@@ -163,6 +163,7 @@
 (define comment
   (make-procedure-with-setter
    (lambda* (:optional (scr #f) (msg 0))
+     "(comment :optional (scr #f) (msg 0)) tries to make musglyph.scm safe for comments"
      (if (or (number? msg)
 	     (not scr))
 	 (sound-comment scr)))

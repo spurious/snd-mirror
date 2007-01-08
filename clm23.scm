@@ -49,6 +49,7 @@
 (define two-pi (* 2 pi))
 
 (define (simple-out beg dur freq amp)
+  "(simple-out beg dur freq amp) test instrument for outa"
   (let* ((os (make-oscil freq))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
@@ -58,6 +59,7 @@
 	 (out-any i (* amp (oscil os)) 0 *output*))))))
 
 (define (simple-outn beg dur freq ampa ampb ampc ampd reva revb)
+  "(simple-outn beg dur freq ampa ampb ampc ampd reva revb) test instrument for outn"
   (let* ((os (make-oscil freq))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
@@ -73,6 +75,7 @@
 	   (if (> revb 0.0) (outb i (* revb val) *reverb*))))))))
 
 (define (simple-ssb beg dur freq amp)
+  "(simple-ssb beg dur freq amp) test instrument for ssb-am"
   (let* ((os (make-ssb-am freq))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
@@ -91,6 +94,7 @@
 	   (out-any i (* amp sum) 0 *output*)))))))
 
 (define (simple-multiarr beg dur freq amp)
+  "(simple-multiarr beg dur freq amp) test instrument for array of gen"
   ;; this won't work in CL because that version of CLM assumes all aref gens are the same type
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (len (inexact->exact (floor (* dur (mus-srate)))))
@@ -109,6 +113,7 @@
 		  0 *output*))))))
 
 (define (simple-sos beg dur amp)
+  "(simple-sos beg dur amp) test instrument for sum-of-sines"
   (let* ((os (make-sum-of-sines 10 440 0.0))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
@@ -118,6 +123,7 @@
 	 (out-any i (* amp (sum-of-sines os)) 0 *output*))))))
 
 (define (simple-soc beg dur freq amp)
+  "(simple-soc beg dur freq amp) test instrument for sum-of-cosines"
   (let* ((os (make-sum-of-cosines 10 freq 0.0))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
@@ -127,6 +133,7 @@
 	 (out-any i (* amp (sum-of-cosines os)) 0 *output*))))))
 
 (define (simple-osc beg dur freq amp)
+  "(simple-osc beg dur freq amp) test instrument for oscil"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (arr (make-vector 20)))
@@ -144,6 +151,7 @@
 	   (out-any i (* amp .05 sum) 0 *output*)))))))
 
 (define (simple-sss beg dur amp)
+  "(simple-sss beg dur amp) test instrument for sine-summation"
   (let* ((os (make-sine-summation 440 0.0 7 .5 1.0))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
@@ -153,6 +161,7 @@
 	 (out-any i (* amp (sine-summation os)) 0 *output*))))))
 
 (define (simple-asy beg dur amp)
+  "(simple-asy beg dur amp) test instrument for asymmetric-fm"
   (let* ((os (make-asymmetric-fm 440.0))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
@@ -162,6 +171,7 @@
 	 (out-any i (* amp (asymmetric-fm os 1.0)) 0 *output*))))))
 
 (define (simple-saw beg dur amp)
+  "(simple-saw beg dur amp) test instrument for sawtooth-wave"
   (let* ((os (make-sawtooth-wave 440.0))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
@@ -171,6 +181,7 @@
 	 (out-any i (* amp (sawtooth-wave os)) 0 *output*))))))
 
 (define (simple-sqr beg dur amp)
+  "(simple-sqr beg dur amp) test instrument for square-wave"
   (let* ((os (make-square-wave 440.0))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
@@ -180,6 +191,7 @@
 	 (out-any i (* amp (square-wave os)) 0 *output*))))))
 
 (define (simple-tri beg dur amp)
+  "(simple-tri beg dur amp) test instrument for triangle-wave"
   (let* ((os (make-triangle-wave 440.0))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
@@ -189,6 +201,7 @@
 	 (out-any i (* amp (triangle-wave os)) 0 *output*))))))
 
 (define (simple-pul beg dur amp)
+  "(simple-pul beg dur amp) test instrument for pusle-train"
   (let* ((os (make-pulse-train 440.0))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
@@ -198,6 +211,7 @@
 	 (out-any i (* amp (pulse-train os)) 0 *output*))))))
 
 (define (simple-sib beg dur freq amp)
+  "(simple-sib beg dur freq amp) test instrument for sine-bank"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (amps (make-double-array 3 :initial-element 0.0))
@@ -216,6 +230,7 @@
 	 (out-any i (sine-bank amps phases) 0 *output*))))))
 
 (define (simple-oz beg dur freq amp)
+  "(simple-oz beg dur freq amp) test instrument for one-zero"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
@@ -226,6 +241,7 @@
 	 (out-any i (* amp (one-zero oz (oscil os))) 0 *output*))))))
 
 (define (simple-op beg dur freq amp)
+  "(simple-op beg dur freq amp) test instrument for one-pole"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
@@ -236,6 +252,7 @@
 	 (out-any i (* amp (one-pole oz (oscil os))) 0 *output*))))))
 
 (define (simple-tz beg dur freq amp)
+  "(simple-tz beg dur freq amp) test instrument for two-zero"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
@@ -246,6 +263,7 @@
 	 (out-any i (* amp (two-zero oz (oscil os))) 0 *output*))))))
 
 (define (simple-tp beg dur freq amp)
+  "(simple-tp beg dur freq amp) test instrument for two-pole"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
@@ -256,6 +274,7 @@
 	 (out-any i (* amp (two-pole oz (oscil os))) 0 *output*))))))
 
 (define (simple-frm beg dur freq amp)
+  "(simple-frm beg dur freq amp) test instrument for formant"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
@@ -266,6 +285,7 @@
 	 (out-any i (* amp (formant oz (oscil os))) 0 *output*))))))
 
 (define (simple-wav beg dur freq amp)
+  "(simple-wav beg dur freq amp) test instrument for waveshape"
   (let* ((w1 (make-waveshape :frequency freq :partials '(1 1 2 1 3 1)))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
@@ -275,6 +295,7 @@
 	 (out-any i (* amp (waveshape w1 1.0)) 0 *output*))))))
 
 (define (simple-poly beg dur freq amp)
+  "(simple-poly beg dur freq amp) test instrument for polyshape"
   (let* ((w1 (make-polyshape :frequency freq :partials '(1 1 2 1 3 1)))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
@@ -284,6 +305,7 @@
 	 (out-any i (* amp (polyshape w1 1.0)) 0 *output*))))))
 
 (define (simple-dly beg dur freq amp)
+  "(simple-dly beg dur freq amp) test instrument for delay"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
@@ -294,6 +316,7 @@
 	 (out-any i (delay buf (* amp (oscil os))) 0 *output*))))))
 
 (define (simple-cmb beg dur freq amp)
+  "(simple-cmb beg dur freq amp) test instrument for comb"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
@@ -304,6 +327,7 @@
 	 (out-any i (comb buf (* amp (oscil os))) 0 *output*))))))
 
 (define (simple-filtered-cmb beg dur freq amp)
+  "(simple-filtered-cmb beg dur freq amp) test instrument for filtered-comb"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
@@ -314,6 +338,7 @@
 	 (out-any i (filtered-comb buf (* amp (oscil os))) 0 *output*))))))
 
 (define (simple-not beg dur freq amp)
+  "(simple-not beg dur freq amp) test instrument for notch"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
@@ -324,6 +349,7 @@
 	 (out-any i (notch buf (* amp (oscil os))) 0 *output*))))))
 
 (define (simple-alp beg dur freq amp)
+  "(simple-alp beg dur freq amp) test instrument for all-pass"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
@@ -334,6 +360,7 @@
 	 (out-any i (all-pass buf (* amp (oscil os))) 0 *output*))))))
 
 (define (simple-ave beg dur freq amp)
+  "(simple-ave beg dur freq amp) test instrument for moving-average"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
@@ -344,6 +371,7 @@
 	 (out-any i (moving-average buf (* amp (oscil os))) 0 *output*))))))
 
 (define (simple-tab beg dur freq amp)
+  "(simple-tab beg dur freq amp) test instrument for table-lookup"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (table-size 256)
@@ -358,6 +386,7 @@
 	 (out-any i (* amp (table-lookup buf)) 0 *output*))))))
 
 (define (simple-flt beg dur freq amp)
+  "(simple-flt beg dur freq amp) test instrument for filter"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (flt (make-filter 8 :xcoeffs (make-vct 8) :ycoeffs (make-vct 8)))
@@ -372,6 +401,7 @@
 	 (out-any i (* amp (filter flt (oscil os))) 0 *output*))))))
 
 (define (simple-fir beg dur freq amp)
+  "(simple-fir beg dur freq amp) test instrument for fir-filter"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (flt (make-fir-filter 8 :xcoeffs (make-vct 8)))
@@ -385,6 +415,7 @@
 	 (out-any i (* amp (fir-filter flt (oscil os))) 0 *output*))))))
 
 (define (simple-iir beg dur freq amp)
+  "(simple-iir beg dur freq amp) test instrument for iir-filter"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (flt (make-iir-filter 8 :ycoeffs (make-vct 8)))
@@ -398,6 +429,7 @@
 	 (out-any i (* amp (iir-filter flt (oscil os))) 0 *output*))))))
 
 (define (simple-f beg dur freq amp)
+  "(simple-f beg dur freq amp) test instrument for frame->sample"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (frm (make-frame 2 .7 .3))
@@ -412,6 +444,7 @@
 	   (out-any i (* amp (frame->sample frm smp)) 0 *output*)))))))
 
 (define (simple-ran beg dur freq amp)
+  "(simple-ran beg dur freq amp) test instrument for rand"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-rand freq)))
@@ -421,6 +454,7 @@
 	 (out-any i (* amp (rand os)) 0 *output*))))))
 
 (define (simple-ri beg dur freq amp)
+  "(simple-ri beg dur freq amp) test instrument for rand-interp"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-rand-interp freq)))
@@ -430,6 +464,7 @@
 	 (out-any i (* amp (rand-interp os)) 0 *output*))))))
 
 (define (simple-rndist beg dur freq amp)
+  "(simple-rndist beg dur freq amp) test instrument for rand dist"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-rand freq :distribution (inverse-integrate '(0 0 1 1)))))
@@ -439,6 +474,7 @@
 	 (out-any i (* amp (rand os)) 0 *output*))))))
 
 (define (simple-ridist beg dur freq amp)
+  "(simple-ridist beg dur freq amp) test instrument for rand-interp dist"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-rand-interp freq :distribution (inverse-integrate '(0 1 1 0)))))
@@ -448,6 +484,7 @@
 	 (out-any i (* amp (rand-interp os)) 0 *output*))))))
 
 (define (simple-env beg dur freq amp)
+  "(simple-env beg dur freq amp) test instrument for env"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
@@ -458,6 +495,7 @@
 	 (out-any i (* (env e) (oscil os)) 0 *output*))))))
 
 (define* (simple-fof beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional ve ae)
+  " (simple-fof beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional ve ae) test instrument for FOF"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
          (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
          (ampf (make-env :envelope (or ae (list 0 0 25 1 75 1 100 0)) :scaler amp :duration dur))
@@ -483,6 +521,7 @@
 	 (out-any i (* (env ampf) (wave-train wt0 (* (env vibenv) (oscil vibr)))) 0 *output*))))))
 
 (define (simple-amb beg dur freq amp)
+  "(simple-amb beg dur freq amp) test instrument for osc?+rand"
   (let* ((os (if (> freq 1) (make-oscil freq) (make-rand freq)))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
@@ -492,6 +531,7 @@
 	 (out-any i (* amp (if (oscil? os) (oscil os) (rand os))) 0 *output*))))))
 
 (define (simple-rd beg dur amp file)
+  "(simple-rd beg dur amp file) test instrument for readin"
   (let* ((rd (make-readin file))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
@@ -501,6 +541,7 @@
 	 (out-any i (* amp (readin rd)) 0 *output*))))))
 
 (define (simple-rd-start beg dur amp file channel start)
+  "(simple-rd-start beg dur amp file channel start) test instrument for readin"
   (let* ((rd (make-readin file :channel channel :start start))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
@@ -510,6 +551,7 @@
 	 (out-any i (* amp (readin rd)) 0 *output*))))))
 
 (define (simple-cnv beg dur amp file)
+  "(simple-cnv beg dur amp file) test instrument for convolve"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (filt (make-double-array 8)))
@@ -522,6 +564,7 @@
 	   (out-any i (* amp (convolve ff)) 0 *output*)))))))
 
 (define (simple-cnf beg dur amp file)
+  "(simple-cnf beg dur amp file) test instrument for convolve"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -536,6 +579,7 @@
 		    0 *output*)))))))
 
 (define (simple-lrg beg dur amp file)
+  "(simple-lrg beg dur amp file) test instrument for convolve"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -553,6 +597,7 @@
 		    0 *output*)))))))
 
 (define (simple-cn2 beg dur amp file)
+  "(simple-cn2 beg dur amp file) test instrument for convolve"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -572,6 +617,7 @@
 		    0 *output*)))))))
 
 (define (simple-src beg dur amp speed file)
+  "(simple-src beg dur amp speed file) test instrument for src"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (sr (make-src :input (make-readin file) :srate speed)))
@@ -581,6 +627,7 @@
 	 (out-any i (* amp (src sr)) 0 *output*))))))
 
 (define (simple-src-f beg dur amp speed file)
+  "(simple-src-f beg dur amp speed file) test instrument for src"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (sr (make-src :input (make-readin file) :srate speed)))
@@ -590,6 +637,7 @@
 	 (out-any i (* amp (src sr 0.0 #f)) 0 *output*))))))
 
 (define (simple-sr2 beg dur amp speed file)
+  "(simple-sr2 beg dur amp speed file) test instrument for src"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -600,6 +648,7 @@
 	 (out-any i (* amp (src sr 0.0 (lambda (dir) (if (= dir 1) (readin rd))))) 0 *output*))))))
 
 (define (simple-sr2a beg dur amp speed file)
+  "(simple-sr2a beg dur amp speed file) test instrument for src"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -610,6 +659,7 @@
 	 (out-any i (* amp (src sr)) 0 *output*))))))
 
 (define (simple-sro beg dur amp speed freq)
+  "(simple-sro beg dur amp speed freq) test instrument for src"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
@@ -622,6 +672,7 @@
 		  0 *output*))))))
 
 (define (simple-grn beg dur amp speed freq)
+  "(simple-grn beg dur amp speed freq) test instrument for granulate"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
@@ -632,6 +683,7 @@
 	 (out-any i (* amp (granulate sr (lambda (dir) (oscil os)))) 0 *output*))))))
 
 (define (simple-pvoc beg dur amp size file)
+  "(simple-pvoc beg dur amp size file) test instrument for phase-vocoder"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (sr (make-phase-vocoder :input (make-readin file) :fft-size size)))
@@ -641,6 +693,7 @@
 	 (out-any i (* amp (phase-vocoder sr)) 0 *output*))))))
 
 (define (simple-ina beg dur amp file)
+  "(simple-ina beg dur amp file) test instrument for ina"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (fil (open-input file))
@@ -652,6 +705,7 @@
 	 (set! ctr (+ ctr 1)))))))
 
 (define (simple-in-rev beg dur ampa ampb)
+  "(simple-in-rev beg dur ampa ampb) test instrument for in reverb"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
     (run
@@ -661,6 +715,7 @@
 	 (if (> ampb 0.0) (outb i (* ampb (inb i *reverb*)) *output*)))))))
 
 (define (simple-f2s beg dur amp file)
+  "(simple-f2s beg dur amp file) test instrument for file->sample"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (fil (make-file->sample file))
@@ -672,6 +727,7 @@
 	 (set! ctr (1+ ctr)))))))
 
 (define (simple-rdf beg dur amp file)
+  "(simple-rdf beg dur amp file) test instrument for readin"
   (let* ((rd (make-readin file))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
@@ -681,6 +737,7 @@
 	 (out-any i (* amp (readin rd)) 0 *output*))))))
 
 (define (simple-loc beg dur freq amp)
+  "(simple-loc beg dur freq amp) test instrument for locsig"
   (let* ((os (make-oscil freq))
 	 (loc (make-locsig :degree 0.0 :channels 1 :output *output*))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
@@ -691,6 +748,7 @@
 	 (locsig loc i (* amp (oscil os))))))))
 
 (define (simple-dloc beg dur freq amp)
+  "(simple-dloc beg dur freq amp) test instrument for move-sound"
   (let* ((os (make-oscil freq))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
@@ -705,6 +763,7 @@
 	 (move-sound loc i (* amp (oscil os))))))))
 
 (define (simple-dloc-4 beg dur freq amp)
+  "(simple-dloc-4 beg dur freq amp) test instrument for dlocsig"
   (let* ((os (make-oscil freq))
 	 (start (floor (* beg (mus-srate))))
 	 (end (+ start (floor (* dur (mus-srate)))))
@@ -729,6 +788,7 @@
 ;(with-sound (:channels 4 :output "temp.snd") (simple-dloc-4 0 2 440 .5))
 
 (define (simple-dup beg dur freq amp)
+  "(simple-dup beg dur freq amp) test instrument for arith"
   (let* ((os (make-oscil freq))
 	 (j 2)
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
@@ -744,6 +804,7 @@
 	     (out-any i (* amp (oscil os)) 0 *output*)))))))
 
 (define (simple-du1 beg dur freq amp)
+  "(simple-du1 beg dur freq amp) test instrument for arith"
   (let* ((os (make-oscil freq))
 	 (j (+ (expt 2 41) 1234)) ; 2199023256786
 	 (mj -3)
@@ -760,6 +821,7 @@
 	     (clm-print "minus 3: ~D" mj)))))))
 
 (define (sample-desc beg dur freq amp)
+  "(sample-desc beg dur freq amp) test instrument for generics"
   (let* ((os (make-oscil freq))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (printed #f)
@@ -777,6 +839,7 @@
 	 (out-any i (* amp (oscil os)) 0 *output*))))))
 
 (define (sample-mdat beg dur freq amp)
+  "(sample-mdat beg dur freq amp) test instrument for coeffs"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (table-size 256)
@@ -794,6 +857,7 @@
 	 (if (>= j table-size) (set! j 0)))))))
 
 (define (sample-xtab beg dur freq amp)
+  "(sample-xtab beg dur freq amp) test instrument for generics"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (flt (make-filter 8 :xcoeffs (make-vct 8) :ycoeffs (make-vct 8)))
@@ -812,6 +876,7 @@
 		  0 *output*))))))
 
 (define (sample-xts beg dur freq amp)
+  "(sample-xts beg dur freq amp) test instrument for generics"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (flt (make-filter 8 :xcoeffs (make-vct 8) :ycoeffs (make-vct 8)))
@@ -832,6 +897,7 @@
 		  0 *output*))))))
 
 (define (sample-srl2 beg dur amp speed freq)
+  "(sample-srl2 beg dur amp speed freq) test instrument for src"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os1 (make-oscil freq))
@@ -846,6 +912,7 @@
 		  0 *output*))))))
 
 (define (sample-srll beg dur amp speed freq)
+  "(sample-srll beg dur amp speed freq) test instrument for src"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
@@ -861,6 +928,7 @@
 		  0 *output*))))))
 
 (define (sample-srl3 beg dur amp speed freq)
+  "(sample-srl3 beg dur amp speed freq) test instrument for src"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os1 (make-oscil freq))
@@ -880,6 +948,7 @@
 		  0 *output*))))))
 
 (define (sample-grn2 beg dur amp speed freq)
+  "(sample-grn2 beg dur amp speed freq) test instrument for granulate"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
@@ -896,6 +965,7 @@
 		  0 *output*))))))
 
 (define (sample-grn3 beg dur amp speed file)
+  "(sample-grn3 beg dur amp speed file) test instrument for granulate"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -910,6 +980,7 @@
 		  0 *output*))))))
 
 (define (sample-cnv beg dur amp speed file)
+  "(sample-cnv beg dur amp speed file) test instrument for convolve"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -927,6 +998,7 @@
 		    0 *output*)))))))
 
 (define (sample-cnv1 beg dur amp speed file)
+  "(sample-cnv1 beg dur amp speed file) test instrument for convolve"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -943,6 +1015,7 @@
 		    0 *output*)))))))
 
 (define (sample-pvoc1 beg dur amp size file)
+  "(sample-pvoc1 beg dur amp size file) test instrument for phase-vocoder"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (fil (make-readin file))
@@ -956,6 +1029,7 @@
 		  0 *output*))))))
 
 (define (sample-pvoc2 beg dur amp size file)
+  "(sample-pvoc2 beg dur amp size file) test instrument for phase-vocoder"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (fil (make-readin file))
@@ -976,6 +1050,7 @@
 		  0 *output*))))))
 
 (define (sample-pvoc3 beg dur amp size file)
+  "(sample-pvoc3 beg dur amp size file) test instrument for phase-vocoder"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (k 0)
@@ -1010,6 +1085,7 @@
 	   0 *output*))))))
 
 (define (sample-mxf beg dur freq amp)
+  "(sample-mxf beg dur freq amp) test instrument for frames"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (frm (make-frame 2 .7 .3))
@@ -1102,6 +1178,7 @@
 	   (mixer-set! mx2 1 1 .4)))))))
 
 (define (sample-osc beg dur freq amp)
+  "(sample-osc beg dur freq amp) test instrument for oscil"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (arr (make-vector 20))
@@ -1125,6 +1202,7 @@
 	   (out-any k (* amp .05 sum) 0 *output*)))))))
 
 (define (sample-ardcl beg dur freq amp)
+  "(sample-ardcl beg dur freq amp) test instrument for arith"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (amps (make-double-array 3 :initial-element 0.0))
@@ -1153,6 +1231,7 @@
 	 (out-any i (sine-bank amps phases) 0 *output*))))))
 
 (define (sample-strs beg dur freq amp)
+  "(sample-strs beg dur freq amp) test instrument for strings"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
@@ -1178,6 +1257,7 @@
 	 (out-any i (oscil os) 0 *output*))))))
 
 (define (sample-flt beg dur freq amp)
+  "(sample-flt beg dur freq amp) test instrument for arith"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (fltdat (make-double-array 3 :initial-element (double 3.14)))
@@ -1204,6 +1284,7 @@
 	 (out-any i (* amp (filter flt (oscil os))) 0 *output*))))))
 
 (define (sample-arrintp beg dur freq amp)
+  "(sample-arrintp beg dur freq amp) test instrument for array-interp"
   (let* ((os (make-oscil freq))
 	 (arr (make-double-array 101))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
@@ -1222,6 +1303,7 @@
 	 (set! loc (+ loc loc-incr)))))))
 
 (define (sample-if beg dur freq amp)
+  "(sample-if beg dur freq amp) test instrument for ifs"
   (let* ((os (make-oscil freq))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
@@ -1291,6 +1373,7 @@
 	 (out-any i (* amp (oscil os)) 0 *output*))))))
 
 (define (sample-arrfile beg dur freq amp)
+  "(sample-arrfile beg dur freq amp) test instrument for arrays"
   (let* ((os (make-oscil freq))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
@@ -1314,6 +1397,7 @@
 	     (if (<= ctr 0) (set! dir 1))))))))
 
 (define (simple-grn-f1 beg dur amp speed freq)
+  "(simple-grn-f1 beg dur amp speed freq) test instrument for granulate"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
@@ -1326,6 +1410,7 @@
 ;(with-sound () (simple-grn-f1 0 1 .1 2 440))
 
 (define (simple-grn-f2 beg dur amp speed file)
+  "(simple-grn-f2 beg dur amp speed file) test instrument for granulate"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -1338,6 +1423,7 @@
 ;(with-sound () (simple-grn-f2 0 1 1 2 "oboe.snd"))
 
 (define (simple-grn-f3 beg dur amp speed file)
+  "(simple-grn-f3 beg dur amp speed file) test instrument for granulate"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -1350,6 +1436,7 @@
 ;(with-sound () (simple-grn-f3 0 1 1 2 "oboe.snd"))
 
 (define (simple-grn-f4 beg dur amp speed file)
+  "(simple-grn-f4 beg dur amp speed file) test instrument for granulate"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -1362,6 +1449,7 @@
 ;(with-sound () (simple-grn-f4 0 1 1 2 "oboe.snd"))
 
 (define (simple-grn-f5 beg dur amp speed file)
+  "(simple-grn-f5 beg dur amp speed file) test instrument for granulate"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -1383,6 +1471,7 @@
 ;(with-sound () (simple-grn-f5 0 1 1 2 "oboe.snd"))
 
 (define (sample-pvoc5 beg dur amp size file freq)
+  "(sample-pvoc5 beg dur amp size file freq) test instrument for phase-vocoder"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (fil (make-readin file))
@@ -1494,6 +1583,7 @@
 |#
 
 (define (pvoc-a beg dur amp size file)
+  "(pvoc-a beg dur amp size file) test instrument for phase-vocoder"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (sr (make-phase-vocoder :input (make-readin file) :fft-size size :interp (/ size 4) :overlap 4)))
@@ -1503,6 +1593,7 @@
 	 (out-any i (* amp (phase-vocoder sr)) 0 *output*))))))
 
 (define (pvoc-b beg dur amp size file)
+  "(pvoc-b beg dur amp size file) test instrument for phase-vocoder"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -1520,6 +1611,7 @@
 |#
 
 (define (pvoc-c beg dur amp size file)
+  "(pvoc-c beg dur amp size file) test instrument for phase-vocoder"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -1557,6 +1649,7 @@
 
 
 (define (pvoc-d beg dur amp size file)
+  "(pvoc-d beg dur amp size file) test instrument for phase-vocoder"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -1610,6 +1703,7 @@
 |#
 
 (define (pvoc-e beg dur amp size file)
+  "(pvoc-e beg dur amp size file) test instrument for phase-vocoder"
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -1694,6 +1788,7 @@
 |#
 
 (define (or1)
+  "(or1) test function for or"
   (let ((e1 (make-env '(0 0 1 1) :end 10))
 	(e2 (make-env '(0 1 1 0) :end 10))
 	(e3 #f)
@@ -1724,6 +1819,7 @@
 	     (clm-print ";or1 ok1: ~A~%" ok1)))))))
 
 (define (or2)
+  "(or2) test function for or"
   (let ((e1 (make-env '(0 0 1 1) :end 10))
 	(e2 (make-env '(0 1 1 0) :end 10))
 	(e3 #f)
@@ -1762,6 +1858,7 @@
 	     (clm-print ";or1 ok1: ~A~%" ok1)))))))
 
 (define (or3)
+  "(or3) test function for or"
   (let ((e1 (make-env '(0 0 1 1) :end 10))
 	(i1 (make-vector 3 32))
 	(f1 (make-vct 3 3.14))
@@ -1793,6 +1890,7 @@
 	     (clm-print ";or3 e~%")))))))
 
 (define (or4)
+  "(or4) test function for or"
   (let ((e1 (make-env '(0 0 1 1) :end 10))
 	(e2 (make-env '(0 1 1 0) :end 10))
   	(i1 (make-vector 3 32))

@@ -21,7 +21,7 @@
 (define effects-menu (add-to-main-menu "Effects" (lambda () (update-label effects-list))))
 
 (define (plausible-mark-samples)
-  ;; find two marks in the current channel (in or nearest to current window)
+  "(plausible-mark-samples) finds two marks in the current channel in or nearest to current window"
   (let* ((snd (selected-sound))
 	 (chn (selected-channel))
 	 (ms (sort (map mark-sample (marks snd chn)) <)))

@@ -22,6 +22,7 @@
 (define xe-envelope
   (make-procedure-with-setter
    (lambda (drawer)
+     "accessor for the current xm-enved envelope"
      (or (car drawer) 
 	 (let ((ax-inf (list-ref drawer 3)))
 	   (list (list-ref ax-inf 0)

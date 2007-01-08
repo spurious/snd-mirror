@@ -71,7 +71,9 @@
 
 (define use-sinc-interp
   (make-procedure-with-setter
-   (lambda () #t)
+   (lambda () 
+     "dummy accessor for obsolete use-sinc-interp"
+     #t)
    (lambda (val) val)))
 
 (define (mus-set-srate val)
@@ -143,6 +145,7 @@
 (define button-font
   (make-procedure-with-setter
    (lambda ()
+     "dummy accessor for obsolete button-font"
      #f)
    (lambda (val)
      #f)))
@@ -150,6 +153,7 @@
 (define bold-button-font
   (make-procedure-with-setter
    (lambda ()
+     "dummy accessor for obsolete bold-button-font"
      #f)
    (lambda (val)
      #f)))
@@ -157,6 +161,7 @@
 (define help-text-font
   (make-procedure-with-setter
    (lambda ()
+     "dummy accessor for obsolete help-text-font"
      #f)
    (lambda (val)
      #f)))

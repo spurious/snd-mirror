@@ -148,7 +148,9 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;(add-hook! lisp-graph-hook display-energy)
 
 (if (not (defined? 'log10))
-    (define (log10 a) (/ (log a) (log 10))))
+    (define (log10 a) 
+      "(log10 a) returns the log bas 10 of 'a'"
+      (/ (log a) (log 10))))
 
 (define display-db
   (lambda (snd chn)
@@ -364,6 +366,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 (define do-go-on-continuation #f)
 
 (define (do-go-on)
+  "(do-go-on) tries to continue an interrupted do loop"
   (if (continuation? do-go-on-continuation)
       (do-go-on-continuation #f)
       ";sorry! can't continue"))
@@ -455,6 +458,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; -------- read and write OGG files
 
 (define (read-ogg filename)
+  "(read-ogg filename) tries to open an OGG file"
   ;; check for "OggS" first word, if found, translate to something Snd can read
   ;; (open-sound (read-ogg "/home/bil/sf1/oboe.ogg"))
   (if (call-with-input-file filename 
@@ -478,7 +482,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 |#
 
 (define (write-ogg snd)
-  ;; write snd data in OGG format
+  "(write-ogg snd) writes 'snd' in OGG format"
   (if (or (> (car (edits snd)) 0)
 	  (not (= (header-type snd) mus-riff)))
       (let ((file (string-append (file-name snd) ".tmp")))
@@ -491,12 +495,14 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; -------- read and write Speex files
 
 (define (read-speex filename)
+  "(read-speex filename) tries to open a SPEEX file"
   (let ((wavfile (string-append filename ".wav")))
     (if (file-exists? wavfile) (delete-file wavfile))
     (system (format #f "speexdec ~A ~A" filename wavfile))
     wavfile))
 
 (define (write-speex snd)
+  "(write-speex snd) writes 'snd' in Speex format"
   ;; write snd data in Speex format
   (if (or (> (car (edits snd)) 0)
 	  (not (= (header-type snd) mus-riff)))
@@ -511,9 +517,11 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; -------- read and write FLAC files
 
 (define (read-flac filename)
+  "(read-flac filename) tries to read a FLAC file"
   (system (format #f "flac -d ~A" filename)))
 
 (define (write-flac snd)
+  "(write-flac snd) writes 'snd' in a FLAC file"
   ;; write snd data in FLAC format
   (if (or (> (car (edits snd)) 0)
 	  (not (= (header-type snd) mus-riff)))
@@ -527,6 +535,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; -------- play AC3 via a52dec
 
 (define (play-ac3 name)
+  "(play-ac3 name) uses a52dec to play an AC3 sound"
   ;; ideally we'd implement C-g to interrupt this, but you can type C-c to the shell once it has started
   ;;   to turn an AC3 file into something Snd can edit, /usr/local/bin/a52dec test.ac3 -o wav > test.wav
   (system (format #f "a52dec ~A" name)))
@@ -537,6 +546,8 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; these are used by Octave (WaveLab) -- each line has one integer, apparently a signed short.
 
 (define* (read-ascii in-filename :optional (out-filename "test.snd") (out-type mus-next) (out-format mus-bshort) (out-srate 44100))
+  "(read-ascii in-filename :optional (out-filename \"test.snd\") (out-type mus-next) (out-format mus-bshort) (out-srate 44100)) tries to \
+read an ASCII sound file"
   (let* ((in-fd (open-input-file in-filename))
 	 (out-fd (new-sound out-filename out-type out-format out-srate 1 (format #f "created by read-ascii: ~A" in-filename)))
 	 (bufsize 512)
@@ -1184,6 +1195,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 
 ;;; this taken from sox (vibro.c)
 (define (vibro speed depth)
+  "(vibro speed depth) adds vibrato or tremolo"
   (let* ((sine (make-oscil speed))
 	 (scl (* 0.5 depth))
 	 (offset (- 1.0 scl)))
@@ -1635,7 +1647,8 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 ;;; here's a very similar function that uses granular synthesis to move at a varying tempo through a sound
 
 (define* (granulated-sound-interp envelope :optional (time-scale 1.0) (grain-length 0.10) (grain-envelope '(0 0 1 1 2 1 3 0)) (output-hop 0.05) snd chn)
-  ;; read sound following envelope (as in env-sound-interp), using grains to create re-tempo'd read
+  "(granulated-sound-interp envelope :optional (time-scale 1.0) (grain-length 0.10) (grain-envelope '(0 0 1 1 2 1 3 0)) (output-hop 0.05) snd chn) reads \
+the given channel following 'envelope' (as in env-sound-interp), using grains to create the re-tempo'd read"
   (let* ((len (frames snd chn))
 	 (newlen (inexact->exact (floor (* time-scale len))))
 	 (read-env (make-env envelope :end newlen :scaler len))
@@ -1805,6 +1818,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 (define last-height 0)
 
 (define (open-current-buffer width height)
+  "(open-current-buffer width height) makes sure the current buffer is displayed (part of the C-x b support)"
   (set! last-width width)
   (set! last-height height)
   (let ((sound-pane (car (sound-widgets (car current-buffer)))))
@@ -1816,12 +1830,14 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 	  (select-channel (cadr current-buffer))))))
 
 (define (close-all-buffers)
+  "(close-all-buffers) closes all buffers (for C-x b)"
   (for-each 
    (lambda (n)
      (hide-widget (car (sound-widgets n))))
    (sounds)))
 
 (define (switch-to-buf)
+  "(switch-to-buf) handles C-x b"
   (prompt-in-minibuffer 
    (if last-buffer
        (if (> (cadr last-buffer) 0)
@@ -1855,6 +1871,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 	  (open-current-buffer width height)))))))
 
 (define (xb-close snd)
+  "(xb-close snd) is part of the C-x b support"
   (if (and current-buffer
 	   (= snd (car current-buffer)))
       (let ((closer (car current-buffer)))
@@ -1879,6 +1896,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 	    (open-current-buffer last-width last-height)))))
 
 (define (xb-open snd)
+  "(xb-open snd) is part of the C-x b support"
   (close-all-buffers)
   (set! last-buffer current-buffer)
   (set! current-buffer (list snd 0))
@@ -2197,6 +2215,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
       #t)))
 
 (define (click-middle-button-to-open-next-file-in-directory)
+  "(click-middle-button-to-open-next-file-in-directory) adds open-next-file-in-directory to the mouse-click-hook"
   (add-hook! mouse-click-hook
 	     (lambda (snd chn button state x y axis)
 	       (if (= button 2)
@@ -2207,6 +2226,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 ;;; -------- chain-dsps
 
 (define* (chain-dsps beg dur :rest dsps)
+  "(chain-dsps beg dur :rest dsps) sets up a generator patch from its arguments"
   ;; I assume the dsps are already made, 
   ;;          the envs are present as break-point lists
   ;;          the calls are ordered out->in (or last first)
@@ -2300,6 +2320,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 ;;; -------- smooth-channel as virtual op
 
 (define* (smooth-channel-via-ptree :optional (beg 0) dur snd chn edpos)
+  "(smooth-channel-via-ptree :optional (beg 0) dur snd chn edpos) is smooth-channel implemented as a virtual edit"
   (let* ((y0 (sample beg snd chn edpos))
 	 (y1 (sample (+ beg (or dur (1- (frames)))) snd chn edpos))
 	 (init-angle (if (> y1 y0) pi 0.0)) 
@@ -2330,6 +2351,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 ;;; -------- ring-modulate-channel (ring-mod as virtual op)
 
 (define* (ring-modulate-channel freq :optional (beg 0) dur snd chn edpos)
+  "(ring-modulate-channel freq :optional (beg 0) dur snd chn edpos) ring-modulates the given channel"
   (ptree-channel
    (lambda (y data forward)
      (declare (y real) (data vct) (forward boolean))

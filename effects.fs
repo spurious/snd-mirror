@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Sat Jan 06 04:41:09 CET 2007
+\ Changed: Sun Jan 07 18:54:04 CET 2007
 
 \ Commentary:
 \
@@ -4185,7 +4185,6 @@ hide
   loc snd chn 1 #f make-sample-reader { rd }
   0.0 0.0 0.0 { samp0 samp1 samp2 }
   10 0.0 make-vct { samps }
-  1.0 { diff }
   #f 					\ flag
   snd chn #f frames loc ?do
     c-g? ?leave

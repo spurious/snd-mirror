@@ -184,6 +184,7 @@
 (define mus-a0
   (make-procedure-with-setter
    (lambda (gen)
+     "obsolete way to access mus-xcoeff 0"
      (mus-xcoeff gen 0))
    (lambda (gen val)
      (set! (mus-xcoeff gen 0) val))))
@@ -191,6 +192,7 @@
 (define mus-a1
   (make-procedure-with-setter
    (lambda (gen)
+     "obsolete way to access mus-xcoeff 1"
      (mus-xcoeff gen 1))
    (lambda (gen val)
      (set! (mus-xcoeff gen 1) val))))
@@ -198,6 +200,7 @@
 (define mus-a2
   (make-procedure-with-setter
    (lambda (gen)
+     "obsolete way to access mus-xcoeff 2"
      (mus-xcoeff gen 2))
    (lambda (gen val)
      (set! (mus-xcoeff gen 2) val))))
@@ -205,6 +208,7 @@
 (define mus-b1
   (make-procedure-with-setter
    (lambda (gen)
+     "obsolete way to access mus-ycoeff 1"
      (mus-ycoeff gen 1))
    (lambda (gen val)
      (set! (mus-ycoeff gen 1) val))))
@@ -212,6 +216,7 @@
 (define mus-b2
   (make-procedure-with-setter
    (lambda (gen)
+     "obsolete way to access mus-ycoeff 2"
      (mus-ycoeff gen 2))
    (lambda (gen val)
      (set! (mus-ycoeff gen 2) val))))

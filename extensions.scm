@@ -28,6 +28,7 @@
 
 (if (not (defined? 'remove-if))
     (define (remove-if pred l) ; from guile/ice-9/common-list.scm
+      "(remove-if func lst) removes any element from 'lst' that 'func' likes"
       (let loop ((l l) (result '()))
 	(cond ((null? l) (reverse! result))
 	      ((pred (car l)) (loop (cdr l) result))
@@ -35,6 +36,7 @@
 
 (if (not (defined? 'find-if))
     (define (find-if pred l)
+      "(find-if func lst) scans 'lst' for any element that 'func' likes"
       (cond ((null? l) #f)
 	    ((pred (car l)) (car l))
 	    (else (find-if pred (cdr l))))))
@@ -717,6 +719,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; -------- blackman4-ramp, blackman4-env-channel
 
 (define* (blackman4-ramp rmp0 rmp1 :optional (beg 0) dur snd chn edpos)
+  "(blackman4-ramp rmp0 rmp1 :optional (beg 0) dur snd chn edpos) produces a blackman4-shaped envelope"
   ;; vct: angle incr off scl
   (ptree-channel
    (lambda (y data forward)
@@ -742,6 +745,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
    (format #f "blackman4-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))
 
 (define* (blackman4-env-channel env :optional (beg 0) dur snd chn edpos)
+  "(blackman4-env-channel env :optional (beg 0) dur snd chn edpos) uses the blackman4 window to connect the dots in 'env'"
   (any-env-channel env blackman4-ramp beg dur snd chn edpos (format #f "blackman4-env-channel '~A ~A ~A" env beg dur)))
 
 ;;; any curve can be used as the connecting line between envelope breakpoints in the
@@ -931,6 +935,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; this is ok going forward (I think), but not in reverse
 
 (define* (delay-channel amount :optional (beg 0) dur snd chn edpos)
+  "(delay-channel amount :optional (beg 0) dur snd chn edpos) implements a delay using virtual edits"
   (let ((dly amount)
 	(cur-edpos (if (or (not edpos)
 			   (= edpos current-edit-position))
@@ -1036,6 +1041,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 (define focus-is-following-mouse #f) ; kludge for prefs dialog...
 (define (focus-follows-mouse)
+  "(focus-follows-mouse) implements pointer-focus for the preferences dialog"
   (if (not focus-is-following-mouse)
       (begin
 	(set! focus-is-following-mouse #t)
@@ -1062,16 +1068,19 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 (define prefs-initial-dur 0.1)
 
 (define (prefs-initial-bounds snd chn dur)
+  "(prefs-initial-bounds snd chn dur) returns the current preferences dialog initial graph bounds"
   (list prefs-initial-beg
 	(if prefs-show-full-duration
 	    dur
 	    (min prefs-initial-dur dur))))
 (define (prefs-activate-initial-bounds beg dur full)
+  "(prefs-activate-initial-bounds beg dur full) activates the preferences dialog initial graph bounds settings"
   (set! prefs-initial-beg beg)
   (set! prefs-initial-dur dur)
   (set! prefs-show-full-duration full)
   (add-hook! initial-graph-hook prefs-initial-bounds))
 (define (prefs-deactivate-initial-bounds)
+  "(prefs-deactivate-initial-bounds) deactivates the preferences dialog initial graph bounds settings"
   (set! prefs-initial-beg 0.0)
   (set! prefs-initial-dur 0.1)
   (set! prefs-show-full-duration #f)
@@ -1133,12 +1142,14 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;; 0 = no sync, 1 = all synced, 2 = sync within sound
 
 (define (global-sync-func snd)
+  "(global-sync-func snd) is an after-open-hook function used by the preferences dialog"
   (if (= global-sync-choice 1)
       (set! (sync snd) 1)
       (if (= global-sync-choice 2)
 	  (set! (sync snd) (1+ (sync-max))))))
 
 (define (set-global-sync choice)
+  "(set-global-sync choice) sets the preferences dialog global-sync choice"
   (set! global-sync-choice choice)
   (if (and (not (= choice 0))
 	   (not (member global-sync-func (hook->list after-open-hook))))
@@ -1148,6 +1159,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; -------- show-selection
 
 (define (show-selection)
+  "(show-selection) adjusts graph ounds to display the selected portion"
   (if (selection?)
       (let ((beg #f)
 	    (end #f))

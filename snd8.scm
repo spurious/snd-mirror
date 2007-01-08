@@ -14,13 +14,19 @@
 
 (define vu-font
   (make-procedure-with-setter
-   (lambda () "not-a-font")
-   (lambda (val) "not-a-font")))
+   (lambda () 
+     "dummy accessor for obsolete vu-font"
+     "not-a-font")
+   (lambda (val) 
+     "not-a-font")))
 
 (define vu-font-size
   (make-procedure-with-setter
-   (lambda () 1.0)
-   (lambda (val) 1.0)))
+   (lambda () 
+     "dummy accessor for obsolete vu-font-size"
+     1.0)
+   (lambda (val) 
+     1.0)))
 
 
 (define* (samples->sound-data :optional (beg 0) num snd chn obj pos (sd-chan 0))

@@ -381,6 +381,7 @@
 (define mark-properties
   (make-procedure-with-setter
    (lambda (id)
+     "(mark-properties id) accesses the properties of mark 'id'"
      (let ((data (assoc id all-mark-properties)))
        (if data
 	   (cdr data)

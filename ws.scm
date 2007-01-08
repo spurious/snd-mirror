@@ -34,6 +34,7 @@
 	    *ws-top-level-prompt*))))
 
 (define (pop-ws)
+  "(pop-ws) pops the with-sound continuation stack"
   (if (not (null? *ws-continues*))
       (begin
 	(set! *ws-continue* (car *ws-continues*))
@@ -54,6 +55,7 @@
   (goto-listener-end))
 
 (define (push-ws continue finish stack)
+  "(push-ws continue finish stack) adds a continuation to the with-sound stack of continuations"
   (if (null? *ws-continues*) (set! *ws-top-level-prompt* (listener-prompt)))
   (set! *ws-continues* (cons *ws-continue* *ws-continues*))
   (set! *ws-continue* continue)
@@ -116,6 +118,7 @@ returning you to the true top-level."
   (local-variable *ws-stack* obj index))
 
 (define (ws-location)
+  "(ws-location) tries to report where with-sound was at the point of an interruption"
   (if (stack? *ws-stack*)
       (let ((len (stack-length *ws-stack*)))
 	(call-with-current-continuation
@@ -248,6 +251,7 @@ returning you to the true top-level."
 				  (clipped 'unset)
 				  (notehook *clm-notehook*)
 				  (scaled-by #f))
+  "with-sound-helper is the business portion of the with-sound macro"
   (let ((old-srate (mus-srate))
 	(old-*output* *output*)
 	(old-*reverb* *reverb*)
@@ -488,6 +492,7 @@ returning you to the true top-level."
 ; cm wants this to be a function so that it can use apply
 
 (define (clm-load file . args) 
+  "(clm-load file . args) loads 'file' in the context of with-sound"
   (apply with-sound-helper (lambda () (load file)) args))
 
 
@@ -516,6 +521,7 @@ returning you to the true top-level."
     `(begin
        (define ,(string->symbol (string-append sname "?"))
 	 (lambda (obj)
+	   "clm struct type check"
 	   (and (list? obj)
 		(eq? (car obj) ',(string->symbol sname)))))
        (define* (,(string->symbol (string-append "make-" sname)) 
@@ -525,6 +531,7 @@ returning you to the true top-level."
 				    (list (car n) (cadr n))
 				    n))
 			      fields))
+	 "clm struct make function"
 	 (list ',(string->symbol sname)
 	       ,@(map string->symbol field-names)))
        (add-clm-type ,sname)
@@ -533,6 +540,7 @@ returning you to the true top-level."
 		  (let ((val `(define ,(string->symbol (string-append sname "-" n))
 				(make-procedure-with-setter
 				 (lambda (arg)
+				   "clm struct field accessor"
 				   (list-ref arg ,ctr))
 				 (lambda (arg val)
 				   (list-set! arg ,ctr val))))))
@@ -595,6 +603,8 @@ returning you to the true top-level."
 	  (play *clm-play*)
 	  (to-snd *to-snd*)
 	  (scaled-by #f))
+  "(init-with-sound . args) is the first half of with-sound; it sets up the CLM output choices, reverb, etc. Use \
+finish-with-sound to complete the process."
   (let ((old-srate (mus-srate))
 	(start (if statistics (get-internal-real-time)))
 	(output-to-file (string? output))
@@ -647,6 +657,7 @@ returning you to the true top-level."
 	  start)))
 
 (define (finish-with-sound wsd)
+  "(finish-with-sound wsd) closes the notelist process started by init-with-sound"
   (if (eq? (car wsd) 'with-sound-data)
       (let ((cycles 0)
 	    (output (list-ref wsd 1))
@@ -700,6 +711,7 @@ returning you to the true top-level."
 (define wsdat-play ; for cm
   (make-procedure-with-setter
    (lambda (w)
+     "accessor for play field of init-with-sound struct"
      (list-ref w 9))
    (lambda (w val)
      (list-set! w 9 val))))
@@ -720,6 +732,7 @@ returning you to the true top-level."
 	  (close-output-port fd))))
 
 (define (ws-save-state filename)
+  "(ws-save-state filename) is an after-save-state-hook function that saves the current with-sound global settings"
   (let ((fd (open-appending filename)))
     ;; open in Guile throws 'system-error (I think) if anything goes wrong
     ;; fd is a Scheme port at this point (not an integer), so we can use format etc
@@ -785,6 +798,7 @@ returning you to the true top-level."
 ;;; ...)
 
 (define (with-mix-find-file-with-extensions file extensions)
+  "(with-mix-find-file-with-extensions file extensions) helps the with-mix macro find checkpoint files"
   (if (file-exists? file)
       file
       (call-with-current-continuation
@@ -798,6 +812,7 @@ returning you to the true top-level."
 	 #f))))
 
 (define (with-mix-file-extension file default)
+  "(with-mix-file-extension file default) is a helper function for the with-mix macro"
   (let ((len (string-length file)))
     (call-with-current-continuation
      (lambda (ok)

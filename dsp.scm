@@ -432,28 +432,43 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 		     
 (define asyfm-freq
   (make-procedure-with-setter
-   (lambda (gen) (radians->hz (list-ref gen 0)))
-   (lambda (gen val) (list-set! gen 0 (hz->radians val)))))
+   (lambda (gen) 
+     "asyfm freq field accessor"
+     (radians->hz (list-ref gen 0)))
+   (lambda (gen val) 
+     (list-set! gen 0 (hz->radians val)))))
 
 (define asyfm-phase
   (make-procedure-with-setter
-   (lambda (gen) (list-ref gen 1))
-   (lambda (gen val) (list-set! gen 1 val))))
+   (lambda (gen) 
+     "asyfm phase field accessor"
+     (list-ref gen 1))
+   (lambda (gen val) 
+     (list-set! gen 1 val))))
 
 (define asyfm-ratio
   (make-procedure-with-setter
-   (lambda (gen) (list-ref gen 2))
-   (lambda (gen val) (list-set! gen 2 val))))
+   (lambda (gen) 
+     "asyfm ratio field accessor"
+     (list-ref gen 2))
+   (lambda (gen val) 
+     (list-set! gen 2 val))))
 
 (define asyfm-r
   (make-procedure-with-setter
-   (lambda (gen) (list-ref gen 3))
-   (lambda (gen val) (list-set! gen 3 val))))
+   (lambda (gen) 
+     "asyfm r field accessor"
+     (list-ref gen 3))
+   (lambda (gen val) 
+     (list-set! gen 3 val))))
 
 (define asyfm-index
   (make-procedure-with-setter
-   (lambda (gen) (list-ref gen 4))
-   (lambda (gen val) (list-set! gen 4 val))))
+   (lambda (gen) 
+     "asyfm index field accessor"
+     (list-ref gen 4))
+   (lambda (gen val) 
+     (list-set! gen 4 val))))
 
 (define (asyfm-J gen input)
   ;; this is the same as the CLM asymmetric-fm generator, set r != 1.0 to get the asymmetric spectra
@@ -1066,7 +1081,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (lambda (x) (+ x (* (- m 1.0) (filter flt x))))))
 
 
-(define (cascade->canonical A)
+(define+ (cascade->canonical A)
   "(cascade->canonical A) converts a list of cascade coeffs (vcts with 3 entries) to canonical form"
   ;; from Orfanidis "Introduction to Signal Processing"
 
@@ -1540,7 +1555,7 @@ the era when computers were human beings"
 
 
 (define (periodogram N)
-  "(periodogram N) returns a N point Bartlett periodogram of the samples in the current channel"
+  "(periodogram N) displays an 'N' point Bartlett periodogram of the samples in the current channel"
   (let* ((len (frames))
 	 (average-data (make-vct N))
 	 (rd (make-sample-reader 0))

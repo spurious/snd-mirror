@@ -15,6 +15,7 @@
   (let ((e (XEvent KeyPress))
 	(cast-current-time (list 'Time CurrentTime)))
     (lambda (widget key state)
+      "(key-event widget key state) sends the key event 'key' with 'state' control bits to 'widget'"
       (let ((dpy (XtDisplay widget))
 	    (window (XtWindow widget)))
 	(set! (.type e) KeyPress)
@@ -46,6 +47,7 @@
   (let ((e (XEvent KeyPress))
 	(cast-current-time (list 'Time CurrentTime)))
     (lambda (widget key state x y)
+      "(key-event-with-mouse widget key state x y) sends the key event 'key' with 'state' control bits and mouse at 'x' and 'y' to 'widget'"
       (let ((dpy (XtDisplay widget))
 	    (window (XtWindow widget)))
 	(set! (.type e) KeyPress)
@@ -74,6 +76,7 @@
 (define resize-event
   (let ((e (XEvent ResizeRequest)))
     (lambda (widget width height)
+      "(resize-event widget width height) sends a resize event to the widget"
       (let ((dpy (XtDisplay widget))
 	    (window (XtWindow widget)))
 	(set! (.window e) window)
@@ -85,6 +88,7 @@
 (define enter-event
   (let ((e (XEvent EnterNotify)))
     (lambda (widget)
+      "(enter-event widget) sends an enter window event to the widget"
       (let ((dpy (XtDisplay widget))
 	    (window (XtWindow widget)))
 	(set! (.window e) window)
@@ -94,6 +98,7 @@
 (define leave-event
   (let ((e (XEvent LeaveNotify)))
     (lambda (widget)
+      "(leave-event widget) sends a leave window event to the widget"
       (let ((dpy (XtDisplay widget))
 	    (window (XtWindow widget)))
 	(set! (.window e) window)
@@ -103,6 +108,7 @@
 (define expose-event
   (let ((e (XEvent Expose)))
     (lambda (widget x y width height)
+      "(expose-event widget x y width height) sends an exposure event to the widget"
       (let ((dpy (XtDisplay widget))
 	    (window (XtWindow widget)))
 	(set! (.window e) window)
@@ -117,6 +123,7 @@
 (define click-event
   (let ((e (XEvent ButtonPress)))
     (lambda (widget button state x y)
+      "(click-event widget button state x y) sends a button click event to the widget"
       (let ((dpy (XtDisplay widget))
 	    (window (XtWindow widget)))
 	(set! (.type e) ButtonPress)
@@ -147,6 +154,7 @@
   (let ((e (XEvent ButtonPress))
 	(e1 (XEvent MotionNotify)))
     (lambda (widget button state x0 y0 x1 y1)
+      "(drag-event widget button state x0 y0 x1 y1) sends a button drag event to the widget"
       (let ((dpy (XtDisplay widget))
 	    (window (XtWindow widget)))
 	(set! (.type e) ButtonPress)
@@ -197,11 +205,13 @@
 		(XSendEvent dpy window #f ButtonReleaseMask e))))))))
 
 (define (select-item wid pos)
+  "(select-item wid pos) selects the item in the list widget 'wid' at position 'pos' (0-based)"
   (if (not (XmIsList wid))
       (display (format #f "~A is not a list" (XtName wid)))
       (XmListSelectPos wid (+ pos 1) #t)))
 
 (define* (click-button button :optional value bits)
+  "(click-button button :optional value bits) tries to click the given button"
   (if (Widget? button)
       (if (XtIsSensitive button)
 	  (if (or (XmIsPushButton button)
@@ -256,6 +266,7 @@
 		       button))))
 
 (define (resize-pane wid height)
+  "(resize-pane wid height) tries to force a paned widget window resize"
   (XtUnmanageChild wid)
   (XtVaSetValues wid (list XmNpaneMinimum (if (> height 5) (- height 5) 0)
 			   XmNpaneMaximum (+ height 5)))
@@ -264,6 +275,7 @@
 			   XmNpaneMaximum 1000)))
 
 (define (force-event)
+  "(force-event) tries to force X to deal with an event"
   (let ((app (car (main-widgets)))
 	(done #f))
     (do ()
@@ -274,11 +286,13 @@
 	    (XtDispatchEvent (XtAppNextEvent app)))))))
 	      
 (define (take-keyboard-focus wid)
+  "(take-keyboard-focus wid) gives the widget 'wid' keyboard focus"
   (if (and (XmIsTraversable wid)
 	   (not (= (XmGetVisibility wid) XmVISIBILITY_FULLY_OBSCURED)))
       (XmProcessTraversal wid XmTRAVERSE_CURRENT)))
 
 (define (move-scale scl val)
+  "(move-scale scl val) moves the scale widget 'scl' to 'val'"
   (XmScaleSetValue scl val)
   (XtCallCallbacks scl XmNvalueChangedCallback
     (let ((cb (XmScaleCallbackStruct)))
@@ -329,6 +343,7 @@
        (cons 0 lst)))))
 
 (define (beep)
+  "(beep) beeps"
   (XBell (XtDisplay (cadr (main-widgets))) 100))
 
 #|

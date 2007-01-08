@@ -40512,6 +40512,7 @@ EDITS: 1
       (set! (spectro-hop) 4)
       (set! (fft-window-alpha) 0.0)
       (set! (fft-window-beta) 0.0)
+      (set! (min-dB) -60.0)
       
       (letrec ((test-sound-func-1
 		(lambda (func name ind-1 ind-2 new-val eq-func leq-func settable channel global)
@@ -65231,10 +65232,12 @@ EDITS: 1
        (lambda (sym var) 
 	 (if (and (variable-bound? var) 
 		  (procedure? (variable-ref var)))
-	     (begin
+	     (let ((value (variable-ref var)))
 	       (set! total (1+ total))
-	       (if (and (not (procedure-documentation (variable-ref var)))
-			(not (procedure-property (variable-ref var) 'documentation)))
+	       (if (and (not (procedure-documentation value))
+			(not (procedure-property value 'documentation))
+			(or (not (procedure-with-setter? value))
+			    (not (procedure-documentation (procedure value)))))
 		   (let ((its-help (snd-help sym)))
 		     (if its-help
 			 (set! outside-help (1+ outside-help))

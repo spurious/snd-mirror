@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Sat Jan 06 05:56:58 CET 2007
+\ Changed: Mon Jan 08 04:26:50 CET 2007
 
 \ Commentary:
 \
@@ -62,38 +62,74 @@
 \ formants            	    ( r1 f1 r2 f2 r3 f3 -- proc; x self -- val )
 \ moving-formant      	    ( radius move -- proc; x self -- val )
 \ osc-formants        	    ( radius bases amounts freqs -- proc; x self -- val )
-\
+\ 
+\ echo                      ( scaler secs -- prc; y self -- val )
+\ zecho                     ( scaler secs freq amp -- prc; y self -- val )
+\ flecho                    ( scaler secs -- prc; y self -- val )
+\ ring-mod                  ( freq gliss-env -- prc; y self -- val )
+\ am                        ( freq -- prc; y self -- val )
+\ vibro                     ( speed depth -- prc; y self -- val )
+\ 
 \ hello-dentist       	    ( frq amp :optional snd chn -- vct )
 \ fp                  	    ( sr osamp osfrq :optional snd chn -- vct )
 \ compand             	    ( -- prc; y self -- val )
 \ compand-channel     	    ( :optional beg dur snd chn edpos -- val )
 \ compand-sound       	    ( :optional beg dur snd -- )
+\ expsrc                    ( rate :optional snd chn -- val )
 \ expsnd              	    ( gr-env :optional snd chn -- vct )
+\ cross-synthesis           ( cross-snd amp fftsize r -- prc; y self -- val )
 \ voiced->unvoiced    	    ( amp fftsize r tempo :optional snd chn -- vct )
+\ pulse-voice               ( cosines :optional freq amp fftsize r snd chn -- vct )
+\ cnvtest                   ( snd0 snd1 amp -- mx )
+\ swap-selection-channels   ( -- )
 \ make-sound-interp   	    ( start :optional snd chn -- prc; loc self -- val )
 \ sound-interp        	    ( func loc -- val )
 \ env-sound-interp    	    ( envelope :optional time-scale snd chn -- file-name )
+\ granulated-sound-interp   ( e :optional tscale grain-len grain-env out-hop snd chn -- filename )
+\ title-with-data           ( -- )
 \ filtered-env        	    ( e :optional snd chn -- val )
-\
+\  
+\ switch-to-buffer          ( -- val )
+\ find-click                ( loc -- pos )
+\ remove-clicks             ( -- )
+\ search-for-click          ( -- pos )
 \ zero+               	    ( -- proc; n self -- val )
 \ next-peak           	    ( -- proc; n self -- val )
+\ find-pitch                ( pitch -- prc; y self -- val )
 \ file->vct           	    ( file -- vct )
 \ add-notes           	    ( notes :optional snd chn -- #f )
+\ region-play-list          ( data -- )
+\ region-play-sequence      ( data -- )
+\ replace-with-selection    ( -- )
+\ explode-sf2               ( -- )
+\ open-next-file-in-directory ( -- f )
+\ click-middle-button-to-open-next-file-in-directory ( -- )
+\ chain-dsps                ( start dur :optional dsps #() -- )
+\ if-cursor-follows-play-it-stays-where-play-stopped ( :optional enable -- )
+\ 
 \ smooth-channel-via-ptree  ( :optional beg dur snd chn edpos -- val )
 \ ring-modulate-channel     ( freq :optional beg dur snd chn edpos -- val )
+\ scramble-channels         ( new-order -- )
+\ scramble-channel          ( silence -- )
 \ reverse-by-blocks         ( block-len :optional snd chn -- val )
 \ reverse-within-blocks     ( block-len :optional snd chn -- val )
-\
+\ channel-clipped?          ( :optional snd chn -- val )
+\ sync-all                  ( -- )
+\ 
 \ make-moog-filter    	    ( freq Q -- gen )
 \ moog-frequecy@      	    ( gen -- frq )
 \ moog-frequecy!      	    ( frq gen -- )
 \ moog-filter         	    ( gen sig -- A )
 
-\ Code:
-
-require clm
-require env
-require rgb
+'snd-nogui provided? [if]
+  ' noop alias window-property
+  ' noop alias set-window-property
+  ' noop alias widget-size
+  ' noop alias set-widget-size
+  ' noop alias show-widget
+  ' noop alias hide-widget
+  ' noop alias with-mix-tag
+[then]
 
 \ #( '( snd0 chn0 ) '( snd0 chn1 ) ... )
 : all-chans ( -- array-of-lists )
@@ -153,6 +189,11 @@ require rgb
     then
   then
 ;
+
+require clm
+require env
+require rgb
+require extensions
 
 \ === from frame.scm
 \
@@ -893,7 +934,7 @@ is like fft-squelch."
     jj 1- to jj
   loop
   rdata idata -1 fft drop
-  $" %S %s" '( flt get-func-name ) string-format { origin }
+  $" <'> %s %s" '( flt get-func-name ) string-format { origin }
   mx f0<> if
     rdata vct-peak { pk }
     rdata mx pk f/ vct-scale!
@@ -1053,6 +1094,86 @@ Faster is:  0.99 2400 make-formant filter-sound"
   ( val )
 ;
 
+\ ;;; -------- echo
+
+: echo ( scaler secs -- prc; y self -- val )
+  doc" Returns an echo maker: 0.5 0.5 echo 0 44100 map-channel"
+  { scaler secs }
+  secs #f srate f* fround->s make-delay { del }
+  1 proc-create del , scaler , ( prc )
+ does> { y self -- val }
+  self @ { del }
+  self cell+ @ { scaler }
+  del  del 0.0 tap y f+ scaler f*  0.0  delay y f+
+;
+
+: zecho ( scaler secs freq amp -- prc; y self -- val )
+  doc" Returns a modulated echo maker: 0.5 0.75 6 10.0 zecho 0 65000 map-channel"
+  { scaler secs freq amp }
+  freq make-oscil { os }
+  secs #f srate f* fround->s { len }
+  :size len :max-size len amp f+ fround->s 1+ make-delay { del }
+  1 proc-create del , scaler , os , amp , ( prc )
+ does> { y self -- val }
+  self @ { del }
+  self cell+ @ { scaler }
+  self 2 cells + @ { os }
+  self 3 cells + @ { amp }
+  del  del 0.0 tap y f+ scaler f*  os 0.0 0.0 oscil amp f*  delay y f+
+;
+
+: flecho ( scaler secs -- prc; y self -- val )
+  doc" Returns a low-pass filtered echo maker: 0.5 0.9 flecho 0 75000 map-channel"
+  { scaler secs }
+  :order 4 :xcoeffs vct( 0.125 0.25 0.25 0.125 ) make-fir-filter { flt }
+  secs #f srate f* fround->s make-delay { del }
+  1 proc-create del , scaler , flt , ( prc )
+ does> { y self -- val }
+  self @ { del }
+  self cell+ @ { scaler }
+  self 2 cells + @ { flt }
+  del  flt  del 0.0 tap y f+ scaler f*  fir-filter  0.0  delay y f+
+;
+
+\ ;;; -------- ring-mod and am
+\ ;;;
+\ ;;; CLM instrument is ring-modulate.ins
+
+: ring-mod ( freq gliss-env -- prc; y self -- val )
+  doc" Returns a time-varying ring-modulation filter:\n\
+10 '( 0 0 1 100 hz->radians ) ring-mod map-channel"
+  { freq gliss-env }
+  :frequency freq make-oscil { os }
+  :envelope gliss-env :end #f #f #f frames make-env { genv }
+  1 proc-create os , genv , ( prc )
+ does> { y self -- val }
+  self @ { os }
+  self cell+ @ { genv }
+  os  genv env 0.0  oscil y f*
+;
+
+: am ( freq -- prc; y self -- val )
+  doc" Returns an amplitude-modulator: 440 am map-channel"
+  make-oscil { os }
+  1 proc-create os , ( prc )
+ does> { y self -- val }
+  1.0  y  self @ ( os ) 0.0 0.0 oscil  amplitude-modulate
+;
+
+\ ;;; this taken from sox (vibro.c)
+: vibro ( speed depth -- prc; y self -- val )
+  { speed depth }
+  speed make-oscil { sine }
+  depth f2/ { scl }
+  1.0 scl f- { offset }
+  1 proc-create sine , scl , offset , ( prc )
+ does> { y self -- val }
+  self @ { sine }
+  self cell+ @ { scl }
+  self 2 cells + @ { offset }
+  sine 0.0 0.0 oscil scl f* offset f+ y f*
+;
+
 \ ;;; -------- hello-dentist
 \ ;;;
 \ ;;; CLM instrument version is in clm.html
@@ -1138,6 +1259,46 @@ previous
   then
 ;
 
+\ ;;; -------- shift pitch keeping duration constant
+\ ;;;
+\ ;;; both src and granulate take a function argument to get input whenever it is needed.
+\ ;;; in this case, src calls granulate which reads the currently selected file.
+\ ;;; CLM version is in expsrc.ins
+
+hide
+: expgr-cb { v snd chn -- prc; dir self -- val }
+  1 proc-create v , snd , chn , 0 , ( prc )
+ does> { dir self -- val }
+  self @ { v }
+  v cycle-ref ( val )
+  v cycle-start@ 0= if
+    self cell+ @ { snd }
+    self 2 cells + @ { chn }
+    self 3 cells + @ { vbeg }
+    vbeg v vct-length + dup self 3 cells + ! ( vbeg += v-len )
+    vbeg v vct-length snd chn #f channel->vct drop
+  then
+  ( val )
+;
+: expsr-cb { gr -- prc; dir self -- val }
+  1 proc-create gr , ( prc )
+ does> { dir self -- val }
+  self @ ( gr ) #f #f granulate
+;
+set-current
+: expsrc <{ rate :optional snd #f chn #f -- val }>
+  doc" Uses sampling-rate conversion and granular synthesis to produce a sound \
+at a new pitch but at the original tempo.  \
+It returns a function for map-channel."
+  0 1024 snd chn #f channel->vct { v }
+  :input v snd chn expgr-cb :expansion rate make-granulate { gr }
+  :input gr expsr-cb :srate rate make-src { sr }
+  1 proc-create sr , ( prc )
+ does> { y self -- val }
+  self @ ( sr ) 0.0 #f src
+;
+previous
+
 \ ;;; the next (expsnd) changes the tempo according to an envelope; the new duration
 \ ;;; will depend on the expansion envelope -- we integrate it to get
 \ ;;; the overall expansion, then use that to decide the new length.
@@ -1168,6 +1329,43 @@ set-current
 ;
 previous
 
+\ ;;; -------- cross-synthesis
+\ ;;;
+\ ;;; CLM version is in clm.html
+
+: cross-synthesis ( cross-snd amp fftsize r -- prc; y self -- val )
+  doc" Does cross-synthesis between CROSS-SND (a sound index) and the currently selected sound:\n\
+1 0.5 128 6.0 cross-synthesis map-channel"
+  { cross-snd amp fftsize r }
+  fftsize 2/ { freq-inc }
+  fftsize 0.0 make-vct { fdr }
+  fftsize 0.0 make-vct { fdi }
+  freq-inc 0.0 make-vct { spectr }
+  1.0 r fftsize f/ f- { radius }
+  #f srate fftsize / { bin }
+  freq-inc nil make-array map! radius i bin * make-formant end-map { formants }
+  1 proc-create fdr , fdi , spectr , formants , amp , freq-inc , cross-snd , fftsize , 0 , ( prc )
+ does> { y self -- val }
+  self @ { fdr }
+  self cell+ @ { fdi }
+  self 2 cells + @ { spectr }
+  self 3 cells + @ { formants }
+  self 4 cells + @ { amp }
+  self 5 cells + @ { ctr }
+  ctr formants length = if
+    self 6 cells + @ { cross-snd }
+    self 7 cells + @ { fftsize }
+    self 8 cells + @ { inctr }
+    inctr fftsize cross-snd 0 #f channel->vct dup self ! to fdr
+    inctr fftsize 2/ + self 8 cells + ! ( inctr += freq-inc )
+    fdr fdi #f 2 spectrum ( fdr ) spectr vct-subtract! ( fdr ) fftsize 2/ 1/f vct-scale! drop
+    0 self 5 cells + ! ( ctr = 0 )
+  then
+  1 self 5 cells + +! ( ctr++ )
+  formants cycle-ref drop
+  spectr fdr vct-add! ( spectr ) formants y formant-bank amp f*
+;
+
 : voiced->unvoiced <{ amp fftsize r tempo :optional snd #f chn #f -- vct }>
   doc" Turns a vocal sound into whispering: 1.0 256 2.0 2.0 #f #f voiced->unvoiced"
   fftsize 2/ { freq-inc }
@@ -1196,6 +1394,99 @@ previous
     dup fabs new-peak-amp fmax to new-peak-amp
     ( outval )
   end-map old-peak-amp new-peak-amp f/ amp f* vct-scale! 0 out-len snd chn #f origin vct->channel
+;
+
+: pulse-voice <{ cosines :optional freq 440.0 amp 1.0 fftsize 256 r 2.0 snd #f chn #f -- vct }>
+  doc" Uses sum-of-cosines to manipulate speech sounds."
+  fftsize 2/ { freq-inc }
+  fftsize 0.0 make-vct { fdr }
+  fftsize 0.0 make-vct { fdi }
+  freq-inc 0.0 make-vct { spectr }
+  :cosines cosines :frequency freq make-sum-of-cosines { pulse }
+  0 { inctr }
+  1.0 r fftsize f/ f- { radius }
+  snd srate fftsize / { bin }
+  snd chn #f frames { len }
+  0.0 0.0 { old-peak-amp new-peak-amp }
+  $" %s %s %s %s %s %s" '( cosines freq amp fftsize r get-func-name ) string-format { origin }
+  freq-inc nil make-array map! radius i bin * make-formant end-map { formants }
+  len 0.0 make-vct map!
+    i freq-inc mod 0= if
+      c-g? if "interrupted" leave then	\ ;; if C-g exit the loop returning the string "interrupted"
+      inctr fftsize snd chn #f channel->vct to fdr
+      fdr vct-peak old-peak-amp fmax to old-peak-amp
+      fdr fdi #f 2 spectrum ( fdr ) spectr vct-subtract! ( fdr ) freq-inc 1/f vct-scale! drop
+      freq-inc +to inctr
+    then
+    spectr fdr vct-add! ( spectr ) formants pulse 0.0 sum-of-cosines formant-bank ( outval )
+    dup fabs new-peak-amp fmax to new-peak-amp
+    ( outval )
+  end-map old-peak-amp new-peak-amp f/ amp f* vct-scale! 0 len snd chn #f origin vct->channel
+;
+\   20.0 1.0 1024 0.01 pulse-voice
+\  120.0 1.0 1024 0.2  pulse-voice
+\  240.0 1.0 1024 0.1  pulse-voice
+\  240.0 1.0 2048      pulse-voice
+\ 1000.0 1.0  512      pulse-voice
+
+\ ;;; -------- convolution example
+
+hide
+: cnv-cb { sf -- prc; dir self -- val }
+  1 proc-create sf , ( prc )
+ does> { dir self -- val }
+  self @ ( sf ) next-sample
+;
+set-current
+: cnvtest ( snd0 snd1 amp -- mx )
+  doc" Convolves SND0 and SND1, scaling by AMP, returns new max amp: 0 1 0.1 cnvtest"
+  { snd0 snd1 amp }
+  snd0 #f #f frames { flt-len }
+  snd1 #f #f frames flt-len + { total-len }
+  0 snd1 0 1 #f make-sample-reader { sf }
+  :input sf cnv-cb :filter 0 flt-len snd0 #f #f channel->vct make-convolve { cnv }
+  total-len 0.0 make-vct map! cnv #f convolve end-map amp vct-scale! ( out-data )
+  0 total-len snd1 #f #f get-func-name vct->channel vct-peak { max-samp }
+  sf free-sample-reader drop
+  max-samp 1.0 f> if '( max-samp fnegate max-samp ) snd1 #f set-y-bounds drop then
+  max-samp
+;
+previous
+
+\ ;;; -------- swap selection chans
+
+: swap-selection-channels ( -- )
+  doc" Swaps the currently selected data's channels."
+  selection? if
+    selection-chans 2 = if
+      selection-position { beg }
+      selection-frames { len }
+      #f { snd-chn0 }
+      #f { snd-chn1 }
+      all-chans each { lst }
+	lst car lst cadr selection-member? if
+	  snd-chn0 false? if
+	    lst to snd-chn0
+	  else
+	    snd-chn1 false? if
+	      lst to snd-chn1
+	      leave
+	    then
+	  then
+	then
+      end-each
+      snd-chn1 if
+	snd-chn0 car snd-chn0 cadr snd-chn1 car snd-chn1 cadr beg len #f #f swap-channels drop
+      else
+	'wrong-number-of-channels '( get-func-name $" needs two channels to swap" ) fth-throw
+      then
+    else
+      'wrong-number-of-channels
+      '( get-func-name $" needs a stereo selection (not %s chans)" selection-chans ) fth-throw
+    then
+  else
+    'no-active-selection '( get-func-name ) fth-throw
+  then
 ;
 
 \ ;;; -------- sound interp
@@ -1264,7 +1555,7 @@ previous
   0 snd chn make-sound-interp { reader }
   :envelope envelope :end newlen :scaler len make-env { read-env }
   snd-tempnam { tempfilename }
-  tempfilename snd srate 1 #f mus-next $" env-sound-interp temp file" mus-sound-open-output { fil }
+  tempfilename snd srate 1 #f mus-next get-func-name mus-sound-open-output { fil }
   8192 { bufsize }
   1 bufsize make-sound-data { data }
   newlen 0 ?do
@@ -1274,8 +1565,82 @@ previous
   newlen bufsize mod ?dup-if fil 0 rot 1- 1 data mus-sound-write drop then
   fil newlen 4 * mus-sound-close-output drop
   $" %s %s %s" '( envelope time-scale get-func-name ) string-format { origin }
-  0 newlen tempfilename snd chn #t ( truncate ) origin set-samples
+  0 newlen tempfilename snd chn #t ( truncate ) origin set-samples ( file-name )
   tempfilename file-delete
+;
+
+: granulated-sound-interp <{ envelope
+     :optional time-scale 1.0 grain-length 0.1 grain-envelope '( 0 0 1 1 2 1 3 0 ) output-hop 0.05
+     snd #f chn #f -- file-name }>
+  snd chn #f frames { len }
+  time-scale len f* fround->s { newlen }
+  :envelope envelope :end newlen :scaler len make-env { read-env }
+  snd-tempnam { tempfilename }
+  \ ;; #f as data-format -> format compatible with sndlib (so no data translation is needed)
+  tempfilename snd srate 1 #f mus-next get-func-name mus-sound-open-output { fil }
+  grain-length snd srate f* fround->s { grain-frames }
+  output-hop snd srate f* fround->s   { hop-frames }
+  grain-length output-hop f/ fround->s 1+ { num-reader }
+  num-reader nil make-array { readers }
+  num-reader nil make-array map!
+    :envelope grain-envelope :end grain-frames make-env
+  end-map { grain-envs }
+  0 { next-reader-start-at }
+  8192 { bufsize }
+  1 bufsize make-sound-data { data }
+  0 { data-ctr }
+  snd srate 0.005 f* { jitter }
+  newlen 0 ?do
+    bufsize 0 do
+      read-env env { position-in-original }
+      j next-reader-start-at >= if
+	readers cycle-start@ { next-reader }
+	readers
+	position-in-original jitter mus-random f+ fround->s 0 max snd chn 1 #f make-sample-reader
+	cycle-set!
+	grain-envs next-reader array-ref mus-reset drop
+	hop-frames +to next-reader-start-at
+      then
+      0.0 ( sum )
+      readers each { rd }
+	rd sample-reader? if
+	  grain-envs i array-ref env rd next-sample f* f+ ( sum += ... )
+	then
+      end-each { sum }
+      data 0 i sum  sound-data-set! drop
+    loop
+    fil 0 bufsize 1- 1 data mus-sound-write drop
+  bufsize +loop
+  newlen bufsize mod ?dup-if fil 0 rot 1- 1 data mus-sound-write drop then
+  fil newlen 4 * mus-sound-close-output drop
+  $" %s %s %s %s %s %s"
+  '( envelope time-scale grain-length grain-envelope output-hop get-func-name )
+  string-format { origin }
+  0 newlen tempfilename snd chn #t ( truncate ) origin set-samples ( file-name )
+  tempfilename file-delete
+;
+\ '( 0 0 1 .1 2 1 ) 1.0 0.2 '( 0 0 1 1 2 0 )      granulated-sound-interp
+\ '( 0 0 1 1 ) 2.0                                granulated-sound-interp
+\ '( 0 0 1 .1 2 1 ) 1.0 0.2 '( 0 0 1 1 2 0 ) 0.02 granulated-sound-interp
+
+\ ;;; -------- add date and time to title bar
+\ ;;;
+\ ;;; The window manager's property that holds the Snd window's title is WM_NAME,
+\ ;;;  we can use the window-property function (used normally for CLM/Snd communication)
+\ ;;;  to reset this value.  The Snd window's identifier is SND_VERSION.
+\ ;;;  Here we're also using the #t argument to short-file-name to get a list of all current sounds.
+
+60 1000 * value retitle-time
+
+: title-with-data ( -- )
+  doc" Causes Snd's main window to display the time of day.  \
+To turn off this clock, set retitle-time to 0"
+  #t short-file-name { names }
+  "SND_VERSION" "WM_NAME"
+  $" snd (%s) %s"
+  '( $" %d-%b %H:%M %Z" current-time strftime names null? if "" else names then ) string-format
+  set-window-property drop
+  retitle-time 0> if retitle-time recurse in drop then
 ;
 
 \ ;;; -------- filtered-env 
@@ -1301,6 +1666,165 @@ amplitude and low-pass amount move together."
 ;
 previous
 
+\ ;;; -------- C-x b support: hide all but one of the current sounds (more like Emacs)
+
+hide
+#f value xb-last-buffer
+#f value xb-current-buffer
+0  value xb-last-width
+0  value xb-last-height
+: open-current-buffer { width heigth -- }
+  width  to xb-last-width
+  heigth to xb-last-height
+  xb-current-buffer car sound-widgets car { sound-pane }
+  sound-pane if
+    sound-pane show-widget drop
+    sound-pane '( width heigth ) set-widget-size drop
+    xb-current-buffer car  select-sound   drop
+    xb-current-buffer cadr select-channel drop
+  then
+;
+: close-all-buffers ( -- ) sounds each ( s ) sound-widgets car hide-widget drop end-each ;
+: stb-cb <{ response -- f }>
+  xb-current-buffer car sound-widgets car widget-size dup car swap cadr { width height }
+  response string? not response empty? || if
+    xb-current-buffer { temp }
+    xb-last-buffer if
+      xb-last-buffer to xb-current-buffer
+    else
+      :file        undef
+      :header-type undef
+      :data-format undef
+      :srate       undef
+      :channels    undef
+      :comment     undef
+      :size        undef new-sound { index }
+      '( index 0 ) to xb-current-buffer
+    then
+    temp to xb-last-buffer
+  else
+    response find-file dup false? if drop "" then 0 find-sound { index }
+    index sound? if
+      xb-current-buffer to xb-last-buffer
+      '( index 0 ) to xb-current-buffer
+    else
+      $" can't find %s" '( response ) string-format #f #f report-in-minibuffer drop
+      1 sleep
+    then
+  then
+  close-all-buffers
+  "" #f #f report-in-minibuffer drop
+  width height open-current-buffer
+  #f
+;
+set-current
+: switch-to-buffer <{ -- val }>
+  "" { default }
+  xb-last-buffer cons? if
+    xb-last-buffer car short-file-name to default
+    $" switch to buffer: "
+  else
+    $" (make new sound) "
+  then { msg }
+  default #f undef report-in-minibuffer drop
+  msg <'> stb-cb #f #t prompt-in-minibuffer
+;
+previous
+
+: xb-close <{ snd -- val }>
+  xb-current-buffer cons?
+  xb-current-buffer car snd = && if
+    xb-current-buffer car { closer }
+    close-all-buffers
+    xb-last-buffer if
+      xb-last-buffer
+    else
+      sounds if #f else '( sounds car 0 ) then
+    then to xb-current-buffer
+    #f sounds each { n }
+      n closer =
+      xb-current-buffer false?
+      xb-current-buffer car n = || && if
+	drop ( #f )
+	'( n 0 )
+	leave
+      then
+    end-each to xb-last-buffer
+    xb-current-buffer if xb-last-width xb-last-height open-current-buffer then
+  then
+  #f
+;
+
+: xb-open <{ snd -- val }>
+  close-all-buffers
+  xb-current-buffer to xb-last-buffer
+  '( snd 0 ) to xb-current-buffer
+  xb-last-width  0= if window-width       else xb-last-width  then
+  xb-last-height 0= if window-height 10 - else xb-last-height then open-current-buffer
+  #f
+;
+\ "b" 0 <'> switch-to-buffer #t "switch-to-buffer" "switch-to-buffer" bind-key
+\ after-open-hook <'> xb-open  add-hook!
+\ close-hook      <'> xb-close add-hook!
+
+\ ;;; -------- remove-clicks 
+
+: find-click ( loc -- pos )
+  doc" Finds the next click starting at LOC."
+  { loc }
+  loc #f #f 1 #f make-sample-reader { rd }
+  0.0 0.0 0.0 { samp0 samp1 samp2 }
+  10 0.0 make-vct { samps }
+  #f 					\ flag
+  #f #f #f frames loc ?do
+    c-g? ?leave
+    samp1 to samp0
+    samp2 to samp1
+    rd next-sample to samp2
+    samps samp0 cycle-set!
+    samps vct-peak 0.1 fmax { local-max }
+    samp0 samp1 f- fabs local-max f>
+    samp1 samp2 f- fabs local-max f>     &&
+    samp0 samp2 f- fabs local-max f2/ f< && if drop ( flag ) i leave then
+  loop
+;
+
+: remove-clicks ( -- )
+  doc" Tries to find and smooth-over clicks."
+  -2 { click }
+  begin
+    click 2+ find-click to click
+    click c-g? not &&
+  while
+      click 2- 4 #f #f smooth-sound drop
+  repeat
+;
+
+: search-for-click ( -- pos )
+  doc" Looks for the next click (for use with C-s)"
+  1 proc-create 10 0.0 make-vct , 0.0 , 0.0 , 0.0 , ( prc )
+ does> { val self -- f }
+  self @ { samps }
+  self cell+ @ { samp0 }
+  self 2 cells + @ { samp1 }
+  self 3 cells + @ { samp2 }
+  samp1 to samp0
+  samp2 to samp1
+  val   to samp2
+  samp0 self cell+ !
+  samp1 self 2 cells + !
+  samp2 self 3 cells + !
+  samps samp0 cycle-set!
+  samps vct-peak 0.1 fmax { local-max }
+  samp0 samp1 f- fabs local-max f>=
+  samp1 samp2 f- fabs local-max f>=     &&
+  samp0 samp2 f- fabs local-max f2/ f<= && if
+    -1
+  else
+    #f
+  then
+;
+
 : zero+ ( -- proc; n self -- val )
   doc" Finds the next positive-going zero crossing (if searching forward) (for use with C-s)"
   1 proc-create 0.0 ( lastn ) ,
@@ -1323,6 +1847,53 @@ previous
   last1 self !   ( last0 = last1 )
   n self cell+ ! ( last1 = n )
   ( rtn )
+;
+
+: find-pitch ( pitch -- prc; y self -- val )
+  doc" Finds the point in the current sound where PITCH (in Hz) predominates:\n\
+C-s 300 find-pitch\n\
+In most cases, this will be slightly offset from the true beginning of the note."
+  { pitch }
+  1 proc-create #f #f transform-size 0.0 make-vct , pitch , ( prc )
+ does> { n self -- val }
+  self @ { data }
+  self cell+ @ { pitch }
+  data n cycle-set!
+  data cycle-start@ 0= if
+    data vct-peak 0.001 f> if
+      data rectangular-window data length #t 0.0 undef #t snd-spectrum { spectr }
+      10.0 flog { log10 }
+      0.0 0 { pk pkloc }
+      data length 2/ 0 ?do
+	spectr i vct-ref dup pk f> if
+	  ( val ) to pk
+	  i to pkloc
+	else
+	  ( val ) drop
+	then
+      loop
+      pkloc 0> if
+	spectr pkloc 1- vct-ref { la }
+	spectr pkloc    vct-ref { ca }
+	spectr pkloc 1+ vct-ref { ra }
+	la ca fmax ra fmax 0.001 f* { pk1 }
+	la 0.0000001 fmax pk1 f/ flog log10 f/ { logla }
+	ca 0.0000001 fmax pk1 f/ flog log10 f/ { logca }
+	ra 0.0000001 fmax pk1 f/ flog log10 f/ { logra }
+	logla logra f- f2/  logla logra f+  logca f2*  f- f/
+      else
+	0.0
+      then pkloc f+ #f srate f* data length f/ { pit }
+      pitch pit f- fabs #f srate data length f2* f/ f< if
+	data length 2/ negate
+      else
+	#f
+      then ( rtn )
+    then
+    data 0.0 vct-fill! drop
+  else
+    #f
+  then
 ;
 
 \ ;;; -------- file->vct and a sort of cue-list, I think
@@ -1376,6 +1947,242 @@ starting at the cursor in the currently selected channel:\n\
 ;
 previous
 
+hide
+: rpl-cb { reg -- prc; self -- val }
+  0 proc-create reg , ( prc )
+ does> { self -- val }
+  self @ ( reg ) undef undef play-region
+;
+set-current
+: region-play-list ( data -- )
+  doc" DATA is list of lists '( '( time reg ) ... ), TIME in secs, \
+setting up a sort of play list:\n\
+'( '( 0.0 0 ) '( 0.5 1 ) '( 1.0 2 ) '( 1.0 0 ) ) region-play-list"
+  ( data ) each { tone }
+    tone car  1000.0 f* fround->s { time }
+    tone cadr { region }
+    region region? if
+      time region rpl-cb in drop
+    then
+  end-each
+;
+previous
+
+: region-play-sequence ( data -- )
+  doc" DATA is list of region ids which will be played one after the other:\n\
+'( 0 2 1 ) region-play-sequence"
+  0.0 { time }
+  ( data ) map
+    *key* { id }
+    time { cur }
+    id 0 region-frames id region-srate f/ +to time
+    '( cur id )
+  end-map region-play-list
+;
+
+\ ;;; -------- replace-with-selection
+
+: replace-with-selection ( -- )
+  doc" Replaces the samples from the cursor with the current selection."
+  #f #f #f cursor { beg }
+  #f #f selection-frames { len }
+  beg #f #f insert-selection drop
+  beg len + len #f #f #f delete-samples drop
+;
+
+\ ;;; -------- explode-sf2
+
+: explode-sf2 ( -- )
+  doc" turns the currently selected soundfont file \
+into a bunch of files of the form sample-name.aif."
+  #f soundfont-info { lst }
+  lst length 1- { last }
+  lst each { vals }
+    \ '( name start loop-start loop-end )
+    vals car    { name }
+    vals cadr   { start }
+    i last < if
+      lst i 1+ list-ref cadr
+    else
+      #f #f #f frames
+    then { end }
+    vals caddr  start b- { loop-start }
+    vals cadddr start b- { loop-end }
+    name ".aif" $+ { filename }
+    selection? if #f #t #f set-selection-member? drop then
+    #t #f #f set-selection-member? drop
+    start #f #f set-selection-position drop
+    end start b- #f #f set-selection-frames drop
+    :file filename :header-type mus-aifc save-selection drop
+    filename open-sound { temp }
+    temp '( loop-start loop-end ) set-sound-loop-info drop
+    temp close-sound drop
+  end-each
+;
+
+\ ;;; -------- open-next-file-in-directory
+
+hide
+#f value nd-last-file-opened		\ string
+#f value nd-current-directory		\ string
+#f value nd-current-sorted-files	\ array
+: gcf-sort-cb <{ a b -- n }>
+  a b string< if
+    -1
+  else
+    a b string> if
+      1
+    else
+      0
+    then
+  then
+;
+: get-current-files ( dir -- )
+  { dir }
+  dir to nd-current-directory
+  dir sound-files-in-directory list->array <'> gcf-sort-cb sort to nd-current-sorted-files
+;
+: get-current-directory <{ filename -- filename }>
+  filename to nd-last-file-opened
+  filename mus-expand-filename file-dirname { new-path }
+  nd-current-directory          string? not
+  nd-current-directory new-path string= not || if new-path get-current-files then
+  filename
+;
+set-current
+: open-next-file-in-directory ( -- f )
+  \ open-hook <'> get-current-directory hook-member? unless
+  \   open-hook <'> get-current-directory add-hook!
+  \ then
+  nd-last-file-opened string? not
+  sounds null? not && if
+    #f snd-snd file-name to nd-last-file-opened
+  then
+  nd-current-directory string? unless
+    sounds null? if file-pwd else nd-last-file-opened file-dirname then get-current-files
+  then
+  nd-current-sorted-files empty? if
+    'no-such-file '( get-func-name nd-current-directory ) fth-throw
+  else
+    nd-current-sorted-files cycle-ref { next-file }
+    next-file 0 find-sound if
+      'file-already-open '( get-func-name next-file ) fth-throw
+    else
+      sounds null? unless #f snd-snd close-sound drop then
+      next-file find-file dup if open-sound then drop
+    then
+  then
+  #t
+;
+previous
+
+hide
+: mouse-click-to-open-cb <{ snd chn button state x y axis -- f }>
+  button 2 = if open-next-file-in-directory else #f then
+;
+set-current
+: click-middle-button-to-open-next-file-in-directory ( -- )
+  mouse-click-hook <'> mouse-click-to-open-cb add-hook!
+  open-hook        <'> get-current-directory  add-hook!
+;
+previous
+
+\ ;;; -------- chain-dsps
+
+instrument: chain-dsps <{ start dur :optional dsps #() -- }>
+  dsps map
+    *key* list? if
+      :envelope *key* :duration dur make-env
+    else
+      *key*
+    then
+  end-map { dsp-chain }
+  start dur #{} run-instrument
+    0.0 { val }
+    dsp-chain each { gen }
+      gen env? if
+	gen env val f*
+      else
+	gen readin? if
+	  gen readin val f+
+	else
+	  gen mus-generator? if
+	    gen val 0.0 mus-apply
+	  else
+	    gen '( val ) run-proc
+	  then
+	then
+      then to val
+    end-each
+    val
+  end-run
+;instrument
+
+hide
+: cdsps-cb { os1 os2 -- prc; val self -- r }
+  1 proc-create os1 , os2 , ( prc )
+ does> { val self -- r }
+  self       @ ( osc1 ) val     0.0 oscil
+  self cell+ @ ( osc2 ) val f2* 0.0 oscil f+
+;
+set-current
+0 [if]
+lambda: ( -- )
+  440.0 make-oscil { os1 }
+  0 1.0   #( '( 0 0 1 1 2 0 ) os1 )    chain-dsps
+  0.5 make-one-zero { oz }
+  "oboe.snd" find-file make-readin { rd }
+  0 1.0   #( '( 0 0 1 1 2 0 ) oz rd  ) chain-dsps
+  220 make-oscil { osc1 }
+  440 make-oscil { osc2 }
+  osc1 osc2 cdsps-cb { cb }
+  0 1.0   #( '( 0 0 1 1 2 0 ) cb )     chain-dsps
+; with-sound
+[then]
+previous
+
+\ ;;; -------- cursor-follows-play and stays where it was when the play ended
+
+hide
+: current-cursor      { snd chn -- cur } 'cursor snd chn channel-property ;
+: set-current-cursor  { snd chn val -- } 'cursor val snd chn set-channel-property ;
+: original-cursor     { snd chn -- cur } 'original-cursor snd chn channel-property ;
+: set-original-cursor { snd chn val -- } 'original-cursor val snd chn set-channel-property ;
+: local-dac-func <{ data -- val }>
+  sounds each { snd }
+    snd channels 0 ?do
+      snd i #f cursor snd i original-cursor <> if
+	snd i  snd i #f cursor set-current-cursor
+      then
+    loop
+  end-each
+  #f
+;
+: local-start-playing-func <{ snd -- val }>
+  snd channels 0 ?do
+    snd i #f cursor { cur }
+    snd i cur set-original-cursor
+    snd i cur set-current-cursor
+  loop
+  #f
+;
+: local-stop-playing-func <{ snd -- val }>
+  snd 0 current-cursor snd #t #f set-cursor
+;
+set-current
+: if-cursor-follows-play-it-stays-where-play-stopped <{ :optional enable #t -- }>
+  enable if
+    dac-hook           <'> local-dac-func           add-hook!
+    start-playing-hook <'> local-start-playing-func add-hook!
+    stop-playing-hook  <'> local-stop-playing-func  add-hook!
+  else
+    dac-hook           <'> local-dac-func           remove-hook! drop
+    start-playing-hook <'> local-start-playing-func remove-hook! drop
+    stop-playing-hook  <'> local-stop-playing-func  remove-hook! drop
+  then
+;
+previous
+
 \ ;;; -------- smooth-channel as virtual op
 
 hide
@@ -1426,6 +2233,99 @@ set-current
 : ring-modulate-channel <{ freq :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
   $" %s %s %s %s" '( freq beg dur get-func-name ) string-format { origin }
   ['] rmc-cb3  beg dur snd chn edpos #f  freq snd rmc-cb2  origin ptree-channel
+;
+previous
+
+\ ;;; -------- re-order channels 
+
+: scramble-channels ( new-order -- )
+  \ ;; (scramble-channels 3 2 0 1) means chan 3 goes to 0, etc
+  { end-chans }
+  end-chans length { len }
+  len 1 > if
+    end-chans map i end-map { cur-chans }
+    end-chans each { end-chan }
+      cur-chans i array-ref { cur-chan }
+      end-chan cur-chan <> if
+	#f cur-chans each { chn } chn end-chan = if drop ( #f ) i leave then end-each { end-loc }
+	#f end-loc #f i 0 len #f swap-channels drop
+	cur-chans end-loc cur-chan array-set!
+	cur-chans i end-chan array-set!
+      then
+    end-each
+  then
+;
+
+hide
+: sc-scan-cb { buffer silence in-silence edges samp -- prc; y self -- #f }
+  1 proc-create buffer , silence , in-silence , edges , samp , ( prc )
+ does> { y self -- #f }
+  self @ ( buffer ) y y f* moving-average { sum-of-squares }
+  sum-of-squares self cell+ @ ( silence ) f< { now-silent }
+  self 2 cells + @ ( in-silence ) now-silent equal? unless
+    self 3 cells + @ ( edges ) self 4 cells + @ ( samp ) array-push drop
+  then
+  now-silent self 2 cells + ! ( in-silence = now-silent )
+  1 self 4 cells + +! ( samp++ )
+  #f
+;
+: sc-edit-cb { pieces -- prc; self -- val }
+  0 proc-create pieces , 0 ( start ) ,  ( prc )
+ does> { self -- val }
+  self @ { pieces }
+  self cell+ @ { start }
+  0.0 { scale-by }
+  pieces length { len }
+  len 0 ?do
+    len random fround->s { this }
+    pieces this array-ref { reg }
+    pieces this #f array-set!
+    reg unless
+      len this 1+ ?do
+	pieces i array-ref dup if
+	  to reg
+	  pieces i #f array-set!
+	  leave
+	then
+      loop
+      reg unless
+	0 this 1- ?do
+	  pieces i array-ref dup if
+	    to reg
+	    pieces i #f array-set!
+	    leave
+	  then
+	-1 +loop
+      then
+    then
+    start reg #f #f 0 mix-region drop
+    reg 0 region-frames +to start
+    reg forget-region drop
+  loop
+  pieces
+;
+set-current
+: scramble-channel ( silence -- )
+  \ ;; (scramble-channel .01)
+  { silence }
+  128 make-moving-average { buffer }
+  silence 128 f/ to silence
+  #() { edges }
+  0 { samp }
+  #t { in-silence }
+  max-regions { old-max }
+  with-mix-tag { old-tags }
+  1024 set-max-regions drop
+  #f set-with-mix-tags drop
+  buffer silence in-silence edges samp sc-scan-cb 0 #f #f #f #f scan-channel drop
+  edges #f #f #f frames array-push drop
+  0 0 { start end }
+  edges map
+    start *key* #f #f make-region
+    *key* to start
+  end-map ( pieces ) sc-edit-cb get-func-name as-one-edit drop
+  old-max set-max-regions drop
+  old-tags set-with-mix-tags drop
 ;
 previous
 
@@ -1506,6 +2406,33 @@ set-current
   then
 ;
 previous
+
+\ ;;; -------- channel-clipped?
+
+hide
+: cc-cb ( -- prc; y self -- f )
+  1 proc-create 0.0 ( last-y ) , ( prc )
+ does> { y self -- f }
+  self @ { last-y }
+  y      fabs 0.9999 f>=
+  last-y fabs 0.9999 f>= && ( result )
+  y self ! ( last-y = y )
+  ( result )
+;
+set-current
+: channel-clipped? <{ :optional snd #f chn #f -- val }>
+  doc" Returns #t and a sample number if it finds clipping."
+  cc-cb 0 #f snd chn #f scan-channel
+;
+previous
+
+\ ;;; -------- sync-all
+
+: sync-all ( -- )
+  doc" Sets the sync fields of all currently open sounds to the same, unique value."
+  sync-max 1+ { new-sync }
+  sounds each ( snd ) new-sync swap set-sync drop end-each
+;
 
 \ === Moog Filter ===
 

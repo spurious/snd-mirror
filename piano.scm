@@ -57,105 +57,6 @@
 (define default-unaCordaGain-table '(21 1.0  24 .4 29 .1 29.1 .95 108 .95))
 
 
-;; converts t60 values to suitable :rate values for expseg
-(define (In-t60 t60) (- 1.0 (expt 0.001 (/ 1.0 t60 (mus-srate)))))
-
-;;; expseg (like musickit asymp)
-(define* (make-expseg :key (currentValue 0.0) (targetValue 0.0))
-  (let ((cv currentValue)
-	(tv targetValue))
-    (lambda (r)
-      (let ((old-cv cv))
-	(set! cv (+ cv (* (- tv cv) r)))
-	old-cv)))) ; (bil) this is slightly different (getting clicks)
-
-;;; signal controlled one-pole lowpass filter
-(define (make-one-pole-swept)
-  (let ((y1 0.0))
-    (lambda (input coef)
-      (set! y1 (- (* (1+ coef) input) (* coef y1)))
-      y1)))
-
-;;; one-pole allpass filter
-(define (make-one-pole-allpass coeff)
-  (let ((coef coeff)
-	(x1 0.0)
-	(y1 0.0))
-    (lambda (input)
-      (set! y1 (+ (* coef (- input y1)) x1))
-      (set! x1 input)
-      y1)))
-
-
-(define (one-pole-one-zero f0 f1 input)
-  (one-zero f0 (one-pole f1 input)))
-
-(define (make-one-pole-one-zero a0 a1 b1)
-  (list (make-one-zero a0 a1)
-	(make-one-pole 1.0 b1)))
-
-
-;;;very special noise generator
-(define (make-noise)
-  (let ((noise-seed 16383))
-    (lambda (amp)
-      (set! noise-seed (logand (+ (* noise-seed 1103515245) 12345) #xffffffff))
-      ;; (bil) added the logand -- otherwise we get an overflow somewhere
-      (* amp (- (* (modulo (inexact->exact (floor (/ noise-seed 65536))) 65536) 0.0000305185) 1.0)))))
-
-
-;;;delay line unit generator with length 0 capabilities...
-(define (make-delay0 len)
-  (if (> len 0)
-      (make-delay len)
-    #f))
-
-(define (delay0 f input)
-  (if f (delay f input) input))
-
-(define (apPhase a1 wT)
-  (atan (* (- (* a1 a1) 1.0) (sin wT))
-	(+ (* 2.0 a1) (*(+ (* a1 a1) 1.0) (cos wT)))))
-
-(define (opozPhase b0 b1 a1 wT)
-  (let ((s (sin wT))
-	(c (cos wT)))
-    (atan (- (* a1 s (+ b0 (* b1 c))) (* b1 s (+ 1 (* a1 c))))
-	  (+ (* (+ b0 (* b1 c)) (+ 1 (* a1 c))) (* b1 s a1 s)))))
-
-(define (get-allpass-coef samp-frac wT)
-  (let ((ta (tan (- (* samp-frac wT))))
-	(c (cos wT))
-	(s (sin wT)))
-    (/ (+ (- ta) (* (signum ta)
-		    (sqrt (* (1+ (* ta ta)) (* s s)))))
-       (- (* c ta) s))))
-
-(define (signum x) (if (= x 0.0) 0 (if (< x 0.0) -1 1)))
-
-(define (apfloor len wT)
-  (let* ((len-int (inexact->exact (floor len)))
-	 (len-frac (- len len-int)))
-    (if (< len-frac golden-mean)
-	(begin
-	 (set! len-int (1- len-int))
-	 (set! len-frac (+ len-frac 1.0))))
-    (if (and (< len-frac golden-mean)
-	     (> len-int 0))
-	(begin
-	 (set! len-int (1- len-int))
-	 (set! len-frac (+ len-frac 1.0))))
-    (list len-int (get-allpass-coef len-frac wT))))
-
-(define (tune-piano frequency stiffnessCoefficient numAllpasses b0 b1 a1)
-  (let* ((wT (/ (* frequency two-pi) (mus-srate)))
-	 (len (/ (+ two-pi
-		    (* numAllpasses
-		       (apPhase stiffnessCoefficient wT))
-		    (opozPhase (+ 1 (* 3 b0)) (+ a1 (* 3 b1)) a1 wT))
-		 wT)))
-    (apfloor len wT)))
-
 (definstrument (p start  :key (duration 1.0)
 		  (keyNum 60.0)                    ; middleC=60: can use fractional part to detune
 		  (strike-velocity 0.5)            ; corresponding normalized velocities (range: 0.0--1.0)
@@ -221,6 +122,105 @@
 		  unaCordaGain
 		  (unaCordaGain-table default-unaCordaGain-table))
     
+  ;; converts t60 values to suitable :rate values for expseg
+  (define (In-t60 t60) (- 1.0 (expt 0.001 (/ 1.0 t60 (mus-srate)))))
+  
+  ;; expseg (like musickit asymp)
+  (define* (make-expseg :key (currentValue 0.0) (targetValue 0.0))
+    (let ((cv currentValue)
+	  (tv targetValue))
+      (lambda (r)
+	(let ((old-cv cv))
+	  (set! cv (+ cv (* (- tv cv) r)))
+	  old-cv)))) ; (bil) this is slightly different (getting clicks)
+  
+  ;; signal controlled one-pole lowpass filter
+  (define (make-one-pole-swept)
+    (let ((y1 0.0))
+      (lambda (input coef)
+	(set! y1 (- (* (1+ coef) input) (* coef y1)))
+	y1)))
+  
+  ;; one-pole allpass filter
+  (define (make-one-pole-allpass coeff)
+    (let ((coef coeff)
+	  (x1 0.0)
+	  (y1 0.0))
+      (lambda (input)
+	(set! y1 (+ (* coef (- input y1)) x1))
+	(set! x1 input)
+	y1)))
+  
+  
+  (define (one-pole-one-zero f0 f1 input)
+    (one-zero f0 (one-pole f1 input)))
+  
+  (define (make-one-pole-one-zero a0 a1 b1)
+    (list (make-one-zero a0 a1)
+	  (make-one-pole 1.0 b1)))
+  
+  
+  ;; very special noise generator
+  (define (make-noise)
+    (let ((noise-seed 16383))
+      (lambda (amp)
+	(set! noise-seed (logand (+ (* noise-seed 1103515245) 12345) #xffffffff))
+	;; (bil) added the logand -- otherwise we get an overflow somewhere
+	(* amp (- (* (modulo (inexact->exact (floor (/ noise-seed 65536))) 65536) 0.0000305185) 1.0)))))
+  
+  
+  ;; delay line unit generator with length 0 capabilities...
+  (define (make-delay0 len)
+    (if (> len 0)
+	(make-delay len)
+	#f))
+  
+  (define (delay0 f input)
+    (if f (delay f input) input))
+  
+  (define (apPhase a1 wT)
+    (atan (* (- (* a1 a1) 1.0) (sin wT))
+	  (+ (* 2.0 a1) (*(+ (* a1 a1) 1.0) (cos wT)))))
+  
+  (define (opozPhase b0 b1 a1 wT)
+    (let ((s (sin wT))
+	  (c (cos wT)))
+      (atan (- (* a1 s (+ b0 (* b1 c))) (* b1 s (+ 1 (* a1 c))))
+	    (+ (* (+ b0 (* b1 c)) (+ 1 (* a1 c))) (* b1 s a1 s)))))
+  
+  (define (get-allpass-coef samp-frac wT)
+    (let ((ta (tan (- (* samp-frac wT))))
+	  (c (cos wT))
+	  (s (sin wT)))
+      (/ (+ (- ta) (* (signum ta)
+		      (sqrt (* (1+ (* ta ta)) (* s s)))))
+	 (- (* c ta) s))))
+  
+  (define (signum x) (if (= x 0.0) 0 (if (< x 0.0) -1 1)))
+  
+  (define (apfloor len wT)
+    (let* ((len-int (inexact->exact (floor len)))
+	   (len-frac (- len len-int)))
+      (if (< len-frac golden-mean)
+	  (begin
+	    (set! len-int (1- len-int))
+	    (set! len-frac (+ len-frac 1.0))))
+      (if (and (< len-frac golden-mean)
+	       (> len-int 0))
+	  (begin
+	    (set! len-int (1- len-int))
+	    (set! len-frac (+ len-frac 1.0))))
+      (list len-int (get-allpass-coef len-frac wT))))
+  
+  (define (tune-piano frequency stiffnessCoefficient numAllpasses b0 b1 a1)
+    (let* ((wT (/ (* frequency two-pi) (mus-srate)))
+	   (len (/ (+ two-pi
+		      (* numAllpasses
+			 (apPhase stiffnessCoefficient wT))
+		      (opozPhase (+ 1 (* 3 b0)) (+ a1 (* 3 b1)) a1 wT))
+		   wT)))
+      (apfloor len wT)))
+  
   (let*	((beg (inexact->exact (floor (* start (mus-srate)))))
 	 (end (+ beg (inexact->exact (floor (* (+ duration release-time-margin) (mus-srate))))))
 	 (dur (inexact->exact (floor (* duration (mus-srate)))))
@@ -232,7 +232,7 @@
 	 (softPole (or softPole (envelope-interp keyNum softPole-table)))
 	 (loudGain (or loudGain (envelope-interp keyNum loudGain-table)))
 	 (softGain (or softGain (envelope-interp keyNum softGain-table)))
-
+	 
 	 (strikePosition (or strikePosition (envelope-interp keyNum strikePosition-table)))
 	 (detuning2 (or detuning2 (envelope-interp keyNum detuning2-table)))
 	 (detuning3 (or detuning3 (envelope-interp keyNum detuning3-table)))
@@ -241,7 +241,7 @@
 	 (singleStringDecayRate (* singleStringDecayRateFactor singleStringDecayRate))
 	 (singleStringZero (or singleStringZero (envelope-interp keyNum singleStringZero-table)))
 	 (singleStringPole (or singleStringPole (envelope-interp keyNum singleStringPole-table)))
-
+	 
 	 (releaseLoopGain (or releaseLoopGain (envelope-interp keyNum releaseLoopGain-table)))
 	 (DryTapFiltCoeft60 (or DryTapFiltCoeft60 (envelope-interp keyNum DryTapFiltCoeft60-table)))
 	 (DryTapFiltCoefTarget (or DryTapFiltCoefTarget (envelope-interp keyNum DryTapFiltCoefTarget-table)))
@@ -257,7 +257,7 @@
 	 (stiffnessFactor (if (null? stiffnessFactor-table) (envelope-interp keyNum stiffnessFactor-table) stiffnessFactor))
 	 
 	 ;;initialize soundboard impulse response elements
-
+	 
 	 (dryTap-one-pole-one-zero-pair (make-one-pole-one-zero 1.0 0.0 0.0))
 	 (dryTap0 (car dryTap-one-pole-one-zero-pair))
 	 (dryTap1 (cadr dryTap-one-pole-one-zero-pair))

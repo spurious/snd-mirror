@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Sat Jan 06 05:57:20 CET 2007
+\ Changed: Sat Jan 06 19:52:19 CET 2007
 
 \ Commentary:
 
@@ -484,7 +484,7 @@ Global variable CHORDALIZE-CHORD is a list of members of chord such as '( 1 5/4 
   loop
   rl im -1 fft drop
   rl vct-peak { pk }
-  $" %S %s" '( func proc-name get-func-name ) string-format { origin }
+  $" <'> %s %s" '( func proc-name get-func-name ) string-format { origin }
   rl old-pk pk f/ vct-scale! 0 len snd chn #f origin vct->channel
 ;
 \ See note above for a good origin for reuse.

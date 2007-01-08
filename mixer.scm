@@ -20,6 +20,7 @@
 (define mat
   (make-procedure-with-setter
    (lambda (m i j)
+     "(mat m i j) accesses an element of the matrix (mixer) 'm'"
      (mixer-ref m i j))
    (lambda (m i j x)
      (mixer-set! m i j x))))

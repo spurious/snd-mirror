@@ -271,6 +271,7 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
 (define mix-properties
   (make-procedure-with-setter
    (lambda (id)
+     "(mix-properties id) accesses the property list of mix 'id'"
      (let ((data (assoc id all-mix-properties)))
        (if data
 	   (cdr data)
@@ -468,6 +469,7 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
 (define track-properties
   (make-procedure-with-setter
    (lambda (id)
+     "(track-properties trk) accesses the property list of track 'trk'"
      (let ((data (assoc id all-track-properties)))
        (if data
 	   (cdr data)

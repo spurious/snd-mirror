@@ -88,6 +88,7 @@
 (define moog-frequency
   (make-procedure-with-setter
    (lambda (gen)
+     "(moog-frequency gen) accesses the cutoff frequency of the Moog filter 'gen'"
      (moog-freq gen))
    (lambda (gen frq)
      (set! (moog-freq gen) frq)
