@@ -1,11 +1,5 @@
 #include "snd.h"
 
-/* TODO: mix lists in track dialog are ids now and the entries in that list should be mouse-sensitive, also the track chain etc
- *          (track_dialog_track_info in snd-mix.c is the mix list)
- *          if (trk->lst_ctr <= 0) then it's an empty track
- */
-
-
 #define NAME_COLUMNS 8
 #define DIALOG_WIDTH 600
 #define DIALOG_HEIGHT 350

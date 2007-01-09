@@ -72,7 +72,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --without-xpm         omit XPM even if it exists (for testing)
 #   --without-xp          omit libXp even if it exists (for testing)
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
-#   --with-profiling      add profiling flags [branch counts] (for testing)
 #   --with-midi           include sndlib midi module
 #   --enable-threads      include pthread stuff
 #   GUILE_CONFIG_path     where to look for guile-config
@@ -114,7 +113,6 @@ AC_ARG_WITH(fftw,        [  --with-fftw		  use fftw, default=yes])
 AC_ARG_WITH(xpm,         [  --with-xpm		  use xpm, default=yes])
 AC_ARG_WITH(xp,          [  --with-xp		  use xp, default=no])
 AC_ARG_WITH(fam,         [  --with-fam		  use libfam (Gamin), default=yes])
-AC_ARG_WITH(profiling,   [  --with-profiling	  include profiling machinery, default=no, for internal testing])
 
 
 # -------- internal sample data type --------
@@ -2083,11 +2081,6 @@ fi
 
 # -ffast-math appears to make exp about twice as fast, but slows down filtering by the same amount -- kinda strange
 #   timing tests using -O3 -ffast-math indicate an overall speedup of maybe 4-5%
-
-if test "$with_profiling" = yes; then
-  CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fbranch-probabilities -pg"
-  RANDOM_FEATURES="$RANDOM_FEATURES profiling"
-fi
 
 
 

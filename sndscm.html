@@ -5702,8 +5702,14 @@ that runs as a normal snd editing function (via <a href="extsnd.html#mapchannel"
 jcrev.scm version assumes it is being called within with-sound:
 </p>
 <pre>
-    (with-sound (:reverb jc-reverb) 
-      (fm-violin 0 .1 440 .1 :reverb-amount .1))
+    Scheme:
+        (with-sound (:reverb jc-reverb) (fm-violin 0 .1 440 .1 :reverb-amount .1))
+
+    Ruby:
+        with_sound(:reverb, :jc_reverb) do fm_violin(0, 0.1, 440, 0.1) end
+
+    Forth:
+        0 1 440 0.2 ' fm-violin :reverb ' jc-reverb with-sound
 </pre>
 <p>jc-reverb has three parameters:
 </p>

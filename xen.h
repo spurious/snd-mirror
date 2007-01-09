@@ -1,8 +1,6 @@
 #ifndef XEN_H
 #define XEN_H
 
-/* SOMEDAY: the notion of "variable" here is confused -- in some cases it's the name, others the object */
-
 /* macros for extension language support 
  *
  * Guile:     covers 1.3.4 to present (1.8.0)

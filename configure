@@ -892,7 +892,6 @@ Optional Packages:
   --with-xpm		  use xpm, default=yes
   --with-xp		  use xp, default=no
   --with-fam		  use libfam (Gamin), default=yes
-  --with-profiling	  include profiling machinery, default=no, for internal testing
   --with-sample-width=N   use N bits of samples
   --with-motif-prefix=PFX where Motif is installed
   --with-temp-dir	  directory to use for temp files
@@ -2950,7 +2949,6 @@ _ACEOF
 #   --without-xpm         omit XPM even if it exists (for testing)
 #   --without-xp          omit libXp even if it exists (for testing)
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
-#   --with-profiling      add profiling flags [branch counts] (for testing)
 #   --with-midi           include sndlib midi module
 #   --enable-threads      include pthread stuff
 #   GUILE_CONFIG_path     where to look for guile-config
@@ -3140,12 +3138,6 @@ fi;
 # Check whether --with-fam or --without-fam was given.
 if test "${with_fam+set}" = set; then
   withval="$with_fam"
-
-fi;
-
-# Check whether --with-profiling or --without-profiling was given.
-if test "${with_profiling+set}" = set; then
-  withval="$with_profiling"
 
 fi;
 
@@ -22224,11 +22216,6 @@ fi
 
 # -ffast-math appears to make exp about twice as fast, but slows down filtering by the same amount -- kinda strange
 #   timing tests using -O3 -ffast-math indicate an overall speedup of maybe 4-5%
-
-if test "$with_profiling" = yes; then
-  CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fbranch-probabilities -pg"
-  RANDOM_FEATURES="$RANDOM_FEATURES profiling"
-fi
 
 
 

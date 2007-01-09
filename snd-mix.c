@@ -1,10 +1,9 @@
 #include "snd.h"
 
-/* TODO: notebook style access to other tracks (next and previous by number are not very intuitive) -- pulldown menu of names?
+/* PERHAPS: notebook style access to other tracks (next and previous by number are not very intuitive) -- pulldown menu of names?
  * PERHAPS: undo&apply for track / mix env?, multiple mix/track dialogs, tempo curves in dialog?
  * PERHAPS: "forget" button -> free_track (forget all?)
  * SOMEDAY: currently, if track, drag mix does not move axes (and waveform doesn't follow the tag)
- * PERHAPS: add user funcs/envs to mix/track dialogs
  * PERHAPS: multiple mix/track dialogs
  * perhaps: mix pane sort of like current mark pane? (the mixes function has identical output to marks)
  *            this needs a hook for mix-creation and deletion (current mark-pane code uses mark-hook

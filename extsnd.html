@@ -3945,7 +3945,17 @@ mus-header-type-name converts 'type', an integer, to a string, e.g. "AIFF".  Som
 
     mus-next  mus-aifc  mus-riff  mus-rf64 mus-nist  mus-raw  mus-ircam  mus-aiff 
     mus-bicsf mus-soundfont mus-voc mus-svx mus-unsupported
-</pre></td></tr><tr><td colspan=2 height=16></td></tr>
+</pre>
+This function doesn't set the header choices for output of recording; it simply decodes a sndlib header type identifier.
+<pre>
+    :<em class=typing>(mus-header-type-name (mus-sound-header-type "oboe.snd"))</em>
+    <em class=listener>"Sun/Next"</em>
+</pre>
+The default sound output header choice is <a href="#defaultoutputheadertype">default-output-header-type</a>,
+the recorder's output default is <a href="#recorderoutheadertype">recorder-out-header-type</a>, a sound file's
+header type is <a href="#mussoundheadertype">mus-sound-header-type</a>, the CLM (with-sound) header default
+is *clm-header-type*, and an opened sound's header type is <a href="#headertype">header-type</a>. 
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mus-header-type->string -->
@@ -4922,6 +4932,7 @@ See also <a href="sndscm.html#panmixregion">pan-mix-region</a> in mix.scm.
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef>mix-selection</em> (:optional beg snd chn)</code>
 </td></tr><tr><td></td><td>
 mix-selection mixes the current selection into the given channel starting at 'beg', returning the new mix's id.
+The Edit:Mix selection menu choice is essentially <code>(mix-selection (cursor))</code>.
 See also <a href="sndscm.html#panmixselection">pan-mix-selection</a> in mix.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5638,7 +5649,7 @@ convolve-selection-with convolves the current selection with 'file', replacing t
 <!-- delete-selection -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="deleteselection">delete-selection</a> ()</code>
 </td></tr><tr><td></td><td>
-delete-selection deletes the selection.
+delete-selection deletes the selection, equivalent to the Edit:Delete selection menu choice.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -5667,6 +5678,7 @@ end.  If 'truncate' is #f, the extra output ('order' samples worth) is mixed int
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="insertselection">insert-selection</a> (:optional beg snd chn)</code>
 </td></tr><tr><td></td><td>
 insert-selection inserts (pastes it in as a block -- not a mix) a copy of the selection starting at 'beg' in the given channel.
+The Edit:Insert selection menu choice is essentially <code>(insert-selection (cursor))</code>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5674,6 +5686,7 @@ insert-selection inserts (pastes it in as a block -- not a mix) a copy of the se
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixselection">mix-selection</a> (:optional beg snd chn)</code>
 </td></tr><tr><td></td><td>
 mix-selection mixes (adds) a copy of the selection starting at 'beg' in the given channel, and returns new mix id.
+The Edit:Mix selection menu choice is <code>(mix-selection (cursor))</code>.
 See also <a href="sndscm.html#panmixselection">pan-mix-selection</a> in mix.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -6695,12 +6708,10 @@ This sets the choice of fft data window (default: <code>blackman2-window</code>)
     ultraspherical-window
 </pre>
 <p>The Hann window is sometimes called Hanning in the DSP literature, apparently
-as an in-joke (engineers are not known for their sense of humor).
-For an extensive discussion of these windows, see
+as an in-joke.  For an extensive discussion of these windows, see
 Fredric J. Harris, "On the Use of Windows for Harmonic Analysis with the Discrete Fourier Transform", Proceedings of the
 IEEE, Vol. 66, No. 1, January 1978, with updates from: Albert H. Nuttall, "Some Windows with Very Good Sidelobe Behaviour", IEEE Transactions
 of Acoustics, Speech, and Signal Processing, Vol. ASSP-29, 1, February 1981, and of course, Julius Smith's DSP web site.
-<small>The Dolph-Chebyshev window, as implemented here, doesn't work with very large windows (i.e. 1 million or more samples).</small>
 </p>
 </td></tr><tr><td colspan=2 height=18></td></tr>
 

@@ -8,6 +8,7 @@
 ;;; using lists and vectors internally for complex intermediates
 
 (define (vector-add! p1 p2)
+  "(vector-add! p1 p2) adds (elementwise) the vectors p1 and p2"
   (let ((len (min (vector-length p1) (vector-length p2)))) 
     (do ((i 0 (1+ i)))
 	((= i len))
@@ -15,6 +16,7 @@
     p1))
 
 (define (vector-scale! p1 scl)
+  "(vector-scale! p1 scl) scales each element of the vector p1 by scl"
   (let ((len (vector-length p1)))
     (do ((i 0 (1+ i)))
 	((= i len))
@@ -23,6 +25,7 @@
 
 (if (not (defined? 'vector-copy))
     (define (vector-copy p1)
+      "(vector-copy p1) returnns a copy of the vector p1"
       (let* ((len (vector-length p1))
 	     (v (make-vector len)))
 	(do ((i 0 (1+ i)))
@@ -31,6 +34,7 @@
 	v)))
 
 (define (poly-as-vector-eval v x)
+  "(poly-as-vector-eval v x) treats 'v' as a vector of polynomial coefficients, returning the value of the polynomial at x"
   (let ((sum (vector-ref v (1- (vector-length v)))))
     (do ((i (- (vector-length v) 2) (1- i)))
 	((< i 0) sum)
@@ -38,7 +42,7 @@
 
 
 (define (poly-as-vector-reduce p1)
-  ;; remove trailing (high-degree) zeros
+  "(poly-as-vector-reduce p1) removes trailing (high-degree) zeros from the vector p1"
   ;; always return at least a 0 coeff (rather than return #f=0 polynomial)
   (let ((new-len (do ((i (1- (vector-length p1)) (1- i)))
 		     ((or (= i 0)
@@ -53,6 +57,7 @@
 	  np))))
 
 (define (poly-reduce p1)
+  "(poly-reduce p1) removes trailing (high-degree) zeros from the vector or vct p1"
   (if (= (vct-ref p1 (1- (vct-length p1))) 0.0)
       (vector->vct (poly-as-vector-reduce (vct->vector p1)))
       p1))
@@ -63,6 +68,7 @@
 
       
 (define (poly-as-vector+ p1 p2)
+  "(poly-as-vector+ p1 p2) adds vectors p1 and p2"
   (if (vector? p1)
       (if (vector? p2)
 	  (if (> (vector-length p1) (vector-length p2))
@@ -75,7 +81,9 @@
 	(vector-set! v 0 (+ (vector-ref v 0) p1))
 	v)))
 
-(define (poly+ p1 p2) (vector->vct (poly-as-vector+ (if (vct? p1) (vct->vector p1) p1) (if (vct? p2) (vct->vector p2) p2))))
+(define (poly+ p1 p2) 
+  "(poly+ p1 p2)  adds vectors or vcts p1 and p2"
+  (vector->vct (poly-as-vector+ (if (vct? p1) (vct->vector p1) p1) (if (vct? p2) (vct->vector p2) p2))))
 
 ;;; (poly+ (vct .1 .2 .3) (vct 0.0 1.0 2.0 3.0 4.0)) -> #<vct[len=5]: 0.100 1.200 2.300 3.000 4.000>
 ;;; (poly+ (vct .1 .2 .3) .5) -> #<vct[len=3]: 0.600 0.200 0.300>
@@ -83,6 +91,7 @@
 
 
 (define (poly-as-vector* p1 p2)
+  "(poly-as-vector* p1 p2) multiplies (as polynomials) the vectors p1 and p2"
   (if (vector? p1)
       (if (vector? p2)
 	  (let* ((p1len (vector-length p1))
@@ -98,7 +107,9 @@
 	  (vector-scale! (vector-copy p1) p2))
       (vector-scale! (vector-copy p2) p1)))
 
-(define (poly* p1 p2) (vector->vct (poly-as-vector* (if (vct? p1) (vct->vector p1) p1) (if (vct? p2) (vct->vector p2) p2))))
+(define (poly* p1 p2)
+  "(poly* p1 p2) multiplies the polynomials (vcts or vectors) p1 and p2"
+  (vector->vct (poly-as-vector* (if (vct? p1) (vct->vector p1) p1) (if (vct? p2) (vct->vector p2) p2))))
     
 ;;; (poly* (vct 1 1) (vct -1 1)) -> #<vct[len=4]: -1.000 0.000 1.000 0.000>
 ;;; (poly* (vct -5 1) (vct 3 7 2)) -> #<vct[len=5]: -15.000 -32.000 -3.000 2.000 0.000>
@@ -108,6 +119,7 @@
 
 
 (define (poly-as-vector/ p1 p2)
+  "(poly-as-vector/ p1 p2) divides the polynomial p1 by p2 (both vectors)"
   (if (vector? p1)
       (if (vector? p2)
 	  ;; Numerical Recipes poldiv
@@ -137,6 +149,7 @@
       (list (vector 0) p2)))
 
 (define (poly/ p1 p2)
+  "(poly/ p1 p2) divides p1 by p2, both polynomials either vcts or vectors"
   (map vector->vct (poly-as-vector/ (if (vct? p1) (vct->vector p1) p1) (if (vct? p2) (vct->vector p2) p2))))
 
 ;;; (poly/ (vct -1.0 -0.0 1.0) (vector 1.0 1.0)) -> (#<vct[len=3]: -1.000 1.000 0.000> #<vct[len=3]: 0.000 0.000 0.000>)
@@ -148,6 +161,7 @@
 
 
 (define (poly-as-vector-derivative p1)
+  "(poly-as-vector-derivative p1) returns the derivative or polynomial p1 (as a vector)"
   (let* ((len (1- (vector-length p1)))
 	 (v (make-vector len)))
     (do ((i (1- len) (1- i))
@@ -155,7 +169,9 @@
 	((< i 0) v)
       (vector-set! v i (* j (vector-ref p1 j))))))
 
-(define (poly-derivative p1) (vector->vct (poly-as-vector-derivative (vct->vector p1))))
+(define (poly-derivative p1) 
+  "(poly-derivative p1) returns the derivative of p1, either a vct or vector"
+  (vector->vct (poly-as-vector-derivative (vct->vector p1))))
 
 ;;; (poly-derivative (vct 0.5 1.0 2.0 4.0)) -> #<vct[len=3]: 1.000 4.000 12.000>
 
@@ -164,6 +180,7 @@
 
 
 (define (poly-as-vector-resultant p1 p2)
+  "(poly-as-vector-resultant p1 p2) returns the resultant of polynomials p1 and p2 (vectors)"
   (let* ((m (vector-length p1))
 	 (n (vector-length p2))
 	 (mat (make-mixer (+ n m -2))))
@@ -181,15 +198,18 @@
     (mixer-determinant mat)))
 
 (define (poly-resultant p1 p2) 
+  "(poly-resultant p1 p2) returns the resultant of polynomials p1 and p2 (vcts or vectors)"
   (poly-as-vector-resultant 
    (if (vct? p1) (vct->vector p1) p1)
    (if (vct? p2) (vct->vector p2) p2)))
 
     
 (define (poly-as-vector-discriminant p1)
+  "(poly-as-vector-discriminant p1) returns the discriminant of polynomial p1 (a vector)"
   (poly-as-vector-resultant p1 (poly-as-vector-derivative p1)))
 
 (define (poly-discriminant p1)
+  "(poly-discriminant p1) returns the discriminant of polynomial p1 (either a vct or a vector)"
   (poly-as-vector-discriminant 
    (if (vct? p1) (vct->vector p1) p1)))
 
@@ -212,6 +232,7 @@
 (define poly-roots-epsilon 1.0e-7)
 
 (define (simplify-complex a)
+  "(simplify-complex a) sets to 0.0 real or imaginary parts of 'a' that are less than poly-roots-epsilon"
   (if (< (abs (imag-part a)) poly-roots-epsilon)
       (if (< (abs (real-part a)) poly-roots-epsilon)
 	  0.0
@@ -222,6 +243,7 @@
 
 
 (define (poly-gcd p1 p2)
+  "(poly-gcd p1 p2) returns the GCD of polynomials p1 and p2 (both vcts)"
   (if (< (vct-length p1) (vct-length p2))
       (vct 0.0)
       (let ((qr (map poly-reduce (poly/ p1 p2))))
@@ -233,6 +255,7 @@
 	    (apply poly-gcd qr)))))
 
 (define (poly-as-vector-gcd p1 p2)
+  "(poly-as-vector-gcd p1 p2) returns the GCD of polynomials p1 and p2 (both vectors)"
   (if (< (vector-length p1) (vector-length p2))
       (vector 0)
       (let ((qr (map poly-as-vector-reduce (poly-as-vector/ p1 p2))))
@@ -454,6 +477,7 @@
 					    roots))))))))))))
 
 (define (poly-roots p1) 
+  "(poly-roots p1) returns the roots of polynomial p1"
   (let* ((v1 (vct->vector (poly-reduce p1)))
 	 (roots (poly-as-vector-roots v1)))
     (for-each

@@ -40513,6 +40513,7 @@ EDITS: 1
       (set! (fft-window-alpha) 0.0)
       (set! (fft-window-beta) 0.0)
       (set! (min-dB) -60.0)
+      (set! (reverb-control-decay) 1.0)
       
       (letrec ((test-sound-func-1
 		(lambda (func name ind-1 ind-2 new-val eq-func leq-func settable channel global)
@@ -65249,8 +65250,12 @@ EDITS: 1
 			 (set! snd-test-help (1+ snd-test-help))))
 		   (set! help (1+ help))))))
        (current-module))
+
       (snd-display (format #f "total: ~D, help: ~D, no-help: ~D, found help: ~D (~D in snd-test, ~D instruments)" 
 			   total help no-help outside-help 242 (- snd-test-help 242)))
+      ;; total: 4219, help: 3511, no-help: 120, found help: 588 (242 in snd-test, 44 instruments)
+      ;; main leftovers: dlocsig, new-effects, prc95, analog-filter
+
       (for-each
        (lambda (lst)
 	 (snd-display "-------- ~A --------~%~A~%" (car lst) (cadr lst)))

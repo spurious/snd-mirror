@@ -322,6 +322,7 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 ;;; (zync) to start and (unzync) to stop
 
 (define (remove-dragger snd)
+  "(remove-dragger snd) undoes an earlier add-dragger which syncs together all the y-zoom sliders"
   (let ((calls (sound-property 'dragger snd)))
     (if calls
 	(do ((chn 0 (1+ chn)))
@@ -333,6 +334,7 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
   #f)
 
 (define (add-dragger snd)
+  "(add-dragger snd) syncs together y-zoom sliders"
   (set! (sound-property 'save-state-ignore snd)
 	(cons 'dragger
 	      (or (sound-property 'save-state-ignore snd)
@@ -860,6 +862,7 @@ Reverb-feedback sets the scaler on the feedback.
    #x00 #x40 #x04 #x20 #x00 #x10 #x10 #x08 #x00 #x04 #x00 #x00))
 
 (define (bitmap->pixmap widget bits width height)
+  "(bitmap->pixmap widget bits width height) takes an X-style bitmap and turns it into a pixmap"
   (XCreateBitmapFromData (XtDisplay widget) (XtWindow widget) bits width height))
 
 ; (XtSetValues (list-ref (sound-widgets) 8) (list XmNlabelPixmap (bitmap->pixmap (list-ref (sound-widgets) 8) iconw right-arrow 16 12)))
@@ -1156,6 +1159,7 @@ Reverb-feedback sets the scaler on the feedback.
     ))
 
 (define (close-scanned-synthesis-pane)
+  "(close-scanned-synthesis-pane) closes the Scanned Sythesis sound pane"
   (for-each-child 
    (cadr (main-widgets))  ; this is Snd's outermost shell
    (lambda (n)
@@ -1460,7 +1464,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 
 (define (thumbnail-graph dpy wn gc pts width height)
-  ;; make a little graph of the data
+  "(thumbnail-graph dpy wn gc pts width height) makes a little graph of the data"
   (let* ((top-margin 2)
 	 (bottom-margin 6)
 	 (left-margin 2)
@@ -1650,6 +1654,7 @@ Reverb-feedback sets the scaler on the feedback.
 		(round-down (- frames (* (round-down seconds) smpte-frames-per-second))))))
 	    
     (lambda (snd chn)
+      "(draw-smpte-label snd chn) draws a SMPTE time stamp in a box on a graph"
       (let* ((axinf (axis-info snd chn))
 	     (x (list-ref axinf 10))
 	     (y (list-ref axinf 13))
@@ -1684,6 +1689,7 @@ Reverb-feedback sets the scaler on the feedback.
 	(update-time-graph #t #t))))
 
 (define (smpte-is-on) ; for prefs dialog
+  "(smpte-is-on) is #t if we are drawing SMPTE time stamps"
   (member draw-smpte-label (hook->list after-graph-hook)))
 
 
@@ -1692,6 +1698,7 @@ Reverb-feedback sets the scaler on the feedback.
 (define red-pixel
   (let ((pix #f))
     (lambda ()
+      "(red-pixel) returns a red pixel"
       (if (not pix)
 	  (let* ((shell (cadr (main-widgets)))
 		 (dpy (XtDisplay shell))
@@ -1704,6 +1711,7 @@ Reverb-feedback sets the scaler on the feedback.
       pix)))
 
 (define* (make-level-meter parent width height args :optional (resizable #t))
+  "(make-level-meter parent width height args :optional (resizable #t)) makes a VU level meter"
   (let* ((frame (XtCreateManagedWidget "meter-frame" xmFrameWidgetClass parent
 		  (append (list XmNshadowType       XmSHADOW_ETCHED_IN
 				XmNwidth            width
@@ -1742,6 +1750,7 @@ Reverb-feedback sets the scaler on the feedback.
     context))
 
 (define (display-level meter-data)
+  "(display-level meter-data) displays a VU level meter"
   (let* ((meter (car meter-data))
 	 (level (list-ref meter-data 1))
 	 (last-level (list-ref meter-data 3))
@@ -1816,7 +1825,7 @@ Reverb-feedback sets the scaler on the feedback.
 		    (XSetForeground dpy gc (black-pixel))))))))))
 
 (define (with-level-meters n)
-  ;; add n level meters to a pane at the top of the Snd window
+  "(with-level-meters n) adds 'n' level meters to a pane at the top of the Snd window"
   (let* ((parent (list-ref (main-widgets) 3))
 	 (height 70)
 	 (width (inexact->exact (floor (/ (cadr (XtGetValues parent (list XmNwidth 0))) n))))
@@ -1873,6 +1882,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 (define make-channel-drop-site
   (lambda args
+    "(make-channel-drop-site :optional snd) adds a drop site pane to the current channel"
     (let* ((snd (if (> (length args) 0) (car args) (selected-sound)))
 	   (chn (selected-channel snd))
 	   (widget (add-channel-pane snd chn "drop here" xmDrawingAreaWidgetClass
@@ -1909,7 +1919,8 @@ Reverb-feedback sets the scaler on the feedback.
 ;;;
 ;;; drop arg is 3-arg func: filename snd chn
 
-(define (set-channel-drop drop snd chn) ; drop is func of 3 args (filename snd chn)
+(define (set-channel-drop drop snd chn)
+  "(set-channel-drop drop snd chn) changes a drop callback function; 'drop' is function of 3 args (filename snd chn)"
   (XmDropSiteUpdate
    (car (channel-widgets snd chn))
    (list XmNdropProc
@@ -2325,7 +2336,9 @@ Reverb-feedback sets the scaler on the feedback.
 ;;;
 ;;; (mark-sync-color "blue")
 
-(define (mark-sync-color new-color)
+(define+ (mark-sync-color new-color)
+  "(mark-sync-color new-color) sets the color for sync'd marks"
+
   (define get-color
     (lambda (color-name)
       (let* ((col (XColor))
@@ -2371,6 +2384,7 @@ Reverb-feedback sets the scaler on the feedback.
 (define tooltip-label #f)
 
 (define (add-tooltip widget tip)
+  "(add-tooltip widget tip) adds the tooltip 'tip' to the widget"
   (let ((tool-proc #f)
 	(quit-proc #f)
 	(timeout 500)   ; millisecs after mouse enters widget to tip display 
@@ -2642,6 +2656,7 @@ Reverb-feedback sets the scaler on the feedback.
 (define variables-pages '())
 
 (define (make-variables-dialog)
+  "(make-variables-dialog) makes a variable-display dialog"
   (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
 	(titlestr (XmStringCreate "Variables" XmFONTLIST_DEFAULT_TAG)))
     (set! variables-dialog 
@@ -2867,6 +2882,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 
 (define (set-root-window-color color)
+  "(set-root-window-color color) sets the color of the overall X background"
   (let* ((dpy (XtDisplay (cadr (main-widgets))))
 	 (root-window (DefaultRootWindow dpy)))
     (XSetWindowBackground dpy root-window color)
@@ -2893,6 +2909,7 @@ Reverb-feedback sets the scaler on the feedback.
 (define ssb-dialog #f)
 
 (define (create-ssb-dialog)
+  "(create-ssb-dialog) creates a dialog for testing the ssb-am stuff"
   (if (not (Widget? ssb-dialog))
       (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
 	    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
@@ -3061,6 +3078,7 @@ Reverb-feedback sets the scaler on the feedback.
 (define audit-dialog #f)
 
 (define (create-audit-dialog)
+  "(create-audit-dialog) creates a slightly dangerous hearing test dialog (don't push the amps way up if you can't hear anything)"
   (if (not (Widget? audit-dialog))
       (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
 	    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))

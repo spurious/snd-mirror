@@ -25,6 +25,7 @@
 ;;; http://www.york.ac.uk/inst/mustech/3d_audio/ambison.htm for more details...
 
 ;;; CHANGES:
+;;; 01/08/2007: make a few functions local etc (Bill)
 ;;; 07/05/2006: translate to scheme, use move-sound generator (Bill)
 ;;; 04/29/2002: fixed reverb envelopes for no reverb under clisp
 ;;; 01/14/2001: added multichannel reverb output with local and global control
@@ -78,8 +79,6 @@
 ;;;     make it so that you can concatenate them...
 ;;; | 11/25/1999 fix the "diagonal case" (sounds go through the head of the listener)
 
-;;; We use a couple of internal functions in the clm package: export them...
-
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))   ; need def-optkey-fun
 (if (not (provided? 'snd-env.scm)) (load-from-path "env.scm")) ; need envelope-interp
 
@@ -104,7 +103,7 @@
 (define (angles-in-turns)
   (one-turn-is 1))
 
-;; speed of sound in air, in meters per second under normanl conditions
+;; speed of sound in air, in meters per second under normal conditions
 (define dlocsig-speed-of-sound 344)
 
 (define (distances-in-meters)
@@ -151,18 +150,27 @@
 ;;; omap:      mapping of speakers to output channels
 ;;;            content should be output channel number, zero based
 
-(define (cis a) (exp (* 0.0+1.0i a)))
+(define (cis a)
+  "(cis a) returns e^(ia)"
+  (exp (* 0.0+1.0i a)))
 
 (defmacro when (test . forms)
   `(if ,test (begin ,@forms)))
 
 (define (copy-list lis)
+  "(copy-list lst) returns a copy of 'lst'"
   (append lis '()))
 
-(define (third a) (if (>= (length a) 3) (list-ref a 2) #f))
-(define (fourth a) (if (>= (length a) 4) (list-ref a 3) #f))
+(define (third a) 
+  "(third lst) returns the 3rd element of 'lst'"
+  (if (>= (length a) 3) (list-ref a 2) #f))
+
+(define (fourth a) 
+  "(fourth lst) returns the 4th element of 'lst'"
+  (if (>= (length a) 4) (list-ref a 3) #f))
 
 (define* (last a :optional n) 
+  "(last lst) returns the last 'n' elements of 'lst' as a list"
   (if (null? a)
       #f
       (if (not n)
@@ -173,46 +181,16 @@
 	      (set! res (cons (list-ref a (- (length a) (+ i 1))) res)))
 	    res))))
 
-(define (listp a) (and (list? a) (not (null? a))))
-(define (list?? a) (and (listp a) a))
+(define (listp a) 
+  "(listp lst) is #t is 'lst' is a non-null list"
+  (and (list? a) (not (null? a))))
 
-(define (has-duplicates? lst)
-  ;; from ice-9/common-list.scm
-  (cond ((null? lst) #f)
-	((member (car lst) (cdr lst)) #t)
-	(else (has-duplicates? (cdr lst)))))
-
-(define (position val lst)
-  (define (position-1 val lst pos)
-    (call-with-current-continuation
-     (lambda (return)
-       (if (null? lst)
-	   #f
-	   (if (= val (car lst))
-	       (return pos)
-	       (position-1 val (cdr lst) (1+ pos)))))))
-  (position-1 val lst 0))
-
-(define (equalp-intersection l1 l2)
-  (if (null? l2) 
-      l2
-      (let loop ((l1 l1) 
-		 (result '()))
-	(cond ((null? l1) 
-	       (reverse! result))
-	      ((member (car l1) l2) 
-	       (loop (cdr l1) 
-		     (cons (car l1) 
-			   result)))
-	      (else (loop (cdr l1) 
-			  result))))))
-
-(define (lastx env)
-  (list-ref env (- (length env) 2)))
+(define (list?? a) 
+  (and (listp a) a))
 
 (define (x-norm env xmax)
-  ;; change x axis values so that they run to xmax
-  (let ((scl (/ xmax (lastx env)))
+  "(x-norm env xmax) changes 'env' x axis values so that they run to 'xmax'"
+  (let ((scl (/ xmax (list-ref env (- (length env) 2))))
 	(val '())
 	(len (length env)))
     (do ((i 0 (+ i 2)))
@@ -228,6 +206,12 @@
 				  (distances '())
 				  (channel-map '()))
   ;; sanity checking of configuration
+
+  (define (has-duplicates? lst)
+    ;; from ice-9/common-list.scm
+    (cond ((null? lst) #f)
+	  ((member (car lst) (cdr lst)) #t)
+	  (else (has-duplicates? (cdr lst)))))
 
   (define (invert3x3 mat) ; invert a 3x3 matrix using cofactors
     (let ((m (make-mixer 3))
@@ -740,8 +724,8 @@
 
 ;;; Generic error when method passed illegal path
 
-(define (illegal-path-argument path)
-  (snd-error (format #f "~A is not a path or a list describing a path" path)))
+;(define (illegal-path-argument path)
+;  (snd-error (format #f "~A is not a path or a list describing a path" path)))
 
 ;;;
 ;;; Generic defining function (for open, closed, polar and cartesian paths)
@@ -1143,24 +1127,11 @@
 	((> k m))
       (vector-set! (vector-ref path-ak-odd (- m 1)) (- k 1) (exact->inexact (/ (- (f (- m k))) (f m)))))))
 
-(define (a k n)
-  (if (odd? (min (+ (* path-maxcoeff 2) 1) n))
-      (begin
-	(if (not path-ak-odd) (make-a-odd))
-	(vector-ref (vector-ref path-ak-odd (/ (- n 3) 2)) (- k 1)))
-    (begin
-      (if (not path-ak-even) (make-a-even))
-      (vector-ref (vector-ref path-ak-even (/ (- n 4) 2)) (- k 1)))))
-
-(define (ac k n)
-  (let ((un (min n path-maxcoeff)))
-    (if (not path-ak-even) (make-a-even))
-    (vector-ref (vector-ref path-ak-even (- un 2)) (- k 1))))
-
 ;;; Calculate bezier difference vectors for the given path
 ;;; (path-x (make-path '((-10 10)(0 5)(10 10))))
 
 (<define-method> calculate-fit ((path <closed-bezier-path>))
+
   (let* ((n (- (length (x path )) 1))
 	 (m (/ (- n (if (odd? n) 3 4)) 2))
 	 ;; data points P(i)
@@ -1171,6 +1142,15 @@
 	 (d (vector (make-vector n 0.0)
 		    (make-vector n 0.0)
 		    (make-vector n 0.0))))
+
+    (define (a-1 k n)
+      (if (odd? (min (+ (* path-maxcoeff 2) 1) n))
+	  (begin
+	    (if (not path-ak-odd) (make-a-odd))
+	    (vector-ref (vector-ref path-ak-odd (/ (- n 3) 2)) (- k 1)))
+	  (begin
+	    (if (not path-ak-even) (make-a-even))
+	    (vector-ref (vector-ref path-ak-even (/ (- n 4) 2)) (- k 1)))))
 
     (define (xvector-ref z j i)
       (if (> i (- n 1))
@@ -1187,7 +1167,7 @@
 	    ((> a 2))
 	  (vector-set! (vector-ref d a) i 
 		     (+ (vector-ref (vector-ref d a) i)
-			(* (a k n)
+			(* (a-1 k n)
 			   (- (xvector-ref p a (+ i k))
 			      (xvector-ref p a (- i k)))))))))
     (if (curvature path)
@@ -1209,6 +1189,11 @@
 	 (d (vector (make-vector (+ n 1) 0.0) 
 		    (make-vector (+ n 1) 0.0) 
 		    (make-vector (+ n 1) 0.0))))
+
+    (define (ac k n)
+      (let ((un (min n path-maxcoeff)))
+	(if (not path-ak-even) (make-a-even))
+	(vector-ref (vector-ref path-ak-even (- un 2)) (- k 1))))
 
     (define (ref z j i)
       (if (> i n) 
@@ -1844,50 +1829,6 @@
 
 ;;; Transform a rendered path using scaling, translation and rotation 
 
-;;; Derive a rotation matrix from an axis vector and an angle
-
-(define (rotation-matrix x y z angle)
-  ;;; translated from C routine by David Eberly
-  ;;; (http://www.magic-software.com/)
-
-  (define (normalize a b c)
-    (let* ((mag (sqrt (+ (* a a) (* b b) (* c c)))))
-      (list (/ a mag) (/ b mag) (/ c mag))))
-
-  (let* ((vals (normalize x y z))
-	 (dx (car vals))
-	 (dy (cadr vals))
-	 (dz (caddr vals))
-	 (rotate (vector (vector 0.0 0.0 0.0) (vector 0.0 0.0 0.0) (vector 0.0 0.0 0.0)))
-	 (I (vector (vector 1.0 0.0 0.0) (vector 0.0 1.0 0.0) (vector 0.0 0.0 1.0)))
-	 (A (vector (vector 0.0d0 dz (- dy)) (vector (- dz) 0.0d0 dx) (vector dy (- dx) 0.0d0)))
-	 (AA (vector (vector 0.0 0.0 0.0) (vector 0.0 0.0 0.0) (vector 0.0 0.0 0.0)))
-	 (sn (sin (- angle)))
-	 (omcs (- 1 (cos (- angle)))))
-
-    (do ((row 0 (1+ row)))
-	((= row 3))
-      (do ((col 0 (1+ col)))
-	  ((= col 3))
-	(vector-set! (vector-ref AA row) col 0d0)
-	(do ((mid 0 (1+ mid)))
-	    ((= mid 3))
-	  (vector-set! (vector-ref AA row) col
-		       (+ (vector-ref (vector-ref AA row) col)
-			  (* (vector-ref (vector-ref A row) mid) 
-			     (vector-ref (vector-ref A mid) col)))))))
-
-	;; rotation matrix is I+sin(angle)*A+[1-cos(angle)]*A*A 
-    (do ((row 0 (1+ row)))
-	((= row 3))
-      (do ((col 0 (1+ col)))
-	  ((= col 3))
-	(vector-set! (vector-ref rotate row) col
-		     (+ (vector-ref (vector-ref I row) col)
-		     (* sn (vector-ref (vector-ref A row) col))
-		     (* omcs (vector-ref (vector-ref AA row) col))))))
-    rotate))
-
 ;;; Transform a path (scaling + translation + rotation)
 
 (define* (transform-path path :key
@@ -1896,6 +1837,52 @@
 			       rotation
 			       rotation-center
 			       (rotation-axis '(0d0 0d0 1.0)))
+
+  ;; Derive a rotation matrix from an axis vector and an angle
+
+  (define (rotation-matrix x y z angle)
+    ;; translated from C routine by David Eberly
+    ;; (http://www.magic-software.com/)
+    
+    (define (normalize a b c)
+      (let* ((mag (sqrt (+ (* a a) (* b b) (* c c)))))
+	(list (/ a mag) (/ b mag) (/ c mag))))
+    
+    (let* ((vals (normalize x y z))
+	   (dx (car vals))
+	   (dy (cadr vals))
+	   (dz (caddr vals))
+	   (rotate (vector (vector 0.0 0.0 0.0) (vector 0.0 0.0 0.0) (vector 0.0 0.0 0.0)))
+	   (I (vector (vector 1.0 0.0 0.0) (vector 0.0 1.0 0.0) (vector 0.0 0.0 1.0)))
+	   (A (vector (vector 0.0d0 dz (- dy)) (vector (- dz) 0.0d0 dx) (vector dy (- dx) 0.0d0)))
+	   (AA (vector (vector 0.0 0.0 0.0) (vector 0.0 0.0 0.0) (vector 0.0 0.0 0.0)))
+	   (sn (sin (- angle)))
+	   (omcs (- 1 (cos (- angle)))))
+      
+      (do ((row 0 (1+ row)))
+	  ((= row 3))
+	(do ((col 0 (1+ col)))
+	    ((= col 3))
+	  (vector-set! (vector-ref AA row) col 0d0)
+	  (do ((mid 0 (1+ mid)))
+	      ((= mid 3))
+	    (vector-set! (vector-ref AA row) col
+			 (+ (vector-ref (vector-ref AA row) col)
+			    (* (vector-ref (vector-ref A row) mid) 
+			       (vector-ref (vector-ref A mid) col)))))))
+      
+      ;; rotation matrix is I+sin(angle)*A+[1-cos(angle)]*A*A 
+      (do ((row 0 (1+ row)))
+	  ((= row 3))
+	(do ((col 0 (1+ col)))
+	    ((= col 3))
+	  (vector-set! (vector-ref rotate row) col
+		       (+ (vector-ref (vector-ref I row) col)
+			  (* sn (vector-ref (vector-ref A row) col))
+			  (* omcs (vector-ref (vector-ref AA row) col))))))
+      rotate))
+  
+  
   (if (not-rendered path)
       (render-path path))
   (if (or scaling translation rotation)
@@ -1905,7 +1892,7 @@
 						   (cadr rotation-axis)
 						   (third rotation-axis)
 						   rotation)
-		       #f))
+			 #f))
 	     (xc (path-x path))
 	     (yc (path-y path))
 	     (zc (path-z path)))
@@ -2152,6 +2139,20 @@
 	 (run-beg #f)
 	 (run-end #f))
 
+    (define (equalp-intersection l1 l2)
+      (if (null? l2) 
+	  l2
+	  (let loop ((l1 l1) 
+		     (result '()))
+	    (cond ((null? l1) 
+		   (reverse! result))
+		  ((member (car l1) l2) 
+		   (loop (cdr l1) 
+			 (cons (car l1) 
+			       result)))
+		  (else (loop (cdr l1) 
+			      result))))))
+
     (define (dist->samples d) (inexact->exact (round (* d (/ (mus-srate) dlocsig-speed-of-sound)))))
     (define (dist->seconds d) (/ d dlocsig-speed-of-sound))
     (define (time->samples time) (inexact->exact (round (* time (mus-srate)))))
@@ -2284,6 +2285,17 @@
 	    ((= i len))
 	  (vector-set! channel-rev-gains i (cons time (vector-ref channel-rev-gains i)))
 	  (vector-set! channel-rev-gains i (cons 0.0 (vector-ref channel-rev-gains i))))))
+
+    (define (position val lst)
+      (define (position-1 val lst pos)
+	(call-with-current-continuation
+	 (lambda (return)
+	   (if (null? lst)
+	       #f
+	       (if (= val (car lst))
+		   (return pos)
+		   (position-1 val (cdr lst) (1+ pos)))))))
+      (position-1 val lst 0))
 
     ;; push gain and time into envelopes
     (define (push-gains group gains dist time num)

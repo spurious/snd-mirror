@@ -1,4 +1,4 @@
-/* tie CLM module into Guile/Scheme or Ruby */
+/* tie CLM module into Scheme, Ruby, or Forth */
 
 /*     
  *  we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
