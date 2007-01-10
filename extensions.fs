@@ -3,10 +3,12 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Thu Jan 04 18:54:24 CET 2007
+\ Changed: Tue Jan 09 05:47:43 CET 2007
 
 \ Commentary:
-\ 
+\
+\ With comments and doc strings from extensions.scm.
+\
 \ Snd-7 compatibility
 \ 
 \ color-map constants
@@ -29,8 +31,18 @@
 \ channel-property     		  ( key snd chn -- value|#f )
 \ set-channel-property 		  ( key val snd chn -- )
 \ set-channel-property-save-state-ignore ( key snd chn -- )
+\ channel-sync                    ( snd chn -- val )
+\ set-channel-sync                ( snd chn val -- )
 \
-\ selection-members               ( -- array of lists )
+\ normalize-mix                   ( filename beg in-chn snd chn -- scl )
+\ enveloped-mix                   ( filename beg env -- )
+\ map-sound-files                 ( func :optional dir -- lst )
+\ for-each-sound-file             ( func :optional dir -- )
+\ match-sound-files               ( func :optional dir -- ary )
+\ selection-members               ( -- array-of-lists )
+\ make-selection                  ( :optional beg end snd chn -- )
+\ delete-selection-and-smooth     ( -- )
+\ eval-over-selection             ( func -- val )
 \
 \ yes-or-no?                      ( question action-if-yes action-if-no snd -- )
 \ check-for-unsaved-edits         ( check -- )
@@ -38,6 +50,8 @@
 \
 \ mix-channel                     ( file-data :optional beg dur snd chn edpos -- val )
 \ insert-channel                  ( file-data :optional beg 0 dur snd chn edpos -- val )
+\ redo-channel                    ( :optional edits snd chn -- )
+\ undo-channel                    ( :optional edits snd chn -- )
 \ any-env-channel                 ( en func :optional beg dur snd chn edpos origin -- val )
 \ sine-ramp                       ( rmp0 rmp1 :optional beg dur snd chn edpos -- val )
 \ sine-env-channel                ( en :optional beg dur snd chn edpos -- val )
@@ -45,16 +59,23 @@
 \ blackman4-env-channel           ( en :optional beg dur snd chn edpos -- val )
 \ ramp-squared                    ( rmp0 rmp1 :optional symmetric beg dur snd chn edpos -- val )
 \ env-squared-channel             ( en :optional symmetric beg dur snd chn edpos -- val )
-\ ramp-expt                       ( rmp0 rmp1 exponent
-\                                   :optional symmetric beg dur snd chn edpos -- val )
-\ env-expt-channel                ( en exponent
-\                                   :optional symmetric beg dur snd chn edpos -- val )
+\ ramp-expt                       ( rmp0 rmp1 exponent ... )
+\ env-expt-channel                ( en exponent ... )
 \ offset-channel                  ( amount :optional beg dur snd chn edpos -- val )
 \ offset-sound                    ( offset :optional beg dur snd -- )
+\ pad-sound                       ( beg dur :optional snd -- )
 \ dither-channel                  ( :optional amount beg dur snd chn edpos -- val )
 \ dither-sound                    ( :optional amount beg dur snd -- )
 \ contrast-channel                ( index :optional beg dur snd chn edpos -- val )
 \ contrast-sound                  ( index :optional beg dur snd -- )
+\ scale-sound                     ( scl :optional beg dur snd -- )
+\ normalize-sound                 ( amp :optional beg dur snd -- )
+\ 
+\ channels=                       ( snd1 chn1 snd2 chn2 :optional allowable-difference -- f )
+\ channels-equal?                 ( snd1 chn1 snd2 chn2 :optional allowable-difference -- f )
+\ mono->stereo                    ( new-name snd1 chn1 snd2 chn2 -- snd )
+\ mono-files->stereo              ( new-name chan1-name chan2-name -- snd )
+\ stereo->mono                    ( orig-snd chan1-name chan2-name -- snd0 snd1 )
 \
 \ focus-follows-mouse             ( -- )
 \ prefs-activate-initial-bounds   ( beg dur full -- )
@@ -63,8 +84,6 @@
 \ with-buffers-menu    		  ( -- )
 \ set-global-sync                 ( choice -- )
 \ show-selection                  ( -- )
-
-\ Code:
 
 require clm
 require examp
@@ -131,7 +150,7 @@ set-current
       mx car mix-position snd chn #f set-cursor	drop
       mx car				\ retval
     else
-      mx ['] sort-mix-pos object-sort array->list { sorted-mx }
+      mx <'> sort-mix-pos object-sort array->list { sorted-mx }
       snd chn #f cursor { pos }
       count 0> if -1 else 0 then { curpos }
       pos sorted-mx car mix-position >= if
@@ -186,7 +205,7 @@ set-current
       mk car #f mark-sample snd chn #f set-cursor drop
       mk car				\ retval
     else
-      mk ['] sort-mark-sample object-sort array->list { sorted-mk }
+      mk <'> sort-mark-sample object-sort array->list { sorted-mk }
       snd chn #f cursor { pos }
       count 0> if -1 else 0 then { curpos }
       pos sorted-mk car #f mark-sample >= if
@@ -229,7 +248,7 @@ previous
   gens each ( gen ) in1 i object-ref in2 i object-ref oscil amps i vct-ref f* ( sum ) f+ end-each
 ;
 
-\ === PROPERTIES ===
+\ ;;; -------- sound-property
 
 : sound-property <{ key :optional snd #f -- val }>
   doc" Returns the value associated with KEY in the given sound's property list, or #f."
@@ -252,6 +271,8 @@ If KEY exists, VAL overwrites the old value."
   snd set-sound-property
 ;
 
+\ ;;; -------- channel-property
+
 : channel-property <{ key :optional snd #f chn #f -- val }>
   doc" Returns the value associated with KEY in the given channel's property list, or #f."
   snd chn channel-properties key list-assoc-ref
@@ -273,8 +294,93 @@ If KEY exists, VAL overwrites the old value."
   snd chn set-channel-property
 ;
 
+: channel-sync     { snd chn -- val } 'sync snd chn         channel-property ;
+: set-channel-sync { snd chn val -- } 'sync val snd chn set-channel-property ;
+
+\ ;;; -------- mix with result at original peak amp
+
+: normalize-mix ( filename beg in-chn snd chn -- scl )
+  doc" It is like mix but the mix result has same peak amp as unmixed SND/CHN (returns scaler)."
+  { filename beg in-chan snd chn }
+  snd chn #f maxamp { original-maxamp }
+  filename beg in-chan snd chn undef undef undef mix drop
+  snd chn #f maxamp { new-maxamp }
+  original-maxamp new-maxamp f<> if
+    original-maxamp new-maxamp f/ { scaler }
+    snd sync { old-sync }
+    0 snd set-sync drop
+    scaler snd chn scale-by drop
+    old-sync snd set-sync drop
+    scaler
+  else
+    1.0
+  then
+;
+
+\ ;;;-------- mix with envelope on mixed-in file
+\ ;;;
+\ ;;; there are lots of ways to do this; this version uses functions from Snd, CLM, and Sndlib.
+
+: enveloped-mix ( filename beg env -- )
+  doc" Mixes FILENAME starting at BEG with amplitude envelope ENV.\n\
+\"pistol.snd\" 0 '( 0 0 1 1 2 0 ) enveloped-mix"
+  { filename beg env }
+  filename mus-sound-frames { len }
+  temp-dir empty? if "" else temp-dir then "tmp.snd" $+ { tmp-name }
+  tmp-name 22050 1 mus-bshort mus-next "" mus-sound-open-output 0 mus-sound-close-output drop
+  :envelope env :end len make-env { en }
+  1 en make-array { inenvs }
+  1 inenvs make-array { envs }
+  1 1.0 make-mixer { mx }
+  tmp-name filename 0 len 0 mx envs mus-mix drop
+  tmp-name beg undef undef undef undef undef undef mix drop
+  tmp-name file-delete
+;
+
+\ ;;; -------- map-sound-files, match-sound-files
+\ ;;;
+\ ;;; apply a function to each sound in dir
+\ ;;;
+\ ;;;   (map-sound-files (lambda (n) (if (> (mus-sound-duration n) 10.0) (snd-print n))))
+
+: map-sound-files <{ func :optional dir "." -- lst }>
+  doc" Applies FUNC to each sound file in DIR."
+  dir sound-files-in-directory map func '( *key* ) run-proc end-map
+;
+\ lambda: <{ n -- str|#f }> n mus-sound-duration 10.0 f> if n snd-print cr then ; map-sound-files
+
+: for-each-sound-file <{ func :optional dir "." -- }>
+  doc" Applies FUNC to each sound file in DIR."
+  dir sound-files-in-directory each { f } func '( f ) run-proc drop end-each
+;
+0 [if]
+"/home/bil/sf" value loop-path
+lambda: <{ n -- }>
+  loop-path "/" $+ n $+ <'> mus-sound-loop-info #t nil fth-catch if
+    stack-reset
+    exit
+  then
+  empty? unless n snd-print drop cr then
+; loop-path for-each-sound-file
+[then]
+
+: match-sound-files <{ func :optional dir "." -- ary }>
+  doc" Applies FUNC to each sound file in DIR and returns an array of files \
+for which FUNC does not return #f."
+  #() { matches }
+  dir sound-files-in-directory each { f }
+    func '( f ) run-proc if matches f array-push drop then
+  end-each
+  matches
+;
+\ lambda: <{ n -- f }> /\.(wav?|snd)$/ n regexp-match ; "." match-sound-files
+
+\ ;;; -------- selection-members
+\ ;;;
+\ ;;; returns a list of lists of (snd chn): channels in current selection
+
 : selection-members ( -- array-of-lists )
-  doc" Array of lists of '( snd chn ) indicating the channels \
+  doc" Returns an array of lists of '( snd chn ) indicating the channels \
 participating in the current selection."
   #() { sndlist }
   selection? if
@@ -287,7 +393,106 @@ participating in the current selection."
   sndlist
 ;
 
-\ --- check-for-unsaved-edits ---
+\ ;;; -------- make-selection
+\ ;;;
+\ ;;; the regularized form of this would use dur not end
+
+: make-selection <{ :optional beg 0 end #f snd #f chn #f -- }>
+  doc" Makes a selection like make-region but without creating a region.  \
+It follows SND's sync field, and applies to all SND's channels if CHN is not specified. \
+END defaults to end of channel, BEG defaults to 0, SND defaults to the currently selected sound."
+  snd snd-snd { current-sound }
+  current-sound sound? unless 'no-such-sound '( get-func-name beg end snd chn ) fth-throw then
+  current-sound sync { current-sync }
+  selection? if
+    sounds each { s }
+      s channels 0 ?do
+	s i selection-member? ( need-update )
+	#f s i set-selection-member? drop
+	( need-update ) if s i update-time-graph drop then
+      loop
+    end-each
+    chn integer? if
+      end integer? if end 1+ else snd chn #f frames then beg - { len }
+      #t  snd chn set-selection-member?  drop
+      beg snd chn set-selection-position drop
+      len snd chn set-selection-frames   drop
+    else
+      sounds each { s }
+	snd #t                                  =
+	s current-sound                         = ||
+	current-sync 0=  current-sync s sync = && || if
+	  s channels 0 ?do
+	    #t  s i set-selection-member?  drop
+	    beg s i set-selection-position drop
+	    len s i set-selection-frames   drop
+	  loop
+	then
+      end-each
+    then
+  then
+;
+
+\ ;;; -------- delete selected portion and smooth the splice
+
+: delete-selection-and-smooth ( -- )
+  doc" Deletes the current selection and smooths the splice."
+  selection? if
+    #f #f selection-position { beg }
+    #f #f selection-frames   { len }
+    all-chans each { lst }
+      lst car  { snd }
+      lst cadr { chn }
+      snd chn selection-member? if
+	beg           len snd chn #f delete-samples drop
+	beg 16 - 0 max 32 snd chn    smooth-sound   drop
+      then
+    end-each
+  then
+;
+
+\ ;;; -------- eval over selection, replacing current samples,
+\ ;;;          mapped to "C-x x" key using prompt-in-minibuffer
+\ ;;;
+\ ;;; when the user types C-x x (without modifiers) and there is a current selection,
+\ ;;;   the minibuffer prompts "selection eval:".  Eventually the user responds,
+\ ;;;   hopefully with a function of one argument, the current selection sample
+\ ;;;   the value returned by the function becomes the new selection value.
+
+: eval-over-selection <{ func -- val }>
+  doc" Evaluates FUNC on each sample in the current selection."
+  func proc?
+  selection? && if
+    #f #f selection-position { beg }
+    #f #f selection-frames   { len }
+    $" <'> %s %s" '( func get-func-name ) string-format { origin }
+    all-chans each { lst }
+      lst car  { snd }
+      lst cadr { chn }
+      snd chn selection-member? if
+	beg len snd chn #f channel->vct ( old-data ) map
+	  func '( *key* ) run-proc
+	end-map ( new-data ) beg len snd chn #f origin vct->channel drop
+      then
+    end-each
+  then
+;
+0 [if]
+"x" 0 lambda: <{ -- val }>
+  selection? if
+    $" selection-eval:" <'> eval-over-selection #f #f prompt-in-minibuffer
+  else
+    $" no selection" #f #f report-in-minibuffer
+  then
+; #t $" eval over selection" $" eval over selection" bind-key
+[then]
+
+\ ;;; -------- check-for-unsaved-edits
+\ ;;;
+\ ;;; (check-for-unsaved-edits :optional (on #t)):
+\ ;;; if 'on', add a function to before-close-hook and before-exit-hook
+\ ;;;    that asks the user for confirmation before closing a sound if there are unsaved
+\ ;;;    edits on that sound.  if 'on' is #f, remove those hooks.
 
 hide
 : response-cb { snd action-if-yes action-if-no -- proc; response self -- val }
@@ -324,7 +529,6 @@ hide
   #t
 ;
 lambda: <{ snd -- val }> #f ; value no-cb
-
 : ignore-unsaved-edits-at-close? ( snd exiting -- f )
   { snd exiting }
   #t
@@ -336,7 +540,6 @@ lambda: <{ snd -- val }> #f ; value no-cb
     then
   loop
 ;
-
 : unsaved-edits-at-close <{ snd -- f }> snd #f ignore-unsaved-edits-at-close? not ;
 : unsaved-edits-at-exit <{ -- f }>
   #f sounds each #t ignore-unsaved-edits-at-close? unless not leave then end-each
@@ -349,11 +552,11 @@ set-current
   doc" Sets up hooks to check for and ask about unsaved edits when a sound is closed.  \
 If CHECK is #f, the hooks are removed."
   ( check ) dup to checking-for-unsaved-edits if
-    before-close-hook ['] unsaved-edits-at-close add-hook!
-    before-exit-hook  ['] unsaved-edits-at-exit  add-hook!
+    before-close-hook <'> unsaved-edits-at-close add-hook!
+    before-exit-hook  <'> unsaved-edits-at-exit  add-hook!
   else
-    before-close-hook ['] unsaved-edits-at-close remove-hook! drop
-    before-exit-hook  ['] unsaved-edits-at-exit  remove-hook! drop
+    before-close-hook <'> unsaved-edits-at-close remove-hook! drop
+    before-exit-hook  <'> unsaved-edits-at-exit  remove-hook! drop
   then
 ;
 previous
@@ -364,27 +567,32 @@ previous
 #() value -saved-remember-sound-states-states-
 
 hide
-#( ' sync ' cursor-follows-play ' selected-channel ' show-controls ' read-only
-   ' contrast-control? ' expand-control? ' reverb-control? ' filter-control?
-   ' amp-control-bounds
-   ' contrast-control ' contrast-control-amp ' contrast-control-bounds
-   ' expand-control ' expand-control-bounds ' expand-control-hop ' expand-control-jitter
-   ' expand-control-length ' expand-control-ramp
-   ' filter-control-envelope ' filter-control-in-dB ' filter-control-in-hz ' filter-control-order 
-   ' reverb-control-decay ' reverb-control-feedback ' reverb-control-length
-   ' reverb-control-length-bounds ' reverb-control-lowpass ' reverb-control-scale
-   ' reverb-control-scale-bounds
-   ' speed-control ' speed-control-bounds ' speed-control-style
-   ' speed-control-tones ) value sound-funcs
-#( ' time-graph? ' transform-graph? ' lisp-graph? ' x-bounds ' y-bounds ' cursor ' cursor-size
-   ' amp-control
-   ' cursor-style ' show-marks ' show-y-zero ' show-grid ' wavo-hop ' wavo-trace
-   ' max-transform-peaks
-   ' show-transform-peaks ' fft-log-frequency ' fft-log-magnitude ' verbose-cursor ' zero-pad
-   ' wavelet-type ' min-dB ' transform-size ' transform-graph-type ' time-graph-type ' fft-window
-   ' transform-type ' transform-normalization ' time-graph-style ' show-mix-waveforms ' dot-size
-   ' x-axis-style ' show-axes ' graphs-horizontal ' lisp-graph-style ' transform-graph-style
-   ' grid-density ) value channel-funcs
+#( <'> sync <'> with-tracking-cursor <'> selected-channel <'> show-controls <'> read-only
+   <'> contrast-control? <'> expand-control? <'> reverb-control? <'> filter-control?
+   <'> amp-control <'> amp-control-bounds
+   <'> contrast-control <'> contrast-control-amp <'> contrast-control-bounds
+   <'> expand-control <'> expand-control-bounds <'> expand-control-hop <'> expand-control-jitter
+   <'> expand-control-length <'> expand-control-ramp
+   <'> filter-control-envelope <'> filter-control-in-dB <'> filter-control-in-hz
+   <'> filter-control-order 
+   <'> reverb-control-decay <'> reverb-control-feedback <'> reverb-control-length
+   <'> reverb-control-length-bounds <'> reverb-control-lowpass <'> reverb-control-scale
+   <'> reverb-control-scale-bounds
+   <'> speed-control <'> speed-control-bounds <'> speed-control-style
+   <'> speed-control-tones ) value sound-funcs
+#( <'> time-graph? <'> transform-graph? <'> lisp-graph? <'> x-bounds <'> y-bounds
+   <'> cursor <'> cursor-size
+   <'> cursor-style <'> show-marks <'> show-y-zero <'> show-grid <'> wavo-hop <'> wavo-trace
+   <'> max-transform-peaks
+   <'> show-transform-peaks <'> fft-log-frequency <'> fft-log-magnitude <'> with-verbose-cursor
+   <'> zero-pad
+   <'> wavelet-type <'> min-dB <'> transform-size <'> transform-graph-type <'> time-graph-type
+   <'> fft-window
+   <'> transform-type <'> transform-normalization <'> time-graph-style <'> show-mix-waveforms
+   <'> dot-size
+   <'> x-axis-style <'> show-axes <'> graphs-horizontal <'> lisp-graph-style
+   <'> transform-graph-style
+   <'> grid-density <'> tracking-cursor-style ) value channel-funcs
 #() value remember-states
 0 value remember-choice
 
@@ -396,7 +604,6 @@ hide
     ary 0 array-ref fname string= if drop ary leave then
   end-each
 ;
-
 : set-saved-state ( snd new-state -- )
   { snd new-state }
   snd file-name { fname }
@@ -411,7 +618,6 @@ hide
     remember-states new-state array-push drop
   then
 ;
-
 : remember-sound-at-close <{ snd -- #f }>
   4 nil make-array { new-state }
   new-state 0 snd file-name array-set!
@@ -429,7 +635,6 @@ hide
   snd new-state set-saved-state
   #f
 ;
-
 : remember-sound-at-open <{ snd -- #f }>
   snd saved-state { state }
   remember-choice 2 <>
@@ -462,7 +667,6 @@ hide
   then
   #f
 ;
-
 : remember-sound-at-start <{ filename -- #f }>
   remember-states empty?
   remember-sound-filename file-exists? && if
@@ -471,7 +675,6 @@ hide
   then
   #f
 ;
-
 : remember-sound-at-exit <{ -- #f }>
   \ The local variable IO must be defined here, not in the else
   \ branch.  ficlVmExecuteXT()/ficlVmInnerLoop() try to kill a local
@@ -503,19 +706,19 @@ and if it is subsquently re-opened, restores that state."
   choice 0=				\ no remembering
   choice 1 = ||	if			\ just within-run remembering
     choice 0= if
-      close-hook      ['] remember-sound-at-close remove-hook! drop
-      after-open-hook ['] remember-sound-at-open  remove-hook! drop
+      close-hook      <'> remember-sound-at-close remove-hook! drop
+      after-open-hook <'> remember-sound-at-open  remove-hook! drop
     then
-    open-hook        ['] remember-sound-at-start remove-hook! drop
-    before-exit-hook ['] remember-sound-at-exit  remove-hook! drop
+    open-hook        <'> remember-sound-at-start remove-hook! drop
+    before-exit-hook <'> remember-sound-at-exit  remove-hook! drop
     remember-sound-filename file-delete
   then
   choice 0<> if
-    close-hook      ['] remember-sound-at-close add-hook!
-    after-open-hook ['] remember-sound-at-open  add-hook!
+    close-hook      <'> remember-sound-at-close add-hook!
+    after-open-hook <'> remember-sound-at-open  add-hook!
     choice 1 <> if
-      open-hook        ['] remember-sound-at-start add-hook!
-      before-exit-hook ['] remember-sound-at-exit  add-hook!
+      open-hook        <'> remember-sound-at-start add-hook!
+      before-exit-hook <'> remember-sound-at-exit  add-hook!
     then
   then
   choice to remember-choice
@@ -570,6 +773,30 @@ FILE-DATA can be the file name or a list '( file-name [beg [channel]] )"
     beg len data snd chn edpos #f origin insert-samples
   else
     #f
+  then
+;
+
+\ ;;; -------- redo-channel, undo-channel
+
+: redo-channel <{ :optional edits 1 snd #f chn #f -- }>
+  doc" It's the regularized version of redo."
+  snd fixnum?
+  snd sync 0<> &&
+  chn fixnum?  && if
+    snd chn edit-position edits + snd chn set-edit-position drop
+  else
+    edits snd chn redo drop
+  then
+;
+
+: undo-channel <{ :optional edits 1 snd #f chn #f -- }>
+  doc" It's the regularized version of undo."
+  snd fixnum?
+  snd sync 0<> &&
+  chn fixnum?  && if
+    snd chn edit-position edits - 0 max snd chn set-edit-position drop
+  else
+    edits snd chn undo drop
   then
 ;
 
@@ -647,14 +874,14 @@ set-current
   doc" Produces a sinsusoidal connection from RMP0 to RMP1."
   \ ;; vct: angle incr off scl
   $" %s %s %s %s %s" '( rmp0 rmp1 beg dur get-func-name ) string-format { origin }
-  ['] sr3-cb beg dur snd chn edpos #t  rmp0 rmp1 sr2-cb  origin ptree-channel
+  <'> sr3-cb beg dur snd chn edpos #t  rmp0 rmp1 sr2-cb  origin ptree-channel
 ;
 previous
 
 : sine-env-channel <{ en :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
   doc" Connects ENV's dots with sinusoids."
   $" %s %s %s %s" '( en beg dur get-func-name ) string-format { origin }
-  en ['] sine-ramp beg dur snd chn edpos origin any-env-channel
+  en <'> sine-ramp beg dur snd chn edpos origin any-env-channel
 ;
 \ '( 0 0 1 1 2 -0.5 3 1 ) sine-env-channel
 
@@ -687,13 +914,13 @@ hide
 set-current
 : blackman4-ramp <{ rmp0 rmp1 :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
   $" %s %s %s %s %s" '( rmp0 rmp1 beg dur get-func-name ) string-format { origin }
-  ['] b4r3-cb beg dur snd chn edpos #f rmp0 rmp1 b4r2-cb origin ptree-channel
+  <'> b4r3-cb beg dur snd chn edpos #f rmp0 rmp1 b4r2-cb origin ptree-channel
 ;
 previous
 
 : blackman4-env-channel <{ en :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
   $" %s %s %s %s" '( en beg dur get-func-name ) string-format { origin }
-  en ['] blackman4-ramp beg dur snd chn edpos origin any-env-channel
+  en <'> blackman4-ramp beg dur snd chn edpos origin any-env-channel
 ;
 
 \ ;;; any curve can be used as the connecting line between envelope breakpoints in the
@@ -728,7 +955,7 @@ set-current
 : ramp-squared <{ rmp0 rmp1 :optional symmetric #t beg 0 dur #f snd #f chn #f edpos #f -- val }>
   doc" Connects RMP0 and RMP1 with an x^2 curve."
   $" %s %s %s %s %s %s" '( rmp0 rmp1 symmetric beg dur get-func-name ) string-format { origin }
-  ['] rsq3-cb beg dur snd chn edpos #t  rmp0 rmp1 symmetric rsq2-cb  origin ptree-channel
+  <'> rsq3-cb beg dur snd chn edpos #t  rmp0 rmp1 symmetric rsq2-cb  origin ptree-channel
 ;
 previous
 
@@ -780,7 +1007,7 @@ set-current
   \ ;; a^x = exp(x * log(a))
   $" %s %s %s %s %s %s %s"
   '( rmp0 rmp1 exponent symmetric beg dur get-func-name ) string-format { origin }
-  ['] rex3-cb beg dur snd chn edpos #t  rmp0 rmp1 symmetric exponent rex2-cb origin ptree-channel
+  <'> rex3-cb beg dur snd chn edpos #t  rmp0 rmp1 symmetric exponent rex2-cb origin ptree-channel
 ;
 previous
 
@@ -820,6 +1047,18 @@ previous
   snd snd-snd to snd
   snd sound? if
     snd channels 0 ?do offset beg dur snd i ( chn ) #f offset-channel drop loop
+  else
+    'no-such-sound '( get-func-name snd ) fth-throw
+  then
+;
+
+\ ;;; -------- pad-sound
+
+: pad-sound <{ beg dur :optional snd #f -- }>
+  doc" Places a block of DUR zeros in every channel of SND starting at BEG."
+  snd snd-snd to snd
+  snd sound? if
+    snd channels 0 ?do beg dur snd i ( chn ) #f pad-channel drop loop
   else
     'no-such-sound '( get-func-name snd ) fth-throw
   then
@@ -875,9 +1114,132 @@ set-current
   then
 ;
 
+\ ;;; -------- scale-sound
+
+: scale-sound <{ scl :optional beg 0 dur #f snd #f -- }>
+  doc" Multiplies every sample in SND by SCL."
+  snd snd-snd to snd
+  snd sound? if
+    snd channels 0 ?do scl beg dur snd i ( chn ) #f scale-channel drop loop
+  else
+    'no-such-sound '( get-func-name snd ) fth-throw
+  then
+;
+
+\ ;;; -------- normalize-sound
+
+: normalize-sound <{ amp :optional beg 0 dur #f snd #f -- }>
+  doc" Scales SND to peak amplitude AMP."
+  snd snd-snd to snd
+  snd sound? if
+    amp 0.0 snd #t #f maxamp each fabs fmax end-each f/ { scl }
+    snd channels 0 ?do scl beg dur snd i ( chn ) #f scale-channel drop loop
+  else
+    'no-such-sound '( get-func-name snd ) fth-throw
+  then
+;
+
+\ ;;; -------- channels-equal
+
+hide
+: c-equal-cb { rd diff -- prc; y self -- f }
+  1 proc-create rd , diff , ( prc )
+ does> { y self -- f }
+  self @ ( rd ) read-sample y f- fabs self cell+ @ ( diff ) f>
+;
+set-current
+: channels= <{ snd1 chn1 snd2 chn2 :optional allowable-difference 0.0 -- f }>
+  doc" Returns #t if the two channels are the same (within diff) modulo trailing 0's."
+  snd1 snd2 =
+  chn1 chn2 = && if
+    #t
+  else
+    snd1 chn1 #f maxamp { mx1 }
+    snd2 chn2 #f maxamp { mx2 }
+    mx1 mx2 f- fabs allowable-difference f> if
+      #f
+    else
+      snd1 chn1 #f frames { len1 }
+      snd2 chn2 #f frames { len2 }
+      len1 len2 >= if
+	len1
+	snd1
+	snd2
+	chn1
+	chn2
+      else
+	len2
+	snd2
+	snd1
+	chn2
+	chn1
+      then { len s1 s2 c1 c2 }
+      0 s2 c2 1 #f make-sample-reader { read2 }
+      read2 allowable-difference c-equal-cb 0 len s1 c1 #f #f scan-channel not
+    then
+  then
+;
+previous
+
+: channels-equal? <{ snd1 chn1 snd2 chn2 :optional allowable-difference 0.0 -- f }>
+  doc" Returns #t if the two channels are the same (within diff)."
+  snd1 chn1 #f frames snd2 chn2 #f frames <> if
+    #f
+  else
+    snd1 chn1 snd2 chn2 allowable-difference channels=
+  then
+;
+
+\ ;;; -------- mono->stereo, mono-files->stereo
+
+: mono->stereo ( new-name snd1 chn1 snd2 chn2 -- snd )
+  doc" Takes the two channels and combines them into a stereo sound NEW-NAME."
+  { new-name snd1 chn1 snd2 chn2 }
+  snd1 chn1 edit-position { old-ed1 }
+  snd2 chn2 edit-position { old-ed2 }
+  :file new-name :channels 2 :srate snd1 srate new-sound { ind }
+  ind 0 snd1 chn1 0 #f #f swap-channels drop
+  ind 1 snd2 chn2 0 #f #f swap-channels drop
+  old-ed1 snd1 chn1 set-edit-position drop
+  old-ed2 snd2 chn2 set-edit-position drop
+  ind
+;
+\ "test.snd" 0 0 1 0 mono->stereo
+
+: mono-files->stereo ( new-name chan1-name chan2-name -- snd )
+  doc" Combines two mono files into the stereo file NEW-NAME."
+  {  new-name chan1-name chan2-name }
+  chan1-name find-file to chan1-name
+  chan1-name false? if 'no-such-file '( get-func-name chan1-name ) fth-throw then
+  chan1-name open-sound { ind1 }
+  chan2-name find-file to chan2-name
+  chan2-name false? if 'no-such-file '( get-func-name chan2-name ) fth-throw then
+  chan2-name open-sound { ind2 }
+  new-name ind1 0 ind2 0 mono->stereo { ind3 }
+  ind1 close-sound drop
+  ind2 close-sound drop
+  ind3
+;
+\ "test.snd" "oboe.snd" "pistol.snd" mono-files->stereo
+
+: stereo->mono ( orig-snd chan1-name chan2-name -- snd0 snd1 )
+  doc" Splits a stereo sound into two mono sounds named CHAN1-NAME and CHAN2-NAME."
+  {  orig-snd chan1-name chan2-name }
+  orig-snd 0 edit-position { old-ed0 }
+  orig-snd 1 edit-position { old-ed1 }
+  :file chan1-name :srate orig-snd srate new-sound { chan1 }
+  :file chan2-name :srate orig-snd srate new-sound { chan2 }
+  orig-snd 0 chan1 0 0 #f #f swap-channels drop
+  orig-snd 1 chan2 0 0 #f #f swap-channels drop
+  old-ed0 orig-snd 0 set-edit-position drop
+  old-ed1 orig-snd 1 set-edit-position drop
+  chan1 chan2
+;
+\ 0 "hi1.snd" "hi2.snd" stereo->mono
+
 \ === PREFERENCES DIALOG ===
 
-\ --- focus-follows-mouse ---
+\ ;;; -------- focus-follows-mouse
 
 hide
 : channel-xt ( snd chn -- xt; self -- val )
@@ -887,7 +1249,6 @@ hide
   self @ ( snd )
   self cell+ @ ( chn ) channel-widgets
 ;
-
 : graph-hook-cb <{ snd chn -- val }>
   snd sound? if
     snd chn channel-xt 'no-such-channel nil fth-catch false? if car focus-widget then
@@ -901,9 +1262,9 @@ set-current
 
 : focus-follows-mouse ( -- )
   focus-is-following-mouse unless
-    mouse-enter-graph-hook    ['] graph-hook-cb add-hook!
-    mouse-enter-listener-hook ['] focus-widget  add-hook!
-    mouse-enter-text-hook     ['] focus-widget  add-hook!
+    mouse-enter-graph-hook    <'> graph-hook-cb add-hook!
+    mouse-enter-listener-hook <'> focus-widget  add-hook!
+    mouse-enter-text-hook     <'> focus-widget  add-hook!
     #t to focus-is-following-mouse
   then
 ;
@@ -925,14 +1286,14 @@ set-current
   beg to prefs-initial-beg
   dur to prefs-initial-dur
   full to prefs-show-full-duration
-  initial-graph-hook ['] bounds-cb add-hook!
+  initial-graph-hook <'> bounds-cb add-hook!
 ;
 
 : prefs-deactivate-initial-bounds ( -- )
   0.0 to prefs-initial-beg
   0.1 to prefs-initial-dur
   #f  to prefs-show-full-duration
-  initial-graph-hook ['] bounds-cb remove-hook! drop
+  initial-graph-hook <'> bounds-cb remove-hook! drop
 ;
 previous
 
@@ -944,7 +1305,6 @@ hide
 #f  value reopen-menu
 16  value reopen-max-length
 ' noop 0 make-proc constant extensions-noop
-
 : reopen-select-cb { brief-name long-name -- proc; self -- }
   0 proc-create long-name , brief-name ,
  does> ( self -- )
@@ -954,7 +1314,6 @@ hide
   reopen-menu brief-name remove-from-menu drop
   long-name file-exists? if long-name open-sound drop then
 ;
-
 : add-to-reopen-menu <{ snd -- #f }>
   snd short-file-name { brief-name }
   snd file-name { long-name }
@@ -971,7 +1330,6 @@ hide
   then
   #f
 ;
-
 : check-reopen-menu <{ file -- }>
   file #f file-basename { brief-name }
   reopen-names brief-name array-member? if
@@ -994,8 +1352,8 @@ set-current
     reopen-menu reopen-empty extensions-noop 0 add-to-menu drop
     reopen-names reopen-empty array-push drop
     #t to including-reopen-menu
-    close-hook ['] add-to-reopen-menu add-hook!
-    open-hook  ['] check-reopen-menu  add-hook!
+    close-hook <'> add-to-reopen-menu add-hook!
+    open-hook  <'> check-reopen-menu  add-hook!
   then
 ;
 previous
@@ -1013,7 +1371,6 @@ hide
   { self }
   self @ ( file ) 0 find-sound dup sound? if select-sound then drop
 ;
-
 : open-buffer <{ file -- }>
   buffer-names buffer-empty array-member? if
     buffer-menu buffer-empty remove-from-menu drop
@@ -1022,7 +1379,6 @@ hide
   buffer-menu file file buffer-select-cb -1 add-to-menu drop
   buffer-names file array-push drop
 ;
-
 : close-buffer <{ snd -- #f }>
   buffer-menu snd file-name remove-from-menu drop
   buffer-names   buffer-names snd file-name array-index   array-delete! drop
@@ -1043,15 +1399,17 @@ set-current
     buffer-menu buffer-empty extensions-noop 0 add-to-menu drop
     buffer-names buffer-empty array-push drop
     #t to including-buffers-menu
-    open-hook  ['] open-buffer  add-hook!
-    close-hook ['] close-buffer add-hook!
+    open-hook  <'> open-buffer  add-hook!
+    close-hook <'> close-buffer add-hook!
   then
 ;
 previous
 
-\ --- global sync (for prefs dialog) ---
+\ ;;; -------- global-sync (for prefs dialog)
+
 0 value global-sync-choice		\ global var so that we can reflect
 					\ the current setting in prefs dialog
+hide
 : global-sync-cb <{ snd -- val }>
   global-sync-choice 1 = if
     1 snd set-sync
@@ -1063,16 +1421,17 @@ previous
     then
   then
 ;
-
+set-current
 : set-global-sync ( choice -- )
   { choice }
   choice to global-sync-choice
   choice 0<> if
-    after-open-hook ['] global-sync-cb hook-member? unless
-      after-open-hook ['] global-sync-cb add-hook!
+    after-open-hook <'> global-sync-cb hook-member? unless
+      after-open-hook <'> global-sync-cb add-hook!
     then
   then
 ;
+previous
 
 \ ;;; -------- show-selection
 

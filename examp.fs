@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Mon Jan 08 04:26:50 CET 2007
+\ Changed: Tue Jan 09 04:18:59 CET 2007
 
 \ Commentary:
 \
@@ -54,14 +54,14 @@
 \ fft-env-interp      	    ( env1 env2 interp :optional snd chn -- vct )
 \ filter-fft                ( flt :optional normalize snd chn -- val )
 \ fft-smoother              ( cutoff start samps :optional snd chn -- val )
-\ comb-filter         	    ( scaler size -- proc; x self -- res )
-\ comb-chord          	    ( scaler size amp -- proc; x self -- res )
-\ zcomb               	    ( scaler size pm -- proc; x self -- val )
-\ notch-filter        	    ( scaler size -- proc; x self -- val )
-\ formant-filter      	    ( radius frequency -- proc; x self -- val )
-\ formants            	    ( r1 f1 r2 f2 r3 f3 -- proc; x self -- val )
-\ moving-formant      	    ( radius move -- proc; x self -- val )
-\ osc-formants        	    ( radius bases amounts freqs -- proc; x self -- val )
+\ comb-filter         	    ( scaler size -- prc; x self -- res )
+\ comb-chord          	    ( scaler size amp -- prc; x self -- res )
+\ zcomb               	    ( scaler size pm -- prc; x self -- val )
+\ notch-filter        	    ( scaler size -- prc; x self -- val )
+\ formant-filter      	    ( radius frequency -- prc; x self -- val )
+\ formants            	    ( r1 f1 r2 f2 r3 f3 -- prc; x self -- val )
+\ moving-formant      	    ( radius move -- prc; x self -- val )
+\ osc-formants        	    ( radius bases amounts freqs -- prc; x self -- val )
 \ 
 \ echo                      ( scaler secs -- prc; y self -- val )
 \ zecho                     ( scaler secs freq amp -- prc; y self -- val )
@@ -85,7 +85,7 @@
 \ make-sound-interp   	    ( start :optional snd chn -- prc; loc self -- val )
 \ sound-interp        	    ( func loc -- val )
 \ env-sound-interp    	    ( envelope :optional time-scale snd chn -- file-name )
-\ granulated-sound-interp   ( e :optional tscale grain-len grain-env out-hop snd chn -- filename )
+\ granulated-sound-interp   ( e :optional tscale grain-len grain-env out-hop snd chn -- file-name )
 \ title-with-data           ( -- )
 \ filtered-env        	    ( e :optional snd chn -- val )
 \  
@@ -93,8 +93,8 @@
 \ find-click                ( loc -- pos )
 \ remove-clicks             ( -- )
 \ search-for-click          ( -- pos )
-\ zero+               	    ( -- proc; n self -- val )
-\ next-peak           	    ( -- proc; n self -- val )
+\ zero+               	    ( -- prc; n self -- val )
+\ next-peak           	    ( -- prc; n self -- val )
 \ find-pitch                ( pitch -- prc; y self -- val )
 \ file->vct           	    ( file -- vct )
 \ add-notes           	    ( notes :optional snd chn -- #f )
@@ -104,7 +104,7 @@
 \ explode-sf2               ( -- )
 \ open-next-file-in-directory ( -- f )
 \ click-middle-button-to-open-next-file-in-directory ( -- )
-\ chain-dsps                ( start dur :optional dsps #() -- )
+\ chain-dsps                ( start dur :optional dsps -- )
 \ if-cursor-follows-play-it-stays-where-play-stopped ( :optional enable -- )
 \ 
 \ smooth-channel-via-ptree  ( :optional beg dur snd chn edpos -- val )
@@ -128,7 +128,6 @@
   ' noop alias set-widget-size
   ' noop alias show-widget
   ' noop alias hide-widget
-  ' noop alias with-mix-tag
 [then]
 
 \ #( '( snd0 chn0 ) '( snd0 chn1 ) ... )
@@ -986,7 +985,7 @@ is like fft-squelch."
 
 \ ;;; -------- comb-filter
 
-: comb-filter ( scaler size -- proc; x self -- res )
+: comb-filter ( scaler size -- prc; x self -- res )
   doc" Returns a comb-filter ready for map-channel etc: 0.8 32 comb-filter map-channel.  \
 If you're in a hurry use: 0.8 32 make-comb clm-channel instead."
   { scaler size }
@@ -999,7 +998,7 @@ If you're in a hurry use: 0.8 32 make-comb clm-channel instead."
 
 \ by using filters at harmonically related sizes, we can get chords:
 
-: comb-chord ( scaler size amp -- proc; x self -- res )
+: comb-chord ( scaler size amp -- prc; x self -- res )
   doc" Returns a set of harmonically-related comb filters: 0.95 100 0.3 comb-chord map-channel"
   { scaler size amp }
   scaler size make-comb { c1 }
@@ -1017,7 +1016,7 @@ If you're in a hurry use: 0.8 32 make-comb clm-channel instead."
 
 \ ;;; or change the comb length via an envelope:
 
-: zcomb ( scaler size pm -- proc; x self -- val )
+: zcomb ( scaler size pm -- prc; x self -- val )
   doc" Returns a comb filter whose length varies according to an envelope:\n\
 0.8 32 '( 0 0 1 10 ) zcomb map-channel "
   { scaler size pm }
@@ -1028,7 +1027,7 @@ If you're in a hurry use: 0.8 32 make-comb clm-channel instead."
   self @ ( cmb ) x self cell+ @ ( penv ) env comb
 ;
 
-: notch-filter ( scaler size -- proc; x self -- val )
+: notch-filter ( scaler size -- prc; x self -- val )
   doc" Returns a notch-filter: 0.8 32 notch-filter map-channel"
   make-notch { gen }
   1 proc-create gen ,
@@ -1036,7 +1035,7 @@ If you're in a hurry use: 0.8 32 make-comb clm-channel instead."
   self @ ( cmd ) x 0.0 notch
 ;
 
-: formant-filter ( radius frequency -- proc; x self -- val )
+: formant-filter ( radius frequency -- prc; x self -- val )
   doc" Returns a formant generator: 0.99 2400 formant-filter map-channel.  \
 Faster is:  0.99 2400 make-formant filter-sound"
   make-formant { gen }
@@ -1045,7 +1044,7 @@ Faster is:  0.99 2400 make-formant filter-sound"
   self @ ( frm ) x formant
 ;
 
-: formants ( r1 f1 r2 f2 r3 f3 -- proc; x self -- val )
+: formants ( r1 f1 r2 f2 r3 f3 -- prc; x self -- val )
   doc" Returns 3 formant filters in parallel: 0.99 900 0.98 1800 0.99 2700 formants map-channel"
   { r1 f1 r2 f2 r3 f3 }
   r1 f1 make-formant { fr1 }
@@ -1058,7 +1057,7 @@ Faster is:  0.99 2400 make-formant filter-sound"
   self 2 cells + @ x formant f+
 ;
 
-: moving-formant ( radius move -- proc; x self -- val )
+: moving-formant ( radius move -- prc; x self -- val )
   doc" Returns a time-varying (in frequency) formant filter:\n\
 0.99 '( 0 1200 1 2400 ) moving-formant map-channel"
   { radius move }
@@ -1071,7 +1070,7 @@ Faster is:  0.99 2400 make-formant filter-sound"
   ( ret )
 ;
 
-: osc-formants ( radius bases amounts freqs -- proc; x self -- val )
+: osc-formants ( radius bases amounts freqs -- prc; x self -- val )
   doc" Returns a time-varying (in frequency) formant filter:\n\
 0.99 '( 0 1200 1 2400 ) moving-formant map-channel"
   { radius bases amounts freqs }
@@ -1825,7 +1824,7 @@ previous
   then
 ;
 
-: zero+ ( -- proc; n self -- val )
+: zero+ ( -- prc; n self -- val )
   doc" Finds the next positive-going zero crossing (if searching forward) (for use with C-s)"
   1 proc-create 0.0 ( lastn ) ,
  does> { n self -- val }
@@ -1834,7 +1833,7 @@ previous
   ( rtn )
 ;
 
-: next-peak ( -- proc; n self -- val )
+: next-peak ( -- prc; n self -- val )
   doc" Finds the next max or min point in the time-domain waveform (for use with C-s)"
   1 proc-create ( last0 ) #f , ( last1 ) #f ,
  does> { n self -- val }
@@ -2314,7 +2313,7 @@ set-current
   0 { samp }
   #t { in-silence }
   max-regions { old-max }
-  with-mix-tag { old-tags }
+  with-mix-tags { old-tags }
   1024 set-max-regions drop
   #f set-with-mix-tags drop
   buffer silence in-silence edges samp sc-scan-cb 0 #f #f #f #f scan-channel drop

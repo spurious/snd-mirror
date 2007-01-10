@@ -308,13 +308,12 @@
 	     (set! ctr (+ ctr 1))
 	     (outa i result *output*))))))))
 
-
-(define (test-prc95)
-  (with-sound ()
-    (plucky 0 .3 440 .2 1.0)
-    (bowstr .5 .3 220 .2 1.0)
-    (brass 1 .3 440 .2 1.0)
-    (clarinet 1.5 .3 440 .2 1.0)
-    (flute 2 .3 440 .2 1.0)))
-
+#|
+(with-sound ()
+  (plucky 0 .3 440 .2 1.0)
+  (bowstr .5 .3 220 .2 1.0)
+  (brass 1 .3 440 .2 1.0)
+  (clarinet 1.5 .3 440 .2 1.0)
+  (flute 2 .3 440 .2 1.0))
+|#
 

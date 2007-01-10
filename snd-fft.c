@@ -1400,7 +1400,6 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
   sg->losamp = ap->losamp;
   sg->hisamp = ap->hisamp;
   sg->window = cp->fft_window;
-  sg->minibuffer_needs_to_be_cleared = false;
   if (cp->graph_time_p) dpys++; 
   if (cp->graph_lisp_p) dpys++; 
   if (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)
@@ -1479,6 +1478,7 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
     }
   cp->fft_changed = FFT_CHANGED;
   start_progress_report(cp->sound, NOT_FROM_ENVED);
+  sg->minibuffer_needs_to_be_cleared = true;
   return(SONO_RUN);
 }
 

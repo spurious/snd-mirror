@@ -1993,7 +1993,6 @@ static void make_sonogram(chan_info *cp)
       bins = (int)(si->target_bins * cp->spectro_cutoff);
       if (bins == 0) return;
 
-      /* TODO: move out back = ok recopy but hg/ss are still posted */
       /* TODO: if saved case was partially obscured, restoration here gets the previous display (colors/sizes etc)! */
 
       if (cp->cgx->fft_pix)                            /* Motif None = 0 */

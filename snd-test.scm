@@ -65254,7 +65254,7 @@ EDITS: 1
       (snd-display (format #f "total: ~D, help: ~D, no-help: ~D, found help: ~D (~D in snd-test, ~D instruments)" 
 			   total help no-help outside-help 242 (- snd-test-help 242)))
       ;; total: 4219, help: 3511, no-help: 120, found help: 588 (242 in snd-test, 44 instruments)
-      ;; main leftovers: dlocsig, new-effects, prc95, analog-filter
+      ;; main leftovers: dlocsig, new-effects, prc95
 
       (for-each
        (lambda (lst)
