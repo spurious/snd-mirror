@@ -10,11 +10,6 @@
 (define extension 10.0)
 (define show-details #f)
 
-(define* (add-named-mark samp name :optional snd chn)
-  (let ((m (add-mark samp snd chn)))
-    (set! (mark-name m) name)
-    m))
-
 ;;; remove anything below 16Hz
 ;;; extend (src by 1/extension)
 ;;; collect upward zero-crossings
@@ -22,62 +17,58 @@
 ;;;   sort by least weight
 ;;;   ramp (out or in) and check if done
 
-(define derumble-sound
-  ;; remove rumbles and DC etc (since we're using zero crossings to find period starts)
-  (lambda args
-    (let* ((snd (if (not (null? args)) (car args) #f))
-	   (chn (if (and (not (null? args)) (> (length args) 1)) (cadr args) #f))
-	   (old-length (frames snd chn))
+(define* (rubber-sound stretch :optional snd chn)
+  ;; prepare sound (get rid of low freqs, resample)
+  
+  (define* (add-named-mark samp name :optional snd chn)
+    (let ((m (add-mark samp snd chn)))
+      (set! (mark-name m) name)
+      m))
+
+  (define* (derumble-sound :optional snd chn)
+    (let* ((old-length (frames snd chn))
 	   (pow2 (inexact->exact (ceiling (/ (log (min old-length (srate snd))) (log 2)))))
 	   (fftlen (inexact->exact (expt 2 pow2)))
 	   (flt-env (list 0.0 0.0 (/ (* 2 16.0) (srate snd)) 0.0 (/ (* 2 20.0) (srate snd)) 1.0 1.0 1.0)))
       (filter-sound flt-env fftlen snd chn)
-      (set! (frames snd chn) old-length))))
-
-(define sample-sound
-  ;; prepare sound for analysis by interpolating samples
-  (lambda args
-    (let* ((snd (if (not (null? args)) (car args) #f))
-	   (chn (if (and (not (null? args)) (> (length args) 1)) (cadr args) #f)))
-      (if (not (= extension 1.0))
-	  (src-sound (/ 1.0 extension) 1.0 snd chn)))))
-
-(define unsample-sound
-  ;; undo earlier interpolation
-  (lambda args
-    (let* ((snd (if (not (null? args)) (car args) #f))
-	   (chn (if (and (not (null? args)) (> (length args) 1)) (cadr args) #f)))
-      (if (not (= extension 1.0))
-	  (src-sound extension 1.0 snd chn)))))
-
-(define (crossings)
-  ;; return number of upward zero crossings that don't look like silence
-  (let* ((crosses 0)
-	 (sr0 (make-sample-reader 0))
-	 (samp0 (next-sample sr0))
-	 (len (frames))
-	 (sum 0.0)
-	 (last-cross 0)
-	 (silence (* extension .001)))
-    (run
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i len))
-	 (let ((samp1 (next-sample sr0)))
-	   (if (and (<= samp0 0.0)
-		    (> samp1 0.0))
-	       (if (and (> (- i last-cross) 4)
-			(> sum silence))
-		   (begin
-		     (set! crosses (+ crosses 1))
-		     (set! last-cross i)
-		     (set! sum 0.0))))
-	   (set! sum (+ sum (abs samp0)))
-	   (set! samp0 samp1)))))
-    crosses))
-
-(define env-add
-  (lambda (s0 s1 samps)
+      (set! (frames snd chn) old-length)))
+  
+  (define* (sample-sound :optional snd chn)
+    (if (not (= extension 1.0))
+	(src-sound (/ 1.0 extension) 1.0 snd chn)))
+  
+  (define* (unsample-sound :optional snd chn)
+    ;; undo earlier interpolation
+    (if (not (= extension 1.0))
+	(src-sound extension 1.0 snd chn)))
+  
+  (define (crossings)
+    ;; return number of upward zero crossings that don't look like silence
+    (let* ((crosses 0)
+	   (sr0 (make-sample-reader 0))
+	   (samp0 (next-sample sr0))
+	   (len (frames))
+	   (sum 0.0)
+	   (last-cross 0)
+	   (silence (* extension .001)))
+      (run
+       (lambda ()
+	 (do ((i 0 (1+ i)))
+	     ((= i len))
+	   (let ((samp1 (next-sample sr0)))
+	     (if (and (<= samp0 0.0)
+		      (> samp1 0.0))
+		 (if (and (> (- i last-cross) 4)
+			  (> sum silence))
+		     (begin
+		       (set! crosses (+ crosses 1))
+		       (set! last-cross i)
+		       (set! sum 0.0))))
+	     (set! sum (+ sum (abs samp0)))
+	     (set! samp0 samp1)))))
+      crosses))
+  
+  (define (env-add s0 s1 samps)
     (let ((data (make-vct samps))
 	  (x 1.0)
 	  (xinc (/ 1.0 samps))
@@ -85,15 +76,12 @@
 	  (sr1 (make-sample-reader (inexact->exact (floor s1)))))
       (run
        (lambda ()
-      (do ((i 0 (1+ i)))
-	  ((= i samps))
-	(vct-set! data i (+ (* x (next-sample sr0))
-			    (* (- 1.0 x) (next-sample sr1))))
-	(set! x (+ x xinc)))))
-      data)))
-
-(define* (rubber-sound stretch :optional snd chn)
-  ;; prepare sound (get rid of low freqs, resample)
+	 (do ((i 0 (1+ i)))
+	     ((= i samps))
+	   (vct-set! data i (+ (* x (next-sample sr0))
+			       (* (- 1.0 x) (next-sample sr1))))
+	   (set! x (+ x xinc)))))
+      data))
   
   (as-one-edit
    (lambda ()

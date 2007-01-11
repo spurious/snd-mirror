@@ -333,7 +333,9 @@ typedef struct chan_info {
   off_t original_cursor, original_left_sample, original_window_size;   /* for cursor reset after cursor-moving play */
   with_hook_t hookable;
   off_t selection_transform_size;
-  bool squelch_update, previous_squelch_update, waiting_to_make_graph, in_as_one_edit;
+  bool squelch_update, previous_squelch_update, waiting_to_make_graph;
+  int in_as_one_edit, as_one_edit_positions_size;
+  int *as_one_edit_positions;
   /* moved from global to channel-local 4-Aug-00 */
   Float spectro_x_scale, spectro_y_scale, spectro_z_scale, spectro_z_angle, spectro_x_angle, spectro_y_angle, spectro_cutoff, spectro_start;
   Float lin_dB, min_dB, fft_window_alpha, fft_window_beta, beats_per_minute, grid_density;
@@ -880,7 +882,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook);
 char *edit_to_string(chan_info *cp, int edit);
 void free_edit_list(chan_info *cp);
 void backup_edit_list(chan_info *cp);
-void as_one_edit(chan_info *cp, int one_edit, const char *one_edit_origin);
+void as_one_edit(chan_info *cp, int one_edit);
 void free_sound_list(chan_info *cp);
 void free_ptree_list(chan_info *cp);
 void release_dangling_readers(chan_info *cp, int edit_ctr);

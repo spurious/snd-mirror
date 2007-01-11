@@ -62,7 +62,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->fft_log_magnitude = fft_log_magnitude(ss);
   cp->min_dB = min_dB(ss);
   cp->lin_dB = ss->lin_dB;
-  cp->in_as_one_edit = false;
+  cp->in_as_one_edit = 0;
   cp->wavelet_type = wavelet_type(ss);
   cp->spectro_x_angle = spectro_x_angle(ss);
   cp->spectro_y_angle = spectro_y_angle(ss);
@@ -191,6 +191,14 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->graph_lisp_p = false;
   cp->selection_transform_size = 0;
   cp->edit_hook_checked = false;
+
+  if (cp->as_one_edit_positions)
+    {
+      FREE(cp->as_one_edit_positions);
+      cp->as_one_edit_positions = NULL;
+      cp->as_one_edit_positions_size = 0;
+    }
+
   if (XEN_HOOK_P(cp->edit_hook))
     {
       XEN_CLEAR_HOOK(cp->edit_hook);

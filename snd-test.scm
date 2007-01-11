@@ -6,32 +6,32 @@
 ;;;  test 3: variables                          [1599]
 ;;;  test 4: sndlib                             [2256]
 ;;;  test 5: simple overall checks              [4675]
-;;;  test 6: vcts                               [12185]
-;;;  test 7: colors                             [12461]
-;;;  test 8: clm                                [12951]
-;;;  test 9: mix                                [22672]
-;;;  test 10: marks                             [26321]
-;;;  test 11: dialogs                           [27219]
-;;;  test 12: extensions                        [27513]
-;;;  test 13: menus, edit lists, hooks, etc     [27968]
-;;;  test 14: all together now                  [29552]
-;;;  test 15: chan-local vars                   [30627]
-;;;  test 16: regularized funcs                 [31957]
-;;;  test 17: dialogs and graphics              [36372]
-;;;  test 18: enved                             [36461]
-;;;  test 19: save and restore                  [36481]
-;;;  test 20: transforms                        [38316]
-;;;  test 21: new stuff                         [40149]
-;;;  test 22: run                               [42174]
-;;;  test 23: with-sound                        [47938]
-;;;  test 24: user-interface                    [50417]
-;;;  test 25: X/Xt/Xm                           [54033]
-;;;  test 26: Gtk                               [58624]
-;;;  test 27: GL                                [62741]
-;;;  test 28: errors                            [62865]
-;;;  test 29: Common Music                      [64981]
-;;;  test all done                              [65031]
-;;;  test the end                               [65260]
+;;;  test 6: vcts                               [12412]
+;;;  test 7: colors                             [12688]
+;;;  test 8: clm                                [13178]
+;;;  test 9: mix                                [22899]
+;;;  test 10: marks                             [26548]
+;;;  test 11: dialogs                           [27446]
+;;;  test 12: extensions                        [27740]
+;;;  test 13: menus, edit lists, hooks, etc     [28195]
+;;;  test 14: all together now                  [29779]
+;;;  test 15: chan-local vars                   [30857]
+;;;  test 16: regularized funcs                 [32187]
+;;;  test 17: dialogs and graphics              [36602]
+;;;  test 18: enved                             [36691]
+;;;  test 19: save and restore                  [36711]
+;;;  test 20: transforms                        [38546]
+;;;  test 21: new stuff                         [40379]
+;;;  test 22: run                               [42406]
+;;;  test 23: with-sound                        [48170]
+;;;  test 24: user-interface                    [50649]
+;;;  test 25: X/Xt/Xm                           [54267]
+;;;  test 26: Gtk                               [58858]
+;;;  test 27: GL                                [62975]
+;;;  test 28: errors                            [63099]
+;;;  test 29: Common Music                      [65215]
+;;;  test all done                              [65265]
+;;;  test the end                               [65500]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -11866,6 +11866,233 @@ EDITS: 5
 		  (XtVaSetValues edp (list XmNpaneMinimum 1))  ; not 0 here -- Xt warnings
 		  (XtManageChild edp)))
 	    (set! (squelch-update ind) #f)
+	    (close-sound ind))
+	  
+	  (let ((ind (open-sound "oboe.snd")))
+	    
+	    ;; simple cases
+	    
+	    (as-one-edit
+	     (lambda ()
+	       (set! (sample 10) 1.0)))
+	    (if (fneq (sample 10) 1.0) (snd-display ";as-one-edit 1: ~A" (sample 10)))
+	    (if (not (= (edit-position ind 0) 1)) 
+		(snd-display ";as-one-edit 1 edpos: ~A" (edit-position ind 0))
+		(begin
+		  (if (not (equal? (edit-fragment 1 ind 0) (list "set-sample 10 1.0000" "set" 10 1)))
+		      (snd-display ";as-one-edit 1 edlist: ~A" (edit-fragment 1 ind 0)))
+		  (if (not (equal? (edit-fragment 0 ind 0) (list #f "init" 0 50828)))
+		      (snd-display ";as-one-edit 1 original edlist: ~A" (edit-fragment 0 ind 0)))))
+	    
+	    (revert-sound ind)
+	    (as-one-edit
+	     (lambda ()
+	       (set! (sample 10) 1.0)
+	       (map-channel (lambda (y) (* y 2.0)) 0 20 ind 0 #f "map-channel as-one-edit")
+	       (if (not (= (edit-position ind 0) 2)) (snd-display ";as-one-edit 2 edpos internal: ~A" (edit-position ind 0))))
+	     "as-one-edit test 2")
+	    (if (fneq (sample 10) 2.0) (snd-display ";as-one-edit 2: ~A" (sample 10)))
+	    (if (not (= (edit-position ind 0) 1)) 
+		(snd-display ";as-one-edit 2 edpos: ~A" (edit-position ind 0))
+		(begin
+		  (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit test 2" "set" 0 20)))
+		      (snd-display ";as-one-edit 2 edlist: ~A" (edit-fragment 1 ind 0)))
+		  (if (not (equal? (edit-fragment 0 ind 0) (list #f "init" 0 50828)))
+		      (snd-display ";as-one-edit 2 original edlist: ~A" (edit-fragment 0 ind 0)))))
+	    
+	    (revert-sound ind)
+	    (let ((ind2 (open-sound "2a.snd")))
+	      (set! (sample 1 ind2 0) 1.0)
+	      (set! (sample 2 ind2 1) 0.5)
+	      (set! (selected-sound) ind)
+	      
+	      (as-one-edit
+	       (lambda ()
+		 (set! (sample 10 ind 0) 1.0)))
+	      (if (fneq (sample 10 ind 0) 1.0) (snd-display ";as-one-edit 3: ~A" (sample 10 ind 0)))
+	      (if (not (= (edit-position ind 0) 1)) (snd-display ";as-one-edit 3 edpos: ~A" (edit-position ind 0)))
+	      (if (not (= (edit-position ind2 0) 1)) (snd-display ";as-one-edit 3 2 edpos: ~A" (edit-position ind2 0)))
+	      (if (not (= (edit-position ind2 1) 1)) (snd-display ";as-one-edit 3 2 1 edpos: ~A" (edit-position ind2 1)))
+	      (if (not (equal? (edit-fragment 1 ind 0) (list "set-sample 10 1.0000" "set" 10 1)))
+		  (snd-display ";as-one-edit 3 edlist: ~A" (edit-fragment 1 ind 0)))
+	      (if (not (equal? (edit-fragment 1 ind2 0) (list "set-sample 1 1.0000" "set" 1 1)))
+		  (snd-display ";as-one-edit 3 2 edlist: ~A" (edit-fragment 1 ind2 0)))
+	      (if (not (equal? (edit-fragment 1 ind2 1) (list "set-sample 2 0.5000" "set" 2 1)))
+		  (snd-display ";as-one-edit 3 2 1 edlist: ~A" (edit-fragment 1 ind2 1)))
+	      
+	      (revert-sound ind)
+	      
+	      (as-one-edit    
+	       (lambda ()
+		 (set! (sample 10 ind 0) 1.0)
+		 (map-channel (lambda (y) (* y 2.0)) 0 20 ind 0 #f "map-channel as-one-edit 2")
+		 (if (not (= (edit-position ind 0) 2)) (snd-display ";as-one-edit 4 edpos internal: ~A" (edit-position ind 0))))
+	       "as-one-edit test 4")
+	      (if (fneq (sample 10) 2.0) (snd-display ";as-one-edit 4: ~A" (sample 10 ind 0)))
+	      (if (not (= (edit-position ind 0) 1)) 
+		  (snd-display ";as-one-edit 4 edpos: ~A" (edit-position ind 0))
+		  (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit test 4" "set" 0 20)))
+		      (snd-display ";as-one-edit 4 edlist: ~A" (edit-fragment 1 ind 0))))
+	      (if (not (equal? (edit-fragment 1 ind2 0) (list "set-sample 1 1.0000" "set" 1 1)))
+		  (snd-display ";as-one-edit 3 2 edlist: ~A" (edit-fragment 1 ind2 0)))
+	      (if (not (equal? (edit-fragment 1 ind2 1) (list "set-sample 2 0.5000" "set" 2 1)))
+		  (snd-display ";as-one-edit 3 2 1 edlist: ~A" (edit-fragment 1 ind2 1)))
+	      
+	      (revert-sound ind)
+	      (set! (sample 3 ind 0) 1.0)
+	      
+	      (as-one-edit
+	       (lambda ()
+		 (set! (sample 10 ind 0) 1.0)
+		 (set! (sample 10 ind2 0) 0.5)
+		 (set! (sample 10 ind2 1) 0.4)))
+	      (if (fneq (sample 3 ind 0) 1.0) (snd-display ";as-one-edit 5 (3): ~A" (sample 3 ind 0)))
+	      (if (fneq (sample 10 ind 0) 1.0) (snd-display ";as-one-edit 5 (10): ~A" (sample 10 ind 0)))
+	      (if (fneq (sample 10 ind2 0) 0.5) (snd-display ";as-one-edit 5 (2 10): ~A" (sample 10 ind2 0)))
+	      (if (fneq (sample 10 ind2 1) 0.4) (snd-display ";as-one-edit 5 (2 1 10): ~A" (sample 10 ind2 1)))
+	      (if (not (= (edit-position ind 0) 2)) (snd-display ";as-one-edit 5 edpos: ~A" (edit-position ind 0)))
+	      (if (not (= (edit-position ind2 0) 2)) (snd-display ";as-one-edit 5 2 edpos: ~A" (edit-position ind2 0)))
+	      (if (not (= (edit-position ind2 1) 2)) (snd-display ";as-one-edit 5 2 1 edpos: ~A" (edit-position ind2 1)))
+	      
+	      (if (not (equal? (edit-fragment 2 ind 0) (list "set-sample 10 1.0000" "set" 10 1)))
+		  (snd-display ";as-one-edit 5 edlist 2: ~A" (edit-fragment 1 ind 0)))
+	      (if (not (equal? (edit-fragment 1 ind 0) (list "set-sample 3 1.0000" "set" 3 1)))
+		  (snd-display ";as-one-edit 5 edlist 1: ~A" (edit-fragment 1 ind 0)))
+	      (if (not (equal? (edit-fragment 0 ind 0) (list #f "init" 0 50828)))
+		  (snd-display ";as-one-edit 5 original edlist: ~A" (edit-fragment 0 ind 0)))
+	      (if (not (equal? (edit-fragment 2 ind2 0) (list "set-sample 10 0.5000" "set" 10 1)))
+		  (snd-display ";as-one-edit 5 edlist 2 1: ~A" (edit-fragment 1 ind2 0)))
+	      
+	      (as-one-edit
+	       (lambda ()
+		 (map-channel (lambda (y) (* y 2.0)) 0 20 ind 0 #f "map-channel as-one-edit 6")
+		 (map-channel (lambda (y) (* y 2.0)) 0 20 ind2 1 #f "map-channel as-one-edit 6 2 1"))
+	       "as-one-edit test 6")
+	      
+	      
+	      (if (fneq (sample 3 ind 0) 2.0) (snd-display ";as-one-edit 6 (3): ~A" (sample 3 ind 0)))
+	      (if (fneq (sample 10 ind 0) 2.0) (snd-display ";as-one-edit 6 (10): ~A" (sample 10 ind 0)))
+	      (if (fneq (sample 10 ind2 0) 0.5) (snd-display ";as-one-edit 6 (2 10): ~A" (sample 10 ind2 0)))
+	      (if (fneq (sample 10 ind2 1) 0.8) (snd-display ";as-one-edit 6 (2 1 10): ~A" (sample 10 ind2 1)))
+	      (if (not (= (edit-position ind 0) 3)) (snd-display ";as-one-edit 6 edpos: ~A" (edit-position ind 0)))
+	      (if (not (= (edit-position ind2 0) 2)) (snd-display ";as-one-edit 6 2 edpos: ~A" (edit-position ind2 0)))
+	      (if (not (= (edit-position ind2 1) 3)) (snd-display ";as-one-edit 6 2 1 edpos: ~A" (edit-position ind2 1)))
+	      
+	      (if (not (equal? (edit-fragment 2 ind 0) (list "set-sample 10 1.0000" "set" 10 1)))
+		  (snd-display ";as-one-edit 5 edlist 2: ~A" (edit-fragment 1 ind 0)))
+	      (if (not (equal? (edit-fragment 2 ind2 0) (list "set-sample 10 0.5000" "set" 10 1)))
+		  (snd-display ";as-one-edit 5 edlist 2 1: ~A" (edit-fragment 1 ind2 0)))
+	      (if (not (equal? (edit-fragment 3 ind 0) (list "as-one-edit test 6" "set" 0 20)))
+		  (snd-display ";as-one-edit 6 edlist: ~A" (edit-fragment 1 ind 0)))
+	      (if (not (equal? (edit-fragment 3 ind2 1) (list "as-one-edit test 6" "set" 0 20)))
+		  (snd-display ";as-one-edit 6 edlist 2 1: ~A" (edit-fragment 1 ind2 1)))
+	      (close-sound ind2))
+	    
+	    ;; nested cases
+	    (revert-sound ind)
+	    
+	    (as-one-edit
+	     (lambda ()
+	       (set! (sample 100) .9)
+	       (as-one-edit
+		(lambda ()
+		  (set! (sample 200) .8)
+		  (set! (sample 300) .7)))
+	       (set! (sample 300) .6)))
+	    (if (or (fneq (sample 100) .9)
+		    (fneq (sample 200) .8)
+		    (fneq (sample 300) .6))
+		(snd-display ";nested as-one-edit 7: ~A ~A ~A" (sample 100) (sample 200) (sample 300)))
+	    (if (not (= (edit-position ind 0) 1))
+		(snd-display ";nested as-one-edit 7 edpos: ~A" (edit-position ind 0)))
+	    (if (squelch-update ind 0)
+		(begin
+		  (snd-display ";nested as-one-edit 7 squelch is on")
+		  (set! (squelch-update) #f)))
+	    (if (not (equal? (edit-fragment 1 ind 0) (list "set-sample 300 0.6000" "set" 300 1)))
+		(snd-display ";as-one-edit 7 edlist: ~A" (edit-fragment 1 ind 0)))
+	    
+	    (revert-sound ind)
+	    (as-one-edit
+	     (lambda ()
+	       (set! (sample 100) .9)
+	       (as-one-edit
+		(lambda ()
+		  (set! (sample 200) .8)
+		  (set! (sample 300) .7)))
+	       (set! (sample 300) .6))
+	     "as-one-edit test 8")
+	    (if (or (fneq (sample 100) .9)
+		    (fneq (sample 200) .8)
+		    (fneq (sample 300) .6))
+		(snd-display ";nested as-one-edit 8: ~A ~A ~A" (sample 100) (sample 200) (sample 300)))
+	    (if (not (= (edit-position ind 0) 1))
+		(snd-display ";nested as-one-edit 8 edpos: ~A" (edit-position ind 0)))
+	    (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit test 8" "set" 300 1)))
+		(snd-display ";as-one-edit 8 edlist: ~A" (edit-fragment 1 ind 0)))
+	    
+	    (revert-sound ind)
+	    (as-one-edit
+	     (lambda ()
+	       (set! (sample 100) .9)
+	       (as-one-edit
+		(lambda ()
+		  (set! (sample 200) .8)
+		  (set! (sample 300) .7))
+		"as-one-edit 9 internal")
+	       (set! (sample 300) .6))
+	     "as-one-edit test 9")
+	    (if (or (fneq (sample 100) .9)
+		    (fneq (sample 200) .8)
+		    (fneq (sample 300) .6))
+		(snd-display ";nested as-one-edit 9: ~A ~A ~A" (sample 100) (sample 200) (sample 300)))
+	    (if (not (= (edit-position ind 0) 1))
+		(snd-display ";nested as-one-edit 9 edpos: ~A" (edit-position ind 0)))
+	    (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit test 9" "set" 300 1)))
+		(snd-display ";as-one-edit 9 edlist: ~A" (edit-fragment 1 ind 0)))
+	    
+	    (revert-sound ind)
+	    (as-one-edit
+	     (lambda ()
+	       (set! (sample 100) .9)
+	       (as-one-edit
+		(lambda ()
+		  (set! (sample 200) .8)
+		  (as-one-edit
+		   (lambda ()
+		     (set! (sample 400) .3))
+		   "not a name")
+		  (set! (sample 300) .7))
+		"as-one-edit 10 internal")
+	       (set! (sample 300) .6))
+	     "as-one-edit test 10")
+	    (if (or (fneq (sample 100) .9)
+		    (fneq (sample 200) .8)
+		    (fneq (sample 300) .6)
+		    (fneq (sample 400) .3))
+		(snd-display ";nested as-one-edit 10: ~A ~A ~A ~A" (sample 100) (sample 200) (sample 300) (sample 400)))
+	    (if (not (= (edit-position ind 0) 1))
+		(snd-display ";nested as-one-edit 10 edpos: ~A" (edit-position ind 0)))
+	    (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit test 10" "set" 300 1)))
+		(snd-display ";as-one-edit 10 edlist: ~A" (edit-fragment 1 ind 0)))
+	    
+	    ;; try implicit as-one-edits nested
+	    (revert-sound ind)
+	    (env-channel-with-base '(0 0 1 1 2 .5 3 .25 4 0) 0.0 0 #f ind 0)
+	    (if (not (= (edit-position ind 0) 1)) (snd-display ";as-one-edit 11 edpos: ~A" (edit-position ind 0)))
+	    (if (not (equal? (edit-fragment 1 ind 0) 
+			     (list "env-channel-with-base '(0.000 0.000 1.000 1.000 2.000 0.500 3.000 0.250 4.000 0.000) 0.0000 0 #f" "scale" 38121 12707)))
+		(snd-display ";as-one-edit 11: ~A" (edit-fragment 1 ind 0)))
+	    
+	    (revert-sound ind)
+	    (as-one-edit
+	     (lambda ()
+	       (env-channel-with-base '(0 0 1 1 2 .5 3 .25 4 0) 0.0 0 #f ind 0))
+	     "as-one-edit 12")
+	    (if (not (= (edit-position ind 0) 1)) (snd-display ";as-one-edit 12 edpos: ~A" (edit-position ind 0)))
+	    (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit 12" "scale" 38121 12707)))
+		(snd-display ";as-one-edit 12: ~A" (edit-fragment 1 ind 0)))
+	    
 	    (close-sound ind))
 	  
 	  (let* ((ind (open-sound "oboe.snd"))
@@ -30310,7 +30537,6 @@ EDITS: 5
 	    (reset-hook! after-transform-hook)
 	    (reset-hook! lisp-graph-hook)
 
-	    (snd-display ";try lisp hook ")
 	    (add-hook! lisp-graph-hook 
 		       (lambda (snd chn) 
 			 (if (> (random 1.0) .5) 
@@ -30320,7 +30546,8 @@ EDITS: 5
 	    (for-each
 	     (lambda (snd)
 	       (if (rs .5)
-		   (set! (sync snd) (inexact->exact (floor (my-random 3))))))
+		   (set! (sync snd) (inexact->exact (floor (my-random 3)))))
+	       (update-lisp-graph snd))
 	     (sounds))
 	    (add-hook! graph-hook superimpose-ffts)
 	    (do ((i 0 (1+ i)))
@@ -30331,7 +30558,10 @@ EDITS: 5
 		     (let* ((dur (floor (/ (frames snd) (srate snd))))
 			    (start (max 0.0 (min (- dur .1) (my-random dur)))))
 		       (if (> dur 0.0) 
-			   (set! (x-bounds snd 0) (list start (min (+ start .1) dur)))))))
+			   (set! (x-bounds snd 0) (list start (min (+ start .1) dur))))))
+		 (update-time-graph snd)
+		 (update-lisp-graph snd)
+		 (update-transform-graph snd))
 	       (sounds)))
 	    (reset-hook! graph-hook)
 	    (reset-hook! lisp-graph-hook)
@@ -50491,7 +50721,9 @@ EDITS: 1
    (and (sound-file? a)
 	(= (mus-sound-chans a) 1))))
 
-(if (and (provided? 'snd-guile) (or full-test (= snd-test 24) (and keep-going (<= snd-test 24))))
+(if (and (= snd-test 24)
+	 (provided? 'snd-guile) 
+	 (or full-test (= snd-test 24) (and keep-going (<= snd-test 24))))
     (begin
       (run-hook before-test-hook 24)
       (add-hook! snd-error-hook (lambda (msg) (snd-display ";err: ~A" msg) #t))
@@ -54046,66 +54278,66 @@ EDITS: 1
 		    (/ (.green col) 65535.0)
 		    (/ (.blue col) 65535.0)))))
 
-(define (tagged-p val sym) (or (eq? val #f) (and (list? val) (not (null? val)) (eq? (car val) sym))))
-(define (array-p val type) (and (list? val) (or (null? val) (type (car val)))))
-(define (XM_INT val) (integer? val))
-(define (XM_ULONG val) (and (integer? val) (>= val 0)))
-(define (XM_UCHAR val) (or (char? val) (and (integer? val) (>= val 0) (< val 65536))))
-(define (XM_FLOAT val) (real? val))
-(define (XM_STRING val) (or (eq? val #f) (string? val) (and (number? val) (= val 0))))
-(define (XM_XMSTRING val) (or (tagged-p val 'XmString) (and (number? val) (= val 0))))
-(define (XM_STRING_TABLE val) (or (array-p val (lambda (n) (eq? (car n) 'XmString))) (and (number? val) (= val 0))))
-(define (XM_INT_TABLE val) (or (array-p val integer?) (and (number? val) (= val 0))))
-(define (XM_BOOLEAN val) (or (boolean? val) (and (number? val) (= val 0))))
-(define (XM_RENDER_TABLE val) (or (tagged-p val 'XmRenderTable) (and (number? val) (= val 0))))
-(define (XM_TRANSFER_ENTRY_LIST val) (or (list? val) (and (number? val) (= val 0))))
-(define (XM_RECTANGLE_LIST val) (or (array-p val (lambda (n) (eq? (car n) 'XRectangle))) (and (number? val) (= val 0))))
-(define (XM_TAB_LIST val) (or (tagged-p val 'XmTabList) (and (number? val) (= val 0))))
-(define (XM_WIDGET_LIST val) (or (array-p val (lambda (n) (eq? (car n) 'Widget))) (and (number? val) (= val 0))))
-(define (XM_ATOM_LIST val) (or (eq? val #f) (array-p val (lambda (n) (eq? (car n) 'Atom))) (and (number? val) (= val 0))))
-(define (XM_STRING_LIST val) (or (array-p val (lambda (n) (eq? (car n) 'XmString))) (and (number? val) (= val 0))))
-(define (XM_CHARSET_TABLE val) (or (array-p val (lambda (n) (eq? (car n) 'CharSet))) (and (number? val) (= val 0))))
-(define (XM_KEYSYM_TABLE val) (or (array-p val (lambda (n) (eq? (car n) 'KeySym))) (and (number? val) (= val 0))))
-(define (XM_WIDGET val) (or (tagged-p val 'Widget) (and (number? val) (= val 0))))
-(define (XM_PIXEL val) (or (tagged-p val 'Pixel) (and (number? val) (= val 0))))
-(define (XM_PIXMAP val) (or (tagged-p val 'Pixmap) (and (number? val) (= val 0))))
-(define (XM_XFONTSTRUCT val) (or (tagged-p val 'XFontStruct) (and (number? val) (= val 0))))
-(define (XM_DIMENSION val) (and (integer? val) (>= val 0) (< val 65536)))
-(define (XM_ATOM val) (or (tagged-p val 'Atom) (and (number? val) (= val 0))))
-(define (XM_TEXT_SOURCE val) (or (tagged-p val 'XmTextSource) (and (number? val) (= val 0))))
-(define (XM_FONTLIST val) (or (tagged-p val 'FontList) (and (number? val) (= val 0))))
-(define (XM_COLORMAP val) (or (tagged-p val 'Colormap) (and (number? val) (= val 0))))
-(define (XM_KEYSYM val) (or (tagged-p val 'KeySym) (and (number? val) (= val 0))))
-(define (XM_SCREEN val) (or (tagged-p val 'Screen) (and (number? val) (= val 0))))
-(define (XM_WINDOW val) (or (tagged-p val 'Window) (and (number? val) (= val 0))))
-(define (XM_VISUAL val) (or (tagged-p val 'Visual) (and (number? val) (= val 0))))
-(define (XM_WIDGET_CLASS val) (or (tagged-p val 'WidgetClass) (and (number? val) (= val 0))))
-(define (XM_STRING_OR_INT val) (or (string? val) (integer? val) (eq? val #f)))
-(define (XM_STRING_OR_XMSTRING val) (or (string? val) (eq? val #f) (and (list? val) (not (null? val)) (eq? (car val) 'XmString)) (and (number? val) (= val 0))))
-(define (XM_BOOLEAN_OR_INT val) (or (boolean? val) (integer? val)))
-(define (XM_POSITION val) (and (integer? val) (< (abs val) 65536)))
-(define (XM_SHORT val) (and (integer? val) (< (abs val) 65536)))
-(define (XM_CALLBACK val) (or (procedure? val) (eq? val #f) (integer? val)))
-(define (XM_TRANSFER_CALLBACK val) (or (procedure? val) (eq? val #f) (integer? val) (and (list? val) (not (null? val)) (procedure? (car val)))))
-(define (XM_CONVERT_CALLBACK val) (or (procedure? val) (eq? val #f) (integer? val) (and (list? val) (not (null? val)) (procedure? (car val)))))
-(define (XM_SEARCH_CALLBACK val) (or (procedure? val) (eq? val #f) (integer? val)))
-(define (XM_ORDER_CALLBACK val) (or (procedure? val) (eq? val #f) (integer? val)))
-(define (XM_QUALIFY_CALLBACK val) (or (procedure? val) (eq? val #f) (integer? val)))
-(define (XM_ALLOC_COLOR_CALLBACK val) (or (procedure? val) (eq? val #f) (integer? val)))
-(define (XM_POPUP_CALLBACK val) (or (procedure? val) (eq? val #f) (integer? val)))
-(define (XM_SCREEN_COLOR_CALLBACK val) (or (procedure? val) (eq? val #f) (integer? val)))
-(define (XM_DROP_CALLBACK val) (or (procedure? val) (eq? val #f) (integer? val)))
-(define (XM_DRAG_CALLBACK val) (or (procedure? val) (eq? val #f) (integer? val)))
-(define (XM_PARSE_CALLBACK val) (or (procedure? val) (eq? val #f) (integer? val)))
+(define (tagged-p val sym) "snd-test type checker" (or (eq? val #f) (and (list? val) (not (null? val)) (eq? (car val) sym))))
+(define (array-p val type) "snd-test type checker" (and (list? val) (or (null? val) (type (car val)))))
+(define (XM_INT val) "snd-test type checker" (integer? val))
+(define (XM_ULONG val) "snd-test type checker" (and (integer? val) (>= val 0)))
+(define (XM_UCHAR val) "snd-test type checker" (or (char? val) (and (integer? val) (>= val 0) (< val 65536))))
+(define (XM_FLOAT val) "snd-test type checker" (real? val))
+(define (XM_STRING val) "snd-test type checker" (or (eq? val #f) (string? val) (and (number? val) (= val 0))))
+(define (XM_XMSTRING val) "snd-test type checker" (or (tagged-p val 'XmString) (and (number? val) (= val 0))))
+(define (XM_STRING_TABLE val) "snd-test type checker" (or (array-p val (lambda (n) (eq? (car n) 'XmString))) (and (number? val) (= val 0))))
+(define (XM_INT_TABLE val) "snd-test type checker" (or (array-p val integer?) (and (number? val) (= val 0))))
+(define (XM_BOOLEAN val) "snd-test type checker" (or (boolean? val) (and (number? val) (= val 0))))
+(define (XM_RENDER_TABLE val) "snd-test type checker" (or (tagged-p val 'XmRenderTable) (and (number? val) (= val 0))))
+(define (XM_TRANSFER_ENTRY_LIST val) "snd-test type checker" (or (list? val) (and (number? val) (= val 0))))
+(define (XM_RECTANGLE_LIST val) "snd-test type checker" (or (array-p val (lambda (n) (eq? (car n) 'XRectangle))) (and (number? val) (= val 0))))
+(define (XM_TAB_LIST val) "snd-test type checker" (or (tagged-p val 'XmTabList) (and (number? val) (= val 0))))
+(define (XM_WIDGET_LIST val) "snd-test type checker" (or (array-p val (lambda (n) (eq? (car n) 'Widget))) (and (number? val) (= val 0))))
+(define (XM_ATOM_LIST val) "snd-test type checker" (or (eq? val #f) (array-p val (lambda (n) (eq? (car n) 'Atom))) (and (number? val) (= val 0))))
+(define (XM_STRING_LIST val) "snd-test type checker" (or (array-p val (lambda (n) (eq? (car n) 'XmString))) (and (number? val) (= val 0))))
+(define (XM_CHARSET_TABLE val) "snd-test type checker" (or (array-p val (lambda (n) (eq? (car n) 'CharSet))) (and (number? val) (= val 0))))
+(define (XM_KEYSYM_TABLE val) "snd-test type checker" (or (array-p val (lambda (n) (eq? (car n) 'KeySym))) (and (number? val) (= val 0))))
+(define (XM_WIDGET val) "snd-test type checker" (or (tagged-p val 'Widget) (and (number? val) (= val 0))))
+(define (XM_PIXEL val) "snd-test type checker" (or (tagged-p val 'Pixel) (and (number? val) (= val 0))))
+(define (XM_PIXMAP val) "snd-test type checker" (or (tagged-p val 'Pixmap) (and (number? val) (= val 0))))
+(define (XM_XFONTSTRUCT val) "snd-test type checker" (or (tagged-p val 'XFontStruct) (and (number? val) (= val 0))))
+(define (XM_DIMENSION val) "snd-test type checker" (and (integer? val) (>= val 0) (< val 65536)))
+(define (XM_ATOM val) "snd-test type checker" (or (tagged-p val 'Atom) (and (number? val) (= val 0))))
+(define (XM_TEXT_SOURCE val) "snd-test type checker" (or (tagged-p val 'XmTextSource) (and (number? val) (= val 0))))
+(define (XM_FONTLIST val) "snd-test type checker" (or (tagged-p val 'FontList) (and (number? val) (= val 0))))
+(define (XM_COLORMAP val) "snd-test type checker" (or (tagged-p val 'Colormap) (and (number? val) (= val 0))))
+(define (XM_KEYSYM val) "snd-test type checker" (or (tagged-p val 'KeySym) (and (number? val) (= val 0))))
+(define (XM_SCREEN val) "snd-test type checker" (or (tagged-p val 'Screen) (and (number? val) (= val 0))))
+(define (XM_WINDOW val) "snd-test type checker" (or (tagged-p val 'Window) (and (number? val) (= val 0))))
+(define (XM_VISUAL val) "snd-test type checker" (or (tagged-p val 'Visual) (and (number? val) (= val 0))))
+(define (XM_WIDGET_CLASS val) "snd-test type checker" (or (tagged-p val 'WidgetClass) (and (number? val) (= val 0))))
+(define (XM_STRING_OR_INT val) "snd-test type checker" (or (string? val) (integer? val) (eq? val #f)))
+(define (XM_STRING_OR_XMSTRING val) "snd-test type checker" (or (string? val) (eq? val #f) (and (list? val) (not (null? val)) (eq? (car val) 'XmString)) (and (number? val) (= val 0))))
+(define (XM_BOOLEAN_OR_INT val) "snd-test type checker" (or (boolean? val) (integer? val)))
+(define (XM_POSITION val) "snd-test type checker" (and (integer? val) (< (abs val) 65536)))
+(define (XM_SHORT val) "snd-test type checker" (and (integer? val) (< (abs val) 65536)))
+(define (XM_CALLBACK val) "snd-test type checker" (or (procedure? val) (eq? val #f) (integer? val)))
+(define (XM_TRANSFER_CALLBACK val) "snd-test type checker" (or (procedure? val) (eq? val #f) (integer? val) (and (list? val) (not (null? val)) (procedure? (car val)))))
+(define (XM_CONVERT_CALLBACK val) "snd-test type checker" (or (procedure? val) (eq? val #f) (integer? val) (and (list? val) (not (null? val)) (procedure? (car val)))))
+(define (XM_SEARCH_CALLBACK val) "snd-test type checker" (or (procedure? val) (eq? val #f) (integer? val)))
+(define (XM_ORDER_CALLBACK val) "snd-test type checker" (or (procedure? val) (eq? val #f) (integer? val)))
+(define (XM_QUALIFY_CALLBACK val) "snd-test type checker" (or (procedure? val) (eq? val #f) (integer? val)))
+(define (XM_ALLOC_COLOR_CALLBACK val) "snd-test type checker" (or (procedure? val) (eq? val #f) (integer? val)))
+(define (XM_POPUP_CALLBACK val) "snd-test type checker" (or (procedure? val) (eq? val #f) (integer? val)))
+(define (XM_SCREEN_COLOR_CALLBACK val) "snd-test type checker" (or (procedure? val) (eq? val #f) (integer? val)))
+(define (XM_DROP_CALLBACK val) "snd-test type checker" (or (procedure? val) (eq? val #f) (integer? val)))
+(define (XM_DRAG_CALLBACK val) "snd-test type checker" (or (procedure? val) (eq? val #f) (integer? val)))
+(define (XM_PARSE_CALLBACK val) "snd-test type checker" (or (procedure? val) (eq? val #f) (integer? val)))
 
-(if (and (or full-test (= snd-test 25) (and keep-going (<= snd-test 25)))
+(if (and (= snd-test 25)
+	 (or full-test (= snd-test 25) (and keep-going (<= snd-test 25)))
 	 (or (not (defined? 'host-name)) 
 	     (and (not (string=? (host-name) "fatty2"))
 		  (not (string=? (host-name) "sun2")))))
     (begin
       (run-hook before-test-hook 25)
-      (if (and #f 
-	       (provided? 'snd-motif) 
+      (if (and (provided? 'snd-motif) 
 	       (provided? 'xm)) 
 	  (begin
 
@@ -65251,10 +65483,10 @@ EDITS: 1
 		   (set! help (1+ help))))))
        (current-module))
 
-      (snd-display (format #f "total: ~D, help: ~D, no-help: ~D, found help: ~D (~D in snd-test, ~D instruments)" 
-			   total help no-help outside-help 242 (- snd-test-help 242)))
-      ;; total: 4219, help: 3511, no-help: 120, found help: 588 (242 in snd-test, 44 instruments)
-      ;; main leftovers: dlocsig, new-effects, prc95
+      (snd-display (format #f "total: ~D, help: ~D, no-help: ~D, found help: ~D (~D in snd-test)" 
+			   total help no-help outside-help snd-test-help))
+
+      ;; total: 4218, help: 3553, no-help: 120, found help: 545 (242 in snd-test, 44 instruments)
 
       (for-each
        (lambda (lst)

@@ -641,7 +641,7 @@ void reflect_edit_history_change(chan_info *cp)
   Widget lst;
 
   if (cp->squelch_update) return;
-  if ((cp->in_as_one_edit) || (cp->cgx == NULL)) return;
+  if ((cp->in_as_one_edit > 0) || (cp->cgx == NULL)) return;
   sp = cp->sound;
   lst = EDIT_HISTORY_LIST(cp);
 #if WITH_RELATIVE_PANES

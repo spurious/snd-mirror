@@ -8360,7 +8360,12 @@ static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
   return(XEN_ZERO);
 }
 
-void as_one_edit(chan_info *cp, int one_edit, const char *one_edit_origin) /* origin copied here */
+
+/* ---------------------------------------- AS-ONE-EDIT ---------------------------------------- */
+
+#define INITIAL_AS_ONE_EDIT_POSITIONS_SIZE 2
+
+void as_one_edit(chan_info *cp, int one_edit)
 {
   bool need_backup = false;
   need_backup = (cp->edit_ctr > one_edit);      /* cp->edit_ctr will be changing, so save this */
@@ -8370,72 +8375,80 @@ void as_one_edit(chan_info *cp, int one_edit, const char *one_edit_origin) /* or
 	sequester_deferred_regions(cp, one_edit - 1);
       while (cp->edit_ctr > one_edit) backup_edit_list(cp);
       if ((need_backup) && (cp->have_mixes)) backup_mix_list(cp, one_edit);
-      if (one_edit_origin)
-	{
-	  ed_list *ed;
-	  ed = cp->edits[cp->edit_ctr];
-	  if (ed)
-	    {
-	      if (ed->origin) FREE(ed->origin);
-	      ed->origin = copy_string(one_edit_origin);
-	    }
-	}
       if (need_backup) prune_edits(cp, cp->edit_ctr + 1);
     }
 }
 
-static int chan_ctr = 0;
-static char *as_one_edit_origin = NULL;
-
-static void init_as_one_edit(chan_info *cp, void *ptr) 
+static void init_as_one_edit(chan_info *cp) 
 {
-  ((int *)ptr)[chan_ctr] = cp->edit_ctr; 
-  cp->previous_squelch_update = cp->squelch_update; /* preserve possible user setting across as-one-edit call */
+  if (cp->in_as_one_edit == 0)
+    cp->previous_squelch_update = cp->squelch_update; /* preserve possible user setting across as-one-edit call */
   cp->squelch_update = true;
-  cp->in_as_one_edit = true;
-  chan_ctr++; 
+  if (cp->as_one_edit_positions_size == 0)
+    {
+      cp->as_one_edit_positions_size = INITIAL_AS_ONE_EDIT_POSITIONS_SIZE;
+      cp->as_one_edit_positions = (int *)CALLOC(cp->as_one_edit_positions_size, sizeof(int));
+    }
+  else
+    {
+      if (cp->in_as_one_edit >= cp->as_one_edit_positions_size)
+	{
+	  cp->as_one_edit_positions_size += INITIAL_AS_ONE_EDIT_POSITIONS_SIZE;
+	  cp->as_one_edit_positions = (int *)REALLOC(cp->as_one_edit_positions, cp->as_one_edit_positions_size * sizeof(int));
+	}
+    }
+  cp->as_one_edit_positions[cp->in_as_one_edit] = cp->edit_ctr;
+  cp->in_as_one_edit++;
 }
 
-static void finish_as_one_edit(chan_info *cp, void *ptr) 
+static void as_one_edit_set_origin(chan_info *cp, void *origin)
 {
-  as_one_edit(cp, (((int *)ptr)[chan_ctr] + 1), as_one_edit_origin);
-  cp->squelch_update = cp->previous_squelch_update;
-  if (!(cp->squelch_update)) clear_minibuffer(cp->sound);
-  cp->in_as_one_edit = false;
-  reflect_edit_history_change(cp);
-  update_graph(cp);
-  chan_ctr++; 
+  if ((cp->as_one_edit_positions[cp->in_as_one_edit] + 1) == cp->edit_ctr)
+    {
+      ed_list *ed;
+      ed = cp->edits[cp->edit_ctr];
+      if (ed)
+	{
+	  if (ed->origin) FREE(ed->origin);
+	  ed->origin = copy_string((char *)origin);
+	}
+    }
+}
+
+static void finish_as_one_edit(chan_info *cp) 
+{
+  cp->in_as_one_edit--;
+  if (cp->in_as_one_edit < 0)
+    {
+#if MUS_DEBUGGING
+      fprintf(stderr, "in_as_one_edit: %d\n", cp->in_as_one_edit);
+#endif
+      cp->in_as_one_edit = 0;
+    }
+  as_one_edit(cp, cp->as_one_edit_positions[cp->in_as_one_edit] + 1);
+  if (cp->in_as_one_edit == 0)
+    {
+      cp->squelch_update = cp->previous_squelch_update;
+      if (!(cp->squelch_update)) clear_minibuffer(cp->sound);
+      reflect_edit_history_change(cp);
+      update_graph(cp);
+    }
 }
 
 #if HAVE_GUILE_DYNAMIC_WIND
-/* protect against errors within as-one-edit */
-typedef struct {
-  XEN proc;
-  int *cur_edits;
-  int chans;
-} as_one_edit_context;
-
 static void before_as_one_edit(void *context)
 {
-  as_one_edit_context *sc = (as_one_edit_context *)context;
-  sc->cur_edits = (int *)CALLOC(sc->chans, sizeof(int));
-  chan_ctr = 0;
-  for_each_normal_chan_1(init_as_one_edit, (void *)(sc->cur_edits));
+  for_each_normal_chan(init_as_one_edit);
 }
 
 static XEN as_one_edit_body(void *context)
 {
-  as_one_edit_context *sc = (as_one_edit_context *)context;
-  return(XEN_CALL_0_NO_CATCH(sc->proc));
+  return(XEN_CALL_0_NO_CATCH((XEN)context));
 }
 
 static void after_as_one_edit(void *context)
 {
-  as_one_edit_context *sc = (as_one_edit_context *)context;
-  chan_ctr = 0;
-  for_each_normal_chan_1(finish_as_one_edit, (void *)(sc->cur_edits));
-  FREE(sc->cur_edits);
-  FREE(sc);
+  for_each_normal_chan(finish_as_one_edit);
 }
 #endif
 
@@ -8443,10 +8456,10 @@ static void after_as_one_edit(void *context)
 static XEN g_as_one_edit(XEN proc, XEN origin)
 {
   #define H_as_one_edit "(" S_as_one_edit " thunk :optional origin): evaluate thunk, collecting all edits into one from the edit historys' point of view"
-  int chans;
   XEN result = XEN_FALSE;
-  char *errmsg;
+  char *errmsg, *as_one_edit_origin = NULL;
   XEN errstr;
+
   XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)), proc, XEN_ARG_1, S_as_one_edit, "a procedure");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_2, S_as_one_edit, "a string");
   errmsg = procedure_ok(proc, 0, S_as_one_edit, "edit", 1);
@@ -8456,42 +8469,30 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
       FREE(errmsg);
       return(snd_bad_arity_error(S_as_one_edit, errstr, proc));
     }
-  chans = active_channels(WITH_VIRTUAL_CHANNELS);
-  if (chans > 0)
-    {
-#if (!HAVE_GUILE_DYNAMIC_WIND)
-      int *cur_edits;
-#endif
-      if (XEN_STRING_P(origin))
+
+  if (XEN_STRING_P(origin))
 	as_one_edit_origin = copy_string(XEN_TO_C_STRING(origin));
       else as_one_edit_origin = NULL;
 #if HAVE_GUILE_DYNAMIC_WIND
-      {
-	as_one_edit_context *sc;
-	sc = (as_one_edit_context *)CALLOC(1, sizeof(as_one_edit_context));
-	sc->chans = chans;
-	sc->proc = proc;
-	result = scm_internal_dynamic_wind((scm_t_guard)before_as_one_edit, 
-					   (scm_t_inner)as_one_edit_body, 
-					   (scm_t_guard)after_as_one_edit, 
-					   (void *)sc,
-					   (void *)sc);
-      }
+  result = scm_internal_dynamic_wind((scm_t_guard)before_as_one_edit, 
+				     (scm_t_inner)as_one_edit_body, 
+				     (scm_t_guard)after_as_one_edit, 
+				     (void *)proc,
+				     (void *)proc);
 #else
-      cur_edits = (int *)CALLOC(chans, sizeof(int));
-      chan_ctr = 0;
-      for_each_normal_chan_1(init_as_one_edit, (void *)cur_edits); /* redo here can't make sense, can it? */
-      /* this is problematic mainly because we now squelch updates within as-one-edit */
-      /*   so we really need the dynamic unwind above to make sure graphics aren't disabled by a user programming error */
-      result = XEN_CALL_0_NO_CATCH(proc);
-      chan_ctr = 0;
-      for_each_normal_chan_1(finish_as_one_edit, (void *)cur_edits);
-      FREE(cur_edits);
+  for_each_normal_chan(init_as_one_edit);
+  result = XEN_CALL_0_NO_CATCH(proc);
+  for_each_normal_chan(finish_as_one_edit);
 #endif
-      if (as_one_edit_origin) {FREE(as_one_edit_origin); as_one_edit_origin = NULL;}
+
+  if (as_one_edit_origin)
+    {
+      for_each_normal_chan_1(as_one_edit_set_origin, (void *)as_one_edit_origin);
+      FREE(as_one_edit_origin);
     }
   return(xen_return_first(result, proc, origin));
 }
+
 
 static XEN g_scale_channel(XEN scl, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
 {

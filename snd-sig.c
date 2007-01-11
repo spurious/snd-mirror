@@ -2577,9 +2577,9 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	      if (segbeg >= segend) break;
 	      segnum = passes[k + 1] - passes[k];
 	    }
-	  new_origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, CURRENT_SAMPLES(si->cps[i]), base);
-	  as_one_edit(si->cps[i], local_edpos + 1, new_origin);
-	  FREE(new_origin);
+	  as_one_edit(si->cps[i], local_edpos + 1);
+	  if (cp->edits[cp->edit_ctr]->origin) FREE(cp->edits[cp->edit_ctr]->origin);
+	  cp->edits[cp->edit_ctr]->origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, CURRENT_SAMPLES(si->cps[i]), base);
 	  update_graph(si->cps[i]);
 	  reflect_edit_history_change(si->cps[i]);
 	  si->cps[i]->edit_hook_checked = false;	  
@@ -2893,12 +2893,12 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	      if ((len < 2) || (snd_abs_off_t(dur - passes[len - 2]) < 2))
 		amp_env_env_selection_by(si->cps[i], egen, si->begs[i], dur, env_pos);
 	    }
-	  new_origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, CURRENT_SAMPLES(si->cps[i]), base);
-	  as_one_edit(si->cps[i], local_edpos + 1, new_origin);
+	  as_one_edit(si->cps[i], local_edpos + 1);
+	  if(si->cps[i]->edits[si->cps[i]->edit_ctr]->origin) FREE(si->cps[i]->edits[si->cps[i]->edit_ctr]->origin);
+	  si->cps[i]->edits[si->cps[i]->edit_ctr]->origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, CURRENT_SAMPLES(si->cps[i]), base);
 	  update_graph(si->cps[i]);
 	  reflect_edit_history_change(si->cps[i]);
 	  si->cps[i]->edit_hook_checked = false;	  
-	  FREE(new_origin);
 	}
     }
   if (e) mus_free(egen);

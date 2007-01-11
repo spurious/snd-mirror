@@ -447,7 +447,7 @@ void reflect_edit_history_change(chan_info *cp)
 {
   /* new edit so it is added, and any trailing lines removed */
   snd_info *sp;
-  if ((cp->in_as_one_edit) || (cp->cgx == NULL)) return;
+  if ((cp->in_as_one_edit > 0) || (cp->cgx == NULL)) return;
   sp = cp->sound;
   if ((cp->chan > 0) && (sp->channel_style != CHANNELS_SEPARATE))
     {

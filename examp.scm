@@ -335,7 +335,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 						      (spectr (make-vct (/ fftlen 2))))
 						 (list (vct-add! spectr (spectrum fdr fdi #f 2))))))))
 		 (sounds))
-		(graph ffts "spectra" 0.0 0.5 #f #f snd chn)))))
+		(graph ffts "spectra" 0.0 0.5 y0 y1 snd chn)))))
     #f))
 
 ;(add-hook! graph-hook superimpose-ffts)
