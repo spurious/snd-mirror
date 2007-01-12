@@ -3216,6 +3216,32 @@ static XEN g_short_file_name(XEN snd_n)
 static XEN g_close_sound(XEN snd_n) 
 {
   #define H_close_sound "(" S_close_sound " :optional snd): close snd"
+
+  if (XEN_INTEGER_P(snd_n))
+    {
+      int snd;
+      snd = XEN_TO_C_INT(snd_n);
+      if ((snd >= 0) &&
+	  (snd < ss->max_sounds))
+	{
+	  snd_info *sp;
+	  sp = ss->sounds[snd];
+	  if (snd_ok(sp))
+	    {
+	      if (sp->inuse == SOUND_WRAPPER) /* from make_simple_channel_display (variable-graph and the region graphs) */
+		{
+		  /* not sure what to do in this case, but at least we can get it out of the various #t chan loops */
+		  sp->inuse = SOUND_IDLE;
+		  ss->sounds[sp->index] = NULL; /* a huge memory leak... */
+		}
+	      else
+		{
+		  snd_close_file(sp);
+		}
+	      return(XEN_FALSE);
+	    }
+	}
+    }
   return(sound_get(snd_n, SP_CLOSE, S_close_sound));
 }
 

@@ -2249,10 +2249,13 @@ void g_init_xmix(void);
 #endif
 
 #if HAVE_GUILE
-static XEN g_write_byte(XEN byte)
+#define S_write_byte "write-byte"
+
+static XEN g_write_byte(XEN byte) /* this collides with CM */
 {
+  #define H_write_byte "(" S_write_byte " byte) writes byte to the current output port"
   XEN port;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(byte), byte, XEN_ONLY_ARG, "write-byte", "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(byte), byte, XEN_ONLY_ARG, S_write_byte, "an integer");
   port = scm_current_output_port();
   scm_putc(XEN_TO_C_INT(byte), SCM_COERCE_OUTPORT(port));
   return(byte);
@@ -2308,7 +2311,7 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_gc_on,  g_gc_on_w,  0, 0, 0, H_gc_on);
 
 #if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE("write-byte", g_write_byte, 1, 0, 0, "write byte");
+  XEN_DEFINE_PROCEDURE(S_write_byte, g_write_byte, 1, 0, 0, H_write_byte);
 #endif
 
 #if HAVE_SCHEME && (!HAVE_SCM_CONTINUATION_P)
