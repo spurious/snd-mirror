@@ -6973,8 +6973,15 @@ Float chn_sample(off_t samp, chan_info *cp, int pos)
 { 
   snd_fd *sf;
   Float val = 0.0;
+
   /* pos is assumed to be right here, not AT_CURRENT_EDIT_POSITION for example */
-  if ((!(cp->active)) || (samp < 0) || (pos < 0) || (pos >= cp->edit_size) || (samp >= cp->samples[pos])) return(0.0);
+  if ((!(cp->active)) || 
+      (samp < 0) || 
+      (pos < 0) || 
+      (pos >= cp->edit_size) || 
+      (samp >= cp->samples[pos])) 
+    return(0.0);
+
   /* try the quick case */
   if (pos == 0)
     {
@@ -6983,6 +6990,7 @@ Float chn_sample(off_t samp, chan_info *cp, int pos)
       if ((sd) && (sd->io) && (sd->io->beg <= samp) && (sd->io->end >= samp))
 	return(MUS_SAMPLE_TO_FLOAT(sd->buffered_data[samp - sd->io->beg]));
     }
+
   /* do it the hard way */
   sf = init_sample_read_any_with_bufsize(samp, cp, READ_FORWARD, pos, 2);
   if (sf)
@@ -6997,7 +7005,14 @@ static void previous_sound_1(snd_fd *sf)
 {
   off_t ind0, ind1, indx;
   bool at_start;
-  at_start = ((sf->cb == NULL) || (sf->current_sound == NULL) || (READER_LOCAL_POSITION(sf) >= sf->current_sound->io->beg));
+  if ((sf->cp) && (!(sf->cp->active)))
+    {
+      reader_out_of_data(sf);
+      return;
+    }
+  at_start = ((sf->cb == NULL) || 
+	      (sf->current_sound == NULL) || 
+	      (READER_LOCAL_POSITION(sf) >= sf->current_sound->io->beg));
   if (at_start)
     {
       snd_data *prev_snd;
@@ -7084,6 +7099,11 @@ static void next_sound_1(snd_fd *sf)
 {
   off_t ind0, ind1, indx;
   bool at_end = false;
+  if ((sf->cp) && (!(sf->cp->active)))
+    {
+      reader_out_of_data(sf);
+      return;
+    }
   at_end = ((sf->cb == NULL) || 
 	    (sf->current_sound == NULL) || 
 	    (READER_LOCAL_END(sf) <= sf->current_sound->io->end));
@@ -8403,35 +8423,42 @@ static void init_as_one_edit(chan_info *cp)
 
 static void as_one_edit_set_origin(chan_info *cp, void *origin)
 {
-  if ((cp->as_one_edit_positions[cp->in_as_one_edit] + 1) == cp->edit_ctr)
+  if (cp->as_one_edit_positions)
     {
-      ed_list *ed;
-      ed = cp->edits[cp->edit_ctr];
-      if (ed)
+      if ((cp->as_one_edit_positions[cp->in_as_one_edit] + 1) == cp->edit_ctr)
 	{
-	  if (ed->origin) FREE(ed->origin);
-	  ed->origin = copy_string((char *)origin);
+	  ed_list *ed;
+	  ed = cp->edits[cp->edit_ctr];
+	  if (ed)
+	    {
+	      if (ed->origin) FREE(ed->origin);
+	      ed->origin = copy_string((char *)origin);
+	    }
 	}
     }
 }
 
 static void finish_as_one_edit(chan_info *cp) 
 {
-  cp->in_as_one_edit--;
-  if (cp->in_as_one_edit < 0)
+  /* if a sound was opened within as-one-edit, it will have 0 here and no array */
+  if ((cp->in_as_one_edit > 0) && (cp->as_one_edit_positions))
     {
+      cp->in_as_one_edit--;
+      if (cp->in_as_one_edit < 0)
+	{
 #if MUS_DEBUGGING
-      fprintf(stderr, "in_as_one_edit: %d\n", cp->in_as_one_edit);
+	  fprintf(stderr, "in_as_one_edit: %d\n", cp->in_as_one_edit);
 #endif
-      cp->in_as_one_edit = 0;
-    }
-  as_one_edit(cp, cp->as_one_edit_positions[cp->in_as_one_edit] + 1);
-  if (cp->in_as_one_edit == 0)
-    {
-      cp->squelch_update = cp->previous_squelch_update;
-      if (!(cp->squelch_update)) clear_minibuffer(cp->sound);
-      reflect_edit_history_change(cp);
-      update_graph(cp);
+	  cp->in_as_one_edit = 0;
+	}
+      as_one_edit(cp, cp->as_one_edit_positions[cp->in_as_one_edit] + 1);
+      if (cp->in_as_one_edit == 0)
+	{
+	  cp->squelch_update = cp->previous_squelch_update;
+	  if (!(cp->squelch_update)) clear_minibuffer(cp->sound);
+	  reflect_edit_history_change(cp);
+	  update_graph(cp);
+	}
     }
 }
 

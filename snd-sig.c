@@ -3542,6 +3542,15 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	    ss->stopped_explicitly = false;
 	  else
 	    {
+	      if (!(cp->active))
+		{
+		  snd_remove(filename, REMOVE_FROM_CACHE);
+		  FREE(filename);
+		  XEN_ERROR(NO_SUCH_CHANNEL,
+			    XEN_LIST_2(C_TO_XEN_STRING(caller),
+				       C_TO_XEN_STRING("can't edit closed channel!")));
+		  return(XEN_FALSE);
+		}
 	      if (j == num)
 		file_change_samples(beg, j, filename, cp, 0, DELETE_ME, LOCK_MIXES, caller, cp->edit_ctr);
 	      else
@@ -3618,6 +3627,14 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 		}
 	    }
 	  sf = free_snd_fd(sf);
+	  if (!(cp->active))
+	    {
+	     if (data) {FREE(data); data = NULL;} 
+	      XEN_ERROR(NO_SUCH_CHANNEL,
+			XEN_LIST_2(C_TO_XEN_STRING(caller),
+				   C_TO_XEN_STRING("can't edit closed channel!")));
+	      return(XEN_FALSE);
+	    }
 	  if (data_pos == num)
 	    change_samples(beg, data_pos, data, cp, LOCK_MIXES, caller, cp->edit_ctr);
 	  else

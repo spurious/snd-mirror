@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [513]
-;;;  test 1: defaults                           [1091]
-;;;  test 2: headers                            [1295]
-;;;  test 3: variables                          [1600]
-;;;  test 4: sndlib                             [2256]
-;;;  test 5: simple overall checks              [4676]
-;;;  test 6: vcts                               [12327]
-;;;  test 7: colors                             [12602]
-;;;  test 8: clm                                [13091]
-;;;  test 9: mix                                [22735]
-;;;  test 10: marks                             [26307]
-;;;  test 11: dialogs                           [27284]
-;;;  test 12: extensions                        [27549]
-;;;  test 13: menus, edit lists, hooks, etc     [27844]
-;;;  test 14: all together now                  [29550]
-;;;  test 15: chan-local vars                   [30586]
-;;;  test 16: regularized funcs                 [32043]
-;;;  test 17: dialogs and graphics              [36459]
-;;;  test 18: enved                             [36548]
-;;;  test 19: save and restore                  [36567]
-;;;  test 20: transforms                        [38476]
-;;;  test 21: new stuff                         [40308]
-;;;  test 22: run                               [42337]
-;;;  test 23: with-sound                        [48086]
-;;;  test 24: user-interface                    [50551]
-;;;  test 25: X/Xt/Xm                           [54171]
-;;;  test 26: Gtk                               [58753]
-;;;  test 27: GL                                [62869]
-;;;  test 28: errors                            [62993]
-;;;  test all done                              [65184]
-;;;  test the end                               [65419]
+;;;  test 0: constants                          [540]
+;;;  test 1: defaults                           [1118]
+;;;  test 2: headers                            [1322]
+;;;  test 3: variables                          [1627]
+;;;  test 4: sndlib                             [2283]
+;;;  test 5: simple overall checks              [4706]
+;;;  test 6: vcts                               [12494]
+;;;  test 7: colors                             [12769]
+;;;  test 8: clm                                [13259]
+;;;  test 9: mix                                [22901]
+;;;  test 10: marks                             [26473]
+;;;  test 11: dialogs                           [27450]
+;;;  test 12: extensions                        [27715]
+;;;  test 13: menus, edit lists, hooks, etc     [28011]
+;;;  test 14: all together now                  [29717]
+;;;  test 15: chan-local vars                   [30753]
+;;;  test 16: regularized funcs                 [32210]
+;;;  test 17: dialogs and graphics              [36626]
+;;;  test 18: enved                             [36715]
+;;;  test 19: save and restore                  [36734]
+;;;  test 20: transforms                        [38643]
+;;;  test 21: new stuff                         [40475]
+;;;  test 22: run                               [42504]
+;;;  test 23: with-sound                        [48253]
+;;;  test 24: user-interface                    [50718]
+;;;  test 25: X/Xt/Xm                           [54340]
+;;;  test 26: Gtk                               [58922]
+;;;  test 27: GL                                [63038]
+;;;  test 28: errors                            [63162]
+;;;  test all done                              [65350]
+;;;  test the end                               [65586]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -41,7 +41,7 @@
 (define tests 1)
 (define keep-going #f)
 (define all-args #f) ; extended testing
-(define test-at-random 10)
+(define test-at-random 0)
 
 (if (and (provided? 'snd-guile) (provided? 'snd-gauche)) (display ";both switches are on?"))
 
@@ -97,6 +97,7 @@
 
 (define original-save-dir (or (save-dir) "/zap/snd"))
 (define original-temp-dir (or (temp-dir) "/zap/tmp"))
+(define original-sound-file-extensions (sound-file-extensions))
 
 (unbind-key #\c 4 #t)
 ;;; clear out old junk!
@@ -221,45 +222,60 @@
 (set! (window-y) 10)
 
 (define test14-file #f)
-(define fneq (lambda (a b) (> (abs (- a b)) .001)))
-(define ffneq (lambda (a b) (> (abs (- a b)) .01)))
-(define fffneq (lambda (a b) (> (abs (- a b)) .1)))
-(define (fneqerr val true-val err) (> (abs (- val true-val)) err))
+
+(define (fneq a b) 
+  "float equal within .001"
+  (> (abs (- a b)) .001))
+
+(define (ffneq a b)
+  "float equal within .01"
+  (> (abs (- a b)) .01))
+
+(define (fffneq a b) 
+  "float equal within .1"
+  (> (abs (- a b)) .1))
+
+(define (fneqerr val true-val err) 
+  "float equal within err"
+  (> (abs (- val true-val)) err))
+
 (define (cneq a b)
+  "complex equal within .001"
   (or (> (abs (- (real-part a) (real-part b))) .001)
       (> (abs (- (imag-part a) (imag-part b))) .001)))
 
-(define feql
-  (lambda (a b)
-    (if (null? a)
-	(null? b)
-	(if (null? b)
-	    #f
-	    (if (fneq (car a) (car b))
-		#f
-		(feql (cdr a) (cdr b)))))))
+(define (feql a b)
+  "list equal with fneq"
+  (if (null? a)
+      (null? b)
+      (if (null? b)
+	  #f
+	  (if (fneq (car a) (car b))
+	      #f
+	      (feql (cdr a) (cdr b))))))
 
-(define ffeql
-  (lambda (a b)
-    (if (list? a)
-	(if (null? a)
-	    (null? b)
-	    (if (null? b)
-		#f
-		(if (fffneq (car a) (car b))
-		    #f
-		    (ffeql (cdr a) (cdr b)))))
-	#f)))
+(define (ffeql a b)
+  "list equal with fffneq"
+  (if (list? a)
+      (if (null? a)
+	  (null? b)
+	  (if (null? b)
+	      #f
+	      (if (fffneq (car a) (car b))
+		  #f
+		  (ffeql (cdr a) (cdr b)))))
+      #f))
 
-(define fveql 
-  (lambda (a b i)
-    (if (null? b)
-	#t
-	(if (fneq (car b) (vct-ref a i))
-	    #f
-	    (fveql a (cdr b) (+ i 1))))))
+(define (fveql a b i)
+  "vct equal with fneq"
+  (if (null? b)
+      #t
+      (if (fneq (car b) (vct-ref a i))
+	  #f
+	  (fveql a (cdr b) (+ i 1)))))
 
 (define (vequal v0 v1)
+  "general equal with .001"
   (let ((old-fudge (mus-float-equal-fudge-factor)))
     (set! (mus-float-equal-fudge-factor) .001)
     (let ((result (equal? v0 v1)))
@@ -267,6 +283,7 @@
       result)))
 
 (define (vvequal v0 v1)
+  "general equal with .00002"
   (let ((old-fudge (mus-float-equal-fudge-factor)))
     (set! (mus-float-equal-fudge-factor) .00002)
     (let ((result (equal? v0 v1)))
@@ -274,6 +291,7 @@
       result)))
 
 (define (sd-equal v0 v1)
+  "sound-data equal within .001"
   (let ((old-fudge (mus-float-equal-fudge-factor)))
     (set! (mus-float-equal-fudge-factor) .001)
     (let ((result (equal? v0 v1)))
@@ -281,9 +299,11 @@
       result)))
 
 (define* (my-substring str start :optional end)
+  "substring with end"
   (substring str start (or end (string-length str))))
 
 (define (string-=? a b)
+  "string=? but ignore -0.0"
   (or (string=? a b)
       (let* ((alen (string-length a))
 	     (blen (string-length b))
@@ -338,11 +358,11 @@
 (if (provided? 'snd-guile) 
     (begin
       (define ran-state (seed->random-state (current-time)))
-      (define my-random
-	(lambda (n)
-	  (if (= n 0) 
-	      0 ;sigh...
-	      (random n ran-state)))))
+      (define (my-random n)
+	"random of 0.0 should return 0.0!"
+	(if (= n 0) 
+	    0 ;sigh...
+	    (random n ran-state))))
     (define my-random random))
 
 					;(define rs (lambda (n) (< (my-random 1.0) n)))
@@ -355,16 +375,19 @@
 
 (define safe-color (make-color 1 0 0))
 (define (make-color-with-catch c1 c2 c3)
+  "make-color but catch 'no-such-color"
   (catch 'no-such-color
 	 (lambda () (make-color c1 c2 c3))
 	 (lambda args safe-color)))
 
 (define* (safe-display-edits :optional snd chn edpos (with-source #t))
+  "display-edits but catch all errors"
   (catch #t
 	 (lambda () (display-edits snd chn edpos with-source))
 	 (lambda args (snd-display ";display-edits error: ~A" args))))
 
 (define (safe-divide a b)
+  "divide but check for 0 denom"
   (if (zero? b)
       a
       (/ a b)))
@@ -391,6 +414,7 @@
 
 
 (define (clear-save-state-files)
+  "forget regions and whatnot"
   (let ((regs (regions)))
     (for-each
      (lambda (n)
@@ -442,10 +466,12 @@
     (define reset-almost-all-hooks reset-all-hooks))
 
 (define (list-p val)
+  "list? and not a null list!"
   (and (list? val)
        (not (null? val))))
 
 (define (arity-ok func args)
+  "func accepts args"
   (let ((arity (or (procedure-property func 'arity)
 		   (ref func 'arity))))
     (and (list-p arity)
@@ -455,6 +481,7 @@
 	     (<= args (+ (car arity) (cadr arity)))))))
 
 (define (set-arity-ok func args)
+  "set proc accepts args"
   (let ((arity (if (procedure-with-setter? func)
 		   (procedure-property (setter func) 'arity)
 		   (procedure-property func 'arity))))
@@ -476,6 +503,7 @@
 	  (begin
 	    ;; test-number tests
 	    (set! snd-test (string->number (list-ref args (1+ arg))))
+	    (set! test-at-random 0)
 	    (set! full-test (< snd-test 0))
 	    (set! with-exit #t)
 	    (set! (script-arg) (1+ arg))
@@ -3852,7 +3880,10 @@
 		 (set! (frames ind) (* cur-samps 2))
 		 (if (not (= (* cur-samps 2) (frames ind))) 
 		     (snd-display ";~A: set frames: ~A -> ~A" file cur-samps (frames ind)))
-		 (set! (chans ind) (* cur-chans 2))
+		 (set! (chans ind) (* cur-chans 2)) ; this can change the index
+		 (let ((xind (find-sound file)))
+		   (if (not (= ind xind))
+		       (set! ind xind)))
 		 (if (not (= (* cur-chans 2) (chans ind))) 
 		     (snd-display ";~A: set chans: ~A -> ~A" file cur-chans (chans ind)))
 		 (set! (data-location ind) (* cur-loc 2))
@@ -3875,9 +3906,9 @@
 		 (delete-file file)))
 	   (list "test.wave" "test.rf64" "test.aifc")))
 	
-					;	  (with-sound (:output big-file-name :srate 44100 :play #f)
-					;	    (do ((i 0 (1+ i))) ((= i 72000))
-					;	      (fm-violin i .1 440 (+ .01 (* (/ i 72000.0) .9)))))
+	;;	  (with-sound (:output big-file-name :srate 44100 :play #f)
+	;;	    (do ((i 0 (1+ i))) ((= i 72000))
+	;;	      (fm-violin i .1 440 (+ .01 (* (/ i 72000.0) .9)))))
 	
 	(if with-big-file
 	    (let ((probable-frames (inexact->exact (floor (* 44100 71999.1))))) ; silence as last .9 secs, so it probably wasn't written
@@ -10605,6 +10636,7 @@ EDITS: 5
 	  (set! (sinc-width) sw)
 	  (close-sound index))
 	
+	(if (< (max-regions) 8) (set! (max-regions) 8))
 	(let* ((ind (open-sound "oboe.snd"))
 	       (rid0 (make-region 2000 2020 ind 0))
 	       (rid0-data (region2vct rid0 0 20)))
@@ -12009,7 +12041,173 @@ EDITS: 5
 	    (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit 12" "scale" 38121 12707)))
 		(snd-display ";as-one-edit 12: ~A" (edit-fragment 1 ind 0)))
 	    
-	    (close-sound ind))
+	    (revert-sound ind)
+	    (let ((m1 #f)
+		  (m2 #f)
+		  (m3 #f)
+		  (m4 #f))
+	      (as-one-edit
+	       (lambda ()
+		 (set! m1 (add-mark 1234 ind 0))
+		 (set! (sample 1236 ind 0) .6)
+		 (as-one-edit
+		  (lambda ()
+		    (set! (sample 123 ind 0) .3)
+		    (set! m2 (add-mark 1235 ind 0)))
+		  "as-one-edit inner 1")
+		 (if (not (mark? m1)) (snd-display ";as-one-edit stepped on m1: ~A" m1))
+		 (if (not (mark? m2)) (snd-display ";as-one-edit stepped on m2: ~A" m2))
+		 (as-one-edit
+		  (lambda ()
+		    (set! m3 (add-mark 1238 ind 0))
+		    (set! (sample 1238 ind 0) .8))
+		  "as-one-edit inner 2")
+		 (set! (sample 1239 ind 0) .9)
+		 (set! m4 (add-mark 1237 ind 0)))
+	       "outer as-one-edit")
+	      (if (not (mark? m1)) (snd-display ";2nd as-one-edit stepped on m1: ~A" m1))
+	      (if (not (mark? m2)) (snd-display ";2nd as-one-edit stepped on m2: ~A" m2))
+	      (if (not (mark? m3)) (snd-display ";2nd as-one-edit stepped on m3: ~A" m3))
+	      (if (not (mark? m4)) (snd-display ";2nd as-one-edit stepped on m4: ~A" m4))
+	      (if (not (= (mark-sample m1) 1234)) (snd-display ";as-one-edit m1 sample: ~A (1234)" (mark-sample m1)))
+	      (if (not (= (mark-sample m2) 1235)) (snd-display ";as-one-edit m2 sample: ~A (1235)" (mark-sample m2)))
+	      (if (not (= (mark-sample m3) 1238)) (snd-display ";as-one-edit m3 sample: ~A (1238)" (mark-sample m3)))
+	      (if (not (= (mark-sample m4) 1237)) (snd-display ";as-one-edit m4 sample: ~A (1237)" (mark-sample m4)))
+	      (if (not (string=? (display-edits ind 0) "
+EDITS: 1
+
+ (begin) [0:2]:
+   (at 0, cp->sounds[0][0:50827, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+
+ (set 1239 1) ; outer as-one-edit [1:9]:
+   (at 0, cp->sounds[0][0:122, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 123, cp->sounds[2][0:0, 1.000]) [buf: 1] 
+   (at 124, cp->sounds[0][124:1235, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1236, cp->sounds[1][0:0, 1.000]) [buf: 1] 
+   (at 1237, cp->sounds[0][1237:1237, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1238, cp->sounds[3][0:0, 1.000]) [buf: 1] 
+   (at 1239, cp->sounds[4][0:0, 1.000]) [buf: 1] 
+   (at 1240, cp->sounds[0][1240:50827, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+"))
+		  (snd-display ";as-one-edit edits: ~A" (display-edits ind 0)))
+	      
+	      (revert-sound ind))
+	    
+	    (let ((m1 #f)
+		  (m2 #f)
+		  (m3 #f)
+		  (m4 #f))
+	      (as-one-edit
+	       (lambda ()
+		 (set! m1 (mix-vct (vct .1 .2 .3) 1234 ind 0))
+		 (set! (sample 1236 ind 0) .6)
+		 (as-one-edit
+		  (lambda ()
+		    (set! (sample 123 ind 0) .3)
+		    (set! m2 (mix-vct (vct .1 .2 .3) 1235 ind 0)))
+		  "as-one-edit inner 1")
+		 (if (not (mix? m1)) (snd-display ";as-one-edit stepped on m1: ~A" m1))
+		 (if (not (mix? m2)) (snd-display ";as-one-edit stepped on m2: ~A" m2))
+		 (as-one-edit
+		  (lambda ()
+		    (set! m3 (mix-vct (vct .1 .2 .3) 1238 ind 0))
+		    (set! (sample 1238 ind 0) .8))
+		  "as-one-edit inner 2")
+		 (set! (sample 1239 ind 0) .9)
+		 (set! m4 (mix-vct (vct .1 .2 .3) 1237 ind 0)))
+	       "outer as-one-edit")
+	      (if (not (mix? m1)) (snd-display ";2nd as-one-edit stepped on mx1: ~A" m1))
+	      (if (not (mix? m2)) (snd-display ";2nd as-one-edit stepped on mx2: ~A" m2))
+	      (if (not (mix? m3)) (snd-display ";2nd as-one-edit stepped on mx3: ~A" m3))
+	      (if (not (mix? m4)) (snd-display ";2nd as-one-edit stepped on mx4: ~A" m4))
+	      (if (not (= (mix-position m1) 1234)) (snd-display ";as-one-edit mx1 sample: ~A (1234)" (mix-position m1)))
+	      (if (not (= (mix-position m2) 1235)) (snd-display ";as-one-edit mx2 sample: ~A (1235)" (mix-position m2)))
+	      (if (not (= (mix-position m3) 1238)) (snd-display ";as-one-edit mx3 sample: ~A (1238)" (mix-position m3)))
+	      (if (not (= (mix-position m4) 1237)) (snd-display ";as-one-edit mx4 sample: ~A (1237)" (mix-position m4)))
+	      ;; can't easily check the edit string because temp mix file names are always different
+	      (revert-sound ind))
+	    
+	    (let ((ind2 #f))
+	      (as-one-edit
+	       (lambda ()
+		 (set! ind2 (open-sound "pistol.snd"))
+		 (set! (sample 100 ind 0) .5)
+		 (set! (sample 200 ind2 0) .6))
+	       "as-one-edit+open")
+	      (if (not (sound? ind2)) (snd-display ";as-one-edit didn't open sound? ~A ~A" ind2 (sounds)))
+	      (if (not (= (edit-position ind2 0) 1)) (snd-display ";edpos as-one-edit opened sound: ~A" (edit-position ind2 0)))
+	      (if (not (= (edit-position ind 0) 1)) (snd-display ";edpos as-one-edit original sound: ~A" (edit-position ind 0)))
+	      (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit+open" "set" 100 1)))
+		  (snd-display ";as-one-edit open sound edlist orig: ~A" (edit-fragment 1 ind 0)))
+	      (if (not (equal? (edit-fragment 1 ind2 0) (list "set-sample 200 0.6000" "set" 200 1)))
+		  (snd-display ";as-one-edit open sound edlist new: ~A" (edit-fragment 1 ind2 0)))
+	      
+	      (as-one-edit
+	       (lambda ()
+		 (set! (sample 200 ind 0) .7)
+		 (close-sound ind2))
+	       "as-one-edit+close")
+	      (if (sound? ind2) 
+		  (begin
+		    (snd-display ";as-one-edit didn't close sound? ~A ~A" ind2 (sounds))
+		    (close-sound ind2)))
+	      (if (not (= (edit-position ind 0) 2)) (snd-display ";edpos as-one-edit close original sound: ~A" (edit-position ind 0)))
+	      (if (not (string=? (display-edits ind 0) "
+EDITS: 2
+
+ (begin) [0:2]:
+   (at 0, cp->sounds[0][0:50827, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+
+ (set 100 1) ; as-one-edit+open [1:4]:
+   (at 0, cp->sounds[0][0:99, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[1][0:0, 1.000]) [buf: 1] 
+   (at 101, cp->sounds[0][101:50827, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+
+ (set 200 1) ; as-one-edit+close [2:6]:
+   (at 0, cp->sounds[0][0:99, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[1][0:0, 1.000]) [buf: 1] 
+   (at 101, cp->sounds[0][101:199, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 200, cp->sounds[2][0:0, 1.000]) [buf: 1] 
+   (at 201, cp->sounds[0][201:50827, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+"))
+		  (snd-display ";as-one-edit open+close: ~A" (display-edits ind 0))))
+	    
+	    (close-sound ind))  
+
+	  (let ((ind1 (open-sound "oboe.snd"))
+		(ind2 #f))
+	    (as-one-edit 
+	     (lambda ()
+	       (set! (sample 100 ind1 0) .5)
+	       (set! ind2 (open-sound "pistol.snd"))
+	       (as-one-edit
+		(lambda ()
+		  (set! (sample 200 ind2 0) .5)
+		  (close-sound ind1))
+		"inner edit")
+	       (set! (sample 300 ind2 0) .6))
+	     "outer edit")
+	    (if (sound? ind1) (snd-display ";as-one-edit close inner: ~A ~A" ind1 (sounds)))
+	    (if (not (sound? ind2)) (snd-display ";as-one-edit open inner: ~A ~A" ind2 (sounds)))
+	    
+	    (revert-sound ind2)
+	    (as-one-edit
+	     (lambda ()
+	       (set! ind1 (open-sound "oboe.snd"))
+	       (as-one-edit
+		(lambda ()
+		  (set! (sample 200 ind1 0) .5))
+		"inner edit")
+	       (set! (sample 100 ind2 0) .4))
+	     "outer edit")
+	    (close-sound ind1)
+	    (close-sound ind2))
+
 	  
 	  (let* ((ind (open-sound "oboe.snd"))
 		 (mx (maxamp ind 0)))
@@ -12844,26 +13042,27 @@ EDITS: 5
 		   (snd-display ";jet ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
 				x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1)))))
 	   
-	   (do ((i 0 (1+ i))) ((= i 10))
-	     (let* ((x (random 1.0))
-		    (r (if (< x 3/8)
-			   (* 14/9 x)
-			   (+ (* 2/3 x) 1/3)))
-		    (g (if (< x 3/8)
-			   (* 2/3 x)
-			   (if (< x 3/4)
-			       (- (* 14/9 x) 1/3)
-			       (+ (* 2/3 x) 1/3))))			
-		    (b (if (< x 3/4)
-			   (* 2/3 x)
-			   (- (* 2 x) 1)))
-		    (rgb (colormap-ref pink-colormap x))
-		    (r1 (list-ref rgb 0))
-		    (g1 (list-ref rgb 1))
-		    (b1 (list-ref rgb 2)))
-	       (if (and (< x (- 1.0 (/ 1.0 n))) (or (cfneq r r1) (cfneq g g1) (cfneq b b1)))
-		   (snd-display ";pink ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
-				x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1)))))
+	   (if (colormap? pink-colormap)
+	       (do ((i 0 (1+ i))) ((= i 10))
+		 (let* ((x (random 1.0))
+			(r (if (< x 3/8)
+			       (* 14/9 x)
+			       (+ (* 2/3 x) 1/3)))
+			(g (if (< x 3/8)
+			       (* 2/3 x)
+			       (if (< x 3/4)
+				   (- (* 14/9 x) 1/3)
+				   (+ (* 2/3 x) 1/3))))			
+			(b (if (< x 3/4)
+			       (* 2/3 x)
+			       (- (* 2 x) 1)))
+			(rgb (colormap-ref pink-colormap x))
+			(r1 (list-ref rgb 0))
+			(g1 (list-ref rgb 1))
+			(b1 (list-ref rgb 2)))
+		   (if (and (< x (- 1.0 (/ 1.0 n))) (or (cfneq r r1) (cfneq g g1) (cfneq b b1)))
+		       (snd-display ";pink ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
+				    x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1))))))
 	   
 	   (do ((i 0 (1+ i))) ((= i 10))
 	     (let* ((x (random 1.0))
@@ -13148,8 +13347,6 @@ EDITS: 5
 	     scissorf 
 	     '(0 0  25 1  75 1  100 0) 
 	     '(1 .5  2 1  3 .5  4 .1  5 .01))))
-
-  
 
 
 (define (snd_test_8)
@@ -14425,7 +14622,7 @@ EDITS: 5
 	     (fneq (mus-phase gen) (- (* 2 pi) 2.0)))
 	(snd-display ";phase: ~A freq: ~A" (mus-phase gen))))
   
-;;; from mixer.scm (commented out)
+  ;; from mixer.scm (commented out)
   (define (frame-cross m1 m2)
     (if (or (not (= (mus-length m1) 3))
 	    (not (= (mus-length m2) 3)))
@@ -27585,258 +27782,259 @@ EDITS: 5
 	  ((p (car l)) (remove-if p (cdr l)))
 	  (else (cons (car l) (remove-if p (cdr l))))))
   
-  
-  (define sf-dir-files
-    (if (string? sf-dir) 
-	(let ((good-files '()))
-	  (for-each ; omit bad headers (test cases) 
-	   (lambda (file)
-	     (catch 'mus-error
-		    (lambda () 
-		      (if (and (< (mus-sound-chans (string-append sf-dir file)) 256)
-			       (> (mus-sound-chans (string-append sf-dir file)) 0)
-			       (>= (mus-sound-data-format (string-append sf-dir file)) 0)
-			       (> (mus-sound-srate (string-append sf-dir file)) 0)
-			       (>= (mus-sound-frames (string-append sf-dir file)) 0))
-			  (set! good-files (cons file good-files))))
-		    (lambda args 
-		      (car args))))
-	   (sound-files-in-directory sf-dir))
-	  good-files)
-	#f))
-  
-  (define sf-dir-len #f)
-  
-  (set! sf-dir-len (if sf-dir-files (length sf-dir-files) 0))
-  
-  (if with-gui
-      (if sf-dir-files
-	  (let ((open-files '())
-		(open-ctr 0))
-	    
-	    (add-sound-file-extension "wave")
-	    (let ((exts (sound-file-extensions)))
-	      (if (not (member "wave" exts))
-		  (snd-display ";sound-file-extensions: ~A" exts))
-	      (set! (sound-file-extensions) (list))
-	      (if (not (null? (sound-file-extensions)))
-		  (snd-display ";sound-file-extesions set to '(): ~A" (sound-file-extensions)))
-	      (set! (sound-file-extensions) exts)
-	      (if (not (member "wave" exts))
-		  (snd-display ";sound-file-extensions reset: ~A" (sound-file-extensions))))
-	    
-	    (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) 
-	      (log-mem clmtest)
+
+  (if (null? (sound-file-extensions))
+      (set! (sound-file-extensions) original-sound-file-extensions))
+
+  (let* ((sf-dir-files
+	  (if (string? sf-dir) 
+	      (let ((good-files '()))
+		(for-each ; omit bad headers (test cases) 
+		 (lambda (file)
+		   (catch 'mus-error
+			  (lambda () 
+			    (if (and (< (mus-sound-chans (string-append sf-dir file)) 256)
+				     (> (mus-sound-chans (string-append sf-dir file)) 0)
+				     (>= (mus-sound-data-format (string-append sf-dir file)) 0)
+				     (> (mus-sound-srate (string-append sf-dir file)) 0)
+				     (>= (mus-sound-frames (string-append sf-dir file)) 0))
+				(set! good-files (cons file good-files))))
+			  (lambda args 
+			    (car args))))
+		 (sound-files-in-directory sf-dir))
+		good-files)
+	      #f))
+	 
+	 (sf-dir-len (if sf-dir-files (length sf-dir-files) 0)))
+
+    (if with-gui
+	(if (> sf-dir-len 0)
+	    (let ((open-files '())
+		  (open-ctr 0))
 	      
-	      (do ()
-		  ((= open-ctr 32))
-		(let* ((len (length open-files))
-		       (open-chance (* (- 8 len) .125))
-		       (close-chance (* len .125)))
-		  (if (or (= len 0) (> (random 1.0) .5))
-		      (let* ((choice (inexact->exact (floor (my-random sf-dir-len))))
-			     (name (string-append sf-dir (list-ref sf-dir-files choice)))
-			     (ht (catch #t (lambda () (mus-sound-header-type name)) (lambda args 0)))
-			     (df (catch #t (lambda () (mus-sound-data-format name)) (lambda args 0)))
-			     (fd (if (or (= ht mus-raw)
-					 (= ht mus-unsupported)
-					 (= df mus-unknown))
-				     -1 
-				     (or (catch #t
-						(lambda () (view-sound name))
-						(lambda args
-						  (snd-display ";~A ~A ~A" name ht df)
-						  -1))
-					 -1))))
-			(if (not (= fd -1))
-			    (begin
-			      (set! open-ctr (+ open-ctr 1))
-			      (set! open-files (cons fd open-files)))))
-		      (if (and (> len 0) (> (random 1.0) 0.3))
-			  (let* ((choice (inexact->exact (floor (my-random (exact->inexact (length open-files))))))
-				 (fd (list-ref open-files choice)))
-			    (close-sound fd)
-			    (set! open-files (remove-if (lambda (a) (= a fd)) open-files)))))))
-	      (if open-files (for-each close-sound open-files))
-	      (set! open-files '())
+	      (add-sound-file-extension "wave")
+	      (let ((exts (sound-file-extensions)))
+		(if (not (member "wave" exts))
+		    (snd-display ";sound-file-extensions: ~A" exts))
+		(set! (sound-file-extensions) (list))
+		(if (not (null? (sound-file-extensions)))
+		    (snd-display ";sound-file-extesions set to '(): ~A" (sound-file-extensions)))
+		(set! (sound-file-extensions) exts)
+		(if (not (member "wave" exts))
+		    (snd-display ";sound-file-extensions reset: ~A" (sound-file-extensions))))
 	      
-	      (if (not (= (length (sounds)) 0)) (snd-display ";active-sounds: ~A ~A?" (sounds) (map short-file-name (sounds))))
-	      (let ((fd (open-raw-sound :file (string-append sf-dir "addf8.nh") :channels 1 :srate 8012 :data-format mus-mulaw)))
-		(if (not (= (data-format fd) mus-mulaw)) (snd-display ";open-raw-sound: ~A?" (mus-data-format-name (data-format fd))))
-		(close-sound fd))
-	      
-	      (reset-hook! bad-header-hook)
-	      (time (test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g723_24") 20.0))
-	      (test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g723_40") 3.0)
-	      (test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g721") 6.0)
-	      (test-spectral-difference (string-append sf-dir "o2.wave") (string-append sf-dir "o2_dvi.wave") 10.0)
-	      (test-spectral-difference (string-append sf-dir "wood.riff") (string-append sf-dir "wood.sds") 4.0)
-	      (test-spectral-difference (string-append sf-dir "nist-10.wav") (string-append sf-dir "nist-shortpack.wav") 1.0)
-	      (add-hook! bad-header-hook (lambda (n) #t))
-	      
-	  ;;; dangling readers (overall)
-	      (let ((ind (open-sound "oboe.snd")))
-		(let ((hi (make-sample-reader 0 ind 0)))
-		  (close-sound ind)
-		  (if (not (sample-reader? hi)) (snd-display ";dangling reader? ~A" hi))
-		  (let ((name (format #f "~A" hi)))
-		    (if (not (string? name)) (snd-display ";dangling reader format: ~A" name)))
-		  (let* ((val (hi))
-			 (val1 (next-sample hi))
-			 (val2 (previous-sample hi))
-			 (val3 (read-sample hi)))
-		    (if (or (fneq val 0.0) (fneq val1 0.0) (fneq val2 0.0) (fneq val3 0.0))
-			(snd-display ";dangling read: ~A ~A ~A ~A" val val1 val2 val3))
-		    (if (sample-reader-home hi) (snd-display ";dangling reader home: ~A" (sample-reader-home hi)))
-		    (if (not (= (sample-reader-position hi) 0)) (snd-display ";dangling sample-reader-position: ~A" (sample-reader-position hi)))
-		    (if (not (sample-reader-at-end? hi)) (snd-display ";dangling reader eof: ~A" (sample-reader-at-end? hi)))
-		    (free-sample-reader hi))))
-	  ;;; same (pruned edit)
-	      (let ((ind (open-sound "oboe.snd")))
-		(delete-samples 100 100)
-		(let ((hi (make-sample-reader 0 ind 0)))
-		  (revert-sound)
-		  (delete-samples 100 100)
-		  (if (not (sample-reader? hi)) (snd-display ";pruned dangling reader? ~A" hi))
-		  (let ((name (format #f "~A" hi)))
-		    (if (not (string? name)) (snd-display ";pruned dangling reader format: ~A" name)))
-		  (let* ((val (hi))
-			 (val1 (next-sample hi))
-			 (val2 (previous-sample hi))
-			 (val3 (read-sample hi)))
-		    (if (or (fneq val 0.0) (fneq val1 0.0) (fneq val2 0.0) (fneq val3 0.0))
-			(snd-display ";pruned dangling read: ~A ~A ~A ~A" val val1 val2 val3))
-		    (if (not (equal? (sample-reader-home hi) (list ind 0))) (snd-display ";pruned dangling reader home: ~A" (sample-reader-home hi)))
-		    (if (not (sample-reader-at-end? hi)) (snd-display ";pruned dangling reader eof: ~A" (sample-reader-at-end? hi)))
-		    (free-sample-reader hi)))
-		(close-sound ind))
-	      ;; region reader
-	      (let* ((ind (open-sound "oboe.snd"))
-		     (reg (make-region 1000 2000 ind 0))
-		     (rd (make-region-sample-reader 0 reg)))
-		(if (mix-sample-reader? rd) (snd-display ";region sample-reader: mix ~A" rd))
-		(if (not (region-sample-reader? rd)) (snd-display ";region sample-reader: region ~A" rd))
-		(if (track-sample-reader? rd) (snd-display ";region sample-reader: track ~A" rd))
-		(if (sample-reader? rd) (snd-display ";region sample-reader: normal ~A" rd))
-					;(if (not (= (sample-reader-position rd) 0)) (snd-display ";region sample-reader position: ~A" (sample-reader-position rd)))
-		(if (not (equal? (sample-reader-home rd) (list reg 0))) (snd-display ";region sample-reader home: ~A" (sample-reader-home rd)))
-		(if (sample-reader-at-end? rd) (snd-display ";region sample-reader at end?: ~A" (sample-reader-at-end? rd)))
-		(let ((val (rd)))
-		  (if (fneq val .0328) (snd-display ";region-sample-reader at start: ~A" val))
-		  (if (not (string? (format #f "~A" rd))) (snd-display ";region-sample-reader: ~A" (format #f "~A" rd)))
-		  (close-sound ind)
-		  ;; reader is still ok presumably
-		  (set! val (next-sample rd))
-		  (if (fneq val .0348) (snd-display ";region-sample-reader at 1: ~A" val))
-		  (forget-region reg)
-		  (set! val (read-sample rd))
-		  (if (fneq val 0.0) (snd-display ";region-sample-reader at end: ~A" val))
-		  (if (not (sample-reader-at-end? rd)) (snd-display ";region-sample-reader after deletion?"))
-		  (free-sample-reader rd)))
-	      ;; mix reader
-	      (let ((save-md 0))
-		(mix-click-sets-amp)
-		(let* ((ind (open-sound "oboe.snd"))
-		       (reg (make-region 1000 2000 ind 0))
-		       (md (mix-region 0 reg ind 0))
-		       (rd (make-mix-sample-reader md)))
-		  (set! (mix-property :hi md) "hi")
-		  (set! save-md md)
-		  (if (not (string=? (mix-property :hi md) "hi")) (snd-display ";mix(9)-property: ~A" (mix-property :hi md)))
-		  (let ((val (rd)))
-		    (if (fneq val .0328) (snd-display ";mix-sample-reader at start: ~A" val))
-		    (if (not (string? (format #f "~A" rd))) (snd-display ";mix-sample-reader: ~A" (format #f "~A" rd)))
+	      (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) 
+		(log-mem clmtest)
+		
+		(do ()
+		    ((= open-ctr 32))
+		  (let* ((len (length open-files))
+			 (open-chance (* (- 8 len) .125))
+			 (close-chance (* len .125)))
+		    (if (or (= len 0) (> (random 1.0) .5))
+			(let* ((choice (inexact->exact (floor (my-random sf-dir-len))))
+			       (name (string-append sf-dir (list-ref sf-dir-files choice)))
+			       (ht (catch #t (lambda () (mus-sound-header-type name)) (lambda args 0)))
+			       (df (catch #t (lambda () (mus-sound-data-format name)) (lambda args 0)))
+			       (fd (if (or (= ht mus-raw)
+					   (= ht mus-unsupported)
+					   (= df mus-unknown))
+				       -1 
+				       (or (catch #t
+						  (lambda () (view-sound name))
+						  (lambda args
+						    (snd-display ";~A ~A ~A" name ht df)
+						    -1))
+					   -1))))
+			  (if (not (= fd -1))
+			      (begin
+				(set! open-ctr (+ open-ctr 1))
+				(set! open-files (cons fd open-files)))))
+			(if (and (> len 0) (> (random 1.0) 0.3))
+			    (let* ((choice (inexact->exact (floor (my-random (exact->inexact (length open-files))))))
+				   (fd (list-ref open-files choice)))
+			      (close-sound fd)
+			      (set! open-files (remove-if (lambda (a) (= a fd)) open-files)))))))
+		(if open-files (for-each close-sound open-files))
+		(set! open-files '())
+		
+		(if (not (= (length (sounds)) 0)) (snd-display ";active-sounds: ~A ~A?" (sounds) (map short-file-name (sounds))))
+		(let ((fd (open-raw-sound :file (string-append sf-dir "addf8.nh") :channels 1 :srate 8012 :data-format mus-mulaw)))
+		  (if (not (= (data-format fd) mus-mulaw)) (snd-display ";open-raw-sound: ~A?" (mus-data-format-name (data-format fd))))
+		  (close-sound fd))
+		
+		(reset-hook! bad-header-hook)
+		(time (test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g723_24") 20.0))
+		(test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g723_40") 3.0)
+		(test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g721") 6.0)
+		(test-spectral-difference (string-append sf-dir "o2.wave") (string-append sf-dir "o2_dvi.wave") 10.0)
+		(test-spectral-difference (string-append sf-dir "wood.riff") (string-append sf-dir "wood.sds") 4.0)
+		(test-spectral-difference (string-append sf-dir "nist-10.wav") (string-append sf-dir "nist-shortpack.wav") 1.0)
+		(add-hook! bad-header-hook (lambda (n) #t))
+		
+		;; dangling readers (overall)
+		(let ((ind (open-sound "oboe.snd")))
+		  (let ((hi (make-sample-reader 0 ind 0)))
 		    (close-sound ind)
-		    (let ((tag (catch #t
-				      (lambda () (mix-property :hi md))
-				      (lambda args (car args)))))
-		      (if (not (eq? tag 'no-such-mix)) (snd-display ";mix-property bad mix: ~A" tag)))
-		    (let ((str (format #f "~A" rd)))
-		      (if (not (string=? str "#<mix-sample-reader: inactive>")) (snd-display ";mix-sample-reader released: ~A" str))
-		      (set! val (read-mix-sample rd))
-		      (if (fneq val 0.0) (snd-display ";mix-sample-reader at end: ~A" val))
-		      (free-sample-reader rd))))
-		;; track reader
+		    (if (not (sample-reader? hi)) (snd-display ";dangling reader? ~A" hi))
+		    (let ((name (format #f "~A" hi)))
+		      (if (not (string? name)) (snd-display ";dangling reader format: ~A" name)))
+		    (let* ((val (hi))
+			   (val1 (next-sample hi))
+			   (val2 (previous-sample hi))
+			   (val3 (read-sample hi)))
+		      (if (or (fneq val 0.0) (fneq val1 0.0) (fneq val2 0.0) (fneq val3 0.0))
+			  (snd-display ";dangling read: ~A ~A ~A ~A" val val1 val2 val3))
+		      (if (sample-reader-home hi) (snd-display ";dangling reader home: ~A" (sample-reader-home hi)))
+		      (if (not (= (sample-reader-position hi) 0)) (snd-display ";dangling sample-reader-position: ~A" (sample-reader-position hi)))
+		      (if (not (sample-reader-at-end? hi)) (snd-display ";dangling reader eof: ~A" (sample-reader-at-end? hi)))
+		      (free-sample-reader hi))))
+		;; same (pruned edit)
+		(let ((ind (open-sound "oboe.snd")))
+		  (delete-samples 100 100)
+		  (let ((hi (make-sample-reader 0 ind 0)))
+		    (revert-sound)
+		    (delete-samples 100 100)
+		    (if (not (sample-reader? hi)) (snd-display ";pruned dangling reader? ~A" hi))
+		    (let ((name (format #f "~A" hi)))
+		      (if (not (string? name)) (snd-display ";pruned dangling reader format: ~A" name)))
+		    (let* ((val (hi))
+			   (val1 (next-sample hi))
+			   (val2 (previous-sample hi))
+			   (val3 (read-sample hi)))
+		      (if (or (fneq val 0.0) (fneq val1 0.0) (fneq val2 0.0) (fneq val3 0.0))
+			  (snd-display ";pruned dangling read: ~A ~A ~A ~A" val val1 val2 val3))
+		      (if (not (equal? (sample-reader-home hi) (list ind 0))) (snd-display ";pruned dangling reader home: ~A" (sample-reader-home hi)))
+		      (if (not (sample-reader-at-end? hi)) (snd-display ";pruned dangling reader eof: ~A" (sample-reader-at-end? hi)))
+		      (free-sample-reader hi)))
+		  (close-sound ind))
+		;; region reader
 		(let* ((ind (open-sound "oboe.snd"))
 		       (reg (make-region 1000 2000 ind 0))
-		       (md (mix-region 0 reg ind 0))
-		       (trk (make-track)))
-		  (set! (mix-track md) trk)
-		  (let ((rd (make-track-sample-reader trk)))
+		       (rd (make-region-sample-reader 0 reg)))
+		  (if (mix-sample-reader? rd) (snd-display ";region sample-reader: mix ~A" rd))
+		  (if (not (region-sample-reader? rd)) (snd-display ";region sample-reader: region ~A" rd))
+		  (if (track-sample-reader? rd) (snd-display ";region sample-reader: track ~A" rd))
+		  (if (sample-reader? rd) (snd-display ";region sample-reader: normal ~A" rd))
+					;(if (not (= (sample-reader-position rd) 0)) (snd-display ";region sample-reader position: ~A" (sample-reader-position rd)))
+		  (if (not (equal? (sample-reader-home rd) (list reg 0))) (snd-display ";region sample-reader home: ~A" (sample-reader-home rd)))
+		  (if (sample-reader-at-end? rd) (snd-display ";region sample-reader at end?: ~A" (sample-reader-at-end? rd)))
+		  (let ((val (rd)))
+		    (if (fneq val .0328) (snd-display ";region-sample-reader at start: ~A" val))
+		    (if (not (string? (format #f "~A" rd))) (snd-display ";region-sample-reader: ~A" (format #f "~A" rd)))
+		    (close-sound ind)
+		    ;; reader is still ok presumably
+		    (set! val (next-sample rd))
+		    (if (fneq val .0348) (snd-display ";region-sample-reader at 1: ~A" val))
+		    (forget-region reg)
+		    (set! val (read-sample rd))
+		    (if (fneq val 0.0) (snd-display ";region-sample-reader at end: ~A" val))
+		    (if (not (sample-reader-at-end? rd)) (snd-display ";region-sample-reader after deletion?"))
+		    (free-sample-reader rd)))
+		;; mix reader
+		(let ((save-md 0))
+		  (mix-click-sets-amp)
+		  (let* ((ind (open-sound "oboe.snd"))
+			 (reg (make-region 1000 2000 ind 0))
+			 (md (mix-region 0 reg ind 0))
+			 (rd (make-mix-sample-reader md)))
+		    (set! (mix-property :hi md) "hi")
+		    (set! save-md md)
+		    (if (not (string=? (mix-property :hi md) "hi")) (snd-display ";mix(9)-property: ~A" (mix-property :hi md)))
 		    (let ((val (rd)))
-		      (if (fneq val .0328) (snd-display ";track-sample-reader at start: ~A" val))
-		      (if (not (string? (format #f "~A" rd))) (snd-display ";track-sample-reader: ~A" (format #f "~A" rd)))
+		      (if (fneq val .0328) (snd-display ";mix-sample-reader at start: ~A" val))
+		      (if (not (string? (format #f "~A" rd))) (snd-display ";mix-sample-reader: ~A" (format #f "~A" rd)))
 		      (close-sound ind)
 		      (let ((tag (catch #t
-					(lambda () (mix-property :hi save-md))
+					(lambda () (mix-property :hi md))
 					(lambda args (car args)))))
-			(if (not (eq? tag 'no-such-mix)) (snd-display ";mix-property(2) bad mix: ~A" tag)))
+			(if (not (eq? tag 'no-such-mix)) (snd-display ";mix-property bad mix: ~A" tag)))
 		      (let ((str (format #f "~A" rd)))
-			(if (not (string? str)) (snd-display ";track-sample-reader released: ~A" str))
-			(set! val (read-track-sample rd))
-			(if (fneq val 0.0) (snd-display ";track-sample-reader at end: ~A" val))
-			(free-sample-reader rd)
-			(for-each
-			 (lambda (n b)
-			   (let ((tag (catch #t
-					     (lambda ()
-					       (n md))
-					     (lambda args (car args)))))
-			     (if (not (eq? tag 'no-such-mix))
-				 (snd-display ";~A: ~A" b tag))))
-			 (list mix-amp mix-tag-position mix-chans mix-track mix-frames mix-locked?
-			       mix-position mix-home mix-speed mix-speed-style mix-tag-y)
-			 (list 'mix-amp 'mix-tag-position 'mix-chans 'mix-track 'mix-frames 'mix-locked?
-			       'mix-position 'mix-home 'mix-speed 'mix-speed-style 'mix-tag-y)))
-		      ))))
-	      (reset-hook! mix-click-hook)
-	      (reset-hook! close-hook)
-	      
-	      (let* ((ind (open-sound "oboe.snd"))
-		     (reg (make-region 1000 2000 ind 0))
-		     (md1 (mix-region 0 reg ind 0))
-		     (md2 (mix-region 1000 reg ind 0))
-		     (trk (make-track md1 md2)))
-		(let ((rd (make-track-sample-reader trk)))
-		  (let ((val (rd)))
-		    (if (fneq val .0328) (snd-display ";track-sample-reader(1) at start: ~A" val))
-		    (if (not (string? (format #f "~A" rd))) (snd-display ";track-sample-reader(1): ~A" (format #f "~A" rd)))
-		    (undo 1)
-		    (delete-sample 5000)
-		    (let ((str (format #f "~A" rd)))
-		      (if (not (string? str)) (snd-display ";track-sample-reader (1) released: ~A" str))
-		      (set! val (read-track-sample rd))
-		      (if (fneq val 0.0348) (snd-display ";track-sample-reader (1) at end: ~A" val))
-		      (set! (with-mix-tags) #f)
-		      (set! md1 (mix-region 0 reg))
-		      (if (not (= md1 -1)) (snd-display ";mix-region + #f tags: ~A" md1))
-		      (set! (with-mix-tags) #t)
-		      (close-sound ind)
+			(if (not (string=? str "#<mix-sample-reader: inactive>")) (snd-display ";mix-sample-reader released: ~A" str))
+			(set! val (read-mix-sample rd))
+			(if (fneq val 0.0) (snd-display ";mix-sample-reader at end: ~A" val))
+			(free-sample-reader rd))))
+		  ;; track reader
+		  (let* ((ind (open-sound "oboe.snd"))
+			 (reg (make-region 1000 2000 ind 0))
+			 (md (mix-region 0 reg ind 0))
+			 (trk (make-track)))
+		    (set! (mix-track md) trk)
+		    (let ((rd (make-track-sample-reader trk)))
+		      (let ((val (rd)))
+			(if (fneq val .0328) (snd-display ";track-sample-reader at start: ~A" val))
+			(if (not (string? (format #f "~A" rd))) (snd-display ";track-sample-reader: ~A" (format #f "~A" rd)))
+			(close-sound ind)
+			(let ((tag (catch #t
+					  (lambda () (mix-property :hi save-md))
+					  (lambda args (car args)))))
+			  (if (not (eq? tag 'no-such-mix)) (snd-display ";mix-property(2) bad mix: ~A" tag)))
+			(let ((str (format #f "~A" rd)))
+			  (if (not (string? str)) (snd-display ";track-sample-reader released: ~A" str))
+			  (set! val (read-track-sample rd))
+			  (if (fneq val 0.0) (snd-display ";track-sample-reader at end: ~A" val))
+			  (free-sample-reader rd)
+			  (for-each
+			   (lambda (n b)
+			     (let ((tag (catch #t
+					       (lambda ()
+						 (n md))
+					       (lambda args (car args)))))
+			       (if (not (eq? tag 'no-such-mix))
+				   (snd-display ";~A: ~A" b tag))))
+			   (list mix-amp mix-tag-position mix-chans mix-track mix-frames mix-locked?
+				 mix-position mix-home mix-speed mix-speed-style mix-tag-y)
+			   (list 'mix-amp 'mix-tag-position 'mix-chans 'mix-track 'mix-frames 'mix-locked?
+				 'mix-position 'mix-home 'mix-speed 'mix-speed-style 'mix-tag-y)))
+			))))
+		(reset-hook! mix-click-hook)
+		(reset-hook! close-hook)
+		
+		(let* ((ind (open-sound "oboe.snd"))
+		       (reg (make-region 1000 2000 ind 0))
+		       (md1 (mix-region 0 reg ind 0))
+		       (md2 (mix-region 1000 reg ind 0))
+		       (trk (make-track md1 md2)))
+		  (let ((rd (make-track-sample-reader trk)))
+		    (let ((val (rd)))
+		      (if (fneq val .0328) (snd-display ";track-sample-reader(1) at start: ~A" val))
+		      (if (not (string? (format #f "~A" rd))) (snd-display ";track-sample-reader(1): ~A" (format #f "~A" rd)))
+		      (undo 1)
+		      (delete-sample 5000)
 		      (let ((str (format #f "~A" rd)))
-			(if (not (string? str)) (snd-display ";track-sample-reader (2) released: ~A" str))
+			(if (not (string? str)) (snd-display ";track-sample-reader (1) released: ~A" str))
 			(set! val (read-track-sample rd))
-			(if (fneq val 0.0) (snd-display ";track-sample-reader (2) at end: ~A" val))
-			(free-sample-reader rd))))))
+			(if (fneq val 0.0348) (snd-display ";track-sample-reader (1) at end: ~A" val))
+			(set! (with-mix-tags) #f)
+			(set! md1 (mix-region 0 reg))
+			(if (not (= md1 -1)) (snd-display ";mix-region + #f tags: ~A" md1))
+			(set! (with-mix-tags) #t)
+			(close-sound ind)
+			(let ((str (format #f "~A" rd)))
+			  (if (not (string? str)) (snd-display ";track-sample-reader (2) released: ~A" str))
+			  (set! val (read-track-sample rd))
+			  (if (fneq val 0.0) (snd-display ";track-sample-reader (2) at end: ~A" val))
+			  (free-sample-reader rd))))))
+		
+		(let ((sfiles '())
+		      (ffiles '()))
+		  (for-each-sound-file 
+		   (lambda (file) 
+		     (if (> (mus-sound-chans file) 16)
+			 (set! ffiles (cons file ffiles)))))
+		  (map-sound-files
+		   (lambda (file) 
+		     (if (> (mus-sound-chans file) 16)
+			 (set! sfiles (cons file sfiles)))))
+		  (if (and (file-exists? "s24.snd")
+			   (or (not (equal? ffiles (list "s24.snd")))
+			       (not (equal? sfiles (list "s24.snd")))))
+		      (snd-display ";map|for-each-sound-file(s): ~A ~A" ffiles sfiles)))
+		)
+;	      (if sf-dir-files
+;		  (for-each (lambda (n) (mus-sound-forget (string-append sf-dir n))) sf-dir-files))
 	      
-	      (let ((sfiles '())
-		    (ffiles '()))
-		(for-each-sound-file 
-		 (lambda (file) 
-		   (if (> (mus-sound-chans file) 16)
-		       (set! ffiles (cons file ffiles)))))
-		(map-sound-files
-		 (lambda (file) 
-		   (if (> (mus-sound-chans file) 16)
-		       (set! sfiles (cons file sfiles)))))
-		(if (and (file-exists? "s24.snd")
-			 (or (not (equal? ffiles (list "s24.snd")))
-			     (not (equal? sfiles (list "s24.snd")))))
-		    (snd-display ";map|for-each-sound-file(s): ~A ~A" ffiles sfiles)))
-	      )
-	    (if sf-dir-files
-		(for-each (lambda (n) (mus-sound-forget (string-append sf-dir n))) sf-dir-files))
-	    
-	    ))))
+	      )))))
 
 
 
@@ -41122,42 +41320,52 @@ EDITS: 1
       (close-sound ind1)
       (close-sound ind2))
     
-    (copy-file (string-append (getcwd) "/oboe.snd") (string-append (getcwd) "/test.snd"))
-    (let* ((ind (open-sound "test.snd"))
-	   (mx (maxamp ind 0))
-	   (chns (chans ind))
-	   (sr (srate ind))
-	   (fr (frames ind 0)))
-      (with-local-hook
-       update-hook
-       (list (lambda (orig-ind)
-	       (lambda (new-ind)
-		 (set! ind new-ind))))
-       (lambda ()
-	 (do ((i 0 (1+ i)))
-	     ((= i 10))
-	   (let ((v (channel->vct)))
-	     (array->file "test.snd" v fr sr chns)
-	     (update-sound ind)
-	     (let ((mx1 (maxamp ind 0)))
-	       (if (fneq mx mx1)
-		   (snd-display ";update-sound looped maxamp: ~A ~A ~A ~A ~A" i ind (frames ind) mx1 mx)))
-	     (if (not (= (chans ind) chns)) (snd-display ";update-sound looped chans: ~A ~A" chns (chans ind)))
-	     (if (not (= (srate ind) sr)) (snd-display ";update-sound looped srate: ~A ~A" sr (srate ind)))
-	     (if (not (= (frames ind) fr)) (snd-display ";update-sound looped frames: ~A ~A" fr (frames ind 0)))))
-	 (let* ((old-ind (open-sound "oboe.snd"))
-		(diff 0.0)
-		(rd (make-sample-reader 0 ind 0))
-		(home (sample-reader-home rd)))
-	   (scan-channel (lambda (y)
-			   (let ((cd (abs (- y (rd)))))
-			     (if (> cd diff) (set! diff cd))
-			     #f))
-			 0 fr old-ind 0)
-	   (if (fneq diff 0.0) 
-	       (snd-display ";update-sound looped overall max diff: ~A, sounds: ~A, ind: ~A, old-ind: ~A, rd: ~A" diff (sounds) ind old-ind home))
-	   (close-sound old-ind))))
-      (close-sound ind))
+    (let ((loboe  (string-append (getcwd) "/oboe.snd"))
+	  (ltest  (string-append (getcwd) "/test.snd")))
+      (copy-file loboe ltest)
+      (mus-sound-forget ltest)
+      (let* ((ind (open-sound ltest))
+	     (mx (maxamp ind 0))
+	     (chns (chans ind))
+	     (sr (srate ind))
+	     (fr (frames ind 0)))
+	(if (or (not (= (chans ind) (mus-sound-chans loboe)))
+		(not (= (srate ind) (mus-sound-srate loboe)))
+		(not (= (frames ind) (mus-sound-frames loboe))))
+	    (snd-display "copy oboe -> test seems to have failed? ~A ~A ~A"
+			 (chans ind) (srate ind) (frames ind))
+	    (with-local-hook
+	     update-hook
+	     (list (lambda (orig-ind)
+		     (lambda (new-ind)
+		       (set! ind new-ind))))
+	     (lambda ()
+	       (do ((i 0 (1+ i)))
+		   ((= i 10))
+		 (let ((v (channel->vct)))
+		   (if (not (vct? v))
+		       (snd-display ";channel->vct of oboe copy is null??")
+		       (array->file "test.snd" v fr sr chns))
+		   (update-sound ind)
+		   (let ((mx1 (maxamp ind 0)))
+		     (if (fneq mx mx1)
+			 (snd-display ";update-sound looped maxamp: ~A ~A ~A ~A ~A" i ind (frames ind) mx1 mx)))
+		   (if (not (= (chans ind) chns)) (snd-display ";update-sound looped chans: ~A ~A" chns (chans ind)))
+		   (if (not (= (srate ind) sr)) (snd-display ";update-sound looped srate: ~A ~A" sr (srate ind)))
+		   (if (not (= (frames ind) fr)) (snd-display ";update-sound looped frames: ~A ~A" fr (frames ind 0)))))
+	       (let* ((old-ind (open-sound "oboe.snd"))
+		      (diff 0.0)
+		      (rd (make-sample-reader 0 ind 0))
+		      (home (sample-reader-home rd)))
+		 (scan-channel (lambda (y)
+				 (let ((cd (abs (- y (rd)))))
+				   (if (> cd diff) (set! diff cd))
+				   #f))
+			       0 fr old-ind 0)
+		 (if (fneq diff 0.0) 
+		     (snd-display ";update-sound looped overall max diff: ~A, sounds: ~A, ind: ~A, old-ind: ~A, rd: ~A" diff (sounds) ind old-ind home))
+		 (close-sound old-ind)))))
+	(close-sound ind)))
     
     (if (file-exists? "test.snd") (delete-file "test.snd"))
     (let* ((ind (open-sound "oboe.snd"))
@@ -42592,6 +42800,47 @@ EDITS: 1
 	   (> (optimization) 0))
       
       (begin
+
+	(set! unique-float 3.0)
+	(set! unique-int 3)
+	(set! unique-char #\c)
+	(set! unique-string "hiho")
+	(set! unique-float-vector (make-vector 3 1.0))
+	(set! unique-int-vector (make-vector 3 1))
+	(set! unique-generator (make-oscil))
+	(set! unique-list (list 1 (make-oscil)))
+	(set! unique-symbol 'hiho)
+	(set! unique-keyword :hiho)
+	(set! unique-clm-vector (make-vector 3 #f))
+	(set! unique-boolean #t)
+	(set! unique-vct-vector (make-vector 3 #f))
+	(set! int-var 32)
+	(set! dbl-var 3.14)
+	(set! bool-var #t)
+	(set! lst-var '(0 1 2))
+	(set! biggie (expt 2 31))
+	(set! str-var "hi")
+	(set! cont1 #f)
+	(set! cont2 #f)
+	(set! gv 1)
+	(set! global-v (make-vct 3 1.0))
+	(set! global-v1 (make-vct 3 1.0))
+	(set! c-var #\a)
+	(set! pair-var (cons 2 3))
+	(set! list-var (list 2 3 4 5))
+	(set! l0111 (list 0 1 1 1))
+	(set! v-var (make-vct 8))
+	(set! ivect (make-vector 3 1))
+	(set! svar (make-st3 :one 1 :two 2))
+	(set! svar1 #f)
+	(set! bst3 #f)
+	(set! bst4 #f)
+	(set! g-gen (make-oscil 440))
+	(set! clm_vector (make-vector 2))
+	(set! vct_vector (make-vector 2))
+	(set! hi1 (make-hiho1))
+	(set! hif2 (make-hiho1 :xx 3.14))
+	(set! hi2 (make-hiho2 :v (make-vct 3 .1)))
 	
 	
 	(ftsta '(lambda (y) (set! dbl-var 32.0) dbl-var) 0.0 32.0)
@@ -49181,7 +49430,7 @@ EDITS: 1
 	      ))
 	
 	(if (not (= *clm-srate* (default-output-srate))) (snd-display ";*clm-srate*: ~A ~A" *clm-srate* (default-output-srate)))
-	(if (not (= *clm-channels* (default-output-chans))) (snd-display ";*clm-channels*: ~A ~A" *clm-channels* (default-output-channels)))
+	(if (not (= *clm-channels* (default-output-chans))) (snd-display ";*clm-channels*: ~A ~A" *clm-channels* (default-output-chans)))
 	(if (not (= *clm-header-type* (default-output-header-type))) (snd-display ";*clm-header-type*: ~A ~A" *clm-header-type* (default-output-header-type)))
 	(if (not (= *clm-data-format* (default-output-data-format))) (snd-display ";*clm-data-format*: ~A ~A" *clm-data-format* (default-output-data-format)))
 	(if (not (= *clm-reverb-channels* 1)) (snd-display ";*clm-reverb-channels*: ~A ~A" *clm-reverb-channels*))
@@ -50541,10 +50790,10 @@ EDITS: 1
 	
 	
 	(if (not (null? (sounds))) (for-each close-sound (sounds)))
+	(set! (optimization) old-opt-23)
 	
 	)))
 
-(set! (optimization) old-opt-23)
 
 
 
@@ -50555,7 +50804,13 @@ EDITS: 1
       (load "peak-env.scm")
       (if (hook-empty? initial-graph-hook) (snd-display ";restore peaks failed?"))))
 
+(if (not (defined? 'move-scale))
+    (define (move-scale a b) #f))
+
+(define mxa 32)
+  
 (define (snd_test_24)
+
   (define (enved-x ux) 
     (let* ((axis (enved-axis-info))
 	   (axis-x0 (list-ref axis 0))
@@ -50563,6 +50818,7 @@ EDITS: 1
 	   (x (if (> ux 1.0) (/ ux 100.0) ux))
 	   (val (inexact->exact (floor (+ axis-x0 (* x (- axis-x1 axis-x0)))))))
       val))
+
   (define (enved-y y) 
     (let* ((axis (enved-axis-info))
 	   (axis-y0 (list-ref axis 1))
@@ -50602,11 +50858,6 @@ EDITS: 1
 	    (let ((ch (string-ref text i)))
 	      (key-event widget (char->integer ch) (shifted? ch)))
 	    (XtCallCallbacks widget XmNactivateCallback #f)))))
-  
-  (define mxa 32)
-  
-  (if (not (defined? 'move-scale))
-      (define (move-scale a b) #f))
   
   (add-file-sorter 
    "duration"
@@ -63117,6 +63368,7 @@ EDITS: 1
 	     (sound-data-23 (make-sound-data 2 3))
 	     (a-hook (make-hook 2))
 	     (a-sound #f)
+	     (exts (sound-file-extensions)) ; save across possible set below
 	     
 	     (procs (list 
 		     add-mark add-sound-file-extension add-source-file-extension sound-file-extensions sound-file? 
@@ -65107,6 +65359,8 @@ EDITS: 1
 	(set! *clm-srate* 22050)
 	(set! (print-length) 12)
 	(set! (mus-array-print-length) 12)
+
+	(set! (sound-file-extensions) exts)
 	
 	)))
 
@@ -65148,14 +65402,7 @@ EDITS: 1
       (do ((i 0 (1+ i)))
 	  ((or (c-g?)
 	       (= i test-at-random)))
-
-	(set! snd-test (random 29))
-	(if (or (= snd-test 24)
-		(= snd-test 25)
-		(= snd-test 26)
-		(= snd-test 29)) ; probably impossible
-	    (set! snd-test (random 23)))
-      
+	(set! snd-test (min 23 (random 24)))
 	(display (format #f "~%~A: ~A" i snd-test))
 	(run-hook before-test-hook snd-test)
 	((vector-ref test-funcs snd-test))
@@ -65407,7 +65654,7 @@ EDITS: 1
       (snd-display (format #f "total: ~D, help: ~D, no-help: ~D, found help: ~D (~D in snd-test)" 
 			   total help no-help outside-help snd-test-help))
       
-      ;; total: 4068, help: 3584, no-help: 109, found help: 375 (130 in snd-test)
+      ;; total: 4068, help: 3605, no-help: 109, found help: 354 (109 in snd-test)
       
       (for-each
        (lambda (lst)
