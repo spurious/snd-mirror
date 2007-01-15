@@ -57,6 +57,11 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 					    C_TO_XEN_INT(cp->chan),
 					    caller),
 				 AT_CURRENT_EDIT_POSITION);
+      if (!(cp->active)) /* edpos proc clobbered channel somehow... */
+	XEN_ERROR(NO_SUCH_CHANNEL,
+		  XEN_LIST_3(C_TO_XEN_STRING(caller),
+			     C_TO_XEN_STRING("edpos arg (a function) clobbered the current sound!"),
+			     edpos));
     }
   else pos = XEN_TO_C_INT_OR_ELSE(edpos, AT_CURRENT_EDIT_POSITION);
   if (pos == AT_CURRENT_EDIT_POSITION)
@@ -3513,7 +3518,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 			      cp->edit_hook_checked = false;
 			      XEN_ERROR(BAD_TYPE,
 					XEN_LIST_3(C_TO_XEN_STRING(caller),
-						   C_TO_XEN_STRING("result of procedure must be a number, boolean, or vct:"),
+						   C_TO_XEN_STRING("result of procedure must be a (non-complex) number, boolean, or vct:"),
 						   res));
 			    }
 			}

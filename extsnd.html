@@ -2606,9 +2606,9 @@ If its function returns #t, the command is not evaluated.  This is an internal d
 
 <table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Channel-specific hooks:</h4></td></tr></table>
 <pre>
-  <a class=def name="edithook">edit-hook</a> ('snd chn')
-  <a class=def name="undohook">undo-hook</a> ('snd chn')
-  <a class=def name="afteredithook">after-edit-hook</a> ('snd chn')
+  <a class=def name="edithook">edit-hook</a> (snd chn)
+  <a class=def name="undohook">undo-hook</a> (snd chn)
+  <a class=def name="afteredithook">after-edit-hook</a> (snd chn)
 </pre>
 
 <table border=0><tr><td width=60><br></td><td>
@@ -2633,22 +2633,20 @@ You can use edit-hook to set
 up protected portions of the edit history:
 
 <table border=0 cellpadding=5 hspace=20 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define protect
-  "(protect #:optional snd chn) disallows any edits before the current one"
-  (lambda args
-    (let* ((edit-pos (apply <a class=quiet href="#editposition">edit-position</a> args))
-           (hook (apply <em class=red>edit-hook</em> args)))
-      (reset-hook! hook)
-      (add-hook! hook 
-        (lambda ()
-          (let ((val (&lt; (apply <a class=quiet href="#editposition">edit-position</a> args) edit-pos)))
-            (if val (<a class=quiet href="#reportinminibuffer">report-in-minibuffer</a> "protected"))
-            val))))))
+(define* (protect :optional snd chn)
+  "(protect :optional snd chn) disallows any edits before the current one"
+  (let* ((edit-pos (<a class=quiet href="#editposition">edit-position</a> snd chn))
+         (hook (<em class=red>edit-hook</em> snd chn)))
+    (reset-hook! hook)
+    (add-hook! hook 
+      (lambda ()
+        (let ((val (&lt; (<a class=quiet href="#editposition">edit-position</a> snd chn) edit-pos)))
+          (if val (<a class=quiet href="#reportinminibuffer">report-in-minibuffer</a> "protected"))
+          val)))))
 
-(define unprotect 
-  "(unprotect #:optional snd chn) allows edits at any edit history position"
-  (lambda args 
-    (reset-hook! (apply <em class=red>edit-hook</em> args))))
+(define* (unprotect :optional snd chn)
+  "(unprotect :optional snd chn) allows edits at any edit history position"
+  (reset-hook! (<em class=red>edit-hook</em> snd chn)))
 </pre></td></tr></table>
 
 <a href="sndscm.html#enveddoc">enved.scm</a> uses several of these hooks to implement an envelope editor in lisp.

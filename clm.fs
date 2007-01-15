@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Sat Jan 06 02:53:52 CET 2007
+\ Changed: Sun Jan 14 01:38:08 CET 2007
 
 \ Commentary:
 \
@@ -53,7 +53,7 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 1-Jan-2007" value *clm-version*
+$" fth 14-Jan-2007" value *clm-version*
 
 \ defined in snd/snd-xen.c
 [undefined] clm-print [if] ' fth-print alias clm-print [then]
@@ -1235,5 +1235,32 @@ event: inst-test ( -- )
   2.4 1.0 vct( 0.5 0.2 0.1 0.05 0 0 0 0 ) $" fyow.snd" 1.0 conv-simp
   3.6 1.0 $" pistol.snd" $" fyow.snd" 0.2 conv-simp
 ;event
+
+'snd provided? [if]
+  instrument: arpeggio <{ start dur freq amp :key ampenv '( 0 0 0.5 1 1 0 ) offset 1.0 -- }>
+    start dur times->samples { end beg }
+    12 nil make-array map!
+      :frequency freq offset i 6 - 0.03 f* f* f+
+      :partials '( 1 1  5 0.7  6 0.7  7 0.7  8 0.7  9 0.7  10 0.7 ) make-waveshape
+    end-map { waveshbank }
+    :envelope ampenv :scaler amp 0.25 f* :start beg :end end make-env { amp-env }
+    end 0.0 make-vct map!
+      0.0 ( wvsum ) waveshbank each ( wv ) 1.0 0.0 waveshape f+ end-each ( wvsum ) amp-env env f*
+    end-map ( output )
+    #f channels 0 ?do ( output ) beg end #f i #f undef vct->channel ( output ) loop ( output ) drop
+  ;instrument
+
+  event: arpeggio-test ( -- )
+    :file "arpeggio.snd"
+    :header-type mus-next
+    :data-format mus-lfloat
+    :channels 2
+    :srate 22050 new-sound { snd }
+    0 10 65 0.5 arpeggio
+    snd save-sound drop
+    0 snd play drop
+    snd close-sound drop
+  ;event
+[then]
 
 \ clm.fs ends here

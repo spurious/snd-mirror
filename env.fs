@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Thu Oct 27 04:51:42 CEST 2005
-\ Changed: Fri Jan 05 22:47:21 CET 2007
+\ Changed: Fri Jan 12 16:07:02 CET 2007
 
 \ Commentary:
 \
@@ -493,71 +493,75 @@ REFLECTED causes every other repetition to be in reverse."
   ( val )
 ;
 
-hide
-: pec-cb { pe beg snd chn edpos -- prc; self -- curbeg }
-  0 proc-create pe , beg , snd , chn , edpos , ( prc )
- does> { self -- curbeg }
-  self           @ { pe }
-  self   cell+   @ { beg }
-  self 2 cells + @ { snd }
-  self 3 cells + @ { chn }
-  self 4 cells + @ { edpos }
-  pe :envs hash-ref each { e }
-    e mus-length 1+ { len }
-    e beg len snd chn edpos env-channel drop
-    len +to beg
-  end-each
-  beg
-;
-set-current
-: power-env-channel <{ pe
-     :optional beg 0 dur #f snd #f chn #f edpos #f edname "power-env-channel" -- curbeg }>
-  pe beg snd chn edpos pec-cb edname as-one-edit
-;
-previous
+[defined] env-channel [if]
+  hide
+  : pec-cb { pe beg snd chn edpos -- prc; self -- curbeg }
+    0 proc-create pe , beg , snd , chn , edpos , ( prc )
+   does> { self -- curbeg }
+    self           @ { pe }
+    self   cell+   @ { beg }
+    self 2 cells + @ { snd }
+    self 3 cells + @ { chn }
+    self 4 cells + @ { edpos }
+    pe :envs hash-ref each { e }
+      e mus-length 1+ { len }
+      e beg len snd chn edpos env-channel drop
+      len +to beg
+    end-each
+    beg
+  ;
+  set-current
+  : power-env-channel <{ pe
+       :optional beg 0 dur #f snd #f chn #f edpos #f edname "power-env-channel" -- curbeg }>
+    pe beg snd chn edpos pec-cb edname as-one-edit
+  ;
+  previous
+[then]
 
 \ ;;; here's a simpler version that takes the breakpoint list, rather than the power-env structure:
 
-hide
-: powc-cb { en beg dur snd chn edpos -- prc; self -- base }
-  dur snd chn #f frames || to dur
-  0 proc-create en , beg , dur , snd , chn , edpos , ( prc )
- does> { self -- base }
-  self           @ { en }
-  self   cell+   @ { curbeg }
-  self 2 cells + @ { dur }
-  self 3 cells + @ { snd }
-  self 4 cells + @ { chn }
-  self 5 cells + @ { edpos }
-  en car { x1 }
-  en -3 object-ref x1 f- { xrange }
-  en cadr { y1 }
-  en caddr { base }
-  0.0 0.0 { x0 y0 }
-  en length 3 ?do
-    x1 to x0
-    y1 to y0
-    en i    object-ref to x1
-    en i 1+ object-ref to y1
-    x1 x0 f- xrange f/ dur f* fround->s { curdur }
-    y0 y1 base curbeg curdur snd chn edpos xramp-channel drop
-    curdur +to curbeg
-    en i 2+ object-ref to base
-  3 +loop
-  base
-;
-set-current
-: powenv-channel <{ envelope :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  \ ;; envelope with a separate base for each segment:
-  \ '( 0 0 0.325  1 1 32.0 2 0 32.0 ) powenv-channel
-  envelope length 3 = if
-    envelope cadr beg dur snd chn edpos scale-channel
-  else
-    $" %s %s %s %s" '( envelope beg dur get-func-name ) string-format { origin }
-    envelope beg dur snd chn edpos powc-cb origin as-one-edit
-  then
-;
-previous
+[defined] xramp-channel [if]
+  hide
+  : powc-cb { en beg dur snd chn edpos -- prc; self -- base }
+    dur snd chn #f frames || to dur
+    0 proc-create en , beg , dur , snd , chn , edpos , ( prc )
+   does> { self -- base }
+    self           @ { en }
+    self   cell+   @ { curbeg }
+    self 2 cells + @ { dur }
+    self 3 cells + @ { snd }
+    self 4 cells + @ { chn }
+    self 5 cells + @ { edpos }
+    en car { x1 }
+    en -3 object-ref x1 f- { xrange }
+    en cadr { y1 }
+    en caddr { base }
+    0.0 0.0 { x0 y0 }
+    en length 3 ?do
+      x1 to x0
+      y1 to y0
+      en i    object-ref to x1
+      en i 1+ object-ref to y1
+      x1 x0 f- xrange f/ dur f* fround->s { curdur }
+      y0 y1 base curbeg curdur snd chn edpos xramp-channel drop
+      curdur +to curbeg
+      en i 2+ object-ref to base
+    3 +loop
+    base
+  ;
+  set-current
+  : powenv-channel <{ envelope :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
+    \ ;; envelope with a separate base for each segment:
+    \ '( 0 0 0.325  1 1 32.0 2 0 32.0 ) powenv-channel
+    envelope length 3 = if
+      envelope cadr beg dur snd chn edpos scale-channel
+    else
+      $" %s %s %s %s" '( envelope beg dur get-func-name ) string-format { origin }
+      envelope beg dur snd chn edpos powc-cb origin as-one-edit
+    then
+  ;
+  previous
+[then]
 
 \ ;;; by Anders Vinjar:
 \ ;;;
@@ -599,41 +603,43 @@ previous
 
 \ ;;; rms-envelope
 
-: rms-envelope <{ file :key beg 0.0 dur #f rfreq 30.0 db #f -- en }>
-  file find-file to file
-  file false? if 'no-such-file '( get-func-name file ) fth-throw then
-  nil { en }
-  rfreq 1/f { incr }
-  file mus-sound-srate { fsr }
-  incr fsr f* fround->s { incrsamps }
-  beg fsr f* fround->s { start }
-  start file 0 1 #f make-sample-reader { reader }
-  dur if
-    fsr dur f* start f+ fround->s  file mus-sound-frames  min
-  else
-    file mus-sound-frames
-  then { end }
-  :size incrsamps make-moving-average { rms }
-  end 0 ?do
-    0.0 { rms-val }
-    incrsamps 0 ?do
-      reader '() apply { val }
-      rms val dup f* moving-average to rms-val
-    loop
-    i fsr f/ en cons to en
-    rms-val fsqrt to rms-val
-    db if
-      rms-val 0.00001 f< if
-	-100.0
-      else
-	rms-val flog 10.0 flog f/ 20.0 f*
-      then
+[defined] make-sample-reader [if]
+  : rms-envelope <{ file :key beg 0.0 dur #f rfreq 30.0 db #f -- en }>
+    file find-file to file
+    file false? if 'no-such-file '( get-func-name file ) fth-throw then
+    nil { en }
+    rfreq 1/f { incr }
+    file mus-sound-srate { fsr }
+    incr fsr f* fround->s { incrsamps }
+    beg fsr f* fround->s { start }
+    start file 0 1 #f make-sample-reader { reader }
+    dur if
+      fsr dur f* start f+ fround->s  file mus-sound-frames  min
     else
-      rms-val
-    then en cons to en
-  incrsamps +loop
-  en list-reverse
-;
+      file mus-sound-frames
+    then { end }
+    :size incrsamps make-moving-average { rms }
+    end 0 ?do
+      0.0 { rms-val }
+      incrsamps 0 ?do
+	reader '() apply { val }
+	rms val dup f* moving-average to rms-val
+      loop
+      i fsr f/ en cons to en
+      rms-val fsqrt to rms-val
+      db if
+	rms-val 0.00001 f< if
+	  -100.0
+	else
+	  rms-val flog 10.0 flog f/ 20.0 f*
+	then
+      else
+	rms-val
+      then en cons to en
+    incrsamps +loop
+    en list-reverse
+  ;
+[then]
 
 \ ;;; -------- normalize-envelope
 

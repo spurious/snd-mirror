@@ -1,40 +1,37 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [540]
-;;;  test 1: defaults                           [1118]
-;;;  test 2: headers                            [1322]
-;;;  test 3: variables                          [1627]
-;;;  test 4: sndlib                             [2283]
-;;;  test 5: simple overall checks              [4706]
-;;;  test 6: vcts                               [12494]
-;;;  test 7: colors                             [12769]
-;;;  test 8: clm                                [13259]
-;;;  test 9: mix                                [22901]
-;;;  test 10: marks                             [26473]
-;;;  test 11: dialogs                           [27450]
-;;;  test 12: extensions                        [27715]
-;;;  test 13: menus, edit lists, hooks, etc     [28011]
-;;;  test 14: all together now                  [29717]
-;;;  test 15: chan-local vars                   [30753]
-;;;  test 16: regularized funcs                 [32210]
-;;;  test 17: dialogs and graphics              [36626]
-;;;  test 18: enved                             [36715]
-;;;  test 19: save and restore                  [36734]
-;;;  test 20: transforms                        [38643]
-;;;  test 21: new stuff                         [40475]
-;;;  test 22: run                               [42504]
-;;;  test 23: with-sound                        [48253]
-;;;  test 24: user-interface                    [50718]
-;;;  test 25: X/Xt/Xm                           [54340]
-;;;  test 26: Gtk                               [58922]
-;;;  test 27: GL                                [63038]
-;;;  test 28: errors                            [63162]
-;;;  test all done                              [65350]
-;;;  test the end                               [65586]
-;;;
-;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
-;;; need all html example code in autotests
-;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
+;;;  test 0: constants                          [535]
+;;;  test 1: defaults                           [1113]
+;;;  test 2: headers                            [1317]
+;;;  test 3: variables                          [1622]
+;;;  test 4: sndlib                             [2278]
+;;;  test 5: simple overall checks              [4722]
+;;;  test 6: vcts                               [12539]
+;;;  test 7: colors                             [12814]
+;;;  test 8: clm                                [13304]
+;;;  test 9: mix                                [22946]
+;;;  test 10: marks                             [26518]
+;;;  test 11: dialogs                           [27495]
+;;;  test 12: extensions                        [27760]
+;;;  test 13: menus, edit lists, hooks, etc     [28056]
+;;;  test 14: all together now                  [29773]
+;;;  test 15: chan-local vars                   [30810]
+;;;  test 16: regularized funcs                 [32267]
+;;;  test 17: dialogs and graphics              [36683]
+;;;  test 18: enved                             [36772]
+;;;  test 19: save and restore                  [36791]
+;;;  test 20: transforms                        [38700]
+;;;  test 21: new stuff                         [40532]
+;;;  test 22: run                               [42571]
+;;;  test 23: with-sound                        [48361]
+;;;  test 24: user-interface                    [50826]
+;;;  test 25: X/Xt/Xm                           [54448]
+;;;  test 26: Gtk                               [59030]
+;;;  test 27: GL                                [63146]
+;;;  test 28: errors                            [63270]
+;;;  test all done                              [65561]
+;;;  test the end                               [65794]
+
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -42,6 +39,7 @@
 (define keep-going #f)
 (define all-args #f) ; extended testing
 (define test-at-random 0)
+;;(show-ptree 1)
 
 (if (and (provided? 'snd-guile) (provided? 'snd-gauche)) (display ";both switches are on?"))
 
@@ -150,13 +148,10 @@
 	   "loop.scm" "cmn-glyphs.lisp" "bullet.xpm" "mb.snd" "funcs.cl" "trumpet.snd")))
 
 
-					;(setlocale LC_ALL "de_DE")
-
+;;(setlocale LC_ALL "de_DE")
 (set! (with-background-processes) #f)
 (set! (show-backtrace) #t)
-
 (define debugging-device-channels 2)
-
 (define max-optimization 6)
 
 ;; start-playing-hook is only called when an indexed sound is played, not if play-mix etc -- need a way to hit all possible playback
@@ -215,7 +210,6 @@
      (let ((val (hundred (- (real-time) start))))
        (set! times (cons (list ',a val) times)))))
 
-					;(show-ptree 1)
 (define original-prompt (listener-prompt))
 (show-listener)
 (set! (window-x) 600)
@@ -3392,6 +3386,27 @@
 	  (if (fneq (sound-data-ref sd1 0 10) 0.1) (snd-display ";sound-data->sound-data 10: ~A" (sound-data-ref sd1 0 10)))
 	  (sound-data->sound-data sd1 sd2 0 10 32)
 	  (if (fneq (sound-data-ref sd2 0 5) 0.2) (snd-display ";sound-data->sound-data 2 5: ~A" (sound-data-ref sd2 0 5))))
+	(let ((sdi (make-sound-data 1 32))
+	      (sdo (make-sound-data 1 32)))
+	  (let ((j (sound-data->sound-data sdi sdo 10 32 10)))
+	    (if (not (= j 2)) (snd-display ";sound-data->sound-data wrap around 2: ~A" j)))
+	  (let ((j (sound-data->sound-data sdi sdo 10 32 32)))
+	    (if (not (= j 10)) (snd-display ";sound-data->sound-data wrap around 10: ~A" j)))
+	  (let ((tag (catch #t
+			    (lambda () (sound-data->sound-data sdi sdo -1 10 10))
+			    (lambda args (car args)))))
+	    (if (not (eq? tag 'out-of-range))
+		(snd-display ";sound-data->sound-data start: ~A" tag)))
+	  (let ((tag (catch #t
+			    (lambda () (sound-data->sound-data sdi sdo 0 -1 10))
+			    (lambda args (car args)))))
+	    (if (not (eq? tag 'out-of-range))
+		(snd-display ";sound-data->sound-data frames: ~A" tag)))
+	  (let ((tag (catch #t
+			    (lambda () (sound-data->sound-data sdi sdo 0 128 10))
+			    (lambda args (car args)))))
+	    (if (not (eq? tag 'out-of-range))
+		(snd-display ";sound-data->sound-data frames: ~A" tag))))
 	
 	(for-each 
 	 (lambda (chans)
@@ -9966,8 +9981,7 @@ EDITS: 5
 	   (lambda* (:optional (snd 0) (chn 0) (edpos current-edit-position)) 
 		    (let ((samp 0)) 
 		      (scan-chan (lambda (n3) 
-				   (if (> n3 .1) 
-				       samp 
+				   (or (> n3 .1) 
 				       (begin 
 					 (set! samp (1+ samp)) 
 					 #f)))
@@ -28183,6 +28197,9 @@ EDITS: 2
       `(if (hook-empty? ,hook)
 	   (snd-display ";~A: empty?" ',hook))))
 
+(define ladspa_inited #f)
+(define clm_buffer_added #f)
+
 (define (snd_test_13)
   (define read-or-run
     (lambda (fil)
@@ -28347,30 +28364,36 @@ EDITS: 2
   
   (reset-almost-all-hooks)
   
-  (let ((fd (view-sound "oboe.snd"))
-	(mb (add-to-main-menu "clm")))
+  (let ((fd (view-sound "oboe.snd")))
+    (let ((mb #f))
+      (if (not clm_buffer_added)
+	  (set! mb (add-to-main-menu "clm")))
     
-    (let ((var (catch #t (lambda () (add-to-menu -1 "fm-violin" (lambda () #f))) (lambda args args))))
-      (if (not (eq? (car var) 'no-such-menu))
-	  (snd-display ";add-to-menu bad menu: ~A" var)))
+      (let ((var (catch #t (lambda () (add-to-menu -1 "fm-violin" (lambda () #f))) (lambda args args))))
+	(if (not (eq? (car var) 'no-such-menu))
+	    (snd-display ";add-to-menu bad menu: ~A" var)))
     
-    (let ((tag (catch #t (lambda () (add-to-main-menu "oops" (make-delay 11)))
-		      (lambda args (car args)))))
-      (if (not (eq? tag 'bad-arity))
-	  (snd-display ";add-to-main-menu non-thunk: ~A" tag)))
-    (let ((tag (catch #t (lambda () (add-to-menu 3 "oops" (make-delay 12)))
-		      (lambda args (car args)))))
-      (if (not (eq? tag 'bad-arity))
-	  (snd-display ";add-to-menu non-thunk: ~A" tag)))
+      (let ((tag (catch #t (lambda () (add-to-main-menu "oops" (make-delay 11)))
+			(lambda args (car args)))))
+	(if (not (eq? tag 'bad-arity))
+	    (snd-display ";add-to-main-menu non-thunk: ~A" tag)))
+      (let ((tag (catch #t (lambda () (add-to-menu 3 "oops" (make-delay 12)))
+			(lambda args (car args)))))
+	(if (not (eq? tag 'bad-arity))
+	    (snd-display ";add-to-menu non-thunk: ~A" tag)))
     
-    (set! (cursor fd) 2000)
-    (set! (transform-graph-type) graph-once)
-    (set! (transform-graph? fd) #t)
-    (if with-gui
-	(begin
-	  (add-to-menu mb "not here" (lambda () (snd-display ";oops")))
-	  (remove-from-menu mb "not here")
-	  (add-to-menu 3 "Denoise" (lambda () (report-in-minibuffer "denoise")))))
+      (set! (cursor fd) 2000)
+      (set! (transform-graph-type) graph-once)
+      (set! (transform-graph? fd) #t)
+      (if (and with-gui
+	       (not clm_buffer_added))
+	  (begin
+	    (add-to-menu mb "not here" (lambda () (snd-display ";oops")))
+	    (remove-from-menu mb "not here")
+	    (add-to-menu 3 "Denoise" (lambda () (report-in-minibuffer "denoise")))))
+
+      (set! clm_buffer_added #t))
+
     (reset-hook! help-hook)
     (let ((hi (snd-help 'cursor-position)))
       (add-hook! help-hook (lambda (a b) 
@@ -28554,9 +28577,11 @@ EDITS: 2
 	    (snd-display ";no widgets added?"))
 	(reset-hook! new-widget-hook))
       
-      (if (provided? 'snd-ladspa)
+      (if (and (not ladspa_inited)
+	       (provided? 'snd-ladspa))
 	  (if (file-exists? "/home/bil/test/ladspa/ladspa_sdk/plugins")
 	      (begin
+		(set! ladspa_inited #t)
 		(set! (ladspa-dir) "/home/bil/test/ladspa/ladspa_sdk/plugins")
 		(init-ladspa)
 		(let* ((ptr (ladspa-descriptor "delay" "delay_5s"))
@@ -29858,7 +29883,8 @@ EDITS: 2
 			(if (= chans 8)
 			    (set! octo-files (cons name octo-files)))))))))
     
-    (set! buffer-menu (add-to-main-menu "Buffers"))  
+    (if (not buffer-menu)
+	(set! buffer-menu (add-to-main-menu "Buffers")))
     (add-hook! open-hook open-buffer)
     (add-hook! close-hook close-buffer)
     
@@ -64843,7 +64869,9 @@ EDITS: 1
 	  (gc)(gc)
 	  
 	  ;;	(set! a-sound (new-sound "test.snd" mus-next mus-bshort 22050 1 "set-samples test" 100))
-	  
+
+	  (if all-args (snd-display ";args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time)))))
+
 	  ;; ---------------- 0 Args
 	  (for-each 
 	   (lambda (n)
@@ -64856,392 +64884,348 @@ EDITS: 1
 	   procs0)
 	  (dismiss-all-dialogs)
 	  (gc)(gc)
-	  
-	  ;; ---------------- 1 Arg
-	  (for-each 
-	   (lambda (arg)
-	     (for-each 
-	      (lambda (n)
-		(let ((err (catch #t
-				  (lambda () (n arg))
-				  (lambda args (car args)))))
-		  (if (eq? err 'wrong-number-of-args)
-		      (snd-display ";procs1 wna: ~A ~A" err (procedure-property n 'documentation)))))
-	      procs1))
-	   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
-		 (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-		 '() '3 4 2 8 16 32 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-		 12345678901234567890 (log0) (nan)))
-	  (gc)(gc)
-	  
-	  ;; ---------------- 2 Args
-	  (for-each 
-	   (lambda (arg1)
-	     (for-each 
-	      (lambda (arg2)
-		(for-each 
-		 (lambda (n)
-		   (let ((err (catch #t
-				     (lambda () (n arg1 arg2))
-				     (lambda args (car args)))))
-		     (if (eq? err 'wrong-number-of-args)
-			 (snd-display ";procs2: ~A ~A" err (procedure-property n 'documentation)))))
-		 procs2))
-	      (if all-args
-		  (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
-			(lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-			'() '3 4 2 8 16 32 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-			12345678901234567890 (log0) (nan))
-		  (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-			(sqrt -1.0) delay-32 :feedback -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
-	   (if all-args
-	       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
-		     (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-		     '() '3 4 2 8 16 32 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-		     12345678901234567890 (log0) (nan))
-	       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-		     (sqrt -1.0) delay-32 :frequency -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
-	  (gc)(gc)
-	  
-	  ;; ---------------- set! no Args
-	  (for-each 
-	   (lambda (arg)
-	     (for-each 
-	      (lambda (n)
-		(let ((err (catch #t
-				  (lambda () (set! (n) arg))
-				  (lambda args (car args)))))
-		  (if (eq? err 'wrong-number-of-args)
-		      (snd-display ";set-procs0: ~A ~A" err (procedure-property n 'documentation)))))
-	      set-procs0))
-	   (if all-args
-	       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
-		     (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-		     '() '3 4 2 8 16 32 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-		     12345678901234567890 (log0) (nan))
-	       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
-		     (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 64 -64 a-hook #f #t '() vector-0 12345678901234567890 (log0) (nan))))
-	  (gc)(gc)
-	  
-	  ;; ---------------- set! 1 Arg
-	  (for-each 
-	   (lambda (arg1)
-	     (for-each 
-	      (lambda (arg2)
-		(for-each 
-		 (lambda (n)
-		   (let ((err (catch #t
-				     (lambda () (set! (n arg1) arg2))
-				     (lambda args (car args)))))
-		     (if (eq? err 'wrong-number-of-args)
-			 (snd-display ";set-procs1: ~A ~A" err (procedure-property n 'documentation)))))
-		 set-procs1))
-	      (if all-args
-		  (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
-			(lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-			'() '3 4 2 8 16 32 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-			12345678901234567890 (log0) (nan))
-		  (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-			(sqrt -1.0) delay-32 :feedback -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
-	   (if all-args
-	       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
-		     (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-		     '() '3 4 2 8 16 32 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-		     12345678901234567890 (log0) (nan))
-	       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-		     (sqrt -1.0) delay-32 :frequency -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
-	  (gc)(gc)
-	  
-	  ;; ---------------- set! 2 Args
-	  (for-each 
-	   (lambda (arg1)
-	     (for-each 
-	      (lambda (arg2)
-		(for-each 
-		 (lambda (arg3)
-		   (for-each 
-		    (lambda (n)
-		      (let ((err (catch #t
-					(lambda () (set! (n arg1 arg2) arg3))
-					(lambda args (car args)))))
-			(if (eq? err 'wrong-number-of-args)
-			    (snd-display ";set-procs2: ~A ~A" err (procedure-property n 'documentation)))))
-		    set-procs2))
-		 (if all-args
-		     (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
-			   (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-			   '() '3 4 2 8 16 32 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-			   12345678901234567890 (log0) (nan))
-		     (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-			   (sqrt -1.0) delay-32 :feedback -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
-	      (if all-args
-		  (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
-			(lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-			'() '3 4 2 8 16 32 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-			12345678901234567890 (log0) (nan))
-		  (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-			(sqrt -1.0) delay-32 :frequency -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
-	   (if all-args
-	       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
-		     (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-		     '() '3 4 2 8 16 32 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-		     12345678901234567890 (log0) (nan))
-	       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-		     (sqrt -1.0) delay-32 :frequency -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
-	  (gc)(gc)
-	  
-	  (if all-args
-	      ;; these can take awhile...
-	      (begin
-		
-		;; ---------------- 3 Args
-		(for-each 
-		 (lambda (arg1)
-		   (begin
-		     (for-each
+
+	  (let* ((main-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
+				 (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
+				 '() '3 2 8 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
+				 12345678901234567890 (log0) (nan) (lambda (a) #f) abs))
+		 (few-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 -1.0
+				 (sqrt -1.0) delay-32 :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
+		 (fewer-args (list "/hiho" 1234 vct-3 -1.0 (sqrt -1.0) delay-32 -1 0 1 #f #t '() 12345678901234567890 (log0)))
+		 (less-args (if all-args main-args few-args)))
+
+	    ;; ---------------- 1 Arg
+	    (for-each 
+	     (lambda (arg)
+	       (for-each 
+		(lambda (n)
+		  (let ((err (catch #t
+				    (lambda () (n arg))
+				    (lambda args (car args)))))
+		    (if (eq? err 'wrong-number-of-args)
+			(snd-display ";procs1 wna: ~A ~A" err (procedure-property n 'documentation)))))
+		procs1))
+	     main-args)
+	    (gc)(gc)
+	    
+	    ;; ---------------- 2 Args
+	    (for-each 
+	     (lambda (arg1)
+	       (for-each 
+		(lambda (arg2)
+		  (for-each 
+		   (lambda (n)
+		     (let ((err (catch #t
+				       (lambda () (n arg1 arg2))
+				       (lambda args (car args)))))
+		       (if (eq? err 'wrong-number-of-args)
+			   (snd-display ";procs2: ~A ~A" err (procedure-property n 'documentation)))))
+		   procs2))
+		main-args))
+	     main-args)
+	    (gc)(gc)
+	    
+	    ;; ---------------- set! no Args
+	    (for-each 
+	     (lambda (arg)
+	       (for-each 
+		(lambda (n)
+		  (let ((err (catch #t
+				    (lambda () (set! (n) arg))
+				    (lambda args (car args)))))
+		    (if (eq? err 'wrong-number-of-args)
+			(snd-display ";set-procs0: ~A ~A" err (procedure-property n 'documentation)))))
+		set-procs0))
+	     main-args)
+	    (gc)(gc)
+	    
+	    ;; ---------------- set! 1 Arg
+	    (for-each 
+	     (lambda (arg1)
+	       (for-each 
+		(lambda (arg2)
+		  (for-each 
+		   (lambda (n)
+		     (let ((err (catch #t
+				       (lambda () (set! (n arg1) arg2))
+				       (lambda args (car args)))))
+		       (if (eq? err 'wrong-number-of-args)
+			   (snd-display ";set-procs1: ~A ~A" err (procedure-property n 'documentation)))))
+		   set-procs1))
+		main-args))
+	     main-args)
+	    (gc)(gc)
+	    
+	    ;; ---------------- set! 2 Args
+	    (for-each 
+	     (lambda (arg1)
+	       (for-each 
+		(lambda (arg2)
+		  (for-each 
+		   (lambda (arg3)
+		     (for-each 
+		      (lambda (n)
+			(let ((err (catch #t
+					  (lambda () (set! (n arg1 arg2) arg3))
+					  (lambda args (car args)))))
+			  (if (eq? err 'wrong-number-of-args)
+			      (snd-display ";set-procs2: ~A ~A" err (procedure-property n 'documentation)))))
+		      set-procs2))
+		   less-args))
+		less-args))
+	     less-args)
+	    (gc)(gc)
+	    
+	    (if all-args
+		;; these can take awhile...
+		(begin
+		  
+		  (snd-display ";3 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
+
+		  ;; ---------------- 3 Args
+		  (for-each 
+		   (lambda (arg1)
+		     (begin
+		       (for-each
+			(lambda (arg2)
+			  (for-each 
+			   (lambda (arg3)
+			     (for-each
+			      (lambda (n)
+				(let ((err (catch #t
+						  (lambda () (n arg1 arg2 arg3))
+						  (lambda args (car args)))))
+				  (if (eq? err 'wrong-number-of-args)
+				      (snd-display ";procs3: ~A ~A" err (procedure-property n 'documentation)))))
+			      procs3))
+			   less-args))
+			less-args)))
+		   less-args)
+		  (gc)(gc)
+		  
+		  (snd-display ";set 3 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
+
+		  ;; ---------------- set! 3 Args
+		  (for-each 
+		   (lambda (arg1)
+		     (for-each 
 		      (lambda (arg2)
 			(for-each 
 			 (lambda (arg3)
-			   (for-each
-			    (lambda (n)
-			      (let ((err (catch #t
-						(lambda () (n arg1 arg2 arg3))
-						(lambda args (car args)))))
-				(if (eq? err 'wrong-number-of-args)
-				    (snd-display ";procs3: ~A ~A" err (procedure-property n 'documentation)))))
-			    procs3))
-			 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 '#(0 1) (sqrt -1.0) delay-32 3/4 -1.0
-			       :start -1 0 3 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
-		      (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 '#(0 1) (sqrt -1.0) delay-32 3/4 -1.0
-			    :channels -1 0 3 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
-		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 '#(0 1) (sqrt -1.0) delay-32 3/4 -1.0
-		       -1 0 3 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
-		(gc)(gc)
-		
-		;; ---------------- set! 3 Args
-		(for-each 
-		 (lambda (arg1)
-		   (for-each 
-		    (lambda (arg2)
-		      (for-each 
-		       (lambda (arg3)
-			 (for-each 
-			  (lambda (arg4)
-			    (for-each 
-			     (lambda (n)
-			       (let ((err (catch #t
-						 (lambda () (set! (n arg1 arg2 arg3) arg4))
-						 (lambda args (car args)))))
-				 (if (eq? err 'wrong-number-of-args)
-				     (snd-display ";set-procs3: ~A ~A" err (procedure-property n 'documentation)))))
-			     set-procs3))
-			  (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-				:wave -1 0 3 16 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
-		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-			     :initial-contents -1 0 3 16 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
-		    (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-			  :input -1 0 3 16 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
-		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-		       -1 0 3 16 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
-		(gc)(gc)
-		
-		;; ---------------- 4 Args
-		(for-each 
-		 (lambda (arg1)
-		   (for-each 
-		    (lambda (arg2)
-		      (for-each 
-		       (lambda (arg3)
-			 (for-each 
-			  (lambda (arg4)
-			    (for-each
-			     (lambda (n)
-			       (let ((err (catch #t
-						 (lambda () (n arg1 arg2 arg3 arg4))
-						 (lambda args (car args)))))
-				 (if (eq? err 'wrong-number-of-args)
-				     (snd-display ";procs4: ~A ~A ~A" err n (procedure-property n 'documentation)))))
-			     procs4))
-			  (list 1.5 "/hiho" (list 0 1) 1234 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-				:wave -1 0 1 64 -64 #f #t '() 12345678901234567890 (log0) (nan))))
-		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) 3/4 '#(0 1) -1.0
-			     :initial-contents -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
-		    (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) 3/4 '#(0 1) -1.0
-			  -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
-		 (list 1.5 "/hiho" (list 0 1) 1234 vct-5 (sqrt -1.0) 3/4 '#(0 1) -1.0
-		       -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
-		(gc)(gc)
-		
-		;; ---------------- set! 4 Args
-		(for-each 
-		 (lambda (arg1)
-		   (for-each 
-		    (lambda (arg2)
-		      (for-each 
-		       (lambda (arg3)
-			 (for-each 
-			  (lambda (arg4)
-			    (for-each 
-			     (lambda (arg5)
-			       (for-each 
-				(lambda (n)
-				  (let ((err (catch #t
-						    (lambda () (set! (n arg1 arg2 arg3 arg4) arg5))
-						    (lambda args (car args)))))
-				    (if (eq? err 'wrong-number-of-args)
-					(snd-display ";set-procs4: ~A ~A" err (procedure-property n 'documentation)))))
-				set-procs4))
-			     (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-				   :wave -1 0 3 16 -64 #f #t '() 12345678901234567890 (log0) (nan))))
-			  (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-				:initial-contents -1 0 3 16 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
-		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-			     :srate -1 0 3 16 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
-		    (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-			  :input -1 0 3 16 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
-		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-		       -1 0 3 16 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
-		(gc)(gc)
-		
-		(clear-sincs)
-		(stop-playing)
-		
-		;; ---------------- 5 Args
-		(for-each 
-		 (lambda (arg1)
-		   (for-each 
-		    (lambda (arg2)
-		      (for-each 
-		       (lambda (arg3)
-			 (for-each 
-			  (lambda (arg4)
-			    (for-each
-			     (lambda (arg5)
-			       (for-each 
-				(lambda (n)
-				  (let ((err (catch #t
-						    (lambda () (n arg1 arg2 arg3 arg4 arg5))
-						    (lambda args (car args)))))
-				    (if (eq? err 'wrong-number-of-args)
-					(snd-display ";procs5: ~A ~A ~A" err n (procedure-property n 'documentation)))))
-				procs5))
-			     (list 1.5 "/hiho" 1234 :wave vct-3 vct-5 (sqrt -1.0) -1 0 -64 #f #t '() 3/4 12345678901234567890 (log0) (nan))))
-			  (list 1.5 "/hiho" 1234 :size vct-3 vct-5 (sqrt -1.0) -1 0 -64 #f #t '() 3/4 12345678901234567890 (log0) (nan))))
-		       (list 1.5 "/hiho" 1234 vct-3 vct-5 (sqrt -1.0) -1 0 -64 #f #t '() 3/4 12345678901234567890 (log0) (nan))))
-		    (list 1.5 "/hiho" 1234 vct-3 vct-5 (sqrt -1.0) -1 0 -64 #f #t '() 3/4 12345678901234567890 (log0) (nan))))
-		 (list 1.5 "/hiho" 1234 vct-3 vct-5 (sqrt -1.0) -1 0 -64 #f #t '() 3/4 12345678901234567890 (log0) (nan)))
-		(gc)(gc)
-		
-		(clear-sincs)
-		
-		;; ---------------- 6 Args
-		(for-each 
-		 (lambda (arg1)
-		   (for-each 
-		    (lambda (arg2)
-		      (for-each 
-		       (lambda (arg3)
-			 (for-each 
-			  (lambda (arg4)
-			    (for-each
-			     (lambda (arg5)
-			       (for-each 
-				(lambda (arg6)
-				  (for-each 
-				   (lambda (n)
-				     (let ((err (catch #t
-						       (lambda () (n arg1 arg2 arg3 arg4 arg5 arg6))
-						       (lambda args (car args)))))
-				       (if (eq? err 'wrong-number-of-args)
-					   (snd-display ";procs6: ~A ~A" err (procedure-property n 'documentation)))))
-				   procs6))
-				(list 1.5 "/hiho" -1234 -1 0 #f #t '() vct-3 (log0))))
-			     (list 1.5 "/hiho" -1234 0 vct-5 #f #t)))
-			  (list 1.5 "/hiho" -1234 vct-3 #f #t)))
-		       (list 1.5 "/hiho" -1234 vct-3 -1 #f #t)))
-		    (list 1.5 -1234 vct-3 vct-5 -1 0 #f #t)))
-		 (list 1.5 "/hiho" -1234 #f #t vct-5))
-		(gc)(gc)
-		
-		;; ---------------- 8 Args
-		(for-each 
-		 (lambda (arg1)
-		   (for-each 
-		    (lambda (arg2)
-		      (for-each 
-		       (lambda (arg3)
-			 (for-each 
-			  (lambda (arg4)
-			    (for-each
-			     (lambda (arg5)
-			       (for-each 
-				(lambda (arg6)
-				  (for-each 
-				   (lambda (arg7)
-				     (for-each 
-				      (lambda (arg8)
-					(for-each 
-					 (lambda (n)
-					   (let ((err (catch #t
-							     (lambda () (n arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8))
-							     (lambda args (car args)))))
-					     (if (eq? err 'wrong-number-of-args)
-						 (snd-display ";procs8: ~A ~A" err (procedure-property n 'documentation)))))
-					 procs8))
-				      (list 1.5 -1 1234 #f '() (log0))))
-				   (list "/hiho" -1 1234 '() vct-5)))
-				(list #t #f -1 1234 '() vct-3)))
-			     (list (sqrt -1.0) 1234 0 -1 '())))
-			  (list 1.5 -1 #f 1234 vct-3 '())))
-		       (list 2 #f #t 1234 vct-5 -1)))
-		    (list #f #t -1 1234 vct-3)))
-		 (list 1.5 -1 '() 1234 "/hiho"))
-		(gc)(gc)
-		
-		(clear-sincs)
-		
-		;; ---------------- 10 Args
-		(for-each 
-		 (lambda (arg1)
-		   (for-each 
-		    (lambda (arg2)
-		      (for-each 
-		       (lambda (arg3)
-			 (for-each 
-			  (lambda (arg4)
-			    (for-each
-			     (lambda (arg5)
-			       (for-each 
-				(lambda (arg6)
-				  (for-each 
-				   (lambda (arg7)
-				     (for-each 
-				      (lambda (arg8)
-					(for-each 
-					 (lambda (arg9)
-					   (for-each 
-					    (lambda (arg10)
-					      (for-each 
-					       (lambda (n)
-						 (let ((err (catch #t
-								   (lambda () (n arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10))
-								   (lambda args (car args)))))
-						   (if (eq? err 'wrong-number-of-args)
-						       (snd-display ";procs10: ~A ~A" err (procedure-property n 'documentation)))))
-					       procs10))
-					    (list 1.5 -1 #f 1234)))
-					 (list "/hiho" -1 1234)))
-				      (list #t #f vct-3 1234)))
-				   (list (sqrt -1.0) #f -1 vct-5)))
-				(list 1.5 #f -1 1234 '())))
-			     (list -2 #f 1234 vct-3)))
-			  (list #f #t '() 1234 vct-5)))
-		       (list 1.5 -1 "/hiho" '())))
-		    (list 1.5 -1 '())))
-		 (list #f -1 1234))
-		(gc)(gc)
-		
-		)))
+			   (for-each 
+			    (lambda (arg4)
+			      (for-each 
+			       (lambda (n)
+				 (let ((err (catch #t
+						   (lambda () (set! (n arg1 arg2 arg3) arg4))
+						   (lambda args (car args)))))
+				   (if (eq? err 'wrong-number-of-args)
+				       (snd-display ";set-procs3: ~A ~A" err (procedure-property n 'documentation)))))
+			       set-procs3))
+			    less-args))
+			 less-args))
+		      less-args))
+		   less-args)
+		  (gc)(gc)
+		  
+		  (snd-display ";4 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
+
+		  ;; ---------------- 4 Args
+		  (for-each 
+		   (lambda (arg1)
+		     (for-each 
+		      (lambda (arg2)
+			(for-each 
+			 (lambda (arg3)
+			   (for-each 
+			    (lambda (arg4)
+			      (for-each
+			       (lambda (n)
+				 (let ((err (catch #t
+						   (lambda () (n arg1 arg2 arg3 arg4))
+						   (lambda args (car args)))))
+				   (if (eq? err 'wrong-number-of-args)
+				       (snd-display ";procs4: ~A ~A ~A" err n (procedure-property n 'documentation)))))
+			       procs4))
+			    few-args))
+			 few-args))
+		      few-args))
+		   few-args)
+		  (gc)(gc)
+		  
+		  (snd-display ";set 4 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
+
+		  ;; ---------------- set! 4 Args
+		  (for-each 
+		   (lambda (arg1)
+		     (for-each 
+		      (lambda (arg2)
+			(for-each 
+			 (lambda (arg3)
+			   (for-each 
+			    (lambda (arg4)
+			      (for-each 
+			       (lambda (arg5)
+				 (for-each 
+				  (lambda (n)
+				    (let ((err (catch #t
+						      (lambda () (set! (n arg1 arg2 arg3 arg4) arg5))
+						      (lambda args (car args)))))
+				      (if (eq? err 'wrong-number-of-args)
+					  (snd-display ";set-procs4: ~A ~A" err (procedure-property n 'documentation)))))
+				  set-procs4))
+			       fewer-args))
+			    fewer-args))
+			 fewer-args))
+		      fewer-args))
+		   fewer-args)
+		  (gc)(gc)
+		  
+		  (clear-sincs)
+		  (stop-playing)
+		  
+		  (snd-display ";5 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
+
+		  ;; ---------------- 5 Args
+		  (for-each 
+		   (lambda (arg1)
+		     (for-each 
+		      (lambda (arg2)
+			(for-each 
+			 (lambda (arg3)
+			   (for-each 
+			    (lambda (arg4)
+			      (for-each
+			       (lambda (arg5)
+				 (for-each 
+				  (lambda (n)
+				    (let ((err (catch #t
+						      (lambda () (n arg1 arg2 arg3 arg4 arg5))
+						      (lambda args (car args)))))
+				      (if (eq? err 'wrong-number-of-args)
+					  (snd-display ";procs5: ~A ~A ~A" err n (procedure-property n 'documentation)))))
+				  procs5))
+			       fewer-args))
+			    fewer-args))
+			 fewer-args))
+		      fewer-args))
+		   fewer-args)
+		  (gc)(gc)
+		  
+		  (clear-sincs)
+		  
+		  (snd-display ";6 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
+
+		  ;; ---------------- 6 Args
+		  (for-each 
+		   (lambda (arg1)
+		     (for-each 
+		      (lambda (arg2)
+			(for-each 
+			 (lambda (arg3)
+			   (for-each 
+			    (lambda (arg4)
+			      (for-each
+			       (lambda (arg5)
+				 (for-each 
+				  (lambda (arg6)
+				    (for-each 
+				     (lambda (n)
+				       (let ((err (catch #t
+							 (lambda () (n arg1 arg2 arg3 arg4 arg5 arg6))
+							 (lambda args (car args)))))
+					 (if (eq? err 'wrong-number-of-args)
+					     (snd-display ";procs6: ~A ~A" err (procedure-property n 'documentation)))))
+				     procs6))
+				  (list 1.5 "/hiho" -1234 -1 0 #f #t '() vct-3 (log0))))
+			       (list 1.5 "/hiho" -1234 0 vct-5 #f #t)))
+			    (list 1.5 "/hiho" -1234 vct-3 #f #t)))
+			 (list 1.5 "/hiho" -1234 vct-3 -1 #f #t)))
+		      (list 1.5 -1234 vct-3 vct-5 -1 0 #f #t)))
+		   (list 1.5 "/hiho" -1234 #f #t vct-5))
+		  (gc)(gc)
+		  
+		  (snd-display ";8 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
+
+		  ;; ---------------- 8 Args
+		  (for-each 
+		   (lambda (arg1)
+		     (for-each 
+		      (lambda (arg2)
+			(for-each 
+			 (lambda (arg3)
+			   (for-each 
+			    (lambda (arg4)
+			      (for-each
+			       (lambda (arg5)
+				 (for-each 
+				  (lambda (arg6)
+				    (for-each 
+				     (lambda (arg7)
+				       (for-each 
+					(lambda (arg8)
+					  (for-each 
+					   (lambda (n)
+					     (let ((err (catch #t
+							       (lambda () (n arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8))
+							       (lambda args (car args)))))
+					       (if (eq? err 'wrong-number-of-args)
+						   (snd-display ";procs8: ~A ~A" err (procedure-property n 'documentation)))))
+					   procs8))
+					(list 1.5 -1 1234 #f '() (log0))))
+				     (list "/hiho" -1 1234 '() vct-5)))
+				  (list #t #f -1 1234 '() vct-3)))
+			       (list (sqrt -1.0) 1234 0 -1 '())))
+			    (list 1.5 -1 #f 1234 vct-3 '())))
+			 (list 2 #f #t 1234 vct-5 -1)))
+		      (list #f #t -1 1234 vct-3)))
+		   (list 1.5 -1 '() 1234 "/hiho"))
+		  (gc)(gc)
+		  
+		  (clear-sincs)
+		  
+		  ;; ---------------- 10 Args
+		  (for-each 
+		   (lambda (arg1)
+		     (for-each 
+		      (lambda (arg2)
+			(for-each 
+			 (lambda (arg3)
+			   (for-each 
+			    (lambda (arg4)
+			      (for-each
+			       (lambda (arg5)
+				 (for-each 
+				  (lambda (arg6)
+				    (for-each 
+				     (lambda (arg7)
+				       (for-each 
+					(lambda (arg8)
+					  (for-each 
+					   (lambda (arg9)
+					     (for-each 
+					      (lambda (arg10)
+						(for-each 
+						 (lambda (n)
+						   (let ((err (catch #t
+								     (lambda () (n arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10))
+								     (lambda args (car args)))))
+						     (if (eq? err 'wrong-number-of-args)
+							 (snd-display ";procs10: ~A ~A" err (procedure-property n 'documentation)))))
+						 procs10))
+					      (list 1.5 -1 #f 1234)))
+					   (list "/hiho" -1 1234)))
+					(list #t #f vct-3 1234)))
+				     (list (sqrt -1.0) #f -1 vct-5)))
+				  (list 1.5 #f -1 1234 '())))
+			       (list -2 #f 1234 vct-3)))
+			    (list #f #t '() 1234 vct-5)))
+			 (list 1.5 -1 "/hiho" '())))
+		      (list 1.5 -1 '())))
+		   (list #f -1 1234))
+		  (gc)(gc)
+		  
+		  ))))
 	
 	(if (defined? 'mus-audio-reinitialize) (mus-audio-reinitialize))
 	(set! (window-y) 10)
@@ -65347,19 +65331,163 @@ EDITS: 1
 		    (if (file-exists? "col5.snd") (delete-file "col5.snd"))
 		    (if (file-exists? "reverb.snd") (delete-file "reverb.snd"))))))
 	
+	;; close-sound cases that are nutty...
+	
+	(let ((tag (catch #t
+			  (lambda ()
+			    (let ((ind (open-sound "oboe.snd")))
+			      (map-channel
+			       (lambda (y)
+				 (if (sound? ind)
+				     (close-sound ind))
+				 0.0))))
+			  (lambda args (car args)))))
+	  (if (not (eq? tag 'no-such-channel)) (snd-display ";map-channel closing own chan: ~A" tag)))
+	
+	(let ((ind1 (open-sound "oboe.snd"))
+	      (ind2 (open-sound "pistol.snd")))
+	  (as-one-edit
+	   (lambda ()
+	     (close-sound ind1)
+	     (close-sound ind2))))
+	
+	(let ((ind1 (open-sound "oboe.snd"))
+	      (ind2 (open-sound "pistol.snd")))
+	  (as-one-edit
+	   (lambda ()
+	     (set! (sample 100 ind1 0) .1)
+	     (set! (sample 200 ind2 0) .1)
+	     (as-one-edit
+	      (lambda ()
+		(close-sound ind1)
+		(close-sound ind2))
+	      "inner edit"))
+	   "outer edit"))
+	
+	(let ((ind (open-sound "oboe.snd")))
+	  (find-channel
+	   (lambda (y)
+	     (if (sound? ind)
+		 (close-sound ind))
+	     #f)))
+	
+	(let ((ind (open-sound "oboe.snd")))
+	  (let ((rd (make-sample-reader 0)))
+	    (close-sound ind)
+	    (do ((i 0 (1+ i)))
+		((= i 10))
+	      (read-sample rd))
+	    (let ((home (sample-reader-home rd)))
+	      (if (and (list? home)
+		       (sound? (car home)))
+		  (snd-display ";reader-home of closed sound: ~A ~A" home (sounds))))
+	    (let ((loc (sample-reader-position rd)))
+	      (if (not (= loc 0))
+		  (snd-display ";closed reader position: ~A" loc)))
+	    (let ((at-end (sample-reader-at-end? rd)))
+	      (if (not at-end)
+		  (snd-display ";closed sample reader at end: ~A" at-end)))))
+	
+	(let ((ind (open-sound "oboe.snd")))
+	  (let ((mx (mix-vct (vct .1 .2 .3))))
+	    (let ((rd (make-mix-sample-reader mx)))
+	      (close-sound ind)
+	      (do ((i 0 (1+ i)))
+		  ((= i 10))
+		(read-mix-sample rd)))))
+	
+	(set! (max-regions) (max 8 (max-regions)))
+	(let ((ind (open-sound "oboe.snd")))
+	  (let ((reg (make-region 0 100 ind 0)))
+	    (let ((rd (make-region-sample-reader 0 reg)))
+	      (close-sound ind)
+	      (forget-region reg)
+	      (do ((i 0 (1+ i)))
+		  ((= i 10))
+		(read-sample rd)))))
+	
+	(let ((ind (open-sound "oboe.snd"))
+	      (scl 1.0))
+	  (set! (sample 100 ind 0) .5)
+	  (map-channel (lambda (y)
+			 (if (> y .4)
+			     (let* ((mx 0.0))
+			       (scan-channel (lambda (x)
+					       (set! mx (max mx (abs x)))
+					       #f))
+			       (set! scl (/ 1.0 mx))))
+			 (* scl y)))
+	  (if (fneq (sample 100 ind 0) 1.0) (snd-display ";scan + map 100: ~A" (sample 100 ind 0)))
+	  (revert-sound ind)
+	  
+	  (set! (sample 100 ind 0) .5)
+	  (map-channel (lambda (y)
+			 (if (> y .4)
+			     (set! (frames ind 0) 1))
+			 y))
+	  (if (fneq (sample 100 ind 0) 0.5) (snd-display ";map + reset frames: ~A" (sample 100 ind 0)))
+	  (if (not (= (frames ind 0) 50828)) (snd-display ";map + reset frames, frames: ~A" (frames ind 0)))
+	  (undo 1 ind 0)
+	  (if (not (= (frames ind 0) 1)) (snd-display ";map + reset frames, undo frames: ~A" (frames ind 0)))
+	  (revert-sound ind)
+	  
+	  (set! (sample 100 ind 0) .5)
+	  (let ((tag (catch #t (lambda () (set! (frames ind 0 1) 1)) (lambda args (car args)))))
+	    (if (not (eq? tag 'wrong-number-of-args)) (snd-display ";set frames + edpos: ~A" tag)))
+	  (revert-sound ind)
+	  
+	  (let ((tag (catch #t (lambda () (map-channel (lambda (y) (* y 0.0+1.0i)))) (lambda args (car args)))))
+	    (if (not (eq? tag 'bad-type)) (snd-display ";map-channel rtn complex: ~A" tag)))
+	  
+	  (let ((rd (make-sample-reader 0)))
+	    (do ((i 0 (1+ i)))
+		((= i 10))
+	      (rd))
+	    (let ((crd (copy-sample-reader rd)))
+	      (close-sound ind)
+	      (do ((i 0 (1+ i)))
+		  ((= i 10))
+		(read-sample crd))
+	      (let ((home (sample-reader-home crd)))
+		(if (and (list? home)
+			 (sound? (car home)))
+		    (snd-display ";copy reader-home of closed sound: ~A ~A" home (sounds))))
+	      (let ((loc (sample-reader-position crd)))
+		(if (not (= loc 0))
+		    (snd-display ";closed copy reader position: ~A" loc)))
+	      (let ((at-end (sample-reader-at-end? crd)))
+		(if (not at-end)
+		    (snd-display ";closed copy sample reader at end: ~A" at-end)))))
+	  
+	  (let ((tag (catch #t (lambda () (revert-sound ind)) (lambda args (car args)))))
+	    (if (not (eq? tag 'no-such-sound)) (snd-display ";revert-sound of closed sound: ~A" tag)))
+	  
+	  (set! ind (open-sound "oboe.snd")) ; closed in copy case above
+	  (set! (sample 100 ind 0) .5)
+	  (let ((tag (catch #t 
+			    (lambda () (scale-channel .5 0 100 ind 0 (lambda () (close-sound ind) current-edit-position)))
+			    (lambda args (car args)))))
+	    (if (not (eq? tag 'bad-arity)) (snd-display ";edpos proc bad args: ~A" tag)))
+	  
+	  (if (not (sound? ind)) (snd-display ";edpos bad arity proc clobbers chan?? ~A" ind))
+	  
+	  (let ((tag (catch #t
+			    (lambda () (scale-channel .5 0 100 ind 0 (lambda (snd chn) (close-sound snd) current-edit-position)))
+			    (lambda args (car args)))))
+	    (if (not (eq? tag 'no-such-channel)) (snd-display ";edpos clobbers channel: ~A" tag)))
+	  
+	  (if (sound? ind) (snd-display ";edpos proc clobbers chan?? ~A" ind)))
+	
 	(set! env3 #f)
 	(set! delay-32 #f)
 	(set! color-95 #f)
 	(set! vector-0 #f)
 	(set! vct-3 #f)
 	(set! sound-data-23 #f)
-	
-	
 	(set! (mus-srate) 22050)
 	(set! *clm-srate* 22050)
 	(set! (print-length) 12)
 	(set! (mus-array-print-length) 12)
-
 	(set! (sound-file-extensions) exts)
 	
 	)))
@@ -65407,6 +65535,7 @@ EDITS: 1
 	(run-hook before-test-hook snd-test)
 	((vector-ref test-funcs snd-test))
 	(run-hook after-test-hook snd-test)
+	(gc) (gc)
 	(if (defined? 'mem-report) (mem-report))))
 
     (if (and (not full-test)
@@ -65465,10 +65594,7 @@ EDITS: 1
 (set! (print-length) 64)
 (display (format #f "~%;times: ~A~%;total: ~A~%" timings (inexact->exact (round (- (real-time) overall-start-time)))))
 
-;;; 2-Nov-06:  (17 16 34 28 982 5742 530 66 9670 1847 366 419 387 712 381 1111 2607 127 115 2692 960 573 4088 6166 3712 846 183 0 3975 0) 492
-;;; 4-Nov-06:  (17 16 35 28 973 45681 55948 73 81440 1941 483 1132 560 946 954 1185 13741 247 230 2714 1221 851 6188 6163 3885 4413 278 0 539195 0) 7717
-
-(let ((best-times '#(17 16 34 28 982 5742 530 66 9670 1847 366 419 387 712 381 1111 2607 127 115 2692 960 573 4088 6166 3712 846 183 0 3975 354)))
+(let ((best-times '#(59 58 114 95 2244 5373 613 134 11680 2892 609 743 868 976 815 1288 3020 197 168 2952 758 1925 4997 6567 846  183 0 242 6696)))
   (do ((i 0 (1+ i)))
       ((= i (vector-length timings)))
     (if (and (> (vector-ref timings i) 0)

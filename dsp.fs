@@ -2,9 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Tue Jan 09 20:06:06 CET 2007
-
-\ Commentary:
+\ Changed: Mon Jan 15 02:04:00 CET 2007
 
 \ src-duration             ( en -- dur )
 \ dolph                    ( n gamma -- im )
@@ -73,15 +71,49 @@
 \ dht                      ( data -- vct )
 \ find-sine                ( freq beg dur -- amp ph )
 \ goertzel                 ( freq :optional beg dur -- amp )
+\ 
+\ make-spencer-filter      ( -- gen )
+\ any-random               ( amount :optional en -- r )
+\ gaussian-distribution    ( s -- en )
+\ pareto-distribution      ( a -- en )
+\ inverse-integrate        ( dist :optional data-size e-size -- vct )
+\ gaussian-envelope        ( s -- en )
+\ 
+\ channel-mean             ( :optional snd chn -- val )
+\ channel-total-energy     ( :optional snd chn -- val )
+\ channel-average-power    ( :optional snd chn -- val )
+\ channel-rms              ( :optional snd chn -- val )
+\ channel-variance         ( :optional snd chn -- val )
+\ channel-norm             ( :optional snd chn -- val )
+\ channel-lp               ( p :optional snd chn -- val )
+\ channel-lp-inf           ( :optional snd chn -- val )
+\ channel2-inner-product   ( s1 c1 s2 c2 -- val )
+\ channel2-angle           ( s1 c1 s2 c2 -- val )
+\ channel2-orthogonal?     ( s1 c1 s2 c2 -- f )
+\ channel2-coefficient-of-projection ( s1 c1 s2 c2 -- val )
+\ channel-distance         ( s1 c1 s2 c2 -- val )
+\ periodogram              ( N -- )
 \
 \ shift-channel-pitch      ( freq :optional order beg dur snd chn edpos -- val )
 \ ssb-bank                 ( old-freq new-freq pairs :optional ... )
 \ ssb-bank-env             ( old-freq new-freq freq-env pairs :optional ... )
+\ make-transposer          ( old-freq new-freq pairs :optional order bw -- gen )
+\ transpose                ( gen input -- val )
+\ make-fdelay              ( len pitch scaler -- prc; y self -- val )
+\ fdelay                   ( gen input -- val )
+\ transposed-echo          ( pitch scaler secs -- val )
+\ 
 \ vct-polynomial           ( v coeffs -- vct )
 \ channel-polynomial       ( coeffs :optional snd chn -- vct )
 \ spectral-polynomial      ( coeffs :optional snd chn -- vct )
+\
+\ scentroid                ( file :key beg dur db-floor rfreq fftsize -- vals )
+\ invert-filter            ( fcoeffs -- res )
+\ make-volterra-filter     ( acoeffs bcoeffs -- gen )
+\ volterra-filter          ( flt x -- val )
 
 require clm
+require env
 
 \ ;;; -------- src-duration (see src-channel in extsnd.html)
 
@@ -1307,6 +1339,256 @@ set-current
 ;
 previous
 
+: make-spencer-filter ( -- gen )
+  doc" It's a version of make-fir-filter; \
+it returns one of the standard smoothing filters from the era when computers were human beings."
+  #( -3 -6 -5 3 21 46 67 74 67 46 21 3 -5 -6 -3 ) { lst }
+  :xcoeffs lst 0.0 make-vct map! *key* 320.0 f/ end-map :order 15 make-fir-filter
+;
+
+\ ;;; -------- any-random
+\ ;;;
+\ ;;; arbitrary random number distributions via the "rejection method"
+
+: any-random <{ amount :optional en #f -- r }>
+  amount f0= if
+    0.0
+  else
+    en if
+      en envelope-last-x { x1 }
+      0.0 0.0 { x y }
+      begin
+	x1 random to x
+	1.0 random to y
+	c-g?  y  x en 1.0 envelope-interp f<= ||
+      until
+      x
+    else
+      amount random
+    then
+  then
+;
+: gaussian-distribution ( s -- en )
+  { s }
+  '() { en }
+  2.0 s s f* f* { den }
+  0.0 -4.0 { x y }
+  21 0 do
+    x en cons to en
+    y y f* den f/ fexp en cons to en
+    x 0.05 f+ to x
+    y 0.40 f* to y
+  loop
+  en list-reverse
+;
+: pareto-distribution ( a -- en )
+  { a }
+  '() { en }
+  1.0 a 1.0 f+ f** a f/ { scl }
+  0.0 1.0 { x y }
+  21 0 do
+    x en cons to en
+    a  y a 1.0 f+ f**  f/ scl f* en cons to en
+    x 0.05 f+ to x
+    y 0.20 f* to y
+  loop
+  en list-reverse
+;
+\ lambda: <{ y -- val }> 1.0 '( 0 1 1 1 )          any-random ; map-channel \ uniform distribution
+\ lambda: <{ y -- val }> 1.0 '( 0 0 0.95 0.1 1 1 ) any-random ; map-channel \ mostly toward 1.0
+\ 1.0 gaussian-distribution value g lambda: <{ y -- val }> 1.0 g any-random ; map-channel
+\ 1.0 pareto-distribution   value g lambda: <{ y -- val }> 1.0 g any-random ; map-channel
+
+\ ;;; this is the inverse integration function used by CLM to turn a
+\ ;;; distribution function into a weighting function
+
+: inverse-integrate <{ dist :optional data-size 512 e-size 50 -- vct }>
+  '() { en }
+  dist cadr exact->inexact dup { sum first-sum }
+  dist car { x0 }
+  dist envelope-last-x { x1 }
+  x1 x0 f- e-size f/ { xincr }
+  x0 { x }
+  e-size 0 ?do
+    sum en cons to en
+    x en cons to en
+    x dist 1.0 envelope-interp sum f+ to sum
+    x xincr f+ to x
+  loop
+  en cadr first-sum f- data-size 1- f/ { incr }
+  en list-reverse to en
+  first-sum to x
+  data-size 0.0 make-vct map!
+    x en 1.0 envelope-interp
+    x incr f+ to x
+  end-map ( data )
+;
+: gaussian-envelope ( s -- en )
+  { s }
+  '() { en }
+  2.0 s s f* f* { den }
+  -1.0 -4.0 { x y }
+  21 0 do
+    x en cons to en
+    y y f* den f/ fexp en cons to en
+    x 0.1 f+ to x
+    y 0.4 f* to y
+  loop
+  en list-reverse
+;
+\ :envelope 1.0 gaussian-envelope make-rand
+
+\ ;;; ---------------- Julius Smith stuff ----------------
+\ ;;;
+\ ;;; these are from "Mathematics of the DFT", W3K Pubs
+
+hide
+: chm-cb { sum -- prc; y self -- f }
+  1 proc-create sum , ( prc )
+ does> { y self -- f }
+  y self +! ( sum += y )
+  #f
+;
+set-current
+: channel-mean <{ :optional snd #f chn #f -- val }>   \ <f, 1> / n
+  doc" Returns the average of the samples in the given channel: <f,1>/n."
+  0.0 { sum }
+  snd chn #f frames { len }
+  sum chm-cb 0 len snd chn #f scan-channel drop
+  sum len f/
+;
+previous
+
+hide
+: chte-cb { sum -- prc; y self -- f }
+  1 proc-create sum , ( prc )
+ does> { y self -- f }
+  y y f* self +! ( sum += y )
+  #f
+;
+set-current
+: channel-total-energy <{ :optional snd #f chn #f -- val }>   \ <f, f>
+  doc" Returns the sum of the squares of all the samples in the given channel: <f,f>."
+  0.0 { sum }
+  snd chn #f frames { len }
+  sum chte-cb 0 len snd chn #f scan-channel drop
+  sum
+;
+previous
+
+: channel-average-power <{ :optional snd #f chn #f -- val }> \ <f, f> / n
+  doc" Returns the average power in the given channel: <f,f>/n."
+  snd chn channel-total-energy snd chn #f frames f/
+;
+: channel-rms <{ :optional snd #f chn #f -- val }> \ sqrt(<f, f> / n)
+  doc" Returns the RMS value of the samples in the given channel: sqrt(<f,f>/n)."
+  snd chn channel-average-power fsqrt
+;
+: channel-variance <{ :optional snd #f chn #f -- val }> \ <f, f> - (<f, 1> / n) ^ 2 with quibbles
+  doc" Returns the sample variance in the given channel: <f,f>-((<f,1>/ n)^2."
+  snd chn #f frames { len }
+  len len 1- f/ snd chn channel-mean f* { mu }
+  snd chn channel-total-energy { P }
+  P mu mu f* f-
+;
+: channel-norm <{ :optional snd #f chn #f -- val }> \ sqrt(<f, f>)
+  doc" Returns the norm of the samples in the given channel: sqrt(<f,f>)."
+  snd chn channel-total-energy fsqrt
+;
+
+hide
+: chlp-cb { sum p -- prc; y self -- f }
+  1 proc-create sum , p , ( prc )
+ does> { y self -- f }
+  y fabs self cell+ @ ( p ) f** self +! ( sum += y ** p )
+;
+set-current
+: channel-lp <{ p :optional snd #f chn #f -- val }>
+  doc" Returns the Lp norm of the samples in the given channel."
+  0.0 { sum }
+  snd chn #f frames { len }
+  sum p chlp-cb 0 len snd chn #f scan-channel drop
+  sum p 1/f f**
+;
+previous
+
+hide
+: chlpinf-cb { mx -- prc; y self -- f }
+  1 proc-create mx , ( prc )
+ does> { y self -- f }
+  y fabs self @ fmax self !
+;
+set-current
+: channel-lp-inf <{ :optional snd #f chn #f -- val }>
+  doc" Returns the maxamp in the given channel (the name is just math jargon for maxamp)."
+  0.0 { mx }
+  snd chn #f frames { len }
+  mx chlpinf-cb 0 len snd chn #f scan-channel drop
+  mx
+;
+previous
+
+: channel2-inner-product ( s1 c1 s2 c2 -- val )	  \ <f, g>
+  doc" Returns the inner-product of the two channels: <f,g>."
+  { s1 c1 s2 c2 }
+  0.0 { sum }
+  0 s1 c1 1 #f make-sample-reader { r1 }
+  0 s2 c2 1 #f make-sample-reader { r2 }
+  0.0 ( sum )
+  s1 c1 #f frames 0 ?do r1 next-sample r2 next-sample f* f+ ( sum += ... ) loop
+  ( sum )
+;
+: channel2-angle ( s1 c1 s2 c2 -- val )	  \ acos(<f, g> / (sqrt(<f, f>) * sqrt(<g, g>)))
+  doc" Treats the two channels as vectors, \
+returning the 'angle' between them: acos(<f,g>/(sqrt(<f,f>)*sqrt(<g,g>)))"
+  { s1 c1 s2 c2 }
+  s1 c1 s2 c2 channel2-inner-product { inprod }
+  s1 c1 channel-norm { norm1 }
+  s2 c2 channel-norm { norm2 }
+  inprod norm1 norm2 f* f/ facos
+;
+: channel2-orthogonal? ( s1 c1 s2 c2 -- f )	  \ <f, g> == 0
+  doc" Returns #t if the two channels' inner-product is 0: <f,g>==0."
+  { s1 c1 s2 c2 }
+  s1 c1 s2 c2 channel2-inner-product fzero?
+;
+: channel2-coefficient-of-projection ( s1 c1 s2 c2 -- val ) \ s1,c1 = x, s2,c2 = y, <f, g> / <f, f>
+  doc" Returns <f,g>/<f,f>."
+  { s1 c1 s2 c2 }
+  s1 c1 s2 c2 channel2-inner-product s1 c1 channel-total-energy f/
+;
+
+\ ;;; -------- end of JOS stuff --------
+
+: channel-distance ( s1 c1 s2 c2 -- val )
+  doc" Returns the euclidean distance between the two channels: sqrt(<f-g,f-g>)."
+  { s1 c1 s2 c2 }
+  0 s1 c1 1 #f make-sample-reader { r1 }
+  0 s2 c2 1 #f make-sample-reader { r2 }
+  0.0 ( sum )
+  s1 c1 #f frames s2 c2 #f frames min 0 ?do
+    r1 next-sample r2 next-sample f- dup f* f+ ( sum += diff^2 )
+  loop
+  ( sum ) fsqrt
+;
+
+: periodogram ( N -- )
+  doc" Displays an 'N' point Bartlett periodogram of the samples in the current channel."
+  { N }
+  #f #f #f frames { len }
+  0 #f #f 1 #f make-sample-reader { rd }
+  N 2* { N2 }
+  N2 0.0 make-vct { rl }
+  N 0 ?do rl i  rd next-sample  vct-set! drop loop
+  N2 0.0 make-vct { im }
+  rl im N2 1 mus-fft drop
+  N 0.0 make-vct map!
+    rl i vct-ref dup f*
+    im i vct-ref dup f* f+
+  end-map ( average-data ) len N f/ fceil 1/f vct-scale! "average-data"
+  0.0 1.0 #f #f #f #f #t #t graph
+;
+
 \ ;;; -------- ssb-am friends
 
 hide
@@ -1424,6 +1706,49 @@ set-current
 ;
 previous
 
+\ ;; echoes with each echo at a new pitch via ssb-am etc
+
+: make-transposer <{ old-freq new-freq pairs :optional order 40 bw 50.0 -- gen }>
+  new-freq old-freq f- old-freq f/ { factor }
+  pairs nil make-array map! i 1+ factor f* old-freq f* make-ssb-am end-map { ssbs }
+  pairs nil make-array map!
+    i old-freq f* { aff }
+    i pairs 2* / 1+ bw f* { bwf }
+    aff bwf f- hz->radians  aff bwf f+ hz->radians  order  make-bandpass
+  end-map { bands }
+  '( ssbs bands )
+;
+: transpose ( gen input -- val )
+  { gen input }
+  gen car  { ssbs }
+  gen cadr { bands }
+  0.0 ( sum )
+  ssbs each { g }
+    g  bands i array-ref input bandpass  0.0 ssb-am f+ ( sum += )
+  end-each
+  ( sum )
+;
+
+: make-fdelay ( len pitch scaler -- prc; y self -- val )
+  { len pitch scaler }
+  len make-delay { dly }
+  440.0 440.0 pitch f* 10 make-transposer { ssb }
+  1 proc-create dly , ssb , scaler , ( prc )
+ does> { y self -- val }
+  self @ { dly }
+  self cell+ @ { ssb }
+  self 2 cells + @ { scaler }
+  dly  ssb  dly 0.0 tap  transpose scaler f* y f+  0.0 delay
+;
+: fdelay ( gen input -- val )
+  { gen input }
+  gen '( input ) run-proc
+;
+: transposed-echo ( pitch scaler secs -- val )
+  { pitch scaler secs }
+  #f srate secs f* fround->s pitch scaler make-fdelay 0 #f #f #f #f #f map-channel
+;
+
 \ ;;; vct|channel|spectral-polynomial
 
 : vct-polynomial ( v coeffs -- vct )
@@ -1478,5 +1803,151 @@ previous
   $" %S %s" '( coeffs get-func-name ) string-format { origin }
   new-sound 0  num-coeffs 1- len * len max  snd chn #f origin vct->channel
 ;
+
+\ ;;; ----------------
+\ ;;; SCENTROID
+\ ;;;
+\ ;;; by Bret Battey
+\ ;;; Version 1.0 July 13, 2002
+\ ;;; translated to Snd/Scheme Bill S 19-Jan-05
+\ ;;;
+\ ;;; Returns the continuous spectral centroid envelope of a sound.
+\ ;;; The spectral centroid is the "center of gravity" of the spectrum, and it
+\ ;;; has a rough correlation to our sense of "brightness" of a sound. 
+\ ;;;
+\ ;;; [Beauchamp, J., "Synthesis by spectral amplitude and 'brightness' matching
+\ ;;; analyzed musical sounds". Journal of Audio Engineering Society 30(6), 396-406]
+\ ;;;
+\ ;;; The formula used is:
+\ ;;;    C = [SUM<n=1toj>F(n)A(n)] / [SUM<n=1toj>A(n)]
+\ ;;;    Where j is the number of bins in the analysis, 
+\ ;;;    F(n) is the frequency of a given bin,
+\ ;;;    A(n) is the magnitude of the given bin.
+\ ;;;
+\ ;;; If a pitch envelope for the analyzed sound is available, the results
+\ ;;; of SCENTROID can be used with the function NORMALIZE-CENTROID, below, 
+\ ;;; to provide a "normalized spectral centroid". 
+\ ;;;
+\ ;;; DB-FLOOR -- Frames below this decibel level (0 dB = max) will be discarded
+\ ;;; and returned with spectral centroid = 0
+\ ;;;
+\ ;;; RFREQ -- Rendering frequency. Number of  measurements per second.
+\ ;;;
+\ ;;; FFTSIZE -- FFT window size. Must be a power of 2. 4096 is recommended.
+
+: scentroid <{ file :key beg 0.0 dur #f db-floor -40.0 rfreq 100.0 fftsize 4094 -- vals }>
+  doc" Returns the spectral centroid envelope of a sound; \
+RFREQ is the rendering frequency, the number of measurements per second; \
+DB-FLOOR is the level below which data will be ignored."
+  file find-file to file
+  file false? if 'no-such-file '( get-func-name file ) fth-throw then
+  file mus-sound-srate { fsr }
+  fsr rfreq f/ fround->s { incrsamps }
+  beg fsr f* fround->s { start }
+  dur if dur fsr f* else file mus-sound-frames beg b- then { end }
+  fftsize 0.0 make-vct { fdr }
+  fftsize 0.0 make-vct { fdi }
+  end start b- incrsamps b/ 1+ { windows }
+  windows 0.0 make-vct { results }
+  fftsize 2/ { fft2 }
+  fsr fftsize f/ fround->s { binwidth }
+  file make-readin { rd }
+  0 { loc }
+  end start ?do
+    rd i set-mus-location drop
+    0.0 { sum-of-squares }
+    fdr map!
+      rd readin { val }
+      val dup f* sum-of-squares f+ to sum-of-squares
+      val
+    end-map
+    sum-of-squares fftsize f/ fsqrt linear->db db-floor f>= if
+      0.0 0.0 { numsum densum }
+      fdi 0.0 vct-fill! drop
+      fdr fdi fftsize 1 mus-fft drop
+      fdr fdi rectangular->polar drop
+      fft2 0 ?do
+	fdr i vct-ref binwidth f* i f* numsum f+ to numsum
+	fdr i vct-ref densum f+ to densum
+      loop
+      results loc numsum densum f/ vct-set! drop
+    then
+    loc 1+ to loc
+  incrsamps +loop
+  results
+;
+
+\ ;;; ----------------
+\ ;;;
+\ ;;; invert-filter inverts an FIR filter
+\ ;;;
+\ ;;; say we previously filtered a sound via (filter-channel (vct .5 .25 .125))
+\ ;;;   and we want to undo it without using (undo):
+\ ;;;   (filter-channel (invert-filter (vct .5 .25 .125)))
+\ ;;;
+\ ;;; there are a million gotchas here.  The primary one is that the inverse filter
+\ ;;;   can "explode" -- the coefficients can grow without bound.  For example, any
+\ ;;;   filter returned by spectrum->coeffs above will be a problem (it always returns
+\ ;;;   a "linear phase" filter).
+
+: invert-filter ( fcoeffs -- res )
+  doc" Tries to return an inverse filter to undo the effect of the FIR filter coeffs."
+  { fcoeffs }
+  fcoeffs length { flen }
+  32 flen + 0.0 make-vct { coeffs }
+  coeffs length { order }
+  flen 0 do coeffs i  fcoeffs i vct-ref  vct-set! drop loop
+  order 0.0 make-vct { nfilt }
+  nfilt 0 coeffs 0 vct-ref 1/f vct-set! drop
+  order 1 ?do
+    i { kk }
+    0.0 ( sum )
+    i 0 ?do
+      nfilt i vct-ref coeffs kk vct-ref f* f+ ( sum += ... )
+      kk 1- to kk
+    loop
+    ( sum ) coeffs 0 vct-ref fnegate f/ nfilt i -rot vct-set! drop
+  loop
+  nfilt
+;
+
+\ ;;; ----------------
+\ ;;;
+\ ;;; Volterra filter
+\ ;;;
+\ ;;; one of the standard non-linear filters
+\ ;;; this version is taken from Monson Hayes "Statistical DSP and Modeling"
+\ ;;;   it is a slight specialization of the form mentioned by J O Smith and others
+
+: make-volterra-filter ( acoeffs bcoeffs -- gen )
+  doc" Returns a list for use with volterra-filter, \
+producing one of the standard non-linear filters."
+  { acoeffs bcoeffs }
+  '( acoeffs
+     bcoeffs
+     acoeffs length bcoeffs length max 0.0 make-vct )
+;
+: volterra-filter ( flt x -- val )
+  doc" Takes FLT, a list returned by make-volterra-filter, \
+and an input X, and returns the (non-linear filtered) result."
+  { flt x }
+  flt car   { as }
+  flt cadr  { bs }
+  flt caddr { xs }
+  as length { x1len }
+  bs length { x2len }
+  xs length { xlen }
+  xs xlen 1- xlen 2- #t vct-move! drop
+  xs 0 x vct-set! drop
+  as xs x1len dot-product ( sum )
+  x2len 0 ?do
+    x2len 0 ?do
+      bs i vct-ref xs j vct-ref f* xs i vct-ref f* f+ ( sum += ... )
+    loop
+  loop
+  ( sum )
+;
+\ vct( 0.5 0.1 ) vct( 0.3 0.2 0.1 ) make-volterra-filter value flt
+\ lambda: <{ y -- val }> flt y volterra-filter ; map-channel
 
 \ dsp.fs ends here

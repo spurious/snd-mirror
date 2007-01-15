@@ -27,8 +27,6 @@ snd_info *get_sp(XEN x_snd_n, sp_sound_t accept_player)
 }
 
 
-/* SOMEDAY: draggable (focusable) freq axis in filter control */
-
 snd_info *snd_new_file(char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples)
 {
   /* caller checks newname != null, and runs overwrite hook */
@@ -4703,9 +4701,6 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
   int len, chn;
   snd_info *sp = NULL;
   chan_info *cp = NULL;
-  XEN peak = XEN_FALSE;
-  env_state *es;
-  env_info *ep;
   int id;
   peak_env_error_t err = PEAK_ENV_NO_ERROR;
   if (fullname) {FREE(fullname); fullname = NULL;}
@@ -4727,6 +4722,8 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
       cp = get_cp(filename, chan, S_channel_amp_envs);
       if (cp)
 	{
+	  env_state *es;
+	  env_info *ep;
 	  int pos;
 	  pos = to_c_edit_position(cp, pts, S_channel_amp_envs, 3);
 	  if ((pos != cp->edit_ctr) || (cp->amp_envs == NULL)) 
@@ -4747,12 +4744,14 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 	    }
 	  return(XEN_EMPTY_LIST);
 	}
+      /* else get_cp threw an error */
     }
   /* filename is a string from here down */
 
   fullname = mus_expand_filename(XEN_TO_C_STRING(filename));
   chn = XEN_TO_C_INT_OR_ELSE(chan, 0);
   len = XEN_TO_C_INT_OR_ELSE(pts, 0);
+
   /* look for sp->filename = fullname
      then peak
      then read direct (via make_sound_readable)
@@ -4761,40 +4760,65 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
   sp = find_sound(fullname, 0);
   if (sp)
     {
-      cp = sp->chans[chn];
-      if ((cp->amp_envs) && (cp->amp_envs[0]))
-	return(g_env_info_to_vcts(cp->amp_envs[0], len));
+      if (chn < sp->nchans)
+	{
+	  cp = sp->chans[chn];
+	  if ((cp->amp_envs) && (cp->amp_envs[0]))
+	    return(g_env_info_to_vcts(cp->amp_envs[0], len));
+	}
+      else
+	{
+	  XEN_ERROR(NO_SUCH_CHANNEL, XEN_LIST_3(C_TO_XEN_STRING(S_channel_amp_envs), filename, chan));
+	  return(XEN_FALSE);
+	}
     }
+
+  if (!(mus_file_probe(fullname)))
+    {
+      XEN_ERROR(NO_SUCH_FILE, XEN_LIST_2(C_TO_XEN_STRING(S_channel_amp_envs), filename));
+      return(XEN_FALSE);
+    }
+  if (mus_sound_chans(fullname) < chn)
+    {
+      XEN_ERROR(NO_SUCH_CHANNEL, XEN_LIST_3(C_TO_XEN_STRING(S_channel_amp_envs), filename, chan));
+      return(XEN_FALSE);
+    }
+
   if (XEN_PROCEDURE_P(peak_func))
     {
-      peak = XEN_CALL_2(peak_func,
-			filename,
-			chan,
-			"peak env procedure");
-      if (XEN_STRING_P(peak))
+      XEN peak_filename;
+      peak_filename = XEN_CALL_2(peak_func,
+				 filename,
+				 chan,
+				 "peak env filename procedure");
+      if (XEN_STRING_P(peak_filename))
 	{
 	  char *peakname;
-	  peakname = mus_expand_filename(XEN_TO_C_STRING(peak));
+	  peakname = mus_expand_filename(XEN_TO_C_STRING(peak_filename));
 	  if (mus_file_probe(peakname))
 	    {
+	      env_info *ep;
 	      ep = get_peak_env_info(peakname, &err);
 	      if (ep)
 		{
-		  peak = g_env_info_to_vcts(ep, len);
+		  XEN vcts;
+		  vcts = g_env_info_to_vcts(ep, len);
 		  ep = free_env_info(ep);
 		  if (peakname) FREE(peakname);
-		  return(peak);
+		  return(vcts);
 		}
 	    }
+	  /* the else side (no such file) could be considered a request to make the peak env file (i.e. not necessarily an error) */
 	  if (peakname) {FREE(peakname); peakname = NULL;}
 	}
     }
+
   /* now set up to read direct... */
-  peak = XEN_FALSE;
-  if (mus_file_probe(fullname))
-    sp = make_sound_readable(fullname, false);
+  sp = make_sound_readable(fullname, false);
   if (sp)
     {
+      env_state *es;
+      XEN peak = XEN_FALSE;
       cp = sp->chans[chn];
       cp->edit_ctr = 0;
       cp->active = true;
@@ -4821,8 +4845,9 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 	}
       cp->active = false;
       completely_free_snd_info(sp);
+      return(xen_return_first(peak, peak_func));
     }
-  return(xen_return_first(peak, peak_func));
+  return(XEN_FALSE);
 }
 
 static XEN g_start_progress_report(XEN snd)

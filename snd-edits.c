@@ -7579,6 +7579,8 @@ void revert_edits(chan_info *cp)
     run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
 }
 
+/* how to handle something like safe-map-channel that wants to disallow undo? */
+
 bool undo_edit(chan_info *cp, int count)
 {
   if ((cp) && 
