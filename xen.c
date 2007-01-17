@@ -698,6 +698,13 @@ static XEN xen_rb_rescue(XEN val)
 		   XEN_FALSE));
 }
 
+#ifndef HAVE_RB_ERRINFO
+XEN rb_errinfo(void)
+{
+  return ruby_errinfo;
+}
+#endif
+
 void xen_repl(int argc, char **argv)
 {
   while (true)
@@ -708,8 +715,7 @@ void xen_repl(int argc, char **argv)
 		 &status);
       if (status != 0)
 	{
-	  extern VALUE ruby_errinfo;
-	  fprintf(stderr, "%s\n", XEN_AS_STRING(ruby_errinfo));
+	  fprintf(stderr, "%s\n", XEN_AS_STRING(rb_errinfo()));
 	  status = 0;
 	}
     }
@@ -721,10 +727,7 @@ XEN xen_rb_eval_string_with_error(char *str)
   XEN res;
   res = rb_eval_string_protect(str, &status);
   if (status != 0)
-    {
-      extern VALUE ruby_errinfo;
-      return(XEN_TO_STRING(ruby_errinfo));
-    }
+    return(XEN_TO_STRING(rb_errinfo()));
   return(res);
 }
 
@@ -733,10 +736,7 @@ XEN xen_rb_load_file_with_error(XEN file)
   int status = 0;
   rb_load_protect(file, 0, &status);
   if (status != 0)
-    {
-      extern VALUE ruby_errinfo;
-      return(XEN_TO_STRING(ruby_errinfo));
-    }
+    return(XEN_TO_STRING(rb_errinfo()));
   return(XEN_TRUE);
 }
 
@@ -807,10 +807,7 @@ XEN xen_rb_apply(XEN func, XEN args)
 		   XEN_LIST_2(func, args),
 		   &status);
   if (status != 0)
-    {
-      extern VALUE ruby_errinfo;
-      return(XEN_TO_STRING(ruby_errinfo));
-    }
+    return(XEN_TO_STRING(rb_errinfo()));
   return(val);
 }
 
@@ -827,10 +824,7 @@ XEN xen_rb_funcall_0(XEN func)
 		   func,
 		   &status);
   if (status != 0)
-    {
-      extern VALUE ruby_errinfo;
-      return(XEN_TO_STRING(ruby_errinfo));
-    }
+    return(XEN_TO_STRING(rb_errinfo()));
   return(val);
 }
 

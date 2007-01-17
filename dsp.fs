@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Mon Jan 15 02:04:00 CET 2007
+\ Changed: Wed Jan 17 00:48:48 CET 2007
 
 \ src-duration             ( en -- dur )
 \ dolph                    ( n gamma -- im )
@@ -111,9 +111,29 @@
 \ invert-filter            ( fcoeffs -- res )
 \ make-volterra-filter     ( acoeffs bcoeffs -- gen )
 \ volterra-filter          ( flt x -- val )
+\
+\ make-moving-max          ( :optional size -- gen )
+\ moving-max               ( gen y -- scl )
+\ make-moving-sum          ( :optional size -- gen )
+\ moving-sum               ( gen y -- val )
+\ make-moving-rms          ( :optional size -- gen )
+\ moving-rms               ( gen y -- val )
+\ make-moving-length       ( :optional size -- gen )
+\ moving-length            ( gen y -- val )
+\ harmonicizer             ( freq coeffs pairs :optional ... )
+\ linear-src-channel       ( sr :optional snd chn -- file )
+\ make-mfilter             ( :key decay frequency -- gen )
+\ mfilter                  ( m :optional x-input y-input -- val )
+\ display-bark-fft         ( :optional off -- )
+\ undisplay-bark-fft       ( -- )
+\ lpc-coeffs               ( data n m -- val )
+\ lpc-predict              ( data n coeffs m nf :optional clipped -- val )
+\ unclip-channel           ( :optional snd chn -- hash )
+\ unclip-sound             ( :optional snd -- ary-of-hashs )
 
 require clm
 require env
+require examp
 
 \ ;;; -------- src-duration (see src-channel in extsnd.html)
 
@@ -1712,8 +1732,9 @@ previous
   new-freq old-freq f- old-freq f/ { factor }
   pairs nil make-array map! i 1+ factor f* old-freq f* make-ssb-am end-map { ssbs }
   pairs nil make-array map!
-    i old-freq f* { aff }
-    i pairs 2* / 1+ bw f* { bwf }
+    i 1.0 f+ { idx }
+    idx old-freq f* { aff }
+    idx pairs f2* f/ 1.0 f+ bw f* { bwf }
     aff bwf f- hz->radians  aff bwf f+ hz->radians  order  make-bandpass
   end-map { bands }
   '( ssbs bands )
@@ -1949,5 +1970,578 @@ and an input X, and returns the (non-linear filtered) result."
 ;
 \ vct( 0.5 0.1 ) vct( 0.3 0.2 0.1 ) make-volterra-filter value flt
 \ lambda: <{ y -- val }> flt y volterra-filter ; map-channel
+
+\ ;;; ----------------
+\ ;;;
+\ ;;; moving-max generator (the max norm, or uniform norm, infinity-norm)
+
+: make-moving-max <{ :optional size 128 -- gen }>
+  doc" Returns a moving-max generator.  \
+The generator keeps a running window of the last SIZE inputs, returning the maxamp in that window."
+  save-stack { s }
+  size make-delay { gen }
+  s restore-stack
+  gen 0.0 set-mus-scaler drop
+  gen
+;
+: moving-max ( gen y -- scl )
+  doc" Returns the maxamp in a moving window over the last few inputs."
+  { gen y }
+  y fabs { absy }
+  gen absy 0.0 delay { mx }
+  absy gen mus-scaler f>= if
+    gen absy set-mus-scaler
+  else
+    mx gen mus-scaler f>= if
+      gen gen mus-data vct-peak set-mus-scaler
+    else
+      gen mus-scaler
+    then
+  then
+;
+
+\ ;;; ----------------
+\ ;;;
+\ ;;; moving-sum generator (the sum norm or 1-norm)
+
+: make-moving-sum <{ :optional size 128 -- gen }>
+  doc" Returns a moving-sum generator.  \
+The generator keeps a running window of the last SIZE inputs, \
+returning the sum of the absolute values of the samples in that window."
+  size make-moving-average { gen }
+  gen 1.0 set-mus-increment drop
+  gen
+;
+: moving-sum ( gen y -- val )
+  doc" Returns the sum of the absolute values in a moving window over the last few inputs."
+  ( gen y ) fabs moving-average
+;
+
+\ ;;; ----------------
+\ ;;;
+\ ;;; moving-rms generator
+
+: make-moving-rms <{ :optional size 128 -- gen }>
+  doc" Returns a moving-rms generator.  \
+The generator keeps a running window of the last SIZE inputs, \
+returning the rms of the samples in that window."
+  size make-moving-average
+;
+: moving-rms ( gen y -- val )
+  doc" Returns the rms of the values in a window over the last few inputs."
+  ( gen y ) dup f* moving-average fsqrt
+;
+
+\ ;;; ----------------
+\ ;;;
+\ ;;; moving-length generator (euclidean norm or 2-norm)
+
+: make-moving-length <{ :optional size 128 -- gen }>
+  doc" Returns a moving-length generator.  \
+The generator keeps a running window of the last SIZE inputs, \
+returning the euclidean length of the vector in that window."
+  size make-moving-average { gen }
+  gen 1.0 set-mus-increment drop
+  gen
+;
+: moving-length ( gen y -- val )
+  doc" Returns the length of the values in a window over the last few inputs."
+  ( gen y ) dup f* moving-average fsqrt
+;
+
+\ ;;; ----------------
+\ ;;;
+\ ;;; harmonicizer (each harmonic is split into a set of harmonics via Chebyshev polynomials)
+\ ;;;   obviously very similar to ssb-bank above, but splits harmonics individually,
+\ ;;;   rather than pitch-shifting them
+
+hide
+: harm-mc-cb { bands avgs peaks pcoeffs flt new-mx -- prc; y self -- val }
+  1 proc-create 40 ( ctr ) , bands , avgs , peaks , pcoeffs , flt , new-mx , ( prc )
+ does> { y self -- val }
+  self @ { ctr }
+  self cell+ @ { bands }
+  self 2 cells + @ { avgs }
+  self 3 cells + @ { peaks }
+  self 4 cells + @ { pcoeffs }
+  self 5 cells + @ { flt }
+  self 6 cells + @ { new-mx }
+  0.0 ( sum )
+  bands each { bd }
+    bd y bandpass { sig }
+    peaks i array-ref  sig  moving-max { mx }
+    avgs  i array-ref  mx f0> if 100.0 mx 1/f fmin else 0.0 then  moving-average { amp }
+    amp f0> if pcoeffs amp sig f* polynomial  mx f* f+ ( sum += ... ) then
+  end-each
+  flt swap ( sum ) filter { val }
+  val fabs new-mx fmax self 6 cells + ! ( to new-mx )
+  ctr 0= if
+    val
+  else
+    -1 self +! ( ctr-- )
+    0.0
+  then
+;
+: harm-aoe-cb { bands avgs peaks pcoeffs flt old-mx beg dur snd chn edpos -- prc; self -- val }
+  0 proc-create
+  0.0 ( new-mx ) ,
+  bands , avgs , peaks , pcoeffs , flt , old-mx ,
+  beg , dur , snd , chn , edpos ,
+  ( prc )
+ does> { self -- val }
+  self @ { new-mx }
+  self cell+ @ { bands }
+  self 2 cells + @ { avgs }
+  self 3 cells + @ { peaks }
+  self 4 cells + @ { pcoeffs }
+  self 5 cells + @ { flt }
+  self 6 cells + @ { old-mx }
+  self 7 cells + @ { beg }
+  self 8 cells + @ { dur }
+  self 9 cells + @ { snd }
+  self 10 cells + @ { chn }
+  self 11 cells + @ { edpos }
+  bands avgs peaks pcoeffs flt new-mx harm-mc-cb  beg dur snd chn edpos map-channel ( retval )
+  new-mx f0> if
+    old-mx new-mx f/ beg dur snd chn #f scale-channel drop
+  then
+;
+set-current
+: harmonicizer <{ freq coeffs pairs
+     :optional order 40 bw 50.0 beg 0 dur #f snd #f chn #f edpos #f -- val }>
+  doc" Splits out each harmonic and replaces it with the spectrum given in coeffs."
+  pairs nil make-array map!
+    i 1.0 f+ { idx }
+    idx freq f/ { aff }
+    idx pairs f2* f/ 1.0 f+ bw f* { bwf }
+    aff bwf f- hz->2pi  aff bwf f+ hz->2pi  order  make-bandpass
+  end-map { bands }
+  pairs nil make-array map! 128 make-moving-average end-map { avgs }
+  pairs nil make-array map! 128 make-moving-max     end-map { peaks }
+  coeffs mus-chebyshev-first-kind partials->polynomial { pcoeffs }
+  2 vct( 1 -1 ) vct( 0 -0.9 ) make-filter { flt }
+  snd chn #f maxamp { old-mx }
+  bands avgs peaks pcoeffs flt old-mx beg dur snd chn edpos harm-aoe-cb  get-func-name as-one-edit
+;
+previous
+
+\ ;;; ----------------
+\ ;;;
+\ ;;; linear sampling rate conversion
+
+hide
+: lsc-ws-cb { rd sr -- prc; self -- f }
+  0 proc-create rd next-sample , rd next-sample , 0.0 , rd , sr , ( prc )
+ does> { self -- f }
+  self           @ { last }
+  self   cell+   @ { next }
+  self 2 cells + @ { intrp }
+  self 3 cells + @ { rd }
+  self 4 cells + @ { sr }
+  0 { samp }
+  begin
+    intrp { pos }
+    pos 1.0 f>= if
+      pos fround->s { num }
+      num 0 ?do
+	next to last
+	rd next-sample to next
+      loop
+      pos num f- to pos
+    then
+    pos sr f+ to intrp
+    samp  next last f- pos f* last f+  0 *output*  out-any drop
+    samp 1+ to samp
+    rd sample-reader-at-end?
+  until
+  #f
+;
+set-current
+: linear-src-channel <{ sr :optional snd #f chn #f -- file }>
+  doc" Performs sampling rate conversion using linear interpolation."
+  0 snd chn 1 #f make-sample-reader { rd }
+  rd sr lsc-ws-cb :output snd-tempnam :srate snd srate with-sound { tempfile }
+  tempfile mus-sound-frames { len }
+  0 len 1- tempfile snd chn #t ( trunc ) get-func-name 0 #f ( edpos ) #t ( autodel ) set-samples
+;
+previous
+
+\ ;;; Mathews/Smith High-Q filter as described in http://ccrma.stanford.edu/~jos/smac03maxjos/
+
+: make-mfilter <{ :key decay 0.99 frequency 1000.0 -- gen }>
+  #{ :decay decay
+     :frequency frequency
+     :eps frequency pi f* mus-srate f/ fsin f2*
+     :xn 0.0
+     :yn 0.0 }
+;
+: mfilter <{ m :optional x-input 0.0 y-input 0.0 -- val }>
+  m :xn hash-ref  m :eps hash-ref m :yn hash-ref f*  f-  m :decay hash-ref f*  x-input f+ { xn1 }
+  m :eps hash-ref xn1 f*  m :yn hash-ref f+  m :decay hash-ref f*  y-input f+ { yn1 }
+  m :xn xn1 hash-set!
+  m :yn yn1 hash-set!
+  yn1
+;
+0 [if]
+: m-ws-cb ( file -- prc; self -- )
+  { file }
+  file find-file to file
+  file false? if 'no-such-file '( get-func-name file ) fth-throw then
+  0 file 0 1 #f make-sample-reader { rd }
+  make-mfilter { m }
+  0 proc-create rd , m , ( prc )
+ does> { self -- }
+  self       @ { rd }
+  self cell+ @ { m }
+  10000 0 do i  m rd next-sample 0.1 f* 0.0 mfilter  *output* outa drop loop
+;
+"now.snd" m-ws-cb with-sound
+[then]
+
+\ ;;; -------- spectrum displayed in various frequency scales
+
+'snd-nogui provided? [unless]
+  hide
+  0 value bark-fft-size
+  0 value bark-tick-function
+
+  : bark ( r1 -- r2 )
+    { f }
+    f 7500.0 f/ { f2 }
+    f2 f2 f* fatan 3.5 f*  0.00076 f f* fatan 13.5 f*  f+
+  ;
+  : mel ( r1 -- r2 )
+    { f }
+    f 700.0 f/ 1.0 f+ flog 1127.0 f*
+  ;
+  : erb ( r1 -- r2 )
+    { f }
+    f 312.0 f+ f 14675.0 f+ f/ flog 11.17 f* 43.0 f+
+  ;
+  : display-bark-fft-cb <{ snd chn -- f }>
+    snd chn left-sample  { ls }
+    snd chn right-sample { rs }
+    2.0  rs ls - 1+ flog 2.0 flog f/ fceil  f** fround->s { fftlen }
+    fftlen 0> if
+      ls fftlen snd chn #f channel->vct { data }
+      snd chn transform-normalization dont-normalize <> { normalized }
+      #t { linear }
+      data vct? if
+	data
+	snd chn fft-window fftlen linear
+	snd chn fft-window-beta #f normalized snd-spectrum { fft }
+	fft vct? if
+	  snd srate { sr }
+	  fft vct-peak { mx }
+	  fft length { data-len }
+	  \ bark settings
+	  20.0 bark floor { bark-low }
+	  sr f2/ bark fceil { bark-high }
+	  data-len bark-high bark-low f- f/ { bark-frqscl }
+	  data-len 0.0 make-vct { bark-data }
+	  \ mel settings
+	  20.0 mel floor { mel-low }
+	  sr f2/ bark fceil { mel-high }
+	  data-len mel-high mel-low f- f/ { mel-frqscl }
+	  data-len 0.0 make-vct { mel-data }
+	  \ erb settings
+	  20.0 erb floor { erb-low }
+	  sr f2/ bark fceil { erb-high }
+	  data-len erb-high erb-low f- f/ { erb-frqscl }
+	  data-len 0.0 make-vct { erb-data }
+	  fftlen to bark-fft-size
+	  fft each { val }
+	    i fftlen f/ sr f* { frq }
+	    frq bark bark-low f- bark-frqscl f* fround->s { bark-bin }
+	    frq mel  mel-low  f- mel-frqscl  f* fround->s { mel-bin }
+	    frq erb  erb-low  f- erb-frqscl  f* fround->s { erb-bin }
+	    bark-bin 0>=
+	    bark-bin data-len < && if bark-data bark-bin val object-set+! then
+	    mel-bin 0>=
+	    mel-bin  data-len < && if mel-data  mel-bin  val object-set+! then
+	    erb-bin 0>=
+	    erb-bin  data-len < && if erb-data  erb-bin  val object-set+! then
+	  end-each
+	  normalized if
+	    bark-data vct-peak { bmx }
+	    mel-data  vct-peak { mmx }
+	    erb-data  vct-peak { emx }
+	    mx bmx f- fabs 0.01 f> if bark-data mx bmx f/ vct-scale! drop then
+	    mx mmx f- fabs 0.01 f> if mel-data  mx mmx f/ vct-scale! drop then
+	    mx emx f- fabs 0.01 f> if erb-data  mx emx f/ vct-scale! drop then
+	  then
+	  '( bark-data mel-data erb-data )
+	  "ignored"
+	  20.0 sr f2/
+	  0.0 normalized if 1.0 else data-len snd chn y-zoom-slider * then
+	  snd chn
+	  #f show-bare-x-axis graph drop
+	then
+      then
+    then
+    #f
+  ;
+  : scale-pos { axis-x0 axis-x1 sr2 f scale -- n }
+    20.0 scale execute { b20 }
+    axis-x1 axis-x0 f-  f scale execute b20 f- f*
+    sr2 scale execute b20 f-  f/ axis-x0 f+ fround->s
+  ;
+  : draw-bark-ticks { axis-x0 axis-x1 axis-y0 major-y0 minor-y0 tick-y0 sr2 bark-function snd chn }
+    2 snd-font ?dup-if snd chn copy-context set-current-font drop then
+    axis-x0 tick-y0 axis-x0 major-y0 snd chn copy-context draw-line drop
+    axis-x0 axis-x1 sr2 1000.0  bark-function scale-pos { i1000 }
+    axis-x0 axis-x1 sr2 10000.0 bark-function scale-pos { i10000 }
+    i1000  tick-y0 i1000  major-y0 snd chn copy-context draw-line drop
+    i10000 tick-y0 i10000 major-y0 snd chn copy-context draw-line drop
+    "20"    axis-x0     major-y0 snd chn copy-context draw-string drop
+    "1000"  i1000  12 - major-y0 snd chn copy-context draw-string drop
+    "10000" i10000 24 - major-y0 snd chn copy-context draw-string drop
+    $" fft size: %d" '( bark-fft-size ) string-format
+    axis-x0 10 + axis-y0 snd chn copy-context draw-string drop
+    1000 100 do
+      axis-x0 axis-x1 sr2 i bark-function scale-pos { i100 }
+      i100 tick-y0 i100 minor-y0 snd chn copy-context draw-line drop
+    100 +loop
+    10000 2000 do
+      axis-x0 axis-x1 sr2 i bark-function scale-pos { i1000 }
+      i1000 tick-y0 i1000 minor-y0 snd chn copy-context draw-line drop
+    1000 +loop
+  ;
+  : make-bark-labels <{ snd chn -- f }>
+    snd chn copy-context foreground-color { old-foreground-color }
+    snd chn lisp-graph axis-info { axinfo }
+    axinfo 10 list-ref { axis-x0 }
+    axinfo 12 list-ref { axis-x1 }
+    axinfo 13 list-ref { axis-y0 }
+    axinfo 11 list-ref { axis-y1 }
+    15 { label-height }
+    8 { char-width }
+    snd srate 2/ { sr2 }
+    6 { minor-tick-len }
+    12 { major-tick-len }
+    axis-y1 { tick-y0 }
+    axis-y1 minor-tick-len + { minor-y0 }
+    axis-y1 major-tick-len + { major-y0 }
+    3 snd-font { bark-label-font }
+    axis-x1 axis-x0 f- 0.45 f* axis-x0 f+ fround->s { label-pos }
+
+    \ bark label/ticks
+    bark-tick-function 0= if
+      axis-x0 axis-x1 axis-y0 major-y0 minor-y0 tick-y0 sr2 <'> bark snd chn draw-bark-ticks
+    then
+    bark-label-font ?dup-if snd chn copy-context set-current-font drop then
+    "bark," label-pos axis-y1 label-height + snd chn copy-context draw-string drop
+
+    \ mel label/ticks
+    2 snd-color snd chn copy-context set-foreground-color drop
+    bark-tick-function 1 = if
+      axis-x0 axis-x1 axis-y0 major-y0 minor-y0 tick-y0 sr2 <'> mel snd chn draw-bark-ticks
+    then
+    bark-label-font ?dup-if snd chn copy-context set-current-font drop then
+    "mel," label-pos char-width 6 * + axis-y1 label-height + snd chn copy-context draw-string drop
+
+    \ erb label/ticks
+    4 snd-color snd chn copy-context set-foreground-color drop
+    bark-tick-function 2 = if
+      axis-x0 axis-x1 axis-y0 major-y0 minor-y0 tick-y0 sr2 <'> erb snd chn draw-bark-ticks
+    then
+    bark-label-font ?dup-if snd chn copy-context set-current-font drop then
+    "erb" label-pos char-width 11 * + axis-y1 label-height + snd chn copy-context draw-string drop
+
+    old-foreground-color snd chn copy-context set-foreground-color
+  ;
+  : choose-bark-ticks <{ snd chn button state x y axis -- f }>
+    axis lisp-graph = if
+      bark-tick-function 1+ to bark-tick-function
+      bark-tick-function 2 > if 0 to bark-tick-function then
+      snd chn update-lisp-graph
+    else
+      #f
+    then
+  ;
+  set-current
+  : display-bark-fft <{ :optional off #f -- }>
+    off unless
+      lisp-graph-hook       <'> display-bark-fft-cb add-hook!
+      after-lisp-graph-hook <'> make-bark-labels    add-hook!
+      mouse-click-hook      <'> choose-bark-ticks   add-hook!
+      sounds each { snd }
+	snd channels 0 ?do snd i update-lisp-graph drop loop
+      end-each
+    else
+      lisp-graph-hook       <'> display-bark-fft-cb remove-hook!
+      after-lisp-graph-hook <'> make-bark-labels    remove-hook!
+      mouse-click-hook      <'> choose-bark-ticks   remove-hook!
+      sounds each { snd }
+	snd channels 0 ?do #f snd i set-lisp-graph? drop loop
+      end-each
+    then
+  ;
+  previous
+  : undisplay-bark-fft ( -- ) #t display-bark-fft ;
+[then]
+
+\ ;;; -------- lpc-coeffs, lpc-predict
+
+: lpc-coeffs ( data n m -- val )
+  doc" Returns M LPC coeffients (in a vector) given N data points in the vct DATA."
+  { data n m }
+  m 0.0 make-array { d }
+  n 0.0 make-array { wk1 }
+  n 0.0 make-array { wk2 }
+  n 0.0 make-array { wkm }
+  wk1   0   data   0  vct-ref  array-set!
+  wk2 n 2-  data n 1- vct-ref  array-set!
+  n 1- 1 ?do
+    wk1 i    data i vct-ref  array-set!
+    wk2 i 1- data i vct-ref  array-set!
+  loop
+  m 0 ?do
+    0.0 0.0 { num denom }
+    n i - 1- 0 ?do
+      wk1 i array-ref wk2 i array-ref f* num f+ to num
+      wk1 i array-ref wk2 i array-ref f* dup f* denom f+ to denom
+    loop
+    denom f0<> if d i num f2* denom f/ array-set! then
+    i 0 ?do d i  wkm i array-ref d j array-ref wkm j i - 1- array-ref f* f-  array-set! loop
+    i m 1- < if
+      i 1+ 0 ?do wkm i  d i array-ref  array-set! loop
+      n i - 2- 0 ?do
+	wk1 i  wk1 i    array-ref wkm j array-ref wk2 i    array-ref f* f-  array-set!
+	wk2 i  wk2 i 1+ array-ref wkm j array-ref wk1 i 1+ array-ref f* f-  array-set!
+      loop
+    then
+  loop
+  d
+;
+: lpc-predict <{ data n coeffs m nf :optional clipped #f -- val }>
+  doc" Takes the output of lpc-coeffs (COEFFS, a vector) and the length thereof (M), \
+N data points of DATA (a vct), and produces NF new data points (in a vct) as its prediction.  \
+If CLIPPED is #t, the new data is assumed to be outside -1.0 to 1.0."
+  n 1- { jj }
+  m 0.0 make-vct map!
+    data jj vct-ref
+    jj 1- to jj
+  end-map { reg }
+  nf 0.0 make-vct map!
+    0.0 ( sum ) reg each ( val ) coeffs i array-ref f* f+ ( sum += ... ) end-each { sum }
+    0 m 1- do reg i  reg i 1- vct-ref  vct-set! drop -1 +loop
+    clipped if
+      sum f0> if
+	sum  1.0 f< if  1.0 to sum then
+      else
+	sum -1.0 f> if -1.0 to sum then
+      then
+    then
+    reg 0 sum vct-set! drop
+    sum
+  end-map ( future )
+;
+
+\ ;;; -------- unclip-channel
+
+hide
+: uncchn-sc-cb { clip-data unclipped-max -- prc; y self -- f }
+  1 proc-create
+  clip-data , unclipped-max , 0 ( clip-beg ) , 0 ( samp ) , #f ( in-clip ) ,
+  ( prc )
+ does> { y self -- f }
+  self           @ { clip-data }
+  self 1 cells + @ { unclipped-max }
+  self 2 cells + @ { clip-beg }
+  self 3 cells + @ { samp }
+  self 4 cells + @ { in-clip }
+  y fabs { absy }
+  absy 0.9999 f> if
+    in-clip unless
+      #t to in-clip
+      samp self 2 cells + ! ( to clip-beg )
+    then
+  else
+    absy unclipped-max fmax self 2 cells + ! ( to unclipped-max )
+    in-clip if
+      #f self 4 cells + ! ( in-clip = #f )
+      clip-data '( clip-beg samp 1- ) array-push to clip-data
+    then
+  then
+  1 self 3 cells + +! ( samp++ )
+  #f
+;
+: uncchn-aoe-cb { clip-data max-len snd chn len -- prc; self -- val }
+  0 proc-create clip-data , max-len , snd , chn , ( prc )
+ does> { self -- val }
+  self           @ { clip-data }
+  self   cell+   @ { max-len }
+  self 2 cells + @ { snd }
+  self 3 cells + @ { chn }
+  self 4 cells + @ { len }
+  32 { min-data-len }
+  clip-data each { lst }
+    lst car  { clip-beg }
+    lst cadr { clip-end }
+    clip-end clip-beg = 1+ { clip-len }
+    min-data-len clip-len 4 * max { data-len }
+    clip-len max-len > if clip-len to max-len then
+    data-len { forward-data-len }
+    data-len { backward-data-len }
+    i 0= if 0 else clip-data i 1- array-ref cadr then { previous-end }
+    i clip-data length 3 - < if clip-data i 1+ array-ref car else len then { next-beg }
+    clip-beg data-len - previous-end < if clip-beg previous-end - 4 max to forward-data-len then
+    clip-len data-len + next-beg > if next-beg clip-end - 4 max to backward-data-len then
+    clip-len forward-data-len f2/ fround->s max { forward-predict-len }
+    clip-len backward-data-len f2/ fround->s max { backward-predict-len }
+    clip-beg forward-data-len - forward-data-len snd chn #f channel->vct { data }
+    data forward-data-len
+    data forward-data-len forward-predict-len lpc-coeffs
+    forward-predict-len clip-len #f lpc-predict { future }
+    clip-end 1+ backward-data-len snd chn #f channel->vct vct-reverse! { rdata }
+    rdata backward-data-len
+    rdata backward-data-len backward-predict-len lpc-coeffs
+    backward-predict-len clip-len #f lpc-predict { past }
+    clip-len 0.0 make-vct { new-data }
+    clip-len 1 > if
+      clip-len 1- { jj }
+      clip-len 1- { clen }
+      new-data map!
+	i clen f/ pi f* fcos 1.0 f+ f2/ { sn }
+	sn future i vct-ref f*
+	1.0 sn f- past jj vct-ref f* f+
+	jj 1- to jj
+      end-map
+    else
+      new-data 0
+      future 0 vct-ref past 0 vct-ref future 0 vct-ref f0> if fmax else fmin then vct-set! drop
+    then
+    new-data clip-beg clip-len snd chn #f get-func-name vct->channel drop
+  end-each
+  #f
+;
+set-current
+: unclip-channel <{ :optional snd #f chn #f -- hash }>
+  doc" Looks for clipped portions and tries to reconstruct the original using LPC."
+  #() { clip-data }			\ #( '( beg end ) '( ... ) ... )
+  0.0 { unclipped-max }
+  snd chn #f frames { len }
+  clip-data unclipped-max uncchn-sc-cb  0 len snd chn #f scan-channel drop
+  clip-data length 0> if
+    0 { max-len }
+    clip-data max-len snd chn len uncchn-aoe-cb  get-func-name as-one-edit drop
+    unclipped-max 0.95 f> if 0.999 to unclipped-max then
+    unclipped-max snd chn #f maxamp f/ 0 len snd chn #f scale-channel drop
+    #{ :max unclipped-max :clips clip-data length 2/ :max-len max-len }
+  else
+    #{}
+  then
+;
+previous
+: unclip-sound <{ :optional snd #f -- ary-of-hashs }>
+  doc" Applies unclip-channel to each channel of SND."
+  snd snd-snd to snd
+  snd sound? if
+    snd channels nil make-array map! snd i unclip-channel end-map ( res )
+  else
+    'no-such-sound '( get-func-name snd ) fth-throw
+  then
+;
 
 \ dsp.fs ends here

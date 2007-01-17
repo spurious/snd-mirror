@@ -94,8 +94,7 @@
  * SOMEDAY: completion of support for vector of def-clm-structs
  *            see comment about lists below ca line 10931
  *
- * TODO: struct field like vector not freed -- the embedded tree is unattached before
- *          these run-time creations, so every call loses another pointer. 
+ * TODO: struct field like vector not freed
  */
 
 #include "snd.h"
