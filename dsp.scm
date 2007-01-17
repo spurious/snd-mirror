@@ -655,6 +655,7 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
     (map-channel
      (lambda (y)
        (* mx (polynomial pcoeffs (/ y mx)))))))
+;; I think this could be a virtual op (ptree)
 
 
 

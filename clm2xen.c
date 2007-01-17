@@ -3016,6 +3016,7 @@ static XEN g_mixer_multiply(XEN uf1, XEN uf2, XEN ures) /* optional res */
 returning the mixer outm, or creating a new mixer if outm is not given.  Either m1 or m2 can be a float, rather than a mixer."
 
   mus_any *res = NULL, *u1 = NULL, *u2 = NULL, *nm = NULL;
+  bool u1_mixer = false, u2_mixer = false;
   if ((MUS_XEN_P(ures)) && 
       (mus_mixer_p(XEN_TO_MUS_ANY(ures))))
     res = (mus_any *)XEN_TO_MUS_ANY(ures);
@@ -3023,31 +3024,36 @@ returning the mixer outm, or creating a new mixer if outm is not given.  Either 
   if (MUS_XEN_P(uf1))
     {
       u1 = XEN_TO_MUS_ANY(uf1);
-      XEN_ASSERT_TYPE(mus_mixer_p(u1) || mus_frame_p(u1), uf1, XEN_ARG_1, S_mixer_multiply, "a frame or mixer");
+      u1_mixer = mus_mixer_p(u1);
+      if (!u1_mixer)
+	XEN_ASSERT_TYPE(mus_frame_p(u1), uf1, XEN_ARG_1, S_mixer_multiply, "a frame or mixer");
     }
   else XEN_ASSERT_TYPE(XEN_NUMBER_P(uf1), uf1, XEN_ARG_1, S_mixer_multiply, "a number, frame or mixer");
   if (MUS_XEN_P(uf2))
     {
       u2 = XEN_TO_MUS_ANY(uf2);
-      XEN_ASSERT_TYPE(mus_mixer_p(u2) || mus_frame_p(u2), uf2, XEN_ARG_2, S_mixer_multiply, "a frame or mixer");
+      u2_mixer = mus_mixer_p(u2);
+      if (!u2_mixer)
+	XEN_ASSERT_TYPE(mus_frame_p(u2), uf2, XEN_ARG_2, S_mixer_multiply, "a frame or mixer");
     }
   else XEN_ASSERT_TYPE(XEN_NUMBER_P(uf2), uf2, XEN_ARG_2, S_mixer_multiply, "a number, frame or mixer");
+  XEN_ASSERT_TYPE(u1_mixer || u2_mixer, uf1, XEN_ARG_1, S_mixer_multiply, "one arg must be a mixer");
   if (!u1)
     {
-      XEN_ASSERT_TYPE((u2) && (mus_mixer_p(u2)), uf2, XEN_ARG_2, S_mixer_multiply, "a mixer");
+      XEN_ASSERT_TYPE(u2_mixer, uf2, XEN_ARG_2, S_mixer_multiply, "a mixer");
       nm = mus_mixer_scale(u2, XEN_TO_C_DOUBLE(uf1), res);
     }
   else
     {
       if (!u2)
 	{
-	  XEN_ASSERT_TYPE((u1) && (mus_mixer_p(u1)), uf1, XEN_ARG_1, S_mixer_multiply, "a mixer");
+	  XEN_ASSERT_TYPE(u1_mixer, uf1, XEN_ARG_1, S_mixer_multiply, "a mixer");
 	  nm = mus_mixer_scale(u1, XEN_TO_C_DOUBLE(uf2), res);
 	}
     }
   if (!nm)
     {
-      if ((mus_mixer_p(u1)) && (mus_mixer_p(u2)))
+      if ((u1_mixer) && (u2_mixer))
 	nm = mus_mixer_multiply(u1, u2, res);
       else nm = mus_frame_to_frame(u1, u2, res);
     }

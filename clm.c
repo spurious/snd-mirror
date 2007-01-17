@@ -5145,7 +5145,7 @@ static mus_any *frame_to_frame_left(mus_any *arg1, mus_any *arg2, mus_any *arg_o
 
 mus_any *mus_frame_to_frame(mus_any *arg1, mus_any *arg2, mus_any *arg_out)
 {
-  if (mus_frame_p(arg1))
+  if (mus_mixer_p(arg2))
     return(frame_to_frame_right(arg1, arg2, arg_out));
   return(frame_to_frame_left(arg1, arg2, arg_out));
 }

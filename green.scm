@@ -19,17 +19,20 @@
 
 
 (define (brownian-noise gr) ; unbounded output
+  "(brownian-noise gr) produces brownian noise from a green noise generator"
   (set! (grnoi-output gr) (+ (grnoi-output gr) (mus-random (grnoi-amp gr))))
   (grnoi-output gr))
 
 
 (define* (make-green-noise :key (frequency 440.0) (amplitude 1.0) (high 1.0) (low -1.0))
+  "(make-green-noise :key (frequency 440.0) (amplitude 1.0) (high 1.0) (low -1.0)) makes a green-noise generator"
   (make-grnoi :freq (hz->radians frequency)
 	      :amp amplitude
 	      :hi high
 	      :lo low))
 
 (define (green-noise r sweep)
+  "(green-noise r sweep) runs a green-noise generator"
   (if (>= (grnoi-phase r) two-pi)
       (begin
        (do () ((< (grnoi-phase r) two-pi)) (set! (grnoi-phase r) (- (grnoi-phase r) two-pi)))
@@ -43,6 +46,7 @@
 
 
 (define* (make-green-noise-interp :key (frequency 440.0) (amplitude 1.0) (high 1.0) (low -1.0))
+  "(make-green-noise-interp :key (frequency 440.0) (amplitude 1.0) (high 1.0) (low -1.0)) makes an interpolating green-noise generator"
   (make-grnoi :freq (hz->radians frequency)
 	      :hi high
 	      :lo low
@@ -50,6 +54,7 @@
 	      :incr (* (mus-random amplitude) (/ frequency (mus-srate)))))
 
 (define (green-noise-interp r sweep)
+  "(green-noise-interp r sweep) runs an interpolating green-noise generator"
   (set! (grnoi-output r) (+ (grnoi-output r) (grnoi-incr r)))
   (if (>= (grnoi-phase r) two-pi)
       (let* ((val (mus-random (grnoi-amp r)))

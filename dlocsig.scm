@@ -91,26 +91,32 @@
 (define dlocsig-one-turn 360)
 
 (define (one-turn-is unit)
+  "(one-turn-is unit) sets dlocsig's angle unit (degrees=360, the default or radians=2*pi)"
   (set! dlocsig-one-turn unit)
   unit)
 
 (define (angles-in-degree)
+  "(angles-in-degree) sets dlocsig's unit to degrees (the default)"
   (one-turn-is 360))
 
 (define (angles-in-radians)
+  "(angles-in-radians) sets dlocsig's unit to radians (default is degrees)"
   (one-turn-is (* 2 pi)))
 
 (define (angles-in-turns)
+  "(angles-in-turns) sets dlocsig's angle unit to turns"
   (one-turn-is 1))
 
 ;; speed of sound in air, in meters per second under normal conditions
 (define dlocsig-speed-of-sound 344)
 
 (define (distances-in-meters)
+  "(distances-in-meters) sets dlocsig's distances in meters (the default)"
   (set! dlocsig-speed-of-sound 344)
   344)
 
 (define (distances-in-feet)
+  "(distances-in-feet) sets dlocsig's distances in feet (default is meters)"
   (set! dlocsig-speed-of-sound 1128)
   1128)
 
@@ -184,9 +190,6 @@
 (define (listp a) 
   "(listp lst) is #t is 'lst' is a non-null list"
   (and (list? a) (not (null? a))))
-
-(define (list?? a) 
-  (and (listp a) a))
 
 (define (x-norm env xmax)
   "(x-norm env xmax) changes 'env' x axis values so that they run to 'xmax'"
@@ -500,6 +503,7 @@
 ;;; Set a particular speaker configuration
 
 (define* (set-speaker-configuration config :key (configs dlocsig-speaker-configs))
+  "(set-speaker-configuration config :key (configs dlocsig-speaker-configs)) sets a dlocsig speaker configuration"
   (let ((lst (if (< (speaker-config-dimension config) 3)
 		 (car configs)
 	       (cadr configs)))
@@ -510,6 +514,7 @@
 ;;; Get the speaker configuration for a given number of output channels
 
 (define* (get-speaker-configuration channels :key (3d dlocsig-3d) (configs dlocsig-speaker-configs))
+  "(get-speaker-configuration channels :key (3d dlocsig-3d) (configs dlocsig-speaker-configs)) returns a dlocsig speaker configuration"
   (let* ((config (if 3d (list-ref (cadr configs) channels) (list-ref (car configs) channels))))
     (if (null? config)
 	(snd-error (format #f "no speaker configuration exists for ~A ~A output channel~A~%" 
@@ -521,35 +526,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Dlocsig unit generator
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;; structure that defines the unit generator
-
-(define* (make-dlocs :key ; order of fields must match make-move-sound expectations
-		     (start 0)               ; absolute sample number at which samples first reach the listener
-		     (end 0)                 ; absolute sample number of end of input samples
-		     (out-channels 0)        ; number of output channels in soundfile
-		     (rev-channels 0)        ; number of reverb channels in soundfile
-		     path                    ; interpolated delay line for doppler
-		     delay                   ; doppler env
-		     rev                     ; reverberation amount
-		     out-delays              ; delay lines for output channels that have additional delays
-		     gains                   ; gain envelopes, one for each output channel
-		     rev-gains               ; reverb gain envelopes, one for each reverb channel
-		     out-map)                ; mapping of speakers to output channels
-  (list 'dlocs start end out-channels rev-channels path delay rev out-delays gains rev-gains out-map))
-
-(define dlocs-start (make-procedure-with-setter (lambda (a) (list-ref a 1)) (lambda (a b) (list-set! a 1 b))))
-(define dlocs-end (make-procedure-with-setter (lambda (a) (list-ref a 2)) (lambda (a b) (list-set! a 2 b))))
-(define dlocs-out-channels (make-procedure-with-setter (lambda (a) (list-ref a 3)) (lambda (a b) (list-set! a 3 b))))
-(define dlocs-rev-channels (make-procedure-with-setter (lambda (a) (list-ref a 4)) (lambda (a b) (list-set! a 4 b))))
-(define dlocs-path (make-procedure-with-setter (lambda (a) (list-ref a 5)) (lambda (a b) (list-set! a 5 b))))
-(define dlocs-delay (make-procedure-with-setter (lambda (a) (list-ref a 6)) (lambda (a b) (list-set! a 6 b))))
-(define dlocs-rev (make-procedure-with-setter (lambda (a) (list-ref a 7)) (lambda (a b) (list-set! a 7 b))))
-(define dlocs-out-delays (make-procedure-with-setter (lambda (a) (list-ref a 8)) (lambda (a b) (list-set! a 8 b))))
-(define dlocs-gains (make-procedure-with-setter (lambda (a) (list-ref a 9)) (lambda (a b) (list-set! a 9 b))))
-(define dlocs-rev-gains (make-procedure-with-setter (lambda (a) (list-ref a 10)) (lambda (a b) (list-set! a 10 b))))
-(define dlocs-out-map (make-procedure-with-setter (lambda (a) (list-ref a 11)) (lambda (a b) (list-set! a 11 b))))
-
 
 ;;; global dlocsig parameters
 
@@ -658,6 +634,10 @@
   (reset-transformation path))
 
 ;;; Return the best possible set of coordinates
+
+(define (list?? a) 
+  "list?? returns a if it is a list"
+  (and (listp a) a))
 
 (<define-method> path-x ((path <path>))
   (or (list?? (tx path))
@@ -871,6 +851,7 @@
 ;;; Parse a set of 2d or 3d points into the separate coordinates
 
 (define (parse-cartesian-coordinates points 3d)
+  "(parse-cartesian-coordinates points 3d) parses a set of 2d or 3d points into the separate coordinates"
   (if (list? (car points))
       ;; decode a list of lists into x:y:z:v components
       ;; 3d -> t [default]
@@ -931,7 +912,7 @@
 ;;; Parse a set of 2d or 3d polar points into the separate coordinates
 
 (define (parse-polar-coordinates points 3d)
-  ;; parse a polar path
+  "(parse-polar-coordinates points 3d) parses a polar path"
   (if (list? (car points))
       ;; decode a list of lists of d:a:e:v into x:y:z:v components
       ;; 3d --> t [default]
@@ -1039,6 +1020,7 @@
 ;;; Pythagoras
 
 (define (distance x y z)
+  "(distance x y z) returns the euclidean distance of (x y z) from the origin"
   (sqrt (+ (* x x) (* y y) (* z z))))
 
 ;;; Nearest point in a line
@@ -1986,6 +1968,7 @@
 			:key
 			rotation-center
 			(rotation-axis '(0d0 0d0 1.0)))
+  "rotate-path is a dlocsig function that rotates a dlocsig path"
   (transform-path path 
 		  :rotation rotation 
 		  :rotation-center rotation-center
@@ -2014,6 +1997,7 @@
 ;;; Change the times of the rendered envelope so that the velocity is constant
 
 (define (constant-velocity path)
+  "constant-velocity is a dlocsig function that changes the times of the rendered envelope so that the velocity is constant"
   (if (not (rx path))
       (render-path path))
   (reset-transformation path)
@@ -2770,6 +2754,34 @@
 	      (fminimum-segment-length xa ya za ta xi yi zi ti)
 	      (fminimum-segment-length xi yi zi ti xb yb zb tb)))))
 
+
+    ;; structure that defines the unit generator
+    (define* (make-dlocs :key                    ; order of fields must match make-move-sound expectations
+			 (start 0)               ; absolute sample number at which samples first reach the listener
+			 (end 0)                 ; absolute sample number of end of input samples
+			 (out-channels 0)        ; number of output channels in soundfile
+			 (rev-channels 0)        ; number of reverb channels in soundfile
+			 path                    ; interpolated delay line for doppler
+			 delay                   ; doppler env
+			 rev                     ; reverberation amount
+			 out-delays              ; delay lines for output channels that have additional delays
+			 gains                   ; gain envelopes, one for each output channel
+			 rev-gains               ; reverb gain envelopes, one for each reverb channel
+			 out-map)                ; mapping of speakers to output channels
+      (list 'dlocs start end out-channels rev-channels path delay rev out-delays gains rev-gains out-map))
+    ;; (define dlocs-start (make-procedure-with-setter (lambda (a) (list-ref a 1)) (lambda (a b) (list-set! a 1 b))))
+    ;; (define dlocs-end (make-procedure-with-setter (lambda (a) (list-ref a 2)) (lambda (a b) (list-set! a 2 b))))
+    ;; (define dlocs-out-channels (make-procedure-with-setter (lambda (a) (list-ref a 3)) (lambda (a b) (list-set! a 3 b))))
+    ;; (define dlocs-rev-channels (make-procedure-with-setter (lambda (a) (list-ref a 4)) (lambda (a b) (list-set! a 4 b))))
+    ;; (define dlocs-path (make-procedure-with-setter (lambda (a) (list-ref a 5)) (lambda (a b) (list-set! a 5 b))))
+    ;; (define dlocs-delay (make-procedure-with-setter (lambda (a) (list-ref a 6)) (lambda (a b) (list-set! a 6 b))))
+    ;; (define dlocs-rev (make-procedure-with-setter (lambda (a) (list-ref a 7)) (lambda (a b) (list-set! a 7 b))))
+    ;; (define dlocs-out-delays (make-procedure-with-setter (lambda (a) (list-ref a 8)) (lambda (a b) (list-set! a 8 b))))
+    ;; (define dlocs-gains (make-procedure-with-setter (lambda (a) (list-ref a 9)) (lambda (a b) (list-set! a 9 b))))
+    ;; (define dlocs-rev-gains (make-procedure-with-setter (lambda (a) (list-ref a 10)) (lambda (a b) (list-set! a 10 b))))
+    ;; (define dlocs-out-map (make-procedure-with-setter (lambda (a) (list-ref a 11)) (lambda (a b) (list-set! a 11 b))))
+
+
     ;; Loop for each pair of points in the position envelope and render them
     (if (= (length xpoints) 1)
 	;; static source (we should check if this is inside the inner radius?)
@@ -2878,7 +2890,9 @@
 ;;; Run macro to localize samples
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (dlocsig a b c) (move-sound a b c)) ; use this form for run's benefit
+(define (dlocsig a b c) 
+  "(dlocsig a b c) is the same as move-sound"
+  (move-sound a b c)) ; use this form for run's benefit
 
 #|
 

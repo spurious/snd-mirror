@@ -33,6 +33,7 @@
 ;;; #'(lambda ...) to just (lambda...)
 
 (define* (make-double-array len :key initial-contents initial-element)
+  "(make-double-array len :key initial-contents initial-element) is for CL/Scheme compatibility; it makes a vct"
   (let ((v (make-vct len (or initial-element 0.0))))
     (if initial-contents
 	(let ((clen (min len (length initial-contents))))
@@ -43,8 +44,12 @@
 
 (define make-double-float-array make-double-array)
 (define make-integer-array make-double-array) ; could use a vector here I suppose
-(define (double a) a)	
-(define (open-input file) (make-file->sample file))
+
+(define (double a) 
+  "(double a) is for compatibility with CL instruments; it returns its argument"
+  a)	
+
+(define open-input make-file->sample)
 
 (define two-pi (* 2 pi))
 

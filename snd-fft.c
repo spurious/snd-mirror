@@ -1,4 +1,6 @@
 #include "snd.h"
+#include "clm2xen.h"
+#include "sndlib2xen.h"
 
 /* we need error catcher from FFTW (memerr = exit) */
 
@@ -329,12 +331,15 @@ static int compare_peaks(const void *pk1, const void *pk2)
 }
 
 int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size)
-{ /* in the fft peak finder below we assume data between 0 and 1 */
+{ 
+  /* in the fft peak finder below we assume data between 0 and 1 */
   /* this procedure is for the list graph -- see below for fft */
+
   int i, j, pks, minpk;
   Float minval, la, ra, ca;
   Float *peaks;
   int *inds;
+
   if (num_peaks <= 0) return(0);
   peaks = (Float *)CALLOC(num_peaks, sizeof(Float));
   inds = (int *)CALLOC(num_peaks, sizeof(int));
@@ -1760,6 +1765,10 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
       FREE(errmsg);
       return(snd_bad_arity_error(S_add_transform, errstr, proc));
     }
+#if HAVE_SCHEME
+  if ((mus_xen_p(proc)) || (sound_data_p(proc))) /* happens a lot in snd-test.scm, so add a check */
+    XEN_WRONG_TYPE_ARG_ERROR(S_add_transform, XEN_ARG_5, proc, "a procedure");
+#endif
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_transform, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(xlabel), xlabel, XEN_ARG_2, S_add_transform, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(lo), lo, XEN_ARG_3, S_add_transform, "a number");

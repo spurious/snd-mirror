@@ -25,6 +25,7 @@
 (define marks-menu (add-to-main-menu "Marks" (lambda ()
 					       (update-label marks-list))))
 (define (find-two-marks)
+  "(find-two-marks) looks for the marks for the marks-menu functions to use"
   (let* ((snd (selected-sound))
 	 (chn (selected-channel))
 	 (ms (marks snd chn)))
@@ -42,6 +43,7 @@
 (define play-between-marks-menu-label #f)
 
 (define (cp-play-between-marks)
+  "(cp-play-between-marks) plays between 2 marks (marks-menu)"
   (play-between-marks play-between-marks-m1 play-between-marks-m2))
 
 (if (or (provided? 'xm) 
@@ -191,6 +193,7 @@
 (define use-combo-box-for-buffer-size #f) ; radio-buttons or combo-box choice
 
 (define (cp-loop-between-marks)
+  "(cp-loop-between-marks) loops between two marks, playing (marks-menu)"
   (loop-between-marks loop-between-marks-m1 loop-between-marks-m2 loop-between-marks-buffer-size))
 
 (if (provided? 'xm)
@@ -415,6 +418,7 @@
 (define fit-to-mark-menu-label #f)
 
 (define (cp-fit-to-marks)
+  "(cp-fit-to-marks) fits the selection between two marks (marks-menu)"
  (fit-selection-between-marks fit-to-mark-one fit-to-mark-two))
 
 (if (or (provided? 'xm) 
@@ -494,6 +498,7 @@ using the granulate generator to fix up the selection duration (this still is no
 (define define-by-mark-menu-label #f)
 
 (define (define-selection-via-marks m1 m2)
+  "(define-selection-via-marks m1 m2) defines the selection via marks (marks-menu)"
   (let ((m1sc (mark-home m1))
         (m2sc (mark-home m2)))
     (if (not (equal? m1sc m2sc))
@@ -580,9 +585,15 @@ using the granulate generator to fix up the selection duration (this still is no
 
 (define mark-sync-menu-label #f)
 (define mark-sync-number 0)
-(define (start-sync) (set! mark-sync-number (+ (mark-sync-max) 1)))
-(define (stop-sync) (set! mark-sync-number 0))
-(define (click-to-sync id) (set! (mark-sync id) mark-sync-number) #f)
+(define (start-sync) 
+  "(start-sync) starts mark syncing (marks-menu)"
+  (set! mark-sync-number (+ (mark-sync-max) 1)))
+(define (stop-sync) 
+  "(stop-sync) stops mark-syncing (marks-menu)"
+  (set! mark-sync-number 0))
+(define (click-to-sync id) 
+  "(click-to-sync id) sets a mark's sync field when it is clicked (marks-menu)"
+  (set! (mark-sync id) mark-sync-number) #f)
 (add-hook! mark-click-hook click-to-sync)
 
 (define m-sync #f)
@@ -590,13 +601,14 @@ using the granulate generator to fix up the selection duration (this still is no
 (define no-m-sync-label "Mark sync (Off)")
 
 (define (msync!)
+  "(msync!) starts mark syncing (marks-menu)"
   (set! m-sync #t)
   (if mark-sync-menu-label (change-label mark-sync-menu-label m-sync-label))
   (start-sync)
   (mark-sync-color "yellow"))
 
-
 (define (unmsync!)
+  "(unmsync!) stops mark syncing (marks-menu)"
   (set! m-sync #f)
   (if mark-sync-menu-label (change-label mark-sync-menu-label no-m-sync-label))
   (stop-sync))
@@ -922,6 +934,7 @@ using the granulate generator to fix up the selection duration (this still is no
 ;;; -------- Explode all marks to separate files
 
 (define (mark-explode)
+  "(mark-explode) produces separate files as delineated by successive marks (marks-menu)"
   (let ((start 0))
     (for-each
      (lambda (mark)

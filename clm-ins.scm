@@ -2728,6 +2728,7 @@ mjkoskin@sci.fi
 ;;; bes-fm -- can also use bes-j0 here as in earlier versions
 
 (define (bes-fm beg dur freq amp ratio index)
+  "(bes-fm beg dur freq amp ratio index) produces J1(J1) imitating FM"
   (let* ((st (inexact->exact (floor (* beg (mus-srate)))))
 	 (nd (+ st (inexact->exact (floor (* dur (mus-srate))))))
 	 (car-ph 0.0)
@@ -2755,6 +2756,7 @@ mjkoskin@sci.fi
   (mod0 #f :type clm) (mod1 #f :type clm))
 
 (define (make-ssb-fm freq)
+  "(make-ssb-fm freq) makes an ssb-fm generator"
   (make-sbfm :am0 (make-oscil freq 0)
 	     :am1 (make-oscil freq (* 0.5 pi))
 	     :car0 (make-oscil 0 0)
@@ -2763,6 +2765,7 @@ mjkoskin@sci.fi
 	     :mod1 (make-delay 40)))
 
 (define (ssb-fm gen modsig)
+  "(ssb-fm gen modsig) runs an ssb-fm generator"
   (+ (* (oscil (sbfm-am0 gen)) 
 	(oscil (sbfm-car0 gen) (hilbert-transform (sbfm-mod0 gen) modsig)))
      (* (oscil (sbfm-am1 gen)) 
@@ -2772,6 +2775,7 @@ mjkoskin@sci.fi
 ;;; if all we want are asymmetric fm-generated spectra, we can just add 2 fm oscil pairs:
 
 (define (make-fm2 f1 f2 f3 f4 p1 p2 p3 p4)
+  "(make-fm2 f1 f2 f3 f4 p1 p2 p3 p4) makes two FM paired oscils"
   ;; (make-fm2 1000 100 1000 100  0 0  (* 0.5 pi) (* 0.5 pi))
   ;; (make-fm2 1000 100 1000 100  0 0  0 (* 0.5 pi))
   (list (make-oscil f1 p1)
@@ -2780,6 +2784,7 @@ mjkoskin@sci.fi
 	(make-oscil f4 p4)))
 
 (define (fm2 gen index)
+  "(fm2 gen index) runs an fm2 generator"
   (* .25 (+ (oscil (list-ref gen 0) (* index (oscil (list-ref gen 1))))
 	    (oscil (list-ref gen 2) (* index (oscil (list-ref gen 3)))))))
 
@@ -2796,18 +2801,21 @@ mjkoskin@sci.fi
   (avgc 0 :type int))
 
 (define* (make-rmsgain :optional (hp 10.0))
+  "(make-rmsgain :optional (hp 10.0)) makes an RMS gain generator"
   (let* ((b (- 2.0 (cos (* hp (/ (* 2.0 pi) (mus-srate))))))
 	 (c2 (- b (sqrt (- (* b b) 1.0))))
 	 (c1 (- 1.0 c2)))
     (make-rmsg :c1 c1 :c2 c2)))
 
 (define (rms gen sig)
+  "(rms gen sig) runs an RMS gain generator"
   (set! (rmsg-q gen) (+ (* (rmsg-c1 gen) sig sig)
 			(* (rmsg-c2 gen) (rmsg-q gen))))
   (sqrt (rmsg-q gen)))
 
 
 (define (gain gen sig rmsval)
+  "(gain gen sig rmsval) returns the current RMS gain"
   (set! (rmsg-r gen) (+ (* (rmsg-c1 gen) sig sig)
 			(* (rmsg-c2 gen) (rmsg-r gen))))
   (let ((this-gain (if (zero? (rmsg-r gen))
@@ -2818,10 +2826,13 @@ mjkoskin@sci.fi
     (* sig this-gain)))
 
 (define (balance gen signal compare)
+  "(balance gen signal compare) scales a signal based on a RMS gain"
   (gain gen signal (rms gen compare)))
 
 (define (gain-avg gen)
+  "(gain-avg gen) is part of the RMS gain stuff"
   (/ (rmsg-avg gen) (rmsg-avgc gen)))
 
 (define (balance-avg gen)
+  "(balance-avg gen) is part of the RM gain stuff"
   (rmsg-avg gen))

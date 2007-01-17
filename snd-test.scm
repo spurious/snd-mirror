@@ -17818,6 +17818,8 @@ EDITS: 2
 	(if (fneq (mixer-ref mx2 0 0) 2.0) (snd-display ";mixer-set: ~A?" mx2))
 	(set! fr0 (sample->frame mx2 1.0))
 	(if (or (fneq (frame-ref fr0 0) 2.0) (fneq (frame-ref fr0 1) .25)) (snd-display ";sample->frame: ~A?" fr0))
+	(let ((tag (catch #t (lambda () (mixer* fr4 fr5)) (lambda args (car args)))))
+	  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";mixer* of 2 frames: ~A" tag)))
 	(let ((frout (make-frame 2)))
 	  (sample->frame mx2 1.0 frout)
 	  (if (not (equal? frout fr0)) (snd-display ";sample->frame via frout: ~A ~A?" frout fr0)))))
@@ -63712,6 +63714,7 @@ EDITS: 1
 				(set! vector-0 (make-vector 1))
 				(set! car-main (make-moving-average 3))
 				(set! cadr-main (make-phase-vocoder (lambda (dir) 1.0)))
+				(set! a-hook (make-mixer 2 .1 .2 .1 .2))
 				))))))
 	  
 	  (for-each (lambda (n)
@@ -65780,8 +65783,8 @@ EDITS: 1
       (snd-display (format #f "total: ~D, help: ~D, no-help: ~D, found help: ~D (~D in snd-test)" 
 			   total help no-help outside-help snd-test-help))
       
-      ;; total: 4068, help: 3605, no-help: 109, found help: 354 (109 in snd-test)
-      
+      ;; total: 4055, help: 3641, no-help: 109, found help: 305 (109 in snd-test)
+
       (for-each
        (lambda (lst)
 	 (snd-display "-------- ~A --------~%~A~%" (car lst) (cadr lst)))

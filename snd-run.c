@@ -93,6 +93,9 @@
  *
  * SOMEDAY: completion of support for vector of def-clm-structs
  *            see comment about lists below ca line 10931
+ *
+ * TODO: struct field like vector not freed -- the embedded tree is unattached before
+ *          these run-time creations, so every call loses another pointer. 
  */
 
 #include "snd.h"
@@ -10869,17 +10872,26 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
     case R_KEYWORD:
     case R_LIST:
     case R_PAIR:         pt->xens[addr] = arg;                               break;
-    case R_STRING:       pt->strs[addr] = copy_string(XEN_TO_C_STRING(arg)); break;
+    case R_STRING:
+      if (!(pt->strs[addr]))
+	pt->strs[addr] = copy_string(XEN_TO_C_STRING(arg)); 
+      break;
     case R_FLOAT_VECTOR:
-      pt->vcts[addr] = vector_to_vct(arg);
-      add_obj_to_gcs(pt, R_FLOAT_VECTOR, addr);
+      if (!(pt->vcts[addr]))
+	{
+	  pt->vcts[addr] = vector_to_vct(arg);
+	  add_obj_to_gcs(pt, R_FLOAT_VECTOR, addr);
+	}
       break;
     case R_INT_VECTOR: 
     case R_VCT_VECTOR:
     case R_CLM_STRUCT_VECTOR:
     case R_CLM_VECTOR:
-      pt->vects[addr] = read_vector(arg, type);
-      add_obj_to_gcs(pt, type, addr);
+      if (!(pt->vects[addr]))
+	{
+	  pt->vects[addr] = read_vector(arg, type);
+	  add_obj_to_gcs(pt, type, addr);
+	}
       break;
     default:
       if (CLM_STRUCT_P(type))
