@@ -129,7 +129,7 @@ static void chans_transform_size(chan_info *cp, void *ptr)
 
 /* gtk_frame_set_label actually creates a new label widget! */
 
-static void sg_frame_set_label(GtkFrame *frame, const char* text)
+static void sg_frame_set_label(GtkFrame *frame, const char *text)
 {
   gtk_button_set_label(GTK_BUTTON(gtk_frame_get_label_widget(frame)), text);
 }

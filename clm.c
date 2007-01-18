@@ -933,10 +933,13 @@ Float mus_sine_bank(Float *amps, Float *phases, int size)
 
 bool mus_oscil_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_OSCIL));}
 static int free_oscil(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
+
 static Float oscil_freq(mus_any *ptr) {return(mus_radians_to_hz(((osc *)ptr)->freq));}
 static Float set_oscil_freq(mus_any *ptr, Float val) {((osc *)ptr)->freq = mus_hz_to_radians(val); return(val);}
+
 static Float oscil_phase(mus_any *ptr) {return(fmod(((osc *)ptr)->phase, TWO_PI));}
 static Float set_oscil_phase(mus_any *ptr, Float val) {((osc *)ptr)->phase = val; return(val);}
+
 static off_t oscil_cosines(mus_any *ptr) {return(1);}
 static void oscil_reset(mus_any *ptr) {((osc *)ptr)->phase = 0.0;}
 
@@ -1027,13 +1030,17 @@ Float mus_sum_of_cosines(mus_any *ptr, Float fm)
 bool mus_sum_of_cosines_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_SUM_OF_COSINES));}
 
 static int free_sum_of_cosines(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
+static void sum_of_cosines_reset(mus_any *ptr) {((cosp *)ptr)->phase = 0.0;}
+
 static Float sum_of_cosines_freq(mus_any *ptr) {return(mus_radians_to_hz(((cosp *)ptr)->freq));}
 static Float set_sum_of_cosines_freq(mus_any *ptr, Float val) {((cosp *)ptr)->freq = mus_hz_to_radians(val); return(val);}
+
 static Float sum_of_cosines_phase(mus_any *ptr) {return(fmod(((cosp *)ptr)->phase, TWO_PI));}
 static Float set_sum_of_cosines_phase(mus_any *ptr, Float val) {((cosp *)ptr)->phase = val; return(val);}
+
 static Float sum_of_cosines_scaler(mus_any *ptr) {return(((cosp *)ptr)->scaler);}
 static Float set_sum_of_cosines_scaler(mus_any *ptr, Float val) {((cosp *)ptr)->scaler = val; return(val);}
-static void sum_of_cosines_reset(mus_any *ptr) {((cosp *)ptr)->phase = 0.0;}
+
 static off_t sum_of_cosines_cosines(mus_any *ptr) {return(((cosp *)ptr)->cosines);}
 static off_t set_sum_of_cosines_cosines(mus_any *ptr, off_t val) 
 {
@@ -1043,6 +1050,7 @@ static off_t set_sum_of_cosines_cosines(mus_any *ptr, off_t val)
   gen->scaler = 1.0 / (Float)val; 
   return(val);
 }
+
 static Float run_sum_of_cosines(mus_any *ptr, Float fm, Float unused) {return(mus_sum_of_cosines(ptr, fm));}
 
 static bool sum_of_cosines_equalp(mus_any *p1, mus_any *p2)
@@ -1228,10 +1236,14 @@ typedef struct {
 } asyfm;
 
 static int free_asymmetric_fm(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
+static void asyfm_reset(mus_any *ptr) {((asyfm *)ptr)->phase = 0.0;}
+
 static Float asyfm_freq(mus_any *ptr) {return(mus_radians_to_hz(((asyfm *)ptr)->freq));}
 static Float set_asyfm_freq(mus_any *ptr, Float val) {((asyfm *)ptr)->freq = mus_hz_to_radians(val); return(val);}
+
 static Float asyfm_phase(mus_any *ptr) {return(fmod(((asyfm *)ptr)->phase, TWO_PI));}
 static Float set_asyfm_phase(mus_any *ptr, Float val) {((asyfm *)ptr)->phase = val; return(val);}
+
 static Float asyfm_ratio(mus_any *ptr) {return(((asyfm *)ptr)->ratio);}
 static Float asyfm_r(mus_any *ptr) {return(((asyfm *)ptr)->r);}
 static Float set_asyfm_r(mus_any *ptr, Float val) 
@@ -1245,7 +1257,6 @@ static Float set_asyfm_r(mus_any *ptr, Float val)
     }
   return(val);
 }
-static void asyfm_reset(mus_any *ptr) {((asyfm *)ptr)->phase = 0.0;}
 
 static bool asyfm_equalp(mus_any *p1, mus_any *p2)
 {
@@ -1355,13 +1366,17 @@ typedef struct {
 } sss;
 
 static int free_sss(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
+static void sss_reset(mus_any *ptr) {((sss *)ptr)->phase = 0.0;}
+
 static Float sss_freq(mus_any *ptr) {return(mus_radians_to_hz(((sss *)ptr)->freq));}
 static Float set_sss_freq(mus_any *ptr, Float val) {((sss *)ptr)->freq = mus_hz_to_radians(val); return(val);}
+
 static Float sss_phase(mus_any *ptr) {return(fmod(((sss *)ptr)->phase, TWO_PI));}
 static Float set_sss_phase(mus_any *ptr, Float val) {((sss *)ptr)->phase = val; return(val);}
-static void sss_reset(mus_any *ptr) {((sss *)ptr)->phase = 0.0;}
+
 static off_t sss_n(mus_any *ptr) {return((off_t)(((sss *)ptr)->n));}
 static Float sss_b(mus_any *ptr) {return(((sss *)ptr)->b);}
+
 static Float sss_a(mus_any *ptr) {return(((sss *)ptr)->a);}
 static Float set_sss_a(mus_any *ptr, Float val) 
 {
@@ -1555,10 +1570,13 @@ static Float run_table_lookup(mus_any *ptr, Float fm, Float unused) {return(mus_
 bool mus_table_lookup_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_TABLE_LOOKUP));}
 static off_t table_lookup_length(mus_any *ptr) {return(((tbl *)ptr)->table_size);}
 static Float *table_lookup_data(mus_any *ptr) {return(((tbl *)ptr)->table);}
+
 static Float table_lookup_freq(mus_any *ptr) {return((((tbl *)ptr)->freq * sampling_rate) / (Float)(((tbl *)ptr)->table_size));}
 static Float set_table_lookup_freq(mus_any *ptr, Float val) {((tbl *)ptr)->freq = (val * ((tbl *)ptr)->table_size) / sampling_rate; return(val);}
+
 static Float table_lookup_phase(mus_any *ptr) {return(fmod(((TWO_PI * ((tbl *)ptr)->phase) / ((tbl *)ptr)->table_size), TWO_PI));}
 static Float set_table_lookup_phase(mus_any *ptr, Float val) {((tbl *)ptr)->phase = (val * ((tbl *)ptr)->table_size) / TWO_PI; return(val);}
+
 static int table_lookup_interp_type(mus_any *ptr) {return((int)(((tbl *)ptr)->type));}
 static void table_lookup_reset(mus_any *ptr) {((tbl *)ptr)->phase = 0.0;}
 
@@ -1683,10 +1701,13 @@ static int free_ws(mus_any *pt)
 
 static Float ws_freq(mus_any *ptr) {return(mus_frequency(((ws *)ptr)->o));}
 static Float set_ws_freq(mus_any *ptr, Float val) {return(mus_set_frequency(((ws *)ptr)->o, val));}
+
 static Float ws_phase(mus_any *ptr) {return(mus_phase(((ws *)ptr)->o));}
 static Float set_ws_phase(mus_any *ptr, Float val) {return(mus_set_phase(((ws *)ptr)->o, val));}
+
 static off_t ws_size(mus_any *ptr) {return(((ws *)ptr)->table_size);}
 static off_t set_ws_size(mus_any *ptr, off_t val) {((ws *)ptr)->table_size = (int)val; return(val);}
+
 static Float *ws_data(mus_any *ptr) {return(((ws *)ptr)->table);}
 
 static void ws_reset(mus_any *ptr)
@@ -2008,12 +2029,16 @@ typedef struct {
 
 static Float wt_freq(mus_any *ptr) {return(((wt *)ptr)->freq);}
 static Float set_wt_freq(mus_any *ptr, Float val) {((wt *)ptr)->freq = val; return(val);}
+
 static Float wt_phase(mus_any *ptr) {return(fmod(((TWO_PI * ((wt *)ptr)->phase) / ((Float)((wt *)ptr)->wave_size)), TWO_PI));}
 static Float set_wt_phase(mus_any *ptr, Float val) {((wt *)ptr)->phase = (fmod(val, TWO_PI) * ((wt *)ptr)->wave_size) / TWO_PI; return(val);}
+
 static off_t wt_length(mus_any *ptr) {return(((wt *)ptr)->wave_size);}
 static off_t wt_set_length(mus_any *ptr, off_t val) {if (val > 0) ((wt *)ptr)->wave_size = (int)val; return((off_t)(((wt *)ptr)->wave_size));}
-static Float *wt_data(mus_any *ptr) {return(((wt *)ptr)->wave);}
+
 static int wt_interp_type(mus_any *ptr) {return((int)(((wt *)ptr)->interp_type));}
+
+static Float *wt_data(mus_any *ptr) {return(((wt *)ptr)->wave);}
 static Float *wt_set_data(mus_any *ptr, Float *data) {((wt *)ptr)->wave = data; return(data);}
 
 static bool wt_equalp(mus_any *p1, mus_any *p2)
@@ -2297,13 +2322,15 @@ static off_t delay_length(mus_any *ptr)
   return(d->zsize); /* maybe always use this? */
 }
 
-static Float *delay_data(mus_any *ptr) {return(((dly *)ptr)->line);}
 static Float delay_scaler(mus_any *ptr) {return(((dly *)ptr)->xscl);}
 static Float set_delay_scaler(mus_any *ptr, Float val) {((dly *)ptr)->xscl = val; return(val);}
+
 static Float delay_fb(mus_any *ptr) {return(((dly *)ptr)->yscl);}
 static Float set_delay_fb(mus_any *ptr, Float val) {((dly *)ptr)->yscl = val; return(val);}
+
 static int delay_interp_type(mus_any *ptr) {return((int)(((dly *)ptr)->type));}
 
+static Float *delay_data(mus_any *ptr) {return(((dly *)ptr)->line);}
 static Float *delay_set_data(mus_any *ptr, Float *val) 
 {
   dly *gen = (dly *)ptr;
@@ -2841,10 +2868,13 @@ Float mus_sawtooth_wave(mus_any *ptr, Float fm)
 
 static Float run_sawtooth_wave(mus_any *ptr, Float fm, Float unused) {return(mus_sawtooth_wave(ptr, fm));}
 bool mus_sawtooth_wave_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_SAWTOOTH_WAVE));}
+
 static Float sw_freq(mus_any *ptr) {return(mus_radians_to_hz(((sw *)ptr)->freq));}
-static Float sw_phase(mus_any *ptr) {return(fmod(((sw *)ptr)->phase, TWO_PI));}
 static Float set_sw_freq(mus_any *ptr, Float val) {((sw *)ptr)->freq = mus_hz_to_radians(val); return(val);}
+
+static Float sw_phase(mus_any *ptr) {return(fmod(((sw *)ptr)->phase, TWO_PI));}
 static Float set_sw_phase(mus_any *ptr, Float val) {((sw *)ptr)->phase = val; return(val);}
+
 static Float sw_width(mus_any *ptr) {return((((sw *)ptr)->width) / ( 2 * M_PI));}
 static Float sw_set_width(mus_any *ptr, Float val) {((sw *)ptr)->width = (2 * M_PI * val); return(val);}
 
@@ -2936,6 +2966,7 @@ Float mus_square_wave(mus_any *ptr, Float fm)
 bool mus_square_wave_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_SQUARE_WAVE));}
 
 static Float run_square_wave(mus_any *ptr, Float fm, Float unused) {return(mus_square_wave(ptr, fm));}
+
 static Float square_wave_scaler(mus_any *ptr) {return(((sw *)ptr)->base);}
 static Float set_square_wave_scaler(mus_any *ptr, Float val) {((sw *)ptr)->base = val; return(val);}
 
@@ -3011,6 +3042,7 @@ Float mus_triangle_wave(mus_any *ptr, Float fm)
 bool mus_triangle_wave_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_TRIANGLE_WAVE));}
 
 static Float run_triangle_wave(mus_any *ptr, Float fm, Float unused) {return(mus_triangle_wave(ptr, fm));}
+
 static Float triangle_wave_scaler(mus_any *ptr) {return(((sw *)ptr)->base * M_PI_2);}
 static Float set_triangle_wave_scaler(mus_any *ptr, Float val) {((sw *)ptr)->base = (val * 2.0 / M_PI); return(val);}
 
@@ -3079,6 +3111,7 @@ Float mus_pulse_train(mus_any *ptr, Float fm)
 bool mus_pulse_train_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_PULSE_TRAIN));}
 
 static Float run_pulse_train(mus_any *ptr, Float fm, Float unused) {return(mus_pulse_train(ptr, fm));}
+
 static Float pulse_train_scaler(mus_any *ptr) {return(((sw *)ptr)->base);}
 static Float set_pulse_train_scaler(mus_any *ptr, Float val) {((sw *)ptr)->base = val; return(val);}
 
@@ -3229,12 +3262,16 @@ bool mus_rand_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_RAND));}
 bool mus_rand_interp_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_RAND_INTERP));}
 
 static int free_noi(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
+
 static Float noi_freq(mus_any *ptr) {return(mus_radians_to_hz(((noi *)ptr)->freq));}
 static Float set_noi_freq(mus_any *ptr, Float val) {((noi *)ptr)->freq = mus_hz_to_radians(val); return(val);}
+
 static Float noi_phase(mus_any *ptr) {return(fmod(((noi *)ptr)->phase, TWO_PI));}
 static Float set_noi_phase(mus_any *ptr, Float val) {((noi *)ptr)->phase = val; return(val);}
+
 static Float noi_scaler(mus_any *ptr) {return(((noi *)ptr)->base);}
 static Float set_noi_scaler(mus_any *ptr, Float val) {((noi *)ptr)->base = val; return(val);}
+
 static Float *noi_data(mus_any *ptr) {return(((noi *)ptr)->distribution);}
 static off_t noi_length(mus_any *ptr) {return(((noi *)ptr)->distribution_size);}
 
@@ -3446,8 +3483,10 @@ static off_t two_length(mus_any *ptr) {return(2);}
 
 static Float smp_xcoeff(mus_any *ptr, int index) {return(((smpflt *)ptr)->xs[index]);}
 static Float smp_set_xcoeff(mus_any *ptr, int index, Float val) {((smpflt *)ptr)->xs[index] = val; return(val);}
+
 static Float smp_ycoeff(mus_any *ptr, int index) {return(((smpflt *)ptr)->ys[index]);}
 static Float smp_set_ycoeff(mus_any *ptr, int index, Float val) {((smpflt *)ptr)->ys[index] = val; return(val);}
+
 static Float *smp_xcoeffs(mus_any *ptr) {return(((smpflt *)ptr)->xs);}
 static Float *smp_ycoeffs(mus_any *ptr) {return(((smpflt *)ptr)->ys);}
 
@@ -3791,6 +3830,7 @@ static Float set_formant_frequency(mus_any *ptr, Float val)
 
 static Float f_radius(mus_any *ptr) {return(((smpflt *)ptr)->radius);}
 static Float f_set_radius(mus_any *ptr, Float val) {mus_set_formant_radius_and_frequency(ptr, val, ((smpflt *)ptr)->frequency); return(val);}
+
 static Float f_gain(mus_any *ptr) {return(((smpflt *)ptr)->gain);}
 static Float f_set_gain(mus_any *ptr, Float val)
 {
@@ -3920,6 +3960,7 @@ bool mus_iir_filter_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_IIR
 
 static Float *filter_data(mus_any *ptr) {return(((flt *)ptr)->state);}
 static off_t filter_length(mus_any *ptr) {return(((flt *)ptr)->order);}
+
 static Float *filter_xcoeffs(mus_any *ptr) {return(((flt *)ptr)->x);}
 static Float *filter_ycoeffs(mus_any *ptr) {return(((flt *)ptr)->y);}
 
@@ -4471,17 +4512,22 @@ static int free_env_gen(mus_any *pt)
 
 static Float *env_data(mus_any *ptr) {return(((seg *)ptr)->original_data);} /* mus-data */
 static Float env_scaler(mus_any *ptr) {return(((seg *)ptr)->original_scaler);}
+
 static Float env_offset(mus_any *ptr) {return(((seg *)ptr)->original_offset);}
 static Float set_env_offset(mus_any *ptr, Float val) {((seg *)ptr)->original_offset = val; return(val);}
+
 int mus_env_breakpoints(mus_any *ptr) {return(((seg *)ptr)->size);}
 static off_t env_length(mus_any *ptr) {return((((seg *)ptr)->end));}
 static Float env_current_value(mus_any *ptr) {return(((seg *)ptr)->current_value);}
+
 off_t *mus_env_passes(mus_any *gen) {return(((seg *)gen)->passes);}
 double *mus_env_rates(mus_any *gen) {return(((seg *)gen)->rates);}
+
 static int env_position(mus_any *ptr) {return(((seg *)ptr)->index);}
 double mus_env_offset(mus_any *gen) {return(((seg *)gen)->offset);}
 double mus_env_scaler(mus_any *gen) {return(((seg *)gen)->scaler);}
 double mus_env_initial_power(mus_any *gen) {return(((seg *)gen)->init_power);}
+
 static off_t seg_pass(mus_any *ptr) {return(((seg *)ptr)->pass);}
 static void set_env_location(mus_any *ptr, off_t val);
 static off_t seg_set_pass(mus_any *ptr, off_t val) {set_env_location(ptr, val); return(val);}
@@ -5404,8 +5450,10 @@ static int free_file_to_sample(mus_any *p)
 
 static off_t file_to_sample_length(mus_any *ptr) {return((((rdin *)ptr)->file_end));}
 static int file_to_sample_channels(mus_any *ptr) {return((int)(((rdin *)ptr)->chans));}
+
 static Float file_to_sample_increment(mus_any *rd) {return((Float)(((rdin *)rd)->dir));}
 static Float file_to_sample_set_increment(mus_any *rd, Float val) {((rdin *)rd)->dir = (int)val; return(val);}
+
 static char *file_to_sample_file_name(mus_any *ptr) {return(((rdin *)ptr)->file_name);}
 static void no_reset(mus_any *ptr) {}
 static Float file_sample(mus_any *ptr, off_t samp, int chan);
@@ -5586,10 +5634,13 @@ static int free_readin(mus_any *p)
 }
 
 static Float run_readin(mus_any *ptr, Float unused1, Float unused2) {return(mus_readin(ptr));}
+
 static Float rd_increment(mus_any *ptr) {return((Float)(((rdin *)ptr)->dir));}
 static Float rd_set_increment(mus_any *ptr, Float val) {((rdin *)ptr)->dir = (int)val; return(val);}
+
 static off_t rd_location(mus_any *rd) {return(((rdin *)rd)->loc);}
 static off_t rd_set_location(mus_any *rd, off_t loc) {((rdin *)rd)->loc = loc; return(loc);}
+
 static int rd_channel(mus_any *rd) {return(((rdin *)rd)->chan);}
 
 static mus_any_class READIN_CLASS = {
@@ -5787,8 +5838,10 @@ static int free_sample_to_file(mus_any *p)
 }
 
 static int sample_to_file_channels(mus_any *ptr) {return((int)(((rdout *)ptr)->chans));}
+
 static off_t bufferlen(mus_any *ptr) {return(clm_file_buffer_size);}
 static off_t set_bufferlen(mus_any *ptr, off_t len) {clm_file_buffer_size = (int)len; return(len);}
+
 static char *sample_to_file_file_name(mus_any *ptr) {return(((rdout *)ptr)->file_name);}
 static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val);
 static int sample_to_file_end(mus_any *ptr);
@@ -6839,10 +6892,13 @@ static char *describe_src(mus_any *ptr)
 
 static off_t src_length(mus_any *ptr) {return(((sr *)ptr)->width);}
 static Float run_src_gen(mus_any *srptr, Float sr_change, Float unused) {return(mus_src(srptr, sr_change, NULL));}
+
 static void *src_closure(mus_any *rd) {return(((sr *)rd)->closure);}
 static void *src_set_closure(mus_any *rd, void *e) {((sr *)rd)->closure = e; return(e);}
+
 static Float src_increment(mus_any *rd) {return(((sr *)rd)->incr);}
 static Float src_set_increment(mus_any *rd, Float val) {((sr *)rd)->incr = val; return(val);}
+
 static Float *src_sinc_table(mus_any *rd) {return(((sr *)rd)->sinc_table);}
 
 static void src_reset(mus_any *ptr)
@@ -7142,14 +7198,24 @@ static off_t grn_set_length(mus_any *ptr, off_t val)
 }
 static Float grn_scaler(mus_any *ptr) {return(((grn_info *)ptr)->amp);}
 static Float grn_set_scaler(mus_any *ptr, Float val) {((grn_info *)ptr)->amp = val; return(val);}
+
 static Float grn_frequency(mus_any *ptr) {return(((Float)((grn_info *)ptr)->output_hop) / (Float)sampling_rate);}
 static Float grn_set_frequency(mus_any *ptr, Float val) {((grn_info *)ptr)->output_hop = (int)((Float)sampling_rate * val); return(val);}
+
 static void *grn_closure(mus_any *rd) {return(((grn_info *)rd)->closure);}
 static void *grn_set_closure(mus_any *rd, void *e) {((grn_info *)rd)->closure = e; return(e);}
+
 static Float grn_increment(mus_any *rd) {return(((Float)(((grn_info *)rd)->output_hop)) / ((Float)((grn_info *)rd)->input_hop));}
-static Float grn_set_increment(mus_any *rd, Float val) {((grn_info *)rd)->input_hop = (int)(((grn_info *)rd)->output_hop / val); return(val);}
+static Float grn_set_increment(mus_any *rd, Float val) 
+{
+  if (val != 0.0) 
+    ((grn_info *)rd)->input_hop = (int)(((grn_info *)rd)->output_hop / val); 
+  return(val);
+}
+
 static off_t grn_hop(mus_any *ptr) {return(((grn_info *)ptr)->output_hop);}
 static off_t grn_set_hop(mus_any *ptr, off_t val) {((grn_info *)ptr)->output_hop = (int)val; return(val);}
+
 static off_t grn_ramp(mus_any *ptr) {return(((grn_info *)ptr)->rmp);}
 static off_t grn_set_ramp(mus_any *ptr, off_t val)
 {
@@ -7158,8 +7224,10 @@ static off_t grn_set_ramp(mus_any *ptr, off_t val)
     gen->rmp = (int)val;
   return(val);
 }
+
 static Float *granulate_data(mus_any *ptr) {return(((grn_info *)ptr)->grain);}
 int mus_granulate_grain_max_length(mus_any *ptr) {return(((grn_info *)ptr)->in_data_len);}
+
 static off_t grn_location(mus_any *ptr) {return((off_t)(((grn_info *)ptr)->randx));}
 static off_t grn_set_location(mus_any *ptr, off_t val) {((grn_info *)ptr)->randx = (unsigned long)val; return(val);}
 
@@ -8012,6 +8080,7 @@ static int free_convolve(mus_any *ptr)
 
 static off_t conv_length(mus_any *ptr) {return(((conv *)ptr)->fftsize);}
 static Float run_convolve(mus_any *ptr, Float unused1, Float unused2) {return(mus_convolve(ptr, NULL));}
+
 static void *conv_closure(mus_any *rd) {return(((conv *)rd)->closure);}
 static void *conv_set_closure(mus_any *rd, void *e) {((conv *)rd)->closure = e; return(e);}
 
@@ -8250,21 +8319,28 @@ static int free_phase_vocoder(mus_any *ptr)
 }
 
 static off_t pv_length(mus_any *ptr) {return(((pv_info *)ptr)->N);}
+
 static off_t pv_hop(mus_any *ptr) {return(((pv_info *)ptr)->D);}
 static off_t pv_set_hop(mus_any *ptr, off_t val) {((pv_info *)ptr)->D = (int)val; return(val);}
+
 static Float pv_frequency(mus_any *ptr) {return(((pv_info *)ptr)->pitch);}
 static Float pv_set_frequency(mus_any *ptr, Float val) {((pv_info *)ptr)->pitch = val; return(val);}
+
 static void *pv_closure(mus_any *rd) {return(((pv_info *)rd)->closure);}
 static void *pv_set_closure(mus_any *rd, void *e) {((pv_info *)rd)->closure = e; return(e);}
 
 Float *mus_phase_vocoder_amp_increments(mus_any *ptr) {return(((pv_info *)ptr)->ampinc);}
 Float *mus_phase_vocoder_amps(mus_any *ptr) {return(((pv_info *)ptr)->amps);}
+
 Float *mus_phase_vocoder_freqs(mus_any *ptr) {return(((pv_info *)ptr)->freqs);}
 Float *mus_phase_vocoder_phases(mus_any *ptr) {return(((pv_info *)ptr)->phases);}
 Float *mus_phase_vocoder_phase_increments(mus_any *ptr) {return(((pv_info *)ptr)->phaseinc);}
+
 int mus_phase_vocoder_outctr(mus_any *ptr) {return(((pv_info *)ptr)->outctr);}
 int mus_phase_vocoder_set_outctr(mus_any *ptr, int val) {((pv_info *)ptr)->outctr = val; return(val);}
+
 static Float run_phase_vocoder(mus_any *ptr, Float unused1, Float unused2) {return(mus_phase_vocoder(ptr, NULL));}
+
 static Float pv_increment(mus_any *rd) {return((Float)(((pv_info *)rd)->interp));}
 static Float pv_set_increment(mus_any *rd, Float val) {((pv_info *)rd)->interp = (int)val; return(val);}
 
@@ -8541,8 +8617,10 @@ static Float set_ssb_am_phase(mus_any *ptr, Float val)
 static off_t ssb_am_cosines(mus_any *ptr) {return(1);}
 static off_t ssb_am_order(mus_any *ptr) {return(mus_order(((ssbam *)ptr)->dly));}
 static int ssb_am_interp_type(mus_any *ptr) {return(delay_interp_type(((ssbam *)ptr)->dly));}
+
 static Float *ssb_am_data(mus_any *ptr) {return(filter_data(((ssbam *)ptr)->hilbert));}
 static Float ssb_am_run(mus_any *ptr, Float insig, Float fm) {return(mus_ssb_am(ptr, insig, fm));}
+
 static Float *ssb_am_xcoeffs(mus_any *ptr) {return(mus_xcoeffs(((ssbam *)ptr)->hilbert));}
 static Float ssb_am_xcoeff(mus_any *ptr, int index) {return(mus_xcoeff(((ssbam *)ptr)->hilbert, index));}
 static Float ssb_am_set_xcoeff(mus_any *ptr, int index, Float val) {return(mus_set_xcoeff(((ssbam *)ptr)->hilbert, index, val));}

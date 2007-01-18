@@ -2540,7 +2540,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       /* end if control-panel */
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	{
-	  char* name;
+	  char *name;
 	  name = just_filename(sp->short_filename); /* copies */
 	  if (strlen(name) > 8) name[8] = '\0';
 	  n = 0;

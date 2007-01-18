@@ -204,10 +204,10 @@ typedef struct mus_any_class {
   int type;
   char *name;
   int (*release)(mus_any *ptr);
-  char* (*describe)(mus_any *ptr);
+  char *(*describe)(mus_any *ptr);
   bool (*equalp)(mus_any *gen1, mus_any *gen2);
-  Float* (*data)(mus_any *ptr);
-  Float* (*set_data)(mus_any *ptr, Float *new_data);
+  Float *(*data)(mus_any *ptr);
+  Float *(*set_data)(mus_any *ptr, Float *new_data);
   off_t (*length)(mus_any *ptr);
   off_t (*set_length)(mus_any *ptr, off_t new_length);
   Float (*frequency)(mus_any *ptr);
@@ -220,7 +220,7 @@ typedef struct mus_any_class {
   Float (*set_increment)(mus_any *ptr, Float val);
   Float (*run)(mus_any *gen, Float arg1, Float arg2);
   mus_clm_extended_t extended_type;
-  void* (*closure)(mus_any *gen);
+  void *(*closure)(mus_any *gen);
   int (*channels)(mus_any *ptr);
   Float (*offset)(mus_any *ptr);
   Float (*set_offset)(mus_any *ptr, Float val);
@@ -234,18 +234,18 @@ typedef struct mus_any_class {
   off_t (*set_ramp)(mus_any *ptr, off_t new_length);
   Float (*read_sample)(mus_any *ptr, off_t samp, int chan);
   Float (*write_sample)(mus_any *ptr, off_t samp, int chan, Float data);
-  char* (*file_name)(mus_any *ptr);
+  char *(*file_name)(mus_any *ptr);
   int (*end)(mus_any *ptr);
   off_t (*location)(mus_any *ptr);
   off_t (*set_location)(mus_any *ptr, off_t loc);
   int (*channel)(mus_any *ptr);
   Float (*ycoeff)(mus_any *ptr, int index);
   Float (*set_ycoeff)(mus_any *ptr, int index, Float val);
-  Float* (*xcoeffs)(mus_any *ptr);
-  Float* (*ycoeffs)(mus_any *ptr);
+  Float *(*xcoeffs)(mus_any *ptr);
+  Float *(*ycoeffs)(mus_any *ptr);
   void *unused;
   void (*reset)(mus_any *ptr);
-  void* (*set_closure)(mus_any *gen, void *e);
+  void *(*set_closure)(mus_any *gen, void *e);
 } mus_any_class;
 
 typedef enum {MUS_INTERP_NONE, MUS_INTERP_LINEAR, MUS_INTERP_SINUSOIDAL, MUS_INTERP_ALL_PASS, 

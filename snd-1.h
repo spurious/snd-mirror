@@ -661,7 +661,7 @@ void color_dialog_help(void);
 void orientation_dialog_help(void);
 void envelope_editor_dialog_help(void);
 void region_dialog_help(void);
-void raw_data_dialog_help(char *info);
+void raw_data_dialog_help(const char *info);
 void new_file_dialog_help(void);
 void edit_header_dialog_help(void);
 void print_dialog_help(void);
@@ -687,8 +687,8 @@ void resample_help(void);
 void filter_help(void);
 void insert_help(void);
 void delete_help(void);
-void name_to_html_viewer(char *red_text);
-void url_to_html_viewer(char *url);
+void name_to_html_viewer(const char *red_text);
+void url_to_html_viewer(const char *url);
 bool snd_topic_help(const char *topic);
 char **help_name_to_xrefs(const char *name);
 
@@ -786,7 +786,7 @@ void ps_set_bold_peak_numbers_font(void);
 void ps_set_peak_numbers_font(void);
 void ps_set_tiny_numbers_font(void);
 bool snd_print(const char *output);
-void region_print(const char *output, const char* title, chan_info *cp);
+void region_print(const char *output, const char *title, chan_info *cp);
 void print_enved(const char *output, int y0);
 void g_init_print(void);
 
@@ -1366,7 +1366,7 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
 void amp_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func);
 void amp_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t num, int pos, XEN init_func);
 void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos);
-snd_info *snd_new_file(char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples);
+snd_info *snd_new_file(const char *newname, int header_type, int data_format, int srate, int chans, const char *new_comment, off_t samples);
 #if XEN_HAVE_RATIOS
   void snd_rationalize(Float a, int *num, int *den);
 #endif
@@ -1534,9 +1534,9 @@ mix_context *make_mix_context(chan_info *cp);
 mix_context *free_mix_context(mix_context *ms);
 void free_mix_list(chan_info *cp);
 void free_mixes(chan_info *cp);
-int mix_complete_file(snd_info *sp, off_t beg, char *fullname, bool with_tag, file_delete_t auto_delete, int track_id, bool all_chans);
-int mix_complete_file_at_cursor(snd_info *sp, char *str, bool with_tag, int track_id);
-int mix_file(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int track_id);
+int mix_complete_file(snd_info *sp, off_t beg, const char *fullname, bool with_tag, file_delete_t auto_delete, int track_id, bool all_chans);
+int mix_complete_file_at_cursor(snd_info *sp, const char *str, bool with_tag, int track_id);
+int mix_file(off_t beg, off_t num, int chans, chan_info **cps, const char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int track_id);
 void backup_mix_list(chan_info *cp, int edit_ctr);
 bool active_mix_p(chan_info *cp);
 off_t mix_beg(chan_info *cp);

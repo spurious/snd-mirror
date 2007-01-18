@@ -2190,8 +2190,8 @@ and replaces it with the spectrum given in coeffs"
 	     :frequency frequency 
 	     :eps (* 2.0 (sin (/ (* pi frequency) (mus-srate))))))
 
-(define* (mfilter m :optional (x-input 0.0) (y-input 0.0))
-  ;; assume the "b1" business is handled by the caller
+(define (mfilter-1 m x-input y-input)
+  ;; no optional args, for 'run'
   (let* ((xn1 (+ x-input
 		 (* (mflt-decay m) (- (mflt-xn m) 
 				      (* (mflt-eps m) (mflt-yn m))))))
@@ -2200,6 +2200,10 @@ and replaces it with the spectrum given in coeffs"
     (set! (mflt-xn m) xn1)
     (set! (mflt-yn m) yn1)
     yn1))
+
+(define* (mfilter m :optional (x-input 0.0) (y-input 0.0))
+  ;; assume the "b1" business is handled by the caller
+  (mfilter-1 m x-input y-input))
 
 #|
 (with-sound () 

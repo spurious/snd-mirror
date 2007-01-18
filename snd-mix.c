@@ -1105,7 +1105,7 @@ static void gather_as_built(mix_info *md, mix_state *cs)
   cs->as_built = ms;
 }
 
-static mix_info *add_mix(chan_info *cp, int chan, off_t beg, off_t num, char *full_original_file, int input_chans, file_delete_t auto_delete)
+static mix_info *add_mix(chan_info *cp, int chan, off_t beg, off_t num, const char *full_original_file, int input_chans, file_delete_t auto_delete)
 { 
   mix_info *md;
   mix_state *cs;
@@ -1129,7 +1129,7 @@ static mix_info *add_mix(chan_info *cp, int chan, off_t beg, off_t num, char *fu
   return(md);
 }
 
-static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info *cp, int chan, 
+static mix_info *file_mix_samples(off_t beg, off_t num, const char *mixfile, chan_info *cp, int chan, 
 				  file_delete_t auto_delete, const char *origin, bool with_tag, 
 				  int track_id, bool redisplay)
 {
@@ -1280,7 +1280,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
  *                     a notion of initial scalers
  */
 
-int mix_file(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int track_id)
+int mix_file(off_t beg, off_t num, int chans, chan_info **cps, const char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int track_id)
 {
   /* loop through out_chans cps writing the new mixed temp files and fixing up the edit trees */
   int id = MIX_FILE_NO_MIX, in_chans;
@@ -1345,7 +1345,7 @@ typedef struct {
   off_t beg, len;
   int chans, track_id;
   chan_info **cps;
-  char *fullname;
+  const char *fullname;
   bool with_tag;
   file_delete_t auto_delete;
   sync_info *si;
@@ -1376,7 +1376,7 @@ static void after_mix_file(void *context)
 }
 #endif
 
-int mix_complete_file(snd_info *sp, off_t beg, char *fullname, bool with_tag, file_delete_t auto_delete, int track_id, bool all_chans)
+int mix_complete_file(snd_info *sp, off_t beg, const char *fullname, bool with_tag, file_delete_t auto_delete, int track_id, bool all_chans)
 {
   /* no need to save as temp here, but we do need sync info (from menu and keyboard) */
   /* returns -1 if with_tag is false, -2 if no such file */
@@ -1442,7 +1442,7 @@ int mix_complete_file(snd_info *sp, off_t beg, char *fullname, bool with_tag, fi
   return(id);
 }
 
-int mix_complete_file_at_cursor(snd_info *sp, char *str, bool with_tag, int track_id)
+int mix_complete_file_at_cursor(snd_info *sp, const char *str, bool with_tag, int track_id)
 {
   if ((sp) && (str) && (*str))
     {
@@ -2257,7 +2257,7 @@ static void draw_mix_tag(mix_info *md)
   chan_info *cp;
   int width, height;
   axis_context *ax;
-  char* lab = NULL;
+  char *lab = NULL;
 
 #if USE_MOTIF
   #define STRING_Y_OFFSET 3

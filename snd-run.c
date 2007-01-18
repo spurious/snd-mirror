@@ -390,7 +390,7 @@ static void init_type_names(void)
     type_names[i] = basic_type_names[i];
 }
 
-static char* type_name(int id) {if ((id >= R_UNSPECIFIED) && (id <= last_type)) return(type_names[id]); return("unknown");}
+static char *type_name(int id) {if ((id >= R_UNSPECIFIED) && (id <= last_type)) return(type_names[id]); return("unknown");}
 
 static int add_new_type(const char *new_type)
 {

@@ -11024,7 +11024,7 @@ This is the order of the envelope editor's FIR filter (the default is 40).
 <!-- enved-in-dB -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="envedin-dB">enved-in-dB</a> ()</code>
 </td></tr><tr><td></td><td>
-This reflects the state of the envelope editor 'dB' button.
+This reflects the state of the envelope editor 'dB' button (it defaults to #f).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -11192,7 +11192,11 @@ This is the listener font.
 <!-- listener-prompt -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="listenerprompt">listener-prompt</a> ()</code>
 </td></tr><tr><td></td><td>
-This is the listener prompt which defaults to "&gt;".
+This is the listener prompt which defaults to "&gt;".  I like ":" better (as you can see in many of the examples in this file),
+so in ~/.snd_guile I have this line:
+<pre>
+    (set! (listener-prompt) ":")
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -11528,7 +11532,7 @@ starts the File:Save as dialog (to save the currently selected sound), returning
 <!-- show-listener -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="showlistener">show-listener</a> ()</code>
 </td></tr><tr><td></td><td>
-If #t, this opens the listener pane, else closes it.  For backwards compatibility, if called outside set!, show-listener opens the pane.
+If show-listener is set to #t, it opens the listener pane; otherwise it closes the listener.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -11684,7 +11688,13 @@ This is the list of selected files (a list of strings) in a View:Files dialog.
 <!-- view-files-sort -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="viewfilessort">view-files-sort</a> (:optional dialog)</code>
 </td></tr><tr><td></td><td>
-This is the sort function choice in a View:Files dialog.
+This is the sort function choice in a View:Files dialog.  Initially there are 6 sort choices: a..z, z..a (sort by file name),
+new..old, old..new (sort by file write date), and small..big, big..small (sort by file size).  The default is 0 (a..z).
+If you set view-files-sort without giving the dialog argument, it just affects the startup state of subsequent new View:Files
+dialogs.  To set the sort choice in the current dialog:
+<pre>
+  (set! (view-files-sort (list-ref (dialog-widgets) 8)) 2) ; 2=new..old
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

@@ -2089,11 +2089,12 @@ fi
 # export-dynamic
 #--------------------------------------------------------------------------------
 
+ORIGINAL_LDFLAGS="$LDFLAGS"
+
 if test "$with_snd_as_widget" != yes ; then
   if test "$ac_cv_header_dlfcn_h" = yes ; then
     if test "$with_gnu_ld" = yes ; then
       LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
-      AC_SUBST(LDFLAGS)
       # I think this really should be CFLAGS since it's assuming it's passed to gcc, not ld, but
       #   that ends up generating endless dumb warnings in gcc
     fi
@@ -2113,6 +2114,8 @@ if test "$ac_snd_have_extension_language" = no ; then
 fi
 
 AC_SUBST(CFLAGS)
+AC_SUBST(ORIGINAL_LDFLAGS)
+AC_SUBST(LDFLAGS)
 AC_SUBST(MAKE_TARGET)
 AC_OUTPUT
 

@@ -42,7 +42,7 @@
   #endif
 #endif
 
-static char* tmpstr = NULL; /* easier to handle this way than with dynamic winds and so on */
+static char *tmpstr = NULL; /* easier to handle this way than with dynamic winds and so on */
 static char *local_mus_expand_filename(char *name)
 {
   if (tmpstr) {FREE(tmpstr); tmpstr = NULL;}
@@ -1861,6 +1861,8 @@ copies sound-data sd-in's data from 0 for 'frames' frames into 'sd-out' starting
   if (beg >= cycle) beg = 0;
   if (cycle > olen) cycle = olen;
   chans = sdo->chans;
+  if (chans > sdi->chans)
+    chans = sdi->chans;
   if ((beg + len) < cycle)
     {
       for (i = 0; i < chans; i++)

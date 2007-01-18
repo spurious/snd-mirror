@@ -82,7 +82,7 @@ static char *sndlib_consistency_check(void)
   return(NULL);
 }
 
-static char* vstrcat(char *arg1, ...)
+static char *vstrcat(char *arg1, ...)
 {
   char *buf;
   va_list ap;
@@ -2711,7 +2711,7 @@ static char *raw_urls[7] = {
 };
 
 
-void raw_data_dialog_help(char *info)
+void raw_data_dialog_help(const char *info)
 {
   if (info)
     {
@@ -3758,7 +3758,7 @@ static char *html_directory(void)
   return(NULL);
 }
 
-void url_to_html_viewer(char *url)
+void url_to_html_viewer(const char *url)
 {
   char *dir_path;
   dir_path = html_directory();
@@ -3791,7 +3791,7 @@ void url_to_html_viewer(char *url)
 }
 
 
-void name_to_html_viewer(char *red_text)
+void name_to_html_viewer(const char *red_text)
 {
   char *url;
   url = snd_url(red_text);

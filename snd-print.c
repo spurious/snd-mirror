@@ -520,7 +520,7 @@ bool snd_print(const char *output)
   return(true);
 }
 
-void region_print(const char *output, const char* title, chan_info *cp)
+void region_print(const char *output, const char *title, chan_info *cp)
 {
   if ((output) && (*output))
     {

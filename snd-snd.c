@@ -27,7 +27,7 @@ snd_info *get_sp(XEN x_snd_n, sp_sound_t accept_player)
 }
 
 
-snd_info *snd_new_file(char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples)
+snd_info *snd_new_file(const char *newname, int header_type, int data_format, int srate, int chans, const char *new_comment, off_t samples)
 {
   /* caller checks newname != null, and runs overwrite hook */
   if (mus_header_writable(header_type, data_format))
@@ -51,7 +51,7 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
 	  size = chans * mus_samples_to_bytes(data_format, samples);
 	  if (size > 0)
 	    {
-	      unsigned char* buf = NULL;
+	      unsigned char *buf = NULL;
 	      buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
 	      bytes = write(chan, buf, size);
 	      if (bytes == 0)
@@ -3712,7 +3712,7 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   size = ch * mus_samples_to_bytes(df, len);
   if (size > 0)
     {
-      unsigned char* buf;
+      unsigned char *buf;
       buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
       if (write(chan, buf, size) != size) fprintf(stderr, "new-sound %s write error", str);
       FREE(buf);
