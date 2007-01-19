@@ -1854,9 +1854,8 @@ copies sound-data sd-in's data from 0 for 'frames' frames into 'sd-out' starting
   if ((len < 0) || (len > ilen))
     XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_to_sound_data),
-			 C_TO_XEN_STRING((len < 0) ? "frames: ~A < 0" : "frames: ~A > input sound-data length: ~A"),
-			 XEN_LIST_2(frames, 
-				    C_TO_XEN_INT(ilen))));
+			 C_TO_XEN_STRING("frames: ~A?"),
+			 XEN_LIST_1(frames)));
   cycle = XEN_TO_C_INT(cycle_length);
   if (beg >= cycle) beg = 0;
   if (cycle > olen) cycle = olen;

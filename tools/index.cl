@@ -437,23 +437,23 @@
 	(incf n g))
       (setf tnames (sort tnames #'string-lessp-but-no-star :key #'ind-sortby))
 
-      (loop for i from 1 below n do
-	(if (string= (ind-sortby (aref tnames i)) (ind-sortby (aref tnames (1- i))))
-	    (let ((clm-case (if (string= (my-subseq (ind-name (aref tnames i)) 9 12) "clm")
-				i
-			      (if (string= (my-subseq (ind-name (aref tnames (1- i))) 9 12) "clm")
-				  (1- i)
-				nil))))
-	      (format t "duplicates: ~A (~A ~A)~%"
-		      (ind-sortby (aref tnames i))
-		      (ind-name (aref tnames (1- i)))
-		      (ind-name (aref tnames i)))
-	      (if clm-case
-		  (let ((curname (ind-name (aref tnames clm-case))))
-		    (setf (ind-name (aref tnames clm-case))
-			  (concatenate 'string
-				       (my-subseq curname 0 (- (length curname) 4))
-				       " (clm)</a>")))))))
+;      (loop for i from 1 below n do
+;	(if (string= (ind-sortby (aref tnames i)) (ind-sortby (aref tnames (1- i))))
+;	    (let ((clm-case (if (string= (my-subseq (ind-name (aref tnames i)) 9 12) "clm")
+;				i
+;			      (if (string= (my-subseq (ind-name (aref tnames (1- i))) 9 12) "clm")
+;				  (1- i)
+;				nil))))
+;	      (format t "duplicates: ~A (~A ~A)~%"
+;		      (ind-sortby (aref tnames i))
+;		      (ind-name (aref tnames (1- i)))
+;		      (ind-name (aref tnames i)))
+;	      (if clm-case
+;		  (let ((curname (ind-name (aref tnames clm-case))))
+;		    (setf (ind-name (aref tnames clm-case))
+;			  (concatenate 'string
+;				       (my-subseq curname 0 (- (length curname) 4))
+;				       " (clm)</a>")))))))
 		    
       (with-open-file (ofil output :direction :output :if-exists :supersede :if-does-not-exist :create)
 	(format ofil "<html>

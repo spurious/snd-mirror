@@ -1045,9 +1045,12 @@ static off_t sum_of_cosines_cosines(mus_any *ptr) {return(((cosp *)ptr)->cosines
 static off_t set_sum_of_cosines_cosines(mus_any *ptr, off_t val) 
 {
   cosp *gen = (cosp *)ptr;
-  gen->cosines = (int)val;
-  gen->cos5 = val + 0.5;
-  gen->scaler = 1.0 / (Float)val; 
+  if (val > 0)
+    {
+      gen->cosines = (int)val;
+      gen->cos5 = val + 0.5;
+      gen->scaler = 1.0 / (Float)val; 
+    }
   return(val);
 }
 
@@ -7193,7 +7196,8 @@ static off_t grn_length(mus_any *ptr) {return(((grn_info *)ptr)->grain_len);}
 static off_t grn_set_length(mus_any *ptr, off_t val) 
 {
   grn_info *gen = ((grn_info *)ptr);
-  if ((val > 0) && (val < gen->out_data_len)) gen->grain_len = (int)val; /* larger -> segfault */
+  if ((val > 0) && (val < gen->out_data_len)) 
+    gen->grain_len = (int)val;                /* larger -> segfault */
   return(gen->grain_len);
 }
 static Float grn_scaler(mus_any *ptr) {return(((grn_info *)ptr)->amp);}
@@ -7205,11 +7209,16 @@ static Float grn_set_frequency(mus_any *ptr, Float val) {((grn_info *)ptr)->outp
 static void *grn_closure(mus_any *rd) {return(((grn_info *)rd)->closure);}
 static void *grn_set_closure(mus_any *rd, void *e) {((grn_info *)rd)->closure = e; return(e);}
 
-static Float grn_increment(mus_any *rd) {return(((Float)(((grn_info *)rd)->output_hop)) / ((Float)((grn_info *)rd)->input_hop));}
-static Float grn_set_increment(mus_any *rd, Float val) 
+static Float grn_increment(mus_any *ptr) 
 {
+  grn_info *gen = ((grn_info *)ptr);
+  return(((Float)(gen->output_hop)) / ((Float)(gen->input_hop)));
+}
+static Float grn_set_increment(mus_any *ptr, Float val) 
+{
+  grn_info *gen = ((grn_info *)ptr);
   if (val != 0.0) 
-    ((grn_info *)rd)->input_hop = (int)(((grn_info *)rd)->output_hop / val); 
+    gen->input_hop = (int)(gen->output_hop / val); 
   return(val);
 }
 

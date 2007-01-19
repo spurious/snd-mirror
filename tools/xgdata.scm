@@ -6195,5 +6195,13 @@
 ;(CFNC-210 "gpointer g_value_get_pointer GValue* value" 'const)
 ;(CFNC-210 "gchar* g_value_get_string GValue* value" 'const)
 
-;;; pango 1-15.0
+;;; pango 1.15.0
 ;;; (CINT-2108 "PANGO_FONT_MASK_GRAVITY")
+
+;;; pango 1.15.4:
+;;; (CINT-2108 "PANGO_ATTR_ABSOLUTE_SIZE" "PangoAttrType")
+;;; (CINT-2108 "PANGO_ATTR_GRAVITY" "PangoAttrType")
+;;; (CINT-2108 "PANGO_ATTR_GRAVITY_HINT" "PangoAttrType")
+;;; + gboolean       pango_layout_is_wrapped           (PangoLayout                *layout);
+;;; + gboolean           pango_layout_is_ellipsized (PangoLayout        *layout);
+

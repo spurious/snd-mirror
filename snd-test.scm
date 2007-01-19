@@ -9,28 +9,28 @@
 ;;;  test 6: vcts                               [12539]
 ;;;  test 7: colors                             [12814]
 ;;;  test 8: clm                                [13304]
-;;;  test 9: mix                                [22946]
-;;;  test 10: marks                             [26518]
-;;;  test 11: dialogs                           [27495]
-;;;  test 12: extensions                        [27760]
-;;;  test 13: menus, edit lists, hooks, etc     [28056]
-;;;  test 14: all together now                  [29773]
-;;;  test 15: chan-local vars                   [30810]
-;;;  test 16: regularized funcs                 [32267]
-;;;  test 17: dialogs and graphics              [36683]
-;;;  test 18: enved                             [36772]
-;;;  test 19: save and restore                  [36791]
-;;;  test 20: transforms                        [38700]
-;;;  test 21: new stuff                         [40532]
-;;;  test 22: run                               [42571]
-;;;  test 23: with-sound                        [48361]
-;;;  test 24: user-interface                    [50826]
-;;;  test 25: X/Xt/Xm                           [54448]
-;;;  test 26: Gtk                               [59030]
-;;;  test 27: GL                                [63146]
-;;;  test 28: errors                            [63270]
-;;;  test all done                              [65561]
-;;;  test the end                               [65794]
+;;;  test 9: mix                                [22972]
+;;;  test 10: marks                             [26544]
+;;;  test 11: dialogs                           [27521]
+;;;  test 12: extensions                        [27786]
+;;;  test 13: menus, edit lists, hooks, etc     [28082]
+;;;  test 14: all together now                  [29799]
+;;;  test 15: chan-local vars                   [30836]
+;;;  test 16: regularized funcs                 [32293]
+;;;  test 17: dialogs and graphics              [36709]
+;;;  test 18: enved                             [36798]
+;;;  test 19: save and restore                  [36817]
+;;;  test 20: transforms                        [38726]
+;;;  test 21: new stuff                         [40558]
+;;;  test 22: run                               [42599]
+;;;  test 23: with-sound                        [48389]
+;;;  test 24: user-interface                    [50854]
+;;;  test 25: X/Xt/Xm                           [54476]
+;;;  test 26: Gtk                               [59058]
+;;;  test 27: GL                                [63174]
+;;;  test 28: errors                            [63298]
+;;;  test all done                              [65590]
+;;;  test the end                               [65823]
 
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
@@ -400,8 +400,7 @@
 			      (vector-set! timings n (real-time))
 			      (snd-display ";test ~D" n)
 			      (gc)(gc)
-			      (set! (show-backtrace) #f)
-					;(snd-display (gc-stats))
+			      (set! (show-backtrace) #t) ; #f??
 					;(if (file-exists? "memlog")
 					;	 (system (format #f "cp memlog memlog.~D" (1- n))))
 			      ))
@@ -20990,6 +20989,8 @@ EDITS: 2
       (set! (mus-length gen) 3000) (if (not (= (mus-length gen) 3000)) (snd-display ";granulate set-length: ~A?" (mus-length gen)))
       (set! (mus-increment gen) 3.0)
       (if (> (abs (- (mus-increment gen) 3.0)) .01) (snd-display ";granulate set-increment: ~F?" (mus-increment gen)))
+      (set! (mus-increment gen) 0.0) ; should be a no-op
+      (if (> (abs (- (mus-increment gen) 3.0)) .01) (snd-display ";granulate set-increment 0.0: ~F?" (mus-increment gen)))
       (set! (mus-location gen) 1)
       (if (not (= (mus-location gen) 1)) (snd-display ";mus-location grn: ~A" (mus-location gen)))
       (set! (mus-frequency gen) .1)
@@ -22512,13 +22513,10 @@ EDITS: 2
 			  0.0 0.0))
 	  (generic-procs (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-channel mus-channels mus-cosines mus-data
 			       mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length
-			       mus-location mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
-			       mus-ycoeffs))
-	  (generic-names (list 'mus-a0 'mus-a1 'mus-a2 'mus-b1 'mus-b2 'mus-channel 
-			       'mus-channels 'mus-cosines 'mus-data
+			       mus-location mus-order mus-phase mus-ramp mus-scaler mus-xcoeffs mus-ycoeffs))
+	  (generic-names (list 'mus-a0 'mus-a1 'mus-a2 'mus-b1 'mus-b2 'mus-channel 'mus-channels 'mus-cosines 'mus-data
 			       'mus-feedback 'mus-feedforward 'mus-formant-radius 'mus-frequency 'mus-hop 'mus-increment 'mus-length
-			       'mus-location 'mus-order 'mus-phase 'mus-ramp 'mus-random 'mus-run 'mus-scaler 'mus-xcoeffs
-			       'mus-ycoeffs)))
+			       'mus-location 'mus-order 'mus-phase 'mus-ramp 'mus-scaler 'mus-xcoeffs 'mus-ycoeffs)))
       (for-each
        (lambda (make runp ques arg name)
 	 (let ((gen (make)))
@@ -22554,7 +22552,8 @@ EDITS: 2
 			       (not (eq? tag1 'mus-error))
 			       (not (eq? tag1 'out-of-range)))
 			  (snd-display ";~A set ~A ~A ~A -> ~A" name genname gen tag tag1))))))
-	    generic-procs generic-names)))
+	    generic-procs generic-names)
+	   (mus-reset gen)))
        make-procs run-procs ques-procs gen-args func-names)
       
       (let ((make-procs (list
@@ -22643,6 +22642,7 @@ EDITS: 2
 	    (for-each
 	     (lambda (make runp)
 	       (let ((gen (make)))
+		 ;; run args
 		 (for-each 
 		  (lambda (arg1)
 		    (catch #t (lambda () (runp gen arg1)) (lambda args (car args)))
@@ -22656,7 +22656,32 @@ EDITS: 2
 		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 			(lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 			'() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-			12345678901234567890 (log0) (nan)))))
+			12345678901234567890 (log0) (nan)))
+		 ;; generic args
+		 (for-each
+		  (lambda (func name)
+		    (catch #t
+			   (lambda ()
+			     (let ((default-value (func gen)))
+			       (for-each
+				(lambda (arg1)
+				  (catch #t
+					 (lambda ()
+					   (let ((old-val (func gen)))
+					     (set! (func gen) arg1)))
+					 (lambda args #f)))
+				(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) 3/4 'mus-error (sqrt -1.0)
+				      (lambda () #t) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
+				      '() '3 4 64 -64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
+				      12345678901234567890 (log0) (nan) (lambda (a) a)))
+			       (if (not (equal? (func gen) default-value))
+				   (catch #t
+					  (lambda ()
+					    (set! (func gen) default-value))
+					  (lambda args #f)))))
+			   (lambda args #f)))
+		  generic-procs generic-names)
+		 (mus-reset gen)))
 	     make-procs run-procs)
 	    
 	    (let ((new-wave (make-vct 1)))
@@ -65494,7 +65519,12 @@ EDITS: 1
 	(set! (print-length) 12)
 	(set! (mus-array-print-length) 12)
 	(set! (sound-file-extensions) exts)
-	
+	(set! car-main #f)
+	(set! cadr-main #f)
+	(set! a-hook #f)
+	(set! a-sound #f)
+	(set! vct-5 #f)
+
 	)))
 
 

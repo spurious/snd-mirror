@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Aug 08 23:27:50 CEST 2006
-\ Changed: Sat Dec 23 04:26:23 CET 2006
+\ Changed: Thu Jan 18 15:48:14 CET 2007
 
 \ Commentary:
 
@@ -98,7 +98,8 @@ require examp
 : reset-all-hooks ( -- )
   doc" Removes all Snd hook functions."
   snd-hooks each ( hook ) dup hook? if reset-hook! else drop then end-each
-  all-chans each { lst }
+  all-chans { chns }
+  chns each { lst }
     lst  car { snd }
     lst cadr { chn }
     snd chn edit-hook       dup hook? if reset-hook! else drop then
