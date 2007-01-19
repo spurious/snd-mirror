@@ -4802,9 +4802,9 @@ mus_any *mus_make_empty_frame(int chans)
   return((mus_any *)nf);
 }
 
-#if 0
 mus_any *mus_make_frame_with_data(int chans, Float *data)
 {
+  /* for CLM */
   mus_frame *nf;
   if (chans <= 0) return(NULL);
   nf = (mus_frame *)clm_calloc(1, sizeof(mus_frame), S_make_frame);
@@ -4814,7 +4814,6 @@ mus_any *mus_make_frame_with_data(int chans, Float *data)
   nf->data_allocated = false;
   return((mus_any *)nf);
 }
-#endif
 
 mus_any *mus_make_frame(int chans, ...)
 {
@@ -5038,9 +5037,9 @@ static mus_any_class MIXER_CLASS = {
   0
 };
 
-#if 0
 mus_any *mus_make_mixer_with_data(int chans, Float *data)
 {
+  /* for CLM */
   mus_mixer *nf;
   int i;
   if (chans <= 0) return(NULL);
@@ -5053,7 +5052,6 @@ mus_any *mus_make_mixer_with_data(int chans, Float *data)
   nf->data_allocated = false;
   return((mus_any *)nf);
 }
-#endif
 
 mus_any *mus_make_empty_mixer(int chans)
 {

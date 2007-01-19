@@ -684,6 +684,13 @@ void mus_clear_sinc_tables(void);
 void *mus_environ(mus_any *gen);
 void *mus_set_environ(mus_any *gen, void *e);
 
+
+/* used only in run.lisp */
+mus_any *mus_make_frame_with_data(int chans, Float *data);
+mus_any *mus_make_mixer_with_data(int chans, Float *data);
+
+
+
 #ifdef __cplusplus
 }
 #endif
