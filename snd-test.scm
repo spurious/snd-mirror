@@ -35,9 +35,9 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
-(define tests 1)
+(define tests 7)
 (define keep-going #f)
-(define all-args #f) ; extended testing
+(define all-args #t) ; extended testing
 (define test-at-random 0)
 ;;(show-ptree 1)
 
@@ -32139,6 +32139,42 @@ EDITS: 2
 		(snd-display ";envelope-interp .361 -> ~A?" (envelope-interp .1 '(0 0 1 1) .012))) 
 	    (if (fneq (envelope-interp .3 '(0 0 .5 1 1 0)) .6)
 		(snd-display ";envelope-interp .3 '(0 0 .5 1 1 0)) -> ~A" (envelope-interp .3 '(0 0 .5 1 1 0))))
+
+	    (if (fneq (envelope-interp .9 '(0 0 1 1)) 0.9) 
+		(snd-display ";envelope-interp .9 -> ~A?" (envelope-interp .9 '(0 0 1 1))))
+	    (if (fneq (envelope-interp .9 '(0 0 1 1) 32.0) 0.698) 
+		(snd-display ";envelope-interp .698 -> ~A?" (envelope-interp .9 '(0 0 1 1) 32.0)))
+	    (if (fneq (envelope-interp .9 '(0 0 1 1) .012) 0.993) 
+		(snd-display ";envelope-interp .993 -> ~A?" (envelope-interp .9 '(0 0 1 1) .012))) 
+
+	    (if (fneq (envelope-interp 1.1 '(0 0 1 0 2 1)) 0.1) 
+		(snd-display ";envelope-interp .1 (2) -> ~A?" (envelope-interp 1.1 '(0 0 1 0 2 1))))
+	    (if (fneq (envelope-interp 1.1 '(0 0 1 0 2 1) 32.0) 0.01336172) 
+		(snd-display ";envelope-interp .013 (2) -> ~A?" (envelope-interp 1.1 '(0 0 1 0 2 1) 32.0)))
+	    (if (fneq (envelope-interp 1.1 '(0 0 1 0 2 1) .012) 0.36177473) 
+		(snd-display ";envelope-interp .361 (2) -> ~A?" (envelope-interp 1.1 '(0 0 1 0 2 1) .012))) 
+
+	    (if (fneq (envelope-interp 1.9 '(0 0 1 0 2 1)) 0.9) 
+		(snd-display ";envelope-interp .9 (2) -> ~A?" (envelope-interp 1.9 '(0 0 1 0 2 1))))
+	    (if (fneq (envelope-interp 1.9 '(0 0 1 0 2 1) 32.0) 0.698) 
+		(snd-display ";envelope-interp .698 (2) -> ~A?" (envelope-interp 1.9 '(0 0 1 0 2 1) 32.0)))
+	    (if (fneq (envelope-interp 1.9 '(0 0 1 0 2 1) .012) 0.993) 
+		(snd-display ";envelope-interp .993 (2) -> ~A?" (envelope-interp 1.9 '(0 0 1 0 2 1) .012))) 
+
+	    (if (fneq (envelope-interp 1.1 '(0 0 0.5 1 1 0 2 1)) 0.1) 
+		(snd-display ";envelope-interp .1 (3) -> ~A?" (envelope-interp 1.1 '(0 0 0.5 1 1 0 2 1))))
+	    (if (fneq (envelope-interp 1.1 '(0 0 0.5 1 1 0 2 1) 32.0) 0.01336172) 
+		(snd-display ";envelope-interp .013 (3) -> ~A?" (envelope-interp 1.1 '(0 0 0.5 1 1 0 2 1) 32.0)))
+	    (if (fneq (envelope-interp 1.1 '(0 0 0.5 1 1 0 2 1) .012) 0.36177473) 
+		(snd-display ";envelope-interp .361 (3) -> ~A?" (envelope-interp 1.1 '(0 0 0.5 1 1 0 2 1) .012))) 
+
+	    (if (fneq (envelope-interp 1.9 '(0 0 0.5 1 1 0 2 1)) 0.9) 
+		(snd-display ";envelope-interp .9 (3) -> ~A?" (envelope-interp 1.9 '(0 0 0.5 1 1 0 2 1))))
+	    (if (fneq (envelope-interp 1.9 '(0 0 0.5 1 1 0 2 1) 32.0) 0.698) 
+		(snd-display ";envelope-interp .698 (3) -> ~A?" (envelope-interp 1.9 '(0 0 0.5 1 1 0 2 1) 32.0)))
+	    (if (fneq (envelope-interp 1.9 '(0 0 0.5 1 1 0 2 1) .012) 0.993) 
+		(snd-display ";envelope-interp .993 (3) -> ~A?" (envelope-interp 1.9 '(0 0 0.5 1 1 0 2 1) .012))) 
+
 	    (if (not (feql (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) (list 1.0 0.2 3.0 0.6))) 
 		(snd-display ";window-envelope: ~A?" (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0))))
 	    (if (not (feql (multiply-envelopes '(0 0 1 1) '(0 0 1 1 2 0)) (list 0 0 0.5 0.5 1 0))) 
@@ -38341,7 +38377,8 @@ EDITS: 1
 	
 	
 	;; ---- *.scm
-	(if (or (not (list? (procedure-source (lambda () (+ 1 2)))))
+	(if (or (provided? 'snd-gauche)
+		(not (list? (procedure-source (lambda () (+ 1 2)))))
 		(eq? (car (procedure-source (lambda () (+ 1 2)))) '%internal-eval))
 	    (snd-display ";skipping edit-list->function tests since procedure-source is useless")
 	    (begin

@@ -22,33 +22,29 @@
 
 ;;; -------- envelope-interp
 
-(define envelope-interp                      ;env is list of x y breakpoint pairs, interpolate at x returning y
-  (lambda args                          ;  (x env :optional (base 1.0)
-    "(envelope-interp x env :optional (base 1.0)) -> value of env at x; base controls connecting segment 
+(define* (envelope-interp x env :optional base)   ;env is list of x y breakpoint pairs, interpolate at x returning y
+  "(envelope-interp x env :optional (base 1.0)) -> value of env at x; base controls connecting segment 
 type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
-    (let ((x (car args))
-	  (env (cadr args))
-	  (base (if (null? (cddr args)) #f (caddr args))))
-      (cond ((null? env) 0.0)		;no data -- return 0.0
-	    ((or (<= x (car env))	;we're sitting on x val (or if < we blew it)
-		 (null? (cddr env)))	;or we're at the end of the list
-	     (cadr env))		;so return current y value
-	    ((> (caddr env) x)		;x <= next env x axis value
-	     (if (or (= (cadr env) (cadddr env))
-		     (and base (= base 0.0)))
-		 (cadr env)		;y1=y0, so just return y0 (avoid endless calculations below)
-		 (if (or (not base) (= base 1.0))
-		     (+ (cadr env)	;y0+(x-x0)*(y1-y0)/(x1-x0)
-			(* (- x (car env))
-			   (/ (- (cadddr env) (cadr env))
-			      (- (caddr env) (car env)))))
-		     (+ (cadr env)
-			(* (/ (- (cadddr env) (cadr env))
-			      (- base 1.0))
-			   (- (expt base (/ (- x (car env))
-					    (- (caddr env) (car env))))
-			      1.0))))))
-	    (else (envelope-interp x (cddr env))))))) ;go on looking for x segment
+  (cond ((null? env) 0.0)		;no data -- return 0.0
+	((or (<= x (car env))	        ;we're sitting on x val (or if < we blew it)
+	     (null? (cddr env)))	;or we're at the end of the list
+	 (cadr env))		        ;so return current y value
+	((> (caddr env) x)		;x <= next env x axis value
+	 (if (or (= (cadr env) (cadddr env))
+		 (and base (= base 0.0)))
+	     (cadr env)		;y1=y0, so just return y0 (avoid endless calculations below)
+	     (if (or (not base) (= base 1.0))
+		 (+ (cadr env)	;y0+(x-x0)*(y1-y0)/(x1-x0)
+		    (* (- x (car env))
+		       (/ (- (cadddr env) (cadr env))
+			  (- (caddr env) (car env)))))
+		 (+ (cadr env)
+		    (* (/ (- (cadddr env) (cadr env))
+			  (- base 1.0))
+		       (- (expt base (/ (- x (car env))
+					(- (caddr env) (car env))))
+			  1.0))))))
+	(else (envelope-interp x (cddr env) base)))) ;go on looking for x segment
 
 
 ;;; -------- window-envelope (a kinda brute-force translation from the CL version in env.lisp)
@@ -414,7 +410,8 @@ repetition to be in reverse."
 ;;; here's a simpler version that takes the breakpoint list, rather than the power-env structure:
 
 (define* (powenv-channel envelope :optional (beg 0) dur snd chn edpos)
-  ;; envelope with a separate base for each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))
+  "(powenv-channel envelope :optional (beg 0) dur snd chn edpos) returns an envelope with a separate base for \
+each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
   (let* ((curbeg beg)
 	 (fulldur (or dur (frames snd chn edpos)))
 	 (len (length envelope))
@@ -452,6 +449,7 @@ repetition to be in reverse."
 ;;; xgrid is how fine a solution to sample our new envelope with.
 
 (define* (envelope-exp e :optional (power 1.0) (xgrid 100))
+  "(envelope-exp e :optional (power 1.0) (xgrid 100)) approximates an exponential curve connecting the breakpoints"
   (let* ((mn (min-envelope e))
 	 (largest-diff (exact->inexact (- (max-envelope e) mn)))
 	 (x-min (car e))
@@ -475,6 +473,7 @@ repetition to be in reverse."
 ;;; rms-envelope
 
 (define* (rms-envelope file :key (beg 0.0) (dur #f) (rfreq 30.0) (db #f))
+  "(rms-envelope file :key (beg 0.0) (dur #f) (rfreq 30.0) (db #f)) returns an envelope of RMS values in 'file'"
   ;; based on rmsenv.ins by Bret Battey
   (let* ((e '())
 	 (incr (/ 1.0 rfreq))

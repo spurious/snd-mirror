@@ -76,7 +76,7 @@
 
 ;;; -------- local hook
 
-(define (list->hook hook lst)
+(define+ (list->hook hook lst)
   "(list->hook hook lst) resets 'hook', then adds each function in 'lst' to it"
   (define (list->hook-1 hook l)
     (if (not (null? l))
@@ -99,4 +99,5 @@
 ;;; -------- hook-member --------
 
 (define (hook-member value hook) 
+  "(hook-member value hook) returns non-#f if 'value' is a member of the hook's function list"
   (member value (hook->list hook)))

@@ -4,7 +4,7 @@ echo ' -------------------------------- basic configure test -------------------
 rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall"  '
-./configure --quiet CFLAGS="-Wall" 
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
 make allclean
 make
 echo ' '
@@ -26,15 +26,15 @@ make sndrecord
 # GUILE_CONFIG_path=/home/bil/test/bin 
 echo ' -------------------------------- basic configure test/bin -------------------------------- '
 make allclean
-echo ' CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin '
-./configure --quiet CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin
+echo ' CFLAGS="-Wall -I/usr/X11R6/include" GUILE_CONFIG_path=/home/bil/test/bin '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" GUILE_CONFIG_path=/home/bil/test/bin LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 ./snd --version
 ./snd -l snd-test 0
 make allclean
-echo ' CC=g++ CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin '
-./configure --quiet CC=g++ CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin
+echo ' CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" GUILE_CONFIG_path=/home/bil/test/bin '
+./configure --quiet CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" GUILE_CONFIG_path=/home/bil/test/bin LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 ./snd --version
@@ -45,7 +45,7 @@ echo ' -------------------------------- with-no-gui ----------------------------
 make allclean
 rm -f snd
 rm -f config.cache
-echo ' CFLAGS="-Wall" --with-no-gui '
+echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-no-gui '
 ./configure --quiet CFLAGS="-Wall" --with-no-gui
 make
 echo ' '
@@ -98,7 +98,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 echo ' --without-guile --without-ruby '
-./configure --quiet --without-guile --without-ruby
+./configure --quiet --without-guile --without-ruby CFLAGS="-I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
 make
 echo ' '
 echo ' '
@@ -119,8 +119,8 @@ echo ' -------------------------------- static gsl -----------------------------
 make allclean
 rm -f snd
 rm -f config.cache
-echo ' CFLAGS="-Wall" --with-static-gsl '
-./configure --quiet CFLAGS="-Wall" --with-static-gsl
+echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-static-gsl '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-static-gsl LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 echo ' '
@@ -137,8 +137,8 @@ rm -f config.cache
 rm -f makefile
 rm -f mus-config.h
 rm -f sndinfo
-echo ' CFLAGS="-Wall"  --with-doubles '
-./configure --quiet CFLAGS="-Wall"  --with-doubles
+echo ' CFLAGS="-Wall -I/usr/X11R6/include"  --with-doubles '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include"  --with-doubles LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 echo ' '
@@ -156,8 +156,8 @@ rm -f config.cache
 rm -f makefile
 rm -f mus-config.h
 rm -f sndinfo
-echo ' CFLAGS="-Wall"  --with-float-samples --without-ladspa --with-gl --with-modules --without-gsl --without-xpm '
-./configure --quiet CFLAGS="-Wall"  --with-float-samples --without-ladspa --with-gl --with-modules --without-gsl --without-xpm
+echo ' CFLAGS="-Wall -I/usr/X11R6/include"  --with-float-samples --without-ladspa --with-gl --with-modules --without-gsl --without-xpm '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include"  --with-float-samples --without-ladspa --with-gl --with-modules --without-gsl --without-xpm LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 echo ' '
@@ -174,8 +174,8 @@ rm -f config.cache
 rm -f makefile
 rm -f mus-config.h
 rm -f sndinfo
-echo ' CFLAGS="-Wall"  --with-float-samples --with-modules '
-./configure --quiet CFLAGS="-Wall"  --with-float-samples --with-modules
+echo ' CFLAGS="-Wall -I/usr/X11R6/include"  --with-float-samples --with-modules '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include"  --with-float-samples --with-modules LDFLAGS="-L/usr/X11R6/lib"
 make
 echo ' '
 echo ' '
@@ -193,8 +193,8 @@ rm -f config.cache
 rm -f makefile
 rm -f mus-config.h
 rm -f sndinfo
-echo ' CFLAGS="-Wall"  --with-sample-width=32 --with-just-gl --with-static-motif --without-fftw '
-./configure --quiet CFLAGS="-Wall"  --with-sample-width=32 --with-just-gl --with-static-motif --without-fftw
+echo ' CFLAGS="-Wall -I/usr/X11R6/include"  --with-sample-width=32 --with-just-gl --with-static-motif --without-fftw '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include"  --with-sample-width=32 --with-just-gl --with-static-motif --without-fftw LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 echo ' '
@@ -212,8 +212,8 @@ rm -f config.cache
 rm -f makefile
 rm -f mus-config.h
 rm -f sndinfo
-echo ' CFLAGS="-Wall"  --with-sample-width=28 '
-./configure --quiet CFLAGS="-Wall"  --with-sample-width=28
+echo ' CFLAGS="-Wall -I/usr/X11R6/include"  --with-sample-width=28 '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include"  --with-sample-width=28 LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 echo ' '
@@ -231,8 +231,8 @@ rm -f config.cache
 rm -f makefile
 rm -f mus-config.h
 rm -f sndinfo
-echo ' CFLAGS="-Wall"  --with-sample-width=16 '
-./configure --quiet CFLAGS="-Wall"  --with-sample-width=16
+echo ' CFLAGS="-Wall -I/usr/X11R6/include"  --with-sample-width=16 '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include"  --with-sample-width=16 LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 echo ' '
@@ -288,8 +288,8 @@ rm -f snd
 rm -f sndinfo
 rm -f audinfo
 rm -f config.cache
-echo ' CFLAGS="-Wall" --enable-snd-debug --with-gsl '
-./configure --quiet CFLAGS="-Wall" --enable-snd-debug --with-gsl
+echo ' CFLAGS="-Wall -I/usr/X11R6/include" --enable-snd-debug --with-gsl '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --enable-snd-debug --with-gsl LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 echo ' '
@@ -297,21 +297,21 @@ echo ' '
 ./snd --version
 ./snd -noinit -l snd-test 2
 make allclean
-echo ' CFLAGS="-Wall" --with-static-xm '
-./configure --quiet CFLAGS="-Wall" --with-static-xm
+echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-static-xm '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-static-xm LDFLAGS="-L/usr/X11R6/lib"
 make
 ./snd --version
 ./snd -l snd-test
 rm xm.o
 echo ' CC=g++ --with-static-xm '
-./configure --quiet CC=g++ --with-static-xm
+./configure --quiet CC=g++ --with-static-xm CFLAGS="-I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
 make xm
 ./snd --version
 ./snd -l snd-test 12
 
 make allclean
-echo ' CFLAGS="-Wall" --with-static-xm --without-xpm --without-xp '
-./configure --quiet CFLAGS="-Wall" --with-static-xm --without-xpm --without-xp
+echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-static-xm --without-xpm --without-xp '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-static-xm --without-xpm --without-xp LDFLAGS="-L/usr/X11R6/lib"
 make
 ./snd --version
 ./snd -l snd-test 8
@@ -323,8 +323,8 @@ echo ' -------------------------------- snd-as-widget test ---------------------
 make allclean
 rm -f snd
 rm -f config.cache
-echo ' CFLAGS="-Wall" --with-snd-as-widget '
-./configure --quiet CFLAGS="-Wall" --with-snd-as-widget --without-fam --without-gsl --disable-nls
+echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-snd-as-widget '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-snd-as-widget --without-fam --without-gsl --disable-nls LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 gcc -c saw.c -I. -g -O2 -I/usr/local/include -I/usr/X11R6/include -o saw.o
@@ -352,8 +352,8 @@ echo ' -------------------------------- ruby test (Motif) ----------------------
 make allclean
 rm -f snd
 rm -f config.cache
-echo ' CFLAGS="-Wall" --with-ruby '
-./configure --quiet CFLAGS="-Wall" --with-ruby
+echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 echo ' '
@@ -364,13 +364,13 @@ echo ' '
 ./snd --version
 # ./snd -noinit -l snd-test.rb -- libxm problem here stops entire sequence
 make allclean
-echo ' CC=g++ CFLAGS="-Wall" --with-ruby '
-./configure --quiet CC=g++ CFLAGS="-Wall" --with-ruby
+echo ' CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby '
+./configure --quiet CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 make allclean
-echo ' CFLAGS="-Wall" --with-ruby --with-static-xm --with-gl --enable-snd-debug '
-./configure --quiet CFLAGS="-Wall" --with-ruby --with-static-xm --with-gl --enable-snd-debug
+echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby --with-static-xm --with-gl --enable-snd-debug '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby --with-static-xm --with-gl --enable-snd-debug LDFLAGS="-L/usr/X11R6/lib"
 make
 echo ' '
 echo ' '
@@ -438,8 +438,8 @@ echo ' -------------------------------- g++ test -------------------------------
 make allclean
 rm -f snd
 rm -f config.cache
-echo ' CC=g++ CFLAGS="-Wall" '
-./configure --quiet CC=g++ CFLAGS="-Wall"
+echo ' CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" '
+./configure --quiet CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 make sndinfo
@@ -470,13 +470,13 @@ make
 ./snd -noinit -l snd-test 6
 make allclean
 echo ' CC=g++ --without-guile --without-ruby '
-./configure --quiet CC=g++ --without-guile --without-ruby
+./configure --quiet CC=g++ --without-guile --without-ruby CFLAGS="-I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 ./snd --version
 make allclean
 echo ' CC=g++ --with-static-xm --without-gsl '
-./configure --quiet CC=g++ --with-static-xm --without-gsl
+./configure --quiet CC=g++ --with-static-xm --without-gsl CFLAGS="-I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 ./snd --version
@@ -492,7 +492,7 @@ rm -f config.cache
 rm -f sndinfo
 rm -f audinfo
 echo ' CFLAGS="-Wall" '
-./configure --quiet CFLAGS="-Wall"
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
 make sndinfo
 ./sndinfo oboe.snd
 make audinfo
@@ -520,8 +520,8 @@ rm -f snd
 rm -f config.cache
 rm -f makefile
 rm -f mus-config.h
-echo ' CFLAGS="-Wall" --disable-nls '
-./configure --quiet CFLAGS="-Wall" --disable-nls
+echo ' CFLAGS="-Wall -I/usr/X11R6/include" --disable-nls '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --disable-nls LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 ./snd --version
@@ -546,7 +546,7 @@ make allclean
 echo ' '
 echo ' '
 echo ' CC=g++ --without-guile --without-ruby --disable-nls '
-./configure --quiet CC=g++ --without-guile --without-ruby --disable-nls
+./configure --quiet CC=g++ --without-guile --without-ruby --disable-nls CFLAGS="-I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 ./snd --version
@@ -554,27 +554,27 @@ make allclean
 echo ' '
 echo ' '
 echo ' CC=g++ --with-static-xm --disable-nls '
-./configure --quiet CC=g++ --with-static-xm --disable-nls
+./configure --quiet CC=g++ --with-static-xm --disable-nls CFLAGS="-I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
 make
 ./snd --version
 ./snd -e "(begin (display (+ 1 2 3)) (exit))"
 make allclean
 echo ' '
 echo ' '
-echo ' CFLAGS="-Wall" --with-ruby --disable-nls '
-./configure --quiet CFLAGS="-Wall" --with-ruby --disable-nls
+echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby --disable-nls '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby --disable-nls LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 ./snd --version
 make allclean
-echo ' --with-static-xm CFLAGS="-DXM_DISABLE_DEPRECATED -Wall" '
-./configure --quiet --with-static-xm CFLAGS="-DXM_DISABLE_DEPRECATED -Wall"
+echo ' --with-static-xm CFLAGS="-DXM_DISABLE_DEPRECATED -Wall -I/usr/X11R6/include" '
+./configure --quiet --with-static-xm CFLAGS="-DXM_DISABLE_DEPRECATED -Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
 ./snd --version
 ./snd -l snd-test 28
 make
 make allclean
-echo ' --with-static-xm --with-ruby CFLAGS="-DXM_DISABLE_DEPRECATED -Wall" '
-./configure --quiet --with-static-xm --with-ruby CFLAGS="-DXM_DISABLE_DEPRECATED -Wall"
+echo ' --with-static-xm --with-ruby CFLAGS="-DXM_DISABLE_DEPRECATED -Wall -I/usr/X11R6/include" '
+./configure --quiet --with-static-xm --with-ruby CFLAGS="-DXM_DISABLE_DEPRECATED -Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
 make
 make allclean
 
