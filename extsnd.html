@@ -10853,13 +10853,13 @@ channel-widgets returns a list of various widgets associated with a given channe
     0: graph                      ;drawing area for all 3 graphs (time, fft, lisp)
     1: w-button 
     2: f-button 
-    3: x-position 
-    4: y-position 
-    5: x-zoom 
-    6: y-zoom 
+    3: x-position slider
+    4: y-position slider
+    5: x-zoom slider
+    6: y-zoom slider
     7: edit history list 
-    8: right(united-chans) y-position 
-    9: right y-zoom
+    8: right(united-chans) y-position slider
+    9: right y-zoom slider
     10: main pane for channel
     ------ the rest only in Gtk+
     11..16: adjustment widgets associated with the zoom and position sliders
@@ -10932,7 +10932,7 @@ dialog-widgets returns a list of dialog widgets (or lists thereof, or #f if none
     0: View: Color dialog 
     1: View: Orientation dialog 
     2: Edit: EnvelopeEditor dialog 
-    3 and 4: unused
+       3 and 4: unused
     5: Options: Transform dialog 
     6: File: Open dialog 
     7: File: Save as dialog 
@@ -11224,7 +11224,11 @@ and click-for-listener-help (draw.scm).
 <!-- listener-text-color -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="listenertextcolor">listener-text-color</a> ()</code>
 </td></tr><tr><td></td><td>
-This is the text color in the listener.
+This is the text color in the listener.  For red text on a black background:
+<pre>
+    (set! (listener-color) (make-color 0 0 0)) ; in Gtk, maybe a bad idea -- the cursor remains black...
+    (set! (listener-text-color) (make-color 1 0 0))
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -12821,7 +12825,7 @@ are:</p>
     <td>main Snd color.</td></tr>
 <tr><td bgcolor="#f6f8ff"><code><a class=def name="cursorcolor">cursor-color</a></code></td>
     <td bgcolor="#f6f8ff"><code>red</code></td>
-    <td bgcolor="#f6f8ff">cursor color.</td></tr>
+    <td bgcolor="#f6f8ff">graph cursor color.</td></tr>
 <tr><td><code><a class=def name="datacolor">data-color</a></code></td>
     <td><code>black</code></td>
     <td>color of data in unselected graph.</td></tr>

@@ -2649,6 +2649,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 
 #|
 (define* (mark-clipping)
+  "(mark-clipping) adds a mark at a clipped portion"
   (let ((snd (or (selected-sound) 
 		 (and (not (null? (sounds))) 
 		      (car (sounds))))))

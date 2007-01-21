@@ -35,9 +35,9 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
-(define tests 7)
+(define tests 1)
 (define keep-going #f)
-(define all-args #t) ; extended testing
+(define all-args #f) ; extended testing
 (define test-at-random 0)
 ;;(show-ptree 1)
 
@@ -65410,7 +65410,25 @@ EDITS: 1
 				 0.0))))
 			  (lambda args (car args)))))
 	  (if (not (eq? tag 'no-such-channel)) (snd-display ";map-channel closing own chan: ~A" tag)))
-	
+
+#|
+;;; this will return a truncated (at the start) result, but I currently can't think of a
+;;;    reasonable way to disallow it.  We either need a before-undo-hook, or edit-hook that is
+;;;    local to the map-channel lambda (so that we can remove it before map-channel itself
+;;;    wants to edit, but adding/removing it on every call seems silly).
+
+	(let ((ind (open-sound "oboe.snd"))
+	      (ctr 0))
+	  (set! (sample 100) .5)
+	  (map-channel (lambda (y)
+			 (if (= ctr 0)
+			     (begin
+			       (revert-sound ind)
+			       (set! (sample 200) .6)))
+			 (set! ctr (1+ ctr))
+			 (* y 3))))
+|#	
+
 	(let ((ind1 (open-sound "oboe.snd"))
 	      (ind2 (open-sound "pistol.snd")))
 	  (as-one-edit

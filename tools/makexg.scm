@@ -1,4 +1,4 @@
-#!/usr/local/bin/guile -s
+#!/usr/bin/guile -s
 !#
 
 ;;; makexg.scm creates the gtk2/gdk/pango/glib bindings using xgdata.scm, writes xg.c
@@ -1530,7 +1530,7 @@
  (lambda (type)
    (let* ((len (string-length type))
 	  (dereftype (if (and (char=? (string-ref type (1- len)) #\*)
-			      (not (string=? type "char*")) ; these are surely strings
+			      (not (string=? type "char*")) ; these are surely strings (and set would need XEN_TO_C_gchar etc)
 			      (not (string=? type "gchar*")))
 			 (substring type 0 (1- len)) 
 			 #f)))

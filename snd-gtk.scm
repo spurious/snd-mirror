@@ -1340,3 +1340,40 @@ Reverb-feedback sets the scaler on the feedback.
 
 
 
+#|
+;;; this code changes the main window's cursor, based on some obsolete code in the gdk documentation
+;;;   unfortunately, it has no effect on the text widget's cursor
+
+(define* (istring :rest ints)
+  (apply string (map integer->char ints)))
+
+(define cursor-bits (istring
+  #x80 #x01 #x40 #x02 #x20 #x04 #x10 #x08 #x08 #x10 #x04 #x20
+  #x82 #x41 #x41 #x82 #x41 #x82 #x82 #x41 #x04 #x20 #x08 #x10
+  #x10 #x08 #x20 #x04 #x40 #x02 #x80 #x01))
+
+(define cursor-mask (istring
+  #x80 #x01 #xc0 #x03 #x60 #x06 #x30 #x0c #x18 #x18 #x8c #x31
+  #xc6 #x63 #x63 #xc6 #x63 #xc6 #xc6 #x63 #x8c #x31 #x18 #x18
+  #x30 #x0c #x60 #x06 #xc0 #x03 #x80 #x01))
+
+(define blue-pixel
+  (let ((tmp (GdkColor)))
+    (gdk_color_parse "blue" tmp)
+    (let ((col (gdk_color_copy tmp)))
+      (gdk_rgb_find_color (gdk_colormap_get_system) col)
+      col)))
+
+(define black-pixel
+  (let ((tmp (GdkColor)))
+    (gdk_color_parse "black" tmp)
+    (let ((col (gdk_color_copy tmp)))
+      (gdk_rgb_find_color (gdk_colormap_get_system) col)
+      col)))
+
+(let* ((listener-text (list-ref (main-widgets) 4))
+       (source (gdk_bitmap_create_from_data (GDK_DRAWABLE (car (main-widgets))) cursor-bits 16 16))
+       (mask (gdk_bitmap_create_from_data (GDK_DRAWABLE (car (main-widgets))) cursor-mask 16 16))
+       (new-cursor (gdk_cursor_new_from_pixmap (GDK_PIXMAP source) (GDK_PIXMAP mask) blue-pixel black-pixel 8 8)))
+  (gdk_window_set_cursor (car (main-widgets)) new-cursor))
+|#
