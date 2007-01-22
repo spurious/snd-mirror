@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Tue Jan 09 04:18:59 CET 2007
+\ Changed: Sat Jan 20 04:20:14 CET 2007
 
 \ Commentary:
 \
@@ -882,18 +882,15 @@ previous
 : fft-env-interp <{ env1 env2 interp :optional snd #f chn #f -- vct }>
   doc" Interpolates between two fft-filtered versions (ENV1 and ENV2 are the spectral envelopes) \
 following interp (an env between 0 and 1)."
-  \ FIXME: gc problems
-  env1 snd chn fft-env-data gc-protect { data1 }
-  env2 snd chn fft-env-data gc-protect { data2 }
+  env1 snd chn fft-env-data { data1 }
+  env2 snd chn fft-env-data { data2 }
   snd chn #f frames { len }
   :envelope interp :end len 1- make-env { e }
   $" %s %s %s %s" '( env1 env2 interp get-func-name ) string-format { origin }
   len 0.0 make-vct map!
     e env { pan }
-    1.0 pan f-  data1 i vct-ref f*  data2 i vct-ref pan f*  f+
+    1.0 pan f- data1 i vct-ref f* data2 i vct-ref pan f*  f+
   end-map ( new-data ) 0 len 1- snd chn #f origin vct->channel
-  data1 gc-unprotect drop
-  data2 gc-unprotect drop
 ;
 
 : filter-fft <{ flt :optional normalize #t snd #f chn #f -- val }>

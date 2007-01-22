@@ -554,16 +554,22 @@ static prefs_info *prefs_row_with_two_toggles(const char *label, const char *var
 
 static GtkWidget *make_row_text(prefs_info *prf, const char *text_value, int cols, GtkWidget *box)
 {
+  int len;
   GtkWidget *w;
   GtkSettings *settings;
   ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
-
+  len = snd_strlen(text_value);
   w = gtk_entry_new();
   gtk_entry_set_has_frame(GTK_ENTRY(w), true);
   if (text_value) sg_entry_set_text(GTK_ENTRY(w), text_value);
   gtk_entry_set_has_frame(GTK_ENTRY(w), false);
   if (cols > 0)
     gtk_entry_set_width_chars(GTK_ENTRY(w), cols);
+  else
+    {
+      if (len > 24) /* sigh... */
+	gtk_entry_set_width_chars(GTK_ENTRY(w), len);
+    }
   gtk_editable_set_editable(GTK_EDITABLE(w), true);
   settings = gtk_widget_get_settings(w);
   g_object_set(settings, "gtk-entry-select-on-focus", false, NULL);

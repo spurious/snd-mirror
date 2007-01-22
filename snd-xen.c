@@ -2477,6 +2477,10 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_ladspa_to_snd();
 #endif
 
+#ifdef SCRIPTS_DIR
+  XEN_ADD_TO_LOAD_PATH(SCRIPTS_DIR);
+#endif
+
   {
     char *pwd;
     pwd = mus_getcwd();

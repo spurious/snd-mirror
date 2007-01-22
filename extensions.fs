@@ -3,14 +3,13 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Tue Jan 09 05:47:43 CET 2007
+\ Changed: Mon Jan 22 02:50:04 CET 2007
 
 \ Commentary:
 \
 \ With comments and doc strings from extensions.scm.
 \
 \ Snd-7 compatibility
-\ 
 \ color-map constants
 \ mus-a0, set-mus-a0, etc
 \ back-or-forth-graph 		  ( count -- lst )
@@ -24,6 +23,12 @@
 \ backward-mark       		  ( count snd chn -- mk )
 \ mus-bank            		  ( gens amps in1 in2 -- val )
 \ oscil-bank          		  ( amps gens in1 in2 -- val )
+\
+\ Snd-8 compatibility
+\ samples->sound-data             ( :optional beg len snd chn sd edpos sd-chan -- sd )
+\ open-sound-file                 ( :key ... -- fd )
+\ close-sound-file                ( fd bytes -- n )
+\ vct->sound-file                 ( fd v samps -- n )
 \
 \ sound-property       		  ( key snd -- value|#f )
 \ set-sound-property   		  ( key val snd -- )
@@ -88,7 +93,7 @@
 require clm
 require examp
 
-\ === Snd-7 compatibility stuff ===
+\ === Snd-7 compatibility stuff (snd7.scm) ===
 : mus-a0     ( gen     -- val ) 0          mus-xcoeff ;
 : set-mus-a0 ( gen val -- val ) 0 swap set-mus-xcoeff ;
 : mus-a1     ( gen     -- val ) 1          mus-xcoeff ;
@@ -247,6 +252,39 @@ previous
   0.0					\ sum
   gens each ( gen ) in1 i object-ref in2 i object-ref oscil amps i vct-ref f* ( sum ) f+ end-each
 ;
+
+\ === Snd-8 compatibility stuff (snd8.scm) ===
+
+: samples->sound-data <{ :optional beg 0 len #f snd #f chn #f sd #f edpos #f sd-chan 0 -- sd }>
+  beg len snd chn edpos channel->vct
+  sd sound-data? if
+    sd
+  else
+    1
+    len integer? if
+      len
+    else
+      snd chn #f frames
+    then
+    make-sound-data
+  then
+  sd-chan
+  vct->sound-data
+;
+: open-sound-file <{ :key
+     file        "test.snd"
+     channels    1
+     srate       22050
+     comment     ""
+     header-type mus-next -- fd }>
+  file srate channels mus-lfloat header-type comment mus-sound-open-output
+;
+<'> mus-sound-close-output alias close-sound-file ( fd bytes -- n )
+: vct->sound-file <{ fd v samps -- n }>
+  fd 0 samps 1- 1 v vct->sound-data mus-sound-write
+;
+
+\ === End of compatibility stuff ===
 
 \ ;;; -------- sound-property
 
@@ -619,11 +657,11 @@ hide
   then
 ;
 : remember-sound-at-close <{ snd -- #f }>
-  4 nil make-array { new-state }
-  new-state 0 snd file-name array-set!
-  new-state 1 snd file-name file-write-date array-set!
-  new-state 2 sound-funcs map snd *key* execute end-map array-set!
-  new-state 3 snd channels nil make-array map!
+  \ #( fname fwdate snd-fncs chn-fncs )
+  #( snd file-name
+     snd file-name file-write-date ) { new-state }
+  sound-funcs map snd *key* execute end-map new-state swap array-push to new-state
+  snd channels nil make-array map!
     channel-funcs map *key* { fnc }
       fnc xt->name "cursor" string= if
 	snd j ( chn ) undef ( edpos ) cursor \ three arguments!
@@ -631,7 +669,7 @@ hide
 	snd j ( chn ) fnc execute
       then
     end-map
-  end-map array-set!
+  end-map new-state swap array-push to new-state
   snd new-state set-saved-state
   #f
 ;

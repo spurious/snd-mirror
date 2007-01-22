@@ -1,50 +1,65 @@
+PACKAGE = @PACKAGE@
+VERSION = @VERSION@
+
 CC = @CC@
+SHELL = @SHELL@
+INSTALL = @INSTALL@
+INSTALL_DATA = ${INSTALL} -m 0644
+
 CFLAGS = @CFLAGS@
+GTK_CFLAGS = @GTK_CFLAGS@
+GUILE_CFLAGS = @GUILE_CFLAGS@
+CAIRO_CFLAGS = @CAIRO_CFLAGS@
+MOTIF_FLAGS = @XFLAGS@
+FFTW_CFLAGS = @FFTW_CFLAGS@
+GL_FLAGS = @GL_FLAGS@
+GSL_FLAGS = @GSL_CFLAGS@
+JACK_FLAGS = @JACK_FLAGS@
+
 ORIGINAL_LDFLAGS = @ORIGINAL_LDFLAGS@
 LDFLAGS = @LDFLAGS@
-LIBS = @LIBINTL@ @LIBS@
 
+LIBS = @LIBINTL@ @LIBS@
 GUILE_LIBS = @GUILE_LIBS@
 XM_LIBS = @XM_LIBS@
 LD_XM_LIBS = @LD_XM_LIBS@
-GUILE_CFLAGS = @GUILE_CFLAGS@
-GTK_CFLAGS = @GTK_CFLAGS@
-CAIRO_CFLAGS = @CAIRO_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
 GTK_LD_LIBS = @GTK_LD_LIBS@
 MOTIF_LIBS = @XLIBS@
-MOTIF_FLAGS = @XFLAGS@
 AUDIO_LIB = @AUDIO_LIB@
 GSL_LIBS = @GSL_LIBS@
-GSL_FLAGS = @GSL_CFLAGS@
 GL_LIBS = @GL_LIBS@
 GL_FILES = @GL_FILES@
-GL_FLAGS = @GL_FLAGS@
 FFTW_LIBS = @FFTW_LIBS@
-FFTW_CFLAGS = @FFTW_CFLAGS@
-SNDLIB_FILES = $(@SNDLIB_FILES@)
-MIDI_FILES = $(@MIDI_FILES@)
 SNDLIB_LIB = @SNDLIB_LIB@
 FAM_LIB = @FAM_LIB@
 JACK_LIBS = @JACK_LIBS@
-JACK_FLAGS = @JACK_FLAGS@
-
-GX_HEADERS = $(@GX_HEADERS@)
-GX_FILES = $(@GX_FILES@)
 
 LDSO_FLAGS = @LDSO_FLAGS@
 SO_FLAGS = @SO_FLAGS@
 SO_LD = @SO_LD@
 
-SHELL = /bin/sh
-top_srcdir = .
-DESTDIR =
-PACKAGE = @PACKAGE@
-VERSION = @VERSION@
-datarootdir = @datarootdir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
 datadir = @datadir@
-localedir = $(datadir)/locale
-DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
+bindir = @bindir@
+srcdir = @srcdir@
+VPATH = @srcdir@
+mandir = @mandir@
+top_srcdir = @top_srcdir@
+
+datarootdir = ${prefix}/share
+pkgdatadir = ${datarootdir}/snd
+localedir = ${datadir}/locale
+DEFS = -DLOCALE_DIR=\"$(localedir)\" -DSCRIPTS_DIR=\"$(pkgdatadir)\" @DEFS@
+
+SNDLIB_FILES = $(@SNDLIB_FILES@)
+MIDI_FILES = $(@MIDI_FILES@)
+
+GX_FILES = $(@GX_FILES@)
+GX_HEADERS = $(@GX_HEADERS@)
+
+
 SUBDIRS = po
 
 .SUFFIXES:
@@ -53,16 +68,7 @@ SUBDIRS = po
 .c.o:
 	$(CC) -c $(DEFS) $(GTK_CFLAGS) $(CAIRO_CFLAGS) $(CFLAGS) $(GUILE_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(GL_FLAGS) $(JACK_FLAGS) $(FFTW_CFLAGS) $<
 
-INSTALL = @INSTALL@
-prefix = @prefix@
-exec_prefix = @exec_prefix@
-bindir = @bindir@
-srcdir = @srcdir@
-mandir = @mandir@
-VPATH = @srcdir@
-
-mkinstalldirs = $(SHELL) $(srcdir)/mkinstalldirs
-
+SND_SCRIPTS = *.scm *.fs *.rb *.fsm
 SNDLIB_HEADERS = mus-config.h sndlib.h _sndlib.h sndlib-strings.h clm.h vct.h sndlib2xen.h clm2xen.h xen.h clm-strings.h
 SND_HEADERS = mus-config.h sndlib.h _sndlib.h clm.h snd.h snd-0.h snd-1.h snd-strings.h snd-rec.h xen.h snd-menu.h snd-file.h
 SND_X_HEADERS = snd-x0.h snd-x1.h
@@ -183,23 +189,29 @@ audinfo: $(SNDLIB_HEADERS)
 	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o audinfo.o -o audinfo $(JACK_LIBS) $(AUDIO_LIB) $(LIBS)
 
 install: snd
-	$(mkinstalldirs) $(DESTDIR)$(bindir)
-	$(mkinstalldirs) $(DESTDIR)$(mandir)
-	$(mkinstalldirs) $(DESTDIR)$(mandir)/man1
+	${SHELL} ${top_srcdir}/mkinstalldirs ${bindir}
+	${SHELL} ${top_srcdir}/mkinstalldirs ${mandir}
+	${SHELL} ${top_srcdir}/mkinstalldirs ${mandir}/man1
+	${SHELL} ${top_srcdir}/mkinstalldirs ${pkgdatadir}
 	(cd po && $(MAKE) install)
-	$(INSTALL) snd $(DESTDIR)$(bindir)/snd
-	$(INSTALL) $(srcdir)/snd.1 $(mandir)/man1
+	$(INSTALL) snd ${bindir}/snd
+	$(INSTALL) ${top_srcdir}/snd.1 ${mandir}/man1
+	for f in ${SND_SCRIPTS}; do ${INSTALL_DATA} ${top_srcdir}/$${f} ${pkgdatadir}/$${f}; done
 
 uninstall:
-	rm -f $(bindir)/snd
+	rm -f ${bindir}/snd
+	rm -f ${mandir}/man1/snd.1
+	for f in ${SND_SCRIPTS};  do rm -f ${pkgdatadir}/$${f}; done
 
 install-strip: snd
-	$(mkinstalldirs) $(DESTDIR)$(bindir)
-	$(mkinstalldirs) $(DESTDIR)$(mandir)
-	$(mkinstalldirs) $(DESTDIR)$(mandir)/man1
+	${SHELL} ${top_srcdir}/mkinstalldirs ${bindir}
+	${SHELL} ${top_srcdir}/mkinstalldirs ${mandir}
+	${SHELL} ${top_srcdir}/mkinstalldirs ${mandir}/man1
+	${SHELL} ${top_srcdir}/mkinstalldirs ${pkgdatadir}
 	(cd po && $(MAKE) install)
-	$(INSTALL) -s snd $(DESTDIR)$(bindir)/snd
-	$(INSTALL) $(srcdir)/snd.1 $(mandir)/man1
+	$(INSTALL) -s snd ${bindir}/snd
+	$(INSTALL) ${top_srcdir}/snd.1 ${mandir}/man1
+	for f in ${SND_SCRIPTS}; do ${INSTALL_DATA} ${top_srcdir}/$${f} ${pkgdatadir}/$${f}; done
 
 Makefile: Makefile.in config.status
 	./config.status

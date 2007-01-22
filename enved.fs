@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Nov 13 13:59:42 CET 2005
-\ Changed: Tue Dec 26 19:39:16 CET 2006
+\ Changed: Sat Jan 20 01:08:01 CET 2007
 
 \ Commentary:
 
@@ -32,13 +32,14 @@
 
 \ === ENVED OBJECT TYPE ===
 hide
+\ The name enved-envelope is in use!
 struct
-  cell% field enved-envelope
+  cell% field enved-fs-envelope
 end-struct enved%
 set-current
 
-: envelope@ ( obj -- lst ) instance-gen-ref enved-envelope @ ;
-: envelope! ( lst obj -- ) instance-gen-ref enved-envelope ! ;
+: envelope@ ( obj -- lst ) instance-gen-ref enved-fs-envelope @ ;
+: envelope! ( lst obj -- ) instance-gen-ref enved-fs-envelope ! ;
 
 $" enved" make-object-type constant fth-enved
 fth-enved make-?obj enved?
@@ -48,7 +49,7 @@ fth-enved make-?obj enved?
   envelope list? envelope 1 $" a list" _ assert-type
   enved% %alloc { enved }
   enved unless 'system-error '( get-func-name $" cannot create enved" _ ) fth-throw then
-  envelope enved enved-envelope !
+  envelope enved enved-fs-envelope !
   enved fth-enved make-instance
 ;  
 previous

@@ -327,12 +327,12 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   gsl_set_error_handler(snd_gsl_error);
 #endif
 
-#if ENABLE_NLS && HAVE_GETTEXT && defined(LOCALEDIR)
+#if ENABLE_NLS && HAVE_GETTEXT && defined(LOCALE_DIR)
   /* both flags needed to avoid idiotic confusion on the Sun */
   #if HAVE_SETLOCALE
     setlocale (LC_ALL, "");
   #endif
-  bindtextdomain (PACKAGE, LOCALEDIR);
+  bindtextdomain (PACKAGE, LOCALE_DIR);
   textdomain (PACKAGE);
   /*
     (bindtextdomain "snd" "/usr/local/share/locale")
