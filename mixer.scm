@@ -6,6 +6,7 @@
 (provide 'snd-mixer.scm)
 
 (define (mixer-copy umx)
+  "(mixer-copy umx) returns a copy of its argument (a mixer)"
   (let* ((size (mus-length umx))
 	 (mx (make-mixer size)))
     (do ((i 0 (1+ i)))
@@ -15,7 +16,9 @@
 	(mixer-set! mx i j (mixer-ref umx i j))))
     mx))
 
-(define (make-zero-mixer n) (make-mixer n))
+(define (make-zero-mixer n) 
+  "(make-zero-mixer n) returns an empty mixer"
+  (make-mixer n))
 
 (define mat
   (make-procedure-with-setter
@@ -26,6 +29,7 @@
      (mixer-set! m i j x))))
 
 (define (mixer-diagonal? m)
+  "(mixer-diagonal? m) returns #t if 'm' is a diagonal mixer"
   (let ((n (mus-length m)))
     (or (= n 1)
 	(call-with-current-continuation
@@ -39,6 +43,7 @@
 		   (return #f)))))))))
 	   
 (define (mixer-transpose mx)
+  "(mixer-transpose mx) returns a new mixer of 'mx' transposed"
   (let* ((n (mus-length mx))
 	 (nmx (make-zero-mixer n)))
     (do ((i 0 (1+ i)))
@@ -49,6 +54,7 @@
     nmx))
 
 (define (sub-matrix mx row col)
+  "(sub-matrix mx row col) returns a portion of the matrix 'mx'"
   (let* ((old-n (mus-length mx))
 	 (new-n (1- old-n))
 	 (nmx (make-zero-mixer new-n)))
@@ -68,6 +74,7 @@
     nmx))
 
 (define (mixer-determinant mx)
+  "(mixer-determinant mx) returns the determinant of 'mx'"
   (let ((n (mus-length mx)))
     (if (= n 1) 
 	(mat mx 0 0)
@@ -92,6 +99,7 @@
 		  sum))))))
 
 (define* (mixer-poly mx :rest coeffs)
+  "(mixer-poly mx :rest coeffs) returns a new mixer, the result of treating 'mx' as the argument to the polynomial defined by the 'coeffs' list"
   (let* ((n (length coeffs))
 	 (nmx (make-scalar-mixer (mus-length mx) (list-ref coeffs (1- n))))
 	 (x (mixer* mx 1.0)))
@@ -104,6 +112,7 @@
 ;;; (define (vct-norm v1) (sqrt (dot-product v1 v1)))
 
 (define (mixer-trace mx)
+  "(mixer-trace mx) returns the trace of 'mx'"
   (let ((sum 0.0)
 	(n (mus-length mx)))
     (do ((i 0 (1+ i)))
@@ -112,6 +121,7 @@
 
 
 (define* (invert-matrix matrix :optional b (zero 1.0e-7))
+  "(invert-matrix matrix :optional b (zero 1.0e-7)) inverts 'matrix'"
   ;; translated from Numerical Recipes (gaussj)
   (call-with-current-continuation
    (lambda (return)
@@ -186,10 +196,12 @@
 ;;;   really forces us to use doubles throughout -- probably should anyway...
 
 (define (mixer-solve A b)
+  "(mixer-solve A b) returns the solution of Ax=b"
   (let ((val (invert-matrix A b)))
     (and val (cadr val))))
 
 (define (mixer-inverse A)
+  "(mixer-inverse A) returns the inverse of 'A'"
   (let ((val (invert-matrix A)))
     (and val (car val))))
 

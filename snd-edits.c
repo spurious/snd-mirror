@@ -9368,6 +9368,7 @@ typedef struct {
 
 bool snd_to_sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == SND_TO_SAMPLE));}
 static bool snd_to_sample_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
+
 static int snd_to_sample_channels(mus_any *ptr) {return(((snd_to_sample *)ptr)->chans);}
 static off_t snd_to_sample_location(mus_any *ptr) {return(((snd_to_sample *)ptr)->samps[0]);}
 static char *snd_to_sample_file_name(mus_any *ptr) {return(((snd_to_sample *)ptr)->sp->filename);}

@@ -242,7 +242,9 @@
 	  data)
 	(snd-error "re-implemented sound-to-temps doesn't handle sync bit correctly yet."))))
 
-(define (temp-filenames data) data)
+(define (temp-filenames data) 
+  "(temp-filenames data) returns 'data'"
+  data)
 
 (define* (temp-to-sound data filename :optional origin)
   "(temp-to-sound data filename :optional origin) reads (multichannel) file as new sound data (from external program)"

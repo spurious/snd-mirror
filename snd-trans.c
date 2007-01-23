@@ -493,10 +493,10 @@ static int read_hcom(const char *oldname, const char *newname, char *hdr)
 {
   short **d = NULL;
   int osp, isp;
-  int dc, di, bits, outp, totalin;
+  int dc = 0, di, bits, outp, totalin;
   bool happy;
   unsigned int curval = 0;
-  int i, sample, size, datum, count, err = MUS_NO_ERROR;
+  int i, sample, size = 0, datum, count = 0, err = MUS_NO_ERROR;
   unsigned char *buf = NULL;
   int fd = -1, fs = -1;
   size_t bytes;

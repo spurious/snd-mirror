@@ -2694,7 +2694,8 @@ Reverb-feedback sets the scaler on the feedback.
     variables-dialog))
 
 (define* (make-variable-display page-name variable-name :optional (type 'text) (range (list 0.0 1.0)))
-  ;; type = 'text, 'meter, 'graph, 'spectrum, 'scale
+"(make-variable-display page-name variable-name :optional (type 'text) (range (list 0.0 1.0))) makes a variable \
+display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
   (if (not (Widget? variables-dialog)) (make-variables-dialog))
   ;; rowColumn widget gets confused by drawingareas, so I'll split them out into separate panes
   (let ((page-info (assoc page-name variables-pages)))
@@ -2762,6 +2763,7 @@ Reverb-feedback sets the scaler on the feedback.
 	(else #f)))))
 
 (define (variable-display var widget)
+  "(variable-display var widget) displays the value of 'var' in 'widget'"
   (if (Widget? widget)
       (if (XmIsTextField widget)
 	  ;; text representation
@@ -2797,7 +2799,7 @@ Reverb-feedback sets the scaler on the feedback.
   var)
 
 (define (variable-display-reset widget)
-  ;; restart graphs -- this is intended for the start (or perhaps end) of a note
+  "(variable-display-reset widget) restarts the variable graphs -- this is intended for the start (or perhaps end) of a note"
   (if (list? widget)
       (if (number? (car widget))
 	  ;; graph/spectrum
@@ -2896,6 +2898,7 @@ Reverb-feedback sets the scaler on the feedback.
 ;;; get open file list across top of window (like Xemacs): use -notebook, then:
 ;;; this is now the default
 (define (notebook-with-top-tabs)
+  "(notebook-with-top-tabs) posts the list of open sounds across the top of the Snd window (like the Emacs buffer list)"
   (let ((nb (list-ref (main-widgets) 3)))
     (XtVaSetValues nb (list XmNorientation XmVERTICAL
                             XmNbindingType XmNONE

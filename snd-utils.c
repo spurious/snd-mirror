@@ -712,7 +712,7 @@ static char *kmg(size_t num)
 	}
       else mus_snprintf(str, LABEL_BUFFER_SIZE, "%.3fK", (float)num / 1024.0);
     }
-  else mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", num);
+  else mus_snprintf(str, LABEL_BUFFER_SIZE, "%Zu", num); /* %Z, rather than %z -- the latter confuses old versions of gcc */
   return(str);
 }
 
@@ -788,7 +788,7 @@ static void fdescribe_pointer(FILE *fp, void *p)
   int loc;
   char *p3 = (char *)p;
   loc = (*((int *)(p3 - 4)));
-  fprintf(fp, "%s[%d]:%s, len:%lu", files[loc], lines[loc], functions[loc], (unsigned long)(sizes[loc]));
+  fprintf(fp, "%s[%d]:%s, len:%Zu", files[loc], lines[loc], functions[loc], sizes[loc]);
   if (printable[loc] == PRINT_CHAR)
     fprintf(fp, ": %s", p3);
 }
@@ -812,7 +812,8 @@ static void set_padding(void *p1, void *p2, size_t len, int loc)
 
 static void check_padding(void *p1, void *p2, size_t len, bool refill)
 {
-  int i, j;
+  int i;
+  size_t j;
   char *ip2;
   if (!p2)
     {
@@ -931,14 +932,14 @@ void *mem_calloc(size_t len, size_t size, const char *func, const char *file, in
   char *ptr, *true_ptr;
   if ((len == 0) || ((len * size) > MAX_MALLOC) || (size == 0))
     {
-      fprintf(stderr, "%s:%s[%d] attempt to calloc %lu bytes", func, file, line, (unsigned long)(len * size));
+      fprintf(stderr, "%s:%s[%d] attempt to calloc %Zu bytes", func, file, line, len * size);
       mem_report(); 
       abort();
     }
   true_ptr = (char *)malloc(len * size + 2 * MEM_PAD_SIZE);
   if (!true_ptr)
     {
-      fprintf(stderr, "can't calloc %lu bytes!!", (unsigned long)(len * size + 2 * MEM_PAD_SIZE));
+      fprintf(stderr, "can't calloc %Zu bytes!!", len * size + 2 * MEM_PAD_SIZE);
       mem_report();
       abort();
     }
@@ -954,13 +955,13 @@ void *mem_malloc(size_t len, const char *func, const char *file, int line)
   char *ptr, *true_ptr;
   if ((len == 0) || (len > MAX_MALLOC))
     {
-      fprintf(stderr, "%s:%s[%d] attempt to malloc %lu bytes", func, file, line, (unsigned long)len);
+      fprintf(stderr, "%s:%s[%d] attempt to malloc %Zu bytes", func, file, line, len);
       mem_report(); abort();
     }
   true_ptr = (char *)malloc(len + 2 * MEM_PAD_SIZE);
   if (!true_ptr)
     {
-      fprintf(stderr, "can't malloc %lu bytes!!", (unsigned long)(len + 2 * MEM_PAD_SIZE));
+      fprintf(stderr, "can't malloc %Zu bytes!!", len + 2 * MEM_PAD_SIZE);
       mem_report();
       abort();
     }
@@ -984,7 +985,7 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
   char *new_ptr, *true_ptr, *new_true_ptr;
   if ((size == 0) || (size > MAX_MALLOC))
     {
-      fprintf(stderr, "%s:%s[%d] attempt to realloc %lu bytes", func, file, line, (unsigned long)size);
+      fprintf(stderr, "%s:%s[%d] attempt to realloc %Zu bytes", func, file, line, size);
       mem_report(); abort();
     }
   true_ptr = (char *)forget_pointer(ptr, func, file, line, false);
@@ -1050,7 +1051,7 @@ void io_fds_in_use(int *open, int *closed, int *top);
 void describe_region(FILE *fd, void *ur);
 void describe_sync(FILE *fp, void *ptr);
 
-typedef struct {int sum, ptrs, loc, refsize; int *refs;} sumloc;
+typedef struct {int ptrs, loc, refsize; size_t sum; int *refs;} sumloc;
 
 static int sloc_bigger(const void *a, const void *b)
 {
@@ -1113,7 +1114,8 @@ void mem_report(void)
 
   for (i = 0; i <= mem_location; i++)
     {
-      int sum, ptrs;
+      int ptrs;
+      size_t sum;
       sum = slocs[i].sum;
       ptrs = slocs[i].ptrs;
       loc = slocs[i].loc;
@@ -1122,11 +1124,11 @@ void mem_report(void)
 	{
 	  if ((loc < 0) || (loc > mem_location))
 	    {
-	      fprintf(Fp, "impossible loc %d:  %d (%d)\n", loc, sum, ptrs);
+	      fprintf(Fp, "impossible loc %d:  %Zu (%d)\n", loc, sum, ptrs);
 	    }
 	  else
 	    {
-	      fprintf(Fp, "%s[%d]:%s:  %d (%d)\n", files[loc], lines[loc], functions[loc], sum, ptrs);
+	      fprintf(Fp, "%s[%d]:%s:  %Zu (%d)\n", files[loc], lines[loc], functions[loc], sum, ptrs);
 	      if (printable[loc] > 0)
 		{
 		  fprintf(Fp, "        ");

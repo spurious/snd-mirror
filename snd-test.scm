@@ -37,9 +37,9 @@
 
 (define tests 1)
 (define keep-going #f)
-(define all-args #f) ; extended testing
+(define all-args #f)
 (define test-at-random 0)
-;;(show-ptree 1)
+;(show-ptree 1)
 
 (if (and (provided? 'snd-guile) (provided? 'snd-gauche)) (display ";both switches are on?"))
 

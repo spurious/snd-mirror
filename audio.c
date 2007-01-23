@@ -2013,8 +2013,9 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
           if (ioctl(audio_out, SNDCTL_DSP_SETFRAGMENT, &buffer_info) == -1) 
 	    {
 	      char *tmp;
-	      fprintf(stderr, tmp = mus_format("can't set %s fragments to: %d x %d",
-					       dev_name, FRAGMENTS, FRAGMENT_SIZE)); /* not an error if ALSA OSS-emulation */
+	      tmp = mus_format("can't set %s fragments to: %d x %d",
+			       dev_name, FRAGMENTS, FRAGMENT_SIZE); /* not an error if ALSA OSS-emulation */
+	      fprintf(stderr, "%s\n", tmp);
 	      fragment_set_failed = true;
 	      FREE(tmp);
 	    }
