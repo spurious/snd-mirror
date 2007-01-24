@@ -428,6 +428,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 		     (frequency 440.0) (initial-phase 0.0)
 		     (ratio 1.0) (r 1.0)
 		     (index 1.0))
+  "(make-asyfm :key frequency initial-phase ratio r index) returns a new asyfm generator (dsp.scm)"
   (list (hz->radians frequency) initial-phase ratio r index))
 		     
 (define asyfm-freq
@@ -471,7 +472,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
      (list-set! gen 4 val))))
 
 (define (asyfm-J gen input)
-  ;; this is the same as the CLM asymmetric-fm generator, set r != 1.0 to get the asymmetric spectra
+  "(asyfm-J gen input) is the same as the CLM asymmetric-fm generator, set r != 1.0 to get the asymmetric spectra"
   (let* ((freq (list-ref gen 0))
 	 (phase (asyfm-phase gen))
 	 (ratio (asyfm-ratio gen))
@@ -487,6 +488,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 ;;; (let ((gen (make-asyfm :frequency 2000 :ratio .1))) (map-channel (lambda (n) (asyfm-J gen 0.0))))
 
 (define (asyfm-I gen input)
+  "(asyfm-I gen input) is the I0 case of the asymmetric-fm generator (dsp.scm)"
   (let* ((freq (list-ref gen 0))
 	 (phase (asyfm-phase gen))
 	 (ratio (asyfm-ratio gen))
@@ -507,13 +509,16 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 (define (cosine-summation gen r)
   "(cosine-summation gen r) is a variant of the CLM sine-summation generator; 'r' controls successive sinusoid amplitudes"
-  ;; this could obviously be radically optimized
-  (* (- (/ (- 1.0 (* r r))
-	   (- (+ 1.0 (* r r))
-	      (* 2 r (oscil gen))))
-	1.0)
-     (/ (- 1.0 (* r r)) ; amplitude normalization (not vital)
-	(* 2 r (+ 1.0 (* r r))))))
+  (let* ((rr (* r r))
+	 (rr+1 (+ 1.0 rr))
+	 (rr-1 (- 1.0 rr))
+	 (r2 (* 2 r)))
+    (* (- (/ rr-1
+	     (- rr+1
+		(* r2 (oscil gen))))
+	  1.0)
+       (/ rr-1 ; amplitude normalization (not vital)
+	  (* r2 rr+1)))))
 
 (define make-cosine-summation make-oscil)
 

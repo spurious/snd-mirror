@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Sun Jan 14 01:38:08 CET 2007
+\ Changed: Tue Jan 23 23:32:07 CET 2007
 
 \ Commentary:
 \
@@ -53,7 +53,7 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 14-Jan-2007" value *clm-version*
+$" fth 23-Jan-2007" value *clm-version*
 
 \ defined in snd/snd-xen.c
 [undefined] clm-print [if] ' fth-print alias clm-print [then]
@@ -382,22 +382,23 @@ $" with-sound interrupt" create-exception with-sound-interrupt
   else
     nil { vals }
     "" '() clm-message
-    *clm-instruments* each to vals	\ Don't create local vars here!
+    *clm-instruments* each to vals
       $" === %s [%.3f-%.3f] ===" vals 3 list-head clm-message
       vals cadddr each ( var ) $" %s = %s" swap clm-message end-each
       "" '() clm-message
     end-each
   then
 ;
-: ws-interrupt? ( -- ) c-g? if 'with-sound-interrupt '() fth-throw then ;
+: ws-interrupt? ( -- )
+  c-g? if
+    'with-sound-interrupt '( "interrupted" ) fth-throw
+  then
+;
 : ws-info ( start dur vars -- start dur )
   { start dur vars }
   *clm-instruments* '( *clm-current-instrument* start dur vars ) array-push to *clm-instruments*
-  *notehook* xt? if *clm-current-instrument* start dur *notehook* execute
-  else
-    *notehook* proc? if
-      *notehook* '( *clm-current-instrument* start dur ) run-proc drop
-    then
+  *notehook* dup xt? swap proc? || if
+    *clm-current-instrument* start dur *notehook* dup proc? if proc->xt then execute stack-reset
   then
   ws-interrupt?
   start dur
@@ -434,7 +435,7 @@ hide
   then
   start dur vars (run)
 ;
-: (end-run) ( value index -- ) *locsig* swap rot locsig drop ;
+: (end-run) { val idx -- } *locsig* idx val locsig drop ;
 set-current
 \ RUN/LOOP is only a simple replacement of
 \ start dur TIMES->SAMPLES ?DO ... LOOP
@@ -917,21 +918,17 @@ set-current
   then
   ws ws-before-output
   ws :timer make-timer hash-set!
-  ws :timer hash-ref start-timer
   \ compute ws body
   *clm-debug* if
-    body-xt xt? if
-      body-xt execute			\ provides a better backtrace
-    else
-      body-xt '() run-proc drop
-    then
+    \ EXECUTE provides probably a more precise backtrace than FTH-CATCH.
+    body-xt dup proc? if proc->xt then execute
   else
-    body-xt 'with-sound-interrupt '() fth-catch if
+    body-xt 'with-sound-interrupt #t fth-catch if
       stack-reset
       *output* mus-close drop
       *reverb* if *reverb* mus-close drop then
-      ws ws-after-output drop
       $" body-xt interrupted by C-g" '() clm-message
+      ws ws-after-output ( ws )
       exit
     then
   then
@@ -943,19 +940,15 @@ set-current
     then
     \ compute ws reverb
     *clm-debug* if
-      reverb-xt xt? if
-	\ push reverb arguments on stack
-	ws :reverb-data hash-ref each end-each reverb-xt execute
-      else
-	reverb-xt ws :reverb-data hash-ref run-proc drop
-      then
+      \ push reverb arguments on stack
+      ws :reverb-data hash-ref each end-each reverb-xt dup proc? if proc->xt then execute
     else
-      reverb-xt 'with-sound-interrupt '() fth-catch if
+      reverb-xt 'with-sound-interrupt #t fth-catch if
 	stack-reset
 	*output* mus-close drop
 	*reverb* mus-close drop
-	ws ws-after-output drop
 	$" reverb-xt interrupted by C-g" '() clm-message
+	ws ws-after-output ( ws )
 	exit
       then
     then
@@ -1181,17 +1174,6 @@ instrument: src-simp ( start dur amp sr sr-env fname -- )
   f mus-close drop
 ;instrument
 
-instrument: hello-dentist ( start dur freq amp fname -- )
-  { start dur freq amp fname }
-  :file fname find-file make-readin { f }
-  :frequency freq :amplitude amp make-rand-interp { rn }
-  :input f input-fn :width 5 make-src { sr }
-  start dur run
-    i sr rn 0.0 rand-interp #f src amp f* *output* outa drop
-  loop
-  f mus-close drop
-;instrument
-
 instrument: conv-simp ( start dur filt fname amp -- )
   { start dur filt fname amp }
   :file fname find-file make-readin { f }
@@ -1213,11 +1195,6 @@ event: src-test ( -- )
   0.0 1.0 1.0 0.2 '( 0e 0e 50e 1e 100e 0e ) $" oboe.snd" src-simp
 ;event
 
-\ ' dent-test with-sound drop
-event: dent-test ( -- )
-  0.0 1.0 40.0 1.0 $" oboe.snd" hello-dentist
-;event
-
 \ ' conv1-test with-sound drop
 event: conv1-test ( -- )
   0.0 1.0 vct( 0.5 0.2 0.1 0.05 0e 0e 0e 0e ) $" fyow.snd" 1.0 conv-simp
@@ -1231,9 +1208,8 @@ event: conv2-test ( -- )
 \ ' inst-test with-sound drop
 event: inst-test ( -- )
   0.0 1.0 1.0 0.2 '( 0 0 50 1 100 0 ) $" oboe.snd" src-simp
-  1.2 1.0 40.0 1.0 $" oboe.snd" hello-dentist
-  2.4 1.0 vct( 0.5 0.2 0.1 0.05 0 0 0 0 ) $" fyow.snd" 1.0 conv-simp
-  3.6 1.0 $" pistol.snd" $" fyow.snd" 0.2 conv-simp
+  1.2 1.0 vct( 0.5 0.2 0.1 0.05 0 0 0 0 ) $" fyow.snd" 1.0 conv-simp
+  2.4 1.0 $" pistol.snd" $" fyow.snd" 0.2 conv-simp
 ;event
 
 'snd provided? [if]

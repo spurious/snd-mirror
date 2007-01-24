@@ -1252,19 +1252,17 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 
 ;;; -------- compand, compand-channel
 
-(define (compand)
-  "(compand) returns a compander: (map-channel (compand))"
-  (let ((tbl (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250 
-		  0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
-    ;; (we're eye-balling the curve on p55 of Steiglitz's "a DSP Primer")
-    (lambda (inval)
-      (let ((index (+ 8.0 (* 8.0 inval))))
-	(array-interp tbl index 17)))))
-
-;;; here's the virtual op version:
-
 (define compand-table (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250 
 			   0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000))
+;; (we're eye-balling the curve on p55 of Steiglitz's "a DSP Primer")
+
+(define (compand)
+  "(compand) returns a compander: (map-channel (compand))"
+  (lambda (inval)
+    (let ((index (+ 8.0 (* 8.0 inval))))
+      (array-interp compand-table index 17))))
+
+;;; here's the virtual op version:
 
 (define* (compand-channel :optional (beg 0) dur snd chn edpos)
   "(compand-channel :optional (beg 0) dur snd chn edpos) applies a standard compander to sound"

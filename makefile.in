@@ -50,6 +50,7 @@ top_srcdir = @top_srcdir@
 
 datarootdir = ${prefix}/share
 pkgdatadir = ${datarootdir}/snd
+# snd-help.c looks for the documentation in /usr/local/share/doc/snd-8 -- perhaps it should be pkgdatadir? or passed at compile time
 localedir = ${datadir}/locale
 DEFS = -DLOCALE_DIR=\"$(localedir)\" -DSCRIPTS_DIR=\"$(pkgdatadir)\" @DEFS@
 

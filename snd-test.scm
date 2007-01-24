@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [535]
-;;;  test 1: defaults                           [1113]
-;;;  test 2: headers                            [1317]
-;;;  test 3: variables                          [1622]
-;;;  test 4: sndlib                             [2278]
-;;;  test 5: simple overall checks              [4722]
-;;;  test 6: vcts                               [12539]
-;;;  test 7: colors                             [12814]
-;;;  test 8: clm                                [13304]
-;;;  test 9: mix                                [22972]
-;;;  test 10: marks                             [26544]
-;;;  test 11: dialogs                           [27521]
-;;;  test 12: extensions                        [27786]
-;;;  test 13: menus, edit lists, hooks, etc     [28082]
-;;;  test 14: all together now                  [29799]
-;;;  test 15: chan-local vars                   [30836]
-;;;  test 16: regularized funcs                 [32293]
-;;;  test 17: dialogs and graphics              [36709]
-;;;  test 18: enved                             [36798]
-;;;  test 19: save and restore                  [36817]
-;;;  test 20: transforms                        [38726]
-;;;  test 21: new stuff                         [40558]
-;;;  test 22: run                               [42599]
-;;;  test 23: with-sound                        [48389]
-;;;  test 24: user-interface                    [50854]
-;;;  test 25: X/Xt/Xm                           [54476]
-;;;  test 26: Gtk                               [59058]
-;;;  test 27: GL                                [63174]
-;;;  test 28: errors                            [63298]
-;;;  test all done                              [65590]
-;;;  test the end                               [65823]
+;;;  test 0: constants                          [534]
+;;;  test 1: defaults                           [1112]
+;;;  test 2: headers                            [1316]
+;;;  test 3: variables                          [1621]
+;;;  test 4: sndlib                             [2277]
+;;;  test 5: simple overall checks              [4721]
+;;;  test 6: vcts                               [12538]
+;;;  test 7: colors                             [12813]
+;;;  test 8: clm                                [13303]
+;;;  test 9: mix                                [23002]
+;;;  test 10: marks                             [26574]
+;;;  test 11: dialogs                           [27551]
+;;;  test 12: extensions                        [27816]
+;;;  test 13: menus, edit lists, hooks, etc     [28112]
+;;;  test 14: all together now                  [29829]
+;;;  test 15: chan-local vars                   [30866]
+;;;  test 16: regularized funcs                 [32359]
+;;;  test 17: dialogs and graphics              [36775]
+;;;  test 18: enved                             [36864]
+;;;  test 19: save and restore                  [36883]
+;;;  test 20: transforms                        [38793]
+;;;  test 21: new stuff                         [40625]
+;;;  test 22: run                               [42666]
+;;;  test 23: with-sound                        [48456]
+;;;  test 24: user-interface                    [50921]
+;;;  test 25: X/Xt/Xm                           [54543]
+;;;  test 26: Gtk                               [59125]
+;;;  test 27: GL                                [63241]
+;;;  test 28: errors                            [63365]
+;;;  test all done                              [65680]
+;;;  test the end                               [65913]
 
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
@@ -13412,6 +13412,30 @@ EDITS: 2
   
 ;;; (test-scanned-synthesis .1 10000 1.0 0.1 0.0)
   
+  (define* (array-interp-sound-diff :optional snd chn)
+
+    (define (envelope->vct e len)
+      (let ((v (make-vct len))
+	    (e (make-env e :end (1- len))))
+	(do ((i 0 (1+ i)))
+	    ((= i len))
+	  (vct-set! v i (env e)))
+	v))
+
+    (let ((tbl (envelope->vct (list 0.0 -1.0 1.0 1.0) 1001))
+	  (curpos (edit-position snd chn)))
+      (map-channel (lambda (y)
+		     (let ((pos (+ 500 (* 500 y))))
+		       (array-interp tbl pos 1000)))
+		   0 #f snd chn)
+
+      (let ((r (make-sample-reader 0 0 0 1 curpos))
+	    (mx 0.0))
+	(scan-channel (lambda (y) 
+			(set! mx (max mx (abs (- y (r))))))
+		      0 #f snd chn)
+	mx)))
+
   (define (test-lpc)
     (define (make-sine n) 
       (let ((data (make-vct n 0.0))) 
@@ -15181,6 +15205,11 @@ EDITS: 2
       (let ((var (catch #t (lambda () (array-interp v0 1 -10)) (lambda args args))))
 	(if (not (eq? (car var) 'out-of-range))
 	    (snd-display ";array-interp bad index: ~A" var))))
+
+    (let ((ind (open-sound "oboe.snd")))
+      (let ((diff (array-interp-sound-diff ind 0)))
+	(if (> diff .00001) (snd-display ";array-interp-sound-diff: ~A" diff)))
+      (close-sound ind))
     
     (let ((v0 (make-vct 10)))
       (do ((i 0 (1+ i))) ((= i 10))

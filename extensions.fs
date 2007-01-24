@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Mon Jan 22 02:50:04 CET 2007
+\ Changed: Wed Jan 24 01:09:48 CET 2007
 
 \ Commentary:
 \
@@ -607,7 +607,7 @@ previous
 hide
 #( <'> sync <'> with-tracking-cursor <'> selected-channel <'> show-controls <'> read-only
    <'> contrast-control? <'> expand-control? <'> reverb-control? <'> filter-control?
-   <'> amp-control <'> amp-control-bounds
+   <'> amp-control-bounds
    <'> contrast-control <'> contrast-control-amp <'> contrast-control-bounds
    <'> expand-control <'> expand-control-bounds <'> expand-control-hop <'> expand-control-jitter
    <'> expand-control-length <'> expand-control-ramp
@@ -618,7 +618,7 @@ hide
    <'> reverb-control-scale-bounds
    <'> speed-control <'> speed-control-bounds <'> speed-control-style
    <'> speed-control-tones ) value sound-funcs
-#( <'> time-graph? <'> transform-graph? <'> lisp-graph? <'> x-bounds <'> y-bounds
+#( <'> amp-control <'> time-graph? <'> transform-graph? <'> lisp-graph? <'> x-bounds <'> y-bounds
    <'> cursor <'> cursor-size
    <'> cursor-style <'> show-marks <'> show-y-zero <'> show-grid <'> wavo-hop <'> wavo-trace
    <'> max-transform-peaks
@@ -662,7 +662,8 @@ hide
      snd file-name file-write-date ) { new-state }
   sound-funcs map snd *key* execute end-map new-state swap array-push to new-state
   snd channels nil make-array map!
-    channel-funcs map *key* { fnc }
+    nil { fnc }
+    channel-funcs map *key* to fnc
       fnc xt->name "cursor" string= if
 	snd j ( chn ) undef ( edpos ) cursor \ three arguments!
       else
@@ -679,8 +680,9 @@ hide
   state length && if
     snd file-name file-write-date state 1 array-ref equal?
     snd channels state 3 array-ref length = && if
-      state 2 array-ref each { val }
-	sound-funcs i array-ref { fnc }
+      nil nil { val fnc }
+      state 2 array-ref each to val
+	sound-funcs i array-ref to fnc
 	fnc xt->name "selected-channel" string= if
 	  snd val set-selected-channel drop \ arguments swaped!
 	else
@@ -689,8 +691,8 @@ hide
       end-each
       snd channels 0 ?do
 	#t snd i ( chn ) set-squelch-update drop
-	state 3 array-ref i ( chn) array-ref each { val } \ channel-funcs values
-	  channel-funcs i array-ref { fnc }
+	state 3 array-ref i ( chn) array-ref each to val \ channel-funcs values
+	  channel-funcs i array-ref to fnc
 	  fnc xt->name "cursor" string= if
 	    val snd j ( chn ) undef ( edpos ) set-cursor drop \ four arguments!
 	  else

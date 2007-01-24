@@ -1874,17 +1874,11 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial
   T1 = (int *)clm_calloc(npartials + 1, sizeof(int), "partials_to_polynomial t1");
   Tn = (int *)clm_calloc(npartials + 1, sizeof(int), "partials_to_polynomial tn");
   Cc1 = (Float *)clm_calloc(npartials + 1, sizeof(Float), "partials_to_polynomial cc1");
-  if (!Cc1) return(NULL);
-  switch (kind)
-    {
-    case MUS_CHEBYSHEV_FIRST_KIND: T0[0] = 1; break;
-    case MUS_CHEBYSHEV_SECOND_KIND: T0[0] = 0; break;
-    case MUS_CHEBYSHEV_OBSOLETE_KIND: 
-      /* fprintf(stderr,"0 is obsolete as 'kind' arg to partials-to-polynomial; use mus-chebyshev-second-kind"); */
-      T0[0] = 0; 
-      break;
-    }
+  if (kind == MUS_CHEBYSHEV_FIRST_KIND)
+    T0[0] = 1;
+  else T0[0] = 0;
   T1[1] = 1;
+
   for (i = 1; i < npartials; i++)
     {
       int k;
@@ -1908,6 +1902,7 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial
 	  T1[k] = Tn[k];
 	}
     }
+
   for (i = 0; i < npartials; i++) 
     partials[i] = Cc1[i];
   FREE(T0);
@@ -1916,6 +1911,7 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial
   FREE(Cc1);
   return(partials);
 }
+
 
 /* ---------------- polyshape ---------------- */
 
@@ -5842,10 +5838,11 @@ static int sample_to_file_channels(mus_any *ptr) {return((int)(((rdout *)ptr)->c
 
 static off_t bufferlen(mus_any *ptr) {return(clm_file_buffer_size);}
 static off_t set_bufferlen(mus_any *ptr, off_t len) {clm_file_buffer_size = (int)len; return(len);}
-
 static char *sample_to_file_file_name(mus_any *ptr) {return(((rdout *)ptr)->file_name);}
+
 static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val);
 static int sample_to_file_end(mus_any *ptr);
+
 static Float run_sample_to_file(mus_any *ptr, Float arg1, Float arg2) {mus_error(MUS_NO_RUN, "no run method for sample->file"); return(0.0);}
 
 static mus_any_class SAMPLE_TO_FILE_CLASS = {
@@ -7703,40 +7700,49 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
   int i, j, midn, midp1;
   double freq, rate, angle = 0.0, cx;
   if (window == NULL) return(NULL);
+
   midn = size >> 1;
   midp1 = (size + 1) / 2;
   freq = TWO_PI / (Float)size;
   rate = 1.0 / (Float)midn;
+
   switch (type)
     {
     case MUS_RECTANGULAR_WINDOW:
       for (i = 0; i < size; i++) 
 	window[i] = 1.0;
       break; 
+
     case MUS_HANN_WINDOW:
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
 	window[j] = (window[i] = 0.5 - 0.5 * cos(angle));
       break; 
+
     case MUS_WELCH_WINDOW:
       for (i = 0, j = size - 1; i <= midn; i++, j--) 
 	window[j] = (window[i] = 1.0 - sqr((Float)(i - midn) / (Float)midp1));
       break; 
+
     case MUS_CONNES_WINDOW:
       for (i = 0, j = size - 1; i <= midn; i++, j--) 
 	window[j] = (window[i] = sqr(1.0 - sqr((Float)(i - midn) / (Float)midp1)));
       break; 
+
     case MUS_PARZEN_WINDOW:
       for (i = 0, j = size - 1; i <= midn; i++, j--) 
 	window[j] = (window[i] = 1.0 - fabs((Float)(i - midn) / (Float)midp1));
       break; 
+
     case MUS_BARTLETT_WINDOW:
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += rate) 
 	window[j] = (window[i] = angle);
       break; 
+
     case MUS_HAMMING_WINDOW:
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
 	window[j] = (window[i] = 0.54 - 0.46 * cos(angle));
       break; 
+
     case MUS_BLACKMAN2_WINDOW: /* using Chebyshev polynomial equivalents here (this is also given as .42 .5 .08) */
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
 	{              /* (+ 0.42323 (* -0.49755 (cos a)) (* 0.07922 (cos (* a 2)))) */
@@ -7744,6 +7750,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	  window[j] = (window[i] = (.34401 + (cx * (-.49755 + (cx * .15844)))));
 	}
       break; 
+
     case MUS_BLACKMAN3_WINDOW:
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
 	{              /* (+ 0.35875 (* -0.48829 (cos a)) (* 0.14128 (cos (* a 2))) (* -0.01168 (cos (* a 3)))) */
@@ -7753,6 +7760,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	  window[j] = (window[i] = (.21747 + (cx * (-.45325 + (cx * (.28256 - (cx * .04672)))))));
 	}
       break; 
+
     case MUS_BLACKMAN4_WINDOW:
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
 	{             /* (+ 0.287333 (* -0.44716 (cos a)) (* 0.20844 (cos (* a 2))) (* -0.05190 (cos (* a 3))) (* 0.005149 (cos (* a 4)))) */
@@ -7760,6 +7768,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	  window[j] = (window[i] = (.084037 + (cx * (-.29145 + (cx * (.375696 + (cx * (-.20762 + (cx * .041194)))))))));
 	}
       break; 
+
     case MUS_EXPONENTIAL_WINDOW:
       {
 	Float expn, expsum = 1.0;
@@ -7771,6 +7780,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	  }
       }
       break;
+
     case MUS_KAISER_WINDOW:
       {
 	Float I0beta;
@@ -7779,14 +7789,17 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	  window[j] = (window[i] = mus_bessi0(beta * sqrt(1.0 - sqr(angle))) / I0beta);
       }
       break;
+
     case MUS_CAUCHY_WINDOW:
       for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) 
 	window[j] = (window[i] = 1.0 / (1.0 + sqr(beta * angle)));
       break;
+
     case MUS_POISSON_WINDOW:
       for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) 
 	window[j] = (window[i] = exp((-beta) * angle));
       break;
+
     case MUS_HANN_POISSON_WINDOW:
       /* Hann * Poisson -- from JOS */
       {
@@ -7795,6 +7808,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	  window[j] = (window[i] = (exp((-beta) * angle) * (0.5 - 0.5 * cos(angle1))));
       }
       break;
+
     case MUS_RIEMANN_WINDOW:
       {
 	Float sr1;
@@ -7811,10 +7825,12 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	  }
       }
       break;
+
     case MUS_GAUSSIAN_WINDOW:
       for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) 
 	window[j] = (window[i] = exp(-.5 * sqr(beta * angle)));
       break;
+
     case MUS_TUKEY_WINDOW:
       cx = midn * (1.0 - beta);
       for (i = 0, j = size - 1; i <= midn; i++, j--) 
@@ -7824,6 +7840,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	  else window[j] = (window[i] = .5 * (1.0 - cos(M_PI * i / cx)));
 	}
       break;
+
     case MUS_ULTRASPHERICAL_WINDOW:
     case MUS_SAMARAKI_WINDOW:
     case MUS_DOLPH_CHEBYSHEV_WINDOW:
@@ -7854,7 +7871,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	    switch (type)
 	      {
 	      case MUS_DOLPH_CHEBYSHEV_WINDOW:
-		rl[i] = creal(ccos(cacos(alpha * cos(angle)) * size)); /* here is Tn (Chebyshev polynomial 1st kind */
+		rl[i] = creal(ccos(cacos(alpha * cos(angle)) * size)); /* here is Tn (Chebyshev polynomial 1st kind) */
 		break;
 	      case MUS_SAMARAKI_WINDOW:
 		/* Samaraki window uses Un instead */
@@ -8887,6 +8904,7 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
 	      obufs[0][j] += ibufs[0][j];
 	    }
 	  break;
+
 	case IDENTITY_MIX:
 	  for (offk = 0, j = 0; offk < out_frames; offk++, j++)
 	    {
@@ -8903,6 +8921,7 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
 		obufs[i][j] += ibufs[i][j];
 	    }
 	  break;
+
 	case SCALED_MONO_MIX:
 	  scaler = mx->vals[0][0];
 	  for (offk = 0, j = 0; offk < out_frames; offk++, j++)
@@ -8919,6 +8938,7 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
 	      obufs[0][j] += (mus_sample_t)(scaler * ibufs[0][j]);
 	    }
 	  break;
+
 	case SCALED_MIX:
 	  for (offk = 0, j = 0; offk < out_frames; offk++, j++)
 	    {
@@ -8936,6 +8956,7 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
 		  obufs[i][j] += (mus_sample_t)(ibufs[m][j] * mx->vals[m][i]);
 	    }
 	  break;
+
 	case ENVELOPED_MONO_MIX:
 	  e = envs[0][0];
 	  for (offk = 0, j = 0; offk < out_frames; offk++, j++)
@@ -8952,6 +8973,7 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
 	      obufs[0][j] += (mus_sample_t)(mus_env(e) * ibufs[0][j]);
 	    }
 	  break;
+
 	case ENVELOPED_MIX:
 	  e = envs[0][0];
 	  for (offk = 0, j = 0; offk < out_frames; offk++, j++)

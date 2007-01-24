@@ -7306,6 +7306,7 @@ int make_track(int *mixes, int len)
       if (edpos) FREE(edpos);
       if (cps) FREE(cps);
       if (origin) FREE(origin);
+      if (cps_squelched) FREE(cps_squelched);
     }
   reflect_mix_or_track_change(ANY_MIX_ID, track_id, false);
   return(track_id);

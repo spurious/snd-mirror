@@ -224,20 +224,11 @@ returning you to the true top-level."
            (list (*definstrument-hook* name targs))
            (list)))))
 
-(defmacro definstrument+ (args . body) ; for Gauche
+(defmacro definstrument+ (args . body) ; for Gauche -- throw away the documentation string
   `(definstrument ,args ,@(cdr body)))
 
-;;; TODO: definstrument help string is currently lost
-;;;       string? of car of body is always #t?
-;;;       definstrument+ already assumes car is help string 
-#|
-(defmacro definstrument+ (args . body)
-  `(begin
-     (definstrument ,args ,@(cdr body))
-     (set! (procedure-property (car ,args) 'documentation) (car ,body))))
-   ;; if Guile, since I assume Gauche doesn't have this property -- more efficient to embed this above
-   ;;   what about adding a "let" so that the "+" form perhaps isn't needed?
-|#
+;;; definstrument help string is currently lost
+
 
 (define* (with-sound-helper thunk 
 			    :key (srate *clm-srate*) 

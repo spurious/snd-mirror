@@ -3,15 +3,11 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Aug 08 23:27:50 CEST 2006
-\ Changed: Thu Jan 18 15:48:14 CET 2007
+\ Changed: Wed Jan 24 00:37:57 CET 2007
 
-\ Commentary:
-
-\ snd-hooks       Array with all Snd hooks.
-\ reset-all-hooks ( -- )
-\ with-local-hook ( hook local-hook-procs thunk -- result )
-
-\ Code:
+\ snd-hooks         Array with all Snd hooks.
+\ reset-all-hooks   ( -- )
+\ with-local-hook   ( hook local-hook-procs thunk -- result )
 
 require examp
 
@@ -98,32 +94,26 @@ require examp
 : reset-all-hooks ( -- )
   doc" Removes all Snd hook functions."
   snd-hooks each ( hook ) dup hook? if reset-hook! else drop then end-each
-  all-chans { chns }
-  chns each { lst }
-    lst  car { snd }
-    lst cadr { chn }
+  nil nil nil { lst snd chn }
+  all-chans each to lst
+    lst  car to snd
+    lst cadr to chn
     snd chn edit-hook       dup hook? if reset-hook! else drop then
     snd chn after-edit-hook dup hook? if reset-hook! else drop then
     snd chn undo-hook       dup hook? if reset-hook! else drop then
   end-each
 ;
 
-: with-local-hook ( hook local-hook-procs thunk -- result )
+: with-local-hook <{ hook local-hook-procs thunk -- result }>
   doc" Evaluates THUNK (an xt) with HOOK set to LOCAL-HOOK-PROCS (a list of procs), \
 then restores HOOK to its previous state."
-  { hook local-hook-procs thunk }
+  hook hook?               hook             1 $" a hook"       assert-type
+  local-hook-procs list?   local-hook-procs 2 $" a list"       assert-type
+  thunk xt? thunk proc? || thunk            3 $" a proc or xt" assert-type
   hook hook->list { old-procs }
   hook reset-hook!
   local-hook-procs each ( proc ) hook swap add-hook! end-each
-  thunk xt? if
-    thunk execute
-  else
-    thunk proc? if
-      thunk '() run-proc
-    else
-      #f
-    then
-  then ( result )
+  thunk dup proc? if proc->xt then execute ( result )
   hook reset-hook!
   old-procs each ( proc ) hook swap add-hook! end-each
 ;
