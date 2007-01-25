@@ -1062,21 +1062,10 @@ based on:
     (sin((n + .5)x) / (2 * sin(x / 2))) - 1/2
 
   known as the Dirichlet kernel
-  see "Special Functions", Andrews, Askey, Roy, 5.1.10
-  also cosine-summation in dsp.scm for an extension
-  a similar sum involves cos for sin above, AAR 5.6.2
-  see also "Table of Integrals...", Gradshteyn and Ryzhik, 1.341 and 1.342
+  see also cosine-summation, fejer-sum, etc in dsp.scm
 </pre><br clear=left>
 
-<p>Unfortunately, there's no (reasonable) way to sweep sum-of-cosines
-in frequency, and keep the result from folding over.  That is, the
-number of cosines is a part of the generating formula, and tricks
-that change it (for example, when the waveform is near 0), only
-work when it doesn't matter. 
-</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
-<pre>
+<table border=0 bgcolor="#fafafa" hspace=40 vspace=20><tr><td><pre>
 (definstrument simple-soc (beg dur freq amp)
   (let* ((os (<em class=red>make-sum-of-cosines</em> 10 freq 0.0))
 	 (start (floor (* beg *srate*)))
@@ -1084,14 +1073,13 @@ work when it doesn't matter.
     (run
      (loop for i from start to end do
        (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>sum-of-cosines</em> os)))))))
-</pre>
-</td></tr></table>
+</pre></td></tr></table>
 
 <p>Almost identical is the following (scheme) <A NAME="sinc-train">sinc-train</a> generator:
 </p>
-<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
-<pre>
-(define* (make-sinc-train #:optional (frequency 440.0) (width #f))
+
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<pre>(define* (make-sinc-train #:optional (frequency 440.0) (width #f))
   (let ((range (or width (* pi (- (* 2 (inexact-&gt;exact (floor (/ (<a class=quiet href="#mussrate">mus-srate</a>) (* 2.2 frequency))))) 1)))))
     ;; 2.2 leaves a bit of space before srate/2, (* 3 pi) is the minimum width, normally
     (list (- (* range 0.5))
@@ -1109,8 +1097,23 @@ work when it doesn't matter.
 	(list-set! gen 0 (- new-ang range))
 	(list-set! gen 0 new-ang))
     val))
-</pre>
-</td></tr></table>
+</pre></td></tr></table>
+
+<p>If you sweep sum-of-cosines upwards in frequency, you'll eventually
+get foldover; the generator produces its preset number of cosines no
+matter what.  It is possible to vary the spectrum smoothly:
+</p>
+
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td><pre>
+(let ((os (make-sum-of-cosines 4 100.0))
+      (pow (make-env '(0 1.0 1 30.0) :end 10000)))
+   (map-channel (lambda (y) 
+		  (let ((val (sum-of-cosines os 0.0))) 
+		    (* (signum val) 
+		       (expt (abs val) (env pow)))))))
+</pre></td></tr></table>
+<p>This trick works on all the pulse-train functions in dsp.scm, but perhaps a filter is a simpler approach.
+</p>
 <br>
 
 

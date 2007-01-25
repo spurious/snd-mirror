@@ -9,28 +9,28 @@
 ;;;  test 6: vcts                               [12538]
 ;;;  test 7: colors                             [12813]
 ;;;  test 8: clm                                [13303]
-;;;  test 9: mix                                [23002]
-;;;  test 10: marks                             [26574]
-;;;  test 11: dialogs                           [27551]
-;;;  test 12: extensions                        [27816]
-;;;  test 13: menus, edit lists, hooks, etc     [28112]
-;;;  test 14: all together now                  [29829]
-;;;  test 15: chan-local vars                   [30866]
-;;;  test 16: regularized funcs                 [32359]
-;;;  test 17: dialogs and graphics              [36775]
-;;;  test 18: enved                             [36864]
-;;;  test 19: save and restore                  [36883]
-;;;  test 20: transforms                        [38793]
-;;;  test 21: new stuff                         [40625]
-;;;  test 22: run                               [42666]
-;;;  test 23: with-sound                        [48456]
-;;;  test 24: user-interface                    [50921]
-;;;  test 25: X/Xt/Xm                           [54543]
-;;;  test 26: Gtk                               [59125]
-;;;  test 27: GL                                [63241]
-;;;  test 28: errors                            [63365]
-;;;  test all done                              [65680]
-;;;  test the end                               [65913]
+;;;  test 9: mix                                [23063]
+;;;  test 10: marks                             [26635]
+;;;  test 11: dialogs                           [27612]
+;;;  test 12: extensions                        [27877]
+;;;  test 13: menus, edit lists, hooks, etc     [28173]
+;;;  test 14: all together now                  [29890]
+;;;  test 15: chan-local vars                   [30927]
+;;;  test 16: regularized funcs                 [32420]
+;;;  test 17: dialogs and graphics              [36836]
+;;;  test 18: enved                             [36925]
+;;;  test 19: save and restore                  [36944]
+;;;  test 20: transforms                        [38854]
+;;;  test 21: new stuff                         [40686]
+;;;  test 22: run                               [42727]
+;;;  test 23: with-sound                        [48517]
+;;;  test 24: user-interface                    [50982]
+;;;  test 25: X/Xt/Xm                           [54604]
+;;;  test 26: Gtk                               [59186]
+;;;  test 27: GL                                [63302]
+;;;  test 28: errors                            [63426]
+;;;  test all done                              [65741]
+;;;  test the end                               [65974]
 
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
@@ -16692,25 +16692,86 @@ EDITS: 2
 	      (snd-display ";kosine-summation 3: ~A" vals)))
 	(undo))
       
-      (let ((angle 0.0)) 
-	(map-channel (lambda (y) 
-		       (let ((val (fejer-sum angle 3))) 
-			 (set! angle (+ angle .1)) 
-			 (* .1 val)))))
-      (let ((vals (channel->vct 0 20)))
-	(if (not (vequal vals (vct 0.1 0.198 0.19 0.178 0.163 0.145 0.124 0.103 0.082 0.063 0.045 0.03 0.018 0.009 0.003 0.001 0.0 0.001 0.004 0.007)))
-	    (snd-display ";fejer-sum: ~A" vals)))
-      (undo)
+      (let ((angle 0.0)
+	    (v (make-vct 20)))
+	(do ((i 0 (1+ i)))
+	    ((= i 20))
+	  (vct-set! v i (fejer-sum angle 3))
+	  (set! angle (+ angle .1)))
+	(if (not (vequal v (vct 1.000 0.988 0.951 0.892 0.815 0.723 0.622 0.516 0.412 0.313 0.225 0.150 0.089 0.045 0.017 0.003 0.000 0.007 0.020 0.035)))
+	    (snd-display ";fejer-sum: ~A" v)))
+
+      (for-each
+       (lambda (n)
+	 (let ((mx 0.0)
+	       (angle 0.0))
+	   (do ((i 0 (1+ i)))
+	       ((= i 300))
+	     (set! mx (max mx (fejer-sum angle n)))
+	     (set! angle (+ angle .01)))
+	   (if (fneq mx 1.0) (snd-display ";fejer-sum maxamp ~D: ~A" n mx))))
+       (list 1 4 9 16 32 100))
       
-      (let ((angle 0.0)) 
-	(map-channel (lambda (y) 
-		       (let ((val (legendre-sum angle 3))) 
-			 (set! angle (+ angle .1)) 
-			 (* .1 val)))))
-      (let ((vals (channel->vct 0 20)))
-	(if (not (vequal vals (vct 0.1 4.707 4.164 3.369 2.46 1.582 0.853 0.346 0.074 0.0 0.054 0.155 0.238 0.266 0.233 0.159 0.077 0.019 0.0 0.019)))
-	    (snd-display ";legendre-sum: ~A" vals)))
-      (undo)
+      (let ((angle 0.0)
+	    (v (make-vct 20)))
+	(do ((i 0 (1+ i)))
+	    ((= i 20))
+	  (vct-set! v i (poussin-sum angle 3))
+	  (set! angle (+ angle .1)))
+	(if (not (vequal v (vct 1.000 0.910 0.663 0.323 -0.024 -0.301 -0.458 -0.486 -0.411 -0.281 -0.147 -0.046 0.008 0.021 0.013 0.003 0.000 0.006 0.012 0.009)))
+	    (snd-display ";poussin-sum: ~A" v)))
+
+      (for-each
+       (lambda (n)
+	 (let ((mx 0.0)
+	       (angle 0.0))
+	   (do ((i 0 (1+ i)))
+	       ((= i 300))
+	     (set! mx (max mx (poussin-sum angle n)))
+	     (set! angle (+ angle .01)))
+	   (if (fneq mx 1.0) (snd-display ";poussin-sum maxamp ~D: ~A" n mx))))
+       (list 1 4 9 16 32 100))
+      
+      (let ((angle 0.0)
+	    (v (make-vct 20)))
+	(do ((i 0 (1+ i)))
+	    ((= i 20))
+	  (vct-set! v i (jackson-sum angle 3))
+	  (set! angle (+ angle .1)))
+	(if (not (vequal v (vct 1.000 0.975 0.904 0.796 0.664 0.523 0.386 0.266 0.170 0.098 0.051 0.022 0.008 0.002 0.000 0.000 0.000 0.000 0.000 0.001)))
+	    (snd-display ";jackson-sum: ~A" v)))
+
+      (for-each
+       (lambda (n)
+	 (let ((mx 0.0)
+	       (angle 0.0))
+	   (do ((i 0 (1+ i)))
+	       ((= i 300))
+	     (set! mx (max mx (jackson-sum angle n)))
+	     (set! angle (+ angle .01)))
+	   (if (fneq mx 1.0) (snd-display ";jackson-sum maxamp ~D: ~A" n mx))))
+       (list 1 4 9 16 32 100))
+      
+      (let ((angle 0.0)
+	    (v (make-vct 20)))
+	(do ((i 0 (1+ i)))
+	    ((= i 20))
+	  (vct-set! v i (legendre-sum angle 3))
+	  (set! angle (+ angle .1)))
+	(if (not (vequal v (vct 1.000 0.961 0.850 0.688 0.502 0.323 0.174 0.071 0.015 0.000 0.011 0.032 0.049 0.054 0.047 0.032 0.016 0.004 0.000 0.004)))
+	    (snd-display ";legendre-sum: ~A" v)))
+
+      (for-each
+       (lambda (n)
+	 (let ((mx 0.0)
+	       (angle 0.0))
+	   (do ((i 0 (1+ i)))
+	       ((= i 300))
+	     (set! mx (max mx (legendre-sum angle n)))
+	     (set! angle (+ angle .01)))
+	   (if (fneq mx 1.0) (snd-display ";legendre-sum maxamp ~D: ~A" n mx))))
+       (list 1 4 9 16 32 100))
+      
       
       (let ((angle 0.0)) 
 	(map-channel (lambda (y) 

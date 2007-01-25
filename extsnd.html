@@ -774,9 +774,9 @@ or a save dialog is opened.
 
 <!-- default-output-data-format -->
 <tr><td colspan=2 bgcolor="#f6f8ff" onmouseover="return escape('I originally intended the names to be &quot;header-format&quot; and &quot;data-type&quot; but somehow things got bollixed up and I didn\'t notice the confusion until years later')"><code><a class=def name="defaultoutputdataformat">default-output-data-format</a></code></td>
-<td bgcolor="#f6f8ff"><code>mus-lfloat</code></td></tr><tr><td></td><td colspan=2>
+<td bgcolor="#f6f8ff"><code>mus-bfloat</code></td></tr><tr><td></td><td colspan=2>
 default-output-data-format is the default data format when a new or temporary file is created, 
-or a save dialog is opened. (The default, <code>mus-lfloat</code>, is from sndlib, standing for 32-bit little-endian floating point data).  
+or a save dialog is opened. (The default, <code>mus-bfloat</code>, is from sndlib, standing for 32-bit big-endian floating point data).  
 Use <a href="#musoutformat">mus-out-format</a> for fastest IO.
 The available output data formats are (b=big-endian, l=little, u=unsigned, short=16 bits, byte=8 bits, int = 32 bits):
 <pre onmouseover="return escape('mus-bshort: big-endian (au-style) 16-bit ints, doubles are 64-bit floats, alaw and mulaw are compression schemes, mus-b24int is a 3-byte (24-bit) format; each header type has restrictions on the kinds of data it can accommodate.')">

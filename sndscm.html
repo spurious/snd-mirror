@@ -2248,11 +2248,12 @@ suitably renamed (make-cosine-summation, etc).
 <!-- legendre-sum -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>legendre-sum</em> <code>angle n</code><br>
-<em class=emdef>fejer-sum</em> <code>angle n</code>
+<em class=emdef>fejer-sum</em> <code>angle n</code><br>
+<em class=emdef>poussin-sum</em> <code>angle n</code><br>
+<em class=emdef>jackson-sum</em> <code>angle n</code>
 </td></tr><tr><td></td><td>
-These two functions
-produce a band-limited pulse-train whose
-cosine components have a decreasing amplitude.
+These functions
+produce a band-limited pulse-train.
 <pre>
     (let ((angle 0.0)) 
       (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) 
@@ -2260,6 +2261,8 @@ cosine components have a decreasing amplitude.
                        (set! angle (+ angle .1)) 
                        (* .1 val)))))
 </pre>
+fejer-sum harmonics are scaled by (/ (- n i) (+ n 1)); decreasing evenly.
+poussin-sum harmonic amplitudes start at 0, go up to a peak at n, then decrease to 0.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

@@ -547,25 +547,47 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 ;;; there is still noticable DC offset if r != 0.5 -- could precompute it and subtract
 
 
-;;; -------- legendre, fejer
+;;; -------- legendre, fejer, poussin, jackson
 
 (define (fejer-sum angle n)
   "(fejer-sum angle n) produces a band-limited pulse train"
-  ;; from "Trigonometric Series" Zygmund p88
+  ;; from "Trigonometric Series" Zygmund p88 with changes suggested by Katznelson "Introduction to Harmonic Analysis" p12, and
+  ;;   scaling by an extra factor of 1/n+1 to make sure we always peak at 1.0 (I assume callers in this context are interested 
+  ;;   in the pulse-train aspect and want easily predictable peak amp).  Harmonics go as (n-i)/n+1.
   (if (= angle 0.0)
       1.0
-      (let ((val (/ (sin (* 0.5 (+ n 1) angle)) (* 2 (sin (* 0.5 angle))))))
-	(* 2 (/ (* val val) (+ n 1))))))
+      (let ((val (/ (sin (* 0.5 (+ n 1) angle)) 
+		    (* (+ n 1) 
+		       (sin (* 0.5 angle))))))
+	(* val val))))
+
+;;; here's Zygmund's version:
+;;  (if (= angle 0.0)
+;;      1.0
+;;      (let ((val (/ (sin (* 0.5 (+ n 1) angle)) (* 2 (sin (* 0.5 angle))))))
+;;	(* 2 (/ (* val val) (+ n 1))))))
 
 ;;; (let ((angle 0.0)) (map-channel (lambda (y) (let ((val (fejer-sum angle 3))) (set! angle (+ angle .1)) (* .1 val)))))
 
+(define (poussin-sum angle n)
+  "(poussin-sum angle n) produces a pulse train"
+  ;; this and next taken from Katznelson p16
+  (- (* 2 (fejer-sum angle (+ (* 2 n) 1)))
+     (fejer-sum angle n)))
+
+(define (jackson-sum angle n)
+  "(poussin-sum angle n) produces a pulse train"
+  (let ((val (fejer-sum angle n)))
+    (* val val))) ; we already normalized this to 1.0
 
 (define (legendre-sum angle n)
   "(legendre-sum angle n) produces a band-limited pulse train"
-  ;; from Andrews, Askey, Roy "Special Functions" p 314
+  ;; from Andrews, Askey, Roy "Special Functions" p 314 with my amplitude scaling
   (if (= angle 0.0)
-      1.0                ; 0.0 / 0.0 ?
-      (let* ((val (/ (sin (* angle (+ n 0.5))) (sin (* 0.5 angle)))))
+      1.0
+      (let* ((val (/ (sin (* angle (+ n 0.5))) 
+		     (* (sin (* 0.5 angle))
+			(+ (* 2 n) 1))))) ; amplitude normalization -- we want a peak amp of 1.0
 	(* val val))))
 
 ;;; (let ((angle 0.0)) (map-channel (lambda (y) (let ((val (legendre-sum angle 3))) (set! angle (+ angle .1)) (* .1 val)))))

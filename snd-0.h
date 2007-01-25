@@ -38,13 +38,6 @@
   #define Float float
 #endif
 
-#define SND_INIT_FILE_ENVIRONMENT_NAME "SND_INIT_FILE"
-#ifndef MUS_WINDOZE
-  #define INIT_FILE_NAME "~/.snd"
-#else
-  #define INIT_FILE_NAME "snd-init"
-#endif
-
 #ifndef STRFTIME_FORMAT
   #define STRFTIME_FORMAT "%a %d-%b-%Y %H:%M %Z"
 #endif
@@ -86,7 +79,7 @@
 #define DEFAULT_OUTPUT_CHANS 1
 #define DEFAULT_OUTPUT_SRATE 22050
 #define DEFAULT_OUTPUT_HEADER_TYPE MUS_NEXT
-#define DEFAULT_OUTPUT_DATA_FORMAT MUS_BSHORT
+#define DEFAULT_OUTPUT_DATA_FORMAT MUS_BFLOAT
 /* mus-next is probably best here since intermediate/temp files can be any length (> 2^32 bytes)
  *   and the next header-specified size, although 32 bits, is explicitly "advisory".
  */
