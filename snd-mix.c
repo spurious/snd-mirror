@@ -4555,7 +4555,7 @@ If file_chn is omitted or " PROC_TRUE ", file's channels are mixed until snd run
 track-id is the track value for each newly created mix."
 
   chan_info *cp = NULL;
-  char *name = NULL;
+  static char *name = NULL;
   int chans, id = -1, file_channel, track_num = 0;
   bool with_mixer = true, delete_file = false;
   mix_info *md;
@@ -4567,12 +4567,10 @@ track-id is the track value for each newly created mix."
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(tag), tag, XEN_ARG_6, S_mix, "a boolean");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, XEN_ARG_7, S_mix, "a boolean");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(track_id), track_id, XEN_ARG_8, S_mix, "a track id");
+  if (name) FREE(name);
   name = mus_expand_filename(XEN_TO_C_STRING(file));
   if (!(mus_file_probe(name)))
-    {
-      if (name) FREE(name);
-      return(snd_no_such_file_error(S_mix, file));
-    }
+    return(snd_no_such_file_error(S_mix, file));
   if (XEN_NOT_BOUND_P(tag))
     with_mixer = with_mix_tags(ss);
   else with_mixer = XEN_TO_C_BOOLEAN(tag);
@@ -4585,7 +4583,6 @@ track-id is the track value for each newly created mix."
       track_num = XEN_TO_C_INT(track_id);
       if ((track_num > 0) && (!(track_p(track_num))))
 	{
-	  if (name) FREE(name);
 	  XEN_ERROR(NO_SUCH_TRACK,
 		    XEN_LIST_2(C_TO_XEN_STRING(S_mix),
 			       track_id));
@@ -4601,7 +4598,6 @@ track-id is the track value for each newly created mix."
 			     XEN_TRUE_P(file_chn) || (!(XEN_BOUND_P(file_chn))));
       if (id == MIX_FILE_NO_FILE) 
 	{
-	  if (name) FREE(name);
 	  XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
 		    XEN_LIST_3(C_TO_XEN_STRING(S_mix),
 			       file,
@@ -4613,7 +4609,6 @@ track-id is the track value for each newly created mix."
       chans = mus_sound_chans(name);
       if (chans <= 0)
 	{
-	  if (name) FREE(name);
 	  XEN_ERROR(BAD_HEADER,
 		    XEN_LIST_4(C_TO_XEN_STRING(S_mix),
 			       file,
@@ -4623,7 +4618,6 @@ track-id is the track value for each newly created mix."
       file_channel = XEN_TO_C_INT_OR_ELSE(file_chn, 0);
       if (file_channel >= chans)
 	{
-	  if (name) FREE(name);
 	  XEN_ERROR(NO_SUCH_CHANNEL,
 		    XEN_LIST_3(C_TO_XEN_STRING(S_mix),
 			       C_TO_XEN_STRING("chan: ~A, ~A chans: ~A"),
@@ -4658,7 +4652,6 @@ track-id is the track value for each newly created mix."
 	    {
 	      if (ss->local_errno != 0)
 		{
-		  if (name) FREE(name);
 		  XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
 			    XEN_LIST_3(C_TO_XEN_STRING(S_mix),
 				       file,
@@ -4668,11 +4661,9 @@ track-id is the track value for each newly created mix."
 	}
       else 
 	{
-	  if (name) FREE(name);
 	  return(snd_no_such_file_error(S_mix, file));
 	}
     }
-  if (name) FREE(name);
   return(C_TO_XEN_INT(id));
 }
 
@@ -7306,7 +7297,6 @@ int make_track(int *mixes, int len)
       if (edpos) FREE(edpos);
       if (cps) FREE(cps);
       if (origin) FREE(origin);
-      if (cps_squelched) FREE(cps_squelched);
     }
   reflect_mix_or_track_change(ANY_MIX_ID, track_id, false);
   return(track_id);

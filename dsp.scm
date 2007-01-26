@@ -593,6 +593,12 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 ;;; (let ((angle 0.0)) (map-channel (lambda (y) (let ((val (legendre-sum angle 3))) (set! angle (+ angle .1)) (* .1 val)))))
 
 
+(define (signum n)
+  (if (positive? n) 1
+      (if (zero? n) 0
+	  -1)))
+
+
 ;;; -------- variations on sum-of-cosines
 ;;; from "Trigonometric Delights" by Eli Maor
 
@@ -2196,7 +2202,7 @@ and replaces it with the spectrum given in coeffs"
 	  (vector-set! factorials n (* n (factorial (1- n)))))
       (vector-ref factorials n))))
 
-(define (binomial n m) ; "n-choose-m" might be a better name
+(define (binomial n m) ; "n-choose-m" might be a better name (there are much better ways to compute this...)
   (/ (factorial n)
      (* (factorial m) (factorial (- n m)))))
 |#

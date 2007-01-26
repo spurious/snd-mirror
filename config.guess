@@ -4,7 +4,7 @@
 #   2000, 2001, 2002, 2003, 2004, 2005, 2006 Free Software Foundation,
 #   Inc.
 
-timestamp='2006-11-08'
+timestamp='2007-01-15'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -781,7 +781,7 @@ EOF
     i*:CYGWIN*:*)
 	echo ${UNAME_MACHINE}-pc-cygwin
 	exit ;;
-    i*:MINGW*:*)
+    *:MINGW*:*)
 	echo ${UNAME_MACHINE}-pc-mingw32
 	exit ;;
     i*:windows32*:*)
@@ -950,6 +950,9 @@ EOF
 	exit ;;
     x86_64:Linux:*:*)
 	echo x86_64-unknown-linux-gnu
+	exit ;;
+    xtensa:Linux:*:*)
+    	echo xtensa-unknown-linux-gnu
 	exit ;;
     i*86:Linux:*:*)
 	# The BFD linker knows what the default object file format is, so
@@ -1208,6 +1211,15 @@ EOF
 	exit ;;
     SX-6:SUPER-UX:*:*)
 	echo sx6-nec-superux${UNAME_RELEASE}
+	exit ;;
+    SX-7:SUPER-UX:*:*)
+	echo sx7-nec-superux${UNAME_RELEASE}
+	exit ;;
+    SX-8:SUPER-UX:*:*)
+	echo sx8-nec-superux${UNAME_RELEASE}
+	exit ;;
+    SX-8R:SUPER-UX:*:*)
+	echo sx8r-nec-superux${UNAME_RELEASE}
 	exit ;;
     Power*:Rhapsody:*:*)
 	echo powerpc-apple-rhapsody${UNAME_RELEASE}

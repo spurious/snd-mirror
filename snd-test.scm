@@ -35,7 +35,7 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
-(define tests 1)
+(define tests 10)
 (define keep-going #f)
 (define all-args #f)
 (define test-at-random 0)
@@ -4889,7 +4889,7 @@
   (define (region2vct r c len)
     (region->vct 0 len r c))
   
-;;; extensions.scm (commented out)
+  ;; extensions.scm (commented out)
   (define* (delay-channel amount :optional (beg 0) dur snd chn edpos)
     (let ((dly amount)
 	  (cur-edpos (if (or (not edpos)
@@ -13410,7 +13410,7 @@ EDITS: 2
 	    (vct-scale! data (/ amp curamp)))
 	  (vct->channel data 0 dur)))))
   
-;;; (test-scanned-synthesis .1 10000 1.0 0.1 0.0)
+  ;; (test-scanned-synthesis .1 10000 1.0 0.1 0.0)
   
   (define* (array-interp-sound-diff :optional snd chn)
 
@@ -13429,7 +13429,7 @@ EDITS: 2
 		       (array-interp tbl pos 1000)))
 		   0 #f snd chn)
 
-      (let ((r (make-sample-reader 0 0 0 1 curpos))
+      (let ((r (make-sample-reader 0 snd chn 1 curpos))
 	    (mx 0.0))
 	(scan-channel (lambda (y) 
 			(set! mx (max mx (abs (- y (r))))))
@@ -26673,7 +26673,7 @@ EDITS: 2
       maxval))
   
   
-;;; from marks.scm (commented out)
+  ;; from marks.scm (commented out)
   
   (define (eval-header sndf)
     (and (string? (comment sndf))
@@ -29891,7 +29891,7 @@ EDITS: 2
 
 (define sfile 0) ; used globally by save-state stuff (... is this a bug?)
 
-(define (safe-make-region beg end snd) ; used in test 15 also
+(define (safe-make-region beg end snd) ; used in test_15 also
   "make-region with error checks"
   (let ((len (frames snd)))
     (if (> len 1)
@@ -31021,9 +31021,7 @@ EDITS: 2
       (set! (func) old-value)
       ))
   
-  
-  
-;;; test src-* 
+  ;; test src-* 
   
   (define (freq-peak beg ind size)
     (define (interpolated-peak-offset la ca ra)
@@ -31118,7 +31116,7 @@ EDITS: 2
 	    (add-player player)))
 	(start-playing chans (srate sound) #f))))
   
-;;; examp.scm (commented out)
+  ;; examp.scm (commented out)
   (define (sound-via-sound snd1 snd2) ; "sound composition"??
     (let* ((intrp (make-sound-interp 0 snd1 0))
 	   (len (1- (frames snd1 0)))
@@ -34856,7 +34854,7 @@ EDITS: 3
 	    (vct-set! vals i 1.0))
 	  (check-edit-tree '((0 14 0 24 1.0 0.0 0.0 0) (25 12 25 49 1.0 0.0 0.0 0) (50 13 0 0 1.0 0.0 0.0 0) (51 12 51 74 1.0 0.0 0.0 0) (75 15 0 24 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "clobber env end")
-;;; this can't be expected to work anymore -- internal backup can change edit tree bounds
+	  ;; this can't be expected to work anymore -- internal backup can change edit tree bounds
 					;	  (save-edit-history "hiho.scm")
 					;	  (revert-sound ind)
 					;	  (set! sfile ind)
@@ -37028,7 +37026,7 @@ EDITS: 1
 	    (< (abs (- a b)) .001))
 	(eq? a b)))
   
-;;; from dsp.scm (commented out)
+  ;; from dsp.scm (commented out)
   (define (repitch-sound old-freq new-freq)
     (ssb-bank old-freq new-freq 10))
   
@@ -42980,8 +42978,11 @@ EDITS: 1
   
   (if (and (provided? 'run)
 	   (> (optimization) 0))
-      
+
+      (do ((run-test 0 (1+ run-test))) ((= run-test tests))
+
       (begin
+	(log-mem run-test)
 	
 	(set! unique-float 3.0)
 	(set! unique-int 3)
@@ -47149,7 +47150,8 @@ EDITS: 1
 		(if (fneq val .125) (snd-display ";embedded func 17: ~A" val)))
 	      (let ((val (run-eval '(oscil (efunc-7 efunc-gen)))))
 		(if (fneq val .248) (snd-display ";embedded func 18: ~A" val)))
-	      
+	      (mus-reset efunc-gen)
+
 	      (if with-gui
 		  (begin
 		    (let* ((ind (open-sound "oboe.snd"))
@@ -48510,7 +48512,7 @@ EDITS: 1
 	  (if (not (equal? v1 (make-vct 10 .2))) (snd-display ";vct<->sound-data 1: ~A" v1)))
 	
 	
-	)))
+	))))
 
 
 
@@ -57974,7 +57976,7 @@ EDITS: 1
 	       (play)
 	       (close-sound))
 	     
-;;; qualify proc is causing a segfault somehow
+	     ;; qualify proc is causing a segfault somehow
 					;	    (let ((box (XmCreateFileSelectionBox (cadr (main-widgets)) "box" 
 					;						 (list XmNfileSearchProc (lambda (w c) #f)
 					;						       XmNqualifySearchDataProc (lambda (w c i)
@@ -65502,10 +65504,10 @@ EDITS: 1
 	  (if (not (eq? tag 'no-such-channel)) (snd-display ";map-channel closing own chan: ~A" tag)))
 
 #|
-;;; this will return a truncated (at the start) result, but I currently can't think of a
-;;;    reasonable way to disallow it.  We either need a before-undo-hook, or edit-hook that is
-;;;    local to the map-channel lambda (so that we can remove it before map-channel itself
-;;;    wants to edit, but adding/removing it on every call seems silly).
+	;; this will return a truncated (at the start) result, but I currently can't think of a
+	;;    reasonable way to disallow it.  We either need a before-undo-hook, or edit-hook that is
+	;;    local to the map-channel lambda (so that we can remove it before map-channel itself
+	;;    wants to edit, but adding/removing it on every call seems silly).
 
 	(let ((ind (open-sound "oboe.snd"))
 	      (ctr 0))
