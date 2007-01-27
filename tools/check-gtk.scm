@@ -1,4 +1,4 @@
-#!/usr/local/bin/guile -s
+#!/usr/bin/guile -s
 !#
 
 ;;; checkxg.scm checks the gtk2/gdk/pango/glib bindings in the snd sources, flagging any that are not gtk-2.0 compatible

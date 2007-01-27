@@ -282,7 +282,7 @@ static bool fsb_directory_button_press_callback(GdkEventButton *ev, void *data);
 static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data);
 
 static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab,
-		     void (*add_innards)(GtkWidget *vbox, void *data), void *data, 
+		     void (*add_innards)(GtkWidget *vbox, void *data), void *data, /* add_innards data can be either file_dialog_info or save_as_dialog_info */
 		     gchar *stock, bool with_extract)
 {
   fsb *fs;
@@ -1152,8 +1152,8 @@ static void dialog_select_callback(const char *filename, void *context)
 
 static void open_innards(GtkWidget *vbox, void *data)
 {
-  file_dialog_info *fd = (file_dialog_info *)data;
   GtkWidget *center_info;
+  file_dialog_info *fd = (file_dialog_info *)data;
 
   center_info = gtk_hbox_new(true, 10);
   gtk_box_pack_start(GTK_BOX(vbox), center_info, false, false, 0);
@@ -1298,16 +1298,20 @@ static file_dialog_info *make_file_dialog(int read_only, const char *title, cons
   return(fd);
 }
 
-static void file_open_error(const char *error_msg, void *ufd)
+static void file_open_error(const char *error_msg, file_dialog_info *fd)
 {
-  /* called from snd_error, redirecting error handling to the dialog */
-  file_dialog_info *fd = (file_dialog_info *)ufd;
   CHANGE_INFO(fd->info1, error_msg);
   SET_INFO_SIZE(fd->info1, strlen(error_msg));
   gtk_widget_show(fd->frame);
   gtk_widget_show(fd->vbox);
   gtk_widget_show(fd->info1);
   CHANGE_INFO(fd->info2, "");
+}
+
+static void redirect_file_open_error(const char *error_msg, void *ufd)
+{
+  /* called from snd_error, redirecting error handling to the dialog */
+  file_open_error(error_msg, (file_dialog_info *)ufd);
 }
 
 static void clear_file_error_label(file_dialog_info *fd)
@@ -1345,10 +1349,10 @@ static gboolean open_modify_key_press(GtkWidget *w, GdkEventKey *event, gpointer
   return(false);
 }
 
-static void clear_error_if_open_changes(fsb *fs, void *data)
+static void clear_error_if_open_changes(fsb *fs, file_dialog_info *fd)
 {
   if (!key_press_handler_id)
-    key_press_handler_id = SG_SIGNAL_CONNECT(fs->file_text, "key_press_event", open_modify_key_press, data);
+    key_press_handler_id = SG_SIGNAL_CONNECT(fs->file_text, "key_press_event", open_modify_key_press, (void *)fd);
 }
 
 #if HAVE_FAM
@@ -1396,8 +1400,8 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
   filename = fsb_file_text(fd->fs);
   if ((!filename) || (!(*filename)))
     {
-      file_open_error(_("no filename given"), (void *)fd);
-      clear_error_if_open_changes(fd->fs, (void *)fd);
+      file_open_error(_("no filename given"), fd);
+      clear_error_if_open_changes(fd->fs, fd);
     }
   else
     {
@@ -1405,7 +1409,7 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
       if (!(directory_p(filename)))
 	{
 	  snd_info *sp;
-	  redirect_snd_error_to(file_open_error, (void *)fd);
+	  redirect_snd_error_to(redirect_file_open_error, (void *)fd);
 	  ss->sgx->requestor_dialog = fd->fs->dialog;
 	  ss->open_requestor = FROM_OPEN_DIALOG;
 	  sp = snd_open_file(filename, fd->file_dialog_read_only);
@@ -1422,7 +1426,7 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 	    {
 	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
 		{
-		  clear_error_if_open_changes(fd->fs, (void *)fd);
+		  clear_error_if_open_changes(fd->fs, fd);
 		  start_unsound_watcher(fd, filename);
 		}
 	    }
@@ -1431,8 +1435,8 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 	{
 	  char *str;
 	  str = mus_format(_("%s is a directory"), filename);
-	  file_open_error(str, (void *)fd);
-	  clear_error_if_open_changes(fd->fs, (void *)fd);
+	  file_open_error(str, fd);
+	  clear_error_if_open_changes(fd->fs, fd);
 	  FREE(str);
 	}
     }
@@ -1471,8 +1475,8 @@ static void file_open_dialog_mkdir(GtkWidget *w, gpointer context)
       /* could not make the directory */
       char *str;
       str = mus_format(_("can't make %s: %s"), filename, strerror(errno));
-      file_open_error(str, (void *)fd);
-      clear_error_if_open_changes(fs, (void *)fd);
+      file_open_error(str, fd);
+      clear_error_if_open_changes(fs, fd);
       FREE(str);
     }
   else
@@ -1543,8 +1547,8 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
   filename = fsb_file_text(mdat->fs);
   if ((!filename) || (!(*filename)))
     {
-      file_open_error(_("no filename given"), (void *)mdat);
-      clear_error_if_open_changes(mdat->fs, (void *)mdat);
+      file_open_error(_("no filename given"), mdat);
+      clear_error_if_open_changes(mdat->fs, mdat);
     }
   else
     {
@@ -1554,7 +1558,7 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 	  snd_info *sp;
 	  int err;
 	  sp = any_selected_sound();
-	  redirect_snd_error_to(file_open_error, (void *)mdat);
+	  redirect_snd_error_to(redirect_file_open_error, (void *)mdat);
 	  ss->sgx->requestor_dialog = mdat->fs->dialog;
 	  ss->open_requestor = FROM_MIX_DIALOG;
 	  err = mix_complete_file_at_cursor(sp, filename, with_mix_tags(ss), 0);
@@ -1565,7 +1569,7 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 		{
 		  if (err == MIX_FILE_NO_FILE)
 		    start_unsound_watcher(mdat, filename);
-		  clear_error_if_open_changes(mdat->fs, (void *)mdat);
+		  clear_error_if_open_changes(mdat->fs, mdat);
 		}
 	    }
 	  else 
@@ -1578,8 +1582,8 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 	{
 	  char *str;
 	  str = mus_format(_("%s is a directory"), filename);
-	  file_open_error(str, (void *)mdat);
-	  clear_error_if_open_changes(mdat->fs, (void *)mdat);
+	  file_open_error(str, mdat);
+	  clear_error_if_open_changes(mdat->fs, mdat);
 	  FREE(str);
 	}
     }
@@ -1635,8 +1639,8 @@ static void file_insert_ok_callback(GtkWidget *w, gpointer context)
   filename = fsb_file_text(fd->fs);
   if ((!filename) || (!(*filename)))
     {
-      file_open_error(_("no filename given"), (void *)fd);
-      clear_error_if_open_changes(fd->fs, (void *)fd);
+      file_open_error(_("no filename given"), fd);
+      clear_error_if_open_changes(fd->fs, fd);
     }
   else
     {
@@ -1648,7 +1652,7 @@ static void file_insert_ok_callback(GtkWidget *w, gpointer context)
 	  sp = any_selected_sound();
 	  ss->sgx->requestor_dialog = w;
 	  ss->open_requestor = FROM_INSERT_DIALOG;
-	  redirect_snd_error_to(file_open_error, (void *)fd);
+	  redirect_snd_error_to(redirect_file_open_error, (void *)fd);
 	  ok = insert_complete_file_at_cursor(sp, filename);
 	  redirect_snd_error_to(NULL, NULL);
 	  if (!ok)
@@ -1656,7 +1660,7 @@ static void file_insert_ok_callback(GtkWidget *w, gpointer context)
 	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
 		{
 		  char *fullname;
-		  clear_error_if_open_changes(fd->fs, (void *)fd);
+		  clear_error_if_open_changes(fd->fs, fd);
 		  fullname = mus_expand_filename(filename);
 		  if (!(mus_file_probe(fullname)))
 		    start_unsound_watcher(fd, filename);
@@ -1673,8 +1677,8 @@ static void file_insert_ok_callback(GtkWidget *w, gpointer context)
 	{
 	  char *str;
 	  str = mus_format(_("%s is a directory"), filename);
-	  file_open_error(str, (void *)fd);
-	  clear_error_if_open_changes(fd->fs, (void *)fd);
+	  file_open_error(str, fd);
+	  clear_error_if_open_changes(fd->fs, fd);
 	  FREE(str);
 	}
     }
@@ -1936,11 +1940,15 @@ static void show_dialog_error(file_data *fd)
   gtk_widget_show(fd->error_text);
 }
 
-static void post_file_dialog_error(const char *error_msg, void *ufd)
+static void post_file_dialog_error(const char *error_msg, file_data *fd)
 {
-  file_data *fd = (file_data *)ufd;
   gtk_entry_set_text(GTK_ENTRY(fd->error_text), (gchar *)error_msg);
   show_dialog_error(fd);
+}
+
+static void redirect_post_file_dialog_error(const char *error_msg, void *ufd)
+{
+  post_file_dialog_error(error_msg, (file_data *)ufd);
 }
 
 
@@ -1957,14 +1965,6 @@ static void clear_filename_handlers(fsb *fs)
       key_press_filename_handler_id = 0;
     }
 }
-
-static gboolean filename_modify_key_press(GtkWidget *w, GdkEventKey *event, gpointer data);
-
-static void clear_error_if_filename_changes(fsb *fs, void *data)
-{
-  key_press_filename_handler_id = SG_SIGNAL_CONNECT(fs->file_text, "key_press_event", filename_modify_key_press, data);
-}
-
 
 static gulong chans_key_press_handler_id = 0;
 
@@ -2001,9 +2001,8 @@ static gboolean panel_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer
   return(false);
 }
 
-static void clear_error_if_panel_changes(GtkWidget *dialog, void *data)
+static void clear_error_if_panel_changes(GtkWidget *dialog, file_data *fd)
 {
-  file_data *fd = (file_data *)data;
   GtkWidget *baddy;
   switch (fd->error_widget)
     {
@@ -2013,14 +2012,18 @@ static void clear_error_if_panel_changes(GtkWidget *dialog, void *data)
     default:                   baddy = fd->chans_text;    break;
     }
   if (baddy) 
-    panel_modify_handler_id = SG_SIGNAL_CONNECT(baddy, "key_press_event", panel_modify_callback, data);
+    panel_modify_handler_id = SG_SIGNAL_CONNECT(baddy, "key_press_event", panel_modify_callback, (void *)fd);
 }
 
-static void post_file_panel_error(const char *error_msg, void *ufd)
+static void post_file_panel_error(const char *error_msg, file_data *fd)
 {
-  file_data *fd = (file_data *)ufd;
   fd->error_widget = fd->scanf_widget;
-  post_file_dialog_error(error_msg, ufd);
+  post_file_dialog_error(error_msg, fd);
+}
+
+static void redirect_post_file_panel_error(const char *error_msg, void *ufd)
+{
+  post_file_panel_error(error_msg, (file_data *)ufd);
 }
 
 
@@ -2332,6 +2335,11 @@ static gboolean filename_modify_key_press(GtkWidget *w, GdkEventKey *event, gpoi
   return(false);
 }
 
+static void clear_error_if_filename_changes(fsb *fs, save_as_dialog_info *sd)
+{
+  key_press_filename_handler_id = SG_SIGNAL_CONNECT(fs->file_text, "key_press_event", filename_modify_key_press, (void *)sd);
+}
+
 static save_as_dialog_info *new_save_as_dialog_info(save_dialog_t type)
 {
   save_as_dialog_info *sd;
@@ -2432,7 +2440,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       if (saving)
 	msg = _("no selection to save");
       else msg = _("can't extract: no selection");
-      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+      post_file_dialog_error((const char *)msg, sd->panel_data);
       if (sd->selection_watcher_loc < 0)
 	sd->selection_watcher_loc = add_selection_watcher(save_as_selection_watcher, (void *)sd);
       return;
@@ -2441,7 +2449,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   if ((sd->type == REGION_SAVE_AS) &&
       (!(region_ok(region_dialog_region()))))
     {
-      post_file_dialog_error(_("no region to save"), (void *)(sd->panel_data));
+      post_file_dialog_error(_("no region to save"), sd->panel_data);
       return;
     }
 
@@ -2452,8 +2460,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       if (saving)
 	msg = _("nothing to save");
       else msg = _("nothing to extract");
-      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-      clear_error_if_filename_changes(sd->fs, (void *)sd);
+      post_file_dialog_error((const char *)msg, sd->panel_data);
+      clear_error_if_filename_changes(sd->fs, sd);
       return;
     }
 
@@ -2464,13 +2472,13 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       if (saving)
 	msg = _("can't save: no file name given");
       else msg = _("can't extract: no file name given");
-      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-      clear_error_if_filename_changes(sd->fs, (void *)sd);
+      post_file_dialog_error((const char *)msg, sd->panel_data);
+      clear_error_if_filename_changes(sd->fs, sd);
       return;
     }
 
   /* get output file attributes */
-  redirect_snd_error_to(post_file_panel_error, (void *)(sd->panel_data));
+  redirect_snd_error_to(redirect_post_file_panel_error, (void *)(sd->panel_data));
   if (saving)
     comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chans, &type, &format, &location, &samples, 0);
   else comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chan, &type, &format, &location, &samples, 0);
@@ -2478,7 +2486,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   redirect_snd_error_to(NULL, NULL);
   if (sd->panel_data->error_widget != NOT_A_SCANF_WIDGET)
     {
-      clear_error_if_panel_changes(sd->fs->dialog, (void *)(sd->panel_data));
+      clear_error_if_panel_changes(sd->fs->dialog, sd->panel_data);
       if (comment) FREE(comment);
       return;
     }
@@ -2511,7 +2519,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 			     extractable_chans, 
 			     (extractable_chans > 1) ? "s" : "");
 	  else msg = mus_format("can't extract chan %d (first chan is numbered 0)", chan);
-	  post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+	  post_file_dialog_error((const char *)msg, sd->panel_data);
 	  clear_error_if_chans_changes(sd->fs->dialog, (void *)(sd->panel_data));
 	  FREE(msg);
 	  if (comment) FREE(comment);
@@ -2523,8 +2531,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   if (run_before_save_as_hook(sp, fullname, sd->type != SOUND_SAVE_AS, srate, type, format, comment))
     {
       msg = mus_format(_("%s cancelled by %s"), (saving) ? "save" : "extract", S_before_save_as_hook);
-      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-      clear_error_if_filename_changes(sd->fs, (void *)sd);      
+      post_file_dialog_error((const char *)msg, sd->panel_data);
+      clear_error_if_filename_changes(sd->fs, sd);      
       FREE(msg);
       FREE(fullname);
       if (comment) FREE(comment);
@@ -2540,8 +2548,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	  (sp->file_read_only))
 	{
 	  msg = mus_format(_("can't overwrite %s (it is write-protected)"), sp->short_filename);
-	  post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-	  clear_error_if_filename_changes(sd->fs, (void *)sd); 
+	  post_file_dialog_error((const char *)msg, sd->panel_data);
+	  clear_error_if_filename_changes(sd->fs, sd); 
 	  if (sp->user_read_only)
 	    add_sp_watcher(sp, SP_READ_ONLY_WATCHER, save_as_watch_user_read_only, (void *)sd);
 	  FREE(msg);
@@ -2567,7 +2575,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 			       "DoIt"
 			       );
 	      sd->file_watcher = fam_monitor_file(fullname, (void *)sd, watch_save_as_file);
-	      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+	      post_file_dialog_error((const char *)msg, sd->panel_data);
 	      clear_error_if_save_as_filename_changes(sd->fs->dialog, (void *)sd);
 	      set_stock_button_label(sd->fs->ok_button, _("DoIt"));
 	      FREE(msg);
@@ -2595,7 +2603,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       tmpfile = fullname;
     }
 
-  redirect_snd_error_to(post_file_dialog_error, (void *)(sd->panel_data));
+  redirect_snd_error_to(redirect_post_file_dialog_error, (void *)(sd->panel_data));
   switch (sd->type)
     {
     case SOUND_SAVE_AS:
@@ -2665,8 +2673,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   else
     {
       msg = mus_format("%s as %s: %s (%s)", (saving) ? "save" : "extract chan", str, io_error_name(io_err), snd_io_strerror());
-      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-      clear_error_if_filename_changes(sd->fs, (void *)sd);
+      post_file_dialog_error((const char *)msg, sd->panel_data);
+      clear_error_if_filename_changes(sd->fs, sd);
       FREE(msg);
     }
   FREE(fullname);
@@ -2721,8 +2729,8 @@ static void save_as_mkdir_callback(GtkWidget *w, gpointer context)
     {
       /* could not make the directory */
       str = mus_format(_("can't make %s: %s"), filename, strerror(errno));
-      post_file_dialog_error((const char *)str, (void *)(sd->panel_data));
-      clear_error_if_filename_changes(fs, (void *)sd);
+      post_file_dialog_error((const char *)str, sd->panel_data);
+      clear_error_if_filename_changes(fs, sd);
       FREE(str);
     }
   else
@@ -3088,12 +3096,12 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
 {
   raw_info *rp = (raw_info *)context;
   int raw_srate, raw_chans, raw_data_format;
-  redirect_snd_error_to(post_file_panel_error, (void *)(rp->rdat));
+  redirect_snd_error_to(redirect_post_file_panel_error, (void *)(rp->rdat));
   get_file_dialog_sound_attributes(rp->rdat, &raw_srate, &raw_chans, NULL, &raw_data_format, &(rp->location), NULL, 1);
   redirect_snd_error_to(NULL, NULL);
   if (rp->rdat->error_widget != NOT_A_SCANF_WIDGET)
     {
-      clear_error_if_panel_changes(rp->dialog, (void *)(rp->rdat));
+      clear_error_if_panel_changes(rp->dialog, rp->rdat);
     }
   else
     {
@@ -3114,11 +3122,11 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
 	  switch (rp->requestor)
 	    {
 	    case FROM_MIX_DIALOG:
-	      redirect_snd_error_to(file_open_error, (void *)mdat);
+	      redirect_snd_error_to(redirect_file_open_error, (void *)mdat);
 	      mix_complete_file_at_cursor(any_selected_sound(), rp->filename, with_mix_tags(ss), 0);
 	      break;
 	    case FROM_INSERT_DIALOG:
-	      redirect_snd_error_to(file_open_error, (void *)idat);
+	      redirect_snd_error_to(redirect_file_open_error, (void *)idat);
 	      insert_complete_file_at_cursor(any_selected_sound(), rp->filename);
 	      break;
 	    case FROM_VIEW_FILES_MIX_DIALOG:
@@ -3341,7 +3349,7 @@ static gboolean new_filename_modify_callback(GtkWidget *w, GdkEventKey *event, g
   return(false);
 }
 
-static void clear_error_if_new_filename_changes(GtkWidget *dialog, void *ignored)
+static void clear_error_if_new_filename_changes(GtkWidget *dialog)
 {
   if (new_file_text)
     new_file_handler_id = SG_SIGNAL_CONNECT(new_file_text, "key_press_event", new_filename_modify_callback, NULL);
@@ -3376,17 +3384,17 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
   if ((!newer_name) || (!(*newer_name)))
     {
       msg = _("new sound needs a file name ('New file:' field is empty)");
-      post_file_dialog_error((const char *)msg, (void *)ndat);
-      clear_error_if_new_filename_changes(new_file_dialog, (void *)ndat);
+      post_file_dialog_error((const char *)msg, ndat);
+      clear_error_if_new_filename_changes(new_file_dialog);
     }
   else
     {
-      redirect_snd_error_to(post_file_panel_error, (void *)ndat);
+      redirect_snd_error_to(redirect_post_file_panel_error, (void *)ndat);
       comment = get_file_dialog_sound_attributes(ndat, &srate, &chans, &header_type, &data_format, &loc, &initial_samples, 1);
       redirect_snd_error_to(NULL, NULL);
       if (ndat->error_widget != NOT_A_SCANF_WIDGET)
 	{
-	  clear_error_if_panel_changes(new_file_dialog, (void *)ndat);
+	  clear_error_if_panel_changes(new_file_dialog, ndat);
 	}
       else
 	{
@@ -3401,8 +3409,8 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 	      msg = mus_format(_("%s exists. If you want to overwrite it, click 'DoIt'"), newer_name);
 	      new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
 	      set_stock_button_label(new_file_ok_button, _("DoIt"));
-	      post_file_dialog_error((const char *)msg, (void *)ndat);
-	      clear_error_if_new_filename_changes(new_file_dialog, NULL);
+	      post_file_dialog_error((const char *)msg, ndat);
+	      clear_error_if_new_filename_changes(new_file_dialog);
 	      FREE(msg);
 	    }
 	  else
@@ -3410,7 +3418,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 	      if (new_file_watcher)
 		new_file_undoit();
 	      ss->local_errno = 0;
-	      redirect_snd_error_to(post_file_dialog_error, (void *)ndat);
+	      redirect_snd_error_to(redirect_post_file_dialog_error, (void *)ndat);
 	      sp = snd_new_file(newer_name, header_type, data_format, srate, chans, comment, initial_samples);
 	      redirect_snd_error_to(NULL, NULL);
 	      if (!sp)
@@ -3418,7 +3426,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 		  if ((ss->local_errno) &&
 		      (mus_file_probe(new_file_filename))) /* see comment in snd-xfile.c */
 		    new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
-		  clear_error_if_new_filename_changes(new_file_dialog, (void *)ndat);
+		  clear_error_if_new_filename_changes(new_file_dialog);
 		}
 	      else
 		{
@@ -3810,12 +3818,12 @@ static void edit_header_ok_callback(GtkWidget *w, gpointer context)
   if ((ep->sp) && (ep->sp->active))
     {
       bool ok;
-      redirect_snd_error_to(post_file_dialog_error, (void *)(ep->edat));
-      ok = edit_header_callback(ep->sp, ep->edat, post_file_dialog_error, post_file_panel_error);
+      redirect_snd_error_to(redirect_post_file_dialog_error, (void *)(ep->edat));
+      ok = edit_header_callback(ep->sp, ep->edat, redirect_post_file_dialog_error, redirect_post_file_panel_error);
       redirect_snd_error_to(NULL, NULL);
       if (ep->edat->error_widget != NOT_A_SCANF_WIDGET)
 	{
-	  clear_error_if_panel_changes(ep->dialog, (void *)(ep->edat));
+	  clear_error_if_panel_changes(ep->dialog, ep->edat);
 	  return;
 	}
       else

@@ -1315,7 +1315,7 @@ static syncdata *gather_syncd_marks(int sync)
 {
   syncdata *sd;
   sd = make_syncdata(sync);
-  for_each_normal_chan_1(gather_chan_syncd_marks, (void *)sd);
+  for_each_normal_chan_with_void(gather_chan_syncd_marks, (void *)sd);
   return(sd);
 }
 
@@ -2106,7 +2106,7 @@ static int *syncd_marks(int sync)
   int *ids;
   int i;
   sd = make_syncdata(sync);
-  for_each_normal_chan_1(gather_chan_syncd_marks, (void *)sd);
+  for_each_normal_chan_with_void(gather_chan_syncd_marks, (void *)sd);
   ids = (int *)CALLOC(1 + sd->mark_ctr, sizeof(int));
   ids[0] = sd->mark_ctr;
   for (i = 0; i < sd->mark_ctr; i++) ids[i + 1] = sd->marks[i]->id;
@@ -2255,7 +2255,7 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
  *   rely on anything in regard to the edit history.
  */
 
-static bool find_any_marks(chan_info *cp, void *ignore)
+static bool find_any_marks(chan_info *cp)
 {
   return((cp->marks) && (cp->mark_ctr[cp->edit_ctr] >= 0)); /* initialized to -1 -- 0 is first mark */
 }
@@ -2362,7 +2362,7 @@ void save_mark_list(FILE *fd, chan_info *cp, bool all_chans)
    */
 
   save_mark_info *sv;
-  if ((!all_chans) && (!(find_any_marks(cp, NULL)))) return; /* in the sound (all_chans) case, this has been checked already */
+  if ((!all_chans) && (!(find_any_marks(cp)))) return; /* in the sound (all_chans) case, this has been checked already */
   sv = (save_mark_info *)CALLOC(1, sizeof(save_mark_info));
   sv->fd = fd;
   sv->size = 0;
@@ -2408,7 +2408,7 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
   sp = get_sp(snd_n, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_save_marks, snd_n));
-  if (map_over_sound_chans(sp, find_any_marks, NULL)) /* are there any marks? */
+  if (map_over_sound_chans(sp, find_any_marks)) /* are there any marks? */
     {
       char *newname = NULL;
       int i, len;

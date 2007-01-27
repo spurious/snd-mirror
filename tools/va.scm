@@ -1,4 +1,4 @@
-#!/usr/local/bin/guile -s
+#!/usr/bin/guile -s
 !#
 
 ;;; a script to search for allocation mismatches and unterminated XtVa args 

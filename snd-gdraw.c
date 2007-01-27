@@ -949,14 +949,17 @@ void set_spectro_z_scale(Float val)
   if (!(ss->graph_hook_active)) for_each_chan(update_graph);
 }
 
-static void chans_spectro_hop(chan_info *cp, void *ptr) {cp->spectro_hop = (*((int *)ptr));}
+static void chans_spectro_hop(chan_info *cp, int value)
+{
+  cp->spectro_hop = value;
+}
 
 static void hop_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
   int val;
   val = mus_iclamp(1, (int)(adj->value), 20);
   in_set_spectro_hop(val);
-  for_each_chan_1(chans_spectro_hop, (void *)(&val));
+  for_each_chan_with_int(chans_spectro_hop, val);
   check_orientation_hook();
   for_each_chan(update_graph);
 }
@@ -967,7 +970,7 @@ void set_spectro_hop(int val)
     {
       in_set_spectro_hop(val);
       if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->hop_adj), val);
-      for_each_chan_1(chans_spectro_hop, (void *)(&val));
+      for_each_chan_with_int(chans_spectro_hop, val);
       check_orientation_hook();
       if (!(ss->graph_hook_active)) for_each_chan(update_graph);
     }

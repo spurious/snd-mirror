@@ -172,7 +172,7 @@ void resize_sx(chan_info *cp);
 void resize_zx(chan_info *cp);
 void resize_sy(chan_info *cp);
 void resize_zy(chan_info *cp);
-bool channel_open_pane(chan_info *cp, void *ptr);
+bool channel_open_pane(chan_info *cp);
 void reflect_edit_history_change(chan_info *cp);
 void reflect_edit_counter_change(chan_info *cp);
 void set_peak_numbers_font(chan_info *cp);

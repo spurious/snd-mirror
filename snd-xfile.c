@@ -1225,10 +1225,8 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
 
 /* -------- File:Open/View dialogs -------- */
 
-static void file_open_error(const char *error_msg, void *ufd)
+static void file_open_error(const char *error_msg, file_dialog_info *fd)
 {
-  /* called from snd_error, redirecting error handling to the dialog */
-  file_dialog_info *fd = (file_dialog_info *)ufd;
   XmString msg;
   msg = XmStringCreateLocalized((char *)error_msg);
   XtVaSetValues(fd->info1, 
@@ -1240,6 +1238,12 @@ static void file_open_error(const char *error_msg, void *ufd)
     XtUnmanageChild(fd->info2);
   if (!(XtIsManaged(fd->info_frame))) 
     XtManageChild(fd->info_frame);
+}
+
+static void redirect_file_open_error(const char *error_msg, void *ufd)
+{
+  /* called from snd_error, redirecting error handling to the dialog */
+  file_open_error(error_msg, (file_dialog_info *)ufd);
 }
 
 static void open_modify_callback(Widget w, XtPointer context, XtPointer info);
@@ -1271,7 +1275,7 @@ static void open_modify_callback(Widget w, XtPointer context, XtPointer info)
   cbs->doit = true; /* fixup filename elsewhere -- returning false here makes the thing beep! */
 }
 
-static void clear_error_if_open_changes(Widget dialog, void *data)
+static void clear_error_if_open_changes(Widget dialog, file_dialog_info *data)
 {
   Widget dialog_filename_text;
   dialog_filename_text = FSB_BOX(dialog, XmDIALOG_TEXT);
@@ -1327,8 +1331,8 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
   filename = (char *)XmStringUnparse(cbs->value, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   if ((!filename) || (!(*filename)))
     {
-      file_open_error(_("no filename given"), (void *)fd);
-      clear_error_if_open_changes(fd->dialog, (void *)fd);
+      file_open_error(_("no filename given"), fd);
+      clear_error_if_open_changes(fd->dialog, fd);
     }
   else
     {
@@ -1336,7 +1340,7 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
       if (!(directory_p(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
 	{
 	  snd_info *sp;
-	  redirect_snd_error_to(file_open_error, (void *)fd);
+	  redirect_snd_error_to(redirect_file_open_error, (void *)fd);
 	  ss->sgx->requestor_dialog = w;
 	  ss->open_requestor = FROM_OPEN_DIALOG;
 	  ss->open_requestor_data = NULL;
@@ -1352,7 +1356,7 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    {
 	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
 		{
-		  clear_error_if_open_changes(fd->dialog, (void *)fd);
+		  clear_error_if_open_changes(fd->dialog, fd);
 		  /* whatever the error was, I think it is correct here to unpost the error
 		   *   if the underlying file is either changed or created.
 		   */
@@ -1365,8 +1369,8 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
 	{
 	  char *str;
 	  str = mus_format(_("%s is a directory"), filename);
-	  file_open_error(str, (void *)fd);
-	  clear_error_if_open_changes(fd->dialog, (void *)fd);
+	  file_open_error(str, fd);
+	  clear_error_if_open_changes(fd->dialog, fd);
 	  FREE(str);
 	}
     }
@@ -1382,8 +1386,8 @@ static void file_mkdir_callback(Widget w, XtPointer context, XtPointer info)
       /* could not make the directory */
       char *str;
       str = mus_format(_("can't make %s: %s"), filename, strerror(errno));
-      file_open_error(str, (void *)fd);
-      clear_error_if_open_changes(fd->dialog, (void *)fd);
+      file_open_error(str, fd);
+      clear_error_if_open_changes(fd->dialog, fd);
       FREE(str);
     }
   else
@@ -1475,8 +1479,8 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
   filename = (char *)XmStringUnparse(cbs->value, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   if ((!filename) || (!(*filename)))
     {
-      file_open_error(_("no filename given"), (void *)fd);
-      clear_error_if_open_changes(fd->dialog, (void *)fd);
+      file_open_error(_("no filename given"), fd);
+      clear_error_if_open_changes(fd->dialog, fd);
     }
   else
     {
@@ -1486,7 +1490,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  int id_or_error;
 	  snd_info *sp;
 	  sp = any_selected_sound();
-	  redirect_snd_error_to(file_open_error, (void *)fd);
+	  redirect_snd_error_to(redirect_file_open_error, (void *)fd);
 	  ss->sgx->requestor_dialog = w;
 	  ss->open_requestor = FROM_MIX_DIALOG;
 	  ss->open_requestor_data = NULL;
@@ -1498,7 +1502,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    {
 	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
 		{
-		  clear_error_if_open_changes(fd->dialog, (void *)fd);
+		  clear_error_if_open_changes(fd->dialog, fd);
 		  if (id_or_error == MIX_FILE_NO_FILE)
 		    start_unsound_watcher(fd, filename);
 		}
@@ -1514,8 +1518,8 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
 	{
 	  char *str;
 	  str = mus_format(_("%s is a directory"), filename);
-	  file_open_error(str, (void *)fd);
-	  clear_error_if_open_changes(fd->dialog, (void *)fd);
+	  file_open_error(str, fd);
+	  clear_error_if_open_changes(fd->dialog, fd);
 	  FREE(str);
 	}
     }
@@ -1571,8 +1575,8 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
   filename = (char *)XmStringUnparse(cbs->value, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   if ((!filename) || (!(*filename)))
     {
-      file_open_error(_("no filename given"), (void *)fd);
-      clear_error_if_open_changes(fd->dialog, (void *)fd);
+      file_open_error(_("no filename given"), fd);
+      clear_error_if_open_changes(fd->dialog, fd);
     }
   else
     {
@@ -1585,7 +1589,7 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  ss->sgx->requestor_dialog = w;
 	  ss->open_requestor = FROM_INSERT_DIALOG;
 	  ss->open_requestor_data = NULL;
-	  redirect_snd_error_to(file_open_error, (void *)fd);
+	  redirect_snd_error_to(redirect_file_open_error, (void *)fd);
 	  ok = insert_complete_file_at_cursor(sp, filename);
 	  redirect_snd_error_to(NULL, NULL);
 	  if (!ok)
@@ -1593,7 +1597,7 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
 	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
 		{
 		  char *fullname;
-		  clear_error_if_open_changes(fd->dialog, (void *)fd);
+		  clear_error_if_open_changes(fd->dialog, fd);
 		  /* ideally insert_complete_file would return an indication of what the error was... */
 		  fullname = mus_expand_filename(filename);
 		  if (!(mus_file_probe(fullname)))
@@ -1612,8 +1616,8 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
 	{
 	  char *str;
 	  str = mus_format(_("%s is a directory"), filename);
-	  file_open_error(str, (void *)fd);
-	  clear_error_if_open_changes(fd->dialog, (void *)fd);
+	  file_open_error(str, fd);
+	  clear_error_if_open_changes(fd->dialog, fd);
 	  FREE(str);
 	}
     }
@@ -1909,16 +1913,20 @@ static void show_dialog_error(file_data *fd)
     }
 }
 
-static void post_file_dialog_error(const char *error_msg, void *ufd)
+static void post_file_dialog_error(const char *error_msg, file_data *fd)
 {
   XmString msg;
-  file_data *fd = (file_data *)ufd;
   msg = XmStringCreateLocalized((char *)error_msg);
   XtVaSetValues(fd->error_text, 
 		XmNlabelString, msg, 
 		NULL);
   XmStringFree(msg);
   show_dialog_error(fd);
+}
+
+static void redirect_post_file_dialog_error(const char *error_msg, void *ufd)
+{
+  post_file_dialog_error(error_msg, (file_data *)ufd);
 }
 
 static void filename_modify_callback(Widget w, XtPointer context, XtPointer info)
@@ -1933,7 +1941,7 @@ static void filename_modify_callback(Widget w, XtPointer context, XtPointer info
   cbs->doit = true;
 }
 
-static void clear_error_if_filename_changes(Widget dialog, void *data)
+static void clear_error_if_filename_changes(Widget dialog, file_data *data)
 {
   Widget dialog_filename_text;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(dialog), dialog);
@@ -1951,10 +1959,9 @@ static void chans_modify_callback(Widget w, XtPointer context, XtPointer info)
   cbs->doit = true;
 }
 
-static void clear_error_if_chans_changes(Widget dialog, void *data)
+static void clear_error_if_chans_changes(Widget dialog, file_data *fd)
 {
-  file_data *fd = (file_data *)data;
-  if (fd->chans_text) XtAddCallback(fd->chans_text, XmNmodifyVerifyCallback, chans_modify_callback, (XtPointer)data);
+  if (fd->chans_text) XtAddCallback(fd->chans_text, XmNmodifyVerifyCallback, chans_modify_callback, (XtPointer)fd);
 }
 
 static void panel_modify_callback(Widget w, XtPointer context, XtPointer info)
@@ -1966,9 +1973,8 @@ static void panel_modify_callback(Widget w, XtPointer context, XtPointer info)
   cbs->doit = true;
 }
 
-static void clear_error_if_panel_changes(Widget dialog, void *data)
+static void clear_error_if_panel_changes(Widget dialog, file_data *fd)
 {
-  file_data *fd = (file_data *)data;
   Widget baddy;
   switch (fd->error_widget)
     {
@@ -1977,14 +1983,14 @@ static void clear_error_if_panel_changes(Widget dialog, void *data)
     case SAMPLES_WIDGET:       baddy = fd->samples_text;  break;
     default:                   baddy = fd->chans_text;    break;
     }
-  if (baddy) XtAddCallback(baddy, XmNmodifyVerifyCallback, panel_modify_callback, (XtPointer)data);
+  if (baddy) XtAddCallback(baddy, XmNmodifyVerifyCallback, panel_modify_callback, (XtPointer)fd);
 }
 
 static void post_file_panel_error(const char *error_msg, void *ufd)
 {
   file_data *fd = (file_data *)ufd;
   fd->error_widget = fd->scanf_widget;
-  post_file_dialog_error(error_msg, ufd);
+  post_file_dialog_error(error_msg, fd);
 }
 
 static void file_data_type_callback(Widget w, XtPointer context, XtPointer info) 
@@ -2547,11 +2553,9 @@ static void save_as_filename_modify_callback(Widget w, XtPointer context, XtPoin
   cbs->doit = true;
 }
 
-static void clear_error_if_save_as_filename_changes(Widget dialog, void *data)
+static void clear_error_if_save_as_filename_changes(Widget dialog, save_as_dialog_info *sd)
 {
-  /* this clear_error call is different from the others -- data is the save_as_dialog_info pointer, not the panel_data pointer */
-  save_as_dialog_info *sd = (save_as_dialog_info *)data;
-  XtAddCallback(sd->filename_widget, XmNmodifyVerifyCallback, save_as_filename_modify_callback, (XtPointer)data);
+  XtAddCallback(sd->filename_widget, XmNmodifyVerifyCallback, save_as_filename_modify_callback, (XtPointer)sd);
 }
 
 static void watch_save_as_file(struct fam_info *fp, FAMEvent *fe)
@@ -2598,7 +2602,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       if (saving)
 	msg = _("no selection to save");
       else msg = _("can't extract: no selection");
-      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+      post_file_dialog_error((const char *)msg, sd->panel_data);
       if (sd->selection_watcher_loc < 0)
 	sd->selection_watcher_loc = add_selection_watcher(save_as_selection_watcher, (void *)sd);
       return;
@@ -2607,7 +2611,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   if ((sd->type == REGION_SAVE_AS) &&
       (!(region_ok(region_dialog_region()))))
     {
-      post_file_dialog_error(_("no region to save"), (void *)(sd->panel_data));
+      post_file_dialog_error(_("no region to save"), sd->panel_data);
       return;
     }
 
@@ -2618,8 +2622,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       if (saving)
 	msg = _("nothing to save");
       else msg = _("nothing to extract");
-      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-      clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
+      post_file_dialog_error((const char *)msg, sd->panel_data);
+      clear_error_if_filename_changes(sd->dialog, sd->panel_data);
       return;
     }
 
@@ -2630,8 +2634,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       if (saving)
 	msg = _("can't save: no file name given");
       else msg = _("can't extract: no file name given");
-      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-      clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
+      post_file_dialog_error((const char *)msg, sd->panel_data);
+      clear_error_if_filename_changes(sd->dialog, sd->panel_data);
       return;
     }
 
@@ -2644,7 +2648,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   redirect_snd_error_to(NULL, NULL);
   if (sd->panel_data->error_widget != NOT_A_SCANF_WIDGET)
     {
-      clear_error_if_panel_changes(sd->dialog, (void *)(sd->panel_data));
+      clear_error_if_panel_changes(sd->dialog, sd->panel_data);
       if (comment) FREE(comment);
       XtFree(str);
       return;
@@ -2678,8 +2682,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 			     extractable_chans, 
 			     (extractable_chans > 1) ? "s" : "");
 	  else msg = mus_format("can't extract chan %d (first chan is numbered 0)", chan);
-	  post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-	  clear_error_if_chans_changes(sd->dialog, (void *)(sd->panel_data));
+	  post_file_dialog_error((const char *)msg, sd->panel_data);
+	  clear_error_if_chans_changes(sd->dialog, sd->panel_data);
 	  FREE(msg);
 	  if (comment) FREE(comment);
 	  XtFree(str);
@@ -2691,8 +2695,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   if (run_before_save_as_hook(sp, fullname, sd->type != SOUND_SAVE_AS, srate, type, format, comment))
     {
       msg = mus_format(_("%s cancelled by %s"), (saving) ? "save" : "extract", S_before_save_as_hook);
-      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-      clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));      
+      post_file_dialog_error((const char *)msg, sd->panel_data);
+      clear_error_if_filename_changes(sd->dialog, sd->panel_data);      
       FREE(msg);
       FREE(fullname);
       if (comment) FREE(comment);
@@ -2709,8 +2713,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	  (sp->file_read_only))
 	{
 	  msg = mus_format(_("can't overwrite %s (it is write-protected)"), sp->short_filename);
-	  post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-	  clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data)); 
+	  post_file_dialog_error((const char *)msg, sd->panel_data);
+	  clear_error_if_filename_changes(sd->dialog, sd->panel_data); 
 	  if (sp->user_read_only)
 	    add_sp_watcher(sp, SP_READ_ONLY_WATCHER, save_as_watch_user_read_only, (void *)(sd->panel_data));
 	  FREE(msg);
@@ -2736,8 +2740,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 			       str,
 			       (parlous_sp) ? ", and has unsaved edits" : "");
 	      sd->file_watcher = fam_monitor_file(fullname, (void *)sd, watch_save_as_file);
-	      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-	      clear_error_if_save_as_filename_changes(sd->dialog, (void *)sd);
+	      post_file_dialog_error((const char *)msg, sd->panel_data);
+	      clear_error_if_save_as_filename_changes(sd->dialog, sd);
 	      ok_label = XmStringCreateLocalized(_("DoIt"));
 	      XtVaSetValues(sd->dialog, 
 			    XmNokLabelString, ok_label, 
@@ -2770,7 +2774,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       tmpfile = fullname;
     }
 
-  redirect_snd_error_to(post_file_dialog_error, (void *)(sd->panel_data));
+  redirect_snd_error_to(redirect_post_file_dialog_error, (void *)(sd->panel_data));
   switch (sd->type)
     {
     case SOUND_SAVE_AS:
@@ -2841,8 +2845,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   else
     {
       msg = mus_format("%s as %s: %s (%s)", (saving) ? "save" : "extract chan", str, io_error_name(io_err), snd_io_strerror());
-      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-      clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
+      post_file_dialog_error((const char *)msg, sd->panel_data);
+      clear_error_if_filename_changes(sd->dialog, sd->panel_data);
       FREE(msg);
     }
 
@@ -2933,8 +2937,8 @@ static void save_as_mkdir_callback(Widget w, XtPointer context, XtPointer info)
       /* could not make the directory */
       char *str;
       str = mus_format(_("can't make %s: %s"), filename, strerror(errno));
-      post_file_dialog_error((const char *)str, (void *)(sd->panel_data));
-      clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data)); 
+      post_file_dialog_error((const char *)str, sd->panel_data);
+      clear_error_if_filename_changes(sd->dialog, sd->panel_data); 
       FREE(str);
     }
   else
@@ -3409,7 +3413,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
   if ((!newer_name) || (!(*newer_name)))
     {
       msg = _("new sound needs a file name ('New file:' field is empty)");
-      post_file_dialog_error((const char *)msg, (void *)ndat);
+      post_file_dialog_error((const char *)msg, ndat);
       clear_error_if_new_filename_changes(new_file_dialog);
     }
   else
@@ -3419,7 +3423,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
       redirect_snd_error_to(NULL, NULL);
       if (ndat->error_widget != NOT_A_SCANF_WIDGET)
 	{
-	  clear_error_if_panel_changes(new_file_dialog, (void *)ndat);
+	  clear_error_if_panel_changes(new_file_dialog, ndat);
 	}
       else
 	{
@@ -3434,7 +3438,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 	      XmString ok_label;
 	      msg = mus_format(_("%s exists. If you want to overwrite it, click 'DoIt'"), newer_name);
 	      new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
-	      post_file_dialog_error((const char *)msg, (void *)ndat);
+	      post_file_dialog_error((const char *)msg, ndat);
 	      clear_error_if_new_filename_changes(new_file_dialog);
 	      ok_label = XmStringCreateLocalized(_("DoIt"));
 	      XtVaSetValues(new_file_dialog, 
@@ -3449,7 +3453,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 	      if (new_file_watcher)
 		new_file_undoit();
 	      ss->local_errno = 0;
-	      redirect_snd_error_to(post_file_dialog_error, (void *)ndat);
+	      redirect_snd_error_to(redirect_post_file_dialog_error, (void *)ndat);
 	      sp = snd_new_file(new_file_filename, header_type, data_format, srate, chans, comment, initial_samples);
 	      redirect_snd_error_to(NULL, NULL);
 	      if (!sp)
@@ -3907,8 +3911,8 @@ static void edit_header_ok_callback(Widget w, XtPointer context, XtPointer info)
       if (XmGetFocusWidget(ep->dialog) == MSG_BOX(ep->dialog, XmDIALOG_OK_BUTTON))
 	{
 	  bool ok;
-	  redirect_snd_error_to(post_file_dialog_error, (void *)(ep->edat));
-	  ok = edit_header_callback(ep->sp, ep->edat, post_file_dialog_error, post_file_panel_error);
+	  redirect_snd_error_to(redirect_post_file_dialog_error, (void *)(ep->edat));
+	  ok = edit_header_callback(ep->sp, ep->edat, redirect_post_file_dialog_error, post_file_panel_error);
 	  /* edit_header_callback, if all goes well, writes the header, recopies the data,
 	   *   then calls snd_update which closes the sound and reopens it, to force the
 	   *   new_header to take effect.  The read-only watcher is disabled during that
@@ -3917,7 +3921,7 @@ static void edit_header_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  redirect_snd_error_to(NULL, NULL);
 	  if (ep->edat->error_widget != NOT_A_SCANF_WIDGET)
 	    {
-	      clear_error_if_panel_changes(ep->dialog, (void *)(ep->edat));
+	      clear_error_if_panel_changes(ep->dialog, ep->edat);
 	      return;
 	    }
 	  else
@@ -4199,7 +4203,7 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
   redirect_snd_error_to(NULL, NULL);
   if (rp->rdat->error_widget != NOT_A_SCANF_WIDGET)
     {
-      clear_error_if_panel_changes(rp->dialog, (void *)(rp->rdat));
+      clear_error_if_panel_changes(rp->dialog, rp->rdat);
     }
   else
     {
@@ -4220,11 +4224,11 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  switch (rp->requestor)
 	    {
 	    case FROM_MIX_DIALOG:
-	      redirect_snd_error_to(file_open_error, (void *)mdat);
+	      redirect_snd_error_to(redirect_file_open_error, (void *)mdat);
 	      mix_complete_file_at_cursor(any_selected_sound(), rp->filename, with_mix_tags(ss), 0);
 	      break;
 	    case FROM_INSERT_DIALOG:
-	      redirect_snd_error_to(file_open_error, (void *)idat);
+	      redirect_snd_error_to(redirect_file_open_error, (void *)idat);
 	      insert_complete_file_at_cursor(any_selected_sound(), rp->filename);
 	      break;
 	    case FROM_VIEW_FILES_MIX_DIALOG:

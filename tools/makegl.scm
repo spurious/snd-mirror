@@ -1,4 +1,4 @@
-#!/usr/local/bin/guile -s
+#!/usr/bin/guile -s
 !#
 
 ;;; makegl.scm creates the GL/GLU bindings using gldata.scm, writes gl.c

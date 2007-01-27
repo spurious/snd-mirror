@@ -55,9 +55,10 @@ static void after_transform(chan_info *cp, Float scaler)
 }
 
 static void set_y_bounds(axis_info *ap);
-static void chans_time_graph_type(chan_info *cp, void *ptr) 
+
+static void chans_time_graph_type(chan_info *cp, int value)
 {
-  cp->time_graph_type = (*((graph_type_t *)ptr)); 
+  cp->time_graph_type = (graph_type_t)value;
   if (cp->time_graph_type == GRAPH_ONCE) 
     {
       set_y_bounds(cp->axis);
@@ -71,12 +72,12 @@ static void chans_time_graph_type(chan_info *cp, void *ptr)
 static void set_time_graph_type(graph_type_t val) 
 {
   in_set_time_graph_type(val); 
-  for_each_chan_1(chans_time_graph_type, (void *)(&val));
+  for_each_chan_with_int(chans_time_graph_type, (int)val);
 }
 
-static void chans_wavo_hop(chan_info *cp, void *ptr) 
+static void chans_wavo_hop(chan_info *cp, int hop)
 {
-  cp->wavo_hop = (*((int *)ptr)); 
+  cp->wavo_hop = hop;
   update_graph(cp); 
 }
 
@@ -87,12 +88,12 @@ static void set_wavo_hop(int uval)
     val = 1; 
   else val = uval; 
   in_set_wavo_hop(val); 
-  for_each_chan_1(chans_wavo_hop, (void *)(&val));
+  for_each_chan_with_int(chans_wavo_hop, val);
 }
 
-static void chans_wavo_trace(chan_info *cp, void *ptr) 
+static void chans_wavo_trace(chan_info *cp, int value)
 {
-  cp->wavo_trace = (*((int *)ptr)); 
+  cp->wavo_trace = value;
   update_graph(cp);
 }
 
@@ -103,7 +104,7 @@ void set_wavo_trace(int uval)
     val = 1; 
   else val = uval; 
   in_set_wavo_trace(val); 
-  for_each_chan_1(chans_wavo_trace, (void *)(&val));
+  for_each_chan_with_int(chans_wavo_trace, val);
 }
 
 static void set_beats_per_minute(Float val) 
@@ -118,9 +119,9 @@ static void set_beats_per_minute(Float val)
     }
 }
 
-static void chans_beats_per_measure(chan_info *cp, void *ptr) 
+static void chans_beats_per_measure(chan_info *cp, int value)
 {
-  cp->beats_per_measure = (*((int *)ptr)); 
+  cp->beats_per_measure = value;
   update_graph(cp);
 }
 
@@ -130,72 +131,72 @@ static void set_beats_per_measure(int val)
     {
       if (val > 1000) val = 1000;
       in_set_beats_per_measure(val); 
-      for_each_chan_1(chans_beats_per_measure, (void *)(&val));
+      for_each_chan_with_int(chans_beats_per_measure, val);
     }
 }
 
-static void chans_max_transform_peaks(chan_info *cp, void *ptr) 
+static void chans_max_transform_peaks(chan_info *cp, int value)
 {
-  cp->max_transform_peaks = (*((int *)ptr)); 
+  cp->max_transform_peaks = value;
 }
 
 void set_max_transform_peaks(int val) 
 {
   in_set_max_transform_peaks(val); 
-  for_each_chan_1(chans_max_transform_peaks, (void *)(&val));
+  for_each_chan_with_int(chans_max_transform_peaks, val);
 }
 
-static void chans_zero_pad(chan_info *cp, void *ptr) 
+static void chans_zero_pad(chan_info *cp, int value)
 {
-  cp->zero_pad = (*((int *)ptr)); 
+  cp->zero_pad = value;
   calculate_fft(cp);
 }
 
 static void set_zero_pad(int val) 
 {
   in_set_zero_pad(val); 
-  for_each_chan_1(chans_zero_pad, (void *)(&val));
+  for_each_chan_with_int(chans_zero_pad, val);
 }
 
-static void chans_show_grid(chan_info *cp, void *ptr)
+static void chans_show_grid(chan_info *cp, int value)
 {
-  cp->show_grid = (*((with_grid_t *)ptr));
+  cp->show_grid = (with_grid_t)value;
   update_graph(cp);
 }
 
 static void set_show_grid(with_grid_t val)
 {
   in_set_show_grid(val);
-  for_each_chan_1(chans_show_grid, (void *)(&val));
+  for_each_chan_with_int(chans_show_grid, (int)val);
 }
 
-static void chans_grid_density(chan_info *cp, void *ptr)
+static void chans_grid_density(chan_info *cp, Float value)
 {
-  cp->grid_density = (*((Float *)ptr));
+  cp->grid_density = value;
   update_graph(cp);
 }
 
 static void set_grid_density(Float val)
 {
   in_set_grid_density(val);
-  for_each_chan_1(chans_grid_density, (void *)(&val));
+  for_each_chan_with_float(chans_grid_density, val);
 }
 
-static void chans_show_sonogram_cursor(chan_info *cp, void *ptr)
+static void chans_show_sonogram_cursor(chan_info *cp, bool value)
 {
-  cp->show_sonogram_cursor = (*((bool *)ptr));
+  cp->show_sonogram_cursor = value;
   update_graph(cp);
 }
 
 static void set_show_sonogram_cursor(bool val)
 {
   in_set_show_sonogram_cursor(val);
-  for_each_chan_1(chans_show_sonogram_cursor, (void *)(&val));
+  for_each_chan_with_bool(chans_show_sonogram_cursor, val);
 }
 
-static void chans_transform_graph_type(chan_info *cp, void *ptr) 
+static void chans_transform_graph_type(chan_info *cp, int value)
 {
-  cp->transform_graph_type = (*((graph_type_t *)ptr)); 
+  cp->transform_graph_type = (graph_type_t)value;
 }
 
 void in_set_transform_graph_type(graph_type_t uval) 
@@ -203,54 +204,54 @@ void in_set_transform_graph_type(graph_type_t uval)
   graph_type_t val;
   val = (graph_type_t)mus_iclamp((int)GRAPH_ONCE, uval, (int)GRAPH_AS_SPECTROGRAM);
   in_set_transform_graph_type_1(val); 
-  for_each_chan_1(chans_transform_graph_type, (void *)(&val));
+  for_each_chan_with_int(chans_transform_graph_type, (int)val);
 }
 
-static void chans_show_mix_waveforms(chan_info *cp, void *ptr) 
+static void chans_show_mix_waveforms(chan_info *cp, bool value)
 {
-  cp->show_mix_waveforms = (*((bool *)ptr));
+  cp->show_mix_waveforms = value;
 }
 
 static void set_show_mix_waveforms(bool val) 
 {
   in_set_show_mix_waveforms(val); 
-  for_each_chan_1(chans_show_mix_waveforms, (void *)(&val));
+  for_each_chan_with_bool(chans_show_mix_waveforms, val);
 }
 
-static void chans_show_axes(chan_info *cp, void *ptr) 
+static void chans_show_axes(chan_info *cp, int value)
 {
-  cp->show_axes = (*((show_axes_t *)ptr)); 
+  cp->show_axes = (show_axes_t)value;
   update_graph(cp); 
 }
 
 void set_show_axes(show_axes_t val) 
 {
   in_set_show_axes(val); 
-  for_each_chan_1(chans_show_axes, (void *)(&val));
+  for_each_chan_with_int(chans_show_axes, (int)val);
 }
 
-static void chans_graphs_horizontal(chan_info *cp, void *ptr) 
+static void chans_graphs_horizontal(chan_info *cp, bool value)
 {
-  cp->graphs_horizontal = (*((bool *)ptr)); 
+  cp->graphs_horizontal = value;
   update_graph(cp); 
 }
 
 static void set_graphs_horizontal(bool val) 
 {
   in_set_graphs_horizontal(val);
-  for_each_chan_1(chans_graphs_horizontal, (void *)(&val));
+  for_each_chan_with_bool(chans_graphs_horizontal, val);
 }
 
-static void chans_fft_window(chan_info *cp, void *ptr) 
+static void chans_fft_window(chan_info *cp, int value)
 {
-  cp->fft_window = (*((mus_fft_window_t *)ptr)); 
-  if (cp->fft) (cp->fft)->window = (*((mus_fft_window_t *)ptr));
+  cp->fft_window = (mus_fft_window_t)value;
+  if (cp->fft) (cp->fft)->window = (mus_fft_window_t)value;
 }
 
 void in_set_fft_window(mus_fft_window_t val) 
 {
   in_set_fft_window_1(val); 
-  for_each_chan_1(chans_fft_window, (void *)(&val));
+  for_each_chan_with_int(chans_fft_window, (int)val);
 }
 
 void chans_field(fcp_t field, Float val)
@@ -371,9 +372,9 @@ static void set_spectro_start(Float val)
     for_each_chan(update_graph);
 }
 
-static void chans_dot_size(chan_info *cp, void *ptr) 
+static void chans_dot_size(chan_info *cp, int value)
 {
-  cp->dot_size = (*((int *)ptr)); 
+  cp->dot_size = value;
   update_graph(cp);
 }
 
@@ -382,13 +383,13 @@ void set_dot_size(int val)
   if (val > 0)  /* -1 here can crash X! */
     {
       in_set_dot_size((Latus)val);
-      for_each_chan_1(chans_dot_size, (void *)(&val));
+      for_each_chan_with_int(chans_dot_size, val);
     }
 }
 
-static void chans_cursor_size(chan_info *cp, void *ptr) 
+static void chans_cursor_size(chan_info *cp, int value)
 {
-  cp->cursor_size = (*((int *)ptr)); 
+  cp->cursor_size = value;
   update_graph(cp);
 }
 
@@ -397,14 +398,14 @@ static void set_cursor_size(int val)
   if (val > 0)
     {
       in_set_cursor_size(val);
-      for_each_chan_1(chans_cursor_size, (void *)(&val));
+      for_each_chan_with_int(chans_cursor_size, val);
     }
 }
 
-static void chans_cursor_style(chan_info *cp, void *ptr) 
+static void chans_cursor_style(chan_info *cp, int value)
 {
   cursor_style_t style;
-  style = (*((cursor_style_t *)ptr));
+  style = (cursor_style_t)value;
   if ((cp->cursor_style == CURSOR_PROC) && (XEN_PROCEDURE_P(cp->cursor_proc)))
     {
       snd_unprotect_at(cp->cursor_proc_loc);
@@ -419,18 +420,18 @@ static void chans_cursor_style(chan_info *cp, void *ptr)
 static void set_cursor_style(cursor_style_t val)
 {
   in_set_cursor_style(val);
-  for_each_chan_1(chans_cursor_style, (void *)(&val));
+  for_each_chan_with_int(chans_cursor_style, (int)val);
 }
 
-static void chans_tracking_cursor_style(chan_info *cp, void *ptr) 
+static void chans_tracking_cursor_style(chan_info *cp, int value)
 {
-  cp->tracking_cursor_style = (*((cursor_style_t *)ptr));
+  cp->tracking_cursor_style = (cursor_style_t)value;
 }
 
 static void set_tracking_cursor_style(cursor_style_t val)
 {
   in_set_tracking_cursor_style(val);
-  for_each_chan_1(chans_tracking_cursor_style, (void *)(&val));
+  for_each_chan_with_int(chans_tracking_cursor_style, (int)val);
 }
 
 chan_info *virtual_selected_channel(chan_info *cp)
@@ -4275,7 +4276,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		      if (show_selection_transform(ss)) 
 			{
 			  if (sp->sync)
-			    for_each_normal_chan_1(calculate_syncd_fft, (void *)(&(sp->sync)));
+			    for_each_normal_chan_with_void(calculate_syncd_fft, (void *)(&(sp->sync)));
 			  else calculate_fft(cp);
 			}
 		    }
@@ -4761,7 +4762,7 @@ static void reset_y_display(chan_info *cp, double sy, double zy)
   apply_y_axis_change(ap, cp);
 }
 
-static void chans_x_axis_style(chan_info *cp, void *ptr);
+static void chans_x_axis_style(chan_info *cp, int value);
 
 static bool call_update_graph = true;
 #define MAX_SPECTRO_SCALE 1000.0
@@ -5041,7 +5042,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
       break;
     case CP_X_AXIS_STYLE:
       val = XEN_TO_C_INT(on); /* range already checked */
-      chans_x_axis_style(cp, (void *)(&val));
+      chans_x_axis_style(cp, val);
       return(C_TO_XEN_INT((int)(cp->x_axis_style)));
       break;
     case CP_DOT_SIZE:
@@ -5596,16 +5597,16 @@ static XEN g_show_y_zero(XEN snd, XEN chn)
   return(C_TO_XEN_BOOLEAN(show_y_zero(ss)));
 }
 
-static void chans_zero(chan_info *cp, void *ptr)
+static void chans_zero(chan_info *cp, bool value)
 {
-  cp->show_y_zero = (*((bool *)ptr));
+  cp->show_y_zero = value;
   update_graph(cp);
 }
 
 void set_show_y_zero(bool val)
 {
   in_set_show_y_zero(val);
-  for_each_chan_1(chans_zero, (void *)(&val));
+  for_each_chan_with_bool(chans_zero, val);
 }
 
 static XEN g_set_show_y_zero(XEN on, XEN snd, XEN chn) 
@@ -5685,10 +5686,8 @@ static XEN g_min_dB(XEN snd, XEN chn)
 }
 
 
-static void update_db_graph(chan_info *cp, void *db)
+static void update_db_graph(chan_info *cp, Float new_db)
 {
-  Float new_db;
-  new_db = ((Float *)db)[0];
   cp->min_dB = new_db;
   cp->lin_dB = pow(10.0, cp->min_dB * 0.05); 
   if ((!(cp->active)) ||
@@ -5704,11 +5703,9 @@ static void update_db_graph(chan_info *cp, void *db)
 
 void set_min_db(Float db)
 {
-  Float new_db[1];
   set_min_dB(db);
   ss->lin_dB = pow(10.0, db * 0.05);
-  new_db[0] = db;
-  for_each_chan_1(update_db_graph, (void *)new_db);
+  for_each_chan_with_float(update_db_graph, db);
 }
 
 static XEN g_set_min_dB(XEN val, XEN snd, XEN chn) 
@@ -5966,16 +5963,16 @@ static XEN g_show_marks(XEN snd, XEN chn)
   return(C_TO_XEN_BOOLEAN(show_marks(ss)));
 }
 
-static void chans_marks(chan_info *cp, void *ptr)
+static void chans_marks(chan_info *cp, bool value)
 {
-  cp->show_marks = (*((bool *)ptr));
+  cp->show_marks = value;
   update_graph(cp);
 }
 
 void set_show_marks(bool val)
 {
   in_set_show_marks(val);
-  for_each_chan_1(chans_marks, (void *)(&val));
+  for_each_chan_with_bool(chans_marks, val);
 }
 
 static XEN g_set_show_marks(XEN on, XEN snd, XEN chn)
@@ -6116,9 +6113,10 @@ static XEN g_verbose_cursor(XEN snd, XEN chn)
 }
 
 static void clrmini(snd_info *sp, void *ignore) {clear_minibuffer(sp);}
-static void chans_verbose_cursor(chan_info *cp, void *ptr) 
+
+static void chans_verbose_cursor(chan_info *cp, bool value)
 {
-  cp->verbose_cursor = (*((bool *)ptr));
+  cp->verbose_cursor = value;
   update_graph(cp);
 }
 
@@ -6126,7 +6124,7 @@ void set_verbose_cursor(bool val)
 {
   in_set_verbose_cursor(val);
   if (val == 0) for_each_sound(clrmini, NULL);
-  for_each_chan_1(chans_verbose_cursor, (void *)(&val));
+  for_each_chan_with_bool(chans_verbose_cursor, val);
 }
 
 static XEN g_set_verbose_cursor(XEN on, XEN snd, XEN chn)
@@ -6379,9 +6377,9 @@ of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lol
   return(C_TO_XEN_INT(graph_style(ss)));
 }
 
-static void chans_graph_style(chan_info *cp, void *ptr) 
+static void chans_graph_style(chan_info *cp, int value)
 {
-  graph_style_t style = (*((graph_style_t *)ptr)); 
+  graph_style_t style = (graph_style_t)value;
   cp->time_graph_style = style;
   cp->lisp_graph_style = style;
   cp->transform_graph_style = style;
@@ -6391,7 +6389,7 @@ static void chans_graph_style(chan_info *cp, void *ptr)
 void set_graph_style(graph_style_t val)
 {
   in_set_graph_style(val);
-  for_each_chan_1(chans_graph_style, (void *)(&val));
+  for_each_chan_with_int(chans_graph_style, (int)val);
 }
 
 static XEN g_set_graph_style(XEN style, XEN snd, XEN chn)
@@ -6514,10 +6512,10 @@ number (" S_x_axis_in_measures ", or clock-style (dd:hh:mm:ss) (" S_x_axis_as_cl
   return(C_TO_XEN_INT((int)x_axis_style(ss)));
 }
 
-static void chans_x_axis_style(chan_info *cp, void *ptr)
+static void chans_x_axis_style(chan_info *cp, int value)
 {
   axis_info *ap;
-  x_axis_style_t new_style = (*((x_axis_style_t *)ptr));
+  x_axis_style_t new_style = (x_axis_style_t)value;
   ap = cp->axis;
   cp->x_axis_style = new_style;
   if (ap)
@@ -6544,7 +6542,7 @@ static void chans_x_axis_style(chan_info *cp, void *ptr)
 void set_x_axis_style(x_axis_style_t val)
 {
   in_set_x_axis_style(val);
-  for_each_chan_1(chans_x_axis_style, (void *)(&val));
+  for_each_chan_with_int(chans_x_axis_style, (int)val);
 }
 
 static XEN g_set_x_axis_style(XEN style, XEN snd, XEN chn)

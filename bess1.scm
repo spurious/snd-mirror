@@ -1,4 +1,4 @@
-#!/usr/local/bin/guile -s
+#!/usr/bin/guile -s
 !#
 
 ;;; bess1.scm -- some examples from clm-2/rt.lisp and clm-2/bess5.cl

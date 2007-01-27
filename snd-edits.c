@@ -8516,7 +8516,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
 
   if (as_one_edit_origin)
     {
-      for_each_normal_chan_1(as_one_edit_set_origin, (void *)as_one_edit_origin);
+      for_each_normal_chan_with_void(as_one_edit_set_origin, (void *)as_one_edit_origin);
       FREE(as_one_edit_origin);
     }
   return(xen_return_first(result, proc, origin));

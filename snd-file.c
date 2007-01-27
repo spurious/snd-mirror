@@ -1282,9 +1282,9 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
       reflect_file_change_in_title();
       sp->file_watcher = fam_monitor_file(sp->filename, (void *)sp, fam_sp_action);
     }
-  map_over_separate_chans(channel_open_pane, NULL);
+  map_over_separate_chans(channel_open_pane);
 #if USE_MOTIF
-  map_over_separate_chans(channel_unlock_pane, NULL);
+  map_over_separate_chans(channel_unlock_pane);
 #endif
   if (sp) 
     {
@@ -4094,6 +4094,7 @@ static XEN g_add_file_to_view_files_list(XEN file, XEN dialog)
 
 static XEN g_view_files_sort(XEN dialog) 
 {
+  #define H_view_files_sort "(" S_view_files_sort "): sort choice in View:files dialog."
   if (XEN_BOUND_P(dialog))
     {
       XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_sort, "a view-files dialog widget"); 
@@ -4104,7 +4105,6 @@ static XEN g_view_files_sort(XEN dialog)
 
 static XEN g_set_view_files_sort(XEN dialog, XEN val) 
 {
-  #define H_view_files_sort "(" S_view_files_sort "): sort choice in View:files dialog."
   int choice;
   XEN sort_choice;
 

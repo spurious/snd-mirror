@@ -1,4 +1,4 @@
-#!/usr/local/bin/guile -s
+#!/usr/bin/guile -s
 !#
 
 (use-modules (ice-9 format))
@@ -8,7 +8,7 @@
     "test.scm"
   (lambda ()
     (call-with-input-file 
-	"rt-examples.scm"
+	"ladspa.scm"
       (lambda (file)
 	(let loop ((line (read-line file 'concat)))
 	  (or (eof-object? line)
@@ -19,6 +19,5 @@
 		    (if (not (char=? ch (integer->char #o015)))
 			(display (format #f "~C" ch)))))
 		(loop (read-line file 'concat)))))))))
-
 
 

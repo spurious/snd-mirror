@@ -71,22 +71,44 @@ void call_selection_watchers(selection_watcher_reason_t reason)
 
 
 
-static bool cp_has_selection(chan_info *cp, void *ignore)
+static bool cp_has_selection(chan_info *cp)
 {
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];
   return((ed) && (ed->selection_beg != NO_SELECTION));
 }
 
+static bool map_over_chans(bool (*func)(chan_info *ncp))
+{
+  /* non-zero = abort map, skips inactive sounds */
+  int i, j;
+  bool val = false;
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      chan_info *cp;
+      sp = ss->sounds[i];
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
+	for (j = 0; j < sp->nchans; j++)
+	  if ((cp = ((chan_info *)(sp->chans[j]))))
+	    if (cp)
+	      {
+		val = (*func)(cp);
+		if (val) return(val);
+	      }
+      }
+  return(val);
+}
+
 bool selection_is_active(void)
 {
   /* is selection active in any channel */
-  return(map_over_chans(cp_has_selection, NULL));
+  return(map_over_chans(cp_has_selection));
 }
 
 bool selection_is_active_in_channel(chan_info *cp)
 {
-  return((cp) && (cp_has_selection(cp, NULL)));
+  return((cp) && (cp_has_selection(cp)));
 }
 
 static bool selection_is_visible(chan_info *cp)
@@ -103,7 +125,7 @@ static bool selection_is_visible(chan_info *cp)
 
 bool selection_is_visible_in_channel(chan_info *cp)
 {
-  return((cp_has_selection(cp, NULL)) && 
+  return((cp_has_selection(cp)) && 
 	 (selection_is_visible(cp)));
 }
 
@@ -196,20 +218,20 @@ static void cp_set_selection_len(chan_info *cp, off_t len)
 static void selection_chans_1(chan_info *cp, void *count)
 {
   int *counter = (int *)count;
-  if (cp_has_selection(cp, NULL)) counter[0]++;
+  if (cp_has_selection(cp)) counter[0]++;
 }
 
 int selection_chans(void)
 {
   int count[1];
   count[0] = 0;
-  for_each_normal_chan_1(selection_chans_1, (void *)count);
+  for_each_normal_chan_with_void(selection_chans_1, (void *)count);
   return(count[0]);
 }
 
 static off_t selection_srate_1(chan_info *cp, off_t *ignored)
 {
-  if (cp_has_selection(cp, NULL)) 
+  if (cp_has_selection(cp)) 
     return((off_t)SND_SRATE(cp->sound));
   return(0);
 }
@@ -358,7 +380,7 @@ void ripple_selection(ed_list *ed, off_t beg, off_t num)
 
 static void next_selection_chan(chan_info *cp, void *sidata)
 {
-  if (cp_has_selection(cp, NULL))
+  if (cp_has_selection(cp))
     {
       sync_info *si = (sync_info *)sidata;
       int chan;
@@ -378,7 +400,7 @@ sync_info *selection_sync(void)
   si->cps = (chan_info **)CALLOC(si->chans, sizeof(chan_info *));
   si->begs = (off_t *)CALLOC(si->chans, sizeof(off_t));
   si->chans = 0;
-  for_each_normal_chan_1(next_selection_chan, (void *)si);
+  for_each_normal_chan_with_void(next_selection_chan, (void *)si);
   return(si);
 }
 

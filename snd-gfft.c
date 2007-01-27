@@ -118,13 +118,10 @@ static void get_fft_window_data(void)
     current_graph_fftr[i] = (current_graph_fftr[i] + 80.0) / 80.0;
 }
 
-static void chans_transform_size(chan_info *cp, void *ptr) 
+static void chans_transform_size(chan_info *cp, int size)
 {
-  int size;
-  size = (*((int *)ptr)); 
   cp->transform_size = size;
-  if (cp->fft) 
-    cp->fft->size = size;
+  if (cp->fft) cp->fft->size = size;
 }
 
 /* gtk_frame_set_label actually creates a new label widget! */
@@ -140,7 +137,7 @@ static void size_browse_callback(const char *name, int row, void *data)
   for_each_chan(force_fft_clear);
   in_set_transform_size(transform_sizes[row]);
   size = transform_size(ss);
-  for_each_chan_1(chans_transform_size, (void *)(&size));
+  for_each_chan_with_int(chans_transform_size, size);
   for_each_chan(calculate_fft);
   if (graph_frame) 
     sg_frame_set_label(GTK_FRAME(graph_frame), 
@@ -149,13 +146,15 @@ static void size_browse_callback(const char *name, int row, void *data)
   graph_redisplay();
 }
 
-static void chans_wavelet_type(chan_info *cp, void *ptr) {cp->wavelet_type = (*((int *)ptr));}
-
+static void chans_wavelet_type(chan_info *cp, int value)
+{
+  cp->wavelet_type = value;
+}
 
 static void wavelet_browse_callback(const char *name, int row, void *data)
 {
   in_set_wavelet_type(row);
-  for_each_chan_1(chans_wavelet_type, (void *)(&row));
+  for_each_chan_with_int(chans_wavelet_type, row);
   if (transform_type(ss) == WAVELET)
     for_each_chan(calculate_fft);
 }
@@ -171,13 +170,16 @@ static void window_browse_callback(const char *name, int row, void *data)
   graph_redisplay();
 }
 
-static void chans_transform_type(chan_info *cp, void *ptr) {cp->transform_type = (*((int *)ptr));}
+static void chans_transform_type(chan_info *cp, int value)
+{
+  cp->transform_type = value;
+}
 
 static void transform_browse_callback(const char *name, int row, void *data)
 {
   for_each_chan(force_fft_clear);
   in_set_transform_type(row);
-  for_each_chan_1(chans_transform_type, (void *)(&row));
+  for_each_chan_with_int(chans_transform_type, row);
   for_each_chan(calculate_fft);
 }
 
@@ -208,20 +210,23 @@ static void spectrogram_callback(GtkWidget *w, gpointer context)
   for_each_chan(calculate_fft);
 }
 
-static void map_show_transform_peaks(chan_info *cp, void *ptr) {cp->show_transform_peaks = (*((bool *)ptr));}
+static void map_show_transform_peaks(chan_info *cp, bool value) 
+{
+  cp->show_transform_peaks = value;
+}
 
 static void peaks_callback(GtkWidget *w, gpointer context)
 {
   bool val = false;
   val = (bool)(GTK_TOGGLE_BUTTON(w)->active);
   in_set_show_transform_peaks(val);
-  for_each_chan_1(map_show_transform_peaks, (void *)(&val));
+  for_each_chan_with_bool(map_show_transform_peaks, val);
   for_each_chan(calculate_fft);
 }
 
-static void chans_fft_log_magnitude(chan_info *cp, void *ptr) 
+static void chans_fft_log_magnitude(chan_info *cp, bool value)
 {
-  cp->fft_log_magnitude = (*((bool *)ptr)); 
+  cp->fft_log_magnitude = value;
   cp->fft_changed = FFT_CHANGE_LOCKED;
 }
 
@@ -231,13 +236,13 @@ static void db_callback(GtkWidget *w, gpointer context)
   val = (bool)(GTK_TOGGLE_BUTTON(w)->active);
   in_set_fft_log_magnitude(val);
   graph_redisplay();
-  for_each_chan_1(chans_fft_log_magnitude, (void *)(&val));
+  for_each_chan_with_bool(chans_fft_log_magnitude, val);
   for_each_chan(calculate_fft);
 }
 
-static void chans_fft_log_frequency(chan_info *cp, void *ptr) 
+static void chans_fft_log_frequency(chan_info *cp, bool value)
 {
-  cp->fft_log_frequency = (*((bool *)ptr)); 
+  cp->fft_log_frequency = value;
   cp->fft_changed = FFT_CHANGE_LOCKED;
 }
 
@@ -246,13 +251,13 @@ static void logfreq_callback(GtkWidget *w, gpointer context)
   bool val;
   val = (bool)(GTK_TOGGLE_BUTTON(w)->active);
   in_set_fft_log_frequency(val);
-  for_each_chan_1(chans_fft_log_frequency, (void *)(&val));
+  for_each_chan_with_bool(chans_fft_log_frequency, val);
   for_each_chan(calculate_fft);
 }
 
-static void chans_transform_normalization(chan_info *cp, void *ptr) 
+static void chans_transform_normalization(chan_info *cp, int value)
 {
-  cp->transform_normalization = (*((fft_normalize_t *)ptr)); 
+  cp->transform_normalization = (fft_normalize_t)value;
   cp->fft_changed = FFT_CHANGE_LOCKED;
 }
 
@@ -261,7 +266,7 @@ static void normalize_callback(GtkWidget *w, gpointer context)
   fft_normalize_t choice;
   if (GTK_TOGGLE_BUTTON(w)->active) choice = NORMALIZE_BY_CHANNEL; else choice = DONT_NORMALIZE;
   in_set_transform_normalization(choice);
-  for_each_chan_1(chans_transform_normalization, (void *)(&choice));
+  for_each_chan_with_int(chans_transform_normalization, (int)choice);
   for_each_chan(calculate_fft);
 }
 
@@ -713,7 +718,7 @@ void set_transform_size(int val)
 {
   for_each_chan(force_fft_clear);
   in_set_transform_size(val);
-  for_each_chan_1(chans_transform_size, (void *)(&val));
+  for_each_chan_with_int(chans_transform_size, val);
   if (transform_dialog)
     {
       int i;
@@ -750,7 +755,7 @@ void set_transform_type(int val)
     {
       if (!(ss->graph_hook_active)) for_each_chan(force_fft_clear);
       in_set_transform_type(val);
-      for_each_chan_1(chans_transform_type, (void *)(&val));
+      for_each_chan_with_int(chans_transform_type, val);
       if (!(ss->graph_hook_active)) 
 	for_each_chan(calculate_fft);
       if (transform_dialog) 
@@ -766,7 +771,7 @@ void set_wavelet_type(int val)
       slist_moveto(wavelet_list, val);
     }
   in_set_wavelet_type(val);
-  for_each_chan_1(chans_wavelet_type, (void *)(&val));
+  for_each_chan_with_int(chans_wavelet_type, val);
   if ((transform_type(ss) == WAVELET) && 
       (!(ss->graph_hook_active))) 
     for_each_chan(calculate_fft);
@@ -776,7 +781,7 @@ void set_wavelet_type(int val)
 void set_show_transform_peaks(bool val)
 {
   in_set_show_transform_peaks(val);
-  for_each_chan_1(map_show_transform_peaks, (void *)(&val));
+  for_each_chan_with_bool(map_show_transform_peaks, val);
   if (transform_dialog) 
     set_toggle_button(peaks_button, val, false, NULL);
   if (!(ss->graph_hook_active)) 
@@ -786,7 +791,7 @@ void set_show_transform_peaks(bool val)
 void set_fft_log_frequency(bool val)
 {
   in_set_fft_log_frequency(val);
-  for_each_chan_1(chans_fft_log_frequency, (void *)(&val));
+  for_each_chan_with_bool(chans_fft_log_frequency, val);
   if (transform_dialog)
     set_toggle_button(logfreq_button, val, false, NULL);
   if (!(ss->graph_hook_active)) 
@@ -796,7 +801,7 @@ void set_fft_log_frequency(bool val)
 void set_fft_log_magnitude(bool val)
 {
   in_set_fft_log_magnitude(val);
-  for_each_chan_1(chans_fft_log_magnitude, (void *)(&val));
+  for_each_chan_with_bool(chans_fft_log_magnitude, val);
   if (transform_dialog) 
     set_toggle_button(db_button, val, false, NULL);
   if (!(ss->graph_hook_active)) 
@@ -828,7 +833,7 @@ void set_transform_graph_type(graph_type_t val)
 void set_transform_normalization(fft_normalize_t val)
 {
   in_set_transform_normalization(val);
-  for_each_chan_1(chans_transform_normalization, (void *)(&val));
+  for_each_chan_with_int(chans_transform_normalization, (int)val);
   if (transform_dialog) 
     set_toggle_button(normalize_button, (val != DONT_NORMALIZE), false, NULL);
   if (!(ss->graph_hook_active)) 

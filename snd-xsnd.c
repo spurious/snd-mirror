@@ -2778,8 +2778,8 @@ void equalize_sound_panes(snd_info *sp, chan_info *ncp, bool all_panes)
 	      wid = (int *)CALLOC(1, sizeof(int));
 	      wid[0] = (ss->channel_min_height >> 1) + 10;
 	      channel_lock_pane(cp, (void *)wid);
-	      channel_open_pane(cp, NULL);
-	      channel_unlock_pane(cp, NULL);
+	      channel_open_pane(cp);
+	      channel_unlock_pane(cp);
 	      FREE(wid);
 	      wid = NULL;
 	    }
@@ -2838,8 +2838,8 @@ void equalize_all_panes(void)
 		{
 		  height = widget_height(SND_PANE(nsp));
 		  even_channels(nsp, (void *)(&height));
-		  map_over_sound_chans(nsp, channel_open_pane, NULL);
-		  map_over_sound_chans(nsp, channel_unlock_pane, NULL);
+		  map_over_sound_chans(nsp, channel_open_pane);
+		  map_over_sound_chans(nsp, channel_unlock_pane);
 		}
 	    }
 	}
@@ -2866,9 +2866,9 @@ void equalize_all_panes(void)
 	  chan_y = ((height - (sounds * 20)) / chans) - 12;
 	  /* probably can be 14 or 12 -- seems to be margin related or something */
 	  wid[0] = chan_y;
-	  map_over_separate_chans(channel_lock_pane, (void *)wid);
-	  map_over_separate_chans(channel_open_pane, NULL);
-	  map_over_separate_chans(channel_unlock_pane, NULL);
+	  map_over_separate_chans_with_void(channel_lock_pane, (void *)wid);
+	  map_over_separate_chans(channel_open_pane);
+	  map_over_separate_chans(channel_unlock_pane);
 	}
       unlock_listener_pane();
       if (!(auto_resize(ss))) XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, false, NULL);
@@ -2887,8 +2887,8 @@ void equalize_all_panes(void)
 	      for_each_sound(sound_unlock_pane, NULL);
 	    }
 	  for_each_sound(even_channels, (void *)(&height));
-	  map_over_separate_chans(channel_open_pane, NULL);   /* manage the channel widgets */
-	  map_over_separate_chans(channel_unlock_pane, NULL); /* allow pane to be resized */
+	  map_over_separate_chans(channel_open_pane);   /* manage the channel widgets */
+	  map_over_separate_chans(channel_unlock_pane); /* allow pane to be resized */
 	}
     }
 }

@@ -477,30 +477,7 @@ snd_info *completely_free_snd_info(snd_info *sp)
   return(NULL);
 }
 
-bool map_over_chans(bool (*func)(chan_info *, void *), void *userptr)
-{
-  /* non-zero = abort map, skips inactive sounds */
-  /* currently used only in cases where only normal sounds are expected */
-  int i, j;
-  bool val = false;
-  for (i = 0; i < ss->max_sounds; i++)
-    {
-      snd_info *sp;
-      chan_info *cp;
-      sp = ss->sounds[i];
-      if ((sp) && (sp->inuse == SOUND_NORMAL))
-	for (j = 0; j < sp->nchans; j++)
-	  if ((cp = ((chan_info *)(sp->chans[j]))))
-	    if (cp)
-	      {
-		val = (*func)(cp, userptr);
-		if (val) return(val);
-	      }
-      }
-  return(val);
-}
-
-void for_each_chan_1(void (*func)(chan_info *, void *), void *userptr)
+void for_each_chan_with_int(void (*func)(chan_info *ncp, int val), int value)
 {
   int i, j;
   for (i = 0; i < ss->max_sounds; i++)
@@ -511,11 +488,41 @@ void for_each_chan_1(void (*func)(chan_info *, void *), void *userptr)
       if ((sp) && ((sp->inuse == SOUND_NORMAL) || (sp->inuse == SOUND_WRAPPER)))
 	for (j = 0; j < sp->nchans; j++)
 	  if ((cp = ((chan_info *)(sp->chans[j]))))
-	    (*func)(cp, userptr);
+	    (*func)(cp, value);
     }
 }
 
-void for_each_chan(void (*func)(chan_info *))
+void for_each_chan_with_bool(void (*func)(chan_info *ncp, bool val), bool value)
+{
+  int i, j;
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      chan_info *cp;
+      sp = ss->sounds[i];
+      if ((sp) && ((sp->inuse == SOUND_NORMAL) || (sp->inuse == SOUND_WRAPPER)))
+	for (j = 0; j < sp->nchans; j++)
+	  if ((cp = ((chan_info *)(sp->chans[j]))))
+	    (*func)(cp, value);
+    }
+}
+
+void for_each_chan_with_float(void (*func)(chan_info *ncp, Float val), Float value)
+{
+  int i, j;
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      chan_info *cp;
+      sp = ss->sounds[i];
+      if ((sp) && ((sp->inuse == SOUND_NORMAL) || (sp->inuse == SOUND_WRAPPER)))
+	for (j = 0; j < sp->nchans; j++)
+	  if ((cp = ((chan_info *)(sp->chans[j]))))
+	    (*func)(cp, value);
+    }
+}
+
+void for_each_chan(void (*func)(chan_info *ncp))
 {
   int i, j;
   for (i = 0; i < ss->max_sounds; i++)
@@ -530,7 +537,7 @@ void for_each_chan(void (*func)(chan_info *))
     }
 }
 
-void for_each_normal_chan_1(void (*func)(chan_info *, void *), void *userptr)
+void for_each_normal_chan_with_void(void (*func)(chan_info *, void *), void *userptr)
 {
   int i, j;
   for (i = 0; i < ss->max_sounds; i++)
@@ -560,7 +567,7 @@ void for_each_normal_chan(void (*func)(chan_info *))
     }
 }
 
-bool map_over_sound_chans(snd_info *sp, bool (*func)(chan_info *, void *), void *userptr)
+bool map_over_sound_chans_with_void(snd_info *sp, bool (*func)(chan_info *, void *), void *userptr)
 {
   /* non-zero = abort map, skips inactive sounds */
   int j;
@@ -570,6 +577,21 @@ bool map_over_sound_chans(snd_info *sp, bool (*func)(chan_info *, void *), void 
     if ((cp = sp->chans[j]))
       {
 	val = (*func)(cp, userptr);
+	if (val) return(val);
+      }
+  return(val);
+}
+
+bool map_over_sound_chans(snd_info *sp, bool (*func)(chan_info *ncp))
+{
+  /* non-zero = abort map, skips inactive sounds */
+  int j;
+  bool val = false;
+  chan_info *cp;
+  for (j = 0; j < sp->nchans; j++)
+    if ((cp = sp->chans[j]))
+      {
+	val = (*func)(cp);
 	if (val) return(val);
       }
   return(val);
@@ -596,7 +618,27 @@ void for_each_sound(void (*func)(snd_info *, void *), void *userptr)
     }
 }
 
-bool map_over_separate_chans(bool (*func)(chan_info *, void *), void *userptr)
+bool map_over_separate_chans(bool (*func)(chan_info *))
+{
+  /* used only to lock/unlock panes */
+  int i;
+  bool val =false;
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      sp = ss->sounds[i];
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
+	{
+	  if (sp->channel_style != CHANNELS_SEPARATE)
+	    val = (*func)(sp->chans[0]);
+	  else val = map_over_sound_chans(sp, func);
+	  if (val) return(val);
+	}
+    }
+  return(val);
+}
+
+bool map_over_separate_chans_with_void(bool (*func)(chan_info *, void *), void *userptr)
 {
   /* used only to lock/unlock panes */
   int i;
@@ -609,7 +651,7 @@ bool map_over_separate_chans(bool (*func)(chan_info *, void *), void *userptr)
 	{
 	  if (sp->channel_style != CHANNELS_SEPARATE)
 	    val = (*func)(sp->chans[0], userptr);
-	  else val = map_over_sound_chans(sp, func, userptr);
+	  else val = map_over_sound_chans_with_void(sp, func, userptr);
 	  if (val) return(val);
 	}
     }

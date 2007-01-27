@@ -403,7 +403,7 @@ static int too_many_files_cleanup(void)
   rtn = -1;
   closed = (int *)MALLOC(sizeof(int));
   (*closed) = 0;
-  for_each_normal_chan_1(close_temp_files, (void *)closed);
+  for_each_normal_chan_with_void(close_temp_files, (void *)closed);
   if ((*closed) == 0) 
     for_each_region_chan(close_temp_files, (void *)closed);
   if ((*closed) == 0)

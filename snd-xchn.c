@@ -250,13 +250,13 @@ void resize_zy(chan_info *cp)
 }
 
 
-bool channel_open_pane(chan_info *cp, void *ptr)
+bool channel_open_pane(chan_info *cp)
 {
   XtManageChild(channel_main_pane(cp));
   return(false);
 }
 
-bool channel_unlock_pane(chan_info *cp, void *ptr)
+bool channel_unlock_pane(chan_info *cp)
 {
   XtVaSetValues(channel_main_pane(cp),
 		XmNpaneMinimum, 5,
@@ -1353,8 +1353,8 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  ncp->tcgx = mcgx;
 		  reset_mix_graph_parent(ncp);
 		}
-	      channel_open_pane(sp->chans[0], NULL);
-	      channel_unlock_pane(sp->chans[0], NULL);
+	      channel_open_pane(sp->chans[0]);
+	      channel_unlock_pane(sp->chans[0]);
 	      XmToggleButtonSetState(unite_button(sp), true, false);
 	    }
 	  else
@@ -1365,9 +1365,9 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		{
 		  /* height[0] = total space available */
 		  height[0] /= sp->nchans;
-		  map_over_sound_chans(sp, channel_lock_pane, (void *)height);
-		  map_over_sound_chans(sp, channel_open_pane, NULL);
-		  map_over_sound_chans(sp, channel_unlock_pane, NULL);
+		  map_over_sound_chans_with_void(sp, channel_lock_pane, (void *)height);
+		  map_over_sound_chans(sp, channel_open_pane);
+		  map_over_sound_chans(sp, channel_unlock_pane);
 		  for (i = 0; i < sp->nchans; i++) 
 		    reset_mix_graph_parent(sp->chans[i]);
 		  pcp = sp->chans[0];

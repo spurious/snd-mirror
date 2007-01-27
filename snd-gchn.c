@@ -57,7 +57,7 @@ bool channel_graph_is_visible(chan_info *cp)
 	   (GTK_WIDGET_VISIBLE(w_snd_pane(cp->sound))))));
 }
 
-bool channel_open_pane(chan_info *cp, void *ptr)
+bool channel_open_pane(chan_info *cp)
 {
   gtk_widget_show(channel_main_pane(cp));
   return(false);
@@ -1024,7 +1024,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  fixup_cp_cgx_ax_wn(ncp);
 		  reset_mix_graph_parent(ncp);
 		}
-	      channel_open_pane(sp->chans[0], NULL);
+	      channel_open_pane(sp->chans[0]);
 	      set_toggle_button(unite_button(sp), true, false, (void *)sp);
 	    }
 	  else
@@ -1038,7 +1038,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  /* height[0] = total space available */
 		  height[0] /= sp->nchans;
 
-		  map_over_sound_chans(sp, channel_open_pane, NULL);
+		  map_over_sound_chans(sp, channel_open_pane);
 		  for (i = 0; i < sp->nchans; i++) reset_mix_graph_parent(sp->chans[i]);
 		  pcp = sp->chans[0];
 		  ap = pcp->axis;
