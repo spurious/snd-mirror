@@ -656,6 +656,8 @@ Say we want  a ramp moving from .3 to .5 over 1 second.
 The corresponding make-env call would be</p>
 <pre>
   (make-env '(0 0 100 1) :scaler .2 :offset .3 :duration 1.0)
+  or
+  (make-env '(0 .2 1 .5) :duration 1.0)
 </pre>
 <p><i>Base</i> determines how the break-points are connected.  If it is 1.0 (the
 default), you get straight line segments.  <i>base</i> = 0.0 gives a step
@@ -1279,7 +1281,7 @@ use this for VOSIM and other related techniques.</p>
   <a class=def name="make-rand">make-rand</a> <a class=quiet href="#optional-key">&amp;optional-key</a> 
         (frequency 440.0)          ;freq at which new random numbers occur
         (amplitude 1.0)            ;numbers are between -amplitude and amplitude
-        (envelope '(-1 1 1 1))     ;distribution envelope (uniform distribution between -1 and 1 is default)
+        (envelope '(-1 1 1 1))     ;distribution envelope (uniform distribution between -1 and 1 is the default)
         distribution               ;pre-computed distribution
   <a class=def name="rand">rand</a> r &amp;optional (sweep 0.0)
   <a class=def name="rand?">rand?</a> r
@@ -1317,7 +1319,7 @@ way around Lisp's clumsy mechanism for repeating a random number sequence.
 <br>
 rand:
   (if (&gt;= phase (* 2 pi))
-      (setf output (centered-random amplitude)))
+      (setf output (<em class=red>centered-random</em> amplitude)))
   (incf phase (+ (<a class=quiet href="#hztoradians">hz-&gt;radians</a> frequency) sweep))
 </pre>
 <br clear=left>
@@ -1326,7 +1328,7 @@ rand:
 some other: <code>(random (random 1.0))</code> or <code>(sin (random 3.14159))</code> are simple examples. Exponential distribution could be:
 </p>
 <pre>
-(/ (log (max .01 (random 1.0))) (log .01))
+  (/ (log (max .01 (random 1.0))) (log .01))
 </pre>
 <p>where the ".01"'s affect how tightly the resultant values cluster toward 0.0 --
 set it to .0001 for example to get most of the random values close to 0.0.
@@ -1548,6 +1550,26 @@ filter (<b>frequency</b> and <b>radius</b>).
 <i>radius</i> should be between 0 and 1 (but less than 1), and
 <i>frequency</i> should be between 0 and srate/2.  
 </p>
+<p>The bird instrument uses a one-pole filter for a distance cue:
+</p>
+
+<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+(definstrument bird (startime dur frequency freq-skew amplitude freq-envelope amp-envelope 
+	             &amp;optional (lpfilt 1.0) (degree 0) (reverb-amount 0))
+  (multiple-value-bind (beg end) (<a class=quiet href="#timestosamples">times-&gt;samples</a> startime dur)
+    (let* ((amp-env (<a class=quiet href="#make-env">make-env</a> amp-envelope amplitude dur))
+	   (gls-env (<a class=quiet href="#make-env">make-env</a> freq-envelope (<a class=quiet href="#hztoradians">hz-&gt;radians</a> freq-skew) dur))
+	   (loc (<a class=quiet href="#make-locsig">make-locsig</a> :degree degree :distance 1.0 :reverb reverb-amount))
+	   (fil (<em class=red>make-one-pole</em> lpfilt (- 1.0 lpfilt)))
+	   (s (<a class=quiet href="#make-oscil">make-oscil</a> :frequency frequency)))
+      (run
+       (loop for i from beg to end do
+	 (<a class=quiet href="#locsig">locsig</a> loc i (<em class=red>one-pole</em> fil (* (<a class=quiet href="#env">env</a> amp-env) 
+                                        (<a class=quiet href="#oscil">oscil</a> s (<a class=quiet href="#env">env</a> gls-env))))))))))
+</pre>
+</td></tr></table>
+
 <br>
 
 
@@ -4853,8 +4875,8 @@ and make sure the control panel is open:
 <pre>
 (defmacro to-snd-with-controls ((&amp;rest args) &amp;body body)
   `(<a class=quiet href="#send-snd">send-snd</a> (format nil 
-	             "(let ((snd (open-sound ~S))) 
-                        (set! (show-controls snd) #t))" 
+	             "(let ((snd (<a class=quiet href="extsnd.html#opensound">open-sound</a> ~S))) 
+                        (set! (<a class=quiet href="extsnd.html#showcontrols">show-controls</a> snd) #t))" 
 	             (<a class=quiet href="#with-sound">with-sound</a> ,args ,@body))))
 </pre>
 </td></tr></table>

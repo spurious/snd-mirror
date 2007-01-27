@@ -2365,7 +2365,7 @@ void reflect_region_in_save_as_dialog(void)
 
 static void save_as_undoit(save_as_dialog_info *sd)
 {
-  set_button_label(sd->fs->ok_button, _("Save"));
+  set_stock_button_label(sd->fs->ok_button, _("Save"));
   if ((sd->filename_watcher_id > 0) && (sd->fs->file_text))
     {
       g_signal_handler_disconnect(sd->fs->file_text, sd->filename_watcher_id);
@@ -2568,8 +2568,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 			       );
 	      sd->file_watcher = fam_monitor_file(fullname, (void *)sd, watch_save_as_file);
 	      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-	      clear_error_if_save_as_filename_changes(sd->fs->dialog, (void *)(sd->panel_data));
-	      set_button_label(sd->fs->ok_button, _("DoIt"));
+	      clear_error_if_save_as_filename_changes(sd->fs->dialog, (void *)sd);
+	      set_stock_button_label(sd->fs->ok_button, _("DoIt"));
 	      FREE(msg);
 	      FREE(fullname);
 	      if (comment) FREE(comment);
@@ -2805,7 +2805,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       fsb *fs;
       sd->header_type = header_type;
       sd->format_type = format_type;
-      sd->fs = make_fsb(file_string, "save as:", NULL, save_innards, (void *)sd, GTK_STOCK_SAVE_AS, (sd->type != REGION_SAVE_AS));
+      sd->fs = make_fsb(file_string, _("save as:"), _("Save as"), save_innards, (void *)sd, GTK_STOCK_SAVE_AS, (sd->type != REGION_SAVE_AS));
       fs = sd->fs;
 
       if (sd->type != REGION_SAVE_AS)
@@ -3318,7 +3318,7 @@ void cleanup_new_file_watcher(void)
 }
 
 static gulong new_file_handler_id = 0;
-static gboolean new_filename_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer data);
+static gboolean new_filename_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer ignored);
 
 static void new_file_undoit(void)
 {
@@ -3335,16 +3335,16 @@ static void new_file_undoit(void)
   new_file_watcher = fam_unmonitor_file(new_file_filename, new_file_watcher);
 }
 
-static gboolean new_filename_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer data)
+static gboolean new_filename_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer ignored)
 {
   new_file_undoit();
   return(false);
 }
 
-static void clear_error_if_new_filename_changes(GtkWidget *dialog, void *data)
+static void clear_error_if_new_filename_changes(GtkWidget *dialog, void *ignored)
 {
   if (new_file_text)
-    new_file_handler_id = SG_SIGNAL_CONNECT(new_file_text, "key_press_event", new_filename_modify_callback, data);
+    new_file_handler_id = SG_SIGNAL_CONNECT(new_file_text, "key_press_event", new_filename_modify_callback, NULL);
 }
 
 static void watch_new_file(struct fam_info *fp, FAMEvent *fe)
@@ -3402,7 +3402,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 	      new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
 	      set_stock_button_label(new_file_ok_button, _("DoIt"));
 	      post_file_dialog_error((const char *)msg, (void *)ndat);
-	      clear_error_if_new_filename_changes(new_file_dialog, (void *)ndat);
+	      clear_error_if_new_filename_changes(new_file_dialog, NULL);
 	      FREE(msg);
 	    }
 	  else

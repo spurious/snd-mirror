@@ -2549,6 +2549,7 @@ static void save_as_filename_modify_callback(Widget w, XtPointer context, XtPoin
 
 static void clear_error_if_save_as_filename_changes(Widget dialog, void *data)
 {
+  /* this clear_error call is different from the others -- data is the save_as_dialog_info pointer, not the panel_data pointer */
   save_as_dialog_info *sd = (save_as_dialog_info *)data;
   XtAddCallback(sd->filename_widget, XmNmodifyVerifyCallback, save_as_filename_modify_callback, (XtPointer)data);
 }
@@ -2736,11 +2737,12 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 			       (parlous_sp) ? ", and has unsaved edits" : "");
 	      sd->file_watcher = fam_monitor_file(fullname, (void *)sd, watch_save_as_file);
 	      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-	      clear_error_if_save_as_filename_changes(sd->dialog, (void *)(sd->panel_data));
+	      clear_error_if_save_as_filename_changes(sd->dialog, (void *)sd);
 	      ok_label = XmStringCreateLocalized(_("DoIt"));
 	      XtVaSetValues(sd->dialog, 
 			    XmNokLabelString, ok_label, 
 			    NULL);
+	      XmUpdateDisplay(FSB_BOX(sd->dialog, XmDIALOG_OK_BUTTON));
 	      XmStringFree(ok_label);
 	      FREE(msg);
 	      FREE(fullname);
@@ -3073,6 +3075,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 					    WITH_HEADER_TYPE_FIELD, 
 					    WITH_COMMENT_FIELD,
 					    WITH_WRITABLE_HEADERS);
+
       sd->panel_data->dialog = sd->dialog;
 
       color_file_selection_box(sd->dialog);
@@ -3168,10 +3171,12 @@ widget_t make_sound_save_as_dialog(bool managed)
 
   sp = any_selected_sound();
   if (sp) hdr = sp->hdr;
+
   make_save_as_dialog(sd,
 		      (char *)((sp) ? sp->short_filename : ""),
 		      default_output_header_type(ss),
 		      default_output_data_format(ss));
+
   set_file_dialog_sound_attributes(sd->panel_data,
 				   sd->panel_data->current_type,
 				   sd->panel_data->current_format,
@@ -3187,6 +3192,7 @@ widget_t make_sound_save_as_dialog(bool managed)
 
   if ((managed) && (!XtIsManaged(sd->dialog))) 
     XtManageChild(sd->dialog);
+
   return(sd->dialog);
 }
 
@@ -3358,7 +3364,7 @@ static void new_file_undoit(void)
 		NULL);
   XmStringFree(ok_label);
   clear_dialog_error(ndat);
-  XtRemoveCallback(new_file_text, XmNmodifyVerifyCallback, new_filename_modify_callback, (XtPointer)ndat);
+  XtRemoveCallback(new_file_text, XmNmodifyVerifyCallback, new_filename_modify_callback, NULL);
   new_file_watcher = fam_unmonitor_file(new_file_filename, new_file_watcher);
 }
 
@@ -3369,9 +3375,9 @@ static void new_filename_modify_callback(Widget w, XtPointer context, XtPointer 
   cbs->doit = true;
 }
 
-static void clear_error_if_new_filename_changes(Widget dialog, void *data)
+static void clear_error_if_new_filename_changes(Widget dialog)
 {
-  XtAddCallback(new_file_text, XmNmodifyVerifyCallback, new_filename_modify_callback, (XtPointer)data);
+  XtAddCallback(new_file_text, XmNmodifyVerifyCallback, new_filename_modify_callback, NULL);
 }
 
 static void watch_new_file(struct fam_info *fp, FAMEvent *fe)
@@ -3404,7 +3410,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
     {
       msg = _("new sound needs a file name ('New file:' field is empty)");
       post_file_dialog_error((const char *)msg, (void *)ndat);
-      clear_error_if_new_filename_changes(new_file_dialog, (void *)ndat);
+      clear_error_if_new_filename_changes(new_file_dialog);
     }
   else
     {
@@ -3429,11 +3435,12 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 	      msg = mus_format(_("%s exists. If you want to overwrite it, click 'DoIt'"), newer_name);
 	      new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
 	      post_file_dialog_error((const char *)msg, (void *)ndat);
-	      clear_error_if_new_filename_changes(new_file_dialog, (void *)ndat);
+	      clear_error_if_new_filename_changes(new_file_dialog);
 	      ok_label = XmStringCreateLocalized(_("DoIt"));
 	      XtVaSetValues(new_file_dialog, 
 			    XmNokLabelString, ok_label, 
 			    NULL);
+	      XmUpdateDisplay(MSG_BOX(new_file_dialog, XmDIALOG_OK_BUTTON));
 	      XmStringFree(ok_label);
 	      FREE(msg);
 	    }
@@ -3459,7 +3466,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 		     *  in any case, we won't be confused by an immediate irrelevant delete event
 		     */
 		    new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
-		  clear_error_if_new_filename_changes(new_file_dialog, (void *)ndat);
+		  clear_error_if_new_filename_changes(new_file_dialog);
 		}
 	      else
 		{
