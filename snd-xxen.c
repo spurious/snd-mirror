@@ -132,20 +132,6 @@ void color_chan_components(color_t color, slider_choice_t which_component)
     }
 }
 
-void recolor_button(widget_t w, void *ptr)
-{
-  if (XtIsWidget(w))
-    {
-      if (XmIsPushButton(w))
-	XtVaSetValues(w, XmNarmColor, ss->sgx->pushed_button_color, NULL);
-      else
-	{
-	  if (XmIsToggleButton(w))
-	    XtVaSetValues(w, XmNselectColor, ss->sgx->pushed_button_color, NULL);
-	}
-    }
-}
-
 static XEN g_graph_cursor(void)
 {
   #define H_graph_cursor "(" S_graph_cursor "): current graph cursor shape"

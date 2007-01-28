@@ -960,7 +960,7 @@ static XEN string_to_form_1(void *data)
   return(C_STRING_TO_XEN_FORM((char *)data));
 }
 
-XEN string_to_form(void *str)
+XEN string_to_form(char *str)
 {
   return(snd_catch_any(string_to_form_1, (void *)str, (const char *)str));  /* catch needed else #< in input (or incomplete form) exits Snd! */
 }

@@ -94,9 +94,10 @@ void vf_highlight_row(widget_t nm, widget_t rw);
 void vf_post_info(view_files_info *vdat, int pos);
 void vf_unpost_info(view_files_info *vdat);
 off_t vf_location(view_files_info *vdat);
-void vf_post_error(const char *error_msg, void *data);
-void vf_post_location_error(const char *error_msg, void *data);
-void vf_post_add_error(const char *error_msg, void *data);
+void vf_post_error(const char *error_msg, view_files_info *data);
+void redirect_vf_post_error(const char *error_msg, void *data);
+void redirect_vf_post_location_error(const char *error_msg, void *data);
+void vf_post_add_error(const char *error_msg, view_files_info *data);
 widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed);
 void vf_post_selected_files_list(view_files_info *vdat);
 void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or_dir);
@@ -147,8 +148,6 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected);
 bool edit_header_callback(snd_info *sp, file_data *edit_header_data, 
 			  void (*outer_handler)(const char *error_msg, void *ufd),
 			  void (*inner_handler)(const char *error_msg, void *ufd));
-
-void map_over_sounds(bool (*func)(snd_info *, void *), void *userptr);
 
 void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected);
 

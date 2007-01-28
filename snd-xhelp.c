@@ -484,7 +484,7 @@ static void create_help_monolog(void)
   
   XtManageChild(help_dialog);
   
-  map_over_children(help_dialog, set_main_color_of_widget, NULL);
+  map_over_children(help_dialog, set_main_color_of_widget);
   XtVaSetValues(help_text, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
   XtVaSetValues(related_items, XmNbackground, ss->sgx->highlight_color, XmNforeground, ss->sgx->black, NULL);
   XtVaSetValues(xref_label, XmNbackground, ss->sgx->reset_button_color, XmNforeground, ss->sgx->black, NULL);

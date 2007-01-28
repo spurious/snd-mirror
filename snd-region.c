@@ -463,7 +463,7 @@ file_info *fixup_region_data(chan_info *cp, int chan, int pos)
   return(NULL);
 }
 
-void for_each_region_chan(void (*func)(chan_info *, void *), void *userptr)
+void for_each_region_chan_with_refint(void (*func)(chan_info *ncp, int *val), int *value)
 {
   /* used only in snd-io.c to remove dangling temp files (probably can't actually happen) */
   int i;
@@ -477,7 +477,7 @@ void for_each_region_chan(void (*func)(chan_info *, void *), void *userptr)
 	  {
 	    chan_info *cp;
 	    cp = r->rsp->chans[chn];
-	    (*func)(cp, userptr);
+	    (*func)(cp, value);
 	  }
     }
 }

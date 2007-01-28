@@ -218,7 +218,7 @@ static void make_edit_find_dialog(bool managed)
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       find_error_label = XtCreateManagedWidget("", xmLabelWidgetClass, find_error_frame, args, n);
       
-      map_over_children(edit_find_dialog, set_main_color_of_widget, NULL);
+      map_over_children(edit_find_dialog, set_main_color_of_widget);
       XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);

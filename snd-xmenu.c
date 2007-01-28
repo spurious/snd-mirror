@@ -865,29 +865,31 @@ Widget menu_widget(int which_menu)
   return(NULL);
 }
 
-static bool or_over_children(Widget w, bool (*func)(Widget, void *), void *userptr)
+static bool or_over_children(Widget w, bool (*func)(Widget uw, const char *ustr), const char *str)
 {
   if (w)
     {
-      if ((*func)(w, userptr)) return(true);
+      if ((*func)(w, str)) return(true);
       if (XtIsComposite(w))
 	{
 	  unsigned int i;
 	  CompositeWidget cw = (CompositeWidget)w;
 	  for (i = 0; i < cw->composite.num_children; i++)
-	    if (or_over_children(cw->composite.children[i], func, userptr))
+	    if (or_over_children(cw->composite.children[i], func, str))
 	      return(true);
 	}
     }
   return(false);
 }
 
-static bool clobber_menu(Widget w, void *lab)
+static bool clobber_menu(Widget w, const char *name)
 {
-  char *name, *wname;
-  name = (char *)lab;
+  char *wname;
   wname = XtName(w);
-  if ((wname) && (name) && (strcmp(name, wname) == 0) && (XtIsManaged(w)))
+  if ((wname) && 
+      (name) && 
+      (strcmp(name, wname) == 0) && 
+      (XtIsManaged(w)))
     {
       int slot;
       XtVaGetValues(w, XmNuserData, &slot, NULL);
@@ -904,7 +906,7 @@ int g_remove_from_menu(int which_menu, const char *label)
   top_menu = menu_widget(which_menu);
   if (top_menu)
     {
-      or_over_children(top_menu, clobber_menu, (void *)label);
+      or_over_children(top_menu, clobber_menu, label);
       return(0);
     }
   return(INVALID_MENU);

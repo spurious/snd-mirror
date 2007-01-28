@@ -52,11 +52,11 @@ static void scale_set_color(prefs_info *prf, color_t pixel);
 static color_t rgb_to_color(Float r, Float g, Float b);
 static char *get_text(GtkWidget *w);
 static void set_text(GtkWidget *w, char *value);
-static void post_prefs_error(const char *msg, void *data);
+static void post_prefs_error(const char *msg, prefs_info *data);
 #ifdef __GNUC__
-  static void va_post_prefs_error(const char *msg, void *data, ...) __attribute__ ((format (printf, 1, 0)));
+  static void va_post_prefs_error(const char *msg, prefs_info *data, ...) __attribute__ ((format (printf, 1, 0)));
 #else
-  static void va_post_prefs_error(const char *msg, void *data, ...);
+  static void va_post_prefs_error(const char *msg, prefs_info *data, ...);
 #endif
 
 #define GET_TOGGLE(Toggle)        gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(Toggle))
@@ -1521,9 +1521,8 @@ static void clear_prefs_error(GtkWidget *w, gpointer context)
   set_label(prf->error, "");
 }
 
-static void post_prefs_error(const char *msg, void *data)
+static void post_prefs_error(const char *msg, prefs_info *prf)
 {
-  prefs_info *prf = (prefs_info *)data;
   prf->got_error = true;
   set_label(prf->error, msg);
   if (prf->erase_id != 0)
@@ -1531,7 +1530,7 @@ static void post_prefs_error(const char *msg, void *data)
   prf->erase_id = SG_SIGNAL_CONNECT(prf->text, "changed", clear_prefs_error, (gpointer)prf);
 }
 
-static void va_post_prefs_error(const char *msg, void *data, ...)
+static void va_post_prefs_error(const char *msg, prefs_info *data, ...)
 {
   char *buf;
   va_list ap;

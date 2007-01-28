@@ -54,9 +54,7 @@ static mark *free_mark(mark *mp)
   return(NULL);
 }
 
-typedef mark *mark_map_func(chan_info *cp, mark *mp, void *m);
-
-static mark *map_over_marks(chan_info *cp, mark_map_func *func, void *m, read_direction_t direction)
+static mark *map_over_marks(chan_info *cp, mark *(*func)(chan_info *ncp, mark *mp1, void *p1), void *m, read_direction_t direction)
 {
   if (cp->marks)
     {
@@ -92,9 +90,45 @@ static mark *map_over_marks(chan_info *cp, mark_map_func *func, void *m, read_di
   return(NULL);
 }
 
-static mark *find_mark_id_1(chan_info *cp, mark *mp, void *uid)
+static mark *map_over_marks_with_int(chan_info *cp, mark *(*func)(chan_info *ncp, mark *mp1, int val1), int value, read_direction_t direction)
 {
-  if (mp->id == (*((int *)uid)))
+  if (cp->marks)
+    {
+      int marks, pos;
+      mark **mps;
+      pos = cp->edit_ctr;
+      mps = cp->marks[pos];
+      marks = cp->mark_ctr[pos];
+      if (mps)
+	{
+	  mark *mp;
+	  int i;
+	  if (direction == READ_FORWARD)
+	    {
+	      for (i = 0; i <= marks; i++) 
+		if (mps[i]) /* can be null if we're running delete_marks at a higher level and draw-mark-hook is active */
+		  {
+		    mp = (*func)(cp, mps[i], value);
+		    if (mp) return(mp);
+		  }
+	    }
+	  else
+	    {
+	      for (i = marks; i >= 0; i--) 
+		if (mps[i])
+		  {
+		    mp = (*func)(cp, mps[i], value);
+		    if (mp) return(mp);
+		  }
+	    }
+	}
+    }
+  return(NULL);
+}
+
+static mark *find_mark_id_1(chan_info *cp, mark *mp, int id)
+{
+  if (mp->id == id)
     return(mp); 
   return(NULL);
 }
@@ -119,7 +153,7 @@ static mark *find_mark_from_id(int id, chan_info **cps, int pos)
 		  old_pos = cp->edit_ctr;
 		  if (pos >= 0) cp->edit_ctr = pos;
 		  /* memoization would have to be done here where we know cp->edit_ctr */
-		  mp = map_over_marks(cp, find_mark_id_1, (void *)(&id), READ_FORWARD);
+		  mp = map_over_marks_with_int(cp, find_mark_id_1, id, READ_FORWARD);
 		  cp->edit_ctr = old_pos;
 		  if (mp) 
 		    {
@@ -1512,13 +1546,13 @@ static void edit_dragged_mark(chan_info *cp, mark *m, off_t initial_sample)
   else 
     if (num < 0)
       {
-	new_m = map_over_marks(cp, find_mark_id_1, (void *)(&id), READ_FORWARD);
+	new_m = map_over_marks_with_int(cp, find_mark_id_1, id, READ_FORWARD);
 	new_m->samp = initial_sample;
 	delete_samples(mark_final_sample, -num, cp, cp->edit_ctr);
       }
   if (num != 0) 
     {
-      new_m = map_over_marks(cp, find_mark_id_1, (void *)(&id), READ_FORWARD);
+      new_m = map_over_marks_with_int(cp, find_mark_id_1, id, READ_FORWARD);
       new_m->samp = mark_final_sample;
       update_graph(cp);
     }

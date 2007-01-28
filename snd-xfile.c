@@ -24,7 +24,7 @@ static void color_file_selection_box(Widget w)
   Widget wtmp;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(w), w);
   
-  map_over_children(w, set_main_color_of_widget, NULL);
+  map_over_children(w, set_main_color_of_widget);
   XtVaSetValues(FSB_BOX(w, XmDIALOG_DIR_LIST), 
 		XmNbackground, ss->sgx->white, 
 		XmNforeground, ss->sgx->black, 
@@ -3637,7 +3637,7 @@ widget_t make_new_file_dialog(bool managed)
       XtManageChild(ndat->error_text);
       XtManageChild(new_file_dialog);
 
-      map_over_children(new_file_dialog, set_main_color_of_widget, NULL);
+      map_over_children(new_file_dialog, set_main_color_of_widget);
       XtVaSetValues(ndat->format_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
       XtVaSetValues(ndat->header_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
 
@@ -4037,7 +4037,7 @@ Widget edit_header(snd_info *sp)
       XtManageChild(ep->edat->error_text);
       XtManageChild(ep->dialog);
 
-      map_over_children(ep->dialog, set_main_color_of_widget, NULL);
+      map_over_children(ep->dialog, set_main_color_of_widget);
       XtVaSetValues(MSG_BOX(ep->dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
       XtVaSetValues(MSG_BOX(ep->dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
       XtVaSetValues(MSG_BOX(ep->dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
@@ -4235,7 +4235,7 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 	      {
 		int err;
 		view_files_info *vdat = (view_files_info *)(rp->requestor_data);
-		redirect_snd_error_to(vf_post_error, rp->requestor_data);
+		redirect_snd_error_to(redirect_vf_post_error, rp->requestor_data);
 		err = vf_mix(vdat);
 	      }
 	      break;
@@ -4243,7 +4243,7 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 	      {
 		int err;
 		view_files_info *vdat = (view_files_info *)(rp->requestor_data);
-		redirect_snd_error_to(vf_post_error, rp->requestor_data);
+		redirect_snd_error_to(redirect_vf_post_error, rp->requestor_data);
 		err = vf_insert(vdat);
 	      }
 	      break;
@@ -4387,7 +4387,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
 				   raw_data_format, raw_srate, raw_chans, rp->location, 
 				   IGNORE_SAMPLES, NULL);
 
-  map_over_children(rp->dialog, set_main_color_of_widget, NULL);
+  map_over_children(rp->dialog, set_main_color_of_widget);
   XtVaSetValues(MSG_BOX(rp->dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
   XtVaSetValues(MSG_BOX(rp->dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
   XtVaSetValues(MSG_BOX(rp->dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
@@ -4496,7 +4496,7 @@ static void create_post_it_monolog(void)
   XtManageChild(post_it_text);
   XtManageChild(post_it_dialog);
 
-  map_over_children(post_it_dialog, set_main_color_of_widget, NULL);
+  map_over_children(post_it_dialog, set_main_color_of_widget);
   XtVaSetValues(post_it_text, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
   XtVaSetValues(MSG_BOX(post_it_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
   XtVaSetValues(MSG_BOX(post_it_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
@@ -5089,9 +5089,8 @@ static void remove_all_pending_clear_callbacks(view_files_info *vdat)
   XtRemoveCallback(vdat->add_text, XmNmodifyVerifyCallback, vf_add_text_modify_callback, (XtPointer)vdat);
 }
 
-void vf_post_error(const char *error_msg, void *data)
+void vf_post_error(const char *error_msg, view_files_info *vdat)
 {
-  view_files_info *vdat = (view_files_info *)data;
   XmString msg;
   remove_all_pending_clear_callbacks(vdat);
   vdat->error_p = true;
@@ -5107,10 +5106,15 @@ void vf_post_error(const char *error_msg, void *data)
   XmStringFree(msg);
 }
 
-void vf_post_location_error(const char *error_msg, void *data)
+void redirect_vf_post_error(const char *error_msg, void *vdat)
+{
+  vf_post_error(error_msg, (view_files_info *)vdat);
+}
+
+void redirect_vf_post_location_error(const char *error_msg, void *data)
 {
   view_files_info *vdat = (view_files_info *)data;
-  vf_post_error(error_msg, data);
+  vf_post_error(error_msg, vdat);
   if (vdat->location_choice == VF_AT_SAMPLE)
     {
       /* watch at_sample_text or button (undo) */
@@ -5134,10 +5138,9 @@ static void vf_add_text_modify_callback(Widget w, XtPointer context, XtPointer i
   cbs->doit = true;
 }
 
-void vf_post_add_error(const char *error_msg, void *data)
+void vf_post_add_error(const char *error_msg, view_files_info *vdat)
 {
-  view_files_info *vdat = (view_files_info *)data;
-  vf_post_error(error_msg, data);
+  vf_post_error(error_msg, vdat);
   XtAddCallback(vdat->add_text, XmNmodifyVerifyCallback, vf_add_text_modify_callback, (XtPointer)vdat);
   /* what about other clearing actions? */
 }
@@ -6184,7 +6187,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       }
       /* XtAddCallback(sort_cascade_menu, XmNcascadingCallback, vf_display_sort_items, (XtPointer)vdat); -- segfaults */
 
-      map_over_children(vdat->file_list, set_main_color_of_widget, NULL);
+      map_over_children(vdat->file_list, set_main_color_of_widget);
 
       set_dialog_widget(VIEW_FILES_DIALOG, vdat->dialog);
 

@@ -4014,9 +4014,9 @@ static Float fft_axis_extent(chan_info *cp)
   else return((Float)(ap->y_axis_y0 - ap->y_axis_y1));
 }
 
-static void calculate_syncd_fft(chan_info *cp, void *ptr)
+static void calculate_syncd_fft(chan_info *cp, int value)
 {
-  if (cp->sound->sync == (*((int *)ptr))) calculate_fft(cp);
+  if (cp->sound->sync == value) calculate_fft(cp);
 }
 
 static bool dragged = false;
@@ -4276,7 +4276,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		      if (show_selection_transform(ss)) 
 			{
 			  if (sp->sync)
-			    for_each_normal_chan_with_void(calculate_syncd_fft, (void *)(&(sp->sync)));
+			    for_each_normal_chan_with_int(calculate_syncd_fft, sp->sync);
 			  else calculate_fft(cp);
 			}
 		    }
@@ -4684,7 +4684,6 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_UPDATE_TRANSFORM_GRAPH: 
 	      if (cp->graph_transform_p)
 		{
-		  void *val;
 		  if (chan_fft_in_progress(cp)) 
 		    force_fft_clear(cp);
 		  
@@ -4693,6 +4692,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 		    single_fft(cp, FORCE_REDISPLAY, FORCE_REFFT);
 		  else
 		    {
+		      void *val;
 		      val = (void *)make_sonogram_state(cp, FORCE_REFFT);
 		      while (sonogram_in_slices(val) == BACKGROUND_CONTINUE);
 		    }
@@ -6112,8 +6112,6 @@ static XEN g_verbose_cursor(XEN snd, XEN chn)
   return(C_TO_XEN_BOOLEAN(verbose_cursor(ss)));
 }
 
-static void clrmini(snd_info *sp, void *ignore) {clear_minibuffer(sp);}
-
 static void chans_verbose_cursor(chan_info *cp, bool value)
 {
   cp->verbose_cursor = value;
@@ -6123,7 +6121,7 @@ static void chans_verbose_cursor(chan_info *cp, bool value)
 void set_verbose_cursor(bool val)
 {
   in_set_verbose_cursor(val);
-  if (val == 0) for_each_sound(clrmini, NULL);
+  if (val == 0) for_each_sound(clear_minibuffer);
   for_each_chan_with_bool(chans_verbose_cursor, val);
 }
 

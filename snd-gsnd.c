@@ -460,7 +460,7 @@ void play_button_pause(bool pausing)
   pause_data *pd;
   pd = (pause_data *)CALLOC(1, sizeof(pause_data));
   pd->pausing = pausing;
-  for_each_sound(set_play_button_pause, (void *)pd);
+  for_each_sound_with_void(set_play_button_pause, (void *)pd);
   FREE(pd);
 }
 

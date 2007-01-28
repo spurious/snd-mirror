@@ -215,9 +215,8 @@ static void cp_set_selection_len(chan_info *cp, off_t len)
   ed->selection_maxamp_position = -1;
 }
 
-static void selection_chans_1(chan_info *cp, void *count)
+static void selection_chans_1(chan_info *cp, int *counter)
 {
-  int *counter = (int *)count;
   if (cp_has_selection(cp)) counter[0]++;
 }
 
@@ -225,7 +224,7 @@ int selection_chans(void)
 {
   int count[1];
   count[0] = 0;
-  for_each_normal_chan_with_void(selection_chans_1, (void *)count);
+  for_each_normal_chan_with_refint(selection_chans_1, count);
   return(count[0]);
 }
 

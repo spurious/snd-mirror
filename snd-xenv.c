@@ -1374,7 +1374,7 @@ Widget create_envelope_editor(void)
       screnvlst = XmCreateScrolledList(colD, "scrolled-env-list", args, n);
       XtManageChild(screnvlst); 
       XtAddCallback(screnvlst, XmNbrowseSelectionCallback, env_browse_callback, NULL);
-      map_over_children(screnvlst, set_main_color_of_widget, NULL);
+      map_over_children(screnvlst, set_main_color_of_widget);
       if (enved_all_envs_top() > 0) make_scrolled_env_list();
 
       /* -------- MAIN GRAPH -------- */

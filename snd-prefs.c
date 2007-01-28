@@ -46,6 +46,11 @@ static void any_error_to_text(const char *msg, void *data)
   TIMEOUT(unpost_any_error);
 }
 
+static void redirect_post_prefs_error(const char *msg, void *data)
+{
+  post_prefs_error(msg, (prefs_info *)data);
+}
+
 
 static int prefs_size = 0, prefs_top = 0;
 static prefs_info **prefs = NULL;
@@ -2364,7 +2369,7 @@ static void optimization_from_text(prefs_info *prf)
   if ((str) && (*str))
     {
       prf->got_error = false;
-      redirect_errors_to(post_prefs_error, (void *)prf);
+      redirect_errors_to(redirect_post_prefs_error, (void *)prf);
       opt = string_to_int(str, MIN_OPTIMIZATION, "optimization"); 
       redirect_errors_to(NULL, NULL);
       FREE_TEXT(str);
@@ -2372,7 +2377,7 @@ static void optimization_from_text(prefs_info *prf)
 	{
 	  if (opt <= MAX_OPTIMIZATION)
 	    set_optimization(opt);		 
-	  else va_post_prefs_error("%s > %d?", (void *)prf, str, MAX_OPTIMIZATION);
+	  else va_post_prefs_error("%s > %d?", prf, str, MAX_OPTIMIZATION);
 	}
       else prf->got_error = false;
     }
@@ -2425,7 +2430,7 @@ static void cursor_size_from_text(prefs_info *prf)
   if ((str) && (*str))
     {
       prf->got_error = false;
-      redirect_errors_to(post_prefs_error, (void *)prf);
+      redirect_errors_to(redirect_post_prefs_error, (void *)prf);
       size = string_to_int(str, 0, "cursor size"); 
       redirect_errors_to(NULL, NULL);
       FREE_TEXT(str);
@@ -2435,13 +2440,13 @@ static void cursor_size_from_text(prefs_info *prf)
 	    {
 	      if (size <= MAX_CURSOR_SIZE)
 		in_set_cursor_size(size);
-	      else va_post_prefs_error("%s > %d?", (void *)prf, str, MAX_CURSOR_SIZE);
+	      else va_post_prefs_error("%s > %d?", prf, str, MAX_CURSOR_SIZE);
 	    }
-	  else va_post_prefs_error("%s < %d?", (void *)prf, str, MIN_CURSOR_SIZE);
+	  else va_post_prefs_error("%s < %d?", prf, str, MIN_CURSOR_SIZE);
 	}
       else prf->got_error = false;
     }
-  else post_prefs_error("no size?", (void *)prf);
+  else post_prefs_error("no size?", prf);
 }
 
 /* ---------------- dot-size ---------------- */
@@ -2489,7 +2494,7 @@ static void dot_size_from_text(prefs_info *prf)
   if ((str) && (*str))
     {
       prf->got_error = false;
-      redirect_errors_to(post_prefs_error, (void *)prf);
+      redirect_errors_to(redirect_post_prefs_error, (void *)prf);
       size = string_to_int(str, 0, "dot size"); 
       redirect_errors_to(NULL, NULL);
       FREE_TEXT(str);
@@ -2499,13 +2504,13 @@ static void dot_size_from_text(prefs_info *prf)
 	    {
 	      if (size <= MAX_DOT_SIZE)
 		in_set_dot_size(size);
-	      else va_post_prefs_error("%s > %d?", (void *)prf, str, MAX_DOT_SIZE);
+	      else va_post_prefs_error("%s > %d?", prf, str, MAX_DOT_SIZE);
 	    }
-	  else va_post_prefs_error("%s < %d?", (void *)prf, str, MIN_DOT_SIZE);
+	  else va_post_prefs_error("%s < %d?", prf, str, MIN_DOT_SIZE);
 	}
       else prf->got_error = false;
     }
-  else post_prefs_error("no size?", (void *)prf);
+  else post_prefs_error("no size?", prf);
 }
 
 
@@ -2554,7 +2559,7 @@ static void fft_size_from_text(prefs_info *prf)
   if ((str) && (*str))
     {
       prf->got_error = false;
-      redirect_errors_to(post_prefs_error, (void *)prf);
+      redirect_errors_to(redirect_post_prefs_error, (void *)prf);
       size = string_to_int(str, MIN_TRANSFORM_SIZE, "size"); 
       redirect_errors_to(NULL, NULL);
       FREE_TEXT(str);
@@ -2564,9 +2569,9 @@ static void fft_size_from_text(prefs_info *prf)
 	    {
 	      if (size <= MAX_TRANSFORM_SIZE)
 		in_set_transform_size(size);
-	      else va_post_prefs_error("%s > %d?", (void *)prf, str, MAX_TRANSFORM_SIZE);
+	      else va_post_prefs_error("%s > %d?", prf, str, MAX_TRANSFORM_SIZE);
 	    }
-	  else post_prefs_error("size must be a power of 2", (void *)prf);
+	  else post_prefs_error("size must be a power of 2", prf);
 	}
       else prf->got_error = false;
     }
@@ -2769,7 +2774,7 @@ static void speed_control_text(prefs_info *prf)
   if ((str) && (*str))
     {
       prf->got_error = false;
-      redirect_errors_to(post_prefs_error, (void *)prf);
+      redirect_errors_to(redirect_post_prefs_error, (void *)prf);
       tones = string_to_int(str, MIN_SPEED_CONTROL_SEMITONES, "semitones");
       redirect_errors_to(NULL, NULL);
       FREE_TEXT(str);
@@ -4156,12 +4161,12 @@ static void show_axes_from_text(prefs_info *prf)
 	      }
 	  if (curpos >= 0)
 	    in_set_show_axes((show_axes_t)curpos);
-	  else post_prefs_error("unknown axis choice", (void *)prf);
+	  else post_prefs_error("unknown axis choice", prf);
 	}
-      else post_prefs_error("need an axis choice", (void *)prf);
+      else post_prefs_error("need an axis choice", prf);
       FREE(trimmed_str);
     }
-  else post_prefs_error("need an axis choice", (void *)prf);
+  else post_prefs_error("need an axis choice", prf);
 }
 
 /* ---------------- x-axis-style ---------------- */
@@ -4210,12 +4215,12 @@ static void x_axis_style_from_text(prefs_info *prf)
 	      }
 	  if (curpos >= 0)
 	    in_set_x_axis_style((x_axis_style_t)curpos);
-	  else post_prefs_error("unknown axis style", (void *)prf);
+	  else post_prefs_error("unknown axis style", prf);
 	}
-      else post_prefs_error("need an axis style", (void *)prf);
+      else post_prefs_error("need an axis style", prf);
       FREE(trimmed_str);
     }
-  else post_prefs_error("need an axis style", (void *)prf);
+  else post_prefs_error("need an axis style", prf);
 }
 
 
@@ -4284,12 +4289,12 @@ static void transform_type_from_text(prefs_info *prf)
 	      }
 	  if (curpos >= 0)
 	    in_set_transform_type(curpos);
-	  else post_prefs_error("unknown tranform", (void *)prf);
+	  else post_prefs_error("unknown tranform", prf);
 	}
-      else post_prefs_error("no transform?", (void *)prf);
+      else post_prefs_error("no transform?", prf);
       FREE(trimmed_str);
     }
-  else post_prefs_error("no transform?", (void *)prf);
+  else post_prefs_error("no transform?", prf);
 }
 
 
@@ -4357,12 +4362,12 @@ static void fft_window_from_text(prefs_info *prf)
 	      }
 	  if (curpos >= 0)
 	    in_set_fft_window((mus_fft_window_t)curpos);
-	  else post_prefs_error("unknown window", (void *)prf);
+	  else post_prefs_error("unknown window", prf);
 	}
-      else post_prefs_error("no window?", (void *)prf);
+      else post_prefs_error("no window?", prf);
       FREE(trimmed_str);
     }
-  else post_prefs_error("no window?", (void *)prf);
+  else post_prefs_error("no window?", prf);
 }
 
 
@@ -4423,12 +4428,12 @@ static void colormap_from_text(prefs_info *prf)
 	      }
 	  if (is_colormap(curpos))
 	    in_set_color_map(curpos);
-	  else post_prefs_error("unknown colormap", (void *)prf);
+	  else post_prefs_error("unknown colormap", prf);
 	}
-      else post_prefs_error("no colormap?", (void *)prf);
+      else post_prefs_error("no colormap?", prf);
       FREE(trimmed_str);
     }
-  else post_prefs_error("no colormap?", (void *)prf);
+  else post_prefs_error("no colormap?", prf);
 }
 
 #if USE_MOTIF

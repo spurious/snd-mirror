@@ -263,9 +263,10 @@ void vf_post_info(view_files_info *vdat, int pos) {}
 void vf_unpost_info(view_files_info *vdat) {}
 void vf_flash_row(vf_row *r) {}
 off_t vf_location(view_files_info *vdat) {return(0);}
-void vf_post_error(const char *error_msg, void *data) {}
-void vf_post_location_error(const char *error_msg, void *data) {}
-void vf_post_add_error(const char *error_msg, void *data) {}
+void vf_post_error(const char *error_msg, view_files_info *data) {}
+void redirect_vf_post_error(const char *error_msg, void *data) {}
+void redirect_vf_post_location_error(const char *error_msg, void *data) {}
+void vf_post_add_error(const char *error_msg, view_files_info *data) {}
 widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed) {return(NULL_WIDGET);}
 void vf_post_selected_files_list(view_files_info *vdat) {}
 void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or_dir) {}

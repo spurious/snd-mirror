@@ -894,13 +894,13 @@ static XEN g_cursor_color(void)
 }
 
 #if USE_MOTIF
-static void highlight_recolor_everything(widget_t w, void *ptr)
+static void highlight_recolor_everything(widget_t w, color_t color)
 {
   Pixel curcol;
   if (XtIsWidget(w))
     {
       XtVaGetValues(w, XmNbackground, &curcol, NULL);
-      if (curcol == (Pixel)ptr)
+      if (curcol == color)
 	XmChangeColor(w, ss->sgx->highlight_color);
     }
   /* to handle the gtk side correctly here, we'd need a list of widgets to modify --
@@ -915,7 +915,7 @@ void set_highlight_color(color_t color)
   old_color = ss->sgx->highlight_color;
   ss->sgx->highlight_color = color; 
 #if USE_MOTIF
-  map_over_children(MAIN_SHELL(ss), highlight_recolor_everything, (void *)old_color);
+  map_over_children_with_color(MAIN_SHELL(ss), highlight_recolor_everything, old_color);
 #endif
 }
 
@@ -1233,12 +1233,28 @@ static XEN g_selected_graph_color(void)
   return(XEN_WRAP_PIXEL(ss->sgx->selected_graph_color));
 }
 
+#if USE_MOTIF
+static void recolor_button(widget_t w)
+{
+  if (XtIsWidget(w))
+    {
+      if (XmIsPushButton(w))
+	XtVaSetValues(w, XmNarmColor, ss->sgx->pushed_button_color, NULL);
+      else
+	{
+	  if (XmIsToggleButton(w))
+	    XtVaSetValues(w, XmNselectColor, ss->sgx->pushed_button_color, NULL);
+	}
+    }
+}
+#endif
+
 static XEN g_set_pushed_button_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_pushed_button_color, "a color"); 
   ss->sgx->pushed_button_color = XEN_UNWRAP_PIXEL(color);
 #if USE_MOTIF
-  map_over_children(MAIN_SHELL(ss), recolor_button, NULL);
+  map_over_children(MAIN_SHELL(ss), recolor_button);
 #endif
   return(color);
 }
@@ -1255,29 +1271,31 @@ static XEN g_basic_color(void)
   return(XEN_WRAP_PIXEL(ss->sgx->basic_color));
 }
 
-static void recolor_everything(widget_t w, void *ptr)
-{
-  /* yow! these are treating ptr differently */
 #if USE_GTK
+static void recolor_everything(widget_t w, gpointer color)
+{
   if (GTK_IS_WIDGET(w)) 
     {
       /* apparently there is a huge memory leak here */
-      gtk_widget_modify_bg(w, GTK_STATE_NORMAL, (GdkColor *)ptr);
+      gtk_widget_modify_bg(w, GTK_STATE_NORMAL, (color_t)color);
       if (GTK_IS_CONTAINER(w))
-	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything, (gpointer)ptr);
+	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything, color);
     }
+}
 #endif
+
 #if USE_MOTIF
+static void recolor_everything(widget_t w, color_t color)
+{
   Pixel curcol;
   if (XtIsWidget(w))
     {
       XtVaGetValues(w, XmNbackground, &curcol, NULL);
-      if (curcol == (Pixel)ptr)
+      if (curcol == color)
 	XmChangeColor(w, ss->sgx->basic_color);
     }
-#endif
 }
-
+#endif
 
 void set_basic_color(color_t color)
 {
@@ -1285,7 +1303,7 @@ void set_basic_color(color_t color)
   old_color = ss->sgx->basic_color;
   ss->sgx->basic_color = color; 
 #if USE_MOTIF
-  map_over_children(MAIN_SHELL(ss), recolor_everything, (void *)old_color);
+  map_over_children_with_color(MAIN_SHELL(ss), recolor_everything, old_color);
 #endif
 #if USE_GTK
   gtk_container_foreach(GTK_CONTAINER(MAIN_SHELL(ss)), recolor_everything, (gpointer)(ss->sgx->basic_color));

@@ -501,7 +501,7 @@ static void make_region_dialog(void)
 		XmNworkWindow, region_ww, 
 		NULL);
 
-  map_over_children(region_list, set_main_color_of_widget, NULL);
+  map_over_children(region_list, set_main_color_of_widget);
   last_row = NULL;
   
   region_rows = (regrow **)CALLOC(max_regions(ss), sizeof(regrow *));
@@ -625,7 +625,7 @@ static void make_region_dialog(void)
   set_current_region(0);
   cp = rsp->chans[0];
   XtVaSetValues(region_rows[0]->nm, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
-  map_over_children(panes, color_sashes, NULL);
+  map_over_children(panes, color_sashes);
   XtVaSetValues(toppane, XmNpaneMinimum, 1, NULL);
   XtVaSetValues(region_grf, XmNpaneMinimum, 1, NULL);
 

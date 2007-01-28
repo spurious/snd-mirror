@@ -7400,7 +7400,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
     }
   if (!(ss->fam_ok))
     if (auto_update(ss)) 
-      for_each_sound(sound_not_current, NULL);
+      for_each_sound(sound_not_current);
   return(IO_NO_ERROR);
 }
 

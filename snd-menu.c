@@ -198,7 +198,7 @@ void reflect_file_revert_in_label(snd_info *sp)
     }
 }
 
-static void file_update(snd_info *sp, void *ptr)
+static void file_update(snd_info *sp)
 {
   /* here we should only update files that have changed on disk */
   if ((sp) && (sp->edited_region == NULL) &&
@@ -213,7 +213,7 @@ static void file_update(snd_info *sp, void *ptr)
 
 void update_file_from_menu(void)
 {
-  for_each_sound(file_update, NULL);
+  for_each_sound(file_update);
 }
 
 void revert_file_from_menu(void)

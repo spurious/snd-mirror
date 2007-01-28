@@ -178,7 +178,7 @@ void clear_window(axis_context *ax)
   if (ax) XClearWindow(ax->dp, ax->wn);
 }
 
-void map_over_children(Widget w, void (*func)(Widget, void *), void *userptr)
+void map_over_children(Widget w, void (*func)(Widget uw))
 {
   /* apply func to each child in entire tree beneath top widget */
   /* taken from Douglas Young, "Motif Debugging and Performance Tuning" Prentice-Hall 1995 */
@@ -186,19 +186,42 @@ void map_over_children(Widget w, void (*func)(Widget, void *), void *userptr)
   if (w)
     {
       unsigned int i;
-      (*func)(w, userptr);
+      (*func)(w);
       if (XtIsComposite(w))
 	{
 	  CompositeWidget cw = (CompositeWidget)w;
 	  for (i = 0; i < cw->composite.num_children; i++)
-	    map_over_children(cw->composite.children[i], func, userptr);
+	    map_over_children(cw->composite.children[i], func);
 	}
       if (XtIsWidget(w))
 	{
 	  for (i = 0; i < w->core.num_popups; i++)
 	    {
 	      Widget child = w->core.popup_list[i];
-	      map_over_children(child, func, userptr);
+	      map_over_children(child, func);
+	    }
+	}
+    }
+}
+
+void map_over_children_with_color(Widget w, void (*func)(Widget uw, color_t color), color_t color)
+{
+  if (w)
+    {
+      unsigned int i;
+      (*func)(w, color);
+      if (XtIsComposite(w))
+	{
+	  CompositeWidget cw = (CompositeWidget)w;
+	  for (i = 0; i < cw->composite.num_children; i++)
+	    map_over_children_with_color(cw->composite.children[i], func, color);
+	}
+      if (XtIsWidget(w))
+	{
+	  for (i = 0; i < w->core.num_popups; i++)
+	    {
+	      Widget child = w->core.popup_list[i];
+	      map_over_children_with_color(child, func, color);
 	    }
 	}
     }
@@ -220,7 +243,7 @@ void raise_dialog(Widget w)
     }
 }
 
-void set_main_color_of_widget(Widget w, void *userptr)
+void set_main_color_of_widget(Widget w)
 {
   if (XtIsWidget(w))
     {
@@ -285,7 +308,7 @@ XtCallbackList make_callback_list(XtCallbackProc callback, XtPointer closure)
 }
 
 #include <Xm/SashP.h>
-void color_sashes(Widget w, void *ptr)
+void color_sashes(Widget w)
 {
   if ((XtIsWidget(w)) && 
       (XtIsSubclass(w, xmSashWidgetClass)))
@@ -421,7 +444,7 @@ void set_sensitive(Widget wid, bool val)
   if (wid) XtSetSensitive(wid, val);
 }
 
-void set_toggle_button(Widget wid, bool val, bool passed, void *data) 
+void set_toggle_button(Widget wid, bool val, bool passed, void *ignore) 
 {
   XmToggleButtonSetState(wid, (Boolean)val, (Boolean)passed);
 }

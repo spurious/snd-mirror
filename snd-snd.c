@@ -2947,7 +2947,7 @@ static XEN g_channel_style(XEN snd)
   return(C_TO_XEN_INT((int)(sp->channel_style)));
 }
 
-static void update_sound(snd_info *sp, void *ptr)
+static void update_sound(snd_info *sp)
 {
   if (sp)
     {
@@ -2965,7 +2965,7 @@ static void update_sound(snd_info *sp, void *ptr)
 void set_channel_style(channel_style_t val)
 {
   in_set_channel_style(val);
-  for_each_sound(update_sound, NULL);
+  for_each_sound(update_sound);
   for_each_chan(update_graph);
 }
 

@@ -116,7 +116,7 @@ static void create_completions_dialog(char *title)
 
   XtManageChild(completions_dialog);
 
-  map_over_children(completions_dialog, set_main_color_of_widget, NULL);
+  map_over_children(completions_dialog, set_main_color_of_widget);
   XtVaSetValues(completions_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
   XtVaSetValues(XmMessageBoxGetChild(completions_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
   XtVaSetValues(XmMessageBoxGetChild(completions_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
@@ -1211,7 +1211,7 @@ static void make_command_widget(int height)
       XtVaGetValues(lisp_window, XmNverticalScrollBar, &wv, XmNhorizontalScrollBar, &wh, NULL);
       XmChangeColor(wv, ss->sgx->basic_color);
       XmChangeColor(wh, ss->sgx->basic_color);
-      map_over_children(SOUND_PANE(ss), color_sashes, NULL);
+      map_over_children(SOUND_PANE(ss), color_sashes);
 
       if (auto_resize(ss))
 	XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, true, NULL);

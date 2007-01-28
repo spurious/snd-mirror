@@ -3133,7 +3133,7 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
 	      {
 		int err;
 		view_files_info *vdat = (view_files_info *)(rp->requestor_data);
-		redirect_snd_error_to(vf_post_error, rp->requestor_data);
+		redirect_snd_error_to(redirect_vf_post_error, rp->requestor_data);
 		err = vf_mix(vdat);
 	      }
 	      break;
@@ -3141,7 +3141,7 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
 	      {
 		int err;
 		view_files_info *vdat = (view_files_info *)(rp->requestor_data);
-		redirect_snd_error_to(vf_post_error, rp->requestor_data);
+		redirect_snd_error_to(redirect_vf_post_error, rp->requestor_data);
 		err = vf_insert(vdat);
 	      }
 	      break;
@@ -4499,18 +4499,22 @@ static void vf_clear_mark(view_files_info *vdat)
     }
 }
 
-void vf_post_error(const char *error_msg, void *data)
+void vf_post_error(const char *error_msg, view_files_info *vdat)
 {
-  view_files_info *vdat = (view_files_info *)data;
   vdat->error_p = true;
   CHANGE_INFO(vdat->info1, error_msg);
   CHANGE_INFO(vdat->info2, "|");
 }
 
-void vf_post_location_error(const char *error_msg, void *data)
+void redirect_vf_post_error(const char *error_msg, void *vdat)
+{
+  vf_post_error(error_msg, (view_files_info *)vdat);
+}
+
+void redirect_vf_post_location_error(const char *error_msg, void *data)
 {
   view_files_info *vdat = (view_files_info *)data;
-  vf_post_error(error_msg, data);
+  vf_post_error(error_msg, vdat);
   if (vdat->location_choice == VF_AT_SAMPLE)
     {
       /* watch at_sample_text or button (undo) */
@@ -4537,11 +4541,10 @@ static gboolean vf_add_text_modify_callback(GtkWidget *w, GdkEventKey *event, gp
   return(false);
 }
 
-void vf_post_add_error(const char *error_msg, void *data)
+void vf_post_add_error(const char *error_msg, view_files_info *vdat)
 {
-  view_files_info *vdat = (view_files_info *)data;
-  vf_post_error(error_msg, data);
-  vdat->add_text_handler_id = SG_SIGNAL_CONNECT(vdat->add_text, "key_press_event", vf_add_text_modify_callback, data);
+  vf_post_error(error_msg, vdat);
+  vdat->add_text_handler_id = SG_SIGNAL_CONNECT(vdat->add_text, "key_press_event", vf_add_text_modify_callback, (gpointer)vdat);
 }
 
 static void view_files_mix_selected_callback(GtkWidget *w, gpointer context) 

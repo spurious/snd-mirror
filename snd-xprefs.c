@@ -73,11 +73,11 @@ static void key_bind(prefs_info *prf, char *(*binder)(char *key, bool c, bool m,
 static void clear_prefs_dialog_error(void);
 static void scale_set_color(prefs_info *prf, color_t pixel);
 static color_t rgb_to_color(Float r, Float g, Float b);
-static void post_prefs_error(const char *msg, void *data);
+static void post_prefs_error(const char *msg, prefs_info *data);
 #ifdef __GNUC__
-  static void va_post_prefs_error(const char *msg, void *data, ...) __attribute__ ((format (printf, 1, 0)));
+  static void va_post_prefs_error(const char *msg, prefs_info *data, ...) __attribute__ ((format (printf, 1, 0)));
 #else
-  static void va_post_prefs_error(const char *msg, void *data, ...);
+  static void va_post_prefs_error(const char *msg, prefs_info *data, ...);
 #endif
 
 #define GET_TOGGLE(Toggle)        (XmToggleButtonGetState(Toggle) == XmSET)
@@ -1650,16 +1650,15 @@ static void clear_prefs_error(Widget w, XtPointer context, XtPointer info)
   set_label(prf->error, "");
 }
 
-static void post_prefs_error(const char *msg, void *data)
+static void post_prefs_error(const char *msg, prefs_info *prf)
 {
-  prefs_info *prf = (prefs_info *)data;
   ASSERT_WIDGET_TYPE(XmIsLabel(prf->error), prf->error);
   prf->got_error = true;
   set_label(prf->error, msg);
   XtAddCallback(prf->text, XmNvalueChangedCallback, clear_prefs_error, (XtPointer)prf);
 }
 
-static void va_post_prefs_error(const char *msg, void *data, ...)
+static void va_post_prefs_error(const char *msg, prefs_info *data, ...)
 {
   char *buf;
   va_list ap;
@@ -1745,7 +1744,7 @@ widget_t start_preferences_dialog(void)
     XmStringFree(revert);
     XmStringFree(clear);
     
-    map_over_children(preferences_dialog, set_main_color_of_widget, NULL);
+    map_over_children(preferences_dialog, set_main_color_of_widget);
     XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
     XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
     XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);

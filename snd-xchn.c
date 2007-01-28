@@ -265,10 +265,8 @@ bool channel_unlock_pane(chan_info *cp)
   return(false);
 }
 
-bool channel_lock_pane(chan_info *cp, void *ptr)
+bool channel_lock_pane(chan_info *cp, int val)
 {
-  int val;
-  val = (*((int *)ptr));
   if (val < 6) val = 6;
   XtUnmanageChild(channel_main_pane(cp));
   XtVaSetValues(channel_main_pane(cp),
@@ -1298,7 +1296,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
       sp->channel_style = new_style;
       if (new_style != old_style)
 	{
-	  int height[1];
+	  int height;
 #if WITH_RELATIVE_PANES
 	  if ((new_style == CHANNELS_SEPARATE) || (old_style == CHANNELS_SEPARATE))
 	    {
@@ -1338,7 +1336,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  for (i = 1; i < sp->nchans; i++) CURSOR(sp->chans[i]) = CURSOR(sp->chans[0]);
 		}
 	    }
-	  height[0] = widget_height(w_snd_pane(sp)) - control_panel_height(sp);
+	  height = widget_height(w_snd_pane(sp)) - control_panel_height(sp);
 	  if (old_style == CHANNELS_SEPARATE)
 	    {
 	      chan_context *mcgx;
@@ -1363,9 +1361,9 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	      chan_info *pcp;
 	      if (new_style == CHANNELS_SEPARATE)
 		{
-		  /* height[0] = total space available */
-		  height[0] /= sp->nchans;
-		  map_over_sound_chans_with_void(sp, channel_lock_pane, (void *)height);
+		  /* height = total space available */
+		  height /= sp->nchans;
+		  map_over_sound_chans_with_int(sp, channel_lock_pane, height);
 		  map_over_sound_chans(sp, channel_open_pane);
 		  map_over_sound_chans(sp, channel_unlock_pane);
 		  for (i = 0; i < sp->nchans; i++) 

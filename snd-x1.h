@@ -229,16 +229,17 @@ int number_width(const char *num, bool use_tiny_font);
 int number_height(bool use_tiny_font);
 int label_height(bool use_tiny_font);
 int mark_name_width(const char *txt);
-void map_over_children(Widget w, void (*func)(Widget w, void *ptr), void *userptr);
+void map_over_children(Widget w, void (*func)(Widget w));
+void map_over_children_with_color(Widget w, void (*func)(Widget uw, color_t color), color_t color);
 void clear_window(axis_context *ax);
 void raise_dialog(Widget w);
-void set_main_color_of_widget(Widget w, void *userptr);
+void set_main_color_of_widget(Widget w);
 char *get_label(Widget label);
 void set_label(Widget label, const char *str);
 void set_title(const char *title);
 void goto_window(Widget text);
 XtCallbackList make_callback_list(XtCallbackProc callback, XtPointer closure);
-void color_sashes(Widget w, void *ptr);
+void color_sashes(Widget w);
 void check_for_event(void);
 void color_cursor(Pixel color);
 void color_marks(Pixel color);
@@ -297,7 +298,7 @@ void resize_sy(chan_info *cp);
 void resize_zy(chan_info *cp);
 bool channel_open_pane(chan_info *cp);
 bool channel_unlock_pane(chan_info *cp);
-bool channel_lock_pane(chan_info *cp, void *ptr);
+bool channel_lock_pane(chan_info *cp, int height);
 void reflect_edit_history_change(chan_info *cp);
 void reflect_edit_counter_change(chan_info *cp);
 int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, Widget main, fw_button_t arrows, bool with_events);
@@ -483,7 +484,6 @@ void save_print_dialog_state(FILE *fd);
 
 /* -------- snd-xxen.c -------- */
 
-void recolor_button(widget_t w, void *ptr);
 void color_chan_components(color_t color, slider_choice_t which_component);
 void color_unselected_graphs(color_t color);
 void g_init_gxen(void);

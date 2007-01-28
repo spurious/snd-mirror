@@ -778,7 +778,7 @@ static Widget make_message_pane(Widget message_pane)
   msg = XmCreateScrolledText(message_pane, "scrolled-text", args, n);
   XtManageChild(msg);
 
-  map_over_children(XtParent(msg), set_main_color_of_widget, NULL);
+  map_over_children(XtParent(msg), set_main_color_of_widget);
   XtVaSetValues(msg, XmNbackground, ss->sgx->light_blue, XmNforeground, ss->sgx->black, NULL);
 
   return(msg);
@@ -1058,7 +1058,7 @@ static void make_file_info_pane(recorder_info *rp, Widget file_pane, int ndevs)
 #endif
   widget_int_to_text(recdat->srate_text, rp->srate);
   widget_int_to_text(recdat->chans_text, rp->out_chans);
-  map_over_children(ff_form, set_main_color_of_widget, NULL);
+  map_over_children(ff_form, set_main_color_of_widget);
   XtVaSetValues(recdat->header_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
   XtVaSetValues(recdat->format_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
   XtVaSetValues(file_label, XmNbackground, ss->sgx->highlight_color, NULL);
@@ -2939,7 +2939,7 @@ widget_t snd_record_file(void)
 
       make_file_info_pane(rp, file_info_pane, rp->ordered_devices_size);
       messages = make_message_pane(message_pane);
-      map_over_children(rec_panes, color_sashes, NULL);
+      map_over_children(rec_panes, color_sashes);
 
       /* loop through all panes reading p->pane_size and */
       for (i = 0; i < rp->ordered_devices_size; i++)

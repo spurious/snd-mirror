@@ -51,7 +51,7 @@ bool snd_exit_cleanly(bool force_exit)
   return(true);
 }
 
-void sound_not_current(snd_info *sp, void *ignore)
+void sound_not_current(snd_info *sp)
 {
   /* check for change in update status */
   bool needs_update;
@@ -1193,7 +1193,7 @@ void save_state(const char *save_state_name)
 	  fprintf(save_fd, "#f value sfile\n");
 #endif
 	}
-      for_each_sound(save_sound_state, (void *)save_fd);      /* current sound state -- will traverse chans */
+      for_each_sound_with_void(save_sound_state, (void *)save_fd);      /* current sound state -- will traverse chans */
       if (ss->selected_sound != NO_SELECTION)
 	{
 #if HAVE_SCHEME

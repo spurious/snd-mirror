@@ -182,7 +182,7 @@ static void auto_update_check(XtPointer context, XtIntervalId *id)
     {
       if ((!(play_in_progress())) && 
 	  (!(record_in_progress())))
-	for_each_sound(sound_not_current, NULL);
+	for_each_sound(sound_not_current);
       auto_update_proc = XtAppAddTimeOut(MAIN_APP(ss),
 					 (unsigned long)(auto_update_interval(ss) * 1000),
 					 (XtTimerCallbackProc)auto_update_check,
@@ -1023,7 +1023,7 @@ void snd_doit(int argc, char **argv)
       }
       XtManageChild(sx->soundpane);
       XtAddCallback(sx->soundpane, XmNpageChangedCallback, notebook_page_changed_callback, NULL);
-      map_over_children(sx->soundpane, set_main_color_of_widget, NULL); /* appears to be a no-op */
+      map_over_children(sx->soundpane, set_main_color_of_widget); /* appears to be a no-op */
       break;
     }
 

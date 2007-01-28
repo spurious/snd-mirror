@@ -121,23 +121,6 @@ time_t file_write_date(const char *filename)
   return((time_t)(statbuf.st_mtime));
 }
 
-void map_over_sounds(bool (*func)(snd_info *, void *), void *userptr)
-{
-  /* true = abort map, skips inactive sounds */
-  int i;
-  for (i = 0; i < ss->max_sounds; i++)
-    {
-      snd_info *sp;
-      sp = ss->sounds[i];
-      if ((sp) && (sp->inuse == SOUND_NORMAL))
-	{
-	  bool val;
-	  val = (*func)(sp, userptr);
-	  if (val) return;
-	}
-    }
-}
-
 /* -------- popup filename lists -------- */
 
 void forget_filename(const char *filename, char **names)
@@ -710,7 +693,7 @@ void reflect_file_change_in_title(void)
   alist = (active_sound_list *)CALLOC(1, sizeof(active_sound_list));
   alist->sounds = (int *)CALLOC(ss->max_sounds, sizeof(int));
   alist->names = (char **)CALLOC(ss->max_sounds, sizeof(char *));
-  for_each_sound(add_sound_to_active_list, alist);
+  for_each_sound_with_void(add_sound_to_active_list, (void *)alist);
   len = snd_strlen(ss->startup_title) + 32;
   if (alist->active_sounds > 0)
     {
@@ -2370,9 +2353,8 @@ typedef struct {
   char *filename;
 } same_name_info;
 
-static bool check_for_same_name(snd_info *sp1, void *ur_info)
+static bool check_for_same_name(snd_info *sp1, same_name_info *info)
 {
-  same_name_info *info = (same_name_info *)ur_info;
   if ((sp1) && 
       (sp1 != info->current_sp) &&
       (strcmp(sp1->filename, info->filename) == 0))
@@ -2386,6 +2368,23 @@ static bool check_for_same_name(snd_info *sp1, void *ur_info)
   return(false);
 }
 
+static void map_over_sounds_with_collision(bool (*func)(snd_info *, same_name_info *col), same_name_info *collision)
+{
+  /* true = abort map, skips inactive sounds */
+  int i;
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      sp = ss->sounds[i];
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
+	{
+	  bool val;
+	  val = (*func)(sp, collision);
+	  if (val) return;
+	}
+    }
+}
+
 snd_info *file_is_open_elsewhere_and_has_unsaved_edits(snd_info *sp, const char *fullname)
 {
   same_name_info *collision;
@@ -2394,7 +2393,7 @@ snd_info *file_is_open_elsewhere_and_has_unsaved_edits(snd_info *sp, const char 
   collision->filename = (char *)fullname;
   collision->parlous_sp = NULL;
   collision->current_sp = sp;
-  map_over_sounds(check_for_same_name, (void *)collision);
+  map_over_sounds_with_collision(check_for_same_name, collision);
   result = collision->parlous_sp;
   FREE(collision);
   return(result);
@@ -3221,7 +3220,7 @@ void add_file_to_view_files_list(view_files_info *vdat, const char *filename, co
 	  if (errno != 0)
 	    msg = mus_format("%s: %s", filename, strerror(errno));
 	  else msg = mus_format("%s does not exist", filename);
-	  vf_post_add_error(msg, (void *)vdat);
+	  vf_post_add_error(msg, vdat);
 	  FREE(msg);
 	}
       return;
@@ -3348,7 +3347,7 @@ static void view_files_monitor_directory(view_files_info *vdat, const char *dirn
       vdat->dirs = (fam_info **)CALLOC(vdat->dirs_size, sizeof(fam_info *));
       vdat->dir_names = (char **)CALLOC(vdat->dirs_size, sizeof(char *));
     }
-  redirect_snd_error_to(vf_post_error, (void *)vdat);
+  redirect_snd_error_to(redirect_vf_post_error, (void *)vdat);
   vdat->dirs[loc] = fam_monitor_directory(dirname, (void *)vdat, vf_watch_directory);
   redirect_snd_error_to(NULL, NULL);
   if (vdat->dirs[loc])
@@ -3558,7 +3557,7 @@ int vf_mix(view_files_info *vdat)
       tempfile = scale_and_src(selected_files, len, sp->nchans, vdat->amp, vdat->speed, vdat->amp_env, &err);
       if (err)
 	{
-	  vf_post_error(tempfile, (void *)vdat);
+	  vf_post_error(tempfile, vdat);
 	  id_or_error = MIX_FILE_NO_TEMP_FILE;
 	}
       else
@@ -3582,14 +3581,14 @@ int vf_mix(view_files_info *vdat)
 void view_files_mix_selected_files(widget_t w, view_files_info *vdat)
 {
   vdat->error_p = false;
-  redirect_snd_error_to(vf_post_location_error, (void *)vdat);
+  redirect_snd_error_to(redirect_vf_post_location_error, (void *)vdat);
   vdat->beg = vf_location(vdat);
   redirect_snd_error_to(NULL, NULL);
   if (!(vdat->error_p))
     {
       int id_or_error = 0;
 
-      redirect_snd_error_to(vf_post_error, (void *)vdat);
+      redirect_snd_error_to(redirect_vf_post_error, (void *)vdat);
       ss->sgx->requestor_dialog = w;
       ss->open_requestor_data = (void *)vdat;
       ss->open_requestor = FROM_VIEW_FILES_MIX_DIALOG;
@@ -3605,7 +3604,7 @@ void view_files_mix_selected_files(widget_t w, view_files_info *vdat)
 	  if (vdat->currently_selected_files == 1)
 	    msg = mus_format(_("%s mixed in at " OFF_TD), vdat->names[vdat->selected_files[0]], vdat->beg);
 	  else msg = mus_format(_("selected files mixed in at " OFF_TD), vdat->beg);
-	  vf_post_error(msg, (void *)vdat);
+	  vf_post_error(msg, vdat);
 	  vdat->error_p = false;
 	  FREE(msg);
 	}
@@ -3638,7 +3637,7 @@ bool vf_insert(view_files_info *vdat)
       tempfile = scale_and_src(selected_files, len, sp->nchans, vdat->amp, vdat->speed, vdat->amp_env, &err);
       if (err)
 	{
-	  vf_post_error(tempfile, (void *)vdat);
+	  vf_post_error(tempfile, vdat);
 	  ok = false;
 	}
       else
@@ -3662,14 +3661,14 @@ bool vf_insert(view_files_info *vdat)
 void view_files_insert_selected_files(widget_t w, view_files_info *vdat)
 {
   vdat->error_p = false;
-  redirect_snd_error_to(vf_post_location_error, (void *)vdat);
+  redirect_snd_error_to(redirect_vf_post_location_error, (void *)vdat);
   vdat->beg = vf_location(vdat);
   redirect_snd_error_to(NULL, NULL);
   if (!(vdat->error_p))
     {
       bool ok = false;
-      redirect_snd_error_to(vf_post_error, (void *)vdat);
-      redirect_snd_warning_to(vf_post_error, (void *)vdat);
+      redirect_snd_error_to(redirect_vf_post_error, (void *)vdat);
+      redirect_snd_warning_to(redirect_vf_post_error, (void *)vdat);
       ss->sgx->requestor_dialog = w;
       ss->open_requestor = FROM_VIEW_FILES_INSERT_DIALOG;
       ss->open_requestor_data = (void *)vdat;
@@ -3682,7 +3681,7 @@ void view_files_insert_selected_files(widget_t w, view_files_info *vdat)
 	  if (vdat->currently_selected_files == 1)
 	    msg = mus_format(_("%s inserted at " OFF_TD), vdat->names[vdat->selected_files[0]], vdat->beg);
 	  else msg = mus_format(_("selected files inserted at " OFF_TD), vdat->beg);
-	  vf_post_error(msg, (void *)vdat);
+	  vf_post_error(msg, vdat);
 	  vdat->error_p = false;
 	  FREE(msg);
 	}
@@ -3951,7 +3950,7 @@ void view_files_add_directory(widget_t dialog, const char *dirname)
 	      if (errno != 0)
 		msg = mus_format("%s: %s", full_filename, strerror(errno));
 	      else msg = mus_format("%s does not exist", full_filename);
-	      vf_post_add_error(msg, (void *)vdat);
+	      vf_post_add_error(msg, vdat);
 	      FREE(msg);
 	    }
 	}

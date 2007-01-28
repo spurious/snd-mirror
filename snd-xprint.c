@@ -269,7 +269,7 @@ static void start_print_dialog(XmString xmstr4, bool managed)
 
       if (managed) XtManageChild(print_dialog);
 
-      map_over_children(print_dialog, set_main_color_of_widget, NULL);
+      map_over_children(print_dialog, set_main_color_of_widget);
       XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
