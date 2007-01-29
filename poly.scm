@@ -83,7 +83,10 @@
 
 (define (poly+ p1 p2) 
   "(poly+ p1 p2)  adds vectors or vcts p1 and p2"
-  (vector->vct (poly-as-vector+ (if (vct? p1) (vct->vector p1) p1) (if (vct? p2) (vct->vector p2) p2))))
+  (vector->vct 
+   (poly-as-vector+ 
+    (if (vct? p1) (vct->vector p1) p1) 
+    (if (vct? p2) (vct->vector p2) p2))))
 
 ;;; (poly+ (vct .1 .2 .3) (vct 0.0 1.0 2.0 3.0 4.0)) -> #<vct[len=5]: 0.100 1.200 2.300 3.000 4.000>
 ;;; (poly+ (vct .1 .2 .3) .5) -> #<vct[len=3]: 0.600 0.200 0.300>
@@ -109,7 +112,10 @@
 
 (define (poly* p1 p2)
   "(poly* p1 p2) multiplies the polynomials (vcts or vectors) p1 and p2"
-  (vector->vct (poly-as-vector* (if (vct? p1) (vct->vector p1) p1) (if (vct? p2) (vct->vector p2) p2))))
+  (vector->vct 
+   (poly-as-vector* 
+    (if (vct? p1) (vct->vector p1) p1) 
+    (if (vct? p2) (vct->vector p2) p2))))
     
 ;;; (poly* (vct 1 1) (vct -1 1)) -> #<vct[len=4]: -1.000 0.000 1.000 0.000>
 ;;; (poly* (vct -5 1) (vct 3 7 2)) -> #<vct[len=5]: -15.000 -32.000 -3.000 2.000 0.000>
@@ -150,7 +156,8 @@
 
 (define (poly/ p1 p2)
   "(poly/ p1 p2) divides p1 by p2, both polynomials either vcts or vectors"
-  (map vector->vct (poly-as-vector/ (if (vct? p1) (vct->vector p1) p1) (if (vct? p2) (vct->vector p2) p2))))
+  (map vector->vct (poly-as-vector/ (if (vct? p1) (vct->vector p1) p1) 
+				    (if (vct? p2) (vct->vector p2) p2))))
 
 ;;; (poly/ (vct -1.0 -0.0 1.0) (vector 1.0 1.0)) -> (#<vct[len=3]: -1.000 1.000 0.000> #<vct[len=3]: 0.000 0.000 0.000>)
 ;;; (poly/ (vct -15 -32 -3 2) (vector -5 1)) -> (#<vct[len=4]: 3.000 7.000 2.000 0.000> #<vct[len=4]: 0.000 0.000 0.000 0.000>)
@@ -171,7 +178,9 @@
 
 (define (poly-derivative p1) 
   "(poly-derivative p1) returns the derivative of p1, either a vct or vector"
-  (vector->vct (poly-as-vector-derivative (vct->vector p1))))
+  (vector->vct 
+   (poly-as-vector-derivative 
+    (vct->vector p1))))
 
 ;;; (poly-derivative (vct 0.5 1.0 2.0 4.0)) -> #<vct[len=3]: 1.000 4.000 12.000>
 

@@ -2202,9 +2202,22 @@ and replaces it with the spectrum given in coeffs"
 	  (vector-set! factorials n (* n (factorial (1- n)))))
       (vector-ref factorials n))))
 
-(define (binomial n m) ; "n-choose-m" might be a better name (there are much better ways to compute this...)
+(define (binomial n m) ; "n-choose-m" might be a better name (there are much better ways to compute this -- see below)
   (/ (factorial n)
      (* (factorial m) (factorial (- n m)))))
+
+(define (n-choose-k n k)
+  "(n-choose-k n k) computes the binomial coefficient C(N,K)"
+  (let ((mn (min k (- n k))))
+    (if (< mn 0)
+	0
+	(if (= mn 0)
+	    1
+	    (let* ((mx (max k (- n k)))
+		   (cnk (1+ mx)))
+	      (do ((i 2 (1+ i)))
+		  ((> i mn) cnk)
+		(set! cnk (/ (* cnk (+ mx i)) i))))))))
 |#
 
 

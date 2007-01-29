@@ -623,12 +623,12 @@ if provided? :snd
   end
 
   def open_sound_file(*args)
-    mus_sound_open_output(get_args(*args, :file, (little_endian ? "test.wav" : "test.snd")),
-                          get_args(*args, :srate, 22050),
-                          get_args(*args, :channels, 1),
+    mus_sound_open_output(get_args(args, :file, (little_endian ? "test.wav" : "test.snd")),
+                          get_args(args, :srate, 22050),
+                          get_args(args, :channels, 1),
                           (little_endian ? Mus_lfloat : Mus_bfloat),
-                          get_args(*args, :header_type, (little_endian ? Mus_riff : Mus_next)),
-                          get_args(*args, :comment, ""))
+                          get_args(args, :header_type, (little_endian ? Mus_riff : Mus_next)),
+                          get_args(args, :comment, ""))
   end
 
   alias close_sound_file mus_sound_close_output

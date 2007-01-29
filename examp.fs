@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Sat Jan 20 04:20:14 CET 2007
+\ Changed: Sat Jan 27 02:02:47 CET 2007
 
 \ Commentary:
 \
@@ -1365,7 +1365,7 @@ previous
 : voiced->unvoiced <{ amp fftsize r tempo :optional snd #f chn #f -- vct }>
   doc" Turns a vocal sound into whispering: 1.0 256 2.0 2.0 #f #f voiced->unvoiced"
   fftsize 2/ { freq-inc }
-  fftsize 0.0 make-vct { fdr }
+  nil { fdr }
   fftsize 0.0 make-vct { fdi }
   freq-inc 0.0 make-vct { spectr }
   snd srate 3.0 f/ make-rand { noi }
@@ -1386,7 +1386,7 @@ previous
       fdr fdi #f 2 spectrum ( fdr ) spectr vct-subtract! ( fdr ) freq-inc 1/f vct-scale! drop
       hop +to inctr
     then
-    spectr fdr vct-add! ( spectr ) formants noi 0.0 rand formant-bank ( outval )
+    spectr fdr vct? if fdr vct-add! then formants noi 0.0 rand formant-bank ( outval )
     dup fabs new-peak-amp fmax to new-peak-amp
     ( outval )
   end-map old-peak-amp new-peak-amp f/ amp f* vct-scale! 0 out-len snd chn #f origin vct->channel
