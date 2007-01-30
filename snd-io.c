@@ -805,7 +805,8 @@ int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err
       /* -1 as fd */
       return(-1);
     }
-  if ((ofd = snd_reopen_write(ofile)) == -1)
+  ofd = snd_reopen_write(ofile);
+  if (ofd == -1)
     {
       (*err) = IO_CANT_REOPEN_FILE;
       return(-1);

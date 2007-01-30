@@ -2409,6 +2409,7 @@ played."
   return(g_play_1(samp_n, snd_n, chn_n, true, TO_C_BOOLEAN_OR_FALSE(syncd), end_n, edpos, S_play, 6, stop_proc, out_chan));
 }
 
+
 static XEN g_play_channel(XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos, XEN stop_proc, XEN out_chan) 
 {
   #define H_play_channel "(" S_play_channel " :optional (beg 0) (dur len) snd chn (pos -1) stop-proc out-chan): \
@@ -2424,25 +2425,35 @@ play snd or snd's channel chn starting at beg for dur samps."
   return(g_play_1(beg, snd_n, chn_n, true, false, end, edpos, S_play_channel, 5, stop_proc, out_chan));
 }
 
+
 static XEN g_play_selection(XEN wait, XEN stop_proc) 
 {
   #define H_play_selection "(" S_play_selection " :optional wait stop-proc): play the selection. \
 'wait', if " PROC_TRUE ", causes " S_play_selection " to wait until the playing is finished \
 before returning."
-  bool back;
+
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(wait), wait, XEN_ARG_1, S_play_selection, "a boolean");
   XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && (procedure_arity_ok(stop_proc, 1))) ||
 		  (XEN_NOT_BOUND_P(stop_proc)) || 
 		  (XEN_FALSE_P(stop_proc)), 
 		  stop_proc, XEN_ARG_3, S_play_selection, "a procedure of 1 arg");
-  back = (!(TO_C_BOOLEAN_OR_FALSE(wait)));
+
   if (selection_is_active())
     {
-      play_selection_1((back) ? IN_BACKGROUND : NOT_IN_BACKGROUND, stop_proc);
+      bool back = false;
+      play_process_t background;
+#if USE_NO_GUI
+      background = NOT_IN_BACKGROUND;
+#else
+      back = (!(TO_C_BOOLEAN_OR_FALSE(wait)));
+      if (back) background = IN_BACKGROUND; else background = NOT_IN_BACKGROUND;
+#endif
+      play_selection_1(background, stop_proc);
       return(XEN_FALSE);
     }
   return(snd_no_active_selection_error(S_play_selection));
 }
+
 
 static XEN g_play_and_wait(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN edpos, XEN stop_proc, XEN out_chan) 
 {
@@ -2462,6 +2473,7 @@ and waiting for the play to complete before returning.  'start' can also be a fi
 
   return(g_play_1(samp_n, snd_n, chn_n, false, TO_C_BOOLEAN_OR_FALSE(syncd), end_n, edpos, S_play_and_wait, 6, stop_proc, out_chan));
 }
+
 
 static XEN g_stop_playing(XEN snd_n)
 {

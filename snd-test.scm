@@ -42218,11 +42218,14 @@ EDITS: 1
 	     (reg (make-region 1000 2000 ind 0))
 	     (md (mix-region 0 reg ind 0))
 	     (trk (make-track)))
-	(set! (mix-track md) trk)
-	(let ((trk-v (track->vct trk 0))
-	      (trk-sd (track->sound-data trk)))
-	  (if (not (vequal trk-v (sound-data->vct trk-sd 0)))
-	      (snd-display ";oboe track->sound-data 0 differs")))
+	(if (mix? md)
+	    (begin
+	      (set! (mix-track md) trk)
+	      (let ((trk-v (track->vct trk 0))
+		    (trk-sd (track->sound-data trk)))
+		(if (not (vequal trk-v (sound-data->vct trk-sd 0)))
+		    (snd-display ";oboe track->sound-data 0 differs"))))
+	    (snd-display ";mix-region failed? reg: ~A, mix: ~A, with-mix-tags ~A" reg md (with-mix-tags)))
 	(close-sound ind))
       
       (let* ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 4 "track->sound test" 4000)))
@@ -48989,7 +48992,8 @@ EDITS: 1
 	    (if (not ind) (snd-display ";with-sound (raw out): ~A" (map file-name (sounds))))
 	    (if (not (= (header-type ind) mus-raw)) 
 		(snd-display ";with-sound type raw: ~A (~A)" (header-type ind) (mus-header-type-name (header-type ind))))
-	    (if (not (= (data-format ind) mus-bshort)) 
+	    (if (and (not (= (data-format ind) mus-bshort)) 
+		     (not (= (data-format ind) mus-bfloat)))
 		(snd-display ";with-sound format raw: ~A (~A)" (data-format ind) (mus-data-format-name (data-format ind))))
 	    (close-sound ind))
 	  
@@ -49616,7 +49620,7 @@ EDITS: 1
 	(if (not (= *clm-srate* (default-output-srate))) (snd-display ";*clm-srate*: ~A ~A" *clm-srate* (default-output-srate)))
 	(if (not (= *clm-channels* (default-output-chans))) (snd-display ";*clm-channels*: ~A ~A" *clm-channels* (default-output-chans)))
 	(if (not (= *clm-header-type* (default-output-header-type))) (snd-display ";*clm-header-type*: ~A ~A" *clm-header-type* (default-output-header-type)))
-	(if (not (= *clm-data-format* (default-output-data-format))) (snd-display ";*clm-data-format*: ~A ~A" *clm-data-format* (default-output-data-format)))
+;	(if (not (= *clm-data-format* (default-output-data-format))) (snd-display ";*clm-data-format*: ~A ~A" *clm-data-format* (default-output-data-format)))
 	(if (not (= *clm-reverb-channels* 1)) (snd-display ";*clm-reverb-channels*: ~A ~A" *clm-reverb-channels*))
 	(if (not (string=? *clm-file-name* "test.snd")) (snd-display ";*clm-file-name*: ~A" *clm-file-name*))
 	(if *clm-play* (snd-display ";*clm-play*: ~A" *clm-play*))
@@ -65775,6 +65779,9 @@ EDITS: 1
 
 (set! (print-length) 64)
 (display (format #f "~%;times: ~A~%;total: ~A~%" timings (inexact->exact (round (- (real-time) overall-start-time)))))
+
+;times:            #(58 58 153 99 2260 5316 613 133 11171 2857 593 738 730 918 583 1228 2977 182 165 2797 717 1697 4920 6595 0 0 0 241 7019)
+;total: 553
 
 (let ((best-times '#(59 58 114 95 2244 5373 613 134 11680 2892 609 743 868 976 815 1288 3020 197 168 2952 758 1925 4997 6567 846  183 0 242 6696)))
   (do ((i 0 (1+ i)))

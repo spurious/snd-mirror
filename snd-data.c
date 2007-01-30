@@ -597,21 +597,6 @@ void for_each_normal_chan(void (*func)(chan_info *ncp))
     }
 }
 
-bool map_over_sound_chans_with_void(snd_info *sp, bool (*func)(chan_info *ncp, void *ptr), void *userptr)
-{
-  /* non-zero = abort map, skips inactive sounds */
-  int j;
-  bool val = false;
-  chan_info *cp;
-  for (j = 0; j < sp->nchans; j++)
-    if ((cp = sp->chans[j]))
-      {
-	val = (*func)(cp, userptr);
-	if (val) return(val);
-      }
-  return(val);
-}
-
 bool map_over_sound_chans_with_int(snd_info *sp, bool (*func)(chan_info *ncp, int val1), int value)
 {
   /* non-zero = abort map, skips inactive sounds */

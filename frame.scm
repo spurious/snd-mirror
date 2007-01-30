@@ -603,8 +603,6 @@
 	(throw 'no-such-sound (list "map-sound" snd)))))
 
 
-;;; SOMEDAY: channel slicer: grn but output locs permuted, reversed etc
-
 (define* (simultaneous-zero-crossing :optional (beg 0) dur snd)
   "(simultaneous-zero-crossing :option beg dur snd) looks through all channels of 'snd' for a simultaneous zero crossing."
   (let ((last-fr (make-frame (chans snd))))

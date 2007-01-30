@@ -34,7 +34,8 @@
 	  (or (eof-object? line)
 	      (begin
 		(display line)
-		(loop (read-line in-port 'concat)))))))))
+		(loop (read-line in-port 'concat)))))
+	(close-pipe in-port)))))
 
 (define (fgrep id num)
   (if (not (member id ignore))

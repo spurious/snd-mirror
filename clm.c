@@ -1437,7 +1437,6 @@ Float mus_sine_summation(mus_any *ptr, Float fm)
 		 (gen->an * (sin(gen->phase + (B * (gen->n + 1))) - 
 			     (gen->a * sin(gen->phase + (B * gen->n)))))) / divisor;
   gen->phase += (gen->freq + fm);
-  /* gen->phase = fmod(gen->phase, TWO_PI); */
   return(result);
 }
 

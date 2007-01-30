@@ -967,6 +967,7 @@ void *mem_malloc(size_t len, const char *func, const char *file, int line)
     }
   ptr = (char *)(true_ptr + MEM_PAD_SIZE);
   if (ptr == NULL) {fprintf(stderr,"malloc->null"); abort();}
+  memset((void *)ptr, 3, len);  /* fill this block with some non-zero value */
   remember_pointer((void *)ptr, (void *)true_ptr, len, func, file, line);
   return((void *)ptr);
 }

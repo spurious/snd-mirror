@@ -847,7 +847,6 @@ void for_each_normal_chan_with_void(void (*func)(chan_info *ncp, void *ptr), voi
 void for_each_normal_chan_with_int(void (*func)(chan_info *ncp, int val), int value);
 void for_each_normal_chan_with_refint(void (*func)(chan_info *ncp, int *val), int *value);
 bool map_over_sound_chans(snd_info *sp, bool (*func)(chan_info *ncp));
-bool map_over_sound_chans_with_void(snd_info *sp, bool (*func)(chan_info *ncp, void *ptr), void *userptr);
 bool map_over_sound_chans_with_int(snd_info *sp, bool (*func)(chan_info *ncp, int val1), int value);
 void for_each_sound_chan(snd_info *sp, void (*func)(chan_info *ncp));
 void for_each_sound(void (*func)(snd_info *usp));
