@@ -73,6 +73,7 @@
 #define S_mus_bshort                    "mus-bshort"
 #define S_mus_byte                      "mus-byte"
 #define S_mus_bytes_per_sample          "mus-bytes-per-sample"
+#define S_mus_caff                      "mus-caff"
 #define S_mus_clipping                  "mus-clipping"
 #define S_mus_data_format_name          "mus-data-format-name"
 #define S_mus_data_format_to_string     "mus-data-format->string"

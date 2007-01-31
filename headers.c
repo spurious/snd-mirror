@@ -33,6 +33,7 @@
  *      RF64 (EBU)
  *      IRCAM (old style)
  *      NIST-sphere
+ *      CAFF
  *      no header
  *
  * Currently supported read-only (in selected data formats):
@@ -54,6 +55,8 @@
  * Microsoft Multimedia Programmer's Reference Manual at ftp.microsoft.com:/SoftLib/MSLFILES/MDRK.EXE.
  * AVI format is described in http://www.rahul.net/jfm/avi.html. EBU RF64 is described in
  * http://www.ebu.ch/CMSimages/en/tec_doc_t3306_tcm6-42570.pdf.
+ * CAFF is described in http://developer.apple.com/documentation/MusicAudio/Reference/CAFSpec/
+ * and afconvert can be found in /Developer/Examples/CoreAudio/Services/AudioFileTools/
  *
  * For a lot of info and examples see http://www.TSP.ECE.McGill.CA/MMSP/Documents/AudioFormats/index.html
  *
@@ -239,6 +242,9 @@ static const unsigned char I_wvpk[4] = {'w','v','p','k'};  /* wavpack */
 static const unsigned char I_RF64[4] = {'R','F','6','4'};  /* EBU RF64 */
 static const unsigned char I_JUNK[4] = {'J','U','N','K'};  /* EBU RF64 */
 static const unsigned char I_ds64[4] = {'d','s','6','4'};  /* EBU RF64 */
+static const unsigned char I_caff[4] = {'c','a','f','f'};  /* Apple CAFF */
+static const unsigned char I_desc[4] = {'d','e','s','c'};  /* Apple CAFF */
+static const unsigned char I_lpcm[4] = {'l','p','c','m'};  /* Apple CAFF */
 
 
 #define HDRBUFSIZ 256
@@ -471,6 +477,7 @@ const char *mus_header_type_name(int type)
     case MUS_TTA:              return("tta");                     break;
     case MUS_WAVPACK:          return("wavpack");                 break;
     case MUS_RF64:             return("rf64");                    break;
+    case MUS_CAFF:             return("caff");                    break;
     default:                   return("unsupported");             break;
     }
 }
@@ -557,6 +564,7 @@ char *mus_header_type_to_string(int type)
     case MUS_SVX:       return(TO_LANG(S_mus_svx));
     case MUS_SOUNDFONT: return(TO_LANG(S_mus_soundfont));
     case MUS_RF64:      return(TO_LANG(S_mus_rf64));
+    case MUS_CAFF:      return(TO_LANG(S_mus_caff));
     }
   return(NULL);
 }
@@ -1447,6 +1455,215 @@ char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends)
 }
 
 
+
+/* CAFF: need snd-file.c lists, read/write, snd-prefs lists, perhaps snd-trans, all cases below
+ *    also /usr/share/magic has long lists for riff/aiff type names that could be included below
+ *
+ */
+
+/* ------------------------------------ CAFF ------------------------------------
+ *
+ * this is a new format from Apple ("Core Audio File Format") described at
+ *    http://developer.apple.com/documentation/MusicAudio/Reference/CAFSpec
+ *
+ * all chunks as in AIFC but size if signed 64-bit int
+ *
+ * 0: 'caff'
+ * 4: 1 ("version")
+ * 6: 0 ("flags")
+ * 8: 'desc' (required to be in this position)
+ * 12: sizeof apple's CAFAudioFormat struct -- (32)
+ *   20: srate (float64)
+ *   28: format (int32)
+ *   32: format flags
+ *   36: bytes per "packet"
+ *   40: frames per packet
+ *   44: channels per frame
+ *   48: bits per channel
+ * audio data is in 'data' chunk
+ */
+
+
+static int read_caff_header(const char *filename, int fd)
+{
+  off_t chunksize = 8, offset = 0;
+  bool happy = false;
+
+  #define data_is_float (1L << 0)
+  #define data_is_big_endian (1L << 1)
+
+  fprintf(stderr,"read %s header\n", filename);
+
+  data_format = MUS_UNKNOWN;
+  srate = 0;
+  chans = 0;
+  true_file_length = SEEK_FILE_LENGTH(fd);
+
+  /* original type spec? */
+
+  while (!happy)
+    {
+  
+
+      offset += chunksize;
+      if (offset >= true_file_length) break;
+
+      if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 64) <= 0) break;
+      chunksize = mus_char_to_boff_t((unsigned char *)(hdrbuf + 4));
+
+      /* can size==0? or -1! */
+
+      if (match_four_chars((unsigned char *)hdrbuf, I_desc))
+	{
+	  int format_flags, bytes_per_packet, frames_per_packet, channels_per_frame, bits_per_channel;
+
+	  srate = (int)mus_char_to_bdouble((unsigned char *)(hdrbuf + 12));
+
+	  /* format_id = mus_char_to_ubint((unsigned char *)(hdrbuf + 20)); */
+
+	  format_flags = mus_char_to_ubint((unsigned char *)(hdrbuf + 24));
+	  bytes_per_packet = mus_char_to_ubint((unsigned char *)(hdrbuf + 28));
+	  frames_per_packet = mus_char_to_ubint((unsigned char *)(hdrbuf + 32));
+	  channels_per_frame = mus_char_to_ubint((unsigned char *)(hdrbuf + 36));
+	  bits_per_channel = mus_char_to_ubint((unsigned char *)(hdrbuf + 40));
+
+
+	  chans = channels_per_frame;
+
+
+	  fprintf(stderr,"srate: %d, format: %c%c%c%c, %d, bytes: %d, frames: %d, chans: %d, bits: %d\n",
+		  srate, hdrbuf[20], hdrbuf[21], hdrbuf[22], hdrbuf[23],
+		  format_flags, bytes_per_packet, frames_per_packet, channels_per_frame, bits_per_channel);
+
+	  /* format id can be 'lpcm' 'alaw' 'ulaw' and a bunch of others we ignore */
+
+	  if (match_four_chars((unsigned char *)(hdrbuf + 20), I_lpcm))
+	    {
+	      fprintf(stderr,"found pcm data\n");
+	      if (format_flags & data_is_float)
+		{
+		  if (!(format_flags & data_is_big_endian))
+		    {
+		      if (bits_per_channel == 32)
+			data_format = MUS_BFLOAT;
+		      else
+			{
+			  if (bits_per_channel == 64)
+			    data_format = MUS_BDOUBLE;
+			  /* else complain */
+			}
+		    }
+		  else
+		    {
+		      if (bits_per_channel == 32)
+			data_format = MUS_LFLOAT;
+		      else
+			{
+			  if (bits_per_channel == 64)
+			    data_format = MUS_LDOUBLE;
+			  /* else complain */
+			}
+		    }
+		}
+	      else
+		{
+		  if (!(format_flags & data_is_big_endian))
+		    {
+		      if (bits_per_channel == 32)
+			data_format = MUS_BINT;
+		      else
+			{
+			  if (bits_per_channel == 24)
+			    data_format = MUS_B24INT;
+			  else
+			    {
+			      if (bits_per_channel == 16)
+				data_format = MUS_BSHORT;
+			      else
+				{
+				  if (bits_per_channel == 8)
+				    data_format = MUS_BYTE;
+				  /* else complain */
+				}
+			    }
+			  /* else complain */
+			}
+		    }
+		  else
+		    {
+		      if (bits_per_channel == 32)
+			data_format = MUS_LINT;
+		      else
+			{
+			  if (bits_per_channel == 24)
+			    data_format = MUS_L24INT;
+			  else
+			    {
+			      if (bits_per_channel == 16)
+				data_format = MUS_LSHORT;
+			      else
+				{
+				  if (bits_per_channel == 8)
+				    data_format = MUS_BYTE;
+				  /* else complain */
+				}
+			    }
+			  /* else complain */
+			}
+		    }
+		}
+	    }
+	  else
+	    {
+	      if (match_four_chars((unsigned char *)(hdrbuf + 20), I_alaw))
+		{
+		  fprintf(stderr,"found alaw data\n");
+		  data_format = MUS_ALAW;
+		}
+	      else
+		{
+		  if (match_four_chars((unsigned char *)(hdrbuf + 20), I_ulaw))
+		    {
+		      fprintf(stderr,"found ulaw data\n");
+		      data_format = MUS_MULAW;
+		    }
+		  /* else complain */
+		}
+	    }
+	  fprintf(stderr,"data format: %d %s\n", data_format, mus_data_format_to_string(data_format));
+	}
+      else
+	{
+	  if (match_four_chars((unsigned char *)hdrbuf, I_data))
+	    {
+	      happy = true;
+	      data_location = offset + 12;
+	      data_size = chunksize;
+	      
+	      fprintf(stderr,"found data at " OFF_TD ", " OFF_TD "\n", data_location, data_size);
+
+	    }
+	      
+	}
+
+      fprintf(stderr,"at " OFF_TD ", chunk: %c%c%c%c for " OFF_TD "\n", offset, hdrbuf[0], hdrbuf[1], hdrbuf[2], hdrbuf[3], chunksize);
+
+      chunksize += 12;
+
+    }
+
+  data_size = mus_bytes_to_samples(data_format, data_size);
+
+  return(MUS_NO_ERROR);
+}
+
+static int write_caff_header(int fd, int wsrate, int wchans, off_t wsize, int format, const char *comment, int len)
+{
+  return(MUS_NO_ERROR);
+}
+
+
+
 /* ------------------------------------ RIFF (wave) ------------------------------------
  *
  * see ftp.microsoft.com:/SoftLib/MSLFILES/MDRK.EXE (also MMSYSTEM.H and MMREG.H)
@@ -1941,7 +2158,7 @@ static int read_rf64_header(const char *filename, int fd)
   /* we've checked RF64 xxxx WAVE before getting here */
   /* this is very similar (identical) to RIFF for the most part, but I decided it was cleanest to copy the code */
 
-  int chunksize, chunkloc, i;
+  off_t chunksize, chunkloc;
   bool got_fmt = false, got_ds64 = false;
   off_t offset;
   little_endian = true;
@@ -1953,7 +2170,10 @@ static int read_rf64_header(const char *filename, int fd)
   chans = 0;
   fact_samples = 0;
   bits_per_sample = 0;
-  for (i = 0; i < AUX_COMMENTS; i++) aux_comment_start[i] = 0;
+  {
+    int i;
+    for (i = 0; i < AUX_COMMENTS; i++) aux_comment_start[i] = 0;
+  }
   true_file_length = SEEK_FILE_LENGTH(fd);
   update_form_size = -1;                                                          /* at hdrbuf+4 -> 0xFFFFFFFF */
 
@@ -1962,7 +2182,7 @@ static int read_rf64_header(const char *filename, int fd)
       offset += chunkloc;
       if (offset >= true_file_length) break;
       if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 64) <= 0) break;
-      chunksize = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
+      chunksize = mus_char_to_lint((unsigned char *)(hdrbuf + 4)); /* TODO: can this be correct?? off_t? */
       if ((chunksize == 0) &&                                                      /* can be empty data chunk */
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
 	break;
@@ -3539,6 +3759,8 @@ static int read_inrs_header(const char *filename, int fd, int loc)
  *           28-40: unused
  *  "MDAT" => data
  *  "ANNO" => comment
+ *
+ * according to /usr/share/magic, this stands for "MacroSystem Audio"
  */
 
 static int read_maud_header(const char *filename, int fd)
@@ -5010,6 +5232,11 @@ static int mus_header_read_1(const char *filename, int fd)
       header_type = MUS_NIST;
       return(read_nist_header(filename, fd));
     }
+  if (match_four_chars((unsigned char *)hdrbuf, I_caff))
+    {
+      header_type = MUS_CAFF;
+      return(read_caff_header(filename, fd));
+    }
   if (match_four_chars((unsigned char *)hdrbuf, I_SOUN))
     {
       if ((match_four_chars((unsigned char *)(hdrbuf + 4), I_D_SA)) && 
@@ -5405,6 +5632,7 @@ int mus_header_write(const char *name, int type, int in_srate, int in_chans, off
     case MUS_AIFC:  err = write_aif_header(fd, in_srate, in_chans, siz, format, comment, len, true);            break;
     case MUS_AIFF:  err = write_aif_header(fd, in_srate, in_chans, siz, format, comment, len, false);           break;
     case MUS_RF64:  err = write_rf64_header(fd, in_srate, in_chans, siz, format, comment, len);                 break;
+    case MUS_CAFF:  err = write_caff_header(fd, in_srate, in_chans, siz, format, comment, len);                 break;
     case MUS_IRCAM: err = write_ircam_header(fd, in_srate, in_chans, format, comment, len);                     break;
     case MUS_NIST:  err = write_nist_header(fd, in_srate, in_chans, siz, format);                               break;
     case MUS_RIFF:  

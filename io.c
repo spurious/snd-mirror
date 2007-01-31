@@ -93,7 +93,19 @@ int mus_char_to_lint(const unsigned char *inp)
   return(o);
 }
 
-int mus_char_to_loff_t(const unsigned char *inp)
+off_t mus_char_to_boff_t(const unsigned char *inp)
+{
+  off_t o;
+  unsigned char *outp = (unsigned char *)&o;
+#if MUS_LITTLE_ENDIAN
+  outp[0] = inp[7]; outp[1] = inp[6]; outp[2] = inp[5]; outp[3] = inp[4]; outp[4] = inp[3]; outp[5] = inp[2]; outp[6] = inp[1]; outp[7] = inp[0];
+#else
+  memcpy((void *)outp, (void *)inp, 8);
+#endif
+  return(o);
+}
+
+off_t mus_char_to_loff_t(const unsigned char *inp)
 {
   off_t o;
   unsigned char *outp = (unsigned char *)&o;

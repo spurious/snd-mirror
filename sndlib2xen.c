@@ -2263,6 +2263,7 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_CONSTANT(S_mus_voc,                  MUS_VOC,                  "VOC header id");
   XEN_DEFINE_CONSTANT(S_mus_svx,                  MUS_SVX,                  "SVX (IFF) header id");
   XEN_DEFINE_CONSTANT(S_mus_soundfont,            MUS_SOUNDFONT,            "soundfont header id");
+  XEN_DEFINE_CONSTANT(S_mus_caff,                 MUS_CAFF,                 "Apple Core Audio File Format header id");
 
   XEN_DEFINE_CONSTANT(S_mus_unknown,              MUS_UNKNOWN,              "unknown data format");
   XEN_DEFINE_CONSTANT(S_mus_bshort,               MUS_BSHORT,               "big-endian short data format id");
@@ -2538,6 +2539,7 @@ void mus_sndlib_xen_initialize(void)
 	       S_mus_bshort,
 	       S_mus_byte,
 	       S_mus_bytes_per_sample,
+	       S_mus_caff,
 	       S_mus_data_format_name,
 	       S_mus_data_format_to_string,
 	       S_mus_error_type_to_string,

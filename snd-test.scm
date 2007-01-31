@@ -650,6 +650,7 @@
       'mus-svx mus-svx 9
       'mus-soundfont mus-soundfont 26
       'mus-rf64 mus-rf64 4
+      'mus-caff mus-caff 60
       
       'mus-interp-none mus-interp-none 0
       'mus-interp-linear mus-interp-linear 1
@@ -2139,7 +2140,7 @@
 		       'mus-audio-spdif-out 'mus-audio-speakers 'mus-audio-srate 'mus-audio-synth 'mus-audio-systems
 		       'mus-audio-treble 'mus-audio-write 'mus-b24int 'mus-bdouble 'mus-bdouble-unscaled
 		       'mus-bfloat 'mus-bfloat-unscaled 'mus-bicsf 'mus-bint 'mus-bintn
-		       'mus-bshort 'mus-byte 'mus-bytes-per-sample 'mus-channel 'mus-channels
+		       'mus-bshort 'mus-byte 'mus-bytes-per-sample 'mus-caff 'mus-channel 'mus-channels
 		       'mus-chebyshev-first-kind 'mus-chebyshev-second-kind 'mus-clipping 'mus-close 'mus-cosines
 		       'mus-data 'mus-data-format->string 'mus-data-format-name 'mus-describe 'mus-error-hook
 		       'mus-error-type->string 'mus-expand-filename 'mus-feedback 'mus-feedforward 'mus-fft

@@ -506,6 +506,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+31-Jan:  caf headers.\n\
 2-Jan:   Snd 8.7.\n\
 29-Dec:  -nogtkrc startup switch.\n\
 27-Dec:  add-source-file-extension.\n\
@@ -517,12 +518,6 @@ void about_snd_help(void)
          sound-data+ sound-data-copy sound-data-reverse! sound-data-peak.\n\
 4-Dec:   frame.scm.\n\
          moved open-sound-file, close-sound-file, and vct->sound-file to snd8.scm.\n\
-29-Nov:  Snd 8.6.\n\
-21-Nov:  sound-data-scale! and sound-data-fill! with vct/sound-data with-sound output.\n\
-         mus-float-equal-fudge-factor\n\
-         fade.scm instruments changed to use outa rather than vct-map!\n\
-20-Nov:  generic out-any, in-any, locsig, move-sound.\n\
-13-Nov:  RF64 headers.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",
@@ -1616,6 +1611,7 @@ void sound_files_help(void)
     RF64\n\
     IRCAM (old style)\n\
     NIST-sphere\n\
+    CAFF\n\
     no header ('raw')\n\
 \n\n\
   read-only (in selected data formats):\n\
