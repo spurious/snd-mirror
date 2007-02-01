@@ -7018,7 +7018,9 @@ Snd can read about 60 header types, and write 7 or so.
 "aiff" and "aifc" come from Apple, "riff" is the Microsoft "wave" header,
 "rf64" is the European Broadcast Union's 64-bit RIFF replacement,
 "nist" comes from the NIST-Sphere package, "next" or "sun" is the Next/Sun
-(".au") header, "ircam" is IRCAM's extension of the Next header, and "raw"
+(".au") header, "ircam" is IRCAM's extension of the Next header, 
+"caf" is Apple's 64-bit AIFC replacement,
+and "raw"
 means the sound file has no header.  If you change the header type to "raw",
 any existing header is removed.
 Each header type has its own peculiarities; if in doubt, use <code>mus-next</code> because it is simple,
@@ -10790,7 +10792,7 @@ to longer:
 <code><a class=def name="addsoundfileextension">add-sound-file-extension</a> (ext)</code>
 </td></tr><tr><td></td><td>
 This adds 'ext' to the list of (case sensitive) sound file extensions used by <a href="#soundfilesindirectory">sound-files-in-directory</a>.
-The initial list is ("snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2" "rf64").
+The initial list is ("snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2" "rf64" "caf").
 To add "ogg" as a recognized extension:
 <pre>
      (add-sound-file-extension "ogg")
@@ -11556,7 +11558,7 @@ This is the list of sound file extensions used by the "just-sounds" buttons and
 <a href="#soundfilesindirectory">sound-files-in-directory</a> to try to recognize
 sound files.  It is settable: a list of extensions as strings:
 <pre>
-    (set! (sound-file-extensions) (list "snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2" "rf64"))
+    (set! (sound-file-extensions) (list "snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2" "rf64" "caf"))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 

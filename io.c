@@ -326,6 +326,16 @@ void mus_ldouble_to_char(unsigned char *j, double x)
 #endif
 }
 
+void mus_boff_t_to_char(unsigned char *j, off_t x)
+{
+  unsigned char *ox = (unsigned char *)&x;
+#if (!MUS_LITTLE_ENDIAN)
+  memcpy((void *)j, (void *)ox, 8);
+#else
+  j[0] = ox[7]; j[1] = ox[6]; j[2] = ox[5]; j[3] = ox[4]; j[4] = ox[3]; j[5] = ox[2]; j[6] = ox[1]; j[7] = ox[0];
+#endif
+}
+
 void mus_loff_t_to_char(unsigned char *j, off_t x)
 {
   unsigned char *ox = (unsigned char *)&x;

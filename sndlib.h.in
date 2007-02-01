@@ -374,6 +374,7 @@ double mus_char_to_ldouble(const unsigned char *inp);
 double mus_char_to_bdouble(const unsigned char *inp);
 void mus_bdouble_to_char(unsigned char *j, double x);
 void mus_ldouble_to_char(unsigned char *j, double x);
+void mus_boff_t_to_char(unsigned char *j, off_t x);
 void mus_loff_t_to_char(unsigned char *j, off_t x);
 unsigned int mus_char_to_ubint(const unsigned char *inp);
 unsigned int mus_char_to_ulint(const unsigned char *inp);

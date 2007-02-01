@@ -3494,6 +3494,7 @@ static char *new_file_dialog_filename(int header_type)
     case MUS_AIFF: extension = "aiff"; break;
     case MUS_RIFF: extension = "wav";  break;
     case MUS_RF64: extension = "wav";  break;
+    case MUS_CAFF: extension = "caf";  break;
     default:       extension = "snd";  break;
     }
   mus_snprintf(filename, 64, _("new-%d.%s"), new_file_dialog_file_ctr++, extension);

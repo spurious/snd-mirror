@@ -526,6 +526,7 @@ void init_sound_file_extensions(void)
   add_sound_file_extension("wve");
   add_sound_file_extension("sf2");
   add_sound_file_extension("rf64");
+  add_sound_file_extension("caf");
 #if HAVE_OGG
   add_sound_file_extension("ogg");
 #endif
@@ -1951,12 +1952,12 @@ bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool se
 
 /* -------- file dialog header/data choices -------- */
 
-enum {H_NEXT, H_AIFC, H_RIFF, H_RF64, H_RAW, H_AIFF, H_IRCAM, H_NIST,  /* the "built-in" choices for output */
-      H_OGG, H_FLAC, H_SPEEX, H_TTA, H_WAVPACK,                        /* readable/writable via external programs */
-      H_MPEG, H_MIDI, H_SHORTEN,                                       /* readable via external programs */
+enum {H_NEXT, H_AIFC, H_RIFF, H_RF64, H_RAW, H_AIFF, H_IRCAM, H_NIST, H_CAFF, /* the "built-in" choices for output */
+      H_OGG, H_FLAC, H_SPEEX, H_TTA, H_WAVPACK,                               /* readable/writable via external programs */
+      H_MPEG, H_MIDI, H_SHORTEN,                                              /* readable via external programs */
       H_SIZE};
 
-static int h_num_formats[H_SIZE] = {8 /* next */, 13 /* aifc */,  8 /* riff */, 8 /* rf64 */, 18 /* raw */, 4 /* aiff */, 5  /* ircam */, 7 /* nist */, 
+static int h_num_formats[H_SIZE] = {8 /* next */, 13 /* aifc */,  8 /* riff */, 8 /* rf64 */, 18 /* raw */, 4 /* aiff */, 5  /* ircam */, 7 /* nist */, 13 /* caff */,
 				    1 /* ogg */,  1  /* flac */,  1 /* speex */, 1 /* tta */, 1 /*wavpack */,
 				    1 /* mpeg */, 1  /* midi */,  1 /* shorten */};
 #define H_DFS_MAX 18
@@ -1972,6 +1973,8 @@ static int h_dfs[H_SIZE][H_DFS_MAX] = { /* next */  {MUS_BSHORT, MUS_MULAW, MUS_
 					/* aiff */  {MUS_BSHORT, MUS_BINT, MUS_BYTE, MUS_B24INT},
 					/* ircam */ {MUS_BSHORT, MUS_MULAW, MUS_BFLOAT, MUS_BINT, MUS_ALAW},
 					/* nist */  {MUS_BSHORT, MUS_LSHORT, MUS_BINT, MUS_LINT, MUS_BYTE, MUS_B24INT, MUS_L24INT},
+					/* caff  */ {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINTN, MUS_ALAW,
+						     MUS_B24INT, MUS_BDOUBLE, MUS_LSHORT, MUS_LINTN, MUS_L24INT, MUS_LFLOAT, MUS_LDOUBLE},
 					/* ogg */   {MUS_LSHORT},
 					/* flac */  {MUS_LSHORT},
 					/* speex */ {MUS_LSHORT},
@@ -1981,10 +1984,10 @@ static int h_dfs[H_SIZE][H_DFS_MAX] = { /* next */  {MUS_BSHORT, MUS_MULAW, MUS_
 };
 static char *h_df_names[H_SIZE][H_DFS_MAX];
 
-static char *h_names[H_SIZE] = {"next ", "aifc ", "wave ", "rf64", "raw  ", "aiff ", "ircam", "nist ", 
+static char *h_names[H_SIZE] = {"next ", "aifc ", "wave ", "rf64", "raw  ", "aiff ", "ircam", "nist ", "caff",
 				"ogg ", "flac ", "speex", "tta", "wavpack",
 				"mpeg ", "midi ", "shorten"};
-static int h_pos_to_type[H_SIZE] = {MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_RF64, MUS_RAW, MUS_AIFF, MUS_IRCAM, MUS_NIST, -1, -1, -1, -1, -1, -1, -1, -1};
+static int h_pos_to_type[H_SIZE] = {MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_RF64, MUS_RAW, MUS_AIFF, MUS_IRCAM, MUS_NIST, MUS_CAFF, -1, -1, -1, -1, -1, -1, -1, -1};
 static int h_type_to_pos[MUS_NUM_HEADER_TYPES];
 static int h_type_to_h[MUS_NUM_HEADER_TYPES];
 static int h_default_format_to_pos[H_SIZE] = {0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -2010,6 +2013,7 @@ void initialize_format_lists(void)
   h_type_to_pos[MUS_AIFF] = 5;
   h_type_to_pos[MUS_IRCAM] = 6;
   h_type_to_pos[MUS_NIST] = 7;
+  h_type_to_pos[MUS_CAFF] = 8;
 
   h_type_to_h[MUS_NEXT] = H_NEXT;
   h_type_to_h[MUS_AIFC] = H_AIFC;
@@ -2019,6 +2023,7 @@ void initialize_format_lists(void)
   h_type_to_h[MUS_AIFF] = H_AIFF;
   h_type_to_h[MUS_IRCAM] = H_IRCAM;
   h_type_to_h[MUS_NIST] = H_NIST;
+  h_type_to_h[MUS_CAFF] = H_CAFF;
   h_type_to_h[MUS_OGG] = H_OGG;
   h_type_to_h[MUS_FLAC] = H_FLAC;
   h_type_to_h[MUS_SPEEX] = H_SPEEX;
@@ -2028,7 +2033,7 @@ void initialize_format_lists(void)
   h_type_to_h[MUS_TTA] = H_TTA;
   h_type_to_h[MUS_WAVPACK] = H_WAVPACK;
   
-  i = 8;
+  i = 9;
   /* readable/writable */
 #if HAVE_OGG
   h_type_to_pos[MUS_OGG] = i;
@@ -2066,7 +2071,7 @@ void initialize_format_lists(void)
 #endif
 }
 
-#define NUM_BUILTIN_HEADERS 8
+#define NUM_BUILTIN_HEADERS 9
 #define NUM_POSSIBLE_HEADERS 16
 static char **writable_headers = NULL;
 static char **readable_headers = NULL;
