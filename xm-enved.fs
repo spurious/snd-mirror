@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Oct 21 18:22:57 CEST 2005
-\ Changed: Tue Dec 26 19:39:50 CET 2006
+\ Changed: Thu Feb 01 01:41:02 CET 2007
 
 \ Commentary:
 

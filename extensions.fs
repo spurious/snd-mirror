@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Wed Jan 24 01:09:48 CET 2007
+\ Changed: Thu Feb 01 01:39:46 CET 2007
 
 \ Commentary:
 \
@@ -366,9 +366,7 @@ If KEY exists, VAL overwrites the old value."
   filename mus-sound-frames { len }
   temp-dir empty? if "" else temp-dir then "tmp.snd" $+ { tmp-name }
   tmp-name 22050 1 mus-bshort mus-next "" mus-sound-open-output 0 mus-sound-close-output drop
-  :envelope env :end len make-env { en }
-  1 en make-array { inenvs }
-  1 inenvs make-array { envs }
+  #( #( :envelope env :end len make-env ) ) { envs }
   1 1.0 make-mixer { mx }
   tmp-name filename 0 len 0 mx envs mus-mix drop
   tmp-name beg undef undef undef undef undef undef mix drop
@@ -661,7 +659,7 @@ hide
   #( snd file-name
      snd file-name file-write-date ) { new-state }
   sound-funcs map snd *key* execute end-map new-state swap array-push to new-state
-  snd channels nil make-array map!
+  snd channels make-array map!
     nil { fnc }
     channel-funcs map *key* to fnc
       fnc xt->name "cursor" string= if

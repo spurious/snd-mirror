@@ -1456,7 +1456,7 @@ char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends)
  * this is a new format from Apple ("Core Audio File Format") described at
  *    http://developer.apple.com/documentation/MusicAudio/Reference/CAFSpec
  *
- * all chunks as in AIFC but size if signed 64-bit int
+ * all chunks as in AIFC but size is signed 64-bit int
  *
  * 0: 'caff'
  * 4: 1 ("version")
@@ -1472,10 +1472,8 @@ char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends)
  *   48: bits per channel
  * audio data is in 'data' chunk
  *
- * TODO: 8-chans + degrees in with-sound seems confused
- *       change chans etc
- *       snd-trans (ima adpcm or whatever)
- *       various comment cases
+ * TODO: change chans etc
+ *       various comment cases (need examples)
  */
 
 
@@ -1513,7 +1511,7 @@ static int read_caff_header(const char *filename, int fd)
 	  channels_per_frame = mus_char_to_ubint((unsigned char *)(hdrbuf + 36));
 	  bits_per_channel = mus_char_to_ubint((unsigned char *)(hdrbuf + 40));
 	  chans = channels_per_frame;
-#if MUS_DEBUGGING
+#if 0
 	  fprintf(stderr,"srate: %d, format: %c%c%c%c, %d, bytes: %d, frames: %d, chans: %d, bits: %d\n",
 		  srate, hdrbuf[20], hdrbuf[21], hdrbuf[22], hdrbuf[23],
 		  format_flags, bytes_per_packet, frames_per_packet, channels_per_frame, bits_per_channel);
@@ -1608,7 +1606,7 @@ static int read_caff_header(const char *filename, int fd)
 		  else err = MUS_UNSUPPORTED_DATA_FORMAT;
 		}
 	    }
-#if MUS_DEBUGGING
+#if 0
 	  fprintf(stderr,"data format: %d %s\n", data_format, mus_data_format_to_string(data_format));
 #endif
 	}
@@ -1623,14 +1621,14 @@ static int read_caff_header(const char *filename, int fd)
 	      if (chunksize > 0)
 		data_size = chunksize;
 	      else data_size = true_file_length - data_location;
-#if MUS_DEBUGGING
+#if 0
 	      fprintf(stderr,"found data at " OFF_TD ", " OFF_TD "\n", data_location, data_size);
 #endif
 	    }
 	  /* else edct or something for comment? */
 	      
 	}
-#if MUS_DEBUGGING
+#if 0
       fprintf(stderr,"at " OFF_TD ", chunk: %c%c%c%c for " OFF_TD "\n", offset, hdrbuf[0], hdrbuf[1], hdrbuf[2], hdrbuf[3], chunksize);
 #endif
       chunksize += 12;
@@ -5953,6 +5951,11 @@ int mus_header_change_srate(const char *filename, int type, int new_srate)
 	mus_lint_to_char((unsigned char *)hdrbuf, new_srate);
       else mus_bint_to_char((unsigned char *)hdrbuf, new_srate);
       CHK_WRITE(fd, hdrbuf, 4);
+      break;
+    case MUS_CAFF:
+      lseek(fd, 20, SEEK_SET);
+      mus_bdouble_to_char((unsigned char *)hdrbuf, (double)new_srate);      
+      CHK_WRITE(fd, hdrbuf, 8);
       break;
     }
   CLOSE(fd, filename);

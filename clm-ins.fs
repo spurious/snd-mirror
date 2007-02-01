@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Fri Dec 29 05:23:15 CET 2006
+\ Changed: Thu Feb 01 00:48:39 CET 2007
 
 \ Commentary:
 \
@@ -421,9 +421,9 @@ instrument: vox <{ start dur freq amp ampfun freqfun freqscl voxfun index
      :optional
      vibscl 0.1 -- }>
   voxfun length { size }
-  size 0 make-array { f1 }
-  size 0 make-array { f2 }
-  size 0 make-array { f3 }
+  size make-array { f1 }
+  size make-array { f2 }
+  size make-array { f3 }
   size 1- 0 ?do
     clm-ins-formants voxfun i 1+ object-ref hash-ref { phon }
     voxfun i object-ref { n }
@@ -660,9 +660,9 @@ instrument: pqw-vox <{ start dur
   :frequency 6.0 :amplitude freq 0.1 f* make-triangle-wave { per-vib }
   :frequency 20.0 :amplitude freq 0.05 f* make-rand-interp { ran-vib }
   phonemes length { plen }
-  plen #f make-array { phone1 }
-  plen #f make-array { phone2 }
-  plen #f make-array { phone3 }
+  plen make-array { phone1 }
+  plen make-array { phone2 }
+  plen make-array { phone3 }
   plen 1- 0 ?do
     phonemes i object-ref { ph }
     phone1 i ph array-set!
@@ -677,7 +677,7 @@ instrument: pqw-vox <{ start dur
   phone2 array->list
   phone3 array->list 3 >array { phones }
   nil { pv }
-  formant-amps length #f make-array map
+  formant-amps map
     pqw-vox% %alloc to pv
     :frequency 0.0 make-oscil pv sin-evens !
     :frequency 0.0 make-oscil pv sin-odds !
@@ -2145,7 +2145,7 @@ instrument: lbj-piano <{ start dur freq amp
   :duration env1dur
   :base     1.0       make-env { ampenv2 }
   parts length 2/ 0.0 make-vct { alist }
-  parts length 2/ 0.0 make-array map!
+  parts length 2/ make-array map!
     alist i  parts i 2* 1+ array-ref  vct-set! drop
     :frequency  parts i 2* array-ref  freq f* make-oscil
   end-map { oscils }
@@ -2904,7 +2904,7 @@ instrument: anoi <{ fname start dur :optional fftsize 128 amp-scaler 1.0 R two-p
   fname make-file->sample { fil }
   1.0 R fftsize f/ f- { radius }
   mus-srate fftsize f/ { bin }
-  freq-inc nil make-array map! :radius radius :frequency i bin f* make-formant end-map { fs }
+  freq-inc make-array map! :radius radius :frequency i bin f* make-formant end-map { fs }
   start seconds->samples { beg }
   start dur #{ :degree 90.0 random } run-instrument
     fil i beg - 0 file->sample { inval }
@@ -3005,7 +3005,7 @@ instrument: fullmix <{ in-file
 	    else
 	      outn env? outn list? || if
 		envs unless
-		  in-chans nil make-array map! out-chans nil make-array end-map to envs
+		  in-chans make-array map! out-chans make-array end-map to envs
 		then
 		envs j ( inp ) array-ref  i ( outp ) 
 		outn env? if outn else :envelope outn :duration dur make-env then
@@ -3035,7 +3035,7 @@ instrument: fullmix <{ in-file
   else
     in-chans make-frame { inframe }
     out-chans make-frame { outframe }
-    in-chans nil make-array map!
+    in-chans make-array map!
       :file in-file :channel i :start inloc make-readin { rd }
       :input rd readin-cb :srate sr make-src
     end-map { srcs }

@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Sun Jan 07 18:54:04 CET 2007
+\ Changed: Thu Feb 01 00:51:55 CET 2007
 
 \ Commentary:
 \
@@ -3163,7 +3163,7 @@ previous
   freq-inc 0.0 make-vct { spectr }
   1.0 r fftsize f/ f- { radius }
   #f srate fftsize / { bin }
-  freq-inc nil make-array map! :radius radius :frequency bin i * make-formant end-map { formants }
+  freq-inc make-array map! :radius radius :frequency bin i * make-formant end-map { formants }
   1 proc-create ( inctr ) 0 , ( ctr ) freq-inc , fdr , fdi , spectr , formants , snd , amp ,
  does> ( inval self -- res )
   { inval self }

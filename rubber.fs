@@ -2,7 +2,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Jan 06 05:32:57 CET 2006
-\ Changed: Sat Dec 23 18:00:09 CET 2006
+\ Changed: Thu Feb 01 00:57:08 CET 2007
 
 \ Commentary:
 \
@@ -95,10 +95,10 @@ hide
   snd chn derumble-sound
   snd chn sample-sound
   snd chn crossings { crosses }
-  crosses 0 make-array { cross-samples }
-  crosses 0 make-array { cross-weights }
-  crosses 0 make-array { cross-marks }
-  crosses 0 make-array { cross-periods }
+  crosses :initial-element 0 make-array { cross-samples }
+  crosses :initial-element 0 make-array { cross-weights }
+  crosses :initial-element 0 make-array { cross-marks }
+  crosses :initial-element 0 make-array { cross-periods }
   0 snd chn 1 #f make-sample-reader { sr0 } \ ;; get cross points (sample numbers)
   sr0 next-sample { samp0 }
   0.0 { sum }

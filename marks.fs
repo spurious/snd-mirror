@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 27 19:22:06 CET 2005
-\ Changed: Wed Jan 03 23:32:13 CET 2007
+\ Changed: Tue Jan 30 23:57:58 CET 2007
 
 \ Commentary:
 \
@@ -123,7 +123,7 @@ require examp
 
 hide
 : save-mark-properties-cb <{ filename -- }>
-  filename w/a io-open { io }
+  filename :fam w/a io-open { io }
   io $" \n\\ from save-mark-properties in %s\n\n" _ '( *filename* ) io-write-format
   io $" require marks\n\n" io-write
   undef undef undef marks each ( snd-m )

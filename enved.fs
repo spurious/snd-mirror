@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Nov 13 13:59:42 CET 2005
-\ Changed: Sat Jan 20 01:08:01 CET 2007
+\ Changed: Thu Feb 01 01:35:49 CET 2007
 
 \ Commentary:
 
@@ -141,7 +141,7 @@ previous
   index 0< if index obj enved-length + to index then
   obj index range? if
     index 2* to index
-    obj envelope@ index 2 list-slice obj envelope!
+    obj envelope@ index :count 2 list-slice obj envelope!
   else
     'out-of-range
     '( get-func-name $" index %s, enved length %s" _ '( index obj enved-length ) )

@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Wed Jan 17 00:48:48 CET 2007
+\ Changed: Thu Feb 01 00:58:07 CET 2007
 
 \ src-duration             ( en -- dur )
 \ dolph                    ( n gamma -- im )
@@ -196,14 +196,14 @@ for time-varying sampling-rate conversion."
   pi n f/ { freq }
   half-pi fnegate { phase }
   -1.0 { mult }
-  n undef make-array map!
+  n make-array map!
     phase ccos alpha c* cacos n c* ccos den c* mult c* ( val )
     mult fnegate to mult
     phase freq f+ to phase
   end-map { vals }
   \ now take the DFT
   0.0 { pk }
-  n undef make-array map!
+  n make-array map!
     0.0 ( sum )
     vals each ( val ) 2.0 0+1.0i c*  pi j i * f*  c*  n c/ cexp c* c+ end-each
     ( sum ) cabs dup pk fmax to pk ( sum )
@@ -245,7 +245,7 @@ by squeezing in the frequency domain, then using the inverse DFT to get the time
   n f2/ floor f>s { n2 }
   n factor f* fround->s { out-n }
   0 n snd chn #f channel->vct { in-data }
-  out-n 0.0 make-array { fr }
+  out-n :initial-element 0.0 make-array { fr }
   two-pi n f/ { freq }
   n 0 ?do
     i n2 < if
@@ -451,7 +451,7 @@ hide
 set-current
 : chorus ( -- proc; inval self -- val )
   doc" Tries to produce the chorus sound effect."
-  chorus-size nil make-array map! make-flanger end-map { dlys }
+  chorus-size make-array map! make-flanger end-map { dlys }
   1 proc-create dlys ,
  does> ( inval self -- val )
   { inval self }
@@ -1040,7 +1040,7 @@ The generator side for the various make-butter procedures." help-set!
   3 vct( alpha  gamma -2.0 f*  alpha fnegate ) vct( 0.0  gamma -2.0 f*  beta f2* ) make-filter
 ;
 : make-eliminate-hum <{ :optional hum-freq 60.0 hum-harmonics 5 bandwith 10 -- }>
-  hum-harmonics nil make-array map!
+  hum-harmonics make-array map!
     hum-freq i 1.0 f+ f* { center }
     bandwith f2/ { b2 }
     center b2 f- center b2 f+ make-iir-band-stop-2
@@ -1288,7 +1288,7 @@ if angle=1.0, you get a normal Fourier transform."
   doc" Performs a Z transform on DATA; \
 if z=e^2*pi*j/n you get a Fourier transform; complex results in returned vector."
   { f n z }
-  n nil make-array map!
+  n make-array map!
     0.0 ( sum )
     1.0 { t }
     z i f** { m }
@@ -1656,8 +1656,8 @@ hide
 set-current
 : ssb-bank <{ old-freq new-freq pairs
      :optional order 40 bw 50.0 beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  pairs nil make-array { ssbs }
-  pairs nil make-array { bands }
+  pairs make-array { ssbs }
+  pairs make-array { bands }
   new-freq old-freq f- old-freq f/ { factor }
   snd chn #f maxamp { mx }
   pairs 0 ?do
@@ -1705,9 +1705,9 @@ hide
 set-current
 : ssb-bank-env <{ old-freq new-freq freq-env pairs
      :optional order 40 bw 50.0 beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  pairs nil make-array { ssbs }
-  pairs nil make-array { bands }
-  pairs nil make-array { frenvs }
+  pairs make-array { ssbs }
+  pairs make-array { bands }
+  pairs make-array { frenvs }
   new-freq old-freq f- old-freq f/ { factor }
   snd chn #f maxamp { mx }
   snd chn #f frames 1- { len }
@@ -1730,8 +1730,8 @@ previous
 
 : make-transposer <{ old-freq new-freq pairs :optional order 40 bw 50.0 -- gen }>
   new-freq old-freq f- old-freq f/ { factor }
-  pairs nil make-array map! i 1+ factor f* old-freq f* make-ssb-am end-map { ssbs }
-  pairs nil make-array map!
+  pairs make-array map! i 1+ factor f* old-freq f* make-ssb-am end-map { ssbs }
+  pairs make-array map!
     i 1.0 f+ { idx }
     idx old-freq f* { aff }
     idx pairs f2* f/ 1.0 f+ bw f* { bwf }
@@ -2110,14 +2110,14 @@ set-current
 : harmonicizer <{ freq coeffs pairs
      :optional order 40 bw 50.0 beg 0 dur #f snd #f chn #f edpos #f -- val }>
   doc" Splits out each harmonic and replaces it with the spectrum given in coeffs."
-  pairs nil make-array map!
+  pairs make-array map!
     i 1.0 f+ { idx }
     idx freq f/ { aff }
     idx pairs f2* f/ 1.0 f+ bw f* { bwf }
     aff bwf f- hz->2pi  aff bwf f+ hz->2pi  order  make-bandpass
   end-map { bands }
-  pairs nil make-array map! 128 make-moving-average end-map { avgs }
-  pairs nil make-array map! 128 make-moving-max     end-map { peaks }
+  pairs make-array map! 128 make-moving-average end-map { avgs }
+  pairs make-array map! 128 make-moving-max     end-map { peaks }
   coeffs mus-chebyshev-first-kind partials->polynomial { pcoeffs }
   2 vct( 1 -1 ) vct( 0 -0.9 ) make-filter { flt }
   snd chn #f maxamp { old-mx }
@@ -2386,10 +2386,10 @@ previous
 : lpc-coeffs ( data n m -- val )
   doc" Returns M LPC coeffients (in a vector) given N data points in the vct DATA."
   { data n m }
-  m 0.0 make-array { d }
-  n 0.0 make-array { wk1 }
-  n 0.0 make-array { wk2 }
-  n 0.0 make-array { wkm }
+  m :initial-element 0.0 make-array { d }
+  n :initial-element 0.0 make-array { wk1 }
+  n :initial-element 0.0 make-array { wk2 }
+  n :initial-element 0.0 make-array { wkm }
   wk1   0   data   0  vct-ref  array-set!
   wk2 n 2-  data n 1- vct-ref  array-set!
   n 1- 1 ?do
@@ -2538,7 +2538,7 @@ previous
   doc" Applies unclip-channel to each channel of SND."
   snd snd-snd to snd
   snd sound? if
-    snd channels nil make-array map! snd i unclip-channel end-map ( res )
+    snd channels make-array map! snd i unclip-channel end-map ( res )
   else
     'no-such-sound '( get-func-name snd ) fth-throw
   then

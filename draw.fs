@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 23:36:09 CET 2005
-\ Changed: Sat Dec 23 17:59:03 CET 2006
+\ Changed: Thu Feb 01 00:49:45 CET 2007
 
 \ Commentary:
 
@@ -88,8 +88,8 @@ hide
 	data vct? if data length else data car length then { data-len }
 	data-len width f/ fround->s { step }
 	data-len width > if
-	  new-len nil make-array to data0
-	  data list? if new-len nil make-array to data1 then
+	  new-len make-array to data0
+	  data list? if new-len make-array to data1 then
 	  0 { idxi }
 	  0 { idxj }
 	  data-max fnegate { max-y }
@@ -129,8 +129,8 @@ hide
 	  repeat
 	else
 	  width data-len f/ fround->s { xstep }
-	  data-len 2* nil make-array to data0
-	  data list? if new-len 2* nil make-array to data1 then
+	  data-len 2* make-array to data0
+	  data list? if new-len 2* make-array to data1 then
 	  0 { idxj }
 	  x-offset { xj }
 	  data-len 0 ?do

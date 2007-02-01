@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Sat Jan 27 02:02:47 CET 2007
+\ Changed: Thu Feb 01 00:53:48 CET 2007
 
 \ Commentary:
 \
@@ -639,7 +639,7 @@ set-current
 : sort-samples ( nbins -- ary )
   doc" Provides a histogram in BINS bins."
   { nbins }
-  nbins 0 make-array { bins }
+  nbins :initial-element 0 make-array { bins }
   bins sorts-cb 0 #f #f #f #f scan-channel drop
   bins
 ;
@@ -1339,7 +1339,7 @@ previous
   freq-inc 0.0 make-vct { spectr }
   1.0 r fftsize f/ f- { radius }
   #f srate fftsize / { bin }
-  freq-inc nil make-array map! radius i bin * make-formant end-map { formants }
+  freq-inc make-array map! radius i bin * make-formant end-map { formants }
   1 proc-create fdr , fdi , spectr , formants , amp , freq-inc , cross-snd , fftsize , 0 , ( prc )
  does> { y self -- val }
   self @ { fdr }
@@ -1377,7 +1377,7 @@ previous
   freq-inc tempo f* fround->s { hop }
   0.0 0.0 { old-peak-amp new-peak-amp }
   $" %s %s %s %s %s" '( amp fftsize r tempo get-func-name ) string-format { origin }
-  freq-inc nil make-array map! radius i bin * make-formant end-map { formants }
+  freq-inc make-array map! radius i bin * make-formant end-map { formants }
   out-len 0.0 make-vct map!
     i freq-inc mod 0= if
       c-g? if "interrupted" leave then	\ ;; if C-g exit the loop returning the string "interrupted"
@@ -1405,7 +1405,7 @@ previous
   snd chn #f frames { len }
   0.0 0.0 { old-peak-amp new-peak-amp }
   $" %s %s %s %s %s %s" '( cosines freq amp fftsize r get-func-name ) string-format { origin }
-  freq-inc nil make-array map! radius i bin * make-formant end-map { formants }
+  freq-inc make-array map! radius i bin * make-formant end-map { formants }
   len 0.0 make-vct map!
     i freq-inc mod 0= if
       c-g? if "interrupted" leave then	\ ;; if C-g exit the loop returning the string "interrupted"
@@ -1577,8 +1577,8 @@ previous
   grain-length snd srate f* fround->s { grain-frames }
   output-hop snd srate f* fround->s   { hop-frames }
   grain-length output-hop f/ fround->s 1+ { num-reader }
-  num-reader nil make-array { readers }
-  num-reader nil make-array map!
+  num-reader make-array { readers }
+  num-reader make-array map!
     :envelope grain-envelope :end grain-frames make-env
   end-map { grain-envs }
   0 { next-reader-start-at }

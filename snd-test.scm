@@ -1516,6 +1516,10 @@
 	  (list "oboe.pf1" 1 22050 2.305125 "Ensoniq Paris" "little endian short (16 bits)")
 	  (list "oboe.smp" 1 22050 2.305125 "snack SMP" "little endian short (16 bits)")
 	  (list "oboe.rf64" 1 22050 2.305125 "rf64" "little endian short (16 bits)")
+	  (list "oboe-be32.caf" 1 22050 2.305125 "caff" "normalized big endian int (32 bits)")
+	  (list "oboe-bf64.caf" 1 22050 2.305125 "caff" "big endian double (64 bits)")
+	  (list "oboe-lf32.caf" 1 22050 2.305125 "caff" "little endian float (32 bits)")
+	  (list "oboe-ulaw.caf" 1 22050 2.305125 "caff" "mulaw (8 bits)")
 	  (list "oboe.nsp" 1 22050 2.305125 "CSL" "little endian short (16 bits)")
 	  (list "oboe.nvf" 1 8000 6.353500 "Creative NVF" "unknown")
 	  (list "oboe-ulaw.voc" 1 22050 2.305669 "VOC" "mulaw (8 bits)")
@@ -20425,6 +20429,24 @@ EDITS: 2
     (if (file-exists? "fmv4.reverb") (delete-file "fmv4.reverb"))
     (mus-sound-prune)
     
+    (for-each
+     (lambda (ht)
+       (let ((ind (find-sound (with-sound (:channels 8)
+				(do ((i 0 (1+ i)))
+				    ((= i 8))
+				  (locsig (make-locsig :degree (* i 45) :output *output*) i 0.5))))))
+	 (do ((i 0 (1+ i)))
+	     ((= i 8))
+	   (let ((samps (channel->vct 0 8 ind i)))
+	     (do ((k 0 (1+ k)))
+		 ((= k 8))
+	       (if (and (= k i) (fneq (vct-ref samps k) 0.5))
+		   (snd-display ";8 out ~A chan ~A samp ~A (0.5): ~A" (mus-header-type->string ht) i k (vct-ref samps k)))
+	       (if (and (not (= i k)) (fneq (vct-ref samps k) 0.0))
+		   (snd-display ";8 out ~A chan ~A samp ~A (0.0): ~A" (mus-header-type->string ht) i k (vct-ref samps k))))))
+	 (close-sound ind)))
+     (list mus-caff mus-aifc mus-next mus-riff mus-rf64))
+
     (let* ((gen (make-frame->file "fmv4.snd" 2 mus-bshort mus-next))
 	   (rev (make-frame->file "fmv4.reverb" 1 mus-bshort mus-next))
 	   (lc (make-locsig 60.0 :reverb .1 :channels 2 :output gen :revout rev)))
@@ -41513,7 +41535,7 @@ EDITS: 1
 	  (if (or (not (= (chans ind) (mus-sound-chans loboe)))
 		  (not (= (srate ind) (mus-sound-srate loboe)))
 		  (not (= (frames ind) (mus-sound-frames loboe))))
-	      (snd-display "copy oboe -> test seems to have failed? ~A ~A ~A"
+	      (snd-display ";copy oboe -> test seems to have failed? ~A ~A ~A"
 			   (chans ind) (srate ind) (frames ind))
 	      (with-local-hook
 	       update-hook
@@ -48915,6 +48937,16 @@ EDITS: 1
 		(snd-display ";with-sound srate (48000, r): ~A (~A, ~A)" (srate ind) (mus-srate) (mus-sound-srate "test1.snd")))
 	    (if (not (= (header-type ind) mus-rf64)) (snd-display ";with-sound type (~A, r): ~A" mus-rf64 (header-type ind)))
 	    (if (not (= (chans ind) 2)) (snd-display ";with-sound chans (2, r): ~A" (chans ind)))
+	    (close-sound ind)
+	    (delete-file "test1.snd"))
+	  
+	  (with-sound (:srate 48000 :channels 2 :header-type mus-caff :data-format mus-lshort :output "test1.snd") (fm-violin 0 .1 440 .1))
+	  (let ((ind (find-sound "test1.snd")))
+	    (if (or (not (= (srate ind) 48000))
+		    (not (= (mus-sound-srate "test1.snd") 48000)))
+		(snd-display ";with-sound mus-caff srate (48000, r): ~A (~A, ~A)" (srate ind) (mus-srate) (mus-sound-srate "test1.snd")))
+	    (if (not (= (header-type ind) mus-caff)) (snd-display ";with-sound type (~A, r): ~A" mus-caff (header-type ind)))
+	    (if (not (= (chans ind) 2)) (snd-display ";with-sound mus-caff chans (2, r): ~A" (chans ind)))
 	    (close-sound ind)
 	    (delete-file "test1.snd"))
 	  

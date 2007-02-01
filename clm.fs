@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Tue Jan 23 23:32:07 CET 2007
+\ Changed: Thu Feb 01 01:31:47 CET 2007
 
 \ Commentary:
 \
@@ -53,7 +53,7 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 23-Jan-2007" value *clm-version*
+$" fth 1-Feb-2007" value *clm-version*
 
 \ defined in snd/snd-xen.c
 [undefined] clm-print [if] ' fth-print alias clm-print [then]
@@ -68,7 +68,7 @@ $" fth 23-Jan-2007" value *clm-version*
   [else]
     \ Prints to Snd's listener (snd-print) and to stdout if $EMACS is
     \ set or $TERM matches /^xterm/.
-    "TERM" getenv dup [if] 0 4 string-substring "xterm" string= [then] value *xterm?*
+    "TERM" getenv dup [if] 0 5 string-substring "xterm" string= [then] value *xterm?*
     : clm-message ( fmt args -- )
       { fmt args }
       "\n\\ " fmt $+ args string-format snd-print drop
@@ -1215,7 +1215,7 @@ event: inst-test ( -- )
 'snd provided? [if]
   instrument: arpeggio <{ start dur freq amp :key ampenv '( 0 0 0.5 1 1 0 ) offset 1.0 -- }>
     start dur times->samples { end beg }
-    12 nil make-array map!
+    12 make-array map!
       :frequency freq offset i 6 - 0.03 f* f* f+
       :partials '( 1 1  5 0.7  6 0.7  7 0.7  8 0.7  9 0.7  10 0.7 ) make-waveshape
     end-map { waveshbank }

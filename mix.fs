@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Tue Jan 02 23:27:17 CET 2007
+\ Changed: Thu Feb 01 00:56:47 CET 2007
 
 \ Commentary:
 \
@@ -310,7 +310,7 @@ previous
 hide
 : mix-click-sets-amp-cb <{ id -- #t }>
   id :zero mix-property not if
-    id mix-chans 1- 0.0 make-array map! id i mix-amp end-map :amps swap id -rot set-mix-property
+    id mix-chans 1- make-array map! id i mix-amp end-map :amps swap id -rot set-mix-property
     id mix-chans 0 ?do id i 0.0 set-mix-amp drop loop
     id :zero #t set-mix-property
   else

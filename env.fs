@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Thu Oct 27 04:51:42 CEST 2005
-\ Changed: Fri Jan 12 16:07:02 CET 2007
+\ Changed: Thu Feb 01 00:54:04 CET 2007
 
 \ Commentary:
 \
@@ -173,7 +173,7 @@ set-current
       en1 xs (at0) { ee1 }
       en2 xs (at0) { ee2 }
       xs array-uniq! ['] fnumb-cmp array-sort! drop
-      xs length 2* 0.0 make-array to en3
+      xs length 2* :initial-element 0.0 make-array to en3
       xs each { x }
 	en3 i 2* x array-set!
 	x ee1 1.0 envelope-interp  x ee2 1.0 envelope-interp  xt execute  en3 i 2* 1+ rot array-set!
@@ -463,7 +463,7 @@ REFLECTED causes every other repetition to be in reverse."
 : make-power-env <{ envelope :key scaler 1.0 offset 0.0 duration 1.0 -- pe }>
   envelope -3 object-ref envelope 0 object-ref f- { xext }
   0 { jj }
-  envelope length 3.0 f/ fround->s 1- ( len ) nil make-array map!
+  envelope length 3.0 f/ fround->s 1- ( len ) make-array map!
     envelope jj     object-ref { x0 }
     envelope jj 3 + object-ref { x1 }
     envelope jj 1+  object-ref { y0 }
