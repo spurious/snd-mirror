@@ -513,11 +513,6 @@ void about_snd_help(void)
 21-Dec:  unclip-channel.\n\
 17-Dec:  region-home.\n\
 14-Dec:  bird.fsm (Mike Scholz).\n\
-12-Dec:  clip-hook.\n\
-11-Dec:  sound-data-multiply! sound-data-add! sound-data-offset! sound-data*\n\
-         sound-data+ sound-data-copy sound-data-reverse! sound-data-peak.\n\
-4-Dec:   frame.scm.\n\
-         moved open-sound-file, close-sound-file, and vct->sound-file to snd8.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",
@@ -4262,6 +4257,6 @@ If more than one hook function, each function gets the previous function's outpu
 
   output_comment_hook = XEN_DEFINE_HOOK(S_output_comment_hook, 1, H_output_comment_hook); /* arg = current mus_sound_comment(hdr) if any */
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_dir, g_html_dir_w, H_html_dir, S_setB S_html_dir, g_set_html_dir_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_dir,     g_html_dir_w,     H_html_dir,     S_setB S_html_dir,     g_set_html_dir_w,      0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_program, g_html_program_w, H_html_program, S_setB S_html_program, g_set_html_program_w,  0, 0, 1, 0);
 }
