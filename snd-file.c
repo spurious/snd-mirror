@@ -762,7 +762,7 @@ static file_info *make_file_info_1(const char *fullname)
   if (hdr->chans <= 0) {if (fallback_chans > 0) hdr->chans = fallback_chans; else hdr->chans = 1;}
   hdr->samples = mus_sound_samples(fullname); /* total samples, not per channel */
   hdr->data_location = mus_sound_data_location(fullname);
-  hdr->comment = (char *)mus_sound_comment(fullname);
+  hdr->comment = mus_sound_comment(fullname);
   hdr->loops = mus_sound_loop_info(fullname);
   return(hdr);
 }
@@ -2438,7 +2438,7 @@ bool edit_header_callback(snd_info *sp, file_data *edit_header_data,
 
   if (sp->hdr->type != MUS_RAW)
     {
-      original_comment = (char *)mus_sound_comment(sp->filename);
+      original_comment = mus_sound_comment(sp->filename);
       if ((hdr->type == MUS_AIFF) || 
 	  (hdr->type == MUS_AIFC)) 
 	mus_header_set_aiff_loop_info(mus_sound_loop_info(sp->filename));

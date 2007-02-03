@@ -350,7 +350,7 @@ const char *mus_data_format_name(int format);
 char *mus_header_type_to_string(int type);
 char *mus_data_format_to_string(int format);
 const char *mus_data_format_short_name(int format);
-unsigned char *mus_sound_comment(const char *name);
+char *mus_sound_comment(const char *name);
 int mus_bytes_per_sample(int format);
 float mus_sound_duration(const char *arg);
 int mus_sound_initialize(void);
@@ -562,8 +562,8 @@ int mus_header_sf2_loop_end(int n);
 const char *mus_header_original_format_name(int format, int type);
 bool mus_header_no_header(const char *name);
 
-unsigned char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_t *ends);
-unsigned char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends);
+char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_t *ends);
+char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends);
 
 int mus_header_change_chans(const char *filename, int type, int new_chans);
 int mus_header_change_srate(const char *filename, int type, int new_srate);

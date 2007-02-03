@@ -1387,10 +1387,10 @@ static int write_aif_header(int fd, int wsrate, int wchans, int siz, int format,
   return(MUS_NO_ERROR);
 }
 
-unsigned char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends)
+char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends)
 {
   /* AIFC: look for aux comments (ANNO chunks) */
-  unsigned char *sc = NULL;
+  char *sc = NULL;
   if ((starts) && (starts[0] != 0))
     {
       off_t full_len;
@@ -1405,7 +1405,7 @@ unsigned char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_
       if (full_len > 0)
 	{
 	  off_t sc_len;
-	  sc = (unsigned char *)CALLOC(full_len, sizeof(unsigned char));
+	  sc = (char *)CALLOC(full_len, sizeof(char));
 	  sc_len = 0;
 	  for (i = 0; i < AUX_COMMENTS; i++) 
 	    {
@@ -2055,9 +2055,9 @@ static int write_riff_header(int fd, int wsrate, int wchans, int siz, int format
   return(err);
 }
 
-unsigned char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_t *ends)
+char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_t *ends)
 {
-  unsigned char *sc = NULL, *auxcom;
+  char *sc = NULL, *auxcom;
   if ((starts) && (starts[0] != 0))
     {
       int len, j, fd, k, m;
@@ -2067,12 +2067,12 @@ unsigned char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_
       if (fd == -1) return(NULL);
       i = starts[0];
       end = ends[0];
-      sc = (unsigned char *)CALLOC(end - i + 2, sizeof(unsigned char));
+      sc = (char *)CALLOC(end - i + 2, sizeof(char));
       j = 0;
       k = 4;
       lseek(fd, i, SEEK_SET);
-      auxcom = (unsigned char *)CALLOC(end - i + 2, sizeof(unsigned char));
-      header_read(fd, auxcom, end - i + 1);
+      auxcom = (char *)CALLOC(end - i + 2, sizeof(char));
+      header_read(fd, (unsigned char *)auxcom, end - i + 1);
       CLOSE(fd, name);
       i += 4;
       while (i < end)

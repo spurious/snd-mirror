@@ -660,11 +660,11 @@ void mus_sound_set_loop_info(const char *arg, int *loop)
     }
 }
 
-unsigned char *mus_sound_comment(const char *name)
+char *mus_sound_comment(const char *name)
 {
   off_t start, end, len;
   int fd, full_len; /* comment string lengths */
-  unsigned char *sc = NULL, *auxcom;
+  char *sc = NULL, *auxcom;
   sound_file *sf = NULL;
   sf = getsf(name); 
   if (sf == NULL) return(NULL);
@@ -696,7 +696,7 @@ unsigned char *mus_sound_comment(const char *name)
       fd = mus_file_open_read(name);
       if (fd == -1) return(NULL);
       lseek(fd, start, SEEK_SET);
-      sc = (unsigned char *)CALLOC(len + 1, sizeof(unsigned char));
+      sc = (char *)CALLOC(len + 1, sizeof(char));
       bytes = read(fd, sc, len);
       CLOSE(fd, name);
       if (((mus_sound_header_type(name) == MUS_AIFF) || 
@@ -710,7 +710,7 @@ unsigned char *mus_sound_comment(const char *name)
 	  if (auxcom)
 	    {
 	      full_len = strlen(auxcom) + strlen(sc) + 2;
-	      sc = (unsigned char *)REALLOC(sc, full_len * sizeof(unsigned char));
+	      sc = (char *)REALLOC(sc, full_len * sizeof(char));
 	      strcat(sc, "\n");
 	      strcat(sc, auxcom);
 	    }

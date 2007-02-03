@@ -203,7 +203,7 @@ static XEN g_mus_sound_comment(XEN gfilename)
   char *res = NULL; 
   XEN newstr;
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, S_mus_sound_comment, "a string"); 
-  res = (char *)mus_sound_comment(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)));
+  res = mus_sound_comment(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)));
   newstr = C_TO_XEN_STRING(res);
   if (res) FREE(res);
   return(newstr);
