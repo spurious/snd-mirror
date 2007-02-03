@@ -2844,7 +2844,7 @@ static int header_to_data(int ht, int frm)
      aifc -> any (b)
      next -> any (b)
      wave -> any (l)
-     caff -> any [TODO: make space for these formats]
+     caff -> any
   */
   switch (ht)
     {
@@ -2881,6 +2881,12 @@ static int header_to_data(int ht, int frm)
 	case MUS_BFLOAT: return(MUS_LFLOAT); break;
 	case MUS_BDOUBLE: return(MUS_LDOUBLE); break;
 	}
+      break;
+    case MUS_CAFF:
+      if (frm == MUS_LINT)
+	return(MUS_LINTN);
+      if (frm == MUS_BINT)
+	return(MUS_BINTN);
       break;
     }
   return(frm);

@@ -3798,6 +3798,7 @@
 			  "no channels method" "no hop method" "no width method" "no file-name method" "no ramp method" "no run method"
 			  "no increment method" "no offset method"
 			  "no xcoeff method" "no ycoeff method" "no xcoeffs method" "no ycoeffs method" "no reset" "bad size" "can't convert"
+			  "read error"
 			  "can't translate"
 			  )))
 	  (let ((happy #t)

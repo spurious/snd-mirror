@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 20
-#define SNDLIB_REVISION 2
-#define SNDLIB_DATE "13-Nov-06"
+#define SNDLIB_REVISION 3
+#define SNDLIB_DATE "3-Feb-07"
 
 #include <mus-config.h>
 
@@ -216,6 +216,7 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
       MUS_NO_CHANNELS, MUS_NO_HOP, MUS_NO_WIDTH, MUS_NO_FILE_NAME, MUS_NO_RAMP, MUS_NO_RUN, 
       MUS_NO_INCREMENT, MUS_NO_OFFSET,
       MUS_NO_XCOEFF, MUS_NO_YCOEFF, MUS_NO_XCOEFFS, MUS_NO_YCOEFFS, MUS_NO_RESET, MUS_BAD_SIZE, MUS_CANT_CONVERT,
+      MUS_READ_ERROR,
       MUS_INITIAL_ERROR_TAG};
 
 /* keep this list in sync with mus_error_names in sound.c and snd-test.scm|rb */
@@ -349,7 +350,7 @@ const char *mus_data_format_name(int format);
 char *mus_header_type_to_string(int type);
 char *mus_data_format_to_string(int format);
 const char *mus_data_format_short_name(int format);
-char *mus_sound_comment(const char *name);
+unsigned char *mus_sound_comment(const char *name);
 int mus_bytes_per_sample(int format);
 float mus_sound_duration(const char *arg);
 int mus_sound_initialize(void);
@@ -546,6 +547,7 @@ off_t mus_bytes_to_samples(int format, off_t size);
 int mus_header_write_next_header(int chan, int srate, int chans, int loc, int siz, int format, const char *comment, int len);
 int mus_header_read(const char *name);
 int mus_header_write(const char *name, int type, int srate, int chans, off_t loc, off_t size_in_samples, int format, const char *comment, int len);
+int mus_write_header(const char *name, int type, int in_srate, int in_chans, off_t size_in_samples, int format, const char *comment);
 off_t mus_header_aux_comment_start(int n);
 off_t mus_header_aux_comment_end(int n);
 int mus_header_initialize(void);
@@ -560,8 +562,8 @@ int mus_header_sf2_loop_end(int n);
 const char *mus_header_original_format_name(int format, int type);
 bool mus_header_no_header(const char *name);
 
-char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_t *ends);
-char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends);
+unsigned char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_t *ends);
+unsigned char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends);
 
 int mus_header_change_chans(const char *filename, int type, int new_chans);
 int mus_header_change_srate(const char *filename, int type, int new_srate);

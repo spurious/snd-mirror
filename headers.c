@@ -1,31 +1,5 @@
 /* readers/writers for various sound file headers
  *
- * --------------------------------
- * int mus_header_read (const char *name)
- * int mus_header_write (const char *name, int type, int in_srate, int in_chans, off_t loc, off_t size_in_samples, int format, const char *comment, int len)
- * int mus_header_initialize (void)
- *
- *   Once mus_header_read has been called, the data in it can be accessed through:
- *
- *        off_t mus_header_samples (void)                       samples 
- *        off_t mus_header_data_location (void)                 location of data (bytes)
- *        int mus_header_chans (void)                           channels
- *        int mus_header_srate (void)                           srate
- *        int mus_header_type (void)                            header type (i.e. aiff, wave, etc)  (see sndlib.h)
- *        int mus_header_format (void)                          data format (see sndlib.h)
- *        off_t mus_header_comment_start (void)                 comment start location (if any) (bytes)
- *        off_t mus_header_comment_end (void)                   comment end location
- *        off_t mus_header_aux_comment_start (int n)            if multiple comments, nth start location
- *        off_t mus_header_aux_comment_end (int n)              if multiple comments, nth end location
- *        int mus_header_type_specifier (void)                  original (header-specific) type ID
- *        int mus_header_bits_per_sample (void)                 sample width in bits
- *        off_t mus_header_true_length (void)                   true (lseek) file length
- *        int mus_bytes_per_sample (int format)                 sample width in bytes
- *        bool mus_header_writable(int type, int format)        can we write this header
- * --------------------------------
- *
- *   "Linear" below means 2's complement integer.
- *
  * Currently supported read/write (in standard data formats):                         
  *      NeXT/Sun/DEC/AFsp
  *      AIFF/AIFC
@@ -736,32 +710,40 @@ static int sndlib_format_to_next(int format)
     }
 }
 
-#if MUS_DEBUGGING
-  #define CHK_WRITE(Fd, Buf, Len)						\
-    do { size_t bytes = 0;							\
-         if (((Len) > 0) && ((bytes = write(Fd, Buf, Len)) == 0))	\
-	   fprintf(stderr, "%s[%d]: header write error (wrote: %d != requested: %d)", c__FUNCTION__, __LINE__, (int)bytes, (int)(Len)); \
-       } while (0)
-  #define CHK_READ(Fd, Buf, Len)			  \
-    do { size_t bytes = 0;							\
-         if (((Len) > 0) && ((bytes = read(Fd, Buf, (Len))) == 0))	\
-  	   fprintf(stderr, "%s[%d]: header read error (read %d != requested %d)", c__FUNCTION__, __LINE__, (int)bytes, (int)(Len)); \
-       } while (0)
-#else
-  #define CHK_WRITE(Fd, Buf, Len) do {if (((Len) > 0) && (write(Fd, Buf, Len) == 0)) fprintf(stderr, "header write error");} while (0)
-  #define CHK_READ(Fd, Buf, Len) do {if (((Len) > 0) && (read(Fd, Buf, Len) == 0)) fprintf(stderr, "header read error");} while (0)
-#endif
+static int header_write(int fd, unsigned char *buf, int chars)
+{
+  if (chars > 0)
+    {
+      int bytes;
+      bytes = write(fd, buf, chars);
+      if (bytes != chars) 
+	return(mus_error(MUS_WRITE_ERROR, "header_write: wrote %d of %d bytes, %s", bytes, chars, STRERROR(errno)));
+    }
+  return(MUS_NO_ERROR);
+}
+
+static int header_read(int fd, unsigned char *buf, int chars)
+{
+  if (chars > 0)
+    {
+      int bytes;
+      bytes = read(fd, buf, chars);
+      if (bytes != chars) 
+	return(mus_error(MUS_READ_ERROR, "header_read: read %d of %d bytes, %s", bytes, chars, STRERROR(errno)));
+    }
+  return(MUS_NO_ERROR);
+}
 
 static void write_next_comment(int fd, const char *comment, int len, int loc)
 {
   if (len > 0)
-    CHK_WRITE(fd, (unsigned char *)comment, len);
+    header_write(fd, (unsigned char *)comment, len);
   len = loc - (len + 24);
   if (len > 0)
     {
       unsigned char *combuf;
       combuf = (unsigned char *)CALLOC(len, sizeof(char));
-      CHK_WRITE(fd, combuf, len);
+      header_write(fd, combuf, len);
       FREE(combuf);
     }
 }
@@ -778,7 +760,7 @@ int mus_header_write_next_header(int fd, int wsrate, int wchans, int loc, int si
   mus_bint_to_char((unsigned char *)(hdrbuf + 12), sndlib_format_to_next(format));
   mus_bint_to_char((unsigned char *)(hdrbuf + 16), wsrate);
   mus_bint_to_char((unsigned char *)(hdrbuf + 20), wchans);
-  CHK_WRITE(fd, hdrbuf, 24);
+  header_write(fd, hdrbuf, 24);
   write_next_comment(fd, comment, len, loc);
   data_location = loc;
   return(MUS_NO_ERROR);
@@ -1276,7 +1258,7 @@ static int write_aif_header(int fd, int wsrate, int wchans, int siz, int format,
   if (aifc_header) 
     {
       write_four_chars((unsigned char *)(hdrbuf + 8), I_AIFC); 
-      CHK_WRITE(fd, hdrbuf, 12);
+      header_write(fd, hdrbuf, 12);
       curend = 12;
       write_four_chars((unsigned char *)hdrbuf, I_FVER);
       mus_bint_to_char((unsigned char *)(hdrbuf + 4), 4);
@@ -1323,7 +1305,7 @@ static int write_aif_header(int fd, int wsrate, int wchans, int siz, int format,
 	  if (i == HDRBUFSIZ)
 	    {
 	      curend += HDRBUFSIZ;
-	      CHK_WRITE(fd, hdrbuf, HDRBUFSIZ);
+	      header_write(fd, hdrbuf, HDRBUFSIZ);
 	      i = 0;
 	    }
 	  hdrbuf[i] = comment[j];
@@ -1334,7 +1316,7 @@ static int write_aif_header(int fd, int wsrate, int wchans, int siz, int format,
 	  if ((i + extra) > HDRBUFSIZ)
 	    {
 	      curend += i;
-	      CHK_WRITE(fd, hdrbuf, i);
+	      header_write(fd, hdrbuf, i);
 	      i = 0;
 	    }
 	  for (j = 0; j < extra; j++)
@@ -1345,7 +1327,7 @@ static int write_aif_header(int fd, int wsrate, int wchans, int siz, int format,
 	}
     }
   curend += i;
-  CHK_WRITE(fd, hdrbuf, i);
+  header_write(fd, hdrbuf, i);
   if ((loop_modes[0] == 0) && (loop_modes[1] == 0))
     {
       write_four_chars((unsigned char *)hdrbuf, I_MARK);   /* SoundHack includes a blank MARK chunk for some reason */
@@ -1358,7 +1340,7 @@ static int write_aif_header(int fd, int wsrate, int wchans, int siz, int format,
       mus_bint_to_char((unsigned char *)(hdrbuf + 26), 0);          /* no loops */
       mus_bint_to_char((unsigned char *)(hdrbuf + 30), 0); 
       mus_bint_to_char((unsigned char *)(hdrbuf + 34), 0);
-      CHK_WRITE(fd, hdrbuf, 38);
+      header_write(fd, hdrbuf, 38);
       curend += 38;
     }
   else
@@ -1379,7 +1361,7 @@ static int write_aif_header(int fd, int wsrate, int wchans, int siz, int format,
 	    }
 	  mus_bshort_to_char((unsigned char *)(hdrbuf + 10 + 8 * j + 6), 0);
 	}
-      CHK_WRITE(fd, hdrbuf, 42);
+      header_write(fd, hdrbuf, 42);
       curend += 42;
       write_four_chars((unsigned char *)hdrbuf, I_INST); 
       mus_bint_to_char((unsigned char *)(hdrbuf + 4), 20);
@@ -1393,22 +1375,22 @@ static int write_aif_header(int fd, int wsrate, int wchans, int siz, int format,
       mus_bshort_to_char((unsigned char *)(hdrbuf + 22), loop_modes[1]);
       mus_bshort_to_char((unsigned char *)(hdrbuf + 24), 3);
       mus_bshort_to_char((unsigned char *)(hdrbuf + 26), 4);
-      CHK_WRITE(fd, hdrbuf, 28);
+      header_write(fd, hdrbuf, 28);
       curend += 28;
     }
   write_four_chars((unsigned char *)(hdrbuf), I_SSND);
   mus_bint_to_char((unsigned char *)(hdrbuf + 4), siz + 8);
   mus_bint_to_char((unsigned char *)(hdrbuf + 8), 0);                        /* "offset" */
   mus_bint_to_char((unsigned char *)(hdrbuf + 12), 0);                       /* "blocksize " */
-  CHK_WRITE(fd, hdrbuf, 16);
+  header_write(fd, hdrbuf, 16);
   data_location = 16 + curend;
   return(MUS_NO_ERROR);
 }
 
-char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends)
+unsigned char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends)
 {
   /* AIFC: look for aux comments (ANNO chunks) */
-  char *sc = NULL;
+  unsigned char *sc = NULL;
   if ((starts) && (starts[0] != 0))
     {
       off_t full_len;
@@ -1423,7 +1405,7 @@ char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends)
       if (full_len > 0)
 	{
 	  off_t sc_len;
-	  sc = (char *)CALLOC(full_len, sizeof(char));
+	  sc = (unsigned char *)CALLOC(full_len, sizeof(unsigned char));
 	  sc_len = 0;
 	  for (i = 0; i < AUX_COMMENTS; i++) 
 	    {
@@ -1435,7 +1417,7 @@ char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends)
 		  int j;
 		  len = end - start + 1;
 		  lseek(fd, start, SEEK_SET);
-		  CHK_READ(fd, (char *)(sc + sc_len), len);
+		  header_read(fd, (unsigned char *)(sc + sc_len), len);
 		  for (j = 0; j < len; j++) 
 		    if (sc[j + sc_len] == 0) 
 		      sc[j + sc_len] = ' ';
@@ -1472,8 +1454,7 @@ char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends)
  *   48: bits per channel
  * audio data is in 'data' chunk
  *
- * TODO: change chans etc
- *       various comment cases (need examples)
+ * TODO: various CAFF comment cases (need examples)
  */
 
 
@@ -1715,7 +1696,7 @@ static int write_caff_header(int fd, int wsrate, int wchans, off_t wsize, int fo
   update_frames_location = 56;
   mus_bint_to_char((unsigned char *)(hdrbuf + 64), 0);
   data_location = 68;
-  CHK_WRITE(fd, hdrbuf, 68);
+  header_write(fd, hdrbuf, 68);
   return(MUS_NO_ERROR);
 }
 
@@ -1898,7 +1879,7 @@ static int write_riff_fmt_chunk(int fd, unsigned char *hdrbuf, int format, int w
       mus_lshort_to_char((unsigned char *)(hdrbuf + 22), 64); 
       break;
     default: 
-      /* don't call mus_error directly -- we need to close the file first in mus_write_header */
+      /* don't call mus_error directly -- we need to close the file first in mus_header_write */
       err = MUS_UNSUPPORTED_DATA_FORMAT;
       break;
     }
@@ -1907,7 +1888,7 @@ static int write_riff_fmt_chunk(int fd, unsigned char *hdrbuf, int format, int w
   mus_lint_to_char((unsigned char *)(hdrbuf + 16), wsrate * wchans * mus_bytes_per_sample(format)); /* added chans 10-Mar-99 */
   mus_lshort_to_char((unsigned char *)(hdrbuf + 20), (short)(wchans * mus_bytes_per_sample(format)));
   /* 22 short written above = bits/sample */
-  CHK_WRITE(fd, hdrbuf, 24);
+  header_write(fd, hdrbuf, 24);
   return(err);
 }
 
@@ -2014,7 +1995,7 @@ static void write_riff_clm_comment(int fd, const char *comment, int len, int ext
     {
       if (i == HDRBUFSIZ)
 	{
-	  CHK_WRITE(fd, hdrbuf, HDRBUFSIZ);
+	  header_write(fd, hdrbuf, HDRBUFSIZ);
 	  i = 0;
 	}
       hdrbuf[i++] = comment[j];
@@ -2023,7 +2004,7 @@ static void write_riff_clm_comment(int fd, const char *comment, int len, int ext
     {
       if ((i + extra) > HDRBUFSIZ)
 	{
-	  CHK_WRITE(fd, hdrbuf, i);
+	  header_write(fd, hdrbuf, i);
 	  i = 0;
 	}
       for (j = 0; j < extra; j++)
@@ -2031,7 +2012,7 @@ static void write_riff_clm_comment(int fd, const char *comment, int len, int ext
     }
   if (i > 0)
     {
-      CHK_WRITE(fd, hdrbuf, i);
+      header_write(fd, hdrbuf, i);
     }
 }
 
@@ -2052,13 +2033,13 @@ static int write_riff_header(int fd, int wsrate, int wchans, int siz, int format
   write_four_chars((unsigned char *)hdrbuf, I_RIFF);
   mus_lint_to_char((unsigned char *)(hdrbuf + 4), data_location + siz);
   write_four_chars((unsigned char *)(hdrbuf + 8), I_WAVE);
-  CHK_WRITE(fd, hdrbuf, 12);
+  header_write(fd, hdrbuf, 12);
 
   /* add JUNK chunk for possible change to RF64 during write */
   write_four_chars((unsigned char *)hdrbuf, I_JUNK);
   mus_lint_to_char((unsigned char *)(hdrbuf + 4), 28);
   for (j = 8; j < 36; j++) hdrbuf[j] = 0;
-  CHK_WRITE(fd, hdrbuf, 36);
+  header_write(fd, hdrbuf, 36);
 
   /* fmt chunk */
   err = write_riff_fmt_chunk(fd, hdrbuf, format, wsrate, wchans);
@@ -2070,13 +2051,13 @@ static int write_riff_header(int fd, int wsrate, int wchans, int siz, int format
   /* start the data chunk */
   write_four_chars((unsigned char *)hdrbuf, I_data);
   mus_lint_to_char((unsigned char *)(hdrbuf + 4), siz);
-  CHK_WRITE(fd, hdrbuf, 8);
+  header_write(fd, hdrbuf, 8);
   return(err);
 }
 
-char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_t *ends)
+unsigned char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_t *ends)
 {
-  char *sc = NULL, *auxcom;
+  unsigned char *sc = NULL, *auxcom;
   if ((starts) && (starts[0] != 0))
     {
       int len, j, fd, k, m;
@@ -2086,12 +2067,12 @@ char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_t *ends)
       if (fd == -1) return(NULL);
       i = starts[0];
       end = ends[0];
-      sc = (char *)CALLOC(end - i + 2, sizeof(char));
+      sc = (unsigned char *)CALLOC(end - i + 2, sizeof(unsigned char));
       j = 0;
       k = 4;
       lseek(fd, i, SEEK_SET);
-      auxcom = (char *)CALLOC(end - i + 2, sizeof(char));
-      CHK_READ(fd, auxcom, end - i + 1);
+      auxcom = (unsigned char *)CALLOC(end - i + 2, sizeof(unsigned char));
+      header_read(fd, auxcom, end - i + 1);
       CLOSE(fd, name);
       i += 4;
       while (i < end)
@@ -2324,7 +2305,7 @@ static int write_rf64_header(int fd, int wsrate, int wchans, off_t size, int for
   write_four_chars((unsigned char *)hdrbuf, I_RF64);
   mus_lint_to_char((unsigned char *)(hdrbuf + 4), -1);
   write_four_chars((unsigned char *)(hdrbuf + 8), I_WAVE);
-  CHK_WRITE(fd, hdrbuf, 12);
+  header_write(fd, hdrbuf, 12);
 
   /* ds64 chunk */
   write_four_chars((unsigned char *)hdrbuf, I_ds64);
@@ -2333,7 +2314,7 @@ static int write_rf64_header(int fd, int wsrate, int wchans, off_t size, int for
   mus_loff_t_to_char((unsigned char *)(hdrbuf + 16), size);
   mus_loff_t_to_char((unsigned char *)(hdrbuf + 24), size);
   mus_lint_to_char((unsigned char *)(hdrbuf + 32), 0); /* "table size" */
-  CHK_WRITE(fd, hdrbuf, 36);
+  header_write(fd, hdrbuf, 36);
 
   err = write_riff_fmt_chunk(fd, hdrbuf, format, wsrate, wchans);
 
@@ -2342,7 +2323,7 @@ static int write_rf64_header(int fd, int wsrate, int wchans, off_t size, int for
 
   write_four_chars((unsigned char *)hdrbuf, I_data);
   mus_lint_to_char((unsigned char *)(hdrbuf + 4), -1);
-  CHK_WRITE(fd, hdrbuf, 8);
+  header_write(fd, hdrbuf, 8);
   return(err);
 }
 
@@ -2365,12 +2346,12 @@ static int mus_header_convert_riff_to_rf64(const char *filename, off_t size)
   /* change overall type to rf64 and set size to RIFF -1 */
   write_four_chars((unsigned char *)hdrbuf, I_RF64);
   mus_lint_to_char((unsigned char *)(hdrbuf + 4), -1);
-  CHK_WRITE(fd, hdrbuf, 8);
+  header_write(fd, hdrbuf, 8);
 
   /* set data chunk's size to -1 */
   lseek(fd, update_ssnd_location, SEEK_SET);
   mus_lint_to_char((unsigned char *)(hdrbuf + 4), -1);
-  CHK_WRITE(fd, hdrbuf, 4);
+  header_write(fd, hdrbuf, 4);
 
   /* convert the "JUNK" chunk to be a "ds64" chunk */
   write_four_chars((unsigned char *)hdrbuf, I_ds64);
@@ -2378,7 +2359,7 @@ static int mus_header_convert_riff_to_rf64(const char *filename, off_t size)
   mus_loff_t_to_char((unsigned char *)(hdrbuf + 8), data_location + size);
   mus_loff_t_to_char((unsigned char *)(hdrbuf + 16), size);
   mus_loff_t_to_char((unsigned char *)(hdrbuf + 24), size);
-  CHK_WRITE(fd, hdrbuf, 36);
+  header_write(fd, hdrbuf, 36);
 
   CLOSE(fd, filename);
   return(true);
@@ -2430,7 +2411,7 @@ static int read_avi_header(const char *filename, int fd)
 	      while (cktotal < chunksize)
 		{
 		  lseek(fd, ckoff, SEEK_SET);
-		  CHK_READ(fd, hdrbuf, 8);
+		  header_read(fd, hdrbuf, 8);
 		  cksize = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
 		  if ((hdrbuf[2] == 'w') && (hdrbuf[3] == 'b'))
 		    {
@@ -2447,7 +2428,7 @@ static int read_avi_header(const char *filename, int fd)
 	      while (cktotal < chunksize)
 		{
 		  lseek(fd, ckoff, SEEK_SET);
-		  CHK_READ(fd, hdrbuf, 8);
+		  header_read(fd, hdrbuf, 8);
 		  cksize = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
 		  ckoff += (8 + cksize);
 		  cktotal += (8 + cksize);
@@ -2459,7 +2440,7 @@ static int read_avi_header(const char *filename, int fd)
 		      while (cktotalr < cksize)
 			{
 			  lseek(fd, ckoffr, SEEK_SET);
-			  CHK_READ(fd, hdrbuf, 8);
+			  header_read(fd, hdrbuf, 8);
 			  cksizer = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
 			  ckoffr += (8 + cksizer);
 			  cktotalr += (8 + cksizer);
@@ -2468,7 +2449,7 @@ static int read_avi_header(const char *filename, int fd)
 			      if (cksizer < HDRBUFSIZ) 
 				rdsize = cksizer; 
 			      else rdsize = HDRBUFSIZ;
-			      CHK_READ(fd, hdrbuf, rdsize);
+			      header_read(fd, hdrbuf, rdsize);
 			      original_data_format = mus_char_to_lshort((unsigned char *)hdrbuf);
 			      chans = mus_char_to_lshort((unsigned char *)(hdrbuf + 2));
 			      srate = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
@@ -2621,7 +2602,7 @@ static int read_soundfont_header(const char *filename, int fd)
 		       */
 		      while (i < cksize)
 			{
-			  CHK_READ(fd, hdrbuf, 46);
+			  header_read(fd, hdrbuf, 46);
 			  i += 46;
 			  type = mus_char_to_lshort((unsigned char *)(hdrbuf + 44));
 			  if ((type == 1) &&
@@ -2860,7 +2841,7 @@ static int write_nist_header(int fd, int wsrate, int wchans, off_t size, int for
 	  ((format == MUS_BSHORT) || (format == MUS_B24INT) || (format == MUS_BINT)) ? "10" : "01",
 	  datum * 8, 
 	  size / datum);
-  CHK_WRITE(fd, (unsigned char *)header, 1024);
+  header_write(fd, (unsigned char *)header, 1024);
   data_location = 1024;
   FREE(header);
   return(MUS_NO_ERROR);
@@ -2896,7 +2877,7 @@ static int read_bicsf_header(const char *filename, int fd)
   data_location = 1024;
   if (data_size == 0) data_size = (true_file_length - data_location);
   lseek(fd, 40, SEEK_SET);
-  CHK_READ(fd, hdrbuf, HDRBUFSIZ);
+  header_read(fd, hdrbuf, HDRBUFSIZ);
   original_data_format = mus_char_to_bint((unsigned char *)hdrbuf);
   switch (original_data_format) 
     {
@@ -3059,20 +3040,20 @@ static void write_ircam_comment(int fd, const char *comment, int len)
     {
       mus_bshort_to_char((unsigned char *)hdrbuf, 2);
       mus_bshort_to_char((unsigned char *)(hdrbuf + 2), (short)len);
-      CHK_WRITE(fd, hdrbuf, 4);
-      CHK_WRITE(fd, (unsigned char *)comment, len);
+      header_write(fd, hdrbuf, 4);
+      header_write(fd, (unsigned char *)comment, len);
     }
   else
     {
       mus_bint_to_char((unsigned char *)hdrbuf, 0);
-      CHK_WRITE(fd, hdrbuf, 4);
+      header_write(fd, hdrbuf, 4);
     }
   len = 1024 - (len + 20);
   if (len > 0)
     {
       unsigned char *combuf;
       combuf = (unsigned char *)CALLOC(len, sizeof(char));
-      CHK_WRITE(fd, combuf, len);
+      header_write(fd, combuf, len);
       FREE(combuf);
     }
 }
@@ -3083,7 +3064,7 @@ static int write_ircam_header(int fd, int wsrate, int wchans, int format, const 
   mus_bfloat_to_char((unsigned char *)(hdrbuf + 4), (float)wsrate);
   mus_bint_to_char((unsigned char *)(hdrbuf + 8), wchans);
   mus_bint_to_char((unsigned char *)(hdrbuf + 12), sndlib_format_to_ircam(format));
-  CHK_WRITE(fd, hdrbuf, 16);
+  header_write(fd, hdrbuf, 16);
   data_location = 1024;
   write_ircam_comment(fd, comment, len);
   return(MUS_NO_ERROR);
@@ -3208,7 +3189,7 @@ static int read_voc_header(const char *filename, int fd)
   if (true_file_length < curbase)
     return(mus_error(MUS_HEADER_READ_FAILED, "%s: block location " OFF_TD " > file length: " OFF_TD, filename, curbase, true_file_length));
   lseek(fd, curbase, SEEK_SET);
-  CHK_READ(fd, hdrbuf, HDRBUFSIZ);
+  header_read(fd, hdrbuf, HDRBUFSIZ);
   while (happy)
     {
       type = (int)(hdrbuf[0]);
@@ -3677,7 +3658,7 @@ static int read_esps_header(const char *filename, int fd)
   srate = 8000;
   chans = 1;
   lseek(fd, 132, SEEK_SET);
-  CHK_READ(fd, hdrbuf, HDRBUFSIZ);
+  header_read(fd, hdrbuf, HDRBUFSIZ);
   if (little)
     {
       doubles = mus_char_to_lint((unsigned char *)hdrbuf);
@@ -3723,7 +3704,7 @@ static int read_esps_header(const char *filename, int fd)
     }
   /* search for "record_freq" to get srate */
   lseek(fd, 333, SEEK_SET);
-  CHK_READ(fd, hdrbuf, HDRBUFSIZ);
+  header_read(fd, hdrbuf, HDRBUFSIZ);
   curbase = 333;
   hend = curbase + HDRBUFSIZ;
   k = 0;
@@ -3995,14 +3976,14 @@ static int read_csl_header(const char *filename, int fd)
 static int read_file_samp_header(const char *filename, int fd)
 {
   int i = 0;
-  char *locbuf;
+  unsigned char *locbuf;
   data_location = 1024;
   chans = 1;
   srate = 8000;
   data_format = MUS_LSHORT;
   lseek(fd, 10, SEEK_SET);
-  locbuf = (char *)CALLOC(1024, sizeof(char));
-  CHK_READ(fd, locbuf, 1024);
+  locbuf = (unsigned char *)CALLOC(1024, sizeof(unsigned char));
+  header_read(fd, locbuf, 1024);
   while (i < 1024)
     {
       if (strncmp((char *)(locbuf + i), "sftot", 5) == 0)
@@ -4164,7 +4145,7 @@ static int read_gravis_header(const char *filename, int fd)
   comment_start = 22;
   comment_end = 81;
   lseek(fd, 239, SEEK_SET); /* try to jump to wave sample block (128+62+49) */
-  CHK_READ(fd, hdrbuf, 128);
+  header_read(fd, hdrbuf, 128);
   srate = mus_char_to_ulshort((unsigned char *)(hdrbuf + 20));
   data_size = mus_char_to_ulshort((unsigned char *)(hdrbuf + 8));
   mode = hdrbuf[55];
@@ -4276,7 +4257,7 @@ static int read_sbstudio_header(const char *filename, int fd)
   bool happy;
   unsigned char *bp;
   lseek(fd, 0, SEEK_SET);
-  CHK_READ(fd, hdrbuf, HDRBUFSIZ);
+  header_read(fd, hdrbuf, HDRBUFSIZ);
   chans = 1; 
   srate = 8000; /* no sampling rate field in this header */
   data_format = MUS_UNKNOWN;
@@ -5408,7 +5389,7 @@ static int mus_header_read_1(const char *filename, int fd)
       return(read_esps_header(filename, fd));
     }
   lseek(fd, 0, SEEK_SET);
-  CHK_READ(fd, hdrbuf, 256);
+  header_read(fd, hdrbuf, 256);
   if ((hdrbuf[252] == 64) && (hdrbuf[253] == 195)) /* #o100 and #o303 */
     {
       header_type = MUS_SPPACK;
@@ -5660,7 +5641,6 @@ mus_header_write_hook_t *mus_header_write_set_hook(mus_header_write_hook_t *new_
 int mus_header_write(const char *name, int type, int in_srate, int in_chans, off_t loc, off_t size_in_samples, int format, const char *comment, int len)
 {
   /* the "loc" arg is a mistake -- just always set it to 0 */
-  /* no mus_error calls within any of the write functions */
 
   int fd, err = MUS_NO_ERROR;
   off_t siz;
@@ -5688,13 +5668,13 @@ int mus_header_write(const char *name, int type, int in_srate, int in_chans, off
 
   switch (type)
     {
-    case MUS_NEXT:  err = mus_header_write_next_header(fd, in_srate, in_chans, loc, siz, format, comment, len); break;
-    case MUS_AIFC:  err = write_aif_header(fd, in_srate, in_chans, siz, format, comment, len, true);            break;
-    case MUS_AIFF:  err = write_aif_header(fd, in_srate, in_chans, siz, format, comment, len, false);           break;
-    case MUS_RF64:  err = write_rf64_header(fd, in_srate, in_chans, siz, format, comment, len);                 break;
-    case MUS_CAFF:  err = write_caff_header(fd, in_srate, in_chans, siz, format, comment, len);                 break;
-    case MUS_IRCAM: err = write_ircam_header(fd, in_srate, in_chans, format, comment, len);                     break;
-    case MUS_NIST:  err = write_nist_header(fd, in_srate, in_chans, siz, format);                               break;
+    case MUS_NEXT:  err = mus_header_write_next_header(fd, in_srate, in_chans, loc, siz, format, comment, len);  break;
+    case MUS_AIFC:  err = write_aif_header(fd, in_srate, in_chans, siz, format, comment, len, true);             break;
+    case MUS_AIFF:  err = write_aif_header(fd, in_srate, in_chans, siz, format, comment, len, false);            break;
+    case MUS_RF64:  err = write_rf64_header(fd, in_srate, in_chans, siz, format, comment, len);                  break;
+    case MUS_CAFF:  err = write_caff_header(fd, in_srate, in_chans, siz, format, comment, len);                  break;
+    case MUS_IRCAM: err = write_ircam_header(fd, in_srate, in_chans, format, comment, len);                      break;
+    case MUS_NIST:  err = write_nist_header(fd, in_srate, in_chans, siz, format);                                break;
     case MUS_RIFF:  
       err = write_riff_header(fd, in_srate, in_chans, siz, format, comment, len); 
       if (err != MUS_NO_ERROR)
@@ -5719,6 +5699,14 @@ int mus_header_write(const char *name, int type, int in_srate, int in_chans, off
 
   CLOSE(fd, name);
   return(err);
+}
+
+int mus_write_header(const char *name, int type, int in_srate, int in_chans, off_t size_in_samples, int format, const char *comment)
+{
+  int len = 0;
+  if (comment)
+    len = strlen(comment);
+  return(mus_header_write(name, type, in_srate, in_chans, 0, size_in_samples, format, comment, len));
 }
 
 int mus_header_change_data_size(const char *filename, int type, off_t size) /* in bytes */
@@ -5759,7 +5747,7 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
 	}
       lseek(fd, 8L, SEEK_SET);
       mus_bint_to_char((unsigned char *)(hdrbuf + 0), (unsigned int)size);
-      CHK_WRITE(fd, hdrbuf, 4);
+      header_write(fd, hdrbuf, 4);
       break;
 
     case MUS_AIFC: 
@@ -5781,13 +5769,13 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
       lseek(fd, 4L, SEEK_SET);
       mus_bint_to_char((unsigned char *)hdrbuf, (int)size + update_form_size - mus_samples_to_bytes(data_format, data_size));
       /* cancel old data_size from previous possible write */
-      CHK_WRITE(fd, hdrbuf, 4);
+      header_write(fd, hdrbuf, 4);
       lseek(fd, update_frames_location, SEEK_SET);
       mus_bint_to_char((unsigned char *)hdrbuf, (int)size / (chans * mus_bytes_per_sample(data_format)));
-      CHK_WRITE(fd, hdrbuf, 4);
+      header_write(fd, hdrbuf, 4);
       lseek(fd, update_ssnd_location, SEEK_SET);
       mus_bint_to_char((unsigned char *)hdrbuf, (int)size + 8);
-      CHK_WRITE(fd, hdrbuf, 4);
+      header_write(fd, hdrbuf, 4);
       break;
 
     case MUS_RIFF: 
@@ -5796,10 +5784,10 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
 	return(mus_header_convert_riff_to_rf64(filename, size));
       lseek(fd, 4L, SEEK_SET);
       mus_lint_to_char((unsigned char *)hdrbuf, (int)size + update_form_size - mus_samples_to_bytes(data_format, data_size)); 
-      CHK_WRITE(fd, hdrbuf, 4);
+      header_write(fd, hdrbuf, 4);
       lseek(fd, update_ssnd_location, SEEK_SET);
       mus_lint_to_char((unsigned char *)hdrbuf, (int)size);
-      CHK_WRITE(fd, hdrbuf, 4);
+      header_write(fd, hdrbuf, 4);
       break;
 
     case MUS_RF64:
@@ -5809,7 +5797,7 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
       mus_loff_t_to_char((unsigned char *)hdrbuf, data_location + size);
       mus_loff_t_to_char((unsigned char *)(hdrbuf + 8), size);
       mus_loff_t_to_char((unsigned char *)(hdrbuf + 16), size);
-      CHK_WRITE(fd, hdrbuf, 24);
+      header_write(fd, hdrbuf, 24);
       break;
 
     case MUS_IRCAM: 
@@ -5833,7 +5821,7 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
       if (update_frames_location < 56) update_frames_location = 56;
       lseek(fd, update_frames_location, SEEK_SET);
       mus_boff_t_to_char((unsigned char *)(hdrbuf + 0), size);
-      CHK_WRITE(fd, hdrbuf, 8);
+      header_write(fd, hdrbuf, 8);
       break;
 
     default:
@@ -5871,14 +5859,14 @@ int mus_header_change_chans(const char *filename, int type, int new_chans)
     case MUS_NEXT:
       lseek(fd, 20L, SEEK_SET);
       mus_bint_to_char((unsigned char *)hdrbuf, new_chans);
-      CHK_WRITE(fd, hdrbuf, 4);
+      header_write(fd, hdrbuf, 4);
       break;
     case MUS_IRCAM:
       lseek(fd, 8L, SEEK_SET);
       if (little_endian) 
 	mus_lint_to_char((unsigned char *)hdrbuf, new_chans);
       else mus_bint_to_char((unsigned char *)hdrbuf, new_chans);
-      CHK_WRITE(fd, hdrbuf, 4);
+      header_write(fd, hdrbuf, 4);
       break;
     case MUS_NIST:
       lseek(fd, 0L, SEEK_SET);
@@ -5890,7 +5878,7 @@ int mus_header_change_chans(const char *filename, int type, int new_chans)
       new_frames = data_size / new_chans;
       mus_bshort_to_char((unsigned char *)hdrbuf, new_chans);
       mus_bint_to_char((unsigned char *)(hdrbuf + 2), new_frames);
-      CHK_WRITE(fd, hdrbuf, 6);
+      header_write(fd, hdrbuf, 6);
       break;
     case MUS_RIFF:
     case MUS_RF64:
@@ -5898,12 +5886,12 @@ int mus_header_change_chans(const char *filename, int type, int new_chans)
       if (little_endian)
 	mus_lshort_to_char((unsigned char *)hdrbuf, new_chans);
       else mus_bshort_to_char((unsigned char *)hdrbuf, new_chans);
-      CHK_WRITE(fd, hdrbuf, 2);
+      header_write(fd, hdrbuf, 2);
       break;
     case MUS_CAFF:
       lseek(fd, 44L, SEEK_SET);
       mus_bint_to_char((unsigned char *)hdrbuf, new_chans);
-      CHK_WRITE(fd, hdrbuf, 4);
+      header_write(fd, hdrbuf, 4);
       /* we should probably also change bytes_per_packet at 36, but... */
       break;
     }
@@ -5935,14 +5923,14 @@ int mus_header_change_srate(const char *filename, int type, int new_srate)
     case MUS_NEXT:
       lseek(fd, 16L, SEEK_SET);
       mus_bint_to_char((unsigned char *)hdrbuf, new_srate);
-      CHK_WRITE(fd, hdrbuf, 4);
+      header_write(fd, hdrbuf, 4);
       break;
     case MUS_IRCAM:
       lseek(fd, 4L, SEEK_SET);
       if (little_endian) 
 	mus_lfloat_to_char((unsigned char *)hdrbuf, (float)new_srate);
       else mus_bfloat_to_char((unsigned char *)hdrbuf, (float)new_srate);
-      CHK_WRITE(fd, hdrbuf, 4);
+      header_write(fd, hdrbuf, 4);
       break;
     case MUS_NIST:
       lseek(fd, 0L, SEEK_SET);
@@ -5952,7 +5940,7 @@ int mus_header_change_srate(const char *filename, int type, int new_srate)
     case MUS_AIFC:
       lseek(fd, update_frames_location + 6, SEEK_SET);
       double_to_ieee_80((double)new_srate, (unsigned char *)hdrbuf);
-      CHK_WRITE(fd, hdrbuf, 10);
+      header_write(fd, hdrbuf, 10);
       break;
     case MUS_RIFF:
     case MUS_RF64:
@@ -5960,12 +5948,12 @@ int mus_header_change_srate(const char *filename, int type, int new_srate)
       if (little_endian)
 	mus_lint_to_char((unsigned char *)hdrbuf, new_srate);
       else mus_bint_to_char((unsigned char *)hdrbuf, new_srate);
-      CHK_WRITE(fd, hdrbuf, 4);
+      header_write(fd, hdrbuf, 4);
       break;
     case MUS_CAFF:
       lseek(fd, 20, SEEK_SET);
       mus_bdouble_to_char((unsigned char *)hdrbuf, (double)new_srate);      
-      CHK_WRITE(fd, hdrbuf, 8);
+      header_write(fd, hdrbuf, 8);
       break;
     }
   CLOSE(fd, filename);
@@ -6001,11 +5989,11 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 		  comment = (char *)CALLOC(len + 1, sizeof(char));
 		  ifd = mus_file_open_read(filename);
 		  lseek(ifd, comment_start, SEEK_SET);
-		  CHK_READ(ifd, (unsigned char *)comment, len);
+		  header_read(ifd, (unsigned char *)comment, len);
 		  CLOSE(ifd, filename);
 		}
 	      data_size = data_size * mus_bytes_per_sample(data_format) / mus_bytes_per_sample(new_format);
-	      mus_header_write(new_file, new_type, srate, chans, loc, data_size, new_format, comment, len);
+	      mus_write_header(new_file, new_type, srate, chans, data_size, new_format, comment);
 	    }
 	  else mus_file_create(new_file);
 	  ifd = mus_file_open_read(filename);
@@ -6013,7 +6001,7 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 	  ofd = mus_file_reopen_write(new_file);
 	  lseek(ofd, 0L, SEEK_END);
 	  buf = (char *)CALLOC(8192, sizeof(char));
-	  while ((nbytes = read(ifd, buf, 8192))) CHK_WRITE(ofd, buf, nbytes);
+	  while ((nbytes = read(ifd, buf, 8192))) write(ofd, buf, nbytes);
 	  CLOSE(ifd, filename);
 	  CLOSE(ofd, new_file);
 	  FREE(buf);
@@ -6050,12 +6038,12 @@ int mus_header_change_format(const char *filename, int type, int new_format)
     case MUS_NEXT:
       lseek(fd, 12L, SEEK_SET);
       mus_bint_to_char((unsigned char *)hdrbuf, sndlib_format_to_next(new_format));
-      CHK_WRITE(fd, hdrbuf, 4);
+      header_write(fd, hdrbuf, 4);
       break;
     case MUS_IRCAM:
       lseek(fd, 12L, SEEK_SET);
       mus_bint_to_char((unsigned char *)hdrbuf, sndlib_format_to_ircam(new_format));
-      CHK_WRITE(fd, hdrbuf, 4);
+      header_write(fd, hdrbuf, 4);
       break;
     case MUS_NIST:
       lseek(fd, 0L, SEEK_SET);
@@ -6067,7 +6055,7 @@ int mus_header_change_format(const char *filename, int type, int new_format)
       lseek(fd, update_frames_location, SEEK_SET);
       mus_bint_to_char((unsigned char *)hdrbuf, old_bytes / (chans * mus_bytes_per_sample(new_format)));
       mus_bshort_to_char((unsigned char *)(hdrbuf + 4), sndlib_format_to_aiff_bits(new_format));
-      CHK_WRITE(fd, hdrbuf, 6);
+      header_write(fd, hdrbuf, 6);
       if (header_type == MUS_AIFC)
 	{
 	  const char *str;
@@ -6077,7 +6065,7 @@ int mus_header_change_format(const char *filename, int type, int new_format)
 	  (*(unsigned char *)(hdrbuf + 4)) = 4; /* final pad null not accounted-for */
 	  write_four_chars((unsigned char *)(hdrbuf + 5), (const unsigned char *)str);
 	  (*(unsigned char *)(hdrbuf + 9)) = 0;
-	  CHK_WRITE(fd, hdrbuf, 10);
+	  header_write(fd, hdrbuf, 10);
 	}
       break;
     case MUS_RIFF:
@@ -6086,7 +6074,7 @@ int mus_header_change_format(const char *filename, int type, int new_format)
       if (little_endian)
 	mus_lshort_to_char((unsigned char *)hdrbuf, sndlib_format_to_aiff_bits(new_format));
       else mus_bshort_to_char((unsigned char *)hdrbuf, sndlib_format_to_aiff_bits(new_format));
-      CHK_WRITE(fd, hdrbuf, 2);
+      header_write(fd, hdrbuf, 2);
       lseek(fd, update_frames_location + 10, SEEK_SET);
       switch (new_format)
 	{
@@ -6109,7 +6097,7 @@ int mus_header_change_format(const char *filename, int type, int new_format)
       if (little_endian)
 	mus_lshort_to_char((unsigned char *)hdrbuf, new_format);
       else mus_bshort_to_char((unsigned char *)hdrbuf, new_format);
-      CHK_WRITE(fd, hdrbuf, 2);
+      header_write(fd, hdrbuf, 2);
       break;
     }
   CLOSE(fd, filename);
@@ -6127,7 +6115,7 @@ int mus_header_change_location(const char *filename, int type, off_t new_locatio
     {
       lseek(fd, 4L, SEEK_SET);
       mus_bint_to_char((unsigned char *)hdrbuf, new_location);
-      CHK_WRITE(fd, hdrbuf, 4);
+      header_write(fd, hdrbuf, 4);
     }
   CLOSE(fd, filename);
   return(err);
@@ -6178,13 +6166,13 @@ int mus_header_change_comment(const char *filename, int type, char *new_comment)
 	  new_file = (char *)CALLOC(strlen(filename) + 5, sizeof(char));
 	  sprintf(new_file, "%s.tmp", filename);
 	  loc = mus_header_data_location();
-	  mus_header_write(new_file, header_type, srate, chans, loc, data_size, data_format, new_comment, (new_comment) ? strlen(new_comment) : 0);
+	  mus_write_header(new_file, header_type, srate, chans, data_size, data_format, new_comment);
 	  ifd = mus_file_open_read(filename);
 	  lseek(ifd, loc, SEEK_SET);
 	  ofd = mus_file_reopen_write(new_file);
 	  lseek(ofd, 0L, SEEK_END);
 	  buf = (char *)CALLOC(8192, sizeof(char));
-	  while ((nbytes = read(ifd, buf, 8192))) CHK_WRITE(ofd, buf, nbytes);
+	  while ((nbytes = read(ifd, buf, 8192))) write(ofd, buf, nbytes);
 	  CLOSE(ifd, filename);
 	  CLOSE(ofd, new_file);
 	  FREE(buf);

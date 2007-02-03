@@ -739,7 +739,7 @@ void move_selection(chan_info *cp, int x)
 io_error_t save_selection(const char *ofile, int type, int format, int srate, const char *comment, int chan)
 {
   /* type and format have already been checked */
-  int ofd, comlen, bps;
+  int ofd, bps;
   io_error_t io_err = IO_NO_ERROR;
   bool reporting = false;
   off_t oloc;
@@ -752,12 +752,11 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
   mus_sample_t **data;
   si = selection_sync();
   if ((si) && (si->cps) && (si->cps[0])) sp = si->cps[0]->sound;
-  comlen = snd_strlen(comment);
   dur = selection_len();
   if (chan == SAVE_ALL_CHANS)
     chans = si->chans;
   else chans = 1;
-  io_err = snd_write_header(ofile, type, srate, chans, chans * dur, format, comment, comlen, NULL);
+  io_err = snd_write_header(ofile, type, srate, chans, chans * dur, format, comment, NULL);
   ASSERT_IO_ERROR(io_err, "snd_write_header in save_selection");
   if (io_err != IO_NO_ERROR)
     {

@@ -771,26 +771,31 @@ static void deferred_region_to_temp_file(region *r)
        * copy len*data-size bytes
        * get max from amp envs
        */
-      off_t data_size, bytes;
+      off_t bytes, err;
       int fdi, fdo;
       char *buffer;
       mus_sample_t ymax = MUS_SAMPLE_0;
       env_info *ep;
       datumb = mus_bytes_per_sample(sp0->hdr->format);
-      data_size = drp->len * r->chans * datumb;
-      fdo = mus_file_create(r->filename);
-      if (fdo == -1)
+
+      err = mus_write_header(r->filename, MUS_NEXT, r->srate, r->chans, drp->len * r->chans, sp0->hdr->format, "region deferred temp");
+      if (err != MUS_NO_ERROR)
 	snd_error(_("can't write region temp file %s: %s"), r->filename, snd_io_strerror());
       else
 	{
-	  mus_header_write_next_header(fdo, r->srate, r->chans, 28, data_size, sp0->hdr->format, "region deferred temp", 20);
+	  off_t oloc;
+	  oloc = mus_header_data_location();
+	  fdo = snd_reopen_write(r->filename);
+	  lseek(fdo, oloc, SEEK_SET);
 	  fdi = mus_file_open_read(sp0->filename);
 	  if (fdi == -1)
 	    snd_error(_("can't read region's original sound? %s: %s"), sp0->filename, snd_io_strerror());
 	  else
 	    {
+	      off_t data_size;
 	      lseek(fdi, sp0->hdr->data_location + r->chans * datumb * r->begs[0], SEEK_SET);
 	      buffer = (char *)CALLOC(MAX_BUFFER_SIZE, sizeof(char));
+	      data_size = drp->len * r->chans * datumb;
 	      for (j = 0; j < data_size; j += MAX_BUFFER_SIZE)
 		{
 		  size_t n;
@@ -1133,15 +1138,14 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 {
   region *r;
   off_t oloc, iloc, ioff, frames, cursamples;
-  int ofd, ifd, chans, i, comlen, err = 0;
+  int ofd, ifd, chans, i, err = 0;
   mus_sample_t **bufs;
   io_error_t io_err = IO_NO_ERROR;
 
   r = id_to_region(rg);
   if (r->use_temp_file == REGION_DEFERRED) 
     deferred_region_to_temp_file(r);
-  comlen = snd_strlen(comment);
-  io_err = snd_write_header(name, type, region_srate(rg), r->chans, r->chans * r->frames, format, comment, comlen, NULL);
+  io_err = snd_write_header(name, type, region_srate(rg), r->chans, r->chans * r->frames, format, comment, NULL);
   if (io_err == IO_NO_ERROR)
     {
       oloc = mus_header_data_location();

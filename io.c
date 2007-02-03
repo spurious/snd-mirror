@@ -1,19 +1,3 @@
-/* IO handlers */
-/*
- * --------------------------------
- * int mus_file_read(int fd, int beg, int end, int chans, mus_sample_t **bufs)
- * int mus_file_write(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
- * int mus_file_open_read(const char *arg) 
- * int mus_file_open_write(const char *arg)
- * int mus_file_create(const char *arg)
- * int mus_file_reopen_write(const char *arg)
- * int mus_file_close(int fd)
- * bool mus_file_probe(const char *arg)
- * char *mus_format(const char *format, ...)
- * off_t mus_file_seek_frame(int tfd, off_t frame)
- * --------------------------------
- */
-
 #include <mus-config.h>
 
 #if USE_SND
@@ -44,10 +28,6 @@
 #include <stdarg.h>
 
 #include "_sndlib.h"
-
-/* data translations for big/little endian machines
- *   the m_* forms are macros where possible for speed (dating back to 1991 -- probably not needed)
- */
 
 void mus_bint_to_char(unsigned char *j, int x)
 {
@@ -353,97 +333,109 @@ void mus_loff_t_to_char(unsigned char *j, off_t x)
 #if MUS_LITTLE_ENDIAN
 
   #if HAVE_BYTESWAP_H
-    #define m_big_endian_short(n)                  ((short)(bswap_16((*((unsigned short *)n)))))
-    #define m_big_endian_int(n)                    ((int)(bswap_32((*((unsigned int *)n)))))
-    #define m_big_endian_unsigned_short(n)         ((unsigned short)(bswap_16((*((unsigned short *)n)))))
+    #define big_endian_short(n)                  ((short)(bswap_16((*((unsigned short *)n)))))
+    #define big_endian_int(n)                    ((int)(bswap_32((*((unsigned int *)n)))))
+    #define big_endian_unsigned_short(n)         ((unsigned short)(bswap_16((*((unsigned short *)n)))))
   #else
-    #define m_big_endian_short(n)                  (mus_char_to_bshort(n))
-    #define m_big_endian_int(n)                    (mus_char_to_bint(n))
-    #define m_big_endian_unsigned_short(n)         (mus_char_to_ubshort(n))
+    #define big_endian_short(n)                  (mus_char_to_bshort(n))
+    #define big_endian_int(n)                    (mus_char_to_bint(n))
+    #define big_endian_unsigned_short(n)         (mus_char_to_ubshort(n))
   #endif
-  #define m_big_endian_float(n)                    (mus_char_to_bfloat(n))
-  #define m_big_endian_double(n)                   (mus_char_to_bdouble(n))
 
-  #define m_little_endian_short(n)                 (*((short *)n))
-  #define m_little_endian_int(n)                   (*((int *)n))
-  #define m_little_endian_float(n)                 (*((float *)n))
-  #define m_little_endian_double(n)                (*((double *)n))
-  #define m_little_endian_unsigned_short(n)        (*((unsigned short *)n))
+  #define big_endian_float(n)                    (mus_char_to_bfloat(n))
+  #define big_endian_double(n)                   (mus_char_to_bdouble(n))
+
+  #define little_endian_short(n)                 (*((short *)n))
+  #define little_endian_int(n)                   (*((int *)n))
+  #define little_endian_float(n)                 (*((float *)n))
+  #define little_endian_double(n)                (*((double *)n))
+  #define little_endian_unsigned_short(n)        (*((unsigned short *)n))
 
   #if HAVE_BYTESWAP_H
-    #define m_set_big_endian_short(n, x)           (*((short *)n)) = ((short)(bswap_16(x)))
-    #define m_set_big_endian_int(n, x)             (*((int *)n)) = ((int)(bswap_32(x)))
-    #define m_set_big_endian_unsigned_short(n, x)  (*((unsigned short *)n)) = ((unsigned short)(bswap_16(x)))
+    #define set_big_endian_short(n, x)           (*((short *)n)) = ((short)(bswap_16(x)))
+    #define set_big_endian_int(n, x)             (*((int *)n)) = ((int)(bswap_32(x)))
+    #define set_big_endian_unsigned_short(n, x)  (*((unsigned short *)n)) = ((unsigned short)(bswap_16(x)))
   #else
-    #define m_set_big_endian_short(n, x)           mus_bshort_to_char(n, x)
-    #define m_set_big_endian_int(n, x)             mus_bint_to_char(n, x)
-    #define m_set_big_endian_unsigned_short(n, x)  mus_ubshort_to_char(n, x)
+    #define set_big_endian_short(n, x)           mus_bshort_to_char(n, x)
+    #define set_big_endian_int(n, x)             mus_bint_to_char(n, x)
+    #define set_big_endian_unsigned_short(n, x)  mus_ubshort_to_char(n, x)
   #endif
-  #define m_set_big_endian_float(n, x)             mus_bfloat_to_char(n, x)
-  #define m_set_big_endian_double(n, x)            mus_bdouble_to_char(n, x)
 
-  #define m_set_little_endian_short(n, x)          (*((short *)n)) = x
-  #define m_set_little_endian_int(n, x)            (*((int *)n)) = x
-  #define m_set_little_endian_float(n, x)          (*((float *)n)) = x
-  #define m_set_little_endian_double(n, x)         (*((double *)n)) = x
-  #define m_set_little_endian_unsigned_short(n, x) (*((unsigned short *)n)) = x
+  #define set_big_endian_float(n, x)             mus_bfloat_to_char(n, x)
+  #define set_big_endian_double(n, x)            mus_bdouble_to_char(n, x)
+
+  #define set_little_endian_short(n, x)          (*((short *)n)) = x
+  #define set_little_endian_int(n, x)            (*((int *)n)) = x
+  #define set_little_endian_float(n, x)          (*((float *)n)) = x
+  #define set_little_endian_double(n, x)         (*((double *)n)) = x
+  #define set_little_endian_unsigned_short(n, x) (*((unsigned short *)n)) = x
 
 #else
 
+/* TODO: is this special case still needed on the Sun? */
+
   #ifndef MUS_SUN
-    #define m_big_endian_short(n)                  (*((short *)n))
-    #define m_big_endian_int(n)                    (*((int *)n))
-    #define m_big_endian_float(n)                  (*((float *)n))
-    #define m_big_endian_double(n)                 (*((double *)n))
-    #define m_big_endian_unsigned_short(n)         (*((unsigned short *)n))
+    #define big_endian_short(n)                  (*((short *)n))
+    #define big_endian_int(n)                    (*((int *)n))
+    #define big_endian_float(n)                  (*((float *)n))
+    #define big_endian_double(n)                 (*((double *)n))
+    #define big_endian_unsigned_short(n)         (*((unsigned short *)n))
 
-    #define m_set_big_endian_short(n, x)           (*((short *)n)) = x
-    #define m_set_big_endian_int(n, x)             (*((int *)n)) = x
-    #define m_set_big_endian_float(n, x)           (*((float *)n)) = x
-    #define m_set_big_endian_double(n, x)          (*((double *)n)) = x
-    #define m_set_big_endian_unsigned_short(n, x)  (*((unsigned short *)n)) = x
+    #define set_big_endian_short(n, x)           (*((short *)n)) = x
+    #define set_big_endian_int(n, x)             (*((int *)n)) = x
+    #define set_big_endian_float(n, x)           (*((float *)n)) = x
+    #define set_big_endian_double(n, x)          (*((double *)n)) = x
+    #define set_big_endian_unsigned_short(n, x)  (*((unsigned short *)n)) = x
   #else
-    #define m_big_endian_short(n)                  (mus_char_to_bshort(n))
-    #define m_big_endian_int(n)                    (mus_char_to_bint(n))
-    #define m_big_endian_float(n)                  (mus_char_to_bfloat(n))
-    #define m_big_endian_double(n)                 (mus_char_to_bdouble(n))
-    #define m_big_endian_unsigned_short(n)         (mus_char_to_ubshort(n))
+    #define big_endian_short(n)                  (mus_char_to_bshort(n))
+    #define big_endian_int(n)                    (mus_char_to_bint(n))
+    #define big_endian_float(n)                  (mus_char_to_bfloat(n))
+    #define big_endian_double(n)                 (mus_char_to_bdouble(n))
+    #define big_endian_unsigned_short(n)         (mus_char_to_ubshort(n))
 
-    #define m_set_big_endian_short(n, x)           mus_bshort_to_char(n, x)
-    #define m_set_big_endian_int(n, x)             mus_bint_to_char(n, x)
-    #define m_set_big_endian_float(n, x)           mus_bfloat_to_char(n, x)
-    #define m_set_big_endian_double(n, x)          mus_bdouble_to_char(n, x)
-    #define m_set_big_endian_unsigned_short(n, x)  mus_ubshort_to_char(n, x)
+    #define set_big_endian_short(n, x)           mus_bshort_to_char(n, x)
+    #define set_big_endian_int(n, x)             mus_bint_to_char(n, x)
+    #define set_big_endian_float(n, x)           mus_bfloat_to_char(n, x)
+    #define set_big_endian_double(n, x)          mus_bdouble_to_char(n, x)
+    #define set_big_endian_unsigned_short(n, x)  mus_ubshort_to_char(n, x)
   #endif
 
   #if HAVE_BYTESWAP_H
-    #define m_little_endian_short(n)               ((short)(bswap_16((*((unsigned short *)n)))))
-    #define m_little_endian_int(n)                 ((int)(bswap_32((*((unsigned int *)n)))))
-    #define m_little_endian_unsigned_short(n)      ((unsigned short)(bswap_16((*((unsigned short *)n)))))
+    #define little_endian_short(n)               ((short)(bswap_16((*((unsigned short *)n)))))
+    #define little_endian_int(n)                 ((int)(bswap_32((*((unsigned int *)n)))))
+    #define little_endian_unsigned_short(n)      ((unsigned short)(bswap_16((*((unsigned short *)n)))))
   #else
-    #define m_little_endian_short(n)               (mus_char_to_lshort(n))
-    #define m_little_endian_int(n)                 (mus_char_to_lint(n))
-    #define m_little_endian_unsigned_short(n)      (mus_char_to_ulshort(n))
+    #define little_endian_short(n)               (mus_char_to_lshort(n))
+    #define little_endian_int(n)                 (mus_char_to_lint(n))
+    #define little_endian_unsigned_short(n)      (mus_char_to_ulshort(n))
   #endif
-  #define m_little_endian_float(n)                 (mus_char_to_lfloat(n))
-  #define m_little_endian_double(n)                (mus_char_to_ldouble(n))
+  #define little_endian_float(n)                 (mus_char_to_lfloat(n))
+  #define little_endian_double(n)                (mus_char_to_ldouble(n))
 
   #if HAVE_BYTESWAP_H
-    #define m_set_little_endian_short(n, x)        (*((short *)n)) = ((short)(bswap_16(x)))
-    #define m_set_little_endian_int(n, x)          (*((int *)n)) = ((int)(bswap_32(x)))
-    #define m_set_little_endian_unsigned_short(n, x) (*((unsigned short *)n)) = ((unsigned short)(bswap_16(x)))
+    #define set_little_endian_short(n, x)        (*((short *)n)) = ((short)(bswap_16(x)))
+    #define set_little_endian_int(n, x)          (*((int *)n)) = ((int)(bswap_32(x)))
+    #define set_little_endian_unsigned_short(n, x) (*((unsigned short *)n)) = ((unsigned short)(bswap_16(x)))
   #else
-    #define m_set_little_endian_short(n, x)        mus_lshort_to_char(n, x)
-    #define m_set_little_endian_int(n, x)          mus_lint_to_char(n, x)
-    #define m_set_little_endian_unsigned_short(n, x) mus_ulshort_to_char(n, x)
+    #define set_little_endian_short(n, x)        mus_lshort_to_char(n, x)
+    #define set_little_endian_int(n, x)          mus_lint_to_char(n, x)
+    #define set_little_endian_unsigned_short(n, x) mus_ulshort_to_char(n, x)
   #endif
-  #define m_set_little_endian_float(n, x)          mus_lfloat_to_char(n, x)
-  #define m_set_little_endian_double(n, x)         mus_ldouble_to_char(n, x)
+  #define set_little_endian_float(n, x)          mus_lfloat_to_char(n, x)
+  #define set_little_endian_double(n, x)         mus_ldouble_to_char(n, x)
 
 #endif
 
 
 /* ---------------- file descriptors ---------------- */
+
+static bool clipping_default = false;
+bool mus_clipping(void) {return(clipping_default);}
+bool mus_set_clipping(bool new_value) {clipping_default = new_value; return(new_value);}
+
+static Float prescaler_default = 1.0;
+Float mus_prescaler(void) {return(prescaler_default);}
+Float mus_set_prescaler(Float new_value) {prescaler_default = new_value; return(new_value);}
 
 typedef struct {
   char *name;
@@ -456,13 +448,6 @@ typedef struct {
 static int io_fd_size = 0;
 static io_fd **io_fds = NULL;
 #define IO_FD_ALLOC_SIZE 8
-static bool clipping_default = false;
-static Float prescaler_default = 1.0;
-
-bool mus_clipping(void) {return(clipping_default);}
-bool mus_set_clipping(bool new_value) {clipping_default = new_value; return(new_value);}
-Float mus_prescaler(void) {return(prescaler_default);}
-Float mus_set_prescaler(Float new_value) {prescaler_default = new_value; return(new_value);}
 
 int mus_file_open_descriptors(int tfd, const char *name, int format, int size /* datum size */, off_t location, int chans, int type)
 {
@@ -906,27 +891,27 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
 		    {
 		    case MUS_BSHORT:               
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = MUS_SHORT_TO_SAMPLE(m_big_endian_short(jchar)); 
+			buffer[loc] = MUS_SHORT_TO_SAMPLE(big_endian_short(jchar)); 
 		      break;
 		    case MUS_LSHORT: 
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = MUS_SHORT_TO_SAMPLE(m_little_endian_short(jchar)); 
+			buffer[loc] = MUS_SHORT_TO_SAMPLE(little_endian_short(jchar)); 
 		      break;
 		    case MUS_BINT:              
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = MUS_INT_TO_SAMPLE(m_big_endian_int(jchar)); 
+			buffer[loc] = MUS_INT_TO_SAMPLE(big_endian_int(jchar)); 
 		      break;
 		    case MUS_LINT: 
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = MUS_INT_TO_SAMPLE(m_little_endian_int(jchar)); 
+			buffer[loc] = MUS_INT_TO_SAMPLE(little_endian_int(jchar)); 
 		      break;
 		    case MUS_BINTN:              
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = MUS_INT_TO_SAMPLE((m_big_endian_int(jchar) >> (32 - MUS_SAMPLE_BITS)));
+			buffer[loc] = MUS_INT_TO_SAMPLE((big_endian_int(jchar) >> (32 - MUS_SAMPLE_BITS)));
 		      break;
 		    case MUS_LINTN: 
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = MUS_INT_TO_SAMPLE((m_little_endian_int(jchar) >> (32 - MUS_SAMPLE_BITS)));
+			buffer[loc] = MUS_INT_TO_SAMPLE((little_endian_int(jchar) >> (32 - MUS_SAMPLE_BITS)));
 		      break;
 		    case MUS_MULAW:  	              
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
@@ -948,57 +933,57 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
 		      if (prescaling == 1.0)
 			{
 			  for (; loc < loclim; loc++, jchar += siz_chans) 
-			    buffer[loc] = (mus_sample_t) (m_big_endian_float(jchar));
+			    buffer[loc] = (mus_sample_t) (big_endian_float(jchar));
 			}
 		      else
 			{
 			  for (; loc < loclim; loc++, jchar += siz_chans) 
-			    buffer[loc] = (mus_sample_t) (prescaling * (m_big_endian_float(jchar)));
+			    buffer[loc] = (mus_sample_t) (prescaling * (big_endian_float(jchar)));
 			}
 		      break;
 		    case MUS_BFLOAT_UNSCALED:
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = (mus_sample_t) (MUS_SAMPLE_UNSCALED(m_big_endian_float(jchar)));
+			buffer[loc] = (mus_sample_t) (MUS_SAMPLE_UNSCALED(big_endian_float(jchar)));
 		      break;
 		    case MUS_BDOUBLE:   
 		      for (; loc < loclim; loc++, jchar += siz_chans)
-			buffer[loc] = (mus_sample_t) (prescaling * (m_big_endian_double(jchar)));
+			buffer[loc] = (mus_sample_t) (prescaling * (big_endian_double(jchar)));
 		      break;
 		    case MUS_BDOUBLE_UNSCALED:   
 		      for (; loc < loclim; loc++, jchar += siz_chans)
-			buffer[loc] = (mus_sample_t) (MUS_SAMPLE_UNSCALED(m_big_endian_double(jchar)));
+			buffer[loc] = (mus_sample_t) (MUS_SAMPLE_UNSCALED(big_endian_double(jchar)));
 		      break;
 		    case MUS_LFLOAT:
 		      if (prescaling == 1.0)
 			{
 			  for (; loc < loclim; loc++, jchar += siz_chans) 
-			    buffer[loc] = (mus_sample_t) (m_little_endian_float(jchar));
+			    buffer[loc] = (mus_sample_t) (little_endian_float(jchar));
 			}
 		      else
 			{
 			  for (; loc < loclim; loc++, jchar += siz_chans) 
-			    buffer[loc] = (mus_sample_t) (prescaling * (m_little_endian_float(jchar)));
+			    buffer[loc] = (mus_sample_t) (prescaling * (little_endian_float(jchar)));
 			}
 		      break;
 		    case MUS_LFLOAT_UNSCALED:    
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = (mus_sample_t) (MUS_SAMPLE_UNSCALED(m_little_endian_float(jchar)));
+			buffer[loc] = (mus_sample_t) (MUS_SAMPLE_UNSCALED(little_endian_float(jchar)));
 		      break;
 		    case MUS_LDOUBLE:   
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = (mus_sample_t) (prescaling * (m_little_endian_double(jchar)));
+			buffer[loc] = (mus_sample_t) (prescaling * (little_endian_double(jchar)));
 		      break;
 		    case MUS_LDOUBLE_UNSCALED:   
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = (mus_sample_t) (MUS_SAMPLE_UNSCALED(m_little_endian_double(jchar)));
+			buffer[loc] = (mus_sample_t) (MUS_SAMPLE_UNSCALED(little_endian_double(jchar)));
 		      break;
 		    case MUS_UBSHORT:   
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = MUS_SHORT_TO_SAMPLE((int)(m_big_endian_unsigned_short(jchar)) - 32768);
+			buffer[loc] = MUS_SHORT_TO_SAMPLE((int)(big_endian_unsigned_short(jchar)) - 32768);
 		      break;
 		    case MUS_ULSHORT:   
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = MUS_SHORT_TO_SAMPLE((int)(m_little_endian_unsigned_short(jchar)) - 32768);
+			buffer[loc] = MUS_SHORT_TO_SAMPLE((int)(little_endian_unsigned_short(jchar)) - 32768);
 		      break;
 		    case MUS_B24INT:
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
@@ -1038,7 +1023,7 @@ int mus_file_read_buffer(int charbuf_data_format, int beg, int chans, int nints,
 
 int mus_file_read(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
 {
-  int num, rtn, i, k;
+  int num, rtn, k;
   num = (end - beg + 1);
   rtn = mus_read_any_1(tfd, beg, chans, num, bufs, NULL, NULL);
   if (rtn == MUS_ERROR) return(MUS_ERROR);
@@ -1046,6 +1031,7 @@ int mus_file_read(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
     /* this zeroing can be fooled if the file is chunked and has trailing, non-data chunks */
     for (k = 0; k < chans; k++)
       {
+	int i;
 	mus_sample_t *buffer;
 	buffer = bufs[k];
 	i = rtn + beg;
@@ -1058,7 +1044,7 @@ int mus_file_read(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
 int mus_file_read_chans(int tfd, int beg, int end, int chans, mus_sample_t **bufs, mus_sample_t **cm)
 {
   /* an optimization of mus_file_read -- just reads the desired channels */
-  int num, rtn, i, k;
+  int num, rtn, k;
   num = (end - beg + 1);
   rtn = mus_read_any_1(tfd, beg, chans, num, bufs, cm, NULL);
   if (rtn == MUS_ERROR) return(MUS_ERROR);
@@ -1066,6 +1052,7 @@ int mus_file_read_chans(int tfd, int beg, int end, int chans, mus_sample_t **buf
     for (k = 0; k < chans; k++)
       if ((cm == NULL) || (cm[k]))
 	{
+	  int i;
 	  mus_sample_t *buffer;
 	  buffer = bufs[k];
 	  i = rtn + beg;
@@ -1203,27 +1190,27 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
 	    {
 	    case MUS_BSHORT: 
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		m_set_big_endian_short(jchar, MUS_SAMPLE_TO_SHORT(buffer[loc]));
+		set_big_endian_short(jchar, MUS_SAMPLE_TO_SHORT(buffer[loc]));
 	      break;
 	    case MUS_LSHORT:   
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		m_set_little_endian_short(jchar, MUS_SAMPLE_TO_SHORT(buffer[loc]));
+		set_little_endian_short(jchar, MUS_SAMPLE_TO_SHORT(buffer[loc]));
 	      break;
 	    case MUS_BINT:   
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		m_set_big_endian_int(jchar, MUS_SAMPLE_TO_INT(buffer[loc]));
+		set_big_endian_int(jchar, MUS_SAMPLE_TO_INT(buffer[loc]));
 	      break;
 	    case MUS_LINT:   
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		m_set_little_endian_int(jchar, MUS_SAMPLE_TO_INT(buffer[loc]));
+		set_little_endian_int(jchar, MUS_SAMPLE_TO_INT(buffer[loc]));
 	      break;
 	    case MUS_BINTN:   
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		m_set_big_endian_int(jchar, MUS_SAMPLE_TO_INT(buffer[loc]) << (32 - MUS_SAMPLE_BITS));
+		set_big_endian_int(jchar, MUS_SAMPLE_TO_INT(buffer[loc]) << (32 - MUS_SAMPLE_BITS));
 	      break;
 	    case MUS_LINTN:   
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		m_set_little_endian_int(jchar, MUS_SAMPLE_TO_INT(buffer[loc]) << (32 - MUS_SAMPLE_BITS));
+		set_little_endian_int(jchar, MUS_SAMPLE_TO_INT(buffer[loc]) << (32 - MUS_SAMPLE_BITS));
 	      break;
 	    case MUS_MULAW:     
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
@@ -1243,43 +1230,43 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
 	      break;
 	    case MUS_BFLOAT:    
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		m_set_big_endian_float(jchar, MUS_SAMPLE_TO_FLOAT(buffer[loc]));
+		set_big_endian_float(jchar, MUS_SAMPLE_TO_FLOAT(buffer[loc]));
 	      break;
 	    case MUS_LFLOAT:    
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		m_set_little_endian_float(jchar, MUS_SAMPLE_TO_FLOAT(buffer[loc]));
+		set_little_endian_float(jchar, MUS_SAMPLE_TO_FLOAT(buffer[loc]));
 	      break;
 	    case MUS_BDOUBLE:
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		m_set_big_endian_double(jchar, MUS_SAMPLE_TO_DOUBLE(buffer[loc]));
+		set_big_endian_double(jchar, MUS_SAMPLE_TO_DOUBLE(buffer[loc]));
 	      break;
 	    case MUS_LDOUBLE:   
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		m_set_little_endian_double(jchar, MUS_SAMPLE_TO_DOUBLE(buffer[loc]));
+		set_little_endian_double(jchar, MUS_SAMPLE_TO_DOUBLE(buffer[loc]));
 	      break;
 	    case MUS_BFLOAT_UNSCALED:    
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		m_set_big_endian_float(jchar, 32768.0 * MUS_SAMPLE_TO_FLOAT(buffer[loc]));
+		set_big_endian_float(jchar, 32768.0 * MUS_SAMPLE_TO_FLOAT(buffer[loc]));
 	      break;
 	    case MUS_LFLOAT_UNSCALED:    
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		m_set_little_endian_float(jchar, 32768.0 * MUS_SAMPLE_TO_FLOAT(buffer[loc]));
+		set_little_endian_float(jchar, 32768.0 * MUS_SAMPLE_TO_FLOAT(buffer[loc]));
 	      break;
 	    case MUS_BDOUBLE_UNSCALED:
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		m_set_big_endian_double(jchar, 32768.0 * MUS_SAMPLE_TO_DOUBLE(buffer[loc]));
+		set_big_endian_double(jchar, 32768.0 * MUS_SAMPLE_TO_DOUBLE(buffer[loc]));
 	      break;
 	    case MUS_LDOUBLE_UNSCALED:   
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		m_set_little_endian_double(jchar, 32768.0 * MUS_SAMPLE_TO_DOUBLE(buffer[loc]));
+		set_little_endian_double(jchar, 32768.0 * MUS_SAMPLE_TO_DOUBLE(buffer[loc]));
 	      break;
 	    case MUS_UBSHORT: 
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		m_set_big_endian_unsigned_short(jchar, (unsigned short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + 32768));
+		set_big_endian_unsigned_short(jchar, (unsigned short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + 32768));
 	      break;
 	    case MUS_ULSHORT: 
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		m_set_little_endian_unsigned_short(jchar, (unsigned short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + 32768));
+		set_little_endian_unsigned_short(jchar, (unsigned short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + 32768));
 	      break;
 	    case MUS_B24INT:   
 	      bk = (k * 3);

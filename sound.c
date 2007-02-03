@@ -1,5 +1,3 @@
-/* sound.c */
-
 #include <mus-config.h>
 
 #if USE_SND
@@ -121,7 +119,8 @@ static const char *mus_initial_error_names[MUS_INITIAL_ERROR_TAG] = {
 
   "no channels method", "no hop method", "no width method", "no file-name method", "no ramp method", "no run method",
   "no increment method", "no offset method",
-  "no xcoeff method", "no ycoeff method", "no xcoeffs method", "no ycoeffs method", "no reset", "bad size", "can't convert"
+  "no xcoeff method", "no ycoeff method", "no xcoeffs method", "no ycoeffs method", "no reset", "bad size", "can't convert",
+  "read error"
 };
 
 static char **mus_error_names = NULL;
@@ -661,11 +660,11 @@ void mus_sound_set_loop_info(const char *arg, int *loop)
     }
 }
 
-char *mus_sound_comment(const char *name)
+unsigned char *mus_sound_comment(const char *name)
 {
   off_t start, end, len;
   int fd, full_len; /* comment string lengths */
-  char *sc = NULL, *auxcom;
+  unsigned char *sc = NULL, *auxcom;
   sound_file *sf = NULL;
   sf = getsf(name); 
   if (sf == NULL) return(NULL);
@@ -697,7 +696,7 @@ char *mus_sound_comment(const char *name)
       fd = mus_file_open_read(name);
       if (fd == -1) return(NULL);
       lseek(fd, start, SEEK_SET);
-      sc = (char *)CALLOC(len + 1, sizeof(char));
+      sc = (unsigned char *)CALLOC(len + 1, sizeof(unsigned char));
       bytes = read(fd, sc, len);
       CLOSE(fd, name);
       if (((mus_sound_header_type(name) == MUS_AIFF) || 
@@ -711,7 +710,7 @@ char *mus_sound_comment(const char *name)
 	  if (auxcom)
 	    {
 	      full_len = strlen(auxcom) + strlen(sc) + 2;
-	      sc = (char *)REALLOC(sc, full_len * sizeof(char));
+	      sc = (unsigned char *)REALLOC(sc, full_len * sizeof(unsigned char));
 	      strcat(sc, "\n");
 	      strcat(sc, auxcom);
 	    }
@@ -744,11 +743,10 @@ int mus_sound_open_input(const char *arg)
 
 int mus_sound_open_output(const char *arg, int srate, int chans, int data_format, int header_type, const char *comment)
 {
-  int fd = MUS_ERROR, err, comlen = 0;
-  if (comment) comlen = strlen(comment);
+  int fd = MUS_ERROR, err;
   mus_sound_initialize();
   mus_sound_forget(arg);
-  err = mus_header_write(arg, header_type, srate, chans, 0, 0, data_format, comment, comlen);
+  err = mus_write_header(arg, header_type, srate, chans, 0, data_format, comment);
   if (err != MUS_ERROR)
     {
       fd = mus_file_open_write(arg);
@@ -1011,23 +1009,24 @@ char *mus_array_to_file_with_error(const char *filename, mus_sample_t *ddata, in
   /* put ddata into a sound file, taking byte order into account */
   /* assume ddata is interleaved already if more than one channel */
   int fd, err = MUS_NO_ERROR;
+  off_t oloc;
   mus_sample_t *bufs[1];
   mus_sound_forget(filename);
-  fd = mus_file_create(filename);
-  if (fd == -1) 
+
+  err = mus_write_header(filename, MUS_NEXT, srate, channels, len * channels, MUS_OUT_FORMAT, NULL);
+  if (err != MUS_NO_ERROR)
     return("mus_array_to_file can't create output file");
+  oloc = mus_header_data_location();
+  fd = mus_file_reopen_write(filename);
+  lseek(fd, oloc, SEEK_SET);
   err = mus_file_open_descriptors(fd, filename,
 				  MUS_OUT_FORMAT,
 				  mus_bytes_per_sample(MUS_OUT_FORMAT),
 				  28, channels, MUS_NEXT);
   if (err != MUS_ERROR)
     {
-      err = mus_header_write_next_header(fd, srate, channels, 28, len * channels * mus_bytes_per_sample(MUS_OUT_FORMAT), MUS_OUT_FORMAT, NULL, 0);
-      if (err != MUS_ERROR)
-	{
-	  bufs[0] = ddata;
-	  err = mus_file_write(fd, 0, len - 1, 1, bufs); /* 1 = chans?? */
-	}
+      bufs[0] = ddata;
+      err = mus_file_write(fd, 0, len - 1, 1, bufs); /* 1 = chans?? */
     }
   mus_file_close(fd);
   if (err == MUS_ERROR)

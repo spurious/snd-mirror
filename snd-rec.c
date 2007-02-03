@@ -1409,8 +1409,7 @@ void recorder_start_output_file(const char *comment)
   io_error_t err;
   off_t oloc = 0;
   char *msg;
-  err = snd_write_header(rp->output_file, rp->output_header_type, rp->srate, rp->out_chans, 0 /* samples */,
-			 rp->output_data_format, comment, snd_strlen(comment), NULL);
+  err = snd_write_header(rp->output_file, rp->output_header_type, rp->srate, rp->out_chans, 0 /* samples */, rp->output_data_format, comment, NULL);
   if (err != IO_NO_ERROR)
     {
       msg = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));

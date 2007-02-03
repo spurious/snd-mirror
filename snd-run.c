@@ -9977,7 +9977,7 @@ static xen_value *mus_sound_duration_1(ptree *prog, xen_value **args, int num_ar
 static void mus_sound_comment_f(int *args, ptree *pt) 
 {
   if (STRING_RESULT) FREE(STRING_RESULT);
-  STRING_RESULT = mus_sound_comment(STRING_ARG_1);
+  STRING_RESULT = (char *)mus_sound_comment(STRING_ARG_1);
 }
 static char *descr_mus_sound_comment_f(int *args, ptree *pt)
 {

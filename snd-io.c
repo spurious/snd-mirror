@@ -502,7 +502,7 @@ int snd_file_open_descriptors(int fd, const char *name, int format, off_t locati
 }
 
 io_error_t snd_write_header(const char *name, int type, int srate, int chans,
-			    off_t samples, int format, const char *comment, int len, 
+			    off_t samples, int format, const char *comment,
 			    int *loops)
 {
   int err; /* sndlib-style error */
@@ -511,14 +511,14 @@ io_error_t snd_write_header(const char *name, int type, int srate, int chans,
   old_error_handler = mus_error_set_handler(local_mus_error_to_snd);
   mus_sound_forget(name);
   mus_header_set_aiff_loop_info(loops);
-  err = mus_header_write(name, type, srate, chans, 0, samples, format, comment, len);
+  err = mus_write_header(name, type, srate, chans, samples, format, comment);
   if (err == -1)
     {
       if (errno == EMFILE) /* 0 => no error (err not actually returned unless it's -1) */
 	{
 	  err = too_many_files_cleanup();
 	  if (err != -1) 
-	    err = mus_header_write(name, type, srate, chans, 0, samples, format, comment, len);
+	    err = mus_write_header(name, type, srate, chans, samples, format, comment);
 	  else 
 	    {
 	      mus_error_set_handler(old_error_handler);
@@ -785,8 +785,7 @@ snd_data *free_snd_data(snd_data *sd)
 int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err)
 {
   /* returns io fd */
-  int ofd, len, sl_err = MUS_NO_ERROR;
-  len = snd_strlen(hdr->comment);
+  int ofd, sl_err = MUS_NO_ERROR;
   if (!(mus_header_writable(hdr->type, hdr->format)))
     {
       hdr->type = default_output_header_type(ss);
@@ -799,7 +798,7 @@ int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err
 	  hdr->format = MUS_OUT_FORMAT;
 	}
     }
-  (*err) = snd_write_header(ofile, hdr->type, hdr->srate, chans, 0, hdr->format, hdr->comment, len, hdr->loops);
+  (*err) = snd_write_header(ofile, hdr->type, hdr->srate, chans, 0, hdr->format, hdr->comment, hdr->loops);
   if ((*err) != IO_NO_ERROR)
     {
       /* -1 as fd */
