@@ -466,7 +466,7 @@ amixer sset PCM,0 80% unmute
 amixer sset Mic,0 80%
 
 If you use 100% (meaning, give me full amplitude output), it's the same
-as 0!! 
+as 0!!  
 
 
 
@@ -645,6 +645,13 @@ sequence is tricky.
 Finally, if you installed Guile from an RPM file, you may also need
 to install the guile-devel package.  Otherwise the configure process
 will say it can't find Guile (actually guile-config).
+
+
+---- Scheme ----
+
+Don't use the gcc optimization switch -ffast-math!  It disables various
+checks for NaN's causing various math functions to fail.
+
 
 
 ---- SGI/OpenGL ----

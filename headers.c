@@ -748,6 +748,9 @@ static void write_next_comment(int fd, const char *comment, int len, int loc)
     }
 }
 
+#if SNDLIB_DISABLE_DEPRECATED
+static
+#endif
 int mus_header_write_next_header(int fd, int wsrate, int wchans, int loc, int siz, int format, const char *comment, int len)
 {
   int i, j;
@@ -5971,7 +5974,7 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 	{
 	  int ofd, ifd, nbytes;
 	  off_t loc, len = 0;
-	  char *buf = NULL;
+	  unsigned char *buf = NULL;
 	  char *new_file, *comment = NULL;
 
 	  if ((header_type == MUS_RIFF) && 
@@ -6000,8 +6003,8 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 	  lseek(ifd, loc, SEEK_SET);
 	  ofd = mus_file_reopen_write(new_file);
 	  lseek(ofd, 0L, SEEK_END);
-	  buf = (char *)CALLOC(8192, sizeof(char));
-	  while ((nbytes = read(ifd, buf, 8192))) write(ofd, buf, nbytes);
+	  buf = (unsigned char *)CALLOC(8192, sizeof(unsigned char));
+	  while ((nbytes = read(ifd, buf, 8192))) header_write(ofd, buf, nbytes);
 	  CLOSE(ifd, filename);
 	  CLOSE(ofd, new_file);
 	  FREE(buf);
@@ -6162,7 +6165,7 @@ int mus_header_change_comment(const char *filename, int type, char *new_comment)
 	  int ofd, ifd;
 	  off_t loc;
 	  int nbytes;
-	  char *buf = NULL;
+	  unsigned char *buf = NULL;
 	  new_file = (char *)CALLOC(strlen(filename) + 5, sizeof(char));
 	  sprintf(new_file, "%s.tmp", filename);
 	  loc = mus_header_data_location();
@@ -6171,8 +6174,8 @@ int mus_header_change_comment(const char *filename, int type, char *new_comment)
 	  lseek(ifd, loc, SEEK_SET);
 	  ofd = mus_file_reopen_write(new_file);
 	  lseek(ofd, 0L, SEEK_END);
-	  buf = (char *)CALLOC(8192, sizeof(char));
-	  while ((nbytes = read(ifd, buf, 8192))) write(ofd, buf, nbytes);
+	  buf = (unsigned char *)CALLOC(8192, sizeof(unsigned char));
+	  while ((nbytes = read(ifd, buf, 8192))) header_write(ofd, buf, nbytes);
 	  CLOSE(ifd, filename);
 	  CLOSE(ofd, new_file);
 	  FREE(buf);

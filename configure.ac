@@ -2082,6 +2082,7 @@ fi
 
 # -ffast-math appears to make exp about twice as fast, but slows down filtering by the same amount -- kinda strange
 #   timing tests using -O3 -ffast-math indicate an overall speedup of maybe 4-5%
+#   can't use -ffast-math in Scheme in any case because NaN handling gets screwed up
 
 
 

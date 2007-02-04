@@ -372,8 +372,6 @@ void mus_loff_t_to_char(unsigned char *j, off_t x)
 
 #else
 
-/* TODO: is this special case still needed on the Sun? */
-
   #ifndef MUS_SUN
     #define big_endian_short(n)                  (*((short *)n))
     #define big_endian_int(n)                    (*((int *)n))

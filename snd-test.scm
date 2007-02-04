@@ -4679,6 +4679,31 @@
 	    
 	    (close-sound ind))))
     
+    (let ((ind (open-sound "oboe.snd")))
+      (save-sound-as "test space.snd")
+      (close-sound ind)
+      (set! ind (open-sound "test space.snd"))
+      (if (not (string=? (short-file-name ind) "test space.snd"))
+	  (snd-display ";file name with space: ~A" (short-file-name ind)))
+      (let ((len (frames ind))
+	    (slen (mus-sound-frames "test space.snd")))
+	(if (not (= len slen)) (snd-display ";spaced filename frames: ~A ~A" len slen)))
+      (add-mark 1234 ind 0)
+      (save-marks ind) ; should write "test space.marks"
+      (close-sound ind)
+      (set! ind (open-sound "test space.snd"))
+      (load "test space.marks")
+      (if (not (find-mark 1234 ind))
+	  (snd-display ";space file name save marks: ~A" (marks ind)))
+      (let ((rd (make-readin :file "test space.snd")))
+	(if (not (string=? (mus-file-name rd) "test space.snd"))
+	    (snd-display ";file name with space readin: ~A" (mus-file-name rd))))
+      (close-sound ind)
+      (if (file-exists? "test space.snd")
+	  (delete-file "test space.snd"))
+      (if (file-exists? "test space.marks")
+      (delete-file "test space.marks")))
+
     (if (provided? 'alsa)
 	(let ((defdev (mus-alsa-device))
 	      (defplay (mus-alsa-playback-device))
@@ -13376,11 +13401,11 @@ EDITS: 2
 	   (end 1)
 	   (scl (exp (/ 4.0 (- end start))))) ; normalize it
       (map-channel (lambda (y) 
-		     (let ((val (if (and (>= x start)
-					 (<= x end))
+		     (let ((val (if (or (<= x start) ; don't divide by zero
+					(>= x end))
+				    0.0
 				    (* (exp (/ -1.0 (- x start))) 
-				       (exp (/ -1.0 (- end x))))
-				    0.0)))
+				       (exp (/ -1.0 (- end x)))))))
 		       (set! x (+ x xi))
 		       (* scl val))))))
   

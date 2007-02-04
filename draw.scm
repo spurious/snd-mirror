@@ -321,61 +321,68 @@ whenever they're in the current view."
 			     (new-len (* width 2))
 			     (data-len (if (vct? data) (vct-length data) (vct-length (car data))))
 			     (step (/ data-len width)))
-			(if (> data-len width)
-			    (begin ; the normal case -- more samples to display than pixels available
-			      (set! data0 (make-vector new-len))
-			      (set! data1 (and (not (vct? data)) (make-vector new-len)))
+
+			(if (< data-scaler 0.00000001)
+			    (begin
+			      (set! data0 (make-vector new-len y-offset))
+			      (set! data1 (and (not (vct? data)) (make-vector new-len y-offset))))
 			      
-			      ;; now subsample the data to fit the number of pixels available
-			      (let ((j 0)
-				    (max-y (- data-max))
-				    (min-y data-max)
-				    (stepper 0.0))
-				(do ((i 0 (1+ i)))
-				    ((or (= j new-len) (= i data-len)))
-				  (if data1
-				      (begin
-					(set! max-y (max max-y (vct-ref (cadr data) i)))
-					(set! min-y (min min-y (vct-ref (car data) i))))
-				      (set! max-y (max max-y (vct-ref data i))))
-				  (set! stepper (+ stepper 1.0))
-				  (if (>= stepper step)
-				      (begin
-					(vector-set! data0 j x-offset) 
-					(vector-set! data0 (+ j 1) (inexact->exact (round (- y-offset (* max-y data-scaler)))))
-					(set! max-y (- data-max))
-					(if data1
-					    (begin
-					      (vector-set! data1 j x-offset) 
-					      (vector-set! data1 (+ j 1) (inexact->exact (round (- y-offset (* min-y data-scaler)))))
-					      (set! min-y data-max)))
-					(set! x-offset (+ x-offset 1))
-					(set! stepper (- stepper step))
-					(set! j (+ j 2)))))
+			    ;; the normal case -- more samples to display than pixels available
+			    ;;   so subsample the data to fit the number of pixels available
+			    (if (> data-len width)
+				(begin 
+				  (set! data0 (make-vector new-len))
+				  (set! data1 (and (not (vct? data)) (make-vector new-len)))
+				  (let ((j 0)
+					(max-y (- data-max))
+					(min-y data-max)
+					(stepper 0.0))
+				    (do ((i 0 (1+ i)))
+					((or (= j new-len) (= i data-len)))
+				      (if data1
+					  (begin
+					    (set! max-y (max max-y (vct-ref (cadr data) i)))
+					    (set! min-y (min min-y (vct-ref (car data) i))))
+					  (set! max-y (max max-y (vct-ref data i))))
+				      (set! stepper (+ stepper 1.0))
+				      (if (>= stepper step)
+					  (begin
+					    (vector-set! data0 j x-offset) 
+					    (vector-set! data0 (+ j 1) (inexact->exact (round (- y-offset (* max-y data-scaler)))))
+					    (set! max-y (- data-max))
+					    (if data1
+						(begin
+						  (vector-set! data1 j x-offset) 
+						  (vector-set! data1 (+ j 1) (inexact->exact (round (- y-offset (* min-y data-scaler)))))
+						  (set! min-y data-max)))
+					    (set! x-offset (+ x-offset 1))
+					    (set! stepper (- stepper step))
+					    (set! j (+ j 2)))))
+				    (while (< j new-len)
+					   (vector-set! data0 j (vector-ref data0 (- j 2)))
+					   (vector-set! data0 (+ j 1) (vector-ref data0 (- j 1)))
+					   (if data1
+					       (begin
+						 (vector-set! data1 j (vector-ref data1 (- j 2)))
+						 (vector-set! data1 (+ j 1) (vector-ref data1 (- j 1)))))
+					   (set! j (+ j 2)))))
 				
-				(while (< j new-len)
-				       (vector-set! data0 j (vector-ref data0 (- j 2)))
-				       (vector-set! data0 (+ j 1) (vector-ref data0 (- j 1)))
-				       (if data1
-					   (begin
-					     (vector-set! data1 j (vector-ref data1 (- j 2)))
-					     (vector-set! data1 (+ j 1) (vector-ref data1 (- j 1)))))
-				       (set! j (+ j 2)))))
-			    (let ((xstep (/ width data-len)))
-			      ;; more pixels than samples
-			      (set! data0 (make-vector (* data-len 2)))
-			      (set! data1 (and (not (vct? data)) (make-vector (* data-len 2))))
-			      (do ((i 0 (1+ i))
-				   (j 0 (+ j 2))
-				   (xj x-offset (+ xj xstep)))
-				  ((= i data-len))
-				(vector-set! data0 j (inexact->exact (round xj)))
-				(if (not data1)
-				    (vector-set! data0 (+ j 1) (inexact->exact (round (- y-offset (* (vct-ref data i) data-scaler)))))
-				    (begin
-				      (vector-set! data0 (+ j 1) (inexact->exact (round (- y-offset (* (vct-ref (cadr data) i) data-scaler)))))
-				      (vector-set! data1 j (inexact->exact (floor xj)))
-				      (vector-set! data1 (+ j 1) (inexact->exact (round (- y-offset (* (vct-ref (car data) i) data-scaler))))))))))
+				;; more pixels than samples
+				(let ((xstep (/ width data-len)))
+				  (set! data0 (make-vector (* data-len 2)))
+				  (set! data1 (and (not (vct? data)) (make-vector (* data-len 2))))
+				  (do ((i 0 (1+ i))
+				       (j 0 (+ j 2))
+				       (xj x-offset (+ xj xstep)))
+				      ((= i data-len))
+				    (vector-set! data0 j (inexact->exact (round xj)))
+				    (if (not data1)
+					(vector-set! data0 (+ j 1) (inexact->exact (round (- y-offset (* (vct-ref data i) data-scaler)))))
+					(begin
+					  (vector-set! data0 (+ j 1) (inexact->exact (round (- y-offset (* (vct-ref (cadr data) i) data-scaler)))))
+					  (vector-set! data1 j (inexact->exact (floor xj)))
+					  (vector-set! data1 (+ j 1) (inexact->exact (round (- y-offset (* (vct-ref (car data) i) data-scaler)))))))))))
+			
 			(set! (channel-property 'inset-envelope snd chn) 
 			      (list width height (edit-position snd chn) data0 data1 y-offset)))))
 		

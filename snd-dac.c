@@ -2440,13 +2440,13 @@ before returning."
 
   if (selection_is_active())
     {
-      bool back = false;
       play_process_t background;
-#if USE_NO_GUI
-      background = NOT_IN_BACKGROUND;
-#else
+#if (!USE_NO_GUI)
+      bool back = false;
       back = (!(TO_C_BOOLEAN_OR_FALSE(wait)));
       if (back) background = IN_BACKGROUND; else background = NOT_IN_BACKGROUND;
+#else
+      background = NOT_IN_BACKGROUND;
 #endif
       play_selection_1(background, stop_proc);
       return(XEN_FALSE);

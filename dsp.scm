@@ -1761,11 +1761,11 @@ shift the given channel in pitch without changing its length.  The higher 'order
 	 (end 1)
 	 (scl (exp (/ 4.0 (- end start))))) ; normalize it
     (map-channel (lambda (y) 
-		   (let ((val (if (and (>= x start)
-				       (<= x end))
+		   (let ((val (if (or (<= x start) ; don't divide by zero
+				      (>= x end))
+				  0.0
 				  (* (exp (/ -1.0 (- x start))) 
-				     (exp (/ -1.0 (- end x))))
-				  0.0)))
+				     (exp (/ -1.0 (- end x)))))))
 		     (set! x (+ x xi))
 		     (* scl val))))))
 |#
