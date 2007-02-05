@@ -301,20 +301,22 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	   (fftlen (inexact->exact (expt 2 pow2)))
 	   (data (autocorrelate (channel->vct s0 fftlen snd chn)))
 	   (cor-peak (vct-peak data)))
-      (call-with-current-continuation
-       (lambda (return)
-	 (do ((i 1 (1+ i)))
-	     ((= i (- fftlen 2)) 0)
-	   (if (and (< (vct-ref data i) (vct-ref data (+ i 1)))
-		    (> (vct-ref data (+ i 1)) (vct-ref data (+ i 2))))
-	       (begin
-		 (let* ((logla (log10 (/ (+ cor-peak (vct-ref data i)) (* 2 cor-peak))))
-			(logca (log10 (/ (+ cor-peak (vct-ref data (+ i 1))) (* 2 cor-peak))))
-			(logra (log10 (/ (+ cor-peak (vct-ref data (+ i 2))) (* 2 cor-peak))))
-			(offset (/ (* 0.5 (- logla logra))
-				   (+ logla logra (* -2.0 logca)))))
-		   (return (/ (srate snd)
-			      (* 2 (+ i 1 offset)))))))))))))
+      (if (= cor-peak 0.0)
+	  0.0
+	  (call-with-current-continuation
+	   (lambda (return)
+	     (do ((i 1 (1+ i)))
+		 ((= i (- fftlen 2)) 0)
+	       (if (and (< (vct-ref data i) (vct-ref data (+ i 1)))
+			(> (vct-ref data (+ i 1)) (vct-ref data (+ i 2))))
+		   (begin
+		     (let* ((logla (log10 (/ (+ cor-peak (vct-ref data i)) (* 2 cor-peak))))
+			    (logca (log10 (/ (+ cor-peak (vct-ref data (+ i 1))) (* 2 cor-peak))))
+			    (logra (log10 (/ (+ cor-peak (vct-ref data (+ i 2))) (* 2 cor-peak))))
+			    (offset (/ (* 0.5 (- logla logra))
+				       (+ logla logra (* -2.0 logca)))))
+		       (return (/ (srate snd)
+				  (* 2 (+ i 1 offset))))))))))))))
 
 ;(add-hook! graph-hook 
 ;	   (lambda (snd chn y0 y1) 
@@ -380,13 +382,15 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	 (rl (channel->vct 0 fftlen snd chn))
 	 (old-pk (vct-peak rl))
 	 (im (make-vct fftlen)))
-    (fft rl im 1)
-    (rectangular->polar rl im)
-    (vct-scale! rl fftscale)
-    (vct-scale! im 0.0)
-    (fft rl im -1)
-    (let ((pk (vct-peak rl)))
-      (vct->channel (vct-scale! rl (/ old-pk pk)) 0 len snd chn #f "zero-phase"))))
+    (if (> old-pk 0.0)
+	(begin
+	  (fft rl im 1)
+	  (rectangular->polar rl im)
+	  (vct-scale! rl fftscale)
+	  (vct-scale! im 0.0)
+	  (fft rl im -1)
+	  (let ((pk (vct-peak rl)))
+	    (vct->channel (vct-scale! rl (/ old-pk pk)) 0 len snd chn #f "zero-phase"))))))
 
 (define* (rotate-phase func :optional snd chn)
   "(rotate-phase func) calls fft, applies func to each phase, then un-ffts"
@@ -398,21 +402,23 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	 (rl (channel->vct 0 fftlen snd chn))
 	 (old-pk (vct-peak rl))
 	 (im (make-vct fftlen)))
-    (fft rl im 1)
-    (rectangular->polar rl im)
-    (vct-scale! rl fftscale)
-    (vct-set! im 0 0.0)
-    (do ((i 1 (1+ i))
-	 (j (1- fftlen) (1- j)))
-	((= i fftlen2))
-      ;; rotate the fft vector by func, keeping imaginary part complex conjgate of real
-      (vct-set! im i (func (vct-ref im i)))
-      (vct-set! im j (- (vct-ref im i))))
-    (polar->rectangular rl im)
-    (fft rl im -1)
-    (let ((pk (vct-peak rl)))
-      (vct->channel (vct-scale! rl (/ old-pk pk)) 0 len snd chn #f 
-		    (format #f "rotate-phase ~A" (procedure-source func))))))
+    (if (> old-pk 0.0)
+	(begin
+	  (fft rl im 1)
+	  (rectangular->polar rl im)
+	  (vct-scale! rl fftscale)
+	  (vct-set! im 0 0.0)
+	  (do ((i 1 (1+ i))
+	       (j (1- fftlen) (1- j)))
+	      ((= i fftlen2))
+	    ;; rotate the fft vector by func, keeping imaginary part complex conjgate of real
+	    (vct-set! im i (func (vct-ref im i)))
+	    (vct-set! im j (- (vct-ref im i))))
+	  (polar->rectangular rl im)
+	  (fft rl im -1)
+	  (let ((pk (vct-peak rl)))
+	    (vct->channel (vct-scale! rl (/ old-pk pk)) 0 len snd chn #f 
+			  (format #f "rotate-phase ~A" (procedure-source func))))))))
 
 ;(rotate-phase (lambda (x) 0.0)) is the same as (zero-phase)
 ;(rotate-phase (lambda (x) (random pi))) randomizes phases

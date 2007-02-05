@@ -4192,6 +4192,29 @@ for each section of a piece as well as the whole thing, all in one run.  Since i
 </pre>
 </td></tr></table>
 
+<p>In Scheme, with-sound can write its output to a vct or sound-data object:
+</p>
+<pre>
+    (with-sound (:output (make-vct 22050)) (fm-violin 0 1 440 .1))
+</pre>
+<p>
+and there's no real limitation on what sorts of functions can be used to generate the
+with-sound output:
+</p>
+<table border=0 bgcolor="#f0f0f0" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+(with-sound () 
+  (let ((incr 0.0) 
+        (ang 0.0))
+    (do ((i 0 (1+ i)))
+        ((= i 44100))
+      (let ((val (* .3 (sin ang))))
+        (set! ang (+ ang incr))
+        (set! incr (+ incr .0003))
+        (outa i val *output*)))))
+</pre>
+</td></tr></table>
+
 <p>
 Besides :channels, :reverb, and :srate, the most useful options are :scaled-to and
 :statistics.

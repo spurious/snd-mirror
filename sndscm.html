@@ -563,7 +563,7 @@ anoi is a stab at noise reduction
 based on Perry Cook's Scrubber.m.  It tracks an on-going average spectrum, then tries
 to squelch that, obviously aimed at reducing background noise in an intermittent signal.
 <pre>
-    (with-sound () (anoi "now.snd" 0 2))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (anoi "now.snd" 0 2))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -576,7 +576,7 @@ attract is a translation to CLM of an instrument developed by James McCartney (C
 based on a "chaotic" equation.
 'c' should be between 1 and 10 or thereabouts.
 <pre>
-    (with-sound () (attract 0 1 .1 1) (attract 1 1 .1 5))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (attract 0 1 .1 1) (attract 1 1 .1 5))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -633,7 +633,7 @@ Here is a portion of a bagpipe tune:
       (bassdr2 '(.5 .06 1 .62 1.5 .07 2.0 .6 2.5 .08 3.0 .56 4.0 .24 5 .98 6 .53 7 
                  .16 8 .33 9 .62 10 .12 12 .14 14 .86 16 .12 23 .14 24 .17))
       (tenordr '(.3 .04 1 .81 2 .27 3 .2 4 .21 5 .18 6 .35 7 .03 8 .07 9 .02 10 .025 11 .035)))
-  (with-sound (:reverb nrev)
+  (<a class=quiet href="clm.html#with-sound">with-sound</a> (:reverb nrev)
     (drone .000 4.000 115.000 (* .25 .500) solid bassdr2 .100 .500 .030 45.000 1 .010 10)
     (drone .000 4.000 229.000 (* .25 .500) solid tenordr .100 .500 .030 45.000 1 .010 11)
     (drone .000 4.000 229.500 (* .25 .500) solid tenordr .100 .500 .030 45.000 1 .010 9)
@@ -692,7 +692,7 @@ of envelopes; in the old days we felt we had to store one envelope, then kludge 
 timings to bash that envelope into the correct shape; this made instruments needlessly messy.
 Here's a call:
 <pre>
-    (with-sound () 
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () 
       (cellon 0 2 220 .1 '(0 0 25 1 75 1 100 0) '(0 0 25 1 75 1 100 0) .75 1.0 0 0 0 0 1 0 0 220 
               '(0 0 25 1 75 1 100 0) 0 0 0 0 '(0 0 100 0) 0 0 0 0 '(0 0 100 0)))
 </pre>
@@ -710,7 +710,7 @@ clm-expsrc can stretch or compress a sound (using granular synthesis) while opti
 'src-ratio' sets the sampling rate change (greater than 1.0 makes it higher in pitch).
 So to make a sound twice as long, but keep the pitch the same:
 <pre>
-    (with-sound () (clm-expsrc 0 4 "oboe.snd" 2.0 1.0 1.0))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (clm-expsrc 0 4 "oboe.snd" 2.0 1.0 1.0))
 </pre>
 'start-in-file' sets where we start reading the input file (in seconds); it defaults to 0.0.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -732,7 +732,7 @@ This is the other half of Peter Common's bagpipe -- see canter above.
 expfile interleaves two granular synthesis processes (two readers pasting in tiny sections
 of their file, one after the other).
 <pre>
-    (with-sound () 
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () 
       (expfil 0 2 .2 .01 .1 "oboe.snd" "fyow.snd")
       (expfil 2 2 .01 .01 .02 "oboe.snd" "fyow.snd"))
 </pre>
@@ -751,7 +751,7 @@ In the next example, the expansion amount in both calls goes from 1 to 3 over th
 the ramp time and segment lengths stay the same, the sampling rate changes from 2 to 0.5, and the hop
 stays the same (.05 in the first, and .2 in the second).
 <pre>
-    (with-sound ()
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> ()
       (exp-snd "fyow.snd" 0 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.05)
       (exp-snd "oboe.snd" 1 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.2))
 </pre>
@@ -779,7 +779,7 @@ car2 and mod2 creating inharmonic spectra (using the square root of 2 more or le
 at random), and car3 and mod3 putting a sort of formant at the minor third
 (2.4 = a ratio of 12/5 = octave+6/5 = minor tenth).
 <pre>
-(with-sound ()
+(<a class=quiet href="clm.html#with-sound">with-sound</a> ()
   (let ((fbell '(0 1 2 1.1000 25 .7500 75 .5000 100 .5000))
         (abell '(0 0 .1000 1 10 .6000 25 .3000 50 .1500 90 .1000 100 0)))
     (fm-bell 0.0 2.0 220.0 .5 abell fbell 0.5)))
@@ -794,7 +794,7 @@ at random), and car3 and mod3 putting a sort of formant at the minor third
 </td></tr><tr><td></td><td>
 The fm-drum uses "cascade FM" (see fm.html); it was developed by Jan Mattox.
 <pre>
-    (with-sound () (fm-drum 0 1.5 55 .3 5 #f) (fm-drum 1.5 1.5 66 .3 4 #t))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (fm-drum 0 1.5 55 .3 5 #f) (fm-drum 1.5 1.5 66 .3 4 #t))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -806,7 +806,7 @@ The fm-drum uses "cascade FM" (see fm.html); it was developed by Jan Mattox.
 The fm-insect started as an attempt to get cicada sounds from FM (for the 5th movement of "Colony"), but
 ended with:
 <pre>
-(with-sound (:srate 22050) 
+(<a class=quiet href="clm.html#with-sound">with-sound</a> (:srate 22050) 
   (let ((locust '(0 0 40 1 95 1 100 .5))
 	(bug_hi '(0 1 25 .7 75 .78 100 1))
 	(amp    '(0 0 25 1 75 .7 100 0)))
@@ -829,7 +829,7 @@ ended with:
 </td></tr><tr><td></td><td>
 This is Dexter Morrill's FM-trumpet; see CMJ feb 77 p51.
 <pre>
-    (with-sound () (fm-trumpet 0 .25))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (fm-trumpet 0 .25))
 </pre>
 As with many instruments from that era, it has a million parameters:
 <pre>
@@ -845,7 +845,7 @@ As with many instruments from that era, it has a million parameters:
 </pre>
 The pitch depends on the 'modfrq1' and 'modfrq2' parameters, as well as 'frq1' and 'frq2':
 <pre>
-    (with-sound () (fm-trumpet 0 1 :frq1 400 :frq2 1600 :modfrq1 400 :modfrq2 400))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (fm-trumpet 0 1 :frq1 400 :frq2 1600 :modfrq1 400 :modfrq2 400))
 </pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -865,7 +865,7 @@ then calls <a href="clm.html#wave-train">wave-train</a> to turn that into a tone
 fofins just adds an amplitude envelope and vibrato.
 In the Scheme version, there is also an optional trailing vibrato envelope argument (this is slightly different from the CL version):
 <pre>
-(with-sound ()  ; slowly ramp up the vibrato
+(<a class=quiet href="clm.html#with-sound">with-sound</a> ()  ; slowly ramp up the vibrato
   (fofins 0 4 270 .1 0.005 730 .6 1090 .3 2440 .1 
           '(0 0 .5 1 3 .5 10 .2 20 .1 50 .1 60 .2 85 1 100 0)
 	  '(0 0 40 0 75 .2 100 1) )
@@ -891,31 +891,31 @@ of channels of data in and out with scalers and envelopes on any path, sampling 
 reverb -- you name it! 
 'infile' is the file to be mixed:
 <pre>
-    (with-sound () (fullmix "pistol.snd")) ; this places pistol.snd at time 0
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (fullmix "pistol.snd")) ; this places pistol.snd at time 0
 </pre>
 'beg' is the start time of the mix in the output sound; 
 'outdur' is the duration of the mixed-in portion in the output;
 'inbeg' is where to start the mix in the input file:
 <pre>
-    (with-sound () (fullmix "pistol.snd" 1.0 2.0 0.25)) 
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (fullmix "pistol.snd" 1.0 2.0 0.25)) 
     ;; start at 0.25 in pistol.snd, include next 2 secs, put at time 1.0 in output
 </pre>
 'srate' is the amount of sampling rate conversion to apply, and
 'reverb' is the amount of the signal to send to the reverberator:
 <pre>
-    (with-sound (:reverb nrev) (fullmix "pistol.snd" 1.0 2.0 0.25 #f 2.0 0.1)) ; up an octave, lots of reverb!
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> (:reverb nrev) (fullmix "pistol.snd" 1.0 2.0 0.25 #f 2.0 0.1)) ; up an octave, lots of reverb!
 </pre>
 The 'matrix' parameter is much harder to describe.  It is either a number or a list of lists.
 In the first case, that number is the amplitude scaler on the output:
 <pre>
-    (with-sound (:reverb nrev) (fullmix "pistol.snd" 1.0 2.0 0.25 0.2 2.0 0.1)) ; same but much softer (0.2 amp)
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> (:reverb nrev) (fullmix "pistol.snd" 1.0 2.0 0.25 0.2 2.0 0.1)) ; same but much softer (0.2 amp)
 </pre>
 If 'matrix' is a list of lists, each element of the inner lists can be either a number or list a breakpoints (an envelope).
 If a number, it is treated as an amplitude scaler for that input and output channel combination.  Each inner list
 represents an input channel, so if we have a stereo input file going to a stereo output file and we want
 the channels to be mixed straight, but channel 0 at .5 amp and channel 1 at .75:
 <pre>
-    (with-sound (:channels 2) (fullmix "2a.snd" #f #f #f '((0.5 0.0) (0.0 0.75))))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> (:channels 2) (fullmix "2a.snd" #f #f #f '((0.5 0.0) (0.0 0.75))))
     ;;                                                       ^   ^     ^   ^
     ;;                                                       |   |     |   |
     ;;                                                    0->0   |  1->0   |
@@ -926,18 +926,18 @@ and its second channel goes to the output second channel scaled by 0.75.
 If we have four channels in and are writing a mono file, and want to mix in
 only the second channel of the input:
 <pre>
-   (with-sound (:channels 1) (fullmix "4.aiff" #f #f #f '((0.0) (1.0) (0.0) (0.0))))
+   (<a class=quiet href="clm.html#with-sound">with-sound</a> (:channels 1) (fullmix "4.aiff" #f #f #f '((0.0) (1.0) (0.0) (0.0))))
 </pre>
 The next complication is that each entry in the inner lists can also be a list of
 envelope breakpoints.  In that case, an envelope is applied to that portion of the
 mix, rather than just a scaler:
 <pre>
-    (with-sound (:channels 2) (fullmix "oboe.snd" #f #f #f (list (list (list 0 0 1 1 2 0) 0.5))))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> (:channels 2) (fullmix "oboe.snd" #f #f #f (list (list (list 0 0 1 1 2 0) 0.5))))
     ;; mono input so one list, envelope output chan 0, scale output chan 1 (two copies of input) 
 </pre>
 And finally(!) each inner list element can also be a CLM env generator:
 <pre>
-    (with-sound (:channels 2)
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> (:channels 2)
       (fullmix "oboe.snd" 1 2 0 (list (list .1 (<a class=quiet href="clm.html#make-env">make-env</a> '(0 0 1 1) :duration 2 :scaler .5)))))
 </pre>
 Here's a Ruby example:
@@ -972,7 +972,7 @@ sinusoid (the "grain" in this case).  'grain-dur' sets the grain's length (in se
 'grain-hop' sets the frequency of the wave-train generator (how quickly the grain is
 repeated), and 'freq' sets the grain sinusoid's frequency.
 <pre>
-    (with-sound () (gran-synth 0 1 300 .0189 .03 .4)) ; grain freq 300Hz, repetition rate 33Hz
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (gran-synth 0 1 300 .0189 .03 .4)) ; grain freq 300Hz, repetition rate 33Hz
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -1001,11 +1001,11 @@ The gains can be either numbers or envelopes (one or the other, not a mixture).
 'filt-gain-scale' and 'filt-gain-base' are similar, but apply to the envelopes, if any.
 'stats' prints encouraging numbers if #t.
 <pre>
-    (with-sound () (graphEq "oboe.snd")) ; accept all the defaults (Scheme is case sensitive)
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (graphEq "oboe.snd")) ; accept all the defaults (Scheme is case sensitive)
 </pre>
 If we want just steady bands:
 <pre>
-    (with-sound () (graphEq "oboe.snd" 0 0 0 1.0 '(0 1 1 0) 1.0 0 '(.1 440 .3 1500 .2 330)))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (graphEq "oboe.snd" 0 0 0 1.0 '(0 1 1 0) 1.0 0 '(.1 440 .3 1500 .2 330)))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -1016,7 +1016,7 @@ If we want just steady bands:
 </td></tr><tr><td></td><td>
 hammondoid is Perry Cook's additive-synthesis Hammond organ.
 <pre>
-    (with-sound () (hammondoid 0 1 440 .1))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (hammondoid 0 1 440 .1))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -1027,13 +1027,13 @@ hammondoid is Perry Cook's additive-synthesis Hammond organ.
 </td></tr><tr><td></td><td>
 jl-reverb is a cavernous version of John Chowning's ancient reverberator.  You can never get enough reverb!
 <pre>
-    (with-sound (:reverb jl-reverb) (fm-violin 0 .1 440 .1 :reverb-amount .1))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> (:reverb jl-reverb) (fm-violin 0 .1 440 .1 :reverb-amount .1))
 </pre>
 'decay' is the reverb decay time tacked onto the end of the output sound.
 To pass parameters to a reverberator, use the with-sound parameter :reverb-data.  So, if we want
 5 seconds of decay:
 <pre>
-    (with-sound (:reverb jl-reverb :reverb-data '(5.0)) (fm-violin 0 .1 440 .1 :reverb-amount .1))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> (:reverb jl-reverb :reverb-data '(5.0)) (fm-violin 0 .1 440 .1 :reverb-amount .1))
     ;;                                            ^ this is passed as (jl-reverb 5.0)
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -1046,13 +1046,13 @@ To pass parameters to a reverberator, use the with-sound parameter :reverb-data.
 lbj-piano, developed by Doug Fulton, uses James A Moorer's piano spectra and
 additive synthesis to mimic a piano.
 <pre>
-    (with-sound () (lbj-piano 0 2 110.0 .2))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (lbj-piano 0 2 110.0 .2))
 </pre>
 Doug says, "The high notes sound pretty rotten" and thinks perhaps
 one major problem is the lack of mechanical noise.
 'pfreq' sets which spectrum to use; it defaults to whatever matches 'freq'.
 <pre>
-    (with-sound () (lbj-piano 0 2 110.0 .2 :pfreq 550))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (lbj-piano 0 2 110.0 .2 :pfreq 550))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -1063,7 +1063,7 @@ one major problem is the lack of mechanical noise.
 </td></tr><tr><td></td><td>
 metal is another Perry Cook creation (HeavyMtl); it's an FM instrument:
 <pre>
-    (with-sound () (metal 0 1 440 .2))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (metal 0 1 440 .2))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -1076,13 +1076,13 @@ metal is another Perry Cook creation (HeavyMtl); it's an FM instrument:
 nrev, developed by Michael McNabb, is one of the more popular old-style reverbs. 
 It is much cleaner than jc-reverb.
 <pre>
-    (with-sound (:reverb nrev) (fm-violin 0 .1 440 .1 :reverb-amount .1))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> (:reverb nrev) (fm-violin 0 .1 440 .1 :reverb-amount .1))
 </pre>
 'reverb-factor' controls the length of the decay -- it should not exceed 1.21 or so.
 'lp-coeff' controls the strength of the low pass filter inserted in the feedback loop.
 'volume-1' can be used to boost the reverb output.
 <pre>
-    (with-sound (:reverb nrev :reverb-data '(:lp-coeff 0.9 :volume-1 2.0)) 
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> (:reverb nrev :reverb-data '(:lp-coeff 0.9 :volume-1 2.0)) 
       (fm-violin 0 .1 440 .1 :reverb-amount .1))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -1139,7 +1139,7 @@ makes great use of this instrument.
 anything other than .5 produces a longer decay.  It should be between 0.0 and 1.0. 
 'lossfact' can be used to shorten decays.  The most useful values are between .8 and 1.0. 
 <pre>
-(with-sound () 
+(<a class=quiet href="clm.html#with-sound">with-sound</a> () 
   (pluck 0 1 330 .3 .95 .95) 
   (pluck 1 2 330 .3 .9 .9999) 
   (pluck 3 2 330 .3 .8 .99))
@@ -1161,11 +1161,11 @@ waveshaping.  It uses both Chebyshev polynomial kinds to set up spectra-producin
 add in such a way as to cancel either the upper or lower set of sidebands.  These are then ganged together as in
 the vox instrument to mimic moving formants.
 <pre>
-    (with-sound () 
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () 
       (pqw-vox 0 1 300 300 .1 '(0 0 50 1 100 0) '(0 0 100 1) .3 '(0 L 100 L) '(.5 .25 .1) 
               '((1 1 2 .5) (1 .5 2 .5 3 1) (1 1 4 .5))))
 
-    (with-sound ()
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> ()
       (pqw-vox 0 2 200 200 .1 '(0 0 50 1 100 0) '(0 0 100 1) .1 '(0 UH 100 ER) '(.8 .15 .05) 
                '((1 1 2 .5) (1 1 2 .5 3 .2 4 .1) (1 1 3 .1 4 .5)))
       (pqw-vox 2 2 200 314 .1 '(0 0 50 1 100 0) '(0 0 100 1) .01 '(0 UH 100 ER) '(.8 .15 .05) 
@@ -1183,7 +1183,7 @@ the vox instrument to mimic moving formants.
 pqw is a simple phase-quadrature waveshaping instrument which produces asymmetric spectra.
 The trailing parameters just set the usual degree, distance, and reverb values.
 <pre>
-    (with-sound () (pqw 0 .5 200 1000 .2 '(0 0 25 1 100 0) '(0 1 100 0) '(2 .1 3 .3 6 .5)))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (pqw 0 .5 200 1000 .2 '(0 0 25 1 100 0) '(0 1 100 0) '(2 .1 3 .3 6 .5)))
 </pre>
 To see the asymmetric spectrum most clearly, set the index function above to '(0 1 100 1).
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -1197,7 +1197,7 @@ resflt, developed by Richard Karpen and Xavier Serra, sets up three resonators (
 then drives them with either white noise or a sum-of-cosines pulse train.
 Both can be used for vocal effects:
 <pre>
-    (with-sound () 
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () 
       (resflt 0 1.0 0 0 0 #f .1 200 230 10 '(0 0 50 1 100 0) '(0 0 100 1) 
               500 .995 .1 1000 .995 .1 2000 .995 .1)
       (resflt 1 1.0 1 10000 .01 '(0 0 50 1 100 0) 0 0 0 0 #f #f 
@@ -1236,14 +1236,14 @@ reson is a vocal simulator developed by John Chowning.  Its trailing parameters 
 </pre>
 Needless to say, no one has ever written out these parameters by hand, so here's an all-time first:
 <pre>
-    (with-sound ()
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> ()
       (reson 0.0 1.0 440 .1 2 '(0 0 100 1) '(0 0 100 1) .1 .1 .1 5 .01 5 .01 0 1.0 0.01
    	     '(((0 0 100 1) 1200 .5 .1 .1 0 1.0 .1 .1) ((0 1 100 0) 2400 .5 .1 .1 0 1.0 .1 .1))))
 </pre>
 But JC got very nice vocal sounds from this -- I must have mistyped somewhere...
 Here's another stab at it:
 <pre>
-(with-sound ()
+(<a class=quiet href="clm.html#with-sound">with-sound</a> ()
       (reson 0.0 1.0 440 .1 2 '(0 1 100 0) '(0 0 100 1) .01 .1 .1 5 .01 5 .01 0 1.0 0.01
    	     '(((0 1 100 1) 1000 .65 .1 .1 0 1.0 .1 .1) ((0 0 100 1) 2400 .15 .1 .1 0 1.0 .1 .1))))
 </pre>
@@ -1257,11 +1257,11 @@ If you find a good example, please send me it!
 </td></tr><tr><td></td><td>
 rhodey is another of Perry Cook's instruments (an electric piano), based on a pair of FM generators.
 <pre>
-    (with-sound () (rhodey 0 1 440 .2))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (rhodey 0 1 440 .2))
 </pre>
 One of the oscillators is set to a frequency 15 times the requested 'freq', so for higher notes, you'll need to set the srate higher:
 <pre>
-    (with-sound (:srate 44100) (rhodey 0 1 880 .2))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> (:srate 44100) (rhodey 0 1 880 .2))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -1287,7 +1287,7 @@ The 'hp' parameter sets the speed with which the balance process
 tracks the RMS signal.  An example is worth a zillion words:
 
 <table border=0 cellpadding=5 hspace=10 vspace=10><tr><td bgcolor="#fafafa"><pre>
-      (with-sound (:channels 3)
+      (<a class=quiet href="clm.html#with-sound">with-sound</a> (:channels 3)
         (let ((rg (make-rmsgain))
 	      (rg1 (make-rmsgain 40))
 	      (rg2 (make-rmsgain 2))
@@ -1331,7 +1331,7 @@ to be used with the spectra in spectra.scm (information laboriously gathered at 
 by James A Moorer).  One such spectrum is labelled "p-a4", so we can hear it via:
 <pre>
     (load "spectr.scm")
-    (with-sound () 
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () 
       (spectra 0 1 440.0 .1 p-a4 '(0.0 0.0 1.0 1.0 5.0 0.9 12.0 0.5 25.0 0.25 100.0 0.0)))
 </pre>
 The trailing parameters are:
@@ -1346,7 +1346,7 @@ The trailing parameters are:
 </pre>
 We can pass our own partials:
 <pre>
-    (with-sound ()
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> ()
       (spectra 0 1 440.0 .1 '(1.0 .4 2.0 .2 3.0 .2 4.0 .1 6.0 .1) 
                '(0.0 0.0 1.0 1.0 5.0 0.9 12.0 0.5 25.0 0.25 100.0 0.0)))
 </pre>
@@ -1431,14 +1431,14 @@ For more than you really want to know about other such sounds, see
 </td></tr><tr><td></td><td>
 Perry Cook's tubular bell:
 <pre>
-    (with-sound () 
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () 
       (tubebell 0 2 440 .1 32.0) 
       (tubebell 2 2 220 .1 64.0) 
       (tubebell 4 2 660 .1 .032))
 </pre>
 'base' is the envelope base:
 <pre>
-    (with-sound () 
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () 
       (tubebell 0 2 440 .1 32.0) 
       (tubebell 2 2 220 .1 2048.0) 
       (tubebell 4 3 660 .1 .032))
@@ -1453,7 +1453,7 @@ Perry Cook's tubular bell:
 </td></tr><tr><td></td><td>
 two-tab interpolates between two spectra.
 <pre>
-    (with-sound () (two-tab 0 2 440 .1 '(1.0 1.0) '(3.0 1.0)))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (two-tab 0 2 440 .1 '(1.0 1.0) '(3.0 1.0)))
     ;; go from harmonic 1 to harmonic 3
 </pre>
 The trailing parameters are:
@@ -1471,11 +1471,11 @@ The trailing parameters are:
 'interp-func' determines how we interpolate between the two spectra.  When
 it is at 1.0, we get only the first, at 0.0 only the second.
 <pre>
-    (with-sound () (two-tab 0 2 440 .1 '(1.0 1.0) '(3.0 1.0) '(0 0 1 1 2 0) '(0 0 1 1)))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (two-tab 0 2 440 .1 '(1.0 1.0) '(3.0 1.0) '(0 0 1 1 2 0) '(0 0 1 1)))
 </pre>
 is the reverse of the earlier sound.  To go out and back:
 <pre>
-    (with-sound () (two-tab 0 2 440 .1 '(1.0 1.0) '(3.0 1.0) '(0 0 1 1 2 0) '(0 0 1 1 2 0)))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (two-tab 0 2 440 .1 '(1.0 1.0) '(3.0 1.0) '(0 0 1 1 2 0) '(0 0 1 1 2 0)))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -1499,7 +1499,7 @@ for the complete table of formants).
 For details on waveshaping, see Le Brun, "Digital Waveshaping Synthesis", JAES 1979 April, vol 27, no 4, p250.
 I used vox in the 5th movement of "Colony" and in "The New Music Liberation Army".
 <pre>
-(with-sound ()
+(<a class=quiet href="clm.html#with-sound">with-sound</a> ()
   (let ((amp-env '(0 0 25 1 75 1 100 0))
         (frq-env '(0 0 5 .5 10 0 100 1)))
   (vox 0 2 170 .4 amp-env frq-env .1 
@@ -1532,7 +1532,7 @@ end
 </td></tr><tr><td></td><td>
 Perry Cook's Wurlitzer (I assume).
 <pre>
-    (with-sound () (wurley 0 1 440 .1))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (wurley 0 1 440 .1))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -1546,7 +1546,7 @@ Perry Cook's Wurlitzer (I assume).
 The "z" instruments demonstrate "zdelay" effects -- interpolating
 comb, notch, and all-pass filters.
 <pre>
-    (with-sound () (zn 0 1   100 .1 20 100 .995) 
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (zn 0 1   100 .1 20 100 .995) 
 		   (zn 1.5 1 100 .1 100 20 .995)
 		   (zc 3 1   100 .1 20 100 .95) 
 		   (zc 4.5 1 100 .1 100 20 .95)
@@ -1641,7 +1641,7 @@ Here's how to trace fm-violin calls in a notelist:
 </p>
 <pre>
     (trace fm-violin)
-    (<em class=red>snd-trace</em> (with-sound () (fm-violin 0 1 440 .1)))
+    (<em class=red>snd-trace</em> (<a class=quiet href="clm.html#with-sound">with-sound</a> () (fm-violin 0 1 440 .1)))
 </pre>
 <p>To turn off the trace</p>
 <pre>
@@ -1680,7 +1680,7 @@ A simple instrument that uses dlocsig is:
 	     ((= i end))
 	   (<em class=red>dlocsig</em> dloc i (* (<a class=quiet href="clm.html#env">env</a> aenv) (<a class=quiet href="clm.html#oscil">oscil</a> osc)))))))))
 
-(with-sound (:channels 2) (sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
+(<a class=quiet href="clm.html#with-sound">with-sound</a> (:channels 2) (sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
 </pre></td></tr></table>
 <br><br>
 
@@ -2195,7 +2195,7 @@ similar to CLM's <a href="clm.html#formant">formant</a>.
 A slightly different view of the same filter is provided
 by <a href="#maxfdoc">maxf</a>.  
 <pre>
-(with-sound ()    ; filter "now.snd" with default freq/decay
+(<a class=quiet href="clm.html#with-sound">with-sound</a> ()    ; filter "now.snd" with default freq/decay
   (let ((rd (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 "now.snd")) 
 	(m (<em class=red>make-mfilter</em>))) 
     (run (lambda () 
@@ -2203,7 +2203,7 @@ by <a href="#maxfdoc">maxf</a>.
 	       ((= i 10000))
 	     (<a class=quiet href="clm.html#outa">outa</a> i (<em class=red>mfilter</em> m (* .1 (rd))) *output*))))))
 
-(with-sound ()    ; sweep center freq from 100Hz to 2000Hz
+(<a class=quiet href="clm.html#with-sound">with-sound</a> ()    ; sweep center freq from 100Hz to 2000Hz
   (let ((rd (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 "oboe.snd")) 
         (m (<em class=red>make-mfilter</em> :decay .99 :frequency 1000)) 
         (e (<a class=quiet href="clm.html#make-env">make-env</a> '(0 100 1 2000) :end 10000))) 
@@ -3414,7 +3414,7 @@ See also <a href="clm.html#ssb-am">ssb-am</a>.
 chain-dsps creates a patch of chained generators from its arguments.
 Someone wanted to set up generator patches in a note list:
 <pre>
-    (with-sound ()
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> ()
       (chain-dsps 0 1.0 '(0 0 1 .25 2 0) (<a class=quiet href="clm.html#make-oscil">make-oscil</a> 440))
       (chain-dsps 1.0 1.0 '(0 0 1 1 2 0) (<a class=quiet href="clm.html#make-one-zero">make-one-zero</a> .5) (<a class=quiet href="clm.html#make-readin">make-readin</a> "oboe.snd"))
       (chain-dsps 2.0 1.0 '(0 0 1 .125 2 0) (let ((osc1 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> 220)) 
@@ -4777,7 +4777,7 @@ controls how much time is spent in the formant bank before starting or after end
 the ramp.
 </p>
 <pre>
-    (with-sound () (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2))
     (<a class=quiet href="extsnd.html#vcttochannel">vct-&gt;channel</a> (cross-fade 0 1.5 1.0 0 1 0.5 .5 0 1.0 256 2))
 </pre>
 <p>
@@ -4796,7 +4796,7 @@ and a suitably noisy original, strange pitches emerge and submerge.  'fsize' is 
 'lo' and 'hi' set the portion of the formant bank that is active during the dissolve.
 </p>
 <pre>
-    (with-sound () (dissolve-fade 0 1 1.0 "oboe.snd" "trumpet.snd" 256 2 0 128))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (dissolve-fade 0 1 1.0 "oboe.snd" "trumpet.snd" 256 2 0 128))
     (<a class=quiet href="extsnd.html#vcttochannel">vct-&gt;channel</a> (dissolve-fade 0 2 1 0 1 1024 2 2 #f))
 </pre>
 
@@ -4943,6 +4943,12 @@ mix-frame mixes the frame (fr) of samples into sound snd (one sample in each cha
 mix-sound-data mixes the contents of sound-data sd into sound snd at beg.  tagged determines whether
 the resulting mixes have tags, and trk is the track they are placed in (0 = none).
 See <a href="#insertsounddata">insert-sound-data</a> for an example that could easily be changed to use mixing instead.
+As with mix-vct, we can use <a href="clm.html#with-sound">with-sound</a> to add notelist output as an edit:
+<pre>
+    (mix-sound-data 
+      (<a class=quiet href="clm.html#with-sound">with-sound</a> (:output (<a class=quiet href="extsnd.html#makesounddata">make-sound-data</a> 2 22050)) 
+        (<a class=quiet href="#fmviolin">fm-violin</a> 0 1 440 .1 :degrees 45)))
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5248,7 +5254,7 @@ is the overall gain multiplier for the output streams.
 sets the output mixing matrix directly (rather than through 'global').
 </p>
 <pre>
-    (with-sound (:reverb freeverb :reverb-data '(:output-gain 3.0)) 
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> (:reverb freeverb :reverb-data '(:output-gain 3.0)) 
       (fm-violin 0 .1 440 .1 :reverb-amount .1))
 </pre>
 
@@ -5306,7 +5312,7 @@ or something.
       (grain-degree-spread 0.0)
       (verbose #t)
 
-    (with-sound (:channels 2 :reverb jc-reverb :reverb-channels 1)
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> (:channels 2 :reverb jc-reverb :reverb-channels 1)
       (grani 0 1 .5 "oboe.snd" :grain-envelope '(0 0 0.2 0.2 0.5 1 0.8 0.2 1 0)))
 </pre>
 
@@ -5361,7 +5367,7 @@ Here's an instrument that fuzzes up its amplitude envelope a bit using green noi
 		    (<a class=quiet href="clm.html#oscil">oscil</a> osc)) 
 	       *output*))))))
 
-(with-sound () (green3 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 100 .2 .02))
+(<a class=quiet href="clm.html#with-sound">with-sound</a> () (green3 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 100 .2 .02))
 </pre></td></tr></table>
 
 <br>
@@ -5729,7 +5735,7 @@ if 'low-pass' if #t, a low pass filter is inserted before the output;
 'amp-env' is an amplitude envelope that can be used to squelch the reverb ringing at the end of a piece.
 </p>
 <pre>
-    (with-sound (:reverb jc-reverb :reverb-data '(#t 1.5 (0 0 1 1 2 1 3 0))) (fm-violin 0 .1 440 .1))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> (:reverb jc-reverb :reverb-data '(#t 1.5 (0 0 1 1 2 1 3 0))) (fm-violin 0 .1 440 .1))
 </pre>
 
 <p>It is possible to use the CLM/with-sound reverbs (or any such instrument) as
@@ -5832,8 +5838,8 @@ an alphabetical set of submenus.  Some of the functions assume you have a sound 
            (shell-freq 3200.0)
            (shell-reso 0.96)
 
-    maraca: (with-sound () (maraca 0 5 .5))
-    cabasa: (with-sound () (maraca 0 5 .5 0.95 0.997 0.5 3000.0 0.7))
+    maraca: (<a class=quiet href="clm.html#with-sound">with-sound</a> () (maraca 0 5 .5))
+    cabasa: (<a class=quiet href="clm.html#with-sound">with-sound</a> () (maraca 0 5 .5 0.95 0.997 0.5 3000.0 0.7))
 
     <em class=emdef>big-maraca</em> beg dur :optional 
                (amp .1) 
@@ -5846,20 +5852,20 @@ an alphabetical set of submenus.  Some of the functions assume you have a sound 
                (with-filters #t)
 
     tambourine: 
-        (with-sound () 
+        (<a class=quiet href="clm.html#with-sound">with-sound</a> () 
           (big-maraca 0 1 .25 0.95 0.9985 .03125 '(2300 5600 8100) '(0.96 0.995 0.995) .01))
 
     sleighbells: 
-        (with-sound () 
+        (<a class=quiet href="clm.html#with-sound">with-sound</a> () 
           (big-maraca 0 2 .15 0.97 0.9994 0.03125 '(2500 5300 6500 8300 9800) 
             '(0.999 0.999 0.999 0.999 0.999)))
 
     sekere: 
-        (with-sound ()
+        (<a class=quiet href="clm.html#with-sound">with-sound</a> ()
           (big-maraca 0 2 .5 0.96 0.999 .0625 '(5500) '(0.6)))
 
     windchimes: 
-        (with-sound () 
+        (<a class=quiet href="clm.html#with-sound">with-sound</a> () 
           (big-maraca 0 4 .5 0.99995 0.95 .001 '(2200 2800 3400) '(0.995 0.995 0.995) .01 #f))
 </pre>
 <p>
@@ -6098,10 +6104,10 @@ maxf.scm and maxf.rb provide a kind of demo instrument showing various ways to
 use the filter (banks tuned to different sets of frequencies, etc).
 </p>
 <pre>
- (with-sound () (maxfilter "dog.snd" 0))
- (with-sound (:srate 44100) (maxfilter "dog.snd" 0 :numf 12))
- (with-sound (:srate 44100) (maxfilter "dog.snd" 0 :numf 13 :att 0.75))
- (with-sound (:srate 44100) (maxfilter "dog.snd" 0 :numf 2 :att 0.25 :freqfactor 0.5))
+ (<a class=quiet href="clm.html#with-sound">with-sound</a> () (maxfilter "dog.snd" 0))
+ (<a class=quiet href="clm.html#with-sound">with-sound</a> (:srate 44100) (maxfilter "dog.snd" 0 :numf 12))
+ (<a class=quiet href="clm.html#with-sound">with-sound</a> (:srate 44100) (maxfilter "dog.snd" 0 :numf 13 :att 0.75))
+ (<a class=quiet href="clm.html#with-sound">with-sound</a> (:srate 44100) (maxfilter "dog.snd" 0 :numf 2 :att 0.25 :freqfactor 0.5))
 </pre>
 <pre>
 <em class=emdef>maxfilter</em> file beg :key (att 1.0) (numf 1) (freqfactor 1.0) (amplitude 1.0)
@@ -6748,7 +6754,7 @@ the clef instead.
 <p>This was created with:
 </p>
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(with-sound () (fm-violin 0 1 440 .1))
+(<a class=quiet href="clm.html#with-sound">with-sound</a> () (fm-violin 0 1 440 .1))
 
 (define (draw-staff x0 y0 width line-sep)
   (do ((line 0 (1+ line))
@@ -6834,7 +6840,7 @@ whistle, very broad more of a whoosh.  This is simple FM
 where the modulating signal is white noise.
 </p>
 <pre>
-   (with-sound ()
+   (<a class=quiet href="clm.html#with-sound">with-sound</a> ()
      (fm-noise 0 2.0 500 0.25 '(0 0 25 1 75 1 100 0) 0.1 0.1 1000 '(0 0 100 1) 0.1 0.1
  	       10 1000 '(0 0 100 1) 0 0 100 500 '(0 0 100 1) 0 0))
 </pre>
@@ -6937,7 +6943,7 @@ To paraphrase these sources, the model includes multiple coupled strings, a nonl
 The actual instrument name is 'p':
 </p>
 <pre>
-    (with-sound ()
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> ()
       (do ((i 0 (1+ i))) ((= i 7))
         (p (* i .5) :duration .5                    ; generate a sequence of 1/2 second tones
                     :keyNum (+ 24 (* 12 i))         ; jump by octaves
@@ -6996,7 +7002,7 @@ goof around with them.
 <p>Here is another example; there are a couple other examples at the end of piano.scm:
 </p>
 <pre>
-    (with-sound ()
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> ()
       (do ((i 0 (1+ i))) ((= i 8))
         (p (* i .5) :duration .5 :keyNum (+ 24 (* 12 i)) :strike-velocity .5 :amp .4 :DryPedalResonanceFactor .25
          :detuningFactor-table '(24 5 36 7.0 48 7.5 60 12.0 72 20 84 30 96 100 108 300)
@@ -7276,7 +7282,7 @@ The example instruments are:
   <em class=emdef>clarinet</em> beg dur freq amplitude maxa 
   <em class=emdef>flute</em> beg dur freq amplitude maxa
 
-  (with-sound ()
+  (<a class=quiet href="clm.html#with-sound">with-sound</a> ()
     (plucky 0 .3 440 .2 1.0)
     (bow .5 .3 220 .2 1.0)
     (brass 1 .3 440 .2 1.0)
@@ -7532,7 +7538,7 @@ have to read the code, or perhaps find something in Perry's publications.
 In any case, here's a simple example:
 </p>
 <pre>
-    (with-sound () 
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () 
       (singer 0 .1 (list (list .4 ehh.shp test.glt 523.0 .8 0.0 .01) 
                          (list .6 oo.shp test.glt 523.0 .7 .1 .01))))
 </pre>
@@ -7547,7 +7553,7 @@ The *.shp and *.glt data is defined at the end of singer.scm.  For example:
 A more complex example is singer's attempt to say "requiem":
 </p>
 <pre>
-    (with-sound ()
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> ()
       (singer 0 .1 (list (list .05 ehh.shp test.glt 523.0 0.8 0.0 .01) 
 		         (list .15 ehh.shp test.glt 523.0 0.8 0.0 .01) 
 		         (list .05 kkk.shp test.glt 523.0 0.0 0.0 .01) 
@@ -8466,8 +8472,8 @@ time-ptr = 0.
 in time. 
 </p>
 <pre>
-    (with-sound () (sndwarp 0 1 "oboe.snd"))
-    (with-sound () (sndwarp 0 4 "oboe.snd" :stretch 2.0 :srate 0.5))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (sndwarp 0 1 "oboe.snd"))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (sndwarp 0 4 "oboe.snd" :stretch 2.0 :srate 0.5))
 </pre>
 
 <table bgcolor="aliceblue" border=0><tr>
@@ -8536,7 +8542,7 @@ These spectra can be used directly in the instrument <a href="#spectra">spectra<
 Here is one that is much simpler, but very loud:
 </p>
 <pre>
-    (with-sound () (stochastic 0 10 :xwig .25 :ywig 10.0))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> () (stochastic 0 10 :xwig .25 :ywig 10.0))
 </pre>
 
 <br>
@@ -9386,7 +9392,7 @@ load("v.rb")
 <tr>
 <td bgcolor="#fbfbff">
 <pre>
-(with-sound () 
+(<a class=quiet href="clm.html#with-sound">with-sound</a> () 
   (fm-violin 0 1 440 .1))
 </pre></td><td width=30></td>
 
@@ -9408,7 +9414,7 @@ we want to hear an arpeggio from the fm-violin:
 </p>
 
 <pre>
-    (with-sound ()
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> ()
       (do ((i 0 (1+ i)))
           ((= i 4))                ; 4 notes in all
         (fm-violin (* i 0.25)      ; notes 1/4 secs apart
@@ -9442,7 +9448,7 @@ See the <a href="#clminsdoc">clm instrument</a> documentation for more examples.
 </pre>
 <p>As far as possible, this parallels CLM's <a href="clm.html#with-sound">with-sound</a>.</p>
 <pre>
-    :<em class=typing>(with-sound (:statistics #t :channels 2 :reverb jc-reverb)
+    :<em class=typing>(<a class=quiet href="clm.html#with-sound">with-sound</a> (:statistics #t :channels 2 :reverb jc-reverb)
        (fm-violin 0 .1 440 .1 :reverb-amount .1 :degree 0)
        (fm-violin 1 .1 660 .2 :degree 90))</em>
     <em class=listener>test.snd:
@@ -9521,7 +9527,7 @@ which is a combination of definstrument and <a href="clm.html#def-optkey-fun">de
       (do ((i 0 (1+ i))) ((= i dur))
 	(outa (+ i beg) (* amplitude (oscil os)) *output*))))))
 
-(with-sound () 
+(<a class=quiet href="clm.html#with-sound">with-sound</a> () 
   (simp 0 10000) 
   (simp 10000 10000 550.0 :amplitude 0.1) 
   (simp 20000 10000 :amplitude 0.2))
@@ -9549,7 +9555,7 @@ mus-mix with *output*:
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(with-sound () 
+(<a class=quiet href="clm.html#with-sound">with-sound</a> () 
   (fm-violin 0 .1 440 .1) 
   (<a class=quiet href="clm.html#musmix">mus-mix</a> *output* "oboe.snd") 
   (fm-violin .1 .1 660 .1))
@@ -9558,7 +9564,7 @@ mus-mix with *output*:
 <p>To continue adding notes to an existing file, set 'continue-old-file':
 </p>
 <pre>
-    (with-sound (:continue-old-file #t) (fm-violin 0 1 440 .1))
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> (:continue-old-file #t) (fm-violin 0 1 440 .1))
 </pre>
 
 <p>You don't have to use definstrument; in the next example we make a Shepard tone
@@ -9572,7 +9578,7 @@ by calling the oscils and whatnot directly in the with-sound body:
     (do ((i 0 (1+ i)))
 	((= i 12))
       (vector-set! oscs i (<a class=quiet href="clm.html#make-oscil">make-oscil</a> :frequency 0.0)))
-    (with-sound (:srate 44100)
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> (:srate 44100)
       (run                            ; use "run" to speed up computation by about a factor of 10
        (lambda ()
 	 (do ((samp 0 (1+ samp)))
@@ -9605,7 +9611,7 @@ Sound-let is documented in <a href="clm.html#sound-let">clm.html</a>; briefly it
 of "let" and with-sound:
 </p>
 <pre>
-  (with-sound ()
+  (<a class=quiet href="clm.html#with-sound">with-sound</a> ()
     (sound-let ((temp-sound () (fm-violin 0 1 440 .1))) ; create temp-sound with an fm-violin note (v.scm)
        (pins 0.0 2.0 temp-sound 1.0 :time-scaler 2.0))  ; stretch it with the pins instrument (clm-ins.scm)
     (fm-violin 1 1 550 .1))                             ; add another fm-violin note
@@ -9616,7 +9622,7 @@ and it does not open the result in Snd (it assumes its output is some intermedia
 parallels the sound-let example above:
 </p>
 <pre>
-  (with-sound ()
+  (<a class=quiet href="clm.html#with-sound">with-sound</a> ()
     (let ((temp-sound (with-temp-sound () (fm-violin 0 1 440 .1))))
       (clm-expsrc 0 2 temp-sound 2.0 1.0 1.0)))
 </pre>
@@ -9663,7 +9669,7 @@ split with-sound into two pieces, primarily for Common Music's benefit.
 <p>is equivalent to 
 </p>
 <pre>
-    (with-sound (:scaled-to .5)
+    (<a class=quiet href="clm.html#with-sound">with-sound</a> (:scaled-to .5)
       (fm-violin 0 1 440 .1))
 </pre>
 

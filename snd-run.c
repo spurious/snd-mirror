@@ -84,7 +84,7 @@
  * (add-hook! optimization-hook (lambda (n) (snd-display "opt: ~A~%" n)))
  */
 
-/* PERHAPS: complex number support for run
+/* complex number support for run -- can't see any good reason for this but...
  *            3+4i real-part imag-part make-rectangular make-polar angle magnitude complex? real? declare case
  *            complex.h: ccos csin ctan cacos casin catan ccosh csinh ctanh cacosh casinh catanh cexp clog cabs cpow csqrt
  *                       carg[angle] creal cimag, complex double _Complex_I

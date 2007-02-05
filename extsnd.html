@@ -3293,6 +3293,13 @@ depending on the type of its arguments.
 </td></tr><tr><td></td><td>
 vct-&gt;channel sets the samples from 'beg' to 'beg' + 'dur' from the values in 'v'.
 This changes (edits) the channel, so 'origin' provides a way to name the edit (for the edit history list and whatnot).
+Since with-sound can write its output to a vct, we can use it with vct-&gt;channel to paste in an fm-violin note as
+an edit:
+<pre>
+  (vct-&gt;channel (<a class=quiet href="clm.html#with-sound">with-sound</a> (:output (make-vct 22050)) (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> 0 1 440 .1)))
+</pre>
+To add such a note to whatever is already present, use either <a href="#mixvct">mix-vct</a> or 
+<a href="sndscm.html#mixsounddata">mix-sound-data</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5011,6 +5018,8 @@ See also <a href="sndscm.html#panmixvct">pan-mix-vct</a> in mix.scm.
     <em class=listener>1000</em>
     :<em class=typing>(mix-frames 3)</em>                      ; and its length is 3 samples
     <em class=listener>3</em>
+    :<em class=typing>(mix-vct (with-sound (:output (make-vct 22050)) (fm-violin 0 1 440 .1)))</em>
+    <em class=listener>0</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 

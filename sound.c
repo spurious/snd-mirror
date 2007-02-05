@@ -835,12 +835,12 @@ static int mus_sound_set_off_t_field(const char *arg, sf_field_t field, off_t va
   return(MUS_ERROR);
 }
 
-int mus_sound_set_chans(const char *arg, int val) {return(mus_sound_set_field(arg, SF_CHANS, val));}
-int mus_sound_set_srate(const char *arg, int val) {return(mus_sound_set_field(arg, SF_SRATE, val));}
-int mus_sound_set_header_type(const char *arg, int val) {return(mus_sound_set_field(arg, SF_TYPE, val));}
-int mus_sound_set_data_format(const char *arg, int val) {return(mus_sound_set_field(arg, SF_FORMAT, val));}
+int mus_sound_set_chans(const char *arg, int val)           {return(mus_sound_set_field(arg,       SF_CHANS,    val));}
+int mus_sound_set_srate(const char *arg, int val)           {return(mus_sound_set_field(arg,       SF_SRATE,    val));}
+int mus_sound_set_header_type(const char *arg, int val)     {return(mus_sound_set_field(arg,       SF_TYPE,     val));}
+int mus_sound_set_data_format(const char *arg, int val)     {return(mus_sound_set_field(arg,       SF_FORMAT,   val));}
 int mus_sound_set_data_location(const char *arg, off_t val) {return(mus_sound_set_off_t_field(arg, SF_LOCATION, val));}
-int mus_sound_set_samples(const char *arg, off_t val) {return(mus_sound_set_off_t_field(arg, SF_SIZE, val));}
+int mus_sound_set_samples(const char *arg, off_t val)       {return(mus_sound_set_off_t_field(arg, SF_SIZE,     val));}
 
 int mus_sound_override_header(const char *arg, int srate, int chans, int format, int type, off_t location, off_t size)
 {
@@ -1022,7 +1022,7 @@ char *mus_array_to_file_with_error(const char *filename, mus_sample_t *ddata, in
   err = mus_file_open_descriptors(fd, filename,
 				  MUS_OUT_FORMAT,
 				  mus_bytes_per_sample(MUS_OUT_FORMAT),
-				  28, channels, MUS_NEXT);
+				  oloc, channels, MUS_NEXT);
   if (err != MUS_ERROR)
     {
       bufs[0] = ddata;

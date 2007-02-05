@@ -1051,20 +1051,21 @@ static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int 
   char *newname;
   int format, ofd;
   io_error_t err;
+  off_t oloc;
   disk_space_t no_space;
   format = MUS_OUT_FORMAT; /* can be double! */
   newname = shorter_tempnam(temp_dir(ss), "snd_mix_");
                       /* we're writing our own private version of this thing, so we can use our own formats */
   err = snd_write_header(newname, MUS_NEXT, nominal_srate, chans, len * chans, format, NULL, NULL);
-  /* Watch out!  28's below are assuming no comment here! */
+  oloc = mus_header_data_location();
   if (err != IO_NO_ERROR)
     {
       snd_warning("%s %s: %s", io_error_name(err), newname, snd_io_strerror());
       return(NULL);
     }
   ofd = snd_reopen_write(newname);
-  snd_file_open_descriptors(ofd, newname, format, 28, chans, MUS_NEXT);
-  lseek(ofd, 28, SEEK_SET);
+  snd_file_open_descriptors(ofd, newname, format, oloc, chans, MUS_NEXT);
+  lseek(ofd, oloc, SEEK_SET);
   no_space = disk_space_p(len * chans * mus_bytes_per_sample(format), newname);
   if (no_space == DISK_SPACE_OK)
     mus_file_write(ofd, 0, len - 1, chans, raw_data);

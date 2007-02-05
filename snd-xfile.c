@@ -2589,9 +2589,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 {
   char *str = NULL, *comment = NULL, *msg = NULL, *fullname = NULL, *tmpfile = NULL;
   snd_info *sp = NULL;
-  int type = MUS_NEXT, format = MUS_BSHORT, srate = 22050, chans = 1, output_type, chan = 0, extractable_chans = 0;
+  int type = MUS_NEXT, format = MUS_BSHORT, srate = 22050, output_type, chan = 0, extractable_chans = 0;
   bool file_exists = false;
-  off_t location = 28, samples = 0;
   io_error_t io_err = IO_NO_ERROR;
 
   clear_dialog_error(sd->panel_data);
@@ -2641,9 +2640,13 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 
   /* get output file attributes */
   redirect_snd_error_to(post_file_panel_error, (void *)(sd->panel_data));
-  if (saving)
-    comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chans, &type, &format, &location, &samples, 0);
-  else comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chan, &type, &format, &location, &samples, 0);
+  {
+    off_t location = 28, samples = 0;
+    int chans = 1;
+    if (saving)
+      comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chans, &type, &format, &location, &samples, 0);
+    else comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chan, &type, &format, &location, &samples, 0);
+  }
   output_type = type;
   redirect_snd_error_to(NULL, NULL);
   if (sd->panel_data->error_widget != NOT_A_SCANF_WIDGET)

@@ -73,6 +73,16 @@ int mus_char_to_lint(const unsigned char *inp)
   return(o);
 }
 
+void mus_boff_t_to_char(unsigned char *j, off_t x)
+{
+  unsigned char *ox = (unsigned char *)&x;
+#if (!MUS_LITTLE_ENDIAN)
+  memcpy((void *)j, (void *)ox, 8);
+#else
+  j[0] = ox[7]; j[1] = ox[6]; j[2] = ox[5]; j[3] = ox[4]; j[4] = ox[3]; j[5] = ox[2]; j[6] = ox[1]; j[7] = ox[0];
+#endif
+}
+
 off_t mus_char_to_boff_t(const unsigned char *inp)
 {
   off_t o;
@@ -83,6 +93,16 @@ off_t mus_char_to_boff_t(const unsigned char *inp)
   memcpy((void *)outp, (void *)inp, 8);
 #endif
   return(o);
+}
+
+void mus_loff_t_to_char(unsigned char *j, off_t x)
+{
+  unsigned char *ox = (unsigned char *)&x;
+#if (MUS_LITTLE_ENDIAN)
+  memcpy((void *)j, (void *)ox, 8);
+#else
+  j[0] = ox[7]; j[1] = ox[6]; j[2] = ox[5]; j[3] = ox[4]; j[4] = ox[3]; j[5] = ox[2]; j[6] = ox[1]; j[7] = ox[0];
+#endif
 }
 
 off_t mus_char_to_loff_t(const unsigned char *inp)
@@ -96,39 +116,6 @@ off_t mus_char_to_loff_t(const unsigned char *inp)
 #endif
   return(o);
 }
-
-int mus_char_to_uninterpreted_int(const unsigned char *inp)
-{
-  int o;
-  unsigned char *outp = (unsigned char *)&o;
-  memcpy((void *)outp, (void *)inp, 4);
-  return(o);
-}
-
-unsigned int mus_char_to_ubint(const unsigned char *inp)
-{
-  unsigned int o;
-  unsigned char *outp = (unsigned char *)&o;
-#if MUS_LITTLE_ENDIAN
-  outp[0] = inp[3]; outp[1] = inp[2]; outp[2] = inp[1]; outp[3] = inp[0];
-#else
-  memcpy((void *)outp, (void *)inp, 4);
-#endif
-  return(o);
-}
-
-unsigned int mus_char_to_ulint(const unsigned char *inp)
-{
-  unsigned int o;
-  unsigned char *outp = (unsigned char *)&o;
-#if (!MUS_LITTLE_ENDIAN)
-  outp[0] = inp[3]; outp[1] = inp[2]; outp[2] = inp[1]; outp[3] = inp[0];
-#else
-  memcpy((void *)outp, (void *)inp, 4);
-#endif
-  return(o);
-}
-
 
 void mus_bfloat_to_char(unsigned char *j, float x)
 {
@@ -262,6 +249,16 @@ unsigned short mus_char_to_ulshort(const unsigned char *inp)
   return(o);
 }
 
+void mus_bdouble_to_char(unsigned char *j, double x)
+{
+  unsigned char *ox = (unsigned char *)&x;
+#if (MUS_LITTLE_ENDIAN)
+  j[0] = ox[7]; j[1] = ox[6]; j[2] = ox[5]; j[3] = ox[4]; j[4] = ox[3]; j[5] = ox[2]; j[6] = ox[1]; j[7] = ox[0];
+#else
+  memcpy((void *)j, (void *)ox, 8);
+#endif
+}
+
 double mus_char_to_ldouble(const unsigned char *inp)
 {
   double o;
@@ -272,6 +269,16 @@ double mus_char_to_ldouble(const unsigned char *inp)
   outp[0] = inp[7]; outp[1] = inp[6]; outp[2] = inp[5]; outp[3] = inp[4]; outp[4] = inp[3]; outp[5] = inp[2]; outp[6] = inp[1]; outp[7] = inp[0];
 #endif
   return(o);
+}
+
+void mus_ldouble_to_char(unsigned char *j, double x)
+{
+  unsigned char *ox = (unsigned char *)&x;
+#if (MUS_LITTLE_ENDIAN)
+  memcpy((void *)j, (void *)ox, 8);
+#else
+  j[0] = ox[7]; j[1] = ox[6]; j[2] = ox[5]; j[3] = ox[4]; j[4] = ox[3]; j[5] = ox[2]; j[6] = ox[1]; j[7] = ox[0];
+#endif
 }
 
 double mus_char_to_bdouble(const unsigned char *inp)
@@ -286,45 +293,38 @@ double mus_char_to_bdouble(const unsigned char *inp)
   return(o);
 }
 
-void mus_bdouble_to_char(unsigned char *j, double x)
+int mus_char_to_uninterpreted_int(const unsigned char *inp)
 {
-  unsigned char *ox = (unsigned char *)&x;
-#if (MUS_LITTLE_ENDIAN)
-  j[0] = ox[7]; j[1] = ox[6]; j[2] = ox[5]; j[3] = ox[4]; j[4] = ox[3]; j[5] = ox[2]; j[6] = ox[1]; j[7] = ox[0];
-#else
-  memcpy((void *)j, (void *)ox, 8);
-#endif
+  int o;
+  unsigned char *outp = (unsigned char *)&o;
+  memcpy((void *)outp, (void *)inp, 4);
+  return(o);
 }
 
-void mus_ldouble_to_char(unsigned char *j, double x)
+unsigned int mus_char_to_ubint(const unsigned char *inp)
 {
-  unsigned char *ox = (unsigned char *)&x;
-#if (MUS_LITTLE_ENDIAN)
-  memcpy((void *)j, (void *)ox, 8);
+  unsigned int o;
+  unsigned char *outp = (unsigned char *)&o;
+#if MUS_LITTLE_ENDIAN
+  outp[0] = inp[3]; outp[1] = inp[2]; outp[2] = inp[1]; outp[3] = inp[0];
 #else
-  j[0] = ox[7]; j[1] = ox[6]; j[2] = ox[5]; j[3] = ox[4]; j[4] = ox[3]; j[5] = ox[2]; j[6] = ox[1]; j[7] = ox[0];
+  memcpy((void *)outp, (void *)inp, 4);
 #endif
+  return(o);
 }
 
-void mus_boff_t_to_char(unsigned char *j, off_t x)
+unsigned int mus_char_to_ulint(const unsigned char *inp)
 {
-  unsigned char *ox = (unsigned char *)&x;
+  unsigned int o;
+  unsigned char *outp = (unsigned char *)&o;
 #if (!MUS_LITTLE_ENDIAN)
-  memcpy((void *)j, (void *)ox, 8);
+  outp[0] = inp[3]; outp[1] = inp[2]; outp[2] = inp[1]; outp[3] = inp[0];
 #else
-  j[0] = ox[7]; j[1] = ox[6]; j[2] = ox[5]; j[3] = ox[4]; j[4] = ox[3]; j[5] = ox[2]; j[6] = ox[1]; j[7] = ox[0];
+  memcpy((void *)outp, (void *)inp, 4);
 #endif
+  return(o);
 }
 
-void mus_loff_t_to_char(unsigned char *j, off_t x)
-{
-  unsigned char *ox = (unsigned char *)&x;
-#if (MUS_LITTLE_ENDIAN)
-  memcpy((void *)j, (void *)ox, 8);
-#else
-  j[0] = ox[7]; j[1] = ox[6]; j[2] = ox[5]; j[3] = ox[4]; j[4] = ox[3]; j[5] = ox[2]; j[6] = ox[1]; j[7] = ox[0];
-#endif
-}
 
 #if HAVE_BYTESWAP_H
   #include <byteswap.h>

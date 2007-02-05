@@ -432,10 +432,14 @@ returning you to the true top-level."
 			 (close-sound scale-output)))
 		   (if (vct? output-1)
 		       (if scaled-to
-			   (vct-scale! output-1 (/ scaled-to (vct-peak output-1)))
+			   (let ((pk (vct-peak output-1)))
+			     (if (> pk 0.0)
+				 (vct-scale! output-1 (/ scaled-to pk))))
 			   (vct-scale! output-1 scaled-by))
 		       (if scaled-to
-			   (sound-data-scale! output-1 (/ scaled-to (sound-data-peak output-1)))
+			   (let ((pk (sound-data-peak output-1)))
+			     (if (> pk 0.0)
+				 (sound-data-scale! output-1 (/ scaled-to pk))))
 			   (sound-data-scale! output-1 scaled-by)))))
 
 	   (if (and play output-to-file)
