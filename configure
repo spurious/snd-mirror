@@ -14978,7 +14978,8 @@ _ACEOF
 _ACEOF
 
               GUILE_LIBS="$GUILE_LIBS -lruby $RUBY_LIBS"
-	      echo "$as_me:$LINENO: checking for readline in -lreadline" >&5
+	      if test "$enable_readline" != no ; then
+	        echo "$as_me:$LINENO: checking for readline in -lreadline" >&5
 echo $ECHO_N "checking for readline in -lreadline... $ECHO_C" >&6
 if test "${ac_cv_lib_readline_readline+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -15050,6 +15051,7 @@ _ACEOF
 			    GUILE_LIBS="$GUILE_LIBS -lreadline -lncurses"
 fi
 
+              fi
 
 
 
@@ -22287,6 +22289,7 @@ fi
 
 # -ffast-math appears to make exp about twice as fast, but slows down filtering by the same amount -- kinda strange
 #   timing tests using -O3 -ffast-math indicate an overall speedup of maybe 4-5%
+#   can't use -ffast-math in Scheme in any case because NaN handling gets screwed up
 
 
 

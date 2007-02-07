@@ -716,8 +716,13 @@ static int header_write(int fd, unsigned char *buf, int chars)
     {
       int bytes;
       bytes = write(fd, buf, chars);
-      if (bytes != chars) 
-	return(mus_error(MUS_WRITE_ERROR, "header_write: wrote %d of %d bytes, %s", bytes, chars, STRERROR(errno)));
+      if (bytes != chars)
+	{
+	  char *errstr;
+	  errstr = STRERROR(errno);
+	  if (!errstr) errstr = "unknown error?";
+	  return(mus_error(MUS_WRITE_ERROR, "header_write: wrote %d of %d bytes, %s", bytes, chars, errstr));
+	}
     }
   return(MUS_NO_ERROR);
 }
@@ -729,7 +734,12 @@ static int header_read(int fd, unsigned char *buf, int chars)
       int bytes;
       bytes = read(fd, buf, chars);
       if (bytes != chars) 
-	return(mus_error(MUS_READ_ERROR, "header_read: read %d of %d bytes, %s", bytes, chars, STRERROR(errno)));
+	{
+	  char *errstr;
+	  errstr = STRERROR(errno);
+	  if (!errstr) errstr = "unknown error?";
+	  return(mus_error(MUS_READ_ERROR, "header_read: read %d of %d bytes, %s", bytes, chars, errstr));
+	}
     }
   return(MUS_NO_ERROR);
 }

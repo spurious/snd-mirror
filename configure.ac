@@ -1217,9 +1217,11 @@ AC_ARG_WITH(ruby,
 
 	      AC_DEFINE_UNQUOTED(RUBY_SEARCH_PATH,"${RUBY_SEARCH_PATH}")
               GUILE_LIBS="$GUILE_LIBS -lruby $RUBY_LIBS"
-	      AC_CHECK_LIB(readline, readline, 
+	      if test "$enable_readline" != no ; then
+	        AC_CHECK_LIB(readline, readline, 
 			   [AC_DEFINE(HAVE_READLINE)
 			    GUILE_LIBS="$GUILE_LIBS -lreadline -lncurses"], ,"-lncurses")
+              fi
               AC_SUBST(GUILE_LIBS)
               AC_SUBST(GUILE_CFLAGS)
 

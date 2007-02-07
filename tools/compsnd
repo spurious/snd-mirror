@@ -204,7 +204,6 @@ make
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit --features ":clm :snd-ruby"
 make allclean
 
 echo ' --without-guile --without-ruby --with-gtk '
@@ -213,7 +212,6 @@ make
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit --features ":clm :snd-ruby"
 rm -f sndinfo
 make sndinfo
 ./sndinfo test.snd
@@ -225,7 +223,6 @@ make
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit --features "'clm 'snd-gtk 'gl"
 make allclean
 
 echo ' --without-guile --without-ruby --with-just-gl '
@@ -234,7 +231,6 @@ make
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit --features "'clm"
 
 echo ' --without-guile --without-ruby g++ '
 ./configure --quiet --without-guile --without-ruby CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
@@ -242,7 +238,6 @@ make
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit --features ":clm :snd-ruby"
 make allclean
 
 echo ' '
@@ -697,7 +692,6 @@ echo ' CC=g++ --without-guile --without-ruby '
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet CC=g++ --without-guile --without-ruby
 make
 ./snd --version
-./snd -noinit --features "'clm 'snd-motif"
 make allclean
 echo ' '
 echo ' '
@@ -784,7 +778,6 @@ echo ' CC=g++ --without-guile --without-ruby --disable-nls '
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet CC=g++ --without-guile --without-ruby --disable-nls
 make
 ./snd --version
-./snd -noinit --features "'clm"
 make allclean
 echo ' '
 echo ' '
@@ -831,7 +824,6 @@ echo ' --with-no-gui --without-guile --without-ruby --quiet'
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --with-no-gui --without-guile --without-ruby --quiet
 make
 ./snd --version
-./snd -noinit --features "'clm 'snd-nogui"
 make allclean
 echo ' '
 echo ' '
@@ -840,7 +832,6 @@ echo ' --without-guile --without-ruby --with-static-xm --with-gl --quiet'
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --without-guile --without-ruby --with-static-xm --with-gl --quiet
 make
 ./snd --version
-./snd -noinit --features "'clm 'xm"
 make allclean
 echo ' '
 echo ' '
@@ -858,7 +849,6 @@ echo ' --without-guile --without-ruby --with-gtk --with-static-xg --with-gl --qu
 ./configure --without-guile --without-ruby --with-gtk --with-static-xg --with-gl --quiet
 make
 ./snd --version
-./snd -noinit --features "'clm 'xg"
 make allclean
 echo ' '
 echo ' '
@@ -946,7 +936,7 @@ make allclean
 setenv PKG_CONFIG_PATH /home/bil/test/old-gtk/lib/pkgconfig
 echo ' '
 echo ' '
-echo ' --quiet --with-gtk LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -I/home/bil/test/old-gtk"'
+echo ' OLD-GTK: --quiet --with-gtk LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -I/home/bil/test/old-gtk"'
 ./configure --quiet --with-gtk LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -I/home/bil/test/old-gtk"
 make
 ./snd --version
