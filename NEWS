@@ -1,78 +1,24 @@
-Snd 8.7
+Snd 8.8:
 
-a huge number of *.fs and *.rb improvements from Mike, including the
-  new file bird.fsm.
+many improvements from Mike
 
+Jack support in OSX and Cygwin from Kjetil
 
-added frame.scm with:
+poussin-sum and jackson-sum in dsp.scm (more band-limited pulse-trains), and changed
+  amplitude scaling in fejer-sum and legendre-sum so that they always peak at 1.0.
+  Also added a note in clm.html showing a way to get a time-varying pulse-train.
 
-    frame-reverse! frame-copy (from mixer.scm)
-    sound->frame frame->sound 
-      region->frame
-   
-    make-frame-reader frame-reader? frame-reader-at-end frame-reader-position 
-      frame-reader-home free-frame-reader copy-frame-reader frame-reader-chans
-      next-frame previous-frame read-frame
-      make-region-frame-reader make-selection-frame-reader 
-      make-track-frame-reader read-track-frame make-sync-frame-reader
-   
-    frame->sound-data sound-data->frame
-    sound->sound-data sound-data->sound
-      region->sound-data track->sound-data selection->sound-data
-    file->vct vct->file
-    frame->vct vct->frame
-    file->sound-data sound-data->file
+changed default-output-data-format to mus-bfloat
 
-    insert-sound-data insert-frame insert-vct
-    mix-sound-data mix-frame
-    scan-sound map-sound (this replaces 8.6's scan-sound)
+removed initFile and the (undocumented) htmlDir X resources
 
-    simultaneous-zero-crossing
+make install now copies the *.scm|fs|rb files to {prefix}/share/snd
 
-added to extensions.scm:
-    pad-sound contrast-sound dither-sound scale-sound offset-sound normalize-sound 
+added read/write support for Apple's new CAFF (64-bit) audio files
 
-added to examp.scm:
-    compand-sound sync-all
+checked: glib 2.12.7|8|9, gtk 2.10.7|8|9, Mesa 6.5.1|2, pango-1.15.3|4|5,
+         sbcl 1.0.1|2, fth 1.0.7
 
-sound-data-multiply! sound-data-add! sound-data-offset! sound-data* sound-data+ 
-    sound-data-copy sound-data-reverse! sound-data-peak
-
-region-home
-add-source-file-extension
-
-clip-hook: called whenever we're about to clip while writing a sound file
-  unclip-channel (dsp.scm) based on LPC (reconstruction via forward and backward prediction)
-  lpc-coeffs and lpc-predict in dsp.scm
-  io.c:  mus_clip_set_handler
-
-finally decided to build in the definition of pi in Guile and Gauche.
-  In the context of Snd, it is absurd to have to make sure "pi" is defined all the time.
-  It's already defined in Forth, and in Ruby it's PI in the math module.
-
-clm.c: removed (unused) mus_make_frame|mixer_with_data
-
-removed the default font settings in Snd.gtkrc -- presumably Snd
-  will now pick up your theme's default font.
-
-added a -nogtkrc startup switch.  This turns off the search for a gtkrc file,
-  or its built-in equivalent -- you get whatever your current theme wants.
-
-removed open-sound-file, vct->sound-file, and close-sound-file.  
-  These were optimizations that make little sense anymore -- use
-  mus-sound-open-output and friends instead.  See snd8.scm for
-  backwards compatible replacements.
-
-mix tags use the mix-color now
+Thanks!:  Mike Scholz, Kjetil Matheussen, Meino Christian Cramer, Michael Edwards
 
 
-Checked: sbcl 1.0, 
-         lesstif 0.95 (it still doesn't work with Snd -- segfaults, 
-           comatose listener, etc), 
-         cmucl 19d (dies trying to compile cmn's transpose.lisp, 
-           so that file is commented out for this version of cmucl),
-         pango 1.15.1|2, fontconfig 2.4.2, cairo 1.2.6, glib 2.12.5|6, stklos 0.82,
-         gamin 1.8.0 (this version fixes at least one of the problems
-           that would sometimes cause Snd to hang)
-
-Thanks: Fernando Lopez-Lezcano, Mike Scholz, Kjetil Matheussen, Forest Bond

@@ -1368,7 +1368,7 @@ static XEN g_script_args(void)
 
 static void printout_to_stdout(const char *msg, void *ignore)
 {
-  fprintf(stdout, "%s\n", msg);
+  puts(msg);
 }
 
 int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool with_title, int args)

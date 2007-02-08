@@ -86,6 +86,12 @@ enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PAS
       MUS_INITIAL_GEN_TAG};
 
 static char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", "lagrange", "bezier", "hermite"};
+static char *interp_type_to_string(int type)
+{
+  if ((type >= 0) && (type < 7))
+    return(interp_name[type]);
+  return("unknown");
+}
 
 
 static int mus_class_tag = MUS_INITIAL_GEN_TAG;
@@ -1588,7 +1594,7 @@ static char *describe_table_lookup(mus_any *ptr)
 	       mus_frequency(ptr),
 	       mus_phase(ptr),
 	       (int)mus_length(ptr),
-	       interp_name[table_lookup_interp_type(ptr)]);
+	       interp_type_to_string(table_lookup_interp_type(ptr)));
   return(describe_buffer);
 }
 
@@ -2062,7 +2068,7 @@ static char *describe_wt(mus_any *ptr)
 	       mus_frequency(ptr), 
 	       mus_phase(ptr), 
 	       mus_length(ptr), 
-	       interp_name[wt_interp_type(ptr)]);
+	       interp_type_to_string(wt_interp_type(ptr)));
   return(describe_buffer);
 }
 
@@ -2284,11 +2290,11 @@ static char *describe_delay(mus_any *ptr)
     mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 		 S_delay ": line[%d,%d, %s]: %s", 
 		 gen->size, gen->zsize, 
-		 interp_name[gen->type],
+		 interp_type_to_string(gen->type),
 		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
   else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 		    S_delay ": line[%d, %s]: %s", 
-		    gen->size, interp_name[gen->type], str = float_array_to_string(gen->line, gen->size, gen->loc));
+		    gen->size, interp_type_to_string(gen->type), str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);
 }
@@ -2365,7 +2371,8 @@ static void delay_reset(mus_any *ptr)
   gen->loc = 0;
   gen->zloc = 0;
   gen->yn1 = 0.0;
-  mus_clear_array(gen->line, gen->zsize);
+  if (gen->line_allocated)                           /* TODO: check this in other cases */
+    mus_clear_array(gen->line, gen->zsize);
 }
 
 static mus_any_class DELAY_CLASS = {
@@ -2451,12 +2458,12 @@ static char *describe_comb(mus_any *ptr)
     mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 		 S_comb ": scaler: %.3f, line[%d,%d, %s]: %s", 
 		 gen->yscl, gen->size, gen->zsize, 
-		 interp_name[gen->type],
+		 interp_type_to_string(gen->type),
 		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
   else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 		    S_comb ": scaler: %.3f, line[%d, %s]: %s", 
 		    gen->yscl, gen->size, 
-		    interp_name[gen->type],
+		    interp_type_to_string(gen->type),
 		    str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);
@@ -2511,12 +2518,12 @@ static char *describe_notch(mus_any *ptr)
     mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 		 S_notch ": scaler: %.3f, line[%d,%d, %s]: %s", 
 		 gen->xscl, gen->size, gen->zsize, 
-		 interp_name[gen->type],
+		 interp_type_to_string(gen->type),
 		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
   else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 		    S_notch ": scaler: %.3f, line[%d, %s]: %s", 
 		    gen->xscl, gen->size, 
-		    interp_name[gen->type],
+		    interp_type_to_string(gen->type),
 		    str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);
@@ -2601,12 +2608,12 @@ static char *describe_all_pass(mus_any *ptr)
     mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 		 S_all_pass ": feedback: %.3f, feedforward: %.3f, line[%d,%d, %s]:%s",
 		 gen->yscl, gen->xscl, gen->size, gen->zsize, 
-		 interp_name[gen->type],
+		 interp_type_to_string(gen->type),
 		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
   else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 		    S_all_pass ": feedback: %.3f, feedforward: %.3f, line[%d, %s]:%s",
 		    gen->yscl, gen->xscl, gen->size, 
-		    interp_name[gen->type],
+		    interp_type_to_string(gen->type),
 		    str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);
@@ -6218,18 +6225,25 @@ static char *describe_locsig(mus_any *ptr)
 	       S_locsig ": chans %d, outn: [", 
 	       gen->chans);
   str = (char *)CALLOC(STR_SIZE, sizeof(char));
-  if (gen->chans - 1 < lim) lim = gen->chans - 1;
-  for (i = 0; i < lim; i++)
+  if (gen->outn)
     {
-      mus_snprintf(str, STR_SIZE, "%.3f ", gen->outn[i]);
-      if ((strlen(describe_buffer) + strlen(str)) < (DESCRIBE_BUFFER_SIZE - 16))
-	strcat(describe_buffer, str);
-      else break;
+      if (gen->chans - 1 < lim) lim = gen->chans - 1;
+      for (i = 0; i < lim; i++)
+	{
+	  mus_snprintf(str, STR_SIZE, "%.3f ", gen->outn[i]);
+	  if ((strlen(describe_buffer) + strlen(str)) < (DESCRIBE_BUFFER_SIZE - 16))
+	    strcat(describe_buffer, str);
+	  else break;
+	}
+      if (gen->chans - 1 > lim) strcat(describe_buffer, "...");
+      mus_snprintf(str, STR_SIZE, "%.3f]", gen->outn[gen->chans - 1]);
+      strcat(describe_buffer, str);
     }
-  if (gen->chans - 1 > lim) strcat(describe_buffer, "...");
-  mus_snprintf(str, STR_SIZE, "%.3f]", gen->outn[gen->chans - 1]);
-  strcat(describe_buffer, str);
-  if (gen->rev_chans > 0)
+  else
+    {
+      strcat(describe_buffer, "nil!]");
+    }
+  if ((gen->rev_chans > 0) && (gen->revn))
     {
       strcat(describe_buffer, ", revn: [");
       lim = 16;
@@ -6245,7 +6259,7 @@ static char *describe_locsig(mus_any *ptr)
       mus_snprintf(str, STR_SIZE, "%.3f]", gen->revn[gen->rev_chans - 1]);
       strcat(describe_buffer, str);
     }
-  mus_snprintf(str, STR_SIZE, ", interp: %s", interp_name[gen->type]);
+  mus_snprintf(str, STR_SIZE, ", interp: %s", interp_type_to_string(gen->type));
   strcat(describe_buffer, str);
   FREE(str);
   return(describe_buffer);

@@ -12835,7 +12835,10 @@ EDITS: 2
     
     (if (and (not (provided? 'snd-gauche))
 	     all-args
-	     (file-exists? "/home/bil/test/iowa/sounds/Cello/Cello.pizz.pp.sulC.C2B2.aiff"))
+	     (provided? 'snd-motif)
+	     (file-exists? "/home/bil/test/iowa/sounds/Cello/Cello.pizz.pp.sulC.C2B2.aiff")
+	     (defined? 'host-name)
+	     (not (string=? (host-name) "sun2")))
 	(sounds->segment-data "/home/bil/test/iowa/sounds/" "iowa-test.data"))
     
     ))
@@ -40817,17 +40820,6 @@ EDITS: 1
 	      (draw-string "hiho" (+ pos 5) 24)
 	      (set! (foreground-color) old-color))))))
   
-  (define (directory->list dir)
-    (let ((dport (opendir dir)))
-      (let loop ((entry (readdir dport))
-		 (files '()))
-	(if (not (eof-object? entry))
-	    (loop (readdir dport) (cons entry files))
-	    (begin
-	      (closedir dport)
-	      (reverse! files))))))
-  
-  
   (begin
     
     (do ((test-ctr 0 (1+ test-ctr))) ((= test-ctr tests)) 
@@ -41740,12 +41732,6 @@ EDITS: 1
 			      ))
 	  ))
 	(close-sound ind))
-      
-      (if (not (provided? 'snd-gauche))
-	  (let ((files (directory->list "tools/")))
-	    (if (not (member "makegl.scm" files))
-		(snd-display ";directory->list: ~A" files))))
-      
       
       ;; frame.scm functions
       
@@ -48583,7 +48569,10 @@ EDITS: 1
 (if (not (provided? 'snd-clm23.scm)) (load "clm23.scm"))
 (if (not (provided? 'snd-freeverb.scm)) (load "freeverb.scm"))
 (if (not (provided? 'snd-grani.scm)) (load "grani.scm"))
-(if (not (provided? 'snd-dlocsig.scm)) (load "dlocsig.scm"))
+(if (not (provided? 'snd-dlocsig.scm))
+    (catch #t 
+	   (lambda () (load "dlocsig.scm"))
+	   (lambda args (snd-display ";load dlocsig: ~A" args))))
 (if (not (provided? 'snd-green.scm)) (load "green.scm"))
 (if (not (provided? 'snd-sndwarp.scm)) (load "sndwarp.scm"))
 

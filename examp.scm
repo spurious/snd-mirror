@@ -2517,7 +2517,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 ;;;   the main function takes the top level directory of the sounds, and returns (eventually) a text
 ;;;   file containing the start times (in samples) and durations of all the notes (each sound file in
 ;;;   this library can have about 12 notes).  The results of this function need to be fixed up by hand
-;;;   in some cases (violin notes in particular).
+;;;   in some cases (violin notes in particular).  Also this only works in Guile+Linux due to readdir bugs.
 
 (define* (sounds->segment-data main-dir :optional (output-file "sounds.data"))
 
@@ -2530,10 +2530,15 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	    (string-set! new-name i #\-)))))
 
   (define (directory->list dir)
-    (let ((dport (opendir dir)))                ; no opendir in Gauche -- not sure how to handle this
+    (let ((dport (opendir dir))                ; no opendir in Gauche -- not sure how to handle this
+					       ; also readdir in Guile is flakey -- does not work in Solaris, perhaps not in netBSD
+					       ; SOMEDAY: make a working directory->list
+	  (ctr 0)) ; try to avoid infinite loop in the broken cases
       (let loop ((entry (readdir dport))
 		 (files '()))
-	(if (not (eof-object? entry))
+	(set! ctr (1+ ctr))
+	(if (and (< ctr 2000)
+		 (not (eof-object? entry)))
 	    (loop (readdir dport) (cons entry files))
 	    (begin
 	      (closedir dport)

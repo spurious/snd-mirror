@@ -191,55 +191,6 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
      (sound-files-in-directory (or dir ".")))
     matches))
   
-;;; we can use Guile's regexp support here to search for all .snd and .wav files:
-#|
-(let ((reg (make-regexp "\\.(wav|snd)$")))
-  (match-sound-files (lambda (file) (regexp-exec reg file))))
-
-;;; this argument to make-regexp is looking for *.wav and *.snd
-;;; a prettier version might use a function written by Dirk Herrmann:
-
-(define (filter-list pred? objects)
-  (let loop ((objs objects)
-	     (result '()))
-    (cond ((null? objs) (reverse! result))
-	  ((pred? (car objs)) (loop (cdr objs) (cons (car objs) result)))
-	  (else (loop (cdr objs) result)))))
-
-(define match-sound-files-1
-  (lambda args
-    (filter-list 
-     (car args) 
-     (sound-files-in-directory 
-      (if (null? (cdr args)) 
-	  "." 
-	  (cadr args))))))
-
-;;; in fact, we could use regexp's in place of Snd's sound-files-in-directory,
-;;; using two more of Dirk Herrman's procedures:
-
-(define (grep rx strings)
-  (let ((r (make-regexp rx)))
-    (filter-list (lambda (x) (regexp-exec r x)) strings)))
-
-(define (directory->list dir)
-  (let ((dport (opendir dir)))
-    (let loop ((entry (readdir dport))
-	       (files '()))
-      (if (not (eof-object? entry))
-	  (loop (readdir dport) (cons entry files))
-	  (begin
-	    (closedir dport)
-	    (reverse! files))))))
-
-;(sort (grep "^[^.]" (directory->list ".")) string<?)
-
-(define* (sound-files-in-directory-1 :optional (dir "."))
-  (sort (grep
-	 (format #f "\\.(~{~A~^|~})$" (sound-file-extensions))
-	 (directory->list dir))
-	string<?))
-|#
 
     
 ;;; -------- selection-members
