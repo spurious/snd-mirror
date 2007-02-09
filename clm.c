@@ -2122,7 +2122,11 @@ static int free_wt(mus_any *p)
   wt *ptr = (wt *)p;
   if (ptr) 
     {
-      if (ptr->out_data) {FREE(ptr->out_data); ptr->out_data = NULL;}
+      if (ptr->out_data)
+	{
+	  FREE(ptr->out_data); 
+	  ptr->out_data = NULL;
+	}
       FREE(ptr);
     }
   return(0);
@@ -2371,8 +2375,7 @@ static void delay_reset(mus_any *ptr)
   gen->loc = 0;
   gen->zloc = 0;
   gen->yn1 = 0.0;
-  if (gen->line_allocated)                           /* TODO: check this in other cases */
-    mus_clear_array(gen->line, gen->zsize);
+  mus_clear_array(gen->line, gen->zsize);
 }
 
 static mus_any_class DELAY_CLASS = {
@@ -6274,6 +6277,8 @@ static int free_locsig(mus_any *p)
       if (ptr->revn) FREE(ptr->revn);
       mus_free((mus_any *)(ptr->outf));
       if (ptr->revf) mus_free((mus_any *)(ptr->revf));
+      ptr->chans = 0;
+      ptr->rev_chans = 0;
       FREE(ptr);
     }
   return(0);

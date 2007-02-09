@@ -506,13 +506,10 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+9-Feb:   Snd 8.8.\n\
 31-Jan:  caf headers.\n\
 2-Jan:   Snd 8.7.\n\
 29-Dec:  -nogtkrc startup switch.\n\
-27-Dec:  add-source-file-extension.\n\
-21-Dec:  unclip-channel.\n\
-17-Dec:  region-home.\n\
-14-Dec:  bird.fsm (Mike Scholz).\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",
