@@ -142,7 +142,7 @@ Version info:
   if GSL, version 0.8 or later
   if gtkglext, version 1.0 or later
   if gamin, version 0.1.0 or later
-  if Gauche, version 0.8.7
+  if Gauche, version 0.8.7 or later
 
 
 ----------------------------------------------------------------

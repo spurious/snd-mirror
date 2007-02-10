@@ -18,32 +18,23 @@
  *      Ultratracker WaveSample, Sample Dump exchange, Yamaha SY85 and SY99 (buggy), Yamaha TX16W, 
  *      Covox v8, AVI, Kurzweil 2000, Paris Ensoniq, Impulse tracker, Korg, Akai type 4, Maui,
  *
- * for a few of these I'm still trying to get documentation -- best sources of info
- * are ftp.cwi.nl:pub/audio (info files), the AFsp sources, and the SOX sources.
- * sox and gsm are at ftp.cwi.nl, AFsp is from kabal@Polaris.EE.McGill.CA (Peter Kabal) as
- * ftp.TSP.EE.McGill.CA:/pub/AFsp/AFsp-V3R2.tar.Z.  The Sound Designer formats are described
- * in the "Developer Documentation" from Digidesign.  Other useful sources can be found at
- * ftp.x.org:/contrib/audio/nas, svr-ftp.eng.cam.ac.uk:/comp.speech/tools, and
- * at http://www.wotsit.org.  I put many of my test cases in 
- * ccrma-ftp.stanford.edu:/pub/Lisp/sf.tar.gz.  The RIFF format is described in the 
- * Microsoft Multimedia Programmer's Reference Manual at ftp.microsoft.com:/SoftLib/MSLFILES/MDRK.EXE.
- * AVI format is described in http://www.rahul.net/jfm/avi.html. EBU RF64 is described in
- * http://www.ebu.ch/CMSimages/en/tec_doc_t3306_tcm6-42570.pdf.
- * CAFF is described in http://developer.apple.com/documentation/MusicAudio/Reference/CAFSpec/
- * and afconvert can be found in /Developer/Examples/CoreAudio/Services/AudioFileTools/
+ * for a few of these I'm still trying to get documentation -- best sources of info are:
+ *     ftp.cwi.nl:pub/audio (info files) 
+ *     the AFsp sources http://www.TSP.ECE.McGill.CA/MMSP/Documents/AudioFormats/index.html
+ *     the SOX sources (sox is a sourceforge project)
+ *     svr-ftp.eng.cam.ac.uk:/comp.speech/tools
+ *     http://www.wotsit.org
+ *     CAFF: http://developer.apple.com/documentation/MusicAudio/Reference/CAFSpec/
+ *           and afconvert can be found in /Developer/Examples/CoreAudio/Services/AudioFileTools/
+ *     RIFF: Microsoft Multimedia Programmer's Reference Manual at ftp.microsoft.com:/SoftLib/MSLFILES/MDRK.EXE
+ *     AVI: http://www.rahul.net/jfm/avi.html
+ *     EBU RF64: http://www.ebu.ch/CMSimages/en/tec_doc_t3306_tcm6-42570.pdf
+ *     Sound Designer: "Developer Documentation" from Digidesign
  *
- * For a lot of info and examples see http://www.TSP.ECE.McGill.CA/MMSP/Documents/AudioFormats/index.html
- *
- * The main problem with compressed sound files is that you can't do reliable
- * random access to the data, can't easily read backwards, and most of the compression
- * schemes are proprietary (and appalling), but to translate Mus10/Sam, HCOM, IEEE text, 
- * MIDI sample dumps, various adpcm cases, NIST shortpack files, and AVI see snd-trans.c 
- * in the sound editor (snd-8.tar.gz).
+ * test cases (sample files): ccrma-ftp.stanford.edu:/pub/Lisp/sf.tar.gz
  *
  * If anyone has information on any other header or data formats, I would be most interested in it,
  * but only if it can be included in this file.
- *
- * ivc format appears to have 16 bytes of header (-1 5 0 0 0 0 -> mulaw) followed by mulaw or alaw data
  */
 
 #include <mus-config.h>
