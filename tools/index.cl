@@ -497,6 +497,12 @@
 		    (setf (ind-indexed (aref tnames x)) t))
 		(format ofil "~%")))
 	    (incf ctr)
+
+	    (when (< ctr cols)
+	      (if (= row 0)
+		  (format ofil "<td width=20></td>")
+		(format ofil "<td></td>")))
+
 	    (when (= ctr cols)
 	      (if got-tr (progn (format ofil "</tr>~%") (setf got-tr nil)))
 	      (incf row)
