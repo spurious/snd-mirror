@@ -1695,6 +1695,24 @@ void xen_gauche_permanent_object(XEN obj)
 {
   /* I can't see how you're supposed to protect something from the gc, so I'll try
    *   simply placing this object under a gensymmed name in the user module??
+   *
+   * Mike Scholz:
+   *    Playing with Boehm's libgc I found your note in the gauche part in 
+   *    xen.c concerning protecting objects from the gc.  Boehm-GC seems not 
+   *    to provide something like gc-protect.  I think one needs an object 
+   *    created with GC_malloc_uncollectable (or static like gauche's classes) 
+   *    where one can hold protected objects.  It may be possible to define a 
+   *    gauche constant with a global list variable holding objects which need 
+   *    protection from the gc, xen_gauche_gc_protect appends objects to it 
+   *    while xen_gauche_gc_unprotect removes them.
+   *
+   * so, I need to include the Boehm GC header and make sure I'm compatible with Gauche, I think...
+   *
+   * /usr/local/lib/gauche/0.8.8/include:
+   *    gauche/  gauche.h  gc_config_macros.h  gc.h  gc_pthread_redirects.h
+   * gc.h:
+   *    GC_API GC_PTR GC_malloc_uncollectable GC_PROTO((size_t size_in_bytes));
+   *
    */
   Scm_DefineConst(Scm_UserModule(), SCM_SYMBOL(Scm_Gensym(SCM_STRING(C_TO_XEN_STRING("Snd")))), obj);
 }

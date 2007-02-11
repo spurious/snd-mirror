@@ -1,19 +1,6 @@
 /* (simple, low level) midi support, work in progress... */
 /*   based on code of Scott Wilson and Craig Sapp */
-
-/*
- * int mus_midi_open_read(const char *name)
- * int mus_midi_open_write(const char *name)
- * int mus_midi_close(int line)
- * int mus_midi_read(int line, unsigned char *buffer, int bytes)
- * int mus_midi_write(int line, unsigned char *buffer, int bytes)
- * char *mus_midi_device_name(int sysdev)  [don't free result]
- * char *mus_midi_describe(void)           [free result]
- *
- *    not implemented (not sure it's needed): int mus_midi_flush(line)
- *
- * currently OSX, ALSA, SGI (both libraries), OSS
- */
+/* currently OSX, ALSA, SGI (both libraries), OSS */
 
 #include <mus-config.h>
 

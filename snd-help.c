@@ -3825,8 +3825,11 @@ char *output_comment(file_info *hdr)
 			 NULL));
 }
 
-XEN g_snd_help(XEN text, int widget_wid)
+
+XEN g_snd_help_with_search(XEN text, int widget_wid, bool search)
 {
+  /* snd-help but no search for misspelled name if search=false */
+
   #if HAVE_SCHEME
     #define snd_help_example "(snd-help 'make-vct)"
     #define snd_help_arg_type "can be a string, symbol, or in some cases, the object itself"
@@ -3849,6 +3852,7 @@ the functions html and ? can be used in place of help to go to the HTML descript
 and the location of the associated C code will be displayed, if it can be found. \
 If " S_help_hook " is not empty, it is invoked with the subject and the snd-help result \
 and its value is returned."
+
 
   char *str = NULL, *subject = NULL;
   int min_diff = 1000;
@@ -3886,7 +3890,8 @@ and its value is returned."
 		help_text = XEN_OBJECT_HELP(text);
 	      }
 	  }
-	topic_min = snd_int_log2(snd_strlen(subject));
+	if (search)
+	  topic_min = snd_int_log2(snd_strlen(subject));
 	
       HELP_LOOP:
 	if (XEN_FALSE_P(help_text))
@@ -3915,7 +3920,7 @@ and its value is returned."
 #endif
 		    
 	      }
-	    if ((XEN_FALSE_P(help_text)) && (!already_looped) && (help_names))
+	    if ((XEN_FALSE_P(help_text)) && (search) && (!already_looped) && (help_names))
 	      {
 		/* we're getting desperate! */
 		int i, min_loc = 0, this_diff;
@@ -4018,79 +4023,92 @@ and its value is returned."
 	  str = XEN_TO_C_STRING(hlp);
 	else
 	  {
-	    int i, min_loc = 0, this_diff, topic_min = 0;
-	    topic_min = snd_int_log2(snd_strlen(subject));
-	    for (i = 0; i < HELP_NAMES_SIZE; i++)
+	    if (search)
 	      {
-		this_diff = levenstein(subject, help_names[i]);
-		if (this_diff < min_diff)
+		int i, min_loc = 0, this_diff, topic_min = 0;
+		topic_min = snd_int_log2(snd_strlen(subject));
+		for (i = 0; i < HELP_NAMES_SIZE; i++)
 		  {
-		    min_diff = this_diff;
-		    min_loc = i;
+		    this_diff = levenstein(subject, help_names[i]);
+		    if (this_diff < min_diff)
+		      {
+			min_diff = this_diff;
+			min_loc = i;
+		      }
 		  }
-	      }
-	    if (min_diff < topic_min)
-	      {
-		subject = help_names[min_loc];
-		sym = C_STRING_TO_XEN_SYMBOL(subject);
-		hlp = XEN_OBJECT_HELP(sym);
-		if (XEN_STRING_P(hlp))
-		  str = XEN_TO_C_STRING(hlp);
+		if (min_diff < topic_min)
+		  {
+		    subject = help_names[min_loc];
+		    sym = C_STRING_TO_XEN_SYMBOL(subject);
+		    hlp = XEN_OBJECT_HELP(sym);
+		    if (XEN_STRING_P(hlp))
+		      str = XEN_TO_C_STRING(hlp);
+		  }
 	      }
 	  }
       }
   }
 #endif
 
-  {
-    bool need_free = false;
-    XEN help_text = XEN_FALSE; 
+  if (search)
+    {
+      bool need_free = false;
+      
+      if ((str == NULL) || 
+	  (snd_strlen(str) == 0) ||
+	  (strcmp(str, PROC_FALSE) == 0)) /* Ruby returns "false" here */
+	{
+	  if (!subject) return(XEN_FALSE);
+	  str = snd_finder(subject, false);
+	  need_free = true;
+	}
+      else 
+	{
+	  if ((min_diff < 1000) && (min_diff > 0))
+	    {
+	      char *more_str;
+	      more_str = snd_finder(subject, true);
+	      if (more_str)
+		{
+		  str = mus_format("%s\nOther possibilities:\n%s", str, more_str);
+		  need_free = true;
+		  FREE(more_str);
+		}
+	    }
+	}
+      if (str)
+	{
+	  XEN help_text = XEN_FALSE;  /* so that we can free "str" */
+	  char *new_str = NULL;
+	  if (subject)
+	    new_str = run_string_hook(help_hook, S_help_hook, str, subject);
+	  else new_str = copy_string(str);
+	  if (need_free)
+	    {
+	      FREE(str);
+	      str = NULL;
+	    }
+	  if (widget_wid > 0)
+	    {
+	      str = word_wrap(new_str, widget_wid);
+	      if (new_str) FREE(new_str);
+	    }
+	  else str = new_str;
+	  help_text = C_TO_XEN_STRING(str);
+	  if (str) FREE(str);
+	  return(xen_return_first(help_text, text));
+	}
+    }
 
-    if ((str == NULL) || 
-	(snd_strlen(str) == 0) ||
-	(strcmp(str, PROC_FALSE) == 0)) /* Ruby returns "false" here */
-      {
-	if (!subject) return(XEN_FALSE);
-	str = snd_finder(subject, false);
-	need_free = true;
-      }
-    else 
-      {
-	if ((min_diff < 1000) && (min_diff > 0))
-	  {
-	    char *more_str;
-	    more_str = snd_finder(subject, true);
-	    if (more_str)
-	      {
-		str = mus_format("%s\nOther possibilities:\n%s", str, more_str);
-		need_free = true;
-		FREE(more_str);
-	      }
-	  }
-      }
+  if (str)
+    return(C_TO_XEN_STRING(str));
+  return(XEN_FALSE);
+}
 
-    if (str)
-      {
-	char *new_str = NULL;
-	if (subject)
-	  new_str = run_string_hook(help_hook, S_help_hook, str, subject);
-	else new_str = copy_string(str);
-	if (need_free)
-	  {
-	    FREE(str);
-	    str = NULL;
-	  }
-	if (widget_wid > 0)
-	  {
-	    str = word_wrap(new_str, widget_wid);
-	    if (new_str) FREE(new_str);
-	  }
-	else str = new_str;
-	help_text = C_TO_XEN_STRING(str);
-	if (str) FREE(str);
-      }
-    return(xen_return_first(help_text, text));
-  }
+
+XEN g_snd_help(XEN text, int widget_wid)
+{
+  return(xen_return_first(g_snd_help_with_search(text, widget_wid, true), text));
 }
 
 static XEN g_listener_help(XEN arg, XEN formatted)

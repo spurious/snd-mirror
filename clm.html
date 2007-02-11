@@ -681,7 +681,7 @@ instrument that maps the line segments into sin x^3:
 	 (zv (<em class=red>make-env</em> <em class=red>en</em> 1.0 dur)))
     (run
      (loop for i from start below end do
-       (let ((zval (<em class=red>env</em> zv))) ;zval^3 is [0.0..1.0], as is sin between 0 and half-pi.
+       (let ((zval (<em class=red>env</em> zv))) ; zval^3 is [0.0..1.0], as is sin between 0 and half-pi.
 	 (<a class=quiet href="#outa">outa</a> i (* amp (sin (* half-pi zval zval zval)) (<a class=quiet href="#oscil">oscil</a> osc))))))))
 
 (<a class=quiet href="#with-sound">with-sound</a> () (mapenv 0 1 440 .4 '(0 0 50 1 75 0 86 .5 100 0)))
@@ -1259,7 +1259,7 @@ use this for VOSIM and other related techniques.</p>
      (loop for i from start below end do
        (<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#env">env</a> ampf) (<em class=red>wave-train</em> wt0 (* (<a class=quiet href="#env">env</a> vibenv) (<a class=quiet href="#oscil">oscil</a> vibr)))))))))
 
-(<a class=quiet href="#with-sound">with-sound</a> () (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)) ;"Ahh"
+(<a class=quiet href="#with-sound">with-sound</a> () (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)) ; "Ahh"
 
 (<a class=quiet href="#with-sound">with-sound</a> () 
   (fofins 0 4 270 .2 0.005 730 .6 1090 .3 2440 .1 '(0 0 40 0 75 .2 100 1) 
@@ -1281,10 +1281,10 @@ use this for VOSIM and other related techniques.</p>
 
 <pre>
   <a class=def name="make-rand">make-rand</a> <a class=quiet href="#optional-key">&amp;optional-key</a> 
-        (frequency 440.0)          ;freq at which new random numbers occur
-        (amplitude 1.0)            ;numbers are between -amplitude and amplitude
-        (envelope '(-1 1 1 1))     ;distribution envelope (uniform distribution between -1 and 1 is the default)
-        distribution               ;pre-computed distribution
+        (frequency 440.0)          ; freq at which new random numbers occur
+        (amplitude 1.0)            ; numbers are between -amplitude and amplitude
+        (envelope '(-1 1 1 1))     ; distribution envelope (uniform distribution between -1 and 1 is the default)
+        distribution               ; pre-computed distribution
   <a class=def name="rand">rand</a> r &amp;optional (sweep 0.0)
   <a class=def name="rand?">rand?</a> r
   <a class=def name="make-rand-interp">make-rand-interp</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (frequency 440.0) (amplitude 1.0) (envelope '(-1 1 1 1) distribution)
@@ -1292,7 +1292,7 @@ use this for VOSIM and other related techniques.</p>
   <a class=def name="rand-interp?">rand-interp?</a> r
   <em class=emdef>centered-random</em> amp 
   <a class=def Name="clm-random">clm-random</a> amp
-  <a class=def name="mus-random">mus-random</a> amp ;same as centered-random (for C-side compatibility)
+  <a class=def name="mus-random">mus-random</a> amp ; same as centered-random (for C-side compatibility)
   <a class=def Name="mus-set-rand-seed">mus-set-rand-seed</a> seed
 </pre>
 <p><b>rand</b> returns a sequence of random numbers between -amplitude and
@@ -1471,7 +1471,7 @@ Another instrument based on similar ideas is:</p>
 
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> attract (beg dur amp c) ;c from 1 to 10 or so
+(<a class=quiet href="#definstrument">definstrument</a> attract (beg dur amp c) ; c from 1 to 10 or so
   ;; by James McCartney, from CMJ vol 21 no 3 p 6
   (let* ((st (floor (* beg *srate*)))
 	 (nd (+ st (floor (* dur *srate*))))
@@ -2240,14 +2240,14 @@ handier.</p>
 <pre>
   <a class=def name="make-granulate">make-granulate</a> <a class=quiet href="#optional-key">&amp;optional-key</a>   
         input
-        (expansion 1.0)   ;how much to lengthen or compress the file
-        (length .15)      ;length of file slices that are overlapped
-        (scaler .6)       ;amplitude scaler on slices (to avoid overflows)
-        (hop .05)         ;speed at which slices are repeated in output
-        (ramp .4)         ;amount of slice-time spent ramping up/down
-        (jitter 1.0)      ;affects spacing of successive grains
-        max-size          ;internal buffer size
-        edit              ;grain editing function (Scheme/Ruby, not CL)
+        (expansion 1.0)   ; how much to lengthen or compress the file
+        (length .15)      ; length of file slices that are overlapped
+        (scaler .6)       ; amplitude scaler on slices (to avoid overflows)
+        (hop .05)         ; speed at which slices are repeated in output
+        (ramp .4)         ; amount of slice-time spent ramping up/down
+        (jitter 1.0)      ; affects spacing of successive grains
+        max-size          ; internal buffer size
+        edit              ; grain editing function (Scheme/Ruby, not CL)
   <a class=def name="granulate">granulate</a> e &amp;optional input-function edit-function
   <a class=def name="granulate?">granulate?</a> e
 </pre>
@@ -2532,9 +2532,9 @@ would be tricky to get time-varying indices.
 <p>There are a number of other generators in the CLM distribution that aren't
 loaded by default.  Among these are:</p>
 <pre>
-  <a href="balance.html#rms">rms</a>         ;trace the rms of signal
-  <a href="balance.html#gain">gain</a>        ;modify signal to match rms power
-  <a href="balance.html#balance">balance</a>     ;combination of rms and gain
+  <a href="balance.html#rms">rms</a>         ; trace the rms of signal
+  <a href="balance.html#gain">gain</a>        ; modify signal to match rms power
+  <a href="balance.html#balance">balance</a>     ; combination of rms and gain
 </pre>
 <p>
 green.cl defines several special purpose noise generators.
@@ -2901,7 +2901,7 @@ a circle.
 You can use <b>locsig-set!</b> and <b>locsig-ref</b> to override the placement decisions.
 To have full output to both channels,</p>
 <pre>
-(setf (locsig-ref loc 0) 1.0) ;or (<a class=quiet href="#locsig-set!">locsig-set!</a> loc 0 1.0)
+(setf (locsig-ref loc 0) 1.0) ; or (<a class=quiet href="#locsig-set!">locsig-set!</a> loc 0 1.0)
 (setf (locsig-ref loc 1) 1.0)
 </pre>
 <p>These locations can be set via envelopes and so on within the run
@@ -3313,17 +3313,17 @@ it would be:
 <p>These provide run-time access to the standard fft routines and their habitual companions.
 <b>make-fft-window</b> can return many of the standard windows including:</p>
 <pre>
-  rectangular-window   ;no change in data
-  bartlett-window      ;triangle
-  parzen-window        ;raised triangle
-  welch-window         ;parzen squared
-  hann-window          ;cosine (sometimes known as "hanning-window" -- a sort of in-joke)
-  hamming-window       ;raised cosine
-  blackman2-window     ;Blackman-Harris windows of various orders
+  rectangular-window   ; no change in data
+  bartlett-window      ; triangle
+  parzen-window        ; raised triangle
+  welch-window         ; parzen squared
+  hann-window          ; cosine (sometimes known as "hanning-window" -- a sort of in-joke)
+  hamming-window       ; raised cosine
+  blackman2-window     ; Blackman-Harris windows of various orders
   blackman3-window
   blackman4-window
   exponential-window
-  kaiser-window        ;beta argument used here
+  kaiser-window        ; beta argument used here
 </pre>
 <p>The
 magnitude of the spectrum is returned by <b>rectangular-&gt;polar</b>.  The data can be windowed
@@ -3364,7 +3364,7 @@ of the spectrum, a distortion that can be effective with speech sounds.</p>
                  (setf (aref fdr (+ k fft4)) (* (<a class=quiet href="#ina">ina</a> filptr fil) fftn))
                  (incf filptr))
                (<em class=red>fft</em> fdr fdi fftsize 1)
-               (let ((j1 hi) ;now reverse bins between lo and hi
+               (let ((j1 hi) ; now reverse bins between lo and hi
                      (k0 (- fftsize lo))
                      (k1 (- fftsize hi)))
                  (loop for j0 from lo to mid do
@@ -4249,7 +4249,7 @@ its first argument (much like <a href="#with-offset">with-offset</a>):</p>
 (<a class=quiet href="#with-sound">with-sound</a> () 
   (fm-violin 0 1 440 .1)
   (scaled-by 2.0
-    (fm-violin 0 .25 660 .1)) ;actual amp is .2
+    (fm-violin 0 .25 660 .1)) ; actual amp is .2
   (fm-violin .5 440 .1))
 </pre>
 </td></tr></table>
@@ -4589,7 +4589,7 @@ begin time offsets.  Its argument is in seconds:</p>
 (<a class=quiet href="#with-sound">with-sound</a> () 
   (fm-violin 0 1 440 .1)
   (<em class=red>with-offset</em> 1.0
-    (fm-violin 0 .25 660 .1)) ;actually starts at 1.0
+    (fm-violin 0 .25 660 .1)) ; actually starts at 1.0
   (fm-violin .5 440 .1))
 </pre>
 </td></tr></table>

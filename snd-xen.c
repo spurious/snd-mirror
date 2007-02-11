@@ -408,6 +408,40 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 	    XEN_DISPLAY(snd_format_if_needed(XEN_CDR(throw_args)), port);
 	  else XEN_DISPLAY(XEN_CDR(throw_args), port);
 	}
+
+      /* wrong-type-arg happens more than others, and actually doesn't provide the needed info
+       *   in most cases -- the error is usually in argument order.  So, if we can find a help
+       *   string for XEN_CAR (normally the caller's name), we'll print out that info too.
+       */
+
+      /* this code is not called in snd-test test 28 because there all errors are caught explicitly */
+
+      if ((XEN_STRING_P(XEN_CAR(throw_args))) &&
+	  (XEN_EQ_P(tag, XEN_ERROR_TYPE("wrong-type-arg"))))
+	{
+	  XEN str;
+	  str = g_snd_help_with_search(XEN_CAR(throw_args), 400, false);
+	  if (XEN_STRING_P(str))
+	    {
+	      char *help;
+	      help = copy_string(XEN_TO_C_STRING(str));
+	      if (help)
+		{
+		  int i, len;
+		  len = snd_strlen(help);
+		  for (i = 1; i < len; i++)
+		    if ((help[i] == '\n') ||                        /* try to print just the calling sequence */
+			((help[i] == ':') && (help[i - 1] == ')'))) /* :optional can occur in the arg list */
+		      {
+			help[i] = 0;
+			break;
+		      }
+		  XEN_PUTS("\n    ", port);
+		  XEN_DISPLAY(C_TO_XEN_STRING(help), port);
+		  FREE(help);
+		}
+	    }
+	}
     }
   else 
     {

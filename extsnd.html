@@ -5666,6 +5666,11 @@ delete-selection deletes the selection, equivalent to the Edit:Delete selection 
 </td></tr><tr><td></td><td>
 env-selection applies 'envelope' to the selection. (as an amplitude envelope).
 'envelope' can also be a CLM env generator; in this case, 'env-base' is ignored.
+These are equivalent:
+<pre>
+  (env-selection '(0 0 1 1 2 0))
+  (env-selection (<a class=quiet href="clm.html#make-env">make-env</a> '(0 0 1 1 2 0) :end (<a class=quiet href="#selectionframes">selection-frames</a>)))
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5684,7 +5689,8 @@ end.  If 'truncate' is #f, the extra output ('order' samples worth) is mixed int
 <!-- insert-selection -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="insertselection">insert-selection</a> (:optional beg snd chn)</code>
 </td></tr><tr><td></td><td>
-insert-selection inserts (pastes it in as a block -- not a mix) a copy of the selection starting at 'beg' in the given channel.
+insert-selection inserts a copy of the selection starting at 'beg' in the given channel (that is, it pastes in the selection
+as a block).
 The Edit:Insert selection menu choice is essentially <code>(insert-selection (cursor))</code>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5804,6 +5810,8 @@ You can set this to move the selection end point:
     <em class=listener>10000</em>
     :<em class=typing>(selection-frames)</em>
     <em class=listener>10000</em>
+    :<em class=typing>(set! (selection-frames) (* 2 (selection-frames)))</em> ; double the selection length
+    <em class=listener>20000</em>
 </pre>
 See also <a href="sndscm.html#makeselection">make-selection</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -7483,7 +7491,8 @@ related settings. Data formats are (b=big-endian, l=little, u=unsigned):
 </pre>
 Header-types are:
 <pre>
-    mus-next mus-aifc mus-riff mus-rf64 mus-nist mus-raw mus-ircam mus-aiff mus-soundfont mus-bicsf mus-voc mus-svx mus-caff
+    mus-next mus-aifc mus-riff mus-rf64 mus-nist mus-raw mus-ircam mus-aiff 
+    mus-soundfont mus-bicsf mus-voc mus-svx mus-caff
 </pre>
 To be informed whenever a new sound is created, use <a href="#newsoundhook">new-sound-hook</a> (see ws.scm).
 </td></tr><tr><td colspan=2 height=18></td></tr>
@@ -13070,6 +13079,10 @@ This returns #t if 'obj' is a color (a Pixel in xm jargon); see <a href="#makeco
 <code><a class=def name="colortolist">color-&gt;list</a> (obj)</code>
 </td></tr><tr><td></td><td>
 This returns the rgb color components of 'obj' in a list.
+<pre>
+  <em class=listener>:</em><em class=typing>(color-&gt;list (make-color 1 0 0))</em>
+  <em class=listener>(1.0 0.0 0.0)</em>
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -13078,7 +13091,7 @@ This returns the rgb color components of 'obj' in a list.
 <code><a class=def name="colorcutoff">color-cutoff</a> ()</code>
 </td></tr><tr><td></td><td>
 In spectra, this sets the lowest data value that will be colored (the default is 0.003).  Anything less than that
-is rendered in the background color.
+is rendered in the background color.  This is the "data cutoff" slider in the View:Color dialog.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -13117,6 +13130,10 @@ These names are defined (with '-colormap' appended) in rgb.scm and rgb.rb.
 <code><a class=def name="colormapname">colormap-name</a> (index)</code>
 </td></tr><tr><td></td><td>
 colormap-name returns the specified colormap's name.
+<pre>
+  <em class=listener>:</em><em class=typing>(colormap-name (colormap))</em>
+  <em class=listener>"hot"</em>
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
