@@ -337,7 +337,7 @@ This reduces the on-card buffering, but may introduce clicks."
 
 static XEN g_mus_alsa_buffers(void)
 {
-  #define H_mus_alsa_buffers "(" S_mus_alsa_buffers ") -> current number of ALSA periods."
+  #define H_mus_alsa_buffers "(" S_mus_alsa_buffers "): current number of ALSA periods."
 #if HAVE_ALSA
   return(C_TO_XEN_INT(mus_alsa_buffers()));
 #endif
@@ -355,7 +355,7 @@ static XEN g_mus_alsa_set_buffers(XEN val)
 
 static XEN g_mus_alsa_buffer_size(void)
 {
-  #define H_mus_alsa_buffer_size "(" S_mus_alsa_buffer_size ") -> current size of ALSA buffers."
+  #define H_mus_alsa_buffer_size "(" S_mus_alsa_buffer_size "): current size of ALSA buffers."
 #if HAVE_ALSA
   return(C_TO_XEN_INT(mus_alsa_buffer_size()));
 #endif
@@ -373,7 +373,7 @@ static XEN g_mus_alsa_set_buffer_size(XEN val)
 
 static XEN g_mus_alsa_device(void)
 {
-  #define H_mus_alsa_device "(" S_mus_alsa_device ") -> current ALSA device."
+  #define H_mus_alsa_device "(" S_mus_alsa_device "): current ALSA device."
 #if HAVE_ALSA
   return(C_TO_XEN_STRING(mus_alsa_device()));
 #endif
@@ -391,7 +391,7 @@ static XEN g_mus_alsa_set_device(XEN val)
 
 static XEN g_mus_alsa_playback_device(void)
 {
-  #define H_mus_alsa_playback_device "(" S_mus_alsa_playback_device ") -> current ALSA playback device."
+  #define H_mus_alsa_playback_device "(" S_mus_alsa_playback_device "): current ALSA playback device."
 #if HAVE_ALSA
   return(C_TO_XEN_STRING(mus_alsa_playback_device()));
 #endif
@@ -409,7 +409,7 @@ static XEN g_mus_alsa_set_playback_device(XEN val)
 
 static XEN g_mus_alsa_capture_device(void)
 {
-  #define H_mus_alsa_capture_device "(" S_mus_alsa_capture_device ") -> current ALSA capture device."
+  #define H_mus_alsa_capture_device "(" S_mus_alsa_capture_device "): current ALSA capture device."
 #if HAVE_ALSA
   return(C_TO_XEN_STRING(mus_alsa_capture_device()));
 #endif
@@ -427,7 +427,7 @@ static XEN g_mus_alsa_set_capture_device(XEN val)
 
 static XEN g_mus_alsa_squelch_warning(void)
 {
-  #define H_mus_alsa_squelch_warning "(" S_mus_alsa_squelch_warning ") -> whether to squelch ALSA srate mismatch warnings."
+  #define H_mus_alsa_squelch_warning "(" S_mus_alsa_squelch_warning "): whether to squelch ALSA srate mismatch warnings."
 #if HAVE_ALSA
   return(C_TO_XEN_BOOLEAN(mus_alsa_squelch_warning()));
 #endif

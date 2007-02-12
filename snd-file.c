@@ -4134,7 +4134,7 @@ static XEN g_set_view_files_sort(XEN dialog, XEN val)
 
 static XEN g_view_files_amp(XEN dialog)
 {
-  #define H_view_files_amp "(" S_view_files_amp " dialog) -> amp setting in the given View:Files dialog"
+  #define H_view_files_amp "(" S_view_files_amp " dialog): amp setting in the given View:Files dialog"
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_amp, "a view-files dialog widget"); 
   return(C_TO_XEN_DOUBLE(view_files_amp((widget_t)(XEN_UNWRAP_WIDGET(dialog)))));
 }
@@ -4149,7 +4149,7 @@ static XEN g_view_files_set_amp(XEN dialog, XEN amp)
 
 static XEN g_view_files_speed(XEN dialog)
 {
-  #define H_view_files_speed "(" S_view_files_speed " dialog) -> speed setting in the given View:Files dialog"
+  #define H_view_files_speed "(" S_view_files_speed " dialog): speed setting in the given View:Files dialog"
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_speed, "a view-files dialog widget"); 
   return(C_TO_XEN_DOUBLE(view_files_speed((widget_t)(XEN_UNWRAP_WIDGET(dialog)))));
 }
@@ -4164,7 +4164,7 @@ static XEN g_view_files_set_speed(XEN dialog, XEN speed)
 
 static XEN g_view_files_amp_env(XEN dialog)
 {
-  #define H_view_files_amp_env "(" S_view_files_amp_env " dialog) -> amp env breakpoints in the given View:Files dialog"
+  #define H_view_files_amp_env "(" S_view_files_amp_env " dialog): amp env breakpoints in the given View:Files dialog"
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_amp_env, "a view-files dialog widget"); 
   return(env_to_xen(view_files_amp_env((widget_t)(XEN_UNWRAP_WIDGET(dialog)))));
 }
@@ -4179,7 +4179,7 @@ static XEN g_view_files_set_amp_env(XEN dialog, XEN amp_env)
 
 static XEN g_view_files_speed_style(XEN dialog)
 {
-  #define H_view_files_speed_style "(" S_view_files_speed_style " dialog) -> speed_style in use in the given View:Files dialog"
+  #define H_view_files_speed_style "(" S_view_files_speed_style " dialog): speed_style in use in the given View:Files dialog"
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_speed_style, "a view-files dialog widget"); 
   return(C_TO_XEN_INT((int)(view_files_speed_style((widget_t)(XEN_UNWRAP_WIDGET(dialog))))));
 }
@@ -4197,7 +4197,7 @@ static XEN g_view_files_selected_files(XEN dialog)
   XEN result = XEN_EMPTY_LIST;
   char **selected_files;
   int i, len = 0;
-  #define H_view_files_selected_files "(" S_view_files_selected_files " dialog) -> list of files currently selected in the given View:Files dialog"
+  #define H_view_files_selected_files "(" S_view_files_selected_files " dialog): list of files currently selected in the given View:Files dialog"
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_selected_files, "a view-files dialog widget"); 
   selected_files = view_files_selected_files((widget_t)(XEN_UNWRAP_WIDGET(dialog)), &len);
   if ((selected_files) && (len > 0))
@@ -4241,7 +4241,7 @@ static XEN g_view_files_files(XEN dialog)
   XEN result = XEN_EMPTY_LIST;
   char **files;
   int i, len = 0;
-  #define H_view_files_files "(" S_view_files_files " dialog) -> list of files currently available in the given View:Files dialog"
+  #define H_view_files_files "(" S_view_files_files " dialog): list of files currently available in the given View:Files dialog"
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_files, "a view-files dialog widget"); 
   files = view_files_files((widget_t)(XEN_UNWRAP_WIDGET(dialog)), &len);
   if ((files) && (len > 0))
@@ -4295,7 +4295,7 @@ static XEN g_add_sound_file_extension(XEN ext)
 
 static XEN g_sound_file_extensions(void)
 {
-  #define H_sound_file_extensions "(" S_sound_file_extensions ") -> list of current sound file extensions (used \
+  #define H_sound_file_extensions "(" S_sound_file_extensions "): list of current sound file extensions (used \
 by the just-sounds file filters)"
 
   XEN res = XEN_EMPTY_LIST;
@@ -4348,7 +4348,7 @@ static XEN g_file_write_date(XEN file)
 #ifndef __GNUC__
   #define H_file_write_date "(" S_file_write_date " file): write date of file"
 #else
-  #define H_file_write_date "(" S_file_write_date " file) -> write date in the same format as \
+  #define H_file_write_date "(" S_file_write_date " file): write date in the same format as \
 current-time:\n(strftime \"%a %d-%b-%Y %H:%M %Z\" (localtime (" S_file_write_date " \"oboe.snd\")))\n" write_date_equivalent
 #endif
 
@@ -4803,7 +4803,7 @@ static XEN g_delete_file_sorter(XEN index)
 
 static XEN g_sound_file_p(XEN name)
 {
-  #define H_sound_file_p "(" S_sound_file_p " name) -> " PROC_TRUE " if name has a known sound file extension"
+  #define H_sound_file_p "(" S_sound_file_p " name): " PROC_TRUE " if name has a known sound file extension"
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_sound_file_p, "a filename");   
   return(C_TO_XEN_BOOLEAN(sound_file_p(XEN_TO_C_STRING(name))));
 }

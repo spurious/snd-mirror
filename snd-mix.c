@@ -7084,7 +7084,7 @@ static int xen_to_c_track(XEN id, const char *origin)
 
 static XEN g_track_p(XEN id)
 {
-  #define H_track_p "(" S_track_p " id) -> " PROC_TRUE " if id refers to an active track"
+  #define H_track_p "(" S_track_p " id): " PROC_TRUE " if id refers to an active track"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(id), id, XEN_ONLY_ARG, S_track_p, "an integer");
   return(C_TO_XEN_BOOLEAN(track_p(XEN_TO_C_INT(id))));
 }
@@ -7416,7 +7416,7 @@ static XEN g_free_track(XEN id)
 
 static XEN g_track_name(XEN id)
 {
-  #define H_track_name "(" S_track_name " id) -> track's name"
+  #define H_track_name "(" S_track_name " id): track's name"
   int track_id;
   track_id = xen_to_c_track(id, S_track_name);
   return(C_TO_XEN_STRING(tracks[track_id]->name));
@@ -7439,7 +7439,7 @@ static XEN g_set_track_name(XEN id, XEN val)
 
 static XEN g_track_tag_y(XEN id)
 {
-  #define H_track_tag_y "(" S_track_tag_y " id) -> track's tag height in pixels"
+  #define H_track_tag_y "(" S_track_tag_y " id): track's tag height in pixels"
   int track_id;
   track_id = xen_to_c_track(id, S_track_tag_y);
   return(C_TO_XEN_INT(tracks[track_id]->tag_y));
@@ -7459,7 +7459,7 @@ static XEN g_set_track_tag_y(XEN id, XEN val)
 
 static XEN g_track_amp(XEN id)
 {
-  #define H_track_amp "(" S_track_amp " id) -> track's amp"
+  #define H_track_amp "(" S_track_amp " id): track's amp"
   int track_id;
   track_id = xen_to_c_track(id, S_track_amp);
   return(C_TO_XEN_DOUBLE(active_track_amp(track_id)));
@@ -7520,7 +7520,7 @@ static void unset_track_color(int id)
 
 static XEN g_track_color(XEN id)
 {
-  #define H_track_color "(" S_track_color " id) -> track's (track-wide) mix waveform color. \
+  #define H_track_color "(" S_track_color " id): track's (track-wide) mix waveform color. \
 To display track 1's members in blue: " track_color_example "."
   int track_id;
   track_id = xen_to_c_track(id, S_track_color);
@@ -7545,7 +7545,7 @@ static XEN g_set_track_color(XEN id, XEN val)
 
 static XEN g_track_speed(XEN id)
 {
-  #define H_track_speed "(" S_track_speed " id) -> track's speed"
+  #define H_track_speed "(" S_track_speed " id): track's speed"
   int track_id;
   track_id = xen_to_c_track(id, S_track_speed);
   return(C_TO_XEN_DOUBLE(active_track_speed(track_id)));
@@ -7606,7 +7606,7 @@ static XEN g_set_track_speed_style(XEN n, XEN speed)
 
 static XEN g_track_tempo(XEN id)
 {
-  #define H_track_tempo "(" S_track_tempo " id) -> track's tempo"
+  #define H_track_tempo "(" S_track_tempo " id): track's tempo"
   int track_id;
   track_id = xen_to_c_track(id, S_track_tempo);
   return(C_TO_XEN_DOUBLE(active_track_tempo(track_id)));
@@ -7652,7 +7652,7 @@ static XEN g_set_track_amp_env(XEN id, XEN e)
 
 static XEN g_track_track(XEN id)
 {
-  #define H_track_track "(" S_track_track " id) -> tracks's track (0 = none); tracks can be members of other tracks."
+  #define H_track_track "(" S_track_track " id): tracks's track (0 = none); tracks can be members of other tracks."
   int track_id;
   track_id = xen_to_c_track(id, S_track_track);
   return(C_TO_XEN_INT(active_track_track(track_id)));
@@ -7677,7 +7677,7 @@ static XEN g_set_track_track(XEN id, XEN trk)
 
 static XEN g_track_position(XEN id, XEN chn)
 {
-  #define H_track_position "(" S_track_position " id :optional (chn 0)) -> track's position (location of first mixed sample)"
+  #define H_track_position "(" S_track_position " id :optional (chn 0)): track's position (location of first mixed sample)"
   int track_id;
   track_id = xen_to_c_track(id, S_track_position);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_2, S_track_position, "integer");
@@ -7707,7 +7707,7 @@ static XEN g_set_track_position(XEN id, XEN pos, XEN chn)
 
 static XEN g_track_frames(XEN id, XEN chn)
 {
-  #define H_track_frames "(" S_track_frames " id :optional (chn 0)) -> id's length (samples)"
+  #define H_track_frames "(" S_track_frames " id :optional (chn 0)): id's length (samples)"
   int track_id;
   track_id = xen_to_c_track(id, S_track_frames);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_2, S_track_frames, "int");
@@ -7716,7 +7716,7 @@ static XEN g_track_frames(XEN id, XEN chn)
 
 static XEN g_track_chans(XEN id)
 {
-  #define H_track_chans "(" S_track_chans " id) -> chans associated with track 'id'. Each such channel \
+  #define H_track_chans "(" S_track_chans " id): chans associated with track 'id'. Each such channel \
 has at least one active mix that is a member of the given track."
   int track_id;
   track_id = xen_to_c_track(id, S_track_chans);
@@ -8488,7 +8488,7 @@ XEN g_track_sample_reader_position(XEN obj)
 
 static XEN g_mix_dialog_mix(void)
 {
-  #define H_mix_dialog_mix "(" S_mix_dialog_mix ") -> current mix id displayed in mix dialog."
+  #define H_mix_dialog_mix "(" S_mix_dialog_mix "): current mix id displayed in mix dialog."
   return(C_TO_XEN_INT(mix_dialog_mix()));
 }
 
@@ -8501,7 +8501,7 @@ static XEN g_set_mix_dialog_mix(XEN val)
 
 static XEN g_track_dialog_track(void)
 {
-  #define H_track_dialog_track "(" S_track_dialog_track ") -> current track id displayed in track dialog."
+  #define H_track_dialog_track "(" S_track_dialog_track "): current track id displayed in track dialog."
   return(C_TO_XEN_INT(track_dialog_track()));
 }
 

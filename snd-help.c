@@ -4164,7 +4164,7 @@ static XEN g_snd_url(XEN name)
 
 static XEN g_snd_urls(void)
 {
-  #define H_snd_urls "(" S_snd_urls ") -> list of all snd names with the associated url (a list of lists)"
+  #define H_snd_urls "(" S_snd_urls "): list of all snd names with the associated url (a list of lists)"
   XEN lst = XEN_EMPTY_LIST;
   int i;
   if (help_names)

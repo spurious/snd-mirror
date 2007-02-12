@@ -740,7 +740,7 @@ fltenv_basic) (13 fltenv_data))"
 
 static XEN g_snd_color(XEN choice)
 {
-  #define H_snd_color "(" S_snd_color " num) -> color associated with 'num' -- see table of colors in snd-draw.c"
+  #define H_snd_color "(" S_snd_color " num): color associated with 'num' -- see table of colors in snd-draw.c"
   color_t col;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(choice), choice, XEN_ONLY_ARG, S_snd_color, "an integer");
 
@@ -797,7 +797,7 @@ static XEN g_snd_font(XEN choice)
   #define WRAP_FONT(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("PangoFontDescription_"), C_TO_XEN_ULONG((unsigned long)Value))
 #endif
 
-  #define H_snd_font "(" S_snd_font " num) -> font associated with 'num' -- see table of fonts in snd-draw.c"
+  #define H_snd_font "(" S_snd_font " num): font associated with 'num' -- see table of fonts in snd-draw.c"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(choice), choice, XEN_ONLY_ARG, S_snd_font, "an integer");
 
   switch (XEN_TO_C_INT(choice))

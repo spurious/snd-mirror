@@ -4259,7 +4259,7 @@ selection of a component (obsolete)"
 
 static XEN gxm_XmTrackingEvent(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmTrackingEvent "Widget XmTrackingEvent(Widget widget, Cursor cursor, Boolean confine_to) -> (widget event)"
+  #define H_XmTrackingEvent "Widget XmTrackingEvent(Widget widget, Cursor cursor, Boolean confine_to): (widget event)"
   /* DIFF: XmTrackingEvent widget cursor confine [event] -> (list widget event)
    */
   XEvent *e; /* do we need to allocate? */
@@ -5324,7 +5324,7 @@ The TabStack widget creation function"
 
 static XEN gxm_XmIsTabStack(XEN arg)
 {
-  #define H_XmIsTabStack "XmIsTabStack(arg) -> #t if arg is a TabStack widget"
+  #define H_XmIsTabStack "XmIsTabStack(arg): #t if arg is a TabStack widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsTabStack", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsTabStack(XEN_TO_C_Widget(arg))));
 }
@@ -5376,7 +5376,7 @@ The DataField widget creation function"
 
 static XEN gxm_XmIsDataField(XEN arg)
 {
-  #define H_XmIsDataField "XmIsDataField(arg) -> #t if arg is a DataField widget"
+  #define H_XmIsDataField "XmIsDataField(arg): #t if arg is a DataField widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDataField", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDataField(XEN_TO_C_Widget(arg))));
 }
@@ -5518,7 +5518,7 @@ The ButtonBox widget creation function"
 
 static XEN gxm_XmIsButtonBox(XEN arg)
 {
-  #define H_XmIsButtonBox "XmIsButtonBox(arg) -> #t if arg is a ButtonBox widget"
+  #define H_XmIsButtonBox "XmIsButtonBox(arg): #t if arg is a ButtonBox widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsButtonBox", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsButtonBox(XEN_TO_C_Widget(arg))));
 }
@@ -5538,7 +5538,7 @@ The Column widget creation function"
 
 static XEN gxm_XmIsColumn(XEN arg)
 {
-  #define H_XmIsColumn "XmIsColumn(arg) -> #t if arg is a Column widget"
+  #define H_XmIsColumn "XmIsColumn(arg): #t if arg is a Column widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsColumn", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsColumn(XEN_TO_C_Widget(arg))));
 }
@@ -5574,7 +5574,7 @@ return(gxm_new_widget("XmCreateDropDown", XmCreateCombinationBox2, arg1, arg2, a
 
 static XEN gxm_XmIsDropDown(XEN arg)
 {
-  #define H_XmIsDropDown "XmIsDropDown(arg) -> #t if arg is a DropDown widget"
+  #define H_XmIsDropDown "XmIsDropDown(arg): #t if arg is a DropDown widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDropDown", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDropDown(XEN_TO_C_Widget(arg))));
 }
@@ -5697,7 +5697,7 @@ static XEN gxm_XmToggleButtonGadgetSetValue(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmCreateGrabShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XmCreateGrabShell "Widget XmCreateGrabShell(Widget parent, char *name, ArgList al, Cardinal ac) -> a new GrabShell"
+  #define H_XmCreateGrabShell "Widget XmCreateGrabShell(Widget parent, char *name, ArgList al, Cardinal ac): a new GrabShell"
   return(gxm_new_widget("XmCreateGrabShell", XmCreateGrabShell, arg1, arg2, arg3, arg4));
 }
 
@@ -6560,7 +6560,7 @@ reorders a stack of widgets that are registered drop sites"
 
 static XEN gxm_XmDropSiteQueryStackingOrder(XEN arg1)
 {
-  #define H_XmDropSiteQueryStackingOrder "Status XmDropSiteQueryStackingOrder(Widget widget) -> (list parent child ...)"
+  #define H_XmDropSiteQueryStackingOrder "Status XmDropSiteQueryStackingOrder(Widget widget): (list parent child ...)"
   /* DIFF: XmDropSiteQueryStackingOrder widget [parent child numchild] -> (list parent child ...)
      no parent children num_children -- returned as '(parent child1...) or #f 
   */
@@ -8056,49 +8056,49 @@ The MessageBox widget creation function"
 
 static XEN gxm_XmIsMessageBox(XEN arg)
 {
-  #define H_XmIsMessageBox "XmIsMessageBox(arg) -> #t if arg is a MessageBox widget"
+  #define H_XmIsMessageBox "XmIsMessageBox(arg): #t if arg is a MessageBox widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsMessageBox", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsMessageBox(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsArrowButtonGadget(XEN arg)
 {
-  #define H_XmIsArrowButtonGadget "XmIsArrowButtonGadget(arg) -> #t if arg is an ArrowButton gadget"
+  #define H_XmIsArrowButtonGadget "XmIsArrowButtonGadget(arg): #t if arg is an ArrowButton gadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsArrowButtonGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsArrowButtonGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsArrowButton(XEN arg)
 {
-  #define H_XmIsArrowButton "XmIsArrowButton(arg) -> #t if arg is an ArrowButton widget"
+  #define H_XmIsArrowButton "XmIsArrowButton(arg): #t if arg is an ArrowButton widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsArrowButton", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsArrowButton(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsNotebook(XEN arg)
 {
-  #define H_XmIsNotebook "XmIsNotebook(arg) -> #t if arg is a Notebook widget"
+  #define H_XmIsNotebook "XmIsNotebook(arg): #t if arg is a Notebook widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsNotebook", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsNotebook(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsPanedWindow(XEN arg)
 {
-  #define H_XmIsPanedWindow "XmIsPanedWindow(arg) -> #t if arg is a PanedWindow widget"
+  #define H_XmIsPanedWindow "XmIsPanedWindow(arg): #t if arg is a PanedWindow widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsPanedWindow", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsPanedWindow(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsBulletinBoard(XEN arg)
 {
-  #define H_XmIsBulletinBoard "XmIsBulletinBoard(arg) -> #t if arg is a BulletinBoard widget"
+  #define H_XmIsBulletinBoard "XmIsBulletinBoard(arg): #t if arg is a BulletinBoard widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsBulletinBoard", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsBulletinBoard(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsPrimitive(XEN arg)
 {
-  #define H_XmIsPrimitive "XmIsPrimitive(arg) -> #t if arg is a Primitive widget"
+  #define H_XmIsPrimitive "XmIsPrimitive(arg): #t if arg is a Primitive widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsPrimitive", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsPrimitive(XEN_TO_C_Widget(arg))));
 }
@@ -8114,287 +8114,287 @@ static XEN gxm_XmIsPrintShell(XEN arg)
 
 static XEN gxm_XmIsCascadeButtonGadget(XEN arg)
 {
-  #define H_XmIsCascadeButtonGadget "XmIsCascadeButtonGadget(arg) -> #t if arg is a CascadeButtonGadget gadget"
+  #define H_XmIsCascadeButtonGadget "XmIsCascadeButtonGadget(arg): #t if arg is a CascadeButtonGadget gadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsCascadeButtonGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsCascadeButtonGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsCascadeButton(XEN arg)
 {
-  #define H_XmIsCascadeButton "XmIsCascadeButton(arg) -> #t if arg is a CascadeButton widget"
+  #define H_XmIsCascadeButton "XmIsCascadeButton(arg): #t if arg is a CascadeButton widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsCascadeButton", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsCascadeButton(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsPushButtonGadget(XEN arg)
 {
-  #define H_XmIsPushButtonGadget "XmIsPushButtonGadget(arg) -> #t if arg is a PushButtonGadget gadget"
+  #define H_XmIsPushButtonGadget "XmIsPushButtonGadget(arg): #t if arg is a PushButtonGadget gadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsPushButtonGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsPushButtonGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsPushButton(XEN arg)
 {
-  #define H_XmIsPushButton "XmIsPushButton(arg) -> #t if arg is a PushButton widget"
+  #define H_XmIsPushButton "XmIsPushButton(arg): #t if arg is a PushButton widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsPushButton", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsPushButton(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsComboBox(XEN arg)
 {
-  #define H_XmIsComboBox "XmIsComboBox(arg) -> #t if arg is a ComboBox widget"
+  #define H_XmIsComboBox "XmIsComboBox(arg): #t if arg is a ComboBox widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsComboBox", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsComboBox(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsCommand(XEN arg)
 {
-  #define H_XmIsCommand "XmIsCommand(arg) -> #t if arg is a Command widget"
+  #define H_XmIsCommand "XmIsCommand(arg): #t if arg is a Command widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsCommand", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsCommand(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsRowColumn(XEN arg)
 {
-  #define H_XmIsRowColumn "XmIsRowColumn(arg) -> #t if arg is a RowColumn widget"
+  #define H_XmIsRowColumn "XmIsRowColumn(arg): #t if arg is a RowColumn widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsRowColumn", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsRowColumn(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsContainer(XEN arg)
 {
-  #define H_XmIsContainer "XmIsContainer(arg) -> #t if arg is a Container widget"
+  #define H_XmIsContainer "XmIsContainer(arg): #t if arg is a Container widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsContainer", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsContainer(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsScreen(XEN arg)
 {
-  #define H_XmIsScreen "XmIsScreen(arg) -> #t if arg is a Screen widget"
+  #define H_XmIsScreen "XmIsScreen(arg): #t if arg is a Screen widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsScreen", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsScreen(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsScale(XEN arg)
 {
-  #define H_XmIsScale "XmIsScale(arg) -> #t if arg is a Scale widget"
+  #define H_XmIsScale "XmIsScale(arg): #t if arg is a Scale widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsScale", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsScale(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsScrollBar(XEN arg)
 {
-  #define H_XmIsScrollBar "XmIsScrollBar(arg) -> #t if arg is a ScrollBar widget"
+  #define H_XmIsScrollBar "XmIsScrollBar(arg): #t if arg is a ScrollBar widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsScrollBar", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsScrollBar(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDialogShell(XEN arg)
 {
-  #define H_XmIsDialogShell "XmIsDialogShell(arg) -> #t if arg is a DialogShell widget"
+  #define H_XmIsDialogShell "XmIsDialogShell(arg): #t if arg is a DialogShell widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDialogShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDialogShell(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsScrolledWindow(XEN arg)
 {
-  #define H_XmIsScrolledWindow "XmIsScrolledWindow(arg) -> #t if arg is a ScrolledWindow widget"
+  #define H_XmIsScrolledWindow "XmIsScrolledWindow(arg): #t if arg is a ScrolledWindow widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsScrolledWindow", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsScrolledWindow(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDisplay(XEN arg)
 {
-  #define H_XmIsDisplay "XmIsDisplay(arg) -> #t if arg is a Display widget"
+  #define H_XmIsDisplay "XmIsDisplay(arg): #t if arg is a Display widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDisplay", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDisplay(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsSelectionBox(XEN arg)
 {
-  #define H_XmIsSelectionBox "XmIsSelectionBox(arg) -> #t if arg is a SelectionBox widget"
+  #define H_XmIsSelectionBox "XmIsSelectionBox(arg): #t if arg is a SelectionBox widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsSelectionBox", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsSelectionBox(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDragContext(XEN arg)
 {
-  #define H_XmIsDragContext "XmIsDragContext(arg) -> #t if arg is a DragContext widget"
+  #define H_XmIsDragContext "XmIsDragContext(arg): #t if arg is a DragContext widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDragContext", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDragContext(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsSeparatorGadget(XEN arg)
 {
-  #define H_XmIsSeparatorGadget "XmIsSeparatorGadget(arg) -> #t if arg is a SeparatorGadget gadget"
+  #define H_XmIsSeparatorGadget "XmIsSeparatorGadget(arg): #t if arg is a SeparatorGadget gadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsSeparatorGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsSeparatorGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDragIconObjectClass(XEN arg)
 {
-  #define H_XmIsDragIconObjectClass "XmIsDragIconObjectClass(arg) -> #t if arg is a DragIconObjectClass widget"
+  #define H_XmIsDragIconObjectClass "XmIsDragIconObjectClass(arg): #t if arg is a DragIconObjectClass widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDragIconObjectClass", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDragIconObjectClass(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsSeparator(XEN arg)
 {
-  #define H_XmIsSeparator "XmIsSeparator(arg) -> #t if arg is a Separator widget"
+  #define H_XmIsSeparator "XmIsSeparator(arg): #t if arg is a Separator widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsSeparator", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsSeparator(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDrawingArea(XEN arg)
 {
-  #define H_XmIsDrawingArea "XmIsDrawingArea(arg) -> #t if arg is a DrawingArea widget"
+  #define H_XmIsDrawingArea "XmIsDrawingArea(arg): #t if arg is a DrawingArea widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDrawingArea", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDrawingArea(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDrawnButton(XEN arg)
 {
-  #define H_XmIsDrawnButton "XmIsDrawnButton(arg) -> #t if arg is a DrawnButton widget"
+  #define H_XmIsDrawnButton "XmIsDrawnButton(arg): #t if arg is a DrawnButton widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDrawnButton", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDrawnButton(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDropSiteManager(XEN arg)
 {
-  #define H_XmIsDropSiteManager "XmIsDropSiteManager(arg) -> #t if arg is a DropSiteManager widget"
+  #define H_XmIsDropSiteManager "XmIsDropSiteManager(arg): #t if arg is a DropSiteManager widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDropSiteManager", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDropSiteManager(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDropTransfer(XEN arg)
 {
-  #define H_XmIsDropTransfer "XmIsDropTransfer(arg) -> #t if arg is a DropTransfer widget"
+  #define H_XmIsDropTransfer "XmIsDropTransfer(arg): #t if arg is a DropTransfer widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDropTransfer", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDropTransfer(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsTextField(XEN arg)
 {
-  #define H_XmIsTextField "XmIsTextField(arg) -> #t if arg is a TextField widget"
+  #define H_XmIsTextField "XmIsTextField(arg): #t if arg is a TextField widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsTextField", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsTextField(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsFileSelectionBox(XEN arg)
 {
-  #define H_XmIsFileSelectionBox "XmIsFileSelectionBox(arg) -> #t if arg is a FileSelectionBox widget"
+  #define H_XmIsFileSelectionBox "XmIsFileSelectionBox(arg): #t if arg is a FileSelectionBox widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsFileSelectionBox", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsFileSelectionBox(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsText(XEN arg)
 {
-  #define H_XmIsText "XmIsText(arg) -> #t if arg is a Text widget"
+  #define H_XmIsText "XmIsText(arg): #t if arg is a Text widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsText", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsText(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsForm(XEN arg)
 {
-  #define H_XmIsForm "XmIsForm(arg) -> #t if arg is a Form widget"
+  #define H_XmIsForm "XmIsForm(arg): #t if arg is a Form widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsForm", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsForm(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsFrame(XEN arg)
 {
-  #define H_XmIsFrame "XmIsFrame(arg) -> #t if arg is a Frame widget"
+  #define H_XmIsFrame "XmIsFrame(arg): #t if arg is a Frame widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsFrame", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsFrame(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsGadget(XEN arg)
 {
-  #define H_XmIsGadget "XmIsGadget(arg) -> #t if arg is a Gadget"
+  #define H_XmIsGadget "XmIsGadget(arg): #t if arg is a Gadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsToggleButtonGadget(XEN arg)
 {
-  #define H_XmIsToggleButtonGadget "XmIsToggleButtonGadget(arg) -> #t if arg is a ToggleButtonGadget gadget"
+  #define H_XmIsToggleButtonGadget "XmIsToggleButtonGadget(arg): #t if arg is a ToggleButtonGadget gadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsToggleButtonGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsToggleButtonGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsGrabShell(XEN arg)
 {
-  #define H_XmIsGrabShell "XmIsGrabShell(arg) -> #t if arg is a GrabShell widget"
+  #define H_XmIsGrabShell "XmIsGrabShell(arg): #t if arg is a GrabShell widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsGrabShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsGrabShell(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsToggleButton(XEN arg)
 {
-  #define H_XmIsToggleButton "XmIsToggleButton(arg) -> #t if arg is a ToggleButton widget"
+  #define H_XmIsToggleButton "XmIsToggleButton(arg): #t if arg is a ToggleButton widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsToggleButton", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsToggleButton(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsIconGadget(XEN arg)
 {
-  #define H_XmIsIconGadget "XmIsIconGadget(arg) -> #t if arg is a IconGadget widget"
+  #define H_XmIsIconGadget "XmIsIconGadget(arg): #t if arg is a IconGadget widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsIconGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsIconGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsIconHeader(XEN arg)
 {
-  #define H_XmIsIconHeader "XmIsIconHeader(arg) -> #t if arg is a IconHeader widget"
+  #define H_XmIsIconHeader "XmIsIconHeader(arg): #t if arg is a IconHeader widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsIconHeader", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsIconHeader(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsLabelGadget(XEN arg)
 {
-  #define H_XmIsLabelGadget "XmIsLabelGadget(arg) -> #t if arg is a LabelGadget widget"
+  #define H_XmIsLabelGadget "XmIsLabelGadget(arg): #t if arg is a LabelGadget widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsLabelGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsLabelGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsLabel(XEN arg)
 {
-  #define H_XmIsLabel "XmIsLabel(arg) -> #t if arg is a Label widget"
+  #define H_XmIsLabel "XmIsLabel(arg): #t if arg is a Label widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsLabel", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsLabel(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsVendorShell(XEN arg)
 {
-  #define H_XmIsVendorShell "XmIsVendorShell(arg) -> #t if arg is a VendorShell widget"
+  #define H_XmIsVendorShell "XmIsVendorShell(arg): #t if arg is a VendorShell widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsVendorShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsVendorShell(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsList(XEN arg)
 {
-  #define H_XmIsList "XmIsList(arg) -> #t if arg is a List widget"
+  #define H_XmIsList "XmIsList(arg): #t if arg is a List widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsList", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsList(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsMainWindow(XEN arg)
 {
-  #define H_XmIsMainWindow "XmIsMainWindow(arg) -> #t if arg is a MainWindow widget"
+  #define H_XmIsMainWindow "XmIsMainWindow(arg): #t if arg is a MainWindow widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsMainWindow", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsMainWindow(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsManager(XEN arg)
 {
-  #define H_XmIsManager "XmIsManager(arg) -> #t if arg is a Manager widget"
+  #define H_XmIsManager "XmIsManager(arg): #t if arg is a Manager widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsManager", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsManager(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsMenuShell(XEN arg)
 {
-  #define H_XmIsMenuShell "XmIsMenuShell(arg) -> #t if arg is a MenuShell widget"
+  #define H_XmIsMenuShell "XmIsMenuShell(arg): #t if arg is a MenuShell widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsMenuShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsMenuShell(XEN_TO_C_Widget(arg))));
 }
@@ -12851,7 +12851,7 @@ are defined for the specified window or returns NULL if no properties were found
 
 static XEN gxm_XListExtensions(XEN arg1)
 {
-  #define H_XListExtensions "XListExtensions(dpy) -> list of strings describing available extensions"
+  #define H_XListExtensions "XListExtensions(dpy): list of strings describing available extensions"
   /* DIFF: XListExtensions omits arg2, returns list
    */
   int i, len, loc;
@@ -13912,7 +13912,7 @@ static XEN gxm_XShapeQueryExtension(XEN dpy)
   #define H_XShapeQueryExtension "(XShapeQueryExtension dpy) returns list of (Bool event_base error_base)"
   /* DIFF: (proposal)
      [C] Bool XShapeQueryExtension(Display *dpy, int *event_base, int *error_base)
-     [XEN] (XShapeQueryExtension dpy) -> (list Bool event_base error_base)
+     [XEN] (XShapeQueryExtension dpy): (list Bool event_base error_base)
   */
   int event_base = 0, error_base = 0;
   Bool ret = False;
@@ -14233,7 +14233,7 @@ static XEN gxm_XtToolkitThreadInitialize(void)
 
 static XEN gxm_XtGetDisplays(XEN arg1)
 {
-  #define H_XtGetDisplays "void XtGetDisplays(app_context) -> list of displays"
+  #define H_XtGetDisplays "void XtGetDisplays(app_context): list of displays"
   /* DIFF: XtGetDisplays not arg2 arg3 returns list
    */
   unsigned int x;
@@ -16670,7 +16670,7 @@ checks that exclusive is #t if spring_loaded is #t."
 
 static XEN gxm_XtBuildEventMask(XEN arg1)
 {
-  #define H_XtBuildEventMask "EventMask XtBuildEventMask(w) -> widget's event mask"
+  #define H_XtBuildEventMask "EventMask XtBuildEventMask(w): widget's event mask"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtBuildEventMask", "Widget");
   return(C_TO_XEN_ULONG(XtBuildEventMask(XEN_TO_C_Widget(arg1))));
 }
@@ -16944,7 +16944,7 @@ static XEN gxm_XtSetKeyTranslator(XEN arg1, XEN arg2)
 
 static XEN gxm_XtTranslateKey(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XtTranslateKey "XtTranslateKey(Display *, XtKeyCode, Modifiers) -> modifiers and keysym"
+  #define H_XtTranslateKey "XtTranslateKey(Display *, XtKeyCode, Modifiers): modifiers and keysym"
   /* DIFF: XtTranslateKey omit and rtn last 2 args
    */
   Modifiers m;
@@ -16975,7 +16975,7 @@ arguments directly to the currently registered KeyCode to KeySym translator, ret
 
 static XEN gxm_XtGetActionKeysym(XEN arg1)
 {
-  #define H_XtGetActionKeysym "KeySym XtGetActionKeysym(event) -> (keysym modifiers)"
+  #define H_XtGetActionKeysym "KeySym XtGetActionKeysym(event): (keysym modifiers)"
   /* DIFF: XtGetActionKeysym omit and rtn last arg
    */
   Modifiers m;
@@ -17093,7 +17093,7 @@ and parameters."
 
 static XEN gxm_XtGetActionList(XEN arg1)
 {
-  #define H_XtGetActionList "void XtGetActionList(widget_class) -> list of actions"
+  #define H_XtGetActionList "void XtGetActionList(widget_class): list of actions"
   /* DIFF: XtGetActionList omit arg2 and 3, return list of lists
    */
   unsigned int len;
@@ -17398,7 +17398,7 @@ KeyCodes that have keysym in their entry for the keyboard mapping table associat
 
 static XEN gxm_XtTranslateCoords(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XtTranslateCoords "void XtTranslateCoords(w, x, y) -> (root_x root_y)"
+  #define H_XtTranslateCoords "void XtTranslateCoords(w, x, y): (root_x root_y)"
   /* DIFF: XtTranslateCoords omits and returns last 2 args
    */
   Position x, y;
@@ -17412,7 +17412,7 @@ static XEN gxm_XtTranslateCoords(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XtMakeResizeRequest(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XtMakeResizeRequest "XtGeometryResult XtMakeResizeRequest(w, width, height) -> (res width height)"
+  #define H_XtMakeResizeRequest "XtGeometryResult XtMakeResizeRequest(w, width, height): (res width height)"
   /* DIFF: XtMakeResizeRequest w wid hgt [rtnw rtn] -> (list res w h)
    */
   Dimension w, h;
@@ -18338,7 +18338,7 @@ static XEN gxm_XpmCreateDataFromPixmap(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
 #if HAVE_XPM_GET_ERROR_STRING
 static XEN gxm_XpmGetErrorString(XEN err)
 {
-  #define H_XpmGetErrorString "(XpmGetErrorString err) -> string describing error"
+  #define H_XpmGetErrorString "(XpmGetErrorString err): string describing error"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(err), err, XEN_ONLY_ARG, "XpmGetErrorString", "an Xpm status code");
   return(C_TO_XEN_STRING(XpmGetErrorString(XEN_TO_C_INT(err))));
 }
@@ -18347,7 +18347,7 @@ static XEN gxm_XpmGetErrorString(XEN err)
 static XEN gxm_XpmColorSymbol(XEN name, XEN value, XEN pixel)
 {
   XpmColorSymbol *r;
-  #define H_XpmColorSymbol "(XpmColorSymbol name val pix) -> new XpmColorSymbol struct"
+  #define H_XpmColorSymbol "(XpmColorSymbol name val pix): new XpmColorSymbol struct"
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, "XpmColorSymbol", "char*");
   XEN_ASSERT_TYPE(XEN_FALSE_P(value) || XEN_STRING_P(value), value, 2, "XpmColorSymbol", "char*");
   XEN_ASSERT_TYPE(XEN_Pixel_P(pixel), pixel, 3, "XpmColorSymbol", "Pixel");
@@ -18361,7 +18361,7 @@ static XEN gxm_XpmColorSymbol(XEN name, XEN value, XEN pixel)
 static XEN gxm_XpmImage(XEN width, XEN height, XEN cpp, XEN ncolors, XEN data)
 {
   XpmImage *r;
-  #define H_XpmImage "(XpmImage w h cpp n data) -> new XpmImage struct"
+  #define H_XpmImage "(XpmImage w h cpp n data): new XpmImage struct"
   XEN_ASSERT_TYPE(XEN_ULONG_P(width), width, 1, "XpmImage", "ulong");
   XEN_ASSERT_TYPE(XEN_ULONG_P(height), height, 2, "XpmImage", "ulong");
   XEN_ASSERT_TYPE(XEN_ULONG_P(cpp), cpp, 3, "XpmImage", "ulong");
@@ -18378,7 +18378,7 @@ static XEN gxm_XpmImage(XEN width, XEN height, XEN cpp, XEN ncolors, XEN data)
 
 static XEN gxm_XpmAttributes(void)
 {
-  #define H_XpmAttributes "(XpmAttributes) -> new XpmAttributes struct"
+  #define H_XpmAttributes "(XpmAttributes): new XpmAttributes struct"
   return(WRAP_FOR_XEN_OBJ("XpmAttributes", 
 			  (XpmAttributes *)CALLOC(1, sizeof(XpmAttributes))));
 }
@@ -18579,7 +18579,7 @@ static XEN gxm_XRectangle(XEN x, XEN y, XEN width, XEN height)
 static XEN gxm_XSegment(XEN x1, XEN y1, XEN x2, XEN y2)
 {
   XSegment *r;
-#define H_XSegment "(XSegment x1 y1 x2 y2) -> new XSegment struct"
+#define H_XSegment "(XSegment x1 y1 x2 y2): new XSegment struct"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(x1), x1, 1, "XSegment", "short");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(y1), y1, 2, "XSegment", "short");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(x2), x2, 3, "XSegment", "short");
@@ -18657,7 +18657,7 @@ static XEN gxm_set_x1(XEN ptr, XEN val)
 static XEN gxm_XPoint(XEN x, XEN y)
 {
   XPoint *r;
-  #define H_XPoint "(XPoint x y) -> new XPoint struct"
+  #define H_XPoint "(XPoint x y): new XPoint struct"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(x), x, 1, "XPoint", "short");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(y), y, 2, "XPoint", "short");
   r = (XPoint *)CALLOC(1, sizeof(XPoint));
@@ -18671,7 +18671,7 @@ static XEN gxm_XPoint(XEN x, XEN y)
 static XEN gxm_XArc(XEN x, XEN y, XEN width, XEN height, XEN angle1, XEN angle2)
 {
   XArc *r;
-  #define H_XArc "(XArc x y w h ang1 ang2) -> new XArc struct"
+  #define H_XArc "(XArc x y w h ang1 ang2): new XArc struct"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(x), x, 1, "XArc", "short");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(y), y, 2, "XArc", "short");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(width), width, 3, "XArc", "INT");
@@ -18721,7 +18721,7 @@ static XEN gxm_set_angle1(XEN ptr, XEN val)
 static XEN gxm_XColor(XEN pixel, XEN red, XEN green, XEN blue, XEN flags, XEN pad)
 {
   XColor *r;
-  #define H_XColor "(XColor pixel red green blue flags pad) -> new XColor struct"
+  #define H_XColor "(XColor pixel red green blue flags pad): new XColor struct"
   XEN_ASSERT_TYPE(XEN_ULONG_P(pixel) || XEN_NOT_BOUND_P(pixel), pixel, 1, "XColor", "ulong");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(red), red, 2, "XColor", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(green), green, 3, "XColor", "int");
@@ -18800,7 +18800,7 @@ static XEN gxm_set_red(XEN ptr, XEN val)
 static XEN gxm_XWindowChanges(XEN x, XEN y, XEN width, XEN height, XEN border_width, XEN sibling, XEN stack_mode)
 {
   XWindowChanges *r;
-  #define H_XWindowChanges "(XWindowChanges x y w h border sib stack_mode) -> new XWindowChanges struct"
+  #define H_XWindowChanges "(XWindowChanges x y w h border sib stack_mode): new XWindowChanges struct"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(x), x, 1, "XWindowChanges", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(y), y, 2, "XWindowChanges", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(width), width, 3, "XWindowChanges", "int");
@@ -18823,7 +18823,7 @@ static XEN gxm_XSetWindowAttributes(XEN arglist)
 {
   int len;
   XSetWindowAttributes *r;
-  #define H_XSetWindowAttributes "(XSetWindowAttributes args) -> new XSetWindowAttributes struct (14 or more args!)"
+  #define H_XSetWindowAttributes "(XSetWindowAttributes args): new XSetWindowAttributes struct (14 or more args!)"
   r = (XSetWindowAttributes *)CALLOC(1, sizeof(XSetWindowAttributes));
   len = XEN_LIST_LENGTH(arglist);
   if ((len > 0) && (XEN_Pixmap_P(XEN_LIST_REF(arglist, 0)))) r->background_pixmap = XEN_TO_C_Pixmap(XEN_LIST_REF(arglist, 0));
@@ -21038,7 +21038,7 @@ static XEN gxm_red_max(XEN ptr)
 static XEN gxm_XTextItem(XEN chars, XEN nchars, XEN delta, XEN font)
 {
   XTextItem *r;
-  #define H_XTextItem "(XTextItem chars len delta font) -> new XTextItem struct"
+  #define H_XTextItem "(XTextItem chars len delta font): new XTextItem struct"
   XEN_ASSERT_TYPE(XEN_STRING_P(chars), chars, 1, "XTextItem", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(nchars), nchars, 2, "XTextItem", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(delta), delta, 3, "XTextItem", "int");
@@ -27081,7 +27081,7 @@ static xm_resource_t resource_type(char *name)
   int i, start, end, ind;
   ind = (int)(name[0]) - 97; 
   /* all the resource names are supposed to start with a lower case alphabetic char */
-  /* (char->integer #\a) -> 97 */
+  /* (char->integer #\a): 97 */
   /* unfortunately, we have names like 100DPIString in the newer Motif widgets... */
   if ((ind < 0) || (ind >= LINKS_SIZE))
     {

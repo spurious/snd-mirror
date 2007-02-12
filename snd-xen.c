@@ -1885,7 +1885,7 @@ static XEN g_gsl_gegenbauer(XEN n, XEN lambda, XEN x)
 #include <gsl/gsl_dht.h>
 static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
 {
-  #define H_gsl_dht "(gsl-dht size data nu xmax) -> Hankel transform of data (a vct)"
+  #define H_gsl_dht "(gsl-dht size data nu xmax): Hankel transform of data (a vct)"
   int n;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_1, "gsl-dht", "an integer");
   XEN_ASSERT_TYPE(MUS_VCT_P(data), data, XEN_ARG_2, "gsl-dht", "a vct");
@@ -1921,7 +1921,7 @@ static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
 
 static XEN g_gsl_roots(XEN poly)
 {
-  #define H_gsl_roots "(gsl-roots poly) -> roots of poly"
+  #define H_gsl_roots "(gsl-roots poly): roots of poly"
   int i, n, loc;
   double *p;
   double complex *z;
@@ -2412,9 +2412,9 @@ void g_xen_initialize(void)
 
 #if HAVE_GAUCHE
   XEN_DEFINE_CONSTANT("internal-time-units-per-second", 100, "clock speed");
-  XEN_DEFINE_PROCEDURE("random",                 g_random_w,                 1, 0, 0, "(random arg) -> random number between 0 and arg ");
+  XEN_DEFINE_PROCEDURE("random",                 g_random_w,                 1, 0, 0, "(random arg): random number between 0 and arg ");
   XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
-  XEN_DEFINE_PROCEDURE("ftell",                  g_ftell_w,                  1, 0, 0, "(ftell fd) -> lseek");
+  XEN_DEFINE_PROCEDURE("ftell",                  g_ftell_w,                  1, 0, 0, "(ftell fd): lseek");
   XEN_DEFINE_PROCEDURE("eval-string",            g_eval_string_w,            1, 0, 0, "eval a string");
 #endif
 

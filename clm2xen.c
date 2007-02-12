@@ -842,7 +842,7 @@ taking into account wrap-around (size is size of data), with linear interpolatio
 
 static XEN g_mus_interpolate(XEN type, XEN x, XEN obj, XEN size, XEN yn1)
 {
-  #define H_mus_interpolate "(" S_mus_interpolate " type x v :optional size yn1) -> interpolate in \
+  #define H_mus_interpolate "(" S_mus_interpolate " type x v :optional size yn1): interpolate in \
 data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear "."
 
   int len;
@@ -882,7 +882,7 @@ bool mus_xen_p(XEN obj) {return(MUS_XEN_P(obj));}
 
 static XEN g_mus_generator_p(XEN obj) 
 {
-  #define H_mus_generator_p "(" S_mus_generator_p " obj) returns " PROC_TRUE " if 'obj' is a CLM generator."
+  #define H_mus_generator_p "(" S_mus_generator_p " obj): " PROC_TRUE " if 'obj' is a CLM generator."
   return(C_TO_XEN_BOOLEAN(MUS_XEN_P(obj)));
 }
 
@@ -1344,7 +1344,7 @@ static XEN g_oscil_p(XEN os)
 
 static XEN g_mus_apply(XEN arglist)
 {
-  #define H_mus_apply "(" S_mus_apply " gen args...) applies gen to args"
+  #define H_mus_apply "(" S_mus_apply " gen args...): apply gen to args"
   int arglist_len;
   mus_any *gen;
   arglist_len = XEN_LIST_LENGTH(arglist);
@@ -3166,7 +3166,7 @@ returning frame outf (creating it if necessary)"
 
 static XEN g_make_scalar_mixer(XEN chans, XEN val)
 {
-  #define H_make_scalar_mixer "(" S_make_scalar_mixer " chans value) returns a mixer \
+  #define H_make_scalar_mixer "(" S_make_scalar_mixer " chans value): return a mixer \
 with 'chans' channels, and 'val' along the diagonal"
 
   mus_any *mx = NULL;
@@ -3194,7 +3194,7 @@ static XEN g_make_mixer(XEN arglist)
     #define make_mixer_example "2 0.5 0.25 0.125 1.0 make-mixer"
   #endif
 
-  #define H_make_mixer "(" S_make_mixer " chans val0 val1 ...) makes a new mixer object \
+  #define H_make_mixer "(" S_make_mixer " chans val0 val1 ...): make a new mixer object \
 with chans inputs and outputs, initializing the scalars from the rest of the arguments:\n  " make_mixer_example "\n\
    | .5    .25 |\n\
    | .125 1.0  |\n"
@@ -3733,7 +3733,7 @@ typedef enum {G_FILTER, G_FIR_FILTER, G_IIR_FILTER} xclm_fir_t;
 
 static XEN g_make_fir_coeffs(XEN order, XEN envl)
 {
-  #define H_make_fir_coeffs "(" S_make_fir_coeffs " order v) turns spectral envelope in vct v into coeffs for FIR filter"
+  #define H_make_fir_coeffs "(" S_make_fir_coeffs " order v): turn spectral envelope in vct v into coeffs for FIR filter"
   int size;
   Float *a;
   vct *v;
@@ -4973,7 +4973,7 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
   int outchans = 0, revchans = 0;
   XEN ref;
 
-  #define H_make_move_sound "(" S_make_move_sound " dloc-list out :optional rev) -> dlocsig run-time generator"
+  #define H_make_move_sound "(" S_make_move_sound " dloc-list out :optional rev): make a dlocsig run-time generator"
 
   /* dloc-list is (list start end outchans revchans dopdly dopenv revenv outdelays outenvs revenvs outmap) */
   /*   outdelays envs and revenvs are vectors */

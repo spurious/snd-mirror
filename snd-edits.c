@@ -8167,7 +8167,7 @@ return a reader ready to access region's channel chn data starting at start-samp
 
 static XEN g_sample_reader_p(XEN obj)
 {
-  #define H_sample_reader_p "(" S_sample_reader_p " obj) -> " PROC_TRUE " if obj is a sound sample-reader."
+  #define H_sample_reader_p "(" S_sample_reader_p " obj): " PROC_TRUE " if obj is a sound sample-reader."
   if (sf_p(obj))
     {
       snd_fd *fd;
@@ -8179,7 +8179,7 @@ static XEN g_sample_reader_p(XEN obj)
 
 static XEN g_region_sample_reader_p(XEN obj)
 {
-  #define H_region_sample_reader_p "(" S_region_sample_reader_p " obj) -> " PROC_TRUE " if obj is a region sample-reader."
+  #define H_region_sample_reader_p "(" S_region_sample_reader_p " obj): " PROC_TRUE " if obj is a region sample-reader."
   if (sf_p(obj))
     {
       snd_fd *fd;
@@ -9555,7 +9555,7 @@ static XEN g_make_snd_to_sample(XEN snd)
 
 static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
 {
-  #define H_edit_list_to_function "(" S_edit_list_to_function " :optional snd chn start end) -> function encapsulating edits"
+  #define H_edit_list_to_function "(" S_edit_list_to_function " :optional snd chn start end): function encapsulating edits"
   chan_info *cp;
   char *funcstr = NULL;
   XEN func;
