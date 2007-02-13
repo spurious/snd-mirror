@@ -600,6 +600,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 
 (define (signum n)
+  ;; in CL this returns 1.0 if n is float
   (if (positive? n) 1
       (if (zero? n) 0
 	  -1)))
@@ -703,7 +704,7 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 ;;; Snd's (very simple) spectrum->coefficients procedure is:
 
 (define (spectrum->coeffs order spectr)
-  "(spectrum->coeffs order spectr) returns FIR filter coefficients given the filter order and desired spectral envelope"
+  "(spectrum->coeffs order spectr) returns FIR filter coefficients given the filter order and desired spectral envelope (a vct)"
   (let* ((coeffs (make-vct order))
 	 (n order)
 	 (m (inexact->exact (floor (/ (+ n 1) 2))))

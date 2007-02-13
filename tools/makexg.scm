@@ -1621,7 +1621,7 @@
 (hey " * 'xg is added to *features*~%")
 (hey " *~%")
 (hey " * added funcs:~%")
-(hey " *    (xg-version) -> date string.~%")
+(hey " *    (xg-version): date string.~%")
 (hey " *    (->string val) interprets 'val' as a string.~%")
 (hey " *    (c-array->list arr len) derefs each member of arr, returning lisp list, len=#f: null terminated array~%")
 (hey " *    (list->c-array lst ctype) packages each member of list as c-type \"type\" returning (wrapped) c array~%")
@@ -1637,7 +1637,7 @@
       (lambda (str)
 	(hey " ~A" (cadr str)))
       args)
-     (hey ") -> ~A struct~%" name)))
+     (hey "): ~A struct~%" name)))
  (reverse make-structs))
  
 (hey " *~%")
@@ -2662,7 +2662,7 @@
 (hey "  GtkTargetEntry* targets;~%")
 (hey "  XEN val;~%")
 (hey "  int i, len;~%")
-(hey "  #define H_make_target_entry \"(make-target-entry lst) -> GtkTargetEntry*, each member of 'lst' should be (list target flags info)\"~%")
+(hey "  #define H_make_target_entry \"(make-target-entry lst): GtkTargetEntry*, each member of 'lst' should be (list target flags info)\"~%")
 (hey "  XEN_ASSERT_TYPE(XEN_LIST_P(lst), lst, XEN_ONLY_ARG, \"make-target-entry\", \"a list of lists describing each target\");~%")
 (hey "  len = XEN_LIST_LENGTH(lst);~%")
 (hey "  if (len == 0) return(XEN_FALSE);~%")
@@ -3104,7 +3104,7 @@
 (hey "  XG_DEFINE_PROCEDURE(g_object_get, xg_object_get_w, 3, 0, 0, NULL);~%")
 
 (define (check-out func)
-  (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, \"(~A obj) -> #t if obj is a ~A\");~%" 
+  (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, \"(~A obj): #t if obj is a ~A\");~%" 
        (no-arg (car func)) 
        (no-arg (car func))
        (no-arg (car func))
@@ -3130,7 +3130,7 @@
 
 (for-each (lambda (struct)
    (let* ((s (find-struct struct)))
-     (hey "  XG_DEFINE_PROCEDURE(~A, gxg_make_~A_w, 0, 0, ~D, \"(~A~A) -> a new ~A struct\");~%" 
+     (hey "  XG_DEFINE_PROCEDURE(~A, gxg_make_~A_w, 0, 0, ~D, \"(~A~A): a new ~A struct\");~%" 
 	  struct 
 	  struct 
 	  (if (> (length (cadr s)) 0) 1 0)

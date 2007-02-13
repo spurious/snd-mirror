@@ -55,18 +55,25 @@
 <li><a href="#otherexamples">Other Examples</a>
 </ul>
 <li><a href="#currentstatus">Current Status</a>
-<li><a href="#lowerlevels">Lower Levels</a>
-<li><a href="#sndlibguile">Sndlib and Guile</a>
-<li><a href="#sndlibforth">Sndlib and Forth</a>
+<li><a href="#sndlibguile">Extension Languages</a>
 </ul>
 <br>
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="introduction">Introduction</a></h2></td></tr></table>
 
-<p>The sound library is a collection of sound file and audio hardware
+<p>sndlib is a collection of sound file and audio hardware
 handlers written in C and running currently on SGI (either
-audio library), Sun, OSS or ALSA (Linux and others), Mac OSX, HPUX, and Windoze systems.  
+audio library), Sun, OSS or ALSA (Linux and others), Mac OSX, and Windows systems.  
 It provides relatively straightforward access to many sound file headers and data
 types, and most of the features of the audio hardware. </p>
+
+<p>To build sndlib (sndlib.so if possible, and sndlib.a):</p>
+<pre>
+  ./configure
+  make
+</pre>
+<p>To install it, 'make install' -- I've tested this process in Linux,
+SGI, and Sun.  It could conceivably work elsewhere. 
+</p>
 
 <p>The following files make up sndlib:</p>
 <ul>
@@ -75,30 +82,25 @@ types, and most of the features of the audio hardware. </p>
 <li>audio.c (read and write sound hardware ports)
 <li>sound.c (provide slightly higher level access to the preceding files)
 <li>sndlib.h (header for the preceding files)
-<li>sndlib2xen.c and sndlib-strings.h (tie preceding into Guile, Ruby, or Forth)
+<li>sndlib2xen.c and sndlib-strings.h (tie preceding into Guile, Gauche, Ruby, or Forth)
 <li>clm.c and clm.h (Music V implementation)
 <li>clm2xen.c, vct.c and vct.h (tie clm.c into Guile, Ruby, or Forth)
 <li>xen.h, xen.c, xen.html (the embedded language support)
 <li>midi.c (primitive MIDI support)
 </ul>
+
 <p>
 The naming scheme is more as less as follows:
-constants start with "MUS_", audio hardware constants with "MUS_AUDIO_",
+the sndlib prefix is "mus" so
+function names start with "mus_" and constants start with "MUS_".  Audio hardware constants start with "MUS_AUDIO_",
 functions involving sound files referenced through the file name
 start with "mus_sound_", functions involving files at a lower level
 with "mus_file_", functions involving header access with "mus_header_",
-functions involving audio hardware access with "mus_audio_", MIDI functions
+functions involving audio hardware access with "mus_audio_", and MIDI functions
 with "mus_midi_", and various
 others just with "mus_" (number translations, etc).  Conversions use
-the word "to" as in "mus_samples_to_bytes".
-</p>
-<p>To build sndlib (sndlib.so if possible, and sndlib.a):</p>
-<pre>
-  ./configure
-  make
-</pre>
-<p>To install it, 'make install' -- I've tested this process in Linux,
-SGI, and Sun.  It could conceivably work elsewhere. 
+the word "to" as in "mus_samples_to_bytes".  Booleans use "_p" (an ancient
+Common Lisp convention meaning "predicate" I think).
 </p>
 
 <br>
@@ -110,35 +112,47 @@ In each case the argument to the function is the full file
 name of the sound file.
 </p>
 <pre>
-  off_t mus_sound_samples (const char *arg)        /* samples of sound according to header (can be incorrect) */
+  off_t mus_sound_samples (const char *arg)        /* samples of sound according to header */
   off_t mus_sound_frames (const char *arg)         /* samples per channel */
-  float mus_sound_duration (const char *arg)
+  float mus_sound_duration (const char *arg)       /* sound duration in seconds */
+  off_t mus_sound_length (const char *arg)         /* true file length in bytes */
+
   int mus_sound_datum_size (const char *arg)       /* bytes per sample */
   off_t mus_sound_data_location (const char *arg)  /* location of first sample (bytes) */
+  int mus_sound_bits_per_sample(const char *arg)   /* bits per sample */
+  int mus_bytes_per_sample(int format)             /* bytes per sample */
+
   int mus_sound_chans (const char *arg)            /* number of channels (samples are interleaved) */
   int mus_sound_srate (const char *arg)            /* sampling rate */
+
   int mus_sound_header_type (const char *arg)      /* header type (aiff etc) */
   int mus_sound_data_format (const char *arg)      /* data format (alaw etc) */
   int mus_sound_original_format (const char *arg)  /* unmodified data format specifier */
+  int mus_sound_type_specifier (const char *arg)   /* original header type identifier */
+
   char *mus_sound_comment (const char *arg)        /* comment if any */
   off_t mus_sound_comment_start (const char *arg)  /* comment start (bytes) if any */
   off_t mus_sound_comment_end (const char *arg)    /* comment end (bytes) */
-  off_t mus_sound_length (const char *arg)         /* true file length (for error checks) */
-  int mus_sound_write_date (const char *arg)       /* bare (uninterpreted) file write date */
-  int mus_sound_type_specifier (const char *arg)   /* original header type identifier */
-  int mus_sound_bits_per_sample(const char *arg)   /* bits per sample */
-  int mus_bytes_per_sample(int format)             /* bytes per sample */
   int *mus_sound_loop_info(const char *arg)        /* 8 loop vals (mode,start,end) then base-detune and base-note  (empty list if no loop info found) */
+
+  int mus_sound_write_date (const char *arg)       /* bare (uninterpreted) file write date */
+
   int mus_sound_initialize(void)                   /* initialize everything */
 </pre>
+
 <p>The following can be used to provide user-understandable descriptions
 of the header type and the data format:</p>
 <pre>
-  char *mus_header_type_name(int type)      /* "AIFF" etc */
-  char *mus_data_format_name(int format)    /* "16-bit big endian linear" etc */
+  char *mus_header_type_name(int type)             /* "AIFF" etc */
+  char *mus_data_format_name(int format)           /* "16-bit big endian linear" etc */
+  char *mus_header_type_to_string(int type)
+  char *mus_data_format_to_string(int format)
+  const char *mus_data_format_short_name(int format)
 </pre>
-<p>In all cases if an error occurs, -1 is returned, and some sort of error message
-is printed; to customize error handling, use mus_set_error_handler and mus_set_print_handler.</p>
+
+<p>In all cases if an error occurs, -1 (MUS_ERROR) is returned, and some sort of error message
+is printed; to customize error handling, use mus_set_error_handler and mus_set_print_handler.
+</p>
 <pre>
   mus_error_handler_t *mus_error_set_handler(mus_error_handler_t *new_error_handler);
   mus_print_handler_t *mus_print_set_handler(mus_print_handler_t *new_print_handler);
@@ -171,11 +185,12 @@ sound file data:</p>
   int mus_sound_write (int fd, int beg, int end, int chans, mus_sample_t **bufs) 
   off_t mus_sound_seek_frame (int fd, off_t frame)
 </pre>
-<p>mus_sample_t defaults to int, but can also be float -- it is set when
-sndlib is built and refers to Sndlib's internal representation of sample values.  
+<p>mus_sample_t defaults to float, but can also be int.  It is set when
+sndlib is built, and refers to Sndlib's internal representation of sample values.  
 There are corresponding macros to convert from the
 sample type to C types (MUS_SAMPLE_TO_FLOAT, etc), and the reverse
-(MUS_FLOAT_TO_SAMPLE, etc).</p>
+(MUS_FLOAT_TO_SAMPLE, etc).
+</p>
 
 <p><i>mus_sound_open_input</i> opens <i>arg</i> for reading.  Most standard
 uncompressed formats are readable.  This function returns the associated
@@ -184,16 +199,16 @@ file number, or -1 upon failure. </p>
 <p><i>mus_sound_close_input</i> closes an open sound file.  Its argument is
 the integer returned by mus_sound_open_input.</p>
 
-<p><i>mus_sound_open_output</i> opens <i>arg</i>, setting its sampling rate
+<p><i>mus_sound_open_output</i> opens (creates) the file <i>arg</i>, setting its sampling rate
 to be <i>srate</i>, number of channels to <i>chans</i>, data format
 to <i>data_format</i> (see sndlib.h for these types: MUS_BSHORT,
 means 16-bit 2's complement big endian fractions),
 header type to <i>header_type</i> (AIFF for example; the available
 writable header types are MUS_AIFC (or AIFF), MUS_RIFF ('wave'), MUS_RF64,
-MUS_NEXT, MUS_NIST, and MUS_IRCAM), and comment (if any) to
+MUS_NEXT, MUS_NIST, MUS_CAFF, and MUS_IRCAM), and comment (if any) to
 <i>comment</i>.  The header is not considered complete without
 an indication of the data size, but since this is rarely known
-in advance, it is supplied when the sound file is closed.  This
+in advance, it is supplied when the sound file is closed.  mus_sound_open_output
 function returns the associated file number.</p>
 
 <p><i>mus_sound_close_output</i> first updates the file's header to 
@@ -202,13 +217,13 @@ the file.  The argument <i>fd</i> is the integer returned by
 mus_sound_open_output.</p>
 
 <p><i>mus_sound_read</i> reads data from the file indicated by <i>fd</i>,
-placing data in the array <i>obufs</i> as 32-bit integers in the
-host's byte order.  <i>chans</i> determines how many arrays of
-ints are in obufs, which is filled by mus_sound_read from its
+placing data in the array <i>obufs</i> as mus_sample_t values (floats normally).
+<i>chans</i> determines how many arrays of
+samples are in obufs, which is filled by mus_sound_read from its
 index <i>beg</i> to <i>end</i> with zero padding if necessary.
-See the sndplay example below.</p>
+</p>
 
-<p><i>mus_sound_write</i> writes data to the file indicated by <i>fd</i>,
+<p><i>mus_sound_write</i> writes samples to the file indicated by <i>fd</i>,
 starting for each of <i>chans</i> channels in <i>obufs</i> at
 <i>beg</i> and ending at <i>end</i>.</p>
 
@@ -220,7 +235,7 @@ file indicated by <i>fd</i> to the desired frame.
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="hardware">Hardware</a></h2></td></tr></table>
 
 <p>The following functions provide access to audio harware.  If an
-error occurs, they return -1. </p>
+error occurs, they return -1 (MUS_ERROR). </p>
 <pre>
   int mus_audio_initialize(void)
   void mus_audio_describe(void)
@@ -260,7 +275,7 @@ refers to the nth such card, so (SNDLIB_DAC_DEVICE | MUS_AUDIO_PACK_SYSTEM(1)) i
 card's dac (the default is system 0, the first card).
 </p>
 
-<p><i>mus_audio_open_output</i> opens an audio port to write date (i.e. speakers, line out, etc).
+<p><i>mus_audio_open_output</i> opens an audio port to write data (i.e. speakers, line out, etc).
 The output device is <i>dev</i> (see sndlib.h).  Its sampling rate is <i>srate</i>, number
 of channels <i>chans</i>, data format <i>format</i>, and buffer size <i>size</i>.  This
 function returns the associated line number of the output port.</p>
@@ -407,15 +422,13 @@ went wrong.
 <br>
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="music5">MusicV</a></h2></td></tr></table>
 
-<p>clm.c and friends implement all the generators found in CLM, a common lisp
+<p>clm.c and friends implement all the generators found in CLM, a
 music V implementation, and clm2xen.c ties these into the languages supported by the
-xen package (currently Guile, Ruby, and Forth).  The
+xen package (currently Guile, Gauche, Ruby, and Forth).  The
 primary clm documentation (which describes both the Scheme and Common Lisp implementations)
-is clm.html found in clm-3.tar.gz alongside sndlib at ccrma-ftp.
+is clm.html found in clm-3.tar.gz or snd-8.tar.gz alongside sndlib at ccrma-ftp.
 The simplest way to try these out is to load them into Snd; see extsnd.html,
 <a href="sndscm.html#exampdoc">examp.scm</a>, and <a href="sndscm.html#sndtestdoc">snd-test.scm</a> in snd-8.tar.gz for more details.
-The C implementation is essentially the same as the two Lisp versions, but (as might be expected), works
-at a lower level, expecting the caller to handle garbage collection and so forth.
 The following briefly describes the C calls (see clm.h).
 </p>
 
@@ -537,10 +550,6 @@ through mus_error which can be redirected or muffled.  See clm2xen.c for an exam
 
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="examples">Examples</a></h2></td></tr></table>
 
-<p>In the following examples I've omitted the usual garrulous C-header
-gab and other inessential stuff.  The full
-program code is available as noted below.</p>
-<br>
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndinfo">SndInfo</a></h3></td></tr></table>
 
 <p>This program prints out a description of a sound file (sndinfo.c).</p>
@@ -553,7 +562,7 @@ int main(int argc, char *argv[])
   time_t date;
   char *comment;
   char timestr[64];
-  mus_sound_initialize();	
+  mus_sound_initialize();	    /* initialize sndlib */
   fd = mus_file_open_read(argv[1]); /* see if it exists */
   if (fd != -1)
     {
@@ -632,8 +641,7 @@ Input formats and sampling rates are dependent on available
 hardware, so in a real program, you'd use <a href="#readaudiostate">mus_audio_mixer_read</a>
 to find out what was available, then mus_file_read_buffer to
 turn that data into a stream of floats.
-You'd also provide, no doubt,
-some whizzy user interface to turn the thing off. (sndrecord.c)</p>
+You'd also provide some way to turn the thing off. (sndrecord.c)</p>
 <pre>
 int main(int argc, char *argv[])
 {
@@ -959,112 +967,11 @@ of Snd and CLM, both of which are freely available.
 </td></tr></table>
 
 <br><br>
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="lowerlevels">Lower Levels</a></h2></td></tr></table>
 
-<p>If you'd like to go below the "sound" interface described above,
-the following functions are exported from sndlib.  You need to remember
-to call mus_sound_initialize (or the underlying initializers) before
-using these functions (this is normally done for you by the various
-"sound_" functions).</p>
-<pre>
-  int mus_header_read (char *name)
-  int mus_header_write (char *name, int type, int in_srate, int in_chans, off_t loc, off_t size_in_samples, int format, char *comment, int len)
-  int mus_header_writable(int type, int format)
-</pre>
-
-<p>These read and write a sound file's header.  The <i>loc</i> parameter is normally 0 (the data location depends
-on many things -- you'd normally write the header, then use mus_header_data_location to get the resultant
-data location). <i>len</i> is the length (bytes) of <i>comment</i>. <i>mus_header_writable</i> returns
-1 if the given combination of header type and data format can be handled by sndlib. 
-</p>
-
-<p>Once mus_header_read has been called, the data in it can be accessed through:</p>
-<pre>
-  off_t mus_header_samples (void)            samples 
-  off_t mus_header_frames (void)             frames (samples / chans)
-  off_t mus_header_data_location (void)      location of data (bytes)
-  int mus_header_chans (void)                channels
-  int mus_header_srate (void)                srate
-  int mus_header_type (void)                 header type (i.e. aiff, wave, etc)  (see sndlib.h)
-  int mus_header_format (void)               data format (see sndlib.h)
-  int mus_header_comment_start (void)        comment start location (if any) (bytes)
-  int mus_header_comment_end (void)          comment end location
-  int mus_header_aux_comment_start (int n)   if multiple comments, nth start location
-  int mus_header_aux_comment_end (int n)     if multiple comments, nth end location
-  int mus_header_type_specifier (void)       original (header-specific) type ID
-  int mus_header_bits_per_sample (void)      sample width in bits
-  off_t mus_header_true_length (void)        true (lseek) file length
-  char *mus_header_type_name (int type)      header_type name
-  char *mus_data_format_name (int format)    data_format name
-</pre>
-
-<p>Various less useful header fields are accessible:
-see headers.c or sndlib.h for details.  The next functions handle various IO calls:</p>
-<pre>
-  int mus_file_open_read (const char *arg)              open file read-only
-  int mus_file_probe (const char *arg)                  return 1 if file exists
-  int mus_file_open_write (const char *arg)             open file read-write, creating it if necessary, else truncating
-  int mus_file_create (const char *arg)                 create file
-  int mus_file_reopen_write (const char *arg)           open file read-write without changing anything
-  int mus_file_close (int fd)                           close file
-  off_t mus_file_seek_frame (int tfd, off_t frame)      go to a specific frame in file
-  int mus_file_read (int fd, int beg, int end, int chans, mus_sample_t **bufs)
-  int mus_file_read_chans (int fd, int beg, int end, int chans, mus_sample_t **bufs, mus_sample_t *cm)
-  int mus_file_read_any (int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t *cm)
-  int mus_file_write_zeros (int tfd, off_t num)
-  int mus_file_write (int tfd, int beg, int end, int chans, mus_sample_t **bufs)
-  Float mus_file_prescaler(int tfd)
-  Float mus_file_set_prescaler(int tfd, Float val)
-</pre>
-<p>The prescaler functions are useful in several pathological cases.
-If you're reading float data that is extremely soft (i.e. max amp
-below .001), the transfer to integer form in sndlib can cause bits
-to be lost, resulting in hiss.  In this case set the prescaler for
-the file to 1000.0 or so to get the data into a more normal
-range.  The mus_file_set_prescaler call should come just after opening
-the sound file, before trying to read any data.
-</p>
-
-<p>If you're trying to deal with various data types yourself,
-the following functions may be useful; they perform various
-byte-order-aware type conversions:</p>
-<pre>
-  void mus_bint_to_char (unsigned char *j, int x)
-  int mus_char_to_bint (const unsigned char *inp)
-  void mus_lint_to_char (unsigned char *j, int x)
-  int mus_char_to_lint (const unsigned char *inp)
-  int mus_char_to_uninterpreted_int (unsigned char *inp)
-  void mus_bfloat_to_char (const unsigned char *j, float x)
-  float mus_char_to_bfloat (const unsigned char *inp)
-  void mus_lfloat_to_char (unsigned char *j, float x)
-  float mus_char_to_lfloat (const unsigned char *inp)
-  void mus_bshort_to_char (unsigned char *j, short x)
-  short mus_char_to_bshort (const unsigned char *inp)
-  void mus_lshort_to_char (unsigned char *j, short x)
-  short mus_char_to_lshort (const unsigned char *inp)
-  void mus_ubshort_to_char (unsigned char *j, unsigned short x)
-  unsigned short mus_char_to_ubshort (const unsigned char *inp)
-  void mus_ulshort_to_char (unsigned char *j, unsigned short x)
-  unsigned short mus_char_to_ulshort (unsigned char *inp)
-  double mus_char_to_ldouble (const unsigned char *inp)
-  double mus_char_to_bdouble (const unsigned char *inp)
-  void mus_bdouble_to_char (unsigned char *j, double x)
-  void mus_ldouble_to_char (unsigned char *j, double x)
-  unsigned int mus_char_to_ubint (const unsigned char *inp)
-  unsigned int mus_char_to_ulint (const unsigned char *inp)
-</pre>
-
-<p>Finally, a couple functions are provided to read and write sound files
-to and from arrays:</p>
-<pre>
-  int mus_file_to_array (const char *filename, int chan, int start, int samples, mus_sample_t *array)
-  int mus_array_to_file (const char *filename, mus_sample_t *ddata, int len, int srate, int channels)
-</pre>
-<br>
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="sndlibguile">Sndlib and Guile</a></h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="sndlibguile"></a>Extension Languages</h2></td></tr></table>
 
 <p>Much of sndlib is accessible at run time in any program that has one of
-the languages supported by the xen package (Guile, Ruby, Forth);
+the languages supported by the xen package (Guile, Gauche, Ruby, Forth);
 the modules sndlib2xen and clm2xen tie most of the library into that language
 making it possible to call the library functions from its interpreter.  The documentation
 is scattered around, unfortunately: the clm side is in clm.html and extsnd.html with many
@@ -1286,11 +1193,6 @@ to make it independent of Snd:
 Now, load this code into guile+sndlib, and <code>(play-sine 440 .1)</code>.
 </p>
 
-<br>
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="sndlibforth">Sndlib and Forth</a></h2></td></tr></table>
-<p>
-Michael Scholz has provided a Forth version of sndlib and CLM -- see the various *.fs files in the Snd tarball.
-</p>
 
 <center>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
@@ -1307,10 +1209,3 @@ Michael Scholz has provided a Forth version of sndlib and CLM -- see the various
 
 <script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
 </body></html>
-
-<!--
-
-#define mus_data_format_to_bytes_per_sample(Format) mus_bytes_per_sample(Format)
-#define mus_sound_print_cache() mus_sound_report_cache(stdout)
-
--->

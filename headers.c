@@ -77,24 +77,15 @@ static const unsigned char I_COMM[4] = {'C','O','M','M'};
 static const unsigned char I_COMT[4] = {'C','O','M','T'};
 static const unsigned char I_INFO[4] = {'I','N','F','O'};
 static const unsigned char I_INST[4] = {'I','N','S','T'};
-static const unsigned char I_inst[4] = {'i','n','s','t'};  /* RIFF wants lower case, just to be different */
 static const unsigned char I_MARK[4] = {'M','A','R','K'};
 static const unsigned char I_SSND[4] = {'S','S','N','D'};
-static const unsigned char I_FVER[4] = {'F','V','E','R'};
 static const unsigned char I_NONE[4] = {'N','O','N','E'};
 static const unsigned char I_ULAW[4] = {'U','L','A','W'};  /* AIFC compression types that we can handle */
 static const unsigned char I_ulaw[4] = {'u','l','a','w'};  /* or maybe it's lowercase (Apple) ... */
-static const unsigned char I_ima4[4] = {'i','m','a','4'};  /* AIFC IMA adpcm apparently */
 static const unsigned char I_raw_[4] = {'r','a','w',' '};  /* AIFC offset binary OS 8.5 (others are 'MAC3' 'MAC6' 'cdx4' 'cdx2' 'str4') */
 static const unsigned char I_sowt[4] = {'s','o','w','t'};  /* AIFC 16-bit little endian -- used by Mac when extracting CD tracks */
-static const unsigned char I_in32[4] = {'i','n','3','2'};  /* AIFC */
-static const unsigned char I_in24[4] = {'i','n','2','4'};  /* AIFC */
-static const unsigned char I_ni23[4] = {'n','i','2','3'};  /* AIFC */
 static const unsigned char I_fl32[4] = {'f','l','3','2'};  /* AIFC 32-bit float */
-static const unsigned char I_FL32[4] = {'F','L','3','2'};  /* AIFC 32-bit float (apparently used by CSound and SoundHack) */
 static const unsigned char I_fl64[4] = {'f','l','6','4'};  /* AIFC 64-bit float */
-static const unsigned char I_twos[4] = {'t','w','o','s'};  /* AIFC big endian? */
-static const unsigned char I_ALAW[4] = {'A','L','A','W'};
 static const unsigned char I_alaw[4] = {'a','l','a','w'};  /* apple */
 static const unsigned char I_APPL[4] = {'A','P','P','L'};
 static const unsigned char I_MUS_[4] = {'C','L','M',' '};  /* I hereby claim this AIFF chunk name */
@@ -106,86 +97,38 @@ static const unsigned char I_data[4] = {'d','a','t','a'};
 static const unsigned char I_fact[4] = {'f','a','c','t'};  /* used by compressed RIFF files */
 static const unsigned char I_clm_[4] = {'c','l','m',' '};
 static const unsigned char I_NIST[4] = {'N','I','S','T'};  /* first word of NIST SPHERE files */
-static const unsigned char I_8SVX[4] = {'8','S','V','X'};  /* AIFF other choice */
-static const unsigned char I_16SV[4] = {'1','6','S','V'};  /* hmmm... 16-bit 8svx? */
 static const unsigned char I_VOC0[4] = {'C','r','e','a'};  /* Actual text is "Creative Voice File" */
-static const unsigned char I_VOC1[4] = {'t','i','v','e'};
 static const unsigned char I_SOUN[4] = {'S','O','U','N'};  /* Sound Tools first word="SOUND" -- not unique as SMP files start with "SOUND SAMPLE" */
-static const unsigned char I_D_SA[4] = {'D',' ','S','A'};
-static const unsigned char I_MPLE[4] = {'M','P','L','E'};
-static const unsigned char I_BODY[4] = {'B','O','D','Y'};  /* next 4 for 8svx chunk names */
-static const unsigned char I_VHDR[4] = {'V','H','D','R'};
-static const unsigned char I_CHAN[4] = {'C','H','A','N'};
 static const unsigned char I_ANNO[4] = {'A','N','N','O'};
 static const unsigned char I_NAME[4] = {'N','A','M','E'};
 static const unsigned char I_AVR_[4] = {'2','B','I','T'};  /* first word of AVR files */
-static const unsigned char I_HCOM[4] = {'H','C','O','M'};
-static const unsigned char I_FSSD[4] = {'F','S','S','D'};
 static const unsigned char I_SPIB[4] = {'%','/','/','\n'}; /* first word of IEEE spib text sound files */
 static const unsigned char I_S___[4] = {'%','-','-','-'};  /* first word of other IEEE spib text sound files */
 static const unsigned char I_ALaw[4] = {'A','L','a','w'};  /* first word of PSION alaw files */
-static const unsigned char I_Soun[4] = {'S','o','u','n'};  /* second */
-static const unsigned char I_MAUD[4] = {'M','A','U','D'};  /* MAUD specialization of AIFF */
-static const unsigned char I_MHDR[4] = {'M','H','D','R'};
-static const unsigned char I_MDAT[4] = {'M','D','A','T'};
-static const unsigned char I_mdat[4] = {'m','d','a','t'};  /* quicktime */
 static const unsigned char I_MThd[4] = {'M','T','h','d'};  /* sigh -- the M word */
 static const unsigned char I_DECN[4] = {'.','s','d','\0'}; /* first word of DEC files (?) */
-static const unsigned char I_sfbk[4] = {'s','f','b','k'};  /* SoundFont 2.0 */
-static const unsigned char I_sdta[4] = {'s','d','t','a'};
-static const unsigned char I_shdr[4] = {'s','h','d','r'};
-static const unsigned char I_pdta[4] = {'p','d','t','a'};
 static const unsigned char I_LIST[4] = {'L','I','S','T'};
 static const unsigned char I_GF1P[4] = {'G','F','1','P'};  /* first word of Gravis Ultrsound patch files */
-static const unsigned char I_ATCH[4] = {'A','T','C','H'};  /* second word */
 static const unsigned char I_DSIG[4] = {'$','S','I','G'};  /* first word of Comdisco SPW file */
-static const unsigned char I_NAL_[4] = {'N','A','L','_'};  /* second word */
 static const unsigned char I_GOLD[4] = {'G','O','L','D'};  /* first word Goldwave(?) sample file */
-static const unsigned char I__WAV[4] = {' ','S','A','M'};  /* second word */
 static const unsigned char I_SRFS[4] = {'S','R','F','S'};  /* first word Sonic Resource Foundry file(?) */
 static const unsigned char I_Diam[4] = {'D','i','a','m'};  /* first word DiamondWare file */
-static const unsigned char I_ondW[4] = {'o','n','d','W'};  /* second word */
 static const unsigned char I_CSRE[4] = {'C','S','R','E'};  /* adf first word -- second starts with "40" */
 static const unsigned char I_SND_[4] = {'S','N','D',' '};  /* SBStudio II */
-static const unsigned char I_SNIN[4] = {'S','N','I','N'};
-static const unsigned char I_SNNA[4] = {'S','N','N','A'};
-static const unsigned char I_SNDT[4] = {'S','N','D','T'};
 static const unsigned char I_DDSF[4] = {'D','D','S','F'};  /* Delusion Digital Sound File */
 static const unsigned char I_FSMt[4] = {'F','S','M',(unsigned char)'\376'};  /* Farandole Composer WaveSample */
-static const unsigned char I_SDXc[4] = {'S','D','X',':'};  /* Sample dump exchange format */
 static const unsigned char I_UWFD[4] = {'U','W','F','D'};  /* Ultratracker Wavesample */
 static const unsigned char I_LM89[4] = {'L','M','8','9'};  /* Yamaha TX-16 */
 static const unsigned char I_SY80[4] = {'S','Y','8','0'};  /* Yamaha SY-99 */
 static const unsigned char I_SY85[4] = {'S','Y','8','5'};  /* Yamaha SY-85 */
 static const unsigned char I_SCRS[4] = {'S','C','R','S'};  /* Digiplayer ST3 */
 static const unsigned char I_covox[4] = {(unsigned char)'\377','\125',(unsigned char)'\377',(unsigned char)'\252'};
-/* static const unsigned char I_DSPL[4] = {'D','S','P','L'};  */ /* Digitracker SPL (now obsolete) */
-static const unsigned char I_AVI_[4] = {'A','V','I',' '};  /* RIFF AVI */
-static const unsigned char I_strf[4] = {'s','t','r','f'};  
-static const unsigned char I_movi[4] = {'m','o','v','i'};  
 static const unsigned char I_PRAM[4] = {'P','R','A','M'};  /* Kurzweil 2000 */
-static const unsigned char I_ones[4] = {(unsigned char)'\377',(unsigned char)'\377',(unsigned char)'\377',(unsigned char)'\377'};
-static const unsigned char I_zeros[4] = {'\0','\0','\0','\0'};
-static const unsigned char I_asf0[4] = {(unsigned char)'\321','\051',(unsigned char)'\342',(unsigned char)'\326'};
-static const unsigned char I_asf1[4] = {(unsigned char)'\332','\065',(unsigned char)'\321','\021'};
-static const unsigned char I_asf2[4] = {(unsigned char)'\220','\064','\000',(unsigned char)'\240'};
-static const unsigned char I_asf3[4] = {(unsigned char)'\311','\003','\111',(unsigned char)'\276'};
 static const unsigned char I__PAF[4] = {' ','p','a','f'};  /* Paris Ensoniq */
 static const unsigned char I_FAP_[4] = {'f','a','p',' '};  /* Paris Ensoniq */
-static const unsigned char I_DS16[4] = {'D','S','1','6'};  /* CSL */
-static const unsigned char I_HEDR[4] = {'H','E','D','R'};  
-static const unsigned char I_HDR8[4] = {'H','D','R','8'};  
-static const unsigned char I_SDA_[4] = {'S','D','A','_'};  
-static const unsigned char I_SDAB[4] = {'S','D','A','B'};  
-static const unsigned char I_SD_B[4] = {'S','D','_','B'};  
-static const unsigned char I_NOTE[4] = {'N','O','T','E'};  
 static const unsigned char I_file[4] = {'f','i','l','e'};  /* snack "SMP" */
-static const unsigned char I__sam[4] = {'=','s','a','m'};  
-static const unsigned char I_SU7M[4] = {'S','U','7','M'};  
-static const unsigned char I_SU7R[4] = {'S','U','7','R'};  
 static const unsigned char I_PVF1[4] = {'P','V','F','1'};  /* portable voice format (mgetty) */
 static const unsigned char I_PVF2[4] = {'P','V','F','2'};
-static const unsigned char I_AUTH[4] = {'A','U','T','H'};
 static const unsigned char I_riff[4] = {'r','i','f','f'};  /* SoundForge */
 static const unsigned char I_TWIN[4] = {'T','W','I','N'};  /* TwinVQ */
 static const unsigned char I_IMPS[4] = {'I','M','P','S'};  /* Impulse Tracker */
@@ -193,14 +136,8 @@ static const unsigned char I_SMP1[4] = {'S','M','P','1'};  /* Korg */
 static const unsigned char I_Maui[4] = {'M','a','u','i'};  /* Turtle Beach */
 static const unsigned char I_SDIF[4] = {'S','D','I','F'};  /* IRCAM sdif */
 static const unsigned char I_NVF_[4] = {'N','V','F',' '};  /* Nomad II Creative NVF */
-static const unsigned char I_VFMT[4] = {'V','F','M','T'};  /* Nomad II Creative NVF */
-static const unsigned char I_OggS[4] = {'O','g','g','S'};  /* Ogg-related files, apparently -- ogg123 has "vorbis" instead of "Speex" */
-static const unsigned char I_fLaC[4] = {'f','L','a','C'};  /* FLAC */
 static const unsigned char I_ajkg[4] = {'a','j','k','g'};  /* shorten */
-static const unsigned char I_TTA1[4] = {'T','T','A','1'};  /* ttaenc */
-static const unsigned char I_wvpk[4] = {'w','v','p','k'};  /* wavpack */
 static const unsigned char I_RF64[4] = {'R','F','6','4'};  /* EBU RF64 */
-static const unsigned char I_JUNK[4] = {'J','U','N','K'};  /* EBU RF64 */
 static const unsigned char I_ds64[4] = {'d','s','6','4'};  /* EBU RF64 */
 static const unsigned char I_caff[4] = {'c','a','f','f'};  /* Apple CAFF */
 static const unsigned char I_desc[4] = {'d','e','s','c'};  /* Apple CAFF */
@@ -970,6 +907,9 @@ static void read_aif_aux_comment(unsigned char *buf, off_t offset, int chunksize
 
 static void read_aif_appl_chunk(unsigned char *buf, off_t offset, int chunksize)
 {
+  const unsigned char I_SU7M[4] = {'S','U','7','M'};  
+  const unsigned char I_SU7R[4] = {'S','U','7','R'};  
+
   if (match_four_chars((unsigned char *)(buf + 8), I_MUS_))
     {
       /* my own chunk has the arbitrary length comment I use (actually the ASCII    */
@@ -1056,12 +996,14 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 	  /* if AIFC, compression type over-rides (possibly bogus) original_data_format */
 	  if (type_specifier == mus_char_to_uninterpreted_int((unsigned const char *)I_AIFC))
 	    {
+	      const unsigned char I_twos[4] = {'t','w','o','s'};  /* AIFC big endian? */
 	      /* some aifc files assume the compression field is a new and very weird chunk!! -- surely a bug? */
 	      /* AIFF spec says COMM size is always 18, but this is amended in the newer AIFC spec */
 	      if (chunksize == 18) chunksize += (5 + ((int)hdrbuf[30]));             /* 5 = chunk header length in this case */
 	      if ((!(match_four_chars((unsigned char *)(hdrbuf + 26), I_NONE))) &&
 		  (!(match_four_chars((unsigned char *)(hdrbuf + 26), I_twos))))
 		{
+		  const unsigned char I_ALAW[4] = {'A','L','A','W'};
 		  original_data_format = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf + 26));
 		  if ((match_four_chars((unsigned char *)(hdrbuf + 26), I_ALAW)) || 
 		      (match_four_chars((unsigned char *)(hdrbuf + 26), I_alaw)))
@@ -1073,6 +1015,7 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 			data_format = MUS_MULAW;
 		      else 
 			{
+			  const unsigned char I_ni23[4] = {'n','i','2','3'};
 			  if ((match_four_chars((unsigned char *)(hdrbuf + 26), I_sowt)) ||
 			      (match_four_chars((unsigned char *)(hdrbuf + 26), I_ni23)))
 			    {
@@ -1090,6 +1033,7 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 				}
 			      else
 				{
+				  unsigned char I_FL32[4] = {'F','L','3','2'};  /* 32-bit float (apparently used by CSound and SoundHack) */
 				  if ((match_four_chars((unsigned char *)(hdrbuf + 26), I_fl32)) ||
 				      (match_four_chars((unsigned char *)(hdrbuf + 26), I_FL32)))
 				    data_format = MUS_BFLOAT;
@@ -1099,6 +1043,7 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 					data_format = MUS_BDOUBLE;
 				      else
 					{
+					  const unsigned char I_ima4[4] = {'i','m','a','4'};  /* AIFC IMA adpcm apparently */
 					  if (match_four_chars((unsigned char *)(hdrbuf + 26), I_ima4))
 					    {
 					      block_align = 34;
@@ -1106,10 +1051,12 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 					    }
 					  else
 					    {
+					      const unsigned char I_in32[4] = {'i','n','3','2'};
 					      if (match_four_chars((unsigned char *)(hdrbuf + 26), I_in32))
 						data_format = MUS_BINT;
 					      else
 						{
+						  const unsigned char I_in24[4] = {'i','n','2','4'};
 						  if (match_four_chars((unsigned char *)(hdrbuf + 26), I_in24))
 						    data_format = MUS_B24INT;
 						  else
@@ -1158,6 +1105,7 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 	    }
 	  else
 	    {
+	      const unsigned char I_AUTH[4] = {'A','U','T','H'};
 	      if ((match_four_chars((unsigned char *)hdrbuf, I_ANNO)) || 
 		  (match_four_chars((unsigned char *)hdrbuf, I_COMT)) ||
 		  (match_four_chars((unsigned char *)hdrbuf, I_NAME)) ||
@@ -1261,6 +1209,7 @@ static int write_aif_header(int fd, int wsrate, int wchans, int siz, int format,
    */
   if (aifc_header) 
     {
+      static const unsigned char I_FVER[4] = {'F','V','E','R'};
       write_four_chars((unsigned char *)(hdrbuf + 8), I_AIFC); 
       header_write(fd, hdrbuf, 12);
       curend = 12;
@@ -1947,6 +1896,7 @@ static int read_riff_header(const char *filename, int fd)
 		}
 	      else
 		{
+		  const unsigned char I_inst[4] = {'i','n','s','t'};  /* RIFF wants lower case, just to be different */
 		  if (match_four_chars((unsigned char *)hdrbuf, I_inst))
 		    {
 		      base_note = hdrbuf[8];
@@ -2022,6 +1972,7 @@ static void write_riff_clm_comment(int fd, const char *comment, int len, int ext
 
 static int write_riff_header(int fd, int wsrate, int wchans, int siz, int format, const char *comment, int len)
 {
+  const unsigned char I_JUNK[4] = {'J','U','N','K'};
   int j, extra = 0, err = MUS_NO_ERROR;
 
   data_location = 36 + 36 + 8;
@@ -2385,6 +2336,9 @@ static int mus_header_convert_riff_to_rf64(const char *filename, off_t size)
 
 static int read_avi_header(const char *filename, int fd)
 {
+  const unsigned char I_strf[4] = {'s','t','r','f'};  
+  const unsigned char I_movi[4] = {'m','o','v','i'};  
+
   /* we know we have checked for RIFF xxxx AVI  when we arrive here */
   int chunksize, chunkloc, cksize, bits;
   bool happy;
@@ -2546,6 +2500,10 @@ int mus_header_sf2_loop_end(int n) {return(soundfont_loop_ends[n]);}
 
 static int read_soundfont_header(const char *filename, int fd)
 {
+  const unsigned char I_sdta[4] = {'s','d','t','a'};
+  const unsigned char I_shdr[4] = {'s','h','d','r'};
+  const unsigned char I_pdta[4] = {'p','d','t','a'};
+
   /* we know we have checked for RIFF xxxx sfbk when we arrive here */
   int chunksize, chunkloc, type, cksize, i, this_end, last_end;
   off_t ckoff, offset;
@@ -3090,6 +3048,9 @@ static int write_ircam_header(int fd, int wsrate, int wchans, int format, const 
 
 static int read_8svx_header(const char *filename, int fd, bool bytewise)
 {
+  const unsigned char I_BODY[4] = {'B','O','D','Y'};
+  const unsigned char I_CHAN[4] = {'C','H','A','N'};
+  const unsigned char I_VHDR[4] = {'V','H','D','R'};
   int chunksize, offset, chunkloc;
   bool happy;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf);
@@ -3314,14 +3275,66 @@ static int read_twinvq_header(const char *filename, int fd)
 }
 
 
+/* ------------------------------------ SDIF ------------------------------------ 
+ * 
+ * not usable in this context -- even the apparently non-existent 1TDS (sampled data)
+ *   format consists of a sequence of chunks, each of any size.
+ *   Why invent an uncompressed format that makes random access impossible?
+ */
+
 static int read_sdif_header(const char *filename, int fd)
 {
-  /* yeah, right! */
+  const unsigned char I_1FQ0[4] = {'1','F','Q','0'}; 
+  const unsigned char I_1STF[4] = {'1','S','T','F'}; 
+  const unsigned char I_1PIC[4] = {'1','P','I','C'}; 
+  const unsigned char I_1TRC[4] = {'1','T','R','C'}; 
+  const unsigned char I_1HRM[4] = {'1','H','R','M'}; 
+  const unsigned char I_1RES[4] = {'1','R','E','S'}; 
+  const unsigned char I_1TDS[4] = {'1','T','D','S'};  /* samples -- all others are useless */
+
+  int offset, size;
+  bool happy = false;
+  offset = 16;
+  while (!happy)
+    {
+      if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 32) <= 0)
+	return(mus_error(MUS_HEADER_READ_FAILED, "%s, sdif header: chunks confused at %d", filename, offset));
+      size = mus_char_to_bint((unsigned char *)(hdrbuf + 4)) + 8; 
+
+      if (match_four_chars((unsigned char *)hdrbuf, I_1TDS))
+	break;
+      else
+	{
+	  char *type;
+	  if (match_four_chars((unsigned char *)hdrbuf, I_1FQ0))
+	    type = "fundamental frequency";
+	  else if (match_four_chars((unsigned char *)hdrbuf, I_1STF))
+	    type = "FFT";
+	  else if (match_four_chars((unsigned char *)hdrbuf, I_1PIC))
+	    type = "spectral peak";
+	  else if (match_four_chars((unsigned char *)hdrbuf, I_1TRC))
+	    type = "sinusoidal track";
+	  else if (match_four_chars((unsigned char *)hdrbuf, I_1HRM))
+	    type = "harmonic track";
+	  else if (match_four_chars((unsigned char *)hdrbuf, I_1RES))
+	    type = "resonance";
+	  else type = "unknown";
+	  return(mus_error(MUS_HEADER_READ_FAILED, "this SDIF file contains %s data, not sampled sound", type));
+	}
+      
+      offset += size;
+    }
   return(MUS_UNSUPPORTED);
 }
 
+
+/* ------------------------------------ NVF ------------------------------------ 
+ */
+
 static int read_nvf_header(const char *filename, int fd)
 {
+  const unsigned char I_VFMT[4] = {'V','F','M','T'};  /* Nomad II Creative NVF */
+
   /* info from nvftools by Tom Mander: */
   /*
     Numbers stored little-endian.
@@ -3806,6 +3819,9 @@ static int read_inrs_header(const char *filename, int fd, int loc)
 
 static int read_maud_header(const char *filename, int fd)
 {
+  const unsigned char I_MHDR[4] = {'M','H','D','R'};
+  const unsigned char I_MDAT[4] = {'M','D','A','T'};
+
   int chunksize, offset, chunkloc;
   bool happy;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf);
@@ -3900,6 +3916,13 @@ static int read_maud_header(const char *filename, int fd)
 
 static int read_csl_header(const char *filename, int fd)
 {
+  const unsigned char I_HEDR[4] = {'H','E','D','R'};  
+  const unsigned char I_HDR8[4] = {'H','D','R','8'};  
+  const unsigned char I_SDA_[4] = {'S','D','A','_'};  
+  const unsigned char I_SDAB[4] = {'S','D','A','B'};  
+  const unsigned char I_SD_B[4] = {'S','D','_','B'};  
+  const unsigned char I_NOTE[4] = {'N','O','T','E'};  
+
   int chunksize, offset, chunkloc;
   bool happy;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf);
@@ -4257,6 +4280,10 @@ static int read_qt_header(const char *filename, int fd)
 
 static int read_sbstudio_header(const char *filename, int fd)
 {
+  const unsigned char I_SNIN[4] = {'S','N','I','N'};
+  const unsigned char I_SNNA[4] = {'S','N','N','A'};
+  const unsigned char I_SNDT[4] = {'S','N','D','T'};
+
   int i, tmp;
   bool happy;
   unsigned char *bp;
@@ -5148,6 +5175,34 @@ void mus_header_raw_defaults(int *sr, int *chn, int *frm)
 
 static int mus_header_read_1(const char *filename, int fd)
 {
+  const unsigned char I_HCOM[4] = {'H','C','O','M'};
+  const unsigned char I_FSSD[4] = {'F','S','S','D'};
+  const unsigned char I_8SVX[4] = {'8','S','V','X'};
+  const unsigned char I_16SV[4] = {'1','6','S','V'};
+  const unsigned char I_VOC1[4] = {'t','i','v','e'};
+  const unsigned char I_Soun[4] = {'S','o','u','n'}; 
+  const unsigned char I_MAUD[4] = {'M','A','U','D'}; 
+  const unsigned char I_mdat[4] = {'m','d','a','t'};  /* quicktime */
+  const unsigned char I_sfbk[4] = {'s','f','b','k'};  /* SoundFont 2.0 */
+  const unsigned char I_ATCH[4] = {'A','T','C','H'}; 
+  const unsigned char I_NAL_[4] = {'N','A','L','_'};
+  const unsigned char I__WAV[4] = {' ','S','A','M'};
+  const unsigned char I_ondW[4] = {'o','n','d','W'};
+  const unsigned char I_SDXc[4] = {'S','D','X',':'};  /* Sample dump exchange format */
+  const unsigned char I_AVI_[4] = {'A','V','I',' '};  /* RIFF AVI */
+  const unsigned char I_ones[4] = {(unsigned char)'\377',(unsigned char)'\377',(unsigned char)'\377',(unsigned char)'\377'};
+  const unsigned char I_zeros[4] = {'\0','\0','\0','\0'};
+  const unsigned char I_asf0[4] = {(unsigned char)'\321','\051',(unsigned char)'\342',(unsigned char)'\326'};
+  const unsigned char I_asf1[4] = {(unsigned char)'\332','\065',(unsigned char)'\321','\021'};
+  const unsigned char I_asf2[4] = {(unsigned char)'\220','\064','\000',(unsigned char)'\240'};
+  const unsigned char I_asf3[4] = {(unsigned char)'\311','\003','\111',(unsigned char)'\276'};
+  const unsigned char I_DS16[4] = {'D','S','1','6'};  /* CSL */
+  const unsigned char I__sam[4] = {'=','s','a','m'};  
+  const unsigned char I_OggS[4] = {'O','g','g','S'};  /* Ogg-related files, apparently -- ogg123 has "vorbis" instead of "Speex" */
+  const unsigned char I_fLaC[4] = {'f','L','a','C'};  /* FLAC */
+  const unsigned char I_TTA1[4] = {'T','T','A','1'};  /* ttaenc */
+  const unsigned char I_wvpk[4] = {'w','v','p','k'};  /* wavpack */
+
   /* returns 0 on success (at least to the extent that we can report the header type), -1 for error */
   int i, loc = 0, bytes;
   bool happy;
@@ -5284,6 +5339,8 @@ static int mus_header_read_1(const char *filename, int fd)
     }
   if (match_four_chars((unsigned char *)hdrbuf, I_SOUN))
     {
+      const unsigned char I_D_SA[4] = {'D',' ','S','A'};
+      const unsigned char I_MPLE[4] = {'M','P','L','E'};
       if ((match_four_chars((unsigned char *)(hdrbuf + 4), I_D_SA)) && 
 	  (match_four_chars((unsigned char *)(hdrbuf + 8), I_MPLE)))
 	{
