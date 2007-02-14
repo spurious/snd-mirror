@@ -6720,7 +6720,7 @@ This sets the choice of fft data window (default: <code>blackman2-window</code>)
     blackman4-window       exponential-window   riemann-window      kaiser-window
     cauchy-window          poisson-window       gaussian-window     tukey-window
     dolph-chebyshev-window hann-poisson-window  connes-window       samaraki-window
-    ultraspherical-window
+    ultraspherical-window  bartlett-hann-window bohman-window       flat-top-window
 </pre>
 <p>The Hann window is sometimes called Hanning in the DSP literature, apparently
 as an in-joke.  For an extensive discussion of these windows, see
@@ -11002,7 +11002,7 @@ This reflects the state of the envelope editor 'clip' button.
 <!-- enved-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="enveddialog">enved-dialog</a> ()</code>
 </td></tr><tr><td></td><td>
-This starts the Envelope editor dialog, returning the dialog widget.
+This starts the envelope editor dialog, returning the dialog widget.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -11018,20 +11018,11 @@ This is the envelope (a list of breakpoints) in the envelope editor's graph wind
 </td></tr><tr><td></td><td>
 This reflects the type of the envelope editor's filter (the default #t means FIR; #f is FFT).  To get the FFT display in the envelope editor
 as the default:
-
-<table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa">
 <pre>
-(define (enved-fft)
   (set! (<em class=red>enved-filter)</em> #f)
   (set! (<a class=quiet href="#envedwaving">enved-wave?</a>) #t)
   (set! (<a class=quiet href="#envedtarget">enved-target</a>) <a class=quiet href="#envedtarget">enved-spectrum</a>)
-  (add-hook! <a class=quiet href="#afteropenhook">after-open-hook</a> (lambda (snd)
-			       (set! (<a class=quiet href="#transformsize">transform-size</a> snd) 
-				     (expt 2 (ceiling (/ (log (max 1 (<a class=quiet href="#frames">frames</a> snd)))
-							 (log 2.0))))))))
-</pre>
-</td></tr></table></td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</pre></td></tr>
 
 
 <!-- enved-filter-order -->
@@ -12573,7 +12564,7 @@ to put the date and time in the Snd title bar.
   blackman4-window       exponential-window    riemann-window       kaiser-window
   cauchy-window          poisson-window        gaussian-window      tukey-window
   dolph-chebyshev-window hann-poisson-window   connes-window        samaraki-window
-  ultraspherical-window
+  ultraspherical-window  bartlett-hann-window  bohman-window        flat-top-window
 </pre>
 
 <p><b>Zoom Focus</b> style (<a href="#zoomfocusstyle">zoom-focus-style</a>):</p>

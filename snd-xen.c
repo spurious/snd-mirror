@@ -1391,26 +1391,6 @@ bool listener_print_p(const char *msg)
  return(XEN_FALSE_P(res));
 }
 
-#if HAVE_FORTH
-static int features_length(char *features)
-{
-  int i, len, num = 1;
-  len = strlen(features);
-  for (i = 0; i < len - 2; i++)
-    if (features[i] == ' ') num++;
-  return(num);
-}
-
-static void fth_local_print(ficlVm *vm, char *msg)
-{
-  /* can't use g_snd_print (as in xen.c) because listener doesn't exist in this context */
-  fprintf(stderr, "error: %s\n", msg);
-}
-
-static void (*old_print_hook)(ficlVm *vm, char *msg);
-#endif
-
-
 void check_features_list(char *features)
 {
   /* check for list of features, report any missing, exit (for compsnd) */
@@ -1443,12 +1423,14 @@ void check_features_list(char *features)
 #endif
 
 #if HAVE_FORTH
-  old_print_hook = fth_print_hook;
-  fth_print_hook = fth_local_print;
-  XEN_EVAL_C_STRING(mus_format("%s %d >list [each] provided? not [if] \"oops\" .error [end-each]\n",
-			       features, 
-			       features_length(features)));
-  fth_print_hook = old_print_hook;
+  XEN_EVAL_C_STRING(mus_format("'( %s ) [each] dup \
+                                          provided? [if] \
+                                            drop \
+                                          [else] \
+                                            1 >list \"\\nno %%s!\\n\\n\" swap format .stderr \
+                                          [then] \
+                                        [end-each]\n", 
+			       features)); 
 #endif
   snd_exit(0);
 }

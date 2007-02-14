@@ -4314,7 +4314,7 @@ static mus_fft_window_t rts_fft_window = DEFAULT_FFT_WINDOW;
 static const char *fft_windows[MUS_NUM_WINDOWS] = 
   {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
    "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes",
-   "Samaraki", "Ultraspherical"};
+   "Samaraki", "Ultraspherical", "Barlett-Hann", "Bohman", "Flat-top"};
 
 static void reflect_fft_window(prefs_info *prf) {SET_TEXT(prf->text, (char *)fft_windows[(int)fft_window(ss)]);}
 static void revert_fft_window(prefs_info *prf) {in_set_fft_window(rts_fft_window);}

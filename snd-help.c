@@ -506,6 +506,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+14-Feb:  three more fft window choices.\n\
 9-Feb:   Snd 8.8.\n\
 31-Jan:  caf headers.\n\
 2-Jan:   Snd 8.7.\n\
@@ -912,7 +913,7 @@ void fft_help(void)
     #define transform_types "fourier-transform wavelet-transform  haar-transform\n      autocorrelation   walsh-transform    cepstrum"
     #define transform_graph_types "graph-once  graph-as-sonogram  graph-as-spectrogram"
     #define transform_normalizations "dont-normalize normalize-by-channel normalize-by-sound normalize-globally"
-    #define fft_windows "      bartlett-window blackman2-window blackman3-window blackman4-window\n      cauchy-window connes-window dolph-chebyshev-window exponential-window\n      gaussian-window hamming-window hann-poisson-window hann-window\n      kaiser-window parzen-window poisson-window rectangular-window\n      riemann-window samaraki-window tukey-window ultraspherical-window\n      welch-window"
+    #define fft_windows "      bartlett-window blackman2-window blackman3-window blackman4-window\n      cauchy-window connes-window dolph-chebyshev-window exponential-window\n      gaussian-window hamming-window hann-poisson-window hann-window\n      kaiser-window parzen-window poisson-window rectangular-window\n      riemann-window samaraki-window tukey-window ultraspherical-window\n      welch-window bartlett-hann-window bohman-window flat-top-window"
   #endif
   #if HAVE_RUBY
     #define transform_normalization_example "set_transform_normalization(Dont_normalize)"
@@ -925,7 +926,7 @@ void fft_help(void)
     #define transform_types "Fourier_transform Wavelet_transform  Haar_transform\n      Autocorrelation   Walsh_transform    Cepstrum"
     #define transform_graph_types "graph_once  graph_as_sonogram  graph_as_spectrogram"
     #define transform_normalizations "Dont_normalize Normalize_by_channel Normalize_by_sound Normalize_globally"
-    #define fft_windows "      Bartlett_window Blackman2_window Blackman3_window Blackman4_window\n      Cauchy_window Connes_window Dolph_chebyshev_window Exponential_window\n      Gaussian_window Hamming_window Hann_poisson_window Hann_window\n      Kaiser_window Parzen_window Poisson_window Rectangular_window\n      Riemann_window Samaraki_window Tukey_window Ultraspherical_window\n      Welch_window"
+    #define fft_windows "      Bartlett_window Blackman2_window Blackman3_window Blackman4_window\n      Cauchy_window Connes_window Dolph_chebyshev_window Exponential_window\n      Gaussian_window Hamming_window Hann_poisson_window Hann_window\n      Kaiser_window Parzen_window Poisson_window Rectangular_window\n      Riemann_window Samaraki_window Tukey_window Ultraspherical_window\n      Welch_window Bartlett_hann_window Bohman_window Flat_top_window"
   #endif
   #if HAVE_FORTH
     #define transform_normalization_example "dont-normalize set-transform-normalization"
@@ -938,7 +939,7 @@ void fft_help(void)
     #define transform_types "fourier-transform wavelet-transform  haar-transform\n      autocorrelation   walsh-transform    cepstrum"
     #define transform_graph_types "graph-once  graph-as-sonogram  graph-as-spectrogram"
     #define transform_normalizations "dont-normalize normalize-by-channel normalize-by-sound normalize-globally"
-    #define fft_windows "      bartlett-window blackman2-window blackman3-window blackman4-window\n      cauchy-window connes-window dolph-chebyshev-window exponential-window\n      gaussian-window hamming-window hann-poisson-window hann-window\n      kaiser-window parzen-window poisson-window rectangular-window\n      riemann-window samaraki-window tukey-window ultraspherical-window\n      welch-window"
+    #define fft_windows "      bartlett-window blackman2-window blackman3-window blackman4-window\n      cauchy-window connes-window dolph-chebyshev-window exponential-window\n      gaussian-window hamming-window hann-poisson-window hann-window\n      kaiser-window parzen-window poisson-window rectangular-window\n      riemann-window samaraki-window tukey-window ultraspherical-window\n      welch-window bartlett-hann-window bohman-window flat-top-window"
   #endif
 
   snd_help_with_xrefs("FFT",
@@ -1019,7 +1020,7 @@ The main FFT-related functions are:\
 "Nearly all the transform-related choices can be set in the transform dialog launched from the Options \
 Menu Transform item. Most of this dialog should be self-explanatory.  Some of the windows take an \
 additional parameter sometimes known as alpha or beta.  This can be set by the scale(s) next to the fft window graph in the \
-transform dialog. \
+transform dialog, or via the variables " S_fft_window_alpha " and " S_fft_window_beta ".\
 \n\n\
 The FFT display is activated by setting the 'f' button on the channel's window.  It then updates \
 itself each time the time domain waveform moves or changes.  \

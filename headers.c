@@ -146,7 +146,7 @@ static const unsigned char I_lpcm[4] = {'l','p','c','m'};  /* Apple CAFF */
 
 #define HDRBUFSIZ 256
 static unsigned char *hdrbuf;
-#define INITIAL_READ_SIZE 32
+#define INITIAL_READ_SIZE 256
 
 /* AIFF files can have any number of ANNO chunks, so we'll grab at least 4 of them */
 #define AUX_COMMENTS 4
@@ -188,9 +188,6 @@ int mus_header_initialize(void)
 #define I_IRCAM_SUN  0x0002a364
 #define I_IRCAM_MIPS 0x0003a364
 #define I_IRCAM_NEXT  0x0004a364
-
-#define NINRS	7
-static const unsigned int I_INRS[NINRS] = {0xcb460020, 0xd0465555, 0xfa460000, 0x1c470040, 0x3b470080, 0x7a470000, 0x9c470040};
 
 static off_t data_location = 0;
 static int srate = 0, chans = 0, header_type = MUS_UNSUPPORTED, data_format = MUS_UNKNOWN, original_data_format = 0;
@@ -1074,6 +1071,9 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 							 'Qclp' -- QUALCOMM PureVoice
 							 0x6D730055 -- MPEG Layer 3, CBR only (pre QT4.1)
 							 '.mp3' -- MPEG Layer 3, CBR & VBR (QT4.1 and later)
+
+							 openquicktime and ffmpeg have decoders for some of these; all too complex for my taste
+							 on a Mac, we could apparently pick up decoders from coreaudio
 						      */
 						      data_format = MUS_UNKNOWN;
 						    }
@@ -2886,7 +2886,7 @@ static int read_bicsf_header(const char *filename, int fd)
 
 
 /* ------------------------------------ IRCAM ------------------------------------ 
- * read/write CLM (old-style BICSF) -- added write option for Sun port 12-Dec-94
+ * old-style BICSF -- added write option for Sun port 12-Dec-94
  *
  *    0: 0x1a364 or variations thereof -- byte order gives big/little_endian decision,
  *         ^ digit gives machine info, according to AFsp sources -- see IRCAM ints above
@@ -3779,8 +3779,6 @@ static int read_esps_header(const char *filename, int fd)
  * 
  */
 
-static int inrs_srates[NINRS] = {6500, 6667, 8000, 10000, 12000, 16000, 20000};
-
 static int read_inrs_header(const char *filename, int fd, int loc)
 {
   true_file_length = SEEK_FILE_LENGTH(fd);
@@ -4165,8 +4163,6 @@ static int read_psion_header(const char *filename, int fd)
 static int read_gravis_header(const char *filename, int fd)
 {
   int mode;
-  lseek(fd, 0, SEEK_SET);
-  if (read(fd, hdrbuf, 128) != 128) return(mus_error(MUS_HEADER_READ_FAILED, "%s PAT header truncated?", filename));
   chans = hdrbuf[84];
   if (chans == 0) chans = 1;
   comment_start = 22;
@@ -4287,8 +4283,6 @@ static int read_sbstudio_header(const char *filename, int fd)
   int i, tmp;
   bool happy;
   unsigned char *bp;
-  lseek(fd, 0, SEEK_SET);
-  header_read(fd, hdrbuf, HDRBUFSIZ);
   chans = 1; 
   srate = 8000; /* no sampling rate field in this header */
   data_format = MUS_UNKNOWN;
@@ -4871,8 +4865,6 @@ static int read_adf_header(const char *filename, int fd)
 
 static int read_diamondware_header(const char *filename, int fd)
 {
-  lseek(fd, 0, SEEK_SET);
-  if (read(fd, hdrbuf, 64) != 64) return(mus_error(MUS_HEADER_READ_FAILED, "%s truncated diamondware header?", filename));
   chans = hdrbuf[34];
   if (hdrbuf[31] == 0)
     {
@@ -4913,8 +4905,6 @@ static int read_paf_header(const char *filename, int fd)
 {
   int form;
   bool little = false;
-  lseek(fd, 0, SEEK_SET);
-  if (read(fd, hdrbuf, 32) != 32) return(mus_error(MUS_HEADER_READ_FAILED, "%s PAF header truncated?", filename));
   data_format = MUS_UNKNOWN;
   if (mus_char_to_bint((unsigned char *)(hdrbuf + 8))) little = true;
   if (little)
@@ -5203,9 +5193,12 @@ static int mus_header_read_1(const char *filename, int fd)
   const unsigned char I_TTA1[4] = {'T','T','A','1'};  /* ttaenc */
   const unsigned char I_wvpk[4] = {'w','v','p','k'};  /* wavpack */
 
+  #define NINRS	7
+  const unsigned int I_INRS[NINRS] = {0xcb460020, 0xd0465555, 0xfa460000, 0x1c470040, 0x3b470080, 0x7a470000, 0x9c470040};
+  int inrs_srates[NINRS] = {6500, 6667, 8000, 10000, 12000, 16000, 20000};
+
   /* returns 0 on success (at least to the extent that we can report the header type), -1 for error */
   int i, loc = 0, bytes;
-  bool happy;
   header_type = MUS_UNSUPPORTED;
   data_format = MUS_UNKNOWN;
   comment_start = 0;
@@ -5416,6 +5409,21 @@ static int mus_header_read_1(const char *filename, int fd)
       header_type = MUS_FLAC;
       return(MUS_NO_ERROR);
     }
+  if (match_four_chars((unsigned char *)hdrbuf, I_ajkg))
+    {
+      header_type = MUS_SHORTEN;
+      return(MUS_NO_ERROR);
+    }
+  if (match_four_chars((unsigned char *)hdrbuf, I_TTA1))
+    {
+      header_type = MUS_TTA;
+      return(MUS_NO_ERROR);
+    }
+  if (match_four_chars((unsigned char *)hdrbuf, I_wvpk))
+    {
+      header_type = MUS_WAVPACK;
+      return(MUS_NO_ERROR);
+    }
   if (match_four_chars((unsigned char *)hdrbuf, I_OggS))
     {
       if ((hdrbuf[29] == 'v') && (hdrbuf[30] == 'o') && (hdrbuf[31] == 'r'))
@@ -5441,40 +5449,6 @@ static int mus_header_read_1(const char *filename, int fd)
       data_size = (hdrbuf[10] + (hdrbuf[11] << 7) + (hdrbuf[12] << 14));
       /* since this file type has embedded blocks, we have to translate it elsewhere */
       return(MUS_NO_ERROR);
-    }
-  /* no recognized magic number at start -- poke around in possible header for other types */
-  /* ESPS is either 0x00006a1a or 0x1a6a0000 at byte 16 */
-  if (equal_big_or_little_endian((unsigned char *)(hdrbuf + 16), 0x00006a1a))
-    {
-      header_type = MUS_ESPS;
-      return(read_esps_header(filename, fd));
-    }
-  lseek(fd, 0, SEEK_SET);
-  header_read(fd, hdrbuf, 256);
-  if ((hdrbuf[252] == 64) && (hdrbuf[253] == 195)) /* #o100 and #o303 */
-    {
-      header_type = MUS_SPPACK;
-      return(read_sppack_header(filename, fd));
-    }
-  if ((match_four_chars((unsigned char *)(hdrbuf + 65), I_FSSD)) && 
-      (match_four_chars((unsigned char *)(hdrbuf + 128), I_HCOM)))
-    {
-      header_type = MUS_HCOM;
-      return(MUS_NO_ERROR);
-    }
-  happy = false;
-  for (i = 0; i < NINRS; i++) 
-    {
-      if (equal_big_or_little_endian((unsigned char *)hdrbuf, I_INRS[i]))
-	{
-	  happy = true;
-	  loc = inrs_srates[i];
-	}
-    }
-  if (happy)
-    {
-      header_type = MUS_INRS;
-      return(read_inrs_header(filename, fd, loc));
     }
   if (mus_char_to_ubint((unsigned char *)hdrbuf) == 0xAAAAAAAA)
     {
@@ -5579,10 +5553,37 @@ static int mus_header_read_1(const char *filename, int fd)
       header_type = MUS_PAF;
       return(read_paf_header(filename, fd));
     }
+  if (match_four_chars((unsigned char *)hdrbuf, I_SDIF))
+    {
+      header_type = MUS_SDIF;
+      return(read_sdif_header(filename, fd));
+    }
+  if (match_four_chars((unsigned char *)hdrbuf, I_NVF_))
+    {
+      header_type = MUS_NVF;
+      return(read_nvf_header(filename, fd));
+    }
   if (match_four_chars((unsigned char *)hdrbuf, I_TWIN))
     {
       header_type = MUS_TWINVQ;
       return(read_twinvq_header(filename, fd));
+    }
+  /* ESPS is either 0x00006a1a or 0x1a6a0000 at byte 16 */
+  if (equal_big_or_little_endian((unsigned char *)(hdrbuf + 16), 0x00006a1a))
+    {
+      header_type = MUS_ESPS;
+      return(read_esps_header(filename, fd));
+    }
+  if ((hdrbuf[252] == 64) && (hdrbuf[253] == 195)) /* #o100 and #o303 */
+    {
+      header_type = MUS_SPPACK;
+      return(read_sppack_header(filename, fd));
+    }
+  if ((match_four_chars((unsigned char *)(hdrbuf + 65), I_FSSD)) && 
+      (match_four_chars((unsigned char *)(hdrbuf + 128), I_HCOM)))
+    {
+      header_type = MUS_HCOM;
+      return(MUS_NO_ERROR);
     }
 #if MUS_LITTLE_ENDIAN
   if (mus_char_to_uninterpreted_int((unsigned char *)hdrbuf) == 0x01000800)
@@ -5622,6 +5623,15 @@ static int mus_header_read_1(const char *filename, int fd)
       return(read_akai3_header(filename, fd));
     }
 #endif
+  for (i = 0; i < NINRS; i++) 
+    {
+      if (equal_big_or_little_endian((unsigned char *)hdrbuf, I_INRS[i]))
+	{
+	  loc = inrs_srates[i];
+	  header_type = MUS_INRS;
+	  return(read_inrs_header(filename, fd, loc));
+	}
+    }
   if ((match_four_chars((unsigned char *)hdrbuf, I_asf0)) &&
       (match_four_chars((unsigned char *)(hdrbuf + 4), I_asf1)) &&
       (match_four_chars((unsigned char *)(hdrbuf + 8), I_asf2)) &&
@@ -5629,31 +5639,6 @@ static int mus_header_read_1(const char *filename, int fd)
     {
       header_type = MUS_ASF;
       return(read_asf_header(filename, fd));
-    }
-  if (match_four_chars((unsigned char *)hdrbuf, I_SDIF))
-    {
-      header_type = MUS_SDIF;
-      return(read_sdif_header(filename, fd));
-    }
-  if (match_four_chars((unsigned char *)hdrbuf, I_NVF_))
-    {
-      header_type = MUS_NVF;
-      return(read_nvf_header(filename, fd));
-    }
-  if (match_four_chars((unsigned char *)hdrbuf, I_ajkg))
-    {
-      header_type = MUS_SHORTEN;
-      return(MUS_NO_ERROR);
-    }
-  if (match_four_chars((unsigned char *)hdrbuf, I_TTA1))
-    {
-      header_type = MUS_TTA;
-      return(MUS_NO_ERROR);
-    }
-  if (match_four_chars((unsigned char *)hdrbuf, I_wvpk))
-    {
-      header_type = MUS_WAVPACK;
-      return(MUS_NO_ERROR);
     }
 
   header_type = MUS_RAW;

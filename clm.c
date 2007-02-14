@@ -4303,6 +4303,7 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
       FREE(rl);
       FREE(im);
     }
+
   return(a);
 }
 
@@ -7754,6 +7755,32 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
     case MUS_BARTLETT_WINDOW:
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += rate) 
 	window[j] = (window[i] = angle);
+      break; 
+
+    case MUS_BARTLETT_HANN_WINDOW:
+      {
+	Float ramp;
+	rate *= 0.5;
+	/* this definition taken from mathworks docs */
+	for (i = 0, j = size - 1, angle = -M_PI, ramp = 0.5; i <= midn; i++, j--, angle += freq, ramp -= rate)
+	  window[j] = (window[i] = 0.62 - 0.48 * ramp + 0.38 * cos(angle));
+      }
+      break; 
+
+    case MUS_FLAT_TOP_WINDOW:
+      /* this definition taken from mathworks docs */
+      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
+	window[j] = (window[i] = 0.2156 - 0.4160 * cos(angle) + 0.2781 * cos(2 * angle) - 0.0836 * cos(3 * angle) + 0.0069 * cos(4 * angle));
+      /* TODO: graph in transform dialog needs negative vals */
+      break; 
+
+    case MUS_BOHMAN_WINDOW:
+      {
+	Float ramp;
+	/* definition from diracdelta docs */
+	for (i = 0, j = size - 1, angle = M_PI, ramp = 0.0; i <= midn; i++, j--, angle -= freq, ramp += rate) 
+	  window[j] = (window[i] = ramp * cos(angle) + (1.0 / M_PI) * sin(angle));
+      }
       break; 
 
     case MUS_HAMMING_WINDOW:

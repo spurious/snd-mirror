@@ -359,7 +359,8 @@ static char *FFT_WINDOW_CONSTANTS[MUS_NUM_WINDOWS] =
      S_hamming_window, S_blackman2_window, S_blackman3_window, S_blackman4_window,
      S_exponential_window, S_riemann_window, S_kaiser_window, S_cauchy_window,
      S_poisson_window, S_gaussian_window, S_tukey_window, S_dolph_chebyshev_window,
-     S_hann_poisson_window, S_connes_window, S_samaraki_window, S_ultraspherical_window
+     S_hann_poisson_window, S_connes_window, S_samaraki_window, S_ultraspherical_window,
+     S_bartlett_hann_window, S_bohman_window, S_flat_top_window
 };
 
 char *mus_fft_window_name(mus_fft_window_t i) {return(FFT_WINDOW_CONSTANTS[(int)i]);}
@@ -962,7 +963,7 @@ static void print_mus_xen(XEN obj, ScmPort *port, ScmWriteContext *pstate)
 }
 #endif
 
-#if HAVE_RUBY || HAVE_FORTH
+#if HAVE_RUBY
 static XEN mus_xen_to_s(XEN obj)
 {
   return(C_TO_XEN_STRING(mus_describe(XEN_TO_MUS_ANY(obj))));
@@ -972,7 +973,7 @@ static XEN mus_xen_to_s(XEN obj)
 #if HAVE_FORTH
 static XEN print_mus_xen(XEN obj)
 {
-  return(C_TO_XEN_STRING(fth_format("#<%s>", mus_describe(XEN_TO_MUS_ANY(obj)))));
+  return(fth_make_string_format("#<%s>", mus_describe(XEN_TO_MUS_ANY(obj)))); 
 }
 #endif
 
@@ -6581,7 +6582,6 @@ void mus_xen_init(void)
 
 #if HAVE_FORTH
   fth_set_object_inspect(mus_xen_tag, print_mus_xen);
-  fth_set_object_to_string(mus_xen_tag, mus_xen_to_s);
   fth_set_object_equal(mus_xen_tag, equalp_mus_xen);
   fth_set_object_mark(mus_xen_tag, mark_mus_xen);
   fth_set_object_free(mus_xen_tag, free_mus_xen);
@@ -6683,6 +6683,9 @@ void mus_xen_init(void)
   #define H_welch_window           "A triangular window squared"
   #define H_parzen_window          "A triangular window"
   #define H_bartlett_window        "A triangular window"
+  #define H_bartlett_hann_window   "A combination of the bartlett and hann windows"
+  #define H_bohman_window          "A weighted cosine window"
+  #define H_flat_top_window        "A sum of cosines window"
   #define H_hamming_window         "A raised cosine"
   #define H_blackman2_window       "2nd order cosine window"
   #define H_blackman3_window       "3rd order cosine window"
@@ -6705,6 +6708,9 @@ void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_welch_window,           MUS_WELCH_WINDOW,           H_welch_window);
   XEN_DEFINE_CONSTANT(S_parzen_window,          MUS_PARZEN_WINDOW,          H_parzen_window);
   XEN_DEFINE_CONSTANT(S_bartlett_window,        MUS_BARTLETT_WINDOW,        H_bartlett_window);
+  XEN_DEFINE_CONSTANT(S_bartlett_hann_window,   MUS_BARTLETT_HANN_WINDOW,   H_bartlett_hann_window);
+  XEN_DEFINE_CONSTANT(S_bohman_window,          MUS_BOHMAN_WINDOW,          H_bohman_window);
+  XEN_DEFINE_CONSTANT(S_flat_top_window,        MUS_FLAT_TOP_WINDOW,        H_flat_top_window);
   XEN_DEFINE_CONSTANT(S_hamming_window,         MUS_HAMMING_WINDOW,         H_hamming_window);
   XEN_DEFINE_CONSTANT(S_blackman2_window,       MUS_BLACKMAN2_WINDOW,       H_blackman2_window);
   XEN_DEFINE_CONSTANT(S_blackman3_window,       MUS_BLACKMAN3_WINDOW,       H_blackman3_window);
@@ -7062,6 +7068,9 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_asymmetric_fm,
 	       S_asymmetric_fm_p,
 	       S_bartlett_window,
+	       S_bartlett_hann_window,
+	       S_bohman_window,
+	       S_flat_top_window,
 	       S_blackman2_window,
 	       S_blackman3_window,
 	       S_blackman4_window,

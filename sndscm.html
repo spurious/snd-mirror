@@ -4449,7 +4449,7 @@ a sum of cosines, and env-squared-channel connects the dots with an x^2 curve.  
 use env-expt-channel.  The 'symmetric' argument determines whether the
 up and down moving ramps look symmetrical around a break point.
 
-<table border=0>
+<table border=0 vspace=10>
 <tr><td><img src="exptenvs.png" alt="exponential envelopes"></td><td>
 <pre>
 (env-channel '(0 0 1 1 2 -.75 3 0)) 
@@ -6451,7 +6451,7 @@ To tie this into C-x C-q, in place of the default "mix" function,
 (<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\q 4 ; C-q
   (lambda () "pan mix"
     (<a class=quiet href="extsnd.html#promptinminibuffer">prompt-in-minibuffer</a> "mix:" (lambda (str) ; use pan-mix at cursor
-				   (pan-mix str (or (<a class=quiet href="extsnd.html#cursor">cursor</a>) 0)) #f #t)))
+				   (em class=red>pan-mix</em> str (or (<a class=quiet href="extsnd.html#cursor">cursor</a>) 0)) #f #t)))
   #t  ; an extended (C-x) command
   "C-x C-q")
 </pre>
@@ -8013,7 +8013,7 @@ load-font loads a font and returns a handle for it.
             (<a class=quiet href="extsnd.html#fillrectangle">fill-rectangle</a> pos 10 50 20)
 	    (set! (<a class=quiet href="extsnd.html#foregroundcolor">foreground-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 1 0 0))
 	    (if new-font (set! (<a class=quiet href="extsnd.html#currentfont">current-font</a>) new-font))
-            (<a class=quiet href="extsnd.html#drawstring">draw-string</a> "hiho" (+ pos 5) 24)
+            (<a class=quiet href="extsnd.html#drawstring">draw-string</a> <em class=red>"hiho"</em> (+ pos 5) 24)
 	    (set! (<a class=quiet href="extsnd.html#foregroundcolor">foreground-color</a>) old-color))))))
 </pre></td></tr></table>
 
@@ -8301,7 +8301,7 @@ mouse location in that channel.
 'args' is list of resource settings for each icon.
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(<em class=red>make-sound-box</em> "sounds"
+(make-sound-box "sounds"
 		(list-ref (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>) 3)
 		(lambda (file) 
                   (<a class=quiet href="extsnd.html#sndprint">snd-print</a> file))

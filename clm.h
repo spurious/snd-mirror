@@ -2,10 +2,12 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 31
-#define MUS_DATE "12-Dec-06"
+#define MUS_REVISION 32
+#define MUS_DATE "14-Feb-07"
 
 /*
+ * 14-Feb:     three more fft window choices.
+ * --------
  * 12-Dec:     removed mus_make_frame|mixer_with_data.
  * 27-Nov:     move-sound array access parallel to locsig.
  * 22-Nov:     had to add non-backwards-compatible reverb chans arg to mus_make_locsig.
@@ -255,7 +257,9 @@ typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PAR
 	      MUS_HAMMING_WINDOW, MUS_BLACKMAN2_WINDOW, MUS_BLACKMAN3_WINDOW, MUS_BLACKMAN4_WINDOW,
 	      MUS_EXPONENTIAL_WINDOW, MUS_RIEMANN_WINDOW, MUS_KAISER_WINDOW, MUS_CAUCHY_WINDOW, MUS_POISSON_WINDOW,
 	      MUS_GAUSSIAN_WINDOW, MUS_TUKEY_WINDOW, MUS_DOLPH_CHEBYSHEV_WINDOW, MUS_HANN_POISSON_WINDOW, 
-	      MUS_CONNES_WINDOW, MUS_SAMARAKI_WINDOW, MUS_ULTRASPHERICAL_WINDOW, MUS_NUM_WINDOWS} mus_fft_window_t;
+	      MUS_CONNES_WINDOW, MUS_SAMARAKI_WINDOW, MUS_ULTRASPHERICAL_WINDOW, 
+	      MUS_BARTLETT_HANN_WINDOW, MUS_BOHMAN_WINDOW, MUS_FLAT_TOP_WINDOW,
+	      MUS_NUM_WINDOWS} mus_fft_window_t;
 
 typedef enum {MUS_CHEBYSHEV_OBSOLETE_KIND, MUS_CHEBYSHEV_FIRST_KIND, MUS_CHEBYSHEV_SECOND_KIND} mus_polynomial_t;
 

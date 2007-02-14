@@ -25,7 +25,7 @@ static int transform_sizes[NUM_TRANSFORM_SIZES] =
 static char *FFT_WINDOWS[MUS_NUM_WINDOWS] = 
   {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
    "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes",
-   "Samaraki", "Ultraspherical"};
+   "Samaraki", "Ultraspherical", "Bartlett-Hann", "Bohman", "Flat-top"};
 
 static Float fp_dB(Float py)
 {
@@ -50,6 +50,7 @@ static axis_info *axis_ap = NULL;
 
 static void graph_redisplay(void)
 {
+  /* fft_window(ss) is the current choice */
   int ix0, iy0, ix1, iy1, i;
   Float xincr, x;
   axis_context *ax;

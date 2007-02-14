@@ -6257,7 +6257,7 @@ choices are: " S_rectangular_window ", " S_hann_window ", " S_welch_window ", " 
 " S_blackman4_window ", " S_exponential_window ", " S_riemann_window ", " S_kaiser_window ", \
 " S_cauchy_window ", " S_poisson_window ", " S_gaussian_window ", " S_tukey_window ", \
 " S_dolph_chebyshev_window ", " S_hann_poisson_window ", " S_connes_window ", \
-" S_samaraki_window ", and " S_ultraspherical_window "."
+" S_samaraki_window ", " S_ultraspherical_window ", " S_bartlett_hann_window ", " S_bohman_window ", and " S_flat_top_window "."
 
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_FFT_WINDOW, S_fft_window));

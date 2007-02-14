@@ -553,9 +553,11 @@
       'enved-amplitude enved-amplitude 0 
       'autocorrelation autocorrelation 3
       'bartlett-window bartlett-window 4 
+      'bartlett-hann-window bartlett-hann-window 21
       'blackman2-window blackman2-window 6 
       'blackman3-window blackman3-window 7 
       'blackman4-window blackman4-window 8
+      'bohman-window bohman-window 22
       'cauchy-window cauchy-window 12 
       'channels-combined channels-combined 1 
       'channels-separate channels-separate 0 
@@ -567,6 +569,7 @@
       'cursor-on-right cursor-on-right 2 
       'dolph-chebyshev-window dolph-chebyshev-window 16
       'exponential-window exponential-window 9 
+      'flat-top-window flat-top-window 23
       'zoom-focus-active zoom-focus-active 2
       'zoom-focus-left zoom-focus-left 0
       'zoom-focus-middle zoom-focus-middle 3
@@ -2032,9 +2035,9 @@
 		       'ask-before-overwrite 'asymmetric-fm 'asymmetric-fm? 'audio-input-device 'audio-output-device
 		       'auto-resize 'auto-update 'auto-update-interval 'autocorrelate 'autocorrelation
 		       'moving-average 'moving-average? 'axis-info 'axis-label-font 'axis-numbers-font
-		       'bad-header-hook 'bartlett-window 'basic-color 'beats-per-measure 'beats-per-minute
+		       'bad-header-hook 'bartlett-window 'bartlett-hann-window 'basic-color 'beats-per-measure 'beats-per-minute
 		       'before-close-hook 'before-exit-hook 'before-save-as-hook 'before-save-state-hook 'before-transform-hook
-		       'bind-key 'blackman2-window 'blackman3-window 'blackman4-window 'bold-peaks-font
+		       'bind-key 'blackman2-window 'blackman3-window 'blackman4-window 'bohman-window 'bold-peaks-font
 		       'bomb 'c-g! 'c-g? 'cauchy-window
 		       'cepstrum 'change-samples-with-origin 'channel->vct 'channel-amp-envs 'channel-data
 		       'channel-properties 'channel-style 'channel-widgets 'channels 'channels-combined
@@ -2078,7 +2081,7 @@
 		       'filter-channel 'filter-control-coeffs 'filter-control-envelope 'filter-control-in-dB 'filter-control-in-hz
 		       'filter-control-order 'filter-control-waveform-color 'filter-control? 'filter-selection 'filter-sound
 		       'filter? 'find-channel 'find-dialog 'find-mark 'find-sound
-		       'finish-progress-report 'fir-filter 'fir-filter? 'focus-widget 'foreground-color
+		       'finish-progress-report 'fir-filter 'fir-filter? 'flat-top-window 'focus-widget 'foreground-color
 		       'forget-region 'formant 'formant-bank 'formant? 'fourier-transform
 		       'frame* 'frame+ 'frame->file 'frame->file?
 		       'frame->frame 'frame->list 'frame->sample 'frame-ref 'frame-set!
@@ -15564,11 +15567,13 @@ EDITS: 2
       (if (not (vequal v (vct 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.000)))
 	  (snd-display ";delay 100 -> 0: ~A" v))
       (mus-reset gen)
+      (if (not (vequal (mus-data gen) (make-vct 100 0.0)))
+	  (snd-display ";after reset mus-data delay peak: ~A" (vct-peak (mus-data gen))))
       (do ((i 0 (1+ i)))
 	  ((= i 10))
 	(vct-set! v i (delay gen (if (odd? i) 1.0 0.0) (* i .1))))
       (if (not (vequal v (vct 0.000 0.900 0.000 0.700 0.000 0.500 0.000 0.300 0.000 0.100)))
-	  (snd-display ";delay 0 -> 100 .1: ~A" v))
+	  (snd-display ";delay 0 -> 100 .1: ~A (~A)" v gen))
       (mus-reset gen)
       (do ((i 0 (1+ i)))
 	  ((= i 10))
@@ -18451,6 +18456,7 @@ EDITS: 2
     (let ((gen (make-fft-window parzen-window 16)))
       (if (not (vequal gen (vct 0.000 0.125 0.250 0.375 0.500 0.625 0.750 1.000 1.000 0.750 0.625 0.500 0.375 0.250 0.125 0.000)))
 	  (snd-display ";parzen window: ~A" gen)))
+    ;; TODO tests for 3 new fft windows and popup.rb snd-test.rb snd-forth-init.fs?
     (let ((gen (make-fft-window bartlett-window 16)))
       (if (not (vequal gen (vct 0.000 0.125 0.250 0.375 0.500 0.625 0.750 1.000 1.000 0.750 0.625 0.500 0.375 0.250 0.125 0.000)))
 	  (snd-display ";bartlett window: ~A" gen)))

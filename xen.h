@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 6
-#define XEN_VERSION "2.6"
+#define XEN_MINOR_VERSION 7
+#define XEN_VERSION "2.7"
 
 /* HISTORY:
  *
+ *  14-Feb-07: XEN_PUTS and friends for fth (Mike).
  *  17-Jan-07: rb_errinfo changes (Mike Scholz).
  *  --------
  *  14-Nov-06: check for Scm_EvalRec (Gauche 0.8.8).
@@ -1291,6 +1292,15 @@ XEN xen_rb_add_to_load_path(char *path);
 #define C_TO_XEN_STRING(str)            fth_make_string(str)
 #define C_TO_XEN_STRINGN(str, len)      fth_make_string_len(str, len)
 #define XEN_TO_C_STRING(Str)            fth_string_ref(Str)
+
+#if HAVE_FTH_PORT_PUTS 
+/* port = XEN_FALSE means default output handler (snd-print). */ 
+#define XEN_PUTS(Str, Port)             fth_port_puts(Port, Str) 
+#define XEN_DISPLAY(Val, Port)          fth_port_display(Port, Val) 
+#define XEN_FLUSH_PORT(Port)            fth_flush_port(Port) 
+#define XEN_CLOSE_PORT(Port)            fth_close_port(Port) 
+#define XEN_PORT_TO_STRING(Port)        fth_port_to_string(Port) 
+#endif 
 
 #define XEN_TO_STRING(Obj)              fth_object_to_string(Obj)
 

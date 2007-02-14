@@ -1231,6 +1231,9 @@ static void one_fft(fft_state *fs)
 	}
       fp->current_size = fs->size; /* protect against parallel size change via fft size menu */
       fs->data = fp->data;
+
+      /* PERHAPS: if mus-rectangular, set window to NULL? */
+
       if (fs->window == NULL)
 	{
 	  static int last_size = 0, last_zero = 0;

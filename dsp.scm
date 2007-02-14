@@ -721,6 +721,11 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 	  (vct-set! coeffs j coeff)
 	  (vct-set! coeffs jj coeff))))))
 
+;; (filter-channel et al reflect around the midpoint, so to match exactly you need to take
+;;   the env passed and flip it backwards for the back portion -- that is to say, this function
+;;   needs a wrapper to make it act like anyone would expect)
+
+
 (define (fltit-1 order spectr)
   "(fltit-1 order spectrum) creates an FIR filter from spectrum and order and returns a closure that calls it: 
 (map-channel (fltit-1 10 (vct 0 1.0 0 0 0 0 0 0 1.0 0)))"
