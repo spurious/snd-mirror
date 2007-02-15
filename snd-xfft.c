@@ -69,16 +69,30 @@ static void graph_redisplay(void)
     }
   axis_ap->xmin = 0.0;
   axis_ap->xmax = 1.0;
-  axis_ap->ymin = 0.0;
-  axis_ap->ymax = 1.0;
-  axis_ap->y_ambit = 1.0;
   axis_ap->x_ambit = 1.0;
   axis_ap->xlabel = NULL;
   axis_ap->x0 = 0.0;
   axis_ap->x1 = 1.0;
-  axis_ap->y0 = 0.0;
-  axis_ap->y1 = 1.0;
+  if (fft_window(ss) == MUS_FLAT_TOP_WINDOW)
+    {
+      axis_ap->ymin = -0.1;
+      axis_ap->ymax = 1.0;
+      axis_ap->y_ambit = 1.1;
+      axis_ap->y0 = -0.1;
+      axis_ap->y1 = 1.0;
+    }
+  else 
+    {
+      axis_ap->ymin = 0.0;
+      axis_ap->ymax = 1.0;
+      axis_ap->y_ambit = 1.0;
+      axis_ap->y0 = 0.0;
+      axis_ap->y1 = 1.0;
+    }
   axis_ap->width = widget_width(graph_drawer);
+
+  fprintf(stderr,"width: %d\n", axis_ap->width);
+
   axis_ap->window_width = axis_ap->width;
   axis_ap->y_offset = 0;
   axis_ap->height = widget_height(graph_drawer);

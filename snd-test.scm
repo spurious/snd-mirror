@@ -18456,7 +18456,6 @@ EDITS: 2
     (let ((gen (make-fft-window parzen-window 16)))
       (if (not (vequal gen (vct 0.000 0.125 0.250 0.375 0.500 0.625 0.750 1.000 1.000 0.750 0.625 0.500 0.375 0.250 0.125 0.000)))
 	  (snd-display ";parzen window: ~A" gen)))
-    ;; TODO tests for 3 new fft windows and popup.rb snd-test.rb snd-forth-init.fs?
     (let ((gen (make-fft-window bartlett-window 16)))
       (if (not (vequal gen (vct 0.000 0.125 0.250 0.375 0.500 0.625 0.750 1.000 1.000 0.750 0.625 0.500 0.375 0.250 0.125 0.000)))
 	  (snd-display ";bartlett window: ~A" gen)))
@@ -18493,6 +18492,31 @@ EDITS: 2
     (let ((gen (make-fft-window hann-poisson-window 16)))
       (if (not (vequal gen (vct 0.000 0.038 0.146 0.309 0.500 0.691 0.854 1.000 1.000 0.854 0.691 0.500 0.309 0.146 0.038 0.000)))
 	  (snd-display ";tukey window: ~A" gen)))
+    (let ((gen (make-fft-window bohman-window 16)))
+      (if (not (vequal gen (vct 0.000 0.006 0.048 0.151 0.318 0.533 0.755 1.000 1.000 0.755 0.533 0.318 0.151 0.048 0.006 0.000)))
+	  (snd-display ";bohman window: ~A" gen)))
+    (let ((win (make-fft-window bartlett-hann-window 32))
+	  (unhappy #f))
+      (do ((i 0 (1+ i))) 
+	  ((or unhappy (= i 32)))
+	(let ((val (+ 0.62 (* -0.48 (abs (- (/ i 31) 0.5))) (* 0.38 (cos (* 2 pi (- (/ i 31) 0.5)))))))
+	  (if (> (abs (- val (vct-ref win i))) .03)
+	      (begin
+		(set! unhappy #t)
+		(snd-display ";bartlett-hann at ~D: ~A ~A" i val (vct-ref win i)))))))
+    (let ((win (make-fft-window flat-top-window 32))
+	  (unhappy #f))
+      (do ((i 0 (1+ i))) 
+	  ((or unhappy (= i 32)))
+	(let ((val (+ 0.2156 
+		      (* -0.4160 (cos (/ (* 2 pi i) 31))) 
+		      (* 0.2781 (cos (/ (* 4 pi i) 31))) 
+		      (* -0.0836 (cos (/ (* 6 pi i) 31))) 
+		      (* 0.0069 (cos (/ (* 8 pi i) 31))))))
+	  (if (> (abs (- val (vct-ref win i))) .1) ; error is much less, of course, in a bigger window
+	      (begin
+		(set! unhappy #t)
+		(snd-display ";flat-top at ~D: ~A ~A" i val (vct-ref win i)))))))
     (catch #t
 	   (lambda ()
 	     (let ((gen (make-fft-window samaraki-window 16)))

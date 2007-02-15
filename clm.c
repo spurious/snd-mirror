@@ -7734,65 +7734,95 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 
     case MUS_HANN_WINDOW:
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
-	window[j] = (window[i] = 0.5 - 0.5 * cos(angle));
+	{
+	  window[i] = 0.5 - 0.5 * cos(angle); 
+	  window[j] = window[i];
+	}
       break; 
 
     case MUS_WELCH_WINDOW:
       for (i = 0, j = size - 1; i <= midn; i++, j--) 
-	window[j] = (window[i] = 1.0 - sqr((Float)(i - midn) / (Float)midp1));
+	{
+	  window[i] = 1.0 - sqr((Float)(i - midn) / (Float)midp1);
+	  window[j] = window[i];
+	}
       break; 
 
     case MUS_CONNES_WINDOW:
-      for (i = 0, j = size - 1; i <= midn; i++, j--) 
-	window[j] = (window[i] = sqr(1.0 - sqr((Float)(i - midn) / (Float)midp1)));
+      for (i = 0, j = size - 1; i <= midn; i++, j--)
+	{
+	  window[i] = sqr(1.0 - sqr((Float)(i - midn) / (Float)midp1));
+	  window[j] = window[i];
+	}
       break; 
 
     case MUS_PARZEN_WINDOW:
-      for (i = 0, j = size - 1; i <= midn; i++, j--) 
-	window[j] = (window[i] = 1.0 - fabs((Float)(i - midn) / (Float)midp1));
+      for (i = 0, j = size - 1; i <= midn; i++, j--)
+	{
+	  window[i] = 1.0 - fabs((Float)(i - midn) / (Float)midp1);
+	  window[j] = window[i];
+	}
       break; 
 
     case MUS_BARTLETT_WINDOW:
-      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += rate) 
-	window[j] = (window[i] = angle);
+      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += rate)
+	{
+	  window[i] = angle;
+	  window[j] = angle;
+	}
       break; 
 
     case MUS_BARTLETT_HANN_WINDOW:
       {
 	Float ramp;
 	rate *= 0.5;
-	/* this definition taken from mathworks docs */
+	/* this definition taken from mathworks docs: they use size - 1 throughout -- this makes very little
+	 *    difference unless you're using a small window.  I decided to be consistent with all the other
+	 *    windows, and besides, this way actually peaks at 1.0 (which matlab misses)
+	 */
 	for (i = 0, j = size - 1, angle = -M_PI, ramp = 0.5; i <= midn; i++, j--, angle += freq, ramp -= rate)
-	  window[j] = (window[i] = 0.62 - 0.48 * ramp + 0.38 * cos(angle));
+	  {
+	    window[i] = 0.62 - 0.48 * ramp + 0.38 * cos(angle);
+	    window[j] = window[i];
+	  }
       }
       break; 
 
     case MUS_FLAT_TOP_WINDOW:
-      /* this definition taken from mathworks docs */
-      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
-	window[j] = (window[i] = 0.2156 - 0.4160 * cos(angle) + 0.2781 * cos(2 * angle) - 0.0836 * cos(3 * angle) + 0.0069 * cos(4 * angle));
-      /* TODO: graph in transform dialog needs negative vals */
+      /* this definition taken from mathworks docs -- see above */
+      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq)
+	{
+	  window[i] = 0.2156 - 0.4160 * cos(angle) + 0.2781 * cos(2 * angle) - 0.0836 * cos(3 * angle) + 0.0069 * cos(4 * angle);
+	  window[j] = window[i];
+	}
       break; 
 
     case MUS_BOHMAN_WINDOW:
       {
 	Float ramp;
 	/* definition from diracdelta docs */
-	for (i = 0, j = size - 1, angle = M_PI, ramp = 0.0; i <= midn; i++, j--, angle -= freq, ramp += rate) 
-	  window[j] = (window[i] = ramp * cos(angle) + (1.0 / M_PI) * sin(angle));
+	for (i = 0, j = size - 1, angle = M_PI, ramp = 0.0; i <= midn; i++, j--, angle -= freq, ramp += rate)
+	  {
+	    window[i] = ramp * cos(angle) + (1.0 / M_PI) * sin(angle);
+	    window[j] = window[i];
+	  }
       }
       break; 
 
     case MUS_HAMMING_WINDOW:
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
-	window[j] = (window[i] = 0.54 - 0.46 * cos(angle));
+	{
+	  window[i] = 0.54 - 0.46 * cos(angle);
+	  window[j] = window[i];
+	}
       break; 
 
     case MUS_BLACKMAN2_WINDOW: /* using Chebyshev polynomial equivalents here (this is also given as .42 .5 .08) */
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
 	{              /* (+ 0.42323 (* -0.49755 (cos a)) (* 0.07922 (cos (* a 2)))) */
 	  cx = cos(angle);
-	  window[j] = (window[i] = (.34401 + (cx * (-.49755 + (cx * .15844)))));
+	  window[i] = .34401 + (cx * (-.49755 + (cx * .15844)));
+	  window[j] = window[i];
 	}
       break; 
 
@@ -7802,7 +7832,8 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	               /* (+ 0.36336 (*  0.48918 (cos a)) (* 0.13660 (cos (* a 2))) (*  0.01064 (cos (* a 3)))) is "Nuttall" window? */
 
 	  cx = cos(angle);
-	  window[j] = (window[i] = (.21747 + (cx * (-.45325 + (cx * (.28256 - (cx * .04672)))))));
+	  window[i] = .21747 + (cx * (-.45325 + (cx * (.28256 - (cx * .04672)))));
+	  window[j] = window[i];
 	}
       break; 
 
@@ -7810,7 +7841,8 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
 	{             /* (+ 0.287333 (* -0.44716 (cos a)) (* 0.20844 (cos (* a 2))) (* -0.05190 (cos (* a 3))) (* 0.005149 (cos (* a 4)))) */
 	  cx = cos(angle);
-	  window[j] = (window[i] = (.084037 + (cx * (-.29145 + (cx * (.375696 + (cx * (-.20762 + (cx * .041194)))))))));
+	  window[i] = .084037 + (cx * (-.29145 + (cx * (.375696 + (cx * (-.20762 + (cx * .041194)))))));
+	  window[j] = window[i];
 	}
       break; 
 
@@ -7820,7 +7852,8 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	expn = log(2) / (Float)midn + 1.0;
 	for (i = 0, j = size - 1; i <= midn; i++, j--) 
 	  {
-	    window[j] = (window[i] = expsum - 1.0); 
+	    window[i] = expsum - 1.0; 
+	    window[j] = window[i];
 	    expsum *= expn;
 	  }
       }
@@ -7830,27 +7863,39 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
       {
 	Float I0beta;
 	I0beta = mus_bessi0(beta); /* Harris multiplies beta by pi */
-	for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) 
-	  window[j] = (window[i] = mus_bessi0(beta * sqrt(1.0 - sqr(angle))) / I0beta);
+	for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate)
+	  {
+	    window[i] = mus_bessi0(beta * sqrt(1.0 - sqr(angle))) / I0beta;
+	    window[j] = window[i];
+	  }
       }
       break;
 
     case MUS_CAUCHY_WINDOW:
-      for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) 
-	window[j] = (window[i] = 1.0 / (1.0 + sqr(beta * angle)));
+      for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate)
+	{
+	  window[i] = 1.0 / (1.0 + sqr(beta * angle));
+	  window[j] = window[i];
+	}
       break;
 
     case MUS_POISSON_WINDOW:
-      for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) 
-	window[j] = (window[i] = exp((-beta) * angle));
+      for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate)
+	{
+	  window[i] = exp((-beta) * angle);
+	  window[j] = window[i];
+	}
       break;
 
     case MUS_HANN_POISSON_WINDOW:
       /* Hann * Poisson -- from JOS */
       {
 	Float angle1;
-	for (i = 0, j = size - 1, angle = 1.0, angle1 = 0.0; i <= midn; i++, j--, angle -= rate, angle1 += freq) 
-	  window[j] = (window[i] = (exp((-beta) * angle) * (0.5 - 0.5 * cos(angle1))));
+	for (i = 0, j = size - 1, angle = 1.0, angle1 = 0.0; i <= midn; i++, j--, angle -= rate, angle1 += freq)
+	  {
+	    window[i] = exp((-beta) * angle) * (0.5 - 0.5 * cos(angle1));
+	    window[j] = window[i];
+	  }
       }
       break;
 
@@ -7861,19 +7906,23 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	for (i = 0, j = size - 1; i <= midn; i++, j--) 
 	  {
 	    if (i == midn) 
-	      window[j] = (window[i] = 1.0);
+	      window[i] = 1.0;
 	    else 
 	      {
 		cx = sr1 * (midn - i);
-		window[j] = (window[i] = sin(cx) / cx);
+		window[i] = sin(cx) / cx;
 	      }
+	    window[j] = window[i];
 	  }
       }
       break;
 
     case MUS_GAUSSIAN_WINDOW:
-      for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) 
-	window[j] = (window[i] = exp(-.5 * sqr(beta * angle)));
+      for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate)
+	{
+	  window[i] = exp(-.5 * sqr(beta * angle));
+	  window[j] = window[i];
+	}
       break;
 
     case MUS_TUKEY_WINDOW:
@@ -7881,8 +7930,9 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
       for (i = 0, j = size - 1; i <= midn; i++, j--) 
 	{
 	  if (i >= cx) 
-	    window[j] = (window[i] = 1.0);
-	  else window[j] = (window[i] = .5 * (1.0 - cos(M_PI * i / cx)));
+	    window[i] = 1.0;
+	  else window[i] = .5 * (1.0 - cos(M_PI * i / cx));
+	  window[j] = window[i];
 	}
       break;
 
