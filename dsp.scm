@@ -2725,3 +2725,34 @@ is assumed to be outside -1.0 to 1.0."
 	      ((= chn chns))
 	    (unclip-channel index chn))))))
 
+
+(define* (kalman-filter-channel :optional (Q 1.0e-5) (R .01))
+  ;; translated from http://www.scipy.org/Cookbook/KalmanFiltering by Andrew Straw
+  (let* ((size (frames))
+	 (mx (maxamp))
+	 (data (channel->vct 0))
+	 (xhat (make-vector size 0.0))
+	 (P (make-vector size 0.0))
+	 (xhatminus (make-vector size 0.0))
+	 (Pminus (make-vector size 0.0))
+	 (K (make-vector size 0.0)))
+    (vector-set! P 0 1.0)
+
+    (do ((k 1 (1+ k)))
+	((= k size))
+      (vector-set! xhatminus k (vector-ref xhat (1- k)))
+      (vector-set! Pminus k (+ (vector-ref P (1- k)) Q))
+      (vector-set! K k (/ (vector-ref Pminus k)
+			  (+ (vector-ref Pminus k) R)))
+      (vector-set! xhat k (+ (vector-ref xhatminus k)
+			     (* (vector-ref K k)
+				(- (vct-ref data k)
+				   (vector-ref xhatminus k)))))
+      (vector-set! P k (* (- 1.0 (vector-ref K k))
+			  (vector-ref Pminus k))))
+
+    (as-one-edit
+     (lambda ()
+       (vct->channel (vector->vct xhatminus))
+       (scale-to mx)))))
+
