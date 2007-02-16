@@ -90,9 +90,6 @@ static void graph_redisplay(void)
       axis_ap->y1 = 1.0;
     }
   axis_ap->width = widget_width(graph_drawer);
-
-  fprintf(stderr,"width: %d\n", axis_ap->width);
-
   axis_ap->window_width = axis_ap->width;
   axis_ap->y_offset = 0;
   axis_ap->height = widget_height(graph_drawer);

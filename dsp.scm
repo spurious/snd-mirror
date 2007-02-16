@@ -2726,28 +2726,43 @@ is assumed to be outside -1.0 to 1.0."
 	    (unclip-channel index chn))))))
 
 
-(define* (kalman-filter-channel :optional (Q 1.0e-5) (R .01))
-  ;; translated from http://www.scipy.org/Cookbook/KalmanFiltering by Andrew Straw
+(define* (kalman-filter-channel :optional (Q 1.0e-5))
+  ;; translated from http://www.scipy.org/Cookbook/KalmanFiltering by Andrew Straw (but "R" here is a signal)
   (let* ((size (frames))
 	 (mx (maxamp))
 	 (data (channel->vct 0))
 	 (xhat 0.0)
-	 (P 1.0)
+	 (P 1.0) ; any non-zero value ok here
+	 (R 0.01) ; first guess
 	 (Pminus 0.0)
+	 (frm (make-formant :radius (- 1.0 (/ 2000.0 (srate))) :frequency 1000))
+	 (del (make-moving-average 256))
 	 (K 0.0))
 
     (run (lambda ()
 	   (do ((k 1 (1+ k)))
 	       ((= k size))
-	     (let ((datum (vct-ref data k)))
-	       (vct-set! data k xhat)
+	     (let ((datum (vct-ref data k))
+		   (xhatminus xhat))
+
+	       (let* ((res (formant frm datum))
+		      (avg (moving-average del (abs res))))
+		 (set! R (/ .000001 (+ avg .001))))
+		 ;; K now goes between say .5 if avg large to almost 0 if avg 0 (R is inverse essentially)
+		 ;;   so filter lp effect increases as apparent true signal decreases
+		 ;;   "truth" here is based on vocal resonances
+
+	       (vct-set! data k xhatminus) ; filter output
+
 	       (set! Pminus (+ P Q))
 	       (set! K (/ Pminus (+ Pminus R)))
-	       (set! xhat (+ (vct-ref data k)
-			     (* K (- datum (vct-ref data k)))))
+	       (set! xhat (+ xhatminus
+			     (* K (- datum xhatminus))))
 	       (set! P (* (- 1.0 K) Pminus))))))
 
     (as-one-edit
      (lambda ()
        (vct->channel data)
        (scale-to mx)))))
+
+;;; TODO: try prediction, doc, etc
