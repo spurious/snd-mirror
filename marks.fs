@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 27 19:22:06 CET 2005
-\ Changed: Tue Jan 30 23:57:58 CET 2007
+\ Changed: Thu Feb 15 23:11:02 CET 2007
 
 \ Commentary:
 \
@@ -157,18 +157,15 @@ previous
 
 : mark-click-info <{ id -- #t }>
   doc" A mark-click-hook function that describes a mark and its properties.\n\
-mark-click-hook ' mark-click-info add-hook!"
+  mark-click-hook ' mark-click-info add-hook!"
   id mark-name empty? if "" else $"  (%S)" '( id mark-name ) string-format then { mname }
-  $"     mark id: %d%s\n"   '( id mname )     string-format { info-string }
-  $"      sample: %d (%.3f secs)\n"
-  '( id undef mark-sample
-     dup id mark-home car srate f/ ) string-format info-string swap $+ to info-string
-  id mark-sync 0<> if
-    $"        sync: %s\n" '( id mark-sync ) string-format info-string swap $+ to info-string
-  then
+  $"       mark id: %d%s\n" '( id mname ) string-format make-port { prt }
+  prt $"        sample: %d (%.3f secs)\n"
+  '( id undef mark-sample dup id mark-home car srate f/ ) port-puts-format
+  id mark-sync 0<> if prt $"          sync: %s\n" '( id mark-sync ) port-puts-format then
   id mark-properties { props }
-  props if $"  properties: %s" '( props ) string-format info-string swap $+ to info-string then
-  $" Mark Info" info-string info-dialog drop
+  props empty? unless prt $"    properties: %s" '( props ) port-puts-format then
+  $" Mark Info" prt port->string info-dialog drop
   #t
 ;
 \ mark-click-hook ' mark-click-info add-hook!
@@ -177,25 +174,24 @@ mark-click-hook ' mark-click-info add-hook!"
 \ back in when the sound is later reopened.
 
 : marks->string { sndf }
-  $" \nrequire marks\n" { str }
-  str $" let:\n" $+ to str
-  str $"   #f { mr }\n" $+ to str
+  $" \nrequire marks\n" make-port { prt }
+  prt $" let:\n" port-puts
+  prt $"   #f { mr }\n" port-puts
   sndf marks each ( chan-marks )
-    $" \n  \\ channel %d\n" '( i ) string-format str swap $+ to str
+    prt $" \n  \\ channel %d\n" '( i ) port-puts-format
     each { m }
       m nil? ?leave
       $"   %s #f %d %S %d add-mark to mk\n"
       '( m undef mark-sample
 	 j ( chn )
 	 m mark-name length 0= if #f else m mark-name then
-	 m mark-sync ) string-format str swap $+ to str
+	 m mark-sync ) port-puts-format
       m mark-properties { props }
-      props if
-	$"   mk %S set-mark-properties\n" '( props ) string-format str swap $+ to str
-      then
+      props if $"   mk %S set-mark-properties\n" '( props ) port-puts-format then
     end-each
   end-each
-  str $" ;let\n" $+
+  prt $" ;let\n" port-puts
+  prt port->string
 ;
 
 0 [if]

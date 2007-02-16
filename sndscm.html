@@ -6451,7 +6451,7 @@ To tie this into C-x C-q, in place of the default "mix" function,
 (<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\q 4 ; C-q
   (lambda () "pan mix"
     (<a class=quiet href="extsnd.html#promptinminibuffer">prompt-in-minibuffer</a> "mix:" (lambda (str) ; use pan-mix at cursor
-				   (em class=red>pan-mix</em> str (or (<a class=quiet href="extsnd.html#cursor">cursor</a>) 0)) #f #t)))
+				   (<em class=red>pan-mix</em> str (or (<a class=quiet href="extsnd.html#cursor">cursor</a>) 0)) #f #t)))
   #t  ; an extended (C-x) command
   "C-x C-q")
 </pre>

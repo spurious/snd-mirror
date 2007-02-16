@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Thu Feb 01 00:58:07 CET 2007
+\ Changed: Tue Feb 13 09:21:16 CET 2007
 
 \ src-duration             ( en -- dur )
 \ dolph                    ( n gamma -- im )
@@ -314,17 +314,17 @@ hide
   1 proc-create div , n , curval ,
  does> ( y self -- val )
   { y self }
-  self           @ { div }
-  self   cell+   @ { n }
+  self       @ { div }
+  self cell+ @ { n }
   div 0= if y self 2 cells + ! ( curval ) then
   1 self +! ( div++ )
   div n = if 0 self ! then
   self 2 cells + @ ( curval )
 ;
 set-current
-: freqdiv   <{ n :optional snd #f chn #f -- }>
+: freqdiv   <{ n :optional snd #f chn #f -- val }>
   doc" Repeats each nth sample N times (clobbering the intermediate samples): 8 freqdiv"
-  0 n 0.0 freqdiv-cb 0 #f snd chn #f $" %s %s" '( n get-func-name ) format map-channel drop
+  0 n 0.0 freqdiv-cb 0 #f snd chn #f $" %s %s" '( n get-func-name ) format map-channel
 ;
 previous
 

@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Thu Feb 01 00:56:47 CET 2007
+\ Changed: Thu Feb 15 22:53:04 CET 2007
 
 \ Commentary:
 \
@@ -506,39 +506,25 @@ previous
   doc" A mix-click-hook function that describes a mix and its properties.\n\
 mix-click-hook ' mix-click-info add-hook!"
   id mix-home car { mid }
-  id mix-name if $"  (%S)"  '( id mix-name ) string-format else "" then { mname }
-  $"        mix id: %d%s\n" '( id mname )    string-format { info-string }
-  $"      position: %d (%.3f secs)\n" '( id mix-position dup mid srate f/ ) string-format
-  info-string swap << to info-string
-  $"        length: %d (%.3f secs)\n" '( id mix-frames dup mid srate f/ )   string-format
-  info-string swap << to info-string
-  $"            in: %s[%d]%s%s\n" '( mid short-file-name id mix-home cadr
-  id mix-locked? if $"  (locked)" else "" then
-  id mix-inverted? if $"  (inverted)" else "" then ) string-format
-  info-string swap << to info-string
-  id mix-track if
-    $"         track: %s\n" '( id mix-track ) string-format
-    info-string swap << to info-string
-  then
-  $"       scalers: %s\n" id mix-chans 0 ?do
-    id i mix-amp
-  loop id mix-chans >list 1 >list string-format
-  info-string swap << to info-string
-  $"         speed: %.3f\n" '( id mix-speed ) string-format
-  info-string swap << to info-string
-  $"          envs: %s\n" id mix-chans 0 ?do
-    id i mix-amp-env
-  loop id mix-chans >list 1 >list string-format
-  info-string swap << to info-string
-  id mix-tag-position if
-    $"  tag-position: %d\n" '( id mix-tag-position ) string-format
-    info-string swap << to info-string
-  then
-  id mix-properties if
-    $"    properties: %s\n" '( id mix-properties ) string-format
-    info-string swap << to info-string
-  then
-  $" Mix info" info-string  info-dialog drop
+  id mix-name empty? if "" else $"  (%S)" '( id mix-name ) string-format then { mname }
+  $"        mix id: %d%s\n" '( id mname ) string-format make-port { prt }
+  prt $"      position: %d (%.3f secs)\n" '( id mix-position dup mid srate f/ ) port-puts-format
+  prt $"        length: %d (%.3f secs)\n" '( id mix-frames   dup mid srate f/ ) port-puts-format
+  prt $"            in: %s[%d]%s%s\n"
+  '( mid short-file-name
+     id mix-home cadr
+     id mix-locked?   if $"  (locked)"   else "" then
+     id mix-inverted? if $"  (inverted)" else "" then ) port-puts-format
+  id mix-track if prt $"         track: %s\n" '( id mix-track ) port-puts-format then
+  prt $"       scalers: %s\n" id mix-chans 0 ?do id i mix-amp loop id mix-chans >list 1 >list
+  port-puts-format
+  prt $"         speed: %.3f\n" '( id mix-speed ) port-puts-format
+  prt $"          envs: %s\n" id mix-chans 0 ?do id i mix-amp-env loop id mix-chans >list 1 >list
+  port-puts-format
+  id mix-tag-position if prt $"  tag-position: %d\n" '( id mix-tag-position ) port-puts-format then
+  id mix-properties { props }
+  props empty? unless prt $"    properties: %s\n" '( props ) port-puts-format then
+  $" Mix info" prt port->string info-dialog drop
   #t
 ;
 \ mix-click-hook ' mix-click-info add-hook!

@@ -988,7 +988,7 @@ Even more amusing is this algorithm:
 	 (cm1c (expt cm1 cs))
 	 (cp1c (expt cp1 cs)))
     (/ (- cp1c cm1c)
-       (+ cp1c cm1c))))
+       (+ cp1c cm1c))))  ; from "From Squares to Circles..." Lasters and Sharpe, Math Spectrum 38:2
 
 (define (sinsq c theta) (cossq c (- theta (* 0.5 pi))))
 (define (sqsq c theta) (sinsq c (- (sinsq c theta)))) ; a sharper square wave
@@ -1045,7 +1045,7 @@ One popular kind of vibrato is:
 <p><b>sum-of-cosines</b> produces a band-limited pulse train containing
 <i>cosines</i> cosines.  I think this was originally viewed as a way to get a speech-oriented
 pulse train that would then be passed through formant filters (see pulse-voice in examp.scm).  There are many similar formulas:
-see also <a href="sndscm.html#fejersum">fejer-sum</a> and friends in dsp.scm. "Trigonometric Delights" by Eli Maor has
+see <a href="sndscm.html#fejersum">fejer-sum</a> and friends in dsp.scm. "Trigonometric Delights" by Eli Maor has
 a derivation of a sum-of-sines formula and a neat
 geometric explanation.  For a derivation of the sum-of-cosines formula, see "Fourier
 Analysis" by Stein and Shakarchi, or multiply the left side (the cosines) by sin(x/2), use the trig

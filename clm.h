@@ -8,7 +8,6 @@
 /*
  * 14-Feb:     three more fft window choices.
  * --------
- * 12-Dec:     removed mus_make_frame|mixer_with_data.
  * 27-Nov:     move-sound array access parallel to locsig.
  * 22-Nov:     had to add non-backwards-compatible reverb chans arg to mus_make_locsig.
  * 21-Nov:     mus_float_equal_fudge_factor, mus_arrays_are_equal.

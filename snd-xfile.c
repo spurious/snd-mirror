@@ -1407,7 +1407,8 @@ static file_dialog_info *odat = NULL;
 widget_t make_open_file_dialog(bool read_only, bool managed)
 {
   char *title, *select_title;
-  if (read_only)
+  if (read_only)  /* TODO: this didn't work, and why was it active after closing the viewed file? */
+                  /* TODO: can sync of same file cause unwanted save? */
     {
       title = _("View");
       select_title = _("open read-only:");
