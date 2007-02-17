@@ -12,6 +12,7 @@ static void file_view_callback(Widget w, XtPointer info, XtPointer context) {mak
 static void file_new_callback(Widget w, XtPointer info, XtPointer context) {make_new_file_dialog(true);}
 static void file_record_callback(Widget w, XtPointer info, XtPointer context) {snd_record_file();}
 static void file_close_callback(Widget w, XtPointer info, XtPointer context) {if (any_selected_sound()) snd_close_file(any_selected_sound());}
+static void file_close_all_callback(Widget w, XtPointer info, XtPointer context) {for_each_sound(snd_close_file);}
 static void file_save_callback(Widget w, XtPointer info, XtPointer context) {if (any_selected_sound()) save_edits_with_prompt(any_selected_sound());}
 static void file_update_callback(Widget w, XtPointer info, XtPointer context) {update_file_from_menu();}
 static void file_save_as_callback(Widget w, XtPointer info, XtPointer context) {make_sound_save_as_dialog(true);}
@@ -279,6 +280,9 @@ Widget add_menu(void)
   file_close_menu = XtCreateManagedWidget(_("Close"), xmPushButtonWidgetClass, file_menu, in_args, in_n);
   XtAddCallback(file_close_menu, XmNactivateCallback, file_close_callback, NULL);
   XtVaSetValues(file_close_menu, XmNmnemonic, 'C', NULL);
+
+  file_close_all_menu = XtCreateWidget(_("Close all"), xmPushButtonWidgetClass, file_menu, main_args, main_n);
+  XtAddCallback(file_close_all_menu, XmNactivateCallback, file_close_all_callback, NULL);
   
   file_save_menu = XtCreateManagedWidget(_("Save"), xmPushButtonWidgetClass, file_menu, in_args, in_n);
   XtAddCallback(file_save_menu, XmNactivateCallback, file_save_callback, NULL);

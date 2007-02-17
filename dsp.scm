@@ -2765,4 +2765,4 @@ is assumed to be outside -1.0 to 1.0."
        (vct->channel data)
        (scale-to mx)))))
 
-;;; TODO: try prediction, doc, etc
+;;; TODO: try prediction

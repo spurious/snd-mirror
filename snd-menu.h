@@ -3,7 +3,7 @@
 
 enum {m_menu,
         f_menu, f_cascade_menu,
-          f_open_menu, f_close_menu, f_save_menu, f_save_as_menu, f_revert_menu, f_exit_menu, f_new_menu,
+          f_open_menu, f_close_menu, f_close_all_menu, f_save_menu, f_save_as_menu, f_revert_menu, f_exit_menu, f_new_menu,
           f_view_menu, f_print_menu, f_mix_menu, f_insert_menu, f_update_menu, f_record_menu, f_sep_menu,
         e_menu, e_cascade_menu,
           e_cut_menu, e_paste_menu, e_mix_menu, e_play_menu, e_save_as_menu, e_undo_menu,
@@ -44,6 +44,7 @@ enum {m_menu,
 #define file_cascade_menu (ss->sgx->mw[f_cascade_menu])
 #define file_open_menu (ss->sgx->mw[f_open_menu])
 #define file_close_menu (ss->sgx->mw[f_close_menu])
+#define file_close_all_menu (ss->sgx->mw[f_close_all_menu])
 #define file_save_menu (ss->sgx->mw[f_save_menu])
 #define file_save_as_menu (ss->sgx->mw[f_save_as_menu])
 #define file_revert_menu (ss->sgx->mw[f_revert_menu])

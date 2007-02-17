@@ -2475,7 +2475,7 @@
 	(set! (mus-header-raw-defaults) (list 44100 2 mus-bshort))
 	
 	(let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
-	  (if (not (string=? str "08-Jul 07:09 PDT"))
+	  (if (not (string=? str "15-Feb 13:18 PST"))
 	      (snd-display ";mus-sound-write-date oboe.snd: ~A?" str)))
 	(let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "pistol.snd")))))
 	  (if (not (string-=? str "01-Jul 13:06 PDT"))
@@ -2682,7 +2682,7 @@
 	(if (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 		 (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
 	    (snd-display ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd")))
-	(if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "08-Jul-2006 07:09"))
+	(if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "15-Feb-2007 13:18"))
 	    (snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
 	(play-sound-1 "oboe.snd")
 	
@@ -28547,11 +28547,13 @@ EDITS: 2
 	      option-holder
 	      (lambda (menu)
 		(if (and (XmIsPushButton menu)
+			 (XtIsManaged menu)
 			 (XtIsSensitive menu)
 			 (not (member (XtName menu)
 				      (list "Exit" "New" 
 					    "Save   C-x C-s" 
 					    "Close  C-x k"
+					    "Close all"
 					    "Save options"
 					    "Mixes" "clm" "fm-violin"))))
 		    (XtCallCallbacks menu XmNactivateCallback (snd-global-state)))))))))
@@ -40683,6 +40685,9 @@ EDITS: 1
 		(if (and (fneq val1 val2)
 			 (fneq val1 val3))
 		    (snd-display ";down-oct: ~A ~A ~A ~A" i val1 val2 val3)))))
+
+	  (kalman-filter-channel) ; just make sure it runs
+
 	  (close-sound ind))
 	
 	(let* ((d0 (make-vct 8))
@@ -56499,6 +56504,7 @@ EDITS: 1
 		   (if (not (Pixmap? p1)) (snd-display ";XmGetPixmapByDepth: ~A" p1))
 		   (XmDestroyPixmap scr p1))
 		 
+#|
 		 (let ((prop (cadr (XmRenderTableCvtToProp (cadr (main-widgets)) rendertable))))
 		   (if (not (string=? (substring prop 0 8) "tag,font"))
 		       (snd-display ";XmRenderTableCvtToProp: ~A" (substring prop 0 8)))
@@ -56516,6 +56522,7 @@ EDITS: 1
 			     (snd-display ";XmRenderTableCvtFromProp: ~A" another)
 			     (XmRenderTableFree another)))
 		       )))
+|#
 		 
 		 (let ((tabl (XmStringTableParseStringArray (list "hi" "ho") 2 "hiho" XmCHARSET_TEXT #f 0 #f)))
 		   (if (not (XmString? (car tabl))) (snd-display ";XmStringTableParseStringArray: ~A" tabl))
@@ -59023,7 +59030,7 @@ EDITS: 1
 		    XmParseMappingGetValues XmParseMappingFree XmParseTableFree XmStringTableProposeTablist
 		    XmTabSetValue XmTabGetValues XmTabFree XmTabCreate XmTabListTabCount XmTabListRemoveTabs
 		    XmTabListReplacePositions XmTabListGetTab XmTabListCopy XmTabListInsertTabs
-		    XmRenderTableCvtFromProp XmRenderTableCvtToProp XmRenditionUpdate XmRenditionRetrieve
+		    ; XmRenderTableCvtFromProp XmRenderTableCvtToProp XmRenditionUpdate XmRenditionRetrieve
 		    XmRenditionFree XmRenditionCreate XmRenderTableGetRenditions XmRenderTableGetRendition
 		    XmRenderTableGetTags XmRenderTableFree XmRenderTableCopy XmRenderTableRemoveRenditions
 		    XmRenderTableAddRenditions XmFontListEntryFree XmFontListEntryGetFont XmFontListEntryGetTag

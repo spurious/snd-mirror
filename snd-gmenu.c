@@ -13,6 +13,7 @@ static void file_view_callback(GtkWidget *w, gpointer info) {make_open_file_dial
 static void file_new_callback(GtkWidget *w, gpointer info) {make_new_file_dialog(true);}
 static void file_record_callback(GtkWidget *w, gpointer info) {snd_record_file();}
 static void file_close_callback(GtkWidget *w, gpointer info) {if (any_selected_sound()) snd_close_file(any_selected_sound());}
+static void file_close_all_callback(GtkWidget *w, gpointer info) {for_each_sound(snd_close_file);}
 static void file_save_callback(GtkWidget *w, gpointer info) {if (any_selected_sound()) save_edits_with_prompt(any_selected_sound());}
 static void file_update_callback(GtkWidget *w, gpointer info) {update_file_from_menu();}
 static void file_save_as_callback(GtkWidget *w, gpointer info) {make_sound_save_as_dialog(true);}
@@ -239,6 +240,13 @@ GtkWidget *add_menu(void)
   gtk_widget_show(file_close_menu);
   set_sensitive(file_close_menu, false);
   SG_SIGNAL_CONNECT(file_close_menu, "activate", file_close_callback, NULL);
+  
+  file_close_all_menu = gtk_image_menu_item_new_with_label(_("Close all"));
+  ml[f_close_all_menu] = _("Close all");
+  gtk_menu_shell_append(GTK_MENU_SHELL(file_cascade_menu), file_close_all_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_close_all_menu), gtk_image_new_from_stock(GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
+  gtk_widget_hide(file_close_all_menu);
+  SG_SIGNAL_CONNECT(file_close_all_menu, "activate", file_close_all_callback, NULL);
   
   file_save_menu = gtk_image_menu_item_new_with_label(_("Save"));
   ml[f_save_menu] = _("Save");

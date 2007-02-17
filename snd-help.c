@@ -506,11 +506,10 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+17-Feb:  File:Close all menu if more than one sound open.\n\
 14-Feb:  three more fft window choices.\n\
 9-Feb:   Snd 8.8.\n\
 31-Jan:  caf headers.\n\
-2-Jan:   Snd 8.7.\n\
-29-Dec:  -nogtkrc startup switch.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

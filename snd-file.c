@@ -1252,7 +1252,6 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
 {
   if (sp)
     {
-      int files;
 #if HAVE_RUBY || HAVE_FORTH || HAVE_GAUCHE
       XEN_VARIABLE_SET(S_snd_opened_sound, C_TO_XEN_INT(sp->index));
 #endif
@@ -1262,7 +1261,6 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
       sp->write_date = file_write_date(sp->filename);
       sp->need_update = false;
       ss->active_sounds++;
-      files = ss->active_sounds;
       reflect_file_change_in_title();
       sp->file_watcher = fam_monitor_file(sp->filename, (void *)sp, fam_sp_action);
     }

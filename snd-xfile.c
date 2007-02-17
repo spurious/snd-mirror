@@ -12,6 +12,12 @@
    View:Files
 */
 
+/* TODO: if in and out dir go back to previous slider (list) pos and if remanaged come back to that spot [if exists] */
+/* TODO:   also change filter/text prompt to reflect change of dir */
+/* TODO: don't let 2chan squeeze into nothing */
+/* SOMEDAY: it would be nice to have a way to choose multiple files to open in the open file dialog list */
+
+
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
 #define MSG_BOX(Dialog, Child) XmMessageBoxGetChild(Dialog, Child)
 

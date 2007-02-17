@@ -138,6 +138,10 @@ void file_menu_update(void)
 
   set_sensitive(file_save_menu, edits_p);
   set_sensitive(file_revert_menu, edits_p);
+
+  if (ss->active_sounds > 1)
+    activate_widget(file_close_all_menu);
+  else deactivate_widget(file_close_all_menu);
 }
 
 void popup_menu_update(void)

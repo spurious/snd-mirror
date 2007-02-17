@@ -1,5 +1,6 @@
 Snd change log
 
+ 17-Feb:     File:Close all menu if more than one sound open.
  14-Feb:     three new fft windows.
   9-Feb:     Snd 8.8.
   1-Feb:     CAFF headers.
