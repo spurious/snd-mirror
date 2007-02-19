@@ -43,7 +43,7 @@ snd_info *snd_new_file(const char *newname, int header_type, int data_format, in
 	{
 	  int chan;
 	  off_t size;
-	  size_t bytes;
+	  ssize_t bytes;
 	  /* send out the initial samples */
 	  chan = snd_reopen_write(newname);
 	  lseek(chan, mus_header_data_location(), SEEK_SET);
@@ -1211,7 +1211,7 @@ void add_sound_data(char *filename, snd_info *sp, channel_graph_t graphed)
 static char *link_file = NULL;
 static char *linked_file(const char *link_name)
 {
-  int bytes;
+  ssize_t bytes;
   #define READLINK_FILE_SIZE 256
   if (link_file == NULL) link_file = (char *)CALLOC(READLINK_FILE_SIZE, sizeof(char));
   bytes = readlink(link_name, link_file, READLINK_FILE_SIZE);
@@ -4466,7 +4466,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   mbuf[0] = ep->fmin;
   mbuf[1] = ep->fmax;
   {
-    size_t bytes;
+    ssize_t bytes;
     bytes = write(fd, (char *)ibuf, (PEAK_ENV_INTS * sizeof(int)));
     if (bytes != 0) bytes = write(fd, (char *)mbuf, (PEAK_ENV_SAMPS * sizeof(mus_sample_t)));
     if (bytes != 0) bytes = write(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(mus_sample_t)));
@@ -4483,7 +4483,8 @@ static char *peak_env_error[6] = {"no error", "bad header", "bad format", "bad s
 static env_info *get_peak_env_info(const char *fullname, peak_env_error_t *error)
 {
   env_info *ep;
-  int fd, bytes, hdr = 0;
+  int fd, hdr = 0;
+  ssize_t bytes;
   int ibuf[PEAK_ENV_INTS];
   mus_sample_t mbuf[PEAK_ENV_SAMPS];
   fd = mus_file_open_read(fullname);

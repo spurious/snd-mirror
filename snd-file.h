@@ -157,9 +157,29 @@ typedef struct {
   char *filename, *full_filename;
 } sort_info;
 
+#if USE_GTK
+  #define position_t gdouble
+  #define POSITION_UNKNOWN 0.0
+#else
+  #define position_t int
+  #define POSITION_UNKNOWN 0
+#endif
+
+typedef struct {
+  char *directory_name;
+  position_t list_top;
+} dirpos_info;
+
+typedef struct {
+  dirpos_info **dirs;
+  int size, top;
+} dirpos_list;
+
+void dirpos_update(dirpos_list *dl, const char *dir, position_t pos);
+position_t dirpos_list_top(dirpos_list *dl, const char *dirname);
+dirpos_list *make_dirpos_list(void);
+
 void snd_sort(int sorter, sort_info **data, int len);
-sort_info *free_sort_info(sort_info *ptr);
-sort_info *make_sort_info(const char *filename, const char *full_filename);
 
 typedef struct {
   sort_info **files;
@@ -181,7 +201,6 @@ dir_info *find_filtered_files_in_dir_with_pattern(const char *name, int filter_c
 
 #define FILENAME_LIST_SIZE 16
 
-void forget_filename(const char *filename, char **names);
 void remember_filename(const char *filename, char **names);
 char **make_filename_list(void);
 

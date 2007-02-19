@@ -11,7 +11,6 @@ typedef struct tick_descriptor {
   int max_ticks;
   double flo, fhi, mlo, mhi, step, tenstep;
   int tens, min_label_width, max_label_width;
-  Locus min_label_x, max_label_x;
   Latus maj_tick_len, min_tick_len;
   char *min_label, *max_label;
   Float grid_scale;

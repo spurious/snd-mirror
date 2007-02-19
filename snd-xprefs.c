@@ -47,8 +47,7 @@ typedef struct prefs_info {
   bool got_error;
   XtIntervalId help_id, power_id;
   const char *var_name, *saved_label;
-  const char **values;
-  int num_values, num_buttons;
+  int num_buttons;
   Float scale_max;
   void (*toggle_func)(struct prefs_info *prf);
   void (*toggle2_func)(struct prefs_info *prf);

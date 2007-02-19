@@ -798,7 +798,7 @@ static void deferred_region_to_temp_file(region *r)
 	      data_size = drp->len * r->chans * datumb;
 	      for (j = 0; j < data_size; j += MAX_BUFFER_SIZE)
 		{
-		  size_t n;
+		  ssize_t n;
 		  bytes = data_size - j;
 		  if (bytes > MAX_BUFFER_SIZE) bytes = MAX_BUFFER_SIZE;
 		  n = read(fdi, buffer, bytes);

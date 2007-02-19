@@ -350,7 +350,8 @@ static XtInputId stdin_id = 0;
 
 static void get_stdin_string(XtPointer context, int *fd, XtInputId *id)
 {
-  int bytes, size;
+  int size;
+  ssize_t bytes;
   char *buf;
   buf = (char *)CALLOC(1024, sizeof(char));
   size = 1024;

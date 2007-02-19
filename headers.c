@@ -639,7 +639,7 @@ static int header_write(int fd, unsigned char *buf, int chars)
 {
   if (chars > 0)
     {
-      int bytes;
+      ssize_t bytes;
       bytes = write(fd, buf, chars);
       if (bytes != chars)
 	{
@@ -656,7 +656,7 @@ static int header_read(int fd, unsigned char *buf, int chars)
 {
   if (chars > 0)
     {
-      int bytes;
+      ssize_t bytes;
       bytes = read(fd, buf, chars);
       if (bytes != chars) 
 	{
@@ -825,7 +825,7 @@ static void double_to_ieee_80(double val, unsigned char *p)
 
 static off_t update_form_size, update_frames_location, update_ssnd_location, update_rf64_location;
 
-static int seek_and_read(int fd, unsigned char *buf, off_t offset, int nbytes)
+static ssize_t seek_and_read(int fd, unsigned char *buf, off_t offset, int nbytes)
 {
   if (offset < 0) return(-1);
   lseek(fd, offset, SEEK_SET);
@@ -2064,8 +2064,8 @@ char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_t *ends)
 static int read_soundforge_header(const char *filename, int fd)
 {
   /* like RIFF but lowercase and 64-bit vals */
-  int chunksize, chunkloc, i, off;
-  off_t offset;
+  int i, off;
+  off_t offset, chunksize, chunkloc;
   chunkloc = 12 * 2 + 16;
   offset = 0;
   data_format = MUS_UNKNOWN;
@@ -2185,7 +2185,7 @@ static int read_rf64_header(const char *filename, int fd)
 	  /* RIFF form size | data size | fact samples */
 	  update_form_size = mus_char_to_loff_t((unsigned char *)(hdrbuf + 8));
 	  data_size = mus_char_to_loff_t((unsigned char *)(hdrbuf + 16));
-	  fact_samples = mus_char_to_loff_t((unsigned char *)(hdrbuf + 24));
+	  fact_samples = (int)mus_char_to_loff_t((unsigned char *)(hdrbuf + 24));
 	  update_rf64_location = offset + 8;
 	  got_ds64 = true;
 	  /* ignore "table" for now */
@@ -2537,7 +2537,7 @@ static int read_soundfont_header(const char *filename, int fd)
 	      lseek(fd, ckoff, SEEK_SET);
 	      while (srate == 0)
 		{
-		  size_t bytes;
+		  ssize_t bytes;
 		  bytes = read(fd, hdrbuf, 8);
 		  if (bytes == 0)
 		    {
@@ -2744,7 +2744,7 @@ static int read_nist_header(const char *filename, int fd)
       n++;
       if (n >= hend)
 	{
-	  int read_bytes;
+	  ssize_t read_bytes;
 	  curbase += hend;
 	  n = 0;
 	  read_bytes = read(fd, hdrbuf, HDRBUFSIZ);
@@ -3663,7 +3663,8 @@ static int read_esps_header(const char *filename, int fd)
   char str[80];
   bool happy = true;
   off_t curbase, hend;
-  int k, j, n, chars, floats, shorts, doubles, bytes;
+  int k, j, n, chars, floats, shorts, doubles;
+  ssize_t bytes;
   bool little;
   little = (hdrbuf[18] == 0);
   if (little)
@@ -5198,7 +5199,8 @@ static int mus_header_read_1(const char *filename, int fd)
   int inrs_srates[NINRS] = {6500, 6667, 8000, 10000, 12000, 16000, 20000};
 
   /* returns 0 on success (at least to the extent that we can report the header type), -1 for error */
-  int i, loc = 0, bytes;
+  int i, loc = 0;
+  ssize_t bytes;
   header_type = MUS_UNSUPPORTED;
   data_format = MUS_UNKNOWN;
   comment_start = 0;
@@ -6015,7 +6017,8 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
     {
       if (header_type != new_type)
 	{
-	  int ofd, ifd, nbytes;
+	  int ofd, ifd;
+	  ssize_t nbytes;
 	  off_t loc, len = 0;
 	  unsigned char *buf = NULL;
 	  char *new_file, *comment = NULL;
@@ -6047,7 +6050,7 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 	  ofd = mus_file_reopen_write(new_file);
 	  lseek(ofd, 0L, SEEK_END);
 	  buf = (unsigned char *)CALLOC(8192, sizeof(unsigned char));
-	  while ((nbytes = read(ifd, buf, 8192))) header_write(ofd, buf, nbytes);
+	  while ((nbytes = read(ifd, buf, 8192))) header_write(ofd, buf, (int)nbytes);
 	  CLOSE(ifd, filename);
 	  CLOSE(ofd, new_file);
 	  FREE(buf);
@@ -6207,7 +6210,7 @@ int mus_header_change_comment(const char *filename, int type, char *new_comment)
 	  char *new_file;
 	  int ofd, ifd;
 	  off_t loc;
-	  int nbytes;
+	  ssize_t nbytes;
 	  unsigned char *buf = NULL;
 	  new_file = (char *)CALLOC(strlen(filename) + 5, sizeof(char));
 	  sprintf(new_file, "%s.tmp", filename);
@@ -6218,7 +6221,7 @@ int mus_header_change_comment(const char *filename, int type, char *new_comment)
 	  ofd = mus_file_reopen_write(new_file);
 	  lseek(ofd, 0L, SEEK_END);
 	  buf = (unsigned char *)CALLOC(8192, sizeof(unsigned char));
-	  while ((nbytes = read(ifd, buf, 8192))) header_write(ofd, buf, nbytes);
+	  while ((nbytes = read(ifd, buf, 8192))) header_write(ofd, buf, (int)nbytes);
 	  CLOSE(ifd, filename);
 	  CLOSE(ofd, new_file);
 	  FREE(buf);
@@ -6405,7 +6408,8 @@ const char *mus_header_original_format_name(int format, int type)
 
 bool mus_header_no_header(const char *filename)
 {
-  int fd, bytes;
+  int fd;
+  ssize_t bytes;
   bool ok = false;
   fd = mus_file_open_read(filename);
   if (fd == -1) 

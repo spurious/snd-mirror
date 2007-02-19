@@ -14,7 +14,7 @@ static void ps_flush(int fd)
 {
   if (nbuf_ctr > 0)
     {
-      size_t bytes;
+      ssize_t bytes;
       bytes = write(fd, nbuf, nbuf_ctr);
       if (bytes == 0) fprintf(stderr, "ps_flush write error");
       nbuf_ctr = 0;

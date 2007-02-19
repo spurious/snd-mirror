@@ -1479,7 +1479,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
 	  Float *sndrdat;
 	  Float scale;
 	  int k;
-	  size_t bytes;
+	  ssize_t bytes;
 	  sndrdat = (Float *)CALLOC(fsize, sizeof(Float));
 	  for (k = 0; k < dur; k++) 
 	    sndrdat[k] = (Float)(read_sample_to_float(sf));
@@ -3579,7 +3579,8 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
       else
 	{
 	  /* not temp_file -- use resizable buffer */
-	  int data_pos = 0, cur_size, kp;
+	  int data_pos = 0, kp;
+	  off_t cur_size;
 	  mus_sample_t *data = NULL;
 	  data = (mus_sample_t *)CALLOC(num, sizeof(mus_sample_t));
 	  cur_size = num;

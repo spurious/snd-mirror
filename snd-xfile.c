@@ -12,10 +12,14 @@
    View:Files
 */
 
-/* TODO: if in and out dir go back to previous slider (list) pos and if remanaged come back to that spot [if exists] */
 /* TODO:   also change filter/text prompt to reflect change of dir */
 /* TODO: don't let 2chan squeeze into nothing */
 /* SOMEDAY: it would be nice to have a way to choose multiple files to open in the open file dialog list */
+/* TODO: can sync of same file cause unwanted save? */
+/* TODO: if sort choice changed and file selected, move window to show it in its new position */
+/* PERHAPS: multiple dirs as in next? */
+/* PERHAPS: if just-sounds, don't show dirs that have no sound files (at least no empty dirs) */
+/* TODO: "<parent directory>" not ".." for backpointer */
 
 
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
@@ -98,7 +102,6 @@ static void force_directory_reread_and_let_filename_change(Widget dialog)
 }
 
 
-
 /* -------- popups -------- */
 
 /* I think there is no way to get a key action to popup one of these menus -- Xm/RowColumn.c
@@ -115,6 +118,7 @@ typedef struct file_pattern_info {
   dir_info *current_files;
   fam_info *directory_watcher;
   int filter_choice, sorter_choice;
+  dirpos_list *dir_list;
 } file_pattern_info;
 
 /* popups:
@@ -624,10 +628,43 @@ static void add_file_popups(file_popup_info *fd)
 
 static void file_change_directory_callback(Widget w, XtPointer context, XtPointer info) 
 {
+  /* click in directory list */
   file_pattern_info *fp = (file_pattern_info *)context;
+  char *leaving_dir;
+
+  {
+    /* save current directory list position */
+    position_t position = 0;
+    XmString *strs;
+    char *filename = NULL;
+    XtVaGetValues(w, 
+		  XmNtopItemPosition, &position,
+		  XmNselectedItems, &strs, 
+		  NULL);
+    if (position > 1) /* 1 = .. */
+      {
+	filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+	dirpos_update(fp->dir_list, filename, position);
+	XtFree(filename);
+      }
+  }
+
+  leaving_dir = copy_string(fp->last_dir);
+  if ((leaving_dir) &&
+      (leaving_dir[strlen(leaving_dir) - 1] == '/'))
+    leaving_dir[strlen(leaving_dir) - 1] = 0;
+  
   fp->reread_directory = true;
   force_directory_reread_and_let_filename_change(fp->dialog);
   fp->reread_directory = false;
+
+  if (leaving_dir)
+    {
+      position_t pos;
+      pos = dirpos_list_top(fp->dir_list, leaving_dir);
+      if (pos != POSITION_UNKNOWN)
+	XmListSetPos(w, pos);
+    }
 }
 
 #if HAVE_FAM
@@ -734,8 +771,19 @@ static void snd_directory_reader(Widget dialog, XmFileSelectionBoxCallbackStruct
   fp->current_files = cur_dir;
   if (pattern) XtFree(pattern);
 
-  /* post the sorted list in the dialog -- alphabetize by default */
-  sort_files_and_redisplay(fp);
+  /* set file_pattern_info->selected_filename list_slider_position from history */
+  {
+    position_t list_pos;
+    Widget file_list;
+    file_list = XmFileSelectionBoxGetChild(dialog, XmDIALOG_LIST);
+    list_pos = dirpos_list_top(fp->dir_list, our_dir);
+
+    /* post the sorted list in the dialog -- alphabetize by default */
+    sort_files_and_redisplay(fp);
+
+    if (list_pos != POSITION_UNKNOWN)
+      XmListSetPos(file_list, list_pos);
+  }
 
 #if HAVE_FAM
   /* make sure fam knows which directory to watch */
@@ -978,11 +1026,20 @@ static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer i
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
   XtVaGetValues(w, XmNselectedItems, &strs, NULL);
   filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
-  if ((filename) && 
-      (plausible_sound_file_p(filename))) /* forces header read to avoid later unwanted error possibility */
-    post_file_info(fd, filename);
+  if (filename)
+    {
+      if (plausible_sound_file_p(filename)) /* forces header read to avoid later unwanted error possibility */
+	post_file_info(fd, filename);
+      XtFree(filename);      
+    }
   else unpost_file_info(fd);
-  if (filename) XtFree(filename);
+
+  {
+    /* save current list position */
+    position_t position = 0;
+    XtVaGetValues(w, XmNtopItemPosition, &position, NULL);
+    dirpos_update(fd->fp->dir_list, fd->fp->current_files->dir_name, position);
+  }
 }
 
 static void unpost_if_filter_changed(Widget w, XtPointer context, XtPointer info)
@@ -1122,6 +1179,8 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   fd->file_dialog_read_only = read_only;
   fd->fpop = (file_popup_info *)CALLOC(1, sizeof(file_popup_info));
   fd->fpop->fp = fd->fp;
+
+  fd->fp->dir_list = make_dirpos_list();
 
   w = MAIN_SHELL(ss);
 
@@ -1413,8 +1472,7 @@ static file_dialog_info *odat = NULL;
 widget_t make_open_file_dialog(bool read_only, bool managed)
 {
   char *title, *select_title;
-  if (read_only)  /* TODO: this didn't work, and why was it active after closing the viewed file? */
-                  /* TODO: can sync of same file cause unwanted save? */
+  if (read_only)  
     {
       title = _("View");
       select_title = _("open read-only:");
@@ -1456,11 +1514,12 @@ widget_t make_open_file_dialog(bool read_only, bool managed)
 	  XtVaSetValues(odat->dialog, 
 			XmNselectionLabelString, s1, 
 			XmNdialogTitle, s2, 
+			XmNokLabelString, s2, /* "ok" button label can be either "View" or "Open" */
 			NULL);
 	  XmStringFree(s1);
 	  XmStringFree(s2);
-	  odat->file_dialog_read_only = read_only;
 	}
+      odat->file_dialog_read_only = read_only;
       if (odat->fp->reread_directory) 
 	{
 	  force_directory_reread(odat->dialog);

@@ -1685,6 +1685,7 @@ static unsigned char p_track_speaker_bits[] = {
 static int track_depth;
 static GC track_gc;
 static Pixmap track_speaker_r;
+#if 0
 void make_track_icons_transparent_again(Pixel old_color, Pixel new_color);
 void make_track_icons_transparent_again(Pixel old_color, Pixel new_color)
 {
@@ -1696,6 +1697,7 @@ void make_track_icons_transparent_again(Pixel old_color, Pixel new_color)
       XtVaSetValues(w_track_track_play, XmNlabelPixmap, track_speaker_r, NULL);
     }
 }
+#endif
 
 static Widget w_track_sep1;
 static Widget track_nextb, track_previousb;

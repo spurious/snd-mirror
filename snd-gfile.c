@@ -41,6 +41,8 @@ typedef struct fsb {
   GtkWidget **file_text_items, **file_filter_items, **file_dir_items, **file_list_items;  /* menu items */
   int file_list_items_size;
 
+  dirpos_list *dir_list;
+
   /* in Motif these are in separate structs, mainly for historical reasons */
 } fsb;
 
@@ -109,6 +111,7 @@ static void watch_current_directory_contents(struct fam_info *famp, FAMEvent *fe
 }
 #endif
 
+
 static void fsb_update_lists(fsb *fs)
 {
   dir_info *files;
@@ -151,7 +154,28 @@ static void fsb_update_lists(fsb *fs)
       for (i = 0; i < files->len; i++) 
 	slist_append(fs->file_list, files->files[i]->filename);
     }
-  slist_moveto(fs->file_list, 0);
+
+  /* TODO: also set directory list position */
+  {
+    position_t list_top;
+    list_top = dirpos_list_top(fs->dir_list, fs->directory_name);
+    if (list_top != POSITION_UNKNOWN)
+      {
+	GtkAdjustment *adj;
+	adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller));
+	/* this is unbelievable -- there's no way to force the scrolled window to update its notion of the viewport size
+	 *    so that the vertical adjustment is more than its (dumb) default size, so unless I set it by hand here,
+	 *    I can't position the list!  I suppose I could have a timed call one second from here that would set
+	 *    the position, but then I have to worry about the user clicking before I get to it.
+	 */
+	if (adj->upper < files->len * 16)
+	  adj->upper = files->len * 16;
+	adj = gtk_viewport_get_vadjustment(GTK_VIEWPORT(gtk_widget_get_parent(fs->file_list->topics)));
+	gtk_adjustment_set_value(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)), list_top);
+      }
+    else slist_moveto(fs->file_list, 0);
+  }
+
   fs->current_files = files;
 
 #if HAVE_FAM
@@ -230,6 +254,14 @@ static void fsb_file_select_callback(const char *file_name, int row, void *data)
       fsb_file_set_text(fs, fullname);
       if (fs->file_select_callback)
 	(*(fs->file_select_callback))((const char *)fullname, fs->file_select_data);
+
+      /* save current list position */
+      {
+	position_t position;
+	position = gtk_adjustment_get_value(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)));
+	dirpos_update(fs->dir_list, fs->directory_name, position);
+      }
+
       FREE(fullname);
     }
 }
@@ -292,6 +324,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
   if (just_sounds(ss))
     fs->filter_choice = JUST_SOUNDS_FILTER;
   else fs->filter_choice = NO_FILE_FILTER;
+  fs->dir_list = make_dirpos_list();
 
 
   /* -------- current working directory -------- */
@@ -1508,6 +1541,7 @@ widget_t make_open_file_dialog(bool read_only, bool managed)
     {
       if (read_only != odat->file_dialog_read_only)
 	{
+	  set_stock_button_label(odat->fs->ok_button, (char *)((read_only) ? _("View") : _("Open")));
 	  gtk_window_set_title(GTK_WINDOW(odat->fs->dialog), (char *)((read_only) ? _("View") : _("Open")));
 	  odat->file_dialog_read_only = read_only;
 	}

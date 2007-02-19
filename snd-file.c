@@ -123,7 +123,7 @@ time_t file_write_date(const char *filename)
 
 /* -------- popup filename lists -------- */
 
-void forget_filename(const char *filename, char **names)
+static void forget_filename(const char *filename, char **names)
 {
   int i, j = 0;
   for (i = 0; i < FILENAME_LIST_SIZE; i++)
@@ -161,9 +161,64 @@ char **make_filename_list(void)
 }
 
 
+/* -------------------------------- file list positioning -------------------------------- */
+
+static dirpos_info *make_dirpos_info(const char *dir, position_t pos)
+{
+  dirpos_info *dp;
+  dp = (dirpos_info *)CALLOC(1, sizeof(dirpos_info));
+  dp->directory_name = copy_string(dir);
+  dp->list_top = pos;
+  return(dp);
+}
+
+dirpos_list *make_dirpos_list(void)
+{
+  dirpos_list *dl;
+  dl = (dirpos_list *)CALLOC(1, sizeof(dirpos_list));
+  dl->size = 8;
+  dl->top = 0;
+  dl->dirs = (dirpos_info **)CALLOC(dl->size, sizeof(dirpos_info *));
+  return(dl);
+}
+
+void dirpos_update(dirpos_list *dl, const char *dir, position_t pos)
+{
+  int i;
+  for (i = 0; i < dl->top; i++)
+    {
+      if ((dl->dirs[i]) && (strcmp(dir, dl->dirs[i]->directory_name) == 0))
+	{
+	  dirpos_info *dp;
+	  dp = dl->dirs[i];
+	  dp->list_top = pos;
+	  return;
+	}
+    }
+  if (dl->top >= dl->size)
+    {
+      int old_size;
+      old_size = dl->size;
+      dl->size += 8;
+      dl->dirs = (dirpos_info **)REALLOC(dl->dirs, dl->size * sizeof(dirpos_info *));
+      for (i = old_size; i < dl->size; i++) dl->dirs[i] = NULL;
+    }
+  dl->dirs[dl->top++] = make_dirpos_info(dir, pos);
+}
+
+position_t dirpos_list_top(dirpos_list *dl, const char *dirname)
+{
+  int i;
+  for (i = 0; i < dl->top; i++)
+    if ((dl->dirs[i]) && (strcmp(dirname, dl->dirs[i]->directory_name) == 0))
+      return(dl->dirs[i]->list_top);
+  return(POSITION_UNKNOWN);
+}
+
+
 /* -------------------------------- sorters -------------------------------- */
 
-sort_info *free_sort_info(sort_info *ptr)
+static sort_info *free_sort_info(sort_info *ptr)
 {
   if (ptr)
     {
@@ -174,7 +229,7 @@ sort_info *free_sort_info(sort_info *ptr)
   return(NULL);
 }
 
-sort_info *make_sort_info(const char *filename, const char *full_filename)
+static sort_info *make_sort_info(const char *filename, const char *full_filename)
 {
   sort_info *ptr;
   ptr = (sort_info *)CALLOC(1, sizeof(sort_info));
@@ -4751,8 +4806,6 @@ static bool file_sorter_ok(XEN name, XEN proc, const char *caller)
     }
   return(true);
 }
-
-void view_files_change_sort_items(void);
 
 static XEN g_add_file_sorter(XEN name, XEN proc)
 {

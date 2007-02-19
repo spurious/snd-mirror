@@ -691,7 +691,7 @@ static unsigned char to_alaw(int pcm_val)
   if (seg >= 8)	return (0x7F ^ mask);
   else 
     {
-      unsigned char	aval;
+      unsigned char aval;
       aval = seg << SEG_SHIFT;
       if (seg < 2) aval |= (pcm_val >> 4) & QUANT_MASK; else aval |= (pcm_val >> (seg + 3)) & QUANT_MASK;
       return (aval ^ mask);
@@ -728,7 +728,7 @@ static unsigned char to_mulaw(int pcm_val)
   if (seg >= 8) return (0x7F ^ mask);
   else 
     {
-      unsigned char	uval;
+      unsigned char uval;
       uval = (seg << 4) | ((pcm_val >> (seg + 3)) & 0xF);
       return (uval ^ mask);
     }
@@ -1064,7 +1064,7 @@ int mus_file_read_chans(int tfd, int beg, int end, int chans, mus_sample_t **buf
 
 static int checked_write(int tfd, char *buf, int chars)
 {
-  int bytes;
+  ssize_t bytes;
   bytes = write(tfd, buf, chars);
   if (bytes != chars) 
     {

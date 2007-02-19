@@ -7723,7 +7723,7 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
   bool include_source = true;
   off_t len;
   XEN res;
-  size_t bytes;
+  ssize_t bytes;
 
   ASSERT_CHANNEL(S_display_edits, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(with_source), with_source, XEN_ARG_4, S_display_edits, "boolean");

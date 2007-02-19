@@ -24,11 +24,11 @@
 
 static char write_error_buffer[PRINT_BUFFER_SIZE];
 
-static int snd_checked_write(int fd, unsigned char *buf, int bytes, const char *filename)
+static ssize_t snd_checked_write(int fd, unsigned char *buf, ssize_t bytes, const char *filename)
 {
   /* io.c checked_write assumes its file descriptors are around */
   /* can't call mus_error here because we need to clean up first in case of error */
-  int bytes_written;
+  ssize_t bytes_written;
   off_t kfree;
   kfree = disk_kspace(filename);
   if (kfree < 0) 
@@ -126,7 +126,8 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, const cha
 
 static int read_midi_sample_dump(const char *oldname, const char *newname, char *hdr)
 {
-  int fs = -1, fd = -1, err = MUS_NO_ERROR, totalin, chans, srate, inp, outp;
+  int fs = -1, fd = -1, err = MUS_NO_ERROR, chans, srate, inp, outp;
+  ssize_t totalin;
   bool happy;
   int val = 0, bits, block_count, header_count, state, samples, shift1, shift2, offset;
   int osp;
@@ -252,7 +253,8 @@ static int read_ieee_text(const char *oldname, const char *newname, char *hdr)
   /* look for "%sampling rate: nn.nn KHz\n", also get end of to comment (i.e. data location) */
   char str[32];
   char *buf = NULL;
-  int fd = -1, fs = -1, totalin;
+  int fd = -1, fs = -1;
+  ssize_t totalin;
   int inp, outp, op, i, j, s0, srate, err = MUS_NO_ERROR;
   bool commenting, happy;
   float fsrate;
@@ -386,7 +388,8 @@ static int read_mus10(const char *oldname, const char *newname, char *hdr)
   /* nostalgic code -- 36 bit words, two 16-bit samples, right justified */
   /* or (even more archaeological) 12 bits packed 3 to a 36-bit word */
   unsigned char *buf = NULL;
-  int fd = -1, fs = -1, totalin, inp, outp, val, err = MUS_NO_ERROR;
+  int fd = -1, fs = -1, inp, outp, val, err = MUS_NO_ERROR;
+  ssize_t totalin;
   bool happy;
   int osp;
   float fsrate, fraction;
@@ -493,7 +496,8 @@ static int read_hcom(const char *oldname, const char *newname, char *hdr)
 {
   short **d = NULL;
   int osp, isp;
-  int dc = 0, di, bits, outp, totalin;
+  int dc = 0, di, bits, outp;
+  ssize_t totalin;
   bool happy;
   unsigned int curval = 0;
   int i, sample, size = 0, datum, count = 0, err = MUS_NO_ERROR;
@@ -602,7 +606,8 @@ static unsigned short log2s[] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 20
 
 static int read_nist_shortpack(const char *oldname, const char *newname, char *hdr)
 {
-  int fs = -1, fd = -1, err = MUS_NO_ERROR, totalin, chans, srate, outp, i = 0, k, num, bits = 0, out, els = 0;
+  int fs = -1, fd = -1, err = MUS_NO_ERROR, chans, srate, outp, i = 0, k, num, bits = 0, out, els = 0;
+  ssize_t totalin;
   bool happy;
   int isp, osp;
   unsigned short *ptr = NULL, *stop, *start, *kptr;
@@ -743,7 +748,8 @@ static int read_nist_shortpack(const char *oldname, const char *newname, char *h
 static int read_ibm_adpcm(const char *oldname, const char *newname, char *hdr)
 {
   short MAX_STEP = 2048, MIN_STEP = 16;
-  int totalin, i, j, k, fs = -1, fd = -1;
+  int i, j, k, fs = -1, fd = -1;
+  ssize_t totalin;
   unsigned char *buf = NULL;
   short *buf1;
   off_t loc;
@@ -864,7 +870,8 @@ static int adpcm_decoder(unsigned char *indata, short *outdata, int totalbytes, 
 
 static int read_dvi_adpcm(const char *oldname, const char *newname, char *hdr, int type)
 {
-  int fs = -1, fd = -1, totalin, chans, srate, blksiz, samps, samps_read;
+  int fs = -1, fd = -1, chans, srate, blksiz, samps, samps_read;
+  ssize_t totalin;
   unsigned char *buf = NULL;
   off_t loc;
   loc = mus_sound_data_location(oldname);
@@ -943,7 +950,8 @@ static short oki_adpcm_decode(char code, struct oki_adpcm_status *stat)
 
 static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
 {
-  int fs = -1, fd = -1, i, j, totalin, chans, srate, blksiz, samps, samps_read;
+  int fs = -1, fd = -1, i, j, chans, srate, blksiz, samps, samps_read;
+  ssize_t totalin;
   unsigned char *buf = NULL;
   off_t loc;
   short *buf1;
@@ -1002,7 +1010,8 @@ static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
 
 static int read_12bit(const char *oldname, const char *newname, char *hdr)
 {
-  int chans, totalin, i, j, fs = -1, fd = -1;
+  int chans, i, j, fs = -1, fd = -1;
+  ssize_t totalin;
   unsigned char *buf = NULL;
   short *buf1;
   off_t loc, samps;
