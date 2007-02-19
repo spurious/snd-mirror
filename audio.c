@@ -4093,9 +4093,9 @@ static snd_pcm_uframes_t alsa_get_max_buffer_size(void)
   return(max_buffer_size);
 }
 
-static int alsa_clamp_buffer_size(int buf_size)
+static snd_pcm_uframes_t alsa_clamp_buffer_size(snd_pcm_uframes_t buf_size)
 {
-  int minb, maxb;
+  snd_pcm_uframes_t minb, maxb;
   minb = alsa_get_min_buffer_size();
   maxb = alsa_get_max_buffer_size();
   if (buf_size > maxb)
@@ -4124,7 +4124,7 @@ static bool alsa_set_playback_parameters(void)
 	  alsa_buffers = old_buffers;
 	  return(false);
 	}
-      size = alsa_clamp_buffer_size(alsa_samples_per_channel * alsa_buffers);
+      size = alsa_clamp_buffer_size((snd_pcm_uframes_t)(alsa_samples_per_channel * alsa_buffers));
       if (size <= 0) return(false);
       alsa_samples_per_channel = size / alsa_buffers;
     }
@@ -4150,7 +4150,7 @@ static bool alsa_set_capture_parameters(void)
 	  alsa_buffers = old_buffers;
 	  return(false);
 	}
-      size = alsa_clamp_buffer_size(alsa_samples_per_channel * alsa_buffers);
+      size = alsa_clamp_buffer_size((snd_pcm_uframes_t)(alsa_samples_per_channel * alsa_buffers));
       if (size <= 0) return(false);
       alsa_samples_per_channel = size / alsa_buffers;
     }
@@ -4209,7 +4209,7 @@ int mus_alsa_set_buffer_size(int size)
   if (alsa_buffers == 0) alsa_buffers = 1;
   if (size > 0)
     {
-      bsize = alsa_clamp_buffer_size(size * alsa_buffers);
+      bsize = alsa_clamp_buffer_size((snd_pcm_uframes_t)(size * alsa_buffers));
       alsa_samples_per_channel = bsize / alsa_buffers;
     }
   return(alsa_samples_per_channel);
@@ -4224,7 +4224,7 @@ int mus_alsa_set_buffers(int num)
       alsa_buffers = alsa_clamp_buffers(num);
       if (alsa_buffers > 0)
 	{
-	  size = alsa_clamp_buffer_size(alsa_samples_per_channel * alsa_buffers);
+	  size = alsa_clamp_buffer_size((snd_pcm_uframes_t)(alsa_samples_per_channel * alsa_buffers));
 	  alsa_samples_per_channel = size / alsa_buffers;
 	}
     }

@@ -19,7 +19,6 @@
 /* TODO: if sort choice changed and file selected, move window to show it in its new position */
 /* PERHAPS: multiple dirs as in next? */
 /* PERHAPS: if just-sounds, don't show dirs that have no sound files (at least no empty dirs) */
-/* TODO: "<parent directory>" not ".." for backpointer */
 
 
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)

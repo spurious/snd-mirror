@@ -7849,13 +7849,14 @@ snd_fd *get_sf(XEN obj) {if (SAMPLE_READER_P(obj)) return((snd_fd *)XEN_OBJECT_R
 
 char *sf_to_string(snd_fd *fd)
 {
-  char *desc, *name = NULL;
+  char *desc;
   chan_info *cp;
   desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   if (fd == NULL)
     sprintf(desc, "#<sample-reader: null>");
   else
     {
+      char *name = NULL;
       cp = fd->cp;
       if ((fd->local_sp) && (fd->local_sp->hdr))
 	name = ((fd->local_sp)->hdr)->name;

@@ -185,6 +185,7 @@ dirpos_list *make_dirpos_list(void)
 void dirpos_update(dirpos_list *dl, const char *dir, position_t pos)
 {
   int i;
+  if (!dl) return;
   for (i = 0; i < dl->top; i++)
     {
       if ((dl->dirs[i]) && (strcmp(dir, dl->dirs[i]->directory_name) == 0))
@@ -209,9 +210,10 @@ void dirpos_update(dirpos_list *dl, const char *dir, position_t pos)
 position_t dirpos_list_top(dirpos_list *dl, const char *dirname)
 {
   int i;
-  for (i = 0; i < dl->top; i++)
-    if ((dl->dirs[i]) && (strcmp(dirname, dl->dirs[i]->directory_name) == 0))
-      return(dl->dirs[i]->list_top);
+  if (dl)
+    for (i = 0; i < dl->top; i++)
+      if ((dl->dirs[i]) && (strcmp(dirname, dl->dirs[i]->directory_name) == 0))
+	return(dl->dirs[i]->list_top);
   return(POSITION_UNKNOWN);
 }
 

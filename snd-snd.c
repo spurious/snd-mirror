@@ -43,13 +43,13 @@ snd_info *snd_new_file(const char *newname, int header_type, int data_format, in
 	{
 	  int chan;
 	  off_t size;
-	  ssize_t bytes;
 	  /* send out the initial samples */
 	  chan = snd_reopen_write(newname);
 	  lseek(chan, mus_header_data_location(), SEEK_SET);
 	  size = chans * mus_samples_to_bytes(data_format, samples);
 	  if (size > 0)
 	    {
+	      ssize_t bytes;
 	      unsigned char *buf = NULL;
 	      buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
 	      bytes = write(chan, buf, size);
@@ -258,9 +258,8 @@ static bool tick_amp_env(chan_info *cp, env_state *es)
   ep = es->ep;
   if (es->slice == 0)
     {
-      int i, n, sb, lm;
+      int n, sb, lm;
       off_t samps_to_read;
-      mus_sample_t ymin, ymax, val;
       snd_fd *sfd;
       if (ep->top_bin != 0)
 	lm = (ep->top_bin - ep->bin + 1);
@@ -289,6 +288,8 @@ static bool tick_amp_env(chan_info *cp, env_state *es)
       if (sfd == NULL) return(false);
       for (n = 0; (n < lm) && (sb < ep->amp_env_size); n++, sb++)
 	{
+	  mus_sample_t ymin, ymax, val;
+	  int i;
 	  val = read_sample(sfd);
 	  ymin = val;
 	  ymax = val;
@@ -1624,8 +1625,6 @@ static bool apply_controls(apply_state *ap)
   sync_info *si;
   Float mult_dur;
   int i, curchan = 0, added_dur = 0;
-  bool over_selection;
-  off_t orig_apply_dur;
   if (ap == NULL) return(false);
   sp = ap->sp;
   if ((!(sp->active)) || (sp->inuse != SOUND_NORMAL)) return(false);
@@ -1679,6 +1678,7 @@ static bool apply_controls(apply_state *ap)
     }
   else
     {
+      off_t orig_apply_dur;
       io_error_t io_err = IO_NO_ERROR;
       orig_apply_dur = apply_dur;
       switch (ap->slice)
@@ -1930,6 +1930,7 @@ static bool apply_controls(apply_state *ap)
 			  else ratio = sp->speed_control / sp->expand_control;
 			  if (ratio != 1.0)
 			    {
+			      bool over_selection;
 			      over_selection = (ss->apply_choice == APPLY_TO_SELECTION);
 			      src_marks(cp, ratio, orig_dur, apply_dur, 
 					(over_selection) ? selection_beg(cp) : 0,

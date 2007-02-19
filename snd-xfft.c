@@ -12,7 +12,6 @@ static Widget error_frame, error_label;
 static GC gc, fgc;
 
 #define GRAPH_SIZE 128
-/* TODO: make graph size dependent on either transform_size or current widget size (and show it) */
 static Float current_graph_data[GRAPH_SIZE]; /* fft window graph in transform options dialog */
 static Float current_graph_fftr[GRAPH_SIZE * 2];
 static Float current_graph_ffti[GRAPH_SIZE * 2];
