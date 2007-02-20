@@ -4311,12 +4311,7 @@ static void transform_type_from_text(prefs_info *prf)
 
 static mus_fft_window_t rts_fft_window = DEFAULT_FFT_WINDOW;
 
-static const char *fft_windows[MUS_NUM_WINDOWS] = 
-  {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
-   "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes",
-   "Samaraki", "Ultraspherical", "Barlett-Hann", "Bohman", "Flat-top"};
-
-static void reflect_fft_window(prefs_info *prf) {SET_TEXT(prf->text, (char *)fft_windows[(int)fft_window(ss)]);}
+static void reflect_fft_window(prefs_info *prf) {SET_TEXT(prf->text, (char *)mus_fft_window_name(fft_window(ss)));}
 static void revert_fft_window(prefs_info *prf) {in_set_fft_window(rts_fft_window);}
 static void clear_fft_window(prefs_info *prf) {in_set_fft_window(DEFAULT_FFT_WINDOW);}
 static void save_fft_window(prefs_info *prf, FILE *ignore) {rts_fft_window = fft_window(ss);}
@@ -4329,9 +4324,9 @@ static char *fft_window_completer(char *text, void *data)
     {
       fft_window_completer_info = (list_completer_info *)CALLOC(1, sizeof(list_completer_info));
       fft_window_completer_info->exact_match = false;
-      fft_window_completer_info->values = (char **)fft_windows;
-      fft_window_completer_info->num_values = MUS_NUM_WINDOWS;
-      fft_window_completer_info->values_size = MUS_NUM_WINDOWS;
+      fft_window_completer_info->values = (char **)mus_fft_window_names();
+      fft_window_completer_info->num_values = MUS_NUM_FFT_WINDOWS;
+      fft_window_completer_info->values_size = MUS_NUM_FFT_WINDOWS;
     }
   return(list_completer(text, (void *)fft_window_completer_info));
 }
@@ -4340,8 +4335,8 @@ static char *fft_window_completer(char *text, void *data)
 static void fft_window_from_menu(prefs_info *prf, char *value)
 {
   int i;
-  for (i = 0; i < MUS_NUM_WINDOWS; i++)
-    if (strcmp(value, fft_windows[i]) == 0)
+  for (i = 0; i < MUS_NUM_FFT_WINDOWS; i++)
+    if (strcmp(value, mus_fft_window_name((mus_fft_window_t)i)) == 0)
       {
 	in_set_fft_window((mus_fft_window_t)i);
 	SET_TEXT(prf->text, value);
@@ -4363,8 +4358,8 @@ static void fft_window_from_text(prefs_info *prf)
       if (snd_strlen(trimmed_str) > 0)
 	{
 	  int curpos = -1;
-	  for (i = 0; i < MUS_NUM_WINDOWS; i++)
-	    if (STRCMP(trimmed_str, fft_windows[i]) == 0)
+	  for (i = 0; i < MUS_NUM_FFT_WINDOWS; i++)
+	    if (STRCMP(trimmed_str, mus_fft_window_name((mus_fft_window_t)i)) == 0)
 	      {
 		curpos = i;
 		break;
@@ -4396,7 +4391,7 @@ static char *colormap_completer(char *text, void *data)
     cmaps[i] = colormap_name(i);
   compinfo = (list_completer_info *)CALLOC(1, sizeof(list_completer_info));
   compinfo->exact_match = false;
-  compinfo->values = (char **)fft_windows;
+  compinfo->values = (char **)mus_fft_window_names();
   compinfo->num_values = len;
   compinfo->values_size = len;
   result = list_completer(text, (void *)compinfo);

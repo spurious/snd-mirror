@@ -489,8 +489,9 @@ int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, in
   return(k);
 }
 
-static Float beta_maxes[MUS_NUM_WINDOWS] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
-					    1.0, 1.0, 15.0, 10.0, 10.0, 10.0, 1.0, 18.0, 10.0, 1.0, 18.0, 18.0};
+static Float beta_maxes[MUS_NUM_FFT_WINDOWS] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+						1.0, 1.0, 15.0, 10.0, 10.0, 10.0, 1.0, 18.0, 10.0, 1.0, 18.0, 18.0,
+						1.0, 1.0, 1.0};
 Float fft_beta_max(mus_fft_window_t win) {return(beta_maxes[(int)win]);}
 
 

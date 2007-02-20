@@ -2,6 +2,8 @@
 
 #include "snd.h"
 
+/* TODO: when options window expanded vertically, graph gets less than half (empty space in button box) */
+
 slist *transform_list = NULL, *size_list = NULL, *window_list = NULL, *wavelet_list = NULL;
 static GtkWidget *transform_dialog = NULL; /* main dialog shell */
 static GtkWidget *outer_table, *db_button, *peaks_button, *logfreq_button, *sono_button, *spectro_button, *normal_fft_button;
@@ -11,20 +13,15 @@ static GdkGC *gc = NULL, *fgc = NULL;
 static bool ignore_callbacks;
 
 #define GRAPH_SIZE 128
-static Float current_graph_data[GRAPH_SIZE]; /* fft window graph in transform options dialog */
-static Float current_graph_fftr[GRAPH_SIZE * 2];
-static Float current_graph_ffti[GRAPH_SIZE * 2];
+static Float graph_data[GRAPH_SIZE]; /* fft window graph in transform options dialog */
+static Float graph_fftr[GRAPH_SIZE * 2];
+static Float graph_ffti[GRAPH_SIZE * 2];
 
 #define NUM_TRANSFORM_SIZES 14
-static char *TRANSFORM_SIZES[NUM_TRANSFORM_SIZES] = 
+static char *transform_size_names[NUM_TRANSFORM_SIZES] = 
   {"32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576", "4194304    "};
 static int transform_sizes[NUM_TRANSFORM_SIZES] = 
   {32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576, 4194304};
-
-static char *FFT_WINDOWS[MUS_NUM_WINDOWS] = 
-  {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
-   "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes",
-   "Samaraki", "Ultraspherical", "Bartlett-Hann", "Bohman", "Flat-top"};
 
 static Float fp_dB(Float py)
 {
@@ -52,7 +49,6 @@ static void graph_redisplay(void)
   else
     {
       ax = axis_ap->ax;
-      if (axis_ap->xlabel) FREE(axis_ap->xlabel);
     }
   ax->wn = graph_drawer->window;
   ax->w = graph_drawer;
@@ -61,7 +57,8 @@ static void graph_redisplay(void)
   axis_ap->xmin = 0.0;
   axis_ap->xmax = 1.0;
   axis_ap->x_ambit = 1.0;
-  axis_ap->xlabel = NULL;
+  if (!(axis_ap->xlabel))
+    axis_ap->xlabel = mus_format("(%d)", GRAPH_SIZE);
   axis_ap->x0 = 0.0;
   axis_ap->x1 = 1.0;
   if (fft_window(ss) == MUS_FLAT_TOP_WINDOW)
@@ -89,19 +86,19 @@ static void graph_redisplay(void)
   make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1 /* "srate" */, SHOW_ALL_AXES, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES, grid_density(ss));
   ax->gc = gc;
   ix1 = grf_x(0.0, axis_ap);
-  iy1 = grf_y(current_graph_data[0], axis_ap);
+  iy1 = grf_y(graph_data[0], axis_ap);
   xincr = 1.0 / (Float)GRAPH_SIZE;
   for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x += xincr)
     {
       ix0 = ix1;
       iy0 = iy1;
       ix1 = grf_x(x, axis_ap);
-      iy1 = grf_y(current_graph_data[i], axis_ap);
+      iy1 = grf_y(graph_data[i], axis_ap);
       gdk_draw_line(wn, gc, ix0, iy0, ix1, iy1);
     }
   ax->gc = fgc;
   ix1 = grf_x(0.0, axis_ap);
-  iy1 = grf_y(current_graph_fftr[0], axis_ap);
+  iy1 = grf_y(graph_fftr[0], axis_ap);
   xincr = 1.0 / (Float)GRAPH_SIZE;
   for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x += xincr)
     {
@@ -109,8 +106,8 @@ static void graph_redisplay(void)
       iy0 = iy1;
       ix1 = grf_x(x, axis_ap);
       if (fft_log_magnitude(ss))
-	iy1 = grf_y(fp_dB(current_graph_fftr[i]), axis_ap);
-      else iy1 = grf_y(current_graph_fftr[i], axis_ap);
+	iy1 = grf_y(fp_dB(graph_fftr[i]), axis_ap);
+      else iy1 = grf_y(graph_fftr[i], axis_ap);
       gdk_draw_line(wn, fgc, ix0, iy0, ix1, iy1);
     }
 }
@@ -120,13 +117,13 @@ static void get_fft_window_data(void)
   int i;
   mus_make_fft_window_with_window(fft_window(ss), GRAPH_SIZE, 
 				  fft_window_beta(ss) * fft_beta_max(fft_window(ss)), 
-				  fft_window_alpha(ss), current_graph_data);
-  memset((void *)current_graph_fftr, 0, GRAPH_SIZE * 2 * sizeof(Float));
-  memset((void *)current_graph_ffti, 0, GRAPH_SIZE * 2 * sizeof(Float));
-  memcpy((void *)current_graph_fftr, (void *)current_graph_data, GRAPH_SIZE * sizeof(Float));
-  mus_spectrum(current_graph_fftr, current_graph_ffti, NULL, GRAPH_SIZE * 2, 0);
+				  fft_window_alpha(ss), graph_data);
+  memset((void *)graph_fftr, 0, GRAPH_SIZE * 2 * sizeof(Float));
+  memset((void *)graph_ffti, 0, GRAPH_SIZE * 2 * sizeof(Float));
+  memcpy((void *)graph_fftr, (void *)graph_data, GRAPH_SIZE * sizeof(Float));
+  mus_spectrum(graph_fftr, graph_ffti, NULL, GRAPH_SIZE * 2, 0); /* always dB */
   for (i = 0; i < GRAPH_SIZE; i++)
-    current_graph_fftr[i] = (current_graph_fftr[i] + 80.0) / 80.0;
+    graph_fftr[i] = (graph_fftr[i] + 80.0) / 80.0; /* min dB -80.0 */
 }
 
 static void chans_transform_size(chan_info *cp, int size)
@@ -152,9 +149,7 @@ static void size_browse_callback(const char *name, int row, void *data)
   for_each_chan(calculate_fft);
   if (graph_frame) 
     sg_frame_set_label(GTK_FRAME(graph_frame), 
-		       FFT_WINDOWS[(int)fft_window(ss)]);
-  get_fft_window_data();
-  graph_redisplay();
+		       mus_fft_window_name(fft_window(ss)));
 }
 
 static void chans_wavelet_type(chan_info *cp, int value)
@@ -176,7 +171,7 @@ static void window_browse_callback(const char *name, int row, void *data)
   for_each_chan(calculate_fft);
   if (graph_frame) 
     sg_frame_set_label(GTK_FRAME(graph_frame), 
-		       FFT_WINDOWS[(int)fft_window(ss)]);
+		       mus_fft_window_name(fft_window(ss)));
   get_fft_window_data();
   graph_redisplay();
 }
@@ -463,7 +458,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       make_transform_type_list();
 
       /* SIZE */
-      size_list = slist_new_with_title_and_table_data(_("size"), outer_table, TRANSFORM_SIZES, NUM_TRANSFORM_SIZES, TABLE_ATTACH, 1, 2, 0, 3);
+      size_list = slist_new_with_title_and_table_data(_("size"), outer_table, transform_size_names, NUM_TRANSFORM_SIZES, TABLE_ATTACH, 1, 2, 0, 3);
       size_list->select_callback = size_browse_callback;
 
       /* DISPLAY */
@@ -576,7 +571,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       /* WINDOW */
       window_box = gtk_table_new(2, 3, false);
       gtk_table_attach_defaults(GTK_TABLE(outer_table), window_box, 1, 2, 3, 6);
-      window_list = slist_new_with_title_and_table_data(_("window"), window_box, FFT_WINDOWS, MUS_NUM_WINDOWS, TABLE_ATTACH, 0, 1, 0, 1);
+      window_list = slist_new_with_title_and_table_data(_("window"), window_box, (char **)mus_fft_window_names(), MUS_NUM_FFT_WINDOWS, TABLE_ATTACH, 0, 1, 0, 1);
       window_list->select_callback = window_browse_callback;
 
       beta_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
@@ -613,7 +608,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       /* GRAPH */
       {
 	GtkWidget *label;
-	label = snd_gtk_highlight_label_new(FFT_WINDOWS[(int)fft_window(ss)]);
+	label = snd_gtk_highlight_label_new(mus_fft_window_name(fft_window(ss)));
 
 	graph_frame = gtk_frame_new(NULL);
 	gtk_table_attach_defaults(GTK_TABLE(outer_table), graph_frame, 2, 3, 4, 6);
@@ -754,7 +749,7 @@ void set_fft_window(mus_fft_window_t val)
       slist_moveto(window_list, (int)val);
       if (graph_frame) 
 	sg_frame_set_label(GTK_FRAME(graph_frame),
-			   FFT_WINDOWS[val]);
+			   mus_fft_window_name(val));
       get_fft_window_data();
       graph_redisplay();
     }

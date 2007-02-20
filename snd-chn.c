@@ -1213,7 +1213,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 {
   snd_info *sp;
   int j = 0;
-  off_t samps, ioff = 0;
+  off_t samps;
   Locus xi;
   axis_info *ap;
   Float samples_per_pixel, xf, pinc = 0.0;
@@ -1239,13 +1239,10 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
    * be tiny, so we're pushing the arithmetic into dangerous realms.  This stuff has been tested
    * on some extreme cases (hour-long 44KHz stereo), but there's always another special case...
    */
-  mus_sample_t samp, ymin, ymax;
-  Float fsamp;
-  int pixels, grfpts;
+  int pixels;
   snd_fd *sf = NULL;
   int x_start, x_end;
   axis_context *ax = NULL;
-  chan_context *cgx;
   sp = cp->sound;
   ap = cp->axis;
   /* check for no graph */
@@ -1283,6 +1280,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
       ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE)) ||
       ((cp->time_graph_style == GRAPH_FILLED) && (samples_per_pixel < 25.0) && (samps < POINT_BUFFER_SIZE)))
     {
+      int grfpts;
       /* i.e. individual samples are widely spaced, so we have to be careful about placement
        *   mouse uses grf_x so in this case we have to also (to make the cursor hit the dots etc) 
        */
@@ -1294,6 +1292,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 	{
 	  for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
 	    {
+	      Float fsamp;
 	      fsamp = read_sample_to_float(sf);
 	      set_grf_point(local_grf_x(x, ap), j, local_grf_y(fsamp, ap));
 	      ps_set_grf_point(x, j, fsamp);
@@ -1341,8 +1340,12 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 	j = amp_env_graph(cp, ap, samples_per_pixel, (normal) ? ((int)SND_SRATE(sp)) : 1);
       else
 	{
+	  mus_sample_t samp, ymin, ymax;
+	  off_t ioff;
 	  if ((ap->hisamp - ap->losamp) > (CURRENT_SAMPLES(cp) / 4))
-	    {                                /* we're trying to view a large portion of the (large) sound */
+	    {    
+                                             /* we're trying to view a large portion of the (large) sound */
+	      chan_context *cgx;
 	      cgx = cp->cgx;
 	      if ((cgx->amp_env_in_progress) &&
 		  (cp->amp_envs))            /* updated sound but bg process not killed yet?? */
@@ -6718,7 +6721,7 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
 			  fp->current_size, 
 			  ap->losamp, 
 			  (float)((double)(ap->losamp) / (double)srate),
-			  mus_fft_window_name(cp->fft_window));
+			  mus_fft_window_name(cp->fft_window)); /* was XEN name */
 		  for (i = 0; i < num_peaks; i++)
 		    fprintf(fd, "  %.*f  %.5f\n",
 			    tens, 

@@ -354,7 +354,7 @@ static void init_keywords(void)
 
 /* ---------------- AM and simple stuff ---------------- */
 
-static char *FFT_WINDOW_CONSTANTS[MUS_NUM_WINDOWS] = 
+static char *fft_window_xen_names[MUS_NUM_FFT_WINDOWS] = 
     {S_rectangular_window, S_hann_window, S_welch_window, S_parzen_window, S_bartlett_window,
      S_hamming_window, S_blackman2_window, S_blackman3_window, S_blackman4_window,
      S_exponential_window, S_riemann_window, S_kaiser_window, S_cauchy_window,
@@ -363,7 +363,7 @@ static char *FFT_WINDOW_CONSTANTS[MUS_NUM_WINDOWS] =
      S_bartlett_hann_window, S_bohman_window, S_flat_top_window
 };
 
-char *mus_fft_window_name(mus_fft_window_t i) {return(FFT_WINDOW_CONSTANTS[(int)i]);}
+char *mus_fft_window_xen_name(mus_fft_window_t i) {return(fft_window_xen_names[(int)i]);}
 
 
 static XEN g_radians_to_hz(XEN val) 

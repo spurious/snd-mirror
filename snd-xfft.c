@@ -12,20 +12,17 @@ static Widget error_frame, error_label;
 static GC gc, fgc;
 
 #define GRAPH_SIZE 128
-static Float current_graph_data[GRAPH_SIZE]; /* fft window graph in transform options dialog */
-static Float current_graph_fftr[GRAPH_SIZE * 2];
-static Float current_graph_ffti[GRAPH_SIZE * 2];
+static Float graph_data[GRAPH_SIZE]; /* fft window graph in transform options dialog */
+static Float graph_fftr[GRAPH_SIZE * 2];
+static Float graph_ffti[GRAPH_SIZE * 2];
+/* I goofed around with making the graph size dependent on the drawer's width, but there's really nothing gained */
+/*   also tried linear/db+min-dB distinction, but linear looks dumb and min-dB is a bother */
 
 #define NUM_TRANSFORM_SIZES 14
-static char *TRANSFORM_SIZES[NUM_TRANSFORM_SIZES] = 
+static char *transform_size_names[NUM_TRANSFORM_SIZES] = 
   {"32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576", "4194304    "};
 static int transform_sizes[NUM_TRANSFORM_SIZES] = 
   {32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576, 4194304};
-
-static char *FFT_WINDOWS[MUS_NUM_WINDOWS] = 
-  {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
-   "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes",
-   "Samaraki", "Ultraspherical", "Bartlett-Hann", "Bohman", "Flat-top"};
 
 static Float fp_dB(Float py)
 {
@@ -64,13 +61,13 @@ static void graph_redisplay(void)
     }
   else 
     {
-      if (axis_ap->xlabel) FREE(axis_ap->xlabel);
       ax = axis_ap->ax;
     }
   axis_ap->xmin = 0.0;
   axis_ap->xmax = 1.0;
   axis_ap->x_ambit = 1.0;
-  axis_ap->xlabel = NULL;
+  if (!(axis_ap->xlabel))
+    axis_ap->xlabel = mus_format("(%d)", GRAPH_SIZE);
   axis_ap->x0 = 0.0;
   axis_ap->x1 = 1.0;
   if (fft_window(ss) == MUS_FLAT_TOP_WINDOW)
@@ -98,7 +95,7 @@ static void graph_redisplay(void)
   ax->gc = gc;
   make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1 /* "srate" */, SHOW_ALL_AXES, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES, grid_density(ss));
   ix1 = local_grf_x(0.0, axis_ap);
-  iy1 = local_grf_y(current_graph_data[0], axis_ap);
+  iy1 = local_grf_y(graph_data[0], axis_ap);
   xincr = 1.0 / (Float)GRAPH_SIZE;
 
   for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x += xincr)
@@ -106,13 +103,13 @@ static void graph_redisplay(void)
       ix0 = ix1;
       iy0 = iy1;
       ix1 = local_grf_x(x, axis_ap);
-      iy1 = local_grf_y(current_graph_data[i], axis_ap);
+      iy1 = local_grf_y(graph_data[i], axis_ap);
       XDrawLine(ax->dp, ax->wn, gc, ix0, iy0, ix1, iy1);
     }
 
   ax->gc = fgc;
   ix1 = local_grf_x(0.0, axis_ap);
-  iy1 = local_grf_y(current_graph_fftr[0], axis_ap);
+  iy1 = local_grf_y(graph_fftr[0], axis_ap);
   xincr = 1.0 / (Float)GRAPH_SIZE;
 
   for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x += xincr)
@@ -121,8 +118,8 @@ static void graph_redisplay(void)
       iy0 = iy1;
       ix1 = local_grf_x(x, axis_ap);
       if (fft_log_magnitude(ss))
-	iy1 = local_grf_y(fp_dB(current_graph_fftr[i]), axis_ap);
-      else iy1 = local_grf_y(current_graph_fftr[i], axis_ap);
+	iy1 = local_grf_y(fp_dB(graph_fftr[i]), axis_ap);
+      else iy1 = local_grf_y(graph_fftr[i], axis_ap);
       XDrawLine(ax->dp, ax->wn, fgc, ix0, iy0, ix1, iy1);
     }
 }
@@ -132,13 +129,13 @@ static void get_fft_window_data(void)
   int i;
   mus_make_fft_window_with_window(fft_window(ss), GRAPH_SIZE, 
 				  fft_window_beta(ss) * fft_beta_max(fft_window(ss)), 
-				  fft_window_alpha(ss), current_graph_data);
-  memset((void *)current_graph_fftr, 0, GRAPH_SIZE * 2 * sizeof(Float));
-  memset((void *)current_graph_ffti, 0, GRAPH_SIZE * 2 * sizeof(Float));
-  memcpy((void *)current_graph_fftr, (void *)current_graph_data, GRAPH_SIZE * sizeof(Float));
-  mus_spectrum(current_graph_fftr, current_graph_ffti, NULL, GRAPH_SIZE * 2, 0);
+				  fft_window_alpha(ss), graph_data);
+  memset((void *)graph_fftr, 0, GRAPH_SIZE * 2 * sizeof(Float));
+  memset((void *)graph_ffti, 0, GRAPH_SIZE * 2 * sizeof(Float));
+  memcpy((void *)graph_fftr, (void *)graph_data, GRAPH_SIZE * sizeof(Float));
+  mus_spectrum(graph_fftr, graph_ffti, NULL, GRAPH_SIZE * 2, 0); /* 0 = always dB */
   for (i = 0; i < GRAPH_SIZE; i++)
-    current_graph_fftr[i] = (current_graph_fftr[i] + 80.0) / 80.0;
+    graph_fftr[i] = (graph_fftr[i] + 80.0) / 80.0; /* min dB here is -80 */
 }
 
 static void chans_transform_size(chan_info *cp, int size)
@@ -158,9 +155,7 @@ static void size_browse_callback(Widget w, XtPointer context, XtPointer info)
   size = transform_size(ss);
   for_each_chan_with_int(chans_transform_size, size);
   for_each_chan(calculate_fft);
-  set_label(graph_label, FFT_WINDOWS[(int)fft_window(ss)]);
-  get_fft_window_data();
-  graph_redisplay();
+  set_label(graph_label, mus_fft_window_name(fft_window(ss)));
 }
 
 static void chans_wavelet_type(chan_info *cp, int value)
@@ -188,7 +183,7 @@ static void window_browse_callback(Widget w, XtPointer context, XtPointer info)
   fft_window_choice = (mus_fft_window_t)(cbs->item_position - 1); /* make these numbers 0-based as in mus.lisp */
   in_set_fft_window(fft_window_choice);
   for_each_chan(calculate_fft);
-  set_label(graph_label, FFT_WINDOWS[(int)fft_window(ss)]);
+  set_label(graph_label, mus_fft_window_name(fft_window(ss)));
   get_fft_window_data();
   graph_redisplay();
   if (fft_window_beta_in_use(fft_window(ss)))
@@ -529,7 +524,7 @@ Widget fire_up_transform_dialog(bool managed)
       Arg args[32];
       XmString sizes[NUM_TRANSFORM_SIZES];
       XmString wavelets[NUM_WAVELETS];
-      XmString windows[MUS_NUM_WINDOWS];
+      XmString windows[MUS_NUM_FFT_WINDOWS];
       XGCValues gv;
       XtCallbackList n1, n2, n3, n4;
       int size_pos = 1;
@@ -693,7 +688,7 @@ Widget fire_up_transform_dialog(bool managed)
       size_list = XmCreateScrolledList(size_form, "size-list", args, n);
       XtVaSetValues(size_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
       for (i = 0; i < NUM_TRANSFORM_SIZES; i++) 
-	sizes[i] = XmStringCreateLocalized(TRANSFORM_SIZES[i]);
+	sizes[i] = XmStringCreateLocalized(transform_size_names[i]);
       XtVaSetValues(size_list, 
 		    XmNitems, sizes, 
 		    XmNitemCount, NUM_TRANSFORM_SIZES, 
@@ -1046,15 +1041,15 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNtopItemPosition, ((int)fft_window(ss) > 2) ? ((int)fft_window(ss) - 1) : ((int)fft_window(ss) + 1)); n++;
       window_list = XmCreateScrolledList(window_form, "window-list", args, n);
       XtVaSetValues(window_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
-      for (i = 0; i < MUS_NUM_WINDOWS; i++)
-	windows[i] = XmStringCreateLocalized(FFT_WINDOWS[i]);
+      for (i = 0; i < MUS_NUM_FFT_WINDOWS; i++)
+	windows[i] = XmStringCreateLocalized((char *)mus_fft_window_name((mus_fft_window_t)i));
 
       XtVaSetValues(window_list, 
 		    XmNitems, windows, 
-		    XmNitemCount, MUS_NUM_WINDOWS, 
+		    XmNitemCount, MUS_NUM_FFT_WINDOWS, 
 		    XmNvisibleItemCount, 5, 
 		    NULL);
-      for (i = 0; i < MUS_NUM_WINDOWS; i++) 
+      for (i = 0; i < MUS_NUM_FFT_WINDOWS; i++) 
 	XmStringFree(windows[i]);
       XtManageChild(window_list); 
       XtAddCallback(window_list, XmNbrowseSelectionCallback, window_browse_callback, NULL);
@@ -1149,7 +1144,7 @@ Widget fire_up_transform_dialog(bool managed)
   else XtUnmanageChild(transform_dialog);
   if ((need_callback) && (XtIsManaged(transform_dialog)))
     {
-      set_label(graph_label, FFT_WINDOWS[(int)fft_window(ss)]);
+      set_label(graph_label, mus_fft_window_name(fft_window(ss)));
       get_fft_window_data();
       XtAddCallback(graph_drawer, XmNresizeCallback, graph_resize_callback, NULL);
       XtAddCallback(graph_drawer, XmNexposeCallback, graph_resize_callback, NULL);
@@ -1245,7 +1240,7 @@ void set_fft_window(mus_fft_window_t val)
   if (transform_dialog)
     {
       XmListSelectPos(window_list, (int)val + 1, false);
-      set_label(graph_label, FFT_WINDOWS[val]);
+      set_label(graph_label, mus_fft_window_name(val));
       get_fft_window_data();
       graph_redisplay();
       if (fft_window_beta_in_use(val))

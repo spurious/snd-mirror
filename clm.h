@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 32
-#define MUS_DATE "14-Feb-07"
+#define MUS_REVISION 33
+#define MUS_DATE "21-Feb-07"
 
 /*
+ * 21-Feb:     mus_fft_window_name.
  * 14-Feb:     three more fft window choices.
  * --------
  * 27-Nov:     move-sound array access parallel to locsig.
@@ -258,12 +259,12 @@ typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PAR
 	      MUS_GAUSSIAN_WINDOW, MUS_TUKEY_WINDOW, MUS_DOLPH_CHEBYSHEV_WINDOW, MUS_HANN_POISSON_WINDOW, 
 	      MUS_CONNES_WINDOW, MUS_SAMARAKI_WINDOW, MUS_ULTRASPHERICAL_WINDOW, 
 	      MUS_BARTLETT_HANN_WINDOW, MUS_BOHMAN_WINDOW, MUS_FLAT_TOP_WINDOW,
-	      MUS_NUM_WINDOWS} mus_fft_window_t;
+	      MUS_NUM_FFT_WINDOWS} mus_fft_window_t;
 
 typedef enum {MUS_CHEBYSHEV_OBSOLETE_KIND, MUS_CHEBYSHEV_FIRST_KIND, MUS_CHEBYSHEV_SECOND_KIND} mus_polynomial_t;
 
 #define MUS_INTERP_TYPE_OK(Interp) ((Interp) <= MUS_NUM_INTERPS)
-#define MUS_FFT_WINDOW_OK(Window) ((Window) < MUS_NUM_WINDOWS)
+#define MUS_FFT_WINDOW_OK(Window) ((Window) < MUS_NUM_FFT_WINDOWS)
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define MUS_RUN(GEN, ARG_1, ARG_2) ({ mus_any *_clm_h_1 = (mus_any *)(GEN); \
                                        ((*((_clm_h_1->core)->run))(_clm_h_1, ARG_1, ARG_2)); })
@@ -630,6 +631,8 @@ void mus_fftw(Float *rl, int n, int dir);
 #endif
 Float *mus_make_fft_window(mus_fft_window_t type, int size, Float beta);
 Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float beta, Float mu, Float *window);
+const char *mus_fft_window_name(mus_fft_window_t win);
+const char **mus_fft_window_names(void);
 Float *mus_convolution(Float* rl1, Float* rl2, int n);
 void mus_convolve_files(const char *file1, const char *file2, Float maxamp, const char *output_file);
 
@@ -693,6 +696,9 @@ mus_any *mus_make_frame_with_data(int chans, Float *data);
 mus_any *mus_make_mixer_with_data(int chans, Float *data);
 
 
+#ifndef CLM_DISABLE_DEPRECATED
+  #define MUS_NUM_WINDOWS MUS_NUM_FFT_WINDOWS
+#endif
 
 #ifdef __cplusplus
 }

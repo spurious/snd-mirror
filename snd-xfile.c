@@ -15,8 +15,7 @@
 /* TODO:   also change filter/text prompt to reflect change of dir */
 /* TODO: don't let 2chan squeeze into nothing */
 /* SOMEDAY: it would be nice to have a way to choose multiple files to open in the open file dialog list */
-/* TODO: can sync of same file cause unwanted save? */
-/* TODO: if sort choice changed and file selected, move window to show it in its new position */
+/* TODO: gtk: if sort choice changed and file selected, move window to show it in its new position (and dir list pos as well) */
 /* PERHAPS: multiple dirs as in next? */
 /* PERHAPS: if just-sounds, don't show dirs that have no sound files (at least no empty dirs) */
 
@@ -701,11 +700,24 @@ static void sort_files_and_redisplay(file_pattern_info *fp)
 {
   /* if just sorting, no need to read the directory */
   dir_info *cur_dir;
+
   cur_dir = fp->current_files;
   if (cur_dir->len > 0)
     {
       XmString *names;
-      int i;
+      int i, new_selected_position = -1;
+      char *selected_filename = NULL;
+
+      {
+	XmString *strs;
+	int selections = 0;
+	XtVaGetValues(XmFileSelectionBoxGetChild(fp->dialog, XmDIALOG_LIST), 
+		      XmNselectedItems, &strs, 
+		      XmNselectedItemCount, &selections,
+		      NULL);
+	if ((selections > 0) && (strs[0]))
+	  selected_filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+      }
 
       snd_sort(fp->sorter_choice, cur_dir->files, cur_dir->len);
 
@@ -718,14 +730,23 @@ static void sort_files_and_redisplay(file_pattern_info *fp)
        */
 
       names = (XmString *)CALLOC(cur_dir->len, sizeof(XmString));
-      for (i = 0; i < cur_dir->len; i++) 
-	names[i] = XmStringCreateLocalized(cur_dir->files[i]->full_filename);
+      for (i = 0; i < cur_dir->len; i++)
+	{
+	  names[i] = XmStringCreateLocalized(cur_dir->files[i]->full_filename);
+	  if ((new_selected_position == -1) &&
+	      (selected_filename) &&
+	      (strcmp(selected_filename, cur_dir->files[i]->full_filename) == 0))
+	    new_selected_position = i;
+	}
 
       XtVaSetValues(fp->dialog, 
 		    XmNfileListItems, names, 
 		    XmNfileListItemCount, cur_dir->len, 
 		    XmNlistUpdated, true, 
 		    NULL);
+
+      if (new_selected_position >= 0)
+	ensure_list_row_visible(XmFileSelectionBoxGetChild(fp->dialog, XmDIALOG_LIST), new_selected_position);
 
       for (i = 0; i < cur_dir->len; i++) 
 	if (names[i]) 

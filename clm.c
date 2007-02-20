@@ -8079,6 +8079,24 @@ Float *mus_make_fft_window(mus_fft_window_t type, int size, Float beta)
   return(mus_make_fft_window_with_window(type, size, beta, 0.0, (Float *)clm_calloc(size, sizeof(Float), S_make_fft_window)));
 }
 
+static const char *fft_window_names[MUS_NUM_FFT_WINDOWS] = 
+  {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
+   "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes",
+   "Samaraki", "Ultraspherical", "Bartlett-Hann", "Bohman", "Flat-top"};
+
+const char *mus_fft_window_name(mus_fft_window_t win)
+{
+  if (MUS_FFT_WINDOW_OK(win))
+    return(fft_window_names[(int)win]);
+  return("unknown");
+}
+
+const char **mus_fft_window_names(void)
+{
+  return(fft_window_names);
+}
+
+
 Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type)
 {
   int i;

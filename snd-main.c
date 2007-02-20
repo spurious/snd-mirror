@@ -423,7 +423,7 @@ static void save_options(FILE *fd)
 
   if (transform_size(ss) != DEFAULT_TRANSFORM_SIZE) pss_sd(fd, S_transform_size, transform_size(ss));
   if (minibuffer_history_length(ss) != DEFAULT_MINIBUFFER_HISTORY_LENGTH) pss_sd(fd, S_minibuffer_history_length, minibuffer_history_length(ss));
-  if (fft_window(ss) != DEFAULT_FFT_WINDOW) pss_ss(fd, S_fft_window, TO_VAR_NAME(mus_fft_window_name(fft_window(ss))));
+  if (fft_window(ss) != DEFAULT_FFT_WINDOW) pss_ss(fd, S_fft_window, TO_VAR_NAME(mus_fft_window_xen_name(fft_window(ss))));
   if (transform_graph_type(ss) != DEFAULT_TRANSFORM_GRAPH_TYPE) pss_ss(fd, S_transform_graph_type, transform_graph_type_name(transform_graph_type(ss)));
   if (time_graph_type(ss) != DEFAULT_TIME_GRAPH_TYPE) pss_ss(fd, S_time_graph_type, time_graph_type_name(time_graph_type(ss)));
   if (x_axis_style(ss) != DEFAULT_X_AXIS_STYLE) pss_ss(fd, S_x_axis_style, x_axis_style_name(x_axis_style(ss)));
@@ -696,7 +696,7 @@ void global_fft_state(void)
   mus_snprintf(buf, 1024, "fft size: %d\n    type: %s\n    window: %s (alpha: %.3f, beta: %.3f)\n",
 	       (int)transform_size(ss), 
 	       TO_VAR_NAME(transform_program_name(transform_type(ss))),
-	       TO_VAR_NAME(mus_fft_window_name(fft_window(ss))),
+	       TO_VAR_NAME(mus_fft_window_xen_name(fft_window(ss))),
 	       fft_window_alpha(ss),
 	       fft_window_beta(ss));
   snd_help_append(buf);
@@ -1074,7 +1074,7 @@ static void save_sound_state(snd_info *sp, void *ptr)
       if (cp->transform_graph_type != transform_graph_type(ss)) 
 	pcp_ss(fd, S_transform_graph_type, transform_graph_type_name(cp->transform_graph_type), chan);
       if (cp->time_graph_type != time_graph_type(ss)) pcp_ss(fd, S_time_graph_type, time_graph_type_name(cp->time_graph_type), chan);
-      if (cp->fft_window != fft_window(ss)) pcp_ss(fd, S_fft_window, TO_VAR_NAME(mus_fft_window_name(cp->fft_window)), chan);
+      if (cp->fft_window != fft_window(ss)) pcp_ss(fd, S_fft_window, TO_VAR_NAME(mus_fft_window_xen_name(cp->fft_window)), chan);
       if (cp->transform_type != transform_type(ss)) pcp_ss(fd, S_transform_type, TO_VAR_NAME(transform_program_name(cp->transform_type)), chan);
       /* this is assuming the added transform definition (if any) can be found -- maybe not a good idea */
       if (cp->transform_normalization != transform_normalization(ss)) 

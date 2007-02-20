@@ -2337,8 +2337,8 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(fft_box);
     rts_fft_window = fft_window(ss);
-    prf = prefs_row_with_list("data window", S_fft_window, fft_windows[(int)rts_fft_window],
-			      fft_windows, MUS_NUM_WINDOWS,
+    prf = prefs_row_with_list("data window", S_fft_window, mus_fft_window_name(rts_fft_window),
+			      mus_fft_window_names(), MUS_NUM_FFT_WINDOWS,
 			      fft_box,
 			      fft_window_from_text,
 			      fft_window_completer, NULL);

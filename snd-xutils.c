@@ -715,14 +715,14 @@ void ensure_list_row_visible(widget_t list, int pos)
 		    XmNvisibleItemCount, &visible,
 		    XmNitemCount, &num_rows,
 		    NULL);
-      if (pos < top)
-	XmListSetPos(list, pos);
+      if (pos <= top)
+	XmListSetPos(list, pos + 1);
       else
 	{
 	  if (pos >= (top + visible))
 	    {
 	      if ((pos + visible) > num_rows)
-		XmListSetBottomPos(list, pos);
+		XmListSetBottomPos(list, num_rows);
 	      else XmListSetPos(list, pos);
 	    }
 	}
