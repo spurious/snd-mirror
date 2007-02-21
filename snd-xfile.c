@@ -12,13 +12,7 @@
    View:Files
 */
 
-/* TODO:   also change filter/text prompt to reflect change of dir */
-/* TODO: don't let 2chan squeeze into nothing */
-/* SOMEDAY: it would be nice to have a way to choose multiple files to open in the open file dialog list */
 /* TODO: gtk: if sort choice changed and file selected, move window to show it in its new position (and dir list pos as well) */
-/* PERHAPS: multiple dirs as in next? */
-/* PERHAPS: if just-sounds, don't show dirs that have no sound files (at least no empty dirs) */
-
 
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
 #define MSG_BOX(Dialog, Child) XmMessageBoxGetChild(Dialog, Child)
@@ -1147,11 +1141,12 @@ static bool file_is_nonexistent_directory(Widget dialog)
   filename = XmTextGetString(FSB_BOX(dialog, XmDIALOG_TEXT));
   if (filename)
     {
-      int i, len;
+      int len;
       len = strlen(filename);
       if ((!mus_file_probe(filename)) && 
 	  (filename[len - 1] == '/'))
 	{
+	  int i;
 	  /* check that there's some hope of making this directory */
 	  for (i = len - 2; i > 0; i--)
 	    if (filename[i] == '/')

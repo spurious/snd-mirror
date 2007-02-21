@@ -1757,21 +1757,21 @@ static XEN g_fmod(XEN a, XEN b)
 #if HAVE_SPECIAL_FUNCTIONS
 static XEN g_j0(XEN x)
 {
-  #define H_j0 "(j0 x) returns the regular cylindrical bessel function J0(x)"
+  #define H_j0 "(j0 x): returns the regular cylindrical bessel function J0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "j0", " a number");
   return(C_TO_XEN_DOUBLE(j0(XEN_TO_C_DOUBLE(x))));
 }
 
 static XEN g_j1(XEN x)
 {
-  #define H_j1 "(j1 x) returns the regular cylindrical bessel function J1(x)"
+  #define H_j1 "(j1 x): returns the regular cylindrical bessel function J1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "j1", " a number");
   return(C_TO_XEN_DOUBLE(j1(XEN_TO_C_DOUBLE(x))));
 }
 
 static XEN g_jn(XEN order, XEN x)
 {
-  #define H_jn "(jn n x) returns the regular cylindrical bessel function Jn(x)"
+  #define H_jn "(jn n x): returns the regular cylindrical bessel function Jn(x)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, "jn", " an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, "jn", " a number");
   return(C_TO_XEN_DOUBLE(jn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
@@ -1779,21 +1779,21 @@ static XEN g_jn(XEN order, XEN x)
 
 static XEN g_y0(XEN x)
 {
-  #define H_y0 "(y0 x) returns the irregular cylindrical bessel function Y0(x)"
+  #define H_y0 "(y0 x): returns the irregular cylindrical bessel function Y0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "y0", " a number");
   return(C_TO_XEN_DOUBLE(y0(XEN_TO_C_DOUBLE(x))));
 }
 
 static XEN g_y1(XEN x)
 {
-  #define H_y1 "(y1 x) returns the irregular cylindrical bessel function Y1(x)"
+  #define H_y1 "(y1 x): returns the irregular cylindrical bessel function Y1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "y1", " a number");
   return(C_TO_XEN_DOUBLE(y1(XEN_TO_C_DOUBLE(x))));
 }
 
 static XEN g_yn(XEN order, XEN x)
 {
-  #define H_yn "(yn n x) returns the irregular cylindrical bessel function Yn(x)"
+  #define H_yn "(yn n x): returns the irregular cylindrical bessel function Yn(x)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, "yn", " an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, "yn", " a number");
   return(C_TO_XEN_DOUBLE(yn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
@@ -1801,21 +1801,21 @@ static XEN g_yn(XEN order, XEN x)
 
 static XEN g_erf(XEN x)
 {
-  #define H_erf "(erf x) returns the error function erf(x)"
+  #define H_erf "(erf x): returns the error function erf(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "erf", " a number");
   return(C_TO_XEN_DOUBLE(erf(XEN_TO_C_DOUBLE(x))));
 }
 
 static XEN g_erfc(XEN x)
 {
-  #define H_erfc "(erfc x) returns the complementary error function erfc(x)"
+  #define H_erfc "(erfc x): returns the complementary error function erfc(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "erfc", " a number");
   return(C_TO_XEN_DOUBLE(erfc(XEN_TO_C_DOUBLE(x))));
 }
 
 static XEN g_lgamma(XEN x)
 {
-  #define H_lgamma "(lgamma x) returns the log of the gamma function at x"
+  #define H_lgamma "(lgamma x): returns the log of the gamma function at x"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "lgamma", " a number");
   return(C_TO_XEN_DOUBLE(lgamma(XEN_TO_C_DOUBLE(x))));
 }
@@ -1823,7 +1823,7 @@ static XEN g_lgamma(XEN x)
 
 static XEN g_i0(XEN x)
 {
-  #define H_i0 "(i0 x) returns the modified cylindrical bessel function I0(x)"
+  #define H_i0 "(i0 x): returns the modified cylindrical bessel function I0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "i0", " a number");
   return(C_TO_XEN_DOUBLE(mus_bessi0(XEN_TO_C_DOUBLE(x))));
 }
@@ -1833,7 +1833,7 @@ static XEN g_i0(XEN x)
 #include <gsl/gsl_sf_ellint.h>
 static XEN g_gsl_ellipk(XEN k)
 {
-  #define H_gsl_ellipk "(gsl-ellipk k) returns the complete elliptic integral k"
+  #define H_gsl_ellipk "(gsl-ellipk k): returns the complete elliptic integral k"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(k), k, XEN_ONLY_ARG, "gsl-ellipk", "a number");
   return(C_TO_XEN_DOUBLE(gsl_sf_ellint_Kcomp(sqrt(XEN_TO_C_DOUBLE(k)), GSL_PREC_APPROX)));
 }
@@ -1841,7 +1841,7 @@ static XEN g_gsl_ellipk(XEN k)
 #include <gsl/gsl_sf_elljac.h>
 static XEN g_gsl_ellipj(XEN u, XEN m)
 {
-  #define H_gsl_ellipj "(gsl-ellipj u m) returns the Jacobian elliptic functions sn, cn, and dn of u and m"
+  #define H_gsl_ellipj "(gsl-ellipj u m): returns the Jacobian elliptic functions sn, cn, and dn of u and m"
   double sn = 0.0, cn = 0.0, dn = 0.0;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(u), u, XEN_ARG_1, "gsl-ellipj", "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(m), m, XEN_ARG_2, "gsl-ellipj", "a number");
@@ -1986,7 +1986,7 @@ static int watchers_size = 0;
 static XEN g_delete_watcher(XEN id)
 {
   int w;
-  #define H_delete_watcher "(" S_delete_watcher " id) removes the watcher associated with the integer 'id'"
+  #define H_delete_watcher "(" S_delete_watcher " id): removes the watcher associated with the integer 'id'"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(id), id, XEN_ONLY_ARG, S_delete_watcher, "an integer");
 
   w = XEN_TO_C_INT(id);
@@ -2014,7 +2014,7 @@ void run_watchers(void)
 static XEN g_add_watcher(XEN func)
 {
   int i, floc = 0;
-  #define H_add_watcher "(" S_add_watcher " func) adds 'func' (a function of no arguments) to the watcher list, and \
+  #define H_add_watcher "(" S_add_watcher " func): adds 'func' (a function of no arguments) to the watcher list, and \
 returns its id (an integer, used by " S_delete_watcher "). "
 
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(func) && XEN_REQUIRED_ARGS_OK(func, 0), func, XEN_ONLY_ARG, S_add_watcher, "a function of no args");
@@ -2273,7 +2273,7 @@ void g_init_xmix(void);
 
 static XEN g_write_byte(XEN byte) /* this collides with CM */
 {
-  #define H_write_byte "(" S_write_byte " byte) writes byte to the current output port"
+  #define H_write_byte "(" S_write_byte " byte): writes byte to the current output port"
   XEN port;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(byte), byte, XEN_ONLY_ARG, S_write_byte, "an integer");
   port = scm_current_output_port();

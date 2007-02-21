@@ -4484,7 +4484,7 @@ static bool delete_mix_1(int mix_id, bool redisplay)
 
 static XEN g_delete_mix(XEN n)
 {
-  #define H_delete_mix "(" S_delete_mix " id) deletes the given mix (this is undo-able)"
+  #define H_delete_mix "(" S_delete_mix " id): deletes the given mix (this is undo-able)"
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_delete_mix, "an integer");
   if (!(delete_mix_1(XEN_TO_C_INT(n), true)))
@@ -7103,7 +7103,7 @@ static XEN g_tracks(void)
 static XEN g_track(XEN id, XEN chn)
 {
   /* given track id, return list of constituent mixes */
-  #define H_track "(" S_track " track-id :optional (chn 0)) returns a list of the mixes contained in the given track (and channel if specified)"
+  #define H_track "(" S_track " track-id :optional (chn 0)): returns a list of the mixes contained in the given track (and channel if specified)"
   int i, track_id;
   XEN result = XEN_EMPTY_LIST;
   track_mix_list_t *trk;
@@ -7342,7 +7342,7 @@ int make_track(int *mixes, int len)
 
 static XEN g_make_track(XEN ids)
 {
-  #define H_make_track "(" S_make_track "mix-ids...) returns a new track containing the mixes passed as its argument. \
+  #define H_make_track "(" S_make_track "mix-ids...): returns a new track containing the mixes passed as its argument. \
 For example, to create a new track containing mixes 1 and 3: " make_track_example "."
   int len = 0, track_id;
   XEN lst;

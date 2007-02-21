@@ -1634,7 +1634,7 @@ sound_data *sound_data_copy(sound_data *sd)
 static XEN g_sound_data_copy(XEN obj)
 {
   sound_data *sdnew;
-  #define H_sound_data_copy "(" S_sound_data_copy " sd) returns a copy of the sound-data object sd"
+  #define H_sound_data_copy "(" S_sound_data_copy " sd): returns a copy of the sound-data object sd"
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ONLY_ARG, S_sound_data_copy, "a sound-data object");
   sdnew = sound_data_copy((sound_data *)XEN_OBJECT_REF(obj));
   XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, sdnew, 0, free_sound_data);
@@ -1656,7 +1656,7 @@ sound_data *sound_data_reverse(sound_data *sd)
 
 static XEN g_sound_data_reverseB(XEN obj)
 {
-  #define H_sound_data_reverseB "(" S_sound_data_reverseB " sd) reverses the elements (within each channel) of sound-data object sd"
+  #define H_sound_data_reverseB "(" S_sound_data_reverseB " sd): reverses the elements (within each channel) of sound-data object sd"
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ONLY_ARG, S_sound_data_reverseB, "a sound-data object");
   sound_data_reverse((sound_data *)XEN_OBJECT_REF(obj));
   return(obj);
@@ -1677,7 +1677,7 @@ sound_data *sound_data_add(sound_data *sd1, sound_data *sd2)
 
 static XEN g_sound_data_addB(XEN obj1, XEN obj2)
 {
-  #define H_sound_data_addB "(" S_sound_data_addB " sd1 sd2) adds (element-wise) sd2 to sd1, returning sd1"
+  #define H_sound_data_addB "(" S_sound_data_addB " sd1 sd2): adds (element-wise) sd2 to sd1, returning sd1"
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj1), obj1, XEN_ARG_1, S_sound_data_addB, "a sound-data object");
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj2), obj2, XEN_ARG_2, S_sound_data_addB, "a sound-data object");
   sound_data_add((sound_data *)XEN_OBJECT_REF(obj1), (sound_data *)XEN_OBJECT_REF(obj2));
@@ -1699,7 +1699,7 @@ sound_data *sound_data_multiply(sound_data *sd1, sound_data *sd2)
 
 static XEN g_sound_data_multiplyB(XEN obj1, XEN obj2)
 {
-  #define H_sound_data_multiplyB "(" S_sound_data_multiplyB " sd1 sd2) multiplies (element-wise) sd1 by sd2, returning sd1"
+  #define H_sound_data_multiplyB "(" S_sound_data_multiplyB " sd1 sd2): multiplies (element-wise) sd1 by sd2, returning sd1"
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj1), obj1, XEN_ARG_1, S_sound_data_multiplyB, "a sound-data object");
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj2), obj2, XEN_ARG_2, S_sound_data_multiplyB, "a sound-data object");
   sound_data_multiply((sound_data *)XEN_OBJECT_REF(obj1), (sound_data *)XEN_OBJECT_REF(obj2));
@@ -1720,7 +1720,7 @@ sound_data *sound_data_offset(sound_data *sd, Float off)
 
 static XEN g_sound_data_offsetB(XEN obj, XEN offset)
 {
-  #define H_sound_data_offsetB "(" S_sound_data_offsetB " sd val) adds val to each element of sd, returning sd"
+  #define H_sound_data_offsetB "(" S_sound_data_offsetB " sd val): adds val to each element of sd, returning sd"
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ARG_1, S_sound_data_offsetB, "a sound-data object");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(offset), offset, XEN_ARG_2, S_sound_data_offsetB, "a number");
   sound_data_offset((sound_data *)XEN_OBJECT_REF(obj), XEN_TO_C_DOUBLE(offset));
@@ -1729,7 +1729,7 @@ static XEN g_sound_data_offsetB(XEN obj, XEN offset)
 
 static XEN g_sound_data_add(XEN obj1, XEN obj2)
 {
-  #define H_sound_data_add "(" S_sound_data_add " obj1 obj2) adds obj1 to obj2, either or both of which can be sound-data objects"
+  #define H_sound_data_add "(" S_sound_data_add " obj1 obj2): adds obj1 to obj2, either or both of which can be sound-data objects"
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj1) || XEN_NUMBER_P(obj1), obj1, XEN_ARG_1, S_sound_data_add, "a sound-data object or a number");
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj2) || XEN_NUMBER_P(obj2), obj2, XEN_ARG_2, S_sound_data_add, "a sound-data object or a number");
   if (SOUND_DATA_P(obj1))
@@ -1745,7 +1745,7 @@ static XEN g_sound_data_add(XEN obj1, XEN obj2)
 
 static XEN g_sound_data_multiply(XEN obj1, XEN obj2)
 {
-  #define H_sound_data_multiply "(" S_sound_data_multiply " obj1 obj2) multiplies obj1 by obj2, either or both of which can be sound-data objects"
+  #define H_sound_data_multiply "(" S_sound_data_multiply " obj1 obj2): multiplies obj1 by obj2, either or both of which can be sound-data objects"
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj1) || XEN_NUMBER_P(obj1), obj1, XEN_ARG_1, S_sound_data_multiply, "a sound-data object or a number");
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj2) || XEN_NUMBER_P(obj2), obj2, XEN_ARG_2, S_sound_data_multiply, "a sound-data object or a number");
   if (SOUND_DATA_P(obj1))

@@ -190,7 +190,7 @@ static XEN g_vct_to_readable_string(XEN obj)
 {
   char *vstr;
   XEN result;
-  #define H_vct_to_string "(" S_vct_to_string " v) -> scheme readable description of v"
+  #define H_vct_to_string "(" S_vct_to_string " v): scheme readable description of v"
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_to_string, "a vct");
   vstr = mus_vct_to_readable_string(XEN_TO_VCT(obj));
   result = C_TO_XEN_STRING(vstr);
@@ -612,7 +612,7 @@ XEN xen_list_to_vct(XEN lst)
 
 static XEN g_vct(XEN args) 
 {
-  #define H_vct "(" S_vct " args...) returns a new vct with args as contents; same as " S_list_to_vct ": (vct 1 2 3)"
+  #define H_vct "(" S_vct " args...): returns a new vct with args as contents; same as " S_list_to_vct ": (vct 1 2 3)"
   return(xen_list_to_vct(args));
 }
 
@@ -700,7 +700,7 @@ static XEN g_vct_reverse(XEN vobj, XEN size)
 
 static XEN g_vct_times(XEN obj1, XEN obj2)
 {
-  #define H_vct_times "(" S_vct_times " obj1 obj2) is either " S_vct_multiplyB " or " S_vct_scaleB ", depending on the types of its arguments"
+  #define H_vct_times "(" S_vct_times " obj1 obj2): either " S_vct_multiplyB " or " S_vct_scaleB ", depending on the types of its arguments"
   if (MUS_VCT_P(obj1))
     {
       if (MUS_VCT_P(obj2))
@@ -712,7 +712,7 @@ static XEN g_vct_times(XEN obj1, XEN obj2)
 
 static XEN g_vct_plus(XEN obj1, XEN obj2)
 {
-  #define H_vct_plus "(" S_vct_plus " obj1 obj2) is either " S_vct_addB " or " S_vct_offsetB ", depending on the types of its arguments"
+  #define H_vct_plus "(" S_vct_plus " obj1 obj2): either " S_vct_addB " or " S_vct_offsetB ", depending on the types of its arguments"
   if (MUS_VCT_P(obj1))
     {
       if (MUS_VCT_P(obj2))
