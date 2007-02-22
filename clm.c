@@ -7648,6 +7648,71 @@ void mus_fft(Float *rl, Float *im, int n, int is)
     }
 }
 
+
+void mus_big_fft(Float *rl, Float *im, off_t n, int is)
+{
+  off_t m, j, mh, ldm, lg, i, i2, j2, imh;
+  double ur, ui, u, vr, vi, angle, c, s;
+  imh = (off_t)(log(n + 1) / log(2.0));
+
+  j = 0;
+  for (i = 0; i < n; i++)
+    {
+      if (j > i)
+	{
+	  vr = rl[j];
+	  vi = im[j];
+	  rl[j] = rl[i];
+	  im[j] = im[i];
+	  rl[i] = vr;
+	  im[i] = vi;
+	}
+      m = n >> 1;
+      while ((m >= 2) && (j >= m))
+	{
+	  j -= m;
+	  m = m >> 1;
+	}
+      j += m;
+    }
+
+  m = 2;
+  ldm = 1;
+  mh = n >> 1;
+  angle = (M_PI * is);
+  for (lg = 0; lg < imh; lg++)
+    {
+      c = cos(angle);
+      s = sin(angle);
+      ur = 1.0;
+      ui = 0.0;
+      for (i2 = 0; i2 < ldm; i2++)
+	{
+	  i = i2;
+	  j = i2 + ldm;
+	  for (j2 = 0; j2 < mh; j2++)
+	    {
+	      vr = ur * rl[j] - ui * im[j];
+	      vi = ur * im[j] + ui * rl[j];
+	      rl[j] = rl[i] - vr;
+	      im[j] = im[i] - vi;
+	      rl[i] += vr;
+	      im[i] += vi;
+	      i += m;
+	      j += m;
+	    }
+	  u = ur;
+	  ur = (ur * c) - (ui * s);
+	  ui = (ui * c) + (u * s);
+	}
+      mh >>= 1;
+      ldm = m;
+      angle *= 0.5;
+      m <<= 1;
+    }
+}
+
+
 #if HAVE_GSL
 #include <gsl/gsl_sf_bessel.h>
 double mus_bessi0(Float x)
@@ -8097,7 +8162,7 @@ const char **mus_fft_window_names(void)
 }
 
 
-Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type)
+Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, mus_spectrum_t type)
 {
   int i;
   Float maxa, todb, lowest;
@@ -8126,7 +8191,7 @@ Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type)
   if (maxa > 0.0)
     {
       maxa = 1.0 / maxa;
-      if (type == 0) /* dB */
+      if (type == MUS_SPECTRUM_IN_DB)
 	{
 	  todb = 20.0 / log(10.0);
 	  for (i = 0; i < n; i++) 
@@ -8134,7 +8199,7 @@ Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type)
 	}
       else
 	{
-	  if (type == 1) /* linear, normalized */
+	  if (type == MUS_SPECTRUM_NORMALIZED)
 	    for (i = 0; i < n; i++) 
 	      rdat[i] *= maxa;
 	}

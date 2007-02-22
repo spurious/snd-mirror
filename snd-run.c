@@ -9475,7 +9475,7 @@ static char *descr_mus_spectrum_3v(int *args, ptree *pt)
 }
 static void mus_spectrum_3v(int *args, ptree *pt) 
 {
-  mus_spectrum(VCT_ARG_1->data, VCT_ARG_2->data, (VCT_ARG_3) ? (VCT_ARG_3->data) : NULL, VCT_ARG_1->length, 1);
+  mus_spectrum(VCT_ARG_1->data, VCT_ARG_2->data, (VCT_ARG_3) ? (VCT_ARG_3->data) : NULL, VCT_ARG_1->length, MUS_SPECTRUM_NORMALIZED);
   VCT_RESULT = VCT_ARG_1;
 }
 static char *descr_mus_spectrum_4v(int *args, ptree *pt) 
@@ -9492,7 +9492,7 @@ static void mus_spectrum_4v(int *args, ptree *pt)
 	       VCT_ARG_2->data, 
 	       (VCT_ARG_3) ? (VCT_ARG_3->data) : NULL,
 	       VCT_ARG_1->length,
-	       INT_ARG_4);
+	       (mus_spectrum_t)INT_ARG_4);
   VCT_RESULT = VCT_ARG_1;
 }
 static xen_value *mus_spectrum_1(ptree *prog, xen_value **args, int num_args) 

@@ -730,7 +730,7 @@ static XEN g_spectrum(XEN url, XEN uim, XEN uwin, XEN utype)
 real and imaginary data in vcts rl and im, returns (in rl) the spectrum thereof; \
 window is the fft data window (a vct as returned by " S_make_fft_window "), \
 and type determines how the spectral data is scaled:\n\
-  0 = data in dB, \n\
+  0 = data in dB,\n\
   1 (default) = linear and normalized\n\
   2 = linear and un-normalized."
 
@@ -758,7 +758,7 @@ and type determines how the spectral data is scaled:\n\
   if (XEN_INTEGER_P(utype)) type = XEN_TO_C_INT(utype); else type = 1; /* linear normalized */
   if ((type < 0) || (type > 2))
     XEN_OUT_OF_RANGE_ERROR(S_spectrum, 4, utype, "type must be 0..2");
-  mus_spectrum(v1->data, v2->data, (v3) ? (v3->data) : NULL, n, type);
+  mus_spectrum(v1->data, v2->data, (v3) ? (v3->data) : NULL, n, (mus_spectrum_t)type);
   return(xen_return_first(url, uim, uwin));
 }
 

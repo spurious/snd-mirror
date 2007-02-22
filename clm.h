@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 33
-#define MUS_DATE "21-Feb-07"
+#define MUS_REVISION 34
+#define MUS_DATE "22-Feb-07"
 
 /*
+ * 22-Feb:     mus_big_fft and mus_spectrum_t.
  * 21-Feb:     mus_fft_window_name.
  * 14-Feb:     three more fft window choices.
  * --------
@@ -261,6 +262,7 @@ typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PAR
 	      MUS_BARTLETT_HANN_WINDOW, MUS_BOHMAN_WINDOW, MUS_FLAT_TOP_WINDOW,
 	      MUS_NUM_FFT_WINDOWS} mus_fft_window_t;
 
+typedef enum {MUS_SPECTRUM_IN_DB, MUS_SPECTRUM_NORMALIZED, MUS_SPECTRUM_RAW} mus_spectrum_t;
 typedef enum {MUS_CHEBYSHEV_OBSOLETE_KIND, MUS_CHEBYSHEV_FIRST_KIND, MUS_CHEBYSHEV_SECOND_KIND} mus_polynomial_t;
 
 #define MUS_INTERP_TYPE_OK(Interp) ((Interp) <= MUS_NUM_INTERPS)
@@ -624,8 +626,9 @@ Float mus_src_05(mus_any *srptr, Float (*input)(void *arg, int direction));
 bool mus_convolve_p(mus_any *ptr);
 Float mus_convolve(mus_any *ptr, Float (*input)(void *arg, int direction));
 mus_any *mus_make_convolve(Float (*input)(void *arg, int direction), Float *filter, int fftsize, int filtersize, void *closure);
-Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type);
+Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, mus_spectrum_t type);
 void mus_fft(Float *rl, Float *im, int n, int is);
+void mus_big_fft(Float *rl, Float *im, off_t n, int is);
 #if HAVE_FFTW || HAVE_FFTW3
 void mus_fftw(Float *rl, int n, int dir);
 #endif

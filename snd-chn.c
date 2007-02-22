@@ -4652,10 +4652,6 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_FFT_LOG_MAGNITUDE:       return(C_TO_XEN_BOOLEAN(cp->fft_log_magnitude));                  break;
 	    case CP_SPECTRO_HOP:             return(C_TO_XEN_INT(cp->spectro_hop));                            break;
 	    case CP_TRANSFORM_SIZE:          return(C_TO_XEN_OFF_T(cp->transform_size));                       break;
-	      /* these are ints throughout currently, but should be off_t eventually.  The change to off_t or mus_fft_size_t
-	       *   is much more effort than might appear -- clm needs to change, and most of snd-fft (and this file).
-	       *   but most problematic -- fftw uses "int" for the fft size.
-	       */
 	    case CP_TRANSFORM_GRAPH_TYPE:    return(C_TO_XEN_INT((int)(cp->transform_graph_type)));            break;
 	    case CP_FFT_WINDOW:              return(C_TO_XEN_INT((int)(cp->fft_window)));                      break;
 	    case CP_TRANSFORM_TYPE:          return(C_TO_XEN_INT(cp->transform_type));                         break;
@@ -6207,23 +6203,23 @@ static XEN g_transform_size(XEN snd, XEN chn)
   #define H_transform_size "(" S_transform_size " :optional snd chn): current fft size (512)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TRANSFORM_SIZE, S_transform_size));
-  return(C_TO_XEN_INT(transform_size(ss)));
+  return(C_TO_XEN_OFF_T(transform_size(ss)));
 }
 
 static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
 {
-  int len;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_transform_size, "an integer"); 
-  len = XEN_TO_C_INT(val);
+  off_t len;
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(val), val, XEN_ARG_1, S_setB S_transform_size, "an integer"); 
+  len = XEN_TO_C_OFF_T(val);
   if (len <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_size, 1, val, "size ~A, but must be > 0");
   if (!(POWER_OF_2_P(len)))
-    len = snd_int_pow2((int)(log(len + 1) / log(2.0)));
+    len = snd_off_t_pow2((int)(log(len + 1) / log(2.0))); /* actually rounds down, despite appearances */
   if (len <= 0) return(XEN_FALSE);
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TRANSFORM_SIZE, S_setB S_transform_size));
   set_transform_size(len);
-  return(C_TO_XEN_INT(transform_size(ss)));
+  return(C_TO_XEN_OFF_T(transform_size(ss)));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_transform_size_reversed, g_set_transform_size)
@@ -6717,7 +6713,7 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
 		{
 		  fprintf(fd, sp->short_filename);
 		  if (sp->nchans > 1) fprintf(fd, _(": chan %d"), cp->chan);
-		  fprintf(fd, _(", fft %d points beginning at sample " OFF_TD " (%.3f secs), %s\n\n"),
+		  fprintf(fd, _(", fft " OFF_TD " points beginning at sample " OFF_TD " (%.3f secs), %s\n\n"),
 			  fp->current_size, 
 			  ap->losamp, 
 			  (float)((double)(ap->losamp) / (double)srate),

@@ -1047,7 +1047,7 @@ void alert_envelope_editor(char *name, env *val)
 }
 
 typedef struct {
-  int size;
+  off_t size;
   Float *data;
   Float scale;
 } enved_fft;
@@ -1128,7 +1128,7 @@ static enved_fft *new_enved_fft(chan_info *cp)
 }
 
 #define DEFAULT_ENVED_MAX_FFT_SIZE 1048576
-static int enved_max_fft_size = DEFAULT_ENVED_MAX_FFT_SIZE;
+static off_t enved_max_fft_size = DEFAULT_ENVED_MAX_FFT_SIZE;
 
 static enved_fft *make_enved_spectrum(chan_info *cp)
 {
@@ -1136,10 +1136,10 @@ static enved_fft *make_enved_spectrum(chan_info *cp)
   ef = new_enved_fft(cp);
   if ((ef) && (ef->size == 0)) /* otherwise it is presumably already available */
     {
-      int i, fsize, data_len;
+      off_t i, fsize, data_len;
       Float data_max = 0.0;
       snd_fd *sf;
-      data_len = (int)(CURRENT_SAMPLES(cp)); /* known to be int here (size check below) */
+      data_len = CURRENT_SAMPLES(cp);
       if (data_len == 0) return(NULL);
       sf = init_sample_read(0, cp, READ_FORWARD);
       if (sf == NULL) return(NULL);
@@ -1164,7 +1164,8 @@ static void display_enved_spectrum(chan_info *cp, enved_fft *ef, axis_info *ap)
   if (ef)
     {
       Float incr, x = 0.0;
-      int i = 0, j = 0, hisamp;
+      int i = 0, j = 0;
+      off_t hisamp;
       Float samples_per_pixel, xf = 0.0, ina, ymax;
       ap->losamp = 0;
       ap->hisamp = ef->size - 1;
@@ -1173,7 +1174,7 @@ static void display_enved_spectrum(chan_info *cp, enved_fft *ef, axis_info *ap)
       ap->x0 = 0.0;
       ap->x1 = SND_SRATE(cp->sound) / 2;
       init_axis_scales(ap);
-      hisamp = (int)(ef->size / 2);
+      hisamp = ef->size / 2;
       incr = (Float)SND_SRATE(cp->sound) / (Float)(ef->size);
       samples_per_pixel = (Float)((double)hisamp / (Float)(ap->x_axis_x1 - ap->x_axis_x0));
       if (samples_per_pixel < 4.0)

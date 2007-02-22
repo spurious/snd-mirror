@@ -749,12 +749,10 @@ static int read_ibm_adpcm(const char *oldname, const char *newname, char *hdr)
 {
   short MAX_STEP = 2048, MIN_STEP = 16;
   int i, j, k, fs = -1, fd = -1;
-  ssize_t totalin;
   unsigned char *buf = NULL;
   short *buf1;
   off_t loc;
   short XHAT1 = 0, delndec, del1dec = 8, ln1dec, temp;
-  unsigned short data_in;
   float M[16] = {0.909, 0.909, 0.909, 0.909, 1.21, 1.4641, 1.771561, 2.143589, 0.909, 0.909, 0.909, 0.909, 1.21, 1.4641, 1.771561, 2.143589};
   float del_table[16] = {0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 0.0, -0.25, -0.5, -0.75, -1.0, -1.25, -1.5, -1.75};
   loc = mus_sound_data_location(oldname);
@@ -770,10 +768,12 @@ static int read_ibm_adpcm(const char *oldname, const char *newname, char *hdr)
   buf1 = (short *)CALLOC(TRANS_BUF_SIZE, sizeof(short));
   while (true)
     {
+      ssize_t totalin;
       totalin = read(fd, buf, TRANS_BUF_SIZE / 4);
       if (totalin <= 0) break;
       for (i = 0, j = 0; i < totalin; i += 2, j += 4)
 	{
+	  unsigned short data_in;
 	  data_in = (*((short *)(buf + i)));
 	  for (k = 0; k < 4; k++)
 	    {
@@ -871,7 +871,6 @@ static int adpcm_decoder(unsigned char *indata, short *outdata, int totalbytes, 
 static int read_dvi_adpcm(const char *oldname, const char *newname, char *hdr, int type)
 {
   int fs = -1, fd = -1, chans, srate, blksiz, samps, samps_read;
-  ssize_t totalin;
   unsigned char *buf = NULL;
   off_t loc;
   loc = mus_sound_data_location(oldname);
@@ -895,6 +894,7 @@ static int read_dvi_adpcm(const char *oldname, const char *newname, char *hdr, i
   samps_read = 0;
   while (samps > 0)
     {
+      ssize_t totalin;
       totalin = read(fd, buf, blksiz);
       if (totalin < blksiz) break;
       samps_read = adpcm_decoder(buf, (short *)hdr, totalin, type);

@@ -241,7 +241,7 @@ void track_dialog_set_track(int id) {}
 void show_track_background_wave(int pts, bool two_sided) {}
 void set_fft_window_alpha(Float val) {in_set_fft_window_alpha(val);}
 void set_fft_window_beta(Float val) {in_set_fft_window_beta(val);}
-void set_transform_size(int val) {in_set_transform_size(val);}
+void set_transform_size(off_t val) {in_set_transform_size(val);}
 void set_fft_window(mus_fft_window_t val) {in_set_fft_window(val);}
 void set_transform_type(int val) {in_set_transform_type(val);}
 void set_wavelet_type(int val) {in_set_wavelet_type(val);}

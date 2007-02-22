@@ -9,7 +9,7 @@
 #include <fftw3.h>
 static double *rdata = NULL, *idata = NULL;
 static fftw_plan rplan, iplan;
-static int last_fft_size = 0;
+static off_t last_fft_size = 0;
 
 void mus_fftw(Float *rl, int n, int dir)
 {
@@ -40,7 +40,7 @@ void mus_fftw(Float *rl, int n, int dir)
 /* save old plans both ways */
 static fftw_real *rdata = NULL, *idata = NULL;
 static rfftw_plan rplan, iplan;
-static int last_fft_size = 0;
+static off_t last_fft_size = 0;
 
 void mus_fftw(Float *rl, int n, int dir)
 {
@@ -393,6 +393,8 @@ int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size)
 
 #define MIN_CHECK 0.000001
 
+/* somday: still more ints -> off_ts */
+
 int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, int fftsize2, int srate, Float samps_per_pixel, Float fft_scale)
 {
   /* we want to reflect the graph as displayed, so each "bin" is samps_per_pixel wide */
@@ -454,13 +456,19 @@ int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, in
 	}
     }
   /* now we have the peaks; turn these into interpolated peaks/amps, and sort */
-  if (ascl > 0.0) ascl = 1.0 / ascl; else ascl = 1.0;
-  if (fft_scale > 0.0) bscl = fft_scale / ascl; else bscl = 1.0;
+  if (ascl > 0.0) 
+    ascl = 1.0 / ascl; 
+  else ascl = 1.0;
+  if (fft_scale > 0.0) 
+    bscl = fft_scale / ascl; 
+  else bscl = 1.0;
   for (i = 0, k = 0; i < pks; i++)
     {
       j = inds[i];
       ca = buf[j] * ascl;
-      if (j > 0) la = buf[j - 1] * ascl; else la = ca;
+      if (j > 0) 
+	la = buf[j - 1] * ascl; 
+      else la = ca;
       ra = buf[j + 1] * ascl; 
       if ((la < MIN_CHECK) || (ra < MIN_CHECK))
 	{
@@ -761,7 +769,7 @@ static void make_sonogram_axes(chan_info *cp)
 }
 
 typedef struct fft_state {
-  int size;
+  off_t size;
   mus_fft_window_t wintype;
   graph_type_t graph_type;
   bool done;
@@ -782,9 +790,11 @@ typedef struct fft_state {
 static double hypot(double r, double i) {return(sqrt(r * r + i * i));}
 #endif
 
-void fourier_spectrum(snd_fd *sf, Float *fft_data, int fft_size, int data_len, Float *window)
+void fourier_spectrum(snd_fd *sf, Float *fft_data, off_t fft_size_1, off_t data_len_1, Float *window)
 {
-  int i;
+  int i, fft_size, data_len;
+  fft_size = (int)fft_size_1;
+  data_len = (int)data_len_1;
   if (window)
     {
       for (i = 0; i < data_len; i++)
@@ -823,7 +833,7 @@ static void apply_fft(fft_state *fs)
   int i;
   off_t ind0;
   Float *fft_data;
-  int data_len;
+  off_t data_len;
   snd_fd *sf;
   chan_info *cp;
   cp = fs->cp;
@@ -1095,15 +1105,30 @@ void cp_free_fft_state(chan_info *cp)
     cp->fft_data = (fft_state *)free_fft_state(cp->fft_data);
 }
 
-bool fft_window_beta_in_use(mus_fft_window_t win) {return(win >= MUS_KAISER_WINDOW);}
-bool fft_window_alpha_in_use(mus_fft_window_t win) {return(win == MUS_ULTRASPHERICAL_WINDOW);}
+bool fft_window_beta_in_use(mus_fft_window_t win) 
+{
+  return((win == MUS_KAISER_WINDOW) ||
+	 (win == MUS_CAUCHY_WINDOW) ||
+	 (win == MUS_POISSON_WINDOW) ||
+	 (win == MUS_GAUSSIAN_WINDOW) ||
+	 (win == MUS_TUKEY_WINDOW) ||
+	 (win == MUS_DOLPH_CHEBYSHEV_WINDOW) ||
+	 (win == MUS_HANN_POISSON_WINDOW) ||
+	 (win == MUS_SAMARAKI_WINDOW) ||
+	 (win == MUS_ULTRASPHERICAL_WINDOW));
+}
+
+bool fft_window_alpha_in_use(mus_fft_window_t win) 
+{
+  return(win == MUS_ULTRASPHERICAL_WINDOW);
+}
 
 static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
 {
   fft_state *fs = NULL;
   axis_info *ap;
   bool reuse_old = false;
-  int fftsize;
+  off_t fftsize;
   off_t dbeg = 0, dlen = 0;
   ap = cp->axis;
   if ((show_selection_transform(ss)) && 
@@ -1173,7 +1198,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
   return(fs);
 }
 
-static fft_info *make_fft_info(int size, mus_fft_window_t window, Float alpha, Float beta)
+static fft_info *make_fft_info(off_t size, mus_fft_window_t window, Float alpha, Float beta)
 {
   fft_info *fp;
   fp = (fft_info *)CALLOC(1, sizeof(fft_info));
@@ -1234,7 +1259,8 @@ static void one_fft(fft_state *fs)
       fs->data = fp->data;
       if (fs->window == NULL)
 	{
-	  static int last_size = 0, last_zero = 0;
+	  static off_t last_size = 0;
+	  static int last_zero = 0;
 	  static mus_fft_window_t last_wintype = MUS_RECTANGULAR_WINDOW;
 	  static Float last_beta = 0.0;
 	  static Float last_alpha = 0.0;
@@ -1393,7 +1419,7 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
   axis_info *ap;
   chan_info *cp;
   sonogram_state *lsg = NULL;
-  int i, tempsize, dpys = 1;
+  int i, dpys = 1;
   cp = sg->cp;
   if (cp->fft_changed != FFT_CHANGE_LOCKED)
     cp->fft_changed = FFT_UNCHANGED;
@@ -1435,6 +1461,7 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
     if ((si->total_slices < sg->outlim) || 
 	(si->total_bins < sg->spectrum_size))
       {
+	int tempsize;
 	for (i = 0; i < si->total_slices; i++) 
 	  if (si->data[i]) 
 	    {

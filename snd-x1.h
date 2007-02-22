@@ -130,7 +130,7 @@ void g_init_gxmain(void);
 
 void set_fft_window_beta(Float val);
 void set_fft_window_alpha(Float val);
-void set_transform_size(int val);
+void set_transform_size(off_t val);
 void set_fft_window(mus_fft_window_t val);
 void set_wavelet_type(int val);
 Widget fire_up_transform_dialog(bool managed);

@@ -32,6 +32,13 @@ int snd_int_pow2(int n)
   return(ipow2s[n]);
 }
 
+off_t snd_off_t_pow2(int n)
+{
+  if (n < POW2_SIZE)
+    return((off_t)ipow2s[n]);
+  return((off_t)ipow2s[16] * (off_t)ipow2s[n - 16]);  /* can't store an array as above -- compiler complaints */
+}
+
 int snd_to_int_pow2(int n)
 {
   /* round up to next power of 2 */
@@ -51,10 +58,6 @@ int snd_int_log2(int n)
       return(i - 1);
   return(0);
 }
-
-/* removed off_t power-of-2 stuff for huge fft's etc: convolution_filter in snd-sig.c, make_fft_state in snd-fft.c 
- *   see note in snd-chn -- this involves a lot of work, and either changes in fftw or fallbacks for it
- */
 
 #define MAX_FLOAT_DIFF_FOR_EQUAL 0.0000001
 bool snd_feq(Float val1, Float val2)

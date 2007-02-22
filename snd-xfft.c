@@ -21,7 +21,7 @@ static Float graph_ffti[GRAPH_SIZE * 2];
 #define NUM_TRANSFORM_SIZES 14
 static char *transform_size_names[NUM_TRANSFORM_SIZES] = 
   {"32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576", "4194304    "};
-static int transform_sizes[NUM_TRANSFORM_SIZES] = 
+static off_t transform_sizes[NUM_TRANSFORM_SIZES] = 
   {32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576, 4194304};
 
 static Float fp_dB(Float py)
@@ -133,12 +133,12 @@ static void get_fft_window_data(void)
   memset((void *)graph_fftr, 0, GRAPH_SIZE * 2 * sizeof(Float));
   memset((void *)graph_ffti, 0, GRAPH_SIZE * 2 * sizeof(Float));
   memcpy((void *)graph_fftr, (void *)graph_data, GRAPH_SIZE * sizeof(Float));
-  mus_spectrum(graph_fftr, graph_ffti, NULL, GRAPH_SIZE * 2, 0); /* 0 = always dB */
+  mus_spectrum(graph_fftr, graph_ffti, NULL, GRAPH_SIZE * 2, MUS_SPECTRUM_IN_DB);
   for (i = 0; i < GRAPH_SIZE; i++)
     graph_fftr[i] = (graph_fftr[i] + 80.0) / 80.0; /* min dB here is -80 */
 }
 
-static void chans_transform_size(chan_info *cp, int size)
+static void chans_transform_size(chan_info *cp, off_t size)
 {
   cp->transform_size = size;
   if (cp->fft) 
@@ -147,13 +147,11 @@ static void chans_transform_size(chan_info *cp, int size)
 
 static void size_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  int size;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
   for_each_chan(force_fft_clear);
   in_set_transform_size(transform_sizes[cbs->item_position - 1]);
-  size = transform_size(ss);
-  for_each_chan_with_int(chans_transform_size, size);
+  for_each_chan_with_off_t(chans_transform_size, transform_size(ss));
   for_each_chan(calculate_fft);
   set_label(graph_label, mus_fft_window_name(fft_window(ss)));
 }
@@ -1215,11 +1213,11 @@ void set_transform_graph_type(graph_type_t val)
     for_each_chan(calculate_fft);
 }
 
-void set_transform_size(int val)
+void set_transform_size(off_t val)
 {
   for_each_chan(force_fft_clear);
   in_set_transform_size(val);
-  for_each_chan_with_int(chans_transform_size, val);
+  for_each_chan_with_off_t(chans_transform_size, val);
   if (transform_dialog)
     {
       int i;

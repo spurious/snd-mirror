@@ -308,6 +308,7 @@ static bool b_ok = false;
 static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "set_%s(%s)\n", TO_PROC_NAME(name), val);}
 static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "set_%s(\"%s\")\n", TO_PROC_NAME(name), val);}
 static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "set_%s(%d)\n", TO_PROC_NAME(name), val);}
+static void pss_sod(FILE *fd, const char *name, off_t val)   {fprintf(fd, "set_%s(" OFF_TD ")\n", TO_PROC_NAME(name), val);}
 static void pss_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "set_%s(%.4f)\n", TO_PROC_NAME(name), val);}
 
 static void pss_sl(FILE *fd, const char *name, Float val1, Float val2) 
@@ -343,6 +344,7 @@ static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan)
 static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "%s set-%s drop\n", val, name);}
 static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "\"%s\" set-%s drop\n", val, name);}
 static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "%d set-%s drop\n", val, name);}
+static void pss_sod(FILE *fd, const char *name, off_t val)   {fprintf(fd, OFF_TD " set-%s drop\n", val, name);}
 static void pss_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "%.4f set-%s drop\n", val, name);}
 static void pss_sl(FILE *fd, const char *name, Float val1, Float val2) 
 {fprintf(fd, "%s'( %f %f ) set-%s drop\n", white_space, val1, val2, name);}
@@ -377,6 +379,7 @@ static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan)
 static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "(set! (%s) %s)\n", name, val);}
 static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "(set! (%s) \"%s\")\n", name, val);}
 static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "(set! (%s) %d)\n", name, val);}
+static void pss_sod(FILE *fd, const char *name, off_t val)   {fprintf(fd, "(set! (%s) " OFF_TD ")\n", name, val);}
 static void pss_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "(set! (%s) %.4f)\n", name, val);}
 static void pss_sl(FILE *fd, const char *name, Float val1, Float val2) {fprintf(fd, "(set! (%s) (list %f %f))\n", name, val1, val2);}
 
@@ -421,7 +424,7 @@ static void save_options(FILE *fd)
 
   fprintf(fd, "\n%s Snd %s (%s) options saved %s\n", XEN_COMMENT_STRING, SND_VERSION, SND_DATE, snd_local_time());
 
-  if (transform_size(ss) != DEFAULT_TRANSFORM_SIZE) pss_sd(fd, S_transform_size, transform_size(ss));
+  if (transform_size(ss) != DEFAULT_TRANSFORM_SIZE) pss_sod(fd, S_transform_size, transform_size(ss));
   if (minibuffer_history_length(ss) != DEFAULT_MINIBUFFER_HISTORY_LENGTH) pss_sd(fd, S_minibuffer_history_length, minibuffer_history_length(ss));
   if (fft_window(ss) != DEFAULT_FFT_WINDOW) pss_ss(fd, S_fft_window, TO_VAR_NAME(mus_fft_window_xen_name(fft_window(ss))));
   if (transform_graph_type(ss) != DEFAULT_TRANSFORM_GRAPH_TYPE) pss_ss(fd, S_transform_graph_type, transform_graph_type_name(transform_graph_type(ss)));
@@ -693,8 +696,8 @@ void global_fft_state(void)
   char *buf;
   snd_help_append("\n\nCurrent FFT defaults:\n\n");
   buf = (char *)CALLOC(1024, sizeof(char));
-  mus_snprintf(buf, 1024, "fft size: %d\n    type: %s\n    window: %s (alpha: %.3f, beta: %.3f)\n",
-	       (int)transform_size(ss), 
+  mus_snprintf(buf, 1024, "fft size: " OFF_TD "\n    type: %s\n    window: %s (alpha: %.3f, beta: %.3f)\n",
+	       transform_size(ss), 
 	       TO_VAR_NAME(transform_program_name(transform_type(ss))),
 	       TO_VAR_NAME(mus_fft_window_xen_name(fft_window(ss))),
 	       fft_window_alpha(ss),
@@ -1070,7 +1073,7 @@ static void save_sound_state(snd_info *sp, void *ptr)
       if (fneq(cp->fft_window_alpha, fft_window_alpha(ss))) pcp_sf(fd, S_fft_window_alpha, cp->fft_window_alpha, chan);
       if (fneq(cp->fft_window_beta, fft_window_beta(ss))) pcp_sf(fd, S_fft_window_beta, cp->fft_window_beta, chan);
       if (cp->spectro_hop != spectro_hop(ss)) pcp_sd(fd, S_spectro_hop, cp->spectro_hop, chan);
-      if (cp->transform_size != transform_size(ss)) pcp_sd(fd, S_transform_size, cp->transform_size, chan);
+      if (cp->transform_size != transform_size(ss)) pcp_sod(fd, S_transform_size, cp->transform_size, chan);
       if (cp->transform_graph_type != transform_graph_type(ss)) 
 	pcp_ss(fd, S_transform_graph_type, transform_graph_type_name(cp->transform_graph_type), chan);
       if (cp->time_graph_type != time_graph_type(ss)) pcp_ss(fd, S_time_graph_type, time_graph_type_name(cp->time_graph_type), chan);

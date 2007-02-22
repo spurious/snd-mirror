@@ -492,6 +492,21 @@ void for_each_chan_with_int(void (*func)(chan_info *ncp, int val), int value)
     }
 }
 
+void for_each_chan_with_off_t(void (*func)(chan_info *ncp, off_t val), off_t value)
+{
+  int i, j;
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      chan_info *cp;
+      sp = ss->sounds[i];
+      if ((sp) && ((sp->inuse == SOUND_NORMAL) || (sp->inuse == SOUND_WRAPPER)))
+	for (j = 0; j < sp->nchans; j++)
+	  if ((cp = ((chan_info *)(sp->chans[j]))))
+	    (*func)(cp, value);
+    }
+}
+
 void for_each_chan_with_bool(void (*func)(chan_info *ncp, bool val), bool value)
 {
   int i, j;

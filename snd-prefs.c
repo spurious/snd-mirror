@@ -9,6 +9,15 @@ static void int_to_textfield(widget_t w, int val)
   FREE(str);
 }
 
+static void off_t_to_textfield(widget_t w, off_t val)
+{
+  char *str;
+  str = (char *)CALLOC(32, sizeof(char));
+  mus_snprintf(str, 32, OFF_TD, val);
+  SET_TEXT(w, str);
+  FREE(str);
+}
+
 static void float_to_textfield(widget_t w, Float val)
 {
   char *str;
@@ -2516,7 +2525,7 @@ static void dot_size_from_text(prefs_info *prf)
 
 /* ---------------- fft-size ---------------- */
 
-static int rts_fft_size = DEFAULT_TRANSFORM_SIZE;
+static off_t rts_fft_size = DEFAULT_TRANSFORM_SIZE;
 
 #define MAX_TRANSFORM_SIZE 1073741824
 #define MIN_TRANSFORM_SIZE 2
@@ -2526,41 +2535,41 @@ static void save_fft_size(prefs_info *prf, FILE *ignore) {rts_fft_size = transfo
 
 static void reflect_fft_size(prefs_info *prf)
 {
-  int_to_textfield(prf->text, transform_size(ss));
+  off_t_to_textfield(prf->text, transform_size(ss));
   SET_SENSITIVE(prf->arrow_up, transform_size(ss) < MAX_TRANSFORM_SIZE);
   SET_SENSITIVE(prf->arrow_down, transform_size(ss) > MIN_TRANSFORM_SIZE);
 }
 
 static void fft_size_up(prefs_info *prf)
 {
-  int size;
+  off_t size;
   size = transform_size(ss) * 2;
   if (size >= MAX_TRANSFORM_SIZE) SET_SENSITIVE(prf->arrow_up, false);
   if (size > MIN_TRANSFORM_SIZE) SET_SENSITIVE(prf->arrow_down, true);
   in_set_transform_size(size);
-  int_to_textfield(prf->text, transform_size(ss));
+  off_t_to_textfield(prf->text, transform_size(ss));
 }
 
 static void fft_size_down(prefs_info *prf)
 {
-  int size;
+  off_t size;
   size = transform_size(ss) / 2;
   if (size <= MIN_TRANSFORM_SIZE) SET_SENSITIVE(prf->arrow_down, false);
   if (size < MAX_TRANSFORM_SIZE) SET_SENSITIVE(prf->arrow_up, true);
   in_set_transform_size(size);
-  int_to_textfield(prf->text, transform_size(ss));
+  off_t_to_textfield(prf->text, transform_size(ss));
 }
 
 static void fft_size_from_text(prefs_info *prf)
 {
-  int size;
+  off_t size;
   char *str;
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
     {
       prf->got_error = false;
       redirect_errors_to(redirect_post_prefs_error, (void *)prf);
-      size = string_to_int(str, MIN_TRANSFORM_SIZE, "size"); 
+      size = string_to_off_t(str, MIN_TRANSFORM_SIZE, "size"); 
       redirect_errors_to(NULL, NULL);
       FREE_TEXT(str);
       if (!(prf->got_error))

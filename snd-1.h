@@ -258,8 +258,8 @@ typedef struct env_editor {
 } env_editor;
 
 typedef struct {
-  int size;
-  int current_size;
+  off_t size;
+  off_t current_size;
   mus_fft_window_t window;
   Float alpha, beta;
   Float scale;
@@ -839,6 +839,7 @@ void initialize_control_panel(snd_info *sp);
 void free_snd_info(snd_info *sp);
 snd_info *completely_free_snd_info(snd_info *sp);
 void for_each_chan_with_int(void (*func)(chan_info *ncp, int val), int value);
+void for_each_chan_with_off_t(void (*func)(chan_info *ncp, off_t val), off_t value);
 void for_each_chan_with_bool(void (*func)(chan_info *ncp, bool val), bool value);
 void for_each_chan_with_float(void (*func)(chan_info *ncp, Float val), Float value);
 void for_each_chan(void (*func)(chan_info *ncp));
@@ -987,7 +988,7 @@ Float fft_beta_max(mus_fft_window_t win);
 void cp_free_fft_state(chan_info *cp);
 void autocorrelation(Float *data, int n);
 void set_fft_info_xlabel(chan_info *cp, const char *new_label);
-void fourier_spectrum(snd_fd *sf, Float *data, int fft_size, int data_len, Float *window);
+void fourier_spectrum(snd_fd *sf, Float *data, off_t fft_size, off_t data_len, Float *window);
 char *wavelet_name(int i);
 char **wavelet_names(void);
 void set_log_freq_start(Float base);
@@ -1452,6 +1453,7 @@ int snd_round(double x);
 off_t snd_round_off_t(double x);
 off_t snd_abs_off_t(off_t val);
 int snd_int_pow2(int n);
+off_t snd_off_t_pow2(int n);
 int snd_to_int_pow2(int n);
 int snd_int_log2(int n);
 bool snd_feq(Float val1, Float val2);
