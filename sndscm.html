@@ -66,21 +66,24 @@ For help with Forth and Snd/CLM, see the Forth documentation section "Snd, CLM, 
 <table border=0 cellspacing=0 cellpadding=2>
 <tr><th colspan=2 bgcolor="beige">Contents</th></tr>
 
-<tr><td><a href="#analogfilterdoc">analog-filter</a></td>
-    <td onmouseover="return escape('These are the traditional IIR filters, any type, any even order.\
+<tr><td bgcolor="#f6f8ff"><a href="#analogfilterdoc">analog-filter</a></td>
+    <td bgcolor="#f6f8ff" onmouseover="return escape('These are the traditional IIR filters, any type, any even order.\
  The elliptic function filters need GSL')">standard IIR filters (Butterworth, Chebyshev, Bessel, Elliptic)</td></tr>
 
-<tr><td bgcolor="#f6f8ff"><a href="#autosavedoc">autosave</a></td>
-    <td bgcolor="#f6f8ff" onmouseover="return escape('periodically save current sound edits in a backup file,\
+<tr><td><a href="#autosavedoc">autosave</a></td>
+    <td onmouseover="return escape('periodically save current sound edits in a backup file,\
  useful if your machine crashes a lot.')">auto-save (edit backup) support</td></tr>
 
-<tr><td><a href="#bessdoc">bess</a></td>
-    <td onmouseover="return escape('This sets up a dialog to experiment with simple FM, the fm-violin,\
+<tr><td bgcolor="#f6f8ff"><a href="#bessdoc">bess</a></td>
+    <td bgcolor="#f6f8ff" onmouseover="return escape('This sets up a dialog to experiment with simple FM, the fm-violin,\
  or with a compositional algorithm')">FM demo</td></tr>
 
-<tr><td bgcolor="#f6f8ff"><a href="#birddoc">bird</a></td>
-    <td bgcolor="#f6f8ff" onmouseover="return escape('bird and bigbird instruments with calls that imitate about 50\
+<tr><td><a href="#birddoc">bird</a></td>
+    <td onmouseover="return escape('bird and bigbird instruments with calls that imitate about 50\
  species using additive synthesis and fancy envelopes.')">North-American birds</td></tr>
+
+<tr><td bgcolor="#f6f8ff"><a href="#cleandoc">clean</a></td>
+    <td bgcolor="#f6f8ff" onmouseover="return escape('click, pop, hum removal, signal reconstruction, etc.')">noise reduction</td></tr>
 
 <tr><td><a href="#clminsdoc">clm-ins, clm23</a></td>
     <td onmouseover="return escape('Instruments using many standard synthesis techniques, including a bagpipe\
@@ -534,6 +537,18 @@ instrument: bird { f: start f: dur f: freq f: freq-skew f: amp freq-env amp-enve
 <br>
 
 
+
+<!-- ---------------------------------------- FILE: clean ---------------------------------------- -->
+
+<A NAME="cleandoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>clean</h2></td></tr></table>
+
+<p>This file provides a set of noise reduction functions packaged up in:
+</p>
+<pre>
+  <a class=def name="cleanchannel">clean-channel</a>
+</pre>
+
+<br>
 
 <!-- ---------------------------------------- FILE: clm-ins ---------------------------------------- -->
 
@@ -4177,6 +4192,7 @@ can be found at configuration time.
 <A class=def NAME="removeclicks">remove-clicks</A>
 </td></tr><tr><td></td><td>
 remove-clicks looks for obvious clicks and uses smooth-sound to remove them.
+See also remove-single-sample-clicks and remove-pops in clean.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -10474,12 +10490,14 @@ to do anything but load it.  Most of the functions mentioned
 here are now in play.scm or dsp.scm.
 (Note added much later: <a href="sndscm.html#unclipchannel">unclip-channel</a>
 does a much better job at reconstruction than the code described here; it uses
-LPC to predict what the lost samples were; see dsp.scm).
+LPC to predict what the lost samples were; see dsp.scm.  Even later: I finally
+packaged all these functions: <a href="cleandoc">clean-channel</a>.
 </p>
 
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
+noise reduction: <a rhef="#cleandoc">clean-channel</a><br>
 clicks: <a href="extsnd.html#smoothchannel">smooth-channel</a>, <a href="#removeclicks">remove-clicks</a>, <a href="sndscm.html#fftsmoother">fft-smoother</a><br>
 rumble, hiss: <a href="#notchoutrumbleandhiss">notch-out-rumble-and-hiss</a>, <a href="#fftsquelch">fft-squelch</a>, <a href="#fftcancel">fft-cancel</a><br>
 hum: <a href="#notchchannel">notch-channel</a><br>

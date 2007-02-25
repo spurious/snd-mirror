@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* PERHAPS: double-click in history window shows that edit in the graph -- snd-xchn 536 */
+
 static XEN save_hook;
 static bool dont_save(snd_info *sp, const char *newname)
 {

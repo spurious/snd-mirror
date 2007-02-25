@@ -88,7 +88,7 @@ enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PAS
 static char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", "lagrange", "bezier", "hermite"};
 static char *interp_type_to_string(int type)
 {
-  if ((type >= 0) && (type < 7))
+  if ((type >= 0) && (type < MUS_NUM_INTERPS))
     return(interp_name[type]);
   return("unknown");
 }
@@ -1585,7 +1585,7 @@ static Float set_table_lookup_freq(mus_any *ptr, Float val) {((tbl *)ptr)->freq 
 static Float table_lookup_phase(mus_any *ptr) {return(fmod(((TWO_PI * ((tbl *)ptr)->phase) / ((tbl *)ptr)->table_size), TWO_PI));}
 static Float set_table_lookup_phase(mus_any *ptr, Float val) {((tbl *)ptr)->phase = (val * ((tbl *)ptr)->table_size) / TWO_PI; return(val);}
 
-static int table_lookup_interp_type(mus_any *ptr) {return((int)(((tbl *)ptr)->type));}
+static int table_lookup_interp_type(mus_any *ptr) {return((int)(((tbl *)ptr)->type));} /* ints here and elsewhere to fit mus_channels method = interp-type */
 static void table_lookup_reset(mus_any *ptr) {((tbl *)ptr)->phase = 0.0;}
 
 static char *describe_table_lookup(mus_any *ptr)
@@ -2688,8 +2688,10 @@ static char *describe_moving_average(mus_any *ptr)
   char *str = NULL;
   dly *gen = (dly *)ptr;
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_moving_average ": %.3f, line[%d]:%s",
-	       gen->xscl * gen->xscl, gen->size, 
+	       "%s: %.3f, line[%d]:%s",
+	       gen->core->name,
+	       gen->xscl * gen->yscl, 
+	       gen->size, 
 	       str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);

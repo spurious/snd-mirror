@@ -40773,6 +40773,8 @@ EDITS: 1
 (if (not (defined? 'load-font))
     (define (load-font name) #f))
 
+(if (not (provided? 'snd-clean.scm)) (load "clean.scm"))
+
 
 (define (snd_test_21)
   
@@ -42791,6 +42793,12 @@ EDITS: 1
 	    (free-sample-reader rd1)
 	    (free-sample-reader rd2)))
 	(close-sound ind))
+
+      ;; tests from clean.scm
+      (test-remove-single-clicks)
+      (test-remove-pops)
+      (test-notch-hum)
+      (test-remove-DC)
       
       )))
 

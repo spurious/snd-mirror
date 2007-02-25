@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Thu Feb 01 01:31:47 CET 2007
+\ Changed: Wed Feb 21 04:34:20 CET 2007
 
 \ Commentary:
 \
@@ -53,30 +53,13 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 1-Feb-2007" value *clm-version*
+$" fth 21-Feb-2007" value *clm-version*
 
 \ defined in snd/snd-xen.c
-[undefined] clm-print [if] ' fth-print alias clm-print [then]
-
+[undefined] snd-print [if] : snd-print ( str -- str )  dup .string           ; [then]
+[undefined] clm-print [if] : clm-print ( fmt args -- ) format snd-print drop ; [then]
 [undefined] clm-message [if]
-  'snd provided? not 'snd-nogui provided? || [if]
-    \ Prints to stdout through snd-print.
-    : clm-message ( fmt args -- )
-      { fmt args }
-      "\\ " fmt $+ "\n" $+ args clm-print
-    ;
-  [else]
-    \ Prints to Snd's listener (snd-print) and to stdout if $EMACS is
-    \ set or $TERM matches /^xterm/.
-    "TERM" getenv dup [if] 0 5 string-substring "xterm" string= [then] value *xterm?*
-    : clm-message ( fmt args -- )
-      { fmt args }
-      "\n\\ " fmt $+ args string-format snd-print drop
-      "EMACS" getenv *xterm?* || if
-	"\\ " fmt $+ "\n" $+ args string-format .stdout
-      then
-    ;
-  [then]
+  : clm-message { fmt args -- str } ." \ " fmt args fth-print cr ;
 [then]
 
 [undefined] flog10 [if]

@@ -1174,6 +1174,19 @@ void mem_report(void)
 			    fprintf(Fp, "[%p: %d %d]\n  ", sd, sd->chans, sd->length);
 			  }
 			  break;
+			case PRINT_SND_DATA:
+			  {
+			    snd_data *sd = (snd_data *)(pointers[orig_i]);
+			    if (sd->type == SND_DATA_BUFFER)
+			      fprintf(Fp, "[%p, (buffer) size: " OFF_TD ", edit: %d, inuse: %d]\n  ", 
+				      sd, sd->data_bytes / sizeof(mus_sample_t), sd->edit_ctr, sd->inuse);
+			    else
+			      if (sd->type == SND_DATA_FILE)
+				fprintf(Fp, "[%p, (file %s) size: " OFF_TD ", edit: %d, inuse: %d, temp: %d, open: %d]\n  ", 
+					sd, sd->filename, sd->data_bytes / sizeof(mus_sample_t), sd->edit_ctr, sd->inuse, sd->temporary, sd->open);
+			      else fprintf(Fp, "[%p, (no data)]\n  ", sd);
+			  }
+			  break;
 			}
 		      /* other printable cases that would be nice: snd_info chn_info io_fd env_state ladspa sound_data mix|track */
 		    }

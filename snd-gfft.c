@@ -2,7 +2,9 @@
 
 #include "snd.h"
 
-/* TODO: when options window expanded vertically, graph gets less than half (empty space in button box) */
+/* when options window expanded vertically, graph gets less than half (empty space in button box) 
+ *   this is a table grid, so I don't think much is possible
+ */
 
 slist *transform_list = NULL, *size_list = NULL, *window_list = NULL, *wavelet_list = NULL;
 static GtkWidget *transform_dialog = NULL; /* main dialog shell */
@@ -20,6 +22,7 @@ static Float graph_ffti[GRAPH_SIZE * 2];
 #define NUM_TRANSFORM_SIZES 14
 static char *transform_size_names[NUM_TRANSFORM_SIZES] = 
   {"32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576", "4194304    "};
+
 static off_t transform_sizes[NUM_TRANSFORM_SIZES] = 
   {32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576, 4194304};
 
