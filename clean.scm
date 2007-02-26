@@ -4,6 +4,7 @@
 (provide 'snd-clean.scm)
 
 (load "dsp.scm")
+;(load "t.scm")
 
 (define (without-graphics thunk)
   (set! (squelch-update) #t)
@@ -41,13 +42,18 @@
 ;;; -------- single sample clicks
 
 (define* (remove-single-sample-clicks :optional (jump 8) snd chn)
-  (let ((reader (make-sample-reader 0 snd chn))
-	(mx (make-moving-average 16)) ; local average of abs difference
-	(samp0 0.0)
-	(samp1 0.0)
-	(samp2 0.0)
-	(fixed 0)
-	(len (frames snd chn)))
+  (let* ((reader (make-sample-reader 0 snd chn))
+	 (mx (make-moving-average 16)) ; local average of abs difference
+	 (samp0 0.0)
+	 (samp1 0.0)
+	 (samp2 0.0)
+	 (fixed 0)
+	 (len (frames snd chn))
+	 (block-size (min len (* 1024 1024))) ; do edits by blocks rather than sample-at-a-time (saves time, memory etc)
+	 (block-ctr 0)
+	 (block-beg 0)
+	 (block (make-vct block-size))
+	 (block-changed #f))
     (run
      (lambda ()
        (do ((ctr 0 (1+ ctr)))
@@ -55,6 +61,7 @@
 	 (set! samp0 samp1)
 	 (set! samp1 samp2)
 	 (set! samp2 (next-sample reader))
+	 (vct-set! block block-ctr samp2)
 	 (let* ((df1 (abs (- samp1 samp0)))
 		(df2 (abs (- samp2 samp1)))
 		(df3 (abs (- samp2 samp0)))
@@ -68,8 +75,21 @@
 				0.0))))
 	       (begin
 		 (set! samp1 (* .5 (+ samp0 samp2)))
-		 (set! (sample (1- ctr) snd chn) samp1)
-		 (set! fixed (1+ fixed))))))))
+		 (vct-set! block (1- block-ctr) samp1)
+		 (set! block-changed #t)
+		 (set! fixed (1+ fixed)))))
+	 (set! block-ctr (1+ block-ctr))
+	 (if (>= block-ctr block-size)
+	     (begin
+	       (if block-changed
+		   (begin
+		     (vct->channel block block-beg block-size snd chn)
+		     (set! block-changed #f)))
+	       (set! block-beg (+ block-beg (1- block-size)))
+	       (set! block-ctr 1)
+	       (vct-set! block 0 samp2))))
+       (if block-changed
+	   (vct->channel block block-beg block-ctr snd chn))))
     fixed))
 
 (define (test-remove-single-clicks)
@@ -109,25 +129,43 @@
 
 ;;; -------- pops
 
+(define* (smooth-vct data beg dur)
+  (let* ((y0 (vct-ref data beg))
+	 (y1 (vct-ref data (+ beg dur)))
+	 (angle (if (> y1 y0) pi 0.0)) 
+	 (off (* .5 (+ y0 y1))) 
+	 (scale (* 0.5 (abs (- y1 y0))))
+	 (incr (/ pi dur)))
+    (do ((i 0 (1+ i)))
+	((= i dur))
+      (vct-set! data (+ beg i) (+ off (* scale (cos (+ angle (* i incr)))))))))
+
 (define* (remove-pops :optional (size 8) snd chn)
-  (let ((reader (make-sample-reader 0 snd chn))
-	(dly0 (make-delay (* 4 size)))
-	(dly1 (make-delay (* 5 size)))
-	(mx-ahead (make-moving-average (* 4 size))) ; local average of abs difference ahead of current window
-	(mx-behind (make-moving-average (* 4 size))) ; local average of abs difference behind current window
-	(mx (make-moving-average size)) ; local average of abs difference
-	(samp0 0.0)
-	(samp1 0.0)
-	(samp2 0.0)
-	(samp3 0.0)
+  (let* ((reader (make-sample-reader 0 snd chn))
+	 (dly0 (make-delay (* 4 size)))
+	 (dly1 (make-delay (* 5 size)))
+	 (mx-ahead (make-moving-average (* 4 size))) ; local average of abs difference ahead of current window
+	 (mx-behind (make-moving-average (* 4 size))) ; local average of abs difference behind current window
+	 (mx (make-moving-average size)) ; local average of abs difference
+	 (samp0 0.0)
+	 (samp1 0.0)
+	 (samp2 0.0)
+	 (samp3 0.0)
 
-	(last-ahead-samp 0.0)
-	(last-dly0-samp 0.0)
-	(last-dly1-samp 0.0)
+	 (last-ahead-samp 0.0)
+	 (last-dly0-samp 0.0)
+	 (last-dly1-samp 0.0)
 
-	(last-case 0)
-	(fixed 0)
-	(len (frames snd chn)))
+	 (last-case 0)
+	 (fixed 0)
+	 (len (frames snd chn))
+
+	 (pad (* 8 size))
+	 (block-size (min (+ len pad) (* 1024 1024)))
+	 (block-ctr 0)
+	 (block-beg 0)
+	 (block (make-vct block-size))
+	 (block-changed #f))
     
     (run
      (lambda ()
@@ -137,50 +175,70 @@
 	     (checked 0)
 	     (checking #f)
 	     (moving-start #t))
-       (do ((ctr 0 (1+ ctr)))
-	   ((= ctr len))
-	 (let* ((ahead-samp (next-sample reader))
-		(diff-ahead (abs (- ahead-samp last-ahead-samp)))
-		(avg-ahead (moving-average mx-ahead diff-ahead))
-		(dly0-samp (delay dly0 ahead-samp))
-		(cur-diff (abs (- dly0-samp last-dly0-samp)))
-		(cur-avg (moving-average mx cur-diff))
-		(dly1-samp (delay dly1 ahead-samp))
-		(diff-behind (abs (- dly1-samp last-dly1-samp)))
-		(avg-behind (moving-average mx-behind diff-behind)))
-	   (set! last-ahead-samp ahead-samp)
-	   (set! last-dly0-samp dly0-samp)
-	   (set! last-dly1-samp dly1-samp)
-	   (if checking
-	       (begin
-		 (set! checked (1+ checked))
-		 (if (or (>= checked (* 2 size))
-			 (< cur-avg check-val))
+	 (do ((ctr 0 (1+ ctr)))
+	     ((= ctr len))
+	   (let* ((ahead-samp (next-sample reader))
+		  (diff-ahead (abs (- ahead-samp last-ahead-samp)))
+		  (avg-ahead (moving-average mx-ahead diff-ahead))
+		  (dly0-samp (delay dly0 ahead-samp))
+		  (cur-diff (abs (- dly0-samp last-dly0-samp)))
+		  (cur-avg (moving-average mx cur-diff))
+		  (dly1-samp (delay dly1 ahead-samp))
+		  (diff-behind (abs (- dly1-samp last-dly1-samp)))
+		  (avg-behind (moving-average mx-behind diff-behind)))
+	     (set! last-ahead-samp ahead-samp)
+	     (set! last-dly0-samp dly0-samp)
+	     (set! last-dly1-samp dly1-samp)
+	     (vct-set! block block-ctr ahead-samp)
+	     (if checking
+		 (begin
+		   (set! checked (1+ checked))
+		   (if (or (>= checked (* 2 size))
+			   (< cur-avg check-val))
+		       (begin
+			 (set! fixed (1+ fixed))
+			 (set! checking #f)
+			 (smooth-vct block (- check-start block-beg) (+ size checker))
+			 (set! block-changed #t)))
+		   (if moving-start
+		       (begin
+			 (set! moving-start (< cur-diff avg-behind))
+			 (if moving-start
+			     (set! check-start (1+ check-start)))))
+		   (if (not moving-start)
+		       (set! checker (1+ checker))))
+		 (if (and (> (- ctr last-case) (* 2 size))
+			  (> cur-avg (* 4 avg-ahead))
+			  (> cur-avg (* 4 avg-behind)))
+		     ;; possible pop
 		     (begin
-		       (set! fixed (1+ fixed))
-		       (set! checking #f)
-		       (smooth-channel check-start (+ size checker) snd chn)))
-		 (if moving-start
-		     (begin
+		       (set! check-start (max 0 (- ctr (* 5 size))))
 		       (set! moving-start (< cur-diff avg-behind))
 		       (if moving-start
-			   (set! check-start (1+ check-start)))))
-		 (if (not moving-start)
-		     (set! checker (1+ checker))))
-	       (if (and (> (- ctr last-case) (* 2 size))
-			(> cur-avg (* 4 avg-ahead))
-			(> cur-avg (* 4 avg-behind)))
-		   ;; possible pop
-		   (begin
-		     (set! check-start (max 0 (- ctr (* 5 size))))
-		     (set! moving-start (< cur-diff avg-behind))
-		     (if moving-start
-			 (set! check-start (1+ check-start)))
-		     (set! checking #t)
-		     (set! check-val cur-avg)
-		     (set! checker 0)
-		     (set! checked 0)
-		     (set! last-case ctr)))))))))
+			   (set! check-start (1+ check-start)))
+		       (set! checking #t)
+		       (set! check-val cur-avg)
+		       (set! checker 0)
+		       (set! checked 0)
+		       (set! last-case ctr))))
+
+	     (set! block-ctr (1+ block-ctr))
+	     (if (>= (+ block-ctr pad) block-size)
+		 (begin
+		   (if block-changed
+		       (begin
+			 (vct->channel block block-beg (- block-ctr pad) snd chn)
+			 (set! block-changed #f)))
+		   (set! block-beg (+ block-beg (- block-ctr pad)))
+		   (do ((i 0 (1+ i))
+			(j (- block-ctr pad) (1+ j)))
+		       ((= i pad))
+		     (vct-set! block i (vct-ref block j)))
+		   (set! block-ctr pad)))))
+
+	 (if block-changed
+	     (vct->channel block block-beg block-ctr snd chn)))))
+
     fixed))
 
 (define (test-remove-pops)
@@ -353,7 +411,7 @@
 (define* (clean-channel :optional snd chn)
 
   ;; look for obvious simple clicks
-  (let ((clicks (without-graphics (lambda () (remove-single-sample-clicks 8 snd chn)))))
+  (let ((clicks (as-one-edit (lambda () (remove-single-sample-clicks 8 snd chn)))))
     (if (> clicks 0)
 	(snd-display "; fixed ~D single sample clicks" clicks)
 	(snd-display "; no single-sample clicks found")))
@@ -373,7 +431,7 @@
      (lambda (quit)
        (for-each
 	(lambda (size)
-	  (let ((pops (without-graphics (lambda () (remove-pops size snd chn)))))
+	  (let ((pops (as-one-edit (lambda () (remove-pops size snd chn)))))
 	    (set! total-pops (+ total-pops pops))
 	    (if (> pops 0)
 		(snd-display "; fixed ~D ~D-sample ~A" pops size (if (= pops 1) "pop" "pops"))
@@ -400,7 +458,6 @@
 
   ;; time-varying low-pass filter
   (tvf-channel snd chn)
-  
   )
 
 

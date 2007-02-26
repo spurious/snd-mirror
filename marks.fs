@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 27 19:22:06 CET 2005
-\ Changed: Thu Feb 15 23:11:02 CET 2007
+\ Changed: Fri Feb 23 19:44:14 CET 2007
 
 \ Commentary:
 \
@@ -159,7 +159,7 @@ previous
   doc" A mark-click-hook function that describes a mark and its properties.\n\
   mark-click-hook ' mark-click-info add-hook!"
   id mark-name empty? if "" else $"  (%S)" '( id mark-name ) string-format then { mname }
-  $"       mark id: %d%s\n" '( id mname ) string-format make-port { prt }
+  $"       mark id: %d%s\n" '( id mname ) string-format make-string-output-port { prt }
   prt $"        sample: %d (%.3f secs)\n"
   '( id undef mark-sample dup id mark-home car srate f/ ) port-puts-format
   id mark-sync 0<> if prt $"          sync: %s\n" '( id mark-sync ) port-puts-format then
@@ -174,7 +174,7 @@ previous
 \ back in when the sound is later reopened.
 
 : marks->string { sndf }
-  $" \nrequire marks\n" make-port { prt }
+  $" \nrequire marks\n" make-string-output-port { prt }
   prt $" let:\n" port-puts
   prt $"   #f { mr }\n" port-puts
   sndf marks each ( chan-marks )

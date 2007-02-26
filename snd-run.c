@@ -7638,6 +7638,44 @@ static xen_value *vct_plus_1(ptree *prog, xen_value **args, int num_args)
   return(vct_offset_1(prog, args, num_args));
 }
 
+/* ---------------- vct->channel ---------------- */
+
+static void vct_to_channel_v(int *args, ptree *pt) 
+{
+  chan_info *cp; 
+  cp = run_get_cp(4, args, pt->ints);
+  if (cp)
+    {
+      vct *v;
+      off_t beg, dur;
+      v = VCT_ARG_1;
+      beg = INT_ARG_2;
+      dur = INT_ARG_3;
+      change_samples(beg, dur, v->data, cp, LOCK_MIXES, S_vct_to_channel, cp->edit_ctr);
+    }
+}
+
+static char *descr_vct_to_channel_v(int *args, ptree *pt) 
+{
+  return(mus_format("vct->channel(" VCT_PT ", " INT_PT ", " INT_PT ")", args[1], VCT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
+}
+
+static xen_value *vct_to_channel_1(ptree *pt, xen_value **args, int num_args)
+{
+  xen_value *true_args[6];
+  xen_value *rtn;
+  int k;
+  if (run_safety == RUN_SAFE) 
+    temp_package(pt, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
+  for (k = 0; k < 4; k++) true_args[k] = args[k];
+  run_opt_arg(pt, args, num_args, 4, true_args);
+  run_opt_arg(pt, args, num_args, 5, true_args);
+  rtn = package(pt, R_BOOL, vct_to_channel_v, descr_vct_to_channel_v, true_args, 5);
+  for (k = num_args + 1; k <= 5; k++) FREE(true_args[k]);
+  return(rtn);
+}
+
+
 
 
 /* ---------------- sound-data ---------------- */
@@ -12445,6 +12483,7 @@ static void init_walkers(void)
   INIT_WALKER(S_channels, make_walker(channels_1, NULL, NULL, 0, 1, R_INT, false, 0));
   INIT_WALKER(S_c_g, make_walker(c_g_p_1, NULL, NULL, 0, 0, R_BOOL, false, 0));
   INIT_WALKER(S_autocorrelate, make_walker(autocorrelate_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
+  INIT_WALKER(S_vct_to_channel, make_walker(vct_to_channel_1, NULL, NULL, 3, 5, R_BOOL, false, 3, R_VCT, R_INT, R_INT));
 
   INIT_WALKER(S_snd_print, make_walker(snd_print_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
   INIT_WALKER(S_snd_warning, make_walker(snd_warning_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));

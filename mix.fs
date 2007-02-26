@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Thu Feb 15 22:53:04 CET 2007
+\ Changed: Fri Feb 23 19:44:32 CET 2007
 
 \ Commentary:
 \
@@ -507,7 +507,7 @@ previous
 mix-click-hook ' mix-click-info add-hook!"
   id mix-home car { mid }
   id mix-name empty? if "" else $"  (%S)" '( id mix-name ) string-format then { mname }
-  $"        mix id: %d%s\n" '( id mname ) string-format make-port { prt }
+  $"        mix id: %d%s\n" '( id mname ) string-format make-string-output-port { prt }
   prt $"      position: %d (%.3f secs)\n" '( id mix-position dup mid srate f/ ) port-puts-format
   prt $"        length: %d (%.3f secs)\n" '( id mix-frames   dup mid srate f/ ) port-puts-format
   prt $"            in: %s[%d]%s%s\n"

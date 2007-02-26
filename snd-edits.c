@@ -1,6 +1,8 @@
 #include "snd.h"
 
 /* PERHAPS: double-click in history window shows that edit in the graph -- snd-xchn 536 */
+/* SOMEDAY: split ed_fragment into 4 cases to save space -- also can we use ptrs in spite of scaling? */
+
 
 static XEN save_hook;
 static bool dont_save(snd_info *sp, const char *newname)
@@ -8675,6 +8677,7 @@ static mus_sample_t *g_floats_to_samples(XEN obj, int *size, const char *caller,
 	}
       else
 	{
+	  /* this block only triggered if not SNDLIB_USE_FLOATS */
 	  if (MUS_VCT_P(obj))
 	    {
 	      vct *v;
@@ -8855,14 +8858,26 @@ the new data's end."
     }
   else
     {
-      mus_sample_t *ivals;
-      int ilen;
-      ilen = (int)len;
-      ivals = g_floats_to_samples(vect, &ilen, caller, 3);
-      if (ivals)
+#if SNDLIB_USE_FLOATS
+      if (MUS_VCT_P(vect))
 	{
-	  change_samples(beg, (off_t)ilen, ivals, cp, LOCK_MIXES, caller, pos);
-	  FREE(ivals);
+	  vct *v;
+	  v = XEN_TO_VCT(vect);
+	  if (len > v->length) len = v->length;
+	  change_samples(beg, len, v->data, cp, LOCK_MIXES, caller, pos);
+	}
+      else
+#endif
+	{
+	  mus_sample_t *ivals;
+	  int ilen;
+	  ilen = (int)len;
+	  ivals = g_floats_to_samples(vect, &ilen, caller, 3);
+	  if (ivals)
+	    {
+	      change_samples(beg, (off_t)ilen, ivals, cp, LOCK_MIXES, caller, pos);
+	      FREE(ivals);
+	    }
 	}
     }
   update_graph(cp);
@@ -9316,15 +9331,28 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
     }
   else
     {
-      int ilen;
-      mus_sample_t *ivals;
-      ilen = (int)len;
-      ivals = g_floats_to_samples(vect, &ilen, S_insert_samples, 3);
-      if (ivals)
+#if SNDLIB_USE_FLOATS
+      if (MUS_VCT_P(vect))
 	{
- 	  if (!origin) origin = copy_string(TO_PROC_NAME(S_insert_samples));
-	  insert_samples(beg, (off_t)ilen, ivals, cp, origin, pos);
-	  FREE(ivals);
+	  vct *v;
+	  v = XEN_TO_VCT(vect);
+	  if (len > v->length) len = v->length;
+	  if (!origin) origin = copy_string(TO_PROC_NAME(S_insert_samples));
+	  insert_samples(beg, len, v->data, cp, origin, pos);
+	}
+      else
+#endif
+	{
+	  int ilen;
+	  mus_sample_t *ivals;
+	  ilen = (int)len;
+	  ivals = g_floats_to_samples(vect, &ilen, S_insert_samples, 3);
+	  if (ivals)
+	    {
+	      if (!origin) origin = copy_string(TO_PROC_NAME(S_insert_samples));
+	      insert_samples(beg, (off_t)ilen, ivals, cp, origin, pos);
+	      FREE(ivals);
+	    }
 	}
     }
   if (origin) FREE(origin);

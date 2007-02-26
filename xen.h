@@ -1297,8 +1297,8 @@ XEN xen_rb_add_to_load_path(char *path);
 /* port = XEN_FALSE means default output handler (snd-print). */ 
 #define XEN_PUTS(Str, Port)             fth_port_puts(Port, Str) 
 #define XEN_DISPLAY(Val, Port)          fth_port_display(Port, Val) 
-#define XEN_FLUSH_PORT(Port)            fth_flush_port(Port) 
-#define XEN_CLOSE_PORT(Port)            fth_close_port(Port) 
+#define XEN_FLUSH_PORT(Port)            fth_port_flush(Port) 
+#define XEN_CLOSE_PORT(Port)            fth_port_close(Port) 
 #define XEN_PORT_TO_STRING(Port)        fth_port_to_string(Port) 
 #endif 
 
@@ -1411,11 +1411,7 @@ XEN xen_rb_add_to_load_path(char *path);
 #endif
 
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  do { \
-    fth_current_file = __FILE__; \
-    fth_current_line = __LINE__; \
-    fth_define_procedure(Name, XEN_PROCEDURE_CAST Func, ReqArg, OptArg, RstArg, Doc); \
-  } while (0)
+  fth_define_procedure(Name, XEN_PROCEDURE_CAST Func, ReqArg, OptArg, RstArg, Doc) 
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   do { \
