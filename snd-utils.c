@@ -1000,7 +1000,7 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
   return((void *)new_ptr);
 }
 
-static char *mem_stats(int ub)
+static char *mem_stats(FILE *Fp, int ub)
 {
   int i, k, ptrs = 0, snds = 0, chns = 0, trees = 0;
   size_t sum = 0;
@@ -1028,11 +1028,11 @@ static char *mem_stats(int ub)
 		{
 		  int j;
 		  trees++;
-		  fprintf(stderr, "chan(%d %d): %d [", k, sp->nchans, cp->ptree_size);
+		  fprintf(Fp, "open at exit: chan(%d %d): %d [", k, sp->nchans, cp->ptree_size);
 		  for (j = 0; j < cp->ptree_size; j++)
 		    if (cp->ptrees[j])
-		      fprintf(stderr, "%p ", cp->ptrees[j]);
-		  fprintf(stderr, "\n");
+		      fprintf(Fp, "%p ", cp->ptrees[j]);
+		  fprintf(Fp, "]\n");
 		}
 	    }
 	}
@@ -1109,7 +1109,7 @@ void mem_report(void)
 
   {
     char *str;
-    str = mem_stats(0);
+    str = mem_stats(Fp, 0);
     fprintf(Fp, "memlog: %s: %s\n\n", snd_local_time(), str);
     free(str);
   }
@@ -1150,41 +1150,41 @@ void mem_report(void)
 			  fprintf(Fp, "[%p: %s]\n   ", pointers[orig_i], mus_name((mus_any *)(pointers[orig_i])));
 			  break;
 			case PRINT_REGION:
-			  fprintf(Fp, "[%p: ", pointers[orig_i]); describe_region(Fp, pointers[orig_i]); fprintf(Fp, "]\n  ");
+			  fprintf(Fp, "[%p: ", pointers[orig_i]); describe_region(Fp, pointers[orig_i]); fprintf(Fp, "]\n        ");
 			  break;
 			case PRINT_SYNC:
-			  fprintf(Fp, "[%p: ", pointers[orig_i]); describe_sync(Fp, pointers[orig_i]); fprintf(Fp, "]\n  ");
+			  fprintf(Fp, "[%p: ", pointers[orig_i]); describe_sync(Fp, pointers[orig_i]); fprintf(Fp, "]\n        ");
 			  break;
 			case PRINT_SND_FD:
 			  {
 			    snd_fd *sf = (snd_fd *)(pointers[orig_i]);
-			    fprintf(Fp, "[%p, loc: %d, beg: " OFF_TD ", eof: %d, sp: %p]\n  ",
+			    fprintf(Fp, "[%p, loc: %d, beg: " OFF_TD ", eof: %d, sp: %p]\n        ",
 				    sf, sf->dangling_loc, sf->initial_samp, (int)(sf->at_eof), sf->local_sp);
 			  }
 			  break;
 			case PRINT_FAM_INFO:
 			  {
 			    fam_info *fp = (fam_info *)(pointers[orig_i]);
-			    fprintf(Fp, "[%p, %s, rp: %p, data: %p]\n  ", fp, fp->filename, fp->rp, fp->data);
+			    fprintf(Fp, "[%p, %s, rp: %p, data: %p]\n        ", fp, fp->filename, fp->rp, fp->data);
 			  }
 			  break;
 			case PRINT_SOUND_DATA:
 			  {
 			    sound_data *sd = (sound_data *)(pointers[orig_i]);
-			    fprintf(Fp, "[%p: %d %d]\n  ", sd, sd->chans, sd->length);
+			    fprintf(Fp, "[%p: %d %d]\n        ", sd, sd->chans, sd->length);
 			  }
 			  break;
 			case PRINT_SND_DATA:
 			  {
 			    snd_data *sd = (snd_data *)(pointers[orig_i]);
 			    if (sd->type == SND_DATA_BUFFER)
-			      fprintf(Fp, "[%p, (buffer) size: " OFF_TD ", edit: %d, inuse: %d]\n  ", 
+			      fprintf(Fp, "[%p, (buffer) size: " OFF_TD ", edit: %d, inuse: %d]\n        ", 
 				      sd, sd->data_bytes / sizeof(mus_sample_t), sd->edit_ctr, sd->inuse);
 			    else
 			      if (sd->type == SND_DATA_FILE)
-				fprintf(Fp, "[%p, (file %s) size: " OFF_TD ", edit: %d, inuse: %d, temp: %d, open: %d]\n  ", 
+				fprintf(Fp, "[%p, (file %s) size: " OFF_TD ", edit: %d, inuse: %d, temp: %d, open: %d]\n        ", 
 					sd, sd->filename, sd->data_bytes / sizeof(mus_sample_t), sd->edit_ctr, sd->inuse, sd->temporary, sd->open);
-			      else fprintf(Fp, "[%p, (no data)]\n  ", sd);
+			      else fprintf(Fp, "[%p, (no data)]\n        ", sd);
 			  }
 			  break;
 			}

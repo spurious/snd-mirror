@@ -2764,5 +2764,3 @@ is assumed to be outside -1.0 to 1.0."
      (lambda ()
        (vct->channel data)
        (scale-to mx)))))
-
-;;; TODO: try prediction

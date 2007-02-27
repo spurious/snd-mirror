@@ -1750,8 +1750,12 @@ void c_convolve(const char *fname, Float amp, int filec, off_t filehdr, int filt
 	  else 
 	    {
 	      /* amp == 0.0 means un-normalized output */
+#if SNDLIB_USE_FLOATS
+	      memcpy((void *)pbuf, (void *)rl0, data_size * sizeof(mus_sample_t));
+#else
 	      for (i = 0; i < data_size; i++) 
 		pbuf[i] = MUS_FLOAT_TO_SAMPLE(rl0[i]);
+#endif
 	    }
 	  progress_report(gsp, "convolve", ip + 1, total_chans, .9, from_enved);
 

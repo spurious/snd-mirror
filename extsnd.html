@@ -11896,16 +11896,18 @@ cases, remove the XK_ or GDK_ prefix.  So, for example, the key marked "Page Dow
 </pre>
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(<em class=red>bind-key</em> #\a 4 
-          (lambda () 
-            "print 'hi' in listener"
-            (<a class=quiet href="#sndprint">snd-print</a> \"hi\") 
-            <a class=quiet href="#bindkey">cursor-in-view</a>))
+(<em class=red>bind-key</em> "Home" 0 
+           (lambda () 
+	     "move cursor and window to current edit"
+	     (let ((ed (<a class=quiet href="#editfragment">edit-fragment</a>))) 
+	       (<a class=quiet href="#reportinminibuffer">report-in-minibuffer</a> (format #f "~A" ed)) 
+	       (set! (<a class=quiet href="#cursor">cursor</a>) (caddr ed)) 
+	       cursor-in-view)))
 
 (<em class=red>bind-key</em> #\p 0 
           (lambda () 
             "move cursor to left edge of window"
-            <a class=quiet href="#bindkey">cursor-on-left</a>)
+            cursor-on-left)
           #f "#\\p-&gt;cursor-on-left")
 
 (<em class=red>bind-key</em> #\v 4
@@ -11913,7 +11915,7 @@ cases, remove the XK_ or GDK_ prefix.  So, for example, the key marked "Page Dow
             "move ahead one window"
 	    (if (&lt; (<a class=quiet href="#rightsample">right-sample</a>) (<a class=quiet href="#frames">frames</a>))
 		(set! (<a class=quiet href="#leftsample">left-sample</a>) (<a class=quiet href="#rightsample">right-sample</a>)))
-	    <a class=quiet href="#bindkey">keyboard-no-action</a>))
+	    keyboard-no-action))
 
 (<em class=red>bind-key</em> #\v 0 
           (lambda () 
@@ -11928,12 +11930,12 @@ cases, remove the XK_ or GDK_ prefix.  So, for example, the key marked "Page Dow
 (<em class=red>bind-key</em> #\o 0 
   (lambda () "play oboe.snd"
     (<a class=quiet href="#play">play</a> "oboe.snd") 
-    <a class=quiet href="#bindkey">keyboard-no-action</a>))
+    keyboard-no-action))
 
 (<em class=red>bind-key</em> #\p 0 
   (lambda () "play pistol.snd"
     (<a class=quiet href="#play">play</a> "pistol.snd") 
-    <a class=quiet href="#bindkey">keyboard-no-action</a>))
+    keyboard-no-action))
 </pre></td></tr></table>
 
 Now each time we hit "o", "oboe.snd" plays,  etc.  Or say we want to move
@@ -11943,7 +11945,7 @@ forward two samples in the graph each time we type "l":
 (<em class=red>bind-key</em> #\l 0 
   (lambda () "move window forward 2 samples"
     (set! (<a class=quiet href="#leftsample">left-sample</a> 0 0) (+ 2 (<a class=quiet href="#leftsample">left-sample</a> 0 0))) 
-    <a class=quiet href="#bindkey">keyboard-no-action</a>))
+    keyboard-no-action))
 </pre></td></tr></table>
 
 Or, more useful perhaps, have C-c set the cursor at a particular sample:
@@ -11952,7 +11954,7 @@ Or, more useful perhaps, have C-c set the cursor at a particular sample:
 (<em class=red>bind-key</em> #\c 4
   (lambda (arg) "move cursor to arg"
     (set! (<a class=quiet href="#cursor">cursor</a>) arg) 
-    <a class=quiet href="#bindkey">cursor-in-middle</a>))
+    cursor-in-middle))
 </pre></td></tr></table>
 
 A similar set rebinds the arrow keys to give much more precise window position and size control:

@@ -153,7 +153,7 @@ typedef struct {
 
 typedef struct {
   int size, allocated_size;
-  struct ed_fragment **fragments; /* defined in snd-edits.c */
+  void *fragments; /* only accessed in snd-edits.c */
   off_t beg, len;
   char *origin;
   int edit_type, sound_location, ptree_location;
@@ -168,7 +168,7 @@ typedef struct snd_fd {
   mus_sample_t (*run)(struct snd_fd *sf);
   Float (*runf)(struct snd_fd *sf);
   ed_list *current_state;
-  struct ed_fragment *cb;
+  void *cb;
   off_t loc, first, last;
   int cbi;
   read_direction_t direction;

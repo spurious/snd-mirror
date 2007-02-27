@@ -5877,7 +5877,7 @@ EDITS: 5
 				     (snd-display ";multi-tree 0: ~A" (safe-display-edits ind 0 12 #f)))
 				 (let ((scl-data (vct-scale! (channel->vct) 2.0)))
 				   (if (not (vequal map-data scl-data))
-				       (snd-display ";map and ptree->scl cosine disagree: ~A ~A" map-data scl-data)))
+				       (snd-display ";map and ptree->scl cosine disagree: ~%  ~A~%  ~A" map-data scl-data)))
 				 
 				 (revert-sound)
 				 (map-channel (lambda (y) 1.0) 0 100)

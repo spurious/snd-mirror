@@ -1,8 +1,6 @@
 #include "snd.h"
 
-/* PERHAPS: double-click in history window shows that edit in the graph -- snd-xchn 536 */
-/* SOMEDAY: split ed_fragment into 4 cases to save space -- also can we use ptrs in spite of scaling? */
-
+/* TODO: water1 / dino quad */
 
 static XEN save_hook;
 static bool dont_save(snd_info *sp, const char *newname)
@@ -367,81 +365,88 @@ char *run_save_state_hook(char *file)
  *    cosine       476  0.012         511   0.012 ; cosine-channel-via-ptree
  *    xramp2       682  0.016         672   0.016 
  *
- * (3.2 GHz):          -ffast-math    (int)  (double)
- *    straight     21    20           18       26
- *    ramp         24    21           20       26
- *    ramp2        27    22           21       27
- *    ramp3        38    24           22       29
- *    ramp4        35    44           24       30
- *    ptree-zero   46    47           48       61
- *    ptree        52    58           53       71
- *    ptreec       80    80           76       93
- *    ptree2       105  100          102      107
- *    ptree3       129  125          122      157
- *    xramp        152   94           86      140 (91)
- *    xramp2       290  148          149      242 (154)
- *    cosine       304  270          284      355 (290)
+ * (3.2 GHz):          -ffast-math    (int)  (double)      (3.8 GHz, float, 1.6.4):
+ *    straight     21    20           18       26             22
+ *    ramp         24    21           20       26             25
+ *    ramp2        27    22           21       27             29
+ *    ramp3        38    24           22       29             33
+ *    ramp4        35    44           24       30             43
+ *    ptree-zero   46    47           48       61             49
+ *    ptree        52    58           53       71             57
+ *    ptreec       80    80           76       93             74
+ *    ptree2       105  100          102      107             94
+ *    ptree3       129  125          122      157            128
+ *    xramp        152   94           86      140 (91)       121
+ *    xramp2       290  148          149      242 (154)      211
+ *    cosine       304  270          284      355 (290)      199
  */
 
-typedef struct ed_fragment {
-  off_t out,                               /* running segment location within current overall edited data */
-        beg,                               /* index into the associated data => start point of data used in current segment */
-        end;                               /* index into the associated data => end point of data used in current segment */
-  Float scl,                               /* segment scaler */
-        rmp0,                              /* first val of ramp */
+typedef struct ed_ramps {
+  Float rmp0,                              /* first val of ramp */
         rmp1,                              /* end val of ramp */
         rmp2, rmp3,                        /* ramp2 vals */
         rmp4, rmp5,                        /* ramp3 vals */
         rmp6, rmp7,                        /* ramp4 vals */
-        ptree_scl, ptree_scl2, ptree_scl3, /* scales the arg to the ptree */
         scaler,                            /* exp-env segment scaler */
         offset,                            /* exp-env segment offset */
         scaler2, offset2;
-  int   snd,                               /* either an index into the cp->sounds array (snd_data structs) or EDIT_LIST_END|ZERO_MARK */
-        typ,                               /* code for accessor choice (ED_SIMPLE etc) */
-        ptree_loc,                         /* index into the cp->ptrees array */
+} ed_ramps;
+
+typedef struct ed_ptrees {
+  Float ptree_scl, ptree_scl2, ptree_scl3; /* scales the arg to the ptree */
+  int   ptree_loc,                         /* index into the cp->ptrees array */
         ptree_loc2, ptree_loc3;
   off_t ptree_pos,                         /* segment position within original at time of ptree edit */
         ptree_dur,                         /* original (unfragmented) segment length */
         ptree_pos2, ptree_dur2, ptree_pos3, ptree_dur3;
-} ed_fragment;
+} ed_ptrees;
 
-/* when editing long edit lists, it might be faster to copy the current one if
- *   we used arrays of structs here, rather than arrays of pointers to structs
- */
+typedef struct ed_fragment {
+  int   typ,                               /* code for accessor choice (ED_SIMPLE etc) */
+        snd;                               /* either an index into the cp->sounds array (snd_data structs) or EDIT_LIST_END|ZERO_MARK */
+  off_t out,                               /* running segment location within current overall edited data */
+        beg,                               /* index into the associated data => start point of data used in current segment */
+        end;                               /* index into the associated data => end point of data used in current segment */
+  Float scl;                               /* segment scaler */
+  ed_ramps *ramps;
+  ed_ptrees *ptrees;
+} ed_fragment;
 
 #define FRAGMENTS(Ed)                       (ed_fragment **)((Ed)->fragments)
 #define FRAGMENT(Ed, Pos)                  ((ed_fragment **)((Ed)->fragments))[Pos]
+#define FRAGMENT_RAMPS(Ed, Pos)            ((ed_fragment **)((Ed)->fragments))[Pos]->ramps
+#define FRAGMENT_PTREES(Ed, Pos)           ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees
+
 #define FRAGMENT_GLOBAL_POSITION(Ed, Pos)  ((ed_fragment **)((Ed)->fragments))[Pos]->out
 #define FRAGMENT_LOCAL_POSITION(Ed, Pos)   ((ed_fragment **)((Ed)->fragments))[Pos]->beg
 #define FRAGMENT_LOCAL_END(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->end
 #define FRAGMENT_SCALER(Ed, Pos)           ((ed_fragment **)((Ed)->fragments))[Pos]->scl
 #define FRAGMENT_TYPE(Ed, Pos)             ((ed_fragment **)((Ed)->fragments))[Pos]->typ
 #define FRAGMENT_SOUND(Ed, Pos)            ((ed_fragment **)((Ed)->fragments))[Pos]->snd
-#define FRAGMENT_RAMP_BEG(Ed, Pos)         ((ed_fragment **)((Ed)->fragments))[Pos]->rmp0
-#define FRAGMENT_RAMP_END(Ed, Pos)         ((ed_fragment **)((Ed)->fragments))[Pos]->rmp1
-#define FRAGMENT_RAMP2_BEG(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp2
-#define FRAGMENT_RAMP2_END(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp3
-#define FRAGMENT_RAMP3_BEG(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp4
-#define FRAGMENT_RAMP3_END(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp5
-#define FRAGMENT_RAMP4_BEG(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp6
-#define FRAGMENT_RAMP4_END(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp7
-#define FRAGMENT_XRAMP_SCALER(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->scaler
-#define FRAGMENT_XRAMP_OFFSET(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->offset
-#define FRAGMENT_XRAMP_SCALER2(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->scaler2
-#define FRAGMENT_XRAMP_OFFSET2(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->offset2
-#define FRAGMENT_PTREE_SCALER(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_scl
-#define FRAGMENT_PTREE2_SCALER(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_scl2
-#define FRAGMENT_PTREE3_SCALER(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_scl3
-#define FRAGMENT_PTREE_INDEX(Ed, Pos)      ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_loc
-#define FRAGMENT_PTREE2_INDEX(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_loc2
-#define FRAGMENT_PTREE3_INDEX(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_loc3
-#define FRAGMENT_PTREE_DUR(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_dur
-#define FRAGMENT_PTREE2_DUR(Ed, Pos)       ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_dur2
-#define FRAGMENT_PTREE3_DUR(Ed, Pos)       ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_dur3
-#define FRAGMENT_PTREE_POSITION(Ed, Pos)   ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_pos
-#define FRAGMENT_PTREE2_POSITION(Ed, Pos)  ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_pos2
-#define FRAGMENT_PTREE3_POSITION(Ed, Pos)  ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_pos3
+#define FRAGMENT_RAMP_BEG(Ed, Pos)         ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->rmp0
+#define FRAGMENT_RAMP_END(Ed, Pos)         ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->rmp1
+#define FRAGMENT_RAMP2_BEG(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->rmp2
+#define FRAGMENT_RAMP2_END(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->rmp3
+#define FRAGMENT_RAMP3_BEG(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->rmp4
+#define FRAGMENT_RAMP3_END(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->rmp5
+#define FRAGMENT_RAMP4_BEG(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->rmp6
+#define FRAGMENT_RAMP4_END(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->rmp7
+#define FRAGMENT_XRAMP_SCALER(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->scaler
+#define FRAGMENT_XRAMP_OFFSET(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->offset
+#define FRAGMENT_XRAMP_SCALER2(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->scaler2
+#define FRAGMENT_XRAMP_OFFSET2(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->offset2
+#define FRAGMENT_PTREE_SCALER(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_scl
+#define FRAGMENT_PTREE2_SCALER(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_scl2
+#define FRAGMENT_PTREE3_SCALER(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_scl3
+#define FRAGMENT_PTREE_INDEX(Ed, Pos)      ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_loc
+#define FRAGMENT_PTREE2_INDEX(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_loc2
+#define FRAGMENT_PTREE3_INDEX(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_loc3
+#define FRAGMENT_PTREE_DUR(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_dur
+#define FRAGMENT_PTREE2_DUR(Ed, Pos)       ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_dur2
+#define FRAGMENT_PTREE3_DUR(Ed, Pos)       ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_dur3
+#define FRAGMENT_PTREE_POSITION(Ed, Pos)   ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_pos
+#define FRAGMENT_PTREE2_POSITION(Ed, Pos)  ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_pos2
+#define FRAGMENT_PTREE3_POSITION(Ed, Pos)  ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_pos3
 #define FRAGMENT_LENGTH(Ed, Pos)           (FRAGMENT_LOCAL_END(Ed, Pos) - FRAGMENT_LOCAL_POSITION(Ed, Pos) + 1)
 
 #define READER_GLOBAL_POSITION(Sf)  ((ed_fragment *)((Sf)->cb))->out
@@ -450,30 +455,30 @@ typedef struct ed_fragment {
 #define READER_SCALER(Sf)           ((ed_fragment *)((Sf)->cb))->scl
 #define READER_TYPE(Sf)             ((ed_fragment *)((Sf)->cb))->typ
 #define READER_SOUND(Sf)            ((ed_fragment *)((Sf)->cb))->snd
-#define READER_RAMP_BEG(Sf)         ((ed_fragment *)((Sf)->cb))->rmp0
-#define READER_RAMP_END(Sf)         ((ed_fragment *)((Sf)->cb))->rmp1
-#define READER_RAMP2_BEG(Sf)        ((ed_fragment *)((Sf)->cb))->rmp2
-#define READER_RAMP2_END(Sf)        ((ed_fragment *)((Sf)->cb))->rmp3
-#define READER_RAMP3_BEG(Sf)        ((ed_fragment *)((Sf)->cb))->rmp4
-#define READER_RAMP3_END(Sf)        ((ed_fragment *)((Sf)->cb))->rmp5
-#define READER_RAMP4_BEG(Sf)        ((ed_fragment *)((Sf)->cb))->rmp6
-#define READER_RAMP4_END(Sf)        ((ed_fragment *)((Sf)->cb))->rmp7
-#define READER_XRAMP_SCALER(Sf)     ((ed_fragment *)((Sf)->cb))->scaler
-#define READER_XRAMP_OFFSET(Sf)     ((ed_fragment *)((Sf)->cb))->offset
-#define READER_XRAMP_SCALER2(Sf)    ((ed_fragment *)((Sf)->cb))->scaler2
-#define READER_XRAMP_OFFSET2(Sf)    ((ed_fragment *)((Sf)->cb))->offset2
-#define READER_PTREE_SCALER(Sf)     ((ed_fragment *)((Sf)->cb))->ptree_scl
-#define READER_PTREE2_SCALER(Sf)    ((ed_fragment *)((Sf)->cb))->ptree_scl2
-#define READER_PTREE3_SCALER(Sf)    ((ed_fragment *)((Sf)->cb))->ptree_scl3
-#define READER_PTREE_INDEX(Sf)      ((ed_fragment *)((Sf)->cb))->ptree_loc
-#define READER_PTREE2_INDEX(Sf)     ((ed_fragment *)((Sf)->cb))->ptree_loc2
-#define READER_PTREE3_INDEX(Sf)     ((ed_fragment *)((Sf)->cb))->ptree_loc3
-#define READER_PTREE_DUR(Sf)        ((ed_fragment *)((Sf)->cb))->ptree_dur
-#define READER_PTREE2_DUR(Sf)       ((ed_fragment *)((Sf)->cb))->ptree_dur2
-#define READER_PTREE3_DUR(Sf)       ((ed_fragment *)((Sf)->cb))->ptree_dur3
-#define READER_PTREE_POSITION(Sf)   ((ed_fragment *)((Sf)->cb))->ptree_pos
-#define READER_PTREE2_POSITION(Sf)  ((ed_fragment *)((Sf)->cb))->ptree_pos2
-#define READER_PTREE3_POSITION(Sf)  ((ed_fragment *)((Sf)->cb))->ptree_pos3
+#define READER_RAMP_BEG(Sf)         ((ed_fragment *)((Sf)->cb))->ramps->rmp0
+#define READER_RAMP_END(Sf)         ((ed_fragment *)((Sf)->cb))->ramps->rmp1
+#define READER_RAMP2_BEG(Sf)        ((ed_fragment *)((Sf)->cb))->ramps->rmp2
+#define READER_RAMP2_END(Sf)        ((ed_fragment *)((Sf)->cb))->ramps->rmp3
+#define READER_RAMP3_BEG(Sf)        ((ed_fragment *)((Sf)->cb))->ramps->rmp4
+#define READER_RAMP3_END(Sf)        ((ed_fragment *)((Sf)->cb))->ramps->rmp5
+#define READER_RAMP4_BEG(Sf)        ((ed_fragment *)((Sf)->cb))->ramps->rmp6
+#define READER_RAMP4_END(Sf)        ((ed_fragment *)((Sf)->cb))->ramps->rmp7
+#define READER_XRAMP_SCALER(Sf)     ((ed_fragment *)((Sf)->cb))->ramps->scaler
+#define READER_XRAMP_OFFSET(Sf)     ((ed_fragment *)((Sf)->cb))->ramps->offset
+#define READER_XRAMP_SCALER2(Sf)    ((ed_fragment *)((Sf)->cb))->ramps->scaler2
+#define READER_XRAMP_OFFSET2(Sf)    ((ed_fragment *)((Sf)->cb))->ramps->offset2
+#define READER_PTREE_SCALER(Sf)     ((ed_fragment *)((Sf)->cb))->ptrees->ptree_scl
+#define READER_PTREE2_SCALER(Sf)    ((ed_fragment *)((Sf)->cb))->ptrees->ptree_scl2
+#define READER_PTREE3_SCALER(Sf)    ((ed_fragment *)((Sf)->cb))->ptrees->ptree_scl3
+#define READER_PTREE_INDEX(Sf)      ((ed_fragment *)((Sf)->cb))->ptrees->ptree_loc
+#define READER_PTREE2_INDEX(Sf)     ((ed_fragment *)((Sf)->cb))->ptrees->ptree_loc2
+#define READER_PTREE3_INDEX(Sf)     ((ed_fragment *)((Sf)->cb))->ptrees->ptree_loc3
+#define READER_PTREE_DUR(Sf)        ((ed_fragment *)((Sf)->cb))->ptrees->ptree_dur
+#define READER_PTREE2_DUR(Sf)       ((ed_fragment *)((Sf)->cb))->ptrees->ptree_dur2
+#define READER_PTREE3_DUR(Sf)       ((ed_fragment *)((Sf)->cb))->ptrees->ptree_dur3
+#define READER_PTREE_POSITION(Sf)   ((ed_fragment *)((Sf)->cb))->ptrees->ptree_pos
+#define READER_PTREE2_POSITION(Sf)  ((ed_fragment *)((Sf)->cb))->ptrees->ptree_pos2
+#define READER_PTREE3_POSITION(Sf)  ((ed_fragment *)((Sf)->cb))->ptrees->ptree_pos3
 
 #define ED_GLOBAL_POSITION(Ed)  (Ed)->out
 #define ED_LOCAL_POSITION(Ed)   (Ed)->beg
@@ -481,34 +486,23 @@ typedef struct ed_fragment {
 #define ED_SCALER(Ed)           (Ed)->scl
 #define ED_TYPE(Ed)             (Ed)->typ
 #define ED_SOUND(Ed)            (Ed)->snd
-#define ED_RAMP_BEG(Ed)         (Ed)->rmp0
-#define ED_RAMP_END(Ed)         (Ed)->rmp1
-#define ED_RAMP2_BEG(Ed)        (Ed)->rmp2
-#define ED_RAMP2_END(Ed)        (Ed)->rmp3
-#define ED_RAMP3_BEG(Ed)        (Ed)->rmp4
-#define ED_RAMP3_END(Ed)        (Ed)->rmp5
-#define ED_RAMP4_BEG(Ed)        (Ed)->rmp6
-#define ED_RAMP4_END(Ed)        (Ed)->rmp7
-#define ED_XRAMP_SCALER(Ed)     (Ed)->scaler
-#define ED_XRAMP_OFFSET(Ed)     (Ed)->offset
-#define ED_XRAMP_SCALER2(Ed)    (Ed)->scaler2
-#define ED_XRAMP_OFFSET2(Ed)    (Ed)->offset2
-#if 0
-#define ED_PTREE_SCALER(Ed)     (Ed)->ptree_scl
-#define ED_PTREE2_SCALER(Ed)    (Ed)->ptree_scl2
-#define ED_PTREE3_SCALER(Ed)    (Ed)->ptree_scl3
-#define ED_PTREE_INDEX(Ed)      (Ed)->ptree_loc
-#define ED_PTREE2_INDEX(Ed)     (Ed)->ptree_loc2
-#define ED_PTREE3_INDEX(Ed)     (Ed)->ptree_loc3
-#define ED_PTREE_DUR(Ed)        (Ed)->ptree_dur
-#define ED_PTREE2_DUR(Ed)       (Ed)->ptree_dur2
-#define ED_PTREE3_DUR(Ed)       (Ed)->ptree_dur3
-#define ED_LENGTH(Ed)           (ED_LOCAL_END(Ed) - ED_LOCAL_POSITION(Ed) + 1)
-#define READER_LENGTH(Sf)       (READER_LOCAL_END(Sf) - READER_LOCAL_POSITION(Sf) + 1)
-#endif
-#define ED_PTREE_POSITION(Ed)   (Ed)->ptree_pos
-#define ED_PTREE2_POSITION(Ed)  (Ed)->ptree_pos2
-#define ED_PTREE3_POSITION(Ed)  (Ed)->ptree_pos3
+#define ED_RAMP_BEG(Ed)         (Ed)->ramps->rmp0
+#define ED_RAMP_END(Ed)         (Ed)->ramps->rmp1
+#define ED_RAMP2_BEG(Ed)        (Ed)->ramps->rmp2
+#define ED_RAMP2_END(Ed)        (Ed)->ramps->rmp3
+#define ED_RAMP3_BEG(Ed)        (Ed)->ramps->rmp4
+#define ED_RAMP3_END(Ed)        (Ed)->ramps->rmp5
+#define ED_RAMP4_BEG(Ed)        (Ed)->ramps->rmp6
+#define ED_RAMP4_END(Ed)        (Ed)->ramps->rmp7
+#define ED_XRAMP_SCALER(Ed)     (Ed)->ramps->scaler
+#define ED_XRAMP_OFFSET(Ed)     (Ed)->ramps->offset
+#define ED_XRAMP_SCALER2(Ed)    (Ed)->ramps->scaler2
+#define ED_XRAMP_OFFSET2(Ed)    (Ed)->ramps->offset2
+#define ED_PTREE_POSITION(Ed)   (Ed)->ptrees->ptree_pos
+#define ED_PTREE2_POSITION(Ed)  (Ed)->ptrees->ptree_pos2
+#define ED_PTREE3_POSITION(Ed)  (Ed)->ptrees->ptree_pos3
+#define ED_RAMPS(Ed)            (Ed)->ramps
+#define ED_PTRESS(Ed)           (Ed)->ptrees
 
 
 /* -------------------------------- fragment accessors --------------------------------
@@ -5255,7 +5249,53 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 #endif
 }
 
-#define copy_ed_fragment(New_Ed, Old_Ed) memcpy((void *)(New_Ed), (void *)(Old_Ed), sizeof(ed_fragment))
+static void ensure_ed_ramps(ed_fragment *ed)
+{
+  if (!(ed->ramps))
+    ed->ramps = (ed_ramps *)CALLOC(1, sizeof(ed_ramps));
+}
+
+static void ensure_ed_ptrees(ed_fragment *ed)
+{
+  if (!(ed->ptrees))
+    ed->ptrees = (ed_ptrees *)CALLOC(1, sizeof(ed_ptrees));
+}
+
+static ed_fragment *make_ed_fragment(void)
+{
+  return((ed_fragment *)CALLOC(1, sizeof(ed_fragment)));
+}
+
+static void copy_ed_fragment(ed_fragment *new_ed, ed_fragment *old_ed)
+{
+  new_ed->typ = old_ed->typ;
+  new_ed->snd = old_ed->snd;
+  new_ed->out = old_ed->out;
+  new_ed->beg = old_ed->beg;
+  new_ed->end = old_ed->end;
+  new_ed->scl = old_ed->scl;
+  if (old_ed->ramps)
+    {
+      ensure_ed_ramps(new_ed);
+      memcpy((void *)(new_ed->ramps), (void *)(old_ed->ramps), sizeof(ed_ramps));
+    }
+  if (old_ed->ptrees)
+    {
+      ensure_ed_ptrees(new_ed);
+      memcpy((void *)(new_ed->ptrees), (void *)(old_ed->ptrees), sizeof(ed_ptrees));
+    }
+}
+
+static ed_fragment *free_ed_fragment(ed_fragment *ed)
+{
+  if (ed)
+    {
+      if (ed->ramps) FREE(ed->ramps);
+      if (ed->ptrees) FREE(ed->ptrees);
+      FREE(ed);
+    }
+  return(NULL);
+}
 
 static ed_list *make_ed_list(int size)
 {
@@ -5264,9 +5304,9 @@ static ed_list *make_ed_list(int size)
   ed = (ed_list *)CALLOC(1, sizeof(ed_list));
   ed->size = size;
   ed->allocated_size = size;
-  ed->fragments = (ed_fragment **)malloc(size * sizeof(ed_fragment *));
+  ed->fragments = (ed_fragment **)malloc(size * sizeof(ed_fragment *)); /* can't use MALLOC/FREE -- compiler dislikes the assignment in FREE */
   for (i = 0; i < size; i++)
-    FRAGMENT(ed, i) = (ed_fragment *)calloc(1, sizeof(ed_fragment)); /* "calloc" removes this from the memory tracker -- it's glomming up everything */
+    FRAGMENT(ed, i) = make_ed_fragment();
   ed->origin = NULL;
   ed->maxamp = -1.0;
   ed->maxamp_position = -1;
@@ -5339,8 +5379,7 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
 	{
 	  int i;
 	  for (i = 0; i < ed->allocated_size; i++)
-	    if (FRAGMENT(ed, i))
-	      free(FRAGMENT(ed, i));
+	    free_ed_fragment(FRAGMENT(ed, i));
 	  free(FRAGMENTS(ed));
 	}
       if (ed->origin) FREE(ed->origin);
@@ -5493,6 +5532,7 @@ static void new_leading_ramp(ed_fragment *new_start, ed_fragment *old_start, off
       Float rmp1, rmp0;
       Float val;
       double xpos = 0.0;
+      ensure_ed_ramps(new_start);
       rmp0 = ED_RAMP_BEG(old_start);
       rmp1 = ED_RAMP_END(old_start);
       if (ED_LOCAL_END(old_start) == ED_LOCAL_POSITION(old_start))
@@ -5534,6 +5574,7 @@ static void new_trailing_ramp(ed_fragment *new_back, ed_fragment *old_back, off_
       Float rmp1, rmp0;
       Float val;
       double xpos = 0.0;
+      ensure_ed_ramps(new_back);
       rmp0 = ED_RAMP_BEG(old_back);
       rmp1 = ED_RAMP_END(old_back);
       if (ED_LOCAL_END(old_back) == ED_LOCAL_POSITION(old_back))
@@ -5571,6 +5612,7 @@ static void new_trailing_ramp(ed_fragment *new_back, ed_fragment *old_back, off_
     }
   if (PTREE123_OP(ED_TYPE(new_back)))
     {
+      ensure_ed_ptrees(new_back);
       ED_PTREE_POSITION(new_back) = ED_PTREE_POSITION(old_back) + samp - ED_GLOBAL_POSITION(old_back);
       if (PTREE23_OP(ED_TYPE(new_back)))
 	{
@@ -5734,9 +5776,7 @@ void extend_edit_list(chan_info *cp, int edpos)
   new_ed->len = cp->samples[edpos];
   cp->edits[cp->edit_ctr] = new_ed;
   for (i = 0; i < new_ed->size; i++) 
-    {
-      copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
-    }
+    copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
   new_ed->edit_type = EXTEND_EDIT;
   new_ed->sound_location = 0;
   new_ed->origin = copy_string(S_pad_channel);
@@ -6326,19 +6366,23 @@ static ed_list *copy_and_split_list(off_t beg, off_t num, ed_list *current_state
 		      /* now fixup ramps/ptrees affected by the split */
 		      if ((ED_TYPE(cur_f) != ED_SIMPLE) && (ED_TYPE(cur_f) != ED_ZERO))
 			{
-			  Float old_beg, old_beg2, old_beg3, old_beg4;
-			  old_beg = ED_RAMP_BEG(split_front_f);
-			  old_beg2 = ED_RAMP2_BEG(split_front_f);
-			  old_beg3 = ED_RAMP3_BEG(split_front_f);
-			  old_beg4 = ED_RAMP4_BEG(split_front_f);
-			  new_leading_ramp(split_front_f, cur_f, end);
-			  if (mid_f == split_front_f)
+			  if (ED_RAMPS(split_front_f))
 			    {
-			      ED_RAMP_BEG(split_front_f) = old_beg;
-			      ED_RAMP2_BEG(split_front_f) = old_beg2;
-			      ED_RAMP3_BEG(split_front_f) = old_beg3;
-			      ED_RAMP4_BEG(split_front_f) = old_beg4;
+			      Float old_beg, old_beg2, old_beg3, old_beg4;
+			      old_beg = ED_RAMP_BEG(split_front_f);
+			      old_beg2 = ED_RAMP2_BEG(split_front_f);
+			      old_beg3 = ED_RAMP3_BEG(split_front_f);
+			      old_beg4 = ED_RAMP4_BEG(split_front_f);
+			      new_leading_ramp(split_front_f, cur_f, end);
+			      if (mid_f == split_front_f)
+				{
+				  ED_RAMP_BEG(split_front_f) = old_beg;
+				  ED_RAMP2_BEG(split_front_f) = old_beg2;
+				  ED_RAMP3_BEG(split_front_f) = old_beg3;
+				  ED_RAMP4_BEG(split_front_f) = old_beg4;
+				}
 			    }
+			  /* possibly also just ptrees in new trailer */
 			  new_trailing_ramp(split_back_f, cur_f, end);
 			}
 		    }
@@ -6467,6 +6511,7 @@ static void setup_ramp_fragments(ed_list *new_ed, int i, double seg0, double seg
 	  FRAGMENT_TYPE(new_ed, i) = ED_ZERO;
 	  return;
 	}
+      ensure_ed_ramps(FRAGMENT(new_ed, i));
       if (is_xramp)
 	{
 	  if (type_info[typ].xramps == 1)
@@ -6659,6 +6704,7 @@ static void make_ptree_fragment(ed_list *new_ed, int i, int ptree_loc, off_t beg
       /* this can happen at the very end (actually seems like a bug...) */
       FRAGMENT_TYPE(new_ed, i) = ED_PTREE;
     }
+  ensure_ed_ptrees(FRAGMENT(new_ed, i));
   if (PTREE1_OP(FRAGMENT_TYPE(new_ed, i)))
     {
       FRAGMENT_PTREE_INDEX(new_ed, i) = ptree_loc;
@@ -7823,8 +7869,8 @@ the edit lists '((global-pos data-num local-pos local-end scaler rmp0 rmp1 type)
 			      C_TO_XEN_OFF_T(FRAGMENT_LOCAL_POSITION(ed, i)),
 			      C_TO_XEN_OFF_T(FRAGMENT_LOCAL_END(ed, i)),
 			      C_TO_XEN_DOUBLE(FRAGMENT_SCALER(ed, i)),
-			      C_TO_XEN_DOUBLE(FRAGMENT_RAMP_BEG(ed, i)),
-			      C_TO_XEN_DOUBLE(FRAGMENT_RAMP_END(ed, i)),
+			      (FRAGMENT_RAMPS(ed, i)) ? C_TO_XEN_DOUBLE(FRAGMENT_RAMP_BEG(ed, i)) : C_TO_XEN_DOUBLE(0.0),
+			      (FRAGMENT_RAMPS(ed, i)) ? C_TO_XEN_DOUBLE(FRAGMENT_RAMP_END(ed, i)) : C_TO_XEN_DOUBLE(0.0),
 			      C_TO_XEN_INT(FRAGMENT_TYPE(ed, i))),
 		   res);
   return(res);
