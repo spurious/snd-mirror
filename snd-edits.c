@@ -1,6 +1,6 @@
 #include "snd.h"
 
-/* TODO: water1 / dino quad */
+/* TODO: water1(checked) / dino quad */
 
 static XEN save_hook;
 static bool dont_save(snd_info *sp, const char *newname)
@@ -365,7 +365,7 @@ char *run_save_state_hook(char *file)
  *    cosine       476  0.012         511   0.012 ; cosine-channel-via-ptree
  *    xramp2       682  0.016         672   0.016 
  *
- * (3.2 GHz):          -ffast-math    (int)  (double)      (3.8 GHz, float, 1.6.4):
+ * (3.2 GHz):          -ffast-math    (int)  (double)      (3.8 GHz, float):
  *    straight     21    20           18       26             22
  *    ramp         24    21           20       26             25
  *    ramp2        27    22           21       27             29

@@ -1,5 +1,14 @@
 # snd-test.rb: Snd Ruby code and tests -*- snd-ruby -*-
 #
+# Commentary:
+#
+# The init file name has changed: .sndtestrc becomes .sndtest.rb.  If
+# the old name exists in the current directory, it will be still read
+# for backward compatibility.
+# 
+# snd -noinit -load snd-test.rb         # all tests
+# snd -noinit -load snd-test.rb 3 7 20  # test 3, 7, 20
+#
 #  test 00: constants
 #  test 01: defaults
 #  test 02: headers
@@ -26,9 +35,6 @@
 #  test 24: user-interface
 #  test 28: errors
 #  test all done
-
-# snd -noinit -load snd-test.rb         # all tests
-# snd -noinit -load snd-test.rb 3 7 20  # test 3, 7, 20
 
 # $VERBOSE = true
 # $DEBUG = true
@@ -66,6 +72,7 @@ $my_snd_error_hook = nil
 $my_mus_error_hook = nil
 $original_save_dir = (save_dir or "/zap/snd")
 $original_temp_dir = (temp_dir or "/zap/tmp")
+$original_sound_file_extensions = sound_file_extensions
 $original_prompt = listener_prompt
 $sample_reader_tests = 300
 $default_file_buffer_size = 65536
@@ -141,8 +148,12 @@ $test28 = true
 
 reset_all_hooks
 
-# global variables may be overridden in `pwd`/.sndtestrc or ~/.sndtestrc
-load_init_file(".sndtestrc")
+# global variables may be overridden in `pwd`/.sndtest.rb or ~/.sndtest.rb
+if File.exist?(".sndtestrc")
+  load_init_file(".sndtestrc")
+else
+  load_init_file(".sndtest.rb")
+end
 
 # to prepare view_files_infos in snd-xfile.c
 # (save_state calls save_view_files_dialogs() in snd-xfile.c)
@@ -1006,9 +1017,11 @@ def test00
     consts = [[:Enved_amplitude, 0],
               [:Autocorrelation, 3],
               [:Bartlett_window, 4],
+              [:Bartlett_hann_window, 21],
               [:Blackman2_window, 6],
               [:Blackman3_window, 7],
               [:Blackman4_window, 8],
+              [:Bohman_window, 22],
               [:Cauchy_window, 12],
               [:Channels_combined, 1],
               [:Channels_separate, 0],
@@ -1020,6 +1033,7 @@ def test00
               [:Cursor_on_right, 2],
               [:Dolph_chebyshev_window, 16],
               [:Exponential_window, 9],
+              [:Flat_top_window, 23],
               [:Zoom_focus_active, 2],
               [:Zoom_focus_left, 0],
               [:Zoom_focus_middle, 3],
@@ -1044,9 +1058,6 @@ def test00
               [:Riemann_window, 10],
               [:Samaraki_window, 19],
               [:Ultraspherical_window, 20],
-              [:Bartlett_hann_window, 21],
-              [:Bohman_window, 22],
-              [:Flat_top_window, 23],
               [:Graph_as_sonogram, 1],
               [:Graph_as_spectrogram, 2],
               [:Graph_once, 0],
@@ -1110,6 +1121,7 @@ def test00
               [:Mus_svx, 9],
               [:Mus_soundfont, 26],
               [:Mus_rf64, 4],
+              [:Mus_caff, 60],
               # 
               [:Mus_interp_none, 0],
               [:Mus_interp_linear, 1],
@@ -3592,6 +3604,7 @@ def test104
    "no reset",
    "bad size",
    "can't convert",
+   "read error",
    "can't translate"].each_with_index do |err, i|
     if (res = mus_error_type2string(i)) != err
       snd_display("mus_error_type2string %d: %s %s?", i, err, res)
@@ -13176,6 +13189,9 @@ def test018
     snd_display("delay 100 -> 0: %s", v)
   end
   dly.reset
+  unless vequal(dly.data, Vct.new(100, 0.0))
+    snd_display("after reset mus-data delay peak: %s?", dly.data.peak)
+  end
   10.times do |i| v[i] = delay(dly, (i.odd? ? 1.0 : 0.0), i * 0.1) end
   unless vequal(v, vct(0.0, 0.9, 0.0, 0.7, 0.0, 0.5, 0.0, 0.3, 0.0, 0.1))
     snd_display("delay 0 -> 100 0.1: %s", v)
@@ -17662,6 +17678,28 @@ def test148
   mus_close(sfrev)
   delete_files("fmv4.snd", "fmv4.reverb")
   mus_sound_prune
+  #
+  [Mus_caff, Mus_aifc, Mus_next, Mus_riff, Mus_rf64].each do |ht|
+    ind = find_sound(with_sound(:channels, 8) do
+                       8.times do |i|
+                         locsig(make_locsig(:degree, i * 45, :output, $output), i, 0.5)
+                       end
+                     end.output)
+    8.times do |chn|
+      samps = channel2vct(0, 8, ind, chn)
+      8.times do |k|
+        if k == chn and fneq(samps[k], 0.5)
+          snd_display("8 out %s chan %d samp %d (0.5): %s?",
+                      mus_header_type2string(ht), chn, k, samp[k])
+        end
+        if k != chn and fneq(samps[k], 0.0)
+          snd_display("8 out %s chan %d samp %d (0.0): %s?",
+                      mus_header_type2string(ht), chn, k, samp[k])
+        end
+      end
+    end
+    close_sound(ind)
+  end
   #
   gen = make_frame2file("fmv4.snd", 2, Mus_bshort, Mus_next)
   rev = make_frame2file("fmv4.reverb", 1, Mus_bshort, Mus_next)
@@ -25710,6 +25748,9 @@ def test12
         end
       end
     end
+    if sound_file_extensions.null?
+      set_sound_file_extensions($original_sound_file_extensions)
+    end
     open_files = []
     open_ctr = 0
     add_sound_file_extension("wave")
@@ -26167,11 +26208,14 @@ def test_menus
     unless RXmIsRowColumn(w)
       option_holder = RXtGetValues(w, [RXmNsubMenuId, 0])[1]
       each_child(option_holder) do |menu|
-        if RXmIsPushButton(menu) and RXtIsSensitive(menu) and
+        if RXmIsPushButton(menu) and
+            RXtIsManaged(menu) and
+            RXtIsSensitive(menu) and
             (not ["Exit",
                   "New", 
                   "Save   C-x C-s", 
                   "Close  C-x k",
+                  "Close all",
                   "Save options",
                   "Mixes",
                   "clm",
@@ -33333,12 +33377,12 @@ def test0219
     snd_display("edit_list2function 1a: %s", res)
   end
   revert_sound(ind)
-  normalize_channel(1.0)
+  normalize_channel(1.001)      # normalize_channel(1.0) seems to do nothing
   unless proc?(func = edit_list2function)
-    snd_display("edit_list2function 1b: %s", func)
+    snd_display("edit_list2function 1c: %s", func)
   end
-  if (res = func.source) != "Proc.new {|snd, chn|  normalize_channel(1.000, 0, false, snd, chn) }"
-    snd_display("edit_list2function 1b: %s", res)
+  if (res = func.source) != "Proc.new {|snd, chn|  normalize_channel(1.001, 0, false, snd, chn) }"
+    snd_display("edit_list2function 1c: %s", res)
   end
   revert_sound(ind)
   # simple delete
@@ -34011,7 +34055,7 @@ def test0219
      [lambda { zero_phase },
       "Proc.new {|snd, chn|  zero_phase(snd, chn) }"],
      [lambda { rotate_phase(lambda { |x| random(PI) })  },
-      format("Proc.new {|snd, chn|  rotate_phase(Proc.new {|val| rotate_phase_%d(val) }, snd, chn) }", edit_list_proc_counter + 1)],
+      format("Proc.new {|snd, chn|  rotate_phase(Proc.new {|val_r| rotate_phase_%d(val_r) }, snd, chn) }", edit_list_proc_counter + 1)],
      [lambda { brighten_slightly(0.5) },
       "Proc.new {|snd, chn|  brighten_slightly(0.5, snd, chn) }"],
      [lambda { shift_channel_pitch(100) },
@@ -36005,6 +36049,7 @@ def test0220
       snd_display("down_oct: %d %s %s %s?", i, val1, val2, val3)
     end
   end
+  kalman_filter_channel
   close_sound(ind)
   # 
   d0 = Vct.new(8)
@@ -36228,7 +36273,7 @@ def test0021
   undo_edit
   filter_channel(vct(1, 0, 1), 3)
   unless vequal(res = channel2vct(5, 10), vct(0, 0, 0, 0, 0, 0.5, 0, 0.5, 0, 0))
-    snd_display("filter_sound (v) 1 0 1: %s?", res)
+    snd_display("filter_channel (v) 1 0 1: %s?", res)
   end
   undo_edit
   filter_sound([0, 1, 1, 1], 100)
@@ -37624,6 +37669,26 @@ def test0023
   close_sound(ind)
   delete_file("test1.snd")
   # 
+  with_sound(:srate, 48000, :channels, 2, :header_type, Mus_caff,
+             :data_format, Mus_lshort, :output, "test1.snd") do
+    fm_violin(0, 0.1, 440, 0.1)
+  end
+  ind = find_sound("test1.snd")
+  if srate(ind) != 48000 or mus_sound_srate("test1.snd") != 48000
+    snd_display("with_sound srate (48000, r): %s (%s, %s)?",
+                srate(ind),
+                mus_srate,
+                mus_sound_srate("test1.snd"))
+  end
+  if (res = header_type(ind)) != Mus_caff
+    snd_display("with_sound type (%s, r): %s?", Mus_caff, res)
+  end
+  if (res = channels(ind)) != 2
+    snd_display("with_sound Mus_caff chans (2, r): %s?", res)
+  end
+  close_sound(ind)
+  delete_file("test1.snd")
+  # 
   with_sound(:srate, 8000, :channels, 3, :header_type, Mus_next, :output, "test1.snd") do
     fm_violin(0, 0.1, 440, 0.1)
   end
@@ -37741,11 +37806,11 @@ def test0023
   with_sound(:header_type, Mus_raw) do fm_violin(0, 0.1, 440, 0.1) end
   $open_raw_sound_hook.remove_hook!("with-sound")
   ind = find_sound("test.snd")
-  unless ind then snd_display("with_sound: %s?", file_name(true)) end
+  unless ind then snd_display("with_sound (raw out): %s?", file_name(true)) end
   if (res = header_type(ind)) != Mus_raw
     snd_display("with_sound type raw: %s (%s)?", res, mus_header_type_name(res))
   end
-  if (res = data_format(ind)) != Mus_bshort
+  if (res = data_format(ind)) != Mus_bshort and res != Mus_bfloat
     snd_display("with_sound format raw: %s (%s)?", res, mus_data_format_name(res))
   end
   close_sound(ind)
@@ -38121,9 +38186,9 @@ def test0223
   if (res1 = $clm_header_type) != (res2 = default_output_header_type)
     snd_display("$clm_header_type: %s %s?", res1, res2)
   end
-  if (res1 = $clm_data_format) != (res2 = default_output_data_format)
-    snd_display("$clm_data_format: %s %s?", res1, res2)
-  end
+  # if (res1 = $clm_data_format) != (res2 = default_output_data_format)
+  #   snd_display("$clm_data_format: %s %s?", res1, res2)
+  # end
   if (res = $clm_reverb_channels) != 1
     snd_display("$clm_reverb_channels: %s 1?", res)
   end
@@ -42451,21 +42516,39 @@ Keyargs =
    :revout, :width, :edit, :synthesize, :analyze, :interp, :overlap, :pitch, :distribution,
    :sines, :dur]
 
-Procs0 = Procs.reject do |n| !function?(n) or !arity_ok(n, 0) end
-Set_procs0 = Set_procs.reject do |n| !function?(n) or !set_arity_ok(n, 1) end
-Procs1 = Procs.reject do |n| !function?(n) or !arity_ok(n, 1) end
-Set_procs1 = Set_procs.reject do |n| !function?(n) or !set_arity_ok(n, 2) end
-Procs2 = Procs.reject do |n| !function?(n) or !arity_ok(n, 2) end
-Set_procs2 = Set_procs.reject do |n| !function?(n) or !set_arity_ok(n, 3) end
-Procs3 = Procs.reject do |n| !function?(n) or !arity_ok(n, 3) end
-Set_procs3 = Set_procs.reject do |n| !function?(n) or !set_arity_ok(n, 4) end
-Procs4 = Procs.reject do |n| !function?(n) or !arity_ok(n, 4) end
-Set_procs4 = Set_procs.reject do |n| !function?(n) or !set_arity_ok(n, 5) end
-Procs5 = Procs.reject do |n| !function?(n) or !arity_ok(n, 5) end
-Procs6 = Procs.reject do |n| !function?(n) or !arity_ok(n, 6) end
-Procs7 = Procs.reject do |n| !function?(n) or !arity_ok(n, 7) end
-Procs8 = Procs.reject do |n| !function?(n) or !arity_ok(n, 8) end
-Procs10 = Procs.reject do |n| !function?(n) or !arity_ok(n, 10) end
+class Array
+  # If body results in true, returns the rejected elements in a new
+  # array and remove these elements from the original.
+  def remove_if!
+    ret = []
+    self.map! do |x|
+      if yield(x)
+        ret.push(x)
+        nil
+      else
+        x
+      end
+    end
+    self.compact!
+    ret
+  end
+end
+
+Procs0  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 0) end
+Set_procs0 = Set_procs.remove_if! do |n| function?(n) and set_arity_ok(n, 1) end
+Procs1  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 1) end
+Set_procs1 = Set_procs.remove_if! do |n| function?(n) and set_arity_ok(n, 2) end
+Procs2  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 2) end
+Set_procs2 = Set_procs.remove_if! do |n| function?(n) and set_arity_ok(n, 3) end
+Procs3  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 3) end
+Set_procs3 = Set_procs.remove_if! do |n| function?(n) and set_arity_ok(n, 4) end
+Procs4  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 4) end
+Set_procs4 = Set_procs.remove_if! do |n| function?(n) and set_arity_ok(n, 5) end
+Procs5  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 5) end
+Procs6  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 6) end
+Procs7  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 7) end # not used
+Procs8  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 8) end
+Procs10 = Procs.remove_if! do |n| function?(n) and arity_ok(n, 10) end
 
 $delay_32 = make_delay(32)
 $color_95 = make_color_with_catch(0.95, 0.95, 0.95)
@@ -43445,7 +43528,7 @@ def test0328
   set_mus_srate(old_srate)
   $clm_srate = old_clm_srate
   # now try everything! (all we care about here is that Snd keeps running)
-  random_args = [1.5, "hiho", [0, 1], 1234, $vct_3, :wave,
+  random_args = [1.5, "/hiho", [0, 1], 1234, $vct_3, :wave,
     -1, 0, 1, false, true, [], $vector_0, 12345678901234567890, log0]
   #
   # key args
@@ -43491,7 +43574,7 @@ def test0328
   #
   # 1 Arg
   #
-  [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+  [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
     lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
     ?c, 0.0, 1.0, -1.0, [], 4, 2, 8, 16, 32, 64, -64, $vector_0, 2.0 ** 21.5, 2.0 ** -18.0,
     $car_main, $cadr_main, 12345678901234567890, log0].each do |arg|
@@ -43506,12 +43589,12 @@ def test0328
   # 2 Args
   #
   if $all_args
-    args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
       lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true, ?c,
       0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, -64, $vector_0, 2.0 ** 21.5, 2.0 ** -18.0,
       $car_main, $cadr_main, 12345678901234567890, log0]
   else
-    args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, sqrt(-1.0), $delay_32, :feedback,
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, sqrt(-1.0), $delay_32, :feedback,
       0, 1, 64, -64, false, true, [], $vector_0, 12345678901234567890, log0]
   end
   args.each do |arg1|
@@ -43528,19 +43611,21 @@ def test0328
   # set no Args
   #
   if $all_args
-    args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
             ?c, 0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, -64, $vector_0,
             2.0 ** 21.5, 2.0 ** -18.0, $car_main, $cadr_main, 12345678901234567890, log0]
   else
-    args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
             false, true, [], $vector_0, 12345678901234567890, log0]
   end
   args.each do |val|
     Set_procs0.each do |n|
-      # undefined local variable or method for mus_error|order
-      next if n == :enved_envelope and symbol?(val)
+      # undefined local variable or method for mus_error|order or unterminated regexp ("/hiho")
+      if n == :enved_envelope and (symbol?(val) or val == "/hiho")
+        next
+      end
       if (tag = Snd.catch do set_snd_func(n, val) end).first == :wrong_number_of_args
         snd_display("set_procs0: %s set_%s\n# %s", tag, n, snd_help(n))
       end
@@ -43551,12 +43636,12 @@ def test0328
   # set 1 Arg
   #
   if $all_args
-    args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
             ?c, 0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, -64, $vector_0,
             2.0 ** 21.5, 2.0 ** -18.0, $car_main, $cadr_main, 12345678901234567890, log0]
   else
-    args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
             false, true, [], $vector_0, 12345678901234567890, log0]
   end
@@ -43574,12 +43659,12 @@ def test0328
   # set 2 Args
   #
   if $all_args
-    args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook,
             false, true, ?c, 0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, -64, $vector_0,
             2.0 ** 21.5, 2.0 ** -18.0, $car_main, $cadr_main, 12345678901234567890, log0]
   else
-    args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
             false, true, [], $vector_0, 12345678901234567890, log0]
   end
@@ -43601,7 +43686,7 @@ def test0328
     #
     # 3 Args
     #
-    args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
             false, true, [], $vector_0, 12345678901234567890, log0]
     args.each do |arg1|
@@ -43621,7 +43706,7 @@ def test0328
     #
     # set 3 Args
     #
-    args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
             false, true, [], $vector_0, 12345678901234567890, log0]
     args.each do |arg1|
@@ -43643,7 +43728,7 @@ def test0328
     #
     # 4 Args
     #
-    args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
             false, true, [], $vector_0, 12345678901234567890, log0]
     args.each do |arg1|
@@ -43665,7 +43750,7 @@ def test0328
     #
     # set 4 Args
     #
-    args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
             false, true, [], $vector_0, 12345678901234567890, log0]
     args.each do |arg1|
@@ -43691,14 +43776,14 @@ def test0328
     #
     # 5 Args
     #
-    args = [1.5, "hiho", 1234, $vct_3, sqrt(-1.0), 1, -1, 64, -64,
+    args = [1.5, "/hiho", 1234, $vct_3, sqrt(-1.0), 1, -1, 64, -64,
             false, true, 12345678901234567890, log0]
     args.each do |arg1|
       args.each do |arg2|
         args.each do |arg3|
           args.each do |arg4|
             args.each do |arg5|
-              Set_procs5.each do |n|
+              Procs5.each do |n|
                 if (tag = Snd.catch do
                       snd_func(n, arg1, arg2, arg3, arg4, arg5)
                     end).first == :wrong_number_of_args
@@ -43714,14 +43799,14 @@ def test0328
     #
     # 6 Args
     #
-    args = [1.5, "hiho", [0, 1], -1234, $vct_3, false, true]
+    args = [1.5, "/hiho", [0, 1], -1234, $vct_3, false, true]
     args.each do |arg1|
       args.each do |arg2|
         args.each do |arg3|
           args.each do |arg4|
             args.each do |arg5|
               args.each do |arg6|
-                Set_procs6.each do |n|
+                Procs6.each do |n|
                   if (tag = Snd.catch do
                         snd_func(n, arg1, arg2, arg3, arg4, arg5, arg6)
                       end).first == :wrong_number_of_args
@@ -43738,7 +43823,7 @@ def test0328
     #
     # 8 Args
     #
-    args = [1.5, "hiho", -1, 1234]
+    args = [1.5, "/hiho", -1, 1234]
     args.each do |arg1|
       args.each do |arg2|
         args.each do |arg3|
@@ -43747,7 +43832,7 @@ def test0328
               args.each do |arg6|
                 args.each do |arg7|
                   args.each do |arg8|
-                    Set_procs8.each do |n|
+                    Procs8.each do |n|
                       if (tag = Snd.catch do
                             snd_func(n, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
                           end).first == :wrong_number_of_args
@@ -43767,7 +43852,7 @@ def test0328
     #
     # 10 Args
     #
-    args = [1.5, "hiho", -1, 1234]
+    args = [1.5, "/hiho", -1, 1234]
     args.each do |arg1|
       args.each do |arg2|
         args.each do |arg3|
@@ -43778,7 +43863,7 @@ def test0328
                   args.each do |arg8|
                     args.each do |arg9|
                       args.each do |arg10|
-                        Set_procs10.each do |n|
+                        Procs10.each do |n|
                           if (tag = Snd.catch do
                                 snd_func(n, arg1, arg2, arg3, arg4, arg5,
                                          arg6, arg7, arg8, arg9, arg10)
@@ -43859,14 +43944,17 @@ def test28
   if $test28
     $before_test_hook.call(28)
     set_with_background_processes(true)
-    if $all_args
-      snd_display("procs: 0: %d %d, 1: %d %d, 2: %d %d, 3: %d %d, 4: %d %d, 5: %d, 6: %d, 7: %d, 8: %d, 10: %d",
-                  Procs0.length, Set_procs0.length,
-                  Procs1.length, Set_procs1.length,
-                  Procs2.length, Set_procs2.length,
-                  Procs3.length, Set_procs3.length,
-                  Procs4.length, Set_procs4.length,
-                  Procs5.length, Procs6.length, Procs7.length, Procs8.length, Procs10.length)
+    if true # $all_args
+      snd_display("proc00: %d/%d", Procs0.length, Set_procs0.length)
+      snd_display("proc01: %d/%d", Procs1.length, Set_procs1.length)
+      snd_display("proc02: %d/%d", Procs2.length, Set_procs2.length)
+      snd_display("proc03: %d/%d", Procs3.length, Set_procs3.length)
+      snd_display("proc04: %d/%d", Procs4.length, Set_procs4.length)
+      snd_display("proc05: %d", Procs5.length)
+      snd_display("proc06: %d", Procs6.length)
+      snd_display("proc07: %d", Procs7.length)
+      snd_display("proc08: %d", Procs8.length)
+      snd_display("proc10: %d", Procs10.length)
     end
     reset_almost_all_hooks
     test0028

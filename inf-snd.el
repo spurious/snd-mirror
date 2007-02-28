@@ -1,10 +1,10 @@
 ;;; inf-snd.el -- Inferior Snd Process (Ruby/Scheme/Forth)
 
-;; Copyright (C) 2002--2006 Michael Scholz
+;; Copyright (C) 2002--2007 Michael Scholz
 
 ;; Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Created: Wed Nov 27 20:52:54 CET 2002
-;; Changed: Thu Aug 03 23:42:21 CEST 2006
+;; Changed: Sat Feb 24 18:51:27 CET 2007
 ;; Keywords: processes, snd, ruby, scheme, forth
 
 ;; This file is not part of GNU Emacs.
@@ -219,7 +219,7 @@
 (require 'cmuscheme)
 (require 'forth-mode "gforth")
 
-(defconst inf-snd-version "04-Aug-2006"
+(defconst inf-snd-version "24-Feb-2007"
   "Version date of inf-snd.el.")
 
 ;; snd-ruby
@@ -301,6 +301,13 @@ Example: (setq inf-snd-prompt \"snd> \")")
 Needed to determine which extension language to use.  This variable is
 buffer-local.")
 
+(defvar inf-snd-comint-line-end "\n"
+  "*User variable for terminating comint-send.
+Interesting perhaps only for Snd-Forth.  The default '\n' should
+be changed to '\n\n' with snd-forth-xm and snd-forth-xg but not
+with snd-forth-nogui.  A double carriage return forces a prompt
+while a single carriage return does it not in every case.")
+
 (defvar inf-snd-index-path "~/"
   "*User variable to path where snd-xref.c is located.")
 
@@ -361,7 +368,7 @@ correct path of snd-xref.c to create valid keywords."
 ;;; from share/emacs/22.0.50/lisp/thingatpt.el
 ;;; lisp-complete-symbol (&optional predicate)
 (defun snd-completion ()
-  "Perform completion on Scheme or Ruby symbol preceding point.
+  "Perform completion on symbols preceding point.
 Compare that symbol against the known Snd symbols.
 If no characters can be completed, display a list of possible completions.
 Repeating the command at that point scrolls the list."
@@ -648,19 +655,17 @@ hook with one arg `comint-preoutput-filter-functions'."
   "If STRING contains a trailing nil, replace it by `inf-snd-prompt'.
 This function could be on the so called abnormal hook with one
 arg `comint-preoutput-filter-functions'."
-  (if (string-match "\\(nil\n\\)" string)
-      (setq string (replace-match inf-snd-prompt t nil string 1)))
-  string)
+  (if (string-match "\\(nil\n$\\)" string)
+      (replace-match inf-snd-prompt t nil string 1)
+    string))
 
 (defun inf-snd-comint-put-prompt-scheme (string)
   "Appends `inf-snd-prompt' to STRING.
 This function could be on the so called abnormal hook with one
 arg `comint-preoutput-filter-functions'."
-  (if (string-match "^>$" string)	;snd-guile-nogui
-      (setq string "")
-    (if (string-match "\\(\n\\)" string)
-	(setq string (concat string inf-snd-prompt))))
-  string)
+  (if (string-match "\\(\n\\)" string)
+      (concat string inf-snd-prompt)
+    string))
 
 (defun inf-snd-comint-snd-send (proc line)
   "Special function for sending input LINE to PROC.
@@ -670,16 +675,12 @@ which contains run_emacs_eval_hook(line).  Running Snd-Forth
 emacs-eval is hardcoded in snd/xen.c.  inf-snd.el uses this
 function to evaluate one line or multi-line input (Ruby only)."
   (if (= (length line) 0)
-      (if (eq 'scheme inf-snd-kind)	;guile >= 1.7 discards nil
+      (if (eq 'scheme inf-snd-kind)
 	  (setq line "#f")
 	(setq line "nil")))
-  (comint-send-string proc
-		      (cond ((eq 'ruby inf-snd-kind)
-			     (format "run_emacs_eval_hook(%%(%s))\n" line))
-			    ((eq 'forth inf-snd-kind)
-			     (format "%S emacs-eval\n" (substring-no-properties line)))
-			    (t
-			     (concat line "\n")))))
+  (comint-send-string proc (if (eq 'ruby inf-snd-kind)
+			       (format "run_emacs_eval_hook(%%(%s))\n" line)
+			     (concat line inf-snd-comint-line-end))))
 
 (defun inf-snd-get-old-input ()
   "Snarf the whole pointed line."
@@ -743,6 +744,7 @@ The following key bindings are defined:
   (setq default-directory inf-snd-working-directory)
   (make-local-variable 'inf-snd-prompt)
   (make-local-variable 'inf-snd-kind)
+  (make-local-variable 'inf-snd-comint-line-end)
   (setq comint-prompt-regexp (concat "^\\(" inf-snd-prompt "\\)+"))
   (setq inf-snd-kind 'ruby)
   (setq mode-line-process '(":%s"))
@@ -791,6 +793,7 @@ The following key bindings are defined:
   (setq default-directory inf-snd-working-directory)
   (make-local-variable 'inf-snd-prompt)
   (make-local-variable 'inf-snd-kind)
+  (make-local-variable 'inf-snd-comint-line-end)
   (setq comint-prompt-regexp (concat "^\\(" inf-snd-prompt "\\)+"))
   (setq inf-snd-kind 'forth)
   (setq mode-line-process '(":%s"))
@@ -841,6 +844,7 @@ The following key bindings are defined:
   (setq default-directory inf-snd-working-directory)
   (make-local-variable 'inf-snd-prompt)
   (make-local-variable 'inf-snd-kind)
+  (make-local-variable 'inf-snd-comint-line-end)
   (setq comint-prompt-regexp (concat "^\\(" inf-snd-prompt "\\)+"))
   (setq inf-snd-kind 'scheme)
   (setq mode-line-process '(":%s"))

@@ -199,6 +199,9 @@ dir_info *find_filtered_files_in_dir_with_pattern(const char *name, int filter_c
   dir_info *find_directories_in_dir(const char *name);
 #endif
 
+bool directory_exists(char *name);
+const char *short_data_format_name(int sndlib_format, const char *filename);
+
 #define FILENAME_LIST_SIZE 16
 
 void remember_filename(const char *filename, char **names);

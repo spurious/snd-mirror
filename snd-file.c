@@ -121,6 +121,37 @@ time_t file_write_date(const char *filename)
   return((time_t)(statbuf.st_mtime));
 }
 
+bool directory_exists(char *name)
+{
+  char temp;
+  bool result;
+  int i, len, last_slash = -1;
+  len = strlen(name);
+  for (i = 0; i < len; i++) 
+    if (name[i] == '/') 
+      last_slash = i;
+  if (last_slash <= 0)
+    return(true);
+  if (last_slash >= len - 1) /* can't be > */
+    return(directory_p(name));
+  temp = name[last_slash + 1];
+  name[last_slash + 1] = '\0';
+  result = directory_p(name);
+  name[last_slash + 1] = temp;
+  return(result);
+}
+
+
+const char *short_data_format_name(int sndlib_format, const char *filename)
+{
+  if (MUS_DATA_FORMAT_OK(sndlib_format))
+    return(mus_data_format_short_name(sndlib_format));
+  else return(mus_header_original_format_name(mus_sound_original_format(filename),
+					      mus_sound_header_type(filename)));
+}
+
+
+
 /* -------- popup filename lists -------- */
 
 static void forget_filename(const char *filename, char **names)

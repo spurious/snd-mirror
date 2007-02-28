@@ -2,17 +2,24 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Fri Jan 05 22:52:12 CET 2007
+\ Changed: Wed Feb 28 00:14:59 CET 2007
 
 \ Commentary:
 \
-\ snd-forth -noinit -load snd-test.fs
+\ The init file name has changed: .sndtest-forth-rc becomes
+\ .sndtest.fs.  If the old name exists in the current directory, it
+\ will be still read for backward compatibility.
+\
+\ snd-forth -noinit -load snd-test.fs        \ all tests
+\ snd-forth -noinit -load snd-test.fs 3 7 20 \ test 3 7 20
+\ snd-forth -noinit -load snd-test.fs -23    \ all tests but 23
 \
 \ test -1: general
 \ test 10: marks
 \ test 15: chan-local vars
 \ test 19: save and restore
 \ test 23: with-sound
+\ test 28: errors
 
 'snd-motif provided? 'xm provided? not && [if] dl-load libxm Init_libxm [then]
 'snd-gtk   provided? 'xg provided? not && [if] dl-load libxg Init_libxg [then]
@@ -32,61 +39,71 @@ require dsp
   require effects
 [then]
 
+reset-all-hooks
+'snd-motif provided? 'snd-gtk provided? || value with-gui
+
+\ If #t, prints additionals, e.g. function names in test-19 or proc-array lengths in test-28
+#f value *snd-test-verbose*
+
+\ You may set them in .sndtest.fs.
+#f value my-snd-error-hook
+#f value my-mus-error-hook
+
+save-dir "/zap/snd" || 		  value original-save-dir
+temp-dir "/zap/tmp" || 		  value original-temp-dir
+listener-prompt        		  value original-prompt
+300                    		  value sample-reader-tests
+1024 8 *               		  value default-file-buffer-size
+"HOME" getenv          		  value home-dir
+"/home/bil/sf1/"       		  value sf-dir
+#t  		       		  value with-exit
+#f                     		  value all-args
+"/home/bil/zap/sounds/bigger.snd" value bigger-snd
+
 #t to *fth-verbose*
 #f to *fth-debug*
 #t to *clm-verbose*
-#t to *clm-debug*
+#f to *clm-debug*
 
 file-pwd "/peaks" $+ to save-peak-env-info-directory
 save-peak-env-info-directory file-directory? [unless]
   save-peak-env-info-directory 0o755 file-mkdir
 [then]
-*clm-search-list* file-pwd array-push drop
+*clm-search-list* file-pwd array-push to *clm-search-list*
 
-save-dir "/zap/snd" || value original-save-dir
-temp-dir "/zap/tmp" || value original-temp-dir
-listener-prompt        value original-prompt
-300                    value sample-reader-tests
-1024 8 *               value default-file-buffer-size
-"HOME" getenv          value home-dir
-"/home/bil/sf1/"       value sf-dir
-#t  		       value with-exit
-
-\ SND-INFO:    Wraps \ and \n around text.
-\ SND-DISPLAY: Wraps text like snd-info but prepends text with line number.
-'snd-nogui provided? [if]
-  #t set-with-mix-tags drop
-  ' noop alias hide-widget
-  : <snd-info> { fmt args -- msg }
-    $" \\ %s\n" '( fmt args string-format ) string-format
-  ;
-  : <snd-display> { fmt args lineno -- msg }
-    $" \\ [%d] %s\n" '( lineno fmt args string-format ) string-format
-  ;
-  : snd-info      ( fmt args -- )        <snd-info>    .stdout ;
-  : (snd-display) ( fmt args lineno -- ) <snd-display> .stdout ;
-[else]
-  : <snd-info> { fmt args -- msg }
-    $" \n\\ %s " '( fmt args string-format ) string-format
-  ;
-  : <snd-display> { fmt args lineno -- msg }
-    $" \n\\ [%d] %s " '( lineno fmt args string-format ) string-format
-  ;
-  : snd-info      ( fmt args -- )        <snd-info>    dup ( msg ) .string ( msg ) .stdout ;
-  : (snd-display) ( fmt args lineno -- ) <snd-display> dup ( msg ) .string ( msg ) .stdout ;
+\ Snd stdout and Snd stderr going to the listener and to
+\ stdout/stderr.
+'snd-nogui provided? [unless]
+  \ Prints at the same time to Snd's listener and stdout/stderr.
+  :port-name "sndout"
+  :write-line lambda: <{ line -- }> line snd-print .stdout ;
+  make-soft-port set-*stdout* value stdout-io
+  :port-name "snderr"
+  :write-line lambda: <{ line -- }> line snd-print .stderr ;
+  make-soft-port set-*stderr* value stderr-io
 [then]
+
+\ SND-DISPLAY: Wraps text like clm-message and prepends text with
+\ current line number ("\ [0010] text\n").
+hide
+: (snd-display) { fmt args lno -- msg } $" \\ [%04d] %s\n" '( lno fmt args format ) fth-print ;
+set-current
 : snd-display ( --; fmt args -- ) postpone *lineno* postpone (snd-display) ; immediate
+previous
 
 : mus-audio-playback-amp ( -- val )
-  32 0.0 make-vct { vals }
-  mus-audio-default mus-audio-amp 0 vals mus-audio-mixer-read drop
-  vals 0 vct-ref
+  32 0.0 make-vct { vals0 }
+  32 0.0 make-vct { vals1 }
+  mus-audio-default mus-audio-amp 0 vals0 mus-audio-mixer-read drop
+  mus-audio-default mus-audio-amp 1 vals1 mus-audio-mixer-read drop
+  vals0 0 vct-ref vals1 0 vct-ref fmax
 ;
-: set-mus-audio-playback-amp ( val -- )
+: set-mus-audio-playback-amp ( lst -- )
   { val }
   32 0.0 make-vct { vals }
   vals 0 val vct-set! drop
   mus-audio-default mus-audio-amp 0 vals mus-audio-mixer-write drop
+  mus-audio-default mus-audio-amp 1 vals mus-audio-mixer-write drop
 ;
 0.0                    value audio-amp-zero
 mus-audio-playback-amp value original-audio-amp
@@ -147,26 +164,101 @@ mus-audio-playback-amp value original-audio-amp
     v1 i object-ref v2 i object-ref fneq if not leave then
   loop
 ;
-: arity-ok ( proc args -- f )
-  { proc args }
-  proc proc-arity { args-lst }
-  args-lst car args-lst cadr + { rargs }
-  rargs args =
-  rargs args < args-lst caddr && ||
+: arity-ok <{ proc args -- f }>
+  proc proc? if
+    \ draw-axes 0/0/#t but it means 3/6/#f
+    proc proc-name "draw-axes" string= if
+      args 3 >=
+      args 9 <= &&
+    else
+      proc proc-arity { args-lst }
+      args args-lst car >=
+      args args-lst car args-lst cadr + <= &&
+    then
+  else
+    #f
+  then
 ;
-: set-arity-ok ( proc args -- f )
-  { proc args }
-  proc proc-arity { args-lst }
-  args-lst car args-lst cadr + 1+ { rargs }
-  rargs args =
-  rargs args < args-lst caddr && ||
-;
+: set-arity-ok <{ proc args -- f }> proc set-xt args arity-ok ; 
 : safe-divide ( a b -- c )
   { a b }
   b zero? b fzero? || if a else a b b/ then
 ;
+: log0 ( -- #<inf> ) 0.0 flog ;
+: make-color-with-catch ( c1 c2 c3 -- color )
+  <'> make-color 'no-such-color #t fth-catch if stack-reset 1 0 0 make-color then
+;
+: reset-almost-all-hooks ( -- )
+  reset-all-hooks
+  my-snd-error-hook proc? if snd-error-hook my-snd-error-hook add-hook! then
+  my-mus-error-hook proc? if mus-error-hook my-mus-error-hook add-hook! then
+;
+'xm provided? [if]
+  : dismiss-all-dialogs ( -- )
+    nil nil { dialog d }
+    dialog-widgets each to dialog
+      dialog if
+	dialog car symbol? if
+	  dialog FXtIsManaged if dialog FXtUnmanageChild drop then
+	else
+	  dialog each to d
+	    d car symbol? if
+	      d FXtIsManaged if d FXtUnmanageChild drop then
+	    then
+	  end-each
+	then
+      then
+    end-each
+  ;
+[else]
+  'xg provided? [if]
+    : dismiss-all-dialogs ( -- )
+      nil { dialog }
+      dialog-widgets each to dialog
+	dialog if
+	  dialog xmobj? if
+	    dialog Fgtk_widget_hide drop
+	  else
+	    nil { d }
+	    dialog each to d
+	      d xmobj? if
+		d Fgtk_widget_hide drop
+	      then
+	    end-each
+	  then
+	then
+      end-each
+    ;
+  [then]
+  <'> noop alias dismiss-all-dialogs
+[then]
+
+#f  value overall-start-time
+#() value timer-values
+#() value test-numbers
+: run-fth-test ( xt -- )
+  { xt }
+  xt xt->name { name }
+  test-numbers  name 0 2 string-substring string->number  array-member? if
+    stack-reset
+    gc-run
+    make-timer { tm }
+    xt execute
+    tm stop-timer
+    stack-reset
+    timer-values '( name tm ) array-push to timer-values
+    sounds if
+      $" open sounds: %s" '( #t short-file-name ) clm-message
+      sounds each ( snd ) close-sound drop end-each
+    then
+    $" %s done\n\\ " '( name ) clm-message
+  then
+;
+: fth-test-timer-inspect { lst -- } $" %15s: %s" lst clm-message ;
+
 : start-snd-test ( -- )
-  ".sndtest-forth-rc" load-init-file
+  \ Global variables may be overridden in `pwd`/.sndtest.fs or ~/.sndtest.fs
+  ".sndtest-forth-rc" file-exists? if ".sndtest-forth-rc" else ".sndtest.fs" then load-init-file
   'snd-motif provided? if
     "snd-motif"
   else
@@ -174,26 +266,50 @@ mus-audio-playback-amp value original-audio-amp
       "snd-gtk"
     else
       'snd-nogui provided? if
+	#t set-with-mix-tags drop
 	"snd-nogui"
       else
 	"snd-unknown"
       then
     then
   then { kind }
-  $" === Snd version: %s (%s)" '( snd-version kind ) snd-info
-  $" === Fth version: %s"      '( fth-version )      snd-info
-  ""   '() snd-info
-  date '() snd-info
-  ""   '() snd-info
+  $" === Snd version: %s (%s)" '( snd-version kind ) clm-message
+  $" === Fth version: %s"      '( fth-version )      clm-message
+  ""   '() clm-message
+  date '() clm-message
+  ""   '() clm-message
+  default-file-buffer-size set-mus-file-buffer-size to *clm-file-buffer-size*
+  audio-amp-zero set-mus-audio-playback-amp
+  #f  set-with-background-processes drop
+  #f  set-trap-segfault  	    drop
+  #t  set-show-backtrace 	    drop
+  600 set-window-x       	    drop
+  10  set-window-y       	    drop
+  #t  show-listener      	    drop
+  reset-almost-all-hooks
+  *snd-test-verbose* to *fth-verbose*
+  stack-reset
+  make-timer to overall-start-time
 ;
 : finish-snd-test ( -- )
+  overall-start-time stop-timer
+  .stack
   stack-reset
   #t show-listener drop
+  regions each ( r ) forget-region drop end-each
+  tracks  each ( t ) free-track    drop end-each
+  0 set-view-files-sort drop
+  clear-sincs drop
   sounds if stop-playing drop then
-  0 { file-count }
-  #( original-save-dir original-temp-dir "/tmp" ) each { path }
+  reset-almost-all-hooks
+  $" all done!" '() clm-message
+  "" '() clm-message
+  timer-values each ( lst ) fth-test-timer-inspect end-each
+  '( "summary" overall-start-time ) fth-test-timer-inspect
+  0 nil nil { file-count path file }
+  #( original-save-dir original-temp-dir "/tmp" ) each to path
     path file-directory? if
-      path file-dir each { file }
+      path file-dir each to file
 	/snd_/ file regexp-match if
 	  file file-delete
 	  1 +to file-count
@@ -201,9 +317,9 @@ mus-audio-playback-amp value original-audio-amp
       end-each
     then
   end-each
-  "" '() snd-info
-  $" %d files deleted" '( file-count ) snd-info
-  "" '() snd-info
+  "" '() clm-message
+  $" %d files deleted" '( file-count ) clm-message
+  "" '() clm-message
   #( "aaa.eps"
      "envs.save"
      "fmv.snd"
@@ -261,28 +377,6 @@ mus-audio-playback-amp value original-audio-amp
   original-prompt set-listener-prompt drop
 ;
 
-#() value timer-values
-#() value test-numbers
-: run-fth-test ( xt -- )
-  { xt }
-  xt xt->name { name }
-  test-numbers  name 0 1 string-substring string->number  array-member? if
-    stack-reset
-    make-timer { tm }
-    tm start-timer
-    xt execute
-    tm stop-timer
-    stack-reset
-    timer-values '( name tm ) array-push drop
-    sounds if
-      $" open sounds: %s" '( #t short-file-name ) snd-info
-      sounds each ( snd ) close-sound drop end-each
-    then
-    $" %s done\n\\ " '( name ) snd-info
-  then
-;
-: fth-test-timer-inspect ( name tm -- ) 2 >list $" %21s: %s" swap snd-info ;
-
 'complex provided? [if]
   : complex-test ( -- )
     \ edot-product (test008)
@@ -335,7 +429,7 @@ mus-audio-playback-amp value original-audio-amp
     then
   ;
 [else]
-  ' noop alias complex-test
+  <'> noop alias complex-test
 [then]
 
 : print-and-check ( gen name desc -- )
@@ -346,8 +440,7 @@ mus-audio-playback-amp value original-audio-amp
   gen egen object-equal? unless $" equal? %s: %s %s?" '( name gen egen ) snd-display then
 ;
 
-\ === TEST -1 (a selection from snd-test.scm) ===
-
+\ ====== test -1: general
 : test-gen-equal ( g0 g1 g2 -- )
   { g0 g1 g2 }
   \ g0 g1 =
@@ -390,27 +483,27 @@ mus-audio-playback-amp value original-audio-amp
   then
 ;
 
-event: 00-selection-from-snd ( -- )
+event: 00-sel-from-snd ( -- )
   \ hooks
   open-hook reset-hook!
-  open-hook ['] my-test1-proc add-hook!
-  open-hook ['] my-test2-proc add-hook!
+  open-hook <'> my-test1-proc add-hook!
+  open-hook <'> my-test2-proc add-hook!
   open-hook object-length 2 <> if
     $" add-hook! global length: %d?" '( open-hook object-length ) snd-display
   then
   open-hook "my-test1-proc" hook-member? unless
     $" global1 add-hook!: %s" '( open-hook ) snd-display
   then
-  open-hook ['] my-test2-proc hook-member? unless
+  open-hook <'> my-test2-proc hook-member? unless
     $" global2 add-hook!: %s" '( open-hook ) snd-display
   then
   open-hook
-  '( ['] my-test3-proc ['] my-test4-proc ['] my-test5-proc )
-  ['] my-local-thunk with-local-hook
+  '( <'> my-test3-proc <'> my-test4-proc <'> my-test5-proc )
+  <'> my-local-thunk with-local-hook
   open-hook object-length 2 <> if
     $" add-hook! reset length: %d?" '( open-hook object-length ) snd-display
   then
-  open-hook ['] my-test1-proc hook-member? unless
+  open-hook <'> my-test1-proc hook-member? unless
     $" reset1 add-hook!: %s" '( open-hook ) snd-display
   then
   open-hook "my-test2-proc" hook-member? unless
@@ -423,20 +516,20 @@ event: 00-selection-from-snd ( -- )
     x 600 6 + <> if $" window-x[600]: %s?" '( x ) snd-display then
     y 10 25 + <> if $" window-y[10]: %s?"  '( y ) snd-display then
   then
-  .stack
   \ bind-key
-  ['] C-xC-c { prc }
-  [char] c 4 #t key-binding { old-prc }
-  [char] c 4 prc #t bind-key { prc1 }
-  [char] c 4 #t key-binding { prc2 }
-  prc prc1 proc= unless $" bind-key: %s %s?" '( prc prc1 ) snd-display then
-  prc prc2 proc= unless $" key-binding: %s %s?" '( prc prc2 ) snd-display then
-  old-prc proc? if
-    [char] c 4 old-prc #t bind-key drop
-  else
-    [char] c 4 #t unbind-key drop
+  'snd-nogui provided? unless
+    <'> C-xC-c { prc }
+    "c" 4 #t key-binding { old-prc }
+    "c" 4 prc #t bind-key { prc1 }
+    "c" 4 #t key-binding { prc2 }
+    prc prc1 proc= unless $" bind-key: %s %s?" '( prc prc1 ) snd-display then
+    prc prc2 proc= unless $" key-binding: %s %s?" '( prc prc2 ) snd-display then
+    old-prc proc? if
+      "c" 4 old-prc #t bind-key drop
+    else
+      "c" 4 #t unbind-key drop
+    then
   then
-  .stack
   \ new-sound
   "fmv.snd" mus-next mus-bshort 22050 1 $" set-samples test" 100 new-sound { ind }
   10  3  3 0.1 make-vct set-samples drop
@@ -445,10 +538,8 @@ event: 00-selection-from-snd ( -- )
     $" 1 set samples 0 for 0.1: %s?" '( res ) snd-display
   then
   ind close-sound drop
-  .stack
   \ edot-product (test008)
   complex-test
-  .stack
   \ delay (test008)
   3 make-delay { gen }
   3 make-delay { gen2 }
@@ -477,23 +568,22 @@ event: 00-selection-from-snd ( -- )
   gen3 0.0 0.0 delay 0.0  fneq || if
     $" delay with vct initial-contents confused" '() snd-display
   then
-  :size #f ['] make-delay #t nil fth-catch to res
+  :size #f <'> make-delay #t nil fth-catch to res
   stack-reset
   res car 'wrong-type-arg object-equal? unless
     $" make-delay bad size false: %s" '( res ) snd-display
   then
   make-oscil { osc }
-  3 :initial-element osc ['] make-delay #t nil fth-catch to res
+  3 :initial-element osc <'> make-delay #t nil fth-catch to res
   stack-reset
   res car 'wrong-type-arg object-equal? unless
     $" make-delay bad initial element: %s" '( res ) snd-display
   then
-  -3 ['] make-delay #t nil fth-catch to res
+  -3 <'> make-delay #t nil fth-catch to res
   stack-reset
   res car 'out-of-range object-equal? unless
     $" make-delay bad size: %s" '( res ) snd-display
   then
-  .stack
   3 make-delay { d1 }
   3 make-delay { d2 }
   4 make-delay { d3 }
@@ -515,7 +605,6 @@ event: 00-selection-from-snd ( -- )
   0 new-index 0 find-mix to res
   res if $" found non-existent mix: %s?" '( res ) snd-display then
   "pistol.snd" 100 mix { mix-id }
-  mix-id mix? unless $" %s not mix?" '( mix-id ) snd-display then
   view-files-dialog { wid }
   mix-id mix-position { pos }
   mix-id mix-frames { len }
@@ -540,21 +629,21 @@ event: 00-selection-from-snd ( -- )
   mr sample-reader-at-end? if $" mix sample-reader-at-end: %s?" '( mr ) snd-display then
   mr sample-reader-home to res
   mix-id res <> if $" mix sample-reader-home: %d %s?" '( res mr ) snd-display then
-  mr object->string 0 21 string-substring to res
+  mr object->string 0 22 string-substring to res
   res $" #<mix-sample-reader mi" string<> if
     $" mix sample-reader actually got: [%s]?" '( res ) snd-display
   then
-  mix-id 1234 ['] mix-amp #t nil fth-catch to res
+  mix-id 1234 <'> mix-amp #t nil fth-catch to res
   stack-reset
   res car 'no-such-channel object-equal? unless
     $" mix-amp bad chan: %s" '( res ) snd-display
   then
-  mix-id 1234 0.1 ['] set-mix-amp #t nil fth-catch to res
+  mix-id 1234 0.1 <'> set-mix-amp #t nil fth-catch to res
   stack-reset
   res car 'no-such-channel object-equal? unless
     $" set-mix-amp bad chan: %s" '( res ) snd-display
   then
-  mix-id 1234 '( 0 0 1 1 ) ['] set-mix-amp-env #t nil fth-catch to res
+  mix-id 1234 '( 0 0 1 1 ) <'> set-mix-amp-env #t nil fth-catch to res
   stack-reset
   res car 'no-such-channel object-equal? unless
     $" set-mix-amp-env bad chan: %s" '( res ) snd-display
@@ -587,10 +676,10 @@ event: 00-selection-from-snd ( -- )
   spdstyle new-index speed-control-style <> if
     $" mix-speed-style: %s %s?" '( spdstyle new-index speed-control-style ) snd-display
   then
-  mix-id ['] play-mix 'mus-error nil fth-catch to res
+  mix-id <'> play-mix 'mus-error nil fth-catch to res
   stack-reset
   res car exception? if $" can't play mix: %s" '( res ) snd-display then
-  mix-id -1 ['] set-mix-track #t nil fth-catch to res
+  mix-id -1 <'> set-mix-track #t nil fth-catch to res
   stack-reset
   res car 'out-of-range object-equal? unless
     $" set-mix-track -1: %s" '( res ) snd-display
@@ -601,39 +690,39 @@ event: 00-selection-from-snd ( -- )
   mix-id speed-control-as-ratio set-mix-speed-style drop
   mix-id mix-speed-style to res
   res speed-control-as-ratio <> if $" set-mix-speed-style: %s?" '( res ) snd-display then
-  mix-id 123123 ['] set-mix-speed-style #t nil fth-catch to res
+  mix-id 123123 <'> set-mix-speed-style #t nil fth-catch to res
   stack-reset
   res car 'out-of-range object-equal? unless
     $" set-mix-speed-style bad arg: %s" '( res ) snd-display
   then
   \ 
   mix-id make-track to trk
-  123123 ['] play-track #t nil fth-catch to res
+  123123 <'> play-track #t nil fth-catch to res
   stack-reset
   res car 'no-such-track object-equal? unless
     $" play-track bad track: %s" '( res ) snd-display
   then
-  123123 #t ['] play-track #t nil fth-catch to res
+  123123 #t <'> play-track #t nil fth-catch to res
   stack-reset
   res car 'no-such-track object-equal? unless
     $" play-track bad track #t: %s" '( res ) snd-display
   then
-  123123 0 ['] play-track #t nil fth-catch to res
+  123123 0 <'> play-track #t nil fth-catch to res
   stack-reset
   res car 'no-such-track object-equal? unless
     $" play-track bad track index: %s" '( res ) snd-display
   then
-  "oboe.snd" 0 0 sounds car 0 #f #f 123123 ['] mix #t nil fth-catch to res
+  "oboe.snd" 0 0 sounds car 0 #f #f 123123 <'> mix #t nil fth-catch to res
   stack-reset
   res car 'no-such-track object-equal? unless
     $" mix bad track index: %s" '( res ) snd-display
   then
-  3 0.1 make-vct 0 sounds car 0 #t $" bad mix-vct" 123123 ['] mix-vct #t nil fth-catch to res
+  3 0.1 make-vct 0 sounds car 0 #t $" bad mix-vct" 123123 <'> mix-vct #t nil fth-catch to res
   stack-reset
   res car 'no-such-track object-equal? unless
     $" mix-vct bad track index: %s" '( res ) snd-display
   then
-  trk 123 ['] track #t nil fth-catch to res
+  trk 123 <'> track #t nil fth-catch to res
   stack-reset
   res car 'no-such-channel object-equal? unless
     $" mix-vct bad track index: %s" '( res ) snd-display
@@ -721,7 +810,6 @@ event: 00-selection-from-snd ( -- )
   new-index revert-sound drop
   new-index close-sound drop
   wid hide-widget drop
-  .stack
   \ envelopes (lists, vcts, arrays) (test015)
   1.0 vct( 0.0 0.0 2.0 1.0 )           1.0 envelope-interp dup 0.5 fneq if
     $" envelope-interp 0.5: %s?" 1 >list snd-display
@@ -903,11 +991,9 @@ event: 00-selection-from-snd ( -- )
   else
     drop
   then
-  .stack
 ;event
 
-\ === TEST 10 ===
-
+\ ====== test 10: marks
 event: 10-marks ( -- )
   "oboe.snd" open-sound { ind }
   123 add-mark drop
@@ -923,67 +1009,66 @@ event: 10-marks ( -- )
   123 ind 0 find-mark { m }
   m mark? if
     m mark-name length zero? unless
-      $" saved mark 123 name: %S?" '( m mark-name ) snd-display
+      $" saved mark 123 name: %s?" '( m mark-name ) snd-display
     then
     m mark-sync zero? unless
-      $" saved mark 123 sync: %S?" '( m mark-sync ) snd-display
+      $" saved mark 123 sync: %s?" '( m mark-sync ) snd-display
     then
   else
-    $" saved marks missed 123: %S?" '( m ) snd-display
+    $" saved marks missed 123: %s?" '( m ) snd-display
   then
   234 ind 0 find-mark to m
   m mark? if
     m mark-name $" hiho" string<> if
-      $" saved mark 234 name: %S?" '( m mark-name ) snd-display
+      $" saved mark 234 name: %s?" '( m mark-name ) snd-display
     then
     m mark-sync { m2sync }
     m2sync 0= m2sync 1 = || if
-      $" saved mark 234 sync: %S?" '( m mark-sync ) snd-display
+      $" saved mark 234 sync: %s?" '( m mark-sync ) snd-display
     then
     m mark-sync
   else
-    $" saved marks missed 234: %S?" '( m ) snd-display
+    $" saved marks missed 234: %s?" '( m ) snd-display
     0
   then { m1-sync }
   345 ind 0 find-mark to m
   m mark? if
     m mark-name length zero? unless
-      $" saved mark 345 name: %S?" '( m mark-name ) snd-display
+      $" saved mark 345 name: %s?" '( m mark-name ) snd-display
     then
     m mark-sync m1-sync <> if
-      $" saved mark 345 sync: %S %S?" '( m mark-sync m1-sync ) snd-display
+      $" saved mark 345 sync: %s %s?" '( m mark-sync m1-sync ) snd-display
     then
   else
-    $" saved marks missed 345: %S?" '( m ) snd-display
+    $" saved marks missed 345: %s?" '( m ) snd-display
   then
   456 ind 0 find-mark to m
   m mark? if
     m mark-name $" a mark" string<> if
-      $" saved mark 456 name: %S?" '( m mark-name ) snd-display
+      $" saved mark 456 name: %s?" '( m mark-name ) snd-display
     then
     m mark-sync { m4sync }
     m4sync m1-sync = m4sync 0= || m4sync 1 = || if
-      $" saved mark 456 sync: %S %S?" '( m mark-sync m1-sync ) snd-display
+      $" saved mark 456 sync: %s %s?" '( m mark-sync m1-sync ) snd-display
     then
   else
-    $" saved marks missed 456: %S?" '( m ) snd-display
+    $" saved marks missed 456: %s?" '( m ) snd-display
   then
   567 ind 0 find-mark to m
   m mark? if
     m mark-name length zero? unless
-      $" saved mark 567 name: %S?" '( m mark-name ) snd-display
+      $" saved mark 567 name: %s?" '( m mark-name ) snd-display
     then
     m mark-sync m1-sync <> if
-      $" saved mark 567 sync: %S %S?" '( m mark-sync m1-sync ) snd-display
+      $" saved mark 567 sync: %s %s?" '( m mark-sync m1-sync ) snd-display
     then
   else
-    $" saved marks missed 567: %S?" '( m ) snd-display
+    $" saved marks missed 567: %s?" '( m ) snd-display
   then
   ind close-sound drop
 ;event
 
-\ === TEST 15 ===
-
+\ ====== test 15: chan-local vars
 : interpolated-peak-offset ( r1 r2 r3 -- r4 )
   { la ca ra }
   la ca fmax ra fmax 0.001 f+ { pk }
@@ -1024,6 +1109,60 @@ event: 10-marks ( -- )
 : f5neq ( a b -- f ) { a b } a b f- fabs 10.0  a b fmax 0.05 f*  f> ;
 
 event: 15-chan-local-vars ( -- )
+  \ dsp.fs
+  "test.snd" mus-next mus-bfloat 22050 1 $" src-* tests" 10000 new-sound { ind }
+  \ src-duration tests
+  '( 0 1 1 2 )      src-duration { d1 }
+  '( 0 2 1 1 )      src-duration { d2 }
+  '( 0 1 0.5 2 )    src-duration { d3 }
+  '( 0.5 1 0.75 2 ) src-duration { d4 }
+  d1 0.693147180559945 fneq
+  d2 d1 fneq ||
+  d3 d1 fneq ||
+  d4 d1 fneq || if
+    $" src-duration test1: %f %f %f %f" '( d1 d2 d3 d4 ) snd-display
+  then
+  '( 0 1 1 0.5 )      src-duration to d1
+  '( 0 0.5 1 1 )      src-duration to d2
+  '( 0 1 0.5 0.5 )    src-duration to d3
+  '( 0.5 1 0.75 0.5 ) src-duration to d4
+  d1 1.38629436111989 fneq
+  d2 d1 fneq ||
+  d3 d1 fneq ||
+  d4 d1 fneq || if
+    $" src-duration test2: %f %f %f %f" '( d1 d2 d3 d4 ) snd-display
+  then
+  '( 0 1 1 1 ) src-duration to d1
+  '( 0 2 1 2 ) src-duration to d2
+  d1 1.0 fneq
+  d2 0.5 fneq || if
+    $" src-duration test3: %f %f" '( d1 d2 ) snd-display
+  then
+  '( 0 0.5 0.5 3 0.6 1 0.7 0.1 0.8 1.5 1 1 ) src-duration to d1
+  d1 1.02474349685432 fneq if
+    $" src-duration test4: %f" '( d1 ) snd-display
+  then
+  '( 0 1 1 2 2 1 ) src-duration to d1
+  d1 0.693147180559945 fneq if
+    $" src-duration test5: %f" '( d1 ) snd-display
+  then
+  500.0 0.0 make-oscil src-test15-cb map-channel drop
+  0 ind 8192 freq-peak { vals }
+  500.0 vals car f4neq
+  1.0   vals cadr fneq || if
+    $" src no-test: %s" '( vals ) snd-display
+  then
+  ind close-sound drop
+  \
+  16 1.0 dolph { val1 }
+  dolph-chebyshev-window 16 1.0 make-fft-window { val2 }
+  val1 val2 vequal unless
+    $" dolph/dolph 1: %s %s" '( val1 val2 ) snd-display
+  then
+  16 1.0 dolph-1 to val1
+  val1 val2 vequal unless
+    $" dolph-1/dolph 1: %s %s" '( val1 val2 ) snd-display
+  then
   \ env.fs
   \ envelope-interp
   0.1 '( 0 0 1 1 ) 1.0 envelope-interp dup 0.1 fneq if
@@ -1244,204 +1383,216 @@ event: 15-chan-local-vars ( -- )
   else
     $" envelope-exp (1): %s?" swap 1 >list snd-display
   then
-  \ dsp.fs
-  "test.snd" mus-next mus-bfloat 22050 1 $" src-* tests" 10000 new-sound { ind }
-  \ src-duration tests
-  '( 0 1 1 2 )      src-duration { d1 }
-  '( 0 2 1 1 )      src-duration { d2 }
-  '( 0 1 0.5 2 )    src-duration { d3 }
-  '( 0.5 1 0.75 2 ) src-duration { d4 }
-  d1 0.693147180559945 fneq
-  d2 d1 fneq ||
-  d3 d1 fneq ||
-  d4 d1 fneq || if
-    $" src-duration test1: %f %f %f %f" '( d1 d2 d3 d4 ) snd-display
-  then
-  '( 0 1 1 0.5 )      src-duration to d1
-  '( 0 0.5 1 1 )      src-duration to d2
-  '( 0 1 0.5 0.5 )    src-duration to d3
-  '( 0.5 1 0.75 0.5 ) src-duration to d4
-  d1 1.38629436111989 fneq
-  d2 d1 fneq ||
-  d3 d1 fneq ||
-  d4 d1 fneq || if
-    $" src-duration test2: %f %f %f %f" '( d1 d2 d3 d4 ) snd-display
-  then
-  '( 0 1 1 1 ) src-duration to d1
-  '( 0 2 1 2 ) src-duration to d2
-  d1 1.0 fneq
-  d2 0.5 fneq || if
-    $" src-duration test3: %f %f" '( d1 d2 ) snd-display
-  then
-  '( 0 0.5 0.5 3 0.6 1 0.7 0.1 0.8 1.5 1 1 ) src-duration to d1
-  d1 1.02474349685432 fneq if
-    $" src-duration test4: %f" '( d1 ) snd-display
-  then
-  '( 0 1 1 2 2 1 ) src-duration to d1
-  d1 0.693147180559945 fneq if
-    $" src-duration test5: %f" '( d1 ) snd-display
-  then
-  500.0 0.0 make-oscil src-test15-cb map-channel drop
-  0 ind 8192 freq-peak { vals }
-  500.0 vals car f4neq
-  1.0   vals cadr fneq || if
-    $" src no-test: %s" '( vals ) snd-display
-  then
-  ind close-sound drop
-  .stack
-  \
-  16 1.0 dolph { val1 }
-  dolph-chebyshev-window 16 1.0 make-fft-window { val2 }
-  val1 val2 vequal unless
-    $" dolph/dolph 1: %s %s" '( val1 val2 ) snd-display
-  then
-  16 1.0 dolph-1 to val1
-  dolph-chebyshev-window 16 1.0 make-fft-window to val2
-  val1 val2 vequal unless
-    $" dolph-1/dolph 1: %s %s" '( val1 val2 ) snd-display
-  then
 ;event
 
-\ === TEST 19 ===
-
+\ ====== test 19: save and restore
 : clm-channel-test <{ :optional snd #f chn #f -- gen }>
   1 -1 make-two-zero 0 #f snd chn #f #f get-func-name clm-channel
 ;
 
 : random-pi-func <{ x -- y }> pi random ;
+lambda: <{ x -- y }> pi random ; value random-pi-addr
+
 #( '( lambda: <{ -- val }> vct( 1.0 0.5 ) 0 2 #f #f #f insert-vct ;
-      $" lambda: <{ snd chn -- val }> vct( 1.000 0.500 ) 0 2 snd chn insert-vct drop ;" )
+      $" lambda: <{ snd chn -- val }> vct( 1.000 0.500 ) 0 2 snd chn insert-vct drop ;"
+      "insert-vct" )
    '( lambda: <{ -- val }> #f #f clm-channel-test ;
-      $" lambda: <{ snd chn -- val }>  snd chn clm-channel-test drop ;" )
+      $" lambda: <{ snd chn -- val }>  snd chn clm-channel-test drop ;"
+   "clm-channel-test" )
    ( examp.fs )
    '( lambda: <{ -- val }> 1000 3000 #f #f fft-edit ;
-      $" lambda: <{ snd chn -- val }> 1000 3000 snd chn fft-edit drop ;" )
+      $" lambda: <{ snd chn -- val }> 1000 3000 snd chn fft-edit drop ;"
+   "fft-edit" )
    '( lambda: <{ -- val }> 0.01 #f #f fft-squelch ;
-      $" lambda: <{ snd chn -- val }> 0.01 snd chn fft-squelch drop ;" )
+      $" lambda: <{ snd chn -- val }> 0.01 snd chn fft-squelch drop ;"
+   "fft-sqelch" )
    '( lambda: <{ -- val }> 1000 3000 #f #f fft-cancel ;
-      $" lambda: <{ snd chn -- val }> 1000 3000 snd chn fft-cancel drop ;" )
+      $" lambda: <{ snd chn -- val }> 1000 3000 snd chn fft-cancel drop ;"
+   "fft-cancel" )
    '( lambda: <{ -- val }> #f #f squelch-vowels ;
-      $" lambda: <{ snd chn -- val }>  snd chn squelch-vowels drop ;" )
+      $" lambda: <{ snd chn -- val }>  snd chn squelch-vowels drop ;"
+   "squelch-vowels" )
    '( lambda: <{ -- val }> '( 0 0 1 1 2 0 ) #f #f fft-env-edit ;
-      $" lambda: <{ snd chn -- val }> '( 0 0 1 1 2 0 ) snd chn fft-env-edit drop ;" )
+      $" lambda: <{ snd chn -- val }> '( 0 0 1 1 2 0 ) snd chn fft-env-edit drop ;"
+   "fft-env-edit" )
    '( lambda: <{ -- val }> '( 0 0 1 1 2 0 ) '( 0 1 1 0 2 0 ) '( 0 0 1 1 ) #f #f fft-env-interp ;
-      $" lambda: <{ snd chn -- val }> '( 0 0 1 1 2 0 ) '( 0 1 1 0 2 0 ) '( 0 0 1 1 ) snd chn fft-env-interp drop ;" )
+      $" lambda: <{ snd chn -- val }> '( 0 0 1 1 2 0 ) '( 0 1 1 0 2 0 ) '( 0 0 1 1 ) snd chn fft-env-interp drop ;"
+   "fft-env-interp" )
    '( lambda: <{ -- val }> 10 0.1 #f #f hello-dentist ;
-      $" lambda: <{ snd chn -- val }> 10 0.1 snd chn hello-dentist drop ;" )
+      $" lambda: <{ snd chn -- val }> 10 0.1 snd chn hello-dentist drop ;"
+   "hello-dentist" )
    '( lambda: <{ -- val }> 1 0.3 20 #f #f fp ;
-      $" lambda: <{ snd chn -- val }> 1 0.3 20 snd chn fp drop ;" )
+      $" lambda: <{ snd chn -- val }> 1 0.3 20 snd chn fp drop ;"
+   "fp" )
    '( lambda: <{ -- val }> '( 0 1 1 2 ) #f #f expsnd ;
-      $" lambda: <{ snd chn -- val }> '( 0 1 1 2 ) snd chn expsnd drop ;" )
+      $" lambda: <{ snd chn -- val }> '( 0 1 1 2 ) snd chn expsnd drop ;"
+   "expsnd" )
    '( lambda: <{ -- val }> 1 256 2 2 #f #f voiced->unvoiced ;
-      $" lambda: <{ snd chn -- val }> 1 256 2 2 snd chn voiced->unvoiced drop ;" )
+      $" lambda: <{ snd chn -- val }> 1 256 2 2 snd chn voiced->unvoiced drop ;"
+   "voiced->unvoided" )
    '( lambda: <{ -- val }> '( 0 0 1 1 2 0 ) 2 #f #f env-sound-interp ;
-      $" lambda: <{ snd chn -- val }> '( 0 0 1 1 2 0 ) 2 snd chn env-sound-interp drop ;" )
+      $" lambda: <{ snd chn -- val }> '( 0 0 1 1 2 0 ) 2 snd chn env-sound-interp drop ;"
+   "env-sound-interp" )
    '( lambda: <{ -- val }> '( '( "1a.snd" ) '( "pistol.snd" 1 2 ) ) #f #f add-notes ;
-      $" lambda: <{ snd chn -- val }> '( '( \"1a.snd\" ) '( \"pistol.snd\" 1 2 ) ) snd chn add-notes drop ;" )
+      $" lambda: <{ snd chn -- val }> '( '( \"1a.snd\" ) '( \"pistol.snd\" 1 2 ) ) snd chn add-notes drop ;"
+   "add-notes" )
    '( lambda: <{ -- val }> 0 #f #f #f compand-channel ;
-      $" lambda: <{ snd chn -- val }> 0 #f snd chn compand-channel drop ;" )
+      $" lambda: <{ snd chn -- val }> 0 #f snd chn compand-channel drop ;"
+   "compand-channel" )
    '( lambda: <{ -- val }> 0 #f #f #f #f smooth-channel-via-ptree ;
-      $" lambda: <{ snd chn -- val }> 0 #f snd chn smooth-channel-via-ptree drop ;" )
+      $" lambda: <{ snd chn -- val }> 0 #f snd chn smooth-channel-via-ptree drop ;"
+   "smooth-channel-via-ptree" )
    '( lambda: <{ -- val }> 300 0 #f #f #f #f ring-modulate-channel ;
-      $" lambda: <{ snd chn -- val }> 300 0 #f snd chn ring-modulate-channel drop ;" )
+      $" lambda: <{ snd chn -- val }> 300 0 #f snd chn ring-modulate-channel drop ;"
+   "ring-modulate-channel" )
    '( lambda: <{ -- val }> '( 0 0 1 1 2 0 ) #f #f filtered-env ;
-      $" lambda: <{ snd chn -- val }> '( 0 0 1 1 2 0 ) snd chn filtered-env drop ;" )
+      $" lambda: <{ snd chn -- val }> '( 0 0 1 1 2 0 ) snd chn filtered-env drop ;"
+   "filtered-env" )
    '( lambda: <{ -- val }> 0.1 #f #f reverse-by-blocks ;
-      $" lambda: <{ snd chn -- val }> 0.1 snd chn reverse-by-blocks drop ;" )
+      $" lambda: <{ snd chn -- val }> 0.1 snd chn reverse-by-blocks drop ;"
+   "reverse-by-blocks" )
    '( lambda: <{ -- val }> 0.1 #f #f reverse-within-blocks ;
-      $" lambda: <{ snd chn -- val }> 0.1 snd chn reverse-within-blocks drop ;" )
+      $" lambda: <{ snd chn -- val }> 0.1 snd chn reverse-within-blocks drop ;"
+   "reverse-within-blocks" )
    ( extensions.fs )
    '( lambda: <{ -- val }> "1a.snd" 1200 #f #f #f #f mix-channel ;
-      $" lambda: <{ snd chn -- val }> \"1a.snd\" 1200 #f snd chn mix-channel drop ;" )
+      $" lambda: <{ snd chn -- val }> \"1a.snd\" 1200 #f snd chn mix-channel drop ;"
+   "mix-channel" )
    '( lambda: <{ -- val }> "1a.snd" 1200 #f #f #f #f insert-channel ;
-      $" lambda: <{ snd chn -- val }> \"1a.snd\" 1200 #f snd chn insert-channel drop ;" )
+      $" lambda: <{ snd chn -- val }> \"1a.snd\" 1200 #f snd chn insert-channel drop ;"
+   "insert-channel" )
    '( lambda: <{ -- val }> "1a.snd" 0.5 0.9 0 #f #f #f #f sine-ramp ;
-      $" lambda: <{ snd chn -- val }> 0.5 0.9 0 #f snd chn sine-ramp drop ;" )
+      $" lambda: <{ snd chn -- val }> 0.5 0.9 0 #f snd chn sine-ramp drop ;"
+   "sine-ramp" )
    '( lambda: <{ -- val }> '( 0 0 1 1 2 -0.5 3 1 ) 0 #f #f #f #f sine-env-channel ;
-      $" lambda: <{ snd chn -- val }> '( 0 0 1 1 2 -0.5 3 1 ) 0 #f snd chn sine-env-channel drop ;" )
+      $" lambda: <{ snd chn -- val }> '( 0 0 1 1 2 -0.5 3 1 ) 0 #f snd chn sine-env-channel drop ;"
+   "sine-env-channel" )
    '( lambda: <{ -- val }> 0 1 0 #f #f #f #f blackman4-ramp ;
-      $" lambda: <{ snd chn -- val }> 0 1 0 #f snd chn blackman4-ramp drop ;" )
+      $" lambda: <{ snd chn -- val }> 0 1 0 #f snd chn blackman4-ramp drop ;"
+   "blackman4-ramp" )
    '( lambda: <{ -- val }> '( 0 0 1 1 2 -0.5 3 1 ) 0 #f #f #f #f blackman4-env-channel ;
-      $" lambda: <{ snd chn -- val }> '( 0 0 1 1 2 -0.5 3 1 ) 0 #f snd chn blackman4-env-channel drop ;" )
+      $" lambda: <{ snd chn -- val }> '( 0 0 1 1 2 -0.5 3 1 ) 0 #f snd chn blackman4-env-channel drop ;"
+   "blackman4-env-channel" )
    '( lambda: <{ -- val }> 0.2 0.8 #t 0 #f #f #f #f ramp-squared ;
-      $" lambda: <{ snd chn -- val }> 0.2 0.8 #t 0 #f snd chn ramp-squared drop ;" )
+      $" lambda: <{ snd chn -- val }> 0.2 0.8 #t 0 #f snd chn ramp-squared drop ;"
+   "ramp-squared" )
    '( lambda: <{ -- val }> '( 0 0 1 1 ) #t 0 #f #f #f #f env-squared-channel ;
-      $" lambda: <{ snd chn -- val }> '( 0 0 1 1 ) #t 0 #f snd chn env-squared-channel drop ;" )
+      $" lambda: <{ snd chn -- val }> '( 0 0 1 1 ) #t 0 #f snd chn env-squared-channel drop ;"
+   "env-squared-channel" )
    '( lambda: <{ -- val }> 0.2 0.8 32 #t 0 #f #f #f #f ramp-expt ;
-      $" lambda: <{ snd chn -- val }> 0.2 0.8 32 #t 0 #f snd chn ramp-expt drop ;" )
+      $" lambda: <{ snd chn -- val }> 0.2 0.8 32 #t 0 #f snd chn ramp-expt drop ;"
+   "ramp-expt" )
    '( lambda: <{ -- val }> '( 0 0 1 1 ) 32 #t 0 #f #f #f #f env-expt-channel ;
-      $" lambda: <{ snd chn -- val }> '( 0 0 1 1 ) 32 #t 0 #f snd chn env-expt-channel drop ;" )
+      $" lambda: <{ snd chn -- val }> '( 0 0 1 1 ) 32 #t 0 #f snd chn env-expt-channel drop ;"
+   "env-expt-channel" )
    '( lambda: <{ -- val }> 0.1 0 #f #f #f #f offset-channel ;
-      $" lambda: <{ snd chn -- val }> 0.1 0 #f snd chn offset-channel drop ;" )
+      $" lambda: <{ snd chn -- val }> 0.1 0 #f snd chn offset-channel drop ;"
+   "offset-channel" )
      '( lambda: <{ -- val }> 0.1 0 #f #f #f #f dither-channel ;
-        $" lambda: <{ snd chn -- val }> 0.1 0 #f snd chn dither-channel drop ;" )
+	$" lambda: <{ snd chn -- val }> 0.1 0 #f snd chn dither-channel drop ;"
+     "dither-channel" )
    '( lambda: <{ -- val }> 0.1 0 #f #f #f #f contrast-channel ;
-      $" lambda: <{ snd chn -- val }> 0.1 0 #f snd chn contrast-channel drop ;" )
+      $" lambda: <{ snd chn -- val }> 0.1 0 #f snd chn contrast-channel drop ;"
+   "contrast-channel" )
    ( dsp.fs )
    '( lambda: <{ -- val }> 550 600 10 40 50 0 #f #f #f #f ssb-bank ;
-      $" lambda: <{ snd chn -- val }> 550 600 10 40 50 0 #f snd chn ssb-bank drop ;" )
+      $" lambda: <{ snd chn -- val }> 550 600 10 40 50 0 #f snd chn ssb-bank drop ;"
+   "ssb-bank" )
    '( lambda: <{ -- val }> 550 600 '( 0 1 1 2 ) 10 40 50 0 #f #f #f #f ssb-bank-env ;
-      $" lambda: <{ snd chn -- val }> 550 600 '( 0 1 1 2 ) 10 40 50 0 #f snd chn ssb-bank-env drop ;" )
+      $" lambda: <{ snd chn -- val }> 550 600 '( 0 1 1 2 ) 10 40 50 0 #f snd chn ssb-bank-env drop ;"
+   "ssb-bank-env" )
    '( lambda: <{ -- val }> 1 #f #f down-oct ;
-      $" lambda: <{ snd chn -- val }> 1 snd chn down-oct drop ;" )
+      $" lambda: <{ snd chn -- val }> 1 snd chn down-oct drop ;"
+   "donw-oct" )
    '( lambda: <{ -- val }> 8 #f #f freqdiv ;
-      $" lambda: <{ snd chn -- val }> 8 snd chn freqdiv drop ;" )
+      $" lambda: <{ snd chn -- val }> 8 snd chn freqdiv drop ;"
+   "freqdiv" )
    '( lambda: <{ -- val }> 8 0 #f #f #f adsat ;
-      $" lambda: <{ snd chn -- val }> 8 0 #f snd chn adsat drop ;" )
+      $" lambda: <{ snd chn -- val }> 8 0 #f snd chn adsat drop ;"
+   "adsat" )
    '( lambda: <{ -- val }> #f #f spike ;
-      $" lambda: <{ snd chn -- val }>  snd chn spike drop ;" )
+      $" lambda: <{ snd chn -- val }>  snd chn spike drop ;"
+   "spike" )
    '( lambda: <{ -- val }> #f #f zero-phase ;
-      $" lambda: <{ snd chn -- val }>  snd chn zero-phase drop ;" )
-   '( lambda: <{ -- val }> ['] random-pi-func #f #f rotate-phase ;
-      $" lambda: <{ snd chn -- val }> ['] random-pi-func snd chn rotate-phase drop ;" )
+      $" lambda: <{ snd chn -- val }>  snd chn zero-phase drop ;"
+   "zero-phase" )
+   '( lambda: <{ -- val }> <'> random-pi-func #f #f rotate-phase ;
+      $" lambda: <{ snd chn -- val }> <'> random-pi-func snd chn rotate-phase drop ;"
+   "rotate-phase-proc" )
+   '( lambda: <{ -- val }> random-pi-addr #f #f rotate-phase ;
+      $" lambda: <{ snd chn -- val }> <'> %s snd chn rotate-phase drop ;" '( random-pi-addr ) format
+   "rotate-phase-lambda" )
    '( lambda: <{ -- val }> 0.5 #f #f brighten-slightly ;
-      $" lambda: <{ snd chn -- val }> 0.5 snd chn brighten-slightly drop ;" )
+      $" lambda: <{ snd chn -- val }> 0.5 snd chn brighten-slightly drop ;"
+   "brighten-slightly" )
    '( lambda: <{ -- val }> 100 40 0 #f #f #f #f shift-channel-pitch ;
-      $" lambda: <{ snd chn -- val }> 100 40 0 #f snd chn shift-channel-pitch drop ;" )
+      $" lambda: <{ snd chn -- val }> 100 40 0 #f snd chn shift-channel-pitch drop ;"
+   "shift-channel-pitch" )
    '( lambda: <{ -- val }> vct( 0.0 0.5 ) #f #f channel-polynomial ;
-      $" lambda: <{ snd chn -- val }> vct( 0.000 0.500 ) snd chn channel-polynomial drop ;" )
+      $" lambda: <{ snd chn -- val }> vct( 0.000 0.500 ) snd chn channel-polynomial drop ;"
+   "channel-polynomial" )
    '( lambda: <{ -- val }> vct( 0.0 1.0 ) #f #f spectral-polynomial ;
-      $" lambda: <{ snd chn -- val }> vct( 0.000 1.000 ) snd chn spectral-polynomial drop ;" )
+      $" lambda: <{ snd chn -- val }> vct( 0.000 1.000 ) snd chn spectral-polynomial drop ;"
+   "spectral-polynomial" )
    '( lambda: <{ -- val }> '( 60.0 120.0 240.0 ) #f 0 #f #f #f #f #t 2 notch-channel ;
-      $" lambda: <{ snd chn -- val }> '( 60.0 120.0 240.0 ) #f 0 #f snd chn notch-channel drop ;" )
+      $" lambda: <{ snd chn -- val }> '( 60.0 120.0 240.0 ) #f 0 #f snd chn notch-channel drop ;"
+   "notch-channel" )
 'snd-motif provided? [if]
    ( effects.fs )
    '( lambda: <{ -- val }> 0.1 128 effects-squelch-channel ;
-      $" lambda: <{ snd chn -- val }> 0.1 128 snd chn effects-squelch-channel drop ;" )
+      $" lambda: <{ snd chn -- val }> 0.1 128 snd chn effects-squelch-channel drop ;"
+   "effects-sqelch-channel" )
    '( lambda: <{ -- val }> #f 0.5 0.1 0 #f #f #f effects-echo ;
-      $" lambda: <{ snd chn -- val }> #f 0.5 0.1 0 #f snd chn effects-echo drop ;" )
+      $" lambda: <{ snd chn -- val }> #f 0.5 0.1 0 #f snd chn effects-echo drop ;"
+   "effects-echo" )
    '( lambda: <{ -- val }> 0.5 0.1 #f 0 #f #f #f effects-flecho ;
-      $" lambda: <{ snd chn -- val }> 0.5 0.1 #f 0 #f snd chn effects-flecho drop ;" )
+      $" lambda: <{ snd chn -- val }> 0.5 0.1 #f 0 #f snd chn effects-flecho drop ;"
+   "effects-flecho" )
    '( lambda: <{ -- val }> 0.75 0.75 6.0 10.0 #f 0 #f #f #f effects-zecho ;
-      $" lambda: <{ snd chn -- val }> 0.75 0.75 6.0 10.0 #f 0 #f snd chn effects-zecho drop ;" )
+      $" lambda: <{ snd chn -- val }> 0.75 0.75 6.0 10.0 #f 0 #f snd chn effects-zecho drop ;"
+   "effects-zecho" )
    '( lambda: <{ -- val }> 0.1 50 0 #f #f #f effects-comb-filter ;
-      $" lambda: <{ snd chn -- val }> 0.1 50 0 #f snd chn effects-comb-filter drop ;" )
+      $" lambda: <{ snd chn -- val }> 0.1 50 0 #f snd chn effects-comb-filter drop ;"
+   "effects-comb-filter" )
    '( lambda: <{ -- val }> 10000 0.5 0 #f #f #f effects-moog ;
-      $" lambda: <{ snd chn -- val }> 10000 0.5 0 #f snd chn effects-moog drop ;" )
+      $" lambda: <{ snd chn -- val }> 10000 0.5 0 #f snd chn effects-moog drop ;"
+   "effects-moog" )
    '( lambda: <{ -- val }> #f #f effects-remove-dc ;
-      $" lambda: <{ snd chn -- val }>  snd chn effects-remove-dc drop ;" )
+      $" lambda: <{ snd chn -- val }>  snd chn effects-remove-dc drop ;"
+   "effects-remove-dc" )
    '( lambda: <{ -- val }> #f #f effects-compand ;
-      $" lambda: <{ snd chn -- val }>  snd chn effects-compand drop ;" )
+      $" lambda: <{ snd chn -- val }>  snd chn effects-compand drop ;"
+   "effects-compand" )
    '( lambda: <{ -- val }> 100.0 #f 0 #f #f #f effects-am ;
-      $" lambda: <{ snd chn -- val }> 100.0 #f 0 #f snd chn effects-am drop ;" )
+      $" lambda: <{ snd chn -- val }> 100.0 #f 0 #f snd chn effects-am drop ;"
+   "effects-am" )
    '( lambda: <{ -- val }> 100.0 #f 0 #f #f #f effects-rm ;
-      $" lambda: <{ snd chn -- val }> 100.0 #f 0 #f snd chn effects-rm drop ;" )
+      $" lambda: <{ snd chn -- val }> 100.0 #f 0 #f snd chn effects-rm drop ;"
+   "effects-rm" )
    '( lambda: <{ -- val }> 1000.0 100.0 0 #f #f #f effects-bbp ;
-      $" lambda: <{ snd chn -- val }> 1000.0 100.0 0 #f snd chn effects-bbp drop ;" )
+      $" lambda: <{ snd chn -- val }> 1000.0 100.0 0 #f snd chn effects-bbp drop ;"
+   "effects-bbp" )
    '( lambda: <{ -- val }> 1000.0 100.0 0 #f #f #f effects-bbr ;
-      $" lambda: <{ snd chn -- val }> 1000.0 100.0 0 #f snd chn effects-bbr drop ;" )
+      $" lambda: <{ snd chn -- val }> 1000.0 100.0 0 #f snd chn effects-bbr drop ;"
+   "effects-bbr" )
    '( lambda: <{ -- val }> 1000.0 0 #f #f #f effects-bhp ;
-      $" lambda: <{ snd chn -- val }> 1000.0 0 #f snd chn effects-bhp drop ;" )
+      $" lambda: <{ snd chn -- val }> 1000.0 0 #f snd chn effects-bhp drop ;"
+   "effects-bhp" )
    '( lambda: <{ -- val }> 1000.0 0 #f #f #f effects-blp ;
-      $" lambda: <{ snd chn -- val }> 1000.0 0 #f snd chn effects-blp drop ;" )
+      $" lambda: <{ snd chn -- val }> 1000.0 0 #f snd chn effects-blp drop ;"
+   "effects-blp" )
    '( lambda: <{ -- val }> 50.0 0.5 0 #f #f #f effects-hello-dentist ;
-      $" lambda: <{ snd chn -- val }> 50.0 0.5 0 #f snd chn effects-hello-dentist drop ;" )
+      $" lambda: <{ snd chn -- val }> 50.0 0.5 0 #f snd chn effects-hello-dentist drop ;"
+   "effects-hello-dentist" )
    '( lambda: <{ -- val }> 1.0 0.3 20.0 0 #f #f #f effects-fp ;
-      $" lambda: <{ snd chn -- val }> 1.0 0.3 20.0 0 #f snd chn effects-fp drop ;" )
+      $" lambda: <{ snd chn -- val }> 1.0 0.3 20.0 0 #f snd chn effects-fp drop ;"
+      "effects-fp" )
    '( lambda: <{ -- val }> 5.0 2.0 0.001 0 #f #f #f effects-flange ;
-      $" lambda: <{ snd chn -- val }> 5.0 2.0 0.001 0 #f snd chn effects-flange drop ;" )
+      $" lambda: <{ snd chn -- val }> 5.0 2.0 0.001 0 #f snd chn effects-flange drop ;"
+   "effects-flange" )
    '( lambda: <{ -- val }> 0.1 0 #f #f #f effects-jc-reverb-1 ;
-      $" lambda: <{ snd chn -- val }> 0.1 0 #f snd chn effects-jc-reverb-1 drop ;" )
+      $" lambda: <{ snd chn -- val }> 0.1 0 #f snd chn effects-jc-reverb-1 drop ;"
+   "effects-jc-reverb-1" )
 [then]
 ) value test19-*.fs
 
@@ -1449,14 +1600,16 @@ event: 19-save/restore ( -- )
   \
   "oboe.snd" open-sound { ind }
   'xm provided? 'xg provided? || if
-    .stack
-    test19-*.fs each { vals }
-      vals car  { func1 }
-      vals cadr { descr }
+    nil nil nil nil nil { vals func1 descr name func }
+    test19-*.fs each to vals
+      vals car   to func1
+      vals cadr  to descr
+      vals caddr to name
+      *snd-test-verbose* if name '() clm-message then
       func1 '() run-proc drop
-      ind #f undef undef edit-list->function { func }
+      ind #f undef undef edit-list->function to func
       func proc-source-ref descr string<> if
-	$" edit-list->function %d: %s?" '( i func proc-source-ref ) snd-display
+      	$" edit-list->function %d: %s?" '( i func proc-source-ref ) snd-display
       then
       ind revert-sound drop
       func '( ind 0 ) run-proc drop
@@ -1466,22 +1619,8 @@ event: 19-save/restore ( -- )
   ind close-sound drop
 ;event
 
-\ === TEST 23 ===
-
-: test23-notehook ( inst start dur -- )
-  { inst start dur }
-  $" %14s[%d]: %5.2f  %5.2f" '( inst stack-level start dur ) snd-info
-;
-: test23-clm-ins ( -- )
-  0.0 0.3 ['] clm-ins-test			\ from clm-ins.fs
-  :notehook ['] test23-notehook
-  :statistics #t
-  :play #t
-  :channels 2
-  :reverb ['] nrev
-  :reverb-data '( :lp-coeff 0.5 :lp-out-coeff 0.8 )
-  :delete-reverb #t  with-sound drop
-;
+\ ====== test 23: with-sound
+: test23-notehook { ins start dur -- } $" %14s: %5.2f  %5.2f" '( ins start dur ) clm-message ;
 : test23-balance ( -- )
   make-rmsgain { rg }
   40 make-rmsgain { rg1 }
@@ -1518,65 +1657,2240 @@ event: 19-save/restore ( -- )
 include bird.fsm
 
 event: 23-with-sound ( -- )
-  0 { ind }
-  ws-bird-test
-  test23-clm-ins
-  .stack
-  ['] test23-balance :channels 3 with-sound ( ws ) :output hash-ref 0 find-sound to ind
-  .stack
-  ind sound? if ind close-sound drop else $" with-sound balance: %S?" '( ind ) snd-display then
+  1024 1024 * to *clm-file-buffer-size*
+  <'> bird-test				\ from bird.fsm
+  :statistics *snd-test-verbose*
+  :verbose    *snd-test-verbose*
+  :srate      44100
+  :scaled-to  0.8 with-sound ( ws ) :output hash-ref .string cr
+  0.0 0.3 <'> clm-ins-test		\ from clm-ins.fs
+  :notehook <'> test23-notehook
+  :statistics *snd-test-verbose*
+  :verbose    *snd-test-verbose*
+  :channels 2 with-sound drop
+  <'> test23-balance :channels 3 with-sound ( ws ) :output hash-ref 0 find-sound { ind }
+  ind sound? if ind close-sound drop else $" with-sound balance: %s?" '( ind ) snd-display then
   100.0 make-oscil { mg }
   1000 make-ssb-fm { gen }
   "tmp.snd" mus-next mus-bfloat 22050 1 new-sound to ind
   0 1000 ind 0 pad-channel drop
-  gen mg test23-ssb-fm ['] map-channel #t nil fth-catch stack-reset
+  gen mg test23-ssb-fm <'> map-channel #t nil fth-catch stack-reset
   ind close-sound drop
-  .stack
 ;event
 
+\ ====== test 28: errors
+#f value FIXME-FIXED?
+'snd-nogui provided? [unless]
+  '( 0 0 1 1 ) value env3
+  : make-identity-mixer <{ chans -- mx }>
+    #f { mx }
+    chans 256 < if
+      chans make-mixer to mx
+      mx mixer? if chans 0 do mx i i 1.0 mixer-set! drop loop else #f to mx then
+    then
+    mx
+  ;
+  : check-error-tag { xt expected-tag -- }
+    xt #t nil fth-catch { tag }
+    stack-reset
+    tag list? if
+      tag car expected-tag symbol= unless
+	$" %s: expected %s from %s, got %s?" '( get-func-name expected-tag xt tag ) snd-display
+      then
+    then
+  ;
+  'snd-motif provided? [if]
+    : snd-motif-error-checks ( -- )
+      '( 'Widget 0 ) 	      	<'> widget-position     'no-such-widget check-error-tag
+      '( 'Widget 0 ) 	      	<'> widget-size         'no-such-widget check-error-tag
+      '( 'Widget 0 ) 	      	<'> widget-text         'no-such-widget check-error-tag
+      '( 'Widget 0 ) '( 0 0 )   <'> set-widget-position 'no-such-widget check-error-tag
+      '( 'Widget 0 ) '( 10 10 ) <'> set-widget-size     'no-such-widget check-error-tag
+      '( 'Widget 0 ) "text"     <'> set-widget-text     'no-such-widget check-error-tag
+      '( 'Widget 0 ) 	      	<'> hide-widget         'no-such-widget check-error-tag
+      '( 'Widget 0 ) 	      	<'> show-widget         'no-such-widget check-error-tag
+      '( 'Widget 0 ) 	      	<'> focus-widget        'no-such-widget check-error-tag
+    ;
+  [else]
+    <'> noop alias snd-motif-error-checks
+  [then]
+
+  stack-reset
+  32 make-delay       constant delay-32	\ FIXME: calls for problems, commented out
+  0.95 0.95 0.95 make-color-with-catch constant color-95
+  0 make-array        constant vector-0
+  3 0.0 make-vct      constant vct-3
+  5 0.0 make-vct      constant vct-5
+  with-gui [if]
+    main-widgets car  constant car-main
+    main-widgets cadr constant cadr-main
+  [else]
+    #f                constant car-main
+    #f                constant cadr-main
+  [then]
+  2 3 make-sound-data constant sound-data-23
+  2 make-hook         constant a-hook
+
+  #( <'> add-mark <'> add-sound-file-extension <'> add-source-file-extension
+     <'> sound-file-extensions
+     <'> sound-file? <'> add-to-main-menu <'> add-to-menu <'> add-transform
+     <'> amp-control <'> as-one-edit <'> ask-before-overwrite <'> audio-input-device
+     <'> audio-output-device <'> auto-resize <'> auto-update <'> autocorrelate
+     <'> axis-info <'> axis-label-font <'> axis-numbers-font <'> basic-color
+     <'> bind-key <'> bomb <'> c-g? <'> apply-controls
+     <'> change-samples-with-origin <'> channel-style <'> channel-widgets <'> channels
+     <'> chans <'> peaks-font <'> bold-peaks-font <'> close-sound
+     <'> color-cutoff <'> color-dialog <'> colormap-ref <'> add-colormap
+     <'> delete-colormap <'> colormap-size <'> colormap-name <'> color-inverted
+     <'> color-scale <'> color->list <'> colormap <'> color?
+     <'> comment <'> contrast-control <'> contrast-control-amp <'> contrast-control?
+     <'> convolve-selection-with <'> convolve-with <'> channel-properties <'> amp-control-bounds
+     <'> speed-control-bounds <'> expand-control-bounds <'> contrast-control-bounds
+     <'> reverb-control-length-bounds
+     <'> reverb-control-scale-bounds <'> cursor-update-interval <'> cursor-location-offset
+     <'> auto-update-interval
+     <'> count-matches <'> current-font <'> cursor <'> cursor-color
+     <'> with-tracking-cursor <'> cursor-size <'> cursor-style <'> tracking-cursor-style
+     <'> dac-combines-channels <'> dac-size <'> clipping <'> data-color
+     <'> data-format <'> data-location <'> data-size <'> default-output-chans
+     <'> default-output-data-format <'> default-output-srate <'> default-output-header-type
+     <'> define-envelope
+     <'> delete-mark <'> delete-marks <'> forget-region <'> delete-sample
+     <'> delete-samples <'> delete-selection <'> dialog-widgets <'> display-edits
+     <'> dot-size <'> draw-dot <'> draw-dots <'> draw-line
+     <'> draw-lines <'> draw-string <'> edit-header-dialog <'> edit-fragment
+     <'> edit-position <'> edit-tree <'> edits <'> env-selection
+     <'> env-sound <'> enved-envelope <'> enved-base <'> enved-clip?
+     <'> enved-in-dB <'> enved-dialog <'> enved-style <'> enved-power
+     <'> enved-target <'> enved-waveform-color <'> enved-wave? <'> eps-file
+     <'> eps-left-margin <'> eps-bottom-margin <'> eps-size <'> expand-control
+     <'> expand-control-hop <'> expand-control-jitter <'> expand-control-length
+     <'> expand-control-ramp
+     <'> expand-control? <'> fft <'> fft-window-alpha <'> fft-window-beta
+     <'> fft-log-frequency <'> fft-log-magnitude <'> transform-size <'> disk-kspace
+     <'> transform-graph-type <'> fft-window <'> transform-graph? <'> view-files-dialog
+     <'> mix-file-dialog <'> file-name <'> fill-polygon <'> fill-rectangle
+     <'> filter-sound <'> filter-control-in-dB <'> filter-control-envelope <'> enved-filter-order
+     <'> enved-filter <'> filter-control-in-hz <'> filter-control-order <'> filter-selection
+     <'> filter-channel <'> filter-control-waveform-color <'> filter-control? <'> find-channel
+     <'> find-mark <'> find-sound <'> finish-progress-report <'> foreground-color
+     <'> insert-file-dialog <'> frames <'> free-sample-reader <'> graph
+     <'> transform? <'> delete-transform <'> add-watcher <'> delete-watcher
+     <'> graph-color <'> graph-cursor <'> graph-data <'> graph->ps
+     <'> gl-graph->ps <'> graph-style <'> lisp-graph? <'>  graphs-horizontal
+     <'> header-type <'> help-dialog <'> info-dialog <'> highlight-color
+     <'> in <'> insert-region <'> insert-sample <'> insert-samples
+     <'> insert-samples-with-origin <'> insert-selection <'> insert-silence <'> insert-sound
+     <'> just-sounds <'> key <'> key-binding <'> left-sample
+     <'> listener-color <'> listener-font <'> listener-prompt <'> listener-selection
+     <'> listener-text-color <'> main-widgets <'> make-color <'> make-graph-data
+     <'> make-mix-sample-reader <'> make-player <'> make-region <'> make-region-sample-reader
+     <'> make-sample-reader <'> make-track-sample-reader <'> map-chan <'> mark-color
+     <'> mark-name <'> mark-sample <'> mark-sync <'> mark-sync-max
+     <'> mark-home <'> marks <'> mark? <'>  max-transform-peaks
+     <'> max-regions <'> maxamp <'> maxamp-position <'> menu-widgets
+     <'> minibuffer-history-length <'> min-dB <'> log-freq-start <'> mix
+     <'> mixes <'> mix-amp <'> mix-amp-env <'> mix-tag-position
+     <'> mix-chans <'> mix-color <'> mix-track <'> mix-frames
+     <'> mix-locked? <'> mix? <'> view-mixes-dialog <'> mix-position
+     <'> view-tracks-dialog <'> track-dialog-track <'> mix-dialog-mix <'> mix-inverted?
+     <'> mix-speed-style <'> mix-name <'> mix-region <'> mix-sample-reader?
+     <'> mix-selection <'> mix-sound <'> mix-home <'> mix-speed
+     <'> mix-tag-height <'> mix-tag-width <'> mark-tag-height <'> mark-tag-width
+     <'> mix-tag-y <'> mix-vct <'> mix-waveform-height <'> time-graph-style
+     <'> lisp-graph-style <'> transform-graph-style <'> read-mix-sample <'> read-track-sample
+     <'> next-sample <'> transform-normalization <'> equalize-panes <'> open-raw-sound
+     <'> open-sound <'> orientation-dialog <'> previous-sample <'> peak-env-info
+     <'> peaks <'> player? <'> players <'> position-color
+     <'> position->x <'> position->y <'> add-directory-to-view-files-list
+     <'> add-file-to-view-files-list
+     <'> view-files-sort <'> view-files-amp <'> view-files-speed <'> view-files-files
+     <'> view-files-selected-files <'> view-files-speed-style <'> view-files-amp-env
+     <'> print-length
+     <'> progress-report <'> prompt-in-minibuffer <'> pushed-button-color <'> read-only
+     <'> recorder-in-device <'> read-peak-env-info-file <'> recorder-autoload
+     <'> recorder-buffer-size
+     <'> recorder-dialog <'> recorder-file <'> recorder-gain <'> recorder-in-amp
+     <'> recorder-in-data-format <'> recorder-max-duration <'> recorder-out-amp
+     <'> recorder-out-chans
+     <'> recorder-out-data-format <'> recorder-out-header-type <'> recorder-srate
+     <'> recorder-trigger
+     <'> redo <'> region-chans <'> view-regions-dialog <'> region-home
+     <'> region-graph-style <'> region-frames <'> region-position <'> region-maxamp
+     <'> region-maxamp-position <'> selection-maxamp <'> selection-maxamp-position
+     <'> region-sample
+     <'> region->vct <'> clear-minibuffer <'> region-srate <'> regions
+     <'> region? <'>  remove-from-menu <'> report-in-minibuffer <'> reset-controls
+     <'> restore-controls <'> restore-region <'> reverb-control-decay <'> reverb-control-feedback
+     <'> recorder-in-chans <'> reverb-control-length <'> reverb-control-lowpass
+     <'> reverb-control-scale
+     <'> reverb-control? <'>  reverse-sound <'> reverse-selection <'> revert-sound
+     <'> right-sample <'> sample <'> sample-reader-at-end? <'>  sample-reader?
+     <'> samples <'> sample-reader-position <'> sash-color <'> save-controls
+     <'> ladspa-dir <'> save-dir <'> save-edit-history <'> save-envelopes
+     <'> save-listener <'> save-marks <'> save-region <'> save-selection
+     <'> save-sound <'> save-sound-as <'> save-state <'> save-state-file
+     <'> scale-by <'> scale-selection-by <'> scale-selection-to <'> scale-to
+     <'> scan-chan <'> search-procedure <'> select-all <'> select-channel
+     <'> select-sound <'> selected-channel <'> selected-data-color <'> selected-graph-color
+     <'> selected-sound <'> selection-position <'> selection-color <'> selection-creates-region
+     <'> selection-frames <'> selection-member? <'> selection? <'> short-file-name
+     <'> show-axes <'> show-backtrace <'> show-controls <'> show-transform-peaks
+     <'> show-indices <'> show-listener <'> show-marks <'> show-mix-waveforms
+     <'> show-selection-transform <'> show-y-zero <'> sinc-width <'> show-grid
+     <'> show-sonogram-cursor <'> grid-density <'> smooth-sound <'> smooth-selection
+     <'> snd-print <'> snd-spectrum <'> snd-tempnam <'> snd-version
+     <'> sound-files-in-directory <'> sound-loop-info <'> sound-widgets <'> soundfont-info
+     <'> sound? <'> sounds <'> spectro-cutoff <'> spectro-hop
+     <'> spectro-start <'> spectro-x-angle <'> spectro-x-scale <'> spectro-y-angle
+     <'> spectro-y-scale <'> spectro-z-angle <'> spectro-z-scale <'> speed-control
+     <'> speed-control-style <'> speed-control-tones <'> squelch-update <'> srate
+     <'> src-sound <'> src-selection <'> start-progress-report <'> stop-player
+     <'> stop-playing <'> swap-channels <'> syncd-marks <'> sync
+     <'> sync-max <'> sound-properties <'> temp-dir <'> text-focus-color
+     <'> tiny-font <'> track-sample-reader? <'>  region-sample-reader? <'> transform-dialog
+     <'> transform-sample <'> transform->vct <'> transform-frames <'> transform-type
+     <'> trap-segfault <'> with-file-monitor <'> optimization <'> unbind-key
+     <'> undo <'> update-transform-graph <'> update-time-graph <'> update-lisp-graph
+     <'> update-sound <'> run-safety <'> clm-table-size <'> with-verbose-cursor
+     <'> view-sound <'> vu-size <'> vu-in-dB <'> wavelet-type
+     <'> time-graph? <'>  time-graph-type <'> wavo-hop <'> wavo-trace
+     <'> window-height <'> window-width <'> window-x <'> window-y
+     <'> with-mix-tags <'> with-relative-panes <'> with-gl <'> write-peak-env-info-file
+     <'> x-axis-style <'> beats-per-measure <'> beats-per-minute <'> x-bounds
+     <'> x-position-slider <'> x->position <'> x-zoom-slider <'> mus-header-type->string
+     <'> mus-data-format->string <'> y-bounds <'> y-position-slider <'> y->position
+     <'> y-zoom-slider <'> zero-pad <'> zoom-color <'> zoom-focus-style
+     <'> mus-sound-samples <'> mus-sound-frames <'> mus-sound-duration <'> mus-sound-datum-size
+     <'> mus-sound-data-location <'> data-size <'> mus-sound-chans <'> mus-sound-srate
+     <'> mus-sound-header-type <'> mus-sound-data-format <'> mus-sound-length
+     <'> mus-sound-type-specifier
+     <'> mus-header-type-name <'> mus-data-format-name <'> mus-sound-comment
+     <'> mus-sound-write-date
+     <'> mus-bytes-per-sample <'> mus-sound-loop-info <'> mus-audio-report <'> mus-sun-set-outputs
+     <'> mus-netbsd-set-outputs <'> mus-alsa-squelch-warning <'> mus-sound-maxamp
+     <'> mus-sound-maxamp-exists?
+     <'> mus-file-prescaler <'> mus-prescaler <'> mus-clipping <'> mus-file-clipping
+     <'> mus-header-raw-defaults <'> moving-average <'> moving-average? <'> make-moving-average
+     <'> mus-expand-filename <'> make-sound-data <'> sound-data-ref <'> sound-data-set!
+     <'> sound-data-scale! <'> sound-data-fill! <'> sound-data? <'> sound-data-length
+     <'> sound-data-multiply! <'> sound-data-add! <'> sound-data-offset! <'> sound-data*
+     <'> sound-data+ <'> sound-data-copy <'> sound-data-reverse! <'> sound-data-maxamp
+     <'> sound-data-chans <'> sound-data->vct <'> vct->sound-data <'> sound-data-peak
+     <'> all-pass <'> all-pass? <'> amplitude-modulate <'> array->file
+     <'> array-interp <'> mus-interpolate <'> asymmetric-fm <'> asymmetric-fm?
+     <'> sound-data->sound-data <'> clear-array <'> comb <'> comb?
+     <'> filtered-comb <'> filtered-comb? <'> contrast-enhancement <'> convolution
+     <'> convolve <'> convolve? <'> db->linear <'> degrees->radians
+     <'> delay <'> delay? <'> dot-product <'> env
+     <'> env-interp <'> env? <'> file->array <'> file->frame
+     <'> file->frame? <'>  file->sample <'> file->sample? <'> filter
+     <'> filter? <'> fir-filter <'> fir-filter? <'> formant
+     <'> formant-bank <'> formant? <'> frame* <'> frame+
+     <'> frame->file <'> frame->file? <'> frame->frame <'> frame->list
+     <'> frame->sample <'> frame-ref <'> frame-set! <'> frame?
+     <'> granulate <'> granulate? <'> hz->radians <'> iir-filter
+     <'> iir-filter? <'>  in-any <'> ina <'> inb
+     <'> linear->db <'> locsig <'> locsig-ref <'> locsig-reverb-ref
+     <'> locsig-reverb-set! <'> locsig-set! <'>  locsig? <'> make-all-pass
+     <'> make-asymmetric-fm <'> make-comb <'> make-filtered-comb <'> make-convolve
+     <'> make-delay <'> make-env <'> make-fft-window <'> make-file->frame
+     <'> make-file->sample <'> make-filter <'> make-fir-filter <'> make-formant
+     <'> make-frame <'> make-frame->file <'> make-granulate <'> make-iir-filter
+     <'> make-locsig <'> move-locsig <'> make-mixer <'> make-notch
+     <'> make-one-pole <'> make-one-zero <'> make-oscil <'> make-pulse-train
+     <'> make-rand <'> make-rand-interp <'> make-readin <'> make-sample->file
+     <'> make-sawtooth-wave <'> make-sine-summation <'> make-square-wave <'> make-src
+     <'> make-sum-of-cosines <'> make-sum-of-sines <'> make-ssb-am <'> make-table-lookup
+     <'> make-triangle-wave <'> make-two-pole <'> make-two-zero <'> make-wave-train
+     <'> make-waveshape <'> mixer* <'> mixer-ref <'> mixer-set!
+     <'> mixer? <'> mixer+ <'> move-sound <'> make-move-sound
+     <'> move-sound? <'> mus-float-equal-fudge-factor <'> multiply-arrays
+     <'> mus-array-print-length
+     <'> mus-channel <'> mus-channels <'> make-polyshape <'> polyshape?
+     <'> mus-close <'> mus-cosines <'> mus-data <'> mus-feedback
+     <'> mus-feedforward <'> mus-fft <'> mus-formant-radius <'> mus-frequency
+     <'> mus-hop <'> mus-increment <'> mus-input? <'> mus-file-name
+     <'> mus-length <'> mus-location <'> mus-mix <'> mus-order
+     <'> mus-output? <'>  mus-phase <'> mus-ramp <'> mus-random
+     <'> mus-scaler <'> mus-srate <'> mus-xcoeffs <'> mus-ycoeffs
+     <'> notch <'> notch? <'> one-pole <'> one-pole?
+     <'> one-zero <'> one-zero? <'> oscil <'> oscil?
+     <'> out-any <'> outa <'> outb <'> outc
+     <'> outd <'> partials->polynomial <'> partials->wave <'> partials->waveshape
+     <'> phase-partials->wave <'> polynomial <'> pulse-train <'> pulse-train?
+     <'> radians->degrees <'> radians->hz <'> rand <'> rand-interp
+     <'> rand-interp? <'>  rand? <'> readin <'> readin?
+     <'> rectangular->polar <'> ring-modulate <'> sample->file <'> sample->file?
+     <'> sample->frame <'> sawtooth-wave <'> sawtooth-wave? <'> sine-summation
+     <'> sine-summation? <'> spectrum <'> square-wave <'> square-wave?
+     <'> src <'> src? <'> sum-of-cosines <'> sum-of-sines
+     <'> ssb-am <'> sum-of-cosines? <'> sum-of-sines? <'> ssb-am?
+     <'> table-lookup <'> table-lookup? <'> tap <'> triangle-wave
+     <'> triangle-wave? <'> two-pole <'> two-pole? <'> two-zero
+     <'> two-zero? <'> wave-train <'> wave-train? <'>  waveshape
+     <'> waveshape? <'>  make-vct <'> vct-add! <'> vct-subtract!
+     <'>  vct-copy <'> vct-length <'> vct-multiply! <'> vct-offset!
+     <'> vct-ref <'> vct-scale! <'> vct-fill! <'> vct-set!
+     <'> mus-audio-describe <'> vct-peak <'> vct? <'> list->vct
+     <'> vct->list <'> vector->vct <'> vct->vector <'> vct-move!
+     <'> vct-reverse! <'> vct-subseq <'> vct <'> little-endian?
+     <'> vct->string <'> clm-channel <'> env-channel <'> map-channel
+     <'> scan-channel <'> play-channel <'> reverse-channel <'> seconds->samples
+     <'> samples->seconds <'> smooth-channel <'> vct->channel <'> channel->vct
+     <'> src-channel <'> scale-channel <'> ramp-channel <'> pad-channel
+     <'> normalize-channel <'> cursor-position <'> clear-listener <'> mus-sound-prune
+     <'> mus-sound-forget <'> xramp-channel <'> ptree-channel <'> snd->sample
+     <'> snd->sample? <'> make-snd->sample <'> make-scalar-mixer <'> beats-per-minute
+     <'> beats-per-measure <'> channel-amp-envs <'> convolve-files <'> filter-control-coeffs
+     <'> locsig-type <'> make-phase-vocoder <'> mus-audio-mixer-read <'> mus-describe
+     <'> mus-error-type->string <'> mus-file-buffer-size <'> mus-name <'> mus-offset
+     <'> mus-out-format <'> mus-reset <'> mus-rand-seed <'> mus-width
+     <'> phase-vocoder? <'> polar->rectangular <'> phase-vocoder-amp-increments
+     <'> phase-vocoder-amps
+     <'> phase-vocoder-freqs <'> phase-vocoder-outctr <'> phase-vocoder-phase-increments
+     <'> phase-vocoder-phases
+     <'> mus-generator? <'> read-sample <'> reset-listener-cursor <'> goto-listener-end
+     <'> sample-reader-home <'> selection-chans <'> selection-srate <'> snd-gcs
+     <'> snd-font <'> snd-color <'> snd-warning <'> sine-bank
+     <'> channel-data <'> x-axis-label <'> variable-graph? <'> y-axis-label
+     <'> snd-url <'> snd-urls <'> tempo-control-bounds <'> free-player
+     <'> quit-button-color <'> help-button-color <'> reset-button-color <'> doit-button-color
+     <'> doit-again-button-color <'> track <'> tracks <'> track?
+     <'> make-track <'> track-amp <'> track-name <'> track-position
+     <'> track-frames <'> track-speed <'> track-tempo <'> track-amp-env
+     <'> track-track <'> delete-track <'> delete-mix <'> track-color
+     <'> free-track <'> track-speed-style <'> delay-tick <'> playing
+     <'> pausing <'> draw-axes <'> copy-mix <'> copy-track
+     <'> copy-sample-reader <'> html-dir <'> html-program <'> lock-track
+     <'> make-fir-coeffs <'> make-identity-mixer <'> mus-interp-type <'> mus-run
+     <'> phase-vocoder <'> player-home <'> redo-edit <'> undo-edit
+     <'> widget-position <'> widget-size <'> focus-widget 
+     [defined] window-property [if] <'> window-property [then] ) constant procs
+
+  #( <'> amp-control <'> ask-before-overwrite <'> audio-input-device <'> audio-output-device
+     <'> auto-update <'> axis-label-font <'> axis-numbers-font <'> channel-style
+     <'> peaks-font <'> bold-peaks-font <'> sound-file-extensions <'> color-cutoff
+     <'> color-inverted <'> color-scale <'> contrast-control <'> contrast-control-amp
+     <'> amp-control-bounds <'> speed-control-bounds <'> expand-control-bounds
+     <'> contrast-control-bounds
+     <'> reverb-control-length-bounds <'> reverb-control-scale-bounds <'> cursor-update-interval
+     <'> cursor-location-offset
+     <'> contrast-control? <'> auto-update-interval <'> current-font <'> cursor
+     <'> cursor-color <'> channel-properties <'> with-tracking-cursor <'> cursor-size
+     <'> cursor-style <'> tracking-cursor-style <'> dac-combines-channels <'> dac-size
+     <'> clipping <'> data-color <'> default-output-chans <'> default-output-data-format
+     <'> default-output-srate <'> default-output-header-type <'> dot-size <'> enved-envelope
+     <'> enved-base <'> enved-clip? <'> enved-in-dB <'> enved-style
+     <'> enved-power <'> enved-target <'> enved-waveform-color <'> enved-wave?
+     <'> eps-file <'> eps-left-margin <'> eps-bottom-margin <'> eps-size
+     <'> expand-control <'> expand-control-hop <'> expand-control-jitter <'> expand-control-length
+     <'> expand-control-ramp <'> expand-control? <'> fft-window-alpha <'> fft-window-beta
+     <'> fft-log-frequency <'> fft-log-magnitude <'> transform-size <'> transform-graph-type
+     <'> fft-window <'> transform-graph? <'> filter-control-in-dB <'> filter-control-envelope
+     <'> enved-filter-order <'> enved-filter <'> filter-control-in-hz <'> filter-control-order
+     <'> filter-control-waveform-color <'> filter-control? <'>  foreground-color <'> graph-color
+     <'> graph-cursor <'> graph-style <'> lisp-graph? <'> graphs-horizontal
+     <'> highlight-color <'> just-sounds <'> left-sample <'> listener-color
+     <'> listener-font <'> listener-prompt <'> listener-text-color <'> mark-color
+     <'> mark-name <'> mark-sample <'> mark-sync <'> max-transform-peaks
+     <'> max-regions <'> min-dB <'> log-freq-start <'> mix-amp
+     <'> mix-amp-env <'> mix-tag-position <'> mix-chans <'> mix-color
+     <'> mix-locked? <'> mix-inverted? <'> mix-name <'> mix-position
+     <'> mix-speed <'> mix-speed-style <'> mix-tag-height <'> mix-tag-width
+     <'> mix-tag-y <'> mark-tag-width <'> mark-tag-height <'> mix-waveform-height
+     <'> transform-normalization <'> equalize-panes <'> position-color <'> recorder-in-device
+     <'> view-files-sort <'> print-length <'> pushed-button-color <'> view-files-amp
+     <'> view-files-speed <'> view-files-speed-style <'> view-files-amp-env <'> view-files-files
+     <'> view-files-selected-files <'> recorder-autoload <'> recorder-buffer-size
+     <'> recorder-dialog
+     <'> recorder-file <'> recorder-gain <'> recorder-in-amp <'> recorder-in-data-format
+     <'> recorder-max-duration <'> recorder-out-amp <'> recorder-out-chans
+     <'> recorder-out-data-format
+     <'> recorder-out-header-type <'> recorder-srate <'> region-graph-style <'> recorder-trigger
+     <'> reverb-control-decay <'> reverb-control-feedback <'> recorder-in-chans
+     <'> reverb-control-length
+     <'> reverb-control-lowpass <'> reverb-control-scale <'> time-graph-style <'> lisp-graph-style
+     <'> transform-graph-style <'> reverb-control? <'> sash-color <'> ladspa-dir
+     <'> save-dir <'> save-state-file <'> selected-data-color <'> selected-graph-color
+     <'> selection-color <'> selection-creates-region <'> show-axes <'> show-backtrace
+     <'> show-controls <'> show-transform-peaks <'> show-indices <'> show-marks
+     <'> show-mix-waveforms <'> show-selection-transform <'> show-listener <'> show-y-zero
+     <'> show-grid <'> show-sonogram-cursor <'> sinc-width <'> spectro-cutoff
+     <'> spectro-hop <'> spectro-start <'> spectro-x-angle <'>  grid-density
+     <'> spectro-x-scale <'> spectro-y-angle <'> spectro-y-scale <'> spectro-z-angle
+     <'> spectro-z-scale <'> speed-control <'> speed-control-style <'> speed-control-tones
+     <'> squelch-update <'> sync <'> sound-properties <'> temp-dir
+     <'> text-focus-color <'> tiny-font <'> y-bounds <'> transform-type
+     <'> trap-segfault <'> with-file-monitor <'> optimization <'> with-verbose-cursor
+     <'> vu-size <'> vu-in-dB <'> wavelet-type <'> x-bounds
+     <'> time-graph? <'> wavo-hop <'> wavo-trace <'> with-gl
+     <'> with-mix-tags <'> x-axis-style <'> beats-per-minute <'> zero-pad
+     <'> zoom-color <'> zoom-focus-style <'> with-relative-panes <'>  window-x
+     <'> window-y <'> window-width <'> window-height <'> mix-dialog-mix
+     <'> track-dialog-track <'> beats-per-measure <'> channels <'> chans
+     <'> colormap <'> comment <'> data-format <'> data-location
+     <'> data-size <'> edit-position <'> frames <'> header-type
+     <'> maxamp <'> minibuffer-history-length <'> read-only <'> right-sample
+     <'> sample <'> samples <'> selected-channel <'> colormap-size
+     <'> colormap? <'> selected-sound <'> selection-position <'> selection-frames
+     <'> selection-member? <'> sound-loop-info <'> srate <'> time-graph-type
+     <'> x-position-slider <'> x-zoom-slider <'> tempo-control-bounds <'> y-position-slider
+     <'> y-zoom-slider <'> sound-data-ref <'> mus-array-print-length
+     <'> mus-float-equal-fudge-factor
+     <'> mus-cosines <'> mus-data <'> mus-feedback <'> mus-feedforward
+     <'> mus-formant-radius <'> mus-frequency <'> mus-hop <'> mus-increment
+     <'> mus-length <'> mus-location <'> mus-phase <'> mus-ramp
+     <'> mus-scaler <'> vct-ref <'> x-axis-label <'> filter-control-coeffs
+     <'> locsig-type <'> mus-file-buffer-size <'> mus-rand-seed <'> mus-width
+     <'> clm-table-size <'> run-safety <'> mus-offset <'> mus-reset
+     <'> phase-vocoder-amp-increments <'> phase-vocoder-amps <'> phase-vocoder-freqs
+     <'> phase-vocoder-outctr
+     <'> phase-vocoder-phase-increments <'> phase-vocoder-phases <'> quit-button-color
+     <'> help-button-color
+     <'> reset-button-color <'> doit-button-color <'> doit-again-button-color <'> track-amp
+     <'> track-name <'> track-position <'> track-speed <'> track-speed-style
+     <'> track-tempo <'> track-amp-env <'> track-color <'> html-dir
+     <'> html-program <'> mus-interp-type <'> widget-position <'> widget-size
+     <'> mixer-ref <'> frame-ref <'> locsig-ref <'> locsig-reverb-ref
+     <'> mus-file-prescaler <'> mus-prescaler <'> mus-clipping <'> mus-file-clipping
+     <'> mus-header-raw-defaults
+     [defined] window-property [if] <'> window-property [then] ) constant set-procs
+  
+  #( <'> make-all-pass <'> make-asymmetric-fm <'> make-snd->sample <'> make-moving-average
+     <'> make-comb <'> make-filtered-comb <'> make-convolve <'> make-delay
+     <'> make-env <'> make-fft-window <'> make-file->frame <'> make-file->sample
+     <'> make-filter <'> make-fir-filter <'> make-formant <'> make-frame
+     <'> make-frame->file <'> make-granulate <'> make-iir-filter <'> make-locsig
+     <'> make-mixer <'> make-notch <'> make-one-pole <'> make-one-zero
+     <'> make-oscil <'> make-pulse-train <'> make-rand <'> make-rand-interp
+     <'> make-readin <'> make-sample->file <'> make-sawtooth-wave <'> make-sine-summation
+     <'> make-square-wave <'> make-src <'> make-sum-of-cosines <'> make-sum-of-sines
+     <'> make-table-lookup <'> make-triangle-wave <'> make-two-pole <'> make-two-zero
+     <'> make-wave-train <'> make-waveshape <'> make-phase-vocoder <'> make-ssb-am
+     <'> make-polyshape <'> make-color <'> make-player <'> make-track
+     <'> make-region <'> make-scalar-mixer ) constant make-procs
+
+  #( :frequency :initial-phase :wave :cosines :amplitude :ratio :size :a0 :a1 :a2 :b1 :b2 :input 
+     :srate :file :channel :start :initial-contents :initial-element :scaler :feedforward :feedback 
+     :max-size :radius :gain :partials :r :a :n :fill-time :order :xcoeffs :ycoeffs :envelope 
+     :base :duration :offset :end :direction :degree :distance :reverb :output :fft-size :expansion 
+     :length :hop :ramp :jitter :type :format :comment :channels :filter :revout :width :edit 
+     :synthesize :analyze :interp :overlap :pitch :distribution :sines :dur ) constant keyargs
+
+  : arity-not-ok     <{ prc args -- f }> prc args     arity-ok not ;
+  : set-arity-not-ok <{ prc args -- f }> prc args set-arity-ok not ;
+  procs <'> arity-not-ok  0 array-reject constant procs00
+  procs <'> arity-not-ok  1 array-reject constant procs01
+  procs <'> arity-not-ok  2 array-reject constant procs02
+  procs <'> arity-not-ok  3 array-reject constant procs03
+  procs <'> arity-not-ok  4 array-reject constant procs04
+  procs <'> arity-not-ok  5 array-reject constant procs05
+  procs <'> arity-not-ok  6 array-reject constant procs06
+  procs <'> arity-not-ok  7 array-reject constant procs07
+  procs <'> arity-not-ok  8 array-reject constant procs08
+  procs <'> arity-not-ok 10 array-reject constant procs10
+  set-procs <'> set-arity-not-ok 1 array-reject constant set-procs00
+  set-procs <'> set-arity-not-ok 2 array-reject constant set-procs01
+  set-procs <'> set-arity-not-ok 3 array-reject constant set-procs02
+  set-procs <'> set-arity-not-ok 4 array-reject constant set-procs03
+  set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
+
+  [undefined] mus-audio-reinitialize [if] : mus-audio-reinitialize ( -- n ) 0 ; [then]
+  : close-sound-mc-cb { -- prc; y self -- val }
+    1 proc-create "oboe.snd" open-sound , ( prc )
+   does> { y self -- val }
+    self @ { ind }
+    ind sound? if ind close-sound drop then
+    0.0
+  ;
+  : close-sound-aoe-1-cb { -- prc; self -- val }
+    0 proc-create "oboe.snd" open-sound , "pistol.snd" open-sound ,
+   does> { self -- val }
+    self       @ ( ind1 ) close-sound drop
+    self cell+ @ ( ind2 ) close-sound
+  ;
+  : close-sound-aoe-2b-cb { ind1 ind2 -- prc; self -- val }
+    0 proc-create ind1 , ind2 , ( prc )
+   does> { self -- val }
+    self       @ ( ind1 ) close-sound drop
+    self cell+ @ ( ind2 ) close-sound
+  ;
+  : close-sound-aoe-2a-cb { -- prc; self -- val }
+    0 proc-create "oboe.snd" open-sound , "pistol.snd" open-sound ,
+   does> { self -- val }
+    self       @ { ind1 }
+    self cell+ @ { ind2 }
+    100 0.1 ind1 0 set-sample drop
+    100 0.1 ind2 0 set-sample drop
+    ind1 ind2 close-sound-aoe-2b-cb "inner-edit" as-one-edit
+  ;
+  : close-sound-fc-cb { -- prc; y self -- f }
+    1 proc-create "oboe.snd" open-sound , ( prc )
+   does> { y self -- f }
+    self @ { ind }
+    ind sound? if ind close-sound drop then
+    #f
+  ;
+  : sc-1-cb { mx -- prc; x self -- f }
+    1 proc-create mx , ( prc )
+   does> { x self -- f }
+    self @ { mx }
+    x fabs mx car fmax  mx swap set-car! drop
+    #f
+  ;
+  : mc-1-cb { -- prc; y self -- val }
+    1 proc-create 1.0 ( scl ) , ( prc )
+   does> { y self -- val }
+    y 0.4 f> if
+      '( 0.0 ) { mx }			\ The list pointer saves the day while
+					\ a single number doesn't work.
+					\ Why?
+					\ FIXME
+      mx sc-1-cb scan-channel drop
+      mx car 1/f self ! ( scl = 1/mx )
+    then
+    self @ ( scl ) y f*
+  ;
+  : mc-2-cb { ind -- prc; y self -- val }
+    1 proc-create ind , ( prc )
+   does> { y self -- val }
+    y 0.4 f> if 1 self @ ( ind ) 0 set-frames drop then
+    y
+  ;
+  : mc-3-cb <{ y -- val }> y 0.0+1.0i c* ;
+  : edpos-1-cb { ind -- prc; self -- edpos }
+    0 proc-create ind , ( prc )
+   does> { self -- edpos }
+    self @ ( ind ) close-sound drop
+    current-edit-position
+  ;
+  : edpos-2-cb <{ snd chn -- edpos }>
+    snd close-sound drop
+    current-edit-position
+  ;
+  
+  event: 28-errors ( -- )
+    #t set-with-background-processes drop
+    reset-all-hooks
+    nil nil { prc tag }
+    #( <'> amp-control <'> bomb <'> apply-controls <'> channels
+       <'> chans <'> close-sound <'> comment <'> contrast-control
+       <'> amp-control-bounds <'> speed-control-bounds <'> expand-control-bounds
+       <'> contrast-control-bounds
+       <'> reverb-control-length-bounds <'> reverb-control-scale-bounds <'> contrast-control-amp
+       <'> contrast-control?
+       <'> data-format <'> data-location <'> data-size <'> expand-control
+       <'> expand-control-hop <'> expand-control-jitter <'> expand-control-length
+       <'> expand-control-ramp
+       <'> expand-control? <'> file-name <'> filter-control-in-dB <'> filter-control-in-hz
+       <'> filter-control-envelope <'> filter-control-order <'> filter-control?
+       <'> finish-progress-report
+       <'> frames <'> header-type <'> progress-report <'> read-only
+       <'> reset-controls <'> restore-controls <'> reverb-control-decay <'> reverb-control-feedback
+       <'> reverb-control-length <'> reverb-control-lowpass <'> reverb-control-scale
+       <'> reverb-control?
+       <'> save-controls <'> select-sound <'> short-file-name <'> sound-loop-info
+       <'> soundfont-info <'> speed-control <'> speed-control-style <'> speed-control-tones
+       <'> srate <'> channel-style <'> start-progress-report <'> sync
+       <'> sound-properties <'> swap-channels ) { prcs-1 }
+    prcs-1 each to prc
+      123 prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'no-such-sound symbol= unless
+	  $" snd no-such-sound %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    #( vct-5 -1.0 csqrt 1.5 "hiho" ) { args-1 }
+    nil { arg }
+    args-1 each to arg
+      prcs-1 each to prc
+	prc <'> progress-report <> if
+	  arg prc #t nil fth-catch to tag
+	  stack-reset
+	  tag list? if
+	    tag car 'wrong-type-arg symbol= unless
+	      $" snd wrong-type-arg %s: %s (%s)" '( prc tag arg ) snd-display
+	    then
+	  then
+	then
+      end-each
+    end-each
+    "obtest.snd" open-sound { ind }
+    args-1 each to arg
+      prcs-1 each to prc
+	\ snd/chn before value
+	\ g_set_channels(snd, val)           arg 0
+	\ snd/chn after value
+	\ g_set_amp_control(val, snd, chn)   0 arg
+	prc <'> channels
+	prc <'> chans         ||
+	prc <'> data-format   ||
+	prc <'> data-location ||
+	prc <'> data-size     ||
+	prc <'> header-type   ||
+	prc <'> srate         ||
+	prc <'> comment       || if arg 0 else 0 arg then prc set-xt #t nil fth-catch to tag
+	stack-reset
+	tag list? if
+	  tag car 'wrong-type-arg symbol= unless
+	    $" snd wrong-type-arg set-%s [%s]: %s" '( prc arg tag ) snd-display
+	  then
+	then
+      end-each
+    end-each
+    #( <'> amp-control <'> contrast-control <'> contrast-control-amp <'> contrast-control?
+       <'> expand-control <'> amp-control-bounds <'> speed-control-bounds <'> expand-control-bounds
+       <'> contrast-control-bounds <'> reverb-control-length-bounds <'> reverb-control-scale-bounds
+       <'> expand-control-hop
+       <'> expand-control-jitter <'> expand-control-length <'> expand-control-ramp
+       <'> expand-control?
+       <'> filter-control-in-dB <'> filter-control-in-hz <'> filter-control-envelope
+       <'> filter-control-order
+       <'> filter-control? <'> reverb-control-decay <'> reverb-control-feedback
+       <'> reverb-control-length
+       <'> reverb-control-lowpass <'> reverb-control-scale <'> reverb-control? <'> speed-control
+       <'> speed-control-style <'> speed-control-tones <'> channel-style <'> sync ) { prcs-2 }
+    args-1 each to arg
+      prcs-2 each to prc
+	arg ind prc set-xt #t nil fth-catch to tag
+	stack-reset
+	tag list? if
+	  tag car 'wrong-type-arg symbol= unless
+	    $" snd safe wrong-type-arg set-%s [%s]: %s" '( prc arg tag ) snd-display
+	  then
+	then
+      end-each
+    end-each
+    ind close-sound drop
+    #( 1 make-array "hiho" -1.0 csqrt 1.5 '( 1 0 ) #( 0 1 ) ) { args-2 }
+    args-2 each to arg
+      #( <'> make-vct <'> vct-copy <'> vct-length <'> vct->list <'> vct-peak ) each to prc
+	arg prc #t nil fth-catch to tag
+	stack-reset
+	tag list? if
+	  tag car 'wrong-type-arg symbol= unless
+	    $" vct 0 wrong-type-arg %s [%s]: %s" '( prc arg tag ) snd-display
+	  then
+	then
+      end-each
+    end-each
+    #( <'> vct-add! <'> vct-subtract! <'> vct-multiply!
+       <'> vct-ref <'> vct-scale! <'> vct-fill! ) { vct-prcs-2 }
+    nil nil { arg1 arg2 }
+    args-2 each to arg1
+      args-1 each to arg2
+	vct-prcs-2 each to prc
+	  arg1 arg2 prc #t nil fth-catch to tag
+	  stack-reset
+	  tag list? if
+	    tag car 'wrong-type-arg       symbol=
+	    tag car 'wrong-number-of-args symbol= ||
+	    tag car 'mus-error            symbol= || unless
+	      $" vct 1 wrong-whatever %s [%s %s]: %s" '( prc arg1 arg2 tag ) snd-display
+	    then
+	  then
+	end-each
+      end-each
+    end-each
+    args-2 each to arg
+      vct-prcs-2 each to prc
+	arg vct-3 prc #t nil fth-catch to tag
+	stack-reset
+	tag list? if
+	  tag car 'wrong-type-arg symbol= unless
+	    $" vct 1 wrong-whatever %s [%s]: %s" '( prc arg tag ) snd-display
+	  then
+	then
+      end-each
+    end-each
+    -23 <'> make-vct #t nil fth-catch to tag
+    tag car 'out-of-range symbol= unless $" make-vct -23: %s" '( tag ) snd-display then
+    vct-3 { v }
+    v 12 <'> vct-ref #t nil fth-catch to tag
+    tag car 'out-of-range symbol= unless $"  vct[12]: %s" '( tag ) snd-display then
+    #( <'> all-pass? <'> asymmetric-fm? <'> comb? <'> filtered-comb?
+       <'> convolve? <'> delay? <'> env? <'> file->frame?
+       <'> file->sample? <'> snd->sample? <'> filter? <'> fir-filter?
+       <'> formant? <'> frame->file? <'> frame? <'> granulate?
+       <'> iir-filter? <'> locsig? <'> mixer? <'> move-sound?
+       <'> mus-input? <'> mus-output? <'> notch? <'> one-pole?
+       <'> one-zero? <'> oscil? <'> phase-vocoder? <'> pulse-train?
+       <'> rand-interp? <'> rand? <'> readin? <'> sample->file?
+       <'> sawtooth-wave? <'> sine-summation? <'> square-wave? <'> src?
+       <'> sum-of-cosines? <'> sum-of-sines? <'> table-lookup? <'> triangle-wave?
+       <'> two-pole? <'> two-zero? <'> wave-train? <'> waveshape?
+       <'> color? <'> mix-sample-reader? <'> moving-average? <'> ssb-am?
+       <'> sample-reader? <'> track-sample-reader? <'> region-sample-reader? <'> vct? ) { ?prcs }
+    args-1 each to arg
+      ?prcs each to prc
+	arg prc #t nil fth-catch to tag
+	stack-reset
+	tag list? if
+	  tag car 'wrong-type-arg symbol= unless
+	    $" ?proc %s [%s]: %s" '( prc arg tag ) snd-display
+	  then
+	then
+      end-each
+    end-each
+    ?prcs each to prc
+      440 make-oscil prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'wrong-type-arg symbol= unless
+	  $" ?proc %s [440 make-oscil]: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    #( <'> reverse-selection <'> selection-position <'> selection-frames <'> smooth-selection
+       <'> scale-selection-to <'> play-selection <'> insert-selection <'> delete-selection
+       <'> mix-selection ) each to prc
+      prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'no-active-selection symbol= unless
+	  $" [0] selection %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    #( <'> src-selection <'> filter-selection <'> env-selection ) each to prc
+      0.0 prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'no-active-selection symbol= unless
+	  $" [1] selection %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    make-track { trk }
+    #( <'> track <'> track-amp <'> track-name <'> track-position
+       <'> track-frames <'> track-speed <'> track-speed-style <'> track-tempo
+       <'> track-amp-env <'> track-track <'> delete-track <'> track-color ) each to prc
+      trk 1+ prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'no-such-track symbol= unless
+	  $" track %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    #( 1.0 "hiho" 0 1.0 speed-control-as-float 1.0 '( 0 0 1 1 ) trk 1- 1 0 0 make-color-with-catch )
+    { trk-args }
+    #( <'> track-amp <'> track-name <'> track-position <'> track-speed
+       <'> track-speed-style <'> track-tempo <'> track-amp-env <'> track-track
+       <'> track-color ) each to prc
+      trk 1+  trk-args i array-ref ( a )  prc set-xt #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'no-such-track symbol= unless
+	  $" set track %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    #( <'> all-pass <'> asymmetric-fm <'> clear-array <'> comb
+       <'> filtered-comb <'> convolve <'> db->linear <'> moving-average
+       <'> degrees->radians <'> delay <'> env <'> formant
+       <'> frame->list <'> granulate <'> hz->radians <'> linear->db
+       <'> make-all-pass <'> make-asymmetric-fm <'> make-comb <'> make-filtered-comb
+       <'> make-convolve <'> make-delay <'> make-env <'> make-file->frame
+       <'> make-file->sample <'> make-filter <'> make-fir-filter <'> make-formant
+       <'> make-frame <'> make-granulate <'> make-iir-filter <'> make-locsig
+       <'> make-notch <'> make-one-pole <'> make-one-zero <'> make-oscil
+       <'> make-pulse-train <'> make-rand <'> make-rand-interp <'> make-readin
+       <'> make-sawtooth-wave <'> make-sine-summation <'> make-square-wave <'> make-src
+       <'> make-sum-of-cosines <'> make-sum-of-sines <'> make-table-lookup <'> make-triangle-wave
+       <'> make-two-pole <'> make-two-zero <'> make-wave-train <'> make-ssb-am
+       <'> make-waveshape <'> mus-channel <'> mus-channels <'> make-polyshape
+       <'> mus-cosines <'> mus-data <'> mus-feedback <'> mus-feedforward
+       <'> mus-formant-radius <'> mus-frequency <'> mus-hop <'> mus-increment
+       <'> mus-length <'> mus-file-name <'> mus-location <'> mus-order
+       <'> mus-phase <'> mus-ramp <'> mus-random <'> mus-run
+       <'> mus-scaler <'> mus-xcoeffs <'> mus-ycoeffs <'> notch
+       <'> one-pole <'> one-zero <'> make-moving-average <'> seconds->samples
+       <'> samples->seconds <'> oscil <'> partials->polynomial <'> partials->wave
+       <'> partials->waveshape <'> phase-partials->wave <'> phase-vocoder <'> pulse-train
+       <'> radians->degrees <'> radians->hz <'> rand <'> rand-interp
+       <'> readin <'> sawtooth-wave <'> sine-summation <'> square-wave
+       <'> src <'> sum-of-cosines <'> sum-of-sines <'> table-lookup
+       <'> tap <'> triangle-wave <'> two-pole <'> two-zero
+       <'> wave-train <'> waveshape <'> ssb-am ) { clm-prcs-1 }
+    \ -1.0 csqrt is a number so I replaced it by #{}: make-frame -> out-of-range
+    #( 1 make-array color-95 #{} ) each to arg
+      clm-prcs-1 each to prc
+	arg prc #t nil fth-catch to tag
+	stack-reset
+	tag list? if
+	  tag car 'wrong-type-arg symbol=
+	  tag car 'arg-error      symbol= || unless
+	    $" clm %s [%s]: %s" '( prc arg tag ) snd-display
+	  then
+	then
+      end-each
+    end-each
+    clm-prcs-1 each to prc
+      make-oscil vct-5 prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'wrong-type-arg symbol=
+	tag car 'bad-arity      symbol= ||
+	tag car 'mus-error      symbol= || unless
+	  $" clm 1 %s [make-oscil]: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    #( <'> mus-channel <'> mus-channels <'> mus-cosines <'> mus-data
+       <'> mus-feedback <'> mus-feedforward <'> mus-formant-radius <'> mus-frequency
+       <'> mus-hop <'> mus-increment <'> mus-length <'> mus-location
+       <'> mus-mix <'> mus-order <'> mus-phase <'> mus-ramp
+       <'> mus-random <'> mus-run <'> mus-scaler <'> mus-xcoeffs
+       <'> mus-ycoeffs ) each to prc
+      make-oscil vector-0 prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'wrong-type-arg symbol= unless
+	  $" mus-gen %s [make-oscil]: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    #( <'> mus-sound-samples <'> mus-sound-frames <'> mus-sound-duration <'> mus-sound-datum-size
+       <'> mus-sound-data-location <'> mus-sound-chans <'> mus-sound-srate <'> mus-sound-header-type
+       <'> mus-sound-data-format <'> mus-sound-length <'> mus-sound-type-specifier
+       <'> mus-header-type-name
+       <'> mus-data-format-name <'> mus-sound-comment <'> mus-sound-write-date
+       <'> mus-bytes-per-sample
+       <'> mus-sound-loop-info <'> mus-sound-maxamp <'> mus-sound-maxamp-exists?
+       <'> mus-header-type->string
+       <'> mus-data-format->string ) { mus-snd-prcs-1 }
+    mus-snd-prcs-1 each to prc
+      vct-5 prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'wrong-type-arg symbol= unless
+	  $" mus-sound %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    mus-snd-prcs-1 each to prc
+      prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'wrong-number-of-args symbol= unless
+	  $" no arg mus-sound %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    #( <'> mus-sound-samples <'> mus-sound-frames <'> mus-sound-duration <'> mus-sound-datum-size
+       <'> mus-sound-data-location <'> mus-sound-chans <'> mus-sound-srate <'> mus-sound-header-type
+       <'> mus-sound-data-format <'> mus-sound-length <'> mus-sound-type-specifier
+       <'> mus-sound-comment
+       <'> mus-sound-write-date <'> mus-sound-maxamp <'> mus-sound-maxamp-exists? ) each to prc
+      "/bad/baddy" prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'mus-error symbol= unless
+	  $" bad file mus-sound %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    #( <'> channel-widgets <'> count-matches <'> cursor <'> channel-properties
+       <'> with-tracking-cursor <'> cursor-position <'> cursor-size <'> cursor-style
+       <'> tracking-cursor-style <'> delete-sample <'> display-edits <'> dot-size
+       <'> draw-dots <'> draw-lines <'> edit-fragment <'> edit-position
+       <'> edit-tree <'> edits <'> fft-window-alpha <'> fft-window-beta
+       <'> fft-log-frequency <'> fft-log-magnitude <'> transform-size <'> transform-graph-type
+       <'> fft-window <'> transform-graph? <'> find-channel <'> graph
+       <'> graph-style <'> lisp-graph? <'> insert-region <'> insert-sound
+       <'> time-graph-style <'> lisp-graph-style <'> transform-graph-style <'> left-sample
+       <'> make-graph-data <'> map-chan <'> max-transform-peaks <'> maxamp
+       <'> maxamp-position <'> min-dB <'> mix-region <'> transform-normalization
+       <'> peak-env-info <'> peaks <'> play <'> play-and-wait
+       <'> position->x <'> position->y <'> reverse-sound <'> revert-sound
+       <'> right-sample <'> sample <'> save-sound <'> save-sound-as
+       <'> scan-chan <'> select-channel <'> show-axes <'> show-transform-peaks
+       <'> show-marks <'> show-mix-waveforms <'> show-y-zero <'> show-grid
+       <'> show-sonogram-cursor <'> spectro-cutoff <'> spectro-hop <'> spectro-start
+       <'> spectro-x-angle <'> spectro-x-scale <'> spectro-y-angle <'>  grid-density
+       <'> spectro-y-scale <'> spectro-z-angle <'> spectro-z-scale <'> squelch-update
+       <'> transform-sample <'> transform->vct <'> transform-frames <'> transform-type
+       <'> update-transform-graph <'> update-time-graph <'> update-lisp-graph <'> update-sound
+       <'> wavelet-type <'> time-graph? <'> time-graph-type <'> wavo-hop
+       <'> wavo-trace <'> x-bounds <'> x-position-slider <'> x-zoom-slider
+       <'> x-axis-label <'> y-axis-label <'> y-bounds <'> y-position-slider
+       <'> y-zoom-slider <'> zero-pad ) { chn-prcs }
+    chn-prcs each to prc
+      vct-5 prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'wrong-type-arg symbol=
+	tag car 'no-such-sound  symbol= || unless
+	  $" chn (no snd) procs %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    chn-prcs each to prc
+      0 vct-5 prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'wrong-type-arg symbol= unless
+	  $" chn (no chn) procs %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    #( <'> channel-widgets <'> cursor <'> with-tracking-cursor <'> channel-properties
+       <'> cursor-position <'> cursor-size <'> cursor-style <'> tracking-cursor-style
+       <'> delete-sample <'> display-edits <'> dot-size <'> edit-fragment
+       <'> edit-position <'> edit-tree <'> edits <'> env-sound
+       <'> fft-window-alpha <'> fft-window-beta <'> fft-log-frequency <'> fft-log-magnitude
+       <'> transform-size <'> transform-graph-type <'> fft-window <'> transform-graph?
+       <'> filter-sound <'> graph-data <'> graph-style <'> lisp-graph?
+       <'> insert-region <'> left-sample <'> time-graph-style <'> lisp-graph-style
+       <'> transform-graph-style <'> make-graph-data <'> max-transform-peaks <'> maxamp
+       <'> maxamp-position <'> min-dB <'> transform-normalization <'> peak-env-info
+       <'> play <'> play-and-wait <'> position->x <'> position->y
+       <'> redo <'> reverse-sound <'> revert-sound <'> right-sample
+       <'> sample <'> save-sound <'> scale-by <'> scale-to
+       <'> show-axes <'> show-transform-peaks <'> show-marks <'> show-mix-waveforms
+       <'> show-y-zero <'> show-grid <'> show-sonogram-cursor <'> spectro-cutoff
+       <'> spectro-hop <'> spectro-start <'> spectro-x-angle <'> spectro-x-scale
+       <'> spectro-y-angle <'> spectro-y-scale <'> spectro-z-angle <'> spectro-z-scale
+       <'> squelch-update <'>  grid-density <'> src-sound <'> transform-sample
+       <'> transform->vct <'> transform-frames <'> transform-type <'> undo
+       <'> update-transform-graph <'> update-time-graph <'> update-lisp-graph <'> update-sound
+       <'> wavelet-type <'> time-graph? <'> time-graph-type <'> wavo-hop
+       <'> wavo-trace <'> x-bounds <'> x-position-slider <'> normalize-channel
+       <'> x->position <'> x-zoom-slider <'> y-bounds <'> y-position-slider
+       <'> x-axis-label <'> y-axis-label <'> y->position <'> y-zoom-slider
+       <'> zero-pad <'> scale-channel ) each to prc
+      1234 prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'no-such-sound symbol= unless
+	  $" chn procs %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    #( <'> delete-sample <'> edit-fragment <'> graph-data <'> graph-style
+       <'> play <'> play-and-wait <'> position->x <'> position->y
+       <'> redo <'> time-graph-style <'> lisp-graph-style <'> transform-graph-style
+       <'> scale-by <'> scale-to <'> undo <'> x->position
+       <'> y->position <'> x-axis-label ) { prcs-3 }
+    prcs-3 each to prc
+      0 1234 prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'no-such-sound symbol= unless
+	  $" snd(1) chn procs %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    "oboe.snd" open-sound to ind
+    prcs-3 each to prc
+      prc proc-name "x-axis-label" string= unless
+	0 ind 1234 prc #t nil fth-catch to tag
+	stack-reset
+	tag list? if
+	  tag car 'no-such-channel symbol= unless
+	    $" snd(1 1234) chn procs %s: %s" '( prc tag ) snd-display
+	  then
+	then
+      then
+    end-each
+    ind close-sound drop
+    "oboe.snd" open-sound to ind
+    #( <'> channel-widgets <'> cursor <'> cursor-position <'> cursor-size
+       <'> cursor-style <'> tracking-cursor-style <'> display-edits <'> dot-size
+       <'> edit-position <'> edit-tree <'> edits <'> fft-window-alpha
+       <'> fft-window-beta <'> fft-log-frequency <'> fft-log-magnitude <'> transform-size
+       <'> transform-graph-type <'> fft-window <'> transform-graph? <'> graph-style
+       <'> lisp-graph? <'> left-sample <'> time-graph-style <'> lisp-graph-style
+       <'> transform-graph-style <'> make-graph-data <'> max-transform-peaks <'> maxamp
+       <'> maxamp-position <'> min-dB <'> transform-normalization <'> peak-env-info
+       <'> reverse-sound <'> right-sample <'> show-axes <'> show-transform-peaks
+       <'> show-marks <'> show-mix-waveforms <'> show-y-zero <'> show-grid
+       <'> show-sonogram-cursor <'>  grid-density <'> spectro-cutoff <'> spectro-hop
+       <'> spectro-start <'> spectro-x-angle <'> spectro-x-scale <'> spectro-y-angle
+       <'> spectro-y-scale <'> spectro-z-angle <'> spectro-z-scale <'> squelch-update
+       <'> transform->vct <'> transform-frames <'> transform-type <'> update-transform-graph
+       <'> update-time-graph <'> update-lisp-graph <'> wavelet-type <'> time-graph?
+       <'> time-graph-type <'> wavo-hop <'> wavo-trace <'> x-bounds
+       <'> x-position-slider <'> x-axis-label <'> x-zoom-slider <'> y-bounds
+       <'> y-position-slider <'> y-zoom-slider <'> zero-pad <'> channel-properties ) each to prc
+      ind 1234 prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'no-such-channel symbol= unless
+	  $" chn procs %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    ind close-sound drop
+    "oboe.snd" open-sound to ind
+    chn-prcs each to prc
+      vct-5 ind 0 prc set-xt #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'wrong-type-arg symbol= unless
+	  $" set chn procs %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    ind close-sound drop
+    #( <'> mix-amp <'> mix-amp-env <'> mix-tag-position <'> mix-chans
+       <'> mix-track <'> mix-frames <'> mix-locked? <'> mix-inverted?
+       <'> mix-name <'> mix-position <'> mix-home <'> mix-speed
+       <'> mix-speed-style <'> mix-tag-y ) { mix-prcs }
+    mix-prcs each to prc
+      vct-5 prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'wrong-type-arg symbol= unless
+	  $" [0] mix procs %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    mix-prcs each to prc
+      1234 prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'no-such-mix symbol= unless
+	  $" [1] mix procs %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    #( <'> mix-tag-position <'> mix-chans <'> mix-track <'> mix-locked?
+       <'> mix-inverted? <'> mix-name <'> mix-position <'> mix-home
+       <'> mix-speed <'> mix-speed-style <'> mix-tag-y ) { mix-set-prcs }
+    mix-set-prcs each to prc
+      1234 vct-5 prc set-xt #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'wrong-type-arg symbol=
+	tag car 'no-such-mix    symbol= || unless
+	  $" [2] set mix procs %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    "oboe.snd" open-sound to ind
+    "oboe.snd" 10 mix-sound { id }
+    mix-set-prcs each to prc
+      id vct-5 prc set-xt #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'wrong-type-arg symbol=
+	tag car 'no-such-mix    symbol= || unless
+	  $" [3] set mix procs %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    ind close-sound drop
+    #( <'> add-mark <'> mark-name <'> mark-sample <'> mark-sync
+       <'> mark-home <'> delete-mark <'> delete-marks <'> find-mark ) each to prc
+      vct-5 prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'wrong-type-arg symbol= unless
+	  $" mark procs %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    #( <'> mark-name <'> mark-sample <'> mark-sync <'> mark-home <'> delete-mark ) each to prc
+      1234 prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'no-such-mark symbol= unless
+	  $" no mark procs %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    "oboe.snd" open-sound to ind
+    0 ind 0 add-mark to id
+    #( <'> mark-name <'> mark-sample <'> mark-sync ) each to prc
+      id vct-5 prc set-xt #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'wrong-type-arg symbol= unless
+	  $" set mark procs %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    ind close-sound drop
+    #( <'> play-region <'> region-chans <'> region-home <'> region-frames
+       <'> region-position <'> region-maxamp <'> region-maxamp-position <'> region-sample
+       <'> region->vct <'> region-srate <'> forget-region ) { reg-prcs-1 }
+    #( vct-5 #( 0 1 ) #{} "hiho" '( 0 1 ) ) each to arg
+      reg-prcs-1 each to prc
+	arg prc #t nil fth-catch to tag
+	stack-reset
+	tag list? if
+	  tag car 'wrong-type-arg symbol= unless
+	    $" region procs %s [%s]: %s" '( prc arg tag ) snd-display
+	  then
+	then
+      end-each
+    end-each
+    reg-prcs-1 each to prc
+      1234 prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'no-such-region symbol= unless
+	  $" (no) region procs %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    #( <'> enved-filter-order <'> enved-filter <'> filter-control-waveform-color
+       <'> ask-before-overwrite
+       <'> auto-resize <'> auto-update <'> axis-label-font <'> axis-numbers-font
+       <'> basic-color <'> bind-key <'> channel-style <'> color-cutoff
+       <'> color-dialog <'> color-inverted <'> color-scale <'> cursor-color
+       <'> dac-combines-channels <'> dac-size <'> clipping <'> data-color
+       <'> default-output-chans <'> default-output-data-format <'> default-output-srate
+       <'> default-output-header-type
+       <'> enved-envelope <'> enved-base <'> enved-clip? <'> enved-in-dB
+       <'> enved-dialog <'> enved-style <'>  enved-power <'> enved-target
+       <'> enved-waveform-color <'> enved-wave? <'> eps-file <'> eps-left-margin
+       <'> eps-bottom-margin <'> eps-size <'> foreground-color <'> graph-color
+       <'> graph-cursor <'> highlight-color <'> just-sounds <'> key-binding
+       <'> listener-color <'> listener-font <'> listener-prompt <'> listener-text-color
+       <'> max-regions <'> minibuffer-history-length <'> mix-waveform-height <'> region-graph-style
+       <'> position-color <'> time-graph-style <'> lisp-graph-style <'> transform-graph-style
+       <'> peaks-font <'> bold-peaks-font <'> view-files-sort <'> print-length
+       <'> pushed-button-color <'> recorder-in-device <'> recorder-autoload <'> recorder-buffer-size
+       <'> recorder-file <'> recorder-in-data-format <'> recorder-max-duration
+       <'> recorder-out-chans
+       <'> recorder-in-chans <'> recorder-out-data-format <'> recorder-out-header-type
+       <'> recorder-srate
+       <'> recorder-trigger <'> sash-color <'> ladspa-dir <'> save-dir
+       <'> save-state-file <'> selected-channel <'> selected-data-color <'> selected-graph-color
+       <'> selected-sound <'> selection-creates-region <'> show-backtrace <'> show-controls
+       <'> show-indices <'> show-listener <'> show-selection-transform <'> sinc-width
+       <'> temp-dir <'> text-focus-color <'> tiny-font <'> trap-segfault
+       <'> with-file-monitor <'> optimization <'> unbind-key <'> with-verbose-cursor
+       <'> vu-size <'> vu-in-dB <'> window-height <'> beats-per-measure
+       <'> window-width <'> window-x <'> window-y <'> with-gl
+       <'> with-mix-tags <'> x-axis-style <'> beats-per-minute <'> zoom-color
+       <'> mix-tag-height <'> mix-tag-width <'> with-relative-panes <'> run-safety
+       <'> clm-table-size <'> mark-tag-width <'> mark-tag-height <'> quit-button-color
+       <'> help-button-color <'> reset-button-color <'> doit-button-color
+       <'> doit-again-button-color ) each to prc
+      vct-5 prc set-xt #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'wrong-type-arg symbol= unless
+	  $" misc procs %s: %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    nil { hook }
+    #( after-graph-hook
+       after-lisp-graph-hook
+       lisp-graph-hook
+       before-transform-hook
+       mix-release-hook
+       save-hook
+       before-save-as-hook
+       after-save-as-hook
+       save-state-hook
+       new-sound-hook
+       mus-error-hook
+       mouse-enter-graph-hook
+       mouse-leave-graph-hook
+       open-raw-sound-hook
+       select-channel-hook
+       output-name-hook
+       after-open-hook
+       close-hook
+       draw-mark-hook
+       mark-click-hook
+       listener-click-hook
+       mix-click-hook
+       after-save-state-hook
+       before-save-state-hook
+       mark-hook
+       mark-drag-hook
+       mark-drag-triangle-hook
+       mix-drag-hook
+       name-click-hook
+       after-apply-controls-hook
+       open-hook
+       output-comment-hook
+       help-hook
+       play-hook
+       dac-hook
+       new-widget-hook
+       read-hook
+       bad-header-hook
+       snd-error-hook
+       snd-warning-hook
+       start-hook
+       start-playing-hook
+       stop-playing-hook
+       mouse-enter-listener-hook
+       mouse-leave-listener-hook
+       window-property-changed-hook
+       select-sound-hook
+       view-files-select-hook
+       during-open-hook
+       after-transform-hook
+       mouse-enter-label-hook
+       mouse-leave-label-hook
+       initial-graph-hook
+       graph-hook
+       key-press-hook
+       mouse-drag-hook
+       mouse-press-hook
+       mouse-click-hook
+       enved-hook ) each to hook
+      hook <'> noop 0 make-proc <'> add-hook! #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'bad-arity      symbol=	\ FTH special 'bad-arity (add-hook!) [ms]
+	tag car 'wrong-type-arg symbol= || unless
+	  $" [0] hooks %s: %s" '( hook hook-name tag ) snd-display
+	then
+      then
+    end-each
+    #( <'> exit-hook <'> stop-dac-hook <'> stop-playing-selection-hook <'> color-hook
+       <'> orientation-hook <'> start-playing-selection-hook ) each to hook
+      hook <'> noop 3 make-proc <'> add-hook! #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'bad-arity      symbol=	\ FTH special 'bad-arity (add-hook!) [ms]
+	tag car 'wrong-type-arg symbol= || unless
+	  $" [1] hooks %s: %s" '( hook hook-name tag ) snd-display
+	then
+      then
+    end-each
+    "not-an-env" 	       <'> set-enved-envelope  	  'no-such-envelope check-error-tag
+    "/bad/baddy" 	       <'> save-envelopes      	  'cannot-save      check-error-tag
+    "/bad/baddy" 	       <'> save-macros         	  'cannot-save      check-error-tag
+    "/bad/baddy" 	       <'> mus-sound-report-cache 'cannot-save      check-error-tag
+    <'> noop 3 make-proc       <'> set-search-procedure   'bad-arity        check-error-tag
+    <'> noop 1 make-proc 1234  <'> set-search-procedure   'no-such-sound    check-error-tag
+    0 "oboe.snd" 1             <'> make-sample-reader     'no-such-channel  check-error-tag
+    0 "oboe.snd" -1            <'> make-sample-reader     'no-such-channel  check-error-tag
+    "p" 0 <'> noop 2 make-proc <'> bind-key               'bad-arity        check-error-tag
+    <'> noop 1 make-proc       <'> set-zoom-focus-style   'bad-arity        check-error-tag
+    1 1.0 make-mixer { mx }
+    "oboe.snd" "pistol.snd" 0 12 0 mx $" a string" <'> mus-mix 'wrong-type-arg check-error-tag
+    "test.snd" new-sound to ind
+    "test.snd" sf-dir "bad_chans.aifc" $+ <'> mus-mix     'bad-header       check-error-tag
+    "test.snd" sf-dir "bad_length.aifc" $+ <'> mus-mix    'mus-error        check-error-tag
+    ind close-sound drop
+    "test.snd" file-delete
+    sf-dir "bad_chans.aifc" $+ "oboe.snd" <'> mus-mix     'bad-header       check-error-tag
+    123 '( 0 0 1 1 )           <'> set-sound-loop-info    'no-such-sound    check-error-tag
+    "fmv.snd" mus-nist mus-bfloat 22050 2 "comment" <'> new-sound 'bad-header check-error-tag
+    123                        <'> player-home            'no-such-player   check-error-tag
+    "/hiho"                    <'> set-temp-dir           'no-such-file     check-error-tag
+    "/hiho"                    <'> set-save-dir           'no-such-file     check-error-tag
+    20 4 0.0 make-vct          <'> snd-transform          'out-of-range     check-error-tag
+    sf-dir "bad_chans.aifc" $+ <'> mus-sound-maxamp       'bad-header       check-error-tag
+    sf-dir "bad_chans.snd" $+ '( 0.0 0.0 ) <'> set-mus-sound-maxamp 'bad-header check-error-tag
+    :order 32 :ycoeffs 4 0.0 make-vct <'> make-iir-filter 'mus-error        check-error-tag
+    :coeffs 4 0 make-vct :ycoeffs 4 0 make-vct <'> make-iir-filter 'mus-error check-error-tag
+    :coeffs 4 0 make-vct :xcoeffs 4 0 make-vct <'> make-fir-filter 'mus-error check-error-tag
+    :size 123456789            <'> make-table-lookup      'out-of-range     check-error-tag
+    :srate -0.5                <'> make-src               'out-of-range     check-error-tag
+    :ramp -0.5                 <'> make-granulate         'out-of-range     check-error-tag
+    :ramp 1.5                  <'> make-granulate         'out-of-range     check-error-tag
+    :expansion 32000.0         <'> make-granulate         'mus-error        check-error-tag
+    "test.snd" :channels 0     <'> new-sound              'out-of-range     check-error-tag
+    "test.snd" :srate 0        <'> new-sound              'out-of-range     check-error-tag
+    "test.snd" :size -1        <'> new-sound              'out-of-range     check-error-tag
+    "test.snd" :size 0         <'> make-readin            'out-of-range     check-error-tag
+    "test.snd" :size -1        <'> make-readin            'out-of-range     check-error-tag
+    "oboe.snd" 0               <'> make-file->sample      'out-of-range     check-error-tag
+    "oboe.snd" -1              <'> make-file->sample      'out-of-range     check-error-tag
+    "oboe.snd" 0               <'> make-file->frame       'out-of-range     check-error-tag
+    "oboe.snd" -1              <'> make-file->frame       'out-of-range     check-error-tag
+    -1                         <'> set-default-output-data-format 'out-of-range check-error-tag
+    mus-soundfont              <'> set-default-output-header-type 'out-of-range check-error-tag
+    sf-dir "bad_location.nist" $+ <'> mus-sound-chans     'mus-error        check-error-tag
+    sf-dir "bad_field.nist" $+ <'> mus-sound-chans        'mus-error        check-error-tag
+    snd-motif-error-checks
+    -1                         <'> main-menu              'no-such-menu     check-error-tag
+    111                        <'> main-menu              'no-such-menu     check-error-tag
+    "hiho" 123                 <'> new-sound              'out-of-range     check-error-tag
+    "hiho" mus-nist 123        <'> new-sound              'out-of-range     check-error-tag
+    "hiho" mus-nist mus-bfloat <'> new-sound              'bad-header       check-error-tag
+    0 1                        <'> make-sound-data        'out-of-range     check-error-tag
+    -2 1                       <'> make-sound-data        'out-of-range     check-error-tag
+    1 -1                       <'> make-sound-data        'out-of-range     check-error-tag
+    1 0                        <'> make-sound-data        'out-of-range     check-error-tag
+    0 1                        <'> mus-sound-close-output 'out-of-range     check-error-tag
+    1 1                        <'> mus-sound-close-output 'out-of-range     check-error-tag
+    2 1                        <'> mus-sound-close-output 'out-of-range     check-error-tag
+    0                          <'> mus-sound-close-input  'out-of-range     check-error-tag
+    1                          <'> mus-sound-close-input  'out-of-range     check-error-tag
+    2                          <'> mus-sound-close-input  'out-of-range     check-error-tag
+    -1                         <'> set-mus-array-print-length 'out-of-range check-error-tag
+    -1                         <'> set-print-length       'out-of-range     check-error-tag
+    3 :initial-element "hio" make-array <'> vector->vct   'wrong-type-arg   check-error-tag
+    12                         <'> set-enved-style        'out-of-range     check-error-tag
+    1.5 0.0 0.0                <'> make-color             'out-of-range     check-error-tag
+    -0.5 0.0 0.0               <'> make-color             'out-of-range     check-error-tag
+    '( 9.0 0.0 )               <'> set-tempo-control-bounds 'out-of-range   check-error-tag
+    '( 0.0 )                   <'> set-tempo-control-bounds 'wrong-type-arg check-error-tag
+    '( 0.0 "hiho" )            <'> set-tempo-control-bounds 'wrong-type-arg check-error-tag
+    #f                         <'> make-variable-graph    'wrong-type-arg   check-error-tag
+    main-widgets 1 list-ref    <'> make-variable-graph    'arg-error        check-error-tag
+    <'> graph->ps              'cannot-print     check-error-tag
+    "oboe.snd" open-sound to ind
+    #t set-selection-creates-region drop
+    select-all drop
+    "sel0.snd" :not-a-key 3    <'> save-selection         'mus-error        check-error-tag
+    '( ind )                   <'> read-only              'wrong-type-arg   check-error-tag
+    ind '( 0 )                 <'> frames                 'wrong-type-arg   check-error-tag
+    0 -10                      <'> smooth-sound           'wrong-type-arg   check-error-tag
+    ind 0 "/baddy/hi"          <'> write-peak-env-info-file 'cannot-save    check-error-tag
+    <'> noop 3 make-proc 0 10 #f #f #f #f
+    <'> noop 1 make-proc       <'> ptree-channel          'bad-arity        check-error-tag
+    <'> noop 1 make-proc 0 10 #f #f #f #f
+    <'> noop 2 make-proc       <'> ptree-channel          'bad-arity        check-error-tag
+    0 ind 123                  <'> mix-selection          'no-such-channel  check-error-tag
+    0 ind 123                  <'> insert-selection       'no-such-channel  check-error-tag
+    ind 0                      <'> set-channels           'out-of-range     check-error-tag
+    ind -1                     <'> set-channels           'out-of-range     check-error-tag
+    ind 12340                  <'> set-channels           'out-of-range     check-error-tag
+    ind 12340                  <'> set-data-format        'out-of-range     check-error-tag
+    ind 12340                  <'> set-header-type        'out-of-range     check-error-tag
+    ind 0                      <'> set-srate              'out-of-range     check-error-tag
+    ind -1                     <'> set-data-location      'out-of-range     check-error-tag
+    ind -1                     <'> set-data-size          'out-of-range     check-error-tag
+    -1 -1                      <'> set-sample             'no-such-sample   check-error-tag
+    -1                         <'> sample                 'no-such-sample   check-error-tag
+    -10                        <'> set-frames             'out-of-range     check-error-tag
+    0.0                        <'> set-min-dB             'out-of-range     check-error-tag
+    0.0 ind 0                  <'> set-min-dB             'out-of-range     check-error-tag
+    1 -22                      <'> start-playing          'out-of-range     check-error-tag
+    1 0                        <'> start-playing          'out-of-range     check-error-tag
+    '( 0.0 1.0 0.1 -0.1 1.0 0.0 ) ind <'> set-filter-control-envelope 'out-of-range check-error-tag
+    '( 0.0 1.0 0.1 1.1 1.0 0.0 ) ind  <'> set-filter-control-envelope 'out-of-range check-error-tag
+    '( 0 0 .1 .1 .05 .1 1 1 ) 32 <'> filter-sound         'env-error        check-error-tag
+    ind 123                    <'> apply-controls         'out-of-range     check-error-tag
+    '( 0.0 2.0 )               <'> set-speed-control-bounds  'out-of-range  check-error-tag
+    '( 0.0 2.0 )               <'> set-expand-control-bounds 'out-of-range  check-error-tag
+    '( 2.0 0.0 )               <'> set-speed-control-bounds  'out-of-range  check-error-tag
+    '( 2.0 0.0 )               <'> set-expand-control-bounds 'out-of-range  check-error-tag
+    sf-dir "bad_chans.snd" $+  <'> insert-sound           'bad-header       check-error-tag
+    sf-dir "bad_chans.snd" $+  <'> convolve-with          'IO-error         check-error-tag
+    "hiho.snd" ind -12         <'> save-sound-as          'cannot-save      check-error-tag
+    "hiho.snd" ind mus-next -12 <'> save-sound-as         'cannot-save      check-error-tag
+    "test.snd" ind mus-nist mus-bdouble <'> save-sound-as 'cannot-save      check-error-tag
+    "test.snd" ind mus-aifc mus-lfloat  <'> save-sound-as 'cannot-save      check-error-tag
+    "test.snd" ind mus-riff mus-bshort  <'> save-sound-as 'cannot-save      check-error-tag
+    "test.snd" ind mus-voc  mus-bshort  <'> save-sound-as 'cannot-save      check-error-tag
+    "test.snd" mus-riff mus-bshort <'> save-selection     'cannot-save      check-error-tag
+    "test.snd" mus-voc  mus-bshort <'> save-selection     'cannot-save      check-error-tag
+    0 <'> noop 0 make-proc     <'> play-selection         'wrong-type-arg   check-error-tag
+    0 0                        <'> play-selection         'wrong-type-arg   check-error-tag
+    0 <'> noop 2 make-proc     <'> play-selection         'wrong-type-arg   check-error-tag
+    #()                        <'> draw-lines             'no-data          check-error-tag
+    #( 1 2 3 )                 <'> draw-lines             'bad-length       check-error-tag
+    '( 0 0 1 1 )  :end 10 make-env <'> src-channel        'out-of-range     check-error-tag
+    '( 0 1 1 0 )  :end 10 make-env <'> src-channel        'out-of-range     check-error-tag
+    '( 0 1 1 -1 ) :end 10 make-env <'> src-channel        'out-of-range     check-error-tag
+    '( 0 -1 1 1 ) :end 10 make-env <'> src-channel        'out-of-range     check-error-tag
+    '( 0 0 1 1 )  :end 10 make-env <'> src-sound          'out-of-range     check-error-tag
+    '( 0 1 1 0 )  :end 10 make-env <'> src-sound          'out-of-range     check-error-tag
+    '( 0 1 1 -1 ) :end 10 make-env <'> src-sound          'out-of-range     check-error-tag
+    '( 0 -1 1 1 ) :end 10 make-env <'> src-sound          'out-of-range     check-error-tag
+    '( 0 -1 1 1 ) :start 100 :end 10 <'> make-env         'out-of-range     check-error-tag
+    0.0 0.0 0.0 0.0 0.0 0.0 0.0 <'> make-readin           'mus-error        check-error-tag
+    vct-3 32                   <'> filter-sound           'out-of-range     check-error-tag
+    '( 0 0 1 1 ) 0             <'> filter-sound           'out-of-range     check-error-tag
+    ind 0 12345 0              <'> swap-channels          'no-such-sound    check-error-tag
+    vct( 0.1 0.2 0.3 ) -1 ind 0 #t <'> mix-vct            'no-such-sample   check-error-tag
+    8 0.0 make-vct 0 -123      <'> snd-spectrum           'out-of-range     check-error-tag
+    8 0.0 make-vct 0 0         <'> snd-spectrum           'out-of-range     check-error-tag
+    "/baddy/hiho"              <'> play                   'no-such-file     check-error-tag
+    sf-dir "nist-shortpack.wav" $+ <'> play               'bad-format       check-error-tag
+    0 ind 123                  <'> play                   'no-such-channel  check-error-tag
+    ind 123                    <'> make-player            'no-such-channel  check-error-tag
+    "/baddy/hiho"              <'> mix                    'no-such-file     check-error-tag
+    "oboe.snd" 0 2             <'> mix                    'no-such-channel  check-error-tag
+    "/baddy/hiho" 0            <'> mix-sound              'no-such-file     check-error-tag
+    "/baddy/hiho.snd"          <'> insert-sound           'no-such-file     check-error-tag
+    0 10 "/baddy/hiho.snd"     <'> insert-samples         'no-such-file     check-error-tag
+    '() ind                    <'> set-filter-control-envelope 'no-data     check-error-tag
+    ind 123                    <'> set-data-format        'out-of-range     check-error-tag
+    ind 123                    <'> set-header-type        'out-of-range     check-error-tag
+    ind 123                    <'> set-selected-channel   'no-such-channel  check-error-tag
+    ind <'> noop 3 make-proc   <'> set-search-procedure   'bad-arity        check-error-tag
+    <'> noop 3 make-proc       <'> map-chan               'bad-arity        check-error-tag
+    <'> noop 3 make-proc       <'> scan-chan              'bad-arity        check-error-tag
+    <'> noop 1 make-proc ind 0 <'> set-cursor-style       'bad-arity        check-error-tag
+    <'> noop 0 make-proc       <'> find-channel           'bad-arity        check-error-tag
+    <'> noop 0 make-proc       <'> count-matches          'bad-arity        check-error-tag
+    0 0 1 1 ind 0 1234         <'> draw-line              'no-such-graphics-context check-error-tag
+    ind 0 1234                 <'> foreground-color       'no-such-graphics-context check-error-tag
+    ind 0 1234                 <'> current-font           'no-such-graphics-context check-error-tag
+    '( vct-3 vct-3 ) ind 0 1234 0 1 0 <'> graph-data      'no-such-graphics-context check-error-tag
+    100 ind 0 1234             <'> position->x            'no-such-axis     check-error-tag
+    100 ind 0 1234             <'> position->y            'no-such-axis     check-error-tag
+    100 ind 0 1234             <'> x->position            'no-such-axis     check-error-tag
+    100 ind 0 1234             <'> y->position            'no-such-axis     check-error-tag
+    ind 0 1234                 <'> axis-info              'no-such-axis     check-error-tag
+    channel-widgets car snd-gcs car "hiho" 0.0 1.0 -1.0 1.0
+    x-axis-in-seconds 1234     <'> draw-axes              'out-of-range     check-error-tag
+    channel-widgets car snd-gcs car "hiho" 0.0 1.0 -1.0 1.0
+    1234                       <'> draw-axes              'out-of-range     check-error-tag
+    ind 1234                   <'> axis-info              'no-such-channel  check-error-tag  
+    1234                       <'> axis-info              'no-such-sound    check-error-tag
+    graph-once set-time-graph-type drop
+    '( 0 0 )                   <'> set-x-bounds           'out-of-range     check-error-tag
+    '( 0.1 -0.1 )              <'> set-x-bounds           'out-of-range     check-error-tag
+    '( 0.2 0.1 )               <'> set-y-bounds           'out-of-range     check-error-tag
+    100 0                      <'> make-region            'out-of-range     check-error-tag
+    -1                         <'> delete-sample          'no-such-sample   check-error-tag
+    ind frames 2*              <'> delete-sample          'no-such-sample   check-error-tag
+    "/bad/baddy.snd"           <'> play                   'no-such-file     check-error-tag
+    0 1234                     <'> play                   'no-such-sound    check-error-tag
+    0 ind 1234                 <'> play                   'no-such-channel  check-error-tag
+    regions empty? if 0 100 make-region then
+    0 regions car 1234         <'> region-sample          'no-such-channel  check-error-tag
+    0 regions car 1234         <'> region-frames          'no-such-channel  check-error-tag
+    0 regions car 1234         <'> region-position        'no-such-channel  check-error-tag
+    0 1 -1                     <'> region->vct            'no-such-region   check-error-tag
+    0 1 regions car 1234       <'> region->vct            'no-such-channel  check-error-tag
+    "/bad/baddy.snd"           <'> save-sound-as          'cannot-save      check-error-tag
+    0 1 1234                   <'> transform-sample       'no-such-sound    check-error-tag
+    0 1 ind 1234               <'> transform-sample       'no-such-channel  check-error-tag
+    0 100 1234                 <'> samples->sound-data    'no-such-sound    check-error-tag
+    0 100 ind 1234             <'> samples->sound-data    'no-such-channel  check-error-tag
+    vct( 0 1 ) "hi" 0 1 0 1 1234     <'> graph            'no-such-sound    check-error-tag
+    vct( 0 1 ) "hi" 0 1 0 1 ind 1234 <'> graph            'no-such-channel  check-error-tag
+    regions car #f <'> noop 0 make-proc <'> play-region   'wrong-type-arg   check-error-tag
+    #f #t set-selection-member? drop
+    vct( 0 0 1 1 ) 4           <'> filter-selection       'no-active-selection check-error-tag
+    "/bad/baddy.snd"           <'> save-selection         'no-active-selection check-error-tag
+    '( 0 0 1 1 )               <'> env-selection          'no-active-selection check-error-tag
+    1234 "/bad/baddy.snd"      <'> save-region            'no-such-region   check-error-tag
+    0 100 ind 0 make-region drop
+    "/bad/baddy.snd"           <'> save-selection         'cannot-save      check-error-tag
+    regions car "/bad/baddy.snd" <'> save-region          'cannot-save      check-error-tag
+    0 1234 0                   <'> make-track-sample-reader 'no-such-track  check-error-tag
+    1234 0 0                   <'> make-track-sample-reader 'no-such-track  check-error-tag
+    1234                       <'> make-mix-sample-reader 'no-such-mix      check-error-tag
+    1234 4321                  <'> set-mix-track          'no-such-mix      check-error-tag
+    0 12 1234 #t               <'> make-region            'no-such-sound    check-error-tag
+    #t ind set-read-only drop
+    ind '( 0 0 1 1 )           <'> set-sound-loop-info    'cannot-save      check-error-tag
+    0 ind 0 123                <'> make-sample-reader     'no-such-direction check-error-tag
+    0 ind 0 0                  <'> make-sample-reader     'no-such-direction check-error-tag
+    0 ind 0 -2                 <'> make-sample-reader     'no-such-direction check-error-tag
+    '()                        <'> scale-by               'no-data          check-error-tag
+    '()                        <'> scale-to               'no-data          check-error-tag
+    "hi" <'> noop 2 make-proc  <'> prompt-in-minibuffer   'bad-arity        check-error-tag
+    -999 ind 0                 <'> set-selection-position 'no-such-sample   check-error-tag
+    -999 ind 0                 <'> set-selection-frames   'wrong-type-arg   check-error-tag
+    0 ind 0                    <'> set-selection-frames   'wrong-type-arg   check-error-tag
+    -1                         <'> edit-fragment          'no-such-edit     check-error-tag
+    101 ind 0                  <'> edit-fragment          'no-such-edit     check-error-tag
+    ind 0 -2                   <'> edit-tree              'no-such-edit     check-error-tag
+    ind 0 101                  <'> edit-tree              'no-such-edit     check-error-tag
+    -1                         <'> add-mark               'no-such-sample   check-error-tag
+    frames 2*                  <'> add-mark               'no-such-sample   check-error-tag
+    "/bad/baddy"               <'> convolve-with          'no-such-file     check-error-tag
+    "/bad/baddy"               <'> mix                    'no-such-file     check-error-tag
+    ind 0 123                  <'> swap-channels          'no-such-sound    check-error-tag
+    123 ind 0                  <'> set-show-axes          'out-of-range     check-error-tag
+    -123 ind 0                 <'> set-show-axes          'out-of-range     check-error-tag
+    123 ind 0                  <'> set-x-axis-style       'out-of-range     check-error-tag
+    -123 ind 0                 <'> set-x-axis-style       'out-of-range     check-error-tag
+    123 ind 0                  <'> set-graph-style        'out-of-range     check-error-tag
+    -123 ind 0                 <'> set-graph-style        'out-of-range     check-error-tag
+    '( 0 0 1 1 ) 0 #f -1.5     <'> env-sound              'out-of-range     check-error-tag
+    0.0 1.0 -1.6               <'> xramp-channel          'out-of-range     check-error-tag
+    0 2 -1                     <'> set-samples            'wrong-type-arg   check-error-tag
+    '( 0 )                     <'> left-sample            'wrong-type-arg   check-error-tag
+    '( 0 )                     <'> amp-control            'wrong-type-arg   check-error-tag
+    '( 0 )                     <'> sound-loop-info        'wrong-type-arg   check-error-tag
+    123 '( 0 )                 <'> add-mark               'wrong-type-arg   check-error-tag
+    '( 0 0 1 1 ) 100 #f #f 1234 0 <'> filter-channel      'no-such-sound    check-error-tag
+    '( 0 0 1 1 ) 100 #f #f ind 1  <'> filter-channel      'no-such-channel  check-error-tag
+    vct( 0 0 1 1 ) 4 #f #f ind 1  <'> filter-channel      'no-such-channel  check-error-tag
+    vct( 0 0 1 1 ) 0           <'> filter-sound           'out-of-range     check-error-tag
+    vct( 0 0 1 1 ) 10          <'> filter-sound           'out-of-range     check-error-tag
+    0 #f #f #f #f #f <'> noop 0 make-proc <'> play        'wrong-type-arg   check-error-tag
+    '( 0.1 0.01 ) ind          <'> set-reverb-control-length-bounds 'out-of-range check-error-tag
+    '( 0.1 0.01 ) ind          <'> set-reverb-control-scale-bounds  'out-of-range check-error-tag
+    edits { eds }
+    log0 <'> undo #t nil fth-catch stack-reset
+    edits eds equal? unless $" undo -inf: %s" '( #f #f edits ) snd-display then
+    #f                         <'> scale-by                'wrong-type-arg  check-error-tag
+    2 0.1 0.1 0.2 0.2 make-mixer <'> scale-by              'wrong-type-arg  check-error-tag
+    3.0 1.0 #t                 <'> src-sound               'wrong-type-arg  check-error-tag
+    3.0 1.0 ind #t             <'> src-sound               'wrong-type-arg  check-error-tag
+    ind 0 123                  <'> display-edits           'no-such-edit    check-error-tag
+    ind close-sound drop
+    "hiho" "time" 0 1 <'> noop 0 make-proc <'> add-transform 'bad-arity     check-error-tag
+    "/bad/baddy"               <'> save-state              'cannot-save     check-error-tag
+    1234 "hi" <'> noop 0 make-proc <'> add-to-menu         'no-such-menu    check-error-tag
+    "hi" <'> noop 2 make-proc  <'> add-to-main-menu        'bad-arity       check-error-tag
+    1 "hi" <'> noop 2 make-proc  <'> add-to-menu           'bad-arity       check-error-tag
+    -1                         <'> set-transform-type      'out-of-range    check-error-tag
+    123                        <'> set-transform-type      'out-of-range    check-error-tag
+    '( 0 1 ) "hiho"            <'> help-dialog             'wrong-type-arg  check-error-tag
+    '( 0 1 ) "hiho"            <'> info-dialog             'wrong-type-arg  check-error-tag
+    1234                       <'> edit-header-dialog      'no-such-sound   check-error-tag
+    0                          <'> make-track-sample-reader 'no-such-track  check-error-tag
+    "/bad/baddy.snd"           <'> open-sound              'no-such-file    check-error-tag
+    "/bad/baddy.snd" 1 22050 mus-lshort <'> open-raw-sound 'no-such-file    check-error-tag
+    "/bad/baddy.snd"           <'> view-sound              'no-such-file    check-error-tag
+    0 "/bad/baddy.snd"         <'> make-sample-reader      'no-such-file    check-error-tag
+    0 1234567                  <'> make-region-sample-reader 'no-such-region check-error-tag
+    12345                      <'> mix-tag-position        'no-such-mix     check-error-tag
+    12345678 0 #f              <'> bind-key                'no-such-key     check-error-tag
+    -1 0 #f                    <'> bind-key                'no-such-key     check-error-tag
+    12 17 #f                   <'> bind-key                'no-such-key     check-error-tag
+    12 -1 #f                   <'> bind-key                'no-such-key     check-error-tag
+    12345678 0                 <'> key-binding             'no-such-key     check-error-tag
+    -1 0                       <'> key-binding             'no-such-key     check-error-tag
+    12 17                      <'> key-binding             'no-such-key     check-error-tag
+    12 -1                      <'> key-binding             'no-such-key     check-error-tag
+    -1                         <'> send-mozilla            'wrong-type-arg  check-error-tag
+    sf-dir "bad_chans.snd" $+ 0 0 123 234 0.0 make-vct <'> file->array 'bad-header check-error-tag
+    sf-dir "bad_chans.snd" $+  <'> make-readin             'bad-header check-error-tag
+    30 3 0 make-vct            <'> make-iir-filter         'mus-error       check-error-tag
+    :size 2 30 f** f>s         <'> make-wave-train         'out-of-range    check-error-tag
+    0.0                        <'> set-mus-srate           'out-of-range    check-error-tag
+    -1000                      <'> set-mus-srate           'out-of-range    check-error-tag
+    3 0 make-vct 3 0 make-vct -1 <'> dot-product           'out-of-range    check-error-tag
+    3 0 make-vct 3 0 make-vct -1 <'> sine-bank             'out-of-range    check-error-tag
+    3 0 make-vct 3 0 make-vct -1 <'> multiply-arrays       'out-of-range    check-error-tag
+    3 :initial-element 0.0 :initial-contents vct( 0.1 0.2 0.3 )
+    <'> make-delay 'out-of-range check-error-tag
+    3 :max-size 100 :initial-contents vct( 0.1 0.2 0.3 )
+    <'> make-delay 'out-of-range check-error-tag
+    :size 100 :wave 3 0 make-vct <'> make-table-lookup     'out-of-range    check-error-tag
+    :size 100 :wave 3 0 make-vct <'> make-wave-train       'out-of-range    check-error-tag
+    :size 100 :wave 3 0 make-vct <'> make-waveshape        'out-of-range    check-error-tag
+    :size 2 30 f** f>s         <'> make-waveshape          'out-of-range    check-error-tag
+    :max-size 2 30 f** f>s     <'> make-granulate          'out-of-range    check-error-tag
+    100 12345678               <'> make-ssb-am             'out-of-range    check-error-tag
+    :envelope '( 0 0 1 1 ) :distribution 10 0 make-vct <'> make-rand 'mus-error check-error-tag
+    :envelope '( 0 0 1 )       <'> make-rand               'mus-error       check-error-tag
+    :envelope '( 0 0 1 1 ) :size -2 <'> make-rand          'out-of-range    check-error-tag
+    :envelope '( 0 0 1 1 ) :size 1234567890 <'> make-rand  'out-of-range    check-error-tag
+    make-granulate #f           <'> noop 3 make-proc <'> granulate     'bad-arity check-error-tag
+    make-phase-vocoder #f       <'> noop 0 make-proc <'> phase-vocoder 'bad-arity check-error-tag
+    make-phase-vocoder #f #f    <'> noop 0 make-proc <'> phase-vocoder 'bad-arity check-error-tag
+    make-phase-vocoder #f #f #f <'> noop 0 make-proc <'> phase-vocoder 'bad-arity check-error-tag
+    3 :xcoeffs vct-3 :ycoeffs vct-3 make-filter 4 <'> mus-xcoeff 'mus-error check-error-tag
+    3 :xcoeffs vct-3 :ycoeffs vct-3 make-filter 4 <'> mus-ycoeff 'mus-error check-error-tag
+    3 :xcoeffs vct-3 :ycoeffs vct-3 make-filter 4 1.0 <'> set-mus-xcoeff 'mus-error check-error-tag
+    3 :xcoeffs vct-3 :ycoeffs vct-3 make-filter 4 1.0 <'> set-mus-ycoeff 'mus-error check-error-tag
+    :ycoeffs 4 0 make-vct :order 12 <'> make-filter        'mus-error       check-error-tag
+    make-oscil 1               <'> set-mus-offset          'mus-error       check-error-tag
+    :channels 2 30 f** f>s     <'> make-locsig             'out-of-range    check-error-tag
+    :width 3000                <'> make-src                'out-of-range    check-error-tag
+    -1                         <'> make-frame              'out-of-range    check-error-tag
+    2 0.1 0.2 make-frame 3     <'> frame-ref               'mus-error       check-error-tag
+    0 0.1                      <'> make-scalar-mixer       'out-of-range    check-error-tag
+    2 make-mixer 3 4           <'> mixer-ref               'mus-error       check-error-tag
+    "baddy" <'> noop 0 make-proc <'> add-colormap          'bad-arity       check-error-tag
+    "baddy" <'> noop 3 make-proc <'> add-colormap          'bad-arity       check-error-tag
+    :fft-size 2 30 f** f>s     <'> make-phase-vocoder      'out-of-range    check-error-tag
+    :input <'> noop 1 make-proc make-src 2000000.0 <'> src 'out-of-range    check-error-tag
+    '( 1 1 ) -1                <'> partials->polynomial    'out-of-range    check-error-tag
+    '( 1 1 ) 3                 <'> partials->polynomial    'out-of-range    check-error-tag
+    :partials '( 1 1 ) :kind -1 <'> make-polyshape         'out-of-range    check-error-tag
+    :partials '( 1 1 ) :kind 3 <'> make-polyshape          'out-of-range    check-error-tag
+    1234                       <'> set-mus-header-raw-defaults 'wrong-type-arg check-error-tag
+    '( 44100 2.123 "hi" )      <'> set-mus-header-raw-defaults 'wrong-type-arg check-error-tag
+    \ key args
+    *snd-test-verbose* if
+      $" procs00: %d/%d" '( procs00 length set-procs00 length ) clm-message
+      $" procs01: %d/%d" '( procs01 length set-procs01 length ) clm-message
+      $" procs02: %d/%d" '( procs02 length set-procs02 length ) clm-message
+      $" procs03: %d/%d" '( procs03 length set-procs03 length ) clm-message
+      $" procs04: %d/%d" '( procs04 length set-procs04 length ) clm-message
+      $" procs05: %d"    '( procs05 length )                    clm-message
+      $" procs06: %d"    '( procs06 length )                    clm-message
+      $" procs07: %d"    '( procs07 length )                    clm-message
+      $" procs08: %d"    '( procs08 length )                    clm-message
+      $" procs10: %d"    '( procs10 length )                    clm-message
+    then
+    #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 :wave -1 0 1 #f #t
+       '() vector-0 12345678901234567890 log0 nan ) { vals }
+    nil nil nil { arg3 arg4 tm }
+    "keyargs-2-args" '() clm-message
+    gc-run
+    keyargs each to arg1
+      vals each to arg2
+	make-procs each to prc
+	  arg1 arg2 prc #t nil fth-catch stack-reset
+	end-each
+      end-each
+    end-each
+    all-args if
+      "keyargs-3-args" '() clm-message
+      gc-run
+      make-timer to tm
+      vals each to arg1
+	keyargs each to arg2
+	  vals each to arg3
+	    make-procs each to prc
+	      arg1 arg2 arg3 prc #t nil fth-catch stack-reset
+	    end-each
+	  end-each
+	end-each
+      end-each
+      tm stop-timer
+      "%s" '( tm ) clm-message
+      FIXME-FIXED? if
+	"keyargs-4-args" '() clm-message
+	gc-run
+	tm start-timer
+	keyargs each to arg1
+	  vals each to arg2
+	    keyargs each to arg3
+	      vals each to arg4
+		make-procs each to prc
+		  arg1 arg2 arg3 arg4 prc #t nil fth-catch stack-reset
+		end-each
+	      end-each
+	    end-each
+	  end-each
+	end-each
+	tm stop-timer
+	"%s" '( tm ) clm-message
+      then
+    then
+    \ 0 args
+    "0-args" '() clm-message
+    gc-run
+    procs00 each to prc
+      prc #t nil fth-catch to tag
+      stack-reset
+      tag list? if
+	tag car 'wrong-number-of-args symbol= if
+	  $" procs00: %s %s" '( prc tag ) snd-display
+	then
+      then
+    end-each
+    dismiss-all-dialogs
+    #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95  #( 0 1 ) 3/4 'mus-error -1.0 csqrt ( delay-32 )
+       <'> noop 0 make-proc vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t <char> c 0.0 1.0 -1.0 
+       '() '3 2 8 64 -64 vector-0 2.0 21.5 f** 2.0 -18.0 f** car-main cadr-main 
+       12345678901234567890 log0 nan <'> noop 1 make-proc abs  ) { main-args }
+    #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95 #( 0 1 ) 3/4 -1.0
+       -1.0 csqrt ( delay-32 ) :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890
+       log0 nan ) { few-args }
+    #( "/hiho" 1234 vct-3 -1.0 -1.0 csqrt ( delay-32 )
+       -1 0 1 #f #t '() 12345678901234567890 log0 ) { fewer-args }
+    all-args if main-args else few-args then { less-args }
+    \ 1 arg
+    "1-arg" '() clm-message
+    gc-run
+    nil { arg }
+    main-args each to arg
+      procs01 each to prc
+	arg prc #t nil fth-catch to tag
+	stack-reset
+	tag list? if
+	  tag car 'wrong-number-of-args symbol= if
+	    $" procs01 wna: (%s) %s %s" '( arg prc tag ) snd-display
+	  then
+	then
+      end-each
+    end-each
+    \ 2 args
+    "2-args" '() clm-message
+    gc-run
+    main-args each to arg1
+      main-args each to arg2
+	procs02 each to prc
+	  arg1 arg2 prc #t nil fth-catch to tag
+	  stack-reset
+	  tag list? if
+	    tag car 'wrong-number-of-args symbol= if
+	      $" procs02: (%s %s) %s %s" '( arg1 arg2 prc tag ) snd-display
+	    then
+	  then
+	end-each
+      end-each
+    end-each
+    \ set! no args
+    "set-no-args" '() clm-message
+    gc-run
+    main-args each to arg
+      set-procs00 each to prc
+	arg prc set-xt #t nil fth-catch to tag
+	stack-reset
+	tag list? if
+	  tag car 'wrong-number-of-args symbol= if
+	    $" set-procs00: (%s) %s %s" '( arg prc tag ) snd-display
+	  then
+	then
+      end-each
+    end-each
+    dismiss-all-dialogs
+    \ set! 1 arg
+    "set-1-arg" '() clm-message
+    gc-run
+    main-args each to arg1
+      main-args each to arg2
+	set-procs01 each to prc
+	  prc proc-name "widget-size" string= unless
+	    arg1 arg2 prc set-xt #t nil fth-catch to tag
+	    stack-reset
+	    tag list? if
+	      tag car 'wrong-number-of-args symbol= if
+		$" set-procs01: (%s %s) %s %s" '( arg1 arg2 prc tag ) snd-display
+	      then
+	    then
+	  then
+	end-each
+      end-each
+    end-each
+    \ set! 2 args
+    "set-2-args" '() clm-message
+    gc-run
+    less-args each to arg1
+      less-args each to arg2
+	less-args each to arg3
+	  set-procs02 each to prc
+	    arg1 arg2 arg3 prc set-xt #t nil fth-catch to tag
+	    stack-reset
+	    tag list? if
+	      tag car 'wrong-number-of-args symbol= if
+		$" set-procs02: (%s %s %s) %s %s" '( arg1 arg2 arg3 prc tag ) snd-display
+	      then
+	    then
+	  end-each
+	end-each
+      end-each
+    end-each
+    all-args if
+      nil nil nil nil nil nil { arg5 arg6 arg7 arg8 arg9 arg0 }
+      \ 3 args
+      "3-args" '() clm-message
+      gc-run
+      make-timer to tm
+      less-args each to arg1
+	less-args each to arg2
+	  less-args each to arg3
+	    procs03 each to prc
+	      arg1 arg2 arg3 prc #t nil fth-catch to tag
+	      stack-reset
+	      tag list? if
+		tag car 'wrong-number-of-args symbol= if
+		  $" procs03: (%s %s %s) %s %s" '( arg1 arg2 arg3 prc tag ) snd-display
+		then
+	      then
+	    end-each
+	  end-each
+	end-each
+      end-each
+      tm stop-timer
+      "%s" '( tm ) clm-message
+      \ set! 3 args
+      "set!-3-args" '() clm-message
+      gc-run
+      tm start-timer
+      less-args each to arg1
+	less-args each to arg2
+	  less-args each to arg3
+	    less-args each to arg4
+	      set-procs03 each to prc
+		arg1 arg2 arg3 arg4 prc #t nil fth-catch to tag
+		stack-reset
+		tag list? if
+		  tag car 'wrong-number-of-args symbol= if
+		    $" set-procs03: (%s %s %s %s) %s %s"
+		    '( arg1 arg2 arg3 arg4 prc tag ) snd-display
+		  then
+		then
+	      end-each
+	    end-each
+	  end-each
+	end-each
+      end-each
+      tm stop-timer
+      "%s" '( tm ) clm-message
+      \ 4 args
+      "4-args" '() clm-message
+      gc-run
+      tm start-timer
+      few-args each to arg1
+	few-args each to arg2
+	  few-args each to arg3
+	    few-args each to arg4
+	      procs04 each to prc
+		arg1 arg2 arg3 arg4 prc #t nil fth-catch to tag
+		stack-reset
+		tag list? if
+		  tag car 'wrong-number-of-args symbol= if
+		    $" procs04: (%s %s %s %s) %s %s" '( arg1 arg2 arg3 arg4 prc tag ) snd-display
+		  then
+		then
+	      end-each
+	    end-each
+	  end-each
+	end-each
+      end-each
+      tm stop-timer
+      "%s" '( tm ) clm-message
+      \ set! 4 args
+      "set!-4-args" '() clm-message
+      gc-run
+      tm start-timer
+      few-args each to arg1
+	few-args each to arg2
+	  few-args each to arg3
+	    few-args each to arg4
+	      few-args each to arg5
+		set-procs04 each to prc
+		  arg1 arg2 arg3 arg4 arg5 prc #t nil fth-catch to tag
+		  stack-reset
+		  tag list? if
+		    tag car 'wrong-number-of-args symbol= if
+		      $" set-procs04: (%s %s %s %s %s) %s %s"
+		      '( arg1 arg2 arg3 arg4 arg5 prc tag ) snd-display
+		    then
+		  then
+		end-each
+	      end-each
+	    end-each
+	  end-each
+	end-each
+      end-each
+      clear-sincs drop
+      stop-playing drop
+      tm stop-timer
+      "%s" '( tm ) clm-message
+      \ 5 args
+      "5-args" '() clm-message
+      gc-run
+      tm start-timer
+      fewer-args each to arg1
+	fewer-args each to arg2
+	  fewer-args each to arg3
+	    fewer-args each to arg4
+	      fewer-args each to arg5
+		procs05 each to prc
+		  arg1 arg2 arg3 arg4 arg5 prc #t nil fth-catch to tag
+		  stack-reset
+		  tag list? if
+		    tag car 'wrong-number-of-args symbol= if
+		      $" procs05: (%s %s %s %s %s) %s %s"
+		      '( arg1 arg2 arg3 arg4 arg5 prc tag ) snd-display
+		    then
+		  then
+		end-each
+	      end-each
+	    end-each
+	  end-each
+	end-each
+      end-each
+      clear-sincs drop
+      tm stop-timer
+      "%s" '( tm ) clm-message
+      \ 6 args
+      "6-args" '() clm-message
+      gc-run
+      tm start-timer
+      #( 1.5 "/hiho" -1234 #f #t vct-5 ) each to arg1
+	#( 1.5 -1234 vct-3 vct-5 -1 0 #f #t ) each to arg2
+	  #( 1.5 "/hiho" -1234 0 vct-3 -1 #f #t ) each to arg3
+	    #( 1.5 "/hiho" -1234 0 vct-3 #f #t ) each to arg4
+	      #( 1.5 "/hiho" -1234 0 vct-5 #f #t ) each to arg5
+		#( 1.5 "/hiho" -1234 -1 0 #f #t '() vct-3 log0 ) each to arg6
+		  procs06 each to prc
+		    arg1 arg2 arg3 arg4 arg5 arg6 prc #t nil fth-catch to tag
+		    stack-reset
+		    tag list? if
+		      tag car 'wrong-number-of-args symbol= if
+			$" procs06: (%s %s %s %s %s %s) %s %s"
+			'( arg1 arg2 arg3 arg4 arg5 arg6 prc tag ) snd-display
+		      then
+		    then
+		  end-each
+		end-each
+	      end-each
+	    end-each
+	  end-each
+	end-each
+      end-each
+      tm stop-timer
+      "%s" '( tm ) clm-message
+      \ 8 args
+      "8-args" '() clm-message
+      gc-run
+      tm start-timer
+      #( 1.5 -1 1234 #f '() log0 ) each to arg1
+	#( "/hiho" -1 1234 '() vct-5 ) each to arg2
+	  #( #t #f -1 1234 '() vct-3 ) each to arg3
+	    #( -1.0 csqrt  1234 0 -1 '() ) each to arg4
+	      #( 1.5 -1 #f 1 234 vct-3 '() ) each to arg5
+		#( 2 #f #t 1234 vct-5 -1 ) each to arg6
+		  #( #f #t -1 1234 vct-3 ) each to arg7
+		    #( 1.5 -1 '() 1234 "/hiho" ) each to arg8
+		      procs08 each to prc
+			arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 prc #t nil fth-catch to tag
+			stack-reset
+			tag list? if
+			  tag car 'wrong-number-of-args symbol= if
+			    $" procs08: (%s %s %s %s %s %s %s %s) %s %s"
+			    '( arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 prc tag ) snd-display
+			  then
+			then
+		      end-each
+		    end-each
+		  end-each
+		end-each
+	      end-each
+	    end-each
+	  end-each
+	end-each
+      end-each
+      tm stop-timer
+      "%s" '( tm ) clm-message
+      \ 10 args
+      "10-args" '() clm-message
+      gc-run
+      tm start-timer
+      #( 1.5 -1 #f 1234 ) each to arg1
+	#( "/hiho" -1 1234 ) each to arg2
+	  #( #t #f vct-3 1234 ) each to arg3
+	    #( -1.0 csqrt #f -1 vct-5 ) each to arg4
+	      #( 1.5 #f -1 1234 '() ) each to arg5
+		#( -2 #f 1234 vct-3 ) each to arg6
+		  #( #f #t '() 1234 vct-5 ) each to arg7
+		    #( 1.5 -1 "/hiho" '() ) each to arg8
+		      #( 1.5 -1 '() ) each to arg9
+			\ procs10 contains GRAPH and RESTORE-REGION.
+			\ RESTORE-REGION doesn't test for the 10th argument, a list of length 2.
+			\ check_saved_temp_file() doesn't test it too
+			\ and crashes with signal illegal instruction.
+			\ That's why the three lists for arg0 to be nice to RESTORE-REGION.
+			\ (RESTORE-REGION is an internal function.)
+			\ original arg0: #( #f -1 1234 )
+			#( '( 0 0 ) '( 1 1 ) '( -1 1234 ) ) each to arg0
+			  procs10 each to prc
+			    arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg0 prc #t nil fth-catch
+			    to tag
+			    stack-reset
+			    tag list? if
+			      tag car 'wrong-number-of-args symbol= if
+				$" procs10: (%s %s %s %s %s %s %s %s %s %s) %s %s"
+				'( arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg0 prc tag )
+				snd-display
+			      then
+			    then
+			  end-each
+			end-each
+		      end-each
+		    end-each
+		  end-each
+		end-each
+	      end-each
+	    end-each
+	  end-each
+	end-each
+      end-each
+      clear-sincs drop
+      tm stop-timer
+      "%s" '( tm ) clm-message
+    then
+    mus-audio-reinitialize drop
+    10 set-window-y drop
+    dismiss-all-dialogs
+    "test.snd" file-exists? if
+      "test.snd" 0o644 file-chmod
+      "test.snd" file-delete
+    then
+    $" cp -f oboe.snd test.snd" file-system drop
+    "test.snd" open-sound to ind
+    "test.snd" file-delete
+    ind <'> update-sound #t nil fth-catch to tag
+    stack-reset
+    tag list? if
+      tag car 'cant-update-file symbol= unless
+	$" update-sound after deletion: %s" '( tag ) snd-display
+      then
+    then
+    10 delete-sample drop
+    ind <'> save-sound #t nil fth-catch to tag
+    stack-reset
+    tag list? if
+      tag car 'cannot-save symbol= unless
+	$" save file deleted: %s" '( tag ) snd-display
+      then
+    then
+    ind close-sound drop
+    \ 
+    $" cp -f oboe.snd test.snd" file-system drop
+    "test.snd" open-sound to ind
+    select-all drop
+    "test.snd" file-delete
+    view-regions-dialog drop
+    dismiss-all-dialogs
+    ind close-sound drop
+    \ 
+    $" cp -f oboe.snd test.snd" file-system drop
+    "test.snd" open-sound to ind
+    "test.snd" 0o400 file-chmod
+    10 delete-sample drop
+    ind <'> save-sound #t nil fth-catch to tag
+    stack-reset
+    tag list? if
+      tag car 'cannot-save symbol= unless
+	$" save protected sound msg: %s" '( tag ) snd-display
+      then
+    then
+    ind close-sound drop
+    \ 
+    "test.snd" 0o644 file-chmod
+    "test.snd" file-delete
+    $" cp -f oboe.snd test.snd" file-system drop
+    "test.snd" 0o200 file-chmod
+    "test.snd" <'> open-sound #t nil fth-catch to tag
+    stack-reset
+    tag list? if
+      tag car 'no-such-file symbol= not
+      tag car 'mus-error    symbol= not && if
+	$" open read-protected sound worked!: %s" '( tag ) snd-display
+      then
+    then
+    "test.snd" 0o644 file-chmod
+    "test.snd" file-delete
+    ind sound? if ind close-sound drop then
+    \ 
+    $" cp -f oboe.snd test.snd" file-system drop
+    "test.snd" 0o400 file-chmod
+    "test.snd" open-sound to ind
+    10 delete-sample drop
+    "test.snd" <'> save-sound-as #t nil fth-catch to tag
+    stack-reset
+    tag list? if
+      tag car 'cannot-save symbol= unless
+	$" save-as write-protected sound msg: %s" '( tag ) snd-display
+      then
+    then
+    ind close-sound drop
+    "test.snd" 0o644 file-chmod
+    "test.snd" file-delete
+    \ 
+    close-sound-mc-cb <'> map-channel #t nil fth-catch to tag
+    stack-reset
+    tag list? if
+      tag car 'no-such-channel symbol= unless
+	$" map-channel closing own chan: %s" '( tag ) snd-display
+      then
+    then
+    \ 
+    close-sound-aoe-1-cb  "snd-test"   as-one-edit drop
+    close-sound-aoe-2a-cb "outer-edit" as-one-edit drop
+    close-sound-fc-cb find-channel drop
+    \ 
+    "oboe.snd" open-sound to ind
+    0 make-sample-reader { rd }
+    ind close-sound drop
+    10 0 do rd read-sample drop loop
+    rd sample-reader-home { home }
+    home list?
+    home car sound? && if $" reader-home of closed sound: %s %s?" '( home sounds ) snd-display then
+    rd sample-reader-position { loc }
+    loc 0<> if $" closed reader position: %s?" '( loc ) snd-display then
+    rd sample-reader-at-end? { at-end }
+    at-end false? if $" closed sample reader at end: %s?" '( at-end ) snd-display then
+    \ 
+    "oboe.snd" open-sound to ind
+    vct( 0.1 0.2 0.3 ) mix-vct { mx }
+    mx make-mix-sample-reader to rd
+    ind close-sound drop
+    10 0 do rd read-mix-sample drop loop
+    \
+    8 max-regions max set-max-regions drop
+    "oboe.snd" open-sound to ind
+    0 100 ind 0 make-region { reg }
+    0 reg make-region-sample-reader to rd
+    ind close-sound drop
+    reg forget-region drop
+    10 0 do rd read-sample drop loop
+    \
+    "oboe.snd" open-sound to ind
+    100 0.5 ind 0 set-sample drop
+    mc-1-cb map-channel drop
+    100 ind 0 sample { s100 }
+    s100 1.0 fneq if $" scan + map 100: %s" '( s100 ) snd-display then
+    ind revert-sound drop
+    \ 
+    100 0.5 ind 0 set-sample drop
+    ind mc-2-cb map-channel drop
+    100 ind 0 sample to s100
+    s100 0.5 fneq if $" map + reset frames: %s" '( s100 ) snd-display then
+    ind 0 frames { frms }
+    frms 50828 <> if $" map + reset frames, frames: %s" '( frms ) snd-display then
+    1 ind 0 undo drop
+    ind 0 frames to frms
+    frms 1 <> if $" map + reset frames, undo frames: %s" '( frms ) snd-display then
+    ind revert-sound drop
+    \ 
+    100 0.5 ind 0 set-sample drop
+    \ Doesn't work like expected with FTH.  If more values on stack
+    \ than needed, no exception can be raised.  No one knows who will
+    \ take and need them.  So we have 'no-such-channel as first
+    \ exception.
+    \ frames ( snd chn edpos -- frms )
+    \ set-frames ( on snd chn -- val )
+    1 ind 0 1 <'> set-frames #t nil fth-catch to tag
+    stack-reset
+    tag list? if
+      tag car 'wrong-number-of-args symbol= unless
+	$" set frames + edpos: %s" '( tag ) snd-display
+      then
+    then
+    ind revert-sound drop
+    <'> mc-3-cb <'> map-channel #t nil fth-catch to tag
+    stack-reset
+    tag list? if
+      tag car 'bad-type symbol= unless
+	$" map-channel rtn complex: %s" '( tag ) snd-display
+      then
+    then
+    0 make-sample-reader to rd
+    10 0 do rd '() apply drop loop
+    rd copy-sample-reader { crd }
+    ind close-sound drop
+    10 0 do crd read-sample drop loop
+    crd sample-reader-home to home
+    home list?
+    home car sound? && if
+      $" copy reader-home of closed sound: %s %s?" '( home sounds ) snd-display
+    then
+    crd sample-reader-position to loc
+    loc 0<> if $" closed copy reader position: %s?" '( loc ) snd-display then
+    crd sample-reader-at-end? to at-end
+    at-end false? if $" closed copy sample reader at end: %s?" '( at-end ) snd-display then
+    \
+    ind <'> revert-sound #t nil fth-catch to tag
+    stack-reset
+    tag list? if
+      tag car 'no-such-sound symbol= unless
+	$" revert-sound of closed sound: %s" '( tag ) snd-display
+      then
+    then
+    \
+    "oboe.snd" open-sound to ind
+    100 0.5 ind 0 set-sample drop
+    0.5 0 100 ind 0 ind edpos-1-cb <'> scale-channel #t nil fth-catch to tag
+    stack-reset
+    tag list? if
+      tag car 'bad-arity symbol= unless
+	$" edpos proc bad args: %s" '( tag ) snd-display
+      then
+    then
+    ind sound? unless $" edpos bad arity proc clobbers chan??: %s" '( ind ) snd-display then
+    \ 
+    0.5 0 100 ind 0 <'> edpos-2-cb <'> scale-channel #t nil fth-catch to tag
+    stack-reset
+    tag list? if
+      tag car 'no-such-channel symbol= unless
+	$" edpos clobbers channel: %s" '( tag ) snd-display
+      then
+    then
+    ind sound? unless $" edpos proc clobbers chan??: %s" '( ind ) snd-display then
+  ;event
+  event: 30-test
+    #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95  #( 0 1 ) 3/4 'mus-error -1.0 csqrt ( delay-32 )
+       <'> noop 0 make-proc vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t <char> c 0.0 1.0 -1.0 
+       '() '3 2 8 64 -64 vector-0 2.0 21.5 f** 2.0 -18.0 f** car-main cadr-main 
+       12345678901234567890 log0 nan <'> noop 1 make-proc abs  ) { main-args }
+    #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95 #( 0 1 ) 3/4 -1.0
+       -1.0 csqrt ( delay-32 ) :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890
+       log0 nan ) { few-args }
+    all-args if main-args else few-args then { less-args }
+    #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 :wave -1 0 1 #f #t
+       '() vector-0 12345678901234567890 log0 nan ) { vals }
+    nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil
+    { ind prc tag arg arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg0 tm }
+    make-timer to tm
+    \ set! no args
+    "set-no-args" '() clm-message
+    tm start-timer
+    main-args each to arg
+      set-procs00 each to prc
+	\ $" %s %s" '( arg prc ) clm-message
+    	arg prc set-xt #t nil fth-catch to tag
+    	stack-reset
+    	tag list? if
+    	  tag car 'wrong-number-of-args symbol= if
+    	    $" set-procs00: (%s) %s %s" '( arg prc tag ) snd-display
+    	  then
+    	then
+      end-each
+    end-each
+    dismiss-all-dialogs
+    tm stop-timer
+    "%s" '( tm ) clm-message
+    \ set! 1 arg
+    "set-1-arg" '() clm-message
+    tm start-timer
+    main-args each to arg1
+      few-args each to arg2
+    	set-procs01 each to prc
+	  \ $" %s %s %s " '( arg1 arg2 prc ) clm-message
+    	  arg1 arg2 prc set-xt #t nil fth-catch to tag
+    	  stack-reset
+    	  tag list? if
+    	    tag car 'wrong-number-of-args symbol= if
+    	      $" set-procs01: (%s %s) %s %s" '( arg1 arg2 prc tag ) snd-display
+    	    then
+    	  then
+    	end-each
+      end-each
+    end-each
+    tm stop-timer
+    "%s" '( tm ) clm-message
+  ;event
+[else]
+  <'> noop alias 28-errors
+[then]
+
 SIGINT lambda: ( sig -- )
-  drop
-  "\n" fth-print
-  $" Interrupt received.  Finish %s" '( *filename* ) snd-info
-  "" '() snd-info
+  stack-reset
+  "" '() clm-message
+  $" Interrupt received.  Finish %S." '( *filename* #f file-basename ) clm-message
+  "" '() clm-message
   finish-snd-test
-  with-exit if 2 (bye) then
+  2 snd-exit drop
 ; signal value original-sig-handler
 
+[undefined] 30-test [if] <'> noop alias 30-test [then]
+
 let: ( -- )
-  default-file-buffer-size set-mus-file-buffer-size drop
-  #f  set-with-background-processes drop
-  audio-amp-zero set-mus-audio-playback-amp
-  #f  set-trap-segfault  drop
-  #t  set-show-backtrace drop
-  600 set-window-x       drop
-  10  set-window-y       drop
-  #t  show-listener      drop
+  #() { numbs }
   script-arg positive? if
     script-args length script-arg 1+ ?do
-      test-numbers  script-args i list-ref string->number  array-push drop
+      script-args i list-ref string->number { n }
+      script-arg 1+ set-script-arg drop
+      n positive? if
+	test-numbers n array-push to test-numbers
+      else
+	numbs        n array-push to numbs \ negative number means exclude this test
+      then
     loop
   then
   test-numbers empty? if
-    29 -1 do test-numbers i array-push drop loop
+    29 -1 do test-numbers i array-push to test-numbers loop
   then
+  numbs each abs { n } test-numbers test-numbers n array-index array-delete! drop end-each
   start-snd-test
-  make-timer { tm }
-  stack-reset
-  tm start-timer
-  ['] 00-selection-from-snd run-fth-test
-  ['] 10-marks              run-fth-test
-  ['] 15-chan-local-vars    run-fth-test
-  ['] 19-save/restore       run-fth-test
-  ['] 23-with-sound         run-fth-test
-  tm stop-timer
-  $" all done!" '() snd-info
-  "" '() snd-info
-  .stack
-  timer-values each ( lst ) dup car swap cadr fth-test-timer-inspect end-each
-  "summary" tm fth-test-timer-inspect
+  <'> 00-sel-from-snd    run-fth-test
+  <'> 10-marks           run-fth-test
+  <'> 15-chan-local-vars run-fth-test
+  <'> 19-save/restore    run-fth-test
+  <'> 23-with-sound      run-fth-test
+  <'> 28-errors          run-fth-test
+  <'> 30-test            run-fth-test	\ local fragment test
   finish-snd-test
-  with-exit if bye then
+  with-exit if 0 snd-exit drop then
 ;let
 
 \ snd-test.fs ends here

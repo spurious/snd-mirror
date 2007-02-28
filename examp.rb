@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Sun Dec 31 00:39:24 CET 2006
+# Changed: Wed Jan 31 02:52:35 CET 2007
 
 # Commentary:
 #
@@ -680,12 +680,12 @@ class Object
   alias Float new_Float
 
   def snd_func(name, *rest, &body)
-    assert_type(func?(name), name, 0, "a string or a symbol")
+    assert_type(func?(name), name, 0, "a string or symbol")
     send(name.to_s, *rest, &body)
   end
   
   def set_snd_func(name, val, *rest, &body)
-    assert_type(func?(name), name, 0, "a string or a symbol")
+    assert_type(func?(name), name, 0, "a string or symbol")
     send(format("set_%s", name.to_s), val, *rest, &body)
   end
 
@@ -2415,13 +2415,11 @@ def clm_message(*args)
         else
           format(*args)
         end
-  if provided?(:snd) and !provided?(:snd_nogui)
+  if provided?(:snd)
     clm_print("\n%s", msg)
-    if ENV["EMACS"]
-      $stdout.print(msg, "\n")
-    else
-      nil
-    end
+     unless provided?(:snd_nogui)
+       $stdout.print(msg, "\n")
+     end
   else
     $stdout.print(msg, "\n")
   end
@@ -3219,7 +3217,7 @@ $graph_hook.add_hook!(\"zoom-spectrum\") do |snd, chn, y0, y1|
 end")
   def zoom_spectrum(snd, chn, y0, y1)
     if transform_graph?(snd, chn) and transform_graph_type(snd, chn) == Graph_once
-      set_transform_size((log(right_sample(snd, chn) - left_sample(snd, chn)) / log(2.0)).ceil,
+      set_transform_size((2 ** (log(right_sample(snd, chn)-left_sample(snd, chn))/log(2.0))).to_i,
                          snd, chn)
       set_spectro_cutoff(y_zoom_slider(snd, chn), snd, chn)
     end
@@ -3272,7 +3270,7 @@ end")
             ffts.push(spectr.add(spectrum(fdr, fdi, false, 2)))
           end
         end
-        graph(ffts, "spectra", 0.0, 0.5, false, false, snd, chn)
+        graph(ffts, "spectra", 0.0, 0.5, y0, y1, snd, chn)
       end
     end
     false

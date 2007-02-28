@@ -1480,7 +1480,6 @@ char *string_to_colon(char *val);
 char *filename_without_directory(const char *name);
 char *just_filename(char *name);
 char *just_directory(const char *name);
-bool directory_exists(char *name);
 char *file_to_string(const char *filename);
 
 #ifdef __GNUC__
@@ -1492,7 +1491,6 @@ char *file_to_string(const char *filename);
 #endif
 
 disk_space_t disk_space_p(off_t bytes, const char *filename);
-const char *short_data_format_name(int sndlib_format, const char *filename);
 char *prettyf(double num, int tens);
 char *shorter_tempnam(const char *dir, const char *prefix);
 char *snd_tempnam(void);

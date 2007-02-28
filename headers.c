@@ -1407,7 +1407,7 @@ char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends)
  *   48: bits per channel
  * audio data is in 'data' chunk
  *
- * TODO: various CAFF comment cases (need examples)
+ * SOMEDAY: various CAFF comment cases (need examples)
  */
 
 

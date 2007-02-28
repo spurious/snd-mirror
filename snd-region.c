@@ -1137,9 +1137,6 @@ void save_region_backpointer(snd_info *sp)
 io_error_t save_region(int rg, const char *name, int type, int format, const char *comment)
 {
   region *r;
-  off_t oloc, iloc, ioff, frames, cursamples;
-  int ofd, ifd, chans, i, err = 0;
-  mus_sample_t **bufs;
   io_error_t io_err = IO_NO_ERROR;
 
   r = id_to_region(rg);
@@ -1148,10 +1145,13 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
   io_err = snd_write_header(name, type, region_srate(rg), r->chans, r->chans * r->frames, format, comment, NULL);
   if (io_err == IO_NO_ERROR)
     {
+      off_t oloc;
+      int ofd;
       oloc = mus_header_data_location();
       ofd = snd_reopen_write(name);
       if (ofd != -1)
 	{
+	  int ifd, ioff;
 	  snd_file_open_descriptors(ofd, name, format, oloc, r->chans, type);
 	  mus_file_set_clipping(ofd, clipping(ss));
 	  lseek(ofd, oloc, SEEK_SET);
@@ -1159,6 +1159,9 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 	  ifd = snd_open_read(r->filename);
 	  if (ifd != -1)
 	    {
+	      off_t iloc, frames, cursamples;
+	      int chans, i, err = 0;
+	      mus_sample_t **bufs;
 	      chans = mus_sound_chans(r->filename);
 	      frames = mus_sound_samples(r->filename) / chans;
 	      iloc = mus_sound_data_location(r->filename);
@@ -1242,6 +1245,7 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
   XEN_ASSERT_TYPE(XEN_STRING_P(start), start, XEN_ARG_7, S_restore_region, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(end), end, XEN_ARG_8, S_restore_region, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_9, S_restore_region, "a string");
+  XEN_ASSERT_TYPE(XEN_LIST_P(date) && (XEN_LIST_LENGTH(date) == 2), date, XEN_ARG_10, S_restore_region, "a list: '(time bytes)");
   check_saved_temp_file("region", filename, date);
   r = (region *)CALLOC(1, sizeof(region));
   regn = XEN_TO_C_INT(pos);

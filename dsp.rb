@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Mon Dec 11 04:59:58 CET 2006
+# Changed: Mon Jan 15 23:47:12 CET 2007
 
 # Commentary:
 #
@@ -665,7 +665,7 @@ calls fft, sets all phases to 0, and un-ffts")
     fft(rl, im, -1)
     pk = rl.peak
     vct2channel(rl.scale(old_pk / pk), 0, len, snd, chn, false,
-                format("%s(Proc.new {|val| %s(val) }", get_func_name, func_name))
+                format("%s(Proc.new {|val_r| %s(val_r) }", get_func_name, func_name))
   end
   # rotate_phase(lambda {|x| 0.0 })  # is the same as (zero-phase)
   # rotate_phase(lambda {|x| random(PI) }) # randomizes phases

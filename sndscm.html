@@ -545,9 +545,17 @@ instrument: bird { f: start f: dur f: freq f: freq-skew f: amp freq-env amp-enve
 <p>This file provides a set of noise reduction functions packaged up in:
 </p>
 <pre>
-  <a class=def name="cleanchannel">clean-channel</a>
+  <a class=def name="cleanchannel">clean-channel</a> :optional snd chn
+  <a class=def name="cleansound">clean-sound</a> :optional snd
 </pre>
+<p>
+clean-channel tries to fix up clicks, pops, hum, DC offset, clipped portions, and hiss using a
+variety of functions from dsp.scm.  The final low-pass filter is relatively conservative (that is,
+it's not a very intense filter), so you may want to run another filter over the data after calling
+clean-channel.
+</p>
 
+<br>
 <br>
 
 <!-- ---------------------------------------- FILE: clm-ins ---------------------------------------- -->
