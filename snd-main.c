@@ -533,6 +533,7 @@ static void save_options(FILE *fd)
     pss_sq(fd, S_save_state_file, save_state_file(ss));
   if (temp_dir(ss)) pss_sq(fd, S_temp_dir, temp_dir(ss));
   if (save_dir(ss)) pss_sq(fd, S_save_dir, save_dir(ss));
+  if (open_file_dialog_directory(ss)) pss_sq(fd, S_open_file_dialog_directory, open_file_dialog_directory(ss));
   if (ladspa_dir(ss)) pss_sq(fd, S_ladspa_dir, ladspa_dir(ss));
   if ((eps_file(ss)) && 
       ((DEFAULT_EPS_FILE == NULL) || (strcmp(eps_file(ss), DEFAULT_EPS_FILE) != 0)))
@@ -1621,6 +1622,21 @@ static XEN g_set_save_dir(XEN val)
   return(C_TO_XEN_STRING(save_dir(ss)));
 }
 
+static XEN g_open_file_dialog_directory(void) {return(C_TO_XEN_STRING(open_file_dialog_directory(ss)));}
+static XEN g_set_open_file_dialog_directory(XEN val) 
+{
+  #define H_open_file_dialog_directory "(" S_open_file_dialog_directory "): name of directory for initial open file dialog search"
+  char *dir;
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_open_file_dialog_directory, "a string"); 
+  dir = XEN_TO_C_STRING(val);
+  if (snd_access(dir, S_open_file_dialog_directory))
+    {
+      if (open_file_dialog_directory(ss)) FREE(open_file_dialog_directory(ss));
+      set_open_file_dialog_directory(copy_string(dir));
+    }
+  return(C_TO_XEN_STRING(open_file_dialog_directory(ss)));
+}
+
 
 static int snd_screen_height(void)
 {
@@ -2027,6 +2043,8 @@ XEN_NARGIFY_0(g_save_state_file_w, g_save_state_file)
 XEN_NARGIFY_1(g_set_save_state_file_w, g_set_save_state_file)
 XEN_NARGIFY_0(g_save_dir_w, g_save_dir)
 XEN_NARGIFY_1(g_set_save_dir_w, g_set_save_dir)
+XEN_NARGIFY_0(g_open_file_dialog_directory_w, g_open_file_dialog_directory)
+XEN_NARGIFY_1(g_set_open_file_dialog_directory_w, g_set_open_file_dialog_directory)
 XEN_NARGIFY_0(g_temp_dir_w, g_temp_dir)
 XEN_NARGIFY_1(g_set_temp_dir_w, g_set_temp_dir)
 XEN_NARGIFY_0(g_ladspa_dir_w, g_ladspa_dir)
@@ -2101,6 +2119,8 @@ XEN_NARGIFY_0(g_abortq_w, g_abortq)
 #define g_set_save_state_file_w g_set_save_state_file
 #define g_save_dir_w g_save_dir
 #define g_set_save_dir_w g_set_save_dir
+#define g_open_file_dialog_directory_w g_open_file_dialog_directory
+#define g_set_open_file_dialog_directory_w g_set_open_file_dialog_directory
 #define g_temp_dir_w g_temp_dir
 #define g_set_temp_dir_w g_set_temp_dir
 #define g_ladspa_dir_w g_ladspa_dir
@@ -2189,6 +2209,9 @@ void g_init_main(void)
   
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_dir, g_save_dir_w, H_save_dir,
 				   S_setB S_save_dir, g_set_save_dir_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_open_file_dialog_directory, g_open_file_dialog_directory_w, H_open_file_dialog_directory,
+				   S_setB S_open_file_dialog_directory, g_set_open_file_dialog_directory_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_temp_dir, g_temp_dir_w, H_temp_dir,
 				   S_setB S_temp_dir, g_set_temp_dir_w,  0, 0, 1, 0);

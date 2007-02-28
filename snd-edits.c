@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: water1(checked) / dino quad */
-
 static XEN save_hook;
 static bool dont_save(snd_info *sp, const char *newname)
 {

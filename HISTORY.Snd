@@ -1,5 +1,6 @@
 Snd change log
 
+ 1-Mar:      open-file-dialog-directory.
  26-Feb:     clean.scm (noise reduction).
  17-Feb:     File:Close all menu if more than one sound open.
  14-Feb:     three new fft windows.

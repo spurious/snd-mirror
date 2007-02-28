@@ -547,7 +547,7 @@ typedef struct snd_state {
   XEN zoom_focus_proc;
   int zoom_focus_proc_loc;
   Float lin_dB;
-  char *HTML_Dir, *HTML_Program;
+  char *HTML_Dir, *HTML_Program, *Open_File_Dialog_Directory;
   bool error_lock;
   char *io_error_info;
   int deferred_regions;

@@ -383,6 +383,7 @@
 #define S_normalize_channel             "normalize-channel"
 #define S_normalize_globally            "normalize-globally"
 #define S_open_file_dialog              "open-file-dialog"
+#define S_open_file_dialog_directory    "open-file-dialog-directory"
 #define S_open_hook                     "open-hook"
 #define S_open_raw_sound                "open-raw-sound"
 #define S_open_raw_sound_hook           "open-raw-sound-hook"

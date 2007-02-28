@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* not to self: label color needs containing eventbox */
+
 bool set_tiny_font(const char *font)
 {
   PangoFontDescription *fs = NULL;

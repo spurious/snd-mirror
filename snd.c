@@ -135,6 +135,7 @@ void snd_set_global_defaults(bool need_cleanup)
       if (ss->Save_State_File) {FREE(ss->Save_State_File); ss->Save_State_File = NULL;}
       if (ss->Eps_File) {FREE(ss->Eps_File); ss->Eps_File = NULL;}
       if (ss->Listener_Prompt) {FREE(ss->Listener_Prompt); ss->Listener_Prompt = NULL;}
+      if (ss->Open_File_Dialog_Directory) {FREE(ss->Open_File_Dialog_Directory); ss->Open_File_Dialog_Directory = NULL;}
       
       /* not sure about the next two... */
       if ((cursor_style(ss) == CURSOR_PROC) && (XEN_PROCEDURE_P(ss->cursor_proc)))
@@ -209,6 +210,7 @@ void snd_set_global_defaults(bool need_cleanup)
   if (MUS_DEFAULT_SAVE_DIR != (char *)NULL) ss->Save_Dir = copy_string(MUS_DEFAULT_SAVE_DIR); else ss->Save_Dir = NULL;
   if (DEFAULT_LADSPA_DIR != (char *)NULL) ss->Ladspa_Dir = copy_string(DEFAULT_LADSPA_DIR); else ss->Ladspa_Dir = NULL;
   if (DEFAULT_EPS_FILE != (char *)NULL) ss->Eps_File = copy_string(DEFAULT_EPS_FILE); else ss->Eps_File = NULL;
+  ss->Open_File_Dialog_Directory = NULL;
   ss->Eps_Bottom_Margin = DEFAULT_EPS_BOTTOM_MARGIN;
   ss->Eps_Left_Margin = DEFAULT_EPS_LEFT_MARGIN;
   ss->Eps_Size = DEFAULT_EPS_SIZE;

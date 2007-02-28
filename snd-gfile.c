@@ -328,14 +328,17 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
 
 
   /* -------- current working directory -------- */
-  pwd = mus_getcwd();
+  if (open_file_dialog_directory(ss))
+    pwd = copy_string(open_file_dialog_directory(ss));
+  else pwd = mus_getcwd();
   cur_dir = (char *)CALLOC(strlen(pwd) + 2, sizeof(char));
 #if MUS_DEBUGGING
   set_printable(PRINT_CHAR);
 #endif
   strcpy(cur_dir, pwd);
   FREE(pwd);
-  strcat(cur_dir, "/");
+  if ((cur_dir) && (cur_dir[strlen(cur_dir) - 1] != '/'))
+    strcat(cur_dir, "/");
   fs->directory_name = cur_dir;
 
 

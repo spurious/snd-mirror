@@ -1207,6 +1207,12 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   cancel_label = XmStringCreateLocalized(_("Dismiss"));
 
   n = 0;
+  if (open_file_dialog_directory(ss))
+    {
+      XmString dirstr;
+      dirstr = XmStringCreateLocalized(open_file_dialog_directory(ss));
+      XtSetArg(args[n], XmNdirectory, dirstr); n++;
+    }
   XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
   XtSetArg(args[n], XmNokLabelString, ok_label); n++;
   XtSetArg(args[n], XmNselectionLabelString, s1); n++;                    /* "open", "mix", "insert" */

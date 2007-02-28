@@ -1,37 +1,36 @@
 ;;; Snd tests
 ;;;
 ;;;  test 0: constants                          [534]
-;;;  test 1: defaults                           [1113]
-;;;  test 2: headers                            [1317]
-;;;  test 3: variables                          [1626]
-;;;  test 4: sndlib                             [2282]
-;;;  test 5: simple overall checks              [4726]
-;;;  test 6: vcts                               [12543]
-;;;  test 7: colors                             [12818]
-;;;  test 8: clm                                [13308]
-;;;  test 9: mix                                [23086]
-;;;  test 10: marks                             [26658]
-;;;  test 11: dialogs                           [27635]
-;;;  test 12: extensions                        [27900]
-;;;  test 13: menus, edit lists, hooks, etc     [28196]
-;;;  test 14: all together now                  [29913]
-;;;  test 15: chan-local vars                   [30950]
-;;;  test 16: regularized funcs                 [32441]
-;;;  test 17: dialogs and graphics              [36857]
-;;;  test 18: enved                             [36946]
-;;;  test 19: save and restore                  [36965]
-;;;  test 20: transforms                        [38875]
-;;;  test 21: new stuff                         [40707]
-;;;  test 22: run                               [42751]
-;;;  test 23: with-sound                        [48545]
-;;;  test 24: user-interface                    [51021]
-;;;  test 25: X/Xt/Xm                           [54643]
-;;;  test 26: Gtk                               [59225]
-;;;  test 27: GL                                [63341]
-;;;  test 28: errors                            [63465]
-;;;  test all done                              [65780]
-;;;  test the end                               [66016]
-
+;;;  test 1: defaults                           [1116]
+;;;  test 2: headers                            [1320]
+;;;  test 3: variables                          [1629]
+;;;  test 4: sndlib                             [2285]
+;;;  test 5: simple overall checks              [4755]
+;;;  test 6: vcts                               [12595]
+;;;  test 7: colors                             [12873]
+;;;  test 8: clm                                [13363]
+;;;  test 9: mix                                [23168]
+;;;  test 10: marks                             [26740]
+;;;  test 11: dialogs                           [27717]
+;;;  test 12: extensions                        [27982]
+;;;  test 13: menus, edit lists, hooks, etc     [28278]
+;;;  test 14: all together now                  [29997]
+;;;  test 15: chan-local vars                   [31034]
+;;;  test 16: regularized funcs                 [32525]
+;;;  test 17: dialogs and graphics              [36943]
+;;;  test 18: enved                             [37032]
+;;;  test 19: save and restore                  [37051]
+;;;  test 20: transforms                        [38961]
+;;;  test 21: new stuff                         [40796]
+;;;  test 22: run                               [42831]
+;;;  test 23: with-sound                        [48625]
+;;;  test 24: user-interface                    [51104]
+;;;  test 25: X/Xt/Xm                           [54726]
+;;;  test 26: Gtk                               [59310]
+;;;  test 27: GL                                [63426]
+;;;  test 28: errors                            [63550]
+;;;  test all done                              [65865]
+;;;  test the end                               [66101]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -2175,7 +2174,7 @@
 		       'name-click-hook 'new-sound 'new-sound-dialog 'new-sound-hook 'new-widget-hook
 		       'next-sample 'normalize-by-channel 'normalize-by-sound 'normalize-channel 'normalize-globally
 		       'notch 'notch? 'one-pole 'one-pole? 'one-zero
-		       'one-zero? 'open-file-dialog 'open-hook 'open-raw-sound 'open-raw-sound-hook
+		       'one-zero? 'open-file-dialog 'open-file-dialog-directory 'open-hook 'open-raw-sound 'open-raw-sound-hook
 		       'open-sound 'optimization 'optimization-hook 'orientation-dialog
 		       'orientation-hook 'oscil 'oscil? 'out-any 'outa
 		       'outb 'outc 'outd 'output-comment-hook 'output-name-hook
@@ -63717,7 +63716,7 @@ EDITS: 1
 		     mix-tag-y mix-vct mix-waveform-height time-graph-style lisp-graph-style transform-graph-style
 					;new-sound 
 		     read-mix-sample read-track-sample next-sample
-		     transform-normalization equalize-panes open-raw-sound open-sound orientation-dialog previous-sample
+		     transform-normalization equalize-panes open-file-dialog-directory open-raw-sound open-sound orientation-dialog previous-sample
 		     peak-env-info peaks ;play play-and-wait play-mix play-region play-selection play-track 
 		     player? players
 		     position-color position->x position->y add-directory-to-view-files-list add-file-to-view-files-list view-files-sort 
@@ -63848,7 +63847,7 @@ EDITS: 1
 			 mark-name mark-sample mark-sync max-transform-peaks max-regions min-dB log-freq-start mix-amp
 			 mix-amp-env mix-tag-position mix-chans mix-color mix-locked? mix-inverted? mix-name mix-position
 			 mix-speed mix-speed-style mix-tag-height mix-tag-width mix-tag-y mark-tag-width mark-tag-height 
-			 mix-waveform-height transform-normalization
+			 mix-waveform-height transform-normalization open-file-dialog-directory
 			 equalize-panes position-color recorder-in-device view-files-sort print-length pushed-button-color
 			 view-files-amp view-files-speed view-files-speed-style view-files-amp-env
 			 view-files-files 
