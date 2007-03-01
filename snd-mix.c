@@ -12,7 +12,7 @@
  *            This would mean adding run_watchers() to add_mix, perhaps finish_moving_mix, set_mix_position,
  *            perhaps delete_mix, and then doc/test etc
  * PERHAPS: quick access + edit of underlying mix data, ripple and update if saved (like region edit)
- *          also double click in edit history => go to that temp file?
+ *            mix-data-file + open-sound, if saved, update
  * PERHAPS: some way to tie multichannel mixes together without the track appearing in the track dialog
  *          mix-sync field?  or a button: ignore local tracks
  */

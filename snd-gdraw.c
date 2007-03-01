@@ -709,7 +709,7 @@ static void start_view_color_dialog(bool managed)
       sg_make_resizable(ccd->dialog);
       gtk_container_set_border_width (GTK_CONTAINER(ccd->dialog), 4);
       gtk_widget_realize(ccd->dialog);
-      gtk_window_resize(GTK_WINDOW(ccd->dialog), 260, 200);
+      gtk_window_resize(GTK_WINDOW(ccd->dialog), 400, 200);
 
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(help_button, "help_button");
@@ -724,9 +724,7 @@ static void start_view_color_dialog(bool managed)
       gtk_widget_show(dismiss_button);
       gtk_widget_show(help_button);
 
-      outer_table = gtk_table_new(5, 2, false);
-      gtk_table_set_col_spacing(GTK_TABLE(outer_table), 1, 100);
-      gtk_table_set_col_spacing(GTK_TABLE(outer_table), 0, 100);
+      outer_table = gtk_table_new(5, 3, false);
       gtk_container_add(GTK_CONTAINER(GTK_DIALOG(ccd->dialog)->vbox), outer_table);
 
       scale_box = gtk_table_new(2, 2, false);
@@ -738,7 +736,6 @@ static void start_view_color_dialog(bool managed)
       ccd->scale_adj = gtk_adjustment_new(50.0, 0.0, 101.0, 0.1, 1.0, 1.0);
       ccd->scale = gtk_hscale_new(GTK_ADJUSTMENT(ccd->scale_adj));
       GTK_WIDGET_UNSET_FLAGS(ccd->scale, GTK_CAN_FOCUS);
-      /* gtk_window_resize GTK_WINDOW(ccd->scale), 200, 30); */
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(ccd->scale)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(ccd->scale), 0);
       gtk_scale_set_value_pos(GTK_SCALE(ccd->scale), GTK_POS_TOP);
@@ -792,11 +789,24 @@ static void start_view_color_dialog(bool managed)
 
       {
 	char **names;
+	GtkWidget *frame;
 	int i, size;
+
+	frame = gtk_frame_new(NULL);
+	gtk_container_set_border_width(GTK_CONTAINER(frame), 0);
+	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
+	gtk_widget_modify_bg(frame, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+	
+	gtk_table_attach(GTK_TABLE(outer_table), frame, 3, 4, 0, 3,
+		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
+		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
+		       4, 4);
+	gtk_widget_show(frame);
+
 	size = num_colormaps();
 	names = (char **)CALLOC(size, sizeof(char *));
 	for (i = 0; i < size; i++) names[i] = colormap_name(i);
-	ccd->list = slist_new_with_title_and_table_data(S_colormap, outer_table, names, size, TABLE_ATTACH, 3, 4, 0, 3);
+	ccd->list = slist_new_with_title(S_colormap, frame, names, size, CONTAINER_ADD);
 	ccd->list->select_callback = list_color_callback;
 	ccd->list->select_callback_data = (void *)ccd;
 	FREE(names);

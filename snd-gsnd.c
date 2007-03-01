@@ -1079,7 +1079,7 @@ void display_filter_env(snd_info *sp)
 
 static gboolean filter_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
-  if (ev->state & GDK_BUTTON1_MASK)
+  if (BUTTON1_PRESSED(ev->state))
     {
       snd_info *sp = (snd_info *)data;
       int evx, evy;
@@ -1684,7 +1684,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       REVLEN_ADJUSTMENT(sp) = gtk_adjustment_new(revlen_to_scroll(sp->reverb_control_length_min, 
 							       sp->reverb_control_length, 
 							       sp->reverb_control_length_max), 
-					      0.0, 1.0, 0.001, 0.01, .1);
+						 0.0, 1.0, 0.001, 0.01, .1);
       REVLEN_SCROLLBAR(sp) = gtk_hscrollbar_new(GTK_ADJUSTMENT(REVLEN_ADJUSTMENT(sp)));
       gtk_box_pack_start(GTK_BOX(REVERB_HBOX(sp)), REVLEN_SCROLLBAR(sp), true, true, 4);
       SG_SIGNAL_CONNECT(REVLEN_ADJUSTMENT(sp), "value_changed", revlen_changed_callback, sp);
@@ -1737,25 +1737,31 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       
       gtk_widget_show(FILTER_HBOX(sp));
       
+      {
+	GtkWidget *fbox;
+	fbox = gtk_hbox_new(false, 4);
+	gtk_box_pack_start(GTK_BOX(CONTROL_PANEL(sp)), fbox, true, true, 0);
+	gtk_widget_show(fbox);
+	
+	/* -------- FILTER GRAPH -------- */
       
-      /* -------- FILTER GRAPH -------- */
+	FILTER_FRAME(sp) = gtk_frame_new(NULL);
+	gtk_box_pack_start(GTK_BOX(fbox), FILTER_FRAME(sp), true, true, 30);
       
-      FILTER_FRAME(sp) = gtk_frame_new(NULL);
-      gtk_box_pack_start(GTK_BOX(CONTROL_PANEL(sp)), FILTER_FRAME(sp), true, true, 10);
-      
-      FILTER_ENV(sp) = gtk_drawing_area_new();
-      gtk_widget_set_events(FILTER_ENV(sp), GDK_ALL_EVENTS_MASK);
-      gtk_widget_modify_bg(FILTER_ENV(sp), GTK_STATE_NORMAL, ss->sgx->highlight_color);
-      gtk_container_add(GTK_CONTAINER(FILTER_FRAME(sp)), FILTER_ENV(sp));
-      gtk_widget_show(FILTER_ENV(sp));
-      SG_SIGNAL_CONNECT(FILTER_ENV(sp), "expose_event", filter_drawer_expose, sp);
-      SG_SIGNAL_CONNECT(FILTER_ENV(sp), "configure_event", filter_drawer_resize, sp);
-      SG_SIGNAL_CONNECT(FILTER_ENV(sp), "button_press_event", filter_drawer_button_press, sp);
-      SG_SIGNAL_CONNECT(FILTER_ENV(sp), "button_release_event", filter_drawer_button_release, sp);
-      SG_SIGNAL_CONNECT(FILTER_ENV(sp), "motion_notify_event", filter_drawer_button_motion, sp);
-
-      gtk_widget_show(FILTER_FRAME(sp));
-      sp->sgx->flt = new_env_editor();
+	FILTER_ENV(sp) = gtk_drawing_area_new();
+	gtk_widget_set_events(FILTER_ENV(sp), GDK_ALL_EVENTS_MASK);
+	gtk_widget_modify_bg(FILTER_ENV(sp), GTK_STATE_NORMAL, ss->sgx->highlight_color);
+	gtk_container_add(GTK_CONTAINER(FILTER_FRAME(sp)), FILTER_ENV(sp));
+	gtk_widget_show(FILTER_ENV(sp));
+	SG_SIGNAL_CONNECT(FILTER_ENV(sp), "expose_event", filter_drawer_expose, sp);
+	SG_SIGNAL_CONNECT(FILTER_ENV(sp), "configure_event", filter_drawer_resize, sp);
+	SG_SIGNAL_CONNECT(FILTER_ENV(sp), "button_press_event", filter_drawer_button_press, sp);
+	SG_SIGNAL_CONNECT(FILTER_ENV(sp), "button_release_event", filter_drawer_button_release, sp);
+	SG_SIGNAL_CONNECT(FILTER_ENV(sp), "motion_notify_event", filter_drawer_button_motion, sp);
+	
+	gtk_widget_show(FILTER_FRAME(sp));
+	sp->sgx->flt = new_env_editor();
+      }
       
       /* end if control-panel */
       gtk_widget_show(CONTROL_PANEL(sp));

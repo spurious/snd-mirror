@@ -291,7 +291,7 @@ static gboolean mix_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpoi
 static gboolean mix_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
   if (!(mix_ok_and_unlocked(mix_dialog_id))) return(false);
-  if (ev->state & GDK_BUTTON1_MASK)
+  if (BUTTON1_PRESSED(ev->state))
     {
       int chans, chan, x, y;
       GdkModifierType state;
@@ -1281,7 +1281,7 @@ static gboolean track_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gp
 static gboolean track_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
   if (!(track_p(track_dialog_id))) return(false);
-  if (ev->state & GDK_BUTTON1_MASK)
+  if (BUTTON1_PRESSED(ev->state))
     {
       int x, y;
       GdkModifierType state;

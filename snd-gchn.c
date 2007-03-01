@@ -522,7 +522,9 @@ gboolean graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
  
 static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  if ((ev->state == 0) && (ev->type == GDK_BUTTON_PRESS) && (ev->button == POPUP_BUTTON))
+  if ((NO_BUCKY_BITS_P(ev->state)) && 
+      (ev->type == GDK_BUTTON_PRESS) && 
+      (ev->button == POPUP_BUTTON))
     {
       int pdata;
       pdata = get_user_int_data(G_OBJECT(w));
@@ -556,7 +558,7 @@ static gboolean graph_scroll(GtkWidget *w, GdkEventScroll *ev, gpointer data)
 
 static gboolean graph_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
-  if (ev->state & GDK_BUTTON1_MASK)
+  if (BUTTON1_PRESSED(ev->state))
     {
       int x, y;
       GdkModifierType state;

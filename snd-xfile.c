@@ -12,8 +12,6 @@
    View:Files
 */
 
-/* TODO: gtk: if sort choice changed and file selected, move window to show it in its new position (and dir list pos as well) */
-
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
 #define MSG_BOX(Dialog, Child) XmMessageBoxGetChild(Dialog, Child)
 
@@ -5021,6 +5019,8 @@ void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or
 {
   char *filename;
   filename = mus_expand_filename((const char *)file_or_dir);
+  if ((filename) && (filename[strlen(filename) - 1] == '*'))
+    filename[strlen(filename) - 1] = 0;
   if (directory_p(filename))
     add_directory_to_view_files_list(vdat, (const char *)filename);
   else add_file_to_view_files_list(vdat, file_or_dir, filename);

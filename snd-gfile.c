@@ -12,6 +12,10 @@
    View:Files
 */
 
+/* TODO: dir list pos
+ * SOMEDAY: replace all gdk graphics with cairo, then add printer support, perhaps xg bindings
+ */
+
 /* ---------------- file selector replacement ---------------- */
 
 typedef struct fsb {
@@ -670,7 +674,7 @@ static void file_dir_item_activate_callback(GtkWidget *w, gpointer context)
 static bool fsb_directory_button_press_callback(GdkEventButton *ev, void *data)
 {
   fsb *fs = (fsb *)data;
-  if ((ev->state == 0) && 
+  if ((NO_BUCKY_BITS_P(ev->state)) && 
       (ev->type == GDK_BUTTON_PRESS) && 
       (ev->button == POPUP_BUTTON))
     {
@@ -786,7 +790,7 @@ static GtkWidget *make_file_list_item(fsb *fs, int choice)
 static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 {
   fsb *fs = (fsb *)data;
-  if ((ev->state == 0) && 
+  if ((NO_BUCKY_BITS_P(ev->state)) && 
       (ev->type == GDK_BUTTON_PRESS) && 
       (ev->button == POPUP_BUTTON))
     {
@@ -907,6 +911,7 @@ static void sort_files_and_redisplay(fsb *fs)
 	    (strcmp(selected, cur_dir->files[i]->filename) == 0))
 	  {
 	    slist_select(fs->file_list, i); /* doesn't call select callback */
+	    scroller_position = i * 16;
 	    break;
 	  }
       FREE(selected);
@@ -1303,7 +1308,8 @@ static file_dialog_info *make_file_dialog(int read_only, const char *title, cons
 
   /* this needs fs, so it can't be in open_innards */
   {
-    GtkWidget *hbox;
+    GtkWidget *hbox, *spacer;
+
     hbox = gtk_hbox_new(true, 0);
     gtk_box_pack_end(GTK_BOX(fd->vbox), hbox, false, false, 0);
     gtk_widget_show(hbox);
@@ -1318,6 +1324,11 @@ static file_dialog_info *make_file_dialog(int read_only, const char *title, cons
     gtk_box_pack_end(GTK_BOX(hbox), fd->dp->play_button, true, true, 2);
     SG_SIGNAL_CONNECT(fd->dp->play_button, "toggled", play_selected_callback, fd->dp);
     gtk_widget_show(fd->dp->play_button);
+
+    /* this order of box_pack_end calls puts the spacer before (above) the buttons */
+    spacer = gtk_vseparator_new();
+    gtk_box_pack_end(GTK_BOX(fd->vbox), spacer, false, false, 6);
+    gtk_widget_show(spacer);
   }
 
   CHANGE_INFO(fd->info1,"");
@@ -4261,6 +4272,11 @@ void vf_post_selected_files_list(view_files_info *vdat)
 
   FREE(msg1);
   FREE(msg2);
+
+  set_sensitive(vdat->openB, true);
+  set_sensitive(vdat->removeB, true);
+  set_sensitive(vdat->mixB, true);
+  set_sensitive(vdat->insertB, true);
 }
 
 void vf_unpost_info(view_files_info *vdat)
@@ -4273,6 +4289,11 @@ void vf_unpost_info(view_files_info *vdat)
 
   CHANGE_INFO(vdat->info1, "");
   CHANGE_INFO(vdat->info2, "");
+
+  set_sensitive(vdat->openB, false);
+  set_sensitive(vdat->removeB, false);
+  set_sensitive(vdat->mixB, false);
+  set_sensitive(vdat->insertB, false);
 }
 
 static void view_files_select_callback(GtkWidget *w, gpointer context) 
@@ -4396,11 +4417,12 @@ void vf_reflect_sort_choice_in_menu(view_files_info *vdat)
       set_sensitive(vdat->sort_items[i], vdat->sorter != (SORT_XEN + i));
 }
 
-
 void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or_dir)
 {
   char *filename;
   filename = mus_expand_filename((const char *)file_or_dir);
+  if ((filename) && (filename[strlen(filename) - 1] == '*'))
+    filename[strlen(filename) - 1] = 0;
   if (directory_p(filename))
     add_directory_to_view_files_list(vdat, (const char *)filename);
   else add_file_to_view_files_list(vdat, file_or_dir, filename);
@@ -4870,7 +4892,7 @@ static gboolean vf_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpoin
 static gboolean vf_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
   view_files_info *vdat = (view_files_info *)data;
-  if (ev->state & GDK_BUTTON1_MASK)
+  if (BUTTON1_PRESSED(ev->state))
     {
       int x, y;
       GdkModifierType state;
@@ -4935,7 +4957,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(helpB, "help_button");
 
-      newB = gtk_button_new_from_stock(GTK_STOCK_NEW);
+      newB = sg_button_new_from_stock_with_label(_("New Viewer"), GTK_STOCK_NEW);
       gtk_widget_set_name(newB, "doit_button");
 
       dismissB = gtk_button_new_from_stock(GTK_STOCK_QUIT);
@@ -5128,6 +5150,13 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	CHANGE_INFO(vdat->info2, "|");
 	gtk_widget_show(vdat->info2);
 
+	{
+	  GtkWidget *spacer;
+	  spacer = gtk_vseparator_new();
+	  gtk_box_pack_start(GTK_BOX(leftform), spacer, false, false, 2);
+	  gtk_widget_show(spacer);
+	}
+
 	lbox = gtk_hbox_new(false, 0);
 	gtk_box_pack_start(GTK_BOX(leftform), lbox, false, false, 0);
 	gtk_widget_show(lbox);
@@ -5141,9 +5170,18 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	SG_SIGNAL_CONNECT(vdat->openB, "clicked", view_files_open_selected_callback, (gpointer)vdat);
 	SG_SIGNAL_CONNECT(vdat->removeB, "clicked", view_files_remove_selected_callback, (gpointer)vdat);
 
+	set_sensitive(vdat->openB, false);
+	set_sensitive(vdat->removeB, false);
+
 	gtk_widget_show(vdat->openB);
 	gtk_widget_show(vdat->removeB);
 
+	{
+	  GtkWidget *spacer;
+	  spacer = gtk_vseparator_new();
+	  gtk_box_pack_start(GTK_BOX(leftform), spacer, false, false, 4);
+	  gtk_widget_show(spacer);
+	}
 
 	/* framed stuff */
 	frame = gtk_frame_new(NULL);
@@ -5169,6 +5207,9 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
 	SG_SIGNAL_CONNECT(vdat->mixB, "clicked", view_files_mix_selected_callback, (gpointer)vdat);
 	SG_SIGNAL_CONNECT(vdat->insertB, "clicked", view_files_insert_selected_callback, (gpointer)vdat);
+
+	set_sensitive(vdat->mixB, false);
+	set_sensitive(vdat->insertB, false);
 
 	gtk_widget_show(vdat->mixB);
 	gtk_widget_show(vdat->insertB);

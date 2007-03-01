@@ -190,6 +190,11 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
   #define snd_MetaMask (GDK_MOD1_MASK | GDK_MOD4_MASK)
 #endif
 
+#define NO_BUCKY_BITS_P(State) (((State) & (GDK_SHIFT_MASK | GDK_CONTROL_MASK | GDK_MOD1_MASK)) == 0)
+/* in some cases, numlock = GDK_MOD2_MASK for example, and we want to completely ignore that setting */
+
+#define BUTTON1_PRESSED(State) ((State) & GDK_BUTTON1_MASK)
+
 #define MAIN_SHELL(a) (a->sgx)->mainshell
 #define MAIN_WINDOW(a) (a->sgx)->mainwindow
 #define MAIN_PANE(a) (a->sgx)->mainpane

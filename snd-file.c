@@ -3453,14 +3453,24 @@ void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname
 {
   /* I think all directory additions come through here */
   dir_info *sound_files = NULL;
-  view_files_monitor_directory(vdat, dirname);
-  sound_files = find_sound_files_in_dir(dirname);
-  if ((sound_files) && (sound_files->len > 0))
+  if ((dirname) && (dirname[strlen(dirname) - 1] != '/'))
     {
-      int i;
-      for (i = 0; i < sound_files->len; i++) 
-	add_file_to_view_files_list(vdat, sound_files->files[i]->filename, sound_files->files[i]->full_filename);
-      free_dir_info(sound_files);
+      char *add_slash;
+      add_slash = mus_format("%s/", dirname);
+      add_directory_to_view_files_list(vdat, add_slash);
+      FREE(add_slash);
+    }
+  else
+    {
+      view_files_monitor_directory(vdat, dirname);
+      sound_files = find_sound_files_in_dir(dirname);
+      if ((sound_files) && (sound_files->len > 0))
+	{
+	  int i;
+	  for (i = 0; i < sound_files->len; i++) 
+	    add_file_to_view_files_list(vdat, sound_files->files[i]->filename, sound_files->files[i]->full_filename);
+	  free_dir_info(sound_files);
+	}
     }
 }
 
