@@ -957,6 +957,7 @@ else
 	# for 2.9.0
 	AC_CHECK_LIB(m, gtk_label_get_line_wrap_mode, [AC_DEFINE(HAVE_GTK_LABEL_GET_LINE_WRAP_MODE)], ,$GTK_LIBS)
 	# for 2.10.0
+	AC_CHECK_LIB(m, gtk_print_operation_new, [AC_DEFINE(HAVE_GTK_PRINT_OPERATION_NEW)], ,$GTK_LIBS)
 
 	XLIBS=""
       	XFLAGS=""

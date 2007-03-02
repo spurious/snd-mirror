@@ -305,26 +305,10 @@ void sg_left_justify_label(GtkWidget *label)
 
 void check_for_event(void)
 {
-  /* this is needed to force label updates and provide interrupts for long computations */
-
-  /*   but... there is apparently a memory leak here -- gdk calls XTranslateCoordinates,
-   *   which calls malloc for something, and according to Valgrind, this stuff just builds up:
+  /* this is needed to force label updates and provide interrupts for long computations
    *
-   *   ==22804== 53,294,592 bytes in 512,448 blocks are still reachable in loss record 886 of 886
-   *   ==22804==    at 0x4020396: malloc (vg_replace_malloc.c:149)
-   *   ==22804==    by 0x499FB1B: _XEnq (in /usr/lib/libX11.so.6.2.0)                   place packet on event queue
-   *   ==22804==    by 0x49A14B5: _XReply (in /usr/lib/libX11.so.6.2.0)                 wait for reply packet
-   *   ==22804==    by 0x4999A73: XTranslateCoordinates (in /usr/lib/libX11.so.6.2.0)
-   *   ==22804==    by 0x449E199: gdk_event_translate (gdkevents-x11.c:1865)
-   *   ==22804==    by 0x449E3D6: _gdk_events_queue (gdkevents-x11.c:2254)
-   *   ==22804==    by 0x449E79E: gdk_event_dispatch (gdkevents-x11.c:2314)
-   *   ==22804==    by 0x461A5B1: g_main_context_dispatch (gmain.c:2045)
-   *   ==22804==    by 0x461D57E: g_main_context_iterate (gmain.c:2677)
-   *   ==22804==    by 0x461DAE4: g_main_context_iteration (gmain.c:2736)
-   *   ==22804==    by 0x424A383: gtk_main_iteration (gtkmain.c:1084)
-   *   ==22804==    by 0x81D6507: check_for_event (snd-gutils.c:272)
-   *
-   * this happens (to the same extent) even in shorter cases
+   *   Valgrind is confused about something here -- it thinks _XEnq malloc in XTranslateCoordinates in gdk_event_translate is never freed
+   *   but this way of letting events run is used (for example) in gtktreeview.c and gtkwidget.c, so if it's wrong here...
    */
 
   int i = 0;

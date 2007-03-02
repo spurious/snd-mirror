@@ -356,7 +356,21 @@ static void ps_set_color(color_t color)
 void ps_bg(axis_info *ap, axis_context *ax)
 {
   /* get background color, fill graph, then set foreground for axis */
+#if USE_MOTIF
   ps_set_color(get_background_color(ax));
+#else
+#if USE_GTK
+  {
+    state_context *sx;
+    chan_info *cp;
+    sx = ss->sgx;
+    cp = ap->cp;
+    if (cp->cgx->selected) 
+      ps_set_color(sx->selected_graph_color);
+    else ps_set_color(sx->graph_color);
+  }
+#endif
+#endif
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %d %d %d %d RF\n",
 	       ap->graph_x0 + bx0, ap->y_offset + by0, ap->width, ap->height);
   ps_write(pbuf);
@@ -419,6 +433,9 @@ void ps_draw_string(axis_info *ap, int x0, int y0, const char *str)
   int px0, py0;
   px0 = x0 + bx0;
   py0 = reflect_y(ap, y0) + by0;
+#if USE_GTK
+  py0 -= 12;
+#endif
   if (px0 > bbx) bbx = px0;
   if (py0 > bby) bby = py0;
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %d %d moveto (%s) show\n", px0, py0, str);
