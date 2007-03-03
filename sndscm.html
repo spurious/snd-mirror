@@ -145,7 +145,7 @@ For help with Forth and Snd/CLM, see the Forth documentation section "Snd, CLM, 
     <td onmouseover="return escape('describe-hook, with-local-hook, reset-all-hooks.')">functions related to hooks</td></tr>
 
 <tr><td bgcolor="#f6f8ff"><a href="#indexdoc">index</a></td>
-    <td bgcolor="#f6f8ff" onmouseover="return escape('connection between mozilla and the snd-help mechanism.')">snd-help extension</td></tr>
+    <td bgcolor="#f6f8ff" onmouseover="return escape('connection between mozilla or firefox and the snd-help mechanism.')">snd-help extension</td></tr>
 
 <tr><td><a href="#dotemacs">inf-snd.el, DotEmacs</a></td>
     <td onmouseover="return escape('a Snd emacs mode implementation.  You can use emacs as the listener, rather\
@@ -5525,10 +5525,10 @@ we want to close all currently open sounds without invoking the peak-env stuff:
   <A class=def NAME="html">html</A> obj
   <em class=emdef>?</em> obj
 </pre>
-<p>index.scm provides a connection between mozilla or netscape
+<p>index.scm provides a connection between firefox, mozilla or netscape
 and the Snd documentation.  The index itself is
 built by index.cl, then accessed through the functions html and ?.
-<code>(html arg)</code>, where 'arg' can be a string, a symbol, or a procedure sends mozilla to the corresponding url
+<code>(html arg)</code>, where 'arg' can be a string, a symbol, or a procedure sends the html reader to the corresponding url
 in the Snd documents.
 <code>(? obj)</code> prints out any help it can find for 'obj', and tries to find 'obj' in the documentation.
 The function that actually passes the url to the reader is <a href="extsnd.html#sendmozilla">send-mozilla</a>.

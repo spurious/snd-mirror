@@ -1,6 +1,8 @@
 #include "snd.h"
 
 
+/* or perhaps use both -- GtkPrint and Print as menu options? */
+
 #if HAVE_GTK_PRINT_OPERATION_NEW && (0)
 
 static GtkPrintSettings *settings = NULL;

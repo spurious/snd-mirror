@@ -881,7 +881,7 @@
     (if (not (equal? (html-dir)  ".")) 
 	(snd-display ";html-dir set def: ~A" (html-dir)))
     (set! (html-program) (html-program))
-    (if (not (equal? (html-program)  "mozilla")) 
+    (if (not (equal? (html-program)  "firefox")) 
 	(snd-display ";html-program set def: ~A" (html-program)))
     (set! (just-sounds) (just-sounds))
     (if (not (equal? (just-sounds)  #f)) 
@@ -1220,7 +1220,7 @@
       'graphs-horizontal (graphs-horizontal) #t
       'grid-density (grid-density) 1.0
       'html-dir (html-dir) "."
-      'html-program (html-program) "mozilla"
+      'html-program (html-program) "firefox"
       'just-sounds (just-sounds) #f
       'ladspa-dir (ladspa-dir) #f 
       'lisp-graph? (without-errors (lisp-graph?)) 'no-such-sound

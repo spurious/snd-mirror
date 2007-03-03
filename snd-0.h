@@ -918,7 +918,7 @@ enum {PRINT_NOT, PRINT_CHAR, PRINT_CLM, PRINT_REGION, PRINT_SYNC, PRINT_SND_FD, 
 
 #define html_program(ss) ss->HTML_Program
 #define set_html_program(a) ss->HTML_Program = a
-#define DEFAULT_HTML_PROGRAM "mozilla"
+#define DEFAULT_HTML_PROGRAM "firefox"
 
 #define graphs_horizontal(ss) ss->Graphs_Horizontal
 #define in_set_graphs_horizontal(a) ss->Graphs_Horizontal = a

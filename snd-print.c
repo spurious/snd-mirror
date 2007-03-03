@@ -356,15 +356,15 @@ static void ps_set_color(color_t color)
 void ps_bg(axis_info *ap, axis_context *ax)
 {
   /* get background color, fill graph, then set foreground for axis */
+  chan_info *cp;
+  cp = ap->cp;
 #if USE_MOTIF
   ps_set_color(get_background_color(ax));
 #else
 #if USE_GTK
   {
     state_context *sx;
-    chan_info *cp;
     sx = ss->sgx;
-    cp = ap->cp;
     if (cp->cgx->selected) 
       ps_set_color(sx->selected_graph_color);
     else ps_set_color(sx->graph_color);
@@ -374,13 +374,25 @@ void ps_bg(axis_info *ap, axis_context *ax)
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %d %d %d %d RF\n",
 	       ap->graph_x0 + bx0, ap->y_offset + by0, ap->width, ap->height);
   ps_write(pbuf);
-  ps_fg(ax);
+  ps_fg(cp, ax);
 }
 
-void ps_fg(axis_context *ax)
+void ps_fg(chan_info *cp, axis_context *ax)
 {
   /* set foreground color for subsequent line drawing */
+#if USE_MOTIF
   ps_set_color(get_foreground_color(ax));
+#else
+#if USE_GTK
+  {
+    state_context *sx;
+    sx = ss->sgx;
+    if (cp->cgx->selected) 
+      ps_set_color(sx->selected_data_color);
+    else ps_set_color(sx->data_color);
+  }
+#endif
+#endif
 }
 
 /* the rest are in real coordinates except upsidedown from PS point of view */

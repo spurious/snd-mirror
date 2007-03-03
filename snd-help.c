@@ -3761,7 +3761,8 @@ void url_to_html_viewer(const char *url)
 	  char *path;
 	  path = (char *)CALLOC(strlen(dir_path) + strlen(url) + 256, sizeof(char));
 	  if ((strcmp(program, "netscape") == 0) ||
-	      (strcmp(program, "mozilla") == 0))
+	      (strcmp(program, "mozilla") == 0) ||
+	      (strcmp(program, "firefox") == 0))
 	    {
 	      sprintf(path, "%s/%s", dir_path, url);
 	      send_mozilla(program, path);

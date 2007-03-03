@@ -1274,7 +1274,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
       if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
 	ax = combined_context(cp); 
       else ax = copy_context(cp);
-      if (cp->printing) ps_fg(ax);
+      if (cp->printing) ps_fg(cp, ax);
     }
   if ((samples_per_pixel < 1.0) ||
       ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE)) ||
@@ -1779,7 +1779,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
   scale = fp->scale;
   if (cp->printing) ps_allocate_grf_points();
   samples_per_pixel = (Float)((double)(hisamp - losamp) / (Float)(fap->x_axis_x1 - fap->x_axis_x0));
-  if (cp->printing) ps_fg(ax);
+  if (cp->printing) ps_fg(cp, ax);
 
   if (cp->fft_log_frequency)
     {
@@ -2877,7 +2877,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
   if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
     ax = combined_context(cp); 
   else ax = copy_context(cp);
-  if (cp->printing) ps_fg(ax);
+  if (cp->printing) ps_fg(cp, ax);
 
   if (up->env_data)
     {

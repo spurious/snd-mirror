@@ -775,7 +775,7 @@ void ps_draw_both_grf_points(axis_info *ap, int j, graph_style_t graph_style, in
 void ps_draw_sono_rectangle(axis_info *ap, int color, Float x, Float y, Float width, Float height);
 void ps_reset_color(void);
 void ps_bg(axis_info *ap, axis_context *ax);
-void ps_fg(axis_context *ax);
+void ps_fg(chan_info *cp, axis_context *ax);
 void ps_draw_line(axis_info *ap, int x0, int y0, int x1, int y1);
 void ps_draw_spectro_line(axis_info *ap, int color, Float x0, Float y0, Float x1, Float y1);
 void ps_fill_rectangle(axis_info *ap, int x0, int y0, int width, int height);

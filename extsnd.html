@@ -447,7 +447,7 @@ Extensions to Snd can be found in:
     <td onmouseover="return escape('describe-hook, with-local-hook, reset-all-hooks.')">functions related to hooks</td></tr>
 
 <tr><td bgcolor="#f6f8ff"><a href="sndscm.html#indexdoc">index</a></td>
-    <td bgcolor="#f6f8ff" onmouseover="return escape('connection between mozilla and the snd-help mechanism.')">snd-help extension</td></tr>
+    <td bgcolor="#f6f8ff" onmouseover="return escape('connection between mozilla or firefox and the snd-help mechanism.')">snd-help extension</td></tr>
 
 <tr><td><a href="sndscm.html#dotemacs">inf-snd.el, DotEmacs</a></td>
     <td onmouseover="return escape('a Snd emacs mode implementation.  You can use emacs as the listener, rather\
@@ -917,7 +917,7 @@ See the function html in index.scm.
 
 <!-- html-program -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="htmlprogram">html-program</a></code></td>
-<td bgcolor="#f6f8ff"><code>"mozilla"</code></td></tr><tr><td></td><td colspan=2>
+<td bgcolor="#f6f8ff"><code>"firefox"</code></td></tr><tr><td></td><td colspan=2>
 This is the program to use to read HTML files.
 On the Mac, you need to give the full path to the executable image: "/Applications/Safari.app/Contents/MacOS/Safari".
 See the function html in index.scm.
@@ -12353,10 +12353,7 @@ This returns the startup arguments as a list of strings. See <a href="grfsnd.htm
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="sendmozilla">send-mozilla</a> (url)</code>
 </td></tr><tr><td></td><td>
-This starts mozilla, if necessary, and tells it to go to the location 'url'.
-The actual HTML reader invoked is determined by <a href="#htmlprogram">html-program</a>,
-but it's currently assumed that netscape/mozilla url syntax can be used to jump to
-the desired url.
+This starts firefox (or whatever <a href="#htmlprogram">html-program</a> is), and tells it to go to the location 'url'.
 <pre>
     (send-mozilla "/home/bil/cl/extsnd.html#sendmozilla")
 </pre>
