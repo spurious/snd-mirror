@@ -1377,3 +1377,63 @@ Reverb-feedback sets the scaler on the feedback.
        (new-cursor (gdk_cursor_new_from_pixmap (GDK_PIXMAP source) (GDK_PIXMAP mask) blue-pixel black-pixel 8 8)))
   (gdk_window_set_cursor (car (main-widgets)) new-cursor))
 |#
+
+
+#|
+;;; this is an example of the Gtk Print dialog and cairo.
+
+(define settings #f)
+
+(define (begin-print op cntxt data)
+  (gtk_print_operation_set_n_pages (GTK_PRINT_OPERATION op) 1)
+  #f)
+
+(define (draw-page operation context page_num data)
+  (let* ((cr (gtk_print_context_get_cairo_context context))
+	 (width (inexact->exact (round (gtk_print_context_get_width context)))))
+
+    (cairo_rectangle cr 0 0 width 10)
+    (cairo_set_source_rgb cr 0.8 0.8 0.8)
+    (cairo_fill_preserve cr)
+
+    (cairo_set_source_rgb cr 0 0 0)
+    (cairo_set_line_width cr 1)
+    (cairo_stroke cr)
+
+    (let* ((layout (gtk_print_context_create_pango_layout context))
+	   (desc (pango_font_description_from_string "sans 14")))
+
+      (pango_layout_set_font_description layout desc)
+      (pango_font_description_free desc)
+
+      (pango_layout_set_text layout "nope" -1)
+      (pango_layout_set_width layout width)
+      (pango_layout_set_alignment layout PANGO_ALIGN_CENTER)
+
+      (cairo_move_to cr (/ width 2) 25)
+      (pango_cairo_show_layout cr layout)
+
+      (g_object_unref (GPOINTER layout))
+      #f)))
+
+(define (end-print op context data)
+  #f)
+
+(define (make-print-dialog)
+  (let* ((operation (gtk_print_operation_new)))
+    (if settings
+	(gtk_print_operation_set_print_settings operation settings))
+
+    (g_signal_connect (G_OBJECT operation) "begin-print" begin-print)
+    (g_signal_connect (G_OBJECT operation) "draw-page" draw-page)
+    (g_signal_connect (G_OBJECT operation) "end-print" end-print)
+
+    (let ((res (gtk_print_operation_run operation GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG (GTK_WINDOW (cadr (main-widgets))))))
+      (if (= (car res) GTK_PRINT_OPERATION_RESULT_APPLY)
+	  (begin
+	    (if settings (g_object_unref (GPOINTER settings)))
+	    (set! settings (gtk_print_operation_get_print_settings operation))
+	    (g_object_ref (GPOINTER settings))))
+
+      (g_object_unref (GPOINTER operation)))))
+|#

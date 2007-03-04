@@ -1915,6 +1915,11 @@ if test $statvfs_ok = 0 ; then
   fi
 fi
 
+
+#--------------------------------------------------------------------------------
+# debugging flag
+#--------------------------------------------------------------------------------
+
 AC_ARG_ENABLE(snd-debug,
   [  --enable-snd-debug      include internal Snd debugging functions],
   if test "$enable_snd_debug" = yes ; then
@@ -2102,6 +2107,11 @@ if test "$with_snd_as_widget" != yes ; then
     fi
   fi
 fi
+
+
+#--------------------------------------------------------------------------------
+# error checks, output
+#--------------------------------------------------------------------------------
 
 if test "$ac_snd_have_extension_language" = no ; then
   if test "$ac_snd_have_gui" = no ; then

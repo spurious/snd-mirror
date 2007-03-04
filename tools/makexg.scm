@@ -149,7 +149,9 @@
 	"GtkClipboardImageReceivedFunc" "PangoMatrix*" "GdkTrapezoid*" "GdkPangoRenderer*" "PangoRenderPart"
 	"GLogFunc" "GError*"
 
-	"GConnectFlags" "GSignalFlags" "GSignalMatchType" "GdkAxisUse" "GdkFillRule" "GdkGCValuesMask"
+	"GConnectFlags" "GSignalFlags" "GSignalMatchType" 
+	;"GdkAxisUse" 
+	"GdkFillRule" "GdkGCValuesMask"
 	"GdkPropMode" "GdkRgbDither" "GdkWMFunction" "GdkWindowEdge" "GdkWindowHints" "GtkAccelFlags" "GtkArrowType"
 	"GtkAttachOptions" "GtkCellRendererState" "GtkCurveType" "GtkDestDefaults" "GtkDestroyNotify" "GtkDialogFlags"
 	"GtkDirectionType" "GtkExpanderStyle" "GtkIconLookupFlags" "GtkMenuPositionFunc" "GtkPathType" "GtkSpinType"
@@ -165,7 +167,7 @@
 
 	"GtkUnit" "GtkPageSetupDoneFunc"
 
-	"GtkPrintContext*" "GtkPrintOperationPreview*" "GtkPrintSettingsFunc" "cairo_matrix_t*" "cairo_glyph_t*"
+	"GtkPrintOperationPreview*" "GtkPrintSettingsFunc" "cairo_matrix_t*" "cairo_glyph_t*"
 	"cairo_font_extents_t*" "cairo_text_extents_t*" "cairo_user_data_key_t*" "cairo_destroy_func_t"
 	))
 
@@ -177,10 +179,11 @@
 	"GtkTableRowCol*" "GtkAccelMap*" "GtkTooltipsData*" "PangoScript" "PangoFontFace**"
 
 	"GValue*" "GdkByteOrder" "GdkCrossingMode" "GdkEventType" "GdkGrabStatus" "GdkNotifyType"
-	"GdkOverlapType" "GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
+	;"GdkOverlapType" 
+	"GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
 	"GtkImageType" "GtkTreeModelFlags" "gint16" "gint8" "gshort" "guint8" "lambda" 
 
-	"time_t" "GtkWindowGroup*" "GtkSettings*"
+	"time_t" "GtkWindowGroup*" "GtkSettings*" "GdkDevice*"
 	))
 
 (define no-xen-to-c 
@@ -191,10 +194,11 @@
 	"GtkTextLogAttrCache*" "GtkAccelMap*" "GtkTooltipsData*" "PangoScript" "PangoFontFace**"
 
 	"GValue*" "GdkByteOrder" "GdkCrossingMode" "GdkEventType" "GdkGrabStatus" "GdkNotifyType"
-	"GdkOverlapType" "GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
+	;"GdkOverlapType" 
+	"GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
 	"GtkImageType" "GtkTreeModelFlags" "etc" "gint16" "gshort"
 
-	"GtkWindowGroup*" "time_t" "GtkSettings*"
+	"GtkWindowGroup*" "time_t" "GtkSettings*" "GdkDevice*"
 	))
 
 (define (cadr-str data)
@@ -702,28 +706,27 @@
 	(cons "GdkCursorType" "INT")
 	(cons "GdkDragAction" "INT")
 	(cons "GdkDragProtocol" "INT")
-	(cons "GdkAxisUse" "INT")
+	;(cons "GdkAxisUse" "INT")
 	(cons "GdkGCValuesMask" "INT")
 	(cons "GdkFill" "INT")
 	(cons "GdkFunction" "INT")
-	(cons "GdkSubwindowMode" "INT")
 	(cons "GdkLineStyle" "INT")
 	(cons "GdkCapStyle" "INT")
 	(cons "GdkJoinStyle" "INT")
 	(cons "GdkGrabStatus" "INT")
 	(cons "GdkEventMask" "INT")
 	(cons "GdkImageType" "INT")
-	(cons "GdkInputSource" "INT")
-	(cons "GdkInputMode" "INT")
+	;(cons "GdkInputSource" "INT")
+	;(cons "GdkInputMode" "INT")
 	(cons "GdkNativeWindow" "ULONG")
 	(cons "GdkModifierType" "INT")
-	(cons "GdkExtensionMode" "INT")
+	;(cons "GdkExtensionMode" "INT")
 	(cons "PangoDirection" "INT")
 	(cons "GdkRgbDither" "INT")
 	(cons "GdkPixbufAlphaMode" "INT")
 	(cons "GdkPropMode" "INT")
 	(cons "GdkFillRule" "INT")
-	(cons "GdkOverlapType" "INT")
+	;(cons "GdkOverlapType" "INT")
 	(cons "GdkVisualType" "INT")
 	(cons "GdkWindowType" "INT")
 	(cons "GdkWindowState" "INT")
@@ -770,7 +773,7 @@
 	(cons "GtkWindowPosition" "INT")
 	(cons "GtkTreeViewColumnSizing" "INT")
 	(cons "GtkTreeViewDropPosition" "INT")
-	(cons "GtkToolbarChildType" "INT")
+	;(cons "GtkToolbarChildType" "INT")
 	(cons "GtkToolbarStyle" "INT")
 	(cons "GtkTreeModelFlags" "INT")
 	(cons "GtkSelectionMode" "INT")
@@ -824,7 +827,7 @@
 	(cons "GtkRecentManagerError" "INT")
 	(cons "GtkTreeViewGridLines" "INT")
 
-	(cons "GtkPrintCapabilities" "INT")
+	;(cons "GtkPrintCapabilities" "INT")
 	(cons "GtkPrintStatus" "INT")
 	(cons "GtkPrintOperationResult" "INT")
 	(cons "GtkPrintOperationAction" "INT")
@@ -850,6 +853,26 @@
 	(cons "cairo_extend_t" "INT")
 	(cons "cairo_filter_t" "INT")
 	(cons "bool" "BOOLEAN")
+
+	;(cons "PangoRenderPart" "INT")
+	(cons "PangoTabAlign" "INT")
+	(cons "GtkWidgetHelpType" "INT")
+	(cons "GtkWidgetFlags" "INT")
+	(cons "GtkRcTokenType" "INT")
+	;(cons "GtkNotebookTab" "INT")
+	(cons "GtkScrollType" "INT")
+	(cons "GtkMovementStep" "INT")
+	(cons "GtkMenuDirectionType" "INT")
+	(cons "GtkDeleteType" "INT")
+	(cons "GtkResponseType" "INT")
+	(cons "GdkInterpType" "INT")
+	;(cons "GdkPixbufError" "INT")
+	;(cons "GdkColorspace" "INT")
+	(cons "GdkWindowAttributesType" "INT")
+	;(cons "GdkWindowClass" "INT")
+	(cons "GdkStatus" "INT")
+	(cons "GdkSubwindowMode" "INT")
+	(cons "GdkPropertyState" "INT")
 
 	))
 
@@ -1223,7 +1246,9 @@
 
 (define declared-types '())
 (define (save-declared-type type)
-  (if (not (member type declared-types)) (set! declared-types (cons type declared-types))))
+  (if (and type
+	   (not (member type declared-types)))
+      (set! declared-types (cons type declared-types))))
 
 (define* (CLNG name #:optional type spec-name)
   (save-declared-type type)
@@ -1896,8 +1921,8 @@
 (with-256 hey (lambda () (for-each xen-callback callbacks-256)))
 (with-290 hey (lambda () (for-each xen-callback callbacks-290)))
 
-;;; (hey "#define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 4)) ? (GCallback)gxg_func4 : ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2))~%")
-(hey "#define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)~%")
+(hey "#define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 4)) ? (GCallback)gxg_func4 : ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2))~%")
+;; (hey "#define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)~%")
 
 (hey "#define XEN_TO_C_lambda_data(Arg) (gpointer)gxg_ptr~%")
 (hey "#define XEN_lambda_data_P(Arg) 1~%")
@@ -2183,21 +2208,29 @@
 (hey "~%static gboolean gxg_func3(GtkWidget *w, GdkEventAny *ev, gpointer data)~%")
 (hey "{~%")
 (hey "  return(XEN_TO_C_BOOLEAN(XEN_CALL_3(XEN_CAR((XEN)data),~%")
-(hey "                          C_TO_XEN_GtkWidget_(w),~%")
-(hey "                          C_TO_XEN_GdkEventAny_(ev),~%")
-(hey "                          XEN_CADR((XEN)data),~%")
-(hey "                          c__FUNCTION__)));~%")
+(hey "                                     C_TO_XEN_GtkWidget_(w),~%")
+(hey "                                     C_TO_XEN_GdkEventAny_(ev),~%")
+(hey "                                     XEN_CADR((XEN)data),~%")
+(hey "                                     c__FUNCTION__)));~%")
 (hey "}~%")
 
-;;; (hey "~%static gboolean gxg_func4(GtkPrintOperation *op, GtkPrintContext *context, gint page_nr, gpointer data)~%")
-;;; (hey "{~%")
-;;; (hey "  return(XEN_TO_C_BOOLEAN(XEN_CALL_4(XEN_CAR((XEN)data),~%")
-;;; (hey "                          C_TO_XEN_GtkPrintOperation_(op),~%")
-;;; (hey "                          C_TO_XEN_GtkPrintContext_(context),~%")
-;;; (hey "                          C_TO_XEN_INT(page_nr),~%")
-;;; (hey "                          XEN_CADR((XEN)data),~%")
-;;; (hey "                          c__FUNCTION__)));~%")
-;;; (hey "}~%~%")
+(hey "~%#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE~%")
+(hey "~%static gboolean gxg_func4(GtkPrintOperation *op, GtkPrintContext *context, gint page_nr, gpointer data)~%")
+(hey "{~%")
+(hey "  return(XEN_TO_C_BOOLEAN(XEN_CALL_4(XEN_CAR((XEN)data),~%")
+(hey "                                     C_TO_XEN_GtkPrintOperation_(op),~%")
+(hey "                                     C_TO_XEN_GtkPrintContext_(context),~%")
+(hey "                                     C_TO_XEN_INT(page_nr),~%")
+(hey "                                     XEN_CADR((XEN)data),~%")
+(hey "                                     c__FUNCTION__)));~%")
+(hey "}~%")
+(hey "#else~%")
+(hey "static gboolean gxg_func4(int arg1, int arg2, int arg3, int arg4)~%")
+(hey "{~%")
+(hey "  return(false);~%")
+(hey "}~%")
+(hey "#endif~%~%")
+
 
 (hey "~%~%/* ---------------------------------------- functions ---------------------------------------- */~%~%")
 
@@ -3320,14 +3353,17 @@
 
 (close-output-port xg-file)
 
-;(for-each
-; (lambda (type)
-;   (if (not (assoc type direct-types))
-;       (display (format #f ";not direct: ~A~%" type))))
-; declared-types)
-;
-;(for-each
-; (lambda (v)
-;   (if (not (member (car v) declared-types))
-;       (display (format #f "~A " (car v)))))
-; direct-types)
+#!
+(for-each
+ (lambda (type)
+   (if (not (assoc type direct-types))
+       (display (format #f ";not direct: ~A~%" type))))
+ declared-types)
+
+(for-each
+ (lambda (v)
+   (if (not (member (car v) declared-types))
+       (display (format #f "~A " (car v)))))
+ direct-types)
+!#
+
