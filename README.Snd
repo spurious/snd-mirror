@@ -239,7 +239,7 @@ Plus many other contributions from
 
 In terms of number of lines, the languages used in Snd/Sndlib are:
 C, Scheme, Ruby, Forth, m4, Common Lisp, Emacs Lisp, javascript,
-expect, and postscript (altogether more than 580,000 lines).
+expect, and postscript (altogether more than 590,000 lines).
 
 
 To get the German version at run-time, (setlocale LC_ALL "de_DE").

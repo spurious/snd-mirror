@@ -7651,7 +7651,18 @@ static void vct_to_channel_v(int *args, ptree *pt)
       v = VCT_ARG_1;
       beg = INT_ARG_2;
       dur = INT_ARG_3;
+#if SNDLIB_USE_FLOATS
       change_samples(beg, dur, v->data, cp, LOCK_MIXES, S_vct_to_channel, cp->edit_ctr);
+#else
+      {
+	off_t i;
+	mus_sample_t *data;
+	data = (mus_sample_t *)CALLOC(dur, sizeof(mus_sample_t));
+	for (i = 0; i < dur; i++) data[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
+	change_samples(beg, dur, data, cp, LOCK_MIXES, S_vct_to_channel, cp->edit_ctr);
+	FREE(data);
+      }
+#endif
     }
 }
 

@@ -164,6 +164,9 @@
 	"GtkRecentData*" "GtkNotebookWindowCreationFunc"
 
 	"GtkUnit" "GtkPageSetupDoneFunc"
+
+	"GtkPrintContext*" "GtkPrintOperationPreview*" "GtkPrintSettingsFunc" "cairo_matrix_t*" "cairo_glyph_t*"
+	"cairo_font_extents_t*" "cairo_text_extents_t*" "cairo_user_data_key_t*" "cairo_destroy_func_t"
 	))
 
 (define no-xen-p 
@@ -777,6 +780,7 @@
 	(cons "GdkWindowTypeHint" "INT")
 	(cons "GdkGravity" "INT")
 	(cons "GdkWindowHints" "INT")
+
 	(cons "PangoAttrType" "INT")
 	(cons "PangoStyle" "INT")
 	(cons "PangoWeight" "INT")
@@ -790,6 +794,7 @@
 	(cons "PangoCoverageLevel" "INT")
 	(cons "PangoGlyph" "ULONG")
 	(cons "PangoScript" "INT")
+
 	(cons "GdkEventType" "INT")
 	(cons "GdkVisibilityState" "INT")
 	(cons "GdkScrollDirection" "INT")
@@ -824,6 +829,27 @@
 	(cons "GtkPrintOperationResult" "INT")
 	(cons "GtkPrintOperationAction" "INT")
 	(cons "GtkPrintError" "INT")
+
+	(cons "cairo_status_t" "INT")
+	(cons "cairo_content_t" "INT")
+	(cons "cairo_operator_t" "INT")
+	(cons "cairo_antialias_t" "INT")
+	(cons "cairo_fill_rule_t" "INT")
+	(cons "cairo_line_cap_t" "INT")
+	(cons "cairo_line_join_t" "INT")
+	(cons "cairo_font_slant_t" "INT")
+	(cons "cairo_font_weight_t" "INT")
+	(cons "cairo_subpixel_order_t" "INT")
+	(cons "cairo_hint_style_t" "INT")
+	(cons "cairo_hint_metrics_t" "INT")
+	(cons "cairo_font_type_t" "INT")
+	(cons "cairo_path_data_type_t" "INT")
+	(cons "cairo_surface_type_t" "INT")
+	(cons "cairo_format_t" "INT")
+	(cons "cairo_pattern_type_t" "INT")
+	(cons "cairo_extend_t" "INT")
+	(cons "cairo_filter_t" "INT")
+	(cons "bool" "BOOLEAN")
 
 	))
 
@@ -1105,6 +1131,9 @@
 		(set! funcs-210 (cons (list name type strs args) funcs-210)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
+(define* (CAIRO-FUNC data #:optional spec) (CFNC-210 data spec))
+
+
 (define (helpify name type args)
   (let* ((initial (format #f "  #define H_~A \"~A ~A(" name type name))
 	 (line-len (string-length initial))
@@ -1331,6 +1360,8 @@
       (begin
 	(set! ints-210 (cons name ints-210))
 	(set! names (cons (cons name 'int) names)))))
+
+(define* (CAIRO-INT name #:optional type) (CINT-210 name type))
 
 (define (CCAST name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))
   (if (assoc name names)
@@ -1598,7 +1629,7 @@
 
 
 ;;; ---------------------------------------- write output files ----------------------------------------
-(hey "/* xg.c: Guile, Gauche, Ruby, and Forth bindings for gdk/gtk/pango, some of glib~%")
+(hey "/* xg.c: Guile, Gauche, Ruby, and Forth bindings for gdk/gtk/pango/cairo, some of glib~%")
 (hey " *   this file generated automatically from makexg.scm and xgdata.scm~%")
 (hey " *   needs xen.h~%")
 (hey " *~%")
@@ -1648,6 +1679,8 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     5-Mar:     cairo and more gtkprint.~%")
+(hey " *     --------~%")
 (hey " *     26-Aug:    removed --with-x11, WITH_GTK_AND_X11, xg-x11.h.~%")
 (hey " *     4-Aug:     added a form of g_object_get and gtk_settings_get_for_screen.~%")
 (hey " *     20-Jul:    added gtkprint stuff.~%")
@@ -1700,14 +1733,16 @@
 
 (hey "#if UNDEF_USE_SND~%  #undef USE_SND~%  #define USE_SND 0~%#endif~%~%")
 
+(hey "#include <string.h>~%")
+(hey "#include <stdlib.h>~%~%")
+
 (hey "#include <glib.h>~%")
 (hey "#include <gdk/gdk.h>~%")
 (hey "#include <gdk/gdkkeysyms.h>~%")
 (hey "#include <gtk/gtk.h>~%")
 (hey "#include <glib-object.h>~%")
 (hey "#include <pango/pango.h>~%")
-(hey "#include <string.h>~%")
-(hey "#include <stdlib.h>~%~%")
+(hey "#include <cairo/cairo.h>~%")
 
 (hey "#if USE_SND~%")
 (hey "  /* USE_SND causes xm to use Snd's error handlers which are much smarter than xen's fallback versions */~%")
