@@ -149,6 +149,7 @@
 #undef USE_GTK
 #undef USE_MOTIF
 #undef USE_NO_GUI
+#undef USE_CAIRO
 
 #undef HAVE_X
 #undef HAVE_XPM

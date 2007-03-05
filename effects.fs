@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Thu Feb 01 00:51:55 CET 2007
+\ Changed: Thu Mar 01 18:35:39 CET 2007
 
 \ Commentary:
 \
@@ -186,7 +186,6 @@ hide
 \ log scaler widget
 
 500 value log-scale-ticks
-
 : scale-log->linear ( lo val hi -- lin )
   { lo val hi }
   2.0 flog { log2 }
@@ -194,7 +193,6 @@ hide
   hi flog          log2 f/ { log-hi }
   val flog log2 f/   log-lo f-  log-hi log-lo f-  f/ log-scale-ticks f* floor f>s
 ;
-
 : scale-linear->log ( lo val hi -- log )
   { lo val hi }
   2.0 flog { log2 }
@@ -202,16 +200,13 @@ hide
   hi flog          log2 f/ { log-hi }
   2.0  log-lo val log-scale-ticks f/ log-hi log-lo f- f* f+  f**
 ;
-
 : scale-log-label ( lo val hi -- str ) scale-linear->log "%.2f" swap 1 >list string-format ;
-
 : scale-log-cb <{ w c info -- }>
   c car   { label }
   c cadr  { low }
   c caddr { high }
   label  low info Fvalue high scale-log-label  change-label
 ;
-
 : create-log-scale-widget { parent title low init high cb -- scale-label-list }
   "%.2f" '( init ) string-format FxmLabelWidgetClass parent
   '( FXmNbackground    basic-color ) undef FXtCreateManagedWidget { label }
@@ -235,18 +230,14 @@ hide
 \ semitone scaler widget
 
 24 value semi-range
-
 : semi-scale-label ( val -- str ) $" semitones: %s" _ swap semi-range - 1 >list string-format ;
-
 : semitones->ratio ( val -- r )
   2.0 swap 12.0 f/ f**
 ;
-
 : ratio->semitones ( ratio -- n )
   12.0 swap flog 2.0 flog f/ f* fround->s
 ;
 : scale-semi-cb <{ w c info -- }> c  info Fvalue semi-scale-label  change-label ;
-
 : create-semi-scale-widget { parent title init cb -- scale-label-list }
   $" semitones: %s" _ '( init ratio->semitones ) string-format { str }
   str FxmLabelWidgetClass parent
@@ -710,9 +701,9 @@ hide
     gen dialog@ activate-dialog
     gen label@ string-downcase
     fr
-    '( 0.0 1.0 1.0 1.0 ) ( envelope )
-    '( 0.0 1.0 0.0 1.0 ) ( axis-bounds )
-    '( FXmNheight 200 ) make-xenved gen envel!
+    :envelope    '( 0.0 1.0 1.0 1.0 )
+    :axis-bounds '( 0.0 1.0 0.0 1.0 )
+    :args        '( FXmNheight 200 ) make-xenved gen envel!
     fr '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
   else
     gen dialog@ activate-dialog
@@ -2376,9 +2367,9 @@ hide
     gen dialog@ activate-dialog
     gen label@ string-downcase
     fr
-    '( 0.0 1.0 1.0 1.0 ) ( envelope )
-    '( 0.0 1.0 0.0 1.0 ) ( axis-bounds )
-    '( FXmNheight 200 ) make-xenved gen envel!
+    :envelope    '( 0.0 1.0 1.0 1.0 )
+    :axis-bounds '( 0.0 1.0 0.0 1.0 )
+    :args        '( FXmNheight 200 ) make-xenved gen envel!
     fr '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
   else
     gen dialog@ activate-dialog
@@ -2528,9 +2519,9 @@ hide
     gen dialog@ activate-dialog
     gen label@ string-downcase
     fr
-    '( 0.0 1.0 1.0 1.0 ) ( envelope )
-    '( 0.0 1.0 0.0 1.0 ) ( axis-bounds )
-    '( FXmNheight 200 ) make-xenved gen envel!
+    :envelope    '( 0.0 1.0 1.0 1.0 )
+    :axis-bounds '( 0.0 1.0 0.0 1.0 )
+    :args        '( FXmNheight 200 ) make-xenved gen envel!
     fr '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
   else
     gen dialog@ activate-dialog
@@ -2641,9 +2632,9 @@ hide
     gen dialog@ activate-dialog
     gen label@ string-downcase
     fr
-    '( 0.0 1.0 1.0 1.0 ) ( envelope )
-    '( 0.0 1.0 0.0 1.0 ) ( axis-bounds )
-    '( FXmNheight 200 ) make-xenved gen envel!
+    :envelope    '( 0.0 1.0 1.0 1.0 )
+    :axis-bounds '( 0.0 1.0 0.0 1.0 )
+    :args        '( FXmNheight 200 ) make-xenved gen envel!
     fr '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
   else
     gen dialog@ activate-dialog
@@ -3337,10 +3328,11 @@ end-struct effects-place-sound%
        FXmNshadowThickness 4
        FXmNshadowType      FXmSHADOW_ETCHED_OUT ) undef FXtCreateManagedWidget { fr }
     gen dialog@ activate-dialog
-    "panning" fr
-    '( 0.0 1.0 1.0 1.0 ) ( envelope )
-    '( 0.0 1.0 0.0 1.0 ) ( axis-bounds )
-    '( FXmNheight 200 ) make-xenved gen envel!
+    "panning"
+    fr
+    :envelope    '( 0.0 1.0 1.0 1.0 )
+    :axis-bounds '( 0.0 1.0 0.0 1.0 )
+    :args        '( FXmNheight 200 ) make-xenved gen envel!
   else
     gen dialog@ activate-dialog
   then

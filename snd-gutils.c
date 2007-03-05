@@ -1,6 +1,6 @@
 #include "snd.h"
 
-/* not to self: label color needs containing eventbox */
+/* for label color add containing eventbox */
 
 bool set_tiny_font(const char *font)
 {
@@ -720,7 +720,7 @@ void widget_off_t_to_text(GtkWidget *w, off_t val)
   FREE(str);
 }
 
-void rotate_text(GdkDrawable *wn, GdkGC *gc, PangoFontDescription *font, const char *text, int angle, gint x0, gint y0)
+static void rotate_text(GdkDrawable *wn, GdkGC *gc, PangoFontDescription *font, const char *text, int angle, gint x0, gint y0)
 {
 #if HAVE_PANGO_MATRIX_ROTATE
   PangoLayout *layout;

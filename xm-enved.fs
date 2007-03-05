@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Oct 21 18:22:57 CEST 2005
-\ Changed: Thu Feb 01 01:41:02 CET 2007
+\ Changed: Thu Mar 01 19:01:45 CET 2007
 
 \ Commentary:
 
@@ -23,27 +23,35 @@
 \  xe-free    	  	( obj -- )
 \
 \ xenved?     	  	( obj -- f )
-\ make-xenved 	  	( name parent lst axis-bounds args -- xenved )
+\ make-xenved 	  	( name parent :key envelope axis-bounds args -- xenved )
 \ run-before-enved-hook ( obj pos x y reason -- f )
 \ xe-index           	( obj x -- index|-1 )
 \ xe-insert!         	( obj index point -- )
 \ xe-delete!         	( obj index -- )
 \ xe-envelope 	  	( obj -- lst )
 \ set-xe-envelope 	( obj lst -- )
-
-\ Code:
+\ xe-open               ( obj -- )
+\ xe-close              ( obj -- )
+\
+\ xenved-test           ( :optional name -- )
 
 require enved
-
-'snd-motif provided? 'xm provided? not && [if] dl-load libxm Init_libxm [then]
-
-'xm provided? [unless]
-  'forth-error
-  '( *filename* $" %s requires snd-motif and xm module or libxm.so" *filename* #f file-basename )
-  fth-throw
-[then]
+require snd-xm
 
 \ === XENVED OBJECT TYPE ===
+
+5 $" ( gen pos x y reason -- f )  \
+Will be called before changing a breakpoint in GEN's envelope.  \
+This hook runs the global ENVED-HOOK at first, \
+subsequent procedures can directly manipulate GEN's envelope \
+or the returned list of the preceding hook procedure.\n\
+This instance hook is like the global ENVED-HOOK; \
+POS is ENVELOPE's x-position, X and Y are the new points, \
+and REASON is one of the Snd constants ENVED-ADD-POINT, ENVED-DELETE-POINT, ENVED-MOVE-POINT.  \
+If one of the hook procedures in the hook list returns #f, xenved changes the breakpoint, \
+otherwise the last hook procedure is responsible for manipulating GEN's envelope itself." _
+create-hook before-enved-hook
+
 hide
 enved%
   cell% field xe-enved
@@ -100,28 +108,61 @@ end-struct xenved%
 : xe-click-time@ ( obj -- val ) instance-gen-ref xe-click-time @ ;
 set-current
 
-$" xenved" make-object-type constant fth-xenved
-
+"xenved" make-object-type constant fth-xenved
 fth-xenved make-?obj xenved?
+
+before-enved-hook lambda: <{ gen pos x y reason -- f }>
+  enved-hook hook-empty? if
+    #f
+  else
+    gen xe-envelope@ { res }
+    enved-hook hook->list each { prc }
+      prc '( res pos x y reason ) run-proc to res
+      res false? ?leave
+    end-each
+    res list? if
+      res gen xe-envelope!
+    else
+      res enved? if
+	res envelope@ gen xe-envelope!
+      else
+	res xenved? if
+	  res xe-envelope@ gen xe-envelope!
+	then
+      then
+    then
+    res #f <> if #t else #f then
+  then
+; add-hook!
+: run-before-enved-hook ( gen x y reason -- f )
+  { gen x y reason }
+  before-enved-hook hook-empty? if
+    #t
+  else
+    #f					\ flag
+    before-enved-hook hook->list each { prc }
+      prc '( gen gen xe-mouse-pos@ x y reason ) run-proc false? if
+	not				\ toggle flag
+	leave
+      then
+    end-each
+  then
+;
 
 : xe-length  ( obj -- len ) xe-enved@ enved-length ;
 : xe-inspect ( obj -- str )
   { obj }
-  $" #<%s[%d]: axis-bounds: '%s, envelope: '%s>"
-  '( obj object-name obj xe-length obj xe-bounds@ obj xe-envelope@ ) string-format
+  $" #<%s[%d]: axis-bounds: %s, envelope: %s>"
+  '( obj object-name obj xe-length obj xe-bounds@ obj xe-enved@ ) string-format
 ;
 : xe->string ( obj -- str ) xe-enved@ enved->string ;  
 : xe-dump ( obj -- str )
   { obj }
-  $" %s %s %s %s %s make-xenved"
-  '( obj xe-name@     object-dump
-     obj xe-parent@   object-dump
-     obj xe-envelope@ object-dump
-     obj xe-bounds@   object-dump
-     obj xe-args@     object-dump ) string-format
+  $" %S %S :envelope %S :axis-bounds %S :args %S make-xenved"
+  '( obj xe-name@ obj xe-parent@ obj xe-envelope@ obj xe-bounds@ obj xe-args@ ) string-format
 ;
-: xe->array  ( obj -- ary )         xe-enved@ enved->array ;  
-\ XE-COPY comes below after MAKE-XENVED
+: xe->array  ( obj -- ary ) xe-enved@ enved->array ;  
+defer xe-copy ( obj1 -- obj2 )
 : xe-ref     ( obj index -- point ) swap xe-enved@ swap enved-ref ;
 : xe-set!    ( obj index point -- ) rot xe-enved@ -rot enved-set! ;
 : xe-equal?  ( obj1 obj2 -- f )
@@ -152,76 +193,24 @@ fth-xenved make-?obj xenved?
 : xe-free ( obj -- ) instance-gen-ref free throw ;
 
 \ Init xenved
-' xe-inspect  fth-xenved set-object-inspect   \ xenved .inspect
-' xe->string  fth-xenved set-object->string   \ xenved object->string
-' xe-dump     fth-xenved set-object-dump      \ xenved object-dump
-' xe->array   fth-xenved set-object->array    \ xenved object->array
-\ XE-COPY comes below after MAKE-XENVED
-' xe-ref      fth-xenved set-object-value-ref \ xenved index        object-ref => '(x y)
-' xe-set!     fth-xenved set-object-value-set \ xenved index '(x y) object-set!
-' xe-equal?   fth-xenved set-object-equal-p   \ obj1 obj2 equal?
-' xe-length   fth-xenved set-object-length    \ xenved object-length => number of points (lstlen/2)
-' xe-mark     fth-xenved set-object-mark      \ xenved object-mark and for gc
-' xe-free     fth-xenved set-object-free      \ for gc
-' xe-ref      fth-xenved 1 set-object-apply   \ xenved index apply => '(x y)
-
-5 $" ( gen pos x y reason -- f )  \
-Will be called before changing a breakpoint in GEN's envelope.  \
-This hook runs the global ENVED-HOOK at first, \
-subsequent procedures can directly manipulate GEN's envelope \
-or the returned list of the preceding hook procedure.\n\
-This instance hook is like the global ENVED-HOOK; \
-POS is ENVELOPE's x-position, X and Y are the new points, \
-and REASON is one of the Snd constants ENVED-ADD-POINT, ENVED-DELETE-POINT, ENVED-MOVE-POINT.  \
-If one of the hook procedures in the hook list returns #f, xenved changes the breakpoint, \
-otherwise the last hook procedure is responsible for manipulating GEN's envelope itself." _
-create-hook before-enved-hook
-
-before-enved-hook lambda: <{ gen pos x y reason -- f }>
-  enved-hook hook-empty? if
-    #f
-  else
-    gen xe-envelope@ { res }
-    enved-hook hook->list each { prc }
-      prc '( res pos x y reason ) run-proc to res
-      res false? ?leave
-    end-each
-    res list? if
-      res gen xe-envelope!
-    else
-      res enved? if
-	res envelope@ gen xe-envelope!
-      else
-	res xenved? if
-	  res xe-envelope@ gen xe-envelope!
-	then
-      then
-    then
-    res #f <> if #t else #f then
-  then
-; add-hook!
-
-: run-before-enved-hook ( gen x y reason -- f )
-  { gen x y reason }
-  before-enved-hook hook-empty? if
-    #t
-  else
-    #f					\ flag
-    before-enved-hook hook->list each { prc }
-      prc '( gen gen xe-mouse-pos@ x y reason ) run-proc false? if
-	not				\ toggle flag
-	leave
-      then
-    end-each
-  then
-;
+<'> xe-inspect  fth-xenved set-object-inspect   \ xe .inspect
+<'> xe->string  fth-xenved set-object->string   \ xe object->string
+<'> xe-dump     fth-xenved set-object-dump      \ xe object-dump
+<'> xe->array   fth-xenved set-object->array    \ xe object->array
+<'> xe-copy     fth-xenved set-object-copy      \ xe object-copy
+<'> xe-ref      fth-xenved set-object-value-ref \ xe index        object-ref => '( x y )
+<'> xe-set!     fth-xenved set-object-value-set \ xe index '( x y ) object-set!
+<'> xe-equal?   fth-xenved set-object-equal-p   \ obj1 obj2 equal?
+<'> xe-length   fth-xenved set-object-length    \ xe object-length => number of points (lstlen/2)
+<'> xe-mark     fth-xenved set-object-mark      \ xe object-mark and for gc
+<'> xe-free     fth-xenved set-object-free      \ for gc
+<'> xe-ref      fth-xenved 1 set-object-apply   \ xe index apply => '( x y )
 
 : xe-index   ( obj x -- index|-1 )  swap xe-enved@ swap enved-index ;
 : xe-insert! ( obj index point -- ) rot  xe-enved@ -rot enved-insert! ;
 : xe-delete! ( obj index -- )       swap xe-enved@ swap enved-delete! ;
 
 0.03 constant mouse-radius
-
 : grfx ( x gen -- val )
   { x gen }
   gen xe-px0@ gen xe-px1@ = if
@@ -396,8 +385,12 @@ before-enved-hook lambda: <{ gen pos x y reason -- f }>
  does> { wid c e f self -- }
   wid FXtDisplay wid FXtWindow FXUndefineCursor drop
 ;
-: axis-bounds? { obj -- f } obj object-length 4 = obj list? && ;
-: make-xenved <{ name parent envelope axis-bounds args -- xenved }>
+: axis-bounds? ( obj -- f ) list-length 4 = ;
+: make-xenved <{ name parent
+     :key
+     envelope    '( 0 0 1 1 )
+     axis-bounds '( 0 1 0 1 )
+     args        nil -- xe }>
   parent      FWidget?     parent      2 $" a widget"              _ assert-type
   axis-bounds axis-bounds? axis-bounds 4 $" a list of axis bounds" _ assert-type
   xenved% %alloc { xe }
@@ -442,16 +435,14 @@ before-enved-hook lambda: <{ gen pos x y reason -- f }>
   gen
 ;
 
-: xe-copy ( obj1 -- obj2 )
+lambda: ( obj1 -- obj2 )
   { obj }
   obj xe-name@
   obj xe-parent@
-  obj xe-envelope@ list-copy
-  obj xe-bounds@   list-copy
-  obj xe-args@     list-copy make-xenved
-;  
-' xe-copy     fth-xenved set-object-copy      \ xenved object-copy
-
+  :envelope    obj xe-envelope@ list-copy
+  :axis-bounds obj xe-bounds@   list-copy
+  :args        obj xe-args@     list-copy make-xenved
+; is xe-copy
 : xe-envelope ( gen -- lst )
   { gen }
   gen xenved? gen 1 $" an xenved object" _ assert-type
@@ -468,7 +459,28 @@ before-enved-hook lambda: <{ gen pos x y reason -- f }>
   lst gen xe-envelope!
   gen xe-redraw
 ;
-
+: xe-open ( gen -- )
+  { gen }
+  gen xenved? gen 1 $" an xenved object" _ assert-type
+  gen xe-drawer@ FWidget? if gen xe-drawer@ FXtManageChild drop then
+;
+: xe-close ( gen -- )
+  { gen }
+  gen xenved? gen 1 $" an xenved object" _ assert-type
+  gen xe-drawer@ FWidget? if gen xe-drawer@ FXtUnmanageChild drop then
+;
 previous
+
+: xenved-test <{ :optional name "xenved" -- xe }>
+  name
+  name FxmFormWidgetClass '( FXmNheight 200 ) add-main-pane
+  :envelope    '( 0 0 1 1 )
+  :axis-bounds '( 0 1 0 1 )
+  :args
+  '( FXmNleftAttachment   FXmATTACH_WIDGET
+     FXmNtopAttachment    FXmATTACH_WIDGET
+     FXmNbottomAttachment FXmATTACH_WIDGET
+     FXmNrightAttachment  FXmATTACH_WIDGET ) make-xenved
+;
 
 \ xm-enved.fs ends here

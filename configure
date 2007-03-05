@@ -887,6 +887,7 @@ Optional Packages:
   --with-midi		  include sndlib midi module
   --with-doubles	  use doubles throughout
   --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes
+  --with-cairo		  use cairo for graphics in Gtk, if possible
   --with-gsl		  use GSL, default=yes
   --with-fftw		  use fftw, default=yes
   --with-xpm		  use xpm, default=yes
@@ -2951,6 +2952,7 @@ _ACEOF
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-midi           include sndlib midi module
 #   --enable-threads      include pthread stuff
+#   --with-cairo          use cairo for Gtk graphics, if possible
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
 #   GUILE_name            same problem
@@ -3106,6 +3108,12 @@ fi;
 # Check whether --with-float-samples or --without-float-samples was given.
 if test "${with_float_samples+set}" = set; then
   withval="$with_float_samples"
+
+fi;
+
+# Check whether --with-cairo or --without-cairo was given.
+if test "${with_cairo+set}" = set; then
+  withval="$with_cairo"
 
 fi;
 
@@ -14123,9 +14131,18 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_m_gdk_cairo_create" >&5
 echo "${ECHO_T}$ac_cv_lib_m_gdk_cairo_create" >&6
 if test $ac_cv_lib_m_gdk_cairo_create = yes; then
-  cat >>confdefs.h <<\_ACEOF
+
+		 cat >>confdefs.h <<\_ACEOF
 #define HAVE_GDK_CAIRO_CREATE 1
 _ACEOF
+
+                 if test "$with_cairo" = yes; then
+                   cat >>confdefs.h <<\_ACEOF
+#define USE_CAIRO 1
+_ACEOF
+
+	           GRAPHICS_TOOLKIT="Gtk (with Cairo graphics)"
+                 fi
 
 fi
 
@@ -18659,8 +18676,6 @@ _ACEOF
 
           	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
           	   JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
-# TODO: else (on mac) JACK_LIBS -framework CoreAudio -framework CoreServices -framework AudioUnit -L/usr/local/lib -ljack -lsamplerate
-#                     and -I/usr/local/include in JACK_FLAGS
                fi
             fi
 fi
@@ -19212,6 +19227,10 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+        else
+            AUDIO_SYSTEM=Jack
+	    JACK_LIBS="-framework CoreAudio -framework CoreServices -framework AudioUnit -L/usr/local/lib -ljack -lsamplerate"
+            JACK_FLAGS="-I/usr/local/include"
 	fi
 	;;
 esac

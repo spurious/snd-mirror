@@ -72,6 +72,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-midi           include sndlib midi module
 #   --enable-threads      include pthread stuff
+#   --with-cairo          use cairo for Gtk graphics, if possible
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
 #   GUILE_name            same problem
@@ -104,6 +105,7 @@ AC_ARG_WITH(builtin-gtkrc,[  --with-builtin-gtkrc	  include built-in gtkrc fallb
 AC_ARG_WITH(midi,        [  --with-midi		  include sndlib midi module])
 AC_ARG_WITH(doubles,     [  --with-doubles	  use doubles throughout])
 AC_ARG_WITH(float-samples, [  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes])
+AC_ARG_WITH(cairo,	 [  --with-cairo		  use cairo for graphics in Gtk, if possible])
 
 # these are primarily for testing
 AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes])
@@ -958,7 +960,14 @@ else
 	AC_CHECK_LIB(m, gtk_label_get_line_wrap_mode, [AC_DEFINE(HAVE_GTK_LABEL_GET_LINE_WRAP_MODE)], ,$GTK_LIBS)
 	# for 2.10.0
 	AC_CHECK_LIB(m, gtk_print_operation_new, [AC_DEFINE(HAVE_GTK_PRINT_OPERATION_NEW)], ,$GTK_LIBS)
-	AC_CHECK_LIB(m, gdk_cairo_create, [AC_DEFINE(HAVE_GDK_CAIRO_CREATE)], ,$GTK_LIBS)
+	AC_CHECK_LIB(m, gdk_cairo_create, 
+		[
+		 AC_DEFINE(HAVE_GDK_CAIRO_CREATE)
+                 if test "$with_cairo" = yes; then
+                   AC_DEFINE(USE_CAIRO)
+	           GRAPHICS_TOOLKIT="Gtk (with Cairo graphics)"
+                 fi
+		], ,$GTK_LIBS)
 
 	XLIBS=""
       	XFLAGS=""
@@ -1550,8 +1559,6 @@ if test "$with_jack" = yes ; then
                    AC_DEFINE_UNQUOTED(MUS_JACK_VERSION,"${jack_version}")
           	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
           	   JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
-# TODO: else (on mac) JACK_LIBS -framework CoreAudio -framework CoreServices -framework AudioUnit -L/usr/local/lib -ljack -lsamplerate
-#                     and -I/usr/local/include in JACK_FLAGS
                fi
             fi
 fi
@@ -1761,6 +1768,10 @@ case "$host" in
 	      [AC_DEFINE(HAVE_KLINEARPCMFORMATFLAGISNONINTERLEAVED)
 	       AC_MSG_RESULT(yes)],
 	      [AC_MSG_RESULT(no)])
+        else
+            AUDIO_SYSTEM=Jack
+	    JACK_LIBS="-framework CoreAudio -framework CoreServices -framework AudioUnit -L/usr/local/lib -ljack -lsamplerate"
+            JACK_FLAGS="-I/usr/local/include"
 	fi
 	;;
 esac

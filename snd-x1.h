@@ -269,7 +269,6 @@ int attach_all_sides(Arg *args, int n);
 void widget_int_to_text(Widget w, int val);
 void widget_float_to_text(Widget w, Float val);
 void widget_off_t_to_text(Widget w, off_t val);
-Pixmap rotate_text(Widget w, const char *str, XFontStruct *font, Float angle_in_degrees, int *nw, int *nh, Pixel bg, Pixel fg, GC d_gc);
 void draw_rotated_axis_label(chan_info *cp, GC gc, const char *text, int x0, int y0);
 void ensure_list_row_visible(widget_t list, int row);
 void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows);

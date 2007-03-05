@@ -4,9 +4,13 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
+#if USE_CAIRO
+  #include <cairo/cairo.h>
+#endif
+
 #if HAVE_GL
-#include <gtk/gtkgl.h>
-#include <GL/gl.h>
+  #include <gtk/gtkgl.h>
+  #include <GL/gl.h>
 #endif
 
 #define LOTSA_PIXELS 10000
@@ -61,6 +65,9 @@ typedef struct {
   GdkDrawable *wn;
   PangoFontDescription *current_font;
   GtkWidget *w;
+#if USE_CAIRO
+  cairo_t *cr;
+#endif
 } axis_context;
 
 typedef struct slist {

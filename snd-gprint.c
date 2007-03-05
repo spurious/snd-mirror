@@ -3,7 +3,7 @@
 
 /* or perhaps use both -- GtkPrint and Print as menu options? */
 
-#if HAVE_GTK_PRINT_OPERATION_NEW && (0)
+#if HAVE_GTK_PRINT_OPERATION_NEW && USE_CAIRO
 
 static GtkPrintSettings *settings = NULL;
 
@@ -24,32 +24,32 @@ static void draw_page(GtkPrintOperation *operation, GtkPrintContext *context, gi
   cr = gtk_print_context_get_cairo_context(context);
   width = gtk_print_context_get_width(context);
 
-  cairo_rectangle (cr, 0, 0, width, 10);
+  cairo_rectangle(cr, 0, 0, width, 10);
   
-  cairo_set_source_rgb (cr, 0.8, 0.8, 0.8);
-  cairo_fill_preserve (cr);
+  cairo_set_source_rgb(cr, 0.8, 0.8, 0.8);
+  cairo_fill_preserve(cr);
   
-  cairo_set_source_rgb (cr, 0, 0, 0);
-  cairo_set_line_width (cr, 1);
-  cairo_stroke (cr);
+  cairo_set_source_rgb(cr, 0, 0, 0);
+  cairo_set_line_width(cr, 1);
+  cairo_stroke(cr);
 
-  layout = gtk_print_context_create_pango_layout (context);
+  layout = gtk_print_context_create_pango_layout(context);
 
-  desc = pango_font_description_from_string ("sans 14");
-  pango_layout_set_font_description (layout, desc);
-  pango_font_description_free (desc);
+  desc = pango_font_description_from_string("sans 14");
+  pango_layout_set_font_description(layout, desc);
+  pango_font_description_free(desc);
 
-  pango_layout_set_text (layout, "nope", -1);
-  pango_layout_set_width (layout, width);
-  pango_layout_set_alignment (layout, PANGO_ALIGN_CENTER);
+  pango_layout_set_text(layout, "nope", -1);
+  pango_layout_set_width(layout, width);
+  pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
 			      
-  pango_layout_get_size (layout, NULL, &layout_height);
+  pango_layout_get_size(layout, NULL, &layout_height);
   text_height = (gdouble)layout_height / PANGO_SCALE;
 
-  cairo_move_to (cr, width / 2,  5);
-  pango_cairo_show_layout (cr, layout);
+  cairo_move_to(cr, width / 2,  5);
+  pango_cairo_show_layout(cr, layout);
 
-  g_object_unref (layout);
+  g_object_unref(layout);
 
   update_graph(selected_channel()); /* currently no output */
 }

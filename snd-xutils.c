@@ -577,7 +577,7 @@ void widget_off_t_to_text(Widget w, off_t val)
   FREE(str);
 }
 
-Pixmap rotate_text(Widget w, const char *str, XFontStruct *font, Float angle_in_degrees, int *nw, int *nh, Pixel bg, Pixel fg, GC d_gc)
+static Pixmap rotate_text(Widget w, const char *str, XFontStruct *font, Float angle_in_degrees, int *nw, int *nh, Pixel bg, Pixel fg, GC d_gc)
 {
   /* rotate clockwise by angle_in_degrees degrees (i.e. 45 points text south-east), 
    * new bounding box (text centered in it) returned in nw and nh

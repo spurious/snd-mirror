@@ -1,5 +1,21 @@
 #include "snd.h"
 
+/* currently gl.c depends on gtkglext which uses gdk a lot
+ * snd-draw: draw_polygon
+ *     gchn: draw_pixbuf
+ *     this file of course
+ *     genv: window_clear etc (set_back|foreground primarily)
+ *     gfft: window_clear and set_bg
+ *     gfile: set_bg
+ *     gmain: set_bg (all gc's allocated, pixmaps, colors etc), gdk_set_locale?!?
+ *     gmix: set_bg, draw_drawable
+ *     grec: pixmaps and colors, set_bg, draw_arc|line etc
+ *     gsnd: draw_drawable (pixmaps)
+ *     gutils: set_fg, pango stuff
+ *     gxen: colors
+ *     xg of course
+ */
+
 void draw_line(axis_context *ax, int x0, int y0, int x1, int y1) 
 {
   if (ax->wn == NULL) return;

@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Wed Feb 21 04:34:20 CET 2007
+\ Changed: Tue Feb 27 13:51:29 CET 2007
 
 \ Commentary:
 \
@@ -53,14 +53,12 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 21-Feb-2007" value *clm-version*
+$" fth 27-Feb-2007" value *clm-version*
 
 \ defined in snd/snd-xen.c
-[undefined] snd-print [if] : snd-print ( str -- str )  dup .string           ; [then]
-[undefined] clm-print [if] : clm-print ( fmt args -- ) format snd-print drop ; [then]
-[undefined] clm-message [if]
-  : clm-message { fmt args -- str } ." \ " fmt args fth-print cr ;
-[then]
+[undefined] snd-print   [if] : snd-print   ( str -- str )  dup .string ;             [then]
+[undefined] clm-print   [if] : clm-print   ( fmt args -- ) format snd-print drop ;   [then]
+[undefined] clm-message [if] : clm-message ( fmt args -- str ) ." \ " fth-print cr ; [then]
 
 [undefined] flog10 [if]
   ' flog  alias flog10
@@ -716,22 +714,46 @@ hide
 ;
 : ws-before-output ( ws -- )
   { ws }
-  *clm-table-size*         set-clm-table-size         drop
-  *clm-file-buffer-size*   set-mus-file-buffer-size   drop
-  *clm-array-print-length* set-mus-array-print-length drop
+  ws :old-table-size         clm-table-size         	hash-set!
+  ws :old-file-buffer-size   mus-file-buffer-size   	hash-set!
+  ws :old-array-print-length mus-array-print-length 	hash-set!
+  ws :old-clipping           mus-clipping           	hash-set!
+  ws :old-srate       	     mus-srate        	    	hash-set!
+  ws :old-locsig-type 	     locsig-type      	    	hash-set!
+  ws :old-*output*    	     *output*         	    	hash-set!
+  ws :old-*reverb*    	     *reverb*         	    	hash-set!
+  ws :old-verbose     	     *verbose*        	    	hash-set! 
+  ws :old-debug       	     *clm-debug*      	    	hash-set!
+  ws :old-channels    	     *channels*       	    	hash-set!
+  ws :old-notehook    	     *notehook*       	    	hash-set!
+  ws :old-decay-time  	     *clm-decay-time* 	    	hash-set!
+  ws :verbose                hash-ref  		    	to *verbose*
+  ws :debug                  hash-ref  		    	to *clm-debug*
+  ws :channels               hash-ref  		    	to *channels*
+  ws :notehook               hash-ref  		    	to *notehook*
+  ws :decay-time             hash-ref  		    	to *clm-decay-time*
+  *clm-table-size*           set-clm-table-size         drop
+  *clm-file-buffer-size*     set-mus-file-buffer-size   drop
+  *clm-array-print-length*   set-mus-array-print-length drop
   *clm-clipped* boolean? if *clm-clipped* else #f then set-mus-clipping drop
+  ws :srate                  hash-ref  		    	set-mus-srate   drop
+  ws :locsig-type            hash-ref  		    	set-locsig-type drop
 ;
 : ws-after-output ( ws -- ws )
   { ws }
-  ws :old-*output*    hash-ref to *output*
-  ws :old-*reverb*    hash-ref to *reverb*
-  ws :old-verbose     hash-ref to *verbose*
-  ws :old-debug       hash-ref to *clm-debug*
-  ws :old-channels    hash-ref to *channels*
-  ws :old-srate       hash-ref set-mus-srate drop
-  ws :old-locsig-type hash-ref set-locsig-type drop
-  ws :old-notehook    hash-ref to *notehook*
-  ws :old-decay-time  hash-ref to *clm-decay-time*
+  ws :old-table-size         hash-ref set-clm-table-size         drop
+  ws :old-file-buffer-size   hash-ref set-mus-file-buffer-size   drop
+  ws :old-array-print-length hash-ref set-mus-array-print-length drop
+  ws :old-clipping           hash-ref set-mus-clipping           drop
+  ws :old-srate       	     hash-ref set-mus-srate              drop
+  ws :old-locsig-type 	     hash-ref set-locsig-type            drop
+  ws :old-*output*    	     hash-ref 				 to *output*
+  ws :old-*reverb*    	     hash-ref 				 to *reverb*
+  ws :old-verbose     	     hash-ref 				 to *verbose*
+  ws :old-debug       	     hash-ref 				 to *clm-debug*
+  ws :old-channels    	     hash-ref 				 to *channels*
+  ws :old-notehook    	     hash-ref 				 to *notehook*
+  ws :old-decay-time  	     hash-ref 				 to *clm-decay-time*
   *ws-args* array-pop
 ;
 : ws-statistics ( ws -- )
@@ -840,22 +862,7 @@ set-current
   { body-xt ws }
   body-xt xt? body-xt proc? || body-xt 1 $" a proc or xt" assert-type
   ws hash?                     ws      2 $" a hash"       assert-type
-  ws :old-*output*    *output*         hash-set!
-  ws :old-*reverb*    *reverb*         hash-set!
-  ws :old-verbose     *verbose*        hash-set! 
-  ws :verbose                          hash-ref  to *verbose*
-  ws :old-debug       *clm-debug*      hash-set!
-  ws :debug                            hash-ref  to *clm-debug*
-  ws :old-channels    *channels*       hash-set!
-  ws :channels                         hash-ref  to *channels*
-  ws :old-srate       mus-srate        hash-set!
-  ws :srate                            hash-ref  set-mus-srate drop
-  ws :old-locsig-type locsig-type      hash-set!
-  ws :locsig-type                      hash-ref  set-locsig-type drop
-  ws :old-notehook    *notehook*       hash-set!
-  ws :notehook                         hash-ref  to *notehook*
-  ws :old-decay-time  *clm-decay-time* hash-set!
-  ws :decay-time                       hash-ref  to *clm-decay-time*
+  ws ws-before-output
   ws :reverb hash-ref { reverb-xt }
   reverb-xt if
     reverb-xt xt? reverb-xt proc? || reverb-xt 3 $" a proc or xt" assert-type
@@ -899,7 +906,6 @@ set-current
       'with-sound-error '( get-func-name $" cannot open reverb sample->file" _ ) fth-throw
     then
   then
-  ws ws-before-output
   ws :timer make-timer hash-set!
   \ compute ws body
   *clm-debug* if
