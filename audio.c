@@ -1294,7 +1294,7 @@ static void describe_audio_state_1(void)
 
 /* ------------------------------- OSS ----------------------------------------- */
 
-#if (HAVE_OSS || HAVE_ALSA || HAVE_JACK)
+#if (HAVE_OSS || HAVE_ALSA || HAVE_JACK_IN_LINUX)
 /* actually it's not impossible that someday we'll have ALSA but not OSS... */
 #define AUDIO_OK
 
@@ -3219,7 +3219,7 @@ AUDIO_INFO:
 /* ------------------------------- ALSA, OSS, Jack ----------------------------------- */
 /* API being used */
 
-static int api = ALSA_API;
+static int api = MUS_ALSA_API;
 int mus_audio_api(void) {return(api);}
 
 /* hopefully first call to sndlib will be this... */
@@ -3327,21 +3327,21 @@ static void describe_audio_state_1(void)
   vect_describe_audio_state_1();
 }
 
-#if HAVE_JACK
+#if HAVE_JACK_IN_LINUX
   static int jack_mus_audio_initialize(void);
 #endif
 
 #if (!HAVE_ALSA)
 static int probe_api(void) 
 {
-#if HAVE_JACK
+#if HAVE_JACK_IN_LINUX
   {
     int jackprobe = jack_mus_audio_initialize();
     if (jackprobe == MUS_ERROR)
       {
 #endif
   /* go for the oss api */
-  api = OSS_API;
+  api = MUS_OSS_API;
   vect_mus_audio_initialize = oss_mus_audio_initialize;
   vect_mus_oss_set_buffers = oss_mus_oss_set_buffers;
   vect_mus_audio_systems = oss_mus_audio_systems;
@@ -3356,7 +3356,7 @@ static int probe_api(void)
   vect_mus_audio_mixer_write = oss_mus_audio_mixer_write;
   vect_describe_audio_state_1 = oss_describe_audio_state_1;
   return(vect_mus_audio_initialize());
-#if HAVE_JACK
+#if HAVE_JACK_IN_LINUX
       }
     return(jackprobe);
   }
@@ -3469,7 +3469,7 @@ static void  alsa_describe_audio_state_1(void);
 
 static int probe_api(void) 
 {
-#if HAVE_JACK
+#if HAVE_JACK_IN_LINUX
   int jackprobe;
   jackprobe = jack_mus_audio_initialize();
   if (jackprobe == MUS_ERROR)
@@ -3479,7 +3479,7 @@ static int probe_api(void)
     if ((snd_card_next(&card) >= 0) && (card >= 0))
       {
 	/* the alsa library has detected one or more cards */
-	api = ALSA_API;
+	api = MUS_ALSA_API;
 	vect_mus_audio_initialize = alsa_mus_audio_initialize;
 	vect_mus_oss_set_buffers = alsa_mus_oss_set_buffers;
 	vect_mus_audio_systems = alsa_mus_audio_systems;
@@ -3497,7 +3497,7 @@ static int probe_api(void)
     else 
       {
 	/* go for the oss api */
-        api = OSS_API;
+        api = MUS_OSS_API;
 	vect_mus_audio_initialize = oss_mus_audio_initialize;
 	vect_mus_oss_set_buffers = oss_mus_oss_set_buffers;
 	vect_mus_audio_systems = oss_mus_audio_systems;
@@ -3514,7 +3514,7 @@ static int probe_api(void)
       }
     /* will the _real_ mus_audio_initialize please stand up? */
     return(vect_mus_audio_initialize());
-#if HAVE_JACK
+#if HAVE_JACK_IN_LINUX
     }
   return(jackprobe);
 #endif
@@ -8431,7 +8431,7 @@ static int   jack_mus_audio_mixer_read(int ur_dev, int field, int chan, float *v
 static int   jack_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val);
 static void  jack_describe_audio_state_1(void);
 
-#if !(defined(HAVE_JACK)) // Ie. Not using Linux.
+#if (!HAVE_JACK_IN_LINUX) // Ie. Not using Linux.
 int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size) 
 {
   return(jack_mus_audio_open_output(ur_dev, srate, chans, format, size));
@@ -8472,10 +8472,24 @@ static void describe_audio_state_1(void)
   jack_describe_audio_state_1();
 }
 
-static int mus_audio_initialize(void){
+int mus_audio_initialize(void){
   return jack_mus_audio_initialize();
 }
 
+int mus_audio_systems(void) 
+{
+  return(jack_mus_audio_systems());
+}
+
+char* mus_audio_system_name(int system) 
+{
+  return(jack_mus_audio_system_name(system));
+}
+
+char* mus_audio_moniker(void) 
+{
+  return(jack_mus_audio_moniker());
+}
 #endif
 
 
@@ -8501,7 +8515,7 @@ static int jack_mus_audio_initialize(void) {
 
   atexit(sndjack_cleanup);
 
-  api = JACK_API;
+  api = MUS_JACK_API;
   vect_mus_audio_initialize = jack_mus_audio_initialize;
   vect_mus_oss_set_buffers = jack_mus_oss_set_buffers;
   vect_mus_audio_systems = jack_mus_audio_systems;
@@ -8551,6 +8565,7 @@ static pid_t jack_mus_player_pid;
 static pthread_t jack_mus_watchdog_thread;
 
 static void *jack_mus_audio_watchdog(void *arg){
+#if JAVE_JACK
   struct sched_param par;
 
   par.sched_priority = sched_get_priority_max(SCHED_RR);
@@ -8590,12 +8605,14 @@ static void *jack_mus_audio_watchdog(void *arg){
   }
  exit:
   fprintf(stderr,"SNDLIB: Watchdog exiting\n");
+#endif
   return NULL;
 }
 
 
 
 static void jack_mus_audio_set_realtime(void){
+#if HAVE_JACK_IN_LINUX
   struct sched_param par;
   static int watchdog_started=0;
 
@@ -8617,14 +8634,17 @@ static void jack_mus_audio_set_realtime(void){
   }{
     //fprintf(stderr,"Set realtime priority\n");
   }
+#endif
 }
 
 static void jack_mus_audio_set_non_realtime(void){
+#if HAVE_JACK_IN_LINUX
   struct sched_param par;
   par.sched_priority = 0;
   sched_setscheduler(0,SCHED_OTHER,&par);
   //fprintf(stderr,"Set non-realtime priority\n");
   jack_mus_isrunning=0;
+#endif
 }
 
 int jack_mus_audio_open_output(int dev, int srate, int chans, int format, int size){
@@ -9866,7 +9886,7 @@ void mus_reset_audio_c(void)
 
 int mus_audio_compatible_format(int dev) 
 {
-#if HAVE_ALSA || HAVE_JACK
+#if HAVE_ALSA || HAVE_JACK_IN_LINUX
   int err, i;
   float val[32];
   int ival[32];

@@ -3331,9 +3331,9 @@
 (hey "      XEN_DEFINE(\"xg-version\", C_TO_XEN_STRING(\"~A\"));~%" (strftime "%d-%b-%y" (localtime (current-time))))
 (hey "      xg_already_inited = true;~%")
 
-(hey "/* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */~%")
 (hey "#if HAVE_SCHEME~%")
-(hey "      /* using awkward dotted list as optional arg for gauche's sake */~%")
+(hey "      /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */~%")
+(hey "      /*   using awkward dotted list as optional arg for gauche's sake */~%")
 (hey "      XEN_EVAL_C_STRING(\"(define (g_signal_connect obj name func . data) \\~%\
                            (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f 0))\");~%")
 (hey "      XEN_EVAL_C_STRING(\"(define (g_signal_connect_after obj name func . data) \\~%\

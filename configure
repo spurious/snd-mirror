@@ -14058,6 +14058,77 @@ _ACEOF
 
 fi
 
+	echo "$as_me:$LINENO: checking for gdk_cairo_create in -lm" >&5
+echo $ECHO_N "checking for gdk_cairo_create in -lm... $ECHO_C" >&6
+if test "${ac_cv_lib_m_gdk_cairo_create+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lm $GTK_LIBS $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char gdk_cairo_create ();
+int
+main ()
+{
+gdk_cairo_create ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_m_gdk_cairo_create=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_m_gdk_cairo_create=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_m_gdk_cairo_create" >&5
+echo "${ECHO_T}$ac_cv_lib_m_gdk_cairo_create" >&6
+if test $ac_cv_lib_m_gdk_cairo_create = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_GDK_CAIRO_CREATE 1
+_ACEOF
+
+fi
+
 
 	XLIBS=""
       	XFLAGS=""
@@ -18588,6 +18659,8 @@ _ACEOF
 
           	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
           	   JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
+# TODO: else (on mac) JACK_LIBS -framework CoreAudio -framework CoreServices -framework AudioUnit -L/usr/local/lib -ljack -lsamplerate
+#                     and -I/usr/local/include in JACK_FLAGS
                fi
             fi
 fi
@@ -18877,7 +18950,7 @@ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 			 AUDIO_LIB="-lasound -lsamplerate"
 	              fi
 		      cat >>confdefs.h <<\_ACEOF
-#define HAVE_JACK 1
+#define HAVE_JACK_IN_LINUX 1
 _ACEOF
 
 		    fi
@@ -18891,7 +18964,7 @@ _ACEOF
  		;;
 	    JACK)
 		cat >>confdefs.h <<\_ACEOF
-#define HAVE_JACK 1
+#define HAVE_JACK_IN_LINUX 1
 _ACEOF
 
 		cat >>confdefs.h <<\_ACEOF
@@ -19920,6 +19993,11 @@ echo "${ECHO_T}no" >&6
     fi
   fi
 fi
+
+
+#--------------------------------------------------------------------------------
+# debugging flag
+#--------------------------------------------------------------------------------
 
 # Check whether --enable-snd-debug or --disable-snd-debug was given.
 if test "${enable_snd_debug+set}" = set; then
@@ -22379,6 +22457,11 @@ if test "$with_snd_as_widget" != yes ; then
     fi
   fi
 fi
+
+
+#--------------------------------------------------------------------------------
+# error checks, output
+#--------------------------------------------------------------------------------
 
 if test "$ac_snd_have_extension_language" = no ; then
   if test "$ac_snd_have_gui" = no ; then

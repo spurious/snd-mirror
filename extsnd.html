@@ -2948,7 +2948,8 @@ region-sample-reader? returns #t if 'obj' is a region sample-reader.
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="samplereaderatendQ">sample-reader-at-end?</a> (obj)</code>
 </td></tr><tr><td></td><td>
 sample-reader-at-end? returns #t if the sample-reader 'obj' (any kind of reader) is at the end of the sound (or whatever it is reading),
-and hence is returning 0.0 each time it is called.
+and hence is returning 0.0 each time it is called.  When the last "real" sample is returned, the at-end? flag is still false; when it
+becomes true, the sample-reader returns a 0.0 sample.
 See <a href="sndscm.html#locatezero">locate-zero</a> in examp.scm, or <a href="sndscm.html#linearsrcchannel">linear-src-channel</a> in dsp.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 

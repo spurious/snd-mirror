@@ -384,11 +384,9 @@ int mus_float_array_to_file(const char *filename, Float *ddata, int len, int sra
 
 /* -------- audio.c -------- */
 
-#if (HAVE_OSS || HAVE_ALSA || HAVE_JACK)
-  #define ALSA_API 0
-  #define OSS_API 1
-  #define JACK_API 2
-#endif
+#define MUS_ALSA_API 0
+#define MUS_OSS_API 1
+#define MUS_JACK_API 2
 
 void mus_audio_describe(void);
 char *mus_audio_report(void);
@@ -450,7 +448,7 @@ bool mus_file_probe(const char *arg);
 int mus_file_open_write(const char *arg);
 int mus_file_create(const char *arg);
 int mus_file_reopen_write(const char *arg);
-  int mus_file_close(int fd);
+int mus_file_close(int fd);
 off_t mus_file_seek_frame(int tfd, off_t frame);
 int mus_file_read(int fd, int beg, int end, int chans, mus_sample_t **bufs);
 int mus_file_read_chans(int fd, int beg, int end, int chans, mus_sample_t **bufs, mus_sample_t **cm);
@@ -605,6 +603,12 @@ char *strdup(const char *str);
 #endif
 #if (!HAVE_FILENO)
 int fileno(FILE *fp);
+#endif
+
+#ifndef SNDLIB_DISABLE_DEPRECATED
+  #define ALSA_API MUS_ALSA_API
+  #define OSS_API MUS_OSS_API
+  #define JACK_API MUS_JACK_API
 #endif
 
 #ifdef __cplusplus

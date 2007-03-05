@@ -1184,10 +1184,10 @@
 (CINT "GDK_INTERP_TILES" "GdkInterpType")
 (CINT "GDK_INTERP_BILINEAR" "GdkInterpType")
 (CINT "GDK_INTERP_HYPER" "GdkInterpType")
-(CINT "GDK_PIXBUF_MAJOR")
-(CINT "GDK_PIXBUF_MINOR")
-(CINT "GDK_PIXBUF_MICRO")
-(CSTR "GDK_PIXBUF_VERSION")
+;;;; (CINT "GDK_PIXBUF_MAJOR")
+;;;; (CINT "GDK_PIXBUF_MINOR")
+;;;; (CINT "GDK_PIXBUF_MICRO")
+;;;; (CSTR "GDK_PIXBUF_VERSION")
 (CLNG "GDK_TYPE_PIXBUF_LOADER")
 (CCAST "GDK_PIXBUF_LOADER(obj)" "GdkPixbufLoader*")
 (CCHK "GDK_IS_PIXBUF_LOADER(obj)" "GdkPixbufLoader*")
@@ -3303,11 +3303,11 @@
 (CCHK "GTK_IS_VBUTTON_BOX(obj)" "GtkVButtonBox*")
 (CFNC "GtkType gtk_vbutton_box_get_type void")
 (CFNC "GtkWidget* gtk_vbutton_box_new void")
-(CINT "GTK_MAJOR_VERSION")
-(CINT "GTK_MINOR_VERSION")
-(CINT "GTK_MICRO_VERSION")
-(CINT "GTK_BINARY_AGE")
-(CINT "GTK_INTERFACE_AGE")
+;;;; (CINT "GTK_MAJOR_VERSION")
+;;;; (CINT "GTK_MINOR_VERSION")
+;;;; (CINT "GTK_MICRO_VERSION")
+;;;; (CINT "GTK_BINARY_AGE")
+;;;; (CINT "GTK_INTERFACE_AGE")
 (CCAST "GTK_VIEWPORT(obj)" "GtkViewport*")
 (CCHK "GTK_IS_VIEWPORT(obj)" "GtkViewport*")
 (CFNC "GtkType gtk_viewport_get_type void")
@@ -6536,10 +6536,12 @@
 (CFNC-210 "void pango_cairo_layout_path cairo_t* cr PangoLayout* layout")
 (CFNC-210 "void pango_cairo_error_underline_path cairo_t* cr gdouble x gdouble y gdouble width gdouble height")
 
-
-
-
-;;; TODO: try simple cairo examples and print dialog -> grfsnd
+(CFNC-210 "cairo_t* gdk_cairo_create GdkDrawable* drawable")
+(CFNC-210 "void gdk_cairo_set_source_color cairo_t* cr GdkColor* color")
+(CFNC-210 "void gdk_cairo_set_source_pixbuf cairo_t* cr GdkPixbuf* pixbuf double pixbuf_x double pixbuf_y")
+(CFNC-210 "void gdk_cairo_set_source_pixmap cairo_t* cr GdkPixmap* pixmap double pixmap_x double pixmap_y")
+(CFNC-210 "void gdk_cairo_rectangle cairo_t* cr GdkRectangle* rectangle")
+(CFNC-210 "void gdk_cairo_region cairo_t* cr GdkRegion* region")
 
 
 ;;; pango 1.15.0

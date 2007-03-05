@@ -32841,6 +32841,64 @@ gdouble y, gdouble width, gdouble height)"
   return(XEN_FALSE);
 }
 
+static XEN gxg_gdk_cairo_create(XEN drawable)
+{
+  #define H_gdk_cairo_create "cairo_t* gdk_cairo_create(GdkDrawable* drawable)"
+  XEN_ASSERT_TYPE(XEN_GdkDrawable__P(drawable), drawable, 1, "gdk_cairo_create", "GdkDrawable*");
+  return(C_TO_XEN_cairo_t_(gdk_cairo_create(XEN_TO_C_GdkDrawable_(drawable))));
+}
+
+static XEN gxg_gdk_cairo_set_source_color(XEN cr, XEN color)
+{
+  #define H_gdk_cairo_set_source_color "void gdk_cairo_set_source_color(cairo_t* cr, GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "gdk_cairo_set_source_color", "cairo_t*");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gdk_cairo_set_source_color", "GdkColor*");
+  gdk_cairo_set_source_color(XEN_TO_C_cairo_t_(cr), XEN_TO_C_GdkColor_(color));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_cairo_set_source_pixbuf(XEN cr, XEN pixbuf, XEN pixbuf_x, XEN pixbuf_y)
+{
+  #define H_gdk_cairo_set_source_pixbuf "void gdk_cairo_set_source_pixbuf(cairo_t* cr, GdkPixbuf* pixbuf, \
+double pixbuf_x, double pixbuf_y)"
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "gdk_cairo_set_source_pixbuf", "cairo_t*");
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 2, "gdk_cairo_set_source_pixbuf", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_double_P(pixbuf_x), pixbuf_x, 3, "gdk_cairo_set_source_pixbuf", "double");
+  XEN_ASSERT_TYPE(XEN_double_P(pixbuf_y), pixbuf_y, 4, "gdk_cairo_set_source_pixbuf", "double");
+  gdk_cairo_set_source_pixbuf(XEN_TO_C_cairo_t_(cr), XEN_TO_C_GdkPixbuf_(pixbuf), XEN_TO_C_double(pixbuf_x), XEN_TO_C_double(pixbuf_y));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_cairo_set_source_pixmap(XEN cr, XEN pixmap, XEN pixmap_x, XEN pixmap_y)
+{
+  #define H_gdk_cairo_set_source_pixmap "void gdk_cairo_set_source_pixmap(cairo_t* cr, GdkPixmap* pixmap, \
+double pixmap_x, double pixmap_y)"
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "gdk_cairo_set_source_pixmap", "cairo_t*");
+  XEN_ASSERT_TYPE(XEN_GdkPixmap__P(pixmap), pixmap, 2, "gdk_cairo_set_source_pixmap", "GdkPixmap*");
+  XEN_ASSERT_TYPE(XEN_double_P(pixmap_x), pixmap_x, 3, "gdk_cairo_set_source_pixmap", "double");
+  XEN_ASSERT_TYPE(XEN_double_P(pixmap_y), pixmap_y, 4, "gdk_cairo_set_source_pixmap", "double");
+  gdk_cairo_set_source_pixmap(XEN_TO_C_cairo_t_(cr), XEN_TO_C_GdkPixmap_(pixmap), XEN_TO_C_double(pixmap_x), XEN_TO_C_double(pixmap_y));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_cairo_rectangle(XEN cr, XEN rectangle)
+{
+  #define H_gdk_cairo_rectangle "void gdk_cairo_rectangle(cairo_t* cr, GdkRectangle* rectangle)"
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "gdk_cairo_rectangle", "cairo_t*");
+  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(rectangle), rectangle, 2, "gdk_cairo_rectangle", "GdkRectangle*");
+  gdk_cairo_rectangle(XEN_TO_C_cairo_t_(cr), XEN_TO_C_GdkRectangle_(rectangle));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_cairo_region(XEN cr, XEN region)
+{
+  #define H_gdk_cairo_region "void gdk_cairo_region(cairo_t* cr, GdkRegion* region)"
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "gdk_cairo_region", "cairo_t*");
+  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 2, "gdk_cairo_region", "GdkRegion*");
+  gdk_cairo_region(XEN_TO_C_cairo_t_(cr), XEN_TO_C_GdkRegion_(region));
+  return(XEN_FALSE);
+}
+
 #endif
 
 #define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))
@@ -38410,6 +38468,12 @@ XEN_NARGIFY_3(gxg_pango_cairo_glyph_string_path_w, gxg_pango_cairo_glyph_string_
 XEN_NARGIFY_2(gxg_pango_cairo_layout_line_path_w, gxg_pango_cairo_layout_line_path)
 XEN_NARGIFY_2(gxg_pango_cairo_layout_path_w, gxg_pango_cairo_layout_path)
 XEN_NARGIFY_5(gxg_pango_cairo_error_underline_path_w, gxg_pango_cairo_error_underline_path)
+XEN_NARGIFY_1(gxg_gdk_cairo_create_w, gxg_gdk_cairo_create)
+XEN_NARGIFY_2(gxg_gdk_cairo_set_source_color_w, gxg_gdk_cairo_set_source_color)
+XEN_NARGIFY_4(gxg_gdk_cairo_set_source_pixbuf_w, gxg_gdk_cairo_set_source_pixbuf)
+XEN_NARGIFY_4(gxg_gdk_cairo_set_source_pixmap_w, gxg_gdk_cairo_set_source_pixmap)
+XEN_NARGIFY_2(gxg_gdk_cairo_rectangle_w, gxg_gdk_cairo_rectangle)
+XEN_NARGIFY_2(gxg_gdk_cairo_region_w, gxg_gdk_cairo_region)
 #endif
 
 XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)
@@ -42434,6 +42498,12 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_pango_cairo_layout_line_path_w gxg_pango_cairo_layout_line_path
 #define gxg_pango_cairo_layout_path_w gxg_pango_cairo_layout_path
 #define gxg_pango_cairo_error_underline_path_w gxg_pango_cairo_error_underline_path
+#define gxg_gdk_cairo_create_w gxg_gdk_cairo_create
+#define gxg_gdk_cairo_set_source_color_w gxg_gdk_cairo_set_source_color
+#define gxg_gdk_cairo_set_source_pixbuf_w gxg_gdk_cairo_set_source_pixbuf
+#define gxg_gdk_cairo_set_source_pixmap_w gxg_gdk_cairo_set_source_pixmap
+#define gxg_gdk_cairo_rectangle_w gxg_gdk_cairo_rectangle
+#define gxg_gdk_cairo_region_w gxg_gdk_cairo_region
 #endif
 
 #define gxg_GPOINTER_w gxg_GPOINTER
@@ -46465,6 +46535,12 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_cairo_layout_line_path, gxg_pango_cairo_layout_line_path_w, 2, 0, 0, H_pango_cairo_layout_line_path);
   XG_DEFINE_PROCEDURE(pango_cairo_layout_path, gxg_pango_cairo_layout_path_w, 2, 0, 0, H_pango_cairo_layout_path);
   XG_DEFINE_PROCEDURE(pango_cairo_error_underline_path, gxg_pango_cairo_error_underline_path_w, 5, 0, 0, H_pango_cairo_error_underline_path);
+  XG_DEFINE_PROCEDURE(gdk_cairo_create, gxg_gdk_cairo_create_w, 1, 0, 0, H_gdk_cairo_create);
+  XG_DEFINE_PROCEDURE(gdk_cairo_set_source_color, gxg_gdk_cairo_set_source_color_w, 2, 0, 0, H_gdk_cairo_set_source_color);
+  XG_DEFINE_PROCEDURE(gdk_cairo_set_source_pixbuf, gxg_gdk_cairo_set_source_pixbuf_w, 4, 0, 0, H_gdk_cairo_set_source_pixbuf);
+  XG_DEFINE_PROCEDURE(gdk_cairo_set_source_pixmap, gxg_gdk_cairo_set_source_pixmap_w, 4, 0, 0, H_gdk_cairo_set_source_pixmap);
+  XG_DEFINE_PROCEDURE(gdk_cairo_rectangle, gxg_gdk_cairo_rectangle_w, 2, 0, 0, H_gdk_cairo_rectangle);
+  XG_DEFINE_PROCEDURE(gdk_cairo_region, gxg_gdk_cairo_region_w, 2, 0, 0, H_gdk_cairo_region);
 #endif
 
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, "(GPOINTER obj) casts obj to GPOINTER");
@@ -47699,9 +47775,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_INTERP_TILES);
   DEFINE_INTEGER(GDK_INTERP_BILINEAR);
   DEFINE_INTEGER(GDK_INTERP_HYPER);
-  DEFINE_INTEGER(GDK_PIXBUF_MAJOR);
-  DEFINE_INTEGER(GDK_PIXBUF_MINOR);
-  DEFINE_INTEGER(GDK_PIXBUF_MICRO);
   DEFINE_INTEGER(GTK_ACCEL_VISIBLE);
   DEFINE_INTEGER(GTK_ACCEL_LOCKED);
   DEFINE_INTEGER(GTK_ACCEL_MASK);
@@ -47978,11 +48051,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_TREE_VIEW_DROP_AFTER);
   DEFINE_INTEGER(GTK_TREE_VIEW_DROP_INTO_OR_BEFORE);
   DEFINE_INTEGER(GTK_TREE_VIEW_DROP_INTO_OR_AFTER);
-  DEFINE_INTEGER(GTK_MAJOR_VERSION);
-  DEFINE_INTEGER(GTK_MINOR_VERSION);
-  DEFINE_INTEGER(GTK_MICRO_VERSION);
-  DEFINE_INTEGER(GTK_BINARY_AGE);
-  DEFINE_INTEGER(GTK_INTERFACE_AGE);
   DEFINE_INTEGER(GTK_TOPLEVEL);
   DEFINE_INTEGER(GTK_NO_WINDOW);
   DEFINE_INTEGER(GTK_REALIZED);
@@ -48804,7 +48872,6 @@ static void define_strings(void)
 {
   
   #define DEFINE_STRING(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))
-  DEFINE_STRING(GDK_PIXBUF_VERSION);
   DEFINE_STRING(GTK_STOCK_DIALOG_INFO);
   DEFINE_STRING(GTK_STOCK_DIALOG_WARNING);
   DEFINE_STRING(GTK_STOCK_DIALOG_ERROR);
@@ -48960,7 +49027,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("04-Mar-07"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("05-Mar-07"));
       xg_already_inited = true;
 /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
 #if HAVE_SCHEME

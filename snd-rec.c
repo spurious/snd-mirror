@@ -174,7 +174,7 @@ int recorder_sort_mixer_device(struct Wdesc *wd, int i, int chan, bool input, in
   /* treble and bass are actually stereo -- we'll do both at once */
   if (!input)
     {
-      if (mus_audio_api() == ALSA_API) 
+      if (mus_audio_api() == MUS_ALSA_API) 
 	{
 	  /* the existing code assumes there are tone controls and that
 	   * a certain device is the output (MUS_AUDIO_DAC_OUT), for now
@@ -689,9 +689,9 @@ void fire_up_recorder(void)
   for (i = 0; i < rp->possible_input_chans; i++) 
     rp->input_channel_active[i] = true; 
 
-  if (mus_audio_api() == ALSA_API) 
+  if (mus_audio_api() == MUS_ALSA_API) 
     {
-      /* ALSA_API: Select first input device for each system */
+      /* MUS_ALSA_API: Select first input device for each system */
 
       /* FIXME: there is one srate, format and so on for each system. The current code
        * is not checking for them being compatible. At least srate and buffer length
@@ -830,7 +830,7 @@ void fire_up_recorder(void)
     }
   else
     {
-      /* OSS_API */
+      /* MUS_OSS_API */
       for (i = 0; i < rp->systems; i++)
 	{
 	  if (!(raw_input_bufs[i]))
@@ -1089,11 +1089,11 @@ void recorder_characterize_devices(int devs, int output_devices)
 #if (HAVE_ALSA || HAVE_OSS)
 	  device = (int)audval[i + 1];
 	  /* FIXME: have not looked to see if oss sndlib supports MUS_AUDIO_DIRECTION */
-	  if ((mus_audio_api() == ALSA_API && 
+	  if ((mus_audio_api() == MUS_ALSA_API && 
 	       ((err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | device, MUS_AUDIO_DIRECTION, 0, &direction)) == MUS_NO_ERROR) &&
 	       (int)direction == 1) 
 	      ||
-	      (mus_audio_api() == OSS_API &&
+	      (mus_audio_api() == MUS_OSS_API &&
 	       recorder_input_device(device)))
 #else
 	    device = (int)audval[i + 1];
@@ -1113,7 +1113,7 @@ void recorder_characterize_devices(int devs, int output_devices)
 	}
     }
 #if (HAVE_ALSA || HAVE_OSS)
-  if (mus_audio_api() == ALSA_API) 
+  if (mus_audio_api() == MUS_ALSA_API) 
     {
       /* search for output devices, first one wins, previous code
        * was assuming one particular device existed */

@@ -958,6 +958,7 @@ else
 	AC_CHECK_LIB(m, gtk_label_get_line_wrap_mode, [AC_DEFINE(HAVE_GTK_LABEL_GET_LINE_WRAP_MODE)], ,$GTK_LIBS)
 	# for 2.10.0
 	AC_CHECK_LIB(m, gtk_print_operation_new, [AC_DEFINE(HAVE_GTK_PRINT_OPERATION_NEW)], ,$GTK_LIBS)
+	AC_CHECK_LIB(m, gdk_cairo_create, [AC_DEFINE(HAVE_GDK_CAIRO_CREATE)], ,$GTK_LIBS)
 
 	XLIBS=""
       	XFLAGS=""
@@ -1549,6 +1550,8 @@ if test "$with_jack" = yes ; then
                    AC_DEFINE_UNQUOTED(MUS_JACK_VERSION,"${jack_version}")
           	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
           	   JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
+# TODO: else (on mac) JACK_LIBS -framework CoreAudio -framework CoreServices -framework AudioUnit -L/usr/local/lib -ljack -lsamplerate
+#                     and -I/usr/local/include in JACK_FLAGS
                fi
             fi
 fi
@@ -1635,7 +1638,7 @@ case "$host" in
 		      else
 			 AUDIO_LIB="-lasound -lsamplerate"
 	              fi
-		      AC_DEFINE(HAVE_JACK)
+		      AC_DEFINE(HAVE_JACK_IN_LINUX)
 		    fi
  		else
          	    AUDIO_SYSTEM=OSS
@@ -1643,7 +1646,7 @@ case "$host" in
  		fi
  		;;
 	    JACK)
-		AC_DEFINE(HAVE_JACK)
+		AC_DEFINE(HAVE_JACK_IN_LINUX)
 		AC_DEFINE(HAVE_OSS)
 		AUDIO_LIB="-lsamplerate"
 		;;

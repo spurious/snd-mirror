@@ -1436,4 +1436,28 @@ Reverb-feedback sets the scaler on the feedback.
 	    (g_object_ref (GPOINTER settings))))
 
       (g_object_unref (GPOINTER operation)))))
+
+
+;;; and an example of drawing in a Snd graph:
+
+(define* (c-circles :optional (xc 5.0)  (yc 5.0) (radius 100.0) (width 2))
+  (let* ((drawer (car (channel-widgets)))
+	 (cr (gdk_cairo_create (GDK_DRAWABLE (.window drawer)))))
+
+    (let ((angle1 0)
+	  (angle2 pi))
+      (cairo_arc cr xc yc radius angle1 angle2)
+      (cairo_stroke cr)
+      (cairo_set_source_rgba cr 1 0.2 0.2 0.6)
+      (cairo_arc cr xc yc 5 0 (* 2 pi))
+      (cairo_fill cr)
+      (cairo_set_line_width cr width)
+      (cairo_arc cr xc yc radius angle1 angle1)
+      (cairo_line_to cr xc yc)
+      (cairo_arc cr xc yc radius angle2 angle2)
+      (cairo_line_to cr xc yc)
+      (cairo_stroke cr))
+
+    (cairo_destroy cr)))
+
 |#

@@ -1787,7 +1787,7 @@ static bool start_audio_output_1(void)
   int oss_available_chans = 2;
 
   /* -------------------- ALSA not OSS -------------------- */
-  if (mus_audio_api() == ALSA_API) 
+  if (mus_audio_api() == MUS_ALSA_API) 
     {
       scan_audio_devices();
       /* allocate devices for playback */
@@ -1927,7 +1927,7 @@ static bool start_audio_output_1(void)
     {
 
       /* -------------------- OSS not ALSA -------------------- */
-      /* api == OSS_API */
+      /* api == MUS_OSS_API -- MUS_JACK_API should not intrude here because we're in HAVE_ALSA || HAVE_OSS */
       if (snd_dacp->channels > 2)
 	{
 	  err = mus_audio_mixer_read(audio_output_device(ss), MUS_AUDIO_CHANNEL, 0, val);

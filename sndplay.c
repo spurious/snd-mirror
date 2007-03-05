@@ -604,7 +604,7 @@ int main(int argc, char *argv[])
   mus_sound_initialize();
  
 #if HAVE_ALSA
-  if (mus_audio_api() == ALSA_API)
+  if (mus_audio_api() == MUS_ALSA_API)
     {
       main_alsa(argc, argv);
       return(0);
