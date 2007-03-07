@@ -917,23 +917,22 @@ void color_listener_text(GdkColor *pix)
 
 void handle_listener(bool open)
 {
-  if (open)
+  if ((open) && (!listener_text))
+    make_command_widget(100);
+
+  if ((SOUND_PANE(ss)) && /* might be run -separate with no sound open */
+      (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS))
     {
-      int hgt;
-      if (!listener_text)
-	make_command_widget(100);
-      hgt = widget_height(SOUND_PANE(ss));
-      if (hgt > 100) /* we can get here before the sound window has opened, but with one pending.
-		      *   the position is in terms of current size, which is useless in this case.
-		      */
+      if (open)
 	{
-	  if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
+	  int hgt = 0;
+	  hgt = widget_height(SOUND_PANE(ss));
+	  if (hgt > 100) /* we can get here before the sound window has opened, but with one pending.
+			  *   the position is in terms of current size, which is useless in this case.
+			  */
 	    gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), (gint)(hgt * .75));
 	}
-    }
-  else
-    {
-      if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
+      else
 	gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), widget_height(SOUND_PANE(ss)));
     }
 }
