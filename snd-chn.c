@@ -3122,6 +3122,39 @@ static void display_channel_data_with_size(chan_info *cp,
 	    }
 	}
     }
+#if USE_CAIRO
+  /* clear old context, make new ones as needed */
+  if ((ap) &&  (ap->ax))
+    {
+      if (ap->ax->cr)
+	{
+	  cairo_destroy(ap->ax->cr);  
+	  ap->ax->cr = NULL;
+	}
+      if (with_time)
+	ap->ax->cr = gdk_cairo_create(ap->ax->wn);
+    }
+  if ((uap) && (uap->ax))
+    {
+      if (uap->ax->cr) 
+	{
+	  cairo_destroy(uap->ax->cr); 
+	  uap->ax->cr = NULL;
+	}
+      if (with_lisp)
+	uap->ax->cr = gdk_cairo_create(ap->ax->wn);
+    }
+  if ((fap) && (fap->ax))
+    {
+      if (fap->ax->cr)
+	{
+	  cairo_destroy(fap->ax->cr); 
+	  fap->ax->cr = NULL;
+	}
+      if (with_fft)
+	fap->ax->cr = gdk_cairo_create(ap->ax->wn);
+    }
+#endif
 
   if (displays == 0)
     {
