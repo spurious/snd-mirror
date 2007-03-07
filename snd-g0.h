@@ -53,12 +53,26 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 
 #define SG_SIGNAL_CONNECT(Widget, Signal, Function, Data) g_signal_connect(G_OBJECT(Widget), Signal, G_CALLBACK(Function), (gpointer)Data)
 
-#define Cessator guint
-#define Cessate gboolean
-#define Indicium gpointer
-#define Locus gint16
-#define Latus guint16
-#define Tempus guint32
+#define idle_t guint
+#define idle_func_t gboolean
+#define any_pointer_t gpointer
+#define color_t GdkColor *
+#define oclock_t guint32
+
+#define rgb_t unsigned short
+#define RGB_MAX 65535
+#define FLOAT_TO_RGB(Val) (rgb_t)(RGB_MAX * (Val))
+#define RGB_TO_FLOAT(Val) (float)((float)(Val) / (float)RGB_MAX)
+
+#if 0
+typedef struct color_t {
+{
+  guint32 pixel;
+  rgb_t red;
+  rgb_t green;
+  rgb_t blue;
+};
+#endif
 
 typedef struct {
   GdkGC *gc;
@@ -86,8 +100,8 @@ typedef struct {
   /* we need two versions of each GC because the selected channel's colors can be different from the unselected channels' */
   GtkWidget **chan_widgets;
   GtkObject **chan_adjs;
-  Cessator fft_in_progress;
-  Cessator amp_env_in_progress;
+  idle_t fft_in_progress;
+  idle_t amp_env_in_progress;
   struct env_state *amp_env_state;
   axis_context *ax;
   bool selected;
@@ -213,7 +227,6 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 #define TINY_FONT(a) (a->sgx)->tiny_fnt
 #define PEAKS_FONT(a) (a->sgx)->peaks_fnt
 #define BOLD_PEAKS_FONT(a) (a->sgx)->bold_peaks_fnt
-#define color_t GdkColor *
 #define KEY_TO_NAME(key) gdk_keyval_name(key)
 
 #define DEFAULT_GRAPH_CURSOR GDK_CROSSHAIR

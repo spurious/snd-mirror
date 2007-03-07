@@ -52,9 +52,9 @@ static XEN g_color_to_list(XEN obj)
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = XEN_UNWRAP_PIXEL(obj);
   XQueryColor(dpy, cmap, &tmp_color);
-  return(xen_return_first(XEN_LIST_3(C_TO_XEN_DOUBLE((float)tmp_color.red / 65535.0),
-				     C_TO_XEN_DOUBLE((float)tmp_color.green / 65535.0),
-				     C_TO_XEN_DOUBLE((float)tmp_color.blue / 65535.0)),
+  return(xen_return_first(XEN_LIST_3(C_TO_XEN_DOUBLE(RGB_TO_FLOAT(tmp_color.red)),
+				     C_TO_XEN_DOUBLE(RGB_TO_FLOAT(tmp_color.green)),
+				     C_TO_XEN_DOUBLE(RGB_TO_FLOAT(tmp_color.blue))),
 			  obj));
 }
 
@@ -75,9 +75,9 @@ static XEN g_make_color(XEN r, XEN g, XEN b)
   dpy = XtDisplay(MAIN_SHELL(ss));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
-  tmp_color.red = (unsigned short)(65535 * rf); 
-  tmp_color.green = (unsigned short)(65535 * gf);
-  tmp_color.blue = (unsigned short)(65535 * bf);
+  tmp_color.red = FLOAT_TO_RGB(rf);
+  tmp_color.green = FLOAT_TO_RGB(gf);
+  tmp_color.blue = FLOAT_TO_RGB(bf);
   if ((XAllocColor(dpy, cmap, &tmp_color)) == 0)
     XEN_ERROR(XEN_ERROR_TYPE("no-such-color"),
 	      XEN_LIST_2(C_TO_XEN_STRING(S_make_color),

@@ -10,8 +10,8 @@ typedef struct tick_descriptor {
   double hi, lo; 
   int max_ticks;
   double flo, fhi, mlo, mhi, step, tenstep;
-  int tens, min_label_width, max_label_width;
-  Latus maj_tick_len, min_tick_len;
+  int tens;
+  int maj_tick_len, min_tick_len, min_label_width, max_label_width;
   char *min_label, *max_label;
   Float grid_scale;
 } tick_descriptor;
@@ -261,18 +261,18 @@ axis_info *free_axis_info(axis_info *ap)
   return(NULL);
 }
 
-Locus grf_x(double val, axis_info *ap)
+int grf_x(double val, axis_info *ap)
 {
   if (val >= ap->x1) return(ap->x_axis_x1);
   if (val <= ap->x0) return(ap->x_axis_x0);
-  return((Locus)(ap->x_base + val * ap->x_scale));
+  return((int)(ap->x_base + val * ap->x_scale));
 }
 
-Locus grf_y(Float val, axis_info *ap)
+int grf_y(Float val, axis_info *ap)
 {
   if (val >= ap->y1) return(ap->y_axis_y1);
   if (val <= ap->y0) return(ap->y_axis_y0);
-  return((Locus)(ap->y_base + val * ap->y_scale));
+  return((int)(ap->y_base + val * ap->y_scale));
 }
 
 void init_axis_scales(axis_info *ap)
@@ -287,7 +287,7 @@ void init_axis_scales(axis_info *ap)
   ap->y_base = (Float)(ap->y_axis_y0 - ap->y0 * ap->y_scale);
 }
 
-static Locus tick_grf_x(double val, axis_info *ap, x_axis_style_t style, int srate)
+static int tick_grf_x(double val, axis_info *ap, x_axis_style_t style, int srate)
 {
   int res = 0;
   switch (style)
@@ -312,7 +312,7 @@ static Locus tick_grf_x(double val, axis_info *ap, x_axis_style_t style, int sra
     }
   if (res >= -32768) 
     {
-      if (res < 32768) return((Locus)res);
+      if (res < 32768) return(res);
       return(32767);
     }
   return(-32768);
@@ -536,15 +536,15 @@ static void set_labels_font(axis_context *ax, printing_t printing, bool use_tiny
 void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t axes, printing_t printing, 
 		 with_x_axis_t show_x_axis, with_grid_t with_grid, log_axis_t log_axes, Float grid_scale)
 {
-  Latus width, height;
-  Latus axis_thickness, left_border_width, bottom_border_width, top_border_width, right_border_width, inner_border_width;
-  Latus major_tick_length, minor_tick_length, x_tick_spacing, y_tick_spacing;
+  int width, height;
+  int axis_thickness, left_border_width, bottom_border_width, top_border_width, right_border_width, inner_border_width;
+  int major_tick_length, minor_tick_length, x_tick_spacing, y_tick_spacing;
   bool include_x_label, include_x_ticks, include_x_tick_labels, include_y_ticks, include_y_tick_labels, include_grid;
   bool y_axis_linear = true, x_axis_linear = true, use_tiny_font = false;
-  Latus x_label_width, x_label_height, x_number_height;
+  int x_label_width, x_label_height, x_number_height;
   int num_ticks;
   tick_descriptor *tdx = NULL, *tdy = NULL;
-  Locus curx, cury;
+  int curx, cury;
   axis_context *ax;
 #if HAVE_GL
   Float xthick, ythick, xmajorlen, xminorlen, ymajorlen, yminorlen;
@@ -708,7 +708,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  ap->y_ticks = tdy;
 	  if (include_y_tick_labels)
 	    {
-	      Latus tick_label_width;
+	      int tick_label_width;
 	      if (tdy->min_label) 
 		{
 		  FREE(tdy->min_label); 
@@ -806,7 +806,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       ap->x_ticks = tdx;
       if (include_x_tick_labels)
 	{
-	  Latus tick_label_width;
+	  int tick_label_width;
 	  if (tdx->min_label) 
 	    {
 	      FREE(tdx->min_label); 
@@ -1026,7 +1026,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	    }
 	}
       tx0 = (int)(tick_grf_x(tdx->mhi, ap, x_style, srate) - (.45 * tdx->max_label_width)); /* try centered label first */
-      if ((tx0 + tdx->max_label_width) > ap->x_axis_x1)
+      if ((int)(tx0 + tdx->max_label_width) > ap->x_axis_x1)
 	tx0 = (int)(tick_grf_x(tdx->mhi, ap, x_style, srate) - tdx->max_label_width + .75 * right_border_width);
       tx1 = tx0 + tdx->max_label_width;
       if ((lx0 > tx1) || (lx1 < tx0))
@@ -1249,7 +1249,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
     {
       double min_freq, max_freq;
       Float minlx = 0.0, maxlx, fap_range, log_range, lscale = 1.0, curlx;
-      Locus logx;
+      int logx;
       int y0, majy, miny, i;
       char *label = NULL;
       Float freq = 0.0, freq10 = 0.0;
@@ -1311,7 +1311,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
     {
       double min_freq, max_freq;
       Float minlx = 0.0, maxlx, fap_range, log_range, lscale = 1.0, curly;
-      Locus logy;
+      int logy;
       int x0, majx, minx, i;
       char *label = NULL;
       Float freq = 0.0, freq10 = 0.0;

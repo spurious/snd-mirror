@@ -1848,18 +1848,18 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 /* ---------------- MIX GRAPHS ---------------- */
 
 /* these are copies from snd-axis.c; didn't want to use macros here */
-static Locus local_grf_x(double val, axis_info *ap)
+static int local_grf_x(double val, axis_info *ap)
 {
   if (val >= ap->x1) return(ap->x_axis_x1);
   if (val <= ap->x0) return(ap->x_axis_x0);
-  return((Locus)(ap->x_base + val * ap->x_scale));
+  return((int)(ap->x_base + val * ap->x_scale));
 }
 
-static Locus local_grf_y(Float val, axis_info *ap)
+static int local_grf_y(Float val, axis_info *ap)
 {
   if (val >= ap->y1) return(ap->y_axis_y1);
   if (val <= ap->y0) return(ap->y_axis_y0);
-  return((Locus)(ap->y_base + val * ap->y_scale));
+  return((int)(ap->y_base + val * ap->y_scale));
 }
 
 static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mix_info *md, Float samples_per_pixel, off_t newbeg, off_t newend)
@@ -1871,7 +1871,7 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mix_
   Float xf, xfinc;
   off_t lo, hi, i;
   int j, main_loc;
-  Locus lastx;
+  int lastx;
   env_info *ep;
   lo = ap->losamp;
   hi = ap->hisamp;
@@ -1945,7 +1945,7 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *
   double xi, xf, xfinc;
   off_t lo, hi, x;
   int main_loc, j;
-  Locus lastx;
+  int lastx;
   env_info *ep;
   lo = ap->losamp;
   hi = ap->hisamp;
@@ -2023,7 +2023,7 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, mix_state *cs)
   off_t newbeg, newend;
   off_t i, samps;
   int j;
-  Locus xi;
+  int xi;
   bool widely_spaced;
   axis_info *ap;
   snd_info *sp;
@@ -2081,10 +2081,9 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, mix_state *cs)
       for (j = 0, i = lo, x = initial_x; i <= hi; i++, j++, x += incr)
 	{
 	  ina = read_sample_to_float(sf);
-
 	  if ((i >= newbeg) && (i <= newend)) ina += next_mix_sample(add);
 	  if (widely_spaced)
-	    set_grf_point((Locus)x, j, local_grf_y(ina, ap));
+	    set_grf_point((int)x, j, local_grf_y(ina, ap));
 	  else set_grf_point(local_grf_x(x, ap), j, local_grf_y(ina, ap));
 	}
       erase_and_draw_grf_points(md->wg, cp, j);
@@ -2208,7 +2207,7 @@ static int prepare_mix_amp_env(mix_info *md, Float scl, int yoff, off_t newbeg, 
   mix_fd *min_fd, *max_fd;
   off_t hi, lo, sum;
   int j;
-  Locus lastx, newx;
+  int lastx, newx;
   Float ymin, ymax, high = 0.0, low = 0.0;
   double xend, xstart, xstep;
   min_fd = init_mix_input_amp_env_read(md, LO_PEAKS);
@@ -2251,8 +2250,8 @@ static int prepare_mix_amp_env(mix_info *md, Float scl, int yoff, off_t newbeg, 
       if (newx > lastx)
 	{
 	  set_grf_points(lastx, j,
-			 (Locus)(yoff - scl * ymin),
-			 (Locus)(yoff - scl * ymax));
+			 (int)(yoff - scl * ymin),
+			 (int)(yoff - scl * ymax));
 	  lastx = newx;
 	  j++;
 	  ymin = low;
@@ -2324,7 +2323,7 @@ static int prepare_mix_waveform(mix_info *md, mix_state *cs, axis_info *ap, Floa
   off_t i, newbeg, newend, endi;
   int j = 0;
   off_t samps;
-  Locus xi;
+  int xi;
   bool widely_spaced;
   Float samples_per_pixel, xf;
   double x, incr, initial_x;
@@ -2372,8 +2371,8 @@ static int prepare_mix_waveform(mix_info *md, mix_state *cs, axis_info *ap, Floa
 	{
 	  ina = next_mix_sample(add);
 	  if (widely_spaced)
-	    set_grf_point((Locus)x, j, (Locus)(yoff - scl * ina));
-	  else set_grf_point(local_grf_x(x, ap), j, (Locus)(yoff - scl * ina));
+	    set_grf_point((int)x, j, (int)(yoff - scl * ina));
+	  else set_grf_point(local_grf_x(x, ap), j, (int)(yoff - scl * ina));
 	}
       (*two_sided) = false;
     }
@@ -2418,8 +2417,8 @@ static int prepare_mix_waveform(mix_info *md, mix_state *cs, axis_info *ap, Floa
 	      if (xf > samples_per_pixel)
 		{
 		  set_grf_points(xi, j,
-				 (Locus)(yoff - scl * ymin),
-				 (Locus)(yoff - scl * ymax));
+				 (int)(yoff - scl * ymin),
+				 (int)(yoff - scl * ymax));
 		  j++;
 		  ymin = 100.0;
 		  ymax = -100.0;
@@ -2470,7 +2469,7 @@ int prepare_mix_id_waveform(int mix_id, axis_info *ap, bool *two_sided)
   return(pts);
 }
 
-static Cessator watch_mix_proc = 0;    /* work proc if mouse outside graph causing axes to move */
+static idle_t watch_mix_proc = 0;    /* work proc if mouse outside graph causing axes to move */
 
 static void display_mix_waveform(chan_info *cp, mix_info *md, bool draw)
 {
@@ -2684,7 +2683,7 @@ int hit_mix(chan_info *cp, int x, int y)
   return(NO_MIX_TAG);
 }
 
-static Cessate watch_mix(Indicium m)
+static idle_func_t watch_mix(any_pointer_t m)
 {
   if (watch_mix_proc)
     {
@@ -6461,8 +6460,8 @@ static int gather_track_info(mix_info *md, void *ptr)
 	  if (ti->size == 0)
 	    {
 	      ti->size = 1;
-	      ti->ids = (short *)CALLOC(1, sizeof(short));
-	      ti->locs = (short *)CALLOC(1, sizeof(short));
+	      ti->ids = (int *)CALLOC(1, sizeof(int));
+	      ti->locs = (int *)CALLOC(1, sizeof(int));
 	      ti->ids[0] = track_id;
 	      ti->locs[0] = tracks[track_id]->loc;
 	    }
@@ -6478,8 +6477,8 @@ static int gather_track_info(mix_info *md, void *ptr)
 	      if (!happy)
 		{
 		  ti->size++;
-		  ti->ids = (short *)REALLOC(ti->ids, ti->size * sizeof(short));
-		  ti->locs = (short *)REALLOC(ti->locs, ti->size * sizeof(short));
+		  ti->ids = (int *)REALLOC(ti->ids, ti->size * sizeof(int));
+		  ti->locs = (int *)REALLOC(ti->locs, ti->size * sizeof(int));
 		  ti->ids[ti->size - 1] = track_id;
 		  ti->locs[ti->size - 1] = tracks[track_id]->loc;
 		}

@@ -1052,7 +1052,7 @@ static void popup_reset_callback(GtkWidget *w, gpointer info)
   gtk_widget_hide(popup_menu);
 }
 
-static void create_popup_menu(guint button, Tempus time)
+static void create_popup_menu(guint button, oclock_t time)
 {
   if (!popup_menu)
     {

@@ -1161,8 +1161,8 @@ static void minibuffer_click_callback(Widget w, XtPointer context, XtPointer inf
 
 static int outer_panes = 0;
 static int *inner_panes = NULL;
-static int *outer_sizes = NULL;
-static int **inner_sizes = NULL;
+static Dimension *outer_sizes = NULL;
+static Dimension **inner_sizes = NULL;
 
 static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 {
@@ -1190,8 +1190,8 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 	  if (outer_panes > 0)
 	    {
 	      inner_panes = (int *)CALLOC(outer_panes, sizeof(int));
-	      outer_sizes = (int *)CALLOC(outer_panes, sizeof(int));
-	      inner_sizes = (int **)CALLOC(outer_panes, sizeof(int *));
+	      outer_sizes = (Dimension *)CALLOC(outer_panes, sizeof(Dimension));
+	      inner_sizes = (Dimension **)CALLOC(outer_panes, sizeof(Dimension *));
 	      outer_ctr = 0;
 	      for (i = 0; i < ss->max_sounds; i++)
 		{
@@ -1204,7 +1204,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 		      Widget child;
 		      child = SND_PANE(sp);
 		      inner_panes[outer_ctr] = sp->nchans;
-		      inner_sizes[outer_ctr] = (int *)CALLOC(sp->nchans, sizeof(int));
+		      inner_sizes[outer_ctr] = (Dimension *)CALLOC(sp->nchans, sizeof(Dimension));
 		      XtVaGetValues(child, XmNheight, &(outer_sizes[outer_ctr]), NULL);
 		      for (k = 0; k < sp->nchans; k++)
 			XtVaGetValues(channel_main_pane(sp->chans[k]), XmNheight, &(inner_sizes[outer_ctr][k]), NULL);
@@ -1219,7 +1219,8 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 	  if ((outer_panes > 0) && 
 	      (strcmp(call_data->params[0], "Commit") == 0))
 	    {
-	      int outer_ctr = 0, cur_outer_size = 0;
+	      int outer_ctr = 0;
+	      Dimension cur_outer_size = 0;
 	      for (i = 0; i < ss->max_sounds; i++)
 		{
 		  sp = ss->sounds[i];
@@ -1233,7 +1234,8 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 			  (abs(cur_outer_size - outer_sizes[outer_ctr]) > (sp->nchans * 2)))
 			{
 			  /* this pane has multiple chans and its size has changed enough to matter */
-			  int total_inner = 0, diff, size;
+			  Dimension total_inner = 0, diff;
+			  int size;
 			  float ratio;
 			  for (k = 0; k < sp->nchans; k++)
 			    total_inner += inner_sizes[outer_ctr][k];
@@ -1615,7 +1617,8 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
   bool make_widgets;
   Arg args[32];
   char *old_name = NULL, *title;
-  Dimension app_y, app_dy, screen_y, chan_min_y;
+  Dimension app_dy, screen_y, chan_min_y;
+  Position app_y;
   /* these dimensions are used to try to get a reasonable channel graph size without falling off the screen bottom */
   Pixmap rb, lb;
   int depth;

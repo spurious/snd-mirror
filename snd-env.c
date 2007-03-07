@@ -698,7 +698,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
     }
 }
 
-void env_editor_button_motion(env_editor *edp, int evx, int evy, Tempus motion_time, env *e)
+void env_editor_button_motion(env_editor *edp, int evx, int evy, oclock_t motion_time, env *e)
 {
   axis_info *ap;
   Float x0, x1, x, y;
@@ -730,7 +730,7 @@ void env_editor_button_motion(env_editor *edp, int evx, int evy, Tempus motion_t
   edp->edited = true;
 }
 
-bool env_editor_button_press(env_editor *edp, int evx, int evy, Tempus time, env *e)
+bool env_editor_button_press(env_editor *edp, int evx, int evy, oclock_t time, env *e)
 {
   int pos;
   Float x, y;

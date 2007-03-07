@@ -673,8 +673,8 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 }
 
 static void stop_playing(dac_info *dp, with_hook_t with_hook, play_stop_t reason) {stop_playing_with_toggle(dp, WITH_TOGGLE, with_hook, reason);}
-static Cessate dac_in_background(Indicium ptr);
-static Cessate dac_work_proc = 0; /* needed in gtk to force process to stop */
+static idle_func_t dac_in_background(any_pointer_t ptr);
+static idle_func_t dac_work_proc = 0; /* needed in gtk to force process to stop */
 
 static void stop_playing_sound_with_toggle(snd_info *sp, dac_toggle_t toggle, with_hook_t with_hook, play_stop_t reason)
 {
@@ -2159,7 +2159,7 @@ static void stop_audio_output(void)
    max_active_slot = -1;
 }
 
-static Cessate dac_in_background(Indicium ptr)
+static idle_func_t dac_in_background(any_pointer_t ptr)
 {
   /* slice 0: try to open audio output devices and get ready to send samples
    *       1: loop sending data until the play_list is empty or some error (C-g) happens

@@ -378,7 +378,7 @@ static void get_stdin_string(XtPointer context, int *fd, XtInputId *id)
 
 static int tm_slice = 0;
 
-static Cessate startup_funcs(XtPointer context)
+static idle_func_t startup_funcs(XtPointer context)
 {
 #ifndef SND_AS_WIDGET
   Atom wm_delete_window;
@@ -578,9 +578,9 @@ color_t get_in_between_color(color_t fg, color_t bg)
   bg_color.pixel = bg;
   XQueryColor(dpy, cmap, &bg_color);
   new_color.flags = DoRed | DoGreen | DoBlue;
-  new_color.red = (unsigned short)((fg_color.red + (2 * bg_color.red)) / 3);
-  new_color.green = (unsigned short)((fg_color.green + (2 * bg_color.green)) / 3);
-  new_color.blue = (unsigned short)((fg_color.blue + (2 * bg_color.blue)) / 3);
+  new_color.red = (rgb_t)((fg_color.red + (2 * bg_color.red)) / 3);
+  new_color.green = (rgb_t)((fg_color.green + (2 * bg_color.green)) / 3);
+  new_color.blue = (rgb_t)((fg_color.blue + (2 * bg_color.blue)) / 3);
   if ((XAllocColor(dpy, cmap, &new_color)) == 0)
     return(fg);
   return(new_color.pixel);
@@ -638,9 +638,9 @@ static void save_a_color(FILE *Fp, Display *dpy, Colormap cmap, const char *rs_n
 	  (current_color.blue != default_color.blue))
 #if HAVE_FORTH
 	fprintf(Fp, "%.3f %.3f %.3f %s set-%s drop\n", 
-		(float)current_color.red / 65535.0,
-		(float)current_color.green / 65535.0,
-		(float)current_color.blue / 65535.0,
+		RGB_TO_FLOAT(current_color.red),
+		RGB_TO_FLOAT(current_color.green),
+		RGB_TO_FLOAT(current_color.blue),
 		S_make_color,
 		ext_name);
 #else
@@ -652,9 +652,9 @@ static void save_a_color(FILE *Fp, Display *dpy, Colormap cmap, const char *rs_n
 #endif
 		TO_PROC_NAME(ext_name), 
 		TO_PROC_NAME(S_make_color),
-		(float)current_color.red / 65535.0,
-		(float)current_color.green / 65535.0,
-		(float)current_color.blue / 65535.0);
+		RGB_TO_FLOAT(current_color.red),
+		RGB_TO_FLOAT(current_color.green),
+		RGB_TO_FLOAT(current_color.blue));
 #endif
     }
 #endif
@@ -821,7 +821,7 @@ void snd_doit(int argc, char **argv)
 #ifdef MUS_MAC_OS
   ss->click_time = XtGetMultiClickTime(dpy);
 #else
-  ss->click_time = (Tempus)(0.5 * XtGetMultiClickTime(dpy));
+  ss->click_time = (oclock_t)(0.5 * XtGetMultiClickTime(dpy));
 #endif
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
   sx = ss->sgx;

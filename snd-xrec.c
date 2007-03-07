@@ -311,18 +311,18 @@ static void allocate_meter(vu_t *vu)
     {
       vu_colors_allocated = true;
       tmp_color.flags = DoRed | DoGreen | DoBlue;
-      tmp_color.red = (unsigned short)65535;
+      tmp_color.red = RGB_MAX;
       for (i = 0; i < VU_COLORS; i++)
 	{
-	  tmp_color.blue = (unsigned short)(256 * yellow_vals[i]);
-	  tmp_color.green = (unsigned short)(256 * 230 + 26 * yellow_vals[i]);
+	  tmp_color.blue = (rgb_t)(256 * yellow_vals[i]);
+	  tmp_color.green = (rgb_t)(256 * 230 + 26 * yellow_vals[i]);
 	  XAllocColor(dp, cmap, &tmp_color);
 	  yellows[i] = tmp_color.pixel;
 	}
       for (i = 0; i < VU_COLORS; i++)
 	{
-	  tmp_color.blue = (unsigned short)(128 * yellow_vals[i]);
-	  tmp_color.green = (unsigned short)(128 * yellow_vals[i]);
+	  tmp_color.blue = (rgb_t)(128 * yellow_vals[i]);
+	  tmp_color.green = (rgb_t)(128 * yellow_vals[i]);
 	  XAllocColor(dp, cmap, &tmp_color);
 	  reds[i] = tmp_color.pixel;
 	}

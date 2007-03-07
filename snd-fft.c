@@ -1611,7 +1611,7 @@ static sono_slice_t cleanup_sonogram(sonogram_state *sg)
   return(SONO_DONE);
 }
 
-Cessate sonogram_in_slices(void *sono)
+idle_func_t sonogram_in_slices(void *sono)
 {
   sonogram_state *sg = (sonogram_state *)sono;
   chan_info *cp;

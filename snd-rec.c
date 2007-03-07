@@ -36,7 +36,7 @@
   #endif
 #endif
 
-static Cessator recorder_reader;
+static idle_t recorder_reader;
 
 int recorder_columns(int vu_meters)
 {
@@ -1148,7 +1148,7 @@ void recorder_characterize_devices(int devs, int output_devices)
 
 #if (HAVE_ALSA || HAVE_OSS)
 
-static Cessate read_adc(void) 
+static idle_func_t read_adc(void) 
 {
   int in_chan, out_chan, i, k, m, n, out_frame, inchn, offset, active_in_chans, ochns, sr, buffer_size, in_datum_size;
   mus_sample_t val;
@@ -1282,7 +1282,7 @@ static Cessate read_adc(void)
 #else
 /* not ALSA or OSS */
 
-static Cessate read_adc(void)
+static idle_func_t read_adc(void)
 {
   int in_chan, out_chan, i, k, m, n, out_frame, inchn, offset, active_in_chans, cur_size, ochns, sr, sz, ifmt, in_datum_size;
   mus_sample_t val;
@@ -1503,9 +1503,9 @@ void cleanup_recording(void)
     }
 }
 
-static Cessate run_adc(Indicium ignore)
+static idle_func_t run_adc(any_pointer_t ignore)
 {
-  Cessate val;
+  idle_func_t val;
   val = read_adc();
 #if MUS_DEBUGGING
   if (!(with_background_processes(ss))) val = BACKGROUND_QUIT;

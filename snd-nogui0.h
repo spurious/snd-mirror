@@ -31,12 +31,17 @@
 #define DEFAULT_AXIS_NUMBERS_FONT "Monospace 10"
 #define DEFAULT_AXIS_LABEL_FONT "Serif 14"
 
-#define Cessator int
-#define Cessate int
-#define Indicium void *
-#define Tempus int
-#define Locus int
-#define Latus int
+#define idle_t int
+#define idle_func_t int
+#define any_pointer_t void *
+#define oclock_t int
+#define color_t int
+
+#define rgb_t unsigned short
+#define RGB_MAX 65535
+#define FLOAT_TO_RGB(Val) (rgb_t)(RGB_MAX * (Val))
+#define RGB_TO_FLOAT(Val) (float)((float)(Val) / (float)RGB_MAX)
+
 
 typedef struct {
   void *ss;
@@ -93,7 +98,6 @@ typedef struct {
 #define MAIN_SHELL(a) 0
 #define MAIN_PANE(a) 0
 #define SOUND_PANE(a) 0
-#define color_t int
 #define KEY_TO_NAME(key) "?"
 /* not NULL here because that causes a segfault in solaris (key name null -> strlen of null in vsprintf) */
 

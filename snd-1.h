@@ -205,18 +205,18 @@ typedef struct {
   Float y_scale, y_base, y_ambit;
   double x_scale, x_base, x_ambit;
   char *xlabel, *ylabel, *default_xlabel;
-  Locus y_axis_x0, x_axis_x0, y_axis_y0, x_axis_y0, x_axis_x1, y_axis_y1, x_label_x, x_label_y;
+  int y_axis_x0, x_axis_x0, y_axis_y0, x_axis_y0, x_axis_x1, y_axis_y1, x_label_x, x_label_y;
   bool graph_active;
   off_t losamp, hisamp;                 /* displayed x-axis bounds in terms of sound sample numbers */
-  Locus graph_x0;                       /* x axis offset relative to window (for double graphs) */
+  int graph_x0;                       /* x axis offset relative to window (for double graphs) */
   struct tick_descriptor *x_ticks, *y_ticks; 
   axis_context *ax;
-  Latus width, height;
+  int width, height;
   struct chan_info *cp;
   Float sy, zy;                         /* as set by user, 0.0 - 1.0 */
   double sx, zx;
-  Locus y_offset;
-  Latus window_width;
+  int y_offset;
+  int window_width;
   bool no_data, changed;
 #if HAVE_GL
   bool use_gl, used_gl;
@@ -250,7 +250,7 @@ typedef struct env_editor {
   int *current_ys;
   int current_size;
   axis_info *axis;
-  Tempus down_time;
+  oclock_t down_time;
   bool env_dragged;
   int env_pos;
   bool click_to_delete, in_dB, with_dots, clip_p;
@@ -283,7 +283,7 @@ typedef struct {
 
 typedef struct {
   int size;
-  short *ids, *locs;
+  int *ids, *locs;
 } track_info;
 
 typedef struct chan_info {
@@ -349,7 +349,7 @@ typedef struct chan_info {
   graph_type_t transform_graph_type, time_graph_type;
   bool show_transform_peaks, fft_log_frequency, fft_log_magnitude;
   graph_style_t time_graph_style, lisp_graph_style, transform_graph_style;
-  Latus dot_size;
+  int dot_size;
   fft_normalize_t transform_normalization;
   int transform_type, spectro_hop, edhist_base;
   bool show_mix_waveforms, graphs_horizontal, edit_hook_checked;
@@ -360,7 +360,7 @@ typedef struct chan_info {
   XEN properties;
   int cursor_proc_loc, edit_hook_loc, undo_hook_loc, after_edit_hook_loc, properties_loc;
   bool selection_visible, active;
-  Locus old_x0, old_x1;
+  int old_x0, old_x1;
   Float *amp_control; /* local amp controls in snd-dac; should it be extended to other controls? */
   search_result_t last_search_result;
   bool just_zero, new_peaks, editable, tracking;
@@ -463,7 +463,7 @@ typedef struct {
 typedef struct snd_state {
   int selected_sound;         /* NO_SELECTION = none selected = which sound is currently receiving user's attention */
   int active_sounds;
-  Latus channel_min_height;
+  int channel_min_height;
   snd_info **sounds;
   char *search_expr, *startup_title, *startup_errors;
   struct ptree *search_tree;
@@ -480,8 +480,8 @@ typedef struct snd_state {
   bool gl_has_double_buffer;
   bool stopped_explicitly, checking_explicitly;
   int reloading_updated_file;
-  Latus init_window_width, init_window_height;
-  Locus init_window_x, init_window_y;
+  int init_window_width, init_window_height;
+  int init_window_x, init_window_y;
   bool graph_hook_active, lisp_graph_hook_active;
   bool Show_Transform_Peaks, Show_Y_Zero, Show_Marks;
   with_grid_t Show_Grid;
@@ -498,7 +498,7 @@ typedef struct snd_state {
   Float Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle, Spectro_Cutoff, Spectro_Start;
   int Default_Output_Header_Type, Default_Output_Data_Format, Default_Output_Chans, Default_Output_Srate;
   int Spectro_Hop, Color_Map, Color_Map_Size, Wavelet_Type, Transform_Type, Optimization;
-  Latus Dot_Size;
+  int Dot_Size;
   int Zero_Pad, Wavo_Hop, Wavo_Trace;
   off_t Transform_Size;
   mus_fft_window_t Fft_Window;
@@ -556,7 +556,7 @@ typedef struct snd_state {
   bool batch_mode;
   bool jump_ok, exiting;
   env_editor *enved;
-  Tempus click_time;
+  oclock_t click_time;
   bool fam_ok;
   FAMConnection *fam_connection;
   void (*snd_error_handler)(const char *error_msg, void *data);
@@ -801,7 +801,7 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state);
 mark *hit_triangle(chan_info *cp, int x, int y);
 void move_mark(chan_info *cp, mark *mp, int x);
 void play_syncd_mark(chan_info *cp, mark *mp);
-off_t move_play_mark(chan_info *cp, off_t *mc, Locus cx);
+off_t move_play_mark(chan_info *cp, off_t *mc, int cx);
 void finish_moving_play_mark(chan_info *cp);
 void finish_moving_mark(chan_info *cp, mark *m);
 mark *add_mark(off_t samp, const char *name, chan_info *cp);
@@ -981,7 +981,7 @@ void c_convolve(const char *fname, Float amp, int filec, off_t filehdr, int filt
 		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, enved_progress_t from_enved, int ip, int total_chans);
 void *make_sonogram_state(chan_info *cp, bool force_recalc);
 void single_fft(chan_info *cp, bool update_display, bool force_recalc);
-Cessate sonogram_in_slices(void *sono);
+idle_func_t sonogram_in_slices(void *sono);
 void clear_transform_edit_ctrs(chan_info *cp);
 void g_init_fft(void);
 Float fft_beta_max(mus_fft_window_t win);
@@ -1154,8 +1154,8 @@ env *invert_env(env *e);
 env *default_env(Float x1, Float y);
 bool default_env_p(env *e);
 env_editor *new_env_editor(void);
-void env_editor_button_motion(env_editor *edp, int evx, int evy, Tempus motion_time, env *e);
-bool env_editor_button_press(env_editor *edp, int evx, int evy, Tempus time, env *e);
+void env_editor_button_motion(env_editor *edp, int evx, int evy, oclock_t motion_time, env *e);
+bool env_editor_button_press(env_editor *edp, int evx, int evy, oclock_t time, env *e);
 void env_editor_button_release(env_editor *edp, env *e);
 double env_editor_ungrf_y_dB(env_editor *edp, int y);
 void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int width, int height, 
@@ -1255,7 +1255,7 @@ void combine_sound(snd_info *sp);
 void separate_sound(snd_info *sp);
 void superimpose_sound(snd_info *sp);
 void set_sound_channel_style(snd_info *sp, channel_style_t val);
-void set_chan_fft_in_progress(chan_info *cp, Cessator fp);
+void set_chan_fft_in_progress(chan_info *cp, idle_t fp);
 void stop_fft_in_progress(chan_info *cp);
 void goto_graph(chan_info *cp);
 void start_amp_env(chan_info *cp);
@@ -1279,9 +1279,9 @@ int move_axis(chan_info *cp, axis_info *ap, int x);
 void set_axes(chan_info *cp, double x0, double x1, Float y0, Float y1);
 void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style);
 bool key_press_callback(chan_info *ur_cp, int x, int y, int key_state, int keysym);
-void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, Tempus time);
+void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, oclock_t time);
 void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, int button);
-void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time);
+void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time);
 void channel_resize(chan_info *cp);
 void edit_history_select(chan_info *cp, int row);
 int make_graph(chan_info *cp);
@@ -1319,8 +1319,8 @@ void set_show_y_zero(bool val);
 axis_info *free_axis_info(axis_info *ap);
 axis_context *free_axis_context(axis_context *ax);
 char *x_axis_location_to_string(chan_info *cp, double loc);
-Locus grf_x(double val, axis_info *ap);
-Locus grf_y(Float val, axis_info *ap);
+int grf_x(double val, axis_info *ap);
+int grf_y(Float val, axis_info *ap);
 void init_axis_scales(axis_info *ap);
 void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t axes, printing_t printing, 
 		 with_x_axis_t show_x_axis, with_grid_t grid, log_axis_t log_axes, Float grid_scale);
@@ -1350,7 +1350,7 @@ void free_env_state(chan_info *cp);
 env_info *free_env_info(env_info *ep);
 void start_env_state(chan_info *cp);
 env_info *make_mix_input_amp_env(chan_info *cp);
-Cessate get_amp_env(Indicium ptr);
+idle_func_t get_amp_env(any_pointer_t ptr);
 void finish_amp_env(chan_info *cp);
 bool amp_env_maxamp_ok(chan_info *cp, int edpos);
 Float amp_env_maxamp(chan_info *cp, int edpos);

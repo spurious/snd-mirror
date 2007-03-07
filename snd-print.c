@@ -306,12 +306,12 @@ static int last_color = -1;
 
 void ps_draw_sono_rectangle(axis_info *ap, int color, Float x, Float y, Float width, Float height)
 {
-  unsigned short r, g, b;
+  rgb_t r, g, b;
   if (last_color != color)
     {
       get_current_color(color_map(ss), color, &r, &g, &b);
       last_color = color;
-      mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n", (float)r / 65535.0, (float)g / 65535.0, (float)b / 65535.0);
+      mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n", RGB_TO_FLOAT(r), RGB_TO_FLOAT(g), RGB_TO_FLOAT(b));
       ps_write(pbuf);
     }
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.1f %.1f %.2f %.2f RF\n", ps_grf_x(ap, x) + 2, ps_grf_y(ap, y), width, height);
@@ -337,16 +337,16 @@ static void ps_set_color(color_t color)
   tmp_color.pixel = color;
   XQueryColor(dpy, cmap, &tmp_color);
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n",
-	       (float)tmp_color.red / 65535.0,
-	       (float)tmp_color.green / 65535.0,
-	       (float)tmp_color.blue / 65535.0);
+	       RGB_TO_FLOAT(tmp_color.red),
+	       RGB_TO_FLOAT(tmp_color.green),
+	       RGB_TO_FLOAT(tmp_color.blue));
   ps_write(pbuf);
 #else
   #if USE_GTK
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n", 
-	       (float)color->red / 65535.0, 
-	       (float)color->green / 65535.0, 
-	       (float)color->blue / 65535.0);
+	       RGB_TO_FLOAT(color->red), 
+	       RGB_TO_FLOAT(color->green), 
+	       RGB_TO_FLOAT(color->blue));
   ps_write(pbuf);
   #endif
 #endif
@@ -414,12 +414,12 @@ void ps_draw_line(axis_info *ap, int x0, int y0, int x1, int y1)
 void ps_draw_spectro_line(axis_info *ap, int color, Float x0, Float y0, Float x1, Float y1)
 {
   /* these are in local coords */
-  unsigned short r, g, b;
+  rgb_t r, g, b;
   if (last_color != color)
     {
       get_current_color(color_map(ss), color, &r, &g, &b);
       last_color = color;
-      mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n", (float)r / 65535.0, (float)g / 65535.0, (float)b / 65535.0);
+      mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n", RGB_TO_FLOAT(r), RGB_TO_FLOAT(g), RGB_TO_FLOAT(b));
       ps_write(pbuf);
     }
   ps_draw_line(ap, (int)x0, (int)y0, (int)x1, (int)y1);

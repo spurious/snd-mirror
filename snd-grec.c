@@ -228,18 +228,18 @@ static void allocate_meter(vu_t *vu)
     {
       GdkColor tmp_color;
       vu_colors_allocated = true;
-      tmp_color.red = (unsigned short)65535;
+      tmp_color.red = RGB_MAX;
       for (i = 0; i < VU_COLORS; i++)
 	{
-	  tmp_color.blue = (unsigned short)(256 * yellow_vals[i]);
-	  tmp_color.green = (unsigned short)(256 * 230 + 26 * yellow_vals[i]);
+	  tmp_color.blue = (rgb_t)(256 * yellow_vals[i]);
+	  tmp_color.green = (rgb_t)(256 * 230 + 26 * yellow_vals[i]);
 	  yellows[i] = gdk_color_copy(&tmp_color);
 	  gdk_rgb_find_color(cmap, yellows[i]);
 	}
       for (i = 0; i < VU_COLORS; i++)
 	{
-	  tmp_color.blue = (unsigned short)(128 * yellow_vals[i]);
-	  tmp_color.green = (unsigned short)(128 * yellow_vals[i]);
+	  tmp_color.blue = (rgb_t)(128 * yellow_vals[i]);
+	  tmp_color.green = (rgb_t)(128 * yellow_vals[i]);
 	  reds[i] = gdk_color_copy(&tmp_color);
 	  gdk_rgb_find_color(cmap, reds[i]);
 	}

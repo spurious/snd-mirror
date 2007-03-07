@@ -1672,9 +1672,9 @@ static XEN g_window_height(void)
 
 static XEN g_set_window_height(XEN height) 
 {
-  Latus val;
+  int val;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(height), height, XEN_ONLY_ARG, S_setB S_window_height, "a number"); 
-  val = (Latus)XEN_TO_C_INT_OR_ELSE(height, 0);
+  val = (int)XEN_TO_C_INT_OR_ELSE(height, 0);
   if ((val > 0) && (val < snd_screen_height()))
     {
 #if (!USE_NO_GUI)
@@ -1693,9 +1693,9 @@ static XEN g_window_width(void)
 
 static XEN g_set_window_width(XEN width) 
 {
-  Latus val;
+  int val;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(width), width, XEN_ONLY_ARG, S_setB S_window_width, "a number"); 
-  val = (Latus)XEN_TO_C_INT_OR_ELSE(width, 0);
+  val = XEN_TO_C_INT_OR_ELSE(width, 0);
   if ((val > 0) && (val < snd_screen_width()))
     {
 #if (!USE_NO_GUI)
@@ -1714,9 +1714,9 @@ static XEN g_window_x(void)
 
 static XEN g_set_window_x(XEN val) 
 {
-  Locus x;
+  int x;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_window_x, "a number"); 
-  x = (Locus)XEN_TO_C_INT_OR_ELSE(val, 0);
+  x = XEN_TO_C_INT_OR_ELSE(val, 0);
   if ((x >= 0) && (x < snd_screen_width()))
     {
       set_widget_x(MAIN_SHELL(ss), x);
@@ -1733,9 +1733,9 @@ static XEN g_window_y(void)
 
 static XEN g_set_window_y(XEN val) 
 {
-  Locus y;
+  int y;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_window_y, "a number"); 
-  y = (Locus)XEN_TO_C_INT_OR_ELSE(val, 0);
+  y = XEN_TO_C_INT_OR_ELSE(val, 0);
   if ((y >= 0) && (y < snd_screen_height()))
     {
       set_widget_y(MAIN_SHELL(ss), y);

@@ -302,7 +302,7 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
   mp->visible = show;
 }
 
-static void draw_play_triangle(chan_info *cp, Locus x)
+static void draw_play_triangle(chan_info *cp, int x)
 {
   int y0;
   y0 = ((axis_info *)(cp->axis))->y_axis_y0;
@@ -404,15 +404,15 @@ static int last_mouse_x = 0;
 static mark *moving_mark = NULL; /* used only while "off-screen" during axis moves */
 
 static void move_axis_to_track_mark(chan_info *cp);
-static Cessator watch_mouse_button = 0;
-static Cessate WatchMouse(Indicium cp)
+static idle_t watch_mouse_button = 0;
+static idle_func_t WatchMouse(any_pointer_t cp)
 {
   if (watch_mouse_button)
     {
       move_axis_to_track_mark((chan_info *)cp);
-      return((Cessate)BACKGROUND_CONTINUE);
+      return(BACKGROUND_CONTINUE);
     }
-  else return((Cessate)BACKGROUND_QUIT);
+  else return(BACKGROUND_QUIT);
 }
 
 static void start_mark_watching(chan_info *cp, mark *mp)
@@ -490,9 +490,9 @@ static void sort_marks(chan_info *cp)
 }
 
 
-static Locus prev_cx = -1;
+static int prev_cx = -1;
 
-off_t move_play_mark(chan_info *cp, off_t *mc, Locus cx)
+off_t move_play_mark(chan_info *cp, off_t *mc, int cx)
 {
   /* mc = mouse loc sampwise return samps updating mc */
   off_t cur_mc;
@@ -1674,7 +1674,7 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
   else
     {
       mus_sample_t ymin, ymax, msamp;
-      Locus xi;
+      int xi;
       double xf;
       if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, false, cp->edit_ctr, (samps > AMP_ENV_CUTOFF)))
 	{

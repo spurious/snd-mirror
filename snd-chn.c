@@ -303,7 +303,7 @@ bool chan_fft_in_progress(chan_info *cp)
   return((bool)(cp->cgx->fft_in_progress));
 }
 
-void set_chan_fft_in_progress(chan_info *cp, Cessator fp) 
+void set_chan_fft_in_progress(chan_info *cp, idle_t fp) 
 {
   cp->cgx->fft_in_progress = fp;
 }
@@ -382,7 +382,7 @@ void set_dot_size(int val)
 {
   if (val > 0)  /* -1 here can crash X! */
     {
-      in_set_dot_size((Latus)val);
+      in_set_dot_size(val);
       for_each_chan_with_int(chans_dot_size, val);
     }
 }
@@ -673,7 +673,7 @@ void start_amp_env(chan_info *cp)
     {
       if (cgx->amp_env_in_progress) stop_amp_env(cp);
       start_env_state(cp);
-      cgx->amp_env_in_progress = BACKGROUND_ADD(get_amp_env, (Indicium)cp);
+      cgx->amp_env_in_progress = BACKGROUND_ADD(get_amp_env, (any_pointer_t)cp);
     }
 }
 
@@ -1083,18 +1083,18 @@ void set_axes(chan_info *cp, double x0, double x1, Float y0, Float y1)
 }
 
 /* these are copies from snd-axis.c; didn't want to use macros here */
-static Locus local_grf_x(double val, axis_info *ap)
+static int local_grf_x(double val, axis_info *ap)
 {
   if (val >= ap->x1) return(ap->x_axis_x1);
   if (val <= ap->x0) return(ap->x_axis_x0);
-  return((Locus)(ap->x_base + val * ap->x_scale));
+  return((int)(ap->x_base + val * ap->x_scale));
 }
 
-static Locus local_grf_y(Float val, axis_info *ap)
+static int local_grf_y(Float val, axis_info *ap)
 {
   if (val >= ap->y1) return(ap->y_axis_y1);
   if (val <= ap->y0) return(ap->y_axis_y0);
-  return((Locus)(ap->y_base + val * ap->y_scale));
+  return((int)(ap->y_base + val * ap->y_scale));
 }
 
 static void display_y_zero(chan_info *cp)
@@ -1103,7 +1103,7 @@ static void display_y_zero(chan_info *cp)
   ap = cp->axis;
   if ((ap->y0 < 0.0) && (ap->y1 > 0.0))
     {
-      Locus zero;
+      int zero;
       zero = local_grf_y(0.0, ap);
       draw_line(copy_context(cp), ap->x_axis_x0, zero, ap->x_axis_x1, zero);
       if (cp->printing) 
@@ -1214,7 +1214,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
   snd_info *sp;
   int j = 0;
   off_t samps;
-  Locus xi;
+  int xi;
   axis_info *ap;
   Float samples_per_pixel, xf, pinc = 0.0;
   double x, incr;  
@@ -1302,7 +1302,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 	{
 #if (!SNDLIB_USE_FLOATS)
 	  mus_sample_t ay0, ay1, isamp;
-	  Locus yval;
+	  int yval;
 	  Float yscl;
 	  ay0 = MUS_FLOAT_TO_SAMPLE(ap->y0);
 	  ay1 = MUS_FLOAT_TO_SAMPLE(ap->y1);
@@ -1316,7 +1316,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 		{
 		  if (isamp <= ay0) 
 		    yval = ap->y_axis_y0;
-		else yval = (Locus)(ap->y_base + isamp * yscl);
+		else yval = (int)(ap->y_base + isamp * yscl);
 		}
 	      set_grf_point(local_grf_x(x, ap), j, yval);
 	    }
@@ -1562,7 +1562,7 @@ void draw_graph_data(chan_info *cp, off_t losamp, off_t hisamp, int data_size,
 		     Float *data, Float *data1, axis_context *ax, graph_style_t style)
 {
   off_t i, samps;
-  Locus xi;
+  int xi;
   axis_info *ap;
   snd_info *sp;
   double x, incr;  
@@ -1745,7 +1745,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
   Float incr, x, scale;
   int i, j, hisamp, losamp = 0;
   Float samples_per_pixel, xf, ina, ymax;
-  Locus logx, logy;
+  int logx, logy;
   Float pslogx, pslogy;
   Float saved_data = 0.0;
   Float minlx = 0.0, curlx = 0.0, fap_range, log_range, lscale = 1.0;
@@ -1980,11 +1980,11 @@ static void make_sonogram(chan_info *cp)
   if ((si) && (si->scale > 0.0))
     {
       int i, slice, fwidth, fheight, j, bins;
-      Latus rectw, recth;
+      int rectw, recth;
       axis_info *fap;
       Float xf, xfincr, yf, yfincr, frectw, frecth, xscl, scl = 1.0;
       Float *hfdata;
-      Locus *hidata;
+      int *hidata;
       axis_context *ax;
       Float minlx = 0.0, curlx = 0.0, lscale = 1.0;
 
@@ -2032,13 +2032,13 @@ static void make_sonogram(chan_info *cp)
       frectw = (Float)fwidth / (Float)(si->target_slices);
       frecth = (Float)fheight / (Float)bins;
       xscl = (Float)(fap->x1 - fap->x0) / (Float)(si->target_slices);
-      rectw = (Latus)(ceil(frectw));
-      recth = (Latus)(ceil(frecth));
+      rectw = (int)(ceil(frectw));
+      recth = (int)(ceil(frecth));
       if (rectw == 0) rectw = 1;
       if (recth == 0) recth = 1;
 
       hfdata = (Float *)MALLOC((bins + 1) * sizeof(Float));
-      hidata = (Locus *)MALLOC((bins + 1) * sizeof(Locus));
+      hidata = (int *)MALLOC((bins + 1) * sizeof(int));
       if (cp->transform_type == FOURIER)
 	{
 	  if (cp->fft_log_frequency)
@@ -2088,8 +2088,8 @@ static void make_sonogram(chan_info *cp)
 	      if (j != NO_COLOR)
 		{
 		  if (cp->fft_log_frequency)
-		    set_sono_rectangle(sono_js[j], j, (Locus)xf, hidata[i + 1], rectw, (Latus)(hidata[i] - hidata[i + 1]));
-		  else set_sono_rectangle(sono_js[j], j, (Locus)xf, hidata[i + 1], rectw, recth);
+		    set_sono_rectangle(sono_js[j], j, (int)xf, hidata[i + 1], rectw, (int)(hidata[i] - hidata[i + 1]));
+		  else set_sono_rectangle(sono_js[j], j, (int)xf, hidata[i + 1], rectw, recth);
 		  if (cp->printing)
 		    {
 		      if (cp->fft_log_frequency) 
@@ -2274,7 +2274,7 @@ static void gl_display(chan_info *cp)
 }
 
 static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool use_dB, Float min_dB,
-			   unsigned short br, unsigned short bg, unsigned short bb)
+			   rgb_t br, rgb_t bg, rgb_t bb)
 {
   Float lin_dB = 0.0;
   Float xincr, yincr, x0, y0;
@@ -2308,7 +2308,7 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool us
       for (i = 0, y0 = -0.5; i < bins - 1; i++, y0 += yincr)
 	{
 	  float x1, y1;
-	  unsigned short r, g, b;
+	  rgb_t r, g, b;
 	  Float val00, val01, val11, val10;
 
 	  glBegin(GL_POLYGON);
@@ -2376,7 +2376,7 @@ static bool make_gl_spectrogram(chan_info *cp)
   axis_info *fap;
   snd_info *sp;
 
-  unsigned short br = 65535, bg = 65535, bb = 65535;
+  rgb_t br = RGB_MAX, bg = RGB_MAX, bb = RGB_MAX;
 #if USE_MOTIF
   Colormap cmap;
   XColor tmp_color;
@@ -2435,17 +2435,17 @@ static bool make_gl_spectrogram(chan_info *cp)
   br = tmp_color.red;
   bg = tmp_color.green;
   bb = tmp_color.blue;
-  glClearColor((float)(tmp_color.red) / 65535.0,
-	       (float)(tmp_color.green) / 65535.0,
-	       (float)(tmp_color.blue) / 65535.0,
+  glClearColor(RGB_TO_FLOAT(tmp_color.red),
+	       RGB_TO_FLOAT(tmp_color.green),
+	       RGB_TO_FLOAT(tmp_color.blue),
 	       0.0);
 #else
   if (cp == selected_channel())
     tmp_color = ss->sgx->selected_graph_color;
   else tmp_color = ss->sgx->graph_color;
-  glClearColor((float)(tmp_color->red) / 65535.0,
-	       (float)(tmp_color->green) / 65535.0,
-	       (float)(tmp_color->blue) / 65535.0,
+  glClearColor(RGB_TO_FLOAT(tmp_color->red),
+	       RGB_TO_FLOAT(tmp_color->green),
+	       RGB_TO_FLOAT(tmp_color->blue),
 	       0.0);
 #endif
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -2608,7 +2608,7 @@ static bool make_spectrogram(chan_info *cp)
 	  
 	  if (color_map(ss) == BLACK_AND_WHITE_COLORMAP)
 	    {
-	      set_grf_point((Locus)(xval + x0), i, (Locus)(yval + y0));
+	      set_grf_point((int)(xval + x0), i, (int)(yval + y0));
 	      if (cp->printing) 
 		ps_set_grf_point(ungrf_x(fap, (int)(xval + x0)), i, 
 				 ungrf_y(fap, (int)(yval + y0)));
@@ -2712,7 +2712,7 @@ static void make_wavogram(chan_info *cp)
       for (j = 0, y0 = -1.0; j < lines - 1; j++, y0 += yinc)
 	for (x0 = -1.0, i = 0; i < len - 1; i++, x0 += xinc)
 	  {
-	    unsigned short r, g, b;
+	    rgb_t r, g, b;
 	    glBegin(GL_POLYGON);
 	    x1 = x0 + xinc;
 	    y1 = y0 + yinc;
@@ -2783,8 +2783,8 @@ static void make_wavogram(chan_info *cp)
 	  xval = xyz[0];
 	  if (color_map(ss) == BLACK_AND_WHITE_COLORMAP)
 	    {
-	      set_grf_point((Locus)(xval + x0), i, 
-			    (Locus)(yval + y0));
+	      set_grf_point((int)(xval + x0), i, 
+			    (int)(yval + y0));
 	      if (cp->printing) 
 		ps_set_grf_point(ungrf_x(ap, (int)(xval + x0)), i, 
 				 ungrf_y(ap, (int)(y0 + yval)));
@@ -2950,7 +2950,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 	    }
 	  else
 	    {
-	      Locus xi;
+	      int xi;
 	      Float ymin, ymax, pinc, xf;
 	      j = 0;
 	      i = 0;
@@ -4056,7 +4056,7 @@ static void calculate_syncd_fft(chan_info *cp, int value)
 }
 
 static bool dragged = false;
-static Tempus mouse_down_time;
+static oclock_t mouse_down_time;
 static mark *mouse_mark = NULL;
 static mark *play_mark = NULL;
 static click_loc_t click_within_graph = CLICK_NOGRAPH;
@@ -4071,7 +4071,7 @@ static chan_info *dragged_cp;
 static int press_x, press_y;
 #endif
 
-void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, Tempus time)
+void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, oclock_t time)
 {
   snd_info *sp;
   sp = cp->sound;
@@ -4322,14 +4322,14 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
     }
 }
 
-static Tempus first_time = 0;
+static oclock_t first_time = 0;
 static off_t mouse_cursor = 0;
 static XEN mark_drag_triangle_hook;
 
-void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time)
+void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 {
   snd_info *sp;
-  Tempus mouse_time;
+  oclock_t mouse_time;
   /* this needs to be a little slow about deciding that we are dragging, as opposed to a slow click */
   mouse_time = time;
   if ((mouse_time - mouse_down_time) < ss->click_time) return;
@@ -4377,10 +4377,10 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time)
 	  else
 	    {
 	      off_t samps;
-	      Tempus time_interval;
+	      oclock_t time_interval;
 	      time_interval = mouse_time - first_time;
 	      first_time = mouse_time;
-	      samps = move_play_mark(cp, &mouse_cursor, (Locus)x);
+	      samps = move_play_mark(cp, &mouse_cursor, x);
 	      if (!(XEN_TRUE_P(drag_res)))
 		{
 		  if (time_interval != 0)
@@ -7009,8 +7009,8 @@ If 'data' is a list of numbers, it is treated as an envelope."
   bool need_update = false;
   Float ymin, ymax, val;
   double nominal_x0, nominal_x1;
-  Latus old_height = 0, old_width = 0, ww = 0;
-  Locus old_y_offset = 0, gx0 = 0;
+  int old_height = 0, old_width = 0, ww = 0;
+  int old_y_offset = 0, gx0 = 0;
 
   /* ldata can be a vct or a list of numbers or vcts */
   XEN_ASSERT_TYPE(((MUS_VCT_P(ldata)) || 
@@ -7189,9 +7189,9 @@ data and passes it to openGL.  See snd-gl.scm for an example."
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(use_dB), use_dB, XEN_ARG_4, S_glSpectrogram, "a boolean");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(min_dB), min_dB, XEN_ARG_5, S_glSpectrogram, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(scale), scale, XEN_ARG_6, S_glSpectrogram, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(br), br, XEN_ARG_7, S_glSpectrogram, "an integer (pixel value)");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(bg), bg, XEN_ARG_8, S_glSpectrogram, "an integer (pixel value)");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(bb), bb, XEN_ARG_9, S_glSpectrogram, "an integer (pixel value)");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(br), br, XEN_ARG_7, S_glSpectrogram, "a number (red value)");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(bg), bg, XEN_ARG_8, S_glSpectrogram, "a number (green value)");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(bb), bb, XEN_ARG_9, S_glSpectrogram, "a number (blue value)");
   si = (sono_info *)CALLOC(1, sizeof(sono_info));
   si->active_slices = XEN_VECTOR_LENGTH(data);
   si->data = (Float **)CALLOC(si->active_slices, sizeof(Float *));
@@ -7208,9 +7208,9 @@ data and passes it to openGL.  See snd-gl.scm for an example."
 		 XEN_TO_C_DOUBLE(cutoff),
 		 XEN_TO_C_BOOLEAN(use_dB),
 		 XEN_TO_C_DOUBLE(min_dB),
-		 (unsigned short)(XEN_TO_C_INT(br)),
-		 (unsigned short)(XEN_TO_C_INT(bg)),
-		 (unsigned short)(XEN_TO_C_INT(bb)));
+		 FLOAT_TO_RGB(XEN_TO_C_DOUBLE(br)),
+		 FLOAT_TO_RGB(XEN_TO_C_DOUBLE(bg)),
+		 FLOAT_TO_RGB(XEN_TO_C_DOUBLE(bb)));
   FREE(si->data);
   FREE(si);
   return(XEN_FALSE);

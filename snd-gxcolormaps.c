@@ -3,7 +3,7 @@
 typedef struct {
   int size;
   char *name;
-  unsigned short *r, *g, *b;
+  rgb_t *r, *g, *b;
   XEN lambda;
   int gc_loc;
   Float** (*make_rgb)(int size, XEN func);
@@ -55,17 +55,17 @@ static cmap *delete_cmap(int index)
   return(NULL);
 }
 
-static unsigned short *Floats_to_ushorts(int size, Float *data)
+static rgb_t *Floats_to_rgb_t(int size, Float *data)
 {
   int i;
-  unsigned short *new_data;
-  new_data = (unsigned short *)CALLOC(size, sizeof(unsigned short));
+  rgb_t *new_data;
+  new_data = (rgb_t *)CALLOC(size, sizeof(rgb_t));
   for (i = 0; i < size; i++)
-    new_data[i] = (unsigned short)floor(65535 * data[i]);
+    new_data[i] = FLOAT_TO_RGB(data[i]);
   return(new_data);
 }
 
-void get_current_color(int index, int n, unsigned short *r, unsigned short *g, unsigned short *b)
+void get_current_color(int index, int n, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   if (is_colormap(index))
     {
@@ -82,9 +82,9 @@ void get_current_color(int index, int n, unsigned short *r, unsigned short *g, u
 	  c->size = color_map_size(ss);
 	  /* make new data */
 	  rgb = (*(c->make_rgb))(c->size, c->lambda);
-	  c->r = Floats_to_ushorts(c->size, rgb[0]);
-	  c->g = Floats_to_ushorts(c->size, rgb[1]);
-	  c->b = Floats_to_ushorts(c->size, rgb[2]);
+	  c->r = Floats_to_rgb_t(c->size, rgb[0]);
+	  c->g = Floats_to_rgb_t(c->size, rgb[1]);
+	  c->b = Floats_to_rgb_t(c->size, rgb[2]);
 	  for (i = 0; i < 3; i++) FREE(rgb[i]);
 	  FREE(rgb);
 	}
@@ -103,9 +103,9 @@ static cmap *new_cmap(const char *name, int size, Float **rgb)
   c = (cmap *)CALLOC(1, sizeof(cmap));
   c->name = copy_string(name);
   c->size = size;
-  c->r = Floats_to_ushorts(size, rgb[0]);
-  c->g = Floats_to_ushorts(size, rgb[1]);
-  c->b = Floats_to_ushorts(size, rgb[2]);
+  c->r = Floats_to_rgb_t(size, rgb[0]);
+  c->g = Floats_to_rgb_t(size, rgb[1]);
+  c->b = Floats_to_rgb_t(size, rgb[2]);
   return(c);
 }
 
@@ -509,7 +509,7 @@ static XEN g_colormap_ref(XEN map, XEN pos)
   Float x;
   #define H_colormap_ref "(" S_colormap_ref " index pos): (list r g b). Index is the colormap \
 index (the value of " S_colormap " for example).  Pos is between 0.0 and 1.0."
-  unsigned short r = 0, g = 0, b = 0;
+  rgb_t r = 0, g = 0, b = 0;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(map), map, XEN_ARG_1, S_colormap_ref, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(pos), pos, XEN_ARG_2, S_colormap_ref, "a number between 0.0 and 1.0");
   index = XEN_TO_C_INT(map);
@@ -521,9 +521,9 @@ index (the value of " S_colormap " for example).  Pos is between 0.0 and 1.0."
   if ((x < 0.0) || (x > 1.0))
     XEN_OUT_OF_RANGE_ERROR(S_colormap_ref, 2, pos, "x must be between 0.0 and 1.0: ~A");
   get_current_color(index, (int)(color_map_size(ss) * x + 0.5), &r, &g, &b);
-  return(XEN_LIST_3(C_TO_XEN_DOUBLE((float)r / 65535.0),
-		    C_TO_XEN_DOUBLE((float)g / 65535.0),
-		    C_TO_XEN_DOUBLE((float)b / 65535.0)));
+  return(XEN_LIST_3(C_TO_XEN_DOUBLE(RGB_TO_FLOAT(r)),
+		    C_TO_XEN_DOUBLE(RGB_TO_FLOAT(g)),
+		    C_TO_XEN_DOUBLE(RGB_TO_FLOAT(b))));
 }
 
 /* can't use Colormap -- it's the X type name */

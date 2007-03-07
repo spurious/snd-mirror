@@ -21,6 +21,7 @@ static void draw_page(GtkPrintOperation *operation, GtkPrintContext *context, gi
   PangoFontDescription *desc;
   gchar *page_str;
 
+  /* this is just example code */
   cr = gtk_print_context_get_cairo_context(context);
   width = gtk_print_context_get_width(context);
 
@@ -51,7 +52,7 @@ static void draw_page(GtkPrintOperation *operation, GtkPrintContext *context, gi
 
   g_object_unref(layout);
 
-  update_graph(selected_channel()); /* currently no output */
+  display_channel_data(selected_channel()); /* update_graph recalculates the spectrum which is unnecessary here */
 }
 
 static void end_print(GtkPrintOperation *operation, GtkPrintContext *context, gpointer data)

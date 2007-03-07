@@ -1115,9 +1115,9 @@ static color_t rgb_to_color(Float r, Float g, Float b)
 {
   GdkColor gcolor;
   GdkColor *ccolor;
-  gcolor.red = (unsigned short)(65535 * r);
-  gcolor.green = (unsigned short)(65535 * g);
-  gcolor.blue = (unsigned short)(65535 * b);
+  gcolor.red = FLOAT_TO_RGB(r);
+  gcolor.green = FLOAT_TO_RGB(g);
+  gcolor.blue = FLOAT_TO_RGB(b);
   ccolor = gdk_color_copy(&gcolor);
   gdk_rgb_find_color(gdk_colormap_get_system(), ccolor);
   return(ccolor);
@@ -1125,9 +1125,9 @@ static color_t rgb_to_color(Float r, Float g, Float b)
 
 static void pixel_to_rgb(color_t pix, float *r, float *g, float *b)
 {
-  (*r) = (float)(pix->red) / 65535.0;
-  (*g) = (float)(pix->green) / 65535.0;
-  (*b) = (float)(pix->blue) / 65535.0;
+  (*r) = RGB_TO_FLOAT(pix->red);
+  (*g) = RGB_TO_FLOAT(pix->green);
+  (*b) = RGB_TO_FLOAT(pix->blue);
 }
 
 static void scale_set_color(prefs_info *prf, color_t pixel)
@@ -1155,9 +1155,9 @@ static void reflect_color(prefs_info *prf)
   current_color = rgb_to_color(r, g, b);
   gtk_widget_modify_bg(prf->color, GTK_STATE_NORMAL, current_color);
 
-  r = current_color->red / 65535.0;
-  g = current_color->green / 65535.0;
-  b = current_color->blue / 65535.0;
+  r = RGB_TO_FLOAT(current_color->red);
+  g = RGB_TO_FLOAT(current_color->green);
+  b = RGB_TO_FLOAT(current_color->blue);
 
   float_to_textfield(prf->rtxt, r);
   float_to_textfield(prf->gtxt, g);

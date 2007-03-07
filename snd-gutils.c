@@ -350,7 +350,8 @@ void gc_set_foreground_xor(GdkGC *gc, GdkColor *col1, GdkColor *col2)
   newcol.red = XOR(col1->red, col2->red);
   newcol.green = XOR(col1->green, col2->green);
   newcol.blue = XOR(col1->blue, col2->blue);
-  gdk_gc_set_foreground(gc, gdk_color_copy(&newcol)); /* memleak? */
+  /* gdk_gc_set_foreground(gc, gdk_color_copy(&newcol)); */ /* this sets .pixel from .pixel -- surely no copy is needed? */
+  gdk_gc_set_foreground(gc, &newcol);
 }
 
 void color_cursor(GdkColor *color)
@@ -650,7 +651,7 @@ void sg_make_resizable(GtkWidget *w)
     }
 }
 
-Cessator add_work_proc(GtkFunction func, gpointer data)
+idle_t add_work_proc(GtkFunction func, gpointer data)
 {
   /* during auto-testing I need to force the background procs to run to completion */
   if (with_background_processes(ss))
@@ -658,7 +659,7 @@ Cessator add_work_proc(GtkFunction func, gpointer data)
   else
     {
       while (((*func)(data)) == BACKGROUND_CONTINUE);
-      return(0);
+      return((idle_t)0);
     }
 }
 

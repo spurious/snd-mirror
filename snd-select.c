@@ -569,7 +569,7 @@ void finish_selection_creation(void)
 
 static void cp_redraw_selection(chan_info *cp)
 {
-  Locus x0, x1;
+  int x0, x1;
   off_t beg, end;
   axis_info *ap;
   double sp_srate;
@@ -686,7 +686,7 @@ int select_all(chan_info *cp)
 /* ---------------- selection mouse motion ---------------- */
 
 static int last_selection_x = 0;
-static Cessator watch_selection_button = 0;
+static idle_t watch_selection_button = 0;
 
 void cancel_selection_watch(void)
 {
@@ -715,7 +715,7 @@ static void move_selection_1(chan_info *cp, int x)
   redraw_selection();
 }
 
-static Cessate WatchSelection(Indicium cp)
+static idle_func_t WatchSelection(any_pointer_t cp)
 {
   if (watch_selection_button)
     {

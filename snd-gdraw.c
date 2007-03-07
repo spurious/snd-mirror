@@ -18,18 +18,58 @@
 
 void draw_line(axis_context *ax, int x0, int y0, int x1, int y1) 
 {
+#if USE_CAIRO
+  if (ax->cr)
+    {
+      /* cairo_set_source_rgb(ax->cr, ax->current_red, ax->current_green, ax->current_blue); */
+      /*   need actual color values, not Pixels or GdkColors, or GdkGcs */
+
+      cairo_set_line_width(ax->cr, 1.0); /* to get a thin line in cairo -- hooboy! you have to offset everything -- this is not pretty */
+      cairo_move_to(ax->cr, x0 + 0.5, y0 + 0.5);
+      cairo_line_to(ax->cr, x1 + 0.5, y1 + 0.5);
+      cairo_stroke(ax->cr);
+      return;
+    }
+#endif
   if (ax->wn == NULL) return;
   gdk_draw_line(ax->wn, ax->gc, (gint)x0, (gint)y0, (gint)x1, (gint)y1);
 }
 
 void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height)
 {
+#if USE_CAIRO
+  if (ax->cr)
+    {
+      cairo_rectangle(ax->cr, x0, y0, width, height);
+      cairo_fill(ax->cr);
+      return;
+    }
+#endif
   if (ax->wn == NULL) return;
   gdk_draw_rectangle(ax->wn, ax->gc, true, (gint)x0, (gint)y0, (gint)width, (gint)height);
 }
 
 void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width, int height)
 {
+  /* used only to clear the overall graph window in snd-chn.c */
+#if USE_CAIRO
+  /*
+   * if cairo, do we need this? draw in bg color? 
+   *    erase_gc is bg=data color, fg=(selected-)graph color, this will use graph color
+   */
+  if (ax->cr)
+    {
+      /*
+      if ((cp->cgx->selected) ||
+	  ((cp->sound) && (cp->sound->channel_style == CHANNELS_SUPERIMPOSED) && (cp->sound->index == ss->selected_sound)))
+	cairo_set_source_rgb(ax->cr, ax->selected_graph_red, ax->selected_graph_green, ax->selected_graph_blue);
+      else cairo_set_source_rgb(ax->cr, ax->graph_red, ax->graph_green, ax->graph_blue);
+      */
+      cairo_rectangle(ax->cr, x0, y0, width, height);
+      cairo_fill(ax->cr);
+      return;
+    }
+#endif
   if (ax->wn == NULL) return;
   gdk_draw_rectangle(ax->wn, erase_GC(cp), true, (gint)x0, (gint)y0, (gint)width, (gint)height);
 }
@@ -177,7 +217,7 @@ static void fill_two_sided_polygons(axis_context *ax, GdkPoint *points, GdkPoint
 static GdkPoint points[POINT_BUFFER_SIZE];
 static GdkPoint points1[POINT_BUFFER_SIZE];
 
-void set_grf_points(Locus xi, int j, Locus ymin, Locus ymax)
+void set_grf_points(int xi, int j, int ymin, int ymax)
 {
   points[j].x = xi;
   points1[j].x = xi;
@@ -185,7 +225,7 @@ void set_grf_points(Locus xi, int j, Locus ymin, Locus ymax)
   points1[j].y = ymin;
 }
 
-void set_grf_point(Locus xi, int j, Locus yi)
+void set_grf_point(int xi, int j, int yi)
 {
   points[j].x = xi;
   points[j].y = yi;
@@ -528,7 +568,7 @@ void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int 
   gdk_draw_line(ax->wn, colormap_GC, x0, y0, x1, y1);
 }
 
-void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus height)
+void set_sono_rectangle(int j, int color, int x, int y, int width, int height)
 {
   GdkRectangle *r;
   r = sono_data[color];

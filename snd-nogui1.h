@@ -30,7 +30,7 @@ void setup_axis_context(chan_info *cp, axis_context *ax);
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1);
 void allocate_color_map(int colormap);
 void allocate_sono_rects(int size);
-void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus height);
+void set_sono_rectangle(int j, int color, int x, int y, int width, int height);
 void draw_sono_rectangles(axis_context *ax, int color, int jmax);
 widget_t start_color_dialog(bool managed);
 widget_t start_orientation_dialog(bool managed);
@@ -186,7 +186,7 @@ bool restore_fft_pix(chan_info *cp, axis_context *ax);
 void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y1);
 void cleanup_cw(chan_info *cp);
 bool fixup_cp_cgx_ax_wn(chan_info *cp);
-void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b);
+void get_current_color(int colormap, int j, rgb_t *r, rgb_t *g, rgb_t *b);
 void change_channel_style(snd_info *sp, channel_style_t new_style);
 int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, widget_t main, fw_button_t arrows, bool with_events);
 

@@ -28,8 +28,8 @@ void fill_polygon(axis_context *ax, int points, ...) {}
 void draw_polygon(axis_context *ax, int points, ...) {}
 void draw_string(axis_context *ax, int x0, int y0, const char *str, int len) {}
 void draw_arc(axis_context *ax, int x, int y, int size) {}
-void set_grf_points(Locus xi, int j, Locus ymin, Locus ymax) {}
-void set_grf_point(Locus xi, int j, Locus yi) {}
+void set_grf_points(int xi, int j, int ymin, int ymax) {}
+void set_grf_point(int xi, int j, int yi) {}
 void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style) {}
 void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style) {}
 void mix_save_graph(mix_context *ms, int j) {}
@@ -42,7 +42,7 @@ void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int 
 void allocate_color_map(int colormap) {}
 void allocate_sono_rects(int size) {}
 void set_with_gl(bool val) {}
-void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus height) {}
+void set_sono_rectangle(int j, int color, int x, int y, int width, int height) {}
 void draw_sono_rectangles(axis_context *ax, int color, int jmax) {}
 widget_t start_color_dialog(bool managed) {return(0);}
 widget_t start_orientation_dialog(bool managed) {return(0);}
@@ -223,7 +223,7 @@ widget_t make_mix_file_dialog(bool managed) {return(0);}
 widget_t make_insert_file_dialog(bool managed) {return(0);}
 void clear_listener(void) {}
 int menu_widget(int which_menu) {return(0);}
-void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b) {}
+void get_current_color(int colormap, int j, rgb_t *r, rgb_t *g, rgb_t *b) {}
 void set_filter_text(snd_info *sp, char *str) {}
 void display_filter_env(snd_info *sp) {}
 void reflect_mix_or_track_change(int mix_id, int track_id, bool forced) {}

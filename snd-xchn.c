@@ -411,13 +411,13 @@ static void w_toggle_callback(Widget w, XtPointer context, XtPointer info)
 
 static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
 {
-  static Tempus last_expose_event_time = 0;
+  static oclock_t last_expose_event_time = 0;
   static chan_info *last_cp = NULL;
   snd_info *sp;
   chan_info *cp = (chan_info *)context;
   XmDrawingAreaCallbackStruct *cb = (XmDrawingAreaCallbackStruct *)info;
   XExposeEvent *ev;
-  Tempus curtime;
+  oclock_t curtime;
   ASSERT_WIDGET_TYPE(XmIsDrawingArea(w), w);
   if ((cp == NULL) || (!(cp->active)) || (cp->sound == NULL)) return;
   ev = (XExposeEvent *)(cb->event);

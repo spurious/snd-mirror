@@ -46,7 +46,7 @@ void fill_polygon(axis_context *ax, int points, ...)
   va_start(ap, points);
   for (i = 0; i < points; i++)
     {
-      pts[i].x = va_arg(ap, int); /* not Locus due to the way va_arg is implemented */
+      pts[i].x = va_arg(ap, int); /* not int due to the way va_arg is implemented */
       pts[i].y = va_arg(ap, int);
     }
   va_end(ap);
@@ -127,7 +127,7 @@ void draw_arc(axis_context *ax, int x, int y, int size)
 
 static XPoint polypts[4];
 
-static void fill_polygons(axis_context *ax, XPoint *points, int num, Locus y0)
+static void fill_polygons(axis_context *ax, XPoint *points, int num, int y0)
 {
   int i;
   for (i = 1; i < num; i++)
@@ -164,7 +164,7 @@ static void fill_two_sided_polygons(axis_context *ax, XPoint *points, XPoint *po
 static XPoint points[POINT_BUFFER_SIZE];
 static XPoint points1[POINT_BUFFER_SIZE];
 
-void set_grf_points(Locus xi, int j, Locus ymin, Locus ymax)
+void set_grf_points(int xi, int j, int ymin, int ymax)
 {
   points[j].x = xi;
   points1[j].x = xi;
@@ -172,7 +172,7 @@ void set_grf_points(Locus xi, int j, Locus ymin, Locus ymax)
   points1[j].y = ymin;
 }
 
-void set_grf_point(Locus xi, int j, Locus yi)
+void set_grf_point(int xi, int j, int yi)
 {
   points[j].x = xi;
   points[j].y = yi;
@@ -543,7 +543,7 @@ void draw_sono_rectangles(axis_context *ax, int color, int jmax)
   XFillRectangles(ax->dp, ax->wn, colormap_GC, sono_data[color], jmax); 
 }
 
-void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus height)
+void set_sono_rectangle(int j, int color, int x, int y, int width, int height)
 {
   XRectangle *r;
   r = sono_data[color];

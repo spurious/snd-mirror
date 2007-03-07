@@ -1186,9 +1186,9 @@ static XColor *rgb_to_color_1(Float r, Float g, Float b)
   XColor *new_color;
   new_color = (XColor *)CALLOC(1, sizeof(XColor));
   new_color->flags = DoRed | DoGreen | DoBlue;
-  new_color->red = (unsigned short)(65535 * r);
-  new_color->green = (unsigned short)(65535 * g);
-  new_color->blue = (unsigned short)(65535 * b);
+  new_color->red = FLOAT_TO_RGB(r);
+  new_color->green = FLOAT_TO_RGB(g);
+  new_color->blue = FLOAT_TO_RGB(b);
   dpy = MAIN_DISPLAY(ss);
   XAllocColor(dpy, DefaultColormap(dpy, DefaultScreen(dpy)), new_color);
   return(new_color);
@@ -1212,9 +1212,9 @@ static void pixel_to_rgb(Pixel pix, float *r, float *g, float *b)
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = pix;
   XQueryColor(dpy, DefaultColormap(dpy, DefaultScreen(dpy)), &tmp_color);
-  (*r) = (float)tmp_color.red / 65535.0;
-  (*g) = (float)tmp_color.green / 65535.0;
-  (*b) = (float)tmp_color.blue / 65535.0;
+  (*r) = RGB_TO_FLOAT(tmp_color.red);
+  (*g) = RGB_TO_FLOAT(tmp_color.green);
+  (*b) = RGB_TO_FLOAT(tmp_color.blue);
 }
 
 static void reflect_color(prefs_info *prf)
@@ -1229,9 +1229,9 @@ static void reflect_color(prefs_info *prf)
   XmScaleGetValue(prf->bscl, &ib);
 
   current_color = rgb_to_color_1(ir / 100.0, ig / 100.0, ib / 100.0);
-  r = current_color->red / 65535.0;
-  g = current_color->green / 65535.0;
-  b = current_color->blue / 65535.0;
+  r = RGB_TO_FLOAT(current_color->red);
+  g = RGB_TO_FLOAT(current_color->green);
+  b = RGB_TO_FLOAT(current_color->blue);
 
   pixel = current_color->pixel;
   FREE(current_color);

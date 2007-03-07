@@ -340,7 +340,7 @@ void finish_amp_env(chan_info *cp)
     }
 }
 
-Cessate get_amp_env(Indicium ptr)
+idle_func_t get_amp_env(any_pointer_t ptr)
 {
   /* calculate the amp env of channel */
   chan_info *cp = (chan_info *)ptr;
@@ -449,7 +449,7 @@ int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sra
   Float step, x, pinc = 0.0;
   double xf, xk;
   mus_sample_t ymin, ymax;
-  Locus xi;
+  int xi;
   int j = 0;
   off_t i;
   env_info *ep;
@@ -4652,7 +4652,7 @@ typedef struct {
   int func_gc_loc;
 } env_tick;
 
-static Cessate tick_it(Indicium pet)
+static idle_func_t tick_it(any_pointer_t pet)
 {
   bool val;
   env_state *es;
@@ -4836,7 +4836,7 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 	      et->func_gc_loc = snd_protect(done_func);
 	      et->len = len;
 	      et->filename = filename;
-	      id = (int)BACKGROUND_ADD(tick_it, (Indicium)et);
+	      id = (int)BACKGROUND_ADD(tick_it, (any_pointer_t)et);
 	      return(C_TO_XEN_INT(id));
 	    }
 	  while (!(tick_amp_env(cp, es)));

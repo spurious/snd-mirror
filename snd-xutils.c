@@ -529,7 +529,7 @@ Pixmap make_pixmap(unsigned char *bits, int width, int height, int depth, GC gc)
   return(nr);
 }
 
-Cessator add_work_proc(XtWorkProc func, XtPointer data)
+idle_t add_work_proc(XtWorkProc func, XtPointer data)
 {
   /* during auto-testing I need to force the background procs to run to completion */
   if (with_background_processes(ss))
@@ -537,7 +537,7 @@ Cessator add_work_proc(XtWorkProc func, XtPointer data)
   else
     {
       while (((*func)(data)) == BACKGROUND_CONTINUE);
-      return(0);
+      return((idle_t)0);
     }
 }
 
@@ -691,7 +691,7 @@ static Pixmap rotate_text(Widget w, const char *str, XFontStruct *font, Float an
 void draw_rotated_axis_label(chan_info *cp, GC gc, const char *text, int x0, int y0)
 {
   Pixmap pix;
-  int h, w;
+  int h = 0, w = 0;
   XGCValues gv;
   Display *dp;
   Widget widget;
@@ -731,13 +731,12 @@ void ensure_list_row_visible(widget_t list, int pos)
 
 void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
 {
-  int visible_size, minimum, maximum, value, size, new_value, increment, page_increment;
+  int minimum, maximum, value, size, new_value, increment, page_increment;
   Widget scrollbar, work_window;
   XtVaGetValues(list, 
 		XmNverticalScrollBar, &scrollbar, 
 		XmNworkWindow, &work_window,
 		NULL);
-  XtVaGetValues(work_window, XmNheight, &visible_size, NULL);
   XtVaGetValues(scrollbar, 
 		XmNminimum, &minimum,
 		XmNmaximum, &maximum,

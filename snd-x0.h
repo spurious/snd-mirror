@@ -63,13 +63,20 @@ typedef enum {NOT_ACTIVATABLE, ACTIVATABLE, NOT_ACTIVATABLE_OR_FOCUSED, ACTIVATA
 #define activate_widget(Wid) XtManageChild(Wid)
 #define deactivate_widget(Wid) XtUnmanageChild(Wid)
 
-#define Cessator XtWorkProcId
-#define Cessate Boolean
-#define Indicium XtPointer
-#define Tempus Time
-#define Locus short
-#define Latus unsigned short
-/* Position/Dimension in X terms */
+#define idle_t XtWorkProcId
+#define idle_func_t Boolean
+#define any_pointer_t XtPointer
+/* can't use "pointer_t" -- Mac already defines that type (CoreServices.h) */
+#define oclock_t Time
+#define color_t Pixel
+
+/* TODO: GdkColor|Pixel->color_t as much as possible */
+
+#define rgb_t unsigned short
+#define RGB_MAX 65535
+#define FLOAT_TO_RGB(Val) (rgb_t)(RGB_MAX * (Val))
+#define RGB_TO_FLOAT(Val) (float)((float)(Val) / (float)RGB_MAX)
+
 
 typedef struct {
   GC gc;
@@ -81,8 +88,8 @@ typedef struct {
 typedef struct {
   /* we need two versions of each GC because the selected channel's colors can be different from the unselected channels' */
   Widget *chan_widgets;
-  Cessator fft_in_progress;
-  Cessator amp_env_in_progress;
+  idle_t fft_in_progress;
+  idle_t amp_env_in_progress;
   struct env_state *amp_env_state;
   axis_context *ax;
   bool selected;
@@ -194,8 +201,6 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 #define AXIS_LABEL_FONT(a) (a->sgx)->axis_label_fontstruct
 #define TINY_FONT(a) (a->sgx)->tiny_fontstruct
 #define LISTENER_FONT(a) (a->sgx)->listener_fontstruct
-#define color_t Pixel
-/* this was unsigned long = Pixel (/usr/X11R6/include/X11/Intrinsic.h) */
 
 #define DEFAULT_GRAPH_CURSOR XC_crosshair
 

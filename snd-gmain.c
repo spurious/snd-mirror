@@ -296,9 +296,9 @@ static void save_a_color(FILE *Fp, const char *def_name, GdkColor *current_color
 	  (current_color->blue != default_color.blue))
 #if HAVE_FORTH
 	fprintf(Fp, "%.3f %.3f %.3f %s set-%s drop\n", 
-		(float)current_color->red / 65535.0,
-		(float)current_color->green / 65535.0,
-		(float)current_color->blue / 65535.0,
+		RGB_TO_FLOAT(current_color->red),
+		RGB_TO_FLOAT(current_color->green),
+		RGB_TO_FLOAT(current_color->blue),
 		S_make_color,
 		ext_name); 
 #else
@@ -310,9 +310,9 @@ static void save_a_color(FILE *Fp, const char *def_name, GdkColor *current_color
 #endif
 		TO_PROC_NAME(ext_name), 
 		TO_PROC_NAME(S_make_color),
-		(float)current_color->red / 65535.0,
-		(float)current_color->green / 65535.0,
-		(float)current_color->blue / 65535.0);
+		RGB_TO_FLOAT(current_color->red),
+		RGB_TO_FLOAT(current_color->green),
+		RGB_TO_FLOAT(current_color->blue));
 #endif
     }
 #endif
@@ -351,7 +351,7 @@ static gboolean io_invoke(GIOChannel *source, GIOCondition condition, gpointer d
 
 static int tm_slice = 0;
 
-static Cessate startup_funcs(gpointer context)
+static idle_func_t startup_funcs(gpointer context)
 {
   static int auto_open_ctr = 0;
   switch (tm_slice)
@@ -465,9 +465,9 @@ color_t get_in_between_color(color_t fg, color_t bg)
 {
   GdkColor gcolor;
   GdkColor *new_color;
-  gcolor.red = (unsigned short)((fg->red + (2 * bg->red)) / 3);
-  gcolor.green = (unsigned short)((fg->green + (2 * bg->green)) / 3);
-  gcolor.blue = (unsigned short)((fg->blue + (2 * bg->blue)) / 3);
+  gcolor.red = (rgb_t)((fg->red + (2 * bg->red)) / 3);
+  gcolor.green = (rgb_t)((fg->green + (2 * bg->green)) / 3);
+  gcolor.blue = (rgb_t)((fg->blue + (2 * bg->blue)) / 3);
   new_color = gdk_color_copy(&gcolor);
   gdk_rgb_find_color(gdk_colormap_get_system(), new_color);
   return(new_color);

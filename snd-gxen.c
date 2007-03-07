@@ -43,9 +43,9 @@ static XEN g_color_to_list(XEN obj)
   GdkColor *v;
   XEN_ASSERT_TYPE(XEN_PIXEL_P(obj), obj, XEN_ONLY_ARG, S_color_to_list, "a color"); 
   v = XEN_UNWRAP_PIXEL(obj);
-  return(xen_return_first(XEN_LIST_3(C_TO_XEN_DOUBLE((float)(v->red) / 65535.0),
-				     C_TO_XEN_DOUBLE((float)(v->green) / 65535.0),
-				     C_TO_XEN_DOUBLE((float)(v->blue) / 65535.0)),
+  return(xen_return_first(XEN_LIST_3(C_TO_XEN_DOUBLE(RGB_TO_FLOAT(v->red)),
+				     C_TO_XEN_DOUBLE(RGB_TO_FLOAT(v->green)),
+				     C_TO_XEN_DOUBLE(RGB_TO_FLOAT(v->blue))),
 			  obj));
 }
 
@@ -62,9 +62,9 @@ static XEN g_make_color(XEN r, XEN g, XEN b)
   rf = check_color_range(S_make_color, r);
   gf = check_color_range(S_make_color, g);
   bf = check_color_range(S_make_color, b);
-  gcolor.red = (unsigned short)(65535 * rf);
-  gcolor.green = (unsigned short)(65535 * gf);
-  gcolor.blue = (unsigned short)(65535 * bf);
+  gcolor.red = FLOAT_TO_RGB(rf);
+  gcolor.green = FLOAT_TO_RGB(gf);
+  gcolor.blue = FLOAT_TO_RGB(bf);
   ccolor = gdk_color_copy(&gcolor);
   gdk_rgb_find_color(gdk_colormap_get_system(), ccolor);
   return(XEN_WRAP_PIXEL(ccolor));
