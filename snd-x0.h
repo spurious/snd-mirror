@@ -56,8 +56,6 @@ typedef enum {NOT_ACTIVATABLE, ACTIVATABLE, NOT_ACTIVATABLE_OR_FOCUSED, ACTIVATA
 #endif
 
 #define widget_t Widget
-#define g_adj_t int
-#define gc_t GC
 
 #define widget_is_active(Wid) XtIsManaged(Wid)
 #define activate_widget(Wid) XtManageChild(Wid)
@@ -69,8 +67,6 @@ typedef enum {NOT_ACTIVATABLE, ACTIVATABLE, NOT_ACTIVATABLE_OR_FOCUSED, ACTIVATA
 /* can't use "pointer_t" -- Mac already defines that type (CoreServices.h) */
 #define oclock_t Time
 #define color_t Pixel
-
-/* TODO: GdkColor|Pixel->color_t as much as possible */
 
 #define rgb_t unsigned short
 #define RGB_MAX 65535

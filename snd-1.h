@@ -1317,7 +1317,6 @@ void set_show_y_zero(bool val);
 /* -------- snd-axis.c -------- */
 
 axis_info *free_axis_info(axis_info *ap);
-axis_context *free_axis_context(axis_context *ax);
 char *x_axis_location_to_string(chan_info *cp, double loc);
 int grf_x(double val, axis_info *ap);
 int grf_y(Float val, axis_info *ap);

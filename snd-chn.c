@@ -3005,15 +3005,10 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool erase_first, with_grid_t grid, log_axis_t log_axes, show_axes_t axes)
 {
   snd_info *sp;
-  axis_context *ax;
   if (!(ap->ax))
-    {
-      ax = (axis_context *)CALLOC(1, sizeof(axis_context));
-      ap->ax = ax;
-    }
-  else ax = ap->ax;
+    ap->ax = cp->cgx->ax;
   sp = cp->sound;
-  setup_axis_context(cp, ax);
+  setup_axis_context(cp, ap->ax);
   /* here is where the graph is cleared(!) -- only use of erase_rectangle */
   if (erase_first == CLEAR_GRAPH)
     erase_rectangle(cp, ap->ax, ap->graph_x0, ap->y_offset, ap->width, ap->height); 
@@ -3128,7 +3123,7 @@ static void display_channel_data_with_size(chan_info *cp,
     {
       if (ap->ax->cr)
 	{
-	  cairo_destroy(ap->ax->cr);  
+	  cairo_destroy(ap->ax->cr);
 	  ap->ax->cr = NULL;
 	}
       if (with_time)

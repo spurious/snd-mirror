@@ -24,9 +24,6 @@
 typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 
 #define widget_t GtkWidget*
-#define g_adj_t GtkObject*
-#define gc_t GdkGC*
-
 #define widget_is_active(Wid) GTK_WIDGET_VISIBLE(Wid)
 #define activate_widget(Wid) gtk_widget_show(Wid)
 #define deactivate_widget(Wid) gtk_widget_hide(Wid)
@@ -64,18 +61,19 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define FLOAT_TO_RGB(Val) (rgb_t)(RGB_MAX * (Val))
 #define RGB_TO_FLOAT(Val) (float)((float)(Val) / (float)RGB_MAX)
 
-#if 0
-typedef struct color_t {
-{
-  guint32 pixel;
-  rgb_t red;
-  rgb_t green;
-  rgb_t blue;
-};
+#if USE_CAIRO
+typedef struct {
+  double fg_red, fg_green, fg_blue, bg_red, bg_green, bg_blue;
+  GdkGC *gc;
+  GdkColor *fg_color, *bg_color;
+  GdkFunction op;
+} gc_t;
+#else
+  #define gc_t GdkGC
 #endif
 
 typedef struct {
-  GdkGC *gc;
+  gc_t *gc;
   GdkDrawable *wn;
   PangoFontDescription *current_font;
   GtkWidget *w;
@@ -164,13 +162,13 @@ typedef struct {
   GdkColor *orig_graph_color, *orig_selected_graph_color, *orig_listener_color, *orig_listener_text_color, *orig_cursor_color;
   GdkColor *orig_basic_color, *orig_selection_color, *orig_zoom_color, *orig_position_color, *orig_highlight_color;
 
-  GdkGC *basic_gc, *selected_basic_gc, *combined_basic_gc;        
-  GdkGC *cursor_gc, *selected_cursor_gc;      
-  GdkGC *selection_gc, *selected_selection_gc;
-  GdkGC *erase_gc, *selected_erase_gc;        
-  GdkGC *mark_gc, *selected_mark_gc;          
-  GdkGC *mix_gc;
-  GdkGC *fltenv_basic_gc, *fltenv_data_gc;
+  gc_t *basic_gc, *selected_basic_gc, *combined_basic_gc;        
+  gc_t *cursor_gc, *selected_cursor_gc;      
+  gc_t *selection_gc, *selected_selection_gc;
+  gc_t *erase_gc, *selected_erase_gc;        
+  gc_t *mark_gc, *selected_mark_gc;          
+  gc_t *mix_gc;
+  gc_t *fltenv_basic_gc, *fltenv_data_gc;
 
   GtkWidget **dialogs;
   int num_dialogs, dialogs_size;

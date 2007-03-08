@@ -72,7 +72,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-midi           include sndlib midi module
 #   --enable-threads      include pthread stuff
-#   --with-cairo          use cairo for Gtk graphics, if possible
+#   --with-cairo          use cairo for Gtk graphics, if possible (not usable, and may never be)
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
 #   GUILE_name            same problem
@@ -105,7 +105,7 @@ AC_ARG_WITH(builtin-gtkrc,[  --with-builtin-gtkrc	  include built-in gtkrc fallb
 AC_ARG_WITH(midi,        [  --with-midi		  include sndlib midi module])
 AC_ARG_WITH(doubles,     [  --with-doubles	  use doubles throughout])
 AC_ARG_WITH(float-samples, [  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes])
-AC_ARG_WITH(cairo,	 [  --with-cairo		  use cairo for graphics in Gtk, if possible])
+AC_ARG_WITH(cairo,	 [  --with-cairo		  use cairo for graphics in Gtk -- not currently usable and may never be])
 
 # these are primarily for testing
 AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes])

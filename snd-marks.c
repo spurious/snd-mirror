@@ -286,8 +286,28 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
       draw_string(ax, (int)(cx - 0.5 * len), y1 + STRING_Y_OFFSET, mp->name, strlen(mp->name));
 #endif
     }
-#if USE_GTK
+#if USE_GTK && (!USE_CAIRO)
   ax = mark_context(cp);
+#endif
+#if USE_CAIRO
+  /* ARGHH!!  The idiots at cairo have not implemented XOR graphics. */
+  if (!(cp->cgx->ax->wn)) fixup_cp_cgx_ax_wn(cp);
+  ax = cp->axis->ax;
+  if (ax->cr) cairo_destroy(ax->cr);
+  ax->cr = gdk_cairo_create(ax->wn);
+  {
+    color_t bg_color;
+    if (show) 
+      bg_color = ss->sgx->red;
+    else
+      {
+	if (cp->cgx->selected) 
+	  bg_color = ss->sgx->selected_graph_color;
+	else bg_color = ss->sgx->graph_color;
+      }
+    cairo_set_source_rgb(ax->cr, RGB_TO_FLOAT(bg_color->red), RGB_TO_FLOAT(bg_color->green), RGB_TO_FLOAT(bg_color->blue));
+    set_foreground_color(ax, bg_color);
+  }
 #endif
   fill_rectangle(ax,
 		 cx - mark_tag_width(ss), top,
@@ -298,7 +318,6 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
 	       cx + PLAY_ARROW_SIZE, y0 +     PLAY_ARROW_SIZE,
 	       cx,                   y0 + 2 * PLAY_ARROW_SIZE,
 	       cx,                   y0);
-
   mp->visible = show;
 }
 

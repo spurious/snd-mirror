@@ -1181,13 +1181,6 @@ color_t get_foreground_color(axis_context *ax)
   return(gv.foreground);
 }
 
-color_t get_background_color(axis_context *ax)
-{
-  XGCValues gv;
-  XGetGCValues(MAIN_DISPLAY(ss), ax->gc, GCBackground, &gv);
-  return(gv.background);
-}
-
 void set_foreground_color(axis_context *ax, Pixel color)
 {
   XSetForeground(MAIN_DISPLAY(ss), ax->gc, color);

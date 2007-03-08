@@ -747,7 +747,7 @@ void display_filter_env(snd_info *sp)
 				 sp->filter_control_order, 
 				 sp->filter_control_in_dB);
     }
-  ax = free_axis_context(ax);
+  FREE(ax);
 }
 
 void set_filter_text(snd_info *sp, char *str)

@@ -179,7 +179,6 @@ void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);
 void set_tiny_numbers_font(chan_info *cp);
 color_t get_foreground_color(axis_context *ax);
-color_t get_background_color(axis_context *ax);
 void set_foreground_color(axis_context *ax, int color);
 void free_fft_pix(chan_info *cp);
 bool restore_fft_pix(chan_info *cp, axis_context *ax);

@@ -78,14 +78,17 @@ typedef struct {
   widget_t add_text;
   widget_t* sort_items;
 
-  gc_t env_gc;
 #if USE_GTK
-  g_adj_t amp_adj;
-  g_adj_t speed_adj;
+  gc_t *env_gc;
+  GtkObject *amp_adj; /* not GtkAdjustment* because gtk_adjustment_new returns a GtkObject* */
+  GtkObject *speed_adj;
 
   gulong at_sample_text_handler_id, at_mark_text_handler_id;
   gulong at_sample_button_handler_id, at_mark_button_handler_id;
   gulong add_text_handler_id;
+#endif
+#if USE_MOTIF
+  GC env_gc;
 #endif
 } view_files_info;
 

@@ -359,7 +359,11 @@ void ps_bg(axis_info *ap, axis_context *ax)
   chan_info *cp;
   cp = ap->cp;
 #if USE_MOTIF
-  ps_set_color(get_background_color(ax));
+  {
+    XGCValues gv;
+    XGetGCValues(MAIN_DISPLAY(ss), ax->gc, GCBackground, &gv);
+    ps_set_color(gv.background);
+  }
 #else
 #if USE_GTK
   {

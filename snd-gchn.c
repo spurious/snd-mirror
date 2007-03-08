@@ -860,21 +860,18 @@ void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, BOLD_PEAKS_FO
 
 color_t get_foreground_color(axis_context *ax)
 {
+#if USE_CAIRO
+  return(ax->gc->fg_color);
+#else
   static GdkGCValues gv;
   gdk_gc_get_values(ax->gc, &gv);
   return(&(gv.foreground));
-}
-
-color_t get_background_color(axis_context *ax)
-{
-  static GdkGCValues gv;
-  gdk_gc_get_values(ax->gc, &gv);
-  return(&(gv.background));
+#endif
 }
 
 void set_foreground_color(axis_context *ax, GdkColor *color)
 {
-  gdk_gc_set_foreground(ax->gc, color);
+  gc_set_foreground(ax->gc, color);
 }
 
 GdkGC *copy_GC(chan_info *cp)

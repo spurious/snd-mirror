@@ -28,6 +28,13 @@ static bool FIR_p = true;
 static bool old_clip_p = false;
 static bool ignore_button_release = false;
 
+static void fixup_axis_context(axis_context *ax, Widget w, GC gc)
+{
+  ax->dp = XtDisplay(w);
+  ax->wn = XtWindow(w);
+  if (gc) ax->gc = gc;
+}
+
 axis_info *enved_make_axis(const char *name, axis_context *ax, 
 			   int ex0, int ey0, int width, int height, 
 			   Float xmin, Float xmax, Float ymin, Float ymax,
@@ -61,7 +68,7 @@ static void display_env(env *e, const char *name, GC cur_gc, int x0, int y0, int
   ax->gc = cur_gc;
   ss->enved->with_dots = dots;
   env_editor_display_env(ss->enved, e, ax, name, x0, y0, width, height, printing);
-  ax = free_axis_context(ax);
+  FREE(ax);
 }
 
 void display_enved_env_with_selection(env *e, const char *name, int x0, int y0, int width, int height, bool dots, printing_t printing)

@@ -11,7 +11,7 @@ static GtkWidget *transform_dialog = NULL; /* main dialog shell */
 static GtkWidget *outer_table, *db_button, *peaks_button, *logfreq_button, *sono_button, *spectro_button, *normal_fft_button;
 static GtkWidget *normalize_button, *selection_button, *window_beta_scale, *window_alpha_scale, *graph_drawer = NULL, *graph_frame = NULL;
 static GtkObject *beta_adj, *alpha_adj;
-static GdkGC *gc = NULL, *fgc = NULL;
+static gc_t *gc = NULL, *fgc = NULL;
 static bool ignore_callbacks;
 
 #define GRAPH_SIZE 128
@@ -624,13 +624,13 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_container_add(GTK_CONTAINER(graph_frame), graph_drawer);
       gtk_widget_modify_bg(graph_drawer, GTK_STATE_NORMAL, ss->sgx->white);
 
-      fgc = gdk_gc_new(MAIN_WINDOW(ss));
-      gdk_gc_set_background(fgc, ss->sgx->white);
-      gdk_gc_set_foreground(fgc, ss->sgx->enved_waveform_color);
+      fgc = gc_new(MAIN_WINDOW(ss));
+      gc_set_background(fgc, ss->sgx->white);
+      gc_set_foreground(fgc, ss->sgx->enved_waveform_color);
 
-      gc = gdk_gc_new(MAIN_WINDOW(ss));
-      gdk_gc_set_background(gc, ss->sgx->white);
-      gdk_gc_set_foreground(gc, ss->sgx->black);
+      gc = gc_new(MAIN_WINDOW(ss));
+      gc_set_background(gc, ss->sgx->white);
+      gc_set_foreground(gc, ss->sgx->black);
 
       gtk_widget_show(graph_drawer);
       gtk_widget_show(graph_frame);

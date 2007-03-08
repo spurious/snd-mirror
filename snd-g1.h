@@ -22,6 +22,7 @@ void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height);
 void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width, int height);
 void fill_polygon(axis_context *ax, int points, ...);
 void draw_polygon(axis_context *ax, int points, ...);
+void draw_polygon_with_points(GdkDrawable *wn, gc_t *gp, bool filled, GdkPoint *points, int npoints);
 void draw_string(axis_context *ax, int x0, int y0, const char *str, int len);
 void draw_arc(axis_context *ax, int x, int y, int size);
 void set_grf_points(int xi, int j, int ymin, int ymax);
@@ -239,7 +240,6 @@ void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);
 void set_tiny_numbers_font(chan_info *cp);
 color_t get_foreground_color(axis_context *ax);
-color_t get_background_color(axis_context *ax);
 void set_foreground_color(axis_context *ax, GdkColor *color);
 GdkGC *copy_GC(chan_info *cp);
 GdkGC *erase_GC(chan_info *cp);
@@ -287,7 +287,13 @@ void check_for_event(void);
 void force_update(GtkWidget *wid);
 void set_title(const char *title);
 void goto_window(GtkWidget *text);
-void gc_set_foreground_xor(GdkGC *gc, GdkColor *col1, GdkColor *col2);
+
+void gc_set_foreground(gc_t *gp, GdkColor *color);
+void gc_set_background(gc_t *gp, GdkColor *color);
+void gc_set_foreground_xor(gc_t *gp, GdkColor *col1, GdkColor *col2);
+void gc_set_function(gc_t *gp, GdkFunction op);
+gc_t *gc_new(GdkDrawable *wn);
+
 void color_cursor(GdkColor *color);
 void color_marks(GdkColor *color);
 void color_selection(GdkColor *color);
@@ -309,7 +315,6 @@ void set_widget_x(GtkWidget *w, gint16 x);
 void set_widget_y(GtkWidget *w, gint16 y);
 void set_widget_size(GtkWidget *w, guint16 width, guint16 height);
 void set_widget_position(GtkWidget *w, gint16 x, gint16 y);
-void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc);
 void set_user_data(GObject *obj, gpointer data);
 void set_user_int_data(GObject *obj, int data);
 void reset_user_int_data(GObject *obj, int data);
@@ -332,7 +337,7 @@ GtkWidget *snd_gtk_highlight_label_new(const char *label);
 void widget_int_to_text(GtkWidget *w, int val);
 void widget_float_to_text(GtkWidget *w, Float val);
 void widget_off_t_to_text(GtkWidget *w, off_t val);
-void draw_rotated_axis_label(chan_info *cp, GdkGC *gc, const char *text, gint x0, gint y0);
+void draw_rotated_axis_label(chan_info *cp, axis_context *ax, const char *text, gint x0, gint y0);
 void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows);
 
 slist *slist_new_with_title_and_table_data(const char *title,

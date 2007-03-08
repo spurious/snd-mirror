@@ -8,8 +8,6 @@
 #define BACKGROUND_ADD(func, data) func(data)
 
 #define widget_t int
-#define g_adj_t int
-#define gc_t int
 #define widget_is_active(Wid) 0
 #define activate_widget(Wid) Wid = 0
 #define deactivate_widget(Wid) Wid = 0
@@ -44,7 +42,6 @@
 
 
 typedef struct {
-  void *ss;
   int wn;
   int gc;
 } axis_context;

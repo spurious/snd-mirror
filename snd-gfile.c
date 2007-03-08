@@ -4848,10 +4848,10 @@ static void vf_amp_env_resize(view_files_info *vdat, GtkWidget *w)
 {
   if (vdat->env_ax == NULL)
     {
-      vdat->env_gc = gdk_gc_new(w->window);
-      gdk_gc_set_background(vdat->env_gc, ss->sgx->graph_color);
-      gdk_gc_set_foreground(vdat->env_gc, ss->sgx->data_color);
-      gdk_gc_set_function(vdat->env_gc, GDK_COPY);
+      vdat->env_gc = gc_new(w->window);
+      gc_set_background(vdat->env_gc, ss->sgx->graph_color);
+      gc_set_foreground(vdat->env_gc, ss->sgx->data_color);
+      gc_set_function(vdat->env_gc, GDK_COPY);
       vdat->env_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
       vdat->env_ax->wn = w->window;
       vdat->env_ax->w = w;

@@ -215,72 +215,72 @@ static void setup_gcs(void)
   sx = ss->sgx;
   wn = MAIN_WINDOW(ss);
 
-  sx->basic_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->basic_gc, sx->graph_color);
-  gdk_gc_set_foreground(sx->basic_gc, sx->data_color);
+  sx->basic_gc = gc_new(wn);
+  gc_set_background(sx->basic_gc, sx->graph_color);
+  gc_set_foreground(sx->basic_gc, sx->data_color);
 
-  sx->combined_basic_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->combined_basic_gc, sx->graph_color);
-  gdk_gc_set_foreground(sx->combined_basic_gc, sx->data_color);
+  sx->combined_basic_gc = gc_new(wn);
+  gc_set_background(sx->combined_basic_gc, sx->graph_color);
+  gc_set_foreground(sx->combined_basic_gc, sx->data_color);
 
-  sx->mix_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->mix_gc, sx->graph_color);
-  gdk_gc_set_foreground(sx->mix_gc, sx->mix_color);
-  gdk_gc_set_function(sx->mix_gc, GDK_COPY);
+  sx->mix_gc = gc_new(wn);
+  gc_set_background(sx->mix_gc, sx->graph_color);
+  gc_set_foreground(sx->mix_gc, sx->mix_color);
+  gc_set_function(sx->mix_gc, GDK_COPY);
 
-  sx->cursor_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->cursor_gc, sx->graph_color);
+  sx->cursor_gc = gc_new(wn);
+  gc_set_background(sx->cursor_gc, sx->graph_color);
   gc_set_foreground_xor(sx->cursor_gc, sx->cursor_color, sx->graph_color);
-  gdk_gc_set_function(sx->cursor_gc, GDK_XOR);
+  gc_set_function(sx->cursor_gc, GDK_XOR);
 
-  sx->selection_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->selection_gc, sx->graph_color);
+  sx->selection_gc = gc_new(wn);
+  gc_set_background(sx->selection_gc, sx->graph_color);
   gc_set_foreground_xor(sx->selection_gc, sx->selection_color, sx->graph_color);
-  gdk_gc_set_function(sx->selection_gc, GDK_XOR);
+  gc_set_function(sx->selection_gc, GDK_XOR);
 
-  sx->mark_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->mark_gc, sx->graph_color);
+  sx->mark_gc = gc_new(wn);
+  gc_set_background(sx->mark_gc, sx->graph_color);
   gc_set_foreground_xor(sx->mark_gc, sx->mark_color, sx->graph_color);
-  gdk_gc_set_function(sx->mark_gc, GDK_XOR);
+  gc_set_function(sx->mark_gc, GDK_XOR);
 
-  sx->erase_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->erase_gc, sx->data_color);
-  gdk_gc_set_foreground(sx->erase_gc, sx->graph_color);
-  gdk_gc_set_function(sx->erase_gc, GDK_COPY);
+  sx->erase_gc = gc_new(wn);
+  gc_set_background(sx->erase_gc, sx->data_color);
+  gc_set_foreground(sx->erase_gc, sx->graph_color);
+  gc_set_function(sx->erase_gc, GDK_COPY);
 
-  sx->selected_basic_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->selected_basic_gc, sx->selected_graph_color);
-  gdk_gc_set_foreground(sx->selected_basic_gc, sx->selected_data_color);
+  sx->selected_basic_gc = gc_new(wn);
+  gc_set_background(sx->selected_basic_gc, sx->selected_graph_color);
+  gc_set_foreground(sx->selected_basic_gc, sx->selected_data_color);
 
-  sx->selected_cursor_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->selected_cursor_gc, sx->graph_color);
+  sx->selected_cursor_gc = gc_new(wn);
+  gc_set_background(sx->selected_cursor_gc, sx->graph_color);
   gc_set_foreground_xor(sx->selected_cursor_gc, sx->cursor_color, sx->graph_color);
-  gdk_gc_set_function(sx->selected_cursor_gc, GDK_XOR);
+  gc_set_function(sx->selected_cursor_gc, GDK_XOR);
 
-  sx->selected_selection_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->selected_selection_gc, sx->graph_color);
+  sx->selected_selection_gc = gc_new(wn);
+  gc_set_background(sx->selected_selection_gc, sx->graph_color);
   gc_set_foreground_xor(sx->selected_selection_gc, sx->selection_color, sx->graph_color);
-  gdk_gc_set_function(sx->selected_selection_gc, GDK_XOR);
+  gc_set_function(sx->selected_selection_gc, GDK_XOR);
 
-  sx->selected_mark_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->selected_mark_gc, sx->selected_graph_color);
+  sx->selected_mark_gc = gc_new(wn);
+  gc_set_background(sx->selected_mark_gc, sx->selected_graph_color);
   gc_set_foreground_xor(sx->selected_mark_gc, sx->mark_color, sx->selected_graph_color);
-  gdk_gc_set_function(sx->selected_mark_gc, GDK_XOR);
+  gc_set_function(sx->selected_mark_gc, GDK_XOR);
 
-  sx->selected_erase_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->selected_erase_gc, sx->selected_data_color);
-  gdk_gc_set_foreground(sx->selected_erase_gc, sx->selected_graph_color);
-  gdk_gc_set_function(sx->selected_erase_gc, GDK_COPY);
+  sx->selected_erase_gc = gc_new(wn);
+  gc_set_background(sx->selected_erase_gc, sx->selected_data_color);
+  gc_set_foreground(sx->selected_erase_gc, sx->selected_graph_color);
+  gc_set_function(sx->selected_erase_gc, GDK_COPY);
 
-  sx->fltenv_basic_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->fltenv_basic_gc, sx->basic_color);
-  gdk_gc_set_foreground(sx->fltenv_basic_gc, sx->black);
-  gdk_gc_set_function(sx->fltenv_basic_gc, GDK_COPY);
+  sx->fltenv_basic_gc = gc_new(wn);
+  gc_set_background(sx->fltenv_basic_gc, sx->basic_color);
+  gc_set_foreground(sx->fltenv_basic_gc, sx->black);
+  gc_set_function(sx->fltenv_basic_gc, GDK_COPY);
 
-  sx->fltenv_data_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->fltenv_data_gc, sx->basic_color);
-  gdk_gc_set_foreground(sx->fltenv_data_gc, sx->filter_control_waveform_color);
-  gdk_gc_set_function(sx->fltenv_data_gc, GDK_COPY);
+  sx->fltenv_data_gc = gc_new(wn);
+  gc_set_background(sx->fltenv_data_gc, sx->basic_color);
+  gc_set_foreground(sx->fltenv_data_gc, sx->filter_control_waveform_color);
+  gc_set_function(sx->fltenv_data_gc, GDK_COPY);
 
   initialize_colormap();
 }

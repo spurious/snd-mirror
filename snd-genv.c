@@ -8,7 +8,7 @@ static GtkWidget *revertB, *undoB, *redoB, *printB, *brktxtL, *brkpixL, *graphB,
 static GtkWidget *nameL, *textL, *dBB, *orderL;
 static GtkWidget *expB, *linB, *lerow, *baseScale, *baseLabel, *baseValue, *selectionB, *selrow, *revrow, *unrow, *saverow;
 static GtkObject *baseAdj, *orderAdj;
-static GdkGC *gc, *rgc, *ggc, *hgc;
+static gc_t *gc, *rgc, *ggc, *hgc;
 static slist *env_list = NULL;
 
 static char *env_names[3] = {N_("amp env:"), N_("flt env:"), N_("src env:")};
@@ -29,6 +29,14 @@ static axis_info *gray_ap = NULL;
 static bool FIR_p = true;
 static bool old_clip_p = false;
 static bool ignore_button_release = false;
+
+static void fixup_axis_context(axis_context *ax, GtkWidget *w, gc_t *gc)
+{
+  ax->wn = w->window;
+  ax->w = w;
+  if (gc) ax->gc = gc;
+  ax->current_font = AXIS_NUMBERS_FONT(ss);
+}
 
 axis_info *enved_make_axis(const char *name, axis_context *ax, 
 			   int ex0, int ey0, int width, int height, 
@@ -53,7 +61,7 @@ axis_info *enved_make_axis(const char *name, axis_context *ax,
   return(axis);
 }
 
-static void display_env(env *e, const char *name, GdkGC *cur_gc, int x0, int y0, int width, int height, bool dots, printing_t printing)
+static void display_env(env *e, const char *name, gc_t *cur_gc, int x0, int y0, int width, int height, bool dots, printing_t printing)
 {
   axis_context *ax = NULL;  
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
@@ -62,7 +70,7 @@ static void display_env(env *e, const char *name, GdkGC *cur_gc, int x0, int y0,
   ax->gc = cur_gc;
   ss->enved->with_dots = dots;
   env_editor_display_env(ss->enved, e, ax, name, x0, y0, width, height, printing);
-  ax = free_axis_context(ax);
+  FREE(ax);
 }
 
 void display_enved_env_with_selection(env *e, const char *name, int x0, int y0, int width, int height, bool dots, printing_t printing)
@@ -798,21 +806,21 @@ GtkWidget *create_envelope_editor(void)
       gtk_window_resize(GTK_WINDOW(enved_dialog), 500, 500);
       gtk_widget_modify_bg(enved_dialog, GTK_STATE_NORMAL, ss->sgx->highlight_color);
 
-      gc = gdk_gc_new(MAIN_WINDOW(ss));
-      gdk_gc_set_background(gc, ss->sgx->white);
-      gdk_gc_set_foreground(gc, ss->sgx->black);
+      gc = gc_new(MAIN_WINDOW(ss));
+      gc_set_background(gc, ss->sgx->white);
+      gc_set_foreground(gc, ss->sgx->black);
 
-      rgc = gdk_gc_new(MAIN_WINDOW(ss));
-      gdk_gc_set_background(rgc, ss->sgx->white);
-      gdk_gc_set_foreground(rgc, ss->sgx->red);
+      rgc = gc_new(MAIN_WINDOW(ss));
+      gc_set_background(rgc, ss->sgx->white);
+      gc_set_foreground(rgc, ss->sgx->red);
 
-      ggc = gdk_gc_new(MAIN_WINDOW(ss));
-      gdk_gc_set_background(ggc, ss->sgx->white);
-      gdk_gc_set_foreground(ggc, ss->sgx->enved_waveform_color);
+      ggc = gc_new(MAIN_WINDOW(ss));
+      gc_set_background(ggc, ss->sgx->white);
+      gc_set_foreground(ggc, ss->sgx->enved_waveform_color);
 
-      hgc = gdk_gc_new(MAIN_WINDOW(ss));
-      gdk_gc_set_background(hgc, ss->sgx->highlight_color);
-      gdk_gc_set_foreground(hgc, ss->sgx->highlight_color);
+      hgc = gc_new(MAIN_WINDOW(ss));
+      gc_set_background(hgc, ss->sgx->highlight_color);
+      gc_set_foreground(hgc, ss->sgx->highlight_color);
 
       helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(helpB, "help_button");
@@ -1189,7 +1197,7 @@ void color_enved_waveform(GdkColor *pix)
   ss->sgx->enved_waveform_color = pix;
   if (enved_dialog)
     {
-      gdk_gc_set_foreground(ggc, pix);
+      gc_set_foreground(ggc, pix);
       if ((enved_wave_p(ss)) && (enved_dialog)) env_redisplay();
     }
 }

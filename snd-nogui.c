@@ -142,7 +142,6 @@ void set_peak_numbers_font(chan_info *cp) {}
 void set_bold_peak_numbers_font(chan_info *cp) {}
 void set_tiny_numbers_font(chan_info *cp) {}
 color_t get_foreground_color(axis_context *ax) {return(0);}
-color_t get_background_color(axis_context *ax) {return(0);}
 void set_foreground_color(axis_context *ax, int color) {}
 void change_channel_style(snd_info *sp, channel_style_t new_style) {}
 void free_fft_pix(chan_info *cp) {}

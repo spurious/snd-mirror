@@ -1074,7 +1074,7 @@ void display_filter_env(snd_info *sp)
 				 sp->filter_control_order, 
 				 sp->filter_control_in_dB);
     }
-  ax = free_axis_context(ax);
+  FREE(ax);
 }
 
 static gboolean filter_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
@@ -1272,7 +1272,7 @@ void filter_env_changed(snd_info *sp, env *e)
 void color_filter_waveform(GdkColor *color)
 {
   int i;
-  gdk_gc_set_foreground(ss->sgx->fltenv_data_gc, color);
+  gc_set_foreground(ss->sgx->fltenv_data_gc, color);
   ss->sgx->filter_control_waveform_color = color;
   for (i = 0; i < ss->max_sounds; i++)
     {

@@ -21,10 +21,14 @@ void draw_line(axis_context *ax, int x0, int y0, int x1, int y1)
 #if USE_CAIRO
   if (ax->cr)
     {
-      /* cairo_set_source_rgb(ax->cr, ax->current_red, ax->current_green, ax->current_blue); */
-      /*   need actual color values, not Pixels or GdkColors, or GdkGcs */
-
-      cairo_set_line_width(ax->cr, 1.0); /* to get a thin line in cairo -- hooboy! you have to offset everything -- this is not pretty */
+      color_t fg_color;
+      fg_color = get_foreground_color(ax);
+      if (fg_color) 
+	cairo_set_source_rgb(ax->cr, RGB_TO_FLOAT(fg_color->red), RGB_TO_FLOAT(fg_color->green), RGB_TO_FLOAT(fg_color->blue));
+      cairo_set_line_width(ax->cr, 1.0); 
+      /* to get a thin line in cairo -- hooboy! you have to offset everything -- this is not pretty
+       *    if line_width < 1.0, you get a fat line in gray-scale!!  
+       */
       cairo_move_to(ax->cr, x0 + 0.5, y0 + 0.5);
       cairo_line_to(ax->cr, x1 + 0.5, y1 + 0.5);
       cairo_stroke(ax->cr);
@@ -40,6 +44,10 @@ void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height)
 #if USE_CAIRO
   if (ax->cr)
     {
+      color_t fg_color;
+      fg_color = get_foreground_color(ax);
+      if (fg_color) 
+	cairo_set_source_rgb(ax->cr, RGB_TO_FLOAT(fg_color->red), RGB_TO_FLOAT(fg_color->green), RGB_TO_FLOAT(fg_color->blue));
       cairo_rectangle(ax->cr, x0, y0, width, height);
       cairo_fill(ax->cr);
       return;
@@ -53,20 +61,34 @@ void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width,
 {
   /* used only to clear the overall graph window in snd-chn.c */
 #if USE_CAIRO
-  /*
-   * if cairo, do we need this? draw in bg color? 
-   *    erase_gc is bg=data color, fg=(selected-)graph color, this will use graph color
-   */
   if (ax->cr)
     {
-      /*
+      color_t bg_color;
       if ((cp->cgx->selected) ||
 	  ((cp->sound) && (cp->sound->channel_style == CHANNELS_SUPERIMPOSED) && (cp->sound->index == ss->selected_sound)))
-	cairo_set_source_rgb(ax->cr, ax->selected_graph_red, ax->selected_graph_green, ax->selected_graph_blue);
-      else cairo_set_source_rgb(ax->cr, ax->graph_red, ax->graph_green, ax->graph_blue);
-      */
+	bg_color = ss->sgx->selected_graph_color;
+      else bg_color = ss->sgx->graph_color;
+#if 1
+      cairo_set_source_rgb(ax->cr, RGB_TO_FLOAT(bg_color->red), RGB_TO_FLOAT(bg_color->green), RGB_TO_FLOAT(bg_color->blue));
       cairo_rectangle(ax->cr, x0, y0, width, height);
       cairo_fill(ax->cr);
+#else
+      {
+	/* try gradient background: looks ok, but display is very slow */
+	cairo_pattern_t *pat;
+	double r, g, b;
+	r = RGB_TO_FLOAT(bg_color->red);
+	g = RGB_TO_FLOAT(bg_color->green);
+	b = RGB_TO_FLOAT(bg_color->blue);
+	pat = cairo_pattern_create_linear(x0, y0, x0 + width, y0 + height);
+	cairo_pattern_add_color_stop_rgb(pat, 1, mus_fclamp(0.0, r - 0.1, 1.0), mus_fclamp(0.0, g - 0.1, 1.0), mus_fclamp(0.0, b - 0.1, 1.0));
+	cairo_pattern_add_color_stop_rgb(pat, 0, mus_fclamp(0.0, r + 0.1, 1.0), mus_fclamp(0.0, g + 0.1, 1.0), mus_fclamp(0.0, b + 0.1, 1.0));
+	cairo_rectangle(ax->cr, x0, y0, width, height);
+	cairo_set_source(ax->cr, pat);
+	cairo_fill(ax->cr);
+	cairo_pattern_destroy(pat);
+      }
+#endif
       return;
     }
 #endif
@@ -109,20 +131,187 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
 void fill_polygon(axis_context *ax, int points, ...)
 {
   int i;
-  GdkPoint *pts;
   va_list ap;
   if (points == 0) return;
-  pts = (GdkPoint *)CALLOC(points, sizeof(GdkPoint));
-  va_start(ap, points);
-  for (i = 0; i < points; i++)
+#if USE_CAIRO
+  if (ax->cr)
     {
-      pts[i].x = va_arg(ap, int);
-      pts[i].y = va_arg(ap, int);
+      int x, y;
+      color_t fg_color;      
+      va_start(ap, points);
+      x = va_arg(ap, int);
+      y = va_arg(ap, int);
+      fg_color = get_foreground_color(ax);
+      if (fg_color) 
+	cairo_set_source_rgb(ax->cr, RGB_TO_FLOAT(fg_color->red), RGB_TO_FLOAT(fg_color->green), RGB_TO_FLOAT(fg_color->blue));
+      cairo_set_line_width(ax->cr, 1.0);
+      cairo_move_to(ax->cr, x, y);
+      for (i = 1; i < points; i++)
+	{
+	  x = va_arg(ap, int);
+	  y = va_arg(ap, int);
+	  cairo_line_to(ax->cr, x, y);
+	}
+      cairo_close_path(ax->cr);
+      cairo_fill(ax->cr);
+      va_end(ap);
+      return;
     }
-  va_end(ap);
-  gdk_draw_polygon(ax->wn, ax->gc, true, pts, points);
-  FREE(pts);
+#endif
+  {
+    GdkPoint *pts;
+    va_start(ap, points);
+    pts = (GdkPoint *)CALLOC(points, sizeof(GdkPoint));
+    for (i = 0; i < points; i++)
+      {
+	pts[i].x = va_arg(ap, int);
+	pts[i].y = va_arg(ap, int);
+      }
+    gdk_draw_polygon(ax->wn, ax->gc, true, pts, points);
+    FREE(pts);
+    va_end(ap);
+  }
 }
+
+/*
+TODO: check ATS
+TODO: static intel mac snd with minimal needs
+
+  -I/usr/local/include   snd-gdraw.c
+snd-gdraw.c: In function 'draw_line':
+snd-gdraw.c:39: warning: passing argument 2 of 'gdk_draw_line' from incompatible pointer type
+snd-gdraw.c: In function 'fill_rectangle':
+snd-gdraw.c:57: warning: passing argument 2 of 'gdk_draw_rectangle' from incompatible pointer type
+snd-gdraw.c: In function 'draw_string':
+snd-gdraw.c:120: warning: passing argument 2 of 'gdk_draw_layout' from incompatible pointer type
+snd-gdraw.c: In function 'fill_polygon':
+snd-gdraw.c:170: warning: passing argument 2 of 'gdk_draw_polygon' from incompatible pointer type
+snd-gdraw.c: In function 'draw_polygon':
+snd-gdraw.c:195: warning: passing argument 2 of 'gdk_draw_lines' from incompatible pointer type
+snd-gdraw.c: In function 'draw_lines':
+snd-gdraw.c:213: warning: passing argument 2 of 'gdk_draw_lines' from incompatible pointer type
+snd-gdraw.c: In function 'draw_points':
+snd-gdraw.c:220: warning: passing argument 2 of 'gdk_draw_points' from incompatible pointer type
+snd-gdraw.c:226: warning: passing argument 2 of 'gdk_draw_arc' from incompatible pointer type
+snd-gdraw.c: In function 'draw_arc':
+snd-gdraw.c:240: warning: passing argument 2 of 'gdk_draw_arc' from incompatible pointer type
+snd-gdraw.c: In function 'draw_both_grf_points':
+snd-gdraw.c:303: warning: passing argument 2 of 'gdk_draw_lines' from incompatible pointer type
+snd-gdraw.c:304: warning: passing argument 2 of 'gdk_draw_lines' from incompatible pointer type
+snd-gdraw.c:319: warning: passing argument 2 of 'gdk_draw_lines' from incompatible pointer type
+snd-gdraw.c:320: warning: passing argument 2 of 'gdk_draw_lines' from incompatible pointer type
+snd-gdraw.c:326: warning: passing argument 2 of 'gdk_draw_line' from incompatible pointer type
+snd-gdraw.c:337: warning: passing argument 2 of 'gdk_draw_rectangle' from incompatible pointer type
+snd-gdraw.c: In function 'draw_grf_points':
+snd-gdraw.c:367: warning: passing argument 2 of 'gdk_draw_line' from incompatible pointer type
+snd-gdraw.c:378: warning: passing argument 2 of 'gdk_draw_rectangle' from incompatible pointer type
+snd-gdraw.c:379: warning: passing argument 2 of 'gdk_draw_rectangle' from incompatible pointer type
+snd-gdraw.c: In function 'setup_axis_context':
+snd-gdraw.c:550: warning: assignment from incompatible pointer type
+
+  -I/usr/local/include   snd-gchn.c
+snd-gchn.c: In function 'copy_GC':
+snd-gchn.c:881: warning: return from incompatible pointer type
+snd-gchn.c:882: warning: return from incompatible pointer type
+snd-gchn.c: In function 'erase_GC':
+snd-gchn.c:893: warning: return from incompatible pointer type
+snd-gchn.c:894: warning: return from incompatible pointer type
+gcc -c -DLOCALE_DIR=\"/usr/local/share/locale\" -DSCRIPTS_DIR=\"/usr/local/share/snd\" -DHAVE_CONFIG_H -I/usr/local/include/gtk-2.0 -I/usr/local/lib/gtk-2.0/include -I/usr/local/include/atk-1.0 -I/usr/local/include/cairo -I/usr/local/include/pango-1.0 -I/usr/local/include/glib-2.0 -I/usr/local/lib/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/libpng12   -I/usr/local/include/cairo -I/usr/include/freetype2 -I/usr/include/libpng12   -O2 -I. -g -O2 -I/home/bil/test/include -pthread  -I/usr/local/include   -I/usr/local/include   snd-gsnd.c
+snd-gsnd.c: In function 'show_lock':
+snd-gsnd.c:160: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gsnd.c: In function 'hide_lock':
+snd-gsnd.c:169: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gsnd.c: In function 'show_stop_sign':
+snd-gsnd.c:176: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gsnd.c: In function 'hide_stop_sign':
+snd-gsnd.c:182: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gsnd.c: In function 'show_bomb':
+snd-gsnd.c:192: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gsnd.c: In function 'hide_bomb':
+snd-gsnd.c:202: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gsnd.c: In function 'show_hourglass':
+snd-gsnd.c:245: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gsnd.c: In function 'hide_hourglass':
+snd-gsnd.c:251: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gsnd.c: In function 'name_pix_expose':
+snd-gsnd.c:281: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gsnd.c: In function 'draw_speed_arrow':
+snd-gsnd.c:720: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gsnd.c:721: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+gcc -c -DLOCALE_DIR=\"/usr/local/share/locale\" -DSCRIPTS_DIR=\"/usr/local/share/snd\" -DHAVE_CONFIG_H -I/usr/local/include/gtk-2.0 -I/usr/local/lib/gtk-2.0/include -I/usr/local/include/atk-1.0 -I/usr/local/include/cairo -I/usr/local/include/pango-1.0 -I/usr/local/include/glib-2.0 -I/usr/local/lib/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/libpng12   -I/usr/local/include/cairo -I/usr/include/freetype2 -I/usr/include/libpng12   -O2 -I. -g -O2 -I/home/bil/test/include -pthread  -I/usr/local/include   -I/usr/local/include   snd-gmix.c
+snd-gmix.c: In function 'reflect_mix_play_stop':
+snd-gmix.c:481: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gmix.c:483: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gmix.c: In function 'mix_play_callback':
+snd-gmix.c:495: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gmix.c: In function 'mix_track_play_callback':
+snd-gmix.c:509: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gmix.c: In function 'mix_play_pix_expose':
+snd-gmix.c:516: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gmix.c: In function 'mix_track_play_pix_expose':
+snd-gmix.c:522: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gmix.c: In function 'w_mix_pan_pix_expose':
+snd-gmix.c:529: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gmix.c: In function 'mix_pan_callback':
+snd-gmix.c:539: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gmix.c: In function 'update_mix_dialog':
+snd-gmix.c:973: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gmix.c: In function 'reflect_track_play_stop':
+snd-gmix.c:1494: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gmix.c: In function 'track_dialog_play_callback':
+snd-gmix.c:1509: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-gmix.c: In function 'w_track_play_pix_expose':
+snd-gmix.c:1516: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+gcc -c -DLOCALE_DIR=\"/usr/local/share/locale\" -DSCRIPTS_DIR=\"/usr/local/share/snd\" -DHAVE_CONFIG_H -I/usr/local/include/gtk-2.0 -I/usr/local/lib/gtk-2.0/include -I/usr/local/include/atk-1.0 -I/usr/local/include/cairo -I/usr/local/include/pango-1.0 -I/usr/local/include/glib-2.0 -I/usr/local/lib/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/libpng12   -I/usr/local/include/cairo -I/usr/include/freetype2 -I/usr/include/libpng12   -O2 -I. -g -O2 -I/home/bil/test/include -pthread  -I/usr/local/include   -I/usr/local/include   snd-grec.c
+snd-grec.c: In function 'allocate_meter':
+snd-grec.c:263: warning: passing argument 2 of 'gdk_draw_rectangle' from incompatible pointer type
+snd-grec.c:270: warning: passing argument 2 of 'gdk_draw_rectangle' from incompatible pointer type
+snd-grec.c:334: warning: passing argument 2 of 'gdk_draw_rectangle' from incompatible pointer type
+snd-grec.c:351: warning: passing argument 2 of 'gdk_draw_arc' from incompatible pointer type
+snd-grec.c:352: warning: passing argument 2 of 'gdk_draw_arc' from incompatible pointer type
+snd-grec.c:353: warning: passing argument 2 of 'gdk_draw_arc' from incompatible pointer type
+snd-grec.c:354: warning: passing argument 2 of 'gdk_draw_arc' from incompatible pointer type
+snd-grec.c:356: warning: passing argument 2 of 'gdk_draw_arc' from incompatible pointer type
+snd-grec.c:357: warning: passing argument 2 of 'gdk_draw_arc' from incompatible pointer type
+snd-grec.c:358: warning: passing argument 2 of 'gdk_draw_arc' from incompatible pointer type
+snd-grec.c:359: warning: passing argument 2 of 'gdk_draw_arc' from incompatible pointer type
+snd-grec.c:361: warning: passing argument 2 of 'gdk_draw_arc' from incompatible pointer type
+snd-grec.c:362: warning: passing argument 2 of 'gdk_draw_arc' from incompatible pointer type
+snd-grec.c:363: warning: passing argument 2 of 'gdk_draw_arc' from incompatible pointer type
+snd-grec.c:364: warning: passing argument 2 of 'gdk_draw_arc' from incompatible pointer type
+snd-grec.c:388: warning: passing argument 2 of 'gdk_draw_line' from incompatible pointer type
+snd-grec.c:389: warning: passing argument 2 of 'gdk_draw_line' from incompatible pointer type
+snd-grec.c:390: warning: passing argument 2 of 'gdk_draw_line' from incompatible pointer type
+snd-grec.c:391: warning: passing argument 2 of 'gdk_draw_line' from incompatible pointer type
+snd-grec.c:392: warning: passing argument 2 of 'gdk_draw_line' from incompatible pointer type
+snd-grec.c:393: warning: passing argument 2 of 'gdk_draw_line' from incompatible pointer type
+snd-grec.c:405: warning: passing argument 2 of 'gdk_draw_line' from incompatible pointer type
+snd-grec.c:406: warning: passing argument 2 of 'gdk_draw_line' from incompatible pointer type
+snd-grec.c:407: warning: passing argument 2 of 'gdk_draw_line' from incompatible pointer type
+snd-grec.c: In function 'display_vu_meter':
+snd-grec.c:476: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-grec.c:490: warning: passing argument 2 of 'gdk_draw_line' from incompatible pointer type
+snd-grec.c:504: warning: passing argument 2 of 'gdk_draw_arc' from incompatible pointer type
+snd-grec.c:505: warning: passing argument 2 of 'gdk_draw_arc' from incompatible pointer type
+snd-grec.c:506: warning: passing argument 2 of 'gdk_draw_arc' from incompatible pointer type
+snd-grec.c:507: warning: passing argument 2 of 'gdk_draw_arc' from incompatible pointer type
+snd-grec.c: In function 'spix_expose':
+snd-grec.c:1310: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+gcc -c -DLOCALE_DIR=\"/usr/local/share/locale\" -DSCRIPTS_DIR=\"/usr/local/share/snd\" -DHAVE_CONFIG_H -I/usr/local/include/gtk-2.0 -I/usr/local/lib/gtk-2.0/include -I/usr/local/include/atk-1.0 -I/usr/local/include/cairo -I/usr/local/include/pango-1.0 -I/usr/local/include/glib-2.0 -I/usr/local/lib/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/libpng12   -I/usr/local/include/cairo -I/usr/include/freetype2 -I/usr/include/libpng12   -O2 -I. -g -O2 -I/home/bil/test/include -pthread  -I/usr/local/include   -I/usr/local/include   snd-genv.c
+snd-genv.c: In function 'clear_point_label':
+snd-genv.c:393: warning: passing argument 2 of 'gdk_draw_rectangle' from incompatible pointer type
+snd-genv.c: In function 'display_enved_progress':
+snd-genv.c:410: warning: passing argument 2 of 'gdk_draw_drawable' from incompatible pointer type
+snd-genv.c:411: warning: passing argument 2 of 'gdk_draw_rectangle' from incompatible pointer type
+snd-genv.c: In function 'brkpixL_expose':
+snd-genv.c:419: warning: passing argument 2 of 'gdk_draw_rectangle' from incompatible pointer type
+
+  -I/usr/local/include   snd-gfft.c
+snd-gfft.c: In function 'graph_redisplay':
+snd-gfft.c:100: warning: passing argument 2 of 'gdk_draw_line' from incompatible pointer type
+snd-gfft.c:114: warning: passing argument 2 of 'gdk_draw_line' from incompatible pointer type
+
+*/
 
 void draw_polygon(axis_context *ax, int points, ...)
 {
@@ -140,6 +329,14 @@ void draw_polygon(axis_context *ax, int points, ...)
   va_end(ap);
   gdk_draw_lines(ax->wn, ax->gc, pts, points);
   FREE(pts);
+}
+
+void draw_polygon_with_points(GdkDrawable *wn, gc_t *gp, bool filled, GdkPoint *points, int npoints)
+{
+#if USE_CAIRO
+#else
+  gdk_draw_polygon(wn, gp, filled, points, npoints);
+#endif
 }
 
 void draw_lines(axis_context *ax, GdkPoint *points, int num)
@@ -193,7 +390,7 @@ static void fill_polygons (axis_context *ax, GdkPoint *points, int num, axis_inf
       polypts[2].y = y0;
       polypts[3].x = points[i - 1].x;
       polypts[3].y = y0;
-      gdk_draw_polygon(ax->wn, ax->gc, true, polypts, 4);
+      draw_polygon_with_points(ax->wn, ax->gc, true, polypts, 4);
     }
 }
 
@@ -210,7 +407,7 @@ static void fill_two_sided_polygons(axis_context *ax, GdkPoint *points, GdkPoint
       polypts[2].y = points1[i].y;
       polypts[3].x = points1[i - 1].x;
       polypts[3].y = points1[i - 1].y;
-      gdk_draw_polygon(ax->wn, ax->gc, true, polypts, 4);
+      draw_polygon_with_points(ax->wn, ax->gc, true, polypts, 4);
     }
 }
 
@@ -354,8 +551,8 @@ void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
   if (!cx) cx = cp->cgx;
   ax = cx->ax;
   wn = ax->wn;
-  draw_gc = copy_GC(cp);
   undraw_gc = erase_GC(cp);
+  draw_gc = copy_GC(cp);
   min = ((nj < previous_j) ? nj : previous_j);
   if (cp->time_graph_style == GRAPH_LINES)
     {
@@ -414,8 +611,8 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
   if (!cx) cx = cp->cgx;
   ax = cx->ax;
   wn = ax->wn;
-  draw_gc = copy_GC(cp);
   undraw_gc = erase_GC(cp);
+  draw_gc = copy_GC(cp);
   min = ((nj < previous_j) ? nj : previous_j);
   if (cp->time_graph_style == GRAPH_LINES)
     {
@@ -541,8 +738,8 @@ void initialize_colormap(void)
   state_context *sx;
   sx = ss->sgx;
   colormap_GC = gdk_gc_new(MAIN_WINDOW(ss));
-  gdk_gc_set_background(sx->basic_gc, sx->graph_color);
-  gdk_gc_set_foreground(sx->basic_gc, sx->data_color);
+  gc_set_background(sx->basic_gc, sx->graph_color);
+  gc_set_foreground(sx->basic_gc, sx->data_color);
   sono_colors = color_map_size(ss);
   sono_data = (GdkRectangle **)CALLOC(sono_colors, sizeof(GdkRectangle *));
   current_colors_size = color_map_size(ss);

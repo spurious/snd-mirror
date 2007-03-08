@@ -1,11 +1,5 @@
 #include "snd.h"
 
-axis_context *free_axis_context(axis_context *ax)
-{
-  if (ax) FREE(ax);
-  return(NULL);
-}
-
 typedef struct tick_descriptor {
   double hi, lo; 
   int max_ticks;
@@ -241,7 +235,7 @@ axis_info *free_axis_info(axis_info *ap)
   if (!ap) return(NULL);
   if (ap->x_ticks) ap->x_ticks = free_tick_descriptor(ap->x_ticks);
   if (ap->y_ticks) ap->y_ticks = free_tick_descriptor(ap->y_ticks);
-  if (ap->ax) ap->ax = free_axis_context(ap->ax);
+  /* leave ap->ax alone -- it actually belongs to cp->cgx */
   if (ap->xlabel) 
     {
       FREE(ap->xlabel); 
@@ -936,7 +930,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	      int y_label_width = 0;
 	      y_label_width = label_width(ap->ylabel, use_tiny_font);
 	      if ((ap->y_axis_y0 - ap->y_axis_y1) > (y_label_width + 20))
-		draw_rotated_axis_label(ap->cp,	ax->gc, ap->ylabel, 
+		draw_rotated_axis_label(ap->cp,	ax, ap->ylabel, 
 					ap->y_axis_x0 - tdy->maj_tick_len - tdy->min_label_width - inner_border_width,
 					(int)((ap->y_axis_y0 + ap->y_axis_y1 - y_label_width) * 0.5) - 8);
 	    }

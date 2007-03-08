@@ -343,16 +343,74 @@ void goto_window(GtkWidget *text)
   gtk_widget_grab_focus(text);
 }
 
-void gc_set_foreground_xor(GdkGC *gc, GdkColor *col1, GdkColor *col2)
+
+/* try to keep track of colors */
+void gc_set_foreground(gc_t *gp, GdkColor *color)
+{
+#if USE_CAIRO
+  gdk_gc_set_foreground(gp->gc, color);
+  gp->fg_color = color;
+  gp->fg_red = RGB_TO_FLOAT(color->red);  
+  gp->fg_green = RGB_TO_FLOAT(color->green);  
+  gp->fg_blue = RGB_TO_FLOAT(color->blue);
+#else
+  gdk_gc_set_foreground(gp, color);
+#endif
+}
+
+void gc_set_background(gc_t *gp, GdkColor *color)
+{
+#if USE_CAIRO
+  gdk_gc_set_background(gp->gc, color);
+  gp->bg_color = color;
+  gp->bg_red = RGB_TO_FLOAT(color->red);  
+  gp->bg_green = RGB_TO_FLOAT(color->green);  
+  gp->bg_blue = RGB_TO_FLOAT(color->blue);
+#else
+  gdk_gc_set_background(gp, color);
+#endif
+}
+
+void gc_set_foreground_xor(gc_t *gp, GdkColor *col1, GdkColor *col2)
 { 
   GdkColor newcol;
   newcol.pixel = XOR(col1->pixel, col2->pixel);
   newcol.red = XOR(col1->red, col2->red);
   newcol.green = XOR(col1->green, col2->green);
   newcol.blue = XOR(col1->blue, col2->blue);
-  /* gdk_gc_set_foreground(gc, gdk_color_copy(&newcol)); */ /* this sets .pixel from .pixel -- surely no copy is needed? */
-  gdk_gc_set_foreground(gc, &newcol);
+#if USE_CAIRO
+  gp->fg_color = col1;
+  gp->fg_red = RGB_TO_FLOAT(col1->red);  
+  gp->fg_green = RGB_TO_FLOAT(col1->green);  
+  gp->fg_blue = RGB_TO_FLOAT(col1->blue);
+  gdk_gc_set_foreground(gp->gc, &newcol);
+#else
+  gdk_gc_set_foreground(gp, &newcol);
+#endif
 }
+
+void gc_set_function(gc_t *gp, GdkFunction op)
+{
+#if USE_CAIRO
+  gp->op = op;
+  gdk_gc_set_function(gp->gc, op);
+#else
+  gdk_gc_set_function(gp, op);
+#endif
+}
+
+gc_t *gc_new(GdkDrawable *wn)
+{
+  gc_t *gp;
+#if USE_CAIRO
+  gp = (gc_t *)CALLOC(1, sizeof(gc_t));
+  gp->gc = gdk_gc_new(wn);
+#else
+  gp = gdk_gc_new(wn);
+#endif
+  return(gp);
+}
+
 
 void color_cursor(GdkColor *color)
 {
@@ -386,8 +444,8 @@ void color_graph(GdkColor *color)
   state_context *sx;
   sx = ss->sgx;
   sx->graph_color = color;
-  gdk_gc_set_background(sx->basic_gc, color);
-  gdk_gc_set_foreground(sx->erase_gc, color);
+  gc_set_background(sx->basic_gc, color);
+  gc_set_foreground(sx->erase_gc, color);
   gc_set_foreground_xor(sx->selection_gc, sx->selection_color, color);
   gc_set_foreground_xor(sx->cursor_gc, sx->cursor_color, color);
   gc_set_foreground_xor(sx->mark_gc, sx->mark_color, color);
@@ -398,8 +456,8 @@ void color_selected_graph(GdkColor *color)
   state_context *sx;
   sx = ss->sgx;
   sx->selected_graph_color = color;
-  gdk_gc_set_background(sx->selected_basic_gc, color);
-  gdk_gc_set_foreground(sx->selected_erase_gc, color);
+  gc_set_background(sx->selected_basic_gc, color);
+  gc_set_foreground(sx->selected_erase_gc, color);
   gc_set_foreground_xor(sx->selected_selection_gc, sx->selection_color, color);
   gc_set_foreground_xor(sx->selected_cursor_gc, sx->cursor_color, color);
   gc_set_foreground_xor(sx->selected_mark_gc, sx->mark_color, color);
@@ -410,8 +468,8 @@ void color_data(GdkColor *color)
   state_context *sx;
   sx = ss->sgx;
   sx->data_color = color;
-  gdk_gc_set_foreground(sx->basic_gc, color);
-  gdk_gc_set_background(sx->erase_gc, color);
+  gc_set_foreground(sx->basic_gc, color);
+  gc_set_background(sx->erase_gc, color);
 }
 
 void color_selected_data(GdkColor *color)
@@ -419,8 +477,8 @@ void color_selected_data(GdkColor *color)
   state_context *sx;
   sx = ss->sgx;
   sx->selected_data_color = color;
-  gdk_gc_set_foreground(sx->selected_basic_gc, color);
-  gdk_gc_set_background(sx->selected_erase_gc, color);
+  gc_set_foreground(sx->selected_basic_gc, color);
+  gc_set_background(sx->selected_erase_gc, color);
 }
 
 void set_mix_color(GdkColor *color)
@@ -428,7 +486,7 @@ void set_mix_color(GdkColor *color)
   state_context *sx;
   sx = ss->sgx;
   sx->mix_color = color;
-  gdk_gc_set_foreground(sx->mix_gc, color);
+  gc_set_foreground(sx->mix_gc, color);
 }
 
 void recolor_graph(chan_info *cp, bool selected)
@@ -520,14 +578,6 @@ void set_widget_size(GtkWidget *w, guint16 width, guint16 height)
 void set_widget_position(GtkWidget *w, gint16 x, gint16 y)
 {
   gtk_window_move(GTK_WINDOW(w), x, y);
-}
-
-void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc)
-{
-  ax->wn = w->window;
-  ax->w = w;
-  if (gc) ax->gc = gc;
-  ax->current_font = AXIS_NUMBERS_FONT(ss);
 }
 
 void set_user_data(GObject *obj, gpointer data)
@@ -721,7 +771,7 @@ void widget_off_t_to_text(GtkWidget *w, off_t val)
   FREE(str);
 }
 
-static void rotate_text(GdkDrawable *wn, GdkGC *gc, PangoFontDescription *font, const char *text, int angle, gint x0, gint y0)
+static void rotate_text(GdkDrawable *wn, gc_t *gp, PangoFontDescription *font, const char *text, int angle, gint x0, gint y0)
 {
 #if HAVE_PANGO_MATRIX_ROTATE
   PangoLayout *layout;
@@ -733,19 +783,23 @@ static void rotate_text(GdkDrawable *wn, GdkGC *gc, PangoFontDescription *font, 
   pango_context_set_matrix(context, &matrix);
   pango_layout_set_font_description(layout, font);
   pango_layout_set_text(layout, text, -1);
-  gdk_draw_layout(wn, gc, x0, y0, layout);
+#if USE_CAIRO
+  gdk_draw_layout(wn, gp->gc, x0, y0, layout);
+#else
+  gdk_draw_layout(wn, gp, x0, y0, layout);
+#endif
   g_object_unref(layout);
   g_object_unref(context);
 #endif
 }
 
-void draw_rotated_axis_label(chan_info *cp, GdkGC *gc, const char *text, gint x0, gint y0)
+void draw_rotated_axis_label(chan_info *cp, axis_context *ax, const char *text, gint x0, gint y0)
 {
   GtkWidget *w;
   if ((cp->chan > 0) && (cp->sound->channel_style == CHANNELS_COMBINED))
     w = channel_graph(cp->sound->chans[0]);
   else w = channel_graph(cp);
-  rotate_text(w->window, gc, AXIS_LABEL_FONT(ss), text, 90, x0, y0);
+  rotate_text(w->window, ax->gc, AXIS_LABEL_FONT(ss), text, 90, x0, y0);
 }
 
 void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)

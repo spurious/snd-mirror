@@ -507,13 +507,6 @@ void set_widget_position(Widget w, Position x, Position y)
   XtVaSetValues(w, XmNx, x, XmNy, y, NULL);
 }
 
-void fixup_axis_context(axis_context *ax, Widget w, GC gc)
-{
-  ax->dp = XtDisplay(w);
-  ax->wn = XtWindow(w);
-  if (gc) ax->gc = gc;
-}
-
 Pixmap make_pixmap(unsigned char *bits, int width, int height, int depth, GC gc)
 {
   Pixmap rb, nr;
@@ -688,7 +681,7 @@ static Pixmap rotate_text(Widget w, const char *str, XFontStruct *font, Float an
   return(rotpix);
 }
 
-void draw_rotated_axis_label(chan_info *cp, GC gc, const char *text, int x0, int y0)
+void draw_rotated_axis_label(chan_info *cp, axis_context *ax, const char *text, int x0, int y0)
 {
   Pixmap pix;
   int h = 0, w = 0;
@@ -699,9 +692,9 @@ void draw_rotated_axis_label(chan_info *cp, GC gc, const char *text, int x0, int
     widget = channel_graph(cp->sound->chans[0]);
   else widget = channel_graph(cp);
   dp = XtDisplay(widget);
-  XGetGCValues(MAIN_DISPLAY(ss), gc, GCForeground | GCBackground, &gv);
-  pix = rotate_text(widget, text, AXIS_LABEL_FONT(ss), -90.0, &w, &h, gv.background, gv.foreground, gc);
-  XCopyArea(dp, pix, XtWindow(widget), gc, 0, 0, w, h, x0, y0); /* XtWindow?? */
+  XGetGCValues(MAIN_DISPLAY(ss), ax->gc, GCForeground | GCBackground, &gv);
+  pix = rotate_text(widget, text, AXIS_LABEL_FONT(ss), -90.0, &w, &h, gv.background, gv.foreground, ax->gc);
+  XCopyArea(dp, pix, XtWindow(widget), ax->gc, 0, 0, w, h, x0, y0); /* XtWindow?? */
   XFreePixmap(dp, pix);  
 }
 

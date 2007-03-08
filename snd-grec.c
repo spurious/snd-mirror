@@ -53,7 +53,7 @@ typedef struct Wdesc {
   GtkObject *adj;
 } Wdesc;
 
-static GdkGC *draw_gc, *vu_gc;
+static gc_t *draw_gc, *vu_gc;
 
 static file_data *recdat;
 
@@ -259,14 +259,14 @@ static void allocate_meter(vu_t *vu)
 	  {
 	    if (!(vu->clip_label))
 	      vu->clip_label = gdk_pixmap_new(wn, width, height, -1);
-	    gdk_gc_set_foreground(draw_gc, reds[0]);	    
+	    gc_set_foreground(draw_gc, reds[0]);	    
 	    gdk_draw_rectangle(vu->clip_label, draw_gc, true, 0, 0, width, height);
 	  }
 	else 
 	  {
 	    if (!(vu->on_label))
 	      vu->on_label = gdk_pixmap_new(wn, width, height, -1);
-	    gdk_gc_set_foreground(draw_gc, yellows[2]);
+	    gc_set_foreground(draw_gc, yellows[2]);
 	    gdk_draw_rectangle(vu->on_label, draw_gc, true, 0, 0, width, height);
 	  }
 	/* initialize the sequence of nested polygons */
@@ -285,19 +285,19 @@ static void allocate_meter(vu_t *vu)
 	pts[6].x = pts[0].x;
 	pts[6].y = pts[0].y;
 	if (k == 1)
-	  gdk_draw_polygon(vu->clip_label, draw_gc, true, pts, 7);
-	else gdk_draw_polygon(vu->on_label, draw_gc, true, pts, 7);
+	  draw_polygon_with_points(vu->clip_label, draw_gc, true, pts, 7);
+	else draw_polygon_with_points(vu->on_label, draw_gc, true, pts, 7);
 	
 	for (i = 1; i < VU_COLORS; i++)
 	  {
 	    band += i;
 	    if (k == 1) 
-	      gdk_gc_set_foreground(draw_gc, reds[i]); 
+	      gc_set_foreground(draw_gc, reds[i]); 
 	    else 
 	      {
 		if (i < 2) 
-		  gdk_gc_set_foreground(draw_gc, yellows[2]); 
-		else gdk_gc_set_foreground(draw_gc, yellows[i]);
+		  gc_set_foreground(draw_gc, yellows[2]); 
+		else gc_set_foreground(draw_gc, yellows[i]);
 	      }
 	    pts[6].x = (short)(wid2 + band * band_x);
 	    pts[6].y = pts[5].y;
@@ -314,8 +314,8 @@ static void allocate_meter(vu_t *vu)
 	    pts[12].x = pts[0].x;
 	    pts[12].y = pts[0].y;
 	    if (k == 1)
-	      gdk_draw_polygon(vu->clip_label, draw_gc, true, pts, 13);
-	    else gdk_draw_polygon(vu->on_label, draw_gc, true, pts, 13);
+	      draw_polygon_with_points(vu->clip_label, draw_gc, true, pts, 13);
+	    else draw_polygon_with_points(vu->on_label, draw_gc, true, pts, 13);
 	    for (j = 0; j < 6; j++) 
 	      { 
 		/* set up initial portion of next polygon */
@@ -330,9 +330,9 @@ static void allocate_meter(vu_t *vu)
   if (!(vu->off_label))
     vu->off_label = gdk_pixmap_new(wn, width, height, -1);
   /* not on, so just display a white background */
-  gdk_gc_set_foreground(draw_gc, white);
+  gc_set_foreground(draw_gc, white);
   gdk_draw_rectangle(vu->off_label, draw_gc, true, 0, 0, width, height);
-  gdk_gc_set_foreground(draw_gc, black);
+  gc_set_foreground(draw_gc, black);
   
   {
     int ang0, ang1, major_tick, minor_tick;
@@ -486,7 +486,7 @@ static void display_vu_meter(vu_t *vu)
     x1 = (int)(wid2 + (wid2 + major_tick) * sinr);
     y1 = (int)(wid2 + top - height_offset - (wid2 + major_tick) * cosr);
 
-    gdk_gc_set_foreground(vu_gc, sx->black);
+    gc_set_foreground(vu_gc, sx->black);
     gdk_draw_line(vu->wn, vu_gc, x0, y0, x1, y1);
 
     if (vu->on_off != VU_OFF)
@@ -494,7 +494,7 @@ static void display_vu_meter(vu_t *vu)
 	if (vu->current_val > vu->red_deg) 
 	  vu->red_deg = vu->current_val;
 	else vu->red_deg = vu->current_val * VU_BUBBLE_SPEED + (vu->red_deg * (1.0 - VU_BUBBLE_SPEED));
-	gdk_gc_set_foreground(vu_gc, sx->red);
+	gc_set_foreground(vu_gc, sx->red);
 
 	redx = (int)(vu->red_deg * 90 * 64);
 	if (redx<(VU_BUBBLE_SIZE)) 
@@ -506,7 +506,7 @@ static void display_vu_meter(vu_t *vu)
 	gdk_draw_arc(vu->wn, vu_gc, false, 3, top + 2 - height_offset, width - 6, width - 6, 135 * 64 - redx, redy);
 	gdk_draw_arc(vu->wn, vu_gc, false, 3, top + 3 - height_offset, width - 6, width - 6, 135 * 64 - redx, redy);
 
-	gdk_gc_set_foreground(vu_gc, sx->black);
+	gc_set_foreground(vu_gc, sx->black);
       }
   }
 }
@@ -1941,14 +1941,14 @@ widget_t snd_record_file(void)
 
       sx = ss->sgx;
       wn = MAIN_WINDOW(ss);
-      draw_gc = gdk_gc_new(wn);
-      gdk_gc_set_background(draw_gc, sx->basic_color);
-      gdk_gc_set_foreground(draw_gc, sx->black);
-      gdk_gc_set_function(draw_gc, GDK_COPY);
-      vu_gc = gdk_gc_new(wn);
-      gdk_gc_set_background(vu_gc, sx->white);
-      gdk_gc_set_foreground(vu_gc, sx->black);
-      gdk_gc_set_function(vu_gc, GDK_COPY);
+      draw_gc = gc_new(wn);
+      gc_set_background(draw_gc, sx->basic_color);
+      gc_set_foreground(draw_gc, sx->black);
+      gc_set_function(draw_gc, GDK_COPY);
+      vu_gc = gc_new(wn);
+      gc_set_background(vu_gc, sx->white);
+      gc_set_foreground(vu_gc, sx->black);
+      gc_set_function(vu_gc, GDK_COPY);
 
       all_panes = (pane_t **)CALLOC(input_devices + 1, sizeof(pane_t *));
       device_buttons_size = input_devices + 2; /* inputs, one output, autoload_file */

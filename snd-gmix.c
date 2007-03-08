@@ -191,7 +191,7 @@ static gboolean amp_press_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
 /* -------- amp-envs -------- */
 static GtkWidget *w_env_frame, *w_env;
 static axis_context *ax = NULL;
-static GdkGC *cur_gc;
+static gc_t *cur_gc;
 static env_editor *spfs[8];
 static int last_clicked_env_chan;
 static bool with_mix_background_wave = false;
@@ -206,11 +206,11 @@ static void show_mix_background_wave(int mix_id, int chan)
   pts = prepare_mix_id_waveform(mix_id, e->axis, &two_sided);
   if (pts > 0)
     {
-      gdk_gc_set_foreground(ax->gc, ss->sgx->enved_waveform_color);
+      gc_set_foreground(ax->gc, ss->sgx->enved_waveform_color);
       if (two_sided)
 	draw_both_grf_points(1, ax, pts, GRAPH_LINES);
       else draw_grf_points(1, ax, pts, e->axis, ungrf_y(e->axis, 0.0), GRAPH_LINES);
-      gdk_gc_set_foreground(ax->gc, ss->sgx->black);
+      gc_set_foreground(ax->gc, ss->sgx->black);
     }
 }
 
@@ -223,10 +223,10 @@ static void mix_amp_env_resize(GtkWidget *w)
     {
       GdkWindow *wn;
       wn = MAIN_WINDOW(ss);
-      cur_gc = gdk_gc_new(wn);
-      gdk_gc_set_background(cur_gc, ss->sgx->graph_color);
-      gdk_gc_set_foreground(cur_gc, ss->sgx->data_color);
-      gdk_gc_set_function(cur_gc, GDK_COPY);
+      cur_gc = gc_new(wn);
+      gc_set_background(cur_gc, ss->sgx->graph_color);
+      gc_set_foreground(cur_gc, ss->sgx->data_color);
+      gc_set_function(cur_gc, GDK_COPY);
       ax = (axis_context *)CALLOC(1, sizeof(axis_context));
       ax->wn = w_env->window;
       ax->w = w_env;
@@ -244,11 +244,11 @@ static void mix_amp_env_resize(GtkWidget *w)
       cur_env = mix_dialog_mix_amp_env(mix_dialog_id, chan);
       if (cur_env)
 	{
-	  gdk_gc_set_foreground(ax->gc, ss->sgx->enved_waveform_color);
+	  gc_set_foreground(ax->gc, ss->sgx->enved_waveform_color);
 	  spfs[chan]->with_dots = false;
 	  env_editor_display_env(spfs[chan], cur_env, ax, _("mix env"), (int)(chan * widget_width(w) / chans), 0,
 				 widget_width(w) / chans, widget_height(w), NOT_PRINTING);
-	  gdk_gc_set_foreground(ax->gc, ss->sgx->black);
+	  gc_set_foreground(ax->gc, ss->sgx->black);
 	}
       if (with_mix_background_wave)
 	show_mix_background_wave(mix_dialog_id, chan);
@@ -1210,17 +1210,17 @@ static gboolean track_amp_press_callback(GtkWidget *w, GdkEventButton *ev, gpoin
 /* -------- amp-env -------- */
 static GtkWidget *w_track_env_frame, *w_track_env;
 static axis_context *track_ax = NULL;
-static GdkGC *track_cur_gc;
+static gc_t *track_cur_gc;
 static env_editor *track_spf;
 static bool with_track_background_wave = false;
 
 void show_track_background_wave(int pts, bool two_sided)
 {
-  gdk_gc_set_foreground(track_ax->gc, ss->sgx->enved_waveform_color);
+  gc_set_foreground(track_ax->gc, ss->sgx->enved_waveform_color);
   if (two_sided)
     draw_both_grf_points(1, track_ax, pts, GRAPH_LINES);
   else draw_grf_points(1, track_ax, pts, track_spf->axis, ungrf_y(track_spf->axis, 0.0), GRAPH_LINES);
-  gdk_gc_set_foreground(track_ax->gc, ss->sgx->black);
+  gc_set_foreground(track_ax->gc, ss->sgx->black);
 }
 
 static void track_amp_env_resize(GtkWidget *w)
@@ -1232,10 +1232,10 @@ static void track_amp_env_resize(GtkWidget *w)
     {
       GdkWindow *wn;
       wn = MAIN_WINDOW(ss);
-      track_cur_gc = gdk_gc_new(wn);
-      gdk_gc_set_background(track_cur_gc, ss->sgx->graph_color);
-      gdk_gc_set_foreground(track_cur_gc, ss->sgx->data_color);
-      gdk_gc_set_function(track_cur_gc, GDK_COPY);
+      track_cur_gc = gc_new(wn);
+      gc_set_background(track_cur_gc, ss->sgx->graph_color);
+      gc_set_foreground(track_cur_gc, ss->sgx->data_color);
+      gc_set_function(track_cur_gc, GDK_COPY);
 
       track_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
       track_ax->wn = w_track_env->window;
@@ -1249,10 +1249,10 @@ static void track_amp_env_resize(GtkWidget *w)
   cur_env = track_dialog_track_amp_env(track_dialog_id);
   if (cur_env)
     {
-      gdk_gc_set_foreground(track_ax->gc, ss->sgx->enved_waveform_color);
+      gc_set_foreground(track_ax->gc, ss->sgx->enved_waveform_color);
       track_spf->with_dots = false;
       env_editor_display_env(track_spf, cur_env, track_ax, _("track env"), 0, 0, widget_width(w), widget_height(w), NOT_PRINTING);
-      gdk_gc_set_foreground(track_ax->gc, ss->sgx->black);
+      gc_set_foreground(track_ax->gc, ss->sgx->black);
     }
   if (with_track_background_wave)
     display_track_waveform(track_dialog_id, track_spf->axis);
