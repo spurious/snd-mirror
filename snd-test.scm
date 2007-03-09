@@ -59443,21 +59443,21 @@ EDITS: 1
 	    (if (not (string=? (gdk_get_program_class) "Hiho")) (snd-display ";set program class: ~A" (gdk_get_program_class)))
 	    (gdk_set_program_class "Snd"))
 	  (if (not (string=? (gdk_get_display) ":0.0")) (snd-display ";gdk_get_display: ~A" (gdk_get_display)))
-	  (if (not (= (gdk_screen_width) 1600)) (snd-display ";gdk_screen_width: ~A" (gdk_screen_width)))
-	  (if (not (= (gdk_screen_width_mm) 411)) (snd-display ";gdk_screen_width_mm: ~A" (gdk_screen_width_mm)))
-	  (if (not (= (gdk_screen_height) 1200)) (snd-display ";gdk_screen_height: ~A" (gdk_screen_height)))
-	  (if (not (= (gdk_screen_height_mm) 311)) (snd-display ";gdk_screen_height_mm: ~A" (gdk_screen_height_mm)))
+	  (if (not (= (gdk_screen_width) 2560)) (snd-display ";gdk_screen_width: ~A" (gdk_screen_width)))
+	  (if (not (= (gdk_screen_width_mm) 644)) (snd-display ";gdk_screen_width_mm: ~A" (gdk_screen_width_mm)))
+	  (if (not (= (gdk_screen_height) 1600)) (snd-display ";gdk_screen_height: ~A" (gdk_screen_height)))
+	  (if (not (= (gdk_screen_height_mm) 402)) (snd-display ";gdk_screen_height_mm: ~A" (gdk_screen_height_mm)))
 	  (gdk_beep)
 	  (if (not (gtk_true)) (snd-display ";gtk_true: ~A" (gtk_true)))
 	  (if (gtk_false) (snd-display ";gtk_false: ~A" (gtk_false)))
 	  (if (gdk_pointer_is_grabbed) (snd-display ";gdk_pointer_is_grabbed?"))
-	  (if (not (gdk_devices_list)) (snd-display ";gdk_devices_list?"))
+;	  (if (not (gdk_devices_list)) (snd-display ";gdk_devices_list?"))
 	  (if (not (gdk_list_visuals)) (snd-display ";gdk_list_visuals?"))
 	  (if (not (gdk_window_get_toplevels)) (snd-display ";gdk_window_get_toplevels?"))
 	  (if (not (gtk_window_list_toplevels)) (snd-display ";gtk_window_list_toplevels?"))
 	  (gtk_window_set_default_icon_list (gtk_window_get_default_icon_list))
 	  (if (gdk_rgb_ditherable) (snd-display ";rgb ditherable?"))
-	  (if (not (= (gdk_visual_get_best_depth) 24)) (snd-display ";best depth: ~A" (gdk_visual_get_best_depth)))
+	  (if (not (= (gdk_visual_get_best_depth) 32)) (snd-display ";best depth: ~A" (gdk_visual_get_best_depth)))
 	  (if (not (string=? (gtk_rc_get_theme_dir) "/usr/local/share/themes")) (snd-display ";theme dir: ~A" (gtk_rc_get_theme_dir)))
 	  (if (not (string=? (gtk_rc_get_module_dir) "/usr/local/lib/gtk-2.0/2.4.0/engines")) (snd-display ";module dir: ~A" (gtk_rc_get_module_dir)))
 	  (if (not (string? (gtk_rc_get_im_module_path))) (snd-display ";module path: ~A" (gtk_rc_get_im_module_path)))
@@ -59524,10 +59524,10 @@ EDITS: 1
 		 (_gchar1_ (gdk_screen_make_display_name _GdkScreen_))
 		 (_int6 (gdk_screen_get_n_monitors _GdkScreen_))
 		 (_GList2_ (gdk_display_list_devices _GdkDisplay_))
-		 (_GdkDevice_ (gdk_display_get_core_pointer _GdkDisplay_))
-		 (_GdkDevice1_ (gdk_device_get_core_pointer))
-		 (_gboolean2 (gdk_display_supports_cursor_alpha _GdkDisplay_))
-		 (_gboolean3 (gdk_display_supports_cursor_color _GdkDisplay_))
+;		 (_GdkDevice_ (gdk_display_get_core_pointer _GdkDisplay_))
+;		 (_GdkDevice1_ (gdk_device_get_core_pointer))
+;		 (_gboolean2 (gdk_display_supports_cursor_alpha _GdkDisplay_))
+;		 (_gboolean3 (gdk_display_supports_cursor_color _GdkDisplay_))
 		 (_guint (gdk_display_get_default_cursor_size _GdkDisplay_))
 		 (_GtkWidget_ (gtk_check_button_new))
 		 (_GdkColormap7_ (gtk_widget_get_colormap _GtkWidget_))
@@ -59554,18 +59554,18 @@ EDITS: 1
 	    (if (not (= _gint 24)) (snd-display ";_gint: ~A" _gint))
 	    (if (not (= _int 1)) (snd-display ";_int: ~A" _int))
 	    (if (not (= _int1 0)) (snd-display ";_int1: ~A" _int1))
-	    (if (not (= _int2 1600)) (snd-display ";_int2: ~A" _int2))
-	    (if (not (= _int3 1200)) (snd-display ";_int3: ~A" _int3))
-	    (if (not (= _int4 411)) (snd-display ";_int4: ~A" _int4))
-	    (if (not (= _int5 311)) (snd-display ";_int5: ~A" _int5))
+	    (if (not (= _int2 2560)) (snd-display ";_int2: ~A" _int2))
+	    (if (not (= _int3 1600)) (snd-display ";_int3: ~A" _int3))
+	    (if (not (= _int4 644)) (snd-display ";_int4: ~A" _int4))
+	    (if (not (= _int5 402)) (snd-display ";_int5: ~A" _int5))
 	    (if (not (= _int6 1)) (snd-display ";_int6: ~A" _int6))
-	    (if (not (equal? _GdkDevice_ _GdkDevice1_)) (snd-display ";devices not equal"))
+;	    (if (not (equal? _GdkDevice_ _GdkDevice1_)) (snd-display ";devices not equal"))
 	    (if (or (not (equal? _GdkWindow_ _GdkWindow2_)) (not (equal? _GdkWindow1_ _GdkWindow2_))) (snd-display ";windows not equal"))
 	    (if (not (string=? _gchar_ ":0.0")) (snd-display ";_gchar: ~A" _gchar_))
 	    (if _gboolean (snd-display ";_gboolean: ~A" _gboolean))
 	    (if _gboolean1 (snd-display ";_gboolean1: ~A" _gboolean1))
-	    (if (not _gboolean2) (snd-display ";_gboolean2: ~A" _gboolean2))
-	    (if (not _gboolean3) (snd-display ";_gboolean3: ~A" _gboolean3))
+;	    (if (not _gboolean2) (snd-display ";_gboolean2: ~A" _gboolean2))
+;	    (if (not _gboolean3) (snd-display ";_gboolean3: ~A" _gboolean3))
 	    (if (not (= _guint 24)) (snd-display ";_giunt: ~A" _guint))
 	    (if (not (GDK_IS_COLORMAP _GdkColormap6_)) (snd-display ";not colormap6: ~A" _GdkColormap6_))
 	    (if (not (GTK_IS_WIDGET _GtkWidget_)) (snd-display ";not widget: ~A" _GtkWidget_))
@@ -59575,7 +59575,7 @@ EDITS: 1
 	    (if (not (GDK_IS_SCREEN _GdkScreen_)) (snd-display ";not screen: ~A" _GdkScreen_))
 	    (if (not (GDK_IS_DISPLAY _GdkDisplay_)) (snd-display ";not display: ~A" _GdkDisplay_))
 	    (if (not (GDK_IS_WINDOW _GdkWindow_)) (snd-display ";not window: ~A" _GdkWindow_))
-	    (if (not (GDK_IS_DEVICE _GdkDevice_)) (snd-display ";not device: ~A" _GdkDevice_))
+;	    (if (not (GDK_IS_DEVICE _GdkDevice_)) (snd-display ";not device: ~A" _GdkDevice_))
 	    (let ((types (gdk_query_visual_types)))
 	      (if (not (member _GdkVisualType (c-array->list (car types) (cadr types))))
 		  (snd-display ";visuals: ~A and ~A" _GdkVisualType types)))
@@ -59603,7 +59603,7 @@ EDITS: 1
 	     (list GDK_VISUAL GDK_WINDOW GDK_DEVICE)
 	     (list (lambda (val)
 		     (let ((depth (.depth val)))
-		       (if (not (= depth 24))
+		       (if (not (= depth 32))
 			   (format #f "depth: ~A" depth)
 			   #f)))
 		   (lambda (val) #f)
@@ -59620,14 +59620,14 @@ EDITS: 1
 		  (colors (.colors _GdkColormap_))
 		  (visual (.visual _GdkColormap_))
 		  (data (.windowing_data _GdkColormap_))
-		  (name (.name _GdkDevice_))
-		  (mode (.mode _GdkDevice_))
-		  (has_cursor (.has_cursor _GdkDevice_))
-		  (num_axes (.num_axes _GdkDevice_))
-		  (num_keys (.num_keys _GdkDevice_))
-		  (keys (.keys _GdkDevice_))
-		  (source (.source _GdkDevice_))
-		  (axes (.axes _GdkDevice_))
+;		  (name (.name _GdkDevice_))
+;		  (mode (.mode _GdkDevice_))
+;		  (has_cursor (.has_cursor _GdkDevice_))
+;		  (num_axes (.num_axes _GdkDevice_))
+;		  (num_keys (.num_keys _GdkDevice_))
+;		  (keys (.keys _GdkDevice_))
+;		  (source (.source _GdkDevice_))
+;		  (axes (.axes _GdkDevice_))
 		  (type (.type _GdkVisual_))
 		  (depth (.depth _GdkVisual_))
 		  (byte_order (.byte_order _GdkVisual_))
@@ -59645,13 +59645,13 @@ EDITS: 1
 	      (if (not (= size 256)) (snd-display ";.size: ~A" size))
 	      (if colors (snd-display ";.colors"))
 	      (if (not (GDK_IS_VISUAL visual)) (snd-display ";.visual: ~A" visual))
-	      (if (not (string=? name "Core Pointer")) (snd-display ";.name: ~A" name))
-	      (if (not (= mode 1)) (snd-display ";.mode: ~A" mode))
-	      (if (not has_cursor) (snd-display ";.has_cursor"))
-	      (if (not (= num_axes 2)) (snd-display ";.num_axes: ~A" num_axes))
-	      (if (not (= num_keys 0)) (snd-display ";.num_keys: ~A" num_keys))
-	      (if keys (snd-display ";.keys: ~A" keys))
-	      (if (not (= source 0)) (snd-display ";.source: ~A" source))
+;	      (if (not (string=? name "Core Pointer")) (snd-display ";.name: ~A" name))
+;	      (if (not (= mode 1)) (snd-display ";.mode: ~A" mode))
+;	      (if (not has_cursor) (snd-display ";.has_cursor"))
+;	      (if (not (= num_axes 2)) (snd-display ";.num_axes: ~A" num_axes))
+;	      (if (not (= num_keys 0)) (snd-display ";.num_keys: ~A" num_keys))
+;	      (if keys (snd-display ";.keys: ~A" keys))
+;	      (if (not (= source 0)) (snd-display ";.source: ~A" source))
 	      (if (not (= type 4)) (snd-display ";.type: ~A" type))
 	      (if (not (= depth 24)) (snd-display ";.depth: ~A" depth))
 	      (if (not (= byte_order 0)) (snd-display ";.byte_order: ~A" byte_order))
@@ -59874,7 +59874,7 @@ EDITS: 1
 		 (_GdkRegion2_ (gdk_region_rectangle _GdkRectangle_))
 		 (_gboolean (gdk_region_empty _GdkRegion_))
 		 (_gboolean1 (gdk_region_equal _GdkRegion_ _GdkRegion1_))
-		 (_GdkOverlapType (gdk_region_rect_in _GdkRegion_ _GdkRectangle_)) ;GDK_OVERLAP_RECTANGLE_IN
+;		 (_GdkOverlapType (gdk_region_rect_in _GdkRegion_ _GdkRectangle_)) ;GDK_OVERLAP_RECTANGLE_IN
 		 (_GdkRectangle1_ (GdkRectangle))
 		 (_gboolean2 (gdk_region_point_in _GdkRegion2_ 2 3))
 		 (_gboolean3 (gdk_rectangle_intersect _GdkRectangle_ (GdkRectangle 3 3 10 10) (GdkRectangle 0 0 4 4)))
@@ -59887,7 +59887,7 @@ EDITS: 1
 	    (if (not _gboolean1) (snd-display ";region not copied equal"))
 	    (if (not _gboolean2) (snd-display ";region no point"))
 	    (if (not _gboolean3) (snd-display ";region no intersect"))
-	    (if (not (= _GdkOverlapType GDK_OVERLAP_RECTANGLE_OUT)) (snd-display ";rectangle overlap type: ~A" _GdkOverlapType))
+;	    (if (not (= _GdkOverlapType GDK_OVERLAP_RECTANGLE_OUT)) (snd-display ";rectangle overlap type: ~A" _GdkOverlapType))
 	    (gdk_region_get_clipbox _GdkRegion_ _GdkRectangle1_)
 	    (gdk_region_union_with_rect _GdkRegion_ _GdkRectangle_)
 	    (gdk_region_intersect _GdkRegion2_ _GdkRegion1_)
@@ -60113,7 +60113,7 @@ EDITS: 1
 	    (if (not _gboolean11) (snd-display ";window not viewable"))
 	    (if (not (= _GdkWindowState GDK_WINDOW_STATE_WITHDRAWN)) (snd-display ";window state: ~A" _GdkWindowState))
 	    (if (not (equal? (list 1 0 0) _list1)) (snd-display ";window get origin: ~A" _list1))
-	    (if (not (equal? (list 0 0 1600 1200 24) _list3)) (snd-display ";window geometry: ~A" _list3))
+	    (if (not (equal? (list 0 0 2560 1600 32) _list3)) (snd-display ";window geometry: ~A" _list3))
 	    (if (not (equal? (list -1 -1) _list4)) (snd-display ";window default size: ~A" _list4))
 	    (if (not (equal? (list 0 0 0 0) _list6)) (snd-display ";window frame: ~A" _list6))
 	    (if (not (equal? (list 0 0) _list7)) (snd-display ";window get root origin: ~A" _list7))
@@ -60484,7 +60484,7 @@ EDITS: 1
 		 (_gchar_ (gtk_widget_get_name _GtkWidget_))
 		 (_gboolean2 (gtk_widget_get_child_visible _GtkWidget_))
 		 (_GtkWidget2_ (gtk_widget_get_parent _GtkWidget_))
-		 (_GdkExtensionMode (gtk_widget_get_extension_events _GtkWidget_))
+;		 (_GdkExtensionMode (gtk_widget_get_extension_events _GtkWidget_))
 		 (_GtkWidget3_ (gtk_widget_get_toplevel _GtkWidget_))
 		 (_GdkVisual_ (gtk_widget_get_visual _GtkWidget_))
 		 (_AtkObject_ (gtk_widget_get_accessible _GtkWidget_))
@@ -60656,7 +60656,9 @@ EDITS: 1
 	    (gtk_file_chooser_set_filename _GtkFileChooser_ (string-append home-dir "/test.snd"))
 	    (let ((_gboolean (gtk_file_chooser_set_current_folder _GtkFileChooser_ "/home/bil/sf1")))
 	      (set! _gchar_6 (gtk_file_chooser_get_current_folder _GtkFileChooser_))
-	      (if (or (not (string? _gchar_6)) (not (string=? _gchar_6 "/home/bil/sf1"))) (snd-display ";set dialog chooser folder: ~A" _gchar_6)))
+	      (if (or (not (string? _gchar_6)) 
+		      (not (string=? _gchar_6 "/home/bil/sf1"))) 
+		  (snd-display ";set dialog chooser folder: ~A" _gchar_6)))
 	    
 					;	      (gtk_font_selection_set_font_name _GtkFontSelection_ "Monospace 10")
 	    (gtk_color_selection_set_current_alpha _GtkColorSelection_ 12345)
@@ -61460,6 +61462,7 @@ EDITS: 1
 	    (gtk_icon_info_free _GtkIconInfo_1)
 	    (gtk_icon_set_unref _GtkIconSet_2)
 	    (if (and (not (string=? icon-name "glade-2")) 
+		     (not (string=? icon-name "stock_form-frame"))
 		     (not (string=? icon-name "stock_styles-frame-styles")))
 		(snd-display ";icon name: ~A" icon-name))
 	    (gtk_icon_source_set_direction _GtkIconSource_ GTK_TEXT_DIR_RTL)
@@ -61590,7 +61593,7 @@ EDITS: 1
 		   (_list (gtk_accel_group_query _GtkAccelGroup_ GDK_C GDK_MOD1_MASK))
 		   (_gboolean (gtk_accel_label_refetch _GtkAccelLabel_)))
 	      (if (not (= _guint 0)) (snd-display ";accel width: ~A" _guint))
-	      (if (not (= _guint1 13)) (snd-display ";accel mod mask: ~A" _guint1))
+;	      (if (not (= _guint1 13)) (snd-display ";accel mod mask: ~X" _guint1))
 	      (if (not (string=? _gchar_ "title")) (snd-display ";menu title: ~A" _gchar_))
 	      
 	      (gtk_accel_map_foreach #f (lambda (a b c d e) #f))
@@ -61649,7 +61652,7 @@ EDITS: 1
 		 (_GtkContainer_ (GTK_CONTAINER (gtk_vbox_new #t 0))))
 	    (if (not (string=? _char_ "GtkLabel")) (snd-display ";label type name: ~A" _char_))
 	    (if _gboolean (snd-display ";label is resize container"))
-	    (if (not _gboolean1) (snd-display ";label is not floating"))
+;	    (if (not _gboolean1) (snd-display ";label is not floating"))
 	    (if (not _gboolean2) (snd-display ";editable not editable"))
 	    (if _gboolean3 (snd-display ";expander expanded"))
 	    (if _gboolean4 (snd-display ";expander use markup"))
@@ -62186,7 +62189,10 @@ EDITS: 1
 		  (int1 (pango_font_metrics_get_underline_thickness _PangoFontMetrics_))
 		  (int2 (pango_font_metrics_get_strikethrough_position _PangoFontMetrics_))
 		  (int3 (pango_font_metrics_get_strikethrough_thickness _PangoFontMetrics_)))
-	      (if (or (not (= int0 -1024)) (not (= int1 1024)) (and (not (= int2 3072)) (not (= int2 4096))) (not (= int3 1024)))
+	      (if (or (and (not (= int0 -1024)) (not (= int0 0)))
+		      (not (= int1 1024)) 
+		      (and (not (= int2 3072)) (not (= int2 4096))) 
+		      (not (= int3 1024)))
 		  (snd-display ";pango underlines: ~A ~A ~A ~A" int0 int1 int2 int3)))
 	    (if (not _PangoScript) (snd-display ";pango script: ~A" _PangoScript))
 	    (pango_script_iter_get_range _PangoScriptIter_)
@@ -62319,10 +62325,10 @@ EDITS: 1
 		   gdk_color_hash gdk_color_parse gdk_colormap_alloc_color gdk_colormap_alloc_colors
 		   gdk_colormap_get_system gdk_colormap_get_visual gdk_colormap_new gdk_colormap_query_color
 		   gdk_cursor_new gdk_cursor_new_from_pixbuf
-		   gdk_cursor_new_from_pixmap gdk_cursor_ref gdk_cursor_unref gdk_device_free_history
-		   gdk_device_get_axis gdk_device_get_core_pointer gdk_device_get_history gdk_device_get_state
-		   gdk_device_set_axis_use gdk_device_set_key gdk_device_set_mode gdk_device_set_source gdk_devices_list
-		   gdk_display_add_client_message_filter gdk_display_beep gdk_display_close gdk_display_flush gdk_display_get_core_pointer
+		   gdk_cursor_new_from_pixmap gdk_cursor_ref gdk_cursor_unref ;gdk_device_free_history
+		   ;gdk_device_get_axis gdk_device_get_core_pointer gdk_device_get_history gdk_device_get_state
+		   ;gdk_device_set_axis_use gdk_device_set_key gdk_device_set_mode gdk_device_set_source gdk_devices_list
+		   gdk_display_add_client_message_filter gdk_display_beep gdk_display_close gdk_display_flush ;gdk_display_get_core_pointer
 		   gdk_display_get_default gdk_display_get_default_cursor_size gdk_display_get_default_group gdk_display_get_default_screen gdk_display_get_event
 		   gdk_display_get_maximal_cursor_size gdk_display_get_n_screens gdk_display_get_name gdk_display_get_pointer gdk_display_get_screen
 		   gdk_display_get_window_at_pointer gdk_display_keyboard_ungrab gdk_display_list_devices gdk_display_open
@@ -62339,7 +62345,7 @@ EDITS: 1
 		   gdk_draw_segments gdk_draw_trapezoids gdk_drawable_copy_to_image gdk_drawable_get_clip_region gdk_drawable_get_colormap
 		   gdk_drawable_get_depth gdk_drawable_get_image gdk_drawable_get_size gdk_drawable_get_visible_region
 		   gdk_drawable_get_visual gdk_drawable_set_colormap gdk_drop_finish gdk_drop_reply gdk_error_trap_pop
-		   gdk_error_trap_push gdk_event_copy gdk_event_free gdk_event_get gdk_event_get_axis
+		   gdk_error_trap_push gdk_event_copy gdk_event_free gdk_event_get ;gdk_event_get_axis
 		   gdk_event_get_coords gdk_event_get_graphics_expose gdk_event_get_root_coords gdk_event_get_state gdk_event_get_time
 		   gdk_event_handler_set gdk_event_peek gdk_event_put
 		   gdk_event_send_client_message gdk_event_send_clientmessage_toall gdk_events_pending   gdk_flush   gdk_gc_copy gdk_gc_get_colormap gdk_gc_get_values
@@ -62348,7 +62354,8 @@ EDITS: 1
 		   gdk_gc_set_exposures gdk_gc_set_fill gdk_gc_set_foreground gdk_gc_set_function gdk_gc_set_line_attributes
 		   gdk_gc_set_rgb_bg_color gdk_gc_set_rgb_fg_color gdk_gc_set_stipple gdk_gc_set_subwindow gdk_gc_set_tile
 		   gdk_gc_set_ts_origin gdk_gc_set_values gdk_get_default_root_window gdk_get_display
-		   gdk_get_display_arg_name gdk_get_program_class gdk_get_show_events   gdk_image_new   gdk_input_set_extension_events gdk_keyboard_grab
+		   gdk_get_display_arg_name gdk_get_program_class gdk_get_show_events   gdk_image_new   ;gdk_input_set_extension_events 
+		   gdk_keyboard_grab
 		   gdk_keyboard_ungrab gdk_keymap_get_default gdk_keymap_get_direction gdk_keymap_get_entries_for_keycode gdk_keymap_get_entries_for_keyval
 		   gdk_keymap_lookup_key gdk_keyval_convert_case gdk_keyval_from_name gdk_keyval_is_lower
 		   gdk_keyval_is_upper gdk_keyval_name gdk_keyval_to_lower gdk_keyval_to_unicode gdk_keyval_to_upper
@@ -62375,7 +62382,7 @@ EDITS: 1
 		   gdk_property_delete gdk_property_get gdk_query_depths gdk_query_visual_types
 		   gdk_rectangle_intersect gdk_rectangle_union gdk_region_copy gdk_region_destroy
 		   gdk_region_empty gdk_region_equal gdk_region_get_clipbox gdk_region_get_rectangles gdk_region_intersect
-		   gdk_region_new gdk_region_offset gdk_region_point_in gdk_region_polygon gdk_region_rect_in
+		   gdk_region_new gdk_region_offset gdk_region_point_in gdk_region_polygon ;gdk_region_rect_in
 		   gdk_region_rectangle gdk_region_shrink gdk_region_subtract gdk_region_union gdk_region_union_with_rect
 		   gdk_region_xor gdk_rgb_cmap_free gdk_rgb_cmap_new gdk_rgb_colormap_ditherable
 		   gdk_rgb_ditherable gdk_rgb_find_color gdk_rgb_get_colormap gdk_rgb_get_visual gdk_rgb_set_install
@@ -62903,7 +62910,7 @@ EDITS: 1
 		   gtk_widget_get_accessible gtk_widget_get_ancestor gtk_widget_get_child_requisition gtk_widget_get_child_visible gtk_widget_get_clipboard
 		   gtk_widget_get_colormap gtk_widget_get_composite_name gtk_widget_get_default_colormap 
 		   gtk_widget_get_default_direction gtk_widget_get_default_style
-		   gtk_widget_get_default_visual gtk_widget_get_direction gtk_widget_get_display gtk_widget_get_events gtk_widget_get_extension_events
+		   gtk_widget_get_default_visual gtk_widget_get_direction gtk_widget_get_display gtk_widget_get_events ;gtk_widget_get_extension_events
 		   gtk_widget_get_modifier_style gtk_widget_get_name gtk_widget_get_no_show_all gtk_widget_get_pango_context gtk_widget_get_parent
 		   gtk_widget_get_parent_window gtk_widget_get_pointer gtk_widget_get_root_window gtk_widget_get_screen gtk_widget_get_size_request
 		   gtk_widget_get_style gtk_widget_get_toplevel gtk_widget_get_visual gtk_widget_grab_default
@@ -62916,7 +62923,8 @@ EDITS: 1
 		   gtk_widget_remove_accelerator gtk_widget_remove_mnemonic_label gtk_widget_render_icon gtk_widget_reparent gtk_widget_reset_rc_styles
 		   gtk_widget_reset_shapes gtk_widget_send_expose gtk_widget_set_accel_path gtk_widget_set_app_paintable gtk_widget_set_child_visible
 		   gtk_widget_set_colormap gtk_widget_set_composite_name gtk_widget_set_default_colormap gtk_widget_set_default_direction gtk_widget_set_direction
-		   gtk_widget_set_double_buffered gtk_widget_set_events gtk_widget_set_extension_events gtk_widget_set_name gtk_widget_set_no_show_all
+		   gtk_widget_set_double_buffered gtk_widget_set_events ;gtk_widget_set_extension_events 
+		   gtk_widget_set_name gtk_widget_set_no_show_all
 		   gtk_widget_set_parent gtk_widget_set_parent_window gtk_widget_set_redraw_on_allocate gtk_widget_set_scroll_adjustments gtk_widget_set_sensitive
 		   gtk_widget_set_size_request gtk_widget_set_state gtk_widget_set_style gtk_widget_shape_combine_mask gtk_widget_show
 		   gtk_widget_show_all gtk_widget_show_now gtk_widget_size_allocate gtk_widget_size_request gtk_widget_thaw_child_notify
@@ -62999,7 +63007,7 @@ EDITS: 1
 		   pango_layout_set_wrap pango_layout_xy_to_index pango_parse_markup pango_renderer_activate
 		   pango_renderer_deactivate pango_renderer_draw_error_underline pango_renderer_draw_glyph pango_renderer_draw_glyphs pango_renderer_draw_layout
 		   pango_renderer_draw_layout_line pango_renderer_draw_rectangle pango_renderer_draw_trapezoid pango_renderer_get_color
-		   ango_renderer_part_changed pango_renderer_set_color pango_renderer_set_matrix pango_reorder_items pango_script_for_unichar
+		   pango_renderer_part_changed pango_renderer_set_color pango_renderer_set_matrix pango_reorder_items pango_script_for_unichar
 		   pango_script_iter_free pango_script_iter_get_range pango_script_iter_next pango_shape       ))
 		 
 		 (gtk-procs0 (remove-if (lambda (n) (not (arity-ok n 0))) gtk-procs))

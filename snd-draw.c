@@ -717,6 +717,14 @@ static XEN g_snd_gcs(void)
 cursor) (4 selected_cursor) (5 selection) (6 selected_selection) (7 erase) (8 selected_erase) (9 mark) (10 selected_mark) (11 mix) (12 \
 fltenv_basic) (13 fltenv_data))"
 
+#if USE_GTK
+#if USE_CAIRO
+  #define XEN_WRAP_GC(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"), C_TO_XEN_ULONG((unsigned long)(Value->gc)))
+#else
+  #define XEN_WRAP_GC(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"), C_TO_XEN_ULONG((unsigned long)Value))
+#endif
+#endif
+
   state_context *sx;
   sx = ss->sgx;
   if (sx)

@@ -1503,6 +1503,13 @@ draws axes in the widget 'wid', using the graphics context 'gc', with the x-axis
 going from x0 to x1 (floats) along the x axis, y0 to y1 along the y axis, with " S_x_axis_style " \
 'style' (" S_x_axis_in_seconds " etc); the axes are actually displayed if 'axes' is " S_show_all_axes ". \
 Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
+
+#if USE_GTK
+  /* this assumes Snd-specific "gc", so we can make it what we want */
+  #define XEN_WRAP_GC(Value)   XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("gc_t_"), C_TO_XEN_ULONG((unsigned long)Value))
+  #define XEN_UNWRAP_GC(Value) (gc_t*)(XEN_TO_C_ULONG(XEN_CADR(Value)))
+#endif
+
   XEN val, xwid, xgc, xx0, xx1, xy0, xy1, xstyle, xaxes;
 #if USE_MOTIF
   Widget w; 

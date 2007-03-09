@@ -1,10 +1,24 @@
 #include "snd.h"
 
+
 /* there are no references to gdk_draw_* or GdkGC or GdkGCValues outside this file except
  *   snd-gchn: gdk_draw_pixbuf (spectrum redisplay optimization)
  *   snd-gutils: gdk_draw_layout -- is this deprecated too?
- *   xg.c and gl.c
+ *   xg.c and gl.c -- this affects snd-gtk.scm which has gdk_gc_* stuff using snd-gcs
  */
+
+/*
+TODO: check ATS
+TODO: static intel mac snd with minimal needs
+TODO: gl + cairo?  does --with-cairo conflict with --with-gl?
+PERHAPS: with-background-gradient
+TODO: no redisplay if cursor is all that changed
+TODO: fft peaks font is too big
+TODO: selection erases (covers)
+TODO: after mark set, all is red; moving mark is redrawn??
+*/
+
+
 
 void draw_line(axis_context *ax, int x0, int y0, int x1, int y1) 
 {
@@ -49,13 +63,13 @@ void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width,
     cairo_pattern_t *pat;
     pat = cairo_pattern_create_linear(x0, y0, x0 + width, y0 + height);
     cairo_pattern_add_color_stop_rgb(pat, 1, 
-				     mus_fclamp(0.0, ax->gc->fg_red - 0.1, 1.0), 
-				     mus_fclamp(0.0, ax->gc->fg_green - 0.1, 1.0), 
-				     mus_fclamp(0.0, ax->gc->fg_blue - 0.1, 1.0));
+				     mus_fclamp(0.0, ax->gc->bg_red - 0.1, 1.0), 
+				     mus_fclamp(0.0, ax->gc->bg_green - 0.1, 1.0), 
+				     mus_fclamp(0.0, ax->gc->bg_blue - 0.1, 1.0));
     cairo_pattern_add_color_stop_rgb(pat, 0, 
-				     mus_fclamp(0.0, ax->gc->fg_red + 0.1, 1.0), 
-				     mus_fclamp(0.0, ax->gc->fg_green + 0.1, 1.0), 
-				     mus_fclamp(0.0, ax->gc->gf_blue + 0.1, 1.0));
+				     mus_fclamp(0.0, ax->gc->bg_red + 0.1, 1.0), 
+				     mus_fclamp(0.0, ax->gc->bg_green + 0.1, 1.0), 
+				     mus_fclamp(0.0, ax->gc->bg_blue + 0.1, 1.0));
     cairo_rectangle(ax->cr, x0, y0, width, height);
     cairo_set_source(ax->cr, pat);
     cairo_fill(ax->cr);
@@ -104,15 +118,12 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
    */
 }
 
-void fill_polygon(axis_context *ax, int points, ...)
+static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list ap)
 {
   int i;
-  va_list ap;
-  if (points == 0) return;
 #if USE_CAIRO
   {
     int x, y;
-    va_start(ap, points);
     x = va_arg(ap, int);
     y = va_arg(ap, int);
     cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
@@ -124,75 +135,107 @@ void fill_polygon(axis_context *ax, int points, ...)
 	y = va_arg(ap, int);
 	cairo_line_to(ax->cr, x, y);
       }
-    cairo_close_path(ax->cr);
-    cairo_fill(ax->cr);
-    va_end(ap);
+    if (filled)
+      {
+	cairo_close_path(ax->cr);
+	cairo_fill(ax->cr);
+      }
+    else
+      {
+	cairo_stroke(ax->cr);
+      }
   }
 #else
   {
     GdkPoint *pts;
-    va_start(ap, points);
     pts = (GdkPoint *)CALLOC(points, sizeof(GdkPoint));
     for (i = 0; i < points; i++)
       {
 	pts[i].x = va_arg(ap, int);
 	pts[i].y = va_arg(ap, int);
       }
-    gdk_draw_polygon(ax->wn, ax->gc, true, pts, points);
+    if (filled)
+      gdk_draw_polygon(ax->wn, ax->gc, true, pts, points);
+    else gdk_draw_lines(ax->wn, ax->gc, pts, points);
     FREE(pts);
-    va_end(ap);
   }
+#endif
+}
+
+void fill_polygon(axis_context *ax, int points, ...)
+{
+  va_list ap;
+  if (points == 0) return;
+  va_start(ap, points);
+  draw_polygon_va(ax, true, points, ap);
+  va_end(ap);
+}
+
+void draw_polygon(axis_context *ax, int points, ...)
+{
+  int i;
+  va_list ap;
+  if (points == 0) return;
+  va_start(ap, points);
+  draw_polygon_va(ax, false, points, ap);
+  va_end(ap);
+}
+
+void draw_polygon_direct(GdkDrawable *wn, gc_t *gp, bool filled, GdkPoint *points, int npoints)
+{
+#if USE_CAIRO
+  int i;
+  cairo_t *cr;
+  cr = gdk_cairo_create(wn);
+  cairo_set_source_rgb(cr, gp->fg_red, gp->fg_green, gp->fg_blue);
+  cairo_set_line_width(cr, 1.0);
+  cairo_move_to(cr, points[0].x + 0.5, points[0].y + 0.5);
+  for (i = 1; i < npoints; i++)
+    cairo_line_to(cr, points[i].x + 0.5, points[i].y + 0.5);
+  if (filled)
+    {
+      cairo_close_path(cr);
+      cairo_fill(cr);
+    }
+  else
+    {
+      cairo_stroke(cr);
+    }
+  cairo_destroy(cr);
+#else
+  gdk_draw_polygon(wn, gp, filled, points, npoints);
 #endif
 }
 
 void draw_picture_direct(GdkDrawable* drawable, gc_t *gp, GdkDrawable* src, gint xsrc, gint ysrc, gint xdest, gint ydest, gint width, gint height)
 {
 #if USE_CAIRO
+  cairo_t *cr;
+  cr = gdk_cairo_create(drawable);
+  gdk_cairo_set_source_pixmap(cr, GDK_PIXMAP(src), xsrc, ysrc);
+  /* TODO draw it? */
+
 #else
   gdk_draw_drawable(drawable, gp, src, xsrc, ysrc, xdest, ydest, width, height);
-#endif
-}
-
-/*
-TODO: check ATS
-TODO: static intel mac snd with minimal needs
-TODO: gl + cairo?
-TODO: check gtk snd-test
-*/
-
-void draw_polygon(axis_context *ax, int points, ...)
-{
-  int i;
-  GdkPoint *pts;
-  va_list ap;
-  if (points == 0) return;
-  pts = (GdkPoint *)CALLOC(points, sizeof(GdkPoint));
-  va_start(ap, points);
-  for (i = 0; i < points; i++)
-    {
-      pts[i].x = va_arg(ap, int);
-      pts[i].y = va_arg(ap, int);
-    }
-  va_end(ap);
-  gdk_draw_lines(ax->wn, ax->gc, pts, points);
-  FREE(pts);
-}
-
-void draw_polygon_direct(GdkDrawable *wn, gc_t *gp, bool filled, GdkPoint *points, int npoints)
-{
-#if USE_CAIRO
-#else
-  gdk_draw_polygon(wn, gp, filled, points, npoints);
 #endif
 }
 
 void draw_lines(axis_context *ax, GdkPoint *points, int num)
 {
   if (num == 0) return;
-#if MUS_DEBUGGING
-  if (!GDK_IS_DRAWABLE(ax->wn)) abort();
-#endif
+#if USE_CAIRO
+  {
+    int i;
+    cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
+    cairo_set_line_width(ax->cr, 1.0); 
+    cairo_move_to(ax->cr, points[0].x + 0.5, points[0].y + 0.5);
+    for (i = 1; i < num; i++)
+      cairo_line_to(ax->cr, points[i].x + 0.5, points[i].y + 0.5);
+    cairo_stroke(ax->cr);
+  }
+#else
   gdk_draw_lines(ax->wn, ax->gc, points, num);
+#endif
 }
 
 void draw_points(axis_context *ax, GdkPoint *points, int num, int size)
@@ -226,6 +269,9 @@ static void draw_point_direct(GdkDrawable *wn, gc_t *gc, GdkPoint point, int siz
 void draw_arc(axis_context *ax, int x, int y, int size)
 {
 #if USE_CAIRO
+  cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
+  cairo_arc(ax->cr, x - size / 2, y - size / 2, size, 0, 360);
+  cairo_stroke(ax->cr);
 #else
   gdk_draw_arc(ax->wn, ax->gc, true, x - size / 2, y - size / 2, size, size, 0, 360 * 64);
 #endif
@@ -316,8 +362,8 @@ void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t g
     {
     case GRAPH_LINES:
     default:
-      gdk_draw_lines(ax->wn, ax->gc, points, j);
-      gdk_draw_lines(ax->wn, ax->gc, points1, j);
+      draw_lines(ax, points, j);
+      draw_lines(ax, points1, j);
       break;
     case GRAPH_DOTS:
       draw_points(ax, points, j, dot_size);
@@ -332,14 +378,14 @@ void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t g
 	  draw_points(ax, points, j, dot_size);
 	  draw_points(ax, points1, j, dot_size);
 	}
-      gdk_draw_lines(ax->wn, ax->gc, points, j);
-      gdk_draw_lines(ax->wn, ax->gc, points1, j);
+      draw_lines(ax, points, j);
+      draw_lines(ax, points1, j);
       break;
     case GRAPH_LOLLIPOPS:
       if (dot_size == 1)
 	{
 	  for (i = 0; i < j; i++)
-	    gdk_draw_line(ax->wn, ax->gc, points[i].x, points[i].y, points1[i].x, points1[i].y);
+	    draw_line(ax, points[i].x, points[i].y, points1[i].x, points1[i].y);
 	}
       else
 	{
@@ -350,7 +396,7 @@ void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t g
 	  draw_points(ax, points, j, dot_size);
 	  draw_points(ax, points1, j, dot_size);
 	  for (i = 0; i < j; i++)
-	    gdk_draw_rectangle(ax->wn, ax->gc, true, points[i].x - size8, points[i].y, size4, points1[i].y - points[i].y);
+	    fill_rectangle(ax, points[i].x - size8, points[i].y, size4, points1[i].y - points[i].y);
 	}
     }
 }
@@ -386,8 +432,8 @@ void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float
 	    {
 	      cairo_move_to(ax->cr, points[i].x + 0.5, gy0 + 0.5);
 	      cairo_line_to(ax->cr, points[i].x + 0.5, points[i].y + 0.5);
-	      cairo_stroke(ax->cr);
 	    }
+	  cairo_stroke(ax->cr);
 
 #else
 	  for (i = 0; i < j; i++)
@@ -403,8 +449,8 @@ void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float
 	  draw_points(ax, points, j, dot_size);
 	  for (i = 0; i < j; i++)
 	    if (points[i].y > gy0) /* unsigned int height */
-	      gdk_draw_rectangle(ax->wn, ax->gc, true, points[i].x - size8, gy0, size4, points[i].y - gy0);
-	    else gdk_draw_rectangle(ax->wn, ax->gc, true, points[i].x - size8, points[i].y, size4, gy0 - points[i].y);
+	      fill_rectangle(ax, points[i].x - size8, gy0, size4, points[i].y - gy0);
+	    else fill_rectangle(ax, points[i].x - size8, points[i].y, size4, gy0 - points[i].y);
 	}
       break;
     }
@@ -434,6 +480,8 @@ void mix_save_graph(mix_context *ms, int j)
 
 void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
 {
+#if USE_CAIRO
+#else
   int i, j, min, previous_j;
   chan_context *cx;
   axis_context *ax;
@@ -490,10 +538,13 @@ void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
 	}
     }
   backup_erase_grf_points(ms, nj);
+#endif
 }
 
 void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
 {
+#if USE_CAIRO
+#else
   int i, j, min, previous_j;
   chan_context *cx;
   axis_context *ax;
@@ -565,6 +616,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
 
     }
   backup_erase_grf_points(ms, nj);
+#endif
 }
 
 void setup_axis_context(chan_info *cp, axis_context *ax)

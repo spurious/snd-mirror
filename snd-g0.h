@@ -40,12 +40,6 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define XEN_WRAP_EVENT(Value)    ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkEvent_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
 #define NULL_WIDGET NULL
 
-
-/* this is used only by draw_axes in snd-axis.c -- it assumes Snd-specific "gc", so we can make it what we want */
-#define XEN_WRAP_GC(Value)       XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("gc_t_"), C_TO_XEN_ULONG((unsigned long)Value))
-#define XEN_UNWRAP_GC(Value)     (gc_t*)(XEN_TO_C_ULONG(XEN_CADR(Value)))
-
-
 #if MUS_DEBUGGING
 #define ASSERT_WIDGET_TYPE(Cond, Wid) if (!(Cond)) fprintf(stderr, "%s:[%s %d] widget is wrong type", c__FUNCTION__, __FILE__, __LINE__)
 #else
