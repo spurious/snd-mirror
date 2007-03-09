@@ -97,7 +97,7 @@ static void graph_redisplay(void)
       iy0 = iy1;
       ix1 = grf_x(x, axis_ap);
       iy1 = grf_y(graph_data[i], axis_ap);
-      gdk_draw_line(wn, gc, ix0, iy0, ix1, iy1);
+      draw_line_direct(wn, gc, ix0, iy0, ix1, iy1);
     }
   ax->gc = fgc;
   ix1 = grf_x(0.0, axis_ap);
@@ -111,7 +111,7 @@ static void graph_redisplay(void)
       if (fft_log_magnitude(ss))
 	iy1 = grf_y(fp_dB(graph_fftr[i]), axis_ap);
       else iy1 = grf_y(graph_fftr[i], axis_ap);
-      gdk_draw_line(wn, fgc, ix0, iy0, ix1, iy1);
+      draw_line_direct(wn, fgc, ix0, iy0, ix1, iy1);
     }
 }
 

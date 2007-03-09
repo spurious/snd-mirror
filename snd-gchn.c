@@ -874,7 +874,7 @@ void set_foreground_color(axis_context *ax, GdkColor *color)
   gc_set_foreground(ax->gc, color);
 }
 
-GdkGC *copy_GC(chan_info *cp)
+gc_t *copy_GC(chan_info *cp)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -882,7 +882,7 @@ GdkGC *copy_GC(chan_info *cp)
   return(sx->basic_gc);
 }
 
-GdkGC *erase_GC(chan_info *cp)
+gc_t *erase_GC(chan_info *cp)
 {
   state_context *sx;
   snd_info *sp;
@@ -905,6 +905,10 @@ void free_fft_pix(chan_info *cp)
 
 bool restore_fft_pix(chan_info *cp, axis_context *ax)
 {
+#if USE_CAIRO
+  /* TODO */
+  return(false);
+#else
 #if HAVE_GDK_DRAW_PIXBUF
   gdk_draw_pixbuf(ax->wn,
 		  copy_GC(cp),
@@ -916,6 +920,7 @@ bool restore_fft_pix(chan_info *cp, axis_context *ax)
   return(true);
 #else
   return(false);
+#endif
 #endif
 }
 

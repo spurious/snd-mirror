@@ -203,7 +203,7 @@ static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
 #if USE_MOTIF
   XFillPolygon(ax->dp, ax->wn, ax->gc, pack_pts, vlen, Complex, CoordModeOrigin);
 #else
-  draw_polygon_with_points(ax->wn, ax->gc, true, pack_pts, vlen);
+  draw_polygon_direct(ax->wn, ax->gc, true, pack_pts, vlen);
 #endif
   FREE(pack_pts);
   return(pts);

@@ -81,7 +81,7 @@ make allclean
 echo ' '
 echo ' '
 echo ' CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/bin -Wdeclaration-after-statement -Wmissing-field-initializers'
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include -Wextra -D_FORTIFY_SOURCE" LDFLAGS="-L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/bin
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include -D_FORTIFY_SOURCE" LDFLAGS="-L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/bin
 make
 make xm
 ./snd --version
@@ -145,8 +145,16 @@ rm -f snd
 rm -f config.cache
 echo ' '
 echo ' '
-echo ' CFLAGS="-Wall -I/usr/X11R6/include -Wextra" --with-gtk '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -Wextra" --with-gtk
+echo ' CFLAGS="-Wall -I/usr/X11R6/include --with-gtk '
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-gtk
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk"
+
+echo ' CFLAGS="-Wall -I/usr/X11R6/include --with-gtk --with-cairo '
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-gtk --with-cairo
 make
 echo ' '
 echo ' '
@@ -262,6 +270,15 @@ echo ' '
 echo ' '
 echo ' --quiet --with-forth --with-gtk --with-static-xg --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"'
 ./configure --quiet --with-forth --with-gtk --with-static-xg --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"
+make allclean
+
+echo ' '
+echo ' '
+echo ' --quiet --with-gtk --with-cairo --with-static-xg LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"'
+./configure --quiet --with-gtk --with-static-xg --with-cairo LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"

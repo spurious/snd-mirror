@@ -22,7 +22,13 @@ void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height);
 void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width, int height);
 void fill_polygon(axis_context *ax, int points, ...);
 void draw_polygon(axis_context *ax, int points, ...);
-void draw_polygon_with_points(GdkDrawable *wn, gc_t *gp, bool filled, GdkPoint *points, int npoints);
+
+void draw_line_direct(GdkDrawable* drawable, gc_t *gc, gint x1, gint y1, gint x2, gint y2);
+void draw_rectangle_direct(GdkDrawable* drawable, gc_t *gc, gboolean filled, gint x, gint y, gint width, gint height);
+void draw_polygon_direct(GdkDrawable *wn, gc_t *gp, bool filled, GdkPoint *points, int npoints);
+void draw_picture_direct(GdkDrawable* drawable, gc_t *gp, GdkDrawable* src, gint xsrc, gint ysrc, gint xdest, gint ydest, gint width, gint height);
+void draw_arc_direct(GdkDrawable* drawable, gc_t *gc, gboolean filled, gint x, gint y, gint width, gint height, gint angle1, gint angle2);
+
 void draw_string(axis_context *ax, int x0, int y0, const char *str, int len);
 void draw_arc(axis_context *ax, int x, int y, int size);
 void set_grf_points(int xi, int j, int ymin, int ymax);
@@ -241,8 +247,8 @@ void set_bold_peak_numbers_font(chan_info *cp);
 void set_tiny_numbers_font(chan_info *cp);
 color_t get_foreground_color(axis_context *ax);
 void set_foreground_color(axis_context *ax, GdkColor *color);
-GdkGC *copy_GC(chan_info *cp);
-GdkGC *erase_GC(chan_info *cp);
+gc_t *copy_GC(chan_info *cp);
+gc_t *erase_GC(chan_info *cp);
 void free_fft_pix(chan_info *cp);
 bool restore_fft_pix(chan_info *cp, axis_context *ax);
 void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y1);

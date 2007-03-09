@@ -1509,7 +1509,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   GC gc; 
 #else
   GtkWidget *w; 
-  GdkGC *gc;
+  gc_t *gc;
 #endif
   XEN label_ref;
   double x0 = 0.0, x1 = 1.0; 
@@ -1531,7 +1531,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   gc = (GC)(XEN_UNWRAP_GC(xgc));
 #else
   w = (GtkWidget *)(XEN_UNWRAP_WIDGET(xwid));
-  gc = (GdkGC *)(XEN_UNWRAP_GC(xgc));
+  gc = (gc_t *)(XEN_UNWRAP_GC(xgc));
 #endif
   label_ref = XEN_LIST_REF(args, 2);
   XEN_ASSERT_TYPE(XEN_STRING_P(label_ref) || XEN_FALSE_P(label_ref), label_ref, XEN_ARG_3, S_draw_axes, "a string");

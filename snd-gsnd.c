@@ -157,7 +157,7 @@ void show_lock(snd_info *sp)
   if (mini_lock)
     {
       sp->sgx->file_pix = mini_lock;
-      gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, mini_lock, 0, 0, 0, 4, 18, 16);
+      draw_picture_direct(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, mini_lock, 0, 0, 0, 4, 18, 16);
     }
 }
 
@@ -166,20 +166,20 @@ void hide_lock(snd_info *sp)
   if (mini_lock)
     {
       sp->sgx->file_pix = blank;
-      gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, blank, 0, 0, 0, 4, 18, 16);
+      draw_picture_direct(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, blank, 0, 0, 0, 4, 18, 16);
     }
 }
 
 static void show_stop_sign(snd_info *sp)
 {
   if ((sp->sgx) && (stop_sign))
-    gdk_draw_drawable(GDK_DRAWABLE(STOP_PIX(sp)->window), ss->sgx->basic_gc, stop_sign, 0, 0, 0, 4, 18, 16);
+    draw_picture_direct(GDK_DRAWABLE(STOP_PIX(sp)->window), ss->sgx->basic_gc, stop_sign, 0, 0, 0, 4, 18, 16);
 }
 
 static void hide_stop_sign(snd_info *sp)
 {
   if ((sp->sgx) && (blank))
-    gdk_draw_drawable(GDK_DRAWABLE(STOP_PIX(sp)->window), ss->sgx->basic_gc, blank, 0, 0, 0, 4, 18, 16);
+    draw_picture_direct(GDK_DRAWABLE(STOP_PIX(sp)->window), ss->sgx->basic_gc, blank, 0, 0, 0, 4, 18, 16);
 }
 
 void show_bomb(snd_info *sp)
@@ -189,7 +189,7 @@ void show_bomb(snd_info *sp)
   if (sp->sgx)
     {
       sp->sgx->file_pix = bombs[sp->bomb_ctr];
-      gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
+      draw_picture_direct(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
     }
   sp->bomb_ctr++; 
 }
@@ -199,7 +199,7 @@ void hide_bomb(snd_info *sp)
   if (sp->sgx)
     {
       sp->sgx->file_pix = blank;
-      gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
+      draw_picture_direct(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
     }
   sp->bomb_ctr = 0;
 }
@@ -242,13 +242,13 @@ void stop_bomb(snd_info *sp)
 static void show_hourglass(snd_info *sp, int glass)
 {
   if (sp->sgx)
-    gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, hourglasses[glass], 0, 0, 0, 4, 18, 16);
+    draw_picture_direct(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, hourglasses[glass], 0, 0, 0, 4, 18, 16);
 }
 
 static void hide_hourglass(snd_info *sp)
 {
   if (sp->sgx)
-    gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
+    draw_picture_direct(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
 }
 
 static void make_pixmaps(void)
@@ -278,7 +278,7 @@ static gboolean name_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
       (sp->sgx) &&
       (sp->sgx->file_pix) &&
       (NAME_PIX(sp)))
-    gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 16, 16);
+    draw_picture_direct(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 16, 16);
   return(false);
 }
 
@@ -717,8 +717,8 @@ static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointe
 static void draw_speed_arrow(snd_info *sp)
 {
   if (sp->speed_control_direction == 1)
-    gdk_draw_drawable(GDK_DRAWABLE(SPEED_ARROW(sp)->window), ss->sgx->basic_gc, speed_r, 0, 0, 0, 4, 18, 16);
-  else gdk_draw_drawable(GDK_DRAWABLE(SPEED_ARROW(sp)->window), ss->sgx->basic_gc, speed_l, 0, 0, 0, 4, 18, 16);
+    draw_picture_direct(GDK_DRAWABLE(SPEED_ARROW(sp)->window), ss->sgx->basic_gc, speed_r, 0, 0, 0, 4, 18, 16);
+  else draw_picture_direct(GDK_DRAWABLE(SPEED_ARROW(sp)->window), ss->sgx->basic_gc, speed_l, 0, 0, 0, 4, 18, 16);
 }
 
 static gboolean speed_arrow_press(GtkWidget *w, GdkEventButton *ev, gpointer data)

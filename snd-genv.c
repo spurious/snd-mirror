@@ -390,7 +390,7 @@ static void select_or_edit_env(int pos)
 
 static void clear_point_label(void)
 {
-  gdk_draw_rectangle(GDK_DRAWABLE(brkpixL->window), hgc, true, 0, 4, 24, 24);
+  draw_rectangle_direct(GDK_DRAWABLE(brkpixL->window), hgc, true, 0, 4, 24, 24);
   set_button_label(brktxtL, BLANK_LABEL);
 }
 
@@ -407,8 +407,8 @@ void enved_display_point_label(Float x, Float y)
 void display_enved_progress(char *str, GdkPixmap *pix)
 {
   if (pix)
-    gdk_draw_drawable(GDK_DRAWABLE(brkpixL->window), hgc, pix, 0, 0, 0, 8, 16, 16);
-  else gdk_draw_rectangle(GDK_DRAWABLE(brkpixL->window), hgc, true, 0, 4, 24, 24);
+    draw_picture_direct(GDK_DRAWABLE(brkpixL->window), hgc, pix, 0, 0, 0, 8, 16, 16);
+  else draw_rectangle_direct(GDK_DRAWABLE(brkpixL->window), hgc, true, 0, 4, 24, 24);
   if (str)
     set_button_label(brktxtL, str);
   else set_button_label(brktxtL, BLANK_LABEL);
@@ -416,7 +416,7 @@ void display_enved_progress(char *str, GdkPixmap *pix)
 
 static gboolean brkpixL_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-  gdk_draw_rectangle(GDK_DRAWABLE(brkpixL->window), hgc, true, 0, 4, 24, 24);
+  draw_rectangle_direct(GDK_DRAWABLE(brkpixL->window), hgc, true, 0, 4, 24, 24);
   return(false);
 }
 

@@ -260,14 +260,14 @@ static void allocate_meter(vu_t *vu)
 	    if (!(vu->clip_label))
 	      vu->clip_label = gdk_pixmap_new(wn, width, height, -1);
 	    gc_set_foreground(draw_gc, reds[0]);	    
-	    gdk_draw_rectangle(vu->clip_label, draw_gc, true, 0, 0, width, height);
+	    draw_rectangle_direct(vu->clip_label, draw_gc, true, 0, 0, width, height);
 	  }
 	else 
 	  {
 	    if (!(vu->on_label))
 	      vu->on_label = gdk_pixmap_new(wn, width, height, -1);
 	    gc_set_foreground(draw_gc, yellows[2]);
-	    gdk_draw_rectangle(vu->on_label, draw_gc, true, 0, 0, width, height);
+	    draw_rectangle_direct(vu->on_label, draw_gc, true, 0, 0, width, height);
 	  }
 	/* initialize the sequence of nested polygons */
 	pts[0].x = (short)(wid2 - band_x);
@@ -285,8 +285,8 @@ static void allocate_meter(vu_t *vu)
 	pts[6].x = pts[0].x;
 	pts[6].y = pts[0].y;
 	if (k == 1)
-	  draw_polygon_with_points(vu->clip_label, draw_gc, true, pts, 7);
-	else draw_polygon_with_points(vu->on_label, draw_gc, true, pts, 7);
+	  draw_polygon_direct(vu->clip_label, draw_gc, true, pts, 7);
+	else draw_polygon_direct(vu->on_label, draw_gc, true, pts, 7);
 	
 	for (i = 1; i < VU_COLORS; i++)
 	  {
@@ -314,8 +314,8 @@ static void allocate_meter(vu_t *vu)
 	    pts[12].x = pts[0].x;
 	    pts[12].y = pts[0].y;
 	    if (k == 1)
-	      draw_polygon_with_points(vu->clip_label, draw_gc, true, pts, 13);
-	    else draw_polygon_with_points(vu->on_label, draw_gc, true, pts, 13);
+	      draw_polygon_direct(vu->clip_label, draw_gc, true, pts, 13);
+	    else draw_polygon_direct(vu->on_label, draw_gc, true, pts, 13);
 	    for (j = 0; j < 6; j++) 
 	      { 
 		/* set up initial portion of next polygon */
@@ -331,7 +331,7 @@ static void allocate_meter(vu_t *vu)
     vu->off_label = gdk_pixmap_new(wn, width, height, -1);
   /* not on, so just display a white background */
   gc_set_foreground(draw_gc, white);
-  gdk_draw_rectangle(vu->off_label, draw_gc, true, 0, 0, width, height);
+  draw_rectangle_direct(vu->off_label, draw_gc, true, 0, 0, width, height);
   gc_set_foreground(draw_gc, black);
   
   {
@@ -348,20 +348,20 @@ static void allocate_meter(vu_t *vu)
 
     /* x y = coords of upper left corner of the bounding rectangle, not the arc center! */
 
-    gdk_draw_arc(vu->on_label, draw_gc, false, 0, top, width, width, ang0, ang1);
-    gdk_draw_arc(vu->on_label, draw_gc, false, 1, top - 1, width - 2, width - 2, ang0, ang1);
-    gdk_draw_arc(vu->on_label, draw_gc, false, 2, top - 2, width - 4, width - 4, ang0, ang1);
-    gdk_draw_arc(vu->on_label, draw_gc, false, 4, top + 4, width - 8, width - 8, ang0, ang1);
+    draw_arc_direct(vu->on_label, draw_gc, false, 0, top, width, width, ang0, ang1);
+    draw_arc_direct(vu->on_label, draw_gc, false, 1, top - 1, width - 2, width - 2, ang0, ang1);
+    draw_arc_direct(vu->on_label, draw_gc, false, 2, top - 2, width - 4, width - 4, ang0, ang1);
+    draw_arc_direct(vu->on_label, draw_gc, false, 4, top + 4, width - 8, width - 8, ang0, ang1);
 
-    gdk_draw_arc(vu->off_label, draw_gc, false, 0, top, width, width, ang0, ang1);
-    gdk_draw_arc(vu->off_label, draw_gc, false, 1, top - 1, width - 2, width - 2, ang0, ang1);
-    gdk_draw_arc(vu->off_label, draw_gc, false, 2, top - 2, width - 4, width - 4, ang0, ang1);
-    gdk_draw_arc(vu->off_label, draw_gc, false, 4, top + 4, width - 8, width - 8, ang0, ang1);
+    draw_arc_direct(vu->off_label, draw_gc, false, 0, top, width, width, ang0, ang1);
+    draw_arc_direct(vu->off_label, draw_gc, false, 1, top - 1, width - 2, width - 2, ang0, ang1);
+    draw_arc_direct(vu->off_label, draw_gc, false, 2, top - 2, width - 4, width - 4, ang0, ang1);
+    draw_arc_direct(vu->off_label, draw_gc, false, 4, top + 4, width - 8, width - 8, ang0, ang1);
 
-    gdk_draw_arc(vu->clip_label, draw_gc, false, 0, top, width, width, ang0, ang1);
-    gdk_draw_arc(vu->clip_label, draw_gc, false, 1, top - 1, width - 2, width - 2, ang0, ang1);
-    gdk_draw_arc(vu->clip_label, draw_gc, false, 2, top - 2, width - 4, width - 4, ang0, ang1);
-    gdk_draw_arc(vu->clip_label, draw_gc, false, 4, top + 4, width - 8, width - 8, ang0, ang1);
+    draw_arc_direct(vu->clip_label, draw_gc, false, 0, top, width, width, ang0, ang1);
+    draw_arc_direct(vu->clip_label, draw_gc, false, 1, top - 1, width - 2, width - 2, ang0, ang1);
+    draw_arc_direct(vu->clip_label, draw_gc, false, 2, top - 2, width - 4, width - 4, ang0, ang1);
+    draw_arc_direct(vu->clip_label, draw_gc, false, 4, top + 4, width - 8, width - 8, ang0, ang1);
 
     /* draw the axis ticks */
     {
@@ -385,12 +385,12 @@ static void allocate_meter(vu_t *vu)
 	  x1 = (int)(wid2 + (wid2 + major_tick) * sinr);
 	  y1 = (int)(wid2 + top - (wid2 + major_tick) * cosr);
 	  
-	  gdk_draw_line(vu->on_label, draw_gc, x0, y0, x1, y1);
-	  gdk_draw_line(vu->on_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
-	  gdk_draw_line(vu->off_label, draw_gc, x0, y0, x1, y1);
-	  gdk_draw_line(vu->off_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
-	  gdk_draw_line(vu->clip_label, draw_gc, x0, y0, x1, y1);
-	  gdk_draw_line(vu->clip_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
+	  draw_line_direct(vu->on_label, draw_gc, x0, y0, x1, y1);
+	  draw_line_direct(vu->on_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
+	  draw_line_direct(vu->off_label, draw_gc, x0, y0, x1, y1);
+	  draw_line_direct(vu->off_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
+	  draw_line_direct(vu->clip_label, draw_gc, x0, y0, x1, y1);
+	  draw_line_direct(vu->clip_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
 	  
 	  if (i < (major_ticks - 1))
 	    for (j = 1; j <= minor_ticks; j++)
@@ -402,9 +402,9 @@ static void allocate_meter(vu_t *vu)
 		y0 = (int)(wid2 + top - wid2 * cosr);
 		x1 = (int)(wid2 + (wid2 + minor_tick) * sinr);
 		y1 = (int)(wid2 + top - (wid2 + minor_tick) * cosr);
-		gdk_draw_line(vu->on_label, draw_gc, x0, y0, x1, y1);
-		gdk_draw_line(vu->off_label, draw_gc, x0, y0, x1, y1);
-		gdk_draw_line(vu->clip_label, draw_gc, x0, y0, x1, y1);
+		draw_line_direct(vu->on_label, draw_gc, x0, y0, x1, y1);
+		draw_line_direct(vu->off_label, draw_gc, x0, y0, x1, y1);
+		draw_line_direct(vu->clip_label, draw_gc, x0, y0, x1, y1);
 	    }
 	}
     }
@@ -473,7 +473,7 @@ static void display_vu_meter(vu_t *vu)
     top = (int)(size * METER_TOP);
     major_tick = (int)(width / 24);
 
-    if (label) gdk_draw_drawable(vu->wn, vu_gc, label, 0, 0, 0, -height_offset, width, height);
+    if (label) draw_picture_direct(vu->wn, vu_gc, label, 0, 0, 0, -height_offset, width, height);
 
     val = vu->current_val * VU_NEEDLE_SPEED + (vu->last_val * (1.0 - VU_NEEDLE_SPEED));
     vu->last_val = val;
@@ -487,7 +487,7 @@ static void display_vu_meter(vu_t *vu)
     y1 = (int)(wid2 + top - height_offset - (wid2 + major_tick) * cosr);
 
     gc_set_foreground(vu_gc, sx->black);
-    gdk_draw_line(vu->wn, vu_gc, x0, y0, x1, y1);
+    draw_line_direct(vu->wn, vu_gc, x0, y0, x1, y1);
 
     if (vu->on_off != VU_OFF)
       {
@@ -501,10 +501,10 @@ static void display_vu_meter(vu_t *vu)
 	  redy = redx; 
 	else redy = VU_BUBBLE_SIZE;
 
-	gdk_draw_arc(vu->wn, vu_gc, false, 3, top + 0 - height_offset, width - 6, width - 6, 135 * 64 - redx, redy);
-	gdk_draw_arc(vu->wn, vu_gc, false, 3, top + 1 - height_offset, width - 6, width - 6, 135 * 64 - redx, redy);
-	gdk_draw_arc(vu->wn, vu_gc, false, 3, top + 2 - height_offset, width - 6, width - 6, 135 * 64 - redx, redy);
-	gdk_draw_arc(vu->wn, vu_gc, false, 3, top + 3 - height_offset, width - 6, width - 6, 135 * 64 - redx, redy);
+	draw_arc_direct(vu->wn, vu_gc, false, 3, top + 0 - height_offset, width - 6, width - 6, 135 * 64 - redx, redy);
+	draw_arc_direct(vu->wn, vu_gc, false, 3, top + 1 - height_offset, width - 6, width - 6, 135 * 64 - redx, redy);
+	draw_arc_direct(vu->wn, vu_gc, false, 3, top + 2 - height_offset, width - 6, width - 6, 135 * 64 - redx, redy);
+	draw_arc_direct(vu->wn, vu_gc, false, 3, top + 3 - height_offset, width - 6, width - 6, 135 * 64 - redx, redy);
 
 	gc_set_foreground(vu_gc, sx->black);
       }
@@ -1307,7 +1307,7 @@ static void make_vu_meters(pane_t *p, int vu_meters,
 static gboolean spix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   Wdesc *wd = (Wdesc *)data;
-  gdk_draw_drawable(GDK_DRAWABLE(w->window), ss->sgx->basic_gc, device_pix(wd->device), 0, 0, 2, 4, 12, 12);
+  draw_picture_direct(GDK_DRAWABLE(w->window), ss->sgx->basic_gc, device_pix(wd->device), 0, 0, 2, 4, 12, 12);
   return(false);
 }
 #endif
