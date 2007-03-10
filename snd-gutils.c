@@ -348,7 +348,6 @@ void goto_window(GtkWidget *text)
 void gc_set_foreground(gc_t *gp, GdkColor *color)
 {
 #if USE_CAIRO
-  gdk_gc_set_foreground(gp->gc, color);
   gp->fg_color = color;
   gp->fg_red = RGB_TO_FLOAT(color->red);  
   gp->fg_green = RGB_TO_FLOAT(color->green);  
@@ -361,7 +360,6 @@ void gc_set_foreground(gc_t *gp, GdkColor *color)
 void gc_set_background(gc_t *gp, GdkColor *color)
 {
 #if USE_CAIRO
-  gdk_gc_set_background(gp->gc, color);
   gp->bg_color = color;
   gp->bg_red = RGB_TO_FLOAT(color->red);  
   gp->bg_green = RGB_TO_FLOAT(color->green);  
@@ -373,18 +371,17 @@ void gc_set_background(gc_t *gp, GdkColor *color)
 
 void gc_set_foreground_xor(gc_t *gp, GdkColor *col1, GdkColor *col2)
 { 
-  GdkColor newcol;
-  newcol.pixel = XOR(col1->pixel, col2->pixel);
-  newcol.red = XOR(col1->red, col2->red);
-  newcol.green = XOR(col1->green, col2->green);
-  newcol.blue = XOR(col1->blue, col2->blue);
 #if USE_CAIRO
   gp->fg_color = col1;
   gp->fg_red = RGB_TO_FLOAT(col1->red);  
   gp->fg_green = RGB_TO_FLOAT(col1->green);  
   gp->fg_blue = RGB_TO_FLOAT(col1->blue);
-  gdk_gc_set_foreground(gp->gc, &newcol);
 #else
+  GdkColor newcol;
+  newcol.pixel = XOR(col1->pixel, col2->pixel);
+  newcol.red = XOR(col1->red, col2->red);
+  newcol.green = XOR(col1->green, col2->green);
+  newcol.blue = XOR(col1->blue, col2->blue);
   gdk_gc_set_foreground(gp, &newcol);
 #endif
 }
@@ -393,7 +390,6 @@ void gc_set_function(gc_t *gp, GdkFunction op)
 {
 #if USE_CAIRO
   gp->op = op;
-  gdk_gc_set_function(gp->gc, op);
 #else
   gdk_gc_set_function(gp, op);
 #endif
@@ -404,7 +400,6 @@ gc_t *gc_new(GdkDrawable *wn)
   gc_t *gp;
 #if USE_CAIRO
   gp = (gc_t *)CALLOC(1, sizeof(gc_t));
-  gp->gc = gdk_gc_new(wn);
 #else
   gp = gdk_gc_new(wn);
 #endif
@@ -784,7 +779,9 @@ static void rotate_text(GdkDrawable *wn, gc_t *gp, PangoFontDescription *font, c
   pango_layout_set_font_description(layout, font);
   pango_layout_set_text(layout, text, -1);
 #if USE_CAIRO
+  /* TODO:
   gdk_draw_layout(wn, gp->gc, x0, y0, layout);
+  */
 #else
   gdk_draw_layout(wn, gp, x0, y0, layout);
 #endif

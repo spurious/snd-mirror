@@ -53,6 +53,7 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define any_pointer_t gpointer
 #define color_t GdkColor *
 #define oclock_t guint32
+#define point_t GdkPoint
 
 #define rgb_t unsigned short
 #define RGB_MAX 65535
@@ -62,7 +63,6 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #if USE_CAIRO
 typedef struct {
   double fg_red, fg_green, fg_blue, bg_red, bg_green, bg_blue;
-  GdkGC *gc;
   GdkColor *fg_color, *bg_color;
   GdkFunction op;
 } gc_t;
@@ -183,13 +183,6 @@ typedef struct {
 #define DEFAULT_BOLD_PEAKS_FONT "Serif Bold 10"
 #define DEFAULT_AXIS_NUMBERS_FONT "Monospace 10"
 #define DEFAULT_AXIS_LABEL_FONT "Serif 14"
-
-typedef struct {
-  GtkWidget *graph;
-  GdkPoint *p0, *p1;
-  int lastpj;
-  GdkColor *color;
-} mix_context;
 
 typedef enum {CONTAINER_ADD, PANED_ADD1, BOX_PACK, TABLE_ATTACH, PANED_ADD2} widget_add_t;
 typedef enum {WITHOUT_CHANNELS_FIELD, WITH_CHANNELS_FIELD, WITH_EXTRACT_CHANNELS_FIELD} dialog_channels_t;

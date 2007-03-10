@@ -30,6 +30,8 @@ static bool FIR_p = true;
 static bool old_clip_p = false;
 static bool ignore_button_release = false;
 
+static axis_context *pix_ax = NULL;
+
 static void fixup_axis_context(axis_context *ax, GtkWidget *w, gc_t *gc)
 {
   ax->wn = w->window;
@@ -390,7 +392,7 @@ static void select_or_edit_env(int pos)
 
 static void clear_point_label(void)
 {
-  draw_rectangle_direct(GDK_DRAWABLE(brkpixL->window), hgc, true, 0, 4, 24, 24);
+  fill_rectangle(pix_ax, 0, 4, 24, 24);
   set_button_label(brktxtL, BLANK_LABEL);
 }
 
@@ -408,7 +410,7 @@ void display_enved_progress(char *str, GdkPixmap *pix)
 {
   if (pix)
     draw_picture_direct(GDK_DRAWABLE(brkpixL->window), hgc, pix, 0, 0, 0, 8, 16, 16);
-  else draw_rectangle_direct(GDK_DRAWABLE(brkpixL->window), hgc, true, 0, 4, 24, 24);
+  else fill_rectangle(pix_ax, 0, 4, 24, 24);
   if (str)
     set_button_label(brktxtL, str);
   else set_button_label(brktxtL, BLANK_LABEL);
@@ -416,7 +418,7 @@ void display_enved_progress(char *str, GdkPixmap *pix)
 
 static gboolean brkpixL_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-  draw_rectangle_direct(GDK_DRAWABLE(brkpixL->window), hgc, true, 0, 4, 24, 24);
+  fill_rectangle(pix_ax, 0, 4, 24, 24);
   return(false);
 }
 
@@ -1020,6 +1022,9 @@ GtkWidget *create_envelope_editor(void)
       gtk_box_pack_start(GTK_BOX(toprow), brkpixL, false, false, 0);
       gtk_widget_show(brkpixL);
       SG_SIGNAL_CONNECT(brkpixL, "expose_event", brkpixL_expose, NULL);
+      pix_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      pix_ax->wn = GDK_DRAWABLE(brkpixL->window);
+      pix_ax->gc = hgc;
       
       brktxtL = snd_gtk_highlight_label_new(BLANK_LABEL); /* not NULL!  gtk only creates the label child if not null */
       gtk_box_pack_start(GTK_BOX(toprow), brktxtL, false, false, 0);

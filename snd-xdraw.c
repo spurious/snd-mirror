@@ -36,49 +36,47 @@ void gtk_style_draw_string(axis_context *ax, int x0, int y0, const char *str, in
   /* XFreeFont here is trouble, but handling it as above seems ok -- Font.c in xlib does allocate new space */
 }
 
-void fill_polygon(axis_context *ax, int points, ...)
-{ /* currently used only in snd-marks.c */
+static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list ap)
+{
   int i;
   XPoint *pts;
-  va_list ap;
-  if (points == 0) return;
   pts = (XPoint *)CALLOC(points, sizeof(XPoint));
-  va_start(ap, points);
-  for (i = 0; i < points; i++)
-    {
-      pts[i].x = va_arg(ap, int); /* not int due to the way va_arg is implemented */
-      pts[i].y = va_arg(ap, int);
-    }
-  va_end(ap);
-  XFillPolygon(ax->dp, ax->wn, ax->gc, pts, points, Convex, CoordModeOrigin);
-  FREE(pts);
-}
-
-void draw_polygon(axis_context *ax, int points, ...)
-{ /* currently used only in snd-marks.c */
-  int i;
-  XPoint *pts;
-  va_list ap;
-  if (points == 0) return;
-  pts = (XPoint *)CALLOC(points, sizeof(XPoint));
-  va_start(ap, points);
   for (i = 0; i < points; i++)
     {
       pts[i].x = va_arg(ap, int);
       pts[i].y = va_arg(ap, int);
     }
-  va_end(ap);
-  XDrawLines(ax->dp, ax->wn, ax->gc, pts, points, CoordModeOrigin);
+  if (filled)
+    XFillPolygon(ax->dp, ax->wn, ax->gc, pts, points, Convex, CoordModeOrigin);
+  else XDrawLines(ax->dp, ax->wn, ax->gc, pts, points, CoordModeOrigin);
   FREE(pts);
 }
 
-void draw_lines(axis_context *ax, XPoint *points, int num)
+void fill_polygon(axis_context *ax, int points, ...)
+{ /* currently used only in snd-marks.c */
+  va_list ap;
+  if (points == 0) return;
+  va_start(ap, points);
+  draw_polygon_va(ax, true, points, ap);
+  va_end(ap);
+}
+
+void draw_polygon(axis_context *ax, int points, ...)
+{ /* currently used only in snd-marks.c */
+  va_list ap;
+  if (points == 0) return;
+  va_start(ap, points);
+  draw_polygon_va(ax, false, points, ap);
+  va_end(ap);
+}
+
+void draw_lines(axis_context *ax, point_t *points, int num)
 {
   if (num == 0) return;
   XDrawLines(ax->dp, ax->wn, ax->gc, points, num, CoordModeOrigin);
 }
 
-void draw_points(axis_context *ax, XPoint *points, int num, int size)
+void draw_points(axis_context *ax, point_t *points, int num, int size)
 {
   if (num == 0) return;
   if (size == 1)
@@ -104,12 +102,12 @@ void draw_points(axis_context *ax, XPoint *points, int num, int size)
     }
 }
 
-static void draw_point(Display *dp, Drawable wn, GC gc, XPoint point, int size)
+void draw_point(axis_context *ax, point_t point, int size)
 {
   if (size == 1)
-    XDrawPoint(dp, wn, gc, point.x, point.y);
+    XDrawPoint(ax->dp, ax->wn, ax->gc, point.x, point.y);
   else
-    XFillArc(dp, wn, gc, 
+    XFillArc(ax->dp, ax->wn, ax->gc, 
 	     point.x - size / 2, 
 	     point.y - size / 2, 
 	     size, size, 0, 
@@ -127,7 +125,7 @@ void draw_arc(axis_context *ax, int x, int y, int size)
 
 static XPoint polypts[4];
 
-static void fill_polygons(axis_context *ax, XPoint *points, int num, int y0)
+void fill_polygons(axis_context *ax, point_t *points, int num, int y0)
 {
   int i;
   for (i = 1; i < num; i++)
@@ -144,7 +142,7 @@ static void fill_polygons(axis_context *ax, XPoint *points, int num, int y0)
     }
 }
 
-static void fill_two_sided_polygons(axis_context *ax, XPoint *points, XPoint *points1, int num)
+void fill_two_sided_polygons(axis_context *ax, point_t *points, point_t *points1, int num)
 {
   int i;
   for (i = 1; i < num; i++)
@@ -161,302 +159,6 @@ static void fill_two_sided_polygons(axis_context *ax, XPoint *points, XPoint *po
     }
 }
 
-static XPoint points[POINT_BUFFER_SIZE];
-static XPoint points1[POINT_BUFFER_SIZE];
-
-void set_grf_points(int xi, int j, int ymin, int ymax)
-{
-  points[j].x = xi;
-  points1[j].x = xi;
-  points[j].y = ymax;
-  points1[j].y = ymin;
-}
-
-void set_grf_point(int xi, int j, int yi)
-{
-  points[j].x = xi;
-  points[j].y = yi;
-}
-
-void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style)
-{
-  int i;
-  switch (graph_style)
-    {
-    case GRAPH_LINES:
-    default:
-      XDrawLines(ax->dp, ax->wn, ax->gc, points, j, CoordModeOrigin);
-      XDrawLines(ax->dp, ax->wn, ax->gc, points1, j, CoordModeOrigin);
-      break;
-    case GRAPH_DOTS:
-      draw_points(ax, points, j, dot_size);
-      draw_points(ax, points1, j, dot_size);
-      break;
-    case GRAPH_FILLED:
-      fill_two_sided_polygons(ax, points, points1, j);
-      break;
-    case GRAPH_DOTS_AND_LINES:
-      if (dot_size > 1)
-	{
-	  draw_points(ax, points, j, dot_size);
-	  draw_points(ax, points1, j, dot_size);
-	}
-      XDrawLines(ax->dp, ax->wn, ax->gc, points, j, CoordModeOrigin);
-      XDrawLines(ax->dp, ax->wn, ax->gc, points1, j, CoordModeOrigin);
-      break;
-    case GRAPH_LOLLIPOPS:
-      if (dot_size == 1)
-	{
-	  for (i = 0; i < j; i++)
-	    XDrawLine(ax->dp, ax->wn, ax->gc, points[i].x, points[i].y, points1[i].x, points1[i].y);
-	}
-      else
-	{
-	  int size8, size4;
-	  size8 = dot_size / 8;
-	  size4 = dot_size / 4;
-	  if (size4 < 1) size4 = 1;
-	  draw_points(ax, points, j, dot_size);
-	  draw_points(ax, points1, j, dot_size);
-	  for (i = 0; i < j; i++)
-	    XFillRectangle(ax->dp, ax->wn, ax->gc, 
-			   points[i].x - size8, 
-			   points[i].y, 
-			   size4, 
-			   points1[i].y - points[i].y);
-	}
- 
-    }
-}
-
-void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style)
-{
-  int i, gy0;
-  switch (graph_style)
-    {
-    case GRAPH_LINES: 
-    default:
-      draw_lines(ax, points, j); 
-      break;
-    case GRAPH_DOTS: 
-      draw_points(ax, points, j, dot_size); 
-      break;
-    case GRAPH_FILLED: 
-      fill_polygons(ax, points, j, grf_y(y0, ap)); 
-      break;
-    case GRAPH_DOTS_AND_LINES: 
-      if (dot_size > 1) draw_points(ax, points, j, dot_size); 
-      draw_lines(ax, points, j); 
-      break;
-    case GRAPH_LOLLIPOPS:
-      gy0 = grf_y(y0, ap);
-      if (dot_size == 1)
-	{
-	  for (i = 0; i < j; i++)
-	    XDrawLine(ax->dp, ax->wn, ax->gc, points[i].x, points[i].y, points[i].x, gy0);
-	}
-      else
-	{
-	  int size8, size4;
-	  size8 = dot_size / 8;
-	  size4 = dot_size / 4;
-	  if (size4 < 1) size4 = 1;
-	  if (dot_size < 20)
-	    {
-	      draw_points(ax, points, j, dot_size);
-	      for (i = 0; i < j; i++)
-		if (points[i].y > gy0) /* unsigned int height */
-		  XFillRectangle(ax->dp, ax->wn, ax->gc, points[i].x - size8, gy0, size4, points[i].y - gy0);
-		else XFillRectangle(ax->dp, ax->wn, ax->gc, points[i].x - size8, points[i].y, size4, gy0 - points[i].y);
-	    }
-	  else
-	    {
-	      int radius, size6, size12, size3;
-	      radius = dot_size / 2;
-	      size6 = snd_round(dot_size / 6.0);
-	      size12 = snd_round(dot_size / 12.0);
-	      size3 = snd_round(dot_size / 3.0);
-	      for (i = 0; i < j; i++) 
-		{
-		  XDrawArc(ax->dp, ax->wn, ax->gc, 
-			   points[i].x - radius, points[i].y - radius,
-			   dot_size, dot_size, 0, 360 * 64);
-		  XDrawArc(ax->dp, ax->wn, ax->gc, 
-			   points[i].x - size3, points[i].y - size3,
-			   2 * size3, 2 * size3, 200 * 64, 140 * 64);
-		  XDrawArc(ax->dp, ax->wn, ax->gc, 
-			   points[i].x - size6 - size12, points[i].y - size6,
-			   size6, size6, 0, 360 * 64);
-		  XDrawArc(ax->dp, ax->wn, ax->gc, 
-			   points[i].x + size12, points[i].y - size6,
-			   size6, size6, 0, 360 * 64);
-		}
-	    }
-	}
-      break;
-    }
-}
-
-static void allocate_erase_grf_points(mix_context *ms)
-{
-  if (ms->p0 == NULL)
-    {
-      ms->p0 = (XPoint *)CALLOC(POINT_BUFFER_SIZE, sizeof(XPoint));
-      ms->p1 = (XPoint *)CALLOC(POINT_BUFFER_SIZE, sizeof(XPoint));
-    }
-}
-
-static void backup_erase_grf_points(mix_context *ms, int nj)
-{
-  ms->lastpj = nj;
-  memcpy((void *)(ms->p0), (void *)points, nj * sizeof(XPoint));
-  memcpy((void *)(ms->p1), (void *)points1, nj * sizeof(XPoint));
-}
-
-void mix_save_graph(mix_context *ms, int j)
-{
-  allocate_erase_grf_points(ms);
-  backup_erase_grf_points(ms, j);
-}
-
-void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
-{
-  int i, j, min, previous_j;
-  chan_context *cx;
-  axis_context *ax;
-  Display *dpy;
-  Drawable wn;
-  GC draw_gc, undraw_gc;
-  previous_j = ms->lastpj;
-  cx = cp->tcgx;
-  if (!cx) cx = cp->cgx;
-  ax = cx->ax;
-  dpy = ax->dp;
-  wn = ax->wn;
-  draw_gc = copy_GC(cp);
-  undraw_gc = erase_GC(cp);
-  min = ((nj < previous_j) ? nj : previous_j);
-  if (cp->time_graph_style == GRAPH_LINES)
-    {
-      for (i = 0, j = 1; i < min - 1; i++, j++)
-	{
-	  XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[j].x, ms->p0[j].y);
-	  XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[j].x, points[j].y);
-	}
-      if (min > 0)
-	{
-	  if (nj > previous_j)
-	    for (i = min - 1; i < nj - 1; i++) 
-	      XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
-	  else
-	    {
-	      if (previous_j > nj)
-		for (i = min - 1; i < previous_j - 1; i++) 
-		  XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i + 1].x, ms->p0[i + 1].y);
-	    }
-	}
-    }
-  else /* dots */
-    {
-      for (i = 0; i < min; i++)
-	{
-	  draw_point(dpy, wn, undraw_gc, ms->p0[i], cp->dot_size);
-	  draw_point(dpy, wn, draw_gc, points[i], cp->dot_size);
-	}
-      if (nj > previous_j)
-	{
-	  for (i = min; i < nj; i++) 
-	    draw_point(dpy, wn, draw_gc, points[i], cp->dot_size);
-	}
-      else
-	{
-	  if (previous_j > nj)
-	    {
-	      for (i = min; i < previous_j; i++) 
-		draw_point(dpy, wn, undraw_gc, ms->p0[i], cp->dot_size);
-	    }
-	}
-    }
-  backup_erase_grf_points(ms, nj);
-}
-
-void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
-{
-  int i, j, min, previous_j;
-  chan_context *cx;
-  axis_context *ax;
-  Display *dpy;
-  Drawable wn;
-  GC draw_gc, undraw_gc;
-  previous_j = ms->lastpj;
-  cx = cp->tcgx;
-  if (!cx) cx = cp->cgx;
-  ax = cx->ax;
-  dpy = ax->dp;
-  wn = ax->wn;
-  draw_gc = copy_GC(cp);
-  undraw_gc = erase_GC(cp);
-  min = ((nj < previous_j) ? nj : previous_j);
-  if (cp->time_graph_style == GRAPH_LINES)
-    {
-      if (min <= 0) min = 1;
-      for (i = 0, j = 1; i < min - 1; i++, j++)
-	{
-	  XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[j].x, ms->p0[j].y);
-	  XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[j].x, points[j].y);
-	  XDrawLine(dpy, wn, undraw_gc, ms->p1[i].x, ms->p1[i].y, ms->p1[j].x, ms->p1[j].y);
-	  XDrawLine(dpy, wn, draw_gc, points1[i].x, points1[i].y, points1[j].x, points1[j].y);
-	}
-      if (nj > previous_j)
-	{
-	  for (i = min - 1; i < nj - 1; i++) 
-	    {
-	      XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
-	      XDrawLine(dpy, wn, draw_gc, points1[i].x, points1[i].y, points1[i + 1].x, points1[i + 1].y);
-	    }
-	}
-      else
-	if (previous_j > nj)
-	  {
-	    for (i = min - 1; i < previous_j - 1; i++) 
-	      {
-		XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i + 1].x, ms->p0[i + 1].y);
-		XDrawLine(dpy, wn, undraw_gc, ms->p1[i].x, ms->p1[i].y, ms->p1[i + 1].x, ms->p1[i + 1].y);
-	      }
-	  }
-    }
-  else /* dots */
-    {
-      for (i = 0; i < min; i++)
-	{
-	  draw_point(dpy, wn, undraw_gc, ms->p0[i], cp->dot_size);
-	  draw_point(dpy, wn, draw_gc, points[i], cp->dot_size);
-	  draw_point(dpy, wn, undraw_gc, ms->p1[i], cp->dot_size);
-	  draw_point(dpy, wn, draw_gc, points1[i], cp->dot_size);
-	}
-      if (nj > previous_j)
-	{
-	  for (i = min; i < nj; i++) 
-	    {
-	      draw_point(dpy, wn, draw_gc, points[i], cp->dot_size);
-	      draw_point(dpy, wn, draw_gc, points1[i], cp->dot_size);
-	    }
-	}
-      else
-	{
-	  if (previous_j > nj)
-	    {
-	      for (i = min; i < previous_j; i++) 
-		{
-		  draw_point(dpy, wn, undraw_gc, ms->p0[i], cp->dot_size);
-		  draw_point(dpy, wn, undraw_gc, ms->p1[i], cp->dot_size);
-		}
-	    }
-	}
-
-    }
-  backup_erase_grf_points(ms, nj);
-}
 
 void setup_axis_context(chan_info *cp, axis_context *ax)
 {

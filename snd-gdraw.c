@@ -11,11 +11,12 @@
 TODO: check ATS
 TODO: static intel mac snd with minimal needs
 TODO: gl + cairo?  does --with-cairo conflict with --with-gl?
-PERHAPS: with-background-gradient
-TODO: no redisplay if cursor is all that changed
+PERHAPS: background-gradient (0 = none)
+TODO: no redisplay if cursor is all that changed, snd-chn 3440
 TODO: fft peaks font is too big
 TODO: selection erases (covers)
-TODO: after mark set, all is red; moving mark is redrawn??
+TODO: mark erases waveform
+TODO: gtk-print: strings not output
 */
 
 
@@ -26,7 +27,7 @@ void draw_line(axis_context *ax, int x0, int y0, int x1, int y1)
   cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
   cairo_set_line_width(ax->cr, 1.0); 
   /* to get a thin line in cairo -- hooboy! you have to offset everything -- this is not pretty
-   *    if line_width < 1.0, you get a fat line in gray-scale!!  
+   *    if line_width < 1.0, you get a smudgy mess in gray-scale!!  
    */
   cairo_move_to(ax->cr, x0 + 0.5, y0 + 0.5);
   cairo_line_to(ax->cr, x1 + 0.5, y1 + 0.5);
@@ -104,7 +105,9 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
       pango_layout_set_font_description(layout, ax->current_font);
       pango_layout_set_text(layout, str, -1);
 #if USE_CAIRO
+      /* TODO:
       gdk_draw_layout(ax->wn, ax->gc->gc, (gint)x0, (gint)y0, layout);
+      */
 #else
       gdk_draw_layout(ax->wn, ax->gc, (gint)x0, (gint)y0, layout);
 #endif
@@ -116,6 +119,101 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
    * at this level via gtk_widget_get_pango_context(w).  But do I need a new context or layout
    * for every font, and do I have to update the fonts every time one changes? 
    */
+}
+
+void draw_picture_direct(GdkDrawable* drawable, gc_t *gp, GdkDrawable* src, gint xsrc, gint ysrc, gint xdest, gint ydest, gint width, gint height)
+{
+#if USE_CAIRO
+  cairo_t *cr;
+  cr = gdk_cairo_create(drawable);
+  gdk_cairo_set_source_pixmap(cr, GDK_PIXMAP(src), xsrc, ysrc);
+  /* TODO draw it? */
+
+#else
+  gdk_draw_drawable(drawable, gp, src, xsrc, ysrc, xdest, ydest, width, height);
+#endif
+}
+
+void draw_lines(axis_context *ax, point_t *points, int num)
+{
+  if (num == 0) return;
+#if USE_CAIRO
+  {
+    int i;
+    /*
+    cairo_set_antialias(ax->cr, CAIRO_ANTIALIAS_NONE);
+    */
+    cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
+    cairo_set_line_width(ax->cr, 1.0); 
+    cairo_move_to(ax->cr, points[0].x, points[0].y);
+    for (i = 1; i < num; i++)
+      cairo_line_to(ax->cr, points[i].x, points[i].y);
+    cairo_stroke(ax->cr);
+  }
+#else
+  gdk_draw_lines(ax->wn, ax->gc, points, num);
+#endif
+}
+
+void draw_arc(axis_context *ax, int x, int y, int size)
+{
+#if USE_CAIRO
+  cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
+  cairo_arc(ax->cr, x - size / 2, y - size / 2, size, 0.0, 2 * M_PI);
+  cairo_stroke(ax->cr);
+#else
+  gdk_draw_arc(ax->wn, ax->gc, true, x - size / 2, y - size / 2, size, size, 0, 360 * 64);
+#endif
+}
+
+void draw_point(axis_context *ax, GdkPoint point, int size)
+{
+#if USE_CAIRO
+  draw_arc(ax, point.x, point.y, size);
+#else
+  if (size == 1)
+    gdk_draw_point(ax->wn, ax->gc, point.x, point.y);
+  else draw_arc(ax, point.x, point.y, size);
+#endif
+}
+
+void draw_points(axis_context *ax, point_t *points, int num, int size)
+{
+  if (num == 0) return;
+#if (!USE_CAIRO)
+  if (size == 1)
+    gdk_draw_points(ax->wn, ax->gc, points, num);
+  else
+#endif
+    {
+      int i;
+      for (i = 0; i < num; i++) 
+	draw_arc(ax, points[i].x, points[i].y, size);
+    }
+}
+
+void draw_arc_direct(GdkDrawable* drawable, gc_t *gc, gboolean filled, gint x, gint y, gint width, gint height, gint angle1, gint angle2)
+{
+#if USE_CAIRO
+#else
+  gdk_draw_arc(drawable, gc, filled, x, y, width, height, angle1, angle2);
+#endif
+}
+
+void draw_line_direct(GdkDrawable* drawable, gc_t *gc, gint x1, gint y1, gint x2, gint y2)
+{
+#if USE_CAIRO
+#else
+  gdk_draw_line(drawable, gc, x1, y1, x2, y2);
+#endif
+}
+
+void draw_rectangle_direct(GdkDrawable* drawable, gc_t *gc, gboolean filled, gint x, gint y, gint width, gint height)
+{
+#if USE_CAIRO
+#else
+  gdk_draw_rectangle(drawable, gc, filled, x, y, width, height);
+#endif
 }
 
 static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list ap)
@@ -181,7 +279,7 @@ void draw_polygon(axis_context *ax, int points, ...)
   va_end(ap);
 }
 
-void draw_polygon_direct(GdkDrawable *wn, gc_t *gp, bool filled, GdkPoint *points, int npoints)
+void draw_polygon_direct(GdkDrawable *wn, gc_t *gp, bool filled, point_t *points, int npoints)
 {
 #if USE_CAIRO
   int i;
@@ -207,104 +305,9 @@ void draw_polygon_direct(GdkDrawable *wn, gc_t *gp, bool filled, GdkPoint *point
 #endif
 }
 
-void draw_picture_direct(GdkDrawable* drawable, gc_t *gp, GdkDrawable* src, gint xsrc, gint ysrc, gint xdest, gint ydest, gint width, gint height)
-{
-#if USE_CAIRO
-  cairo_t *cr;
-  cr = gdk_cairo_create(drawable);
-  gdk_cairo_set_source_pixmap(cr, GDK_PIXMAP(src), xsrc, ysrc);
-  /* TODO draw it? */
-
-#else
-  gdk_draw_drawable(drawable, gp, src, xsrc, ysrc, xdest, ydest, width, height);
-#endif
-}
-
-void draw_lines(axis_context *ax, GdkPoint *points, int num)
-{
-  if (num == 0) return;
-#if USE_CAIRO
-  {
-    int i;
-    cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
-    cairo_set_line_width(ax->cr, 1.0); 
-    cairo_move_to(ax->cr, points[0].x + 0.5, points[0].y + 0.5);
-    for (i = 1; i < num; i++)
-      cairo_line_to(ax->cr, points[i].x + 0.5, points[i].y + 0.5);
-    cairo_stroke(ax->cr);
-  }
-#else
-  gdk_draw_lines(ax->wn, ax->gc, points, num);
-#endif
-}
-
-void draw_points(axis_context *ax, GdkPoint *points, int num, int size)
-{
-  if (num == 0) return;
-#if USE_CAIRO
-#else
-  if (size == 1)
-    gdk_draw_points(ax->wn, ax->gc, points, num);
-  else
-    {
-      int i, size2;
-      size2 = size / 2;
-      for (i = 0; i < num; i++) 
-	gdk_draw_arc(ax->wn, ax->gc, true, points[i].x - size2, points[i].y - size2, size, size, 0, 360 * 64);
-    }
-#endif
-}
-
-static void draw_point_direct(GdkDrawable *wn, gc_t *gc, GdkPoint point, int size)
-{
-#if USE_CAIRO
-#else
-  if (size == 1)
-    gdk_draw_point(wn, gc, point.x, point.y);
-  else
-    gdk_draw_arc(wn, gc, true, point.x - size / 2, point.y - size / 2, size, size, 0, 360 * 64);
-#endif
-}
-
-void draw_arc(axis_context *ax, int x, int y, int size)
-{
-#if USE_CAIRO
-  cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
-  cairo_arc(ax->cr, x - size / 2, y - size / 2, size, 0, 360);
-  cairo_stroke(ax->cr);
-#else
-  gdk_draw_arc(ax->wn, ax->gc, true, x - size / 2, y - size / 2, size, size, 0, 360 * 64);
-#endif
-}
-
-void draw_arc_direct(GdkDrawable* drawable, gc_t *gc, gboolean filled, gint x, gint y, gint width, gint height, gint angle1, gint angle2)
-{
-#if USE_CAIRO
-#else
-  gdk_draw_arc(drawable, gc, filled, x, y, width, height, angle1, angle2);
-#endif
-}
-
-void draw_line_direct(GdkDrawable* drawable, gc_t *gc, gint x1, gint y1, gint x2, gint y2)
-{
-#if USE_CAIRO
-#else
-  gdk_draw_line(drawable, gc, x1, y1, x2, y2);
-#endif
-}
-
-void draw_rectangle_direct(GdkDrawable* drawable, gc_t *gc, gboolean filled, gint x, gint y, gint width, gint height)
-{
-#if USE_CAIRO
-#else
-  gdk_draw_rectangle(drawable, gc, filled, x, y, width, height);
-#endif
-}
-
-
 static GdkPoint polypts[4];
 
-static void fill_polygons(axis_context *ax, GdkPoint *points, int num, axis_info *ap, int y0)
+void fill_polygons(axis_context *ax, point_t *points, int num, int y0)
 {
   int i;
   for (i = 1; i < num; i++)
@@ -321,7 +324,7 @@ static void fill_polygons(axis_context *ax, GdkPoint *points, int num, axis_info
     }
 }
 
-static void fill_two_sided_polygons(axis_context *ax, GdkPoint *points, GdkPoint *points1, int num)
+void fill_two_sided_polygons(axis_context *ax, point_t *points, point_t *points1, int num)
 {
   int i;
   for (i = 1; i < num; i++)
@@ -336,287 +339,6 @@ static void fill_two_sided_polygons(axis_context *ax, GdkPoint *points, GdkPoint
       polypts[3].y = points1[i - 1].y;
       draw_polygon_direct(ax->wn, ax->gc, true, polypts, 4);
     }
-}
-
-static GdkPoint points[POINT_BUFFER_SIZE];
-static GdkPoint points1[POINT_BUFFER_SIZE];
-
-void set_grf_points(int xi, int j, int ymin, int ymax)
-{
-  points[j].x = xi;
-  points1[j].x = xi;
-  points[j].y = ymax;
-  points1[j].y = ymin;
-}
-
-void set_grf_point(int xi, int j, int yi)
-{
-  points[j].x = xi;
-  points[j].y = yi;
-}
-
-void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style)
-{
-  int i;
-  switch (graph_style)
-    {
-    case GRAPH_LINES:
-    default:
-      draw_lines(ax, points, j);
-      draw_lines(ax, points1, j);
-      break;
-    case GRAPH_DOTS:
-      draw_points(ax, points, j, dot_size);
-      draw_points(ax, points1, j, dot_size);
-      break;
-    case GRAPH_FILLED:
-      fill_two_sided_polygons(ax, points, points1, j);
-      break;
-    case GRAPH_DOTS_AND_LINES:
-      if (dot_size > 1)
-	{
-	  draw_points(ax, points, j, dot_size);
-	  draw_points(ax, points1, j, dot_size);
-	}
-      draw_lines(ax, points, j);
-      draw_lines(ax, points1, j);
-      break;
-    case GRAPH_LOLLIPOPS:
-      if (dot_size == 1)
-	{
-	  for (i = 0; i < j; i++)
-	    draw_line(ax, points[i].x, points[i].y, points1[i].x, points1[i].y);
-	}
-      else
-	{
-	  int size8, size4;
-	  size8 = dot_size / 8;
-	  size4 = dot_size / 4;
-	  if (size4 < 1) size4 = 1;
-	  draw_points(ax, points, j, dot_size);
-	  draw_points(ax, points1, j, dot_size);
-	  for (i = 0; i < j; i++)
-	    fill_rectangle(ax, points[i].x - size8, points[i].y, size4, points1[i].y - points[i].y);
-	}
-    }
-}
-
-void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style)
-{
-  int i, gy0;
-  switch (graph_style)
-    {
-    case GRAPH_LINES:
-    default:
-      draw_lines(ax, points, j); 
-      break;
-    case GRAPH_DOTS: 
-      draw_points(ax, points, j, dot_size); 
-      break;
-    case GRAPH_FILLED: 
-      fill_polygons(ax, points, j, ap, grf_y(y0, ap)); 
-      break;
-    case GRAPH_DOTS_AND_LINES: 
-      if (dot_size > 1) 
-	draw_points(ax, points, j, dot_size); 
-      draw_lines(ax, points, j); 
-      break;
-    case GRAPH_LOLLIPOPS:
-      gy0 = grf_y(y0, ap);
-      if (dot_size == 1)
-	{
-#if USE_CAIRO
-	  cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
-	  cairo_set_line_width(ax->cr, 1.0); 
-	  for (i = 0; i < j; i++)
-	    {
-	      cairo_move_to(ax->cr, points[i].x + 0.5, gy0 + 0.5);
-	      cairo_line_to(ax->cr, points[i].x + 0.5, points[i].y + 0.5);
-	    }
-	  cairo_stroke(ax->cr);
-
-#else
-	  for (i = 0; i < j; i++)
-	    gdk_draw_line(ax->wn, ax->gc, points[i].x, points[i].y, points[i].x, gy0);
-#endif
-	}
-      else
-	{
-	  int size8, size4;
-	  size8 = dot_size / 8;
-	  size4 = dot_size / 4;
-	  if (size4 < 1) size4 = 1;
-	  draw_points(ax, points, j, dot_size);
-	  for (i = 0; i < j; i++)
-	    if (points[i].y > gy0) /* unsigned int height */
-	      fill_rectangle(ax, points[i].x - size8, gy0, size4, points[i].y - gy0);
-	    else fill_rectangle(ax, points[i].x - size8, points[i].y, size4, gy0 - points[i].y);
-	}
-      break;
-    }
-}
-
-static void allocate_erase_grf_points(mix_context *ms)
-{
-  if (ms->p0 == NULL)
-    {
-      ms->p0 = (GdkPoint *)CALLOC(POINT_BUFFER_SIZE, sizeof(GdkPoint));
-      ms->p1 = (GdkPoint *)CALLOC(POINT_BUFFER_SIZE, sizeof(GdkPoint));
-    }
-}
-
-static void backup_erase_grf_points(mix_context *ms, int nj)
-{
-  ms->lastpj = nj;
-  memcpy((void *)(ms->p0), (void *)points, nj * sizeof(GdkPoint));
-  memcpy((void *)(ms->p1), (void *)points1, nj * sizeof(GdkPoint));
-}
-
-void mix_save_graph(mix_context *ms, int j)
-{
-  allocate_erase_grf_points(ms);
-  backup_erase_grf_points(ms, j);
-}
-
-void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
-{
-#if USE_CAIRO
-#else
-  int i, j, min, previous_j;
-  chan_context *cx;
-  axis_context *ax;
-  GdkDrawable *wn;
-  GdkGC *draw_gc, *undraw_gc;
-  previous_j = ms->lastpj;
-  cx = cp->tcgx;
-  if (!cx) cx = cp->cgx;
-  ax = cx->ax;
-  wn = ax->wn;
-  undraw_gc = erase_GC(cp);
-  draw_gc = copy_GC(cp);
-  min = ((nj < previous_j) ? nj : previous_j);
-  if (cp->time_graph_style == GRAPH_LINES)
-    {
-      if (min <= 0) min = 1;
-      for (i = 0, j = 1; i < min - 1; i++, j++)
-	{
-	  gdk_draw_line(wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[j].x, ms->p0[j].y);
-	  gdk_draw_line(wn, draw_gc, points[i].x, points[i].y, points[j].x, points[j].y);
-	}
-      if (min > 0)
-	{
-	  if (nj > previous_j)
-	    for (i = min - 1; i < nj - 1; i++) 
-	      gdk_draw_line(wn, draw_gc, points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
-	  else
-	    {
-	      if (previous_j > nj)
-		for (i = min - 1; i < previous_j - 1; i++) 
-		  gdk_draw_line(wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i + 1].x, ms->p0[i + 1].y);
-	    }
-	}
-    }
-  else /* dots */
-    {
-      for (i = 0; i < min; i++)
-	{
-	  draw_point_direct(wn, undraw_gc, ms->p0[i], cp->dot_size);
-	  draw_point_direct(wn, draw_gc, points[i], cp->dot_size);
-	}
-      if (nj > previous_j)
-	{
-	  for (i = min; i < nj; i++) 
-	    draw_point_direct(wn, draw_gc, points[i], cp->dot_size);
-	}
-      else
-	{
-	  if (previous_j > nj)
-	    {
-	      for (i = min; i < previous_j; i++) 
-		draw_point_direct(wn, undraw_gc, ms->p0[i], cp->dot_size);
-	    }
-	}
-    }
-  backup_erase_grf_points(ms, nj);
-#endif
-}
-
-void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
-{
-#if USE_CAIRO
-#else
-  int i, j, min, previous_j;
-  chan_context *cx;
-  axis_context *ax;
-  GdkDrawable *wn;
-  GdkGC *draw_gc, *undraw_gc;
-  previous_j = ms->lastpj;
-  cx = cp->tcgx;
-  if (!cx) cx = cp->cgx;
-  ax = cx->ax;
-  wn = ax->wn;
-  undraw_gc = erase_GC(cp);
-  draw_gc = copy_GC(cp);
-  min = ((nj < previous_j) ? nj : previous_j);
-  if (cp->time_graph_style == GRAPH_LINES)
-    {
-      for (i = 0, j = 1; i < min - 1; i++, j++)
-	{
-	  gdk_draw_line(wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[j].x, ms->p0[j].y);
-	  gdk_draw_line(wn, draw_gc, points[i].x, points[i].y, points[j].x, points[j].y);
-	  gdk_draw_line(wn, undraw_gc, ms->p1[i].x, ms->p1[i].y, ms->p1[j].x, ms->p1[j].y);
-	  gdk_draw_line(wn, draw_gc, points1[i].x, points1[i].y, points1[j].x, points1[j].y);
-	}
-      if (nj > previous_j)
-	{
-	  for (i = min - 1; i < nj - 1; i++) 
-	    {
-	      gdk_draw_line(wn, draw_gc, points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
-	      gdk_draw_line(wn, draw_gc, points1[i].x, points1[i].y, points1[i + 1].x, points1[i + 1].y);
-	    }
-	}
-      else
-	if (previous_j > nj)
-	  {
-	    for (i = min - 1; i < previous_j - 1; i++) 
-	      {
-		gdk_draw_line(wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i + 1].x, ms->p0[i + 1].y);
-		gdk_draw_line(wn, undraw_gc, ms->p1[i].x, ms->p1[i].y, ms->p1[i + 1].x, ms->p1[i + 1].y);
-	      }
-	  }
-    }
-  else /* dots */
-    {
-      for (i = 0; i < min; i++)
-	{
-	  draw_point_direct(wn, undraw_gc, ms->p0[i], cp->dot_size);
-	  draw_point_direct(wn, draw_gc, points[i], cp->dot_size);
-	  draw_point_direct(wn, undraw_gc, ms->p1[i], cp->dot_size);
-	  draw_point_direct(wn, draw_gc, points1[i], cp->dot_size);
-	}
-      if (nj > previous_j)
-	{
-	  for (i = min; i < nj; i++) 
-	    {
-	      draw_point_direct(wn, draw_gc, points[i], cp->dot_size);
-	      draw_point_direct(wn, draw_gc, points1[i], cp->dot_size);
-	    }
-	}
-      else
-	{
-	  if (previous_j > nj)
-	    {
-	      for (i = min; i < previous_j; i++) 
-		{
-		  draw_point_direct(wn, undraw_gc, ms->p0[i], cp->dot_size);
-		  draw_point_direct(wn, undraw_gc, ms->p1[i], cp->dot_size);
-		}
-	    }
-	}
-
-    }
-  backup_erase_grf_points(ms, nj);
-#endif
 }
 
 void setup_axis_context(chan_info *cp, axis_context *ax)

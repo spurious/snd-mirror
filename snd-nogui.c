@@ -23,20 +23,16 @@ void save_post_it_dialog_state(FILE *fd) {}
 void reflect_just_sounds(void) {}
 void save_file_dialog_state(FILE *fd) {}
 void draw_line(axis_context *ax, int x0, int y0, int x1, int y1) {}
+void draw_point(axis_context *ax, point_t point, int size) {}
 void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height) {}
 void fill_polygon(axis_context *ax, int points, ...) {}
+void fill_polygons(axis_context *ax, point_t *points, int num, int y0) {}
+void fill_two_sided_polygons(axis_context *ax, point_t *points, point_t *points1, int num) {}
 void draw_polygon(axis_context *ax, int points, ...) {}
 void draw_string(axis_context *ax, int x0, int y0, const char *str, int len) {}
 void draw_arc(axis_context *ax, int x, int y, int size) {}
-void set_grf_points(int xi, int j, int ymin, int ymax) {}
-void set_grf_point(int xi, int j, int yi) {}
-void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style) {}
-void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style) {}
-void mix_save_graph(mix_context *ms, int j) {}
 void save_colors(FILE *Fp) {}
 void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width, int height) {}
-void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int j) {}
-void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int j) {}
 void setup_axis_context(chan_info *cp, axis_context *ax) {}
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1) {}
 void allocate_color_map(int colormap) {}

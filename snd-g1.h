@@ -16,12 +16,15 @@ bool help_dialog_is_active(void);
 /* -------- snd-gdraw.c -------- */
 
 void draw_line(axis_context *ax, int x0, int y0, int x1, int y1);
-void draw_lines(axis_context *ax, GdkPoint *points, int num);
-void draw_points(axis_context *ax, GdkPoint *points, int num, int size);
+void draw_lines(axis_context *ax, point_t *points, int num);
+void draw_points(axis_context *ax, point_t *points, int num, int size);
+void draw_point(axis_context *ax, point_t point, int size);
 void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height);
 void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width, int height);
 void fill_polygon(axis_context *ax, int points, ...);
 void draw_polygon(axis_context *ax, int points, ...);
+void fill_polygons(axis_context *ax, point_t *points, int num, int y0);
+void fill_two_sided_polygons(axis_context *ax, point_t *points, point_t *points1, int num);
 
 void draw_line_direct(GdkDrawable* drawable, gc_t *gc, gint x1, gint y1, gint x2, gint y2);
 void draw_rectangle_direct(GdkDrawable* drawable, gc_t *gc, gboolean filled, gint x, gint y, gint width, gint height);
@@ -31,13 +34,6 @@ void draw_arc_direct(GdkDrawable* drawable, gc_t *gc, gboolean filled, gint x, g
 
 void draw_string(axis_context *ax, int x0, int y0, const char *str, int len);
 void draw_arc(axis_context *ax, int x, int y, int size);
-void set_grf_points(int xi, int j, int ymin, int ymax);
-void set_grf_point(int xi, int j, int yi);
-void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style);
-void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style);
-void mix_save_graph(mix_context *ms, int j);
-void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int j);
-void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int j);
 void setup_axis_context(chan_info *cp, axis_context *ax);
 GtkWidget *start_color_dialog(bool managed);
 GtkWidget *start_orientation_dialog(bool managed);

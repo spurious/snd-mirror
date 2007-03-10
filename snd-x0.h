@@ -67,6 +67,8 @@ typedef enum {NOT_ACTIVATABLE, ACTIVATABLE, NOT_ACTIVATABLE_OR_FOCUSED, ACTIVATA
 /* can't use "pointer_t" -- Mac already defines that type (CoreServices.h) */
 #define oclock_t Time
 #define color_t Pixel
+#define point_t XPoint
+#define gc_t GC
 
 #define rgb_t unsigned short
 #define RGB_MAX 65535
@@ -162,13 +164,6 @@ typedef struct {
   XtInputId fam_port;
   Widget *mw, *pw;
 } state_context;
-
-typedef struct {
-  Widget graph;
-  XPoint *p0, *p1;
-  int lastpj;
-  Pixel color;
-} mix_context;
 
 typedef enum {WITHOUT_CHANNELS_FIELD, WITH_CHANNELS_FIELD, WITH_EXTRACT_CHANNELS_FIELD} dialog_channels_t;
 typedef enum {WITHOUT_SAMPLES_FIELD, WITH_SAMPLES_FIELD} dialog_samples_t;

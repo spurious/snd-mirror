@@ -2,6 +2,203 @@
 
 #if (!USE_NO_GUI)
 
+/* our "current path" */
+static point_t points[POINT_BUFFER_SIZE];
+static point_t points1[POINT_BUFFER_SIZE];
+
+void set_grf_points(int xi, int j, int ymin, int ymax)
+{
+  points[j].x = xi;
+  points1[j].x = xi;
+  points[j].y = ymax;
+  points1[j].y = ymin;
+}
+
+void set_grf_point(int xi, int j, int yi)
+{
+  points[j].x = xi;
+  points[j].y = yi;
+}
+
+void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style)
+{
+  int i;
+  switch (graph_style)
+    {
+    case GRAPH_LINES:
+    default:
+      draw_lines(ax, points, j);
+      draw_lines(ax, points1, j);
+      break;
+    case GRAPH_DOTS:
+      draw_points(ax, points, j, dot_size);
+      draw_points(ax, points1, j, dot_size);
+      break;
+    case GRAPH_FILLED:
+      fill_two_sided_polygons(ax, points, points1, j);
+      break;
+    case GRAPH_DOTS_AND_LINES:
+      if (dot_size > 1)
+	{
+	  draw_points(ax, points, j, dot_size);
+	  draw_points(ax, points1, j, dot_size);
+	}
+      draw_lines(ax, points, j);
+      draw_lines(ax, points1, j);
+      break;
+    case GRAPH_LOLLIPOPS:
+      if (dot_size == 1)
+	{
+	  for (i = 0; i < j; i++)
+	    draw_line(ax, points[i].x, points[i].y, points1[i].x, points1[i].y);
+	}
+      else
+	{
+	  int size8, size4;
+	  size8 = dot_size / 8;
+	  size4 = dot_size / 4;
+	  if (size4 < 1) size4 = 1;
+	  draw_points(ax, points, j, dot_size);
+	  draw_points(ax, points1, j, dot_size);
+	  for (i = 0; i < j; i++)
+	    fill_rectangle(ax, points[i].x - size8, points[i].y, size4, points1[i].y - points[i].y);
+	}
+    }
+}
+
+void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style)
+{
+  int i, gy0;
+  switch (graph_style)
+    {
+    case GRAPH_LINES:
+    default:
+      draw_lines(ax, points, j); 
+      break;
+    case GRAPH_DOTS: 
+      draw_points(ax, points, j, dot_size); 
+      break;
+    case GRAPH_FILLED: 
+      fill_polygons(ax, points, j, grf_y(y0, ap)); 
+      break;
+    case GRAPH_DOTS_AND_LINES: 
+      if (dot_size > 1) 
+	draw_points(ax, points, j, dot_size); 
+      draw_lines(ax, points, j); 
+      break;
+    case GRAPH_LOLLIPOPS:
+      gy0 = grf_y(y0, ap);
+      if (dot_size == 1)
+	for (i = 0; i < j; i++)
+	  draw_line(ax, points[i].x, points[i].y, points[i].x, gy0);
+      else
+	{
+	  int size8, size4;
+	  size8 = dot_size / 8;
+	  size4 = dot_size / 4;
+	  if (size4 < 1) size4 = 1;
+	  draw_points(ax, points, j, dot_size);
+	  for (i = 0; i < j; i++)
+	    if (points[i].y > gy0)
+	      fill_rectangle(ax, points[i].x - size8, gy0, size4, points[i].y - gy0);
+	    else fill_rectangle(ax, points[i].x - size8, points[i].y, size4, gy0 - points[i].y);
+	}
+      break;
+    }
+}
+
+static void allocate_erase_grf_points(mix_context *ms)
+{
+  if (ms->p0 == NULL)
+    {
+      ms->p0 = (point_t *)CALLOC(POINT_BUFFER_SIZE, sizeof(point_t));
+      ms->p1 = (point_t *)CALLOC(POINT_BUFFER_SIZE, sizeof(point_t));
+    }
+}
+
+static void backup_erase_grf_points(mix_context *ms, int nj)
+{
+  ms->lastpj = nj;
+  memcpy((void *)(ms->p0), (void *)points, nj * sizeof(point_t));
+  memcpy((void *)(ms->p1), (void *)points1, nj * sizeof(point_t));
+}
+
+void mix_save_graph(mix_context *ms, int j)
+{
+  allocate_erase_grf_points(ms);
+  backup_erase_grf_points(ms, j);
+}
+
+void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
+{
+  chan_context *cx;
+  axis_context *ax;
+#if USE_MOTIF
+  GC draw_gc, undraw_gc;
+#else
+  gc_t *draw_gc, *undraw_gc;
+#endif
+  cx = cp->tcgx;
+  if (!cx) cx = cp->cgx;
+  ax = cx->ax;
+  undraw_gc = erase_GC(cp);
+  draw_gc = copy_GC(cp);
+  if (cp->time_graph_style == GRAPH_LINES)
+    {
+      ax->gc = undraw_gc;
+      draw_lines(ax, ms->p0, ms->lastpj);
+      ax->gc = draw_gc;
+      draw_lines(ax, points, nj);
+    }
+  else 
+    {
+      ax->gc = undraw_gc;
+      draw_points(ax, ms->p0, ms->lastpj, cp->dot_size);
+      ax->gc = draw_gc;
+      draw_points(ax, points, nj, cp->dot_size);
+    }
+  backup_erase_grf_points(ms, nj);
+  ax->gc = draw_gc;
+}
+
+void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
+{
+  chan_context *cx;
+  axis_context *ax;
+#if USE_MOTIF
+  GC draw_gc, undraw_gc;
+#else
+  gc_t *draw_gc, *undraw_gc;
+#endif
+  cx = cp->tcgx;
+  if (!cx) cx = cp->cgx;
+  ax = cx->ax;
+  undraw_gc = erase_GC(cp);
+  draw_gc = copy_GC(cp);
+  if (cp->time_graph_style == GRAPH_LINES)
+    {
+      ax->gc = undraw_gc;
+      draw_lines(ax, ms->p0, ms->lastpj);
+      draw_lines(ax, ms->p1, ms->lastpj);
+      ax->gc = draw_gc;
+      draw_lines(ax, points, nj);
+      draw_lines(ax, points1, nj);
+    }
+  else 
+    {
+      ax->gc = undraw_gc;
+      draw_points(ax, ms->p0, ms->lastpj, cp->dot_size);
+      draw_points(ax, ms->p1, ms->lastpj, cp->dot_size);
+      ax->gc = draw_gc;
+      draw_points(ax, points, nj, cp->dot_size);
+      draw_points(ax, points1, nj, cp->dot_size);
+    }
+  backup_erase_grf_points(ms, nj);
+  ax->gc = draw_gc;
+}
+
+
+
 #define AXIS_CONTEXT_ID_OK(Id) ((Id >= CHAN_GC) && (Id <= CHAN_TMPGC))
 #define AXIS_INFO_ID_OK(Id)    (Id <= (int)LISP_AXIS_INFO)
 #define NO_SUCH_WIDGET         XEN_ERROR_TYPE("no-such-widget")

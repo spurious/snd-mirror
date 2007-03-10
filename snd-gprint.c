@@ -52,7 +52,14 @@ static void draw_page(GtkPrintOperation *operation, GtkPrintContext *context, gi
 
   g_object_unref(layout);
 
-  display_channel_data(selected_channel()); /* update_graph recalculates the spectrum which is unnecessary here */
+  {
+    chan_info *cp;
+    cp = selected_channel();
+    if (cp->cgx->ax->cr) cairo_destroy(cp->cgx->ax->cr);
+    cp->cgx->ax->cr = cr;
+    display_channel_data_for_print(cp); /* update_graph recalculates the spectrum which is unnecessary here */
+    cp->cgx->ax->cr = NULL;
+  }
 }
 
 static void end_print(GtkPrintOperation *operation, GtkPrintContext *context, gpointer data)

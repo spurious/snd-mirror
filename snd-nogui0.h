@@ -34,6 +34,7 @@
 #define any_pointer_t void *
 #define oclock_t int
 #define color_t int
+#define point_t int
 
 #define rgb_t unsigned short
 #define RGB_MAX 65535
@@ -81,12 +82,6 @@ typedef struct {
   struct dialog_play_info *ignore_me; /* for the compiler's benefit */
   int requestor_dialog;
 } state_context;
-
-typedef struct {
-  int *p0, *p1;
-  int lastpj, graph, color;
-} mix_context;
-
 
 #define snd_ShiftMask 0
 #define snd_ControlMask 0

@@ -3027,12 +3027,13 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 	      cp->grid_density);
 }
 
-static void draw_graph_cursor(chan_info *cp);
 static void draw_sonogram_cursor(chan_info *cp);
+static void draw_graph_cursor(chan_info *cp);
 
 static void display_channel_data_with_size(chan_info *cp, 
 					   int width, int height, int offset, 
-					   bool just_fft, bool just_lisp, bool just_time)
+					   bool just_fft, bool just_lisp, bool just_time,
+					   bool save_cr)
 {
   /* this procedure is unnecessarily confusing! */
   snd_info *sp;
@@ -3119,13 +3120,12 @@ static void display_channel_data_with_size(chan_info *cp,
     }
 
 #if USE_CAIRO
-  if ((cp->cgx) && (cp->cgx->ax))
+  if ((!save_cr) && (cp->cgx) && (cp->cgx->ax))
     {
       if (cp->cgx->ax->cr)
 	cairo_destroy(cp->cgx->ax->cr);
       cp->cgx->ax->cr = gdk_cairo_create(cp->cgx->ax->wn);
     }
-  else fprintf(stderr, "cp cgx trouble: %p %p\n", cp->cgx, (cp->cgx) ? cp->cgx->ax : 0);
 #endif
 
   if (displays == 0)
@@ -3326,7 +3326,7 @@ static void display_channel_data_with_size(chan_info *cp,
     } 
 }
 
-static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp, bool just_time)
+static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp, bool just_time, bool save_cr)
 {
   snd_info *sp;
   int width, height;
@@ -3341,7 +3341,7 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
       width = widget_width(channel_graph(cp));
       height = widget_height(channel_graph(cp));
       if ((height > 5) && (width > 5))
-	display_channel_data_with_size(cp, width, height, 0, just_fft, just_lisp, just_time);
+	display_channel_data_with_size(cp, width, height, 0, just_fft, just_lisp, just_time, save_cr);
     }
   else
     {
@@ -3353,7 +3353,7 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
       height = widget_height(channel_graph(sp->chans[0]));
       cp->height = height;
       if (sp->channel_style == CHANNELS_SUPERIMPOSED)
-	display_channel_data_with_size(cp, width, height, 0, just_fft, just_lisp, just_time);
+	display_channel_data_with_size(cp, width, height, 0, just_fft, just_lisp, just_time, save_cr);
       else
 	{
 	  int offset, full_height, y0, y1, bottom, top;
@@ -3385,7 +3385,7 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
 	    chan_height = height - offset;
 	  if (((y0 < top) && (y0 >= bottom)) || 
 	      ((y1 > bottom) && (y1 <= top)))
-	    display_channel_data_with_size(cp, width, (int)chan_height, offset, just_fft, just_lisp, just_time);
+	    display_channel_data_with_size(cp, width, (int)chan_height, offset, just_fft, just_lisp, just_time, save_cr);
 	  else 
 	    {
 	      ap = cp->axis;
@@ -3397,22 +3397,27 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
 
 void display_channel_fft_data(chan_info *cp)
 {
-  display_channel_data_1(cp, true, false, false);
+  display_channel_data_1(cp, true, false, false, false);
 }
 
 static void display_channel_lisp_data(chan_info *cp)
 {
-  display_channel_data_1(cp, false, true, false);
+  display_channel_data_1(cp, false, true, false, false);
 }
 
 static void display_channel_time_data(chan_info *cp)
 {
-  display_channel_data_1(cp, false, false, true);
+  display_channel_data_1(cp, false, false, true, false);
 }
 
 void display_channel_data(chan_info *cp)
 {
-  display_channel_data_1(cp, false, false, false);
+  display_channel_data_1(cp, false, false, false, false);
+}
+
+void display_channel_data_for_print(chan_info *cp)
+{
+  display_channel_data_1(cp, false, false, false, true);
 }
 
 

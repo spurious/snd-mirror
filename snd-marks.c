@@ -296,7 +296,8 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
   if (ax->cr) cairo_destroy(ax->cr);
   ax->cr = gdk_cairo_create(ax->wn);
   {
-    color_t bg_color;
+    color_t bg_color, old_color;
+    old_color = ax->fg_color;
     if (show) 
       bg_color = ss->sgx->red;
     else
@@ -305,9 +306,7 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
 	  bg_color = ss->sgx->selected_graph_color;
 	else bg_color = ss->sgx->graph_color;
       }
-    cairo_set_source_rgb(ax->cr, RGB_TO_FLOAT(bg_color->red), RGB_TO_FLOAT(bg_color->green), RGB_TO_FLOAT(bg_color->blue));
-    set_foreground_color(ax, bg_color);
-  }
+    gc_set_foreground(ax, bg_color);
 #endif
   fill_rectangle(ax,
 		 cx - mark_tag_width(ss), top,
@@ -319,6 +318,10 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
 	       cx,                   y0 + 2 * PLAY_ARROW_SIZE,
 	       cx,                   y0);
   mp->visible = show;
+#if USE_CAIRO
+    gc_set_foreground(ax, old_color);
+  }
+#endif
 }
 
 static void draw_play_triangle(chan_info *cp, int x)
