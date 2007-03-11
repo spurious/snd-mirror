@@ -3915,13 +3915,11 @@ and its value is returned."
 		help_text = XEN_PROCEDURE_HELP(value);  /* (procedure-property ...) */
 		if (XEN_FALSE_P(help_text))
 		  help_text = XEN_PROCEDURE_SOURCE_HELP(value);      /* (procedure-documentation ...) -- this is the first line of source if string */
-#if HAVE_GUILE
+
 		/* if procedure-with-setter, documentation string might be on the getter? */
 		if ((XEN_FALSE_P(help_text)) &&
 		    (SCM_PROCEDURE_WITH_SETTER_P(value)))
 		  help_text = XEN_PROCEDURE_SOURCE_HELP(SCM_PROCEDURE(value));
-#endif
-		    
 	      }
 	    if ((XEN_FALSE_P(help_text)) && (search) && (!already_looped) && (help_names))
 	      {

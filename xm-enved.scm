@@ -176,7 +176,6 @@
 	    (set! args (append args (list XmNforeground (data-color)))))
 	(let* ((drawer (XtCreateManagedWidget name xmDrawingAreaWidgetClass parent args))
 	       (gc (car (snd-gcs)))
-	       (egc (list-ref (snd-gcs) 7))
 	       (x0 (car axis-bounds))
 	       (x1 (cadr axis-bounds)) ; too confusing! -- change internally below
 	       (y0 (caddr axis-bounds))
@@ -186,7 +185,7 @@
 			     drawer 
 			     #f  ; axis pixel locs filled in when drawn
 			     (list x0 y0 x1 y1)
-			     (list gc egc) 
+			     (list gc #f)
 			     name)))
 	  (XtAddCallback drawer XmNresizeCallback 
 			 (lambda (w context info) 
@@ -214,7 +213,6 @@
 	  editor))
       (let* ((drawer (gtk_drawing_area_new))
 	     (gc (car (snd-gcs)))
-	     (egc (list-ref (snd-gcs) 7))
 	     (x0 (car axis-bounds))
 	     (x1 (cadr axis-bounds))
 	     (y0 (caddr axis-bounds))
@@ -225,7 +223,7 @@
 			   drawer 
 			   #f  ; axis pixel locs filled in when drawn
 			   (list x0 y0 x1 y1)
-			   (list gc egc) 
+			   (list gc #f)
 			   name)))
 	(gtk_widget_set_events drawer GDK_ALL_EVENTS_MASK)
 	(gtk_box_pack_start (GTK_BOX parent) drawer #t #t 10)
@@ -303,7 +301,6 @@
 	 (ax-pix (list-ref drawer 2))
 	 (ax-inf (list-ref drawer 3))
 	 (gc (car (list-ref drawer 4)))
-	 (egc (cadr (list-ref drawer 4)))
 	 (name (list-ref drawer 5))
 	 (len (and (list? cur-env) (length cur-env))))
     (if (and (list? ax-pix)

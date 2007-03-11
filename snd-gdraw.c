@@ -16,7 +16,12 @@ TODO: no redisplay if cursor is all that changed, snd-chn 3440
 TODO: fft peaks font is too big
 TODO: selection erases (covers)
 TODO: mark erases waveform
-TODO: gtk-print: strings not output
+TODO: gtk-print: strings not output [fixed?]
+TODO: erase_GC should be bg->fg + bg as was -- see mix redpy
+TODO: cursor starts to redpy after mark! Then no true waveform
+TODO: remove all _direct, get pixmap translated
+TODO: gfft spacing is bad
+TODO: track down fth help problem (defs in lang?)
 */
 
 
@@ -85,9 +90,6 @@ void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width,
 
 void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
 {
-  PangoLayout *layout = NULL;
-  PangoContext *ctx;
-
   if ((ax->wn == NULL) || (ax->current_font == NULL)) return;
   if ((!str) || (!(*str))) return;
   if (!(g_utf8_validate(str, -1, NULL)))
@@ -98,27 +100,36 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
 #endif
       return;
     }
-  ctx = gdk_pango_context_get();
-  layout = pango_layout_new(ctx);
-  if (layout)
-    {
-      pango_layout_set_font_description(layout, ax->current_font);
-      pango_layout_set_text(layout, str, -1);
-#if USE_CAIRO
-      /* TODO:
-      gdk_draw_layout(ax->wn, ax->gc->gc, (gint)x0, (gint)y0, layout);
-      */
+#if (!USE_CAIRO)
+  {
+    PangoLayout *layout = NULL;
+    PangoContext *ctx;
+    ctx = gdk_pango_context_get();
+    layout = pango_layout_new(ctx);
+    if (layout)
+      {
+	pango_layout_set_font_description(layout, ax->current_font);
+	pango_layout_set_text(layout, str, -1);
+	gdk_draw_layout(ax->wn, ax->gc, (gint)x0, (gint)y0, layout);
+	g_object_unref(G_OBJECT(layout));
+      }
+    g_object_unref(ctx);
+  }
 #else
-      gdk_draw_layout(ax->wn, ax->gc, (gint)x0, (gint)y0, layout);
+  {
+    PangoLayout *layout = NULL;
+    layout = pango_cairo_create_layout(ax->cr);
+    if (layout)
+      {
+	pango_layout_set_font_description(layout, ax->current_font);
+	pango_layout_set_text(layout, str, -1);
+	cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);	
+	cairo_move_to(ax->cr, x0, y0);
+	pango_cairo_show_layout(ax->cr, layout);
+	g_object_unref(G_OBJECT(layout));
+      }
+  }
 #endif
-      g_object_unref(G_OBJECT(layout));
-    }
-  g_object_unref(ctx);
-  /* this is apparently obsolete code now.  I think the new way (untested) is to set up a context
-   * on each widget (geezus...) via gtk_widget_create_pango_layout(), then re-use that context
-   * at this level via gtk_widget_get_pango_context(w).  But do I need a new context or layout
-   * for every font, and do I have to update the fonts every time one changes? 
-   */
 }
 
 void draw_picture_direct(GdkDrawable* drawable, gc_t *gp, GdkDrawable* src, gint xsrc, gint ysrc, gint xdest, gint ydest, gint width, gint height)
@@ -155,25 +166,36 @@ void draw_lines(axis_context *ax, point_t *points, int num)
 #endif
 }
 
-void draw_arc(axis_context *ax, int x, int y, int size)
+void draw_dot(axis_context *ax, int x, int y, int size)
 {
 #if USE_CAIRO
   cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
-  cairo_arc(ax->cr, x - size / 2, y - size / 2, size, 0.0, 2 * M_PI);
-  cairo_stroke(ax->cr);
+  cairo_arc(ax->cr, x, y, size / 2, 0.0, 2 * M_PI);
+  cairo_fill(ax->cr);
 #else
   gdk_draw_arc(ax->wn, ax->gc, true, x - size / 2, y - size / 2, size, size, 0, 360 * 64);
+#endif
+}
+
+void draw_arc(axis_context *ax, int x, int y, int size, int angle0, int angle1)
+{
+#if USE_CAIRO
+  cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
+  cairo_arc(ax->cr, x, y, size / 2, mus_degrees_to_radians(angle0), mus_degrees_to_radians(angle1));
+  cairo_stroke(ax->cr);
+#else
+  gdk_draw_arc(ax->wn, ax->gc, false, x - size / 2, y - size / 2, size, size, angle0 * 64, angle1 * 64);
 #endif
 }
 
 void draw_point(axis_context *ax, GdkPoint point, int size)
 {
 #if USE_CAIRO
-  draw_arc(ax, point.x, point.y, size);
+  draw_dot(ax, point.x, point.y, size);
 #else
   if (size == 1)
     gdk_draw_point(ax->wn, ax->gc, point.x, point.y);
-  else draw_arc(ax, point.x, point.y, size);
+  else draw_dot(ax, point.x, point.y, size);
 #endif
 }
 
@@ -188,32 +210,8 @@ void draw_points(axis_context *ax, point_t *points, int num, int size)
     {
       int i;
       for (i = 0; i < num; i++) 
-	draw_arc(ax, points[i].x, points[i].y, size);
+	draw_dot(ax, points[i].x, points[i].y, size);
     }
-}
-
-void draw_arc_direct(GdkDrawable* drawable, gc_t *gc, gboolean filled, gint x, gint y, gint width, gint height, gint angle1, gint angle2)
-{
-#if USE_CAIRO
-#else
-  gdk_draw_arc(drawable, gc, filled, x, y, width, height, angle1, angle2);
-#endif
-}
-
-void draw_line_direct(GdkDrawable* drawable, gc_t *gc, gint x1, gint y1, gint x2, gint y2)
-{
-#if USE_CAIRO
-#else
-  gdk_draw_line(drawable, gc, x1, y1, x2, y2);
-#endif
-}
-
-void draw_rectangle_direct(GdkDrawable* drawable, gc_t *gc, gboolean filled, gint x, gint y, gint width, gint height)
-{
-#if USE_CAIRO
-#else
-  gdk_draw_rectangle(drawable, gc, filled, x, y, width, height);
-#endif
 }
 
 static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list ap)
@@ -279,29 +277,19 @@ void draw_polygon(axis_context *ax, int points, ...)
   va_end(ap);
 }
 
-void draw_polygon_direct(GdkDrawable *wn, gc_t *gp, bool filled, point_t *points, int npoints)
+void fill_polygon_from_array(axis_context *ax, point_t *points, int npoints)
 {
 #if USE_CAIRO
   int i;
-  cairo_t *cr;
-  cr = gdk_cairo_create(wn);
-  cairo_set_source_rgb(cr, gp->fg_red, gp->fg_green, gp->fg_blue);
-  cairo_set_line_width(cr, 1.0);
-  cairo_move_to(cr, points[0].x + 0.5, points[0].y + 0.5);
+  cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
+  cairo_set_line_width(ax->cr, 1.0);
+  cairo_move_to(ax->cr, points[0].x, points[0].y);
   for (i = 1; i < npoints; i++)
-    cairo_line_to(cr, points[i].x + 0.5, points[i].y + 0.5);
-  if (filled)
-    {
-      cairo_close_path(cr);
-      cairo_fill(cr);
-    }
-  else
-    {
-      cairo_stroke(cr);
-    }
-  cairo_destroy(cr);
+    cairo_line_to(ax->cr, points[i].x, points[i].y);
+  cairo_close_path(ax->cr);
+  cairo_fill(ax->cr);
 #else
-  gdk_draw_polygon(wn, gp, filled, points, npoints);
+  gdk_draw_polygon(ax->wn, ax->gc, true, points, npoints);
 #endif
 }
 
@@ -320,7 +308,7 @@ void fill_polygons(axis_context *ax, point_t *points, int num, int y0)
       polypts[2].y = y0;
       polypts[3].x = points[i - 1].x;
       polypts[3].y = y0;
-      draw_polygon_direct(ax->wn, ax->gc, true, polypts, 4);
+      fill_polygon_from_array(ax, polypts, 4);
     }
 }
 
@@ -337,7 +325,7 @@ void fill_two_sided_polygons(axis_context *ax, point_t *points, point_t *points1
       polypts[2].y = points1[i].y;
       polypts[3].x = points1[i - 1].x;
       polypts[3].y = points1[i - 1].y;
-      draw_polygon_direct(ax->wn, ax->gc, true, polypts, 4);
+      fill_polygon_from_array(ax, polypts, 4);
     }
 }
 

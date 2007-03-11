@@ -25,15 +25,13 @@ void fill_polygon(axis_context *ax, int points, ...);
 void draw_polygon(axis_context *ax, int points, ...);
 void fill_polygons(axis_context *ax, point_t *points, int num, int y0);
 void fill_two_sided_polygons(axis_context *ax, point_t *points, point_t *points1, int num);
+void fill_polygon_from_array(axis_context *ax, point_t *points, int npoints);
 
-void draw_line_direct(GdkDrawable* drawable, gc_t *gc, gint x1, gint y1, gint x2, gint y2);
-void draw_rectangle_direct(GdkDrawable* drawable, gc_t *gc, gboolean filled, gint x, gint y, gint width, gint height);
-void draw_polygon_direct(GdkDrawable *wn, gc_t *gp, bool filled, GdkPoint *points, int npoints);
 void draw_picture_direct(GdkDrawable* drawable, gc_t *gp, GdkDrawable* src, gint xsrc, gint ysrc, gint xdest, gint ydest, gint width, gint height);
-void draw_arc_direct(GdkDrawable* drawable, gc_t *gc, gboolean filled, gint x, gint y, gint width, gint height, gint angle1, gint angle2);
 
 void draw_string(axis_context *ax, int x0, int y0, const char *str, int len);
-void draw_arc(axis_context *ax, int x, int y, int size);
+void draw_arc(axis_context *ax, int x, int y, int size, int angle0, int angle1);
+void draw_dot(axis_context *ax, int x, int y, int size);
 void setup_axis_context(chan_info *cp, axis_context *ax);
 GtkWidget *start_color_dialog(bool managed);
 GtkWidget *start_orientation_dialog(bool managed);

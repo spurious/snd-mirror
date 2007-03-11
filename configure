@@ -887,7 +887,7 @@ Optional Packages:
   --with-midi		  include sndlib midi module
   --with-doubles	  use doubles throughout
   --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes
-  --with-cairo		  use cairo for graphics in Gtk, if possible
+  --with-cairo		  use cairo for graphics in Gtk -- not currently very usable
   --with-gsl		  use GSL, default=yes
   --with-fftw		  use fftw, default=yes
   --with-xpm		  use xpm, default=yes
@@ -14147,6 +14147,79 @@ _ACEOF
 fi
 
 
+	# for cairo 1.4.0
+	echo "$as_me:$LINENO: checking for cairo_get_user_data in -lcairo" >&5
+echo $ECHO_N "checking for cairo_get_user_data in -lcairo... $ECHO_C" >&6
+if test "${ac_cv_lib_cairo_cairo_get_user_data+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcairo $GTK_LIBS $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char cairo_get_user_data ();
+int
+main ()
+{
+cairo_get_user_data ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_cairo_cairo_get_user_data=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_cairo_cairo_get_user_data=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_cairo_cairo_get_user_data" >&5
+echo "${ECHO_T}$ac_cv_lib_cairo_cairo_get_user_data" >&6
+if test $ac_cv_lib_cairo_cairo_get_user_data = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_CAIRO_GET_USER_DATA 1
+_ACEOF
+
+fi
+
+
 	XLIBS=""
       	XFLAGS=""
 
@@ -22414,7 +22487,7 @@ fi
 if test "${enable_deprecated+set}" = set; then
   enableval="$enable_deprecated"
   if test "$enable_deprecated" = no ; then
-    CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED $CFLAGS"
+    CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DCAIRO_DISABLE_DEPRECATED $CFLAGS"
     cat >>confdefs.h <<\_ACEOF
 #define XM_DISABLE_DEPRECATED 1
 _ACEOF

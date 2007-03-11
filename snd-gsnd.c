@@ -1061,6 +1061,9 @@ void display_filter_env(snd_info *sp)
   ax->gc = ss->sgx->fltenv_basic_gc;
   ax->wn = drawer->window;
   ax->w = drawer;
+#if USE_CAIRO
+  ax->cr = gdk_cairo_create(ax->wn);
+#endif
   gdk_window_clear(ax->wn);
   edp->in_dB = sp->filter_control_in_dB;
   edp->with_dots = true;
@@ -1074,6 +1077,9 @@ void display_filter_env(snd_info *sp)
 				 sp->filter_control_order, 
 				 sp->filter_control_in_dB);
     }
+#if USE_CAIRO
+  cairo_destroy(ax->cr);
+#endif
   FREE(ax);
 }
 

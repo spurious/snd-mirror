@@ -143,6 +143,7 @@ Version info:
   if gtkglext, version 1.0 or later
   if gamin, version 0.1.0 or later
   if Gauche, version 0.8.7 or later
+  if Cairo and the xg module, version 1.2.6 or later
 
 
 ----------------------------------------------------------------

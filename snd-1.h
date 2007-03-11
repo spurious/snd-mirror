@@ -1312,6 +1312,7 @@ axis_context *erase_context(chan_info *cp);
 axis_context *selection_context(chan_info *cp);
 axis_context *mark_context(chan_info *cp);
 axis_context *mix_waveform_context(chan_info *cp);
+axis_context *cursor_context(chan_info *cp);
 void calculate_fft(chan_info *cp);
 void set_min_db(Float db);
 void set_x_axis_style(x_axis_style_t val);
@@ -1795,19 +1796,19 @@ Float evaluate_ptreec(struct ptree *pt, Float arg, vct *v, bool dir);
 
 /* -------- snd-draw.c -------- */
 
-#if (!USE_NO_GUI)
-  void set_grf_points(int xi, int j, int ymin, int ymax);
-  void set_grf_point(int xi, int j, int yi);
-  void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style);
-  void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style);
-  void mix_save_graph(mix_context *ms, int j);
-  void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int j);
-  void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int j);
-  axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller);
-  void g_init_draw(void);
-  void set_dialog_widget(snd_dialog_t which, widget_t wid);
-  void run_new_widget_hook(widget_t w);
-#endif
+void draw_cursor(chan_info *cp);
+void set_grf_points(int xi, int j, int ymin, int ymax);
+void set_grf_point(int xi, int j, int yi);
+void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style);
+void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style);
+void mix_save_graph(mix_context *ms, int j);
+void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int j);
+void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int j);
+axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller);
+void g_init_draw(void);
+void set_dialog_widget(snd_dialog_t which, widget_t wid);
+void run_new_widget_hook(widget_t w);
+
 #if HAVE_GL
   void sgl_save_currents(void);
   void sgl_set_currents(void);

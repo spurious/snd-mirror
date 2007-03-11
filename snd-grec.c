@@ -7,7 +7,6 @@
 
 typedef struct {
   GtkWidget *meter, *label;
-  GdkDrawable *wn;
   int on_off;
   int clipped;
   Float current_val, last_val;
@@ -18,6 +17,7 @@ typedef struct {
   GdkPixmap *off_label;
   GdkPixmap *on_label;
   GdkPixmap *clip_label;
+  axis_context *ax; /* to hold cairo context and current drawing choices */
 } vu_t;
 
 typedef struct {
@@ -162,7 +162,7 @@ static gboolean recorder_noop_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gp
 #define CLIPPED_TRIGGER 0.99
 #define VU_NEEDLE_SPEED 0.25
 #define VU_BUBBLE_SPEED 0.025
-#define VU_BUBBLE_SIZE (15 * 64)
+#define VU_BUBBLE_SIZE 15
 #define VU_COLORS 11
 
 static GdkColor *yellows[VU_COLORS];
@@ -259,15 +259,19 @@ static void allocate_meter(vu_t *vu)
 	  {
 	    if (!(vu->clip_label))
 	      vu->clip_label = gdk_pixmap_new(wn, width, height, -1);
-	    gc_set_foreground(draw_gc, reds[0]);	    
-	    draw_rectangle_direct(vu->clip_label, draw_gc, true, 0, 0, width, height);
+	    gc_set_foreground(draw_gc, reds[0]);
+	    vu->ax->wn = vu->clip_label;
+	    vu->ax->gc = draw_gc;
+	    fill_rectangle(vu->ax, 0, 0, width, height);
 	  }
 	else 
 	  {
 	    if (!(vu->on_label))
 	      vu->on_label = gdk_pixmap_new(wn, width, height, -1);
 	    gc_set_foreground(draw_gc, yellows[2]);
-	    draw_rectangle_direct(vu->on_label, draw_gc, true, 0, 0, width, height);
+	    vu->ax->wn = vu->on_label;
+	    vu->ax->gc = draw_gc;
+	    fill_rectangle(vu->ax, 0, 0, width, height);
 	  }
 	/* initialize the sequence of nested polygons */
 	pts[0].x = (short)(wid2 - band_x);
@@ -284,9 +288,7 @@ static void allocate_meter(vu_t *vu)
 	pts[5].y = pts[0].y;
 	pts[6].x = pts[0].x;
 	pts[6].y = pts[0].y;
-	if (k == 1)
-	  draw_polygon_direct(vu->clip_label, draw_gc, true, pts, 7);
-	else draw_polygon_direct(vu->on_label, draw_gc, true, pts, 7);
+	fill_polygon_from_array(vu->ax, pts, 7);
 	
 	for (i = 1; i < VU_COLORS; i++)
 	  {
@@ -313,9 +315,7 @@ static void allocate_meter(vu_t *vu)
 	    pts[11].y = pts[6].y;
 	    pts[12].x = pts[0].x;
 	    pts[12].y = pts[0].y;
-	    if (k == 1)
-	      draw_polygon_direct(vu->clip_label, draw_gc, true, pts, 13);
-	    else draw_polygon_direct(vu->on_label, draw_gc, true, pts, 13);
+	    fill_polygon_from_array(vu->ax, pts, 13);
 	    for (j = 0; j < 6; j++) 
 	      { 
 		/* set up initial portion of next polygon */
@@ -331,7 +331,9 @@ static void allocate_meter(vu_t *vu)
     vu->off_label = gdk_pixmap_new(wn, width, height, -1);
   /* not on, so just display a white background */
   gc_set_foreground(draw_gc, white);
-  draw_rectangle_direct(vu->off_label, draw_gc, true, 0, 0, width, height);
+  vu->ax->wn = vu->off_label;
+  vu->ax->gc = draw_gc;
+  fill_rectangle(vu->ax, 0, 0, width, height);
   gc_set_foreground(draw_gc, black);
   
   {
@@ -340,28 +342,31 @@ static void allocate_meter(vu_t *vu)
     int x0, y0, x1, y1;
     Float rdeg;
 
-    ang0 = 45 * 64;
-    ang1 = 90 * 64;
+    ang0 = 45;
+    ang1 = 90;
     top = (int)(size * METER_TOP);
     major_tick = (int)(width / 24);
     minor_tick = (int)((width * 0.6) / 24);
 
     /* x y = coords of upper left corner of the bounding rectangle, not the arc center! */
 
-    draw_arc_direct(vu->on_label, draw_gc, false, 0, top, width, width, ang0, ang1);
-    draw_arc_direct(vu->on_label, draw_gc, false, 1, top - 1, width - 2, width - 2, ang0, ang1);
-    draw_arc_direct(vu->on_label, draw_gc, false, 2, top - 2, width - 4, width - 4, ang0, ang1);
-    draw_arc_direct(vu->on_label, draw_gc, false, 4, top + 4, width - 8, width - 8, ang0, ang1);
+    vu->ax->wn = vu->on_label;
+    draw_arc(vu->ax, 0, top, width, ang0, ang1);
+    draw_arc(vu->ax, 1, top - 1, width - 2, ang0, ang1);
+    draw_arc(vu->ax, 2, top - 2, width - 4, ang0, ang1);
+    draw_arc(vu->ax, 4, top + 4, width - 8, ang0, ang1);
 
-    draw_arc_direct(vu->off_label, draw_gc, false, 0, top, width, width, ang0, ang1);
-    draw_arc_direct(vu->off_label, draw_gc, false, 1, top - 1, width - 2, width - 2, ang0, ang1);
-    draw_arc_direct(vu->off_label, draw_gc, false, 2, top - 2, width - 4, width - 4, ang0, ang1);
-    draw_arc_direct(vu->off_label, draw_gc, false, 4, top + 4, width - 8, width - 8, ang0, ang1);
+    vu->ax->wn = vu->off_label;
+    draw_arc(vu->ax, 0, top, width, ang0, ang1);
+    draw_arc(vu->ax, 1, top - 1, width - 2, ang0, ang1);
+    draw_arc(vu->ax, 2, top - 2, width - 4, ang0, ang1);
+    draw_arc(vu->ax, 4, top + 4, width - 8, ang0, ang1);
 
-    draw_arc_direct(vu->clip_label, draw_gc, false, 0, top, width, width, ang0, ang1);
-    draw_arc_direct(vu->clip_label, draw_gc, false, 1, top - 1, width - 2, width - 2, ang0, ang1);
-    draw_arc_direct(vu->clip_label, draw_gc, false, 2, top - 2, width - 4, width - 4, ang0, ang1);
-    draw_arc_direct(vu->clip_label, draw_gc, false, 4, top + 4, width - 8, width - 8, ang0, ang1);
+    vu->ax->wn = vu->clip_label;
+    draw_arc(vu->ax, 0, top, width, ang0, ang1);
+    draw_arc(vu->ax, 1, top - 1, width - 2, ang0, ang1);
+    draw_arc(vu->ax, 2, top - 2, width - 4, ang0, ang1);
+    draw_arc(vu->ax, 4, top + 4, width - 8, ang0, ang1);
 
     /* draw the axis ticks */
     {
@@ -385,12 +390,15 @@ static void allocate_meter(vu_t *vu)
 	  x1 = (int)(wid2 + (wid2 + major_tick) * sinr);
 	  y1 = (int)(wid2 + top - (wid2 + major_tick) * cosr);
 	  
-	  draw_line_direct(vu->on_label, draw_gc, x0, y0, x1, y1);
-	  draw_line_direct(vu->on_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
-	  draw_line_direct(vu->off_label, draw_gc, x0, y0, x1, y1);
-	  draw_line_direct(vu->off_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
-	  draw_line_direct(vu->clip_label, draw_gc, x0, y0, x1, y1);
-	  draw_line_direct(vu->clip_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
+	  vu->ax->wn = vu->on_label;
+	  draw_line(vu->ax, x0, y0, x1, y1);
+	  draw_line(vu->ax, x0 + 1, y0, x1 + 1, y1);
+	  vu->ax->wn = vu->off_label;
+	  draw_line(vu->ax, x0, y0, x1, y1);
+	  draw_line(vu->ax, x0 + 1, y0, x1 + 1, y1);
+	  vu->ax->wn = vu->clip_label;
+	  draw_line(vu->ax, x0, y0, x1, y1);
+	  draw_line(vu->ax, x0 + 1, y0, x1 + 1, y1);
 	  
 	  if (i < (major_ticks - 1))
 	    for (j = 1; j <= minor_ticks; j++)
@@ -402,9 +410,12 @@ static void allocate_meter(vu_t *vu)
 		y0 = (int)(wid2 + top - wid2 * cosr);
 		x1 = (int)(wid2 + (wid2 + minor_tick) * sinr);
 		y1 = (int)(wid2 + top - (wid2 + minor_tick) * cosr);
-		draw_line_direct(vu->on_label, draw_gc, x0, y0, x1, y1);
-		draw_line_direct(vu->off_label, draw_gc, x0, y0, x1, y1);
-		draw_line_direct(vu->clip_label, draw_gc, x0, y0, x1, y1);
+		vu->ax->wn = vu->on_label;
+		draw_line(vu->ax, x0, y0, x1, y1);
+		vu->ax->wn = vu->off_label;
+		draw_line(vu->ax, x0, y0, x1, y1);
+		vu->ax->wn = vu->clip_label;
+		draw_line(vu->ax, x0, y0, x1, y1);
 	    }
 	}
     }
@@ -473,7 +484,9 @@ static void display_vu_meter(vu_t *vu)
     top = (int)(size * METER_TOP);
     major_tick = (int)(width / 24);
 
-    if (label) draw_picture_direct(vu->wn, vu_gc, label, 0, 0, 0, -height_offset, width, height);
+    vu->ax->wn = vu->meter->window;
+    vu->ax->gc = vu_gc;
+    if (label) draw_picture_direct(vu->ax->wn, vu_gc, label, 0, 0, 0, -height_offset, width, height);
 
     val = vu->current_val * VU_NEEDLE_SPEED + (vu->last_val * (1.0 - VU_NEEDLE_SPEED));
     vu->last_val = val;
@@ -487,7 +500,7 @@ static void display_vu_meter(vu_t *vu)
     y1 = (int)(wid2 + top - height_offset - (wid2 + major_tick) * cosr);
 
     gc_set_foreground(vu_gc, sx->black);
-    draw_line_direct(vu->wn, vu_gc, x0, y0, x1, y1);
+    draw_line(vu->ax, x0, y0, x1, y1);
 
     if (vu->on_off != VU_OFF)
       {
@@ -496,15 +509,15 @@ static void display_vu_meter(vu_t *vu)
 	else vu->red_deg = vu->current_val * VU_BUBBLE_SPEED + (vu->red_deg * (1.0 - VU_BUBBLE_SPEED));
 	gc_set_foreground(vu_gc, sx->red);
 
-	redx = (int)(vu->red_deg * 90 * 64);
-	if (redx<(VU_BUBBLE_SIZE)) 
+	redx = (int)(vu->red_deg * 90);
+	if (redx < VU_BUBBLE_SIZE)
 	  redy = redx; 
 	else redy = VU_BUBBLE_SIZE;
 
-	draw_arc_direct(vu->wn, vu_gc, false, 3, top + 0 - height_offset, width - 6, width - 6, 135 * 64 - redx, redy);
-	draw_arc_direct(vu->wn, vu_gc, false, 3, top + 1 - height_offset, width - 6, width - 6, 135 * 64 - redx, redy);
-	draw_arc_direct(vu->wn, vu_gc, false, 3, top + 2 - height_offset, width - 6, width - 6, 135 * 64 - redx, redy);
-	draw_arc_direct(vu->wn, vu_gc, false, 3, top + 3 - height_offset, width - 6, width - 6, 135 * 64 - redx, redy);
+	draw_arc(vu->ax, 3, top + 0 - height_offset, width - 6, 135 - redx, redy);
+	draw_arc(vu->ax, 3, top + 1 - height_offset, width - 6, 135 - redx, redy);
+	draw_arc(vu->ax, 3, top + 2 - height_offset, width - 6, 135 - redx, redy);
+	draw_arc(vu->ax, 3, top + 3 - height_offset, width - 6, 135 - redx, redy);
 
 	gc_set_foreground(vu_gc, sx->black);
       }
@@ -528,11 +541,6 @@ static void remake_all_vu_meters(void)
 	    {
 	      vu->dB = vu_in_dB(ss);
 	      vu->max_val = 0.0; /* force button update */
-#if 0
-	      if (vu->on_label) {XFreePixmap(dp, vu->on_label); vu->on_label = None;}
-	      if (vu->off_label) {XFreePixmap(dp, vu->off_label); vu->off_label = None;}
-	      if (vu->clip_label) {XFreePixmap(dp, vu->clip_label); vu->clip_label = None;}
-#endif
 	      allocate_meter(vu);
 	      display_vu_meter(vu);
 	    }
@@ -559,13 +567,14 @@ static vu_t *make_vu_meter(GtkWidget *meter, GtkWidget *label, Float size)
   vu->meter = meter;
   vu->label = label;
   vu->size = size;
-  vu->wn = meter->window;
   vu->on_off = VU_OFF;
   vu->current_val = 0.0;
   vu->last_val = 0.0;
   vu->max_val = 0.0;
   vu->clipped = 0;
   vu->dB = vu_in_dB(ss);
+  vu->ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+  vu->ax->wn = meter->window;
   allocate_meter(vu);
   return(vu);
 }

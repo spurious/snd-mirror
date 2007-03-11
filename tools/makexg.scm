@@ -1,7 +1,7 @@
 #!/usr/bin/guile -s
 !#
 
-;;; makexg.scm creates the gtk2/gdk/pango/glib bindings using xgdata.scm, writes xg.c
+;;; makexg.scm creates the gtk2/gdk/pango/glib/cairo bindings using xgdata.scm, writes xg.c
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
@@ -114,6 +114,10 @@
 (define checks-210 '())
 (define check-types-210 '())
 
+(define cairo-funcs-140 '())
+(define cairo-ints-140 '())
+(define cairo-types-140 '())
+
 (define all-types '())
 (define all-check-types '())
 
@@ -156,7 +160,7 @@
 	"GtkAttachOptions" "GtkCellRendererState" "GtkCurveType" "GtkDestDefaults" "GtkDestroyNotify" "GtkDialogFlags"
 	"GtkDirectionType" "GtkExpanderStyle" "GtkIconLookupFlags" "GtkMenuPositionFunc" "GtkPathType" "GtkSpinType"
 	"GtkTextSearchFlags" "GtkTreeIterCompareFunc" "GtkTreeSelectionFunc" "GtkUIManagerItemType" "GtkWindowPosition"
-	"GtkWindowType" "PangoGlyph" "PangoUnderline" "double" "gssize" 
+	"GtkWindowType" "PangoGlyph" "PangoUnderline" "gssize" 
 
 	"GtkMenuBar*" "GtkTranslateFunc" "GtkMenuPositionFunc" "GtkTreeIterCompareFunc" "GtkTreeSelectionFunc"
 	"GtkDestroyNotify"
@@ -1156,6 +1160,22 @@
 
 (define* (CAIRO-FUNC data #:optional spec) (CFNC-210 data spec))
 
+(define* (CAIRO-FUNC-140 data #:optional spec)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(no-way "CAIRO-FUNC-140: ~A~%" (list name data))
+	(let ((type (car-str data)))
+	  (if (not (member type all-types))
+	      (begin
+		(set! all-types (cons type all-types))
+		(set! cairo-types-140 (cons type cairo-types-140))))
+	  (let ((strs (parse-args args '210)))
+	    (if spec
+		(set! cairo-funcs-140 (cons (list name type strs args spec) cairo-funcs-140))
+		(set! cairo-funcs-140 (cons (list name type strs args) cairo-funcs-140)))
+	    (set! names (cons (cons name (func-type strs)) names)))))))
+
 
 (define (helpify name type args)
   (let* ((initial (format #f "  #define H_~A \"~A ~A(" name type name))
@@ -1387,6 +1407,15 @@
 	(set! names (cons (cons name 'int) names)))))
 
 (define* (CAIRO-INT name #:optional type) (CINT-210 name type))
+
+(define* (CAIRO-INT-140 name #:optional type)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CAIRO-INT-140~%" name)
+      (begin
+	(set! cairo-ints-140 (cons name cairo-ints-140))
+	(set! names (cons (cons name 'int) names)))))
+  
 
 (define (CCAST name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))
   (if (assoc name names)
@@ -1651,6 +1680,11 @@
   (thunk)
   (dpy "#endif~%~%"))
 
+(define (with-cairo-140 dpy thunk)
+  (dpy "#if HAVE_CAIRO_GET_USER_DATA~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
 
 
 ;;; ---------------------------------------- write output files ----------------------------------------
@@ -1704,6 +1738,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     12-Mar:    cairo 1.4.0.~%")
 (hey " *     9-Mar:     removed all *_get_type functions (nearly 300!).~%")
 (hey " *     5-Mar:     cairo and more gtkprint.~%")
 (hey " *     --------~%")
@@ -1969,61 +2004,17 @@
 
 ;;; (for-each check-type-it (reverse check-types))
 
-(if (not (null? types-21))
-    (with-21 hey
-	     (lambda ()
-	       (for-each type-it (reverse types-21))
-	       )))
-(if (not (null? types-22))
-    (with-22 hey
-	     (lambda ()
-	       (for-each type-it (reverse types-22))
-	       )))
-(if (not (null? types-23))
-    (with-23 hey
-	     (lambda ()
-	       (for-each type-it (reverse types-23))
-	       )))
-(if (not (null? types-236))
-    (with-236 hey
-	     (lambda ()
-	       (for-each type-it (reverse types-236))
-	       )))
-(if (not (null? types-250))
-    (with-250 hey
-	     (lambda ()
-	       (for-each type-it (reverse types-250))
-	       )))
-
-(if (not (null? types-256))
-    (with-256 hey
-	     (lambda ()
-	       (for-each type-it (reverse types-256))
-	       )))
-
-(if (not (null? types-260))
-    (with-260 hey
-	     (lambda ()
-	       (for-each type-it (reverse types-260))
-	       )))
-
-(if (not (null? types-270))
-    (with-270 hey
-	     (lambda ()
-	       (for-each type-it (reverse types-270))
-	       )))
-
-(if (not (null? types-290))
-    (with-290 hey
-	     (lambda ()
-	       (for-each type-it (reverse types-290))
-	       )))
-
-(if (not (null? types-210))
-    (with-210 hey
-	     (lambda ()
-	       (for-each type-it (reverse types-210))
-	       )))
+(if (not (null? types-21)) (with-21 hey (lambda () (for-each type-it (reverse types-21)))))
+(if (not (null? types-22)) (with-22 hey (lambda () (for-each type-it (reverse types-22)))))
+(if (not (null? types-23)) (with-23 hey (lambda () (for-each type-it (reverse types-23)))))
+(if (not (null? types-236)) (with-236 hey (lambda () (for-each type-it (reverse types-236)))))
+(if (not (null? types-250)) (with-250 hey (lambda () (for-each type-it (reverse types-250)))))
+(if (not (null? types-256)) (with-256 hey (lambda () (for-each type-it (reverse types-256)))))
+(if (not (null? types-260)) (with-260 hey (lambda () (for-each type-it (reverse types-260)))))
+(if (not (null? types-270)) (with-270 hey (lambda () (for-each type-it (reverse types-270)))))
+(if (not (null? types-290)) (with-290 hey (lambda () (for-each type-it (reverse types-290)))))
+(if (not (null? types-210)) (with-210 hey (lambda () (for-each type-it (reverse types-210)))))
+(if (not (null? cairo-types-140)) (with-cairo-140 hey (lambda () (for-each type-it (reverse cairo-types-140)))))
 
 (hey "#define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))~%")
 (hey "#define XLI(a, b) XEN_TO_C_INT(XEN_LIST_REF(a, b))~%")
@@ -2658,6 +2649,7 @@
 (if (not (null? funcs-273)) (with-273 hey (lambda () (for-each handle-func (reverse funcs-273)))))
 (if (not (null? funcs-290)) (with-290 hey (lambda () (for-each handle-func (reverse funcs-290)))))
 (if (not (null? funcs-210)) (with-210 hey (lambda () (for-each handle-func (reverse funcs-210)))))
+(if (not (null? cairo-funcs-140)) (with-cairo-140 hey (lambda () (for-each handle-func (reverse cairo-funcs-140)))))
 
 
 (hey "#define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))~%~%")
@@ -3005,6 +2997,7 @@
 (if (not (null? funcs-273)) (with-273 hey (lambda () (for-each argify-func (reverse funcs-273)))))
 (if (not (null? funcs-290)) (with-290 hey (lambda () (for-each argify-func (reverse funcs-290)))))
 (if (not (null? funcs-210)) (with-210 hey (lambda () (for-each argify-func (reverse funcs-210)))))
+(if (not (null? cairo-funcs-140)) (with-cairo-140 hey (lambda () (for-each argify-func (reverse cairo-funcs-140)))))
 
 (define (ruby-cast func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
 (hey "XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)~%")
@@ -3064,6 +3057,7 @@
 (if (not (null? funcs-273)) (with-273 hey (lambda () (for-each unargify-func (reverse funcs-273)))))
 (if (not (null? funcs-290)) (with-290 hey (lambda () (for-each unargify-func (reverse funcs-290)))))
 (if (not (null? funcs-210)) (with-210 hey (lambda () (for-each unargify-func (reverse funcs-210)))))
+(if (not (null? cairo-funcs-140)) (with-cairo-140 hey (lambda () (for-each unargify-func (reverse cairo-funcs-140)))))
 
 (hey "#define gxg_GPOINTER_w gxg_GPOINTER~%")
 (hey "#define c_array_to_xen_list_w c_array_to_xen_list~%")
@@ -3145,6 +3139,7 @@
 (if (not (null? funcs-273)) (with-273 hey (lambda () (for-each defun (reverse funcs-273)))))
 (if (not (null? funcs-290)) (with-290 hey (lambda () (for-each defun (reverse funcs-290)))))
 (if (not (null? funcs-210)) (with-210 hey (lambda () (for-each defun (reverse funcs-210)))))
+(if (not (null? cairo-funcs-140)) (with-cairo-140 hey (lambda () (for-each defun (reverse cairo-funcs-140)))))
 
 (define (cast-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, \"(~A obj) casts obj to ~A\");~%" 
@@ -3245,6 +3240,8 @@
     (with-290 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-290)))))
 (if (not (null? ints-210))
     (with-210 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-210)))))
+(if (not (null? cairo-ints-140))
+    (with-cairo-140 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse cairo-ints-140)))))
 
 
 (for-each 

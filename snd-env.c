@@ -557,7 +557,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 	    size = ENVED_DOT_SIZE;
 	  else size = (int)(ENVED_DOT_SIZE * 0.4);
 	  env_editor_set_current_point(edp, 0, ix1, iy1);
-	  draw_arc(ax, ix1, iy1, size);
+	  draw_dot(ax, ix1, iy1, size);
 	}
       if (e->base == 1.0)
 	{
@@ -572,7 +572,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 		  if (edp->with_dots)
 		    {
 		      env_editor_set_current_point(edp, j, ix1, iy1);
-		      draw_arc(ax, ix1, iy1, size);
+		      draw_dot(ax, ix1, iy1, size);
 		    }
 		  /* now try to fill in from the last point to this one */
 		  if ((ix1 - ix0) < (2 * EXP_SEGLEN))
@@ -615,7 +615,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 		  if (edp->with_dots)
 		    {
 		      env_editor_set_current_point(edp, j, ix1, iy1);
-		      draw_arc(ax, ix1, iy1, size);
+		      draw_dot(ax, ix1, iy1, size);
 		    }
 		  draw_line(ax, ix0, iy0, ix1, iy1);
 		  if (printing) ps_draw_line(ap, ix0, iy0, ix1, iy1);
@@ -635,7 +635,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 		  if (edp->with_dots)
 		    {
 		      env_editor_set_current_point(edp, j, ix1, iy1);
-		      draw_arc(ax, ix1, iy1, size);
+		      draw_dot(ax, ix1, iy1, size);
 		    }
 		  draw_line(ax, ix0, iy0, ix1, iy0);
 		  draw_line(ax, ix1, iy0, ix1, iy1);
@@ -678,7 +678,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 		    {
 		      index = mus_position(ce);
 		      if (index < (e->pts - 1))
-			draw_arc(ax, ix1, iy1, size);
+			draw_dot(ax, ix1, iy1, size);
 		    }
 		}
 	      if (curx < ex1)
@@ -691,7 +691,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 		  if (printing) ps_draw_line(ap, ix0, iy0, ix1, iy1);
 		}
 	      if (edp->with_dots)
-		draw_arc(ax, ix1, iy1, size);
+		draw_dot(ax, ix1, iy1, size);
 	      mus_free(ce);
 	    }
 	}

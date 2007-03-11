@@ -969,6 +969,9 @@ else
                  fi
 		], ,$GTK_LIBS)
 
+	# for cairo 1.4.0
+	AC_CHECK_LIB(cairo, cairo_get_user_data, [AC_DEFINE(HAVE_CAIRO_GET_USER_DATA)], ,$GTK_LIBS)
+
 	XLIBS=""
       	XFLAGS=""
       	AC_SUBST(XLIBS)
@@ -2072,7 +2075,7 @@ fi
 AC_ARG_ENABLE(deprecated,
   [  --disable-deprecated	  do not include any deprecated stuff from gtk, guile, motif, clm, or sndlib],
   if test "$enable_deprecated" = no ; then
-    CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED $CFLAGS"
+    CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DCAIRO_DISABLE_DEPRECATED $CFLAGS"
     AC_DEFINE(XM_DISABLE_DEPRECATED)
     AC_DEFINE(CLM_DISABLE_DEPRECATED)
     AC_DEFINE(SNDLIB_DISABLE_DEPRECATED)

@@ -198,6 +198,52 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
 }
 
 
+void draw_cursor(chan_info *cp)
+{
+  cursor_style_t cur;
+  axis_info *ap;
+  axis_context *ax;
+  if (!(cp->graph_time_p)) return;
+  ap = cp->axis;
+#if !USE_CAIRO
+  ax = cursor_context(cp);
+#endif
+  if ((cp->tracking) && (with_tracking_cursor(ss) != DONT_TRACK))
+    cur = cp->tracking_cursor_style;
+  else cur = cp->cursor_style;
+
+#if USE_CAIRO
+  /*
+  if (cp->cursor_visible)
+    set_foreground_color(ax, ax->gc->bg_color);
+  cp->cursor_visible = !(cp->cursor_visible);
+  */
+#endif
+
+  switch (cur)
+    {
+    case CURSOR_CROSS:
+      draw_line(ax, cp->cx, cp->cy - cp->cursor_size, cp->cx, cp->cy + cp->cursor_size);
+      draw_line(ax, cp->cx - cp->cursor_size, cp->cy, cp->cx + cp->cursor_size, cp->cy);
+      break;
+    case CURSOR_LINE:
+      draw_line(ax, cp->cx, ap->y_axis_y0, cp->cx, ap->y_axis_y1);
+      break;
+    case CURSOR_PROC:
+      XEN_CALL_3((XEN_PROCEDURE_P(cp->cursor_proc)) ? (cp->cursor_proc) : (ss->cursor_proc),
+		 C_TO_XEN_INT(cp->sound->index),
+		 C_TO_XEN_INT(cp->chan),
+		 /* this was time-graph, which was useless. It's now #t if we're in tracking-cursor mode */
+		 /*   this will be called only it with_tracking_cursor is #f -> we want to draw it ourselves */
+		 C_TO_XEN_BOOLEAN(cp->tracking),
+		 S_cursor_style " procedure");
+      break;
+    }
+}
+
+
+
+
 
 #define AXIS_CONTEXT_ID_OK(Id) ((Id >= CHAN_GC) && (Id <= CHAN_TMPGC))
 #define AXIS_INFO_ID_OK(Id)    (Id <= (int)LISP_AXIS_INFO)
@@ -269,7 +315,7 @@ static XEN g_draw_dot(XEN x0, XEN y0, XEN size, XEN snd, XEN chn, XEN ax)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_1, S_draw_dot, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_2, S_draw_dot, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(size), size, XEN_ARG_3, S_draw_dot, "a number");
-  draw_arc(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dot),
+  draw_dot(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dot),
 	   XEN_TO_C_INT(x0),
 	   XEN_TO_C_INT(y0),
 	   XEN_TO_C_INT_OR_ELSE(size, 1));
@@ -316,12 +362,6 @@ static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax)
 	      snd_strlen(tmp));
   return(text);
 }
-
-#if USE_MOTIF
-  #define point_t XPoint
-#else
-  #define point_t GdkPoint
-#endif
 
 static point_t *vector_to_points(XEN pts, const char *caller, int *vector_len)
 {
@@ -400,7 +440,7 @@ static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
 #if USE_MOTIF
   XFillPolygon(ax->dp, ax->wn, ax->gc, pack_pts, vlen, Complex, CoordModeOrigin);
 #else
-  draw_polygon_direct(ax->wn, ax->gc, true, pack_pts, vlen);
+  fill_polygon_from_array(ax, pack_pts, vlen);
 #endif
   FREE(pack_pts);
   return(pts);
@@ -908,18 +948,29 @@ static XEN g_focus_widget(XEN wid)
   return(wid);
 }
 
+#if USE_CAIRO
+static XEN XEN_WRAP_GC(gc_t *gc)
+{
+  /* this is just a stop-gap -- ideally user extension code would not use the Gdk-specific gcs -- TODO: rewrite all snd-gcs references */
+  GdkGC *gp;
+  gp = gdk_gc_new(MAIN_WINDOW(ss));
+  gdk_gc_set_background(gp, gc->bg_color);
+  gdk_gc_set_foreground(gp, gc->fg_color);
+  if (gc->op == GDK_XOR)
+    gdk_gc_set_function(gp, GDK_XOR);
+  return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"), C_TO_XEN_ULONG((unsigned long)gp)));
+}
+#endif
+
 static XEN g_snd_gcs(void)
 {
   #define H_snd_gcs "(" S_snd_gcs "): a list of Snd graphics contexts (list (0 basic) (1 selected_basic) (2 combined) (3 \
 cursor) (4 selected_cursor) (5 selection) (6 selected_selection) (7 erase) (8 selected_erase) (9 mark) (10 selected_mark) (11 mix) (12 \
 fltenv_basic) (13 fltenv_data))"
 
-#if USE_GTK
-#if USE_CAIRO
-  #define XEN_WRAP_GC(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"), C_TO_XEN_ULONG((unsigned long)(Value->gc)))
-#else
+#if USE_GTK && (!USE_CAIRO)
   #define XEN_WRAP_GC(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"), C_TO_XEN_ULONG((unsigned long)Value))
-#endif
+  /* draw axes wants a gc_t* value */
 #endif
 
   state_context *sx;
@@ -1813,4 +1864,16 @@ a new set of channel or sound widgets is created."
 
   new_widget_hook = XEN_DEFINE_HOOK(S_new_widget_hook, 1, H_new_widget_hook);      /* arg = widget */
 }
+
+#else
+/* no gui */
+void set_grf_points(int xi, int j, int ymin, int ymax) {}
+void set_grf_point(int xi, int j, int yi) {}
+void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style) {}
+void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style) {}
+void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj) {}
+void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj) {}
+void mix_save_graph(mix_context *ms, int j) {}
+void draw_cursor(chan_info *cp) {}
 #endif
+

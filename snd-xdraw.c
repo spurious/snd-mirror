@@ -114,7 +114,7 @@ void draw_point(axis_context *ax, point_t point, int size)
 	     360 * 64);
 }
 
-void draw_arc(axis_context *ax, int x, int y, int size)
+void draw_dot(axis_context *ax, int x, int y, int size)
 {
   XFillArc(ax->dp, ax->wn, ax->gc, 
 	   x - size / 2, 

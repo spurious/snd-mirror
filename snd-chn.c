@@ -1206,7 +1206,6 @@ snd_info *make_simple_channel_display(int srate, int initial_length,
 }
 
 static void make_wavogram(chan_info *cp);
-static axis_context *cursor_context(chan_info *cp);
 static axis_context *combined_context(chan_info *cp);
 
 static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_sided)
@@ -2887,14 +2886,14 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
       x0 = local_grf_x(up->data[0][0], uap);
       y0 = local_grf_y(up->data[0][1], uap);
       if (cp->dot_size > 0) 
-	draw_arc(ax, x0, y0, cp->dot_size);
+	draw_dot(ax, x0, y0, cp->dot_size);
       for (i = 2; i < grf_len; i += 2)
 	{
 	  x1 = local_grf_x(up->data[0][i], uap);
 	  y1 = local_grf_y(up->data[0][i + 1], uap);
 	  draw_line(ax, x0, y0, x1, y1);
 	  if (cp->dot_size > 0) 
-	    draw_arc(ax, x1, y1, cp->dot_size);
+	    draw_dot(ax, x1, y1, cp->dot_size);
 	  x0 = x1;
 	  y0 = y1;
 	}
@@ -3422,38 +3421,6 @@ void display_channel_data_for_print(chan_info *cp)
 
 
 /* ---------------- CHANNEL CURSOR ---------------- */
-
-static void draw_cursor(chan_info *cp)
-{
-  cursor_style_t cur;
-  axis_info *ap;
-  axis_context *ax;
-  if (!(cp->graph_time_p)) return;
-  ap = cp->axis;
-  ax = cursor_context(cp);
-  if ((cp->tracking) && (with_tracking_cursor(ss) != DONT_TRACK))
-    cur = cp->tracking_cursor_style;
-  else cur = cp->cursor_style;
-  switch (cur)
-    {
-    case CURSOR_CROSS:
-      draw_line(ax, cp->cx, cp->cy - cp->cursor_size, cp->cx, cp->cy + cp->cursor_size);
-      draw_line(ax, cp->cx - cp->cursor_size, cp->cy, cp->cx + cp->cursor_size, cp->cy);
-      break;
-    case CURSOR_LINE:
-      draw_line(ax, cp->cx, ap->y_axis_y0, cp->cx, ap->y_axis_y1);
-      break;
-    case CURSOR_PROC:
-      XEN_CALL_3((XEN_PROCEDURE_P(cp->cursor_proc)) ? (cp->cursor_proc) : (ss->cursor_proc),
-		 C_TO_XEN_INT(cp->sound->index),
-		 C_TO_XEN_INT(cp->chan),
-		 /* this was time-graph, which was useless. It's now #t if we're in tracking-cursor mode */
-		 /*   this will be called only it with_tracking_cursor is #f -> we want to draw it ourselves */
-		 C_TO_XEN_BOOLEAN(cp->tracking),
-		 S_cursor_style " procedure");
-      break;
-    }
-}
 
 static void draw_graph_cursor(chan_info *cp)
 {
@@ -4540,7 +4507,7 @@ axis_context *set_context(chan_info *cp, chan_gc_t gc)
 axis_context *copy_context(chan_info *cp)            {return(set_context(cp, CHAN_GC));}
 axis_context *erase_context(chan_info *cp)           {return(set_context(cp, CHAN_IGC));}
 axis_context *selection_context(chan_info *cp)       {return(set_context(cp, CHAN_SELGC));}
-static axis_context *cursor_context(chan_info *cp)   {return(set_context(cp, CHAN_CGC));}
+axis_context *cursor_context(chan_info *cp)          {return(set_context(cp, CHAN_CGC));}
 axis_context *mark_context(chan_info *cp)            {return(set_context(cp, CHAN_MGC));}
 axis_context *mix_waveform_context(chan_info *cp)    {return(set_context(cp, CHAN_MXGC));}
 static axis_context *combined_context(chan_info *cp) {return(set_context(cp, CHAN_TMPGC));}

@@ -46,13 +46,14 @@
  *     win32-specific functions
  *
  * HISTORY:
- *     9-Mar:     removed all *_get_type functions.
+ *     12-Mar:    cairo 1.4.0.
+ *     9-Mar:     removed all *_get_type functions (nearly 300!).
  *     5-Mar:     cairo and more gtkprint.
  *     --------
  *     26-Aug:    removed --with-x11, WITH_GTK_AND_X11, xg-x11.h.
  *     4-Aug:     added a form of g_object_get and gtk_settings_get_for_screen.
- *     20-Jul:    added gtkprint stuff.
- *     17-Jul:    added g_signal_connect and other related macros.
+ *     20-Jul:    gtkprint stuff.
+ *     17-Jul:    g_signal_connect and other related macros.
  *     21-Apr:    Gauche support.
  *     29-Mar:    Forth support.
  *     7-Mar:     if g_set_error, return the error message, not the GError pointer
@@ -64,7 +65,7 @@
  *     4-Jan:     removed deprecated XEN_VECTOR_ELEMENTS.
  *     --------
  *     8-Dec:     added some g_log handler funcs.
- *     6-Dec:     added check for lost callback context.
+ *     6-Dec:     check for lost callback context.
  *                tightened type (pointer) checking considerably (#f only acceptable if explicit @ used in xgdata.scm).
  *     3-Dec:     changed GPOINTER cast func to accept non-lists.
  *     27-Aug:    removed the PANGO_ENGINE and PANGO_BACKEND stuff.
@@ -555,6 +556,7 @@ XM_TYPE_PTR(char__, char**)
 #define C_TO_XEN_gfloat(Arg) C_TO_XEN_DOUBLE(Arg)
 #define XEN_TO_C_gfloat(Arg) (gfloat)(XEN_TO_C_DOUBLE(Arg))
 #define XEN_gfloat_P(Arg) XEN_NUMBER_P(Arg)
+#define C_TO_XEN_double(Arg) C_TO_XEN_DOUBLE(Arg)
 #define XEN_TO_C_double(Arg) (double)(XEN_TO_C_DOUBLE(Arg))
 #define XEN_double_P(Arg) XEN_NUMBER_P(Arg)
 #define XEN_TO_C_GdkInterpType(Arg) (GdkInterpType)(XEN_TO_C_INT(Arg))
@@ -1095,6 +1097,11 @@ XM_TYPE_PTR(cairo_path_t_, cairo_path_t*)
 #define C_TO_XEN_cairo_filter_t(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_cairo_filter_t(Arg) (cairo_filter_t)(XEN_TO_C_INT(Arg))
 #define XEN_cairo_filter_t_P(Arg) XEN_INTEGER_P(Arg)
+#endif
+
+#if HAVE_CAIRO_GET_USER_DATA
+XM_TYPE_PTR(void_, void*)
+XM_TYPE_PTR(cairo_rectangle_list_t_, cairo_rectangle_list_t*)
 #endif
 
 #define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))
@@ -31594,6 +31601,256 @@ static XEN gxg_gdk_cairo_region(XEN cr, XEN region)
 
 #endif
 
+#if HAVE_CAIRO_GET_USER_DATA
+static XEN gxg_cairo_get_reference_count(XEN cr)
+{
+  #define H_cairo_get_reference_count "guint cairo_get_reference_count(cairo_t* cr)"
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "cairo_get_reference_count", "cairo_t*");
+  return(C_TO_XEN_guint(cairo_get_reference_count(XEN_TO_C_cairo_t_(cr))));
+}
+
+static XEN gxg_cairo_get_user_data(XEN cr, XEN key)
+{
+  #define H_cairo_get_user_data "void* cairo_get_user_data(cairo_t* cr, cairo_user_data_key_t* key)"
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "cairo_get_user_data", "cairo_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_user_data_key_t__P(key), key, 2, "cairo_get_user_data", "cairo_user_data_key_t*");
+  return(C_TO_XEN_void_(cairo_get_user_data(XEN_TO_C_cairo_t_(cr), XEN_TO_C_cairo_user_data_key_t_(key))));
+}
+
+static XEN gxg_cairo_set_user_data(XEN cr, XEN key, XEN user_data, XEN destroy)
+{
+  #define H_cairo_set_user_data "cairo_status_t cairo_set_user_data(cairo_t* cr, cairo_user_data_key_t* key, \
+void* user_data, cairo_destroy_func_t destroy)"
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "cairo_set_user_data", "cairo_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_user_data_key_t__P(key), key, 2, "cairo_set_user_data", "cairo_user_data_key_t*");
+  XEN_ASSERT_TYPE(XEN_void__P(user_data), user_data, 3, "cairo_set_user_data", "void*");
+  XEN_ASSERT_TYPE(XEN_cairo_destroy_func_t_P(destroy), destroy, 4, "cairo_set_user_data", "cairo_destroy_func_t");
+  return(C_TO_XEN_cairo_status_t(cairo_set_user_data(XEN_TO_C_cairo_t_(cr), XEN_TO_C_cairo_user_data_key_t_(key), XEN_TO_C_void_(user_data), 
+                                                     XEN_TO_C_cairo_destroy_func_t(destroy))));
+}
+
+static XEN gxg_cairo_clip_extents(XEN cr, XEN ignore_x1, XEN ignore_y1, XEN ignore_x2, XEN ignore_y2)
+{
+  #define H_cairo_clip_extents "void cairo_clip_extents(cairo_t* cr, double* [x1], double* [y1], double* [x2], \
+double* [y2])"
+  double ref_x1;
+  double ref_y1;
+  double ref_x2;
+  double ref_y2;
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "cairo_clip_extents", "cairo_t*");
+  cairo_clip_extents(XEN_TO_C_cairo_t_(cr), &ref_x1, &ref_y1, &ref_x2, &ref_y2);
+  return(XEN_LIST_4(C_TO_XEN_double(ref_x1), C_TO_XEN_double(ref_y1), C_TO_XEN_double(ref_x2), C_TO_XEN_double(ref_y2)));
+}
+
+static XEN gxg_cairo_copy_clip_rectangle_list(XEN cr)
+{
+  #define H_cairo_copy_clip_rectangle_list "cairo_rectangle_list_t* cairo_copy_clip_rectangle_list(cairo_t* cr)"
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "cairo_copy_clip_rectangle_list", "cairo_t*");
+  return(C_TO_XEN_cairo_rectangle_list_t_(cairo_copy_clip_rectangle_list(XEN_TO_C_cairo_t_(cr))));
+}
+
+static XEN gxg_cairo_rectangle_list_destroy(XEN rectangle_list)
+{
+  #define H_cairo_rectangle_list_destroy "void cairo_rectangle_list_destroy(cairo_rectangle_list_t* rectangle_list)"
+  XEN_ASSERT_TYPE(XEN_cairo_rectangle_list_t__P(rectangle_list), rectangle_list, 1, "cairo_rectangle_list_destroy", "cairo_rectangle_list_t*");
+  cairo_rectangle_list_destroy(XEN_TO_C_cairo_rectangle_list_t_(rectangle_list));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_cairo_font_face_get_reference_count(XEN font_face)
+{
+  #define H_cairo_font_face_get_reference_count "guint cairo_font_face_get_reference_count(cairo_font_face_t* font_face)"
+  XEN_ASSERT_TYPE(XEN_cairo_font_face_t__P(font_face), font_face, 1, "cairo_font_face_get_reference_count", "cairo_font_face_t*");
+  return(C_TO_XEN_guint(cairo_font_face_get_reference_count(XEN_TO_C_cairo_font_face_t_(font_face))));
+}
+
+static XEN gxg_cairo_scaled_font_get_reference_count(XEN scaled_font)
+{
+  #define H_cairo_scaled_font_get_reference_count "guint cairo_scaled_font_get_reference_count(cairo_scaled_font_t* scaled_font)"
+  XEN_ASSERT_TYPE(XEN_cairo_scaled_font_t__P(scaled_font), scaled_font, 1, "cairo_scaled_font_get_reference_count", "cairo_scaled_font_t*");
+  return(C_TO_XEN_guint(cairo_scaled_font_get_reference_count(XEN_TO_C_cairo_scaled_font_t_(scaled_font))));
+}
+
+static XEN gxg_cairo_scaled_font_get_user_data(XEN scaled_font, XEN key)
+{
+  #define H_cairo_scaled_font_get_user_data "void* cairo_scaled_font_get_user_data(cairo_scaled_font_t* scaled_font, \
+cairo_user_data_key_t* key)"
+  XEN_ASSERT_TYPE(XEN_cairo_scaled_font_t__P(scaled_font), scaled_font, 1, "cairo_scaled_font_get_user_data", "cairo_scaled_font_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_user_data_key_t__P(key), key, 2, "cairo_scaled_font_get_user_data", "cairo_user_data_key_t*");
+  return(C_TO_XEN_void_(cairo_scaled_font_get_user_data(XEN_TO_C_cairo_scaled_font_t_(scaled_font), XEN_TO_C_cairo_user_data_key_t_(key))));
+}
+
+static XEN gxg_cairo_scaled_font_set_user_data(XEN scaled_font, XEN key, XEN user_data, XEN destroy)
+{
+  #define H_cairo_scaled_font_set_user_data "cairo_status_t cairo_scaled_font_set_user_data(cairo_scaled_font_t* scaled_font, \
+cairo_user_data_key_t* key, void* user_data, cairo_destroy_func_t destroy)"
+  XEN_ASSERT_TYPE(XEN_cairo_scaled_font_t__P(scaled_font), scaled_font, 1, "cairo_scaled_font_set_user_data", "cairo_scaled_font_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_user_data_key_t__P(key), key, 2, "cairo_scaled_font_set_user_data", "cairo_user_data_key_t*");
+  XEN_ASSERT_TYPE(XEN_void__P(user_data), user_data, 3, "cairo_scaled_font_set_user_data", "void*");
+  XEN_ASSERT_TYPE(XEN_cairo_destroy_func_t_P(destroy), destroy, 4, "cairo_scaled_font_set_user_data", "cairo_destroy_func_t");
+  return(C_TO_XEN_cairo_status_t(cairo_scaled_font_set_user_data(XEN_TO_C_cairo_scaled_font_t_(scaled_font), XEN_TO_C_cairo_user_data_key_t_(key), 
+                                                                 XEN_TO_C_void_(user_data), XEN_TO_C_cairo_destroy_func_t(destroy))));
+}
+
+static XEN gxg_cairo_get_dash_count(XEN cr)
+{
+  #define H_cairo_get_dash_count "int cairo_get_dash_count(cairo_t* cr)"
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "cairo_get_dash_count", "cairo_t*");
+  return(C_TO_XEN_int(cairo_get_dash_count(XEN_TO_C_cairo_t_(cr))));
+}
+
+static XEN gxg_cairo_get_dash(XEN cr, XEN ignore_dashes, XEN ignore_offset)
+{
+  #define H_cairo_get_dash "void cairo_get_dash(cairo_t* cr, double* [dashes], double* [offset])"
+  double ref_dashes;
+  double ref_offset;
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "cairo_get_dash", "cairo_t*");
+  cairo_get_dash(XEN_TO_C_cairo_t_(cr), &ref_dashes, &ref_offset);
+  return(XEN_LIST_2(C_TO_XEN_double(ref_dashes), C_TO_XEN_double(ref_offset)));
+}
+
+static XEN gxg_cairo_surface_get_reference_count(XEN surface)
+{
+  #define H_cairo_surface_get_reference_count "guint cairo_surface_get_reference_count(cairo_surface_t* surface)"
+  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(surface), surface, 1, "cairo_surface_get_reference_count", "cairo_surface_t*");
+  return(C_TO_XEN_guint(cairo_surface_get_reference_count(XEN_TO_C_cairo_surface_t_(surface))));
+}
+
+static XEN gxg_cairo_pattern_get_reference_count(XEN pattern)
+{
+  #define H_cairo_pattern_get_reference_count "guint cairo_pattern_get_reference_count(cairo_pattern_t* pattern)"
+  XEN_ASSERT_TYPE(XEN_cairo_pattern_t__P(pattern), pattern, 1, "cairo_pattern_get_reference_count", "cairo_pattern_t*");
+  return(C_TO_XEN_guint(cairo_pattern_get_reference_count(XEN_TO_C_cairo_pattern_t_(pattern))));
+}
+
+static XEN gxg_cairo_pattern_get_user_data(XEN pattern, XEN key)
+{
+  #define H_cairo_pattern_get_user_data "void* cairo_pattern_get_user_data(cairo_pattern_t* pattern, \
+cairo_user_data_key_t* key)"
+  XEN_ASSERT_TYPE(XEN_cairo_pattern_t__P(pattern), pattern, 1, "cairo_pattern_get_user_data", "cairo_pattern_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_user_data_key_t__P(key), key, 2, "cairo_pattern_get_user_data", "cairo_user_data_key_t*");
+  return(C_TO_XEN_void_(cairo_pattern_get_user_data(XEN_TO_C_cairo_pattern_t_(pattern), XEN_TO_C_cairo_user_data_key_t_(key))));
+}
+
+static XEN gxg_cairo_pattern_set_user_data(XEN pattern, XEN key, XEN user_data, XEN destroy)
+{
+  #define H_cairo_pattern_set_user_data "cairo_status_t cairo_pattern_set_user_data(cairo_pattern_t* pattern, \
+cairo_user_data_key_t* key, void* user_data, cairo_destroy_func_t destroy)"
+  XEN_ASSERT_TYPE(XEN_cairo_pattern_t__P(pattern), pattern, 1, "cairo_pattern_set_user_data", "cairo_pattern_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_user_data_key_t__P(key), key, 2, "cairo_pattern_set_user_data", "cairo_user_data_key_t*");
+  XEN_ASSERT_TYPE(XEN_void__P(user_data), user_data, 3, "cairo_pattern_set_user_data", "void*");
+  XEN_ASSERT_TYPE(XEN_cairo_destroy_func_t_P(destroy), destroy, 4, "cairo_pattern_set_user_data", "cairo_destroy_func_t");
+  return(C_TO_XEN_cairo_status_t(cairo_pattern_set_user_data(XEN_TO_C_cairo_pattern_t_(pattern), XEN_TO_C_cairo_user_data_key_t_(key), 
+                                                             XEN_TO_C_void_(user_data), XEN_TO_C_cairo_destroy_func_t(destroy))));
+}
+
+static XEN gxg_cairo_pattern_get_rgba(XEN pattern, XEN ignore_red, XEN ignore_green, XEN ignore_blue, XEN ignore_alpha)
+{
+  #define H_cairo_pattern_get_rgba "cairo_status_t cairo_pattern_get_rgba(cairo_pattern_t* pattern, double* [red], \
+double* [green], double* [blue], double* [alpha])"
+  double ref_red;
+  double ref_green;
+  double ref_blue;
+  double ref_alpha;
+  XEN_ASSERT_TYPE(XEN_cairo_pattern_t__P(pattern), pattern, 1, "cairo_pattern_get_rgba", "cairo_pattern_t*");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_cairo_status_t(cairo_pattern_get_rgba(XEN_TO_C_cairo_pattern_t_(pattern), &ref_red, &ref_green, &ref_blue, 
+                                                            &ref_alpha));
+    return(XEN_LIST_5(result, C_TO_XEN_double(ref_red), C_TO_XEN_double(ref_green), C_TO_XEN_double(ref_blue), C_TO_XEN_double(ref_alpha)));
+   }
+}
+
+static XEN gxg_cairo_pattern_get_surface(XEN pattern, XEN ignore_surface)
+{
+  #define H_cairo_pattern_get_surface "cairo_status_t cairo_pattern_get_surface(cairo_pattern_t* pattern, \
+cairo_surface_t** [surface])"
+  cairo_surface_t* ref_surface = NULL;
+  XEN_ASSERT_TYPE(XEN_cairo_pattern_t__P(pattern), pattern, 1, "cairo_pattern_get_surface", "cairo_pattern_t*");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_cairo_status_t(cairo_pattern_get_surface(XEN_TO_C_cairo_pattern_t_(pattern), &ref_surface));
+    return(XEN_LIST_2(result, C_TO_XEN_cairo_surface_t_(ref_surface)));
+   }
+}
+
+static XEN gxg_cairo_pattern_get_color_stop_rgba(XEN pattern, XEN index, XEN ignore_offset, XEN ignore_red, XEN ignore_green, XEN ignore_blue, XEN ignore_alpha)
+{
+  #define H_cairo_pattern_get_color_stop_rgba "cairo_status_t cairo_pattern_get_color_stop_rgba(cairo_pattern_t* pattern, \
+int index, double* [offset], double* [red], double* [green], double* [blue], double* [alpha])"
+  double ref_offset;
+  double ref_red;
+  double ref_green;
+  double ref_blue;
+  double ref_alpha;
+  XEN_ASSERT_TYPE(XEN_cairo_pattern_t__P(pattern), pattern, 1, "cairo_pattern_get_color_stop_rgba", "cairo_pattern_t*");
+  XEN_ASSERT_TYPE(XEN_int_P(index), index, 2, "cairo_pattern_get_color_stop_rgba", "int");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_cairo_status_t(cairo_pattern_get_color_stop_rgba(XEN_TO_C_cairo_pattern_t_(pattern), XEN_TO_C_int(index), 
+                                                                       &ref_offset, &ref_red, &ref_green, &ref_blue, &ref_alpha));
+    return(XEN_LIST_6(result, C_TO_XEN_double(ref_offset), C_TO_XEN_double(ref_red), C_TO_XEN_double(ref_green), C_TO_XEN_double(ref_blue), C_TO_XEN_double(ref_alpha)));
+   }
+}
+
+static XEN gxg_cairo_pattern_get_color_stop_count(XEN pattern, XEN ignore_count)
+{
+  #define H_cairo_pattern_get_color_stop_count "cairo_status_t cairo_pattern_get_color_stop_count(cairo_pattern_t* pattern, \
+int* [count])"
+  int ref_count;
+  XEN_ASSERT_TYPE(XEN_cairo_pattern_t__P(pattern), pattern, 1, "cairo_pattern_get_color_stop_count", "cairo_pattern_t*");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_cairo_status_t(cairo_pattern_get_color_stop_count(XEN_TO_C_cairo_pattern_t_(pattern), &ref_count));
+    return(XEN_LIST_2(result, C_TO_XEN_int(ref_count)));
+   }
+}
+
+static XEN gxg_cairo_pattern_get_linear_points(XEN pattern, XEN ignore_x0, XEN ignore_y0, XEN ignore_x1, XEN ignore_y1)
+{
+  #define H_cairo_pattern_get_linear_points "cairo_status_t cairo_pattern_get_linear_points(cairo_pattern_t* pattern, \
+double* [x0], double* [y0], double* [x1], double* [y1])"
+  double ref_x0;
+  double ref_y0;
+  double ref_x1;
+  double ref_y1;
+  XEN_ASSERT_TYPE(XEN_cairo_pattern_t__P(pattern), pattern, 1, "cairo_pattern_get_linear_points", "cairo_pattern_t*");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_cairo_status_t(cairo_pattern_get_linear_points(XEN_TO_C_cairo_pattern_t_(pattern), &ref_x0, &ref_y0, 
+                                                                     &ref_x1, &ref_y1));
+    return(XEN_LIST_5(result, C_TO_XEN_double(ref_x0), C_TO_XEN_double(ref_y0), C_TO_XEN_double(ref_x1), C_TO_XEN_double(ref_y1)));
+   }
+}
+
+static XEN gxg_cairo_pattern_get_radial_circles(XEN pattern, XEN ignore_x0, XEN ignore_y0, XEN ignore_r0, XEN ignore_x1, XEN ignore_y1, XEN ignore_r1)
+{
+  #define H_cairo_pattern_get_radial_circles "cairo_status_t cairo_pattern_get_radial_circles(cairo_pattern_t* pattern, \
+double* [x0], double* [y0], double* [r0], double* [x1], double* [y1], double* [r1])"
+  double ref_x0;
+  double ref_y0;
+  double ref_r0;
+  double ref_x1;
+  double ref_y1;
+  double ref_r1;
+  XEN_ASSERT_TYPE(XEN_cairo_pattern_t__P(pattern), pattern, 1, "cairo_pattern_get_radial_circles", "cairo_pattern_t*");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_cairo_status_t(cairo_pattern_get_radial_circles(XEN_TO_C_cairo_pattern_t_(pattern), &ref_x0, &ref_y0, 
+                                                                      &ref_r0, &ref_x1, &ref_y1, &ref_r1));
+    return(XEN_LIST_7(result, C_TO_XEN_double(ref_x0), C_TO_XEN_double(ref_y0), C_TO_XEN_double(ref_r0), C_TO_XEN_double(ref_x1), C_TO_XEN_double(ref_y1), C_TO_XEN_double(ref_r1)));
+   }
+}
+
+static XEN gxg_cairo_get_scaled_font(XEN cr)
+{
+  #define H_cairo_get_scaled_font "cairo_scaled_font_t* cairo_get_scaled_font(cairo_t* cr)"
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "cairo_get_scaled_font", "cairo_t*");
+  return(C_TO_XEN_cairo_scaled_font_t_(cairo_get_scaled_font(XEN_TO_C_cairo_t_(cr))));
+}
+
+#endif
+
 #define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))
 
 static XEN gxg_GPOINTER(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("gpointer"), (WRAPPED_OBJECT_P(obj)) ? XEN_CADR(obj) : obj));}
@@ -36951,6 +37208,32 @@ XEN_NARGIFY_2(gxg_gdk_cairo_rectangle_w, gxg_gdk_cairo_rectangle)
 XEN_NARGIFY_2(gxg_gdk_cairo_region_w, gxg_gdk_cairo_region)
 #endif
 
+#if HAVE_CAIRO_GET_USER_DATA
+XEN_NARGIFY_1(gxg_cairo_get_reference_count_w, gxg_cairo_get_reference_count)
+XEN_NARGIFY_2(gxg_cairo_get_user_data_w, gxg_cairo_get_user_data)
+XEN_NARGIFY_4(gxg_cairo_set_user_data_w, gxg_cairo_set_user_data)
+XEN_ARGIFY_5(gxg_cairo_clip_extents_w, gxg_cairo_clip_extents)
+XEN_NARGIFY_1(gxg_cairo_copy_clip_rectangle_list_w, gxg_cairo_copy_clip_rectangle_list)
+XEN_NARGIFY_1(gxg_cairo_rectangle_list_destroy_w, gxg_cairo_rectangle_list_destroy)
+XEN_NARGIFY_1(gxg_cairo_font_face_get_reference_count_w, gxg_cairo_font_face_get_reference_count)
+XEN_NARGIFY_1(gxg_cairo_scaled_font_get_reference_count_w, gxg_cairo_scaled_font_get_reference_count)
+XEN_NARGIFY_2(gxg_cairo_scaled_font_get_user_data_w, gxg_cairo_scaled_font_get_user_data)
+XEN_NARGIFY_4(gxg_cairo_scaled_font_set_user_data_w, gxg_cairo_scaled_font_set_user_data)
+XEN_NARGIFY_1(gxg_cairo_get_dash_count_w, gxg_cairo_get_dash_count)
+XEN_ARGIFY_3(gxg_cairo_get_dash_w, gxg_cairo_get_dash)
+XEN_NARGIFY_1(gxg_cairo_surface_get_reference_count_w, gxg_cairo_surface_get_reference_count)
+XEN_NARGIFY_1(gxg_cairo_pattern_get_reference_count_w, gxg_cairo_pattern_get_reference_count)
+XEN_NARGIFY_2(gxg_cairo_pattern_get_user_data_w, gxg_cairo_pattern_get_user_data)
+XEN_NARGIFY_4(gxg_cairo_pattern_set_user_data_w, gxg_cairo_pattern_set_user_data)
+XEN_ARGIFY_5(gxg_cairo_pattern_get_rgba_w, gxg_cairo_pattern_get_rgba)
+XEN_ARGIFY_2(gxg_cairo_pattern_get_surface_w, gxg_cairo_pattern_get_surface)
+XEN_ARGIFY_7(gxg_cairo_pattern_get_color_stop_rgba_w, gxg_cairo_pattern_get_color_stop_rgba)
+XEN_ARGIFY_2(gxg_cairo_pattern_get_color_stop_count_w, gxg_cairo_pattern_get_color_stop_count)
+XEN_ARGIFY_5(gxg_cairo_pattern_get_linear_points_w, gxg_cairo_pattern_get_linear_points)
+XEN_ARGIFY_7(gxg_cairo_pattern_get_radial_circles_w, gxg_cairo_pattern_get_radial_circles)
+XEN_NARGIFY_1(gxg_cairo_get_scaled_font_w, gxg_cairo_get_scaled_font)
+#endif
+
 XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)
 XEN_NARGIFY_2(c_array_to_xen_list_w, c_array_to_xen_list)
 XEN_NARGIFY_2(xen_list_to_c_array_w, xen_list_to_c_array)
@@ -40761,6 +41044,32 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_cairo_set_source_pixmap_w gxg_gdk_cairo_set_source_pixmap
 #define gxg_gdk_cairo_rectangle_w gxg_gdk_cairo_rectangle
 #define gxg_gdk_cairo_region_w gxg_gdk_cairo_region
+#endif
+
+#if HAVE_CAIRO_GET_USER_DATA
+#define gxg_cairo_get_reference_count_w gxg_cairo_get_reference_count
+#define gxg_cairo_get_user_data_w gxg_cairo_get_user_data
+#define gxg_cairo_set_user_data_w gxg_cairo_set_user_data
+#define gxg_cairo_clip_extents_w gxg_cairo_clip_extents
+#define gxg_cairo_copy_clip_rectangle_list_w gxg_cairo_copy_clip_rectangle_list
+#define gxg_cairo_rectangle_list_destroy_w gxg_cairo_rectangle_list_destroy
+#define gxg_cairo_font_face_get_reference_count_w gxg_cairo_font_face_get_reference_count
+#define gxg_cairo_scaled_font_get_reference_count_w gxg_cairo_scaled_font_get_reference_count
+#define gxg_cairo_scaled_font_get_user_data_w gxg_cairo_scaled_font_get_user_data
+#define gxg_cairo_scaled_font_set_user_data_w gxg_cairo_scaled_font_set_user_data
+#define gxg_cairo_get_dash_count_w gxg_cairo_get_dash_count
+#define gxg_cairo_get_dash_w gxg_cairo_get_dash
+#define gxg_cairo_surface_get_reference_count_w gxg_cairo_surface_get_reference_count
+#define gxg_cairo_pattern_get_reference_count_w gxg_cairo_pattern_get_reference_count
+#define gxg_cairo_pattern_get_user_data_w gxg_cairo_pattern_get_user_data
+#define gxg_cairo_pattern_set_user_data_w gxg_cairo_pattern_set_user_data
+#define gxg_cairo_pattern_get_rgba_w gxg_cairo_pattern_get_rgba
+#define gxg_cairo_pattern_get_surface_w gxg_cairo_pattern_get_surface
+#define gxg_cairo_pattern_get_color_stop_rgba_w gxg_cairo_pattern_get_color_stop_rgba
+#define gxg_cairo_pattern_get_color_stop_count_w gxg_cairo_pattern_get_color_stop_count
+#define gxg_cairo_pattern_get_linear_points_w gxg_cairo_pattern_get_linear_points
+#define gxg_cairo_pattern_get_radial_circles_w gxg_cairo_pattern_get_radial_circles
+#define gxg_cairo_get_scaled_font_w gxg_cairo_get_scaled_font
 #endif
 
 #define gxg_GPOINTER_w gxg_GPOINTER
@@ -44582,6 +44891,32 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_cairo_region, gxg_gdk_cairo_region_w, 2, 0, 0, H_gdk_cairo_region);
 #endif
 
+#if HAVE_CAIRO_GET_USER_DATA
+  XG_DEFINE_PROCEDURE(cairo_get_reference_count, gxg_cairo_get_reference_count_w, 1, 0, 0, H_cairo_get_reference_count);
+  XG_DEFINE_PROCEDURE(cairo_get_user_data, gxg_cairo_get_user_data_w, 2, 0, 0, H_cairo_get_user_data);
+  XG_DEFINE_PROCEDURE(cairo_set_user_data, gxg_cairo_set_user_data_w, 4, 0, 0, H_cairo_set_user_data);
+  XG_DEFINE_PROCEDURE(cairo_clip_extents, gxg_cairo_clip_extents_w, 1, 4, 0, H_cairo_clip_extents);
+  XG_DEFINE_PROCEDURE(cairo_copy_clip_rectangle_list, gxg_cairo_copy_clip_rectangle_list_w, 1, 0, 0, H_cairo_copy_clip_rectangle_list);
+  XG_DEFINE_PROCEDURE(cairo_rectangle_list_destroy, gxg_cairo_rectangle_list_destroy_w, 1, 0, 0, H_cairo_rectangle_list_destroy);
+  XG_DEFINE_PROCEDURE(cairo_font_face_get_reference_count, gxg_cairo_font_face_get_reference_count_w, 1, 0, 0, H_cairo_font_face_get_reference_count);
+  XG_DEFINE_PROCEDURE(cairo_scaled_font_get_reference_count, gxg_cairo_scaled_font_get_reference_count_w, 1, 0, 0, H_cairo_scaled_font_get_reference_count);
+  XG_DEFINE_PROCEDURE(cairo_scaled_font_get_user_data, gxg_cairo_scaled_font_get_user_data_w, 2, 0, 0, H_cairo_scaled_font_get_user_data);
+  XG_DEFINE_PROCEDURE(cairo_scaled_font_set_user_data, gxg_cairo_scaled_font_set_user_data_w, 4, 0, 0, H_cairo_scaled_font_set_user_data);
+  XG_DEFINE_PROCEDURE(cairo_get_dash_count, gxg_cairo_get_dash_count_w, 1, 0, 0, H_cairo_get_dash_count);
+  XG_DEFINE_PROCEDURE(cairo_get_dash, gxg_cairo_get_dash_w, 1, 2, 0, H_cairo_get_dash);
+  XG_DEFINE_PROCEDURE(cairo_surface_get_reference_count, gxg_cairo_surface_get_reference_count_w, 1, 0, 0, H_cairo_surface_get_reference_count);
+  XG_DEFINE_PROCEDURE(cairo_pattern_get_reference_count, gxg_cairo_pattern_get_reference_count_w, 1, 0, 0, H_cairo_pattern_get_reference_count);
+  XG_DEFINE_PROCEDURE(cairo_pattern_get_user_data, gxg_cairo_pattern_get_user_data_w, 2, 0, 0, H_cairo_pattern_get_user_data);
+  XG_DEFINE_PROCEDURE(cairo_pattern_set_user_data, gxg_cairo_pattern_set_user_data_w, 4, 0, 0, H_cairo_pattern_set_user_data);
+  XG_DEFINE_PROCEDURE(cairo_pattern_get_rgba, gxg_cairo_pattern_get_rgba_w, 1, 4, 0, H_cairo_pattern_get_rgba);
+  XG_DEFINE_PROCEDURE(cairo_pattern_get_surface, gxg_cairo_pattern_get_surface_w, 1, 1, 0, H_cairo_pattern_get_surface);
+  XG_DEFINE_PROCEDURE(cairo_pattern_get_color_stop_rgba, gxg_cairo_pattern_get_color_stop_rgba_w, 2, 5, 0, H_cairo_pattern_get_color_stop_rgba);
+  XG_DEFINE_PROCEDURE(cairo_pattern_get_color_stop_count, gxg_cairo_pattern_get_color_stop_count_w, 1, 1, 0, H_cairo_pattern_get_color_stop_count);
+  XG_DEFINE_PROCEDURE(cairo_pattern_get_linear_points, gxg_cairo_pattern_get_linear_points_w, 1, 4, 0, H_cairo_pattern_get_linear_points);
+  XG_DEFINE_PROCEDURE(cairo_pattern_get_radial_circles, gxg_cairo_pattern_get_radial_circles_w, 1, 6, 0, H_cairo_pattern_get_radial_circles);
+  XG_DEFINE_PROCEDURE(cairo_get_scaled_font, gxg_cairo_get_scaled_font_w, 1, 0, 0, H_cairo_get_scaled_font);
+#endif
+
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, "(GPOINTER obj) casts obj to GPOINTER");
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP_w, 1, 0, 0, "(GDK_COLORMAP obj) casts obj to GDK_COLORMAP");
   XG_DEFINE_PROCEDURE(GDK_DRAG_CONTEXT, gxg_GDK_DRAG_CONTEXT_w, 1, 0, 0, "(GDK_DRAG_CONTEXT obj) casts obj to GDK_DRAG_CONTEXT");
@@ -46515,7 +46850,6 @@ static void define_integers(void)
   DEFINE_INTEGER(CAIRO_FORMAT_RGB24);
   DEFINE_INTEGER(CAIRO_FORMAT_A8);
   DEFINE_INTEGER(CAIRO_FORMAT_A1);
-  DEFINE_INTEGER(CAIRO_FORMAT_RGB16_565);
   DEFINE_INTEGER(CAIRO_PATTERN_TYPE_SOLID);
   DEFINE_INTEGER(CAIRO_PATTERN_TYPE_SURFACE);
   DEFINE_INTEGER(CAIRO_PATTERN_TYPE_LINEAR);
@@ -46530,6 +46864,12 @@ static void define_integers(void)
   DEFINE_INTEGER(CAIRO_FILTER_NEAREST);
   DEFINE_INTEGER(CAIRO_FILTER_BILINEAR);
   DEFINE_INTEGER(CAIRO_FILTER_GAUSSIAN);
+#endif
+
+#if HAVE_CAIRO_GET_USER_DATA
+  DEFINE_INTEGER(CAIRO_STATUS_INVALID_INDEX);
+  DEFINE_INTEGER(CAIRO_STATUS_CLIP_NOT_REPRESENTABLE);
+  DEFINE_INTEGER(CAIRO_SURFACE_TYPE_OS2);
 #endif
 
   DEFINE_ULONG(GDK_TYPE_PIXBUF);
@@ -47066,7 +47406,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("09-Mar-07"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("11-Mar-07"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

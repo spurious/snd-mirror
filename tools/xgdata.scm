@@ -6220,6 +6220,10 @@
 (CAIRO-INT "CAIRO_STATUS_INVALID_DASH" "cairo_status_t")
 (CAIRO-INT "CAIRO_STATUS_INVALID_DSC_COMMENT" "cairo_status_t")
 
+(CAIRO-INT-140 "CAIRO_STATUS_INVALID_INDEX" "cairo_status_t")
+(CAIRO-INT-140 "CAIRO_STATUS_CLIP_NOT_REPRESENTABLE" "cairo_status_t")
+
+
 (CAIRO-INT "CAIRO_CONTENT_COLOR" "cairo_content_t")
 (CAIRO-INT "CAIRO_CONTENT_ALPHA" "cairo_content_t")
 (CAIRO-INT "CAIRO_CONTENT_COLOR_ALPHA" "cairo_content_t")
@@ -6300,11 +6304,13 @@
 (CAIRO-INT "CAIRO_SURFACE_TYPE_DIRECTFB" "cairo_surface_type_t")
 (CAIRO-INT "CAIRO_SURFACE_TYPE_SVG" "cairo_surface_type_t")
 
+(CAIRO-INT-140 "CAIRO_SURFACE_TYPE_OS2" "cairo_surface_type_t")
+
 (CAIRO-INT "CAIRO_FORMAT_ARGB32" "cairo_format_t")
 (CAIRO-INT "CAIRO_FORMAT_RGB24" "cairo_format_t")
 (CAIRO-INT "CAIRO_FORMAT_A8" "cairo_format_t")
 (CAIRO-INT "CAIRO_FORMAT_A1" "cairo_format_t")
-(CAIRO-INT "CAIRO_FORMAT_RGB16_565" "cairo_format_t")
+;;; (CAIRO-INT "CAIRO_FORMAT_RGB16_565" "cairo_format_t") ; out 1.4.0
 
 (CAIRO-INT "CAIRO_PATTERN_TYPE_SOLID" "cairo_pattern_type_t")
 (CAIRO-INT "CAIRO_PATTERN_TYPE_SURFACE" "cairo_pattern_type_t")
@@ -6555,4 +6561,29 @@
 ;;; (CFNC-2108 "gboolean pango_layout_is_ellipsized PangoLayout* layout")
 
 
+
+
+(CAIRO-FUNC-140 "guint cairo_get_reference_count cairo_t* cr")
+(CAIRO-FUNC-140 "void* cairo_get_user_data cairo_t* cr cairo_user_data_key_t* key")
+(CAIRO-FUNC-140 "cairo_status_t cairo_set_user_data cairo_t* cr cairo_user_data_key_t* key void* user_data cairo_destroy_func_t destroy")
+(CAIRO-FUNC-140 "void cairo_clip_extents cairo_t* cr double* [x1] double* [y1] double* [x2] double* [y2]")
+(CAIRO-FUNC-140 "cairo_rectangle_list_t* cairo_copy_clip_rectangle_list cairo_t* cr")
+(CAIRO-FUNC-140 "void cairo_rectangle_list_destroy cairo_rectangle_list_t* rectangle_list")
+(CAIRO-FUNC-140 "guint cairo_font_face_get_reference_count cairo_font_face_t* font_face")
+(CAIRO-FUNC-140 "guint cairo_scaled_font_get_reference_count cairo_scaled_font_t* scaled_font")
+(CAIRO-FUNC-140 "void* cairo_scaled_font_get_user_data cairo_scaled_font_t* scaled_font cairo_user_data_key_t* key")
+(CAIRO-FUNC-140 "cairo_status_t cairo_scaled_font_set_user_data cairo_scaled_font_t* scaled_font cairo_user_data_key_t* key void* user_data cairo_destroy_func_t destroy")
+(CAIRO-FUNC-140 "int cairo_get_dash_count cairo_t* cr")
+(CAIRO-FUNC-140 "void cairo_get_dash cairo_t* cr double* [dashes] double* [offset]")
+(CAIRO-FUNC-140 "guint cairo_surface_get_reference_count cairo_surface_t* surface")
+(CAIRO-FUNC-140 "guint cairo_pattern_get_reference_count cairo_pattern_t* pattern")
+(CAIRO-FUNC-140 "void* cairo_pattern_get_user_data cairo_pattern_t* pattern cairo_user_data_key_t* key")
+(CAIRO-FUNC-140 "cairo_status_t cairo_pattern_set_user_data cairo_pattern_t* pattern cairo_user_data_key_t* key void* user_data cairo_destroy_func_t destroy")
+(CAIRO-FUNC-140 "cairo_status_t cairo_pattern_get_rgba cairo_pattern_t* pattern double* [red] double* [green] double* [blue] double* [alpha]")
+(CAIRO-FUNC-140 "cairo_status_t cairo_pattern_get_surface cairo_pattern_t* pattern cairo_surface_t** [surface]")
+(CAIRO-FUNC-140 "cairo_status_t cairo_pattern_get_color_stop_rgba cairo_pattern_t* pattern int index double* [offset] double* [red] double* [green] double* [blue] double* [alpha]")
+(CAIRO-FUNC-140 "cairo_status_t cairo_pattern_get_color_stop_count cairo_pattern_t* pattern int* [count]")
+(CAIRO-FUNC-140 "cairo_status_t cairo_pattern_get_linear_points cairo_pattern_t* pattern double* [x0] double* [y0] double* [x1] double* [y1]")
+(CAIRO-FUNC-140 "cairo_status_t cairo_pattern_get_radial_circles cairo_pattern_t* pattern double* [x0] double* [y0] double* [r0] double* [x1] double* [y1] double* [r1]")
+(CAIRO-FUNC-140 "cairo_scaled_font_t* cairo_get_scaled_font cairo_t* cr")
 

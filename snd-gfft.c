@@ -57,6 +57,9 @@ static void graph_redisplay(void)
   ax->w = graph_drawer;
   ax->gc = gc;
   ax->current_font = AXIS_NUMBERS_FONT(ss);
+#if USE_CAIRO
+  ax->cr = gdk_cairo_create(ax->wn);
+#endif
   axis_ap->xmin = 0.0;
   axis_ap->xmax = 1.0;
   axis_ap->x_ambit = 1.0;
@@ -97,7 +100,7 @@ static void graph_redisplay(void)
       iy0 = iy1;
       ix1 = grf_x(x, axis_ap);
       iy1 = grf_y(graph_data[i], axis_ap);
-      draw_line_direct(wn, gc, ix0, iy0, ix1, iy1);
+      draw_line(ax, ix0, iy0, ix1, iy1);
     }
   ax->gc = fgc;
   ix1 = grf_x(0.0, axis_ap);
@@ -111,8 +114,12 @@ static void graph_redisplay(void)
       if (fft_log_magnitude(ss))
 	iy1 = grf_y(fp_dB(graph_fftr[i]), axis_ap);
       else iy1 = grf_y(graph_fftr[i], axis_ap);
-      draw_line_direct(wn, fgc, ix0, iy0, ix1, iy1);
+      draw_line(ax, ix0, iy0, ix1, iy1);
     }
+#if USE_CAIRO
+  cairo_destroy(ax->cr);
+  ax->cr = NULL;
+#endif
 }
 
 static void get_fft_window_data(void)
@@ -445,7 +452,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_widget_show(orient_button);
       gtk_widget_show(help_button);
 
-      outer_table = gtk_table_new(6, 3, false);
+      outer_table = gtk_table_new(2, 3, false); /* rows cols */
       gtk_container_add(GTK_CONTAINER(GTK_DIALOG(transform_dialog)->vbox), outer_table);
       gtk_table_set_row_spacings(GTK_TABLE(outer_table), 16);
       gtk_table_set_col_spacings(GTK_TABLE(outer_table), 16);
@@ -459,12 +466,12 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       make_transform_type_list();
 
       /* SIZE */
-      size_list = slist_new_with_title_and_table_data(_("size"), outer_table, transform_size_names, NUM_TRANSFORM_SIZES, TABLE_ATTACH, 1, 2, 0, 3);
+      size_list = slist_new_with_title_and_table_data(_("size"), outer_table, transform_size_names, NUM_TRANSFORM_SIZES, TABLE_ATTACH, 1, 2, 0, 1);
       size_list->select_callback = size_browse_callback;
 
       /* DISPLAY */
       display_frame = gtk_frame_new(NULL);
-      gtk_table_attach_defaults(GTK_TABLE(outer_table), display_frame, 2, 3, 0, 4);
+      gtk_table_attach_defaults(GTK_TABLE(outer_table), display_frame, 2, 3, 0, 1);
       gtk_frame_set_shadow_type(GTK_FRAME(display_frame), GTK_SHADOW_ETCHED_IN);
 
       buttons = gtk_vbox_new(false, 0);
@@ -566,12 +573,12 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_widget_show(display_frame);
 
       /* WAVELET */
-      wavelet_list = slist_new_with_title_and_table_data(_("wavelet"), outer_table, wavelet_names(), NUM_WAVELETS, TABLE_ATTACH, 0, 1, 3, 6);
+      wavelet_list = slist_new_with_title_and_table_data(_("wavelet"), outer_table, wavelet_names(), NUM_WAVELETS, TABLE_ATTACH, 0, 1, 1, 2);
       wavelet_list->select_callback = wavelet_browse_callback;
 
       /* WINDOW */
       window_box = gtk_table_new(2, 3, false);
-      gtk_table_attach_defaults(GTK_TABLE(outer_table), window_box, 1, 2, 3, 6);
+      gtk_table_attach_defaults(GTK_TABLE(outer_table), window_box, 1, 2, 1, 2);
       window_list = slist_new_with_title_and_table_data(_("window"), window_box, (char **)mus_fft_window_names(), MUS_NUM_FFT_WINDOWS, TABLE_ATTACH, 0, 1, 0, 1);
       window_list->select_callback = window_browse_callback;
 
@@ -612,7 +619,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	label = snd_gtk_highlight_label_new(mus_fft_window_name(fft_window(ss)));
 
 	graph_frame = gtk_frame_new(NULL);
-	gtk_table_attach_defaults(GTK_TABLE(outer_table), graph_frame, 2, 3, 4, 6);
+	gtk_table_attach_defaults(GTK_TABLE(outer_table), graph_frame, 2, 3, 1, 2);
 	gtk_frame_set_label_align(GTK_FRAME(graph_frame), 0.5, 0.0);
 	gtk_frame_set_shadow_type(GTK_FRAME(graph_frame), GTK_SHADOW_ETCHED_IN);
 
@@ -872,7 +879,7 @@ void make_transform_type_list(void)
 	  }
       if (!transform_list)
 	{
-	  transform_list = slist_new_with_title_and_table_data(_("type"), outer_table, transform_names, j, TABLE_ATTACH, 0, 1, 0, 3);
+	  transform_list = slist_new_with_title_and_table_data(_("type"), outer_table, transform_names, j, TABLE_ATTACH, 0, 1, 0, 1);
 	  transform_list->select_callback = transform_browse_callback;
 	}
       else
