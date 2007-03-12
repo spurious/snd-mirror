@@ -960,6 +960,8 @@ else
 	AC_CHECK_LIB(m, gtk_label_get_line_wrap_mode, [AC_DEFINE(HAVE_GTK_LABEL_GET_LINE_WRAP_MODE)], ,$GTK_LIBS)
 	# for 2.10.0
 	AC_CHECK_LIB(m, gtk_print_operation_new, [AC_DEFINE(HAVE_GTK_PRINT_OPERATION_NEW)], ,$GTK_LIBS)
+
+	# for gdk|pango_cairo 
 	AC_CHECK_LIB(m, gdk_cairo_create, 
 		[
 		 AC_DEFINE(HAVE_GDK_CAIRO_CREATE)
@@ -969,6 +971,8 @@ else
                  fi
 		], ,$GTK_LIBS)
 
+	# for cairo
+	AC_CHECK_LIB(cairo, cairo_create, [AC_DEFINE(HAVE_CAIRO_CREATE)], ,$GTK_LIBS)
 	# for cairo 1.4.0
 	AC_CHECK_LIB(cairo, cairo_get_user_data, [AC_DEFINE(HAVE_CAIRO_GET_USER_DATA)], ,$GTK_LIBS)
 
@@ -1153,11 +1157,11 @@ if test "$with_gauche" = yes ; then
     # gauche-config inserts single-quotes in the -I and -L results thereby rendering them useless,
     #   so the following sed command tries to remove them.  You apparently can't quote a single-quote
     #   in this context, so I use \x27 = ASCII for single quote.
-#   GUILE_CFLAGS=`$GAUCHE_CONFIG -I | sed 's/\x27//g'`
-    GUILE_CFLAGS=`$GAUCHE_CONFIG -I | tr -d "'"` 
+#   XEN_CFLAGS=`$GAUCHE_CONFIG -I | sed 's/\x27//g'`
+    XEN_CFLAGS=`$GAUCHE_CONFIG -I | tr -d "'"` 
 # apparently the sed line depends on the version of sed -- mine works (4.1.5) but others say it doesn't
 #   thanks to Kjetil for the replacement using "tr"
-    CFLAGS="$CFLAGS $GUILE_CFLAGS"
+    CFLAGS="$CFLAGS $XEN_CFLAGS"
 
     AC_COMPILE_IFELSE(
      [AC_LANG_PROGRAM([#include <gauche.h>],
@@ -1176,8 +1180,8 @@ if test "$with_gauche" = yes ; then
                  AC_DEFINE(HAVE_SCHEME)
                  ac_snd_have_extension_language=yes
                  AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
-                 GUILE_LIBS=`$GAUCHE_CONFIG -L  | sed 's/\x27//g'`
-                 GUILE_LIBS="$GUILE_LIBS -lgauche"
+                 XEN_LIBS=`$GAUCHE_CONFIG -L  | sed 's/\x27//g'`
+                 XEN_LIBS="$XEN_LIBS -lgauche"
                  LOCAL_LANGUAGE="Gauche"
         	 AC_DEFINE(WITH_RUN)
 
@@ -1188,7 +1192,7 @@ if test "$with_gauche" = yes ; then
              	 AC_MSG_WARN([We need Gauche 0.8.7 or later])
                  with_gauche=no
                  CFLAGS="$OLD_CFLAGS"
-                 GUILE_CFLAGS=""
+                 XEN_CFLAGS=""
 		])
   fi
 fi
@@ -1222,25 +1226,25 @@ AC_ARG_WITH(ruby,
               AC_DEFINE_UNQUOTED(MUS_RUBY_VERSION,"${RUBY_VERSION}")
               AC_DEFINE_UNQUOTED(RUBY_RELEASE_DATE,"${RUBY_RELEASE_DATE}")
 
-	      GUILE_CFLAGS=`$RUBY -e [['\$:.each {|path| print "-I", path, " "}']]`
-	      GUILE_LIBS=`$RUBY -e [['\$:.each {|path| print "-L", path, " "}']]`
+	      XEN_CFLAGS=`$RUBY -e [['\$:.each {|path| print "-I", path, " "}']]`
+	      XEN_LIBS=`$RUBY -e [['\$:.each {|path| print "-L", path, " "}']]`
 	      RUBY_SEARCH_PATH=`$RUBY -e [['\$:.each {|path| print path, ":"}']]`
 	      RUBY_LIBS=`$RUBY -e [['require "rbconfig"; include Config; print CONFIG["LIBS"]']]`
 
 	      AC_DEFINE_UNQUOTED(RUBY_SEARCH_PATH,"${RUBY_SEARCH_PATH}")
-              GUILE_LIBS="$GUILE_LIBS -lruby $RUBY_LIBS"
+              XEN_LIBS="$XEN_LIBS -lruby $RUBY_LIBS"
 	      if test "$enable_readline" != no ; then
 	        AC_CHECK_LIB(readline, readline, 
 			   [AC_DEFINE(HAVE_READLINE)
-			    GUILE_LIBS="$GUILE_LIBS -lreadline -lncurses"], ,"-lncurses")
+			    XEN_LIBS="$XEN_LIBS -lreadline -lncurses"], ,"-lncurses")
               fi
-              AC_SUBST(GUILE_LIBS)
-              AC_SUBST(GUILE_CFLAGS)
+              AC_SUBST(XEN_LIBS)
+              AC_SUBST(XEN_CFLAGS)
 
               OLD_LIBS="$LIBS"
-    	      LIBS="$GUILE_LIBS $LIBS"
+    	      LIBS="$XEN_LIBS $LIBS"
               OLD_CFLAGS="$CFLAGS"
-              CFLAGS="$GUILE_CFLAGS -lm $CFLAGS"
+              CFLAGS="$XEN_CFLAGS -lm $CFLAGS"
               AC_CHECK_LIB(ruby, rb_gc_disable, [AC_DEFINE(HAVE_RB_GC_DISABLE)])
 	      AC_CHECK_LIB(ruby, rb_ary_dup, [AC_DEFINE(HAVE_RB_ARY_DUP)])
 	      AC_CHECK_LIB(ruby, rb_errinfo, [AC_DEFINE(HAVE_RB_ERRINFO)])
@@ -1301,8 +1305,8 @@ AC_ARG_WITH(forth,
 			  if test "$FTH_HAVE_RATIO" = yes ; then
      	      		     AC_DEFINE(HAVE_SCM_MAKE_RATIO)
 			  fi
-               		  AC_SUBST(GUILE_CFLAGS, $FTH_CFLAGS)
-               		  AC_SUBST(GUILE_LIBS,   $FTH_LIBS)
+               		  AC_SUBST(XEN_CFLAGS, $FTH_CFLAGS)
+               		  AC_SUBST(XEN_LIBS,   $FTH_LIBS)
  	      		  LOCAL_LANGUAGE="Forth"
  	      		  ac_snd_have_extension_language=yes])
 	fi)
@@ -1319,8 +1323,8 @@ fi
 
 if test "$with_guile" != no && test "$with_ruby" != yes && test "$with_forth" != yes && test "$with_gauche" != yes ; then
 
-GUILE_LIBS=""
-GUILE_CFLAGS=""
+XEN_LIBS=""
+XEN_CFLAGS=""
 if test "$GUILE_CONFIG_name" = "" ; then
   GUILE_CONFIG_name="guile-config"
 fi
@@ -1365,22 +1369,22 @@ else
 
 if test $GUILE_CONFIG_works = yes; then
 
-  GUILE_CFLAGS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} compile`"
+  XEN_CFLAGS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} compile`"
 
   if test "$GUILE_LIB_path" != "" ; then
     # MacOSX linker doesn't know the -rpath stuff, but user may have placed Guile in /usr/lib/snd/bin
     case "$host" in
       *-apple-*)
-        GUILE_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
+        XEN_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
         ;;
       *)
-        GUILE_LIBS="-Xlinker -rpath -Xlinker $GUILE_LIB_path `${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
+        XEN_LIBS="-Xlinker -rpath -Xlinker $GUILE_LIB_path `${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
 	XM_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
 	;;
     esac
   else
     # GUILE_LIB_path is empty
-    GUILE_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
+    XEN_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
   fi
 
   if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.3.4"))'`" != "#t"; then
@@ -1388,9 +1392,9 @@ if test $GUILE_CONFIG_works = yes; then
     AC_DEFINE(HAVE_GUILE,0)
     AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
   else
-    AC_SUBST(GUILE_CFLAGS)
+    AC_SUBST(XEN_CFLAGS)
     if test "$XM_LIBS" = ""; then
-      XM_LIBS="$GUILE_LIBS"
+      XM_LIBS="$XEN_LIBS"
       if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.6.8"))'`" = "#t"; then
         # the -pthread business confuses ld
         new_libs=`echo " $XM_LIBS " | sed -e 's/-pthread //'`
@@ -1411,9 +1415,9 @@ if test $GUILE_CONFIG_works = yes; then
     ac_snd_have_extension_language=yes
 
     OLD_LIBS="$LIBS"
-    LIBS="$GUILE_LIBS $LIBS"
+    LIBS="$XEN_LIBS $LIBS"
     OLD_CFLAGS="$CFLAGS"
-    CFLAGS="$GUILE_CFLAGS $CFLAGS"
+    CFLAGS="$XEN_CFLAGS $CFLAGS"
     GNAME="guile"
 
 # special Mac OSX stuff -- need to protect against multiple -lguile's, add -all_load, and add -lguile-ltdl
@@ -1425,7 +1429,7 @@ if test $GUILE_CONFIG_works = yes; then
       *-*-solaris*) 
 # this is a bug in the Sun guile-config I think
         if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.6"))'`" = "#t"; then
-	  GUILE_LIBS="$GUILE_LIBS -lltdl"
+	  XEN_LIBS="$XEN_LIBS -lltdl"
 	fi
 	;;
     esac
@@ -1478,10 +1482,10 @@ if test $GUILE_CONFIG_works = yes; then
       AC_DEFINE(WITH_RUN)
     fi
     if test "$with_snd_as_pd_external" = yes ; then
-      GUILE_LIBS=["`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string-append (cdr (assoc (quote libdir) %guile-build-info)) "/libguile.a " (cdr (assoc (quote LIBS) %guile-build-info))))'`"]
+      XEN_LIBS=["`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string-append (cdr (assoc (quote libdir) %guile-build-info)) "/libguile.a " (cdr (assoc (quote LIBS) %guile-build-info))))'`"]
     fi
 
-    AC_SUBST(GUILE_LIBS)
+    AC_SUBST(XEN_LIBS)
   fi
 else
   AC_DEFINE(HAVE_GUILE,0)

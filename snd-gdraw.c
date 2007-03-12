@@ -3,7 +3,6 @@
 
 /* there are no references to gdk_draw_* or GdkGC or GdkGCValues outside this file except
  *   snd-gchn: gdk_draw_pixbuf (spectrum redisplay optimization)
- *   snd-gutils: gdk_draw_layout -- is this deprecated too?
  *   xg.c and gl.c -- this affects snd-gtk.scm which has gdk_gc_* stuff using snd-gcs
  */
 
@@ -11,17 +10,20 @@
 TODO: check ATS
 TODO: static intel mac snd with minimal needs
 TODO: gl + cairo?  does --with-cairo conflict with --with-gl?
-PERHAPS: background-gradient (0 = none)
+PERHAPS: background-gradient (0 = none), fancy dots in enved?
 TODO: no redisplay if cursor is all that changed, snd-chn 3440
 TODO: fft peaks font is too big
 TODO: selection erases (covers)
 TODO: mark erases waveform
-TODO: gtk-print: strings not output [fixed?]
 TODO: erase_GC should be bg->fg + bg as was -- see mix redpy
 TODO: cursor starts to redpy after mark! Then no true waveform
 TODO: remove all _direct, get pixmap translated
 TODO: gfft spacing is bad
 TODO: track down fth help problem (defs in lang?)
+TODO: it's possible to have gtk but no cairo -- need that check in configure/xg [fixed?]
+TODO: add cairo case in all gdk_gc stuff in *.scm/rb/fs
+PERHAPS: can cairo make gl-style graphs?
+PERHAPS: would it be faster to path polys then one fill?
 */
 
 

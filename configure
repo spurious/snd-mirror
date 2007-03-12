@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FFTW_LIBS FFTW_CFLAGS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS CAIRO_CFLAGS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS FAM_LIB GAUCHE_CONFIG GUILE_LIBS GUILE_CFLAGS FTH_VERSION FTH_CFLAGS FTH_LIBS FTH_HAVE_COMPLEX FTH_HAVE_RATIO FTH XM_LIBS LD_XM_LIBS AUDIO_LIB JACK_LIBS JACK_FLAGS LDSO_FLAGS SO_FLAGS SO_LD PATH_OGGDEC PATH_OGGENC PATH_MPG123 PATH_MPG321 PATH_SPEEXDEC PATH_SPEEXENC PATH_FLAC PATH_TIMIDITY PATH_SHORTEN PATH_TTA PATH_WAVPACK PATH_WVUNPACK MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS USE_NLS MSGFMT GMSGFMT XGETTEXT MSGMERGE INTL_MACOSX_LIBS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB ORIGINAL_LDFLAGS MAKE_TARGET LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FFTW_LIBS FFTW_CFLAGS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS CAIRO_CFLAGS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS FAM_LIB GAUCHE_CONFIG XEN_LIBS XEN_CFLAGS FTH_VERSION FTH_CFLAGS FTH_LIBS FTH_HAVE_COMPLEX FTH_HAVE_RATIO FTH XM_LIBS LD_XM_LIBS AUDIO_LIB JACK_LIBS JACK_FLAGS LDSO_FLAGS SO_FLAGS SO_LD PATH_OGGDEC PATH_OGGENC PATH_MPG123 PATH_MPG321 PATH_SPEEXDEC PATH_SPEEXENC PATH_FLAC PATH_TIMIDITY PATH_SHORTEN PATH_TTA PATH_WAVPACK PATH_WVUNPACK MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS USE_NLS MSGFMT GMSGFMT XGETTEXT MSGMERGE INTL_MACOSX_LIBS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB ORIGINAL_LDFLAGS MAKE_TARGET LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -14066,6 +14066,8 @@ _ACEOF
 
 fi
 
+
+	# for gdk|pango_cairo
 	echo "$as_me:$LINENO: checking for gdk_cairo_create in -lm" >&5
 echo $ECHO_N "checking for gdk_cairo_create in -lm... $ECHO_C" >&6
 if test "${ac_cv_lib_m_gdk_cairo_create+set}" = set; then
@@ -14146,6 +14148,78 @@ _ACEOF
 
 fi
 
+
+	# for cairo
+	echo "$as_me:$LINENO: checking for cairo_create in -lcairo" >&5
+echo $ECHO_N "checking for cairo_create in -lcairo... $ECHO_C" >&6
+if test "${ac_cv_lib_cairo_cairo_create+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcairo $GTK_LIBS $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char cairo_create ();
+int
+main ()
+{
+cairo_create ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_cairo_cairo_create=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_cairo_cairo_create=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_cairo_cairo_create" >&5
+echo "${ECHO_T}$ac_cv_lib_cairo_cairo_create" >&6
+if test $ac_cv_lib_cairo_cairo_create = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_CAIRO_CREATE 1
+_ACEOF
+
+fi
 
 	# for cairo 1.4.0
 	echo "$as_me:$LINENO: checking for cairo_get_user_data in -lcairo" >&5
@@ -14986,11 +15060,11 @@ echo "${ECHO_T}$gauche_version" >&6
     # gauche-config inserts single-quotes in the -I and -L results thereby rendering them useless,
     #   so the following sed command tries to remove them.  You apparently can't quote a single-quote
     #   in this context, so I use \x27 = ASCII for single quote.
-#   GUILE_CFLAGS=`$GAUCHE_CONFIG -I | sed 's/\x27//g'`
-    GUILE_CFLAGS=`$GAUCHE_CONFIG -I | tr -d "'"`
+#   XEN_CFLAGS=`$GAUCHE_CONFIG -I | sed 's/\x27//g'`
+    XEN_CFLAGS=`$GAUCHE_CONFIG -I | tr -d "'"`
 # apparently the sed line depends on the version of sed -- mine works (4.1.5) but others say it doesn't
 #   thanks to Kjetil for the replacement using "tr"
-    CFLAGS="$CFLAGS $GUILE_CFLAGS"
+    CFLAGS="$CFLAGS $XEN_CFLAGS"
 
     cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -15052,8 +15126,8 @@ _ACEOF
 #define HAVE_EXTENSION_LANGUAGE 1
 _ACEOF
 
-                 GUILE_LIBS=`$GAUCHE_CONFIG -L  | sed 's/\x27//g'`
-                 GUILE_LIBS="$GUILE_LIBS -lgauche"
+                 XEN_LIBS=`$GAUCHE_CONFIG -L  | sed 's/\x27//g'`
+                 XEN_LIBS="$XEN_LIBS -lgauche"
                  LOCAL_LANGUAGE="Gauche"
         	 cat >>confdefs.h <<\_ACEOF
 #define WITH_RUN 1
@@ -15142,7 +15216,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 echo "$as_me: WARNING: We need Gauche 0.8.7 or later" >&2;}
                  with_gauche=no
                  CFLAGS="$OLD_CFLAGS"
-                 GUILE_CFLAGS=""
+                 XEN_CFLAGS=""
 
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
@@ -15200,8 +15274,8 @@ _ACEOF
 _ACEOF
 
 
-	      GUILE_CFLAGS=`$RUBY -e '\$:.each {|path| print "-I", path, " "}'`
-	      GUILE_LIBS=`$RUBY -e '\$:.each {|path| print "-L", path, " "}'`
+	      XEN_CFLAGS=`$RUBY -e '\$:.each {|path| print "-I", path, " "}'`
+	      XEN_LIBS=`$RUBY -e '\$:.each {|path| print "-L", path, " "}'`
 	      RUBY_SEARCH_PATH=`$RUBY -e '\$:.each {|path| print path, ":"}'`
 	      RUBY_LIBS=`$RUBY -e 'require "rbconfig"; include Config; print CONFIG["LIBS"]'`
 
@@ -15209,7 +15283,7 @@ _ACEOF
 #define RUBY_SEARCH_PATH "${RUBY_SEARCH_PATH}"
 _ACEOF
 
-              GUILE_LIBS="$GUILE_LIBS -lruby $RUBY_LIBS"
+              XEN_LIBS="$XEN_LIBS -lruby $RUBY_LIBS"
 	      if test "$enable_readline" != no ; then
 	        echo "$as_me:$LINENO: checking for readline in -lreadline" >&5
 echo $ECHO_N "checking for readline in -lreadline... $ECHO_C" >&6
@@ -15280,7 +15354,7 @@ if test $ac_cv_lib_readline_readline = yes; then
 #define HAVE_READLINE 1
 _ACEOF
 
-			    GUILE_LIBS="$GUILE_LIBS -lreadline -lncurses"
+			    XEN_LIBS="$XEN_LIBS -lreadline -lncurses"
 fi
 
               fi
@@ -15288,9 +15362,9 @@ fi
 
 
               OLD_LIBS="$LIBS"
-    	      LIBS="$GUILE_LIBS $LIBS"
+    	      LIBS="$XEN_LIBS $LIBS"
               OLD_CFLAGS="$CFLAGS"
-              CFLAGS="$GUILE_CFLAGS -lm $CFLAGS"
+              CFLAGS="$XEN_CFLAGS -lm $CFLAGS"
               echo "$as_me:$LINENO: checking for rb_gc_disable in -lruby" >&5
 echo $ECHO_N "checking for rb_gc_disable in -lruby... $ECHO_C" >&6
 if test "${ac_cv_lib_ruby_rb_gc_disable+set}" = set; then
@@ -15874,9 +15948,9 @@ _ACEOF
 _ACEOF
 
 			  fi
-               		  GUILE_CFLAGS=$FTH_CFLAGS
+               		  XEN_CFLAGS=$FTH_CFLAGS
 
-               		  GUILE_LIBS=$FTH_LIBS
+               		  XEN_LIBS=$FTH_LIBS
 
  	      		  LOCAL_LANGUAGE="Forth"
  	      		  ac_snd_have_extension_language=yes
@@ -15907,8 +15981,8 @@ fi
 
 if test "$with_guile" != no && test "$with_ruby" != yes && test "$with_forth" != yes && test "$with_gauche" != yes ; then
 
-GUILE_LIBS=""
-GUILE_CFLAGS=""
+XEN_LIBS=""
+XEN_CFLAGS=""
 if test "$GUILE_CONFIG_name" = "" ; then
   GUILE_CONFIG_name="guile-config"
 fi
@@ -15984,22 +16058,22 @@ echo "${ECHO_T}no" >&6
 
 if test $GUILE_CONFIG_works = yes; then
 
-  GUILE_CFLAGS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} compile`"
+  XEN_CFLAGS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} compile`"
 
   if test "$GUILE_LIB_path" != "" ; then
     # MacOSX linker doesn't know the -rpath stuff, but user may have placed Guile in /usr/lib/snd/bin
     case "$host" in
       *-apple-*)
-        GUILE_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
+        XEN_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
         ;;
       *)
-        GUILE_LIBS="-Xlinker -rpath -Xlinker $GUILE_LIB_path `${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
+        XEN_LIBS="-Xlinker -rpath -Xlinker $GUILE_LIB_path `${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
 	XM_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
 	;;
     esac
   else
     # GUILE_LIB_path is empty
-    GUILE_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
+    XEN_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
   fi
 
   if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.3.4"))'`" != "#t"; then
@@ -16016,7 +16090,7 @@ _ACEOF
   else
 
     if test "$XM_LIBS" = ""; then
-      XM_LIBS="$GUILE_LIBS"
+      XM_LIBS="$XEN_LIBS"
       if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.6.8"))'`" = "#t"; then
         # the -pthread business confuses ld
         new_libs=`echo " $XM_LIBS " | sed -e 's/-pthread //'`
@@ -16048,9 +16122,9 @@ _ACEOF
     ac_snd_have_extension_language=yes
 
     OLD_LIBS="$LIBS"
-    LIBS="$GUILE_LIBS $LIBS"
+    LIBS="$XEN_LIBS $LIBS"
     OLD_CFLAGS="$CFLAGS"
-    CFLAGS="$GUILE_CFLAGS $CFLAGS"
+    CFLAGS="$XEN_CFLAGS $CFLAGS"
     GNAME="guile"
 
 # special Mac OSX stuff -- need to protect against multiple -lguile's, add -all_load, and add -lguile-ltdl
@@ -16062,7 +16136,7 @@ _ACEOF
       *-*-solaris*)
 # this is a bug in the Sun guile-config I think
         if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.6"))'`" = "#t"; then
-	  GUILE_LIBS="$GUILE_LIBS -lltdl"
+	  XEN_LIBS="$XEN_LIBS -lltdl"
 	fi
 	;;
     esac
@@ -18025,7 +18099,7 @@ _ACEOF
 
     fi
     if test "$with_snd_as_pd_external" = yes ; then
-      GUILE_LIBS="`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string-append (cdr (assoc (quote libdir) %guile-build-info)) "/libguile.a " (cdr (assoc (quote LIBS) %guile-build-info))))'`"
+      XEN_LIBS="`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string-append (cdr (assoc (quote libdir) %guile-build-info)) "/libguile.a " (cdr (assoc (quote LIBS) %guile-build-info))))'`"
     fi
 
 
@@ -23251,8 +23325,8 @@ s,@GL_FILES@,$GL_FILES,;t t
 s,@GL_FLAGS@,$GL_FLAGS,;t t
 s,@FAM_LIB@,$FAM_LIB,;t t
 s,@GAUCHE_CONFIG@,$GAUCHE_CONFIG,;t t
-s,@GUILE_LIBS@,$GUILE_LIBS,;t t
-s,@GUILE_CFLAGS@,$GUILE_CFLAGS,;t t
+s,@XEN_LIBS@,$XEN_LIBS,;t t
+s,@XEN_CFLAGS@,$XEN_CFLAGS,;t t
 s,@FTH_VERSION@,$FTH_VERSION,;t t
 s,@FTH_CFLAGS@,$FTH_CFLAGS,;t t
 s,@FTH_LIBS@,$FTH_LIBS,;t t

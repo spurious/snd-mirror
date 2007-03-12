@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 27 19:22:06 CET 2005
-\ Changed: Fri Feb 23 19:44:14 CET 2007
+\ Changed: Sun Mar 11 23:07:56 CET 2007
 
 \ Commentary:
 \
@@ -33,7 +33,6 @@ require examp
 ;
 
 \ mark-name->id is a global version of find-mark
-
 : mark-name->id ( name -- m )
   doc" Like find-mark but searches all currently accessible channels."
   { name }
@@ -59,7 +58,7 @@ require examp
 : describe-mark ( id -- ary )
   doc" Returns a description of the movements of mark ID over the channel's edit history."
   { id }
-  id ['] mark-home 'no-such-mark nil fth-catch if
+  id <'> mark-home 'no-such-mark nil fth-catch if
     sounds each { snd }
       snd channels 0 ?do
 	0 snd i ( chn ) edits each + end-each 1+ ( max-edits ) 0 ?do
@@ -123,56 +122,58 @@ require examp
 
 hide
 : save-mark-properties-cb <{ filename -- }>
-  filename :fam w/a io-open { io }
-  io $" \n\\ from save-mark-properties in %s\n\n" _ '( *filename* ) io-write-format
-  io $" require marks\n\n" io-write
-  undef undef undef marks each ( snd-m )
-    each ( chn-m )
-      each { m }
-	m mark-properties { mp }
-	mp if
-	  m mark-home { mhome }
-	  m undef mark-sample { msamp }
-	  io $" let:\n" io-write
-	  io $"   %S 0 find-sound { snd }\n" '( mhome car file-name ) io-write-format
-	  io $"   snd sound? if\n" io-write
-	  io $"     %d snd %d find-mark { mk }\n" '( msamp mhome cadr ) io-write-format
-	  io $"     mk mark? if\n" io-write
-	  io $"       mk %S set-mark-properties\n" '( mp ) io-write-format
-	  io $"     then\n" io-write
-	  io $"   then\n" io-write
-	  io $" ;let\n" io-write
-	then
+  undef undef undef marks caar cons? if
+    filename :fam a/o io-open { io }
+    io $" \n\\ from save-mark-properties in %s\n" _ '( *filename* ) io-write-format
+    io $" require marks\n\n" io-write
+    io $" let:\n" io-write
+    io $"   nil nil { snd mk }\n" io-write
+    undef undef undef marks each ( snd-m )
+      each ( chn-m )
+	each { m }
+	  m mark-properties { mp }
+	  mp if
+	    m mark-home { mhome }
+	    m undef mark-sample { msamp }
+	    io $"   %S 0 find-sound to snd\n" '( mhome car file-name ) io-write-format
+	    io $"   snd sound? if\n" io-write
+	    io $"     %d snd %d find-mark to mk\n" '( msamp mhome cadr ) io-write-format
+	    io $"     mk mark? if\n" io-write
+	    io $"       mk %S set-mark-properties\n" '( mp ) io-write-format
+	    io $"     then\n" io-write
+	    io $"   then\n" io-write
+	  then
+	end-each
       end-each
     end-each
-  end-each
-  io io-close
+    io $" ;let\n" io-write
+    io io-close
+  then
 ;
 set-current
 : save-mark-properties ( -- )
   doc" Sets up an after-save-state-hook function to save any mark-properties."
-  after-save-state-hook ['] save-mark-properties-cb add-hook!
+  after-save-state-hook <'> save-mark-properties-cb add-hook!
 ;
 previous
 
 : mark-click-info <{ id -- #t }>
   doc" A mark-click-hook function that describes a mark and its properties.\n\
-  mark-click-hook ' mark-click-info add-hook!"
-  id mark-name empty? if "" else $"  (%S)" '( id mark-name ) string-format then { mname }
-  $"       mark id: %d%s\n" '( id mname ) string-format make-string-output-port { prt }
+mark-click-hook <'> mark-click-info add-hook!"
+  $"       mark id: %d\n" '( id ) string-format make-string-output-port { prt }
+  id mark-name empty? unless prt $"          name: %s\n" '( id mark-name ) port-puts-format then
   prt $"        sample: %d (%.3f secs)\n"
   '( id undef mark-sample dup id mark-home car srate f/ ) port-puts-format
-  id mark-sync 0<> if prt $"          sync: %s\n" '( id mark-sync ) port-puts-format then
+  id mark-sync if prt $"          sync: %s\n" '( id mark-sync ) port-puts-format then
   id mark-properties { props }
   props empty? unless prt $"    properties: %s" '( props ) port-puts-format then
   $" Mark Info" prt port->string info-dialog drop
   #t
 ;
-\ mark-click-hook ' mark-click-info add-hook!
+\ mark-click-hook <'> mark-click-info add-hook!
 
 \ This code saves mark info in the sound file header, and reads it
 \ back in when the sound is later reopened.
-
 : marks->string { sndf }
   $" \nrequire marks\n" make-string-output-port { prt }
   prt $" let:\n" port-puts
@@ -197,7 +198,7 @@ previous
 0 [if]
   output-comment-hook lambda: <{ str }> selected-sound marks->string ; add-hook!
   after-open-hook lambda: <{ snd -- }>
-    snd comment ( str ) ['] string-eval #t nil fth-catch if ( str ) drop then
+    snd comment ( str ) <'> string-eval #t nil fth-catch if ( str ) drop then
   ; add-hook!
 [then]
 

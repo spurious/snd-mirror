@@ -669,7 +669,7 @@ This can kill the X server!
 ---- Sun ----
 
 If the make process complains about lt_dlclose and friends, add -lltdl
-to the GUILE_LIBS list in makefile.  The --with-gl and --with-just-gl
+to the XEN_LIBS list in makefile.  The --with-gl and --with-just-gl
 switches are not recommended on the Sun, though they work; the
 colormap of the entire system is hijacked while Snd is running.
 
@@ -717,12 +717,12 @@ list in the makefile.
 
 You might also need to fixup the guile portion of the makefile:
 
-GUILE_LIBS = -L/usr/local/lib -lguile -lm -lguile-ltdl -ldl
+XEN_LIBS = -L/usr/local/lib -lguile -lm -lguile-ltdl -ldl
 
 or, in the fink case:
 
-GUILE_LIBS = -L/sw/lib -lguile -lm /sw/lib/libguile.a
-GUILE_CFLAGS = -I/sw/include/
+XEN_LIBS = -L/sw/lib -lguile -lm /sw/lib/libguile.a
+XEN_CFLAGS = -I/sw/include/
 
 
 If C-f (and other such commands) doesn't work, either try toggling

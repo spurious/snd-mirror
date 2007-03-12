@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Thu Feb 01 01:39:46 CET 2007
+\ Changed: Sun Mar 11 22:44:36 CET 2007
 
 \ Commentary:
 \
@@ -600,7 +600,7 @@ previous
 \ --- remember-sound-state ---
 
 ".snd-remember-sound" value remember-sound-filename
-#() value -saved-remember-sound-states-states-
+#() value -saved-remember-sound-states-
 
 hide
 #( <'> sync <'> with-tracking-cursor <'> selected-channel <'> show-controls <'> read-only
@@ -709,7 +709,7 @@ hide
   remember-states empty?
   remember-sound-filename file-exists? && if
     remember-sound-filename file-eval
-    -saved-remember-sound-states-states- to remember-states
+    -saved-remember-sound-states- to remember-states
   then
   #f
 ;
@@ -726,8 +726,7 @@ hide
     io $" \\ -*- snd-forth -*-\n" io-write
     io $" \\ from remember-sound-state in %s\n" _ '( *filename* ) io-write-format
     io $" \\ written: %s\n\n" _ '( date ) io-write-format
-    io $" %s to -saved-remember-sound-states-states-\n\n"
-    '( remember-states object-dump ) io-write-format
+    io $" %S to -saved-remember-sound-states-\n\n" '( remember-states ) io-write-format
     io $" \\ %s ends here\n" _ '( remember-sound-filename #f file-basename ) io-write-format
     io io-close
   then
