@@ -14,9 +14,9 @@ typedef struct {
   Float size;
   Float max_val;
   bool dB;
-  GdkPixmap *off_label;
-  GdkPixmap *on_label;
-  GdkPixmap *clip_label;
+  picture_t *off_label;
+  picture_t *on_label;
+  picture_t *clip_label;
   axis_context *ax; /* to hold cairo context and current drawing choices */
 } vu_t;
 
@@ -100,19 +100,23 @@ void recorder_error(const char *msg)
 
 /* -------------------------------- ICONS -------------------------------- */
 
-static GdkPixmap *speaker_pix, *line_in_pix, *mic_pix, *aes_pix, *adat_pix, *digital_in_pix, *cd_pix;
+static picture_t *speaker_pix, *line_in_pix, *mic_pix, *aes_pix, *adat_pix, *digital_in_pix, *cd_pix;
 
 static void make_record_icons(GtkWidget *w)
 {
   GdkWindow *wn;
   wn = MAIN_WINDOW(ss);
+#if USE_CAIRO
+  /* TODO */
+#else
   speaker_pix = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, speaker_bits());
   mic_pix = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mic_bits());
   line_in_pix = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, line_in_bits());
   cd_pix = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, cd_bits());
+#endif
 }
 
-static GdkPixmap *device_pix(int device)
+static picture_t *device_pix(int device)
 {
   switch (device)
     {
@@ -257,19 +261,25 @@ static void allocate_meter(vu_t *vu)
 	band = 1;
 	if (k == 1)
 	  {
+#if USE_CAIRO
+#else
 	    if (!(vu->clip_label))
 	      vu->clip_label = gdk_pixmap_new(wn, width, height, -1);
-	    gc_set_foreground(draw_gc, reds[0]);
 	    vu->ax->wn = vu->clip_label;
+#endif
+	    gc_set_foreground(draw_gc, reds[0]);
 	    vu->ax->gc = draw_gc;
 	    fill_rectangle(vu->ax, 0, 0, width, height);
 	  }
 	else 
 	  {
+#if USE_CAIRO
+#else
 	    if (!(vu->on_label))
 	      vu->on_label = gdk_pixmap_new(wn, width, height, -1);
-	    gc_set_foreground(draw_gc, yellows[2]);
 	    vu->ax->wn = vu->on_label;
+#endif
+	    gc_set_foreground(draw_gc, yellows[2]);
 	    vu->ax->gc = draw_gc;
 	    fill_rectangle(vu->ax, 0, 0, width, height);
 	  }
@@ -327,11 +337,14 @@ static void allocate_meter(vu_t *vu)
   }
 
   /* create the 3 labels, draw arcs and ticks */
+#if USE_CAIRO
+#else
   if (!(vu->off_label))
     vu->off_label = gdk_pixmap_new(wn, width, height, -1);
+  vu->ax->wn = vu->off_label;
+#endif
   /* not on, so just display a white background */
   gc_set_foreground(draw_gc, white);
-  vu->ax->wn = vu->off_label;
   vu->ax->gc = draw_gc;
   fill_rectangle(vu->ax, 0, 0, width, height);
   gc_set_foreground(draw_gc, black);
@@ -424,7 +437,7 @@ static void allocate_meter(vu_t *vu)
 
 static void display_vu_meter(vu_t *vu)
 {
-  GdkPixmap *label = 0;
+  picture_t *label = NULL;
   recorder_info *rp;
 
   if (!vu) return;

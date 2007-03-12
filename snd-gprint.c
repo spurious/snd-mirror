@@ -17,9 +17,8 @@ static void draw_page(GtkPrintOperation *operation, GtkPrintContext *context, gi
   cairo_t *cr;
   PangoLayout *layout;
   gdouble width, text_height;
-  gint line, i, layout_height;
+  gint layout_height;
   PangoFontDescription *desc;
-  gchar *page_str;
 
   /* this is just example code */
   cr = gtk_print_context_get_cairo_context(context);

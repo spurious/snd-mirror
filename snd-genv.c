@@ -406,7 +406,7 @@ void enved_display_point_label(Float x, Float y)
   set_button_label(brktxtL, brkpt_buf);
 }
 
-void display_enved_progress(char *str, GdkPixmap *pix)
+void display_enved_progress(char *str, picture_t *pix)
 {
   if (pix)
     draw_picture_direct(GDK_DRAWABLE(brkpixL->window), hgc, pix, 0, 0, 0, 8, 16, 16);

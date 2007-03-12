@@ -207,6 +207,8 @@ void draw_cursor(chan_info *cp)
   ap = cp->axis;
 #if !USE_CAIRO
   ax = cursor_context(cp);
+#else
+  ax = ap->ax;
 #endif
   if ((cp->tracking) && (with_tracking_cursor(ss) != DONT_TRACK))
     cur = cp->tracking_cursor_style;

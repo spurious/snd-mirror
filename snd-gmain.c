@@ -454,10 +454,13 @@ static idle_func_t startup_funcs(gpointer context)
 #ifndef SND_AS_WIDGET
 static void set_up_icon(void)
 {
-  GdkPixmap *pix;
+  picture_t *pix;
+#if USE_CAIRO
+#else
   GdkBitmap *mask;
   pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), &mask, NULL, snd_icon_bits());
   gdk_window_set_icon(MAIN_WINDOW(ss), NULL, pix, mask);
+#endif
 }
 #endif
 

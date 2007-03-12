@@ -231,6 +231,9 @@ static void mix_amp_env_resize(GtkWidget *w)
       ax->wn = w_env->window;
       ax->w = w_env;
       ax->gc = cur_gc;
+#if USE_CAIRO
+      ax->cr = gdk_cairo_create(ax->wn);
+#endif
     }
   else clear_window(ax);
   chans = mix_dialog_mix_input_chans(mix_dialog_id);
@@ -333,7 +336,7 @@ static gboolean mix_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *ev,
 /* -------- track -------- */
 static GtkWidget *w_id = NULL, *w_beg = NULL, *w_track = NULL, *mix_play = NULL, *w_id_label = NULL;
 static GtkWidget *w_track_label = NULL, *mix_track_play_pix = NULL, *mix_play_pix = NULL, *mix_track_play = NULL, *w_mix_pan, *w_mix_pan1;
-static GdkPixmap *speaker_off_pix, *speaker_on_pix, *mix_speaker_pix, *mix_track_speaker_pix, *mix_pan_pix, *mix_yellow_pan_pix, *mix_basic_pan_pix;
+static picture_t *speaker_off_pix, *speaker_on_pix, *mix_speaker_pix, *mix_track_speaker_pix, *mix_pan_pix, *mix_yellow_pan_pix, *mix_basic_pan_pix;
 
 static bool id_changed = false;
 
@@ -725,8 +728,11 @@ GtkWidget *make_mix_dialog(void)
       
       if (!speaker_off_pix)
 	{
+#if USE_CAIRO
+#else
 	  speaker_off_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, speaker_bits());
 	  speaker_on_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, blue_speaker_bits());
+#endif
 	}
 
       mix_speaker_pix = speaker_off_pix;
@@ -762,8 +768,11 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_show(mix_track_play_pix);
       SG_SIGNAL_CONNECT(mix_track_play_pix, "expose_event", mix_track_play_pix_expose, NULL);
 
+#if USE_CAIRO
+#else
       mix_basic_pan_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, pan_bits());
       mix_yellow_pan_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, yellow_pan_bits());
+#endif
       mix_pan_pix = mix_basic_pan_pix;
       w_mix_pan = gtk_button_new();
       gtk_box_pack_end(GTK_BOX(rc1), w_mix_pan, false, false, 2);
@@ -1241,6 +1250,9 @@ static void track_amp_env_resize(GtkWidget *w)
       track_ax->wn = w_track_env->window;
       track_ax->w = w_track_env;
       track_ax->gc = track_cur_gc;
+#if USE_CAIRO
+      track_ax->cr = gdk_cairo_create(track_ax->wn);
+#endif
     }
   else clear_window(track_ax);
   e = track_dialog_env(track_dialog_id);
@@ -1318,7 +1330,7 @@ static gboolean track_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *e
 /* -------- track -------- */
 static GtkWidget *w_track_id = NULL, *w_track_beg = NULL, *w_track_id_label = NULL, *w_track_text;
 static GtkWidget *w_track_track_label = NULL, *w_track_play_pix = NULL, *w_track_play = NULL, *w_track_track;
-static GdkPixmap *track_speaker_pix;
+static picture_t *track_speaker_pix;
 
 static bool track_id_changed = false;
 
@@ -1690,8 +1702,11 @@ GtkWidget *make_track_dialog(void)
       
       if (!speaker_off_pix)
 	{
+#if USE_CAIRO
+#else
 	  speaker_off_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, speaker_bits());
 	  speaker_on_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, blue_speaker_bits());
+#endif
 	}
       track_speaker_pix = speaker_off_pix;
 

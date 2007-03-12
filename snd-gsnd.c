@@ -147,10 +147,10 @@ void display_minibuffer_error(snd_info *sp, const char *str)
 
 /* -------- PIXMAPS -------- */
 
-static GdkPixmap *mini_lock = NULL, *speed_r = NULL, *speed_l = NULL, *blank = NULL, *stop_sign = NULL;
 static bool mini_lock_allocated = false;
-static GdkPixmap *bombs[NUM_BOMBS];
-static GdkPixmap *hourglasses[NUM_HOURGLASSES];
+static picture_t *mini_lock = NULL, *speed_r = NULL, *speed_l = NULL, *blank = NULL, *stop_sign = NULL;
+static picture_t *bombs[NUM_BOMBS];
+static picture_t *hourglasses[NUM_HOURGLASSES];
 
 void show_lock(snd_info *sp)
 {
@@ -258,6 +258,9 @@ static void make_pixmaps(void)
       GdkWindow *wn;
       int k;
       wn = MAIN_WINDOW(ss);
+#if USE_CAIRO
+      /* TODO */
+#else
       mini_lock = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_lock_bits());
       stop_sign = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, stop_sign_bits());
       blank = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, blank_bits());
@@ -267,6 +270,7 @@ static void make_pixmaps(void)
 	bombs[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_bomb_bits(k));
       for (k = 0; k < NUM_HOURGLASSES; k++) 
 	hourglasses[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_glass_bits(k));
+#endif
       mini_lock_allocated = true;
     }
 }

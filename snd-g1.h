@@ -27,7 +27,7 @@ void fill_polygons(axis_context *ax, point_t *points, int num, int y0);
 void fill_two_sided_polygons(axis_context *ax, point_t *points, point_t *points1, int num);
 void fill_polygon_from_array(axis_context *ax, point_t *points, int npoints);
 
-void draw_picture_direct(GdkDrawable* drawable, gc_t *gp, GdkDrawable* src, gint xsrc, gint ysrc, gint xdest, gint ydest, gint width, gint height);
+void draw_picture_direct(GdkDrawable *drawable, gc_t *gp, picture_t *src, gint xsrc, gint ysrc, gint xdest, gint ydest, gint width, gint height);
 
 void draw_string(axis_context *ax, int x0, int y0, const char *str, int len);
 void draw_arc(axis_context *ax, int x, int y, int size, int angle0, int angle1);
@@ -441,7 +441,7 @@ void new_active_channel_alert(void);
 void env_redisplay(void);
 void env_redisplay_with_print(void);
 void enved_display_point_label(Float x, Float y);
-void display_enved_progress(char *str, GdkPixmap *pix);
+void display_enved_progress(char *str, picture_t *pix);
 void enved_print(char *name);
 GtkWidget *create_envelope_editor(void);
 void set_enved_clip_p(bool val);

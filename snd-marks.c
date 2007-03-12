@@ -297,7 +297,7 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
   ax->cr = gdk_cairo_create(ax->wn);
   {
     color_t bg_color, old_color;
-    old_color = ax->fg_color;
+    old_color = ax->gc->fg_color;
     if (show) 
       bg_color = ss->sgx->red;
     else
@@ -306,7 +306,7 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
 	  bg_color = ss->sgx->selected_graph_color;
 	else bg_color = ss->sgx->graph_color;
       }
-    gc_set_foreground(ax, bg_color);
+    set_foreground_color(ax, bg_color);
 #endif
   fill_rectangle(ax,
 		 cx - mark_tag_width(ss), top,
@@ -319,7 +319,7 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
 	       cx,                   y0);
   mp->visible = show;
 #if USE_CAIRO
-    gc_set_foreground(ax, old_color);
+  set_foreground_color(ax, old_color);
   }
 #endif
 }

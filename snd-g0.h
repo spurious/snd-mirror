@@ -51,7 +51,7 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define idle_t guint
 #define idle_func_t gboolean
 #define any_pointer_t gpointer
-#define color_t GdkColor *
+typedef GdkColor *color_t;
 #define oclock_t guint32
 #define point_t GdkPoint
 
@@ -66,8 +66,12 @@ typedef struct {
   GdkColor *fg_color, *bg_color;
   GdkFunction op;
 } gc_t;
+
+#define picture_t cairo_surface_t
+
 #else
   #define gc_t GdkGC
+  #define picture_t GdkPixmap
 #endif
 
 typedef struct {
@@ -109,7 +113,7 @@ typedef struct {
 } chan_context;
 
 typedef struct {
-  GdkPixmap *file_pix;
+  picture_t *file_pix;
   GtkWidget **snd_widgets;
   GtkObject **snd_adjs;
   struct env_editor *flt;
