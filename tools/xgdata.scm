@@ -6524,7 +6524,7 @@
 (CAIRO-FUNC "void cairo_matrix_transform_distance cairo_matrix_t* matrix gdouble* [dx] gdouble* [dy]")
 (CAIRO-FUNC "void cairo_matrix_transform_point cairo_matrix_t* matrix gdouble* [x] gdouble* [y]")
 
-(STRUCT-make "cairo_matrix_t")
+(CAIRO-STRUCT-make "cairo_matrix_t")
 
 (CFNC-210 "PangoLayout* pango_cairo_create_layout cairo_t* cr")
 (CFNC-210 "void pango_cairo_update_layout cairo_t* cr PangoLayout* layout")

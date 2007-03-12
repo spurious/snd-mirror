@@ -35,6 +35,7 @@
 (define strings-250 '())
 (define structs '())
 (define make-structs '()) ; these have a xg-specific make function
+(define cairo-make-structs '())
 (define struct-fields '())
 (define settable-struct-fields '())
 
@@ -1614,6 +1615,10 @@
   (STRUCT data)
   (set! make-structs (cons (car-str data) make-structs)))
 
+(define (CAIRO-STRUCT-make data)
+  (STRUCT data) ; fields not needed currently
+  (set! cairo-make-structs (cons (car-str data) cairo-make-structs)))
+
 (define (find-struct name)
   (call-with-current-continuation
    (lambda (return)
@@ -1760,6 +1765,20 @@
       args)
      (hey "): ~A struct~%" name)))
  (reverse make-structs))
+ 
+(if (not (null? cairo-make-structs))
+    (for-each
+     (lambda (name)
+       (let ((args (cadr (find-struct name))))
+	 (if (> (length args) 0)
+	     (hey " *    (~A #:optional" name)
+	     (hey " *    (~A" name))
+	 (for-each
+	  (lambda (str)
+	    (hey " ~A" (cadr str)))
+	  args)
+	 (hey "): ~A struct (if cairo)~%" name)))
+     (reverse cairo-make-structs)))
  
 (hey " *~%")
 (hey " * omitted functions and macros:~%")
@@ -2957,44 +2976,49 @@
 (for-each make-reader (reverse settable-struct-fields))
 (for-each make-writer (reverse settable-struct-fields))
 
-(for-each
- (lambda (name)
-   (let* ((struct (find-struct name))
-	  (strs (cadr struct)))
-     ;; cadr of each inner list is field name, car is field type
-     (if (= (length strs) 0)
-	 (begin
-	   (hey "static XEN gxg_make_~A(void)~%" name)
-	   (hey "{~%")
-	   (hey "  ~A* result;~%" name)
-	   (hey "  result = (~A*)CALLOC(1, sizeof(~A));~%" name name)
-	   (hey "  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(~S), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));~%" 
-		(string-append name "_"))
-	   (hey "}~%~%"))
-	 (begin
-	   (hey "static XEN gxg_make_~A(XEN arglist)~%" name)
-	   (hey "{~%")
-	   (hey "  ~A* result;~%" name)
-	   (hey "  int i, len;~%")
-	   (hey "  result = (~A*)CALLOC(1, sizeof(~A));~%" name name)
-	   (hey "  len = XEN_LIST_LENGTH(arglist);~%")
-	   (hey "  for (i = 0; i < len; i++)~%")
-	   (hey "    switch (i)~%")
-	   (hey "      {~%")
-	   (let ((ctr 0))
-	     (for-each
-	      (lambda (str)
-		(let ((field-name (cadr str))
-		      (field-type (car str)))
-		  (hey "      case ~D: result->~A = XEN_TO_C_~A(XEN_LIST_REF(arglist, ~D));~%"
-		       ctr field-name (no-stars field-type) ctr)
-		  (set! ctr (1+ ctr))))
-	      strs))
-	   (hey "      }~%")
-	   (hey "  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(~S), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));~%" 
-		(string-append name "_"))
-	   (hey "}~%~%")))))
- (reverse make-structs))
+(define (define-struct name)
+  (let* ((struct (find-struct name))
+	 (strs (cadr struct)))
+    ;; cadr of each inner list is field name, car is field type
+    (if (= (length strs) 0)
+	(begin
+	  (hey "static XEN gxg_make_~A(void)~%" name)
+	  (hey "{~%")
+	  (hey "  ~A* result;~%" name)
+	  (hey "  result = (~A*)CALLOC(1, sizeof(~A));~%" name name)
+	  (hey "  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(~S), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));~%" 
+	       (string-append name "_"))
+	  (hey "}~%~%"))
+	(begin
+	  (hey "static XEN gxg_make_~A(XEN arglist)~%" name)
+	  (hey "{~%")
+	  (hey "  ~A* result;~%" name)
+	  (hey "  int i, len;~%")
+	  (hey "  result = (~A*)CALLOC(1, sizeof(~A));~%" name name)
+	  (hey "  len = XEN_LIST_LENGTH(arglist);~%")
+	  (hey "  for (i = 0; i < len; i++)~%")
+	  (hey "    switch (i)~%")
+	  (hey "      {~%")
+	  (let ((ctr 0))
+	    (for-each
+	     (lambda (str)
+	       (let ((field-name (cadr str))
+		     (field-type (car str)))
+		 (hey "      case ~D: result->~A = XEN_TO_C_~A(XEN_LIST_REF(arglist, ~D));~%"
+		      ctr field-name (no-stars field-type) ctr)
+		 (set! ctr (1+ ctr))))
+	     strs))
+	  (hey "      }~%")
+	  (hey "  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(~S), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));~%" 
+	       (string-append name "_"))
+	  (hey "}~%~%")))))
+
+(for-each define-struct (reverse make-structs))
+(if (not (null? cairo-make-structs))
+    (with-cairo hey 
+		(lambda () 
+		  (for-each define-struct (reverse cairo-make-structs)))))
+
 
 ;;; ---------------- argify ----------------
 
@@ -3075,6 +3099,18 @@
  (reverse make-structs))
 (hey "~%")
 
+(with-cairo hey
+  (lambda ()
+    (for-each 
+     (lambda (struct) 
+       (let* ((s (find-struct struct)))
+	 (if (> (length (cadr s)) 0)
+	     (hey "XEN_VARGIFY(gxg_make_~A_w, gxg_make_~A)~%" struct struct)
+	     (hey "XEN_NARGIFY_0(gxg_make_~A_w, gxg_make_~A)~%" struct struct))))
+     (reverse cairo-make-structs))))
+(hey "~%")
+
+
 (hey "~%#else~%")
 (hey "/* not XEN_ARGIFY_1 */~%")
 
@@ -3132,6 +3168,18 @@
 		  (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct)
 		  (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct))))
  (reverse make-structs))
+(hey "~%")
+
+(if (not (null? cairo-make-structs))
+    (with-cairo hey 
+		(lambda () 
+		  (for-each 
+		   (lambda (struct) 
+		     (let* ((s (find-struct struct)))
+		       (if (> (length (cadr s)) 0)
+			   (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct)
+			   (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct))))
+		   (reverse cairo-make-structs)))))
 (hey "~%")
 
 
@@ -3237,6 +3285,21 @@
 	  (if (> (length (cadr s)) 0) " ..." "")
 	  struct)))
  (reverse make-structs))
+
+(if (not (null? cairo-make-structs))
+    (with-cairo hey
+		(lambda ()
+		  (for-each 
+		   (lambda (struct)
+		     (let* ((s (find-struct struct)))
+		       (hey "  XG_DEFINE_PROCEDURE(~A, gxg_make_~A_w, 0, 0, ~D, \"(~A~A): a new ~A struct\");~%" 
+			    struct 
+			    struct 
+			    (if (> (length (cadr s)) 0) 1 0)
+			    struct
+			    (if (> (length (cadr s)) 0) " ..." "")
+			    struct)))
+		   (reverse cairo-make-structs)))))
 
 (hey "}~%~%")
 

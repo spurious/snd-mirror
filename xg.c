@@ -37,16 +37,15 @@
  *    (PangoColor): PangoColor struct
  *    (PangoRectangle): PangoRectangle struct
  *    (PangoLogAttr): PangoLogAttr struct
- *    (cairo_matrix_t): cairo_matrix_t struct
+ *    (cairo_matrix_t): cairo_matrix_t struct (if cairo)
  *
  * omitted functions and macros:
  *     anything with a va_list or GtkArg* argument.
  *     most of the unusual keysym names
- *     all *_CLASS, *_IFACE macros
+ *     all *_CLASS, *_IFACE macros, *_get_type functions
  *     win32-specific functions
  *
  * HISTORY:
- *     12-Mar:    cairo 1.4.0.
  *     9-Mar:     removed all *_get_type functions (nearly 300!).
  *     5-Mar:     cairo and more gtkprint.
  *     --------
@@ -34020,12 +34019,15 @@ static XEN gxg_make_PangoLogAttr(void)
   return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoLogAttr_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
 }
 
+#if HAVE_CAIRO_CREATE
 static XEN gxg_make_cairo_matrix_t(void)
 {
   cairo_matrix_t* result;
   result = (cairo_matrix_t*)CALLOC(1, sizeof(cairo_matrix_t));
   return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("cairo_matrix_t_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
 }
+
+#endif
 
 
 #ifdef XEN_ARGIFY_1
@@ -37865,7 +37867,11 @@ XEN_VARGIFY(gxg_make_GtkRequisition_w, gxg_make_GtkRequisition)
 XEN_NARGIFY_0(gxg_make_PangoColor_w, gxg_make_PangoColor)
 XEN_NARGIFY_0(gxg_make_PangoRectangle_w, gxg_make_PangoRectangle)
 XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
+
+#if HAVE_CAIRO_CREATE
 XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
+#endif
+
 
 
 #else
@@ -41706,7 +41712,11 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_make_PangoColor_w gxg_make_PangoColor
 #define gxg_make_PangoRectangle_w gxg_make_PangoRectangle
 #define gxg_make_PangoLogAttr_w gxg_make_PangoLogAttr
+
+#if HAVE_CAIRO_CREATE
 #define gxg_make_cairo_matrix_t_w gxg_make_cairo_matrix_t
+#endif
+
 
 
 #endif
@@ -45553,7 +45563,10 @@ static void define_structs(void)
   XG_DEFINE_PROCEDURE(PangoColor, gxg_make_PangoColor_w, 0, 0, 0, "(PangoColor): a new PangoColor struct");
   XG_DEFINE_PROCEDURE(PangoRectangle, gxg_make_PangoRectangle_w, 0, 0, 0, "(PangoRectangle): a new PangoRectangle struct");
   XG_DEFINE_PROCEDURE(PangoLogAttr, gxg_make_PangoLogAttr_w, 0, 0, 0, "(PangoLogAttr): a new PangoLogAttr struct");
+#if HAVE_CAIRO_CREATE
   XG_DEFINE_PROCEDURE(cairo_matrix_t, gxg_make_cairo_matrix_t_w, 0, 0, 0, "(cairo_matrix_t): a new cairo_matrix_t struct");
+#endif
+
 }
 
 /* ---------------------------------------- constants ---------------------------------------- */

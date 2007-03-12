@@ -257,6 +257,9 @@
 (define (STRUCT-make data)
   #f)
 
+(define (CAIRO-STRUCT-make data)
+  #f)
+
 ;;; ---------------------------------------- read data ---------------------------------------- 
 (load "xgdata.scm")
 

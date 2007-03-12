@@ -20,7 +20,7 @@ TODO: cursor starts to redpy after mark! Then no true waveform
 TODO: remove all _direct, get pixmap translated
 TODO: gfft spacing is bad
 TODO: track down fth help problem (defs in lang?)
-TODO: it's possible to have gtk but no cairo -- need that check in configure/xg [fixed?]
+TODO: it's possible to have gtk but no cairo -- need that check in configure/xg [fixed? also libxm configur/config.h]
 TODO: add cairo case in all gdk_gc stuff in *.scm/rb/fs
 PERHAPS: can cairo make gl-style graphs?
 PERHAPS: would it be faster to path polys then one fill?
