@@ -30,13 +30,9 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 
 #define XEN_WRAP_WIDGET(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkWidget_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
 #define XEN_WRAP_WINDOW(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkWindow_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
-#define XEN_WRAP_PIXEL(Value)    XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkColor_"), C_TO_XEN_ULONG((unsigned long)Value))
 #define XEN_UNWRAP_WIDGET(Value) (XEN_LIST_P(Value) ? (GtkWidget*)(XEN_TO_C_ULONG(XEN_CADR(Value))) : NULL)
-#define XEN_UNWRAP_PIXEL(Value)  (GdkColor*)(XEN_TO_C_ULONG(XEN_CADR(Value)))
 #define XEN_WIDGET_P(Value)      (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
                                   (strcmp("GtkWidget_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
-#define XEN_PIXEL_P(Value)       (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-                                  (strcmp("GdkColor_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 #define XEN_WRAP_EVENT(Value)    ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkEvent_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
 #define NULL_WIDGET NULL
 
@@ -51,27 +47,49 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define idle_t guint
 #define idle_func_t gboolean
 #define any_pointer_t gpointer
-typedef GdkColor *color_t;
 #define oclock_t guint32
 #define point_t GdkPoint
 
-#define rgb_t unsigned short
-#define RGB_MAX 65535
-#define FLOAT_TO_RGB(Val) (rgb_t)(RGB_MAX * (Val))
-#define RGB_TO_FLOAT(Val) (float)((float)(Val) / (float)RGB_MAX)
-
 #if USE_CAIRO
-typedef struct {
-  double fg_red, fg_green, fg_blue, bg_red, bg_green, bg_blue;
-  GdkColor *fg_color, *bg_color;
-  GdkFunction op;
-} gc_t;
+  #define rgb_t double
+  #define RGB_MAX 1.0
+  #define FLOAT_TO_RGB(Val) (rgb_t)(Val)
+  #define RGB_TO_FLOAT(Val) Val
 
-#define picture_t cairo_surface_t
+  typedef struct {
+    rgb_t red, green, blue;
+  } color_info;
+
+  typedef color_info* color_t;
+
+  typedef struct {
+    color_t fg_color, bg_color;
+    int op;
+  } gc_t;
+
+  #define picture_t cairo_surface_t
+
+  #define XEN_WRAP_PIXEL(Value)    XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("color_t"), C_TO_XEN_ULONG((unsigned long)Value))
+  #define XEN_UNWRAP_PIXEL(Value)  (color_t)(XEN_TO_C_ULONG(XEN_CADR(Value)))
+  #define XEN_PIXEL_P(Value)       (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+                                    (strcmp("color_t", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
 #else
+
+  #define rgb_t unsigned short
+  #define RGB_MAX 65535
+  #define FLOAT_TO_RGB(Val) (rgb_t)(RGB_MAX * (Val))
+  #define RGB_TO_FLOAT(Val) (float)((float)(Val) / (float)RGB_MAX)
+
   #define gc_t GdkGC
   #define picture_t GdkPixmap
+  typedef GdkColor* color_t;
+  #define color_info GdkColor
+
+  #define XEN_WRAP_PIXEL(Value)    XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkColor_"), C_TO_XEN_ULONG((unsigned long)Value))
+  #define XEN_UNWRAP_PIXEL(Value)  (GdkColor*)(XEN_TO_C_ULONG(XEN_CADR(Value)))
+  #define XEN_PIXEL_P(Value)       (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+                                    (strcmp("GdkColor_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 #endif
 
 typedef struct {
@@ -153,16 +171,16 @@ typedef struct {
   PangoFontDescription *peaks_fnt;
   PangoFontDescription *bold_peaks_fnt; 
 
-  GdkColor *white, *black, *red, *yellow, *green, *light_blue, *lighter_blue;
-  GdkColor *data_color, *selected_data_color, *mark_color, *graph_color, *selected_graph_color, *listener_color, *listener_text_color, *cursor_color;
-  GdkColor *basic_color, *selection_color, *zoom_color, *position_color, *highlight_color, *enved_waveform_color;
-  GdkColor *text_focus_color, *filter_control_waveform_color, *mix_color, *pushed_button_color, *sash_color;
-  GdkColor *help_button_color, *doit_again_button_color, *doit_button_color, *quit_button_color, *reset_button_color;
-  GdkColor *selected_grid_color, *grid_color;
+  color_info *white, *black, *red, *yellow, *green, *light_blue, *lighter_blue;
+  color_info *data_color, *selected_data_color, *mark_color, *graph_color, *selected_graph_color, *listener_color, *listener_text_color, *cursor_color;
+  color_info *basic_color, *selection_color, *zoom_color, *position_color, *highlight_color, *enved_waveform_color;
+  color_info *text_focus_color, *filter_control_waveform_color, *mix_color, *pushed_button_color, *sash_color;
+  color_info *help_button_color, *doit_again_button_color, *doit_button_color, *quit_button_color, *reset_button_color;
+  color_info *selected_grid_color, *grid_color;
 
-  GdkColor *orig_data_color, *orig_selected_data_color, *orig_mark_color, *orig_mix_color;
-  GdkColor *orig_graph_color, *orig_selected_graph_color, *orig_listener_color, *orig_listener_text_color, *orig_cursor_color;
-  GdkColor *orig_basic_color, *orig_selection_color, *orig_zoom_color, *orig_position_color, *orig_highlight_color;
+  color_info *orig_data_color, *orig_selected_data_color, *orig_mark_color, *orig_mix_color;
+  color_info *orig_graph_color, *orig_selected_graph_color, *orig_listener_color, *orig_listener_text_color, *orig_cursor_color;
+  color_info *orig_basic_color, *orig_selection_color, *orig_zoom_color, *orig_position_color, *orig_highlight_color;
 
   gc_t *basic_gc, *selected_basic_gc, *combined_basic_gc;        
   gc_t *cursor_gc, *selected_cursor_gc;      

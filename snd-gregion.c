@@ -82,10 +82,10 @@ static void unhighlight_region(void)
     {
       regrow *oldr;
       oldr = region_row(current_region);
-      gtk_widget_modify_bg(oldr->nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-      gtk_widget_modify_base(oldr->nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-      gtk_widget_modify_bg(oldr->rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-      gtk_widget_modify_base(oldr->rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      widget_modify_bg(oldr->nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      widget_modify_base(oldr->nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      widget_modify_bg(oldr->rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      widget_modify_base(oldr->rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
     }
 }
 
@@ -95,10 +95,10 @@ static void highlight_region(void)
     {
       regrow *oldr;
       oldr = region_row(current_region);
-      gtk_widget_modify_bg(oldr->nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
-      gtk_widget_modify_base(oldr->nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
-      gtk_widget_modify_bg(oldr->rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
-      gtk_widget_modify_base(oldr->rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+      widget_modify_bg(oldr->nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+      widget_modify_base(oldr->nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+      widget_modify_bg(oldr->rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+      widget_modify_base(oldr->rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
     }
 }
 
@@ -367,8 +367,8 @@ static regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignal
   /* assume "ww" is a vbox widget in this case */
   r->rw = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(ww), r->rw, false, false, 0);
-  gtk_widget_modify_bg(r->rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-  gtk_widget_modify_base(r->rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  widget_modify_bg(r->rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  widget_modify_base(r->rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
   gtk_widget_show(r->rw);
 
   r->pl = gtk_check_button_new();
@@ -383,8 +383,8 @@ static regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignal
   SG_SIGNAL_CONNECT(r->nm, "enter_notify_event", regrow_mouse_enter_label, r);
   SG_SIGNAL_CONNECT(r->nm, "leave_notify_event", regrow_mouse_leave_label, r);
   set_user_data(G_OBJECT(r->nm), (gpointer)r);
-  gtk_widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-  gtk_widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
   gtk_widget_show(r->nm);
 
   return(r);
@@ -506,13 +506,13 @@ static void make_region_dialog(void)
   labels = gtk_button_new();
   gtk_box_pack_start(GTK_BOX(infobox), labels, true, true, 2);
   gtk_widget_show(labels);
-  gtk_widget_modify_bg(labels, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  widget_modify_bg(labels, GTK_STATE_NORMAL, ss->sgx->highlight_color);
   SG_SIGNAL_CONNECT(labels, "enter_notify_event", region_labels_mouse_enter, NULL);
 
   labbox = gtk_vbox_new(true, 0);
   gtk_container_add(GTK_CONTAINER(labels), labbox);
   gtk_widget_show(labbox);
-  gtk_widget_modify_bg(labbox, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  widget_modify_bg(labbox, GTK_STATE_NORMAL, ss->sgx->highlight_color);
 
   srate_text = gtk_label_new(_("srate:"));
   sg_left_justify_label(srate_text);
@@ -538,22 +538,22 @@ static void make_region_dialog(void)
   SG_SIGNAL_CONNECT(edit_button, "clicked", region_edit_callback, NULL);
   gtk_box_pack_start(GTK_BOX(infobox), edit_button, true, true, 2);
   gtk_widget_show(edit_button);
-  gtk_widget_modify_bg(edit_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
-  gtk_widget_modify_bg(edit_button, GTK_STATE_ACTIVE, ss->sgx->red);
+  widget_modify_bg(edit_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
+  widget_modify_bg(edit_button, GTK_STATE_ACTIVE, ss->sgx->red);
 
   print_button = gtk_button_new_with_label(_("print"));
   SG_SIGNAL_CONNECT(print_button, "clicked", region_print_callback, NULL);
   gtk_box_pack_start(GTK_BOX(infobox), print_button, true, true, 2);
   gtk_widget_show(print_button);
-  gtk_widget_modify_bg(print_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
-  gtk_widget_modify_bg(print_button, GTK_STATE_ACTIVE, ss->sgx->red);
+  widget_modify_bg(print_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
+  widget_modify_bg(print_button, GTK_STATE_ACTIVE, ss->sgx->red);
 
   unlist_button = gtk_button_new_with_label(_("unlist"));
   SG_SIGNAL_CONNECT(unlist_button, "clicked", region_unlist_callback, NULL);
   gtk_box_pack_start(GTK_BOX(infobox), unlist_button, true, true, 2);
   gtk_widget_show(unlist_button);
-  gtk_widget_modify_bg(unlist_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
-  gtk_widget_modify_bg(unlist_button, GTK_STATE_ACTIVE, ss->sgx->red);
+  widget_modify_bg(unlist_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
+  widget_modify_bg(unlist_button, GTK_STATE_ACTIVE, ss->sgx->red);
 
   gtk_widget_show(region_dialog);
 

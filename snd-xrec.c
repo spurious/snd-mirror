@@ -311,7 +311,7 @@ static void allocate_meter(vu_t *vu)
     {
       vu_colors_allocated = true;
       tmp_color.flags = DoRed | DoGreen | DoBlue;
-      tmp_color.red = RGB_MAX;
+      tmp_color.red = 65535;
       for (i = 0; i < VU_COLORS; i++)
 	{
 	  tmp_color.blue = (rgb_t)(256 * yellow_vals[i]);

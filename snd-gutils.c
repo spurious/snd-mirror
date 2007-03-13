@@ -345,39 +345,31 @@ void goto_window(GtkWidget *text)
 
 
 /* try to keep track of colors */
-void gc_set_foreground(gc_t *gp, GdkColor *color)
+void gc_set_foreground(gc_t *gp, color_info *color)
 {
 #if USE_CAIRO
   gp->fg_color = color;
-  gp->fg_red = RGB_TO_FLOAT(color->red);  
-  gp->fg_green = RGB_TO_FLOAT(color->green);  
-  gp->fg_blue = RGB_TO_FLOAT(color->blue);
 #else
   gdk_gc_set_foreground(gp, color);
 #endif
 }
 
-void gc_set_background(gc_t *gp, GdkColor *color)
+void gc_set_background(gc_t *gp, color_info *color)
 {
 #if USE_CAIRO
   gp->bg_color = color;
-  gp->bg_red = RGB_TO_FLOAT(color->red);  
-  gp->bg_green = RGB_TO_FLOAT(color->green);  
-  gp->bg_blue = RGB_TO_FLOAT(color->blue);
 #else
   gdk_gc_set_background(gp, color);
 #endif
 }
 
-void gc_set_foreground_xor(gc_t *gp, GdkColor *col1, GdkColor *col2)
+void gc_set_foreground_xor(gc_t *gp, color_info *col1, color_info *col2)
 { 
 #if USE_CAIRO
   gp->fg_color = col1;
-  gp->fg_red = RGB_TO_FLOAT(col1->red);  
-  gp->fg_green = RGB_TO_FLOAT(col1->green);  
-  gp->fg_blue = RGB_TO_FLOAT(col1->blue);
+  gp->bg_color = col2;
 #else
-  GdkColor newcol;
+  color_info newcol;
   newcol.pixel = XOR(col1->pixel, col2->pixel);
   newcol.red = XOR(col1->red, col2->red);
   newcol.green = XOR(col1->green, col2->green);
@@ -389,7 +381,7 @@ void gc_set_foreground_xor(gc_t *gp, GdkColor *col1, GdkColor *col2)
 void gc_set_function(gc_t *gp, GdkFunction op)
 {
 #if USE_CAIRO
-  gp->op = op;
+  gp->op = (int)op;
 #else
   gdk_gc_set_function(gp, op);
 #endif
@@ -407,7 +399,7 @@ gc_t *gc_new(GdkDrawable *wn)
 }
 
 
-void color_cursor(GdkColor *color)
+void color_cursor(color_info *color)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -416,7 +408,7 @@ void color_cursor(GdkColor *color)
   gc_set_foreground_xor(sx->selected_cursor_gc, color, sx->selected_graph_color);
 }
 
-void color_marks(GdkColor *color)
+void color_marks(color_info *color)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -425,7 +417,7 @@ void color_marks(GdkColor *color)
   gc_set_foreground_xor(sx->selected_mark_gc, color, sx->selected_graph_color);
 }
 
-void color_selection(GdkColor *color)
+void color_selection(color_info *color)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -434,7 +426,7 @@ void color_selection(GdkColor *color)
   gc_set_foreground_xor(sx->selected_selection_gc, color, sx->selected_graph_color);
 }
 
-void color_graph(GdkColor *color)
+void color_graph(color_info *color)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -446,7 +438,7 @@ void color_graph(GdkColor *color)
   gc_set_foreground_xor(sx->mark_gc, sx->mark_color, color);
 }
 
-void color_selected_graph(GdkColor *color)
+void color_selected_graph(color_info *color)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -458,7 +450,7 @@ void color_selected_graph(GdkColor *color)
   gc_set_foreground_xor(sx->selected_mark_gc, sx->mark_color, color);
 }
 
-void color_data(GdkColor *color)
+void color_data(color_info *color)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -467,7 +459,7 @@ void color_data(GdkColor *color)
   gc_set_background(sx->erase_gc, color);
 }
 
-void color_selected_data(GdkColor *color)
+void color_selected_data(color_info *color)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -476,7 +468,7 @@ void color_selected_data(GdkColor *color)
   gc_set_background(sx->selected_erase_gc, color);
 }
 
-void set_mix_color(GdkColor *color)
+void set_mix_color(color_info *color)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -484,11 +476,83 @@ void set_mix_color(GdkColor *color)
   gc_set_foreground(sx->mix_gc, color);
 }
 
+color_t rgb_to_color(Float r, Float g, Float b)
+{
+#if USE_CAIRO
+  color_info *ccolor;
+  ccolor = (color_info *)CALLOC(1, sizeof(color_info));
+  ccolor->red = r;
+  ccolor->green = g;
+  ccolor->blue = b;
+#else
+  color_info gcolor;
+  color_info *ccolor;
+  gcolor.red = FLOAT_TO_RGB(r);
+  gcolor.green = FLOAT_TO_RGB(g);
+  gcolor.blue = FLOAT_TO_RGB(b);
+  ccolor = gdk_color_copy(&gcolor);
+  gdk_rgb_find_color(gdk_colormap_get_system(), ccolor);
+#endif
+  return(ccolor);
+}
+
+#if USE_CAIRO
+static GdkColor *rgb_to_gdk_color(color_t col)
+{
+  GdkColor gcolor;
+  GdkColor *ccolor;
+  gcolor.red = (unsigned short)(col->red * 65535);
+  gcolor.green = (unsigned short)(col->green * 65535);
+  gcolor.blue = (unsigned short)(col->blue * 65535);
+  ccolor = gdk_color_copy(&gcolor);
+  gdk_rgb_find_color(gdk_colormap_get_system(), ccolor);
+  return(ccolor);
+}
+#endif
+
+void widget_modify_bg(GtkWidget *w, GtkStateType type, color_t color)
+{
+#if USE_CAIRO
+  /* the color has to stick around??? */
+  /* another stop-gap: allocate a color each time... */
+  gtk_widget_modify_bg(w, GTK_STATE_NORMAL, rgb_to_gdk_color(color));
+#else
+  gtk_widget_modify_bg(w, GTK_STATE_NORMAL, color);
+#endif
+}
+
+void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color)
+{
+#if USE_CAIRO
+  gtk_widget_modify_fg(w, GTK_STATE_NORMAL, rgb_to_gdk_color(color));
+#else
+  gtk_widget_modify_fg(w, GTK_STATE_NORMAL, color);
+#endif
+}
+
+void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color)
+{
+#if USE_CAIRO
+  gtk_widget_modify_base(w, GTK_STATE_NORMAL, rgb_to_gdk_color(color));
+#else
+  gtk_widget_modify_base(w, GTK_STATE_NORMAL, color);
+#endif
+}
+
+void widget_modify_text(GtkWidget *w, GtkStateType type, color_t color)
+{
+#if USE_CAIRO
+  gtk_widget_modify_text(w, GTK_STATE_NORMAL, rgb_to_gdk_color(color));
+#else
+  gtk_widget_modify_text(w, GTK_STATE_NORMAL, color);
+#endif
+}
+
 void recolor_graph(chan_info *cp, bool selected)
 {
   state_context *sx;
   sx = ss->sgx;
-  gtk_widget_modify_bg(channel_graph(cp), GTK_STATE_NORMAL, (selected) ? sx->selected_graph_color : sx->graph_color);
+  widget_modify_bg(channel_graph(cp), GTK_STATE_NORMAL, (selected) ? sx->selected_graph_color : sx->graph_color);
 }
 
 void set_sensitive(GtkWidget *wid, bool val) 
@@ -725,7 +789,7 @@ GtkWidget *snd_gtk_highlight_label_new(const char *label)
   return(rlw);
 }
 
-GtkWidget *snd_gtk_entry_label_new(const char *label, GdkColor *color)
+GtkWidget *snd_gtk_entry_label_new(const char *label, color_info *color)
 {
   GtkWidget *rlw;
   rlw = gtk_entry_new();
@@ -733,8 +797,8 @@ GtkWidget *snd_gtk_entry_label_new(const char *label, GdkColor *color)
   if (label) gtk_entry_set_text(GTK_ENTRY(rlw), label);
   gtk_editable_set_editable(GTK_EDITABLE(rlw), false);
   GTK_WIDGET_UNSET_FLAGS(GTK_WIDGET(rlw), GTK_CAN_FOCUS); /* turn off the $%#@$! blinking cursor */
-  gtk_widget_modify_base(rlw, GTK_STATE_NORMAL, color);
-  gtk_widget_modify_base(rlw, GTK_STATE_ACTIVE, color);
+  widget_modify_base(rlw, GTK_STATE_NORMAL, color);
+  widget_modify_base(rlw, GTK_STATE_ACTIVE, color);
   return(rlw);
 }
 
@@ -766,6 +830,7 @@ void widget_off_t_to_text(GtkWidget *w, off_t val)
   FREE(str);
 }
 
+/* TODO: move these two to snd-gdraw? also the color stuff? */
 static void rotate_text(GdkDrawable *wn, gc_t *gp, PangoFontDescription *font, const char *text, int angle, gint x0, gint y0)
 {
 #if HAVE_PANGO_MATRIX_ROTATE
@@ -975,7 +1040,7 @@ void slist_clear(slist *lst)
       }
   lst->num_items = 0;
   if (lst->selected_item != SLIST_NO_ITEM_SELECTED)
-    gtk_widget_modify_bg(lst->items[lst->selected_item], GTK_STATE_NORMAL, ss->sgx->white);
+    widget_modify_bg(lst->items[lst->selected_item], GTK_STATE_NORMAL, ss->sgx->white);
   lst->selected_item = SLIST_NO_ITEM_SELECTED;
 }
 
@@ -1030,9 +1095,9 @@ void slist_moveto(slist *lst, int row)
 void slist_select(slist *lst, int row)
 {
   if (lst->selected_item != SLIST_NO_ITEM_SELECTED)
-    gtk_widget_modify_bg(lst->items[lst->selected_item], GTK_STATE_NORMAL, ss->sgx->white);
+    widget_modify_bg(lst->items[lst->selected_item], GTK_STATE_NORMAL, ss->sgx->white);
   if (row != SLIST_NO_ITEM_SELECTED)
-    gtk_widget_modify_bg(lst->items[row], GTK_STATE_NORMAL, ss->sgx->light_blue);
+    widget_modify_bg(lst->items[row], GTK_STATE_NORMAL, ss->sgx->light_blue);
   lst->selected_item = row;
 }
 

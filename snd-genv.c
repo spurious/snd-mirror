@@ -38,6 +38,9 @@ static void fixup_axis_context(axis_context *ax, GtkWidget *w, gc_t *gc)
   ax->w = w;
   if (gc) ax->gc = gc;
   ax->current_font = AXIS_NUMBERS_FONT(ss);
+#if USE_CAIRO
+  if (!(ax->cr)) ax->cr = gdk_cairo_create(w->window);
+#endif
 }
 
 axis_info *enved_make_axis(const char *name, axis_context *ax, 
@@ -70,6 +73,9 @@ static void display_env(env *e, const char *name, gc_t *cur_gc, int x0, int y0, 
   ax->wn = drawer->window;
   ax->w = drawer;
   ax->gc = cur_gc;
+#if USE_CAIRO
+  ax->cr = gdk_cairo_create(drawer->window);
+#endif
   ss->enved->with_dots = dots;
   env_editor_display_env(ss->enved, e, ax, name, x0, y0, width, height, printing);
   FREE(ax);
@@ -361,8 +367,8 @@ static void reflect_segment_state(void)
 {
   if (enved_dialog)
     {
-      gtk_widget_modify_bg(expB, GTK_STATE_NORMAL, (enved_style(ss) == ENVELOPE_EXPONENTIAL) ? ss->sgx->yellow : ss->sgx->lighter_blue);
-      gtk_widget_modify_bg(linB, GTK_STATE_NORMAL, (enved_style(ss) == ENVELOPE_LINEAR) ? ss->sgx->yellow : ss->sgx->lighter_blue);
+      widget_modify_bg(expB, GTK_STATE_NORMAL, (enved_style(ss) == ENVELOPE_EXPONENTIAL) ? ss->sgx->yellow : ss->sgx->lighter_blue);
+      widget_modify_bg(linB, GTK_STATE_NORMAL, (enved_style(ss) == ENVELOPE_LINEAR) ? ss->sgx->yellow : ss->sgx->lighter_blue);
       if ((active_env) && (!(showing_all_envs))) env_redisplay();
     }
 }
@@ -392,7 +398,10 @@ static void select_or_edit_env(int pos)
 
 static void clear_point_label(void)
 {
-  fill_rectangle(pix_ax, 0, 4, 24, 24);
+#if USE_CAIRO
+  if ((pix_ax) && (pix_ax->cr))
+#endif
+    fill_rectangle(pix_ax, 0, 4, 24, 24);
   set_button_label(brktxtL, BLANK_LABEL);
 }
 
@@ -408,9 +417,16 @@ void enved_display_point_label(Float x, Float y)
 
 void display_enved_progress(char *str, picture_t *pix)
 {
+#if USE_CAIRO
+  if ((pix_ax) && (pix_ax->cr))
+    {
+#endif
   if (pix)
     draw_picture_direct(GDK_DRAWABLE(brkpixL->window), hgc, pix, 0, 0, 0, 8, 16, 16);
   else fill_rectangle(pix_ax, 0, 4, 24, 24);
+#if USE_CAIRO
+    }
+#endif
   if (str)
     set_button_label(brktxtL, str);
   else set_button_label(brktxtL, BLANK_LABEL);
@@ -418,7 +434,10 @@ void display_enved_progress(char *str, picture_t *pix)
 
 static gboolean brkpixL_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-  fill_rectangle(pix_ax, 0, 4, 24, 24);
+#if USE_CAIRO
+  if ((pix_ax) && (pix_ax->cr))
+#endif
+    fill_rectangle(pix_ax, 0, 4, 24, 24);
   return(false);
 }
 
@@ -527,7 +546,7 @@ static void show_button_pressed(GtkWidget *w, gpointer context)
 static void selection_button_pressed(GtkWidget *w, gpointer context)
 {
   apply_to_selection = (!apply_to_selection);
-  gtk_widget_modify_bg(selectionB, GTK_STATE_NORMAL, (apply_to_selection) ? ss->sgx->yellow : ss->sgx->lighter_blue);
+  widget_modify_bg(selectionB, GTK_STATE_NORMAL, (apply_to_selection) ? ss->sgx->yellow : ss->sgx->lighter_blue);
   set_sensitive(apply2B, true);
   if ((enved_wave_p(ss)) && 
       (!showing_all_envs)) 
@@ -583,9 +602,9 @@ static void redo_button_pressed(GtkWidget *w, gpointer context)
 static void reflect_apply_state(void)
 {
   gtk_label_set_text(GTK_LABEL(nameL), _(env_names[enved_target(ss)]));
-  gtk_widget_modify_bg(ampB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_AMPLITUDE) ? ss->sgx->yellow : ss->sgx->lighter_blue);
-  gtk_widget_modify_bg(fltB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SPECTRUM) ? ss->sgx->yellow : ss->sgx->lighter_blue);
-  gtk_widget_modify_bg(srcB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SRATE) ? ss->sgx->yellow : ss->sgx->lighter_blue);
+  widget_modify_bg(ampB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_AMPLITUDE) ? ss->sgx->yellow : ss->sgx->lighter_blue);
+  widget_modify_bg(fltB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SPECTRUM) ? ss->sgx->yellow : ss->sgx->lighter_blue);
+  widget_modify_bg(srcB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SRATE) ? ss->sgx->yellow : ss->sgx->lighter_blue);
   if ((!showing_all_envs) && (enved_wave_p(ss))) env_redisplay();
 }
 
@@ -806,7 +825,7 @@ GtkWidget *create_envelope_editor(void)
       gtk_container_set_border_width(GTK_CONTAINER(enved_dialog), 4);
       gtk_widget_realize(enved_dialog);
       gtk_window_resize(GTK_WINDOW(enved_dialog), 500, 500);
-      gtk_widget_modify_bg(enved_dialog, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      widget_modify_bg(enved_dialog, GTK_STATE_NORMAL, ss->sgx->highlight_color);
 
       gc = gc_new(MAIN_WINDOW(ss));
       gc_set_background(gc, ss->sgx->white);
@@ -864,7 +883,7 @@ GtkWidget *create_envelope_editor(void)
       gtk_box_pack_start(GTK_BOX(mainform), leftframe, false, false, 0);
       gtk_frame_set_shadow_type(GTK_FRAME(leftframe), GTK_SHADOW_ETCHED_IN);
       gtk_widget_show(leftframe);
-      gtk_widget_modify_bg(leftframe, GTK_STATE_NORMAL, ss->sgx->black);
+      widget_modify_bg(leftframe, GTK_STATE_NORMAL, ss->sgx->black);
 
       leftbox = gtk_vbox_new(false, 0);
       gtk_container_add(GTK_CONTAINER(leftframe), leftbox);
@@ -877,8 +896,8 @@ GtkWidget *create_envelope_editor(void)
       drawer = gtk_drawing_area_new();
       gtk_box_pack_start(GTK_BOX(mainform), drawer, true, true, 0);
       gtk_widget_set_events(drawer, GDK_ALL_EVENTS_MASK);
-      gtk_widget_modify_bg(drawer, GTK_STATE_NORMAL, ss->sgx->white);
-      gtk_widget_modify_fg(drawer, GTK_STATE_NORMAL, ss->sgx->black);
+      widget_modify_bg(drawer, GTK_STATE_NORMAL, ss->sgx->white);
+      widget_modify_fg(drawer, GTK_STATE_NORMAL, ss->sgx->black);
       gtk_widget_show(drawer);
 
       showB = gtk_button_new_with_label(_("view envs"));
@@ -1016,15 +1035,15 @@ GtkWidget *create_envelope_editor(void)
       SG_SIGNAL_CONNECT(textL, "activate", text_field_activated, NULL);
 
       brkpixL = gtk_drawing_area_new();
-      gtk_widget_modify_bg(brkpixL, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      widget_modify_bg(brkpixL, GTK_STATE_NORMAL, ss->sgx->highlight_color);
       gtk_widget_set_events(brkpixL, GDK_EXPOSURE_MASK);
       gtk_widget_set_size_request(brkpixL, 16, 16);
       gtk_box_pack_start(GTK_BOX(toprow), brkpixL, false, false, 0);
-      gtk_widget_show(brkpixL);
-      SG_SIGNAL_CONNECT(brkpixL, "expose_event", brkpixL_expose, NULL);
       pix_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
       pix_ax->wn = GDK_DRAWABLE(brkpixL->window);
       pix_ax->gc = hgc;
+      gtk_widget_show(brkpixL);
+      SG_SIGNAL_CONNECT(brkpixL, "expose_event", brkpixL_expose, NULL);
       
       brktxtL = snd_gtk_highlight_label_new(BLANK_LABEL); /* not NULL!  gtk only creates the label child if not null */
       gtk_box_pack_start(GTK_BOX(toprow), brktxtL, false, false, 0);
@@ -1056,7 +1075,7 @@ GtkWidget *create_envelope_editor(void)
 
       baseAdj = gtk_adjustment_new(0.5, 0.0, 1.0, 0.001, 0.01, .1);
       baseScale = gtk_hscrollbar_new(GTK_ADJUSTMENT(baseAdj));
-      gtk_widget_modify_bg(baseScale, GTK_STATE_NORMAL, ss->sgx->position_color);
+      widget_modify_bg(baseScale, GTK_STATE_NORMAL, ss->sgx->position_color);
       SG_SIGNAL_CONNECT(baseAdj, "value_changed", base_changed_callback, NULL);
       gtk_box_pack_start(GTK_BOX(bottomrow), baseScale, true, true, 4);
       gtk_widget_show(baseScale);
@@ -1083,6 +1102,10 @@ GtkWidget *create_envelope_editor(void)
       SG_SIGNAL_CONNECT(drawer, "button_press_event", drawer_button_press, NULL);
       SG_SIGNAL_CONNECT(drawer, "button_release_event", drawer_button_release, NULL);
       SG_SIGNAL_CONNECT(drawer, "motion_notify_event", drawer_button_motion, NULL);
+
+#if USE_CAIRO
+      pix_ax->cr = gdk_cairo_create(brkpixL->window);
+#endif
 
       if (enved_all_envs_top() == 0)
 	{
@@ -1178,7 +1201,7 @@ static void enved_reflect_selection(bool on)
       if ((apply_to_selection) && (!on))
 	{
 	  apply_to_selection = false;
-	  gtk_widget_modify_bg(selectionB, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
+	  widget_modify_bg(selectionB, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
 	}
       if ((enved_target(ss) != ENVED_SPECTRUM) && 
 	  (enved_wave_p(ss)) && 
@@ -1197,7 +1220,7 @@ static void enved_selection_watcher(selection_watcher_reason_t reason, void *dat
     }
 }
 
-void color_enved_waveform(GdkColor *pix)
+void color_enved_waveform(color_info *pix)
 {
   ss->sgx->enved_waveform_color = pix;
   if (enved_dialog)

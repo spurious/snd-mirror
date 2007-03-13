@@ -49,7 +49,6 @@ static void save_key_binding(prefs_info *prf, FILE *fd, char *(*binder)(char *ke
 static void key_bind(prefs_info *prf, char *(*binder)(char *key, bool c, bool m, bool x));
 static void clear_prefs_dialog_error(void);
 static void scale_set_color(prefs_info *prf, color_t pixel);
-static color_t rgb_to_color(Float r, Float g, Float b);
 static char *get_text(GtkWidget *w);
 static void set_text(GtkWidget *w, char *value);
 static void post_prefs_error(const char *msg, prefs_info *data);
@@ -196,7 +195,7 @@ static GtkSizeGroup *label_group;
 static GtkSizeGroup *help_group;
 static GtkSizeGroup *widgets_group;
 
-static GdkColor *rscl_color, *gscl_color, *bscl_color;
+static color_info *rscl_color, *gscl_color, *bscl_color;
 
 #define PACK_1 true
 #define PACK_2 false
@@ -1111,18 +1110,6 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
 
 /* ---------------- color selector row(s) ---------------- */
 
-static color_t rgb_to_color(Float r, Float g, Float b)
-{
-  GdkColor gcolor;
-  GdkColor *ccolor;
-  gcolor.red = FLOAT_TO_RGB(r);
-  gcolor.green = FLOAT_TO_RGB(g);
-  gcolor.blue = FLOAT_TO_RGB(b);
-  ccolor = gdk_color_copy(&gcolor);
-  gdk_rgb_find_color(gdk_colormap_get_system(), ccolor);
-  return(ccolor);
-}
-
 static void pixel_to_rgb(color_t pix, float *r, float *g, float *b)
 {
   (*r) = RGB_TO_FLOAT(pix->red);
@@ -1140,24 +1127,26 @@ static void scale_set_color(prefs_info *prf, color_t pixel)
   gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->gadj), g);
   float_to_textfield(prf->btxt, b);
   gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->badj), b);
-  gtk_widget_modify_bg(prf->color, GTK_STATE_NORMAL, pixel);
+  widget_modify_bg(prf->color, GTK_STATE_NORMAL, pixel);
 }
 
 static void reflect_color(prefs_info *prf)
 {
   Float r, g, b;
-  GdkColor *current_color;
+  color_info *current_color;
 
   r = GTK_ADJUSTMENT(prf->radj)->value;
   g = GTK_ADJUSTMENT(prf->gadj)->value;
   b = GTK_ADJUSTMENT(prf->badj)->value;
 
   current_color = rgb_to_color(r, g, b);
-  gtk_widget_modify_bg(prf->color, GTK_STATE_NORMAL, current_color);
+  widget_modify_bg(prf->color, GTK_STATE_NORMAL, current_color);
 
+#if (!USE_CAIRO)
   r = RGB_TO_FLOAT(current_color->red);
   g = RGB_TO_FLOAT(current_color->green);
   b = RGB_TO_FLOAT(current_color->blue);
+#endif
 
   float_to_textfield(prf->rtxt, r);
   float_to_textfield(prf->gtxt, g);
@@ -1278,7 +1267,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   gtk_widget_set_events(prf->color, GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
   gtk_box_pack_start(GTK_BOX(hb), prf->color, false, false, 4);
   gtk_size_group_add_widget(prf->color_texts, prf->color);
-  gtk_widget_modify_bg(prf->color, GTK_STATE_NORMAL, current_pixel);
+  widget_modify_bg(prf->color, GTK_STATE_NORMAL, current_pixel);
   gtk_widget_show(prf->color);
   
   sep1 = make_row_inner_separator(8, hb);
@@ -1308,8 +1297,8 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->rscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->radj));
   gtk_box_pack_start(GTK_BOX(row2), prf->rscl, true, true, 4);
   /* normal = slider, active = trough, selected unused */
-  gtk_widget_modify_bg(prf->rscl, GTK_STATE_NORMAL, rscl_color);
-  gtk_widget_modify_bg(prf->rscl, GTK_STATE_PRELIGHT, rscl_color);
+  widget_modify_bg(prf->rscl, GTK_STATE_NORMAL, rscl_color);
+  widget_modify_bg(prf->rscl, GTK_STATE_PRELIGHT, rscl_color);
   gtk_widget_show(prf->rscl);
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->rscl)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->rscl), false);
@@ -1317,8 +1306,8 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->gadj = gtk_adjustment_new(g, 0.0, 1.01, 0.001, 0.01, .01);
   prf->gscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->gadj));
   gtk_box_pack_start(GTK_BOX(row2), prf->gscl, true, true, 4);
-  gtk_widget_modify_bg(prf->gscl, GTK_STATE_NORMAL, gscl_color);
-  gtk_widget_modify_bg(prf->gscl, GTK_STATE_PRELIGHT, gscl_color);
+  widget_modify_bg(prf->gscl, GTK_STATE_NORMAL, gscl_color);
+  widget_modify_bg(prf->gscl, GTK_STATE_PRELIGHT, gscl_color);
   gtk_widget_show(prf->gscl);
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->gscl)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->gscl), false);
@@ -1326,8 +1315,8 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->badj = gtk_adjustment_new(b, 0.0, 1.01, 0.001, 0.01, .01);
   prf->bscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->badj));
   gtk_box_pack_start(GTK_BOX(row2), prf->bscl, true, true, 4);
-  gtk_widget_modify_bg(prf->bscl, GTK_STATE_NORMAL, bscl_color);
-  gtk_widget_modify_bg(prf->bscl, GTK_STATE_PRELIGHT, bscl_color);
+  widget_modify_bg(prf->bscl, GTK_STATE_NORMAL, bscl_color);
+  widget_modify_bg(prf->bscl, GTK_STATE_PRELIGHT, bscl_color);
   gtk_widget_show(prf->bscl);
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->bscl)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->bscl), false);
@@ -1402,8 +1391,8 @@ static GtkWidget *make_top_level_label(const char *label, GtkWidget *parent)
 #if HAVE_GTK_BUTTON_SET_ALIGNMENT
   w = snd_gtk_highlight_label_new(label);
   gtk_button_set_alignment(GTK_BUTTON(w), 0.01, 0.5);
-  gtk_widget_modify_bg(w, GTK_STATE_NORMAL, ss->sgx->light_blue);
-  gtk_widget_modify_bg(w, GTK_STATE_PRELIGHT, ss->sgx->light_blue);
+  widget_modify_bg(w, GTK_STATE_NORMAL, ss->sgx->light_blue);
+  widget_modify_bg(w, GTK_STATE_PRELIGHT, ss->sgx->light_blue);
 #else
   w = snd_gtk_entry_label_new(label, ss->sgx->light_blue);
 #endif

@@ -169,13 +169,27 @@ static gboolean recorder_noop_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gp
 #define VU_BUBBLE_SIZE 15
 #define VU_COLORS 11
 
-static GdkColor *yellows[VU_COLORS];
-static GdkColor *reds[VU_COLORS];
+static color_info *yellows[VU_COLORS];
+static color_info *reds[VU_COLORS];
 static bool vu_colors_allocated = false;
 static int yellow_vals[] = {0, 16, 32, 64, 96, 128, 160, 175, 185, 200, 210, 220, 230, 240};
 
 static GtkWidget *db_button = NULL;
 static void remake_all_vu_meters(void);
+
+#if USE_CAIRO
+#define INT_TO_RGB(Val) (Val / 65535.0)
+
+static color_info *make_color(int r, int g, int b)
+{
+  color_info *ccolor;
+  ccolor = (color_info *)CALLOC(1, sizeof(color_info));
+  ccolor->red = INT_TO_RGB(r);
+  ccolor->green = INT_TO_RGB(g);
+  ccolor->blue = INT_TO_RGB(b);
+  return(ccolor);
+}
+#endif
 
 void set_vu_in_dB(bool val)
 {
@@ -210,14 +224,20 @@ static void set_vu_max_label(vu_t *vu)
 static void allocate_meter(vu_t *vu)
 {
   GdkDrawable *wn;
+#if (!USE_CAIRO)
   GdkColormap *cmap;
-  GdkColor *white, *black, *red;
+#endif
+  color_info *white, *black, *red;
   Float size;
   int i, j, width, wid2, height, top;
 
+#if (!USE_CAIRO)
   cmap = gdk_colormap_get_system();
-  red = ss->sgx->red;
+#endif
+
   wn = recorder->window;
+
+  red = ss->sgx->red;
   black = ss->sgx->black;
   white = ss->sgx->white;
 
@@ -228,11 +248,22 @@ static void allocate_meter(vu_t *vu)
   top = (int)(size * 100);
 
   /* create the lit-from-below effect in yellow and red */
+#if USE_CAIRO
   if (!vu_colors_allocated)
     {
-      GdkColor tmp_color;
       vu_colors_allocated = true;
-      tmp_color.red = RGB_MAX;
+      for (i = 0; i < VU_COLORS; i++)
+	{
+	  yellows[i] = make_color(65535, 256 * 230 + 26 * yellow_vals[i], 256 * yellow_vals[i]);
+	  reds[i] = make_color(65535, 128 * yellow_vals[i], 128 * yellow_vals[i]);
+	}
+    }
+#else
+  if (!vu_colors_allocated)
+    {
+      color_info tmp_color;
+      vu_colors_allocated = true;
+      tmp_color.red = 65535;
       for (i = 0; i < VU_COLORS; i++)
 	{
 	  tmp_color.blue = (rgb_t)(256 * yellow_vals[i]);
@@ -248,6 +279,8 @@ static void allocate_meter(vu_t *vu)
 	  gdk_rgb_find_color(cmap, reds[i]);
 	}
     }
+#endif
+
   {
     int band, k;
     Float band_x, band_y;
@@ -1038,13 +1071,13 @@ static void meter_button_callback(GtkWidget *w, gpointer context)
   vu = p->meters[wd->chan];
   if (vu->on_off == VU_OFF)
     {
-      gtk_widget_modify_bg(w, GTK_STATE_NORMAL, ss->sgx->red);
+      widget_modify_bg(w, GTK_STATE_NORMAL, ss->sgx->red);
       vu->on_off = VU_ON;
       vu->red_deg = 0.0;
     }
   else 
     {
-      gtk_widget_modify_bg(w, GTK_STATE_NORMAL, ss->sgx->basic_color);
+      widget_modify_bg(w, GTK_STATE_NORMAL, ss->sgx->basic_color);
       vu->on_off = VU_OFF;
     }
   display_vu_meter(vu);
@@ -1124,7 +1157,7 @@ static void handle_matrix_slider(GtkWidget *mb, pane_t *p, int bin, int bout, in
   a = p->amps[curamp];
   if (remove)
     {
-      gtk_widget_modify_bg(mb, GTK_STATE_NORMAL, ss->sgx->basic_color);
+      widget_modify_bg(mb, GTK_STATE_NORMAL, ss->sgx->basic_color);
       p->active_sliders[bin][bout] = false;
       gtk_widget_hide(a->label);
       gtk_widget_hide(a->number);
@@ -1132,7 +1165,7 @@ static void handle_matrix_slider(GtkWidget *mb, pane_t *p, int bin, int bout, in
     }
   else
     {
-      gtk_widget_modify_bg(mb, GTK_STATE_NORMAL, ss->sgx->green);
+      widget_modify_bg(mb, GTK_STATE_NORMAL, ss->sgx->green);
       p->active_sliders[bin][bout] = true;
       if (a->label)
 	{
@@ -1237,8 +1270,8 @@ static GtkWidget *make_button_matrix(recorder_info *rp, pane_t *p, char *name, G
 
 	mb = gtk_button_new();
 	if (row == col)
-	  gtk_widget_modify_bg(mb, GTK_STATE_NORMAL, ss->sgx->green);
-	else gtk_widget_modify_bg(mb, GTK_STATE_NORMAL, ss->sgx->basic_color);
+	  widget_modify_bg(mb, GTK_STATE_NORMAL, ss->sgx->green);
+	else widget_modify_bg(mb, GTK_STATE_NORMAL, ss->sgx->basic_color);
 	gtk_table_attach_defaults(GTK_TABLE(buttons), mb, col, col + 1, row, row + 1);
 	gtk_widget_show(mb);
 	SG_SIGNAL_CONNECT(mb, "clicked", matrix_button_callback, si);
@@ -1296,7 +1329,7 @@ static void make_vu_meters(pane_t *p, int vu_meters,
       gtk_box_pack_start(GTK_BOX(hboxes[row]), frame, false, false, 0);
       gtk_container_set_border_width(GTK_CONTAINER(frame), 2);
       gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
-      gtk_widget_modify_bg(frame, GTK_STATE_NORMAL, ss->sgx->black);
+      widget_modify_bg(frame, GTK_STATE_NORMAL, ss->sgx->black);
       gtk_widget_set_size_request(frame, (int)(METER_WIDTH * 2 * meter_size), (int)(METER_HEIGHT * meter_size) + 12); /* 12 for meter frame */
       gtk_frame_set_label_widget(GTK_FRAME(frame), label);
       gtk_frame_set_label_align(GTK_FRAME(frame), 0.0, 1.0);
@@ -1592,7 +1625,7 @@ static void reset_record_callback(GtkWidget *w, gpointer context)
       rp->triggered = (!rp->triggering);
       sensitize_control_buttons();
       set_stock_button_label(reset_button, _("Reset"));
-      gtk_widget_modify_bg(record_button, GTK_STATE_NORMAL, ss->sgx->basic_color);
+      widget_modify_bg(record_button, GTK_STATE_NORMAL, ss->sgx->basic_color);
       set_stock_button_label(record_button, (rp->triggering) ? _("Triggered Record") : _("Record"));
       mus_file_close(rp->output_file_descriptor);
       rp->output_file_descriptor = -1;
@@ -1646,7 +1679,7 @@ void finish_recording(recorder_info *rp)
   char *str;
   Float duration;
   sensitize_control_buttons();
-  gtk_widget_modify_bg(record_button, GTK_STATE_NORMAL, ss->sgx->basic_color);
+  widget_modify_bg(record_button, GTK_STATE_NORMAL, ss->sgx->basic_color);
   set_stock_button_label(reset_button, _("Reset"));
   set_stock_button_label(record_button, (rp->triggering) ? _("Triggered Record") : _("Record"));
   mus_file_close(rp->output_file_descriptor);
@@ -1793,7 +1826,7 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 	      return;
 	    }
 	}
-      gtk_widget_modify_bg(record_button, GTK_STATE_NORMAL, ss->sgx->red);
+      widget_modify_bg(record_button, GTK_STATE_NORMAL, ss->sgx->red);
       set_stock_button_label(reset_button, _("Cancel"));
       set_stock_button_label(record_button, _("Done"));
       recorder_start_output_file(comment);
@@ -2060,7 +2093,7 @@ widget_t snd_record_file(void)
       file_info_pane = gtk_frame_new(NULL);
       gtk_widget_set_name(file_info_pane, "record_frame");
       gtk_frame_set_shadow_type(GTK_FRAME(file_info_pane), GTK_SHADOW_ETCHED_IN);
-      gtk_widget_modify_bg(file_info_pane, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+      widget_modify_bg(file_info_pane, GTK_STATE_NORMAL, ss->sgx->zoom_color);
       gtk_box_pack_start(GTK_BOX(rec_panes_box), file_info_pane, false, false, 0);
       gtk_widget_show(file_info_pane);
       make_file_info_pane(rp, file_info_pane, rp->ordered_devices_size);

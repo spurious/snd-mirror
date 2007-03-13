@@ -333,7 +333,7 @@ GtkWidget *add_menu(void)
   ml[f_sep_menu] = NULL;
   gtk_menu_shell_append(GTK_MENU_SHELL(file_cascade_menu), file_sep_menu);
   gtk_widget_show(file_sep_menu);
-  gtk_widget_modify_bg(file_sep_menu, GTK_STATE_NORMAL, ss->sgx->black);
+  widget_modify_bg(file_sep_menu, GTK_STATE_NORMAL, ss->sgx->black);
 
   file_exit_menu = gtk_image_menu_item_new_with_label(_("Exit"));
   ml[f_exit_menu] = _("Exit");
@@ -383,7 +383,7 @@ GtkWidget *add_menu(void)
   ml[e_select_sep_menu] = NULL;
   gtk_menu_shell_append(GTK_MENU_SHELL(edit_cascade_menu), edit_select_sep_menu);
   gtk_widget_show(edit_select_sep_menu);
-  gtk_widget_modify_bg(edit_select_sep_menu, GTK_STATE_NORMAL, ss->sgx->black);
+  widget_modify_bg(edit_select_sep_menu, GTK_STATE_NORMAL, ss->sgx->black);
 
   edit_cut_menu = gtk_image_menu_item_new_with_label(_("Delete Selection"));
   ml[e_cut_menu] = _("Delete Selection");
@@ -445,7 +445,7 @@ GtkWidget *add_menu(void)
   ml[e_edit_sep_menu] = NULL;
   gtk_menu_shell_append(GTK_MENU_SHELL(edit_cascade_menu), edit_edit_sep_menu);
   gtk_widget_show(edit_edit_sep_menu);
-  gtk_widget_modify_bg(edit_edit_sep_menu, GTK_STATE_NORMAL, ss->sgx->black);
+  widget_modify_bg(edit_edit_sep_menu, GTK_STATE_NORMAL, ss->sgx->black);
 
   edit_env_menu = gtk_image_menu_item_new_with_label(_("Edit Envelope"));
   ml[e_env_menu] = _("Edit Envelope");
@@ -544,7 +544,7 @@ GtkWidget *add_menu(void)
   ml[v_sep2_menu] = NULL;
   gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_sep2_menu);
   gtk_widget_show(view_sep2_menu);
-  gtk_widget_modify_bg(view_sep2_menu, GTK_STATE_NORMAL, ss->sgx->black);
+  widget_modify_bg(view_sep2_menu, GTK_STATE_NORMAL, ss->sgx->black);
 
 
   view_graph_style_menu = gtk_menu_item_new_with_label(_("Graph style"));
@@ -795,7 +795,7 @@ GtkWidget *add_menu(void)
   ml[o_sep_menu] = NULL;
   gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), options_sep_menu);
   gtk_widget_show(options_sep_menu);
-  gtk_widget_modify_bg(options_sep_menu, GTK_STATE_NORMAL, ss->sgx->black);
+  widget_modify_bg(options_sep_menu, GTK_STATE_NORMAL, ss->sgx->black);
 
   options_preferences_menu = gtk_menu_item_new_with_label(_("Preferences"));
   ml[o_preferences_menu] = _("Preferences");

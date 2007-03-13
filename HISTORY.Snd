@@ -1,5 +1,6 @@
 Snd change log
 
+ 14-Mar:     cairo graphics backend (--with-cairo configure choice).
  1-Mar:      open-file-dialog-directory.
  26-Feb:     clean.scm (noise reduction).
  17-Feb:     File:Close all menu if more than one sound open.

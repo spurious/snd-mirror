@@ -381,10 +381,10 @@ static gboolean minibuffer_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpoin
 
 /* -------- PLAY BUTTON -------- */
 
-static void set_button_base(GtkWidget *w, GdkColor *col)
+static void set_button_base(GtkWidget *w, color_info *col)
 {
-  gtk_widget_modify_base(w, GTK_STATE_NORMAL, col);
-  gtk_widget_modify_base(w, GTK_STATE_PRELIGHT, col);
+  widget_modify_base(w, GTK_STATE_NORMAL, col);
+  widget_modify_base(w, GTK_STATE_PRELIGHT, col);
 }
 
 void set_play_button(snd_info *sp, bool val)
@@ -819,8 +819,8 @@ static void expand_button_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
   sp->expand_control_p = GTK_TOGGLE_BUTTON(w)->active;
-  /* to change the trough color: (gtk_widget_modify_bg (list-ref (channel-widgets) 3) GTK_STATE_ACTIVE (zoom-color)) */
-  /*   and the slider color:     (gtk_widget_modify_bg (list-ref (channel-widgets) 3) GTK_STATE_PRELIGHT (highlight-color)) */
+  /* to change the trough color: (widget_modify_bg (list-ref (channel-widgets) 3) GTK_STATE_ACTIVE (zoom-color)) */
+  /*   and the slider color:     (widget_modify_bg (list-ref (channel-widgets) 3) GTK_STATE_PRELIGHT (highlight-color)) */
 }
 
 void toggle_expand_button(snd_info *sp, bool state)
@@ -1279,7 +1279,7 @@ void filter_env_changed(snd_info *sp, env *e)
   sp->filter_control_changed = true;
 }
 
-void color_filter_waveform(GdkColor *color)
+void color_filter_waveform(color_info *color)
 {
   int i;
   gc_set_foreground(ss->sgx->fltenv_data_gc, color);
@@ -1760,7 +1760,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       
 	FILTER_ENV(sp) = gtk_drawing_area_new();
 	gtk_widget_set_events(FILTER_ENV(sp), GDK_ALL_EVENTS_MASK);
-	gtk_widget_modify_bg(FILTER_ENV(sp), GTK_STATE_NORMAL, ss->sgx->highlight_color);
+	widget_modify_bg(FILTER_ENV(sp), GTK_STATE_NORMAL, ss->sgx->highlight_color);
 	gtk_container_add(GTK_CONTAINER(FILTER_FRAME(sp)), FILTER_ENV(sp));
 	gtk_widget_show(FILTER_ENV(sp));
 	SG_SIGNAL_CONNECT(FILTER_ENV(sp), "expose_event", filter_drawer_expose, sp);
@@ -1953,9 +1953,9 @@ void reflect_sound_selection(snd_info *sp)
   snd_info *osp = NULL;
   if (ss->selected_sound != NO_SELECTION) osp = ss->sounds[ss->selected_sound];
   if ((osp) && (sp != osp) && (osp->inuse == SOUND_NORMAL)) 
-    gtk_widget_modify_fg(NAME_BUTTON(osp), GTK_STATE_NORMAL, ss->sgx->black);
+    widget_modify_fg(NAME_BUTTON(osp), GTK_STATE_NORMAL, ss->sgx->black);
   if ((NAME_BUTTON(sp)) && (sp->selected_channel != NO_SELECTION))
-    gtk_widget_modify_fg(NAME_BUTTON(sp), GTK_STATE_NORMAL, ss->sgx->red);
+    widget_modify_fg(NAME_BUTTON(sp), GTK_STATE_NORMAL, ss->sgx->red);
   if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
     {
       int page, current_page;

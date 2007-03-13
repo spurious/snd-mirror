@@ -40,7 +40,7 @@ static XEN g_in(XEN ms, XEN code)
 static XEN g_color_to_list(XEN obj)
 {
   #define H_color_to_list "(" S_color_to_list " obj): 'obj' rgb values as a list of floats"
-  GdkColor *v;
+  color_info *v;
   XEN_ASSERT_TYPE(XEN_PIXEL_P(obj), obj, XEN_ONLY_ARG, S_color_to_list, "a color"); 
   v = XEN_UNWRAP_PIXEL(obj);
   return(xen_return_first(XEN_LIST_3(C_TO_XEN_DOUBLE(RGB_TO_FLOAT(v->red)),
@@ -52,8 +52,7 @@ static XEN g_color_to_list(XEN obj)
 static XEN g_make_color(XEN r, XEN g, XEN b)
 {
   #define H_make_color "(" S_make_color " r g b): return a color object with the indicated rgb values"
-  GdkColor gcolor;
-  GdkColor *ccolor;
+  color_info *ccolor;
   Float rf, gf, bf;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(r), r, XEN_ARG_1, S_make_color, "a number");
   /* someday accept a list as r */
@@ -62,11 +61,19 @@ static XEN g_make_color(XEN r, XEN g, XEN b)
   rf = check_color_range(S_make_color, r);
   gf = check_color_range(S_make_color, g);
   bf = check_color_range(S_make_color, b);
+#if USE_CAIRO
+  ccolor = (color_info *)CALLOC(1, sizeof(color_info));
+  ccolor->red = rf;
+  ccolor->green = gf;
+  ccolor->blue = bf;
+#else
+  color_info gcolor;
   gcolor.red = FLOAT_TO_RGB(rf);
   gcolor.green = FLOAT_TO_RGB(gf);
   gcolor.blue = FLOAT_TO_RGB(bf);
   ccolor = gdk_color_copy(&gcolor);
   gdk_rgb_find_color(gdk_colormap_get_system(), ccolor);
+#endif
   return(XEN_WRAP_PIXEL(ccolor));
 }
 
@@ -105,13 +112,13 @@ void color_chan_components(color_t color, slider_choice_t which_component)
 	      {
 		if (which_component == COLOR_POSITION)
 		  {
-		    gtk_widget_modify_bg(channel_sx(cp), GTK_STATE_ACTIVE, color);
-		    gtk_widget_modify_bg(channel_sy(cp), GTK_STATE_ACTIVE, color);
+		    widget_modify_bg(channel_sx(cp), GTK_STATE_ACTIVE, color);
+		    widget_modify_bg(channel_sy(cp), GTK_STATE_ACTIVE, color);
 		  }
 		else
 		  {
-		    gtk_widget_modify_bg(channel_zx(cp), GTK_STATE_ACTIVE, color);
-		    gtk_widget_modify_bg(channel_zy(cp), GTK_STATE_ACTIVE, color);
+		    widget_modify_bg(channel_zx(cp), GTK_STATE_ACTIVE, color);
+		    widget_modify_bg(channel_zy(cp), GTK_STATE_ACTIVE, color);
 		  }
 	      }
 	  }

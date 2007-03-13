@@ -416,7 +416,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
     /* filter popup menu */
     fs->filters_mbar = gtk_menu_bar_new();
     gtk_box_pack_end(GTK_BOX(row), fs->filters_mbar, false, false, 0);
-    gtk_widget_modify_bg(fs->filters_mbar, GTK_STATE_NORMAL, ss->sgx->basic_color);
+    widget_modify_bg(fs->filters_mbar, GTK_STATE_NORMAL, ss->sgx->basic_color);
     gtk_widget_show(fs->filters_mbar);
 
     fs->filters_menu = gtk_menu_new();
@@ -478,7 +478,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
 
     /* file popup menu */
     fs->files_mbar = gtk_menu_bar_new();
-    gtk_widget_modify_bg(fs->files_mbar, GTK_STATE_NORMAL, ss->sgx->basic_color);
+    widget_modify_bg(fs->files_mbar, GTK_STATE_NORMAL, ss->sgx->basic_color);
     gtk_box_pack_end(GTK_BOX(row), fs->files_mbar, false, false, 0);
     gtk_widget_show(fs->files_mbar);
 
@@ -845,7 +845,7 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 		  gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(fs->file_list_items[k]))),
 				     XEN_TO_C_STRING(XEN_CAR(XEN_VECTOR_REF(ss->file_sorters, i))));
 		  reset_user_int_data(G_OBJECT(fs->file_list_items[k]), SORT_XEN + i);
-		  gtk_widget_modify_bg(fs->file_list_items[k], GTK_STATE_NORMAL, ss->sgx->lighter_blue);
+		  widget_modify_bg(fs->file_list_items[k], GTK_STATE_NORMAL, ss->sgx->lighter_blue);
 		  if (!(GTK_WIDGET_VISIBLE(fs->file_list_items[k])))
 		    gtk_widget_show(fs->file_list_items[k]);
 		  k++;
@@ -859,7 +859,7 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 		  gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(fs->file_list_items[k]))),
 				     XEN_TO_C_STRING(XEN_CAR(XEN_VECTOR_REF(ss->file_filters, i))));
 		  reset_user_int_data(G_OBJECT(fs->file_list_items[k]), i + FILE_FILTER_OFFSET);
-		  gtk_widget_modify_bg(fs->file_list_items[k], GTK_STATE_NORMAL, ss->sgx->light_blue);
+		  widget_modify_bg(fs->file_list_items[k], GTK_STATE_NORMAL, ss->sgx->light_blue);
 		  if (!(GTK_WIDGET_VISIBLE(fs->file_list_items[k])))
 		    gtk_widget_show(fs->file_list_items[k]);
 		  k++;
@@ -871,7 +871,7 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 	    {
 	      gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(fs->file_list_items[k]))), NO_FILTER_LABEL);
 	      reset_user_int_data(G_OBJECT(fs->file_list_items[k]), NO_FILE_FILTER_OFFSET);
-	      gtk_widget_modify_bg(fs->file_list_items[k], GTK_STATE_NORMAL, ss->sgx->light_blue);
+	      widget_modify_bg(fs->file_list_items[k], GTK_STATE_NORMAL, ss->sgx->light_blue);
 	      if (!(GTK_WIDGET_VISIBLE(fs->file_list_items[k])))
 		gtk_widget_show(fs->file_list_items[k]);
 	    }
@@ -1203,7 +1203,7 @@ static void open_innards(GtkWidget *vbox, void *data)
   fd->frame = gtk_frame_new(NULL);
   gtk_frame_set_shadow_type(GTK_FRAME(fd->frame), GTK_SHADOW_ETCHED_IN);
   gtk_container_set_border_width(GTK_CONTAINER(fd->frame), 1);
-  gtk_widget_modify_bg(fd->frame, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+  widget_modify_bg(fd->frame, GTK_STATE_NORMAL, ss->sgx->zoom_color);
   gtk_box_pack_start(GTK_BOX(center_info), fd->frame, false, false, 10);
 
   fd->vbox = gtk_vbox_new(false, 0);
@@ -2151,7 +2151,7 @@ static void add_srate_menu(file_data *fd, char *srate_name)
     }
   sr = gtk_menu_item_new_with_label(srate_name);
   gtk_menu_shell_append(GTK_MENU_SHELL(fd->smenu), sr);
-  gtk_widget_modify_bg(sr, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  widget_modify_bg(sr, GTK_STATE_NORMAL, ss->sgx->highlight_color);
   set_user_int_data(G_OBJECT(sr), fd->num_srates);
   gtk_widget_show(sr);
   SG_SIGNAL_CONNECT(sr, "activate", srate_drop, (gpointer)fd);
@@ -2274,10 +2274,10 @@ file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       gtk_menu_shell_append(GTK_MENU_SHELL(cmenu), c3);
       gtk_menu_shell_append(GTK_MENU_SHELL(cmenu), c4);
 
-      gtk_widget_modify_bg(c1, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-      gtk_widget_modify_bg(c2, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-      gtk_widget_modify_bg(c3, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-      gtk_widget_modify_bg(c4, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      widget_modify_bg(c1, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      widget_modify_bg(c2, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      widget_modify_bg(c3, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      widget_modify_bg(c4, GTK_STATE_NORMAL, ss->sgx->highlight_color);
 
       gtk_widget_show(c1);
       gtk_widget_show(c2);
@@ -4166,13 +4166,13 @@ static vf_row *make_vf_row(view_files_info *vdat, GtkSignalFunc play_callback, G
   gtk_widget_show(r->rw);
 
   r->pl = gtk_check_button_new();
-  gtk_widget_modify_bg(r->pl, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
+  widget_modify_bg(r->pl, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
   gtk_box_pack_start(GTK_BOX(r->rw), r->pl, false, false, 2);
   SG_SIGNAL_CONNECT(r->pl, "toggled", play_callback, r);
   gtk_widget_show(r->pl);
 
   r->nm = gtk_button_new_with_label("");
-  gtk_widget_modify_bg(r->nm, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
+  widget_modify_bg(r->nm, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
   sg_left_justify_button(r->nm);
   gtk_box_pack_start(GTK_BOX(r->rw), r->nm, true, true, 2);
 
@@ -4191,18 +4191,18 @@ static vf_row *make_vf_row(view_files_info *vdat, GtkSignalFunc play_callback, G
 
 void vf_unhighlight_row(GtkWidget *nm, GtkWidget *rw)
 {
-  gtk_widget_modify_bg(nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-  gtk_widget_modify_base(nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-  gtk_widget_modify_bg(rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-  gtk_widget_modify_base(rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  widget_modify_bg(nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  widget_modify_base(nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  widget_modify_bg(rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  widget_modify_base(rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
 }
 
 void vf_highlight_row(GtkWidget *nm, GtkWidget *rw)
 {
-  gtk_widget_modify_bg(nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
-  gtk_widget_modify_base(nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
-  gtk_widget_modify_bg(rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
-  gtk_widget_modify_base(rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+  widget_modify_bg(nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+  widget_modify_base(nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+  widget_modify_bg(rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+  widget_modify_base(rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
 }
 
 static gint vf_unflash_row(gpointer data)
@@ -4223,8 +4223,8 @@ static gint vf_unflash_row(gpointer data)
 
 void vf_flash_row(vf_row *r)
 {
-  gtk_widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->sgx->light_blue);
-  gtk_widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->sgx->light_blue);
+  widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->sgx->light_blue);
+  widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->sgx->light_blue);
   g_timeout_add_full(0, (guint32)500, vf_unflash_row, (gpointer)r, NULL);
 }
 
@@ -5016,7 +5016,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       sep1 = gtk_hseparator_new();
       gtk_box_pack_start(GTK_BOX(fileform), sep1, false, false, 2);
-      gtk_widget_modify_bg(sep1, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+      widget_modify_bg(sep1, GTK_STATE_NORMAL, ss->sgx->zoom_color);
       gtk_widget_show(sep1);
 
       tophbox = gtk_hbox_new(false, 0);
@@ -5137,7 +5137,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
 	ltop_sep = gtk_hseparator_new();
 	gtk_box_pack_start(GTK_BOX(leftform), ltop_sep, false, false, 2);
-	gtk_widget_modify_bg(ltop_sep, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+	widget_modify_bg(ltop_sep, GTK_STATE_NORMAL, ss->sgx->zoom_color);
 	gtk_widget_show(ltop_sep);
 
 	vdat->info1 = NEW_INFO();
@@ -5187,7 +5187,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	frame = gtk_frame_new(NULL);
 	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
 	gtk_container_set_border_width(GTK_CONTAINER(frame), 3);
-	gtk_widget_modify_bg(frame, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+	widget_modify_bg(frame, GTK_STATE_NORMAL, ss->sgx->zoom_color);
 	gtk_widget_show(frame);
 	gtk_box_pack_start(GTK_BOX(leftform), frame, false, false, 0);
 	
@@ -5215,19 +5215,19 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_widget_show(vdat->insertB);
 
 	vdat->at_cursor_button = gtk_radio_button_new_with_label(NULL, _("at cursor"));
-	gtk_widget_modify_bg(vdat->at_cursor_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
+	widget_modify_bg(vdat->at_cursor_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
 	gtk_box_pack_start(GTK_BOX(lbox2), vdat->at_cursor_button, false, false, 0);
 	gtk_widget_show(vdat->at_cursor_button);
 	SG_SIGNAL_CONNECT(vdat->at_cursor_button, "clicked", view_files_at_cursor_callback, (gpointer)vdat);
 
 	vdat->at_end_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), _("at end"));
-	gtk_widget_modify_bg(vdat->at_end_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
+	widget_modify_bg(vdat->at_end_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
 	gtk_box_pack_start(GTK_BOX(lbox2), vdat->at_end_button, false, false, 0);
 	gtk_widget_show(vdat->at_end_button);
 	SG_SIGNAL_CONNECT(vdat->at_end_button, "clicked", view_files_at_end_callback, (gpointer)vdat);
 
 	vdat->at_beginning_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), _("at beginning"));
-	gtk_widget_modify_bg(vdat->at_beginning_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
+	widget_modify_bg(vdat->at_beginning_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
 	gtk_box_pack_start(GTK_BOX(lbox2), vdat->at_beginning_button, false, false, 0);
 	gtk_widget_show(vdat->at_beginning_button);
 	SG_SIGNAL_CONNECT(vdat->at_beginning_button, "clicked", view_files_at_beginning_callback, (gpointer)vdat);
@@ -5245,7 +5245,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_widget_show(lbox4);
 
 	vdat->at_sample_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), _("at sample"));
-	gtk_widget_modify_bg(vdat->at_sample_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
+	widget_modify_bg(vdat->at_sample_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
 	gtk_box_pack_start(GTK_BOX(lbox3), vdat->at_sample_button, false, false, 0);
 	gtk_widget_show(vdat->at_sample_button);
 	SG_SIGNAL_CONNECT(vdat->at_sample_button, "clicked", view_files_at_sample_callback, (gpointer)vdat);
@@ -5254,7 +5254,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_widget_show(vdat->at_sample_text);
 
 	vdat->at_mark_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), _("at mark"));
-	gtk_widget_modify_bg(vdat->at_mark_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
+	widget_modify_bg(vdat->at_mark_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
 	gtk_box_pack_end(GTK_BOX(lbox3), vdat->at_mark_button, false, false, 0);
 	gtk_widget_show(vdat->at_mark_button);
 	SG_SIGNAL_CONNECT(vdat->at_mark_button, "clicked", view_files_at_mark_callback, (gpointer)vdat);
@@ -5339,7 +5339,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  vdat->env_drawer = gtk_drawing_area_new();
 	  gtk_widget_set_events(vdat->env_drawer, GDK_ALL_EVENTS_MASK);
 	  gtk_container_add(GTK_CONTAINER(gframe), vdat->env_drawer);
-	  gtk_widget_modify_bg(vdat->env_drawer, GTK_STATE_NORMAL, ss->sgx->white);
+	  widget_modify_bg(vdat->env_drawer, GTK_STATE_NORMAL, ss->sgx->white);
 	  gtk_widget_show(vdat->env_drawer);
 
 	  SG_SIGNAL_CONNECT(vdat->env_drawer, "expose_event", vf_amp_env_expose_callback, (gpointer)vdat);

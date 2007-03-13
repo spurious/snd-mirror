@@ -6331,8 +6331,6 @@
 
 
 ;typedef void(*cairo_destroy_func_t)(void *data)
-;typedef cairo_status_t(*cairo_write_func_t)(void *closure, const unsigned char *data, unsigned int length)
-;typedef cairo_status_t(*cairo_read_func_t)(void *closure, unsigned char *data, unsigned int length)
 
 ;typedef struct { unsigned long index double x double y} cairo_glyph_t
 ;typedef struct { double x_bearing double y_bearing double width double height double x_advance double y_advance} cairo_text_extents_t

@@ -17,13 +17,12 @@ TODO: selection erases (covers)
 TODO: mark erases waveform
 TODO: erase_GC should be bg->fg + bg as was -- see mix redpy
 TODO: cursor starts to redpy after mark! Then no true waveform
-TODO: remove all _direct, get pixmap translated
-TODO: gfft spacing is bad
-TODO: libxm configure/config.h [fixed?]
+TODO: remove all _direct, get pixmap translated: cairo_surface_create_similar?
 TODO: add cairo case in all gdk_gc stuff in *.scm/rb/fs
 PERHAPS: can cairo make gl-style graphs?
 PERHAPS: would it be faster to path polys then one fill?
 TODO: initial env editor window mixes dialog is empty
+TODO: enved axes disappear
 PERHAPS: wrap save/restore around all these functions
 */
 
@@ -32,7 +31,7 @@ PERHAPS: wrap save/restore around all these functions
 void draw_line(axis_context *ax, int x0, int y0, int x1, int y1) 
 {
 #if USE_CAIRO
-  cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
+  cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
   cairo_set_line_width(ax->cr, 1.0); 
   /* to get a thin line in cairo -- hooboy! you have to offset everything -- this is not pretty
    *    if line_width < 1.0, you get a smudgy mess in gray-scale!!  
@@ -49,7 +48,7 @@ void draw_line(axis_context *ax, int x0, int y0, int x1, int y1)
 void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height)
 {
 #if USE_CAIRO
-  cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
+  cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
   cairo_rectangle(ax->cr, x0, y0, width, height);
   cairo_fill(ax->cr);
 #else
@@ -63,7 +62,7 @@ void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width,
   /* used only to clear the overall graph window in snd-chn.c */
 #if USE_CAIRO
 #if 1
-  cairo_set_source_rgb(ax->cr, ax->gc->bg_red, ax->gc->bg_green, ax->gc->bg_blue);
+  cairo_set_source_rgb(ax->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue);
   cairo_rectangle(ax->cr, x0, y0, width, height);
   cairo_fill(ax->cr);
 #else
@@ -72,13 +71,13 @@ void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width,
     cairo_pattern_t *pat;
     pat = cairo_pattern_create_linear(x0, y0, x0 + width, y0 + height);
     cairo_pattern_add_color_stop_rgb(pat, 1, 
-				     mus_fclamp(0.0, ax->gc->bg_red - 0.1, 1.0), 
-				     mus_fclamp(0.0, ax->gc->bg_green - 0.1, 1.0), 
-				     mus_fclamp(0.0, ax->gc->bg_blue - 0.1, 1.0));
+				     mus_fclamp(0.0, ax->gc->bg_color->red - 0.1, 1.0), 
+				     mus_fclamp(0.0, ax->gc->bg_color->green - 0.1, 1.0), 
+				     mus_fclamp(0.0, ax->gc->bg_color->blue - 0.1, 1.0));
     cairo_pattern_add_color_stop_rgb(pat, 0, 
-				     mus_fclamp(0.0, ax->gc->bg_red + 0.1, 1.0), 
-				     mus_fclamp(0.0, ax->gc->bg_green + 0.1, 1.0), 
-				     mus_fclamp(0.0, ax->gc->bg_blue + 0.1, 1.0));
+				     mus_fclamp(0.0, ax->gc->bg_color->red + 0.1, 1.0), 
+				     mus_fclamp(0.0, ax->gc->bg_color->green + 0.1, 1.0), 
+				     mus_fclamp(0.0, ax->gc->bg_color->blue + 0.1, 1.0));
     cairo_rectangle(ax->cr, x0, y0, width, height);
     cairo_set_source(ax->cr, pat);
     cairo_fill(ax->cr);
@@ -120,13 +119,15 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
   }
 #else
   {
+    /* can we just use set_font_face|size and show_text here? */
+
     PangoLayout *layout = NULL;
     layout = pango_cairo_create_layout(ax->cr);
     if (layout)
       {
 	pango_layout_set_font_description(layout, ax->current_font);
 	pango_layout_set_text(layout, str, -1);
-	cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);	
+	cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);	
 	cairo_move_to(ax->cr, x0, y0);
 	pango_cairo_show_layout(ax->cr, layout);
 	g_object_unref(G_OBJECT(layout));
@@ -141,11 +142,9 @@ void draw_picture_direct(GdkDrawable* drawable, gc_t *gp, picture_t *src, gint x
   cairo_t *cr;
   cr = gdk_cairo_create(drawable);
   cairo_set_source_surface(cr, src, xsrc, ysrc);
-  /* TODO draw it? */
   cairo_move_to(cr, xdest, ydest);
   cairo_fill(cr);
   cairo_destroy(cr);
-
 #else
   gdk_draw_drawable(drawable, gp, GDK_DRAWABLE(src), xsrc, ysrc, xdest, ydest, width, height);
 #endif
@@ -160,7 +159,7 @@ void draw_lines(axis_context *ax, point_t *points, int num)
     /*
     cairo_set_antialias(ax->cr, CAIRO_ANTIALIAS_NONE);
     */
-    cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
+    cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
     cairo_set_line_width(ax->cr, 1.0); 
     cairo_move_to(ax->cr, points[0].x, points[0].y);
     for (i = 1; i < num; i++)
@@ -175,7 +174,7 @@ void draw_lines(axis_context *ax, point_t *points, int num)
 void draw_dot(axis_context *ax, int x, int y, int size)
 {
 #if USE_CAIRO
-  cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
+  cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
   cairo_arc(ax->cr, x, y, size / 2, 0.0, 2 * M_PI);
   cairo_fill(ax->cr);
 #else
@@ -186,7 +185,7 @@ void draw_dot(axis_context *ax, int x, int y, int size)
 void draw_arc(axis_context *ax, int x, int y, int size, int angle0, int angle1)
 {
 #if USE_CAIRO
-  cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
+  cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
   cairo_arc(ax->cr, x, y, size / 2, mus_degrees_to_radians(angle0), mus_degrees_to_radians(angle1));
   cairo_stroke(ax->cr);
 #else
@@ -228,7 +227,7 @@ static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list a
     int x, y;
     x = va_arg(ap, int);
     y = va_arg(ap, int);
-    cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
+    cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
     cairo_set_line_width(ax->cr, 1.0);
     cairo_move_to(ax->cr, x, y);
     for (i = 1; i < points; i++)
@@ -286,7 +285,7 @@ void fill_polygon_from_array(axis_context *ax, point_t *points, int npoints)
 {
 #if USE_CAIRO
   int i;
-  cairo_set_source_rgb(ax->cr, ax->gc->fg_red, ax->gc->fg_green, ax->gc->fg_blue);
+  cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
   cairo_set_line_width(ax->cr, 1.0);
   cairo_move_to(ax->cr, points[0].x, points[0].y);
   for (i = 1; i < npoints; i++)
@@ -347,12 +346,14 @@ void setup_axis_context(chan_info *cp, axis_context *ax)
   ax->w = w;
 }
 
-
-/* colormaps */
-/* should I use the RGB stuff in gdk rather than colormaps? */
+/* TODO: color_name_to_rgb rgb_to_gdk_color is in gutils */
 
 #define BLACK_AND_WHITE_COLORMAP 0
-/* defined as enum member in snd-gxcolormaps.c */
+/* defined as enum member in snd-gxcolormaps.c (needed also in color dialog below) */
+
+#if (!USE_CAIRO)
+
+/* colormaps */
 
 static int sono_bins = 0; /* total_bins */
 static GdkColor **current_colors = NULL;
@@ -470,6 +471,95 @@ void allocate_color_map(int colormap)
       current_colormap = colormap;
     }
 }
+
+#else
+/* cairo colormaps */
+
+/* PERHAPS: rectangles probably not needed */
+
+static int sono_bins = 0; /* total_bins */
+static int sono_colors = 0; /* colormap_size */
+static GdkRectangle **sono_data = NULL;
+
+void check_colormap_sizes(int size)
+{
+  int i, old_size;
+  if ((sono_data) && (sono_colors < size) && (sono_bins > 0))
+    {
+      old_size = sono_colors;
+      sono_colors = size;
+      sono_data = (GdkRectangle **)REALLOC(sono_data, sono_colors * sizeof(GdkRectangle *));
+      for (i = old_size; i < sono_colors; i++) sono_data[i] = (GdkRectangle *)CALLOC(sono_bins, sizeof(GdkRectangle));
+    }
+}
+
+void initialize_colormap(void)
+{
+  sono_colors = color_map_size(ss);
+  sono_data = (GdkRectangle **)CALLOC(sono_colors, sizeof(GdkRectangle *));
+}
+
+void draw_sono_rectangles(axis_context *ax, int color, int jmax)
+{
+  int i;
+  rgb_t r, g, b;
+  get_current_color(color_map(ss), color, &r, &g, &b);
+  cairo_save(ax->cr);
+  cairo_set_source_rgb(ax->cr, r, g, b);
+  for (i = 0; i < jmax; i++)
+    {
+      cairo_rectangle(ax->cr, 
+		      sono_data[color][i].x, 
+		      sono_data[color][i].y, 
+		      sono_data[color][i].width, 
+		      sono_data[color][i].height);
+      cairo_fill(ax->cr);
+    }
+  cairo_restore(ax->cr);
+}
+
+void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1)
+{
+  rgb_t r, g,b;
+  get_current_color(color_map(ss), color, &r, &g, &b);
+  cairo_set_source_rgb(ax->cr, r, g, b);
+  cairo_set_line_width(ax->cr, 1.0); 
+  cairo_move_to(ax->cr, x0 + 0.5, y0 + 0.5);
+  cairo_line_to(ax->cr, x1 + 0.5, y1 + 0.5);
+  cairo_stroke(ax->cr);
+}
+
+void set_sono_rectangle(int j, int color, int x, int y, int width, int height)
+{
+  GdkRectangle *r;
+  r = sono_data[color];
+  r[j].x = x;
+  r[j].y = y;
+  r[j].width = width;
+  r[j].height = height;
+}
+
+void allocate_sono_rects(int size)
+{
+  if (size != sono_bins)
+    {
+      int i;
+      for (i = 0; i < sono_colors; i++)
+	{
+	  if ((sono_bins > 0) && (sono_data[i])) 
+	    FREE(sono_data[i]); 
+	  sono_data[i] = (GdkRectangle *)CALLOC(size, sizeof(GdkRectangle));
+	}
+      sono_bins = size;
+    }
+}
+
+void allocate_color_map(int colormap)
+{
+}
+
+#endif
+
 
 
 /* -------- color browser -------- */
@@ -708,7 +798,7 @@ static void start_view_color_dialog(bool managed)
 	frame = gtk_frame_new(NULL);
 	gtk_container_set_border_width(GTK_CONTAINER(frame), 0);
 	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
-	gtk_widget_modify_bg(frame, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+	widget_modify_bg(frame, GTK_STATE_NORMAL, ss->sgx->zoom_color);
 	
 	gtk_table_attach(GTK_TABLE(outer_table), frame, 3, 4, 0, 3,
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 

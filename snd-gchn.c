@@ -869,7 +869,7 @@ color_t get_foreground_color(axis_context *ax)
 #endif
 }
 
-void set_foreground_color(axis_context *ax, GdkColor *color)
+void set_foreground_color(axis_context *ax, color_info *color)
 {
   gc_set_foreground(ax->gc, color);
 }

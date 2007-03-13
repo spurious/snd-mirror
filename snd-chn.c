@@ -2381,7 +2381,7 @@ static bool make_gl_spectrogram(chan_info *cp)
   XColor tmp_color;
   Display *dpy;
 #else
-  GdkColor *tmp_color;
+  color_info *tmp_color;
 #endif
 
   si = cp->sonogram_data;

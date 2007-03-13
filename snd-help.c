@@ -506,6 +506,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+14-Mar:  cairo graphics backend (--with-cairo configure choice).\n\
 1-Mar:   open-file-dialog-directory.\n\
 26-Feb:  clean.scm.\n\
 17-Feb:  File:Close all menu if more than one sound open.\n\

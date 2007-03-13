@@ -956,10 +956,6 @@ static XEN XEN_WRAP_GC(gc_t *gc)
   /* this is just a stop-gap -- ideally user extension code would not use the Gdk-specific gcs -- TODO: rewrite all snd-gcs references */
   GdkGC *gp;
   gp = gdk_gc_new(MAIN_WINDOW(ss));
-  gdk_gc_set_background(gp, gc->bg_color);
-  gdk_gc_set_foreground(gp, gc->fg_color);
-  if (gc->op == GDK_XOR)
-    gdk_gc_set_function(gp, GDK_XOR);
   return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"), C_TO_XEN_ULONG((unsigned long)gp)));
 }
 #endif
@@ -1473,7 +1469,7 @@ void set_selected_graph_color(color_t color)
 #if USE_MOTIF
       XtVaSetValues(channel_graph(cp), XmNbackground, ss->sgx->selected_graph_color, NULL);
 #else
-      gtk_widget_modify_bg(channel_graph(cp), GTK_STATE_NORMAL, ss->sgx->selected_graph_color);
+      widget_modify_bg(channel_graph(cp), GTK_STATE_NORMAL, ss->sgx->selected_graph_color);
 #endif
     }
 }
@@ -1535,7 +1531,7 @@ static void recolor_everything(widget_t w, gpointer color)
   if (GTK_IS_WIDGET(w)) 
     {
       /* apparently there is a huge memory leak here */
-      gtk_widget_modify_bg(w, GTK_STATE_NORMAL, (color_t)color);
+      widget_modify_bg(w, GTK_STATE_NORMAL, (color_t)color);
       if (GTK_IS_CONTAINER(w))
 	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything, color);
     }

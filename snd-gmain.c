@@ -1,32 +1,62 @@
 #include "snd.h"
 
 #define FALLBACK_FONT "Monospace 14"
-#define HIGHLIGHT_COLOR      "ivory1"
-#define BASIC_COLOR          "ivory2"
-#define POSITION_COLOR       "ivory3"
-#define ZOOM_COLOR           "ivory4"
-#define CURSOR_COLOR         "red"
-#define SELECTION_COLOR      "lightsteelblue1"
-#define MIX_COLOR            "darkgray"
-#define ENVED_WAVEFORM_COLOR "blue"
-#define GRAPH_COLOR          "white"
-#define SELECTED_GRAPH_COLOR "white"
-#define DATA_COLOR           "black"
-#define SELECTED_DATA_COLOR  "black"
-#define MARK_COLOR           "red"
-#define LISTENER_COLOR       "AliceBlue"
-#define LISTENER_TEXT_COLOR  "black"
-#define LIGHT_BLUE_COLOR     "lightsteelblue1"
-#define LIGHTER_BLUE_COLOR   "AliceBlue"
-#define WHITE_COLOR          "white"
-#define BLACK_COLOR          "black"
-#define GREEN_COLOR          "green2"
-#define RED_COLOR            "red"
-#define YELLOW_COLOR         "yellow"
-#define TEXT_FOCUS_COLOR     "white"
-#define FILTER_CONTROL_WAVEFORM_COLOR "blue"
-#define PUSHED_BUTTON_COLOR  "lightsteelblue1"
-#define SASH_COLOR           "lightgreen"
+
+#if USE_CAIRO
+  #define HIGHLIGHT_COLOR      rgb_to_color(1.00, 1.00, 0.94) /* "ivory1" */
+  #define BASIC_COLOR          rgb_to_color(0.93, 0.93, 0.87) /* "ivory2" */
+  #define POSITION_COLOR       rgb_to_color(0.80, 0.80, 0.75) /* "ivory3" */
+  #define ZOOM_COLOR           rgb_to_color(0.54, 0.54, 0.51) /* "ivory4" */
+  #define CURSOR_COLOR         rgb_to_color(1.0, 0.0, 0.0) /* "red" */
+  #define SELECTION_COLOR      rgb_to_color(0.79, 0.88, 1.00) /* "lightsteelblue1" */
+  #define MIX_COLOR            rgb_to_color(0.66, 0.66, 0.66) /* "darkgray" */
+  #define ENVED_WAVEFORM_COLOR rgb_to_color(0.0, 0.0, 1.0) /* "blue" */
+  #define GRAPH_COLOR          rgb_to_color(1.0, 1.0, 1.0) /* "white" */
+  #define SELECTED_GRAPH_COLOR rgb_to_color(1.0, 1.0, 1.0) /* "white" */
+  #define DATA_COLOR           rgb_to_color(0.0, 0.0, 0.0) /* "black" */
+  #define SELECTED_DATA_COLOR  rgb_to_color(0.0, 0.0, 0.0) /* "black" */
+  #define MARK_COLOR           rgb_to_color(1.0, 0.0, 0.0) /* "red" */
+  #define LISTENER_COLOR       rgb_to_color(0.94, 0.97, 1.00) /* "AliceBlue" */
+  #define LISTENER_TEXT_COLOR  rgb_to_color(0.0, 0.0, 0.0) /* "black" */
+  #define LIGHT_BLUE_COLOR     rgb_to_color(0.79, 0.88, 1.00) /* "lightsteelblue1" */
+  #define LIGHTER_BLUE_COLOR   rgb_to_color(0.94, 0.97, 1.00) /* "AliceBlue" */
+  #define WHITE_COLOR          rgb_to_color(1.0, 1.0, 1.0) /* "white" */
+  #define BLACK_COLOR          rgb_to_color(0.0, 0.0, 0.0) /* "black" */
+  #define GREEN_COLOR          rgb_to_color(0.00, 0.93, 0.00) /* "green2" */
+  #define RED_COLOR            rgb_to_color(1.0, 0.0, 0.0) /* "red" */
+  #define YELLOW_COLOR         rgb_to_color(1.00, 1.00, 0.00) /* "yellow" */
+  #define TEXT_FOCUS_COLOR     rgb_to_color(1.0, 1.0, 1.0) /* "white" */
+  #define FILTER_CONTROL_WAVEFORM_COLOR rgb_to_color(0.0, 0.0, 1.0) /* "blue" */
+  #define PUSHED_BUTTON_COLOR  rgb_to_color(0.79, 0.88, 1.00) /* "lightsteelblue1" */
+  #define SASH_COLOR           rgb_to_color(0.56, 0.93, 0.56) /* "lightgreen" */
+#else
+  #define HIGHLIGHT_COLOR      "ivory1"
+  #define BASIC_COLOR          "ivory2"
+  #define POSITION_COLOR       "ivory3"
+  #define ZOOM_COLOR           "ivory4"
+  #define CURSOR_COLOR         "red"
+  #define SELECTION_COLOR      "lightsteelblue1"
+  #define MIX_COLOR            "darkgray"
+  #define ENVED_WAVEFORM_COLOR "blue"
+  #define GRAPH_COLOR          "white"
+  #define SELECTED_GRAPH_COLOR "white"
+  #define DATA_COLOR           "black"
+  #define SELECTED_DATA_COLOR  "black"
+  #define MARK_COLOR           "red"
+  #define LISTENER_COLOR       "AliceBlue"
+  #define LISTENER_TEXT_COLOR  "black"
+  #define LIGHT_BLUE_COLOR     "lightsteelblue1"
+  #define LIGHTER_BLUE_COLOR   "AliceBlue"
+  #define WHITE_COLOR          "white"
+  #define BLACK_COLOR          "black"
+  #define GREEN_COLOR          "green2"
+  #define RED_COLOR            "red"
+  #define YELLOW_COLOR         "yellow"
+  #define TEXT_FOCUS_COLOR     "white"
+  #define FILTER_CONTROL_WAVEFORM_COLOR "blue"
+  #define PUSHED_BUTTON_COLOR  "lightsteelblue1"
+  #define SASH_COLOR           "lightgreen"
+#endif
 
 #define CHANNEL_SASH_INDENT -10
 #define CHANNEL_SASH_SIZE 10
@@ -285,12 +315,13 @@ static void setup_gcs(void)
   initialize_colormap();
 }
 
-static void save_a_color(FILE *Fp, const char *def_name, GdkColor *current_color, const char *ext_name)
+static void save_a_color(FILE *Fp, const char *def_name, color_info *current_color, const char *ext_name)
 {
 #if HAVE_EXTENSION_LANGUAGE
-  GdkColor default_color;
+  GdkColor default_color; /* color name here */
   if (gdk_color_parse(def_name, &default_color))
     {
+      /* TODO: these will never match in cairo case */
       if ((current_color->red != default_color.red) ||
 	  (current_color->green != default_color.green) ||
 	  (current_color->blue != default_color.blue))
@@ -466,20 +497,32 @@ static void set_up_icon(void)
 
 color_t get_in_between_color(color_t fg, color_t bg)
 {
-  GdkColor gcolor;
-  GdkColor *new_color;
+#if USE_CAIRO
+  color_info *new_color;
+  new_color = (color_info *)CALLOC(1, sizeof(color_info));
+  new_color->red = (rgb_t)((fg->red + (2 * bg->red)) / 3);
+  new_color->green = (rgb_t)((fg->green + (2 * bg->green)) / 3);
+  new_color->blue = (rgb_t)((fg->blue + (2 * bg->blue)) / 3);
+#else
+  color_info gcolor;
+  color_info *new_color;
   gcolor.red = (rgb_t)((fg->red + (2 * bg->red)) / 3);
   gcolor.green = (rgb_t)((fg->green + (2 * bg->green)) / 3);
   gcolor.blue = (rgb_t)((fg->blue + (2 * bg->blue)) / 3);
   new_color = gdk_color_copy(&gcolor);
   gdk_rgb_find_color(gdk_colormap_get_system(), new_color);
+#endif
   return(new_color);
 }
 
-static GdkColor *get_color(char *defined_color, char *fallback_color, char *second_fallback_color, bool use_white)
+#if USE_CAIRO
+  #define get_color(Color, Ignore1, Ignore2, Ignore3) Color
+#else
+static color_info *get_color(char *defined_color, char *fallback_color, char *second_fallback_color, bool use_white)
 {
-  GdkColor tmp_color;
-  GdkColor *new_color;
+  GdkColor tmp_color; /* using Gdk color name handlers here */
+  color_info *new_color;
+  /* gdk_color_parse (gdk/gdkcolor.c) just calls pango_color_parse (pango/pango-color.c) which looks up the name in pango-color-table.h */
   if ((!(gdk_color_parse(defined_color, &tmp_color))) &&
       ((!fallback_color) || (!(gdk_color_parse(fallback_color, &tmp_color)))) &&
       ((!second_fallback_color) || (!(gdk_color_parse(second_fallback_color, &tmp_color)))))
@@ -500,6 +543,7 @@ static GdkColor *get_color(char *defined_color, char *fallback_color, char *seco
   gdk_rgb_find_color(gdk_colormap_get_system(), new_color);
   return(new_color);
 }
+#endif
 
 static void notebook_switch_page(GtkNotebook *w, GtkNotebookPage *page_widget, gint page_num)
 {

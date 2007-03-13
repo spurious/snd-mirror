@@ -723,8 +723,8 @@ GtkWidget *make_mix_dialog(void)
       gtk_box_pack_start(GTK_BOX(rc), mix_play, false, false, 2);
       SG_SIGNAL_CONNECT(mix_play, "clicked", mix_play_callback, NULL);
       gtk_widget_show(mix_play);
-      gtk_widget_modify_bg(mix_play, GTK_STATE_ACTIVE, ss->sgx->basic_color);
-      gtk_widget_modify_bg(mix_play, GTK_STATE_SELECTED, ss->sgx->basic_color);
+      widget_modify_bg(mix_play, GTK_STATE_ACTIVE, ss->sgx->basic_color);
+      widget_modify_bg(mix_play, GTK_STATE_SELECTED, ss->sgx->basic_color);
       
       if (!speaker_off_pix)
 	{
@@ -758,8 +758,8 @@ GtkWidget *make_mix_dialog(void)
       gtk_box_pack_start(GTK_BOX(rc1), mix_track_play, false, false, 2);
       SG_SIGNAL_CONNECT(mix_track_play, "clicked", mix_track_play_callback, NULL);
       gtk_widget_show(mix_track_play);
-      gtk_widget_modify_bg(mix_track_play, GTK_STATE_ACTIVE, ss->sgx->basic_color);
-      gtk_widget_modify_bg(mix_track_play, GTK_STATE_SELECTED, ss->sgx->basic_color);
+      widget_modify_bg(mix_track_play, GTK_STATE_ACTIVE, ss->sgx->basic_color);
+      widget_modify_bg(mix_track_play, GTK_STATE_SELECTED, ss->sgx->basic_color);
 
       mix_track_play_pix = gtk_drawing_area_new();
       gtk_widget_set_events(mix_track_play_pix, GDK_EXPOSURE_MASK);
@@ -903,7 +903,7 @@ GtkWidget *make_mix_dialog(void)
       w_env = gtk_drawing_area_new();
       gtk_widget_set_events(w_env, GDK_ALL_EVENTS_MASK);
       gtk_container_add(GTK_CONTAINER(w_env_frame), w_env);
-      gtk_widget_modify_bg(w_env, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      widget_modify_bg(w_env, GTK_STATE_NORMAL, ss->sgx->highlight_color);
       gtk_widget_show(w_env);
       SG_SIGNAL_CONNECT(w_env, "expose_event", mix_amp_env_expose_callback, NULL);
       SG_SIGNAL_CONNECT(w_env, "configure_event", mix_amp_env_resize_callback, NULL);
@@ -1697,8 +1697,8 @@ GtkWidget *make_track_dialog(void)
       gtk_box_pack_start(GTK_BOX(rc), w_track_play, false, false, 2);
       SG_SIGNAL_CONNECT(w_track_play, "clicked", track_dialog_play_callback, NULL);
       gtk_widget_show(w_track_play);
-      gtk_widget_modify_bg(w_track_play, GTK_STATE_ACTIVE, ss->sgx->basic_color);
-      gtk_widget_modify_bg(w_track_play, GTK_STATE_SELECTED, ss->sgx->basic_color);
+      widget_modify_bg(w_track_play, GTK_STATE_ACTIVE, ss->sgx->basic_color);
+      widget_modify_bg(w_track_play, GTK_STATE_SELECTED, ss->sgx->basic_color);
       
       if (!speaker_off_pix)
 	{
@@ -1857,7 +1857,7 @@ GtkWidget *make_track_dialog(void)
       w_track_env = gtk_drawing_area_new();
       gtk_widget_set_events(w_track_env, GDK_ALL_EVENTS_MASK);
       gtk_container_add(GTK_CONTAINER(w_track_env_frame), w_track_env);
-      gtk_widget_modify_bg(w_track_env, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      widget_modify_bg(w_track_env, GTK_STATE_NORMAL, ss->sgx->highlight_color);
       gtk_widget_show(w_track_env);
       SG_SIGNAL_CONNECT(w_track_env, "expose_event", track_amp_env_expose_callback, NULL);
       SG_SIGNAL_CONNECT(w_track_env, "configure_event", track_amp_env_resize_callback, NULL);

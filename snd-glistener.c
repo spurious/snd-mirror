@@ -696,7 +696,7 @@ static gboolean listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gp
 
 static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
-  gtk_widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->white);
+  widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->white);
   if (XEN_HOOKED(mouse_enter_text_hook))
     run_hook(mouse_enter_text_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
@@ -707,7 +707,7 @@ static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
 
 static gboolean mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
-  gtk_widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->basic_color);
+  widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->basic_color);
   if (XEN_HOOKED(mouse_leave_text_hook))
     run_hook(mouse_leave_text_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
@@ -734,8 +734,8 @@ GtkWidget *snd_entry_new(GtkWidget *container, snd_entry_bg_t with_white_backgro
   gtk_widget_show(text);
   if (with_white_background == WITH_WHITE_BACKGROUND) 
     {
-      gtk_widget_modify_bg(text, GTK_STATE_NORMAL, ss->sgx->white);
-      gtk_widget_modify_base(text, GTK_STATE_SELECTED, ss->sgx->white); 
+      widget_modify_bg(text, GTK_STATE_NORMAL, ss->sgx->white);
+      widget_modify_base(text, GTK_STATE_SELECTED, ss->sgx->white); 
     }
   connect_mouse_to_text(text);
   return(text);
@@ -901,18 +901,18 @@ void goto_listener(void)
   goto_window(listener_text);
 }
 
-void color_listener(GdkColor *pix)
+void color_listener(color_info *pix)
 {
   ss->sgx->listener_color = pix;
   if (listener_text) 
-    gtk_widget_modify_base(listener_text, GTK_STATE_NORMAL, ss->sgx->listener_color);
+    widget_modify_base(listener_text, GTK_STATE_NORMAL, ss->sgx->listener_color);
 }
 
-void color_listener_text(GdkColor *pix)
+void color_listener_text(color_info *pix)
 {
   ss->sgx->listener_text_color = pix;
   if (listener_text) 
-    gtk_widget_modify_text(listener_text, GTK_STATE_NORMAL, ss->sgx->listener_text_color);
+    widget_modify_text(listener_text, GTK_STATE_NORMAL, ss->sgx->listener_text_color);
 }
 
 void handle_listener(bool open)
