@@ -29,8 +29,6 @@
                                       (strcmp("Pixel", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 #define NULL_WIDGET NULL
 
-#define POINT_BUFFER_SIZE 4096
-
 typedef enum {NOT_ACTIVATABLE, ACTIVATABLE, NOT_ACTIVATABLE_OR_FOCUSED, ACTIVATABLE_BUT_NOT_FOCUSED} text_cr_t;
 
 #ifdef MUS_SGI

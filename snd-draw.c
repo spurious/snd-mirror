@@ -245,7 +245,10 @@ void draw_cursor(chan_info *cp)
       break;
     }
 #if USE_CAIRO
-  /* TODO: redraw the erased wave portion, if any */
+  /* TODO: redraw the erased wave portion, if any 
+       this is the set of points between cx-size and cx+size
+       since cursor can move throughout the window without remaking the graph, we'd have to save the entire graph
+   */
   /*
     TODO: we're assuming in scheme currently that the thumbnail graph will have a context
   cairo_destroy(ax->cr);

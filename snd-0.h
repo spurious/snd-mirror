@@ -57,6 +57,8 @@
 #define UNPACK_CHANNEL(a) (a & 0xff)
 #define PACK_SOUND_AND_CHANNEL(a, b) ((a << 16) | b)
 
+#define POINT_BUFFER_SIZE 4096
+
 #define FILE_BUFFER_SIZE 8192
 /* this shouldn't be too much larger than the average un-peak-env'd time domain window size:
  *   as a read crosses the in-core boundary, it jumps ahead to the next windowful (everything

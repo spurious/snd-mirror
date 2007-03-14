@@ -12370,17 +12370,6 @@ Snd's error handling mechanism.
 See also <a href="#muserrorhook">mus-error-hook</a> and <a href="#snderrorhook">snd-error-hook</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
-<!-- TODO: incorporate:
-You can use FTH's help word: 
-
-   help update-transform-graph 
-
-help is a parsing word so it's not necessary to produce an XT first. 
-snd-help is both a parsing word and a normal word: 
-
-   "update-transform-graph" #t snd-help 
-   snd-help update-transform-graph 
--->
 
 <!-- snd-help -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
@@ -12427,6 +12416,8 @@ Normally snd-help adds carriage-returns to fit the current size of the listener;
 get the raw string instead, set the argument 'formatted' to #f.  click-for-listener-help
 in draw.scm uses this to put off formatting the help string until the help dialog (rather than
 the listener) gets it.
+<br><br>
+In Guile, the built-in help function is named "help".  Similarly, in Forth, <code>help update-transform-graph</code>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

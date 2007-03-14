@@ -14,7 +14,6 @@
 #endif
 
 #define LOTSA_PIXELS 10000
-#define POINT_BUFFER_SIZE 4096
 
 #define BACKGROUND_QUIT false
 #define BACKGROUND_CONTINUE true

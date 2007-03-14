@@ -830,40 +830,6 @@ void widget_off_t_to_text(GtkWidget *w, off_t val)
   FREE(str);
 }
 
-/* TODO: move these two to snd-gdraw? also the color stuff? */
-static void rotate_text(GdkDrawable *wn, gc_t *gp, PangoFontDescription *font, const char *text, int angle, gint x0, gint y0)
-{
-#if HAVE_PANGO_MATRIX_ROTATE
-  PangoLayout *layout;
-  PangoContext *context;
-  PangoMatrix matrix = PANGO_MATRIX_INIT;
-  context = gdk_pango_context_get();
-  layout = pango_layout_new(context);
-  pango_matrix_rotate(&matrix, angle);
-  pango_context_set_matrix(context, &matrix);
-  pango_layout_set_font_description(layout, font);
-  pango_layout_set_text(layout, text, -1);
-#if USE_CAIRO
-  /* TODO:
-  gdk_draw_layout(wn, gp->gc, x0, y0, layout);
-  */
-#else
-  gdk_draw_layout(wn, gp, x0, y0, layout);
-#endif
-  g_object_unref(layout);
-  g_object_unref(context);
-#endif
-}
-
-void draw_rotated_axis_label(chan_info *cp, axis_context *ax, const char *text, gint x0, gint y0)
-{
-  GtkWidget *w;
-  if ((cp->chan > 0) && (cp->sound->channel_style == CHANNELS_COMBINED))
-    w = channel_graph(cp->sound->chans[0]);
-  else w = channel_graph(cp);
-  rotate_text(w->window, ax->gc, AXIS_LABEL_FONT(ss), text, 90, x0, y0);
-}
-
 void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
 {
   /* view files file list */

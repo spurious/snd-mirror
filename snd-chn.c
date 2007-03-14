@@ -3443,7 +3443,8 @@ static void draw_sonogram_cursor_1(chan_info *cp)
   axis_context *fax;
   fap = cp->fft->axis;
   fax = cursor_context(cp);
-  if ((fap) && (fax)) draw_line(fax, cp->fft_cx, fap->y_axis_y0, cp->fft_cx, fap->y_axis_y1);
+  if ((fap) && (fax)) 
+    draw_line(fax, cp->fft_cx, fap->y_axis_y0, cp->fft_cx, fap->y_axis_y1);
 }
 
 static void draw_sonogram_cursor(chan_info *cp)

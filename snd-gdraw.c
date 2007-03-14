@@ -8,23 +8,25 @@
  */
 
 /*
-TODO: check ATS
-TODO: static intel mac snd with minimal needs
-TODO: gl + cairo?
-PERHAPS: background-gradient (0 = none), fancy dots in enved? can we pick up settings from the current theme? (display is still pretty slow)
-TODO: selection erases (covers) could transparency fix this?
-TODO: mark erases waveform
-TODO: erase_GC should be bg->fg + bg as was -- see mix redpy
-TODO: cursor starts to redpy after mark! Then no true waveform
-TODO: add cairo case in all gdk_gc stuff in *.scm/rb/fs
-PERHAPS: can cairo make gl-style graphs?
-PERHAPS: would it be faster to path polys then one fill?
-TODO: initial env editor window mixes dialog is empty
-TODO: enved axes disappear (mixes too)
-PERHAPS: wrap save/restore around all these functions
-TODO: snd-test+gtk[currently stops at snd-clock-icon] case gl transparency?
-TODO: colormaps need not be saved as arrays in cairo case
-*/
+ * TODO: check ATS
+ * TODO: static intel mac snd with minimal needs
+ * TODO: gl + cairo?
+ * PERHAPS: background-gradient (0 = none), fancy dots in enved? can we pick up settings from the current theme? (display is still pretty slow)
+ * TODO: selection erases (covers)
+ * TODO: mark erases waveform
+ * TODO: erase_GC should be bg->fg + bg as was -- see mix redpy
+ * TODO: cursor starts to redpy after mark! Then no true waveform
+ * TODO: add cairo case in all gdk_gc stuff in *.scm/rb/fs
+ * PERHAPS: can cairo make gl-style graphs?
+ * PERHAPS: would it be faster to path polys then one fill?
+ * TODO: initial env editor window mixes dialog is empty
+ * TODO: enved axes disappear (mixes too)
+ * PERHAPS: wrap save/restore around all these functions
+ * TODO: snd-test+gtk[currently stops at snd-clock-icon] case gl transparency?
+ * TODO: colormaps need not be saved as arrays in cairo case
+ * TODO: there's also an fft/sonogram cursor
+ * TODO: moving mix display is smudged
+ */
 
 
 
@@ -43,6 +45,72 @@ void draw_line(axis_context *ax, int x0, int y0, int x1, int y1)
   if (ax->wn == NULL) return;
   gdk_draw_line(ax->wn, ax->gc, (gint)x0, (gint)y0, (gint)x1, (gint)y1);
 #endif
+}
+
+void draw_lines(axis_context *ax, point_t *points, int num)
+{
+  if (num == 0) return;
+#if USE_CAIRO
+  {
+    int i;
+    cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
+    cairo_set_line_width(ax->cr, 1.0); 
+    cairo_move_to(ax->cr, points[0].x, points[0].y);
+    for (i = 1; i < num; i++)
+      cairo_line_to(ax->cr, points[i].x, points[i].y);
+    cairo_stroke(ax->cr);
+  }
+#else
+  gdk_draw_lines(ax->wn, ax->gc, points, num);
+#endif
+}
+
+void draw_dot(axis_context *ax, int x, int y, int size)
+{
+#if USE_CAIRO
+  cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
+  cairo_arc(ax->cr, x, y, size / 2, 0.0, 2 * M_PI);
+  cairo_fill(ax->cr);
+#else
+  gdk_draw_arc(ax->wn, ax->gc, true, x - size / 2, y - size / 2, size, size, 0, 360 * 64);
+#endif
+}
+
+void draw_arc(axis_context *ax, int x, int y, int size, int angle0, int angle1)
+{
+#if USE_CAIRO
+  cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
+  cairo_arc(ax->cr, x, y, size / 2, mus_degrees_to_radians(angle0), mus_degrees_to_radians(angle1));
+  cairo_stroke(ax->cr);
+#else
+  gdk_draw_arc(ax->wn, ax->gc, false, x - size / 2, y - size / 2, size, size, angle0 * 64, angle1 * 64);
+#endif
+}
+
+void draw_point(axis_context *ax, GdkPoint point, int size)
+{
+#if USE_CAIRO
+  draw_dot(ax, point.x, point.y, size);
+#else
+  if (size == 1)
+    gdk_draw_point(ax->wn, ax->gc, point.x, point.y);
+  else draw_dot(ax, point.x, point.y, size);
+#endif
+}
+
+void draw_points(axis_context *ax, point_t *points, int num, int size)
+{
+  if (num == 0) return;
+#if (!USE_CAIRO)
+  if (size == 1)
+    gdk_draw_points(ax->wn, ax->gc, points, num);
+  else
+#endif
+    {
+      int i;
+      for (i = 0; i < num; i++) 
+	draw_dot(ax, points[i].x, points[i].y, size);
+    }
 }
 
 void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height)
@@ -119,28 +187,65 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
   }
 #else
   {
-    /* can we just use set_font_face|size and show_text here? */
-
     PangoLayout *layout = NULL;
     layout = pango_cairo_create_layout(ax->cr);
-    if (layout)
-      {
-	pango_layout_set_font_description(layout, ax->current_font);
-	pango_layout_set_text(layout, str, -1);
-	cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);	
-	cairo_move_to(ax->cr, x0, y0);
-	pango_cairo_show_layout(ax->cr, layout);
-	g_object_unref(G_OBJECT(layout));
-      }
+    pango_layout_set_font_description(layout, ax->current_font);
+    pango_layout_set_text(layout, str, -1);
+    cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);	
+    cairo_move_to(ax->cr, x0, y0);
+    pango_cairo_show_layout(ax->cr, layout);
+    g_object_unref(G_OBJECT(layout));
   }
 #endif
+}
+
+static void rotate_text(axis_context *ax, PangoFontDescription *font, const char *text, int angle, gint x0, gint y0)
+{
+#if HAVE_PANGO_MATRIX_ROTATE
+#if USE_CAIRO
+  cairo_t *cr;
+  int width, height;
+  PangoLayout *layout = NULL;
+  cr = gdk_cairo_create(ax->wn);
+  layout = pango_cairo_create_layout(cr);
+  pango_layout_set_font_description(layout, font);
+  pango_layout_set_text(layout, text, -1);
+  pango_layout_get_size (layout, &width, &height);
+  fprintf(stderr,"size: %f %f\n", (double)width / PANGO_SCALE, (double)height / PANGO_SCALE);
+  cairo_set_source_rgb(cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
+  cairo_move_to(cr, x0 + (double)height / (2 * PANGO_SCALE), y0 + (double)width / PANGO_SCALE);
+  cairo_rotate(cr, mus_degrees_to_radians(-angle));
+  pango_cairo_update_layout(cr, layout);
+  pango_cairo_show_layout(cr, layout);
+  cairo_destroy(cr);
+  g_object_unref(layout);
+#else
+  PangoLayout *layout;
+  PangoContext *context;
+  PangoMatrix matrix = PANGO_MATRIX_INIT;
+  pango_matrix_rotate(&matrix, angle);
+  context = gdk_pango_context_get();
+  layout = pango_layout_new(context);
+  pango_context_set_matrix(context, &matrix);
+  pango_layout_set_font_description(layout, font);
+  pango_layout_set_text(layout, text, -1);
+  gdk_draw_layout(ax->wn, ax->gc, x0, y0, layout);
+  g_object_unref(layout);
+  g_object_unref(context);
+#endif
+#endif
+}
+
+void draw_rotated_axis_label(chan_info *cp, axis_context *ax, const char *text, gint x0, gint y0)
+{
+  rotate_text(ax, AXIS_LABEL_FONT(ss), text, 90, x0, y0);
 }
 
 void draw_picture(axis_context *ax, picture_t *src, gint xsrc, gint ysrc, gint xdest, gint ydest, gint width, gint height)
 {
 #if USE_CAIRO
   cairo_t *cr;
-  if ((ax) && GDK_IS_DRAWABLE(ax->wn))
+  if ((ax) && (GDK_IS_DRAWABLE(ax->wn)))
     {
       cr = gdk_cairo_create(ax->wn);
       gdk_cairo_set_source_pixmap(cr, src, xsrc + xdest, ysrc + ydest);
@@ -150,72 +255,6 @@ void draw_picture(axis_context *ax, picture_t *src, gint xsrc, gint ysrc, gint x
 #else
   gdk_draw_drawable(ax->wn, ax->gc, GDK_DRAWABLE(src), xsrc, ysrc, xdest, ydest, width, height);
 #endif
-}
-
-void draw_lines(axis_context *ax, point_t *points, int num)
-{
-  if (num == 0) return;
-#if USE_CAIRO
-  {
-    int i;
-    cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
-    cairo_set_line_width(ax->cr, 1.0); 
-    cairo_move_to(ax->cr, points[0].x, points[0].y);
-    for (i = 1; i < num; i++)
-      cairo_line_to(ax->cr, points[i].x, points[i].y);
-    cairo_stroke(ax->cr);
-  }
-#else
-  gdk_draw_lines(ax->wn, ax->gc, points, num);
-#endif
-}
-
-void draw_dot(axis_context *ax, int x, int y, int size)
-{
-#if USE_CAIRO
-  cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
-  cairo_arc(ax->cr, x, y, size / 2, 0.0, 2 * M_PI);
-  cairo_fill(ax->cr);
-#else
-  gdk_draw_arc(ax->wn, ax->gc, true, x - size / 2, y - size / 2, size, size, 0, 360 * 64);
-#endif
-}
-
-void draw_arc(axis_context *ax, int x, int y, int size, int angle0, int angle1)
-{
-#if USE_CAIRO
-  cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
-  cairo_arc(ax->cr, x, y, size / 2, mus_degrees_to_radians(angle0), mus_degrees_to_radians(angle1));
-  cairo_stroke(ax->cr);
-#else
-  gdk_draw_arc(ax->wn, ax->gc, false, x - size / 2, y - size / 2, size, size, angle0 * 64, angle1 * 64);
-#endif
-}
-
-void draw_point(axis_context *ax, GdkPoint point, int size)
-{
-#if USE_CAIRO
-  draw_dot(ax, point.x, point.y, size);
-#else
-  if (size == 1)
-    gdk_draw_point(ax->wn, ax->gc, point.x, point.y);
-  else draw_dot(ax, point.x, point.y, size);
-#endif
-}
-
-void draw_points(axis_context *ax, point_t *points, int num, int size)
-{
-  if (num == 0) return;
-#if (!USE_CAIRO)
-  if (size == 1)
-    gdk_draw_points(ax->wn, ax->gc, points, num);
-  else
-#endif
-    {
-      int i;
-      for (i = 0; i < num; i++) 
-	draw_dot(ax, points[i].x, points[i].y, size);
-    }
 }
 
 static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list ap)

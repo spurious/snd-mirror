@@ -313,36 +313,6 @@ $mouse_enter_listener_hook.add_hook!("focus") do |widget| focus_widget(widget) e
 $mouse_enter_text_hook.add_hook!("focus") do |widget| focus_widget(widget) end
 </pre></td></tr></table>
 
-<!-- TODO: check for incorporation
-your Snd program name.  Here is a part of my initialization in 
-.emacs.el: 
-
-(set-default 'auto-mode-alist 
-         (append '(("\\.\\(fs\\|fth\\|fsm\\|fr\\)$" . snd-forth-mode) 
-                ("\\.snd_prefs_forth$"           . snd-forth-mode)) 
-                auto-mode-alist)) 
-
-(autoload 'run-snd-forth   "inf-snd" "Start inferior Snd-Forth process" t) 
-(autoload 'snd-forth-mode  "inf-snd" "Load snd-forth-mode, derived from `forth-mode'" t) 
-
-(setq inf-snd-forth-program-name "snd-forth-xm") 
-
-The rest is optional, I think. 
-
-(setq inf-snd-working-directory  "~/.snd.d/") 
-(setq inf-snd-index-path         "/usr/gnu/cvs/snd/") 
-(setq inf-snd-prompt             "snd> ") 
-
-(add-hook 'inf-snd-forth-mode-hook 
-      (lambda () 
-        (setq inf-snd-comint-line-end "\n\n"))) 
-(add-hook 'snd-forth-mode-hook 
-      (lambda () 
-        (define-key (current-local-map) "\C-co" 'snd-send-buffer) 
-        (define-key (current-local-map) "\C-cr" 'snd-send-region) 
-        (define-key (current-local-map) "\C-ce" 'snd-send-definition))) 
--->
-
 <p>And Forth:
 </p>
 
