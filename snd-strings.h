@@ -38,6 +38,7 @@
 #define S_axis_info                     "axis-info"
 #define S_axis_label_font               "axis-label-font"
 #define S_axis_numbers_font             "axis-numbers-font"
+#define S_background_gradient           "background-gradient"
 #define S_bad_header_hook               "bad-header-hook"
 #define S_basic_color                   "basic-color"
 #define S_beats_per_measure             "beats-per-measure"

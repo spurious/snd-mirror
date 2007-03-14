@@ -201,26 +201,29 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
 void draw_cursor(chan_info *cp)
 {
   cursor_style_t cur;
+#if USE_CAIRO
+  color_t old_color;
+  cairo_t *cr;
+#endif
   axis_info *ap;
   axis_context *ax;
   if (!(cp->graph_time_p)) return;
   ap = cp->axis;
-#if !USE_CAIRO
-  ax = cursor_context(cp);
-#else
+#if USE_CAIRO
   ax = ap->ax;
+  old_color = get_foreground_color(ax);
+  if (cp->cursor_visible)
+    set_foreground_color(ax, ax->gc->bg_color);
+  else set_foreground_color(ax, ss->sgx->cursor_color);
+  cp->cursor_visible = !(cp->cursor_visible);
+  if (ax->cr) cairo_destroy(ax->cr);
+  ax->cr = gdk_cairo_create(ax->wn); /* this is needed to force the cursor to be displayed! */
+#else
+  ax = cursor_context(cp);
 #endif
   if ((cp->tracking) && (with_tracking_cursor(ss) != DONT_TRACK))
     cur = cp->tracking_cursor_style;
   else cur = cp->cursor_style;
-
-#if USE_CAIRO
-  /*
-  if (cp->cursor_visible)
-    set_foreground_color(ax, ax->gc->bg_color);
-  cp->cursor_visible = !(cp->cursor_visible);
-  */
-#endif
 
   switch (cur)
     {
@@ -241,6 +244,15 @@ void draw_cursor(chan_info *cp)
 		 S_cursor_style " procedure");
       break;
     }
+#if USE_CAIRO
+  /* TODO: redraw the erased wave portion, if any */
+  /*
+    TODO: we're assuming in scheme currently that the thumbnail graph will have a context
+  cairo_destroy(ax->cr);
+  ax->cr = NULL;
+  */
+  set_foreground_color(ax, old_color);
+#endif
 }
 
 

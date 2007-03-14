@@ -4,6 +4,7 @@
 /* there are no references to gdk_draw_* or GdkGC or GdkGCValues outside this file except
  *   snd-gchn: gdk_draw_pixbuf (spectrum redisplay optimization)
  *   xg.c and gl.c -- this affects snd-gtk.scm which has gdk_gc_* stuff using snd-gcs
+ *   also GdkColor is pretty well sequestered
  */
 
 /*
@@ -11,19 +12,18 @@ TODO: check ATS
 TODO: static intel mac snd with minimal needs
 TODO: gl + cairo?
 PERHAPS: background-gradient (0 = none), fancy dots in enved? can we pick up settings from the current theme? (display is still pretty slow)
-TODO: no redisplay if cursor is all that changed, snd-chn 3440
-TODO: fft peaks font is too big
-TODO: selection erases (covers)
+TODO: selection erases (covers) could transparency fix this?
 TODO: mark erases waveform
 TODO: erase_GC should be bg->fg + bg as was -- see mix redpy
 TODO: cursor starts to redpy after mark! Then no true waveform
-TODO: remove all _direct, get pixmap translated: cairo_surface_create_similar?
 TODO: add cairo case in all gdk_gc stuff in *.scm/rb/fs
 PERHAPS: can cairo make gl-style graphs?
 PERHAPS: would it be faster to path polys then one fill?
 TODO: initial env editor window mixes dialog is empty
-TODO: enved axes disappear
+TODO: enved axes disappear (mixes too)
 PERHAPS: wrap save/restore around all these functions
+TODO: snd-test+gtk[currently stops at snd-clock-icon] case gl transparency?
+TODO: colormaps need not be saved as arrays in cairo case
 */
 
 
@@ -67,7 +67,7 @@ void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width,
   cairo_fill(ax->cr);
 #else
   {
-    /* try gradient background: looks ok, but display is very slow (is this ok in 1.4.0?) */
+    /* try gradient background: looks ok, but display is slow */
     cairo_pattern_t *pat;
     pat = cairo_pattern_create_linear(x0, y0, x0 + width, y0 + height);
     cairo_pattern_add_color_stop_rgb(pat, 1, 
@@ -136,17 +136,19 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
 #endif
 }
 
-void draw_picture_direct(GdkDrawable* drawable, gc_t *gp, picture_t *src, gint xsrc, gint ysrc, gint xdest, gint ydest, gint width, gint height)
+void draw_picture(axis_context *ax, picture_t *src, gint xsrc, gint ysrc, gint xdest, gint ydest, gint width, gint height)
 {
 #if USE_CAIRO
   cairo_t *cr;
-  cr = gdk_cairo_create(drawable);
-  cairo_set_source_surface(cr, src, xsrc, ysrc);
-  cairo_move_to(cr, xdest, ydest);
-  cairo_fill(cr);
-  cairo_destroy(cr);
+  if ((ax) && GDK_IS_DRAWABLE(ax->wn))
+    {
+      cr = gdk_cairo_create(ax->wn);
+      gdk_cairo_set_source_pixmap(cr, src, xsrc + xdest, ysrc + ydest);
+      cairo_paint(cr);
+      cairo_destroy(cr);
+    }
 #else
-  gdk_draw_drawable(drawable, gp, GDK_DRAWABLE(src), xsrc, ysrc, xdest, ydest, width, height);
+  gdk_draw_drawable(ax->wn, ax->gc, GDK_DRAWABLE(src), xsrc, ysrc, xdest, ydest, width, height);
 #endif
 }
 
@@ -156,9 +158,6 @@ void draw_lines(axis_context *ax, point_t *points, int num)
 #if USE_CAIRO
   {
     int i;
-    /*
-    cairo_set_antialias(ax->cr, CAIRO_ANTIALIAS_NONE);
-    */
     cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
     cairo_set_line_width(ax->cr, 1.0); 
     cairo_move_to(ax->cr, points[0].x, points[0].y);
@@ -345,8 +344,6 @@ void setup_axis_context(chan_info *cp, axis_context *ax)
   ax->wn = w->window;
   ax->w = w;
 }
-
-/* TODO: color_name_to_rgb rgb_to_gdk_color is in gutils */
 
 #define BLACK_AND_WHITE_COLORMAP 0
 /* defined as enum member in snd-gxcolormaps.c (needed also in color dialog below) */

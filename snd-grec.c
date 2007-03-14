@@ -51,6 +51,7 @@ typedef struct Wdesc {
   pane_t *p;
   GtkWidget *wg;
   GtkObject *adj;
+  axis_context *ax;
 } Wdesc;
 
 static gc_t *draw_gc, *vu_gc;
@@ -106,14 +107,10 @@ static void make_record_icons(GtkWidget *w)
 {
   GdkWindow *wn;
   wn = MAIN_WINDOW(ss);
-#if USE_CAIRO
-  /* TODO */
-#else
   speaker_pix = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, speaker_bits());
   mic_pix = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mic_bits());
   line_in_pix = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, line_in_bits());
   cd_pix = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, cd_bits());
-#endif
 }
 
 static picture_t *device_pix(int device)
@@ -294,24 +291,18 @@ static void allocate_meter(vu_t *vu)
 	band = 1;
 	if (k == 1)
 	  {
-#if USE_CAIRO
-#else
 	    if (!(vu->clip_label))
 	      vu->clip_label = gdk_pixmap_new(wn, width, height, -1);
 	    vu->ax->wn = vu->clip_label;
-#endif
 	    gc_set_foreground(draw_gc, reds[0]);
 	    vu->ax->gc = draw_gc;
 	    fill_rectangle(vu->ax, 0, 0, width, height);
 	  }
 	else 
 	  {
-#if USE_CAIRO
-#else
 	    if (!(vu->on_label))
 	      vu->on_label = gdk_pixmap_new(wn, width, height, -1);
 	    vu->ax->wn = vu->on_label;
-#endif
 	    gc_set_foreground(draw_gc, yellows[2]);
 	    vu->ax->gc = draw_gc;
 	    fill_rectangle(vu->ax, 0, 0, width, height);
@@ -370,12 +361,10 @@ static void allocate_meter(vu_t *vu)
   }
 
   /* create the 3 labels, draw arcs and ticks */
-#if USE_CAIRO
-#else
   if (!(vu->off_label))
     vu->off_label = gdk_pixmap_new(wn, width, height, -1);
   vu->ax->wn = vu->off_label;
-#endif
+
   /* not on, so just display a white background */
   gc_set_foreground(draw_gc, white);
   vu->ax->gc = draw_gc;
@@ -532,7 +521,7 @@ static void display_vu_meter(vu_t *vu)
 
     vu->ax->wn = vu->meter->window;
     vu->ax->gc = vu_gc;
-    if (label) draw_picture_direct(vu->ax->wn, vu_gc, label, 0, 0, 0, -height_offset, width, height);
+    if (label) draw_picture(vu->ax, label, 0, 0, 0, -height_offset, width, height);
 
     val = vu->current_val * VU_NEEDLE_SPEED + (vu->last_val * (1.0 - VU_NEEDLE_SPEED));
     vu->last_val = val;
@@ -1362,7 +1351,7 @@ static void make_vu_meters(pane_t *p, int vu_meters,
 static gboolean spix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   Wdesc *wd = (Wdesc *)data;
-  draw_picture_direct(GDK_DRAWABLE(w->window), ss->sgx->basic_gc, device_pix(wd->device), 0, 0, 2, 4, 12, 12);
+  draw_picture(wd->ax, device_pix(wd->device), 0, 0, 2, 4, 12, 12);
   return(false);
 }
 #endif
@@ -1406,6 +1395,9 @@ static void make_vertical_gain_sliders(recorder_info *rp, pane_t *p,
 	  gtk_widget_set_size_request(spix, 16, 16);
 	  gtk_box_pack_start(GTK_BOX(sbox), spix, false, false, 0);
 	  gtk_widget_show(spix);
+	  wd->ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+	  wd->ax->wn = spix->window;
+	  wd->ax->gc = ss->sgx->basic_gc;
 	  SG_SIGNAL_CONNECT(spix, "expose_event", spix_expose, wd);
 	}
       else

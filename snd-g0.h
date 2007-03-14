@@ -67,7 +67,7 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
     int op;
   } gc_t;
 
-  #define picture_t cairo_surface_t
+  #define picture_t GdkPixmap
 
   #define XEN_WRAP_PIXEL(Value)    XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("color_t"), C_TO_XEN_ULONG((unsigned long)Value))
   #define XEN_UNWRAP_PIXEL(Value)  (color_t)(XEN_TO_C_ULONG(XEN_CADR(Value)))
@@ -139,6 +139,7 @@ typedef struct {
   int page;
   bool mini_active;
   gulong minibuffer_watcher;
+  axis_context *name_pix_ax, *stop_pix_ax, *speed_arrow_ax;
 } snd_context;
 
 typedef enum {NOT_A_SCANF_WIDGET, SRATE_WIDGET, CHANS_WIDGET, DATA_LOCATION_WIDGET, SAMPLES_WIDGET} scanf_widget_t;
@@ -201,10 +202,10 @@ typedef struct {
 } state_context;
 
 #define DEFAULT_TINY_FONT "Monospace 8"
-#define DEFAULT_PEAKS_FONT "Serif 10"
-#define DEFAULT_BOLD_PEAKS_FONT "Serif Bold 10"
+#define DEFAULT_PEAKS_FONT "Serif 8"
+#define DEFAULT_BOLD_PEAKS_FONT "Serif Bold 8"
 #define DEFAULT_AXIS_NUMBERS_FONT "Monospace 10"
-#define DEFAULT_AXIS_LABEL_FONT "Serif 14"
+#define DEFAULT_AXIS_LABEL_FONT "Serif 12"
 
 typedef enum {CONTAINER_ADD, PANED_ADD1, BOX_PACK, TABLE_ATTACH, PANED_ADD2} widget_add_t;
 typedef enum {WITHOUT_CHANNELS_FIELD, WITH_CHANNELS_FIELD, WITH_EXTRACT_CHANNELS_FIELD} dialog_channels_t;

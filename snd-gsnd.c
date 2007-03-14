@@ -157,7 +157,7 @@ void show_lock(snd_info *sp)
   if (mini_lock)
     {
       sp->sgx->file_pix = mini_lock;
-      draw_picture_direct(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, mini_lock, 0, 0, 0, 4, 18, 16);
+      draw_picture(sp->sgx->name_pix_ax, mini_lock, 0, 0, 0, 4, 18, 16);
     }
 }
 
@@ -166,20 +166,20 @@ void hide_lock(snd_info *sp)
   if (mini_lock)
     {
       sp->sgx->file_pix = blank;
-      draw_picture_direct(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, blank, 0, 0, 0, 4, 18, 16);
+      draw_picture(sp->sgx->name_pix_ax, blank, 0, 0, 0, 4, 18, 16);
     }
 }
 
 static void show_stop_sign(snd_info *sp)
 {
   if ((sp->sgx) && (stop_sign))
-    draw_picture_direct(GDK_DRAWABLE(STOP_PIX(sp)->window), ss->sgx->basic_gc, stop_sign, 0, 0, 0, 4, 18, 16);
+    draw_picture(sp->sgx->stop_pix_ax, stop_sign, 0, 0, 0, 4, 18, 16);
 }
 
 static void hide_stop_sign(snd_info *sp)
 {
   if ((sp->sgx) && (blank))
-    draw_picture_direct(GDK_DRAWABLE(STOP_PIX(sp)->window), ss->sgx->basic_gc, blank, 0, 0, 0, 4, 18, 16);
+    draw_picture(sp->sgx->stop_pix_ax, blank, 0, 0, 0, 4, 18, 16);
 }
 
 void show_bomb(snd_info *sp)
@@ -189,7 +189,7 @@ void show_bomb(snd_info *sp)
   if (sp->sgx)
     {
       sp->sgx->file_pix = bombs[sp->bomb_ctr];
-      draw_picture_direct(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
+      draw_picture(sp->sgx->name_pix_ax, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
     }
   sp->bomb_ctr++; 
 }
@@ -199,7 +199,7 @@ void hide_bomb(snd_info *sp)
   if (sp->sgx)
     {
       sp->sgx->file_pix = blank;
-      draw_picture_direct(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
+      draw_picture(sp->sgx->name_pix_ax, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
     }
   sp->bomb_ctr = 0;
 }
@@ -242,13 +242,13 @@ void stop_bomb(snd_info *sp)
 static void show_hourglass(snd_info *sp, int glass)
 {
   if (sp->sgx)
-    draw_picture_direct(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, hourglasses[glass], 0, 0, 0, 4, 18, 16);
+    draw_picture(sp->sgx->name_pix_ax, hourglasses[glass], 0, 0, 0, 4, 18, 16);
 }
 
 static void hide_hourglass(snd_info *sp)
 {
   if (sp->sgx)
-    draw_picture_direct(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
+    draw_picture(sp->sgx->name_pix_ax, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
 }
 
 static void make_pixmaps(void)
@@ -258,9 +258,7 @@ static void make_pixmaps(void)
       GdkWindow *wn;
       int k;
       wn = MAIN_WINDOW(ss);
-#if USE_CAIRO
-      /* TODO */
-#else
+
       mini_lock = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_lock_bits());
       stop_sign = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, stop_sign_bits());
       blank = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, blank_bits());
@@ -270,7 +268,7 @@ static void make_pixmaps(void)
 	bombs[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_bomb_bits(k));
       for (k = 0; k < NUM_HOURGLASSES; k++) 
 	hourglasses[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_glass_bits(k));
-#endif
+
       mini_lock_allocated = true;
     }
 }
@@ -281,8 +279,9 @@ static gboolean name_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
   if ((sp) &&
       (sp->sgx) &&
       (sp->sgx->file_pix) &&
-      (NAME_PIX(sp)))
-    draw_picture_direct(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 16, 16);
+      (NAME_PIX(sp)) &&
+      (sp->sgx->name_pix_ax))
+    draw_picture(sp->sgx->name_pix_ax, sp->sgx->file_pix, 0, 0, 0, 4, 16, 16);
   return(false);
 }
 
@@ -721,8 +720,8 @@ static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointe
 static void draw_speed_arrow(snd_info *sp)
 {
   if (sp->speed_control_direction == 1)
-    draw_picture_direct(GDK_DRAWABLE(SPEED_ARROW(sp)->window), ss->sgx->basic_gc, speed_r, 0, 0, 0, 4, 18, 16);
-  else draw_picture_direct(GDK_DRAWABLE(SPEED_ARROW(sp)->window), ss->sgx->basic_gc, speed_l, 0, 0, 0, 4, 18, 16);
+    draw_picture(sp->sgx->speed_arrow_ax, speed_r, 0, 0, 0, 4, 18, 16);
+  else draw_picture(sp->sgx->speed_arrow_ax, speed_l, 0, 0, 0, 4, 18, 16);
 }
 
 static gboolean speed_arrow_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -1460,6 +1459,9 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       gtk_widget_set_size_request(NAME_PIX(sp), 16, 16);
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), NAME_PIX(sp), false, false, 0);
       gtk_widget_show(NAME_PIX(sp));
+      sp->sgx->name_pix_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      sp->sgx->name_pix_ax->wn = NAME_PIX(sp)->window;
+      sp->sgx->name_pix_ax->gc = ss->sgx->basic_gc;
       SG_SIGNAL_CONNECT(NAME_PIX(sp), "expose_event", name_pix_expose, sp);
 
       STOP_PIX(sp) = gtk_drawing_area_new();
@@ -1467,6 +1469,9 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       gtk_widget_set_size_request(STOP_PIX(sp), 18, 16);
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), STOP_PIX(sp), false, false, 0);
       gtk_widget_show(STOP_PIX(sp));
+      sp->sgx->stop_pix_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      sp->sgx->stop_pix_ax->wn = STOP_PIX(sp)->window;
+      sp->sgx->stop_pix_ax->gc = ss->sgx->basic_gc;
       SG_SIGNAL_CONNECT(STOP_PIX(sp), "button_press_event", stop_sign_press, sp);
 
       MINIBUFFER_LABEL(sp) = gtk_label_new(NULL);
@@ -1581,6 +1586,9 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       gtk_box_pack_start(GTK_BOX(SPEED_HBOX(sp)), SPEED_ARROW(sp), false, false, 2);
       gtk_widget_set_size_request(SPEED_ARROW(sp), 18, 16);
       gtk_widget_show(SPEED_ARROW(sp));
+      sp->sgx->speed_arrow_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      sp->sgx->speed_arrow_ax->wn = SPEED_ARROW(sp)->window;
+      sp->sgx->speed_arrow_ax->gc = ss->sgx->basic_gc;
       SG_SIGNAL_CONNECT(SPEED_ARROW(sp), "expose_event", speed_arrow_expose, sp);
       SG_SIGNAL_CONNECT(SPEED_ARROW(sp), "button_press_event", speed_arrow_press, sp);
 

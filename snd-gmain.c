@@ -7,25 +7,25 @@
   #define BASIC_COLOR          rgb_to_color(0.93, 0.93, 0.87) /* "ivory2" */
   #define POSITION_COLOR       rgb_to_color(0.80, 0.80, 0.75) /* "ivory3" */
   #define ZOOM_COLOR           rgb_to_color(0.54, 0.54, 0.51) /* "ivory4" */
-  #define CURSOR_COLOR         rgb_to_color(1.0, 0.0, 0.0) /* "red" */
+  #define CURSOR_COLOR         rgb_to_color(1.0, 0.0, 0.0)    /* "red" */
   #define SELECTION_COLOR      rgb_to_color(0.79, 0.88, 1.00) /* "lightsteelblue1" */
   #define MIX_COLOR            rgb_to_color(0.66, 0.66, 0.66) /* "darkgray" */
-  #define ENVED_WAVEFORM_COLOR rgb_to_color(0.0, 0.0, 1.0) /* "blue" */
-  #define GRAPH_COLOR          rgb_to_color(1.0, 1.0, 1.0) /* "white" */
-  #define SELECTED_GRAPH_COLOR rgb_to_color(1.0, 1.0, 1.0) /* "white" */
-  #define DATA_COLOR           rgb_to_color(0.0, 0.0, 0.0) /* "black" */
-  #define SELECTED_DATA_COLOR  rgb_to_color(0.0, 0.0, 0.0) /* "black" */
-  #define MARK_COLOR           rgb_to_color(1.0, 0.0, 0.0) /* "red" */
+  #define ENVED_WAVEFORM_COLOR rgb_to_color(0.0, 0.0, 1.0)    /* "blue" */
+  #define GRAPH_COLOR          rgb_to_color(1.0, 1.0, 1.0)    /* "white" */
+  #define SELECTED_GRAPH_COLOR rgb_to_color(1.0, 1.0, 1.0)    /* "white" */
+  #define DATA_COLOR           rgb_to_color(0.0, 0.0, 0.0)    /* "black" */
+  #define SELECTED_DATA_COLOR  rgb_to_color(0.0, 0.0, 0.0)    /* "black" */
+  #define MARK_COLOR           rgb_to_color(1.0, 0.0, 0.0)    /* "red" */
   #define LISTENER_COLOR       rgb_to_color(0.94, 0.97, 1.00) /* "AliceBlue" */
-  #define LISTENER_TEXT_COLOR  rgb_to_color(0.0, 0.0, 0.0) /* "black" */
+  #define LISTENER_TEXT_COLOR  rgb_to_color(0.0, 0.0, 0.0)    /* "black" */
   #define LIGHT_BLUE_COLOR     rgb_to_color(0.79, 0.88, 1.00) /* "lightsteelblue1" */
   #define LIGHTER_BLUE_COLOR   rgb_to_color(0.94, 0.97, 1.00) /* "AliceBlue" */
-  #define WHITE_COLOR          rgb_to_color(1.0, 1.0, 1.0) /* "white" */
-  #define BLACK_COLOR          rgb_to_color(0.0, 0.0, 0.0) /* "black" */
+  #define WHITE_COLOR          rgb_to_color(1.0, 1.0, 1.0)    /* "white" */
+  #define BLACK_COLOR          rgb_to_color(0.0, 0.0, 0.0)    /* "black" */
   #define GREEN_COLOR          rgb_to_color(0.00, 0.93, 0.00) /* "green2" */
-  #define RED_COLOR            rgb_to_color(1.0, 0.0, 0.0) /* "red" */
+  #define RED_COLOR            rgb_to_color(1.0, 0.0, 0.0)    /* "red" */
   #define YELLOW_COLOR         rgb_to_color(1.00, 1.00, 0.00) /* "yellow" */
-  #define TEXT_FOCUS_COLOR     rgb_to_color(1.0, 1.0, 1.0) /* "white" */
+  #define TEXT_FOCUS_COLOR     rgb_to_color(1.0, 1.0, 1.0)    /* "white" */
   #define FILTER_CONTROL_WAVEFORM_COLOR rgb_to_color(0.0, 0.0, 1.0) /* "blue" */
   #define PUSHED_BUTTON_COLOR  rgb_to_color(0.79, 0.88, 1.00) /* "lightsteelblue1" */
   #define SASH_COLOR           rgb_to_color(0.56, 0.93, 0.56) /* "lightgreen" */
@@ -315,38 +315,46 @@ static void setup_gcs(void)
   initialize_colormap();
 }
 
+#if USE_CAIRO
+static void save_a_color(FILE *Fp, color_info *default_color, color_info *current_color, const char *ext_name)
+#else
 static void save_a_color(FILE *Fp, const char *def_name, color_info *current_color, const char *ext_name)
+#endif
 {
 #if HAVE_EXTENSION_LANGUAGE
+#if USE_CAIRO
+  if ((current_color->red != default_color->red) ||
+      (current_color->green != default_color->green) ||
+      (current_color->blue != default_color->blue))
+#else
   GdkColor default_color; /* color name here */
-  if (gdk_color_parse(def_name, &default_color))
-    {
-      /* TODO: these will never match in cairo case */
-      if ((current_color->red != default_color.red) ||
-	  (current_color->green != default_color.green) ||
-	  (current_color->blue != default_color.blue))
+  if ((gdk_color_parse(def_name, &default_color)) &&
+      ((current_color->red != default_color.red) ||
+       (current_color->green != default_color.green) ||
+       (current_color->blue != default_color.blue)))
+#endif
+
 #if HAVE_FORTH
-	fprintf(Fp, "%.3f %.3f %.3f %s set-%s drop\n", 
-		RGB_TO_FLOAT(current_color->red),
-		RGB_TO_FLOAT(current_color->green),
-		RGB_TO_FLOAT(current_color->blue),
-		S_make_color,
-		ext_name); 
+    fprintf(Fp, "%.3f %.3f %.3f %s set-%s drop\n", 
+	    RGB_TO_FLOAT(current_color->red),
+	    RGB_TO_FLOAT(current_color->green),
+	    RGB_TO_FLOAT(current_color->blue),
+	    S_make_color,
+	    ext_name); 
 #else
 #if HAVE_SCHEME
-	fprintf(Fp, "(set! (%s) (%s %.3f %.3f %.3f))\n", 
+    fprintf(Fp, "(set! (%s) (%s %.3f %.3f %.3f))\n", 
 #endif
 #if HAVE_RUBY
-	fprintf(Fp, "set_%s(%s(%.3f, %.3f, %.3f))\n", 
+    fprintf(Fp, "set_%s(%s(%.3f, %.3f, %.3f))\n", 
 #endif
-		TO_PROC_NAME(ext_name), 
-		TO_PROC_NAME(S_make_color),
-		RGB_TO_FLOAT(current_color->red),
-		RGB_TO_FLOAT(current_color->green),
-		RGB_TO_FLOAT(current_color->blue));
-#endif
-    }
-#endif
+	    TO_PROC_NAME(ext_name), 
+	    TO_PROC_NAME(S_make_color),
+	    RGB_TO_FLOAT(current_color->red),
+	    RGB_TO_FLOAT(current_color->green),
+	    RGB_TO_FLOAT(current_color->blue));
+#endif /* not forth */
+#endif /* ext lang */
 }
 
 void save_colors(FILE *Fp)
@@ -486,12 +494,9 @@ static idle_func_t startup_funcs(gpointer context)
 static void set_up_icon(void)
 {
   picture_t *pix;
-#if USE_CAIRO
-#else
   GdkBitmap *mask;
   pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), &mask, NULL, snd_icon_bits());
   gdk_window_set_icon(MAIN_WINDOW(ss), NULL, pix, mask);
-#endif
 }
 #endif
 
@@ -1036,8 +1041,11 @@ class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n			\
 #endif
   
   setup_gcs();
+#if USE_CAIRO
+  make_icons_transparent("ivory2");
+#else
   make_icons_transparent(BASIC_COLOR);
-  
+#endif
   if (batch) gtk_widget_hide(MAIN_SHELL(ss));
   BACKGROUND_ADD(startup_funcs, NULL);
   

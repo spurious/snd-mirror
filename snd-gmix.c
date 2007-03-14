@@ -14,6 +14,9 @@ static GtkObject *w_speed_adj;
 static bool speed_pressed = false, speed_dragged = false;
 /* can't use value_changed on adjustment and motion event happens even when the mouse merely moves across the slider without dragging */
 
+static axis_context *mix_play_ax = NULL, *track_play_ax = NULL, *mix_pan_ax = NULL, *mix_track_play_ax = NULL;
+
+
 static Float speed_to_scrollbar(Float minval, Float val, Float maxval)
 {
   if (val <= minval) return(0.0);
@@ -335,7 +338,7 @@ static gboolean mix_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *ev,
 
 /* -------- track -------- */
 static GtkWidget *w_id = NULL, *w_beg = NULL, *w_track = NULL, *mix_play = NULL, *w_id_label = NULL;
-static GtkWidget *w_track_label = NULL, *mix_track_play_pix = NULL, *mix_play_pix = NULL, *mix_track_play = NULL, *w_mix_pan, *w_mix_pan1;
+static GtkWidget *w_track_label = NULL, *mix_track_play = NULL, *w_mix_pan;
 static picture_t *speaker_off_pix, *speaker_on_pix, *mix_speaker_pix, *mix_track_speaker_pix, *mix_pan_pix, *mix_yellow_pan_pix, *mix_basic_pan_pix;
 
 static bool id_changed = false;
@@ -480,10 +483,10 @@ void reflect_mix_play_stop(void)
   mix_playing = false;
   mix_speaker_pix = speaker_off_pix;
   mix_track_speaker_pix = speaker_off_pix;
-  if (mix_play_pix)
-    draw_picture_direct(GDK_DRAWABLE(mix_play_pix->window), ss->sgx->basic_gc, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
-  if (mix_track_play_pix)
-    draw_picture_direct(GDK_DRAWABLE(mix_track_play_pix->window), ss->sgx->basic_gc, mix_track_speaker_pix, 0, 0, 2, 4, 12, 12);
+  if (mix_play_ax)
+    draw_picture(mix_play_ax, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
+  if (mix_track_play_ax)
+    draw_picture(mix_track_play_ax, mix_track_speaker_pix, 0, 0, 2, 4, 12, 12);
 }
 
 static void mix_play_callback(GtkWidget *w, gpointer context) 
@@ -495,7 +498,7 @@ static void mix_play_callback(GtkWidget *w, gpointer context)
       if (!(mix_ok(mix_dialog_id))) return;
       mix_playing = true;
       mix_speaker_pix = speaker_on_pix;
-      draw_picture_direct(GDK_DRAWABLE(mix_play_pix->window), ss->sgx->basic_gc, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
+      draw_picture(mix_play_ax, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
       mix_dialog_mix_play(mix_dialog_id);
     }
 }
@@ -509,27 +512,27 @@ static void mix_track_play_callback(GtkWidget *w, gpointer context)
       if (!(mix_ok(mix_dialog_id))) return;
       mix_playing = true;
       mix_track_speaker_pix = speaker_on_pix;
-      draw_picture_direct(GDK_DRAWABLE(mix_track_play_pix->window), ss->sgx->basic_gc, mix_track_speaker_pix, 0, 0, 2, 4, 12, 12);
+      draw_picture(mix_track_play_ax, mix_track_speaker_pix, 0, 0, 2, 4, 12, 12);
       mix_dialog_track_play(mix_dialog_id);
     }
 }
 
 static gboolean mix_play_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-  draw_picture_direct(GDK_DRAWABLE(mix_play_pix->window), ss->sgx->basic_gc, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
+  draw_picture(mix_play_ax, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
   return(false);
 }
 
 static gboolean mix_track_play_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-  draw_picture_direct(GDK_DRAWABLE(mix_track_play_pix->window), ss->sgx->basic_gc, mix_track_speaker_pix, 0, 0, 2, 4, 12, 12);
+  draw_picture(mix_track_play_ax, mix_track_speaker_pix, 0, 0, 2, 4, 12, 12);
   return(false);
 }
 
 
 static gboolean w_mix_pan_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-  draw_picture_direct(GDK_DRAWABLE(w_mix_pan1->window), ss->sgx->basic_gc, mix_pan_pix, 0, 0, 0, 4, 14, 12);
+  draw_picture(mix_pan_ax, mix_pan_pix, 0, 0, 0, 4, 14, 12);
   return(false);
 }
 
@@ -539,7 +542,7 @@ static void mix_pan_callback(GtkWidget *w, gpointer context)
   if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   inverted = (!(mix_dialog_mix_inverted(mix_dialog_id)));
   if (inverted) mix_pan_pix = mix_yellow_pan_pix; else mix_pan_pix = mix_basic_pan_pix;
-  draw_picture_direct(GDK_DRAWABLE(w_mix_pan1->window), ss->sgx->basic_gc, mix_pan_pix, 0, 0, 0, 4, 14, 12);
+  draw_picture(mix_pan_ax, mix_pan_pix, 0, 0, 0, 4, 14, 12);
   mix_dialog_set_mix_inverted(mix_dialog_id, inverted);
 }
 
@@ -635,7 +638,7 @@ GtkWidget *make_mix_dialog(void)
   if (mix_dialog == NULL)
     {
       GtkWidget *dismiss_button, *help_button, *rc, *mix_frame, *track_frame, *rc_top, *rc1;
-      GtkWidget *lo_hbox, *w_dB_frame, *w_dB, *w_clip, *w_wave, *w_dB_row;
+      GtkWidget *lo_hbox, *w_dB_frame, *w_dB, *w_clip, *w_wave, *w_dB_row, *w_mix_pan1, *mix_play_pix, *mix_track_play_pix;
       char amplab[LABEL_BUFFER_SIZE];
       int i;
       mix_dialog_id = any_mix_id();
@@ -728,15 +731,13 @@ GtkWidget *make_mix_dialog(void)
       
       if (!speaker_off_pix)
 	{
-#if USE_CAIRO
-#else
 	  speaker_off_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, speaker_bits());
 	  speaker_on_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, blue_speaker_bits());
-#endif
 	}
 
       mix_speaker_pix = speaker_off_pix;
       mix_track_speaker_pix = speaker_off_pix;
+
       mix_play_pix = gtk_drawing_area_new();
       gtk_widget_set_events(mix_play_pix, GDK_EXPOSURE_MASK);
       gtk_widget_set_size_request(mix_play_pix, 16, 16);
@@ -768,11 +769,9 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_show(mix_track_play_pix);
       SG_SIGNAL_CONNECT(mix_track_play_pix, "expose_event", mix_track_play_pix_expose, NULL);
 
-#if USE_CAIRO
-#else
       mix_basic_pan_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, pan_bits());
       mix_yellow_pan_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, yellow_pan_bits());
-#endif
+
       mix_pan_pix = mix_basic_pan_pix;
       w_mix_pan = gtk_button_new();
       gtk_box_pack_end(GTK_BOX(rc1), w_mix_pan, false, false, 2);
@@ -916,6 +915,18 @@ GtkWidget *make_mix_dialog(void)
       set_dialog_widget(MIX_DIALOG, mix_dialog);
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_clip), true);
 
+      mix_play_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      mix_play_ax->wn = mix_play_pix->window;
+      mix_play_ax->gc = ss->sgx->basic_gc;
+
+      mix_pan_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      mix_pan_ax->wn = w_mix_pan1->window;
+      mix_pan_ax->gc = ss->sgx->basic_gc;
+
+      mix_track_play_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      mix_track_play_ax->wn = mix_track_play_pix->window;
+      mix_track_play_ax->gc = ss->sgx->basic_gc;
+
       gtk_widget_hide(error_frame);
     }
   else 
@@ -979,7 +990,7 @@ static void update_mix_dialog(int mix_id)
 	  if (mix_dialog_mix_inverted(mix_dialog_id))
 	    mix_pan_pix = mix_yellow_pan_pix; 
 	  else mix_pan_pix = mix_basic_pan_pix;
-	  draw_picture_direct(GDK_DRAWABLE(w_mix_pan1->window), ss->sgx->basic_gc, mix_pan_pix, 0, 0, 0, 4, 14, 12);
+	  draw_picture(mix_pan_ax, mix_pan_pix, 0, 0, 0, 4, 14, 12);
 	}
       else
 	{
@@ -1329,7 +1340,7 @@ static gboolean track_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *e
 
 /* -------- track -------- */
 static GtkWidget *w_track_id = NULL, *w_track_beg = NULL, *w_track_id_label = NULL, *w_track_text;
-static GtkWidget *w_track_track_label = NULL, *w_track_play_pix = NULL, *w_track_play = NULL, *w_track_track;
+static GtkWidget *w_track_track_label = NULL, *w_track_play = NULL, *w_track_track;
 static picture_t *track_speaker_pix;
 
 static bool track_id_changed = false;
@@ -1500,10 +1511,10 @@ bool track_play_stopped(void) {return(!track_playing);}
 void reflect_track_play_stop(void)
 {
   track_playing = false;
-  if (w_track_play_pix)
+  if (track_play_ax)
     {
       track_speaker_pix = speaker_off_pix;
-      draw_picture_direct(GDK_DRAWABLE(w_track_play_pix->window), ss->sgx->basic_gc, track_speaker_pix, 0, 0, 2, 4, 12, 12);
+      draw_picture(track_play_ax, track_speaker_pix, 0, 0, 2, 4, 12, 12);
     }
 }
 
@@ -1518,14 +1529,14 @@ static void track_dialog_play_callback(GtkWidget *w, gpointer context)
       if (!(track_p(track_dialog_id))) return;
       track_playing = true;
       track_speaker_pix = speaker_on_pix;
-      draw_picture_direct(GDK_DRAWABLE(w_track_play_pix->window), ss->sgx->basic_gc, track_speaker_pix, 0, 0, 2, 4, 12, 12);
+      draw_picture(track_play_ax, track_speaker_pix, 0, 0, 2, 4, 12, 12);
       track_dialog_play(track_dialog_id);
     }
 }
 
 static gboolean w_track_play_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-  draw_picture_direct(GDK_DRAWABLE(w_track_play_pix->window), ss->sgx->basic_gc, track_speaker_pix, 0, 0, 2, 4, 12, 12);
+  draw_picture(track_play_ax, track_speaker_pix, 0, 0, 2, 4, 12, 12);
   return(false);
 }
 
@@ -1611,7 +1622,7 @@ GtkWidget *make_track_dialog(void)
   if (track_dialog == NULL)
     {
       GtkWidget *dismiss_button, *help_button, *rc, *apply_button, *track_frame, *t_frame, *rc_top, *rc1;
-      GtkWidget *lo_hbox, *w_dB_frame, *w_dB, *w_clip, *w_wave, *w_dB_row;
+      GtkWidget *lo_hbox, *w_dB_frame, *w_dB, *w_clip, *w_wave, *w_dB_row, *w_track_play_pix;
       track_spf = new_env_editor();
       track_dialog_id = any_track_id();
       track_dialog = snd_gtk_dialog_new();
@@ -1702,11 +1713,8 @@ GtkWidget *make_track_dialog(void)
       
       if (!speaker_off_pix)
 	{
-#if USE_CAIRO
-#else
 	  speaker_off_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, speaker_bits());
 	  speaker_on_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, blue_speaker_bits());
-#endif
 	}
       track_speaker_pix = speaker_off_pix;
 
@@ -1867,6 +1875,11 @@ GtkWidget *make_track_dialog(void)
       gtk_widget_show(w_track_env_frame);
 
       gtk_widget_show(track_dialog);
+
+      track_play_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      track_play_ax->wn = w_track_play_pix->window;
+      track_play_ax->gc = ss->sgx->basic_gc;
+
       set_dialog_widget(TRACK_DIALOG, track_dialog);
       if ((widget_width(track_dialog) > 0) && (widget_height(track_dialog) < 300))
 	set_widget_size(track_dialog, widget_width(track_dialog), 300);

@@ -398,9 +398,7 @@ static void select_or_edit_env(int pos)
 
 static void clear_point_label(void)
 {
-#if USE_CAIRO
-  if ((pix_ax) && (pix_ax->cr))
-#endif
+  if (pix_ax)
     fill_rectangle(pix_ax, 0, 4, 24, 24);
   set_button_label(brktxtL, BLANK_LABEL);
 }
@@ -417,16 +415,9 @@ void enved_display_point_label(Float x, Float y)
 
 void display_enved_progress(char *str, picture_t *pix)
 {
-#if USE_CAIRO
-  if ((pix_ax) && (pix_ax->cr))
-    {
-#endif
-  if (pix)
-    draw_picture_direct(GDK_DRAWABLE(brkpixL->window), hgc, pix, 0, 0, 0, 8, 16, 16);
+  if (pix_ax)
+    draw_picture(pix_ax, pix, 0, 0, 0, 8, 16, 16);
   else fill_rectangle(pix_ax, 0, 4, 24, 24);
-#if USE_CAIRO
-    }
-#endif
   if (str)
     set_button_label(brktxtL, str);
   else set_button_label(brktxtL, BLANK_LABEL);
@@ -434,9 +425,7 @@ void display_enved_progress(char *str, picture_t *pix)
 
 static gboolean brkpixL_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-#if USE_CAIRO
-  if ((pix_ax) && (pix_ax->cr))
-#endif
+  if (pix_ax)
     fill_rectangle(pix_ax, 0, 4, 24, 24);
   return(false);
 }
@@ -1039,9 +1028,6 @@ GtkWidget *create_envelope_editor(void)
       gtk_widget_set_events(brkpixL, GDK_EXPOSURE_MASK);
       gtk_widget_set_size_request(brkpixL, 16, 16);
       gtk_box_pack_start(GTK_BOX(toprow), brkpixL, false, false, 0);
-      pix_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
-      pix_ax->wn = GDK_DRAWABLE(brkpixL->window);
-      pix_ax->gc = hgc;
       gtk_widget_show(brkpixL);
       SG_SIGNAL_CONNECT(brkpixL, "expose_event", brkpixL_expose, NULL);
       
@@ -1097,15 +1083,18 @@ GtkWidget *create_envelope_editor(void)
       gtk_widget_show(mainform);
       gtk_widget_show(enved_dialog);
 
+      pix_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      pix_ax->wn = GDK_DRAWABLE(brkpixL->window);
+      pix_ax->gc = hgc;
+#if USE_CAIRO
+      pix_ax->cr = gdk_cairo_create(brkpixL->window);
+#endif
+
       SG_SIGNAL_CONNECT(drawer, "expose_event", drawer_expose, NULL);
       SG_SIGNAL_CONNECT(drawer, "configure_event", drawer_resize, NULL);
       SG_SIGNAL_CONNECT(drawer, "button_press_event", drawer_button_press, NULL);
       SG_SIGNAL_CONNECT(drawer, "button_release_event", drawer_button_release, NULL);
       SG_SIGNAL_CONNECT(drawer, "motion_notify_event", drawer_button_motion, NULL);
-
-#if USE_CAIRO
-      pix_ax->cr = gdk_cairo_create(brkpixL->window);
-#endif
 
       if (enved_all_envs_top() == 0)
 	{
