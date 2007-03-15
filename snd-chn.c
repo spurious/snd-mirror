@@ -3347,7 +3347,12 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
       /* all chans in one graph widget, sy->scroll entire set, zy->zoom entire set etc */
       /* updates are asynchronous (dependent on background ffts etc), so we can't do the whole window at once */
       /* complication here is that we're growing down from the top, causing endless confusion */
+
+#if USE_GTK
+      width = widget_width(channel_graph(sp->chans[0])); /* don't fixup for gsy width -- those sliders are in different table slots */
+#else
       width = widget_width(channel_graph(sp->chans[0])) - (2 * ss->position_slider_width);
+#endif
       if (width <= 0) return;
       height = widget_height(channel_graph(sp->chans[0]));
       cp->height = height;

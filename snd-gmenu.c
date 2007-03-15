@@ -303,6 +303,7 @@ GtkWidget *add_menu(void)
   gtk_widget_show(file_new_menu);
   SG_SIGNAL_CONNECT(file_new_menu, "activate", file_new_callback, NULL);
 
+#if (!USE_CAIRO)
   file_record_menu = gtk_image_menu_item_new_with_label(_("Record"));
   ml[f_record_menu] = _("Record");
   gtk_menu_shell_append(GTK_MENU_SHELL(file_cascade_menu), file_record_menu);
@@ -313,6 +314,7 @@ GtkWidget *add_menu(void)
 #endif
   gtk_widget_show(file_record_menu);
   SG_SIGNAL_CONNECT(file_record_menu, "activate", file_record_callback, NULL);
+#endif
 
   file_view_menu = gtk_image_menu_item_new_with_label(_("View"));
   ml[f_view_menu] = _("View");
@@ -842,11 +844,13 @@ GtkWidget *add_menu(void)
   gtk_widget_show(help_keys_menu);
   SG_SIGNAL_CONNECT(help_keys_menu, "activate", help_keys_callback, NULL);
 
+#if (!USE_CAIRO)
   help_recording_menu = gtk_menu_item_new_with_label(_("Record"));
   ml[h_recording_menu] = _("Record");
   gtk_menu_shell_append(GTK_MENU_SHELL(help_cascade_menu), help_recording_menu);
   gtk_widget_show(help_recording_menu);
   SG_SIGNAL_CONNECT(help_recording_menu, "activate", help_recording_callback, NULL);
+#endif
 
   help_play_menu = gtk_menu_item_new_with_label(_("Play"));
   ml[h_play_menu] = _("Play");

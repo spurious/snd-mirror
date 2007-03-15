@@ -139,8 +139,8 @@
 	 (pts0 #f)
 	 (pts1 #f)
 	 (ax0 0) (ax1 0) (ay0 0) (ay1 0)
-	 (gc (car (snd-gcs)))
-	 (egc (list-ref (snd-gcs) 7))
+	 (gc (and (not (provided? 'cairo)) (car (snd-gcs))))
+	 (egc (and (not (provided? 'cairo)) (list-ref (snd-gcs) 7)))
 	 
 	 ;; now set up a paned window in the main Snd window with controllers on the left and the graph on the right
 	 (scan-outer (let ((pane (gtk_hbox_new #f 0)))
@@ -156,7 +156,8 @@
 		      (gtk_widget_set_events grf GDK_ALL_EVENTS_MASK)
 		      (gtk_box_pack_start (GTK_BOX scan-outer) grf #t #t 0)
 		      (gtk_widget_show grf)
-		      (gdk_window_set_background (.window grf) (graph-color))
+		      (if (not (provided? 'cairo))
+			  (gdk_window_set_background (.window grf) (graph-color)))
 		      grf))
 	 ;; the controllers
 	 (scan-start (let ((label (gtk_button_new_with_label "Start")))
@@ -188,30 +189,68 @@
 		(inexact->exact
 		 (round (+ ay0
 			   (* range (- 10.0 y))))))))
-    
+
+    (define (cairo-draw-lines cr data size)
+      (cairo_set_line_width cr 4.0)
+      (cairo_move_to cr (vector-ref data 0) (vector-ref data 1))
+      (do ((i 1 (1+ i))
+	   (j 2 (+ j 2)))
+	  ((= i size))
+	(cairo_line_to cr (vector-ref data j) (vector-ref data (+ j 1))))
+      (cairo_stroke cr))
+
     (define (draw-graph)
       (if (and (> ax1 ax0)
 	       (> ay1 ay0))
-	  (let ((diff (* 0.05 (- ay1 ay0))) ; assuming -10 to 10 
-		(wn (GDK_DRAWABLE (.window scan-pane)))
-		(xincr (/ (- ax1 ax0) size)))
-	    (if pts1
-		(gdk_draw_lines wn egc (list 'GdkPoint_ pts1) size)
-		(gdk_draw_rectangle wn egc #t
-				    (+ ax0 2)
-				    ay0
-				    (- ax1 ax0 2)
-				    (- ay1 ay0)))
-	    (do ((i 0 (1+ i))
-		 (j 0 (+ j 2))
-		 (xi ax0 (+ xi xincr)))
-		((= i size))
-	      (vector-set! vect j (inexact->exact (floor xi)))
-	      (vector-set! vect (+ j 1) (y->grfy (vct-ref gx0 i) diff)))
-	    (if pts1 (freeGdkPoints pts1))
-	    (set! pts0 (vector->GdkPoints vect))
-	    (set! pts1 pts0)
-	    (gdk_draw_lines wn gc (list 'GdkPoint_ pts0) size))))
+	  (if (provided? 'cairo)
+	      (let* ((diff (* 0.05 (- ay1 ay0))) ; assuming -10 to 10 
+		     (wn (GDK_DRAWABLE (.window scan-pane)))
+		     (cr (gdk_cairo_create wn))
+		     (xincr (/ (- ax1 ax0) size))
+		     (bg-color (color->list (basic-color))))
+		(cairo_set_source_rgb cr (car bg-color) (cadr bg-color) (caddr bg-color))
+		(if pts1
+		    (cairo-draw-lines cr pts1 size)
+		    (begin
+		      (cairo_rectangle cr (+ ax0 2) ay0 (- ax1 ax0 2) (- ay1 ay0))
+		      (cairo_fill cr)))
+		(cairo_set_source_rgb cr 0.0 0.0 0.0)
+		(cairo_set_line_width cr 1.0)
+		(let ((x (inexact->exact (floor ax0)))
+		      (y (y->grfy (vct-ref gx0 0) diff)))
+		  (cairo_move_to cr x y)
+		  (vector-set! vect 0 x)
+		  (vector-set! vect 1 y))
+		(do ((i 1 (1+ i))
+		     (j 2 (+ j 2))
+		     (xi (+ ax0 xincr) (+ xi xincr)))
+		    ((= i size))
+		  (let ((x (inexact->exact (floor xi)))
+			(y (y->grfy (vct-ref gx0 i) diff)))
+		    (vector-set! vect j x)
+		    (vector-set! vect (+ j 1) y)
+		    (cairo_line_to cr x y)))
+		(cairo_stroke cr)
+		(set! pts1 vect)
+		(cairo_destroy cr))
+
+	      ;; gdk version
+	      (let ((diff (* 0.05 (- ay1 ay0))) ; assuming -10 to 10 
+		    (wn (GDK_DRAWABLE (.window scan-pane)))
+		    (xincr (/ (- ax1 ax0) size)))
+		(if pts1
+		    (gdk_draw_lines wn egc (list 'GdkPoint_ pts1) size)
+		    (gdk_draw_rectangle wn egc #t (+ ax0 2) ay0	(- ax1 ax0 2) (- ay1 ay0)))
+		(do ((i 0 (1+ i))
+		     (j 0 (+ j 2))
+		     (xi ax0 (+ xi xincr)))
+		    ((= i size))
+		  (vector-set! vect j (inexact->exact (floor xi)))
+		  (vector-set! vect (+ j 1) (y->grfy (vct-ref gx0 i) diff)))
+		(if pts1 (freeGdkPoints pts1))
+		(set! pts0 (vector->GdkPoints vect))
+		(set! pts1 pts0)
+		(gdk_draw_lines wn gc (list 'GdkPoint_ pts0) size)))))
     
     (define (redraw-graph)
       (set! bounds (draw-axes scan-pane gc "scanned synthesis" 0.0 1.0 -10.0 10.0))

@@ -16,6 +16,9 @@
  * SOMEDAY: replace all gdk graphics with cairo, then add printer support, perhaps xg bindings
  */
 
+/* if icons do not get displayed, check the system preferences menu+toolbar dialog */
+
+
 /* ---------------- file selector replacement ---------------- */
 
 typedef struct fsb {
@@ -4856,6 +4859,9 @@ static void vf_amp_env_resize(view_files_info *vdat, GtkWidget *w)
       vdat->env_ax->wn = w->window;
       vdat->env_ax->w = w;
       vdat->env_ax->gc = vdat->env_gc;
+#if USE_CAIRO
+      vdat->env_ax->cr = gdk_cairo_create(w->window);
+#endif
     }
   else clear_window(vdat->env_ax);
   vdat->spf->with_dots = true;
@@ -5236,12 +5242,12 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_box_pack_start(GTK_BOX(lbox2), lbox5, false, false, 0);
 	gtk_widget_show(lbox5);
 
-	lbox3 = gtk_vbox_new(false, 0);
+	lbox3 = gtk_vbox_new(true, 0);
 	gtk_box_pack_start(GTK_BOX(lbox5), lbox3, false, false, 0);
 	gtk_widget_show(lbox3);
 
-	lbox4 = gtk_vbox_new(false, 0);
-	gtk_box_pack_start(GTK_BOX(lbox5), lbox4, true, true, 0);
+	lbox4 = gtk_vbox_new(true, 0);
+	gtk_box_pack_start(GTK_BOX(lbox5), lbox4, true, true, 10);
 	gtk_widget_show(lbox4);
 
 	vdat->at_sample_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), _("at sample"));

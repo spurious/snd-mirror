@@ -539,21 +539,24 @@ static void make_region_dialog(void)
   gtk_box_pack_start(GTK_BOX(infobox), edit_button, true, true, 2);
   gtk_widget_show(edit_button);
   widget_modify_bg(edit_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
-  widget_modify_bg(edit_button, GTK_STATE_ACTIVE, ss->sgx->red);
 
   print_button = gtk_button_new_with_label(_("print"));
   SG_SIGNAL_CONNECT(print_button, "clicked", region_print_callback, NULL);
   gtk_box_pack_start(GTK_BOX(infobox), print_button, true, true, 2);
   gtk_widget_show(print_button);
   widget_modify_bg(print_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
-  widget_modify_bg(print_button, GTK_STATE_ACTIVE, ss->sgx->red);
 
   unlist_button = gtk_button_new_with_label(_("unlist"));
   SG_SIGNAL_CONNECT(unlist_button, "clicked", region_unlist_callback, NULL);
   gtk_box_pack_start(GTK_BOX(infobox), unlist_button, true, true, 2);
   gtk_widget_show(unlist_button);
   widget_modify_bg(unlist_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
+
+  /* these no longer work right
+  widget_modify_bg(edit_button, GTK_STATE_ACTIVE, ss->sgx->red);
+  widget_modify_bg(print_button, GTK_STATE_ACTIVE, ss->sgx->red);
   widget_modify_bg(unlist_button, GTK_STATE_ACTIVE, ss->sgx->red);
+  */
 
   gtk_widget_show(region_dialog);
 

@@ -776,7 +776,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_zy], 0, 1, 0, 1, 
 		       (GtkAttachOptions)(GTK_FILL), 
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
-		       0, 0);
+		       2, 0);
       set_user_data(G_OBJECT(adjs[W_zy_adj]), (gpointer)cp);
       SG_SIGNAL_CONNECT(adjs[W_zy_adj], "value_changed", zy_valuechanged_callback, cp);
       gtk_widget_show(cw[W_zy]);
@@ -787,7 +787,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_sy], 1, 2, 0, 1, 
 		       (GtkAttachOptions)(GTK_FILL), 
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
-		       0, 0);
+		       2, 0);
       set_user_data(G_OBJECT(adjs[W_sy_adj]), (gpointer)cp);
       SG_SIGNAL_CONNECT(adjs[W_sy_adj], "value_changed", sy_valuechanged_callback, cp);
       gtk_widget_show(cw[W_sy]);

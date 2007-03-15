@@ -13,19 +13,20 @@
  * TODO: gl + cairo?
  * PERHAPS: background-gradient (0 = none), fancy dots in enved? can we pick up settings from the current theme? (display is still pretty slow)
  * TODO: selection erases (covers)
- * TODO: mark erases waveform
- * TODO: erase_GC should be bg->fg + bg as was -- see mix redpy
- * TODO: cursor starts to redpy after mark! Then no true waveform
+ * TODO: mark and cursor erase waveform
  * TODO: add cairo case in all gdk_gc stuff in *.scm/rb/fs
  * PERHAPS: can cairo make gl-style graphs?
  * PERHAPS: would it be faster to path polys then one fill?
  * TODO: initial env editor window mixes dialog is empty
  * TODO: enved axes disappear (mixes too)
  * PERHAPS: wrap save/restore around all these functions
- * TODO: snd-test+gtk[currently stops at snd-clock-icon] case gl transparency?
+ * TODO: snd-test+gtk[currently stops at snd-clock-icon] case gl transparency? [valgrind too]
  * TODO: colormaps need not be saved as arrays in cairo case
  * TODO: there's also an fft/sonogram cursor
  * TODO: moving mix display is smudged
+ * PERHAPS: (listener-text-color exists) and listener-response-color, listener-prompt-color|style? (currently boldface)
+ * TODO: when first opened, file can have 0 vertical space! [can't seem to repeat this bug]
+ * TODO: grec segfaults 308 [when this is fixed, fix snd-gmenu]
  */
 
 
@@ -55,15 +56,16 @@ void draw_lines(axis_context *ax, point_t *points, int num)
     int i;
     cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
     cairo_set_line_width(ax->cr, 1.0); 
-    cairo_move_to(ax->cr, points[0].x, points[0].y);
+    cairo_move_to(ax->cr, points[0].x + 0.5, points[0].y + 0.5);
     for (i = 1; i < num; i++)
-      cairo_line_to(ax->cr, points[i].x, points[i].y);
+      cairo_line_to(ax->cr, points[i].x + 0.5, points[i].y + 0.5);
     cairo_stroke(ax->cr);
   }
 #else
   gdk_draw_lines(ax->wn, ax->gc, points, num);
 #endif
 }
+
 
 void draw_dot(axis_context *ax, int x, int y, int size)
 {
@@ -113,6 +115,7 @@ void draw_points(axis_context *ax, point_t *points, int num, int size)
     }
 }
 
+
 void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height)
 {
 #if USE_CAIRO
@@ -136,8 +139,14 @@ void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width,
 #else
   {
     /* try gradient background: looks ok, but display is slow */
+    /*   if we use this stuff, the cursor becomes much more difficult since the current bg color is always different */
     cairo_pattern_t *pat;
-    pat = cairo_pattern_create_linear(x0, y0, x0 + width, y0 + height);
+    /* this is shaded toward the right
+       pat = cairo_pattern_create_linear(0, 0, width, height);
+    */
+    /* this is shaded toward the bottom 
+     */
+    pat = cairo_pattern_create_linear(0, 0, 0, height);
     cairo_pattern_add_color_stop_rgb(pat, 1, 
 				     mus_fclamp(0.0, ax->gc->bg_color->red - 0.1, 1.0), 
 				     mus_fclamp(0.0, ax->gc->bg_color->green - 0.1, 1.0), 
@@ -157,6 +166,7 @@ void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width,
   gdk_draw_rectangle(ax->wn, erase_GC(cp), true, (gint)x0, (gint)y0, (gint)width, (gint)height);
 #endif
 }
+
 
 void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
 {
@@ -201,7 +211,6 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
 
 static void rotate_text(axis_context *ax, PangoFontDescription *font, const char *text, int angle, gint x0, gint y0)
 {
-#if HAVE_PANGO_MATRIX_ROTATE
 #if USE_CAIRO
   cairo_t *cr;
   int width, height;
@@ -220,6 +229,7 @@ static void rotate_text(axis_context *ax, PangoFontDescription *font, const char
   cairo_destroy(cr);
   g_object_unref(layout);
 #else
+#if HAVE_PANGO_MATRIX_ROTATE
   PangoLayout *layout;
   PangoContext *context;
   PangoMatrix matrix = PANGO_MATRIX_INIT;
@@ -241,6 +251,7 @@ void draw_rotated_axis_label(chan_info *cp, axis_context *ax, const char *text, 
   rotate_text(ax, AXIS_LABEL_FONT(ss), text, 90, x0, y0);
 }
 
+
 void draw_picture(axis_context *ax, picture_t *src, gint xsrc, gint ysrc, gint xdest, gint ydest, gint width, gint height)
 {
 #if USE_CAIRO
@@ -256,6 +267,7 @@ void draw_picture(axis_context *ax, picture_t *src, gint xsrc, gint ysrc, gint x
   gdk_draw_drawable(ax->wn, ax->gc, GDK_DRAWABLE(src), xsrc, ysrc, xdest, ydest, width, height);
 #endif
 }
+
 
 static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list ap)
 {

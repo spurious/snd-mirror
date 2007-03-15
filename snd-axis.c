@@ -1496,6 +1496,8 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
 #define AXIS_STYLE_OK(Id) (((Id) >= 0) && ((Id) < NUM_X_AXIS_STYLES))
 #define SHOW_AXES_OK(Id) (((Id) >= 0) && ((Id) < NUM_SHOW_AXES))
 
+/* TODO: g_draw_axes assumes gdk gc etc -- needs cairo version */
+
 static XEN g_draw_axes(XEN args)
 {
   #define H_draw_axes "(" S_draw_axes " wid gc label (x0 0.0) (x1 1.0) (y0 -1.0) (y1 1.0) (style " S_x_axis_in_seconds ") (axes " S_show_all_axes ")): \

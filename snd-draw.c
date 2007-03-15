@@ -203,7 +203,6 @@ void draw_cursor(chan_info *cp)
   cursor_style_t cur;
 #if USE_CAIRO
   color_t old_color;
-  cairo_t *cr;
 #endif
   axis_info *ap;
   axis_context *ax;
