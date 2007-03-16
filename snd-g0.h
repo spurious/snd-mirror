@@ -127,6 +127,12 @@ typedef struct {
   unsigned int fft_pix_width, fft_pix_height;
   int fft_pix_x0, fft_pix_y0;
   bool fft_pix_ready;
+#if USE_CAIRO
+  GdkPixbuf *cursor_pix;
+  unsigned int cursor_pix_width, cursor_pix_height;
+  int cursor_pix_x0, cursor_pix_y0;
+  bool cursor_pix_ready;
+#endif
 } chan_context;
 
 typedef struct {

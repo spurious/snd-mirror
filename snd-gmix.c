@@ -234,13 +234,13 @@ static void mix_amp_env_resize(GtkWidget *w)
       ax->wn = w_env->window;
       ax->w = w_env;
       ax->gc = cur_gc;
-#if USE_CAIRO
-      ax->cr = gdk_cairo_create(ax->wn);
-#endif
     }
   else clear_window(ax);
   chans = mix_dialog_mix_input_chans(mix_dialog_id);
   e = mix_dialog_envs(mix_dialog_id);
+#if USE_CAIRO
+  ax->cr = gdk_cairo_create(ax->wn);
+#endif
   for (chan = 0; chan < chans; chan++)
     {
       env *cur_env;
@@ -259,6 +259,9 @@ static void mix_amp_env_resize(GtkWidget *w)
       if (with_mix_background_wave)
 	show_mix_background_wave(mix_dialog_id, chan);
     }
+#if USE_CAIRO
+  cairo_destroy(ax->cr);
+#endif
 }
 
 static gboolean mix_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -1261,11 +1264,11 @@ static void track_amp_env_resize(GtkWidget *w)
       track_ax->wn = w_track_env->window;
       track_ax->w = w_track_env;
       track_ax->gc = track_cur_gc;
-#if USE_CAIRO
-      track_ax->cr = gdk_cairo_create(track_ax->wn);
-#endif
     }
   else clear_window(track_ax);
+#if USE_CAIRO
+  track_ax->cr = gdk_cairo_create(track_ax->wn);
+#endif
   e = track_dialog_env(track_dialog_id);
   track_spf->with_dots = true;
   env_editor_display_env(track_spf, e, track_ax, _("track env"), 0, 0, widget_width(w), widget_height(w), NOT_PRINTING);
@@ -1279,6 +1282,9 @@ static void track_amp_env_resize(GtkWidget *w)
     }
   if (with_track_background_wave)
     display_track_waveform(track_dialog_id, track_spf->axis);
+#if USE_CAIRO
+  cairo_destroy(track_ax->cr);
+#endif
 }
 
 static gboolean track_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)

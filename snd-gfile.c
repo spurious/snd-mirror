@@ -4859,13 +4859,16 @@ static void vf_amp_env_resize(view_files_info *vdat, GtkWidget *w)
       vdat->env_ax->wn = w->window;
       vdat->env_ax->w = w;
       vdat->env_ax->gc = vdat->env_gc;
-#if USE_CAIRO
-      vdat->env_ax->cr = gdk_cairo_create(w->window);
-#endif
     }
   else clear_window(vdat->env_ax);
+#if USE_CAIRO
+  vdat->env_ax->cr = gdk_cairo_create(w->window);
+#endif
   vdat->spf->with_dots = true;
   env_editor_display_env(vdat->spf, vdat->amp_env, vdat->env_ax, NULL, 0, 0, widget_width(w), widget_height(w), NOT_PRINTING);
+#if USE_CAIRO
+  cairo_destroy(vdat->env_ax->cr);
+#endif
 }
 
 void vf_set_amp_env(view_files_info *vdat, env *new_e)

@@ -547,6 +547,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 	init_env_axes(ap, name, x0, y0, width, height, ex0, ex1, ey0, ey1, NOT_PRINTING);
     }
   if (!(ax->wn)) return;
+
   if (e)
     {
       ix1 = grf_x(e->data[0], ap);

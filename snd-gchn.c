@@ -906,7 +906,6 @@ void free_fft_pix(chan_info *cp)
 bool restore_fft_pix(chan_info *cp, axis_context *ax)
 {
 #if USE_CAIRO
-  /* TODO: test this pixbuf code */
   cairo_t *cr;
   cr = gdk_cairo_create(ax->wn);
   gdk_cairo_set_source_pixbuf(cr, cp->cgx->fft_pix, cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0);

@@ -1486,17 +1486,22 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
 /* this is intended for use with the xm package */
 
 #if USE_MOTIF
-#define XEN_GC_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+  #define XEN_GC_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
 			 (strcmp("GC", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 #else
-#define XEN_GC_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+#if USE_CAIRO
+  #define XEN_UNWRAP_GC(Value) (cairo_t *)(XEN_TO_C_ULONG(XEN_CADR(Value)))
+  #define XEN_GC_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+			 (strcmp("cairo_t_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+#else
+  #define XEN_UNWRAP_GC(Value) (gc_t *)(XEN_TO_C_ULONG(XEN_CADR(Value)))
+  #define XEN_GC_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
 			 (strcmp("GdkGC_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+#endif
 #endif
 
 #define AXIS_STYLE_OK(Id) (((Id) >= 0) && ((Id) < NUM_X_AXIS_STYLES))
 #define SHOW_AXES_OK(Id) (((Id) >= 0) && ((Id) < NUM_SHOW_AXES))
-
-/* TODO: g_draw_axes assumes gdk gc etc -- needs cairo version */
 
 static XEN g_draw_axes(XEN args)
 {
@@ -1506,17 +1511,17 @@ going from x0 to x1 (floats) along the x axis, y0 to y1 along the y axis, with "
 'style' (" S_x_axis_in_seconds " etc); the axes are actually displayed if 'axes' is " S_show_all_axes ". \
 Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 
-#if USE_GTK
-  #define XEN_UNWRAP_GC(Value) (gc_t *)(XEN_TO_C_ULONG(XEN_CADR(Value)))
-#endif
-
   XEN val, xwid, xgc, xx0, xx1, xy0, xy1, xstyle, xaxes;
 #if USE_MOTIF
   Widget w; 
   GC gc; 
 #else
   GtkWidget *w; 
+#if USE_CAIRO
+  cairo_t *cr;
+#else
   gc_t *gc;
+#endif
 #endif
   XEN label_ref;
   double x0 = 0.0, x1 = 1.0; 
@@ -1538,7 +1543,11 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   gc = (GC)(XEN_UNWRAP_GC(xgc));
 #else
   w = (GtkWidget *)(XEN_UNWRAP_WIDGET(xwid));
+#if USE_CAIRO
+  cr = (cairo_t *)(XEN_UNWRAP_GC(xgc));
+#else
   gc = (gc_t *)(XEN_UNWRAP_GC(xgc));
+#endif
 #endif
   label_ref = XEN_LIST_REF(args, 2);
   XEN_ASSERT_TYPE(XEN_STRING_P(label_ref) || XEN_FALSE_P(label_ref), label_ref, XEN_ARG_3, S_draw_axes, "a string");
@@ -1589,6 +1598,9 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 #else
   ax->wn = w->window;
   ax->w = w;
+#if USE_CAIRO
+  ax->cr = cr;
+#endif
 #endif  
   ap->xmin = x0;
   ap->xmax = x1;
@@ -1608,7 +1620,12 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   ap->height = widget_height(w);
   ap->graph_x0 = 0;
   clear_window(ax);
+#if (!USE_CAIRO)
   ax->gc = gc;
+#else
+  ax->gc = ss->sgx->basic_gc;
+  /* TODO: this is a stopgap for cairo */
+#endif
   make_axes_1(ap, x_style, 1, axes, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES, grid_density(ss));
   val = XEN_CONS(C_TO_XEN_INT(ap->x_axis_x0),
 	 XEN_CONS(C_TO_XEN_INT(ap->y_axis_y0),

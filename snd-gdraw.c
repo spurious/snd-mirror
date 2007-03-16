@@ -13,15 +13,15 @@
  * TODO: gl + cairo?
  * PERHAPS: background-gradient (0 = none), fancy dots in enved? can we pick up settings from the current theme? (display is still pretty slow)
  * TODO: selection erases (covers)
- * TODO: mark and cursor erase waveform
- * TODO: add cairo case in all gdk_gc stuff in *.scm/rb/fs
- * PERHAPS: can cairo make gl-style graphs?
+ * TODO: mark and cursor erase waveform [can pre-cursor stuff be saved as region, then plopped back down to erase?] (save|restore_fft_pix)
  * PERHAPS: would it be faster to path polys then one fill?
- * TODO: initial env editor window mixes dialog is empty
- * TODO: enved axes disappear (mixes too)
  * PERHAPS: wrap save/restore around all these functions
- * TODO: snd-test+gtk[currently stops at snd-clock-icon] case gl transparency? [valgrind too]
- * TODO: colormaps need not be saved as arrays in cairo case
+ * TODO: add cairo case in all gdk_gc stuff in *.scm/rb/fs
+ *          snd-test+gtk case gl transparency? [valgrind too]
+ *          scanned-synthesis display slightly clobbers y axis, and flickers
+ *          happy-face as progress bar: frown to smile + color change?
+ *          the clock is minimal...
+ * TODO: colormaps need not be saved as arrays in simple cases
  * TODO: there's also an fft/sonogram cursor
  * TODO: moving mix display is smudged
  * PERHAPS: (listener-text-color exists) and listener-response-color, listener-prompt-color|style? (currently boldface)
@@ -180,22 +180,7 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
 #endif
       return;
     }
-#if (!USE_CAIRO)
-  {
-    PangoLayout *layout = NULL;
-    PangoContext *ctx;
-    ctx = gdk_pango_context_get();
-    layout = pango_layout_new(ctx);
-    if (layout)
-      {
-	pango_layout_set_font_description(layout, ax->current_font);
-	pango_layout_set_text(layout, str, -1);
-	gdk_draw_layout(ax->wn, ax->gc, (gint)x0, (gint)y0, layout);
-	g_object_unref(G_OBJECT(layout));
-      }
-    g_object_unref(ctx);
-  }
-#else
+#if USE_CAIRO
   {
     PangoLayout *layout = NULL;
     layout = pango_cairo_create_layout(ax->cr);
@@ -205,6 +190,18 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
     cairo_move_to(ax->cr, x0, y0);
     pango_cairo_show_layout(ax->cr, layout);
     g_object_unref(G_OBJECT(layout));
+  }
+#else
+  {
+    PangoLayout *layout = NULL;
+    PangoContext *ctx;
+    ctx = gdk_pango_context_get();
+    layout = pango_layout_new(ctx);
+    pango_layout_set_font_description(layout, ax->current_font);
+    pango_layout_set_text(layout, str, -1);
+    gdk_draw_layout(ax->wn, ax->gc, (gint)x0, (gint)y0, layout);
+    g_object_unref(G_OBJECT(layout));
+    g_object_unref(ctx);
   }
 #endif
 }

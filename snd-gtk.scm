@@ -253,7 +253,10 @@
 		(gdk_draw_lines wn gc (list 'GdkPoint_ pts0) size)))))
     
     (define (redraw-graph)
-      (set! bounds (draw-axes scan-pane gc "scanned synthesis" 0.0 1.0 -10.0 10.0))
+      (if (provided? 'cairo)
+	  (let ((cr (gdk_cairo_create (GDK_DRAWABLE (.window scan-pane)))))
+	    (set! bounds (draw-axes scan-pane cr "scanned synthesis" 0.0 1.0 -10.0 10.0)))
+	  (set! bounds (draw-axes scan-pane gc "scanned synthesis" 0.0 1.0 -10.0 10.0)))
       (set! ax0 (+ (car bounds) 2))
       (set! ax1 (caddr bounds))
       (set! ay1 (cadr bounds))
@@ -771,29 +774,48 @@ Reverb-feedback sets the scaler on the feedback.
 
 (if (defined? 'gdk_pixmap_new)
 (define snd-clock-icon
-  (let* ((shell (cadr (main-widgets)))
-	 (win (car (main-widgets)))
-	 (clock-pixmaps (make-vector 12))
-	 (dgc (car (snd-gcs))))
-    (do ((i 0 (1+ i)))
-	((= i 12))
-      (let* ((pix (gdk_pixmap_new (GDK_DRAWABLE win) 16 16 -1))
-	     (pixwin (GDK_DRAWABLE pix)))
-	(vector-set! clock-pixmaps i pix)
-	(gdk_gc_set_foreground dgc (basic-color))
-	(gdk_draw_rectangle pixwin dgc #t 0 0 16 16)
-	(gdk_gc_set_foreground dgc white-pixel)
-	(gdk_draw_arc pixwin dgc #t 1 1 14 14 0 (* 64 360))
-	(gdk_gc_set_foreground dgc black-pixel)
-	(gdk_draw_arc pixwin dgc #f 1 1 14 14 0 (* 64 360))
-	(gdk_draw_line pixwin dgc 8 8 
-		       (+ 8 (inexact->exact (round (* 7 (sin (* i (/ 3.1416 6.0)))))))
-		       (- 8 (inexact->exact (round (* 7 (cos (* i (/ 3.1416 6.0))))))))))
-    (gdk_gc_set_foreground dgc (data-color))
-    (lambda (snd hour)
-      (gdk_draw_drawable (GDK_DRAWABLE (.window (list-ref (sound-widgets snd) 8))) dgc 
-			 (GDK_DRAWABLE (vector-ref clock-pixmaps hour)) 0 0 0 4 16 16)
-      #f))))
+  (if (provided? 'cairo)
+      (lambda (snd hour)
+	(let* ((window (GDK_DRAWABLE (.window (list-ref (sound-widgets snd) 8))))
+	       (cr (gdk_cairo_create window))
+	       (bg (color->list (basic-color))))
+	  (cairo_set_source_rgb cr (car bg) (cadr bg) (caddr bg))
+	  (cairo_rectangle cr 0 0 16 16) ; icon bg
+	  (cairo_fill cr)
+	  (cairo_set_source_rgb cr 1.0 1.0 1.0)
+	  (cairo_arc cr 8 8 7 0 (* 2 pi))  ; clock face
+	  (cairo_fill cr)
+	  (cairo_set_line_width cr 2.0)
+	  (cairo_set_source_rgb cr 0.0 0.0 0.0)
+	  (cairo_move_to cr 8 8)         ; clock hour hand
+	  (cairo_line_to cr (+ 8 (* 7 (sin (* hour (/ 3.1416 6.0)))))
+		            (- 8 (* 7 (cos (* hour (/ 3.1416 6.0))))))
+	  (cairo_stroke cr)
+	  (cairo_destroy cr)))
+      ;; gdk case
+      (let* ((shell (cadr (main-widgets)))
+	     (win (car (main-widgets)))
+	     (clock-pixmaps (make-vector 12))
+	     (dgc (car (snd-gcs))))
+	(do ((i 0 (1+ i)))
+	    ((= i 12))
+	  (let* ((pix (gdk_pixmap_new (GDK_DRAWABLE win) 16 16 -1))
+		 (pixwin (GDK_DRAWABLE pix)))
+	    (vector-set! clock-pixmaps i pix)
+	    (gdk_gc_set_foreground dgc (basic-color))
+	    (gdk_draw_rectangle pixwin dgc #t 0 0 16 16)
+	    (gdk_gc_set_foreground dgc white-pixel)
+	    (gdk_draw_arc pixwin dgc #t 1 1 14 14 0 (* 64 360))
+	    (gdk_gc_set_foreground dgc black-pixel)
+	    (gdk_draw_arc pixwin dgc #f 1 1 14 14 0 (* 64 360))
+	    (gdk_draw_line pixwin dgc 8 8 
+			   (+ 8 (inexact->exact (round (* 7 (sin (* i (/ 3.1416 6.0)))))))
+			   (- 8 (inexact->exact (round (* 7 (cos (* i (/ 3.1416 6.0))))))))))
+	(gdk_gc_set_foreground dgc (data-color))
+	(lambda (snd hour)
+	  (gdk_draw_drawable (GDK_DRAWABLE (.window (list-ref (sound-widgets snd) 8))) dgc 
+			     (GDK_DRAWABLE (vector-ref clock-pixmaps hour)) 0 0 0 4 16 16)
+	  #f)))))
 
 
 

@@ -173,21 +173,6 @@ style "white_button" = "default_button"
 
 widget "*.white_button" style "white_button"
 
-style "env_button" = "default_button"
-{
-  bg[NORMAL] = { 0.94, 0.97, 1.0 }
-  bg[INSENSITIVE] = { 0.94, 0.97, 1.0 }
-
-  GtkButton::default_border = { 0, 0, 0, 0 }
-  GtkButton::default_outside_border = { 0, 0, 0, 0 }
-  GtkButton::inner_border = { 0, 0, 0, 0 }
-
-  xthickness = 0
-  ythickness = 0
-}
-
-widget "*.env_button" style "env_button"
-
 style "label_button" = "default_button"
 {
   bg[NORMAL] = { 1.0, 1.0, 0.94 }
