@@ -1,6 +1,29 @@
 #include "snd.h"
 #include "snd-rec.h"
 
+/* TODO: remove all output meters, all volume and chan in/out controls, all messages and
+ *       data conversions, max tracking -- just input vu meters, output chans, on/off switch, device choice (no pane!)
+ *       and these xen connections:
+ *         recorder-autoload
+ *         recorder-buffer-size
+ *         recorder-file-hook
+ *         recorder-gain
+ *         recorder-in-amp
+ *         recorder-in-chans
+ *         recorder-in-data-format
+ *         recorder-in-device
+ *         recorder-max-duration
+ *         recorder-out-amp
+ *         recorder-out-chans
+ *         recorder-out-data-format
+ *         recorder-out-header-type
+ *         recorder-trigger
+ *       change recorder-file to recorder-output-file
+ *       leaving only recorder-srate -- maybe omit that!
+ *
+ * TODO: move mixer stuff to a separate dialog
+ */
+
 /* if user changes vu-size after meters created, we need to make sure the pixmaps are big enough 
  *   (this is probably safe for now because the size can't change) 
  */

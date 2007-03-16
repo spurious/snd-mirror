@@ -894,6 +894,9 @@ gc_t *erase_GC(chan_info *cp)
   return(sx->erase_gc);
 }
 
+
+/* -------- large sonogram pixmap (for expose events that don't need to recalculate the sonogram) -------- */
+
 void free_fft_pix(chan_info *cp)
 {
   if ((cp->cgx->fft_pix) &&
@@ -936,15 +939,54 @@ void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int 
   cp->cgx->fft_pix_height = fheight;
   cp->cgx->fft_pix_x0 = x0;
   cp->cgx->fft_pix_y0 = y1;
-  cp->cgx->fft_pix = gdk_pixbuf_get_from_drawable(cp->cgx->fft_pix,
-						  ax->wn,
-						  gtk_widget_get_colormap(ax->w),
-						  cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0,
-						  0, 0,
+  cp->cgx->fft_pix = gdk_pixbuf_get_from_drawable(cp->cgx->fft_pix, ax->wn, gtk_widget_get_colormap(ax->w),
+						  cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0, 0, 0,
 						  cp->cgx->fft_pix_width, cp->cgx->fft_pix_height);
   cp->cgx->fft_pix_ready = true;
 #endif
 }
+
+#if USE_CAIRO
+/* -------- cursor erasure in cairo -------- */
+
+void free_cursor_pix(chan_info *cp)
+{
+  if (cp->cgx->cursor_pix)
+    g_object_unref(cp->cgx->cursor_pix);
+  /* TODO: check that this is actually freed sometime */
+  cp->cgx->cursor_pix = NULL;
+  cp->cgx->cursor_pix_ready = false;
+}
+
+bool restore_cursor_pix(chan_info *cp, axis_context *ax)
+{
+  if (cp->cgx->cursor_pix_ready)
+    {
+      cairo_t *cr;
+      cr = gdk_cairo_create(ax->wn);
+      gdk_cairo_set_source_pixbuf(cr, cp->cgx->cursor_pix, cp->cgx->cursor_pix_x0, cp->cgx->cursor_pix_y0);
+      cairo_paint(cr);
+      cairo_destroy(cr);
+      free_cursor_pix(cp);
+      return(true);
+    }
+  return(false);
+}
+
+void save_cursor_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y1)
+{
+  if ((fwidth == 0) || (fheight == 0)) return;
+  cp->cgx->cursor_pix_width = fwidth;
+  cp->cgx->cursor_pix_height = fheight;
+  cp->cgx->cursor_pix_x0 = x0;
+  cp->cgx->cursor_pix_y0 = y1;
+  cp->cgx->cursor_pix = gdk_pixbuf_get_from_drawable(cp->cgx->cursor_pix, ax->wn, gtk_widget_get_colormap(ax->w),
+						     cp->cgx->cursor_pix_x0, cp->cgx->cursor_pix_y0, 0, 0,
+						     cp->cgx->cursor_pix_width, cp->cgx->cursor_pix_height);
+  cp->cgx->cursor_pix_ready = true;
+}
+#endif
+
 
 void cleanup_cw(chan_info *cp)
 {
@@ -953,6 +995,9 @@ void cleanup_cw(chan_info *cp)
       chan_context *cx;
       GtkWidget **cw;
       free_fft_pix(cp);
+#if USE_CAIRO
+      free_cursor_pix(cp);
+#endif
       if (EDIT_HISTORY_LIST(cp)) 
 	{
 	  slist_clear(EDIT_HISTORY_LIST(cp));

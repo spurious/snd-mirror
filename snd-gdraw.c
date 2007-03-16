@@ -13,7 +13,7 @@
  * TODO: gl + cairo?
  * PERHAPS: background-gradient (0 = none), fancy dots in enved? can we pick up settings from the current theme? (display is still pretty slow)
  * TODO: selection erases (covers)
- * TODO: mark and cursor erase waveform [can pre-cursor stuff be saved as region, then plopped back down to erase?] (save|restore_fft_pix)
+ * TODO: mark erases waveform
  * PERHAPS: would it be faster to path polys then one fill?
  * PERHAPS: wrap save/restore around all these functions
  * TODO: add cairo case in all gdk_gc stuff in *.scm/rb/fs
@@ -27,6 +27,14 @@
  * PERHAPS: (listener-text-color exists) and listener-response-color, listener-prompt-color|style? (currently boldface)
  * TODO: when first opened, file can have 0 vertical space! [can't seem to repeat this bug]
  * TODO: grec segfaults 308 [when this is fixed, fix snd-gmenu]
+ * TODO: if move mouse to listener, but no click, then "(" -> two "("
+ * TODO: why is test 5 redisplaying a sonogram at great expense? [squelch-update?]
+ * TODO: snd-test 19 and 21: (snd:16429): Gdk-CRITICAL **: gdk_drawable_copy_to_image: assertion `src_y >= 0' failed
+ *                                        Gdk-CRITICAL **: gdk_drawable_copy_to_image: assertion `src_x >= 0' failed
+ * TODO: snd-test 23 segfault: get_foreground_color (ax=0xab4bae8) at snd-gchn.c:862, setting cursor position -> handle_cursor etc (cp->cgx|sound is null!!)
+ *         variable-display snd-gtk 1188?
+ * TODO: there is almost certainly a memory leak in the cairo stuff
+ * TODO: was test 7 actually being run?
  */
 
 

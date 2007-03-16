@@ -1797,6 +1797,7 @@ Float evaluate_ptreec(struct ptree *pt, Float arg, vct *v, bool dir);
 /* -------- snd-draw.c -------- */
 
 void draw_cursor(chan_info *cp);
+void erase_cursor(chan_info *cp);
 void set_grf_points(int xi, int j, int ymin, int ymax);
 void set_grf_point(int xi, int j, int yi);
 void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style);

@@ -919,7 +919,7 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, off_t sta
       if (sp) 
 	{
 	  sp->playing++;
-	  if (sp->with_tracking_cursor != DONT_TRACK)
+	  if ((sp->with_tracking_cursor != DONT_TRACK) && (!(IS_PLAYER(sp))))
 	    {
 	      cp->original_cursor = CURSOR(cp);
 	      if (cp->axis)

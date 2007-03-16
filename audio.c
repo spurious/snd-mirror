@@ -3216,7 +3216,7 @@ AUDIO_INFO:
     }
 }
 
-/* ------------------------------- ALSA, OSS, Jack ----------------------------------- */
+/* ------------------------------- ALSA, OSS, Jack-in-Linux ----------------------------------- */
 /* API being used */
 
 static int api = MUS_ALSA_API;
@@ -8565,7 +8565,7 @@ static pid_t jack_mus_player_pid;
 static pthread_t jack_mus_watchdog_thread;
 
 static void *jack_mus_audio_watchdog(void *arg){
-#if JAVE_JACK
+#if HAVE_JACK
   struct sched_param par;
 
   par.sched_priority = sched_get_priority_max(SCHED_RR);

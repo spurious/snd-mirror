@@ -245,6 +245,11 @@ gc_t *erase_GC(chan_info *cp);
 void free_fft_pix(chan_info *cp);
 bool restore_fft_pix(chan_info *cp, axis_context *ax);
 void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y1);
+#if USE_CAIRO
+  void free_cursor_pix(chan_info *cp);
+  bool restore_cursor_pix(chan_info *cp, axis_context *ax);
+  void save_cursor_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y1);
+#endif
 void cleanup_cw(chan_info *cp);
 void change_channel_style(snd_info *sp, channel_style_t new_style);
 

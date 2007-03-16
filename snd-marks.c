@@ -290,13 +290,13 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
   ax = mark_context(cp);
 #endif
 #if USE_CAIRO
-  /* ARGHH!!  The idiots at cairo have not implemented XOR graphics. */
-  if (!(cp->cgx->ax->wn)) fixup_cp_cgx_ax_wn(cp);
-  ax = cp->axis->ax;
-  if (ax->cr) cairo_destroy(ax->cr);
-  ax->cr = gdk_cairo_create(ax->wn);
   {
     color_t bg_color, old_color;
+    /* ARGHH!!  The idiots at cairo have not implemented XOR graphics. */
+    if (!(cp->cgx->ax->wn)) fixup_cp_cgx_ax_wn(cp);
+    ax = cp->axis->ax;
+    if (ax->cr) cairo_destroy(ax->cr);
+    ax->cr = gdk_cairo_create(ax->wn);
     old_color = ax->gc->fg_color;
     if (show) 
       bg_color = ss->sgx->red;

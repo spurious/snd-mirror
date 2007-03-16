@@ -211,12 +211,10 @@ void draw_cursor(chan_info *cp)
 #if USE_CAIRO
   ax = ap->ax;
   old_color = get_foreground_color(ax);
-  if (cp->cursor_visible)
-    set_foreground_color(ax, ax->gc->bg_color);
-  else set_foreground_color(ax, ss->sgx->cursor_color);
-  cp->cursor_visible = !(cp->cursor_visible);
+  set_foreground_color(ax, ss->sgx->cursor_color);
   if (ax->cr) cairo_destroy(ax->cr);
   ax->cr = gdk_cairo_create(ax->wn); /* this is needed to force the cursor to be displayed! */
+  free_cursor_pix(cp);
 #else
   ax = cursor_context(cp);
 #endif
@@ -227,13 +225,23 @@ void draw_cursor(chan_info *cp)
   switch (cur)
     {
     case CURSOR_CROSS:
+#if USE_CAIRO
+      save_cursor_pix(cp, ax, 2 * cp->cursor_size + 1, 2 * cp->cursor_size + 1, cp->cx - cp->cursor_size, cp->cy - cp->cursor_size);
+#endif
       draw_line(ax, cp->cx, cp->cy - cp->cursor_size, cp->cx, cp->cy + cp->cursor_size);
       draw_line(ax, cp->cx - cp->cursor_size, cp->cy, cp->cx + cp->cursor_size, cp->cy);
       break;
     case CURSOR_LINE:
-      draw_line(ax, cp->cx, ap->y_axis_y0, cp->cx, ap->y_axis_y1);
+#if USE_CAIRO
+      save_cursor_pix(cp, ax, 2, ap->y_axis_y0 - ap->y_axis_y1, cp->cx, ap->y_axis_y1);
+#endif
+      draw_line(ax, cp->cx, ap->y_axis_y0 - 1, cp->cx, ap->y_axis_y1);
       break;
     case CURSOR_PROC:
+#if USE_CAIRO
+      /* in the cairo case, we need some info about the cursor shape, but I'll assume cursor_size is meaningful */
+      save_cursor_pix(cp, ax, 2 * cp->cursor_size + 1, 2 * cp->cursor_size + 1, cp->cx - cp->cursor_size, cp->cy - cp->cursor_size);
+#endif
       XEN_CALL_3((XEN_PROCEDURE_P(cp->cursor_proc)) ? (cp->cursor_proc) : (ss->cursor_proc),
 		 C_TO_XEN_INT(cp->sound->index),
 		 C_TO_XEN_INT(cp->chan),
@@ -244,19 +252,19 @@ void draw_cursor(chan_info *cp)
       break;
     }
 #if USE_CAIRO
-  /* TODO: redraw the erased wave portion, if any 
-       this is the set of points between cx-size and cx+size
-       since cursor can move throughout the window without remaking the graph, we'd have to save the entire graph
-   */
-  /*
-    TODO: we're assuming in scheme currently that the thumbnail graph will have a context
-  cairo_destroy(ax->cr);
-  ax->cr = NULL;
-  */
   set_foreground_color(ax, old_color);
 #endif
 }
 
+void erase_cursor(chan_info *cp)
+{
+#if USE_CAIRO
+  if (cp->cgx->cursor_pix)
+    restore_cursor_pix(cp, cp->axis->ax); /* returns true if old cursor was erased */
+#else
+  draw_cursor(cp);
+#endif
+}
 
 
 

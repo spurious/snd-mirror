@@ -3433,7 +3433,7 @@ static void draw_graph_cursor(chan_info *cp)
   ap = cp->axis;
   if ((CURSOR(cp) < ap->losamp) || (CURSOR(cp) > ap->hisamp)) return;
   if ((cp->chan > 0) && (cp->sound->channel_style == CHANNELS_SUPERIMPOSED)) return;
-  if (cp->cursor_visible) draw_cursor(cp);
+  if (cp->cursor_visible) erase_cursor(cp);
   cp->cx = local_grf_x((double)(CURSOR(cp)) / (double)SND_SRATE(cp->sound), ap); /* not float -- this matters in very long files (i.e. > 40 minutes) */
   if (cp->just_zero)
     cp->cy = local_grf_y(0.0, ap);
@@ -3619,7 +3619,7 @@ void cursor_moveto_with_window(chan_info *cp, off_t samp, off_t left_samp, off_t
   ap = cp->axis;
   if (cp->cursor_visible)
     {
-      if (cp->graph_time_p) draw_cursor(cp);
+      if (cp->graph_time_p) erase_cursor(cp);
       cp->cursor_visible = false; /* don't redraw at old location */
     }
   if (cp->fft_cursor_visible)
