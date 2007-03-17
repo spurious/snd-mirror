@@ -257,7 +257,7 @@
 	  (let ((cr (gdk_cairo_create (GDK_DRAWABLE (.window scan-pane)))))
 	    (set! bounds (draw-axes scan-pane cr "scanned synthesis" 0.0 1.0 -10.0 10.0)))
 	  (set! bounds (draw-axes scan-pane gc "scanned synthesis" 0.0 1.0 -10.0 10.0)))
-      (set! ax0 (+ (car bounds) 2))
+      (set! ax0 (+ (car bounds) (if (provided? 'cairo) 4 2)))
       (set! ax1 (caddr bounds))
       (set! ay1 (cadr bounds))
       (set! ay0 (cadddr bounds))
@@ -1191,7 +1191,6 @@ Reverb-feedback sets the scaler on the feedback.
 		  ;; "thermometer"
 		  (let ((y0 (cadr widget))
 			(y1 (caddr widget)))
-;		    (display (max 0.0 (min 1.0 (/ (- var y0) (- y1 y0)))))
 		    ;; (define wid (make-variable-display "do-loop" "i*2" 'scale))
 		    (gtk_progress_bar_set_fraction 
 		     (GTK_PROGRESS_BAR (car widget))

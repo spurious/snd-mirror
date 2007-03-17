@@ -4810,6 +4810,30 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
       return(on);
       break;
     case CP_CURSOR:
+#if USE_CAIRO
+      if (cp->cgx == NULL)
+	{
+	  fprintf(stderr, "set cursor cgx null");
+	  abort();
+	}
+      if (cp->sound == NULL)
+	{
+	  fprintf(stderr, "set cursor sound null");
+	  abort();
+	}
+      if (cp->cgx->ax == NULL)
+	{
+	  fprintf(stderr, "set cursor cgx->ax null");
+	  abort();
+	}
+      if (cp->cgx->ax->cr == NULL)
+	{
+	  fprintf(stderr, "set cursor cgx->ax->cr null");
+	  if (cp->cgx->ax->wn)
+	    cp->cgx->ax->cr = gdk_cairo_create(cp->cgx->ax->wn);
+	  else abort();
+	}
+#endif
       cp->cursor_on = true; 
       cursor_moveto(cp, beg_to_sample(on, caller));
       return(C_TO_XEN_OFF_T(CURSOR(cp)));
@@ -7260,6 +7284,13 @@ to a standard Snd channel graph placed in the widget 'container'."
     }
   cp->sounds[0] = make_snd_data_buffer_for_simple_channel(initial_length);
   cp->edits[0] = initial_ed_list(0, initial_length - 1);
+#if MUS_DEBUGGING
+  if (cp->cgx == NULL)
+    {
+      fprintf(stderr, "make variable graph cgx null");
+      abort();
+    }
+#endif
   return(C_TO_XEN_INT(sp->index));
 }
 

@@ -14,27 +14,18 @@
  * PERHAPS: background-gradient (0 = none), fancy dots in enved? can we pick up settings from the current theme? (display is still pretty slow)
  * TODO: selection erases (covers)
  * TODO: mark erases waveform
- * PERHAPS: would it be faster to path polys then one fill?
  * PERHAPS: wrap save/restore around all these functions
  * TODO: add cairo case in all gdk_gc stuff in *.scm/rb/fs
- *          snd-test+gtk case gl transparency? [valgrind too]
- *          scanned-synthesis display slightly clobbers y axis, and flickers
  *          happy-face as progress bar: frown to smile + color change?
  *          the clock is minimal...
  * TODO: colormaps need not be saved as arrays in simple cases
- * TODO: there's also an fft/sonogram cursor
+ * TODO: sonogram cursor needs to save/restore background (it's a vertical line) and not step on x axis
  * TODO: moving mix display is smudged
  * PERHAPS: (listener-text-color exists) and listener-response-color, listener-prompt-color|style? (currently boldface)
  * TODO: when first opened, file can have 0 vertical space! [can't seem to repeat this bug]
  * TODO: grec segfaults 308 [when this is fixed, fix snd-gmenu]
- * TODO: if move mouse to listener, but no click, then "(" -> two "("
  * TODO: why is test 5 redisplaying a sonogram at great expense? [squelch-update?]
- * TODO: snd-test 19 and 21: (snd:16429): Gdk-CRITICAL **: gdk_drawable_copy_to_image: assertion `src_y >= 0' failed
- *                                        Gdk-CRITICAL **: gdk_drawable_copy_to_image: assertion `src_x >= 0' failed
- * TODO: snd-test 23 segfault: get_foreground_color (ax=0xab4bae8) at snd-gchn.c:862, setting cursor position -> handle_cursor etc (cp->cgx|sound is null!!)
- *         variable-display snd-gtk 1188?
- * TODO: there is almost certainly a memory leak in the cairo stuff
- * TODO: was test 7 actually being run?
+ * TODO: there is almost certainly a memory leak in the cairo stuff: valgrind
  */
 
 
@@ -225,7 +216,6 @@ static void rotate_text(axis_context *ax, PangoFontDescription *font, const char
   pango_layout_set_font_description(layout, font);
   pango_layout_set_text(layout, text, -1);
   pango_layout_get_size (layout, &width, &height);
-  fprintf(stderr,"size: %f %f\n", (double)width / PANGO_SCALE, (double)height / PANGO_SCALE);
   cairo_set_source_rgb(cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
   cairo_move_to(cr, x0 + (double)height / (2 * PANGO_SCALE), y0 + (double)width / PANGO_SCALE);
   cairo_rotate(cr, mus_degrees_to_radians(-angle));

@@ -511,7 +511,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
       chan_info *cp;
       cp = current_channel();
       graph_key_press(channel_graph(cp), event, (gpointer)cp); 
-      return(false);
+      return(true); /* don't repeat the keystroke */
     }
   if (event->keyval == GDK_Tab)
     {

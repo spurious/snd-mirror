@@ -203,6 +203,7 @@ void draw_cursor(chan_info *cp)
   cursor_style_t cur;
 #if USE_CAIRO
   color_t old_color;
+  int cy0 = 0, cx0 = 0, csize;
 #endif
   axis_info *ap;
   axis_context *ax;
@@ -210,11 +211,20 @@ void draw_cursor(chan_info *cp)
   ap = cp->axis;
 #if USE_CAIRO
   ax = ap->ax;
+  if (!ax)
+    {
+      fprintf(stderr,"axis->ax is null...");
+      ap->ax = cp->cgx->ax;
+      ax = ap->ax;
+    }
   old_color = get_foreground_color(ax);
   set_foreground_color(ax, ss->sgx->cursor_color);
   if (ax->cr) cairo_destroy(ax->cr);
   ax->cr = gdk_cairo_create(ax->wn); /* this is needed to force the cursor to be displayed! */
   free_cursor_pix(cp);
+  if (cp->cx > cp->cursor_size) cx0 = cp->cx - cp->cursor_size;
+  if (cp->cy > cp->cursor_size) cy0 = cp->cy - cp->cursor_size;
+  csize = 2 * cp->cursor_size + 1;
 #else
   ax = cursor_context(cp);
 #endif
@@ -226,7 +236,7 @@ void draw_cursor(chan_info *cp)
     {
     case CURSOR_CROSS:
 #if USE_CAIRO
-      save_cursor_pix(cp, ax, 2 * cp->cursor_size + 1, 2 * cp->cursor_size + 1, cp->cx - cp->cursor_size, cp->cy - cp->cursor_size);
+      save_cursor_pix(cp, ax, csize, csize, cx0, cy0);
 #endif
       draw_line(ax, cp->cx, cp->cy - cp->cursor_size, cp->cx, cp->cy + cp->cursor_size);
       draw_line(ax, cp->cx - cp->cursor_size, cp->cy, cp->cx + cp->cursor_size, cp->cy);
@@ -240,7 +250,7 @@ void draw_cursor(chan_info *cp)
     case CURSOR_PROC:
 #if USE_CAIRO
       /* in the cairo case, we need some info about the cursor shape, but I'll assume cursor_size is meaningful */
-      save_cursor_pix(cp, ax, 2 * cp->cursor_size + 1, 2 * cp->cursor_size + 1, cp->cx - cp->cursor_size, cp->cy - cp->cursor_size);
+      save_cursor_pix(cp, ax, csize, csize, cx0, cy0);
 #endif
       XEN_CALL_3((XEN_PROCEDURE_P(cp->cursor_proc)) ? (cp->cursor_proc) : (ss->cursor_proc),
 		 C_TO_XEN_INT(cp->sound->index),
@@ -323,6 +333,23 @@ static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_2, S_draw_line, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x1), x1, XEN_ARG_3, S_draw_line, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y1), y1, XEN_ARG_4, S_draw_line, "a number");
+#if USE_CAIRO
+  {
+    axis_context *axc;
+    axc = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_line);
+    if (!(axc->cr))
+      {
+	if (axc->wn)
+	  axc->cr = gdk_cairo_create(axc->wn);
+	else
+	  {
+	    fprintf(stderr,"ax->cr is null in (draw-line %s %s %s %s %s %s %s)\n",
+		    XEN_AS_STRING(x0), XEN_AS_STRING(y0), XEN_AS_STRING(x1), XEN_AS_STRING(y1), XEN_AS_STRING(snd), XEN_AS_STRING(chn), XEN_AS_STRING(ax));
+	    abort();
+	  }
+      }
+  }
+#endif
   draw_line(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_line),
 	    XEN_TO_C_INT(x0),
 	    XEN_TO_C_INT(y0),
