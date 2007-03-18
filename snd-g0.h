@@ -132,6 +132,10 @@ typedef struct {
   unsigned int cursor_pix_width, cursor_pix_height;
   int cursor_pix_x0, cursor_pix_y0;
   bool cursor_pix_ready;
+  GdkPixbuf *sono_cursor_pix;
+  unsigned int sono_cursor_pix_width, sono_cursor_pix_height;
+  int sono_cursor_pix_x0, sono_cursor_pix_y0;
+  bool sono_cursor_pix_ready;
 #endif
 } chan_context;
 

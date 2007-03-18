@@ -932,14 +932,14 @@ bool restore_fft_pix(chan_info *cp, axis_context *ax)
 #endif
 }
 
-void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y1)
+void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y0)
 {
   if ((fwidth == 0) || (fheight == 0)) return;
 #if HAVE_GDK_DRAW_PIXBUF
   cp->cgx->fft_pix_width = fwidth;
   cp->cgx->fft_pix_height = fheight;
   cp->cgx->fft_pix_x0 = x0;
-  cp->cgx->fft_pix_y0 = y1;
+  cp->cgx->fft_pix_y0 = y0;
   cp->cgx->fft_pix = gdk_pixbuf_get_from_drawable(cp->cgx->fft_pix, ax->wn, gtk_widget_get_colormap(ax->w),
 						  cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0, 0, 0,
 						  cp->cgx->fft_pix_width, cp->cgx->fft_pix_height);
@@ -948,13 +948,12 @@ void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int 
 }
 
 #if USE_CAIRO
-/* -------- cursor erasure in cairo -------- */
+/* -------- time graph cursor erasure -------- */
 
 void free_cursor_pix(chan_info *cp)
 {
   if (cp->cgx->cursor_pix)
     g_object_unref(cp->cgx->cursor_pix);
-  /* TODO: check that this is actually freed sometime */
   cp->cgx->cursor_pix = NULL;
   cp->cgx->cursor_pix_ready = false;
 }
@@ -974,17 +973,55 @@ bool restore_cursor_pix(chan_info *cp, axis_context *ax)
   return(false);
 }
 
-void save_cursor_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y1)
+void save_cursor_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y0)
 {
   if ((fwidth == 0) || (fheight == 0)) return;
   cp->cgx->cursor_pix_width = fwidth;
   cp->cgx->cursor_pix_height = fheight;
   cp->cgx->cursor_pix_x0 = x0;
-  cp->cgx->cursor_pix_y0 = y1;
+  cp->cgx->cursor_pix_y0 = y0;
   cp->cgx->cursor_pix = gdk_pixbuf_get_from_drawable(cp->cgx->cursor_pix, ax->wn, gtk_widget_get_colormap(ax->w),
 						     cp->cgx->cursor_pix_x0, cp->cgx->cursor_pix_y0, 0, 0,
 						     cp->cgx->cursor_pix_width, cp->cgx->cursor_pix_height);
   cp->cgx->cursor_pix_ready = true;
+}
+
+/* -------- sonogram cursor erasure -------- */
+
+void free_sono_cursor_pix(chan_info *cp)
+{
+  if (cp->cgx->sono_cursor_pix)
+    g_object_unref(cp->cgx->sono_cursor_pix);
+  cp->cgx->sono_cursor_pix = NULL;
+  cp->cgx->sono_cursor_pix_ready = false;
+}
+
+bool restore_sono_cursor_pix(chan_info *cp, axis_context *ax)
+{
+  if (cp->cgx->sono_cursor_pix_ready)
+    {
+      cairo_t *cr;
+      cr = gdk_cairo_create(ax->wn);
+      gdk_cairo_set_source_pixbuf(cr, cp->cgx->sono_cursor_pix, cp->cgx->sono_cursor_pix_x0, cp->cgx->sono_cursor_pix_y0);
+      cairo_paint(cr);
+      cairo_destroy(cr);
+      free_sono_cursor_pix(cp);
+      return(true);
+    }
+  return(false);
+}
+
+void save_sono_cursor_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y0)
+{
+  if ((fwidth == 0) || (fheight == 0)) return;
+  cp->cgx->sono_cursor_pix_width = fwidth;
+  cp->cgx->sono_cursor_pix_height = fheight;
+  cp->cgx->sono_cursor_pix_x0 = x0;
+  cp->cgx->sono_cursor_pix_y0 = y0;
+  cp->cgx->sono_cursor_pix = gdk_pixbuf_get_from_drawable(cp->cgx->sono_cursor_pix, ax->wn, gtk_widget_get_colormap(ax->w),
+							  cp->cgx->sono_cursor_pix_x0, cp->cgx->sono_cursor_pix_y0, 0, 0,
+							  cp->cgx->sono_cursor_pix_width, cp->cgx->sono_cursor_pix_height);
+  cp->cgx->sono_cursor_pix_ready = true;
 }
 #endif
 
@@ -998,6 +1035,7 @@ void cleanup_cw(chan_info *cp)
       free_fft_pix(cp);
 #if USE_CAIRO
       free_cursor_pix(cp);
+      free_sono_cursor_pix(cp);
 #endif
       if (EDIT_HISTORY_LIST(cp)) 
 	{

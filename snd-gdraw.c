@@ -10,22 +10,16 @@
 /*
  * TODO: check ATS
  * TODO: static intel mac snd with minimal needs
- * TODO: gl + cairo?
+ * TODO: gl + cairo? -- spectrogram is just a black plane -- see apparently the hacks progs 
  * PERHAPS: background-gradient (0 = none), fancy dots in enved? can we pick up settings from the current theme? (display is still pretty slow)
- * TODO: selection erases (covers)
- * TODO: mark erases waveform
- * PERHAPS: wrap save/restore around all these functions
- * TODO: add cairo case in all gdk_gc stuff in *.scm/rb/fs
+ * TODO: add cairo case in all gdk_gc stuff in *.scm/rb/fs: display-level-meter mark-sync-color
  *          happy-face as progress bar: frown to smile + color change?
  *          the clock is minimal...
  * TODO: colormaps need not be saved as arrays in simple cases
- * TODO: sonogram cursor needs to save/restore background (it's a vertical line) and not step on x axis
- * TODO: moving mix display is smudged
+ * TODO: moving mix display is smudged (but not really so bad...)
  * PERHAPS: (listener-text-color exists) and listener-response-color, listener-prompt-color|style? (currently boldface)
- * TODO: when first opened, file can have 0 vertical space! [can't seem to repeat this bug]
  * TODO: grec segfaults 308 [when this is fixed, fix snd-gmenu]
- * TODO: why is test 5 redisplaying a sonogram at great expense? [squelch-update?]
- * TODO: there is almost certainly a memory leak in the cairo stuff: valgrind
+ * TODO: if sono cursor, no erase and segfault on zoom in in draw hour glass
  */
 
 
@@ -215,7 +209,7 @@ static void rotate_text(axis_context *ax, PangoFontDescription *font, const char
   layout = pango_cairo_create_layout(cr);
   pango_layout_set_font_description(layout, font);
   pango_layout_set_text(layout, text, -1);
-  pango_layout_get_size (layout, &width, &height);
+  pango_layout_get_size(layout, &width, &height);
   cairo_set_source_rgb(cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
   cairo_move_to(cr, x0 + (double)height / (2 * PANGO_SCALE), y0 + (double)width / PANGO_SCALE);
   cairo_rotate(cr, mus_degrees_to_radians(-angle));

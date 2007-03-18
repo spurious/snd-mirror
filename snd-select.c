@@ -583,12 +583,23 @@ static void cp_redraw_selection(chan_info *cp)
   if (ap->hisamp > end)
     x1 = grf_x((double)end / sp_srate, ap);
   else x1 = ap->x_axis_x1;
+#if USE_CAIRO
+  if (cp->selection_visible)
+    {
+      axis_context *ax;
+      ax = selection_context(cp);
+      cairo_set_source_rgb(ax->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue);
+      cairo_rectangle(ax->cr, cp->old_x0, ap->y_axis_y1, cp->old_x1 - cp->old_x0, (int)(ap->y_axis_y0 - ap->y_axis_y1));
+      cairo_fill(ax->cr);
+    }
+#else
   if (cp->selection_visible)
     fill_rectangle(selection_context(cp),
 		   cp->old_x0,
 		   ap->y_axis_y1,
 		   cp->old_x1 - cp->old_x0,
 		   (int)(ap->y_axis_y0 - ap->y_axis_y1));
+#endif
   fill_rectangle(selection_context(cp),
 		 x0,
 		 ap->y_axis_y1,
@@ -597,6 +608,9 @@ static void cp_redraw_selection(chan_info *cp)
   cp->old_x0 = x0;
   cp->old_x1 = x1;
   cp->selection_visible = true;
+#if USE_CAIRO
+  make_graph(cp);
+#endif
 }
 
 static void redraw_selection(void)

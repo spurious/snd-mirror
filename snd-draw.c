@@ -63,6 +63,7 @@ void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t g
 	  for (i = 0; i < j; i++)
 	    fill_rectangle(ax, points[i].x - size8, points[i].y, size4, points1[i].y - points[i].y);
 	}
+      break;
     }
 }
 
@@ -106,6 +107,7 @@ void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float
       break;
     }
 }
+
 
 static void allocate_erase_grf_points(mix_context *ms)
 {
@@ -274,6 +276,147 @@ void erase_cursor(chan_info *cp)
 #else
   draw_cursor(cp);
 #endif
+}
+
+
+
+void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
+{
+  int len, top, cx, y0, y1;
+  axis_context *ax;
+
+#if USE_MOTIF
+  #define STRING_Y_OFFSET 6
+#else
+  #define STRING_Y_OFFSET -6
+#endif
+
+  top = ap->y_axis_y1;
+  y1 = top;
+  y0 = ap->y_axis_y0;
+  if (mp->name) top += 10;
+  cx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), ap);
+
+  /* split into 3 cases to try to make it more readable */
+#if USE_MOTIF
+
+  ax = mark_context(cp);
+  if (mp->name)
+    {
+      ax->current_font = ss->sgx->peaks_fontstruct->fid;
+      XSetFont(ax->dp, ax->gc, ss->sgx->peaks_fontstruct->fid);
+      len = mark_name_width(mp->name);
+      draw_string(ax, (int)(cx - 0.5 * len), y1 + STRING_Y_OFFSET, mp->name, strlen(mp->name));
+    }
+  fill_rectangle(ax,
+		 cx - mark_tag_width(ss), top,
+		 2 * mark_tag_width(ss), mark_tag_height(ss));
+  draw_line(ax, cx, top + 4, cx, y0);
+  fill_polygon(ax, 4,
+	       cx, y0,
+	       cx + MARK_PLAY_ARROW_SIZE, y0 + MARK_PLAY_ARROW_SIZE,
+	       cx, y0 + 2 * MARK_PLAY_ARROW_SIZE,
+	       cx, y0);
+  mp->visible = show;
+
+#else
+  /* gtk / cairo */
+
+#if USE_CAIRO
+  {
+    color_t bg_color, old_color;
+    int slop = 0;
+    if (mp->name)
+      {
+	ax->current_font = PEAKS_FONT(ss);
+	len = mark_name_width(mp->name);
+	if (!show) /* erase mark */
+	  {
+	    ax = erase_context(cp);
+	    fill_rectangle(ax, (int)(cx - 0.5 * len - 1), top - 15, len + 3, 16);
+	  }
+	else 
+	  {
+	    ax = mark_context(cp);
+	    draw_string(ax, (int)(cx - 0.5 * len), y1 + STRING_Y_OFFSET, mp->name, strlen(mp->name));
+	  }
+      }
+    else ax = mark_context(cp);
+    if (ax->cr) cairo_destroy(ax->cr);
+    ax->cr = gdk_cairo_create(ax->wn);
+    
+    old_color = ax->gc->fg_color;
+    if (show) 
+      bg_color = ss->sgx->red;
+    else
+      {
+	if (cp->cgx->selected) 
+	  bg_color = ss->sgx->selected_graph_color;
+	else bg_color = ss->sgx->graph_color;
+	slop = 1;
+      }
+    set_foreground_color(ax, bg_color);
+
+    fill_rectangle(ax,
+		   cx - mark_tag_width(ss), top,
+		   2 * mark_tag_width(ss), mark_tag_height(ss) + slop);
+    draw_line(ax, cx, top + 4, cx, y0);
+    fill_polygon(ax, 4,
+		 cx, y0,
+		 cx + MARK_PLAY_ARROW_SIZE + slop, y0 + MARK_PLAY_ARROW_SIZE,
+		 cx, y0 + 2 * MARK_PLAY_ARROW_SIZE + slop,
+		 cx, y0);
+    mp->visible = show;
+
+    set_foreground_color(ax, old_color);
+    make_graph(cp);
+  }
+
+
+#else
+
+  /* gtk without cairo */
+  if (mp->name)
+    {
+      len = mark_name_width(mp->name);
+      if (!show) /* erase mark */
+	{
+	  ax = erase_context(cp);
+	  /* gtk and cairo cases need to be separate because we're using XOR (red) in the non-cairo case (so the tag needs to be left unerased) */
+	  fill_rectangle(ax, (int)(cx - 0.5 * len), top - 15, len + 1, 13); /* this should depend on TINY_FONT height */
+	}
+      else 
+	{
+	  ax = copy_context(cp);
+	  ax->current_font = PEAKS_FONT(ss);
+	  draw_string(ax, (int)(cx - 0.5 * len), y1 + STRING_Y_OFFSET, mp->name, strlen(mp->name));
+	}
+    }
+  ax = mark_context(cp);
+  fill_rectangle(ax,
+		 cx - mark_tag_width(ss), top,
+		 2 * mark_tag_width(ss), mark_tag_height(ss));
+  draw_line(ax, cx, top + 4, cx, y0);
+  fill_polygon(ax, 4,
+	       cx, y0,
+	       cx + MARK_PLAY_ARROW_SIZE, y0 + MARK_PLAY_ARROW_SIZE,
+	       cx, y0 + 2 * MARK_PLAY_ARROW_SIZE,
+	       cx, y0);
+  mp->visible = show;
+
+#endif
+#endif
+}
+
+void show_mark_triangle(chan_info *cp, int x)
+{
+  int y0;
+  y0 = ((axis_info *)(cp->axis))->y_axis_y0;
+  draw_polygon(mark_context(cp), 4,
+	       x, y0,
+	       x + MARK_PLAY_ARROW_SIZE, y0 + MARK_PLAY_ARROW_SIZE,
+	       x, y0 + 2 * MARK_PLAY_ARROW_SIZE,
+	       x, y0);
 }
 
 

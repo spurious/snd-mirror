@@ -1885,11 +1885,15 @@ static XEN g_set_recorder_out_amp(XEN num, XEN amp)
 
 static XEN g_recorder_dialog(void) 
 {
-  widget_t w;
   #define H_recorder_dialog "(" S_recorder_dialog "): start the Recorder"
+#if (!USE_CAIRO)
+  widget_t w;
   init_recorder(); 
   w = snd_record_file(); 
   return(XEN_WRAP_WIDGET(w));
+#else
+  return(XEN_FALSE);
+#endif
 }
 
 static XEN g_vu_size(void) {return(C_TO_XEN_DOUBLE(vu_size(ss)));}

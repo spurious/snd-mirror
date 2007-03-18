@@ -225,19 +225,9 @@ void marks_off(chan_info *cp)
 
 static XEN draw_mark_hook;
 
-#define PLAY_ARROW_SIZE 10
-
-#if USE_MOTIF
-  #define STRING_Y_OFFSET 6
-#else
-  #define STRING_Y_OFFSET -6
-#endif
-
 static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
 {
   /* fields are samp and name */
-  int len, top, cx, y0, y1;
-  axis_context *ax;
   if (!(cp->graph_time_p)) return;
   if (XEN_HOOKED(draw_mark_hook))
     {
@@ -251,89 +241,9 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
 	  return;
 	}
     }
-  top = ap->y_axis_y1;
-  y1 = top;
-  y0 = ap->y_axis_y0;
-  if (mp->name) top += 10;
-  cx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), ap);
-#if USE_MOTIF
-  ax = mark_context(cp);
-#else
-  ax = copy_context(cp);
-#endif
-  if (mp->name)
-    {
-#if USE_MOTIF
-      ax->current_font = ss->sgx->peaks_fontstruct->fid;
-      XSetFont(ax->dp, ax->gc, ss->sgx->peaks_fontstruct->fid);
-#else
-  #if USE_GTK
-      ax->current_font = PEAKS_FONT(ss);
-  #endif
-#endif
-      len = mark_name_width(mp->name);
-#if USE_GTK
-      if (!show) /* erase mark */
-	{
-	  ax = erase_context(cp);
-	  fill_rectangle(ax, (int)(cx - 0.5 * len), top - 13, len + 1, 12); /* this should dependent on TINY_FONT height */
-	}
-      else
-	{
-	  draw_string(ax, (int)(cx - 0.5 * len), y1 + STRING_Y_OFFSET, mp->name, strlen(mp->name));
-	}
-#else
-      draw_string(ax, (int)(cx - 0.5 * len), y1 + STRING_Y_OFFSET, mp->name, strlen(mp->name));
-#endif
-    }
-#if USE_GTK && (!USE_CAIRO)
-  ax = mark_context(cp);
-#endif
-#if USE_CAIRO
-  {
-    color_t bg_color, old_color;
-    /* ARGHH!!  The idiots at cairo have not implemented XOR graphics. */
-    if (!(cp->cgx->ax->wn)) fixup_cp_cgx_ax_wn(cp);
-    ax = cp->axis->ax;
-    if (ax->cr) cairo_destroy(ax->cr);
-    ax->cr = gdk_cairo_create(ax->wn);
-    old_color = ax->gc->fg_color;
-    if (show) 
-      bg_color = ss->sgx->red;
-    else
-      {
-	if (cp->cgx->selected) 
-	  bg_color = ss->sgx->selected_graph_color;
-	else bg_color = ss->sgx->graph_color;
-      }
-    set_foreground_color(ax, bg_color);
-#endif
-  fill_rectangle(ax,
-		 cx - mark_tag_width(ss), top,
-		 2 * mark_tag_width(ss), mark_tag_height(ss));
-  draw_line(ax, cx, top + 4, cx, y0);
-  fill_polygon(ax, 4,
-	       cx,                   y0,
-	       cx + PLAY_ARROW_SIZE, y0 +     PLAY_ARROW_SIZE,
-	       cx,                   y0 + 2 * PLAY_ARROW_SIZE,
-	       cx,                   y0);
-  mp->visible = show;
-#if USE_CAIRO
-  set_foreground_color(ax, old_color);
-  }
-#endif
+  show_mark(cp, ap, mp, show);
 }
 
-static void draw_play_triangle(chan_info *cp, int x)
-{
-  int y0;
-  y0 = ((axis_info *)(cp->axis))->y_axis_y0;
-  draw_polygon(mark_context(cp), 4,
-	       x,                   y0,
-	       x + PLAY_ARROW_SIZE, y0 +     PLAY_ARROW_SIZE,
-	       x,                   y0 + 2 * PLAY_ARROW_SIZE,
-	       x,                   y0);
-}
 
 static void draw_mark(chan_info *cp, axis_info *ap, mark *mp)
 {
@@ -384,10 +294,10 @@ static mark *hit_triangle_1(chan_info *cp, mark *mp, void *m)
   if (mp->samp > ap->hisamp) return(md->all_done); /* grf_x clips so we can be confused by off-screen marks */
   mx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), cp->axis);
   if (mx > md->x) return(md->all_done);
-  if ((mx + PLAY_ARROW_SIZE) < md->x) return(NULL);
-  y = md->y - ap->y_axis_y0 - PLAY_ARROW_SIZE;
+  if ((mx + MARK_PLAY_ARROW_SIZE) < md->x) return(NULL);
+  y = md->y - ap->y_axis_y0 - MARK_PLAY_ARROW_SIZE;
   if (y < 0) y = -y;
-  if ((mx + PLAY_ARROW_SIZE - y) >= md->x) return(mp);
+  if ((mx + MARK_PLAY_ARROW_SIZE - y) >= md->x) return(mp);
   /* the last is assuming the triangle shape for hit detection */
   return(NULL);
 }
@@ -400,7 +310,7 @@ mark *hit_triangle(chan_info *cp, int x, int y)
       ap = cp->axis;
       /* first check that we're in the bottom portion of the graph where the mark triangles are */
       if ((y >= ap->y_axis_y0) && 
-	  (y <= (ap->y_axis_y0 + 2 * PLAY_ARROW_SIZE)))
+	  (y <= (ap->y_axis_y0 + 2 * MARK_PLAY_ARROW_SIZE)))
 	{
 	  mark *mp;
 	  mdata *md;
@@ -520,9 +430,9 @@ off_t move_play_mark(chan_info *cp, off_t *mc, int cx)
   off_t cur_mc;
   axis_info *ap;
   ap = cp->axis;
-  if (prev_cx > 0) draw_play_triangle(cp, prev_cx);
+  if (prev_cx > 0) show_mark_triangle(cp, prev_cx);
   prev_cx = cx;
-  draw_play_triangle(cp, cx);
+  show_mark_triangle(cp, cx);
   cur_mc = (*mc);
   (*mc) = (off_t)(ungrf_x(ap, cx) * SND_SRATE(cp->sound));
   return((*mc) - cur_mc);
@@ -532,7 +442,7 @@ void finish_moving_play_mark(chan_info *cp)
 {
   snd_info *sp;
   sp = cp->sound;
-  draw_play_triangle(cp, prev_cx);
+  show_mark_triangle(cp, prev_cx);
   prev_cx = -1;
   sp->speed_control = 1.0;
 }

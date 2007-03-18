@@ -63597,7 +63597,7 @@ EDITS: 1
 			 view-files-amp view-files-speed view-files-speed-style view-files-amp-env
 			 view-files-files 
 			 view-files-selected-files 
-			 recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp
+			 recorder-autoload recorder-buffer-size recorder-file recorder-gain recorder-in-amp
 			 recorder-in-data-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-data-format recorder-out-header-type
 			 recorder-srate region-graph-style recorder-trigger reverb-control-decay reverb-control-feedback recorder-in-chans
 			 reverb-control-length reverb-control-lowpass reverb-control-scale time-graph-style lisp-graph-style transform-graph-style

@@ -197,20 +197,6 @@ static int yellow_vals[] = {0, 16, 32, 64, 96, 128, 160, 175, 185, 200, 210, 220
 static GtkWidget *db_button = NULL;
 static void remake_all_vu_meters(void);
 
-#if USE_CAIRO
-#define INT_TO_RGB(Val) (Val / 65535.0)
-
-static color_info *make_color(int r, int g, int b)
-{
-  color_info *ccolor;
-  ccolor = (color_info *)CALLOC(1, sizeof(color_info));
-  ccolor->red = INT_TO_RGB(r);
-  ccolor->green = INT_TO_RGB(g);
-  ccolor->blue = INT_TO_RGB(b);
-  return(ccolor);
-}
-#endif
-
 void set_vu_in_dB(bool val)
 {
   in_set_vu_in_dB(val);
@@ -244,17 +230,12 @@ static void set_vu_max_label(vu_t *vu)
 static void allocate_meter(vu_t *vu)
 {
   GdkDrawable *wn;
-#if (!USE_CAIRO)
   GdkColormap *cmap;
-#endif
   color_info *white, *black, *red;
   Float size;
   int i, j, width, wid2, height, top;
 
-#if (!USE_CAIRO)
   cmap = gdk_colormap_get_system();
-#endif
-
   wn = recorder->window;
 
   red = ss->sgx->red;
@@ -268,17 +249,6 @@ static void allocate_meter(vu_t *vu)
   top = (int)(size * 100);
 
   /* create the lit-from-below effect in yellow and red */
-#if USE_CAIRO
-  if (!vu_colors_allocated)
-    {
-      vu_colors_allocated = true;
-      for (i = 0; i < VU_COLORS; i++)
-	{
-	  yellows[i] = make_color(65535, 256 * 230 + 26 * yellow_vals[i], 256 * yellow_vals[i]);
-	  reds[i] = make_color(65535, 128 * yellow_vals[i], 128 * yellow_vals[i]);
-	}
-    }
-#else
   if (!vu_colors_allocated)
     {
       color_info tmp_color;
@@ -299,7 +269,6 @@ static void allocate_meter(vu_t *vu)
 	  gdk_rgb_find_color(cmap, reds[i]);
 	}
     }
-#endif
 
   {
     int band, k;

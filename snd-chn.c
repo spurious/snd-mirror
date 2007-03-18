@@ -1205,8 +1205,8 @@ snd_info *make_simple_channel_display(int srate, int initial_length,
   return(sp);
 }
 
-static void make_wavogram(chan_info *cp);
 static axis_context *combined_context(chan_info *cp);
+static void make_wavogram(chan_info *cp);
 
 static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_sided)
 {
@@ -1418,8 +1418,9 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
       if (cp->printing)
 	ps_reset_color();
     }
-  if ((cp->verbose_cursor) && (cp->cursor_on) && (CURSOR(cp) >= ap->losamp) && (CURSOR(cp) <= ap->hisamp) &&
-      ((normal) && ((sp->minibuffer_on == MINI_OFF) || (sp->minibuffer_on == MINI_CURSOR))))
+  if ((cp->verbose_cursor) && (cp->cursor_on) && (normal) && 
+      (CURSOR(cp) >= ap->losamp) && (CURSOR(cp) <= ap->hisamp) && 
+      ((sp->minibuffer_on == MINI_OFF) || (sp->minibuffer_on == MINI_CURSOR)))
     {
       show_cursor_info(cp); 
       sp->minibuffer_on = MINI_CURSOR;
@@ -1429,7 +1430,6 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 
 int make_graph(chan_info *cp) {return(make_graph_1(cp, (double)(SND_SRATE(cp->sound)), true, NULL));}
 int make_background_graph(chan_info *cp, int srate, bool *two_sided) {return(make_graph_1(cp, (double)srate, false, two_sided));}
-
 
 /* these next two procedures split "make_graph" into two pieces; the first
  *   gets the data to be graphed, using the amp envs and so on, and
@@ -3195,6 +3195,12 @@ static void display_channel_data_with_size(chan_info *cp,
 		      cp->show_axes);
 	  cp->cursor_visible = false;
 	  cp->selection_visible = false;
+
+#if USE_CAIRO
+	  if ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) 
+	    display_selection(cp);
+#endif
+
 	  points = make_graph(cp);
 	  if (points == 0) return;
 	  if (cp->cursor_on) draw_graph_cursor(cp);
@@ -3307,7 +3313,9 @@ static void display_channel_data_with_size(chan_info *cp,
 	{
 	  if ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) 
 	    {
+#if (!USE_CAIRO)
 	      display_selection(cp);
+#endif
 	      display_channel_marks(cp);
 	    }
 	  if (cp->show_y_zero) display_y_zero(cp);
@@ -3425,6 +3433,7 @@ void display_channel_data_for_print(chan_info *cp)
 }
 
 
+
 /* ---------------- CHANNEL CURSOR ---------------- */
 
 static void draw_graph_cursor(chan_info *cp)
@@ -3449,7 +3458,23 @@ static void draw_sonogram_cursor_1(chan_info *cp)
   fap = cp->fft->axis;
   fax = cursor_context(cp);
   if ((fap) && (fax)) 
+#if (!USE_CAIRO)
     draw_line(fax, cp->fft_cx, fap->y_axis_y0, cp->fft_cx, fap->y_axis_y1);
+#else
+  {
+    if (fax->cr) cairo_destroy(fax->cr);
+    fax->cr = gdk_cairo_create(fax->wn);
+    if (cp->fft_cursor_visible)
+      restore_sono_cursor_pix(cp, fax); /* returns true if old cursor was erased */
+    else
+      {
+	/* y_axis_y0 > y_axis_y1 (upside down coordinates) */
+	free_sono_cursor_pix(cp);
+	save_sono_cursor_pix(cp, fax, 1, fap->y_axis_y0 - fap->y_axis_y1, cp->fft_cx, fap->y_axis_y0);
+	draw_line(fax, cp->fft_cx, fap->y_axis_y0, cp->fft_cx, fap->y_axis_y1);
+      }
+  }
+#endif
 }
 
 static void draw_sonogram_cursor(chan_info *cp)
