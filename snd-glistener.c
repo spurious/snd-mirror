@@ -917,7 +917,6 @@ void color_listener_text(color_info *pix)
 
 void handle_listener(bool open)
 {
-  /* TODO: can we close the listener? */
   if ((open) && (!listener_text))
     make_command_widget(100);
 

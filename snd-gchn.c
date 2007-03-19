@@ -934,7 +934,7 @@ bool restore_fft_pix(chan_info *cp, axis_context *ax)
 
 void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y0)
 {
-  if ((fwidth == 0) || (fheight == 0)) return;
+  if ((fwidth <= 0) || (fheight <= 0)) return;
 #if HAVE_GDK_DRAW_PIXBUF
   cp->cgx->fft_pix_width = fwidth;
   cp->cgx->fft_pix_height = fheight;
@@ -975,7 +975,7 @@ bool restore_cursor_pix(chan_info *cp, axis_context *ax)
 
 void save_cursor_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y0)
 {
-  if ((fwidth == 0) || (fheight == 0)) return;
+  if ((fwidth <= 0) || (fheight <= 0)) return;
   cp->cgx->cursor_pix_width = fwidth;
   cp->cgx->cursor_pix_height = fheight;
   cp->cgx->cursor_pix_x0 = x0;
@@ -983,7 +983,7 @@ void save_cursor_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, i
   cp->cgx->cursor_pix = gdk_pixbuf_get_from_drawable(cp->cgx->cursor_pix, ax->wn, gtk_widget_get_colormap(ax->w),
 						     cp->cgx->cursor_pix_x0, cp->cgx->cursor_pix_y0, 0, 0,
 						     cp->cgx->cursor_pix_width, cp->cgx->cursor_pix_height);
-  cp->cgx->cursor_pix_ready = true;
+  cp->cgx->cursor_pix_ready = (cp->cgx->cursor_pix != NULL);
 }
 
 /* -------- sonogram cursor erasure -------- */
@@ -1013,7 +1013,7 @@ bool restore_sono_cursor_pix(chan_info *cp, axis_context *ax)
 
 void save_sono_cursor_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y0)
 {
-  if ((fwidth == 0) || (fheight == 0)) return;
+  if ((fwidth <= 0) || (fheight <= 0)) return;
   cp->cgx->sono_cursor_pix_width = fwidth;
   cp->cgx->sono_cursor_pix_height = fheight;
   cp->cgx->sono_cursor_pix_x0 = x0;
@@ -1021,7 +1021,7 @@ void save_sono_cursor_pix(chan_info *cp, axis_context *ax, int fwidth, int fheig
   cp->cgx->sono_cursor_pix = gdk_pixbuf_get_from_drawable(cp->cgx->sono_cursor_pix, ax->wn, gtk_widget_get_colormap(ax->w),
 							  cp->cgx->sono_cursor_pix_x0, cp->cgx->sono_cursor_pix_y0, 0, 0,
 							  cp->cgx->sono_cursor_pix_width, cp->cgx->sono_cursor_pix_height);
-  cp->cgx->sono_cursor_pix_ready = true;
+  cp->cgx->sono_cursor_pix_ready = (cp->cgx->sono_cursor_pix != NULL);
 }
 #endif
 

@@ -12,9 +12,7 @@
    View:Files
 */
 
-/* TODO: dir list pos
- * SOMEDAY: replace all gdk graphics with cairo, then add printer support, perhaps xg bindings
- */
+/* TODO: dir list pos */
 
 /* if icons do not get displayed, check the system preferences menu+toolbar dialog */
 

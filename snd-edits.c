@@ -3505,7 +3505,6 @@ Float protected_previous_sample_to_float(snd_fd *sf)
 /* setting the at_end flag here means that a 0.0 is returned from read-sample and then
  *   the caller has to check at-end to see if that 0.0 is real.  Not sure how (or whether)
  *   this should be fixed.
- *   PERHAPS: read ahead so that at-end flag is set before unreal zero?
  */
 static void reader_out_of_data(snd_fd *sf)
 {

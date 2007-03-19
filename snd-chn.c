@@ -3462,17 +3462,23 @@ static void draw_sonogram_cursor_1(chan_info *cp)
     draw_line(fax, cp->fft_cx, fap->y_axis_y0, cp->fft_cx, fap->y_axis_y1);
 #else
   {
+    fax = cp->cgx->ax; /* fap->ax does not work here?!? */
     if (fax->cr) cairo_destroy(fax->cr);
     fax->cr = gdk_cairo_create(fax->wn);
     if (cp->fft_cursor_visible)
       restore_sono_cursor_pix(cp, fax); /* returns true if old cursor was erased */
     else
       {
+	color_t old_color;
 	/* y_axis_y0 > y_axis_y1 (upside down coordinates) */
 	free_sono_cursor_pix(cp);
-	save_sono_cursor_pix(cp, fax, 1, fap->y_axis_y0 - fap->y_axis_y1, cp->fft_cx, fap->y_axis_y0);
-	draw_line(fax, cp->fft_cx, fap->y_axis_y0, cp->fft_cx, fap->y_axis_y1);
+	save_sono_cursor_pix(cp, fax, 2, fap->y_axis_y0 - fap->y_axis_y1, cp->fft_cx, fap->y_axis_y1);
+	old_color = get_foreground_color(fax);
+	set_foreground_color(fax, ss->sgx->cursor_color);
+	draw_line(fax, cp->fft_cx, fap->y_axis_y0 - 1, cp->fft_cx, fap->y_axis_y1);
+	set_foreground_color(fax, old_color);
       }
+    cp->fft_cursor_visible = (!(cp->fft_cursor_visible));
   }
 #endif
 }

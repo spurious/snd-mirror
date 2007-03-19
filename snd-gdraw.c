@@ -15,11 +15,10 @@
  * TODO: add cairo case in all gdk_gc stuff in *.scm/rb/fs: display-level-meter mark-sync-color
  *          happy-face as progress bar: frown to smile + color change?
  *          the clock is minimal...
+ *          xm-enved has draw-axes, snd-gtk.scm also (scanned-syn)
  * TODO: colormaps need not be saved as arrays in simple cases
- * TODO: moving mix display is smudged (but not really so bad...)
- * PERHAPS: (listener-text-color exists) and listener-response-color, listener-prompt-color|style? (currently boldface)
  * TODO: grec segfaults 308 [when this is fixed, fix snd-gmenu]
- * TODO: if sono cursor, no erase and segfault on zoom in in draw hour glass
+ * TODO: segfaults in snd-test [mus-interp-type type error realloc problem?]
  */
 
 
@@ -372,6 +371,7 @@ void fill_two_sided_polygons(axis_context *ax, point_t *points, point_t *points1
     }
 }
 
+
 void setup_axis_context(chan_info *cp, axis_context *ax)
 {
   GtkWidget *w;
@@ -385,12 +385,13 @@ void setup_axis_context(chan_info *cp, axis_context *ax)
   ax->w = w;
 }
 
+
+/* colormaps */
+
 #define BLACK_AND_WHITE_COLORMAP 0
 /* defined as enum member in snd-gxcolormaps.c (needed also in color dialog below) */
 
 #if (!USE_CAIRO)
-
-/* colormaps */
 
 static int sono_bins = 0; /* total_bins */
 static GdkColor **current_colors = NULL;

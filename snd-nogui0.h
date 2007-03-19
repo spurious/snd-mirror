@@ -13,10 +13,8 @@
 
 #define XEN_WRAP_WIDGET(Value) XEN_FALSE
 #define XEN_WRAP_WINDOW(Value) XEN_FALSE
-#define XEN_WRAP_GC(Value) XEN_FALSE
 #define XEN_WRAP_PIXEL(Value) XEN_FALSE
 #define XEN_UNWRAP_WIDGET(Value) 0
-#define XEN_UNWRAP_GC(Value) 0
 #define XEN_UNWRAP_PIXEL(Value) 0
 #define XEN_WIDGET_P(Value) 0
 #define NULL_WIDGET 0

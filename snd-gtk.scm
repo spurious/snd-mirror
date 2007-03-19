@@ -139,8 +139,8 @@
 	 (pts0 #f)
 	 (pts1 #f)
 	 (ax0 0) (ax1 0) (ay0 0) (ay1 0)
-	 (gc (and (not (provided? 'cairo)) (car (snd-gcs))))
-	 (egc (and (not (provided? 'cairo)) (list-ref (snd-gcs) 7)))
+	 (gc (car (snd-gcs)))
+	 (egc (list-ref (snd-gcs) 7))
 	 
 	 ;; now set up a paned window in the main Snd window with controllers on the left and the graph on the right
 	 (scan-outer (let ((pane (gtk_hbox_new #f 0)))
@@ -253,10 +253,7 @@
 		(gdk_draw_lines wn gc (list 'GdkPoint_ pts0) size)))))
     
     (define (redraw-graph)
-      (if (provided? 'cairo)
-	  (let ((cr (gdk_cairo_create (GDK_DRAWABLE (.window scan-pane)))))
-	    (set! bounds (draw-axes scan-pane cr "scanned synthesis" 0.0 1.0 -10.0 10.0)))
-	  (set! bounds (draw-axes scan-pane gc "scanned synthesis" 0.0 1.0 -10.0 10.0)))
+      (set! bounds (draw-axes scan-pane gc "scanned synthesis" 0.0 1.0 -10.0 10.0))
       (set! ax0 (+ (car bounds) (if (provided? 'cairo) 4 2)))
       (set! ax1 (caddr bounds))
       (set! ay1 (cadr bounds))
@@ -932,64 +929,142 @@ Reverb-feedback sets the scaler on the feedback.
 	 (win (GDK_DRAWABLE (.window meter)))
 	 (major-tick (inexact->exact (round (/ width 24))))
 	 (minor-tick (inexact->exact (round (* major-tick .6))))
-	 (ang0 (* 45 64))
-	 (ang1 (* 90 64))
 	 (wid2 (inexact->exact (floor (/ width 2))))
 	 (gc (car (snd-gcs)))
 	 (top (inexact->exact (round (/ height 3.2))))) ; distance of label from top of meter
-    (gdk_gc_set_foreground gc white-pixel)
-    (gdk_draw_rectangle win gc #t 0 0 width height)
-    (gdk_gc_set_foreground gc black-pixel)
-    (gdk_draw_arc win gc #f 0 top width width ang0 ang1)
-    (gdk_draw_arc win gc #f 0 (1- top) width width ang0 ang1)
-    (if (> width 100)
-	(gdk_draw_arc win gc #f 0 (- top 2) width width ang0 ang1))
-    (gdk_draw_arc win gc #f 4 (+ top 4) (- width 8) (- width 8) ang0 ang1)
-    (do ((i 0 (1+ i)))
-	((= i 5))
-      (let* ((rdeg (degrees->radians (- 45 (* i 22.5))))
-	     (sinr (sin rdeg))
-	     (cosr (cos rdeg))
-	     (x0 (inexact->exact (round (+ wid2 (* wid2 sinr)))))
-	     (y0 (inexact->exact (round (- (+ wid2 top) (* wid2 cosr)))))
-	     (x1 (inexact->exact (round (+ wid2 (* (+ wid2 major-tick) sinr)))))
-	     (y1 (inexact->exact (round (- (+ wid2 top) (* (+ wid2 major-tick) cosr))))))
-	(gdk_draw_line win gc x0 y0 x1 y1)
-	(gdk_draw_line win gc (+ x0 1) y0 (+ x1 1) y1)
-	(if (< i 4)
-	    (do ((j 1 (1+ j)))
-		((= j 6))
-	      (let* ((rdeg (degrees->radians (- 45 (* i 22.5) (* j (/ 90.0 20.0)))))
-		     (sinr (sin rdeg))
-		     (cosr (cos rdeg))
-		     (x0 (inexact->exact (round (* wid2 (+ 1.0 sinr)))))
-		     (y0 (inexact->exact (round (- (+ wid2 top) (* wid2 cosr)))))
-		     (x1 (inexact->exact (round (+ wid2 (* (+ wid2 minor-tick) sinr)))))
-		     (y1 (inexact->exact (round (- (+ wid2 top) (* (+ wid2 minor-tick) cosr))))))
-		(gdk_draw_line win gc x0 y0 x1 y1))))))
-    (let* ((needle-speed 0.25)
-	   (bubble-speed 0.025)
-	   (bubble-size (* 15 64))
-	   (val (+ (* level needle-speed) (* last-level (- 1.0 needle-speed))))
-	   (deg (- (* val 90.0) 45.0))
-	   (rdeg (degrees->radians deg))
-	   (nx1 (inexact->exact (round (+ wid2 (* (+ wid2 major-tick) (sin rdeg))))))
-	   (ny1 (inexact->exact (round (- (+ wid2 top) (* (+ wid2 major-tick) (cos rdeg)))))))
-      (gdk_draw_line win gc wid2 (+ top wid2) nx1 ny1)
-      (list-set! meter-data 3 val)
-      (if (> val red-deg)
-	  (list-set! meter-data 4 val)
-	  (list-set! meter-data 4 (+ (* val bubble-speed) (* red-deg (- 1.0 bubble-speed)))))
-      (if (> (list-ref meter-data 4) .01)
-	  (begin
-	    (gdk_gc_set_foreground gc red-pixel)
-	    (let* ((redx (inexact->exact (floor (* (list-ref meter-data 4) 90 64))))
-		   (redy (min redx bubble-size)))
-	      (do ((i 0 (1+ i)))
-		  ((= i 4))
-		(gdk_draw_arc win gc #f i (+ top i) (- width (* i 2)) (- width (* i 2)) (- (* 135 64) redx) redy)))
-	    (gdk_gc_set_foreground gc black-pixel)))
-      )))
+
+    (if (provided? 'cairo)
+	;; this is too slow -- can we save the plate? (also if just 1 meter, put pivot higher?)
+	(let ((cr (gdk_cairo_create win)))
+
+	  ;; put our origin at the meter pivot point scaled (as a square so the dial remains circular) to 0..1
+	  (cairo_translate cr (* 0.5 width) (+ (* 0.5 width) (* 0.2 height)))
+	  (cairo_scale cr width width)
+
+	  ;; background
+	  (let ((pat (cairo_pattern_create_radial 0 0 .1 0 0 0.75)))
+	    (cairo_pattern_add_color_stop_rgb pat 0.0 1.0 0.9 0.0) 
+	    (cairo_pattern_add_color_stop_rgb pat 1.0 1.0 1.0 1.0)
+	    (cairo_rectangle cr -1 -1 2 2)
+	    (cairo_set_source cr pat)
+	    (cairo_fill cr)
+	    (cairo_pattern_destroy pat))
+
+	  ;; dial markings
+	  (cairo_set_source_rgb cr 0.0 0.0 0.0)
+
+	  ;; outer arc
+	  (cairo_set_line_width cr (/ 2.0 width))
+	  (cairo_arc cr 0 0 0.5 (* -0.75 pi) (* -0.25 pi))
+	  (cairo_stroke cr)
+
+	  ;; inner arc
+	  (cairo_set_line_width cr (/ 0.5 width))
+	  (cairo_arc cr 0 0 (- 0.5 (/ 6.0 width)) (* -0.75 pi) (* -0.25 pi))
+	  (cairo_stroke cr)
+	  
+	  ;; save unrotated coords
+	  (cairo_save cr)
+
+	  ;; ticks
+	  (cairo_rotate cr (* 5 (/ pi 4)))
+	  (do ((i 0 (1+ i)))
+	      ((= i 5))
+	    (cairo_set_line_width cr (/ 1.5 width))
+	    (if (or (= i 0) (= i 4))
+		(begin
+		  (cairo_move_to cr (- 0.5 (/ 6.0 width)) 0.0)
+		  (cairo_rel_line_to cr (/ 15.0 width) 0))
+		(begin
+		  (cairo_move_to cr 0.5 0.0)
+		  (cairo_rel_line_to cr (/ 9.0 width) 0)))
+	    (cairo_stroke cr)
+	    (if (< i 4)
+		(begin
+		  (cairo_set_line_width cr (/ 0.5 width))
+		  (do ((j 0 (1+ j)))
+		      ((= j 5))
+		    (cairo_move_to cr 0.5 0.0)
+		    (cairo_rel_line_to cr (/ 6.0 width) 0)
+		    (cairo_rotate cr (/ pi (* 8 5)))
+		    (cairo_stroke cr)))))
+	  (cairo_restore cr)
+
+	  ;; needle and bubble
+	  (let* ((needle-speed 0.25)
+		 (bubble-speed 0.025)
+		 (bubble-size (* 15 64))
+		 (val (+ (* level needle-speed) (* last-level (- 1.0 needle-speed)))))
+	    (cairo_save cr)
+	    (cairo_set_line_width cr (/ 2.0 width))
+	    (cairo_rotate cr (+ (* 5 (/ pi 4)) (* val pi 0.5)))
+	    (cairo_move_to cr 0 0)
+	    (cairo_rel_line_to cr 0.6 0.0)
+	    (cairo_stroke cr)
+	    (cairo_restore cr)
+	    
+	    ;; now the red bubble...
+	    )
+
+	  (cairo_destroy cr)
+	  )
+
+	;; gdk case
+	(let ((ang0 (* 45 64))
+	      (ang1 (* 90 64)))
+	  (gdk_gc_set_foreground gc white-pixel)
+	  (gdk_draw_rectangle win gc #t 0 0 width height)
+	  (gdk_gc_set_foreground gc black-pixel)
+	  (gdk_draw_arc win gc #f 0 top width width ang0 ang1)
+	  (gdk_draw_arc win gc #f 0 (1- top) width width ang0 ang1)
+	  (if (> width 100)
+	      (gdk_draw_arc win gc #f 0 (- top 2) width width ang0 ang1))
+	  (gdk_draw_arc win gc #f 4 (+ top 4) (- width 8) (- width 8) ang0 ang1)
+	  (do ((i 0 (1+ i)))
+	      ((= i 5))
+	    (let* ((rdeg (degrees->radians (- 45 (* i 22.5))))
+		   (sinr (sin rdeg))
+		   (cosr (cos rdeg))
+		   (x0 (inexact->exact (round (+ wid2 (* wid2 sinr)))))
+		   (y0 (inexact->exact (round (- (+ wid2 top) (* wid2 cosr)))))
+		   (x1 (inexact->exact (round (+ wid2 (* (+ wid2 major-tick) sinr)))))
+		   (y1 (inexact->exact (round (- (+ wid2 top) (* (+ wid2 major-tick) cosr))))))
+	      (gdk_draw_line win gc x0 y0 x1 y1)
+	      (gdk_draw_line win gc (+ x0 1) y0 (+ x1 1) y1)
+	      (if (< i 4)
+		  (do ((j 1 (1+ j)))
+		      ((= j 6))
+		    (let* ((rdeg (degrees->radians (- 45 (* i 22.5) (* j (/ 90.0 20.0)))))
+			   (sinr (sin rdeg))
+			   (cosr (cos rdeg))
+			   (x0 (inexact->exact (round (* wid2 (+ 1.0 sinr)))))
+			   (y0 (inexact->exact (round (- (+ wid2 top) (* wid2 cosr)))))
+			   (x1 (inexact->exact (round (+ wid2 (* (+ wid2 minor-tick) sinr)))))
+			   (y1 (inexact->exact (round (- (+ wid2 top) (* (+ wid2 minor-tick) cosr))))))
+		      (gdk_draw_line win gc x0 y0 x1 y1))))))
+	  (let* ((needle-speed 0.25)
+		 (bubble-speed 0.025)
+		 (bubble-size (* 15 64))
+		 (val (+ (* level needle-speed) (* last-level (- 1.0 needle-speed))))
+		 (deg (- (* val 90.0) 45.0))
+		 (rdeg (degrees->radians deg))
+		 (nx1 (inexact->exact (round (+ wid2 (* (+ wid2 major-tick) (sin rdeg))))))
+		 (ny1 (inexact->exact (round (- (+ wid2 top) (* (+ wid2 major-tick) (cos rdeg)))))))
+	    (gdk_draw_line win gc wid2 (+ top wid2) nx1 ny1)
+	    (list-set! meter-data 3 val)
+	    (if (> val red-deg)
+		(list-set! meter-data 4 val)
+		(list-set! meter-data 4 (+ (* val bubble-speed) (* red-deg (- 1.0 bubble-speed)))))
+	    (if (> (list-ref meter-data 4) .01)
+		(begin
+		  (gdk_gc_set_foreground gc red-pixel)
+		  (let* ((redx (inexact->exact (floor (* (list-ref meter-data 4) 90 64))))
+			 (redy (min redx bubble-size)))
+		    (do ((i 0 (1+ i)))
+			((= i 4))
+		      (gdk_draw_arc win gc #f i (+ top i) (- width (* i 2)) (- width (* i 2)) (- (* 135 64) redx) redy)))
+		  (gdk_gc_set_foreground gc black-pixel)))
+	    )))))
 
 (define (with-level-meters n)
   ;; add n level meters to a pane at the top of the Snd window
@@ -1019,7 +1094,7 @@ Reverb-feedback sets the scaler on the feedback.
 		    (reverse meter-list)))))
     (add-hook! stop-dac-hook
 	       (lambda () ; drain away the bubble
-		 (gtk_idle_add 
+		 (g_idle_add 
 		  (let ((ctr 0))
 		    (lambda (ignored)
 		      (for-each 
@@ -1033,17 +1108,6 @@ Reverb-feedback sets the scaler on the feedback.
     meter-list))
 
 
-;;; -------- add delete and rename options to the file menu
-
-(define (add-delete-and-rename-options)
-  (let ((dialog (open-file-dialog #f)))
-    (if (GTK_IS_FILE_SELECTION dialog) ; in newer gtk's this is a file_chooser, not a file_selection widget
-	(gtk_file_selection_show_fileop_buttons (GTK_FILE_SELECTION dialog)))
-    (set! dialog (mix-file-dialog #f))
-    (if (GTK_IS_FILE_SELECTION dialog)
-	(gtk_file_selection_show_fileop_buttons (GTK_FILE_SELECTION dialog)))))
-
-  
 
 ;;; -------- make-pixmap --------
 

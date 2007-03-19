@@ -850,13 +850,13 @@ static XEN g_main_widgets(void)
   #define H_main_widgets "(" S_main_widgets "): top level \
 widgets (list (0)main-app (1)main-shell (2)main-pane (3)sound-pane (4)listener-pane (5)notebook-outer-pane)"
 
-  XEN main_win;
+  return(XEN_CONS(
 #if USE_MOTIF
-  main_win = XEN_WRAP_APPCONTEXT(MAIN_APP(ss));
+		  XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("XtAppContext"), 
+			     C_TO_XEN_ULONG((unsigned long)MAIN_APP(ss))),
 #else
-  main_win = XEN_WRAP_WINDOW(MAIN_WINDOW(ss));
+		  XEN_WRAP_WINDOW(MAIN_WINDOW(ss)),
 #endif
-  return(XEN_CONS(main_win,
 	   XEN_CONS(XEN_WRAP_WIDGET(MAIN_SHELL(ss)),
              XEN_CONS(XEN_WRAP_WIDGET(MAIN_PANE(ss)),
                XEN_CONS(XEN_WRAP_WIDGET(SOUND_PANE(ss)),
@@ -1142,44 +1142,44 @@ static XEN g_focus_widget(XEN wid)
   return(wid);
 }
 
-#if USE_CAIRO
-static XEN XEN_WRAP_GC(gc_t *gc)
-{
-  /* this is just a stop-gap -- ideally user extension code would not use the Gdk-specific gcs -- TODO: rewrite all snd-gcs references */
-  GdkGC *gp;
-  gp = gdk_gc_new(MAIN_WINDOW(ss));
-  return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"), C_TO_XEN_ULONG((unsigned long)gp)));
-}
-#endif
 
 static XEN g_snd_gcs(void)
 {
   #define H_snd_gcs "(" S_snd_gcs "): a list of Snd graphics contexts (list (0 basic) (1 selected_basic) (2 combined) (3 \
 cursor) (4 selected_cursor) (5 selection) (6 selected_selection) (7 erase) (8 selected_erase) (9 mark) (10 selected_mark) (11 mix) (12 \
-fltenv_basic) (13 fltenv_data))"
+fltenv_basic) (13 fltenv_data))."
 
-#if USE_GTK && (!USE_CAIRO)
-  #define XEN_WRAP_GC(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"), C_TO_XEN_ULONG((unsigned long)Value))
-  /* draw axes wants a gc_t* value */
+#if USE_MOTIF
+      #define XEN_WRAP_SND_GC(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GC"), C_TO_XEN_ULONG((unsigned long)Value))
+#else
+  #if USE_GTK
+    #if USE_CAIRO
+      #define XEN_WRAP_SND_GC(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("gc_t_"), C_TO_XEN_ULONG((unsigned long)Value))
+    #else
+      #define XEN_WRAP_SND_GC(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"), C_TO_XEN_ULONG((unsigned long)Value))
+    #endif
+  #else
+      #define XEN_WRAP_SND_GC(Value) XEN_FALSE
+  #endif
 #endif
 
   state_context *sx;
   sx = ss->sgx;
   if (sx)
-    return(XEN_CONS(XEN_WRAP_GC(sx->basic_gc),
-	    XEN_CONS(XEN_WRAP_GC(sx->selected_basic_gc), 
-	     XEN_CONS(XEN_WRAP_GC(sx->combined_basic_gc), 
-	      XEN_CONS(XEN_WRAP_GC(sx->cursor_gc), 
-               XEN_CONS(XEN_WRAP_GC(sx->selected_cursor_gc), 
-                XEN_CONS(XEN_WRAP_GC(sx->selection_gc), 
-                 XEN_CONS(XEN_WRAP_GC(sx->selected_selection_gc), 
-                  XEN_CONS(XEN_WRAP_GC(sx->erase_gc), 
-                   XEN_CONS(XEN_WRAP_GC(sx->selected_erase_gc), 
-                    XEN_CONS(XEN_WRAP_GC(sx->mark_gc), 
-                     XEN_CONS(XEN_WRAP_GC(sx->selected_mark_gc), 
-                      XEN_CONS(XEN_WRAP_GC(sx->mix_gc), 
-                       XEN_CONS(XEN_WRAP_GC(sx->fltenv_basic_gc), 
-                        XEN_CONS(XEN_WRAP_GC(sx->fltenv_data_gc), 
+    return(XEN_CONS(XEN_WRAP_SND_GC(sx->basic_gc),
+	    XEN_CONS(XEN_WRAP_SND_GC(sx->selected_basic_gc), 
+	     XEN_CONS(XEN_WRAP_SND_GC(sx->combined_basic_gc), 
+	      XEN_CONS(XEN_WRAP_SND_GC(sx->cursor_gc), 
+               XEN_CONS(XEN_WRAP_SND_GC(sx->selected_cursor_gc), 
+                XEN_CONS(XEN_WRAP_SND_GC(sx->selection_gc), 
+                 XEN_CONS(XEN_WRAP_SND_GC(sx->selected_selection_gc), 
+                  XEN_CONS(XEN_WRAP_SND_GC(sx->erase_gc), 
+                   XEN_CONS(XEN_WRAP_SND_GC(sx->selected_erase_gc), 
+                    XEN_CONS(XEN_WRAP_SND_GC(sx->mark_gc), 
+                     XEN_CONS(XEN_WRAP_SND_GC(sx->selected_mark_gc), 
+                      XEN_CONS(XEN_WRAP_SND_GC(sx->mix_gc), 
+                       XEN_CONS(XEN_WRAP_SND_GC(sx->fltenv_basic_gc), 
+                        XEN_CONS(XEN_WRAP_SND_GC(sx->fltenv_data_gc), 
 			 XEN_EMPTY_LIST)))))))))))))));
   return(XEN_EMPTY_LIST);
 }
