@@ -2272,6 +2272,12 @@ static void gl_display(chan_info *cp)
 #endif
 }
 
+#if USE_CAIRO
+  #define GL_COLOR_SET(R, G, B) glColor3d(R, G, B)
+#else
+  #define GL_COLOR_SET(R, G, B) glColor3us(R, G, B)
+#endif
+
 static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool use_dB, Float min_dB,
 			   rgb_t br, rgb_t bg, rgb_t bb)
 {
@@ -2329,33 +2335,33 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool us
 	  if (js[slice][i] != NO_COLOR)
 	    {
 	      get_current_color(color_map(ss), js[slice][i], &r, &g, &b);
-	      glColor3us(r, g, b);
+	      GL_COLOR_SET(r, g, b);
 	    }
-	  else glColor3us(br, bg, bb);
+	  else GL_COLOR_SET(br, bg, bb);
 	  glVertex3f(x0, val00, y0);
 	  
 	  if (js[slice + 1][i] != NO_COLOR)
 	    {
 	      get_current_color(color_map(ss), js[slice + 1][i], &r, &g, &b);
-	      glColor3us(r, g, b);
+	      GL_COLOR_SET(r, g, b);
 	    }
-	  else glColor3us(br, bg, bb);
+	  else GL_COLOR_SET(br, bg, bb);
 	  glVertex3f(x1, val10, y0);
 	  
 	  if (js[slice + 1][i + 1] != NO_COLOR)
 	    {
 	      get_current_color(color_map(ss), js[slice + 1][i + 1], &r, &g, &b);
-	      glColor3us(r, g, b);
+	      GL_COLOR_SET(r, g, b);
 	    }
-	  else glColor3us(br, bg, bb);
+	  else GL_COLOR_SET(br, bg, bb);
 	  glVertex3f(x1, val11, y1);
 	  
 	  if (js[slice][i + 1] != NO_COLOR)
 	    {
 	      get_current_color(color_map(ss), js[slice][i + 1], &r, &g, &b);
-	      glColor3us(r, g, b);
+	      GL_COLOR_SET(r, g, b);
 	    }
-	  else glColor3us(br, bg, bb);
+	  else GL_COLOR_SET(br, bg, bb);
 	  glVertex3f(x0, val01, y1);
 	  
 	  glEnd();
@@ -2717,19 +2723,19 @@ static void make_wavogram(chan_info *cp)
 	    y1 = y0 + yinc;
 
 	    get_current_color(color_map(ss), js[j][i], &r, &g, &b);
-	    glColor3us(r, g, b);
+	    GL_COLOR_SET(r, g, b);
 	    glVertex3f(x0, samps[j][i], y0);
 		      
 	    get_current_color(color_map(ss), js[j + 1][i], &r, &g, &b);
-	    glColor3us(r, g, b);
+	    GL_COLOR_SET(r, g, b);
 	    glVertex3f(x1, samps[j+ 1][i], y0);
 		      
 	    get_current_color(color_map(ss), js[j + 1][i + 1], &r, &g, &b);
-	    glColor3us(r, g, b);
+	    GL_COLOR_SET(r, g, b);
 	    glVertex3f(x1, samps[j + 1][i + 1], y1);
 		      
 	    get_current_color(color_map(ss), js[j][i + 1], &r, &g, &b);
-	    glColor3us(r, g, b);
+	    GL_COLOR_SET(r, g, b);
 	    glVertex3f(x0, samps[j][i + 1], y1);
 		      
 	    glEnd();

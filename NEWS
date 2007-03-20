@@ -1,24 +1,31 @@
-Snd 8.8:
+Snd 8.9
 
-many improvements from Mike
+many more Forth and Ruby improvements from Mike.
 
-Jack support in OSX and Cygwin from Kjetil
+three more fft windows: bohman-window, bartlett-hann-window, flat-top-window
 
-poussin-sum and jackson-sum in dsp.scm (more band-limited pulse-trains), and changed
-  amplitude scaling in fejer-sum and legendre-sum so that they always peak at 1.0.
-  Also added a note in clm.html showing a way to get a time-varying pulse-train.
+kalman-filter-channel (dsp.scm) -- noise-reduction experiment
 
-changed default-output-data-format to mus-bfloat
+clean.scm -- more noise reduction (clean-channel|sound)
 
-removed initFile and the (undocumented) htmlDir X resources
+File:Close all menu if more than one sound open
 
-make install now copies the *.scm|fs|rb files to {prefix}/share/snd
+open-file-dialog-directory to set the initial Open File dialog directory
 
-added read/write support for Apple's new CAFF (64-bit) audio files
+changed default html reader from mozilla to firefox
 
-checked: glib 2.12.7|8|9, gtk 2.10.7|8|9, Mesa 6.5.1|2, pango-1.15.3|4|5,
-         sbcl 1.0.1|2, fth 1.0.7
+added bindings to xg.c for cairo and gtk print
 
-Thanks!:  Mike Scholz, Kjetil Matheussen, Meino Christian Cramer, Michael Edwards
+added a cairo graphics backend (on the --with-cairo configure switch)
+  no "eye candy" yet, but everything works, I think -- cairo is a lot slower 
+  than gdk or GL (I wonder why gtk chose cairo over GL).
+  
 
+checked: Gauche 0.8.9, pango 1.15.6, 1.16.0|1, gsl 1.9, fth 1.0.8, sbcl 1.0.3,
+    glib 2.12.10|11 2.13.0, cairo 1.4.0, gtk+-2.10.10
+
+
+Thanks!: Michael Edwards, Peter Anderson, Immanuel Litzroth, Mike Scholz,
+         Jay LaBoeuf, Max Mathews, Luke Dahl, Joanne Carey, Charles Turner,
+	 Kjetil Matheussen
 

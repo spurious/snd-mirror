@@ -10,12 +10,8 @@
 /*
  * TODO: check ATS
  * TODO: static intel mac snd with minimal needs
- * TODO: gl + cairo? -- spectrogram is just a black plane -- see apparently the hacks progs 
- * PERHAPS: background-gradient (0 = none), fancy dots in enved? can we pick up settings from the current theme? (display is still pretty slow)
- * TODO: add cairo case in all gdk_gc stuff in *.scm/rb/fs: display-level-meter mark-sync-color
- *          happy-face as progress bar: frown to smile + color change?
- *          the clock is minimal...
- *          xm-enved has draw-axes, snd-gtk.scm also (scanned-syn)
+ * PERHAPS: background-gradient (0 = none)
+ * PERHAPS: happy-face as progress bar: frown to smile + color change (blue->yellow)?
  * TODO: colormaps need not be saved as arrays in simple cases
  * TODO: grec segfaults 308 [when this is fixed, fix snd-gmenu]
  * TODO: segfaults in snd-test [mus-interp-type type error realloc problem?]

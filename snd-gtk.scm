@@ -538,16 +538,17 @@
 	
 	(if (not (hook-empty? draw-mark-hook)) 
 	    (reset-hook! draw-mark-hook))
-	(add-hook! draw-mark-hook
-		   (lambda (id)
-		     (if (> (mark-sync id) 0)
-			 (begin
-			   (gdk_gc_set_foreground mark-gc gmc)
-			   (gdk_gc_set_foreground selected-mark-gc sgmc))
-			 (begin
-			   (gdk_gc_set_foreground mark-gc ogmc)
-			   (gdk_gc_set_foreground selected-mark-gc osgmc)))
-		     #f))))))
+	(if (not (provided? 'cairo))
+	    (add-hook! draw-mark-hook
+		       (lambda (id)
+			 (if (> (mark-sync id) 0)
+			     (begin
+			       (gdk_gc_set_foreground mark-gc gmc)
+			       (gdk_gc_set_foreground selected-mark-gc sgmc))
+			     (begin
+			       (gdk_gc_set_foreground mark-gc ogmc)
+			       (gdk_gc_set_foreground selected-mark-gc osgmc)))
+			 #f)))))))
   
   
 
@@ -993,21 +994,32 @@ Reverb-feedback sets the scaler on the feedback.
 	  ;; needle and bubble
 	  (let* ((needle-speed 0.25)
 		 (bubble-speed 0.025)
-		 (bubble-size (* 15 64))
+		 (bubble-size (/ pi 12))
 		 (val (+ (* level needle-speed) (* last-level (- 1.0 needle-speed)))))
 	    (cairo_save cr)
 	    (cairo_set_line_width cr (/ 2.0 width))
 	    (cairo_rotate cr (+ (* 5 (/ pi 4)) (* val pi 0.5)))
 	    (cairo_move_to cr 0 0)
-	    (cairo_rel_line_to cr 0.6 0.0)
+	    (cairo_rel_line_to cr 0.55 0.0)
 	    (cairo_stroke cr)
 	    (cairo_restore cr)
 	    
-	    ;; now the red bubble...
-	    )
+	    (list-set! meter-data 3 val)
+	    (if (<= val red-deg)
+		(set! val (+ (* val bubble-speed) (* red-deg (- 1.0 bubble-speed)))))
+	    (list-set! meter-data 4 val)
 
-	  (cairo_destroy cr)
-	  )
+	    ;; now the red bubble...
+	    (if (> val .01)
+		(begin
+		  (cairo_set_source_rgb cr 1.0 0.0 0.0)
+		  (cairo_set_line_width cr (/ 5.0 width))
+		  (let* ((redx (* val 0.5 pi))
+			 (redy (min redx bubble-size)))
+		    (cairo_arc cr 0 0 (- 0.5 (/ 3.0 width))  (+ (* 5 (/ pi 4)) (max 0.0 (- redx bubble-size))) (+ (* 5 (/ pi 4)) redx))
+		    (cairo_stroke cr)))))
+
+	  (cairo_destroy cr))
 
 	;; gdk case
 	(let ((ang0 (* 45 64))

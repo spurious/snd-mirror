@@ -850,19 +850,24 @@ static XEN g_main_widgets(void)
   #define H_main_widgets "(" S_main_widgets "): top level \
 widgets (list (0)main-app (1)main-shell (2)main-pane (3)sound-pane (4)listener-pane (5)notebook-outer-pane)"
 
-  return(XEN_CONS(
+  XEN bad_temp, res; /* needed by old gcc -- gets confused by straight arg list */
+  int loc;
 #if USE_MOTIF
-		  XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("XtAppContext"), 
-			     C_TO_XEN_ULONG((unsigned long)MAIN_APP(ss))),
+  bad_temp = XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("XtAppContext"), 
+			C_TO_XEN_ULONG((unsigned long)MAIN_APP(ss)));
 #else
-		  XEN_WRAP_WINDOW(MAIN_WINDOW(ss)),
+  bad_temp = XEN_WRAP_WINDOW(MAIN_WINDOW(ss));
 #endif
+  loc = snd_protect(bad_temp);
+  res = XEN_CONS(bad_temp,
 	   XEN_CONS(XEN_WRAP_WIDGET(MAIN_SHELL(ss)),
              XEN_CONS(XEN_WRAP_WIDGET(MAIN_PANE(ss)),
                XEN_CONS(XEN_WRAP_WIDGET(SOUND_PANE(ss)),
 		 XEN_CONS(XEN_WRAP_WIDGET(ss->sgx->listener_pane),
 		   XEN_CONS(XEN_WRAP_WIDGET(SOUND_PANE_BOX(ss)),
-		     XEN_EMPTY_LIST)))))));
+		     XEN_EMPTY_LIST))))));
+  snd_unprotect_at(loc);
+  return(res);
 }
 
 static XEN dialog_widgets;
