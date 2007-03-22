@@ -293,6 +293,7 @@ AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(long long)
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(ssize_t)
 AC_TYPE_SIGNAL
 
 AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs statfs clock getline)

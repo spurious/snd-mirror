@@ -326,6 +326,7 @@ void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
   {
     color_t bg_color, old_color;
     int slop = 0;
+    ax = mark_context(cp);
     if (mp->name)
       {
 	ax->current_font = PEAKS_FONT(ss);
@@ -334,14 +335,10 @@ void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
 	  {
 	    ax = erase_context(cp);
 	    fill_rectangle(ax, (int)(cx - 0.5 * len - 1), top - 15, len + 3, 16);
-	  }
-	else 
-	  {
 	    ax = mark_context(cp);
-	    draw_string(ax, (int)(cx - 0.5 * len), y1 + STRING_Y_OFFSET, mp->name, strlen(mp->name));
 	  }
+	else  draw_string(ax, (int)(cx - 0.5 * len), y1 + STRING_Y_OFFSET, mp->name, strlen(mp->name));
       }
-    else ax = mark_context(cp);
     if (ax->cr) cairo_destroy(ax->cr);
     ax->cr = gdk_cairo_create(ax->wn);
     
@@ -2070,5 +2067,8 @@ void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj) {}
 void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj) {}
 void mix_save_graph(mix_context *ms, int j) {}
 void draw_cursor(chan_info *cp) {}
+void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show) {}
+void show_mark_triangle(chan_info *cp, int x) {}
+void erase_cursor(chan_info *cp) {}
 #endif
 

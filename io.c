@@ -1078,7 +1078,7 @@ static int checked_write(int tfd, char *buf, int chars)
 			 fd->name));
       else
 	return(mus_error(MUS_WRITE_ERROR,
-			 "mus_write: write error for %s%s%s: only %d of %d bytes written",
+			 "mus_write: write error for %s%s%s: only " SSIZE_TD " of %d bytes written",
 			 fd->name, (errno) ? ": " : "", (errno) ? STRERROR(errno) : "",
 			 bytes, chars));
     }

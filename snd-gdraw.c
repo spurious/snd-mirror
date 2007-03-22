@@ -9,6 +9,8 @@
 
 /*
  * TODO: check ATS
+ * TODO: run cmn test (beam-width?)
+ * TODO: check out glitz, sc all.lisp bsd problem
  * TODO: static intel mac snd with minimal needs
  * PERHAPS: background-gradient (0 = none)
  * PERHAPS: happy-face as progress bar: frown to smile + color change (blue->yellow)?

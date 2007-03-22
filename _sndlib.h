@@ -35,6 +35,12 @@
   #define OFF_TD "%d"
 #endif
 
+#if (defined(SIZEOF_SSIZE_T)) && (SIZEOF_SSIZE_T > 4)
+  #define SSIZE_TD "%ld"
+#else
+  #define SSIZE_TD "%d"
+#endif
+
 #ifndef MUS_LITTLE_ENDIAN
   #if WORDS_BIGENDIAN
     #define MUS_LITTLE_ENDIAN 0

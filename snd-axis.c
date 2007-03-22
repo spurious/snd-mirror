@@ -1527,9 +1527,6 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   GtkWidget *w; 
   gc_t *gc;
 #endif
-#if USE_CAIRO
-  cairo_t *cr;
-#endif
 
   XEN val, xwid, xgc, xx0, xx1, xy0, xy1, xstyle, xaxes, label_ref;
   double x0 = 0.0, x1 = 1.0; 

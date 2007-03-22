@@ -1,5 +1,6 @@
 Snd change log
 
+ 22-Mar:     Snd 8.9.
  14-Mar:     cairo graphics backend (--with-cairo configure choice).
  1-Mar:      open-file-dialog-directory.
  26-Feb:     clean.scm (noise reduction).

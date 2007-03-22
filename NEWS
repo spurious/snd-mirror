@@ -17,8 +17,7 @@ changed default html reader from mozilla to firefox
 added bindings to xg.c for cairo and gtk print
 
 added a cairo graphics backend (on the --with-cairo configure switch)
-  no "eye candy" yet, but everything works, I think -- cairo is a lot slower 
-  than gdk or GL (I wonder why gtk chose cairo over GL).
+  no "eye candy" yet, but everything works, I hope.
   
 
 checked: Gauche 0.8.9, pango 1.15.6, 1.16.0|1, gsl 1.9, fth 1.0.8, sbcl 1.0.3,
@@ -27,5 +26,5 @@ checked: Gauche 0.8.9, pango 1.15.6, 1.16.0|1, gsl 1.9, fth 1.0.8, sbcl 1.0.3,
 
 Thanks!: Michael Edwards, Peter Anderson, Immanuel Litzroth, Mike Scholz,
          Jay LaBoeuf, Max Mathews, Luke Dahl, Joanne Carey, Charles Turner,
-	 Kjetil Matheussen
+	 Kjetil Matheussen, Anders Vinjar
 

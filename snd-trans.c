@@ -41,7 +41,7 @@ static ssize_t snd_checked_write(int fd, unsigned char *buf, ssize_t bytes, cons
   if (kfree < (bytes >> 10))
     { 
       mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
-		   _("only " OFF_TD " bytes left on device (we need %d bytes)"),
+		   _("only " OFF_TD " bytes left on device (we need " SSIZE_TD " bytes)"),
 		   kfree << 10, bytes);
       return(MUS_ERROR);
     }
@@ -49,7 +49,7 @@ static ssize_t snd_checked_write(int fd, unsigned char *buf, ssize_t bytes, cons
   if (bytes_written != bytes)
     {
       mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
-		   _("write error (wrote %d of requested %d bytes): %s"),
+		   _("write error (wrote " SSIZE_TD " of requested " SSIZE_TD " bytes): %s"),
 		   bytes_written, bytes, snd_io_strerror());
       return(MUS_ERROR);
     }
