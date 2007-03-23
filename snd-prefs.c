@@ -656,15 +656,6 @@ static void revert_dac_combines_channels(prefs_info *prf) {set_dac_combines_chan
 static void save_dac_combines_channels(prefs_info *prf, FILE *ignore) {rts_dac_combines_channels = dac_combines_channels(ss);}
 
 
-/* ---------------- recorder-autoload ---------------- */
-
-static bool rts_recorder_autoload = false; /* DEFAULT_RECORDER_AUTOLOAD is defined in snd-rec.c */
-static void reflect_recorder_autoload(prefs_info *prf) {SET_TOGGLE(prf->toggle, rec_autoload());}
-static void recorder_autoload_toggle(prefs_info *prf) {rec_set_autoload(GET_TOGGLE(prf->toggle));}
-static void revert_recorder_autoload(prefs_info *prf) {rec_set_autoload(rts_recorder_autoload);}
-static void save_recorder_autoload(prefs_info *prf, FILE *ignore) {rts_recorder_autoload = rec_autoload();}
-
-
 /* ---------------- show-listener ---------------- */
 
 static bool rts_show_listener = false, prefs_show_listener = false;
@@ -1512,38 +1503,6 @@ static void listener_prompt_text(prefs_info *prf)
 }
 
 
-/* ---------------- recorder file name ---------------- */
-
-static char *rts_recorder_filename = NULL;
-
-static void reflect_recorder_filename(prefs_info *prf)
-{
-  SET_TEXT(prf->text, rec_filename());
-}
-
-static void revert_recorder_filename(prefs_info *prf)
-{
-  if (rts_recorder_filename) rec_set_filename(rts_recorder_filename);
-}
-
-static void save_recorder_filename(prefs_info *prf, FILE *ignore)
-{
-  if (rts_recorder_filename) FREE(rts_recorder_filename);
-  rts_recorder_filename = copy_string(rec_filename());
-}
-
-static void recorder_filename_text(prefs_info *prf)
-{
-  char *str;
-  str = GET_TEXT(prf->text);
-  if ((str) && (*str))
-    {
-      rec_set_filename(str);
-      FREE_TEXT(str);
-    }
-}
-
-
 /* ---------------- show-transform-peaks ---------------- */
 
 static bool rts_show_transform_peaks = DEFAULT_SHOW_TRANSFORM_PEAKS;
@@ -1751,30 +1710,6 @@ static void dac_size_text(prefs_info *prf)
       redirect_errors_to(NULL, NULL);
       if (!(prf->got_error))
 	set_dac_size(value);
-      FREE_TEXT(str);
-    }
-}
-
-
-/* ---------------- recorder-buffer-size ---------------- */
-
-static int rts_recorder_buffer_size = 4096; /* snd-rec.c */
-static void reflect_recorder_buffer_size(prefs_info *prf) {int_to_textfield(prf->text, rec_buffer_size());}
-static void revert_recorder_buffer_size(prefs_info *prf) {rec_set_buffer_size(rts_recorder_buffer_size);}
-static void save_recorder_buffer_size(prefs_info *prf, FILE *ignore) {rts_recorder_buffer_size = rec_buffer_size();}
-
-static void recorder_buffer_size_text(prefs_info *prf)
-{
-  char *str;
-  str = GET_TEXT(prf->text);
-  if ((str) && (*str))
-    {
-      int value = 0;
-      redirect_errors_to(any_error_to_text, (void *)prf);
-      value = string_to_int(str, 0, "recorder buffer size");
-      redirect_errors_to(NULL, NULL);
-      if (!(prf->got_error))
-	rec_set_buffer_size(value);
       FREE_TEXT(str);
     }
 }
@@ -3216,183 +3151,6 @@ static void raw_data_format_from_menu(prefs_info *prf, char *value)
       }
 }
 #endif
-
-
-/* ---------------- recorder-out-chans etc ---------------- */
-
-static int rts_recorder_output_chans = 1;
-static int rts_recorder_srate = 44100;
-static int rts_recorder_output_header_type = MUS_RIFF;
-static int rts_recorder_output_data_format = MUS_AUDIO_COMPATIBLE_FORMAT;
-
-static prefs_info *recorder_output_data_format_prf = NULL, *recorder_output_header_type_prf = NULL;
-
-#define NUM_RECORDER_OUT_CHANS_CHOICES 4
-static const char *recorder_out_chans_choices[NUM_RECORDER_OUT_CHANS_CHOICES] = {"1", "2", "4", "8"};
-static int recorder_chans[NUM_RECORDER_OUT_CHANS_CHOICES] = {1, 2, 4, 8};
-
-#define NUM_RECORDER_SRATE_CHOICES 5
-static const char *recorder_srate_choices[NUM_RECORDER_SRATE_CHOICES] = {"8000", "22050", "44100", "48000", "96000"};
-static int recorder_srates[NUM_RECORDER_SRATE_CHOICES] = {8000, 22050, 44100, 48000, 96000};
-
-#define NUM_RECORDER_OUT_TYPE_CHOICES 7
-static const char *recorder_out_type_choices[NUM_RECORDER_OUT_TYPE_CHOICES] = {"aifc", "wave", "next/sun", "rf64", "nist", "aiff", "caff"};
-static int recorder_types[NUM_RECORDER_OUT_TYPE_CHOICES] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_RF64, MUS_NIST, MUS_AIFF, MUS_CAFF};
-
-#define NUM_RECORDER_OUT_FORMAT_CHOICES 4
-static const char *recorder_out_format_choices[NUM_RECORDER_OUT_FORMAT_CHOICES] = {"short", "int", "float", "double"};
-static int recorder_formats[NUM_RECORDER_OUT_FORMAT_CHOICES] = {MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE};
-
-static void reflect_recorder_output_chans(prefs_info *prf)
-{
-  int which = -1;
-  switch (rec_output_chans())
-    {
-    case 1: which = 0; break;
-    case 2: which = 1; break;
-    case 4: which = 2; break;
-    case 8: which = 3; break;
-    }
-  if (which != -1)
-    set_radio_button(prf, which);
-}
-
-static void reflect_recorder_srate(prefs_info *prf)
-{
-  int which = -1, sr;
-  sr = rec_srate();
-  if (sr == 8000) which = 0; else
-  if (sr == 22050) which = 1; else
-  if (sr == 44100) which = 2; else
-  if (sr == 48000) which = 3; else
-  if (sr == 96000) which = 4;
-  if (which != -1)
-    set_radio_button(prf, which);
-}
-
-static void revert_recorder_output_chans(prefs_info *prf) {rec_set_output_chans(rts_recorder_output_chans);}
-static void save_recorder_output_chans(prefs_info *prf, FILE *ignore) {rts_recorder_output_chans = rec_output_chans();}
-
-static void revert_recorder_srate(prefs_info *prf) {rec_set_srate(rts_recorder_srate);}
-static void save_recorder_srate(prefs_info *prf, FILE *ignore) {rts_recorder_srate = rec_srate();}
-
-static void recorder_output_chans_choice(prefs_info *prf)
-{
-  if (GET_TOGGLE(prf->radio_button))
-    rec_set_output_chans(recorder_chans[which_radio_button(prf)]);
-}
-
-static void recorder_srate_choice(prefs_info *prf)
-{
-  if (GET_TOGGLE(prf->radio_button))
-    rec_set_srate(recorder_srates[which_radio_button(prf)]);
-}
-
-static void reflect_recorder_output_header_type(prefs_info *prf)
-{
-  int which = -1;
-  switch (rec_output_header_type())
-    {
-    case MUS_AIFC: which = 0; break;
-    case MUS_AIFF: which = 5; break;
-    case MUS_RIFF: which = 1; break;
-    case MUS_RF64: which = 3; break;
-    case MUS_NEXT: which = 2; break;
-    case MUS_NIST: which = 4; break;
-    case MUS_CAFF: which = 6; break;
-    }
-  if (which != -1)
-    set_radio_button(prf, which);
-}
-
-static void reflect_recorder_output_data_format(prefs_info *prf)
-{
-  int which = -1;
-  switch (rec_output_data_format())
-    {
-    case MUS_LINT: case MUS_BINT:       which = 1; break;
-    case MUS_LSHORT: case MUS_BSHORT:   which = 0; break;
-    case MUS_LFLOAT: case MUS_BFLOAT:   which = 2; break;
-    case MUS_LDOUBLE: case MUS_BDOUBLE: which = 3; break;
-    }
-  if (which != -1)
-    set_radio_button(prf, which);
-}
-
-static void revert_recorder_output_header_type(prefs_info *prf) {rec_set_output_header_type(rts_recorder_output_header_type);}
-static void save_recorder_output_header_type(prefs_info *prf, FILE *ignore) {rts_recorder_output_header_type = rec_output_header_type();}
-
-static void revert_recorder_output_data_format(prefs_info *prf) {rec_set_output_data_format(rts_recorder_output_data_format);}
-static void save_recorder_output_data_format(prefs_info *prf, FILE *ignore) {rts_recorder_output_data_format = rec_output_data_format();}
-
-static void recorder_output_header_type_choice(prefs_info *prf)
-{
-  if (GET_TOGGLE(prf->radio_button))
-    {
-      rec_set_output_header_type(recorder_types[which_radio_button(prf)]);
-      rec_set_output_data_format(header_to_data(rec_output_header_type(), rec_output_data_format()));
-      reflect_recorder_output_data_format(recorder_output_data_format_prf);
-    }
-}
-
-static void recorder_output_data_format_choice(prefs_info *prf)
-{
-  if (GET_TOGGLE(prf->radio_button))
-    {
-      rec_set_output_data_format(recorder_formats[which_radio_button(prf)]);
-      switch (rec_output_data_format())
-	{
-	case MUS_LSHORT:
-	  switch (rec_output_header_type())
-	    {
-	    case MUS_AIFC: case MUS_AIFF: case MUS_NEXT: 
-	      rec_set_output_data_format(MUS_BSHORT); 
-	      break;
-	    }
-	  break;
-	  
-	case MUS_LINT:
-	  switch (rec_output_header_type())
-	    {
-	    case MUS_AIFC: case MUS_AIFF: case MUS_NEXT: 
-	      rec_set_output_data_format(MUS_BINT); 
-	      break;
-	    }
-	  break;
-	case MUS_LFLOAT:
-	  switch (rec_output_header_type())
-	    {
-	    case MUS_AIFC: case MUS_NEXT: 
-	      rec_set_output_data_format(MUS_BFLOAT); 
-	      break;
-	    case MUS_AIFF:
-	      rec_set_output_header_type(MUS_AIFC);
-	      rec_set_output_data_format(MUS_BFLOAT); 
-	      break;
-	    case MUS_NIST: 
-	      rec_set_output_header_type(MUS_RIFF); 
-	      break;
-	    }
-	  break;
-	case MUS_LDOUBLE:
-	  switch (rec_output_header_type())
-	    {
-	    case MUS_AIFC: case MUS_NEXT: 
-	      rec_set_output_data_format(MUS_BDOUBLE); 
-	      break;
-	    case MUS_AIFF:
-	      rec_set_output_header_type(MUS_AIFC);
-	      rec_set_output_data_format(MUS_BDOUBLE); 
-	      break;
-	    case MUS_NIST: 
-	      rec_set_output_header_type(MUS_RIFF); 
-	      break;
-	    }
-	  break;
-	}
-      reflect_recorder_output_header_type(recorder_output_header_type_prf);
-    }
-}
 
 
 /* ---------------- with-sound ---------------- */

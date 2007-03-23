@@ -2637,65 +2637,6 @@ widget_t start_preferences_dialog(void)
 				dac_combines_channels_toggle);
     remember_pref(prf, reflect_dac_combines_channels, save_dac_combines_channels, NULL, NULL, revert_dac_combines_channels);
 
-    current_sep = make_inter_variable_separator(aud_box);
-    make_inner_label("  recorder options", aud_box);
-
-    rts_recorder_filename = copy_string(rec_filename());
-    prf = prefs_row_with_text("recorder output file name", S_recorder_file, rec_filename(),
-			      aud_box, 
-			      recorder_filename_text);
-    remember_pref(prf, reflect_recorder_filename, save_recorder_filename, NULL, NULL, revert_recorder_filename);
-    current_sep = make_inter_variable_separator(aud_box);
-
-    prf = prefs_row_with_toggle("automatically open the recorded sound", S_recorder_autoload,
-				rts_recorder_autoload = rec_autoload(),
-				aud_box, 
-				recorder_autoload_toggle);
-    remember_pref(prf, reflect_recorder_autoload, save_recorder_autoload, NULL, NULL, revert_recorder_autoload);
-    current_sep = make_inter_variable_separator(aud_box);
-
-    str = mus_format("%d", rts_recorder_buffer_size = rec_buffer_size());
-    prf = prefs_row_with_text("input buffer size", S_recorder_buffer_size, 
-			      str,
-			      aud_box,
-			      recorder_buffer_size_text);
-    remember_pref(prf, reflect_recorder_buffer_size, save_recorder_buffer_size, NULL, NULL, revert_recorder_buffer_size);
-    FREE(str);
-    current_sep = make_inter_variable_separator(aud_box);
-
-    rts_recorder_output_chans = rec_output_chans();
-    prf = prefs_row_with_radio_box("default recorder output sound attributes: chans", S_recorder_out_chans,
-				   recorder_out_chans_choices, NUM_RECORDER_OUT_CHANS_CHOICES, -1,
-				   aud_box,
-				   recorder_output_chans_choice);
-    reflect_recorder_output_chans(prf);
-    remember_pref(prf, reflect_recorder_output_chans, save_recorder_output_chans, NULL, NULL, revert_recorder_output_chans);
-
-    rts_recorder_srate = rec_srate();
-    prf = prefs_row_with_radio_box("srate", S_recorder_srate,
-				   recorder_srate_choices, NUM_RECORDER_SRATE_CHOICES, -1,
-				   aud_box,
-				   recorder_srate_choice);
-    reflect_recorder_srate(prf);
-    remember_pref(prf, reflect_recorder_srate, save_recorder_srate, NULL, NULL, revert_recorder_srate);
-
-    rts_recorder_output_header_type = rec_output_header_type();
-    prf = prefs_row_with_radio_box("header type", S_recorder_out_header_type,
-				   recorder_out_type_choices, NUM_RECORDER_OUT_TYPE_CHOICES, -1,
-				   aud_box,
-				   recorder_output_header_type_choice);
-    recorder_output_header_type_prf = prf;
-    remember_pref(prf, reflect_recorder_output_header_type, save_recorder_output_header_type, NULL, NULL, revert_recorder_output_header_type);
-
-    rts_recorder_output_data_format = rec_output_data_format();
-    prf = prefs_row_with_radio_box("data format", S_recorder_out_data_format,
-				   recorder_out_format_choices, NUM_RECORDER_OUT_FORMAT_CHOICES, -1,
-				   aud_box,
-				   recorder_output_data_format_choice);
-    recorder_output_data_format_prf = prf;
-    remember_pref(prf, reflect_recorder_output_data_format, save_recorder_output_data_format, NULL, NULL, revert_recorder_output_data_format);
-    reflect_recorder_output_header_type(recorder_output_header_type_prf);
-    reflect_recorder_output_data_format(recorder_output_data_format_prf);
   }
 
   set_dialog_widget(PREFERENCES_DIALOG, preferences_dialog);

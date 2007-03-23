@@ -177,38 +177,6 @@
 			    " ..............................X"
 			    " XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
 	    
-	    (icon-rec-pane (list
-			    "32 25 4 1"
-			    "       c white"
-			    ".      c blue"
-			    "X      c black"
-			    "o      c red"
-			    "                                "
-			    " ..............................X"
-			    " ..............................X"
-			    " ..............................X"
-			    " ..............................X"
-			    " ..............................X"
-			    " ..ooooo....oooooo....oooo.....X"
-			    " ..oooooo...oooooo...oo..oo....X"
-			    " ..oo...oo..oo......oo....oo...X"
-			    " ..oo...oo..oo......oo....oo...X"
-			    " ..oo...oo..oo......oo.........X"
-			    " ..oo...oo..oooooo..oo.........X"
-			    " ..oooooo...oooooo..oo.........X"
-			    " ..oo..oo...oo......oo.........X"
-			    " ..oo...oo..oo......oo.........X"
-			    " ..oo...oo..oo......oo....oo...X"
-			    " ..oo...oo..oooooo...oo..oo....X"
-			    " ..oo...oo..oooooo....oooo.....X"
-			    " ..............................X"
-			    " ..............................X"
-			    " ..............................X"
-			    " ..............................X"
-			    " ..............................X"
-			    " ..............................X"
-			    " XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
-	    
 	    (icon-undo-it (list
 			   "32 25 3 1"
 			   "       c white"
@@ -1095,11 +1063,6 @@
 		  (if (not (null? (sounds))) 
 		      (mix-file-dialog)))
 		"Mix file")
-	  
-	  (list icon-rec-pane
-		(lambda (w c i) 
-		  (recorder-dialog))
-		"Recorder")
 	  
 	  (list icon-env-edit
 		(lambda (w c i) 

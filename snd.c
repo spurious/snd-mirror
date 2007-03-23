@@ -195,8 +195,6 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Tracking_Cursor_Style = DEFAULT_TRACKING_CURSOR_STYLE;
   ss->cursor_proc = XEN_UNDEFINED;
   ss->cursor_proc_loc = NOT_A_GC_LOC;
-  ss->Vu_Size = DEFAULT_VU_SIZE;
-  ss->Vu_In_dB = DEFAULT_VU_IN_DB;
   ss->Selection_Creates_Region = DEFAULT_SELECTION_CREATES_REGION;
   ss->Transform_Normalization = DEFAULT_TRANSFORM_NORMALIZATION;
   ss->Zoom_Focus_Style = DEFAULT_ZOOM_FOCUS_STYLE;

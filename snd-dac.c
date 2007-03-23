@@ -1910,7 +1910,6 @@ static bool start_audio_output_1(void)
 	      dac_error();
 	      dac_running = false;
 	      cleanup_dac_hook();
-	      unlock_recording_audio();
 	      if (global_rev) free_reverb();
 	      max_active_slot = -1;
 	      return(false);
@@ -2112,7 +2111,6 @@ static bool start_audio_output(void)
   dac_info *dp;
   int i;
   cursor_time = 0;
-  lock_recording_audio();
   if (start_audio_output_1()) /* number of channels may be less than requested initially */
     {
       for (i = 0; i <= max_active_slot; i++)
@@ -2153,7 +2151,6 @@ static void stop_audio_output(void)
        }
    dac_running = false;
    cleanup_dac_hook();
-   unlock_recording_audio();
    dac_pausing = false;
    if (global_rev) free_reverb();
    max_active_slot = -1;

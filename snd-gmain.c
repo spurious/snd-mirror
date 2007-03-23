@@ -125,8 +125,7 @@ static gint auto_update_check(gpointer context)
 {
   if (auto_update_interval(ss) > 0.0)
     {
-      if ((!(play_in_progress())) && 
-	  (!(record_in_progress())))
+      if (!(play_in_progress()))
 	for_each_sound(sound_not_current);
       auto_update_proc = g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, context, NULL);
     }

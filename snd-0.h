@@ -717,14 +717,6 @@ enum {PRINT_NOT, PRINT_CHAR, PRINT_CLM, PRINT_REGION, PRINT_SYNC, PRINT_SND_FD, 
 #define open_file_dialog_directory(ss) ss->Open_File_Dialog_Directory
 #define set_open_file_dialog_directory(a) ss->Open_File_Dialog_Directory = a
 
-#define vu_size(ss) ss->Vu_Size
-#define set_vu_size(a) ss->Vu_Size = a
-#define DEFAULT_VU_SIZE 1.0
-
-#define vu_in_dB(ss) ss->Vu_In_dB
-#define in_set_vu_in_dB(a) ss->Vu_In_dB = a
-#define DEFAULT_VU_IN_DB false
-
 #define wavelet_type(ss) ss->Wavelet_Type
 #define in_set_wavelet_type(a) ss->Wavelet_Type = a
 #define DEFAULT_WAVELET_TYPE 0

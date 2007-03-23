@@ -42,7 +42,6 @@ bool snd_exit_cleanly(bool force_exit)
   cleanup_dac();
   for_each_normal_chan(remove_temp_files);
   cleanup_region_temp_files();
-  cleanup_recording();
   forget_temps();
 #if MUS_DEBUGGING
   clear_listener_strings();
@@ -562,8 +561,6 @@ static void save_options(FILE *fd)
   if (fneq(spectro_y_angle(ss), DEFAULT_SPECTRO_Y_ANGLE)) pss_sf(fd, S_spectro_y_angle, spectro_y_angle(ss));
   if (fneq(spectro_cutoff(ss), DEFAULT_SPECTRO_CUTOFF)) pss_sf(fd, S_spectro_cutoff, spectro_cutoff(ss));
   if (fneq(spectro_start(ss), DEFAULT_SPECTRO_START)) pss_sf(fd, S_spectro_start, spectro_start(ss));
-  if (fneq(vu_size(ss), DEFAULT_VU_SIZE)) pss_sf(fd, S_vu_size, vu_size(ss));
-  if (vu_in_dB(ss) != DEFAULT_VU_IN_DB) pss_ss(fd, S_vu_in_dB, b2s(vu_in_dB(ss)));
   if (fneq(enved_base(ss), DEFAULT_ENVED_BASE)) pss_sf(fd, S_enved_base, enved_base(ss));
   if (fneq(enved_power(ss), DEFAULT_ENVED_POWER)) pss_sf(fd, S_enved_power, enved_power(ss));
   if (fneq(eps_bottom_margin(ss), DEFAULT_EPS_BOTTOM_MARGIN)) pss_sf(fd, S_eps_bottom_margin, eps_bottom_margin(ss));
@@ -608,7 +605,6 @@ static void save_options(FILE *fd)
     pss_sl(fd, S_tempo_control_bounds, tempo_control_min(ss), tempo_control_max(ss));
   if (in_show_controls(ss) != DEFAULT_SHOW_CONTROLS) pss_ss(fd, S_show_controls, b2s(in_show_controls(ss)));
 
-  save_recorder_state(fd);
   save_colors(fd);
 
   if (fneq(mus_srate(), MUS_DEFAULT_SAMPLING_RATE)) pss_sf(fd, S_mus_srate, mus_srate());
@@ -1230,7 +1226,6 @@ void save_state(const char *save_state_name)
   if (color_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_color_dialog));
   if (orientation_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_orientation_dialog));
   if (region_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_view_regions_dialog));
-  if (record_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_recorder_dialog));
   save_post_it_dialog_state(save_fd);
   save_find_dialog_state(save_fd);
   save_edit_header_dialog_state(save_fd);

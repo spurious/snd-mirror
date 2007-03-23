@@ -35,7 +35,9 @@ int snd_int_pow2(int n)
 off_t snd_off_t_pow2(int n)
 {
   if ((n < 0) || (n > 46)) return(0);
-  return((off_t)ipow2s[n]);
+  if (n < POW2_SIZE)
+    return((off_t)ipow2s[n]);
+  return((off_t)ipow2s[16] * (off_t)ipow2s[n - 16]);  /* can't store an array as above -- compiler complaints */
 }
 
 int snd_to_int_pow2(int n)

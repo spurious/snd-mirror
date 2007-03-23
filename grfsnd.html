@@ -445,13 +445,6 @@ mus-lfloat 	       set-default-output-data-format drop
 mus-interp-linear      set-locsig-type drop
 512                    set-dac-size drop
 mus-audio-default      set-audio-output-device drop
-22050                  set-recorder-srate drop
-2                      set-recorder-out-chans drop
-mus-next               set-recorder-out-header-type drop
-mus-lfloat             set-recorder-out-data-format drop
-mus-audio-dac-out      set-recorder-in-device drop
-2                      set-recorder-in-chans drop
-#t                     set-recorder-autoload drop
 #t                     set-show-indices drop
 0.0                    set-auto-update-interval drop
 #f                     set-trap-segfault drop
@@ -624,9 +617,9 @@ deprecate them someday.
 <p>There are several other resources that set widget sizes: zoomSliderWidth,
 positionSliderWidth, toggleSize, sashSize, sashIndent, channelSashSize, and channelSashIndent.
 And several more color resources: whitecolor (list background),
-blackcolor (recorder VU meter text), redcolor (buttons, VU clipping, etc), 
+blackcolor, redcolor (buttons, VU clipping, etc), 
 greencolor (a few buttons),
-yellowcolor (a few envelope editor buttons), lightbluecolor (the recorder), and lighterbluecolor (the fft option panel).
+yellowcolor (a few envelope editor buttons), lightbluecolor, and lighterbluecolor (the fft option panel).
 </p>
 
 <p>You can experiment with other choices by

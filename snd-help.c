@@ -1464,105 +1464,13 @@ Other track-related functions include: " S_track_track ", " S_track_chans ",\n\
 
 /* ---------------- Recording ---------------- */
 
-static char *record_xrefs[] = {
-  "recorder variables: {" S_recorder_gain "}, etc",
-  "low-level ADC input: {" S_mus_audio_open_input "}",
-#if (!HAVE_FORTH)
-  "process incoming sound: rtio." XEN_FILE_EXTENSION,
-#endif
-  NULL};
-
 void recording_help(void) 
 {
   snd_help_with_xrefs("Record", 
 
-#if HAVE_EXTENSION_LANGUAGE
-"To make a recording, choose 'Record' from the File menu. A window opens with the various \
-recording controls.  The top three panes display the status of the input and output lines. If a \
-channel is active, its meter will glow yellow. If some signal clips during recording, \
-the meter will flash red. The numbers below the channel buttons indicate the signal maximum \
-since it was last reset. The sliders underneath the meters scale the audio data in various ways \
-before it is mixed into the output. The vertical sliders on the right scale the line-in and \
-microphone signals before the meter, and the output signal before it gets to the speaker \
-(these are needed to avoid clipping on input,  and to set the 'monitor' volume of the output \
-independent of the output file volume). \
-\n\n\
-The fourth pane has information about the current output file (its name and so on), and \
-the layout of the window. The buttons on the right can be used to open and close panes \
-painlessly. If the button is not square (a diamond on the SGI), the underlying audio \
-hardware can't handle input from that device at the same time as it reads other 'radio' button \
-devices. So, in that case, opening the panel via the button also turns off the other incompatible \
-device. The fifth pane contains a history of whatever the recorder thought worth \
-reporting. The duration field gives the current output file's duration. The bottom row of \
-buttons dismiss the window, start recording, cancel the current take, and provide some \
-help. There's also a slider on the far right that controls the speaker output volume \
-(independent of the output file volume). \
-\n\n\
-To make a recording, choose the inputs and outputs you want; for example, to record channel \
-A from the microphone to channel A of the output file, click the Microphone panel's A button and \
-the Output panel's A button. Then when you're ready to go, click the Record button. Click it \
-again to finish the recording. \
-\n\n\
-If the record window's VU meters are too big (or too small) for your screen, you can fool around \
-with the variable " S_vu_size " which defaults to 1.0. Set " S_vu_in_dB " to " PROC_TRUE " to get dB scaling. \
-\n\n\
-If you go to the main Snd window while the recorder is active and play a sound, the \
-recorder's audio lines are made inactive to try to reduce confusion.  To re-activate \
-the recorder, press the 'reset' button at the bottom of the window. \
-\n\n\
-Digital input is slightly tricky -- you need to set the sampling rate before you \
-click the 'digital input' button; otherwise you'll get a stuttering effect because the output \
-(monitor) rate doesn't match the input rate.\n\
-\n\
-The recorder-related functions are:\n\
-\n\
-    " S_recorder_autoload ": open recording automatically\n\
-    " S_recorder_buffer_size ": input buffer size\n\
-    " S_recorder_dialog ": start the recorder dialog\n\
-    " S_recorder_file ": output file name\n\
-    " S_recorder_file_hook ": hook for setting output file name\n\
-    " S_recorder_gain "(which-gain): input (sound card) gain\n\
-    " S_recorder_in_amp " (in-chan out-chan): input -> output gain\n\
-    " S_recorder_in_chans ": number of input chans\n\
-    " S_recorder_in_data_format ": incoming data format\n\
-    " S_recorder_in_device ": input device (mus-microphone)\n\
-    " S_recorder_max_duration ": maximum output file length (if set)\n\
-    " S_recorder_out_amp "(out-chan): output gain on out-chan\n\
-    " S_recorder_out_chans ": number of output chans\n\
-    " S_recorder_out_data_format ": output sound data format\n\
-    " S_recorder_out_header_type ": output sound header choice\n\
-    " S_recorder_srate ": sampling rate of recording\n\
-    " S_recorder_trigger ": amplitude at which to start recording (if set)\n",
-
-#else
-"To make a recording, choose 'Record' from the File menu. A window opens with the various \
-recording controls.  The top three panes display the status of the input and output lines. If a \
-channel is active, its meter will glow yellow. If some signal clips during recording, \
-the meter will flash red. The numbers below the channel buttons indicate the signal maximum \
-since it was last reset. The sliders underneath the meters scale the audio data in various ways \
-before it is mixed into the output. The vertical sliders on the right scale the line-in and \
-microphone signals before the meter, and the output signal before it gets to the speaker \
-(these are needed to avoid clipping on input,  and to set the 'monitor' volume of the output \
-independent of the output file volume). \
-\n\n\
-The fourth pane has information about the current output file (its name and so on), and \
-the layout of the window. The buttons on the right can be used to open and close panes \
-painlessly. If the button is not square (a diamond on the SGI), the underlying audio \
-hardware can't handle input from that device at the same time as it reads other 'radio' button \
-devices. So, in that case, opening the panel via the button also turns off the other incompatible \
-device. The fifth pane contains a history of whatever the recorder thought worth \
-reporting. The duration field gives the current output file's duration. The bottom row of \
-buttons dismiss the window, start recording, cancel the current take, and provide some \
-help. There's also a slider on the far right that controls the speaker output volume \
-(independent of the output file volume). \
-\n\n\
-To make a recording, choose the inputs and outputs you want; for example, to record channel \
-A from the microphone to channel A of the output file, click the Microphone panel's A button and \
-the Output panel's A button. Then when you're ready to go, click the Record button. Click it \
-again to finish the recording.",
-#endif
+"This is being totally rewritten.  Nothing works yet.",
 		      WITH_WORD_WRAP,
-		      record_xrefs,
+		      NULL,
 		      NULL);
 }
 
@@ -3248,7 +3156,7 @@ static char **xref_tables[NUM_XREFS] = {
   Deletions_xrefs, Envelopes_xrefs, Filters_xrefs, Searching_xrefs, Insertions_xrefs, Maxamps_xrefs,
   Playing_xrefs, Reversing_xrefs, Saving_xrefs, Smoothing_xrefs, Resampling_xrefs, FFTs_xrefs, Reverb_xrefs,
   Resampling_xrefs, Searching_xrefs, Undo_and_Redo_xrefs, Undo_and_Redo_xrefs, 
-  sync_xrefs, control_xrefs, record_xrefs, header_and_data_xrefs, key_xrefs, Tracks_xrefs, Copying_xrefs,
+  sync_xrefs, control_xrefs, NULL, header_and_data_xrefs, key_xrefs, Tracks_xrefs, Copying_xrefs,
   Noise_Reduction_xrefs, Window_size_and_position_xrefs, Colors_xrefs, control_xrefs, Random_Numbers_xrefs,
   Wavogram_xrefs
 };

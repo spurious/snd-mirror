@@ -180,8 +180,7 @@ static void auto_update_check(XtPointer context, XtIntervalId *id)
 {
   if (auto_update_interval(ss) > 0.0)
     {
-      if ((!(play_in_progress())) && 
-	  (!(record_in_progress())))
+      if (!(play_in_progress()))
 	for_each_sound(sound_not_current);
       auto_update_proc = XtAppAddTimeOut(MAIN_APP(ss),
 					 (unsigned long)(auto_update_interval(ss) * 1000),

@@ -1004,7 +1004,6 @@ XM_TYPE_PTR_1(GtkRecentData_, GtkRecentData*)
 #define C_TO_XEN_GtkTreeViewGridLines(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkTreeViewGridLines(Arg) (GtkTreeViewGridLines)(XEN_TO_C_INT(Arg))
 #define XEN_GtkTreeViewGridLines_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR(cairo_t_, cairo_t*)
 XM_TYPE_PTR(GtkPrintContext_, GtkPrintContext*)
 XM_TYPE_PTR(GtkPageSetup_, GtkPageSetup*)
 XM_TYPE_PTR(GtkPrintOperation_, GtkPrintOperation*)
@@ -1033,6 +1032,7 @@ XM_TYPE_PTR_2(GtkSettings_, GtkSettings*)
 #endif
 
 #if HAVE_CAIRO_CREATE
+XM_TYPE_PTR(cairo_t_, cairo_t*)
 XM_TYPE_PTR(cairo_surface_t_, cairo_surface_t*)
 #define C_TO_XEN_cairo_content_t(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_cairo_content_t(Arg) (cairo_content_t)(XEN_TO_C_INT(Arg))
@@ -29965,6 +29965,13 @@ static XEN gxg_gdk_cairo_region(XEN cr, XEN region)
 #endif
 
 #if HAVE_CAIRO_CREATE
+static XEN gxg_cairo_create(XEN target)
+{
+  #define H_cairo_create "cairo_t* cairo_create(cairo_surface_t* target)"
+  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(target), target, 1, "cairo_create", "cairo_surface_t*");
+  return(C_TO_XEN_cairo_t_(cairo_create(XEN_TO_C_cairo_surface_t_(target))));
+}
+
 static XEN gxg_cairo_version(void)
 {
   #define H_cairo_version "int cairo_version( void)"
@@ -29975,13 +29982,6 @@ static XEN gxg_cairo_version_string(void)
 {
   #define H_cairo_version_string "char* cairo_version_string( void)"
   return(C_TO_XEN_char_(cairo_version_string()));
-}
-
-static XEN gxg_cairo_create(XEN target)
-{
-  #define H_cairo_create "cairo_t* cairo_create(cairo_surface_t* target)"
-  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(target), target, 1, "cairo_create", "cairo_surface_t*");
-  return(C_TO_XEN_cairo_t_(cairo_create(XEN_TO_C_cairo_surface_t_(target))));
 }
 
 static XEN gxg_cairo_reference(XEN cr)
@@ -31605,6 +31605,25 @@ gdouble* [y])"
   XEN_ASSERT_TYPE(XEN_cairo_matrix_t__P(matrix), matrix, 1, "cairo_matrix_transform_point", "cairo_matrix_t*");
   cairo_matrix_transform_point(XEN_TO_C_cairo_matrix_t_(matrix), &ref_x, &ref_y);
   return(XEN_LIST_2(C_TO_XEN_gdouble(ref_x), C_TO_XEN_gdouble(ref_y)));
+}
+
+#endif
+
+#if HAVE_CAIRO_CREATE && CAIRO_HAS_PNG_FUNCTIONS
+static XEN gxg_cairo_image_surface_create_from_png(XEN filename)
+{
+  #define H_cairo_image_surface_create_from_png "cairo_surface_t* cairo_image_surface_create_from_png(char* filename)"
+  XEN_ASSERT_TYPE(XEN_char__P(filename), filename, 1, "cairo_image_surface_create_from_png", "char*");
+  return(C_TO_XEN_cairo_surface_t_(cairo_image_surface_create_from_png((const char*)XEN_TO_C_char_(filename))));
+}
+
+static XEN gxg_cairo_surface_write_to_png(XEN surface, XEN filename)
+{
+  #define H_cairo_surface_write_to_png "cairo_status_t cairo_surface_write_to_png(cairo_surface_t* surface, \
+char* filename)"
+  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(surface), surface, 1, "cairo_surface_write_to_png", "cairo_surface_t*");
+  XEN_ASSERT_TYPE(XEN_char__P(filename), filename, 2, "cairo_surface_write_to_png", "char*");
+  return(C_TO_XEN_cairo_status_t(cairo_surface_write_to_png(XEN_TO_C_cairo_surface_t_(surface), (const char*)XEN_TO_C_char_(filename))));
 }
 
 #endif
@@ -37039,9 +37058,9 @@ XEN_NARGIFY_2(gxg_gdk_cairo_region_w, gxg_gdk_cairo_region)
 #endif
 
 #if HAVE_CAIRO_CREATE
+XEN_NARGIFY_1(gxg_cairo_create_w, gxg_cairo_create)
 XEN_NARGIFY_0(gxg_cairo_version_w, gxg_cairo_version)
 XEN_NARGIFY_0(gxg_cairo_version_string_w, gxg_cairo_version_string)
-XEN_NARGIFY_1(gxg_cairo_create_w, gxg_cairo_create)
 XEN_NARGIFY_1(gxg_cairo_reference_w, gxg_cairo_reference)
 XEN_NARGIFY_1(gxg_cairo_destroy_w, gxg_cairo_destroy)
 XEN_NARGIFY_1(gxg_cairo_save_w, gxg_cairo_save)
@@ -37220,6 +37239,11 @@ XEN_NARGIFY_1(gxg_cairo_matrix_invert_w, gxg_cairo_matrix_invert)
 XEN_NARGIFY_3(gxg_cairo_matrix_multiply_w, gxg_cairo_matrix_multiply)
 XEN_ARGIFY_3(gxg_cairo_matrix_transform_distance_w, gxg_cairo_matrix_transform_distance)
 XEN_ARGIFY_3(gxg_cairo_matrix_transform_point_w, gxg_cairo_matrix_transform_point)
+#endif
+
+#if HAVE_CAIRO_CREATE && CAIRO_HAS_PNG_FUNCTIONS
+XEN_NARGIFY_1(gxg_cairo_image_surface_create_from_png_w, gxg_cairo_image_surface_create_from_png)
+XEN_NARGIFY_2(gxg_cairo_surface_write_to_png_w, gxg_cairo_surface_write_to_png)
 #endif
 
 #if HAVE_CAIRO_GET_USER_DATA
@@ -40884,9 +40908,9 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #endif
 
 #if HAVE_CAIRO_CREATE
+#define gxg_cairo_create_w gxg_cairo_create
 #define gxg_cairo_version_w gxg_cairo_version
 #define gxg_cairo_version_string_w gxg_cairo_version_string
-#define gxg_cairo_create_w gxg_cairo_create
 #define gxg_cairo_reference_w gxg_cairo_reference
 #define gxg_cairo_destroy_w gxg_cairo_destroy
 #define gxg_cairo_save_w gxg_cairo_save
@@ -41065,6 +41089,11 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_cairo_matrix_multiply_w gxg_cairo_matrix_multiply
 #define gxg_cairo_matrix_transform_distance_w gxg_cairo_matrix_transform_distance
 #define gxg_cairo_matrix_transform_point_w gxg_cairo_matrix_transform_point
+#endif
+
+#if HAVE_CAIRO_CREATE && CAIRO_HAS_PNG_FUNCTIONS
+#define gxg_cairo_image_surface_create_from_png_w gxg_cairo_image_surface_create_from_png
+#define gxg_cairo_surface_write_to_png_w gxg_cairo_surface_write_to_png
 #endif
 
 #if HAVE_CAIRO_GET_USER_DATA
@@ -44736,9 +44765,9 @@ static void define_functions(void)
 #endif
 
 #if HAVE_CAIRO_CREATE
+  XG_DEFINE_PROCEDURE(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
   XG_DEFINE_PROCEDURE(cairo_version, gxg_cairo_version_w, 0, 0, 0, H_cairo_version);
   XG_DEFINE_PROCEDURE(cairo_version_string, gxg_cairo_version_string_w, 0, 0, 0, H_cairo_version_string);
-  XG_DEFINE_PROCEDURE(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
   XG_DEFINE_PROCEDURE(cairo_reference, gxg_cairo_reference_w, 1, 0, 0, H_cairo_reference);
   XG_DEFINE_PROCEDURE(cairo_destroy, gxg_cairo_destroy_w, 1, 0, 0, H_cairo_destroy);
   XG_DEFINE_PROCEDURE(cairo_save, gxg_cairo_save_w, 1, 0, 0, H_cairo_save);
@@ -44917,6 +44946,11 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(cairo_matrix_multiply, gxg_cairo_matrix_multiply_w, 3, 0, 0, H_cairo_matrix_multiply);
   XG_DEFINE_PROCEDURE(cairo_matrix_transform_distance, gxg_cairo_matrix_transform_distance_w, 1, 2, 0, H_cairo_matrix_transform_distance);
   XG_DEFINE_PROCEDURE(cairo_matrix_transform_point, gxg_cairo_matrix_transform_point_w, 1, 2, 0, H_cairo_matrix_transform_point);
+#endif
+
+#if HAVE_CAIRO_CREATE && CAIRO_HAS_PNG_FUNCTIONS
+  XG_DEFINE_PROCEDURE(cairo_image_surface_create_from_png, gxg_cairo_image_surface_create_from_png_w, 1, 0, 0, H_cairo_image_surface_create_from_png);
+  XG_DEFINE_PROCEDURE(cairo_surface_write_to_png, gxg_cairo_surface_write_to_png_w, 2, 0, 0, H_cairo_surface_write_to_png);
 #endif
 
 #if HAVE_CAIRO_GET_USER_DATA
@@ -47440,7 +47474,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("12-Mar-07"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("22-Mar-07"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

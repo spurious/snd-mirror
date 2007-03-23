@@ -5,7 +5,6 @@
 
 void display_minibuffer_error(snd_info *sp, const char *str) {fprintf(stderr, "%s\n", str);}
 void clear_minibuffer_error(snd_info *sp) {}
-void reflect_amp_control_bounds_change_in_recorder(void) {}
 void recorder_error(const char *msg) {}
 void snd_help_back_to_top(void) {}
 color_t get_in_between_color(color_t fg, color_t bg) {return(0);}
@@ -209,10 +208,7 @@ void set_enved_wave_p(bool val) {}
 void set_enved_in_dB(bool val) {}
 bool enved_dialog_is_active(void) {return(false);}
 void set_enved_filter_order(int order) {}
-void lock_recording_audio(void) {}
-void unlock_recording_audio(void) {}
 widget_t snd_record_file(void) {return(0);}
-bool record_dialog_is_active(void) {return(false);}
 widget_t make_open_file_dialog(bool read_only, bool managed) {return(0);}
 widget_t make_mix_file_dialog(bool managed) {return(0);}
 widget_t make_insert_file_dialog(bool managed) {return(0);}
@@ -359,7 +355,6 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define " S_mouse_leave_text_hook " (make-hook 1))");
   XEN_EVAL_C_STRING("(define " S_new_widget_hook " (make-hook 1))");
   XEN_EVAL_C_STRING("(define " S_orientation_hook " (make-hook 0))");
-  XEN_EVAL_C_STRING("(define " S_recorder_file_hook " (make-hook 1)) ");
   XEN_EVAL_C_STRING("(define " S_window_property_changed_hook " (make-hook 1))");
 
   XEN_EVAL_C_STRING("(define " S_copy_context " 0)");
@@ -568,7 +563,6 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("$mouse_leave_text_hook = false");
   XEN_EVAL_C_STRING("$new_widget_hook = false");
   XEN_EVAL_C_STRING("$orientation_hook = false");
-  XEN_EVAL_C_STRING("$recorder_file_hook = false");
   XEN_EVAL_C_STRING("$window_property_changed_hook = false");
 
   XEN_EVAL_C_STRING("Copy_context = 0");
@@ -595,7 +589,6 @@ void snd_doit(int argc, char **argv)
 1 #f create-hook " S_mouse_leave_text_hook "\n\
 1 #f create-hook " S_new_widget_hook "\n\
 0 #f create-hook " S_orientation_hook "\n\
-1 #f create-hook " S_recorder_file_hook "\n\
 1 #f create-hook " S_window_property_changed_hook "\n");
 
   XEN_EVAL_C_STRING("\

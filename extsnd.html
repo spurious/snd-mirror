@@ -2402,33 +2402,6 @@ This is intended to make it possible to read user-typing in the listener.
 </pre></td></tr></table></td></tr><tr><td></td><td colspan=2></td></tr>
 
 
-<!-- recorder-file-hook -->
-<tr><td colspan=3 bgcolor="#f6f8ff">
-<code><a class=def name="recorderfilehook">recorder-file-hook</a> (name)</code>
-</td></tr><tr><td></td><td colspan=2>
-This hook is called when 'Record' is pressed in the recorder dialog; it is passed the current recorder output filename.
-If it returns a string, that becomes the output filename.
-
-<table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(add-hook! <em class=red>recorder-file-hook</em>
-  (lambda (name)
-    (let* ((header (<a class=quiet href="#recorderoutheadertype">recorder-out-header-type</a>))
-	   (extension (if (or (= header <a class=quiet href="#headertype">mus-aifc</a>) (= header <a class=quiet href="#headertype">mus-aiff</a>)) ".aif"
-			  (if (= header <a class=quiet href="#headertype">mus-next</a>) ".snd"
-			      ".wav"))))
-      (if name
-	  (let ((len (string-length name)))
-	    (do ((i 0 (1+ i)))
-		((or (= i len)
-		     (char=? (string-ref name i) #\.))
-		 (string-append (if (&gt; i 1)
-				    (substring name 0 i)
-				    "test")
-				extension))))
-	  (string-append "test" extension)))))
-</pre></td></tr></table></td></tr><tr><td colspan=3 height=16></td></tr>
-
-
 <!-- save-hook -->
 <tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="savehook">save-hook</a> (snd name)</code> [<b>or</b>]
@@ -3968,7 +3941,7 @@ This function doesn't set the header choices for output of recording; it simply 
     <em class=listener>"Sun/Next"</em>
 </pre>
 The default sound output header choice is <a href="#defaultoutputheadertype">default-output-header-type</a>,
-the recorder's output default is <a href="#recorderoutheadertype">recorder-out-header-type</a>, a sound file's
+a sound file's
 header type is <a href="#mussoundheadertype">mus-sound-header-type</a>, the CLM (with-sound) header default
 is *clm-header-type*, and an opened sound's header type is <a href="#headertype">header-type</a>. 
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -9127,7 +9100,6 @@ There are several srates floating around in Snd.
 <code>default-output-srate</code> is the default sampling rate used when opening new files.  
 <code>enved-srate</code> is a constant that can be assigned to the envelope editor's <code>enved-target</code> (to apply an envelope to the sampling rate).  
 <code>region-srate</code> is the sampling rate associated with a region.  
-<code>recorder-srate</code> is the sampling rate of the ADC.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -11393,119 +11365,10 @@ This creates and (if 'managed' which defaults to #t) activates the File:Print di
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- recorder-autoload -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderautoload">recorder-autoload</a> ()</code>
-</td></tr><tr><td></td><td>
-This reflects the state of the '<a href="snd.html#Xautoload">autoload</a>' button in the recorder dialog.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- recorder-buffer-size -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderbuffersize">recorder-buffer-size</a> ()</code>
-</td></tr><tr><td></td><td>
-This is the size of the recorder input buffer (there's a trade-off between responsiveness and clicks in some cases).
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- recorder-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderdialog">recorder-dialog</a> ()</code>
 </td></tr><tr><td></td><td>
 This starts the <a href="snd.html#recordfile">recorder</a> window, returning the dialog widget.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- recorder-file -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderfile">recorder-file</a> ()</code>
-</td></tr><tr><td></td><td>
-This is the default recorder output file name.  Se also <a href="#recorderfilehook">recorder-file-hook</a>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- recorder-gain -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recordergain">recorder-gain</a> (gain)</code>
-</td></tr><tr><td></td><td>
-This is the recorder input (sound card) gain.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- recorder-in-amp -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderinamp">recorder-in-amp</a> (in out)</code>
-</td></tr><tr><td></td><td>
-This is the recorder input channel 'in' to output channel 'out' amplitude.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- recorder-in-chans -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderinchans">recorder-in-chans</a> ()</code>
-</td></tr><tr><td></td><td>
-This is the number of recorder input channels (default is 0 = ask the audio card how many channels it can handle).
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- recorder-in-data-format -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderindataformat">recorder-in-data-format</a> ()</code>
-</td></tr><tr><td></td><td>
-This is the incoming data format for the recorder. Its default is 16-bit linear.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- recorder-in-device -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderindevice">recorder-in-device</a> ()</code>
-</td></tr><tr><td></td><td>
-This is the recorder input device.
-<pre>
-    (set! (recorder-in-device) mus-audio-line-in)
-</pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- recorder-max-duration -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recordermaxduration">recorder-max-duration</a> ()</code>
-</td></tr><tr><td></td><td>
-This is the maximum output file length (in seconds) that the recorder will write.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- recorder-out-amp -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderoutamp">recorder-out-amp</a> (out)</code>
-</td></tr><tr><td></td><td>
-This is the recorder output channel 'out' amplitude.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- recorder-out-chans -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderoutchans">recorder-out-chans</a> ()</code>
-</td></tr><tr><td></td><td>
-This is the number of output channels in the recorder (the default is 2).
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- recorder-out-data-format -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderoutdataformat">recorder-out-data-format</a> ()</code>
-</td></tr><tr><td></td><td>
-This is the recorder's output data format.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- recorder-out-header-type -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderoutheadertype">recorder-out-header-type</a> ()</code>
-</td></tr><tr><td></td><td>
-This is the recorder's output header type.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- recorder-srate -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recordersrate">recorder-srate</a> ()</code>
-</td></tr><tr><td></td><td>
-This is the recorder's sampling rate.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- recorder-trigger -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recordertrigger">recorder-trigger</a> ()</code>
-</td></tr><tr><td></td><td>
-This is the recorder's auto-trigger value.  If the input amplitude gets louder than this value, the
-recorder starts writing output.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -11766,22 +11629,6 @@ This starts the <a href="snd.html#regionbrowser">region browser</a> (a no-op if 
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="viewtracksdialog">view-tracks-dialog</a> ()</code>
 </td></tr><tr><td></td><td>
 This creates and activates the View:Tracks dialog, returning the dialog widget.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- vu-in-dB -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vuindb">vu-in-dB</a> ()</code>
-</td></tr><tr><td></td><td>
-This controls whether the recorder VU meters use a dB scale (the default is #f = linear).  There is
-apparently a "British Standard" for these silly things, which only goes to show that some people have no
-sense of humor.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- vu-size -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vusize">vu-size</a> ()</code>
-</td></tr><tr><td></td><td>
-This is the overall size of the recorder VU meters (the default is 1.0).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

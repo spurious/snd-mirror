@@ -918,31 +918,6 @@
     (set! (print-length) (print-length))
     (if (not (equal? (print-length)  12 )) 
 	(snd-display ";print-length set def: ~A" (print-length)))
-    (set! (recorder-autoload) (recorder-autoload))
-    (if (not (equal? (recorder-autoload)  #f)) 
-	(snd-display ";recorder-autoload set def: ~A" (recorder-autoload)))
-    (set! (recorder-buffer-size) (recorder-buffer-size))
-    (if (not (equal? (recorder-buffer-size)  4096 )) 
-	(snd-display ";recorder-buffer-size set def: ~A" (recorder-buffer-size)))
-    (set! (recorder-file) (recorder-file))
-    (if (or (not (string? (recorder-file)))
-	    (not (string=? (recorder-file) "test.snd")))
-	(snd-display ";recorder-file set def: ~A" (recorder-file)))
-    (set! (recorder-max-duration) (recorder-max-duration))
-    (if (fneq (recorder-max-duration)  1000000.0)
-	(snd-display ";recorder-max-duration set def: ~A" (recorder-max-duration)))
-    (set! (recorder-out-chans) (recorder-out-chans))
-    (if (not (equal? (recorder-out-chans)  2 )) 
-	(snd-display ";recorder-out-chans set def: ~A" (recorder-out-chans)))
-    (set! (recorder-in-chans) (recorder-in-chans))
-    (if (not (equal? (recorder-in-chans)  0 )) 
-	(snd-display ";recorder-in-chans set def: ~A" (recorder-in-chans)))
-    (set! (recorder-srate) (recorder-srate))
-    (if (not (equal? (recorder-srate)  22050 )) 
-	(snd-display ";recorder-srate set def: ~A" (recorder-srate)))
-    (set! (recorder-trigger) (recorder-trigger))
-    (if (fneq (recorder-trigger)  0.0)
-	(snd-display ";recorder-trigger set def: ~A" (recorder-trigger)))
     (set! (save-state-file) (save-state-file))
     (if (not (equal? (save-state-file)  "saved-snd.scm" )) 
 	(snd-display ";save-state-file set def: ~A" (save-state-file)))
@@ -1040,12 +1015,6 @@
     (set! (with-verbose-cursor) (with-verbose-cursor))
     (if (not (equal? (with-verbose-cursor)  #f)) 
 	(snd-display ";with-verbose-cursor set def: ~A" (with-verbose-cursor)))
-    (set! (vu-size) (vu-size))
-    (if (fneq (vu-size)  1.0 )
-	(snd-display ";vu-size set def: ~A" (vu-size)))
-    (set! (vu-in-dB) (vu-in-dB))
-    (if (vu-in-dB)
-	(snd-display ";vu-in-dB set def: ~A" (vu-in-dB)))
     (set! (wavelet-type) (wavelet-type))
     (if (not (equal? (wavelet-type)  0 )) 
 	(snd-display ";wavelet-type set def: ~A" (wavelet-type)))
@@ -1244,14 +1213,6 @@
       'optimization (optimization) 0
       'print-length (print-length) 12 
       'read-only (without-errors (read-only)) 'no-such-sound
-      'recorder-autoload (recorder-autoload) #f
-      'recorder-buffer-size (recorder-buffer-size) 4096 
-      'recorder-file (recorder-file) "test.snd"
-      'recorder-in-chans (recorder-in-chans) 0
-      'recorder-max-duration (recorder-max-duration) 1000000.0
-      'recorder-out-chans (recorder-out-chans) 2 
-      'recorder-srate (recorder-srate) 22050 
-      'recorder-trigger (recorder-trigger) 0.0
       'region-graph-style (region-graph-style) graph-lines
       'reverb-control-feedback (reverb-control-feedback) 1.09
       'reverb-control-length (without-errors (reverb-control-length)) 'no-such-sound
@@ -1299,8 +1260,6 @@
       'transform-type (transform-type) 0 
       'view-files-sort (view-files-sort) 0
       'view-files-sort (view-files-sort) 0 
-      'vu-in-dB (vu-in-dB) #f
-      'vu-size (vu-size) 1.0 
       'wavelet-type (wavelet-type) 0 
       'wavo-hop (wavo-hop) 3 
       'wavo-trace (wavo-trace) 64 
@@ -1838,12 +1797,6 @@
 	(list 'transform-normalization transform-normalization normalize-by-channel dont-normalize)
 	(list 'view-files-sort view-files-sort 0 1)
 	(list 'print-length print-length 12 16)
-	(list 'recorder-autoload recorder-autoload #f #t)
-	(list 'recorder-out-chans recorder-out-chans 2 1)
-	(list 'recorder-in-chans recorder-in-chans 0 1)
-	(list 'recorder-buffer-size recorder-buffer-size 4096 256)
-	(list 'recorder-max-duration recorder-max-duration 1000000.0 1000.0)
-	(list 'recorder-trigger recorder-trigger 0.0 0.1)
 	(list 'region-graph-style region-graph-style graph-lines graph-lollipops)
 	(list 'reverb-control-decay reverb-control-decay 1.0 2.0)
 	(list 'reverb-control-feedback reverb-control-feedback 1.09 1.6)
@@ -1882,8 +1835,6 @@
 	(list 'tiny-font tiny-font "6x12" "9x15")
 	(list 'transform-type transform-type 0 1)
 	(list 'with-verbose-cursor with-verbose-cursor #f #t)
-	(list 'vu-size vu-size 1.0 2.0)
-	(list 'vu-in-dB vu-in-dB #f #t)
 	(list 'wavelet-type wavelet-type 0 1)
 	(list 'time-graph? time-graph? #f #t)
 	(list 'time-graph-type time-graph-type graph-once graph-as-wavogram)
@@ -2193,11 +2144,8 @@
 		       'pulse-train? 'pushed-button-color 'quit-button-color 'radians->degrees 'radians->hz
 		       'ramp-channel 'rand 'rand-interp 'rand-interp? 'rand?
 		       'read-hook 'read-mix-sample 'read-only 'read-peak-env-info-file 'read-region-sample
-		       'read-sample 'read-track-sample 'readin 'readin? 'recorder-autoload
-		       'recorder-buffer-size 'recorder-dialog 'recorder-file 'recorder-file-hook 'recorder-gain
-		       'recorder-in-amp 'recorder-in-chans 'recorder-in-data-format 'recorder-in-device 'recorder-max-duration
-		       'recorder-out-amp 'recorder-out-chans 'recorder-out-data-format 'recorder-out-header-type 'recorder-srate
-		       'recorder-trigger 'rectangular->polar 'rectangular-window 'redo 'redo-edit
+		       'read-sample 'read-track-sample 'readin 'readin? 
+		       'rectangular->polar 'rectangular-window 'redo 'redo-edit
 		       'region->vct 'region-chans 'region-home 'region-frames 'region-graph-style 'region-maxamp
 		       'region-maxamp-position 'region-position 'region-sample 'region-sample-reader? 'region-srate
 		       'region? 'regions 'remove-from-menu 'report-in-minibuffer 'reset-button-color
@@ -2262,7 +2210,7 @@
 		       'vector->vct 'view-files-amp 'view-files-amp-env
 		       'view-files-dialog 'view-files-files 'view-files-select-hook 'view-files-selected-files 'view-files-sort
 		       'view-files-speed 'view-files-speed-style 'view-mixes-dialog 'view-regions-dialog 'view-sound
-		       'view-tracks-dialog 'vu-size 'vu-in-dB 'walsh-transform
+		       'view-tracks-dialog 'walsh-transform
 		       'wave-train 'wave-train? 'wavelet-transform 'wavelet-type 'waveshape
 		       'waveshape? 'wavo-hop 'wavo-trace 'welch-window 'widget-position
 		       'widget-size 'widget-text 'window-height 'window-property 'window-property-changed-hook
@@ -27777,27 +27725,6 @@ EDITS: 2
 	    (let ((wid (insert-file-dialog #f)))
 	      (if (not (equal? wid (list-ref (dialog-widgets) 23)))
 		  (snd-display ";insert-file-dialog-> ~A ~A" wid (list-ref (dialog-widgets) 23))))
-	    (if (not (provided? 'snd-gtk))
-		(begin
-					;(recorder-dialog) 
-		  (set! (recorder-file) "hiho.snd")
-		  (if (not (string=? (recorder-file) "hiho.snd")) (snd-display ";set-recorder-file: ~A?" (recorder-file)))
-		  (set! (recorder-in-data-format) mus-mulaw)
-		  (if (not (= (recorder-in-data-format) mus-mulaw)) (snd-display ";set-recorder-in-data-format: ~A?" (recorder-in-data-format)))
-		  (set! (recorder-in-device) mus-audio-line-in)
-		  (if (not (= (recorder-in-device) mus-audio-line-in)) (snd-display ";set-recorder-in-device: ~A?" (recorder-in-device)))
-		  (set! (recorder-out-data-format) mus-mulaw)
-		  (if (not (= (recorder-out-data-format) mus-mulaw)) (snd-display ";set-recorder-out-data-format: ~A?" (recorder-out-data-format)))
-		  (set! (recorder-out-header-type) mus-aifc)
-		  (if (not (= (recorder-out-header-type) mus-aifc)) (snd-display ";set-recorder-out-header-type: ~A?" (recorder-out-header-type)))
-		  (set! (recorder-srate) 44100)
-		  (if (not (= (recorder-srate) 44100)) (snd-display ";set-recorder-srate: ~A?" (recorder-srate)))
-		  (set! (recorder-gain 0) 0.5)
-		  (if (fneq (recorder-gain 0) 0.5) (snd-display ";set-recorder-gain: ~A?" (recorder-gain 0)))
-		  (set! (recorder-out-amp 0) 0.5)
-		  (if (> (abs (- (recorder-out-amp 0) 0.5)) .01) (snd-display ";set-recorder-out-amp: ~A?" (recorder-out-amp 0)))
-		  (set! (recorder-in-amp 0 0) 0.5)
-		  (if (> (abs (- (recorder-in-amp 0 0) 0.5)) .01) (snd-display ";set-recorder-in-amp: ~A?" (recorder-in-amp 0 0)))))
 	    (let ((held (help-dialog "Test" "snd-test here")))
 	      (if (not (= (length (menu-widgets)) 7)) (snd-display ";menu-widgets: ~A?" (menu-widgets)))
 	      (if (not (equal? (widget-position (car (menu-widgets))) (list 0 0)))
@@ -28753,38 +28680,11 @@ EDITS: 2
     (close-sound fd)
     
     (set! fd (open-sound "obtest.snd"))
-    (if (and (defined? 'window-property)
-	     (not (provided? 'snd-nogui)))
-	(begin
-	  (let ((names (short-file-name #t)))
-	    (set! retitle-time 0)
-	    (title-with-date)
-	    (if (provided? 'xm) (XSynchronize (XtDisplay (cadr (main-widgets))) #t))
-	    (set! (window-property "SND_VERSION" "WM_NAME")
-		  (format #f "snd (~A)~A"
-			  (strftime "%d-%b %H:%M %Z" (localtime (current-time)))
-			  (if (null? names)
-			      ""
-			      (format #f ":~{~A~^, ~}" names)))))
-	  (let ((gotit #f)
-		(oldsize (vu-size)))
-	    (add-hook! window-property-changed-hook (lambda (hi) (set! gotit #t) #f))
-	    (set! (window-property "SND_VERSION" "SND_COMMAND") "(set! (vu-size) .5)")
-	    (if (not (string=? (window-property "SND_VERSION" "SND_COMMAND") "(set! (vu-size) .5)"))
-		(snd-display ";window-property: ~A" (window-property "SND_VERSION" "SND_COMMAND")))
-	    (reset-hook! window-property-changed-hook)
-	    (set! (window-property "SND_VERSION" "SND_COMMAND") "(make-vector 10 3.14)")
-	    (if (provided? 'xm) (XSynchronize (XtDisplay (cadr (main-widgets))) #f))
-	    (if (and gotit ; this old trick never works...
-		     (fneq (vu-size) 0.5))
-		(snd-display ";set window-property vu-size (should be 0.5): ~A" (vu-size)))
-	    (set! (vu-size) oldsize))))
     
     (let ((ctr 0))
       (let ((added 0))
 	(reset-hook! close-hook)
 	(set! (with-background-processes) #t)
-	(set! (vu-size) 1.25)
 	(add-hook! new-widget-hook
 		   (lambda (w)
 		     (set! added (+ added 1))))
@@ -52781,93 +52681,6 @@ EDITS: 1
 		   (close-sound ind)
 		   ))
 	       
-	       ;; -------- recorder dialog
-	       (if (provided? 'snd-debug)
-		   (begin
-		     (add-hook! recorder-file-hook
-				(lambda (name)
-				  (let* ((header (recorder-out-header-type))
-					 (extension (if (or (= header mus-aifc) (= header mus-aiff)) ".aif"
-							(if (= header mus-next) ".snd"
-							    ".wav"))))
-				    (if name
-					(let ((len (string-length name)))
-					  (do ((i 0 (1+ i)))
-					      ((or (= i len)
-						   (char=? (string-ref name i) #\.))
-					       (string-append (if (> i 1)
-								  (substring name 0 i)
-								  "test")
-							      extension))))
-					(string-append "test" extension)))))
-		     (let ((wid (recorder-dialog)))
-		       (if (not (equal? wid (list-ref (dialog-widgets) 18)))
-			   (snd-display ";recorder-dialog -> ~A ~A" wid (list-ref (dialog-widgets) 18))))
-		     (let* ((recd (list-ref (dialog-widgets) 18)))
-		       (if recd ; /dev/mixer trouble sometimes here
-			   (let* ((record-button (find-child recd "record-button"))
-				  (reset-button (XmMessageBoxGetChild recd XmDIALOG_CANCEL_BUTTON))
-				  (dismiss-button (XmMessageBoxGetChild recd XmDIALOG_OK_BUTTON))
-				  (panes (find-child recd "rec-panes"))
-				  (file-pane (find-child panes "file-pane"))
-				  (fdata (find-child file-pane "file-data"))
-				  (ff (find-child fdata "ff-form"))
-				  (file-text (find-child ff "text"))
-				  (buttons '())
-				  (sliders '())
-				  (numbers '()))
-			     (for-each-child recd (lambda (w) 
-						    (if (and (XmIsPushButton w) 
-							     (or (string=? (XtName w) "A")
-								 (string=? (XtName w) " ")
-								 (string=? (XtName w) "/")
-								 (string=? (XtName (XtParent w)) "data")))
-							(set! buttons (cons w buttons)))
-						    (if (and (XmIsPushButton w) 
-							     (string=? (XtName w) "recorder-amp-number")) 
-							(set! numbers (cons w numbers)))
-						    (if (and (XmIsScrollBar w) 
-							     (or (string=? (XtName w) "amp")
-								 (string=? (XtName w) "trigger-scale")))
-							(set! sliders (cons w sliders)))))
-			     (XmTextSetString file-text "fmv.snd")
-			     (for-each (lambda (w) (click-button w #t)) buttons)
-			     (for-each (lambda (w) (click-button w #t)) numbers)
-			     (for-each
-			      (lambda (w)
-				(XtCallCallbacks w XmNdragCallback
-						 (let ((cb (XmScrollBarCallbackStruct)))
-						   (set! (.value cb) 65)
-						   (set! (.event cb) (XEvent))
-						   cb)))
-			      sliders)
-			     (set! (with-background-processes) #t)
-			     (click-button record-button #t)
-			     (click-button record-button #f)
-			     (click-button record-button #t)
-			     (click-button reset-button #t)
-			     (set! (with-background-processes) #f)
-			     (if (and (string? (recorder-file))
-				      (not (string=? (recorder-file) (string-append (getcwd) "/fmv.wav"))))
-				 (snd-display ";recorder-file after hook: ~A" (recorder-file)))
-			     (reset-hook! recorder-file-hook)
-			     (click-button reset-button)
-			     (for-each-child recd (lambda (w)
-						    (if (or (XmIsText w)
-							    (XmIsTextField w))
-							(begin
-							  (widget-string w "1")
-							  (key-event w snd-return-key 0)
-							  (force-event))
-							(if (and (XmIsLabel w)
-								 (or (string=? (XtName w) "i")
-								     (string=? (XtName w) "n")
-								     (string=? (XtName w) "out")))
-							    (begin
-							      (drag-event w 1 0 0 0 50 10)
-							      (force-event))))))
-			     (click-button dismiss-button))))))
-	       
 	       ;; -------- edit find dialog
 	       
 	       (let ((wid (find-dialog)))
@@ -54505,25 +54318,6 @@ EDITS: 1
 				     (snd-display ";why is print dialog alive?"))))
 			     (snd-display ";no print dialog?"))
 			 (close-sound ind)))
-		     
-		     ;; ---------------- recorder dialog ----------------
-		     (let ((old-val (with-background-processes)))
-		       (set! (with-background-processes) #f) ; turns off recorder background process altogether
-		       (if (not (list-ref (dialog-widgets) 18))
-			   (recorder-dialog))
-		       (if (Widget? (list-ref (dialog-widgets) 18))
-			   (let* ((recd (list-ref (dialog-widgets) 18))
-				  (file-pane (find-child recd "file-pane"))
-				  (record (find-child recd "record-button"))
-				  ;; cancel -> reset, ok -> dismiss
-				  )
-			     (if (not (XtIsManaged recd)) (XtManageChild recd))
-			     (click-button record) (force-event)
-			     (click-button record) (force-event)
-			     (click-button (XmMessageBoxGetChild recd XmDIALOG_CANCEL_BUTTON)) (force-event)
-			     (click-button (XmMessageBoxGetChild recd XmDIALOG_OK_BUTTON)) (force-event)
-			     ))
-		       (set! (with-background-processes) old-val))
 		     
 		     ;; ---------------- preferences dialog ----------------
 		     (let* ((prefs (preferences-dialog))
@@ -63467,14 +63261,11 @@ EDITS: 1
 		     position-color position->x position->y add-directory-to-view-files-list add-file-to-view-files-list view-files-sort 
 		     view-files-amp view-files-speed view-files-files view-files-selected-files view-files-speed-style view-files-amp-env
 		     print-length progress-report prompt-in-minibuffer pushed-button-color read-only
-		     recorder-in-device read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog
-		     recorder-file recorder-gain recorder-in-amp recorder-in-data-format recorder-max-duration recorder-out-amp
-		     recorder-out-chans recorder-out-data-format recorder-out-header-type recorder-srate recorder-trigger redo 
-		     region-chans view-regions-dialog region-home 
+		     read-peak-env-info-file redo region-chans view-regions-dialog region-home 
 		     region-graph-style region-frames region-position region-maxamp region-maxamp-position 
 		     selection-maxamp selection-maxamp-position region-sample region->vct clear-minibuffer
 		     region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
-		     restore-region reverb-control-decay reverb-control-feedback recorder-in-chans
+		     restore-region reverb-control-decay reverb-control-feedback 
 		     reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
 		     reverse-selection revert-sound right-sample sample sample-reader-at-end?  sample-reader? samples sample-reader-position
 		     sash-color save-controls ladspa-dir save-dir save-edit-history save-envelopes
@@ -63494,7 +63285,7 @@ EDITS: 1
 		     text-focus-color tiny-font track-sample-reader?  region-sample-reader? transform-dialog transform-sample
 		     transform->vct transform-frames transform-type trap-segfault with-file-monitor optimization unbind-key undo
 		     update-transform-graph update-time-graph update-lisp-graph update-sound run-safety clm-table-size
-		     with-verbose-cursor view-sound vu-size vu-in-dB wavelet-type
+		     with-verbose-cursor view-sound wavelet-type
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 		     with-mix-tags with-relative-panes with-gl write-peak-env-info-file x-axis-style beats-per-measure
 		     beats-per-minute x-bounds x-position-slider x->position x-zoom-slider mus-header-type->string mus-data-format->string
@@ -63593,13 +63384,10 @@ EDITS: 1
 			 mix-amp-env mix-tag-position mix-chans mix-color mix-locked? mix-inverted? mix-name mix-position
 			 mix-speed mix-speed-style mix-tag-height mix-tag-width mix-tag-y mark-tag-width mark-tag-height 
 			 mix-waveform-height transform-normalization open-file-dialog-directory
-			 equalize-panes position-color recorder-in-device view-files-sort print-length pushed-button-color
+			 equalize-panes position-color view-files-sort print-length pushed-button-color
 			 view-files-amp view-files-speed view-files-speed-style view-files-amp-env
-			 view-files-files 
-			 view-files-selected-files 
-			 recorder-autoload recorder-buffer-size recorder-file recorder-gain recorder-in-amp
-			 recorder-in-data-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-data-format recorder-out-header-type
-			 recorder-srate region-graph-style recorder-trigger reverb-control-decay reverb-control-feedback recorder-in-chans
+			 view-files-files view-files-selected-files 
+			 region-graph-style reverb-control-decay reverb-control-feedback
 			 reverb-control-length reverb-control-lowpass reverb-control-scale time-graph-style lisp-graph-style transform-graph-style
 			 reverb-control? sash-color ladspa-dir save-dir save-state-file selected-data-color selected-graph-color
 			 selection-color selection-creates-region show-axes show-backtrace show-controls
@@ -63607,7 +63395,7 @@ EDITS: 1
 			 show-y-zero show-grid show-sonogram-cursor sinc-width spectro-cutoff spectro-hop spectro-start spectro-x-angle  grid-density
 			 spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
 			 speed-control-style speed-control-tones squelch-update sync sound-properties temp-dir text-focus-color tiny-font y-bounds
-			 transform-type trap-segfault with-file-monitor optimization with-verbose-cursor vu-size vu-in-dB wavelet-type x-bounds
+			 transform-type trap-segfault with-file-monitor optimization with-verbose-cursor wavelet-type x-bounds
 			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
 			 with-relative-panes  window-x window-y window-width window-height mix-dialog-mix track-dialog-track beats-per-measure
 			 channels chans colormap comment data-format data-location data-size edit-position frames header-type maxamp
@@ -64384,13 +64172,11 @@ EDITS: 1
 			    listener-color listener-font listener-prompt listener-text-color max-regions
 			    minibuffer-history-length mix-waveform-height region-graph-style position-color
 			    time-graph-style lisp-graph-style transform-graph-style peaks-font bold-peaks-font
-			    view-files-sort print-length pushed-button-color recorder-in-device recorder-autoload
-			    recorder-buffer-size recorder-file recorder-in-data-format recorder-max-duration recorder-out-chans recorder-in-chans
-			    recorder-out-data-format recorder-out-header-type recorder-srate recorder-trigger sash-color ladspa-dir save-dir save-state-file
+			    view-files-sort print-length pushed-button-color sash-color ladspa-dir save-dir save-state-file
 			    selected-channel selected-data-color selected-graph-color 
 			    selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener
 			    show-selection-transform sinc-width temp-dir text-focus-color tiny-font
-			    trap-segfault with-file-monitor optimization unbind-key with-verbose-cursor vu-size vu-in-dB window-height beats-per-measure
+			    trap-segfault with-file-monitor optimization unbind-key with-verbose-cursor window-height beats-per-measure
 			    window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
 			    mix-tag-width with-relative-panes run-safety clm-table-size mark-tag-width mark-tag-height
 			    quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color

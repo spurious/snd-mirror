@@ -1596,4 +1596,14 @@ Reverb-feedback sets the scaler on the feedback.
 
     (cairo_destroy cr)))
 
+;;; to write out an image as a png file:
+
+  (let* ((surface (cairo_image_surface_create CAIRO_FORMAT_RGB24 width height))
+	 (cr (cairo_create surface)))
+    ;; now draw using cr
+    (cairo_surface_flush surface)
+    (cairo_surface_write_to_png surface "test.png")
+    (cairo_surface_destroy surface)
+    (cairo_destroy cr))
+
 |#

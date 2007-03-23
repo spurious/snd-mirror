@@ -9,13 +9,10 @@
 
 /*
  * TODO: check ATS
- * TODO: run cmn test (beam-width?)
- * TODO: check out glitz, sc all.lisp bsd problem
  * TODO: static intel mac snd with minimal needs
  * PERHAPS: background-gradient (0 = none)
  * PERHAPS: happy-face as progress bar: frown to smile + color change (blue->yellow)?
  * TODO: colormaps need not be saved as arrays in simple cases
- * TODO: grec segfaults 308 [when this is fixed, fix snd-gmenu]
  * TODO: segfaults in snd-test [mus-interp-type type error realloc problem?]
  */
 

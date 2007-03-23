@@ -478,13 +478,7 @@ void g_init_gxen(void);
 
 /* -------- snd-grec.c -------- */
 
-void lock_recording_audio(void);
-void unlock_recording_audio(void);
-void cleanup_recording(void);
-widget_t snd_record_file(void);
-bool record_dialog_is_active(void);
-void reflect_amp_control_bounds_change_in_recorder(void);
-void g_init_gxrec(void);
+widget_t record_file(void);
 
 
 

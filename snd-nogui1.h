@@ -299,21 +299,21 @@ void track_dialog_set_track(int id);
 void show_track_background_wave(int pts, bool two_sided);
 
 
+
 /* -------- snd-xrec.c -------- */
 
-void lock_recording_audio(void);
-void unlock_recording_audio(void);
-void cleanup_recording(void);
 widget_t snd_record_file(void);
-bool record_dialog_is_active(void);
-void reflect_amp_control_bounds_change_in_recorder(void);
+
 
 
 /* -------- snd-gxutils.c -------- */
+
 bool send_mozilla(const char *html_viewer, const char *url);
 
 
+
 /* -------- snd-xprint.c -------- */
+
 widget_t make_file_print_dialog(bool managed, bool direct_to_printer);
 void save_print_dialog_state(FILE *fd);
 
