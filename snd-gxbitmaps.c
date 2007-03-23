@@ -467,6 +467,7 @@ static char * mic_xpm[] = {
 "X----XX----X",
 "XXXXXXXXXXXX"};
 
+#if 0
 char **mic_bits(void) {return(mic_xpm);}
 
 static char *cd_xpm[] = {
@@ -506,6 +507,7 @@ static char *line_in_xpm[] = {
 "------------"};
 
 char **line_in_bits(void) {return(line_in_xpm);}
+#endif
 
 static char *pan_xpm[] = {
 "14 12 2 1",

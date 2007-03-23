@@ -22,7 +22,6 @@ void save_post_it_dialog_state(FILE *fd) {}
 void reflect_just_sounds(void) {}
 void save_file_dialog_state(FILE *fd) {}
 void draw_line(axis_context *ax, int x0, int y0, int x1, int y1) {}
-void draw_point(axis_context *ax, point_t point, int size) {}
 void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height) {}
 void fill_polygon(axis_context *ax, int points, ...) {}
 void fill_polygons(axis_context *ax, point_t *points, int num, int y0) {}
@@ -208,7 +207,7 @@ void set_enved_wave_p(bool val) {}
 void set_enved_in_dB(bool val) {}
 bool enved_dialog_is_active(void) {return(false);}
 void set_enved_filter_order(int order) {}
-widget_t snd_record_file(void) {return(0);}
+widget_t record_file(void) {return(0);}
 widget_t make_open_file_dialog(bool read_only, bool managed) {return(0);}
 widget_t make_mix_file_dialog(bool managed) {return(0);}
 widget_t make_insert_file_dialog(bool managed) {return(0);}

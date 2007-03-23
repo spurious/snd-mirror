@@ -13,7 +13,6 @@
  * PERHAPS: background-gradient (0 = none)
  * PERHAPS: happy-face as progress bar: frown to smile + color change (blue->yellow)?
  * TODO: colormaps need not be saved as arrays in simple cases
- * TODO: segfaults in snd-test [mus-interp-type type error realloc problem?]
  */
 
 
@@ -65,6 +64,7 @@ void draw_dot(axis_context *ax, int x, int y, int size)
 #endif
 }
 
+#if 0
 void draw_arc(axis_context *ax, int x, int y, int size, int angle0, int angle1)
 {
 #if USE_CAIRO
@@ -75,7 +75,9 @@ void draw_arc(axis_context *ax, int x, int y, int size, int angle0, int angle1)
   gdk_draw_arc(ax->wn, ax->gc, false, x - size / 2, y - size / 2, size, size, angle0 * 64, angle1 * 64);
 #endif
 }
+#endif
 
+#if 0
 void draw_point(axis_context *ax, GdkPoint point, int size)
 {
 #if USE_CAIRO
@@ -86,6 +88,7 @@ void draw_point(axis_context *ax, GdkPoint point, int size)
   else draw_dot(ax, point.x, point.y, size);
 #endif
 }
+#endif
 
 void draw_points(axis_context *ax, point_t *points, int num, int size)
 {
@@ -126,7 +129,6 @@ void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width,
 #else
   {
     /* try gradient background: looks ok, but display is slow */
-    /*   if we use this stuff, the cursor becomes much more difficult since the current bg color is always different */
     cairo_pattern_t *pat;
     /* this is shaded toward the right
        pat = cairo_pattern_create_linear(0, 0, width, height);

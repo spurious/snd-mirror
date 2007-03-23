@@ -14,6 +14,8 @@
  *     HAVE_GTK_TREE_VIEW_GET_VISIBLE_RANGE for 2.7.3
  *     HAVE_GTK_LINK_BUTTON_NEW for 2.9.0
  *     HAVE_GTK_LABEL_GET_LINE_WRAP_MODE for 2.10.0
+ *     HAVE_CAIRO_CREATE for cairo
+ *     HAVE_CAIRO_GET_USER_DATA for cairo 1.4.0
  *
  * reference args initial values are usually ignored, resultant values are returned in a list.
  * null ptrs are passed and returned as #f, trailing "user_data" callback function arguments are optional (default: #f).
@@ -47474,7 +47476,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("22-Mar-07"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("23-Mar-07"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

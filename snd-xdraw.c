@@ -102,6 +102,7 @@ void draw_points(axis_context *ax, point_t *points, int num, int size)
     }
 }
 
+#if 0
 void draw_point(axis_context *ax, point_t point, int size)
 {
   if (size == 1)
@@ -113,6 +114,7 @@ void draw_point(axis_context *ax, point_t point, int size)
 	     size, size, 0, 
 	     360 * 64);
 }
+#endif
 
 void draw_dot(axis_context *ax, int x, int y, int size)
 {

@@ -15,7 +15,6 @@ void snd_help_back_to_top(void);
 void draw_line(axis_context *ax, int x0, int y0, int x1, int y1);
 void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height);
 void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width, int height);
-void draw_point(axis_context *ax, point_t point, int size);
 void fill_polygon(axis_context *ax, int points, ...);
 void fill_polygons(axis_context *ax, point_t *points, int num, int y0);
 void fill_two_sided_polygons(axis_context *ax, point_t *points, point_t *points1, int num);
@@ -302,7 +301,7 @@ void show_track_background_wave(int pts, bool two_sided);
 
 /* -------- snd-xrec.c -------- */
 
-widget_t snd_record_file(void);
+widget_t record_file(void);
 
 
 

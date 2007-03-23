@@ -18,7 +18,6 @@ bool help_dialog_is_active(void);
 void draw_line(axis_context *ax, int x0, int y0, int x1, int y1);
 void draw_lines(axis_context *ax, point_t *points, int num);
 void draw_points(axis_context *ax, point_t *points, int num, int size);
-void draw_point(axis_context *ax, point_t point, int size);
 void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height);
 void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width, int height);
 void fill_polygon(axis_context *ax, int points, ...);
