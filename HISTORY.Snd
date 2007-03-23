@@ -1,5 +1,6 @@
 Snd change log
 
+ 23-Mar:     recorder dialog removed.
  22-Mar:     Snd 8.9.
  14-Mar:     cairo graphics backend (--with-cairo configure choice).
  1-Mar:      open-file-dialog-directory.

@@ -576,9 +576,6 @@ void make_icons_transparent(char *color)
   sprintf(bg_line, "-      c %s s %s", color, color); /* the background color isn't known at compile time */
   speaker_xpm[1] = bg_line;
   blue_speaker_xpm[1] = bg_line;
-  mic_xpm[1] = bg_line;
-  cd_xpm[1] = bg_line;
-  line_in_xpm[1] = bg_line;
   pan_xpm[1] = bg_line;
 #endif
 }

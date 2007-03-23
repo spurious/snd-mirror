@@ -506,12 +506,11 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+23-Mar:  recorder dialog removed -- a new one is underway...\n\
 22-Mar:  Snd 8.9.\n\
 14-Mar:  cairo graphics backend (--with-cairo configure choice).\n\
 1-Mar:   open-file-dialog-directory.\n\
 26-Feb:  clean.scm.\n\
-17-Feb:  File:Close all menu if more than one sound open.\n\
-14-Feb:  three more fft window choices.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",
