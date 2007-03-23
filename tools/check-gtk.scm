@@ -113,6 +113,9 @@
 (define* (CAIRO-FUNC data #:optional spec)
   (fgrep (cadr-str data) 210))
 
+(define* (CAIRO-PNG-FUNC data #:optional spec)
+  (fgrep (cadr-str data) 210))
+
 (define* (CAIRO-FUNC-140 data #:optional spec)
   (fgrep (cadr-str data) 140))
 

@@ -5576,12 +5576,6 @@
 ;; 11.2: + double pango_matrix_get_font_scale_factor (PangoMatrix *matrix);
 
 (CFNC-290 "PangoAttrList* pango_attr_list_ref PangoAttrList* list")
-;(CFNC-290 "void pango_cairo_context_set_hinting PangoContext* context gboolean hinting")
-;(CFNC-290 "gboolean pango_cairo_context_get_hinting PangoContext* context")
-;(CFNC-290 "void pango_cairo_context_set_font_options PangoContext* context cairo_font_options_t* options")
-;(CFNC-290 "const cairo_font_options_t* pango_cairo_context_get_font_options PangoContext* context")
-;(CFNC-290 "void pango_cairo_context_set_resolution PangoContext* context double dpi")
-;(CFNC-290 "gdouble pango_cairo_context_get_resolution PangoContext* context")
 ;;;;(CFNC-290 "GType pango_item_get_type void")
 ;;;;(CFNC-290 "GType pango_layout_line_get_type void")
 (CFNC-290 "PangoLayoutLine* pango_layout_line_ref PangoLayoutLine* line")
@@ -6014,6 +6008,11 @@
 (CSTR-210 "GTK_PRINT_SETTINGS_OUTPUT_FILE_FORMAT")
 (CSTR-210 "GTK_PRINT_SETTINGS_OUTPUT_URI")
 
+
+
+(CAIRO-FUNC "cairo_t* cairo_create cairo_surface_t* target") ; try to make cairo_t declaration independent of 210
+
+
 ;;;;;(CFNC-210 "GType gtk_printer_get_type void")
 ;(CFNC-210 "GtkPrinter* gtk_printer_new gchar* name GtkPrintBackend* backend gboolean virtual_")
 ;(CFNC-210 "GtkPrintBackend* gtk_printer_get_backend GtkPrinter* printer")
@@ -6340,7 +6339,7 @@
 
 (CAIRO-FUNC "int cairo_version void")
 (CAIRO-FUNC "char* cairo_version_string void" 'const)
-(CAIRO-FUNC "cairo_t* cairo_create cairo_surface_t* target")
+;moved up a ways to get cairo_t under HAVE_CAIRO_CREATE (CAIRO-FUNC "cairo_t* cairo_create cairo_surface_t* target")
 (CAIRO-FUNC "cairo_t* cairo_reference cairo_t* cr")
 (CAIRO-FUNC "void cairo_destroy cairo_t* cr")
 (CAIRO-FUNC "void cairo_save cairo_t* cr")
@@ -6524,6 +6523,11 @@
 
 (CAIRO-STRUCT-make "cairo_matrix_t")
 
+
+(CAIRO-PNG-FUNC "cairo_surface_t* cairo_image_surface_create_from_png char* filename" 'const)
+(CAIRO-PNG-FUNC "cairo_status_t cairo_surface_write_to_png cairo_surface_t* surface char* filename" 'const)
+
+;;; these need to be on the cairo switch also
 (CFNC-210 "PangoLayout* pango_cairo_create_layout cairo_t* cr")
 (CFNC-210 "void pango_cairo_update_layout cairo_t* cr PangoLayout* layout")
 (CFNC-210 "void pango_cairo_update_context cairo_t* cr PangoContext* context")
@@ -6584,4 +6588,5 @@
 (CAIRO-FUNC-140 "cairo_status_t cairo_pattern_get_linear_points cairo_pattern_t* pattern double* [x0] double* [y0] double* [x1] double* [y1]")
 (CAIRO-FUNC-140 "cairo_status_t cairo_pattern_get_radial_circles cairo_pattern_t* pattern double* [x0] double* [y0] double* [r0] double* [x1] double* [y1] double* [r1]")
 (CAIRO-FUNC-140 "cairo_scaled_font_t* cairo_get_scaled_font cairo_t* cr")
+
 
