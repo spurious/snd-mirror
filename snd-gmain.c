@@ -354,6 +354,10 @@ static void save_a_color(FILE *Fp, const char *def_name, color_info *current_col
 	    RGB_TO_FLOAT(current_color->blue));
 #endif /* not forth */
 #endif /* ext lang */
+
+#if USE_CAIRO
+  FREE(default_color); /* macro has rgb_to_color which allocates */
+#endif
 }
 
 void save_colors(FILE *Fp)

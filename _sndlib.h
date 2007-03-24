@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 20
-#define SNDLIB_REVISION 3
-#define SNDLIB_DATE "3-Feb-07"
+#define SNDLIB_REVISION 4
+#define SNDLIB_DATE "26-Mar-07"
 
 #include <mus-config.h>
 
@@ -520,6 +520,7 @@ void mus_reset_io_c(void);
 void mus_reset_headers_c(void);
 void mus_reset_audio_c(void);
 
+int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Float *maxes);
 
 
 /* -------- headers.c -------- */

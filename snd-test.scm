@@ -35,7 +35,7 @@
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)
-(define keep-going #f)
+(define keep-going #t)
 (define all-args #f)
 (define test-at-random 0)
 ;(show-ptree 1)
@@ -64348,7 +64348,7 @@ EDITS: 1
 		(check-error-tag 'wrong-type-arg (lambda () (set! (tempo-control-bounds) (list 0.0))))
 		(check-error-tag 'wrong-type-arg (lambda () (set! (tempo-control-bounds) (list 0.0 "hiho"))))
 		(check-error-tag 'wrong-type-arg (lambda () (make-variable-graph #f)))
-		(check-error-tag 'arg-error (lambda () (make-variable-graph (list-ref (main-widgets) 1))))
+		(if (provided? 'snd-motif) (check-error-tag 'arg-error (lambda () (make-variable-graph (list-ref (main-widgets) 1)))))
 		(check-error-tag 'cannot-print (lambda () (graph->ps)))
 		(let ((ind (open-sound "oboe.snd"))) 
 		  (set! (selection-creates-region) #t)

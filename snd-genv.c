@@ -238,7 +238,7 @@ static void apply_enved(void)
 	    }
 	  set_sensitive(applyB, true);
 	  set_sensitive(apply2B, true);
-	  set_stock_button_label(cancelB, _("Dismiss"));
+	  set_stock_button_label(cancelB, _("Go Away"));
 	}
     }
 }
@@ -847,7 +847,7 @@ GtkWidget *create_envelope_editor(void)
       helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(helpB, "help_button");
 
-      cancelB = sg_button_new_from_stock_with_label("Dismiss", GTK_STOCK_QUIT);
+      cancelB = sg_button_new_from_stock_with_label("Go Away", GTK_STOCK_QUIT);
       gtk_widget_set_name(cancelB, "quit_button");
 
       applyB = gtk_button_new_from_stock(GTK_STOCK_APPLY);

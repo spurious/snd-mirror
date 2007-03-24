@@ -122,7 +122,7 @@ int sg_text_width(const char *txt, PangoFontDescription *font)
     {
       pango_layout_set_font_description(layout, font);
       pango_layout_set_text(layout, txt, -1);
-      pango_layout_get_pixel_size(layout, &wid, NULL);
+      pango_layout_get_pixel_size(layout, &wid, NULL); /* huge (6MBytes!) memleak here */
       g_object_unref(G_OBJECT(layout));
     }
   g_object_unref(ctx);
@@ -187,7 +187,7 @@ static int sg_font_height(PangoFontDescription *font)
 #endif
 
   ctx = gdk_pango_context_get();
-  m = pango_context_get_metrics(ctx, font, gtk_get_default_language());
+  m = pango_context_get_metrics(ctx, font, gtk_get_default_language()); /* huge memleak here, but what can I do? */
   hgt = (int)((dpi / 72.0) * PANGO_PIXELS(pango_font_metrics_get_ascent(m)));
   pango_font_metrics_unref(m);
   g_object_unref(ctx);
@@ -481,6 +481,7 @@ color_t rgb_to_color(Float r, Float g, Float b)
 #if USE_CAIRO
   color_info *ccolor;
   ccolor = (color_info *)CALLOC(1, sizeof(color_info));
+  /* TODO: memleak here! */
   ccolor->red = r;
   ccolor->green = g;
   ccolor->blue = b;

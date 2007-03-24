@@ -630,7 +630,7 @@ Widget make_mix_dialog(void)
       char amplab[LABEL_BUFFER_SIZE];
 
       mix_dialog_id = any_mix_id();
-      xdismiss = XmStringCreateLocalized(_("Dismiss"));
+      xdismiss = XmStringCreateLocalized(_("Go Away"));
       xapply = XmStringCreateLocalized(_("Apply Env"));
       xhelp = XmStringCreateLocalized(_("Help"));
       xtitle = XmStringCreateLocalized(_("Mixes"));
@@ -1745,7 +1745,7 @@ Widget make_track_dialog(void)
       XGCValues v;
 
       track_dialog_id = any_track_id();
-      xdismiss = XmStringCreateLocalized(_("Dismiss"));
+      xdismiss = XmStringCreateLocalized(_("Go Away"));
       xapply = XmStringCreateLocalized(_("Apply Env"));
       xhelp = XmStringCreateLocalized(_("Help"));
       xtitle = XmStringCreateLocalized(_("Tracks"));

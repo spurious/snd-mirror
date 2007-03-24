@@ -233,7 +233,7 @@ static void apply_enved(void)
 	  if (enved_wave_p(ss)) env_redisplay();
 	  set_sensitive(applyB, true);
 	  set_sensitive(apply2B, true);
-	  set_button_label(cancelB, _("Dismiss"));
+	  set_button_label(cancelB, _("Go Away"));
 	}
     }
 }
@@ -868,7 +868,7 @@ Widget create_envelope_editor(void)
       char str[LABEL_BUFFER_SIZE];
 
       /* -------- DIALOG -------- */
-      xdismiss = XmStringCreateLocalized(_("Dismiss"));
+      xdismiss = XmStringCreateLocalized(_("Go Away"));
       xhelp = XmStringCreateLocalized(_("Help"));
       titlestr = XmStringCreateLocalized(_("Edit Envelope"));
       xapply = XmStringCreateLocalized(_("Apply"));

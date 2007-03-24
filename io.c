@@ -1573,3 +1573,109 @@ off_t mus_oclamp(off_t lo, off_t val, off_t hi)
       return(lo); 
     else return(val);
 }
+
+
+
+/* raw sample data peak value (without per-sample conversion) */
+
+int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Float *maxes)
+{
+  /* returns MUS_ERROR if format can't be handled */
+  /*   assumes maxes arrays has at least chans elements and that data array has at least bytes bytes */
+  int chan, bytes_per_sample, bytes_per_frame;
+  unsigned char *eod, *samp;
+  bytes_per_sample = mus_bytes_per_sample(format);
+  bytes_per_frame = bytes_per_sample * chans;
+  eod = (unsigned char *)(data + bytes);
+  for (chan = 0; chan < chans; chan++)
+    {
+      maxes[chan] = 0.0;
+      switch (format)
+	{
+	case MUS_BSHORT:
+	  {
+	    short max_samp = 0;
+	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp += bytes_per_frame; samp < eod)
+	      {
+		short val;
+		val = big_endian_short(samp);
+		if (val < 0) val = -val;
+		if (val > max_samp) max_samp = val;
+	      }
+	    maxes[chan] = (Float)max_samp / 32768.0;
+	  }
+	  break;
+	case MUS_LSHORT:
+	  {
+	    short max_samp = 0;
+	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp += bytes_per_frame; samp < eod)
+	      {
+		short val;
+		val = little_endian_short(samp);
+		if (val < 0) val = -val;
+		if (val > max_samp) max_samp = val;
+	      }
+	    maxes[chan] = (Float)max_samp / 32768.0;
+	  }
+	  break;
+	case MUS_MULAW:  	              
+	  {
+	    short max_samp = 0;
+	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp += bytes_per_frame; samp < eod)
+	      {
+		short val;
+		val = mulaw[*samp];
+		if (val < 0) val = -val;
+		if (val > max_samp) max_samp = val;
+	      }
+	    maxes[chan] = (Float)max_samp / 32768.0;
+	  }
+	  break;
+	case MUS_ALAW:                  
+	  {
+	    short max_samp = 0;
+	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp += bytes_per_frame; samp < eod)
+	      {
+		short val;
+		val = alaw[*samp];
+		if (val < 0) val = -val;
+		if (val > max_samp) max_samp = val;
+	      }
+	    maxes[chan] = (Float)max_samp / 32768.0;
+	  }
+	  break;
+	case MUS_BFLOAT:
+	  {
+	    float max_samp = 0.0;
+	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp += bytes_per_frame; samp < eod)
+	      {
+		float val;
+		val = big_endian_float(samp);
+		if (val < 0.0) val = -val;
+		if (val > max_samp) max_samp = val;
+	      }
+	    maxes[chan] = (Float)max_samp;
+	  }
+	  break;
+	case MUS_LFLOAT:
+	  {
+	    float max_samp = 0.0;
+	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp += bytes_per_frame; samp < eod)
+	      {
+		float val;
+		val = little_endian_float(samp);
+		if (val < 0.0) val = -val;
+		if (val > max_samp) max_samp = val;
+	      }
+	    maxes[chan] = (Float)max_samp;
+	  }
+	  break;
+	default:
+	  /* int cases are problematic because the scaling is unknown */
+	  /* byte, double, 24-bit, and unsigned short and unscaled cases are absurd */
+	  return(MUS_ERROR);
+	  break;
+	}
+    }
+  return(MUS_NO_ERROR);
+}

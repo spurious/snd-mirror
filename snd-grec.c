@@ -1,28 +1,43 @@
 #include "snd.h"
 
-/* vu meters (click=on?) white/yellow/red bgs, needle
- *    needle max without data conversion
+/* vu meters white=reading/yellow=recording/red=clipped bgs, needle
  * output file widget
  * buttons ("Record/Stop" to turn on off)
- *
- * use whatever input device is the default, using all its current settings
- *   write data as received
- * local check_for_event, no global bg func
- *
  * current vu sizes: 100x40 200x70 300x90 400x110
+ * perhaps buttons for chans/srate?
  */
 
+
 static GtkWidget *recorder = NULL;
+static bool reading = false, recording = false;
+static char *recorder_output_filename = NULL;
+static int recorder_fd = -1, recorder_srate = 44100, recorder_chans = 2, recorder_format = MUS_LFLOAT;
+static off_t recorder_total_bytes = 0;
+
+
+static void stop_recording(void)
+{
+  recording = false;
+  mus_sound_close_output(recorder_fd, recorder_total_bytes);
+}
 
 static gint close_recorder(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   /* window manager close button */
+  if (recording)
+    stop_recording();
+  reading = false;
+  gtk_widget_hide(recorder);
   return(true);
 }
 
 static void quit_recorder(GtkWidget *w, gpointer context) 
 {
   /* Quit button in the recorder dialog */
+  if (recording)
+    stop_recording();
+  reading = false;
+  gtk_widget_hide(recorder);
 }
 
 static void recorder_help(GtkWidget *w, gpointer context) 
@@ -30,8 +45,93 @@ static void recorder_help(GtkWidget *w, gpointer context)
   recording_help();
 }
 
+static void display_meters(Float *maxes, int chans)
+{
+  fprintf(stderr,"%.3f ", maxes[0]);
+}
+
+static void start_recording(void)
+{
+  recorder_fd = mus_sound_open_output(recorder_output_filename, recorder_srate, recorder_chans, recorder_format, MUS_NEXT, NULL);
+  if (recorder_fd < 0)
+    recording = false;
+  else recording = true;
+}
+
+static void start_reading(void)
+{
+  Float *maxes;
+  #define MIXER_SIZE 8
+  Float mixer_vals[MIXER_SIZE];
+  int input_device, buffer_size, err = MUS_NO_ERROR;
+  unsigned char *inbuf;
+
+  mus_audio_mixer_read(MUS_AUDIO_DEFAULT, MUS_AUDIO_CHANNEL, MIXER_SIZE, mixer_vals);
+  recorder_chans = (int)mixer_vals[0];
+  if (recorder_chans > 4) recorder_chans = 8;
+  if (recorder_chans <= 0)
+    {
+      reading = false;
+      return;
+    }
+
+  mus_audio_mixer_read(MUS_AUDIO_DEFAULT, MUS_AUDIO_SRATE, MIXER_SIZE, mixer_vals);
+  recorder_srate = (int)mixer_vals[0];
+  /* TODO: can srate return be a list -- choose 44100 if possible */
+  if (recorder_srate <= 0)
+    {
+      reading = false;
+      return;
+    }
+
+  mus_audio_mixer_read(MUS_AUDIO_DEFAULT, MUS_AUDIO_FORMAT, MIXER_SIZE, mixer_vals);  
+  /* TODO: get best */
+  recorder_format = MUS_LFLOAT;
+
+  /* TODO: buffer size */
+  buffer_size = 256;
+  
+  input_device = mus_audio_open_input(MUS_AUDIO_DEFAULT, recorder_srate, recorder_chans, recorder_format, buffer_size);
+  if (input_device < 0)
+    {
+      reading = false;
+      return;
+    }
+
+  maxes = (Float *)CALLOC(recorder_chans, sizeof(Float));
+  inbuf = (unsigned char *)CALLOC(buffer_size, sizeof(unsigned char *));
+  /* TODO: do all the reads return char? */
+
+  while (true)
+    {
+      err = mus_audio_read(input_device, (char *)inbuf, buffer_size);
+      if (err != MUS_NO_ERROR) break;
+      if (recording)
+	{
+	  write(recorder_fd, (char *)inbuf, buffer_size);
+	  recorder_total_bytes += buffer_size;
+	}
+      check_for_event();  /* watch for close event or "go away" clicked */
+      if (!reading) break;
+      err = mus_samples_peak(inbuf, buffer_size, recorder_chans, recorder_format, maxes);
+      if (err != MUS_ERROR) 
+	display_meters(maxes, recorder_chans);
+    }
+
+  mus_audio_close(input_device);
+  FREE(inbuf);
+  FREE(maxes);
+
+  /* TODO: if err, report it */
+}
+
 static void start_or_stop_recorder(GtkWidget *w, gpointer context) 
 {
+  if (recording)
+    stop_recording();
+  else start_recording();
+
+  /* if recording button="Stop" else button="Record" */
 }
 
 widget_t record_file(void) 
@@ -71,10 +171,13 @@ widget_t record_file(void)
       gtk_widget_show(record_button);
       gtk_widget_show(help_button);
 
+      set_dialog_widget(RECORDER_DIALOG, recorder);
 
 
-      gtk_widget_show(recorder);
+      
     }
+  gtk_widget_show(recorder);
+  start_reading();
   return(recorder);
 }
 

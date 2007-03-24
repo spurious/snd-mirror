@@ -209,7 +209,6 @@ need a String or Symbol, not %s"
   $before_save_as_hook          = Hook.new("$before_save_as_hook", 7)
   # unless --with-no-gui
   $color_hook                   = Hook.new("$color_hook", 0)
-  $recorder_file_hook           = Hook.new("$recorder_file_hook", 1)
   # if --with-gtk
   $gtk_popup_hook               = Hook.new("$gtk_popup_hook", 5)
 end
@@ -338,7 +337,6 @@ if defined? $after_graph_hook
 
   unless provided? :snd_nogui
     Snd_hooks.push($color_hook)
-    Snd_hooks.push($recorder_file_hook)
   end
   if provided? :snd_gtk
     Snd_hooks.push($gtk_popup_hook)

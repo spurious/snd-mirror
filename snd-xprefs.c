@@ -1698,7 +1698,7 @@ widget_t start_preferences_dialog(void)
     revert = XmStringCreateLocalized(_("Revert"));
     clear = XmStringCreateLocalized(_("Clear"));
     save = XmStringCreateLocalized(_("Save"));
-    dismiss = XmStringCreateLocalized(_("Dismiss"));
+    dismiss = XmStringCreateLocalized(_("Go Away"));
 
     n = 0;
     XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;

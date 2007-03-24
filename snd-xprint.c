@@ -191,7 +191,7 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       xmstr1 = XmStringCreateLocalized(_("Print"));  /* "ok" here is confusing -- might mean, ok I'm done */
       xmstr2 = XmStringCreateLocalized(_("Help"));
-      xmstr3 = XmStringCreateLocalized(_("Dismiss"));
+      xmstr3 = XmStringCreateLocalized(_("Go Away"));
       titlestr = XmStringCreateLocalized(_("Print"));
 
       XtSetArg(args[n], XmNmessageString, xmstr4); n++;

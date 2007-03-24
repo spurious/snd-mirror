@@ -1197,12 +1197,12 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
 
   w = MAIN_SHELL(ss);
 
-  /* -------- titles -- 'Dismiss' is changed later to 'Cancel' in some cases */
+  /* -------- titles -- 'Go Away' is changed later to 'Cancel' in some cases */
   s1 = XmStringCreateLocalized(select_title);
   s2 = XmStringCreateLocalized(title);
   ok_label = XmStringCreateLocalized(title);
   filter_list_label = XmStringCreateLocalized(_("files listed:"));
-  cancel_label = XmStringCreateLocalized(_("Dismiss"));
+  cancel_label = XmStringCreateLocalized(_("Go Away"));
 
   n = 0;
   if (open_file_dialog_directory(ss))
@@ -5596,7 +5596,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       Widget amp_label, speed_label, env_frame;
       Widget bframe, bform;
 
-      xdismiss = XmStringCreateLocalized(_("Dismiss"));
+      xdismiss = XmStringCreateLocalized(_("Go Away"));
       xhelp = XmStringCreateLocalized(_("Help"));
       titlestr = XmStringCreateLocalized(_("Files"));
       new_viewer_str = XmStringCreateLocalized(_("New Viewer"));

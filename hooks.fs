@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Aug 08 23:27:50 CEST 2006
-\ Changed: Wed Jan 24 00:37:57 CET 2007
+\ Changed: Fri Mar 23 21:39:11 CET 2007
 
 \ snd-hooks         Array with all Snd hooks.
 \ reset-all-hooks   ( -- )
@@ -71,7 +71,6 @@ require examp
      play-hook
      print-hook
      read-hook
-     'snd-nogui provided? [unless] recorder-file-hook [then]
      save-hook
      save-state-hook
      select-channel-hook

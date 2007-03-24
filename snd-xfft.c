@@ -534,7 +534,7 @@ Widget fire_up_transform_dialog(bool managed)
 	    size_pos = i + 1;
 	    break;
 	  }
-      xdismiss = XmStringCreateLocalized(_("Dismiss")); /* needed by template dialog */
+      xdismiss = XmStringCreateLocalized(_("Go Away")); /* needed by template dialog */
       xhelp = XmStringCreateLocalized(_("Help"));
       xtitle = XmStringCreateLocalized(_("Transform Options"));
       xorient = XmStringCreateLocalized(_("Orientation"));

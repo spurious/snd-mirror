@@ -2544,6 +2544,8 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
           linux_audio_close(fd);
           return(MUS_NO_ERROR);
           break;
+
+	  /* this only if device is MUS_AUDIO_MIXER or DAC_FILTER -- should use some other name! */
         case MUS_AUDIO_FORMAT: /* this is asking for configuration info -- we return an array with per-"device" channels */
           ioctl(fd, SOUND_MIXER_READ_STEREODEVS, &stereodevs);
 	  for (ind = 0; ind <= MUS_AUDIO_SYNTH; ind++) {if (chan > ind) val[ind] = 0;}
@@ -2615,12 +2617,12 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 	  */
 #endif
 	  ind = 0;
-	  if (formats & (to_oss_format(MUS_BYTE)))    {ind++; if (chan > ind) val[ind] = MUS_BYTE;}
  	  if (formats & (to_oss_format(MUS_BSHORT)))  {ind++; if (chan > ind) val[ind] = MUS_BSHORT;}
-	  if (formats & (to_oss_format(MUS_UBYTE)))   {ind++; if (chan > ind) val[ind] = MUS_UBYTE;}
+	  if (formats & (to_oss_format(MUS_LSHORT)))  {ind++; if (chan > ind) val[ind] = MUS_LSHORT;}
 	  if (formats & (to_oss_format(MUS_MULAW)))   {ind++; if (chan > ind) val[ind] = MUS_MULAW;}
 	  if (formats & (to_oss_format(MUS_ALAW)))    {ind++; if (chan > ind) val[ind] = MUS_ALAW;}
-	  if (formats & (to_oss_format(MUS_LSHORT)))  {ind++; if (chan > ind) val[ind] = MUS_LSHORT;}
+	  if (formats & (to_oss_format(MUS_BYTE)))    {ind++; if (chan > ind) val[ind] = MUS_BYTE;}
+	  if (formats & (to_oss_format(MUS_UBYTE)))   {ind++; if (chan > ind) val[ind] = MUS_UBYTE;}
 	  if (formats & (to_oss_format(MUS_UBSHORT))) {ind++; if (chan > ind) val[ind] = MUS_UBSHORT;}
 	  if (formats & (to_oss_format(MUS_ULSHORT))) {ind++; if (chan > ind) val[ind] = MUS_ULSHORT;}
 	  val[0] = ind;
@@ -7625,7 +7627,6 @@ int mus_audio_mixer_read(int dev1, int field, int chan, float *val)
       val[0] = 44100;
       break;
     case MUS_AUDIO_FORMAT:
-      /* never actually used except perhaps play.scm */
       val[0] = 1.0;
 #if MUS_LITTLE_ENDIAN
       val[1] = MUS_LFLOAT;

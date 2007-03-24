@@ -327,7 +327,7 @@ static void create_help_monolog(void)
   XmRenderTable rs = NULL;
   titlestr = XmStringCreateLocalized(_("Help"));
   forward = XmStringCreateLocalized(_("Forward"));
-  dismiss = XmStringCreateLocalized(_("Dismiss"));
+  dismiss = XmStringCreateLocalized(_("Go Away"));
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -378,7 +378,7 @@ static void create_help_monolog(void)
   XtAddEventHandler(help_text, ButtonReleaseMask, false, text_release_callback, NULL);
   XtManageChild(help_text);
 
-  /* to display the url-related portion of the text in red, we need to a rendition for it in the rendertable */
+  /* to display the url-related portion of the text in red, we need a rendition for it in the rendertable */
   /* try to find the current default render table. */
   parent = help_text;
   while ((parent != NULL) && (rs == NULL))

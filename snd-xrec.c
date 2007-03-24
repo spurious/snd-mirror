@@ -10,6 +10,8 @@ static void close_recorder(Widget w, XtPointer context, XtPointer info)
 static void quit_recorder(Widget w, XtPointer context, XtPointer info) 
 {
   /* Quit button in dialog */
+  if (XmGetFocusWidget(recorder) == XmMessageBoxGetChild(recorder, XmDIALOG_CANCEL_BUTTON))
+    XtUnmanageChild(recorder);
 }
 
 static void recorder_help(Widget w, XtPointer context, XtPointer info) 
@@ -31,7 +33,7 @@ widget_t record_file(void)
       XmString xquit, xhelp, xrecord, xtitle;
       Atom wm_delete;
 
-      xquit = XmStringCreateLocalized(_("Quit"));
+      xquit = XmStringCreateLocalized(_("Go Away"));
       xhelp = XmStringCreateLocalized(_("Help"));
       xrecord = XmStringCreateLocalized(_("Record"));
       xtitle = XmStringCreateLocalized(_("Record"));
@@ -66,11 +68,17 @@ widget_t record_file(void)
       XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->doit_button_color, NULL);
 
       XtManageChild(recorder);
+      set_dialog_widget(RECORDER_DIALOG, recorder);
 
       wm_delete = XmInternAtom(XtDisplay(recorder), "WM_DELETE_WINDOW", false);
       XmAddWMProtocolCallback(XtParent(recorder), wm_delete, close_recorder, NULL);
 
 
+    }
+  else 
+    {
+      if (!XtIsManaged(recorder)) XtManageChild(recorder);
+      raise_dialog(recorder);
     }
 
 
