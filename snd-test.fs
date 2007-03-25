@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Wed Feb 28 00:14:59 CET 2007
+\ Changed: Sun Mar 25 01:06:20 CET 2007
 
 \ Commentary:
 \
@@ -234,28 +234,25 @@ mus-audio-playback-amp value original-audio-amp
 [then]
 
 #f  value overall-start-time
-#() value timer-values
 #() value test-numbers
 : run-fth-test ( xt -- )
   { xt }
   xt xt->name { name }
   test-numbers  name 0 2 string-substring string->number  array-member? if
+    name '() clm-message
     stack-reset
     gc-run
     make-timer { tm }
     xt execute
     tm stop-timer
     stack-reset
-    timer-values '( name tm ) array-push to timer-values
     sounds if
       $" open sounds: %s" '( #t short-file-name ) clm-message
       sounds each ( snd ) close-sound drop end-each
     then
-    $" %s done\n\\ " '( name ) clm-message
+    $" %s: %s\n\\ " '( name tm ) clm-message
   then
 ;
-: fth-test-timer-inspect { lst -- } $" %15s: %s" lst clm-message ;
-
 : start-snd-test ( -- )
   \ Global variables may be overridden in `pwd`/.sndtest.fs or ~/.sndtest.fs
   ".sndtest-forth-rc" file-exists? if ".sndtest-forth-rc" else ".sndtest.fs" then load-init-file
@@ -287,7 +284,7 @@ mus-audio-playback-amp value original-audio-amp
   10  set-window-y       	    drop
   #t  show-listener      	    drop
   reset-almost-all-hooks
-  *snd-test-verbose* to *fth-verbose*
+  *snd-test-verbose* to *clm-verbose*
   stack-reset
   make-timer to overall-start-time
 ;
@@ -304,8 +301,7 @@ mus-audio-playback-amp value original-audio-amp
   reset-almost-all-hooks
   $" all done!" '() clm-message
   "" '() clm-message
-  timer-values each ( lst ) fth-test-timer-inspect end-each
-  '( "summary" overall-start-time ) fth-test-timer-inspect
+  $" summary: %s" '( overall-start-time ) clm-message
   0 nil nil { file-count path file }
   #( original-save-dir original-temp-dir "/tmp" ) each to path
     path file-directory? if
@@ -483,7 +479,7 @@ mus-audio-playback-amp value original-audio-amp
   then
 ;
 
-event: 00-sel-from-snd ( -- )
+: 00-sel-from-snd ( -- )
   \ hooks
   open-hook reset-hook!
   open-hook <'> my-test1-proc add-hook!
@@ -991,10 +987,10 @@ event: 00-sel-from-snd ( -- )
   else
     drop
   then
-;event
+;
 
 \ ====== test 10: marks
-event: 10-marks ( -- )
+: 10-marks ( -- )
   "oboe.snd" open-sound { ind }
   123 add-mark drop
   234 ind 0 "hiho"     1 add-mark drop
@@ -1066,7 +1062,7 @@ event: 10-marks ( -- )
     $" saved marks missed 567: %s?" '( m ) snd-display
   then
   ind close-sound drop
-;event
+;
 
 \ ====== test 15: chan-local vars
 : interpolated-peak-offset ( r1 r2 r3 -- r4 )
@@ -1108,7 +1104,7 @@ event: 10-marks ( -- )
 : f4neq ( a b -- f ) f- fabs  1.0 f> ;
 : f5neq ( a b -- f ) { a b } a b f- fabs 10.0  a b fmax 0.05 f*  f> ;
 
-event: 15-chan-local-vars ( -- )
+: 15-chan-local-vars ( -- )
   \ dsp.fs
   "test.snd" mus-next mus-bfloat 22050 1 $" src-* tests" 10000 new-sound { ind }
   \ src-duration tests
@@ -1383,7 +1379,7 @@ event: 15-chan-local-vars ( -- )
   else
     $" envelope-exp (1): %s?" swap 1 >list snd-display
   then
-;event
+;
 
 \ ====== test 19: save and restore
 : clm-channel-test <{ :optional snd #f chn #f -- gen }>
@@ -1596,7 +1592,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
 [then]
 ) value test19-*.fs
 
-event: 19-save/restore ( -- )
+: 19-save/restore ( -- )
   \
   "oboe.snd" open-sound { ind }
   'xm provided? 'xg provided? || if
@@ -1617,7 +1613,7 @@ event: 19-save/restore ( -- )
     end-each
   then
   ind close-sound drop
-;event
+;
 
 \ ====== test 23: with-sound
 : test23-notehook { ins start dur -- } $" %14s: %5.2f  %5.2f" '( ins start dur ) clm-message ;
@@ -1656,15 +1652,15 @@ event: 19-save/restore ( -- )
 
 include bird.fsm
 
-event: 23-with-sound ( -- )
+: 23-with-sound ( -- )
   1024 1024 * to *clm-file-buffer-size*
   <'> bird-test				\ from bird.fsm
   :statistics *snd-test-verbose*
   :verbose    *snd-test-verbose*
   :srate      44100
-  :scaled-to  0.8 with-sound ( ws ) :output hash-ref .string cr
+  :scaled-to  0.8 with-sound ( ws ) *snd-test-verbose* if :output hash-ref .string cr else drop then
   0.0 0.3 <'> clm-ins-test		\ from clm-ins.fs
-  :notehook <'> test23-notehook
+  :notehook   *snd-test-verbose* if <'> test23-notehook else #f then
   :statistics *snd-test-verbose*
   :verbose    *snd-test-verbose*
   :channels 2 with-sound drop
@@ -1676,7 +1672,7 @@ event: 23-with-sound ( -- )
   0 1000 ind 0 pad-channel drop
   gen mg test23-ssb-fm <'> map-channel #t nil fth-catch stack-reset
   ind close-sound drop
-;event
+;
 
 \ ====== test 28: errors
 #f value FIXME-FIXED?
@@ -1716,7 +1712,7 @@ event: 23-with-sound ( -- )
   [then]
 
   stack-reset
-  32 make-delay       constant delay-32	\ FIXME: calls for problems, commented out
+  32 make-delay       constant delay-32
   0.95 0.95 0.95 make-color-with-catch constant color-95
   0 make-array        constant vector-0
   3 0.0 make-vct      constant vct-3
@@ -1808,13 +1804,7 @@ event: 23-with-sound ( -- )
      <'> view-files-selected-files <'> view-files-speed-style <'> view-files-amp-env
      <'> print-length
      <'> progress-report <'> prompt-in-minibuffer <'> pushed-button-color <'> read-only
-     <'> recorder-in-device <'> read-peak-env-info-file <'> recorder-autoload
-     <'> recorder-buffer-size
-     <'> recorder-dialog <'> recorder-file <'> recorder-gain <'> recorder-in-amp
-     <'> recorder-in-data-format <'> recorder-max-duration <'> recorder-out-amp
-     <'> recorder-out-chans
-     <'> recorder-out-data-format <'> recorder-out-header-type <'> recorder-srate
-     <'> recorder-trigger
+     <'> read-peak-env-info-file
      <'> redo <'> region-chans <'> view-regions-dialog <'> region-home
      <'> region-graph-style <'> region-frames <'> region-position <'> region-maxamp
      <'> region-maxamp-position <'> selection-maxamp <'> selection-maxamp-position
@@ -1822,7 +1812,7 @@ event: 23-with-sound ( -- )
      <'> region->vct <'> clear-minibuffer <'> region-srate <'> regions
      <'> region? <'>  remove-from-menu <'> report-in-minibuffer <'> reset-controls
      <'> restore-controls <'> restore-region <'> reverb-control-decay <'> reverb-control-feedback
-     <'> recorder-in-chans <'> reverb-control-length <'> reverb-control-lowpass
+     <'> reverb-control-length <'> reverb-control-lowpass
      <'> reverb-control-scale
      <'> reverb-control? <'>  reverse-sound <'> reverse-selection <'> revert-sound
      <'> right-sample <'> sample <'> sample-reader-at-end? <'>  sample-reader?
@@ -1853,7 +1843,7 @@ event: 23-with-sound ( -- )
      <'> trap-segfault <'> with-file-monitor <'> optimization <'> unbind-key
      <'> undo <'> update-transform-graph <'> update-time-graph <'> update-lisp-graph
      <'> update-sound <'> run-safety <'> clm-table-size <'> with-verbose-cursor
-     <'> view-sound <'> vu-size <'> vu-in-dB <'> wavelet-type
+     <'> view-sound <'> wavelet-type
      <'> time-graph? <'>  time-graph-type <'> wavo-hop <'> wavo-trace
      <'> window-height <'> window-width <'> window-x <'> window-y
      <'> with-mix-tags <'> with-relative-panes <'> with-gl <'> write-peak-env-info-file
@@ -1999,17 +1989,11 @@ event: 23-with-sound ( -- )
      <'> mix-locked? <'> mix-inverted? <'> mix-name <'> mix-position
      <'> mix-speed <'> mix-speed-style <'> mix-tag-height <'> mix-tag-width
      <'> mix-tag-y <'> mark-tag-width <'> mark-tag-height <'> mix-waveform-height
-     <'> transform-normalization <'> equalize-panes <'> position-color <'> recorder-in-device
+     <'> transform-normalization <'> equalize-panes <'> position-color
      <'> view-files-sort <'> print-length <'> pushed-button-color <'> view-files-amp
      <'> view-files-speed <'> view-files-speed-style <'> view-files-amp-env <'> view-files-files
-     <'> view-files-selected-files <'> recorder-autoload <'> recorder-buffer-size
-     <'> recorder-dialog
-     <'> recorder-file <'> recorder-gain <'> recorder-in-amp <'> recorder-in-data-format
-     <'> recorder-max-duration <'> recorder-out-amp <'> recorder-out-chans
-     <'> recorder-out-data-format
-     <'> recorder-out-header-type <'> recorder-srate <'> region-graph-style <'> recorder-trigger
-     <'> reverb-control-decay <'> reverb-control-feedback <'> recorder-in-chans
-     <'> reverb-control-length
+     <'> view-files-selected-files <'> region-graph-style <'> reverb-control-decay
+     <'> reverb-control-feedback <'> reverb-control-length
      <'> reverb-control-lowpass <'> reverb-control-scale <'> time-graph-style <'> lisp-graph-style
      <'> transform-graph-style <'> reverb-control? <'> sash-color <'> ladspa-dir
      <'> save-dir <'> save-state-file <'> selected-data-color <'> selected-graph-color
@@ -2023,7 +2007,7 @@ event: 23-with-sound ( -- )
      <'> squelch-update <'> sync <'> sound-properties <'> temp-dir
      <'> text-focus-color <'> tiny-font <'> y-bounds <'> transform-type
      <'> trap-segfault <'> with-file-monitor <'> optimization <'> with-verbose-cursor
-     <'> vu-size <'> vu-in-dB <'> wavelet-type <'> x-bounds
+     <'> wavelet-type <'> x-bounds
      <'> time-graph? <'> wavo-hop <'> wavo-trace <'> with-gl
      <'> with-mix-tags <'> x-axis-style <'> beats-per-minute <'> zero-pad
      <'> zoom-color <'> zoom-focus-style <'> with-relative-panes <'>  window-x
@@ -2170,7 +2154,7 @@ event: 23-with-sound ( -- )
     current-edit-position
   ;
   
-  event: 28-errors ( -- )
+  : 28-errors ( -- )
     #t set-with-background-processes drop
     reset-all-hooks
     nil nil { prc tag }
@@ -2756,18 +2740,13 @@ event: 23-with-sound ( -- )
        <'> max-regions <'> minibuffer-history-length <'> mix-waveform-height <'> region-graph-style
        <'> position-color <'> time-graph-style <'> lisp-graph-style <'> transform-graph-style
        <'> peaks-font <'> bold-peaks-font <'> view-files-sort <'> print-length
-       <'> pushed-button-color <'> recorder-in-device <'> recorder-autoload <'> recorder-buffer-size
-       <'> recorder-file <'> recorder-in-data-format <'> recorder-max-duration
-       <'> recorder-out-chans
-       <'> recorder-in-chans <'> recorder-out-data-format <'> recorder-out-header-type
-       <'> recorder-srate
-       <'> recorder-trigger <'> sash-color <'> ladspa-dir <'> save-dir
+       <'> pushed-button-color <'> sash-color <'> ladspa-dir <'> save-dir
        <'> save-state-file <'> selected-channel <'> selected-data-color <'> selected-graph-color
        <'> selected-sound <'> selection-creates-region <'> show-backtrace <'> show-controls
        <'> show-indices <'> show-listener <'> show-selection-transform <'> sinc-width
        <'> temp-dir <'> text-focus-color <'> tiny-font <'> trap-segfault
        <'> with-file-monitor <'> optimization <'> unbind-key <'> with-verbose-cursor
-       <'> vu-size <'> vu-in-dB <'> window-height <'> beats-per-measure
+       <'> window-height <'> beats-per-measure
        <'> window-width <'> window-x <'> window-y <'> with-gl
        <'> with-mix-tags <'> x-axis-style <'> beats-per-minute <'> zoom-color
        <'> mix-tag-height <'> mix-tag-width <'> with-relative-panes <'> run-safety
@@ -3273,14 +3252,14 @@ event: 23-with-sound ( -- )
       then
     end-each
     dismiss-all-dialogs
-    #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95  #( 0 1 ) 3/4 'mus-error -1.0 csqrt ( delay-32 )
+    #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95  #( 0 1 ) 3/4 'mus-error -1.0 csqrt delay-32
        <'> noop 0 make-proc vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t <char> c 0.0 1.0 -1.0 
        '() '3 2 8 64 -64 vector-0 2.0 21.5 f** 2.0 -18.0 f** car-main cadr-main 
-       12345678901234567890 log0 nan <'> noop 1 make-proc abs  ) { main-args }
+       12345678901234567890 log0 nan <'> noop 1 make-proc ) { main-args }
     #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95 #( 0 1 ) 3/4 -1.0
-       -1.0 csqrt ( delay-32 ) :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890
+       -1.0 csqrt delay-32 :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890
        log0 nan ) { few-args }
-    #( "/hiho" 1234 vct-3 -1.0 -1.0 csqrt ( delay-32 )
+    #( "/hiho" 1234 vct-3 -1.0 -1.0 csqrt delay-32
        -1 0 1 #f #t '() 12345678901234567890 log0 ) { fewer-args }
     all-args if main-args else few-args then { less-args }
     \ 1 arg
@@ -3796,14 +3775,14 @@ event: 23-with-sound ( -- )
       then
     then
     ind sound? unless $" edpos proc clobbers chan??: %s" '( ind ) snd-display then
-  ;event
-  event: 30-test
-    #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95  #( 0 1 ) 3/4 'mus-error -1.0 csqrt ( delay-32 )
+  ;
+  : 30-test
+    #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95  #( 0 1 ) 3/4 'mus-error -1.0 csqrt delay-32
        <'> noop 0 make-proc vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t <char> c 0.0 1.0 -1.0 
        '() '3 2 8 64 -64 vector-0 2.0 21.5 f** 2.0 -18.0 f** car-main cadr-main 
-       12345678901234567890 log0 nan <'> noop 1 make-proc abs  ) { main-args }
+       12345678901234567890 log0 nan <'> noop 1 make-proc ) { main-args }
     #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95 #( 0 1 ) 3/4 -1.0
-       -1.0 csqrt ( delay-32 ) :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890
+       -1.0 csqrt delay-32 :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890
        log0 nan ) { few-args }
     all-args if main-args else few-args then { less-args }
     #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 :wave -1 0 1 #f #t
@@ -3811,44 +3790,65 @@ event: 23-with-sound ( -- )
     nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil
     { ind prc tag arg arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg0 tm }
     make-timer to tm
-    \ set! no args
-    "set-no-args" '() clm-message
+    \ \ set! no args
+    \ "set-no-args" '() clm-message
+    \ tm start-timer
+    \ main-args each to arg
+    \   set-procs00 each to prc
+    \ 	\ $" %s %s" '( arg prc ) clm-message
+    \ 	arg prc set-xt #t nil fth-catch to tag
+    \ 	stack-reset
+    \ 	tag list? if
+    \ 	  tag car 'wrong-number-of-args symbol= if
+    \ 	    $" set-procs00: (%s) %s %s" '( arg prc tag ) snd-display
+    \ 	  then
+    \ 	then
+    \   end-each
+    \ end-each
+    \ dismiss-all-dialogs
+    \ tm stop-timer
+    \ "%s" '( tm ) clm-message
+    \ \ set! 1 arg
+    \ "set-1-arg" '() clm-message
+    \ tm start-timer
+    \ main-args each to arg1
+    \   few-args each to arg2
+    \ 	set-procs01 each to prc
+    \ 	  \ $" %s %s %s" '( arg1 arg2 prc ) clm-message
+    \ 	  arg1 arg2 prc set-xt #t nil fth-catch to tag
+    \ 	  stack-reset
+    \ 	  tag list? if
+    \ 	    tag car 'wrong-number-of-args symbol= if
+    \ 	      $" set-procs01: (%s %s) %s %s" '( arg1 arg2 prc tag ) snd-display
+    \ 	    then
+    \ 	  then
+    \ 	end-each
+    \   end-each
+    \ end-each
+    \ tm stop-timer
+    \ "%s" '( tm ) clm-message
+    \ set! 2 args
+    "set-2-args" '() clm-message
     tm start-timer
-    main-args each to arg
-      set-procs00 each to prc
-	\ $" %s %s" '( arg prc ) clm-message
-    	arg prc set-xt #t nil fth-catch to tag
-    	stack-reset
-    	tag list? if
-    	  tag car 'wrong-number-of-args symbol= if
-    	    $" set-procs00: (%s) %s %s" '( arg prc tag ) snd-display
-    	  then
-    	then
+    less-args each to arg1
+      less-args each to arg2
+	$" %s %s" '( arg1 arg2 ) clm-message
+	less-args each to arg3
+	  set-procs02 each to prc
+	    arg1 arg2 arg3 prc set-xt #t nil fth-catch to tag
+	    stack-reset
+	    tag list? if
+	      tag car 'wrong-number-of-args symbol= if
+		$" set-procs02: (%s %s %s) %s %s" '( arg1 arg2 arg3 prc tag ) snd-display
+	      then
+	    then
+	  end-each
+	end-each
       end-each
     end-each
-    dismiss-all-dialogs
     tm stop-timer
     "%s" '( tm ) clm-message
-    \ set! 1 arg
-    "set-1-arg" '() clm-message
-    tm start-timer
-    main-args each to arg1
-      few-args each to arg2
-    	set-procs01 each to prc
-	  \ $" %s %s %s " '( arg1 arg2 prc ) clm-message
-    	  arg1 arg2 prc set-xt #t nil fth-catch to tag
-    	  stack-reset
-    	  tag list? if
-    	    tag car 'wrong-number-of-args symbol= if
-    	      $" set-procs01: (%s %s) %s %s" '( arg1 arg2 prc tag ) snd-display
-    	    then
-    	  then
-    	end-each
-      end-each
-    end-each
-    tm stop-timer
-    "%s" '( tm ) clm-message
-  ;event
+  ;
 [else]
   <'> noop alias 28-errors
 [then]

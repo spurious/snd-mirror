@@ -1595,7 +1595,7 @@ int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Floa
 	case MUS_BSHORT:
 	  {
 	    short max_samp = 0;
-	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp += bytes_per_frame; samp < eod)
+	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp < eod; samp += bytes_per_frame)
 	      {
 		short val;
 		val = big_endian_short(samp);
@@ -1608,7 +1608,7 @@ int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Floa
 	case MUS_LSHORT:
 	  {
 	    short max_samp = 0;
-	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp += bytes_per_frame; samp < eod)
+	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp < eod; samp += bytes_per_frame)
 	      {
 		short val;
 		val = little_endian_short(samp);
@@ -1621,7 +1621,7 @@ int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Floa
 	case MUS_MULAW:  	              
 	  {
 	    short max_samp = 0;
-	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp += bytes_per_frame; samp < eod)
+	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp < eod; samp += bytes_per_frame)
 	      {
 		short val;
 		val = mulaw[*samp];
@@ -1634,7 +1634,7 @@ int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Floa
 	case MUS_ALAW:                  
 	  {
 	    short max_samp = 0;
-	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp += bytes_per_frame; samp < eod)
+	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp < eod; samp += bytes_per_frame)
 	      {
 		short val;
 		val = alaw[*samp];
@@ -1647,7 +1647,7 @@ int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Floa
 	case MUS_BFLOAT:
 	  {
 	    float max_samp = 0.0;
-	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp += bytes_per_frame; samp < eod)
+	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp < eod; samp += bytes_per_frame)
 	      {
 		float val;
 		val = big_endian_float(samp);
@@ -1660,7 +1660,7 @@ int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Floa
 	case MUS_LFLOAT:
 	  {
 	    float max_samp = 0.0;
-	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp += bytes_per_frame; samp < eod)
+	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp < eod; samp += bytes_per_frame)
 	      {
 		float val;
 		val = little_endian_float(samp);
@@ -1672,7 +1672,7 @@ int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Floa
 	  break;
 	default:
 	  /* int cases are problematic because the scaling is unknown */
-	  /* byte, double, 24-bit, and unsigned short and unscaled cases are absurd */
+	  /* byte, double, 24-bit, unsigned short and unscaled cases are absurd */
 	  return(MUS_ERROR);
 	  break;
 	}

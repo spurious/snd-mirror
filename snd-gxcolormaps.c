@@ -7,6 +7,7 @@ typedef struct {
   XEN lambda;
   int gc_loc;
   Float** (*make_rgb)(int size, XEN func);
+  void (*get_rgb)(float x, rgb_t *r, rgb_t *g, rgb_t *b);
 } cmap;
 
 static cmap **cmaps = NULL;
@@ -71,28 +72,33 @@ void get_current_color(int index, int n, rgb_t *r, rgb_t *g, rgb_t *b)
     {
       cmap *c;
       c = cmaps[index];
-      if (color_map_size(ss) != c->size)
+      if (c->get_rgb)
+	(c->get_rgb)((float)n / (float)color_map_size(ss), r, g, b);
+      else
 	{
-	  Float **rgb;
-	  int i;
-	  /* release old colormap data */
-	  if (c->r) FREE(c->r);
-	  if (c->g) FREE(c->g);
-	  if (c->b) FREE(c->b);
-	  c->size = color_map_size(ss);
-	  /* make new data */
-	  rgb = (*(c->make_rgb))(c->size, c->lambda);
-	  c->r = Floats_to_rgb_t(c->size, rgb[0]);
-	  c->g = Floats_to_rgb_t(c->size, rgb[1]);
-	  c->b = Floats_to_rgb_t(c->size, rgb[2]);
-	  for (i = 0; i < 3; i++) FREE(rgb[i]);
-	  FREE(rgb);
-	}
-      if (n < c->size)
-	{
-	  (*r) = c->r[n];
-	  (*g) = c->g[n];
-	  (*b) = c->b[n];
+	  if (color_map_size(ss) != c->size)
+	    {
+	      Float **rgb;
+	      int i;
+	      /* release old colormap data */
+	      if (c->r) FREE(c->r);
+	      if (c->g) FREE(c->g);
+	      if (c->b) FREE(c->b);
+	      c->size = color_map_size(ss);
+	      /* make new data */
+	      rgb = (*(c->make_rgb))(c->size, c->lambda);
+	      c->r = Floats_to_rgb_t(c->size, rgb[0]);
+	      c->g = Floats_to_rgb_t(c->size, rgb[1]);
+	      c->b = Floats_to_rgb_t(c->size, rgb[2]);
+	      for (i = 0; i < 3; i++) FREE(rgb[i]);
+	      FREE(rgb);
+	    }
+	  if (n < c->size)
+	    {
+	      (*r) = c->r[n];
+	      (*g) = c->g[n];
+	      (*b) = c->b[n];
+	    }
 	}
     }
 }
@@ -103,24 +109,31 @@ static cmap *new_cmap(const char *name, int size, Float **rgb)
   c = (cmap *)CALLOC(1, sizeof(cmap));
   c->name = copy_string(name);
   c->size = size;
-  c->r = Floats_to_rgb_t(size, rgb[0]);
-  c->g = Floats_to_rgb_t(size, rgb[1]);
-  c->b = Floats_to_rgb_t(size, rgb[2]);
+  if (rgb)
+    {
+      c->r = Floats_to_rgb_t(size, rgb[0]);
+      c->g = Floats_to_rgb_t(size, rgb[1]);
+      c->b = Floats_to_rgb_t(size, rgb[2]);
+    }
+  c->lambda = XEN_FALSE;
+  c->gc_loc = NOT_A_GC_LOC;
   return(c);
 }
 
-static cmap *make_builtin_cmap(int size, const char *name, Float** (*make_rgb)(int size, XEN ignored))
+static cmap *make_builtin_cmap(int size, const char *name, 
+			       Float** (*make_rgb)(int size, XEN ignored),
+			       void (*get_rgb)(float x, rgb_t *r, rgb_t *g, rgb_t *b))
 {
-  Float **rgb;
+  Float **rgb = NULL;
   cmap *c = NULL;
-  rgb = make_rgb(size, XEN_FALSE);
+  if ((make_rgb) && (!get_rgb))
+    rgb = make_rgb(size, XEN_FALSE);
+  c = new_cmap(name, size, rgb);
+  c->get_rgb = get_rgb;
+  c->make_rgb = make_rgb;
   if (rgb)
     {
       int i;
-      c = new_cmap(name, size, rgb);
-      c->make_rgb = make_rgb;
-      c->lambda = XEN_FALSE;
-      c->gc_loc = NOT_A_GC_LOC;
       for (i = 0; i < 3; i++) FREE(rgb[i]);
       FREE(rgb);
     }
@@ -234,12 +247,22 @@ static int add_colormap(char *name, XEN func)
   return(index);
 }
 
-
 static Float **make_black_and_white_colormap(int size, XEN ignored)
 {
   /* (r 0) (g 0) (b 0) */
   return(make_base_rgb(size));
 }
+
+#if USE_CAIRO
+static void black_and_white_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
+{
+  (*r) = 0.0;
+  (*g) = 0.0;
+  (*b) = 0.0;
+}
+#else
+  #define black_and_white_rgb NULL
+#endif
 
 /* colormap functions taken mostly from (GPL) octave-forge code written by Kai Habel <kai.habel@gmx.de> */
 
@@ -260,6 +283,17 @@ static Float **make_gray_colormap(int size, XEN ignored)
   return(rgb);
 }
 
+#if USE_CAIRO
+static void gray_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
+{
+  (*r) = n;
+  (*g) = n;
+  (*b) = n;
+}
+#else
+  #define gray_rgb NULL
+#endif
+
 static Float **make_autumn_colormap(int size, XEN ignored)
 {
   /* (r 1.0) (g x) (b 0.0) */
@@ -276,6 +310,17 @@ static Float **make_autumn_colormap(int size, XEN ignored)
     }
   return(rgb);
 }
+
+#if USE_CAIRO
+static void autumn_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
+{
+  (*r) = 1.0;
+  (*g) = n;
+  (*b) = 0.0;
+}
+#else
+  #define autumn_rgb NULL
+#endif
 
 static Float **make_spring_colormap(int size, XEN ignored)
 {
@@ -294,6 +339,17 @@ static Float **make_spring_colormap(int size, XEN ignored)
   return(rgb);
 }
 
+#if USE_CAIRO
+static void spring_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
+{
+  (*r) = 1.0;
+  (*g) = n;
+  (*b) = 1.0 - n;
+}
+#else
+  #define spring_rgb NULL
+#endif
+
 static Float **make_winter_colormap(int size, XEN ignored)
 {
   /* (r 0.0) (g x) (b (- 1.0 (/ x 2))) */
@@ -310,6 +366,17 @@ static Float **make_winter_colormap(int size, XEN ignored)
     }
   return(rgb);
 }
+
+#if USE_CAIRO
+static void winter_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
+{
+  (*r) = 0.0;
+  (*g) = n;
+  (*b) = 1.0 - (n * 0.5);
+}
+#else
+  #define winter_rgb NULL
+#endif
 
 static Float **make_summer_colormap(int size, XEN ignored)
 {
@@ -328,6 +395,17 @@ static Float **make_summer_colormap(int size, XEN ignored)
   return(rgb);
 }
 
+#if USE_CAIRO
+static void summer_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
+{
+  (*r) = n;
+  (*g) = 0.5 + (0.5 * n);
+  (*b) = 0.4;
+}
+#else
+  #define summer_rgb NULL
+#endif
+
 static Float **make_cool_colormap(int size, XEN ignored)
 {
   /* (r x) (g (- 1.0 x)) (b 1.0) */
@@ -344,6 +422,17 @@ static Float **make_cool_colormap(int size, XEN ignored)
     }
   return(rgb);
 }
+
+#if USE_CAIRO
+static void cool_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
+{
+  (*r) = n;
+  (*g) = 1.0 - n;
+  (*b) = 1.0;
+}
+#else
+  #define cool_rgb NULL
+#endif
 
 static Float **make_copper_colormap(int size, XEN ignored)
 {
@@ -362,6 +451,17 @@ static Float **make_copper_colormap(int size, XEN ignored)
   return(rgb);
 }
 
+#if USE_CAIRO
+static void copper_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
+{
+  (*r) = (x < 0.8) ? (1.25 * x) : 1.0;
+  (*g) = 0.8 * x;
+  (*b) = 0.5 * x;
+}
+#else
+  #define copper_rgb NULL
+#endif
+
 static Float **make_flag_colormap(int size, XEN ignored)
 {
   /* (r (if (or (= k 0) (= k 1)) 1.0 0.0)) (g (if (= k 1) 1.0 0.0)) (b (if (or (= k 1) (= k 2)) 1.0 0.0)) */
@@ -378,6 +478,19 @@ static Float **make_flag_colormap(int size, XEN ignored)
     }
   return(rgb);
 }
+
+#if USE_CAIRO
+static void flag_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
+{
+  int k;
+  k = ((int)(x * color_map_size(ss))) % 4;
+  (*r) = (k < 2) ? 1.0 : 0.0;
+  (*g) = (k == 1) ? 1.0 : 0.0;
+  (*b) = ((k == 1) || (k == 2)) ? 1.0 : 0.0;
+}
+#else
+  #define flag_rgb NULL
+#endif
 
 static Float **make_prism_colormap(int size, XEN ignored)
 {
@@ -399,6 +512,22 @@ static Float **make_prism_colormap(int size, XEN ignored)
   return(rgb);
 }
 
+#if USE_CAIRO
+static void prism_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
+{
+  int k;
+  k = ((int)(x * color_map_size(ss))) % 6;
+  Float rs[6] = {1.0, 1.0, 1.0, 0.0, 0.0, 0.6667};
+  Float gs[6] = {0.0, 0.5, 1.0, 1.0, 0.0, 0.0};
+  Float bs[6] = {0.0, 0.0, 0.0, 0.0, 1.0, 1.0};
+  (*r) = rs[k];
+  (*g) = gs[k];
+  (*b) = bs[k];
+}
+#else
+  #define prism_rgb NULL
+#endif
+
 static Float **make_bone_colormap(int size, XEN ignored)
 {
   /* (r (if (< x 3/4) (* 7/8 x) (- (* 11/8 x) 3/8)))
@@ -418,6 +547,17 @@ static Float **make_bone_colormap(int size, XEN ignored)
     }
   return(rgb);
 }
+
+#if USE_CAIRO
+static void bone_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
+{
+  (*r) = (x < .75) ? (x * .875) : ((x * 11.0 / 8.0) - .375);
+  (*g) = (x < .375) ? (x * .875) : ((x < .75) ? ((x * 29.0 / 24.0) - .125) : ((x * .875) + .125));
+  (*b) = (x < .375) ? (x * 29.0 / 24.0) : ((x * .875) + .125);
+}
+#else
+  #define bone_rgb NULL
+#endif
 
 static Float **make_hot_colormap(int size, XEN ignored)
 {
@@ -440,6 +580,17 @@ static Float **make_hot_colormap(int size, XEN ignored)
   return(rgb);
 }
 
+#if USE_CAIRO
+static void hot_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
+{
+  (*r) = (x < .375) ? (x * 8.0 / 3.0) : 1.0;
+  (*g) = (x < .375) ? 0.0 : ((x < .75) ? ((x * 8.0 / 3.0) - 1.0) : 1.0);
+  (*b) = (x < .75) ? 0.0 : ((x * 4.0) - 3.0);
+}
+#else
+  #define hot_rgb NULL
+#endif
+
 static Float **make_jet_colormap(int size, XEN ignored)
 {
   /* 
@@ -460,6 +611,17 @@ static Float **make_jet_colormap(int size, XEN ignored)
     }
   return(rgb);
 }
+
+#if USE_CAIRO
+static void jet_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
+{
+  (*r) = (x < .375) ? 0.0 : ((x < .625) ? ((x * 4.0) - 1.5) : ((x < .875) ? 1.0 : ((x * -4.0) + 4.5)));
+  (*g) = (x < .125) ? 0.0 : ((x < .375) ? ((x * 4.0) - 0.5) : ((x < .625) ? 1.0 : ((x < .875) ? ((x * -4.0) + 3.5) : 0.0)));
+  (*b) = (x < .125) ? ((x * 4.0) + 0.5) : ((x < .375) ? 1.0 : ((x < .625) ? ((x * -4.0) + 2.5) : 0.0));
+}
+#else
+  #define jet_rgb NULL
+#endif
 
 static Float **make_pink_colormap(int size, XEN ignored)
 {
@@ -482,6 +644,17 @@ static Float **make_pink_colormap(int size, XEN ignored)
   return(rgb);
 }
 
+#if USE_CAIRO
+static void pink_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
+{
+  (*r) = (x < .375) ? (x * 14.0 / 9.0) : ((x * 2.0 / 3.0) + 1.0 / 3.0);
+  (*g) = (x < .375) ? (x * 2.0 / 3.0) : ((x < .75) ? ((x * 14.0 / 9.0) - 1.0 / 3.0) : ((x * 2.0 / 3.0) + 1.0 / 3.0));
+  (*b) = (x < .75) ? (x * 2.0 / 3.0) : ((x * 2.0) - 1.0);
+}
+#else
+  #define pink_rgb NULL
+#endif
+
 static Float **make_rainbow_colormap(int size, XEN ignored)
 {
   /* 
@@ -502,6 +675,17 @@ static Float **make_rainbow_colormap(int size, XEN ignored)
     }
   return(rgb);
 }
+
+#if USE_CAIRO
+static void rainbow_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
+{
+  (*r) = (x < .4) ? 1.0 : ((x < .6) ? ((x * -5.0) + 3.0) : ((x < .8) ? 0.0 : ((x * 10.0 / 3.0) - 8.0 / 3.0)));
+  (*g) = (x < .4) ? (x * 2.5) : ((x < .6) ? 1.0 : ((x < .8) ? ((x * -5.0) + 4.0) : 0.0));
+  (*b) = (x < .6) ? 0.0 : ((x < .8) ? ((x * 5.0) - 3.0) : 1.0);
+}
+#else
+  #define rainbow_rgb NULL
+#endif
 
 static XEN g_colormap_ref(XEN map, XEN pos)
 {
@@ -647,21 +831,21 @@ void g_init_gxcolormaps(void)
   cmaps_size = 16;
   cmaps = (cmap **)CALLOC(cmaps_size, sizeof(cmap *));
   /* these are just place-holders */
-  cmaps[BLACK_AND_WHITE_COLORMAP] = make_builtin_cmap(1, _("black-and-white"), make_black_and_white_colormap); 
-  cmaps[GRAY_COLORMAP] =    make_builtin_cmap(1, _("gray"), make_gray_colormap); 
-  cmaps[AUTUMN_COLORMAP] =  make_builtin_cmap(1, _("autumn"), make_autumn_colormap); 
-  cmaps[SPRING_COLORMAP] =  make_builtin_cmap(1, _("spring"), make_spring_colormap); 
-  cmaps[WINTER_COLORMAP] =  make_builtin_cmap(1, _("winter"), make_winter_colormap); 
-  cmaps[SUMMER_COLORMAP] =  make_builtin_cmap(1, _("summer"), make_summer_colormap); 
-  cmaps[COOL_COLORMAP] =    make_builtin_cmap(1, _("cool"), make_cool_colormap); 
-  cmaps[COPPER_COLORMAP] =  make_builtin_cmap(1, _("copper"), make_copper_colormap); 
-  cmaps[FLAG_COLORMAP] =    make_builtin_cmap(1, _("flag"), make_flag_colormap); 
-  cmaps[PRISM_COLORMAP] =   make_builtin_cmap(1, _("prism"), make_prism_colormap); 
-  cmaps[BONE_COLORMAP] =    make_builtin_cmap(1, _("bone"), make_bone_colormap); 
-  cmaps[HOT_COLORMAP] =     make_builtin_cmap(1, _("hot"), make_hot_colormap); 
-  cmaps[JET_COLORMAP] =     make_builtin_cmap(1, _("jet"), make_jet_colormap); 
-  cmaps[PINK_COLORMAP] =    make_builtin_cmap(1, _("pink"), make_pink_colormap); 
-  cmaps[RAINBOW_COLORMAP] = make_builtin_cmap(1, _("rainbow"), make_rainbow_colormap); 
+  cmaps[BLACK_AND_WHITE_COLORMAP] = make_builtin_cmap(1, _("black-and-white"), make_black_and_white_colormap, black_and_white_rgb); 
+  cmaps[GRAY_COLORMAP] =    make_builtin_cmap(1, _("gray"),    make_gray_colormap,    gray_rgb); 
+  cmaps[AUTUMN_COLORMAP] =  make_builtin_cmap(1, _("autumn"),  make_autumn_colormap,  autumn_rgb); 
+  cmaps[SPRING_COLORMAP] =  make_builtin_cmap(1, _("spring"),  make_spring_colormap,  spring_rgb); 
+  cmaps[WINTER_COLORMAP] =  make_builtin_cmap(1, _("winter"),  make_winter_colormap,  winter_rgb); 
+  cmaps[SUMMER_COLORMAP] =  make_builtin_cmap(1, _("summer"),  make_summer_colormap,  summer_rgb); 
+  cmaps[COOL_COLORMAP] =    make_builtin_cmap(1, _("cool"),    make_cool_colormap,    cool_rgb); 
+  cmaps[COPPER_COLORMAP] =  make_builtin_cmap(1, _("copper"),  make_copper_colormap,  copper_rgb); 
+  cmaps[FLAG_COLORMAP] =    make_builtin_cmap(1, _("flag"),    make_flag_colormap,    flag_rgb); 
+  cmaps[PRISM_COLORMAP] =   make_builtin_cmap(1, _("prism"),   make_prism_colormap,   prism_rgb); 
+  cmaps[BONE_COLORMAP] =    make_builtin_cmap(1, _("bone"),    make_bone_colormap,    bone_rgb); 
+  cmaps[HOT_COLORMAP] =     make_builtin_cmap(1, _("hot"),     make_hot_colormap,     hot_rgb); 
+  cmaps[JET_COLORMAP] =     make_builtin_cmap(1, _("jet"),     make_jet_colormap,     jet_rgb); 
+  cmaps[PINK_COLORMAP] =    make_builtin_cmap(1, _("pink"),    make_pink_colormap,    pink_rgb); 
+  cmaps[RAINBOW_COLORMAP] = make_builtin_cmap(1, _("rainbow"), make_rainbow_colormap, rainbow_rgb); 
 
   XEN_DEFINE_PROCEDURE(S_colormap_p, g_colormap_p_w,           1, 0, 0, H_colormap_p);
   XEN_DEFINE_PROCEDURE(S_colormap_ref, g_colormap_ref_w,       2, 0, 0, H_colormap_ref);

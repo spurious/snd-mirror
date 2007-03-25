@@ -266,7 +266,7 @@ static sort_info *make_sort_info(const char *filename, const char *full_filename
 {
   sort_info *ptr;
   ptr = (sort_info *)CALLOC(1, sizeof(sort_info));
-  ptr->filename = strdup(filename); /* not copy_string -> these are glomming up the memleak reporting */
+  ptr->filename = strdup(filename); /* not copy_string -> these are glomming up memlog */
   ptr->full_filename = strdup(full_filename);
   return(ptr);
 }

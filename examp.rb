@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Wed Jan 31 02:52:35 CET 2007
+# Changed: Sat Mar 24 23:51:35 CET 2007
 
 # Commentary:
 #
@@ -586,9 +586,6 @@ if provided? :snd
   alias preload_directory               add_directory_to_view_files_list
   alias preload_file                    add_file_to_view_files_list
   alias $previous_files_select_hook     $view_files_select_hook
-  alias recorder_in_format              recorder_in_data_format
-  alias recorder_out_format             recorder_out_data_format
-  alias recorder_out_type               recorder_out_header_type
   Sort_files_by_name = 0
   Sort_files_by_date = 2
   Sort_files_by_size = 4
@@ -2265,18 +2262,29 @@ end
 #
 # Simulates a save local variable environment and restores old
 # variables to their original values.
-def let(*args, &prc)
-  locals = Hash.new
-  eval("local_variables", prc).each do |name| locals[name] = eval(name, prc) end
-  # yield(*args)
-  # See ruby/ChangeLog: Tue Jul 18 16:52:29 2006  Yukihiro Matsumoto  <matz@ruby-lang.org>
-  prc.call(*args)
-rescue Interrupt, ScriptError, NameError, StandardError
-  Kernel.raise
-ensure
-  @locals = locals
-  locals.each_key do |name| eval("#{name} = @locals[#{name.inspect}]", prc) end
-  remove_instance_variable("@locals")
+#
+# EVAL doesn't take any longer a proc for a binding.  The date is a
+# guess.
+if RUBY_RELEASE_DATE > "2006-12-21"
+  def let(*args, &prc)
+    prc.call(*args)
+  rescue Interrupt, ScriptError, NameError, StandardError
+    Kernel.raise
+  end
+else
+  def let(*args, &prc)
+    locals = Hash.new
+    eval("local_variables", prc).each do |name| locals[name] = eval(name, prc) end
+    # yield(*args)
+    # See ruby/ChangeLog: Tue Jul 18 16:52:29 2006  Yukihiro Matsumoto  <matz@ruby-lang.org>
+    prc.call(*args)
+  rescue Interrupt, ScriptError, NameError, StandardError
+    Kernel.raise
+  ensure
+    @locals = locals
+    locals.each_key do |name| eval("#{name} = @locals[#{name.inspect}]", prc) end
+    remove_instance_variable("@locals")
+  end
 end
 
 include Math

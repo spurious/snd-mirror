@@ -11,8 +11,7 @@
  * TODO: check ATS
  * TODO: static intel mac snd with minimal needs
  * PERHAPS: background-gradient (0 = none)
- * PERHAPS: happy-face as progress bar: frown to smile + color change (blue->yellow)?
- * TODO: colormaps need not be saved as arrays in simple cases
+ * PERHAPS: happy-face as progress bar: frown to smile + color change (blue->red->yellow)?
  */
 
 

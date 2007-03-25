@@ -450,6 +450,7 @@ static char *blue_speaker_xpm[] = {
 
 char **blue_speaker_bits(void) {return(blue_speaker_xpm);}
 
+#if 0
 static char * mic_xpm[] = {
 "12 12 2 1",
 "-      c None s None",
@@ -467,7 +468,6 @@ static char * mic_xpm[] = {
 "X----XX----X",
 "XXXXXXXXXXXX"};
 
-#if 0
 char **mic_bits(void) {return(mic_xpm);}
 
 static char *cd_xpm[] = {

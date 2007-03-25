@@ -2201,9 +2201,6 @@ file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   formats = type_and_format_to_position(fdat, header_type, data_format);
   nformats = fdat->formats;
 
-  fdat->header_short_names = headers;
-  fdat->num_header_types = nheaders;
-
   form = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(parent), form, false, false, 4);
   gtk_widget_show(form);

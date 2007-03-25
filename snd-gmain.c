@@ -507,7 +507,7 @@ color_t get_in_between_color(color_t fg, color_t bg)
 {
 #if USE_CAIRO
   color_info *new_color;
-  new_color = (color_info *)CALLOC(1, sizeof(color_info));
+  new_color = (color_info *)CALLOC(1, sizeof(color_info)); /* memleak here */
   new_color->red = (rgb_t)((fg->red + (2 * bg->red)) / 3);
   new_color->green = (rgb_t)((fg->green + (2 * bg->green)) / 3);
   new_color->blue = (rgb_t)((fg->blue + (2 * bg->blue)) / 3);

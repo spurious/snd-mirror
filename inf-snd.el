@@ -4,7 +4,7 @@
 
 ;; Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Created: Wed Nov 27 20:52:54 CET 2002
-;; Changed: Sat Feb 24 18:51:27 CET 2007
+;; Changed: Sun Mar 25 01:11:47 CET 2007
 ;; Keywords: processes, snd, ruby, scheme, forth
 
 ;; This file is not part of GNU Emacs.
@@ -219,7 +219,7 @@
 (require 'cmuscheme)
 (require 'forth-mode "gforth")
 
-(defconst inf-snd-version "24-Feb-2007"
+(defconst inf-snd-version "25-Mar-2007"
   "Version date of inf-snd.el.")
 
 ;; snd-ruby
@@ -644,9 +644,9 @@ snd/examp.rb.  This function could be on the so called abnormal
 hook with one arg `comint-preoutput-filter-functions'."
   (if (string-match "\\(^nil\n\\)" string)
       (setq string (replace-match "" t nil string 1)))
-  ;; Drop trailing '\n' ("...snd(0)> \n" ==> "...snd(0)> ").
+  ;; Drop trailing '\n' ("...snd(0)> \n" => "...snd(0)> ").
   (if (string-match inf-snd-prompt string)
-      (setq string (substring string 0 (- (length string) 1))))
+      (setq string (substring string 0 -1)))
   (while (string-match inf-snd-to-comment-regexp string)
     (setq string (replace-match "# \\1" t nil string 1)))
   string)
@@ -655,7 +655,7 @@ hook with one arg `comint-preoutput-filter-functions'."
   "If STRING contains a trailing nil, replace it by `inf-snd-prompt'.
 This function could be on the so called abnormal hook with one
 arg `comint-preoutput-filter-functions'."
-  (if (string-match "\\(nil\n$\\)" string)
+  (if (string-match "\\(\\(nil\\|#<undef>\\|#<nil>\\)\n$\\)" string)
       (replace-match inf-snd-prompt t nil string 1)
     string))
 
@@ -663,7 +663,7 @@ arg `comint-preoutput-filter-functions'."
   "Appends `inf-snd-prompt' to STRING.
 This function could be on the so called abnormal hook with one
 arg `comint-preoutput-filter-functions'."
-  (if (string-match "\\(\n\\)" string)
+  (if (string-match "\n" string)
       (concat string inf-snd-prompt)
     string))
 
@@ -671,8 +671,7 @@ arg `comint-preoutput-filter-functions'."
   "Special function for sending input LINE to PROC.
 Variable `comint-input-sender' is set to this function.  Running
 Snd-Ruby it is necessary to load snd/examp.rb in your ~/.snd file
-which contains run_emacs_eval_hook(line).  Running Snd-Forth
-emacs-eval is hardcoded in snd/xen.c.  inf-snd.el uses this
+which contains run_emacs_eval_hook(line).  inf-snd.el uses this
 function to evaluate one line or multi-line input (Ruby only)."
   (if (= (length line) 0)
       (if (eq 'scheme inf-snd-kind)
