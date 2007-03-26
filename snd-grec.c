@@ -52,9 +52,14 @@ static void display_meters(Float *maxes, int chans)
 
 static void start_recording(void)
 {
+  if (recorder_output_filename == NULL) recorder_output_filename = copy_string("test.snd");
   recorder_fd = mus_sound_open_output(recorder_output_filename, recorder_srate, recorder_chans, recorder_format, MUS_NEXT, NULL);
   if (recorder_fd < 0)
-    recording = false;
+    {
+      fprintf(stderr,"open output file chans: %d, srate: %d, format: %s -> %d\n", 
+	      recorder_chans, recorder_srate, mus_data_format_short_name(recorder_format), recorder_fd);
+      recording = false;
+    }
   else recording = true;
 }
 
@@ -62,7 +67,7 @@ static void start_reading(void)
 {
   Float *maxes;
   #define MIXER_SIZE 8
-  Float mixer_vals[MIXER_SIZE];
+  float mixer_vals[MIXER_SIZE];
   int input_device, buffer_size, err = MUS_NO_ERROR;
   unsigned char *inbuf;
 
@@ -71,6 +76,7 @@ static void start_reading(void)
   if (recorder_chans > 4) recorder_chans = 8;
   if (recorder_chans <= 0)
     {
+      fprintf(stderr,"chans: %d?\n", recorder_chans);
       reading = false;
       return;
     }
@@ -80,6 +86,7 @@ static void start_reading(void)
   /* TODO: can srate return be a list -- choose 44100 if possible */
   if (recorder_srate <= 0)
     {
+      fprintf(stderr,"srate: %d?\n", recorder_srate);
       reading = false;
       return;
     }
@@ -94,14 +101,17 @@ static void start_reading(void)
   input_device = mus_audio_open_input(MUS_AUDIO_DEFAULT, recorder_srate, recorder_chans, recorder_format, buffer_size);
   if (input_device < 0)
     {
+      fprintf(stderr,"open chans: %d, srate: %d, format: %s, size: %d -> %d\n", 
+	      recorder_chans, recorder_srate, mus_data_format_short_name(recorder_format), buffer_size, input_device);
       reading = false;
       return;
     }
 
   maxes = (Float *)CALLOC(recorder_chans, sizeof(Float));
-  inbuf = (unsigned char *)CALLOC(buffer_size, sizeof(unsigned char *));
+  inbuf = (unsigned char *)CALLOC(buffer_size, sizeof(unsigned char));
   /* TODO: do all the reads return char? */
 
+  fprintf(stderr,"reading...\n");
   while (true)
     {
       err = mus_audio_read(input_device, (char *)inbuf, buffer_size);
@@ -117,6 +127,9 @@ static void start_reading(void)
       if (err != MUS_ERROR) 
 	display_meters(maxes, recorder_chans);
     }
+  if (err != MUS_NO_ERROR)
+    fprintf(stderr,"error: %s\n", mus_error_type_to_string(err));
+  else fprintf(stderr,"done\n");
 
   mus_audio_close(input_device);
   FREE(inbuf);
