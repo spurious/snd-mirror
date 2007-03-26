@@ -150,7 +150,9 @@ void display_minibuffer_error(snd_info *sp, const char *str)
 static bool mini_lock_allocated = false;
 static picture_t *mini_lock = NULL, *speed_r = NULL, *speed_l = NULL, *blank = NULL, *stop_sign = NULL;
 static picture_t *bombs[NUM_BOMBS];
-static picture_t *hourglasses[NUM_HOURGLASSES];
+#if (!USE_CAIRO)
+  static picture_t *hourglasses[NUM_HOURGLASSES];
+#endif
 
 void show_lock(snd_info *sp)
 {
@@ -239,6 +241,7 @@ void stop_bomb(snd_info *sp)
 }
 
 
+#if (!USE_CAIRO)
 static void show_hourglass(snd_info *sp, int glass)
 {
   if (sp->sgx)
@@ -250,6 +253,65 @@ static void hide_hourglass(snd_info *sp)
   if (sp->sgx)
     draw_picture(sp->sgx->name_pix_ax, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
 }
+#else
+static GdkDrawable *sound_pix_wn(snd_info *sp)
+{
+  return(GDK_DRAWABLE(NAME_PIX(sp)->window));
+}
+
+static void show_happy_face(GdkDrawable *wn, Float pct)
+{
+  cairo_t *cr;
+  cr = gdk_cairo_create(wn);
+
+  /* overall background */
+  cairo_translate(cr, 0, 4);
+
+  cairo_set_source_rgb(cr, ss->sgx->basic_color->red, ss->sgx->basic_color->green, ss->sgx->basic_color->blue); 
+  cairo_rectangle(cr, 0, 0, 16, 16);
+  cairo_fill(cr);
+  
+  /* round face */
+  cairo_set_source_rgb(cr, 1.0, pct, 0.0);
+  cairo_arc(cr, 8, 8, 8, 0.0, 2 * M_PI);
+  cairo_fill(cr);
+  
+  /* eyes */
+  cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+  cairo_arc(cr, 5, 6, 1.5, 0, 2 * M_PI);
+  cairo_fill(cr);
+
+  cairo_arc(cr, 11, 6, 1.5, 0, 2 * M_PI);
+  cairo_fill(cr);
+
+  /* mouth */
+  cairo_set_line_width(cr, 1.0);
+  if (pct < 0.4)
+    cairo_arc(cr, 8, 14, 4, 17.0/16.0 * M_PI, -1.0/16.0 * M_PI);
+  else
+    {
+      if (pct < 0.7)
+	{
+	  cairo_move_to(cr, 4, 12);
+	  cairo_rel_line_to(cr, 8, 0);
+	}
+      else cairo_arc(cr, 8, 8, 5, 1.0/16.0 * M_PI, 15.0/16.0 * M_PI);
+    }
+  cairo_stroke(cr);
+
+  cairo_destroy(cr);
+}
+
+static void hide_happy_face(GdkDrawable *wn)
+{
+  cairo_t *cr;
+  cr = gdk_cairo_create(wn);
+  cairo_set_source_rgb(cr, ss->sgx->basic_color->red, ss->sgx->basic_color->green, ss->sgx->basic_color->blue); 
+  cairo_rectangle(cr, 0, 0, 24, 24);
+  cairo_fill(cr);
+  cairo_destroy(cr);
+}
+#endif
 
 static void make_pixmaps(void)
 {
@@ -266,9 +328,10 @@ static void make_pixmaps(void)
       speed_l = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, speed_l_bits());
       for (k = 0; k < NUM_BOMBS; k++) 
 	bombs[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_bomb_bits(k));
+#if (!USE_CAIRO)
       for (k = 0; k < NUM_HOURGLASSES; k++) 
 	hourglasses[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_glass_bits(k));
-
+#endif
       mini_lock_allocated = true;
     }
 }
@@ -1457,7 +1520,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       NAME_PIX(sp) = gtk_drawing_area_new();
       gtk_widget_set_events(NAME_PIX(sp), GDK_EXPOSURE_MASK);
       gtk_widget_set_size_request(NAME_PIX(sp), 16, 16);
-      gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), NAME_PIX(sp), false, false, 0);
+      gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), NAME_PIX(sp), false, false, 2);
       gtk_widget_show(NAME_PIX(sp));
       sp->sgx->name_pix_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
       sp->sgx->name_pix_ax->wn = NAME_PIX(sp)->window;
@@ -1467,7 +1530,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       STOP_PIX(sp) = gtk_drawing_area_new();
       gtk_widget_set_events(STOP_PIX(sp), GDK_BUTTON_PRESS_MASK);
       gtk_widget_set_size_request(STOP_PIX(sp), 18, 16);
-      gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), STOP_PIX(sp), false, false, 0);
+      gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), STOP_PIX(sp), false, false, 2);
       gtk_widget_show(STOP_PIX(sp));
       sp->sgx->stop_pix_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
       sp->sgx->stop_pix_ax->wn = STOP_PIX(sp)->window;
@@ -1920,22 +1983,35 @@ int control_panel_height(snd_info *sp)
 
 /* -------- PROGRESS REPORT -------- */
 
+#if USE_CAIRO
+GdkDrawable *enved_pix_wn(void);
+#endif
+
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved)
 {
-  int which;
   if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
-  which = (int)(pct * NUM_HOURGLASSES);
-  if (which >= NUM_HOURGLASSES) which = NUM_HOURGLASSES - 1;
-  if (which < 0) which = 0;
-  if (from_enved == FROM_ENVED)
-    display_enved_progress(NULL, hourglasses[which]);
-  else show_hourglass(sp, which);
+#if (!USE_CAIRO)
+  {
+    int which;
+    which = (int)(pct * NUM_HOURGLASSES);
+    if (which >= NUM_HOURGLASSES) which = NUM_HOURGLASSES - 1;
+    if (which < 0) which = 0;
+    if (from_enved == FROM_ENVED)
+      display_enved_progress(NULL, hourglasses[which]);
+    else show_hourglass(sp, which);
+  }
+#else
+    if (from_enved == FROM_ENVED)
+      show_happy_face(enved_pix_wn(), pct);
+    else show_happy_face(sound_pix_wn(sp), pct);
+#endif
   check_for_event();
 }
 
 void finish_progress_report(snd_info *sp, enved_progress_t from_enved)
 {
   if (sp->inuse != SOUND_NORMAL) return;
+#if (!USE_CAIRO)
   if (from_enved == FROM_ENVED)
     display_enved_progress(NULL, NULL);
   else
@@ -1943,6 +2019,15 @@ void finish_progress_report(snd_info *sp, enved_progress_t from_enved)
       hide_hourglass(sp);
       hide_stop_sign(sp);
     }
+#else
+  if (from_enved == FROM_ENVED)
+    hide_happy_face(enved_pix_wn());
+  else
+    {
+      hide_happy_face(sound_pix_wn(sp));
+      hide_stop_sign(sp);
+    }
+#endif
   if (!(ss->stopped_explicitly)) clear_minibuffer(sp);
 }
 
@@ -1951,7 +2036,11 @@ void start_progress_report(snd_info *sp, enved_progress_t from_enved)
   if (sp->inuse != SOUND_NORMAL) return;
   if (from_enved == NOT_FROM_ENVED) 
     {
+#if (!USE_CAIRO)
       show_hourglass(sp, 0);
+#else
+      show_happy_face(sound_pix_wn(sp), 0.0);
+#endif
       show_stop_sign(sp);
     }
 }

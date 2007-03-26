@@ -427,9 +427,11 @@ void enved_display_point_label(Float x, Float y)
 
 void display_enved_progress(char *str, picture_t *pix)
 {
+#if (!USE_CAIRO)
   if (pix_ax)
     draw_picture(pix_ax, pix, 0, 0, 0, 8, 16, 16);
   else fill_rectangle(pix_ax, 0, 4, 24, 24);
+#endif
   if (str)
     set_button_label(brktxtL, str);
   else set_button_label(brktxtL, BLANK_LABEL);
@@ -1127,6 +1129,14 @@ GtkWidget *create_envelope_editor(void)
   active_channel = current_channel();
   return(enved_dialog);
 }
+
+#if USE_CAIRO
+GdkDrawable *enved_pix_wn(void);
+GdkDrawable *enved_pix_wn(void)
+{
+  return(GDK_DRAWABLE(brkpixL->window));
+}
+#endif
 
 void set_enved_clip_p(bool val) 
 {

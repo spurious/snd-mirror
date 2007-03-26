@@ -11,50 +11,7 @@
  * TODO: check ATS
  * TODO: static intel mac snd with minimal needs
  * PERHAPS: background-gradient (0 = none)
- * SOMEDAY: happy-face as progress bar:
-
- here it is in scheme:
-
-(define (snd-happy-face snd progress)
-  (let* ((window (GDK_DRAWABLE (.window (list-ref (sound-widgets snd) 8))))
-	 (cr (gdk_cairo_create window))
-	 (bg (color->list (basic-color)))
-	 (fc (list 1.0 progress 0.0)))
-
-    ;; overall background
-    (cairo_set_source_rgb cr (car bg) (cadr bg) (caddr bg))
-    (cairo_rectangle cr 0 0 16 16)
-    (cairo_fill cr)
-
-    ;; round face
-    (cairo_set_source_rgb cr (car fc) (cadr fc) (caddr fc))
-    (cairo_arc cr 8 8 8 0.0 (* 2 pi))
-    (cairo_fill cr)
-
-    ;; eyes
-    (cairo_set_source_rgb cr 0.0 0.0 0.0)
-    (cairo_arc cr 5 6 1.5 0 (* 2 pi))
-    (cairo_fill cr)
-
-    (cairo_arc cr 11 6 1.5 0 (* 2 pi))
-    (cairo_fill cr)
-
-    ;; mouth
-    (cairo_set_line_width cr 1.0)
-    (if (< progress 0.4)
-	(cairo_arc cr 8 14 4 (* 17/16 pi) (* -1/16 pi))
-	(if (< progress 0.7)
-	    (begin
-	      (cairo_move_to cr 4 12)
-	      (cairo_rel_line_to cr 8 0))
-	    (cairo_arc cr 8 8 5 (* 1/16 pi) (* 15/16 pi))))
-    (cairo_stroke cr)
-
-    (cairo_destroy cr)))
-
  */
-
-
 
 void draw_line(axis_context *ax, int x0, int y0, int x1, int y1) 
 {
