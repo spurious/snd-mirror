@@ -380,9 +380,7 @@ void gc_set_foreground_xor(gc_t *gp, color_info *col1, color_info *col2)
 
 void gc_set_function(gc_t *gp, GdkFunction op)
 {
-#if USE_CAIRO
-  gp->op = (int)op;
-#else
+#if (!USE_CAIRO)
   gdk_gc_set_function(gp, op);
 #endif
 }

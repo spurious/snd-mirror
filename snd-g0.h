@@ -63,7 +63,6 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 
   typedef struct {
     color_t fg_color, bg_color;
-    int op; /* TODO get rid of op */
   } gc_t;
 
   #define picture_t GdkPixmap

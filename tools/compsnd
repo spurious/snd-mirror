@@ -25,6 +25,7 @@ tools/check-gtk.scm
 
 rm -f snd
 rm -f config.cache
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 basic configure test                                  ----- '
 echo ' -------------------------------------------------------------------------------- '
@@ -89,10 +90,8 @@ make sndinfo
 make audinfo
 make sndplay
 make sndrecord
-
-# GUILE_CONFIG_path=/home/bil/test/bin 
-echo ' -------------------------------- basic configure test/bin guile -------------------------------- '
 make allclean
+
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
@@ -108,17 +107,7 @@ echo '(let ((hxm (dlopen (string-append (getcwd) "/xm.so")))) (dlinit hxm "Init_
 rm tmp.scm
 make allclean
 
-# echo ' CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/bin '
-# ./configure --quiet CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/bin
-# /usr/include/gmp.h:2073: declaration of C function `std::ostream& 
-#   operator<<(std::ostream&, const __mpq_struct*)' conflicts with
-# /usr/include/gmp.h:2072: previous declaration `std::ostream& 
-#   operator<<(std::ostream&, const __mpz_struct*)' here
-# make
-# make xm
-# snd --version
-# make allclean
-
+echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --enable-snd-debug g++                                ----  '
@@ -132,6 +121,7 @@ make xm
 make allclean
 rm -f snd
 rm -f config.cache
+
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
@@ -147,9 +137,9 @@ echo ' '
 make allclean
 rm -f snd
 rm -f config.cache
-echo ' '
-echo ' '
 
+echo ' '
+echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 -with-no-gui --without-ladspa                         ----  '
 echo ' -------------------------------------------------------------------------------- '
@@ -163,6 +153,7 @@ echo ' '
 make allclean
 rm -f snd
 rm -f config.cache
+
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
@@ -198,6 +189,10 @@ echo ' -------------------------------------------------------------------------
 ./configure --quiet CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" --with-gtk --disable-deprecated
 make xg
 make allclean
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk"
+make allclean
 
 echo ' '
 echo ' '
@@ -213,18 +208,6 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 g++ --with-gtk -DHAVE_GFCDN=0"                       -----  '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CC=g++ --with-gtk CFLAGS="-Wall -I/usr/X11R6/include -DHAVE_GFCDN=0"
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-gtk 'snd-guile"
-make xg
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 g++ --with-gtk --without-builtin-gtkrc                 ---  '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet --with-gtk --without-builtin-gtkrc CFLAGS="-Wall -I/usr/X11R6/include"
@@ -235,6 +218,7 @@ make
 make allclean
 rm -f snd
 rm -f config.cache
+
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
@@ -354,17 +338,6 @@ make
 ./snd -noinit --features "'clm 'snd-forth 'snd-nogui"
 make allclean
 
-# echo ' '
-# echo ' '
-# echo ' --quiet --with-forth CC=g++ --disable-deprecated'
-# ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-forth CC=g++ --disable-deprecated
-# make
-# ./snd --version
-# ./snd -noinit --features "'clm 'snd-forth"
-# make allclean
-
-
-
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
@@ -420,12 +393,11 @@ make
 ./snd -noinit --features "'clm 'snd-gauche"
 make allclean
 
-
-
 echo ' '
 make allclean
 rm -f snd
 rm -f config.cache
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --with-static-gsl --with-alsa --with-midi                -  '
 echo ' -------------------------------------------------------------------------------- '
@@ -443,6 +415,7 @@ rm -f config.cache
 rm -f makefile
 rm -f mus-config.h
 rm -f sndinfo
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                 --with-doubles                                       ----  '
 echo ' -------------------------------------------------------------------------------- '
@@ -460,6 +433,7 @@ rm -f config.cache
 rm -f makefile
 rm -f mus-config.h
 rm -f sndinfo
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                  --with-doubles  but int samples                      ----  '
 echo ' -------------------------------------------------------------------------------- '
@@ -478,6 +452,7 @@ rm -f config.cache
 rm -f makefile
 rm -f mus-config.h
 rm -f sndinfo
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                  --without-float-samples --without-ladspa --with-gl --with-gl2ps --with-modules --without-gsl --without-xpm '
 echo ' -------------------------------------------------------------------------------- '
@@ -497,6 +472,7 @@ rm -f config.cache
 rm -f makefile
 rm -f mus-config.h
 rm -f sndinfo
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                 --without-float-samples --with-sample-width=32 --with-just-gl --with-static-motif --without-fftw --with-midi '
 echo ' -------------------------------------------------------------------------------- '
@@ -515,6 +491,7 @@ rm -f config.cache
 rm -f makefile
 rm -f mus-config.h
 rm -f sndinfo
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                 --without-float-samples --with-sample-width=28       ----  '
 echo ' -------------------------------------------------------------------------------- '
@@ -546,6 +523,7 @@ echo ' '
 make allclean
 rm -f snd
 rm -f config.cache
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                  --with-gtk                                            ---- '
 echo ' -------------------------------------------------------------------------------- '
@@ -569,6 +547,7 @@ echo ' '
 ./snd --version
 ./snd -noinit --features "'clm 'snd-gtk 'xg"
 make allclean
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                GTK_DISABLE_DEPRECATED G_DISABLE_DEPRECATED GDK_DISABLE_DEPRECATED --with-gtk --with-static-xm --with-x11 '
 echo ' -------------------------------------------------------------------------------- '
@@ -584,6 +563,7 @@ rm -f snd
 rm -f sndinfo
 rm -f audinfo
 rm -f config.cache
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                --enable-snd-debug --with-gsl                           ---- '
 echo ' -------------------------------------------------------------------------------- '
@@ -625,6 +605,7 @@ echo ' '
 make allclean
 rm -f snd
 rm -f config.cache
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --with-snd-as-widget                                   ---- '
 echo ' -------------------------------------------------------------------------------- '
@@ -677,6 +658,7 @@ make
 ./snd --version
 ./snd -noinit --features ":clm, :snd_ruby"
 make allclean
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-ruby --with-static-xm --with-gl --enable-snd-debug --with-alsa '
 echo ' -------------------------------------------------------------------------------- '
@@ -690,6 +672,7 @@ echo ' '
 make allclean
 rm -f snd
 rm -f config.cache
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --with-ruby --with-gtk                                 ---- '
 echo ' -------------------------------------------------------------------------------- '
@@ -736,6 +719,7 @@ echo ' '
 make allclean
 rm -f snd
 rm -f config.cache
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --with-ruby --with-no-gui --without-fftw                --- '
 echo ' -------------------------------------------------------------------------------- '
@@ -771,6 +755,7 @@ make allclean
 
 rm -f snd
 rm -f config.cache
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                g++                                                      --- '
 echo ' -------------------------------------------------------------------------------- '
@@ -785,9 +770,9 @@ make sndrecord
 ./audinfo
 ./sndinfo test.snd
 make allclean
-echo ' '
-echo ' '
 
+echo ' '
+echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                g++ --with-gtk                                          ---- '
 echo ' -------------------------------------------------------------------------------- '
@@ -796,9 +781,9 @@ make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-gtk"
 make allclean
-echo ' '
-echo ' '
 
+echo ' '
+echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                g++ --with-no-gui                                       ---- '
 echo ' -------------------------------------------------------------------------------- '
@@ -834,6 +819,7 @@ rm -f snd
 rm -f config.cache
 rm -f sndinfo
 rm -f audinfo
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                sndlib                                                 ---- '
 echo ' -------------------------------------------------------------------------------- '
@@ -875,6 +861,7 @@ rm -f snd
 rm -f config.cache
 rm -f makefile
 rm -f mus-config.h
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --disable-nls                                          ---- '
 echo ' -------------------------------------------------------------------------------- '
@@ -1104,6 +1091,7 @@ make
 make allclean
 
 setenv PKG_CONFIG_PATH /home/bil/test/old-gtk/lib/pkgconfig
+
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
