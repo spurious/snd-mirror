@@ -145,7 +145,7 @@
 	 (end (max pos1 pos2))
 	 (all-data (samples->sound-data)) ; for simplicity, just grab all the data
 	 (audio-data (make-sound-data 1 bufsize))
-	 (bytes (* bufsize 2))
+	 (bytes (* bufsize 2)) ; mus-audio-write handles the translation to short (and takes frames, not bytes as 3rd arg)
 	 (audio-fd (mus-audio-open-output mus-audio-default (srate) 1 mus-lshort bytes)))
     (if (not (= audio-fd -1))
 	(do ()

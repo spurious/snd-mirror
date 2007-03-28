@@ -2530,19 +2530,19 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	    (string-set! new-name i #\-)))))
 
   (define (directory->list dir)
-    (let ((dport (opendir dir))                ; no opendir in Gauche -- not sure how to handle this
-					       ; also readdir in Guile is flakey -- does not work in Solaris, perhaps not in netBSD
-					       ; SOMEDAY: make a working directory->list
-	  (ctr 0)) ; try to avoid infinite loop in the broken cases
-      (let loop ((entry (readdir dport))
-		 (files '()))
-	(set! ctr (1+ ctr))
-	(if (and (< ctr 2000)
-		 (not (eof-object? entry)))
-	    (loop (readdir dport) (cons entry files))
-	    (begin
-	      (closedir dport)
-	      (reverse! files))))))
+    (if (provided? 'snd-gauche)
+	(sys-readdir dir)
+	(let ((dport (opendir dir)) 
+	      (ctr 0)) ; try to avoid infinite loop in the broken cases
+	  (let loop ((entry (readdir dport))
+		     (files '()))
+	    (set! ctr (1+ ctr))
+	    (if (and (< ctr 2000)
+		     (not (eof-object? entry)))
+		(loop (readdir dport) (cons entry files))
+		(begin
+		  (closedir dport)
+		  (reverse! files)))))))
 
   (define (segment-maxamp name beg dur)
     (let ((mx 0.0)

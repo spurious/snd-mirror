@@ -13,6 +13,7 @@ static bool reading = false, recording = false;
 static char *recorder_output_filename = NULL;
 static int recorder_fd = -1, recorder_srate = 44100, recorder_chans = 2, recorder_format = MUS_LFLOAT;
 static off_t recorder_total_bytes = 0;
+static axis_context *recorder_ax = NULL;
 
 
 static void stop_recording(void)
@@ -125,15 +126,17 @@ static void start_reading(void)
   input_device = mus_audio_open_input(MUS_AUDIO_DEFAULT, recorder_srate, recorder_chans, recorder_format, buffer_size);
   if (input_device < 0)
     {
-      fprintf(stderr,"open chans: %d, srate: %d, format: %s, size: %d -> %d\n", 
+      fprintf(stderr,"open input failed: chans: %d, srate: %d, format: %s, size: %d -> %d\n", 
 	      recorder_chans, recorder_srate, mus_data_format_short_name(recorder_format), buffer_size, input_device);
+
+      /* TODO: try some fallbacks -- different srate/chans etc */
+      
       reading = false;
       return;
     }
 
   maxes = (Float *)CALLOC(recorder_chans, sizeof(Float));
   inbuf = (unsigned char *)CALLOC(buffer_size, sizeof(unsigned char));
-  /* TODO: do all the reads return char? */
 
   fprintf(stderr,"reading...\n");
   reading = true;
@@ -173,6 +176,41 @@ static void start_or_stop_recorder(GtkWidget *w, gpointer context)
   /* if recording button="Stop" else button="Record" */
 }
 
+static void draw_meter(axis_context *ax, GdkPixbuf *pix, int x, int y)
+{
+#if USE_CAIRO
+  cairo_t *cr;
+  cr = gdk_cairo_create(ax->wn);
+  gdk_cairo_set_source_pixbuf(cr, pix, x, y);
+  cairo_paint(cr);
+  cairo_destroy(cr);
+#else
+#if HAVE_GDK_DRAW_PIXBUF
+  gdk_draw_pixbuf(ax->wn, ax->gc, pix, 0, 0, x, y, gdk_pixbuf_get_width(pix), gdk_pixbuf_get_height(pix), GDK_RGB_DITHER_NONE, 0, 0); 
+#endif
+#endif
+}
+
+static gboolean meters_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
+{
+  int i, x = 0, width, meter_width;
+  width = widget_width(meters);
+  meter_width = width / recorder_chans;
+  /* gdk_pixbuf_new_from_file(name, &error) */
+
+  /* if not ax ... */
+  /* draw_meter(recorder_ax, meter, x, 0); */
+
+  return(false);
+}
+
+static gboolean meters_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+{
+
+  return(false);
+}
+
+
 widget_t record_file(void) 
 {
   if (!recorder)
@@ -210,12 +248,22 @@ widget_t record_file(void)
       gtk_widget_show(record_button);
       gtk_widget_show(help_button);
 
+
+      meters = gtk_drawing_area_new();
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->vbox), meters, true, true, 8);
+      gtk_widget_show(meters);
+
+
+      gtk_widget_show(recorder);
       set_dialog_widget(RECORDER_DIALOG, recorder);
 
 
+      SG_SIGNAL_CONNECT(meters, "expose_event", meters_expose, NULL);
+      SG_SIGNAL_CONNECT(meters, "configure_event", meters_resize, NULL);
+
       
     }
-  gtk_widget_show(recorder);
+  else gtk_widget_show(recorder);
   start_reading();
   return(recorder);
 }

@@ -8,8 +8,6 @@
  */
 
 /*
- * TODO: check ATS
- * TODO: static intel mac snd with minimal needs
  * PERHAPS: background-gradient (0 = none)
  */
 
