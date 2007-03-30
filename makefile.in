@@ -71,7 +71,7 @@ SUBDIRS = po
 
 SND_SCRIPTS = *.scm *.fs *.rb *.fsm
 SNDLIB_HEADERS = mus-config.h sndlib.h _sndlib.h sndlib-strings.h clm.h vct.h sndlib2xen.h clm2xen.h xen.h clm-strings.h
-SND_HEADERS = mus-config.h sndlib.h _sndlib.h clm.h snd.h snd-0.h snd-1.h snd-strings.h snd-rec.h xen.h snd-menu.h snd-file.h
+SND_HEADERS = mus-config.h sndlib.h _sndlib.h clm.h snd.h snd-0.h snd-1.h snd-strings.h xen.h snd-menu.h snd-file.h
 SND_X_HEADERS = snd-x0.h snd-x1.h
 SND_G_HEADERS = snd-g0.h snd-g1.h
 SNDLIB_O_FILES = headers.o audio.o io.o sound.o clm.o xen.o vct.o sndlib2xen.o clm2xen.o
@@ -79,7 +79,7 @@ MIDI_O_FILES = midi.o
 
 NO_GUI_HEADERS = snd-nogui0.h snd-nogui1.h
 
-O_FILES = snd-io.o snd-utils.o snd-listener.o snd-error.o snd-completion.o snd-menu.o snd-axis.o snd-data.o snd-fft.o snd-marks.o snd-file.o snd-edits.o snd-chn.o snd-dac.o snd-region.o snd-select.o snd-find.o snd-snd.o snd-help.o snd-main.o snd-print.o snd-trans.o snd-mix.o snd.o snd-env.o snd-xen.o snd-ladspa.o snd-rec.o snd-kbd.o snd-sig.o snd-draw.o snd-run.o
+O_FILES = snd-io.o snd-utils.o snd-listener.o snd-error.o snd-completion.o snd-menu.o snd-axis.o snd-data.o snd-fft.o snd-marks.o snd-file.o snd-edits.o snd-chn.o snd-dac.o snd-region.o snd-select.o snd-find.o snd-snd.o snd-help.o snd-main.o snd-print.o snd-trans.o snd-mix.o snd.o snd-env.o snd-xen.o snd-ladspa.o snd-kbd.o snd-sig.o snd-draw.o snd-run.o
 
 X_O_FILES = snd-xutils.o snd-xhelp.o snd-xfind.o snd-xmenu.o snd-xdraw.o snd-xlistener.o snd-xchn.o snd-xsnd.o snd-xregion.o snd-xdrop.o snd-xmain.o snd-xmix.o snd-xrec.o snd-xenv.o snd-gxutils.o snd-gxbitmaps.o snd-gxcolormaps.o snd-xfft.o snd-xprint.o snd-xfile.o snd-xxen.o snd-xprefs.o
 

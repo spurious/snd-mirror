@@ -253,6 +253,7 @@ static void start_or_stop_recorder(GtkWidget *w, gpointer context)
 
 static gboolean meters_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
+  if (recorder_chans == 0) return(false);
   meters_width = widget_width(meters);
   meter_width = meters_width / recorder_chans;
   meter_height = widget_height(meters);

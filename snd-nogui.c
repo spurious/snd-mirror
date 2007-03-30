@@ -1,5 +1,4 @@
 #include "snd.h"
-#include "snd-rec.h"
 #include "snd-menu.h"
 #include "snd-file.h"
 

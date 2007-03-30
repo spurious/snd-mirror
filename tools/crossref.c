@@ -223,7 +223,6 @@ int main(int argc, char **argv)
   add_header("snd-g1.h");
   add_header("snd-nogui0.h");
   add_header("snd-nogui1.h");
-  add_header("snd-rec.h");
   add_header("xen.h");
   add_header("mus-config.h.in");
   add_header("libclm.def");
@@ -270,7 +269,6 @@ int main(int argc, char **argv)
   add_file("snd-trans.c");
   add_file("snd-mix.c");
   add_file("snd.c");
-  add_file("snd-rec.c");
   add_file("snd-env.c");
   add_file("snd-xen.c");
   add_file("snd-ladspa.c");
@@ -604,7 +602,7 @@ int main(int argc, char **argv)
       qsort((void *)qs, names_ctr, sizeof(qdata *), greater_compare);
       for (i = 0; i < names_ctr; i++)
 	{
-	  bool menu_case = false, file_case = false, rec_case = false, nonogui_case = false;
+	  bool menu_case = false, file_case = false, nonogui_case = false;
 	  int menu_count = 0, file_count = 0, rec_count = 0;
 	  int nfiles;
 	  nfiles = 0;
@@ -632,7 +630,6 @@ int main(int argc, char **argv)
 		}
 	      menu_case = (strcmp(qs[i]->hname, "snd-menu.h") != 0);
 	      file_case = (strcmp(qs[i]->hname, "snd-file.h") != 0);
-	      rec_case = (strcmp(qs[i]->hname, "snd-rec.h") != 0);
 	      menu_count  = 0;
 	      file_count = 0;
 	      rec_count = 0;
@@ -681,17 +678,6 @@ int main(int argc, char **argv)
 			    }
 			  else file_count++;
 			}
-		      if (rec_case)
-			{
-			  if ((strcmp(files[j], "snd-rec.c") != 0) &&
-			      (strcmp(files[j], "snd-xrec.c") != 0) &&
-			      (strcmp(files[j], "snd-grec.c") != 0))
-			    {
-			      if (strcmp(files[j], "snd-nogui.c") != 0)
-				rec_case = false;
-			    }
-			  else rec_count++;
-			}
 		      
 		      fprintf(FD,"\n    %s: %d", files[j], counts[qs[i]->i][j]);
 		      nfiles++;
@@ -699,7 +685,6 @@ int main(int argc, char **argv)
 		}
 	      if ((menu_case) && (menu_count > 0)) fprintf(FD, "\n->SND-MENU.H\n");
 	      if ((file_case) && (file_count > 0)) fprintf(FD, "\n->SND-FILE.H\n");
-	      if ((rec_case) && (rec_count > 0)) fprintf(FD, "\n->SND-REC.H\n");
 	      if (nonogui_case) fprintf(FD, "\nnot needed in snd-nogui?\n");
 	      {
 		int m;

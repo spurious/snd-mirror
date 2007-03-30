@@ -2457,7 +2457,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_file();
   g_init_data();
   g_init_env();
-  g_init_recorder();
   g_init_find();
   g_init_track();
 #if (!USE_NO_GUI)

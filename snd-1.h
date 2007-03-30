@@ -1688,11 +1688,6 @@ void g_init_find(void);
 int snd_translate(const char *oldname, const char *newname, int type);
 
 
-/* -------- snd-rec.c -------- */
-
-void g_init_recorder(void);
-
-
 /* -------- snd.c -------- */
 
 void mus_error_to_snd(int type, char *msg);

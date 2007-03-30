@@ -49,7 +49,6 @@ snd-menu.c
 snd-mix.c
 snd-nogui.c
 snd-print.c
-snd-rec.c
 snd-region.c
 snd-run.c
 snd-select.c

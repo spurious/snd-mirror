@@ -2013,6 +2013,12 @@ static XEN g_preferences_dialog(void)
   return(XEN_WRAP_WIDGET(w));
 }
 
+static XEN g_recorder_dialog(void) 
+{
+  #define H_recorder_dialog "(" S_recorder_dialog "): start the Recorder"
+  return(XEN_WRAP_WIDGET(record_file()));
+}
+
 static XEN g_abort(void)
 {
   #define H_abort "(" S_abort "): exit Snd via \"abort\", presumably to land in the debugger"
@@ -2107,6 +2113,7 @@ XEN_ARGIFY_1(g_orientation_dialog_w, g_orientation_dialog)
 XEN_ARGIFY_1(g_transform_dialog_w, g_transform_dialog)
 XEN_ARGIFY_2(g_print_dialog_w, g_print_dialog)
 XEN_NARGIFY_0(g_preferences_dialog_w, g_preferences_dialog)
+XEN_NARGIFY_0(g_recorder_dialog_w, g_recorder_dialog)
 XEN_NARGIFY_0(g_abort_w, g_abort)
 XEN_NARGIFY_0(g_abortq_w, g_abortq)
 #else
@@ -2183,6 +2190,7 @@ XEN_NARGIFY_0(g_abortq_w, g_abortq)
 #define g_transform_dialog_w g_transform_dialog
 #define g_print_dialog_w g_print_dialog
 #define g_preferences_dialog_w g_preferences_dialog
+#define g_recorder_dialog_w g_recorder_dialog
 #define g_abort_w g_abort
 #define g_abortq_w g_abortq
 #endif
@@ -2321,6 +2329,7 @@ the hook functions return " PROC_TRUE ", the save state process opens 'filename'
   XEN_DEFINE_PROCEDURE(S_transform_dialog,      g_transform_dialog_w,      0, 1, 0, H_transform_dialog);
   XEN_DEFINE_PROCEDURE(S_print_dialog,          g_print_dialog_w,          0, 2, 0, H_print_dialog);
   XEN_DEFINE_PROCEDURE(S_preferences_dialog,    g_preferences_dialog_w,    0, 0, 0, H_preferences_dialog);
+  XEN_DEFINE_PROCEDURE(S_recorder_dialog,       g_recorder_dialog_w,       0, 0, 0, H_recorder_dialog);
   XEN_DEFINE_PROCEDURE(S_abort,                 g_abort_w,                 0, 0, 0, H_abort);
   XEN_DEFINE_PROCEDURE(S_c_g,                   g_abortq_w,                0, 0, 0, H_abortQ);
 }
