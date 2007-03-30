@@ -474,18 +474,17 @@ void set_mix_color(color_info *color)
   gc_set_foreground(sx->mix_gc, color);
 }
 
+
 color_t rgb_to_color(Float r, Float g, Float b)
 {
-#if USE_CAIRO
   color_info *ccolor;
-  ccolor = (color_info *)CALLOC(1, sizeof(color_info));
-  /* TODO: memleak here! */
+#if USE_CAIRO
+  ccolor = (color_info *)MALLOC(sizeof(color_info));
   ccolor->red = r;
   ccolor->green = g;
   ccolor->blue = b;
 #else
   color_info gcolor;
-  color_info *ccolor;
   gcolor.red = FLOAT_TO_RGB(r);
   gcolor.green = FLOAT_TO_RGB(g);
   gcolor.blue = FLOAT_TO_RGB(b);
@@ -496,7 +495,7 @@ color_t rgb_to_color(Float r, Float g, Float b)
 }
 
 #if USE_CAIRO
-static GdkColor *rgb_to_gdk_color(color_t col)
+GdkColor *rgb_to_gdk_color(color_t col)
 {
   GdkColor gcolor;
   GdkColor *ccolor;

@@ -20,7 +20,7 @@
  * reference args initial values are usually ignored, resultant values are returned in a list.
  * null ptrs are passed and returned as #f, trailing "user_data" callback function arguments are optional (default: #f).
  * where supported, "..." args are passed as a list, trailing NULL or -1 should be omitted.
- * 'xg is added to *features*
+ * 'xg and possibly 'cairo are added to *features*
  *
  * added funcs:
  *    (xg-version): date string.
@@ -568,7 +568,6 @@ XM_TYPE_PTR(char__, char**)
 XM_TYPE_PTR(GdkPixbufAnimation_, GdkPixbufAnimation*)
 XM_TYPE_PTR(GdkPixbufAnimationIter_, GdkPixbufAnimationIter*)
 XM_TYPE_PTR_1(GTimeVal_, GTimeVal*)
-XM_TYPE_PTR(GdkPixbufLoader_, GdkPixbufLoader*)
 XM_TYPE_PTR(GtkAccelGroup_, GtkAccelGroup*)
 #define XEN_TO_C_GtkAccelFlags(Arg) (GtkAccelFlags)(XEN_TO_C_INT(Arg))
 #define XEN_GtkAccelFlags_P(Arg) XEN_INTEGER_P(Arg)
@@ -576,7 +575,6 @@ XM_TYPE_PTR(GObject_, GObject*)
 XM_TYPE_PTR(GSList_, GSList*)
 XM_TYPE_PTR_2(GtkAccelGroupEntry_, GtkAccelGroupEntry*)
 XM_TYPE_PTR_1(GtkAccelLabel_, GtkAccelLabel*)
-XM_TYPE_PTR(GScanner_, GScanner*)
 XM_TYPE_PTR_1(GtkAccessible_, GtkAccessible*)
 XM_TYPE_PTR(GtkObject_, GtkObject*)
 XM_TYPE_PTR(GtkAdjustment_, GtkAdjustment*)
@@ -5326,67 +5324,6 @@ static XEN gxg_gdk_pixbuf_get_option(XEN pixbuf, XEN key)
   return(C_TO_XEN_gchar_(gdk_pixbuf_get_option(XEN_TO_C_GdkPixbuf_(pixbuf), XEN_TO_C_gchar_(key))));
 }
 
-static XEN gxg_gdk_pixbuf_loader_new(void)
-{
-  #define H_gdk_pixbuf_loader_new "GdkPixbufLoader* gdk_pixbuf_loader_new( void)"
-  return(C_TO_XEN_GdkPixbufLoader_(gdk_pixbuf_loader_new()));
-}
-
-static XEN gxg_gdk_pixbuf_loader_new_with_type(XEN image_type, XEN ignore_error)
-{
-  #define H_gdk_pixbuf_loader_new_with_type "GdkPixbufLoader* gdk_pixbuf_loader_new_with_type(char* image_type, \
-GError** [error])"
-  GError* ref_error = NULL;
-  XEN_ASSERT_TYPE(XEN_char__P(image_type), image_type, 1, "gdk_pixbuf_loader_new_with_type", "char*");
-  {
-    XEN result = XEN_FALSE;
-    result = C_TO_XEN_GdkPixbufLoader_(gdk_pixbuf_loader_new_with_type(XEN_TO_C_char_(image_type), &ref_error));
-    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
-   }
-}
-
-static XEN gxg_gdk_pixbuf_loader_write(XEN loader, XEN buf, XEN count, XEN ignore_error)
-{
-  #define H_gdk_pixbuf_loader_write "gboolean gdk_pixbuf_loader_write(GdkPixbufLoader* loader, guchar* buf, \
-gsize count, GError** [error])"
-  GError* ref_error = NULL;
-  XEN_ASSERT_TYPE(XEN_GdkPixbufLoader__P(loader), loader, 1, "gdk_pixbuf_loader_write", "GdkPixbufLoader*");
-  XEN_ASSERT_TYPE(XEN_guchar__P(buf), buf, 2, "gdk_pixbuf_loader_write", "guchar*");
-  XEN_ASSERT_TYPE(XEN_gsize_P(count), count, 3, "gdk_pixbuf_loader_write", "gsize");
-  {
-    XEN result = XEN_FALSE;
-    result = C_TO_XEN_gboolean(gdk_pixbuf_loader_write(XEN_TO_C_GdkPixbufLoader_(loader), XEN_TO_C_guchar_(buf), XEN_TO_C_gsize(count), 
-                                                       &ref_error));
-    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
-   }
-}
-
-static XEN gxg_gdk_pixbuf_loader_get_pixbuf(XEN loader)
-{
-  #define H_gdk_pixbuf_loader_get_pixbuf "GdkPixbuf* gdk_pixbuf_loader_get_pixbuf(GdkPixbufLoader* loader)"
-  XEN_ASSERT_TYPE(XEN_GdkPixbufLoader__P(loader), loader, 1, "gdk_pixbuf_loader_get_pixbuf", "GdkPixbufLoader*");
-  return(C_TO_XEN_GdkPixbuf_(gdk_pixbuf_loader_get_pixbuf(XEN_TO_C_GdkPixbufLoader_(loader))));
-}
-
-static XEN gxg_gdk_pixbuf_loader_get_animation(XEN loader)
-{
-  #define H_gdk_pixbuf_loader_get_animation "GdkPixbufAnimation* gdk_pixbuf_loader_get_animation(GdkPixbufLoader* loader)"
-  XEN_ASSERT_TYPE(XEN_GdkPixbufLoader__P(loader), loader, 1, "gdk_pixbuf_loader_get_animation", "GdkPixbufLoader*");
-  return(C_TO_XEN_GdkPixbufAnimation_(gdk_pixbuf_loader_get_animation(XEN_TO_C_GdkPixbufLoader_(loader))));
-}
-
-static XEN gxg_gdk_pixbuf_loader_close(XEN loader, XEN ignore_error)
-{
-  #define H_gdk_pixbuf_loader_close "gboolean gdk_pixbuf_loader_close(GdkPixbufLoader* loader, GError** [error])"
-  GError* ref_error = NULL;
-  XEN_ASSERT_TYPE(XEN_GdkPixbufLoader__P(loader), loader, 1, "gdk_pixbuf_loader_close", "GdkPixbufLoader*");
-  {
-    XEN result = XEN_FALSE;
-    result = C_TO_XEN_gboolean(gdk_pixbuf_loader_close(XEN_TO_C_GdkPixbufLoader_(loader), &ref_error));
-    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
-   }
-}
-
 static XEN gxg_gtk_vbox_new(XEN homogeneous, XEN spacing)
 {
   #define H_gtk_vbox_new "GtkWidget* gtk_vbox_new(gboolean homogeneous, gint spacing)"
@@ -5689,14 +5626,6 @@ static XEN gxg_gtk_accel_map_load_fd(XEN fd)
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_accel_map_load_scanner(XEN scanner)
-{
-  #define H_gtk_accel_map_load_scanner "void gtk_accel_map_load_scanner(GScanner* scanner)"
-  XEN_ASSERT_TYPE(XEN_GScanner__P(scanner), scanner, 1, "gtk_accel_map_load_scanner", "GScanner*");
-  gtk_accel_map_load_scanner(XEN_TO_C_GScanner_(scanner));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_accel_map_save_fd(XEN fd)
 {
   #define H_gtk_accel_map_save_fd "void gtk_accel_map_save_fd(gint fd)"
@@ -5982,13 +5911,6 @@ guint keyval, GdkModifierType modifiers, gchar* signal_name, GSList* binding_arg
   gtk_binding_entry_add_signall(XEN_TO_C_GtkBindingSet_(binding_set), XEN_TO_C_guint(keyval), XEN_TO_C_GdkModifierType(modifiers), 
                                 XEN_TO_C_gchar_(signal_name), XEN_TO_C_GSList_(binding_args));
   return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_binding_parse_binding(XEN scanner)
-{
-  #define H_gtk_binding_parse_binding "guint gtk_binding_parse_binding(GScanner* scanner)"
-  XEN_ASSERT_TYPE(XEN_GScanner__P(scanner), scanner, 1, "gtk_binding_parse_binding", "GScanner*");
-  return(C_TO_XEN_guint(gtk_binding_parse_binding(XEN_TO_C_GScanner_(scanner))));
 }
 
 static XEN gxg_gtk_bin_get_child(XEN bin)
@@ -10739,44 +10661,6 @@ static XEN gxg_gtk_rc_get_im_module_file(void)
    g_free(result);
    return(rtn);
   }
-}
-
-static XEN gxg_gtk_rc_scanner_new(void)
-{
-  #define H_gtk_rc_scanner_new "GScanner* gtk_rc_scanner_new( void)"
-  return(C_TO_XEN_GScanner_(gtk_rc_scanner_new()));
-}
-
-static XEN gxg_gtk_rc_parse_color(XEN scanner, XEN color)
-{
-  #define H_gtk_rc_parse_color "guint gtk_rc_parse_color(GScanner* scanner, GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GScanner__P(scanner), scanner, 1, "gtk_rc_parse_color", "GScanner*");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gtk_rc_parse_color", "GdkColor*");
-  return(C_TO_XEN_guint(gtk_rc_parse_color(XEN_TO_C_GScanner_(scanner), XEN_TO_C_GdkColor_(color))));
-}
-
-static XEN gxg_gtk_rc_parse_state(XEN scanner, XEN ignore_state)
-{
-  #define H_gtk_rc_parse_state "guint gtk_rc_parse_state(GScanner* scanner, GtkStateType* [state])"
-  GtkStateType ref_state;
-  XEN_ASSERT_TYPE(XEN_GScanner__P(scanner), scanner, 1, "gtk_rc_parse_state", "GScanner*");
-  {
-    XEN result = XEN_FALSE;
-    result = C_TO_XEN_guint(gtk_rc_parse_state(XEN_TO_C_GScanner_(scanner), &ref_state));
-    return(XEN_LIST_2(result, C_TO_XEN_GtkStateType(ref_state)));
-   }
-}
-
-static XEN gxg_gtk_rc_parse_priority(XEN scanner, XEN ignore_priority)
-{
-  #define H_gtk_rc_parse_priority "guint gtk_rc_parse_priority(GScanner* scanner, GtkPathPriorityType* [priority])"
-  GtkPathPriorityType ref_priority;
-  XEN_ASSERT_TYPE(XEN_GScanner__P(scanner), scanner, 1, "gtk_rc_parse_priority", "GScanner*");
-  {
-    XEN result = XEN_FALSE;
-    result = C_TO_XEN_guint(gtk_rc_parse_priority(XEN_TO_C_GScanner_(scanner), &ref_priority));
-    return(XEN_LIST_2(result, C_TO_XEN_GtkPathPriorityType(ref_priority)));
-   }
 }
 
 static XEN gxg_gtk_ruler_set_metric(XEN ruler, XEN metric)
@@ -31896,7 +31780,6 @@ static XEN gxg_GDK_WINDOW(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(
 static XEN gxg_GDK_PIXBUF(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkPixbuf_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GDK_PIXBUF_ANIMATION(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkPixbufAnimation_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GDK_PIXBUF_ANIMATION_ITER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkPixbufAnimationIter_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GDK_PIXBUF_LOADER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkPixbufLoader_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_VBOX(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkVBox_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_ACCEL_GROUP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkAccelGroup_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_ACCEL_LABEL(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkAccelLabel_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -32115,7 +31998,6 @@ static XEN gxg_GDK_IS_WINDOW(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(
 static XEN gxg_GDK_IS_PIXBUF(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_PIXBUF((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_PIXBUF_ANIMATION(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_PIXBUF_ANIMATION((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_PIXBUF_ANIMATION_ITER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_PIXBUF_ANIMATION_ITER((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
-static XEN gxg_GDK_IS_PIXBUF_LOADER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_PIXBUF_LOADER((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_VBOX(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_VBOX((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_ACCEL_GROUP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_ACCEL_GROUP((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_ACCEL_LABEL(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_ACCEL_LABEL((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
@@ -34407,12 +34289,6 @@ XEN_NARGIFY_1(gxg_gdk_pixbuf_animation_iter_get_pixbuf_w, gxg_gdk_pixbuf_animati
 XEN_NARGIFY_1(gxg_gdk_pixbuf_animation_iter_on_currently_loading_frame_w, gxg_gdk_pixbuf_animation_iter_on_currently_loading_frame)
 XEN_NARGIFY_2(gxg_gdk_pixbuf_animation_iter_advance_w, gxg_gdk_pixbuf_animation_iter_advance)
 XEN_NARGIFY_2(gxg_gdk_pixbuf_get_option_w, gxg_gdk_pixbuf_get_option)
-XEN_NARGIFY_0(gxg_gdk_pixbuf_loader_new_w, gxg_gdk_pixbuf_loader_new)
-XEN_ARGIFY_2(gxg_gdk_pixbuf_loader_new_with_type_w, gxg_gdk_pixbuf_loader_new_with_type)
-XEN_ARGIFY_4(gxg_gdk_pixbuf_loader_write_w, gxg_gdk_pixbuf_loader_write)
-XEN_NARGIFY_1(gxg_gdk_pixbuf_loader_get_pixbuf_w, gxg_gdk_pixbuf_loader_get_pixbuf)
-XEN_NARGIFY_1(gxg_gdk_pixbuf_loader_get_animation_w, gxg_gdk_pixbuf_loader_get_animation)
-XEN_ARGIFY_2(gxg_gdk_pixbuf_loader_close_w, gxg_gdk_pixbuf_loader_close)
 XEN_NARGIFY_2(gxg_gtk_vbox_new_w, gxg_gtk_vbox_new)
 XEN_NARGIFY_0(gxg_gtk_accel_group_new_w, gxg_gtk_accel_group_new)
 XEN_NARGIFY_1(gxg_gtk_accel_group_lock_w, gxg_gtk_accel_group_lock)
@@ -34444,7 +34320,6 @@ XEN_NARGIFY_1(gxg_gtk_accel_map_load_w, gxg_gtk_accel_map_load)
 XEN_NARGIFY_1(gxg_gtk_accel_map_save_w, gxg_gtk_accel_map_save)
 XEN_NARGIFY_2(gxg_gtk_accel_map_foreach_w, gxg_gtk_accel_map_foreach)
 XEN_NARGIFY_1(gxg_gtk_accel_map_load_fd_w, gxg_gtk_accel_map_load_fd)
-XEN_NARGIFY_1(gxg_gtk_accel_map_load_scanner_w, gxg_gtk_accel_map_load_scanner)
 XEN_NARGIFY_1(gxg_gtk_accel_map_save_fd_w, gxg_gtk_accel_map_save_fd)
 XEN_NARGIFY_1(gxg_gtk_accel_map_add_filter_w, gxg_gtk_accel_map_add_filter)
 XEN_NARGIFY_2(gxg_gtk_accel_map_foreach_unfiltered_w, gxg_gtk_accel_map_foreach_unfiltered)
@@ -34473,7 +34348,6 @@ XEN_NARGIFY_3(gxg_gtk_binding_entry_clear_w, gxg_gtk_binding_entry_clear)
 XEN_NARGIFY_4(gxg_gtk_binding_set_add_path_w, gxg_gtk_binding_set_add_path)
 XEN_NARGIFY_3(gxg_gtk_binding_entry_remove_w, gxg_gtk_binding_entry_remove)
 XEN_NARGIFY_5(gxg_gtk_binding_entry_add_signall_w, gxg_gtk_binding_entry_add_signall)
-XEN_NARGIFY_1(gxg_gtk_binding_parse_binding_w, gxg_gtk_binding_parse_binding)
 XEN_NARGIFY_1(gxg_gtk_bin_get_child_w, gxg_gtk_bin_get_child)
 XEN_NARGIFY_5(gxg_gtk_box_pack_start_w, gxg_gtk_box_pack_start)
 XEN_NARGIFY_5(gxg_gtk_box_pack_end_w, gxg_gtk_box_pack_end)
@@ -34997,10 +34871,6 @@ XEN_NARGIFY_0(gxg_gtk_rc_get_theme_dir_w, gxg_gtk_rc_get_theme_dir)
 XEN_NARGIFY_0(gxg_gtk_rc_get_module_dir_w, gxg_gtk_rc_get_module_dir)
 XEN_NARGIFY_0(gxg_gtk_rc_get_im_module_path_w, gxg_gtk_rc_get_im_module_path)
 XEN_NARGIFY_0(gxg_gtk_rc_get_im_module_file_w, gxg_gtk_rc_get_im_module_file)
-XEN_NARGIFY_0(gxg_gtk_rc_scanner_new_w, gxg_gtk_rc_scanner_new)
-XEN_NARGIFY_2(gxg_gtk_rc_parse_color_w, gxg_gtk_rc_parse_color)
-XEN_ARGIFY_2(gxg_gtk_rc_parse_state_w, gxg_gtk_rc_parse_state)
-XEN_ARGIFY_2(gxg_gtk_rc_parse_priority_w, gxg_gtk_rc_parse_priority)
 XEN_NARGIFY_2(gxg_gtk_ruler_set_metric_w, gxg_gtk_ruler_set_metric)
 XEN_NARGIFY_5(gxg_gtk_ruler_set_range_w, gxg_gtk_ruler_set_range)
 XEN_NARGIFY_1(gxg_gtk_ruler_draw_ticks_w, gxg_gtk_ruler_draw_ticks)
@@ -37295,7 +37165,6 @@ XEN_NARGIFY_1(gxg_GDK_WINDOW_w, gxg_GDK_WINDOW)
 XEN_NARGIFY_1(gxg_GDK_PIXBUF_w, gxg_GDK_PIXBUF)
 XEN_NARGIFY_1(gxg_GDK_PIXBUF_ANIMATION_w, gxg_GDK_PIXBUF_ANIMATION)
 XEN_NARGIFY_1(gxg_GDK_PIXBUF_ANIMATION_ITER_w, gxg_GDK_PIXBUF_ANIMATION_ITER)
-XEN_NARGIFY_1(gxg_GDK_PIXBUF_LOADER_w, gxg_GDK_PIXBUF_LOADER)
 XEN_NARGIFY_1(gxg_GTK_VBOX_w, gxg_GTK_VBOX)
 XEN_NARGIFY_1(gxg_GTK_ACCEL_GROUP_w, gxg_GTK_ACCEL_GROUP)
 XEN_NARGIFY_1(gxg_GTK_ACCEL_LABEL_w, gxg_GTK_ACCEL_LABEL)
@@ -37514,7 +37383,6 @@ XEN_NARGIFY_1(gxg_GDK_IS_WINDOW_w, gxg_GDK_IS_WINDOW)
 XEN_NARGIFY_1(gxg_GDK_IS_PIXBUF_w, gxg_GDK_IS_PIXBUF)
 XEN_NARGIFY_1(gxg_GDK_IS_PIXBUF_ANIMATION_w, gxg_GDK_IS_PIXBUF_ANIMATION)
 XEN_NARGIFY_1(gxg_GDK_IS_PIXBUF_ANIMATION_ITER_w, gxg_GDK_IS_PIXBUF_ANIMATION_ITER)
-XEN_NARGIFY_1(gxg_GDK_IS_PIXBUF_LOADER_w, gxg_GDK_IS_PIXBUF_LOADER)
 XEN_NARGIFY_1(gxg_GTK_IS_VBOX_w, gxg_GTK_IS_VBOX)
 XEN_NARGIFY_1(gxg_GTK_IS_ACCEL_GROUP_w, gxg_GTK_IS_ACCEL_GROUP)
 XEN_NARGIFY_1(gxg_GTK_IS_ACCEL_LABEL_w, gxg_GTK_IS_ACCEL_LABEL)
@@ -38257,12 +38125,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_pixbuf_animation_iter_on_currently_loading_frame_w gxg_gdk_pixbuf_animation_iter_on_currently_loading_frame
 #define gxg_gdk_pixbuf_animation_iter_advance_w gxg_gdk_pixbuf_animation_iter_advance
 #define gxg_gdk_pixbuf_get_option_w gxg_gdk_pixbuf_get_option
-#define gxg_gdk_pixbuf_loader_new_w gxg_gdk_pixbuf_loader_new
-#define gxg_gdk_pixbuf_loader_new_with_type_w gxg_gdk_pixbuf_loader_new_with_type
-#define gxg_gdk_pixbuf_loader_write_w gxg_gdk_pixbuf_loader_write
-#define gxg_gdk_pixbuf_loader_get_pixbuf_w gxg_gdk_pixbuf_loader_get_pixbuf
-#define gxg_gdk_pixbuf_loader_get_animation_w gxg_gdk_pixbuf_loader_get_animation
-#define gxg_gdk_pixbuf_loader_close_w gxg_gdk_pixbuf_loader_close
 #define gxg_gtk_vbox_new_w gxg_gtk_vbox_new
 #define gxg_gtk_accel_group_new_w gxg_gtk_accel_group_new
 #define gxg_gtk_accel_group_lock_w gxg_gtk_accel_group_lock
@@ -38294,7 +38156,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_accel_map_save_w gxg_gtk_accel_map_save
 #define gxg_gtk_accel_map_foreach_w gxg_gtk_accel_map_foreach
 #define gxg_gtk_accel_map_load_fd_w gxg_gtk_accel_map_load_fd
-#define gxg_gtk_accel_map_load_scanner_w gxg_gtk_accel_map_load_scanner
 #define gxg_gtk_accel_map_save_fd_w gxg_gtk_accel_map_save_fd
 #define gxg_gtk_accel_map_add_filter_w gxg_gtk_accel_map_add_filter
 #define gxg_gtk_accel_map_foreach_unfiltered_w gxg_gtk_accel_map_foreach_unfiltered
@@ -38323,7 +38184,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_binding_set_add_path_w gxg_gtk_binding_set_add_path
 #define gxg_gtk_binding_entry_remove_w gxg_gtk_binding_entry_remove
 #define gxg_gtk_binding_entry_add_signall_w gxg_gtk_binding_entry_add_signall
-#define gxg_gtk_binding_parse_binding_w gxg_gtk_binding_parse_binding
 #define gxg_gtk_bin_get_child_w gxg_gtk_bin_get_child
 #define gxg_gtk_box_pack_start_w gxg_gtk_box_pack_start
 #define gxg_gtk_box_pack_end_w gxg_gtk_box_pack_end
@@ -38847,10 +38707,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_rc_get_module_dir_w gxg_gtk_rc_get_module_dir
 #define gxg_gtk_rc_get_im_module_path_w gxg_gtk_rc_get_im_module_path
 #define gxg_gtk_rc_get_im_module_file_w gxg_gtk_rc_get_im_module_file
-#define gxg_gtk_rc_scanner_new_w gxg_gtk_rc_scanner_new
-#define gxg_gtk_rc_parse_color_w gxg_gtk_rc_parse_color
-#define gxg_gtk_rc_parse_state_w gxg_gtk_rc_parse_state
-#define gxg_gtk_rc_parse_priority_w gxg_gtk_rc_parse_priority
 #define gxg_gtk_ruler_set_metric_w gxg_gtk_ruler_set_metric
 #define gxg_gtk_ruler_set_range_w gxg_gtk_ruler_set_range
 #define gxg_gtk_ruler_draw_ticks_w gxg_gtk_ruler_draw_ticks
@@ -41145,7 +41001,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GDK_PIXBUF_w gxg_GDK_PIXBUF
 #define gxg_GDK_PIXBUF_ANIMATION_w gxg_GDK_PIXBUF_ANIMATION
 #define gxg_GDK_PIXBUF_ANIMATION_ITER_w gxg_GDK_PIXBUF_ANIMATION_ITER
-#define gxg_GDK_PIXBUF_LOADER_w gxg_GDK_PIXBUF_LOADER
 #define gxg_GTK_VBOX_w gxg_GTK_VBOX
 #define gxg_GTK_ACCEL_GROUP_w gxg_GTK_ACCEL_GROUP
 #define gxg_GTK_ACCEL_LABEL_w gxg_GTK_ACCEL_LABEL
@@ -41364,7 +41219,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GDK_IS_PIXBUF_w gxg_GDK_IS_PIXBUF
 #define gxg_GDK_IS_PIXBUF_ANIMATION_w gxg_GDK_IS_PIXBUF_ANIMATION
 #define gxg_GDK_IS_PIXBUF_ANIMATION_ITER_w gxg_GDK_IS_PIXBUF_ANIMATION_ITER
-#define gxg_GDK_IS_PIXBUF_LOADER_w gxg_GDK_IS_PIXBUF_LOADER
 #define gxg_GTK_IS_VBOX_w gxg_GTK_IS_VBOX
 #define gxg_GTK_IS_ACCEL_GROUP_w gxg_GTK_IS_ACCEL_GROUP
 #define gxg_GTK_IS_ACCEL_LABEL_w gxg_GTK_IS_ACCEL_LABEL
@@ -42114,12 +41968,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_pixbuf_animation_iter_on_currently_loading_frame, gxg_gdk_pixbuf_animation_iter_on_currently_loading_frame_w, 1, 0, 0, H_gdk_pixbuf_animation_iter_on_currently_loading_frame);
   XG_DEFINE_PROCEDURE(gdk_pixbuf_animation_iter_advance, gxg_gdk_pixbuf_animation_iter_advance_w, 2, 0, 0, H_gdk_pixbuf_animation_iter_advance);
   XG_DEFINE_PROCEDURE(gdk_pixbuf_get_option, gxg_gdk_pixbuf_get_option_w, 2, 0, 0, H_gdk_pixbuf_get_option);
-  XG_DEFINE_PROCEDURE(gdk_pixbuf_loader_new, gxg_gdk_pixbuf_loader_new_w, 0, 0, 0, H_gdk_pixbuf_loader_new);
-  XG_DEFINE_PROCEDURE(gdk_pixbuf_loader_new_with_type, gxg_gdk_pixbuf_loader_new_with_type_w, 1, 1, 0, H_gdk_pixbuf_loader_new_with_type);
-  XG_DEFINE_PROCEDURE(gdk_pixbuf_loader_write, gxg_gdk_pixbuf_loader_write_w, 3, 1, 0, H_gdk_pixbuf_loader_write);
-  XG_DEFINE_PROCEDURE(gdk_pixbuf_loader_get_pixbuf, gxg_gdk_pixbuf_loader_get_pixbuf_w, 1, 0, 0, H_gdk_pixbuf_loader_get_pixbuf);
-  XG_DEFINE_PROCEDURE(gdk_pixbuf_loader_get_animation, gxg_gdk_pixbuf_loader_get_animation_w, 1, 0, 0, H_gdk_pixbuf_loader_get_animation);
-  XG_DEFINE_PROCEDURE(gdk_pixbuf_loader_close, gxg_gdk_pixbuf_loader_close_w, 1, 1, 0, H_gdk_pixbuf_loader_close);
   XG_DEFINE_PROCEDURE(gtk_vbox_new, gxg_gtk_vbox_new_w, 2, 0, 0, H_gtk_vbox_new);
   XG_DEFINE_PROCEDURE(gtk_accel_group_new, gxg_gtk_accel_group_new_w, 0, 0, 0, H_gtk_accel_group_new);
   XG_DEFINE_PROCEDURE(gtk_accel_group_lock, gxg_gtk_accel_group_lock_w, 1, 0, 0, H_gtk_accel_group_lock);
@@ -42151,7 +41999,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_accel_map_save, gxg_gtk_accel_map_save_w, 1, 0, 0, H_gtk_accel_map_save);
   XG_DEFINE_PROCEDURE(gtk_accel_map_foreach, gxg_gtk_accel_map_foreach_w, 2, 0, 0, H_gtk_accel_map_foreach);
   XG_DEFINE_PROCEDURE(gtk_accel_map_load_fd, gxg_gtk_accel_map_load_fd_w, 1, 0, 0, H_gtk_accel_map_load_fd);
-  XG_DEFINE_PROCEDURE(gtk_accel_map_load_scanner, gxg_gtk_accel_map_load_scanner_w, 1, 0, 0, H_gtk_accel_map_load_scanner);
   XG_DEFINE_PROCEDURE(gtk_accel_map_save_fd, gxg_gtk_accel_map_save_fd_w, 1, 0, 0, H_gtk_accel_map_save_fd);
   XG_DEFINE_PROCEDURE(gtk_accel_map_add_filter, gxg_gtk_accel_map_add_filter_w, 1, 0, 0, H_gtk_accel_map_add_filter);
   XG_DEFINE_PROCEDURE(gtk_accel_map_foreach_unfiltered, gxg_gtk_accel_map_foreach_unfiltered_w, 2, 0, 0, H_gtk_accel_map_foreach_unfiltered);
@@ -42180,7 +42027,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_binding_set_add_path, gxg_gtk_binding_set_add_path_w, 4, 0, 0, H_gtk_binding_set_add_path);
   XG_DEFINE_PROCEDURE(gtk_binding_entry_remove, gxg_gtk_binding_entry_remove_w, 3, 0, 0, H_gtk_binding_entry_remove);
   XG_DEFINE_PROCEDURE(gtk_binding_entry_add_signall, gxg_gtk_binding_entry_add_signall_w, 5, 0, 0, H_gtk_binding_entry_add_signall);
-  XG_DEFINE_PROCEDURE(gtk_binding_parse_binding, gxg_gtk_binding_parse_binding_w, 1, 0, 0, H_gtk_binding_parse_binding);
   XG_DEFINE_PROCEDURE(gtk_bin_get_child, gxg_gtk_bin_get_child_w, 1, 0, 0, H_gtk_bin_get_child);
   XG_DEFINE_PROCEDURE(gtk_box_pack_start, gxg_gtk_box_pack_start_w, 5, 0, 0, H_gtk_box_pack_start);
   XG_DEFINE_PROCEDURE(gtk_box_pack_end, gxg_gtk_box_pack_end_w, 5, 0, 0, H_gtk_box_pack_end);
@@ -42704,10 +42550,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_rc_get_module_dir, gxg_gtk_rc_get_module_dir_w, 0, 0, 0, H_gtk_rc_get_module_dir);
   XG_DEFINE_PROCEDURE(gtk_rc_get_im_module_path, gxg_gtk_rc_get_im_module_path_w, 0, 0, 0, H_gtk_rc_get_im_module_path);
   XG_DEFINE_PROCEDURE(gtk_rc_get_im_module_file, gxg_gtk_rc_get_im_module_file_w, 0, 0, 0, H_gtk_rc_get_im_module_file);
-  XG_DEFINE_PROCEDURE(gtk_rc_scanner_new, gxg_gtk_rc_scanner_new_w, 0, 0, 0, H_gtk_rc_scanner_new);
-  XG_DEFINE_PROCEDURE(gtk_rc_parse_color, gxg_gtk_rc_parse_color_w, 2, 0, 0, H_gtk_rc_parse_color);
-  XG_DEFINE_PROCEDURE(gtk_rc_parse_state, gxg_gtk_rc_parse_state_w, 1, 1, 0, H_gtk_rc_parse_state);
-  XG_DEFINE_PROCEDURE(gtk_rc_parse_priority, gxg_gtk_rc_parse_priority_w, 1, 1, 0, H_gtk_rc_parse_priority);
   XG_DEFINE_PROCEDURE(gtk_ruler_set_metric, gxg_gtk_ruler_set_metric_w, 2, 0, 0, H_gtk_ruler_set_metric);
   XG_DEFINE_PROCEDURE(gtk_ruler_set_range, gxg_gtk_ruler_set_range_w, 5, 0, 0, H_gtk_ruler_set_range);
   XG_DEFINE_PROCEDURE(gtk_ruler_draw_ticks, gxg_gtk_ruler_draw_ticks_w, 1, 0, 0, H_gtk_ruler_draw_ticks);
@@ -44995,7 +44837,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GDK_PIXBUF, gxg_GDK_PIXBUF_w, 1, 0, 0, "(GDK_PIXBUF obj) casts obj to GDK_PIXBUF");
   XG_DEFINE_PROCEDURE(GDK_PIXBUF_ANIMATION, gxg_GDK_PIXBUF_ANIMATION_w, 1, 0, 0, "(GDK_PIXBUF_ANIMATION obj) casts obj to GDK_PIXBUF_ANIMATION");
   XG_DEFINE_PROCEDURE(GDK_PIXBUF_ANIMATION_ITER, gxg_GDK_PIXBUF_ANIMATION_ITER_w, 1, 0, 0, "(GDK_PIXBUF_ANIMATION_ITER obj) casts obj to GDK_PIXBUF_ANIMATION_ITER");
-  XG_DEFINE_PROCEDURE(GDK_PIXBUF_LOADER, gxg_GDK_PIXBUF_LOADER_w, 1, 0, 0, "(GDK_PIXBUF_LOADER obj) casts obj to GDK_PIXBUF_LOADER");
   XG_DEFINE_PROCEDURE(GTK_VBOX, gxg_GTK_VBOX_w, 1, 0, 0, "(GTK_VBOX obj) casts obj to GTK_VBOX");
   XG_DEFINE_PROCEDURE(GTK_ACCEL_GROUP, gxg_GTK_ACCEL_GROUP_w, 1, 0, 0, "(GTK_ACCEL_GROUP obj) casts obj to GTK_ACCEL_GROUP");
   XG_DEFINE_PROCEDURE(GTK_ACCEL_LABEL, gxg_GTK_ACCEL_LABEL_w, 1, 0, 0, "(GTK_ACCEL_LABEL obj) casts obj to GTK_ACCEL_LABEL");
@@ -45221,7 +45062,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GDK_IS_PIXBUF, gxg_GDK_IS_PIXBUF_w, 1, 0, 0, "(GDK_IS_PIXBUF obj): #t if obj is a GDK_IS_PIXBUF");
   XG_DEFINE_PROCEDURE(GDK_IS_PIXBUF_ANIMATION, gxg_GDK_IS_PIXBUF_ANIMATION_w, 1, 0, 0, "(GDK_IS_PIXBUF_ANIMATION obj): #t if obj is a GDK_IS_PIXBUF_ANIMATION");
   XG_DEFINE_PROCEDURE(GDK_IS_PIXBUF_ANIMATION_ITER, gxg_GDK_IS_PIXBUF_ANIMATION_ITER_w, 1, 0, 0, "(GDK_IS_PIXBUF_ANIMATION_ITER obj): #t if obj is a GDK_IS_PIXBUF_ANIMATION_ITER");
-  XG_DEFINE_PROCEDURE(GDK_IS_PIXBUF_LOADER, gxg_GDK_IS_PIXBUF_LOADER_w, 1, 0, 0, "(GDK_IS_PIXBUF_LOADER obj): #t if obj is a GDK_IS_PIXBUF_LOADER");
   XG_DEFINE_PROCEDURE(GTK_IS_VBOX, gxg_GTK_IS_VBOX_w, 1, 0, 0, "(GTK_IS_VBOX obj): #t if obj is a GTK_IS_VBOX");
   XG_DEFINE_PROCEDURE(GTK_IS_ACCEL_GROUP, gxg_GTK_IS_ACCEL_GROUP_w, 1, 0, 0, "(GTK_IS_ACCEL_GROUP obj): #t if obj is a GTK_IS_ACCEL_GROUP");
   XG_DEFINE_PROCEDURE(GTK_IS_ACCEL_LABEL, gxg_GTK_IS_ACCEL_LABEL_w, 1, 0, 0, "(GTK_IS_ACCEL_LABEL obj): #t if obj is a GTK_IS_ACCEL_LABEL");
@@ -46421,44 +46261,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_RC_BG);
   DEFINE_INTEGER(GTK_RC_TEXT);
   DEFINE_INTEGER(GTK_RC_BASE);
-  DEFINE_INTEGER(GTK_RC_TOKEN_INVALID);
-  DEFINE_INTEGER(GTK_RC_TOKEN_INCLUDE);
-  DEFINE_INTEGER(GTK_RC_TOKEN_NORMAL);
-  DEFINE_INTEGER(GTK_RC_TOKEN_ACTIVE);
-  DEFINE_INTEGER(GTK_RC_TOKEN_PRELIGHT);
-  DEFINE_INTEGER(GTK_RC_TOKEN_SELECTED);
-  DEFINE_INTEGER(GTK_RC_TOKEN_INSENSITIVE);
-  DEFINE_INTEGER(GTK_RC_TOKEN_FG);
-  DEFINE_INTEGER(GTK_RC_TOKEN_BG);
-  DEFINE_INTEGER(GTK_RC_TOKEN_TEXT);
-  DEFINE_INTEGER(GTK_RC_TOKEN_BASE);
-  DEFINE_INTEGER(GTK_RC_TOKEN_XTHICKNESS);
-  DEFINE_INTEGER(GTK_RC_TOKEN_YTHICKNESS);
-  DEFINE_INTEGER(GTK_RC_TOKEN_FONT);
-  DEFINE_INTEGER(GTK_RC_TOKEN_FONTSET);
-  DEFINE_INTEGER(GTK_RC_TOKEN_FONT_NAME);
-  DEFINE_INTEGER(GTK_RC_TOKEN_BG_PIXMAP);
-  DEFINE_INTEGER(GTK_RC_TOKEN_PIXMAP_PATH);
-  DEFINE_INTEGER(GTK_RC_TOKEN_STYLE);
-  DEFINE_INTEGER(GTK_RC_TOKEN_BINDING);
-  DEFINE_INTEGER(GTK_RC_TOKEN_BIND);
-  DEFINE_INTEGER(GTK_RC_TOKEN_WIDGET);
-  DEFINE_INTEGER(GTK_RC_TOKEN_WIDGET_CLASS);
-  DEFINE_INTEGER(GTK_RC_TOKEN_CLASS);
-  DEFINE_INTEGER(GTK_RC_TOKEN_LOWEST);
-  DEFINE_INTEGER(GTK_RC_TOKEN_GTK);
-  DEFINE_INTEGER(GTK_RC_TOKEN_APPLICATION);
-  DEFINE_INTEGER(GTK_RC_TOKEN_THEME);
-  DEFINE_INTEGER(GTK_RC_TOKEN_RC);
-  DEFINE_INTEGER(GTK_RC_TOKEN_HIGHEST);
-  DEFINE_INTEGER(GTK_RC_TOKEN_ENGINE);
-  DEFINE_INTEGER(GTK_RC_TOKEN_MODULE_PATH);
-  DEFINE_INTEGER(GTK_RC_TOKEN_IM_MODULE_PATH);
-  DEFINE_INTEGER(GTK_RC_TOKEN_IM_MODULE_FILE);
-  DEFINE_INTEGER(GTK_RC_TOKEN_STOCK);
-  DEFINE_INTEGER(GTK_RC_TOKEN_LTR);
-  DEFINE_INTEGER(GTK_RC_TOKEN_RTL);
-  DEFINE_INTEGER(GTK_RC_TOKEN_LAST);
   DEFINE_INTEGER(GTK_SIZE_GROUP_NONE);
   DEFINE_INTEGER(GTK_SIZE_GROUP_HORIZONTAL);
   DEFINE_INTEGER(GTK_SIZE_GROUP_VERTICAL);
@@ -46571,14 +46373,6 @@ static void define_integers(void)
   DEFINE_INTEGER(PANGO_DIRECTION_RTL);
   DEFINE_INTEGER(PANGO_DIRECTION_TTB_LTR);
   DEFINE_INTEGER(PANGO_DIRECTION_TTB_RTL);
-  DEFINE_INTEGER(G_NORMALIZE_DEFAULT);
-  DEFINE_INTEGER(G_NORMALIZE_NFD);
-  DEFINE_INTEGER(G_NORMALIZE_DEFAULT_COMPOSE);
-  DEFINE_INTEGER(G_NORMALIZE_NFC);
-  DEFINE_INTEGER(G_NORMALIZE_ALL);
-  DEFINE_INTEGER(G_NORMALIZE_NFKD);
-  DEFINE_INTEGER(G_NORMALIZE_ALL_COMPOSE);
-  DEFINE_INTEGER(G_NORMALIZE_NFKC);
   DEFINE_INTEGER(G_PRIORITY_HIGH);
   DEFINE_INTEGER(G_PRIORITY_DEFAULT);
   DEFINE_INTEGER(G_PRIORITY_HIGH_IDLE);
@@ -46946,7 +46740,6 @@ static void define_integers(void)
   DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION);
   DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION_ITER);
   DEFINE_ULONG(GDK_PIXBUF_ERROR);
-  DEFINE_ULONG(GDK_TYPE_PIXBUF_LOADER);
   DEFINE_ULONG(GDK_TYPE_PIXBUF_ALPHA_MODE);
   DEFINE_ULONG(GDK_TYPE_COLORSPACE);
   DEFINE_ULONG(GDK_TYPE_PIXBUF_ERROR);
@@ -47150,65 +46943,6 @@ static void define_integers(void)
   DEFINE_ULONG(G_TYPE_BOXED);
   DEFINE_ULONG(G_TYPE_PARAM);
   DEFINE_ULONG(G_TYPE_OBJECT);
-  DEFINE_ULONG(G_UNICODE_CONTROL);
-  DEFINE_ULONG(G_UNICODE_FORMAT);
-  DEFINE_ULONG(G_UNICODE_UNASSIGNED);
-  DEFINE_ULONG(G_UNICODE_PRIVATE_USE);
-  DEFINE_ULONG(G_UNICODE_SURROGATE);
-  DEFINE_ULONG(G_UNICODE_LOWERCASE_LETTER);
-  DEFINE_ULONG(G_UNICODE_MODIFIER_LETTER);
-  DEFINE_ULONG(G_UNICODE_OTHER_LETTER);
-  DEFINE_ULONG(G_UNICODE_TITLECASE_LETTER);
-  DEFINE_ULONG(G_UNICODE_UPPERCASE_LETTER);
-  DEFINE_ULONG(G_UNICODE_COMBINING_MARK);
-  DEFINE_ULONG(G_UNICODE_ENCLOSING_MARK);
-  DEFINE_ULONG(G_UNICODE_NON_SPACING_MARK);
-  DEFINE_ULONG(G_UNICODE_DECIMAL_NUMBER);
-  DEFINE_ULONG(G_UNICODE_LETTER_NUMBER);
-  DEFINE_ULONG(G_UNICODE_OTHER_NUMBER);
-  DEFINE_ULONG(G_UNICODE_CONNECT_PUNCTUATION);
-  DEFINE_ULONG(G_UNICODE_DASH_PUNCTUATION);
-  DEFINE_ULONG(G_UNICODE_CLOSE_PUNCTUATION);
-  DEFINE_ULONG(G_UNICODE_FINAL_PUNCTUATION);
-  DEFINE_ULONG(G_UNICODE_INITIAL_PUNCTUATION);
-  DEFINE_ULONG(G_UNICODE_OTHER_PUNCTUATION);
-  DEFINE_ULONG(G_UNICODE_OPEN_PUNCTUATION);
-  DEFINE_ULONG(G_UNICODE_CURRENCY_SYMBOL);
-  DEFINE_ULONG(G_UNICODE_MODIFIER_SYMBOL);
-  DEFINE_ULONG(G_UNICODE_MATH_SYMBOL);
-  DEFINE_ULONG(G_UNICODE_OTHER_SYMBOL);
-  DEFINE_ULONG(G_UNICODE_LINE_SEPARATOR);
-  DEFINE_ULONG(G_UNICODE_PARAGRAPH_SEPARATOR);
-  DEFINE_ULONG(G_UNICODE_SPACE_SEPARATOR);
-  DEFINE_ULONG(G_UNICODE_BREAK_MANDATORY);
-  DEFINE_ULONG(G_UNICODE_BREAK_CARRIAGE_RETURN);
-  DEFINE_ULONG(G_UNICODE_BREAK_LINE_FEED);
-  DEFINE_ULONG(G_UNICODE_BREAK_COMBINING_MARK);
-  DEFINE_ULONG(G_UNICODE_BREAK_SURROGATE);
-  DEFINE_ULONG(G_UNICODE_BREAK_ZERO_WIDTH_SPACE);
-  DEFINE_ULONG(G_UNICODE_BREAK_INSEPARABLE);
-  DEFINE_ULONG(G_UNICODE_BREAK_NON_BREAKING_GLUE);
-  DEFINE_ULONG(G_UNICODE_BREAK_CONTINGENT);
-  DEFINE_ULONG(G_UNICODE_BREAK_SPACE);
-  DEFINE_ULONG(G_UNICODE_BREAK_AFTER);
-  DEFINE_ULONG(G_UNICODE_BREAK_BEFORE);
-  DEFINE_ULONG(G_UNICODE_BREAK_BEFORE_AND_AFTER);
-  DEFINE_ULONG(G_UNICODE_BREAK_HYPHEN);
-  DEFINE_ULONG(G_UNICODE_BREAK_NON_STARTER);
-  DEFINE_ULONG(G_UNICODE_BREAK_OPEN_PUNCTUATION);
-  DEFINE_ULONG(G_UNICODE_BREAK_CLOSE_PUNCTUATION);
-  DEFINE_ULONG(G_UNICODE_BREAK_QUOTATION);
-  DEFINE_ULONG(G_UNICODE_BREAK_EXCLAMATION);
-  DEFINE_ULONG(G_UNICODE_BREAK_IDEOGRAPHIC);
-  DEFINE_ULONG(G_UNICODE_BREAK_NUMERIC);
-  DEFINE_ULONG(G_UNICODE_BREAK_INFIX_SEPARATOR);
-  DEFINE_ULONG(G_UNICODE_BREAK_SYMBOL);
-  DEFINE_ULONG(G_UNICODE_BREAK_ALPHABETIC);
-  DEFINE_ULONG(G_UNICODE_BREAK_PREFIX);
-  DEFINE_ULONG(G_UNICODE_BREAK_POSTFIX);
-  DEFINE_ULONG(G_UNICODE_BREAK_COMPLEX_CONTEXT);
-  DEFINE_ULONG(G_UNICODE_BREAK_AMBIGUOUS);
-  DEFINE_ULONG(G_UNICODE_BREAK_UNKNOWN);
 #if HAVE_GDK_DRAW_PIXBUF
   DEFINE_ULONG(GDK_TYPE_SCREEN);
   DEFINE_ULONG(GDK_TYPE_DISPLAY);
@@ -47476,7 +47210,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("23-Mar-07"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("30-Mar-07"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

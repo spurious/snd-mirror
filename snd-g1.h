@@ -309,6 +309,10 @@ void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color);
 void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color);
 void widget_modify_text(GtkWidget *w, GtkStateType type, color_t color);
 color_t rgb_to_color(Float r, Float g, Float b);
+#if USE_CAIRO
+  GdkColor *rgb_to_gdk_color(color_t col);
+#endif
+
 void recolor_graph(chan_info *cp, bool selected);
 void set_sensitive(GtkWidget *wid, bool val);
 void set_toggle_button(GtkWidget *wid, bool val, bool passed, void *data);

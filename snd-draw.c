@@ -1720,15 +1720,25 @@ static XEN g_basic_color(void)
 }
 
 #if USE_GTK
-static void recolor_everything(widget_t w, gpointer color)
+static void recolor_everything_1(widget_t w, gpointer color)
 {
   if (GTK_IS_WIDGET(w)) 
     {
-      /* apparently there is a huge memory leak here */
-      widget_modify_bg(w, GTK_STATE_NORMAL, (color_t)color);
+      gtk_widget_modify_bg(w, GTK_STATE_NORMAL, (GdkColor *)color);
       if (GTK_IS_CONTAINER(w))
-	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything, color);
+	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything_1, color);
     }
+}
+
+static void recolor_everything(widget_t w, gpointer color)
+{
+#if USE_CAIRO
+  GdkColor *nc;
+  nc = rgb_to_gdk_color((color_t)color);
+  recolor_everything_1(w, (gpointer)nc);
+#else
+  recolor_everything_1(w, color);
+#endif
 }
 #endif
 
@@ -1754,7 +1764,7 @@ void set_basic_color(color_t color)
   map_over_children_with_color(MAIN_SHELL(ss), recolor_everything, old_color);
 #endif
 #if USE_GTK
-  gtk_container_foreach(GTK_CONTAINER(MAIN_SHELL(ss)), recolor_everything, (gpointer)(ss->sgx->basic_color));
+  recolor_everything(MAIN_SHELL(ss), color);
 #endif
 
 #if HAVE_XPM && USE_MOTIF
