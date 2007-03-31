@@ -35,7 +35,7 @@
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)
-(define keep-going #t)
+(define keep-going #f)
 (define all-args #f)
 (define test-at-random 0)
 ;(show-ptree 1)
@@ -3294,7 +3294,7 @@
 		   (snd-display ";~A bad field: ~A" name var))))
 	   (list mus-audio-mixer-read mus-audio-mixer-write)
 	   (list "mus-audio-mixer-read" "mus-audio-mixer-write")))
-	(mus-audio-mixer-write mus-audio-microphone mus-audio-amp 0 (make-vct 1))
+	(mus-audio-mixer-write mus-audio-microphone mus-audio-amp 0 (make-vct 1 1.0))
 	
 	(let* ((ind (open-sound (string-append "/usr/local/" (getcwd) "/2.snd"))) ; check the "//" path reset case
 	       (sd1 (samples->sound-data 12000 10 ind 0))

@@ -215,7 +215,6 @@ static void start_reading(void)
   maxes = (Float *)CALLOC(recorder_chans, sizeof(Float));
   inbuf = (unsigned char *)CALLOC(buffer_size, sizeof(unsigned char));
 
-  fprintf(stderr,"reading...\n");
   reading = true;
   while (true)
     {
@@ -266,8 +265,6 @@ static void db_callback(GtkWidget *w, gpointer context)
   meters_in_db = (bool)(GTK_TOGGLE_BUTTON(w)->active);
 }
 
-
-
 widget_t record_file(void) 
 {
   if (!recorder)
@@ -306,11 +303,9 @@ widget_t record_file(void)
       gtk_widget_show(record_button);
       gtk_widget_show(help_button);
 
-
       meters = gtk_drawing_area_new();
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->vbox), meters, true, true, 8);
       gtk_widget_show(meters);
-
 
       hbox = gtk_hbox_new(false, 0);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->vbox), hbox, false, false, 6);
@@ -328,7 +323,6 @@ widget_t record_file(void)
       gtk_widget_show(db_button);
       SG_SIGNAL_CONNECT(db_button, "toggled", db_callback, NULL);
 
-
       gtk_widget_show(recorder);
       set_dialog_widget(RECORDER_DIALOG, recorder);
 
@@ -340,11 +334,9 @@ widget_t record_file(void)
       gc_set_foreground(recorder_ax->gc, ss->sgx->black);
       gc_set_function(recorder_ax->gc, GDK_COPY);
 #endif      
-      
 
       SG_SIGNAL_CONNECT(meters, "expose_event", meters_resize, NULL);
       SG_SIGNAL_CONNECT(meters, "configure_event", meters_resize, NULL);
-
     }
   else gtk_widget_show(recorder);
   start_reading();

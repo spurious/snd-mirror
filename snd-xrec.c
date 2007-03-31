@@ -46,7 +46,7 @@ static void recorder_help(Widget w, XtPointer context, XtPointer info)
 
 static void display_meters(Float *maxes)
 {
-  int i, x0 = 0;
+  int i, x0 = 0, yc;
   /* if maxes is NULL, assume all 0's */
   if (recorder_chans == 0) return;
   if (!(recorder_ax->wn)) recorder_ax->wn = XtWindow(meters);
@@ -58,9 +58,11 @@ static void display_meters(Float *maxes)
   XSetLineAttributes(recorder_ax->dp, recorder_ax->gc, 2, LineSolid, CapRound, JoinRound);
   XSetForeground(recorder_ax->dp, recorder_ax->gc, ss->sgx->black);
 
+  yc = 0.5 * meter_width + 0.2 * meter_height;
+
   for (i = 0; i < recorder_chans; i++, x0 += meter_width)
     {
-      Float cur_max = 0.0, rads, xc, yc;
+      Float cur_max = 0.0, rads, xc;
       if (maxes) 
 	{
 	  if (!meters_in_db)
@@ -75,12 +77,12 @@ static void display_meters(Float *maxes)
 
       rads = (M_PI * 0.5 * cur_max) - (M_PI / 4);
       xc = x0 + 0.5 * meter_width;
-      yc = 0.5 * meter_width + 0.2 * meter_height;
 
       XDrawArc(recorder_ax->dp, recorder_ax->wn, recorder_ax->gc, x0, 20, meter_width, meter_width, 45 * 64, 90 * 64);
-      XDrawLine(recorder_ax->dp, recorder_ax->wn, recorder_ax->gc, xc, yc, 
-		    xc + 0.55 * meter_width * sin(rads),
-		    yc - 0.55 * meter_width * cos(rads));
+      XDrawLine(recorder_ax->dp, recorder_ax->wn, recorder_ax->gc, 
+		xc, yc, 
+		xc + 0.55 * meter_width * sin(rads),
+		yc - 0.55 * meter_width * cos(rads));
     }
 }
 
@@ -166,7 +168,6 @@ static void start_reading(void)
     }
 #endif
 
-  /* TODO: buffer size */
   buffer_size = 4096;
   
   input_device = mus_audio_open_input(MUS_AUDIO_DEFAULT, recorder_srate, recorder_chans, recorder_format, buffer_size);
@@ -175,8 +176,6 @@ static void start_reading(void)
       fprintf(stderr,"open input failed: chans: %d, srate: %d, format: %s, size: %d -> %d\n", 
 	      recorder_chans, recorder_srate, mus_data_format_short_name(recorder_format), buffer_size, input_device);
 
-      /* TODO: try some fallbacks -- different srate/chans etc */
-      
       reading = false;
       return;
     }
@@ -184,7 +183,6 @@ static void start_reading(void)
   maxes = (Float *)CALLOC(recorder_chans, sizeof(Float));
   inbuf = (unsigned char *)CALLOC(buffer_size, sizeof(unsigned char));
 
-  fprintf(stderr,"reading...\n");
   reading = true;
   while (true)
     {
@@ -209,8 +207,6 @@ static void start_reading(void)
   mus_audio_close(input_device);
   FREE(inbuf);
   FREE(maxes);
-
-  /* TODO: if err, report it */
 }
 
 static void start_or_stop_recorder(Widget w, XtPointer context, XtPointer info)
@@ -233,9 +229,6 @@ static void db_callback(Widget w, XtPointer context, XtPointer info)
 {
   meters_in_db = (bool)XmToggleButtonGetState(w);
 }
-
-
-
 
 widget_t record_file(void) 
 {
@@ -351,9 +344,7 @@ widget_t record_file(void)
       XmAddWMProtocolCallback(XtParent(recorder), wm_delete, close_recorder, NULL);
 
       XtManageChild(recorder);
-
       map_over_children(recorder, set_main_color_of_widget);
-
       set_dialog_widget(RECORDER_DIALOG, recorder);
 
       recorder_ax->wn = XtWindow(meters);

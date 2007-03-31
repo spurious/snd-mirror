@@ -4,7 +4,6 @@
 
 void display_minibuffer_error(snd_info *sp, const char *str) {fprintf(stderr, "%s\n", str);}
 void clear_minibuffer_error(snd_info *sp) {}
-void recorder_error(const char *msg) {}
 void snd_help_back_to_top(void) {}
 color_t get_in_between_color(color_t fg, color_t bg) {return(0);}
 void set_find_dialog_label(const char *str) {}

@@ -450,65 +450,6 @@ static char *blue_speaker_xpm[] = {
 
 char **blue_speaker_bits(void) {return(blue_speaker_xpm);}
 
-#if 0
-static char * mic_xpm[] = {
-"12 12 2 1",
-"-      c None s None",
-"X	c black",
-"----XXXX----",
-"---XX-X-X---",
-"---X-X-XX---",
-"---XXXXXX---",
-"---X----X---",
-"XXXX----XXXX",
-"X--X----X--X",
-"X--X----X--X",
-"X--XXXXXX--X",
-"X---XXXX---X",
-"X----XX----X",
-"XXXXXXXXXXXX"};
-
-char **mic_bits(void) {return(mic_xpm);}
-
-static char *cd_xpm[] = {
-"12 12 2 1",
-"-      c None s None",
-"X	c black",
-"---XXXXX----",
-"-XX-----XX--",
-"-X--XXX--X--",
-"X--X---X--X-",
-"X-X-XXX-X-X-",
-"X-X-X-X-X-X-",
-"X-X-XXX-X-X-",
-"X--X---X--X-",
-"-X--XXX--X--",
-"-XX-----XX--",
-"---XXXXX----",
-"------------"};
-
-char **cd_bits(void) {return(cd_xpm);}
-
-static char *line_in_xpm[] = {
-"12 12 2 1",
-"-      c None s None",
-"X	c black",
-"----------X-",
-"------X--X--",
-"-----X---X--",
-"--X--X--X---",
-"-X--X---X---",
-"XXXXXXXXXXXX",
-"-X--X---X---",
-"--X--X--X---",
-"-----X---X--",
-"------X--X--",
-"----------X-",
-"------------"};
-
-char **line_in_bits(void) {return(line_in_xpm);}
-#endif
-
 static char *pan_xpm[] = {
 "14 12 2 1",
 "-      c None s None",

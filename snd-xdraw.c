@@ -630,6 +630,8 @@ static void start_view_color_dialog(bool managed)
       XmStringFree(xinvert);
       if (color_scale(ss) != 1.0)
 	reflect_color_scale(color_scale(ss));
+
+      map_over_children(ccd->dialog, set_main_color_of_widget);
       set_dialog_widget(COLOR_DIALOG, ccd->dialog);
       if (managed) XtManageChild(ccd->dialog);
     }
@@ -687,8 +689,6 @@ static XmString scale_label(const char *orig_label, int value, bool dec)
     lab = mus_format("%s: %d", orig_label, value);
   else lab = mus_format("%s: %.2f", orig_label, value * 0.01);
   x = XmStringCreateLocalized(lab);
-  /* in Gnome, the label bg color is the window inactive color?! */
-  /*   do  I have to set up a special rendition here? */
   FREE(lab);
   return(x);
 }
@@ -1278,6 +1278,7 @@ static void start_view_orientation_dialog(bool managed)
       XmStringFree(glstr);
 #endif
 
+      map_over_children(oid->dialog, set_main_color_of_widget);
       set_dialog_widget(ORIENTATION_DIALOG, oid->dialog);
       if (managed) XtManageChild(oid->dialog);
     }
