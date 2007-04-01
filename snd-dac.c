@@ -62,7 +62,7 @@ static mus_any *make_flt(dac_info *dp, int order, Float *env)
 static Float speed(dac_info *dp, Float sr)
 {
   if (dp->never_sped)
-    return(read_sample_to_float(dp->chn_fd));
+    return(read_sample(dp->chn_fd));
   if (dp->src == NULL)
     dp->src = make_src(0.0, dp->chn_fd, sr);
   return(mus_src(dp->src->gen, sr, &src_input_as_needed));
@@ -76,7 +76,7 @@ static Float expand_input_as_needed(void *arg, int dir)
   dp = spd->dp;
   if (spd->speeding)
     return(speed(dp, spd->sr));
-  else return(read_sample_to_float(dp->chn_fd));
+  else return(read_sample(dp->chn_fd));
 }
 
 static int max_expand_control_len(snd_info *sp)
@@ -1299,7 +1299,7 @@ static int fill_dac_buffers(int write_ok)
 		case NO_CHANGE:
 		  /* simplest case -- no changes at all */
 		  for (j = 0; j < frames; j++)
-		    buf[j] += read_sample(dp->chn_fd);
+		    buf[j] += read_sample_to_mus_sample(dp->chn_fd);
 		  break;
 
 		case JUST_AMP:
@@ -1307,7 +1307,7 @@ static int fill_dac_buffers(int write_ok)
 		  amp = dp->cur_amp;
 		  incr = (AMP_CONTROL(sp, dp) - amp) / (Float)(frames);
 		  for (j = 0; j < frames; j++, amp += incr) 
-		    buf[j] += (mus_sample_t)(read_sample(dp->chn_fd) * amp);
+		    buf[j] += (mus_sample_t)(read_sample_to_mus_sample(dp->chn_fd) * amp);
 		  dp->cur_amp = amp;
 		  break;
 
@@ -1414,7 +1414,7 @@ static int fill_dac_buffers(int write_ok)
 				{
 				  for (j = 0; j < frames; j++, amp += incr, rev += revincr) 
 				    {
-				      fval = amp * read_sample_to_float(dp->chn_fd);
+				      fval = amp * read_sample(dp->chn_fd);
 				      revin[j] += fval * rev;
 				      buf[j] += MUS_FLOAT_TO_SAMPLE(fval);
 				    }

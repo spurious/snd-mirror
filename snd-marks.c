@@ -1588,7 +1588,7 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
 	      if (i == current_sample) 
 		for (k = current_sample; k < initial_sample; k++) 
 		  read_sample(sf);
-	      set_grf_point(grf_x(x, ap), j, grf_y(read_sample_to_float(sf), ap));
+	      set_grf_point(grf_x(x, ap), j, grf_y(read_sample(sf), ap));
 	    }
 	}
       else
@@ -1596,7 +1596,7 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
 	  for (j = 0, i = ap->losamp, x = start_time; i <= ap->hisamp; i++, j++, x += incr)
 	    {
 	      if ((i < initial_sample) || (i >= current_sample)) 
-		samp = read_sample_to_float(sf);
+		samp = read_sample(sf);
 	      else samp = 0.0;
 	      set_grf_point(grf_x(x, ap), j, grf_y(samp, ap));
 	    }
@@ -1605,7 +1605,7 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
     }
   else
     {
-      mus_sample_t ymin, ymax, msamp;
+      Float ymin, ymax, msamp;
       int xi;
       double xf;
       if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, false, cp->edit_ctr, (samps > AMP_ENV_CUTOFF)))
@@ -1638,8 +1638,8 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
 		   (i < current_sample)) ||
 		  (kk >= ep->amp_env_size))
 		{
-		  ymin = MUS_SAMPLE_0;
-		  ymax = MUS_SAMPLE_0;
+		  ymin = 0.0;
+		  ymax = 0.0;
 		}
 	      else
 		{
@@ -1652,8 +1652,8 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
 		    }
 		}
 	      set_grf_points(xi++, j++,
-			     grf_y(MUS_SAMPLE_TO_FLOAT(ymin), ap),
-			     grf_y(MUS_SAMPLE_TO_FLOAT(ymax), ap));
+			     grf_y(ymin, ap),
+			     grf_y(ymax, ap));
 	      xk += samples_per_pixel;
 	      i = (off_t)xk;
 	      if ((current_sample < initial_sample) && 
@@ -1686,8 +1686,8 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
 	  x = ap->x0;
 	  xi = grf_x(x, ap);
 	  xf = 0.0;     /* samples per pixel counter */
-	  ymin = MUS_SAMPLE_MAX;
-	  ymax = MUS_SAMPLE_MIN;
+	  ymin = 1.0;
+	  ymax = -1.0;
 	  if (current_sample < initial_sample) 
 	    {
 	      for (i = ap->losamp, xf = 0.0; i <= ap->hisamp; i++)
@@ -1702,13 +1702,13 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
 		  if (xf > samples_per_pixel)
 		    {
 		      set_grf_points(xi, j, 
-				     grf_y(MUS_SAMPLE_TO_FLOAT(ymin), ap), 
-				     grf_y(MUS_SAMPLE_TO_FLOAT(ymax), ap));
+				     grf_y(ymin, ap), 
+				     grf_y(ymax, ap));
 		      xi++;
 		      j++;
 		      xf -= samples_per_pixel;
-		      ymin = MUS_SAMPLE_MAX;
-		      ymax = MUS_SAMPLE_MIN;
+		      ymin = 1.0;
+		      ymax = -1.0;
 		    }
 		}
 	    }
@@ -1718,20 +1718,20 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
 		{
 		  if ((i < initial_sample) || (i >= current_sample))
 		    msamp = read_sample(sf);
-		  else msamp = MUS_SAMPLE_0;
+		  else msamp = 0.0;
 		  if (msamp > ymax) ymax = msamp;
 		  if (msamp < ymin) ymin = msamp;
 		  xf += 1.0;
 		  if (xf > samples_per_pixel)
 		    {
 		      set_grf_points(xi, j, 
-				     grf_y(MUS_SAMPLE_TO_FLOAT(ymin), ap), 
-				     grf_y(MUS_SAMPLE_TO_FLOAT(ymax), ap));
+				     grf_y(ymin, ap), 
+				     grf_y(ymax, ap));
 		      xi++;
 		      j++;
 		      xf -= samples_per_pixel;
-		      ymin = MUS_SAMPLE_MAX;
-		      ymax = MUS_SAMPLE_MIN;
+		      ymin = 1.0;
+		      ymax = -1.0;
 		    }
 		}
 	    }

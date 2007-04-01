@@ -111,8 +111,8 @@ typedef struct {
 
 typedef struct {
   int samps_per_bin, amp_env_size;
-  mus_sample_t fmax, fmin;
-  mus_sample_t *data_max, *data_min;
+  Float fmax, fmin;
+  Float *data_max, *data_min;
   bool completed;
   int bin, top_bin;
 } env_info;
@@ -165,8 +165,8 @@ typedef struct {
 } ed_list;
 
 typedef struct snd_fd {
-  mus_sample_t (*run)(struct snd_fd *sf);
   Float (*runf)(struct snd_fd *sf);
+  Float (*rev_runf)(struct snd_fd *sf);
   ed_list *current_state;
   void *cb;
   off_t loc, first, last;
@@ -179,18 +179,14 @@ typedef struct snd_fd {
   struct chan_info *cp;
   struct snd_info *local_sp;
   Float fscaler;
-#if (!SNDLIB_USE_FLOATS)
-  int iscaler;
-#endif
   off_t frag_pos;
   struct ptree *ptree1, *ptree2, *ptree3;
   XEN closure1, closure2, closure3;
   int protect1, protect2, protect3;
+  int type1, type2, type3;
   double incr1, curval1, incr2, curval2, incr3, curval3, incr4, curval4;
   bool zero, xramp2;
   int edit_ctr, dangling_loc, region, type;
-  mus_sample_t (*rev_run)(struct snd_fd *sf);
-  Float (*rev_runf)(struct snd_fd *sf);
   Float (*rampf)(struct snd_fd *sf);
   Float (*rev_rampf)(struct snd_fd *sf);
 } snd_fd;
@@ -938,10 +934,10 @@ void read_sample_change_direction(snd_fd *sf, read_direction_t dir);
 bool ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, bool is_xramp);
 bool ptree_or_sound_fragments_in_use(chan_info *cp, int pos);
 bool ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos);
-#define read_sample(Sf) (*((Sf)->run))(Sf)
-#define read_sample_to_float(Sf) (*((Sf)->runf))(Sf)
-Float protected_next_sample_to_float(snd_fd *sf);
-Float protected_previous_sample_to_float(snd_fd *sf);
+#define read_sample_to_mus_sample(Sf) MUS_FLOAT_TO_SAMPLE((*((Sf)->runf))(Sf))
+#define read_sample(Sf) (*((Sf)->runf))(Sf)
+Float protected_next_sample(snd_fd *sf);
+Float protected_previous_sample(snd_fd *sf);
 Float channel_local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos, off_t *maxpos);
 bool undo_edit_with_sync(chan_info *cp, int count);
 bool redo_edit_with_sync(chan_info *cp, int count);
@@ -1636,14 +1632,14 @@ speed_style_t set_track_speed_style(int id, speed_style_t choice, bool from_gui)
 
 struct mix_fd;
 struct track_fd;
-Float mix_read_sample_to_float(struct mix_fd *ptr);
+Float mix_read_sample(struct mix_fd *ptr);
 bool mf_p(XEN obj);
 struct mix_fd *get_mf(XEN obj);
 char *run_mix_sample_reader_to_string(struct mix_fd *mf);
 void run_free_mix_fd(struct mix_fd *ptr);
 struct mix_fd *run_make_mix_sample_reader(int id, off_t beg);
 bool mix_sample_reader_at_end_p(struct mix_fd *mf);
-Float track_read_sample_to_float(struct track_fd *ptr);
+Float track_read_sample(struct track_fd *ptr);
 bool tf_p(XEN obj);
 struct track_fd *get_tf(XEN obj);
 char *run_track_sample_reader_to_string(struct track_fd *ptr);
@@ -1770,7 +1766,8 @@ void g_init_run(void);
 XEN ptree_code(struct ptree *pt);
 Float evaluate_ptree_1f1v1b2f(struct ptree *pt, Float arg, vct *v, bool dir);
 struct ptree *form_to_ptree_3_f(XEN code);
-Float evaluate_ptreec(struct ptree *pt, Float arg, vct *v, bool dir);
+Float evaluate_ptreec(struct ptree *pt, Float arg, XEN object, bool dir, int type);
+int xen_to_run_type(XEN val);
 
 
 /* -------- snd-draw.c -------- */

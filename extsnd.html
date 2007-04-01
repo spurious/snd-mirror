@@ -7932,10 +7932,10 @@ If your editing operation has any state (i.e. needs to
 know where it is in the data), you need to add an 'init-func' (the 8th argument to ptree-channel).
 The 'init-func' takes two arguments, the begin time of the read operation, relative to
 the original start of the fragment, and the original fragment duration (both in samples).
-It should return a vct
-holding all the information the main function ('proc' above) needs to
+It should return 
+the information the main function ('proc' above) needs to
 handle the current fragment correctly.  Global variables are not guaranteed to 
-be set within the body of 'proc', so use the vct for local values that change
+be set within the body of 'proc', so use a vct for local values that change
 as the read operation progresses.
 <br><br>
 
@@ -7946,9 +7946,9 @@ So, in the complicated, 3 argument case,
 the sequence of operations is:
 a read is requested, 'init-func' is called with the read start point (relative to the
 original segment start),
-it returns in a vct any state that 'proc' may need
+it returns any state that 'proc' may need
 to refer to, then each time a sample is needed from the current sample
-reader, 'proc' is called passing it the current underlying sample, the vct of 'init-func',
+reader, 'proc' is called passing it the current underlying sample, the return value of 'init-func',
 and the read direction.
 Here is an example that mixes a sine wave into the current channel:
 
@@ -8056,11 +8056,11 @@ currently doesn't know how to save the enclosing environment along with the init
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
   (let ((outer 0.5))
     (<em class=red>ptree-channel</em> (lambda (y data forward)
-		     (declare (y real) (data vct) (forward boolean))
-		     (* y (<a class=quiet href="#vctref">vct-ref</a> data 0)))
+		     (declare (y real) (data float) (forward boolean))
+		     (* y data))
 		   0 #f ind 0 #f #f
 		   (lambda (pos dur)
-		     (<a class=quiet href="#vct">vct</a> outer))))
+		     outer)))
 </pre></td></tr></table>
 
 will not save the "outer" declaration in the saved state file. 
@@ -8095,7 +8095,7 @@ could in this case be:
 			      (<a class=quiet href="#sample">sample</a> (1- pos) ind 0 edpos))))))
 </pre></td></tr></table>
 
-Here are a couple more examples:
+Here are several more examples:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define* (ptree-scale scl :optional (beg 0) dur snd chn edpos)
@@ -8132,6 +8132,17 @@ Here are a couple more examples:
 	    (/ 1.0 frag-dur)
 	    (/ (- r1 r0) (- base 1.0))
 	    (/ frag-beg frag-dur))))))
+
+(define* (virtual-mix file beg :optional snd chn)
+  (let ((len (<a class=quiet href="#mussoundframes">mus-sound-frames</a> file)))
+    (<em class=red>ptree-channel</em>
+     (lambda (y state forward)
+       (declare (y real) (state sample-reader) (forward boolean))
+       (+ y (if forward (<a class=quiet href="#nextsample">next-sample</a> state) (<a class=quiet href="#previoussample">previous-sample</a> state))))
+     beg len snd chn -1 #f
+     (lambda (frag-beg frag-dur)
+       (<a class=quiet href="#makesamplereader">make-sample-reader</a> frag-beg file)))))
+
 </pre></td></tr></table>
 
 To handle an envelope in a ptree-channel application, it's probably
@@ -8520,9 +8531,6 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 (begin (<a class=quiet href="#selectall">select-all</a>) (<a class=quiet href="#mixselection">mix-selection</a> 0))
 (begin (<a class=quiet href="#selectall">select-all</a>) (<a class=quiet href="#scaleselectionby">scale-selection-by</a> 2.0))
 (begin (<a class=quiet href="#savesoundas">save-sound-as</a> "temp.snd") (<a class=quiet href="#mix">mix</a> "temp.snd" 0) (delete-file "temp.snd"))
-
-(<a class=quiet href="#ptreechannel">ptree-channel</a> (lambda (y data forward) (data y)) 0 (<a class=quiet href="#frames">frames</a>) 0 0 #f #t
-	       (lambda (pos dur) (lambda (y) (* 2.0 y))))
 
 (let ((flt (<a class=quiet href="#makevct">make-vct</a> 8)))
   (<a class=quiet href="#vctset">vct-set!</a> flt 0 2.0)

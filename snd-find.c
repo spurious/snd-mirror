@@ -51,7 +51,7 @@ static bool run_global_search(gfd *g)
 	      snd_fd *sf;
 	      if (!((g->cps[i])->sound)) return(STOP_SEARCHING);
 	      sf = g->fds[i]; 
-	      samp = read_sample_to_float(sf);
+	      samp = read_sample(sf);
 	      if (ss->search_tree)
 		{
 		  if (evaluate_ptree_1f2b(ss->search_tree, samp))
@@ -264,7 +264,7 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 
       for (i = start; i < end; i++, tick++)
 	{
-	  if (evaluate_ptree_1f2b(sp->search_tree, read_sample_to_float(sf)))
+	  if (evaluate_ptree_1f2b(sp->search_tree, read_sample(sf)))
 	    {
 	      count--; 
 	      if (count == 0) break;
@@ -290,7 +290,7 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
       for (i = start, passes = 0; i < end; i++, passes++)
 	{
 	  res = XEN_CALL_1(sp->search_proc, 
-			   C_TO_XEN_DOUBLE((double)(read_sample_to_float(sf))), 
+			   C_TO_XEN_DOUBLE((double)(read_sample(sf))), 
 			   "local search func");
 	  if (XEN_NOT_FALSE_P(res)) 
 	    {
@@ -356,7 +356,7 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
     {
       for (i = start; i >= 0; i--, tick++)
 	{
-	  if (evaluate_ptree_1f2b(sp->search_tree, read_sample_to_float(sf)))
+	  if (evaluate_ptree_1f2b(sp->search_tree, read_sample(sf)))
 	    {
 	      count--; 
 	      if (count == 0) break;
@@ -383,7 +383,7 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 	{
 	  /* sp search proc as ptree */
 	  res = XEN_CALL_1(sp->search_proc, 
-			   C_TO_XEN_DOUBLE((double)(read_sample_to_float(sf))), 
+			   C_TO_XEN_DOUBLE((double)(read_sample(sf))), 
 			   "local search func");
 	  if (XEN_NOT_FALSE_P(res)) 
 	    {

@@ -73,7 +73,7 @@ typedef struct mix_fd {
   mus_any **segs;
   int *ctr;
   off_t *samples;
-  mus_sample_t **idata;
+  Float **idata;
   int samps_per_bin, dangling_loc;
   env_info **eps;                      /* new envs created via env_on_env */
   Float *scalers;
@@ -641,7 +641,7 @@ static Float next_mix_input_amp_env_sample(mix_fd *mf, int chan)
      */
     {
       mf->ctr[chan]++;
-      return(MUS_SAMPLE_TO_FLOAT(mf->idata[chan][mf->ctr[chan]]));
+      return(mf->idata[chan][mf->ctr[chan]]);
     }
   return(0.0);
 }
@@ -654,7 +654,7 @@ static Float next_mix_sample(mix_fd *mf)
   switch (mf->calc)
     {
     case C_STRAIGHT_SOUND:
-      return(read_sample_to_float(mf->sfs[mf->base]));
+      return(read_sample(mf->sfs[mf->base]));
       break;
     case C_STRAIGHT_PEAK:
       return(next_mix_input_amp_env_sample(mf, mf->base));
@@ -665,7 +665,7 @@ static Float next_mix_sample(mix_fd *mf)
       break;
     case C_AMP_SOUND:
       for (i = 0; i < mf->chans; i++)
-	sum += (mf->scalers[i] * read_sample_to_float(mf->sfs[i]));
+	sum += (mf->scalers[i] * read_sample(mf->sfs[i]));
       break;
     case C_AMP_PEAK:
       for (i = 0; i < mf->chans; i++)
@@ -674,8 +674,8 @@ static Float next_mix_sample(mix_fd *mf)
     case C_AMP_ENV_SOUND:
       for (i = 0; i < mf->chans; i++)
 	if (mf->segs[i])
-	  sum += (mus_env(mf->segs[i]) * read_sample_to_float(mf->sfs[i]));
-	else sum += (mf->scalers[i] * read_sample_to_float(mf->sfs[i]));
+	  sum += (mus_env(mf->segs[i]) * read_sample(mf->sfs[i]));
+	else sum += (mf->scalers[i] * read_sample(mf->sfs[i]));
       break;
     case C_AMP_ENV_PEAK:
       for (i = 0; i < mf->chans; i++)
@@ -728,7 +728,7 @@ static Float next_mix_sample(mix_fd *mf)
 	      {
 		mf->lst[i] = mf->nxt[i];
 		if (mf->type == MIX_INPUT_SOUND)
-		  mf->nxt[i] = read_sample_to_float(mf->sfs[i]);
+		  mf->nxt[i] = read_sample(mf->sfs[i]);
 		else mf->nxt[i] = next_mix_input_amp_env_sample(mf, i);
 	      }
 	}
@@ -736,7 +736,7 @@ static Float next_mix_sample(mix_fd *mf)
   return(sum);
 }
 
-Float mix_read_sample_to_float(struct mix_fd *ptr) {return(next_mix_sample(ptr));}
+Float mix_read_sample(struct mix_fd *ptr) {return(next_mix_sample(ptr));}
 
 #define PREVIOUS_MIX true
 #define CURRENT_MIX false
@@ -891,8 +891,8 @@ static mix_fd *init_mix_read_any(mix_info *md, bool old, int type, off_t beg)
 	    {
 	      for (i = 0; i < chans; i++)
 		{
-		  mf->lst[i] = read_sample_to_float(mf->sfs[i]);
-		  mf->nxt[i] = read_sample_to_float(mf->sfs[i]);
+		  mf->lst[i] = read_sample(mf->sfs[i]);
+		  mf->nxt[i] = read_sample(mf->sfs[i]);
 		}
 	    }
 	}
@@ -925,7 +925,7 @@ static mix_fd *init_mix_input_amp_env_read(mix_info *md, bool hi)
   mf->ctr = (int *)CALLOC(sp->nchans, sizeof(int));
   mf->samples = (off_t *)CALLOC(sp->nchans, sizeof(off_t));
   if ((mf->calc != C_ZERO_SOUND) && (mf->calc != C_ZERO_PEAK))
-    mf->idata = (mus_sample_t **)CALLOC(sp->nchans, sizeof(mus_sample_t *));
+    mf->idata = (Float **)CALLOC(sp->nchans, sizeof(Float *));
   for (i = 0; i < sp->nchans; i++)
     {
       chan_info *cp;
@@ -1234,7 +1234,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, const char *mixfile, cha
 	  j = 0;
 	  if (err == -1) break;
 	}
-      chandata[j] += read_sample(csf);
+      chandata[j] += read_sample_to_mus_sample(csf);
       j++;
     }
   if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);
@@ -1545,7 +1545,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   char *ofile = NULL;
   mus_sample_t **data;
   mus_sample_t *chandata;
-  mus_sample_t mval, mmax, mmin;
+  Float mval, mmax, mmin;
   file_info *ohdr = NULL;
   axis_info *ap;
   chan_info *cp;
@@ -1578,8 +1578,8 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 
   maxy = ap->ymax;
   miny = ap->ymin;
-  mmax = MUS_SAMPLE_MIN;
-  mmin = MUS_SAMPLE_MAX;
+  mmax = -1.0;
+  mmin = 1.0;
 
 #if 0
   fprintf(stderr, "remix file (dpy: %d) origin: \"%s\", mix id: %d,\n        beg: " OFF_TD ", end: " OFF_TD ", old: " OFF_TD " to " OFF_TD ", new: " OFF_TD " to " OFF_TD "\n",
@@ -1708,10 +1708,10 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 	    }
 	  if (sub->calc == C_STRAIGHT_SOUND) 
 	    mval = read_sample(cur) - read_sample(sfb);
-	  else mval = MUS_FLOAT_TO_SAMPLE((read_sample_to_float(cur) - next_mix_sample(sub)));
+	  else mval = read_sample(cur) - next_mix_sample(sub);
 	  if (mval > mmax) mmax = mval;
 	  else if (mval < mmin) mmin = mval;
-	  chandata[j++] = mval;
+	  chandata[j++] = MUS_FLOAT_TO_SAMPLE(mval);
 	}
     }
   else
@@ -1730,10 +1730,10 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 		}
 	      if (add->calc == C_STRAIGHT_SOUND)
 		mval = read_sample(cur) + read_sample(afb);
-	      else mval = MUS_FLOAT_TO_SAMPLE((read_sample_to_float(cur) + next_mix_sample(add)));
+	      else mval = read_sample(cur) + next_mix_sample(add);
 	      if (mval > mmax) mmax = mval;
 	      else if (mval < mmin) mmin = mval;
-	      chandata[j++] = mval;
+	      chandata[j++] = MUS_FLOAT_TO_SAMPLE(mval);
 	    }
 	}
       else
@@ -1758,7 +1758,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 		    mval += read_sample(afb);
 		  if (mval > mmax) mmax = mval;
 		  else if (mval < mmin) mmin = mval;
-		  chandata[j++] = mval;
+		  chandata[j++] = MUS_FLOAT_TO_SAMPLE(mval);
 		}
 	    }
 	  else
@@ -1772,7 +1772,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 		      j = 0;
 		      if (err == -1) break;
 		    }
-		  val = read_sample_to_float(cur);
+		  val = read_sample(cur);
 		  if ((i >= old_beg) && (i <= old_end))
 		    val -= next_mix_sample(sub);
 		  if ((i >= new_beg) && (i <= new_end))
@@ -1827,10 +1827,8 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   /* fix up graph if we overflowed during mix */
   if (redisplay)
     {
-      val = MUS_SAMPLE_TO_FLOAT(mmax);
-      if (val > maxy) maxy = val;
-      val = MUS_SAMPLE_TO_FLOAT(mmin);
-      if (val < miny) miny = val;
+      if (mmax > maxy) maxy = mmax;
+      if (mmin < miny) miny = mmin;
       if ((maxy > ap->ymax) || (miny < ap->ymin)) 
 	{
 	  if (maxy < -miny) maxy = -miny; 
@@ -1916,9 +1914,9 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mix_
 	}
       while (main_start <= xi)
 	{
-	  val = MUS_SAMPLE_TO_FLOAT(ep->data_min[main_loc]);
+	  val = ep->data_min[main_loc];
 	  if (val < main_ymin) main_ymin = val;
-	  val = MUS_SAMPLE_TO_FLOAT(ep->data_max[main_loc]);
+	  val = ep->data_max[main_loc];
 	  if (val > main_ymax) main_ymax = val;
 	  if (main_loc < (ep->amp_env_size - 1))
 	    main_loc++;
@@ -1999,9 +1997,9 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *
 	}
       while (main_start <= xi)
 	{
-	  val = MUS_SAMPLE_TO_FLOAT(ep->data_min[main_loc]);
+	  val = ep->data_min[main_loc];
 	  if (val < main_ymin) main_ymin = val;
-	  val = MUS_SAMPLE_TO_FLOAT(ep->data_max[main_loc]);
+	  val = ep->data_max[main_loc];
 	  if (val > main_ymax) main_ymax = val;
 	  if (main_loc < (ep->amp_env_size - 1))
 	    main_loc++;
@@ -2080,7 +2078,7 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, mix_state *cs)
 	}
       for (j = 0, i = lo, x = initial_x; i <= hi; i++, j++, x += incr)
 	{
-	  ina = read_sample_to_float(sf);
+	  ina = read_sample(sf);
 	  if ((i >= newbeg) && (i <= newend)) ina += next_mix_sample(add);
 	  if (widely_spaced)
 	    set_grf_point((int)x, j, local_grf_y(ina, ap));
@@ -2098,8 +2096,7 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, mix_state *cs)
 	}
       else
 	{
-	  mus_sample_t mina, mymax, mymin;
-	  Float ymin, ymax;
+	  Float mina, mymax, mymin, ymin, ymax;
 	  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
 	  if (sf == NULL) return;
 	  if (newbeg < lo)
@@ -2117,8 +2114,8 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, mix_state *cs)
 
 	  if (add->calc == C_ZERO_SOUND)
 	    {
-	      mymax = MUS_SAMPLE_MIN;
-	      mymin = MUS_SAMPLE_MAX;
+	      mymax = -1.0;
+	      mymin = 1.0;
 	      while (i <= hi)
 		{
 		  mina = read_sample(sf);
@@ -2129,13 +2126,13 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, mix_state *cs)
 		  if (xf > samples_per_pixel)
 		    {
 		      set_grf_points(xi, j, 
-					 local_grf_y(MUS_SAMPLE_TO_FLOAT(mymin), ap), 
-					 local_grf_y(MUS_SAMPLE_TO_FLOAT(mymax), ap));
+					 local_grf_y(mymin, ap), 
+					 local_grf_y(mymax, ap));
 		      xi++;
 		      j++;
 		      xf -= samples_per_pixel;
-		      mymax = MUS_SAMPLE_MIN;
-		      mymin = MUS_SAMPLE_MAX;
+		      mymax = -1.0;
+		      mymin = 1.0;
 		    }
 		}
 	    }
@@ -2144,8 +2141,8 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, mix_state *cs)
 	      if (add->calc == C_STRAIGHT_SOUND)
 		{
 		  snd_fd *afb;
-		  mymax = MUS_SAMPLE_MIN;
-		  mymin = MUS_SAMPLE_MAX;
+		  mymax = -1.0;
+		  mymin = 1.0;
 
 		  afb = add->sfs[add->base];
 		  while (i <= hi)
@@ -2160,13 +2157,13 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, mix_state *cs)
 		      if (xf > samples_per_pixel)
 			{
 			  set_grf_points(xi, j, 
-					 local_grf_y(MUS_SAMPLE_TO_FLOAT(mymin), ap), 
-					 local_grf_y(MUS_SAMPLE_TO_FLOAT(mymax), ap));
+					 local_grf_y(mymin, ap), 
+					 local_grf_y(mymax, ap));
 			  xi++;
 			  j++;
 			  xf -= samples_per_pixel;
-			  mymax = MUS_SAMPLE_MIN;
-			  mymin = MUS_SAMPLE_MAX;
+			  mymax = -1.0;
+			  mymin = 1.0;
 			}
 		    }
 		}
@@ -2174,7 +2171,7 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, mix_state *cs)
 		{
 		  while (i <= hi)
 		    {
-		      ina = read_sample_to_float(sf);
+		      ina = read_sample(sf);
 
 		      if ((i >= newbeg) && (i <= newend)) ina += next_mix_sample(add);
 		      if (ina > ymax) ymax = ina;
@@ -4936,7 +4933,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
       snd_fd *sf;
       sf = init_sample_read(bg, cp, READ_FORWARD);
       for (i = 0; i < len; i++)
-	data[i] += read_sample(sf);
+	data[i] += read_sample_to_mus_sample(sf);
       sf = free_snd_fd(sf);
       change_samples(bg, len, data, cp, LOCK_MIXES, (char *)((edname == NULL) ? S_mix_vct : edname), cp->edit_ctr);
     }
@@ -8157,7 +8154,7 @@ static Float next_track_sample(track_fd *fd)
   return(sum);
 }
 
-Float track_read_sample_to_float(struct track_fd *ptr) {return(next_track_sample(ptr));}
+Float track_read_sample(struct track_fd *ptr) {return(next_track_sample(ptr));}
 
 static void play_track(int track_num, int chan, off_t beg, bool from_gui)
 {

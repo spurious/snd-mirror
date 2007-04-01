@@ -282,7 +282,7 @@ static Float region_sample(int reg, int chn, off_t samp)
 	    {
 	    case REGION_FILE:
 	      sf = init_region_read(samp, reg, chn, READ_FORWARD);
-	      val = read_sample_to_float(sf);
+	      val = read_sample(sf);
 	      free_snd_fd(sf);
 	      return(val);
 	      break;
@@ -328,14 +328,14 @@ static void region_samples(int reg, int chn, off_t beg, off_t num, Float *data)
 	    case REGION_FILE:
 	      sf = init_region_read(beg, reg, chn, READ_FORWARD);
 	      for (i = beg, j = 0; (i < r->frames) && (j < num); i++, j++) 
-		data[j] = read_sample_to_float(sf);
+		data[j] = read_sample(sf);
 	      free_snd_fd(sf);
 	      break;
 	    case REGION_DEFERRED:
 	      drp = r->dr;
 	      sf = init_sample_read_any(beg + r->begs[chn], drp->cps[chn], READ_FORWARD, drp->edpos[chn]);
 	      for (i = beg, j = 0; (i < r->frames) && (j < num); i++, j++) 
-		data[j] = read_sample_to_float(sf);
+		data[j] = read_sample(sf);
 	      free_snd_fd(sf);
 	      break;
 	    }
@@ -736,7 +736,7 @@ static void deferred_region_to_temp_file(region *r)
   int i, k, ofd = 0, datumb = 0, err = 0;
   bool copy_ok;
   off_t j, len = 0;
-  mus_sample_t val, curval;
+  mus_sample_t val;
   snd_fd **sfs = NULL;
   snd_info *sp0;
   file_info *hdr = NULL;
@@ -774,7 +774,7 @@ static void deferred_region_to_temp_file(region *r)
       off_t bytes, err;
       int fdi, fdo;
       char *buffer;
-      mus_sample_t ymax = MUS_SAMPLE_0;
+      Float ymax = 0.0;
       env_info *ep;
       datumb = mus_bytes_per_sample(sp0->hdr->format);
 
@@ -817,7 +817,7 @@ static void deferred_region_to_temp_file(region *r)
 		  if (ymax < -ep->fmin)
 		    ymax = -ep->fmin;
 		}
-	      r->maxamp = MUS_SAMPLE_TO_FLOAT(ymax);
+	      r->maxamp = ymax;
 	      r->maxamp_position = -1; /* not tracked in amp-env stuff */
 	    }
 	  snd_close(fdo, r->filename);
@@ -867,7 +867,8 @@ static void deferred_region_to_temp_file(region *r)
 		{
 		  if (j <= r->lens[i])
 		    {
-		      data[i][k] = read_sample(sfs[i]);
+		      mus_sample_t curval;
+		      data[i][k] = read_sample_to_mus_sample(sfs[i]);
 		      curval = mus_sample_abs(data[i][k]);
 		      if (curval > val) 
 			{

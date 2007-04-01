@@ -798,12 +798,12 @@ void fourier_spectrum(snd_fd *sf, Float *fft_data, off_t fft_size_1, off_t data_
   if (window)
     {
       for (i = 0; i < data_len; i++)
-	fft_data[i] = window[i] * read_sample_to_float(sf);
+	fft_data[i] = window[i] * read_sample(sf);
     }
   else
     {
       for (i = 0; i < data_len; i++)
-	fft_data[i] = read_sample_to_float(sf);
+	fft_data[i] = read_sample(sf);
     }
   if (data_len < fft_size) 
     memset((void *)(fft_data + data_len), 0, (fft_size - data_len) * sizeof(Float));
@@ -871,31 +871,31 @@ static void apply_fft(fft_state *fs)
       fourier_spectrum(sf, fft_data, fs->size, data_len, fs->window);
       break;
     case WAVELET:
-      for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
+      for (i = 0; i < data_len; i++) fft_data[i] = read_sample(sf);
       if (data_len < fs->size) 
 	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
       wavelet_transform(fft_data, fs->size, wavelet_data[cp->wavelet_type], wavelet_sizes[cp->wavelet_type]);
       break;
     case HAAR:
-      for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
+      for (i = 0; i < data_len; i++) fft_data[i] = read_sample(sf);
       if (data_len < fs->size) 
 	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
       haar_transform(fft_data, fs->size);
       break;
     case CEPSTRUM:
-      for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
+      for (i = 0; i < data_len; i++) fft_data[i] = read_sample(sf);
       if (data_len < fs->size) 
 	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
       cepstrum(fft_data, fs->size);
       break;
     case WALSH:
-      for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
+      for (i = 0; i < data_len; i++) fft_data[i] = read_sample(sf);
       if (data_len < fs->size) 
 	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
       walsh_transform(fft_data, fs->size);
       break;
     case AUTOCORRELATION:
-      for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
+      for (i = 0; i < data_len; i++) fft_data[i] = read_sample(sf);
       if (data_len < fs->size) 
 	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
       autocorrelation(fft_data, fs->size);

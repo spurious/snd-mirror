@@ -120,8 +120,8 @@ static void display_meters(Float *maxes)
 
       gdk_draw_arc(recorder_ax->wn, recorder_ax->gc, false, x0, 20, meter_width, meter_width, 45 * 64, 90 * 64);
       gdk_draw_line(recorder_ax->wn, recorder_ax->gc, xc, yc, 
-		    xc + 0.55 * meter_width * sin(rads),
-		    yc - 0.55 * meter_width * cos(rads));
+		    (int)(xc + 0.55 * meter_width * sin(rads)),
+		    (int)(yc - 0.55 * meter_width * cos(rads)));
     }
 #endif
 }
@@ -344,3 +344,4 @@ widget_t record_file(void)
 }
 
 
+/* TODO: doc new rec */

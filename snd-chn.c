@@ -1292,37 +1292,15 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 	  for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
 	    {
 	      Float fsamp;
-	      fsamp = read_sample_to_float(sf);
+	      fsamp = read_sample(sf);
 	      set_grf_point(local_grf_x(x, ap), j, local_grf_y(fsamp, ap));
 	      ps_set_grf_point(x, j, fsamp);
 	    }
 	}
       else
 	{
-#if (!SNDLIB_USE_FLOATS)
-	  mus_sample_t ay0, ay1, isamp;
-	  int yval;
-	  Float yscl;
-	  ay0 = MUS_FLOAT_TO_SAMPLE(ap->y0);
-	  ay1 = MUS_FLOAT_TO_SAMPLE(ap->y1);
-	  yscl = MUS_FIX_TO_FLOAT * ap->y_scale;
 	  for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
-	    {
-	      isamp = read_sample(sf);
-	      if (isamp >= ay1) 
-		yval = ap->y_axis_y1;
-	      else 
-		{
-		  if (isamp <= ay0) 
-		    yval = ap->y_axis_y0;
-		else yval = (int)(ap->y_base + isamp * yscl);
-		}
-	      set_grf_point(local_grf_x(x, ap), j, yval);
-	    }
-#else
-	  for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
-	    set_grf_point(local_grf_x(x, ap), j, local_grf_y(read_sample_to_float(sf), ap));
-#endif
+	    set_grf_point(local_grf_x(x, ap), j, local_grf_y(read_sample(sf), ap));
 	}
       if (normal)
 	{
@@ -1339,7 +1317,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 	j = amp_env_graph(cp, ap, samples_per_pixel, (normal) ? ((int)SND_SRATE(sp)) : 1);
       else
 	{
-	  mus_sample_t samp, ymin, ymax;
+	  Float ymin, ymax;
 	  off_t ioff;
 	  if ((ap->hisamp - ap->losamp) > (CURRENT_SAMPLES(cp) / 4))
 	    {    
@@ -1364,13 +1342,14 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 	  x = ap->x0;
 	  xi = local_grf_x(x, ap);
 	  xf = 0.0;     /* samples per pixel counter */
-	  ymin = MUS_SAMPLE_MAX;
-	  ymax = MUS_SAMPLE_MIN;
+	  ymin = 1.0;
+	  ymax = -1.0;
 	  if (cp->printing) pinc = samples_per_pixel / cur_srate;
 	  ap->changed = false;
 	  ss->stopped_explicitly = false;
 	  for (ioff = ap->losamp, xf = 0.0; ioff <= ap->hisamp; ioff++)
 	    {
+	      Float samp;
 	      samp = read_sample(sf);
 	      if (samp > ymax) ymax = samp;
 	      if (samp < ymin) ymin = samp;
@@ -1378,18 +1357,18 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 	      if (xf > samples_per_pixel)
 		{
 		  set_grf_points(xi, j, 
-				 local_grf_y(MUS_SAMPLE_TO_FLOAT(ymin), ap), 
-				 local_grf_y(MUS_SAMPLE_TO_FLOAT(ymax), ap));
+				 local_grf_y(ymin, ap), 
+				 local_grf_y(ymax, ap));
 		  if (cp->printing) 
 		    {
 		      x += pinc; 
-		      ps_set_grf_points(x, j, MUS_SAMPLE_TO_FLOAT(ymin), MUS_SAMPLE_TO_FLOAT(ymax));
+		      ps_set_grf_points(x, j, ymin, ymax);
 		    }
 		  xi++;
 		  j++;
 		  xf -= samples_per_pixel;
-		  ymin = MUS_SAMPLE_MAX;
-		  ymax = MUS_SAMPLE_MIN;
+		  ymin = 1.0;
+		  ymax = -1.0;
 		  if (samps > 10000000)
 		    {
 		      check_for_event();
@@ -1469,14 +1448,14 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
       if (sf == NULL) return(XEN_FALSE); /* should this throw an error? (CHANNEL_BEING_DEALLOCATED) */
       data = (Float *)MALLOC(data_size * sizeof(Float));
       for (i = 0; i < data_size; i++)
-	data[i] = read_sample_to_float(sf);
+	data[i] = read_sample(sf);
     }
   else
     {
       if (amp_env_usable(cp, samples_per_pixel, hisamp, false, edit_pos, true)) 
 	{
 	  double step, xk;
-	  mus_sample_t ymin, ymax;
+	  Float ymin, ymax;
 	  int k, kk;
 	  env_info *ep;
 	  data_size = pixels + 1;
@@ -1504,8 +1483,8 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 		}
 	      xk += samples_per_pixel;
 	      ioff = (off_t)xk;
-	      data[j] = MUS_SAMPLE_TO_FLOAT(ymin);
-	      data1[j] = MUS_SAMPLE_TO_FLOAT(ymax);
+	      data[j] = ymin;
+	      data1[j] = ymax;
 	      j++;
 	      ymin = ep->fmax;
 	      ymax = ep->fmin;
@@ -1525,7 +1504,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 	  ss->stopped_explicitly = false;
 	  for (ioff = losamp, xf = 0.0; ioff <= hisamp; ioff++)
 	    {
-	      samp = read_sample_to_float(sf);
+	      samp = read_sample(sf);
 	      if (samp > ymax) ymax = samp;
 	      if (samp < ymin) ymin = samp;
 	      xf += 1.0;
@@ -2694,7 +2673,7 @@ static void make_wavogram(chan_info *cp)
 	  js[i] = (int *)CALLOC(len, sizeof(int));
 	  for (j = 0; j < len; j++)
 	    {
-	      samps[i][j] = read_sample_to_float(sf);
+	      samps[i][j] = read_sample(sf);
 	      js[i][j] = skew_color(samps[i][j]);
 	      if (js[i][j] < 0) js[i][j] = 0;
 	    }
@@ -2779,7 +2758,7 @@ static void make_wavogram(chan_info *cp)
       y = yoff;
       for (i = 0; i < cp->wavo_trace; i++, x += xincr)
 	{
-	  binval = read_sample_to_float(sf);
+	  binval = read_sample(sf);
 	  xyz[0] = x - x0; 
 	  xyz[1] = y - y0; 
 	  xyz[2] = binval;

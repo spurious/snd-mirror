@@ -58,7 +58,7 @@ static void display_meters(Float *maxes)
   XSetLineAttributes(recorder_ax->dp, recorder_ax->gc, 2, LineSolid, CapRound, JoinRound);
   XSetForeground(recorder_ax->dp, recorder_ax->gc, ss->sgx->black);
 
-  yc = 0.5 * meter_width + 0.2 * meter_height;
+  yc = (int)(0.5 * meter_width + 0.2 * meter_height);
 
   for (i = 0; i < recorder_chans; i++, x0 += meter_width)
     {
@@ -81,8 +81,8 @@ static void display_meters(Float *maxes)
       XDrawArc(recorder_ax->dp, recorder_ax->wn, recorder_ax->gc, x0, 20, meter_width, meter_width, 45 * 64, 90 * 64);
       XDrawLine(recorder_ax->dp, recorder_ax->wn, recorder_ax->gc, 
 		xc, yc, 
-		xc + 0.55 * meter_width * sin(rads),
-		yc - 0.55 * meter_width * cos(rads));
+		(int)(xc + 0.55 * meter_width * sin(rads)),
+		(int)(yc - 0.55 * meter_width * cos(rads)));
     }
 }
 

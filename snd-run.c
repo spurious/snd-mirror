@@ -390,7 +390,12 @@ static void init_type_names(void)
     type_names[i] = basic_type_names[i];
 }
 
-static char *type_name(int id) {if ((id >= R_UNSPECIFIED) && (id <= last_type)) return(type_names[id]); return("unknown");}
+static char *type_name(int id) 
+{
+  if ((id >= R_UNSPECIFIED) && (id <= last_type)) 
+    return(type_names[id]); 
+  return("unknown");
+}
 
 static int add_new_type(const char *new_type)
 {
@@ -1978,7 +1983,7 @@ static vect *read_vector(XEN vector, int type)
   return(NULL);
 }
 
-static int xen_to_run_type(XEN val)
+int xen_to_run_type(XEN val)
 {
   if (XEN_NUMBER_P(val))
     {
@@ -6851,7 +6856,7 @@ static xen_value *report_in_minibuffer_1(ptree *pt, xen_value **args, int num_ar
 
 /* ---------------- sample-reader stuff ---------------- */
 
-static void reader_f(int *args, ptree *pt) {FLOAT_RESULT = read_sample_to_float(READER_ARG_1);}
+static void reader_f(int *args, ptree *pt) {FLOAT_RESULT = read_sample(READER_ARG_1);}
 static char *descr_reader(int *args, ptree *pt, const char *which) 
 {
   return(mus_format( FLT_PT " = %s(" RD_PT ")", args[0], FLOAT_RESULT, which, args[1], DESC_READER_ARG_1));
@@ -6867,11 +6872,11 @@ static xen_value *reader_0(ptree *prog, xen_value **args, xen_value *sf)
 static xen_value *reader_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, reader_f, descr_reader_f, args, 1));}
 
 static char *descr_next_reader_f(int *args, ptree *pt) {return(descr_reader(args, pt, S_next_sample));}
-static void next_reader_f(int *args, ptree *pt) {FLOAT_RESULT = protected_next_sample_to_float(READER_ARG_1);}
+static void next_reader_f(int *args, ptree *pt) {FLOAT_RESULT = protected_next_sample(READER_ARG_1);}
 static xen_value *next_sample_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, next_reader_f, descr_next_reader_f, args, 1));}
 
 static char *descr_previous_reader_f(int *args, ptree *pt) {return(descr_reader(args, pt, S_previous_sample));}
-static void previous_reader_f(int *args, ptree *pt) {FLOAT_RESULT = protected_previous_sample_to_float(READER_ARG_1);}
+static void previous_reader_f(int *args, ptree *pt) {FLOAT_RESULT = protected_previous_sample(READER_ARG_1);}
 static xen_value *previous_sample_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, previous_reader_f, descr_previous_reader_f, args, 1));}
 
 
@@ -6976,7 +6981,7 @@ static xen_value *make_region_sample_reader_1(ptree *pt, xen_value **args, int n
 
 /* -------- mix -------- */
 
-static void mix_reader_f(int *args, ptree *pt) {FLOAT_RESULT = mix_read_sample_to_float(MIX_READER_ARG_1);}
+static void mix_reader_f(int *args, ptree *pt) {FLOAT_RESULT = mix_read_sample(MIX_READER_ARG_1);}
 static char *descr_mix_reader(int *args, ptree *pt, const char *which) 
 {
   return(mus_format( FLT_PT " = %s(" MF_PT ")", args[0], FLOAT_RESULT, which, args[1], DESC_MIX_READER_ARG_1));
@@ -7017,7 +7022,7 @@ static xen_value *make_mix_sample_reader_1(ptree *pt, xen_value **args, int num_
 
 /* -------- track -------- */
 
-static void track_reader_f(int *args, ptree *pt) {FLOAT_RESULT = track_read_sample_to_float(TRACK_READER_ARG_1);}
+static void track_reader_f(int *args, ptree *pt) {FLOAT_RESULT = track_read_sample(TRACK_READER_ARG_1);}
 static char *descr_track_reader(int *args, ptree *pt, const char *which) 
 {
   return(mus_format( FLT_PT " = %s(" TF_PT ")", args[0], FLOAT_RESULT, which, args[1], DESC_TRACK_READER_ARG_1));
@@ -11911,15 +11916,52 @@ int evaluate_ptree_1f2b(struct ptree *pt, Float arg)
   return(pt->ints[pt->result->addr]);
 }
 
-Float evaluate_ptreec(struct ptree *pt, Float arg, vct *v, bool dir)
+Float evaluate_ptreec(struct ptree *pt, Float arg, XEN object, bool dir, int type)
 {
+  /* set the "val" (current sample) arg */
   pt->dbls[pt->args[0]] = arg;
   if (pt->arity > 1)
     {
-      if (pt->vcts)
-	pt->vcts[pt->args[1]] = v;
+      int addr;
+      /* set the "dir" (read direction) arg */
       pt->ints[pt->args[2]] = (Int)dir;
+
+      /* set the "state" (init-func return value) arg -- "type" is decided when init-func is evaluated */
+      addr = pt->args[1];
+      switch (type)
+	{
+	case R_FLOAT:        pt->dbls[addr] = (Double)XEN_TO_C_DOUBLE(object);                    break;
+	case R_INT:          pt->ints[addr] = R_XEN_TO_C_INT(object);                             break;
+	case R_CHAR:         pt->ints[addr] = (Int)XEN_TO_C_CHAR(object);                         break;
+	case R_BOOL:         pt->ints[addr] = (Int)XEN_TO_C_BOOLEAN(object);                      break;
+	case R_VCT:          if (pt->vcts) pt->vcts[addr] = (vct *)XEN_OBJECT_REF(object);        break;
+	  /* dumb cases force the pt->vcts check -- vct returned, but never used for example */
+	case R_SOUND_DATA:   if (pt->sds) pt->sds[addr] = (sound_data *)XEN_OBJECT_REF(object);   break;
+	case R_CLM:          if (pt->clms) pt->clms[addr] = XEN_TO_MUS_ANY(object);               break;
+	case R_READER:       if (pt->readers) pt->readers[addr] = get_sf(object);                 break;
+	case R_MIX_READER:   if (pt->mix_readers) pt->mix_readers[addr] = get_mf(object);         break;
+	case R_TRACK_READER: if (pt->track_readers) pt->track_readers[addr] = get_tf(object);     break;
+	case R_STRING:       
+	  if (pt->strs)
+	    {
+	      if (pt->strs[addr]) FREE(pt->strs[addr]);
+	      pt->strs[addr] = copy_string(XEN_TO_C_STRING(object));
+	    }
+	  break; 
+	case R_SYMBOL:
+	case R_KEYWORD:
+	case R_LIST:
+	case R_PAIR:         if (pt->xens) pt->xens[addr] = object;                               break;
+	default:
+	  /* disaster -- init-func returned something we can't handle, so we're heading for a segfault
+	   *   unless the overly-clever user forgot to refer to it.  Not sure how to exit completely...
+	   */
+	  snd_error("ptree-channel init-func returned a %s which we can't handle", type_name(type));
+	  return(0.0);
+	  break;
+	}
     }
+
   eval_ptree(pt);
   return(pt->dbls[pt->result->addr]);
 }
@@ -12640,7 +12682,8 @@ Float evaluate_ptree_1f2f(struct ptree *pt, Float arg) {return(0.0);}
 int evaluate_ptree_1f2b(struct ptree *pt, Float arg) {return(0);}
 void free_ptree(struct ptree *pt) {}
 XEN ptree_code(struct ptree *pt) {return(XEN_FALSE);}
-Float evaluate_ptreec(struct ptree *pt, Float arg, vct *v, bool dir) {return(0.0);}
+Float evaluate_ptreec(struct ptree *pt, Float arg, XEN object, bool dir, int type) {return(0.0);}
+int xen_to_run_type(XEN val) {return(0);}
 #endif
 /* endif WITH_RUN */
 

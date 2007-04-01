@@ -705,8 +705,8 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
       j = 0;
       for (k = 0; k < dur; k++)
 	{
-	  idata0[j] = read_sample(c1);
-	  idata1[j] = read_sample(c0);
+	  idata0[j] = read_sample_to_mus_sample(c1);
+	  idata1[j] = read_sample_to_mus_sample(c0);
 	  j++;
 	  if (j == MAX_BUFFER_SIZE)
 	    {
@@ -757,8 +757,8 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
     {
       for (k = 0; k < dur; k++)
 	{
-	  idata0[k] = read_sample(c1);
-	  idata1[k] = read_sample(c0);
+	  idata0[k] = read_sample_to_mus_sample(c1);
+	  idata1[k] = read_sample_to_mus_sample(c0);
 	}
       change_samples(beg, dur, data0[0], cp0, LOCK_MIXES, S_swap_channels, cp0->edit_ctr);
       change_samples(beg, dur, data1[0], cp1, LOCK_MIXES, S_swap_channels, cp1->edit_ctr);
@@ -792,7 +792,7 @@ Float src_input_as_needed(void *arg, int direction)
       read_sample_change_direction(sf, (direction == 1) ? READ_FORWARD : READ_BACKWARD);
       sr->dir = direction;
     }
-  return(read_sample_to_float(sf));
+  return(read_sample(sf));
 }
 
 src_state *make_src(Float srate, snd_fd *sf, Float initial_srate)
@@ -1311,7 +1311,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
       j = 0;
       for (k = 0; k < dur; k++)
 	{
-	  idata[j++] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, read_sample_to_float(sf), 0.0));
+	  idata[j++] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, read_sample(sf), 0.0));
 	  if (j == MAX_BUFFER_SIZE)
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
@@ -1323,12 +1323,12 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   else
     {
       for (k = 0; k < dur; k++)
-	idata[k] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, read_sample_to_float(sf), 0.0));
+	idata[k] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, read_sample(sf), 0.0));
       j = (int)dur;
     }
   for (k = 0; k < overlap; k++)
     {
-      idata[j++] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, 0.0, 0.0) + read_sample_to_float(sf));
+      idata[j++] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, 0.0, 0.0) + read_sample(sf));
       if ((temp_file) && (j == MAX_BUFFER_SIZE))
 	{
 	  err = mus_file_write(ofd, 0, j - 1, 1, data);
@@ -1368,7 +1368,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
 
 static Float convolve_next_sample(void *ptr, int dir)
 {
-  return(read_sample_to_float(((snd_fd *)ptr)));
+  return(read_sample(((snd_fd *)ptr)));
 }
 
 static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t beg, off_t dur, 
@@ -1482,7 +1482,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
 	  ssize_t bytes;
 	  sndrdat = (Float *)CALLOC(fsize, sizeof(Float));
 	  for (k = 0; k < dur; k++) 
-	    sndrdat[k] = (Float)(read_sample_to_float(sf));
+	    sndrdat[k] = (Float)(read_sample(sf));
 	  mus_fftw(sndrdat, fsize, 1);
 	  scale = 1.0 / (Float)fsize;
 	  for (k = 0; k < fsize; k++)
@@ -1644,7 +1644,7 @@ static void *pfilter_direct_run(void *context)
 	  else prebeg = beg;
 	  if (prebeg > 0)
 	    for (m = (int)prebeg; m > 0; m--)
-	      d[m] = read_sample_to_float(sf);
+	      d[m] = read_sample(sf);
 	}
     }
   if ((arg->over_selection) && (!(arg->truncate)))
@@ -1654,14 +1654,14 @@ static void *pfilter_direct_run(void *context)
       if (arg->gen)
 	{
 	  for (j = 0; j < arg->dur; j++)
-	    idata[j] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(arg->gen, read_sample_to_float(sf), 0.0));
+	    idata[j] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(arg->gen, read_sample(sf), 0.0));
 	}
       else
 	{
 	  for (j = 0; j < arg->dur; j++)
 	    {
 	      x = 0.0; 
-	      d[0] = read_sample_to_float(sf);
+	      d[0] = read_sample(sf);
 	      for (m = order - 1; m > 0; m--) 
 		{
 		  x += d[m] * a[m]; 
@@ -1677,11 +1677,11 @@ static void *pfilter_direct_run(void *context)
       for (offk = 0; offk < arg->dur; offk++)
 	{
 	  if (arg->gen)
-	    x = MUS_RUN(arg->gen, read_sample_to_float(sf), 0.0);
+	    x = MUS_RUN(arg->gen, read_sample(sf), 0.0);
 	  else
 	    {
 	      x = 0.0; 
-	      d[0] = read_sample_to_float(sf);
+	      d[0] = read_sample(sf);
 	      for (m = order - 1; m > 0; m--) 
 		{
 		  x += d[m] * a[m]; 
@@ -1706,11 +1706,11 @@ static void *pfilter_direct_run(void *context)
       for (offk = 0; offk < order; offk++)
 	{
 	  if (arg->gen)
-	    x = MUS_RUN(arg->gen, read_sample_to_float(sf), 0.0);
+	    x = MUS_RUN(arg->gen, read_sample(sf), 0.0);
 	  else
 	    {
 	      x = 0.0; 
-	      d[0] = read_sample_to_float(sf);
+	      d[0] = read_sample(sf);
 	      for (m = order - 1; m > 0; m--) 
 		{
 		  x += d[m] * a[m]; 
@@ -1718,7 +1718,7 @@ static void *pfilter_direct_run(void *context)
 		} 
 	      x += d[0] * a[0]; 
 	    }
-	  idata[j] = MUS_FLOAT_TO_SAMPLE(x + read_sample_to_float(sfold));
+	  idata[j] = MUS_FLOAT_TO_SAMPLE(x + read_sample(sfold));
 	  j++;
 	  if ((arg->temp_file) && (j == MAX_BUFFER_SIZE))
 	    {
@@ -1872,7 +1872,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
 	  else prebeg = beg;
 	  if (prebeg > 0)
 	    for (m = (int)prebeg; m > 0; m--)
-	      d[m] = read_sample_to_float(sf);
+	      d[m] = read_sample(sf);
 	}
     }
   if ((over_selection) && (!truncate))
@@ -1882,7 +1882,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
       if (gen)
 	{
 	  for (j = 0; j < dur; j++)
-	    idata[j] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, read_sample_to_float(sf), 0.0));
+	    idata[j] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, read_sample(sf), 0.0));
 	}
       else
 	{
@@ -1891,7 +1891,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
 	  for (j = 0; j < dur; j++)
 	    {
 	      x = 0.0; 
-	      d[0] = read_sample_to_float(sf);
+	      d[0] = read_sample(sf);
 	      for (m = order - 1; m > 0; m--) 
 		{
 		  x += d[m] * a[m]; 
@@ -1907,11 +1907,11 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
       for (offk = 0; offk < dur; offk++)
 	{
 	  if (gen)
-	    x = MUS_RUN(gen, read_sample_to_float(sf), 0.0);
+	    x = MUS_RUN(gen, read_sample(sf), 0.0);
 	  else
 	    {
 	      x = 0.0; 
-	      d[0] = read_sample_to_float(sf);
+	      d[0] = read_sample(sf);
 	      for (m = order - 1; m > 0; m--) 
 		{
 		  x += d[m] * a[m]; 
@@ -1946,11 +1946,11 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
       for (offk = 0; offk < order; offk++)
 	{
 	  if (gen)
-	    x = MUS_RUN(gen, read_sample_to_float(sf), 0.0);
+	    x = MUS_RUN(gen, read_sample(sf), 0.0);
 	  else
 	    {
 	      x = 0.0; 
-	      d[0] = read_sample_to_float(sf);
+	      d[0] = read_sample(sf);
 	      for (m = order - 1; m > 0; m--) 
 		{
 		  x += d[m] * a[m]; 
@@ -1958,7 +1958,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
 		} 
 	      x += d[0] * a[0]; 
 	    }
-	  idata[j] = MUS_FLOAT_TO_SAMPLE(x + read_sample_to_float(sfold));
+	  idata[j] = MUS_FLOAT_TO_SAMPLE(x + read_sample(sfold));
 	  j++;
 	  if ((temp_file) && (j == MAX_BUFFER_SIZE))
 	    {
@@ -2297,7 +2297,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
   else 
     {
       int sbin, ebin;
-      mus_sample_t min1, max1;
+      Float min1, max1;
       ep = amp_env_copy(cp, false, edpos);
       if (ep) 
 	{
@@ -2336,7 +2336,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
       j = 0;
       for (k = 0; k < dur; k++)
 	{
-	  idata[j++] = read_sample(sf);
+	  idata[j++] = read_sample_to_mus_sample(sf);
 	  if (j == MAX_BUFFER_SIZE)
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
@@ -2357,7 +2357,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
   else 
     {
       for (k = 0; k < dur; k++)
-	idata[k] = read_sample(sf);
+	idata[k] = read_sample_to_mus_sample(sf);
       change_samples(beg, dur, idata, cp, LOCK_MIXES, origin, cp->edit_ctr);
     }
   if (ep) cp->amp_envs[cp->edit_ctr] = ep;
@@ -2675,7 +2675,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 		{
 		  egen_val = mus_env(egen);
 		  for (k = 0; k < si->chans; k++)
-		    data[k][j] = (mus_sample_t)(read_sample(sfs[k]) * egen_val);
+		    data[k][j] = MUS_FLOAT_TO_SAMPLE(read_sample(sfs[k]) * egen_val);
 		  j++;
 		  if ((temp_file) && (j == MAX_BUFFER_SIZE))
 		    {
@@ -2703,7 +2703,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 		    {
 		      egen_val = mus_env_linear(egen);
 		      for (k = 0; k < si->chans; k++)
-			data[k][j] = (mus_sample_t)(read_sample(sfs[k]) * egen_val);
+			data[k][j] = MUS_FLOAT_TO_SAMPLE(read_sample(sfs[k]) * egen_val);
 		    }
 		}
 	      else
@@ -2712,7 +2712,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 		    {
 		      egen_val = mus_env(egen);
 		      for (k = 0; k < si->chans; k++)
-			data[k][j] = (mus_sample_t)(read_sample(sfs[k]) * egen_val);
+			data[k][j] = MUS_FLOAT_TO_SAMPLE(read_sample(sfs[k]) * egen_val);
 		    }
 		}
 	    }
@@ -2726,7 +2726,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	      ss->stopped_explicitly = false;
 	      for (ioff = 0; ioff < dur; ioff++)
 		{
-		  idata[j] = (mus_sample_t)(read_sample(sf) * mus_env(egen));
+		  idata[j] = MUS_FLOAT_TO_SAMPLE(read_sample(sf) * mus_env(egen));
 		  j++;
 		  if ((temp_file) && (j == MAX_BUFFER_SIZE))
 		    {
@@ -2751,12 +2751,12 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	      if (mus_env_linear_p(egen))
 		{
 		  for (j = 0; j < dur; j++)
-		    idata[j] = (mus_sample_t)(read_sample(sf) * mus_env_linear(egen));
+		    idata[j] = MUS_FLOAT_TO_SAMPLE(read_sample(sf) * mus_env_linear(egen));
 		}
 	      else
 		{
 		  for (j = 0; j < dur; j++)
-		    idata[j] = (mus_sample_t)(read_sample(sf) * mus_env(egen));
+		    idata[j] = MUS_FLOAT_TO_SAMPLE(read_sample(sf) * mus_env(egen));
 		}
 	    }
 	}
@@ -3150,7 +3150,7 @@ static char *run_channel(chan_info *cp, struct ptree *pt, off_t beg, off_t dur, 
       ss->stopped_explicitly = false;
       for (k = 0; k < dur; k++)
 	{
-	  idata[j++] = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, read_sample_to_float(sf)));
+	  idata[j++] = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, read_sample(sf)));
 	  if (j == MAX_BUFFER_SIZE)
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
@@ -3176,7 +3176,7 @@ static char *run_channel(chan_info *cp, struct ptree *pt, off_t beg, off_t dur, 
       if (dur > 0) 
 	{
 	  for (k = 0; k < dur; k++)
-	    idata[k] = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, read_sample_to_float(sf)));
+	    idata[k] = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, read_sample(sf)));
 	  change_samples(beg, dur, idata, cp, LOCK_MIXES, origin, cp->edit_ctr);
 	}
     }
@@ -3207,6 +3207,7 @@ static Float scale_and_src_input(void *data, int direction)
 
 char *scale_and_src(char **files, int len, int max_chans, Float amp, Float speed, env *amp_env, bool *temp_file_err)
 {
+  /* view files mix and insert possible src change */
   char *tempfile;
   snd_fd ***fds = NULL;
   snd_info **sps = NULL;
@@ -3490,7 +3491,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	  for (kp = 0; kp < num; kp++)
 	    {
 	      /* changed here to remove catch 24-Mar-02 */
-	      res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)));
+	      res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
 	      if (XEN_NUMBER_P(res))                         /* one number -> replace current sample */
 		MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(res), outgen);
 	      else
@@ -3586,7 +3587,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	  cur_size = num;
 	  for (kp = 0; kp < num; kp++)
 	    {
-	      res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)));
+	      res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
 	      if (XEN_NUMBER_P(res))                         /* one number -> replace current sample */
 		{
 		  if (data_pos >= cur_size)
@@ -3701,7 +3702,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
 	  for (kp = 0; kp < num; kp++)
 	    {
 	      res = XEN_CALL_3(proc, 
-			       C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
+			       C_TO_XEN_DOUBLE((double)read_sample(sf)),
 			       v,
 			       XEN_TRUE,
 			       origin);
@@ -3713,7 +3714,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
 	  for (kp = 0; kp < num; kp++)
 	    {
 	      res = XEN_CALL_1(proc, 
-			       C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
+			       C_TO_XEN_DOUBLE((double)read_sample(sf)),
 			       origin);
 	      MUS_OUTA_1(kp, XEN_TO_C_DOUBLE(res), outgen);
 	    }
@@ -3728,7 +3729,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
 	  for (kp = 0; kp < num; kp++)
 	    {
 	      res = XEN_CALL_3(proc, 
-			       C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
+			       C_TO_XEN_DOUBLE((double)read_sample(sf)),
 			       v,
 			       XEN_TRUE,
 			       origin);
@@ -3740,7 +3741,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
 	  for (kp = 0; kp < num; kp++)
 	    {
 	      res = XEN_CALL_1(proc, 
-			       C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
+			       C_TO_XEN_DOUBLE((double)read_sample(sf)),
 			       origin);
 	      data[kp] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(res));
 	    }
@@ -3923,7 +3924,7 @@ static XEN scan_body(void *context)
   for (kp = 0; kp < sc->num; kp++)
     {
       XEN res;
-      res = XEN_CALL_1_NO_CATCH(sc->proc, C_TO_XEN_DOUBLE((double)read_sample_to_float(sc->sf)));
+      res = XEN_CALL_1_NO_CATCH(sc->proc, C_TO_XEN_DOUBLE((double)read_sample(sc->sf)));
       /* in Forth, a return value of 0 is assumed to be false -- should we check for that? */
       if (XEN_NOT_FALSE_P(res))
 	{
@@ -4031,7 +4032,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       if (pt)
 	{
 	  for (kp = 0; kp < num; kp++)
-	    if (evaluate_ptree_1f2b(pt, read_sample_to_float(sf)))
+	    if (evaluate_ptree_1f2b(pt, read_sample(sf)))
 	      {
 		if (counting)
 		  counts++;
@@ -4070,7 +4071,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   for (kp = 0; kp < num; kp++)
     {
       XEN res;
-      res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)));
+      res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
       /* leak here -- if reader active and error occurs, we jump out without cleanup */
       /* see dynamic_wind above */
       if (XEN_NOT_FALSE_P(res))
