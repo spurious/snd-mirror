@@ -1148,6 +1148,10 @@ static mix_info *add_mix(chan_info *cp, int chan, off_t beg, off_t num, const ch
   return(md);
 }
 
+#if MUS_DEBUGGING && HAVE_GUILE
+void _mix_(chan_info *cp, const char *filename, off_t beg);
+#endif
+
 static mix_info *file_mix_samples(off_t beg, off_t num, const char *mixfile, chan_info *cp, int chan, 
 				  file_delete_t auto_delete, const char *origin, bool with_tag, 
 				  int track_id, bool redisplay)
@@ -1172,6 +1176,15 @@ static mix_info *file_mix_samples(off_t beg, off_t num, const char *mixfile, cha
       (!(extend_with_zeros(cp, len, beg - len + 1, cp->edit_ctr))))
     return(NULL);
   if (beg < 0) beg = 0;
+#if WITH_VIRTUAL_MIX
+  if (with_tag)
+    {
+      in_chans = mus_sound_chans(mixfile);
+      _mix_(cp, mixfile, beg);
+    }
+  else
+    {
+#endif
   sp = cp->sound;
   ihdr = make_file_info(mixfile, FILE_READ_ONLY, FILE_NOT_SELECTED);
   if (!ihdr) 
@@ -1262,6 +1275,10 @@ static mix_info *file_mix_samples(off_t beg, off_t num, const char *mixfile, cha
   else new_origin = copy_string(origin);
   file_mix_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, new_origin, cp->edit_ctr, with_tag); /* editable checked already */
   if (ofile) FREE(ofile);
+#if WITH_VIRTUAL_MIX
+    }
+#endif
+
   if (with_tag)
     {
       md = add_mix(cp, chan, beg, num, mixfile, in_chans, auto_delete);

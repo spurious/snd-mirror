@@ -62,7 +62,8 @@ static void display_meters(Float *maxes)
 
   for (i = 0; i < recorder_chans; i++, x0 += meter_width)
     {
-      Float cur_max = 0.0, rads, xc;
+      Float cur_max = 0.0, rads;
+      int xc;
       if (maxes) 
 	{
 	  if (!meters_in_db)
@@ -76,7 +77,7 @@ static void display_meters(Float *maxes)
 	}
 
       rads = (M_PI * 0.5 * cur_max) - (M_PI / 4);
-      xc = x0 + 0.5 * meter_width;
+      xc = (int)(x0 + 0.5 * meter_width);
 
       XDrawArc(recorder_ax->dp, recorder_ax->wn, recorder_ax->gc, x0, 20, meter_width, meter_width, 45 * 64, 90 * 64);
       XDrawLine(recorder_ax->dp, recorder_ax->wn, recorder_ax->gc, 
@@ -190,7 +191,10 @@ static void start_reading(void)
       if (err != MUS_NO_ERROR) break;
       if (recording)
 	{
-	  write(recorder_fd, (char *)inbuf, buffer_size);
+	  ssize_t bytes;
+	  bytes = write(recorder_fd, (char *)inbuf, buffer_size);
+	  if (bytes != buffer_size)
+	    fprintf(stderr, "recorder wrote " SSIZE_TD " bytes of %d requested?", bytes, buffer_size);
 	  recorder_total_bytes += buffer_size;
 	}
       check_for_event();  /* watch for close event or "go away" clicked */

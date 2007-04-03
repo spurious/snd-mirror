@@ -325,6 +325,7 @@ void ps_reset_color(void)
   last_color = -1;
 }
 
+#if USE_MOTIF || USE_GTK
 static void ps_set_color(color_t color)
 {
 #if USE_MOTIF
@@ -352,6 +353,7 @@ static void ps_set_color(color_t color)
 #endif
   last_color = -1;
 }
+#endif
 
 void ps_bg(axis_info *ap, axis_context *ax)
 {

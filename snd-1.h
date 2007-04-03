@@ -189,6 +189,7 @@ typedef struct snd_fd {
   int edit_ctr, dangling_loc, region, type;
   Float (*rampf)(struct snd_fd *sf);
   Float (*rev_rampf)(struct snd_fd *sf);
+  void *mix_info;
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;

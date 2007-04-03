@@ -6855,6 +6855,21 @@ In the find dialog and in C-s or C-r searches, if the value returned is an integ
 <em class=listener>'( #t 4423 )</em>
 </pre>
 
+I didn't bring out the search direction (find-channel is built on scan-channel which assumes it is
+scanning forwards), but it's not hard to write a function to find in reverse:
+
+<pre>
+(define* (<A NAME=findchannelinreverse">find-channel-in-reverse</A> proc :optional beg snd chn edpos)
+  (let* ((sample (or beg (1- (<a class=quiet href="#frames">frames</a> snd chn)))) ; or cursor?
+	 (reader (<a class=quiet href="#makesamplereader">make-sample-reader</a> sample snd chn -1 edpos))
+	 (result #f))
+    (do ((i sample (1- i)))
+	((or result (< i 0)) 
+	 (and result
+	     (list result (1+ i))))
+      (set! result (proc (reader))))))
+</pre>
+
 
 <!-- INDEX searchexamples:Searching -->
 <A NAME="searchexamples"></a>

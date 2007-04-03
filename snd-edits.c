@@ -341,7 +341,7 @@ char *run_save_state_hook(char *file)
  * redo: push position foward
  * No actual changes are flushed out to the file system until the file is saved.
  *
- * the editing possibilities are insert, change, delete, scaling, zero, [x]ramp[2,3], ptree(xen). 
+ * the editing possibilities are insert, change, delete, scale, zero, [x]ramp[2,3], ptree. 
  * All input goes through these lists (with minor exceptions -- see chn_sample below).
  *
  * The accessors are highly optimized (split into numerous choices) since everything else in Snd
@@ -349,34 +349,20 @@ char *run_save_state_hook(char *file)
  *   267 MHz PC (and equivalent Sun) can play stereo 44KHz through the double xramp op (or ptree2!)
  *   without glitches, and on a modern machine the readers scarcely register in loadav.
  *
- * to be more precise (1.7 GHz Pentium):
- *
- *                   float               int
- *    straight     38   0.001         31    0.001 ; 28 20 if buffer
- *    ramp         40   0.001         33    0.001 
- *    ramp2        51   0.001         48    0.001 
- *    ramp3        54   0.001         52    0.001 
- *    ptree        86   0.002         84    0.002 ; y * 0.5
- *    ptreec       133  0.003         131   0.003 ; y * vct-ref
- *    ptree2       168  0.004         159   0.004 
- *    xramp        376  0.009         371   0.009 
- *    cosine       476  0.012         511   0.012 ; cosine-channel-via-ptree
- *    xramp2       682  0.016         672   0.016 
- *
- * (3.2 GHz):          -ffast-math    (int)  (double)      (3.8 GHz, float):
- *    straight     21    20           18       26             22
- *    ramp         24    21           20       26             25
- *    ramp2        27    22           21       27             29
- *    ramp3        38    24           22       29             33
- *    ramp4        35    44           24       30             43
- *    ptree-zero   46    47           48       61             49
- *    ptree        52    58           53       71             57
- *    ptreec       80    80           76       93             74
- *    ptree2       105  100          102      107             94
- *    ptree3       129  125          122      157            128
- *    xramp        152   94           86      140 (91)       121
- *    xramp2       290  148          149      242 (154)      211
- *    cosine       304  270          284      355 (290)      199
+ * (3.2 GHz):          -ffast-math  (double)   (3.8 GHz, float):
+ *    straight     21    20           26             22
+ *    ramp         24    21           26             25
+ *    ramp2        27    22           27             29
+ *    ramp3        38    24           29             33
+ *    ramp4        35    44           30             43
+ *    ptree-zero   46    47           61             49
+ *    ptree        52    58           71             57
+ *    ptreec       80    80           93             74
+ *    ptree2       105  100          107             94
+ *    ptree3       129  125          157            128
+ *    xramp        152   94          140 (91)       121
+ *    xramp2       290  148          242 (154)      211
+ *    cosine       304  270          355 (290)      199
  */
 
 typedef struct ed_ramps {
@@ -399,21 +385,33 @@ typedef struct ed_ptrees {
         ptree_pos2, ptree_dur2, ptree_pos3, ptree_dur3;
 } ed_ptrees;
 
+typedef struct ed_mixes {
+  int mix_loc;
+  off_t len;
+} ed_mixes;
+
+typedef struct mix_data {
+  snd_fd *sf;
+} mix_data;
+
 typedef struct ed_fragment {
-  int   typ,                               /* code for accessor choice (ED_SIMPLE etc) */
+  short typ,                               /* code for accessor choice (ED_SIMPLE etc) */
         snd;                               /* either an index into the cp->sounds array (snd_data structs) or EDIT_LIST_END|ZERO_MARK */
   off_t out,                               /* running segment location within current overall edited data */
         beg,                               /* index into the associated data => start point of data used in current segment */
         end;                               /* index into the associated data => end point of data used in current segment */
   Float scl;                               /* segment scaler */
   ed_ramps *ramps;
+  /* could use union here except that it might complicate the task of copy_ed_fragment below */
   ed_ptrees *ptrees;
+  ed_mixes *mixes; 
 } ed_fragment;
 
 #define FRAGMENTS(Ed)                       (ed_fragment **)((Ed)->fragments)
 #define FRAGMENT(Ed, Pos)                  ((ed_fragment **)((Ed)->fragments))[Pos]
 #define FRAGMENT_RAMPS(Ed, Pos)            ((ed_fragment **)((Ed)->fragments))[Pos]->ramps
 #define FRAGMENT_PTREES(Ed, Pos)           ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees
+#define FRAGMENT_MIXES(Ed, Pos)            ((ed_fragment **)((Ed)->fragments))[Pos]->mixes
 
 #define FRAGMENT_GLOBAL_POSITION(Ed, Pos)  ((ed_fragment **)((Ed)->fragments))[Pos]->out
 #define FRAGMENT_LOCAL_POSITION(Ed, Pos)   ((ed_fragment **)((Ed)->fragments))[Pos]->beg
@@ -446,6 +444,8 @@ typedef struct ed_fragment {
 #define FRAGMENT_PTREE2_POSITION(Ed, Pos)  ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_pos2
 #define FRAGMENT_PTREE3_POSITION(Ed, Pos)  ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_pos3
 #define FRAGMENT_LENGTH(Ed, Pos)           (FRAGMENT_LOCAL_END(Ed, Pos) - FRAGMENT_LOCAL_POSITION(Ed, Pos) + 1)
+#define FRAGMENT_MIX_INDEX(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->mix_loc
+#define FRAGMENT_MIX_LENGTH(Ed, Pos)       ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->len
 
 #define READER_GLOBAL_POSITION(Sf)  ((ed_fragment *)((Sf)->cb))->out
 #define READER_LOCAL_POSITION(Sf)   ((ed_fragment *)((Sf)->cb))->beg
@@ -477,6 +477,8 @@ typedef struct ed_fragment {
 #define READER_PTREE_POSITION(Sf)   ((ed_fragment *)((Sf)->cb))->ptrees->ptree_pos
 #define READER_PTREE2_POSITION(Sf)  ((ed_fragment *)((Sf)->cb))->ptrees->ptree_pos2
 #define READER_PTREE3_POSITION(Sf)  ((ed_fragment *)((Sf)->cb))->ptrees->ptree_pos3
+#define READER_MIX_INDEX(Sf)        ((ed_fragment *)((Sf)->cb))->mixes->mix_loc
+#define READER_MIX_LENGTH(Sf)       ((ed_fragment *)((Sf)->cb))->mixes->len
 
 #define ED_GLOBAL_POSITION(Ed)  (Ed)->out
 #define ED_LOCAL_POSITION(Ed)   (Ed)->beg
@@ -501,14 +503,17 @@ typedef struct ed_fragment {
 #define ED_PTREE3_POSITION(Ed)  (Ed)->ptrees->ptree_pos3
 #define ED_RAMPS(Ed)            (Ed)->ramps
 #define ED_PTRESS(Ed)           (Ed)->ptrees
+#define ED_MIXES(Ed)            (Ed)->mixes
+#define ED_MIX_INDEX(Ed)        (Ed)->mixes->mix_loc
+#define ED_MIX_LENGTH(Ed)       (Ed)->mixes->len
 
 
 /* -------------------------------- fragment accessors --------------------------------
  *
  * all sample accesses go through runf
  *
- * each type of accessor needs 8 cases: 
- *   [back | forth] [normal | on_zero] -> [mus_sample_t | float]
+ * each type of accessor needs 4 cases: 
+ *   [back | forth] [normal | on_zero]
  * on_zero case only needed if input 0 doesn't imply output 0
  *
  * to simplify reordering, ramps 1-4 use incrs 1-4, but xramp1 uses 4, then xramp2 uses 3
@@ -806,6 +811,25 @@ static Float previous_zero(snd_fd *sf)
   if (sf->loc < sf->first) return(previous_sound(sf));
   sf->loc--;
   return(0.0);
+}
+
+static Float next_mix(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound(sf)); /* next_sound here refers to whatever follows the mixed portion */
+
+  /* current underlying sample is sf->data[sf->loc++]
+   * sf->mix_info points to the mix reader
+   */
+  return(next_sample_value(sf) + 
+	 next_sample_value(((mix_data *)(sf->mix_info))->sf));
+}
+
+static Float previous_mix(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound(sf));
+
+  return(previous_sample_value(sf) + 
+	 previous_sample_value(((mix_data *)(sf->mix_info))->sf));
 }
 
 static Float next_ramp(snd_fd *sf)
@@ -2340,10 +2364,9 @@ static Float previous_ramp_ptree_xramp_ramp_ptree_xramp(snd_fd *sf)
 /* these are the virtual-op accessor choices 
    (ramp->xramp are flipped in many cases to reduce clutter, a*b=b*a so (a(b))=(b(a))) 
    ptree zero cases use accessor-internal switch sf->zero
-   complex cases simply return float and use generic conversion to sample
 */
 
-enum {ED_SIMPLE, ED_ZERO,
+enum {ED_SIMPLE, ED_ZERO, ED_MIX,
       
       /* pure (x)ramp ops */
       ED_RAMP, ED_RAMP2, ED_RAMP3, ED_RAMP4,
@@ -2532,6 +2555,8 @@ static fragment_type_info type_info[NUM_OPS] = {
    "ed_simple", NULL, NULL, NULL, NULL},
   {ED_ZERO, ED_ZERO, ED_ZERO, ED_PTREE_ZERO, 0, 0, 0, true, 
    "ed_zero", next_zero, previous_zero, NULL, NULL},
+  {ED_MIX, -1, -1, -1, 0, 0, 0, false, 
+   "ed_mix", next_mix, previous_mix, NULL, NULL},
 
   {ED_RAMP, ED_RAMP2, ED_XRAMP_RAMP, ED_PTREE_RAMP, 0, 1, 0, false, 
    "ed_ramp", next_ramp, previous_ramp, NULL, NULL},
@@ -3282,7 +3307,13 @@ static bool RAMP_OP(int type)
   return(type_info[type].xramps + type_info[type].ramps > 0);
 }
 
-#if MUS_DEBUGGING && 0
+static bool MIX_OP(int type)
+{
+  return(type == ED_MIX);
+}
+
+#define DEBUG_EDIT_TABLES 0
+#if DEBUG_EDIT_TABLES
 static int hit_entry[NUM_OPS];
 static void init_hit_entries(void)
 {
@@ -3515,6 +3546,8 @@ static void setup_ramp4(snd_fd *sf, double rmp0, double rmp1)
   sf->curval4 = rmp0 + sf->incr4 * sf->frag_pos;
 }
 
+static snd_fd *make_virtual_mix_reader(chan_info *cp, off_t len, int index, read_direction_t direction);
+
 static void choose_accessor(snd_fd *sf)
 {
   int typ;
@@ -3555,6 +3588,15 @@ static void choose_accessor(snd_fd *sf)
     {
     case ED_ZERO:
       break;
+    case ED_MIX:
+      {
+	mix_data *md;
+	md = (mix_data *)CALLOC(1, sizeof(mix_data));
+	sf->mix_info = (void *)md;
+	md->sf = make_virtual_mix_reader(sf->cp, READER_MIX_LENGTH(sf), READER_MIX_INDEX(sf), sf->direction);
+      }
+      break;
+
     case ED_PTREE: case ED_PTREE_ZERO:
     case ED_PTREE2: case ED_PTREE2_ZERO:
     case ED_PTREE3: case ED_PTREE3_ZERO:
@@ -4023,8 +4065,8 @@ static void choose_accessor(snd_fd *sf)
 #define EDIT_LIST_END_MARK -2
 #define EDIT_LIST_ZERO_MARK -1
 
-enum {INSERTION_EDIT, DELETION_EDIT, CHANGE_EDIT, INITIALIZE_EDIT, SCALED_EDIT, ZERO_EDIT, RAMP_EDIT, PTREE_EDIT, EXTEND_EDIT};
-static char *edit_names[10] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", "extend", ""};
+enum {INSERTION_EDIT, DELETION_EDIT, CHANGE_EDIT, INITIALIZE_EDIT, SCALED_EDIT, ZERO_EDIT, RAMP_EDIT, PTREE_EDIT, EXTEND_EDIT, MIX_EDIT};
+static char *edit_names[11] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", "extend", "mix", ""};
 
 static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool with_source)
 {
@@ -4051,6 +4093,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
     case RAMP_EDIT:       fprintf(outp, "\n (ramp " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                          break;
     case PTREE_EDIT:      fprintf(outp, "\n (ptree[%d] " OFF_TD " " OFF_TD ") ", ed->ptree_location, ed->beg, ed->len); break; 
     case EXTEND_EDIT:     fprintf(outp, "\n (extend edit list with no-op)");                                            break;
+    case MIX_EDIT:        fprintf(outp, "\n (mix " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                           break; 
     case INITIALIZE_EDIT: fprintf(outp, "\n (begin) ");                                                                 break;
     }
   if (ed->origin) fprintf(outp, "; %s ", ed->origin);
@@ -4134,7 +4177,9 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 	  fprintf(outp, "])");
 	  if (index != EDIT_LIST_ZERO_MARK)
 	    {
-	      sd = cp->sounds[index];
+	      if (MIX_OP(typ))
+		sd = cp->sounds[FRAGMENT_MIX_INDEX(ed, j)];
+	      else sd = cp->sounds[index];
 	      if (sd == NULL) 
 		fprintf(outp, " [nil!]");
 	      else 
@@ -6686,6 +6731,16 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
 
 /* -------------------------------- sample readers -------------------------------- */
 
+static mix_data *free_mix_data(mix_data *md)
+{
+  if (md)
+    {
+      if (md->sf) free_snd_fd(md->sf);
+      FREE(md);
+    }
+  return(NULL);
+}
+
 snd_fd *free_snd_fd_almost(snd_fd *sf)
 {
   if (sf) 
@@ -6712,6 +6767,10 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
  	  sf->closure3 = XEN_UNDEFINED;
 	  sf->protect3 = NOT_A_GC_LOC;
  	}
+      if (sf->mix_info)
+	{
+	  sf->mix_info = (void *)free_mix_data((mix_data *)(sf->mix_info));
+	}
       reader_out_of_data(sf);
       sd = sf->current_sound;
       if ((sd) && 
@@ -6745,7 +6804,7 @@ off_t current_location(snd_fd *sf)
   return(READER_GLOBAL_POSITION(sf) - READER_LOCAL_POSITION(sf) + sf->loc);
 }
 
-enum {SAMPLE_READER, REGION_READER};
+enum {SAMPLE_READER, REGION_READER, MIX_READER};
 
 static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read_direction_t direction, int edit_position, int bufsize)
 {
@@ -9503,6 +9562,156 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
   return(func);
 }
 
+#if WITH_VIRTUAL_MIX
+
+static void make_mix_fragment(ed_list *new_ed, int i, int mix_loc, off_t beg, off_t num)
+{
+  FRAGMENT_TYPE(new_ed, i) = ED_MIX;
+  if (!(FRAGMENT_MIXES(new_ed, i)))
+    FRAGMENT_MIXES(new_ed, i) = (ed_mixes *)CALLOC(1, sizeof(ed_mixes));
+  FRAGMENT_MIX_INDEX(new_ed, i) = mix_loc;
+  FRAGMENT_MIX_LENGTH(new_ed, i) = num;
+  FRAGMENT_SCALER(new_ed, i) = 1.0;
+}
+
+void _mix_(chan_info *cp, const char *filename, off_t beg);
+void _mix_(chan_info *cp, const char *filename, off_t beg)
+{
+  off_t num;
+  int edpos;
+  off_t len;
+  int i, fd, mix_loc;
+  ed_list *new_ed, *old_ed;
+  file_info *hdr;
+
+  hdr = make_file_info(filename, FILE_READ_ONLY, FILE_NOT_SELECTED);
+
+  edpos = cp->edit_ctr;
+  num = mus_sound_frames(filename);
+
+  if ((beg < 0) || 
+      (num <= 0) ||
+      (beg >= cp->samples[edpos]))
+    {
+      fprintf(stderr, "oops");
+      return; 
+    }
+  len = cp->samples[edpos];
+  if (!(prepare_edit_list(cp, len, edpos, "-mix-")))
+    {
+      /* perhaps edit-hook blocked the edit */
+      return;
+    }
+  old_ed = cp->edits[edpos];
+
+  fd = snd_open_read(filename);
+  snd_file_open_descriptors(fd,
+			    filename,
+			    hdr->format,
+			    hdr->data_location,
+			    hdr->chans,
+			    hdr->type);
+
+  mix_loc = add_sound_file_to_edit_list(cp, filename, 
+					make_file_state(fd, hdr, 0, 0, FILE_BUFFER_SIZE),
+					hdr, DONT_DELETE_ME, 0);
+
+  if ((beg == 0) && 
+      (num >= cp->samples[edpos]))
+    {
+      num = len;
+      new_ed = make_ed_list(cp->edits[edpos]->size);
+      new_ed->beg = beg;
+      new_ed->len = num;
+      cp->edits[cp->edit_ctr] = new_ed;
+
+      for (i = 0; i < new_ed->size; i++) 
+	{
+	  copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
+	  make_mix_fragment(new_ed, i, mix_loc, beg, num);
+	}
+    }
+  else 
+    {
+      if (beg + num > len) num = len - beg;
+      new_ed = copy_and_split_list(beg, num, old_ed, NULL);
+
+      cp->edits[cp->edit_ctr] = new_ed;
+      for (i = 0; i < new_ed->size; i++) 
+	{
+	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) > (beg + num - 1)) 
+	    break;                                                    /* not >= (1 sample selections) */
+	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) >= beg)
+	    make_mix_fragment(new_ed, i, mix_loc, beg, num);
+	}
+    }
+  new_ed->edit_type = MIX_EDIT;
+  new_ed->sound_location = old_ed->sound_location;
+  new_ed->origin = copy_string("-mix-");
+  new_ed->edpos = edpos;
+  new_ed->selection_beg = old_ed->selection_beg;
+  new_ed->selection_end = old_ed->selection_end;
+
+  after_edit(cp);
+  update_graph(cp);
+}
+
+static snd_fd *make_virtual_mix_reader(chan_info *cp, off_t len, int index, read_direction_t direction)
+{
+  snd_fd *sf;
+  snd_data *first_snd = NULL;
+  off_t ind0, ind1, indx;
+  sf = (snd_fd *)CALLOC(1, sizeof(snd_fd));
+#if MUS_DEBUGGING
+  set_printable(PRINT_SND_FD);
+#endif
+  sf->closure1 = XEN_UNDEFINED;
+  sf->closure2 = XEN_UNDEFINED;
+  sf->closure3 = XEN_UNDEFINED;
+  sf->protect1 = NOT_A_GC_LOC;
+  sf->protect2 = NOT_A_GC_LOC;
+  sf->protect3 = NOT_A_GC_LOC;
+  sf->region = INVALID_REGION;
+  sf->type = MIX_READER;
+  sf->initial_samp = 0;
+  sf->cp = cp;
+  sf->fscaler = MUS_FIX_TO_FLOAT;
+  sf->direction = direction;
+  sf->current_state = NULL;
+  sf->edit_ctr = 0;
+  sf->dangling_loc = -1;
+  first_snd = cp->sounds[index];
+  sf->frag_pos = 0;
+  ind0 = 0;
+  indx = 0;
+  ind1 = len;
+  sf->fscaler = MUS_FIX_TO_FLOAT;
+  if (first_snd->type == SND_DATA_FILE)
+    {
+      first_snd->inuse = true;
+      sf->current_sound = first_snd;
+      sf->data = first_snd->buffered_data;
+      if (direction == READ_FORWARD)
+	file_buffers_forward(ind0, ind1, indx, sf, first_snd);
+      else file_buffers_back(ind0, ind1, indx, sf, first_snd);
+    }
+  else 
+    {
+      sf->current_sound = NULL;
+      sf->data = first_snd->buffered_data;
+      sf->first = ind0;
+      sf->last = ind1;
+      sf->loc = indx;
+    }
+  return(sf);
+}
+#else
+static snd_fd *make_virtual_mix_reader(chan_info *cp, off_t len, int index, read_direction_t direction)
+{
+  return(NULL);
+}
+#endif
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_5(g_make_sample_reader_w, g_make_sample_reader)
 XEN_ARGIFY_4(g_make_region_sample_reader_w, g_make_region_sample_reader)
@@ -9687,7 +9896,7 @@ keep track of which files are in a given saved state batch, and a way to rename 
 
   SND_TO_SAMPLE = mus_make_class_tag();
 
-#if MUS_DEBUGGING && 0
+#if DEBUG_EDIT_TABLES
   /* consistency checks for the accessor state table */
   init_hit_entries();
   check_type_info_entry(ED_SIMPLE, 0, 0, 0, false);
@@ -9729,4 +9938,8 @@ append the rest?
       change over to an array of functions: ramp_start_number, xramp+scale, ptree(zero), etc
         the basic accessor sequence can be (*(arr[1]))(sf, ((*(arr[0]))(sf, sf->data[loc...]))) --
         means changing function type slightly, and ptree_zero case is sticky, and scalers are tricky 
+
+	src/filter could be done if I had a block reader (sample-reader but accessing buffer)
+	if src, then mix could take all dialog edits as edits to its own reader
+	 
 */

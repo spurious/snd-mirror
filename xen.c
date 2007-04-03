@@ -1132,7 +1132,7 @@ void snd_rb_raise(XEN type, XEN info); /* XEN_ERROR */
 
 static XEN xen_rb_make_hook(int argc, XEN *argv, XEN klass)
 {
-  XEN hook, name;
+  XEN hook = XEN_FALSE, name;
   if (argc > 0 && argc < 4)
     {
       hook = xen_rb_hook_initialize(argc, argv, hook_alloc(xen_rb_cHook));
