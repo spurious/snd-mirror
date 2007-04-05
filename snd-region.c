@@ -443,7 +443,7 @@ file_info *fixup_region_data(chan_info *cp, int chan, int pos)
 	  cp->edits = ncp->edits; /* ?? is this safe ?? */
 	  cp->edit_size = ncp->edit_size;
 	  cp->edit_ctr = ncp->edit_ctr;
-	  cp->samples[0] = ncp->samples[0];
+	  cp->edits[0]->samples = ncp->edits[0]->samples;
 	  cp->axis = ncp->axis;
 	  if ((r->amp_envs) && (r->amp_envs[chan]))
 	    {

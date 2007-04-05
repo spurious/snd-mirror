@@ -15,6 +15,7 @@
  *            mix-data-file + open-sound, if saved, update
  * PERHAPS: some way to tie multichannel mixes together without the track appearing in the track dialog
  *          mix-sync field?  or a button: ignore local tracks
+ * does select (click tag) mix change mix dialog choice?
  */
 
 typedef struct {
@@ -55,6 +56,7 @@ typedef struct {
   env **dialog_envs;           /* mix dialog version of current amp envs */
   bool save_needed;            /* for mix drag display */
   char *name;
+  int index;
 } mix_info;
 
 typedef enum {C_STRAIGHT_SOUND, C_AMP_SOUND, C_SPEED_SOUND, C_ZERO_SOUND, C_AMP_ENV_SOUND, C_SPEED_AMP_SOUND, C_SPEED_ENV_SOUND,
@@ -1148,8 +1150,9 @@ static mix_info *add_mix(chan_info *cp, int chan, off_t beg, off_t num, const ch
   return(md);
 }
 
-#if MUS_DEBUGGING && HAVE_GUILE
-void _mix_(chan_info *cp, const char *filename, off_t beg);
+#if WITH_VIRTUAL_MIX
+bool any_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos);
+int _mix_(chan_info *cp, const char *filename, off_t beg);
 #endif
 
 static mix_info *file_mix_samples(off_t beg, off_t num, const char *mixfile, chan_info *cp, int chan, 
@@ -1164,7 +1167,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, const char *mixfile, cha
   char *ofile, *new_origin = NULL;
   mus_sample_t **data;
   mus_sample_t *chandata;
-  int in_chans, err = 0;
+  int in_chans, err = 0, index = -1;
   mix_info *md = NULL;
   off_t i, j, len, size;
   file_info *ihdr, *ohdr;
@@ -1176,11 +1179,12 @@ static mix_info *file_mix_samples(off_t beg, off_t num, const char *mixfile, cha
       (!(extend_with_zeros(cp, len, beg - len + 1, cp->edit_ctr))))
     return(NULL);
   if (beg < 0) beg = 0;
-#if WITH_VIRTUAL_MIX
-  if (with_tag)
+#if WITH_VIRTUAL_MIX && 0
+  if ((with_tag) && 
+      (!(any_fragments_in_use(cp, beg, beg + num, cp->edit_ctr))))
     {
       in_chans = mus_sound_chans(mixfile);
-      _mix_(cp, mixfile, beg);
+      index = _mix_(cp, mixfile, beg); /* returns cp->sounds index for later change position or scale */
     }
   else
     {
@@ -1275,13 +1279,14 @@ static mix_info *file_mix_samples(off_t beg, off_t num, const char *mixfile, cha
   else new_origin = copy_string(origin);
   file_mix_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, new_origin, cp->edit_ctr, with_tag); /* editable checked already */
   if (ofile) FREE(ofile);
-#if WITH_VIRTUAL_MIX
+#if WITH_VIRTUAL_MIX && 0
     }
 #endif
 
   if (with_tag)
     {
       md = add_mix(cp, chan, beg, num, mixfile, in_chans, auto_delete);
+      md->index = index;
       if (track_id > 0) 
 	{
 	  int edpos;
@@ -5218,7 +5223,6 @@ void g_init_mix(void)
 /* ---------------- TRACKS ---------------- */
 
 static void record_track_info_given_track(int track_id);
-static void record_track_info(chan_info *cp, int loc);
 
 typedef struct {
   Float amp, speed, tempo;
@@ -6436,29 +6440,18 @@ static void set_track_tempo(int id, Float tempo)
 
 /* -------- chan-relative view of track lists -------- */
 
-track_info *free_track_info(chan_info *cp, int loc)
+track_info *free_track_info(ed_list *ed)
 {
-  if (cp->tracks[loc])
+  if (ed->tracks)
     {
       track_info *ti;
-      ti = cp->tracks[loc];
+      ti = ed->tracks;
       if (ti->ids) FREE(ti->ids);
       if (ti->locs) FREE(ti->locs);
       FREE(ti);
+      ed->tracks = NULL;
     }
   return(NULL);
-}
-
-void free_track_info_list(chan_info *cp)
-{
-  if (cp->tracks)
-    {
-      int i;
-      for (i = 0; i < cp->edit_size; i++)
-	free_track_info(cp, i);
-      FREE(cp->tracks);
-      cp->tracks = NULL;
-    }
 }
 
 static int gather_track_info(mix_info *md, void *ptr)
@@ -6509,18 +6502,20 @@ static void record_track_info_given_track(int track_id)
   int i;
   trk = track_mixes(track_id);
   for (i = 0; i < trk->cps_ctr; i++)
-    record_track_info(trk->cps[i], trk->cps[i]->edit_ctr);
+    record_track_info(trk->cps[i]);
   free_track_mix_list(trk);
 }
 
-static void record_track_info(chan_info *cp, int loc)
+void record_track_info(chan_info *cp)
 {
+  ed_list *ed;
+  ed = cp->edits[cp->edit_ctr];
   if (track_ctr == 0)
-    cp->tracks[loc] = NULL;
+    ed->tracks = NULL;
   else
     {
       track_info *ti;
-      if (cp->tracks[loc]) free_track_info(cp, loc);
+      if (ed->tracks) free_track_info(ed);
       ti = (track_info *)CALLOC(1, sizeof(track_info));
       ti->size = 0;
       map_over_channel_mixes_with_void(cp, gather_track_info, (void *)ti);
@@ -6529,44 +6524,42 @@ static void record_track_info(chan_info *cp, int loc)
 	  FREE(ti);
 	  ti = NULL;
 	}
-      cp->tracks[loc] = ti;
+      ed->tracks = ti;
     }
 }
 
-void record_initial_track_info(chan_info *cp)
-{
-  record_track_info(cp, cp->edit_ctr);
-}
 
 
 /*---------------- snd-edit chan track update ---------------- */
 
 void update_track_lists(chan_info *cp, int top_ctr)
 {
-  if (cp->tracks)
+  ed_list *ed;
+  track_info *ti = NULL;
+  ed = cp->edits[cp->edit_ctr];
+  ti = ed->tracks;
+  if (!ti)
     {
-      track_info *ti;
-      ti = cp->tracks[cp->edit_ctr];
-      if ((!ti) && (cp->edit_ctr < top_ctr))
+      if (cp->edit_ctr < top_ctr)
 	{
 	  /* revert-sound can undo past the last track info record */
 	  int ctr;
 	  ctr = cp->edit_ctr;
 	  while ((!ti) && (ctr < top_ctr))
-	    ti = cp->tracks[ctr++];	    
+	    ti = cp->edits[ctr++]->tracks;	    
 	}
-      if (ti)
-	{
-	  /* use ids to reset locs */
-	  int i;
-	  for (i = 0; i < ti->size; i++)
-	    if (track_p(ti->ids[i]))
-	      {
-		track_list *tl;
-		tl = tracks[ti->ids[i]];
-		tl->loc = (int)(ti->locs[i]);
-	      }
-	}
+    }
+  if (ti)
+    {
+      /* use ids to reset locs */
+      int i;
+      for (i = 0; i < ti->size; i++)
+	if (track_p(ti->ids[i]))
+	  {
+	    track_list *tl;
+	    tl = tracks[ti->ids[i]];
+	    tl->loc = (int)(ti->locs[i]);
+	  }
     }
 }
 

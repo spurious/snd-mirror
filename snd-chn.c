@@ -573,12 +573,9 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
   cp->edit_ctr = 0;
   allocate_ed_list(cp);
   cp->amp_envs = (env_info **)CALLOC(cp->edit_size, sizeof(env_info *));
-  cp->samples = (off_t *)CALLOC(cp->edit_size, sizeof(off_t));
-  cp->cursors = (off_t *)CALLOC(cp->edit_size, sizeof(off_t));
   cp->sound_size = INITIAL_EDIT_SIZE;
   cp->sound_ctr = 0;
   cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
-  cp->samples[0] = frames;
 
   if ((cp->hookable == WITH_HOOK) && 
       (graphed == WITH_GRAPH) &&    
@@ -3560,7 +3557,9 @@ void handle_cursor(chan_info *cp, kbd_cursor_t redisplay)
   {
     /* not sure about this */
     int i;
-    for (i = 0; i < cp->edit_size; i++) cp->cursors[i] = CURSOR(cp);
+    for (i = 0; i < cp->edit_size; i++) 
+      if (cp->edits[i]) 
+	cp->edits[i]->cursor = CURSOR(cp);
   }
   update_possible_selection_in_progress(CURSOR(cp));
 }
@@ -4593,7 +4592,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_GRAPH_TRANSFORM_P:       return(C_TO_XEN_BOOLEAN(cp->graph_transform_p));                  break;
 	    case CP_GRAPH_TIME_P:            return(C_TO_XEN_BOOLEAN(cp->graph_time_p));                       break;
 	    case CP_CURSOR:                  return(C_TO_XEN_OFF_T(CURSOR(cp)));                               break;
-	    case CP_EDPOS_CURSOR:            return(C_TO_XEN_OFF_T(cp->cursors[to_c_edit_position(cp, cp_edpos, S_cursor, 3)])); break;
+	    case CP_EDPOS_CURSOR:            return(C_TO_XEN_OFF_T(cp->edits[to_c_edit_position(cp, cp_edpos, S_cursor, 3)]->cursor)); break;
 	    case CP_FRAMES:                  return(C_TO_XEN_OFF_T(CURRENT_SAMPLES(cp)));                      break;
 	    case CP_GRAPH_LISP_P:            return(C_TO_XEN_BOOLEAN(cp->graph_lisp_p));                       break;
 	    case CP_AP_LOSAMP:               if (cp->axis) return(C_TO_XEN_OFF_T(cp->axis->losamp));         break;
@@ -4865,7 +4864,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
 	    cp->cursor_on = true; 
 	    cursor_moveto(cp, cpos);
 	  }
-	else cp->cursors[pos] = cpos;
+	else cp->edits[pos]->cursor = cpos;
 	return(C_TO_XEN_OFF_T(cpos));
       }
       break;
@@ -7216,7 +7215,7 @@ given channel.  Currently, this must be a channel (sound) created by " S_make_va
   cp = get_cp(snd, chn, S_channel_data);
   if ((cp) && (cp->sound) && (cp->sound->inuse == SOUND_WRAPPER))
 #if SNDLIB_USE_FLOATS
-    return(wrap_sound_data(1, cp->samples[0], &(cp->sounds[0]->buffered_data)));
+    return(wrap_sound_data(1, cp->edits[0]->samples, &(cp->sounds[0]->buffered_data)));
 #else
   {
     /* actually this can't work.  We expect that anything we write to the channel data (sound-data) object
@@ -7226,7 +7225,7 @@ given channel.  Currently, this must be a channel (sound) created by " S_make_va
     XEN result;
     sound_data *sd;
     int i, loc;
-    result = make_sound_data(1, cp->samples[0]); /* need actual gc-able object here */
+    result = make_sound_data(1, cp->edits[0]->samples); /* need actual gc-able object here */
     loc = snd_protect(result);
     sd = (sound_data *)XEN_OBJECT_REF(result);
     for (i = 0; i < sd->length; i++)

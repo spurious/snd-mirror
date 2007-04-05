@@ -83,7 +83,7 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 
 off_t to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int arg_pos)
 {
-  return(cp->samples[to_c_edit_position(cp, edpos, caller, arg_pos)]);
+  return(cp->edits[to_c_edit_position(cp, edpos, caller, arg_pos)]->samples);
 }
 
 off_t beg_to_sample(XEN beg, const char *caller)
@@ -100,7 +100,7 @@ off_t beg_to_sample(XEN beg, const char *caller)
 off_t dur_to_samples(XEN dur, off_t beg, chan_info *cp, int edpos, int argn, const char *caller)
 {
   off_t samps;
-  samps = XEN_TO_C_OFF_T_OR_ELSE(dur, cp->samples[edpos] - beg);
+  samps = XEN_TO_C_OFF_T_OR_ELSE(dur, cp->edits[edpos]->samples - beg);
   if (samps < 0)
     XEN_WRONG_TYPE_ARG_ERROR(caller, argn, dur, "a positive integer");
   return(samps);
@@ -109,7 +109,7 @@ off_t dur_to_samples(XEN dur, off_t beg, chan_info *cp, int edpos, int argn, con
 static off_t end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller)
 {
   off_t last;
-  last = XEN_TO_C_OFF_T_OR_ELSE(end, cp->samples[edpos] - 1);
+  last = XEN_TO_C_OFF_T_OR_ELSE(end, cp->edits[edpos]->samples - 1);
   if (last < 0) 
     XEN_ERROR(NO_SUCH_SAMPLE,
 	      XEN_LIST_2(C_TO_XEN_STRING(caller),
@@ -140,7 +140,7 @@ static sync_state *get_sync_state_1(snd_info *sp, chan_info *cp, off_t beg, bool
 	  pos = to_c_edit_position(ncp, edpos, caller, arg_pos);
 	  if (forwards == READ_FORWARD)
 	    sfs[i] = init_sample_read_any(beg, ncp, READ_FORWARD, pos);
-	  else sfs[i] = init_sample_read_any(ncp->samples[pos] - 1, ncp, READ_BACKWARD, pos);
+	  else sfs[i] = init_sample_read_any(ncp->edits[pos]->samples - 1, ncp, READ_BACKWARD, pos);
 	}
     }
   else
@@ -178,7 +178,7 @@ static sync_state *get_sync_state_1(snd_info *sp, chan_info *cp, off_t beg, bool
       pos = to_c_edit_position(cp, edpos, caller, arg_pos);
       if (forwards == READ_FORWARD)
 	sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
-      else sf = init_sample_read_any(cp->samples[pos] - 1, cp, READ_BACKWARD, pos);
+      else sf = init_sample_read_any(cp->edits[pos]->samples - 1, cp, READ_BACKWARD, pos);
       if (sf)
 	{
 	  si = make_simple_sync(cp, beg);
@@ -491,7 +491,7 @@ static Float channel_maxamp_and_position(chan_info *cp, int edpos, off_t *maxpos
   if (maxpos) (*maxpos) = ed_maxamp_position(cp, pos);
   if ((val >= 0.0) && ((!maxpos) || ((*maxpos) >= 0)))
     return(val);
-  val = channel_local_maxamp(cp, 0, cp->samples[pos], pos, maxpos);
+  val = channel_local_maxamp(cp, 0, cp->edits[pos]->samples, pos, maxpos);
   set_ed_maxamp(cp, pos, val);
   if (maxpos) set_ed_maxamp_position(cp, pos, (*maxpos));
   return(val);
@@ -936,12 +936,12 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
       /* envelope case -- have to go by sr->sample, not output sample counter, also check marks */
       cur_mark_sample = -1;
       env_val = mus_env(egen);
-      if ((cp->marks) && 
-	  (cp->mark_ctr[cp->edit_ctr] >= 0))
+      if ((cp->edits[cp->edit_ctr]->marks) && 
+	  (cp->edits[cp->edit_ctr]->mark_ctr >= 0))
 	{
 	  mark **mps;
-	  mps = cp->marks[cp->edit_ctr];
-	  cur_marks = cp->mark_ctr[cp->edit_ctr] + 1;
+	  mps = cp->edits[cp->edit_ctr]->marks;
+	  cur_marks = cp->edits[cp->edit_ctr]->mark_ctr + 1;
 	  new_marks = (off_t *)MALLOC(cur_marks * sizeof(off_t));
 	  old_marks = (off_t *)MALLOC(cur_marks * sizeof(off_t));
 	  for (m = 0; m < cur_marks; m++)
@@ -1082,7 +1082,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
       else file_override_samples(k, ofile, cp, 0, DELETE_ME, LOCK_MIXES, new_origin);
       if (new_origin) FREE(new_origin);
       /* not file_change_samples because that would not necessarily change the current file length */
-      if (cp->marks)
+      if (cp->edits[cp->edit_ctr]->marks)
 	{
 	  if (egen == NULL)
 	    src_marks(cp, ratio, dur, k, beg, full_chan);
@@ -2273,7 +2273,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
    */
   sp = cp->sound;
   edpos = to_c_edit_position(cp, edp, caller, arg_pos);
-  if (dur > cp->samples[edpos]) dur = cp->samples[edpos];
+  if (dur > cp->edits[edpos]->samples) dur = cp->edits[edpos]->samples;
   if (dur > MAX_BUFFER_SIZE)
     {
       temp_file = true; 
@@ -2292,7 +2292,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
       datumb = mus_bytes_per_sample(hdr->format);
     }
   else temp_file = false;
-  if ((beg == 0) && (dur == cp->samples[edpos]))
+  if ((beg == 0) && (dur == cp->edits[edpos]->samples))
     ep = amp_env_copy(cp, true, edpos); /* true -> reversed */
   else 
     {
@@ -2323,11 +2323,11 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
   data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
   idata = data[0];
 #if HAVE_FORTH
-  if (dur == cp->samples[edpos])
+  if (dur == cp->edits[edpos]->samples)
     origin = mus_format(OFF_TD PROC_SEP PROC_FALSE " %s", beg, S_reverse_channel);
   else origin = mus_format(OFF_TD PROC_SEP OFF_TD " %s", beg, dur, S_reverse_channel);
 #else
-  if (dur == cp->samples[edpos])
+  if (dur == cp->edits[edpos]->samples)
     origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP PROC_FALSE, TO_PROC_NAME(S_reverse_channel), beg);
   else origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD, TO_PROC_NAME(S_reverse_channel), beg, dur);
 #endif
@@ -2788,7 +2788,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 		  file_change_samples(si->begs[i], dur, ofile, si->cps[i], i, 
 				      (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
 				      LOCK_MIXES, new_origin, si->cps[i]->edit_ctr);
-		  if ((si->begs[i] == 0) && (dur == si->cps[i]->samples[pos]))
+		  if ((si->begs[i] == 0) && (dur == si->cps[i]->edits[pos]->samples))
 		    amp_env_env(si->cps[i], mus_data(egen), len, pos, base, scaler, offset);
 		  else 
 		    {
@@ -2891,7 +2891,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	      if (segbeg >= segend) break;
 	      segnum = passes[k + 1] - passes[k];
 	    }
-	  if ((si->begs[i] == 0) && (dur == si->cps[i]->samples[env_pos]))
+	  if ((si->begs[i] == 0) && (dur == si->cps[i]->edits[env_pos]->samples))
 	    amp_env_env(si->cps[i], mus_data(egen), len, env_pos, base, scaler, offset);
 	  else 
 	    {
@@ -3058,9 +3058,9 @@ static void smooth_channel(chan_info *cp, off_t beg, off_t dur, int edpos)
   Float y0, y1, angle, incr, off, scale;
   if ((beg < 0) || (dur <= 0)) return;
   if (!(editable_p(cp))) return;
-  if ((beg + dur) > cp->samples[edpos]) 
+  if ((beg + dur) > cp->edits[edpos]->samples) 
     {
-      dur = cp->samples[edpos] - beg;
+      dur = cp->edits[edpos]->samples - beg;
       if (dur <= 0) return;
     }
   y0 = chn_sample(beg, cp, edpos);
@@ -3417,7 +3417,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
     {
       if (dur != 0) 
 	end = beg + dur - 1;
-      else end = cp->samples[pos] - 1;
+      else end = cp->edits[pos]->samples - 1;
     }
   num = end - beg + 1;
   if (num > 0)
@@ -3439,9 +3439,9 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	}
 
       /* added 27-Oct-06 -- can't see why map-channel should be that different from insert-samples et al */
-      if (beg > cp->samples[pos])
+      if (beg > cp->edits[pos]->samples)
 	{
-	  if (!(extend_with_zeros(cp, cp->samples[pos], beg - cp->samples[pos] + 1, pos))) return(XEN_FALSE);
+	  if (!(extend_with_zeros(cp, cp->edits[pos]->samples, beg - cp->edits[pos]->samples + 1, pos))) return(XEN_FALSE);
 	  pos = cp->edit_ctr;
 	}
 
@@ -3819,9 +3819,9 @@ the current sample, the vct returned by 'init-func', and the current read direct
   beg = beg_to_sample(s_beg, S_ptree_channel);
   dur = dur_to_samples(s_dur, beg, cp, pos, 3, S_ptree_channel);
   if (dur <= 0) return(XEN_FALSE);
-  if ((beg + dur) > cp->samples[pos])
+  if ((beg + dur) > cp->edits[pos]->samples)
     {
-      if (!(extend_with_zeros(cp, cp->samples[pos], beg + dur - cp->samples[pos], pos))) return(XEN_FALSE);
+      if (!(extend_with_zeros(cp, cp->edits[pos]->samples, beg + dur - cp->edits[pos]->samples, pos))) return(XEN_FALSE);
       pos = cp->edit_ctr;
     }
 
@@ -4003,7 +4003,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, caller, arg_pos);
   beg = beg_to_sample(s_beg, caller);
-  if (beg > cp->samples[pos]) return(XEN_FALSE);
+  if (beg > cp->edits[pos]->samples) return(XEN_FALSE);
   if (XEN_FALSE_P(s_dur))
     end = end_to_sample(s_end, cp, pos, caller);
   else dur = dur_to_samples(s_dur, beg, cp, pos, 3, caller);
@@ -4019,7 +4019,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
     {
       if (dur != 0)
 	end = beg + dur - 1;
-      else end = cp->samples[pos] - 1;
+      else end = cp->edits[pos]->samples - 1;
     }
   num = end - beg + 1;
   if (num <= 0) return(XEN_FALSE);
@@ -4266,7 +4266,7 @@ smooth data from beg for dur in snd's channel chn"
   pos = to_c_edit_position(cp, edpos, S_smooth_channel, 5);
   start = beg_to_sample(beg, S_smooth_channel);
   num = dur_to_samples(dur, start, cp, pos, 2, S_smooth_channel);
-  if ((start < cp->samples[pos]) &&
+  if ((start < cp->edits[pos]->samples) &&
       (num > 0))
     smooth_channel(cp, start, num, pos);
   return(beg);
@@ -4323,10 +4323,10 @@ static XEN g_reverse_channel(XEN s_beg, XEN s_dur, XEN snd_n, XEN chn_n, XEN edp
   beg = beg_to_sample(s_beg, S_reverse_channel);
   pos = to_c_edit_position(cp, edpos, S_reverse_channel, 5);
   dur = dur_to_samples(s_dur, beg, cp, pos, 2, S_reverse_channel);
-  if ((beg > cp->samples[pos]) || (dur == 0)) return(XEN_FALSE);
+  if ((beg > cp->edits[pos]->samples) || (dur == 0)) return(XEN_FALSE);
   end = beg + dur;
-  if (end > cp->samples[pos])
-    end = cp->samples[pos];
+  if (end > cp->edits[pos]->samples)
+    end = cp->edits[pos]->samples;
   sf = init_sample_read_any(end - 1, cp, READ_BACKWARD, pos);
   errmsg = reverse_channel(cp, sf, beg, end - beg, edpos, S_reverse_channel, 5);
   free_snd_fd(sf);
@@ -4375,7 +4375,7 @@ static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
   if (!cp) return(XEN_FALSE);
   bg = beg_to_sample(beg, S_pad_channel);
   pos = to_c_edit_position(cp, edpos, S_pad_channel, 5);
-  len = XEN_TO_C_OFF_T_OR_ELSE(num, cp->samples[pos] - bg);
+  len = XEN_TO_C_OFF_T_OR_ELSE(num, cp->edits[pos]->samples - bg);
   if (extend_with_zeros(cp, bg,	len, pos))
     update_graph(cp);
   return(beg);
@@ -4711,7 +4711,7 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
   pos = to_c_edit_position(cp, edpos, S_env_channel, 6);
   dur = dur_to_samples(samps, beg, cp, pos, 3, S_env_channel);
   if (dur == 0) return(XEN_FALSE);
-  if (beg > cp->samples[pos]) return(XEN_FALSE); /* not redundant */
+  if (beg > cp->edits[pos]->samples) return(XEN_FALSE); /* not redundant */
   sp = cp->sound;
   old_sync = sp->sync;
   sp->sync = 0;
@@ -4739,7 +4739,7 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
   pos = to_c_edit_position(cp, edpos, S_env_channel, 6);
   dur = dur_to_samples(samps, beg, cp, pos, 3, S_env_channel);
   if (dur == 0) return(XEN_FALSE);
-  if (beg > cp->samples[pos]) return(XEN_FALSE); /* not redundant */
+  if (beg > cp->edits[pos]->samples) return(XEN_FALSE); /* not redundant */
   sp = cp->sound;
   old_sync = sp->sync;
   sp->sync = 0;
@@ -4792,7 +4792,7 @@ scale samples in the given sound/channel between beg and beg + num by a ramp goi
 	  data[2] = 1.0;
 	  data[3] = XEN_TO_C_DOUBLE(rmp1);
 	  if ((samp == 0) && 
-	      (samps >= cp->samples[pos]))
+	      (samps >= cp->edits[pos]->samples))
 	    amp_env_env(cp, data, 2, pos, 1.0, 1.0, 0.0);
 	  else 
 	    {
@@ -4876,7 +4876,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
 		  if (cp->amp_envs[pos])
 		    {
 		      if ((samp == 0) && 
-			  (samps >= cp->samples[pos]))
+			  (samps >= cp->edits[pos]->samples))
 			amp_env_env(cp, data, 2, pos, ebase, mus_env_scaler(e), mus_env_offset(e));
 		      else 
 			{
@@ -5187,7 +5187,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
   pos = to_c_edit_position(cp, edpos, S_src_channel, 6);
   dur = dur_to_samples(dur_n, beg, cp, pos, 3, S_src_channel);
   if (dur == 0) return(XEN_FALSE);
-  if (beg > cp->samples[pos]) return(XEN_FALSE);
+  if (beg > cp->edits[pos]->samples) return(XEN_FALSE);
   if (XEN_NUMBER_P(ratio_or_env))
     {
       ratio = XEN_TO_C_DOUBLE(ratio_or_env);

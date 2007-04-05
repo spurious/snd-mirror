@@ -152,9 +152,21 @@ typedef struct {
 } snd_data;
 
 typedef struct {
+  off_t samp;
+  char *name;
+  int id, sync;
+  bool visible;
+} mark;
+
+typedef struct {
+  int size;
+  int *ids, *locs;
+} track_info;
+
+typedef struct {
   int size, allocated_size;
   void *fragments; /* only accessed in snd-edits.c */
-  off_t beg, len;
+  off_t beg, len;  /* beg and len of changed portion */
   char *origin;
   int edit_type, sound_location, ptree_location;
   off_t selection_beg, selection_end;  /* selection needs to follow edit list */
@@ -162,6 +174,10 @@ typedef struct {
   off_t maxamp_position, selection_maxamp_position;
   int edpos;
   bool ptree_env_too, backed_up;
+  off_t samples, cursor;
+  int mark_size, mark_ctr;
+  mark **marks;
+  track_info *tracks;
 } ed_list;
 
 typedef struct snd_fd {
@@ -221,13 +237,6 @@ typedef struct {
 } axis_info;
 
 typedef struct {
-  off_t samp;
-  char *name;
-  int id, sync;
-  bool visible;
-} mark;
-
-typedef struct {
   Float *data;
   int pts, data_size; /* data_size is independent of actual number of points of data (can be much larger) */
   Float base;
@@ -278,21 +287,14 @@ typedef struct {
   Float scale;
 } sono_info;
 
-typedef struct {
-  int size;
-  int *ids, *locs;
-} track_info;
-
 typedef struct chan_info {
   int chan;                /* which chan are we */
-  off_t *samples;          /* current length */
   bool graph_transform_p;  /* f button state */
   bool graph_time_p;       /* w button state */
   bool graph_lisp_p;       /* is lisp graph active */
   struct lisp_grf *lisp_info; /* defined in snd-chn.c */
   bool cursor_on;          /* channel's cursor */
   bool cursor_visible, fft_cursor_visible;     /* for XOR decisions */
-  off_t *cursors;          /* sample number (follows edit history) */
   int cursor_size;
   cursor_style_t cursor_style, tracking_cursor_style;
   int cx, cy, fft_cx;      /* graph-relative cursor loc (for XOR) */
@@ -311,10 +313,6 @@ typedef struct chan_info {
   fft_info *fft;           /* possibly null fft data */
   struct snd_info *sound;  /* containing sound */
   axis_info *axis;         /* time domain axis */
-  mark ***marks;           /* current marks, indexed by edit_ctr, then mark_number, then the mark pointer */
-  int marks_size;
-  int *mark_size;
-  int *mark_ctr;
   chan_context *cgx;       /* graphics/window context */
   chan_context *tcgx;      /* when combining chans, all should use chan[0]'s context */
   env_info **amp_envs;
@@ -361,14 +359,13 @@ typedef struct chan_info {
   Float *amp_control; /* local amp controls in snd-dac; should it be extended to other controls? */
   search_result_t last_search_result;
   bool just_zero, new_peaks, editable, tracking;
-  track_info **tracks;
 #if HAVE_GL
   int gl_fft_list;
 #endif
 } chan_info;
 
-#define CURRENT_SAMPLES(Cp) (Cp)->samples[(Cp)->edit_ctr]
-#define CURSOR(Cp) (Cp)->cursors[(Cp)->edit_ctr]
+#define CURRENT_SAMPLES(Cp) (Cp)->edits[(Cp)->edit_ctr]->samples
+#define CURSOR(Cp) (Cp)->edits[(Cp)->edit_ctr]->cursor
 
 typedef struct {
   void (*watcher)(struct snd_info *sp, sp_watcher_reason_t reason, int list_loc);
@@ -810,14 +807,12 @@ void finish_moving_play_mark(chan_info *cp);
 void finish_moving_mark(chan_info *cp, mark *m);
 mark *add_mark(off_t samp, const char *name, chan_info *cp);
 bool delete_mark_samp(off_t samp, chan_info *cp);
-void free_mark_list(chan_info *cp, int ignore);
-void collapse_marks(snd_info *sp);
+void free_mark_list(ed_list *ed);
 bool goto_mark(chan_info *cp, int count);
 void goto_named_mark(chan_info *cp, const char *name);
 mark *active_mark(chan_info *cp);
 off_t mark_beg(chan_info *cp);
 void display_channel_marks(chan_info *cp);
-void release_pending_marks(chan_info *cp, int edit_ctr);
 void ripple_marks(chan_info *cp, off_t beg, off_t change);
 bool mark_define_region(chan_info *cp, int count);
 void save_mark_list(FILE *fd, chan_info *cp, bool all_chans);
@@ -829,7 +824,6 @@ void swap_marks(chan_info *cp0, chan_info *cp1);
 void g_init_marks(void);
 void *sound_store_marks(snd_info *sp);
 void sound_restore_marks(snd_info *sp, void *marks);
-void backup_mark_list(chan_info *cp, int cur);
 off_t mark_id_to_sample(int id);
 
 
@@ -1596,9 +1590,8 @@ int previous_mix_id(int id);
 void reflect_edit_in_mix_dialog_envs(int n);
 void g_init_track(void);
 bool track_p(int trk);
-void free_track_info_list(chan_info *cp);
-track_info *free_track_info(chan_info *cp, int loc);
-void record_initial_track_info(chan_info *cp);
+track_info *free_track_info(ed_list *ed);
+void record_track_info(chan_info *cp);
 off_t track_position(int id, int chan);
 off_t track_frames(int id, int chan);
 int track_chans(int id);

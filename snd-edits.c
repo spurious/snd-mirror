@@ -160,9 +160,7 @@ static void prune_edits(chan_info *cp, int edpt)
 	{
 	  cp->edits[i] = free_ed_list(cp->edits[i], cp);
 	  cp->amp_envs[i] = free_amp_env(cp, i);
-	  cp->tracks[i] = free_track_info(cp, i);
 	}
-      release_pending_marks(cp, edpt);
       release_pending_mixes(cp, edpt);
       release_pending_sounds(cp, edpt);
       release_dangling_readers(cp, edpt);
@@ -224,28 +222,15 @@ static bool prepare_edit_list(chan_info *cp, off_t len, int pos, const char *cal
       cp->edit_size += EDIT_ALLOC_SIZE;
       if (!cp->edits) cp->edits = (ed_list **)CALLOC(cp->edit_size, sizeof(ed_list *));
       else cp->edits = (ed_list **)REALLOC(cp->edits, cp->edit_size * sizeof(ed_list *));
-      if (!cp->samples) cp->samples = (off_t *)CALLOC(cp->edit_size, sizeof(off_t));
-      else cp->samples = (off_t *)REALLOC(cp->samples, cp->edit_size * sizeof(off_t));
-      if (!cp->cursors) cp->cursors = (off_t *)CALLOC(cp->edit_size, sizeof(off_t));
-      else cp->cursors = (off_t *)REALLOC(cp->cursors, cp->edit_size * sizeof(off_t));
       if (!(cp->amp_envs)) cp->amp_envs = (env_info **)CALLOC(cp->edit_size, sizeof(env_info *));
       else cp->amp_envs = (env_info **)REALLOC(cp->amp_envs, cp->edit_size * sizeof(env_info *));
-      if (!(cp->tracks)) cp->tracks = (track_info **)CALLOC(cp->edit_size, sizeof(track_info *));
-      else cp->tracks = (track_info **)REALLOC(cp->tracks, cp->edit_size * sizeof(track_info *));
       for (i = cp->edit_ctr; i < cp->edit_size; i++) 
 	{
 	  cp->edits[i] = NULL; 
 	  cp->amp_envs[i] = NULL; 
-	  cp->tracks[i] = NULL; 
-	  cp->samples[i] = 0;
-	  cp->cursors[i] = 0;
 	}
     }
   prune_edits(cp, cp->edit_ctr);
-  CURRENT_SAMPLES(cp) = len;
-  if (cp->edit_ctr > 0)
-    CURSOR(cp) = cp->cursors[cp->edit_ctr - 1];
-  record_initial_track_info(cp);
   return(true);
 }
 
@@ -388,6 +373,7 @@ typedef struct ed_ptrees {
 typedef struct ed_mixes {
   int mix_loc;
   off_t len;
+  Float scl;
 } ed_mixes;
 
 typedef struct mix_data {
@@ -446,6 +432,7 @@ typedef struct ed_fragment {
 #define FRAGMENT_LENGTH(Ed, Pos)           (FRAGMENT_LOCAL_END(Ed, Pos) - FRAGMENT_LOCAL_POSITION(Ed, Pos) + 1)
 #define FRAGMENT_MIX_INDEX(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->mix_loc
 #define FRAGMENT_MIX_LENGTH(Ed, Pos)       ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->len
+#define FRAGMENT_MIX_SCALER(Ed, Pos)       ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->scl
 
 #define READER_GLOBAL_POSITION(Sf)  ((ed_fragment *)((Sf)->cb))->out
 #define READER_LOCAL_POSITION(Sf)   ((ed_fragment *)((Sf)->cb))->beg
@@ -479,6 +466,7 @@ typedef struct ed_fragment {
 #define READER_PTREE3_POSITION(Sf)  ((ed_fragment *)((Sf)->cb))->ptrees->ptree_pos3
 #define READER_MIX_INDEX(Sf)        ((ed_fragment *)((Sf)->cb))->mixes->mix_loc
 #define READER_MIX_LENGTH(Sf)       ((ed_fragment *)((Sf)->cb))->mixes->len
+#define READER_MIX_SCALER(Sf)       ((ed_fragment *)((Sf)->cb))->mixes->scl
 
 #define ED_GLOBAL_POSITION(Ed)  (Ed)->out
 #define ED_LOCAL_POSITION(Ed)   (Ed)->beg
@@ -506,6 +494,7 @@ typedef struct ed_fragment {
 #define ED_MIXES(Ed)            (Ed)->mixes
 #define ED_MIX_INDEX(Ed)        (Ed)->mixes->mix_loc
 #define ED_MIX_LENGTH(Ed)       (Ed)->mixes->len
+#define ED_MIX_SCALER(Ed)       (Ed)->mixes->scl
 
 
 /* -------------------------------- fragment accessors --------------------------------
@@ -820,8 +809,8 @@ static Float next_mix(snd_fd *sf)
   /* current underlying sample is sf->data[sf->loc++]
    * sf->mix_info points to the mix reader
    */
-  return(next_sample_value(sf) + 
-	 next_sample_value(((mix_data *)(sf->mix_info))->sf));
+  return(next_sample_value(sf) +  /* read_sample here would call runf => next_mix => infinite recursion */
+	 read_sample(((mix_data *)(sf->mix_info))->sf));
 }
 
 static Float previous_mix(snd_fd *sf)
@@ -829,7 +818,7 @@ static Float previous_mix(snd_fd *sf)
   if (sf->loc < sf->first) return(previous_sound(sf));
 
   return(previous_sample_value(sf) + 
-	 previous_sample_value(((mix_data *)(sf->mix_info))->sf));
+	 read_sample(((mix_data *)(sf->mix_info))->sf));
 }
 
 static Float next_ramp(snd_fd *sf)
@@ -2552,7 +2541,7 @@ typedef struct {
 
 static fragment_type_info type_info[NUM_OPS] = {
   {ED_SIMPLE, ED_RAMP, ED_XRAMP, ED_PTREE, 0, 0, 0, false, 
-   "ed_simple", NULL, NULL, NULL, NULL},
+   "ed_simple", next_sample_value, previous_sample_value, NULL, NULL},
   {ED_ZERO, ED_ZERO, ED_ZERO, ED_PTREE_ZERO, 0, 0, 0, true, 
    "ed_zero", next_zero, previous_zero, NULL, NULL},
   {ED_MIX, -1, -1, -1, 0, 0, 0, false, 
@@ -3546,7 +3535,8 @@ static void setup_ramp4(snd_fd *sf, double rmp0, double rmp1)
   sf->curval4 = rmp0 + sf->incr4 * sf->frag_pos;
 }
 
-static snd_fd *make_virtual_mix_reader(chan_info *cp, off_t len, int index, read_direction_t direction);
+static snd_fd *make_virtual_mix_reader(chan_info *cp, off_t len, int index, Float scl, read_direction_t direction);
+static mix_data *free_mix_data(mix_data *md);
 
 static void choose_accessor(snd_fd *sf)
 {
@@ -3588,12 +3578,24 @@ static void choose_accessor(snd_fd *sf)
     {
     case ED_ZERO:
       break;
+    case ED_SIMPLE:
+      if ((READER_SCALER(sf) == 1.0) &&
+	  (sf->fscaler == 1.0))
+	{
+	  sf->runf = next_sample_value_unscaled;
+	  sf->rev_runf = previous_sample_value_unscaled;
+	}
+      break;
     case ED_MIX:
       {
 	mix_data *md;
+	if (sf->mix_info)
+	  sf->mix_info = (void *)free_mix_data((mix_data *)(sf->mix_info));
+	/* PERHAPS: do this at end not start? */
+
 	md = (mix_data *)CALLOC(1, sizeof(mix_data));
 	sf->mix_info = (void *)md;
-	md->sf = make_virtual_mix_reader(sf->cp, READER_MIX_LENGTH(sf), READER_MIX_INDEX(sf), sf->direction);
+	md->sf = make_virtual_mix_reader(sf->cp, READER_MIX_LENGTH(sf), READER_MIX_INDEX(sf), READER_MIX_SCALER(sf), sf->direction);
       }
       break;
 
@@ -4030,27 +4032,6 @@ static void choose_accessor(snd_fd *sf)
       setup_ramp3(sf, READER_PTREE2_SCALER(sf) * READER_RAMP3_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP3_END(sf));
       setup_ramp4(sf, READER_SCALER(sf) * READER_RAMP4_BEG(sf), READER_SCALER(sf) * READER_RAMP4_END(sf));
       break;
-
-    case ED_SIMPLE:
-      if (READER_SCALER(sf) == 1.0)
-	{
-	  if (sf->fscaler == 1.0) 
-	    {
-	      sf->runf = next_sample_value_unscaled;
-	      sf->rev_runf = previous_sample_value_unscaled;
-	    }
-	  else 
-	    {
-	      sf->runf = next_sample_value;
-	      sf->rev_runf = previous_sample_value;
-	    }
-	}
-      else
-	{
-	  sf->runf = next_sample_value;
-	  sf->rev_runf = previous_sample_value;
-	}
-      break;
     default:
 #if MUS_DEBUGGING
       fprintf(stderr, "choose accessor: %d %s?\n", typ, (typ < NUM_OPS) ? type_info[typ].name : "unknown");
@@ -4230,7 +4211,7 @@ off_t edit_changes_end_at(chan_info *cp, int edpos)
 	  (FRAGMENT_LOCAL_END(ed, len) == FRAGMENT_LOCAL_END(old_ed, old_len)))
 	{
 	  if (FRAGMENT_LOCAL_POSITION(ed, len) != FRAGMENT_LOCAL_POSITION(old_ed, old_len))
-	    return(cp->samples[edpos - 1] - (FRAGMENT_LOCAL_END(ed, len) - FRAGMENT_LOCAL_POSITION(ed, len)));
+	    return(cp->edits[edpos - 1]->samples - (FRAGMENT_LOCAL_END(ed, len) - FRAGMENT_LOCAL_POSITION(ed, len)));
 	  len--;
 	  old_len--;
 	}
@@ -4407,7 +4388,7 @@ static io_error_t channel_to_file(chan_info *cp, const char *ofile, int edpos)
     }
   else
     {
-      err = snd_make_file(ofile, 1, sp->hdr, sf, cp->samples[edpos]);
+      err = snd_make_file(ofile, 1, sp->hdr, sf, cp->edits[edpos]->samples);
       free_snd_fd(sf[0]);
       FREE(sf);
       if ((err != IO_NO_ERROR) &&
@@ -4528,7 +4509,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		  FREE(ofile);
 		}
 	      else nfile = shorter_tempnam(save_dir(ss), "snd_");
-	      len = cp->samples[i];
+	      len = cp->edits[i]->samples;
 	      io_err = channel_to_file(cp, nfile, i);
 
 	      if (io_err != IO_NO_ERROR)
@@ -4896,7 +4877,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  else 
 		    {
 		      char *durstr;
-		      if (ed->len == cp->samples[i])
+		      if (ed->len == cp->edits[i]->samples)
 			durstr = copy_string("#f");
 		      else durstr = mus_format(OFF_TD, ed->len);
 		      function = mus_format("%s (%s %s " OFF_TD " %s snd chn)",
@@ -5188,6 +5169,12 @@ static void copy_ed_fragment(ed_fragment *new_ed, ed_fragment *old_ed)
       ensure_ed_ptrees(new_ed);
       memcpy((void *)(new_ed->ptrees), (void *)(old_ed->ptrees), sizeof(ed_ptrees));
     }
+  if (old_ed->mixes)
+    {
+      if (!(new_ed->mixes))
+	new_ed->mixes = (ed_mixes *)CALLOC(1, sizeof(ed_mixes));
+      memcpy((void *)(new_ed->mixes), (void *)(old_ed->mixes), sizeof(ed_mixes));
+    }
 }
 
 static ed_fragment *free_ed_fragment(ed_fragment *ed)
@@ -5196,6 +5183,7 @@ static ed_fragment *free_ed_fragment(ed_fragment *ed)
     {
       if (ed->ramps) FREE(ed->ramps);
       if (ed->ptrees) FREE(ed->ptrees);
+      if (ed->mixes) FREE(ed->mixes);
       FREE(ed);
     }
   return(NULL);
@@ -5303,6 +5291,10 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
 	      cp->ptree_inits[loc] = XEN_FALSE;
 	    }
 	}
+      if (ed->marks)
+	free_mark_list(ed);
+      if (ed->tracks)
+	ed->tracks = free_track_info(ed);
       FREE(ed);
     }
   return(NULL);
@@ -5330,15 +5322,8 @@ void backup_edit_list(chan_info *cp)
   free_amp_env(cp, cur - 1);
   cp->edits[cur - 1] = new_ed;
   cp->amp_envs[cur - 1] = cp->amp_envs[cur];
-  if (cp->tracks)
-    {
-      if (cp->tracks[cur - 1]) free_track_info(cp, cur - 1);
-      cp->tracks[cur - 1] = cp->tracks[cur];
-      cp->tracks[cur] = NULL;
-    }
   cp->edits[cur] = NULL;
   cp->amp_envs[cur] = NULL;
-  cp->samples[cur - 1] = cp->samples[cur];
   if (cp->sounds) /* protect from release_pending_sounds upon edit after undo after as-one-edit or whatever */
     for (i = 0; i < cp->sound_size; i++)
       {
@@ -5346,7 +5331,6 @@ void backup_edit_list(chan_info *cp)
 	sd = cp->sounds[i];
 	if ((sd) && (sd->edit_ctr == cur)) sd->edit_ctr--;
       }
-  backup_mark_list(cp, cur);
   cp->edit_ctr--;
   reflect_edit_history_change(cp);
 }
@@ -5386,6 +5370,7 @@ ed_list *initial_ed_list(off_t beg, off_t end)
   ed->selection_end = 0;
   ed->edit_type = INITIALIZE_EDIT;
   ed->sound_location = 0;
+  ed->samples = end + 1;
   /* origin (channel %s %d) desc channel should be obvious from context */
   FRAGMENT_LOCAL_POSITION(ed, 0) = beg;
   FRAGMENT_LOCAL_END(ed, 0) = end;
@@ -5426,7 +5411,6 @@ snd_info *sound_is_silence(snd_info *sp)
 void allocate_ed_list(chan_info *cp) 
 {
   cp->edits = (ed_list **)CALLOC(cp->edit_size, sizeof(ed_list *));
-  cp->tracks = (track_info **)CALLOC(cp->edit_size, sizeof(track_info *));
 }
 
 static void new_leading_ramp(ed_fragment *new_start, ed_fragment *old_start, off_t samp)
@@ -5529,6 +5513,7 @@ static void new_trailing_ramp(ed_fragment *new_back, ed_fragment *old_back, off_
 
 static void ripple_all(chan_info *cp, off_t beg, off_t samps)
 {
+  record_track_info(cp);
   ripple_marks(cp, beg, samps);
   ripple_mixes(cp, beg, samps);
   check_for_first_edit(cp);
@@ -5626,11 +5611,9 @@ static ed_list *insert_samples_into_list(off_t samp, off_t num, int pos, chan_in
       old_state = cp->edits[cp->edit_ctr - 1];
       new_state->selection_beg = old_state->selection_beg;
       new_state->selection_end = old_state->selection_end;
+      new_state->cursor = old_state->cursor;
     }
-  ripple_all(cp, samp, num);
-  ripple_selection(new_state, samp, num);
-  if (CURSOR(cp) > samp) CURSOR(cp) += num;
-  reflect_sample_change_in_axis(cp);
+  if (new_state->cursor > samp) new_state->cursor += num;
   return(new_state);
 }
 
@@ -5639,9 +5622,11 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
   off_t len, new_len;
   ed_fragment *cb;
   ed_list *ed, *old_ed;
+
   if (num <= 0) return(true); /* false if can't edit, but this is a no-op */
+
   old_ed = cp->edits[edpos];
-  len = cp->samples[edpos];
+  len = cp->edits[edpos]->samples;
   if (beg > len) 
     {
       new_len = beg + num; 
@@ -5649,20 +5634,27 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
       num = new_len - beg;
     }
   else new_len = len + num;
-  if (!(prepare_edit_list(cp, new_len, edpos, S_pad_channel))) return(false); /* actual edit-list origin is done at zero_edit level */
+  if (!(prepare_edit_list(cp, new_len, edpos, S_pad_channel))) 
+    return(false); /* actual edit-list origin is done at zero_edit level */
+
   ed = insert_samples_into_list(beg, num, edpos, cp, &cb, S_pad_channel, 0.0);
-  cp->edits[cp->edit_ctr] = ed;
+  ed->samples = new_len;
   ED_SOUND(cb) = EDIT_LIST_ZERO_MARK;
   ED_SCALER(cb) = 0.0;
   ED_TYPE(cb) = ED_ZERO;
   ed->edit_type = ZERO_EDIT;
   ed->sound_location = 0;
   ed->maxamp = old_ed->maxamp;
-  check_for_first_edit(cp); /* needed to activate revert menu option */
+  cp->edits[cp->edit_ctr] = ed;
   amp_env_insert_zeros(cp, beg, num, edpos);
+
+  ripple_all(cp, beg, num);
+  ripple_selection(ed, beg, num);
   lock_affected_mixes(cp, beg, beg);
+  reflect_sample_change_in_axis(cp);
   reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
   after_edit(cp);
+
   return(true);
 }
 
@@ -5673,12 +5665,15 @@ void extend_edit_list(chan_info *cp, int edpos)
   /*   but it's confusing to the user not to have the position change show up in the history list */
   int i;
   ed_list *new_ed, *old_ed;
-  if (!(prepare_edit_list(cp, cp->samples[edpos], edpos, S_pad_channel))) return;
+
   old_ed = cp->edits[edpos];
-  new_ed = make_ed_list(cp->edits[edpos]->size);
+  if (!(prepare_edit_list(cp, old_ed->samples, edpos, S_pad_channel))) return;
+
+  new_ed = make_ed_list(old_ed->size);
   new_ed->beg = 0;
-  new_ed->len = cp->samples[edpos];
-  cp->edits[cp->edit_ctr] = new_ed;
+  new_ed->len = old_ed->samples;
+  new_ed->samples = old_ed->samples;
+  new_ed->cursor = old_ed->cursor;
   for (i = 0; i < new_ed->size; i++) 
     copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
   new_ed->edit_type = EXTEND_EDIT;
@@ -5689,7 +5684,9 @@ void extend_edit_list(chan_info *cp, int edpos)
   new_ed->selection_end = old_ed->selection_end;
   new_ed->maxamp = old_ed->maxamp;
   new_ed->maxamp_position = old_ed->maxamp_position;
-  ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
+  cp->edits[cp->edit_ctr] = new_ed;
+
+  ripple_all(cp, 0, 0); /* 0,0 -> copy marks and mixes */
   cp->amp_envs[cp->edit_ctr] = amp_env_copy(cp, false, edpos);
   after_edit(cp);
 }
@@ -5699,7 +5696,9 @@ bool file_insert_samples(off_t beg, off_t num, const char *inserted_file, chan_i
   off_t len;
   ed_fragment *cb;
   file_info *hdr;
-  len = cp->samples[edpos];
+  ed_list *ed;
+
+  len = cp->edits[edpos]->samples;
   if (beg >= len)
     {
       if (!(extend_with_zeros(cp, len, beg - len, edpos))) return(false);
@@ -5707,7 +5706,12 @@ bool file_insert_samples(off_t beg, off_t num, const char *inserted_file, chan_i
       len = CURRENT_SAMPLES(cp);
     }
   if (!(prepare_edit_list(cp, len + num, edpos, origin))) return(false);
-  cp->edits[cp->edit_ctr] = insert_samples_into_list(beg, num, edpos, cp, &cb, origin, 1.0);
+  
+  ed = insert_samples_into_list(beg, num, edpos, cp, &cb, origin, 1.0);
+  ed->samples = len + num;
+  ed->edit_type = INSERTION_EDIT;
+  cp->edits[cp->edit_ctr] = ed;
+
   hdr = make_file_info(inserted_file, FILE_READ_ONLY, FILE_NOT_SELECTED);
   if (hdr)
     {
@@ -5723,17 +5727,16 @@ bool file_insert_samples(off_t beg, off_t num, const char *inserted_file, chan_i
       ED_SOUND(cb) = add_sound_file_to_edit_list(cp, inserted_file, 
 						 make_file_state(fd, hdr, chan, 0, FILE_BUFFER_SIZE),
 						 hdr, auto_delete, chan);
-      {
-	ed_list *ed;
-	ed = cp->edits[cp->edit_ctr];
-	ed->edit_type = INSERTION_EDIT;
-	ed->sound_location = ED_SOUND(cb);
-      }
-      /* mixes were rippled by insert_samples_into_list above (ripple_all -> ripple_mixes)
+      ed->sound_location = ED_SOUND(cb);
+
+      /* mixes are rippled first (ripple_all -> ripple_mixes)
        *   so the lock should affect those that were split by the insertion, which in current
        *   terms means we're interested only in 'beg'
        */
+      ripple_all(cp, beg, num);
+      ripple_selection(ed, beg, num);
       lock_affected_mixes(cp, beg, beg);
+      reflect_sample_change_in_axis(cp);
       reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
       after_edit(cp);
       return(true);
@@ -5745,26 +5748,34 @@ bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, con
 {
   off_t len;
   ed_fragment *cb;
+  ed_list *ed;
+
   if (num <= 0) return(true);
-  len = cp->samples[edpos];
+  len = cp->edits[edpos]->samples;
   if (beg >= len)
     {
-      if (!(extend_with_zeros(cp, len, beg - len, edpos))) return(false);
+      if (!(extend_with_zeros(cp, len, beg - len, edpos))) 
+	return(false);
       edpos = cp->edit_ctr;
       len = CURRENT_SAMPLES(cp);
     }
-  if (!(prepare_edit_list(cp, len + num, edpos, origin))) return(false);
-  cp->edits[cp->edit_ctr] = insert_samples_into_list(beg, num, edpos, cp, &cb, origin, 1.0);
+  if (!(prepare_edit_list(cp, len + num, edpos, origin))) 
+    return(false);
+
+  ed = insert_samples_into_list(beg, num, edpos, cp, &cb, origin, 1.0);
+  ed->edit_type = INSERTION_EDIT;
+  ed->samples = len + num;
+  cp->edits[cp->edit_ctr] = ed;
+
   prepare_sound_list(cp);
   cp->sounds[cp->sound_ctr] = make_snd_data_buffer(vals, (int)num, cp->edit_ctr);
   ED_SOUND(cb) = cp->sound_ctr;
-  {
-    ed_list *ed;
-    ed = cp->edits[cp->edit_ctr];
-    ed->edit_type = INSERTION_EDIT;
-    ed->sound_location = ED_SOUND(cb);
-  }
+  ed->sound_location = ED_SOUND(cb);
+
+  ripple_all(cp, beg, num);
+  ripple_selection(ed, beg, num);
   lock_affected_mixes(cp, beg, beg);
+  reflect_sample_change_in_axis(cp);
   reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
   after_edit(cp);
   return(true);
@@ -5900,41 +5911,42 @@ static ed_list *delete_section_from_list(off_t beg, off_t num, ed_list *current_
   return(new_state);
 }
 
-static ed_list *delete_samples_from_list(off_t beg, off_t num, int pos, chan_info *cp)
-{
-  ed_list *new_state;
-  new_state = delete_section_from_list(beg, num, cp->edits[pos]);
-  if ((cp->edits) && (cp->edit_ctr > 0))
-    {
-      ed_list *old_state;
-      old_state = cp->edits[cp->edit_ctr - 1];
-      new_state->selection_beg = old_state->selection_beg;
-      new_state->selection_end = old_state->selection_end;
-    }
-  new_state->edpos = pos;
-  ripple_all(cp, beg, -num);
-  ripple_selection(new_state, beg, -num);
-  if (CURSOR(cp) > beg)
-    {
-      /* this added 6-Dec-02 */
-      CURSOR(cp) -= num;
-      if (CURSOR(cp) < beg) CURSOR(cp) = beg;
-    }
-  reflect_sample_change_in_axis(cp);
-  return(new_state);
-}    
-
 bool delete_samples(off_t beg, off_t num, chan_info *cp, int edpos)
 {
   off_t len;
   if (num <= 0) return(true);
-  len = cp->samples[edpos];
+  len = cp->edits[edpos]->samples;
   if ((beg < len) && (beg >= 0))
     {
+      ed_list *ed;
+
       if ((beg + num) > len) num = len - beg;
       if (!(prepare_edit_list(cp, len - num, edpos, S_delete_samples))) return(false);
       lock_affected_mixes(cp, beg, beg + num); /* edit_ctr should be ready, need pre-ripple values for block overlap check */
-      cp->edits[cp->edit_ctr] = delete_samples_from_list(beg, num, edpos, cp);
+
+      ed = delete_section_from_list(beg, num, cp->edits[edpos]);
+      if ((cp->edits) && (cp->edit_ctr > 0))
+	{
+	  ed_list *old_state;
+	  old_state = cp->edits[cp->edit_ctr - 1];
+	  ed->selection_beg = old_state->selection_beg;
+	  ed->selection_end = old_state->selection_end;
+	  ed->cursor = old_state->cursor;
+	}
+      ed->edpos = edpos;
+      ed->samples = len - num;
+      cp->edits[cp->edit_ctr] = ed;
+
+      ripple_all(cp, beg, -num);
+      ripple_selection(ed, beg, -num);
+      if (ed->cursor > beg)
+	{
+	  /* this added 6-Dec-02 */
+	  ed->cursor -= num;
+	  if (ed->cursor < beg) ed->cursor = beg;
+	}
+
+      reflect_sample_change_in_axis(cp);
       reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
       after_edit(cp);
       return(true);
@@ -5954,7 +5966,7 @@ static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info 
   off_t del_num, cur_end;
   ed_fragment *changed_f;
   if (num <= 0) return(NULL);
-  cur_end = cp->samples[pos];
+  cur_end = cp->edits[pos]->samples;
   del_num = cur_end - beg;
   if (num < del_num) del_num = num;
   del_state = delete_section_from_list(beg, del_num, cp->edits[pos]);
@@ -5969,7 +5981,6 @@ static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info 
       new_state->selection_end = old_state->selection_end;
     }
   new_state->edpos = pos;
-  ripple_all(cp, 0, 0);
   return(new_state);
 }
 
@@ -5980,10 +5991,11 @@ bool file_mix_change_samples(off_t beg, off_t num, const char *tempfile, chan_in
   hdr = make_file_info(tempfile, FILE_READ_ONLY, FILE_NOT_SELECTED);
   if (hdr)
     {
+      ed_list *ed;
       off_t prev_len, new_len;
       ed_fragment *cb;
       int fd;
-      prev_len = cp->samples[edpos];
+      prev_len = cp->edits[edpos]->samples;
       if (beg >= prev_len)
 	{
 	  if (!(extend_with_zeros(cp, prev_len, beg - prev_len + 1, edpos))) 
@@ -6001,9 +6013,13 @@ bool file_mix_change_samples(off_t beg, off_t num, const char *tempfile, chan_in
 	  free_file_info(hdr);
 	  return(false);
 	}
-      cp->edits[cp->edit_ctr] = change_samples_in_list(beg, num, edpos, cp, &cb, origin);
-      if (new_len > prev_len) reflect_sample_change_in_axis(cp);
-      if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg + num);
+
+      ed = change_samples_in_list(beg, num, edpos, cp, &cb, origin);
+      ed->edit_type = CHANGE_EDIT;
+      ed->samples = new_len;
+      if (cp->edit_ctr > 0) ed->cursor = cp->edits[cp->edit_ctr - 1]->cursor;
+      cp->edits[cp->edit_ctr] = ed;
+      
       fd = snd_open_read(tempfile);
       snd_file_open_descriptors(fd,
 				tempfile,
@@ -6015,12 +6031,11 @@ bool file_mix_change_samples(off_t beg, off_t num, const char *tempfile, chan_in
       ED_SOUND(cb) = add_sound_file_to_edit_list(cp, tempfile, 
 						 make_file_state(fd, hdr, chan, 0, FILE_BUFFER_SIZE),
 						 hdr, auto_delete, chan);
-      {
-	ed_list *ed;
-	ed = cp->edits[cp->edit_ctr];
-	ed->edit_type = CHANGE_EDIT;
-	ed->sound_location = ED_SOUND(cb);
-      }
+      ed->sound_location = ED_SOUND(cb);
+
+      ripple_all(cp, 0, 0); /* copies marks/mixes */
+      if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg + num);
+      if (new_len > prev_len) reflect_sample_change_in_axis(cp);
 
       if (!with_mix)
 	{
@@ -6068,16 +6083,19 @@ bool file_override_samples(off_t num, const char *tempfile, chan_info *cp, int c
       during_open(fd, tempfile, SND_OVERRIDE_FILE);
       e = initial_ed_list(0, num - 1);
       if (origin) e->origin = copy_string(origin);
+      e->edit_type = CHANGE_EDIT;
+      e->edpos = cp->edit_ctr - 1;
+      e->samples = num;
+      if (cp->edit_ctr > 0) e->cursor = cp->edits[cp->edit_ctr - 1]->cursor;
       cp->edits[cp->edit_ctr] = e;
       if (lock == LOCK_MIXES) lock_affected_mixes(cp, 0, num);
       FRAGMENT_SOUND(e, 0) = add_sound_file_to_edit_list(cp, tempfile, 
 							 make_file_state(fd, hdr, chan, 0, FILE_BUFFER_SIZE),
 							 hdr, auto_delete, chan);
-      e->edit_type = CHANGE_EDIT;
       e->sound_location = FRAGMENT_SOUND(e, 0);
-      e->edpos = cp->edit_ctr - 1;
-      reflect_sample_change_in_axis(cp);
+
       ripple_all(cp, 0, 0);
+      reflect_sample_change_in_axis(cp);
       reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
       after_edit(cp);
     }
@@ -6095,8 +6113,9 @@ bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, loc
   off_t prev_len, new_len;
   ed_fragment *cb;
   ed_list *ed;
+
   if (num <= 0) return(true);
-  prev_len = cp->samples[edpos];
+  prev_len = cp->edits[edpos]->samples;
   if (beg >= prev_len)
     {
       if (!(extend_with_zeros(cp, prev_len, beg - prev_len + 1, edpos))) return(false);
@@ -6105,16 +6124,22 @@ bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, loc
     }
   new_len = beg + num;
   if (new_len < prev_len) new_len = prev_len;
-  if (!(prepare_edit_list(cp, new_len, edpos, origin))) return(false);
+  if (!(prepare_edit_list(cp, new_len, edpos, origin))) 
+    return(false);
+
   ed = change_samples_in_list(beg, num, edpos, cp, &cb, origin);
-  if (new_len > prev_len) reflect_sample_change_in_axis(cp);
+  ed->edit_type = CHANGE_EDIT;
+  ed->samples = new_len;
   cp->edits[cp->edit_ctr] = ed;
+  if (cp->edit_ctr > 0) ed->cursor = cp->edits[cp->edit_ctr - 1]->cursor;
   prepare_sound_list(cp);
   cp->sounds[cp->sound_ctr] = make_snd_data_buffer(vals, (int)num, cp->edit_ctr);
   ED_SOUND(cb) = cp->sound_ctr;
-  ed->edit_type = CHANGE_EDIT;
   ed->sound_location = ED_SOUND(cb);
+
+  ripple_all(cp, 0, 0);
   if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg + num);
+  if (new_len > prev_len) reflect_sample_change_in_axis(cp);
   reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
   after_edit(cp);
   return(true);
@@ -6195,6 +6220,35 @@ bool ptree_or_sound_fragments_in_use(chan_info *cp, int pos)
     }
   return(false);
 }
+
+#if WITH_VIRTUAL_MIX
+bool any_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos);
+bool any_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
+{
+  ed_list *ed;
+  int i;
+  off_t end;
+  ed = cp->edits[pos];
+  end = beg + dur - 1;
+  for (i = 0; i < ed->size - 1; i++) 
+    {
+      off_t loc, next_loc;
+      int typ;
+      if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(false);
+      loc = FRAGMENT_GLOBAL_POSITION(ed, i);
+      if (loc > end) return(false);
+      typ = FRAGMENT_TYPE(ed, i);
+      next_loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);         /* i.e. next loc = current fragment end point */
+      /* fragment starts at loc, ends just before next_loc, is of type typ */
+      if (next_loc > beg)
+	{
+	  if (FRAGMENT_TYPE(ed, i) != ED_SIMPLE)
+	    return(true);
+	}
+    }
+  return(false);
+}
+#endif
 
 static ed_list *copy_and_split_list(off_t beg, off_t num, ed_list *current_state, const char *origin)
 {
@@ -6307,16 +6361,20 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
   off_t len = 0;
   int i;
   ed_list *new_ed, *old_ed;
+
+  old_ed = cp->edits[pos];
   if ((beg < 0) || 
       (num <= 0) ||
-      (beg >= cp->samples[pos]) ||
+      (beg >= old_ed->samples) ||
       (scl == 1.0))
     return(true); 
-  len = cp->samples[pos];
-  if (!(prepare_edit_list(cp, len, pos, S_scale_channel))) return(false);
-  old_ed = cp->edits[pos];
+
+  len = old_ed->samples;
+  if (!(prepare_edit_list(cp, len, pos, S_scale_channel))) 
+    return(false);
+
   if ((beg == 0) && 
-      (num >= cp->samples[pos]))
+      (num >= old_ed->samples))
     {
       if (scl == 0.0)
 	{
@@ -6329,15 +6387,17 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
       else
 	{
 	  num = len;
-	  new_ed = make_ed_list(cp->edits[pos]->size);
+	  new_ed = make_ed_list(old_ed->size);
 	  new_ed->beg = beg;
 	  new_ed->len = num;
 	  for (i = 0; i < new_ed->size; i++) 
 	    {
 	      copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
 	      FRAGMENT_SCALER(new_ed, i) *= scl;
+	      if (FRAGMENT_MIXES(new_ed, i)) FRAGMENT_MIX_SCALER(new_ed, i) *= scl;
 	    }
 	}
+      new_ed->samples = len;
       cp->edits[cp->edit_ctr] = new_ed;
       amp_env_scale_by(cp, scl, pos); /* this seems wasteful if this is an intermediate (in_as_one_edit etc) */
     }
@@ -6345,7 +6405,7 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
     {
       if (beg + num > len) num = len - beg;
       new_ed = copy_and_split_list(beg, num, old_ed, NULL);
-
+      new_ed->samples = len;
       cp->edits[cp->edit_ctr] = new_ed;
       for (i = 0; i < new_ed->size; i++) 
 	{
@@ -6353,11 +6413,13 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
 	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) >= beg) 
 	    {
 	      FRAGMENT_SCALER(new_ed, i) *= scl;
+	      if (FRAGMENT_MIXES(new_ed, i)) FRAGMENT_MIX_SCALER(new_ed, i) *= scl;
 	      if (scl == 0.0) FRAGMENT_TYPE(new_ed, i) = ED_ZERO;
 	    }
 	}
       amp_env_scale_selection_by(cp, scl, beg, num, pos);
     }
+  new_ed->cursor = old_ed->cursor;
   new_ed->edit_type = SCALED_EDIT;
   new_ed->sound_location = 0;
   if (origin)
@@ -6388,6 +6450,7 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
   new_ed->edpos = pos;
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
+
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   lock_affected_mixes(cp, beg, beg + num);
   if (!in_as_one_edit) 
@@ -6491,22 +6554,25 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   ed_list *new_ed, *old_ed;
   Float seg0, seg1;
   double incr;
+
+  old_ed = cp->edits[pos];
   if ((beg < 0) || 
       (num <= 0) ||
-      (beg >= cp->samples[pos]))
+      (beg >= old_ed->samples))
     return(true); 
   if ((rmp0 == rmp1) || (num == 1))
     return(scale_channel(cp, rmp0, beg, num, pos, in_as_one_edit));
-  len = cp->samples[pos];
-  if (!(prepare_edit_list(cp, len, pos, origin))) return(false);
-  old_ed = cp->edits[pos];
+  len = old_ed->samples;
+  if (!(prepare_edit_list(cp, len, pos, origin))) 
+    return(false);
+
   incr = (double)(rmp1 - rmp0) / (double)(num - 1);
   if ((beg == 0) && 
-      (num >= cp->samples[pos]))
+      (num >= old_ed->samples))
     {
       /* one ramp over entire fragment list -- no splits will occur here */
       num = len;
-      new_ed = make_ed_list(cp->edits[pos]->size);
+      new_ed = make_ed_list(old_ed->size);
       new_ed->beg = beg;
       new_ed->len = num;
       cp->edits[cp->edit_ctr] = new_ed;
@@ -6538,6 +6604,8 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
 	    }
 	}
     }
+  new_ed->samples = len;
+  new_ed->cursor = old_ed->cursor;
   new_ed->edit_type = RAMP_EDIT;
   new_ed->sound_location = 0;
   if (!is_x)
@@ -6577,6 +6645,7 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   new_ed->edpos = pos;
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
+
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   lock_affected_mixes(cp, beg, beg + num);
   reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
@@ -6641,9 +6710,11 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
   off_t len;
   int i, ptree_loc = 0;
   ed_list *new_ed, *old_ed;
+
+  old_ed = cp->edits[pos];
   if ((beg < 0) || 
       (num <= 0) ||
-      (beg >= cp->samples[pos]) ||
+      (beg >= old_ed->samples) ||
       (tree == NULL))
     {
       if (tree) 
@@ -6653,13 +6724,15 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
 	}
       return; 
     }
-  len = cp->samples[pos];
+
+  len = old_ed->samples;
   if (pos > cp->edit_ctr)
     {
       /* prepare_edit_list will throw 'no-such-edit, but we need to clean up the ptree first */
       free_ptree(tree);
       tree = NULL;
     }
+
   if (!(prepare_edit_list(cp, len, pos, S_ptree_channel)))
     {
       /* perhaps edit-hook blocked the edit */
@@ -6670,7 +6743,7 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
 	}
       return;
     }
-  old_ed = cp->edits[pos];
+
   ptree_loc = add_ptree(cp);
   cp->ptrees[ptree_loc] = tree;
   if (XEN_PROCEDURE_P(init_func))
@@ -6681,12 +6754,13 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
   else cp->ptree_inits[ptree_loc] = XEN_FALSE;
 
   if ((beg == 0) && 
-      (num >= cp->samples[pos]))
+      (num >= old_ed->samples))
     {
       num = len;
-      new_ed = make_ed_list(cp->edits[pos]->size);
+      new_ed = make_ed_list(old_ed->size);
       new_ed->beg = beg;
       new_ed->len = num;
+      new_ed->samples = len;
       cp->edits[cp->edit_ctr] = new_ed;
 
       for (i = 0; i < new_ed->size; i++) 
@@ -6701,7 +6775,7 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
     {
       if (beg + num > len) num = len - beg;
       new_ed = copy_and_split_list(beg, num, old_ed, NULL);
-
+      new_ed->samples = len;
       cp->edits[cp->edit_ctr] = new_ed;
       for (i = 0; i < new_ed->size; i++) 
 	{
@@ -6713,6 +6787,7 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
       if (env_it)
 	amp_env_ptree_selection(cp, tree, beg, num, pos, init_func);
     }
+  new_ed->cursor = old_ed->cursor;
   new_ed->edit_type = PTREE_EDIT;
   new_ed->sound_location = 0;
   new_ed->ptree_location = ptree_loc;
@@ -6721,6 +6796,7 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
   new_ed->ptree_env_too = env_it;
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
+
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   lock_affected_mixes(cp, beg, beg + num);
   reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
@@ -6832,7 +6908,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
       else snd_warning(_("%s has changed since we last read it!"), sp->short_filename);
     }
 
-  curlen = cp->samples[edit_position];
+  curlen = cp->edits[edit_position]->samples;
   /* snd_fd allocated only here */
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd)); /* only creation point */
 #if MUS_DEBUGGING
@@ -6947,7 +7023,7 @@ Float chn_sample(off_t samp, chan_info *cp, int pos)
       (samp < 0) || 
       (pos < 0) || 
       (pos >= cp->edit_size) || 
-      (samp >= cp->samples[pos])) 
+      (samp >= cp->edits[pos]->samples)) 
     return(0.0);
 
   /* try the quick case */
@@ -7157,8 +7233,8 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   file_info *hdr0, *hdr1;
   env_info *e0 = NULL, *e1 = NULL;
 
-  if ((!(prepare_edit_list(cp0, cp1->samples[pos1], AT_CURRENT_EDIT_POSITION, S_swap_channels))) ||
-      (!(prepare_edit_list(cp1, cp0->samples[pos0], AT_CURRENT_EDIT_POSITION, S_swap_channels))))
+  if ((!(prepare_edit_list(cp0, cp1->edits[pos1]->samples, AT_CURRENT_EDIT_POSITION, S_swap_channels))) ||
+      (!(prepare_edit_list(cp1, cp0->edits[pos0]->samples, AT_CURRENT_EDIT_POSITION, S_swap_channels))))
     return;
 
   name = cp0->sound->filename;
@@ -7194,6 +7270,8 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   new_ed->edpos = pos1;
   new_ed->maxamp = old_ed->maxamp;
   new_ed->maxamp_position = old_ed->maxamp_position;
+  new_ed->samples = old_ed->samples;
+  new_ed->cursor = old_ed->cursor;
   new_ed->beg = 0;
   new_ed->len = old_ed->len;
   new_ed->origin = copy_string(TO_PROC_NAME(S_swap_channels));
@@ -7213,6 +7291,8 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   new_ed->maxamp_position = old_ed->maxamp_position;
   new_ed->beg = 0;
   new_ed->len = old_ed->len;
+  new_ed->samples = old_ed->samples;
+  new_ed->cursor = old_ed->cursor;
   new_ed->origin = copy_string(TO_PROC_NAME(S_swap_channels)); /* swap = stored change-edit at restore time, so no redundancy here */
   cp1->edits[cp1->edit_ctr] = new_ed;
   if (new_ed->len > 0)
@@ -7231,12 +7311,13 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
       if (e0) e0 = free_env_info(e0);
       if (e1) e1 = free_env_info(e1);
     }
+
   ripple_all(cp0, 0, 0);
   ripple_all(cp1, 0, 0);
   swap_marks(cp0, cp1);
-  if (cp0->samples[cp0->edit_ctr] != cp0->samples[cp0->edit_ctr - 1])
+  if (cp0->edits[cp0->edit_ctr]->samples != cp0->edits[cp0->edit_ctr - 1]->samples)
     reflect_sample_change_in_axis(cp0);
-  if (cp1->samples[cp1->edit_ctr] != cp1->samples[cp1->edit_ctr - 1])
+  if (cp1->edits[cp1->edit_ctr]->samples != cp1->edits[cp1->edit_ctr - 1]->samples)
     reflect_sample_change_in_axis(cp1);
   after_edit(cp0);
   after_edit(cp1);
@@ -7258,7 +7339,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   off_t *old_cursors = NULL;
   chan_info *cp;
   snd_fd **sf;
-  void *sa;
+  void *ms, *sa;
   file_info *sphdr = NULL;
   io_error_t io_err = IO_NO_ERROR;
 
@@ -7293,7 +7374,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
 
   sa = make_axes_data(sp);
   sphdr->samples = samples * sp->nchans;
-  collapse_marks(sp);
+  ms = (void *)sound_store_marks(sp);
   old_cursors = (off_t *)CALLOC(sp->nchans, sizeof(off_t));
   for (i = 0; i < sp->nchans; i++)
     {
@@ -7301,21 +7382,10 @@ io_error_t save_edits_and_update_display(snd_info *sp)
       old_cursors[i] = CURSOR(cp); /* depends on edit_ctr -- set to -1 by free_edit_list below */
       if (ss->deferred_regions > 0)
 	sequester_deferred_regions(cp, -1);
-      if (cp->tracks) free_track_info_list(cp); /* needs to precede free_edit_list which clobbers cp->edit_size */
       if (cp->have_mixes) reset_mix_list(cp);
       if (cp->edits) free_edit_list(cp);
       sf[i] = free_snd_fd(sf[i]);  /* must precede free_sound_list since it accesses the snd_data structs that free_sound_list frees */
       if (cp->sounds) free_sound_list(cp);
-      if (cp->samples) 
-	{
-	  FREE(cp->samples); 
-	  cp->samples = NULL;
-	}
-      if (cp->cursors) 
-	{
-	  FREE(cp->cursors); 
-	  cp->cursors = NULL;
-	}
       cp->axis = free_axis_info(cp->axis);
     }
   FREE(sf);
@@ -7344,6 +7414,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   sp->write_date = file_write_date(sp->filename);
   add_sound_data(sp->filename, sp, WITHOUT_INITIAL_GRAPH_HOOK);
   restore_axes_data(sp, sa, mus_sound_duration(sp->filename), true);
+  sound_restore_marks(sp, ms);
   sa = free_axes_data(sa);
   for (i = 0; i < sp->nchans; i++)
     CURSOR(sp->chans[i]) = old_cursors[i];
@@ -7391,7 +7462,7 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int ty
       int local_pos;
       cp = sp->chans[i];
       if (pos == AT_CURRENT_EDIT_POSITION) local_pos = cp->edit_ctr; else local_pos = pos;
-      if (frames < cp->samples[local_pos]) frames = cp->samples[local_pos];
+      if (frames < cp->edits[local_pos]->samples) frames = cp->edits[local_pos]->samples;
       sf[i] = init_sample_read_any(0, cp, READ_FORWARD, local_pos); /* & err */
       if (sf[i] == NULL)
 	{
@@ -8922,7 +8993,7 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edp
   if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, caller, 6);
   beg = beg_to_sample(samp_0, caller);
-  len = XEN_TO_C_OFF_T_OR_ELSE(samps, cp->samples[pos] - beg);
+  len = XEN_TO_C_OFF_T_OR_ELSE(samps, cp->edits[pos]->samples - beg);
   if ((beg == 0) && (len == 0)) return(XEN_FALSE); /* empty file (channel) possibility */
   if (len <= 0) XEN_OUT_OF_RANGE_ERROR(caller, 2, samps, "samples ~A <= 0?");
   fvals = (Float *)MALLOC(len * sizeof(Float));
@@ -9566,16 +9637,42 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
 
 static void make_mix_fragment(ed_list *new_ed, int i, int mix_loc, off_t beg, off_t num)
 {
-  FRAGMENT_TYPE(new_ed, i) = ED_MIX;
+  /* TODO: ED_MIX_ZERO + ED_MIX_X|RAMPN  interleave also ED_SIMPLE ED_MIX ED_ZERO ED_MIX_ZERO etc so
+   *   removal = find index, set scl to 0.0, if no other mixes, op type -= 1
+   *   get new position and re-do the _mix_ process but use the current index
+   *   To change scale, just set scl field on copy
+   *   reader setup at fragment start = look for non-0.0 scls, and get snd_fds for them
+   *   overall reader then adds all active mixes to current global
+   *   need: fragment start -> mix start,
+   *         continuation of reader over (irrelevant) global fragment sequence
+   *         so setup uses current snd_fd of index if it exists
+   *   if global too complex (ptree), save first, then mix->simple+mix
+   *   anything other than scale on mix = save first, then scale as ed_simple -- how is this done in ptree_channel etc? rampable--ramp_or_ptree_fragments_in_use
+   *     this should be automatic given -1's in the state table above -- appears to be computing but the mix is still displayed?
+   *   in unmix, after scl=0 + type change if any look for adjacent fragments with same type -- 
+   *     I think these can be combined in a loop
+   * in redpy -- 1st is not subtracted, remix involves simplified _mix_ 
+   * if only virtual-tag-mix, then env has to be local ed list, and src is not do-able without collapse or a very special-case reader
+   * if this, can all the mix_state stuff be deleted? -- mix_state is implicit in the channel's ed lists
+   */
+  /* TODO: scale -> no tag?
+   *  mix-track -> sync (track-track -> sync)
+   *  keep all mix state in the edit list
+   *  use only ed_mix access -- mix without tag can be as current but kept separate for sanity
+   *  any tagged mix on ptree (etc), save last state as temp, remake its edlist entry as ed_simple and then mix
+   * 
+   *  tracks, amp_envs, [mixes], ffts = enved_spectra -> ed_list
+   */
+  FRAGMENT_TYPE(new_ed, i) = ED_MIX; /* new form would be cur type + 1 */
   if (!(FRAGMENT_MIXES(new_ed, i)))
     FRAGMENT_MIXES(new_ed, i) = (ed_mixes *)CALLOC(1, sizeof(ed_mixes));
   FRAGMENT_MIX_INDEX(new_ed, i) = mix_loc;
   FRAGMENT_MIX_LENGTH(new_ed, i) = num;
-  FRAGMENT_SCALER(new_ed, i) = 1.0;
+  FRAGMENT_MIX_SCALER(new_ed, i) = 1.0;
 }
 
-void _mix_(chan_info *cp, const char *filename, off_t beg);
-void _mix_(chan_info *cp, const char *filename, off_t beg)
+int _mix_(chan_info *cp, const char *filename, off_t beg);
+int _mix_(chan_info *cp, const char *filename, off_t beg)
 {
   off_t num;
   int edpos;
@@ -9588,21 +9685,21 @@ void _mix_(chan_info *cp, const char *filename, off_t beg)
 
   edpos = cp->edit_ctr;
   num = mus_sound_frames(filename);
+  old_ed = cp->edits[edpos];
 
   if ((beg < 0) || 
       (num <= 0) ||
-      (beg >= cp->samples[edpos]))
+      (beg >= old_ed->samples))
     {
       fprintf(stderr, "oops");
-      return; 
+      return(-1); 
     }
-  len = cp->samples[edpos];
+  len = old_ed->samples;
   if (!(prepare_edit_list(cp, len, edpos, "-mix-")))
     {
       /* perhaps edit-hook blocked the edit */
-      return;
+      return(-1);
     }
-  old_ed = cp->edits[edpos];
 
   fd = snd_open_read(filename);
   snd_file_open_descriptors(fd,
@@ -9617,10 +9714,10 @@ void _mix_(chan_info *cp, const char *filename, off_t beg)
 					hdr, DONT_DELETE_ME, 0);
 
   if ((beg == 0) && 
-      (num >= cp->samples[edpos]))
+      (num >= old_ed->samples))
     {
       num = len;
-      new_ed = make_ed_list(cp->edits[edpos]->size);
+      new_ed = make_ed_list(old_ed->size);
       new_ed->beg = beg;
       new_ed->len = num;
       cp->edits[cp->edit_ctr] = new_ed;
@@ -9645,6 +9742,8 @@ void _mix_(chan_info *cp, const char *filename, off_t beg)
 	    make_mix_fragment(new_ed, i, mix_loc, beg, num);
 	}
     }
+  new_ed->samples = len;
+  new_ed->cursor = old_ed->cursor;
   new_ed->edit_type = MIX_EDIT;
   new_ed->sound_location = old_ed->sound_location;
   new_ed->origin = copy_string("-mix-");
@@ -9652,11 +9751,13 @@ void _mix_(chan_info *cp, const char *filename, off_t beg)
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
 
+  ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   after_edit(cp);
   update_graph(cp);
+  return(mix_loc);
 }
 
-static snd_fd *make_virtual_mix_reader(chan_info *cp, off_t len, int index, read_direction_t direction)
+static snd_fd *make_virtual_mix_reader(chan_info *cp, off_t len, int index, Float scl, read_direction_t direction)
 {
   snd_fd *sf;
   snd_data *first_snd = NULL;
@@ -9675,7 +9776,6 @@ static snd_fd *make_virtual_mix_reader(chan_info *cp, off_t len, int index, read
   sf->type = MIX_READER;
   sf->initial_samp = 0;
   sf->cp = cp;
-  sf->fscaler = MUS_FIX_TO_FLOAT;
   sf->direction = direction;
   sf->current_state = NULL;
   sf->edit_ctr = 0;
@@ -9685,7 +9785,27 @@ static snd_fd *make_virtual_mix_reader(chan_info *cp, off_t len, int index, read
   ind0 = 0;
   indx = 0;
   ind1 = len;
-  sf->fscaler = MUS_FIX_TO_FLOAT;
+  sf->fscaler = scl * MUS_FIX_TO_FLOAT;
+  if (scl == 1.0)
+    {
+      sf->runf = next_sample_value_unscaled;
+      sf->rev_runf = previous_sample_value_unscaled;
+    }
+  else
+    {
+      if (scl == 0.0)
+	{
+	  sf->runf = next_zero;
+	  sf->rev_runf = previous_zero;
+	}
+      else
+	{
+	  sf->runf = next_sample_value;
+	  sf->rev_runf = previous_sample_value;
+	}
+    }
+  if (direction == READ_BACKWARD)
+    swap_readers(sf);
   if (first_snd->type == SND_DATA_FILE)
     {
       first_snd->inuse = true;
@@ -9706,7 +9826,7 @@ static snd_fd *make_virtual_mix_reader(chan_info *cp, off_t len, int index, read
   return(sf);
 }
 #else
-static snd_fd *make_virtual_mix_reader(chan_info *cp, off_t len, int index, read_direction_t direction)
+static snd_fd *make_virtual_mix_reader(chan_info *cp, off_t len, int index, Float scl, read_direction_t direction)
 {
   return(NULL);
 }

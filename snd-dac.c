@@ -897,17 +897,17 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, off_t sta
     {
       if (sp->speed_control_direction == 1) 
 	{
-	  if (start >= cp->samples[pos]) return(NULL);
+	  if (start >= cp->edits[pos]->samples) return(NULL);
 	  direction = READ_FORWARD; 
 	  beg = start;
 	}
       else 
 	{
 	  direction = READ_BACKWARD;
-	  if ((start == 0) || (start >= cp->samples[pos])) /* don't be pedantic about the start point */
-	    beg = cp->samples[pos] - 1;
+	  if ((start == 0) || (start >= cp->edits[pos]->samples)) /* don't be pedantic about the start point */
+	    beg = cp->edits[pos]->samples - 1;
 	  else beg = start;
-	  if ((end == 0) || (end >= (cp->samples[pos])))
+	  if ((end == 0) || (end >= (cp->edits[pos]->samples)))
 	    end = NO_END_SPECIFIED;
 	}
     }

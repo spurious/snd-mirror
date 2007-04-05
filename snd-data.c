@@ -34,7 +34,6 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->ptree_size = 0;
   cp->ptree_ctr = -1;
   cp->edit_size = 0;
-  cp->tracks = NULL;
   cp->tracking = false;
   cp->cursor_on = false;
   cp->cursor_visible = false;
@@ -138,14 +137,10 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->printing = NOT_PRINTING;
   cp->graph_time_p = true;
   release_dangling_readers(cp, -1);
-  if (cp->samples) {FREE(cp->samples); cp->samples = NULL;}
-  if (cp->cursors) {FREE(cp->cursors); cp->cursors = NULL;}
-  if (cp->tracks) free_track_info_list(cp); /* needs to precede free_edit_list which clobbers cp->edit_size */
   if (cp->edits) free_edit_list(cp);
   if (cp->sounds) free_sound_list(cp);
   if (cp->ptrees) free_ptree_list(cp);
   if (cp->enved_spectra) free_enved_spectra(cp);
-  free_mark_list(cp, -1);
   free_mixes(cp);
   cp->sound = NULL;  /* a backpointer */
   cp->cursor_on = false;

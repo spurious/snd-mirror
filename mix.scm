@@ -1,4 +1,4 @@
-;;; various mix and track related utilities
+;;; various mix and track related functions
 ;;;
 ;;; (pan-mix file frame envelope) mixes file into current sound starting at frame using envelope to pan (0: all chan 0, 1: all chan 1)
 ;;; (mix->vct id) return mix data in vct

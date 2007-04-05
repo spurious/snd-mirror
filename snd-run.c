@@ -6798,7 +6798,7 @@ static void frames_i(int *args, ptree *pt)
       if (INT_ARG_3 == AT_CURRENT_EDIT_POSITION)
 	pos = cp->edit_ctr;
       else pos = INT_ARG_3;
-      INT_RESULT = cp->samples[pos];
+      INT_RESULT = cp->edits[pos]->samples;
     }
 }
 

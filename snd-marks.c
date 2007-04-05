@@ -1,13 +1,5 @@
 #include "snd.h"
 
-/* to handle undo/redo cleanly, we keep the mark list as an array (indexed to edit_ctr)
- * of arrays of pointers to marks.  Any mark-related operation follows cp->edit_ctr's
- * array within the outer array.  This way, marks come and go in an intuitively clean
- * manner without endless list operations in this file.  The downside is that the
- * mark associated with a given id is actually a list of marks, and which one is
- * "current" can change at any time.
- */
-
 static int sync_max = 0;
 static int mark_id_counter = 0;
 
@@ -56,13 +48,14 @@ static mark *free_mark(mark *mp)
 
 static mark *map_over_marks(chan_info *cp, mark *(*func)(chan_info *ncp, mark *mp1, void *p1), void *m, read_direction_t direction)
 {
-  if (cp->marks)
+  ed_list *ed;
+  ed = cp->edits[cp->edit_ctr];
+  if (ed->marks)
     {
-      int marks, pos;
+      int marks;
       mark **mps;
-      pos = cp->edit_ctr;
-      mps = cp->marks[pos];
-      marks = cp->mark_ctr[pos];
+      mps = ed->marks;
+      marks = ed->mark_ctr;
       if (mps)
 	{
 	  mark *mp;
@@ -92,13 +85,14 @@ static mark *map_over_marks(chan_info *cp, mark *(*func)(chan_info *ncp, mark *m
 
 static mark *map_over_marks_with_int(chan_info *cp, mark *(*func)(chan_info *ncp, mark *mp1, int val1), int value, read_direction_t direction)
 {
-  if (cp->marks)
+  ed_list *ed;
+  ed = cp->edits[cp->edit_ctr];
+  if (ed->marks)
     {
-      int marks, pos;
+      int marks;
       mark **mps;
-      pos = cp->edit_ctr;
-      mps = cp->marks[pos];
-      marks = cp->mark_ctr[pos];
+      mps = ed->marks;
+      marks = ed->mark_ctr;
       if (mps)
 	{
 	  mark *mp;
@@ -146,7 +140,7 @@ static mark *find_mark_from_id(int id, chan_info **cps, int pos)
 	for (j = 0; j<(sp->nchans); j++)
 	  if ((cp = ((chan_info *)(sp->chans[j]))))
 	    {
-	      if (pos < cp->marks_size) /* pos can be -1 */
+	      if (pos < cp->edit_size) /* pos can be -1 */
 		{
 		  int old_pos;
 		  mark *mp;
@@ -304,7 +298,7 @@ static mark *hit_triangle_1(chan_info *cp, mark *mp, void *m)
 
 mark *hit_triangle(chan_info *cp, int x, int y)
 {
-  if (cp->marks)
+  if (cp->edits[cp->edit_ctr]->marks)
     {
       axis_info *ap;
       ap = cp->axis;
@@ -414,11 +408,9 @@ static int compare_mark_samps(const void *mp1, const void *mp2)
 
 static void sort_marks(chan_info *cp)
 {
-  mark **mps;
-  int ed;
-  ed = cp->edit_ctr;
-  mps = cp->marks[ed];
-  qsort((void *)mps, cp->mark_ctr[ed] + 1, sizeof(mark *), compare_mark_samps);
+  ed_list *ed;
+  ed = cp->edits[cp->edit_ctr];
+  qsort((void *)(ed->marks), ed->mark_ctr + 1, sizeof(mark *), compare_mark_samps);
 }
 
 
@@ -462,39 +454,29 @@ static void run_mark_hook(chan_info *cp, int id, mark_hook_reason_t reason)
   run_watchers();
 }
 
-static void allocate_marks(chan_info *cp, int edit_ctr)
-{
-  int i;
-  cp->marks_size = edit_ctr + 16;
-  cp->marks = (mark ***)CALLOC(cp->marks_size, sizeof(mark **));
-  cp->mark_size = (int *)CALLOC(cp->marks_size, sizeof(int));
-  cp->mark_ctr = (int *)CALLOC(cp->marks_size, sizeof(int));
-  for (i = 0; i < cp->marks_size; i++) cp->mark_ctr[i] = -1;
-}
-
-#define MARKS_ALLOC_SIZE 16
+#define MARKS_ALLOC_SIZE 4
 
 mark *add_mark(off_t samp, const char *name, chan_info *cp)
 {
-  int i, ed, med;
+  int i, med;
   mark **mps;
-  if (!(cp->marks)) allocate_marks(cp, cp->edit_ctr);
-  /* our current mark list is cp->edit_ctr (it starts at 0 -- see snd-chn.c and snd-edits.c) */
-  ed = cp->edit_ctr;
-  cp->mark_ctr[ed]++;
-  if (cp->mark_ctr[ed] >= cp->mark_size[ed])
+  ed_list *ed;
+  ed = cp->edits[cp->edit_ctr];
+  if (!(ed->marks))
     {
-      cp->mark_size[ed] += MARKS_ALLOC_SIZE;
-      if (!cp->marks[ed]) 
-	cp->marks[ed] = (mark **)CALLOC(cp->mark_size[ed], sizeof(mark *));
-      else 
-	{
-	  cp->marks[ed] = (mark **)REALLOC(cp->marks[ed], cp->mark_size[ed] * sizeof(mark *));
-	  for (i = cp->mark_size[ed] - MARKS_ALLOC_SIZE; i < cp->mark_size[ed]; i++) cp->marks[ed][i] = NULL;
-	}
+      ed->mark_size = MARKS_ALLOC_SIZE;
+      ed->mark_ctr = -1;
+      ed->marks = (mark **)CALLOC(MARKS_ALLOC_SIZE, sizeof(mark *));
     }
-  mps = cp->marks[ed];
-  med = cp->mark_ctr[ed];
+  ed->mark_ctr++;
+  if (ed->mark_ctr >= ed->mark_size)
+    {
+      ed->mark_size += MARKS_ALLOC_SIZE;
+      ed->marks = (mark **)REALLOC(ed->marks, ed->mark_size * sizeof(mark *));
+      for (i = ed->mark_size - MARKS_ALLOC_SIZE; i < ed->mark_size; i++) ed->marks[i] = NULL;
+    }
+  mps = ed->marks;
+  med = ed->mark_ctr;
   if (med == 0)
     {
       if (mps[0]) free_mark(mps[0]);
@@ -529,38 +511,42 @@ mark *add_mark(off_t samp, const char *name, chan_info *cp)
 
 bool delete_mark_samp(off_t samp, chan_info *cp)
 {
-  if ((cp) && (cp->marks))
+  if (cp)
     {
-      int i, ed;
-      mark **mps;
-      ed = cp->edit_ctr;
-      mps = cp->marks[ed];
-      if (mps)
+      ed_list *ed;
+      ed = cp->edits[cp->edit_ctr];
+      if (ed->marks)
 	{
-	  int edm;
-	  edm = cp->mark_ctr[ed];
-	  for (i = 0; i <= edm; i++)
+	  int i;
+	  mark **mps;
+	  mps = ed->marks;
+	  if (mps)
 	    {
-	      mark *mp;
-	      mp = mps[i];
-	      if (mp->samp == samp)
+	      int edm;
+	      edm = ed->mark_ctr;
+	      for (i = 0; i <= edm; i++)
 		{
-		  axis_info *ap;
-		  int id = -1;
-		  ap = cp->axis;
-		  if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp, ap, mp); 
-		  id = mp->id;
-		  free_mark(mp);
-		  mps[i] = NULL;
-		  if (i < edm)
+		  mark *mp;
+		  mp = mps[i];
+		  if (mp->samp == samp)
 		    {
-		      int j;
-		      for (j = i; j < edm; j++) mps[j] = mps[j + 1];
-		      mps[edm] = NULL;
+		      axis_info *ap;
+		      int id = -1;
+		      ap = cp->axis;
+		      if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp, ap, mp); 
+		      id = mp->id;
+		      free_mark(mp);
+		      mps[i] = NULL;
+		      if (i < edm)
+			{
+			  int j;
+			  for (j = i; j < edm; j++) mps[j] = mps[j + 1];
+			  mps[edm] = NULL;
+			}
+		      ed->mark_ctr--;
+		      run_mark_hook(cp, id, MARK_DELETE);
+		      return(true);
 		    }
-		  cp->mark_ctr[ed]--;
-		  run_mark_hook(cp, id, MARK_DELETE);
-		  return(true);
 		}
 	    }
 	}
@@ -570,36 +556,39 @@ bool delete_mark_samp(off_t samp, chan_info *cp)
 
 static bool delete_mark_id(int id, chan_info *cp)
 {
-  if ((cp) && (cp->marks))
+  if (cp)
     {
-      int ed;
-      mark **mps;
-      ed = cp->edit_ctr;
-      mps = cp->marks[ed];
-      if (mps)
+      ed_list *ed;
+      ed = cp->edits[cp->edit_ctr];
+      if (ed->marks)
 	{
-	  int i, edm;
-	  edm = cp->mark_ctr[ed];
-	  for (i = 0; i <= edm; i++)
+	  mark **mps;
+	  mps = ed->marks;
+	  if (mps)
 	    {
-	      mark *mp;
-	      mp = mps[i];
-	      if (mp->id == id)
+	      int i, edm;
+	      edm = ed->mark_ctr;
+	      for (i = 0; i <= edm; i++)
 		{
-		  axis_info *ap;
-		  ap = cp->axis;
-		  if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp, ap, mp); 
-		  free_mark(mp);
-		  mps[i] = NULL;
-		  if (i < edm)
+		  mark *mp;
+		  mp = mps[i];
+		  if (mp->id == id)
 		    {
-		      int j;
-		      for (j = i; j < edm; j++) mps[j] = mps[j + 1];
-		      mps[edm] = NULL;
+		      axis_info *ap;
+		      ap = cp->axis;
+		      if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp, ap, mp); 
+		      free_mark(mp);
+		      mps[i] = NULL;
+		      if (i < edm)
+			{
+			  int j;
+			  for (j = i; j < edm; j++) mps[j] = mps[j + 1];
+			  mps[edm] = NULL;
+			}
+		      ed->mark_ctr--;
+		      run_mark_hook(cp, id, MARK_DELETE);
+		      return(true);
 		    }
-		  cp->mark_ctr[ed]--;
-		  run_mark_hook(cp, id, MARK_DELETE);
-		  return(true);
 		}
 	    }
 	}
@@ -609,121 +598,54 @@ static bool delete_mark_id(int id, chan_info *cp)
 
 static void delete_marks(chan_info *cp)
 {
-  if ((cp) && (cp->marks))
+  if (cp)
     {
-      int i, ed;
-      mark **mps;
-      ed = cp->edit_ctr;
-      mps = cp->marks[ed];
-      if (mps)
+      ed_list *ed;
+      ed = cp->edits[cp->edit_ctr];
+      if (ed->marks)
 	{
-	  for (i = 0; i < cp->mark_size[ed]; i++)
-	    {
-	      mark *mp;
-	      mp = mps[i];
-	      if (mp) 
-		{
-		  axis_info *ap;
-		  ap = cp->axis;
-		  if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp, ap, mp); 
-		  free_mark(mp);
-		  mps[i] = NULL;
-		}
-	    }
-	  cp->mark_ctr[ed] = -1;
-	  run_mark_hook(cp, -1, MARKS_DELETE);
-	}
-    }
-}
-
-void free_mark_list(chan_info *cp, int ignore)
-{
-  if (cp->marks)
-    {
-      int i;
-      for (i = 0; i < cp->marks_size; i++) 
-	{
-	  if (i != ignore)
-	    {
-	      mark **mps;
-	      mps = cp->marks[i];
-	      if (mps)
-		{
-		  int j;
-		  for (j = 0; j < cp->mark_size[i]; j++)
-		    {
-		      mark *mp;
-		      mp = mps[j];
-		      if (mp) free_mark(mp);
-		      mps[j] = NULL;
-		    }
-		  FREE(mps);
-		}
-	    }
-	}
-      FREE(cp->marks);
-      cp->marks = NULL;
-      cp->marks_size = 0;
-      FREE(cp->mark_ctr);
-      cp->mark_ctr = NULL;
-      FREE(cp->mark_size);
-      cp->mark_size = NULL;
-    }
-}
-
-void backup_mark_list(chan_info *cp, int cur)
-{
-  if (cp->marks)
-    {
-      release_pending_marks(cp, cur - 1); /* frees mark list at cur - 1, but not the top pointer */
-      if (cp->marks[cur - 1]) FREE(cp->marks[cur - 1]); /* not freed by release_pending_marks */
-      cp->marks[cur - 1] = cp->marks[cur];
-      cp->marks[cur] = NULL;
-      cp->mark_ctr[cur - 1] = cp->mark_ctr[cur];
-      cp->mark_ctr[cur] = -1;
-      cp->mark_size[cur - 1] = cp->mark_size[cur]; /* oops!! this was omitted until 19-Dec-06 */
-      cp->mark_size[cur] = 0;
-      /* if mark size is not reset, a large as-one-edit backup involving more than 16 marks can ripple
-       *   to a state where the current marks entry thinks ctr > size!  This causes a subsequent ripple_marks
-       *   or free_mark_list to run off the end of the marks array freeing random pointers!
-       */
-#if MUS_DEBUGGING
-      if (cp->mark_size[cur - 1] < cp->mark_ctr[cur - 1]) 
-	fprintf(stderr, "mark array size: %d, ctr: %d\n", cp->mark_size[cur - 1], cp->mark_ctr[cur - 1]);
-#endif
-    }
-}
-
-void collapse_marks(snd_info *sp)
-{
-  /* in all channels, move current edit_ctr mark list to 0, freeing all the rest */
-  int i;
-  for (i = 0; i < sp->nchans; i++)
-    {
-      chan_info *cp;
-      cp = sp->chans[i];
-      if ((cp) && (cp->marks))
-	{
-	  int ed;
+	  int i;
 	  mark **mps;
-	  ed = cp->edit_ctr;
-	  mps = cp->marks[ed];
-	  /* this is the one to save */
+	  mps = ed->marks;
 	  if (mps)
 	    {
-	      int len, size;
-	      len = cp->mark_ctr[ed];
-	      size = cp->mark_size[ed];
-	      free_mark_list(cp, ed);
-	      allocate_marks(cp, 0);
-	      cp->marks[0] = mps;
-	      cp->mark_ctr[0] = len;
-	      cp->mark_size[0] = size;
+	      for (i = 0; i < ed->mark_size; i++)
+		{
+		  mark *mp;
+		  mp = mps[i];
+		  if (mp) 
+		    {
+		      axis_info *ap;
+		      ap = cp->axis;
+		      if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp, ap, mp); 
+		      free_mark(mp);
+		      mps[i] = NULL;
+		    }
+		}
+	      ed->mark_ctr = -1;
+	      run_mark_hook(cp, -1, MARKS_DELETE);
 	    }
 	}
     }
 }
 
+void free_mark_list(ed_list *ed)
+{
+  if (ed->marks)
+    {
+      int j;
+      for (j = 0; j < ed->mark_size; j++)
+	{
+	  mark *mp;
+	  mp = ed->marks[j];
+	  if (mp) free_mark(mp);
+	  ed->marks[j] = NULL;
+	}
+      FREE(ed->marks);
+      ed->marks = NULL;
+      ed->mark_size = 0;
+    }
+}
 
 /* save and restore across update-sound */
 
@@ -752,21 +674,21 @@ void *sound_store_marks(snd_info *sp)
     {
       chan_info *cp;
       cp = sp->chans[i];
-      if ((cp) && (cp->marks))
+      if (cp)
 	{
-	  int ed;
-	  mark **mps;
-	  ed = cp->edit_ctr;
-	  mps = cp->marks[ed];
-	  if ((mps) && (cp->mark_ctr[ed] >= 0))
+	  ed_list *ed;
+	  ed = cp->edits[cp->edit_ctr];
+	  if ((ed) && (ed->marks) && (ed->mark_ctr >= 0))
 	    {
+	      mark **mps;
 	      int j;
+	      mps = ed->marks;
 	      res[i] = (mark_info *)CALLOC(1, sizeof(mark_info));
-	      res[i]->marks = (mark **)CALLOC(cp->mark_size[ed], sizeof(mark *)); 
-	      for (j = 0; j <= cp->mark_ctr[ed]; j++)
-		res[i]->marks[j] = copy_mark(mps[j]);
-	      res[i]->ctr = cp->mark_ctr[ed];
-	      res[i]->size = cp->mark_size[ed];
+	      res[i]->marks = (mark **)CALLOC(ed->mark_size, sizeof(mark *)); 
+	      for (j = 0; j <= ed->mark_ctr; j++)
+		res[i]->marks[j] = copy_mark(mps[j]); /* TODO: can't we just grab the old array here, clearing the old reference? */
+	      res[i]->ctr = ed->mark_ctr;
+	      res[i]->size = ed->mark_size;
 	    }
 	}
     }
@@ -787,12 +709,16 @@ void sound_restore_marks(snd_info *sp, void *mrk)
 	{
 	  if (marks[i])
 	    {
+	      ed_list *ed;
 	      chan_info *cp;
 	      cp = sp->chans[i];
-	      allocate_marks(cp, 0);
-	      cp->marks[0] = marks[i]->marks;
-	      cp->mark_ctr[0] = marks[i]->ctr;
-	      cp->mark_size[0] = marks[i]->size;
+	      ed = cp->edits[0];
+	      if (ed)
+		{
+		  ed->marks = marks[i]->marks;
+		  ed->mark_ctr = marks[i]->ctr;
+		  ed->mark_size = marks[i]->size;
+		}
 	    }
 	}
       for (i = 0; i < mrks->size; i++)
@@ -809,7 +735,7 @@ static mark *find_nth_mark(chan_info *cp, int count)
   int i, c;
   off_t samp;
   mark *mp = NULL;
-  if ((!cp) || (!cp->marks)) return(NULL);
+  if ((!cp) || (!cp->edits[cp->edit_ctr]->marks)) return(NULL);
   if (count > 0) c = count; else c = -count;
   samp = CURSOR(cp);
   for (i = 0; i < c; i++)
@@ -825,7 +751,7 @@ static mark *find_nth_mark(chan_info *cp, int count)
 bool goto_mark(chan_info *cp, int count)
 {
   mark *mp;
-  if ((!cp) || (!cp->marks)) return(false);
+  if ((!cp) || (!cp->edits[cp->edit_ctr]->marks)) return(false);
   mp = find_nth_mark(cp, count);
   if (!mp) return(false);
   cursor_moveto(cp, mp->samp);
@@ -884,33 +810,11 @@ static mark *display_channel_marks_1(chan_info *cp, mark *mp, void *m)
 
 void display_channel_marks(chan_info *cp)
 {
-  if ((cp->marks) && (cp->show_marks))
+  if ((cp->edits[cp->edit_ctr]->marks) && (cp->show_marks))
     {
       dpy_last ls;
       ls.last_samp = -1;
       map_over_marks(cp, display_channel_marks_1, (void *)(&ls), READ_FORWARD);
-    }
-}
-
-void release_pending_marks(chan_info *cp, int edit_ctr)
-{
-  /* free the mark list at edit_ctr */
-  if ((cp) && (cp->marks))
-    {
-      mark **mps;
-      mps = cp->marks[edit_ctr];
-      if (mps)
-	{
-	  int j;
-	  for (j = 0; j < cp->mark_size[edit_ctr]; j++) /* was <= cp->mark_ctr[edit_ctr] */
-	    {
-	      mark *mp;
-	      mp = mps[j];
-	      if (mp) free_mark(mp);
-	      mps[j] = NULL;
-	    }
-	  cp->mark_ctr[edit_ctr] = -1;
-	}
     }
 }
 
@@ -920,58 +824,32 @@ void ripple_marks(chan_info *cp, off_t beg, off_t change)
   /* this is called after the tree has been pushed forward, so edit_ctr is ahead of us */
   /* but we don't do anything if no marks */
 
-  if ((cp) && (cp->marks))
+  if ((cp) && (cp->edit_ctr > 0))
     {
-      int old_m, new_m, i;
-      mark **mps;
-      if (cp->edit_ctr == 0) return;
-      old_m = cp->edit_ctr - 1;
-      new_m = cp->edit_ctr;
-      if (new_m >= cp->marks_size) /* groan -- we have to realloc the base array of array of pointers! */
+      ed_list *old_ed, *new_ed;
+      new_ed = cp->edits[cp->edit_ctr];
+      old_ed = cp->edits[cp->edit_ctr - 1];
+      
+      if (new_ed->marks)
 	{
-	  int old_size;
-	  old_size = cp->marks_size;
-	  cp->marks_size += MARKS_ALLOC_SIZE;
-	  if (new_m >= cp->marks_size) cp->marks_size = new_m + MARKS_ALLOC_SIZE;
-	  cp->marks = (mark ***)REALLOC(cp->marks, cp->marks_size * sizeof(mark **));
-	  cp->mark_size = (int *)REALLOC(cp->mark_size, cp->marks_size * sizeof(int));
-	  cp->mark_ctr = (int *)REALLOC(cp->mark_ctr, cp->marks_size * sizeof(int));
-	  for (i = old_size; i < cp->marks_size; i++) 
-	    {
-	      cp->mark_ctr[i] = -1;
-	      cp->mark_size[i] = 0;
-	      cp->marks[i] = NULL;
-	    }
-	}
-
-      /* release current */
-      if (cp->marks[new_m])
-	{
-	  mps = cp->marks[new_m];
-	  for (i = 0; i < cp->mark_size[new_m]; i++)
-	    if (mps[i])
-	      {
-		free_mark(mps[i]);
-		mps[i] = NULL;
-	      }
-	  FREE(mps);
-	  cp->marks[new_m] = NULL;
+	  /* release current */
+	  free_mark_list(new_ed);
 	}
 
       /* copy old with position change */
-      cp->mark_ctr[new_m] = cp->mark_ctr[old_m];
-      cp->mark_size[new_m] = cp->mark_size[old_m];
-
-      if (cp->mark_size[new_m] > 0)
+      new_ed->mark_ctr = old_ed->mark_ctr;
+      new_ed->mark_size = old_ed->mark_size;
+      if (new_ed->mark_size > 0)
 	{
-	  cp->marks[new_m] = (mark **)CALLOC(cp->mark_size[new_m], sizeof(mark *));
-	  if (cp->mark_ctr[new_m] >= 0)
+	  new_ed->marks = (mark **)CALLOC(new_ed->mark_size, sizeof(mark *));
+	  if (new_ed->mark_ctr >= 0)
 	    {
-	      mark **mpo;
+	      int i;
+	      mark **mps, **mpo;
 	      mark *mp;
-	      mps = cp->marks[new_m];
-	      mpo = cp->marks[old_m];
-	      for (i = 0; i <= cp->mark_ctr[new_m]; i++)
+	      mps = new_ed->marks;
+	      mpo = old_ed->marks;
+	      for (i = 0; i <= new_ed->mark_ctr; i++)
 		mps[i] = copy_mark(mpo[i]);
 	      if (change < 0)
 		{
@@ -979,7 +857,7 @@ void ripple_marks(chan_info *cp, off_t beg, off_t change)
 		  /* if (change < 0) and any marks are between beg and beg+change, they must be deleted */
 		  end = beg - change - 1;
 		  i = 0;
-		  while (i <= cp->mark_ctr[new_m])
+		  while (i <= new_ed->mark_ctr)
 		    {
 		      mp = mps[i];
 		      if ((mp->samp >= beg) && (mp->samp <= end)) /* was mp->samp > beg, ditto end, beg can = end */
@@ -995,7 +873,7 @@ void ripple_marks(chan_info *cp, off_t beg, off_t change)
 	      else
 		{
 		  if (change > 0)
-		    for (i = 0; i <= cp->mark_ctr[new_m]; i++)
+		    for (i = 0; i <= new_ed->mark_ctr; i++)
 		      {
 			mp = mps[i];
 			if (mp->samp > beg) mp->samp += change;
@@ -1010,7 +888,9 @@ bool mark_define_region(chan_info *cp, int count)
 {
   if ((cp) && (max_regions(ss) > 0))
     {
-      if (cp->marks)
+      ed_list *ed;
+      ed = cp->edits[cp->edit_ctr];
+      if (ed->marks)
 	{
 	  off_t beg;
 	  mark *mp;
@@ -1058,167 +938,156 @@ static mark *reverse_mark_1(chan_info *cp, mark *mp, void *um)
 
 void reverse_marks(chan_info *cp, off_t beg, off_t dur) /* beg -1 for full sound */
 {
-  mark *m;
-  mark **mps;
-  int ed;
-  if (cp->marks == NULL) return;
-  ed = cp->edit_ctr;
-  mps = cp->marks[ed];
-  if (mps == NULL) return;
-  if (beg == -1)
+  ed_list *ed;
+  ed = cp->edits[cp->edit_ctr];
+  if (ed->marks)
     {
-      m = make_mark_1(CURRENT_SAMPLES(cp) - 1, NULL, 0, 0);
-      map_over_marks(cp, reverse_mark_1, (void *)m, READ_FORWARD);
-      free_mark(m);
-    }
-  else
-    {
-      off_t end;
-      int i, marks;
-      end = beg + dur - 1;
-      marks = cp->mark_ctr[ed];
-      for (i = 0; i <= marks; i++) 
+      mark *m;
+      mark **mps;
+      mps = ed->marks;
+      if (beg == -1)
 	{
-	  m = mps[i];
-	  if ((m->samp >= beg) && (m->samp <= end))
-	    m->samp = end - (m->samp - beg);
+	  m = make_mark_1(CURRENT_SAMPLES(cp) - 1, NULL, 0, 0);
+	  map_over_marks(cp, reverse_mark_1, (void *)m, READ_FORWARD);
+	  free_mark(m);
 	}
+      else
+	{
+	  off_t end;
+	  int i, marks;
+	  end = beg + dur - 1;
+	  marks = ed->mark_ctr;
+	  for (i = 0; i <= marks; i++) 
+	    {
+	      m = mps[i];
+	      if ((m->samp >= beg) && (m->samp <= end))
+		m->samp = end - (m->samp - beg);
+	    }
+	}
+      if (ed->mark_ctr >= 0)
+	qsort((void *)mps, ed->mark_ctr + 1, sizeof(mark *), compare_mark_samps);
     }
-  if (cp->mark_ctr[ed] >= 0)
-    qsort((void *)mps, cp->mark_ctr[ed] + 1, sizeof(mark *), compare_mark_samps);
 }
 
 void src_marks(chan_info *cp, Float ratio, off_t old_samps, off_t new_samps, off_t beg, bool over_selection)
 {
-  if (cp->marks)
+  ed_list *ed;
+  ed = cp->edits[cp->edit_ctr];
+  if ((ed->marks) && (ed->mark_ctr >= 0))
     {		
-      int i, marks, pos;
+      int i, marks;
       mark *m;
       mark **mps;
-      pos = cp->edit_ctr;
-      mps = cp->marks[pos];
-      marks = cp->mark_ctr[pos];
-      if ((mps) && (marks >= 0))
+      mps = ed->marks;
+      marks = ed->mark_ctr;
+      if (!over_selection)
 	{
-	  if (!over_selection)
+	  for (i = 0; i <= marks; i++) 
 	    {
-	      for (i = 0; i <= marks; i++) 
-		{
-		  m = mps[i];
-		  if (ratio > 0.0)
-		    m->samp = (off_t)(m->samp / ratio);
-		  else m->samp = (off_t)((old_samps - 1 - m->samp) / (-ratio)); /* ratio < 0 here */
-		}
+	      m = mps[i];
+	      if (ratio > 0.0)
+		m->samp = (off_t)(m->samp / ratio);
+	      else m->samp = (off_t)((old_samps - 1 - m->samp) / (-ratio)); /* ratio < 0 here */
 	    }
-	  else
-	    {
-	      off_t end;
-	      end = beg + old_samps - 1;
-	      for (i = 0; i <= marks; i++) 
-		{
-		  m = mps[i];
-		  if ((m->samp >= beg) && (m->samp <= end))
-		    {
-		      if (ratio > 0.0)
-			m->samp = beg + (off_t)((m->samp - beg) / ratio);
-		      else m->samp = beg + (off_t)((old_samps - 1 - (m->samp - beg)) / (-ratio));
-		    }
-		  else
-		    {
-		      if (m->samp > end)
-			m->samp += (new_samps - old_samps);
-		    }
-		}
-	    }
-	  if (ratio < 0.0) qsort((void *)mps, marks + 1, sizeof(mark *), compare_mark_samps);
 	}
+      else
+	{
+	  off_t end;
+	  end = beg + old_samps - 1;
+	  for (i = 0; i <= marks; i++) 
+	    {
+	      m = mps[i];
+	      if ((m->samp >= beg) && (m->samp <= end))
+		{
+		  if (ratio > 0.0)
+		    m->samp = beg + (off_t)((m->samp - beg) / ratio);
+		  else m->samp = beg + (off_t)((old_samps - 1 - (m->samp - beg)) / (-ratio));
+		}
+	      else
+		{
+		  if (m->samp > end)
+		    m->samp += (new_samps - old_samps);
+		}
+	    }
+	}
+      if (ratio < 0.0) qsort((void *)mps, marks + 1, sizeof(mark *), compare_mark_samps);
     }
 }
 
 void reset_marks(chan_info *cp, int cur_marks, off_t *samps, off_t end, off_t extension, bool over_selection)
 {
-  if (cp->marks)
+  ed_list *ed;
+  ed = cp->edits[cp->edit_ctr];
+  if ((ed->marks) && (ed->mark_ctr >= 0))
     {		
-      int marks, pos;
+      int i, marks;
+      mark *m;
       mark **mps;
-      pos = cp->edit_ctr;
-      mps = cp->marks[pos];
-      marks = cp->mark_ctr[pos];
-      if ((mps) && (marks >= 0))
+      mps = ed->marks;
+      marks = ed->mark_ctr;
+      if (over_selection)
+	for (i = 0; i <= marks; i++) 
+	  {
+	    m = mps[i];
+	    if (m->samp > end) m->samp += extension;
+	  }
+      for (i = 0; (i <= marks) && (i < cur_marks); i++) 
 	{
-	  int i;
-	  mark *m;
-	  if (over_selection)
-	    for (i = 0; i <= marks; i++) 
-	      {
-		m = mps[i];
-		if (m->samp > end) m->samp += extension;
-	      }
-	  for (i = 0; (i <= marks) && (i < cur_marks); i++) 
-	    {
-	      m = mps[i];
-	      if (samps[i] >= 0) m->samp = samps[i];
-	    }
-	  qsort((void *)mps, marks + 1, sizeof(mark *), compare_mark_samps);
+	  m = mps[i];
+	  if (samps[i] >= 0) m->samp = samps[i];
 	}
+      qsort((void *)mps, marks + 1, sizeof(mark *), compare_mark_samps);
     }
 }
 
 void ripple_trailing_marks(chan_info *cp, off_t beg, off_t old_len, off_t new_len)
 {
-  if (cp->marks)
+  ed_list *ed;
+  ed = cp->edits[cp->edit_ctr];
+  if ((ed->marks) && (ed->mark_ctr >= 0))
     {		
-      int marks, pos;
+      int i, marks;
       mark **mps;
       ripple_marks(cp, 0, 0);
-      pos = cp->edit_ctr;
-      mps = cp->marks[pos];
-      marks = cp->mark_ctr[pos];
-      if ((mps) && (marks >= 0))
+      mps = ed->marks;
+      marks = ed->mark_ctr;
+      for (i = 0; i <= marks; i++) 
 	{
-	  int i;
-	  for (i = 0; i <= marks; i++) 
-	    {
-	      mark *m;
-	      m = mps[i];
-	      if (m->samp > (beg + old_len)) m->samp += (new_len - old_len);
-	    }
+	  mark *m;
+	  m = mps[i];
+	  if (m->samp > (beg + old_len)) m->samp += (new_len - old_len);
 	}
     }
 }
 
 void swap_marks(chan_info *cp0, chan_info *cp1)
 {
-  if ((cp0->marks) || (cp1->marks))
+  ed_list *ed0, *ed1;
+  ed0 = cp0->edits[cp0->edit_ctr];
+  ed1 = cp1->edits[cp1->edit_ctr];
+  if ((ed0->marks) || (ed1->marks))
     {
       mark **mps0 = NULL, **mps1 = NULL;
       int ctr0 = -1, ctr1 = -1;
       int size0 = 0, size1 = 0;
-      int pos0, pos1;
-      pos0 = cp0->edit_ctr;
-      pos1 = cp1->edit_ctr;
-      if (cp0->marks)
+      if (ed0->marks)
 	{
-	  mps0 = cp0->marks[pos0];
-	  ctr0 = cp0->mark_ctr[pos0];
-	  size0 = cp0->mark_size[pos0];
+	  mps0 = ed0->marks;
+	  ctr0 = ed0->mark_ctr;
+	  size0 = ed0->mark_size;
 	}
-      if (cp1->marks)
+      if (ed1->marks)
 	{
-	  mps1 = cp1->marks[pos1];
-	  ctr1 = cp1->mark_ctr[pos1];
-	  size1 = cp1->mark_size[pos1];
+	  mps1 = ed1->marks;
+	  ctr1 = ed1->mark_ctr;
+	  size1 = ed1->mark_size;
 	}
-      if ((cp0->marks) && (cp1->marks == NULL))
-	allocate_marks(cp1, pos1);
-      if ((cp1->marks) && (cp0->marks == NULL))
-	allocate_marks(cp0, pos0);
-      cp0->marks[pos0] = mps1;
-      cp0->mark_ctr[pos0] = ctr1;
-      cp0->mark_size[pos0] = size1;
-      cp1->marks[pos1] = mps0;
-      cp1->mark_ctr[pos1] = ctr0;
-      cp1->mark_size[pos1] = size0;
+      ed0->marks = mps1;
+      ed0->mark_ctr = ctr1;
+      ed0->mark_size = size1;
+      ed1->marks = mps0;
+      ed1->mark_ctr = ctr0;
+      ed1->mark_size = size0;
     }
 }
 
@@ -1331,8 +1200,9 @@ static void finalize_md_context(int size)
 
 mark *hit_mark(chan_info *cp, int x, int y, int key_state)
 {
-  mark *mp = NULL;
-  if (cp->marks)
+  ed_list *ed;
+  ed = cp->edits[cp->edit_ctr];
+  if ((ed->marks) && (ed->mark_ctr >= 0))
     {
       axis_info *ap;
       ap = cp->axis;
@@ -1340,6 +1210,7 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
       if ((y >= ap->y_axis_y1) && 
 	  (y <= (ap->y_axis_y1 + mark_tag_height(ss) + 10)))               /*  + 10 for named marks -- checked again later */
 	{
+	  mark *mp;
 	  mdata *md;
 	  md = (mdata *)CALLOC(1, sizeof(mdata));
 	  md->x = x;
@@ -1388,9 +1259,10 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
 		  else initialize_md_context(1, &cp);
 		}
 	    }
+	  return(mp);
 	}
     }
-  return(mp);
+  return(NULL);
 }
 
 static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_sample, int which);
@@ -1962,10 +1834,8 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
   ASSERT_CHANNEL(S_find_mark, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mark);
   if (!cp) return(XEN_FALSE);
-  if (cp->marks == NULL) 
-    return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_find_mark, 4);
-  mps = cp->marks[pos];
+  mps = cp->edits[pos]->marks;
   if (mps)
     {
       int i;
@@ -1976,7 +1846,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
       else samp = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);
       if (name)
 	{
-	  for (i = 0; i <= cp->mark_ctr[pos]; i++) 
+	  for (i = 0; i <= cp->edits[pos]->mark_ctr; i++) 
 	    if ((mps[i]) && 
 		(mps[i]->name) && 
 		(strcmp(name, mps[i]->name) == 0))
@@ -1984,7 +1854,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
 	}
       else
 	{
-	  for (i = 0; i <= cp->mark_ctr[pos]; i++)
+	  for (i = 0; i <= cp->edits[pos]->mark_ctr; i++)
 	    if ((mps[i]) && 
 		(mps[i]->samp == samp)) 
 	      return(C_TO_XEN_INT(mps[i]->id));
@@ -2121,12 +1991,14 @@ static XEN g_set_mark_tag_height(XEN val)
 static int *channel_marks(chan_info *cp, int pos)
 {
   int *ids = NULL;
-  if (cp->marks)
+  ed_list *ed;
+  ed = cp->edits[pos];
+  if (ed->marks)
     {
       mark **mps;
       int marks;
-      mps = cp->marks[pos];
-      marks = cp->mark_ctr[pos];
+      mps = ed->marks;
+      marks = ed->mark_ctr;
       if (mps)
 	{
 	  int i;
@@ -2223,7 +2095,9 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 
 static bool find_any_marks(chan_info *cp)
 {
-  return((cp->marks) && (cp->mark_ctr[cp->edit_ctr] >= 0)); /* initialized to -1 -- 0 is first mark */
+  ed_list *ed;
+  ed = cp->edits[cp->edit_ctr];
+  return((ed->marks) && (ed->mark_ctr >= 0)); /* initialized to -1 -- 0 is first mark */
 }
 
 typedef struct {

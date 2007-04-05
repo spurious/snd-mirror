@@ -169,7 +169,7 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 	       * changed dramatically, we need to do it all.  fmin/fmax need to be set as we copy.
 	       * as-one-edit can mess this up...
 	       */
-	      old_samples = cp->samples[pos - 1];
+	      old_samples = cp->edits[pos - 1]->samples;
 	      if (snd_abs_off_t(samples - old_samples) < (samples / 2))
 		{
 		  int start_bin, end_bin, old_end_bin;
@@ -1024,8 +1024,8 @@ void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
       env_info *new_ep;
       new_ep = cp->amp_envs[cp->edit_ctr];
       if (new_ep) new_ep = free_amp_env(cp, cp->edit_ctr);
-      old_samps = cp->samples[pos];
-      cur_samps = cp->samples[cp->edit_ctr];
+      old_samps = cp->edits[pos]->samples;
+      cur_samps = CURRENT_SAMPLES(cp);
       val = (int)(log((double)(cur_samps)));
       if (val > 20) val = 20;
       val = snd_int_pow2(val);
@@ -1919,7 +1919,7 @@ static bool apply_controls(apply_state *ap)
 		  for (i = 0; i < sp->nchans; i++)
 		    {
 		      cp = sp->chans[i];
-		      if (cp->marks)
+		      if (cp->edits[cp->edit_ctr]->marks)
 			{
 			  Float ratio;
 			  if (!(sp->expand_control_p))
@@ -2411,7 +2411,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
 	      /* reset x axis bounds */
 	      int i;
 	      for (i = 0; i < sp->nchans; i++)
-		set_x_axis_x0x1(sp->chans[i], 0.0, (double)(sp->chans[i]->samples[sp->chans[i]->edit_ctr]) / (double)ival);
+		set_x_axis_x0x1(sp->chans[i], 0.0, (double)(CURRENT_SAMPLES(sp->chans[i])) / (double)ival);
 	    }
 	}
       break;
@@ -4727,7 +4727,7 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 	    return(g_env_info_to_vcts(ep, ep->amp_env_size));
 	  /* force amp env to completion */
 	  stop_amp_env(cp);
-	  es = make_env_state(cp, cp->samples[pos]);
+	  es = make_env_state(cp, cp->edits[pos]->samples);
 	  if (es)
 	    {
 	      while (!(tick_amp_env(cp, es)));
@@ -4816,7 +4816,7 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
       cp = sp->chans[chn];
       cp->edit_ctr = 0;
       cp->active = true;
-      es = make_env_state(cp, cp->samples[0]);
+      es = make_env_state(cp, cp->edits[0]->samples);
       if (es)
 	{
 	  if (XEN_PROCEDURE_P(done_func))
