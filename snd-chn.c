@@ -556,6 +556,15 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
   double xmax, x0, x1, dur, gdur;
   char *label = NULL, *hook_label = NULL;
   bool ymin_set = false, ymax_set = false;
+
+  cp->edit_size = INITIAL_EDIT_SIZE;
+  cp->edits = (ed_list **)CALLOC(cp->edit_size, sizeof(ed_list *));
+  cp->edit_ctr = 0;
+  cp->edits[0] = initial_ed_list(0, frames - 1);
+  cp->sound_size = INITIAL_EDIT_SIZE;
+  cp->sound_ctr = 0;
+  cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
+
   x0 = 0.0;
   x1 = 0.1;
   y0 = -1.0;
@@ -569,13 +578,6 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
     default:                   label = _("time");            break;
     }
   dur = (double)frames / (double)(srate);
-  cp->edit_size = INITIAL_EDIT_SIZE;
-  cp->edit_ctr = 0;
-  allocate_ed_list(cp);
-  cp->amp_envs = (env_info **)CALLOC(cp->edit_size, sizeof(env_info *));
-  cp->sound_size = INITIAL_EDIT_SIZE;
-  cp->sound_ctr = 0;
-  cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
 
   if ((cp->hookable == WITH_HOOK) && 
       (graphed == WITH_GRAPH) &&    
@@ -680,11 +682,12 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
   off_t frames;
   snd_info *sp;
   file_info *chdr, *hdr;
+
   sp = cp->sound;
   hdr = sp->hdr;
   frames = hdr->samples / hdr->chans;
   add_channel_data_1(cp, hdr->srate, frames, graphed);
-  cp->edits[0] = initial_ed_list(0, frames - 1);
+
   chdr = copy_header(filename, hdr); /* need one separate from snd_info case */
   chn = cp->chan;
   if (chdr)
@@ -705,7 +708,7 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
 	}
     }
   if ((CURRENT_SAMPLES(cp) > AMP_ENV_CUTOFF) &&
-      (cp->amp_envs[0] == NULL) &&                     /* perhaps created in initial-graph-hook by read-peak-env-info-file */
+      (cp->edits[0]->peak_env == NULL) &&              /* perhaps created in initial-graph-hook by read-peak-env-info-file */
       (cp->sound->short_filename != NULL))             /* region browser jumped in too soon during autotest */
     start_amp_env(cp);
 }
@@ -1321,11 +1324,10 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
                                              /* we're trying to view a large portion of the (large) sound */
 	      chan_context *cgx;
 	      cgx = cp->cgx;
-	      if ((cgx->amp_env_in_progress) &&
-		  (cp->amp_envs))            /* updated sound but bg process not killed yet?? */
-		{                            /* but the amp-env background process is still working on it */
+	      if (cgx->amp_env_in_progress)
+		{                            /* is peak-env background process is still working on it */
 		  env_info *ep;
-		  ep = cp->amp_envs[cp->edit_ctr];
+		  ep = cp->edits[cp->edit_ctr]->peak_env;
 		  if ((ep) && samples_per_pixel >= (Float)(ep->samps_per_bin))
 		    {                        /* and it will be useful when it finishes */
 		      cp->waiting_to_make_graph = true;
@@ -1458,7 +1460,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 	  data_size = pixels + 1;
 	  data = (Float *)CALLOC(data_size, sizeof(Float));
 	  data1 = (Float *)CALLOC(data_size, sizeof(Float));
-	  ep = cp->amp_envs[edit_pos];
+	  ep = cp->edits[edit_pos]->peak_env;
 	  step = samples_per_pixel / (Float)(ep->samps_per_bin);
 	  xf = (double)(losamp) / (double)(ep->samps_per_bin);
 	  j = 0;

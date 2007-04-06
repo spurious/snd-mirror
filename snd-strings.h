@@ -353,6 +353,7 @@
 #define S_mix_selection                 "mix-selection"
 #define S_mix_speed                     "mix-speed"
 #define S_mix_speed_style               "mix-speed-style"
+#define S_mix_sync                      "mix-sync"
 #define S_mix_tag_height                "mix-tag-height"
 #define S_mix_tag_position              "mix-tag-position"
 #define S_mix_tag_width                 "mix-tag-width"

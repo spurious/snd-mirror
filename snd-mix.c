@@ -612,8 +612,8 @@ static bool mix_input_amp_env_usable(mix_info *md, Float samples_per_pixel)
 	  chan_info *cp;
 	  env_info *ep = NULL;
 	  cp = sp->chans[i];
-	  if ((cp == NULL) || (cp->amp_envs == NULL)) return(false);
-	  ep = cp->amp_envs[0]; /* mixed-in-sound cp->edit_ctr always 0 */
+	  if (!cp) return(false);
+	  ep = cp->edits[0]->peak_env; /* mixed-in-sound cp->edit_ctr always 0 */
 	  if ((ep == NULL) && 
 	      (CURRENT_SAMPLES(cp) > AMP_ENV_CUTOFF))
 	    ep = make_mix_input_amp_env(cp);
@@ -945,7 +945,7 @@ static mix_fd *init_mix_input_amp_env_read(mix_info *md, bool hi)
 	  ep = env_on_env(cs->as_built->amp_envs[i], cp);
 	  mf->eps[i] = ep; /* save for GC */
 	}
-      else ep = cp->amp_envs[0]; /* mixed-in-sound cp->edit_ctr always 0 */
+      else ep = cp->edits[0]->peak_env; /* mixed-in-sound cp->edit_ctr always 0 */
       mf->samps_per_bin = ep->samps_per_bin;
       if ((mf->calc != C_ZERO_SOUND) && (mf->calc != C_ZERO_PEAK))
 	{
@@ -1899,7 +1899,7 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mix_
     new_fd = init_mix_read(md, CURRENT_MIX, lo - newbeg);
   else new_fd = init_mix_read(md, CURRENT_MIX, 0);
   if (!new_fd) return(0);
-  ep = cp->amp_envs[cp->edit_ctr];
+  ep = cp->edits[cp->edit_ctr]->peak_env;
   main_loc = (int)((double)(ap->losamp) / (double)(ep->samps_per_bin));
   main_start = ap->losamp;
   if ((lo > newbeg) && (lo < newend)) 
@@ -1971,7 +1971,7 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *
   hi = ap->hisamp;
   new_min_fd = init_mix_input_amp_env_read(md, LO_PEAKS); 
   new_max_fd = init_mix_input_amp_env_read(md, HI_PEAKS); 
-  ep = cp->amp_envs[cp->edit_ctr];
+  ep = cp->edits[cp->edit_ctr]->peak_env;
   main_loc = (int)((double)(ap->losamp) / (double)(ep->samps_per_bin));
   main_start = ap->losamp;
   if (lo > newbeg) 

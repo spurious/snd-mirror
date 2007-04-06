@@ -74,7 +74,6 @@ static void free_region(region *r, int complete)
   /* if not complete, just clear out old data (edited region being saved) */
   if (r)
     {
-      release_region_readers(r->id);
       if (complete == COMPLETE_DELETION)
 	{
 	  if (r->editor_copy)
@@ -392,10 +391,8 @@ static void make_region_readable(region *r)
       cp->editable = false;
       regsp->chans[i] = cp;
       add_channel_data_1(cp, r->srate, r->frames, WITHOUT_GRAPH);
-      cp->edits[0] = initial_ed_list(0, r->frames - 1);
-      cp->edit_size = 1;
-      cp->sound_size = 1;
       cp->hookable = WITHOUT_HOOK;
+
       hdr = make_file_info(r->filename, FILE_READ_ONLY, FILE_NOT_SELECTED);
       if (hdr)
 	{
@@ -446,15 +443,11 @@ file_info *fixup_region_data(chan_info *cp, int chan, int pos)
 	  cp->edits[0]->samples = ncp->edits[0]->samples;
 	  cp->axis = ncp->axis;
 	  if ((r->amp_envs) && (r->amp_envs[chan]))
-	    {
-	      if (cp->amp_envs == NULL)
-		cp->amp_envs = (env_info **)CALLOC(cp->edit_size, sizeof(env_info *));
-	      cp->amp_envs[0] = r->amp_envs[chan];
-	    }
+	    cp->edits[0]->peak_env = r->amp_envs[chan];
 	  else
 	    {
-	      if ((cp->amp_envs) && (cp->amp_envs[0]))
-		cp->amp_envs[0] = NULL;
+	      if (cp->edits[0]->peak_env)
+		cp->edits[0]->peak_env = NULL;
 	    }
 	  initialize_scrollbars(cp);
 	  return(nsp->hdr);
@@ -713,11 +706,10 @@ int define_region(sync_info *si, off_t *ends)
       r->begs[i] = si->begs[i];
       r->lens[i] = ends[i] - si->begs[i];
       drp->edpos[i] = drp->cps[i]->edit_ctr;
-      if ((r->lens[i] > AMP_ENV_CUTOFF) &&
-	  (drp->cps[i]->amp_envs))
+      if (r->lens[i] > AMP_ENV_CUTOFF)
 	{
 	  env_info *ep;
-	  ep = drp->cps[i]->amp_envs[drp->edpos[i]];
+	  ep = drp->cps[i]->edits[drp->edpos[i]]->peak_env;
 	  if ((ep) && (ep->completed))
 	    {
 	      if (r->amp_envs == NULL)

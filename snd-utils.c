@@ -1130,8 +1130,8 @@ void mem_report(void)
 			case PRINT_SND_FD:
 			  {
 			    snd_fd *sf = (snd_fd *)(pointers[orig_i]);
-			    fprintf(Fp, "[%p, loc: %d, beg: " OFF_TD ", eof: %d, sp: %p]\n        ",
-				    sf, sf->dangling_loc, sf->initial_samp, (int)(sf->at_eof), sf->local_sp);
+			    fprintf(Fp, "[%p, beg: " OFF_TD ", eof: %d, sp: %p]\n        ",
+				    sf, sf->initial_samp, (int)(sf->at_eof), sf->local_sp);
 			  }
 			  break;
 			case PRINT_FAM_INFO:

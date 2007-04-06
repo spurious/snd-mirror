@@ -164,9 +164,15 @@ typedef struct {
 } track_info;
 
 typedef struct {
+  off_t size;
+  Float *data;
+  Float scale;
+} enved_fft;
+
+typedef struct {
   int size, allocated_size;
-  void *fragments; /* only accessed in snd-edits.c */
-  off_t beg, len;  /* beg and len of changed portion */
+  struct ed_fragment **fragments;
+  off_t beg, len;                      /* beg and len of changed portion */
   char *origin;
   int edit_type, sound_location, ptree_location;
   off_t selection_beg, selection_end;  /* selection needs to follow edit list */
@@ -176,15 +182,18 @@ typedef struct {
   bool ptree_env_too, backed_up;
   off_t samples, cursor;
   int mark_size, mark_ctr;
-  mark **marks;
+  mark **marks;                        /* mark positions */
   track_info *tracks;
+  env_info *peak_env;                  /* peak amp env data */
+  enved_fft *fft;                      /* overall fft data for envelope editor */
+  void *readers;                       /* current readers of this edit (g++ stupidity forces us to use void* here -- type is sf_info, snd-edits.c) */
 } ed_list;
 
 typedef struct snd_fd {
   Float (*runf)(struct snd_fd *sf);
   Float (*rev_runf)(struct snd_fd *sf);
   ed_list *current_state;
-  void *cb;
+  struct ed_fragment *cb;
   off_t loc, first, last;
   int cbi;
   read_direction_t direction;
@@ -196,13 +205,13 @@ typedef struct snd_fd {
   struct snd_info *local_sp;
   Float fscaler;
   off_t frag_pos;
-  struct ptree *ptree1, *ptree2, *ptree3;
+  struct ptree *ptree1, *ptree2, *ptree3; /* ptree struct defined in snd-run.c */
   XEN closure1, closure2, closure3;
   int protect1, protect2, protect3;
   int type1, type2, type3;
   double incr1, curval1, incr2, curval2, incr3, curval3, incr4, curval4;
   bool zero, xramp2;
-  int edit_ctr, dangling_loc, region, type;
+  int edit_ctr, region, type;
   Float (*rampf)(struct snd_fd *sf);
   Float (*rev_rampf)(struct snd_fd *sf);
   void *mix_info;
@@ -309,13 +318,11 @@ typedef struct chan_info {
   struct ptree **ptrees;
   XEN *ptree_inits;
   int *init_locs;
-  struct enved_ffts *enved_spectra;
   fft_info *fft;           /* possibly null fft data */
   struct snd_info *sound;  /* containing sound */
   axis_info *axis;         /* time domain axis */
   chan_context *cgx;       /* graphics/window context */
   chan_context *tcgx;      /* when combining chans, all should use chan[0]'s context */
-  env_info **amp_envs;
   sono_info *sonogram_data;
   struct sonogram_state *last_sonogram, *temp_sonogram; /* defined in snd-fft.c */
   bool show_sonogram_cursor;
@@ -877,7 +884,6 @@ void g_init_data(void);
 
 /* -------- snd-edits.c -------- */
 
-void allocate_ed_list(chan_info *cp);
 ed_list *initial_ed_list(off_t beg, off_t end);
 snd_info *sound_is_silence(snd_info *sp);
 off_t edit_changes_begin_at(chan_info *cp, int edpos);
@@ -913,7 +919,6 @@ void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length);
 bool editable_p(chan_info *cp);
 snd_fd *free_snd_fd(snd_fd *sf);
 char *sf_to_string(snd_fd *fd);
-void release_region_readers(int reg);
 bool sf_p(XEN obj);
 snd_fd *get_sf(XEN obj);
 snd_fd *free_snd_fd_almost(snd_fd *sf);
@@ -1180,9 +1185,8 @@ void add_or_edit_symbol(char *name, env *val);
 env* name_to_env(const char *str);
 env *position_to_env(int pos);
 void delete_envelope(char *name);
-void free_enved_spectra(chan_info *cp);
-void release_dangling_enved_spectra(chan_info *cp, int edpt);
-void reflect_enved_spectra_change(chan_info *cp);
+enved_fft *free_enved_fft(enved_fft *ef);
+void reflect_enved_fft_change(chan_info *cp);
 
 XEN env_to_xen(env *e);
 env *xen_to_env(XEN res);

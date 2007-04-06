@@ -15,7 +15,7 @@ static bool dont_save(snd_info *sp, const char *newname)
 void after_edit(chan_info *cp)
 {
   reflect_edit_history_change(cp);
-  reflect_enved_spectra_change(cp);
+  reflect_enved_fft_change(cp);
   if ((XEN_HOOK_P(cp->after_edit_hook)) && (XEN_HOOKED(cp->after_edit_hook)))
     run_hook(cp->after_edit_hook, XEN_EMPTY_LIST, S_after_edit_hook);
 }
@@ -157,14 +157,9 @@ static void prune_edits(chan_info *cp, int edpt)
       if (ss->deferred_regions > 0)
 	sequester_deferred_regions(cp, edpt - 1);
       for (i = edpt; i < cp->edit_size; i++) 
-	{
-	  cp->edits[i] = free_ed_list(cp->edits[i], cp);
-	  cp->amp_envs[i] = free_amp_env(cp, i);
-	}
+	cp->edits[i] = free_ed_list(cp->edits[i], cp);
       release_pending_mixes(cp, edpt);
       release_pending_sounds(cp, edpt);
-      release_dangling_readers(cp, edpt);
-      release_dangling_enved_spectra(cp, edpt);
     }
 }
 
@@ -222,13 +217,7 @@ static bool prepare_edit_list(chan_info *cp, off_t len, int pos, const char *cal
       cp->edit_size += EDIT_ALLOC_SIZE;
       if (!cp->edits) cp->edits = (ed_list **)CALLOC(cp->edit_size, sizeof(ed_list *));
       else cp->edits = (ed_list **)REALLOC(cp->edits, cp->edit_size * sizeof(ed_list *));
-      if (!(cp->amp_envs)) cp->amp_envs = (env_info **)CALLOC(cp->edit_size, sizeof(env_info *));
-      else cp->amp_envs = (env_info **)REALLOC(cp->amp_envs, cp->edit_size * sizeof(env_info *));
-      for (i = cp->edit_ctr; i < cp->edit_size; i++) 
-	{
-	  cp->edits[i] = NULL; 
-	  cp->amp_envs[i] = NULL; 
-	}
+      for (i = cp->edit_ctr; i < cp->edit_size; i++) cp->edits[i] = NULL; 
     }
   prune_edits(cp, cp->edit_ctr);
   return(true);
@@ -5263,6 +5252,11 @@ off_t ed_selection_maxamp_position(chan_info *cp)
   return(ed->selection_maxamp_position);
 }
 
+typedef struct {
+  snd_fd **rds;
+  int size;
+} sf_info;
+
 static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
 {
   if (ed)
@@ -5295,6 +5289,26 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
 	free_mark_list(ed);
       if (ed->tracks)
 	ed->tracks = free_track_info(ed);
+      if (ed->peak_env)
+	ed->peak_env = free_env_info(ed->peak_env);
+      if (ed->fft)
+	ed->fft = free_enved_fft(ed->fft);
+      if (ed->readers)
+	{
+	  int i;
+	  sf_info *lst;
+	  lst = (sf_info *)(ed->readers);
+	  for (i = 0; i < lst->size; i++)
+	    if (lst->rds[i])
+	      {
+		reader_out_of_data(lst->rds[i]);
+		lst->rds[i]->current_state = NULL; /* this pointer is now being freed, so it can't be safe to leave it around */
+		lst->rds[i] = NULL;
+	      }
+	  FREE(lst->rds);
+	  FREE(lst);
+	  ed->readers = NULL;
+	}
       FREE(ed);
     }
   return(NULL);
@@ -5318,12 +5332,8 @@ void backup_edit_list(chan_info *cp)
     old_ed->edit_type = ED_SIMPLE;
   free_ed_list(old_ed, cp);
   old_ed = NULL;
-
-  free_amp_env(cp, cur - 1);
   cp->edits[cur - 1] = new_ed;
-  cp->amp_envs[cur - 1] = cp->amp_envs[cur];
   cp->edits[cur] = NULL;
-  cp->amp_envs[cur] = NULL;
   if (cp->sounds) /* protect from release_pending_sounds upon edit after undo after as-one-edit or whatever */
     for (i = 0; i < cp->sound_size; i++)
       {
@@ -5347,13 +5357,6 @@ void free_edit_list(chan_info *cp)
 	      free_ed_list(cp->edits[i], cp);
 	  FREE(cp->edits);
 	  cp->edits = NULL;
-	}
-      if (cp->amp_envs)
-	{
-	  for (i = 0; i < cp->edit_size; i++)
-	    free_amp_env(cp, i);
-	  FREE(cp->amp_envs); 
-	  cp->amp_envs = NULL;
 	}
       cp->edit_ctr = -1;
       cp->edit_size = 0;
@@ -5406,11 +5409,6 @@ snd_info *sound_is_silence(snd_info *sp)
 	}
     }
   return(sp);
-}
-
-void allocate_ed_list(chan_info *cp) 
-{
-  cp->edits = (ed_list **)CALLOC(cp->edit_size, sizeof(ed_list *));
 }
 
 static void new_leading_ramp(ed_fragment *new_start, ed_fragment *old_start, off_t samp)
@@ -5687,7 +5685,7 @@ void extend_edit_list(chan_info *cp, int edpos)
   cp->edits[cp->edit_ctr] = new_ed;
 
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks and mixes */
-  cp->amp_envs[cp->edit_ctr] = amp_env_copy(cp, false, edpos);
+  cp->edits[cp->edit_ctr]->peak_env = amp_env_copy(cp, false, edpos);
   after_edit(cp);
 }
 
@@ -6892,7 +6890,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   snd_data *first_snd = NULL;
   if (!(cp->active)) return(NULL);
   if ((edit_position < 0) || (edit_position >= cp->edit_size)) return(NULL); /* was ">" not ">=": 6-Jan-05 */
-  ed = (ed_list *)(cp->edits[edit_position]);
+  ed = cp->edits[edit_position];
   if (!ed) return(NULL);
   sp = cp->sound;
   if (sp->inuse == SOUND_IDLE) return(NULL);
@@ -6910,7 +6908,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
 
   curlen = cp->edits[edit_position]->samples;
   /* snd_fd allocated only here */
-  sf = (snd_fd *)CALLOC(1, sizeof(snd_fd)); /* only creation point */
+  sf = (snd_fd *)CALLOC(1, sizeof(snd_fd)); /* only creation point (... oops -- see below...)*/
 #if MUS_DEBUGGING
   set_printable(PRINT_SND_FD);
 #endif
@@ -6928,7 +6926,6 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   sf->direction = direction;
   sf->current_state = ed;
   sf->edit_ctr = edit_position;
-  sf->dangling_loc = -1;
   if ((curlen <= 0) ||    /* no samples, not ed->len (delete->len = #deleted samps) */
       (samp < 0) ||       /* this should never happen */
       ((samp >= curlen) && (direction == READ_FORWARD)))
@@ -7303,8 +7300,8 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
       }
   if ((e0) && (e1))
     {
-      cp0->amp_envs[cp0->edit_ctr] = e1;
-      cp1->amp_envs[cp1->edit_ctr] = e0;
+      cp0->edits[cp0->edit_ctr]->peak_env = e1;
+      cp1->edits[cp1->edit_ctr]->peak_env = e0;
     }
   else
     {
@@ -7601,7 +7598,7 @@ void revert_edits(chan_info *cp)
   update_track_lists(cp, old_ctr - 1);
   update_graph(cp);
   reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
-  reflect_enved_spectra_change(cp);
+  reflect_enved_fft_change(cp);
   if ((XEN_HOOK_P(cp->undo_hook)) && (XEN_HOOKED(cp->undo_hook)))
     run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
 }
@@ -7630,7 +7627,7 @@ bool undo_edit(chan_info *cp, int count)
       update_track_lists(cp, 0);
       update_graph(cp);
       reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
-      reflect_enved_spectra_change(cp);
+      reflect_enved_fft_change(cp);
       if ((XEN_HOOK_P(cp->undo_hook)) && (XEN_HOOKED(cp->undo_hook)))
 	run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
       return(true);
@@ -7698,7 +7695,7 @@ bool redo_edit(chan_info *cp, int count)
 	  update_track_lists(cp, 0);
 	  update_graph(cp);
 	  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
-	  reflect_enved_spectra_change(cp);
+	  reflect_enved_fft_change(cp);
 	  if ((XEN_HOOK_P(cp->undo_hook)) && (XEN_HOOKED(cp->undo_hook)))
 	    run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
 	  return(true);
@@ -7934,46 +7931,58 @@ XEN_MAKE_OBJECT_PRINT_PROCEDURE(snd_fd, print_sf, sf_to_string)
  *   xen and is merely cleared, not freed at the C level.
  */
 
-static snd_fd **dangling_readers = NULL;
-static int dangling_reader_size = 0;
-#define DANGLING_READER_INCREMENT 16
-
 static void list_reader(snd_fd *fd)
 {
+  ed_list *ed;
   int loc = -1;
-  if (dangling_reader_size == 0)
+  ed = fd->current_state;
+  if (ed)
     {
-      dangling_reader_size = DANGLING_READER_INCREMENT;
-      dangling_readers = (snd_fd **)CALLOC(dangling_reader_size, sizeof(snd_fd *));
-      loc = 0;
-    }
-  else
-    {
-      int i;
-      for (i = 0; i < dangling_reader_size; i++)
-	if (dangling_readers[i] == NULL)
-	  {
-	    loc = i;
-	    break;
-	  }
-      if (loc == -1)
+      sf_info *lst = NULL;
+      if (ed->readers == NULL)
 	{
-	  loc = dangling_reader_size;
-	  dangling_reader_size += DANGLING_READER_INCREMENT;
-	  dangling_readers = (snd_fd **)REALLOC(dangling_readers, dangling_reader_size * sizeof(snd_fd *));
-	  for (i = loc; i < dangling_reader_size; i++) dangling_readers[i] = NULL;
+	  ed->readers = (void *)CALLOC(1, sizeof(sf_info));
+	  lst = (sf_info *)(ed->readers);
+	  lst->size = 2;
+	  lst->rds = (snd_fd **)CALLOC(2, sizeof(snd_fd *));
+	  loc = 0;
 	}
+      else
+	{
+	  int i;
+	  lst = (sf_info *)(ed->readers);
+	  for (i = 0; i < lst->size; i++)
+	    if (!(lst->rds[i]))
+	      {
+		loc = i;
+		break;
+	      }
+	  if (loc == -1)
+	    {
+	      loc = lst->size;
+	      lst->size *= 2;
+	      lst->rds = (snd_fd **)REALLOC(lst->rds, lst->size * sizeof(snd_fd *));
+	      for (i = loc; i < lst->size; i++)
+		lst->rds[i] = NULL;
+	    }
+	}
+      lst->rds[loc] = fd;
     }
-  fd->dangling_loc = loc;
-  dangling_readers[loc] = fd;
+  else fprintf(stderr, "can't list reader?");
 }
 
 static void unlist_reader(snd_fd *fd)
 {
-  if ((fd) && (fd->dangling_loc >= 0))
+  if ((fd) && (fd->current_state) && (fd->current_state->readers))
     {
-      dangling_readers[fd->dangling_loc] = NULL;
-      fd->dangling_loc = -1;
+      int i;
+      ed_list *ed;
+      sf_info *lst;
+      ed = fd->current_state;
+      lst = (sf_info *)(ed->readers);
+      for (i = 0; i < lst->size; i++)
+	if (fd == lst->rds[i])
+	  lst->rds[i] = NULL;
     }
 }
 
@@ -7991,22 +8000,6 @@ static void sf_free(snd_fd *fd)
     }
 }
 
-void release_dangling_readers(chan_info *cp, int edit_ctr)
-{
-  int i;
-  for (i = 0; i < dangling_reader_size; i++)
-    {
-      snd_fd *fd;
-      fd = dangling_readers[i];
-      if ((fd) && 
-	  (fd->cp == cp) && 
-	  (edit_ctr <= fd->edit_ctr))
-	{
-	  reader_out_of_data(fd); /* sf_free would free fd causing infinite trouble later */
-	  dangling_readers[i] = NULL;
-	}
-    }
-}
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(snd_fd, free_sf, sf_free)
 /* sf_free is original, free_sf is wrapped form */
@@ -8245,23 +8238,6 @@ static XEN g_copy_sample_reader(XEN obj)
   if (tf_p(obj))
     return(g_copy_track_sample_reader(obj));
   return(XEN_FALSE);
-}
-
-void release_region_readers(int reg)
-{
-  int i, regval;
-  regval = -2 - reg;
-  for (i = 0; i < dangling_reader_size; i++)
-    {
-      snd_fd *fd;
-      fd = dangling_readers[i];
-      if ((fd) && 
-	  (fd->edit_ctr == regval))
-	{
-	  reader_out_of_data(fd); /* sf_free would free fd causing infinite trouble later */
-	  dangling_readers[i] = NULL;
-	}
-    }
 }
 
 static XEN g_next_sample(XEN obj)
@@ -9653,16 +9629,43 @@ static void make_mix_fragment(ed_list *new_ed, int i, int mix_loc, off_t beg, of
    *     I think these can be combined in a loop
    * in redpy -- 1st is not subtracted, remix involves simplified _mix_ 
    * if only virtual-tag-mix, then env has to be local ed list, and src is not do-able without collapse or a very special-case reader
-   * if this, can all the mix_state stuff be deleted? -- mix_state is implicit in the channel's ed lists
    */
+
   /* TODO: scale -> no tag?
-   *  mix-track -> sync (track-track -> sync)
-   *  keep all mix state in the edit list
    *  use only ed_mix access -- mix without tag can be as current but kept separate for sanity
    *  any tagged mix on ptree (etc), save last state as temp, remake its edlist entry as ed_simple and then mix
    * 
-   *  tracks, amp_envs, [mixes], ffts = enved_spectra -> ed_list
+   *  [mixes, tracks?] -> ed_list
+   *  amp_env->peak_env
+   *  edits list [sounds mixes]
    */
+
+  /* TODO: remove notion of mix-chans -- each mix refers to one path in and out
+   *         also affects mix-amp mix-amp-env
+   *         opt reg in-chan in mix-region|selection, perhaps mix-sound-data et al
+   *       add mix-sync (for various multi-channel cases that don't want the track mechanism)
+   *       remove copy-mix (do this with mix reader in mix.scm)
+   *       remove delete-mix (mix.scm) -> unmix (actually remove edit, not just set amp 0)
+   *       add tag-y based on freq (score-style display)
+   *       remove mix-inverted? -- do this in mix.scm if anywhere
+   *       remove mix-locked? -- this is implicit in mix? 
+   *
+   *   if mix-property, display upon tag click or in dialog
+   *
+   *   move mix-state stack to edit list
+   *    mix-amp then finds id in edits mix list etc -- this way mix states follow the edit list automatically
+   *
+   * remove track-track?
+   *
+   * check that short mixes use buffers not files
+   *
+   * for readers:
+   sf->cp = cp;
+   sf->current_state = ed;
+   sf->edit_ctr = edit_position;
+   *  has everything we need upon release
+   */
+
   FRAGMENT_TYPE(new_ed, i) = ED_MIX; /* new form would be cur type + 1 */
   if (!(FRAGMENT_MIXES(new_ed, i)))
     FRAGMENT_MIXES(new_ed, i) = (ed_mixes *)CALLOC(1, sizeof(ed_mixes));
@@ -9779,7 +9782,6 @@ static snd_fd *make_virtual_mix_reader(chan_info *cp, off_t len, int index, Floa
   sf->direction = direction;
   sf->current_state = NULL;
   sf->edit_ctr = 0;
-  sf->dangling_loc = -1;
   first_snd = cp->sounds[index];
   sf->frag_pos = 0;
   ind0 = 0;

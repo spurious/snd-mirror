@@ -2360,7 +2360,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
 	idata[k] = read_sample_to_mus_sample(sf);
       change_samples(beg, dur, idata, cp, LOCK_MIXES, origin, cp->edit_ctr);
     }
-  if (ep) cp->amp_envs[cp->edit_ctr] = ep;
+  if (ep) cp->edits[cp->edit_ctr]->peak_env = ep;
   reverse_marks(cp, (section) ? beg : -1, dur);
   update_graph(cp); 
   FREE(data[0]);
@@ -4448,8 +4448,8 @@ swap the indicated channels"
 		  e1 = amp_env_copy(cp1, false, cp1->edit_ctr);
 		  file_override_samples(dur1, cp1->sound->filename, cp0, cp1->chan, DONT_DELETE_ME, LOCK_MIXES, S_swap_channels);
 		  file_override_samples(dur0, cp0->sound->filename, cp1, cp0->chan, DONT_DELETE_ME, LOCK_MIXES, S_swap_channels);
-		  cp0->amp_envs[cp0->edit_ctr] = e1;
-		  cp1->amp_envs[cp1->edit_ctr] = e0;
+		  cp0->edits[cp0->edit_ctr]->peak_env = e1;
+		  cp1->edits[cp1->edit_ctr]->peak_env = e0;
 		  swap_marks(cp0, cp1);
 		  update_graph(cp0);
 		  update_graph(cp1);
@@ -4784,7 +4784,7 @@ scale samples in the given sound/channel between beg and beg + num by a ramp goi
     }
   if (ramp_channel(cp, XEN_TO_C_DOUBLE(rmp0), XEN_TO_C_DOUBLE(rmp1), samp, samps, pos, NOT_IN_AS_ONE_EDIT))
     {
-      if (cp->amp_envs[pos])
+      if (cp->edits[pos]->peak_env)
 	{
 	  Float data[4];
 	  data[0] = 0.0;
@@ -4873,7 +4873,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
 	      r1 = r0 + passes[0] * rates[0];
 	      if (xramp_channel(cp, r0, r1, mus_env_scaler(e), mus_env_offset(e), samp, samps, pos, NOT_IN_AS_ONE_EDIT, e, 0))
 		{
-		  if (cp->amp_envs[pos])
+		  if (cp->edits[pos]->peak_env)
 		    {
 		      if ((samp == 0) && 
 			  (samps >= cp->edits[pos]->samples))

@@ -95,7 +95,6 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->printing = NOT_PRINTING;
   cp->waiting_to_make_graph = false;
   cp->new_peaks = false;
-  cp->amp_envs = NULL;
   cp->sonogram_data = NULL;
   cp->lisp_info = NULL;
   cp->amp_control = NULL;
@@ -136,11 +135,9 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->graph_transform_p = false;
   cp->printing = NOT_PRINTING;
   cp->graph_time_p = true;
-  release_dangling_readers(cp, -1);
   if (cp->edits) free_edit_list(cp);
   if (cp->sounds) free_sound_list(cp);
   if (cp->ptrees) free_ptree_list(cp);
-  if (cp->enved_spectra) free_enved_spectra(cp);
   free_mixes(cp);
   cp->sound = NULL;  /* a backpointer */
   cp->cursor_on = false;

@@ -1491,7 +1491,7 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
 	  double step, xk, xki;
 	  off_t ii, kk;
 	  env_info *ep;
-	  ep = cp->amp_envs[cp->edit_ctr];
+	  ep = cp->edits[cp->edit_ctr]->peak_env;
 	  step = samples_per_pixel / (Float)(ep->samps_per_bin);
 	  xf = (double)(ap->losamp) / (double)(ep->samps_per_bin);
 	  j = 0;

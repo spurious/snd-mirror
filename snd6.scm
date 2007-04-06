@@ -166,7 +166,5 @@
    (lambda (val)
      #f)))
 
-(define mix-sync mix-track)
-
 ;;; unused-track/new-track -> make-track
 ;;; env-track -> track-amp-env

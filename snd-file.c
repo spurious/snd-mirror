@@ -1556,9 +1556,7 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
       cp->cgx = NULL;
       sp->chans[i] = cp;
       add_channel_data_1(cp, hdr->srate, len, WITHOUT_GRAPH);
-      cp->edits[0] = initial_ed_list(0, len - 1);
-      cp->edit_size = 1;
-      cp->sound_size = 1;
+
       fd = snd_open_read(filename); /* sends the error if any */
       if (fd != -1)
 	{
@@ -1871,15 +1869,15 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   for (i = 0; i < sp_chans; i++) 
     {
       chan_info *ncp;
+      int k;
       ncp = sp->chans[i];
       old_cursors[i] = CURSOR(ncp);
-      if (ncp->amp_envs)
+      for (k = 0; k < ncp->edit_size; k++)
 	{
-	  int k;
-	  for (k = 0; k < ncp->edit_size; k++) 
-	    ncp->amp_envs[k] = free_amp_env(ncp, k);
-	  FREE(ncp->amp_envs);
-	  ncp->amp_envs = NULL;
+	  ed_list *ed;
+	  ed = ncp->edits[k];
+	  if (ed)
+	    ed->peak_env = free_amp_env(ncp, k);
 	}
     }
 
