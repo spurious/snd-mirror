@@ -710,7 +710,7 @@ static char *fallbacks[] = {
   "*enableThinThickness: True",
   "*enableToggleColor: True",
   "*enableToggleVisual: True",
-  NULL
+ NULL
 };
 
 void snd_doit(int argc, char **argv)

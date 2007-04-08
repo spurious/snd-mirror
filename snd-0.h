@@ -93,7 +93,6 @@
 #define NO_END_SPECIFIED -1
 #define NO_MIX_TAG -1
 #define INVALID_MIX_ID -1
-#define INVALID_MIX_CHANNEL -2
 #define SAVE_ALL_CHANS -1
 #define INVALID_TRACK_ID -1
 #define ANY_MIX_ID -2

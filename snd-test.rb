@@ -20488,14 +20488,14 @@ def test009
   view_files_dialog
   pos = mix_position(mix_id)
   len = mix_frames(mix_id)
-  loc = mix_locked?(mix_id)
-  inv = mix_inverted?(mix_id)
+#  loc = mix_locked?(mix_id)
+#  inv = mix_inverted?(mix_id)
   anc = mix_tag_position(mix_id)
   spd = mix_speed(mix_id)
   spdstyle = mix_speed_style(mix_id)
   trk = mix_track(mix_id)
   snd, chn = mix_home(mix_id)[0, 2]
-  chns = mix_chans(mix_id)
+#  chns = mix_chans(mix_id)
   nam = mix_name(mix_id)
   amp = mix_amp(mix_id, 0)
   mr = make_mix_sample_reader(mix_id)
@@ -20534,13 +20534,13 @@ def test009
   #
   snd_display("mix_position: %d?", pos) if pos != 100
   snd_display("mix_frames: %d?", len) if len != 41623
-  snd_display("mix_locked?: %s?", loc) if loc
-  snd_display("mix_inverted?: %s?", inv) if inv
+#  snd_display("mix_locked?: %s?", loc) if loc
+#  snd_display("mix_inverted?: %s?", inv) if inv
   snd_display("mix_tag_position: %d?", anc) if anc.nonzero?
   snd_display("mix_track: %d?", trk) if trk.nonzero?
   snd_display("snd mix_home: %d?", snd) if snd != new_index
   snd_display("chn mix_home: %d?", chn) if chn.nonzero?
-  snd_display("mix_chans: %d?", chns) if chns != 1
+#  snd_display("mix_chans: %d?", chns) if chns != 1
   snd_display("mix_amp: %s?", amp) if fneq(amp, 1.0)
   snd_display("mix_speed: %s?", spd) if fneq(spd, 1.0)
   snd_display("mix_name: %s?", nam) unless nam.null?
@@ -20866,28 +20866,28 @@ def test019
   set_mix_amp(mix_id, 0, 0.5)
   snd_display("mix_amp 0.5: %s?", mix_amp(mix_id, 0)) if fneq(mix_amp(mix_id, 0), 0.5)
   scale_by(0.5)
-  snd_display("mix not locked? %s?", mix_id) unless mix_locked?(mix_id)
-  if (res = Snd.catch do set_mix_amp(mix_id, 0, 1.0) end).first != :no_such_mix
-    snd_display("set locked mix amp: %s", res.inspect)
-  end
-  if (res = Snd.catch do set_mix_position(mix_id, 10) end).first != :no_such_mix
-    snd_display("set locked mix position: %s", res.inspect)
-  end
-  if (res = Snd.catch do set_mix_speed(mix_id, 1.5) end).first != :no_such_mix
-    snd_display("set locked mix speed: %s", res.inspect)
-  end
-  if (res = Snd.catch do set_mix_amp_env(mix_id,0 , [0, 0, 1, 1]) end).first != :no_such_mix
-    snd_display("set locked mix amp env: %s", res.inspect)
-  end
-  undo_edit
-  if mix_locked?(mix_id)
-    snd_display("undo locked mix: %s?", mix_id)
-  else
-    set_mix_position(mix_id, 10)
-    if (res = mix_position(mix_id)) != 10
-      snd_display("mix_position 10: %d?", res)
-    end
-  end
+#  snd_display("mix not locked? %s?", mix_id) unless mix_locked?(mix_id)
+#  if (res = Snd.catch do set_mix_amp(mix_id, 0, 1.0) end).first != :no_such_mix
+#    snd_display("set locked mix amp: %s", res.inspect)
+#  end
+#  if (res = Snd.catch do set_mix_position(mix_id, 10) end).first != :no_such_mix
+#    snd_display("set locked mix position: %s", res.inspect)
+#  end
+#  if (res = Snd.catch do set_mix_speed(mix_id, 1.5) end).first != :no_such_mix
+#    snd_display("set locked mix speed: %s", res.inspect)
+#  end
+#  if (res = Snd.catch do set_mix_amp_env(mix_id,0 , [0, 0, 1, 1]) end).first != :no_such_mix
+#    snd_display("set locked mix amp env: %s", res.inspect)
+#  end
+#  undo_edit
+#  if mix_locked?(mix_id)
+#    snd_display("undo locked mix: %s?", mix_id)
+#  else
+#    set_mix_position(mix_id, 10)
+#    if (res = mix_position(mix_id)) != 10
+#      snd_display("mix_position 10: %d?", res)
+#    end
+#  end
   close_sound(id)
   #
   set_print_length(30)
@@ -21303,9 +21303,9 @@ def test029
   end
   set_sync(true, ind)
   md = mix_selection(500, ind)
-  if (res = mix_chans(md)) != 2
-    snd_display("mix_chans of stereo selection: %s?", res)
-  end
+#  if (res = mix_chans(md)) != 2
+#    snd_display("mix_chans of stereo selection: %s?", res)
+#  end
   unless mix?(md + 1)
     snd_display("where is 2nd mix? %s %s?", md, mixes)
   end
@@ -21371,9 +21371,9 @@ def check_copied_mix(original, copy, pos)
   if (res = mix_track(copy)).nonzero?
     snd_display("copy_mix set track: %s %s?", res, mix_track(original))
   end
-  if (res1 = mix_chans(copy)) != (res2 = mix_chans(original))
-    snd_display("copy_mix chans: %s %s?", res1, res2)
-  end
+#  if (res1 = mix_chans(copy)) != (res2 = mix_chans(original))
+#    snd_display("copy_mix chans: %s %s?", res1, res2)
+#  end
   if (res1 = mix_tag_position(copy)) != (res2 = mix_tag_position(original))
     snd_display("copy_mix anchor: %s %s?", res1, res2)
   end
@@ -21610,49 +21610,49 @@ def test039
   # 
   ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "lock mix tests", 300)
   mix1 = mix_vct(Vct.new(10, 0.5), 10)
-  if res = mix_locked?(mix1)
-    snd_display("make mix locked: %s %s?", mix1, res)
-  end
+#  if res = mix_locked?(mix1)
+#    snd_display("make mix locked: %s %s?", mix1, res)
+#  end
   delete_mix(mix1)
   if fneq(res = maxamp(ind, 0), 0.0)
     snd_display("delete_mix maxamp: %s?", res)
   end
-  unless res = mix_locked?(mix1)
-    snd_display("delete_mix not locked: %s %s?", mix1, res)
-  end
+#  unless res = mix_locked?(mix1)
+#    snd_display("delete_mix not locked: %s %s?", mix1, res)
+#  end
   undo_channel(1, ind, 0)
   if fneq(res = maxamp(ind, 0), 0.5)
     snd_display("undelete mix maxamp: %s?", res)
   end
-  if res = mix_locked?(mix1)
-    snd_display("undelete mix locked: %s %s?", mix1, res)
-  end
+#  if res = mix_locked?(mix1)
+#    snd_display("undelete mix locked: %s %s?", mix1, res)
+#  end
   redo_channel(1, ind, 0)
   if fneq(res = maxamp(ind, 0), 0.0)
     snd_display("redelete mix maxamp: %s?", res)
   end
-  unless res = mix_locked?(mix1)
-    snd_display("redelete mix not locked: %s %s?", mix1, res)
-  end
+#  unless res = mix_locked?(mix1)
+#    snd_display("redelete mix not locked: %s %s?", mix1, res)
+#  end
   undo_edit(2)
   snd_display("undo 2 kept mix?") if mix?(mix1)
   if fneq(res = maxamp(ind, 0), 0.0)
     snd_display("no delete_mix maxamp: %s?", res)
   end
-  if (res = Snd.catch do
-        if res = mix_locked?(mix1)
-          snd_display("no delete_mix locked: %s %s?", mix1, res)
-        end
-      end).first != :no_such_mix
-    snd_display("pending mix release accessible?")
-  end
-  if (res = Snd.catch do set_mix_locked?(mix1, true) end).first != :no_such_mix
-    snd_display("pending mix release settable?")
-  end
-  redo_edit
-  if res = mix_locked?(mix1)
-    snd_display("mix un/locked: %s %s?", mix1, res)
-  end
+#  if (res = Snd.catch do
+#        if res = mix_locked?(mix1)
+#          snd_display("no delete_mix locked: %s %s?", mix1, res)
+#        end
+#      end).first != :no_such_mix
+#    snd_display("pending mix release accessible?")
+#  end
+#  if (res = Snd.catch do set_mix_locked?(mix1, true) end).first != :no_such_mix
+#    snd_display("pending mix release settable?")
+#  end
+#  redo_edit
+#  if res = mix_locked?(mix1)
+#    snd_display("mix un/locked: %s %s?", mix1, res)
+#  end
   if fneq(res = maxamp(ind, 0), 0.5)
     snd_display("reundelete mix maxamp: %s?", res)
   end
@@ -22393,9 +22393,9 @@ def test049
   if (res = edit_position(ind, 0)) != edpos + 1
     snd_display("delete_track not atomic: %s %s?", edpos, res)
   end
-  if (not (res1 = mix_locked?(mix1))) or (not (res2 = mix_locked?(mix1)))
-    snd_display("delete_track didn\'t lock mixes: %s %s?", res1, res2)
-  end
+#  if (not (res1 = mix_locked?(mix1))) or (not (res2 = mix_locked?(mix1)))
+#    snd_display("delete_track didn\'t lock mixes: %s %s?", res1, res2)
+#  end
   if fneq(res = track_amp(track2a), 0.0)
     snd_display("delete_track track amp: %s?", res)
   end
@@ -22418,9 +22418,9 @@ def test049
   if fneq(res = maxamp(ind, 0), 0.2)
     snd_display("undo delete_track maxamp: %s?", res)
   end
-  if (res1 = mix_locked?(mix1)) or (res2 = mix_locked?(mix1))
-    snd_display("undo delete_track didn\'t unlock mixes: %s %s?", res1, res2)
-  end
+#  if (res1 = mix_locked?(mix1)) or (res2 = mix_locked?(mix1))
+#    snd_display("undo delete_track didn\'t unlock mixes: %s %s?", res1, res2)
+#  end
   revert_sound(ind)
   #
   mix1 = mix_vct(Vct.new(100, 0.2), 50)
@@ -22428,18 +22428,18 @@ def test049
   mix3 = mix_vct(Vct.new(100, 0.2), 500)
   track3 = make_track(mix1, mix2, mix3)
   edpos = edit_position(ind, 0)
-  lock_track(track3)
-  if (not (res1 = mix_locked?(mix1))) or
-      (not (res2 = mix_locked?(mix2))) or
-      (not (res3 = mix_locked?(mix3)))
-    snd_display("lock_track: %s %s %s?", res1, res2, res3)
-  end
-  if (res = track(track3)) != nil
-    snd_display("locked track: %s?", res)
-  end
-  if (res = edit_position(ind, 0)) != edpos + 1
-    snd_display("lock track not atomic: %s %s?", edpos, res)
-  end
+#  lock_track(track3)
+#  if (not (res1 = mix_locked?(mix1))) or
+#      (not (res2 = mix_locked?(mix2))) or
+#      (not (res3 = mix_locked?(mix3)))
+#    snd_display("lock_track: %s %s %s?", res1, res2, res3)
+#  end
+#  if (res = track(track3)) != nil
+#    snd_display("locked track: %s?", res)
+#  end
+#  if (res = edit_position(ind, 0)) != edpos + 1
+#    snd_display("lock track not atomic: %s %s?", edpos, res)
+#  end
   close_sound(ind)
   if (res = track(track3)) != nil
     snd_display("close_sound unset track: %s %s?", res, track(track3).map do |m| mix?(m) end)
@@ -23639,9 +23639,9 @@ def test089
   if (res = mix_position(id0)) != 0
     snd_display("pan_mix 1->1 pos: %s?", res)
   end
-  if (res = mix_chans(id0)) != 1
-    snd_display("pan_mix 1->1 mix_chans: %s?", res)
-  end
+#  if (res = mix_chans(id0)) != 1
+#    snd_display("pan_mix 1->1 mix_chans: %s?", res)
+#  end
   revert_sound(ind)
   #
   id0 = pan_mix("1a.snd", 10000, [0, 0, 1, 1])
@@ -23675,9 +23675,9 @@ def test089
       (res3 = mix_track(id0 + 1)) != res1
     snd_display("pan_mix 2->1: %s %s %s?", res1, res2, res3)
   end
-  if (res = mix_chans(id0)) != 2
-    snd_display("pan_mix 2->1 mix_chans: %s", res)
-  end
+#  if (res = mix_chans(id0)) != 2
+#    snd_display("pan_mix 2->1 mix_chans: %s", res)
+#  end
   if (res1 = mix_position(id0)) != (res2 = mix_position(id0 + 1)) or
       (res3 = track_position(mix_track(id0))) != res1 or
       res1 != 100
@@ -23775,9 +23775,9 @@ def test099
   id1 = id0 + 1
   trk = make_track(id0)
   snd_display("pan_mix 1->2 track: %s?", trk) unless track?(trk)
-  if (res = mix_chans(id0)) != 1
-    snd_display("pan_mix 1->2 mix_chans: %s?", res)
-  end
+#  if (res = mix_chans(id0)) != 1
+#    snd_display("pan_mix 1->2 mix_chans: %s?", res)
+#  end
   if fneq(res1 = mix_amp(id0), 1.0) or fneq(res2 = mix_amp(id1), 1.0)
     snd_display("pan_mix 1->2 amps: %s %s?", res1, res2)
   end
@@ -23796,9 +23796,9 @@ def test099
   id0 = pan_mix("2a.snd", 100)
   id1 = id0 + 1
   trk = mix_track(id0)
-  if (res = mix_chans(id0)) != 2
-    snd_display("pan_mix 2->2 mix_chans: %s?", res)
-  end
+#  if (res = mix_chans(id0)) != 2
+#    snd_display("pan_mix 2->2 mix_chans: %s?", res)
+#  end
   if (res = track(trk)) != [id0, id1]
     snd_display("pan_mix 2->2 track: %s %s?", res, id0)
   end
@@ -23836,9 +23836,9 @@ def test099
   if fneq(res1 = maxamp(ind, 0), maxs[1]) or fneq(res2 = maxamp(ind, 1), 0.0)
     snd_display("pan_mix 4->2 max: %s %s?", res1, res2)
   end
-  if (res = mix_chans(id0)) != 4
-    snd_display("pan_mix 4->2 mix_chans: %s?", res)
-  end
+#  if (res = mix_chans(id0)) != 4
+#    snd_display("pan_mix 4->2 mix_chans: %s?", res)
+#  end
   close_sound(ind)
   # 
   ind = new_sound("fmv.snd", Mus_next, Mus_bshort, 22050, 4, "pan-mix tests")
@@ -23863,9 +23863,9 @@ def test099
   if (res = mix_position(id0)) != 0
     snd_display("pan_mix_vct 1->1 pos: %s?", res)
   end
-  if (res = mix_chans(id0)) != 1
-    snd_display("pan_mix_vct 1->1 mix_chans: %s?", res)
-  end
+#  if (res = mix_chans(id0)) != 1
+#    snd_display("pan_mix_vct 1->1 mix_chans: %s?", res)
+#  end
   ind1 = new_sound("fmv.snd", Mus_next, Mus_bshort, 22050, 1, "pan-mix-* tests")
   reg = make_region(0, 50, ind, 0)
   id1 = pan_mix_region(reg)
@@ -25894,10 +25894,10 @@ def test12
     #
     [:mix_amp,
      :mix_tag_position,
-     :mix_chans,
+#     :mix_chans,
      :mix_track,
      :mix_frames,
-     :mix_locked?,
+#     :mix_locked?,
      :mix_position,
      :mix_home,
      :mix_speed,
@@ -33181,7 +33181,7 @@ def test0119
         set_mix_track(mix2, trk)
         set_mix_track(mix3, trk)
         set_track_amp_env(trk, [0, 0, 1, 5])
-        lock_track(trk)
+#        lock_track(trk)
       },
     lambda { |ind|
         if (res = edit_position(ind, 0)) != 8
@@ -34171,7 +34171,7 @@ def test0319
   revert_sound(ind)
   # mix-locked?
   id = make_v_mix(ind, 0)
-  set_mix_locked?(id, true)
+#  set_mix_locked?(id, true)
   unless proc?(func = edit_list2function)
     snd_display("edit_list2function mix 3: %s?", func)
   end

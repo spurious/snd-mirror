@@ -1,6 +1,5 @@
 ;;; various mix and track related functions
 ;;;
-;;; (pan-mix file frame envelope) mixes file into current sound starting at frame using envelope to pan (0: all chan 0, 1: all chan 1)
 ;;; (mix->vct id) return mix data in vct
 ;;; (snap-mix-to-beat (at-tag-position)) forces dragged mix to end up on a beat
 ;;; (delete-all-mixes) removes all mixes
@@ -97,115 +96,6 @@
 	mix-list)
        #f))))
 
-
-;;; -------- pan-mix --------
-
-(define* (pan-mix name :optional (beg 0) (envelope 1.0) snd (chn 0) auto-delete)
-  "(pan-mix file (start 0) (envelope 1.0) snd (chn 0) (auto-delete #f)) mixes 'file' into the sound 'snd'
-starting at start (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1).
-So, (pan-mix \"oboe.snd\" .1 '(0 0 1 1)) goes from all chan 0 to all chan 1.  If
-the variable with-tags is #t, the resultant mixes are placed in their own track, and 
-the track envelope controls the panning. 
-If 'envelope' is a scaler, it is turned into an evelope at that value. 'auto-delete' determines
-whether the in-coming file should be treated as a temporary file and deleted when the mix
-is no longer accessible."
-
-  (let ((index (or snd (selected-sound) (and (sounds) (car (sounds)))))
-	(old-with-mix-tags (with-mix-tags)))
-    (if (not (sound? index))
-	(throw 'no-such-sound (list "pan-mix" snd)))
-    (if (not (file-exists? name))
-	(throw 'no-such-file (list "pan-mix" name)))
-    (let ((new-mix
-	   (dynamic-wind
-	    (lambda () (set! (with-mix-tags) #t))
-	    (lambda ()
-	      (let ((incoming-chans (mus-sound-chans name))
-		    (receiving-chans (chans index))
-		    (old-sync (sync index))
-		    (track-func (if (list? envelope) envelope (list 0 envelope 1 envelope))))
-		(if (= receiving-chans 1)
-		    (if (= incoming-chans 1)
-			(let ((id (mix name beg 0 index 0 #t auto-delete)))
-			  (if (list? envelope)
-			      (set! (mix-amp-env id 0) envelope)
-			      (set! (mix-amp id 0) envelope))
-			  id)
-			(as-one-edit
-			 ;; incoming chans > 2 ignored
-			 (lambda ()
-			   (let* ((trk (make-track))
-				  (mix0 (mix name beg 0 index 0 #t auto-delete trk))
-				  (mix1 (mix name beg 1 index 0 #t auto-delete trk)))
-			     (set! (mix-inverted? mix1) #t)
-			     (set! (track-amp-env trk) track-func)
-			     mix0))))
-		    (let* ((chan0 chn)
-			   (chan1 (modulo (1+ chn) receiving-chans)))
-		      ;; receiving-chans >= 2, so start-chan comes into play
-		      (if (= incoming-chans 1)
-			  (dynamic-wind
-			   (lambda ()
-			     (set! (sync index) #f))
-			   (lambda ()
-			     (as-one-edit
-			      (lambda ()
-				(let* ((trk (make-track))
-				       (mix0 (mix name beg 0 index chan0 #t auto-delete trk))
-				       (mix1 (mix name beg 0 index chan1 #t auto-delete trk)))
-				  (set! (mix-inverted? mix1) #t)
-				  (set! (track-amp-env trk) track-func)
-				  mix0))))
-			   (lambda ()
-			     (set! (sync index) old-sync)))
-			  (let ((new-sync 0))
-			    ;; incoming chans > 2 ignored
-			    (for-each (lambda (s) (if (>= (sync s) new-sync) (set! new-sync (1+ (sync s))))) (sounds))
-			    (dynamic-wind
-			     (lambda ()
-			       (set! (sync index) new-sync))
-			     (lambda ()
-			       (as-one-edit
-				(lambda ()
-				  (let* ((trk (make-track))
-					 (mix0 (mix name beg 0 index chan0 #t auto-delete trk))
-					 (mix1 (mix name beg 1 index chan1 #t auto-delete trk)))
-				    (set! (mix-inverted? mix1) #t)
-				    (set! (track-amp-env trk) track-func)
-				    mix0))))
-			     (lambda ()
-			       (set! (sync index) old-sync)))))))))
-	    (lambda ()
-	      (set! (with-mix-tags) old-with-mix-tags)))))
-      (if (and (mix? new-mix)
-	       (not old-with-mix-tags))
-	  (if (track? (mix-track new-mix))
-	      (lock-track (mix-track new-mix))
-	      (set! (mix-locked? new-mix) #t)))
-      new-mix)))
-
-(define* (pan-mix-selection :optional (beg 0) (envelope 1.0) snd (chn 0))
-  "(pan-mix-selection (start 0) (envelope 1.0) snd (chn 0)) mixes the current selection  into the sound 'snd'
-starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1)."
-  (if (not (selection?))
-      (throw 'no-active-selection (list "pan-mix-selection"))
-      (pan-mix (save-selection (snd-tempnam)) beg envelope snd chn #t)))
-
-(define* (pan-mix-region reg :optional (beg 0) (envelope 1.0) snd (chn 0))
-  "(pan-mix-region reg (start 0) (envelope 1.0) snd (chn 0)) mixes the given region into the sound 'snd' 
-starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1)."
-  (if (not (region? reg))
-      (throw 'no-such-region (list "pan-mix-region" reg))
-      (pan-mix (save-region reg (snd-tempnam)) beg envelope snd chn #t)))
-
-(define* (pan-mix-vct v :optional (beg 0) (envelope 1.0) snd (chn 0))
-  "(pan-mix-vct v (start 0) (envelope 1.0) snd (chn 0)) mixes the vct data into the sound 'snd' 
-starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1)."
-  (let* ((temp-file (snd-tempnam))
-	 (fd (mus-sound-open-output temp-file (srate snd) 1 #f #f "")))
-    (mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
-    (mus-sound-close-output fd (* 4 (vct-length v)))
-    (pan-mix temp-file beg envelope snd chn #t)))
 
 (define (mix->vct id)
   "(mix->vct id) returns mix's data in vct"
@@ -315,19 +205,12 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
 	     (lambda (n)
 	       (let ((zeroed (mix-property :zero n)))
 		 (if (not zeroed)
-		     (let ((amps '()))
-		       (do ((i (1- (mix-chans n)) (1- i)))
-			   ((< i 0))
-			 (set! amps (cons (mix-amp n i) amps)))
-		       (set! (mix-property :amps n) amps)
-		       (do ((i 0 (1+ i)))
-			   ((= i (mix-chans n)))
-			 (set! (mix-amp n i) 0.0))
+		     (begin
+		       (set! (mix-property :amp n) (mix-amp n))
+		       (set! (mix-amp n) 0.0)
 		       (set! (mix-property :zero n) #t))
-		     (let ((amps (mix-property :amps n)))
-		       (do ((i 0 (1+ i)))
-			   ((= i (mix-chans n)))
-			 (set! (mix-amp n i) (list-ref amps i)))
+		     (begin
+		       (set! (mix-amp n) (mix-property :amp n))
 		       (set! (mix-property :zero n) #f)))
 		 #t))))
 
@@ -507,7 +390,7 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
   "(mix-click-info n) is a mix-click-hook function that describes a mix and its properties"
   (help-dialog "Mix Help"
 	       (format #f "Mix ~A:~%  position: ~D = ~,3F secs~%  length: ~D (~,3F secs)
-~%  in: ~A[~D]~A~A~A~%  scalers: ~A~%  speed: ~A~%  envs: ~{~A~^~%    ~}~A~A"
+~%  in: ~A[~D]~A~A~A~%  scaler: ~A~%  speed: ~A~%  env: ~A~A~A"
 		       (if (mix-name n)
 			   (format #f "~S (~D)" (mix-name n) n)
 			   (format #f "~D" n))
@@ -521,15 +404,9 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
 		       (if (not (= (mix-track n) 0))
 			   (format #f "~%  track: ~A" (mix-track n))
 			   "")
-		       (let ((scls '()))
-			 (do ((i (1- (mix-chans n)) (1- i)))
-			     ((< i 0) scls)
-			   (set! scls (cons (mix-amp n i) scls))))
+		       (mix-amp n)
 		       (mix-speed n)
-		       (let ((es '()))
-			 (do ((i (1- (mix-chans n)) (1- i)))
-			     ((< i 0) es)
-			   (set! es (cons (mix-amp-env n i) es))))
+		       (mix-amp-env n)
 		       (if (not (= (mix-tag-position n) 0))
 			   (format #f "~%  tag-position: ~A" (mix-tag-position n))
 			   "")

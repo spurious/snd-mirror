@@ -301,33 +301,6 @@ static XEN g_multiply_envs(XEN e1, XEN e2, XEN maxx)
 }
 #endif
 
-env *invert_env(env *e)
-{
-  env *new_e;
-  int i, k;
-  new_e = copy_env(e);
-  for (k = 0, i = 1; k < new_e->pts; k++, i += 2)
-    new_e->data[i] = 1.0 - new_e->data[i];
-  if ((e->base != 0.0) && (e->base != 1.0))
-    new_e->base = 1.0 / e->base;
-  return(new_e);
-}
-
-#if MUS_DEBUGGING && HAVE_SCHEME
-static XEN g_invert_env(XEN e)
-{
-  env *temp1, *temp2;
-  XEN res;
-  temp1 = xen_to_env(e);
-  temp2 = invert_env(temp1);
-  res = env_to_xen(temp2);
-  free_env(temp1);
-  free_env(temp2);
-  return(res);
-}
-#endif
-
-
 static void add_point(env *e, int pos, Float x, Float y)
 {
   int i, j;
@@ -1047,18 +1020,7 @@ void alert_envelope_editor(char *name, env *val)
   else add_envelope(name, val);
 }
 
-typedef struct {
-  off_t size;
-  Float *data;
-  Float scale;
-} enved_fft;
-
-typedef struct enved_ffts {
-  int size;
-  enved_fft **ffts;
-} enved_ffts;
-
-static enved_fft *free_enved_fft(enved_fft *ef)
+enved_fft *free_enved_fft(enved_fft *ef)
 {
   if (ef)
     {
@@ -1069,64 +1031,14 @@ static enved_fft *free_enved_fft(enved_fft *ef)
   return(NULL);
 }
 
-void free_enved_spectra(chan_info *cp)
+void reflect_enved_fft_change(chan_info *cp)
 {
-  if (cp->enved_spectra)
-    {
-      enved_ffts *efs;
-      int i;
-      efs = cp->enved_spectra;
-      for (i = 0; i < efs->size; i++)
-	efs->ffts[i] = free_enved_fft(efs->ffts[i]);
-      FREE(efs->ffts);
-      FREE(efs);
-      cp->enved_spectra = NULL;
-    }
-}
-
-void release_dangling_enved_spectra(chan_info *cp, int edpt)
-{
-  if (cp->enved_spectra)
-    {
-      enved_ffts *efs;
-      int i;
-      efs = cp->enved_spectra;
-      if (edpt < efs->size)
-	for (i = edpt; i < efs->size; i++)
-	  efs->ffts[i] = free_enved_fft(efs->ffts[i]);
-    }
-}
-
-void reflect_enved_spectra_change(chan_info *cp)
-{
-  if ((cp->enved_spectra) && 
-      (cp == current_channel()) &&
-      (enved_target(ss) == ENVED_SPECTRUM))
+  if ((enved_dialog_is_active()) &&
+      (enved_target(ss) == ENVED_SPECTRUM) &&
+      (cp == current_channel()))
     env_redisplay();
 }
 
-static enved_fft *new_enved_fft(chan_info *cp)
-{
-  enved_ffts *efs;
-  if (cp->enved_spectra == NULL)
-    cp->enved_spectra = (enved_ffts *)CALLOC(1, sizeof(enved_ffts));
-  efs = cp->enved_spectra;
-  if (efs->size <= cp->edit_ctr)
-    {
-      if (efs->ffts)
-	{
-	  int i, old_size;
-	  old_size = efs->size;
-	  efs->ffts = (enved_fft **)REALLOC(efs->ffts, (cp->edit_ctr + 1) * sizeof(enved_fft *));
-	  for (i = old_size; i <= cp->edit_ctr; i++) efs->ffts[i] = NULL;
-	}
-      else efs->ffts = (enved_fft **)CALLOC(cp->edit_ctr + 1, sizeof(enved_fft *));
-      efs->size = cp->edit_ctr + 1;
-    }
-  if (efs->ffts[cp->edit_ctr] == NULL)
-    efs->ffts[cp->edit_ctr] = (enved_fft *)CALLOC(1, sizeof(enved_fft));
-  return(efs->ffts[cp->edit_ctr]);
-}
 
 #define DEFAULT_ENVED_MAX_FFT_SIZE 1048576
 static off_t enved_max_fft_size = DEFAULT_ENVED_MAX_FFT_SIZE;
@@ -1134,7 +1046,9 @@ static off_t enved_max_fft_size = DEFAULT_ENVED_MAX_FFT_SIZE;
 static enved_fft *make_enved_spectrum(chan_info *cp)
 {
   enved_fft *ef;
-  ef = new_enved_fft(cp);
+  if (cp->edits[cp->edit_ctr]->fft == NULL)
+    cp->edits[cp->edit_ctr]->fft = (enved_fft *)CALLOC(1, sizeof(enved_fft));
+  ef = cp->edits[cp->edit_ctr]->fft;
   if ((ef) && (ef->size == 0)) /* otherwise it is presumably already available */
     {
       off_t i, fsize, data_len;
@@ -1791,7 +1705,6 @@ XEN_ARGIFY_1(g_save_envelopes_w, g_save_envelopes)
 XEN_ARGIFY_3(g_define_envelope_w, g_define_envelope)
 #if MUS_DEBUGGING && HAVE_SCHEME
   XEN_ARGIFY_6(g_window_env_w, g_window_env)
-  XEN_NARGIFY_1(g_invert_env_w, g_invert_env)
   XEN_NARGIFY_3(g_multiply_envs_w, g_multiply_envs)
 #endif
 #else
@@ -1816,7 +1729,6 @@ XEN_ARGIFY_3(g_define_envelope_w, g_define_envelope)
 #define g_define_envelope_w g_define_envelope
 #if MUS_DEBUGGING && HAVE_SCHEME
   #define g_window_env_w g_window_env
-  #define g_invert_env_w g_invert_env
   #define g_multiply_envs_w g_multiply_envs
 #endif
 #endif
@@ -1920,6 +1832,5 @@ stretch-envelope from env.fth: \n\
 #if MUS_DEBUGGING && HAVE_SCHEME
   XEN_DEFINE_PROCEDURE("window-env", g_window_env_w, 5, 1, 0, "internal testing function");
   XEN_DEFINE_PROCEDURE("multiply-envs", g_multiply_envs_w, 3, 0, 0, "internal testing function");
-  XEN_DEFINE_PROCEDURE("invert-env", g_invert_env_w, 1, 0, 0, "internal testing function");
 #endif
 }

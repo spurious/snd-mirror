@@ -476,7 +476,7 @@ Extensions to Snd can be found in:
  fft notch filter, mark and mix functions, etc.  The main one loads a huge set of sound effects.')">additional menus</td></tr>
 
 <tr><td bgcolor="#f6f8ff"><a href="sndscm.html#mixdoc">mix</a></td>
-    <td bgcolor="#f6f8ff" onmouseover="return escape('mix-property, delete-all-mixes, mix-sound, pan-mix, save-mix,\
+    <td bgcolor="#f6f8ff" onmouseover="return escape('mix-property, delete-all-mixes, mix-sound, save-mix,\
  snap-mix-to-beat; similar functions for tracks')">functions related to mixes and tracks</td></tr>
 
 <tr><td><a href="sndscm.html#mixerdoc">mixer</a></td>
@@ -1968,9 +1968,7 @@ in mix.scm for a fancier version):
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (add-hook! <em class=red>mix-click-hook</em>
   (lambda (n)
-    (do ((i 0 (1+ i)))
-	((= i (<a class=quiet href="#mixchans">mix-chans</a> n)))
-      (set! (<a class=quiet href="#mixamp">mix-amp</a> n i) 0.0))
+    (set! (<a class=quiet href="#mixamp">mix-amp</a> n) 0.0)
     #t))
 </pre></td></tr></table></td></tr><tr><td colspan=3 height=16></td></tr>
 
@@ -4600,22 +4598,15 @@ into "tracks", which have a very similar set of functions.
 
 <table width="35%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Mixes</h4></td></tr></table>
 
-<p>A mix is an object that represents an output channel of a sound mix.
-Each mix object has a unique identifier called its id that identifies it in the following functions.
+<p>A mix is an object that represents a channel of a sound mix.
+Each mix object has a unique identifier called its 'id' that identifies it in the following functions.
 A track is a list of mixes that are treated in many ways as a single big mix.
 Say we have a mix whose id is 123:</p>
 <pre>
-    &gt;<em class=typing>(mix-chans 123)</em>
-    <em class=listener>1</em>
-    &gt;<em class=listener>(set! (mix-amp 123 0) .5)</em>
+    &gt;<em class=listener>(set! (mix-amp 123) .5)</em>
     <em class=typing>.5</em>
 </pre>
-<p>This 
-sets mix 123's channel 0 amplitude scaler to .5.  If a multichannel sound is mixed into a channel, the
-mix object associated with that action has the same number of channels as the input sound, any of which can contribute to 
-the target channel. Similarly, a multichannel sound mixed into a multichannel sound results in a mix
-for each target channel, each such mix having the full set of input channels reflecting the mixed-in
-sound.
+<p>This sets mix 123's amplitude scaler to .5.  
 </p>
 
 
@@ -4724,29 +4715,22 @@ in the 2nd channel of the 2nd (a stereo sound):
 
 
 <!-- mix-amp -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixamp">mix-amp</a> (mix :optional chan)</code>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixamp">mix-amp</a> (mix)</code>
 </td></tr><tr><td></td><td>
-mix-amp is the amplitude scaler applied to the mix's (input) channel 'chan'. 
+mix-amp is the amplitude scaler applied to the mix. 
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix-amp-env -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixampenv">mix-amp-env</a> (mix :optional chan)</code>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixampenv">mix-amp-env</a> (mix)</code>
 </td></tr><tr><td></td><td>
 mix-amp-env is the 
-amplitude envelope applied to the mix's input channel 'chan' (a list of breakpoints).  
+amplitude envelope applied to the mix (a list of breakpoints).  
 To reset this to its default (null) state, use #f.
 <pre>
-    (set! (mix-amp-env 0 0) '(0 0 1 1))
+    (set! (mix-amp-env 0) '(0 0 1 1))
 </pre> 
-sets mix 0's 0-chan envelope to a ramp.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- mix-chans -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixchans">mix-chans</a> (mix)</code>
-</td></tr><tr><td></td><td>
-mix-chans returns the number of input chans in the mix.
+sets mix 0's envelope to a ramp.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4778,24 +4762,6 @@ mix-home returns a list containing the sound index and channel number affected b
     :<em class=typing>(mix-home 1)</em>
     <em class=listener>(0 0)</em>
 </pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- mix-inverted? -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixinvertedp">mix-inverted?</a> (mix)</code>
-</td></tr><tr><td></td><td>
-mix-inverted? returns #t if the mix 'mix' should invert its track's amp-env values.  Stereo mixes are often
-combined through a track that povides panning via its amplitude envelope.  If we think of that envelope as
-applied to the first channel, the second channel gets the inverted version to provide a simple kind of panning.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- mix-locked? -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixlockedp">mix-locked?</a> (mix)</code>
-</td></tr><tr><td></td><td>
-mix-locked? returns #t if 'mix' is locked (rendered immovable).  A mix is automatically locked if an edit operation
-affects some portion of the data that the mix also affects.  For example, if you delete a portion of a sound
-that has actively mixed data, the associated mix tag goes away until you undo that deletion. 
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4913,7 +4879,6 @@ mix-position is the current starting position (a sample number) of 'mix'.
 mix-region mixes region 'reg' into the given channel starting at sample 'samp' ('samp' defaults to the cursor sample).
 It returns the id of the first channel's 
 mix (subsequent channels simply increment this number).
-See also <a href="sndscm.html#panmixregion">pan-mix-region</a> in mix.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4922,7 +4887,6 @@ See also <a href="sndscm.html#panmixregion">pan-mix-region</a> in mix.scm.
 </td></tr><tr><td></td><td>
 mix-selection mixes the current selection into the given channel starting at 'beg', returning the new mix's id.
 The Edit:Mix selection menu choice is essentially <code>(mix-selection (cursor))</code>.
-See also <a href="sndscm.html#panmixselection">pan-mix-selection</a> in mix.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4990,7 +4954,6 @@ mix-vct returns the id of the new mix, or -1 if some error occurred.
 If 'with-mix-tags' is #f (the default is #t), the data is simply
 mixed without creating any mix tags, and without returning a mix id.
 If 'track' is the id of an existing track, the subsequent mix is placed in that track.
-See also <a href="sndscm.html#panmixvct">pan-mix-vct</a> in mix.scm.
 <pre>
     :<em class=typing>(channel-&gt;vct 1000 3)</em>               ; what are these 3 samples before the mix?
     <em class=listener>#&lt;vct[len=3]: -0.065 -0.059 -0.060&gt;</em>
@@ -5060,12 +5023,7 @@ save mix data in file: <a href="sndscm.html#savemix">save-mix</a><br>
 mix property list: <a href="sndscm.html#mixproperty">mix-property</a> in mix.scm<br>
 pan mono sound into stereo: see <a href="sndscm.html#placesound">place-sound</a> in examp.scm<br>
 move a mixed sound via dlocsig: <a href="#mixmovesound">mix-move-sound</a><br>
-pan mix file with envelope: <a href="sndscm.html#panmix">pan-mix</a><br>
-pan mix selection: <a href="sndscm.html#panmixselection">pan-mix-selection</a><br>
-pan mix region: <a href="sndscm.html#panmixregion">pan-mix-region</a><br>
-pan mix vct: <a href="sndscm.html#panmixvct">pan-mix-vct</a><br>
 the mix dialog: <a href="snd.html#mixdialog">Mix Dialog</a><br>
-use pan-mix in File:Mix dialog: <a href="sndscm.html#usepanmixinmixmenu">use-pan-mix-in-mix-menu</a><br>
 mix menu: see mix-menu.scm<br>
 cross-fade in frequency: cross-fade and dissolve-fade in <a href="sndscm.html#fadedoc">fade.scm</a><br>
 zipper cross-fade: <a href="sndscm.html#zipdoc">zipper.scm</a><br>
@@ -5125,14 +5083,6 @@ delete-track removes the track 'track-id' from the output by setting its amplitu
 free-track frees track 'track-id'; this frees the memory associated with the track and is not undoable.
 To free all tracks: <code>(for-each <em class=red>free-track</em> (<a class=quiet href="#tracks">tracks</a>))</code>.
 This function is mostly for internal testing.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- lock-track -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="locktrack">lock-track</a> (track-id)</code>
-</td></tr><tr><td></td><td>
-lock-track locks track 'track-id' by locking all its associated mixes: see <a href="#mixlockedp">mix-locked?</a>.  One reason to lock a track would be
-to preserve its overall amplitude envelope despite some subsequent editing that changes the nominal track length.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5197,9 +5147,6 @@ the portion of the track envelope that happens to fall over it.  Use #f to reset
 Anything that changes the track's bounds causes the track envelope to be reapplied; there are many ways
 this can happen implicitly: set mix-track, mix-position, mix-speed (of a constituent mix), track-position,
 track-speed, and track-tempo; even make-track if it steals away one of our member mixes.
-If a mix in a track has set the <a href="#mixinvertedp">mix-inverted?</a> flag, the
-first track envelope in its track chain is inverted, thereby interpreting the
-track envelope as a panning control.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5442,7 +5389,6 @@ This creates a <a href="#samplereaders">sample-reader</a> reading the region's c
 mix-region mixes region 'reg' into the given channel starting at sample 'samp' (defaulting to the cursor location).
 It returns the id of the first channel's 
 mix (subsequent channels simply increment this number).
-See also <a href="sndscm.html#panmixregion">pan-mix-region</a> in mix.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5684,7 +5630,6 @@ The Edit:Insert selection menu choice is essentially <code>(insert-selection (cu
 </td></tr><tr><td></td><td>
 mix-selection mixes (adds) a copy of the selection starting at 'beg' in the given channel, and returns new mix id.
 The Edit:Mix selection menu choice is <code>(mix-selection (cursor))</code>.
-See also <a href="sndscm.html#panmixselection">pan-mix-selection</a> in mix.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -6598,7 +6543,7 @@ The CLM env generator: <a href="clm.html#make-env">env</a>, many examples in exa
 Various operations on envelopes: <a href="sndscm.html#envdoc">env.scm</a><br>
 Peak env files: <a href="sndscm.html#peakenvdoc">peak-env.scm</a><br>
 The envelope editor: <a href="snd.html#editenvelope">Edit or View and Envelope</a><br>
-Panning: place-sound in examp.scm, <a href="snd.html#mixdialog">Mix Dialog</a>, play-panned in enved.scm, <a href="sndscm.html#panmix">pan-mix</a><br>
+Panning: place-sound in examp.scm<br>
 Envelope over mix: <a href="sndscm.html#envelopedmix">enveloped-mix</a><br>
 Envelope over track (a set of mixes): <a href="#trackampenv">track-amp-env</a><br>
 Local envelope editor: <a href="sndscm.html#enveddoc">enved.scm</a>, xm-enved.scm<br>
@@ -6859,12 +6804,12 @@ I didn't bring out the search direction (find-channel is built on scan-channel w
 scanning forwards), but it's not hard to write a function to find in reverse:
 
 <pre>
-(define* (<A NAME=findchannelinreverse">find-channel-in-reverse</A> proc :optional beg snd chn edpos)
+(define* (<A NAME="findchannelinreverse">find-channel-in-reverse</A> proc :optional beg snd chn edpos)
   (let* ((sample (or beg (1- (<a class=quiet href="#frames">frames</a> snd chn)))) ; or cursor?
 	 (reader (<a class=quiet href="#makesamplereader">make-sample-reader</a> sample snd chn -1 edpos))
 	 (result #f))
     (do ((i sample (1- i)))
-	((or result (< i 0)) 
+	((or result (&lt; i 0)) 
 	 (and result
 	     (list result (1+ i))))
       (set! result (proc (reader))))))

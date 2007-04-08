@@ -174,7 +174,7 @@ For help with Forth and Snd/CLM, see the Forth documentation section "Snd, CLM, 
  fft notch filter, mark and mix functions, etc.  The main one loads a huge set of sound effects.')">additional menus</td></tr>
 
 <tr><td bgcolor="#f6f8ff"><a href="#mixdoc">mix</a></td>
-    <td bgcolor="#f6f8ff" onmouseover="return escape('mix-property, delete-all-mixes, mix-sound, pan-mix, save-mix,\
+    <td bgcolor="#f6f8ff" onmouseover="return escape('mix-property, delete-all-mixes, mix-sound, save-mix,\
  snap-mix-to-beat; similar functions for tracks')">functions related to mixes and tracks</td></tr>
 
 <tr><td><a href="#mixerdoc">mixer</a></td>
@@ -3639,7 +3639,6 @@ This function could use at least a start time parameter.
 <br>
 Panning or Sound Placement<br>
 Place sound: <a href="#placesound">place-sound</a> above.<br>
-Pan mix: <a href="#panmix">pan-mix</a>, or via the amplitude and envelope controls in the mix dialog<br>
 Place mix: <a href="clm.html#musmix">mus-mix</a><br>
 Play sound with panning: <a href="#playpanned">play-panned</a><br>
 CLM placement generator: <a href="clm.html#locsig">locsig</a><br>
@@ -4831,12 +4830,6 @@ and a suitably noisy original, strange pitches emerge and submerge.  'fsize' is 
     (<a class=quiet href="clm.html#with-sound">with-sound</a> () (dissolve-fade 0 1 1.0 "oboe.snd" "trumpet.snd" 256 2 0 128))
     (<a class=quiet href="extsnd.html#vcttochannel">vct-&gt;channel</a> (dissolve-fade 0 2 1 0 1 1024 2 2 #f))
 </pre>
-
-<table bgcolor="aliceblue" border=0><tr>
-<td>
-<pre>see also: <a href="#mixdoc" onmouseover="return escape('cross-fade in amplitude')">pan-mix</a>
-</pre>
-</td></tr></table>
 
 <br>
 
@@ -6461,62 +6454,6 @@ mix-sound mixes 'file' (all chans) into the currently selected sound at 'start'.
 </td></tr><tr><td></td><td>
 mix-&gt;vct returns in a vct the current samples
 of mix 'id'.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- pan-mix -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="panmix">pan-mix</a> <code>file (frame 0) (env 1.0) snd (chn 0) auto-delete</code>
-</td></tr><tr><td></td><td>
-pan-mix
-mixes 'file' into the current sound starting at 'frame' using the envelope 'env'
-to pan the mixed samples (0: all chan 1, 1: all chan 0).
-
-So, <code>(pan-mix \"oboe.snd\" .1 '(0 0 1 1))</code> goes from all chan 0 to all chan 1.  If
-the variable <a href="extsnd.html#withmixtags">with-mix-tags</a> is #t, the resultant mixes are placed in their own track, and 
-the track envelope controls the panning. 
-If 'envelope' is a scaler, it is turned into an evelope at that value. 'auto-delete' determines
-whether the in-coming file should be treated as a temporary file and deleted when the mix
-is no longer accessible.
-To tie this into C-x C-q, in place of the default "mix" function,
-<pre>
-(<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\q 4 ; C-q
-  (lambda () "pan mix"
-    (<a class=quiet href="extsnd.html#promptinminibuffer">prompt-in-minibuffer</a> "mix:" (lambda (str) ; use pan-mix at cursor
-				   (<em class=red>pan-mix</em> str (or (<a class=quiet href="extsnd.html#cursor">cursor</a>) 0)) #f #t)))
-  #t  ; an extended (C-x) command
-  "C-x C-q")
-</pre>
-See <a href="#usepanmixinmixmenu">use-pan-mix-in-mix-menu</a> to change the
-File:Mix menu to use pan-mix.  
-<br>
-<img src="pan.png" alt="picture of panning" hspace=20 vspace=10>
-
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- pan-mix-region -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="panmixregion">pan-mix-region</A> <code>region (frame 0) (env 1.0) snd (chn 0)</code>
-</td></tr><tr><td></td><td>
-pan-mix-region is similar to pan-mix above, but mixes a region, rather than a file.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- pan-mix-selection -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="panmixselection">pan-mix-selection</A> <code>(frame 0) (env 1.0) snd (chn 0)</code>
-</td></tr><tr><td></td><td>
-pan-mix-selection is similar to pan-mix above, but mixes the current selection, rather than a file.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- pan-mix-vct -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="panmixvct">pan-mix-vct</A> <code>vct (frame 0) (env 1.0) snd (chn 0)</code>
-</td></tr><tr><td></td><td>
-pan-mix-vct is similar to pan-mix above, but mixes a vct, rather than a file.
-The vct data represents one channel of sound.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -8385,14 +8322,6 @@ manager sends a SAVE_YOURSELF message.
 </td></tr><tr><td></td><td>
 upon-take-focus causes 'thunk' (a function of no arguments) to be called
 whenever Snd receives focus from the window manager.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- use-pan-mix-in-mix-menu -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="usepanmixinmixmenu">use-pan-mix-in-mix-menu</a> ()
-</td></tr><tr><td></td><td>
-use-pan-mix-in-mix-menu changes the File:Mix dialog to use <a href="#panmix">pan-mix</a> rather than <a href="extsnd.html#mix">mix</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

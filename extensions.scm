@@ -143,18 +143,6 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
     (mix tmp-name beg)
     (delete-file tmp-name)))
 
-;;; another way:
-; 
-; (define (enveloped-mix-1 filename beg env)
-;   "(enveloped-mix-1 filename beg env) mixes filename starting at beg with amplitude envelope env. (enveloped-mix-1 \"pistol.snd\" 0 '(0 0 1 1 2 0))"
-;   (as-one-edit
-;    (lambda ()
-;      (let* ((mix-id (mix filename beg))
-; 	    (inchans (mix-chans mix-id)))
-;        (do ((i 0 (1+ i)))
-; 	   ((= i inchans))
-; 	 (set! (mix-amp-env mix-id i) env))))))
-
 
 ;;; -------- map-sound-files, match-sound-files
 ;;;

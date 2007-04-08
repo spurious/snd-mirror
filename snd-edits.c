@@ -796,10 +796,10 @@ static Float next_mix(snd_fd *sf)
   if (sf->loc > sf->last) return(next_sound(sf)); /* next_sound here refers to whatever follows the mixed portion */
 
   /* current underlying sample is sf->data[sf->loc++]
-   * sf->mix_info points to the mix reader
+   * sf->mixes points to the mix reader
    */
   return(next_sample_value(sf) +  /* read_sample here would call runf => next_mix => infinite recursion */
-	 read_sample(((mix_data *)(sf->mix_info))->sf));
+	 read_sample(((mix_data *)(sf->mixes))->sf));
 }
 
 static Float previous_mix(snd_fd *sf)
@@ -807,7 +807,7 @@ static Float previous_mix(snd_fd *sf)
   if (sf->loc < sf->first) return(previous_sound(sf));
 
   return(previous_sample_value(sf) + 
-	 read_sample(((mix_data *)(sf->mix_info))->sf));
+	 read_sample(((mix_data *)(sf->mixes))->sf));
 }
 
 static Float next_ramp(snd_fd *sf)
@@ -3578,12 +3578,12 @@ static void choose_accessor(snd_fd *sf)
     case ED_MIX:
       {
 	mix_data *md;
-	if (sf->mix_info)
-	  sf->mix_info = (void *)free_mix_data((mix_data *)(sf->mix_info));
+	if (sf->mixes)
+	  sf->mixes = (void *)free_mix_data((mix_data *)(sf->mixes));
 	/* PERHAPS: do this at end not start? */
 
 	md = (mix_data *)CALLOC(1, sizeof(mix_data));
-	sf->mix_info = (void *)md;
+	sf->mixes = (void *)md;
 	md->sf = make_virtual_mix_reader(sf->cp, READER_MIX_LENGTH(sf), READER_MIX_INDEX(sf), READER_MIX_SCALER(sf), sf->direction);
       }
       break;
@@ -6841,9 +6841,9 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
  	  sf->closure3 = XEN_UNDEFINED;
 	  sf->protect3 = NOT_A_GC_LOC;
  	}
-      if (sf->mix_info)
+      if (sf->mixes)
 	{
-	  sf->mix_info = (void *)free_mix_data((mix_data *)(sf->mix_info));
+	  sf->mixes = (void *)free_mix_data((mix_data *)(sf->mixes));
 	}
       reader_out_of_data(sf);
       sd = sf->current_sound;
@@ -9635,23 +9635,18 @@ static void make_mix_fragment(ed_list *new_ed, int i, int mix_loc, off_t beg, of
    *  use only ed_mix access -- mix without tag can be as current but kept separate for sanity
    *  any tagged mix on ptree (etc), save last state as temp, remake its edlist entry as ed_simple and then mix
    * 
-   *  [mixes, tracks?] -> ed_list
-   *  amp_env->peak_env
-   *  edits list [sounds mixes]
+   *  all amp_env->peak_env
+   *  edits list mix states
    */
 
-  /* TODO: remove notion of mix-chans -- each mix refers to one path in and out
-   *         also affects mix-amp mix-amp-env
-   *         opt reg in-chan in mix-region|selection, perhaps mix-sound-data et al
+  /* TODO: remove opt reg in-chan in mix-region|selection, perhaps mix-sound-data et al
    *       add mix-sync (for various multi-channel cases that don't want the track mechanism)
    *       remove copy-mix (do this with mix reader in mix.scm)
    *       remove delete-mix (mix.scm) -> unmix (actually remove edit, not just set amp 0)
    *       add tag-y based on freq (score-style display)
-   *       remove mix-inverted? -- do this in mix.scm if anywhere
-   *       remove mix-locked? -- this is implicit in mix? 
    *
    *   if mix-property, display upon tag click or in dialog
-   *
+   *   edit-list-property?
    *   move mix-state stack to edit list
    *    mix-amp then finds id in edits mix list etc -- this way mix states follow the edit list automatically
    *
@@ -9659,11 +9654,8 @@ static void make_mix_fragment(ed_list *new_ed, int i, int mix_loc, off_t beg, of
    *
    * check that short mixes use buffers not files
    *
-   * for readers:
-   sf->cp = cp;
-   sf->current_state = ed;
-   sf->edit_ctr = edit_position;
-   *  has everything we need upon release
+   * TODO: XMIX env ed not displayed, check GMIX
+   * someday re-write pan-mix
    */
 
   FRAGMENT_TYPE(new_ed, i) = ED_MIX; /* new form would be cur type + 1 */

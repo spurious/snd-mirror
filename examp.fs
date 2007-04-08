@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Thu Feb 01 00:53:48 CET 2007
+\ Changed: Fri Apr 06 00:26:04 CEST 2007
 
 \ Commentary:
 \
@@ -13,6 +13,9 @@
 \ close-sound-extend  	    ( snd -- )
 \ snd-snd             	    ( :optional snd -- snd )
 \ snd-chn             	    ( :optional chn -- chn )
+\ toggle-read-eval-loop     ( -- )
+\ make-read-eval-loop       ( -- )
+\ remove-read-eval-loop     ( -- )
 \
 \ from frame.scm
 \ insert-vct                ( v :optional beg dur snd chn edpos -- samps )
@@ -188,6 +191,59 @@
     then
   then
 ;
+
+\ === Traditional Forth Read-Eval-Loop for Snd's listener. ===
+hide
+#f value ficl-stack
+
+: read-eval-loop-cb <{ line -- result-string }>
+  #f clear-minibuffer drop
+  line empty? if
+    "ok\n" snd-print drop
+  else
+    ficl-stack restore-stack
+    $space snd-print drop
+    line <'> string-eval #t nil fth-catch false? if
+      save-stack to ficl-stack
+      $"  ok\n" snd-print drop
+    else
+      stack-reset
+      $" %s in %s"
+      '( *last-exception* exception-name *last-exception* exception-last-message-ref )
+      string-format snd-warning drop
+      *fth-verbose* if backtrace then
+    then
+  then
+  reset-listener-cursor drop
+  #t
+;
+: __toggle-read-eval-loop { key -- }
+  key 'on equal?
+  key #t  equal? || if			\ on
+    read-hook <'> read-eval-loop-cb hook-member? unless
+      read-hook <'> read-eval-loop-cb add-hook!
+    then
+  else
+    key 'off equal?
+    key #f   equal? || if		\ off
+      read-hook <'> read-eval-loop-cb remove-hook!
+    else				\ toggle
+      read-hook <'> read-eval-loop-cb hook-member? if
+	read-hook <'> read-eval-loop-cb remove-hook!
+      else
+	read-hook <'> read-eval-loop-cb add-hook!
+      then
+    then
+  then
+  #f to ficl-stack
+  stack-reset
+  reset-listener-cursor drop
+;
+set-current
+: toggle-read-eval-loop ( -- ) nil __toggle-read-eval-loop ;
+: make-read-eval-loop   ( -- ) #t  __toggle-read-eval-loop ;
+: remove-read-eval-loop ( -- ) #f  __toggle-read-eval-loop ;
+previous
 
 require clm
 require env

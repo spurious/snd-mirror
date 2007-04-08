@@ -190,8 +190,6 @@ char **stop_sign_bits(void);
 
 char **speaker_bits(void);
 char **blue_speaker_bits(void);
-char **pan_bits(void);
-char **yellow_pan_bits(void);
 void make_icons_transparent(char *basic_color);
 
 

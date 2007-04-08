@@ -506,6 +506,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+6-Apr:   virtual mix changes: removed mix-chans, mix-locked?, mix-inverted?, lock-track\n\
 23-Mar:  recorder dialog removed -- a new one is underway...\n\
 22-Mar:  Snd 8.9.\n\
 14-Mar:  cairo graphics backend (--with-cairo configure choice).\n\
