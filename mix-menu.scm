@@ -804,7 +804,7 @@ The track number 0 is the 'untrack' so to speak.")))
 
 (add-to-menu mix-menu #f #f)
 
-(add-to-menu mix-menu "Colorize tracks" (lambda () (load-from-path "track-colors.scm")))
+;;;(add-to-menu mix-menu "Colorize tracks" (lambda () (load-from-path "track-colors.scm")))
 
 (add-to-menu mix-menu "Delete all mixes & tracks" (lambda () (delete-all-tracks)))
 

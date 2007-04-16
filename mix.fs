@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Fri Feb 23 19:44:32 CET 2007
+\ Changed: Mon Apr 09 20:56:26 CEST 2007
 
 \ Commentary:
 \
@@ -12,10 +12,6 @@
 \ mix-sound            ( file start -- mix-id )
 \ delete-all-mixes     ( -- )
 \ find-mix             ( sample snd chn -- mx )
-\ pan-mix              ( name beg envelope snd chn auto-delete -- mx )
-\ pan-mix-selection    ( beg envelope snd chn -- mx )
-\ pan-mix-region       ( reg beg envelope snd chn -- mx )
-\ pan-mix-vct          ( v beg envelope snd chn -- mx )
 \ mix->vct             ( id -- vct )
 \ save-mix             ( id filename -- )
 \ mix-maxamp           ( id -- max-amp )
@@ -96,117 +92,6 @@ previous
       leave
     then
   end-each
-;
-
-\ --- pan-mix ---
-
-hide
-: pan-mix-cb ( name beg idx inchan chan0 chan1 auto-delete track-func -- prc ; self -- mx )
-  { name beg idx inchan chan0 chan1 auto-delete track-func }
-  0 proc-create name , beg , idx , inchan , chan0 , chan1 , auto-delete , track-func ,
- does> ( self -- mx )
-  { self }
-  self @ { name }
-  self 1 cells + @ { beg }
-  self 2 cells + @ { idx }
-  self 3 cells + @ { inchan }
-  self 4 cells + @ { chan0 }
-  self 5 cells + @ { chan1 }
-  self 6 cells + @ { auto-delete }
-  self 7 cells + @ { track-func }
-  '() make-track { trk }
-  name beg 0      idx chan0 #t auto-delete trk mix { mix0 }
-  name beg inchan idx chan1 #t auto-delete trk mix { mix1 }
-  mix1 #t set-mix-inverted? drop
-  trk track-func set-track-amp-env drop
-  mix0
-;
-set-current
-: pan-mix <{ name :optional beg 0 envelope 1.0 snd #f chn 0 auto-delete #f -- mx }>
-  doc" Mixes FILE into the sound SND starting at BEG \
-(in samples) using ENVELOPE to pan (0: all chan 0, 1: all chan 1).  \
-So, \"oboe.snd\" 0.1 '( 0 0 1 1 ) pan-mix goes from all chan 0 to all chan 1.  \
-If the variable with-tags is #t, the resultant mixes are placed in their own track, \
-and the track envelope controls the panning.  \
-If ENVELOPE is a scaler, it is turned into an evelope at that value.  \
-AUTO-DELETE determines whether the in-coming file should be treated as a temporary file \
-and deleted when the mix is no longer accessible."
-  name find-file to name
-  name false? if 'no-such-file '( get-func-name name ) fth-throw then
-  snd snd-snd dup sound? unless 'no-such-sound '( get-func-name snd ) fth-throw then { idx }
-  with-mix-tags { old-with-mix-tag }
-  #t set-with-mix-tags drop
-  name mus-sound-chans { incoming-chans }
-  idx channels { receiving-chans }
-  idx sync { old-sync }
-  envelope list? if envelope else '( 0 envelope 1 envelope ) then { track-func }
-  receiving-chans 1 = if
-    incoming-chans 1 = if
-      name beg 0 idx 0 #t auto-delete mix { id }
-      envelope list? if
-	id 0 envelope set-mix-amp-env drop
-      else
-	id 0 envelope set-mix-amp drop
-      then
-      id
-    else
-      \ incoming chans > 2 ignored
-      name beg idx 1 0 0 auto-delete track-func pan-mix-cb undef as-one-edit drop
-    then
-  else
-    chn { chan0 }
-    chn 1+ receiving-chans mod { chan1 }
-    incoming-chans 1 = if
-      idx #f set-sync drop
-      name beg idx 0 chan0 chan1 auto-delete track-func pan-mix-cb undef as-one-edit drop
-      idx old-sync set-sync drop
-    else
-      0 { new-sync }
-      \ incoming chans > 2 ignored
-      sounds each { s } s sync new-sync > if s sync 1+ to new-sync then end-each
-      idx new-sync set-sync drop
-      name beg idx 1 chan0 chan1 auto-delete track-func pan-mix-cb undef as-one-edit drop
-      idx old-sync set-sync drop
-    then
-  then { new-mix }
-  old-with-mix-tag set-with-mix-tags drop
-  new-mix mix? old-with-mix-tag not && if
-    new-mix mix-track track? if
-      new-mix mix-track lock-track drop
-    else
-      new-mix #t set-mix-locked? drop
-    then
-  then
-  new-mix
-;
-previous
-
-: pan-mix-selection <{ :optional beg 0 envelope 1.0 snd #f chn 0 -- mx }>
-  doc" Mixes the current selection into the sound SND \
-starting at START (in samples) using ENVELOPE to pan (0: all chan 0, 1: all chan 1)."
-  selection? if
-    snd-tempnam save-selection beg envelope snd chn #t pan-mix
-  else
-    'no-active-selection '( get-func-name ) fth-throw
-  then
-;
-
-: pan-mix-region <{ reg :optional beg 0 envelope 1.0 snd #f chn 0 -- mx }>
-  doc" Mixes the given region into the sound SND \
-starting at START (in samples) using ENVELOPE to pan (0: all chan 0, 1: all chan 1)."
-  reg region? if
-    reg snd-tempnam save-region beg envelope snd chn #t pan-mix
-  else
-    'no-such-region '( get-func-name reg ) fth-throw
-  then
-;
-
-: pan-mix-vct <{ v :optional beg 0 envelope 1.0 snd #f chn 0 -- mx }>
-  snd-tempnam { temp-file }
-  temp-file snd srate 1 mus-sound-open-output { fd }
-  fd 0 v vct-length 1- 1 v undef undef vct->sound-data mus-sound-write drop
-  fd v vct-length 4 * mus-sound-close-output drop
-  temp-file beg envelope snd chn #t pan-mix
 ;
 
 : mix->vct ( id -- v )
@@ -295,26 +180,13 @@ previous
 ;
 
 hide
-: mix-name->id-xt ( name --; id self -- nothing or id )
-  1 proc-create swap ,
- does> ( id self -- nothing or id )
-  { id self }
-  self @ ( name ) id mix-name string= if id then
-;
-set-current
-: mix-name->id ( name -- id )
-  depth >r ( name ) mix-name->id-xt undef undef mixes tree-for-each depth r> = if #f then
-;
-previous
-
-hide
 : mix-click-sets-amp-cb <{ id -- #t }>
   id :zero mix-property not if
-    id mix-chans 1- make-array map! id i mix-amp end-map :amps swap id -rot set-mix-property
-    id mix-chans 0 ?do id i 0.0 set-mix-amp drop loop
+    id :amp id mix-amp set-mix-property
+    id 0.0 set-mix-amp drop
     id :zero #t set-mix-property
   else
-    id :amps mix-property dup false? if drop #() then each id i rot set-mix-amp drop end-each
+    id id :amp mix-property set-mix-amp drop
     id :zero #f set-mix-property
   then
   #t
@@ -500,6 +372,27 @@ previous
   then
 ;
 
+\ ;;; -------- mix-name->id and track-name->id
+
+: mix-name->id { name -- mx }
+  doc" Returns the mix id associated with NAME."
+  #f
+  sounds each { snd }
+    snd channels 0 do
+      snd i ( chn ) mixes each { mx }
+	mx mix-name name string= if drop mx exit then
+      end-each
+    loop
+  end-each dup false? if drop 'no-such-mix '( get-func-name name ) fth-throw then
+;
+: track-name->id { name -- trk }
+  doc" Returns the track id associated with NAME."
+  #f
+  tracks each { trk }
+    trk track-name name string= if drop trk leave then
+  end-each dup false? if drop 'no-such-track '( get-func-name name ) fth-throw then
+;
+
 \ mix-click-info
 
 : mix-click-info <{ id -- #t }>
@@ -510,17 +403,11 @@ mix-click-hook ' mix-click-info add-hook!"
   $"        mix id: %d%s\n" '( id mname ) string-format make-string-output-port { prt }
   prt $"      position: %d (%.3f secs)\n" '( id mix-position dup mid srate f/ ) port-puts-format
   prt $"        length: %d (%.3f secs)\n" '( id mix-frames   dup mid srate f/ ) port-puts-format
-  prt $"            in: %s[%d]%s%s\n"
-  '( mid short-file-name
-     id mix-home cadr
-     id mix-locked?   if $"  (locked)"   else "" then
-     id mix-inverted? if $"  (inverted)" else "" then ) port-puts-format
+  prt $"            in: %s[%d]\n"     '( mid short-file-name id mix-home cadr ) port-puts-format
   id mix-track if prt $"         track: %s\n" '( id mix-track ) port-puts-format then
-  prt $"       scalers: %s\n" id mix-chans 0 ?do id i mix-amp loop id mix-chans >list 1 >list
-  port-puts-format
-  prt $"         speed: %.3f\n" '( id mix-speed ) port-puts-format
-  prt $"          envs: %s\n" id mix-chans 0 ?do id i mix-amp-env loop id mix-chans >list 1 >list
-  port-puts-format
+  prt $"       scalers: %s\n"   '( id mix-amp )     port-puts-format
+  prt $"         speed: %.3f\n" '( id mix-speed )   port-puts-format
+  prt $"          envs: %s\n"   '( id mix-amp-env ) port-puts-format
   id mix-tag-position if prt $"  tag-position: %d\n" '( id mix-tag-position ) port-puts-format then
   id mix-properties { props }
   props empty? unless prt $"    properties: %s\n" '( props ) port-puts-format then

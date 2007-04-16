@@ -390,7 +390,7 @@
   "(mix-click-info n) is a mix-click-hook function that describes a mix and its properties"
   (help-dialog "Mix Help"
 	       (format #f "Mix ~A:~%  position: ~D = ~,3F secs~%  length: ~D (~,3F secs)
-~%  in: ~A[~D]~A~A~A~%  scaler: ~A~%  speed: ~A~%  env: ~A~A~A"
+~%  in: ~A[~D]~%  scaler: ~A~%  speed: ~A~%  env: ~A~A"
 		       (if (mix-name n)
 			   (format #f "~S (~D)" (mix-name n) n)
 			   (format #f "~D" n))
@@ -398,18 +398,11 @@
 		       (exact->inexact (/ (mix-position n) (srate (car (mix-home n)))))
 		       (mix-frames n)
 		       (exact->inexact (/ (mix-frames n) (srate (car (mix-home n)))))
-		       (short-file-name (car (mix-home n))) (cadr (mix-home n))
-		       (if (mix-locked? n) ", (locked)" "")
-		       (if (mix-inverted? n) ", (inverted)" "")
-		       (if (not (= (mix-track n) 0))
-			   (format #f "~%  track: ~A" (mix-track n))
-			   "")
+		       (short-file-name (car (mix-home n)))
+		       (cadr (mix-home n))
 		       (mix-amp n)
 		       (mix-speed n)
 		       (mix-amp-env n)
-		       (if (not (= (mix-tag-position n) 0))
-			   (format #f "~%  tag-position: ~A" (mix-tag-position n))
-			   "")
 		       (let ((props (mix-properties n)))
 			 (if (and (list? props)
 				  (not (null? props)))

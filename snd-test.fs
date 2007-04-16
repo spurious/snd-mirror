@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Sun Mar 25 01:06:20 CET 2007
+\ Changed: Sun Apr 08 23:31:29 CEST 2007
 
 \ Commentary:
 \
@@ -604,8 +604,6 @@ mus-audio-playback-amp value original-audio-amp
   view-files-dialog { wid }
   mix-id mix-position { pos }
   mix-id mix-frames { len }
-  mix-id mix-locked? { loc }
-  mix-id mix-inverted? { inv }
   mix-id mix-tag-position { anc }
   mix-id mix-speed { spd }
   mix-id mix-speed-style { spdstyle }
@@ -613,7 +611,6 @@ mus-audio-playback-amp value original-audio-amp
   mix-id mix-home { home-lst }
   home-lst car { snd }
   home-lst cadr { chn }
-  mix-id mix-chans { chns }
   mix-id 0 mix-amp { amp }
   mix-id make-mix-sample-reader { mr }
   mr mix-sample-reader? unless $" %s is not mix-sample-reader?"  '( mr ) snd-display then
@@ -660,13 +657,10 @@ mus-audio-playback-amp value original-audio-amp
   \
   100 pos <>   if $" mix-position: %d?"     '( pos ) snd-display then
   41623 len <> if $" mix-frames: %d?"       '( len ) snd-display then
-  loc          if $" mix-locked?: %s?"      '( loc ) snd-display then
-  inv          if $" mix-inverted?: %s?"    '( inv ) snd-display then
   anc      0<> if $" mix-tag-position: %d?" '( anc ) snd-display then
   trk      0<> if $" mix-track: %s?"        '( trk ) snd-display then
   snd new-index <> if $" snd mix-home: %d?" '( snd ) snd-display then
   chn      0<> if $" chn mix-home: %d?"     '( chn ) snd-display then
-  chns 1    <> if $" mix-chans: %d?"        '( chns ) snd-display then
   amp 1.0 fneq if $" mix-amp: %s?"          '( amp ) snd-display then
   spd 1.0 fneq if $" mix-speed: %s?"        '( spd ) snd-display then
   spdstyle new-index speed-control-style <> if
@@ -1787,9 +1781,9 @@ include bird.fsm
      <'> max-regions <'> maxamp <'> maxamp-position <'> menu-widgets
      <'> minibuffer-history-length <'> min-dB <'> log-freq-start <'> mix
      <'> mixes <'> mix-amp <'> mix-amp-env <'> mix-tag-position
-     <'> mix-chans <'> mix-color <'> mix-track <'> mix-frames
-     <'> mix-locked? <'> mix? <'> view-mixes-dialog <'> mix-position
-     <'> view-tracks-dialog <'> track-dialog-track <'> mix-dialog-mix <'> mix-inverted?
+     <'> mix-color <'> mix-track <'> mix-frames
+     <'> mix? <'> view-mixes-dialog <'> mix-position
+     <'> view-tracks-dialog <'> track-dialog-track <'> mix-dialog-mix
      <'> mix-speed-style <'> mix-name <'> mix-region <'> mix-sample-reader?
      <'> mix-selection <'> mix-sound <'> mix-home <'> mix-speed
      <'> mix-tag-height <'> mix-tag-width <'> mark-tag-height <'> mark-tag-width
@@ -1952,7 +1946,7 @@ include bird.fsm
      <'> track-track <'> delete-track <'> delete-mix <'> track-color
      <'> free-track <'> track-speed-style <'> delay-tick <'> playing
      <'> pausing <'> draw-axes <'> copy-mix <'> copy-track
-     <'> copy-sample-reader <'> html-dir <'> html-program <'> lock-track
+     <'> copy-sample-reader <'> html-dir <'> html-program
      <'> make-fir-coeffs <'> make-identity-mixer <'> mus-interp-type <'> mus-run
      <'> phase-vocoder <'> player-home <'> redo-edit <'> undo-edit
      <'> widget-position <'> widget-size <'> focus-widget 
@@ -1985,8 +1979,8 @@ include bird.fsm
      <'> listener-font <'> listener-prompt <'> listener-text-color <'> mark-color
      <'> mark-name <'> mark-sample <'> mark-sync <'> max-transform-peaks
      <'> max-regions <'> min-dB <'> log-freq-start <'> mix-amp
-     <'> mix-amp-env <'> mix-tag-position <'> mix-chans <'> mix-color
-     <'> mix-locked? <'> mix-inverted? <'> mix-name <'> mix-position
+     <'> mix-amp-env <'> mix-tag-position <'> mix-color
+     <'> mix-name <'> mix-position
      <'> mix-speed <'> mix-speed-style <'> mix-tag-height <'> mix-tag-width
      <'> mix-tag-y <'> mark-tag-width <'> mark-tag-height <'> mix-waveform-height
      <'> transform-normalization <'> equalize-panes <'> position-color
@@ -2621,8 +2615,8 @@ include bird.fsm
       then
     end-each
     ind close-sound drop
-    #( <'> mix-amp <'> mix-amp-env <'> mix-tag-position <'> mix-chans
-       <'> mix-track <'> mix-frames <'> mix-locked? <'> mix-inverted?
+    #( <'> mix-amp <'> mix-amp-env <'> mix-tag-position
+       <'> mix-track <'> mix-frames
        <'> mix-name <'> mix-position <'> mix-home <'> mix-speed
        <'> mix-speed-style <'> mix-tag-y ) { mix-prcs }
     mix-prcs each to prc
@@ -2643,8 +2637,8 @@ include bird.fsm
 	then
       then
     end-each
-    #( <'> mix-tag-position <'> mix-chans <'> mix-track <'> mix-locked?
-       <'> mix-inverted? <'> mix-name <'> mix-position <'> mix-home
+    #( <'> mix-tag-position <'> mix-track
+       <'> mix-name <'> mix-position <'> mix-home
        <'> mix-speed <'> mix-speed-style <'> mix-tag-y ) { mix-set-prcs }
     mix-set-prcs each to prc
       1234 vct-5 prc set-xt #t nil fth-catch to tag

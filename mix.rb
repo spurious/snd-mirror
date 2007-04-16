@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Feb 22 13:40:33 CET 2005
-# Changed: Mon Dec 11 05:02:03 CET 2006
+# Changed: Mon Apr 09 20:58:38 CEST 2007
 
 # Commentary:
 #
@@ -12,10 +12,6 @@
 #  mix_sound(file, start)
 #  delete_all_mixes
 #  find_mix(sample, snd, chn)
-#  pan_mix(name, beg, envelope, snd, chn, auto_delete)
-#  pan_mix_selection(beg, envelope, snd, chn)
-#  pan_mix_region(reg, beg, envelope, snd, chn)
-#  pan_mix_vct(v, beg, envelope, snd, chn)
 #  mix2vct(id)
 #  save_mix(id, filename)
 #  mix_maxamp(id)
@@ -93,140 +89,6 @@ mixes file (all chans) at start in the currently selected sound.")
 returns the id of the mix at the given sample, or nil")
   def find_mix(sample, snd = false, chn = false)
     (mixes(Snd.snd(snd), Snd.chn(chn)) or []).detect do |n| mix_position(n) == sample end
-  end
-  
-  # 
-  # === PAN-MIX ===
-  # 
-  add_help(:pan_mix,
-           "pan_mix(file, [start=0, [envelope=1.0, [snd=false, [chn=0, auto_delete=false]]]]) \
-mixes 'file' into the sound 'snd' starting at start (in samples) \
-using 'envelope' to pan (0: all chan 0, 1: all chan 1).
-So, pan_mix(\"oboe.snd\", 0.1, [0, 0, 1, 1]) goes from all chan 0 to all chan 1.  \
-If 'envelope' is a scaler, it is turned into an evelope at that value.  \
-'auto_delete' determines whether the in-coming file should be treated as a temporary file \
-and deleted when the mix is no longer accessible.")
-  def pan_mix(name, beg = 0, envelope = 1.0, snd = false, chn = 0, auto_delete = false)
-    index = Snd.snd(snd)
-    old_with_mix_tags = with_mix_tags
-    Snd.raise(:no_such_sound, snd) unless sound?(index)
-    Snd.raise(:no_such_file, name) unless File.exist?(name)
-    new_mix = nil
-    begin
-      set_with_mix_tags(true)
-      incoming_chans = mus_sound_chans(name)
-      receiving_chans = channels(index)
-      old_sync = sync(index)
-      track_func = if array?(envelope)
-                     envelope
-                   else
-                     [0, envelope, 1, envelope]
-                   end
-      if receiving_chans == 1
-        if incoming_chans == 1
-          id = mix(name, beg, 0, index, 0, true, auto_delete)
-          if array?(envelope)
-            set_mix_amp_env(id, 0, envelope)
-          else
-            set_mix_amp(id, 0, envelope)
-          end
-          new_mix = id
-        else
-          as_one_edit_rb(get_func_name) do
-            trk = make_track
-            mix0 = mix(name, beg, 0, index, 0, true, auto_delete, trk)
-            mix1 = mix(name, beg, 1, index, 0, true, auto_delete, trk)
-            set_mix_inverted?(mix1, true)
-            set_track_amp_env(trk, track_func)
-            new_mix = mix0
-          end
-        end
-      else
-        chan0 = chn
-        chan1 = (chn + 1) % receiving_chans
-        if incoming_chans == 1
-          begin
-            set_sync(false, index)
-            as_one_edit_rb(get_func_name) do
-              trk = make_track
-              mix0 = mix(name, beg, 0, index, chan0, true, auto_delete, trk)
-              mix1 = mix(name, beg, 0, index, chan1, true, auto_delete, trk)
-              set_mix_inverted?(mix1, true)
-              set_track_amp_env(trk, track_func)
-              new_mix = mix0
-            end
-          rescue
-            raise
-          ensure
-            set_sync(old_sync, index)
-          end
-        else
-          new_sync = 0
-          Snd.sounds.each do |s|
-            if (sn = sync(s)) >= new_sync
-              new_sync = sn + 1
-            end
-          end
-          begin
-            set_sync(new_sync, index)
-            as_one_edit_rb(get_func_name) do
-              trk = make_track
-              mix0 = mix(name, beg, 0, index, chan0, true, auto_delete, trk)
-              mix1 = mix(name, beg, 1, index, chan1, true, auto_delete, trk)
-              set_mix_inverted?(mix1, true)
-              set_track_amp_env(trk, track_func)
-              new_mix = mix0
-            end
-          rescue
-            raise
-          ensure
-            set_sync(old_sync, index)
-          end
-        end
-      end
-    rescue
-      raise
-    ensure
-      set_with_mix_tags(old_with_mix_tags)
-    end
-    if mix?(new_mix) and (not old_with_mix_tags)
-      if track?(trk = mix_track(new_mix))
-        lock_track(trk)
-      else
-        set_mix_locked?(new_mix, true)
-      end
-    end
-    new_mix
-  end
-
-  add_help(:pan_mix_selection,
-           "pan_mix_selection([beg=0, [envelope=1.0, [snd=false, [chn=0]]]]) \
-mixes the current selection  into the sound 'snd' starting at 'start' (in samples) \
-using 'envelope' to pan (0: all chan 0, 1: all chan 1).")
-  def pan_mix_selection(beg = 0, envelope = 1.0, snd = false, chn = 0)
-    Snd.raise(:no_active_selection) unless selection?
-    pan_mix(save_selection(snd_tempnam), beg, envelope, snd, chn, true)
-  end
-
-  add_help(:pan_mix_region,
-           "pan_mix_region(reg, [beg=0, [envelope=1.0, [snd=false, [chn=0]]]]) \
-mixes the given region into the sound 'snd' starting at 'start' (in samples) \
-using 'envelope' to pan (0: all chan 0, 1: all chan 1).")
-  def pan_mix_region(reg, beg = 0, envelope = 1.0, snd = false, chn = 0)
-    Snd.raise(:no_such_region, reg) unless region?(reg)
-    pan_mix(save_region(reg, snd_tempnam), beg, envelope, snd, chn, true)
-  end
-
-  add_help(:pan_mix_vct,
-           "pan_mix_vct(v, [beg=0, [envelope=1.0, [snd=false, [chn=0]]]]) \
-mixes the vct data into the sound 'snd' starting at 'start' (in samples) \
-using 'envelope' to pan (0: all chan 0, 1: all chan 1).")
-  def pan_mix_vct(v, beg = 0, envelope = 1.0, snd = false, chn = 0)
-    temp_file = snd_tempnam
-    fd = mus_sound_open_output(temp_file, srate(snd), 1, false, false, "")
-    mus_sound_write(fd, 0, v.length - 1, 1, vct2sound_data(v))
-    mus_sound_close_output(fd, 4 * v.length)
-    pan_mix(temp_file, beg, envelope, snd, chn, true)
   end
 
   add_help(:mix2vct, "mix2vct(id) returns mix's data in vct")
@@ -361,12 +223,11 @@ removes the key-value pair in the given mix's property list")
   def mix_click_sets_amp
     $mix_click_hook.add_hook!(get_func_name) do |id|
       unless mix_property(id, :zero)
-        amps = (0...mix_chans(id)).map do |i| mix_amp(id, i) end
-        set_mix_property(id, :amps, amps)
-        mix_chans(id).times do |i| set_mix_amp(id, i, 0.0) end
+        set_mix_property(id, :amp, mix_amp(id))
+        set_mix_amp(id, 0.0)
         set_mix_property(id, :zero, true)
       else
-        (mix_property(id, :amps) or []).each_with_index do |amp, i| set_mix_amp(id, i, amp) end
+        set_mix_amp(id, mix_property(id, :amp))
         set_mix_property(id, :zero, false)
       end
       true
@@ -592,14 +453,12 @@ is a $mix_click_hook function that describes a mix and its properties")
                                    mix_frames(id) / srate(mix_home(id)[0]).to_f,
                                    short_file_name(mix_home(id)[0]),
                                    mix_home(id)[1],
-                                   (mix_locked?(id) ? " (locked)" : ""),
-                                   (mix_inverted?(id) ? " (inverted)" : ""),
                                    (mix_track(id).nonzero? ?
                                     format("\n       track: %s", mix_track(id)) :
                                       ""),
-                                   (0...mix_chans(id)).map do |i| mix_amp(id, i) end.inspect,
+                                   mix_amp(id, i),
                                    mix_speed(id),
-                                   (0...mix_chans(id)).map do |i| mix_amp_env(id, i) end.inspect,
+                                   mix_amp_env(id, i),
                                    (mix_tag_position(id).nonzero? ?
                                     format("\ntag-position: %d", mix_tag_position(id)) :
                                       ""),
