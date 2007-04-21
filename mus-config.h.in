@@ -7,6 +7,7 @@
 #undef mode_t
 #undef pid_t
 #undef size_t
+#undef ssize_t
 #undef off_t
 
 #undef HAVE_GETCWD

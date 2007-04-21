@@ -700,6 +700,9 @@
 								      "em" "head" "h4" "sup" "font" "map" "smaller" "th")
 								:test #'string-equal)
 							(progn
+							  
+;							  (if (string-equal closer "table")
+;							      (format t "~A -> ~A: ~A ~A?~%" closer commands file linectr))
 
 							  (if (not (string-equal (car commands)
 										 closer))

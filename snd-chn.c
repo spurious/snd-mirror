@@ -2214,7 +2214,6 @@ void reset_spectro(void)
 }
 #endif
 
-static void display_channel_time_data(chan_info *cp);
 static void display_channel_lisp_data(chan_info *cp);
 static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool erase_first, with_grid_t grid, log_axis_t log_axes, show_axes_t axes);
 
@@ -3297,7 +3296,7 @@ static void display_channel_data_with_size(chan_info *cp,
   
   if ((!just_lisp) && (!just_fft))
     {
-      if ((with_time) && (cp->hookable == WITH_HOOK)) /* hookable if not region graph */
+      if (with_time)
 	{
 	  if ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) 
 	    {
@@ -3408,7 +3407,7 @@ static void display_channel_lisp_data(chan_info *cp)
   display_channel_data_1(cp, false, true, false, false);
 }
 
-static void display_channel_time_data(chan_info *cp)
+void display_channel_time_data(chan_info *cp)
 {
   display_channel_data_1(cp, false, false, true, false);
 }
