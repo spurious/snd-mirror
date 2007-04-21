@@ -439,19 +439,13 @@ void g_init_gxenv(void);
 
 /* -------- snd-xmix.c -------- */
 
-void reflect_mix_or_track_change(int mix_id, int track_id, bool forced);
+void reflect_mix_change(int mix_id);
 Widget make_mix_dialog(void);
-Widget make_track_dialog(void);
 bool mix_play_stopped(void);
-bool track_play_stopped(void);
 void reflect_mix_play_stop(void);
-void reflect_track_play_stop(void);
 void make_mixer_icons_transparent_again(Pixel old_color, Pixel new_color);
 int mix_dialog_mix(void);
 void mix_dialog_set_mix(int id);
-int track_dialog_track(void);
-void track_dialog_set_track(int id);
-void show_track_background_wave(int pts, bool two_sided);
 
 
 

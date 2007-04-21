@@ -2264,10 +2264,6 @@ XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
  void Init_libgl(void);
 #endif
 
-#if MUS_DEBUGGING && HAVE_SCHEME
-void g_init_xmix(void);
-#endif
-
 #if HAVE_GUILE
 #define S_write_byte "write-byte"
 
@@ -2458,7 +2454,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_data();
   g_init_env();
   g_init_find();
-  g_init_track();
 #if (!USE_NO_GUI)
   g_init_gxutils();
   g_init_gxcolormaps();
@@ -2478,10 +2473,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_gxfind();
 #endif
   g_init_run();
-
-#if MUS_DEBUGGING && HAVE_SCHEME  && USE_MOTIF
-  g_init_xmix();
-#endif
 
 #if HAVE_SCHEME && HAVE_DLFCN_H
   XEN_DEFINE_PROCEDURE("dlopen",  g_dlopen_w,  1, 0 ,0, "");

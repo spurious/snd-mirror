@@ -211,7 +211,6 @@ static void execute_named_macro(chan_info *cp, char *name, off_t count)
 	  if (ss->deferred_regions > 0) 
 	    sequester_deferred_regions(cp, one_edit - 1);
 	  while (cp->edit_ctr > one_edit) backup_edit_list(cp);
-	  if (cp->have_mixes) backup_mix_list(cp, one_edit);
 	}
 #else
       /* not sure it's possible to get here at all -- execute undefined named macro?? */
@@ -920,7 +919,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		int id_or_error;
 		clear_minibuffer(sp);
 		redirect_errors_to(errors_to_minibuffer, (void *)sp);
-		id_or_error = mix_complete_file_at_cursor(sp, str, with_mix_tags(ss), 0);
+		id_or_error = mix_complete_file_at_cursor(sp, str);
 		redirect_errors_to(NULL, NULL);
 		if (id_or_error >= 0)
 		  report_in_minibuffer(sp, _("%s mixed in at cursor"), str);

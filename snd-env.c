@@ -28,6 +28,7 @@ env *copy_env(env *e)
   return(NULL);
 }
 
+#if 0
 bool envs_equal(env *e1, env *e2)
 {
   /* snd-mix.c check for set mix amp env no-op */
@@ -40,6 +41,7 @@ bool envs_equal(env *e1, env *e2)
   if (e1->base != e2->base) return(false); /* 1 and 0 are possibilities here */
   return(true);
 }
+#endif
 
 char *env_to_string(env *e)
 {

@@ -214,19 +214,13 @@ int menu_widget(int which_menu) {return(0);}
 void get_current_color(int colormap, int j, rgb_t *r, rgb_t *g, rgb_t *b) {}
 void set_filter_text(snd_info *sp, char *str) {}
 void display_filter_env(snd_info *sp) {}
-void reflect_mix_or_track_change(int mix_id, int track_id, bool forced) {}
+void reflect_mix_change(int mix_id) {}
 int make_mix_dialog(void) {return(0);}
-int make_track_dialog(void) {return(0);}
 bool mix_play_stopped(void) {return(false);}
-bool track_play_stopped(void) {return(false);}
 void reflect_mix_play_stop(void) {}
-void reflect_track_play_stop(void) {}
 void set_mix_color(int color) {}
 int mix_dialog_mix(void) {return(0);}
 void mix_dialog_set_mix(int id) {}
-int track_dialog_track(void) {return(0);}
-void track_dialog_set_track(int id) {}
-void show_track_background_wave(int pts, bool two_sided) {}
 void set_fft_window_alpha(Float val) {in_set_fft_window_alpha(val);}
 void set_fft_window_beta(Float val) {in_set_fft_window_beta(val);}
 void set_transform_size(off_t val) {in_set_transform_size(val);}

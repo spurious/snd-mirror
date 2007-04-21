@@ -87,7 +87,7 @@
     <li><a href="extsnd.html#sndsounddata" onmouseover="return escape('arrays of vcts for multichannel data')">Sound-data</a>
     <li><a href="extsnd.html#extsndlib" onmouseover="return escape('the underlying library that handles sound data and files')">Sndlib</a>
     <li><a href="extsnd.html#sndmarks" onmouseover="return escape('location markers in sound data')">Marks</a>
-    <li><a href="extsnd.html#sndmixes" onmouseover="return escape('mixed sounds and groups of mixed sounds')">Mixes and Tracks</a>
+    <li><a href="extsnd.html#sndmixes" onmouseover="return escape('mixed sounds and groups of mixed sounds')">Mixes</a>
     <li><a href="extsnd.html#sndregions" onmouseover="return escape('selected or saved portions of sound data')">Regions and Selections</a>
     <li><a href="extsnd.html#sndsounds" onmouseover="return escape('editing functions, per-channel display decisions, etc')">Sounds and channels</a>
       <ul>
@@ -328,7 +328,7 @@ $mouse_enter_text_hook.add_hook!("focus") do |widget| focus_widget(widget) end
 \ need to add a path to *load-path*.  ${prefix}/share/fth/site-fth is
 \ already included.  Otherwise you can add a path with e.g.
 \
-\   "/home/mike/snd-8" add-load-path
+\   "/home/mike/snd-9" add-load-path
 
 #t to *fth-verbose*
 
@@ -1412,7 +1412,7 @@ included with Snd.  'make xm' should create
 a shared library named xm.so; you can load this at any time into Snd:
 </p>
 <pre>
-    &gt; <em class=typing>(define hxm (dlopen "/home/bil/snd-8/xm.so"))</em>
+    &gt; <em class=typing>(define hxm (dlopen "/home/bil/snd-9/xm.so"))</em>
     <em class=listener>#&lt;unspecified&gt;</em>
     &gt; <em class=typing>(dlinit hxm "Init_libxm")</em>
     <em class=listener>#t</em>
@@ -1729,7 +1729,7 @@ if you have an executable file with:
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa">
 <pre>
-#!/home/bil/test/snd-8/snd -l
+#!/home/bil/test/snd-9/snd -l
 !#
 (define a-test 32)
 (display "hiho")
@@ -1739,12 +1739,12 @@ if you have an executable file with:
 <p>it can be executed just like any such script.
 </p>
 <pre>
-    /home/bil/test/snd-8/ script
+    /home/bil/test/snd-9/ script
     hiho
     :a-test
     32
     :(<a class=quiet href="extsnd.html#exit">exit</a>)
-    /home/bil/test/snd-8/ 
+    /home/bil/test/snd-9/ 
 </pre>
 <p>The difference between this use of Snd, and using guile itself
 for scripts is that Snd uses the -l switch where guile would use -s.
@@ -1760,7 +1760,7 @@ writes the result as "test.snd":
 
 <tr>
 <td bgcolor="#fbfbff"><pre>
-#!/home/bil/snd-8/snd -l
+#!/home/bil/snd-9/snd -l
 !#
 (open-sound "oboe.snd")
 (scale-by 2.0)
@@ -1769,7 +1769,7 @@ writes the result as "test.snd":
 </pre></td><td width=60></td>
 
 <td bgcolor="#FdFdf2"><pre>
-#!/home/bil/snd-8/snd -batch
+#!/home/bil/snd-9/snd -batch
 open_sound "oboe.snd"
 scale_by 2.0
 save_sound_as "test.snd"
@@ -1797,7 +1797,7 @@ as it scans the startup arguments (see snd-test.scm).
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-#!/home/bil/test/snd-8/snd -l
+#!/home/bil/test/snd-9/snd -l
 !#
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2) ;i.e. ("-l" "script")
   (display "usage: script file-name...")

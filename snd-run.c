@@ -199,7 +199,7 @@ static XEN gauche_set_walker(XEN func, XEN walker)
 #define LST_PT  "lst%d(%p)"
 #define KEY_PT  "key%d(%p)"
 #define RD_PT   "rd%d(%p)"
-#define MF_PT   "mf%d(%p)"
+#define MIX_SAMPLE_READER_PT   "mf%d(%p)"
 #define TF_PT   "tf%d(%p)"
 #define CLM_PT  "clm%d(%p)"
 #define FNC_PT  "fnc%d(%p)"
@@ -367,18 +367,18 @@ static void symbol_set_value(XEN code, XEN sym, XEN new_val)
 
 enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST, R_PAIR, 
       R_SYMBOL, R_KEYWORD, R_FUNCTION, R_GOTO, R_VCT, 
-      R_READER, R_MIX_READER, R_TRACK_READER, R_SOUND_DATA, R_CLM, 
+      R_READER, R_MIX_READER, R_SOUND_DATA, R_CLM, 
       R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_CLM_STRUCT_VECTOR, R_CLM_VECTOR, 
       R_NUMBER, R_CONS, R_VECTOR, R_XEN, R_NUMBER_CLM, R_NUMBER_VCT, 
       R_NUMBER_SOUND_DATA, R_ANY}; /* last 8 for walker arg checks */
 
-#define BUILT_IN_TYPES 31
+#define BUILT_IN_TYPES 30
 static int last_type = R_ANY;
 static int type_names_size = BUILT_IN_TYPES;
 static char **type_names = NULL;
 static char *basic_type_names[BUILT_IN_TYPES] = {"unspecified", "int", "float", "boolean", "char", "string", "list", "pair", 
 						 "symbol", "keyword", "function", "continuation", "vct", 
-						 "sample-reader", "mix-sample-reader", "track-sample-reader", "sound-data", "clm", 
+						 "sample-reader", "mix-sample-reader", "sound-data", "clm", 
 						 "float-vector", "int-vector", "vct-vector", "clm-struct-vector", "clm-vector", 
 						 "number", "cons", "vector", "xen", "number or clm", "number or vct", 
 						 "number or sound-data", "any"};
@@ -496,8 +496,6 @@ typedef struct ptree {
   snd_fd **readers;
   int mix_reader_ctr, mix_readers_size;
   struct mix_fd **mix_readers;
-  int track_reader_ctr, track_readers_size;
-  struct track_fd **track_readers;
   int fnc_ctr, fncs_size;
   struct ptree **fncs;
   int xen_ctr, xens_size;
@@ -700,7 +698,6 @@ static char *describe_ptree(ptree *pt)
   vect **inner_vects;
   snd_fd **inner_readers;
   struct mix_fd **inner_mix_readers;
-  struct track_fd **inner_track_readers;
   ptree **inner_fncs;
   XEN *inner_xens;
   xen_value ***inner_xen_vars;
@@ -718,7 +715,6 @@ static char *describe_ptree(ptree *pt)
   inner_xens = pt->xens;
   inner_readers = pt->readers;
   inner_mix_readers = pt->mix_readers;
-  inner_track_readers = pt->track_readers;
   if (pt->outer_tree)
     {
       pt->ints = pt->outer_tree->ints;
@@ -732,7 +728,6 @@ static char *describe_ptree(ptree *pt)
       pt->xens = pt->outer_tree->xens;
       pt->readers = pt->outer_tree->readers;
       pt->mix_readers = pt->outer_tree->mix_readers;
-      pt->track_readers = pt->outer_tree->track_readers;
       pt->xen_vars = pt->outer_tree->xen_vars;
     }
   buf = str_append(buf, &size, mus_format("ints: %d, dbls: %d, triples: %d, vars: %d\n  [",
@@ -807,7 +802,6 @@ static char *describe_ptree(ptree *pt)
   pt->xens = inner_xens;
   pt->readers = inner_readers;
   pt->mix_readers = inner_mix_readers;
-  pt->track_readers = inner_track_readers;
   return(buf);
 }
 
@@ -856,7 +850,7 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
       if ((pt->readers) && (pt->readers[addr]))
 	{
 	  char *buf = NULL, *vstr = NULL;
-	  vstr = sf_to_string(pt->readers[addr]);
+	  vstr = sample_reader_to_string(pt->readers[addr]);
 	  buf = mus_format("rd%d(%s)", addr, vstr);
 	  if (vstr) FREE(vstr);
 	  return(buf);
@@ -869,17 +863,6 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
 	  char *buf = NULL, *vstr = NULL;
 	  vstr = run_mix_sample_reader_to_string(pt->mix_readers[addr]);
 	  buf = mus_format("mf%d(%s)", addr, vstr);
-	  if (vstr) FREE(vstr);
-	  return(buf);
-	}
-      else return(copy_string("null"));
-      break;
-    case R_TRACK_READER:
-      if ((pt->track_readers) && (pt->track_readers[addr]))
-	{
-	  char *buf = NULL, *vstr = NULL;
-	  vstr = run_track_sample_reader_to_string(pt->track_readers[addr]);
-	  buf = mus_format("tf%d(%s)", addr, vstr);
 	  if (vstr) FREE(vstr);
 	  return(buf);
 	}
@@ -978,7 +961,6 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   outer->xens = inner->xens;
   outer->readers = inner->readers;
   outer->mix_readers = inner->mix_readers;
-  outer->track_readers = inner->track_readers;
   outer->xen_vars = inner->xen_vars;
   outer->gc_protected = inner->gc_protected;
 
@@ -998,7 +980,6 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   inner->xens = NULL;
   inner->readers = NULL;
   inner->mix_readers = NULL;
-  inner->track_readers = NULL;
   inner->xen_vars = NULL;
   inner->gc_protected = NULL;
 
@@ -1023,7 +1004,6 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   outer->xen_ctr = inner->xen_ctr;
   outer->reader_ctr = inner->reader_ctr;
   outer->mix_reader_ctr = inner->mix_reader_ctr;
-  outer->track_reader_ctr = inner->track_reader_ctr;
   outer->strs_size = inner->strs_size;
   outer->vcts_size = inner->vcts_size;
   outer->sds_size = inner->sds_size;
@@ -1033,7 +1013,6 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   outer->xens_size = inner->xens_size;
   outer->readers_size = inner->readers_size;
   outer->mix_readers_size = inner->mix_readers_size;
-  outer->track_readers_size = inner->track_readers_size;
   outer->xen_var_ctr = inner->xen_var_ctr;
   outer->xen_vars_size = inner->xen_vars_size;
 
@@ -1058,7 +1037,6 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   inner->xen_ctr = 0;
   inner->reader_ctr = 0;
   inner->mix_reader_ctr = 0;
-  inner->track_reader_ctr = 0;
   inner->strs_size = 0;
   inner->vcts_size = 0;
   inner->sds_size = 0;
@@ -1068,7 +1046,6 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   inner->xens_size = 0;
   inner->readers_size = 0;
   inner->mix_readers_size = 0;
-  inner->track_readers_size = 0;
   inner->xen_var_ctr = 0;
   inner->xen_vars_size = 0;
 }
@@ -1281,19 +1258,8 @@ void free_ptree(struct ptree *pt)
 			      for (k = 0; k < pt->mix_reader_ctr; k++)
 				if ((k != v->addr) && (pt->mix_readers[k] == pt->mix_readers[v->addr]))
 				  pt->mix_readers[k] = NULL;
-			      run_free_mix_fd(pt->mix_readers[v->addr]); 
+			      run_free_mix_sample_reader(pt->mix_readers[v->addr]); 
 			      pt->mix_readers[v->addr] = NULL;   
-			    }
-			  break;
-			case R_TRACK_READER: 
-			  if (pt->track_readers[v->addr])
-			    {
-			      int k;
-			      for (k = 0; k < pt->track_reader_ctr; k++)
-				if ((k != v->addr) && (pt->track_readers[k] == pt->track_readers[v->addr]))
-				  pt->track_readers[k] = NULL;
-			      run_free_track_sample_reader(pt->track_readers[v->addr]); 
-			      pt->track_readers[v->addr] = NULL;   
 			    }
 			  break;
 			case R_FUNCTION:     
@@ -1416,11 +1382,6 @@ void free_ptree(struct ptree *pt)
 	{
 	  FREE(pt->mix_readers);
 	  pt->mix_readers = NULL;
-	}
-      if (pt->track_readers) 
-	{
-	  FREE(pt->track_readers);
-	  pt->track_readers = NULL;
 	}
       if (pt->gc_protected)
 	{
@@ -1663,25 +1624,6 @@ static int add_mix_reader_to_ptree(ptree *pt, struct mix_fd *value)
   return(cur);
 }
 
-static int add_track_reader_to_ptree(ptree *pt, struct track_fd *value)
-{
-  int cur;
-  cur = pt->track_reader_ctr++;
-  if (cur >= pt->track_readers_size)
-    {
-      pt->track_readers_size += 8;
-      if (pt->track_readers)
-	{
-	  int i;
-	  pt->track_readers = (struct track_fd **)REALLOC(pt->track_readers, pt->track_readers_size * sizeof(struct track_fd *));
-	  for (i = cur; i < pt->track_readers_size; i++) pt->track_readers[i] = NULL;
-	}
-      else pt->track_readers = (struct track_fd **)CALLOC(pt->track_readers_size, sizeof(struct track_fd *));
-    }
-  pt->track_readers[cur] = value;
-  return(cur);
-}
-
 static xen_var *new_xen_var(const char *name, xen_value *v)
 {
   xen_var *var;
@@ -1768,7 +1710,6 @@ static xen_value *add_empty_var_to_ptree(ptree *prog, int type)
     case R_FUNCTION:     return(make_xen_value(type, add_fnc_to_ptree(prog, NULL), R_VARIABLE));            break;
     case R_READER:       return(make_xen_value(type, add_reader_to_ptree(prog, NULL), R_VARIABLE));         break;
     case R_MIX_READER:   return(make_xen_value(type, add_mix_reader_to_ptree(prog, NULL), R_VARIABLE));     break;
-    case R_TRACK_READER: return(make_xen_value(type, add_track_reader_to_ptree(prog, NULL), R_VARIABLE));   break;
     case R_SOUND_DATA:   return(make_xen_value(type, add_sound_data_to_ptree(prog, NULL), R_VARIABLE));     break;
     case R_FLOAT_VECTOR:
     case R_VCT:          return(make_xen_value(type, add_vct_to_ptree(prog, NULL), R_VARIABLE));            break;
@@ -1810,7 +1751,6 @@ static xen_value *transfer_value(ptree *prog, xen_value *v)
     case R_FUNCTION: 
     case R_READER: 
     case R_MIX_READER: 
-    case R_TRACK_READER: 
     case R_SOUND_DATA:
     case R_SYMBOL: 
     case R_KEYWORD:
@@ -1995,9 +1935,8 @@ int xen_to_run_type(XEN val)
     {
       if (XEN_BOOLEAN_P(val)) return(R_BOOL); else
 	if (MUS_VCT_P(val)) return(R_VCT); else
-	  if (sf_p(val)) return(R_READER); else
-	    if (mf_p(val)) return(R_MIX_READER); else
-	      if (tf_p(val)) return(R_TRACK_READER); else
+	  if (sample_reader_p(val)) return(R_READER); else
+	    if (mix_sample_reader_p(val)) return(R_MIX_READER); else
 		if (sound_data_p(val)) return(R_SOUND_DATA); else
 		  if (mus_xen_p(val)) return(R_CLM); else
 		    if (XEN_CHAR_P(val)) return(R_CHAR); else
@@ -2076,11 +2015,10 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
     case R_INT:        v = make_xen_value(R_INT, add_int_to_ptree(prog, R_XEN_TO_C_INT(val)), R_VARIABLE);                 break;
     case R_FLOAT:      v = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(val)), R_VARIABLE);              break;
     case R_BOOL:       v = make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)XEN_TO_C_BOOLEAN(val)), R_VARIABLE);         break;
-    case R_VCT:        v = make_xen_value(R_VCT, add_vct_to_ptree(prog, xen_to_vct(val)), R_VARIABLE);                        break;
+    case R_VCT:        v = make_xen_value(R_VCT, add_vct_to_ptree(prog, xen_to_vct(val)), R_VARIABLE);                     break;
     case R_SOUND_DATA: v = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, (sound_data *)XEN_OBJECT_REF(val)), R_VARIABLE); break;
-    case R_READER:     v = make_xen_value(R_READER, add_reader_to_ptree(prog, get_sf(val)), R_VARIABLE);                   break;
-    case R_MIX_READER: v = make_xen_value(R_MIX_READER, add_mix_reader_to_ptree(prog, get_mf(val)), R_VARIABLE);           break;
-    case R_TRACK_READER: v = make_xen_value(R_TRACK_READER, add_track_reader_to_ptree(prog, get_tf(val)), R_VARIABLE);     break;
+    case R_READER:     v = make_xen_value(R_READER, add_reader_to_ptree(prog, xen_to_sample_reader(val)), R_VARIABLE);     break;
+    case R_MIX_READER: v = make_xen_value(R_MIX_READER, add_mix_reader_to_ptree(prog, (struct mix_fd *)xen_to_mix_sample_reader(val)), R_VARIABLE); break;
     case R_CHAR:       v = make_xen_value(R_CHAR, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(val))), R_VARIABLE);          break;
     case R_STRING:     v = make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(val))), R_VARIABLE); break;
     case R_LIST:       v = make_xen_value(R_LIST, add_xen_to_ptree(prog, val), R_VARIABLE);                                break;
@@ -2229,7 +2167,6 @@ static void eval_embedded_ptree(ptree *prog, ptree *pt)
   prog->xens = pt->xens;
   prog->readers = pt->readers;
   prog->mix_readers = pt->mix_readers;
-  prog->track_readers = pt->track_readers;
   eval_ptree(prog);
   prog->ints = NULL;
   prog->dbls = NULL;
@@ -2244,7 +2181,6 @@ static void eval_embedded_ptree(ptree *prog, ptree *pt)
   prog->xens = NULL;
   prog->readers = NULL;
   prog->mix_readers = NULL;
-  prog->track_readers = NULL;
   pt->ints[0] = old_pc;
   pt->ints[1] = old_all_done;
 }
@@ -2368,13 +2304,6 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define DESC_MIX_READER_ARG_1 ((args[1] < pt->mix_reader_ctr) ? pt->mix_readers[args[1]] : NULL)
 #define DESC_MIX_READER_ARG_2 ((args[2] < pt->mix_reader_ctr) ? pt->mix_readers[args[2]] : NULL)
 
-#define TRACK_READER_RESULT pt->track_readers[args[0]]
-#define DESC_TRACK_READER_RESULT ((args[0] < pt->track_reader_ctr) ? pt->track_readers[args[0]] : NULL)
-#define TRACK_READER_ARG_1 pt->track_readers[args[1]]
-#define TRACK_READER_ARG_2 pt->track_readers[args[2]]
-#define DESC_TRACK_READER_ARG_1 ((args[1] < pt->track_reader_ctr) ? pt->track_readers[args[1]] : NULL)
-#define DESC_TRACK_READER_ARG_2 ((args[2] < pt->track_reader_ctr) ? pt->track_readers[args[2]] : NULL)
-
 #define FNC_RESULT ((ptree **)(pt->fncs))[args[0]]
 #define FNC_ARG_1 ((ptree **)(pt->fncs))[args[1]]
 #define FNC_ARG_2 ((ptree **)(pt->fncs))[args[2]]
@@ -2470,11 +2399,7 @@ static char *descr_store_b_reader(int *args, ptree *pt)
 
 static void store_b_mix_reader(int *args, ptree *pt) {BOOL_RESULT = (bool)(MIX_READER_ARG_1);}
 static char *descr_store_b_mix_reader(int *args, ptree *pt) 
-  {return(mus_format( BOOL_PT " = (bool)" MF_PT , args[0], B2S(BOOL_RESULT), args[1], DESC_MIX_READER_ARG_1));}
-
-static void store_b_track_reader(int *args, ptree *pt) {BOOL_RESULT = (bool)(TRACK_READER_ARG_1);}
-static char *descr_store_b_track_reader(int *args, ptree *pt) 
-  {return(mus_format( BOOL_PT " = (bool)" TF_PT , args[0], B2S(BOOL_RESULT), args[1], DESC_TRACK_READER_ARG_1));}
+  {return(mus_format( BOOL_PT " = (bool)" MIX_SAMPLE_READER_PT , args[0], B2S(BOOL_RESULT), args[1], DESC_MIX_READER_ARG_1));}
 
 static void store_b_sd(int *args, ptree *pt) {BOOL_RESULT = (bool)(SOUND_DATA_ARG_1);}
 static char *descr_store_b_sd(int *args, ptree *pt) 
@@ -2559,7 +2484,6 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
 	  case R_CLM:          return(add_triple_to_ptree(pt, va_make_triple(store_b_clm, descr_store_b_clm, 2, var, init_val))); break;
 	  case R_READER:       return(add_triple_to_ptree(pt, va_make_triple(store_b_reader, descr_store_b_reader, 2, var, init_val))); break;
 	  case R_MIX_READER:   return(add_triple_to_ptree(pt, va_make_triple(store_b_mix_reader, descr_store_b_mix_reader, 2, var, init_val))); break;
-	  case R_TRACK_READER: return(add_triple_to_ptree(pt, va_make_triple(store_b_track_reader, descr_store_b_track_reader, 2, var, init_val))); break;
 	  default:
 	    {
 	      xen_value *temp_v = NULL;
@@ -2591,7 +2515,7 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
       break;
 #endif
       /* case R_SOUND_DATA: sound_data_free in sndlib2xen.c and sound_data_dup in the RUBY section */
-      /* case R_READER: case R_MIX_READER: case R_TRACK_READER: free for each + copy_reader? */
+      /* case R_READER: case R_MIX_READER: free for each + copy_reader? */
       /* case R_FLOAT_VECTOR: case R_INT_VECTOR: case R_VCT_VECTOR: case R_CLM_STRUCT_VECTOR: case R_CLM_VECTOR: need free/copy */
     }
   /* this is not necessarily an error as long as we don't actually allow
@@ -3028,15 +2952,13 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
 	      if ((false_result->type == R_BOOL) &&
 		  ((true_result->type == R_CLM) || 
 		   (true_result->type == R_READER) ||
-		   (true_result->type == R_MIX_READER) ||
-		   (true_result->type == R_TRACK_READER)))
+		   (true_result->type == R_MIX_READER)))
 		false_result->type = true_result->type;
 	      else
 		if ((true_result->type == R_BOOL) &&
 		    ((false_result->type == R_CLM) || 
 		     (false_result->type == R_READER) ||
-		     (false_result->type == R_MIX_READER) ||
-		     (false_result->type == R_TRACK_READER)))
+		     (false_result->type == R_MIX_READER)))
 		  true_result->type = false_result->type;
 	    }
 
@@ -4772,7 +4694,6 @@ static void xen_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)XEN_EQ_P(RXEN_ARG
 static void clm_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(CLM_ARG_1 == CLM_ARG_2);}
 static void reader_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(READER_ARG_1 == READER_ARG_2);} /* safe because float arg -> #f below */
 static void mix_reader_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(MIX_READER_ARG_1 == MIX_READER_ARG_2);} /* safe because float arg -> #f below */
-static void track_reader_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(TRACK_READER_ARG_1 == TRACK_READER_ARG_2);} /* safe because float arg -> #f below */
 
 static char *descr_eq_b(int *args, ptree *pt) 
 {
@@ -4800,11 +4721,7 @@ static char *descr_reader_eq_b(int *args, ptree *pt)
 }
 static char *descr_mix_reader_eq_b(int *args, ptree *pt) 
 {
-  return(mus_format( BOOL_PT " = eq?(" MF_PT ", " MF_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_MIX_READER_ARG_1, args[2], DESC_MIX_READER_ARG_2));
-}
-static char *descr_track_reader_eq_b(int *args, ptree *pt) 
-{
-  return(mus_format( BOOL_PT " = eq?(" TF_PT ", " TF_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_TRACK_READER_ARG_1, args[2], DESC_TRACK_READER_ARG_2));
+  return(mus_format( BOOL_PT " = eq?(" MIX_SAMPLE_READER_PT ", " MIX_SAMPLE_READER_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_MIX_READER_ARG_1, args[2], DESC_MIX_READER_ARG_2));
 }
 
 static xen_value *eq_p(ptree *prog, xen_value **args, int num_args)
@@ -4828,7 +4745,6 @@ static xen_value *eq_p(ptree *prog, xen_value **args, int num_args)
     case R_CLM:          return(package(prog, R_BOOL, clm_eq_b, descr_clm_eq_b, args, 2));
     case R_READER:       return(package(prog, R_BOOL, reader_eq_b, descr_reader_eq_b, args, 2));
     case R_MIX_READER:   return(package(prog, R_BOOL, mix_reader_eq_b, descr_mix_reader_eq_b, args, 2));
-    case R_TRACK_READER: return(package(prog, R_BOOL, track_reader_eq_b, descr_track_reader_eq_b, args, 2));
     case R_KEYWORD:
     case R_LIST:
     case R_PAIR:
@@ -4886,7 +4802,6 @@ static xen_value *eqv_p(ptree *prog, xen_value **args, int num_args)
     case R_CLM:          return(package(prog, R_BOOL, eqv_clm, descr_eqv_clm, args, 2)); 
     case R_READER:       return(package(prog, R_BOOL, reader_eq_b, descr_reader_eq_b, args, 2));
     case R_MIX_READER:   return(package(prog, R_BOOL, mix_reader_eq_b, descr_mix_reader_eq_b, args, 2));
-    case R_TRACK_READER: return(package(prog, R_BOOL, track_reader_eq_b, descr_track_reader_eq_b, args, 2));
     case R_VCT:          return(package(prog, R_BOOL, vct_eqv_b, descr_vct_eqv_b, args, 2));
     case R_SOUND_DATA:   return(package(prog, R_BOOL, sd_eqv_b, descr_sd_eqv_b, args, 2));
     case R_KEYWORD:
@@ -5907,12 +5822,10 @@ static void display_vct_vect(int *args, ptree *pt)
   if (buf) {fprintf(stderr, "%s", buf); FREE(buf); }
 }
 
-static void display_rd(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = sf_to_string(READER_ARG_1)); FREE(buf);}
+static void display_rd(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = sample_reader_to_string(READER_ARG_1)); FREE(buf);}
 static char *descr_display_rd(int *args, ptree *pt) {return(mus_format("display(" RD_PT ")", args[1], DESC_READER_ARG_1));}
 static void display_mf(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = run_mix_sample_reader_to_string(MIX_READER_ARG_1)); FREE(buf);}
-static char *descr_display_mf(int *args, ptree *pt) {return(mus_format("display(" MF_PT ")", args[1], DESC_MIX_READER_ARG_1));}
-static void display_tf(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = run_track_sample_reader_to_string(TRACK_READER_ARG_1)); FREE(buf);}
-static char *descr_display_tf(int *args, ptree *pt) {return(mus_format("display(" TF_PT ")", args[1], DESC_TRACK_READER_ARG_1));}
+static char *descr_display_mf(int *args, ptree *pt) {return(mus_format("display(" MIX_SAMPLE_READER_PT ")", args[1], DESC_MIX_READER_ARG_1));}
 static void display_sd(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = sound_data_to_string(SOUND_DATA_ARG_1)); FREE(buf);}
 static char *descr_display_sd(int *args, ptree *pt) {return(mus_format("display(" SD_PT ")", args[1], DESC_SOUND_DATA_ARG_1));}
 static void display_chr(int *args, ptree *pt) {fprintf(stderr, "%c", (char)(INT_ARG_1));}
@@ -5946,7 +5859,6 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
     case R_KEYWORD:      return(package(pt, R_BOOL, display_key, descr_display_key, args, 1));       break;
     case R_READER:       return(package(pt, R_BOOL, display_rd, descr_display_rd, args, 1));         break;
     case R_MIX_READER:   return(package(pt, R_BOOL, display_mf, descr_display_mf, args, 1));         break;
-    case R_TRACK_READER: return(package(pt, R_BOOL, display_tf, descr_display_tf, args, 1));         break;
     case R_FLOAT_VECTOR:
     case R_VCT:          return(package(pt, R_BOOL, display_vct, descr_display_vct, args, 1));       break;
     case R_SOUND_DATA:   return(package(pt, R_BOOL, display_sd, descr_display_sd, args, 1));         break;
@@ -6313,9 +6225,6 @@ static void funcall_nf(int *args, ptree *pt)
       case R_MIX_READER: 
  	pt->mix_readers[func->args[i]] = pt->mix_readers[args[i + 2]]; 
  	break;
-      case R_TRACK_READER: 
- 	pt->track_readers[func->args[i]] = pt->track_readers[args[i + 2]]; 
- 	break;
       default:      
 	/* def-clm-struct list can be passed here -> xens */
 	if (CLM_STRUCT_P(func->arg_types[i]))
@@ -6367,9 +6276,6 @@ static void funcall_nf(int *args, ptree *pt)
       break;
     case R_MIX_READER:   
       MIX_READER_RESULT = pt->mix_readers[fres->addr];   
-      break;
-    case R_TRACK_READER:   
-      TRACK_READER_RESULT = pt->track_readers[fres->addr];   
       break;
     default:      
       if (CLM_STRUCT_P(fres->type))
@@ -6444,8 +6350,7 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {ret
 INT_INT_OP(mus_bytes_per_sample)
 bool r_sound_p(int i);
 BOOL_INT_OP(r_sound_p);
-BOOL_INT_OP(mix_ok);
-BOOL_INT_OP(track_p);
+BOOL_INT_OP(mix_exists);
 BOOL_INT_OP(region_ok);
 bool r_mark_p(int n);
 BOOL_INT_OP(r_mark_p);
@@ -6459,25 +6364,10 @@ off_t r_mark_sync(int n);
 off_t r_mark_sample(int n);
 INT_INT_OP(r_mark_sync);
 INT_INT_OP(r_mark_sample);
-off_t r_mix_position(int n);
-off_t r_mix_frames(int n);
-int r_mix_track(int n);
-INT_INT_OP(r_mix_position);
-INT_INT_OP(r_mix_frames);
-INT_INT_OP(r_mix_track);
-INT_INT_OP(track_chans);
-
-Float r_mix_speed(int n);
-#define r_track_speed(Trk) track_dialog_track_speed(Trk)
-#define r_track_tempo(Trk) track_dialog_track_tempo(Trk)
-#define r_track_amp(Trk) track_dialog_track_amp(Trk)
-#define r_track_track(Trk) track_dialog_track_track(Trk)
-
-INT_INT_OP(r_track_track);
-FLOAT_INT_OP(r_mix_speed);
-FLOAT_INT_OP(r_track_speed);
-FLOAT_INT_OP(r_track_tempo);
-FLOAT_INT_OP(r_track_amp);
+INT_INT_OP(mix_position_from_id);
+INT_INT_OP(mix_length_from_id);
+FLOAT_INT_OP(mix_speed_from_id);
+FLOAT_INT_OP(mix_amp_from_id);
 INT_INT_OP(region_chans);
 INT_INT_OP(region_srate);
 INT_INT_OP(region_len);
@@ -6882,14 +6772,9 @@ static char *descr_reader_at_end_b_m(int *args, ptree *pt)
 {
   return(mus_format( BOOL_PT " = (mix-)" S_sample_reader_at_end_p "(" RD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_MIX_READER_ARG_1));
 }
-static char *descr_reader_at_end_b_t(int *args, ptree *pt)
-{
-  return(mus_format( BOOL_PT " = (track-)" S_sample_reader_at_end_p "(" RD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_TRACK_READER_ARG_1));
-}
 
 static void reader_at_end_b_s(int *args, ptree *pt) {BOOL_RESULT = READER_ARG_1->at_eof;}
 static void reader_at_end_b_m(int *args, ptree *pt) {BOOL_RESULT = mix_sample_reader_at_end_p(MIX_READER_ARG_1);}
-static void reader_at_end_b_t(int *args, ptree *pt) {BOOL_RESULT = track_sample_reader_at_end_p(TRACK_READER_ARG_1);}
 
 static xen_value *sample_reader_at_end_p_1(ptree *prog, xen_value **args, int num_args) 
 {
@@ -6897,8 +6782,6 @@ static xen_value *sample_reader_at_end_p_1(ptree *prog, xen_value **args, int nu
     return(package(prog, R_BOOL, reader_at_end_b_s, descr_reader_at_end_b_s, args, 1));
   if (args[1]->type == R_MIX_READER)
     return(package(prog, R_BOOL, reader_at_end_b_m, descr_reader_at_end_b_m, args, 1));
-  if (args[1]->type == R_TRACK_READER)
-    return(package(prog, R_BOOL, reader_at_end_b_t, descr_reader_at_end_b_t, args, 1));
   return(NULL);
 }
 
@@ -6975,10 +6858,10 @@ static xen_value *make_region_sample_reader_1(ptree *pt, xen_value **args, int n
 
 /* -------- mix -------- */
 
-static void mix_reader_f(int *args, ptree *pt) {FLOAT_RESULT = mix_read_sample(MIX_READER_ARG_1);}
+static void mix_reader_f(int *args, ptree *pt) {FLOAT_RESULT = run_read_mix_sample(MIX_READER_ARG_1);}
 static char *descr_mix_reader(int *args, ptree *pt, const char *which) 
 {
-  return(mus_format( FLT_PT " = %s(" MF_PT ")", args[0], FLOAT_RESULT, which, args[1], DESC_MIX_READER_ARG_1));
+  return(mus_format( FLT_PT " = %s(" MIX_SAMPLE_READER_PT ")", args[0], FLOAT_RESULT, which, args[1], DESC_MIX_READER_ARG_1));
 }
 static char *descr_mix_reader_f(int *args, ptree *pt) {return(descr_mix_reader(args, pt, S_read_mix_sample));}
 static xen_value *mix_reader_0(ptree *prog, xen_value **args, xen_value *sf)
@@ -6995,15 +6878,15 @@ static xen_value *mix_reader_1(ptree *prog, xen_value **args, int num_args)
 
 static char *descr_make_mix_sample_reader_r2(int *args, ptree *pt)
 {
-  return(mus_format( MF_PT " = " S_make_mix_sample_reader "(" INT_PT ", " INT_PT ")",
+  return(mus_format( MIX_SAMPLE_READER_PT " = " S_make_mix_sample_reader "(" INT_PT ", " INT_PT ")",
 		    args[0], DESC_MIX_READER_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
 static char *descr_make_mix_sample_reader_r1(int *args, ptree *pt)
 {
-  return(mus_format( MF_PT " = " S_make_mix_sample_reader "(" INT_PT ", 0)", args[0], DESC_MIX_READER_RESULT, args[1], INT_ARG_1));
+  return(mus_format( MIX_SAMPLE_READER_PT " = " S_make_mix_sample_reader "(" INT_PT ", 0)", args[0], DESC_MIX_READER_RESULT, args[1], INT_ARG_1));
 }
-static void make_mix_sample_reader_r2(int *args, ptree *pt) {MIX_READER_RESULT = run_make_mix_sample_reader(INT_ARG_1, INT_ARG_2);}
-static void make_mix_sample_reader_r1(int *args, ptree *pt) {MIX_READER_RESULT = run_make_mix_sample_reader(INT_ARG_1, 0);}
+static void make_mix_sample_reader_r2(int *args, ptree *pt) {MIX_READER_RESULT = (struct mix_fd *)run_make_mix_sample_reader(INT_ARG_1, INT_ARG_2);}
+static void make_mix_sample_reader_r1(int *args, ptree *pt) {MIX_READER_RESULT = (struct mix_fd *)run_make_mix_sample_reader(INT_ARG_1, 0);}
 static xen_value *make_mix_sample_reader_1(ptree *pt, xen_value **args, int num_args)
 {
   xen_value *rtn;
@@ -7013,57 +6896,6 @@ static xen_value *make_mix_sample_reader_1(ptree *pt, xen_value **args, int num_
   add_obj_to_gcs(pt, R_MIX_READER, rtn->addr);
   return(rtn);
 }
-
-/* -------- track -------- */
-
-static void track_reader_f(int *args, ptree *pt) {FLOAT_RESULT = track_read_sample(TRACK_READER_ARG_1);}
-static char *descr_track_reader(int *args, ptree *pt, const char *which) 
-{
-  return(mus_format( FLT_PT " = %s(" TF_PT ")", args[0], FLOAT_RESULT, which, args[1], DESC_TRACK_READER_ARG_1));
-}
-static char *descr_track_reader_f(int *args, ptree *pt) {return(descr_track_reader(args, pt, S_read_track_sample));}
-static xen_value *track_reader_0(ptree *prog, xen_value **args, xen_value *sf)
-{
-  if (args[0]) FREE(args[0]);
-  args[0] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_VARIABLE);
-  add_triple_to_ptree(prog, va_make_triple(track_reader_f, descr_track_reader_f, 2, args[0], sf));
-  return(args[0]);
-}
-static xen_value *track_reader_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, track_reader_f, descr_track_reader_f, args, 1));}
-
-static char *descr_make_track_sample_reader_r3(int *args, ptree *pt)
-{
-  return(mus_format( TF_PT " = " S_make_track_sample_reader "(" INT_PT ", " INT_PT ", " INT_PT ")",
-		     args[0], DESC_TRACK_READER_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
-}
-static char *descr_make_track_sample_reader_r2(int *args, ptree *pt)
-{
-  return(mus_format( TF_PT " = " S_make_track_sample_reader "(" INT_PT ", " INT_PT ", 0)",
-		    args[0], DESC_TRACK_READER_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
-}
-static char *descr_make_track_sample_reader_r1(int *args, ptree *pt)
-{
-  return(mus_format( TF_PT " = " S_make_track_sample_reader "(" INT_PT ", 0, 0)", args[0], DESC_TRACK_READER_RESULT, args[1], INT_ARG_1));
-}
-static void make_track_sample_reader_r3(int *args, ptree *pt) {TRACK_READER_RESULT = run_make_track_sample_reader(INT_ARG_1, INT_ARG_2, INT_ARG_3);}
-static void make_track_sample_reader_r2(int *args, ptree *pt) {TRACK_READER_RESULT = run_make_track_sample_reader(INT_ARG_1, INT_ARG_2, 0);}
-static void make_track_sample_reader_r1(int *args, ptree *pt) {TRACK_READER_RESULT = run_make_track_sample_reader(INT_ARG_1, 0, 0);}
-static xen_value *make_track_sample_reader_1(ptree *pt, xen_value **args, int num_args)
-{
-  xen_value *rtn;
-  if (num_args == 3)
-    rtn = package(pt, R_TRACK_READER, make_track_sample_reader_r3, descr_make_track_sample_reader_r3, args, num_args);
-  else
-    {
-      if (num_args == 2)
-	rtn = package(pt, R_TRACK_READER, make_track_sample_reader_r2, descr_make_track_sample_reader_r2, args, num_args);
-      else rtn = package(pt, R_TRACK_READER, make_track_sample_reader_r1, descr_make_track_sample_reader_r1, args, num_args);
-    }
-  add_obj_to_gcs(pt, R_TRACK_READER, rtn->addr);
-  return(rtn);
-}
-
-
 
 /* ---------------- vector stuff ---------------- */
 
@@ -7651,14 +7483,14 @@ static void vct_to_channel_v(int *args, ptree *pt)
       beg = INT_ARG_2;
       dur = INT_ARG_3;
 #if SNDLIB_USE_FLOATS
-      change_samples(beg, dur, v->data, cp, LOCK_MIXES, S_vct_to_channel, cp->edit_ctr);
+      change_samples(beg, dur, v->data, cp, S_vct_to_channel, cp->edit_ctr);
 #else
       {
 	off_t i;
 	mus_sample_t *data;
 	data = (mus_sample_t *)CALLOC(dur, sizeof(mus_sample_t));
 	for (i = 0; i < dur; i++) data[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
-	change_samples(beg, dur, data, cp, LOCK_MIXES, S_vct_to_channel, cp->edit_ctr);
+	change_samples(beg, dur, data, cp, S_vct_to_channel, cp->edit_ctr);
 	FREE(data);
       }
 #endif
@@ -10212,11 +10044,6 @@ static xen_value *mix_sample_reader_p_1(ptree *prog, xen_value **args, int num_a
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_MIX_READER), R_CONSTANT));
 }
 
-static xen_value *track_sample_reader_p_1(ptree *prog, xen_value **args, int num_args)
-{
-  return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_TRACK_READER), R_CONSTANT));
-}
-
 static xen_value *keyword_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_KEYWORD), R_CONSTANT));
@@ -10888,7 +10715,6 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
 	    case R_CLM:          pt->clms[addr] = NULL;          break;
 	    case R_READER:       pt->readers[addr] = NULL;       break;
 	    case R_MIX_READER:   pt->mix_readers[addr] = NULL;   break;
-	    case R_TRACK_READER: pt->track_readers[addr] = NULL; break;
 	    case R_INT_VECTOR: 
 	    case R_VCT_VECTOR:
 	    case R_CLM_STRUCT_VECTOR:
@@ -10912,9 +10738,8 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
     case R_VCT:          pt->vcts[addr] = xen_to_vct(arg);                     break;
     case R_SOUND_DATA:   pt->sds[addr] = (sound_data *)XEN_OBJECT_REF(arg); break;
     case R_CLM:          pt->clms[addr] = XEN_TO_MUS_ANY(arg);              break;
-    case R_READER:       pt->readers[addr] = get_sf(arg);                   break;
-    case R_MIX_READER:   pt->mix_readers[addr] = get_mf(arg);               break;
-    case R_TRACK_READER: pt->track_readers[addr] = get_tf(arg);             break;
+    case R_READER:       pt->readers[addr] = xen_to_sample_reader(arg);     break;
+    case R_MIX_READER:   pt->mix_readers[addr] = (struct mix_fd *)xen_to_mix_sample_reader(arg); break;
     case R_SYMBOL:
     case R_KEYWORD:
     case R_LIST:
@@ -11419,7 +11244,6 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 		{
 		case R_READER:       if (num_args == 0) res = reader_0(prog, args, v);       break;
 		case R_MIX_READER:   if (num_args == 0) res = mix_reader_0(prog, args, v);   break;
-		case R_TRACK_READER: if (num_args == 0) res = track_reader_0(prog, args, v); break;
 		case R_CLM:          res = clm_n(prog, args, num_args, v); break;
 		case R_BOOL:
 		case R_GOTO:         if (num_args == 0) res = goto_0(prog, args, v);         break;
@@ -11924,17 +11748,16 @@ Float evaluate_ptreec(struct ptree *pt, Float arg, XEN object, bool dir, int typ
       addr = pt->args[1];
       switch (type)
 	{
-	case R_FLOAT:        pt->dbls[addr] = (Double)XEN_TO_C_DOUBLE(object);                    break;
-	case R_INT:          pt->ints[addr] = R_XEN_TO_C_INT(object);                             break;
-	case R_CHAR:         pt->ints[addr] = (Int)XEN_TO_C_CHAR(object);                         break;
-	case R_BOOL:         pt->ints[addr] = (Int)XEN_TO_C_BOOLEAN(object);                      break;
-	case R_VCT:          if (pt->vcts) pt->vcts[addr] = (vct *)XEN_OBJECT_REF(object);        break;
+	case R_FLOAT:        pt->dbls[addr] = (Double)XEN_TO_C_DOUBLE(object);                              break;
+	case R_INT:          pt->ints[addr] = R_XEN_TO_C_INT(object);                                       break;
+	case R_CHAR:         pt->ints[addr] = (Int)XEN_TO_C_CHAR(object);                                   break;
+	case R_BOOL:         pt->ints[addr] = (Int)XEN_TO_C_BOOLEAN(object);                                break;
+	case R_VCT:          if (pt->vcts) pt->vcts[addr] = (vct *)XEN_OBJECT_REF(object);                  break;
 	  /* dumb cases force the pt->vcts check -- vct returned, but never used for example */
-	case R_SOUND_DATA:   if (pt->sds) pt->sds[addr] = (sound_data *)XEN_OBJECT_REF(object);   break;
-	case R_CLM:          if (pt->clms) pt->clms[addr] = XEN_TO_MUS_ANY(object);               break;
-	case R_READER:       if (pt->readers) pt->readers[addr] = get_sf(object);                 break;
-	case R_MIX_READER:   if (pt->mix_readers) pt->mix_readers[addr] = get_mf(object);         break;
-	case R_TRACK_READER: if (pt->track_readers) pt->track_readers[addr] = get_tf(object);     break;
+	case R_SOUND_DATA:   if (pt->sds) pt->sds[addr] = (sound_data *)XEN_OBJECT_REF(object);             break;
+	case R_CLM:          if (pt->clms) pt->clms[addr] = XEN_TO_MUS_ANY(object);                         break;
+	case R_READER:       if (pt->readers) pt->readers[addr] = xen_to_sample_reader(object);             break;
+	case R_MIX_READER:   if (pt->mix_readers) pt->mix_readers[addr] = (struct mix_fd *)xen_to_mix_sample_reader(object); break;
 	case R_STRING:       
 	  if (pt->strs)
 	    {
@@ -12516,10 +12339,6 @@ static void init_walkers(void)
   INIT_WALKER(S_make_mix_sample_reader, make_walker(make_mix_sample_reader_1, NULL, NULL, 1, 2, R_MIX_READER, false, 1, R_NUMBER));
   INIT_WALKER(S_mix_sample_reader_p, make_walker(mix_sample_reader_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
 
-  INIT_WALKER(S_read_track_sample, make_walker(track_reader_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_TRACK_READER));
-  INIT_WALKER(S_make_track_sample_reader, make_walker(make_track_sample_reader_1, NULL, NULL, 1, 3, R_TRACK_READER, false, 2, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_track_sample_reader_p, make_walker(track_sample_reader_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
-
   INIT_WALKER(S_edit_position, make_walker(edit_position_1, NULL, NULL, 0, 2, R_INT, false, 0));
   INIT_WALKER(S_frames, make_walker(frames_1, NULL, NULL, 0, 3, R_INT, false, 0));
   INIT_WALKER(S_cursor, make_walker(cursor_1, NULL, NULL, 0, 2, R_INT, false, 0));
@@ -12537,8 +12356,7 @@ static void init_walkers(void)
   INIT_WALKER(S_report_in_minibuffer, make_walker(report_in_minibuffer_1, NULL, NULL, 1, 2, R_BOOL, false, 1, R_STRING));
 
   INIT_WALKER(S_sound_p, make_walker(r_sound_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
-  INIT_WALKER(S_mix_p, make_walker(mix_ok_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
-  INIT_WALKER(S_track_p, make_walker(track_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
+  INIT_WALKER(S_mix_p, make_walker(mix_exists_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
   INIT_WALKER(S_region_p, make_walker(region_ok_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
   INIT_WALKER(S_mark_p, make_walker(r_mark_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
   INIT_WALKER(S_mark_sync, make_walker(r_mark_sync_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
@@ -12547,21 +12365,14 @@ static void init_walkers(void)
   INIT_WALKER(S_selection_chans, make_walker(selection_chans_1, NULL, NULL, 0, 0, R_INT, false, 0));
   INIT_WALKER(S_temp_dir, make_walker(r_temp_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
   INIT_WALKER(S_save_dir, make_walker(r_save_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
-  INIT_WALKER(S_mix_track, make_walker(r_mix_track_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
-  INIT_WALKER(S_mix_position, make_walker(r_mix_position_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
-  INIT_WALKER(S_mix_frames, make_walker(r_mix_frames_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
-  INIT_WALKER(S_track_chans, make_walker(track_chans_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
-  INIT_WALKER(S_track_track, make_walker(r_track_track_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_mix_position, make_walker(mix_position_from_id_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_mix_length, make_walker(mix_length_from_id_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
   INIT_WALKER(S_region_chans, make_walker(region_chans_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
   INIT_WALKER(S_region_srate, make_walker(region_srate_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
   INIT_WALKER(S_region_frames, make_walker(region_len_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
-
-  INIT_WALKER(S_mix_speed, make_walker(r_mix_speed_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
-  INIT_WALKER(S_track_speed, make_walker(r_track_speed_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
-  INIT_WALKER(S_track_tempo, make_walker(r_track_tempo_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
-  INIT_WALKER(S_track_amp, make_walker(r_track_amp_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
+  INIT_WALKER(S_mix_speed, make_walker(mix_speed_from_id_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
+  INIT_WALKER(S_mix_amp, make_walker(mix_amp_from_id_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
   INIT_WALKER(S_region_maxamp, make_walker(region_maxamp_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
-
   INIT_WALKER(S_fft, make_walker(fft_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
 }
 

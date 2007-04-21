@@ -64,7 +64,7 @@
     <li><a href="#sndsounddata" onmouseover="return escape('arrays of vcts for multichannel data')">Sound-data</a>
     <li><a href="#extsndlib" onmouseover="return escape('the underlying library that handles sound data and files')">Sndlib</a>
     <li><a href="#sndmarks" onmouseover="return escape('location markers in sound data')">Marks</a>
-    <li><a href="#sndmixes" onmouseover="return escape('mixed sounds and groups of mixed sounds')">Mixes and Tracks</a>
+    <li><a href="#sndmixes" onmouseover="return escape('mixed sounds and groups of mixed sounds')">Mixes</a>
     <li><a href="#sndregions" onmouseover="return escape('selected or saved portions of sound data')">Regions and Selections</a>
     <li><a href="#sndsounds" onmouseover="return escape('editing functions, per-channel display decisions, etc')">Sounds and channels</a>
       <ul>
@@ -473,11 +473,11 @@ Extensions to Snd can be found in:
 
 <tr><td><a href="sndscm.html#menusdoc">menus</a></td>
     <td onmouseover="return escape('Menu additions for things like crop, trim,\
- fft notch filter, mark and mix functions, etc.  The main one loads a huge set of sound effects.')">additional menus</td></tr>
+ fft notch filter, mark functions, etc.  The main one loads a huge set of sound effects.')">additional menus</td></tr>
 
 <tr><td bgcolor="#f6f8ff"><a href="sndscm.html#mixdoc">mix</a></td>
-    <td bgcolor="#f6f8ff" onmouseover="return escape('mix-property, delete-all-mixes, mix-sound, save-mix,\
- snap-mix-to-beat; similar functions for tracks')">functions related to mixes and tracks</td></tr>
+    <td bgcolor="#f6f8ff" onmouseover="return escape('mix-property, silence-all-mixes, mix-sound, save-mix,\
+ snap-mix-to-beat')">functions related to mixes</td></tr>
 
 <tr><td><a href="sndscm.html#mixerdoc">mixer</a></td>
     <td onmouseover="return escape('matrix determinant, transpose, invert, using the CLM\
@@ -2730,9 +2730,6 @@ garbage collector will take care of it if you forget (but, sigh, the GC can be d
 <a class=quiet href="#mixsamplereaderQ">mix-sample-reader?</a> returns #t if its argument in a mix sample reader,
 and <a class=quiet href="#readmixsample">read-mix-sample</a> returns the next sample (before it is mixed into
 the output).
-Mixes can be collected into tracks, so there are also <a class=quiet href="#maketracksamplereader">make-track-sample-reader</a>, 
-<a class=quiet href="#tracksamplereaderQ">track-sample-reader?</a>,
-and <a class=quiet href="#readtracksample">read-track-sample</a>.
 </p>
 
 <p>Multichannel iterations can be handled via <a href="sndscm.html#framereaders">frame-readers</a>.  These are currently
@@ -2836,13 +2833,6 @@ in the Scheme, Ruby, and Forth files.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- make-track-sample-reader -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="maketracksamplereader">make-track-sample-reader</a> (track :optional chn beg)</code>
-</td></tr><tr><td></td><td>
-make-track-sample-reader creates a track-sample-reader reading 'track'.  'beg' is the starting point of the reader within the track.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- mix-sample-reader? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixsamplereaderQ">mix-sample-reader?</a> (obj)</code>
 </td></tr><tr><td></td><td>
@@ -2901,13 +2891,6 @@ reading in the direction set by <a class=quiet href="#makesamplereader">make-sam
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- read-track-sample -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readtracksample">read-track-sample</a> (obj)</code>
-</td></tr><tr><td></td><td>
-read-track-sample returns the next sample read by the track-sample-reader 'obj'.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- region-sample-reader? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="regionsamplereaderQ">region-sample-reader?</a> (obj)</code>
 </td></tr><tr><td></td><td>
@@ -2930,7 +2913,7 @@ See <a href="sndscm.html#locatezero">locate-zero</a> in examp.scm, or <a href="s
 </td></tr><tr><td></td><td>
 sample-reader-home returns information describing the source of the data the sample-reader 'obj' is reading.
 if 'obj' is a sound sample reader, it returns a list with the sound index and channel number associated with 'obj'.
-If 'obj' is a mix reader, it returns the mix's id.  If 'obj' is a track reader, it returns a list with the track id and channel number.
+If 'obj' is a mix reader, it returns the mix's id. 
 Finally, if 'obj' is a region reader, it returns a list with the region id.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -2949,12 +2932,6 @@ current (sample-wise) location of the sample-reader 'obj' (any kind of reader).
 sample-reader? returns #t if 'obj' is a sample-reader.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
-
-<!-- track-sample-reader? -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tracksamplereaderQ">track-sample-reader?</a> (obj)</code>
-</td></tr><tr><td></td><td>
-track-sample-reader? returns #t if 'obj' is a track-sample-reader.
-</td></tr>
 </table>
 
 <p>If your extension language supports it, the read-sample functions can be omitted: <code>(reader)</code> is the same as <code>(<a class=quiet href="#readsample">read-sample</a> reader)</code>.
@@ -3119,8 +3096,7 @@ copy file: in Scheme: copy-file, in Ruby: File.copy or File.syscopy<br>
 copy string: in Guile or Forth: string-copy<br>
 copy list: in Guile or Forth: list-copy or copy-tree<br>
 copy vct: <a href="#vctcopy">vct-copy</a>, <a href="#vcttovector">vct-&gt;vector</a>, <a href="sndscm.html#vcttoframe">vct-&gt;frame</a><br>
-copy mix: <a href="#copymix">copy-mix</a>, <a href="sndscm.html#mixtovct">mix-&gt;vct</a><br>
-copy track: <a href="#copytrack">copy-track</a>, <a href="sndscm.html#tracktovct">track-&gt;vct</a>, <a href="sndscm.html#tracktosounddata">track-&gt;sound-data</a><br>
+copy mix: <a href="sndscm.html#mixtovct">mix-&gt;vct</a><br>
 copy sample reader: <a href="#copysamplereader">copy-sample-reader</a><br>
 copy (clone) current sound edit state: <a href="#clonesoundas">clone-sound-as</a><br>
 copy channel data: <a href="#channeltovct">channel-&gt;vct</a>, or <a href="#savesoundas">save-sound-as</a><br>
@@ -3351,7 +3327,6 @@ there are also several functions that create and fill vcts with data:</p>
     <a href="#channeltovct">channel-&gt;vct</a>             channel samples to vct
     <a href="sndscm.html#mixtovct">mix-&gt;vct</a>                 mix samples to vct
     <a href="#sounddatatovct">sound-data-&gt;vct</a>          sound-data samples to vct
-    <a href="sndscm.html#tracktovct">track-&gt;vct</a>               track samples to vct
     <a href="#vectortovct">vector-&gt;vct</a>              vector data to vct (assumed to be floats)
     <a href="#selection2vct">selection-&gt;vct</a>           selected samples to vct
     <a href="sndscm.html#filetovct">file-&gt;vct</a>                file data to vct
@@ -4418,8 +4393,8 @@ continues to point to its original sample:
 </td></tr><tr><td></td><td>
 This is the 
 mark's sync field (the default is 0).
-The sync value is very similar to
-the mix track number or the sound sync field; it provides a way to group marks for simultaneous
+The sync value 
+provides a way to group marks for simultaneous
 changes.  Marks that share the same sync value (if not 0), move together when any one of them is
 dragged, play together if clicked, etc.  To find which marks share a given
 sync value, use <a href="#syncdmarks">syncd-marks</a>; to find an unused sync value use <a href="#marksyncmax">mark-sync-max</a>.
@@ -4586,21 +4561,19 @@ edit-menu.scm (trim from mark, etc), examp.scm (move window to correspond to mar
 </p>
 <br>
 <br>
-<table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndmixes">Mixes and Tracks</a></h3></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndmixes">Mixes</a></h3></td></tr></table>
 
 <p>Mixing operations have a lot of extra support built into Snd.  In nearly every mixing function, you
 can request a "mix tag" (or set that request globally via <a href="#withmixtags">with-mix-tags</a>).
 If the mix operation is tagged, you can then operate on that data through a number of functions,
-the Mix Dialog, various hooks, and various mouse-related actions.  These mixes can be grouped
-into "tracks", which have a very similar set of functions.  
+the Mix Dialog, various hooks, and various mouse-related actions.
 </p>
 
 
 <table width="35%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Mixes</h4></td></tr></table>
 
-<p>A mix is an object that represents a channel of a sound mix.
+<p>A mix is an object that represents a channel (one channel in and one channel out) of a sound mix.
 Each mix object has a unique identifier called its 'id' that identifies it in the following functions.
-A track is a list of mixes that are treated in many ways as a single big mix.
 Say we have a mix whose id is 123:</p>
 <pre>
     &gt;<em class=listener>(set! (mix-amp 123) .5)</em>
@@ -4614,30 +4587,15 @@ Say we have a mix whose id is 123:</p>
 
 <table border=0 cellspacing=0 hspace=10>
 
-<!-- copy-mix -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="copymix">copy-mix</a> (mix :optional beg)</code>
-</td></tr><tr><td width=60></td><td>
-copy-mix copies 'mix', placing the copy at 'beg' which defaults to the copied mix's position.  The new mix's track is set to 0.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- delete-mix -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="deletemix">delete-mix</a> (mix)</code>
+<!-- mix -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mix">mix</a> (file :optional samp in-chan snd chn with-mix-tags auto-delete)</code>
 </td></tr><tr><td></td><td>
-delete-mix removes 'mix' from the output by setting its input amplitudes to 0.0.  
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mix">mix</a> (file :optional samp in-chan snd chn with-mix-tags auto-delete track)</code>
-</td></tr><tr><td></td><td>
-mix is one of the basic mixing functions.  A more better name might be 'mix-file', but the name is too ingrained to change now.
+mix is one of the basic mixing functions. 
 mix mixes the 'in-chan' channel of the file 'file' into the given channel
 starting at 'samp' in the output channel.
-If only the 'file' argument is given, this is equivalent to the File menu's 
-Mix option; the mix start sample in this case depends on the cursor location.
-mix returns the id of the first channel's mix (subsequent channels simply 
-increment this number). If <a class=quiet href="#sync">sync</a> is off and 'in-chan' is not #t, only the first channel is mixed.
+mix returns the id mix or -1 (a simple mix, no tag).
 If 'with-mix-tags' is #f (the default is #t), the data is simply
-mixed without creating any mix objects.  'track' is the newly created mix's track number; it defaults to 0 (no track).
+mixed without creating any mix objects. 
 The input file ('file') is not deleted by Snd unless 'auto-delete' is #t. 
 <br>
 <img src="mix1.png" alt="mixes" vspace=10 onmouseover="return escape('the mix tag is the red rectangle at the left end of the mix waveform.  The number under it is that mix\'s id.')">
@@ -4690,7 +4648,7 @@ We can use <a href="sndscm.html#dlocsigdoc">dlocsig</a> in conjunction with mix 
 <!-- mixes -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixes">mixes</a> (:optional snd chn edpos)</code>
 </td></tr><tr><td></td><td>
-mixes returns a list of the currently active mixes (their id numbers) in the given channel at the edit history position 'edpos'.
+mixes returns a list of the mixes (their id numbers) in the given channel at the edit history position 'edpos'.
 If the channel argument is omitted, you get a list of lists, each inner list referring to a single channel of that sound.
 If the sound index is also omitted, you get a list of lists of lists, the outer list referring to each sound, each
 inner list to that sound's channels.  Say we have two sounds open, 2 mixes in the first (a mono sound), and 1 mix
@@ -4735,32 +4693,32 @@ sets mix 0's envelope to a ramp.
 
 
 <!-- mix-color -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixcolor">mix-color</a> ()</code>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixcolor">mix-color</a> (:optional mix)</code>
 </td></tr><tr><td></td><td>
 This is the color of mix waveforms; it defaults to dark-gray.
-The set form, <code>(set! (mix-color) ...)</code>, has an optional second argument; if you
+If you
 want to set just a particular mix's color, give the id of the mix
-as that argument: <code>(set! (mix-color) red)</code> sets all mix waveforms to
+as the 'mix' argument: <code>(set! (mix-color) red)</code> sets all mix waveforms to
 red; but <code>(set! (mix-color 3) red)</code> sets only mix 3's waveform to red.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- mix-frames -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixframes">mix-frames</a> (mix)</code>
+<!-- mix-length -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixlength">mix-length</a> (mix)</code>
 </td></tr><tr><td></td><td>
-mix-frames returns the mix's length in samples.
+mix-length returns the mix's length in samples.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix-home-->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixhome">mix-home</a> (mix)</code>
 </td></tr><tr><td></td><td>
-mix-home returns a list containing the sound index and channel number affected by 'mix'.
+mix-home returns a list containing the mix's output sound index and channel number, and the input original filename (if any), and input channel.
 <pre>
     :<em class=typing>(mix "pistol.snd" 1000)</em>
     <em class=listener>1</em>
     :<em class=typing>(mix-home 1)</em>
-    <em class=listener>(0 0)</em>
+    <em class=listener>(0 0 "/home/bil/cl/pistol.snd" 0)</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4768,15 +4726,12 @@ mix-home returns a list containing the sound index and channel number affected b
 <!-- mix-name -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixname">mix-name</a> (mix)</code>
 </td></tr><tr><td></td><td>
-mix-name is the mix's name, if any.  The mix name is displayed below the mix waveform where the mix id number
-would normally be.  See also <a href="sndscm.html#mixnametoid">mix-name-&gt;id</a>.
+mix-name is the mix's name, if any.  The mix name is displayed near the mix tag.
+See also <a href="sndscm.html#mixnametoid">mix-name-&gt;id</a>.
 Here's an example that uses the mix name to provide some pitch
 feedback:
 
 <table border=0 cellpadding=5 vspace=5><tr><td bgcolor="#fafafa"><pre>
-;;; set up two tracks, one containing the violin notes, the other with the cello notes
-;;; set mix names to show the current pitch
-
 (if (not (provided? 'snd-v.scm)) (load-from-path "v.scm"))
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
@@ -4815,23 +4770,7 @@ feedback:
    (cello  6 1 'c3 .2)  (cello  7 1 'g2 .2)   (cello  8 1 'c3 .2)
 
    (violin 9 3 'd4 .2)
-   (cello  9 3 'b2 .2)
-
-   (let ((overall-trk (<a class=quiet href="#maketrack">make-track)))</a> ; for global amplitude envelopes, transpositions etc
-
-     (let ((trk (apply <a class=quiet href="#maketrack">make-track</a> (reverse cellos))))
-       (set! (<a class=quiet href="#tracktagy">track-tag-y</a> trk) 40)
-       (set! (<a class=quiet href="#trackcolor">track-color</a> trk) (<a class=quiet href="#makecolor">make-color</a> 0 1 0))     ; cellos are green
-       (set! (<a class=quiet href="#trackname">track-name</a> trk) "cello")
-       (set! (<a class=quiet href="#tracktrack">track-track</a> trk) overall-trk))
-
-     (let ((trk (apply <a class=quiet href="#maketrack">make-track</a> (reverse violins))))
-       (set! (<a class=quiet href="#tracktagy">track-tag-y</a> trk) 10)
-       (set! (<a class=quiet href="#trackcolor">track-color</a> trk) (<a class=quiet href="#makecolor">make-color</a> 0 0 1))     ; violins are blue
-       (set! (<a class=quiet href="#trackname">track-name</a> trk) "violin")
-       (set! (<a class=quiet href="#tracktrack">track-track</a> trk) overall-trk)))))
-                                                       ; forget the reverb
-                                                       ; and you'll be blue too
+   (cello  9 3 'b2 .2)))
 </pre></td></tr></table>
 <img src="mixname.png" alt="mix name example" vspace=10>
 <p>
@@ -4874,18 +4813,27 @@ mix-position is the current starting position (a sample number) of 'mix'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixregion">mix-region</a> (:optional samp reg snd chn track)</code>
+<!-- mix-properties -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="mixproperties">mix-properties</a> (mix)</code>
 </td></tr><tr><td></td><td>
-mix-region mixes region 'reg' into the given channel starting at sample 'samp' ('samp' defaults to the cursor sample).
-It returns the id of the first channel's 
-mix (subsequent channels simply increment this number).
+mix-properties is a property list associated with a mix.
+<a href="sndscm.html#mixproperty">mix-property</a> (in mix.scm) reads and writes this list.  
+</td></tr><tr><td colspan=2 height=18></td></tr>
+
+
+<!-- mix-region -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixregion">mix-region</a> (:optional samp reg snd chn reg-chan)</code>
+</td></tr><tr><td></td><td>
+mix-region mixes region 'reg's' channel 'reg-chan' into the given channel starting at sample 'samp' ('samp' defaults to the cursor sample).
+It returns the new mix id, if any.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix-selection -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef>mix-selection</em> (:optional beg snd chn)</code>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef>mix-selection</em> (:optional beg snd chn selection-chan)</code>
 </td></tr><tr><td></td><td>
-mix-selection mixes the current selection into the given channel starting at 'beg', returning the new mix's id.
+mix-selection mixes the current selection's channel 'selection-cha' into the given channel starting at 'beg', returning the new mix's id.
 The Edit:Mix selection menu choice is essentially <code>(mix-selection (cursor))</code>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4898,14 +4846,10 @@ mix-speed is the speed (resampling ratio) of 'mix'; 1.0 (the default) means no r
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- mix-speed-style -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixspeedstyle">mix-speed-style</a> (mix)</code>
+<!-- mix-sync -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixsync">mix-sync</a> (mix)</code>
 </td></tr><tr><td></td><td>
-mix-speed-style is the <a href="#speedstyle">speed-style</a> choice of 'mix'.  This affects how the mix dialog
-speed slider is interpreted:  as a 
-float, (<code>speed-control-as-float</code>, the default), as a ratio 
-of relatively small integers (<code>speed-control-as-ratio</code>), or as a step in a 
-microtonal scale (<code>speed-control-as-semitone</code>).  
+mix-sync is an integer, like <a href="#sync">sync</a> that you can use to group mixes.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4913,13 +4857,6 @@ microtonal scale (<code>speed-control-as-semitone</code>).
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixtagheight">mix-tag-height</a> ()</code>
 </td></tr><tr><td></td><td>
 This is the mix tag height in pixels (the default is 14).
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- mix-tag-position -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixtagposition">mix-tag-position</a> (mix)</code>
-</td></tr><tr><td></td><td>
-This is the mix tag position (a sample number) within the mixed data; the default of 0 places the tag at the start of the mixed portion.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4934,26 +4871,17 @@ This is the mix tag width in pixels (the default is 6).
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixtagy">mix-tag-y</a> (mix)</code>
 </td></tr><tr><td></td><td>
 This is the mix tag y (vertical) offset (its default is 0).  
-The x (horizontal) offset of the tag is determined by <a href="#mixtagposition">mix-tag-position</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- mix-track -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixtrack">mix-track</a> (mix)</code>
+<!-- mix-vct -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixvct">mix-vct</a> (vct :optional beg snd chn with-mix-tags origin)</code>
 </td></tr><tr><td></td><td>
-A mix can be a member of a list of mixes known as a track.  mix-track determines
-which track, if any, this mix belongs to.  The default of 0 means "no track".
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixvct">mix-vct</a> (vct :optional beg snd chn with-mix-tags origin track)</code>
-</td></tr><tr><td></td><td>
-mix-vct is another of the basic mixing functions. It
+mix-vct is one of the basic mixing functions. It
 mixes the contents of 'vct' into the given channel starting at sample 'beg'.
-mix-vct returns the id of the new mix, or -1 if some error occurred.
 If 'with-mix-tags' is #f (the default is #t), the data is simply
-mixed without creating any mix tags, and without returning a mix id.
-If 'track' is the id of an existing track, the subsequent mix is placed in that track.
+mixed without creating any mix tags.
+mix-vct returns the id of the new mix, or -1 (a simple mix, no tag).
 <pre>
     :<em class=typing>(channel-&gt;vct 1000 3)</em>               ; what are these 3 samples before the mix?
     <em class=listener>#&lt;vct[len=3]: -0.065 -0.059 -0.060&gt;</em>
@@ -4963,7 +4891,7 @@ If 'track' is the id of an existing track, the subsequent mix is placed in that 
     <em class=listener>#&lt;vct[len=3]: 0.035 0.141 0.240&gt;</em>
     :<em class=typing>(mix-position 3)</em>                    ; and the new mix starts at 1000
     <em class=listener>1000</em>
-    :<em class=typing>(mix-frames 3)</em>                      ; and its length is 3 samples
+    :<em class=typing>(mix-length 3)</em>                      ; and its length is 3 samples
     <em class=listener>3</em>
     :<em class=typing>(mix-vct (with-sound (:output (make-vct 22050)) (fm-violin 0 1 440 .1)))</em>
     <em class=listener>0</em>
@@ -4981,7 +4909,9 @@ This is the maximum height in pixels of mix waveforms.  The default is 20 (see <
 <!-- mix? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixp">mix?</a> (id)</code>
 </td></tr><tr><td></td><td>
-mix/ returns #t if 'id' is an active mix.
+mix? returns #t if the mix 'id' exists (that is, it is accessible in a channel's edit list).
+It returns the id if the given mix is currently active.
+Otherwise mix? returns #f.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5024,293 +4954,13 @@ mix property list: <a href="sndscm.html#mixproperty">mix-property</a> in mix.scm
 pan mono sound into stereo: see <a href="sndscm.html#placesound">place-sound</a> in examp.scm<br>
 move a mixed sound via dlocsig: <a href="#mixmovesound">mix-move-sound</a><br>
 the mix dialog: <a href="snd.html#mixdialog">Mix Dialog</a><br>
-mix menu: see mix-menu.scm<br>
 cross-fade in frequency: cross-fade and dissolve-fade in <a href="sndscm.html#fadedoc">fade.scm</a><br>
 zipper cross-fade: <a href="sndscm.html#zipdoc">zipper.scm</a><br>
 snap mix to beat after drag: <a href="sndscm.html#snapmixtobeat">snap-mix-to-beat</a><br>
-delete all mixes: <a href="sndscm.html#deleteallmixes">delete-all-mixes</a><br>
+delete all mixes: <a href="sndscm.html#silenceallmixes">silence-all-mixes</a><br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
-<br>
-
-<br>
-<table width="35%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Tracks</h4></td></tr></table>
-
-<A NAME="trackstuff"></a>
-
-<p>A track is a list of mixes, each mix having its <a href="#mixtrack">mix-track</a> field set to the track id.  The <a href="#maketrack">make-track</a>
-function takes the initial mixes, returning the new track's id (an integer).  The
-<a href="#track">track</a> function returns the list of mixes that are members of the given track.  The rest of the track functions
-take the track id as their initial argument.  A track has much the same structure as a mix: an amplitude, speed,
-amplitude envelope, track, position, and so on.  If its track field is not 0, the entire track is a member
-of another, higher level track.  Tracks provide a mechanism to group together related notes or mixes for panning,
-global envelopes, intra-voice tempo control, and so on. If a mix is dragged, and it is part of a track, all the mixes in that track move
-with it.  
-</p>
-
-<table border=0 cellpadding=10 hspace=20><tr><td>
-<img src="track1.png" alt="tracks"></td><td>
-<img src="track2.png" alt="tracks"></td></tr></table>
-
-<p>
-Here we have two tracks, each holding four mixes; one track's color is green, the other blue.  We then
-change the second (blue) track's tempo to be twice as slow, and move the first (green) track to the right.
-</p>
-<br>
-
-<!-- -------------------------------- TRACK FUNCTION TABLE -------------------------------- -->
-
-<table border=0 cellspacing=0 hspace=10>
-
-<!-- copy-track -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="copytrack">copy-track</a> (track-id :optional beg)</code>
-</td></tr><tr><td width=60></td><td>
-copy-track copies the track 'track-id', placing the copy at 'beg' which defaults to the copied track's position.  The new track's track is set to 0.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- delete-track -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="deletetrack">delete-track</a> (track-id)</code>
-</td></tr><tr><td></td><td>
-delete-track removes the track 'track-id' from the output by setting its amplitude to 0.0.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- free-track -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="freetrack">free-track</a> (track-id)</code>
-</td></tr><tr><td></td><td>
-free-track frees track 'track-id'; this frees the memory associated with the track and is not undoable.
-To free all tracks: <code>(for-each <em class=red>free-track</em> (<a class=quiet href="#tracks">tracks</a>))</code>.
-This function is mostly for internal testing.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- make-track -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="maketrack">make-track</a> (:optional mix-ids...)</code>
-</td></tr><tr><td width=60><br></td><td>
-make-track creates a new track, returning its id.  You can add a mix to the track subsequently by setting that mix's mix-track field.
-<code>(make-track 1 3)</code> creates a new track with mixes 1 and 3.  A mix can be a member (directly) of only one track, so
-if its track field is already set, and it is included as an argument to make-track, the previous setting is cancelled.
-If the previous track had an amplitude envelope, this can cause its remaining mixes to be re-enveloped.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- play-track -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="playtrack">play-track</a> (track-id :optional chn beg)</code>
-</td></tr><tr><td></td><td>
-play-track plays track 'track-id'. If 'chn' is #t, this plays all the track's mixes, even if they're in different sounds.
-'beg' is where to start playing within the track.
-This function does not return until the play is complete or interrupted (it is similar to <a href="#playandwait">play-and-wait</a>,
-rather than <a href="#play">play</a>).
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="track">track</a> (track-id :optional chn)</code>
-</td></tr><tr><td width=60><br></td><td>
-track returns a list of the mixes currently in track 'track-id'.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- tracks -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tracks">tracks</a> (track-id)</code>
-</td></tr><tr><td width=60><br></td><td>
-tracks returns a list of the current tracks that have active mixes.  Old, empty tracks are
-not currently garbage collected (theoretically, you might decide to use it at any time by
-putting a mix in it); to free an unused track, use <a href="#freetrack">free-track</a>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track? -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackp">track?</a> (track-id)</code>
-</td></tr><tr><td width=60><br></td><td>
-track? returns #t if 'track-id' refers to an active (not deleted) track.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track-amp -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackamp">track-amp</a> (track-id)</code>
-</td></tr><tr><td width=60><br></td><td>
-This is the amplitude scaler applied to every mix in the track 'track-id'.  It is an additional scaler on top
-of the individual mixs' <a href="#mixamp">mix-amp</a>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track-amp-env -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackampenv">track-amp-env</a> (track-id)</code>
-</td></tr><tr><td width=60><br></td><td>
-This is the track's global amplitude envelope.  It is a list of breakpoint pairs, not a CLM env generator.
-The amplitude envelope is applied over the entire track;
-each mix's resultant amplitude envelope is the result of multiplying its envelope (if any) by
-the portion of the track envelope that happens to fall over it.  Use #f to reset track-amp-env to the default (null) envelope.
-Anything that changes the track's bounds causes the track envelope to be reapplied; there are many ways
-this can happen implicitly: set mix-track, mix-position, mix-speed (of a constituent mix), track-position,
-track-speed, and track-tempo; even make-track if it steals away one of our member mixes.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track-chans -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackchans">track-chans</a> (track-id)</code>
-</td></tr><tr><td width=60><br></td><td>
-track-chans returns the number of output channels associated with track 'track-id'. Each such channel
-has at least one active mix.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track-color -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackcolor">track-color</a> (track-id)</code>
-</td></tr><tr><td width=60><br></td><td>
-The track-color refers to the color of the mix waveform (the thing displayed to the right
-of the tag).
-<pre>
-    :<em class=typing>(define hi (make-track 0 1))</em>
-    <em class=listener>#&lt;unspecified&gt;</em>
-    :<em class=typing>(set! (track-color 1) (make-color 0 0 1))</em>
-    <em class=listener>(#&lt;color: (0.00 0.00 1.00)&gt; #&lt;color: (0.00 0.00 1.00)&gt;)</em>
-</pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track-frames -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackframes">track-frames</a> (track-id :optional chn)</code>
-</td></tr><tr><td width=60><br></td><td>
-track-frames is the length in samples of the track.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track-name -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackname">track-name</a> (track-id)</code>
-</td></tr><tr><td></td><td>
-This is the track's name.  See also <a href="sndscm.html#tracknametoid">track-name-&gt;id</a>, and the example
-under <a href="sndscm.html#mixnametoid">mix-name-&gt;id</a>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track-position -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackposition">track-position</a> (track-id :optional chn)</code>
-</td></tr><tr><td width=60><br></td><td>
-track-position is the minimum <a href="#mixposition">mix-position</a> of the mixes in the track's mix list.
-If you set track-position, all
-its mixes are moved by the same amount to make the minimum mix position coincide with the new track-position.
-If you include the channel number when setting the track-position, only the mixes that are members of that channel of the
-track are moved.
-<br>
-<pre>
-    :<em class=typing>(track-position 1)</em>
-    <em class=listener>10748</em>
-    :<em class=typing>(mix-position 0)</em>
-    <em class=listener>10748</em>
-    :<em class=typing>(mix-position 1)</em>
-    <em class=listener>23287</em>
-    :<em class=typing>(set! (track-position 1) 1500)</em>
-    <em class=listener>1500</em>
-    :<em class=typing>(mix-position 0)</em>
-    <em class=listener>1500</em>
-    :<em class=typing>(mix-position 1)</em>
-    <em class=listener>14039</em>
-</pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track-speed -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackspeed">track-speed</a> (track-id)</code>
-</td></tr><tr><td width=60><br></td><td>
-This is the track speed (resampling ratio).  It affects the resampling of each mix, not the speed at
-which the mixes occur (the latter is controlled by <a href="#tracktempo">track-tempo</a>).
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track-speed-style -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackspeedstyle">track-speed-style</a> (track-id)</code>
-</td></tr><tr><td></td><td>
-This affects how the track dialog
-speed slider is interpreted:  as a 
-float, (<code>speed-control-as-float</code>, the default), as a ratio 
-of relatively small integers (<code>speed-control-as-ratio</code>), or as a step in a 
-microtonal scale (<code>speed-control-as-semitone</code>).  
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track-tag-y -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tracktagy">track-tag-y</a> (track-id)</code>
-</td></tr><tr><td></td><td>
-track-tag-y is the track waveform (vertical) position in pixels from the top of the graph.  
-It overrides <a href="#mixtagy">mix-tag-y</a> if both are non-zero.
-You can use track-tag-y to put all the mixes associated with a given track at the same
-level in the graphs.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track-tempo -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tracktempo">track-tempo</a> (track-id)</code>
-</td></tr><tr><td width=60><br></td><td>
-track-tempo affects the spacing between mixes; a higher track-tempo corresponds to
-tighter spacing between mixes.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track-track -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tracktrack">track-track</a> (track-id)</code>
-</td></tr><tr><td width=60><br></td><td>
-track-track determines whether the track is a member of a higher level track (0 means no track).
-</td></tr>
-
-</table>
-<br>
-
-<!-- INDEX trackstuff:Tracks -->
-<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
-<blockquote><small>
-<br>
-place track in vct: <a href="sndscm.html#tracktovct">track-&gt;vct</a><br>
-place track in file: <a href="sndscm.html#savetrack">save-track</a><br>
-filter track data: <a href="sndscm.html#filtertrack">filter-track</a><br>
-transpose track: <a href="sndscm.html#transposetrack">transpose-track</a><br>
-change track tempo: <a href="sndscm.html#retempotrack">retempo-track</a><br>
-maxamp of track data: <a href="sndscm.html#trackmaxamp">track-maxamp</a><br>
-track property list: <a href="sndscm.html#trackproperty">track-property</a><br>
-reverse track: <a href="sndscm.html#reversetrack">reverse-track</a><br>
-the track dialog: <a href="snd.html#mixdialog">The Mix Dialog</a><br>
-various other dialogs for track operations: mix-menu.scm and track-colors.scm<br>
-<br>
-</small></blockquote>
-</td></tr></TABLE>
-<br>
-
-<p>It's possible to use the track and mix functions with with-temp-sound and definstrument.
-I haven't found a way yet to automate the process, but here's an example, using the
-fm-violin (v.scm), dividing the notes in a note list between two multi-channel tracks:
-</p>
-<table border=0 cellpadding=5 vspace=10 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(let* ((track-1 (<a class=quiet href="#maketrack">make-track</a>))
-       (track-1-y 20)
-       (track-2 (<a class=quiet href="#maketrack">make-track</a>))
-       (track-2-y 50)
-       (ind (<a class=quiet href="#newsound">new-sound</a> "test.snd" :channels 2)))
-
-  (define (violin-1 start . args)
-    (let* ((tmp (<em class=red>with-temp-sound</em> (:channels 2) (apply <a class=quiet href="sndscm.html#vdoc">fm-violin</a> (append (list 0) args))))
-	   (id (<em class=red>mix</em> tmp (<a class=quiet href="clm.html#secondstosamples">seconds-&gt;samples</a> start) #t #f #f #t #t track-1)))
-      (set! (<a class=quiet href="#mixtagy">mix-tag-y</a> id) track-1-y)
-      (set! (<a class=quiet href="#mixtagy">mix-tag-y</a> (1+ id)) track-1-y)
-      id))
-
-  (define (violin-2 start . args)
-    (let* ((tmp (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> (:channels 2) (apply <a class=quiet href="sndscm.html#vdoc">fm-violin</a> (append (list 0) args))))
-	   (id (<a class=quiet href="#mix">mix</a> tmp (<a class=quiet href="clm.html#secondstosamples">seconds-&gt;samples</a> start) #t #f #f #t #t track-2)))
-      (set! (<a class=quiet href="#mixtagy">mix-tag-y</a> id) track-2-y)
-      (set! (<a class=quiet href="#mixtagy">mix-tag-y</a> (1+ id)) track-2-y)
-      id))
-
-  (set! (<a class=quiet href="#trackcolor">track-color</a> track-1) (<a class=quiet href="#makecolor">make-color</a> 0 .5 .1))
-  (set! (<a class=quiet href="#trackcolor">track-color</a> track-2) (<a class=quiet href="#makecolor">make-color</a> .5 .1 0))
-
-  (violin-1 0 .1 440 .1 :degree 45)
-  (violin-2 .1 .2 660 .1 :degree 0)
-  (violin-1 .2 .1 440 .1 :degree 90)
-  (violin-2 .4 .2 660 .1 :degree 60))
-</pre></td></tr></table>
 <br><br>
 
 
@@ -5384,7 +5034,7 @@ This creates a <a href="#samplereaders">sample-reader</a> reading the region's c
 
 
 <!-- mix-region -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef>mix-region</em> (:optional samp reg snd chn track)</code>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef>mix-region</em> (:optional samp reg snd chn)</code>
 </td></tr><tr><td></td><td>
 mix-region mixes region 'reg' into the given channel starting at sample 'samp' (defaulting to the cursor location).
 It returns the id of the first channel's 
@@ -6482,13 +6132,12 @@ delete a file: use the Scheme function delete-file, Ruby's File.delete, or Forth
 delete a region: <a href="#forgetregion">forget-region</a><br>
 delete the currently selected samples: <a href="#deleteselection">delete-selection</a><br>
 delete the selection and smooth the splice: <a href="sndscm.html#deleteselectionandsmooth">delete-selection-and-smooth</a><br>
-delete a mix or all mixes: <a href="#deletemix">delete-mix</a><br>
-delete a track or all tracks: <a href="#deletetrack">delete-track</a><br>
 delete a mark or all marks: <a href="#deletemark">delete-mark</a><br>
 delete a colormap: <a href="#deletecolormap">delete-colormap</a><br>
 delete samples: <a href="#deletesamples">delete-samples</a><br>
 remove a file from the sound cache: <a href="#mussoundforget">mus-sound-forget</a><br>
 remove a menu item: <a href="#removefrommenu">remove-from-menu</a> or remove-main-menu in snd-motif.scm<br>
+delete a mix or all mixes: <a href="sndscm.html#silenceallmixes">silence-mixes</a><br>
 add a 'delete' option to the file selection dialog: <a href="sndscm.html#adddeleteoption">add-delete-option</a><br>
 Scheme delete funcs: remove-if assoc-remove! hash-remove! delete-if! delete! string-delete<br>
 <br>
@@ -6545,7 +6194,6 @@ Peak env files: <a href="sndscm.html#peakenvdoc">peak-env.scm</a><br>
 The envelope editor: <a href="snd.html#editenvelope">Edit or View and Envelope</a><br>
 Panning: place-sound in examp.scm<br>
 Envelope over mix: <a href="sndscm.html#envelopedmix">enveloped-mix</a><br>
-Envelope over track (a set of mixes): <a href="#trackampenv">track-amp-env</a><br>
 Local envelope editor: <a href="sndscm.html#enveddoc">enved.scm</a>, xm-enved.scm<br>
 Read sound indexed through envelope: <a href="sndscm.html#envsoundinterp">env-sound-interp</a><br>
 Cosine as envelope: <a href="#cosinechannel">cosine-channel</a>, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>, <a href="clm.html#bellcurve">bell-curve</a><br>
@@ -6764,7 +6412,6 @@ time varying filter: fltit in examp.scm<br>
 draw frequency response: use <a href="snd.html#editenvelope">envelope editor</a> or <a href="snd.html#filtercontrol">filter control</a> in control panel<br>
 Moog filter: <a href="sndscm.html#moogdoc">moog.scm</a><br>
 Click reduction: <a href="sndscm.html#removeclicks">remove-clicks</a>, <a href="sndscm.html#cleanchannel">clean-channel</a><br>
-Filter a track: <a href="sndscm.html#filtertrack">filter-track</a><br>
 LADSPA-based filter effects: see ladspa.scm<br>
 Max Mathews resonator: <a href="sndscm.html#maxfdoc">maxf.scm, maxf.rb</a>, <a href="sndscm.html#mfilter">mfilter</a><br>
 Spectral edit dialog: <a href="snd.html#editenvelope">Envelope Editor</a><br>
@@ -7377,7 +7024,6 @@ Vct maxamp: <a href="#vctpeak">vct-peak</a><br>
 CLM's sound maxamp: <a href="clm.html#sound-maxamp">sound-maxamp</a> (same as mus-sound-maxamp)<br>
 To set the y axis bounds to reflect the channel's maxamp: <a href="#ybounds">y-bounds</a><br>
 Mix maxamp: <a href="sndscm.html#mixmaxamp">mix-maxamp</a><br>
-Track maxamp: <a href="sndscm.html#trackmaxamp">track-maxamp</a><br>
 maxamp locations: <a href="#maxampposition">maxamp-position</a>, <a href="#regionmaxampposition">region-maxamp-position</a>, <a href="#selectionmaxampposition">selection-maxamp-position</a>
 <br><br>
 </small></blockquote>
@@ -7642,7 +7288,6 @@ play from cursor with tracking cursor: <a href="#pfc">pfc</a> above<br>
 play the selection: <a href="#playselection">play-selection</a>, <a href="snd.html#cxp">C-x p</a><br>
 play a region: <a href="#playregion">play-region</a>, <a href="snd.html#cxp">C-x p</a>, play button in Region dialog<br>
 play a mix: <a href="#playmix">play-mix</a>, play button in Mix dialog<br>
-play a track: <a href="#playtrack">play-track</a><br>
 play from mark: click or drag triangle (control-click for all chans)<br>
 play continuously between two marks: <a href="sndscm.html#loopbetweenmarks">loop-it</a><br>
 stop playing: C-g, C-t, <a href="#stopplaying">stop-playing</a>, set <a href="#playing">playing</a> to #f<br>
@@ -8248,7 +7893,6 @@ reverse selected portion: <a href="#reverseselection">reverse-selection</a><br>
 read samples in reverse: use <a href="#makesamplereader">make-sample-reader</a> with direction -1<br>
 reverse at new sampling rate: use <a href="#srcchannel">src-channel</a> with a negative ratio<br>
 Reverse in control panel: <a href="snd.html#speed">control panel</a> and <a href="#speedcontrol">speed-control</a> variable<br>
-reverse a track: <a href="sndscm.html#reversetrack">reverse-track</a><br>
 reverse an envelope: <a href="sndscm.html#reverseenvelope">reverse-envelope</a><br>
 reverse block-wise: <a href="sndscm.html#reversebyblocks">reverse-by-blocks and reverse-within-blocks</a><br>
 reverse via FFT: <a href="#sillyreverse">silly-reverse</a><br>
@@ -8406,7 +8050,6 @@ save Snd's complete state (unsaved edits and all): <a href="#savestate">save-sta
 save the selection: <a href="#saveselection">save-selection</a><br>
 save a region: <a href="#saveregion">save-region</a><br>
 save a mix: <a href="sndscm.html#savemix">save-mix</a><br>
-save a track: <a href="sndscm.html#savetrack">save-track</a><br>
 save the control panel state: <a href="#savecontrols">save-controls</a><br>
 save currently defined envelopes (envelope editor): <a href="#saveenvelopes">save-envelopes</a><br>
 start the file save dialog: <a href="#savesounddialog">save-sound-dialog</a><br>
@@ -9803,7 +9446,7 @@ channel's local amp-control value is set instead of the sound's.  This affects
 </td></tr><tr><td></td><td>
 The amp-control min and max amounts as a list.  The default is
 (list 0.0 8.0).  The value 1.0 should be in the given range, since it is placed in the middle of the slider's range.
-If no 'snd' argument is given, this also affects the Mix, Track, View:Files, and Record dialogs.
+If no 'snd' argument is given, this also affects the Mix, View:Files, and Record dialogs.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -10151,7 +9794,7 @@ current <a class=quiet href="snd.html#speed">speed</a> (sampling rate conversion
 </td></tr><tr><td></td><td>
 The speed-control min and max amounts as a list.  The default is
 (list 0.05 20.0).
-If no 'snd' argument is given, this also affects the Mix, Track, and View:Files dialogs.
+If no 'snd' argument is given, this also affects the Mix, and View:Files dialogs.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -10174,11 +9817,8 @@ In the various speed controls, you can click the number to cycle through the spe
 The number of tones per octave in the <code>speed-control-as-semitone</code> speed 
 style (default: 12).
 </td></tr><tr><td colspan=2 height=16></td></tr>
-
-<!-- tempo-control-bounds -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tempocontrolbounds">tempo-control-bounds</a> ()</code>
-</td></tr><tr><td></td><td>Track dialog tempo slider bounds (defaults to (list 0.0 8.0)).</td></tr>
 </table>
+
 
 <p>
 <a href="sndscm.html#makehiddencontrolsdialog">make-hidden-controls-dialog</a> in
@@ -10367,6 +10007,16 @@ In Forth:
 The current position in the edit history list; it can be set:  <code>(set! (edit-position) 0)</code> is equivalent
 to <code>(<a class=quiet href="#revertsound">revert-sound</a>)</code> in a mono sound.
 See <a href="#makesamplereader">make-sample-reader</a>.
+</td></tr><tr><td></td><td></td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- edit-properties -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="editproperties">edit-properties</a> (:optional <em class=narg>snd chn edpos</em>)</code>
+</td></tr><tr><td></td><td>
+Each entry in a channel's edit history list has a property list (similar to the
+<a href="#channelproperties">channel-properties</a> list).  If you have information that changes with the
+edit lists, these property lists might simplify the access code.
 </td></tr><tr><td></td><td></td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -10929,7 +10579,6 @@ dialog-widgets returns a list of dialog widgets (or lists thereof, or #f if none
     18: File: Recorder dialog 
     19: View: Regions dialog
     20: info dialog (activated by info-dialog function)
-    21: View: Tracks dialog 
     22: Edit: Selection Save as dialog
     23: File: Insert file dialog
     24: region save as dialog (from regions dialog save button)
@@ -11501,13 +11150,6 @@ For example, we can read and write the minibuffer:
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- track-dialog-track -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackdialogtrack">track-dialog-track</a> ()</code>
-</td></tr><tr><td></td><td>
-This is the id of the track currently displayed by the track dialog.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- transform-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="transformdialog">transform-dialog</a> (:optional managed)</code>
 </td></tr><tr><td></td><td>
@@ -11590,13 +11232,6 @@ This creates and activates the View:Mixes Dialog, returning the dialog widget.
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="viewregionsdialog">view-regions-dialog</a> ()</code>
 </td></tr><tr><td></td><td>
 This starts the <a href="snd.html#regionbrowser">region browser</a> (a no-op if there are no regions), and returns the dialog widget.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- view-tracks-dialog -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="viewtracksdialog">view-tracks-dialog</a> ()</code>
-</td></tr><tr><td></td><td>
-This creates and activates the View:Tracks dialog, returning the dialog widget.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -12505,7 +12140,7 @@ etc.  The Snd-specific errors are:</p>
 'no-such-channel  'no-such-sound  'no-such-mark       'no-such-mix
 'no-such-menu     'no-such-file   'no-such-region     'no-such-sample
 'no-such-edit     'cannot-save    'no-such-envelope   'no-active-selection
-'no-such-widget   'mus-error      'no-such-track      'bad-arity
+'no-such-widget   'mus-error                          'bad-arity
 'cannot-print     'no-such-axis   'no-such-player     'no-such-graphics-context
 'no-such-color    'no-such-widget 'no-such-plugin     'no-data
 'gsl-error        'no-such-key    'no-such-direction  'cannot-parse
@@ -12532,9 +12167,6 @@ throws the error 'no-such-file:</p>
     (or (file-exists? file)
 	(throw 'no-such-file (list "look-for-file" file)))))
 </pre>
-<p>The mix.scm track functions can return 'no-such-track if a
-given track has no mixes.
-</p>
 <p>There is one special catch: 'snd-top-level.  This is used by the
 debuggers to exit the current context, returning up a level in the
 stack of listeners.  Normally that means you jump out of a breakpoint
@@ -12774,7 +12406,6 @@ colors in the file dialogs: install-searcher-with-colors in snd-motif.scm<br>
 color-dialog: <a href="#colordialog">color-dialog</a><br>
 colored samples: <a href="sndscm.html#drawdoc">display-colored-samples</a> and others in draw.scm<br>
 colored edits: <a href="sndscm.html#drawdoc">display-previous-edits</a> in draw.scm<br>
-colored tracks: track-colors.scm in the tutorial<br>
 colored marks: mark-sync-color in snd-motif.scm<br>
 colors in rxvt: red-text et al in examp.scm<br>
 flashing colors: flash-selected-data in examp.scm<br>

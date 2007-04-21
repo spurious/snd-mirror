@@ -1,47 +1,17 @@
-;;; various mix and track related functions
+;;; various mix related functions
 ;;;
 ;;; (mix->vct id) return mix data in vct
-;;; (snap-mix-to-beat (at-tag-position)) forces dragged mix to end up on a beat
-;;; (delete-all-mixes) removes all mixes
+;;; (snap-mix-to-beat) forces dragged mix to end up on a beat
+;;; (silence-all-mixes) sets all mix amps to 0.0
 ;;; (find-mix sample snd chn) returns the id of the mix at the given sample, or #f
 ;;; (save-mix mix filename) saves mix data in file filename
 ;;; (mix-maxamp id) maxamp of mix
 ;;;
-;;; (track->vct track (chan 0)) place track data in vct
-;;; (save-track track filename (chan 0)) save track data in file
-;;; (filter-track track coeffs) filter track data
-;;; (reverse-track track) reverses the mix order
-;;; (delete-all-tracks) removes all mixes that have an associated track (sets all amps to 0)
-;;; (set-all-tracks new-id) places all mixes in track new-id
-;;;
-;;; (transpose-track track semitones) transposes each mix in track  by semitones
-;;; (retempo-track track tempo) changes the inter-mix begin times of mixes in track by tempo (> 1.0 is faster)
-;;; (track-maxamp id) maxamp of track
-;;;
 ;;; mix-property associates a property list with a mix
-;;; track-property associates a property list with a track
 ;;; mix-click-sets-amp sets up hook functions so that mix click zeros amps, then subsequent click resets to the before-zero value
 
 (use-modules (ice-9 common-list))
 (provide 'snd-mix.scm)
-
-(if (not (defined? 'remove-if))
-    (define (remove-if pred l) ; from guile/ice-9/common-list.scm
-      (let loop ((l l) (result '()))
-	(cond ((null? l) (reverse! result))
-	      ((pred (car l)) (loop (cdr l) result))
-	      (else (loop (cdr l) (cons (car l) result)))))))
-
-(if (not (defined? 'some))
-    (define (some pred l . rest)
-      (cond ((null? rest)
-	     (let mapf ((l l))
-	       (and (not (null? l))
-		    (or (pred (car l)) (mapf (cdr l))))))
-	    (else (let mapf ((l l) (rest rest))
-		    (and (not (null? l))
-			 (or (apply pred (car l) (map car rest))
-			     (mapf (cdr l) (map cdr rest)))))))))
 
 
 (define (tree-for-each func tree)
@@ -66,21 +36,17 @@
 	  (#t lst)))
   (for-each func (reverse (flatten tree))))
 
-
-
-;;; ---------------- mixes ----------------
-
 (define (mix-sound file start)
   "(mix-sound file start) mixes file (all chans) at start in the currently selected sound."
   (mix file start #t))
 
-(define (delete-all-mixes)
-  "(delete-all-mixes) removes all mixes (sets all amps to 0)"
+(define (silence-all-mixes)
+  "(silence-all-mixes) sets all mix amps to 0"
   (as-one-edit
     (lambda ()
       (tree-for-each
         (lambda (id)
-          (delete-mix id))
+          (set! (mix-amp id) 0.0))
         (mixes)))))
 
 
@@ -100,7 +66,7 @@
 (define (mix->vct id)
   "(mix->vct id) returns mix's data in vct"
   (if (mix? id)
-      (let* ((len (mix-frames id))
+      (let* ((len (mix-length id))
 	     (v (make-vct len))
 	     (reader (make-mix-sample-reader id)))
 	(do ((i 0 (1+ i)))
@@ -110,6 +76,8 @@
 	v)
       (throw 'no-such-mix (list "mix->vct" id))))
 
+;;; TODO: save-mix too large for vct */
+
 (define (save-mix id filename)
   "(save-mix id filename) saves mix data (as floats) in file filename"
   (let ((v (mix->vct id))
@@ -117,10 +85,12 @@
     (mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
     (mus-sound-close-output fd (* 4 (vct-length v)))))
 
+;;; TODO: mix-maxamp could easily be built-in (internal peak-env calc)
+
 (define (mix-maxamp id)
   "(mix-maxamp id) returns the max amp in the given mix"
   (if (mix? id)
-      (let* ((len (mix-frames id))
+      (let* ((len (mix-length id))
 	     (peak 0.0)
 	     (reader (make-mix-sample-reader id)))
 	(set! peak (abs (read-mix-sample reader)))
@@ -134,12 +104,11 @@
       (throw 'no-such-mix (list "mix-maxamp" id))))
 	  
 
-(define* (snap-mix-to-beat :optional (at-tag-position #f))
+(define* (snap-mix-to-beat)
   "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute).  reset mix-release-hook to cancel"
   (add-hook! mix-release-hook
 	     (lambda (id samps-moved)
-	       (let* ((offset (if at-tag-position (mix-tag-position id) 0))
-		      (samp (+ samps-moved (mix-position id) offset))
+	       (let* ((samp (+ samps-moved (mix-position id)))
 		      (snd (car (mix-home id)))
 		      (chn (cadr (mix-home id)))
 		      (bps (/ (beats-per-minute snd chn) 60.0))
@@ -149,30 +118,13 @@
 		      (higher (inexact->exact (floor (/ (* (1+ beat) sr) bps)))))
 		 (set! (mix-position id)
 		       (if (< (- samp lower) (- higher samp))
-			   (max 0 (- lower offset))
-			   (- higher offset)))
+			   (max 0 lower)
+			   higher))
 		 #t))))
 
 
-;;; --------------------------------------------------------------------------------
+;;; --------- mix-property
 
-(define all-mix-properties '())
-
-(define mix-properties
-  (make-procedure-with-setter
-   (lambda (id)
-     "(mix-properties id) accesses the property list of mix 'id'"
-     (let ((data (assoc id all-mix-properties)))
-       (if data
-	   (cdr data)
-           '())))
-   (lambda (id new-val)
-     (let ((old-val (assoc id all-mix-properties)))
-       (if old-val
-	   (set-cdr! old-val new-val)
-	   (set! all-mix-properties (cons (cons id new-val) all-mix-properties)))
-       new-val))))
-     
 (define mix-property
   (make-procedure-with-setter
    (lambda (key id)
@@ -192,13 +144,8 @@
 	   new-val)
 	 (throw 'no-such-mix (list "set! mix-property" id))))))
 
-(add-hook! close-hook
-	   (lambda (snd)
-	     (if (not (null? all-mix-properties))
-		 ;; prune out inactive mix properties
-		 (set! all-mix-properties (remove-if (lambda (val)
-						       (not (mix? (car val))))
-						     all-mix-properties)))))
+
+;;; -------- mix-click-sets-amp
 
 (define (mix-click-sets-amp)
   (add-hook! mix-click-hook 
@@ -215,176 +162,7 @@
 		 #t))))
 
 
-;;; --------------------------------------------------------------------------------
-
-(define (delete-all-tracks)
-  "(delete-all-tracks) removes all mixes that have an associated track (sets all amps to 0)"
-  (as-one-edit
-    (lambda ()
-      (tree-for-each
-        (lambda (id)
-	  (if (not (= (mix-track id) 0))
-	      (delete-mix id)))
-        (mixes)))))
-
-
-(define (reverse-track trk)
-  "(reverse-track) reverses the order of its mixes (it changes various mix begin times)"
-  (if (some mix? (track trk))
-      (let* ((ids-in-order (sort (track trk)
-				 (lambda (a b)
-				   (> (mix-position a)
-				      (mix-position b))))))
-	(as-one-edit
-	 (lambda ()
-	   (for-each (lambda (id pos)
-		       (set! (mix-position id) pos))
-		     ids-in-order
-		     (reverse (map mix-position ids-in-order))))))
-      (throw 'no-such-track (list "reverse-track" trk))))
-
-
-(define* (track->vct trk :optional (chan 0))
-  "(track->vct track (chan 0)) places track data in vct"
-  (if (track? trk)
-      (if (< chan (track-chans trk))
-	  (let* ((len (track-frames trk chan))
-		 (v (make-vct len))
-		 (rd (make-track-sample-reader trk chan)))
-	    (run
-	     (lambda ()
-	       (do ((i 0 (1+ i)))
-		   ((= i len) v)
-		 (vct-set! v i (read-track-sample rd))))))
-	  (throw 'no-such-channel (list "track->vct" chan)))
-      (throw 'no-such-track (list "track->vct" trk))))
-
-(define* (save-track trk filename :optional (chan #t))
-  "(save-track track filename (chan #t)) saves track data (as floats) in file filename"
-  (if (track? trk)
-      (let ((chans (track-chans trk)))
-	(if (or (and (eq? chan #t)
-		     (= chans 1))
-		(and (integer? chan)
-		     (< chan chans)))
-	    (let* ((current-chan (if (eq? chan #t) 0 chan))
-		   (v (track->vct trk current-chan))
-		   (fd (mus-sound-open-output filename (srate) 1 #f #f "written by save-track")))
-	      (mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
-    	      (mus-sound-close-output fd (* 4 (vct-length v))))
-	    (if (and (eq? chan #t)
-		     (> chans 0))
-		(let* ((fd (mus-sound-open-output filename (srate) chans #f #f "written by save-track"))
-		       (len (track-frames trk))
-		       (pos (track-position trk))
-		       (sd (make-sound-data chans len)))
-		  (do ((i 0 (1+ i)))
-		      ((= i chans))
-		    (let* ((chan-len (track-frames trk i))
-			   (chan-pos (- (track-position trk i) pos))
-			   (reader (make-track-sample-reader trk i)) ; beg is next arg if it's needed
-			   (chan-end (+ chan-pos chan-len)))
-		      (do ((j chan-pos (1+ j)))
-			  ((= j chan-end))
-			(sound-data-set! sd i j (read-track-sample reader)))))
-		  (mus-sound-write fd 0 (1- len) chans sd)
-		  (mus-sound-close-output fd (* len chans 4)))
-		(throw 'no-such-channel (list "save-track" chan)))))
-      (throw 'no-such-track (list "save-track" trk))))
-	  
-
-(define* (track-maxamp id :optional chan)
-  "(track-maxamp id :optional chan) returns the max amp in the given track"
-  (if (track? id)
-      (if (number? chan)
-	  (let* ((len (track-frames id chan))
-		 (peak 0.0)
-		 (reader (make-track-sample-reader id chan 0)))
-	    (set! peak (abs (read-track-sample reader)))
-	    (do ((i 1 (1+ i)))
-		((= i len))
-	      (let ((val (abs (read-track-sample reader))))
-		(if (> val peak)
-		    (set! peak val))))
-	    (free-sample-reader reader)
-	    peak)
-	  (let ((maxs '())
-		(chans (track-chans id)))
-	    (do ((chn 0 (1+ chn)))
-		((= chn chans))
-	      (set! maxs (cons (track-maxamp id chn) maxs)))
-	    (reverse maxs)))
-      (throw 'no-such-track (list "track-maxamp" id))))
-	  
-(define (transpose-track trk semitones)
-  "(transpose-track track semitones) transposes each mix in track by semitones"
-  (let ((mult (expt 2.0 (/ semitones 12.0))))
-    (set! (track-speed trk) (* (track-speed trk) mult))))
-
-(define (retempo-track trk tempo)
-  "(retempo-track track tempo) changes the inter-mix begin times of mixes in track by tempo (> 1.0 is faster)"
-  (set! (track-tempo trk) (* (track-tempo trk) tempo)))
-
-;;; (retempo-track 1 2.0)
-
-(define (filter-track track-id fir-filter-coeffs)
-  "(filter-track track coeffs) filters track data using FIR filter coeffs: (filter-track track-id '(.1 .2 .3 .3 .2 .1))"
-  (if (track? track-id)
-      (let ((order (length fir-filter-coeffs))
-	    (chans (track-chans track-id)))
-	(do ((chan 0 (1+ chan)))
-	    ((= chan chans))
-	  (let ((beg (track-position track-id chan))
-		(dur (track-frames track-id chan))
-		(flt (make-fir-filter order (list->vct fir-filter-coeffs)))
-		(reader (make-track-sample-reader track-id chan 0)))
-	    (map-channel (lambda (y)
-			   (let ((val (read-track-sample reader)))
-			     (+ y (- (fir-filter flt val) val))))
-			 beg (+ dur order) #f #f #f "filter-track"))))
-      (throw 'no-such-track (list "filter-track" track-id))))
-
-
-;;; --------------------------------------------------------------------------------
-
-(define all-track-properties '())
-
-(define track-properties
-  (make-procedure-with-setter
-   (lambda (id)
-     "(track-properties trk) accesses the property list of track 'trk'"
-     (let ((data (assoc id all-track-properties)))
-       (if data
-	   (cdr data)
-           '())))
-   (lambda (id new-val)
-     (let ((old-val (assoc id all-track-properties)))
-       (if old-val
-	   (set-cdr! old-val new-val)
-	   (set! all-track-properties (cons (cons id new-val) all-track-properties)))
-       new-val))))
-     
-(define track-property
-  (make-procedure-with-setter
-   (lambda (key id)
-     "(track-property key id) returns the value associated with 'key' in the given track's property list, or #f"
-     (if (track? id)
-	 (let ((data (assoc key (track-properties id))))
-	   (if data
-	       (cdr data)
-	       #f))
-	 (throw 'no-such-track (list "track-property" id))))
-   (lambda (key id new-val)
-     (if (track? id)
-	 (let ((old-val (assoc key (track-properties id))))
-	   (if old-val
-	       (set-cdr! old-val new-val)
-	       (set! (track-properties id) (cons (cons key new-val) (track-properties id))))
-	   new-val)
-	 (throw 'no-such-track (list "set! track-property" id))))))
-
-
-;;; --------------------------------------------------------------------------------
+;;; ---------- mix-click-info
 
 (define (mix-click-info n)
   "(mix-click-info n) is a mix-click-hook function that describes a mix and its properties"
@@ -396,9 +174,9 @@
 			   (format #f "~D" n))
 		       (mix-position n)
 		       (exact->inexact (/ (mix-position n) (srate (car (mix-home n)))))
-		       (mix-frames n)
-		       (exact->inexact (/ (mix-frames n) (srate (car (mix-home n)))))
-		       (short-file-name (car (mix-home n)))
+		       (mix-length n)
+		       (exact->inexact (/ (mix-length n) (srate (car (mix-home n)))))
+		       (short-file-name (car (mix-home n))) 
 		       (cadr (mix-home n))
 		       (mix-amp n)
 		       (mix-speed n)
@@ -411,7 +189,7 @@
   #t)
 
 
-;;; -------- mix-name->id and track-name->id 
+;;; -------- mix-name->id
 
 (define (mix-name->id name)
   "(mix-name->id name) returns the mix id associated with 'name'"
@@ -430,16 +208,106 @@
       (sounds))
      'no-such-mix)))
 
-(define (track-name->id name)
-  "(track-name->id name) returns the track id associated with 'name'"
-  (call-with-current-continuation
-   (lambda (return)
+
+;;; ---------------- backwards compatibilty
+
+(define (delete-mix id) 
+  (set! (mix-amp id) 0.0))
+
+
+
+;;; -------- mix lists (used to be "tracks"
+
+(define (scale-mixes mix-list scl)
+  (as-one-edit
+   (lambda ()
      (for-each
-      (lambda (trk)
-	(if (and (string? (track-name trk))
-		 (string=? (track-name trk) name))
-	    (return trk)))
-      (tracks))
-     'no-such-track)))
+      (lambda (m)
+	(set! (mix-amp m) (* scl (mix-amp m))))
+      mix-list))))
+
+(define (silence-mixes mix-list)
+  (scale-mixes mix-list 0.0))
+
+(define (move-mixes mix-list samps)
+  (as-one-edit
+   (lambda ()
+     (for-each
+      (lambda (m)
+	(set! (mix-position m) (+ (mix-position m) samps)))
+      mix-list))))
+
+(define (src-mixes mix-list sr)
+  (as-one-edit
+   (lambda ()
+     (for-each
+      (lambda (m)
+	(set! (mix-speed m) (* (mix-speed m) sr)))
+      mix-list))))
+
+(define (transpose-mixes mix-list semitones)
+  "(transpose-mixes mix-list semitones) transposes each mix in mix-list by semitones"
+  (src-mixes mix-list (expt 2.0 (/ semitones 12.0))))
+
+(define (color-mixes mix-list col)
+  (for-each
+   (lambda (m)
+     (set! (mix-color m) col))
+   mix-list))
+
+(define (set-mixes-tag-y mix-list new-y)
+  (for-each
+   (lambda (m)
+     (set! (mix-tag-y m) new-y))
+   mix-list))
+  
+(define (mixes-maxamp mix-list)
+  (let ((mx 0.0))
+    (for-each
+     (lambda (m)
+       (set! mx (max mx (mix-maxamp m))))
+     mix-list)
+    mx))
+
+(define (scale-tempo mix-list tempo-scl)
+  (let* ((first-beg (mix-position (car mix-list)))
+	 (last-beg first-beg))
+    (for-each
+     (lambda (m)
+       (let ((pos (mix-position m)))
+	 (set! first-beg (min first-beg pos))
+	 (set! last-beg (max last-beg pos))))
+     (cdr mix-list))
+    (as-one-edit
+     (lambda ()
+       (for-each
+	(lambda (m)
+	  (let ((diff (inexact->exact (round (* tempo-scl (- (mix-position m) first-beg))))))
+	    (if (not (= diff 0))
+		(set! (mix-position m) (+ first-beg diff)))))
+	mix-list)))))
+
+;;; reverse-mix-list is (scale-tempo mix-list -1.0)
 
 
+(define (mixes-length mix-list)
+  (1+ (- (apply max (map (lambda (m) 
+			   (+ (mix-position m) (mix-length m))) 
+			 mix-list))
+	 (apply min (map mix-position mix-list)))))
+
+  
+(define (save-mixes mix-list filename)
+  (let* ((len (mixes-length mix-list))
+	 (beg (apply min (map mix-position mix-list)))
+	 (data (make-vct len)))
+    (for-each
+     (lambda (m)
+       (vct-add! data (mix->vct m) (- (mix-position m) beg)))
+     mix-list)
+    (let ((fd (mus-sound-open-output filename (srate) 1 #f #f "")))
+      (mus-sound-write fd 0 (1- len) 1 (vct->sound-data data))
+      (mus-sound-close-output fd (* 4 (vct-length data))))))
+
+
+;;; env-mixes, play-mixes

@@ -1,30 +1,110 @@
-Snd 8.9
+Snd 9.0
 
-many more Forth and Ruby improvements from Mike.
-
-three more fft windows: bohman-window, bartlett-hann-window, flat-top-window
-
-kalman-filter-channel (dsp.scm) -- noise-reduction experiment
-
-clean.scm -- more noise reduction (clean-channel|sound)
-
-File:Close all menu if more than one sound open
-
-open-file-dialog-directory to set the initial Open File dialog directory
-
-changed default html reader from mozilla to firefox
-
-added bindings to xg.c for cairo and gtk print
-
-added a cairo graphics backend (on the --with-cairo configure switch)
-  no "eye candy" yet, but everything works, I hope.
-  
-
-checked: Gauche 0.8.9, pango 1.15.6, 1.16.0|1, gsl 1.9, fth 1.0.8, sbcl 1.0.3,
-    glib 2.12.10|11 2.13.0, cairo 1.4.0, gtk+-2.10.10
+I discarded the old recorder and the track support, and completely 
+revamped the virtual mix support -- enough changes to warrant a new 
+major version.
 
 
-Thanks!: Michael Edwards, Peter Anderson, Immanuel Litzroth, Mike Scholz,
-         Jay LaBoeuf, Max Mathews, Luke Dahl, Joanne Carey, Charles Turner,
-	 Kjetil Matheussen, Anders Vinjar
+the recorder:
+  completely discarded the old recorder and its functions -- these are gone:
+    recorder-autoload
+    recorder-buffer-size
+    recorder-file
+    recorder-file-hook
+    recorder-gain
+    recorder-in-amp
+    recorder-in-chans
+    recorder-in-data-format
+    recorder-in-device
+    recorder-max-duration
+    recorder-out-amp
+    recorder-out-chans
+    recorder-out-data-format
+    recorder-out-header-type
+    recorder-srate
+    recorder-trigger
+    vu-in-dB
+    vu-size
+  due to hardware troubles, I haven't fully tested the new recorder.
 
+tracks:
+  removed:             replacement:
+    copy-track
+    delete-all-tracks     silence-all-mixes
+    delete-track          silence-mixes
+    filter-track
+    free-track
+    lock-track
+    make-track
+    make-track-frame-reader 
+    make-track-sample-reader
+    mix-track
+    play-track
+    read-track-frame 
+    read-track-sample
+    retempo-track         scale-tempo
+    reverse-track         scale-tempo by a negative scaler
+    save-track            save-mixes
+    set-all-tracks
+    track                 (now any list of mix ids)
+    track->sound-data
+    track->vct
+    track-amp             scale-mixes
+    track-amp-env         env-mixes
+    track-chans
+    track-color           color-mixes
+    track-dialog-track
+    track-frames          mixes-length
+    track-maxamp          mixes-maxamp
+    track-name
+    track-position        move-mixes
+    track-property
+    track-sample-reader?
+    track-speed           src-mixes
+    track-speed-style
+    track-tag-y           set-mixes-tag-y
+    track-tempo           scale-tempo
+    track-track
+    track?                (now just a list)
+    tracks
+    transpose-track       transpose-mixes
+    view-tracks-dialog
+
+  removed track-colors.scm and mix-menu.scm
+
+  removed all track-related arguments from functions such as mix-vct, mix, and
+    mix-region
+
+  removed tempo-control-bounds
+
+  completely rewrote the virtual mix support:  these are gone:
+    copy-mix
+    delete-mix (set mix-amp to 0.0)
+    mix-chans (each mix is one chan in -> one chan out)
+    mix-inverted?
+    mix-locked?
+    mix-speed-style
+    mix-tag-position
+    pan-mix (mix.scm) and all its friends
+
+  changed
+    mix-frames -> mix-length
+    delete-all-mixes -> silence-all-mixes
+ 
+  added 
+    edit-properties
+    mix-sync
+
+  moved mix-properties into C.
+
+  "mix" function now handles one channel in and out and the position defaults to 0 (not the cursor)
+
+
+as always, infinite ruby and forth improvements thanks to Mike
+
+spokenword.scm thanks to Ville Koskinen
+
+checked: fftw 3.2a, cairo 1.4.2|4, sbcl 1.0.4, pango 1.16.2
+
+
+Thanks!: Mike Scholz, Esben Stien, Michael Edwards, Ville Koskinen

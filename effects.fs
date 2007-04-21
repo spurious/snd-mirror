@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Thu Mar 01 18:35:39 CET 2007
+\ Changed: Wed Apr 11 13:58:23 CEST 2007
 
 \ Commentary:
 \
@@ -79,6 +79,8 @@
 \ effects-remove-clicks          ( :optional snd chn -- res )
 \ effects-remove-dc              ( :optional snd chn -- res )
 \ effects-compand                ( :optional snd chn -- res )
+
+'snd-motif provided? [unless] skip-file [then]
 
 require clm
 require examp

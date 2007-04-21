@@ -1506,10 +1506,6 @@ void snd_close_file(snd_info *sp)
    */
   free_snd_info(sp);
   ss->active_sounds--;
-  if (ss->active_sounds == 0) 
-    {
-      release_pending_track_states();
-    }
   reflect_file_change_in_title();
   call_selection_watchers(SELECTION_IN_DOUBT);
   call_ss_watchers(SS_FILE_OPEN_WATCHER, SS_FILE_CLOSED);
@@ -3645,7 +3641,8 @@ int vf_mix(view_files_info *vdat)
     id_or_error = mix_complete_file(sp, vdat->beg, 
 				    vdat->full_names[vdat->selected_files[0]], 
 				    with_mix_tags(ss), 
-				    DONT_DELETE_ME, 0, true); /* all-chans = true */
+				    DONT_DELETE_ME,
+				    MIX_SETS_SYNC_LOCALLY);
   else
     {
       int i;
@@ -3667,7 +3664,7 @@ int vf_mix(view_files_info *vdat)
 					  tempfile,
 					  with_mix_tags(ss), 
 					  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-					  0, true); /* all-chans = true */
+					  MIX_SETS_SYNC_LOCALLY);
 	}
       FREE(tempfile);
       for (i = 0; i < len; i++)

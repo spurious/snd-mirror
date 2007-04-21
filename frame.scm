@@ -6,11 +6,12 @@
 ;;;
 ;;; make-frame-reader frame-reader? frame-reader-at-end frame-reader-position frame-reader-home free-frame-reader copy-frame-reader frame-reader-chans
 ;;;   next-frame previous-frame read-frame
-;;;   make-region-frame-reader make-selection-frame-reader make-track-frame-reader read-track-frame make-sync-frame-reader
+;;;   make-region-frame-reader make-selection-frame-reader
+;;;   make-sync-frame-reader
 ;;;
 ;;; frame->sound-data, sound-data->frame
 ;;; sound->sound-data sound-data->sound
-;;;   region->sound-data track->sound-data selection->sound-data
+;;;   region->sound-data selection->sound-data
 ;;; file->vct vct->file
 ;;; frame->vct vct->frame
 ;;; file->sound-data sound-data->file
@@ -367,44 +368,6 @@
 	   (sounds)))
 	fr)))
 
-(define (make-track-frame-reader beg trk) ; following region reader in arg order
-  "(make-track-frame-reader beg trk) returns a frame reader that reads all the channels in the track trk"
-  (if (not (track? trk))
-      (throw 'no-such-track (list "make-track-frame-reader" trk))
-      (let* ((chns (track-chans trk))
-	     (fr (make-vector (+ chns +frame-reader0+)))
-	     (pos (track-position trk)))
-	(vector-set! fr +frame-reader-tag+ 'frame-reader)
-	(vector-set! fr +frame-reader-snd+ trk)
-	(vector-set! fr +frame-reader-channels+ chns)
-	(vector-set! fr +frame-reader-frame+ (make-frame chns))
-	(do ((i 0 (1+ i)))
-	    ((= i chns))
-	  (let* ((chan-pos (- (track-position trk i) pos))
-		 (chan-beg (- (or beg 0) chan-pos))) ; track chans can start at different places, but track-sample-reader is chan-specific
-	    (vector-set! fr (+ i +frame-reader0+) 
-			 (if (>= chan-beg 0)
-			     (make-track-sample-reader trk i chan-beg)
-			     chan-beg))))
-	fr)))
-
-(define (read-track-frame fr)
-  "(read-track-frame fr) returns the next frame read by the track-frame-reader 'fr'"
-  (let ((vals (vector-ref fr +frame-reader-frame+)))
-    (do ((i 0 (1+ i)))
-	((= i (vector-ref fr +frame-reader-channels+)))
-      (let ((rd (vector-ref fr (+ i +frame-reader0+))))
-	(if (number? rd)
-	    (begin
-	      (frame-set! vals i 0.0)
-	      (if (>= rd -1)
-		  (begin
-		    (set! rd (make-track-sample-reader (vector-ref fr +frame-reader-snd+) i 0))
-		    (vector-set! fr (+ i +frame-reader0+) rd))
-		  (vector-set! fr (+ i +frame-reader0+) (1+ rd))))
-	    (frame-set! vals i (read-track-sample rd)))))
-    vals))
-
 
 (define (file->vct file)
   "(file->vct file) returns a vct with file's data (channel 0)"
@@ -477,20 +440,6 @@
 	sd)
       (throw 'no-active-selection (list "selection->sound-data"))))
 
-(define* (track->sound-data trk :optional (beg 0))
-  "(track->sound-data trk) returns a sound-data object with the contents of track trk"
-  (if (not (track? trk))
-      (throw 'no-such-track (list "track->sound-data" trk))
-      (let* ((chns (track-chans trk))
-	     (len (track-frames trk))
-	     (sd (make-sound-data chns len))
-	     (reader (make-track-frame-reader beg trk)))
-	(do ((i 0 (1+ i)))
-	    ((= i len))
-	  (frame->sound-data (read-track-frame reader) sd i))
-	(free-frame-reader reader)
-	sd)))
-
 
 (define* (insert-vct v :optional (beg 0) dur snd chn edpos)
   "(insert-vct v :optional beg dur snd chn edpos) inserts vct v's data into sound snd at beg"
@@ -539,8 +488,8 @@
 		  ((= chn chns))
 		(set! (sample beg index chn) (+ (frame-ref fr chn) (sample beg index chn)))))))))
 
-(define* (mix-sound-data sd :optional (beg 0) dur snd tagged trk)
-  "(mix-sound-data sd :optional beg dur snd tagged trk) mixes the contents of sound-data sd into sound snd at beg"
+(define* (mix-sound-data sd :optional (beg 0) dur snd tagged)
+  "(mix-sound-data sd :optional beg dur snd tagged) mixes the contents of sound-data sd into sound snd at beg"
   (if (not (sound-data? sd))
       (throw 'wrong-type-arg (list "mix-sound-data" sd))
       (let ((index (or snd (selected-sound) (car (sounds)))))
@@ -552,7 +501,7 @@
 		   (mix-id #f))
 	      (do ((chn 0 (1+ chn)))
 		  ((= chn chns))
-		(let ((id (mix-vct (sound-data->vct sd chn v) beg index chn tagged "mix-sound-data" trk)))
+		(let ((id (mix-vct (sound-data->vct sd chn v) beg index chn tagged "mix-sound-data")))
 		  (if (not mix-id) (set! mix-id id))))
 	      mix-id)))))
 

@@ -312,6 +312,7 @@ whenever they're in the current view."
 			   (= y-offset (list-ref old-env 5))
 			   (= (edit-position snd chn) (list-ref old-env 2)))
 		      (begin
+			;; (display "use old graph")
 			(set! data0 (list-ref old-env 3))
 			(set! data1 (list-ref old-env 4)))
 		      (let* ((data (make-graph-data snd chn current-edit-position 0 (frames snd chn)))
@@ -321,6 +322,8 @@ whenever they're in the current view."
 			     (new-len (* width 2))
 			     (data-len (if (vct? data) (vct-length data) (vct-length (car data))))
 			     (step (/ data-len width)))
+
+			;; TODO: this is making graphs right and left?? (display "made new graph")
 
 			(if (< data-scaler 0.00000001)
 			    (begin

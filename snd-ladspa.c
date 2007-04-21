@@ -557,7 +557,7 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
     loadLADSPA();
 
   /* First parameter should be a file reader or list thereof. */
-  XEN_ASSERT_TYPE(sf_p(reader) || XEN_LIST_P(reader) || XEN_FALSE_P(reader),
+  XEN_ASSERT_TYPE(sample_reader_p(reader) || XEN_LIST_P(reader) || XEN_FALSE_P(reader),
 		  reader,
 		  XEN_ARG_1,
 		  S_apply_ladspa, "a sample-reader, a list of readers, or " PROC_FALSE);
@@ -640,8 +640,8 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
   if (inchans > 0)
     {
       if (XEN_LIST_P(reader))
-	tmp_fd = get_sf(XEN_LIST_REF(reader, 0));
-      else tmp_fd = get_sf(reader);
+	tmp_fd = xen_to_sample_reader(XEN_LIST_REF(reader, 0));
+      else tmp_fd = xen_to_sample_reader(reader);
       cp = tmp_fd->cp;
       sp = cp->sound;
     }
@@ -713,9 +713,9 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
       if (XEN_LIST_P(reader))
 	{
 	  for (i = 0; i < readers; i++)
-	    sf[i] = get_sf(XEN_LIST_REF(reader, i));
+	    sf[i] = xen_to_sample_reader(XEN_LIST_REF(reader, i));
 	}
-      else sf[0] = get_sf(reader);
+      else sf[0] = xen_to_sample_reader(reader);
     }
   /* this code added 20-Sep-01 */
   if (inchans > 0)
@@ -833,7 +833,6 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
 				  ncp,
 				  i,
 				  (outchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-				  LOCK_MIXES,
 				  XEN_TO_C_STRING(origin),
 				  ncp->edit_ctr))
 	    update_graph(ncp);

@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Sun Dec 24 02:52:59 CET 2006
+\ Changed: Wed Apr 11 13:56:19 CEST 2007
 
 \ Commentary:
 
@@ -23,6 +23,8 @@
 \ change-listener-popup-color  ( new-color -- )
 
 \ Code:
+
+'snd-motif provided? [unless] skip-file [then]
 
 require extensions
 require snd-xm

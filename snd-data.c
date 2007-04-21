@@ -8,7 +8,6 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
       cp = (chan_info *)CALLOC(1, sizeof(chan_info)); 
       cp->cgx = (chan_context *)CALLOC(1, sizeof(chan_context));
       cp->cgx->ax = (axis_context *)CALLOC(1, sizeof(axis_context));
-      cp->have_mixes = false;
       cp->last_sonogram = NULL;
       cp->temp_sonogram = NULL;
 #if HAVE_GL
@@ -138,7 +137,7 @@ static chan_info *free_chan_info(chan_info *cp)
   if (cp->edits) free_edit_list(cp);
   if (cp->sounds) free_sound_list(cp);
   if (cp->ptrees) free_ptree_list(cp);
-  free_mixes(cp);
+  free_channel_mixes(cp);
   cp->sound = NULL;  /* a backpointer */
   cp->cursor_on = false;
   cp->cursor_visible = false;
@@ -431,7 +430,7 @@ void free_snd_info(snd_info *sp)
   clear_mini_strings(sp);
   clear_filter_strings(sp);
   clear_players();
-  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
+  reflect_mix_change(ANY_MIX_ID);
 }
 
 snd_info *completely_free_snd_info(snd_info *sp)

@@ -44,6 +44,13 @@ typedef enum {NOT_ACTIVATABLE, ACTIVATABLE, NOT_ACTIVATABLE_OR_FOCUSED, ACTIVATA
 /* #define BACKGROUND_ADD(func, data) XtAppAddWorkProc(MAIN_APP(ss), func, (XtPointer)data) */
 #define BACKGROUND_ADD(func, data) add_work_proc(func, (XtPointer)data)
 
+#define CALL_TIMEOUT(Func, Wait, Data) XtAppAddTimeOut(MAIN_APP(ss), Wait, Func, (XtPointer)Data)
+#define TIMEOUT_ARGS                   XtPointer context, XtIntervalId *id
+#define TIMEOUT_TYPE                   void
+#define TIMEOUT_RESULT
+#define timeout_result_t               XtIntervalId
+#define TIMEOUT_REMOVE(Id)             XtRemoveTimeOut(Id)
+
 #if MUS_DEBUGGING
   #define ASSERT_WIDGET_TYPE(Cond, Wid) if (!(Cond)) fprintf(stderr, "%s:[%s %d] %s is wrong type", c__FUNCTION__, __FILE__, __LINE__, XtName(Wid))
 #else

@@ -12,7 +12,7 @@ enum {m_menu,
         h_menu, h_cascade_menu,
           h_about_snd_menu, h_fft_menu, h_find_menu, h_undo_menu, h_sync_menu, h_controls_menu,
           h_env_menu, h_marks_menu, h_sound_files_menu, h_init_file_menu,
-          h_mix_menu, h_track_menu, h_recording_menu, h_keys_menu, 
+          h_mix_menu, h_recording_menu, h_keys_menu, 
           h_play_menu, h_save_menu, h_resample_menu, h_filter_menu, h_insert_menu, 
           h_delete_menu, h_reverb_menu, h_debug_menu, h_region_menu, h_selection_menu, h_colors_menu,
         o_menu, o_cascade_menu,
@@ -29,7 +29,7 @@ enum {m_menu,
           v_combine_menu, v_combine_cascade_menu,
             v_combine_separate_menu, v_combine_combined_menu, v_combine_superimposed_menu,
           v_color_menu, v_orientation_menu, 
-          v_files_menu, v_mix_dialog_menu, v_track_dialog_menu,
+          v_files_menu, v_mix_dialog_menu, 
           v_x_axis_menu, v_x_axis_cascade_menu,
             v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu, v_x_axis_measures_menu, v_x_axis_clock_menu,
           v_axes_menu, v_axes_cascade_menu,
@@ -87,7 +87,6 @@ enum {m_menu,
 #define help_sound_files_menu (ss->sgx->mw[h_sound_files_menu])
 #define help_init_file_menu (ss->sgx->mw[h_init_file_menu])
 #define help_mix_menu (ss->sgx->mw[h_mix_menu])
-#define help_track_menu (ss->sgx->mw[h_track_menu])
 #define help_recording_menu (ss->sgx->mw[h_recording_menu])
 #define help_keys_menu (ss->sgx->mw[h_keys_menu])
 #define help_play_menu (ss->sgx->mw[h_play_menu])
@@ -140,7 +139,6 @@ enum {m_menu,
 #define view_orientation_menu (ss->sgx->mw[v_orientation_menu])
 #define view_files_menu (ss->sgx->mw[v_files_menu])
 #define view_mix_dialog_menu (ss->sgx->mw[v_mix_dialog_menu])
-#define view_track_dialog_menu (ss->sgx->mw[v_track_dialog_menu])
 #define view_x_axis_menu (ss->sgx->mw[v_x_axis_menu])
 #define view_x_axis_cascade_menu (ss->sgx->mw[v_x_axis_cascade_menu])
 #define view_x_axis_seconds_menu (ss->sgx->mw[v_x_axis_seconds_menu])

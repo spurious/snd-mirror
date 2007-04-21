@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Oct 21 18:22:57 CEST 2005
-\ Changed: Thu Mar 01 19:01:45 CET 2007
+\ Changed: Wed Apr 11 13:50:44 CEST 2007
 
 \ Commentary:
 
@@ -34,6 +34,8 @@
 \ xe-close              ( obj -- )
 \
 \ xenved-test           ( :optional name -- )
+
+'snd-motif provided? [unless] skip-file [then]
 
 require enved
 require snd-xm

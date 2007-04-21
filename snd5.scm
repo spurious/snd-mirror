@@ -24,7 +24,6 @@
   pix)
 
 ;(define update-transform update-transform-graph)
-;(define mix-length mix-frames)
 ;(define region-length region-frames)
 ;(define selection-length selection-frames)
 

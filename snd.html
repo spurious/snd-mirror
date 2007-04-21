@@ -57,7 +57,7 @@ using either <a href="http://www.gnu.org/software/guile/guile.html">Guile</a>,
 <a href="http://www.ruby-lang.org">Ruby</a>, <a href="http://www.sourceforge.net/projects/fth">Forth</a>,
 or <a href="http://www.shiro.dreamhost.com/scheme/gauche/index.html">Gauche</a>.
 Snd is free; the code is available via anonymous ftp as 
-<a href="ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz">snd-8.tar.gz</a>.
+<a href="ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-9.tar.gz">snd-9.tar.gz</a>.
 Snd has a <a href="http://ccrma.stanford.edu/software/snd/">home page</a>
 and a CVS <a href="http://snd.cvs.sourceforge.net/snd/cvs-snd">repository</a>, and
 is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">PlanetCCRMA</a> package.
@@ -142,7 +142,7 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
       <li><a href="extsnd.html#sndsounddata" onmouseover="return escape('arrays of vcts for multichannel data')">Sound-data</a>
       <li><a href="extsnd.html#extsndlib" onmouseover="return escape('the underlying library that handles sound data and files')">Sndlib</a>
       <li><a href="extsnd.html#sndmarks" onmouseover="return escape('location markers in sound data')">Marks</a>
-      <li><a href="extsnd.html#sndmixes" onmouseover="return escape('mixed sounds and groups of mixed sounds')">Mixes and Tracks</a>
+      <li><a href="extsnd.html#sndmixes" onmouseover="return escape('mixed sounds and groups of mixed sounds')">Mixes</a>
       <li><a href="extsnd.html#sndregions" onmouseover="return escape('selected or saved portions of sound data')">Regions and Selections</a>
       <li><a href="extsnd.html#sndsounds" onmouseover="return escape('editing functions, per-channel display decisions, etc')">Sounds and channels</a>
         <ul>
@@ -239,86 +239,79 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 <tr>
 <td><a href="#savefile">Save as</a></td>
 <td><a href="#editcut">Cut</a></td>
-<td><a href="extsnd.html#trackstuff">Tracks</a></td>
+<td><a href="#regionbrowser">Regions</a></td>
 <td><a href="#savedstate">Save session</a></td>
 <td><a href="#builtinkeys">Key bindings</a></td>
 </tr>
 <tr>
 <td><a href="#revertfile">Revert</a></td>
 <td><a href="#editcut">Paste</a></td>
-<td><a href="#regionbrowser">Regions</a></td>
+<td><a href="#viewfiles">Files</a></td>
 <td><a href="#preferencesbrowser">Preferences</a></td>
 <td><a href="#recordfile">Record</a></td>
 </tr>
 <tr>
 <td><a href="#mixingfiles">Mix</a></td>
 <td><a href="#editcut">Mix Selection</a></td>
-<td><a href="#viewfiles">Files</a></td>
+<td><a href="#colorbrowser">Color</a></td>
 <td></td>
 <td><a href="#menuplay">Play</a></td>
 </tr>
 <tr>
 <td><a href="#insertfile">Insert</a></td>
 <td><a href="#cxp">Play Selection</a></td>
-<td><a href="#colorbrowser">Color</a></td>
+<td><a href="#orientationbrowser">Orientation</a></td>
 <td></td>
 <td><a href="#savefile">Save</a></td>
 </tr>
 <tr>
 <td><a href="#updatefile">Update</a></td>
 <td><a href="#cxw">Save Selection</a></td>
-<td><a href="#orientationbrowser">Orientation</a></td>
+<td><a href="#viewdots">Graph style</a></td>
 <td></td>
 <td><a href="#mixingfiles">Mix</a></td>
 </tr>
 <tr>
 <td><a href="#newfile">New</a></td>
 <td><a href="#menuselectall">Select all</a></td>
-<td><a href="#viewdots">Graph style</a></td>
+<td><a href="extsnd.html#withverbosecursor">Verbose cursor</a></td>
 <td></td>
 <td><a href="#speed">Resample</a></td>
 </tr>
 <tr>
 <td><a href="#recordfile">Record</a></td>
 <td><a href="#editenvelope">Edit Envelope</a></td>
-<td><a href="extsnd.html#withverbosecursor">Verbose cursor</a></td>
+<td><a href="#unitebutton">Channel style</a></td>
 <td></td>
 <td><a href="#viewfft">FFT</a></td>
 </tr>
 <tr>
 <td><a href="#openfile">View</a></td>
 <td><a href="#editheader">Edit Header</a></td>
-<td><a href="#unitebutton">Channel style</a></td>
+<td><a href="#menuequalizepanes">Equalize Panes</a></td>
 <td></td>
 <td><a href="#filtercontrol">Filter</a></td>
 </tr>
 <tr>
 <td><a href="#printfile">Print</a></td>
 <td></td>
-<td><a href="#menuequalizepanes">Equalize Panes</a></td>
+<td><a href="#viewy0">Show y=0</a></td>
 <td></td>
 <td><a href="#reverb">Reverb</a></td>
 </tr>
 <tr>
 <td><a href="#exitfile">Exit</a></td>
 <td></td>
-<td><a href="#viewy0">Show y=0</a></td>
+<td><a href="extsnd.html#xaxisstyle">X axis units</a></td>
 <td></td>
 <td><a href="#ampenvs">Envelope</a></td>
 </tr>
 <tr>
 <td></td>
 <td></td>
-<td><a href="extsnd.html#xaxisstyle">X axis units</a></td>
-<td></td>
-<td><a href="#marks">Mark</a></td>
-</tr>
-<tr>
-<td></td>
-<td></td>
 <td><a href="extsnd.html#showaxes">Axes</a></td>
 <td></td>
-<td>...</td>
+<td><a href="#marks">Mark</a></td>
 </tr>
 </table>
 
@@ -491,7 +484,6 @@ you put all the sources in /home/bil/cl, add this line to your
         <!-- I(insert file):M(File: Insert)(insertfile) --> <!-- I(insert file):A(insertfile) -->
         <!-- I(record sound):M(File: Record)(recordfile) --> <!-- I(record sound):A(recordfile) -->
         <!-- I(change format):M(File: Save as)(savefileas) --><!-- I(change format):O(Edit: Edit header)(editheader) -->
-	<!-- I(mix file):O(see mix.scm for tracks) -->
 
 <p>When invoked, Snd scans
 its arguments for file names, and opens any it finds.</p>
@@ -741,7 +733,6 @@ flushed (but see the function check-for-unsaved-edits in <a href="sndscm.html#ch
 <tr><td width=140><a href="#controls">Show controls</a></td><td>show the control panel</td><td>(C-x C-o, C-x C-c)</td></tr>
 <tr><td><a href="extsnd.html#lisplistener">Open listener</a></td><td>show listener</td><td></td></tr>
 <tr><td><a href="#mixdialog">Mixes</a></td><td>mix browser</td><td></td></tr>
-<tr><td><a href="#mixdialog">Tracks</a></td><td>track browser</td><td></td></tr>
 <tr><td><a href="#regionbrowser">Regions</a></td><td>a browser to examine the region stack</td><td></td></tr>
 <tr><td><a href="#viewfiles">Files</a></td><td>a browser of interesting files</td><td></td></tr>
 <tr><td><a href="#colorbrowser">Color</a></td><td>a browser that chooses color maps</td><td></td></tr>
@@ -1643,10 +1634,10 @@ to take the current sync state into account, whereas
 the C-x C-q command does not. To mix a selection, use
 C-x q.
 In drag-and-drop, the mix starts at the mouse location;
-in the other cases, the default is to
+in the other cases, the default is usually to
 start at the current cursor location.
 The mixed-in sound is displayed as a separate waveform above the main waveform with
-a red tag at the beginning.  You can drag the tag to reposition the
+a tag at the beginning.  You can drag the tag to reposition the
 mix.  The amplitude, amplitude envelope, and speed (resampling rate) of the mixed-in portion can
 be changed independently of anything else either through such functions as
 <a href="extsnd.html#mixamp">mix-amp</a>, or through the View:Mix Dialog.
@@ -1661,28 +1652,13 @@ be changed independently of anything else either through such functions as
 
 <p>The Mix Dialog (under the View Menu) provides various
 commonly-used controls on the currently chosen mix.  At the top are
-the mix id (an integer), begin and end times, and a play button for the mix,
-followed by the track number, a play button for the track, and a
-panning button (that icon is a pan...).  If the pan button is set,
-the track amplitude envelope is inverted before being applied to the mix;
-in conjunction with the un-inverted case, this treats the track envelope
-as a panning control.
-Beneath all that are various sliders
-controlling the speed (resampling rate) of the mix, and the amplitude of each
-input channel; and finally, an editor for the mix's (input) channels.
+the mix id (an integer), its begin and end times, and a play button for the mix.
+Beneath that are various sliders
+controlling the speed (resampling rate) and amplitude of the mix,
+and beneath that an envelope editor for the mix's amplitude envelope.
 The current mix amp env is not actually changed until you click 'Apply Env'.
 The editor envelope is drawn in black with dots whereas the current
 mix amp env (if any) is drawn in blue.
-</p>
-<p>
-By default, each mixed-in sound is considered separately from all the others,
-but you would sometimes rather treat both channels of a stereo mix as
-one thing, or group several mixed-in sounds together.  These groups are called "tracks" in Snd,
-and there are a variety of functions and hooks that apply to them.  See
-<a href="extsnd.html#sndmixes">Mixes and Tracks</a> for details, and
-mix.scm for examples.
-The track dialog is very similar to the mix dialog, providing the same
-kinds of controls.
 </p>
 
 
@@ -1813,9 +1789,7 @@ operations.
 To apply the envelope to the current
 selection, rather than the current sound, set the 'selection' button.
 To apply it to the currently selected mix, set the 'mix' button.
-In this case, if the mix has multiple input channels, the envelope
-is applied to the currently selected channel (the one with the
-red label); control-click 'mix' to load the current mix amplitude
+Control-click 'mix' to load the current mix amplitude
 envelope into the editor.
 </p>
 

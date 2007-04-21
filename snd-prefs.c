@@ -3514,39 +3514,6 @@ static void revert_marks_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_
 static void clear_marks_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 
 
-/* ---------------- mix menu ---------------- */
-
-static bool include_mix_menu = false;
-
-static void help_mix_menu(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option adds a top-level 'Mix/Track' menu.  Included are such choices as delete mix, \
-snap mix to beat, delete, play, reverse, save, and transpose track, set track amplitude, speed, and tempo, etc.",
-	   WITH_WORD_WRAP);
-}
-
-static bool find_mix_menu(void) {return(XEN_DEFINED_P("mix-menu"));}
-
-static void save_mix_menu(prefs_info *prf, FILE *fd)
-{
-  include_mix_menu = GET_TOGGLE(prf->toggle);
-  if (include_mix_menu)
-    fprintf(fd, "(if (not (provided? 'snd-mix-menu.scm)) (load-from-path \"mix-menu.scm\"))\n");
-}
-
-static void mix_menu_toggle(prefs_info *prf)
-{
-  if ((GET_TOGGLE(prf->toggle)) &&
-      (!(find_mix_menu())))
-    xen_load_file_with_path_and_extension("mix-menu");
-}
-
-static void reflect_mix_menu(prefs_info *prf) {}
-static void revert_mix_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_mix_menu);}
-static void clear_mix_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
-
-
 /* ---------------- icon box ---------------- */
 
 static bool include_icon_box = false;

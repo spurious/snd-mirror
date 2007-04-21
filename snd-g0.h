@@ -20,6 +20,13 @@
 #define BACKGROUND_REMOVE(func) g_source_remove(func)
 #define BACKGROUND_ADD(func, data) add_work_proc(func, (gpointer)data)
 
+#define TIMEOUT_ARGS                   gpointer context
+#define TIMEOUT_TYPE                   gint
+#define TIMEOUT_RESULT                 return(0);
+#define CALL_TIMEOUT(Func, Wait, Data) g_timeout_add_full(0, Wait, Func, (gpointer)Data, NULL)
+#define timeout_result_t               guint
+#define TIMEOUT_REMOVE(Id)             g_source_remove(Id)
+
 typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 
 #define widget_t GtkWidget*

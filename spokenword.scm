@@ -1,6 +1,6 @@
 ;   spokenword.scm
 ;
-;   April 16th 2007
+;   April 17th 2007
 ;
 ;   Ville Koskinen
 ;   j.v.o.koskinen@gmail.com
@@ -127,7 +127,6 @@
                   (delete-samples (mark-sample out-mark) (- (+ (mark-sample in-mark) 1) (mark-sample out-mark)))
                   (local-smooth (cursor))))))))))
 
-; Somewhere here is a bug, but I can't find out where...
 (define (play-preview)
   (let* ((in-mark (find-mark "In"))
          (out-mark (find-mark "Out"))
@@ -143,7 +142,7 @@
         (not (eq? out-mark #f)))
       (if (< out-position in-position)
           (play (max 0 (- out-position preview-length)) #f #f #f out-position #f play-next))
-      ((play (cursor) #f #f #f (+ (cursor) preview-length))))))
+      (play (cursor) #f #f #f (+ (cursor) preview-length)))))
 
 ; Copied from examp.scm
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

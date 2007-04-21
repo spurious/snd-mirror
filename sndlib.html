@@ -266,7 +266,7 @@ audio systems (soundcards essentially) that are available.
 The input device is <i>dev</i> (see sndlib.h for details; when in doubt, use MUS_AUDIO_DEFAULT).
 The input sampling rate is <i>srate</i> or as close as we
 can get to it.  The number of input channels (if available) is <i>chans</i>.
-The input data format is <i>format</i> (when in doubt, use the macro MUS_COMPATIBLE_FORMAT).
+The input data format is <i>format</i> (when in doubt, use the macro MUS_AUDIO_COMPATIBLE_FORMAT).
 And the input buffer size (if settable at all) is <i>size</i> (bytes).  This
 function returns an integer to distinguish its port from others that might be
 in use.  In this and other related functions, the device has an optional second
@@ -426,9 +426,9 @@ went wrong.
 music V implementation, and clm2xen.c ties these into the languages supported by the
 xen package (currently Guile, Gauche, Ruby, and Forth).  The
 primary clm documentation (which describes both the Scheme and Common Lisp implementations)
-is clm.html found in clm-3.tar.gz or snd-8.tar.gz alongside sndlib at ccrma-ftp.
+is clm.html found in clm-3.tar.gz or snd-9.tar.gz alongside sndlib at ccrma-ftp.
 The simplest way to try these out is to load them into Snd; see extsnd.html,
-<a href="sndscm.html#exampdoc">examp.scm</a>, and <a href="sndscm.html#sndtestdoc">snd-test.scm</a> in snd-8.tar.gz for more details.
+<a href="sndscm.html#exampdoc">examp.scm</a>, and <a href="sndscm.html#sndtestdoc">snd-test.scm</a> in snd-9.tar.gz for more details.
 The following briefly describes the C calls (see clm.h).
 </p>
 
@@ -611,7 +611,7 @@ int main(int argc, char *argv[])
       for (i=0;i&lt;chans;i++) 
         bufs[i] = (mus_sample_t *)calloc(BUFFER_SIZE, sizeof(mus_sample_t));
       obuf = (short *)calloc(BUFFER_SIZE * chans, sizeof(short));
-      afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, chans, MUS_COMPATIBLE_FORMAT, outbytes);
+      afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, chans, MUS_AUDIO_COMPATIBLE_FORMAT, outbytes);
       if (afd != -1)
 	{
 	  for (i = 0; i &lt; frames; i += BUFFER_SIZE)

@@ -563,7 +563,7 @@ static void add_to_region_list(region *r)
 
 #define NOT_EDITABLE -2
 
-static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk, io_error_t *err)
+static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, io_error_t *err, int start_chan)
 {
   region *r;
   char *origin = NULL;
@@ -598,7 +598,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk, io
 #else
 	  origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP "%d", TO_PROC_NAME(S_mix_region), beg, n);
 #endif
-	  id = mix_file(beg, r->frames, si->chans, si->cps, newname, DELETE_ME, origin, with_mix_tags(ss), trk);
+	  id = mix_file(beg, r->frames, si->chans, si->cps, newname, DELETE_ME, origin, with_mix_tags(ss), start_chan);
 	  FREE(origin);
 	}
       if (newname) FREE(newname);
@@ -643,16 +643,16 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk, io
   return(id);
 }
 
-static io_error_t paste_region_2(int n, chan_info *cp, bool add, off_t beg, int trk)
+static io_error_t paste_region_2(int n, chan_info *cp, bool add, off_t beg)
 {
   io_error_t err = IO_NO_ERROR;
   int id;
-  id = paste_region_1(n, cp, add, beg, trk, &err);
+  id = paste_region_1(n, cp, add, beg, &err, 0);
   return(err);
 }
 
-io_error_t paste_region(int n, chan_info *cp) {return(paste_region_2(n, cp, false, CURSOR(cp), 0));}
-io_error_t add_region(int n, chan_info *cp) {return(paste_region_2(n, cp, true, CURSOR(cp), 0));}
+io_error_t paste_region(int n, chan_info *cp) {return(paste_region_2(n, cp, false, CURSOR(cp)));}
+io_error_t add_region(int n, chan_info *cp) {return(paste_region_2(n, cp, true, CURSOR(cp)));}
 
 int define_region(sync_info *si, off_t *ends)
 {
@@ -706,7 +706,7 @@ int define_region(sync_info *si, off_t *ends)
       r->begs[i] = si->begs[i];
       r->lens[i] = ends[i] - si->begs[i];
       drp->edpos[i] = drp->cps[i]->edit_ctr;
-      if (r->lens[i] > AMP_ENV_CUTOFF)
+      if (r->lens[i] > PEAK_ENV_CUTOFF)
 	{
 	  env_info *ep;
 	  ep = drp->cps[i]->edits[drp->edpos[i]]->peak_env;
@@ -1280,7 +1280,7 @@ insert region data into snd's channel chn starting at start-samp"
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_insert_region, reg_n));
   samp = beg_to_sample(samp_n, S_insert_region);
-  err = paste_region_2(rg, cp, false, samp, 0);
+  err = paste_region_2(rg, cp, false, samp);
   if (SERIOUS_IO_ERROR(err))
     XEN_ERROR(CANT_UPDATE_FILE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_insert_region),
@@ -1596,17 +1596,18 @@ using data format (default depends on machine byte order), header type (" S_mus_
   return(args[orig_arg[0] - 1]); /* -> filename, parallel save-selection */
 }
 
-static XEN g_mix_region(XEN chn_samp_n, XEN reg_n, XEN snd_n, XEN chn_n, XEN tid)
+static XEN g_mix_region(XEN chn_samp_n, XEN reg_n, XEN snd_n, XEN chn_n, XEN reg_chn)
 {
-  #define H_mix_region "(" S_mix_region " :optional (chn-samp 0) (region 0) snd chn (track 0)): \
-mix region into snd's channel chn starting at chn-samp; return new mix id."
+  #define H_mix_region "(" S_mix_region " :optional (chn-samp 0) (region 0) snd chn (region-chan #t)): \
+mix region's channel region-chan (or all chans if region-chan is " PROC_TRUE ") into snd's channel chn starting at chn-samp; return new mix id, if any."
 
   chan_info *cp;
   off_t samp;
   io_error_t err = IO_NO_ERROR;
-  int rg, id = -1, track_id = 0;
+  int rg, id = -1, reg_chan = 0;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_1, S_mix_region, "a number");
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_mix_region, "a region id");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(reg_chn), reg_chn, XEN_ARG_5, S_mix_region, "an integer or " PROC_TRUE);
   ASSERT_CHANNEL(S_mix_region, snd_n, chn_n, 3);
   rg = XEN_REGION_TO_C_INT(reg_n);
   if (!(region_ok(rg)))
@@ -1616,14 +1617,10 @@ mix region into snd's channel chn starting at chn-samp; return new mix id."
   if (XEN_BOUND_P(chn_samp_n))
     samp = beg_to_sample(chn_samp_n, S_mix_region);
   else samp = CURSOR(cp);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(tid), tid, XEN_ARG_5, S_mix_region, "an integer");
-  track_id = XEN_TO_C_INT_OR_ELSE(tid, 0);
-  if ((track_id > 0) && (!(track_p(track_id))))
-    XEN_ERROR(NO_SUCH_TRACK,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),
-			 tid));
-  id = paste_region_1(rg, cp, true, samp, track_id, &err);
-  /* id might legitmately be invalid mix id if with_mix_tags is #f */
+  if (XEN_INTEGER_P(reg_chn))
+    reg_chan = XEN_TO_C_INT(reg_chn);
+  id = paste_region_1(rg, cp, true, samp, &err, reg_chan);
+  /* id might legitmately be invalid mix id if with_mix_tags is #f or virtual mix not ok */
   if (SERIOUS_IO_ERROR(err))
     XEN_ERROR(CANT_UPDATE_FILE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),

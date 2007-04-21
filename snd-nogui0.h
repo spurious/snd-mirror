@@ -6,6 +6,13 @@
 #define BACKGROUND_REMOVE(func)
 #define BACKGROUND_ADD(func, data) func(data)
 
+#define TIMEOUT_ARGS void *context
+#define TIMEOUT_TYPE void
+#define TIMEOUT_RESULT
+#define timeout_result_t int
+#define TIMEOUT_REMOVE(Id)
+#define CALL_TIMEOUT(Func, Wait, Data) 0
+
 #define widget_t int
 #define widget_is_active(Wid) 0
 #define activate_widget(Wid) Wid = 0

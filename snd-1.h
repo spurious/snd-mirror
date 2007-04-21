@@ -159,11 +159,6 @@ typedef struct {
 } mark;
 
 typedef struct {
-  int size;
-  int *ids, *locs;
-} track_info;
-
-typedef struct {
   off_t size;
   Float *data;
   Float scale;
@@ -174,7 +169,8 @@ typedef struct {
   struct ed_fragment **fragments;
   off_t beg, len;                      /* beg and len of changed portion */
   char *origin;
-  int edit_type, sound_location, ptree_location;
+  edit_t edit_type;
+  int sound_location, ptree_location;
   off_t selection_beg, selection_end;  /* selection needs to follow edit list */
   Float maxamp, selection_maxamp;
   off_t maxamp_position, selection_maxamp_position;
@@ -183,10 +179,12 @@ typedef struct {
   off_t samples, cursor;
   int mark_size, mark_ctr;
   mark **marks;                        /* mark positions */
-  track_info *tracks;
   env_info *peak_env;                  /* peak amp env data */
   enved_fft *fft;                      /* overall fft data for envelope editor */
   void *readers;                       /* current readers of this edit (g++ stupidity forces us to use void* here -- type is sf_info, snd-edits.c) */
+  void *mixes;
+  XEN properties;
+  int properties_gc_loc;
 } ed_list;
 
 typedef struct snd_fd {
@@ -211,7 +209,8 @@ typedef struct snd_fd {
   int type1, type2, type3;
   double incr1, curval1, incr2, curval2, incr3, curval3, incr4, curval4;
   bool zero, xramp2;
-  int edit_ctr, region, type;
+  int edit_ctr, region;
+  reader_t type;
   Float (*rampf)(struct snd_fd *sf);
   Float (*rev_rampf)(struct snd_fd *sf);
   void *mixes;
@@ -230,7 +229,7 @@ typedef struct {
   int y_axis_x0, x_axis_x0, y_axis_y0, x_axis_y0, x_axis_x1, y_axis_y1, x_label_x, x_label_y;
   bool graph_active;
   off_t losamp, hisamp;                 /* displayed x-axis bounds in terms of sound sample numbers */
-  int graph_x0;                       /* x axis offset relative to window (for double graphs) */
+  int graph_x0;                         /* x axis offset relative to window (for double graphs) */
   struct tick_descriptor *x_ticks, *y_ticks; 
   axis_context *ax;
   int width, height;
@@ -250,6 +249,14 @@ typedef struct {
   int pts, data_size; /* data_size is independent of actual number of points of data (can be much larger) */
   Float base;
 } env;
+
+typedef struct {
+  int mix_id;
+  off_t beg, len;
+  Float scaler, speed;
+  env *amp_env;
+  int index;           /* cp->sounds index (src writes a new temp file) */
+} mix_state;
 
 typedef struct fam_info {
   FAMRequest *rp;
@@ -331,7 +338,6 @@ typedef struct chan_info {
   fft_change_t fft_changed;
   Float gsy, gzy;
   int height;
-  bool have_mixes;
   off_t original_cursor, original_left_sample, original_window_size;   /* for cursor reset after cursor-moving play */
   with_hook_t hookable;
   off_t selection_transform_size;
@@ -540,7 +546,7 @@ typedef struct snd_state {
   Float Amp_Control_Min, Amp_Control_Max, Reverb_Control_Scale_Min, Reverb_Control_Scale_Max;
   Float Reverb_Control_Length_Min, Reverb_Control_Length_Max;
   int Filter_Control_Order, Cursor_Location_Offset;
-  Float Tempo_Control_Min, Tempo_Control_Max, Min_dB;
+  Float Min_dB;
   bool Show_Controls;
   tracking_cursor_t With_Tracking_Cursor;
   XEN cursor_proc;
@@ -655,7 +661,6 @@ void debug_help(void);
 void env_help(void);
 void marks_help(void);
 void mix_help(void);
-void track_help(void);
 void sound_files_help(void);
 void init_file_help(void);
 void recording_help(void);
@@ -674,7 +679,6 @@ void edit_header_dialog_help(void);
 void print_dialog_help(void);
 void view_files_dialog_help(void);
 void mix_dialog_help(void);
-void track_dialog_help(void);
 void find_dialog_help(void);
 void completion_dialog_help(void);
 void open_file_dialog_help(void);
@@ -884,7 +888,12 @@ void g_init_data(void);
 
 /* -------- snd-edits.c -------- */
 
+#if MUS_DEBUGGING
+#define initial_ed_list(Beg, End) initial_ed_list_1(Beg, End, __FUNCTION__, __FILE__, __LINE__)
+ed_list *initial_ed_list_1(off_t beg, off_t end, const char *func, const char *file, int line);
+#else
 ed_list *initial_ed_list(off_t beg, off_t end);
+#endif
 snd_info *sound_is_silence(snd_info *sp);
 off_t edit_changes_begin_at(chan_info *cp, int edpos);
 off_t edit_changes_end_at(chan_info *cp, int edpos);
@@ -899,27 +908,26 @@ void free_sound_list(chan_info *cp);
 void free_ptree_list(chan_info *cp);
 void after_edit(chan_info *cp);
 bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos);
-void extend_edit_list(chan_info *cp, int edpos);
+bool extend_edit_list(chan_info *cp, int edpos);
 bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos);
 bool file_insert_samples(off_t beg, off_t num, const char *tempfile, chan_info *cp, int chan, 
 			 file_delete_t auto_delete, const char *origin, int edpos);
 bool insert_complete_file_at_cursor(snd_info *sp, const char *filename);
 bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg, file_delete_t auto_delete);
 bool delete_samples(off_t beg, off_t num, chan_info *cp, int edpos);
-bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, lock_mix_t lock, const char *origin, int edpos);
-bool file_change_samples(off_t beg, off_t num, const char *tempfile, chan_info *cp, int chan, 
-			 file_delete_t auto_delete, lock_mix_t lock, const char *origin, int edpos);
-bool file_mix_change_samples(off_t beg, off_t num, const char *tempfile, chan_info *cp, int chan, 
-			     file_delete_t auto_delete, lock_mix_t lock, const char *origin, int edpos, bool with_mix);
-bool file_override_samples(off_t num, const char *tempfile, chan_info *cp, int chan, 
-			   file_delete_t auto_delete, lock_mix_t lock, const char *origin);
+bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos);
+bool file_change_samples(off_t beg, off_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos);
+/*
+bool file_mix_change_samples(off_t beg, off_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos, bool with_mix);
+*/
+bool file_override_samples(off_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin);
 Float chn_sample(off_t samp, chan_info *cp, int pos);
 void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length);
 bool editable_p(chan_info *cp);
 snd_fd *free_snd_fd(snd_fd *sf);
-char *sf_to_string(snd_fd *fd);
-bool sf_p(XEN obj);
-snd_fd *get_sf(XEN obj);
+char *sample_reader_to_string(snd_fd *fd);
+bool sample_reader_p(XEN obj);
+snd_fd *xen_to_sample_reader(XEN obj);
 snd_fd *free_snd_fd_almost(snd_fd *sf);
 bool scale_channel(chan_info *cp, Float scaler, off_t beg, off_t num, int pos, bool in_as_one_edit);
 bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool in_as_one_edit, const char *origin);
@@ -961,11 +969,21 @@ void set_ed_selection_maxamp_position(chan_info *cp, off_t val);
 off_t ed_selection_maxamp_position(chan_info *cp);
 void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1);
 void reflect_file_change_in_label(chan_info *cp);
-void update_track_lists(chan_info *cp, int top_ctr);
 void reflect_file_change_in_title(void);
 
 bool snd_to_sample_p(mus_any *ptr);
 Float snd_to_sample_read(mus_any *ptr, off_t frame, int chan);
+int mix_buffer_with_tag(chan_info *cp, mus_sample_t *data, off_t beg, off_t num, const char *origin);
+
+int mix_file_with_tag(chan_info *cp, const char *filename, int chan, off_t beg, file_delete_t auto_delete, const char *origin);
+void unmix(chan_info *cp, mix_state *ms);
+void remix(chan_info *cp, mix_state *ms);
+snd_fd *make_virtual_mix_reader(chan_info *cp, off_t beg, off_t len, int index, Float scl, read_direction_t direction);
+bool virtual_mix_ok(chan_info *cp, int edpos, off_t beg, off_t len);
+bool begin_mix_op(chan_info *cp, off_t old_beg, off_t old_len, off_t new_beg, off_t new_len, int edpos, const char *caller);
+bool end_mix_op(chan_info *cp, off_t old_beg, off_t old_len);
+void prepare_sound_list(chan_info *cp);
+
 
 
 /* -------- snd-fft.c -------- */
@@ -1145,7 +1163,6 @@ char *region_description(int rg);
 /* -------- snd-env.c -------- */
 
 env *copy_env(env *e);
-bool envs_equal(env *e1, env *e2);
 env *free_env(env *e);
 char *env_to_string(env *e);
 env *make_envelope(Float *env_buffer, int len);
@@ -1272,6 +1289,7 @@ void set_x_bounds(axis_info *ap);
 void set_show_axes(show_axes_t val);
 void display_channel_data(chan_info *cp);
 void display_channel_fft_data(chan_info *cp);
+void display_channel_time_data(chan_info *cp);
 void show_cursor_info(chan_info *cp);
 void apply_x_axis_change(axis_info *ap, chan_info *cp);
 void apply_y_axis_change(axis_info *ap, chan_info *cp);
@@ -1350,7 +1368,6 @@ env_info *free_amp_env(chan_info *cp, int pos);
 void free_env_state(chan_info *cp);
 env_info *free_env_info(env_info *ep);
 void start_env_state(chan_info *cp);
-env_info *make_mix_input_amp_env(chan_info *cp);
 idle_func_t get_amp_env(any_pointer_t ptr);
 void finish_amp_env(chan_info *cp);
 bool amp_env_maxamp_ok(chan_info *cp, int edpos);
@@ -1369,7 +1386,6 @@ void reset_controls(snd_info *sp);
 void stop_applying(snd_info *sp);
 void menu_apply_controls(snd_info *sp);
 void menu_reset_controls(snd_info *sp);
-env_info *env_on_env(env *e, chan_info *cp);
 void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Float scaler, Float offset);
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, int pos);
 void amp_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func);
@@ -1538,125 +1554,79 @@ void g_init_listener(void);
 
 /* -------- snd-mix.c -------- */
 
-mix_context *make_mix_context(chan_info *cp);
-mix_context *free_mix_context(mix_context *ms);
-void free_mix_list(chan_info *cp);
-void free_mixes(chan_info *cp);
-int mix_complete_file(snd_info *sp, off_t beg, const char *fullname, bool with_tag, file_delete_t auto_delete, int track_id, bool all_chans);
-int mix_complete_file_at_cursor(snd_info *sp, const char *str, bool with_tag, int track_id);
-int mix_file(off_t beg, off_t num, int chans, chan_info **cps, const char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int track_id);
-void backup_mix_list(chan_info *cp, int edit_ctr);
-bool active_mix_p(chan_info *cp);
-off_t mix_beg(chan_info *cp);
-void reset_mix_graph_parent(chan_info *cp);
-void display_channel_mixes(chan_info *cp);
-void lock_affected_mixes(chan_info *cp, off_t beg, off_t end);
-void release_pending_mixes(chan_info *cp, int edit_ctr);
-void reset_mix_list(chan_info *cp);
-void sync_mixes_with_edits(chan_info *cp);
-void ripple_mixes(chan_info *cp, off_t beg, off_t change);
+void free_ed_mixes(void *ptr);
+bool mix_vct_untagged(vct *v, chan_info *cp, off_t beg, const char *origin);
+bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, off_t beg, off_t num, file_delete_t auto_delete, const char *origin);
+bool mix_exists(int n);
+bool mix_is_active(int n);
+bool channel_has_mixes(chan_info *cp);
+bool channel_has_active_mixes(chan_info *cp);
+char *mix_name(int id);
+int mix_name_to_id(const char *name);
 void goto_mix(chan_info *cp, int count);
-off_t mix_frames(int n);
+off_t zoom_focus_mix_in_channel_to_position(chan_info *cp);
 int any_mix_id(void);
-bool mix_active_p(int n);
-int set_mix_amp_env(int n, env *val);
-void g_init_mix(void);
-void clear_mix_tags(chan_info *cp);
-void clear_mix_y(chan_info *cp);
-void color_mixes(color_t color);
-void move_mix_tag(int mix_tag, int x);
-void finish_moving_mix_tag(int mix_tag, int x);
-int hit_mix(chan_info *cp, int x, int y);
-int prepare_mix_id_waveform(int mix_id, axis_info *ap, bool *two_sided);
-chan_info *mix_dialog_mix_channel(int mix_id);
-void mix_dialog_mix_play(int mix_id);
-void mix_dialog_track_play(int mix_id);
-void mix_dialog_start_drag(int mix_id);
-void mix_dialog_set_mix_speed(int mix_id, Float val, bool dragging);
-void mix_dialog_set_mix_amp(int mix_id, Float val, bool dragging);
-void mix_dialog_set_mix_track(int mix_id, int track);
-int mix_dialog_mix_track(int mix_id);
-Float mix_dialog_mix_speed(int mix_id);
-Float mix_dialog_mix_amp(int mix_id);
-off_t mix_dialog_mix_position(int mix_id);
-env *mix_dialog_mix_amp_env(int n);
-int set_mix_position(int mix_id, off_t beg);
-bool mix_ok(int n);
-env *mix_dialog_env(int n);
-void mix_at_x_y(int data, const char *filename, int x, int y);
 int next_mix_id(int id);
 int previous_mix_id(int id);
-void reflect_edit_in_mix_dialog_env(int n);
-void g_init_track(void);
-bool track_p(int trk);
-track_info *free_track_info(ed_list *ed);
-void record_track_info(chan_info *cp);
-off_t track_position(int id, int chan);
-off_t track_frames(int id, int chan);
-int track_chans(int id);
-chan_info *track_channel(int id, int chn);
-env *track_dialog_track_amp_env(int id);
-Float track_dialog_track_amp(int id);
-Float track_dialog_track_speed(int id);
-Float track_dialog_track_tempo(int id);
-int track_dialog_track_track(int id);
-env *track_dialog_env(int n);
-void track_dialog_play(int track_id);
-void track_dialog_set_amp(int track_id, Float val);
-void track_dialog_start_slider_drag(int id);
-void track_dialog_set_speed(int id, Float val);
-void track_dialog_set_tempo(int id, Float val, bool dragging);
-void track_dialog_set_amp_env(int id, env *e);
-bool track_dialog_track_color_set(int id);
-color_t track_dialog_track_color(int id);
-void reflect_edit_in_track_dialog_env(int n);
-bool set_track_track(int id, int trk);
-void set_track_position(int id, off_t pos);
-int any_track_id(void);
-int next_track_id(int id);
-int previous_track_id(int id);
-char *track_dialog_track_info(int id);
-void release_pending_track_states(void);
-void display_track_waveform(int track_id, axis_info *ap);
-speed_style_t mix_speed_style(int id);
-speed_style_t set_mix_speed_style(int id, speed_style_t choice, bool from_gui);
-speed_style_t track_speed_style(int id);
-speed_style_t set_track_speed_style(int id, speed_style_t choice, bool from_gui);
+void free_channel_mixes(chan_info *cp);
+void delete_any_remaining_mix_temp_files_at_exit(chan_info *cp);
 
-struct mix_fd;
-struct track_fd;
-Float mix_read_sample(struct mix_fd *ptr);
-bool mf_p(XEN obj);
-struct mix_fd *get_mf(XEN obj);
-char *run_mix_sample_reader_to_string(struct mix_fd *mf);
-void run_free_mix_fd(struct mix_fd *ptr);
-struct mix_fd *run_make_mix_sample_reader(int id, off_t beg);
-bool mix_sample_reader_at_end_p(struct mix_fd *mf);
-Float track_read_sample(struct track_fd *ptr);
-bool tf_p(XEN obj);
-struct track_fd *get_tf(XEN obj);
-char *run_track_sample_reader_to_string(struct track_fd *ptr);
-void run_free_track_sample_reader(struct track_fd *ptr);
-struct track_fd *run_make_track_sample_reader(int id, int chan, off_t beg);
-bool track_sample_reader_at_end_p(struct track_fd *tf);
-char *edit_list_mix_and_track_init(chan_info *cp);
+off_t mix_position_from_id(int id);
+off_t mix_length_from_id(int id);
+Float mix_amp_from_id(int id);
+Float mix_speed_from_id(int id);
+env *mix_amp_env_from_id(int id);
+int mix_channel_from_id(int id);
+off_t mix_set_position_from_id(int id, off_t enw_pos);
+off_t mix_set_length_from_id(int id, off_t new_len);
+Float mix_set_amp_from_id(int id, Float new_scaler);
+Float mix_set_speed_from_id(int id, Float new_speed);
+env *mix_set_amp_env_from_id(int id, env *new_e);
+chan_info *mix_chan_info_from_id(int id);
 
+mix_state *prepare_mix_state_for_channel(chan_info *cp, int mix_loc, off_t beg, off_t len);
+mix_state *mix_state_is_in_ed_list(ed_list *ed, mix_state *ms);
+mix_state *add_ed_mix(ed_list *ed, mix_state *ms);
+mix_state *copy_mix_state(mix_state *old_ms);
+
+void g_init_mix(void);
+
+bool mix_set_position_edit(int id, off_t pos);
+bool mix_set_amp_env_edit(int id, env *e);
+bool mix_set_amp_edit(int id, Float amp);
+bool mix_set_speed_edit(int id, Float spd);
+
+mix_context *make_mix_context(chan_info *cp);
+mix_context *free_mix_context(mix_context *ms);
+int mix_complete_file(snd_info *sp, off_t beg, const char *fullname, bool with_tag, file_delete_t auto_delete, mix_sync_t all_chans);
+int mix_complete_file_at_cursor(snd_info *sp, const char *str);
+int mix_file(off_t beg, off_t num, int chans, chan_info **cps, const char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int start_chan);
+
+bool mix_sample_reader_at_end_p(void *mf);
+bool mix_sample_reader_p(XEN obj);
+void *xen_to_mix_sample_reader(XEN obj);
 XEN g_copy_mix_sample_reader(XEN obj);
 XEN g_mix_sample_reader_home(XEN obj);
 XEN g_mix_sample_reader_at_end_p(XEN obj);
 XEN g_mix_sample_reader_position(XEN obj);
 XEN g_free_mix_sample_reader(XEN obj);
-XEN g_copy_track_sample_reader(XEN obj);
-XEN g_track_sample_reader_home(XEN obj);
-XEN g_track_sample_reader_at_end_p(XEN obj);
-XEN g_track_sample_reader_position(XEN obj);
-XEN g_free_track_sample_reader(XEN obj);
+char *edit_list_mix_init(chan_info *cp);
+void channel_set_mix_tags_erased(chan_info *cp);
+void color_mixes(color_t color);
+void move_mix_tag(int mix_tag, int x);
+void finish_moving_mix_tag(int mix_tag, int x);
+int hit_mix(chan_info *cp, int x, int y);
+int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided);
+void reset_mix_graph_parent(chan_info *cp);
+void display_channel_mixes(chan_info *cp);
 
-char *track_name(int trk);
-char *mix_name(int id);
-int track_name_to_id(const char *name);
-int mix_name_to_id(const char *name);
+void mix_dialog_mix_play(int mix_id);
+void drag_and_drop_mix_at_x_y(int data, const char *filename, int x, int y);
 
+Float run_read_mix_sample(void *ptr);
+char *run_mix_sample_reader_to_string(void *mf);
+void run_free_mix_sample_reader(void *ptr);
+void *run_make_mix_sample_reader(int id, off_t beg);
 
 
 /* -------- snd-find.c -------- */

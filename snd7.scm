@@ -5,7 +5,6 @@
 (use-modules (ice-9 session)) ; for apropos
 
 (define free-mix-sample-reader free-sample-reader)
-(define free-track-sample-reader free-sample-reader)
 (define (inspect-sample-reader rd) (format #f "~A" rd))
 
 (define enved-exp?
@@ -38,7 +37,6 @@
 (define file-dialog view-files-dialog)
 (define region-dialog view-regions-dialog)
 (define mix-dialog view-mixes-dialog)
-(define track-dialog view-tracks-dialog)
 (define file-save-as-dialog save-sound-dialog)
 
 

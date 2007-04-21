@@ -45,7 +45,7 @@ typedef struct prefs_info {
   Widget color, rscl, gscl, bscl, rtxt, gtxt, btxt, list_menu, radio_button;
   Widget *radio_buttons;
   bool got_error;
-  XtIntervalId help_id, power_id;
+  timeout_result_t help_id, power_id;
   const char *var_name, *saved_label;
   int num_buttons;
   Float scale_max;
@@ -84,14 +84,12 @@ static void post_prefs_error(const char *msg, prefs_info *data);
 #define GET_TEXT(Text)            XmTextFieldGetString(Text)
 #define SET_TEXT(Text, Val)       XmTextFieldSetString(Text, Val)
 #define FREE_TEXT(Val)            XtFree(Val)
-#define TIMEOUT(Func)             XtAppAddTimeOut(MAIN_APP(ss), ERROR_WAIT_TIME, Func, (XtPointer)prf)
-#define TIMEOUT_ARGS              XtPointer context, XtIntervalId *id
-#define TIMEOUT_TYPE              void
-#define TIMEOUT_RESULT            
 #define SET_SCALE(Value)          XmScaleSetValue(prf->scale, (int)(100 * Value))
 #define SET_SENSITIVE(Wid, Val)   XtSetSensitive(Wid, Val)
 #define black_text(Prf)           XtVaSetValues(Prf->label, XmNforeground, ss->sgx->black, NULL)
 #define red_text(Prf)             XtVaSetValues(Prf->label, XmNforeground, ss->sgx->red, NULL)
+
+#define TIMEOUT(Func)             XtAppAddTimeOut(MAIN_APP(ss), ERROR_WAIT_TIME, Func, (XtPointer)prf)
 
 
 static int get_scale_1(Widget scale)
@@ -2066,13 +2064,6 @@ widget_t start_preferences_dialog(void)
 				dpy_box, current_sep, 
 				marks_menu_toggle);
     remember_pref(prf, reflect_marks_menu, save_marks_menu, help_marks_menu, clear_marks_menu, revert_marks_menu);
-
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    prf = prefs_row_with_toggle("mix/track menu", "mix-menu.scm",
-				(include_mix_menu = find_mix_menu()),
-				dpy_box, current_sep, 
-				mix_menu_toggle);
-    remember_pref(prf, reflect_mix_menu, save_mix_menu, help_mix_menu, clear_mix_menu, revert_mix_menu);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("a toolbar", "toolbar.scm",

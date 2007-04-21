@@ -506,7 +506,13 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
-6-Apr:   virtual mix changes: removed mix-chans, mix-locked?, mix-inverted?, lock-track\n\
+1-May:   Snd 9.0.\n\
+16-Apr:  spokenword.scm thanks to Ville Koskinen.\n\
+8-Apr:   removed all track support.\n\
+6-Apr:   virtual mix changes: removed mix-chans, mix-locked?, mix-inverted?, delete-mix.\n\
+         added edit-properties, mix-sync.\n\
+         moved delete-mix to mix.scm.\n\
+         moved mix-properties into C.\n\
 23-Mar:  recorder dialog removed -- a new one is underway...\n\
 22-Mar:  Snd 8.9.\n\
 14-Mar:  cairo graphics backend (--with-cairo configure choice).\n\
@@ -721,7 +727,7 @@ File:Revert is the same as undo all edits.",
 static char *sync_xrefs[5] = {
   "sound sync field: {" S_sync "}, {" S_sync_max "}",
   "mark sync field: {" S_mark_sync "}, {" S_mark_sync_max "}, {mark-sync-color}, {" S_syncd_marks "}",
-  "mix sync (track) field: {" S_mix_track "}",
+  "mix sync field: {" S_mix_sync "}",
   "channel display choice: {" S_channel_style "}",
   NULL};
 
@@ -1307,14 +1313,12 @@ usually handier, however, to adjust the mix via the Mix dialog. \
 \n\n\
 The Mix dialog (under the View Menu) provides various \
 commonly-used controls on the currently chosen mix. At the top are the mix id, \
-name, begin and end times, track number, and a play button. Beneath that are \
+name, begin and end times, and a play button. Beneath that are \
 various sliders controlling the speed (sampling rate) of the mix, amplitude of \
 each input channel, and the amplitude envelopes. \
 \n\n\
 To move the cursor from one mix to the next, in the same manner as C-j moves through marks, use C-x C-j. \
 \n\n\
-A set of associated mixes is called a 'track' in Snd, and there's a help menu item for that subject.\n\
-\n\
 The main mix-related functions are:\n\
 \n\
   " S_mix " (file :optional samp in-chan snd chn tags delete trk)\n\
@@ -1324,10 +1328,10 @@ The main mix-related functions are:\n\
   " S_mix_selection " (:optional beg snd chn)\n\
     mix (add) selection starting at beg\n\
 \n\
-  " S_mix_region " (:optional samp reg snd chn track)\n\
+  " S_mix_region " (:optional samp reg snd chn)\n\
     mix region reg at sample samp (default is cursor sample)\n\
 \n\
-  " S_mix_vct " (vct :optional beg snd chn with-mix-tags origin track)\n\
+  " S_mix_vct " (vct :optional beg snd chn with-mix-tags origin)\n\
     mix the contents of vct starting at beg\n\
     " mix_vct_example "\n\
 \n\
@@ -1346,7 +1350,7 @@ The main mix-related functions are:\n\
   " S_mix_position " (mix)\n\
     position (a sample number) of mix\n\
 \n\
-  " S_mix_frames " (mix)\n\
+  " S_mix_length " (mix)\n\
     mix's length in samples\n\
 \n\
 Other such function include: " S_mix_waveform_height ", " S_with_mix_tags ", " S_mix_tag_width ",\n\
@@ -1365,13 +1369,12 @@ reposition the mix. \
 \n\n\
 The Mix dialog (under the View Menu) provides various \
 commonly-used controls on the currently chosen mix. At the top are the mix id, \
-name, begin and end times, track number, and a play button. Beneath that are \
+name, begin and end times, and a play button. Beneath that are \
 various sliders controlling the speed (sampling rate) of the mix, amplitude of \
 each input channel, and the amplitude envelopes. \
 \n\n\
 To move the cursor from one mix to the next, in the same manner as C-j moves through marks, use C-x C-j. \
-\n\n\
-A set of associated mixes is called a 'track' in Snd, and there's a help menu item for that subject.",
+\n\n",
 #endif
 
 		      WITH_WORD_WRAP, 
@@ -1380,85 +1383,6 @@ A set of associated mixes is called a 'track' in Snd, and there's a help menu it
 
   append_key_help("C-x q", snd_K_q, 0, true,
     append_key_help("C-x C-q", snd_K_q, snd_ControlMask, true, true));
-}
-
-
-/* ---------------- Tracks ---------------- */
-
-void track_help(void) 
-{
-  #if HAVE_SCHEME
-    #define make_track_example "(make-track 1 3) ; mixes 1 and 3 are in this track"
-    #define track_amp_env_example "(set! (track-amp-env 1) '(0 0 1 1))"
-    #define track_color_example "(set! (track-color 1) (make-color 0 0 1)) ; blue"
-  #endif
-  #if HAVE_RUBY
-    #define make_track_example "make_track(1, 3) # mixes 1 and 3 are in this track"
-    #define track_amp_env_example "set_track_amp_env(1, [0.0, 0.0, 1.0, 1.0])"
-    #define track_color_example "set_track_color(1, make_color(0.0, 0.0, 1.0)) # blue" 
-  #endif
-  #if HAVE_FORTH
-    #define make_track_example "1 3 make-track \\ mixes 1 and 3 are in this track"
-    #define track_amp_env_example "1 '( 0.0 0.0 1.0 1.0 ) set-track-amp-env"
-    #define track_color_example "1 0.0 0.0 1.0 make-color set-track-color \\ blue"
-  #endif
-
-  snd_help_with_xrefs("Tracks",
-
-#if HAVE_EXTENSION_LANGUAGE
-"A track is a list of mixes, each constituent mix having its 'mix-track' field set to the track id.  The " S_make_track " \
-function takes the initial list of mix id's, returning the track id (an integer). \
-The rest of the track functions \
-take the track id as their initial argument.  A track has much the same structure as a mix: an amplitude, speed, \
-amplitude envelope, track, position, and so on.  If its own 'track-track' field is not 0, the entire track is a member \
-of the another (higher-level) track. Tracks provide a mechanism to group together related notes or mixes, \
-for panning, global envelopes, intra-voice tempo control, and so on. \
-\n\n\
-There is View:Tracks dialog to manipulate tracks from sliders and so on.  You can also use the \
-track-related functions, the more useful of which are: \n\
-\n\
-  " S_make_track " (mix-ids...)\n\
-    create a new track, returning its id:\n\
-    " make_track_example "\n\
-\n\
-  " S_play_track " (track-id :optional chn beg)\n\
-    play the given track.\n\
-\n\
-  " S_track_amp " (track-id)\n\
-    track overall amplitude.\n\
-\n\
-  " S_track_amp_env " (track-id)\n\
-    overall track amplitude envelope:\n\
-    " track_amp_env_example "\n\
-\n\
-  " S_track_color " (track-id)\n\
-    track waveform color:\n\
-    " track_color_example "\n\
-\n\
-  " S_track_position " (track-id)\n\
-    track position (begin of first mix) in samples\n\
-\n\
-  " S_track_frames " (track-id :optional chan)\n\
-    track length in samples\n\
-\n\
-  " S_track_speed " (track-id)\n\
-    track speed. This affects the resampling of each mix,\n\
-    not the speed at which the mixes occur (see track-tempo)\n\
-\n\
-  " S_track_tempo " (track-id)\n\
-    track tempo. This affects the spacing between mixes;\n\
-    a higher track-tempo corresponds to tighter spacing between mixes.\n\
-\n\
-Other track-related functions include: " S_track_track ", " S_track_chans ",\n\
-    " S_tracks ", " S_track_track ", " S_delete_track ", " S_copy_track ".",
-
-#else
-"A track is a list of mixes, but I can't see how to use it when there's no extension language.",
-#endif
-
-		      WITH_WORD_WRAP,
-		      snd_xrefs("Track"),
-		      snd_xref_urls("Track"));
 }
 
 
@@ -1756,7 +1680,6 @@ The following functions are related to playing sounds:\n\
   " S_play_mix " (mix :optional beg)\n\
   " S_play_region " (:optional reg wait stop-func)\n\
   " S_play_selection " (:optional wait pos stop-proc)\n\
-  " S_play_track " (track-id :optional chn beg)\n\
 \n\
   " S_pausing ": set to " PROC_TRUE " to pause output\n",
 
@@ -2013,7 +1936,7 @@ The control panel 'speed' functions are:\n\
   " S_speed_control_bounds " (:optional snd)\n\
     speed-control min and max amounts as a list.\n\
     The default is (list 0.05 20.0). If no 'snd' argument\n\
-    is given, this affects Mix, Track, and View:Files dialogs.\n\
+    is given, this affects Mix and View:Files dialogs.\n\
 \n\
   " S_speed_control_style " (:optional snd)\n\
     The speed control can be a float, (" H_speed_control_as_float "),\n\
@@ -2101,9 +2024,7 @@ functions are:\n\
     delete 'samps' samples starting at 'samp'\n\
 \n\
   " S_delete_selection " (): delete selected portions.\n\
-  " S_delete_mark " (id): delete mark 'id'\n\
-  " S_delete_mix " (id): delete mix 'id'\n\
-  " S_delete_track " (id): delete track 'id'\n",
+  " S_delete_mark " (id): delete mark 'id'",
 
 #else
 "To delete a sample, use C-d; to delete the selection, C-w, or the Edit menu Delete Selection option.",
@@ -2157,7 +2078,7 @@ The main region-related functions are:\n\
   " S_insert_region " (:optional beg reg snd chn)\n\
     insert region 'reg' at sample 'beg'\n\
 \n\
-  " S_mix_region " (:optional samp reg snd chn track)\n\
+  " S_mix_region " (:optional samp reg snd chn)\n\
     mix in region 'reg' at sample 'samp' (defaults to the cursor sample)\n\
 \n\
   " S_play_region " (:optional reg wait stop-func)\n\
@@ -2789,7 +2710,7 @@ void mix_dialog_help(void)
 
 "This dialog provides various commonly-used controls on the currently \
 chosen mix.  At the top are the mix id, begin and end times, \
-track number, and a play button.  " mix_dialog_mix_help "Beneath that are various sliders \
+and a play button.  " mix_dialog_mix_help "Beneath that are various sliders \
 controlling the speed (sampling rate) of the mix, and the amplitude of each \
 input channel; and finally, an envelope editor for the mix's (input) channels. \
 The current mix amp env is not actually changed until you click 'Apply Env'.\
@@ -2800,34 +2721,6 @@ mix amp env (if any) is drawn in blue.",
 		      snd_xrefs("Mix"),
 		      snd_xref_urls("Mix"));
 }
-
-
-/* ---------------- Track Dialog ---------------- */
-
-void track_dialog_help(void)
-{
-  #if HAVE_EXTENSION_LANGUAGE
-    #define track_dialog_track_help "The function " S_track_dialog_track " gives (or sets) the currently displayed track's id. "
-  #else
-    #define track_dialog_track_help ""
-  #endif
-
-  snd_help_with_xrefs("Tracks",
-
-"This dialog provides various commonly-used controls on the currently \
-chosen track.  At the top are the track id, begin and end times, \
-track number, and a play button.  " track_dialog_track_help "Beneath that are various sliders \
-controlling the speed (sampling rate) and the amplitude of the track, \
-and an envelope editor for the track's overall amplitude envelope. \
-The current track's amp env is not actually changed until you click 'Apply Env'.\
-The editor envelope is drawn in black with dots whereas the current \
-mix amp env (if any) is drawn in blue. ",
-
-		      WITH_WORD_WRAP,
-		      snd_xrefs("Track"),
-		      snd_xref_urls("Track"));
-}
-
 
 
 /* ---------------- New File ---------------- */
@@ -3143,11 +3036,11 @@ static char *topic_url(const char *topic)
   return(NULL);
 }
 
-#define NUM_XREFS 36
+#define NUM_XREFS 35
 static char *xrefs[NUM_XREFS] = {
   "Mark", "Mix", "Region", "Selection", "Cursor", "Tracking cursor", "Delete", "Envelope", "Filter",
   "Search", "Insert", "Maxamp", "Play", "Reverse", "Save", "Smooth", "Resample", "FFT", "Reverb",
-  "Src", "Find", "Undo", "Redo", "Sync", "Control panel", "Record", "Header", "Key", "Track", "Copy",
+  "Src", "Find", "Undo", "Redo", "Sync", "Control panel", "Record", "Header", "Key", "Copy",
   "Noise Reduction", "Window Size", "Color", "Control", "Random Numbers", "Wavogram"
 };
 
@@ -3156,7 +3049,7 @@ static char **xref_tables[NUM_XREFS] = {
   Deletions_xrefs, Envelopes_xrefs, Filters_xrefs, Searching_xrefs, Insertions_xrefs, Maxamps_xrefs,
   Playing_xrefs, Reversing_xrefs, Saving_xrefs, Smoothing_xrefs, Resampling_xrefs, FFTs_xrefs, Reverb_xrefs,
   Resampling_xrefs, Searching_xrefs, Undo_and_Redo_xrefs, Undo_and_Redo_xrefs, 
-  sync_xrefs, control_xrefs, NULL, header_and_data_xrefs, key_xrefs, Tracks_xrefs, Copying_xrefs,
+  sync_xrefs, control_xrefs, NULL, header_and_data_xrefs, key_xrefs, Copying_xrefs,
   Noise_Reduction_xrefs, Window_size_and_position_xrefs, Colors_xrefs, control_xrefs, Random_Numbers_xrefs,
   Wavogram_xrefs
 };
@@ -3166,7 +3059,7 @@ static char **xref_url_tables[NUM_XREFS] = {
   Deletions_urls, Envelopes_urls, Filters_urls, Searching_urls, Insertions_urls, Maxamps_urls,
   Playing_urls, Reversing_urls, Saving_urls, Smoothing_urls, Resampling_urls, FFTs_urls, Reverb_urls,
   Resampling_urls, Searching_urls, Undo_and_Redo_urls, Undo_and_Redo_urls, 
-  NULL, NULL, NULL, NULL, NULL, Tracks_urls, Copying_urls, 
+  NULL, NULL, NULL, NULL, NULL, Copying_urls, 
   Noise_Reduction_urls, Window_size_and_position_urls, Colors_urls, NULL, Random_Numbers_urls,
   Wavogram_urls
 };
@@ -3178,7 +3071,7 @@ static help_func help_funcs[NUM_XREFS] = {
   &delete_help, &env_help, &filter_help, &find_help, &insert_help, &maxamp_help,
   &play_help, &reverse_help, &save_help, &smooth_help, &resample_help, &fft_help, &reverb_help,
   &resample_help, &find_help, &undo_help, &undo_help,
-  &sync_help, &controls_help, recording_help, &sound_files_help, &key_binding_help, &track_help, &copy_help,
+  &sync_help, &controls_help, recording_help, &sound_files_help, &key_binding_help, &copy_help,
   &noise_reduction_help, &window_size_help, &colors_help, &controls_help, &random_numbers_help,
   &wavogram_help
 };

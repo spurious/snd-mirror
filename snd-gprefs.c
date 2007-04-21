@@ -21,7 +21,7 @@ typedef struct prefs_info {
   GtkObject *adj, *radj, *gadj, *badj;
   GtkWidget **radio_buttons;
   bool got_error;
-  guint help_id, power_id, erase_id;
+  timeout_result_t help_id, power_id, erase_id;
   const char *var_name, *saved_label;
   const char **values;
   int num_values, num_buttons;
@@ -64,9 +64,6 @@ static void post_prefs_error(const char *msg, prefs_info *data);
 #define SET_TEXT(Text, Val)       set_text(Text, Val)
 #define FREE_TEXT(Val)            
 #define TIMEOUT(Func)             g_timeout_add_full(0, ERROR_WAIT_TIME, Func, (gpointer)prf, NULL)
-#define TIMEOUT_ARGS              gpointer context
-#define TIMEOUT_TYPE              gint
-#define TIMEOUT_RESULT            return(0);
 #define SET_SCALE(Value)          gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->adj), Value)
 #define GET_SCALE()               (GTK_ADJUSTMENT(prf->adj)->value * prf->scale_max)
 #define SET_SENSITIVE(Wid, Val)   gtk_widget_set_sensitive(Wid, Val)
@@ -1899,13 +1896,6 @@ widget_t start_preferences_dialog(void)
 				dpy_box,
 				marks_menu_toggle);
     remember_pref(prf, reflect_marks_menu, save_marks_menu, help_marks_menu, clear_marks_menu, revert_marks_menu);
-
-    current_sep = make_inter_variable_separator(dpy_box);
-    prf = prefs_row_with_toggle("mix/track menu", "mix-menu.scm",
-				(include_mix_menu = find_mix_menu()),
-				dpy_box,
-				mix_menu_toggle);
-    remember_pref(prf, reflect_mix_menu, save_mix_menu, help_mix_menu, clear_mix_menu, revert_mix_menu);
 
     current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("a toolbar", "toolbar.scm",

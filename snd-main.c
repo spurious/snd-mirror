@@ -6,7 +6,7 @@
 static void remove_temp_files(chan_info *cp)
 {
   free_sound_list(cp);
-  free_mix_list(cp);
+  delete_any_remaining_mix_temp_files_at_exit(cp);
 }
 
 static XEN exit_hook;
@@ -600,9 +600,6 @@ static void save_options(FILE *fd)
   if (filter_control_in_hz(ss) != DEFAULT_FILTER_CONTROL_IN_HZ) pss_ss(fd, S_filter_control_in_hz, b2s(filter_control_in_hz(ss)));
   if (with_tracking_cursor(ss) != DEFAULT_WITH_TRACKING_CURSOR)
     pss_ss(fd, S_with_tracking_cursor, b2s((bool)(with_tracking_cursor(ss)))); /* a boolean from the user's point of view */
-  if ((fneq(tempo_control_min(ss), DEFAULT_TEMPO_CONTROL_MIN)) ||
-      (fneq(tempo_control_max(ss), DEFAULT_TEMPO_CONTROL_MAX)))
-    pss_sl(fd, S_tempo_control_bounds, tempo_control_min(ss), tempo_control_max(ss));
   if (in_show_controls(ss) != DEFAULT_SHOW_CONTROLS) pss_ss(fd, S_show_controls, b2s(in_show_controls(ss)));
 
   save_colors(fd);
@@ -680,9 +677,6 @@ void global_control_panel_state(void)
 	       filter_control_order(ss),
 	       b2s(filter_control_in_dB(ss)),
 	       b2s(filter_control_in_hz(ss)));
-  snd_help_append(buf);
-  mus_snprintf(buf, 1024, "tempo bounds: %.3f to %.3f\n",
-	       tempo_control_min(ss), tempo_control_max(ss));
   snd_help_append(buf);
   snd_help_back_to_top();
   FREE(buf);

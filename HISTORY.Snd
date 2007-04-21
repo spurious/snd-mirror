@@ -1,6 +1,11 @@
 Snd change log
 
- 6-Apr:      removed mix-chans, mix-locked?, mix-inverted?, lock-track.
+ 1-May:      Snd 9.0.
+ 16-Apr:     removed mix-chans, mix-locked?, mix-inverted?, all track stuff
+               track-colors.scm, mix-menu.scm
+             moved mix-properties into C.
+             added edit-properties, mix-sync.
+             spokenword.scm thanks to Ville Koskinen.\n\
  23-Mar:     recorder dialog removed.
  22-Mar:     Snd 8.9.
  14-Mar:     cairo graphics backend (--with-cairo configure choice).

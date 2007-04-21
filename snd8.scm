@@ -71,3 +71,9 @@
 (define recorder-trigger         (make-procedure-with-setter (lambda () #f) (lambda (val) #f)))
 (define vu-size                  (make-procedure-with-setter (lambda () #f) (lambda (val) #f)))
 (define vu-in-dB                 (make-procedure-with-setter (lambda () #f) (lambda (val) #f)))
+
+
+(define (lock-track trk) "obsolete" #f)
+(define mix-locked?              (make-procedure-with-setter (lambda (id) #f) (lambda (id val) #f)))
+(define mix-inverted?            (make-procedure-with-setter (lambda (id) #f) (lambda (id val) #f)))
+(define (mix-chans id) "obsolete" 1)

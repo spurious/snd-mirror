@@ -403,7 +403,7 @@ sync_info *selection_sync(void)
   return(si);
 }
 
-static int mix_selection(chan_info *cp, sync_info *si_out, off_t beg, io_error_t *err)
+static int mix_selection(chan_info *cp, sync_info *si_out, off_t beg, io_error_t *err, int start_chan)
 {
   char *tempfile = NULL, *origin = NULL;
   int id = INVALID_MIX_ID;
@@ -419,7 +419,8 @@ static int mix_selection(chan_info *cp, sync_info *si_out, off_t beg, io_error_t
 #endif
       id = mix_file(beg, selection_len(), si_out->chans, si_out->cps, tempfile, 
 		    (si_out->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
-		    origin, with_mix_tags(ss), 0);
+		    origin, with_mix_tags(ss), 
+		    start_chan);
       FREE(origin);
     }
   if (tempfile) FREE(tempfile);
@@ -442,7 +443,7 @@ void add_selection_or_region(int reg, chan_info *cp)
 	    {
 	      sync_info *si_out;
 	      si_out = sync_to_chan(cp);
-	      mix_selection(cp, si_out, CURSOR(cp), &io_err);
+	      mix_selection(cp, si_out, CURSOR(cp), &io_err, 0);
 	      free_sync_info(si_out);
 	    }
 	  else io_err = add_region(reg, cp);
@@ -699,17 +700,30 @@ int select_all(chan_info *cp)
 
 /* ---------------- selection mouse motion ---------------- */
 
+/* TODO: an oddity of mouse-driven selection definition: if move left of start, start is reset! */
+
 static int last_selection_x = 0;
-static idle_t watch_selection_button = 0;
+static timeout_result_t watch_selection_button = 0;
 
 void cancel_selection_watch(void)
 {
   if (watch_selection_button)
-    BACKGROUND_REMOVE(watch_selection_button);
+    TIMEOUT_REMOVE(watch_selection_button);
   watch_selection_button = 0;
 }
 
-static void start_selection_watching(chan_info *cp);
+static void move_selection_1(chan_info *cp, int x);
+
+static TIMEOUT_TYPE watch_selection(TIMEOUT_ARGS)
+{
+  chan_info *cp = (chan_info *)context;
+  if (watch_selection_button)
+    {
+      move_selection_1(cp, last_selection_x);
+      watch_selection_button = CALL_TIMEOUT(watch_selection, 50, cp);
+    }
+  TIMEOUT_RESULT
+}
 
 static void move_selection_1(chan_info *cp, int x)
 {
@@ -721,27 +735,13 @@ static void move_selection_1(chan_info *cp, int x)
 	  ((x < ap->x_axis_x0) && (ap->x0 == ap->xmin)))
 	return;
       move_axis(cp, ap, x);
-      if (!watch_selection_button) start_selection_watching(cp);
+      if (!watch_selection_button) 
+	watch_selection_button = CALL_TIMEOUT(watch_selection, 50, cp);
     }
   else 
     if (watch_selection_button) 
       cancel_selection_watch();
   redraw_selection();
-}
-
-static idle_func_t WatchSelection(any_pointer_t cp)
-{
-  if (watch_selection_button)
-    {
-      move_selection_1((chan_info *)cp, last_selection_x);
-      return(BACKGROUND_CONTINUE);
-    }
-  else return(BACKGROUND_QUIT);
-}
-
-static void start_selection_watching(chan_info *cp)
-{
-  watch_selection_button = BACKGROUND_ADD(WatchSelection, cp);
 }
 
 void move_selection(chan_info *cp, int x)
@@ -963,25 +963,29 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
   return(snd_no_active_selection_error(S_insert_selection));
 }
 
-static XEN g_mix_selection(XEN beg, XEN snd, XEN chn)
+static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
 {
-  #define H_mix_selection "(" S_mix_selection " :optional (beg 0) snd chn): mix the currently selected portion starting at beg"
+  #define H_mix_selection "(" S_mix_selection " :optional (beg 0) snd chn (selection-channel #t)): mix the currently selected portion starting at beg"
   if (selection_is_active())
     {
       chan_info *cp;
       off_t obeg;
       io_error_t io_err = IO_NO_ERROR;
       XEN res;
+      int selection_chan = 0;
       sync_info *si_out;
       ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_mix_selection, "a number");
+      XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(sel_chan), sel_chan, XEN_ARG_4, S_mix_selection, "an integer or #t");
       cp = get_cp(snd, chn, S_mix_selection);
       if ((!cp) || (!(editable_p(cp)))) return(XEN_FALSE);
       obeg = beg_to_sample(beg, S_mix_selection);
+      if (XEN_INTEGER_P(sel_chan))
+	selection_chan = XEN_TO_C_INT(sel_chan);
       if (XEN_NUMBER_P(chn))
 	si_out = make_simple_sync(cp, obeg); /* ignore sync */
       else si_out = sync_to_chan(cp);
-      res = C_TO_XEN_INT(mix_selection(cp, si_out, obeg, &io_err));
+      res = C_TO_XEN_INT(mix_selection(cp, si_out, obeg, &io_err, selection_chan));
       free_sync_info(si_out);
       if (SERIOUS_IO_ERROR(io_err))
 	XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
@@ -1287,7 +1291,7 @@ XEN_ARGIFY_2(g_selection_maxamp_w, g_selection_maxamp)
 XEN_ARGIFY_2(g_selection_maxamp_position_w, g_selection_maxamp_position)
 XEN_NARGIFY_0(g_delete_selection_w, g_delete_selection)
 XEN_ARGIFY_3(g_insert_selection_w, g_insert_selection)
-XEN_ARGIFY_3(g_mix_selection_w, g_mix_selection)
+XEN_ARGIFY_4(g_mix_selection_w, g_mix_selection)
 XEN_ARGIFY_2(g_select_all_w, g_select_all)
 XEN_VARGIFY(g_save_selection_w, g_save_selection)
 #else
@@ -1332,7 +1336,7 @@ void g_init_selection(void)
   XEN_DEFINE_PROCEDURE(S_selection_maxamp_position, g_selection_maxamp_position_w, 0, 2, 0, H_selection_maxamp_position);
   XEN_DEFINE_PROCEDURE(S_delete_selection, g_delete_selection_w, 0, 0, 0, H_delete_selection);
   XEN_DEFINE_PROCEDURE(S_insert_selection, g_insert_selection_w, 0, 3, 0, H_insert_selection);
-  XEN_DEFINE_PROCEDURE(S_mix_selection,    g_mix_selection_w,    0, 3, 0, H_mix_selection);
+  XEN_DEFINE_PROCEDURE(S_mix_selection,    g_mix_selection_w,    0, 4, 0, H_mix_selection);
   XEN_DEFINE_PROCEDURE(S_select_all,       g_select_all_w,       0, 2, 0, H_select_all);
   XEN_DEFINE_PROCEDURE(S_save_selection,   g_save_selection_w,   0, 0, 1, H_save_selection);
 }

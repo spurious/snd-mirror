@@ -174,8 +174,8 @@ For help with Forth and Snd/CLM, see the Forth documentation section "Snd, CLM, 
  fft notch filter, mark and mix functions, etc.  The main one loads a huge set of sound effects.')">additional menus</td></tr>
 
 <tr><td bgcolor="#f6f8ff"><a href="#mixdoc">mix</a></td>
-    <td bgcolor="#f6f8ff" onmouseover="return escape('mix-property, delete-all-mixes, mix-sound, save-mix,\
- snap-mix-to-beat; similar functions for tracks')">functions related to mixes and tracks</td></tr>
+    <td bgcolor="#f6f8ff" onmouseover="return escape('mix-property, silence-all-mixes, mix-sound, save-mix,\
+ snap-mix-to-beat')">functions related to mixes</td></tr>
 
 <tr><td><a href="#mixerdoc">mixer</a></td>
     <td onmouseover="return escape('matrix determinant, transpose, invert, using the CLM\
@@ -4605,7 +4605,7 @@ In fact, we could replace the built-in procedures <a href="extsnd.html#addsoundf
 <a class=def name="insertchannel">insert-channel</a> <code>filedat :optional beg dur snd chn edpos</code>
 </td></tr><tr><td></td><td>
 insert-channel inserts the specified data ('filedat') in the given channel at the given location.
-See mix-channel below for a description of 'filedat'.
+See <a href="#mixchannel">mix-channel</a> for a description of 'filedat'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4963,10 +4963,10 @@ mix-frame mixes the frame (fr) of samples into sound snd (one sample in each cha
 
 <!-- mix-sound-data -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="mixsounddata">mix-sound-data</a> <code>sd :optional beg dur snd tagged trk</code>
+<a class=def name="mixsounddata">mix-sound-data</a> <code>sd :optional beg dur snd tagged</code>
 </td></tr><tr><td></td><td>
 mix-sound-data mixes the contents of sound-data sd into sound snd at beg.  tagged determines whether
-the resulting mixes have tags, and trk is the track they are placed in (0 = none).
+the resulting mixes have tags.
 See <a href="#insertsounddata">insert-sound-data</a> for an example that could easily be changed to use mixing instead.
 As with mix-vct, we can use <a href="clm.html#with-sound">with-sound</a> to add notelist output as an edit:
 <pre>
@@ -5083,14 +5083,6 @@ sound-&gt;frame returns a frame containing the contents of the sound snd at posi
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- track->sound-data -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="tracktosounddata">track-&gt;sound-data</a> <code>trk :optional (beg 0)</code>
-</td></tr><tr><td></td><td>
-track-&gt;sound-data returns a sound-data object containing the contents of the track 'trk'.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- vct->file -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="vcttofile">vct-&gt;file</a> <code>vct file :optional (srate 22050) (comment "")</code>
@@ -5199,13 +5191,6 @@ make-selection-frame-reader returns a frame reader that reads all channels of th
 make-sync-frame-reader returns a frame reader that reads all channels sync'd to the sound 'snd'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
-<!-- make-track-frame-reader -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="maketrackframereader">make-track-frame-reader</a> <code>start</code></td></tr>
-<tr><td></td><td>
-make-track-frame-reader returns a frame reader that reads all channels of the track 'trk'.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
 <!-- next-frame -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="nextframe">next-frame</a> <code>obj</code></td></tr>
@@ -5226,13 +5211,6 @@ previous-frame returns the previous frame in the stream read by the frame-reader
 <tr><td></td><td>
 read-frame returns the next frame (reading in the direction set by <a class=quiet href="#makeframereader">make-frame-reader</a>) 
 from the frame-reader 'obj'.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-<!-- read-track-frame -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="readtrackframe">read-track-frame</a> <code>obj</code></td></tr>
-<tr><td></td><td>
-read-track-frame returns the next frame read by the track-frame-reader 'obj'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 </table>
@@ -6177,7 +6155,7 @@ edit-menu.scm adds some useful options to the Edit menu:
 
 <!-- fft-menu.scm -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>mix-menu.scm</em>
+<em class=emdef>fft-menu.scm</em>
 </td></tr><tr><td></td><td>
 fft-menu.scm adds an "FFT Edits" top-level menu.  It has entries for:
 <pre>
@@ -6215,29 +6193,6 @@ marks-menu.scm adds a "Marks" top-level menu with entries:
   Show loop editor           ; edit loop points; this dialog is not really functional yet
   Delete all marks           ; delete all marks
   Explode marks to files     ; writes a separate file for each set of marks
-</pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- mix-menu.scm -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>mix-menu.scm</em>
-</td></tr><tr><td></td><td>
-mix-menu.scm adds a top-level "Mix/Track" menu with entries for:
-<pre>
-  Delete mix            ; delete mix (set its amp to 0.0)
-  Snap mix to beat      ; if on, make mixes start on a beat
-  Assign all tracks     ; set track numbers
-  Delete track          ; delete track (set its amp to 0.0)
-  Play track
-  Reverse track         ; reverse order of constituent mixes in track
-  Set track amplitude
-  Set track speed       ; track sampling rate conversion (2.0 = up octave)
-  Set track tempo       ; change tempo at which constituent mixes occur
-  Transpose track       ; transpose each mix
-  Save track            ; save track to file "track-1.snd" (number increments)
-  Colorize tracks       ; load track-colors.scm to get tracks in many colors
-  Delete all mixes and tracks
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -6319,8 +6274,7 @@ special-menu.scm adds a "Special" menu with entries:
 </table>
 
 <p>Associated with these menus is a group of files that change Snd's overall appearance, add a box of
-handy icons, and so on: misc.scm, track-colors.scm, toolbar.scm, and new-backgrounds.scm.
-<b>track-colors.scm</b> defines the color choices for the tracks, based on rgb.scm.
+handy icons, and so on: misc.scm, toolbar.scm, and new-backgrounds.scm.
 <b>new-backgrounds.scm</b> defines some background pictures that can be applied to all the
 Snd widgets: wood, granite, rough, blueish, and smoke.  I think "rough" is the
 default used by misc.scm.
@@ -6366,18 +6320,18 @@ you want to your initialization file.
 
 <!-- main-index |mixdoc:cross-fade (amplitude) -->
 
-<p>mix.scm provides various mix and track related utilities. 
+<p>mix.scm provides various mix utilities. 
 </p>
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" align="center" valign="middle"><h3>mixes</h3></td></tr></table>
 
 <table border=0 cellspacing=0 hspace=20>
 
-<!-- delete-all-mixes -->
+<!-- color-mixes -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="deleteallmixes">delete-all-mixes</a>
-</td></tr><tr><td width=60></td><td>
-This removes all mixes (sets all mix amplitudes to 0.0).
+<a class=def name="colormixes">color-mixes</a> <code>mix-list new-color</code>
+</td></tr><tr><td></td><td>
+color-mixes sets the color of each mix in 'mix-list' to 'new-color'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -6404,7 +6358,7 @@ clicked mix in the help dialog.
 <A class=def NAME="mixclicksetsamp">mix-click-sets-amp</A>
 </td></tr><tr><td></td><td>
 mix-click-sets-amp adds a <a href="extsnd.html#mixclickhook">mix-click-hook</a> function so that 
-if you click a mix, it is removed (its amplitudes are set to 0.0);
+if you click a mix, it is removed (its amplitude is set to 0.0);
 a subsequent click resets it to its previous value.
 This is intended to make it easy to compare renditions with and without a given mix.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -6430,14 +6384,14 @@ mix-name-&gt;id returns the if of the mix with the given name, or 'no-such-mix i
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="mixproperty">mix-property</a> <code>key id</code>
 </td></tr><tr><td></td><td>
-mix-property associates a property list with each mix.
+mix-property associates a property with each mix.
 <pre>
     :<em class=typing>(set! (mix-property :info 0) "this is a mix")</em>
     <em class=listener>"this is a mix"</em>
     :<em class=typing>(mix-property :info 0)</em>
     <em class=listener>"this is a mix"</em>
 </pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2></td></tr>
 
 
 <!-- mix-sound -->
@@ -6452,8 +6406,32 @@ mix-sound mixes 'file' (all chans) into the currently selected sound at 'start'.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="mixtovct">mix-&gt;vct</a> <code>id</code>
 </td></tr><tr><td></td><td>
-mix-&gt;vct returns in a vct the current samples
-of mix 'id'.
+mix-&gt;vct returns a mix's samples in a vct.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mixes-length -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def NAME="mixeslength">mixes-length</A> <code>mix-list</code>
+</td></tr><tr><td></td><td>
+mixes-length returns the number of samples between the start of the first mix in 'mix-list' and
+the last end point.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mixes-maxamp -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def NAME="mixesmaxamp">mixes-maxamp</A> <code>mix-list</code>
+</td></tr><tr><td></td><td>
+mixes-maxamp returns the maxamp of the mixes in 'mix-list'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- move-mixes -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="movemixes">move-mixes</a> <code>mix-list samps</code>
+</td></tr><tr><td></td><td>
+move-mixes moves each mix in 'mix-list' by 'samps' samples.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -6462,6 +6440,54 @@ of mix 'id'.
 <a class=def name="savemix">save-mix</a> <code>id filename</code>
 </td></tr><tr><td></td><td>
 save-mix saves a given mix's data in a file.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- save-mixes -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="savemixes">save-mixes</a> <code>mix-list filename</code>
+</td></tr><tr><td></td><td>
+save-mixes saves the given mixes in the file 'filename'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- scale-mixes -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="scalemixes">scale-mixes</a> <code>mix-list scl</code>
+</td></tr><tr><td></td><td>
+scale-mixes scales the amplitude of each mix in 'mix-list' by 'scl'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- scale-tempo -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="scaletempo">scale-tempo</a> <code>mix-list scl</code>
+</td></tr><tr><td></td><td>
+scale-tempo changes the positions of the mixes in 'mix-list' to reflect a tempo change of 'scl'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- set-mixes-tag-y -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def NAME="setmixestagy">set-mixes-tag-y</A> <code>mix-list new-y</code>
+</td></tr><tr><td></td><td>
+set-mixes-tag-y sets the tag y location of each mix in 'mix-list' to 'new-y'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- silence-all-mixes -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="silenceallmixes">silence-all-mixes</a>
+</td></tr><tr><td width=60></td><td>
+This sets all mix amplitudes to 0.0.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- silence-mixes -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="silencemixes">silence-mixes</a> <code>mix-list</code>
+</td></tr><tr><td></td><td>
+silence-mixes sets the amplitude of each mix in 'mix-list' to 0.0.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -6474,112 +6500,25 @@ If 'at-tag-position' is #t, the tagged point, rather than the mix beginning fall
 Reset <a href="extsnd.html#mixreleasehook">mix-release-hook</a> to cancel this action.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+<!-- src-mixes -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="srcmixes">src-mixes</a> <code>mix-list scl</code>
+</td></tr><tr><td></td><td>
+src-mixes scales the speed (resampling ratio) of each mix in 'mix-list' by 'scl'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- transpose-mixes -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="transposemixes">transpose-mixes</a> <code>mix-list semitones</code>
+</td></tr><tr><td></td><td>
+transpose-mixes sets the speed of mix in 'mix-list' to cause a transposition by the given number of semitones.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 </table>
 
 <br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" align="center" valign="middle"><h3>tracks</h3></td></tr></table>
-
-<table border=0 cellspacing=0 hspace=20>
-
-<!-- delete-all-tracks -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="deletealltracks">delete-all-tracks</a>
-</td></tr><tr><td width=60></td><td>
-delete-all-tracks removes all mixes (by setting their amplitudes to 0.0) that have an associated track.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- filter-track -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="filtertrack">filter-track</a> <code>track fir-coeffs</code>
-</td></tr><tr><td></td><td>
-filter-track applies an FIR filter to each mix sound at the pre-mix point (that is, the
-mixed in sound is filtered, then the mix takes place).
-'fir-coeffs' are the filter coefficients:
-<pre>
-    (filter-track track-id '(.1 .2 .3 .3 .2 .1)) ; a low-pass filter
-</pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- retempo-track -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="retempotrack">retempo-track</a> <code>track tempo</code>
-</td></tr><tr><td></td><td>
-retempo-track affects the time between the successive mix begin points ('tempo' &gt; 1.0 makes the
-mixes happen more quickly):
-<pre>
-    :<em class=typing>(retempo-track (track 1) 2.0)</em>
-    <em class=listener>(1500 7770)</em>
-    :<em class=typing>(mix-position 0)</em>
-    <em class=listener>1500</em>
-    :<em class=typing>(mix-position 1)</em>
-    <em class=listener>7770</em>
-    :<em class=typing>(+ 1500 (* .5 (- 14039 1500))) ; 14039 is the former mix 1 begin time (see above)</em>
-    <em class=listener>7769.5</em>
-</pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- reverse-track -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="reversetrack">reverse-track</a> <code>track</code>
-</td></tr><tr><td></td><td>
-reverse-track reverses the order in which a track's member mixes occur.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- save-track -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="savetrack">save-track</a> <code>track filename (chan #t)</code>
-</td></tr><tr><td></td><td>
-save-track places the track's samples into the file 'filename'.
-If the 'chan' arg is #t, all channels are saved.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track-maxamp -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="trackmaxamp">track-maxamp</a> <code>id :optional chan</code>
-</td></tr><tr><td></td><td>
-track-maxamp returns the maxamp in the given track channel.  If 'chan' is #t,
-track-maxamp returns a list of all channel maxamps (much like <a href="extsnd.html#maxamp">maxamp</a>).
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track-name->id -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="tracknametoid">track-name-&gt;id</a> <code>name</code>
-</td></tr><tr><td></td><td>
-track-name-&gt;id returns the if of the track with the given name, or 'no-such-track if none can be found.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track-property -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="trackproperty">track-property</a> <code>key id</code>
-</td></tr><tr><td></td><td>
-track-property associates a property list with each track.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- transpose-track -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="transposetrack">transpose-track</a> <code>track semitones</code>
-</td></tr><tr><td></td><td>
-transpose-track transposes each mix in 'track' by 'semitones'.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track-&gt;vct -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="tracktovct">track-&gt;vct</a> <code>track (chan 0)</code>
-</td></tr><tr><td></td><td>
-track-&gt;vct places all the track samples (the samples of all the constituent mixes)
-into a vct.  
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-</table>
 
 <table bgcolor="aliceblue" border=0><tr><td>
 <pre>see also: <a href="extsnd.html#sndmixes">Mixes</a> <a href="snd.html#mixingfiles">View:Mix</a> <a href="#mixchannel">mix-channel</a> <a href="#fadedoc">dissolve-fade</a> <a href="clm.html#musmix">mus-mix</a> <a href="clm.html#with-mix">with-mix</a>

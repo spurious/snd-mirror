@@ -1579,7 +1579,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  ss->sgx->requestor_dialog = w;
 	  ss->open_requestor = FROM_MIX_DIALOG;
 	  ss->open_requestor_data = NULL;
-	  id_or_error = mix_complete_file_at_cursor(sp, filename, with_mix_tags(ss), 0);
+	  id_or_error = mix_complete_file_at_cursor(sp, filename);
 	  /* "id_or_error" here is either one of the mix id's or an error indication such as MIX_FILE_NO_MIX */
 	  /*    the possible error conditions have been checked already, or go through snd_error */
 	  redirect_snd_error_to(NULL, NULL);
@@ -4314,7 +4314,7 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    {
 	    case FROM_MIX_DIALOG:
 	      redirect_snd_error_to(redirect_file_open_error, (void *)mdat);
-	      mix_complete_file_at_cursor(any_selected_sound(), rp->filename, with_mix_tags(ss), 0);
+	      mix_complete_file_at_cursor(any_selected_sound(), rp->filename);
 	      break;
 	    case FROM_INSERT_DIALOG:
 	      redirect_snd_error_to(redirect_file_open_error, (void *)idat);

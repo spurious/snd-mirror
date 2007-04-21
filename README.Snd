@@ -7,11 +7,11 @@ even run on others if the GUI support is omitted.
 
 To build Snd, get the sources from
 
-  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz
+  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-9.tar.gz
 
-  gzip -d snd-8.tar.gz
-  tar xf snd-8.tar
-  cd snd-8
+  gzip -d snd-9.tar.gz
+  tar xf snd-9.tar
+  cd snd-9
   ./configure
   make
   make install
@@ -235,7 +235,8 @@ Plus many other contributions from
   Fabio Furlanete,
   Rick Taube,
   Anders Vinjar,
-  Olivier Doare.
+  Olivier Doare,
+  Ville Koskinen.
 
 
 In terms of number of lines, the languages used in Snd/Sndlib are:
@@ -291,7 +292,7 @@ CCRMA:
   http://ccrma-mail.stanford.edu/mailman/listinfo/planetccrma
 
 Snd:
-  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz
+  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-9.tar.gz
   http://ccrma.stanford.edu/software/snd/
   http://sourceforge.net/projects/snd/
   http://www.notam02.no/arkiv/doc/snd-rt/

@@ -99,7 +99,6 @@ static void view_listener_callback(GtkWidget *w, gpointer info) {handle_listener
 #endif
 
 static void view_mix_dialog_callback(GtkWidget *w, gpointer info) {make_mix_dialog();}
-static void view_track_dialog_callback(GtkWidget *w, gpointer info) {make_track_dialog();}
 static void view_region_callback_1(GtkWidget *w, gpointer info) {view_region_callback(w, info);}
 static void view_orientation_callback_1(GtkWidget *w, gpointer info) {view_orientation_callback(w, info);}
 static void view_color_callback_1(GtkWidget *w, gpointer info) {view_color_callback(w, info);}
@@ -154,7 +153,6 @@ static void help_controls_callback(GtkWidget *w, gpointer info) {controls_help()
 static void help_env_callback(GtkWidget *w, gpointer info) {env_help();}
 static void help_marks_callback(GtkWidget *w, gpointer info) {marks_help();}
 static void help_mix_callback(GtkWidget *w, gpointer info) {mix_help();}
-static void help_track_callback(GtkWidget *w, gpointer info) {track_help();}
 static void help_sound_files_callback(GtkWidget *w, gpointer info) {sound_files_help();}
 static void help_recording_callback(GtkWidget *w, gpointer info) {recording_help();}
 static void help_keys_callback(GtkWidget *w, gpointer info) {key_binding_help();}
@@ -499,13 +497,6 @@ GtkWidget *add_menu(void)
   gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(view_mix_dialog_menu), gtk_image_new_from_stock(GTK_STOCK_ADD, GTK_ICON_SIZE_MENU));
   gtk_widget_show(view_mix_dialog_menu);
   SG_SIGNAL_CONNECT(view_mix_dialog_menu, "activate", view_mix_dialog_callback, NULL);
-
-  view_track_dialog_menu = gtk_image_menu_item_new_with_label(_("Tracks"));
-  ml[v_track_dialog_menu] = _("Tracks");
-  gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_track_dialog_menu);
-  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(view_track_dialog_menu), gtk_image_new_from_stock(GTK_STOCK_BOLD, GTK_ICON_SIZE_MENU));
-  gtk_widget_show(view_track_dialog_menu);
-  SG_SIGNAL_CONNECT(view_track_dialog_menu, "activate", view_track_dialog_callback, NULL);
 
   view_region_menu = gtk_image_menu_item_new_with_label(_("Regions"));
   ml[v_region_menu] = _("Regions");
@@ -865,12 +856,6 @@ GtkWidget *add_menu(void)
   gtk_menu_shell_append(GTK_MENU_SHELL(help_cascade_menu), help_mix_menu);
   gtk_widget_show(help_mix_menu);
   SG_SIGNAL_CONNECT(help_mix_menu, "activate", help_mix_callback, NULL);
-
-  help_track_menu = gtk_menu_item_new_with_label(_("Track"));
-  ml[h_track_menu] = _("Track");
-  gtk_menu_shell_append(GTK_MENU_SHELL(help_cascade_menu), help_track_menu);
-  gtk_widget_show(help_track_menu);
-  SG_SIGNAL_CONNECT(help_track_menu, "activate", help_track_callback, NULL);
 
   help_resample_menu = gtk_menu_item_new_with_label(_("Resample"));
   ml[h_resample_menu] = _("Resample");

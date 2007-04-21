@@ -179,6 +179,9 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 		   *   but this is tricky stuff -- not worth pushing...
 		   */
 		  end = edit_changes_end_at(cp, cp->edit_ctr);
+		  /*
+		  fprintf(stderr,"peak env from " OFF_TD " to " OFF_TD "\n", start, end);
+		  */
 		  if (snd_abs_off_t(end - start) < (samples / 2))
 		    {
 		      int i, j;
@@ -431,7 +434,7 @@ bool amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool s
     }
   if ((start_new) &&
       (!(cgx->amp_env_in_progress)) && 
-      (CURRENT_SAMPLES(cp) > AMP_ENV_CUTOFF) &&
+      (CURRENT_SAMPLES(cp) > PEAK_ENV_CUTOFF) &&
       (cp->sound->short_filename != NULL))             /* region browser jumped in too soon during autotest */
     start_amp_env(cp);
   return(false);
@@ -749,35 +752,6 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Fl
     }
 }
 
-env_info *env_on_env(env *e, chan_info *cp)
-{
-  env_info *ep;
-  ep = amp_env_copy(cp, false, 0);
-  if (ep)
-    {
-      int i;
-      Float val;
-      mus_any *me;
-      me = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, ep->amp_env_size - 1, NULL);
-      for (i = 0; i < ep->amp_env_size; i++) 
-	{
-	  val = mus_env(me);
-	  if (val >= 0.0)
-	    {
-	      ep->data_min[i] = ep->data_min[i] * val;
-	      ep->data_max[i] = ep->data_max[i] * val;
-	    }
-	  else
-	    {
-	      ep->data_min[i] = ep->data_max[i] * val;
-	      ep->data_max[i] = ep->data_min[i] * val;
-	    }
-	}
-      mus_free(me);
-    }
-  return(ep);
-}
-
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, int pos)
 {
   env_info *old_ep;
@@ -997,20 +971,6 @@ void amp_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t n
       new_ep->top_bin = old_ep->top_bin;
       cp->edits[cp->edit_ctr]->peak_env = new_ep;
     }
-}
-
-env_info *make_mix_input_amp_env(chan_info *cp)
-{
-  if (CURRENT_SAMPLES(cp) > AMP_ENV_CUTOFF)
-    {
-      env_state *es;
-      es = make_env_state(cp, CURRENT_SAMPLES(cp)); /* sets cp->edits[pos]->peak_env */
-      while (!(tick_amp_env(cp, es)));
-      es->sf = free_snd_fd(es->sf);
-      FREE(es);
-      return(cp->edits[cp->edit_ctr]->peak_env);
-    }
-  return(NULL);
 }
 
 void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
@@ -1852,7 +1812,7 @@ static bool apply_controls(apply_state *ap)
 			{
 			  if (file_change_samples(apply_beg, apply_dur, ap->ofile, sp->chans[i], i,
 						  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-						  LOCK_MIXES, ap->origin, sp->chans[i]->edit_ctr))
+						  ap->origin, sp->chans[i]->edit_ctr))
 			    update_graph(sp->chans[i]);
 			}
 		    }
@@ -1862,7 +1822,7 @@ static bool apply_controls(apply_state *ap)
 			{
 			  if (file_override_samples(apply_dur, ap->ofile, sp->chans[i], i,
 						    (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-						    LOCK_MIXES, ap->origin))
+						    ap->origin))
 			    update_graph(sp->chans[i]);
 			}
 		    }
@@ -1872,9 +1832,9 @@ static bool apply_controls(apply_state *ap)
 		    curchan = sp->selected_channel;
 		  if (apply_beg > 0)
 		    file_change_samples(apply_beg, apply_dur, ap->ofile, sp->chans[curchan], 0, 
-					DELETE_ME, LOCK_MIXES, ap->origin, sp->chans[curchan]->edit_ctr);
+					DELETE_ME, ap->origin, sp->chans[curchan]->edit_ctr);
 		  else file_override_samples(apply_dur, ap->ofile, sp->chans[curchan], 0, 
-					     DELETE_ME, LOCK_MIXES, ap->origin);
+					     DELETE_ME, ap->origin);
 		  update_graph(sp->chans[curchan]);
 		  break;
 		case APPLY_TO_SELECTION:
@@ -1887,7 +1847,7 @@ static bool apply_controls(apply_state *ap)
 			{
 			  if (file_change_samples(si->begs[i], apply_dur, ap->ofile, si->cps[i], i,
 						  (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-						  LOCK_MIXES, ap->origin, si->cps[i]->edit_ctr))
+						  ap->origin, si->cps[i]->edit_ctr))
 			    update_graph(si->cps[i]);
 			}
 		    }
@@ -2722,7 +2682,7 @@ static XEN sound_set_global(XEN snd_n, XEN val, sp_field_t fld, const char *call
       case SP_AMP_BOUNDS:
 	in_set_amp_control_min(ss, XEN_TO_C_DOUBLE(XEN_CAR(val)));
 	in_set_amp_control_max(ss, XEN_TO_C_DOUBLE(XEN_CADR(val)));
-	reflect_mix_or_track_change(mix_dialog_mix(), track_dialog_track(), false);
+	/* TODO: id this a good idea? reflect_mix_change(mix_dialog_mix()); */
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
       case SP_CONTRAST_BOUNDS:
@@ -2764,7 +2724,7 @@ static XEN sound_set_global(XEN snd_n, XEN val, sp_field_t fld, const char *call
       case SP_SPEED_BOUNDS:
 	in_set_speed_control_min(ss, XEN_TO_C_DOUBLE(XEN_CAR(val)));
 	in_set_speed_control_max(ss, XEN_TO_C_DOUBLE(XEN_CADR(val)));
-	reflect_mix_or_track_change(mix_dialog_mix(), track_dialog_track(), false);
+	/* reflect_mix_change(mix_dialog_mix()); */
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
       case SP_REVERB_LENGTH_BOUNDS:

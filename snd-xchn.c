@@ -769,7 +769,7 @@ static void channel_drop_watcher(Widget w, const char *str, Position x, Position
   long data;
   data = (long)context; /* also at 1020 */
 #endif
-  mix_at_x_y((int)data, str, x, y);
+  drag_and_drop_mix_at_x_y((int)data, str, x, y);
 }
 
 static void channel_drag_watcher(Widget w, const char *str, Position x, Position y, drag_style_t dtype, void *context)
@@ -1302,14 +1302,14 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	  if (old_style == CHANNELS_COMBINED)
 	    {
 	      hide_gz_scrollbars(sp);
-	      for (i = 1; i < sp->nchans; i++) clear_mix_y(sp->chans[i]);
+	      for (i = 1; i < sp->nchans; i++) channel_set_mix_tags_erased(sp->chans[i]);
 	    }
 	  else 
 	    {
 	      if (new_style == CHANNELS_COMBINED)
 		{
 		  show_gz_scrollbars(sp);
-		  for (i = 1; i < sp->nchans; i++) clear_mix_y(sp->chans[i]);
+		  for (i = 1; i < sp->nchans; i++) channel_set_mix_tags_erased(sp->chans[i]);
 		}
 	    }
 	  if (old_style == CHANNELS_SUPERIMPOSED)

@@ -1022,6 +1022,17 @@ static char *mem_stats(FILE *Fp, int ub)
   return(result);
 }
 
+static const char *reader_type_to_string(int type)
+{
+  switch (type)
+    {
+    case SAMPLE_READER: return("sample-reader"); break;
+    case REGION_READER: return("region-reader"); break;
+    case MIX_READER:    return("mix-reader");    break;
+    }
+  return("unknown reader type");
+}
+
 void dump_protection(FILE *Fp);
 void io_fds_in_use(int *open, int *closed, int *top);
 void describe_region(FILE *fd, void *ur);
@@ -1130,8 +1141,8 @@ void mem_report(void)
 			case PRINT_SND_FD:
 			  {
 			    snd_fd *sf = (snd_fd *)(pointers[orig_i]);
-			    fprintf(Fp, "[%p, beg: " OFF_TD ", eof: %d, sp: %p]\n        ",
-				    sf, sf->initial_samp, (int)(sf->at_eof), sf->local_sp);
+			    fprintf(Fp, "[%s, %p, beg: " OFF_TD ", eof: %d, sp: %p]\n        ",
+				    reader_type_to_string(sf->type), sf, sf->initial_samp, (int)(sf->at_eof), sf->local_sp);
 			  }
 			  break;
 			case PRINT_FAM_INFO:

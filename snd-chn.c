@@ -707,7 +707,7 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
 	  cp->sounds[0] = make_snd_data_file(filename, io, chdr, DONT_DELETE_ME, cp->edit_ctr, chn);
 	}
     }
-  if ((CURRENT_SAMPLES(cp) > AMP_ENV_CUTOFF) &&
+  if ((CURRENT_SAMPLES(cp) > PEAK_ENV_CUTOFF) &&
       (cp->edits[0]->peak_env == NULL) &&              /* perhaps created in initial-graph-hook by read-peak-env-info-file */
       (cp->sound->short_filename != NULL))             /* region browser jumped in too soon during autotest */
     start_amp_env(cp);
@@ -900,8 +900,12 @@ static off_t zoom_focus_location(chan_info *cp)
   if (selection_is_visible_in_channel(cp)) 
     return(selection_beg(cp));
 
-  if (active_mix_p(cp))
-    return(mix_beg(cp));
+  {
+    off_t pos;
+    pos = zoom_focus_mix_in_channel_to_position(cp);
+    if (pos >= 0)
+      return(pos);
+  }
 
   if (active_mark(cp))
     return(mark_beg(cp));
@@ -3155,7 +3159,7 @@ static void display_channel_data_with_size(chan_info *cp,
   if ((!just_fft) && (!just_lisp))
     {
       marks_off(cp);
-      clear_mix_tags(cp);
+      channel_set_mix_tags_erased(cp);
       if (with_time)
 	{
 	  int points;
@@ -3303,7 +3307,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	      display_channel_marks(cp);
 	    }
 	  if (cp->show_y_zero) display_y_zero(cp);
-	  if ((cp->have_mixes)) display_channel_mixes(cp);
+	  if ((channel_has_active_mixes(cp))) display_channel_mixes(cp);
 	}
       if ((sp->channel_style != CHANNELS_SUPERIMPOSED) && (height > 10))
 	display_channel_id(cp, height + offset, sp->nchans);
@@ -3374,7 +3378,10 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
 	    }
 #if USE_GTK
 	  /* this only needed because Gtk signal blocking is screwed up */
-	  if ((cp->chan > 0) && (cp->have_mixes) && (cp->axis->height != height)) clear_mix_y(cp);
+	  if ((cp->chan > 0) && 
+	      (channel_has_active_mixes(cp)) && 
+	      (cp->axis->height != height)) 
+	    channel_set_mix_tags_erased(cp);
 #endif
 	  if ((cp->chan == (sp->nchans - 1)) && 
 	      ((offset + chan_height) < height))
@@ -4221,9 +4228,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 						     S_mix_click_hook);
 			      if (!(XEN_TRUE_P(res)))
 				{
-				  if (mix_dialog_mix_track(mix_tag) == 0)
-				    reflect_mix_or_track_change(mix_tag, ANY_TRACK_ID, true);
-				  else reflect_mix_or_track_change(mix_tag, mix_dialog_mix_track(mix_tag), true);
+				  reflect_mix_change(mix_tag);
 				  report_in_minibuffer(sp, _("mix %d "), mix_tag);
 				}
 			    }
@@ -6850,6 +6855,46 @@ static XEN g_set_channel_properties(XEN on, XEN snd_n, XEN chn_n)
 WITH_THREE_SETTER_ARGS(g_set_channel_properties_reversed, g_set_channel_properties)
 
 
+static XEN g_edit_properties(XEN snd_n, XEN chn_n, XEN pos) 
+{
+  #define H_edit_properties "(" S_edit_properties " :optional snd chn edpos): \
+A property list associated with the given edit. It is set to '() at the time an edit is performed and cleared when that edit is no longer accessible. \
+The accessor edit-property is provided in extensions." XEN_FILE_EXTENSION "."
+
+  chan_info *cp;
+  int edpos;
+  ASSERT_CHANNEL(S_edit_properties, snd_n, chn_n, 1);
+  cp = get_cp(snd_n, chn_n, S_edit_properties);
+  if (!cp) return(XEN_FALSE);
+  edpos = to_c_edit_position(cp, pos, S_edit_properties, 3);
+  if (!(XEN_VECTOR_P(cp->edits[edpos]->properties)))
+    {
+      cp->edits[edpos]->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
+      cp->edits[edpos]->properties_gc_loc = snd_protect(cp->edits[edpos]->properties);
+    }
+  return(XEN_VECTOR_REF(cp->edits[edpos]->properties, 0));
+}
+
+static XEN g_set_edit_properties(XEN on, XEN snd_n, XEN chn_n, XEN pos) 
+{
+  chan_info *cp;
+  int edpos;
+  ASSERT_CHANNEL(S_setB S_edit_properties, snd_n, chn_n, 1);
+  cp = get_cp(snd_n, chn_n, S_setB S_edit_properties);
+  if (!cp) return(XEN_FALSE);
+  edpos = to_c_edit_position(cp, pos, S_setB S_edit_properties, 3);
+  if (!(XEN_VECTOR_P(cp->edits[edpos]->properties)))
+    {
+      cp->edits[edpos]->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
+      cp->edits[edpos]->properties_gc_loc = snd_protect(cp->edits[edpos]->properties);
+    }
+  XEN_VECTOR_SET(cp->edits[edpos]->properties, 0, on);
+  return(XEN_VECTOR_REF(cp->edits[edpos]->properties, 0));
+}
+
+WITH_FOUR_SETTER_ARGS(g_set_edit_properties_reversed, g_set_edit_properties)
+
+
 static XEN g_edits(XEN snd_n, XEN chn_n)
 {
   #define H_edits "(" S_edits " :optional snd chn): -> (list undoable-edits redoable-edits) in snd's channel chn"
@@ -7427,6 +7472,8 @@ XEN_ARGIFY_2(g_right_sample_w, g_right_sample)
 XEN_ARGIFY_3(g_set_right_sample_w, g_set_right_sample)
 XEN_ARGIFY_2(g_channel_properties_w, g_channel_properties)
 XEN_ARGIFY_3(g_set_channel_properties_w, g_set_channel_properties)
+XEN_ARGIFY_3(g_edit_properties_w, g_edit_properties)
+XEN_ARGIFY_4(g_set_edit_properties_w, g_set_edit_properties)
 XEN_ARGIFY_2(g_max_transform_peaks_w, g_max_transform_peaks)
 XEN_ARGIFY_3(g_set_max_transform_peaks_w, g_set_max_transform_peaks)
 XEN_ARGIFY_2(g_show_y_zero_w, g_show_y_zero)
@@ -7576,6 +7623,8 @@ XEN_NARGIFY_1(g_set_with_gl_w, g_set_with_gl)
 #define g_set_right_sample_w g_set_right_sample
 #define g_channel_properties_w g_channel_properties
 #define g_set_channel_properties_w g_set_channel_properties
+#define g_edit_properties_w g_edit_properties
+#define g_set_edit_properties_w g_set_edit_properties
 #define g_max_transform_peaks_w g_max_transform_peaks
 #define g_set_max_transform_peaks_w g_set_max_transform_peaks
 #define g_show_y_zero_w g_show_y_zero
@@ -7772,6 +7821,9 @@ void g_init_chn(void)
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_channel_properties, g_channel_properties_w, H_channel_properties,
 					    S_setB S_channel_properties, g_set_channel_properties_w, g_set_channel_properties_reversed, 0, 2, 1, 2);
+  
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_edit_properties, g_edit_properties_w, H_edit_properties,
+					    S_setB S_edit_properties, g_set_edit_properties_w, g_set_edit_properties_reversed, 0, 3, 1, 3);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_max_transform_peaks, g_max_transform_peaks_w, H_max_transform_peaks,
 					    S_setB S_max_transform_peaks, g_set_max_transform_peaks_w, g_set_max_transform_peaks_reversed, 0, 2, 1, 2);

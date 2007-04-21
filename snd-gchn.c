@@ -589,7 +589,7 @@ static const gint config_attributes[] = {
 
 static void channel_drop_watcher(GtkWidget *w, const char *filename, int x, int y, void *data)
 {
-  mix_at_x_y(get_user_int_data(G_OBJECT(w)), filename, x, y);
+  drag_and_drop_mix_at_x_y(get_user_int_data(G_OBJECT(w)), filename, x, y);
 }
 
 static void channel_drag_watcher(GtkWidget *w, const char *filename, int x, int y, drag_style_t dtype, void *context)
@@ -1074,14 +1074,14 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	  if (old_style == CHANNELS_COMBINED)
 	    {
 	      hide_gz_scrollbars(sp);
-	      for (i = 1; i < sp->nchans; i++) clear_mix_y(sp->chans[i]);
+	      for (i = 1; i < sp->nchans; i++) channel_set_mix_tags_erased(sp->chans[i]);
 	    }
 	  else 
 	    {
 	      if (new_style == CHANNELS_COMBINED)
 		{
 		  show_gz_scrollbars(sp);
-		  for (i = 1; i < sp->nchans; i++) clear_mix_y(sp->chans[i]);
+		  for (i = 1; i < sp->nchans; i++) channel_set_mix_tags_erased(sp->chans[i]);
 		}
 	    }
 	  if (old_style == CHANNELS_SUPERIMPOSED)

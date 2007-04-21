@@ -330,27 +330,29 @@ static int last_mouse_x = 0;
 static mark *moving_mark = NULL; /* used only while "off-screen" during axis moves */
 
 static void move_axis_to_track_mark(chan_info *cp);
-static idle_t watch_mouse_button = 0;
-static idle_func_t WatchMouse(any_pointer_t cp)
+
+static timeout_result_t watch_mouse_button = 0;
+static TIMEOUT_TYPE watch_mouse(TIMEOUT_ARGS)
 {
+  chan_info *cp = (chan_info *)context;
   if (watch_mouse_button)
     {
-      move_axis_to_track_mark((chan_info *)cp);
-      return(BACKGROUND_CONTINUE);
+      move_axis_to_track_mark(cp);
+      watch_mouse_button = CALL_TIMEOUT(watch_mouse, 50, cp);
     }
-  else return(BACKGROUND_QUIT);
+  TIMEOUT_RESULT
 }
 
 static void start_mark_watching(chan_info *cp, mark *mp)
 {
   moving_mark = mp;
-  watch_mouse_button = BACKGROUND_ADD(WatchMouse, cp);
+  watch_mouse_button = CALL_TIMEOUT(watch_mouse, 50, cp);
   watching_mouse = true;
 }
 
 static void cancel_mark_watch(chan_info *cp)
 {
-  if (watch_mouse_button) BACKGROUND_REMOVE(watch_mouse_button);
+  if (watch_mouse_button) TIMEOUT_REMOVE(watch_mouse_button);
   watch_mouse_button = 0;
   watching_mouse = false;
   moving_mark = NULL;
@@ -1480,7 +1482,7 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
       Float ymin, ymax, msamp;
       int xi;
       double xf;
-      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, false, cp->edit_ctr, (samps > AMP_ENV_CUTOFF)))
+      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, false, cp->edit_ctr, (samps > PEAK_ENV_CUTOFF)))
 	{
 	  /* needs two sets of pointers and a frame within the amp env:
 	   *   sample given mark edit: i and xk

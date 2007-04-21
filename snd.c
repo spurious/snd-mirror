@@ -282,8 +282,6 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Filter_Control_Order = DEFAULT_FILTER_CONTROL_ORDER;
   ss->Filter_Control_In_Db = DEFAULT_FILTER_CONTROL_IN_DB;
   ss->Filter_Control_In_Hz = DEFAULT_FILTER_CONTROL_IN_HZ;
-  ss->Tempo_Control_Min = DEFAULT_TEMPO_CONTROL_MIN;
-  ss->Tempo_Control_Max = DEFAULT_TEMPO_CONTROL_MAX;
   ss->Show_Controls = DEFAULT_SHOW_CONTROLS;
   ss->With_Tracking_Cursor = DEFAULT_WITH_TRACKING_CURSOR;
   ss->Just_Sounds = DEFAULT_JUST_SOUNDS;

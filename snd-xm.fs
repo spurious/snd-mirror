@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 26 22:36:46 CET 2005
-\ Changed: Sat Dec 23 05:20:02 CET 2006
+\ Changed: Wed Apr 11 14:00:06 CEST 2007
 
 \ Commentary:
 \
@@ -42,24 +42,18 @@
 
 \ Code:
 
+'snd-motif provided? [unless] skip-file [then]
+
 require clm
 require examp
-'snd-motif provided? 'xm provided? not && [if] dl-load libxm Init_libxm [then]
-
-'xm provided? [unless]
-  'forth-error
-  '( *filename* $" %s requires snd-motif and xm module or libxm.so" *filename* #f file-basename )
-  fth-throw
-[then]
+dl-load libxm Init_libxm
 
 : main-dpy ( -- dpy ) main-widgets cadr FXtDisplay ;
-
 : load-font ( name -- fid|#f )
   { name }
   main-dpy name FXLoadQueryFont { fs }
   fs FXFontStruct? if fs Ffid else #f then 
 ;
-
 : current-screen ( -- scr )
   doc" Returns the current X screen number of the current display."
   main-dpy FDefaultScreenOfDisplay

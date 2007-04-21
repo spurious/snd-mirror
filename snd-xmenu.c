@@ -89,7 +89,6 @@ static void view_lollipops_callback(Widget w, XtPointer info, XtPointer context)
 static void view_listener_callback(Widget w, XtPointer info, XtPointer context) {handle_listener(!(listener_is_visible()));}
 #endif
 static void view_mix_dialog_callback(Widget w, XtPointer info, XtPointer context) {make_mix_dialog();}
-static void view_track_dialog_callback(Widget w, XtPointer info, XtPointer context) {make_track_dialog();}
 static void view_zero_callback(Widget w, XtPointer info, XtPointer context){set_show_y_zero((!(show_y_zero(ss))));}
 static void view_cursor_callback(Widget w, XtPointer info, XtPointer context){set_verbose_cursor((!(verbose_cursor(ss))));}
 
@@ -154,7 +153,6 @@ static void help_controls_callback(Widget w, XtPointer info, XtPointer context) 
 static void help_env_callback(Widget w, XtPointer info, XtPointer context) {env_help();}
 static void help_marks_callback(Widget w, XtPointer info, XtPointer context) {marks_help();}
 static void help_mix_callback(Widget w, XtPointer info, XtPointer context) {mix_help();}
-static void help_track_callback(Widget w, XtPointer info, XtPointer context) {track_help();}
 static void help_sound_files_callback(Widget w, XtPointer info, XtPointer context) {sound_files_help();}
 static void help_recording_callback(Widget w, XtPointer info, XtPointer context) {recording_help();}
 static void help_keys_callback(Widget w, XtPointer info, XtPointer context) {key_binding_help();}
@@ -416,9 +414,6 @@ Widget add_menu(void)
   view_mix_dialog_menu = XtCreateManagedWidget(_("Mixes"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
   XtAddCallback(view_mix_dialog_menu, XmNactivateCallback, view_mix_dialog_callback, NULL);
 
-  view_track_dialog_menu = XtCreateManagedWidget(_("Tracks"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
-  XtAddCallback(view_track_dialog_menu, XmNactivateCallback, view_track_dialog_callback, NULL);
-
   view_region_menu = XtCreateManagedWidget(_("Regions"), xmPushButtonWidgetClass, view_menu, in_args, in_n);
   XtAddCallback(view_region_menu, XmNactivateCallback, view_region_callback_1, NULL);
   XtVaSetValues(view_region_menu, XmNmnemonic, 'R', NULL);
@@ -632,9 +627,6 @@ Widget add_menu(void)
 
   help_mix_menu = XtCreateManagedWidget(_("Mix"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
   XtAddCallback(help_mix_menu, XmNactivateCallback, help_mix_callback, NULL);
-
-  help_track_menu = XtCreateManagedWidget(_("Track"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
-  XtAddCallback(help_track_menu, XmNactivateCallback, help_track_callback, NULL);
 
   help_resample_menu = XtCreateManagedWidget(_("Resample"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
   XtAddCallback(help_resample_menu, XmNactivateCallback, help_resample_callback, NULL);

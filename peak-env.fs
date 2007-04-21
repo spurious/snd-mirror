@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Wed Dec 21 17:37:13 CET 2005
-\ Changed: Thu Dec 21 18:37:28 CET 2006
+\ Changed: Wed Apr 11 13:56:56 CEST 2007
 
 \ Commentary:
 \ 
@@ -11,9 +11,7 @@
 
 \ Code:
 
-'snd provided? [unless]
-  'forth-error '( $" peak-env.fs" $" snd is needed for peak-env-info" ) fth-throw
-[then]
+'snd provided? [unless] skip-file [then]
 
 require clm
 

@@ -1610,7 +1610,7 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 	  redirect_snd_error_to(redirect_file_open_error, (void *)mdat);
 	  ss->sgx->requestor_dialog = mdat->fs->dialog;
 	  ss->open_requestor = FROM_MIX_DIALOG;
-	  err = mix_complete_file_at_cursor(sp, filename, with_mix_tags(ss), 0);
+	  err = mix_complete_file_at_cursor(sp, filename);
 	  redirect_snd_error_to(NULL, NULL);
 	  if (err < 0) 
 	    {
@@ -3169,7 +3169,7 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
 	    {
 	    case FROM_MIX_DIALOG:
 	      redirect_snd_error_to(redirect_file_open_error, (void *)mdat);
-	      mix_complete_file_at_cursor(any_selected_sound(), rp->filename, with_mix_tags(ss), 0);
+	      mix_complete_file_at_cursor(any_selected_sound(), rp->filename);
 	      break;
 	    case FROM_INSERT_DIALOG:
 	      redirect_snd_error_to(redirect_file_open_error, (void *)idat);

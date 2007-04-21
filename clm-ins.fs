@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Thu Feb 01 00:48:39 CET 2007
+\ Changed: Wed Apr 18 02:18:00 CEST 2007
 
 \ Commentary:
 \
@@ -59,9 +59,9 @@ require env
 
 \ Prevent name clash with possibly loaded sndins.so.
 \ sndins.so instruments can be called with fm-violin-ins etc.
-[defined] fm-violin [if] ' fm-violin alias fm-violin-ins [then]
-[defined] jc-reverb [if] ' jc-reverb alias jc-reverb-ins [then]
-[defined] nrev      [if] ' nrev      alias nrev-ins      [then]
+[defined] fm-violin [if] <'> fm-violin alias fm-violin-ins [then]
+[defined] jc-reverb [if] <'> jc-reverb alias jc-reverb-ins [then]
+[defined] nrev      [if] <'> nrev      alias nrev-ins      [then]
 
 \ General input function for src, granulate etc.
 : readin-cb ( gen -- proc; dir self -- r )
@@ -73,7 +73,7 @@ require env
 : reverb-dur ( rev -- dur ) mus-length samples->seconds *clm-decay-time* f+ ;
 
 \ clm/jcrev.ins
-instrument: jc-reverb <{ :key
+instrument: jc-reverb-fs <{ :key
      volume 1.0
      delay1 0.013
      delay2 0.011
@@ -135,6 +135,7 @@ instrument: jc-reverb <{ :key
     then
   loop
 ;instrument
+<'> jc-reverb-fs alias jc-reverb
 
 \ snd/fm.html
 instrument: violin <{ start dur freq amp
@@ -180,7 +181,7 @@ instrument: violin <{ start dur freq amp
 ;
 
 \ === FM-Violin (clm/v.ins, snd/v.scm|rb) ===
-instrument: fm-violin <{ start dur freq amp
+instrument: fm-violin-fs <{ start dur freq amp
      :key
      fm-index                   1.0
      amp-env                    '( 0 0 25 1 75 1 100 0 )
@@ -307,6 +308,7 @@ instrument: fm-violin <{ start dur freq amp
     end-run
   then
 ;
+<'> fm-violin-fs alias fm-violin
 
 : fm-violin-test <{ :optional start 0.0 dur 1.0 -- }>
   start now!
@@ -1293,7 +1295,7 @@ instrument: canter <{ start dur pitch amp
 \ reverb output.
 \
 \ clm/nrev.ins
-instrument: nrev <{ :key
+instrument: nrev-fs <{ :key
      reverb-factor 1.09
      lp-coeff      0.7
      lp-out-coeff  0.85
@@ -1364,6 +1366,7 @@ instrument: nrev <{ :key
     then
   loop
 ;instrument
+<'> nrev-fs alias nrev
 
 struct
   cell% field carriers

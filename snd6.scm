@@ -115,29 +115,6 @@
 
 (if (not (provided? 'snd-mix.scm)) (load-from-path "mix.scm"))
 
-(if (defined? 'sync-multichannel-mixes)
-    (define mix-panel-applies-to-track sync-multichannel-mixes))
-(if (defined? 'track-position)
-    (define (set-track-position track pos)
-      "obsolete way to set track-position"
-      (set! (track-position track) pos)))
-(if (defined? 'track-amp)
-    (define (set-track-amp track new-amp) 
-      "obsolete way to set track amp"
-      (set! (track-amp track) new-amp)))
-(if (defined? 'track-speed)
-    (define (set-track-speed track new-speed) 
-      "obsolete way to set track-speed"
-      (set! (track-speed track) new-speed)))
-(if (defined? 'track-color)
-    (define (set-track-color track new-color) 
-      "obsolete way to set track-color"
-      (set! (track-color track) new-color)))
-(if (defined? 'retempo-track)
-    (define set-track-tempo retempo-track))
-(if (defined? 'env-track)
-    (define set-track-amp-env env-track))
-
 (define (protect-region n) 
   "obsolete -- simply produces an error"
   (snd-error "protect-region has been removed"))
@@ -165,6 +142,3 @@
      #f)
    (lambda (val)
      #f)))
-
-;;; unused-track/new-track -> make-track
-;;; env-track -> track-amp-env
