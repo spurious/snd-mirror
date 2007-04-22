@@ -4535,7 +4535,7 @@ axis_context *copy_context(chan_info *cp)            {return(set_context(cp, CHA
 axis_context *erase_context(chan_info *cp)           {return(set_context(cp, CHAN_IGC));}
 axis_context *selection_context(chan_info *cp)       {return(set_context(cp, CHAN_SELGC));}
 axis_context *cursor_context(chan_info *cp)          {return(set_context(cp, CHAN_CGC));}
-axis_context *mark_context(chan_info *cp)            {return(set_context(cp, CHAN_MGC));}
+axis_context *mark_tag_context(chan_info *cp)        {return(set_context(cp, CHAN_MGC));}
 axis_context *mix_waveform_context(chan_info *cp)    {return(set_context(cp, CHAN_MXGC));}
 static axis_context *combined_context(chan_info *cp) {return(set_context(cp, CHAN_TMPGC));}
 

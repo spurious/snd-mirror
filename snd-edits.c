@@ -5627,8 +5627,7 @@ void backup_edit_list(chan_info *cp)
   /*   it might be enough to save the second tree loc in ptree2 cases, and include it in the block above */
   if (old_ed->edit_type == PTREE_EDIT)
     old_ed->edit_type = INITIALIZE_EDIT; /* was ED_SIMPLE which is obviously confused -- anything but PTREE_EDIT should be ok */
-  free_ed_list(old_ed, cp);
-  old_ed = NULL;
+  old_ed = free_ed_list(old_ed, cp);
   cp->edits[cur - 1] = new_ed;
   cp->edits[cur] = NULL;
   if (cp->sounds) /* protect from release_pending_sounds upon edit after undo after as-one-edit or whatever */
@@ -5651,7 +5650,7 @@ void free_edit_list(chan_info *cp)
 	{
 	  for (i = 0; i < cp->edit_size; i++)
 	    if (cp->edits[i]) 
-	      free_ed_list(cp->edits[i], cp);
+	      cp->edits[i] = free_ed_list(cp->edits[i], cp);
 	  FREE(cp->edits);
 	  cp->edits = NULL;
 	}
@@ -7401,8 +7400,7 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
 	    sd = free_snd_data(sd); 
 	}
       if ((sf->current_state) && (sf->type == MIX_READER))
-	free_ed_list(sf->current_state, sf->cp);
-      sf->current_state = NULL;
+	sf->current_state = free_ed_list(sf->current_state, sf->cp);
       sf->current_sound = NULL;
     }
   return(NULL);
@@ -7889,7 +7887,6 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   off_t samples = 0;
   off_t *old_cursors = NULL;
   chan_info *cp;
-  snd_fd **sf;
   void *ms, *sa;
   file_info *sphdr = NULL;
   io_error_t io_err = IO_NO_ERROR;
@@ -7898,47 +7895,50 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   ofile = snd_tempnam(); 
   /* this will use user's TMPDIR if temp_dir(ss) is not set, else stdio.h's P_tmpdir else /tmp */
 
-  sf = (snd_fd **)CALLOC(sp->nchans, sizeof(snd_fd *));
-  for (i = 0; i < sp->nchans; i++)
-    {
-      sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
-      if (sf[i] == NULL)
-	{
-	  int j;
-	  for (j = 0; j < i; j++) free_snd_fd(sf[j]);
-	  FREE(sf);
-	  return(IO_BAD_CHANNEL);
-	}
-      if (samples < CURRENT_SAMPLES(sp->chans[i]))
-	samples = CURRENT_SAMPLES(sp->chans[i]);
-    }
-  sphdr = sp->hdr;
+  {
+    snd_fd **sf;
+    sf = (snd_fd **)CALLOC(sp->nchans, sizeof(snd_fd *));
+    for (i = 0; i < sp->nchans; i++)
+      {
+	sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
+	if (sf[i] == NULL)
+	  {
+	    int j;
+	    for (j = 0; j < i; j++) free_snd_fd(sf[j]);
+	    FREE(sf);
+	    return(IO_BAD_CHANNEL);
+	  }
+	if (samples < CURRENT_SAMPLES(sp->chans[i]))
+	  samples = CURRENT_SAMPLES(sp->chans[i]);
+      }
 
-  /* write the new file */
-  io_err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples);
-  if (io_err != IO_NO_ERROR) 
-    {
-      for (i = 0; i < sp->nchans; i++) free_snd_fd(sf[i]);
-      FREE(sf);
-      return(io_err);
-    }
+    /* write the new file */
+    io_err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples);
+    for (i = 0; i < sp->nchans; i++) free_snd_fd(sf[i]);
+    FREE(sf);
+    sf = NULL;
+    if (io_err != IO_NO_ERROR)
+      {
+	if (ofile) FREE(ofile);
+	return(io_err);
+      }
+  }
 
   sa = make_axes_data(sp);
+  sphdr = sp->hdr;
   sphdr->samples = samples * sp->nchans;
   ms = (void *)sound_store_marks(sp);
   old_cursors = (off_t *)CALLOC(sp->nchans, sizeof(off_t));
   for (i = 0; i < sp->nchans; i++)
     {
       cp = sp->chans[i];
-      old_cursors[i] = CURSOR(cp); /* depends on edit_ctr -- set to -1 by free_edit_list below */
+      old_cursors[i] = CURSOR(cp);        /* depends on edit_ctr -- set to -1 by free_edit_list below */
       if (ss->deferred_regions > 0)
 	sequester_deferred_regions(cp, -1);
-      if (cp->edits) free_edit_list(cp);
-      sf[i] = free_snd_fd(sf[i]);  /* must precede free_sound_list since it accesses the snd_data structs that free_sound_list frees */
+      if (cp->edits) free_edit_list(cp); /* sets cp->edits to NULL */
       if (cp->sounds) free_sound_list(cp);
       cp->axis = free_axis_info(cp->axis);
     }
-  FREE(sf);
 
 #if (HAVE_ACCESS)
   if (access(sp->filename, W_OK))
@@ -10158,22 +10158,28 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
     peak-envs after change [check all redisplays and maybe squelch cases]
     reader0 opts [recombination?]
     mix|edit-properties test [if mix-property, display upon tag click or in dialog [add?]]
-    tmp216
     *.rb
     *.fs
-    snd-tests [also check ripple, etc][test chan to mix-region|selection]
-    compsnd + valgrind + memlog
     pan mix and syncd mixes for stereo
     tag height+color for orchestration/score appearance
-    mix.scm: env-mixes, play-mixes [copy?]
+    mix.scm: env-mixes, play-mixes
     ws.scm: with-exploded-sound and extreme tests
     C side for mix-maxamp? -- if we have a peak env see amp_env_maxamp in snd-snd
     [multiple mix dialogs?]
     [forego copy of original file if possible? -- an arg to mix?]
-    edit-list->function for mix changes
-    play-mix
+    check edit-list->function for mix changes
+    play-mix (also tie-in to xmix)
     during as-one-edit, backup when it's obvious
-    why not env_on_env for env_chan?
+    can snd-marks dispense with the erase_and_draw stuff in snd-draw?
+
+    snd-tests [test chan to mix-region|selection]
+      test 9: is bagatelle used?, 
+              speed+env mix: #<vct[len=24]: 0.000 0.000 0.000 0.160 0.286 0.403 0.571 0.738 0.857 0.983 1.000 1.005 1.000 1.005 1.000 0.983 1.000 0.886 0.714 0.537 ...>
+      test 5: ;channel edits: (275 0)
+      test 8: check save-sound -> invalid write due to double gc of ed_list in snd_fd free
+      test 12: region-sample-reader is messed up, 13: add-watcher is unhappy, (and all mixes seem confused?), 16: uhoh
+      test 19: 35173 arg problem (22 has display "1" etc ), 23: ;auto-delete mix (with-tag)?
+      test 15: ;mix-region mix-home (2 0 #f 0) (2 0)?, ;mix-selection mix-home: (2 0 #f 0) (2 0)?
    */
 
 static int add_mix_op(int type)
@@ -10335,7 +10341,7 @@ int mix_file_with_tag(chan_info *cp, const char *filename, int chan, off_t beg, 
     }
   else new_len = old_len; 
 
-  if (!(prepare_edit_list(cp, edpos, "-mix-")))
+  if (!(prepare_edit_list(cp, edpos, origin)))
     return(NO_MIX_TAG);
 
   fd = snd_open_read(filename);
@@ -10347,7 +10353,7 @@ int mix_file_with_tag(chan_info *cp, const char *filename, int chan, off_t beg, 
 			    hdr->type);
 
   mix_loc = add_sound_file_to_edit_list(cp, filename, 
-					make_file_state(fd, hdr, 0, 0, FILE_BUFFER_SIZE),
+					make_file_state(fd, hdr, chan, 0, FILE_BUFFER_SIZE),
 					hdr, auto_delete,
 					chan);
 
@@ -10585,10 +10591,6 @@ snd_fd *make_virtual_mix_reader(chan_info *cp, off_t beg, off_t len, int index, 
 
       if (first_snd->inuse)
 	{
-#if MUS_DEBUGGING
-	  fprintf(stderr,"mix index copying...");
-#endif
-	  
 	  first_snd = copy_snd_data(first_snd, beg, MIX_FILE_BUFFER_SIZE);
 	  if (!first_snd)
 	    return(cancel_reader(sf));

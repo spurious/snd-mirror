@@ -28,12 +28,12 @@ env *copy_env(env *e)
   return(NULL);
 }
 
-#if 0
 bool envs_equal(env *e1, env *e2)
 {
   /* snd-mix.c check for set mix amp env no-op */
   int i;
-  if ((e1 == NULL) || (e2 == NULL)) return(false);
+  if (!e1) return(!e2);
+  if (!e2) return(false);
   if (e1->pts != e2->pts) return(false);
   for (i = 0; i < e1->pts * 2; i++)
     if (e1->data[i] != e2->data[i])
@@ -41,7 +41,6 @@ bool envs_equal(env *e1, env *e2)
   if (e1->base != e2->base) return(false); /* 1 and 0 are possibilities here */
   return(true);
 }
-#endif
 
 char *env_to_string(env *e)
 {
@@ -120,188 +119,6 @@ env *make_envelope(Float *env_buffer, int len)
 {
   return(make_envelope_with_offset_and_scaler(env_buffer, len, 0.0, 1.0));
 }
-
-static env *normalize_x_axis(env *e)
-{
-  /* make sure env goes from 0 to 1 x-wise; e is changed */
-  Float x0, x1, scl;
-  int i, j;
-  if (!e) return(NULL);
-  x0 = e->data[0];
-  x1 = e->data[e->pts * 2 - 2];
-  if ((x0 == 0.0) && (x1 == 1.0))
-    return(e);
-  if ((e->pts == 1) || (x0 == x1))
-    {
-      e->data[0] = 0.0;
-      return(e);
-    }
-  scl = 1.0 / (x1 - x0);
-  for (i = 0, j = 0; i < e->pts; i++, j += 2)
-    e->data[j] = (e->data[j] - x0) * scl;
-  return(e);
-}
-
-static int add_breakpoint(env *e, int pos, Float x, Float y)
-{
-  if (pos >= e->data_size)
-    {
-      e->data_size += 16;
-      e->data = (Float *)REALLOC(e->data, e->data_size * sizeof(Float));
-    }
-  e->data[pos] = x;
-  e->data[pos + 1] = y;
-  return(pos + 2);
-}
-
-env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_dur, Float maxx)
-{
-  env *local_e = NULL;
-  int i, j = 0, k;
-  mus_any *me;
-  Float x0, x1, e_x_range, e_x0, e_x1, local_x0, local_x1, lx0;
-  /* return env representing e from local beg for local dur */
-  if ((local_beg < e_beg) || 
-      (local_dur > e_dur) ||
-      ((local_beg == e_beg) && (local_dur == e_dur)))
-    return(normalize_x_axis(copy_env(e))); /* fixup 0..1? */
-  /* only need to interpolate start and end breaks, copy in between */
-  x0 = (double)(local_beg - e_beg) / (double)e_dur;
-  x1 = (double)(local_beg + local_dur - e_beg) / (double)e_dur;
-  e_x0 = e->data[0];
-  e_x1 = e->data[e->pts * 2 - 2];
-  e_x_range = e_x1 - e_x0;
-  local_x0 = e_x0 + x0 * e_x_range;
-  local_x1 = e_x0 + x1 * e_x_range;
-  local_e = (env *)CALLOC(1, sizeof(env));
-  local_e->data = (Float *)CALLOC(e->pts * 2, sizeof(Float));
-  local_e->data_size = e->pts * 2;
-  lx0 = local_x0 + maxx;
-  me = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, 1000 * e->pts, NULL);
-  for (k = 0, i = 0; k < e->pts; k++, i += 2)
-    {
-      if (e->data[i] >= local_x0)
-	{
-	  if (j == 0)
-	    {
-	      if (e->data[i] == local_x0)
-		j = add_breakpoint(local_e, 0, local_x0, e->data[i + 1]);
-	      else j = add_breakpoint(local_e, 0, local_x0, mus_env_interp(local_x0, me));
-	    }
-	  if ((e->data[i] < local_x1) && (e->data[i] != local_x0))
-	    {
-	      if (e->base != 1.0)
-		{
-		  while ((lx0 + .001) < e->data[i])
-		    {
-		      j = add_breakpoint(local_e, j, lx0, mus_env_interp(lx0, me));
-		      lx0 += maxx;
-		    }
-		  lx0 = e->data[i] + maxx;
-		}
-	      j = add_breakpoint(local_e, j, e->data[i], e->data[i + 1]);
-	      if (e->data[i] == local_x1) break; /* hit end point */
-	    }
-	}
-      if (e->data[i] >= local_x1)
-	{
-	  if (e->base != 1.0)
-	    {
-	      while ((lx0 + .001) < local_x1)
-		{
-		  j = add_breakpoint(local_e, j, lx0, mus_env_interp(lx0, me));
-		  lx0 += maxx;
-		}
-	    }
-	  j = add_breakpoint(local_e, j, local_x1, mus_env_interp(local_x1, me));
-	  break;
-	}
-    }
-  mus_free(me);
-  if (j == 0)
-    return(free_env(local_e));
-  local_e->pts = j / 2;
-  local_e->base = e->base;
-  return(normalize_x_axis(local_e));
-}
-
-#if MUS_DEBUGGING && HAVE_SCHEME
-static XEN g_window_env(XEN e, XEN b1, XEN d1, XEN b2, XEN d2, XEN maxx)
-{
-  XEN res;
-  env *temp1 = NULL, *temp2 = NULL;
-  temp1 = xen_to_env(e);
-  temp2 = window_env(temp1,
-		     XEN_TO_C_OFF_T(b1),
-		     XEN_TO_C_OFF_T(d1),
-		     XEN_TO_C_OFF_T(b2),
-		     XEN_TO_C_OFF_T(d2),
-		     (XEN_NUMBER_P(maxx)) ? XEN_TO_C_DOUBLE(maxx) : 1.0);
-  res = env_to_xen(temp2);
-  temp1 = free_env(temp1);
-  temp2 = free_env(temp2);
-  return(res);
-}
-#endif
-
-env *multiply_envs(env *e1, env *e2, Float maxx)
-{
-  /* assume at this point that x axes are 0..1 */
-  int i = 2, j = 2, k = 2;
-  Float x = 0.0, y0, y1;
-  env *e = NULL;
-  mus_any *me1, *me2;
-  e = (env *)CALLOC(1, sizeof(env));
-  e->data_size = (e1->pts + e2->pts) * 2;
-  e->data = (Float *)CALLOC(e->data_size, sizeof(Float));
-  e->data[0] = 0.0;
-  e->data[1] = e1->data[1] * e2->data[1];
-  me1 = mus_make_env(e1->data, e1->pts, 1.0, 0.0, e1->base, 0.0, 0, 1000 * e1->pts, NULL);
-  me2 = mus_make_env(e2->data, e2->pts, 1.0, 0.0, e2->base, 0.0, 0, 1000 * e2->pts, NULL);
-  while (true)
-    {
-      x += maxx;
-      if (x >= e1->data[i]) x = e1->data[i];
-      if (x >= e2->data[j]) x = e2->data[j];
-      if (x == e1->data[i])
-	{
-	  y0 = e1->data[i + 1];
-	  if (i < ((e1->pts * 2) - 1)) i += 2;
-	}
-      else y0 = mus_env_interp(x, me1);
-      if (x == e2->data[j])
-	{
-	  y1 = e2->data[j + 1];
-	  if (j < ((e2->pts * 2) - 1)) j += 2;
-	}
-      else y1 = mus_env_interp(x, me2);
-      k = add_breakpoint(e, k, x, y0 * y1);
-      if ((x + (maxx * .01)) >= 1.0) break;
-    }
-  if (k == 0)
-    return(free_env(e));
-  e->pts = k / 2;
-  e->base = 1.0;
-  mus_free(me1);
-  mus_free(me2);
-  return(e);
-}
-
-#if MUS_DEBUGGING && HAVE_SCHEME
-static XEN g_multiply_envs(XEN e1, XEN e2, XEN maxx)
-{
-  XEN res;
-  env *temp1 = NULL, *temp2 = NULL, *temp3 = NULL;
-  temp1 = xen_to_env(e1);
-  temp2 = xen_to_env(e2);
-  temp3 = multiply_envs(temp1, temp2, XEN_TO_C_DOUBLE(maxx));
-  res = env_to_xen(temp3);
-  temp1 = free_env(temp1);
-  temp2 = free_env(temp2);
-  temp3 = free_env(temp3);
-  return(res);
-}
-#endif
 
 static void add_point(env *e, int pos, Float x, Float y)
 {
@@ -1705,10 +1522,6 @@ XEN_NARGIFY_1(g_set_enved_filter_order_w, g_set_enved_filter_order)
 XEN_NARGIFY_0(g_enved_dialog_w, g_enved_dialog)
 XEN_ARGIFY_1(g_save_envelopes_w, g_save_envelopes)
 XEN_ARGIFY_3(g_define_envelope_w, g_define_envelope)
-#if MUS_DEBUGGING && HAVE_SCHEME
-  XEN_ARGIFY_6(g_window_env_w, g_window_env)
-  XEN_NARGIFY_3(g_multiply_envs_w, g_multiply_envs)
-#endif
 #else
 #define g_enved_base_w g_enved_base
 #define g_set_enved_base_w g_set_enved_base
@@ -1729,10 +1542,6 @@ XEN_ARGIFY_3(g_define_envelope_w, g_define_envelope)
 #define g_enved_dialog_w g_enved_dialog
 #define g_save_envelopes_w g_save_envelopes
 #define g_define_envelope_w g_define_envelope
-#if MUS_DEBUGGING && HAVE_SCHEME
-  #define g_window_env_w g_window_env
-  #define g_multiply_envs_w g_multiply_envs
-#endif
 #endif
 
 void g_init_env(void)
@@ -1831,8 +1640,4 @@ stretch-envelope from env.fth: \n\
   ss->enved->in_dB = DEFAULT_ENVED_IN_DB;
   ss->enved->clip_p = DEFAULT_ENVED_CLIP_P;
 
-#if MUS_DEBUGGING && HAVE_SCHEME
-  XEN_DEFINE_PROCEDURE("window-env", g_window_env_w, 5, 1, 0, "internal testing function");
-  XEN_DEFINE_PROCEDURE("multiply-envs", g_multiply_envs_w, 3, 0, 0, "internal testing function");
-#endif
 }

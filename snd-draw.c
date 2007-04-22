@@ -109,7 +109,7 @@ void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float
 }
 
 
-static void allocate_erase_grf_points(mix_context *ms)
+static void allocate_erase_grf_points(mark_context *ms)
 {
   if (ms->p0 == NULL)
     {
@@ -118,20 +118,20 @@ static void allocate_erase_grf_points(mix_context *ms)
     }
 }
 
-static void backup_erase_grf_points(mix_context *ms, int nj)
+static void backup_erase_grf_points(mark_context *ms, int nj)
 {
   ms->lastpj = nj;
   memcpy((void *)(ms->p0), (void *)points, nj * sizeof(point_t));
   memcpy((void *)(ms->p1), (void *)points1, nj * sizeof(point_t));
 }
 
-void mix_save_graph(mix_context *ms, int j)
+void mark_save_graph(mark_context *ms, int j)
 {
   allocate_erase_grf_points(ms);
   backup_erase_grf_points(ms, j);
 }
 
-void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
+void erase_and_draw_grf_points(mark_context *ms, chan_info *cp, int nj)
 {
   chan_context *cx;
   axis_context *ax;
@@ -163,7 +163,7 @@ void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
   ax->gc = draw_gc;
 }
 
-void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
+void erase_and_draw_both_grf_points(mark_context *ms, chan_info *cp, int nj)
 {
   chan_context *cx;
   axis_context *ax;
@@ -300,7 +300,7 @@ void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
   /* split into 3 cases to try to make it more readable */
 #if USE_MOTIF
 
-  ax = mark_context(cp);
+  ax = mark_tag_context(cp);
   if (mp->name)
     {
       ax->current_font = ss->sgx->peaks_fontstruct->fid;
@@ -326,7 +326,7 @@ void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
   {
     color_t bg_color, old_color;
     int slop = 0;
-    ax = mark_context(cp);
+    ax = mark_tag_context(cp);
     if (mp->name)
       {
 	ax->current_font = PEAKS_FONT(ss);
@@ -335,7 +335,7 @@ void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
 	  {
 	    ax = erase_context(cp);
 	    fill_rectangle(ax, (int)(cx - 0.5 * len - 1), top - 15, len + 3, 16);
-	    ax = mark_context(cp);
+	    ax = mark_tag_context(cp);
 	  }
 	else  draw_string(ax, (int)(cx - 0.5 * len), y1 + STRING_Y_OFFSET, mp->name, strlen(mp->name));
       }
@@ -389,7 +389,7 @@ void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
 	  draw_string(ax, (int)(cx - 0.5 * len), y1 + STRING_Y_OFFSET, mp->name, strlen(mp->name));
 	}
     }
-  ax = mark_context(cp);
+  ax = mark_tag_context(cp);
   fill_rectangle(ax,
 		 cx - mark_tag_width(ss), top,
 		 2 * mark_tag_width(ss), mark_tag_height(ss));
@@ -409,7 +409,7 @@ void show_mark_triangle(chan_info *cp, int x)
 {
   int y0;
   y0 = ((axis_info *)(cp->axis))->y_axis_y0;
-  draw_polygon(mark_context(cp), 4,
+  draw_polygon(mark_tag_context(cp), 4,
 	       x, y0,
 	       x + MARK_PLAY_ARROW_SIZE, y0 + MARK_PLAY_ARROW_SIZE,
 	       x, y0 + 2 * MARK_PLAY_ARROW_SIZE,
@@ -2072,9 +2072,9 @@ void set_grf_points(int xi, int j, int ymin, int ymax) {}
 void set_grf_point(int xi, int j, int yi) {}
 void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style) {}
 void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style) {}
-void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj) {}
-void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj) {}
-void mix_save_graph(mix_context *ms, int j) {}
+void erase_and_draw_grf_points(mark_context *ms, chan_info *cp, int nj) {}
+void erase_and_draw_both_grf_points(mark_context *ms, chan_info *cp, int nj) {}
+void mark_save_graph(mark_context *ms, int j) {}
 void draw_cursor(chan_info *cp) {}
 void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show) {}
 void show_mark_triangle(chan_info *cp, int x) {}

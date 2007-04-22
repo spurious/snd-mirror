@@ -611,7 +611,7 @@ typedef struct {
   point_t *p0, *p1;
   int lastpj;
   color_t color;
-} mix_context;
+} mark_context;
 
 
 
@@ -1167,10 +1167,9 @@ env *free_env(env *e);
 char *env_to_string(env *e);
 env *make_envelope(Float *env_buffer, int len);
 env *make_envelope_with_offset_and_scaler(Float *env_buffer, int len, Float offset, Float scaler);
-env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_dur, Float maxx);
-env *multiply_envs(env *e1, env *e2, Float maxx);
 env *default_env(Float x1, Float y);
 bool default_env_p(env *e);
+bool envs_equal(env *e1, env *e2);
 env_editor *new_env_editor(void);
 void env_editor_button_motion(env_editor *edp, int evx, int evy, oclock_t motion_time, env *e);
 bool env_editor_button_press(env_editor *edp, int evx, int evy, oclock_t time, env *e);
@@ -1321,7 +1320,7 @@ axis_context *set_context(chan_info *cp, chan_gc_t gc);
 axis_context *copy_context(chan_info *cp);
 axis_context *erase_context(chan_info *cp);
 axis_context *selection_context(chan_info *cp);
-axis_context *mark_context(chan_info *cp);
+axis_context *mark_tag_context(chan_info *cp);
 axis_context *mix_waveform_context(chan_info *cp);
 axis_context *cursor_context(chan_info *cp);
 void calculate_fft(chan_info *cp);
@@ -1576,12 +1575,14 @@ off_t mix_length_from_id(int id);
 Float mix_amp_from_id(int id);
 Float mix_speed_from_id(int id);
 env *mix_amp_env_from_id(int id);
+#if 0
 int mix_channel_from_id(int id);
 off_t mix_set_position_from_id(int id, off_t enw_pos);
 off_t mix_set_length_from_id(int id, off_t new_len);
+env *mix_set_amp_env_from_id(int id, env *new_e);
+#endif
 Float mix_set_amp_from_id(int id, Float new_scaler);
 Float mix_set_speed_from_id(int id, Float new_speed);
-env *mix_set_amp_env_from_id(int id, env *new_e);
 chan_info *mix_chan_info_from_id(int id);
 
 mix_state *prepare_mix_state_for_channel(chan_info *cp, int mix_loc, off_t beg, off_t len);
@@ -1596,8 +1597,6 @@ bool mix_set_amp_env_edit(int id, env *e);
 bool mix_set_amp_edit(int id, Float amp);
 bool mix_set_speed_edit(int id, Float spd);
 
-mix_context *make_mix_context(chan_info *cp);
-mix_context *free_mix_context(mix_context *ms);
 int mix_complete_file(snd_info *sp, off_t beg, const char *fullname, bool with_tag, file_delete_t auto_delete, mix_sync_t all_chans);
 int mix_complete_file_at_cursor(snd_info *sp, const char *str);
 int mix_file(off_t beg, off_t num, int chans, chan_info **cps, const char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int start_chan);
@@ -1617,7 +1616,6 @@ void move_mix_tag(int mix_tag, int x);
 void finish_moving_mix_tag(int mix_tag, int x);
 int hit_mix(chan_info *cp, int x, int y);
 int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided);
-void reset_mix_graph_parent(chan_info *cp);
 void display_channel_mixes(chan_info *cp);
 
 void mix_dialog_mix_play(int mix_id);
@@ -1741,9 +1739,9 @@ void set_grf_points(int xi, int j, int ymin, int ymax);
 void set_grf_point(int xi, int j, int yi);
 void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style);
 void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style);
-void mix_save_graph(mix_context *ms, int j);
-void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int j);
-void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int j);
+void mark_save_graph(mark_context *ms, int j);
+void erase_and_draw_grf_points(mark_context *ms, chan_info *cp, int j);
+void erase_and_draw_both_grf_points(mark_context *ms, chan_info *cp, int j);
 axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller);
 void g_init_draw(void);
 void set_dialog_widget(snd_dialog_t which, widget_t wid);

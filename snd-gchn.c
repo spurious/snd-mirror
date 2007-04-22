@@ -1114,7 +1114,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  cleanup_cw(ncp);
 		  ncp->tcgx = mcgx;
 		  fixup_cp_cgx_ax_wn(ncp);
-		  reset_mix_graph_parent(ncp);
+		  /* reset_mix_graph_parent(ncp); */
 		}
 	      channel_open_pane(sp->chans[0]);
 	      set_toggle_button(unite_button(sp), true, false, (void *)sp);
@@ -1131,7 +1131,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  height[0] /= sp->nchans;
 
 		  map_over_sound_chans(sp, channel_open_pane);
-		  for (i = 0; i < sp->nchans; i++) reset_mix_graph_parent(sp->chans[i]);
+		  /* for (i = 0; i < sp->nchans; i++) reset_mix_graph_parent(sp->chans[i]); */
 		  pcp = sp->chans[0];
 		  ap = pcp->axis;
 		  for (i = 1; i < sp->nchans; i++)

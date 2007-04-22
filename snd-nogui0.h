@@ -74,7 +74,7 @@ typedef struct {
 typedef enum {NOT_A_SCANF_WIDGET} scanf_widget_t;
 
 typedef struct {
-  int data_color, selected_data_color, mix_color, basic_color, grid_color, selected_grid_color;
+  int data_color, selected_data_color, mix_color, basic_color, grid_color, selected_grid_color, mark_color;
   int white, black, red, yellow, green, light_blue;
   int fltenv_basic_gc, fltenv_data_gc;
   int basic_gc, selected_basic_gc, combined_basic_gc;        

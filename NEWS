@@ -47,8 +47,8 @@ tracks:
     save-track            save-mixes
     set-all-tracks
     track                 (now any list of mix ids)
-    track->sound-data
-    track->vct
+    track->sound-data     (see save-mixes)
+    track->vct            (see save-mixes)
     track-amp             scale-mixes
     track-amp-env         env-mixes
     track-chans
@@ -104,7 +104,7 @@ as always, infinite ruby and forth improvements thanks to Mike
 
 spokenword.scm thanks to Ville Koskinen
 
-checked: fftw 3.2a, cairo 1.4.2|4, sbcl 1.0.4, pango 1.16.2
+checked: fftw 3.2a, cairo 1.4.2|4, sbcl 1.0.4, pango 1.16.2, Gauche 0.8.10
 
 
 Thanks!: Mike Scholz, Esben Stien, Michael Edwards, Ville Koskinen

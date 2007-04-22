@@ -248,7 +248,6 @@ static void after_mix_file(void *context)
 
 int mix_complete_file(snd_info *sp, off_t beg, const char *fullname, bool with_tag, file_delete_t auto_delete, mix_sync_t all_chans)
 {
-  /* no need to save as temp here, but we do need sync info (from menu and keyboard) */
   chan_info *cp;
   chan_info **cps = NULL;
   int chans, id = MIX_FILE_NO_MIX, old_sync;
@@ -320,7 +319,6 @@ int mix_complete_file(snd_info *sp, off_t beg, const char *fullname, bool with_t
 int mix_file(off_t beg, off_t num, int chans, chan_info **cps, const char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int start_chan)
 {
   /* used in mix_selection and paste(mix)_region, and in mix_complete_file */
-  /* loop through out_chans cps writing the new mixed temp files and fixing up the edit trees */
 
   int i, id = MIX_FILE_NO_MIX, in_chans;
   char *new_origin = NULL;
@@ -354,8 +352,9 @@ int mix_file(off_t beg, off_t num, int chans, chan_info **cps, const char *mixin
 	  FREE(new_origin); 
 	  new_origin = NULL;
 	}
-      update_graph(cp);
     }
+  for (i = 0; i < chans; i++) 
+    update_graph(cps[i]);
   return(id);
 }
 
@@ -506,7 +505,7 @@ typedef struct {
   env_info *peak_env;
   XEN properties;
   int properties_gc_loc;
-  mix_context *wg;             /* which drawingarea graph are we using, and what color */
+  color_t color;
   /* TODO: associated with each index (in mix_state) we need possibly a peak-env set */
   int x, y;  /* these are needed to know where to erase while dragging the tag */
 } mix_info;
@@ -602,7 +601,6 @@ static mix_info *free_mix_info(mix_info *md)
   if (md)
     {
       if (md->name) {FREE(md->name); md->name = NULL;}
-      /* if (md->wg) md->wg = free_mix_context(md->wg); */
       mix_infos[md->id] = NULL;
       if (md->temporary == DELETE_ME)
 	{
@@ -661,12 +659,6 @@ int mix_name_to_id(const char *name)
   return(loc_so_far);
 }
 
-#if 0
-static int pending_mix_id(void) {return(mix_infos_ctr);}
-#endif
-
-static mix_context *set_mix_info_context(chan_info *cp);
-
 static mix_info *make_mix_info(chan_info *cp)
 {
   mix_info *md;
@@ -691,15 +683,12 @@ static mix_info *make_mix_info(chan_info *cp)
   md->id = mix_infos_ctr++;
   md->cp = cp;
   md->temporary = DONT_DELETE_ME;
-  md->wg = set_mix_info_context(cp);
+  md->color = ss->sgx->mix_color;
   md->tag_y = 0;
   md->name = NULL;
   md->y = MIX_TAG_ERASED;
   md->peak_env = NULL;
   md->properties = XEN_FALSE;
-
-  /* TODO: in_chan */
-
   return(md);
 }
 
@@ -872,6 +861,7 @@ off_t mix_position_from_id(int id)
   return(0);
 }
 
+#if 0
 off_t mix_set_position_from_id(int id, off_t new_pos)
 {
   mix_state *ms;
@@ -884,7 +874,7 @@ off_t mix_set_position_from_id(int id, off_t new_pos)
     }
   return(0);
 }
-
+#endif
 
 off_t mix_length_from_id(int id)
 {
@@ -895,6 +885,7 @@ off_t mix_length_from_id(int id)
   return(0);
 }
 
+#if 0
 off_t mix_set_length_from_id(int id, off_t new_len)
 {
   mix_state *ms;
@@ -906,6 +897,7 @@ off_t mix_set_length_from_id(int id, off_t new_len)
     }
   return(0);
 }
+#endif
 
 
 Float mix_amp_from_id(int id)
@@ -961,6 +953,7 @@ env *mix_amp_env_from_id(int id)
   return(NULL);
 }
 
+#if 0
 env *mix_set_amp_env_from_id(int id, env *new_e)
 {
   mix_state *ms;
@@ -974,7 +967,7 @@ env *mix_set_amp_env_from_id(int id, env *new_e)
     }
   return(NULL);
 }
-
+#endif
 
 
 /* stable (not in edit list) */
@@ -1030,6 +1023,7 @@ chan_info *mix_chan_info_from_id(int id)
   return(NULL);
 }
 
+#if 0
 int mix_channel_from_id(int id)
 {
   mix_info *md;
@@ -1038,6 +1032,7 @@ int mix_channel_from_id(int id)
     return(md->in_chan);
   return(-1);
 }
+#endif
 
 static int mix_tag_y_from_id(int id)
 {
@@ -1065,7 +1060,7 @@ static color_t mix_color_from_id(int mix_id)
   mix_info *md;
   md = md_from_id(mix_id);
   if (md)
-    return(md->wg->color);
+    return(md->color);
   return(ss->sgx->mix_color);
 }
 
@@ -1074,7 +1069,7 @@ static color_t mix_set_color_from_id(int id, color_t new_color)
   mix_info *md;
   md = md_from_id(id);
   if (md)
-    md->wg->color = new_color;
+    md->color = new_color;
   return(new_color);
 }
 
@@ -1088,15 +1083,18 @@ bool mix_set_amp_edit(int id, Float amp)
   if (md) old_ms = current_mix_state(md); /* needed for edit bounds and existence check */
   if (old_ms)
     {
-      mix_state *ms;
-      begin_mix_op(md->cp, old_ms->beg, old_ms->len, old_ms->beg, old_ms->len, md->cp->edit_ctr, S_setB S_mix_amp);
-      ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
-      ms->scaler = amp;
-
-      /* TODO: peak env scaled too? */
-
-      /* SOMEDAY: track-style op could make any number of changes here */
-      end_mix_op(md->cp, 0, 0);
+      if (old_ms->scaler != amp)
+	{
+	  mix_state *ms;
+	  begin_mix_op(md->cp, old_ms->beg, old_ms->len, old_ms->beg, old_ms->len, md->cp->edit_ctr, S_setB S_mix_amp);
+	  ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
+	  ms->scaler = amp;
+	  
+	  /* TODO: peak env scaled too? */
+	  
+	  /* SOMEDAY: track-style op could make any number of changes here */
+	  end_mix_op(md->cp, 0, 0);
+	}
       return(true);
     }
   return(false);
@@ -1251,21 +1249,24 @@ bool mix_set_amp_env_edit(int id, env *e)
   if (md) old_ms = current_mix_state(md); /* needed for edit bounds and existence check */
   if (old_ms)
     {
-      chan_info *cp;
-      mix_state *ms;
-      cp = md->cp;
-
-      begin_mix_op(cp, old_ms->beg, old_ms->len, old_ms->beg, old_ms->len, cp->edit_ctr, S_setB S_mix_amp_env); /* this does not change beg or len */
-      ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
-      if (ms->amp_env) free_env(ms->amp_env);
-      ms->amp_env = copy_env(e);
-      /* can't use mus_env (as the reader op) here because we need to run backwards */
-
-      if ((e) || (ms->speed != 1.0))
-	ms->index = remake_mix_data(ms, md);
-      else ms->index = md->original_index;
-
-      end_mix_op(cp, 0, 0);
+      if (!(envs_equal(old_ms->amp_env, e)))
+	{
+	  chan_info *cp;
+	  mix_state *ms;
+	  cp = md->cp;
+	  
+	  begin_mix_op(cp, old_ms->beg, old_ms->len, old_ms->beg, old_ms->len, cp->edit_ctr, S_setB S_mix_amp_env); /* this does not change beg or len */
+	  ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
+	  if (ms->amp_env) free_env(ms->amp_env);
+	  ms->amp_env = copy_env(e);
+	  /* can't use mus_env (as the reader op) here because we need to run backwards */
+	  
+	  if ((e) || (ms->speed != 1.0))
+	    ms->index = remake_mix_data(ms, md);
+	  else ms->index = md->original_index;
+	  
+	  end_mix_op(cp, 0, 0);
+	}
       return(true);
     }
   return(false);
@@ -1279,20 +1280,23 @@ bool mix_set_position_edit(int id, off_t pos)
   if (md) old_ms = current_mix_state(md);
   if (old_ms)
     {
-      mix_state *ms;
-      char *origin;
+      if (old_ms->beg != pos)
+	{
+	  mix_state *ms;
+	  char *origin;
 #if HAVE_FORTH
-      origin = mus_format(" -mix-%d " OFF_TD " set-%s", id, pos, S_mix_position);
+	  origin = mus_format(" -mix-%d " OFF_TD " set-%s", id, pos, S_mix_position);
 #else
-      origin = mus_format(PROC_SET_MIX OFF_TD PROC_CLOSE, TO_PROC_NAME(S_mix_position), id, pos);
+	  origin = mus_format(PROC_SET_MIX OFF_TD PROC_CLOSE, TO_PROC_NAME(S_mix_position), id, pos);
 #endif
-      begin_mix_op(md->cp, old_ms->beg, old_ms->len, pos, old_ms->len, md->cp->edit_ctr, origin); /* this does not change beg or len */
-      FREE(origin);
-      ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
-      unmix(md->cp, ms);
-      ms->beg = pos;
-      remix(md->cp, ms);
-      end_mix_op(md->cp, (old_ms->beg != pos) ? old_ms->beg : 0, old_ms->len);
+	  begin_mix_op(md->cp, old_ms->beg, old_ms->len, pos, old_ms->len, md->cp->edit_ctr, origin); /* this does not change beg or len */
+	  FREE(origin);
+	  ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
+	  unmix(md->cp, ms);
+	  ms->beg = pos;
+	  remix(md->cp, ms);
+	  end_mix_op(md->cp, (old_ms->beg != pos) ? old_ms->beg : 0, old_ms->len);
+	}
       return(true);
     }
   return(false);
@@ -1306,81 +1310,31 @@ bool mix_set_speed_edit(int id, Float spd)
   if (md) old_ms = current_mix_state(md); /* needed for edit bounds and existence check */
   if (old_ms)
     {
-      chan_info *cp;
-      mix_state *ms;
-      off_t len;
-
-      cp = md->cp;
-      len = snd_round_off_t((double)(md->in_samps) / (double)spd);
-      begin_mix_op(cp, old_ms->beg, old_ms->len, old_ms->beg, len, cp->edit_ctr, S_setB S_mix_speed);
-
-      ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
-      ms->speed = spd;
-      ms->len = len;
-      unmix(cp, ms);
-
-      if ((ms->speed != 1.0) || (ms->amp_env))
-	ms->index = remake_mix_data(ms, md);
-      else ms->index = md->original_index;
-
-      remix(cp, ms);
-      end_mix_op(cp, 0, 0); /* old_ms->beg, old_ms->len); */
+      if (old_ms->speed != spd)
+	{
+	  chan_info *cp;
+	  mix_state *ms;
+	  off_t len;
+	  
+	  cp = md->cp;
+	  len = snd_round_off_t((double)(md->in_samps) / (double)spd);
+	  begin_mix_op(cp, old_ms->beg, old_ms->len, old_ms->beg, len, cp->edit_ctr, S_setB S_mix_speed);
+	  
+	  ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
+	  ms->speed = spd;
+	  ms->len = len;
+	  unmix(cp, ms);
+	  
+	  if ((ms->speed != 1.0) || (ms->amp_env))
+	    ms->index = remake_mix_data(ms, md);
+	  else ms->index = md->original_index;
+	  
+	  remix(cp, ms);
+	  end_mix_op(cp, 0, 0); /* old_ms->beg, old_ms->len); */
+	}
       return(true);
     }
   return(false);
-}
-
-
-
-
-
-/* -------- mix_contexts (saved graphs for quick erase and redraw) -------- */
-
-mix_context *make_mix_context(chan_info *cp)
-{
-  mix_context *g;
-  g = (mix_context *)CALLOC(1, sizeof(mix_context));
-  g->graph = channel_graph(cp);
-  g->color = ss->sgx->mix_color;
-  return(g);
-}
-
-static mix_context *set_mix_info_context(chan_info *cp)
-{
-  snd_info *sp;
-  sp = cp->sound;
-  if (sp->channel_style != CHANNELS_SEPARATE) cp = sp->chans[0];
-  return(make_mix_context(cp));
-}
-
-mix_context *free_mix_context(mix_context *ms)
-{
-  if (ms->p0) {FREE(ms->p0); ms->p0 = NULL;}
-  if (ms->p1) {FREE(ms->p1); ms->p1 = NULL;}
-  FREE(ms);
-  return(NULL);
-}
-
-void reset_mix_graph_parent(chan_info *cp)
-{
-  /* if channel style (output drawing area widget) changed, reflect that in all cp's mixes */
-  if (cp)
-    {
-      mix_list *mxl;
-      mxl = (mix_list *)(cp->edits[cp->edit_ctr]->mixes);
-      if (mxl)
-	{
-	  int i;
-	  for (i = 0; i < mxl->size; i++)
-	    if (mxl->list[i])
-	      {
-		mix_info *md;
-		md = mix_infos[mxl->list[i]->mix_id];
-		if (md->wg) FREE(md->wg);
-		md->wg = set_mix_info_context(cp);
-	      }
-	}
-    }
 }
 
 
@@ -1467,10 +1421,13 @@ static XEN g_mix_amp_env(XEN n)
 
 static XEN g_set_mix_amp_env(XEN n, XEN val) 
 {
-  static env *e = NULL;
+  env *e = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_amp_env, "an integer");
   XEN_ASSERT_TYPE(XEN_LIST_P(val) || XEN_FALSE_P(val), val, XEN_ARG_2, S_setB S_mix_amp_env, "a list or " PROC_FALSE);
-  e = get_env(val, S_setB S_mix_amp_env);
+
+  if (XEN_LIST_P(val))
+    e = get_env(val, S_setB S_mix_amp_env);
+
   if (mix_set_amp_env_edit(XEN_TO_C_INT(n), e))
     return(val);
   return(snd_no_such_mix_error(S_setB S_mix_amp_env, n));  
@@ -1632,10 +1589,10 @@ filename or " PROC_FALSE " and the input channel for its data."
 void color_mixes(color_t color)
 {
   int i;
-  set_mix_color(color);                  /* snd-xutils etc -- sets foreground of global ss->sgx->mix_gc */
+  set_mix_color(color);
   for (i = 0; i < mix_infos_ctr; i++)
     if (mix_infos[i])
-      mix_infos[i]->wg->color = color;
+      mix_infos[i]->color = color;
   for_each_normal_chan(update_graph);
 }
 
@@ -2519,7 +2476,7 @@ static void draw_mix_tag(mix_info *md, int x, int y)
     }
 
   ax = mix_waveform_context(cp);
-  set_foreground_color(ax, md->wg->color); 
+  set_foreground_color(ax, md->color); 
   fill_rectangle(ax, x - width / 2, y - height, width, height);
   md->x = x;
   md->y = y;

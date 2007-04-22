@@ -1279,20 +1279,20 @@ void mix_help(void)
   #if HAVE_SCHEME
     #define mix_example "(mix \"oboe.snd\" 1234)"
     #define mix_vct_example "(mix-vct (vct 0 .1 .2) 1234)"
-    #define mix_amp_example "(set! (mix-amp 0 0) .5)"
-    #define mix_amp_env_example "(set! (mix-amp-env 0 0) '(0 0 1 1))"
+    #define mix_amp_example "(set! (mix-amp 0) .5)"
+    #define mix_amp_env_example "(set! (mix-amp-env 0) '(0 0 1 1))"
   #endif
   #if HAVE_RUBY
     #define mix_example "mix(\"oboe.snd\", 1234)"
     #define mix_vct_example "mix_vct(vct(0.0, 0.1, 0.2), 1234)"
-    #define mix_amp_example "set_mix_amp(0, 0, .5)"
-    #define mix_amp_env_example "set_mix_amp_env(0, 0, [0.0, 0.0, 1.0, 1.0])"
+    #define mix_amp_example "set_mix_amp(0, .5)"
+    #define mix_amp_env_example "set_mix_amp_env(0, [0.0, 0.0, 1.0, 1.0])"
   #endif
   #if HAVE_FORTH
     #define mix_example "\"oboe.snd\" 1234 mix"
     #define mix_vct_example "0.0 0.1 0.2 vct 1234 mix-vct"
-    #define mix_amp_example "0 0 0.5 set-mix-amp"
-    #define mix_amp_env_example "0 0 '( 0.0 0.0 1.0 1.0 ) set-mix-amp-env"
+    #define mix_amp_example "0 0.5 set-mix-amp"
+    #define mix_amp_env_example "0 '( 0.0 0.0 1.0 1.0 ) set-mix-amp-env"
   #endif
 
   snd_help_with_xrefs("Mixing", 
@@ -1305,11 +1305,8 @@ mixing functions. Currently the only difference between the first two is that \
 the Mix menu option tries to take the current sync state into account, whereas \
 the C-x C-q command does not. To mix a selection, use C-x q. The mix starts at \
 the current cursor location. It is displayed as a separate waveform above \
-the main waveform with a red tag at the beginning.  You can drag the tag to \
-reposition the mix. The underlying sound being mixed can be edited by the same \
-functions used throughout Snd; the mix number is used as the first (only) \
-member of a list where the functions take the sound index argument. It is \
-usually handier, however, to adjust the mix via the Mix dialog. \
+the main waveform with a tag at the beginning.  You can drag the tag to \
+reposition the mix. \
 \n\n\
 The Mix dialog (under the View Menu) provides various \
 commonly-used controls on the currently chosen mix. At the top are the mix id, \
@@ -1321,26 +1318,26 @@ To move the cursor from one mix to the next, in the same manner as C-j moves thr
 \n\n\
 The main mix-related functions are:\n\
 \n\
-  " S_mix " (file :optional samp in-chan snd chn tags delete trk)\n\
+  " S_mix " (file :optional samp in-chan snd chn tags delete)\n\
     mix file's channel in-chan starting at samp\n\
     " mix_example "\n\
 \n\
-  " S_mix_selection " (:optional beg snd chn)\n\
+  " S_mix_selection " (:optional beg snd chn selection-channel)\n\
     mix (add) selection starting at beg\n\
 \n\
-  " S_mix_region " (:optional samp reg snd chn)\n\
+  " S_mix_region " (:optional samp reg snd chn region-channel)\n\
     mix region reg at sample samp (default is cursor sample)\n\
 \n\
   " S_mix_vct " (vct :optional beg snd chn with-mix-tags origin)\n\
-    mix the contents of vct starting at beg\n\
+    mix the contents of vct starting at beg:\n\
     " mix_vct_example "\n\
 \n\
-  " S_mix_amp " (mix :optional chan)\n\
-    amplitude of mix's channel chan:\n\
+  " S_mix_amp " (mix)\n\
+    amplitude of mix:\n\
     " mix_amp_example "\n\
 \n\
-  " S_mix_amp_env " (mix :optional chan)\n\
-    amplitude envelope of mix's channel chan:\n\
+  " S_mix_amp_env " (mix)\n\
+    amplitude envelope of mix:\n\
     " mix_amp_env_example "\n\
 \n\
   " S_mix_speed " (mix)\n\
@@ -1364,14 +1361,14 @@ mixing functions. Currently the only difference between the first two is that \
 the Mix menu option tries to take the current sync state into account, whereas \
 the C-x C-q command does not. To mix a selection, use C-x q. The mix starts at \
 the current cursor location. It is displayed as a separate waveform above \
-the main waveform with a red tag at the beginning.  You can drag the tag to \
+the main waveform with a tag at the beginning.  You can drag the tag to \
 reposition the mix. \
 \n\n\
 The Mix dialog (under the View Menu) provides various \
 commonly-used controls on the currently chosen mix. At the top are the mix id, \
 name, begin and end times, and a play button. Beneath that are \
-various sliders controlling the speed (sampling rate) of the mix, amplitude of \
-each input channel, and the amplitude envelopes. \
+various sliders controlling the speed (sampling rate), amplitude, \
+and amplitude envelope applied to the mix. \
 \n\n\
 To move the cursor from one mix to the next, in the same manner as C-j moves through marks, use C-x C-j. \
 \n\n",
@@ -2078,7 +2075,7 @@ The main region-related functions are:\n\
   " S_insert_region " (:optional beg reg snd chn)\n\
     insert region 'reg' at sample 'beg'\n\
 \n\
-  " S_mix_region " (:optional samp reg snd chn)\n\
+  " S_mix_region " (:optional samp reg snd chn reg-chan)\n\
     mix in region 'reg' at sample 'samp' (defaults to the cursor sample)\n\
 \n\
   " S_play_region " (:optional reg wait stop-func)\n\
@@ -2185,7 +2182,7 @@ The primary selection-related functions are:\n\
   " S_insert_selection " (:optional beg snd chn)\n\
     insert (a copy of) selection starting at 'beg'\n\
 \n\
-  " S_mix_selection " (:optional beg snd chn)\n\
+  " S_mix_selection " (:optional beg snd chn selection-chan)\n\
     mix (add) selection starting at 'beg'\n\
 \n\
   " S_play_selection " (:optional wait pos stop-proc)\n\
@@ -2374,8 +2371,8 @@ and the fft is large enough to include the entire sound, and the 'wave' button i
 the spectrum is also displayed in the envelope editor, making it easier to perform accurate (fussy?) filtering operations. \
 \n\n\
 To apply the envelope to the current selection, rather than the current sound, set the 'selection' button. \
-To apply it to the currently selected mix, set the 'mix' button. In this case, if the mix has multiple input channels, the envelope \
-is applied to the currently selected channel (the one with the red label); control-click 'mix' to load the current mix amplitude \
+To apply it to the currently selected mix, set the 'mix' button. \
+control-click 'mix' to load the current mix amplitude \
 envelope into the editor. \
 \n\n\
 The two toggle buttons at the lower right choose whether to show a light-colored version of \
@@ -2711,8 +2708,8 @@ void mix_dialog_help(void)
 "This dialog provides various commonly-used controls on the currently \
 chosen mix.  At the top are the mix id, begin and end times, \
 and a play button.  " mix_dialog_mix_help "Beneath that are various sliders \
-controlling the speed (sampling rate) of the mix, and the amplitude of each \
-input channel; and finally, an envelope editor for the mix's (input) channels. \
+controlling the speed (sampling rate) and amplitude of the mix, \
+and finally, an envelope editor for the mix. \
 The current mix amp env is not actually changed until you click 'Apply Env'.\
 The editor envelope is drawn in black with dots whereas the current \
 mix amp env (if any) is drawn in blue.",

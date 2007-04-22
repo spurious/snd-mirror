@@ -1171,19 +1171,36 @@ static syncdata *free_syncdata(syncdata *sd)
 static bool mark_control_clicked = false; /* C-click of mark -> drag data as mark is dragged */
 static off_t mark_initial_sample = 0;
 static syncdata *mark_sd = NULL;
-static mix_context **mark_movers = NULL;
+static mark_context **mark_movers = NULL;
+
+static mark_context *make_mark_context(chan_info *cp)
+{
+  mark_context *g;
+  g = (mark_context *)CALLOC(1, sizeof(mark_context));
+  g->graph = channel_graph(cp);
+  g->color = ss->sgx->mark_color;
+  return(g);
+}
+
+static mark_context *free_mark_context(mark_context *ms)
+{
+  if (ms->p0) {FREE(ms->p0); ms->p0 = NULL;}
+  if (ms->p1) {FREE(ms->p1); ms->p1 = NULL;}
+  FREE(ms);
+  return(NULL);
+}
 
 static void initialize_md_context(int size, chan_info **cps)
 {
   int i;
-  mark_movers = (mix_context **)CALLOC(size, sizeof(mix_context *));
+  mark_movers = (mark_context **)CALLOC(size, sizeof(mark_context *));
   for (i = 0; i < size; i++)
     {
-      mix_context *ms;
-      mark_movers[i] = make_mix_context(cps[i]);
+      mark_context *ms;
+      mark_movers[i] = make_mark_context(cps[i]);
       ms = mark_movers[i];
       ms->lastpj = make_graph(cps[i]); 
-      mix_save_graph(ms, ms->lastpj);
+      mark_save_graph(ms, ms->lastpj);
     }
 }
 
@@ -1194,7 +1211,7 @@ static void finalize_md_context(int size)
       int i;
       for (i = 0; i < size; i++) 
 	if (mark_movers[i]) 
-	  free_mix_context(mark_movers[i]);
+	  free_mark_context(mark_movers[i]);
       FREE(mark_movers);
       mark_movers = NULL;
     }
