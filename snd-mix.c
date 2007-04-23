@@ -688,6 +688,7 @@ static mix_info *make_mix_info(chan_info *cp)
   md->name = NULL;
   md->y = MIX_TAG_ERASED;
   md->peak_env = NULL;
+  md->properties_gc_loc = NOT_A_GC_LOC;
   md->properties = XEN_FALSE;
   return(md);
 }
@@ -1981,15 +1982,19 @@ static char *mix_sample_reader_to_string(mix_fd *fd)
     sprintf(desc, "#<mix-sample-reader: null>");
   else
     {
-      mix_info *md;
-      md = fd->md;
-      if (md)
-	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<mix-sample-reader mix %d, (from " OFF_TD ", at " OFF_TD "%s): %s>",
-		     md->id,
-		     fd->sf->initial_samp,
-		     fd->sf->loc,
-		     (fd->sf->at_eof) ? ", at eof" : "",
-		     (md->in_filename) ? md->in_filename : "<vct>");
+      if ((mix_is_active(fd->sf->region)) &&
+	  (fd->md) &&
+	  (fd->sf->region == (fd->md->id)))
+	{
+	  mix_info *md;
+	  md = fd->md;
+	  mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<mix-sample-reader mix %d, (from " OFF_TD ", at " OFF_TD "%s): %s>",
+		       md->id,
+		       fd->sf->initial_samp,
+		       fd->sf->loc,
+		       (fd->sf->at_eof) ? ", at eof" : "",
+		       (md->in_filename) ? md->in_filename : "<vct>");
+	}
       else sprintf(desc, "#<mix-sample-reader: inactive>");
     }
   return(desc);
@@ -1999,10 +2004,14 @@ XEN_MAKE_OBJECT_PRINT_PROCEDURE(mix_fd, print_mf, mix_sample_reader_to_string)
 
 static void mf_free(mix_fd *fd)
 {
-  /* TODO:
   if (fd) 
-    free_mix_fd(fd); 
-  */
+    {
+      if (fd->sf)
+	free_snd_fd(fd->sf);
+      fd->sf = NULL;
+      fd->md = NULL;
+      FREE(fd);
+    }
 }
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(mix_fd, free_mf, mf_free)
@@ -2028,8 +2037,9 @@ static XEN g_make_mix_sample_reader(XEN mix_id, XEN ubeg)
       mf = (mix_fd *)CALLOC(1, sizeof(mix_fd));
       mf->md = md;
       mf->sf = make_virtual_mix_reader(md->cp, beg, ms->len, ms->index, ms->scaler, READ_FORWARD);
-      if (mf)
+      if (mf->sf)
 	{
+	  mf->sf->region = md->id;
 	  XEN_MAKE_AND_RETURN_OBJECT(mf_tag, mf, 0, free_mf);
 	}
     }

@@ -4728,49 +4728,57 @@ mix-home returns a list containing the mix's output sound index and channel numb
 </td></tr><tr><td></td><td>
 mix-name is the mix's name, if any.  The mix name is displayed near the mix tag.
 See also <a href="sndscm.html#mixnametoid">mix-name-&gt;id</a>.
-Here's an example that uses the mix name to provide some pitch
+Here's an example that uses the mix name and the tag location (mix-tag-y) to provide some pitch
 feedback:
 
 <table border=0 cellpadding=5 vspace=5><tr><td bgcolor="#fafafa"><pre>
 (if (not (provided? 'snd-v.scm)) (load-from-path "v.scm"))
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
-(define violins '())
-(define cellos '())
+(define (frequency-&gt;tag-y freq lo octs) ; tag height dependent on freq
+  (inexact-&gt;exact (round (* 100 (- 1.0 (/ (log (/ freq lo)) (* (log 2.0) octs)))))))
 
-(define (violin beg dur freq amp)
-  (let ((id (<a class=quiet href="#mix">mix</a> (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> ()                            ; write instrument output to temp sound
-   	           (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> 0 dur (-&gt;frequency freq #t) amp)) ; our favorite FM instrument
-		 (-&gt;sample beg) 0 #f #f                         ; mix into the current sound
-		 #t #t)))                                       ; with tag and auto-delete
-    (if (symbol? freq)                                          ; set mix name to reflect pitch
-	(set! (<em class=red>mix-name</em> id) (symbol-&gt;string freq)))
-    (set! violins (cons id violins))))                          ; save list of violin mixes
-
-(define (cello beg dur freq amp)                                ; similar to violin, but for cello notes
-  (let ((id (<a class=quiet href="#mix">mix</a> (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> () 
-		   (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> 0 dur (-&gt;frequency freq #t) amp :fm-index 1.5))
-	    (-&gt;sample beg) 0 #f #f 
-	    #t #t)))
-    (if (symbol? freq)
-	(set! (<em class=red>mix-name</em> id) (symbol-&gt;string freq)))
-    (set! cellos (cons id cellos))))
-
-(<a class=quiet href="#newsound">new-sound</a> "test.snd" :channels 1)       ; open a new sound in Snd
-
-(<a class=quiet href="#asoneedit">as-one-edit</a>
-  (lambda ()                              ; play a familiar tune...
-   (violin 0 1 'e4 .2)  (violin 1 1.5 'g4 .2)  (violin 2.5 .5 'g3 .2)
-   (cello  0 1 'c3 .2)  (cello  1 1.5 'e3 .2)  (cello  2.5 .5 'g2 .2)
-
-   (violin 3 3 'f4 .2)
-   (cello  3 3 'd3 .2)
-
-   (violin 6 1 'e4 .2)  (violin 7 1 'g3 .2)   (violin 8 1 'e4 .2)
-   (cello  6 1 'c3 .2)  (cello  7 1 'g2 .2)   (cello  8 1 'c3 .2)
-
-   (violin 9 3 'd4 .2)
-   (cello  9 3 'b2 .2)))
+(let ((violin-sync 1)
+      (violin-color (<a class=quiet href="#makecolor">make-color</a> 0 0 1)) ; blue
+      (cello-sync 2)
+      (cello-color (<a class=quiet href="#makecolor">make-color</a> 0 1 0)) ; green
+      (index (<a class=quiet href="#newsound">new-sound</a> "test.snd" :channels 1 :size (* 22050 22))))
+  
+  (define (violin beg dur freq amp)
+    (let ((id (<a class=quiet href="#mix">mix</a> (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> ()                            ; write instrument output to temp sound
+   	             (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> 0 dur (<a class=quiet href="sndscm.html#tofrequency">-&gt;frequency</a> freq #t) amp)) ; our favorite FM instrument
+		(<a class=quiet href="sndscm.html#tosample">-&gt;sample</a> beg) 0 index 0  ; mix start, file in-chan, sound, channel
+                #t #t)))                  ; mix with tag and auto-delete
+      (if (symbol? freq)
+	  (set! (<em class=red>mix-name</em> id) (symbol-&gt;string freq)))
+      (set! (<a class=quiet href="#mixsync">mix-sync</a> id) violin-sync)
+      (set! (<a class=quiet href="#mixcolor">mix-color</a> id) violin-color)
+      (set! (<a class=quiet href="#mixtagy">mix-tag-y</a> id) (frequency-&gt;tag-y (-&gt;frequency freq #t) (-&gt;frequency 'c2) 3))))
+  
+  (define (cello beg dur freq amp)
+    (let ((id (<a class=quiet href="#mix">mix</a> (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> ()
+   	             (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> 0 dur (<a class=quiet href="sndscm.html#tofrequency">-&gt;frequency</a> freq #t) amp :fm-index 1.5))
+                (<a class=quiet href="sndscm.html#tosample">-&gt;sample</a> beg) 0 index 0
+  	        #t #t)))
+      (if (symbol? freq)
+	  (set! (<em class=red>mix-name</em> id) (symbol-&gt;string freq)))
+      (set! (<a class=quiet href="#mixsync">mix-sync</a> id) cello-sync)
+      (set! (<a class=quiet href="#mixcolor">mix-color</a> id) cello-color)
+      (set! (<a class=quiet href="#mixtagy">mix-tag-y</a> id) (frequency-&gt;tag-y (-&gt;frequency freq #t) (-&gt;frequency 'c2) 3))))
+  
+  (<a class=quiet href="#asoneedit">as-one-edit</a>
+   (lambda ()
+     (violin 0 1 'e4 .2)  (violin 1 1.5 'g4 .2)  (violin 2.5 .5 'g3 .2)
+     (cello  0 1 'c3 .2)  (cello  1 1.5 'e3 .2)  (cello  2.5 .5 'g2 .2)
+     
+     (violin 3 3 'f4 .2)
+     (cello  3 3 'd3 .2)
+     
+     (violin 6 1 'e4 .2)   (violin 7 1 'g3 .2)   (violin 8 1 'e4 .2)
+     (cello  6 1 'c3 .2)   (cello  7 1 'g2 .2)   (cello  8 1 'c3 .2)
+     
+     (violin 9 3 'd4 .2)
+     (cello  9 3 'b2 .2))))
 </pre></td></tr></table>
 <img src="mixname.png" alt="mix name example" vspace=10>
 <p>

@@ -9629,7 +9629,7 @@ that info.
 The *clm-* variables are saved in the save-state
 file by <A NAME="wssavestate">ws-save-state</A>, which may not be a good idea -- feedback welcome!
 Two more convenience functions are <b>-&gt;frequency</b> and <b>-&gt;sample</b>.
-<b>-&gt;frequency</b> takes either a number or a common-music pitch symbol ('c4 is middle C),
+<A NAME="tofrequency">-&gt;frequency</A> takes either a number or a common-music pitch symbol ('c4 is middle C),
 and returns either the number or the frequency associated with that pitch:
 </p>
 <pre>
@@ -9638,7 +9638,7 @@ and returns either the number or the frequency associated with that pitch:
 </pre>
 <p>It's optional second argument can be #t to get integer ratios, rather than
 the default equal temperment.
-<b>-&gt;sample</b> returns a sample number given a time in seconds:
+<A NAME="tosample">-&gt;sample</A> returns a sample number given a time in seconds:
 </p>
 <pre>
     <em class=listener>&gt;</em> <em class=typing>(-&gt;sample 1.0)</em>

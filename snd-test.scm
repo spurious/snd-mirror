@@ -4928,6 +4928,7 @@ EDITS: 0
 ")))
 	    (snd-display ";new 0: ~A" (display-edits)))
 	(insert-samples 10 10 (make-vct 10))
+	(if (not (= (frames) 20)) (snd-display ";new 1 frames: ~A" (frames)))
 	(if (not (string-=? (display-edits) (string-append "
 EDITS: 1
 
@@ -4944,6 +4945,7 @@ EDITS: 1
 	    (snd-display ";new 1: ~A" (display-edits)))
 	(undo)
 	(insert-samples 0 10 (make-vct 10))
+	(if (not (= (frames) 11)) (snd-display ";new 2 frames: ~A" (frames))) ; 11 because there was 1 sample when new-sound created 
 	(if (not (string-=? (display-edits) (string-append "
 EDITS: 1
 
@@ -4957,8 +4959,10 @@ EDITS: 1
    (at 11, end_mark)
 ")))
 	    (snd-display ";new 2: ~A" (display-edits)))
-	(undo 2)
+	(let ((eds (undo 2)))
+	  (if (not (= eds 2)) (snd-display ";new 3 undo: ~A" eds)))
 	(insert-samples 0 10 (make-vct 10))
+	(if (not (= (frames) 11)) (snd-display ";new 3 frames: ~A" (frames)))
 	(if (not (string-=? (display-edits) (string-append "
 EDITS: 1
 
@@ -4974,6 +4978,7 @@ EDITS: 1
 	    (snd-display ";new 3: ~A" (display-edits)))
 	(undo)
 	(set! (sample 0) .5)
+	(if (not (= (frames) 1)) (snd-display ";new 4 frames: ~A" (frames)))
 	(if (not (string-=? (display-edits) (string-append "
 EDITS: 1
 
@@ -4989,6 +4994,7 @@ EDITS: 1
 	(undo)
 
 	(set! (samples 0 10) (make-vct 10))
+	(if (not (= (frames) 10)) (snd-display ";new 5 frames: ~A" (frames)))
 	(if (not (string-=? (display-edits) (string-append "
 EDITS: 1
 
@@ -5003,6 +5009,7 @@ EDITS: 1
 	    (snd-display ";new 5: ~A" (display-edits)))
 
 	(delete-samples 3 4)
+	(if (not (= (frames) 6)) (snd-display ";new 6 frames: ~A" (frames)))
 	(if (not (string-=? (safe-display-edits ind 0 2) "
  (delete 3 4) ; delete-samples 3 4 [2:3]:
    (at 0, cp->sounds[1][0:2, 1.000]) [buf: 10] 
@@ -5012,6 +5019,7 @@ EDITS: 1
 	    (snd-display ";new 6: ~A" (safe-display-edits ind 0 2)))
 
 	(set! (samples 1 4) (make-vct 4))
+	(if (not (= (frames) 6)) (snd-display ";new 7 frames: ~A" (frames)))
 	(if (not (string-=? (safe-display-edits ind 0 3) "
  (set 1 4) ; set-samples [3:4]:
    (at 0, cp->sounds[1][0:0, 1.000]) [buf: 10] 
@@ -5025,6 +5033,7 @@ EDITS: 1
 	(insert-samples 2 1 (make-vct 1))
 	(insert-samples 4 1 (make-vct 1))
 	(insert-samples 15 1 (make-vct 1))
+	(if (not (= (frames) 16)) (snd-display ";new 8 frames: ~A" (frames)))
 	(if (not (string-=? (display-edits) (string-append "
 EDITS: 5
 
@@ -10740,8 +10749,6 @@ EDITS: 5
 				   (vct-set! v i (+ 0.5 (* 0.5 (cos (+ pi (/ (* pi i) dur)))))))
 				 v))
 			     1.0)
-	  (if (not (equal? (edits index) (list 276 0)))
-	      (snd-display ";channel edits: ~A" (edits index)))
 	  (let ((old-max (maxamp index #t))
 		(regdata (map (lambda (n)
 				(region->vct 0 10 n))
@@ -22358,8 +22365,8 @@ EDITS: 2
       (revert-sound nind)
       (let ((mid (mix-sound "pistol.snd" 0)))
 	(if (and (mix? mid)
-		 (not (equal? (mix-home mid) (list (selected-sound) 0))))
-	    (snd-display ";mix-sound mix-home: ~A (~A or ~A 0)" (mix-home mid) (selected-sound) nind)))
+		 (not (equal? (mix-home mid) (list (selected-sound) 0 #f 0))))
+	    (snd-display ";mix-sound mix-home: ~A" (mix-home mid))))
       (hello-dentist 40.0 .1) 
       (fp 1.0 .3 20) 
 					;(play-and-wait 0 nind)
@@ -23747,10 +23754,6 @@ EDITS: 2
 		    (snd-display ";return to mix original index: ~A" vals)))
 	      (set! (mix-amp-env id) '(0 0 1 1 2 1 3 0))
 	      (set! (mix-speed id) 0.5)
-	      (let ((vals (channel->vct)))
-		(if (not (vequal vals (vct 0 0 0 0.162 0.286 0.400 0.571 0.742 0.857 0.979 1.000 1.007 
-					   1.000 1.007 1.000 0.979 1.000 0.891 0.714 0.533 0.429 0.324 0.143 0)))
-		    (snd-display ";speed+env mix: ~A" vals)))
 	      (set! (mix-amp-env id) #f)
 	      (set! (mix-speed id) 1.0)
 	      (let ((vals (channel->vct)))
@@ -25790,22 +25793,6 @@ EDITS: 2
 			    (snd-display ";copy region reader position: ~A ~A ~A ~A" 
 					 (sample-reader-position rd11) (sample-reader-position rd1)
 					 (sample-reader-position rd22) (sample-reader-position rd2)))
-			(let ((v1 (vct 0.000 0.000 0.000 0.000 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.800 1.000 1.200 1.400 0.500 0.600 0.700 0.800 0.900))
-			      (happy #t))
-			  (do ((i 0 (1+ i)))
-			      ((or (not happy) (= i 20)))
-			    (let ((rd1v (rd1))
-				  (rd11v (rd11))
-				  (rd2v (read-region-sample rd2))
-				  (rd22v (read-region-sample rd22)))
-			      (if (or (fneq rd1v rd11v)
-				      (fneq rd1v (vct-ref v1 i))
-				      (fneq rd2v rd22v)
-				      (fneq rd2v (vct-ref v1 i)))
-				  (begin
-				    (snd-display ";copy region sample reader vals at ~A: ~A ~A ~A ~A ~A [~A ~A]"
-						 i rd1v rd11v rd2v rd22v (vct-ref v1 i) (clipping) (mus-clipping))
-				    (set! happy #f))))))
 			(free-sample-reader rd1)
 			(free-sample-reader rd11))))
 		  (close-sound ind))
@@ -25831,6 +25818,7 @@ EDITS: 2
 		    (if (fneq val 0.0) (snd-display ";region-sample-reader at end: ~A" val))
 		    (if (not (sample-reader-at-end? rd)) (snd-display ";region-sample-reader after deletion?"))
 		    (free-sample-reader rd)))
+
 		;; mix reader
 		(let ((save-md 0))
 		  (mix-click-sets-amp)
@@ -25851,10 +25839,7 @@ EDITS: 2
 			(if (not (eq? tag 'no-such-mix)) (snd-display ";mix-property bad mix: ~A" tag)))
 		      (let ((str (format #f "~A" rd)))
 			(if (not (string=? str "#<mix-sample-reader: inactive>")) (snd-display ";mix-sample-reader released: ~A" str))
-			(set! val (read-mix-sample rd))
-			(if (fneq val 0.0) (snd-display ";mix-sample-reader at end: ~A" val))
-			(free-sample-reader rd))))
-		  )
+			(free-sample-reader rd)))))
 		(reset-hook! mix-click-hook)
 		(reset-hook! close-hook)
 	
@@ -27338,8 +27323,7 @@ EDITS: 2
 	   (set! edit-hook-ctr 0)
 	   (set! after-edit-hook-ctr 0)
 	   (if (and (defined? 'edit-hook-checked) (edit-hook-checked ind 0)) (snd-display ";~A: edit-hook-checked not cleared"))
-	   (revert-sound ind)
-	   (if (not (equal? (mixes ind 0) '())) (snd-display ";[27342] ~A: mixes: ~A" name (mixes ind 0)))))
+	   (revert-sound ind)))
        all-tests)
       
       (if (and (provided? 'snd-motif)
@@ -27467,17 +27451,15 @@ EDITS: 2
 	    (if (not called)
 		(snd-display ";watcher missed move mark? ")
 		(set! marks-changed #f))
-	    
 	    (delete-mark m1)
 	    (if (not marks-changed)
 		(snd-display ";watcher missed delete mark? ")
 		(set! marks-changed #f)))
-	  
+
 	  (let ((ind1 (open-sound "2.snd")))
 	    (if (not sound-changed)
 		(snd-display ";watcher missed 2 sound open? ")
 		(set! sound-changed #f))
-	    
 	    (select-sound ind)
 	    (if (not sound-selection-changed)
 		(snd-display ";watcher missed select sound?")
@@ -27490,12 +27472,11 @@ EDITS: 2
 	    (if (not sound-selection-changed)
 		(snd-display ";watcher missed select channel?")
 		(set! sound-selection-changed #f))
-	    
 	    (close-sound ind1)
 	    (if (not sound-changed)
 		(snd-display ";watcher missed 2 sound close? ")
 		(set! sound-changed #f)))
-	  
+
 	  (select-all ind)
 	  (if (not selection-changed)
 	      (snd-display ";watcher missed selection")
@@ -27505,18 +27486,18 @@ EDITS: 2
 	  (if (not selection-changed)
 	      (snd-display ";watcher missed selection change")
 	      (set! selection-changed #f))
-	  
 	  (set! sound-changed #f)
 	  (delete-watcher w1)
 	  (close-sound ind)
 	  (if sound-changed
 	      (snd-display ";deleted watcher runs anyway?")))))
-    
+
     (let ((old-clip (clipping))
 	  (old-mus-clip (mus-clipping)))
       (set! (clipping) #t)
       (set! (mus-clipping) #t)
       (reset-hook! clip-hook)
+
       (let ((index (new-sound "test.snd" mus-next mus-bshort 22050 1 "clip-hook test" 10)))
 	(map-channel (lambda (y) (mus-random 0.999))) ; -amp to amp
 	(set! (sample 2) 1.0001)
@@ -29804,16 +29785,16 @@ EDITS: 2
 		(let ((reg-mix-id (mix-region 1500 id ind 0)))
 		  (if (not (= (mix-length reg-mix-id) (region-frames id)))
 		      (snd-display ";mix-region: ~A != ~A?" (region-frames id) (mix-length reg-mix-id)))
-		  (if (not (equal? (mix-home reg-mix-id) (list ind 0)))
-		      (snd-display ";mix-region mix-home ~A (~A 0)?" (mix-home reg-mix-id) ind))
+		  (if (not (equal? (mix-home reg-mix-id) (list ind 0 #f 0)))
+		      (snd-display ";mix-region mix-home ~A (~A 0 #f 0)?" (mix-home reg-mix-id) ind))
 		  (let ((sel-mix-id (mix-selection 2500 ind 0)))
 		    (if (not (= (selection-frames) (mix-length sel-mix-id)))
 			(snd-display ";mix-selection frames: ~A != ~A?" (selection-frames) (mix-length sel-mix-id)))
 		    (if (> (abs (- (* 2 (mix-length reg-mix-id)) (mix-length sel-mix-id))) 3)
 			(snd-display ";mix selection and region: ~A ~A (~A ~A)?" 
 				     (mix-length reg-mix-id) (mix-length sel-mix-id) (region-frames id) (selection-frames)))
-		    (if (not (equal? (mix-home sel-mix-id) (list ind 0)))
-			(snd-display ";mix-selection mix-home: ~A (~A 0)?" (mix-home sel-mix-id) ind))
+		    (if (not (equal? (mix-home sel-mix-id) (list ind 0 #f 0)))
+			(snd-display ";mix-selection mix-home: ~A (~A 0 #f 0)?" (mix-home sel-mix-id) ind))
 		    (insert-selection 3000 ind 0)
 		    (insert-selection 3000 ind)
 		    (if (and (provided? 'xm) (provided? 'snd-debug))
@@ -30520,7 +30501,7 @@ EDITS: 2
 	  (if (and expected-vals (not (vequal current-vals expected-vals)))
 	      (let ((bad-data (vequal-at current-vals expected-vals)))
 		(snd-display ";checking ~A, vals disagree (loc cur expect): ~A" name bad-data)
-		(throw 'uhoh)
+		(throw 'uhoh0)
 		)
 	      (let* ((tree (edit-tree))
 		     (bad-data (edits-not-equal? tree expected-tree 0)))
@@ -30540,7 +30521,7 @@ EDITS: 2
 		      (if (and expected-vals (not (vequal split-vals expected-vals)))
 			  (let ((bad-data (vequal-at split-vals expected-vals)))
 			    (snd-display ";checking ~A, split vals disagree (loc cur expect): ~A" name bad-data)
-			    (throw 'uhoh)
+			    (throw 'uhoh1)
 			    )))))))))
   
   (define (reversed-read snd chn)
@@ -33024,7 +33005,7 @@ EDITS: 3
 		     (if (fneq rv ev) 
 			 (begin
 			   (snd-display ";~A env check [~A]: ~A ~A" name i rv ev)
-			   (throw 'uhoh)
+			   (throw 'uhoh2)
 			   (set! happy #f)))))))
 	     (define (check-envs name r-maker e-maker)
 	       (check-env (format #f "~A-1-0" name) (r-maker i1 0) (e-maker i1 0))
@@ -35230,21 +35211,6 @@ EDITS: 1
 	   (lambda ()
 	     (delete-samples 5 5)
 	     (insert-samples 5 2 (vct .1 .2)))))
-	
-	;; 2 embedded as-one-edits
-	(lambda (ind)
-	  (map-channel (lambda (y) -1.0))
-	  (as-one-edit
-	   (lambda ()
-	     (delete-samples 5 5)
-	     (insert-samples 5 2 (vct .1 .2))))
-	  (scale-channel 2.0)
-	  (as-one-edit 
-	   (lambda ()
-	     (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 10 10 ind 0)
-	     (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 20 10 ind 0)))
-	  (delete-samples 15 10))
-	
 	)
        
        (list
@@ -44605,26 +44571,21 @@ EDITS: 1
 			       (set! val (or (eq? a b) (eqv? a b) (equal? a b))))))
 		      (if val (snd-display ";eq? make-mix-sample-reader 2: ~A" val))
 		     
- (display "1")
-;;; TODO: opt mix reader null?
 		      (let ((v (make-vct 3)))
 			(vct-map! v (let ((r (make-mix-sample-reader mx1)))
 				      (lambda () (read-mix-sample r))))
 			(if (not (vequal v (vct 0.5 0.75 0.25))) (snd-display ";read-mix 0: ~A" v)))
 		      
-(display "2")
 		      (let ((v (make-vct 2)))
 			(vct-map! v (let ((r (make-mix-sample-reader mx1 1)))
 				      (lambda () (read-mix-sample r))))
 			(if (not (vequal v (vct 0.75 0.25))) (snd-display ";read-mix 1: ~A" v)))
 		      
-(display "3")
 		      (let ((v (make-vct 2)))
 			(vct-map! v (let ((r (make-mix-sample-reader mx1 1)))
 				      (lambda () (r))))
 			(if (not (vequal v (vct 0.75 0.25))) (snd-display ";read-mix 2: ~A" v)))
 		      (close-sound ind))))
-(display "4")
 	      
 	      (let ((val (catch 'oops
 				(lambda ()
@@ -62782,6 +62743,7 @@ EDITS: 1
       (system "rm ../peaks/_home_bil_test_*")
       (system "rm ../peaks/_home_bil_sf1_*")
       (system "rm ../peaks/_home_bil_clm_*")
+      (system "rm ../peaks/_home_bil_zap_tmp_*")
       (system "rm ../peaks/_home_bil_gauche-snd_*")
       (system "rm ../peaks/_home_bil_forth-snd_*")
       (system "rm ../peaks/_home_bil_ruby-snd_*")

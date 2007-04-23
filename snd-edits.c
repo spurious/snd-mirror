@@ -4422,7 +4422,8 @@ off_t edit_changes_begin_at(chan_info *cp, int edpos)
   for (i = 0; i < min_len; i ++)
     if ((FRAGMENT_GLOBAL_POSITION(ed, i) != FRAGMENT_GLOBAL_POSITION(old_ed, i)) || 
 	(FRAGMENT_SOUND(ed, i) != FRAGMENT_SOUND(old_ed, i)) || 
-	(FRAGMENT_LOCAL_POSITION(ed, i) != FRAGMENT_LOCAL_POSITION(old_ed, i)))
+	(FRAGMENT_LOCAL_POSITION(ed, i) != FRAGMENT_LOCAL_POSITION(old_ed, i)) ||
+	(FRAGMENT_TYPE(ed, i) != FRAGMENT_TYPE(old_ed, i))) /* mix op may not change position//sound/local position */
       {
 	if ((MIX_OP(FRAGMENT_TYPE(ed, i))) &&
 	    (FRAGMENT_GLOBAL_POSITION(ed, i) > FRAGMENT_GLOBAL_POSITION(old_ed, i)))
@@ -4445,7 +4446,8 @@ off_t edit_changes_end_at(chan_info *cp, int edpos)
   while ((len >= 0) && (old_len >= 0))
     {
       if ((FRAGMENT_SOUND(ed, len) == FRAGMENT_SOUND(old_ed, old_len)) &&
-	  (FRAGMENT_LOCAL_END(ed, len) == FRAGMENT_LOCAL_END(old_ed, old_len)))
+	  (FRAGMENT_LOCAL_END(ed, len) == FRAGMENT_LOCAL_END(old_ed, old_len)) &&
+	  (FRAGMENT_TYPE(ed, len) == FRAGMENT_TYPE(old_ed, old_len)))
 	{
 	  if (FRAGMENT_LOCAL_POSITION(ed, len) != FRAGMENT_LOCAL_POSITION(old_ed, old_len))
 	    return(cp->edits[edpos - 1]->samples - (FRAGMENT_LOCAL_END(ed, len) - FRAGMENT_LOCAL_POSITION(ed, len)));
@@ -5435,7 +5437,9 @@ static void copy_ed_fragment(ed_fragment *new_ed, ed_fragment *old_ed)
     }
   if (old_ed->mixes)
     {
+#if MUS_DEBUGGING
       if (new_ed->mixes) {fprintf(stderr, "ed mixes is not null in copy fragment?"); abort();}
+#endif
       new_ed->mixes = copy_fragment_mixes(old_ed->mixes);
     }
 }
@@ -5480,6 +5484,8 @@ static ed_list *make_ed_list(int size)
   ed->maxamp_position = -1;
   ed->selection_maxamp = -1.0;
   ed->selection_maxamp_position = -1;
+  ed->properties_gc_loc = NOT_A_GC_LOC;
+  ed->properties = XEN_FALSE;
   return(ed);
 }
 
@@ -6035,26 +6041,17 @@ static ed_list *insert_samples_into_list(off_t samp, off_t num, int pos, chan_in
   return(new_state);
 }
 
-bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
+
+static bool insert_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
 {
   off_t len, new_len;
   ed_fragment *cb;
   ed_list *ed, *old_ed;
   bool backup = false;
 
-  if (num <= 0) return(true); /* false if can't edit, but this is a no-op */
-
   old_ed = cp->edits[edpos];
   len = cp->edits[edpos]->samples;
-  if (beg > len) 
-    {
-      new_len = beg + num; 
-      beg = len;
-      num = new_len - beg;
-    }
-  else new_len = len + num;
-  if (!(prepare_edit_list(cp, edpos, S_pad_channel))) 
-    return(false); /* actual edit-list origin is done at zero_edit level */
+  new_len = len + num;  /* we're inserting num zeros somewhere */
 
   if (lock_affected_mixes(cp, edpos, beg, beg))
     {
@@ -6065,6 +6062,7 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
     }
 
   ed = insert_samples_into_list(beg, num, edpos, cp, &cb, S_pad_channel, 0.0);
+
   ed->samples = new_len;
   ED_SOUND(cb) = EDIT_LIST_ZERO_MARK;
   ED_SCALER(cb) = 0.0;
@@ -6085,6 +6083,72 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
   if (backup)
     backup_edit_list(cp);
 
+  return(true);
+}
+
+
+bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
+{
+  /* this can also be called when beg is within the current sound -> insert a block of zeros */
+
+  int i;
+  off_t len, new_len;
+  ed_fragment *cb;
+  ed_list *new_ed, *old_ed;
+
+  if (num <= 0) return(true); /* false if can't edit, but this is a no-op */
+
+  if (!(prepare_edit_list(cp, edpos, S_pad_channel))) 
+    return(false); 
+
+  old_ed = cp->edits[edpos];
+  len = cp->edits[edpos]->samples;
+
+  /* check for insert zeros case */
+  if (beg < len)
+    return(insert_zeros(cp, beg, num, edpos));
+
+  /* extend with zeros at end */
+  new_len = beg + num; /* beg might even be > current end? */
+  beg = len;
+  num = new_len - beg;
+
+  new_ed = make_ed_list(old_ed->size + 1);
+  new_ed->beg = beg;
+  new_ed->len = num;
+  new_ed->samples = new_len;
+  new_ed->cursor = old_ed->cursor;
+  new_ed->origin = copy_string(S_pad_channel);
+  new_ed->edpos = edpos;
+  new_ed->selection_beg = old_ed->selection_beg;
+  new_ed->selection_end = old_ed->selection_end;
+  new_ed->maxamp = old_ed->maxamp;
+  new_ed->maxamp_position = old_ed->maxamp_position;
+
+  for (i = 0; i < old_ed->size; i++) 
+    copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
+
+  /* make the zero fragment, fixup the end fragment */
+
+  FRAGMENT(new_ed, old_ed->size) = FRAGMENT(new_ed, old_ed->size - 1);
+  FRAGMENT_GLOBAL_POSITION(new_ed, old_ed->size) = new_len;
+  
+  cb = make_ed_fragment();
+  FRAGMENT(new_ed, old_ed->size - 1) = cb;
+  ED_SOUND(cb) = EDIT_LIST_ZERO_MARK;
+  ED_SCALER(cb) = 0.0;
+  ED_TYPE(cb) = ED_ZERO;
+  ED_GLOBAL_POSITION(cb) = beg;
+  ED_LOCAL_POSITION(cb) = 0;
+  ED_LOCAL_END(cb) = num - 1;
+
+  new_ed->edit_type = ZERO_EDIT;
+  cp->edits[cp->edit_ctr] = new_ed;
+  amp_env_insert_zeros(cp, beg, num, edpos);
+
+  ripple_all(cp, 0, 0);
+  reflect_sample_change_in_axis(cp);
+  after_edit(cp);
   return(true);
 }
 
@@ -6479,9 +6543,9 @@ bool file_change_samples(off_t beg, off_t num, const char *tempfile, chan_info *
       int backup = 0;
 
       prev_len = cp->edits[edpos]->samples;
-      if (beg >= prev_len)
+      if (beg > prev_len)
 	{
-	  if (!(extend_with_zeros(cp, prev_len, beg - prev_len + 1, edpos))) 
+	  if (!(extend_with_zeros(cp, prev_len, beg - prev_len, edpos))) 
 	    {
 	      free_file_info(hdr);
 	      return(false);
@@ -6606,9 +6670,9 @@ bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, con
 
   if (num <= 0) return(true);
   prev_len = cp->edits[edpos]->samples;
-  if (beg >= prev_len)
+  if (beg > prev_len)
     {
-      if (!(extend_with_zeros(cp, prev_len, beg - prev_len + 1, edpos))) return(false);
+      if (!(extend_with_zeros(cp, prev_len, beg - prev_len, edpos))) return(false);
       edpos = cp->edit_ctr;
       prev_len = CURRENT_SAMPLES(cp);
       backup++;
@@ -8772,6 +8836,10 @@ static XEN g_copy_sample_reader(XEN obj)
 					C_TO_XEN_INT(fd->cp->chan),
 					C_TO_XEN_INT((fd->direction == READ_FORWARD) ? 1 : -1), /* Scheme side is different from C side */
 					C_TO_XEN_INT(fd->edit_ctr)));
+#if MUS_DEBUGGING
+	  if (fd->type != REGION_READER)
+	    fprintf(stderr, "copy sample reader got %d\n", fd->type);
+#endif
 	  return(g_make_region_sample_reader(C_TO_XEN_OFF_T(region_current_location(fd)),
 					     C_TO_XEN_INT(fd->region),
 					     C_TO_XEN_INT(fd->cp->chan),
@@ -10157,13 +10225,11 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
 
     peak-envs after change [check all redisplays and maybe squelch cases]
     reader0 opts [recombination?]
-    mix|edit-properties test [if mix-property, display upon tag click or in dialog [add?]]
     *.rb
     *.fs
     pan mix and syncd mixes for stereo
-    tag height+color for orchestration/score appearance
     mix.scm: env-mixes, play-mixes
-    ws.scm: with-exploded-sound and extreme tests
+    ws.scm: with-exploded-sound and extreme tests [much flashing as grf updates -- need to flush pointless redisplays]
     C side for mix-maxamp? -- if we have a peak env see amp_env_maxamp in snd-snd
     [multiple mix dialogs?]
     [forego copy of original file if possible? -- an arg to mix?]
@@ -10172,14 +10238,17 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
     during as-one-edit, backup when it's obvious
     can snd-marks dispense with the erase_and_draw stuff in snd-draw?
 
+    as-one-edit is screwing up the overall peak envs
+
     snd-tests [test chan to mix-region|selection]
-      test 9: is bagatelle used?, 
+      mix|edit-properties test [if mix-property, display upon tag click or in dialog [add? text widget?]]
+      new mix.scm tests
+      test 9: is bagatelle used? -- no also not make-waltz
               speed+env mix: #<vct[len=24]: 0.000 0.000 0.000 0.160 0.286 0.403 0.571 0.738 0.857 0.983 1.000 1.005 1.000 1.005 1.000 0.983 1.000 0.886 0.714 0.537 ...>
-      test 5: ;channel edits: (275 0)
-      test 8: check save-sound -> invalid write due to double gc of ed_list in snd_fd free
-      test 12: region-sample-reader is messed up, 13: add-watcher is unhappy, (and all mixes seem confused?), 16: uhoh
-      test 19: 35173 arg problem (22 has display "1" etc ), 23: ;auto-delete mix (with-tag)?
-      test 15: ;mix-region mix-home (2 0 #f 0) (2 0)?, ;mix-selection mix-home: (2 0 #f 0) (2 0)?
+      test 12: region-sample-reader is messed up (print mix_reader after sf was freed, but sf ptr is not null?)
+           13: add-watcher is unhappy, (and all mixes seem confused?), 
+           16: uhoh
+           23: ;auto-delete mix (with-tag)? (46915)
    */
 
 static int add_mix_op(int type)
@@ -10332,7 +10401,7 @@ int mix_file_with_tag(chan_info *cp, const char *filename, int chan, off_t beg, 
   old_len = old_ed->samples;
   if (beg + file_len > old_len)
     {
-      if (!(extend_with_zeros(cp, old_len, beg + file_len - old_len + 1, edpos))) 
+      if (!(extend_with_zeros(cp, old_len, beg + file_len - old_len, edpos))) 
 	return(NO_MIX_TAG);
       edpos = cp->edit_ctr;
       new_len = beg + file_len;
@@ -10393,7 +10462,7 @@ int mix_buffer_with_tag(chan_info *cp, mus_sample_t *data, off_t beg, off_t buf_
   old_len = old_ed->samples;
   if (beg + buf_len > old_len)
     {
-      if (!(extend_with_zeros(cp, old_len, beg + buf_len - old_len + 1, edpos))) 
+      if (!(extend_with_zeros(cp, old_len, beg + buf_len - old_len, edpos))) 
 	return(NO_MIX_TAG);
       edpos = cp->edit_ctr;
       new_len = beg + buf_len;
@@ -10549,7 +10618,7 @@ snd_fd *make_virtual_mix_reader(chan_info *cp, off_t beg, off_t len, int index, 
   sf->protect1 = NOT_A_GC_LOC;
   sf->protect2 = NOT_A_GC_LOC;
   sf->protect3 = NOT_A_GC_LOC;
-  sf->region = INVALID_REGION;
+  sf->region = INVALID_MIX_ID;
   sf->type = MIX_READER;
   sf->initial_samp = beg;
   sf->cp = cp;

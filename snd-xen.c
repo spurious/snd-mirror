@@ -183,11 +183,17 @@ int snd_protect(XEN obj)
   return(gc_last_set);
 }
 
+#if MUS_DEBUGGING
+void snd_unprotect_at_1(int loc, const char *func, const char *file, int line)
+#else
 void snd_unprotect_at(int loc)
+#endif
 {
 #if MUS_DEBUGGING
   cur_gc_index--;
+  if (loc == 0) fprintf(stderr,"%s %s[%d]: unprotect at %d\n", func, file, line, loc);
 #endif
+
   if (loc >= 0)
     {
       XEN_VECTOR_SET(gc_protection, loc, DEFAULT_GC_VALUE);

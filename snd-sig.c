@@ -3443,7 +3443,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
       /* added 27-Oct-06 -- can't see why map-channel should be that different from insert-samples et al */
       if (beg > cp->edits[pos]->samples)
 	{
-	  if (!(extend_with_zeros(cp, cp->edits[pos]->samples, beg - cp->edits[pos]->samples + 1, pos))) return(XEN_FALSE);
+	  if (!(extend_with_zeros(cp, cp->edits[pos]->samples, beg - cp->edits[pos]->samples, pos))) return(XEN_FALSE);
 	  pos = cp->edit_ctr;
 	}
 
