@@ -5511,7 +5511,9 @@ static ed_list *make_ed_list(int size)
   ed_list *ed;
   int i;
   ed = (ed_list *)CALLOC(1, sizeof(ed_list));
+#if MUS_DEBUGGING
   set_printable(PRINT_ED_LIST);
+#endif
   ed->size = size;
   ed->allocated_size = size;
   ed->fragments = (ed_fragment **)malloc(size * sizeof(ed_fragment *)); /* can't use MALLOC/FREE -- compiler dislikes the assignment in FREE */

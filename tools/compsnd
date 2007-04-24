@@ -1,5 +1,8 @@
 #!/bin/csh -f
 
+# TODO: GAUCHCE API choices
+# TODO: include  -DSCM_DEBUG_TYPING_STRICTNESS=2 in CFLAGS  (no xm)
+
 # cp ~/dist/snd/snd.tar .
 # tar xf snd.tar
 
