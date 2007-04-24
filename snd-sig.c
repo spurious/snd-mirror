@@ -2979,7 +2979,8 @@ void cursor_insert(chan_info *cp, off_t beg, off_t count)
 	      (extend_with_zeros(cps[i], 
 				 mus_oclamp(0, beg, CURRENT_SAMPLES(si->cps[i])), 
 				 count, 
-				 cps[i]->edit_ctr)))
+				 cps[i]->edit_ctr,
+				 "cursor insert")))
 	    update_graph(cps[i]);
 	}
       si = free_sync_info(si);
@@ -2990,7 +2991,8 @@ void cursor_insert(chan_info *cp, off_t beg, off_t count)
 	  (extend_with_zeros(cp, 
 			     mus_oclamp(0, beg, CURRENT_SAMPLES(cp)), 
 			     count, 
-			     cp->edit_ctr)))
+			     cp->edit_ctr,
+			     "cursor insert")))
 	update_graph(cp);
     }
 }
@@ -3443,7 +3445,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
       /* added 27-Oct-06 -- can't see why map-channel should be that different from insert-samples et al */
       if (beg > cp->edits[pos]->samples)
 	{
-	  if (!(extend_with_zeros(cp, cp->edits[pos]->samples, beg - cp->edits[pos]->samples, pos))) return(XEN_FALSE);
+	  if (!(extend_with_zeros(cp, cp->edits[pos]->samples, beg - cp->edits[pos]->samples, pos, "extend for " S_map_channel))) return(XEN_FALSE);
 	  pos = cp->edit_ctr;
 	}
 
@@ -3823,7 +3825,7 @@ the current sample, the vct returned by 'init-func', and the current read direct
   if (dur <= 0) return(XEN_FALSE);
   if ((beg + dur) > cp->edits[pos]->samples)
     {
-      if (!(extend_with_zeros(cp, cp->edits[pos]->samples, beg + dur - cp->edits[pos]->samples, pos))) return(XEN_FALSE);
+      if (!(extend_with_zeros(cp, cp->edits[pos]->samples, beg + dur - cp->edits[pos]->samples, pos, "extend for " S_ptree_channel))) return(XEN_FALSE);
       pos = cp->edit_ctr;
     }
 
@@ -4379,7 +4381,7 @@ static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
   pos = to_c_edit_position(cp, edpos, S_pad_channel, 5);
   len = XEN_TO_C_OFF_T_OR_ELSE(num, cp->edits[pos]->samples - bg);
   if ((len > 0) &&
-      (extend_with_zeros(cp, bg, len, pos)))
+      (extend_with_zeros(cp, bg, len, pos, S_pad_channel)))
     update_graph(cp);
   return(beg);
 }

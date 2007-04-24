@@ -152,7 +152,12 @@ static int add_ptree(chan_info *cp)
   return(cp->ptree_ctr);
 }
 
+#if DEBUG_SND_FD
+#define free_ed_list(Ed, Cp) free_ed_list_1(Ed, Cp, __FUNCTION__, __FILE__, __LINE__)
+static ed_list *free_ed_list_1(ed_list *ed, chan_info *cp, const char *func, const char *file, int line);
+#else
 static ed_list *free_ed_list(ed_list *ed, chan_info *cp);
+#endif
 
 static void prune_edits(chan_info *cp, int edpt)
 {
@@ -161,7 +166,7 @@ static void prune_edits(chan_info *cp, int edpt)
       int i;
       if (ss->deferred_regions > 0)
 	sequester_deferred_regions(cp, edpt - 1);
-      for (i = edpt; i < cp->edit_size; i++) 
+      for (i = edpt; i < cp->edit_size; i++)
 	cp->edits[i] = free_ed_list(cp->edits[i], cp);
       release_pending_sounds(cp, edpt);
     }
@@ -4261,6 +4266,16 @@ static void choose_accessor(snd_fd *sf)
 
 static char *edit_names[NUM_EDIT_TYPES] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", "extend", "mix", "change mix"};
 
+#if MUS_DEBUGGING
+char *ed_list_edit_type_to_string(int type)
+{
+  if ((type >= 0) &&
+      (type < NUM_EDIT_TYPES))
+    return(edit_names[type]);
+  return("unknown edit");
+}
+#endif
+
 static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool with_source)
 {
   int len, j, index;
@@ -4885,6 +4900,12 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 			      cp->chan);
 		    }
 		  break;
+
+		  /* TODO */
+		case MIX_EDIT:
+		case CHANGE_MIX_EDIT:
+		  break;
+
 		default:
 		  snd_error("unknown edit branch: %s: %d %d",
 			    ed->origin, 
@@ -4960,6 +4981,12 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 			       ed->len,
 			       cp->chan);
 		  break;
+
+		  /* TODO */
+		case MIX_EDIT:
+		case CHANGE_MIX_EDIT:
+		  break;
+
 		default:
 		  snd_error("unknown edit branch: %s: %d %d",
 			    ed->origin, 
@@ -5144,6 +5171,12 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  /* origin here is useless (see extend_with_zeros cases) */
 		  function = mus_format("%s (%s " OFF_TD " " OFF_TD " snd chn)", function, S_pad_channel, ed->beg, ed->len);
 		  break;
+
+		case MIX_EDIT:
+		case CHANGE_MIX_EDIT:
+		  function = mus_format("%s (%s snd chn)", function, ed->origin);
+		  break;
+		  
 		default: break;
 		}
 	    }
@@ -5257,6 +5290,13 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  function = mus_format("%s%s %s(" OFF_TD ", " OFF_TD ", snd, chn)", 
 					function, (first) ? "" : ";", TO_PROC_NAME(S_pad_channel), ed->beg, ed->len);
 		  break;
+
+		  /* TODO */
+		case MIX_EDIT:
+		case CHANGE_MIX_EDIT:
+		  function = mus_format("%s%s %s, snd, chn)", function, (first) ? "" : ";", ed->origin);
+		  break;
+
 		default: break;
 		}
 	    }
@@ -5363,10 +5403,16 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  /* mix drag case */
 		  break;
 		case ZERO_EDIT:
-		  /* origin here is useless (see extend_with_zeros cases) */
+		  /* origin here is useless (see extend_with_zeros cases) TODO: is this still true? */
 		  function = mus_format("%s " OFF_TD " " OFF_TD " snd chn %s drop", 
 					function, ed->beg, ed->len, S_pad_channel);
 		  break;
+
+		  /* TODO */
+		case MIX_EDIT:
+		case CHANGE_MIX_EDIT:
+		  break;
+
 		default: break;
 		}
 	    }
@@ -5460,20 +5506,12 @@ static ed_fragment *free_ed_fragment(ed_fragment *ed)
   return(NULL);
 }
 
-#if MUS_DEBUGGING
-#define make_ed_list(Size) make_ed_list_1(Size, __FUNCTION__, __FILE__, __LINE__)
-static ed_list *make_ed_list_1(int size, const char *func, const char *file, int line)
-#else
 static ed_list *make_ed_list(int size)
-#endif
 {
   ed_list *ed;
   int i;
-#if MUS_DEBUGGING
-  ed = (ed_list *)mem_calloc(1, sizeof(ed_list), func, file, line);
-#else
   ed = (ed_list *)CALLOC(1, sizeof(ed_list));
-#endif
+  set_printable(PRINT_ED_LIST);
   ed->size = size;
   ed->allocated_size = size;
   ed->fragments = (ed_fragment **)malloc(size * sizeof(ed_fragment *)); /* can't use MALLOC/FREE -- compiler dislikes the assignment in FREE */
@@ -5550,8 +5588,15 @@ typedef struct {
   int size;
 } sf_info;
 
+#if DEBUG_SND_FD
+static ed_list *free_ed_list_1(ed_list *ed, chan_info *cp, const char *func, const char *file, int line)
+#else
 static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
+#endif
 {
+#if DEBUG_SND_FD
+  fprintf(stderr, "%s %s[%d]: free ed_list %p\n", func, file, line, ed);
+#endif
   if (ed)
     {
       if (FRAGMENTS(ed)) 
@@ -5561,7 +5606,11 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
 	    free_ed_fragment(FRAGMENT(ed, i));
 	  free(FRAGMENTS(ed));
 	}
-      if (ed->origin) FREE(ed->origin);
+      if (ed->origin) 
+	{
+	  FREE(ed->origin);
+	  ed->origin = NULL;
+	}
       if (ed->edit_type == PTREE_EDIT)
 	{
 	  int loc;
@@ -5593,6 +5642,9 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
 	    if (lst->rds[i])
 	      {
 		reader_out_of_data(lst->rds[i]);
+#if DEBUG_SND_FD
+		fprintf(stderr,"clear %p state\n", lst->rds[i]);
+#endif
 		lst->rds[i]->current_state = NULL; /* this pointer is now being freed, so it can't be safe to leave it around */
 		lst->rds[i]->cb = NULL;
 		lst->rds[i] = NULL;
@@ -5665,18 +5717,10 @@ void free_edit_list(chan_info *cp)
     }
 }
 
-#if MUS_DEBUGGING
-ed_list *initial_ed_list_1(off_t beg, off_t end, const char *func, const char *file, int line)
-#else
 ed_list *initial_ed_list(off_t beg, off_t end)
-#endif
 {
   ed_list *ed;
-#if MUS_DEBUGGING
-  ed = make_ed_list_1(2, func, file, line);
-#else
   ed = make_ed_list(2);
-#endif
   ed->beg = beg;
   ed->len = end + 1;
   ed->selection_beg = NO_SELECTION;
@@ -5926,6 +5970,9 @@ static bool lock_affected_mixes(chan_info *cp, int edpos, off_t beg, off_t end)
 	      new_ed->edit_type = CHANGE_EDIT;
 	      new_ed->samples = cur_len;
 	      new_ed->cursor = cur_cursor;
+#if MUS_DEBUGGING
+	      if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
 	      cp->edits[cp->edit_ctr] = new_ed;
 	      ED_SOUND(cb) = add_sound_file_to_edit_list(cp, temp_file_name, 
 							 make_file_state(fd, hdr, 0, 0, FILE_BUFFER_SIZE),
@@ -6070,6 +6117,9 @@ static bool insert_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
   ed->edit_type = ZERO_EDIT;
   ed->sound_location = 0;
   ed->maxamp = old_ed->maxamp;
+#if MUS_DEBUGGING
+  if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
   cp->edits[cp->edit_ctr] = ed;
   amp_env_insert_zeros(cp, beg, num, edpos);
 
@@ -6087,7 +6137,7 @@ static bool insert_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
 }
 
 
-bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
+bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos, const char *origin)
 {
   /* this can also be called when beg is within the current sound -> insert a block of zeros */
 
@@ -6098,7 +6148,7 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
 
   if (num <= 0) return(true); /* false if can't edit, but this is a no-op */
 
-  if (!(prepare_edit_list(cp, edpos, S_pad_channel))) 
+  if (!(prepare_edit_list(cp, edpos, origin)))
     return(false); 
 
   old_ed = cp->edits[edpos];
@@ -6118,7 +6168,7 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
   new_ed->len = num;
   new_ed->samples = new_len;
   new_ed->cursor = old_ed->cursor;
-  new_ed->origin = copy_string(S_pad_channel);
+  new_ed->origin = copy_string(origin);
   new_ed->edpos = edpos;
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
@@ -6143,6 +6193,10 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
   ED_LOCAL_END(cb) = num - 1;
 
   new_ed->edit_type = ZERO_EDIT;
+
+#if MUS_DEBUGGING
+  if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
   cp->edits[cp->edit_ctr] = new_ed;
   amp_env_insert_zeros(cp, beg, num, edpos);
 
@@ -6178,6 +6232,9 @@ bool extend_edit_list(chan_info *cp, int edpos)
   new_ed->selection_end = old_ed->selection_end;
   new_ed->maxamp = old_ed->maxamp;
   new_ed->maxamp_position = old_ed->maxamp_position;
+#if MUS_DEBUGGING
+  if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
   cp->edits[cp->edit_ctr] = new_ed;
 
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks and mixes */
@@ -6197,7 +6254,7 @@ bool file_insert_samples(off_t beg, off_t num, const char *inserted_file, chan_i
   len = cp->edits[edpos]->samples;
   if (beg > len)
     {
-      if (!(extend_with_zeros(cp, len, beg - len, edpos))) 
+      if (!(extend_with_zeros(cp, len, beg - len, edpos, origin)))
 	return(false);
       edpos = cp->edit_ctr;
       len = CURRENT_SAMPLES(cp);
@@ -6216,6 +6273,9 @@ bool file_insert_samples(off_t beg, off_t num, const char *inserted_file, chan_i
   ed = insert_samples_into_list(beg, num, edpos, cp, &cb, origin, 1.0);
   ed->samples = len + num;
   ed->edit_type = INSERTION_EDIT;
+#if MUS_DEBUGGING
+  if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
   cp->edits[cp->edit_ctr] = ed;
 
   hdr = make_file_info(inserted_file, FILE_READ_ONLY, FILE_NOT_SELECTED);
@@ -6268,7 +6328,7 @@ bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, con
   len = cp->edits[edpos]->samples;
   if (beg > len)
     {
-      if (!(extend_with_zeros(cp, len, beg - len, edpos))) 
+      if (!(extend_with_zeros(cp, len, beg - len, edpos, origin)))
 	return(false);
       edpos = cp->edit_ctr;
       len = CURRENT_SAMPLES(cp);
@@ -6288,6 +6348,9 @@ bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, con
   ed = insert_samples_into_list(beg, num, edpos, cp, &cb, origin, 1.0);
   ed->edit_type = INSERTION_EDIT;
   ed->samples = len + num;
+#if MUS_DEBUGGING
+  if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
   cp->edits[cp->edit_ctr] = ed;
 
   prepare_sound_list(cp);
@@ -6473,6 +6536,9 @@ bool delete_samples(off_t beg, off_t num, chan_info *cp, int edpos)
 	}
       ed->edpos = edpos;
       ed->samples = len - num;
+#if MUS_DEBUGGING
+      if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
       cp->edits[cp->edit_ctr] = ed;
 
       ripple_all(cp, beg, -num);
@@ -6545,7 +6611,7 @@ bool file_change_samples(off_t beg, off_t num, const char *tempfile, chan_info *
       prev_len = cp->edits[edpos]->samples;
       if (beg > prev_len)
 	{
-	  if (!(extend_with_zeros(cp, prev_len, beg - prev_len, edpos))) 
+	  if (!(extend_with_zeros(cp, prev_len, beg - prev_len, edpos, origin)))
 	    {
 	      free_file_info(hdr);
 	      return(false);
@@ -6572,6 +6638,9 @@ bool file_change_samples(off_t beg, off_t num, const char *tempfile, chan_info *
       ed->edit_type = CHANGE_EDIT;
       ed->samples = new_len;
       if (cp->edit_ctr > 0) ed->cursor = cp->edits[cp->edit_ctr - 1]->cursor;
+#if MUS_DEBUGGING
+      if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
       cp->edits[cp->edit_ctr] = ed;
       
       fd = snd_open_read(tempfile);
@@ -6640,6 +6709,9 @@ bool file_override_samples(off_t num, const char *tempfile, chan_info *cp, int c
       e->edpos = cp->edit_ctr - 1;
       e->samples = num;
       if (cp->edit_ctr > 0) e->cursor = cp->edits[cp->edit_ctr - 1]->cursor;
+#if MUS_DEBUGGING
+      if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
       cp->edits[cp->edit_ctr] = e;
 
       FRAGMENT_SOUND(e, 0) = add_sound_file_to_edit_list(cp, tempfile, 
@@ -6672,7 +6744,8 @@ bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, con
   prev_len = cp->edits[edpos]->samples;
   if (beg > prev_len)
     {
-      if (!(extend_with_zeros(cp, prev_len, beg - prev_len, edpos))) return(false);
+      if (!(extend_with_zeros(cp, prev_len, beg - prev_len, edpos, origin))) 
+	return(false);
       edpos = cp->edit_ctr;
       prev_len = CURRENT_SAMPLES(cp);
       backup++;
@@ -6691,6 +6764,9 @@ bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, con
   ed = change_samples_in_list(beg, num, edpos, cp, &cb, origin);
   ed->edit_type = CHANGE_EDIT;
   ed->samples = new_len;
+#if MUS_DEBUGGING
+  if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
   cp->edits[cp->edit_ctr] = ed;
   if (cp->edit_ctr > 0) ed->cursor = cp->edits[cp->edit_ctr - 1]->cursor;
   prepare_sound_list(cp);
@@ -6964,6 +7040,9 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
 	    }
 	}
       new_ed->samples = len;
+#if MUS_DEBUGGING
+      if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
       cp->edits[cp->edit_ctr] = new_ed;
       amp_env_scale_by(cp, scl, pos); /* this seems wasteful if this is an intermediate (in_as_one_edit etc) */
     }
@@ -6981,6 +7060,9 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
       if (beg + num > len) num = len - beg;
       new_ed = copy_and_split_list(beg, num, old_ed);
       new_ed->samples = len;
+#if MUS_DEBUGGING
+      if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
       cp->edits[cp->edit_ctr] = new_ed;
       for (i = 0; i < new_ed->size; i++) 
 	{
@@ -7165,6 +7247,9 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
       new_ed = make_ed_list(old_ed->size);
       new_ed->beg = beg;
       new_ed->len = num;
+#if MUS_DEBUGGING
+      if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
       cp->edits[cp->edit_ctr] = new_ed;
       for (i = 0; i < new_ed->size; i++)
 	copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
@@ -7181,6 +7266,9 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
       if (beg + num > len) num = len - beg;
       new_ed = copy_and_split_list(beg, num, old_ed);
       
+#if MUS_DEBUGGING
+      if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
       cp->edits[cp->edit_ctr] = new_ed;
       seg1 = rmp0 - incr;
       for (i = 0; i < new_ed->size - 1; i++) 
@@ -7361,6 +7449,9 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
       new_ed->beg = beg;
       new_ed->len = num;
       new_ed->samples = len;
+#if MUS_DEBUGGING
+      if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
       cp->edits[cp->edit_ctr] = new_ed;
 
       for (i = 0; i < new_ed->size; i++) 
@@ -7376,6 +7467,9 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
       if (beg + num > len) num = len - beg;
       new_ed = copy_and_split_list(beg, num, old_ed);
       new_ed->samples = len;
+#if MUS_DEBUGGING
+      if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
       cp->edits[cp->edit_ctr] = new_ed;
       for (i = 0; i < new_ed->size; i++) 
 	{
@@ -7431,6 +7525,9 @@ static mix_data *free_mix_data(mix_data *md)
 
 snd_fd *free_snd_fd_almost(snd_fd *sf)
 {
+#if DEBUG_SND_FD
+  fprintf(stderr, "almost free %p\n", sf);
+#endif
   if (sf) 
     {
       snd_data *sd;
@@ -7463,9 +7560,18 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
 	  if ((sd->copy) || (sd->free_me))
 	    sd = free_snd_data(sd); 
 	}
-      if ((sf->current_state) && (sf->type == MIX_READER))
-	sf->current_state = free_ed_list(sf->current_state, sf->cp);
       sf->current_sound = NULL;
+      if (sf->current_state) 
+	{
+	  if (sf->type == MIX_READER)
+	    sf->current_state = free_ed_list(sf->current_state, sf->cp);
+	  sf->current_state = NULL;
+	}
+      sf->cp = NULL;
+      sf->local_sp = NULL;
+      sf->cb = NULL;
+      sf->region = INVALID_REGION;
+      sf->edit_ctr = -1;
     }
   return(NULL);
 }
@@ -7475,6 +7581,9 @@ snd_fd *free_snd_fd(snd_fd *sf)
   if (sf)
     {
       free_snd_fd_almost(sf);
+#if DEBUG_SND_FD
+      fprintf(stderr,"really free %p\n", sf);
+#endif
       FREE(sf);
     }
   return(NULL);
@@ -7533,6 +7642,9 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   sf->fscaler = MUS_FIX_TO_FLOAT;
   sf->direction = direction;
   sf->current_state = ed;
+#if DEBUG_SND_FD
+  fprintf(stderr,"init make %p -> %p\n", sf, sf->current_state);
+#endif
   sf->edit_ctr = edit_position;
   if ((curlen <= 0) ||    /* no samples, not ed->len (delete->len = #deleted samps) */
       (samp < 0) ||       /* this should never happen */
@@ -8552,6 +8664,9 @@ static void list_reader(snd_fd *fd)
   ed_list *ed;
   int loc = -1;
   ed = fd->current_state;
+#if DEBUG_SND_FD
+  fprintf(stderr,"list %p on %p\n", fd, ed);
+#endif
   if (ed)
     {
       sf_info *lst = NULL;
@@ -8589,7 +8704,12 @@ static void list_reader(snd_fd *fd)
 
 static void unlist_reader(snd_fd *fd)
 {
-  if ((fd) && (fd->current_state) && (fd->current_state->readers))
+#if DEBUG_SND_FD
+  fprintf(stderr, "unlist %p\n", fd);
+#endif
+  if ((fd) && 
+      (fd->cp) && (fd->cp->active) &&
+      (fd->current_state) && (fd->current_state->readers))
     {
       int i;
       ed_list *ed;
@@ -8604,6 +8724,9 @@ static void unlist_reader(snd_fd *fd)
 
 static void sf_free(snd_fd *fd)
 {
+#if DEBUG_SND_FD
+  fprintf(stderr,"free %p\n", fd);
+#endif
   if (fd) 
     {
       snd_info *sp = NULL;
@@ -8742,6 +8865,9 @@ snd can be a filename, or a sound index number."
 		     XEN_LIST_2(C_TO_XEN_STRING(S_make_sample_reader),
 				dir1));
     }
+#if DEBUG_SND_FD
+  fprintf(stderr,"g make: %p\n", fd);
+#endif
   if (fd)
     {
       fd->local_sp = loc_sp;
@@ -8882,6 +9008,7 @@ static XEN g_free_sample_reader(XEN obj)
       snd_info *sp = NULL;
       snd_fd *fd;
       fd = TO_SAMPLE_READER(obj);
+      unlist_reader(fd);
       sp = fd->local_sp; 
       fd->local_sp = NULL;
       free_snd_fd_almost(fd); /* this is different from sf_free! */
@@ -9077,7 +9204,7 @@ static void finish_as_one_edit(chan_info *cp)
     }
 }
 
-#if HAVE_GUILE_DYNAMIC_WIND
+#if HAVE_GUILE_DYNAMIC_WIND && (SCM_DEBUG_TYPING_STRICTNESS != 2)
 static void before_as_one_edit(void *context)
 {
   for_each_normal_chan(init_as_one_edit);
@@ -9115,7 +9242,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
   if (XEN_STRING_P(origin))
 	as_one_edit_origin = copy_string(XEN_TO_C_STRING(origin));
       else as_one_edit_origin = NULL;
-#if HAVE_GUILE_DYNAMIC_WIND
+#if HAVE_GUILE_DYNAMIC_WIND && (SCM_DEBUG_TYPING_STRICTNESS != 2)
   result = scm_internal_dynamic_wind((scm_t_guard)before_as_one_edit, 
 				     (scm_t_inner)as_one_edit_body, 
 				     (scm_t_guard)after_as_one_edit, 
@@ -10232,24 +10359,22 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
     ws.scm: with-exploded-sound and extreme tests [much flashing as grf updates -- need to flush pointless redisplays]
     C side for mix-maxamp? -- if we have a peak env see amp_env_maxamp in snd-snd
     [multiple mix dialogs?]
-    [forego copy of original file if possible? -- an arg to mix?]
     check edit-list->function for mix changes
     play-mix (also tie-in to xmix)
     during as-one-edit, backup when it's obvious
     can snd-marks dispense with the erase_and_draw stuff in snd-draw?
-
-    as-one-edit is screwing up the overall peak envs
+    as-one-edit should squelch updates (if it doesn't already -- see scale case)
 
     snd-tests [test chan to mix-region|selection]
       mix|edit-properties test [if mix-property, display upon tag click or in dialog [add? text widget?]]
       new mix.scm tests
-      test 9: is bagatelle used? -- no also not make-waltz
-              speed+env mix: #<vct[len=24]: 0.000 0.000 0.000 0.160 0.286 0.403 0.571 0.738 0.857 0.983 1.000 1.005 1.000 1.005 1.000 0.983 1.000 0.886 0.714 0.537 ...>
-      test 12: region-sample-reader is messed up (print mix_reader after sf was freed, but sf ptr is not null?)
-           13: add-watcher is unhappy, (and all mixes seem confused?), 
-           16: uhoh
+      test 9: mix.scm list tests (and all the rest)
+           16: mix-scale all-args case is very slow?
+           19: edit-list->function trouble
+           20: unlist reader trouble
            23: ;auto-delete mix (with-tag)? (46915)
-   */
+      memlog: snd-edits.c[6135]: extend with zeros ed list not gc'd?
+  */
 
 static int add_mix_op(int type)
 {
@@ -10401,7 +10526,7 @@ int mix_file_with_tag(chan_info *cp, const char *filename, int chan, off_t beg, 
   old_len = old_ed->samples;
   if (beg + file_len > old_len)
     {
-      if (!(extend_with_zeros(cp, old_len, beg + file_len - old_len, edpos))) 
+      if (!(extend_with_zeros(cp, old_len, beg + file_len - old_len, edpos, origin))) 
 	return(NO_MIX_TAG);
       edpos = cp->edit_ctr;
       new_len = beg + file_len;
@@ -10431,6 +10556,9 @@ int mix_file_with_tag(chan_info *cp, const char *filename, int chan, off_t beg, 
   new_ed->samples = new_len;
   new_ed->origin = copy_string(origin);
   new_ed->edpos = edpos;
+#if MUS_DEBUGGING
+  if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
   cp->edits[cp->edit_ctr] = new_ed;
   add_ed_mix(cp->edits[cp->edit_ctr], ms);
 
@@ -10462,7 +10590,7 @@ int mix_buffer_with_tag(chan_info *cp, mus_sample_t *data, off_t beg, off_t buf_
   old_len = old_ed->samples;
   if (beg + buf_len > old_len)
     {
-      if (!(extend_with_zeros(cp, old_len, beg + buf_len - old_len, edpos))) 
+      if (!(extend_with_zeros(cp, old_len, beg + buf_len - old_len, edpos, origin))) 
 	return(NO_MIX_TAG);
       edpos = cp->edit_ctr;
       new_len = beg + buf_len;
@@ -10471,7 +10599,7 @@ int mix_buffer_with_tag(chan_info *cp, mus_sample_t *data, off_t beg, off_t buf_
     }
   else new_len = old_len; 
 
-  if (!(prepare_edit_list(cp, edpos, "-mix-vct-")))
+  if (!(prepare_edit_list(cp, edpos, origin)))
     return(NO_MIX_TAG);
 
   prepare_sound_list(cp);
@@ -10483,6 +10611,9 @@ int mix_buffer_with_tag(chan_info *cp, mus_sample_t *data, off_t beg, off_t buf_
   new_ed->samples = new_len;
   new_ed->origin = copy_string(origin);
   new_ed->edpos = edpos;
+#if MUS_DEBUGGING
+  if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
   cp->edits[cp->edit_ctr] = new_ed;
   add_ed_mix(cp->edits[cp->edit_ctr], ms);
 
@@ -10577,11 +10708,14 @@ static void ripple_mixes_1(chan_info *cp, off_t beg, off_t len, off_t change, Fl
 			{
 			  new_ms = copy_mix_state(old_ms);
 			  add_ed_mix(ed, new_ms);
-			  if ((change != 0) &&
-			      (new_ms->beg > beg))
-			    new_ms->beg += change;
-			  if (len != 0)
-			    new_ms->scaler = scl;
+			  if (new_ms->beg >= beg) /* TODO: >? needs = for scaling (mix at 0 etc) */
+			    {
+			      if ((len != 0) &&
+				  (new_ms->beg < beg + len))
+				new_ms->scaler *= scl;
+			      if (change != 0)
+				new_ms->beg += change;
+			    }
 			  /* TODO: peak-env changed? */
 			}
 		      FRAGMENT_MIX_STATE(ed, i, j) = new_ms;
@@ -10624,6 +10758,9 @@ snd_fd *make_virtual_mix_reader(chan_info *cp, off_t beg, off_t len, int index, 
   sf->cp = cp;
   sf->direction = direction;
   sf->current_state = initial_ed_list(0, len - 1);  /* need size field here to signal eof -- GC'd in free_mix_data */
+#if DEBUG_SND_FD
+  fprintf(stderr,"mix make %p -> %p\n", sf, sf->current_state);
+#endif
   sf->cb = FRAGMENT(sf->current_state, 0);
   sf->edit_ctr = 0;
   first_snd = cp->sounds[index];
@@ -10765,6 +10902,9 @@ bool begin_mix_op(chan_info *cp, off_t old_beg, off_t old_len, off_t new_beg, of
   new_ed->edpos = edpos;
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
+#if MUS_DEBUGGING
+  if (cp->edits[cp->edit_ctr]) fprintf(stderr, "%s %s[%d]: overwriting ed_list %p\n", __FUNCTION__, __FILE__, __LINE__, cp->edits[cp->edit_ctr]);
+#endif
   cp->edits[cp->edit_ctr] = new_ed;
   ripple_all(cp, 0, 0); /* 0,0 -> copy current mix (and mark) lists */
   return(true);

@@ -211,7 +211,12 @@ static XEN gauche_set_walker(XEN func, XEN walker)
 #define B2S(Arg) ((Arg) ? "#t" : "#f")
 
 #define UNLIMITED_ARGS -1
-static XEN walk_sym = XEN_FALSE;
+
+#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
+  static XEN walk_sym = XEN_FALSE;
+#else
+  static XEN walk_sym;
+#endif
 
 /* find and set (Scheme) variable values */
 
@@ -878,6 +883,7 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
 	return(describe_ptree(((ptree **)(pt->fncs))[addr]));
       else return(copy_string("internal lambda?"));
       break;
+#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
     case R_INT_VECTOR:  
     case R_VCT_VECTOR:
     case R_CLM_STRUCT_VECTOR:
@@ -888,6 +894,7 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
 	return(mus_format("xen%d(%s: clm-struct %p)", addr, type_name(type), pt->xens[addr]));
       else return(mus_format("?%d(unknown type: %d)", addr, type));            
       break;
+#endif
     }
   return(NULL);
 }
@@ -2318,6 +2325,7 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define DESC_FNC_ARG_5 ((args[5] < pt->fnc_ctr) ? pt->fncs[args[5]] : NULL)
 #define DESC_FNC_ARG_6 ((args[6] < pt->fnc_ctr) ? pt->fncs[args[6]] : NULL)
 
+#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
 #define XEN_RESULT pt->xens[args[0]]
 #define DESC_XEN_RESULT ((args[0] < pt->xen_ctr) ? pt->xens[args[0]] : NULL)
 #define RXEN_ARG_1 pt->xens[args[1]]
@@ -2326,6 +2334,16 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define DESC_RXEN_ARG_1 ((args[1] < pt->xen_ctr) ? pt->xens[args[1]] : NULL)
 #define DESC_RXEN_ARG_2 ((args[2] < pt->xen_ctr) ? pt->xens[args[2]] : NULL)
 #define DESC_RXEN_ARG_3 ((args[3] < pt->xen_ctr) ? pt->xens[args[3]] : NULL)
+#else
+#define XEN_RESULT pt->xens[args[0]]
+#define DESC_XEN_RESULT NULL
+#define RXEN_ARG_1 pt->xens[args[1]]
+#define RXEN_ARG_2 pt->xens[args[2]]
+#define RXEN_ARG_3 pt->xens[args[3]]
+#define DESC_RXEN_ARG_1 NULL
+#define DESC_RXEN_ARG_2 NULL
+#define DESC_RXEN_ARG_3 NULL
+#endif
 
 #define VECT_RESULT pt->vects[args[0]]
 #define VECT_ARG_1 pt->vects[args[1]]
@@ -10427,7 +10445,11 @@ static XEN xen_values_to_list(ptree *pt, int *args)
   return(lst);
 }
 
-static XEN format_func = XEN_FALSE;
+#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
+  static XEN format_func = XEN_FALSE;
+#else
+  static XEN format_func;
+#endif
 
 static void format_s(int *args, ptree *pt) 
 {

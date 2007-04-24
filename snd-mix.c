@@ -614,6 +614,8 @@ static mix_info *free_mix_info(mix_info *md)
 	  md->properties_gc_loc = NOT_A_GC_LOC;
 	  md->properties = XEN_FALSE;
 	}
+      if (md->peak_env)
+	md->peak_env = free_env_info(md->peak_env);
       FREE(md);
     }
   return(NULL);

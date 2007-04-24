@@ -5107,7 +5107,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
 	  else
 	    {
 	      if (newlen > curlen)
-		extend_with_zeros(cp, curlen, newlen - curlen, cp->edit_ctr);
+		extend_with_zeros(cp, curlen, newlen - curlen, cp->edit_ctr, S_setB S_frames);
 	    }
 	  if (need_update)
 	    update_graph(cp);

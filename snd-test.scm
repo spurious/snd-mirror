@@ -35,7 +35,7 @@
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)
-(define keep-going #t)
+(define keep-going #f)
 (define all-args #f)
 (define test-at-random 0)
 ;(show-ptree 1)
@@ -23303,33 +23303,43 @@ EDITS: 2
 ;;; ---------------- test 9: mix ----------------
 
 (define (snd_test_9)
+
   (define (make-waltz)
+
+    (define (frequency->tag-y freq lo octs) ; tag height dependent on freq
+      (inexact->exact (round (* 100 (- 1.0 (/ (log (/ freq lo)) (* (log 2.0) octs)))))))
     
     (let ((oldie (find-sound "test.snd")))
       (if (sound? oldie)
 	  (close-sound oldie)))
     
-    (let ((violins '())
-	  (cellos '())
-	  (index (new-sound "test.snd" :channels 1)))
+    (let ((violin-sync 1)
+	  (violin-color (make-color 0 0 1)) ; blue
+	  (cello-sync 2)
+	  (cello-color (make-color 0 1 0)) ; green
+	  (index (new-sound "test.snd" :channels 1 :size (* 22050 22))))
       
       (define (violin beg dur freq amp)
-	(let ((id (mix (with-temp-sound () 
-					(fm-violin 0 dur (->frequency freq #t) amp))
-		       (->sample beg) 0 index 0  ; start, file in-chan, sound, channel
-		       #t #t)))                  ; with tag and auto-delete
+	(let ((id (mix (with-temp-sound ()                            ; write instrument output to temp sound
+					(fm-violin 0 dur (->frequency freq #t) amp)) ; our favorite FM instrument
+		       (->sample beg) 0 index 0  ; mix start, file in-chan, sound, channel
+		       #t #t)))                  ; mix with tag and auto-delete
 	  (if (symbol? freq)
 	      (set! (mix-name id) (symbol->string freq)))
-	  (set! violins (cons id violins))))
+	  (set! (mix-sync id) violin-sync)
+	  (set! (mix-color id) violin-color)
+	  (set! (mix-tag-y id) (frequency->tag-y (->frequency freq #t) (->frequency 'c2) 3))))
       
       (define (cello beg dur freq amp)
-	(let ((id (mix (with-temp-sound () 
+	(let ((id (mix (with-temp-sound ()
 					(fm-violin 0 dur (->frequency freq #t) amp :fm-index 1.5))
 		       (->sample beg) 0 index 0
-		       #t #t)))  ; with tag and auto-delete
+		       #t #t)))
 	  (if (symbol? freq)
 	      (set! (mix-name id) (symbol->string freq)))
-	  (set! cellos (cons id cellos))))
+	  (set! (mix-sync id) cello-sync)
+	  (set! (mix-color id) cello-color)
+	  (set! (mix-tag-y id) (frequency->tag-y (->frequency freq #t) (->frequency 'c2) 3))))
       
       (as-one-edit
        (lambda ()
@@ -23344,7 +23354,7 @@ EDITS: 2
 	 
 	 (violin 9 3 'd4 .2)
 	 (cello  9 3 'b2 .2)
-	 
+    
 	 (violin 12 1 'f4 .2)  (violin 13 1.5 'a4 .2)  (violin 14.5 .5 'g3 .2)
 	 (cello  12 1 'd3 .2)  (cello  13 1.5 'f3 .2)  (cello  14.5 .5 'g2 .2)
 	 
@@ -24380,7 +24390,14 @@ EDITS: 2
 	    (close-sound new-index))
 	  )
 	(dismiss-all-dialogs)
-	
+
+	(let ((ind (make-waltz)))
+	  ;; mix.scm stuff...
+	  (close-sound ind))
+
+	(let ((ind (make-bagatelle)))
+	  (close-sound ind))
+
 	)))
 
 
@@ -27732,13 +27749,14 @@ EDITS: 2
 	    (set! (y-bounds curfd) (list -0.5 0.5))
 	    (let ((yb (y-bounds curfd)))
 	      (if (or (fneq (car yb) -0.5) (fneq (cadr yb) 0.5)) (snd-display ";y-bounds: ~A?" yb)))
-	    (set! (cursor curfd) curloc)
-	    (let ((cl (cursor curfd)))
-	      (if (not (= cl curloc)) 
+	    (set! (cursor curfd 0) curloc)
+	    (let ((cl (cursor curfd 0)))
+	      (if (and (not (= cl curloc))
+		       (> (frames curfd 0) curloc))
 		  (begin
-		    (snd-display ";cursor ~A /= ~A?" cl curloc)
-		    (set! curloc (cursor)))))
-	    (if (>= curloc (frames curfd)) (set! curloc 0))
+		    (snd-display ";cursor ~A /= ~A (frames: ~A)?" cl curloc (frames curfd 0))
+		    (set! curloc (cursor curfd 0)))))
+	    (if (>= curloc (frames curfd 0)) (set! curloc 0))
 	    (let* ((id (catch #t (lambda () (add-mark curloc curfd)) (lambda args -1))))
 	      (if (and (number? id) (not (= id -1)))
 		  (let* ((cl (mark-sample id))
@@ -30476,7 +30494,7 @@ EDITS: 2
 	 (let ((len (vct-length v0)))
 	   (do ((i 0 (1+ i)))
 	       ((= i len) #f)
-	     (if (> (abs (- (vct-ref v0 i) (vct-ref v1 i))) .0001)
+	     (if (> (abs (- (vct-ref v0 i) (vct-ref v1 i))) .001)
 		 (return (list i (vct-ref v0 i) (vct-ref v1 i)))))))))
     (define (edits-not-equal? tl0 tl1 pos)
       (if (null? tl0)
@@ -30500,9 +30518,7 @@ EDITS: 2
 	  (snd-display ";~A: lengths differ: ~A ~A" name len (vct-length expected-vals))
 	  (if (and expected-vals (not (vequal current-vals expected-vals)))
 	      (let ((bad-data (vequal-at current-vals expected-vals)))
-		(snd-display ";checking ~A, vals disagree (loc cur expect): ~A" name bad-data)
-		(throw 'uhoh0)
-		)
+		(snd-display ";checking ~A, vals disagree (loc cur expect): ~A" name bad-data))
 	      (let* ((tree (edit-tree))
 		     (bad-data (edits-not-equal? tree expected-tree 0)))
 		(if bad-data
@@ -32357,25 +32373,28 @@ EDITS: 3
 		   (j 0 (1+ j)))
 		  ((= i 14))
 		(vct-set! vals i (+ (vct-ref vals i) (vct-ref mixvals j))))
-	      (check-edit-tree '((0 1 0 3 1.0 0.0 0.0 0) (4 4 0 9 1.0 0.0 0.0 0) 
-				 (14 3 9 9 1.0 0.0 0.0 0) (15 1 15 19 0.5 -1.49011614158923e-9 0.444444447755814 1) 
-				 (20 2 0 0 1.0 0.0 0.0 0) (21 1 21 24 0.5 0.666666686534882 1.0 1) 
-				 (25 1 25 29 0.5 0.0 0.0 0) (30 1 30 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+	      (check-edit-tree '((0 1 0 3 1.0 0.0 0.0 0) (4 1 4 4 1.0 0.0 0.0 1) (5 3 0 8 1.0 0.0 0.0 1) (14 3 9 9 1.0 0.0 0.0 0) 
+				 (15 1 15 19 0.5 -8.27842294714998e-10 0.444444447755814 4) (20 2 0 0 1.0 0.0 0.0 0) 
+				 (21 1 21 24 0.5 0.666666686534882 1.0 4) (25 1 25 29 0.5 0.0 0.0 0) 
+				 (30 1 30 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			       vals (format #f "mix-vct (id: ~A (~A) [~A ~A] + .1 -> [~A ~A] [~A ~A]) 4 (.1)" 
 					    id ind
 					    old-sample4 old-sample5
 					    (sample 4) (sample 5) 
 					    (vct-ref vals 4) (vct-ref vals 5)))))
+
+	  ;     (list global-position data-number local-position local-end scaler ramp0 ramp1 type)
+
 	  (delete-samples 28 12)
 	  (insert-silence 28 12)
 	  (do ((i 28 (1+ i)))
 	      ((= i 40))
 	    (vct-set! vals i 0.0))
 	  (let ((old-vals (vct-copy vals)))
-	    (check-edit-tree '((0 1 0 3 1.0 0.0 0.0 0) (4 4 0 9 1.0 0.0 0.0 0)
-			       (14 3 9 9 1.0 0.0 0.0 0) (15 1 15 19 0.5 -1.49011614158923e-9 0.444444447755814 1) 
-			       (20 2 0 0 1.0 0.0 0.0 0) (21 1 21 24 0.5 0.666666686534882 1.0 1) 
-			       (25 1 25 27 0.5 0.0 0.0 0) (28 -1 0 11 0.0 0.0 0.0 0)
+	    (check-edit-tree '((0 1 0 3 1.0 0.0 0.0 0) (4 1 4 4 1.0 0.0 0.0 1) (5 3 0 8 1.0 0.0 0.0 1)
+			       (14 3 9 9 1.0 0.0 0.0 0) (15 1 15 19 0.5 -8.27842294714998e-10 0.444444447755814 4) 
+			       (20 2 0 0 1.0 0.0 0.0 0) (21 1 21 24 0.5 0.666666686534882 1.0 4) 
+			       (25 1 25 27 0.5 0.0 0.0 0) (28 -1 0 11 0.0 0.0 0.0 2) 
 			       (40 1 40 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			     vals "delete/insert")
 	    (if (fneq (selection-maxamp) .6) (snd-display ";selection-maxamp after: ~A" (selection-maxamp)))
@@ -32386,36 +32405,34 @@ EDITS: 3
 	    (do ((i 50 (1+ i)))
 		((= i 60))
 	      (vct-set! vals i .1))
-	    (check-edit-tree '((0 1 0 3 1.0 0.0 0.0 0) (4 4 0 9 1.0 0.0 0.0 0) (14 3 9 9 1.0 0.0 0.0 0) 
-			       (15 1 15 19 0.5 -1.49011614158923e-9 0.444444447755814 1) 
-			       (20 2 0 0 1.0 0.0 0.0 0) (21 1 21 24 0.5 0.666666686534882 1.0 1)
-			       (25 1 25 27 0.5 0.0 0.0 0) (28 -1 0 11 0.0 0.0 0.0 0) (40 1 40 49 1.0 0.0 0.0 0) 
-			       (50 1 50 59 0.100000001490116 0.0 0.0 0) (60 1 60 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+	    (check-edit-tree '((0 1 0 3 1.0 0.0 0.0 0) (4 1 4 4 1.0 0.0 0.0 1) (5 3 0 8 1.0 0.0 0.0 1) (14 3 9 9 1.0 0.0 0.0 0) 
+			       (15 1 15 19 0.5 -8.27842294714998e-10 0.444444447755814 4) (20 2 0 0 1.0 0.0 0.0 0) 
+			       (21 1 21 24 0.5 0.666666686534882 1.0 4) (25 1 25 27 0.5 0.0 0.0 0) (28 -1 0 11 0.0 0.0 0.0 2) 
+			       (40 1 40 49 1.0 0.0 0.0 0) (50 1 50 59 0.100000001490116 0.0 0.0 0) (60 1 60 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			     vals "scale-selection-by .1")
 	    (env-channel (make-env '(0 0 1 1 2 0 3 0) :end 30 :base 0) 50 30)
 	    (let ((e (make-env '(0 0 1 1 2 0 3 0) :end 30 :base 0)))
 	      (do ((i 50 (1+ i)))
 		  ((= i 80))
 		(vct-set! vals i (* (vct-ref vals i) (env e)))))
-	    (check-edit-tree '((0 1 0 3 1.0 0.0 0.0 0) (4 4 0 9 1.0 0.0 0.0 0) (14 3 9 9 1.0 0.0 0.0 0) 
-			       (15 1 15 19 0.5 -1.49011614158923e-9 0.444444447755814 1) 
-			       (20 2 0 0 1.0 0.0 0.0 0) (21 1 21 24 0.5 0.666666686534882 1.0 1)
-			       (25 1 25 27 0.5 0.0 0.0 0) (28 -1 0 11 0.0 0.0 0.0 0) (40 1 40 49 1.0 0.0 0.0 0) 
-			       (50 1 50 59 0.0 0.0 0.0 0) (60 1 60 60 0.0 0.0 0.0 0) (61 1 61 70 1.0 0.0 0.0 0) 
-			       (71 1 71 79 0.0 0.0 0.0 0) (80 1 80 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+	    (check-edit-tree '((0 1 0 3 1.0 0.0 0.0 0) (4 1 4 4 1.0 0.0 0.0 1) (5 3 0 8 1.0 0.0 0.0 1) (14 3 9 9 1.0 0.0 0.0 0) 
+			       (15 1 15 19 0.5 -8.27842294714998e-10 0.444444447755814 4) (20 2 0 0 1.0 0.0 0.0 0) 
+			       (21 1 21 24 0.5 0.666666686534882 1.0 4) (25 1 25 27 0.5 0.0 0.0 0) (28 -1 0 11 0.0 0.0 0.0 2)
+			       (40 1 40 49 1.0 0.0 0.0 0) (50 1 50 59 0.0 0.0 0.0 2) (60 1 60 60 0.0 0.0 0.0 2) 
+			       (61 1 61 70 1.0 0.0 0.0 0) (71 1 71 79 0.0 0.0 0.0 2) (80 1 80 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			     vals "step env 30")
 	    (undo-channel 2)
-	    (check-edit-tree '((0 1 0 3 1.0 0.0 0.0 0) (4 4 0 9 1.0 0.0 0.0 0) (14 3 9 9 1.0 0.0 0.0 0) 
-			       (15 1 15 19 0.5 -1.49011614158923e-9 0.444444447755814 1) (20 2 0 0 1.0 0.0 0.0 0) 
-			       (21 1 21 24 0.5 0.666666686534882 1.0 1) (25 1 25 27 0.5 0.0 0.0 0) (28 -1 0 11 0.0 0.0 0.0 0) 
-			       (40 1 40 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+	    (check-edit-tree '((0 1 0 3 1.0 0.0 0.0 0) (4 1 4 4 1.0 0.0 0.0 1) (5 3 0 8 1.0 0.0 0.0 1) 
+			       (14 3 9 9 1.0 0.0 0.0 0) (15 1 15 19 0.5 -8.27842294714998e-10 0.444444447755814 4) 
+			       (20 2 0 0 1.0 0.0 0.0 0) (21 1 21 24 0.5 0.666666686534882 1.0 4) (25 1 25 27 0.5 0.0 0.0 0) 
+			       (28 -1 0 11 0.0 0.0 0.0 2) (40 1 40 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			     old-vals "undo to delete/insert (over step env)"))
 	  (redo-channel 2)
-	  (check-edit-tree '((0 1 0 3 1.0 0.0 0.0 0) (4 4 0 9 1.0 0.0 0.0 0) (14 3 9 9 1.0 0.0 0.0 0) 
-			     (15 1 15 19 0.5 -1.49011614158923e-9 0.444444447755814 1) (20 2 0 0 1.0 0.0 0.0 0) 
-			     (21 1 21 24 0.5 0.666666686534882 1.0 1) (25 1 25 27 0.5 0.0 0.0 0) (28 -1 0 11 0.0 0.0 0.0 0) 
-			     (40 1 40 49 1.0 0.0 0.0 0) (50 1 50 59 0.0 0.0 0.0 0) (60 1 60 60 0.0 0.0 0.0 0) 
-			     (61 1 61 70 1.0 0.0 0.0 0) (71 1 71 79 0.0 0.0 0.0 0) (80 1 80 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+	  (check-edit-tree '((0 1 0 3 1.0 0.0 0.0 0) (4 1 4 4 1.0 0.0 0.0 1) (5 3 0 8 1.0 0.0 0.0 1) (14 3 9 9 1.0 0.0 0.0 0) 
+			     (15 1 15 19 0.5 -8.27842294714998e-10 0.444444447755814 4) (20 2 0 0 1.0 0.0 0.0 0) 
+			     (21 1 21 24 0.5 0.666666686534882 1.0 4) (25 1 25 27 0.5 0.0 0.0 0) (28 -1 0 11 0.0 0.0 0.0 2)
+			     (40 1 40 49 1.0 0.0 0.0 0) (50 1 50 59 0.0 0.0 0.0 2) (60 1 60 60 0.0 0.0 0.0 2)
+			     (61 1 61 70 1.0 0.0 0.0 0) (71 1 71 79 0.0 0.0 0.0 2) (80 1 80 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "redo past step env 30")
 	  (set! (sample 75) -.5)
 	  (vct-set! vals 75 -.5)
@@ -32425,22 +32442,21 @@ EDITS: 3
 	    (do ((i 75 (1+ i)))
 		((= i 85))
 	      (vct-set! vals i (one-zero flt1 (vct-ref vals i))))
-	    (check-edit-tree '((0 1 0 3 1.0 0.0 0.0 0) (4 4 0 9 1.0 0.0 0.0 0) (14 3 9 9 1.0 0.0 0.0 0) 
-			       (15 1 15 19 0.5 -1.49011614158923e-9 0.444444447755814 1) (20 2 0 0 1.0 0.0 0.0 0)
-			       (21 1 21 24 0.5 0.666666686534882 1.0 1) (25 1 25 27 0.5 0.0 0.0 0) (28 -1 0 11 0.0 0.0 0.0 0)
-			       (40 1 40 49 1.0 0.0 0.0 0) (50 1 50 59 0.0 0.0 0.0 0) (60 1 60 60 0.0 0.0 0.0 0) 
-			       (61 1 61 70 1.0 0.0 0.0 0) (71 1 71 74 0.0 0.0 0.0 0) (75 6 0 9 1.0 0.0 0.0 0) 
-			       (85 1 85 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+	    (check-edit-tree '((0 1 0 3 1.0 0.0 0.0 0) (4 1 4 4 1.0 0.0 0.0 1) (5 3 0 8 1.0 0.0 0.0 1) (14 3 9 9 1.0 0.0 0.0 0) 
+			       (15 1 15 19 0.5 -8.27842294714998e-10 0.444444447755814 4) (20 2 0 0 1.0 0.0 0.0 0) 
+			       (21 1 21 24 0.5 0.666666686534882 1.0 4) (25 1 25 27 0.5 0.0 0.0 0) (28 -1 0 11 0.0 0.0 0.0 2) 
+			       (40 1 40 49 1.0 0.0 0.0 0) (50 1 50 59 0.0 0.0 0.0 2) (60 1 60 60 0.0 0.0 0.0 2) 
+			       (61 1 61 70 1.0 0.0 0.0 0) (71 1 71 74 0.0 0.0 0.0 2) (75 6 0 9 1.0 0.0 0.0 0) (85 1 85 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			     vals "clm-channel 75 10"))
 	  (map-channel (lambda (y) (* y .5)) 3 11)
 	  (do ((i 3 (1+ i)))
 	      ((= i 14))
 	    (vct-set! vals i (* .5 (vct-ref vals i))))
-	  (check-edit-tree '((0 1 0 2 1.0 0.0 0.0 0) (3 7 0 10 1.0 0.0 0.0 0) (14 3 9 9 1.0 0.0 0.0 0) 
-			     (15 1 15 19 0.5 -1.49011614158923e-9 0.444444447755814 1) (20 2 0 0 1.0 0.0 0.0 0) 
-			     (21 1 21 24 0.5 0.666666686534882 1.0 1) (25 1 25 27 0.5 0.0 0.0 0) (28 -1 0 11 0.0 0.0 0.0 0) 
-			     (40 1 40 49 1.0 0.0 0.0 0) (50 1 50 59 0.0 0.0 0.0 0) (60 1 60 60 0.0 0.0 0.0 0) 
-			     (61 1 61 70 1.0 0.0 0.0 0) (71 1 71 74 0.0 0.0 0.0 0) (75 6 0 9 1.0 0.0 0.0 0)
+	  (check-edit-tree '((0 1 0 2 1.0 0.0 0.0 0) (3 8 0 10 1.0 0.0 0.0 0) (14 7 10 11 1.0 0.0 0.0 0) 
+			     (16 1 16 19 0.5 0.111111111938953 0.444444447755814 4) (20 2 0 0 1.0 0.0 0.0 0) 
+			     (21 1 21 24 0.5 0.666666686534882 1.0 4) (25 1 25 27 0.5 0.0 0.0 0) (28 -1 0 11 0.0 0.0 0.0 2) 
+			     (40 1 40 49 1.0 0.0 0.0 0) (50 1 50 59 0.0 0.0 0.0 2) (60 1 60 60 0.0 0.0 0.0 2) 
+			     (61 1 61 70 1.0 0.0 0.0 0) (71 1 71 74 0.0 0.0 0.0 2) (75 6 0 9 1.0 0.0 0.0 0) 
 			     (85 1 85 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "map-channel 3 14")
 	  (map-channel (let ((reader (make-sample-reader 50)))
@@ -32451,9 +32467,9 @@ EDITS: 3
 	       (j 50 (1+ j)))
 	      ((= i 25))
 	    (vct-set! vals i (- (vct-ref vals i) (vct-ref vals j))))
-	  (check-edit-tree '((0 8 0 24 1.0 0.0 0.0 0) (25 1 25 27 0.5 0.0 0.0 0) (28 -1 0 11 0.0 0.0 0.0 0) 
-			     (40 1 40 49 1.0 0.0 0.0 0) (50 1 50 59 0.0 0.0 0.0 0) (60 1 60 60 0.0 0.0 0.0 0) 
-			     (61 1 61 70 1.0 0.0 0.0 0) (71 1 71 74 0.0 0.0 0.0 0) (75 6 0 9 1.0 0.0 0.0 0) 
+	  (check-edit-tree '((0 9 0 24 1.0 0.0 0.0 0) (25 1 25 27 0.5 0.0 0.0 0) (28 -1 0 11 0.0 0.0 0.0 2)
+			     (40 1 40 49 1.0 0.0 0.0 0) (50 1 50 59 0.0 0.0 0.0 2) (60 1 60 60 0.0 0.0 0.0 2)
+			     (61 1 61 70 1.0 0.0 0.0 0) (71 1 71 74 0.0 0.0 0.0 2) (75 6 0 9 1.0 0.0 0.0 0)
 			     (85 1 85 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "back set via map-channel")
 	  (set! (selection-position) 20)
@@ -32466,11 +32482,21 @@ EDITS: 3
 	      ((= i 90))
 	    (vct-set! vals i (* (vct-ref vals i) x))
 	    (set! x (+ x incr)))
-	  (check-edit-tree '((0 8 0 19 1.0 0.0 0.0 0) (20 8 20 24 1.0 -2.69948563502709e-10 0.0579710155725479 2) (25 1 25 27 0.5 0.0724637657403946 0.101449273526669 2) (28 -1 0 11 0.0 0.0 0.0 1) (40 1 40 49 1.0 0.289855062961578 0.420289844274521 2) (50 1 50 59 0.0 0.0 0.0 1) (60 1 60 60 0.0 0.0 0.0 1) (61 1 61 70 1.0 0.594202876091003 0.724637687206268 2) (71 1 71 74 0.0 0.0 0.0 1) (75 6 0 9 1.0 0.797101438045502 0.927536249160767 2) (85 1 85 89 1.0 0.942028999328613 1.0 2) (90 1 90 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+	  (check-edit-tree '((0 9 0 19 1.0 0.0 0.0 0) (20 9 20 24 1.0 -2.69948563502709e-10 0.0579710155725479 4) 
+			     (25 1 25 27 0.5 0.0724637657403946 0.101449273526669 4) (28 -1 0 11 0.0 0.0 0.0 2) 
+			     (40 1 40 49 1.0 0.289855062961578 0.420289844274521 4) (50 1 50 59 0.0 0.0 0.0 2)
+			     (60 1 60 60 0.0 0.0 0.0 2) (61 1 61 70 1.0 0.594202876091003 0.724637687206268 4) 
+			     (71 1 71 74 0.0 0.0 0.0 2) (75 6 0 9 1.0 0.797101438045502 0.927536249160767 4) 
+			     (85 1 85 89 1.0 0.942028999328613 1.0 4) (90 1 90 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "env-selection")
 	  (normalize-channel .5)
 	  (vct-scale! vals .5)
-	  (check-edit-tree '((0 8 0 19 0.5 0.0 0.0 0) (20 8 20 24 0.5 -2.69948563502709e-10 0.0579710155725479 2) (25 1 25 27 0.25 0.0724637657403946 0.101449273526669 2) (28 -1 0 11 0.0 0.0 0.0 1) (40 1 40 49 0.5 0.289855062961578 0.420289844274521 2) (50 1 50 59 0.0 0.0 0.0 1) (60 1 60 60 0.0 0.0 0.0 1) (61 1 61 70 0.5 0.594202876091003 0.724637687206268 2) (71 1 71 74 0.0 0.0 0.0 1) (75 6 0 9 0.5 0.797101438045502 0.927536249160767 2) (85 1 85 89 0.5 0.942028999328613 1.0 2) (90 1 90 99 0.5 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+	  (check-edit-tree '((0 9 0 19 0.5 0.0 0.0 0) (20 9 20 24 0.5 -2.69948563502709e-10 0.0579710155725479 4)
+			     (25 1 25 27 0.25 0.0724637657403946 0.101449273526669 4) (28 -1 0 11 0.0 0.0 0.0 2)
+			     (40 1 40 49 0.5 0.289855062961578 0.420289844274521 4) (50 1 50 59 0.0 0.0 0.0 2) 
+			     (60 1 60 60 0.0 0.0 0.0 2) (61 1 61 70 0.5 0.594202876091003 0.724637687206268 4)
+			     (71 1 71 74 0.0 0.0 0.0 2) (75 6 0 9 0.5 0.797101438045502 0.927536249160767 4) 
+			     (85 1 85 89 0.5 0.942028999328613 1.0 4) (90 1 90 99 0.5 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "scale-to")
 	  (if (fneq (selection-maxamp) .5) (snd-display ";selection-maxamp after scale: ~A" (selection-maxamp)))
 	  (delete-samples 0 100)
@@ -32481,19 +32507,20 @@ EDITS: 3
 	  
 	  (set! (sample 50) .5)
 	  (vct-set! vals 50 .5)
-	  (check-edit-tree '((0 -1 0 49 0.0 0.0 0.0 0) (50 9 0 0 1.0 0.0 0.0 0) (51 -1 51 99 0.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+	  (check-edit-tree '((0 -1 0 49 0.0 0.0 0.0 2) (50 10 0 0 1.0 0.0 0.0 0) (51 -1 51 99 0.0 0.0 0.0 2) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "split silence")
 	  (map-channel (lambda (y) 1.0) 0 25)
 	  (do ((i 0 (1+ i)))
 	      ((= i 25))
 	    (vct-set! vals i 1.0))
-	  (check-edit-tree '((0 10 0 24 1.0 0.0 0.0 0) (25 -1 25 49 0.0 0.0 0.0 0) (50 9 0 0 1.0 0.0 0.0 0) (51 -1 51 99 0.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+	  (check-edit-tree '((0 11 0 24 1.0 0.0 0.0 0) (25 -1 25 49 0.0 0.0 0.0 2) (50 10 0 0 1.0 0.0 0.0 0) (51 -1 51 99 0.0 0.0 0.0 2) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "clobber silence start")
 	  (map-channel (lambda (y) 1.0) 75 25)
 	  (do ((i 75 (1+ i)))
 	      ((= i 100))
 	    (vct-set! vals i 1.0))
-	  (check-edit-tree '((0 10 0 24 1.0 0.0 0.0 0) (25 -1 25 49 0.0 0.0 0.0 0) (50 9 0 0 1.0 0.0 0.0 0) (51 -1 51 74 0.0 0.0 0.0 0) (75 11 0 24 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+	  (check-edit-tree '((0 11 0 24 1.0 0.0 0.0 0) (25 -1 25 49 0.0 0.0 0.0 2) (50 10 0 0 1.0 0.0 0.0 0) 
+			     (51 -1 51 74 0.0 0.0 0.0 2) (75 12 0 24 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "clobber silence end")
 	  (scale-channel 0.0 0 100)
 	  (vct-fill! vals 0.0)
@@ -32505,23 +32532,24 @@ EDITS: 3
 	    (do ((i 0 (1+ i)))
 		((= i 100))
 	      (vct-set! vals i (env e1))))
-	  (check-edit-tree '((0 12 0 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+	  (check-edit-tree '((0 13 0 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "env start")
 	  (set! (sample 50) -.5)
 	  (vct-set! vals 50 -.5)
-	  (check-edit-tree '((0 12 0 49 1.0 0.0 0.0 0) (50 13 0 0 1.0 0.0 0.0 0) (51 12 51 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+	  (check-edit-tree '((0 13 0 49 1.0 0.0 0.0 0) (50 14 0 0 1.0 0.0 0.0 0) (51 13 51 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "split env segment")
 	  (map-channel (lambda (y) 1.0) 0 25)
 	  (do ((i 0 (1+ i)))
 	      ((= i 25))
 	    (vct-set! vals i 1.0))
-	  (check-edit-tree '((0 14 0 24 1.0 0.0 0.0 0) (25 12 25 49 1.0 0.0 0.0 0) (50 13 0 0 1.0 0.0 0.0 0) (51 12 51 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+	  (check-edit-tree '((0 15 0 24 1.0 0.0 0.0 0) (25 13 25 49 1.0 0.0 0.0 0) (50 14 0 0 1.0 0.0 0.0 0) (51 13 51 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "clobber env start")
 	  (map-channel (lambda (y) 1.0) 75 25)
 	  (do ((i 75 (1+ i)))
 	      ((= i 100))
 	    (vct-set! vals i 1.0))
-	  (check-edit-tree '((0 14 0 24 1.0 0.0 0.0 0) (25 12 25 49 1.0 0.0 0.0 0) (50 13 0 0 1.0 0.0 0.0 0) (51 12 51 74 1.0 0.0 0.0 0) (75 15 0 24 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+	  (check-edit-tree '((0 15 0 24 1.0 0.0 0.0 0) (25 13 25 49 1.0 0.0 0.0 0) (50 14 0 0 1.0 0.0 0.0 0) 
+			     (51 13 51 74 1.0 0.0 0.0 0) (75 16 0 24 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "clobber env end")
 	  ;; this can't be expected to work anymore -- internal backup can change edit tree bounds
 					;	  (save-edit-history "hiho.scm")
@@ -32538,31 +32566,41 @@ EDITS: 3
 	    (do ((i 50 (1+ i)))
 		((= i 70))
 	      (vct-set! vals i (* (env e) (vct-ref vals i)))))
-	  (check-edit-tree '((0 14 0 24 1.0 0.0 0.0 0) (25 12 25 49 1.0 0.0 0.0 0) (50 13 0 0 1.0 1.0 1.0 1) (51 12 51 60 1.0 0.899999976158142 -2.38418582654276e-8 1) (61 12 61 69 1.0 0.111111111938953 1.0 1) (70 12 70 74 1.0 0.0 0.0 0) (75 15 0 24 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+	  (check-edit-tree '((0 15 0 24 1.0 0.0 0.0 0) (25 13 25 49 1.0 0.0 0.0 0) (50 14 0 0 1.0 1.0 1.0 4) 
+			     (51 13 51 60 1.0 0.899999976158142 -2.38418582654276e-8 4) (61 13 61 69 1.0 0.111111111938953 1.0 4) 
+			     (70 13 70 74 1.0 0.0 0.0 0) (75 16 0 24 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "env on env")
 	  (env-channel (make-env '(0 1 1 0 2 1) :end 79) 10 80)
 	  (let ((e (make-env '(0 1 1 0 2 1) :end 79)))
 	    (do ((i 10 (1+ i)))
 		((= i 90))
 	      (vct-set! vals i (* (env e) (vct-ref vals i)))))
-	  (check-edit-tree '((0 14 0 9 1.0 0.0 0.0 0) (10 14 10 24 1.0 1.0 0.649999976158142 1) (25 12 25 49 1.0 0.625 0.025000000372529 1) 
-			     (50 13 0 0 1.0 1.0 1.0 3) (51 12 51 60 1.0 0.899999976158142 -2.38418582654276e-8 3) 
-			     (61 12 61 69 1.0 0.111111111938953 1.0 3) (70 12 70 74 1.0 0.512820541858673 0.615384638309479 1) 
-			     (75 15 0 14 1.0 0.64102566242218 1.0 1) (90 15 15 24 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+	  (check-edit-tree '((0 15 0 9 1.0 0.0 0.0 0) (10 15 10 24 1.0 1.0 0.649999976158142 4) 
+			     (25 13 25 49 1.0 0.625 0.025000000372529 4) (50 14 0 0 1.0 1.0 1.0 6) 
+			     (51 13 51 60 1.0 0.899999976158142 -2.38418582654276e-8 6) 
+			     (61 13 61 69 1.0 0.111111111938953 1.0 6) (70 13 70 74 1.0 0.512820541858673 0.615384638309479 4)
+			     (75 16 0 14 1.0 0.64102566242218 1.0 4) (90 16 15 24 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "env on env 2")
 	  (env-channel (make-env '(0 1 1 0 2 1) :end 19) 50 20)
 	  (let ((e (make-env '(0 1 1 0 2 1) :end 19)))
 	    (do ((i 50 (1+ i)))
 		((= i 70))
 	      (vct-set! vals i (* (env e) (vct-ref vals i)))))
-	  (check-edit-tree '((0 14 0 9 1.0 0.0 0.0 0) (10 14 10 24 1.0 1.0 0.649999976158142 2) (25 12 25 49 1.0 0.625 0.025000000372529 2) (50 13 0 0 1.0 1.0 1.0 4) (51 12 51 60 1.0 0.899999976158142 -2.38418582654276e-8 4) (61 12 61 69 1.0 0.111111111938953 1.0 4) (70 12 70 74 1.0 0.512820541858673 0.615384638309479 2) (75 15 0 14 1.0 0.64102566242218 1.0 2) (90 15 15 24 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 1))
+	  (check-edit-tree '((0 15 0 9 1.0 0.0 0.0 0) (10 15 10 24 1.0 1.0 0.649999976158142 4) 
+			     (25 13 25 49 1.0 0.625 0.025000000372529 4) (50 14 0 0 1.0 1.0 1.0 8) 
+			     (51 13 51 60 1.0 0.899999976158142 -2.38418582654276e-8 8) (61 13 61 69 1.0 0.111111111938953 1.0 8)
+			     (70 13 70 74 1.0 0.512820541858673 0.615384638309479 4) (75 16 0 14 1.0 0.64102566242218 1.0 4)
+			     (90 16 15 24 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "env on env 3")
 	  (delete-samples 10 20)
 	  (insert-silence 10 20)
 	  (do ((i 10 (1+ i)))
 	      ((= i 30))
 	    (vct-set! vals i 0.0))
-	  (check-edit-tree '((0 14 0 9 1.0 0.0 0.0 0) (10 -1 0 19 0.0 0.0 0.0 1) (30 12 30 49 1.0 0.5 0.025000000372529 2) (50 13 0 0 1.0 1.0 1.0 4) (51 12 51 60 1.0 0.899999976158142 -2.38418582654276e-8 4) (61 12 61 69 1.0 0.111111111938953 1.0 4) (70 12 70 74 1.0 0.512820541858673 0.615384638309479 2) (75 15 0 14 1.0 0.64102566242218 1.0 2) (90 15 15 24 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 1))
+	  (check-edit-tree '((0 15 0 9 1.0 0.0 0.0 0) (10 -1 0 19 0.0 0.0 0.0 2) (30 13 30 49 1.0 0.5 0.025000000372529 4)
+			     (50 14 0 0 1.0 1.0 1.0 8) (51 13 51 60 1.0 0.899999976158142 -2.38418582654276e-8 8)
+			     (61 13 61 69 1.0 0.111111111938953 1.0 8) (70 13 70 74 1.0 0.512820541858673 0.615384638309479 4)
+			     (75 16 0 14 1.0 0.64102566242218 1.0 4) (90 16 15 24 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "env preclobbered")
 	  (close-sound ind))
 	
@@ -34393,6 +34431,7 @@ EDITS: 1
 	      (snd-display ";frames: ~,2F ~,2F" 
 			   (exact->inexact (/ (mus-sound-frames "1.snd") (mus-sound-frames "oboe.snd")))
 			   (exact->inexact (/ (mus-sound-frames "1.snd") (mus-sound-frames "1a.snd"))))
+	      (snd-display ";~A~28T~A~44T~A~56T(1/oboe, 1/1a)" "1.snd" "oboe.snd" "1a.snd")
 	      (for-each
 	       (lambda (name func)
 		 (let* ((ind (open-sound "1.snd"))
@@ -36311,6 +36350,10 @@ EDITS: 1
 	  (revert-sound ind)
 	  (if (not (= (filter-control-order ind) order)) (snd-display ";controls->channel filter: ~A" (filter-control-order ind)))))
       
+
+      (if #f (begin ; TODO: mix edit-list->function tests:
+	       ;; currently: (lambda (snd chn) (let ((-mix-0 0)) (make-v-mix snd chn snd chn) (set! (mix-position -mix-0) 200 snd chn)))
+
       ;; ---- mix stuff
       (let ((id (make-v-mix ind 0)))
 	;; ---- mix-position
@@ -36366,7 +36409,7 @@ EDITS: 1
 	      (snd-display ";edit-list->function mix 5 respeed: ~A ~A" 
 			   (mixes ind 0) (and (not (null? (mixes ind 0))) (mix-speed (car (mixes ind 0)))))))
 	(revert-sound ind)
-	)
+	)))
       (close-sound ind))
     
     (let ((ind (open-sound "2.snd")))
@@ -60644,7 +60687,8 @@ EDITS: 1
 			  make-file->sample make-filter make-fir-filter make-formant make-frame make-frame->file make-granulate
 			  make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil
 			  make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
-			  make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
+			  make-sine-summation make-square-wave 
+			  make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
 			  make-two-pole make-two-zero make-wave-train make-waveshape make-phase-vocoder make-ssb-am make-polyshape
 			  make-color make-player make-region make-scalar-mixer
 			  ))
@@ -60745,7 +60789,7 @@ EDITS: 1
 				(set! cadr-main (make-phase-vocoder (lambda (dir) 1.0)))
 				(set! a-hook (make-mixer 2 .1 .2 .1 .2))
 				))))))
-	  
+
 	  (for-each (lambda (n)
 		      (let ((tag
 			     (catch #t
@@ -61808,7 +61852,7 @@ EDITS: 1
 	  
 					;	    (reset-hook! snd-error-hook)
 					;	    (add-hook! snd-error-hook (lambda (msg) (snd-display msg) #t))
-	  
+
 	  ;; ---------------- key args
 	  (for-each
 	   (lambda (arg1)

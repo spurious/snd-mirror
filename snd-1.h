@@ -888,11 +888,9 @@ void g_init_data(void);
 
 /* -------- snd-edits.c -------- */
 
-#if MUS_DEBUGGING
-#define initial_ed_list(Beg, End) initial_ed_list_1(Beg, End, __FUNCTION__, __FILE__, __LINE__)
-ed_list *initial_ed_list_1(off_t beg, off_t end, const char *func, const char *file, int line);
-#else
 ed_list *initial_ed_list(off_t beg, off_t end);
+#if MUS_DEBUGGING
+  char *ed_list_edit_type_to_string(int type);
 #endif
 snd_info *sound_is_silence(snd_info *sp);
 off_t edit_changes_begin_at(chan_info *cp, int edpos);
@@ -907,7 +905,7 @@ void as_one_edit(chan_info *cp, int one_edit);
 void free_sound_list(chan_info *cp);
 void free_ptree_list(chan_info *cp);
 void after_edit(chan_info *cp);
-bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos);
+bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos, const char *origin);
 bool extend_edit_list(chan_info *cp, int edpos);
 bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos);
 bool file_insert_samples(off_t beg, off_t num, const char *tempfile, chan_info *cp, int chan, 

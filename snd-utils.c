@@ -736,7 +736,7 @@ static int find_mem_location(const char *func, const char *file, int line)
 	    {
 	      functions[i + mem_locations] = NULL;
 	      files[i + mem_locations] = NULL;
-	      printable[i + mem_locations] = 0;
+	      printable[i + mem_locations] = PRINT_NOT;
 	      lines[i + mem_locations] = 0;
 	    }
 	  mem_locations += 1024;
@@ -760,12 +760,20 @@ static int find_mem_location(const char *func, const char *file, int line)
 
 static void fdescribe_pointer(FILE *fp, void *p)
 {
-  int loc;
-  char *p3 = (char *)p;
-  loc = (*((int *)(p3 - 4)));
-  fprintf(fp, "%s[%d]:%s, len:%Zu", files[loc], lines[loc], functions[loc], sizes[loc]);
-  if (printable[loc] == PRINT_CHAR)
-    fprintf(fp, ": %s", p3);
+  if (p)
+    {
+      int loc;
+      char *p3 = (char *)p;
+      loc = (*((int *)(p3 - 4)));
+      if ((loc >= 0) && (loc < mem_size))
+	{
+	  fprintf(fp, "%s[%d]:%s, len:%Zu", files[loc], lines[loc], functions[loc], sizes[loc]);
+	  if (printable[loc] == PRINT_CHAR)
+	    fprintf(fp, ": %s", p3);
+	}
+      else fprintf(fp, "bad loc: %d", loc);
+    }
+  else fprintf(fp, "null");
 }
 
 static void describe_pointer(void *p)
@@ -867,6 +875,8 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
   check_padding(ptr, rtp, sizes[loc], refill);
   pointers[loc] = 0;
   true_pointers[loc] = 0;
+  locations[loc] = 0;
+  sizes[loc] = 0;
   return(rtp);
 }
 
@@ -1052,6 +1062,7 @@ void mem_report(void)
   int loc, i, j;
   sumloc *slocs;
   FILE *Fp;
+
   if (ss->search_tree)
     {
       free_ptree(ss->search_tree);
@@ -1077,8 +1088,11 @@ void mem_report(void)
 	      {
 		if (slocs[loc].refsize == slocs[loc].ptrs)
 		  {
+		    int k;
+		    k = slocs[loc].refsize;
 		    slocs[loc].refsize *= 2;
 		    slocs[loc].refs = (int *)realloc(slocs[loc].refs, sizeof(int) * slocs[loc].refsize);
+		    for (;k < slocs[loc].refsize; k++) slocs[loc].refs[k] = 0;
 		  }
 	      }
 	  }
@@ -1170,14 +1184,23 @@ void mem_report(void)
 			      else fprintf(Fp, "[%p, (no data)]\n        ", sd);
 			  }
 			  break;
+			case PRINT_ED_LIST:
+			  {
+			    ed_list *ed = (ed_list *)(pointers[orig_i]);
+			    fprintf(Fp, "[%p, origin: %s, beg: " OFF_TD ", len: " OFF_TD ", type: %s (%d), size: %d]\n    ",
+				    ed, (ed->origin) ? ed->origin : "null", 
+				    ed->beg, ed->len, ed_list_edit_type_to_string(ed->edit_type), ed->edit_type, ed->allocated_size);
+			  }
+			  break;
 			}
-		      /* other printable cases that would be nice: snd_info chn_info io_fd env_state ladspa sound_data mix|track */
+		      /* other printable cases that would be nice: snd_info chn_info io_fd env_state ladspa sound_data mix */
 		    }
 		  fprintf(Fp, "\n\n");
 		}
 	    }
 	}
     }
+  
   {
     int open = 0, closed = 0, top = 0;
     io_fds_in_use(&open, &closed, &top);

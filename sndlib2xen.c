@@ -229,9 +229,9 @@ static XEN g_mus_header_raw_defaults(void)
 static XEN g_mus_header_set_raw_defaults(XEN lst)
 {
   XEN_ASSERT_TYPE((XEN_LIST_P(lst)) && (XEN_LIST_LENGTH(lst) == 3), lst, XEN_ONLY_ARG, S_mus_header_raw_defaults, "a list: '(srate chans data-format)");
-  XEN_ASSERT_TYPE(XEN_CAR(lst), XEN_CAR(lst), XEN_ARG_1, S_mus_header_raw_defaults, "an integer = srate");
-  XEN_ASSERT_TYPE(XEN_CADR(lst), XEN_CADR(lst), XEN_ARG_2, S_mus_header_raw_defaults, "an integer = chans");
-  XEN_ASSERT_TYPE(XEN_CADDR(lst), XEN_CADDR(lst), XEN_ARG_3, S_mus_header_raw_defaults, "an integer = data-format");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(XEN_CAR(lst)), XEN_CAR(lst), XEN_ARG_1, S_mus_header_raw_defaults, "an integer = srate");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(XEN_CADR(lst)), XEN_CADR(lst), XEN_ARG_2, S_mus_header_raw_defaults, "an integer = chans");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(XEN_CADDR(lst)), XEN_CADDR(lst), XEN_ARG_3, S_mus_header_raw_defaults, "an integer = data-format");
   mus_header_set_raw_defaults(XEN_TO_C_INT(XEN_CAR(lst)),
 			      XEN_TO_C_INT(XEN_CADR(lst)),
 			      XEN_TO_C_INT(XEN_CADDR(lst)));
