@@ -4439,6 +4439,18 @@ It is the multichannel version of <a href="#ditherchannel">dither-channel</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- edit-property -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="editproperty">edit-property</a> <code>key snd chn edpos</code>
+</td></tr><tr><td></td><td>
+edit-property returns the value associated with 'key' in the given channel's edit history list
+<a href="extsnd.html#editproperties">property list</a> at edit location 'edpos'.  To add or change a property, use set! with this procedure
+as in <a href="#channelproperty">channel-property</a>.
+The edit list property list is convenient because the associated information goes away automatically
+when the given edit is no longer accessible.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- enveloped-mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="envelopedmix">enveloped-mix</a> <code>filename beg env</code><br>

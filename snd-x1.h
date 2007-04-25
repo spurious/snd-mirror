@@ -441,7 +441,6 @@ void g_init_gxenv(void);
 
 void reflect_mix_change(int mix_id);
 Widget make_mix_dialog(void);
-bool mix_play_stopped(void);
 void reflect_mix_play_stop(void);
 void make_mixer_icons_transparent_again(Pixel old_color, Pixel new_color);
 int mix_dialog_mix(void);

@@ -12,7 +12,7 @@
 
 
 
-bool mix_vct_untagged(vct *v, chan_info *cp, off_t beg, const char *origin)
+static bool mix_vct_untagged(vct *v, chan_info *cp, off_t beg, const char *origin)
 {
   mus_sample_t *data;
   int i, len;
@@ -43,9 +43,8 @@ bool mix_vct_untagged(vct *v, chan_info *cp, off_t beg, const char *origin)
 }
 
 
-bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, off_t beg, off_t num, file_delete_t auto_delete, const char *origin)
+static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, off_t beg, off_t num, file_delete_t auto_delete, const char *origin)
 {
-  cp->edit_hook_checked = false;
   if ((num > 0) && (editable_p(cp)))
     {
       file_info *ihdr;
@@ -139,7 +138,6 @@ bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, off_t b
 			snd_remove(filename, REMOVE_FROM_CACHE);
 
 		      update_graph(cp);
-		      cp->edit_hook_checked = false;
 		      return(true);
 		    }
 		}
@@ -848,11 +846,6 @@ off_t zoom_focus_mix_in_channel_to_position(chan_info *cp)
 }
 
 
-/* TODO: when changed, unless we extend the edit list, it is the current edit that is changed --
- *         I don't see any display change, but the mix sample reader sees the new state??
- *         so in normal case, we need to make an edit for these guys: use the unmix entry!
- */
-
 /* follow edit list */
 off_t mix_position_from_id(int id)
 {
@@ -864,21 +857,6 @@ off_t mix_position_from_id(int id)
   return(0);
 }
 
-#if 0
-off_t mix_set_position_from_id(int id, off_t new_pos)
-{
-  mix_state *ms;
-  ms = current_mix_state(md_from_id(id));
-  if (ms)
-    {
-      ms->beg = new_pos;
-      /* fprintf(stderr,"set mix %p at " OFF_TD "\n", ms, ms->beg); */
-      return(ms->beg);
-    }
-  return(0);
-}
-#endif
-
 off_t mix_length_from_id(int id)
 {
   mix_state *ms;
@@ -887,21 +865,6 @@ off_t mix_length_from_id(int id)
     return(ms->len);
   return(0);
 }
-
-#if 0
-off_t mix_set_length_from_id(int id, off_t new_len)
-{
-  mix_state *ms;
-  ms = current_mix_state(md_from_id(id));
-  if (ms)
-    {
-      ms->len = new_len;
-      return(ms->len);
-    }
-  return(0);
-}
-#endif
-
 
 Float mix_amp_from_id(int id)
 {
@@ -956,22 +919,6 @@ env *mix_amp_env_from_id(int id)
   return(NULL);
 }
 
-#if 0
-env *mix_set_amp_env_from_id(int id, env *new_e)
-{
-  mix_state *ms;
-  ms = current_mix_state(md_from_id(id));
-  if (ms)
-    {
-      /* this is freed by free_mix_state, so we need a local copy */
-      if (ms->amp_env) free_env(ms->amp_env);
-      ms->amp_env = copy_env(new_e);
-      return(ms->amp_env);
-    }
-  return(NULL);
-}
-#endif
-
 
 /* stable (not in edit list) */
 
@@ -1025,17 +972,6 @@ chan_info *mix_chan_info_from_id(int id)
     return(md->cp);
   return(NULL);
 }
-
-#if 0
-int mix_channel_from_id(int id)
-{
-  mix_info *md;
-  md = md_from_id(id);
-  if (md)
-    return(md->in_chan);
-  return(-1);
-}
-#endif
 
 static int mix_tag_y_from_id(int id)
 {
@@ -1343,8 +1279,6 @@ bool mix_set_speed_edit(int id, Float spd)
 
 
 /* xen connection */
-
-/* TODO: nearly all of these (including mix) could take a list, rather than one mix arg = do all settings in one op */
 
 static XEN snd_no_such_mix_error(const char *caller, XEN n)
 {
@@ -1820,9 +1754,6 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
 #if (!SNDLIB_USE_FLOATS)
   FREE(data);
 #endif
-  cp->edit_hook_checked = false;
-  /* TODO: what is this hook check for? */
-
   update_graph(cp);
 
   return(xen_return_first(C_TO_XEN_INT(mix_id), obj, origin));
@@ -2173,7 +2104,44 @@ static XEN g_set_mix_dialog_mix(XEN val)
   return(val);
 }
 
+static bool play_mix(mix_info *md, off_t beg)
+{
+  mix_state *ms;
+  ms = current_mix_state(md);
+  if (!ms)
+    {
+      int i;
+      for (i = md->cp->edit_ctr - 1; (ms == NULL) && (i < 0); i--)
+	ms = ed_mix_state(md->cp->edits[i], md->id);
+    }
+  if (ms)
+    return(add_mix_to_play_list(ms, md->cp, beg));
+  return(false);
+}
 
+static XEN g_play_mix(XEN num, XEN beg)
+{
+  #define H_play_mix "(" S_play_mix " id :optional (beg 0)): play mix.  'beg' is where to start playing."
+  mix_info *md;
+  off_t samp;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ONLY_ARG, S_play_mix, "an integer");
+  md = md_from_id(XEN_TO_C_INT(num));
+  if (md == NULL)
+    return(snd_no_such_mix_error(S_play_mix, num));
+  ASSERT_SAMPLE_TYPE(S_play_mix, beg, XEN_ARG_2);
+  samp = beg_to_sample(beg, S_play_mix);
+  play_mix(md, samp); 
+  return(num);
+}
+
+bool play_mix_from_id(int mix_id) 
+{
+  mix_info *md;
+  md = md_from_id(mix_id);
+  if (md)
+    return(play_mix(md, 0));
+  return(false);
+}
 
 
 static XEN mix_release_hook;
@@ -2222,7 +2190,7 @@ XEN_ARGIFY_6(g_mix_vct_w, g_mix_vct)
 XEN_ARGIFY_2(g_make_mix_sample_reader_w, g_make_mix_sample_reader)
 XEN_NARGIFY_1(g_read_mix_sample_w, g_read_mix_sample)
 XEN_NARGIFY_1(g_mix_sample_reader_p_w, g_mix_sample_reader_p)
-/* XEN_ARGIFY_2(g_play_mix_w, g_play_mix) */
+XEN_ARGIFY_2(g_play_mix_w, g_play_mix)
 
 XEN_NARGIFY_0(g_view_mixes_dialog_w, g_view_mixes_dialog)
 XEN_NARGIFY_0(g_mix_dialog_mix_w, g_mix_dialog_mix)
@@ -2269,7 +2237,7 @@ XEN_NARGIFY_1(g_set_mix_dialog_mix_w, g_set_mix_dialog_mix)
 #define g_make_mix_sample_reader_w g_make_mix_sample_reader
 #define g_read_mix_sample_w g_read_mix_sample
 #define g_mix_sample_reader_p_w g_mix_sample_reader_p
-/* #define g_play_mix_w g_play_mix */
+#define g_play_mix_w g_play_mix
 
 #define g_view_mixes_dialog_w g_view_mixes_dialog
 #define g_mix_dialog_mix_w g_mix_dialog_mix
@@ -2309,9 +2277,7 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE(S_make_mix_sample_reader, g_make_mix_sample_reader_w, 1, 1, 0, H_make_mix_sample_reader);
   XEN_DEFINE_PROCEDURE(S_read_mix_sample,        g_read_mix_sample_w,        1, 0, 0, H_read_mix_sample);
   XEN_DEFINE_PROCEDURE(S_mix_sample_reader_p,    g_mix_sample_reader_p_w,    1, 0, 0, H_mix_sample_reader_p);
-  /* TODO: play_mix 
   XEN_DEFINE_PROCEDURE(S_play_mix,               g_play_mix_w,               0, 2, 0, H_play_mix);
-  */
 
   XEN_DEFINE_PROCEDURE(S_mix,                    g_mix_w,                    1, 6, 0, H_mix);
   XEN_DEFINE_PROCEDURE(S_mix_vct,                g_mix_vct_w,                1, 5, 0, H_mix_vct);
@@ -3022,12 +2988,5 @@ void finish_moving_mix_tag(int mix_id, int x)
       update_graph(cp);
     }
 }
-
-
-
-/* not written yet */
-
-void mix_dialog_mix_play(int mix_id) {}
-
 
 

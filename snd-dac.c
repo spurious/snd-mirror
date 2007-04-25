@@ -30,7 +30,7 @@ typedef struct dac_info {
   snd_fd *chn_fd;      /* sample reader */
   spd_info *spd;
   mus_any *flt;
-  int region;          /* to reset region-browser play button upon completion */
+  int region, mix_id;  /* to reset region-browser play button upon completion */
   bool selection;
   src_state *src;
   snd_info *sp;        /* needed to see button callback changes etc */
@@ -348,7 +348,8 @@ static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd, int out_
   dac_info *dp;
   dp = (dac_info *)CALLOC(1, sizeof(dac_info)); /* only place dac_info is created */
   dp->stop_procedure = XEN_FALSE;
-  dp->region = -1;
+  dp->region = INVALID_REGION;
+  dp->mix_id = INVALID_MIX_ID;
   dp->a = NULL;
   dp->a_size = 0;
   dp->audio_chan = out_chan;
@@ -618,13 +619,20 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
       if ((sp) && (sp->playing <= 0)) 
 	reflect_play_stop(sp);
       else 
-	if (dp->region >= 0) 
-	  reflect_play_region_stop(dp->region);
+	{
+	  if (dp->region != INVALID_REGION)
+	    reflect_play_region_stop(dp->region);
+	  else
+	    {
+	      if (dp->mix_id != INVALID_MIX_ID)
+		reflect_mix_play_stop();
+	    }
+	}
     }
   if (dp->slot == max_active_slot) max_active_slot--;
   if (with_hook == WITH_HOOK)
     {
-      if (dp->region < 0) /* not region play */
+      if (dp->region == INVALID_REGION) /* not region play */
 	{
 	  if (dp->selection)
 	    {
@@ -979,6 +987,31 @@ void play_region(int region, play_process_t background)
 {
   play_region_1(region, background, XEN_FALSE);
 }
+
+bool add_mix_to_play_list(mix_state *ms, chan_info *cp, off_t beg_within_mix)
+{
+  int slot;
+  slot = find_slot_to_play();
+  if (slot != -1)
+    {
+      snd_fd *fd;
+      fd = make_virtual_mix_reader(cp, beg_within_mix, ms->len - beg_within_mix, ms->index, 1.0, READ_FORWARD);
+      if (fd)
+	{
+	  dac_info *dp;
+	  dp = init_dp(slot, cp, NULL, fd, NO_END_SPECIFIED, 0);
+	  if (dp)
+	    {
+	      dp->mix_id = 1; /* any valid mix id will do */
+	      start_dac(SND_SRATE(cp->sound), 1, NOT_IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY);
+	      return(true);
+	    }
+	}
+      else free_snd_fd(fd);
+    }
+  return(false);
+}
+
 
 static bool call_start_playing_hook(snd_info *sp)
 {

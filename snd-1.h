@@ -360,7 +360,7 @@ typedef struct chan_info {
   int dot_size;
   fft_normalize_t transform_normalization;
   int transform_type, spectro_hop, edhist_base;
-  bool show_mix_waveforms, graphs_horizontal, edit_hook_checked;
+  bool show_mix_waveforms, graphs_horizontal;
   XEN edit_hook;
   XEN undo_hook;
   XEN cursor_proc;
@@ -1224,6 +1224,7 @@ void play_sound(snd_info *sp, off_t start, off_t end);
 void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, 
 		   play_process_t background, XEN edpos, bool selection, const char *caller, int arg_pos);
 void play_selection(play_process_t background);
+bool add_mix_to_play_list(mix_state *ms, chan_info *cp, off_t beg_within_mix);
 void toggle_dac_pausing(void); /* snd-dac.c */
 bool play_in_progress(void);
 void initialize_apply(snd_info *sp, int chans, off_t beg, off_t frames);
@@ -1555,8 +1556,6 @@ void g_init_listener(void);
 /* -------- snd-mix.c -------- */
 
 void free_ed_mixes(void *ptr);
-bool mix_vct_untagged(vct *v, chan_info *cp, off_t beg, const char *origin);
-bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, off_t beg, off_t num, file_delete_t auto_delete, const char *origin);
 bool mix_exists(int n);
 bool mix_is_active(int n);
 bool channel_has_mixes(chan_info *cp);
@@ -1576,12 +1575,6 @@ off_t mix_length_from_id(int id);
 Float mix_amp_from_id(int id);
 Float mix_speed_from_id(int id);
 env *mix_amp_env_from_id(int id);
-#if 0
-int mix_channel_from_id(int id);
-off_t mix_set_position_from_id(int id, off_t enw_pos);
-off_t mix_set_length_from_id(int id, off_t new_len);
-env *mix_set_amp_env_from_id(int id, env *new_e);
-#endif
 Float mix_set_amp_from_id(int id, Float new_scaler);
 Float mix_set_speed_from_id(int id, Float new_speed);
 chan_info *mix_chan_info_from_id(int id);
@@ -1619,7 +1612,7 @@ int hit_mix(chan_info *cp, int x, int y);
 int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided);
 void display_channel_mixes(chan_info *cp);
 
-void mix_dialog_mix_play(int mix_id);
+bool play_mix_from_id(int mix_id);
 void drag_and_drop_mix_at_x_y(int data, const char *filename, int x, int y);
 
 Float run_read_mix_sample(void *ptr);

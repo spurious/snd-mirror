@@ -181,7 +181,6 @@ static chan_info *free_chan_info(chan_info *cp)
     }
   cp->graph_lisp_p = false;
   cp->selection_transform_size = 0;
-  cp->edit_hook_checked = false;
 
   if (cp->as_one_edit_positions)
     {

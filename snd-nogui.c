@@ -216,7 +216,6 @@ void set_filter_text(snd_info *sp, char *str) {}
 void display_filter_env(snd_info *sp) {}
 void reflect_mix_change(int mix_id) {}
 int make_mix_dialog(void) {return(0);}
-bool mix_play_stopped(void) {return(false);}
 void reflect_mix_play_stop(void) {}
 void set_mix_color(int color) {}
 int mix_dialog_mix(void) {return(0);}

@@ -1,5 +1,11 @@
 #include "snd.h"
 
+/* TODO: amp env display is broken (segfault) 
+   and not sure it opens with current possible mix-amp-env [set dialog_env to mix-amp-env in reflection]
+   also we used to show the current actual env in blue bg
+*/
+
+
 #define NAME_COLUMNS 8
 #define DIALOG_WIDTH 600
 #define DIALOG_HEIGHT 350
@@ -415,14 +421,11 @@ static void help_mix_dialog_callback(Widget w, XtPointer context, XtPointer info
 
 /* -------- mix play -------- */
 static bool mix_playing = false;
-bool mix_play_stopped(void) {return(!mix_playing);}
 
 void reflect_mix_play_stop(void)
 {
   if (mix_play)
-    {
-      XmChangeColor(mix_play, ss->sgx->basic_color);
-    }
+    XmChangeColor(mix_play, ss->sgx->basic_color);
   mix_playing = false;
 }
 
@@ -433,9 +436,9 @@ static void mix_dialog_play_callback(Widget w, XtPointer context, XtPointer info
   else
     {
       if (!(mix_exists(mix_dialog_id))) return;
-      mix_playing = true;
-      if (mix_play) XmChangeColor(mix_play, ss->sgx->pushed_button_color);
-      mix_dialog_mix_play(mix_dialog_id);
+      mix_playing = play_mix_from_id(mix_dialog_id);
+      if ((mix_play) && (mix_playing))
+	XmChangeColor(mix_play, ss->sgx->pushed_button_color);
     }
 }
 
@@ -868,7 +871,6 @@ Widget make_mix_dialog(void)
     {
       if (!(XtIsManaged(mix_dialog))) XtManageChild(mix_dialog);
       raise_dialog(mix_dialog);
-      /* TODO: what is this?? if (mix_dialog_id != INVALID_MIX_ID) reflect_mix_amp_env(); */
     }
   reflect_mix_change(mix_dialog_id);
   return(mix_dialog);

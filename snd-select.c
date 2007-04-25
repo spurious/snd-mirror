@@ -424,7 +424,6 @@ static int mix_selection(chan_info *cp, sync_info *si_out, off_t beg, io_error_t
       FREE(origin);
     }
   if (tempfile) FREE(tempfile);
-  cp->edit_hook_checked = false;
   (*err) = io_err;
   return(id);
 }
@@ -496,7 +495,6 @@ static io_error_t insert_selection(chan_info *cp, sync_info *si_out, off_t beg)
 	}
     }
   if (tempfile) FREE(tempfile);
-  cp->edit_hook_checked = false;
   return(io_err);
 }
 

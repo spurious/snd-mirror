@@ -7345,13 +7345,7 @@ to a standard Snd channel graph placed in the widget 'container'."
     }
   cp->sounds[0] = make_snd_data_buffer_for_simple_channel(initial_length);
   cp->edits[0] = initial_ed_list(0, initial_length - 1);
-#if MUS_DEBUGGING
-  if (cp->cgx == NULL)
-    {
-      fprintf(stderr, "make variable graph cgx null");
-      abort();
-    }
-#endif
+  cp->edits[0]->origin = copy_string(S_make_variable_graph);
   return(C_TO_XEN_INT(sp->index));
 }
 
@@ -7409,17 +7403,6 @@ static XEN g_set_with_gl(XEN val)
 #endif
   return(C_TO_XEN_BOOLEAN(with_gl(ss)));
 }
-
-
-#if MUS_DEBUGGING && HAVE_GUILE
-static XEN g_edit_hook_checked(XEN snd, XEN chn) 
-{
-  chan_info *cp;
-  cp = get_cp(snd, chn, "edit-hook-checked");
-  if (cp) return(C_TO_XEN_BOOLEAN(cp->edit_hook_checked));
-  return(XEN_FALSE);
-}
-#endif
 
 
 #ifdef XEN_ARGIFY_1
@@ -8062,10 +8045,6 @@ and " PROC_TRUE " thereafter."
   mark_click_hook =       XEN_DEFINE_HOOK(S_mark_click_hook, 1,       H_mark_click_hook);      /* arg = id */
   mix_click_hook =        XEN_DEFINE_HOOK(S_mix_click_hook, 1,        H_mix_click_hook);       /* arg = id */
   mark_drag_triangle_hook = XEN_DEFINE_HOOK(S_mark_drag_triangle_hook, 4, H_mark_drag_triangle_hook); /* args = id x time dragged-before */
-
-#if MUS_DEBUGGING && HAVE_GUILE
-  XEN_DEFINE_PROCEDURE("edit-hook-checked", g_edit_hook_checked, 2, 0, 0, "internal debugging func");
-#endif
 }
 
 

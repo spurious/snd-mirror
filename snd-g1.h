@@ -421,7 +421,6 @@ void clear_minibuffer_error(snd_info *sp);
 
 void reflect_mix_change(int mix_id);
 GtkWidget *make_mix_dialog(void);
-bool mix_play_stopped(void);
 void reflect_mix_play_stop(void);
 int mix_dialog_mix(void);
 void mix_dialog_set_mix(int id);

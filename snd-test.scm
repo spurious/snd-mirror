@@ -40,8 +40,6 @@
 (define test-at-random 0)
 ;(show-ptree 1)
 
-(if (not (defined? 'play-mix)) (define (play-mix . args) #f))
-
 (if (and (provided? 'snd-guile) (provided? 'snd-gauche)) (display ";both switches are on?"))
 
 (if (provided? 'snd-gauche)
@@ -23581,7 +23579,7 @@ EDITS: 2
 	    ((= test-ctr tests))
 
 
-	  (let ((ind (new-sound :size 10)))
+	  (let ((ind (new-sound "test.snd" :size 10)))
 	    (let ((v (vct .1 .2 .3)))
 	      (let ((id (mix-vct v 0)))
 		(let ((nv (channel->vct)))
@@ -23633,7 +23631,7 @@ EDITS: 2
 		(if (not (= (frames ind 0) 20)) (snd-display ";mix v20 at 0 new len: ~A" (frames ind 0)))))
 	    (close-sound ind))
 	  
-	  (let ((ind (new-sound :size 100000)))
+	  (let ((ind (new-sound "test.snd" :size 100000)))
 	    (let ((id (mix "oboe.snd" 0)))
 	      (let ((mxid (mix? id)))
 		(if (or (not (number? mxid))
@@ -23658,7 +23656,7 @@ EDITS: 2
 	      (if (not (= (frames ind 0) (+ 70000 50828))) (snd-display ";mix oboe at 70k frames: ~A" (frames ind 0))))
 	    (close-sound ind))
 	  
-	  (let ((ind (new-sound :size 10)))
+	  (let ((ind (new-sound "test.snd" :size 10)))
 	    (let ((v (vct .1 .2 .3)))
 	      (let ((id (mix-vct v 0)))
 		(scale-by 2.0)
@@ -23703,7 +23701,7 @@ EDITS: 2
 			  (snd-display ";mix v at 3 after env: ~A" nv)))))
 		(close-sound ind))))
 	  
-	  (let ((ind (new-sound :size 100)))
+	  (let ((ind (new-sound "test.snd" :size 100)))
 	    (let ((v (vct .1 .2 .3)))
 	      (let ((id (mix-vct v 10)))
 		(pad-channel 0 10)
@@ -23748,7 +23746,7 @@ EDITS: 2
 		    ))))
 	    (close-sound ind))
 
-	  (let ((ind (new-sound :size 15)))
+	  (let ((ind (new-sound "test.snd" :size 15)))
 	    (let ((id (mix-vct (make-vct 11 1.0) 2)))
 	      (set! (mix-amp-env id) '(0 0 1 1))
 	      (let ((vals (channel->vct)))
@@ -27313,7 +27311,6 @@ EDITS: 2
 	   (if (not (= edit-hook-ctr 1)) (snd-display ";~A: edit hook calls: ~A" name edit-hook-ctr))
 	   (if (not (= after-edit-hook-ctr 0)) (snd-display ";~A: after edit hook calls: ~A" name after-edit-hook-ctr))
 	   (set! edit-hook-ctr 0)
-	   (if (and (defined? 'edit-hook-checked) (edit-hook-checked ind 0)) (snd-display ";~A: edit-hook-checked not cleared"))
 	   (if (not (equal? (mixes ind 0) '())) (snd-display ";[27315] ~A: mixes: ~A" name (mixes ind 0)))))
        all-tests)
       
@@ -27339,7 +27336,6 @@ EDITS: 2
 	   (if (not (> after-edit-hook-ctr 0)) (snd-display ";~A: unblocked after edit hook calls: ~A" name after-edit-hook-ctr))
 	   (set! edit-hook-ctr 0)
 	   (set! after-edit-hook-ctr 0)
-	   (if (and (defined? 'edit-hook-checked) (edit-hook-checked ind 0)) (snd-display ";~A: edit-hook-checked not cleared"))
 	   (revert-sound ind)))
        all-tests)
       
@@ -34431,7 +34427,7 @@ EDITS: 1
 	      (snd-display ";frames: ~,2F ~,2F" 
 			   (exact->inexact (/ (mus-sound-frames "1.snd") (mus-sound-frames "oboe.snd")))
 			   (exact->inexact (/ (mus-sound-frames "1.snd") (mus-sound-frames "1a.snd"))))
-	      (snd-display ";~A~28T~A~44T~A~56T(1/oboe, 1/1a)" "1.snd" "oboe.snd" "1a.snd")
+	      (snd-display ";~12T~A~28T~A~44T~A~56T(1/oboe, 1/1a)" "1.snd" "oboe.snd" "1a.snd")
 	      (for-each
 	       (lambda (name func)
 		 (let* ((ind (open-sound "1.snd"))

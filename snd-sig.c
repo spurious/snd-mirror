@@ -313,7 +313,6 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 	    {
 	      if (ofile) FREE(ofile);
 	      free_sync_state(sc);
-	      ucp->edit_hook_checked = false;
 	      return(mus_format(_("convolve: save chan (%s[%d]) in %s hit error: %s\n"),
 				sp->short_filename, ucp->chan, 
 				saved_chan_file, snd_open_strerror()));
@@ -326,7 +325,6 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		{
 		  if (ofile) FREE(ofile);
 		  free_sync_state(sc);
-		  ucp->edit_hook_checked = false;
 		  return(mus_format(_("convolve: open saved chan (%s[%d]) file %s hit error: %s\n"),
 				    sp->short_filename, ucp->chan, 
 				    saved_chan_file, snd_open_strerror()));
@@ -345,7 +343,6 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		  if (fltfd == -1) 
 		    {
 		      if (ofile) FREE(ofile);
-		      ucp->edit_hook_checked = false;
 		      free_sync_state(sc);
 		      return(mus_format(_("convolve: open filter file %s hit error: %s\n"), 
 					filename, snd_open_strerror()));
@@ -380,7 +377,6 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 			{
 			  if (ofile) FREE(ofile);
 			  free_sync_state(sc);
-			  ucp->edit_hook_checked = false;
 			  return(mus_format(_("convolve: close filter file %s hit error: %s\n"), 
 					    filename, snd_io_strerror()));
 			}
@@ -390,7 +386,6 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		{
 		  if (ofile) FREE(ofile);
 		  free_sync_state(sc);
-		  ucp->edit_hook_checked = false;
 		  return(mus_format(_("convolve: close saved chan (%s[%d]) file %s hit error: %s\n"),
 				    sp->short_filename, ucp->chan, 
 				    saved_chan_file, snd_io_strerror()));
@@ -416,7 +411,6 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		}
 	      else file_override_samples(filtersize + filesize, ofile, ucp, 0, DELETE_ME, origin);
 	    }
-	  ucp->edit_hook_checked = false;
 	  if (ofile) FREE(ofile);
 	  check_for_event();
 	  if (ss->stopped_explicitly) 
@@ -662,8 +656,6 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
       ofd0 = open_temp_file(ofile0, 1, hdr0, &io_err);
       if (ofd0 == -1)
 	{
-	  cp0->edit_hook_checked = false;
-	  cp1->edit_hook_checked = false;
 	  free_file_info(hdr0);
 	  snd_error(_("%s " S_swap_channels " temp file %s: %s\n"), 
 		    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
@@ -677,8 +669,6 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
       ofd1 = open_temp_file(ofile1, 1, hdr1, &io_err);
       if (ofd1 == -1)
 	{
-	  cp0->edit_hook_checked = false;
-	  cp1->edit_hook_checked = false;
 	  close_temp_file(ofile0, ofd0, hdr0->type, 0);
 	  free_file_info(hdr0);
 	  free_file_info(hdr1);
@@ -774,8 +764,6 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
   FREE(data1);
   free_snd_fd(c0);
   free_snd_fd(c1);
-  cp0->edit_hook_checked = false;
-  cp1->edit_hook_checked = false;
 }
 
 
@@ -862,7 +850,6 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   ofd = open_temp_file(ofile, 1, hdr, &io_err);
   if (ofd == -1)
     {
-      cp->edit_hook_checked = false;
       return(mus_format(_("%s %s temp file %s: %s\n"), 
 			(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 			origin, ofile, 
@@ -1108,7 +1095,6 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   ofile = NULL;
   FREE(data[0]);
   FREE(data);
-  cp->edit_hook_checked = false;
   return(NULL);
 }
 
@@ -1275,15 +1261,15 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   mus_sample_t *idata;
   char *ofile = NULL;
   snd_fd *sf;
+
   if ((beg < 0) || ((dur + overlap) <= 0)) return(NULL);
   sp = cp->sound;
   if (!(editable_p(cp))) return(NULL);
+
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   if (sf == NULL)
-    {
-      cp->edit_hook_checked = false;
-      return(mus_format(_("%s can't read %s[%d] channel data!"), S_clm_channel, sp->short_filename, cp->chan));
-    }
+    return(mus_format(_("%s can't read %s[%d] channel data!"), S_clm_channel, sp->short_filename, cp->chan));
+
   if ((dur + overlap) > MAX_BUFFER_SIZE)
     {
       io_error_t io_err = IO_NO_ERROR;
@@ -1293,7 +1279,6 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
       ofd = open_temp_file(ofile, 1, hdr, &io_err);
       if (ofd == -1)
 	{
-	  cp->edit_hook_checked = false;
 	  free_snd_fd(sf); 
 	  return(mus_format(_("%s %s temp file %s: %s\n"), 
 			    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
@@ -1358,7 +1343,6 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   update_graph(cp); 
   FREE(data[0]);
   FREE(data);
-  cp->edit_hook_checked = false;
   return(NULL);
 }
 
@@ -1401,7 +1385,6 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
   ofd = open_temp_file(ofile, 1, hdr, &io_err);
   if (ofd == -1)
     {
-      cp->edit_hook_checked = false;
       return(mus_format(_("%s %s temp file %s: %s\n"), 
 			(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 			origin, ofile, 
@@ -1503,7 +1486,6 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
     }
   if (ofile) {FREE(ofile); ofile = NULL;}
   hdr = free_file_info(hdr);
-  cp->edit_hook_checked = false;
   if ((fltdat) && (!precalculated_coeffs))  FREE(fltdat);
   update_graph(cp);
   return(NULL);
@@ -1585,7 +1567,6 @@ static void *pfilter_direct_init(void *context)
       arg->ofd = open_temp_file(arg->ofile, 1, arg->hdr, &io_err);
       if (arg->ofd == -1)
 	{
-	  cp->edit_hook_checked = false;
 	  arg->result = mus_format(_("%s %s temp file %s: %s\n"), 
 				   (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 				   arg->origin, arg->ofile, 
@@ -1799,7 +1780,6 @@ static void *pfilter_direct_finish(void *context)
   else change_samples(arg->beg, arg->dur, arg->data[0], arg->cp, arg->new_origin, arg->cp->edit_ctr);
   if (arg->new_origin) FREE(arg->new_origin);
   update_graph(arg->cp); 
-  arg->cp->edit_hook_checked = false;
   return(NULL);
 }
 #endif
@@ -1837,7 +1817,6 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
       ofd = open_temp_file(ofile, 1, hdr, &io_err);
       if (ofd == -1)
 	{
-	  cp->edit_hook_checked = false;
 	  return(mus_format(_("%s %s temp file %s: %s\n"), 
 			    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 			    origin, ofile, 
@@ -2027,7 +2006,6 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
   else change_samples(beg, dur, data[0], cp, new_origin, cp->edit_ctr);
   if (new_origin) FREE(new_origin);
   update_graph(cp); 
-  cp->edit_hook_checked = false;
   FREE(data[0]);
   FREE(data);
   if (d) FREE(d);
@@ -2283,7 +2261,6 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
       if (ofd == -1)
 	{
 	  if (ofile) FREE(ofile);
-	  cp->edit_hook_checked = false;	  
 	  return(mus_format(_("%s %s temp file %s: %s\n"), 
 			    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 			    caller, ofile, 
@@ -2366,7 +2343,6 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
   FREE(data[0]);
   FREE(data);
   if (origin) FREE(origin);
-  cp->edit_hook_checked = false;	  
   return(NULL);
 }
 
@@ -2587,7 +2563,6 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	  cp->edits[cp->edit_ctr]->origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, CURRENT_SAMPLES(si->cps[i]), base);
 	  update_graph(si->cps[i]);
 	  reflect_edit_history_change(si->cps[i]);
-	  si->cps[i]->edit_hook_checked = false;	  
 	}
       free_sync_state(sc);
       if (e) mus_free(egen);
@@ -2903,7 +2878,6 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	  si->cps[i]->edits[si->cps[i]->edit_ctr]->origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, CURRENT_SAMPLES(si->cps[i]), base);
 	  update_graph(si->cps[i]);
 	  reflect_edit_history_change(si->cps[i]);
-	  si->cps[i]->edit_hook_checked = false;	  
 	}
     }
   if (e) mus_free(egen);
@@ -3084,7 +3058,6 @@ static void smooth_channel(chan_info *cp, off_t beg, off_t dur, int edpos)
   change_samples(beg, dur, data, cp, origin, cp->edit_ctr);
   if (origin) FREE(origin);
   update_graph(cp);
-  cp->edit_hook_checked = false;
   FREE(data);
 }
 
@@ -3123,7 +3096,6 @@ static char *run_channel(chan_info *cp, struct ptree *pt, off_t beg, off_t dur, 
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   if (sf == NULL) 
     {
-      cp->edit_hook_checked = false;
       return(mus_format(_("%s: can't read %s[%d] channel data!"), caller, sp->short_filename, cp->chan));
     }
   if (dur > MAX_BUFFER_SIZE)
@@ -3136,7 +3108,6 @@ static char *run_channel(chan_info *cp, struct ptree *pt, off_t beg, off_t dur, 
       if (ofd == -1)
 	{
 	  free_snd_fd(sf); 
-	  cp->edit_hook_checked = false;
 	  return(mus_format(_("%s %s temp file %s: %s\n"), 
 			    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 			    caller, ofile, 
@@ -3188,7 +3159,6 @@ static char *run_channel(chan_info *cp, struct ptree *pt, off_t beg, off_t dur, 
   free_snd_fd(sf);
   FREE(data[0]);
   FREE(data);
-  cp->edit_hook_checked = false;
   return(NULL);
 }
 
@@ -3438,14 +3408,17 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	  XEN errstr;
 	  errstr = C_TO_XEN_STRING(errmsg);
 	  FREE(errmsg);
-	  cp->edit_hook_checked = false;
 	  return(snd_bad_arity_error(caller, errstr, proc));
 	}
 
       /* added 27-Oct-06 -- can't see why map-channel should be that different from insert-samples et al */
       if (beg > cp->edits[pos]->samples)
 	{
-	  if (!(extend_with_zeros(cp, cp->edits[pos]->samples, beg - cp->edits[pos]->samples, pos, "extend for " S_map_channel))) return(XEN_FALSE);
+	  if (!(extend_with_zeros(cp, cp->edits[pos]->samples, beg - cp->edits[pos]->samples, pos, "extend for " S_map_channel))) 
+	    return(XEN_FALSE);
+
+	  /* TODO: else backup */
+
 	  pos = cp->edit_ctr;
 	}
 
@@ -3459,10 +3432,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	      err_str = run_channel(cp, pt, beg, num, pos, caller, S_map_channel);
 	      free_ptree(pt);
 	      if (err_str == NULL)
-		{
-		  cp->edit_hook_checked = false;
-		  return(XEN_ZERO);
-		}
+		return(XEN_ZERO);
 	      else FREE(err_str); /* and fallback on normal evaluator */
 	    }
 	}
@@ -3470,10 +3440,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
       sp = cp->sound;
       sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
       if (sf == NULL) 
-	{
-	  cp->edit_hook_checked = false;
-	  return(XEN_TRUE);
-	}
+	return(XEN_TRUE);
 
       temp_file = (num > MAX_BUFFER_SIZE);
       if (temp_file)
@@ -3520,7 +3487,6 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 			      if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
 			      snd_remove(filename, REMOVE_FROM_CACHE);
 			      FREE(filename);
-			      cp->edit_hook_checked = false;
 			      XEN_ERROR(BAD_TYPE,
 					XEN_LIST_3(C_TO_XEN_STRING(caller),
 						   C_TO_XEN_STRING("result of procedure must be a (non-complex) number, boolean, or vct:"),
@@ -3627,7 +3593,6 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 			    {
 			      if (data) {FREE(data); data = NULL;}
 			      sf = free_snd_fd(sf);
-			      cp->edit_hook_checked = false;
 			      XEN_ERROR(BAD_TYPE,
 					XEN_LIST_3(C_TO_XEN_STRING(caller),
 						   C_TO_XEN_STRING("result of procedure must be a number, boolean, or vct:"),
@@ -3667,7 +3632,6 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	}
       update_graph(cp);
     }
-  cp->edit_hook_checked = false;
   return(xen_return_first(res, org));
 }
 
@@ -3683,10 +3647,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
   if (!(editable_p(cp))) return(XEN_FALSE);
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   if (sf == NULL) 
-    {
-      cp->edit_hook_checked = false;
-      return(XEN_TRUE);
-    }
+    return(XEN_TRUE);
   if (XEN_PROCEDURE_P(init_func))
     {
       v = XEN_CALL_2(init_func,
@@ -3764,7 +3725,6 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
     }
   if (loc != NOT_A_GC_LOC) snd_unprotect_at(loc);
   update_graph(cp); 
-  cp->edit_hook_checked = false;
   return(proc);
 }
 
@@ -3811,7 +3771,6 @@ the current sample, the vct returned by 'init-func', and the current read direct
   pos = to_c_edit_position(cp, edpos, S_ptree_channel, 6);
   if (pos > cp->edit_ctr)
     {
-      cp->edit_hook_checked = false;
       XEN_ERROR(NO_SUCH_EDIT,
 		XEN_LIST_3(C_TO_XEN_STRING(S_ptree_channel),
 			   C_TO_XEN_STRING("edpos: ~A, ~A chan ~A has ~A edits"),
@@ -3825,7 +3784,11 @@ the current sample, the vct returned by 'init-func', and the current read direct
   if (dur <= 0) return(XEN_FALSE);
   if ((beg + dur) > cp->edits[pos]->samples)
     {
-      if (!(extend_with_zeros(cp, cp->edits[pos]->samples, beg + dur - cp->edits[pos]->samples, pos, "extend for " S_ptree_channel))) return(XEN_FALSE);
+      if (!(extend_with_zeros(cp, cp->edits[pos]->samples, beg + dur - cp->edits[pos]->samples, pos, "extend for " S_ptree_channel))) 
+	return(XEN_FALSE);
+
+      /* TODO: else backup later! */
+
       pos = cp->edit_ctr;
     }
 
@@ -4458,8 +4421,6 @@ swap the indicated channels"
 		  swap_marks(cp0, cp1);
 		  update_graph(cp0);
 		  update_graph(cp1);
-		  cp0->edit_hook_checked = false;
-		  cp1->edit_hook_checked = false;
 		}
 	    }
 	  else

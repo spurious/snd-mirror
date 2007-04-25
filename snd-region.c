@@ -587,7 +587,6 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, io_error_t 
       io_err = copy_file(r->filename, newname);
       if (io_err != IO_NO_ERROR)
 	{
-	  cp->edit_hook_checked = false;
 	  (*err) = io_err;
 	  return(INVALID_REGION);
 	}
@@ -613,7 +612,6 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, io_error_t 
 	  if (io_err != IO_NO_ERROR)
 	    {
 	      if (si) si = free_sync_info(si);
-	      cp->edit_hook_checked = false;
 	      (*err) = io_err;
 	      return(INVALID_REGION);
 	    }
@@ -639,7 +637,6 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, io_error_t 
       if ((r->use_temp_file == REGION_FILE) && (tempfile)) FREE(tempfile);
     }
   if (si) si = free_sync_info(si);
-  cp->edit_hook_checked = false;
   return(id);
 }
 

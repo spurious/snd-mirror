@@ -422,7 +422,6 @@ static void beg_activated(GtkWidget *w, gpointer context)
 
 /* -------- mix play -------- */
 static bool mix_playing = false;
-bool mix_play_stopped(void) {return(!mix_playing);}
 
 void reflect_mix_play_stop(void)
 {
@@ -439,10 +438,12 @@ static void mix_play_callback(GtkWidget *w, gpointer context)
   else
     {
       if (!(mix_exists(mix_dialog_id))) return;
-      mix_playing = true;
-      mix_speaker_pix = speaker_on_pix;
-      draw_picture(mix_play_ax, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
-      mix_dialog_mix_play(mix_dialog_id);
+      mix_playing = play_mix_from_id(mix_dialog_id);
+      if ((mix_play_ax) && (mix_playing))
+	{
+	  mix_speaker_pix = speaker_on_pix;
+	  draw_picture(mix_play_ax, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
+	}
     }
 }
 

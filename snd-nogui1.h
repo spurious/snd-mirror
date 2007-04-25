@@ -286,7 +286,6 @@ void set_enved_filter_order(int order);
 
 void reflect_mix_change(int mix_id);
 int make_mix_dialog(void);
-bool mix_play_stopped(void);
 void reflect_mix_play_stop(void);
 int mix_dialog_mix(void);
 void mix_dialog_set_mix(int id);

@@ -2682,7 +2682,7 @@ static XEN sound_set_global(XEN snd_n, XEN val, sp_field_t fld, const char *call
       case SP_AMP_BOUNDS:
 	in_set_amp_control_min(ss, XEN_TO_C_DOUBLE(XEN_CAR(val)));
 	in_set_amp_control_max(ss, XEN_TO_C_DOUBLE(XEN_CADR(val)));
-	/* TODO: id this a good idea? reflect_mix_change(mix_dialog_mix()); */
+	reflect_mix_change(ANY_MIX_ID);
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
       case SP_CONTRAST_BOUNDS:
@@ -2724,7 +2724,7 @@ static XEN sound_set_global(XEN snd_n, XEN val, sp_field_t fld, const char *call
       case SP_SPEED_BOUNDS:
 	in_set_speed_control_min(ss, XEN_TO_C_DOUBLE(XEN_CAR(val)));
 	in_set_speed_control_max(ss, XEN_TO_C_DOUBLE(XEN_CADR(val)));
-	/* reflect_mix_change(mix_dialog_mix()); */
+	reflect_mix_change(ANY_MIX_ID);
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
       case SP_REVERB_LENGTH_BOUNDS:

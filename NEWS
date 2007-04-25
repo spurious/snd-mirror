@@ -93,6 +93,7 @@ tracks:
  
   added 
     edit-properties
+    edit-property accessor in extensions.scm
     mix-sync
 
   moved mix-properties into C.

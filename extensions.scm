@@ -1,6 +1,6 @@
 ;;; various generally useful Snd extensions
 
-;;; channel-property, sound-property
+;;; channel-property, sound-property, edit-property
 ;;; delete selected portion and smooth the splice
 ;;; eval over selection
 ;;; mix with result at original peak amp
@@ -61,6 +61,13 @@
 	   (set! (channel-properties snd chn) (cons (cons key new-val) (channel-properties snd chn))))
        new-val))))
 
+(define channel-sync
+  (make-procedure-with-setter
+   (lambda (snd chn) (channel-property 'sync snd chn))
+   (lambda (snd chn val) (set! (channel-property 'sync snd chn) val))))
+
+
+
 ;;; -------- sound-property
 
 (define sound-property
@@ -81,10 +88,25 @@
        new-val))))
 
 
-(define channel-sync
+;;; -------- edit-property
+
+(define edit-property
   (make-procedure-with-setter
-   (lambda (snd chn) (channel-property 'sync snd chn))
-   (lambda (snd chn val) (set! (channel-property 'sync snd chn) val))))
+       
+   (lambda (key snd chn edpos)
+     "(edit-property key snd chn edpos) returns the value associated with 'key' in the given channel's edit history property list at edit location edpos"
+     (let ((data (assoc key (edit-properties snd chn edpos))))
+       (if data
+	   (cdr data)
+           #f)))
+
+   (lambda (key snd chn edpos new-val)
+     (let ((old-val (assoc key (edit-properties snd chn edpos))))
+       (if old-val
+	   (set-cdr! old-val new-val)
+	   (set! (edit-properties snd chn edpos) (cons (cons key new-val) (edit-properties snd chn edpos))))
+       new-val))))
+
 
 
 (if (not (defined? 'all-chans))
