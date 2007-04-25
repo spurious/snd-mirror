@@ -472,16 +472,8 @@ static mix_state *ed_mix_state(ed_list *ed, int mix_id)
 
 mix_state *mix_state_is_in_ed_list(ed_list *ed, mix_state *ms)
 {
-  mix_list *mxl;
-  mxl = (mix_list *)(ed->mixes);
-  if ((mxl) && (ms))
-    {
-      int i;
-      for (i = 0; i < mxl->size; i++)
-	if ((mxl->list[i]) &&
-	    (mxl->list[i]->mix_id == ms->mix_id)) /* can't use ms itself because we copy before adding to this list */
-	  return(mxl->list[i]);
-    }
+  if (ms)
+    return(ed_mix_state(ed, ms->mix_id));
   return(NULL);
 }
 
@@ -541,16 +533,6 @@ bool mix_is_active(int n)
 	 (current_mix_state(mix_infos[n])));
 }
 
-#if 0
-static mix_state *mix_is_active_in_channel(int n, chan_info *cp)
-{
-  if ((mix_exists(n)) &&
-      (mix_infos[n]->cp == cp))
-    return(current_mix_state(mix_infos[n]));
-  return(NULL);
-}
-#endif
-
 static mix_info *md_from_id(int n) 
 {
   if (mix_exists(n))
@@ -587,12 +569,23 @@ int previous_mix_id(int id)
   return(INVALID_MIX_ID);
 }
 
-#if 0
-static mix_state *ms_from_id(int n)
+int lowest_mix_id(void)
 {
-  return(current_mix_state(md_from_id(n)));
+  int i;
+  for (i = 0; i < mix_infos_ctr; i++) 
+    if (mix_infos[i])
+      return(i);
+  return(INVALID_MIX_ID);
 }
-#endif
+
+int highest_mix_id(void)
+{
+  int i;
+  for (i = mix_infos_ctr - 1; i >= 0; i--)
+    if (mix_infos[i])
+      return(i);
+  return(INVALID_MIX_ID);
+}
 
 static mix_info *free_mix_info(mix_info *md)
 {
@@ -2484,15 +2477,6 @@ static int local_grf_x(double val, axis_info *ap)
   if (val <= ap->x0) return(ap->x_axis_x0);
   return((int)(ap->x_base + val * ap->x_scale));
 }
-
-#if 0
-static int local_grf_y(Float val, axis_info *ap)
-{
-  if (val >= ap->y1) return(ap->y_axis_y1);
-  if (val <= ap->y0) return(ap->y_axis_y0);
-  return((int)(ap->y_base + val * ap->y_scale));
-}
-#endif
 
 static env_info *make_mix_input_peak_env(mix_info *md)
 {

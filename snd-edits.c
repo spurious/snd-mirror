@@ -5939,6 +5939,7 @@ static bool lock_affected_mixes(chan_info *cp, int edpos, off_t beg, off_t end)
 	      if (full_file)
 		{
 		  new_ed = initial_ed_list(0, change_end);
+		  new_ed->origin = copy_string("lock mixes");
 		  new_ed->edpos = edpos;
 		  cb = FRAGMENT(new_ed, 0);
 		}
@@ -6654,7 +6655,9 @@ bool file_override_samples(off_t num, const char *tempfile, chan_info *cp, int c
 				hdr->type);
       during_open(fd, tempfile, SND_OVERRIDE_FILE);
       e = initial_ed_list(0, num - 1);
-      if (origin) e->origin = copy_string(origin);
+      if (origin) 
+	e->origin = copy_string(origin);
+      else e->origin = copy_string("file change samples");
       e->edit_type = CHANGE_EDIT;
       e->edpos = cp->edit_ctr - 1;
       e->samples = num;
@@ -10267,13 +10270,10 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
     during as-one-edit, backup when it's obvious
     can snd-marks dispense with the erase_and_draw stuff in snd-draw?
     if mix-property, display upon tag click or in dialog [add? text widget?]
-    test edit-property
-    save-state and test for edit-properties
 
     snd-tests [test chan to mix-region|selection]
       new mix.scm tests
       test 9: mix.scm list tests (and all the rest)
-           16: mix-scale all-args case is very slow?
            19: edit-list->function trouble
            23: ;auto-delete mix (with-tag)? (46915)
       memlog: snd-edits.c[6135]: extend with zeros ed list not gc'd -- appears to come from g_ptree_channel?
@@ -10581,11 +10581,14 @@ void remix(chan_info *cp, mix_state *ms)
 
 static void ripple_mixes_1(chan_info *cp, off_t beg, off_t len, off_t change, Float scl)
 {
+  /* this is where most of the time goes in mixing! */
   if ((cp) &&
       (cp->edit_ctr > 0))
     {
       ed_list *ed;
-      int i;
+      int i, low_id, high_id;
+      mix_state **current_states = NULL;
+      
       ed = cp->edits[cp->edit_ctr];
       /* this may have mixes already (current op was mix op) or might be null */
       for (i = 0; i < ed->size; i++) 
@@ -10595,14 +10598,24 @@ static void ripple_mixes_1(chan_info *cp, off_t beg, off_t len, off_t change, Fl
 	      (FRAGMENT_MIX_LIST_SIZE(ed, i) > 0))
 	    {
 	      int j;
+	      if (current_states == NULL)
+		{
+		  int size;
+		  low_id = lowest_mix_id();
+		  high_id = highest_mix_id();
+		  size = high_id - low_id + 1;
+		  current_states = (mix_state **)CALLOC(size, sizeof(mix_state *));
+		}
 	      for (j = 0; j < FRAGMENT_MIX_LIST_SIZE(ed, i); j++)
 		{
 		  mix_state *old_ms;
-		  old_ms = FRAGMENT_MIX_STATE(ed, i, j);           /* the old copy -- we (may) need to make a new one */
+		  old_ms = FRAGMENT_MIX_STATE(ed, i, j);            /* the old copy -- we (may) need to make a new one */
 		  if (old_ms)
 		    {
 		      mix_state *new_ms;
-		      new_ms = mix_state_is_in_ed_list(ed, old_ms);
+		      new_ms = current_states[old_ms->mix_id - low_id];
+		      if (!new_ms)
+			new_ms = mix_state_is_in_ed_list(ed, old_ms); 
 		      if (!new_ms)
 			{
 			  new_ms = copy_mix_state(old_ms);
@@ -10618,10 +10631,12 @@ static void ripple_mixes_1(chan_info *cp, off_t beg, off_t len, off_t change, Fl
 			  /* TODO: peak-env changed? */
 			}
 		      FRAGMENT_MIX_STATE(ed, i, j) = new_ms;
+		      current_states[new_ms->mix_id - low_id] = new_ms;
 		    }
 		}
 	    }
 	}
+      if (current_states) FREE(current_states);
     }
 }
 

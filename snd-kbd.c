@@ -2201,16 +2201,19 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
 {
   int args, k = 0, s;
   bool e;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(key) || XEN_STRING_P(key) || XEN_CHAR_P(key), key, XEN_ARG_1, caller, "an integer, char, or string");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_2, caller, "an integer");
   XEN_ASSERT_TYPE((XEN_FALSE_P(code) || XEN_PROCEDURE_P(code)), code, XEN_ARG_3, caller, PROC_FALSE " or a procedure");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, XEN_ARG_4, caller, "a boolean");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_5, caller, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(prefs_info), prefs_info, XEN_ARG_6, caller, "a string");
+
   k = key_name_to_key(key, caller);
   s = XEN_TO_C_INT(state) & 0xfffe; /* get rid of shift bit */
   check_for_key_error(k, s, caller);
   e = (XEN_TRUE_P(cx_extended));
+
   if (XEN_FALSE_P(code))
     set_keymap_entry(k, s, 0, XEN_UNDEFINED, e, NULL, NULL);
   else 

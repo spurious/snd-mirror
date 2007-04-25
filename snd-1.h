@@ -1567,6 +1567,8 @@ off_t zoom_focus_mix_in_channel_to_position(chan_info *cp);
 int any_mix_id(void);
 int next_mix_id(int id);
 int previous_mix_id(int id);
+int lowest_mix_id(void);
+int highest_mix_id(void);
 void free_channel_mixes(chan_info *cp);
 void delete_any_remaining_mix_temp_files_at_exit(chan_info *cp);
 

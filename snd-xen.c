@@ -191,7 +191,6 @@ void snd_unprotect_at(int loc)
 {
 #if MUS_DEBUGGING
   cur_gc_index--;
-  if (loc == 0) fprintf(stderr,"%s %s[%d]: unprotect at %d\n", func, file, line, loc);
 #endif
 
   if (loc >= 0)
