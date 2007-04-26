@@ -789,7 +789,8 @@
     (if (not (equal? (default-output-chans)  1 )) 
 	(snd-display ";default-output-chans set def: ~A" (default-output-chans)))
     (set! (default-output-data-format) (default-output-data-format))
-    (if (not (equal? (default-output-data-format) mus-bshort)) 
+    (if (and (not (equal? (default-output-data-format) mus-bfloat))
+	     (not (equal? (default-output-data-format) mus-lfloat)))
 	(snd-display ";default-output-data-format set def: ~A" (default-output-data-format)))
     (set! (default-output-srate) (default-output-srate))
     (if (not (equal? (default-output-srate)  22050 )) 
@@ -1154,7 +1155,7 @@
       'dac-combines-channels (dac-combines-channels) #t
       'dac-size (dac-size) 256 
       'default-output-chans (default-output-chans) 1 
-      'default-output-data-format (default-output-data-format) mus-bshort
+      'default-output-data-format (default-output-data-format) mus-lfloat
       'default-output-header-type (default-output-header-type) mus-next
       'default-output-srate (default-output-srate) 22050 
       'dot-size (dot-size) 1 

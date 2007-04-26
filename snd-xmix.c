@@ -1,11 +1,5 @@
 #include "snd.h"
 
-/* TODO: amp env display is broken (segfault) 
-   and not sure it opens with current possible mix-amp-env [set dialog_env to mix-amp-env in reflection]
-   also we used to show the current actual env in blue bg
-*/
-
-
 #define NAME_COLUMNS 8
 #define DIALOG_WIDTH 600
 #define DIALOG_HEIGHT 350
@@ -15,7 +9,6 @@
 static Widget mix_dialog = NULL;
 static bool dragging = false;
 static int mix_dialog_id = INVALID_MIX_ID;
-
 static env *dialog_env = NULL;
 
 static int edpos_before_drag;
@@ -249,36 +242,30 @@ static int press_x, press_y;
 static void mix_drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XMotionEvent *ev = (XMotionEvent *)event;
-  env *e;
   if (!(mix_is_active(mix_dialog_id))) return;
 #ifdef MUS_MAC_OSX
   if ((press_x == ev->x) && (press_y == ev->y)) return;
 #endif
-  e = dialog_env;
-  env_editor_button_motion(spf, ev->x, ev->y, ev->time, e);
+  env_editor_button_motion(spf, ev->x, ev->y, ev->time, dialog_env);
   mix_amp_env_resize(w, NULL, NULL);
 }
 
 static void mix_drawer_button_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XButtonEvent *ev = (XButtonEvent *)event;
-  env *e;
   if (!(mix_is_active(mix_dialog_id))) return;
 #ifdef MUS_MAC_OSX
   press_x = ev->x;
   press_y = ev->y;
 #endif
-  e = dialog_env;
-  if (env_editor_button_press(spf, ev->x, ev->y, ev->time, e))
+  if (env_editor_button_press(spf, ev->x, ev->y, ev->time, dialog_env))
     mix_amp_env_resize(w, NULL, NULL);
 }
 
 static void mix_drawer_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
-  env *e;
   if (!(mix_is_active(mix_dialog_id))) return;
-  e = dialog_env;
-  env_editor_button_release(spf, e);
+  env_editor_button_release(spf, dialog_env);
   mix_amp_env_resize(w, NULL, NULL);
 }
 
@@ -387,10 +374,11 @@ static void beg_activated(void)
 
 static void apply_mix_dialog_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  env *e;
   if (!(mix_is_active(mix_dialog_id))) return;
-  e = dialog_env;
-  mix_set_amp_env_edit(mix_dialog_id, e);
+  if ((dialog_env) && 
+      (!(default_env_p(dialog_env))))
+    mix_set_amp_env_edit(mix_dialog_id, dialog_env);
+  else mix_set_amp_env_edit(mix_dialog_id, NULL);
   mix_amp_env_resize(w_env, NULL, NULL);
 }
 
@@ -904,11 +892,14 @@ void reflect_mix_change(int mix_id)
 	      char lab[LABEL_BUFFER_SIZE];
 	      
 	      cp = mix_chan_info_from_id(mix_dialog_id);
-	      val = mix_speed_from_id(mix_dialog_id);
-	      XtVaSetValues(w_speed, XmNvalue, speed_to_scrollbar(speed_control_min(ss), val, speed_control_max(ss)), NULL);
-	      speed_changed(val, lab, xmix_speed_control_style, speed_control_tones(ss), 6);
-	      set_label(w_speed_number, lab);
-	      
+
+	      if (!dragging)
+		{
+		  val = mix_speed_from_id(mix_dialog_id);
+		  XtVaSetValues(w_speed, XmNvalue, speed_to_scrollbar(speed_control_min(ss), val, speed_control_max(ss)), NULL);
+		  speed_changed(val, lab, xmix_speed_control_style, speed_control_tones(ss), 6);
+		  set_label(w_speed_number, lab);
+		}
 	      widget_mix_to_text(w_id, mix_dialog_id);
 	      
 	      beg = mix_position_from_id(mix_dialog_id);
@@ -934,6 +925,15 @@ void reflect_mix_change(int mix_id)
 	      else val = 1.0;
 	      XtVaSetValues(w_amp, XmNvalue, amp_to_scrollbar(w_amp_number, val), NULL);
 	    }
+	  
+	  if (mix_amp_env_from_id(mix_dialog_id))
+	    {
+	      if (dialog_env) free_env(dialog_env);
+	      dialog_env = copy_env(mix_amp_env_from_id(mix_dialog_id));
+	    }
+	  /* copy here else we're editing it directly afterwards (and we free old in mix_set_amp_env_edit) */
+	  if (!dialog_env) 
+	    dialog_env = default_env(1.0, 1.0);
 	  mix_amp_env_resize(w_env, NULL, NULL);
 	}
     }

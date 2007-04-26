@@ -2,47 +2,39 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Feb 22 13:40:33 CET 2005
-# Changed: Mon Apr 09 20:58:38 CEST 2007
+# Changed: Thu Apr 26 00:02:03 CEST 2007
 
 # Commentary:
 #
-# various mix and track related utilities
+# various mix related functions
 #
 # module Mix (see mix.scm)
 #  mix_sound(file, start)
-#  delete_all_mixes
+#  silence_all_mixes
 #  find_mix(sample, snd, chn)
 #  mix2vct(id)
 #  save_mix(id, filename)
 #  mix_maxamp(id)
 #  snap_mix_to_beat(at_tag_position)
 #
-#  mix_properties(id)
-#  set_mix_properties(id, new_val)
-#  remove_mix_properties(id)
 #  mix_property(id, key)
 #  set_mix_property(id, key, val)
-#  remove_mix_property(id, key)
-#  mix_name2id(name)
-#  mix_click_sets_amp
-#
-#  delete_all_tracks
-#  reverse_track(trk)
-#  track2vct(trk, chn)
-#  save_track(trk, filename, chn)
-#  track_maxamp(id, chn)
-#  transpose_track(trk, semitones)
-#  retempo_track(trk, tempo)
-#  filter_track(trk, fir_filter_coeffs)
-#
-#  track_properties(id)
-#  set_track_properties(id, new_val)
-#  remove_track_properties(id)
-#  track_property(id, key)
-#  set_track_property(id, key, val)
-#  remove_track_property(id, key)
-#  track_name2id(name)
+#  mix_click_sets_amp(id)
 #  mix_click_info(id)
+#  mix_name2id(name)
+#
+#  delete_mix(id)
+#  scale_mixes(mix_list, scl)
+#  silence_mixes(mix_list)
+#  move_mixes(mix_list, samps)
+#  src_mixes(mix_list, sr)
+#  transpose_mixes(mix_list, semitones)
+#  color_mixes(mix_list, col)
+#  set_mixes_tag_y(mix_list, new_y)
+#  mixes_maxamp(mix_list)
+#  scale_tempo(mix_list, tempo_scl)
+#  mixes_length(mix_list)
+#  save_mixes(mix_list, filename)
 #
 # module Mixer_matrix (see mixer.scm)
 #  mixer2matrix(mx)
@@ -79,30 +71,29 @@ mixes file (all chans) at start in the currently selected sound.")
     mix(file, start, true)
   end
 
-  add_help(:delete_all_mixes, "delete_all_mixes() removes all mixes (sets all amps to 0)")
-  def delete_all_mixes
-    as_one_edit_rb(get_func_name) do (mixes or []).flatten.each do |id| delete_mix(id) end end
+  add_help(:delete_all_mixes, "delete_all_mixes() sets all mix amps to 0.")
+  def silence_all_mixes
+    as_one_edit_rb(get_func_name) do (mixes or []).flatten.each do |id| set_mix_amp(id, 0.0) end end
   end
 
   add_help(:find_mix,
            "find_mix(sample, [snd=false, [chn=false]]) \
-returns the id of the mix at the given sample, or nil")
+returns the id of the mix at the given sample, or nil.")
   def find_mix(sample, snd = false, chn = false)
     (mixes(Snd.snd(snd), Snd.chn(chn)) or []).detect do |n| mix_position(n) == sample end
   end
 
-  add_help(:mix2vct, "mix2vct(id) returns mix's data in vct")
+  add_help(:mix2vct, "mix2vct(id) returns mix's data in vct.")
   def mix2vct(id)
     Snd.raise(:no_such_mix, id) unless mix?(id)
-    len = mix_frames(id)
-    v = make_vct(len)
+    len = mix_length(id)
     rd = make_mix_sample_reader(id)
-    len.times do |i| v[i] = read_mix_sample(rd) end
+    v = Vct.new(len) do |i| read_mix_sample(rd) end
     free_sample_reader(rd)
     v
   end
 
-  add_help(:save_mix, "save_mix(id, filename) saves mix data (as floats) in file filename")
+  add_help(:save_mix, "save_mix(id, filename) saves mix data (as floats) in file FILENAME.")
   def save_mix(id, filename)
     Snd.raise(:no_such_mix, id) unless mix?(id)
     v = mix2vct(id)
@@ -111,10 +102,10 @@ returns the id of the mix at the given sample, or nil")
     mus_sound_close_output(fd, 4 * v.length)
   end
 
-  add_help(:mix_maxamp, "mix_maxamp(id) returns the max amp in the given mix")
+  add_help(:mix_maxamp, "mix_maxamp(id) returns the max amp in the given mix.")
   def mix_maxamp(id)
     Snd.raise(:no_such_mix, id) unless mix?(id)
-    len = mix_frames(id)
+    len = mix_length(id)
     rd = make_mix_sample_reader(id)
     peak = read_mix_sample(rd).abs
     (1...len).each do peak = [peak, read_mix_sample(rd).abs].max end
@@ -125,11 +116,10 @@ returns the id of the mix at the given sample, or nil")
   add_help(:snap_mix_to_beat,
            "snap_mix_to_beat() \
 forces a dragged mix to end up on a beat (see beats-per-minute).  \
-reset $mix_release_hook to cancel")
-  def snap_mix_to_beat(at_tag_position = false)
+Reset $mix_release_hook to cancel.")
+  def snap_mix_to_beat
     $mix_release_hook.add_hook!(get_func_name) do |id, samps_moved|
-      offset = at_tag_position ? mix_tag_position(id) : 0
-      samp = samps_moved + mix_position(id) + offset
+      samp = samps_moved + mix_position(id)
       snd = mix_home(id)[0]
       chn = mix_home(id)[1]
       bps = beats_per_minute(snd, chn) / 60.0
@@ -138,73 +128,94 @@ reset $mix_release_hook to cancel")
       lower = ((beat * sr) / bps).floor
       higher = (((beat + 1) * sr) / bps).floor
       set_mix_position(id, if (samp - lower) < (higher - samp)
-                             [0, lower - offset].max
+                             [0, lower].max
                            else
-                             higher - offset
+                             higher
                            end)
       true
     end
   end
 
   #
-  # === Mix Properties ===
+  # === Mix Property ===
   #
-  $all_mix_properties = Array.new
-
-  def mix_properties(id)
-    property(id, :mix_property)
-  end
-
-  def set_mix_properties(id, new_val)
-    set_property(id, :mix_property, new_val)
-  end
-
-  def remove_mix_properties(id)
-    if hash?(mix_properties(id))
-      properties.delete(id)
-      $all_mix_properties.delete(id)
-    end
-  end
-
   add_help(:mix_property,
            "mix_property(id, key) \
-returns the value associated with 'key' in the given mix's property list, or false")
+returns the value associated with KEY in the given mix's property list, or false.")
   def mix_property(id, key)
     Snd.raise(:no_such_mix, id) unless mix?(id)
-    hash?(h = mix_properties(id)) and h[key]
+    if (data = mix_properties(id)) and (res = data.assoc(key))
+      res.cdr
+    else
+      false
+    end
   end
 
   add_help(:set_mix_property,
            "set_mix_property(id, key, val) \
-sets the value 'val' to 'key' in the given mix's property list")
+sets the value VAL to KEY in the given mix's property list.")
   def set_mix_property(id, key, val)
     Snd.raise(:no_such_mix, id) unless mix?(id)
-    unless hash?(h = mix_properties(id)) and h.store(key, val)
-      $all_mix_properties.push(id)
-      set_mix_properties(id, {key, val})
+    if data = mix_properties(id)
+      if res = data.assoc(key)
+        res.cdr = val
+      else
+        data.push([key, val])
+      end
+    else                        # new list
+      set_mix_properties(id, [[key, val]])
     end
   end
 
-  add_help(:remove_mix_property,
-           "remove_mix_property(id, key) \
-removes the key-value pair in the given mix's property list")
-  def remove_mix_property(id, key)
-    Snd.raise(:no_such_mix, id) unless mix?(id)
-    if hash?(h = mix_properties(id))
-      h.delete(key)
+  def mix_click_sets_amp(id)
+    unless mix_property(id, :zero)
+      set_mix_property(id, :amp, mix_amp(id))
+      set_mix_amp(id, 0.0)
+      set_mix_property(id, :zero, true)
     else
-      $all_mix_properties.delete(id)
+      set_mix_amp(id, mix_property(id, :amp))
+      set_mix_property(id, :zero, false)
     end
+    true
   end
-  
-=begin  
-  $close_hook.add_hook!("remove-mix-properties") do |snd|
-    $all_mix_properties.each do |id| (not mix?(id)) and remove_mix_properties(id) end
+  # $mix_click_hook.add_hook!("mix-click-sets-amp", &method(:mix_click_sets_amp).to_proc)
+
+  # 
+  # === Mix Click Info ===
+  # 
+  add_help(:mix_click_info,
+           "mix_click_info(n) \
+is a $mix_click_hook function that describes a mix and its properties.")
+  def mix_click_info(id)
+    Snd.raise(:no_such_mix, id) unless mix?(id)
+    info_dialog("Mix Info", format("\
+      mix id: %d%s
+    position: %d (%1.3f secs)
+      length: %d (%1.3f secs)
+          in: %s[%d]
+      scaler: %s
+       speed: %s
+         env: %s%s",
+                                   id,
+                                   ((s = mix_name(id)) ?
+                                    format("\n    mix name: %s", s.inspect) :
+                                    ""),
+                                   mix_position(id), mix_position(id) / srate(mix_home(id)[0]).to_f,
+                                   mix_length(id),   mix_length(id) / srate(mix_home(id)[0]).to_f,
+                                   short_file_name(mix_home(id)[0]),
+                                   mix_home(id)[1],
+                                   mix_amp(id),
+                                   mix_speed(id),
+                                   mix_amp_env(id),
+                                   ((props = mix_properties(id)) ?
+                                    format("\n  properties: %s", props.inspect) :
+                                    "")))
+    true
   end
-=end
+  # $mix_click_hook.add_hook!("mix-click-info", &method(:mix_click_info).to_proc)
 
   add_help(:mix_name2id,
-           "mix_name2id(name)  returns the mix id associated with NAME")
+           "mix_name2id(name)  returns the mix id associated with NAME.")
   def mix_name2id(name)
     callcc do |ret|
       Snd.sounds.each do |snd|
@@ -220,252 +231,104 @@ removes the key-value pair in the given mix's property list")
     end
   end
 
-  def mix_click_sets_amp
-    $mix_click_hook.add_hook!(get_func_name) do |id|
-      unless mix_property(id, :zero)
-        set_mix_property(id, :amp, mix_amp(id))
-        set_mix_amp(id, 0.0)
-        set_mix_property(id, :zero, true)
-      else
-        set_mix_amp(id, mix_property(id, :amp))
-        set_mix_property(id, :zero, false)
-      end
-      true
-    end
+  # ;;; ---------------- backwards compatibilty
+
+  def delete_mix(id)
+    set_mix_amp(id, 0.0)
   end
-  # $mix_click_hook.add_hook!("mix-click-info") do |id| mix_click_info(id) end
-  
-  # 
-  # === Track ===
-  # 
-  add_help(:delete_all_tracks,
-           "delete_all_tracks() \
-removes all mixes that have an associated track (sets all amps to 0)")
-  def delete_all_tracks
+
+  # ;;; -------- mix lists (used to be "tracks")
+
+  def scale_mixes(mix_list, scl)
     as_one_edit_rb(get_func_name) do
-      (mixes or []).flatten.each do |id| delete_mix(id) unless mix_track(id).zero? end
-    end
-  end
-
-  add_help(:reverse_track,
-           "reverse_track(trk) \
-reverses the order of its mixes (it changes various mix begin times)")
-  def reverse_track(trk)
-    if track(trk).detect do |t| mix?(t) end
-      ids_in_order = track(trk).sort do |a, b|
-        if mix_position(a) > mix_position(b)
-          1
-        elsif mix_position(a) < mix_position(b)
-          -1
-        else
-          0
-        end
-      end
-      as_one_edit_rb(get_func_name) do
-        ids_in_order.map do |id| mix_position(id) end.reverse.zip(ids_in_order).each do |pos, id|
-          set_mix_position(id, pos)
-        end
-      end
-    else
-      Snd.raise(:no_such_track, trk)
-    end
-  end
-
-  add_help(:track2vct, "track2vct(track, [chan=0]) places track data in vct") 
-  def track2vct(trk, chn = 0)
-    Snd.raise(:no_such_track, trk) unless track?(trk)
-    Snd.raise(:no_such_channel, chn) unless chn < track_chans(trk)
-    len = track_frames(trk, chn)
-    v = make_vct(len)
-    rd = make_track_sample_reader(trk, chn)
-    len.times do |i| v[i] = read_track_sample(rd) end
-    free_sample_reader(rd)
-    v
-  end
-
-  add_help(:save_track,
-           "save_track(track, filename, [chan=true]) saves track data (as floats) in file filename")
-  def save_track(trk, filename, chn = true)
-    Snd.raise(:no_such_track, trk) unless track?(trk)
-    chans = track_chans(trk)
-    if chn == true and chans == 1 or number?(chn) and chn < chans
-      v = track2vct(trk, (chn == true ? 0 : chn))
-      fd = mus_sound_open_output(filename, srate(), 1, false, false, "written by save-track")
-      mus_sound_write(fd, 0, v.length - 1, 1, vct2sound_data(v))
-      mus_sound_close_output(fd, 4 * v.length)
-    else
-      if chn == true and chans > 0
-        fd = mus_sound_open_output(filename, srate(), chans, false, false, "written by save-track")
-        len = track_frames(trk)
-        pos = track_position(trk)
-        v = make_vct(chans * len)
-        chans.times do |i|
-          chan_len = track_frames(trk, i)
-          chan_pos = track_position(trk, i) - pos
-          rd = make_track_sample_reader(trk, i)
-          chan_len.times do |j| v[i + chans * (chan_pos + j)] = read_track_sample(rd) end
-          free_sample_reader(rd)
-        end
-        mus_sound_write(fd, 0, v.length - 1, 1, vct2sound_data(v))
-        mus_sound_close_output(fd, 4 * v.length)
-      else
-        Snd.raise(:no_such_channel, chn)
+      mix_list.each do |m|
+        set_mix_amp(m, scl * mix_amp(m))
       end
     end
   end
 
-  add_help(:track_maxamp, "track_maxamp(id, chan) returns the max amp in the given track")
-  def track_maxamp(id, chn)
-    Snd.raise(:no_such_track, id) unless track?(id)
-    len = track_frames(id)
-    rd = make_track_sample_reader(id)
-    peak = read_track_sample(rd).abs
-    (1...len).each do peak = [peak, read_track_sample(rd).abs].max end
-    free_sample_reader(rd)
-    peak
+  def silence_mixes(mix_list)
+    scale_mixes(mix_list, 0.0)
+  end
+
+  def move_mixes(mix_list, samps)
+    as_one_edit_rb(get_func_name) do
+      mix_list.each do |m|
+        set_mix_position(m, mix_position(m) + samps)
+      end
+    end
+  end
+
+  def src_mixes(mix_list, sr)
+    as_one_edit_rb(get_func_name) do
+      mix_list.each do |m|
+        set_mix_speed(m, mix_speed(m) * sr)
+      end
+    end
   end
 
   add_help(:transpose_track,
-           "transpose_track(track, semitones) transposes each mix in track by semitones")
-  def transpose_track(trk, semitones)
-    set_track_speed(trk, track_speed(trk) * 2 ** (semitones / 12.0))
+           "transpose_mixes(mix_list, semitones)  \
+transposes each mix in MIX_LIST by SEMITONES.")
+  def transpose_mixes(mix_list, semitones)
+    src_mixes(mix_list, 2.0 ** (semitones / 12.0))
   end
 
-  add_help(:retempo_track,
-           "retempo_track(track, tempo) \
-changes the inter-mix begin times of mixes in track by tempo (> 1.0 is faster)")
-  def retempo_track(trk, tempo)
-    set_track_tempo(trk, track_tempo(trk) * tempo)
-  end
-
-  add_help(:filter_track,
-           "filter_track(track, coeffs) \
-filters track data using FIR filter coeffs: filter_track(track-id, [0.1, 0.2, 0.3, 0.3, 0.2, 0.1])")
-  def filter_track(trk, fir_filter_coeffs)
-    Snd.raise(:no_such_track, trk) unless track?(trk)
-    order = fir_filter_coeffs.length
-    chans = track_chans(trk)
-    chans.times do |chn|
-      beg = track_position(trk, chn)
-      dur = track_frames(trk, chn)
-      flt = make_fir_filter(order, list2vct(fir_filter_coeffs))
-      rd = make_track_sample_reader(trk, chn, 0)
-      map_channel(lambda do |y|
-                    val = read_track_sample(rd)
-                    y + fir_filter(flt, val) - val
-                  end, beg, dur + order, false, false, false, get_func_name)
+  def color_mixes(mix_list, col)
+    mix_list.each do |m|
+      set_mix_color(m, col)
     end
   end
 
-  # 
-  # === Track Properties ===
-  # 
-  $all_track_properties = Array.new
-
-  def track_properties(id)
-    property(id, :track_property)
-  end
-
-  def set_track_properties(id, new_val)
-    set_property(id, :track_property, new_val)
-  end
-
-  def remove_track_properties(id)
-    if hash?(track_properties(id))
-      properties.delete(id)
-      $all_track_properties.delete(id)
+  def set_mixes_tag_y(mix_list, new_y)
+    mix_list.each do |m|
+      set_mix_tag_y(m, new_y)
     end
   end
 
-  add_help(:track_property,
-           "track_property(id, key) \
-returns the value associated with 'key' in the given track's property list, or false")
-  def track_property(id, key)
-    Snd.raise(:no_such_track, id) unless track?(id)
-    hash?(h = track_properties(id)) and h[key]
-  end
-
-  add_help(:set_track_property,
-           "set_track_property(id, key, val) \
-sets the value 'val' to 'key' in the given track's property list")
-  def set_track_property(id, key, val)
-    Snd.raise(:no_such_track, id) unless track?(id)
-    unless hash?(h = track_properties(id)) and h.store(key, val)
-      $all_track_properties.push(id)
-      set_track_properties(id, {key, val})
+  def mixes_maxamp(mix_list)
+    mx = 0.0
+    mix_list.each do |m|
+      mx = [mx, mix_maxamp(m)].max
     end
+    mx
   end
 
-  add_help(:remove_track_property,
-           "remove_track_property(id, key) \
-removes the key-value pair in the given track's property list")
-  def remove_track_property(id, key)
-    Snd.raise(:no_such_track, id) unless track?(id)
-    if hash?(h = track_properties(id))
-      h.delete(key)
-    else
-      $all_track_properties.delete(id)
+  def scale_tempo(mix_list, tempo_scl)
+    first_beg = last_beg = mix_position(mix_list.car)
+    mix_list.cdr.each do |m|
+      pos = mix_position(m)
+      first_beg = [first_beg, pos].min
+      last_beg  = [last_beg,  pos].max
     end
-  end
-
-  add_help(:track_name2id,
-           "track_name2id(name)  returns the track id associated with NAME")
-  def track_name2id(name)
-    callcc do |ret|
-      Snd.tracks.each do |trk|
-        if track_name(trk) == name
-          ret.call(trk)
+    tempo_scl = tempo_scl.to_f
+    as_one_edit_rb(get_func_name) do
+      mix_list.each do |m|
+        diff = (tempo_scl * (mix_position(m) - first_beg)).round
+        if diff != 0
+          set_mix_position(m, first_beg + diff)
         end
       end
-      :no_such_track
     end
   end
-  
-=begin  
-  $close_hook.add_hook!("remove-track-properties") do |snd|
-    $all_track_properties.each do |id| (not track?(id)) and remove_track_properties(id) end
-  end
-=end
+  # reverse_mix_list is scale_tempo(mix_list, -1.0)
 
-  # 
-  # === Mix Click Info ===
-  # 
-  add_help(:mix_click_info,
-           "mix_click_info(n) \
-is a $mix_click_hook function that describes a mix and its properties")
-  def mix_click_info(id)
-    Snd.raise(:no_such_mix, id) unless mix?(id)
-    info_dialog("Mix info", format("\
-      mix id: %d%s
-    position: %d (%1.3f secs)
-      length: %d (%1.3f secs)
-          in: %s[%d]%s%s%s
-     scalers: %s
-       speed: %s
-        envs: %s%s%s",
-                                   id,
-                                   ((s = mix_name(id)) ?
-                                    format("\n    mix name: %s", s.inspect) :
-                                      ""),
-                                   mix_position(id),
-                                   mix_position(id) / srate(mix_home(id)[0]).to_f,
-                                   mix_frames(id),
-                                   mix_frames(id) / srate(mix_home(id)[0]).to_f,
-                                   short_file_name(mix_home(id)[0]),
-                                   mix_home(id)[1],
-                                   (mix_track(id).nonzero? ?
-                                    format("\n       track: %s", mix_track(id)) :
-                                      ""),
-                                   mix_amp(id, i),
-                                   mix_speed(id),
-                                   mix_amp_env(id, i),
-                                   (mix_tag_position(id).nonzero? ?
-                                    format("\ntag-position: %d", mix_tag_position(id)) :
-                                      ""),
-                                   ((props = mix_properties(id)) ?
-                                    format("\n  properties: %s", props.inspect) :
-                                      "")))
-    true
+  def mixes_length(mix_list)
+    max_len = mix_list.map do |m| mix_position(m) + mix_length(m) end.max
+    min_len = mix_list.map do |m| mix_position(m) end.min
+    max_len - min_len + 1
+  end
+
+  def save_mixes(mix_list, filename)
+    len = mixes_length(mix_list)
+    beg = mix_list.map do |m| mix_position(m) end.min
+    data = Vct.new(len)
+    mix_list.each do |m|
+      vct_add!(data, mix2vct(m), mix_position(m) - beg)
+    end
+    fd = mus_sound_open_output(filename(srate(), 1, false, false, ""))
+    mus_sound_write(fd, 0, len - 1, vct2sound_data(data))
+    mus_sound_close_output(fd, 4 * data.length)
   end
 end
 

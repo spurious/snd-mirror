@@ -10,7 +10,7 @@
   #define PROC_SET_TRACK_CHANNEL "set_%s(%d, %d, "
 #endif
 
-
+#define MIX_PEAK_ENV_CUTOFF 20000
 
 static bool mix_vct_untagged(vct *v, chan_info *cp, off_t beg, const char *origin)
 {
@@ -454,6 +454,19 @@ mix_state *add_ed_mix(ed_list *ed, mix_state *ms)
   return(ms);
 }
 
+void preload_mixes(mix_state **mixes, int low_id, ed_list *ed)
+{
+  mix_list *mxl;
+  mxl = (mix_list *)(ed->mixes);
+  if (mxl)
+    {
+      int i;
+      for (i = 0; i < mxl->size; i++)
+	if (mxl->list[i])
+	  mixes[mxl->list[i]->mix_id - low_id] = mxl->list[i];
+    }
+}
+
 static mix_state *ed_mix_state(ed_list *ed, int mix_id)
 {
   mix_list *mxl;
@@ -569,12 +582,16 @@ int previous_mix_id(int id)
   return(INVALID_MIX_ID);
 }
 
+static int last_lowest_id = 0;
 int lowest_mix_id(void)
 {
   int i;
-  for (i = 0; i < mix_infos_ctr; i++) 
+  for (i = last_lowest_id; i < mix_infos_ctr; i++) 
     if (mix_infos[i])
-      return(i);
+      {
+	last_lowest_id = i;
+	return(i);
+      }
   return(INVALID_MIX_ID);
 }
 
@@ -1191,8 +1208,8 @@ bool mix_set_amp_env_edit(int id, env *e)
 	  ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
 	  if (ms->amp_env) free_env(ms->amp_env);
 	  ms->amp_env = copy_env(e);
+
 	  /* can't use mus_env (as the reader op) here because we need to run backwards */
-	  
 	  if ((e) || (ms->speed != 1.0))
 	    ms->index = remake_mix_data(ms, md);
 	  else ms->index = md->original_index;
@@ -2482,7 +2499,7 @@ static env_info *make_mix_input_peak_env(mix_info *md)
 {
   mix_state *ms;
   ms = current_mix_state(md);
-  if (ms->len >= PEAK_ENV_CUTOFF)
+  if (ms->len >= MIX_PEAK_ENV_CUTOFF)
     {
       env_info *ep;
       snd_fd *sf;
@@ -2595,6 +2612,8 @@ static int prepare_mix_peak_env(mix_info *md, Float scl, int yoff, off_t newbeg,
 
   return(j);
 }
+
+/* currently 60% of "normal" time is here */
 
 static int prepare_mix_waveform(mix_info *md, mix_state *ms, axis_info *ap, Float scl, int yoff, double cur_srate, bool *two_sided)
 {
@@ -2951,14 +2970,8 @@ void finish_moving_mix_tag(int mix_id, int x)
   
   pos = snd_round_off_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(cp->sound)));
 
-  /* cp->edit_ctr = edpos_before_drag; */
   cp->hookable = hookable_before_drag;
   undo_edit(cp, 1);
-
-#if MUS_DEBUGGING
-  if (cp->edit_ctr != edpos_before_drag)
-    fprintf(stderr,"edpos: %d %d\n", edpos_before_drag, cp->edit_ctr);
-#endif
 
   if (XEN_HOOKED(mix_release_hook))
     res = run_progn_hook(mix_release_hook,

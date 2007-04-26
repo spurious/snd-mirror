@@ -3352,7 +3352,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   off_t beg = 0, end = 0, dur = 0;
   off_t num;
   int rpt = 0, i, pos;
-  bool temp_file = false;
+  bool temp_file = false, backup = false;
   XEN res = XEN_FALSE;
   XEN proc = XEN_FALSE;
 #if WITH_RUN
@@ -3416,9 +3416,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	{
 	  if (!(extend_with_zeros(cp, cp->edits[pos]->samples, beg - cp->edits[pos]->samples, pos, "extend for " S_map_channel))) 
 	    return(XEN_FALSE);
-
-	  /* TODO: else backup */
-
+	  backup = true;
 	  pos = cp->edit_ctr;
 	}
 
@@ -3630,6 +3628,10 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	    }
 	  if (data) {FREE(data); data = NULL;}
 	}
+
+      if (backup)
+	backup_edit_list(cp);
+
       update_graph(cp);
     }
   return(xen_return_first(res, org));
@@ -3744,6 +3746,7 @@ the current sample, the vct returned by 'init-func', and the current read direct
   chan_info *cp;
   char *caller = NULL;
   off_t beg = 0, dur = 0;
+  bool backup = false;
   int pos;
 #if WITH_RUN
   bool ptrees_present = false;
@@ -3786,9 +3789,7 @@ the current sample, the vct returned by 'init-func', and the current read direct
     {
       if (!(extend_with_zeros(cp, cp->edits[pos]->samples, beg + dur - cp->edits[pos]->samples, pos, "extend for " S_ptree_channel))) 
 	return(XEN_FALSE);
-
-      /* TODO: else backup later! */
-
+      backup = true;
       pos = cp->edit_ctr;
     }
 
@@ -3812,12 +3813,16 @@ the current sample, the vct returned by 'init-func', and the current read direct
 	  if (pt)
 	    {
 	      ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, caller);
+	      if (backup)
+		backup_edit_list(cp);
 	      if (caller) {FREE(caller); caller = NULL;}
 	      return(proc_and_list);
 	    }
 	}
       /* fallback on map chan */
       g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
+      if (backup)
+	backup_edit_list(cp);
       if (caller) {FREE(caller); caller = NULL;}
       return(proc_and_list);
     }
@@ -3841,6 +3846,8 @@ the current sample, the vct returned by 'init-func', and the current read direct
       else ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, caller);
     }
   else g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
+  if (backup)
+    backup_edit_list(cp);
   if (caller) {FREE(caller); caller = NULL;}
 #endif
   return(proc_and_list);
