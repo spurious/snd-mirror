@@ -4880,7 +4880,12 @@ This is the mix tag width in pixels (the default is 6).
 <!-- mix-tag-y -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixtagy">mix-tag-y</a> (mix)</code>
 </td></tr><tr><td></td><td>
-This is the mix tag y (vertical) offset (its default is 0).  
+This is the mix tag y (vertical) offset; 0 (the default) is the top of the graph, so
+higher tag-y values position the tag lower in the graph. For
+example, if you know the frequency of the mix sound, you can reflect that in the tag height with:
+<pre
+   (set! (mix-tag-y mix-id) (inexact-&gt;exact (round (* 100 (- 1.0 (/ (log (/ freq 40.0)) (* (log 2.0) 7)))))))
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

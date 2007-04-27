@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: can snd-marks dispense with the erase_and_draw stuff in snd-draw?
+ */
+
 static int sync_max = 0;
 static int mark_id_counter = 0;
 

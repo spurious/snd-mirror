@@ -582,6 +582,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, io_error_t 
   si = sync_to_chan(cp);
   if (add)
     {
+      /* unfortunately we need to copy here since the region may fall off the region stack while we're still using the mix */
       char *newname;
       newname = shorter_tempnam(temp_dir(ss), "snd_");
       io_err = copy_file(r->filename, newname);
@@ -597,7 +598,12 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, io_error_t 
 #else
 	  origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP "%d", TO_PROC_NAME(S_mix_region), beg, n);
 #endif
-	  id = mix_file(beg, r->frames, si->chans, si->cps, newname, DELETE_ME, origin, with_mix_tags(ss), start_chan);
+	  if (si->chans > 1)
+	    remember_temp(newname, si->chans);
+
+	  id = mix_file(beg, r->frames, si->chans, si->cps, newname, 
+			(si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+			origin, with_mix_tags(ss), start_chan);
 	  FREE(origin);
 	}
       if (newname) FREE(newname);

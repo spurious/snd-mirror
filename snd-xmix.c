@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: multiple mix dialogs
+ */
+
 #define NAME_COLUMNS 8
 #define DIALOG_WIDTH 600
 #define DIALOG_HEIGHT 350

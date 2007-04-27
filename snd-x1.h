@@ -378,8 +378,7 @@ void clear_minibuffer_error(snd_info *sp);
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan);
 file_data *make_file_data_panel(Widget parent, const char *name, Arg *args, int n, dialog_channels_t with_chan, 
 				int header_type, int data_format, dialog_data_location_t with_loc, 
-				dialog_samples_t with_samples, dialog_error_t with_error, 
-				dialog_header_type_t with_header_type, dialog_comment_t with_comment,
+				dialog_samples_t with_samples, dialog_header_type_t with_header_type, dialog_comment_t with_comment,
 				header_choice_t header_choice);
 void alert_new_file(void);
 widget_t make_open_file_dialog(bool read_only, bool managed);

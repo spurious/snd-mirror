@@ -34,7 +34,7 @@ tracks:
     delete-track          silence-mixes
     filter-track
     free-track
-    lock-track
+    lock-track            
     make-track
     make-track-frame-reader 
     make-track-sample-reader
@@ -45,8 +45,8 @@ tracks:
     retempo-track         scale-tempo
     reverse-track         scale-tempo by a negative scaler
     save-track            save-mixes
-    set-all-tracks
-    track                 (now any list of mix ids)
+    set-all-tracks        sync-mixes
+    track                 (now any list of mix ids) -- syncd-mixes follows the mix-sync value
     track->sound-data     (see save-mixes)
     track->vct            (see save-mixes)
     track-amp             scale-mixes
@@ -95,6 +95,22 @@ tracks:
     edit-properties
     edit-property accessor in extensions.scm
     mix-sync
+
+    mix.scm:
+      scale-mixes
+      silence-mixes
+      move-mixes
+      src-mixes
+      transpose-mixes
+      color-mixes
+      set-mixes-tag-y
+      mixes-maxamp
+      scale-tempo
+      mixes-length
+      save-mixes
+      env-mixes
+      sync-all-mixes
+      syncd-mixes
 
   moved mix-properties into C.
 

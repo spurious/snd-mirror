@@ -85,7 +85,6 @@
     (mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
     (mus-sound-close-output fd (* 4 (vct-length v)))))
 
-;;; TODO: mix-maxamp could easily be built-in (internal peak-env calc)
 
 (define (mix-maxamp id)
   "(mix-maxamp id) returns the max amp in the given mix"
@@ -212,13 +211,18 @@
 ;;; ---------------- backwards compatibilty
 
 (define (delete-mix id) 
+  "(delete-mix id) sets the mix's amp to 0.0"
   (set! (mix-amp id) 0.0))
 
 
 
-;;; -------- mix lists (used to be "tracks"
+;;; -------- mix lists (used to be called "tracks")
+;;;
+;;; to use these based on a mix-sync setting, use syncd-mixes below:
+;;;   (scale-mixes (syncd-mixes 2) 2.0) scales all mixes whose mix-sync field is 2 by 2.0.
 
 (define (scale-mixes mix-list scl)
+  "(scale-mixes mix-list scl) scales the amplitude of each mix in 'mix-list' by 'scl'"
   (as-one-edit
    (lambda ()
      (for-each
@@ -226,42 +230,59 @@
 	(set! (mix-amp m) (* scl (mix-amp m))))
       mix-list))))
 
+
 (define (silence-mixes mix-list)
+  "(silence-mixes mix-list) sets the amplitude of each mix in 'mix-list' to 0.0"
   (scale-mixes mix-list 0.0))
 
+
 (define (move-mixes mix-list samps)
+  "(move-mixes mix-list samps) moves each mix in 'mix-list' by 'samps' samples"
   (as-one-edit
    (lambda ()
      (for-each
       (lambda (m)
-	(set! (mix-position m) (+ (mix-position m) samps)))
+	(set! (mix-position m) (min 0 (+ (mix-position m) samps))))
       mix-list))))
 
+
 (define (src-mixes mix-list sr)
-  (as-one-edit
-   (lambda ()
-     (for-each
-      (lambda (m)
-	(set! (mix-speed m) (* (mix-speed m) sr)))
-      mix-list))))
+  "(src-mixes mix-list sr) multiplies the speed (resampling ratio) of each mix in 'mix-list' by 'sr'"
+  (if (not (= sr 0.0))
+      (as-one-edit
+       (lambda ()
+	 (for-each
+	  (lambda (m)
+	    (set! (mix-speed m) (* (mix-speed m) sr)))
+	  mix-list)))))
+
 
 (define (transpose-mixes mix-list semitones)
   "(transpose-mixes mix-list semitones) transposes each mix in mix-list by semitones"
-  (src-mixes mix-list (expt 2.0 (/ semitones 12.0))))
+  (if (not (= semitones 0))
+      (src-mixes mix-list (expt 2.0 (/ semitones 12.0)))))
 
 (define (color-mixes mix-list col)
+  "(color-mixes mix-list color) sets the tag and waveform color of each mix in 'mix-list' to 'color'"
   (for-each
    (lambda (m)
      (set! (mix-color m) col))
    mix-list))
 
 (define (set-mixes-tag-y mix-list new-y)
+  "(set-mixes-tag-y mix-list new-y) sets the mix tag vertical position of each mix in 'mix-list' to 'new-y'.  The \
+position is measured from the top of the graph, so higher tag-y values position the tag lower in the graph. For \
+example, if you know the frequency of the mix sound, you can reflect that in the tag height with: \n\n\
+\n\
+   (set! (mix-tag-y mix-id) (inexact->exact (round (* 100 (- 1.0 (/ (log (/ freq 40.0)) (* (log 2.0) 7)))))))\n"
+
   (for-each
    (lambda (m)
      (set! (mix-tag-y m) new-y))
    mix-list))
   
 (define (mixes-maxamp mix-list)
+  "(mixes-maxamp mix-list) returns the maximum amplitude of the data in the mixes in 'mix-list'"
   (let ((mx 0.0))
     (for-each
      (lambda (m)
@@ -270,6 +291,11 @@
     mx))
 
 (define (scale-tempo mix-list tempo-scl)
+  "(scale-tempo mix-list scl) changes the rate at which the mixes in 'mix-list' occur to reflect \
+the tempo scaler 'scl'.  If 'scl' is 2.0, for example, the mixes are re-positioned so that they \
+happen twice as fast (the data is not resampled -- each mix is untouched except that its begin time \
+may change)"
+
   (let* ((first-beg (mix-position (car mix-list)))
 	 (last-beg first-beg))
     (for-each
@@ -291,6 +317,8 @@
 
 
 (define (mixes-length mix-list)
+  "(mixes-length mix-list) returns the number of samples between the start of the earliest mix and the \
+last end of the mixes in 'mix-list'"
   (1+ (- (apply max (map (lambda (m) 
 			   (+ (mix-position m) (mix-length m))) 
 			 mix-list))
@@ -298,6 +326,7 @@
 
   
 (define (save-mixes mix-list filename)
+  "(save-mixes mix-list filename) saves the data of the mixes in 'mix-list' in 'filename'"
   (let* ((len (mixes-length mix-list))
 	 (beg (apply min (map mix-position mix-list)))
 	 (data (make-vct len)))
@@ -310,4 +339,61 @@
       (mus-sound-close-output fd (* 4 (vct-length data))))))
 
 
-;;; env-mixes, play-mixes
+(if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))
+
+(define (env-mixes mix-list overall-amp-env)
+  "(env-mixes mix-list amp-env) applies 'amp-env' as a global amplitude envelope to the mixes in 'mix-list'"
+  (let* ((mix-begs (map mix-position mix-list))
+	 (mix-ends (map (lambda (m) (+ (mix-position m) (mix-length m))) mix-list))
+	 (beg (apply min mix-begs))
+	 (end (apply max mix-ends))
+	 (first-x (car overall-amp-env))
+	 (last-x (envelope-last-x overall-amp-env))
+	 (x-scale (/ (- last-x first-x) (1+ (- end beg)))))
+    (as-one-edit
+     (lambda ()
+       (for-each 
+	(lambda (m)
+	  (let* ((beg-x (+ first-x (* x-scale (- (mix-position m) beg))))
+		 (end-x (+ first-x (* x-scale (- (+ (mix-position m) (mix-length m)) beg))))
+		 (wenv (window-envelope beg-x end-x overall-amp-env)))
+	    (if (null? (mix-amp-env m))
+		(set! (mix-amp-env m) wenv)
+		(set! (mix-amp-env m) (multiply-envelopes (mix-amp-env m) wenv)))))
+	mix-list)))))
+  
+
+(define* (sync-all-mixes :optional (new-sync 1))
+  ;; a replacement for set-all-tracks in snd-8
+  "(sync-all-mixes :optional (new-sync 1)) sets the mix-sync field of every active mix to new-sync"
+  (for-each
+   (lambda (snd-m)
+     (for-each
+      (lambda (chn-m)
+	(for-each
+	 (lambda (m)
+	   (set! (mix-sync m) new-sync))
+	 chn-m))
+      snd-m))
+   (mixes)))
+
+
+(define (syncd-mixes sync)
+  "(syncd-mixes sync) returns a list (possibly null) of all mixes whose mix-sync field is set to 'sync'"
+  (if (<= sync 0)
+      (list)
+      (let ((mix-list '()))
+	(for-each
+	 (lambda (snd-m)
+	   (for-each
+	    (lambda (chn-m)
+	      (for-each
+	       (lambda (m)
+		 (if (= (mix-sync m) sync)
+		     (set! mix-list (cons m mix-list))))
+	       chn-m))
+	    snd-m))
+	 (mixes))
+	mix-list)))
+
+	

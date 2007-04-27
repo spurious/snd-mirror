@@ -483,13 +483,6 @@ static mix_state *ed_mix_state(ed_list *ed, int mix_id)
 }
 
 
-mix_state *mix_state_is_in_ed_list(ed_list *ed, mix_state *ms)
-{
-  if (ms)
-    return(ed_mix_state(ed, ms->mix_id));
-  return(NULL);
-}
-
 /* these are the nominally unchanging fields in a mix (they don't follow the edit lists) */
 
 #define MIX_TAG_ERASED -1
@@ -1038,10 +1031,6 @@ bool mix_set_amp_edit(int id, Float amp)
 	  begin_mix_op(md->cp, old_ms->beg, old_ms->len, old_ms->beg, old_ms->len, md->cp->edit_ctr, S_setB S_mix_amp);
 	  ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
 	  ms->scaler = amp;
-	  
-	  /* TODO: peak env scaled too? */
-	  
-	  /* SOMEDAY: track-style op could make any number of changes here */
 	  end_mix_op(md->cp, 0, 0);
 	}
       return(true);
@@ -1637,11 +1626,6 @@ static XEN g_set_mix_tag_height(XEN val)
   for_each_normal_chan(update_graph);
   return(C_TO_XEN_INT(mix_tag_height(ss)));
 }
-
-
-
-
-
 
 
 static XEN g_mix_p(XEN n) 
@@ -2487,7 +2471,6 @@ static void draw_mix_tag(mix_info *md, int x, int y)
   if (lab) {FREE(lab); lab = NULL;}
 }
 
-/* these are copies from snd-axis.c; didn't want to use macros here */
 static int local_grf_x(double val, axis_info *ap)
 {
   if (val >= ap->x1) return(ap->x_axis_x1);
@@ -2987,3 +2970,4 @@ void finish_moving_mix_tag(int mix_id, int x)
 }
 
 
+/* TODO: set mix tag y should at least redpy that mix */

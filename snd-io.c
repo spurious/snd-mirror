@@ -621,6 +621,9 @@ static void tick_temp(const char *filename, int chan)
 	  return;
 	}
     }
+#if MUS_DEBUGGING
+  fprintf(stderr, "attempt to tick unremembered temp file %s\n", filename);
+#endif
 }
 
 void forget_temps(void)

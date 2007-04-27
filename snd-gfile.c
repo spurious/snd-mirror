@@ -2177,7 +2177,6 @@ file_data *make_file_data_panel(GtkWidget *parent, const char *name,
 				int header_type, int data_format,
 				dialog_data_location_t with_loc, 
 				dialog_samples_t with_samples,
-				dialog_error_t with_error, 
 				dialog_header_type_t with_header_type,
 				dialog_comment_t with_comment, 
 				header_choice_t header_choice)
@@ -2346,12 +2345,9 @@ file_data *make_file_data_panel(GtkWidget *parent, const char *name,
     }
 
   /* error */
-  if (with_error == WITH_ERROR_FIELD)
-    {
-      fdat->error_text = snd_gtk_entry_label_new(NULL, ss->sgx->highlight_color);
-      gtk_box_pack_end(GTK_BOX(parent), fdat->error_text, false, false, 0);
-      gtk_widget_hide(fdat->error_text);
-    }
+  fdat->error_text = snd_gtk_entry_label_new(NULL, ss->sgx->highlight_color);
+  gtk_box_pack_end(GTK_BOX(parent), fdat->error_text, false, false, 0);
+  gtk_widget_hide(fdat->error_text);
 
   return(fdat);
 }
@@ -2828,7 +2824,6 @@ static void save_innards(GtkWidget *vbox, void *data)
 					    sd->header_type, sd->format_type, 
 					    WITHOUT_DATA_LOCATION_FIELD, 
 					    WITHOUT_SAMPLES_FIELD,
-					    WITH_ERROR_FIELD, 
 					    WITH_HEADER_TYPE_FIELD, 
 					    WITH_COMMENT_FIELD,
 					    WITH_WRITABLE_HEADERS);
@@ -3299,7 +3294,6 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
 				  MUS_RAW, raw_data_format, 
 				  WITH_DATA_LOCATION_FIELD, 
 				  WITHOUT_SAMPLES_FIELD,
-				  WITH_ERROR_FIELD, 
 				  WITHOUT_HEADER_TYPE_FIELD, 
 				  WITHOUT_COMMENT_FIELD,
 				  WITH_READABLE_HEADERS);
@@ -3601,7 +3595,6 @@ widget_t make_new_file_dialog(bool managed)
 				  default_output_data_format(ss), 
 				  WITHOUT_DATA_LOCATION_FIELD, 
 				  WITH_SAMPLES_FIELD,
-				  WITH_ERROR_FIELD, 
 				  WITH_HEADER_TYPE_FIELD, 
 				  WITH_COMMENT_FIELD,
 				  WITH_BUILTIN_HEADERS);
@@ -3947,7 +3940,6 @@ GtkWidget *edit_header(snd_info *sp)
 				      hdr->format, 
 				      WITH_DATA_LOCATION_FIELD, 
 				      WITH_SAMPLES_FIELD,
-				      WITH_ERROR_FIELD, 
 				      WITH_HEADER_TYPE_FIELD, 
 				      WITH_COMMENT_FIELD,
 				      WITH_BUILTIN_HEADERS);

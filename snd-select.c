@@ -417,6 +417,9 @@ static int mix_selection(chan_info *cp, sync_info *si_out, off_t beg, io_error_t
 #else
       origin = mus_format("%s" PROC_OPEN OFF_TD, TO_PROC_NAME(S_mix_selection), beg);
 #endif
+      if (si_out->chans > 1)
+	remember_temp(tempfile, si_out->chans);
+
       id = mix_file(beg, selection_len(), si_out->chans, si_out->cps, tempfile, 
 		    (si_out->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
 		    origin, with_mix_tags(ss), 

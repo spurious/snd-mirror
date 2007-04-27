@@ -2166,8 +2166,9 @@ static void chans_drop(Widget w, XtPointer context, XtPointer info)
 file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, int in_n, 
 				dialog_channels_t with_chan, 
 				int header_type, int data_format,
-				dialog_data_location_t with_loc, dialog_samples_t with_samples,
-				dialog_error_t with_error, dialog_header_type_t with_header_type,
+				dialog_data_location_t with_loc, 
+				dialog_samples_t with_samples,
+				dialog_header_type_t with_header_type,
 				dialog_comment_t with_comment,
 				header_choice_t header_choice)
 {
@@ -2463,8 +2464,7 @@ file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, i
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, form); n++; /* form is the internal XmForm widget holding the lists etc */
-  XtSetArg(args[n], XmNbottomAttachment, ((with_comment != WITHOUT_COMMENT_FIELD) || 
-					  (with_error == WITH_ERROR_FIELD)) ? XmATTACH_NONE : XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNbottomAttachment, (with_comment != WITHOUT_COMMENT_FIELD) ? XmATTACH_NONE : XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
@@ -2473,29 +2473,26 @@ file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, i
   sep4 = XtCreateManagedWidget("sep4", xmSeparatorWidgetClass, parent, args, n);
 
   /* try to make the comment field the one that grows */
-  if (with_error == WITH_ERROR_FIELD)
+  n = 0;
+  if (with_comment == WITHOUT_COMMENT_FIELD)
     {
-      n = 0;
-      if (with_comment == WITHOUT_COMMENT_FIELD)
-	{
-	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-	  XtSetArg(args[n], XmNtopWidget, sep4); n++;
-	}
-      else
-	{
-	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
-	}
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNborderColor, ss->sgx->black); n++;
-      XtSetArg(args[n], XmNborderWidth, 2); n++;
-      XtSetArg(args[n], XmNmarginWidth, 10); n++;
-      XtSetArg(args[n], XmNmarginHeight, 10); n++;
-      fdat->error_text = XtCreateWidget("", xmLabelWidgetClass, parent, args, n);
-      /* XtUnmanageChild(fdat->error_text); */
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, sep4); n++;
     }
+  else
+    {
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
+    }
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNborderColor, ss->sgx->black); n++;
+  XtSetArg(args[n], XmNborderWidth, 2); n++;
+  XtSetArg(args[n], XmNmarginWidth, 10); n++;
+  XtSetArg(args[n], XmNmarginHeight, 10); n++;
+  fdat->error_text = XtCreateWidget("", xmLabelWidgetClass, parent, args, n);
+  /* XtUnmanageChild(fdat->error_text); */
 
   if (with_comment != WITHOUT_COMMENT_FIELD)
     {
@@ -3163,7 +3160,6 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 					    header_type, format_type, 
 					    WITHOUT_DATA_LOCATION_FIELD, 
 					    WITHOUT_SAMPLES_FIELD,
-					    WITH_ERROR_FIELD, 
 					    WITH_HEADER_TYPE_FIELD, 
 					    WITH_COMMENT_FIELD,
 					    WITH_WRITABLE_HEADERS);
@@ -3718,7 +3714,6 @@ widget_t make_new_file_dialog(bool managed)
 				  default_output_data_format(ss), 
 				  WITHOUT_DATA_LOCATION_FIELD, 
 				  WITH_SAMPLES_FIELD,
-				  WITH_ERROR_FIELD, 
 				  WITH_HEADER_TYPE_FIELD, 
 				  WITH_COMMENT_FIELD,
 				  WITH_BUILTIN_HEADERS);
@@ -4109,7 +4104,6 @@ Widget edit_header(snd_info *sp)
 				      hdr->format, 
 				      WITH_DATA_LOCATION_FIELD, 
 				      WITH_SAMPLES_FIELD,
-				      WITH_ERROR_FIELD, 
 				      WITH_HEADER_TYPE_FIELD, 
 				      WITH_COMMENT_FIELD,
 				      WITH_BUILTIN_HEADERS);
@@ -4465,7 +4459,6 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
 				  MUS_RAW, raw_data_format, 
 				  WITH_DATA_LOCATION_FIELD, 
 				  WITHOUT_SAMPLES_FIELD,
-				  WITH_ERROR_FIELD, 
 				  WITHOUT_HEADER_TYPE_FIELD, 
 				  WITHOUT_COMMENT_FIELD,
 				  WITH_READABLE_HEADERS);

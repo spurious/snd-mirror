@@ -6347,6 +6347,14 @@ color-mixes sets the color of each mix in 'mix-list' to 'new-color'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- env-mixes -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="envmixes">env-mixes</a> <code>mix-list envelope</code>
+</td></tr><tr><td></td><td>
+env-mixes applies 'envelope' as an overall amplitude envelope to the mixes in 'mix-list'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- find-mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="findmix">find-mix</a> <code>sample snd chn</code>
@@ -6512,11 +6520,34 @@ If 'at-tag-position' is #t, the tagged point, rather than the mix beginning fall
 Reset <a href="extsnd.html#mixreleasehook">mix-release-hook</a> to cancel this action.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- src-mixes -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="srcmixes">src-mixes</a> <code>mix-list scl</code>
 </td></tr><tr><td></td><td>
 src-mixes scales the speed (resampling ratio) of each mix in 'mix-list' by 'scl'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- sync-all-mixes -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def NAME="syncallmixes">sync-all-mixes</A> <code>:optional (new-sync 1)</code>
+</td></tr><tr><td></td><td>
+sync-all-mixes sets the mix-sync field of every active mix to 'new-sync'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- syncd-mixes -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def NAME="syncdmixes">syncd-mixes</A> <code>sync</code>
+</td></tr><tr><td></td><td>
+syncd-mixes returns a list (possibly null) of all mixes whose mix-sync field is set to 'sync'.
+Most of the functions in mix.scm take a 'mix-list'; to form that list based on a given
+mix-sync value, use syncd-mixes:
+<pre>	
+    (<a class=quiet href="#scalemixes">scale-mixes</a> (syncd-mixes 2) 2.0)
+</pre>
+which scales the amplitude by 2.0 of any mix whose mix-sync field is 2.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

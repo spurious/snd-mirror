@@ -1,7 +1,6 @@
 #!/bin/csh -f
 
 # TODO: GAUCHCE API choices
-# TODO: include  -DSCM_DEBUG_TYPING_STRICTNESS=2 in CFLAGS  (no xm)
 
 # cp ~/dist/snd/snd.tar .
 # tar xf snd.tar
@@ -1066,6 +1065,17 @@ echo ' -------------------------------------------------------------------------
 echo ' ----                 --with-jack GUILE_CONFIG_path=/home/bil/test/bin       ---- '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet --with-jack CFLAGS="-I/home/bil/test/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/bin
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-guile"
+make allclean
+
+echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
+echo ' ----                 -DSCM_DEBUG_TYPING_STRICTNESS=2 GUILE_CONFIG_path=/home/bil/test/bin '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet CFLAGS="-I/home/bil/test/include -I/usr/X11R6/include -DSCM_DEBUG_TYPING_STRICTNESS=2" LDFLAGS="-L/home/bil/test/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/bin
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-guile"

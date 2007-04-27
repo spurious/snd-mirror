@@ -5407,7 +5407,8 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  /* mix drag case */
 		  break;
 		case ZERO_EDIT:
-		  /* origin here is useless (see extend_with_zeros cases) TODO: is this still true? */
+		  /* origin here is unpredictable -- most of these extensions should be backed-over and invisible */
+		  /*   the one case that should survive (pad-channel) just passes its name as the origin */
 		  function = mus_format("%s " OFF_TD " " OFF_TD " snd chn %s drop", 
 					function, ed->beg, ed->len, S_pad_channel);
 		  break;
@@ -9053,6 +9054,9 @@ static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 
 /* ---------------------------------------- AS-ONE-EDIT ---------------------------------------- */
 
+/* SOMEDAY: during as-one-edit, backup when it's obvious to reduce edlist length
+ */
+
 #define INITIAL_AS_ONE_EDIT_POSITIONS_SIZE 2
 
 void as_one_edit(chan_info *cp, int one_edit)
@@ -10475,25 +10479,20 @@ keep track of which files are in a given saved state batch, and a way to rename 
     *.rb
     *.fs
     pan mix and syncd mixes for stereo
-    mix.scm: env-mixes, play-mixes
-    ws.scm: with-exploded-sound and extreme tests [much flashing as grf updates -- need to flush pointless redisplays]
-    C side for mix-maxamp? -- if we have a peak env see amp_env_maxamp in snd-snd
+    mix.scm: play-mixes
+    extreme tests such as water.scm [much flashing as grf updates -- need to flush pointless redisplays]
     edit-list->function for mix changes
-
-    [multiple mix dialogs?]
     if mix-property, display upon tag click or in dialog [add? text widget?]
-
-    snd-tests [test chan to mix-region|selection]
+    snd-tests
       new mix.scm tests
       test 9: mix.scm list tests (and all the rest)
            19: edit-list->function trouble
            23: ;auto-delete mix (with-tag)? (46915)
       memlog: snd-edits.c[6135]: extend with zeros ed list not gc'd -- appears to come from g_ptree_channel?
-      test 9: mix-selection (snd-select 411) multi-chan del is not working
       unlist and read can be called on fully freed xen-allocated readers (valtmp)
 
-    during as-one-edit, backup when it's obvious
-    can snd-marks dispense with the erase_and_draw stuff in snd-draw?
+    mix-local show-waveform choice to reduce clutter
+    access to mix index to support stuff like filter mix
   */
 
 static int add_mix_op(int type)
@@ -11101,8 +11100,4 @@ append the rest?
       change over to an array of functions: ramp_start_number, xramp+scale, ptree(zero), etc
         the basic accessor sequence can be (*(arr[1]))(sf, ((*(arr[0]))(sf, sf->data[loc...]))) --
         means changing function type slightly, and ptree_zero case is sticky, and scalers are tricky 
-
-	src/filter could be done if I had a block reader (sample-reader but accessing buffer)
-	if src, then mix could take all dialog edits as edits to its own reader
-	 
 */

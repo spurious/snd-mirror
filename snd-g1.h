@@ -482,7 +482,7 @@ file_data *make_file_data_panel(GtkWidget *parent, const char *name,
 				dialog_channels_t with_chan, 
 				int header_type, int data_format,
 				dialog_data_location_t with_loc, dialog_samples_t with_samples,
-				dialog_error_t with_error, dialog_header_type_t with_header_type,
+				dialog_header_type_t with_header_type,
 				dialog_comment_t with_comment,
 				header_choice_t header_choice);
 widget_t make_sound_save_as_dialog(bool managed);

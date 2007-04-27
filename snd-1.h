@@ -1583,7 +1583,6 @@ Float mix_set_speed_from_id(int id, Float new_speed);
 chan_info *mix_chan_info_from_id(int id);
 
 mix_state *prepare_mix_state_for_channel(chan_info *cp, int mix_loc, off_t beg, off_t len);
-mix_state *mix_state_is_in_ed_list(ed_list *ed, mix_state *ms);
 mix_state *add_ed_mix(ed_list *ed, mix_state *ms);
 mix_state *copy_mix_state(mix_state *old_ms);
 
