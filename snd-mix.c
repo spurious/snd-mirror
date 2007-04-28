@@ -878,19 +878,6 @@ Float mix_amp_from_id(int id)
   return(0.0);
 }
 
-Float mix_set_amp_from_id(int id, Float new_scaler)
-{
-  mix_state *ms;
-  ms = current_mix_state(md_from_id(id));
-  if (ms)
-    {
-      ms->scaler = new_scaler;
-      return(ms->scaler);
-    }
-  return(0.0);
-}
-
-
 Float mix_speed_from_id(int id)
 {
   mix_state *ms;
@@ -899,19 +886,6 @@ Float mix_speed_from_id(int id)
     return(ms->speed);
   return(0.0);
 }
-
-Float mix_set_speed_from_id(int id, Float new_speed)
-{
-  mix_state *ms;
-  ms = current_mix_state(md_from_id(id));
-  if (ms)
-    {
-      ms->speed = new_speed;
-      return(ms->speed);
-    }
-  return(0.0);
-}
-
 
 env *mix_amp_env_from_id(int id)
 {

@@ -6455,6 +6455,53 @@ move-mixes moves each mix in 'mix-list' by 'samps' samples.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- pan-mix -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="panmix">pan-mix</a> <code>file beg env :optional snd chn auto-delete</code>
+</td></tr><tr><td></td><td>
+pan-mix
+mixes 'file' into the current sound starting at 'beg' using the envelope 'env'
+to pan the mixed samples (0: all chan 1, 1: all chan 0).
+So, <code>(pan-mix \"oboe.snd\" 1000 '(0 0 1 1))</code> goes from all chan 0 to all chan 1.
+'auto-delete' determines
+whether the in-coming file should be treated as a temporary file and deleted when the mix
+is no longer accessible.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- pan-mix-region -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="panmixregion">pan-mix-region</A> <code>region beg env :optional snd chn</code>
+</td></tr><tr><td></td><td>
+pan-mix-region is similar to pan-mix above, but mixes a region, rather than a file.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- pan-mix-selection -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="panmixselection">pan-mix-selection</A> <code>beg env :optional snd chn</code>
+</td></tr><tr><td></td><td>
+pan-mix-selection is similar to pan-mix above, but mixes the current selection, rather than a file.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- pan-mix-vct -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="panmixvct">pan-mix-vct</A> <code>vct beg env :optional snd chn</code>
+</td></tr><tr><td></td><td>
+pan-mix-vct is similar to pan-mix above, but mixes a vct, rather than a file.
+The vct data represents one channel of sound.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- play-mixes -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="playmixes">play-mixes</a> <code>mix-list</code>
+</td></tr><tr><td></td><td>
+play-mixes plays the mixes in 'mix-list'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- save-mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="savemix">save-mix</a> <code>id filename</code>

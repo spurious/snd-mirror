@@ -12,13 +12,25 @@ static int completions(char *text)
 {
   ScmHashTable *tab;
   int len, matches = 0;
-  ScmHashEntry *e;
   ScmHashIter iter;
+
+#if GAUCHE_API_0_9
+  ScmDictEntry *e;
+#else
+  ScmHashEntry *e;
+#endif
+
   ScmModule *m = Scm_UserModule();
   tab = m->table;
+#if GAUCHE_API_0_9
+  Scm_HashIterInit(&iter, SCM_HASH_TABLE_CORE(tab));
+#else
   Scm_HashIterInit(tab, &iter);
+#endif
   len = strlen(text);
+
   while ((e = Scm_HashIterNext(&iter)) != NULL)
+
     {
       char *sym;
       /* fprintf(stderr,"e: %p, value: %s %s\n", e, XEN_AS_STRING(e->value), XEN_AS_STRING(SCM_GLOC(e->value)->name)); */

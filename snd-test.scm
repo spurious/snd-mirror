@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [535]
-;;;  test 1: defaults                           [1086]
-;;;  test 2: headers                            [1280]
-;;;  test 3: variables                          [1589]
-;;;  test 4: sndlib                             [2232]
-;;;  test 5: simple overall checks              [4702]
-;;;  test 6: vcts                               [12738]
-;;;  test 7: colors                             [13016]
-;;;  test 8: clm                                [13506]
-;;;  test 9: mix                                [23311]
-;;;  test 10: marks                             [24358]
-;;;  test 11: dialogs                           [25319]
-;;;  test 12: extensions                        [25564]
-;;;  test 13: menus, edit lists, hooks, etc     [25801]
-;;;  test 14: all together now                  [27472]
-;;;  test 15: chan-local vars                   [28505]
-;;;  test 16: regularized funcs                 [30021]
-;;;  test 17: dialogs and graphics              [34439]
-;;;  test 18: enved                             [34528]
-;;;  test 19: save and restore                  [34547]
-;;;  test 20: transforms                        [36358]
-;;;  test 21: new stuff                         [38193]
-;;;  test 22: run                               [40112]
-;;;  test 23: with-sound                        [45795]
-;;;  test 24: user-interface                    [48274]
-;;;  test 25: X/Xt/Xm                           [51704]
-;;;  test 26: Gtk                               [56288]
-;;;  test 27: GL                                [60144]
-;;;  test 28: errors                            [60268]
-;;;  test all done                              [62538]
-;;;  test the end                               [62773]
+;;;  test 0: constants                          [539]
+;;;  test 1: defaults                           [1091]
+;;;  test 2: headers                            [1285]
+;;;  test 3: variables                          [1594]
+;;;  test 4: sndlib                             [2237]
+;;;  test 5: simple overall checks              [4707]
+;;;  test 6: vcts                               [12729]
+;;;  test 7: colors                             [13007]
+;;;  test 8: clm                                [13497]
+;;;  test 9: mix                                [23302]
+;;;  test 10: marks                             [24516]
+;;;  test 11: dialogs                           [25477]
+;;;  test 12: extensions                        [25722]
+;;;  test 13: menus, edit lists, hooks, etc     [25996]
+;;;  test 14: all together now                  [27661]
+;;;  test 15: chan-local vars                   [28695]
+;;;  test 16: regularized funcs                 [30306]
+;;;  test 17: dialogs and graphics              [34745]
+;;;  test 18: enved                             [34834]
+;;;  test 19: save and restore                  [34853]
+;;;  test 20: transforms                        [36648]
+;;;  test 21: new stuff                         [38483]
+;;;  test 22: run                               [40402]
+;;;  test 23: with-sound                        [46084]
+;;;  test 24: user-interface                    [48564]
+;;;  test 25: X/Xt/Xm                           [51994]
+;;;  test 26: Gtk                               [56578]
+;;;  test 27: GL                                [60434]
+;;;  test 28: errors                            [60558]
+;;;  test all done                              [62826]
+;;;  test the end                               [63062]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -24389,6 +24389,117 @@ EDITS: 2
 	    (close-sound new-index))
 	  )
 	(dismiss-all-dialogs)
+
+	    ;; pan-mix tests
+	    (let ((ind (new-sound "fmv.snd" mus-next mus-bshort 22050 1 "pan-mix tests")))
+	      
+	      (let ((id0 (car (pan-mix "1a.snd" 10000 '(0 0 1 1)))))
+		(if (or (fneq (mix-amp id0) 1.0)
+			(not (feql (mix-amp-env id0) '(0 1 1 0))))
+		    (snd-display ";pan-mix 1->1 2: ~A ~A" (mix-amp id0) (mix-amp-env id0)))
+		(if (not (= (mix-position id0) 10000)) (snd-display ";pan-mix 1->1 pos 2: ~A" (mix-position id0)))
+		(revert-sound ind))
+	      
+	      (let* ((ids (pan-mix "2a.snd" 100 '(0 0 1 1)))
+		     (id0 (car ids))
+		     (id1 (cadr ids)))
+		(if (or (not (mix? id0)) (not (mix? id1)))
+		    (snd-display ";pan-mix 2->1: ~A ~A" id0 id1))
+		(if (not (= (mix-position id0) (mix-position id1) 100))
+		  (snd-display ";pan-mix 2->1 pos: ~A ~A" (mix-position id0) (mix-position id1)))
+		(if (or (fneq (mix-amp id0) 1.0) (fneq (mix-amp id1) 1.0))
+		    (snd-display ";pan-mix 2->1 mix amps 3: ~A ~A" (mix-amp id0) (mix-amp id1)))
+		(if (not (feql (mix-amp-env id0) '(0 1 1 0)))
+		  (snd-display ";pan-mix 2->1 ramp env: ~A" (mix-amp-env id0)))
+		(revert-sound ind))
+	      (close-sound ind))
+	    
+	    (let ((ind (new-sound "fmv.snd" mus-next mus-bshort 22050 2 "pan-mix tests")))
+	      (let* ((ids (pan-mix "1a.snd" 100 '(0 0 1 1 2 0)))
+		     (id0 (car ids))
+		     (id1 (cadr ids)))
+		(if (or (not (mix? id0)) (not (mix? id1)))
+		    (snd-display ";pan-mix 1->2: ~A ~A" id0 id1))
+		(if (not (= (mix-position id0) (mix-position id1) 100))
+		  (snd-display ";pan-mix 1->2 pos: ~A ~A" (mix-position id0) (mix-position id1)))
+		(if (or (fneq (mix-amp id0) 1.0) (fneq (mix-amp id1) 1.0)) 
+		    (snd-display ";pan-mix 1->2 amps: ~A ~A" (mix-amp id0) (mix-amp id1)))
+		(if (not (feql (mix-amp-env id0) '(0 1 1 0 2 1)))
+		  (snd-display ";pan-mix 1->2 env 0: ~A" (mix-amp-env id0)))
+		(if (not (feql (mix-amp-env id1) '(0 0 1 1 2 0)))
+		  (snd-display ";pan-mix 1->2 env 1: ~A" (mix-amp-env id1)))
+		(revert-sound ind))
+
+	      (let* ((ids (pan-mix "2a.snd" 100 '(0 0 1 1 2 0)))
+		     (id0 (car ids))
+		     (id1 (cadr ids))
+		     (id2 (caddr ids))
+		     (id3 (cadddr ids)))
+		(if (or (not (mix? id0)) (not (mix? id1)) (not (mix? id2)) (not (mix? id3)))
+		    (snd-display ";pan-mix 2->2: ~A ~A ~A ~A" id0 id1 id2 id3))
+		(if (not (= (mix-position id0) (mix-position id1) (mix-position id2) (mix-position id3) 100))
+		    (snd-display ";pan-mix 2->2 pos: ~A ~A ~A ~A" (mix-position id0) (mix-position id1) (mix-position id2) (mix-position id3)))
+		(if (or (fneq (mix-amp id0) 1.0) (fneq (mix-amp id1) 1.0)) 
+		    (snd-display ";pan-mix 2->2 amps: ~A ~A" (mix-amp id0) (mix-amp id1)))
+		(if (not (feql (mix-amp-env id0) '(0 1 1 0 2 1)))
+		    (snd-display ";pan-mix 2->2 env 0: ~A" (mix-amp-env id0)))
+		(if (not (feql (mix-amp-env id1) '(0 0 1 1 2 0)))
+		    (snd-display ";pan-mix 2->2 env 1: ~A" (mix-amp-env id1)))
+		(if (not (feql (mix-amp-env id2) '(0 1 1 0 2 1)))
+		    (snd-display ";pan-mix 2->2 env 2: ~A" (mix-amp-env id2)))
+		(if (not (feql (mix-amp-env id3) '(0 0 1 1 2 0)))
+		    (snd-display ";pan-mix 2->2 env 3: ~A" (mix-amp-env id3)))
+		(revert-sound ind))
+	      (close-sound ind))
+	  
+            (let ((ind (new-sound "test.snd" mus-next mus-bshort 22050 2 "pan-mix-* tests" 1000)))
+	      (let* ((ids (pan-mix-vct (make-vct 100 .3) 100 '(0 0 1 1)))
+		     (id0 (car ids))
+		     (id1 (cadr ids)))
+		(if (or (not (mix? id0)) (not (mix? id1)))
+		    (snd-display ";pan-mix-vct 1->2: ~A ~A" id0 id1))
+		(if (not (= (mix-position id0) (mix-position id1) 100))
+		  (snd-display ";pan-mix-vct 1->2 pos: ~A ~A" (mix-position id0) (mix-position id1)))
+		(if (or (fneq (mix-amp id0) 1.0) (fneq (mix-amp id1) 1.0)) 
+		    (snd-display ";pan-mix-vct 1->2 amps: ~A ~A" (mix-amp id0) (mix-amp id1)))
+		(if (not (feql (mix-amp-env id0) '(0 1 1 0)))
+		  (snd-display ";pan-mix-vct 1->2 env 0: ~A" (mix-amp-env id0)))
+		(if (not (feql (mix-amp-env id1) '(0 0 1 1)))
+		  (snd-display ";pan-mix-vct 1->2 env 1: ~A" (mix-amp-env id1)))
+		(revert-sound ind))
+
+	      (let* ((reg (make-region 0 50 ind 0))
+		     (ids (pan-mix-region reg 100 '(0 0 1 1)))
+		     (id0 (car ids))
+		     (id1 (cadr ids)))
+		(if (or (not (mix? id0)) (not (mix? id1)))
+		    (snd-display ";pan-mix-region 1->2: ~A ~A" id0 id1))
+		(if (not (= (mix-position id0) (mix-position id1) 100))
+		  (snd-display ";pan-mix-region 1->2 pos: ~A ~A" (mix-position id0) (mix-position id1)))
+		(if (or (fneq (mix-amp id0) 1.0) (fneq (mix-amp id1) 1.0)) 
+		    (snd-display ";pan-mix-region 1->2 amps: ~A ~A" (mix-amp id0) (mix-amp id1)))
+		(if (not (feql (mix-amp-env id0) '(0 1 1 0)))
+		  (snd-display ";pan-mix-region 1->2 env 0: ~A" (mix-amp-env id0)))
+		(if (not (feql (mix-amp-env id1) '(0 0 1 1)))
+		  (snd-display ";pan-mix-region 1->2 env 1: ~A" (mix-amp-env id1)))
+		(revert-sound ind))
+
+	      (select-all)
+	      (let* ((ids (pan-mix-selection 100 '(0 0 1 1)))
+		     (id0 (car ids))
+		     (id1 (cadr ids)))
+		(if (or (not (mix? id0)) (not (mix? id1)))
+		    (snd-display ";pan-mix-selection 1->2: ~A ~A" id0 id1))
+		(if (not (= (mix-position id0) (mix-position id1) 100))
+		  (snd-display ";pan-mix-selection 1->2 pos: ~A ~A" (mix-position id0) (mix-position id1)))
+		(if (or (fneq (mix-amp id0) 1.0) (fneq (mix-amp id1) 1.0)) 
+		    (snd-display ";pan-mix-selection 1->2 amps: ~A ~A" (mix-amp id0) (mix-amp id1)))
+		(if (not (feql (mix-amp-env id0) '(0 1 1 0)))
+		  (snd-display ";pan-mix-selection 1->2 env 0: ~A" (mix-amp-env id0)))
+		(if (not (feql (mix-amp-env id1) '(0 0 1 1)))
+		  (snd-display ";pan-mix-selection 1->2 env 1: ~A" (mix-amp-env id1)))
+		(revert-sound ind))
+	      (close-sound ind))
 
 	(let ((ind (make-waltz)))
 	  ;; mix.scm stuff...
@@ -62750,7 +62861,7 @@ EDITS: 1
 ;times:            #(58 58 153 99 2260 5316 613 133 11171 2857 593 738 730 918 583 1228 2977 182 165 2797 717 1697 4920 6595 0 0 0 241 7019)
 ;total: 553
 
-(let ((best-times '#(59 58 114 95 2244 5373 613 134 11680 2892 609 743 868 976 815 1288 3020 197 168 2952 758 1925 4997 6567 846  183 0 242 6696)))
+(let ((best-times '#(59 58 114 95 2244 5373 613 134 11680 2892 609 743 868 976 815 1288 3020 197 168 2952 758 1925 4997 6567 846  183 0 242 6696))) ; 571
   (do ((i 0 (1+ i)))
       ((= i (vector-length timings)))
     (if (and (> (vector-ref timings i) 0)

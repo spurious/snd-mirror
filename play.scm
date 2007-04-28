@@ -92,6 +92,9 @@
        (sound-data-set! data 0 i (* 2.0 (sound-data-ref data 0 i)))))))
 |#
 
+;;; this could also be done with a function argument to the play function -- get a
+;;;   sample-reader for the sound, call it on each invocation of the argument function etc
+
 
 ;;; -------- play sound n times -- (play-often 3) for example.
 
@@ -314,43 +317,33 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
 
 (define (play-sine freq amp)
   "(play-sine freq amp) plays a 1 second sinewave at freq and amp"
-  (let* ((audio-info (open-play-output 1 22050 #f 256))
-	 (audio-fd (car audio-info))
-	 (outchans (cadr audio-info))
-	 (pframes (caddr audio-info)))
-    (if (not (= audio-fd -1))
-	(let ((len 22050)
-	      (osc (make-oscil freq))
-	      (data (make-sound-data outchans pframes)))
-	  (do ((beg 0 (+ beg pframes)))
-	      ((or (c-g?)                   ; C-g to stop in mid-stream
-		   (> beg len)))
-	    (do ((i 0 (1+ i)))
-		((= i pframes))
-	      (sound-data-set! data 0 i (* amp (oscil osc))))
-	    (mus-audio-write audio-fd data pframes))
-	  (mus-audio-close audio-fd))
-	#f)))
+  (let* ((len 22050)
+	 (osc (make-oscil freq)))
+    (play (lambda ()
+	    (set! len (1- len))
+	    (if (<= len 0)
+		#f
+		(* amp (oscil osc)))))))
+
 
 (define (play-sines freqs-and-amps)
   "(play-sines freqs-and-amps) produces a tone given its spectrum: (play-sines '((440 .4) (660 .3)))"
-  (let* ((audio-info (open-play-output 1 22050 #f 256))
-	 (audio-fd (car audio-info))
-	 (outchans (cadr audio-info))
-	 (pframes (caddr audio-info)))
-    (if (not (= audio-fd -1))
-	(let ((len 22050)
-	      (oscs (map make-oscil (map car freqs-and-amps)))
-	      (amps (map cadr freqs-and-amps))
-	      (data (make-sound-data outchans pframes)))
-	  (do ((beg 0 (+ beg pframes)))
-	      ((or (c-g?)                   ; C-g to stop in mid-stream
-		   (> beg len)))
-	    (do ((i 0 (1+ i)))
-		((= i pframes))
-	      (sound-data-set! data 0 i (apply + (map (lambda (o a) (* a (oscil o))) oscs amps))))
-	    (mus-audio-write audio-fd data pframes))
-	  (mus-audio-close audio-fd))
-	#f)))
+  (let* ((len 22050)
+	 (num-oscs (length freqs-and-amps))
+	 (oscs (make-vector num-oscs))
+	 (amps (make-vector num-oscs)))
+    (do ((i 0 (1+ i)))
+	((= i num-oscs))
+      (vector-set! oscs i (make-oscil (car (list-ref freqs-and-amps i))))
+      (vector-set! amps i (cadr (list-ref freqs-and-amps i))))
+    (play (lambda ()
+	    (set! len (1- len))
+	    (if (<= len 0)
+		#f
+		(let ((sum 0.0))
+		  (do ((i 0 (1+ i)))
+		      ((= i num-oscs))
+		    (set! sum (+ sum (* (vector-ref amps i) (oscil (vector-ref oscs i))))))
+		  sum))))))
 
 ;(play-sines '((425 .05) (450 .01) (470 .01) (546 .02) (667 .01) (789 .034) (910 .032)))

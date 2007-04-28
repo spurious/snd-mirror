@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 7
-#define XEN_VERSION "2.7"
+#define XEN_MINOR_VERSION 8
+#define XEN_VERSION "2.8"
 
 /* HISTORY:
  *
+ *  28-Apr-07: changes for Gauche API changes in versions 0.8.8, 0.8.10, and 0.9.
  *  14-Feb-07: XEN_PUTS and friends for fth (Mike).
  *  17-Jan-07: rb_errinfo changes (Mike Scholz).
  *  --------
@@ -1610,7 +1611,12 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define C_TO_XEN_STRING(a)           (a) ? SCM_MAKE_STR_COPYING(a) : XEN_FALSE
 #define C_TO_XEN_STRINGN(Str, Len)   Scm_MakeString(Str, Len, Len, SCM_MAKSTR_COPYING)
 #define C_STRING_TO_XEN_FORM(Str)    Scm_ReadFromCString(Str)
-#define XEN_EVAL_FORM(Form)          Scm_Eval(Form, SCM_OBJ(Scm_UserModule()))
+
+#if GAUCHE_API_0_8_8 || GAUCHE_API_0_9
+  #define XEN_EVAL_FORM(Form)          Scm_EvalRec(Form, SCM_OBJ(Scm_UserModule()))
+#else
+  #define XEN_EVAL_FORM(Form)          Scm_Eval(Form, SCM_OBJ(Scm_UserModule()))
+#endif
 #define XEN_EVAL_C_STRING(Arg)       xen_gauche_eval_c_string(Arg)
 #define XEN_SYMBOL_P(Arg)            SCM_SYMBOLP(Arg)
 #define XEN_SYMBOL_TO_C_STRING(a)    XEN_TO_C_STRING(SCM_SYMBOL_NAME(a))
@@ -1749,26 +1755,37 @@ void xen_gauche_define_procedure_with_setter(char *get_name, ScmHeaderRec* (*get
   int get_req, int get_opt, int set_req, int set_opt);
 #endif
 
-#define XEN_CALL_0(Func, Caller)                   Scm_Apply(Func, XEN_EMPTY_LIST)
-#define XEN_CALL_1(Func, Arg1, Caller)             Scm_Apply(Func, XEN_LIST_1(Arg1))
-#define XEN_CALL_2(Func, Arg1, Arg2, Caller)       Scm_Apply(Func, XEN_LIST_2(Arg1, Arg2))
-#define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller) Scm_Apply(Func, XEN_LIST_3(Arg1, Arg2, Arg3))
-#define XEN_APPLY(Func, Args, Caller)              Scm_Apply(Func, Args)
-#define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller) Scm_Apply(Func, XEN_LIST_4(Arg1, Arg2, Arg3, Arg4))
-#define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller) Scm_Apply(Func, XEN_LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5))
-#define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) Scm_Apply(Func, XEN_LIST_6(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6))
-#define XEN_APPLY_NO_CATCH(Func, Args)              Scm_Apply(Func, Args)
-#define XEN_CALL_0_NO_CATCH(Func)                   Scm_Apply(Func, XEN_EMPTY_LIST)
-#define XEN_CALL_1_NO_CATCH(Func, Arg1)             Scm_Apply(Func, XEN_LIST_1(Arg1))
-#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2)       Scm_Apply(Func, XEN_LIST_2(Arg1, Arg2))
-#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3) Scm_Apply(Func, XEN_LIST_3(Arg1, Arg2, Arg3))
+#if GAUCHE_API_0_8_8 || GAUCHE_API_0_9
+  #define Xen_Scm_Apply(Func, Args) Scm_ApplyRec(Func, Args)
+#else
+  #define Xen_Scm_Apply(Func, Args) Scm_Apply(Func, Args)
+#endif
+  
+#define XEN_CALL_0(Func, Caller)                   Xen_Scm_Apply(Func, XEN_EMPTY_LIST)
+#define XEN_CALL_1(Func, Arg1, Caller)             Xen_Scm_Apply(Func, XEN_LIST_1(Arg1))
+#define XEN_CALL_2(Func, Arg1, Arg2, Caller)       Xen_Scm_Apply(Func, XEN_LIST_2(Arg1, Arg2))
+#define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller) Xen_Scm_Apply(Func, XEN_LIST_3(Arg1, Arg2, Arg3))
+#define XEN_APPLY(Func, Args, Caller)              Xen_Scm_Apply(Func, Args)
+#define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller) Xen_Scm_Apply(Func, XEN_LIST_4(Arg1, Arg2, Arg3, Arg4))
+#define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller) Xen_Scm_Apply(Func, XEN_LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5))
+#define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) Xen_Scm_Apply(Func, XEN_LIST_6(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6))
+#define XEN_APPLY_NO_CATCH(Func, Args)              Xen_Scm_Apply(Func, Args)
+#define XEN_CALL_0_NO_CATCH(Func)                   Xen_Scm_Apply(Func, XEN_EMPTY_LIST)
+#define XEN_CALL_1_NO_CATCH(Func, Arg1)             Xen_Scm_Apply(Func, XEN_LIST_1(Arg1))
+#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2)       Xen_Scm_Apply(Func, XEN_LIST_2(Arg1, Arg2))
+#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3) Xen_Scm_Apply(Func, XEN_LIST_3(Arg1, Arg2, Arg3))
 
 /* puts arg=string, display arg=obj */
 #define XEN_PUTS(Str, Port)      Scm_Puts(SCM_STRING(C_TO_XEN_STRING(Str)), Port)
 #define XEN_DISPLAY(Val, Port)   xen_gauche_display(Val, Port)
 #define XEN_FLUSH_PORT(Port)     Scm_Flush(Port)
 #define XEN_CLOSE_PORT(Port)     Scm_ClosePort(Port)
-#define XEN_PORT_TO_STRING(Port) Scm_GetOutputString(SCM_PORT(Port))
+
+#if GAUCHE_API_0_9
+  #define XEN_PORT_TO_STRING(Port) Scm_GetOutputString(SCM_PORT(Port), 0)
+#else
+  #define XEN_PORT_TO_STRING(Port) Scm_GetOutputString(SCM_PORT(Port))
+#endif
 
 typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 

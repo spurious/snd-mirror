@@ -700,11 +700,6 @@ void *mus_set_environ(mus_any *gen, void *e);
 mus_any *mus_make_frame_with_data(int chans, Float *data);
 mus_any *mus_make_mixer_with_data(int chans, Float *data);
 
-
-#ifndef CLM_DISABLE_DEPRECATED
-  #define MUS_NUM_WINDOWS MUS_NUM_FFT_WINDOWS
-#endif
-
 #ifdef __cplusplus
 }
 #endif

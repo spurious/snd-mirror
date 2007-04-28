@@ -3673,8 +3673,6 @@ Set mus-alsa-squelch-warning to #t to squelch warnings from ALSA about srate mis
 </td></tr><tr><td><br></td><td>
 mus-audio-close closes the audio port 'line' ('line' comes from either <a href="#musaudioopeninput">mus-audio-open-input</a>
 or <a href="#musaudioopenoutput">mus-audio-open-output</a>).
-Here is a simplification of <a href="sndscm.html#playsine">play-sine</a> in play.scm that 
-shows how these low-level DAC functions fit together:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa">
 <pre>
@@ -7224,7 +7222,7 @@ by <a href="#maxfftpeaks">max-transform-peaks</a>.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="play">play</a> (:optional samp snd chn sync end edpos stop-proc out-chan)</code>
 </td></tr><tr><td></td><td>
-This plays the given channel starting from sample 'samp'. 
+This function plays the given channel starting from sample 'samp'. 
 If 'sync' is #t, it plays all sounds sync'd to 'snd'.  If 'end' is not given or is #f, 
 it plays until the end of the sound. If 'end' is given (as a sample number), the 
 actual end point may be off by a few samples; Snd only checks on 
@@ -7292,6 +7290,22 @@ And here we play from the cursor with a moving ("tracking") cursor:
     (<em class=red>play</em> (<a class=quiet href="#cursor">cursor</a>))))
 </pre></td></tr></table>
 
+Finally, if 'samp' is a function, it is called on every sample; if it returns a number, that number is
+sent to the DAC; if it returns #f, it stops.  <a href="sndscm.html#playmixes">play-mixes</a> uses this
+function option to time the playing each mix in a sequence of mixes.  Another example is <a href="sndscm.html#playsine">play-sine</a>:
+
+<table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
+(define (play-sine freq amp)
+  "(play-sine freq amp) plays a 1 second sinewave at freq and amp"
+  (let* ((len 22050)
+	 (osc (<a class=quiet href="clm.html#make-oscil">make-oscil</a> freq)))
+    (<em class=red>play</em> (lambda ()
+	    (set! len (1- len))
+	    (if (<= len 0)        ; we've sent 22050 samples, so it's time to stop
+		#f
+		(* amp (<a class=quiet href="clm.html#oscil">oscil</a> osc)))))))
+</pre></td></tr></table>
+
 <!-- INDEX playexamples:Playing -->
 <A NAME="playexamples"></a>
 
@@ -7303,6 +7317,7 @@ play from cursor with tracking cursor: <a href="#pfc">pfc</a> above<br>
 play the selection: <a href="#playselection">play-selection</a>, <a href="snd.html#cxp">C-x p</a><br>
 play a region: <a href="#playregion">play-region</a>, <a href="snd.html#cxp">C-x p</a>, play button in Region dialog<br>
 play a mix: <a href="#playmix">play-mix</a>, play button in Mix dialog<br>
+play a sequence of mixes: <a href="sndscm.html#playmixes">play-mixes</a><br>
 play from mark: click or drag triangle (control-click for all chans)<br>
 play continuously between two marks: <a href="sndscm.html#loopbetweenmarks">loop-it</a><br>
 stop playing: C-g, C-t, <a href="#stopplaying">stop-playing</a>, set <a href="#playing">playing</a> to #f<br>

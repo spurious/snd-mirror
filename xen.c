@@ -1577,7 +1577,11 @@ void xen_gauche_list_set_x(XEN Lst, int Loc, XEN Val)
 
 XEN xen_gauche_load_file(char *file)
 {
+#if GAUCHE_API_0_8_10 || GAUCHE_API_0_9
+  Scm_Load(file, 0, NULL);
+#else
   Scm_Load(file, 0); /* returns an int, but we want (XEN) error indication */
+#endif
   /* flags is or of SCM_LOAD_QUIET_NOFILE SCM_LOAD_IGNORE_CODING */
   return(XEN_FALSE);
 }
@@ -1623,7 +1627,7 @@ XEN xen_gauche_object_to_string(XEN obj)
     }
   ostr = Scm_MakeOutputStringPort(true);
   Scm_Write(obj, SCM_OBJ(ostr), true);
-  return(Scm_GetOutputString(SCM_PORT(ostr)));
+  return(XEN_PORT_TO_STRING(ostr));
 }
 
 void xen_gauche_permanent_object(XEN obj)
@@ -1894,7 +1898,11 @@ static XEN g_run_hook(XEN all_args)
   functions = ghook_functions(obj);
   while (XEN_NOT_NULL_P(functions))
     {
+#if GAUCHE_API_0_8_8 || GAUCHE_API_0_9
+      val = Scm_ApplyRec(XEN_CAR(functions), args);
+#else
       val = Scm_Apply(XEN_CAR(functions), args);
+#endif
       functions = XEN_CDR(functions);
     }
   return(val);
@@ -1956,7 +1964,11 @@ void xen_initialize(void)
   Scm_Init(GAUCHE_SIGNATURE); /* signature is apparently a version mismatch check? (core.c) */
   {
     SCM_UNWIND_PROTECT {
+#if GAUCHE_API_0_8_10 || GAUCHE_API_0_9
+      Scm_Load("gauche-init.scm", 0, NULL);
+#else
       Scm_Load("gauche-init.scm", 0);
+#endif
     }
     SCM_WHEN_ERROR {
       fprintf(stderr, "Error in Gauche initialization file.\n");

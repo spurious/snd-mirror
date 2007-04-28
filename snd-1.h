@@ -595,13 +595,6 @@ typedef struct {
 } region_state;
 
 typedef struct {
-  mus_any *gen;
-  snd_fd *sf;
-  off_t sample;
-  int dir;
-} src_state;
-
-typedef struct {
   char *key;
   bool c, m, x;
 } key_info;
@@ -1578,8 +1571,6 @@ off_t mix_length_from_id(int id);
 Float mix_amp_from_id(int id);
 Float mix_speed_from_id(int id);
 env *mix_amp_env_from_id(int id);
-Float mix_set_amp_from_id(int id, Float new_scaler);
-Float mix_set_speed_from_id(int id, Float new_speed);
 chan_info *mix_chan_info_from_id(int id);
 
 mix_state *prepare_mix_state_for_channel(chan_info *cp, int mix_loc, off_t beg, off_t len);
@@ -1684,9 +1675,6 @@ void scale_by(chan_info *cp, Float *scalers, int len, bool selection);
 bool scale_to(snd_info *sp, chan_info *cp, Float *scalers, int len, bool selection);
 Float channel_maxamp(chan_info *cp, int edpos);
 off_t channel_maxamp_position(chan_info *cp, int edpos);
-src_state *make_src(Float srate, snd_fd *sf, Float initial_srate);
-Float src_input_as_needed(void *arg, int dir);
-src_state *free_src(src_state *sr);
 void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num, 
 		    enved_progress_t from_enved, const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos);
 void apply_filter(chan_info *ncp, int order, env *e, enved_progress_t from_enved, const char *caller, const char *origin, 

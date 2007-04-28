@@ -10478,13 +10478,11 @@ keep track of which files are in a given saved state batch, and a way to rename 
     peak-envs after change [check all redisplays and maybe squelch cases]
     *.rb
     *.fs
-    pan mix and syncd mixes for stereo
-    mix.scm: play-mixes
+    syncd mixes for stereo (automated that is via mix-drag-hook etc)
     extreme tests such as water.scm [much flashing as grf updates -- need to flush pointless redisplays]
     edit-list->function for mix changes
     if mix-property, display upon tag click or in dialog [add? text widget?]
     snd-tests
-      new mix.scm tests
       test 9: mix.scm list tests (and all the rest)
            19: edit-list->function trouble
            23: ;auto-delete mix (with-tag)? (46915)
@@ -10527,12 +10525,6 @@ static void make_mix_fragment(ed_list *new_ed, int i, mix_state *ms, off_t beg)
   /* i = index into ed_fragment list for this edit */
   /* we're changing one fragment to add the mix */
 
-  /* TODO: make sure there is a sounding mix in this fragment? */
-  /*   for set mix amp, we'll need to check for all 0, then set fragment type to underlying no-mix case (not just here but wherever the 0 case hits) */
-
-  /*
-  fprintf(stderr,"make_mix_fragment at %d, beg: " OFF_TD "\n", i, beg);
-  */
   FRAGMENT_TYPE(new_ed, i) = add_mix_op(FRAGMENT_TYPE(new_ed, i));
   if (!(FRAGMENT_MIXES(new_ed, i)))
     FRAGMENT_MIXES(new_ed, i) = (ed_mixes *)CALLOC(1, sizeof(ed_mixes));
@@ -10801,7 +10793,7 @@ static void ripple_mixes_1(chan_info *cp, off_t beg, off_t len, off_t change, Fl
       (cp->edit_ctr > 0))
     {
       ed_list *ed;
-      int i, low_id, high_id;
+      int i, low_id = 0, high_id;
       mix_state **current_states = NULL;
 
       ed = cp->edits[cp->edit_ctr];

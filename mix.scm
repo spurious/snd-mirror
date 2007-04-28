@@ -397,3 +397,131 @@ last end of the mixes in 'mix-list'"
 	mix-list)))
 
 	
+(define (play-mixes mix-list)
+  "(play-mixes mix-list) plays the mixes in 'mix-list'"
+  (let* ((sorted-mixes (sort mix-list (lambda (a b) (< (mix-position a) (mix-position b)))))
+	 (now (mix-position (car sorted-mixes))))
+    (play (lambda ()
+	    (while (and (not (null? sorted-mixes))
+			(= now (mix-position (car sorted-mixes))))
+	      (play-mix (car sorted-mixes))
+	      (set! sorted-mixes (cdr sorted-mixes)))
+	    (set! now (1+ now))
+	    (if (null? sorted-mixes)
+		#f
+		0.0)))))
+
+
+;;; -------- pan-mix --------
+
+(define* (pan-mix name beg pan :optional snd (chn 0) auto-delete)
+
+  "(pan-mix file start pan-env :optional snd (chn 0) (auto-delete #f)) mixes 'file' into the sound 'snd'
+starting at 'start' (in samples) using 'pan-env' to decide how to split the sound between the output channels (0: all chan 0, 1: all chan 1).
+So, (pan-mix \"oboe.snd\" 0 '(0 0 1 1)) goes from all chan 0 to all chan 1.
+'auto-delete' determines whether the in-coming file should be treated as a temporary file and deleted when the mix
+is no longer accessible.  pan-mix returns a list of the id's of the mixes performing the
+panning operation."
+
+  (let ((index (or snd (selected-sound) (and (sounds) (car (sounds))))))
+    (if (not (sound? index))
+	(throw 'no-such-sound (list "pan-mix" snd)))
+    (if (not (file-exists? name))
+	(throw 'no-such-file (list "pan-mix" name)))
+    
+    (as-one-edit
+     (lambda ()
+
+       (define (invert-envelope e)
+	 (if (null? e)
+	     '()
+	     (append (list (car e) (- 1.0 (cadr e)))
+		     (invert-envelope (cddr e)))))
+
+       (let ((incoming-chans (mus-sound-chans name))
+	     (receiving-chans (chans index)))
+
+	 (if (= incoming-chans 1)
+
+	     ;; mono input
+
+	     (if (= receiving-chans 1)
+
+		 ;; mono to mono = just scale or envelope
+		 (let ((id (mix name beg 0 index 0 (with-mix-tags) auto-delete))) ; file start in-chan snd chn ...
+		   (if (mix? id)
+		       (set! (mix-amp-env id) (invert-envelope pan)))
+		   (list id))
+
+		 ;; mono to stereo
+		 (let ((id0 (mix name beg 0 index 0 (with-mix-tags) auto-delete))
+		       (id1 (mix name beg 0 index 1 (with-mix-tags) auto-delete)))
+		   (if (and (mix? id0)
+			    (mix? id1))
+		       (begin
+			 (set! (mix-amp-env id0) (invert-envelope pan))
+			 (set! (mix-amp-env id1) pan)))
+		   (list id0 id1)))
+
+	     ;; stero input
+	     
+	     (if (= receiving-chans 1)
+
+		 ;; stereo -> mono => scale or envelope both input chans into the output
+		 (let ((id0 (mix name beg 0 index 0 (with-mix-tags) auto-delete))
+		       (id1 (mix name beg 1 index 0 (with-mix-tags) auto-delete)))
+		   (if (and (mix? id0)
+			    (mix? id1))
+		       (begin
+			 (set! (mix-amp-env id0) (invert-envelope pan))
+			 (set! (mix-amp-env id1) (invert-envelope pan))))
+		   (list id0 id1))
+
+		 ;; stereo -> stereo => incoming chans are treated equally, each panned into outputs
+		 (let ((id00 (mix name beg 0 index 0 (with-mix-tags) auto-delete))
+		       (id01 (mix name beg 0 index 1 (with-mix-tags) auto-delete))
+		       (id10 (mix name beg 1 index 0 (with-mix-tags) auto-delete))
+		       (id11 (mix name beg 1 index 1 (with-mix-tags) auto-delete)))
+		   (if (and (mix? id00)
+			    (mix? id01)
+			    (mix? id10)
+			    (mix? id11))
+		       (begin
+			 (set! (mix-amp-env id00) (invert-envelope pan))
+			 (set! (mix-amp-env id10) (invert-envelope pan))
+			 (set! (mix-amp-env id01) pan)
+			 (set! (mix-amp-env id11) pan)))
+		   (list id00 id01 id10 id11)))))))))
+
+
+(define* (pan-mix-selection beg pan :optional snd chn)
+
+  "(pan-mix-selection start pan-env :optional snd chn) mixes the current selection  into the sound 'snd'
+starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all chan 1)."
+
+  (if (not (selection?))
+      (throw 'no-active-selection (list "pan-mix-selection"))
+      (pan-mix (save-selection (snd-tempnam)) beg pan snd chn #t)))
+
+
+(define* (pan-mix-region reg beg pan :optional snd chn)
+
+  "(pan-mix-region reg start pan-env :optional snd chn) mixes the given region into the sound 'snd' 
+starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all chan 1)."
+
+  (if (not (region? reg))
+      (throw 'no-such-region (list "pan-mix-region" reg))
+      (pan-mix (save-region reg (snd-tempnam)) beg pan snd chn #t)))
+
+
+(define* (pan-mix-vct v beg pan :optional snd chn)
+
+  "(pan-mix-vct v start pan-env :optional snd chn) mixes the vct data into the sound 'snd' 
+starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all chan 1)."
+
+  (let* ((temp-file (snd-tempnam))
+	 (fd (mus-sound-open-output temp-file (srate snd) 1 #f #f "")))
+    (mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
+    (mus-sound-close-output fd (* 4 (vct-length v)))
+    (pan-mix temp-file beg pan snd chn #t)))
+

@@ -15,7 +15,10 @@ typedef struct {
   Float sr;
 } spd_info;
 
+typedef enum {DAC_NOTHING, DAC_CHANNEL, DAC_REGION, DAC_MIX, DAC_XEN} dac_source_t;
+
 typedef struct dac_info {
+  dac_source_t type;
   Float cur_index;
   Float cur_amp;
   Float cur_srate;
@@ -32,7 +35,7 @@ typedef struct dac_info {
   mus_any *flt;
   int region, mix_id;  /* to reset region-browser play button upon completion */
   bool selection;
-  src_state *src;
+  mus_any *src;
   snd_info *sp;        /* needed to see button callback changes etc */
   chan_info *cp;
   bool never_sped;
@@ -40,10 +43,30 @@ typedef struct dac_info {
   off_t end;
   XEN stop_procedure;
   int stop_procedure_gc_loc;
+  XEN func;
+  int func_gc_loc, direction;
+  Float (*dac_sample)(struct dac_info *dp);
 } dac_info;
 
 #define AMP_CONTROL(sp, dp) ((dp->cp->amp_control) ? (dp->cp->amp_control[0]) : sp->amp_control)
 /* an experiment */
+
+static Float dac_read_sample(struct dac_info *dp)
+{
+  return(read_sample(dp->chn_fd));
+}
+
+static Float dac_xen_sample(struct dac_info *dp)
+{
+  XEN result;
+  result = XEN_CALL_0_NO_CATCH(dp->func);
+  if (XEN_FALSE_P(result))
+    {
+      dp->end = 0;
+      return(0.0);
+    }
+  return(XEN_TO_C_DOUBLE(result));
+}
 
 
 /* -------- filter -------- */
@@ -59,16 +82,31 @@ static mus_any *make_flt(dac_info *dp, int order, Float *env)
 
 
 /* -------- sample-rate conversion -------- */
+
+static Float dac_src_input_as_needed(void *arg, int direction) 
+{
+  dac_info *dp = (dac_info *)arg;
+  if ((direction != dp->direction) && (dp->chn_fd))
+    {
+      read_sample_change_direction(dp->chn_fd, (direction == 1) ? READ_FORWARD : READ_BACKWARD);
+      dp->direction = direction;
+    }
+  return((*(dp->dac_sample))(dp));
+}
+
 static Float speed(dac_info *dp, Float sr)
 {
   if (dp->never_sped)
-    return(read_sample(dp->chn_fd));
+    return((*(dp->dac_sample))(dp));
   if (dp->src == NULL)
-    dp->src = make_src(0.0, dp->chn_fd, sr);
-  return(mus_src(dp->src->gen, sr, &src_input_as_needed));
+    dp->src = mus_make_src(&dac_src_input_as_needed, sr, sinc_width(ss), (void *)dp);
+  mus_set_increment(dp->src, sr);
+  return(mus_src(dp->src, 0.0, &dac_src_input_as_needed));
 }
 
+
 /* -------- granular synthesis -------- */
+
 static Float expand_input_as_needed(void *arg, int dir) 
 {
   spd_info *spd = (spd_info *)arg;
@@ -76,7 +114,7 @@ static Float expand_input_as_needed(void *arg, int dir)
   dp = spd->dp;
   if (spd->speeding)
     return(speed(dp, spd->sr));
-  else return(read_sample(dp->chn_fd));
+  else return((*(dp->dac_sample))(dp));
 }
 
 static int max_expand_control_len(snd_info *sp)
@@ -307,6 +345,8 @@ static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
   return(amp * mus_contrast_enhancement(dp->contrast_amp * inval, index));
 }
 
+
+
 static mus_error_handler_t *old_error_handler;
 static bool got_local_error = false;
 static void local_mus_error(int type, char *msg)
@@ -343,79 +383,25 @@ Float *sample_linear_env(env *e, int order)
   return(data);
 }
 
-static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd, int out_chan)
-{
-  dac_info *dp;
-  dp = (dac_info *)CALLOC(1, sizeof(dac_info)); /* only place dac_info is created */
-  dp->stop_procedure = XEN_FALSE;
-  dp->region = INVALID_REGION;
-  dp->mix_id = INVALID_MIX_ID;
-  dp->a = NULL;
-  dp->a_size = 0;
-  dp->audio_chan = out_chan;
-  dp->never_sped = true;
-  if (sp)
-    {
-      dp->expanding = sp->expand_control_p;
-      dp->filtering = ((sp->filter_control_p) && (sp->filter_control_order > 0));
-      dp->reverbing = sp->reverb_control_p;
-      dp->contrast_amp = sp->contrast_control_amp;
-      if (!(snd_feq(sp->speed_control * sp->speed_control_direction, 1.0)))
-	{
-	  dp->src = make_src(0.0, fd, sp->speed_control * sp->speed_control_direction);
-	  if (dp->src == NULL)
-	    {
-	      FREE(dp);
-	      return(NULL);
-	    }
-	}
-      /* that is, if user wants fancy src, he needs to say so before we start */
-      if (dp->expanding) 
-	{
-	  dp->spd = (spd_info *)make_expand(sp, sp->expand_control, dp);
-	  dp->expand_ring_frames = (int)(SND_SRATE(sp) * sp->expand_control * sp->expand_control_length * 2);
-	}
-      if (dp->filtering)
-	{
-	  sp->filter_control_changed = false;
-	  if (!(sp->filter_control_envelope)) 
-	    dp->filtering = false;
-	  else
-	    {
-	      Float *data = NULL;
-	      data = sample_linear_env(sp->filter_control_envelope, sp->filter_control_order);
-	      if (data)
-		{
-		  dp->flt = make_flt(dp, sp->filter_control_order, data);
-		  FREE(data);
-		}
-	      else dp->filtering = false;
-	    }
-	}
-    }
-  dp->chn_fd = fd;
-  dp->sp = sp;
-  dp->cp = cp;
-  return(dp);
-}
-
 static void free_dac_info(dac_info *dp, play_stop_t reason)
 {
-  if (XEN_PROCEDURE_P(dp->stop_procedure))
+  if (dp->stop_procedure_gc_loc != NOT_A_GC_LOC)
     {
       XEN_CALL_1(dp->stop_procedure, 
 		 C_TO_XEN_INT((int)reason),
 		 "play stop procedure");
       snd_unprotect_at(dp->stop_procedure_gc_loc);
       dp->stop_procedure = XEN_FALSE;
+      dp->stop_procedure_gc_loc = NOT_A_GC_LOC;
     }
   if (dp->a) {FREE(dp->a); dp->a = NULL; dp->a_size = 0;}
   dp->chn_fd = free_snd_fd(dp->chn_fd);
   if (dp->spd) free_expand(dp->spd);
-  if (dp->src) free_src(dp->src);
+  if (dp->src) mus_free(dp->src);
   if (dp->flt) mus_free(dp->flt);
   dp->sp = NULL;
   dp->cp = NULL;
+  dp->type = DAC_NOTHING;
   FREE(dp);
 }
 
@@ -616,23 +602,29 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
   play_list_members--;
   if (toggle == WITH_TOGGLE) 
     {
-      if ((sp) && (sp->playing <= 0)) 
-	reflect_play_stop(sp);
-      else 
+      switch (dp->type)
 	{
+	case DAC_CHANNEL:
+	  if ((sp) && (sp->playing <= 0)) 
+	    reflect_play_stop(sp);
+	  break;
+	case DAC_REGION:
 	  if (dp->region != INVALID_REGION)
 	    reflect_play_region_stop(dp->region);
-	  else
-	    {
-	      if (dp->mix_id != INVALID_MIX_ID)
-		reflect_mix_play_stop();
-	    }
+	  break;
+	case DAC_MIX:
+	  if (dp->mix_id != INVALID_MIX_ID)
+	    reflect_mix_play_stop();
+	case DAC_XEN:
+	  break;
+	case DAC_NOTHING:
+	  break;
 	}
     }
   if (dp->slot == max_active_slot) max_active_slot--;
   if (with_hook == WITH_HOOK)
     {
-      if (dp->region == INVALID_REGION) /* not region play */
+      if (dp->type == DAC_CHANNEL)
 	{
 	  if (dp->selection)
 	    {
@@ -774,6 +766,7 @@ void stop_playing_region(int n, play_stop_t reason)
       dac_info *dp;
       for (i = 0; i < dac_max_sounds; i++)
 	if ((play_list[i]) &&
+	    (play_list[i]->type == DAC_REGION) &&
 	    (play_list[i]->region == n))
 	  {
 	    dp = play_list[i];
@@ -813,15 +806,77 @@ static int find_slot_to_play(void)
   return(old_size);
 }
 
-static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, off_t end, int out_chan)
+static dac_info *make_dac_info(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, off_t end, int out_chan, dac_source_t type, XEN func)
 {
   dac_info *dp;
-  dp = make_dac_info(cp, sp, fd, out_chan); /* sp == NULL if region */
-  if (dp == NULL) 
+
+  dp = (dac_info *)CALLOC(1, sizeof(dac_info)); /* only place dac_info is created */
+  dp->stop_procedure = XEN_FALSE;
+  dp->stop_procedure_gc_loc = NOT_A_GC_LOC;
+  dp->region = INVALID_REGION;
+  dp->mix_id = INVALID_MIX_ID;
+  dp->direction = 1;
+  dp->type = type; /* dac needs to know how to get input before calling mus_make_src below */
+  if (type == DAC_XEN)
     {
-      free_snd_fd(fd);
-      return(NULL);
+      dp->dac_sample = dac_xen_sample;
+      dp->func = func;
+      dp->func_gc_loc = snd_protect(func);
     }
+  else 
+    {
+      dp->dac_sample = dac_read_sample;
+      dp->func = XEN_FALSE;
+      dp->func_gc_loc = NOT_A_GC_LOC;
+    }
+  dp->a = NULL;
+  dp->a_size = 0;
+  dp->audio_chan = out_chan;
+  dp->never_sped = true;
+  dp->chn_fd = fd;
+  dp->sp = sp;
+  dp->cp = cp;
+
+  /* next block may get input */
+  if (sp)
+    {
+      dp->expanding = sp->expand_control_p;
+      dp->filtering = ((sp->filter_control_p) && (sp->filter_control_order > 0));
+      dp->reverbing = sp->reverb_control_p;
+      dp->contrast_amp = sp->contrast_control_amp;
+
+      if ((!(snd_feq(sp->speed_control, 1.0))) ||
+	  (sp->speed_control_direction == -1))
+	{
+	  dp->src = mus_make_src(&dac_src_input_as_needed, sp->speed_control, sinc_width(ss), (void *)dp);
+	  dp->direction = sp->speed_control_direction;
+	}
+
+      if (dp->expanding) 
+	{
+	  dp->spd = (spd_info *)make_expand(sp, sp->expand_control, dp);
+	  dp->expand_ring_frames = (int)(SND_SRATE(sp) * sp->expand_control * sp->expand_control_length * 2);
+	}
+
+      if (dp->filtering)
+	{
+	  sp->filter_control_changed = false;
+	  if (!(sp->filter_control_envelope)) 
+	    dp->filtering = false;
+	  else
+	    {
+	      Float *data = NULL;
+	      data = sample_linear_env(sp->filter_control_envelope, sp->filter_control_order);
+	      if (data)
+		{
+		  dp->flt = make_flt(dp, sp->filter_control_order, data);
+		  FREE(data);
+		}
+	      else dp->filtering = false;
+	    }
+	}
+    }
+
   play_list_members++;
   dp->end = end;
   play_list[slot] = dp;
@@ -836,6 +891,7 @@ static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, off_
       dp->cur_exp = sp->expand_control;
       dp->cur_rev = sp->reverb_control_scale;
     }
+
   return(dp);
 }
 
@@ -939,7 +995,7 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, off_t sta
 	      cursor_moveto_without_verbosity(cp, start);
 	    }
 	}
-      return(init_dp(slot, cp, sp, sf, end, out_chan));
+      return(make_dac_info(slot, cp, sp, sf, end, out_chan, DAC_CHANNEL, XEN_FALSE));
     }
   return(NULL);
 }
@@ -952,7 +1008,12 @@ static dac_info *add_region_channel_to_play_list(int region, int chan, off_t beg
   if (slot == -1) return(NULL);
   fd = init_region_read(beg, region, chan, READ_FORWARD);
   if (fd)
-    return(init_dp(slot, fd->cp, NULL, fd, end, out_chan));
+    {
+      dac_info *dp;
+      dp = make_dac_info(slot, fd->cp, NULL, fd, end, out_chan, DAC_REGION, XEN_FALSE);
+      if (dp) dp->region = region;
+      return(dp);
+    }
   return(NULL);
 }
 
@@ -971,7 +1032,6 @@ void play_region_1(int region, play_process_t background, XEN stop_proc)
       if (dp) 
 	{
 	  if (rtn_dp == NULL) rtn_dp = dp;
-	  dp->region = region;
 	}
     }
   if (rtn_dp)
@@ -999,15 +1059,46 @@ bool add_mix_to_play_list(mix_state *ms, chan_info *cp, off_t beg_within_mix)
       if (fd)
 	{
 	  dac_info *dp;
-	  dp = init_dp(slot, cp, NULL, fd, NO_END_SPECIFIED, 0);
+	  dp = make_dac_info(slot, cp, NULL, fd, NO_END_SPECIFIED, 0, DAC_MIX, XEN_FALSE);
 	  if (dp)
 	    {
-	      dp->mix_id = 1; /* any valid mix id will do */
+	      dp->mix_id = ms->index; /* any valid mix id will do */
 	      start_dac(SND_SRATE(cp->sound), 1, NOT_IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY);
 	      return(true);
 	    }
 	}
       else free_snd_fd(fd);
+    }
+  return(false);
+}
+
+
+/* (play (let ((osc (make-oscil 440.0)) 
+               (samp 0)) 
+           (lambda () 
+             (if (or (c-g?) 
+                 (> samp 20000)) 
+		 #f
+		 (begin
+             (set! samp (1+ samp)) 
+             (* .5 (oscil osc)))))))
+	     TODO: DOC: TEST: play-mixes play-sine(s)
+	     SOMEDAY: xen play + snd/chn = use those controls
+ */
+
+static bool add_xen_to_play_list(XEN func)
+{
+  int slot;
+  slot = find_slot_to_play();
+  if (slot != -1)
+    {
+      dac_info *dp;
+      dp = make_dac_info(slot, NULL, NULL, NULL, NO_END_SPECIFIED, 0, DAC_XEN, func);
+      if (dp)
+	{
+	  start_dac((int)mus_srate(), 1, NOT_IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY);
+	  return(true);
+	}
     }
   return(false);
 }
@@ -1253,6 +1344,8 @@ static void cleanup_dac_hook(void)
     }
 }
 
+
+
 static int fill_dac_buffers(int write_ok)
 {
   /* return value used only by Apply */
@@ -1332,7 +1425,7 @@ static int fill_dac_buffers(int write_ok)
 		case NO_CHANGE:
 		  /* simplest case -- no changes at all */
 		  for (j = 0; j < frames; j++)
-		    buf[j] += read_sample_to_mus_sample(dp->chn_fd);
+		    buf[j] += (*(dp->dac_sample))(dp);
 		  break;
 
 		case JUST_AMP:
@@ -1340,7 +1433,7 @@ static int fill_dac_buffers(int write_ok)
 		  amp = dp->cur_amp;
 		  incr = (AMP_CONTROL(sp, dp) - amp) / (Float)(frames);
 		  for (j = 0; j < frames; j++, amp += incr) 
-		    buf[j] += (mus_sample_t)(read_sample_to_mus_sample(dp->chn_fd) * amp);
+		    buf[j] += (mus_sample_t)(amp * (*(dp->dac_sample))(dp));
 		  dp->cur_amp = amp;
 		  break;
 
@@ -1447,7 +1540,7 @@ static int fill_dac_buffers(int write_ok)
 				{
 				  for (j = 0; j < frames; j++, amp += incr, rev += revincr) 
 				    {
-				      fval = amp * read_sample(dp->chn_fd);
+				      fval = amp * (*(dp->dac_sample))(dp);
 				      revin[j] += fval * rev;
 				      buf[j] += MUS_FLOAT_TO_SAMPLE(fval);
 				    }
@@ -1470,7 +1563,7 @@ static int fill_dac_buffers(int write_ok)
 		  dp->cur_index = ind;
 		  break;
 		}
-	      if (dp->end != NO_END_SPECIFIED)
+	      if ((dp->end != NO_END_SPECIFIED) && (dp->end != 0))
 		{
 		  if ((dp->chn_fd->cb == NULL) ||
 		      ((dp->sp->speed_control_direction > 0) && 
@@ -1501,7 +1594,8 @@ static int fill_dac_buffers(int write_ok)
 		    stop_playing(dp, WITH_HOOK, PLAY_COMPLETE);
 		  else
 		    {
-		      if (dp->chn_fd->at_eof)
+		      if ((dp->chn_fd) &&
+			  (dp->chn_fd->at_eof))
 			{
 			  if (!(dp->expanding))
 			    stop_playing(dp, WITH_HOOK, PLAY_COMPLETE);
@@ -2328,6 +2422,10 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
   off_t end = NO_END_SPECIFIED;
   off_t *ends = NULL;
   play_process_t background;
+
+  if (XEN_PROCEDURE_P(samp_n))
+    return(C_TO_XEN_BOOLEAN(add_xen_to_play_list(samp_n)));
+
   if (XEN_OFF_T_P(end_n)) end = XEN_TO_C_OFF_T(end_n);
 #if USE_NO_GUI
   background = NOT_IN_BACKGROUND;
@@ -2432,7 +2530,7 @@ static XEN g_play(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN ed
   #endif
 
   #define H_play "(" S_play " :optional (start 0) snd chn sync end (pos -1) stop-proc out-chan): play snd or snd's channel chn starting at start. \
-'start' can also be a filename: " play_example ".  If 'sync' is true, all sounds syncd to snd are played. \
+'start' can also be a function or a filename: " play_example ".  If 'sync' is true, all sounds syncd to snd are played. \
 If 'end' is not given, " S_play " plays to the end of the sound.  If 'pos' is -1 or not given, the current edit position is \
 played."
 
@@ -2499,7 +2597,7 @@ static XEN g_play_and_wait(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_
 
   #define H_play_and_wait "(" S_play_and_wait " (start 0) snd chn syncd end (pos -1) stop-proc out-chan): \
 play snd or snd's channel chn starting at start \
-and waiting for the play to complete before returning.  'start' can also be a filename:\n  " play_and_wait_example
+and waiting for the play to complete before returning.  'start' can also be a function or a filename:\n  " play_and_wait_example
 
   return(g_play_1(samp_n, snd_n, chn_n, false, TO_C_BOOLEAN_OR_FALSE(syncd), end_n, edpos, S_play_and_wait, 6, stop_proc, out_chan));
 }

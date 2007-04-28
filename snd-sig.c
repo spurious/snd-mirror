@@ -769,7 +769,14 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
 
 /* -------- src -------- */
 
-Float src_input_as_needed(void *arg, int direction) 
+typedef struct {
+  mus_any *gen;
+  snd_fd *sf;
+  off_t sample;
+  int dir;
+} src_state;
+
+static Float src_input_as_needed(void *arg, int direction) 
 {
   src_state *sr = (src_state *)arg;
   snd_fd *sf;
@@ -783,7 +790,7 @@ Float src_input_as_needed(void *arg, int direction)
   return(read_sample(sf));
 }
 
-src_state *make_src(Float srate, snd_fd *sf, Float initial_srate)
+static src_state *make_src(Float srate, snd_fd *sf, Float initial_srate)
 {
   src_state *sr;
   if ((sinc_width(ss) > MUS_MAX_CLM_SINC_WIDTH) ||
@@ -799,7 +806,7 @@ src_state *make_src(Float srate, snd_fd *sf, Float initial_srate)
   return(sr);
 }
 
-src_state *free_src(src_state *sr)
+static src_state *free_src(src_state *sr)
 {
   mus_free(sr->gen);
   FREE(sr);

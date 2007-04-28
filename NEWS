@@ -39,7 +39,7 @@ tracks:
     make-track-frame-reader 
     make-track-sample-reader
     mix-track
-    play-track
+    play-track            play-mixes
     read-track-frame 
     read-track-sample
     retempo-track         scale-tempo
@@ -85,11 +85,11 @@ tracks:
     mix-locked?
     mix-speed-style
     mix-tag-position
-    pan-mix (mix.scm) and all its friends
 
   changed
     mix-frames -> mix-length
     delete-all-mixes -> silence-all-mixes
+    pan-mix (mix.scm) and all its friends
  
   added 
     edit-properties
@@ -111,17 +111,21 @@ tracks:
       env-mixes
       sync-all-mixes
       syncd-mixes
+      play-mixes
 
   moved mix-properties into C.
 
   "mix" function now handles one channel in and out and the position defaults to 0 (not the cursor)
 
+the 1st arg to "play" can be a function that produces samples to be sent to the DAC, or
+  controls other such processes -- see play-mixes in mix.scm for an example. 
 
-as always, infinite ruby and forth improvements thanks to Mike
+
+as always, infinite Ruby and Forth improvements thanks to Mike
 
 spokenword.scm thanks to Ville Koskinen
 
-checked: fftw 3.2a, cairo 1.4.2|4, sbcl 1.0.4, pango 1.16.2, Gauche 0.8.10
+checked: fftw 3.2a, cairo 1.4.2|4, sbcl 1.0.4, pango 1.16.2|4, Gauche 0.8.10
 
 
 Thanks!: Mike Scholz, Esben Stien, Michael Edwards, Ville Koskinen, "bigcab"
