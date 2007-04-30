@@ -30,27 +30,33 @@ static int completions(char *text)
   len = strlen(text);
 
   while ((e = Scm_HashIterNext(&iter)) != NULL)
-
     {
-      char *sym;
-      /* fprintf(stderr,"e: %p, value: %s %s\n", e, XEN_AS_STRING(e->value), XEN_AS_STRING(SCM_GLOC(e->value)->name)); */
-      sym = XEN_SYMBOL_TO_C_STRING(SCM_GLOC(e->value)->name);
-      if (strncmp(text, sym, len) == 0)
+      if (e->value) 
 	{
-	  matches++;
-	  add_possible_completion(sym);
-	  if (current_match == NULL)
-	    current_match = copy_string(sym);
-	  else 
+	  char *sym;
+	  /* fprintf(stderr,"e: %p, value: %s %s\n", e, XEN_AS_STRING(e->value), XEN_AS_STRING(SCM_GLOC(e->value)->name)); */
+#if GAUCHE_API_0_9
+	  sym = XEN_SYMBOL_TO_C_STRING(SCM_GLOC(SCM_DICT_VALUE(e))->name);
+#else
+	  sym = XEN_SYMBOL_TO_C_STRING(SCM_GLOC(e->value)->name);
+#endif
+	  if (strncmp(text, sym, len) == 0)
 	    {
-	      int j, curlen;
-	      curlen = snd_strlen(current_match);
-	      for (j = 0; j < curlen; j++)
-		if (current_match[j] != sym[j])
-		  {
-		    current_match[j] = '\0';
-		    break;
-		  }
+	      matches++;
+	      add_possible_completion(sym);
+	      if (current_match == NULL)
+		current_match = copy_string(sym);
+	      else 
+		{
+		  int j, curlen;
+		  curlen = snd_strlen(current_match);
+		  for (j = 0; j < curlen; j++)
+		    if (current_match[j] != sym[j])
+		      {
+			current_match[j] = '\0';
+			break;
+		      }
+		}
 	    }
 	}
     }

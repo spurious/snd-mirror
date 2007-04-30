@@ -1647,6 +1647,27 @@ XEN xen_gauche_eval_c_string(char *arg)
       result = Scm_EvalCString(arg, SCM_OBJ(Scm_UserModule()));
 #else
       result = Scm_EvalRec(Scm_ReadFromCString(arg), SCM_OBJ(Scm_UserModule()));
+
+      /* TODO: Gauche: use ScmPacket here for error reporting 
+
+      Scm_Eval -> -1 for error, packet arg has info
+
+      int Scm_LoadFromPort(ScmPort *port, int flags, ScmLoadPacket *result);
+      int Scm_Load(ScmPort *port, int flags, ScmLoadPacket *result);
+      int Scm_Require(ScmObj feature, int flags, ScmLoadPacket *result);
+      int Scm_Eval(ScmObj form, ScmObj env, ScmEvalPacket *packet);
+      int Scm_EvalCString(const char *form, ScmObj env, ScmEvalPacket *packet);
+      int Scm_Apply(ScmObj proc, ScmObj args, ScmEvalPacket *packet);
+      To make the new API behave as the old, pass SCM_LOAD_PROPAGATE_ERROR for flags and NULL for result.
+      typedef struct ScmEvalPacketRec {
+      ScmObj results[SCM_VM_MAX_VALUES];
+      int    numResults;
+      ScmObj exception;
+      ScmModule *module; 'Current module' after evaluation
+      } ScmEvalPacket;
+
+      */
+
 #endif
     }
   SCM_WHEN_ERROR 

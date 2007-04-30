@@ -1,7 +1,5 @@
 #!/bin/csh -f
 
-# TODO: GAUCHCE API choices
-
 # cp ~/dist/snd/snd.tar .
 # tar xf snd.tar
 
@@ -346,6 +344,28 @@ echo ' -------------------------------------------------------------------------
 echo ' ----                 --with-gauche                                          ---- '
 echo ' -------------------------------------------------------------------------------- '
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-gauche
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-gauche 'snd-motif"
+make allclean
+
+echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
+echo ' ----                 --with-gauche  API 0_8*                                ---- '
+echo ' -------------------------------------------------------------------------------- '
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include -DGAUCHE_API_0_8_8 -DGAUCHE_API_0_8_10" --quiet --with-gauche
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-gauche 'snd-motif"
+make allclean
+
+echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
+echo ' ----                 --with-gauche  API 0_9                                 ---- '
+echo ' -------------------------------------------------------------------------------- '
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include -DGAUCHE_API_0_9" --quiet --with-gauche
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-gauche 'snd-motif"

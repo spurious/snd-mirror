@@ -242,7 +242,7 @@
    (lambda ()
      (for-each
       (lambda (m)
-	(set! (mix-position m) (min 0 (+ (mix-position m) samps))))
+	(set! (mix-position m) (max 0 (+ (mix-position m) samps))))
       mix-list))))
 
 
@@ -454,7 +454,7 @@ panning operation."
 		   (list id))
 
 		 ;; mono to stereo
-		 (let ((id0 (mix name beg 0 index 0 (with-mix-tags) auto-delete))
+		 (let ((id0 (mix name beg 0 index 0 (with-mix-tags) #f))
 		       (id1 (mix name beg 0 index 1 (with-mix-tags) auto-delete)))
 		   (if (and (mix? id0)
 			    (mix? id1))
@@ -468,7 +468,7 @@ panning operation."
 	     (if (= receiving-chans 1)
 
 		 ;; stereo -> mono => scale or envelope both input chans into the output
-		 (let ((id0 (mix name beg 0 index 0 (with-mix-tags) auto-delete))
+		 (let ((id0 (mix name beg 0 index 0 (with-mix-tags) #f))
 		       (id1 (mix name beg 1 index 0 (with-mix-tags) auto-delete)))
 		   (if (and (mix? id0)
 			    (mix? id1))
@@ -478,9 +478,9 @@ panning operation."
 		   (list id0 id1))
 
 		 ;; stereo -> stereo => incoming chans are treated equally, each panned into outputs
-		 (let ((id00 (mix name beg 0 index 0 (with-mix-tags) auto-delete))
-		       (id01 (mix name beg 0 index 1 (with-mix-tags) auto-delete))
-		       (id10 (mix name beg 1 index 0 (with-mix-tags) auto-delete))
+		 (let ((id00 (mix name beg 0 index 0 (with-mix-tags) #f)) ; TODO: multichan deletion here (if auto-delete)
+		       (id01 (mix name beg 0 index 1 (with-mix-tags) #f))
+		       (id10 (mix name beg 1 index 0 (with-mix-tags) #f))
 		       (id11 (mix name beg 1 index 1 (with-mix-tags) auto-delete)))
 		   (if (and (mix? id00)
 			    (mix? id01)

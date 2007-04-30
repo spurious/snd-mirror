@@ -895,6 +895,9 @@ static Float next_mix(snd_fd *sf)
   return((sf->data[sf->loc++] * sf->fscaler) +
 	 read_mix_list_samples((mix_data *)(sf->mixes)));
 }
+/* if underlying data was scaled,and we added a mix, we couldn't share the existing scale, so
+ *   and mixes can be added after subsequent scaling, so we're constrained to use the mix-amps
+ */
 
 static Float previous_mix(snd_fd *sf)
 {
@@ -2487,6 +2490,23 @@ enum {ED_SIMPLE, ED_MIX_SIMPLE, ED_ZERO, ED_MIX_ZERO,
       ED_XRAMP, ED_XRAMP2, ED_XRAMP_RAMP, 
       ED_XRAMP_RAMP2, ED_XRAMP2_RAMP,
       ED_XRAMP_RAMP3, ED_XRAMP2_RAMP2,
+
+
+      /* SOMEDAY: MIX_XRAMP MIX_PTREE|_ZERO, perhaps other MIX_(X)RAMP_(X)RAMP... 
+	          RAMP_MIX is possible -- place ramp on the sum of the mixes and the direct:
+
+		  static Float next_ramp_one_mix(snd_fd *sf)
+		  {
+		    if (sf->loc > sf->last) return(next_sound(sf));
+		    return(((sf->data[sf->loc++] * sf->fscaler) + read_sample(((mix_data *)(sf->mixes))->sfs[0])) * next_ramp_value(sf));
+		    
+		    does fscaler behave correctly here or would we need another scale slot?
+		    see 6872 virtual_mix_ok
+		  }
+
+		  so RAMP|2|3|4_MIX|_ZERO XRAMP_MIX|_ZERO
+
+       */
 
       /* single ptree ops */
       ED_PTREE, ED_PTREE_RAMP, ED_PTREE_XRAMP, ED_PTREE_ZERO, ED_PTREE_RAMP2, ED_PTREE_RAMP3,
@@ -10473,25 +10493,22 @@ keep track of which files are in a given saved state batch, and a way to rename 
 
 /* -------------------- virtual mixes -------------------- */
 
-  /* TODO:
+  /* TODO: peak-envs after change [check all redisplays and maybe squelch cases]
+   * TODO: *.rb untracked
+   * TODO: *.fs untracked
+   * TODO: syncd mixes for stereo (automated that is via mix-drag-hook etc)
+   * TODO: extreme tests such as water.scm [much flashing as grf updates -- need to flush pointless redisplays]
+   * PERHAPS: mix-property display in dialog [add text widget?]
+   * TODO: snd-test test 19: edit-list->function
+   * TODO: 28 mult case gc bug?
+   * TODO: memlog: snd-edits.c[6135]: extend with zeros ed list not gc'd -- appears to come from g_ptree_channel?
+   * TODO: unlist and read can be called on fully freed xen-allocated readers (valtmp)
+   * TODO: mix-local show-waveform choice to reduce clutter
+   * PERHAPS: access to mix index to support stuff like filter mix (mix-home?)
 
-    peak-envs after change [check all redisplays and maybe squelch cases]
-    *.rb
-    *.fs
-    syncd mixes for stereo (automated that is via mix-drag-hook etc)
-    extreme tests such as water.scm [much flashing as grf updates -- need to flush pointless redisplays]
-    edit-list->function for mix changes
-    if mix-property, display upon tag click or in dialog [add? text widget?]
-    snd-tests
-      test 9: mix.scm list tests (and all the rest)
-           19: edit-list->function trouble
-           23: ;auto-delete mix (with-tag)? (46915)
-      memlog: snd-edits.c[6135]: extend with zeros ed list not gc'd -- appears to come from g_ptree_channel?
-      unlist and read can be called on fully freed xen-allocated readers (valtmp)
+   * what happens in ramp of zero? no-op in setup_ramp_fragments? -> env-channel is an edit
 
-    mix-local show-waveform choice to reduce clutter
-    access to mix index to support stuff like filter mix
-  */
+   */
 
 static int add_mix_op(int type)
 {
@@ -10793,7 +10810,7 @@ static void ripple_mixes_1(chan_info *cp, off_t beg, off_t len, off_t change, Fl
       (cp->edit_ctr > 0))
     {
       ed_list *ed;
-      int i, low_id = 0, high_id;
+      int i, low_id = 0, high_id; /* low_id confuses the compiler, but it will always get set below (current_states starts NULL etc) */
       mix_state **current_states = NULL;
 
       ed = cp->edits[cp->edit_ctr];
@@ -10889,7 +10906,8 @@ snd_fd *make_virtual_mix_reader(chan_info *cp, off_t beg, off_t len, int index, 
   */
   ind1 = len;
   sf->fscaler = scl * MUS_FIX_TO_FLOAT;
-  if (scl == 1.0)
+  if ((scl == 1.0) &&
+      (sf->fscaler == 1.0))
     {
       sf->runf = next_sample_value_unscaled;
       sf->rev_runf = previous_sample_value_unscaled;

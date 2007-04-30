@@ -1386,7 +1386,7 @@ static XEN g_set_mix_name(XEN n, XEN val)
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ARG_2, S_setB S_mix_name, "a string");
   id = XEN_TO_C_INT(n);
   if (mix_exists(id))
-    mix_set_name_from_id(id, XEN_TO_C_STRING(val));
+    mix_set_name_from_id(id, (XEN_STRING_P(val) ? XEN_TO_C_STRING(val) : NULL));
   else return(snd_no_such_mix_error(S_setB S_mix_name, n));
   return(val);
 }
@@ -1751,6 +1751,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
   if (name) FREE(name);
 
   name = mus_expand_filename(XEN_TO_C_STRING(file));
+
   if (!(mus_file_probe(name)))
     return(snd_no_such_file_error(S_mix, file));
 
@@ -1826,6 +1827,8 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 	  len = mus_file_to_array(name, file_channel, 0, len, data); 
 	  id = mix_buffer_with_tag(cp, data, beg, len, origin);
 	  FREE(data);
+	  if (delete_file)
+	    snd_remove(name, REMOVE_FROM_CACHE);
 	}
       else 
 	{

@@ -1082,7 +1082,6 @@ bool add_mix_to_play_list(mix_state *ms, chan_info *cp, off_t beg_within_mix)
 		 (begin
              (set! samp (1+ samp)) 
              (* .5 (oscil osc)))))))
-	     TODO: DOC: TEST: play-mixes play-sine(s)
 	     SOMEDAY: xen play + snd/chn = use those controls
  */
 
@@ -2543,6 +2542,7 @@ static XEN g_play_channel(XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos, XEN
   #define H_play_channel "(" S_play_channel " :optional (beg 0) (dur len) snd chn (pos -1) stop-proc out-chan): \
 play snd or snd's channel chn starting at beg for dur samps."
   XEN end = XEN_FALSE;
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_play_channel, "a number");
   if (XEN_INTEGER_P(dur))
     {
       off_t len;
