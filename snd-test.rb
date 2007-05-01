@@ -535,7 +535,6 @@ end
 def finish_snd_test
   $overall_start_time.stop
   Snd.regions.apply(:forget_region)
-  Snd.tracks.apply(:free_track)
   set_view_files_sort(0)
   clear_sincs
   stop_playing
@@ -3078,7 +3077,8 @@ def test074
     end
   end
   mus_audio_mixer_write(Mus_audio_microphone, Mus_audio_amp, 0, make_vct(1))
-  ind = open_sound("/usr/local/" + Dir.pwd + "/2.snd")
+#  ind = open_sound("/usr/local/" + Dir.pwd + "/2.snd")
+  ind = open_sound("2.snd")
   sd1 = samples2sound_data(12000, 10, ind, 0)
   vc1 = sound_data2vct(sd1)
   vc2 = samples2vct(12000, 10, ind, 0)
@@ -7147,7 +7147,6 @@ def test105
   fd = make_sample_reader(0)
   snd_display("sample_reader: mix %s?", fd) if mix_sample_reader?(fd)
   snd_display("sample_reader: region %s?", fd) if region_sample_reader?(fd)
-  snd_display("sample_reader: track %s?", fd) if track_sample_reader?(fd)
   snd_display("sample_reader: normal %s?", fd) unless sample_reader?(fd)
   snd_display("sample_reader: position %s?", fd) if sample_reader_position(fd).nonzero?
   free_sample_reader(fd)
@@ -20472,10 +20471,6 @@ end
 
 # ---------------- test 09: mix ----------------
 
-def track_end(id)
-  track_position(id) + track_frames(id) - 1
-end
-
 def test009
   new_index = new_sound("hiho.wave", Mus_next, Mus_bshort, 22050, 1)
   select_sound(new_index)
@@ -20487,17 +20482,13 @@ def test009
   end
   view_files_dialog
   pos = mix_position(mix_id)
-  len = mix_frames(mix_id)
-  anc = mix_tag_position(mix_id)
+  len = mix_length(mix_id)
   spd = mix_speed(mix_id)
-  spdstyle = mix_speed_style(mix_id)
-  trk = mix_track(mix_id)
   snd, chn = mix_home(mix_id)[0, 2]
   nam = mix_name(mix_id)
   amp = mix_amp(mix_id, 0)
   mr = make_mix_sample_reader(mix_id)
   snd_display("%s not mix_sample_reader?", mr) unless mix_sample_reader?(mr)
-  snd_display("mix_sample_reader: track %s?", mr) if track_sample_reader?(mr)
   snd_display("mix_sample_reader: region %s?", mr) if region_sample_reader?(mr)
   snd_display("mix_sample_reader: normal %s?", mr) if sample_reader?(mr)
   if (res = sample_reader_position(mr)).nonzero?
@@ -20530,25 +20521,17 @@ def test009
   free_sample_reader(mr)
   #
   snd_display("mix_position: %d?", pos) if pos != 100
-  snd_display("mix_frames: %d?", len) if len != 41623
-  snd_display("mix_tag_position: %d?", anc) if anc.nonzero?
-  snd_display("mix_track: %d?", trk) if trk.nonzero?
+  snd_display("mix_length: %d?", len) if len != 41623
   snd_display("snd mix_home: %d?", snd) if snd != new_index
   snd_display("chn mix_home: %d?", chn) if chn.nonzero?
   snd_display("mix_amp: %s?", amp) if fneq(amp, 1.0)
   snd_display("mix_speed: %s?", spd) if fneq(spd, 1.0)
   snd_display("mix_name: %s?", nam) unless nam.null?
-  if spdstyle != speed_control_style
-    snd_display("mix_speed_style: %s %s", spdstyle, speed_control_style)
-  end
   Snd.catch(:mus_error, lambda do |args| snd_display("can\'t play mix: %s", args) end) do
     play_mix(mix_id)
   end
   Snd.catch(:mus_error, lambda do |args| snd_display("can\'t play mix from 1000: %s", args) end) do
     play_mix(mix_id, 1000)
-  end
-  if (res = Snd.catch do set_mix_track(mix_id, -1) end).first != :out_of_range
-    snd_display("set_mix_track -1: %s (%s)", res.inspect, mix_track(mix_id))
   end
   set_mix_name(mix_id, "test-mix")
   if (res = mix_name(mix_id)) != "test-mix" then snd_display("mix_name set: %s?", res) end
@@ -20561,38 +20544,6 @@ def test009
   set_mix_position(mix_id, 200)
   set_mix_amp(mix_id, 0, 0.5)
   set_mix_speed(mix_id, 2.0)
-  set_mix_speed_style(mix_id, Speed_control_as_ratio)
-  if (res = mix_speed_style(mix_id)) != Speed_control_as_ratio
-    snd_display("set_mix_speed_style: %s", res)
-  end
-  if (res = Snd.catch do set_mix_speed_style(mix_id, 123123) end).first != :out_of_range
-    snd_display("set_mix_speed_style bad arg: %s", res.inspect)
-  end
-  trk = make_track(mix_id)
-  if (res = Snd.catch do play_track(123123) end).first != :no_such_track
-    snd_display("play_track bad track: %s", res.inspect)
-  end
-  if (res = Snd.catch do play_track(123123, true) end).first != :no_such_track
-    snd_display("play_track bad track true: %s", res.inspect)
-  end
-  if (res = Snd.catch do play_track(123123, 0) end).first != :no_such_track
-    snd_display("play_track bad track index: %s", res.inspect)
-  end
-  if (res = Snd.catch do
-        mix("oboe.snd", 0, 0, sounds.car, 0, false, false, 123123)
-      end).first != :no_such_track
-    snd_display("mix bad track index: %s", res.inspect)
-  end
-  if (res = Snd.catch do
-        mix_vct(Vct.new(3, 0.1), 0, sounds.car, 0, true, "bad mix-vct", 123123)
-      end).first != :no_such_track
-    snd_display("mix_vct bad track index: %s", res.inspect)
-  end
-  if (res = Snd.catch do track(trk, 123) end).first != :no_such_channel
-    snd_display("mix_vct bad track index: %s", res.inspect)
-  end
-  play_track(trk)
-  set_mix_tag_position(mix_id, 30)
   set_mix_amp_env(mix_id, 0, [0, 0, 1, 1])
   val = mix_amp_env(mix_id, 0)
   set_mix_amp_env(mix_id, 0, mix_amp_env(mix_id, 0))
@@ -20602,16 +20553,12 @@ def test009
   set_mix_tag_y(mix_id, 20)
   pos = mix_position(mix_id)
   spd = mix_speed(mix_id)
-  trk = mix_track(mix_id)
   amp = mix_amp(mix_id, 0)
   my = mix_tag_y(mix_id)
-  anc = mix_tag_position(mix_id)
   snd_display("set_mix_position: %d?", pos) if pos != 200
   snd_display("set_mix_speed: %s?", spd) if fneq(spd, 2.0)
-  snd_display("set_mix_track: %d?", trk) unless track?(trk)
   snd_display("set_mix_mix_tag_y: %d?", my) if my != 20
   snd_display("set_mix_amp: %s?", amp) if fneq(amp, 0.5)
-  snd_display("set_mix_tag_position: %d?", anc) if anc != 30
   if (res = mix_amp_env(mix_id, 0)) != [0, 0, 1, 1]
     snd_display("set_mix_amp_env: %s?", res)
   end
@@ -20649,94 +20596,6 @@ def test009
   update_time_graph
   set_mix_waveform_height(20)
   revert_sound(new_index)
-  # 
-  # now track tests (mix.rb)
-  # 
-  trk = make_track
-  unless (res = track_name(trk)).null? then snd_display("track_name default: %s?", res) end
-  set_track_name(trk, "test-track")
-  if (res = track_name(trk)) != "test-track" then snd_display("track_name set: %s?", res) end
-  id = track_name2id("test-track")
-  if id != trk then snd_display("track_name2id: %s %s?", id, trk) end
-  set_track_name(trk, "test-track-again")
-  if (res = track_name(trk)) != "test-track-again" then snd_display("track_name again: %s?",res) end
-  set_track_name(trk, false)
-  unless (res = track_name(trk)).null? then snd_display("track_name false: %s?", res) end
-  mix_ids = make_array(6) do |i| mix("oboe.snd", i * 1000) end
-  set_mix_track(mix_ids[0], trk)
-  set_mix_track(mix_ids[2], trk)
-  set_mix_track(mix_ids[4], trk)
-  if (res = track_position(trk)).nonzero?
-    snd_display("track_position: %d?", res)
-  end
-  mr = make_track_sample_reader(trk)
-  if mr.to_s[0, 24] != "#<track-sample-reader tr"
-    snd_display("track sample_reader actually got: [%s]", mr.to_s[0, 24])
-  end
-  if (res = sample_reader_position(mr)) != 0
-    snd_display("track sample_reader position: %d?", res)
-  end
-  snd_display("track sample_reader at end? %s", mr) if sample_reader_at_end?(mr)
-  if (res = sample_reader_home(mr)) != [trk, 0]
-    snd_display("track %s home: %s?", mr, res)
-  end
-  snd_display("track sample_reader: mix %s?", mr) if mix_sample_reader?(mr)
-  snd_display("track sample_reader: region %s?", mr) if region_sample_reader?(mr)
-  snd_display("track sample_reader: normal %s?", mr) if sample_reader?(mr)
-  free_sample_reader(mr)
-  #
-  curend = track_end(trk)
-  curframes = track_frames(trk)
-  curmixpos = track(trk).map do |m| mix_position(m) end
-  curmixframes = track(trk).map do |m| mix_frames(m) end
-  set_track_position(trk, 500)
-  if (res = track_position(trk)) != 500
-    snd_display("set_track_position: %d?", res)
-  end
-  if (res = mix_position(mix_ids[0])) != 500
-    snd_display("track_position 0 =  %d?", res)
-  end
-  if (res = mix_position(mix_ids[1])) != 1000
-    snd_display("track_position 1 =  %d?", res)
-  end
-  if (res = mix_position(mix_ids[4])) != 4500
-    snd_display("track_position 4 =  %d?", res)
-  end
-  unless (track_end(trk) - (curend + 500)).abs < 2
-    snd_display("track_end: %d (cur+500: %d, %d, %d + %d -> %d\n# %s\n# %s\n# %s\n# %s\n# %s)?",
-                track_end(trk), curend + 500, curframes,
-                track_position(trk), track_frames(trk),
-                track_position(trk) + track_frames(trk) -1,
-                track(trk),
-                track(trk).map { |m| mix_frames(m) },
-                track(trk).map { |m| mix_position(m) },
-                curmixpos, curmixframes)
-  end
-  set_track_amp(trk, 0.5)
-  snd_display("set_track_amp: %s?", track_amp(trk)) if fneq(track_amp(trk), 0.5)
-  set_track_amp(trk, track_amp(trk) + 0.25)
-  snd_display("incf track_amp: %s?", track_amp(trk)) if fneq(track_amp(trk), 0.75)
-  transpose_track(trk, 12)
-  snd_display("transpose_track: %s?", track_speed(trk)) if fneq(track_speed(trk), 2.0)
-  retempo_track(trk, 2.0)
-  if track_frames(trk) != ((4000 + 50828) / 2)
-    snd_display("track_tempo: %d (%d, %s %s)?",
-                track_frames(trk), (4000 + 50828) / 2,
-                track(trk),
-                track(trk).map { |m| mix_frames(m) })
-  end
-  set_track_color(trk, make_color_with_catch(0.8, 0.8, 0.8))
-  trk2 = make_track
-  set_mix_track(mix_ids[1], trk2)
-  set_mix_track(mix_ids[3], trk2)
-  set_track_color(trk2, make_color_with_catch(0.2, 0.8, 0.0))
-  t2 = track2vct(trk2)
-  t3 = mix2vct(mix_ids[5])
-  if fneq(t2[1000], t3[1000]) or fneq(t3[1000], 0.0328369)
-    snd_display("track2vct: %s, mix2vct: %s (0.0328369)?", t2[1000], t3[1000])
-  end
-  set_track_amp_env(trk, [0, 0, 1, 1])
-  play_and_wait(0, false, false)
   #
   v1 = envelope_interp(1.0, [0, 0, 2.0, 1.0])
   v2 = envelope_interp(1.0, [0, 0.0, 1, 1.0, 2, 0.0])
@@ -20767,306 +20626,6 @@ def test009
 end
 
 def test019
-  ind = new_sound("new.snd")
-  trk33 = make_track
-  mxs = make_array(10) do |i|
-    v = make_vct(1, i * 0.05)
-    if mix?(m = mix_vct(v, i, ind, 0))
-      set_mix_track(m, trk33)
-    else
-      snd_display("mix_vct at %d failed?", i)
-      break
-    end
-    m
-  end
-  tr = make_track_sample_reader(trk33)
-  tr1 = make_track_sample_reader(trk33, true, 5)
-  10.times do |i|
-    if fneq(val = (i.odd? ? read_track_sample(tr) : read_track_sample(tr)), i * 0.05)
-      snd_display("read track at %d: %s?", i, val)
-      break
-    end
-  end
-  if fneq(val = read_track_sample(tr1), 0.05 * 5)
-    snd_display("track_sample_reader withbeg: %s %s %s?", val, 0.05 * 5, tr1)
-  end
-  free_sample_reader(tr)
-  free_sample_reader(tr1)
-  save_sound(ind)
-  snd_display("saved mixes not re-activated?") unless mix?(mxs[0])
-  close_sound(ind)
-  #
-  ind = open_sound("oboe.snd")
-  open_readers = make_array(100)
-  mix1 = mix_vct(vct(0.1, 0.2, 0.3), 120, ind, 0, true, "origin!")
-  mix2 = mix_vct(vct(0.1, 0.2, 0.3), 1200, ind, 0, true)
-  mix3 = mix_vct(vct(0.1, 0.2, 0.3), 12000, ind, 0, true)
-  trk123 = make_track
-  reg1 = make_region(200, 300, ind, 0)
-  set_mix_track(mix1, trk123)
-  set_mix_track(mix2, trk123)
-  set_mix_track(mix3, trk123)
-  $sample_reader_tests.times do |i|
-    r = random(100)
-    case random(4)
-    when 0
-      unless sample_reader?(open_readers[r] = make_sample_reader(random(30000), ind, 0))
-        snd_display("sample_reader? %s?", open_readers[r])
-      end
-      next_sample(open_readers[r])
-      if (res = sample_reader_home(open_readers[r])) != [ind, 0]
-        snd_display("sample_reader_home %s?", res)
-      end
-    when 1
-      unless region_sample_reader?(open_readers[r] = make_region_sample_reader(random(90), reg1))
-        snd_display("region_sample_reader? %s?", open_readers[r])
-      end
-      next_sample(open_readers[r])
-    when 2
-      unless mix_sample_reader?(open_readers[r] = make_mix_sample_reader(mix1))
-        snd_display("mix_sample_reader? %s?", open_readers[r])
-      end
-      if fneq(res = read_mix_sample(open_readers[r]), 0.1)
-        snd_display("read_mix_sample: %s?", res)
-      end
-    else
-      unless track_sample_reader?(open_readers[r] = make_track_sample_reader(trk123))
-        snd_display("track_sample_reader? %s?", open_readers[r])
-      end
-      if fneq(res = read_track_sample(open_readers[r]), 0.1)
-        snd_display("read_track_sample: %s?", res)
-      end
-    end
-    if random(1.0) > 0.25
-      rr = random(100)
-      if open_readers[rr]
-        if sample_reader?(open_readers[rr])
-          free_sample_reader(open_readers[rr])
-        elsif mix_sample_reader?(open_readers[rr])
-          free_sample_reader(open_readers[rr])
-        elsif track_sample_reader?(open_readers[rr])
-          free_sample_reader(open_readers[rr])
-        end
-      end
-      open_readers[rr] = false
-    end
-  end
-  open_readers.clear
-  close_sound(ind)
-  #
-  id = open_sound("oboe.snd")
-  make_selection(1000, 2000, id, 0)
-  mix_id = mix_selection(3000, id, 0)
-  set_mix_amp(mix_id, 0, 0.5)
-  snd_display("mix_amp 0.5: %s?", mix_amp(mix_id, 0)) if fneq(mix_amp(mix_id, 0), 0.5)
-  scale_by(0.5)
-  if (res = Snd.catch do set_mix_amp(mix_id, 0, 1.0) end).first != :no_such_mix
-    snd_display("set locked mix amp: %s", res.inspect)
-  end
-  if (res = Snd.catch do set_mix_position(mix_id, 10) end).first != :no_such_mix
-    snd_display("set locked mix position: %s", res.inspect)
-  end
-  if (res = Snd.catch do set_mix_speed(mix_id, 1.5) end).first != :no_such_mix
-    snd_display("set locked mix speed: %s", res.inspect)
-  end
-  if (res = Snd.catch do set_mix_amp_env(mix_id,0 , [0, 0, 1, 1]) end).first != :no_such_mix
-    snd_display("set locked mix amp env: %s", res.inspect)
-  end
-  undo_edit
-  close_sound(id)
-  #
-  set_print_length(30)
-  index = new_sound("test.snd")
-  v1 = make_vct(1, 0.1)
-  v2 = make_vct(2, 0.2)
-  v3 = make_vct(3, 0.3)
-  id1 = [0, 10, 20].map do |start| mix_vct(v1, start) end
-  id2 = [1, 12, 23].map do |start| mix_vct(v2, start) end
-  id3 = [2, 14, 26].map do |start| mix_vct(v3, start) end
-  trk1 = make_track
-  unless vequal(res = channel2vct,
-                vct(0.1, 0.2, 0.5, 0.3, 0.3, 0, 0, 0, 0, 0, 0.1, 0, 0.2, 0.2, 0.3,
-                    0.3, 0.3, 0, 0, 0, 0.1, 0, 0, 0.2, 0.2,  0, 0.3, 0.3, 0.3))
-    snd_display("mix tests off to a bad start: %s?", res)
-  end
-  unless vequal(res = mix2vct(id2[0]), vct(0.2, 0.2))
-    snd_display("mix2vct of 0.2: %s?", res)
-  end
-  set_mix_track(id1[0], trk1)
-  tr1 = trk1
-  if (res = track(tr1)) != [id1[0]]
-    snd_display("1 track2%s %s?", res, [id1[0]])
-  end
-  if (res = track_position(tr1)) != mix_position(id1[0])
-    snd_display("1 track_position %s %s (%s)?", tr1, res, mix_position(id1[0]))
-  end
-  if (res1 = track_frames(tr1)) != (res2 = mix_frames(id1[0]))
-    snd_display("1 track_frames %s frames: %s (mix frames: %s)?", track(tr1), res1, res2)
-  end
-  if (res1 = track_end(tr1)) != (res2 = mix_position(id1[0])) + (res3 = mix_frames(id1[0])) - 1
-    snd_display("1 track_end %s %s %s?", res1, res2, res3)
-  end
-  if fneq(res1 = track_amp(tr1), res2 = mix_amp(id1[0], 0))
-    snd_display("1 track_amp %s %s?", res1, res2)
-  end
-  if fneq(res1 = track_speed(tr1), res2 = mix_speed(id1[0]))
-    snd_display("1 track_speed %s %s?", res1, res2)
-  end
-  if (res1 = track_speed_style(tr1)) != (res2 = speed_control_style)
-    snd_display("1 track_speed_style: %s %s?", res1, res2)
-  end
-  set_track_speed_style(tr1, Speed_control_as_semitone)
-  if (res = track_speed_style(tr1)) != Speed_control_as_semitone
-    snd_display("1 set_track_speed_style: %s %s?", res)
-  end
-  if (res = Snd.catch do set_track_speed_style(tr1, 123) end).first != :out_of_range
-    snd_display("set_track_speed_style bad val: %s", res.inspect)
-  end
-  unless vequal(res1 = track2vct(tr1), res2 = mix2vct(id1[0]))
-    snd_display("1 track2vct %s %s?", res1, res2)
-  end
-  set_track_amp(tr1, 0.0)
-  unless vequal(res = channel2vct,
-                vct(0, 0.2, 0.5, 0.3, 0.3, 0, 0, 0, 0, 0, 0.1, 0, 0.2, 0.2, 0.3,
-                    0.3, 0.3, 0, 0, 0, 0.1, 0, 0, 0.2, 0.2, 0, 0.3, 0.3, 0.3))
-    snd_display("first mix deleted: %s?", res)
-  end
-  undo_edit
-  if fneq(res = mix_amp(id1[0], 0), 1.0)
-    snd_display("1 undo delete_track amp: %s?", res)
-  end
-  set_track_amp(tr1, 2.0)
-  unless vequal(res = channel2vct,
-                vct(0.2, 0.2, 0.5, 0.3, 0.3, 0, 0, 0, 0, 0, 0.1, 0, 0.2, 0.2, 0.3,
-                    0.3, 0.3, 0, 0, 0, 0.1, 0, 0, 0.2, 0.2, 0, 0.3, 0.3, 0.3))
-    snd_display("1 set_track_amp: %s?", res)
-  end
-  set_track_position(tr1, 8)
-  if (res = track_position(tr1)) != 8
-    snd_display("moved track 1: %s?", track_position(tr1))
-  end
-  unless vequal(res = channel2vct,
-                vct(0, 0.2, 0.5, 0.3, 0.3, 0, 0, 0, 0.2, 0, 0.1, 0, 0.2, 0.2, 0.3,
-                    0.3, 0.3, 0, 0, 0, 0.1, 0, 0, 0.2, 0.2, 0, 0.3, 0.3, 0.3))
-    snd_display("1 set_track_position 8: %s?", res)
-  end
-  reverse_track(tr1)
-  unless vequal(res = channel2vct,
-                vct(0, 0.2, 0.5, 0.3, 0.3, 0, 0, 0, 0.2, 0, 0.1, 0, 0.2, 0.2, 0.3,
-                    0.3, 0.3, 0, 0, 0, 0.1, 0, 0, 0.2, 0.2, 0, 0.3, 0.3, 0.3))
-    snd_display("1 reverse track: %s?", res)
-  end
-  # 
-  trk2 = make_track(id1[1], id2[1], id3[1])
-  tr2 = trk2
-  if (res = track_position(tr2)) != mix_position(id1[1])
-    snd_display("2 track_position %s %s (%s)?", tr2, res, mix_position(id1[1]))
-  end
-  set_track_amp(tr2, 2.0)
-  unless vequal(res = channel2vct,
-                vct(0, 0.2, 0.5, 0.3, 0.3, 0, 0, 0, 0.2, 0, 0.2, 0, 0.4, 0.4, 0.6,
-                    0.6, 0.6, 0, 0, 0, 0.1, 0, 0, 0.2, 0.2, 0, 0.3, 0.3, 0.3))
-    snd_display("2 set_track_amp: %s?", res)
-  end
-  set_track_position(tr2, track_position(tr2) - 1)
-  revert_sound(index)
-  #
-  id1 = [0, 10, 20].map do |start| mix_vct(v1, start) end
-  id2 = [1, 12, 23].map do |start| mix_vct(v2, start) end
-  id3 = [2, 14, 26].map do |start| mix_vct(v3, start) end
-  trk1 = make_track
-  unless vequal(res = channel2vct,
-                vct(0.1, 0.2, 0.5, 0.3, 0.3, 0, 0, 0, 0, 0, 0.1, 0, 0.2, 0.2, 0.3,
-                    0.3, 0.3, 0, 0, 0, 0.1, 0, 0, 0.2, 0.2, 0, 0.3, 0.3, 0.3))
-    snd_display("mix tests 2nd start: %s?", res)
-  end
-  tr1 = make_track(*id1)
-  tr2 = make_track(*id3)
-  old_pos = track(tr1).map do |m| mix_position(m) end
-  if old_pos != (res = id1.map do |m| mix_position(m) end)
-    snd_display("old_pos: %s %s?", old_pos, res)
-  end
-  retempo_track(tr1, 2)
-  unless vequal(res = channel2vct,
-                vct(0.1, 0.2, 0.5, 0.3, 0.3, 0.1, 0, 0, 0, 0, 0.1, 0, 0.2, 0.2, 0.3,
-                    0.3, 0.3, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0, 0.3, 0.3, 0.3))
-    snd_display("3 track-tempo 0.5: %s -> %s, %s?",
-                old_pos, track(tr1).map do |m| mix_position(m) end, res)
-  end
-  set_track_amp(tr1, 0.0)
-  unless vequal(res = channel2vct,
-                vct(0, 0.2, 0.5, 0.3, 0.3, 0, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0.3,
-                    0.3, 0.3, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0, 0.3, 0.3, 0.3))
-    snd_display("3 track_amp 0: %s?", res)
-  end
-  delete_all_mixes
-  close_sound(index)
-  #
-  ind = open_sound("2.snd")
-  md = mix("1a.snd", 1000, 0, ind, 1, true)
-  snd_display("maxamp after mix into chan 2: %s?", maxamp(ind, 1)) if fneq(maxamp(ind, 1), 0.1665)
-  set_mix_amp(md, 0, 0.0)
-  if (res1 = edits(ind, 0)) != [0, 0] or (res2 = edits(ind, 1) != [2, 0])
-    snd_display("mix into chan2 zeroed: %s %s?", res1, res2)
-  end
-  if fneq(res = maxamp(ind, 1), 0.066)
-    snd_display("maxamp afer mix zeroed into chan 2: %s?", res)
-  end
-  set_mix_amp(md, 0, 0.5)
-  if fneq(res = maxamp(ind, 1), 0.116)
-    snd_display("maxamp afer mix 0.5 into chan 2: %s?", res)
-  end
-  set_mix_speed(md, 2.0)
-  if fneq((res1 = mix_frames(md)) / (res2 = mus_sound_frames("1a.snd")).to_f, 0.5)
-    snd_display("mix srate chan 2: %s %s?", res1, res2)
-  end
-  update_time_graph
-  set_mix_speed(md, 0.5)
-  update_time_graph
-  set_mix_amp(md, 0, 1.0)
-  if fneq(res = maxamp(ind, 1), 0.116)
-    snd_display("non-sync mix_speed: %s?", res)
-  end
-  set_mix_amp_env(md, 0, [0, 0, 1, 1, 2, 0])
-  update_time_graph
-  set_mix_speed(md, 1.0)
-  update_time_graph
-  revert_sound(ind)
-  set_sync(1, ind)
-  m0 = maxamp(ind, 0)
-  m1 = maxamp(ind, 1)
-  len = frames(ind, 0)
-  md = mix("2.snd")
-  if frames(ind, 0) != len or fneq(maxamp(ind, 0), 2 * m0) or  fneq(maxamp(ind, 1), 2 * m1)
-    snd_display("mix twice synced: m0: %s -> %s, m1: %s -> %s, len: %d -> %d?",
-                m0, maxamp(ind, 0), m1, maxamp(ind, 1), len, frames(ind, 0))
-  end
-  if provided?(:snd_motif) and provided?(:xm)
-    wid = view_mixes_dialog
-    if wid != (res = dialog_widgets[16])
-      snd_display("view_mixes_dialog -> %s %s?", wid, res)
-    end
-    mixd = dialog_widgets[16]
-    spdscr = find_child(mixd, "mix-speed")
-    dragged = false
-    $mix_drag_hook.add_hook!("snd-test") do |n| dragged = n end
-    cb = RXmScrollBarCallbackStruct()
-    Rset_value(cb, 650)
-    Rset_event(cb, RXEvent())
-    RXtCallCallbacks(spdscr, RXmNvalueChangedCallback, cb)
-    xy = mix_tag_xy(md)
-    cwid = channel_widgets(ind, 0)[0]
-    x = xy[0] + 1
-    y = xy[1] - 2
-    pos = mix_position(md)
-    focus_widget(cwid)
-    drag_event(cwid, 1, 0, x, y, x + 50, y)
-    force_event
-    RXtUnmanageChild(mixd)
-    $mix_drag_hook.reset_hook!
-  end
-  $mix_release_hook.reset_hook!
-  close_sound(ind)
 end
 
 def test029
@@ -21219,17 +20778,6 @@ def test029
     snd_display("mix_position m2[3]: %s?", res)
   end
   undo_edit(2)
-  ntrack = make_track
-  set_mix_track(m1, ntrack)
-  set_mix_track(m2, ntrack)
-  reverse_track(ntrack)
-  if (res = mix_position(m1)) != 123
-    snd_display("mix_position m1[4]: %s?", res)
-  end
-  if (res = mix_position(m2)) != 321
-    snd_display("mix_position m2[4]: %s?", res)
-  end
-  undo_edit
   set_mix_position(m2, 500)
   undo_edit
   scale_channel(0.5, 1000, 100)
@@ -21350,13 +20898,7 @@ end
 
 def check_copied_mix(original, copy, pos)
   snd_display("copy_mix returns bad mix: %s?", copy) unless mix?(copy)
-  if (res = mix_track(copy)).nonzero?
-    snd_display("copy_mix set track: %s %s?", res, mix_track(original))
-  end
-  if (res1 = mix_tag_position(copy)) != (res2 = mix_tag_position(original))
-    snd_display("copy_mix anchor: %s %s?", res1, res2)
-  end
-  if (res1 = mix_frames(copy)) != (res2 = mix_frames(original))
+  if (res1 = mix_length(copy)) != (res2 = mix_length(original))
     snd_display("copy_mix frames: %s %s?", res1, res2)
   end
   if (res = mix_position(copy)) != pos
@@ -21364,9 +20906,6 @@ def check_copied_mix(original, copy, pos)
   end
   if (res1 = mix_speed(copy)) != (res2 = mix_speed(original))
     snd_display("copy_mix speed: %s %s?", res1, res2)
-  end
-  if (res1 = mix_speed_style(copy)) != (res2 = mix_speed_style(original))
-    snd_display("copy_mix speed_style: %s %s?", res1, res2)
   end
   if (res1 = mix_maxamp(copy)) != (res2 = mix_maxamp(original))
     snd_display("copy_mix maxamp: %s %s?", res1, res2)
@@ -21467,8 +21006,6 @@ def test039
     mix1 = mix_vct([0.1, 0.2, 0.3].to_vct, 120, ind, 0, true, "origin!")
     mix2 = mix_vct([0.1, 0.2, 0.3].to_vct, 1200, ind, 0, true)
     mix3 = mix_vct([0.1, 0.2, 0.3].to_vct, 12000, ind, 0, true)
-    set_mix_track(mix1, make_track)
-    set_mix_track(mix3, mix_track(mix1))
     if mixes(ind, 0) != [mix1, mix2, mix3]
       snd_display("mixes: %s %s?", mixes(ind, 0), [mix1, mix2, mix3])
     end
@@ -21480,8 +21017,6 @@ def test039
     mixd = dialog_widgets[16]
     nxt = find_child(mixd, "Next")
     prev = find_child(mixd, "Previous")
-    tplay = find_child(mixd, "mix-track-play")
-    click_button(tplay)
     force_event
     if (not RXtIsSensitive(nxt)) or RXtIsSensitive(prev)
       snd_display("mix_dialog next/previous: %s %s %s %s?",
@@ -21524,7 +21059,6 @@ def test039
   set_mix_amp_env(mix1, 0, [0, 0, 1, 1])
   copy_mix1 = copy_mix(mix1, 60)
   check_copied_mix(mix1, copy_mix1, 60)
-  set_mix_tag_position(mix1, 2)
   copy_mix1 = copy_mix(mix1, 80)
   check_copied_mix(mix1, copy_mix1, 80)
   set_mix_position(mix1, 100)
@@ -21562,7 +21096,7 @@ def test039
   set_mix_color(old_color)
   save_mix(mix1, "test.snd")
   ind1 = open_sound("test.snd")
-  if (res1 = frames(ind1)) != (res2 = mix_frames(mix1))
+  if (res1 = frames(ind1)) != (res2 = mix_length(mix1))
     snd_display("save_mix frames: %s %s?", res1, res2)
   end
   unless vequal(res1 = channel2vct(0, 10, ind1), res2 = mix2vct(mix1))
@@ -21573,10 +21107,6 @@ def test039
   # 
   ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "lock mix tests", 300)
   mix1 = mix_vct(Vct.new(10, 0.5), 10)
-  delete_mix(mix1)
-  if fneq(res = maxamp(ind, 0), 0.0)
-    snd_display("delete_mix maxamp: %s?", res)
-  end
   undo_channel(1, ind, 0)
   if fneq(res = maxamp(ind, 0), 0.5)
     snd_display("undelete mix maxamp: %s?", res)
@@ -21594,2506 +21124,33 @@ def test039
   if fneq(res = maxamp(ind, 0), 0.5)
     snd_display("reundelete mix maxamp: %s?", res)
   end
-  track1 = make_track(mix1)
-  delete_track(track1)
-  if fneq(res = maxamp(ind, 0), 0.0)
-    snd_display("delete_track maxamp: %s?", res)
-  end
-  undo_edit
-  if fneq(res = maxamp(ind, 0), 0.5)
-    snd_display("undelete track maxamp: %s?", res)
-  end
-  redo_edit
-  if fneq(res = maxamp(ind, 0), 0.0)
-    snd_display("redelete track maxamp: %s?", res)
-  end
   revert_sound(ind)
   mix2 = mix_vct(Vct.new(10, 0.5), 10)
-  track2 = make_track(mix2)
-  set_track_amp_env(track2, [0, 0, 1, 1])
-  delete_track(track2)
-  if fneq(res = maxamp(ind, 0), 0.0)
-    snd_display("delete_track (amp_env) maxamp: %s?", res)
-  end
   undo_edit
   mix3 = mix_vct(Vct.new(10, 0.5), 10)
-  set_mix_track(mix3, track2)
-  delete_track(track2)
-  if fneq(res = maxamp(ind, 0), 0.0)
-    snd_display("redelete track (amp_env) maxamp: %s?", res)
-  end
   close_sound(ind)
   # 
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "mix undo tests", 300)
-  mix1 = mix_vct(Vct.new(10, 0.1), 10)
-  track1 = make_track
-  track2 = make_track
-  set_mix_track(mix1, track1)
-  if (res = mix_track(mix1)) != track1
-    snd_display("mix_track start %s: %s?", track1, res)
-  end
-  set_track_amp(track2, 2.0)
-  set_mix_amp(mix1, 0, 3.0)
-  if fneq(res = maxamp(ind, 0), 0.3)
-    snd_display("mix_track chain setup: %s %s?", res, mix_amp(mix1, 0))
-  end
-  set_mix_track(mix1, track2)
-  if (res = mix_track(mix1)) != track2
-    snd_display("set_mix_track %s: %s?", track2, res)
-  end
-  if fneq(res = maxamp(ind, 0), 0.6)
-    snd_display("mix_track chain set: %s %s?", res, mix_amp(mix1, 0))
-  end
-  undo_edit
-  if (res = mix_track(mix1)) != track1
-    snd_display("mix_track undo %s: %s?", track1, res)
-  end
-  if fneq(res = maxamp(ind, 0), 0.3)
-    snd_display("mix_track undo setup: %s %s?", res, mix_amp(mix1, 0))
-  end
-  undo_edit(2)  
-  if (res = mix_track(mix1)) != 0
-    snd_display("mix_track undo2: %s %s %s: %s?", track1, track2, res, edit_position(ind, 0))
-  end
-  if fneq(res = maxamp(ind, 0), 0.1)
-    snd_display("mix_track chain undo: %s %s?", res, mix_amp(mix1, 0))
-  end
-  set_mix_position(mix1, 20)
-  if fneq(res = maxamp(ind, 0), 0.1)
-    snd_display("mix_track chain undo: %s %s?", res, mix_amp(mix1, 0))
-  end
-  pos0 = mix_tag_position(mix1)
-  y0 = mix_tag_y(mix1)
-  set_mix_amp(mix1, 1.0)
-  set_mix_tag_position(mix1, 3)
-  set_mix_tag_y(mix1, 6)
-  if (res = mix_tag_position(mix1)) != 3
-    snd_display("mix_tag_position chain test 0: %s?", res)
-  end
-  if (res = mix_tag_y(mix1)) != 6
-    snd_display("mix_tag_y chain test 0: %s?", res)
-  end
-  close_sound(ind)
-end
-
-def check_copied_track(original, copy, pos)
-  snd_display("copy_track returns bad track: %s?", copy) unless track?(copy)
-  if (res = track_track(copy)).nonzero?
-    snd_display("copy_track set track: %s %s?", res, track_track(original))
-  end
-  if (res1 = track_chans(copy)) != (res2 = track_chans(original))
-    snd_display("copy_track chans: %s %s?", res1, res2)
-  end
-  if (res1 = track_frames(copy)) != (res2 = track_frames(original))
-    snd_display("copy_track frames: %s %s?", res1, res2)
-  end
-  if (res = track_position(copy)) != pos
-    snd_display("copy_track set position: %s %s?", res, pos)
-  end
-  if (res1 = track_speed(copy)) != (res2 = track_speed(original))
-    snd_display("copy_track speed: %s %s?", res1, res2)
-  end
-  if (res1 = track_speed_style(copy)) != (res2 = track_speed_style(original))
-    snd_display("copy_track speed_style: %s %s?", res1, res2)
-  end
-  if (res1 = track_amp(copy)) != (res2 = track_amp(original))
-    snd_display("copy_track amp: %s %s?", res1, res2)
-  end
-  copy_amp_env = track_amp_env(copy)
-  original_amp_env = track_amp_env(original)
-  if array?(copy_amp_env) and array?(original_amp_env)
-    unless vequal(copy_amp_env, original_amp_env)
-      snd_display("copy_track amp_env: %s %s?", copy_amp_env, original_amp_env)
-    end
-  else
-    if copy_amp_env != original_amp_env
-      snd_display("copy_track amp_env: %s %s?", copy_amp_env, original_amp_env)
-    end
-  end
-  if (res1 = (track(copy) or []).length) != (res2 = (track(original) or []).length)
-    snd_display("copy_track mix lists differ: %s %s?", res1, res2)
-  else
-    if track(original) and track(copy)
-      track(original).zip(track(copy)) do |orig, cop|
-        if (res1 = mix_track(orig)) == original
-          if (res2 = mix_track(cop)) != copy
-            snd_display("copy_track mix_tracks: %s -> %s?", res1, res2)
-          end
-        end
-      end
-    end
-  end
-  if track_chans(original) > 0
-    unless vequal(vcopy = track2vct(copy), vorig = track2vct(original))
-      snd_display("copy_track data: %s %s?", vcopy, vorig)
-    end
-  end
-end
-
-# state: [amp, speed, track, env, color]
-def track_states_match?(track_id, state)
-  (track_amp(track_id) - state[0]).abs < 0.0001 and
-    (track_speed(track_id) - state[1]).abs < 0.0001 and
-    track_track(track_id) == state[2] and
-    (((not track_amp_env(track_id)) and (not state[3])) or
-       vequal(track_amp_env(track_id), state[3])) and
-    track_color(track_id) == state[4]
-end
-
-def track_state2list(track_id)
-  [track_amp(track_id),
-   track_speed(track_id),
-   track_track(track_id),
-   track_amp_env(track_id),
-   track_color(track_id)]
 end
 
 def test049
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "copy-mix tests", 300)
-  mix1 = mix_vct(Vct.new(10, 0.1), 10)
-  track1 = make_track
-  track2 = make_track
-  edpos = edit_position(ind, 0)
-  set_mix_track(mix1, track1)
-  if (res = mix_track(mix1)) != track1
-    snd_display("mix_track start %s: %s", track1, res)
-  end
-  set_track_amp(track2, 2.0)
-  set_mix_amp(mix1, 0, 3.0)
-  if fneq(res = maxamp(ind, 0), 0.3)
-    snd_display("mix_track chain setup: %s %s?", res, mix_amp(mix1, 0))
-  end
-  set_mix_track(mix1, track2)
-  if (res = mix_track(mix1)) != track2
-    snd_display("set_mix_track %s: %s?", track2, res)
-  end
-  if fneq(res = maxamp(ind, 0), 0.6)
-    snd_display("mix_track chain set: %s %s?", res, mix_amp(mix1, 0))
-  end
-  undo_edit
-  if (res = mix_track(mix1)) != track1
-    snd_display("mix_track undo %s: %s?", track1, res)
-  end
-  if fneq(res = maxamp(ind, 0), 0.3)
-    snd_display("mix_track undo setup: %s %s?", res, mix_amp(mix1, 0))
-  end
-  set_edit_position(edpos, ind, 0)
-  if (res = mix_track(mix1)) != 0
-    snd_display("mix_track undo2: %s?", res)
-  end
-  if fneq(res = maxamp(ind, 0), 0.1)
-    snd_display("mix_track chain undo: %s %s?", res, mix_amp(mix1, 0))
-  end
-  set_mix_position(mix1, 20)
-  if fneq(res = maxamp(ind, 0), 0.1)
-    snd_display("mix_track chain undo: %s %s?", res, mix_amp(mix1, 0))
-  end
-  pos0 = mix_tag_position(mix1)
-  y0 = mix_tag_y(mix1)
-  set_mix_amp(mix1, 1.0)
-  set_mix_tag_position(mix1, 3)
-  set_mix_tag_y(mix1, 6)
-  set_mix_amp(mix1, 0, 0.1)
-  if (res = mix_tag_position(mix1)) != 3
-    snd_display("mix_tag_position chain test 0: %s?", res)
-  end
-  if (res = mix_tag_y(mix1)) != 6
-    snd_display("mix_tag_y chain test 0: %s?", res)
-  end
-  undo_edit
-  if (res = mix_tag_position(mix1)) != 3
-    snd_display("mix_tag_position chain test 2: %s?", res)
-  end
-  if (res = mix_tag_y(mix1)) != 6
-    snd_display("mix_tag_y chain test 2: %s?", res)
-  end
-  set_track_tag_y(track1, 123)
-  if (res = track_tag_y(track1)) != 123
-    snd_display("set_track_tag_y: %s?", res)
-  end
-  if (res = track_tag_y(track2)) != 0
-    snd_display("track_tag_y default: %s?", res)
-  end
-  close_sound(ind)
-  #
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "copy-track tests",  300)
-  if (res = Snd.catch do copy_track(0) end).first != :no_such_track
-    snd_display("copy_track 0: %s", res)
-  end
-  if (res = Snd.catch do copy_track(123123) end).first != :no_such_track
-    snd_display("copy_track 123123: %s", res.inspect)
-  end
-  mix1 = mix_vct(Vct.new(10, 1.0), 100)
-  track0 = make_track
-  track1 = make_track(mix1)
-  if (res = track(track1)) != [mix1]
-    snd_display("make_track for copy: %s %s?", mix1, res)
-  end
-  if (res = mix_track(mix1)) != track1
-    snd_display("make_track for copy mix: %s %s?", res, track1)
-  end
-  copy_track0 = copy_track(track0)
-  edpos = edit_position(ind, 0)
-  copy_track1 = copy_track(track1)
-  if (res = track(track1)) != [mix1]
-    snd_display("copy_track clobbered original: %s %s?", mix1, res)
-  end
-  if (res = mix_track(mix1)) != track1
-    snd_display("copy_track for clobbered original: %s %s?", res, track1)
-  end
-  check_copied_track(track0, copy_track0, -1)
-  check_copied_track(track1, copy_track1, 100)
-  if (res = edit_position(ind, 0)) != edpos + 1
-    snd_display("copy_track not atomic? %s %s?", edpos, res)
-  end
-  undo_edit(2)
-  mix1 = mix_vct(Vct.new(10, 1.0), 50)
-  track1 = make_track(mix1)
-  track2 = copy_track(track1, 200)
-  check_copied_track(track1, track2, 200)
-  undo_edit
-  set_track_amp(track1, 2.0)
-  set_track_amp_env(track1, [0, 0, 1, 1])
-  set_mix_amp(mix1, 0.25)
-  track2 = copy_track(track1, 200)
-  check_copied_track(track1, track2, 200)
-  revert_sound(ind)
-  mix1 = mix_vct(Vct.new(10, 1.0), 50)
-  mix2 = mix_vct(Vct.new(10, 1.0), 75)
-  track1 = make_track(mix1, mix2)
-  track2 = copy_track(track1, 200)
-  check_copied_track(track1, track2, 200)
-  mix3 = mix_vct(Vct.new(10, 1.0), 10)
-  mix4 = mix_vct(Vct.new(10, 1.0), 20)
-  track3 = make_track(mix3, mix4)
-  set_track_track(track3, track1)
-  track2 = copy_track(track1, 300)
-  check_copied_track(track1, track2, 300)
-  close_sound(ind)
-  #
-  # empty and 1-mix tracks
-  #
-  old_with_mix_tags = with_mix_tags
-  set_with_mix_tags(true)
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "track tests",  1000)
-  mix1 = mix_vct(Vct.new(10, 0.4), 100)
-  snd_display("can\'t even get track tests started!") unless mix?(mix1)
-  track1 = make_track(mix1)
-  snd_display("track? %s", track1) unless track?(track1)
-  if (res = Snd.catch do set_track_track(track1, -1) end).first != :out_of_range
-    snd_display("set_track_track -1: %s (%s)", res, track_track(track1))
-  end
-  if (res = track_chans(track1)) != 1
-    snd_display("track_chans 1 mix: %s?", res)
-  end
-  if (res = mix_track(mix1)) != track1
-    snd_display("make_track didn\'t set track? %s?", res)
-  end
-  if (res = track(track1)) != [mix1]
-    snd_display("track 1: %s %s?", mix1, res)
-  end
-  unless track_states_match?(track1, [1.0, 1.0, 0, nil, false])
-    snd_display("track states 1: %s?", track_state2list(track1))
-  end
-  if (res = edit_position(ind, 0)) != 2
-    snd_display("tracked mix edit position: %s %s?", res, edit_tree(ind, 0))
-  end
-  if fneq(res = maxamp(ind, 0), 0.4)
-    snd_display("mixed maxamp 0.4: %s?", res)
-  end
-  if (res = track_position(track1)) != 100
-    snd_display("track position mix1: %s?", res)
-  end
-  if (res = track_frames(track1)) != 10
-    snd_display("track frames mix1: %s?", res)
-  end
-  set_track_amp(track1, 2.0)
-  unless track_states_match?(track1, [2.0, 1.0, 0, nil, false])
-    snd_display("track states 2: %s?", track_state2list(track1))
-  end
-  if (res = edit_position(ind, 0)) != 3
-    snd_display("tracked mix amp-2 edit position: %s %s?", res, edit_tree(ind, 0))
-  end
-  if fneq(res = maxamp(ind, 0), 0.8)
-    snd_display("mixed maxamp 0.8: %s?", res)
-  end
-  undo_edit(1)
-  unless track_states_match?(track1, [1.0, 1.0, 0, nil, false])
-    snd_display("track states 3 (undo): %s?", track_state2list(track1))
-  end
-  if (res = edit_position(ind, 0)) != 2
-    snd_display("tracked mix edit position (undo): %s %s?", res, edit_tree(ind, 0))
-  end
-  if fneq(res = maxamp(ind, 0), 0.4)
-    snd_display("mixed maxamp 0.4 (undo): %s?", res)
-  end
-  redo_edit(1)
-  unless track_states_match?(track1, [2.0, 1.0, 0, nil, false])
-    snd_display("track states 4 (redo): %s?", track_state2list(track1))
-  end
-  if (res = edit_position(ind, 0)) != 3
-    snd_display("tracked mix amp-2 edit position (redo): %s %s?", res, edit_tree(ind, 0))
-  end
-  if fneq(res = maxamp(ind, 0), 0.8)
-    snd_display("mixed maxamp 0.8 (redo): %s?", res)
-  end
-  mr = make_mix_sample_reader(mix1)
-  tr = make_track_sample_reader(track1)
-  mix_frames(mix1).times do |i|
-    ms = read_mix_sample(mr)
-    ts = read_track_sample(tr)
-    if fneq(ms, ts) or fneq(ms, 0.8)
-      snd_display("mix+track readers: %s %s (0.8)?", ms, ts)
-      break
-    end
-  end
-  [99, 105, 111,
-   199, 207, 211,
-   299, 306, 311].zip([0.0, 0.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]) do |samp, val|
-    snd_display("track read (1) %d: %s (%s)?", samp, sample(samp), val) if fneq(sample(samp), val)
-  end
-  #
-  snd_display("track read 99: %s?", sample(99)) if fneq(sample(99), 0.0)
-  snd_display("track read 111: %s?", sample(111)) if fneq(sample(111), 0.0)
-  set_track_position(track1, 200)
-  if (res = track_position(track1)) != 200
-    snd_display("track_position mix1 200: %s?", res)
-  end
-  if (res = track_frames(track1)) != 10
-    snd_display("track_frames mix1 200: %s?", res)
-  end
-  if (res = mix_position(mix1)) != 200
-    snd_display("mix_position mix1 1 200: %s?", res)
-  end
-  if (res = mix_frames(mix1)) != 10
-    snd_display("mix_frames mix1 1 200: %s?", res)
-  end
-  unless track_states_match?(track1, [2.0, 1.0, 0, nil, false])
-    snd_display("track states 5 (move): %s?", track_state2list(track1))
-  end
-  [99, 105, 111,
-   199, 207, 211,
-   299, 306, 311].zip([0.0, 0.0, 0.0, 0.0, 0.8, 0.0, 0.0, 0.0, 0.0]) do |samp, val|
-    snd_display("track read (2) %d: %s (%s)?", samp, sample(samp), val) if fneq(sample(samp), val)
-  end
-  undo_edit(1)
-  #
-  set_track_position(track1, 300)
-  if (res = track_position(track1)) != 300
-    snd_display("track_position mix1 300: %s?", res)
-  end
-  if (res = track_frames(track1)) != 10
-    snd_display("track_frames mix1 300: %s?", res)
-  end
-  if (res = mix_position(mix1)) != 300
-    snd_display("mix_position mix1 1 300: %s?", res)
-  end
-  if (res = mix_frames(mix1)) != 10
-    snd_display("mix_frames mix1 1 300: %s?", res)
-  end
-  unless track_states_match?(track1, [2.0, 1.0, 0, nil, false])
-    snd_display("track states 6 (move mix): %s?", track_state2list(track1))
-  end
-  [99, 105, 111,
-   199, 207, 211,
-   299, 306, 311].zip([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.8, 0.0]) do |samp, val|
-    snd_display("track read (3) %d: %s (%s)?", samp, sample(samp), val) if fneq(sample(samp), val)
-  end
-  undo_edit(1)
-  #
-  track2 = make_track
-  pos = edit_position(ind)
-  if (res = track(track2)) != nil # []
-    snd_display("empty track: %s %s?", mix1, res)
-  end
-  if (res = track_chans(track2)).nonzero?
-    snd_display("track_chans no mix: %s?", res)
-  end
-  if (res = track_position(track2)) != -1
-    snd_display("empyt track position: %s?", res)
-  end
-  if (res = track_frames(track2)).nonzero?
-    snd_display("empyt track frames: %s?", res)
-  end
-  unless track_states_match?(track2, [1.0, 1.0, 0, nil, false])
-    snd_display("empty track states: %s?", track_state2list(track2))
-  end
-  if (res = Snd.catch do set_track_track(track1, track1) end).first != :out_of_range
-    snd_display("circular track: %s", res.inspect)
-  end
-  set_track_track(track1, track2)
-  unless track_states_match?(track1, [2.0, 1.0, track2, nil, false])
-    snd_display("track states 8 (track): %s?", track_state2list(track1))
-  end
-  if (res = Snd.catch do set_track_track(track2, track1) end).first != :out_of_range
-    snd_display("circular track 2: %s", res.inspect)
-  end
-  if fneq(res = maxamp(ind, 0), 0.8)
-    snd_display("track+track maxamp 0.8: %s?", res)
-  end
-  set_track_amp(track2, 0.5)
-  unless track_states_match?(track2, [0.5, 1.0, 0, nil, false])
-    snd_display("empty track states 9 (amp): %s?", track_state2list(track2))
-  end
-  if fneq(res = maxamp(ind, 0), 0.4)
-    snd_display("track+track maxamp 0.4: %s?", res)
-  end
-  set_track_amp(track1, 0.5)
-  if fneq(res = maxamp(ind, 0), 0.1)
-    snd_display("track+track maxamp 0.1: %s?", res)
-  end
-  set_track_track(track1, 0)
-  if fneq(res = maxamp(ind, 0), 0.2)
-    snd_display("track+track maxamp 0.2: %s?", res)
-  end
-  set_edit_position(pos, ind)
-  unless track_states_match?(track1, [2.0, 1.0, 0, nil, false])
-    snd_display("track states 10 (edit-pos): %s?", track_state2list(track1))
-  end
-  set_track_speed(track1, 0.5)
-  if (res = mix_frames(mix1)) != 20
-    snd_display("mix_frames with track_speed: %s?", res)
-  end
-  if (res = track_frames(track1)) != 20
-    snd_display("track_frames with track_speed: %s?", res)
-  end
-  unless track_states_match?(track1, [2.0, 0.5, 0, nil, false])
-    snd_display("track states 11 (speed): %s?", track_state2list(track1))
-  end
-  set_mix_track(mix1, 0)
-  if (res = track(track1)) != nil # []
-    snd_display("empty track 1: %s %s?", mix1, res)
-  end
-  if (res = mix_frames(mix1)) != 10
-    snd_display("mix_frames without track_speed: %s?", res)
-  end
-  if (res = track_frames(track1)) != 0
-    snd_display("track_frames without track_speed: %s?", res)
-  end
-  if (res = track_position(track1)) != -1
-    snd_display("empty track1 position: %s?", res)
-  end
-  if fneq(res = maxamp(ind, 0), 0.4)
-    snd_display("no track maxamp 0.4: %s?", res)
-  end
-  set_mix_track(mix1, track2)
-  if (res = track(track2)) != [mix1]
-    snd_display("track 2: %s %s?", mix1, res)
-  end
-  if (res = track(track1)) != nil
-    snd_display("empty track (set 2): %s %s %s?", mix1, res, track(track2))
-  end
-  if (res = track_position(track2)) != 100
-    snd_display("track 2 position mix1: %s?", res)
-  end
-  if (res = track_frames(track2)) != 10
-    snd_display("track 2 frames mix1: %s?", res)
-  end
-  if fneq(res = maxamp(ind, 0), 0.2)
-    snd_display("track 2 maxamp 0.2: %s %s %s?", res, mix_amp(mix1), track_amp(track2))
-  end
-  set_mix_amp_env(mix1, 0, [0, 0, 1, 1])
-  tv = track2vct(track2)
-  mv = mix2vct(mix1)
-  if mv.length != tv.length or
-      (not vequal(tv, mv)) or
-      (not vequal(tv, [0, 0.022, 0.044, 0.067, 0.089, 0.111, 0.133, 0.156, 0.178, 0.2].to_vct))
-    snd_display("amp env ramp track2 mix1: %s %s?", tv, mv)
-  end
-  set_track_amp_env(track2, [0, 0, 1, 1])
-  tv = track2vct(track2)
-  mv = mix2vct(mix1)
-  if mv.length != tv.length or
-      (not vequal(tv, mv)) or
-      (not vequal(tv, [0, 0.002, 0.008, 0.018, 0.032, 0.05, 0.072, 0.098, 0.128, 0.162].to_vct))
-    snd_display("amp env 2 ramp track2 mix1: %s %s?", tv, mv)
-  end
-  set_mix_amp_env(mix1, 0, false)
-  tv = track2vct(track2)
-  mv = mix2vct(mix1)
-  if mv.length != tv.length or
-      (not vequal(tv, mv)) or
-      (not vequal(tv, [0, 0.022, 0.044, 0.067, 0.089, 0.111, 0.133, 0.156, 0.178, 0.2].to_vct))
-    snd_display("amp env ramp track2: %s %s?", tv, mv)
-  end
-  set_track_speed(track1, 1.0)
-  set_mix_track(mix1, track1)
-  tv = track2vct(track1)
-  mv = mix2vct(mix1)
-  if mv.length != tv.length or
-      (not vequal(tv, mv)) or
-      (not vequal(tv, Vct.new(10, 0.8)))
-    snd_display("no amp env track1 mix1: %s %s?", tv, mv)
-  end
-  color = make_color_with_catch(0, 1, 0)
-  set_track_color(track1, color)
-  if (res = track_color(track1)) != color
-    snd_display("track color gree: %s?", res)
-  end
-  unless track_states_match?(track1, [2.0, 1.0, 0, nil, color])
-    snd_display("track 1 states 9 (color): %s?", track_state2list(track1))
-  end
-  free_track(track2)
-  snd_display("free_track track?") if track?(track2)
-  snd_display("free_track tracks: %s in %s?", track2, tracks) if tracks.member?(track2)
-  revert_sound(ind)
-  # 
-  unless track_states_match?(track1, [1.0, 1.0, 0, nil, false])
-    snd_display("track states 12 after revert: %s?", track_state2list(track1))
-  end
-  snd_display("revert2tracks: %s %s?", track1, tracks) unless tracks.member?(track1)
-  if (res = track(track1)) != nil
-    snd_display("revert past mix track1: %s %s %s?", res, mix1, mix?(mix1))
-  end
-  if (res = Snd.catch do track2vct(track1) end).first != :no_such_channel
-    snd_display("track2vct empty track: %s?", res.inspect)
-  end
-  mix1 = mix_vct(Vct.new(1, 0.1), 50)
-  set_mix_track(mix1, track1)
-  if (res = track_position(track1)) != 50
-    snd_display("track 1 position mix-samp: %s?", res)
-  end
-  if (res = track_frames(track1)) != 1
-    snd_display("track 1 frames mix-samp: %s?", res)
-  end
-  start_state = track_state2list(track1)
-  set_track_amp_env(track1, [0, 1, 1, 0])
-  undo_edit
-  unless track_states_match?(track1, start_state)
-    snd_display("undo after set_track_amp_env: %s %s?", start_state, track_state2list(track1))
-  end
-  redo_edit
-  unless vequal(res = track_amp_env(track1), [0, 1, 1, 0].to_vct)
-    snd_display("redo set_track_amp_env: %s?", res)
-  end
-  set_track_amp_env(track1, false)
-  unless track_states_match?(track1, start_state)
-    snd_display("redo/undo after set_track_amp_env: %s %s?", start_state, track_state2list(track1))
-  end
-  #
-  edpos = edit_position(ind, 0)
-  state = track_state2list(track1)
-  as_one_edit_rb do
-    set_track_amp(track1, 4.0)
-    set_track_speed(track1, 1.5)
-    set_track_amp_env(track1, [0, 1, 1, 0])
-  end
-  if (res = edit_position(ind, 0)) - 1 != edpos
-    snd_display("backup in as_one_edit: %s %s?", edpos, res)
-  end
-  unless track_states_match?(track1, [4.0, 1.5, 0, [0, 1, 1, 0], false])
-    snd_display("track states after as_one_edit: %s?", track_state2list(track1))
-  end
-  undo_edit
-  unless track_states_match?(track1, state)
-    snd_display("track states after undone as_one_edit: %s %s?", state, track_state2list(track1))
-  end
-  redo_edit
-  unless track_states_match?(track1, [4.0, 1.5, 0, [0, 1, 1, 0], false])
-    snd_display("track states after as_one_edit redo: %s?", track_state2list(track1))
-  end
-  set_track_amp_env(track1, false)
-  unless track_states_match?(track1, [4.0, 1.5, 0, nil, false])
-    snd_display("track states after amp_env false: %s?", track_state2list(track1))
-  end
-  undo_edit
-  revert_sound(ind)
-  #
-  # multi mix tracks
-  #
-  mix1 = mix_vct(Vct.new(100, 0.1), 50)
-  mix2 = mix_vct(Vct.new(100, 0.2), 250)
-  set_mix_track(mix1, track1)
-  set_mix_track(mix2, track1)
-  if (res = track_chans(track1)) != 1
-    snd_display("track_chans mono mix: %s?", res)
-  end
-  if (res = track_position(track1)) != 50
-    snd_display("track_position mix2/3: %s?", res)
-  end
-  if (res = track_frames(track1)) != 300
-    snd_display("track_frames mix2/3: %s?", res)
-  end
-  if (res = track(track1)) != [mix1, mix2]
-    snd_display("track1 mix2/3 track: %s %s %s?", mix1, mix2, res)
-  end
-  unless track_states_match?(track1, [1.0, 1.0, 0, nil, false])
-    snd_display("track states 1 mix2/3: %s?", track_state2list(track1))
-  end
-  if fneq(res = maxamp, 0.2)
-    snd_display("track1 mix2/3 maxamp: %s?", res)
-  end
-  edpos = edit_position(ind, 0)
-  set_track_amp(track1, 2.0)
-  if fneq(res = maxamp, 0.4)
-    snd_display("track1 mix2/3 *2 maxamp: %s?", res)
-  end
-  if fneq(sample(51), 0.2) or fneq(sample(251), 0.4)
-    snd_display("track1 mix2/3 *2 samples: %s %s?", sample(51), sample(251))
-  end
-  if fneq(res1 = mix_amp(mix1), 1.0) or fneq(res2 = mix_amp(mix2), 1.0)
-    snd_display("track1 mix2/3 mix amps: %s %s?", res1, res2)
-  end
-  if (res = edit_position(ind, 0)) != edpos + 1
-    snd_display("track amp set was not atomic: %s %s?", edpos, res)
-  end
-  undo_edit
-  set_track_position(track1, 100)
-  if (res = mix_position(mix1)) != 100
-    snd_display("set_track_position 100 mix1: %s?", res)
-  end
-  if (res = mix_position(mix2)) != 300
-    snd_display("set_track_position 100 mix2: %s?", res)
-  end
-  if (res = track_position(track1)) != 100
-    snd_display("set_track_position 100 track1: %s?", res)
-  end
-  if (res = edit_position(ind, 0)) != edpos + 1
-    snd_display("track position set was not atomic: %s %s?", edpos, res)
-  end
-  #
-  if fneq( sample( 51), 0.0) or
-      fneq(sample( 99), 0.0) or
-      fneq(sample(251), 0.0) or
-      fneq(sample(299), 0.0)
-    snd_display("set_track_position, bad cancel?: %s %s %s %s?",
-                sample(51), sample(99), sample(251), sample(299))
-  end
-  if fneq( sample(100), 0.1) or
-      fneq(sample(199), 0.1) or
-      fneq(sample(301), 0.2) or
-      fneq(sample(399), 0.2)
-    snd_display("set_track_position, bad remix after cancel?: %s %s %s %s?",
-                sample(100), sample(199), sample(301), sample(399))
-  end
-  undo_edit
-  set_track_speed(track1, 0.5)
-  if (res1 = mix_frames(mix1)) != 200 or (res2 = mix_frames(mix2)) != 200
-    snd_display("set_track_speed mix_frames: %s %s %s?", res1, res2, track_frames(track1))
-  end
-  if (res = edit_position(ind, 0)) != edpos + 1
-    snd_display("track speed set was not atomic: %s %s?", edpos, res)
-  end
-  unless track_states_match?(track1, [1.0, 0.5, 0, nil, false])
-    snd_display("track states speed set mix2/3: %s?", track_state2list(track1))
-  end
-  undo_edit
-  old_track_color = track_color(track1)
-  old_mix1_color = mix_color(mix1)
-  old_mix2_color = mix_color(mix2)
-  color = make_color_with_catch(0, 1, 1)
-  set_track_color(track1, color)
-  if (res = edit_position(ind, 0)) != edpos
-    snd_display("track color set was an edit?: %s %s?", edpos, res)
-  end
-  unless track_states_match?(track1, [1.0, 1.0, 0, nil, color])
-    snd_display("track states color set mix2/3: %s?", track_state2list(track1))
-  end
-  if (res1 = mix_color(mix1)) != color or
-      (res2 = mix_color(mix2)) != color or
-      (res3 = track_color(track1)) != color
-    snd_display("set_track_color mix2/3: %s %s %s?", res1, res2, res3)
-  end
-  set_track_amp_env(track1, [0, 0, 0.5, 0, 0.51, 1, 1, 1])
-  unless vequal(res = track_amp_env(track1), [0, 0, 0.5, 0, 0.51, 1, 1, 1].to_vct)
-    snd_display("set_track_amp_env mix2/3: %s?", res)
-  end
-  if fneq( sample( 51), 0.0) or
-      fneq(sample( 99), 0.0) or
-      fneq(sample(251), 0.2) or
-      fneq(sample(299), 0.2)
-    snd_display("set_track_position, bad remix after cancel?: %s %s %s %s?",
-                sample(51), sample(99), sample(251), sample(299))
-  end
-  if (res = edit_position(ind, 0)) != edpos + 1
-    snd_display("track amp env set was not atomic: %s %s?", edpos, res)
-  end
-  unless track_states_match?(track1, [1.0, 1.0, 0, [0, 0, 0.5, 0, 0.51, 1, 1, 1], color])
-    snd_display("track states amp_env set mix2/3: %s?", track_state2list(track1))
-  end
-  if (res = track_color(track1)) != color
-    snd_display("track_color not stacked: %s %s?", color, res)
-  end
-  set_track_color(track1, old_track_color)
-  edpos = edit_position(ind, 0)
-  track2a = make_track(mix1, mix2)
-  if (res = edit_position(ind, 0)) != edpos + 1
-    snd_display("make_track not atomic: %s %s %s?", edpos, res, track(track2a))
-  end
-  if (res1 = mix_track(mix1)) != track2a and (res2 = mix_track(mix2)) != track2a
-    snd_display("make_track didn\'t reset track: %s %s %s?", res1, res2, track2a)
-  end
-  if (res = track(track1)) != nil
-    snd_display("make_track didn\'t cancel old track: %s?", res)
-  end
-  edpos = edit_position(ind, 0)
-  delete_track(track2a)
-  if (res = edit_position(ind, 0)) != edpos + 1
-    snd_display("delete_track not atomic: %s %s?", edpos, res)
-  end
-  if fneq(res = track_amp(track2a), 0.0)
-    snd_display("delete_track track amp: %s?", res)
-  end
-  if fneq(res = maxamp(ind, 0), 0.0)
-    snd_display("delete_track maxamp: %s?", res)
-  end
-  # :no_such_mix here has no meaning
-  Snd.catch(:no_such_mix) do set_mix_track(mix1, 0) end
-  snd_display("locked mix set track: %s?", mix_track(mix1)) if mix_track(mix1).zero?
-  old_amp = mix_amp(mix1, 0)
-  Snd.catch(:no_such_mix) do set_mix_amp(mix1, 0, 123.0) end
-  snd_display("locked mix set amp: %s?", mix_amp(mix1)) if fneq(mix_amp(mix1, 0), old_amp)
-  old_speed = mix_speed(mix1)
-  Snd.catch(:no_such_mix) do set_mix_speed(mix1, 123.0) end
-  snd_display("locked mix set speed: %s?", mix_speed(mix1)) if fneq(mix_speed(mix1), old_speed)
-  old_pos = mix_position(mix1)
-  Snd.catch(:no_such_mix) do set_mix_position(mix1, 123) end
-  snd_display("locked mix set position: %s?", mix_position(mix1)) if mix_position(mix1) != old_pos
-  undo_edit
-  if fneq(res = maxamp(ind, 0), 0.2)
-    snd_display("undo delete_track maxamp: %s?", res)
-  end
-  revert_sound(ind)
-  #
-  mix1 = mix_vct(Vct.new(100, 0.2), 50)
-  mix2 = mix_vct(Vct.new(100, 0.2), 250)
-  mix3 = mix_vct(Vct.new(100, 0.2), 500)
-  track3 = make_track(mix1, mix2, mix3)
-  edpos = edit_position(ind, 0)
-  if (res = track(track3)) != nil
-    snd_display("locked track: %s?", res)
-  end
-  if (res = edit_position(ind, 0)) != edpos + 1
-    snd_display("lock track not atomic: %s %s?", edpos, res)
-  end
-  close_sound(ind)
-  if (res = track(track3)) != nil
-    snd_display("close_sound unset track: %s %s?", res, track(track3).map do |m| mix?(m) end)
-  end
 end
 
 def test059
-  # stereo track
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 2, "track tests", 1000)
-  mixid = mix("2a.snd", 100, true, ind)
-  trk = mix_track(mixid)
-  mixids = track(trk)
-  if (res = mix_track(mixid)) <= 0
-    snd_display("multimix 1: %s %s %s?", res, trk, mixids)
-  end
-  if (res = mixids.map do |m| mix_track(m) end).uniq.length != 1
-    snd_display("multimix 2: %s?", res)
-  end
-  if (res1 = edit_position(ind, 0)) != (res2 = edit_position(ind, 1)) or res1 != 1
-    snd_display("multimix 3 edpos: %s %s?", res1, res2)
-  end
-  if (res = track_chans(trk)) != 2
-    snd_display("track_chans stereo mix: %s?", res)
-  end
-  # track properties
-  set_track_property(trk, :hiho, 123)
-  if (res = track_property(trk,:hiho)) != 123
-    snd_display("track_property: %s?", res)
-  end
-  if res = track_property(trk, :not_there)
-    snd_display("track-not-property: %s?", res)
-  end
-  set_track_property(trk, :hi, "hi")
-  if (res = track_property(trk, :hi)) != "hi"
-    snd_display("track_property 1: %s?", res)
-  end
-  # 2chan basic stuff
-  max0 = maxamp(ind, 0)
-  max1 = maxamp(ind, 1)
-  set_track_amp(trk, 2.0)
-  if fneq(res1 = maxamp(ind, 0), 2 * max0) or fneq(res2 = maxamp(ind, 1), 2 * max1)
-    snd_display("2chn track_amp: %s %s -> %s %s?", max0, max1, res1, res2)
-  end
-  if (res1 = edit_position(ind, 0)) != (res2 = edit_position(ind, 1)) or res1 != 2
-    snd_display("2chn amp edpos: %s %s?", res1, res2)
-  end
-  undo_edit(1, ind, 0)
-  undo_edit(1, ind, 1)
-  set_track_position(trk, 500)
-  if (res = track_position(trk)) != 500
-    snd_display("2chn track_position: %s?", res)
-  end
-  if (res = mixids.map do |m| mix_position(m) end).uniq.length != 1 or
-      mix_position(mixids.first) != 500
-    snd_display("2chn track_position mixes: %s?", res)
-  end
-  if (res1 = edit_position(ind, 0)) != (res2 = edit_position(ind, 1)) or res1 != 2
-    snd_display("2chn position edpos: %s %s?", res1, res2)
-  end
-  undo_edit(1, ind, 0)
-  undo_edit(1, ind, 1)
-  old_frames = frames
-  set_track_speed(trk, 0.5)
-  if (res1 = frames(ind, 0)) != (res2 = frames(ind, 1)) and
-      res1 != (100 + 2 * (old_frames - 100))
-    snd_display("2chn speed: %s %s %s?", res1, res2, old_frames * 2)
-  end
-  if (res1 = edit_position(ind, 0)) != (res2 = edit_position(ind, 1)) or res1 != 2
-    snd_display("2chn speed edpos: %s %s?", res1, res2)
-  end
-  undo_edit(1, ind, 0)
-  undo_edit(1, ind, 1)
-  set_track_amp_env(trk, [0, 1, 0.1, 2, 0.9, 2, 1, 0])
-  if fneq(res1 = maxamp(ind, 0), 2 * max0) or fneq(res2 = maxamp(ind, 1), 2 * max1)
-    snd_display("2chn track_env: %s %s -> %s %s?", max0, max1, res1, res2)
-  end
-  if (res1 = edit_position(ind, 0)) != (res2 = edit_position(ind, 1)) or res1 != 2
-    snd_display("2chn env edpos: %s %s?", res1, res2)
-  end
-  undo_edit(1, ind, 0)
-  undo_edit(1, ind, 1)
-  close_sound(ind)
-  # 
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "track tests", 1000)
-  track4 = make_track
-  mixid = mix_vct(Vct.new(10, 0.5), 100, ind, 0, true, "snd-test", track4)
-  if (res = mix_track(mixid)) != track4
-    snd_display("mix_vct with track: %s?", res)
-  end
-  if (res = edit_position(ind, 0)) != 1
-    snd_display("mix_vct w/track not atomic: %s?", res)
-  end
-  if fneq(res = maxamp(ind, 0), 0.5)
-    snd_display("mix_vct+track maxamp: %s?", res)
-  end
-  if fneq(res = mix_maxamp(mixid), 0.5)
-    snd_display("mix_maxamp: %s?", res)
-  end
-  if fneq(res = track_maxamp(track4, 0), 0.5)
-    snd_display("track_maxamp: %s?", res)
-  end
-  undo_edit
-  if fneq(res = maxamp(ind, 0), 0.0)
-    snd_display("mix_vct+track undo maxamp: %s?", res)
-  end
-  redo_edit
-  if (res = mix_track(mixid)) != track4
-    snd_display("mix_vct with track (redo): %s?", res)
-  end
-  if fneq(res = maxamp(ind, 0), 0.5)
-    snd_display("mix_vct+track redo maxamp: %s?", res)
-  end
-  amix = mix("1a.snd", 200, 0, ind, 0, true, false, track4)
-  if (res = mix_track(amix)) != track4
-    snd_display("mix with track: %s?", res)
-  end
-  if (res = edit_position(ind, 0)) != 2
-    snd_display("mix w/track not atomic: %s?", res)
-  end
-  if fneq(res = maxamp(ind, 0), 0.5)
-    snd_display("mix+track maxamp: %s?", res)
-  end
-  undo_edit
-  if fneq(res = maxamp(ind, 0), 0.5)
-    snd_display("mix+track undo maxamp: %s?", res)
-  end
-  redo_edit
-  if (res = mix_track(amix)) != track4
-    snd_display("mix with track (redo): %s?", res)
-  end
-  if fneq(res = maxamp(ind, 0), 0.5)
-    snd_display("mix+track redo maxamp: %s?", res)
-  end
-  if (res = track(track4)) != [mixid, amix]
-    snd_display("mix_vct+mix+track: %s?", res)
-  end
-  rid = make_region(100, 110, ind, 0)
-  if fneq(res = region_maxamp(rid), 0.5)
-    snd_display("region(mix) picked up wrong section: %s?", res)
-  end
-  rmix = mix_region(900, rid, ind, 0, track4)
-  if (res = mix_track(rmix)) != track4
-    snd_display("mix_region with track: %s?", res)
-  end
-  if (res = edit_position(ind, 0)) != 3
-    snd_display("mix_region w/track not atomic: %s?", res)
-  end
-  if fffneq(res = maxamp(ind, 0), 0.56)
-    snd_display("mix_region+track maxamp: %s (0.56)?", res)
-  end
-  if (res = Snd.catch do mix_region(900, rid, ind, 0, 123123) end).first != :no_such_track
-    snd_display("mix_region bad track: %s", res.inspect)
-  end
-  undo_edit
-  if fneq(res = maxamp(ind, 0), 0.5)
-    snd_display("mix_region+track undo maxamp: %s?", res)
-  end
-  redo_edit
-  if (res = mix_track(rmix)) != track4
-    snd_display("mix_region with track (redo): %s?", res)
-  end
-  if fffneq(res = maxamp(ind, 0), 0.56)
-    snd_display("mix_region+track redo maxamp: %s (0.56)?", res)
-  end
-  if (res = track(track4)) != [mixid, amix, rmix]
-    snd_display("mix_vct+mix_region+mix+track: %s?", res)
-  end
-  make_selection(400, 500, ind, 0)
-  smix = mix_selection(4000, ind, 0)
-  set_mix_track(smix, track4)
-  if (res = mix_track(smix)) != track4
-    snd_display("mix_selection with track: %s?", res)
-  end
-  if fffneq(res = maxamp(ind, 0), 0.56)
-    snd_display("mix_selection+track maxamp: %s (0.56)?", res)
-  end
-  undo_edit
-  if fffneq(res = maxamp(ind, 0), 0.56)
-    snd_display("mix_selection+track undo maxamp: %s (0.56)?", res)
-  end
-  redo_edit
-  if (res = mix_track(smix)) != track4
-    snd_display("mix_selection with track (redo): %s?", res)
-  end
-  if fffneq(res = maxamp(ind, 0), 0.56)
-    snd_display("mix_selection+track redo maxamp: %s (0.56)?", res)
-  end
-  if (res = track(track4)) != [mixid, amix, rmix, smix]
-    snd_display("mix_vct+mix_selection+mix+track: %s?", res)
-  end
-  set_track_amp(track4, 0.5)
-  if fffneq(res = maxamp(ind, 0), 0.28)
-    snd_display("mix_selection+track reset amp maxamp: %s (0.28)?", res)
-  end
-  bmix = mix_vct(Vct.new(10, 0.75), 4300, ind, 0, true, "snd-test", track4)
-  if (res = mix_track(bmix)) != track4
-    snd_display("mix_vct with track amp: %s?", res)
-  end
-  if (res = edit_position(ind, 0)) != 7
-    snd_display("mix_vct w/track not atomic: %s?", res)
-  end
-  if fffneq(res = maxamp(ind, 0), 0.375)
-    snd_display("mix_vct+track amp maxamp: %s (0.375)?", res)
-  end
-  if (res = track(track4)) != [mixid, amix, rmix, smix, bmix]
-    snd_display("mix_vct+mix_selection+mix+track amp: %s?", res)
-  end
-  delete_track(track4)
-  if fneq(res = maxamp(ind, 0), 0.0)
-    snd_display("maxamp delete_track4: %s?", res)
-  end
-  close_sound(ind)
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 2, "track tests", 1000)
-  trk = make_track
-  mix1 = mix_vct(Vct.new(10, 0.50), 10, ind, 0, true, "snd-test", trk)
-  mix2 = mix_vct(Vct.new(10, 0.25), 20, ind, 1, true, "snd-test", trk)
-  mix3 = mix_vct(Vct.new(10, 0.30), 30, ind, 0, true, "snd-test", trk)
-  mix4 = mix_vct(Vct.new(10, 0.10), 40, ind, 1, true, "snd-test", trk)
-  if (res = track_chans(trk)) != 2
-    snd_display("track_chans 4 mix_vct: %s %s?", res, track(trk).map do |m| mix_home(m) end)
-  end
-  if fneq(res = maxamp(ind, 0), 0.5)
-    snd_display("maxamp mix_vct 4 0: %s?", res)
-  end
-  if fneq(res = maxamp(ind, 1), 0.25)
-    snd_display("maxamp mix_vct 4 1: %s?", res)
-  end
-  if (res = track_position(trk)) != 10
-    snd_display("overall track_position: %s?", res)
-  end
-  if (res = track_frames(trk)) != 40
-    snd_display("overall track_frames: %s?", res)
-  end
-  if (res = track_position(trk, 0)) != 10
-    snd_display("chn0 track_position: %s?", res)
-  end
-  if (res = track_position(trk, 1)) != 20
-    snd_display("chn1 track_position: %s?", res)
-  end
-  if (res = track_frames(trk, 0)) != 30
-    snd_display("chn0 track_frames: %s?", res)
-  end
-  if (res = track_frames(trk, 1)) != 30
-    snd_display("chn1 track_frames: %s?", res)
-  end
-  if (res = track(trk, 0)) != [mix1, mix3]
-    snd_display("track + chan0: %s %s?", res, track(trk))
-  end
-  if (res = track(trk, 1)) != [mix2, mix4]
-    snd_display("track + chan1: %s %s?", res, track(trk))
-  end
-  set_track_position(trk, 0)
-  if (res = track_position(trk)) != 0
-    snd_display("overall track_position 0: %s?", res)
-  end
-  if (res = track_frames(trk)) != 40
-    snd_display("overall track_frames 0: %s?", res)
-  end
-  if (res = track_position(trk, 0)) != 0
-    snd_display("chn0 track_position 0: %s?", res)
-  end
-  if (res = track_position(trk, 1)) != 10
-    snd_display("chn1 track_position 0: %s?", res)
-  end
-  if (res = track_frames(trk, 0)) != 30
-    snd_display("chn0 track_frames 0: %s?", res)
-  end
-  if (res = track_frames(trk, 1)) != 30
-    snd_display("chn1 track_frames 0: %s?", res)
-  end
-  if (res = mix_position(mix3)) != 20
-    snd_display("chn0 track_position mix3:  %s?", res)
-  end
-  if (res = mix_position(mix4)) != 30
-    snd_display("chn1 track_position mix4:  %s?", res)
-  end
-  set_track_position(trk, 0, 20)
-  if (res = track_position(trk)) != 10
-    snd_display("overall track_position 1: %s?", res)
-  end
-  if (res = track_frames(trk)) != 40
-    snd_display("overall track_frames 1: %s?", res)
-  end
-  if (res = track_position(trk, 0)) != 20
-    snd_display("chn0 track_position 1: %s?", res)
-  end
-  if (res = track_position(trk, 1)) != 10
-    snd_display("chn1 track_position 1: %s?", res)
-  end
-  if (res = track_frames(trk, 0)) != 30
-    snd_display("chn0 track_frames 1: %s?", res)
-  end
-  if (res = track_frames(trk, 1)) != 30
-    snd_display("chn1 track_frames 1: %s?", res)
-  end
-  if (res = mix_position(mix3)) != 40
-    snd_display("chn0 track_position mix3 1:  %s?", res)
-  end
-  if (res = mix_position(mix4)) != 30
-    snd_display("chn1 track_position mix4 1:  %s?", res)
-  end
-  set_track_position(trk, 1, 20)
-  if (res = track_position(trk)) != 20
-    snd_display("overall track_position 2: %s?", res)
-  end
-  if (res = track_frames(trk)) != 30
-    snd_display("overall track_frames 2: %s?", res)
-  end
-  if (res = track_position(trk, 0)) != 20
-    snd_display("chn0 track_position 2: %s?", res)
-  end
-  if (res = track_position(trk, 1)) != 20
-    snd_display("chn1 track_position 2: %s?", res)
-  end
-  if (res = track_frames(trk, 0)) != 30
-    snd_display("chn0 track_frames 2: %s?", res)
-  end
-  if (res = track_frames(trk, 1)) != 30
-    snd_display("chn1 track_frames 2: %s?", res)
-  end
-  if (res = mix_position(mix3)) != 40
-    snd_display("chn0 track_position mix3 2:  %s?", res)
-  end
-  if (res = mix_position(mix4)) != 40
-    snd_display("chn1 track_position mix4 2:  %s?", res)
-  end
-  close_sound(ind)
-  #
-  ind0 = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "track tests", 60)
-  ind1 = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "track tests", 60)
-  mix_vct(Vct.new(3, 0.5), 10, ind0, 0, false)
-  mix_vct(Vct.new(3, 0.2), 40, ind0, 0, false)
-  mix1 = mix_vct(Vct.new(3, 0.5), 10, ind1, 0, true)
-  mix2 = mix_vct(Vct.new(3, 0.2), 40, ind1, 0, true)
-  trk = make_track(mix1, mix2)
-  filter_sound([0.1, 0.2, 0.3, 0.3, 0.2, 0.1].to_vct, 6, ind0, 0)
-  filter_track(trk, [0.1, 0.2, 0.3, 0.3, 0.2, 0.1])
-  if (res = edit_position(ind0, 0)) != 3
-    snd_display("filter_sound edpos: %s?", res)
-  end
-  if (res = edit_position(ind1, 0)) != 4
-    snd_display("filter_track edpos: %s?", res)
-  end
-  if fneq(res1 = maxamp(ind0, 0), 0.4) or fneq(res2 = maxamp(ind1, 0), 0.4)
-    snd_display("filter_track maxamps: %s %s?", res1, res2)
-  end
-  unless vequal(res1 = channel2vct(0, 50, ind0, 0), res2 = channel2vct(0, 50, ind1, 0))
-    snd_display("filters not the same:\n# %s\n# %s?", res1, res2)
-  end
-  close_sound(ind0)
-  close_sound(ind1)
-end
-
-def test069
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 4, "track2vct tests", 1000)
-  trk = make_track
-  mix1 = mix_vct(Vct.new(10, 0.50), 10, ind, 0, true, "snd-test", trk)
-  mix2 = mix_vct(Vct.new(10, 0.25), 20, ind, 1, true, "snd-test", trk)
-  mix3 = mix_vct(Vct.new(10, 0.30), 30, ind, 2, true, "snd-test", trk)
-  mix4 = mix_vct(Vct.new(10, 0.10), 40, ind, 1, true, "snd-test", trk)
-  if (res = track_chans(trk)) != 3
-    snd_display("track_chans arg: %s?", res)
-  end
-  v = track2vct(trk, 0)
-  snd_display("track2vct 0: %s?", v) unless vequal(v, Vct.new(10, 0.5))
-  v = track2vct(trk, 2)
-  snd_display("track2vct 2: %s?", v) unless vequal(v, Vct.new(10, 0.3))
-  v = track2vct(trk, 1)
-  v1 = Vct.new(30) do |i|
-    if i < 10
-      0.25
-    elsif i > 19
-      0.1
-    else
-      0.0
-    end
-  end
-  snd_display("track2vct 3: %s?", v) unless vequal(v, v1)
-  # 
-  if (res = Snd.catch do track2vct(trk, 3) end).first != :no_such_channel
-    snd_display("track2vct track 3: %s", res.inspect)
-  end
-  if (res = Snd.catch do track2vct(trk + 123) end).first != :no_such_track
-    snd_display("track2vct untrack: %s", res.inspect)
-  end
-  save_track(trk, "test.snd")
-  ind0 = open_sound("test.snd")
-  snd_display("save_track chans: %s?", chans(ind0)) if chans(ind0) != 3
-  snd_display("save_track frames: %s?", frames(ind0)) if frames(ind0) != 40
-  unless vequal(res = maxamp(ind0, true), [0.5, 0.25, 0.3])
-    snd_display("save_track maxamp: %s?", res)
-  end
-  v = channel2vct(0, 20, ind0, 0)
-  v1 = Vct.new(20) do |i|
-    if i < 10
-      0.5
-    else
-      0.0
-    end
-  end
-  snd_display("save_track 0: %s?", v) unless vequal(v, v1)
-  if (res = Snd.catch do save_track(trk, "test.snd", 3) end).first != :no_such_channel
-    snd_display("save_track track 3: %s", res.inspect)
-  end
-  if (res = Snd.catch do track2vct(trk + 123, "test.snd") end).first != :no_such_track
-    snd_display("save_track untrack: %s", res.inspect)
-  end
-  close_sound(ind0)
-  save_track(trk, "test.snd", 1)
-  ind0 = open_sound("test.snd")
-  snd_display("save_track chan1: %s?", chans(ind0)) if chans(ind0) != 1
-  snd_display("save_track chan1 frames: %s?", frames(ind0)) if frames(ind0) != 30
-  if fneq(res = maxamp(ind0, 0), 0.25)
-    snd_display("save_track maxamp chan1: %s?", res)
-  end
-  v = channel2vct(0, 30, ind0, 0)
-  v1 = Vct.new(30) do |i|
-    if i < 10
-      0.25
-    elsif i > 19
-      0.1
-    else
-      0.0
-    end
-  end
-  snd_display("save_track chan1: %s?", v) unless vequal(v, v1)
-  close_sound(ind0)
-  close_sound(ind)
-  if (res = Snd.catch do save_track(trk, "test.snd") end).first != :no_such_channel
-    snd_display("save_track empty track: %s", res.inspect)
-  end
-  if (res = Snd.catch do save_track(trk, "test.snd", 1) end).first != :no_such_channel
-    snd_display("save_track empty track (1): %s", res.inspect)
-  end
-  if (res = Snd.catch do track2vct(trk) end).first != :no_such_channel
-    snd_display("track2vct empty track: %s", res.inspect)
-  end
-  if (res = Snd.catch do track2vct(trk, 1) end).first != :no_such_channel
-    snd_display("track2vct empty track (1): %s", res.inspect)
-  end
-  # 
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "track amp_env tests", 300)
-  track0 = make_track
-  set_track_amp_env(track0, [0, 0, 1, 1])
-  set_track_position(track0, 123)
-  set_track_speed(track0, 0.5)
-  set_track_speed(track0, 1.0)
-  mix1 = mix_vct(Vct.new(10, 1.0), 10)
-  set_mix_track(mix1, track0)
-  tdata = track2vct(track0)
-  mdata = mix2vct(mix1)
-  snd_display("1 mix track: %s %s?", tdata, mdata) unless vequal(tdata, mdata)
-  set_mix_position(mix1, 30)
-  if (res = mix_position(mix1)) != 30
-    snd_display("mix_pos change track_pos: %s %s?", res, track_position(track0))
-  end
-  close_sound(ind)
-  #
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "track amp_env tests", 300)
-  trk = make_track
-  mix1 = mix_vct(Vct.new(100, 0.5),   0, ind, 0, true, "snd-test", trk)
-  mix2 = mix_vct(Vct.new(100, 0.3), 200, ind, 0, true, "snd-test", trk)
-  edpos = edit_position(ind, 0)
-  data = channel2vct(0, 300, ind, 0)
-  vdata = Vct.new(300) do |i|
-    if i < 100
-      0.5
-    elsif i > 199
-      0.3
-    else
-      0.0
-    end
-  end
-  e = make_env(:envelope, [0, 0, 1, 1], :end, 299)
-  unless vequal_err(data, vdata, 0.00001)
-    snd_display("track not yet ramped:\n# %s\n# %s?", data, vdata)
-  end
-  set_track_amp_env(trk, [0, 0, 1, 1])
-  vdata.map! do |val| val *= env(e) end
-  data = channel2vct(0, 300, ind, 0)
-  unless vequal_err(data, vdata, 0.002)
-    snd_display("track_amp_env ramped:\n# %s\n# %s?", data, vdata)
-  end
-  if (res = edit_position(ind, 0)) != edpos + 1
-    snd_display("track_amp_env ramped not atomic: %s %s?", edpos, res)
-  end
-  set_mix_amp_env(mix1, [0, 1, 1, 0])
-  if (res = edit_position(ind, 0)) != edpos + 2
-    snd_display("mix_amp_env ramped not atomic: %s %s?", edpos, res)
-  end
-  data = channel2vct(0, 300, ind, 0)
-  e = make_env(:envelope, [0, 1, 1, 0], :end, 99)
-  vdata.map_with_index! do |val, i|
-    break if i > 99
-    val *= env(e)
-  end
-  unless vequal_err(data, vdata, 0.001)
-    snd_display("track_amp_env + mix_amp_env ramped:\n# %s\n# %s?", data, vdata)
-  end
-  set_mix_amp(mix1, 2.0)
-  if (res = edit_position(ind, 0)) != edpos + 3
-    snd_display("mix_amp ramped not atomic: %s %s?", edpos, res)
-  end
-  data = channel2vct(0, 300, ind, 0)
-  vdata.map_with_index! do |val, i|
-    break if i > 99
-    val *= 2.0
-  end
-  unless vequal_err(data, vdata, 0.001)
-    snd_display("track_amp_env + mix_amp_env + amp ramped:\n# %s\n# %s?", data, vdata)
-  end
-  set_track_position(trk, 100)
-  if (res = edit_position(ind, 0)) != edpos + 4
-    snd_display("track_position + mix_amp_env  ramped not atomic: %s %s?", edpos, res)
-  end
-  if (res = frames(ind, 0)) != 400
-    snd_display("set_track_position extended file: %s?", res)
-  end
-  if (res = track_frames(trk)) != 300
-    snd_display("set_track_position extended file track: %s?", res)
-  end
-  data = channel2vct(100, 300, ind, 0)
-  unless vequal_err(data, vdata, 0.001)
-    snd_display("track_amp_env + mix_amp_env + amp ramped + position:\n# %s\n# %s?", data, vdata)
-  end
-  #
-  set_mix_amp_env(mix1, false)
-  set_mix_amp(mix2, 0, 10.0 / 3);
-  e = make_env(:envelope, [0, 0, 1, 1], :end, 299)
-  vdata.map_with_index! do |val, i|
-    if i < 100 or i > 199
-      env(e)
-    else
-      val *= env(e)
-    end
-  end
-  data = channel2vct(100, 300, ind, 0)
-  unless vequal_err(data, vdata, 0.003)
-    snd_display("track_amp_env to 1.0:\n# %s\n# %s?", data, vdata)
-  end
-  set_track_speed(trk, 0.5)
-  if (res = track_frames(trk)) != 400
-    snd_display("track frames after speed+amp-env: %s?", res)
-  end
-  if (res = frames(ind, 0)) != 500
-    snd_display("set_track_speed extended file: %s?", res)
-  end
-  if fneq(sample(100), 0.0) or
-      fneq_err(sample(200), 0.25, 0.0015) or
-      fneq_err(sample(400), 0.75, 0.0015)
-    snd_display("track-amp-env+speed0.5 samps: %s %s %s?", sample(100), sample(200), sample(400))
-  end
-  revert_sound(ind)
-  #
-  mix1 = mix_vct(Vct.new(100, 1.0),   0, ind, 0, true, "snd-test", trk)
-  mix2 = mix_vct(Vct.new(100, 1.0), 100, ind, 0, true, "snd-test", trk)
-  if (res = track(trk)) != [mix1, mix2]
-    snd_display("unset track upon revert: %s %s?", res, [mix1, mix2])
-  end
-  set_track_amp_env(trk, [0, 0, 1, 1])
-  if fneq( sample(  0), 0.000) or
-      fneq(sample( 50), 0.252) or
-      fneq(sample( 99), 0.500) or
-      fneq(sample(100), 0.500) or
-      fneq(sample(199), 1.000)
-    snd_display("mix_speed/position track + track_amp_env: %s?",
-                [0, 50, 99, 100, 199].map do |m| sample(m) end)
-  end
-  set_mix_speed(mix2, 0.25)
-  if fneq( sample(  0), 0.000) or
-      fneq(sample( 50), 0.101) or
-      fneq(sample( 99), 0.200) or
-      fneq(sample(100), 0.200) or
-      fneq(sample(200), 0.400) or
-      fneq_err(sample(300), 0.600, 0.003) or
-      fneq_err(sample(400), 0.801, 0.01) or
-      fneq_err(sample(450), 0.900, 0.01)
-    snd_display("mix_speed lengthens track + track_amp_env: %s?",
-                [0, 50, 99, 100, 200, 300, 400, 450].map do |m| sample(m) end)
-  end
-  undo_edit
-  set_mix_speed(mix2, 2.0)
-  if fneq( sample(  0), 0.000) or
-      fneq(sample( 50), 0.337) or
-      fneq(sample( 99), 0.667) or
-      fneq(sample(151), 0.000) or
-      fneq(sample(200), 0.000) or
-      fneq_err(sample(110), 0.730, 0.1) or
-      fneq_err(sample(135), 0.900, 0.1)
-    snd_display("mix_speed lengthens track + track_amp_env: %s?",
-                [0, 50, 99, 110, 135, 151, 200].map do |m| sample(m) end)
-  end
-  undo_edit
-  set_mix_position(mix2, 400)
-  if fneq( sample(  0), 0.000) or
-      fneq(sample( 50), 0.101) or
-      fneq(sample( 99), 0.200) or
-      fneq(sample(100), 0.000) or
-      fneq(sample(200), 0.000) or
-      fneq(sample(300), 0.000) or
-      fneq(sample(400), 0.800) or
-      fneq(sample(450), 0.901)
-    snd_display("mix_position lengthens track + track_amp_env: %s?",
-                [0, 50, 99, 100, 200, 300, 400, 450].map do |m| sample(m) end)
-  end
-  undo_edit
-  set_track_position(trk, 300)
-  set_mix_position(mix1, 0)
-  if fneq( sample(  0), 0.000) or
-      fneq(sample( 50), 0.101) or
-      fneq(sample( 99), 0.200) or
-      fneq(sample(100), 0.000) or
-      fneq(sample(200), 0.000) or
-      fneq(sample(300), 0.000) or
-      fneq(sample(400), 0.800) or
-      fneq(sample(450), 0.901)
-    snd_display("mix_position (backwards) lengthens track + track_amp_env: %s?",
-                [0, 50, 99, 100, 200, 300, 400, 450].map do |m| sample(m) end)
-  end
-  undo_edit(2)
-  set_mix_position(mix2, 50)
-  if fneq( sample(  0), 0.000) or
-      fneq(sample( 49), 0.330) or
-      fneq(sample( 50), 0.670) or
-      fneq(sample( 99), 1.330) or
-      fneq(sample(100), 0.670) or
-      fneq(sample(149), 1.000) or
-      fneq(sample(200), 0.000)
-    snd_display("mix_position 2 shortens track + track_amp_env: %s?",
-                [0, 49, 50, 99, 100, 149, 200].map do |m| sample(m) end)
-  end
-  undo_edit
-  set_mix_position(mix1, 100)
-  if fneq( sample(  0), 0.000) or
-      fneq(sample( 50), 0.000) or
-      fneq(sample( 99), 0.000) or
-      fneq(sample(100), 0.000) or
-      fneq(sample(150), 1.010) or
-      fneq(sample(199), 2.000) or
-      fneq(sample(200), 0.000)
-    snd_display("mix_position 1 shortens track + track_amp_env: %s?",
-                [0, 50, 99, 100, 150, 199, 200].map do |m| sample(m) end)
-  end
-  undo_edit
-  close_sound(ind)
-  # 
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 2,
-                  "multi-channel track position tests", 300)
-  mix1 = mix_vct(Vct.new(10, 1.0),   0, ind, 0)
-  mix2 = mix_vct(Vct.new(10, 1.0), 200, ind, 1)
-  trk = make_track(mix1, mix2)
-  if (res = track_chans(trk)) != 2
-    snd_display("2chan track_position test off to bad start: %s?", res)
-  end
-  if (res1 =  track_position(trk, 0)) != 0 or
-      (res2 = track_position(trk, 1)) != 200 or
-      (res3 = track_position(trk)) != 0 or
-      (res4 = mix_position(mix1)) != 0 or
-      (res5 = mix_position(mix2)) != 200
-    snd_display("2chan track_position pos: %s %s %s %s %s?", res1, res2, res3, res4, res5)
-  end
-  set_track_position(trk, 0, 25)
-  if (res1 =  track_position(trk, 0)) != 25 or
-      (res2 = track_position(trk, 1)) != 200 or
-      (res3 = track_position(trk)) != 25 or
-      (res4 = mix_position(mix1)) != 25 or
-      (res5 = mix_position(mix2)) != 200
-    snd_display("2chan track_position pos 2: %s %s %s %s %s?", res1, res2, res3, res4, res5)
-  end
-  set_track_position(trk, 1, 100)
-  if (res1 =  track_position(trk, 0)) != 25 or
-      (res2 = track_position(trk, 1)) != 100 or
-      (res3 = track_position(trk)) != 25 or
-      (res4 = mix_position(mix1)) != 25 or
-      (res5 = mix_position(mix2)) != 100
-    snd_display("2chan track_position pos 3: %s %s %s %s %s?", res1, res2, res3, res4, res5)
-  end
-  set_track_position(trk, 1, 10)
-  if (res1 =  track_position(trk, 0)) != 25 or
-      (res2 = track_position(trk, 1)) != 10 or
-      (res3 = track_position(trk)) != 10 or
-      (res4 = mix_position(mix1)) != 25 or
-      (res5 = mix_position(mix2)) != 10
-    snd_display("2chan track_position pos 4: %s %s %s %s %s?", res1, res2, res3, res4, res5)
-  end
-  set_mix_position(mix1, 0)
-  set_mix_position(mix2, 200)
-  if (res1 =  track_position(trk, 0)) != 0 or
-      (res2 = track_position(trk, 1)) != 200 or
-      (res3 = track_position(trk)) != 0 or
-      (res4 = mix_position(mix1)) != 0 or
-      (res5 = mix_position(mix2)) != 200
-    snd_display("2chan track_position pos 5: %s %s %s %s %s?", res1, res2, res3, res4, res5)
-  end
-  #
-  set_track_amp_env(trk, [0, 0, 1, 1])
-  if (not vequal(res1 = track2vct(trk, 0),
-                 vct(0.000, 0.005, 0.011, 0.016, 0.021, 0.026, 0.032, 0.037, 0.042, 0.048))) or
-      (not vequal(res2 = track2vct(trk, 1),
-                  vct(0.952, 0.958, 0.963, 0.968, 0.974, 0.979, 0.984, 0.989, 0.995, 1.000)))
-    snd_display("2chan track-pos amp-env: %s %s?", res1, res2)
-  end
-  set_track_position(trk, 0, 100)
-  if (not vequal(res1 = track2vct(trk, 0),
-                 vct(0.000, 0.010, 0.020, 0.030, 0.040, 0.051, 0.061, 0.071, 0.081, 0.091))) or
-      (not vequal(res2 = track2vct(trk, 1),
-                  vct(0.909, 0.919, 0.929, 0.939, 0.949, 0.960, 0.970, 0.980, 0.990, 1.000)))
-    snd_display("2chan track-pos amp-env 2: %s %s?", res1, res2)
-  end
- set_track_position(trk, 1, 100)
-  if (not vequal(res1 = track2vct(trk, 0),
-                 vct(0.000, 0.111, 0.222, 0.333, 0.444, 0.556, 0.667, 0.778, 0.889, 1.000))) or
-      (not vequal(res2 = track2vct(trk, 1),
-                  vct(0.000, 0.111, 0.222, 0.333, 0.444, 0.556, 0.667, 0.778, 0.889, 1.000)))
-    snd_display("2chan track-pos amp-env 3: %s %s?", res1, res2)
-  end
- set_track_position(trk, 1, 0)
-  if (not vequal(res1 = track2vct(trk, 0),
-                 vct(0.909, 0.919, 0.929, 0.939, 0.949, 0.960, 0.970, 0.980, 0.990, 1.000))) or
-      (not vequal(res2 = track2vct(trk, 1),
-                  vct(0.000, 0.010, 0.020, 0.030, 0.040, 0.051, 0.061, 0.071, 0.081, 0.091)))
-    snd_display("2chan track-pos amp-env 4: %s %s?", res1, res2)
-  end
-  mix3 = mix_vct(Vct.new(10, 1.0), 200, ind, 1)
-  set_mix_track(mix3, trk)
-  if (not vequal(res = track2vct(trk, 0),
-                 vct(0.476, 0.481, 0.487, 0.492, 0.497, 0.503, 0.508, 0.513, 0.519, 0.524))) or
-      (not vequal(channel2vct(0, 10, ind, 1),
-                 vct(0.000, 0.005, 0.011, 0.016, 0.021, 0.026, 0.032, 0.037, 0.042, 0.048))) or
-      (not vequal(channel2vct(200, 10, ind, 1),
-                  vct(0.952, 0.958, 0.963, 0.968, 0.974, 0.979, 0.984, 0.989, 0.995, 1.000)))
-    snd_display("2chan track-pos amp-env 5: %s %s?", res, track2vct(trk, 1))
-  end
-  edpos = edit_position(ind, 1)
-  set_track_position(trk, 0, 50)
-  if (res = edit_position(ind, 1)) != edpos
-    snd_display("set track pos changed edpos: %s %s?", edpos, res)
-  end
-  if (not vequal(res = track2vct(trk, 0),
-                 vct(0.238, 0.243, 0.249, 0.254, 0.259, 0.265, 0.270, 0.275, 0.280, 0.286))) or
-      (not vequal(channel2vct(0, 10, ind, 1),
-                 vct(0.000, 0.005, 0.011, 0.016, 0.021, 0.026, 0.032, 0.037, 0.042, 0.048))) or
-      (not vequal(channel2vct(200, 10, ind, 1),
-                  vct(0.952, 0.958, 0.963, 0.968, 0.974, 0.979, 0.984, 0.989, 0.995, 1.000)))
-    snd_display("2chan track-pos amp-env 6: %s %s?", res, track2vct(trk, 1))
-  end
-  close_sound(ind)
-  # 
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1,
-                  "multi-channel track position tests", 300)
-  mix1 = mix_vct(Vct.new(10, 1.0), 0, ind, 0)
-  trk = make_track
-  set_track_amp_env(trk, [0, 0, 1, 1])
-  unless vequal(res = track_amp_env(trk), [0, 0, 1, 1].to_vct)
-    snd_display("empty track env: %s?", res)
-  end
-  set_mix_track(mix1, trk)
-  unless vequal(res = track2vct(trk),
-                vct(0.000, 0.111, 0.222, 0.333, 0.444, 0.556, 0.667, 0.778, 0.889, 1.000))
-    snd_display("track amp-env 1 mix: %s?", res)
-  end
-  set_track_position(trk, 10)
-  unless vequal(res = channel2vct(0, 20, ind, 0),
-                vct(0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
-                    0.000, 0.111, 0.222, 0.333, 0.444, 0.556, 0.667, 0.778, 0.889, 1.000))
-    snd_display("move 1 mix track + env: %s", res)
-  end
-  unless vequal(res = mix2vct(mix1),
-                vct(0.000, 0.111, 0.222, 0.333, 0.444, 0.556, 0.667, 0.778, 0.889, 1.000))
-    snd_display("track amp-env 1 mix2vct: %s?", res)
-  end
-  set_mix_track(mix1, 0)
-  unless vequal(res = mix2vct(mix1), Vct.new(10, 1.0)) 
-    snd_display("untrack mix2vct: %s?", res)
-  end
-  unless vequal(res = track_amp_env(trk), [0, 0, 1, 1])
-    snd_display("newly empty track env: %s?", res)
-  end
-  set_mix_speed(mix1, 0.5)
-  set_mix_track(mix1, trk)
-  if (res1 = mix_frames(mix1)) != 20 or (res2 = track_frames(trk)) != 20
-    snd_display("mix_speed for track frames: %s %s?", res1, res2)
-  end
-  if fneq(sample(30), 0.0) or fneq(sample(10), 0.0) or fneq(sample(20), 0.526)
-    snd_display("mix_speed + track amp env: %s?", track2vct(trk))
-  end
-  set_track_speed(trk, 2.0)
-  if (res1 = mix_frames(mix1)) != 10 or (res2 = track_frames(trk)) != 10
-    snd_display("mix_speed (2) for track frames: %s %s?", res1, res2)
-  end
-  unless vequal(res = track2vct(trk),
-                vct(0.000, 0.111, 0.222, 0.333, 0.444, 0.556, 0.667, 0.778, 0.889, 1.000))
-    snd_display("mix+track speed + amp-env: %s?", res)
-  end
-  close_sound(ind)
 end
 
 def test079
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "track + track tests", 300)
-  mix1 = mix_vct(Vct.new(10, 1.0), 20, ind, 0)
-  track1 = make_track
-  track2 = make_track
-  edpos = edit_position(ind, 0)
-  # 
-  # track->track+env
-  # 
-  set_track_amp_env(track2, [0, 0, 1, 1])
-  set_track_track(track1, track2)
-  set_mix_track(mix1, track1)
-  if (res1 = track(track1)) != (res2 = track(track2)) or res1 != [mix1]
-    snd_display("embedded track: %s %s %s?", res1, res2, [mix1])
-  end
-  if (res1 = mix_position(mix1)) != (res2 = track_position(track1)) or
-      (res3 = track_position(track2)) != res1 or
-      res1 != 20
-    snd_display("embedded track pos: %s %s %s?", res1, res2, res3)
-  end
-  if (res1 = mix_frames(mix1)) != (res2 = track_frames(track1)) or
-      (res3 = track_frames(track2)) != res1 or
-      res1 != 10
-    snd_display("embedded track dur: %s %s %s?", res1, res2, res3)
-  end
-  if (not vequal(res1 = mix2vct(mix1), res2 = track2vct(track1))) or
-      (not vequal(res1, res3 = track2vct(track2))) or
-      (not vequal(res3, vct(0.000, 0.111, 0.222, 0.333, 0.444, 0.556, 0.667, 0.778, 0.889, 1.000)))
-    snd_display("embedded track amp-env(t->e): %s %s %s?", res1, res2, res3)
-  end
-  edpos = edit_position(ind, 0)
-  set_track_position(track1, 50)
-  if (res1 = mix_position(mix1)) != (res2 = track_position(track1)) or
-      (res3 = track_position(track2)) != res1 or
-      res1 != 50
-    snd_display("embedded track set pos: %s %s %s?", res1, res2, res3)
-  end
-  if (not vequal(res1 = mix2vct(mix1), res2 = track2vct(track1))) or
-      (not vequal(res1, res3 = track2vct(track2))) or
-      (not vequal(res3, vct(0.000, 0.111, 0.222, 0.333, 0.444, 0.556, 0.667, 0.778, 0.889, 1.000)))
-    snd_display("embedded track amp-env(t->e) set pos: %s %s %s?", res1, res2, res3)
-  end
-  set_edit_position(edpos, ind, 0)
-  set_track_position(track2, 50)
-  if (res1 = mix_position(mix1)) != (res2 = track_position(track1)) or
-      (res3 = track_position(track2)) != res1 or
-      res1 != 50
-    snd_display("embedded track set pos 1: %s %s %s?", res1, res2, res3)
-  end
-  set_edit_position(edpos, ind, 0)
-  set_mix_position(mix1, 50)
-  if (res1 = mix_position(mix1)) != (res2 = track_position(track1)) or
-      (res3 = track_position(track2)) != res1 or
-      res1 != 50
-    snd_display("embedded track set pos 2: %s %s %s?", res1, res2, res3)
-  end
-  set_edit_position(edpos, ind, 0)
-  set_track_speed(track2, 0.5)
-  if (res1 = mix_position(mix1)) != (res2 = track_position(track1)) or
-      (res3 = track_position(track2)) != res1 or
-      res1 != 20
-    snd_display("embedded track set speed: %s %s %s?", res1, res2, res3)
-  end
-  set_edit_position(edpos, ind, 0)
-  set_track_speed(track1, 0.5)
-  if (res1 = mix_position(mix1)) != (res2 = track_position(track1)) or
-      (res3 = track_position(track2)) != res1 or
-      res1 != 20
-    snd_display("embedded track set speed 1: %s %s %s?", res1, res2, res3)
-  end
-  set_edit_position(edpos, ind, 0)
-  set_mix_speed(mix1, 0.5)
-  if (res1 = mix_position(mix1)) != (res2 = track_position(track1)) or
-      (res3 = track_position(track2)) != res1 or
-      res1 != 20
-    snd_display("embedded track set speed 2: %s %s %s?", res1, res2, res3)
-  end
-  set_edit_position(edpos, ind, 0)
-  if (res1 = mix_frames(mix1)) != (res2 = track_frames(track1)) or
-      (res3 = track_frames(track2)) != res1 or
-      res1 != 10
-    snd_display("embedded track undo set speed: %s %s %s?", res1, res2, res3)
-  end
-  set_track_amp(track2, 0.5)
-  if (not vequal(res1 = mix2vct(mix1), res2 = track2vct(track1))) or
-      (not vequal(res1, res3 = track2vct(track2))) or
-      (not vequal(res3, vct(0.000, 0.111, 0.222, 0.333, 0.444,
-                            0.556, 0.667, 0.778, 0.889, 1.000).scale(0.5)))
-    snd_display("embedded track set amp(t->e): %s %s %s?", res1, res2, res3)
-  end
-  undo_edit
-  set_track_amp(track1, 0.5)
-  if (not vequal(res1 = mix2vct(mix1), res2 = track2vct(track1))) or
-      (not vequal(res1, res3 = track2vct(track2))) or
-      (not vequal(res3, vct(0.000, 0.111, 0.222, 0.333, 0.444,
-                            0.556, 0.667, 0.778, 0.889, 1.000).scale(0.5)))
-    snd_display("embedded track set amp(t->e) 1: %s %s %s?", res1, res2, res3)
-  end
-  undo_edit
-  set_mix_amp(mix1, 0.5)
-  if (not vequal(res1 = mix2vct(mix1), res2 = track2vct(track1))) or
-      (not vequal(res1, res3 = track2vct(track2))) or
-      (not vequal(res3, vct(0.000, 0.111, 0.222, 0.333, 0.444,
-                            0.556, 0.667, 0.778, 0.889, 1.000).scale(0.5)))
-    snd_display("embedded track set amp(t->e) 2: %s %s %s?", res1, res2, res3)
-  end
-  undo_edit
-  # 
-  set_track_amp_env(track1, [0, 0, 1, 1])
-  set_track_amp_env(track1, false)
-  if (not vequal(res1 = mix2vct(mix1), res2 = track2vct(track1))) or
-      (not vequal(res1, res3 = track2vct(track2))) or
-      (not vequal(res3, vct(0.000, 0.111, 0.222, 0.333, 0.444, 0.556, 0.667, 0.778, 0.889, 1.000)))
-    snd_display("embedded track amp-env(t->e) 1: %s %s %s?", res1, res2, res3)
-  end
-  set_mix_amp_env(mix1, 0, [0, 0, 1, 1])
-  if (not vequal(res1 = mix2vct(mix1), res2 = track2vct(track1))) or
-      (not vequal(res1, res3 = track2vct(track2))) or
-      (not vequal(res3, vct(0, 0.010, 0.040, 0.090, 0.160, 0.250, 0.360, 0.490, 0.640, 0.810)))
-    snd_display("embedded track amp-env(t->e) 2: %s %s %s?", res1, res2, res3)
-  end
-  set_track_amp_env(track1, [0, 0, 1, 1])
-  if (not vequal(res1 = mix2vct(mix1), res2 = track2vct(track1))) or
-      (not vequal(res1, res3 = track2vct(track2))) or
-      (not vequal(res3, vct(0, 0.001, 0.008, 0.027, 0.064, 0.125, 0.216, 0.343, 0.512, 0.729)))
-    snd_display("embedded track amp-env(t->e) 3: %s %s %s?", res1, res2, res3)
-  end
-  set_mix_amp_env(mix1, 0, false)
-  if (not vequal(res1 = mix2vct(mix1), res2 = track2vct(track1))) or
-      (not vequal(res1, res3 = track2vct(track2))) or
-      (not vequal(res3, vct(0, 0.010, 0.040, 0.090, 0.160, 0.250, 0.360, 0.490, 0.640, 0.810)))
-    snd_display("embedded track amp-env(t->e) 4: %s %s %s?", res1, res2, res3)
-  end
-  set_track_amp_env(track1, false)
-  if (not vequal(res1 = mix2vct(mix1), res2 = track2vct(track1))) or
-      (not vequal(res1, res3 = track2vct(track2))) or
-      (not vequal(res3, vct(0.000, 0.111, 0.222, 0.333, 0.444, 0.556, 0.667, 0.778, 0.889, 1.000)))
-    snd_display("embedded track amp-env(t->e) 1: %s %s %s?", res1, res2, res3)
-  end
-  if (res1 = mix_frames(mix1)) != (res2 = track_frames(track1)) or
-      (res3 = track_frames(track2)) != res1 or
-      res1 != 10
-    snd_display("embedded track dur back out: %s %s %s?", res1, res2, res3)
-  end
-  # 
-  # two mixes track(1)+track-amp-env
-  # 
-  mix2 = mix_vct(Vct.new(10, 1.0), 30, ind, 0)
-  set_mix_track(mix2, track1)
-  if (not vequal(track2vct(track1), track2vct(track2))) or
-      (not vequal(res = channel2vct(20, 20, ind, 0),
-                  vct(0.000, 0.056, 0.111, 0.167, 0.222, 0.278, 0.333, 0.389, 0.444, 0.500,
-                      0.500, 0.556, 0.611, 0.667, 0.722, 0.778, 0.833, 0.889, 0.944, 1.000)))
-    snd_display("embedded track 2mix ampenv: %s?", res)
-  end
-  set_mix_track(mix2, track1)
-  if (res1 = track(track1)) != (res2 = track(track2)) or res1 != [mix1, mix2]
-    snd_display("embedded track 2mix: %s %s %s?", res1, res2, [mix1, mix2])
-  end
-  if (res1 = track_position(track1)) != (res2 = track_position(track2)) or res1 != 20
-    snd_display("embedded track pos 2mix: %s %s?", res1, res2)
-  end
-  if (res1 = track_frames(track1)) != (res2 = track_frames(track2)) or res1 != 20
-    snd_display("embedded track dur 2mix: %s %s?", res1, res2)
-  end
-  set_track_position(track1, 50)
-  if (res1 = track_position(track1)) != (res2 = track_position(track2)) or
-      (res3 = mix_position(mix1)) != res1 or
-      res1 != 50
-    snd_display("embedded track set pos 2mix: %s %s?", res1, res2, res3)
-  end
-  if (not vequal(track2vct(track1), track2vct(track2))) or
-      (not vequal(res = channel2vct(50, 20, ind, 0),
-                  vct(0.000, 0.056, 0.111, 0.167, 0.222, 0.278, 0.333, 0.389, 0.444, 0.500,
-                      0.500, 0.556, 0.611, 0.667, 0.722, 0.778, 0.833, 0.889, 0.944, 1.000)))
-    snd_display("embedded track amp-env(t->e) set pos 2mix: %s?", res)
-  end
-  undo_edit
-  set_track_position(track2, 50)
-  if (res1 = track_position(track1)) != (res2 = track_position(track2)) or
-      (res3 = mix_position(mix1)) != res1 or
-      res1 != 50
-    snd_display("embedded track set pos 2mix 1: %s %s?", res1, res2, res3)
-  end
-  undo_edit
-  set_track_speed(track1, 0.5)
-  if (res1 = track_frames(track1)) != (res2 = track_frames(track2)) or res1 != 30
-    snd_display("embedded track set speed 2mix: %s %s?", res1, res2)
-  end
-  undo_edit
-  set_track_speed(track2, 0.5)
-  if (res1 = track_frames(track1)) != (res2 = track_frames(track2)) or res1 != 30
-    snd_display("embedded track set speed 2mix 1: %s %s?", res1, res2)
-  end
-  undo_edit
-  set_track_amp(track1, 0.5)
-  if (not vequal(track2vct(track1), track2vct(track2))) or
-      (not vequal(res = channel2vct(20, 20, ind, 0),
-                  vct(0.000, 0.056, 0.111, 0.167, 0.222, 0.278, 0.333, 0.389, 0.444, 0.500,
-                      0.500, 0.556, 0.611, 0.667, 0.722,
-                      0.778, 0.833, 0.889, 0.944, 1.000).scale(0.5)))
-    snd_display("embedded track amp(t->e) set pos 2mix 2: %s?", res)
-  end
-  undo_edit
-  set_track_amp(track2, 0.5)
-  if (not vequal(track2vct(track1), track2vct(track2))) or
-      (not vequal(res = channel2vct(20, 20, ind, 0),
-                  vct(0.000, 0.056, 0.111, 0.167, 0.222, 0.278, 0.333, 0.389, 0.444, 0.500,
-                      0.500, 0.556, 0.611, 0.667, 0.722,
-                      0.778, 0.833, 0.889, 0.944, 1.000).scale(0.5)))
-    snd_display("embedded track amp(t->e) set pos 2mix 3: %s?", res)
-  end
-  undo_edit
-  set_mix_amp(mix1, 0.5)
-  set_mix_amp(mix2, 0.5)
-  if (not vequal(track2vct(track1), track2vct(track2))) or
-      (not vequal(res = channel2vct(20, 20, ind, 0),
-                  vct(0.000, 0.056, 0.111, 0.167, 0.222, 0.278, 0.333, 0.389, 0.444, 0.500,
-                      0.500, 0.556, 0.611, 0.667, 0.722,
-                      0.778, 0.833, 0.889, 0.944, 1.000).scale(0.5)))
-    snd_display("embedded track amp(t->e) set pos 2mix 4: %s?", res)
-  end
-  undo_edit(2)
-  set_track_amp_env(track1, [0, 0, 1, 1])
-  set_track_amp_env(track2, false)
-  if (not vequal(track2vct(track1), track2vct(track2))) or
-      (not vequal(res = channel2vct(20, 20, ind, 0),
-                  vct(0.000, 0.056, 0.111, 0.167, 0.222, 0.278, 0.333, 0.389, 0.444, 0.500,
-                      0.500, 0.556, 0.611, 0.667, 0.722, 0.778, 0.833, 0.889, 0.944, 1.000)))
-    snd_display("embedded track amp-env(t->e) 2mix 1: %s?", res)
-  end
-  set_track_amp_env(track2, [0, 0, 1, 1])
-  if (not vequal(track2vct(track1), track2vct(track2))) or
-      (not vequal(res = channel2vct(20, 20, ind, 0),
-                  vct(0.000, 0.002, 0.010, 0.022, 0.040, 0.062, 0.090, 0.122, 0.160, 0.202,
-                      0.250, 0.303, 0.360, 0.422, 0.490, 0.562, 0.640, 0.722, 0.810, 0.903)))
-    snd_display("embedded track amp-env(t->e) 2mix 2: %s?", res)
-  end
-  #
-  track3 = make_track(mix1, mix2)
-  if (res1 = track(track1)) != nil or
-      (res2 = track(track2)) != nil or
-      (res3 = track(track3)) != [mix1, mix2]
-    snd_display("make_track overrides: %s %s %s?", res1, res2, res3)
-  end
-  unless vequal(res = channel2vct(20, 20, ind, 0), Vct.new(20, 1.0))
-    snd_display("make_track overrides vals: %s?", res)
-  end
-  track4 = make_track(mix2)
-  if (res1 = track(track1))  != nil or
-      (res2 = track(track2)) != nil or
-      (res3 = track(track3)) != [mix1] or
-      (res4 = track(track4)) != [mix2]
-    snd_display("make_track again overrides: %s %s %s %s (%s %s)?",
-                res1, res2, res3, res4, mix1, mix2)
-  end
-  close_sound(ind)
-  #
-  # track-tempo tests
-  # 
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "track tests", 1000)
-  trk = make_track
-  initial_edpos = edit_position(ind, 0)
-  if fneq(res = track_tempo(trk), 1.0)
-    snd_display("track_tempo: %s?", res)
-  end
-  set_track_tempo(trk, 0.5)
-  if fneq(res = track_tempo(trk), 0.5)
-    snd_display("set_track_tempo: %s?", res)
-  end
-  if (res = edit_position(ind, 0)) != initial_edpos
-    snd_display("no-op set_track_tempo edits: %s %s?", initial_edpos, res)
-  end
-  set_track_tempo(trk, 1.0)
-  mix0 = mix_vct(Vct.new(10, 0.1), 100)
-  set_mix_track(mix0, trk)
-  if (res = mix_position(mix0)) != 100
-    snd_display("track tempo initial mix pos: %s?", res)
-  end
-  set_track_tempo(trk, 0.5)
-  if (res = mix_position(mix0)) != 100
-    snd_display("track tempo mix pos: %s?", res)
-  end
-  set_track_tempo(trk, 1.0)
-  mix1 = mix_vct(Vct.new(10, 0.3), 300)
-  set_mix_track(mix1, trk)
-  if (res = mix_position(mix0)) != 100
-    snd_display("track (2) tempo initial mix0 pos: %s?", res)
-  end
-  if (res = mix_position(mix1)) != 300
-    snd_display("track (2) tempo initial mix1 pos: %s?", res)
-  end
-  edpos1 = edit_position(ind, 0)
-  set_track_tempo(trk, 0.5)
-  if (res = mix_position(mix0)) != 100
-    snd_display("track tempo (2) mix0 pos: %s?", res)
-  end
-  if (res = mix_position(mix1)) != 500
-    snd_display("track tempo (2) mix1 pos: %s?", res)
-  end
-  if (res = edit_position(ind, 0)) != edpos1 + 1
-    snd_display("track tempo not atomic: %s %s?", edpos1, res)
-  end
-  set_track_tempo(trk, 1.0)
-  if (res = mix_position(mix0)) != 100
-    snd_display("track (2) tempo back mix0 pos: %s?", res)
-  end
-  if (res = mix_position(mix1)) != 300
-    snd_display("track (2) tempo back mix1 pos: %s?", res)
-  end
-  set_track_tempo(trk, 2.0)
-  if (res = mix_position(mix0)) != 100
-    snd_display("track tempo (2) mix0 2 pos: %s?", res)
-  end
-  if (res = mix_position(mix1)) != 200
-    snd_display("track tempo (2) mix1 2 pos: %s?", res)
-  end
-  set_track_tempo(trk, 1.0)
-  mix2 = mix_vct(Vct.new(10, 0.4), 400)
-  set_mix_track(mix2, trk)
-  if (res = mix_position(mix0)) != 100
-    snd_display("track (3) tempo initial mix0 pos: %s?", res)
-  end
-  if (res = mix_position(mix1)) != 300
-    snd_display("track (3) tempo initial mix1 pos: %s?", res)
-  end
-  if (res = mix_position(mix2)) != 400
-    snd_display("track (3) tempo initial mix2 pos: %s?", res)
-  end
-  set_track_tempo(trk, 0.5)
-  if (res = mix_position(mix0)) != 100
-    snd_display("track tempo (3) mix0 pos: %s?", res)
-  end
-  if (res = mix_position(mix1)) != 500
-    snd_display("track tempo (3) mix1 pos: %s?", res)
-  end
-  if (res = mix_position(mix2)) != 700
-    snd_display("track tempo (3) mix2 pos: %s?", res)
-  end
-  set_track_tempo(trk, 1.0)
-  if (res = mix_position(mix0)) != 100
-    snd_display("track (3) tempo back mix0 pos: %s?", res)
-  end
-  if (res = mix_position(mix1)) != 300
-    snd_display("track (3) tempo back mix1 pos: %s?", res)
-  end
-  if (res = mix_position(mix2)) != 400
-    snd_display("track (3) tempo back mix2 pos: %s?", res)
-  end
-  set_track_tempo(trk, 2.0)
-  if (res = mix_position(mix0)) != 100
-    snd_display("track tempo (3) mix0 2 pos: %s?", res)
-  end
-  if (res = mix_position(mix1)) != 200
-    snd_display("track tempo (3) mix1 2 pos: %s?", res)
-  end
-  if (res = mix_position(mix2)) != 250
-    snd_display("track tempo (3) mix2 2 pos: %s?", res)
-  end
-  #
-  set_track_amp_env(trk, [0, 0, 1, 1])
-  set_track_tempo(trk, 1.0)
-  if (res = mix_position(mix0)) != 100
-    snd_display("track (4) tempo mix0 pos: %s?", res)
-  end
-  if (res = mix_position(mix1)) != 300
-    snd_display("track (4) tempo mix1 pos: %s?", res)
-  end
-  if (res = mix_position(mix2)) != 400
-    snd_display("track (4) tempo mix2 pos: %s?", res)
-  end
-  set_track_amp_env(trk, [0, 1, 1, 0])
-  set_track_tempo(trk, 2.0)
-  if (res = mix_position(mix0)) != 100
-    snd_display("track tempo (4) mix0 2 pos: %s?", res)
-  end
-  if (res = mix_position(mix1)) != 200
-    snd_display("track tempo (4) mix1 2 pos: %s?", res)
-  end
-  if (res = mix_position(mix2)) != 250
-    snd_display("track tempo (4) mix2 2 pos: %s?", res)
-  end
-  close_sound(ind)
 end
 
 def test089
-  #
-  # pan-mix tests
-  #
-  ind = new_sound("fmv.snd", Mus_next, Mus_bfloat, 22050, 1, "pan_mix tests")
-  id0 = pan_mix("1a.snd")
-  if (res1 = mix_track(id0)) != 0 or
-      fneq(res2 = mix_amp(id0, 0), 1.0) or
-      (res3 = mix_amp_env(id0, 0)) != nil
-    snd_display("pan_mix 1->1 all opt: %s %s %s?", res1, res2, res3)
-  end
-  if fneq(res1 = maxamp(ind, 0), res2 = mix_maxamp(id0))
-    snd_display("pan_mix 1->1 maxamps: %s %s?", res1, res2)
-  end
-  if (res = mix_position(id0)) != 0
-    snd_display("pan_mix 1->1 pos: %s?", res)
-  end
-  revert_sound(ind)
-  #
-  id0 = pan_mix("1a.snd", 10000, [0, 0, 1, 1])
-  if (res1 = mix_track(id0)) != 0 or
-      fneq(res2 = mix_amp(id0, 0), 1.0) or
-      (res3 = mix_amp_env(id0, 0)) != [0, 0, 1, 1]
-    snd_display("pan_mix 1->1 2: %s %s %s?", res1, res2, res3)
-  end
-  if (res = mix_position(id0)) != 10000
-    snd_display("pan_mix 1->1 pos 2: %s?", res)
-  end
-  revert_sound(ind)
-  # 
-  id0 = pan_mix("1a.snd", 80000, [0, 0, 1, 1])
-  if (res1 = mix_track(id0)) != 0 or
-      fneq(res2 = mix_amp(id0, 0), 1.0) or
-      (res3 = mix_amp_env(id0, 0)) != [0, 0, 1, 1]
-    snd_display("pan_mix 1->1 3: %s %s %s?", res1, res2, res3)
-  end
-  if (res = mix_position(id0)) != 80000
-    snd_display("pan_mix 1->1 pos 4: %s?", res)
-  end
-  if (res = frames(ind, 0)) != 80000 + mus_sound_frames("1a.snd")
-    snd_display("pan_mix past end frames: %s?", res)
-  end
-  revert_sound(ind)
-  # 
-  id0 = pan_mix("2a.snd", 100)
-  if (res1 = mix_track(id0)) == 0 or
-      (not (res2 = mix?(id0 + 1))) or
-      (res3 = mix_track(id0 + 1)) != res1
-    snd_display("pan_mix 2->1: %s %s %s?", res1, res2, res3)
-  end
-  if (res1 = mix_position(id0)) != (res2 = mix_position(id0 + 1)) or
-      (res3 = track_position(mix_track(id0))) != res1 or
-      res1 != 100
-    snd_display("pan_mix 2->1 pos: %s %s %s?", res1, res2, res3)
-  end
-  if fneq(res1 = mix_maxamp(id0), res2 = maxamp(ind, 0)) or
-      fneq(res3 = mix_maxamp(id0 + 1), 0.0)
-    snd_display("pan_mix 2->1 maxamps: %s %s %s?", res1, res2, res3)
-  end
-  if (res = track(mix_track(id0))) != [id0, id0 + 1]
-    snd_display("pan_mix 2->1 track: %s %s?", res, id0)
-  end
-  max1 = maxamp(ind, 0)
-  maxid0 = mix_maxamp(id0)
-  maxid1 = mix_maxamp(id0 + 1)
-  set_track_amp_env(mix_track(id0), [0, 0, 0, 0])
-  if fneq(res1 = mix_maxamp(id0), 0.0) or fneq(res2 = mix_maxamp(id0 + 1), max1)
-    snd_display("pan_mix 2->1 maxamps (reversed): %s %s %s?", res1, res2, maxamp(ind, 0))
-  end
-  revert_sound(ind)
-  #
-  maxs = mus_sound_maxamp("2a.snd")
-  id0 = pan_mix("2a.snd", 100, 0.4)
-  expected_max = [0.4 * maxs[1], 0.6 * maxs[3]].max
-  if fneq(res = maxamp(ind, 0), expected_max)
-    snd_display("pan_mix scaled: %s %s?", res, maxs)
-  end
-  if (res1 = mix_position(id0)) != (res2 = mix_position(id0 + 1)) or
-      (res3 = track_position(mix_track(id0))) != res1 or
-      res1 != 100
-    snd_display("pan_mix 2->1 pos 2: %s %s %s?", res1, res2, res3)
-  end
-  if fneq(res1 = mix_amp(id0, 0), 1.0) or fneq(res2 = mix_amp(id0 + 1, 1), 1.0)
-    snd_display("pan_mix 2->1 mix_amp: %s %s?", res1, res2)
-  end
-  if fneq(res1 = mix_amp(id0, 1), 0.0) or fneq(res2 = mix_amp(id0 + 1, 0), 0.0)
-    snd_display("pan_mix 2->1 mix_amp (off case): %s %s?", res1, res2)
-  end
-  unless vequal(res = track_amp_env(mix_track(id0)), [0, 0.4, 1, 0.4])
-    snd_display("pan_mix 2->1 0.4 env: %s?", res)
-  end
-  revert_sound(ind)
-  #
-  id0 = pan_mix("2a.snd", 100, [0, 0, 1, 1])
-  if (res1 = mix_position(id0)) != (res2 = mix_position(id0 + 1)) or
-      (res3 = track_position(mix_track(id0))) != res1 or
-      res1 != 100
-    snd_display("pan_mix 2->1 pos 3: %s %s %s?", res1, res2, res3)
-  end
-  if fneq(res1 = mix_amp(id0, 0), 1.0) or fneq(res2 = mix_amp(id0 + 1, 1), 1.0)
-    snd_display("pan_mix 2->1 mix_amp 3: %s %s?", res1, res2)
-  end
-  if fneq(res1 = mix_amp(id0, 1), 0.0) or fneq(res2 = mix_amp(id0 + 1, 0), 0.0)
-    snd_display("pan_mix 2->1 mix_amp (off case) 3: %s %s?", res1, res2)
-  end
-  unless vequal(res = track_amp_env(mix_track(id0)), [0, 0, 1, 1])
-    snd_display("pan_mix 2->1 ramp env: %s?", res)
-  end
-  if fffneq(res = maxamp(ind, 0), 0.0372) or
-      fffneq(res, [mix_maxamp(id0), mix_maxamp(id0 + 1)].max)
-    snd_display("pan_mix 2->1 ramp maxamp: %s %s %s?", res1, mix_maxamp(id0), mix_maxamp(id0 + 1))
-  end
-  revert_sound(ind)
-  #
-  mus_sound_forget("4.aiff")
-  id0 = pan_mix("4.aiff", 100)
-  if (res1 = mix_position(id0)) != (res2 = mix_position(id0 + 1)) or
-      (res3 = track_position(mix_track(id0))) != res1 or
-      res1 != 100
-    snd_display("pan_mix 4->1 pos 4: %s %s %s?", res1, res2, res3)
-  end
-  if fneq(res1 = mix_amp(id0, 0), 1.0) or fneq(res2 = mix_amp(id0 + 1, 1), 1.0)
-    snd_display("pan_mix 4->1 mix_amp 4: %s %s?", res1, res2)
-  end
-  if fneq(res1 = mix_amp(id0, 1), 0.0) or fneq(res2 = mix_amp(id0 + 1, 0), 0.0)
-    snd_display("pan_mix 4->1 mix_amp (off case) 4: %s %s?", res1, res2)
-  end
-  unless vequal(res = track_amp_env(mix_track(id0)), [0, 1, 1, 1])
-    snd_display("pan_mix 4->1 ramp env 4: %s?", res)
-  end
-  maxs = mus_sound_maxamp("4.aiff")
-  if fneq(res = maxamp(ind, 0), maxs[1])
-    snd_display("pan_mix ramp 4->1 maxamp 4: %s %s?", res, maxs)
-  end
-  set_track_amp_env(mix_track(id0), [0, 0, 1, 0])
-  if fneq(res = maxamp(ind, 0), maxs[3])
-    snd_display("pan_mix ramp 4->1 maxamp 4(2): %s %s?", res, maxs)
-  end
-  close_sound(ind)
 end
 
 def test099
-  ind = new_sound("fmv.snd", Mus_next, Mus_bshort, 22050, 2, "pan-mix tests")
-  id0 = pan_mix("1a.snd")
-  id1 = id0 + 1
-  trk = make_track(id0)
-  snd_display("pan_mix 1->2 track: %s?", trk) unless track?(trk)
-  if fneq(res1 = mix_amp(id0), 1.0) or fneq(res2 = mix_amp(id1), 1.0)
-    snd_display("pan_mix 1->2 amps: %s %s?", res1, res2)
-  end
-  if fneq(res1 = maxamp(ind, 0), res2 = mix_maxamp(id0)) or fneq(res3 = maxamp(ind, 1), 0.0)
-    snd_display("pan_mix 1->2 maxamps: %s %s %s?", res1, res2, res3)
-  end
-  if (res = track(mix_track(id0))) != [id0]
-    snd_display("pan_mix 1->2 track: %s %s?", res, [id0])
-  end
-  set_track_amp_env(mix_track(id0), [0, 0, 1, 0])
-  if fneq(res1 = maxamp(ind, 1), res2 = mix_maxamp(id1)) or fneq(res3 = maxamp(ind, 0), 0.0)
-    snd_display("pan_mix 1->2 maxamps reversed: %s %s %s?", res1, res2, res3)
-  end
-  revert_sound(ind)
-  #
-  id0 = pan_mix("2a.snd", 100)
-  id1 = id0 + 1
-  trk = mix_track(id0)
-  if (res = track(trk)) != [id0, id1]
-    snd_display("pan_mix 2->2 track: %s %s?", res, id0)
-  end
-  if fneq(res1 = mix_amp(id0, 0), 1.0) or fneq(res2 = mix_amp(id0, 1), 0.0) or
-      fneq(res3 = mix_amp(id1, 0), 0.0) or fneq(res4 = mix_amp(id1, 1), 1.0)
-    snd_display("pan_mix 2->2 amps: %s %s %s %s?", res1, res2, res3, res4)
-  end
-  if fneq(res1 = maxamp(ind, 0), res2 = mix_maxamp(id0)) or fneq(res3 = maxamp(ind, 1), 0.0)
-    snd_display("pan_mix 2->2 maxamps: %s %s %s?", res1, res2, res3)
-  end
-  set_track_amp_env(mix_track(id0), [0, 0, 1, 0])
-  if fneq(res1 = maxamp(ind, 1), res2 = mix_maxamp(id1)) or fneq(res3 = maxamp(ind, 0), 0.0)
-    snd_display("pan_mix 2->2 maxamps reversed: %s %s %s?", res1, res2, res3)
-  end
-  revert_sound(ind)
-  #
-  id0 = pan_mix("2a.snd", 1000, 0.4)
-  id1 = id0 + 1
-  trk = mix_track(id0)
-  maxs = mus_sound_maxamp("2a.snd")
-  if fneq(res1 = maxamp(ind, 0), 0.4 * maxs[1]) or
-      fneq(res2 = maxamp(ind, 1), 0.6 * maxs[3])
-    snd_display("pan_mix 2->2 0.4: %s %s?", res1, res2)
-  end
-  unless vequal(track_amp_env(trk), [0, 0.4, 1, 0.4])
-    snd_display("pan_mix 2->2 0.4 env: %s?", res)
-  end
-  if (res = track(trk)) != [id0, id1]
-    snd_display("pan_mix 2->2 track 0.4: %s %s?", res, id0)
-  end
-  revert_sound(ind)
-  #
-  id0 = pan_mix("4.aiff")
-  maxs = mus_sound_maxamp("4.aiff")
-  if fneq(res1 = maxamp(ind, 0), maxs[1]) or fneq(res2 = maxamp(ind, 1), 0.0)
-    snd_display("pan_mix 4->2 max: %s %s?", res1, res2)
-  end
-  close_sound(ind)
-  # 
-  ind = new_sound("fmv.snd", Mus_next, Mus_bshort, 22050, 4, "pan-mix tests")
-  id0 = pan_mix("1a.snd")
-  id1 = id0 + 1
-  trk = make_track(id0)
-  if (res = track(mix_track(id0))) != [id0]
-    snd_display("pan_mix 1->4 track: %s %s?", res, id0)
-  end
-  close_sound(ind)
-  # 
-  ind = new_sound("test.snd", Mus_next, Mus_bshort, 22050, 1, "pan-mix-* tests")
-  id0 = pan_mix_vct(Vct.new(100, 0.3))
-  if (res1 = mix_track(id0)) != 0 or
-      fneq(res2 = mix_amp(id0, 0), 1.0) or
-      (res3 = mix_amp_env(id0, 0)) != nil
-    snd_display("pan_mix_vct 1->1 all opt: %s %s %s?", res1, res2, res3)
-  end
-  if fneq(res1 = maxamp(ind, 0), res2 = mix_maxamp(id0)) or fneq(res1, 0.3)
-    snd_display("pan_mix_vct 1->1 maxamps: %s %s?", res1, res2)
-  end
-  if (res = mix_position(id0)) != 0
-    snd_display("pan_mix_vct 1->1 pos: %s?", res)
-  end
-  ind1 = new_sound("fmv.snd", Mus_next, Mus_bshort, 22050, 1, "pan-mix-* tests")
-  reg = make_region(0, 50, ind, 0)
-  id1 = pan_mix_region(reg)
-  if fneq(res1 = maxamp(ind1, 0), res2 = mix_maxamp(id1)) or fneq(res1, 0.3)
-    snd_display("pan_mix_region 1->1 maxamps: %s %s?", res1, res2)
-  end
-  select_all
-  revert_sound(ind)
-  id0 = pan_mix_selection(0, 1.0, ind, 0)
-  if fneq(res1 = maxamp(ind, 0), res2 = mix_maxamp(id0)) or fneq(res1, 0.3)
-    snd_display("pan_mix_selection 1->1 maxamps: %s %s?", res1, res2)
-  end
-  close_sound(ind)
-  close_sound(ind1)
 end
 
 def test109
-  ind = new_sound("fmv.snd", Mus_next, Mus_bshort, 22050, 1, "locked pan_mix tests")
-  id0 = pan_mix("1a.snd")
-  max1a = mus_sound_maxamp("1a.snd")[1]
-  max2a = mus_sound_maxamp("2a.snd")[1]
-  if fneq(res = maxamp(ind, 0), max1a)
-    snd_display("no-tag pan_mix 1->1 maxamps: %s %s?", res, max1a)
-  end
-  revert_sound(ind)
-  id0 = pan_mix("2a.snd", 100)
-  if fneq(res = maxamp(ind, 0), max2a)
-    snd_display("no-tag pan_mix 2->1 maxamps: %s %s?", res, max1a)
-  end
-  unless vequal(res = channel2vct(3000, 10), Vct.new(10, 0.0))
-    snd_display("no-tag pan_mix 2->1 channel 2: %s?", res)
-  end
-  close_sound(ind)
-  ind = new_sound("fmv.snd", Mus_next, Mus_bshort, 22050, 2, "locked pan_mix tests")
-  id0 = pan_mix("1a.snd")
-  unless vequal(res = maxamp(ind, true), [max1a, 0.0])
-    snd_display("no-tag pan_mix 1->2 maxamps: %s %s?", res, max1a)
-  end
-  revert_sound(ind)
-  id0 = pan_mix("2a.snd", 100)
-  unless vequal(res = maxamp(ind, true), [max1a, 0.0])
-    snd_display("no-tag pan_mix 2->2 maxamps: %s %s?", res, max1a)
-  end
-  close_sound(ind)
-  set_with_mix_tags(true)
-  if mus_clipping then set_mus_clipping(false) end
-  if clipping     then set_clipping(false)     end
-  # 
-  ind = new_sound("test.snd", Mus_next, Mus_bshort, 22050, 2, "copy sample-reader tests", 1000)
-  vct2channel(Vct.new(10) do |i| (i + 1) * 0.1 end, 101, 10, ind, 0)
-  vct2channel(Vct.new(10) do |i| (i + 1) * 0.1 end, 201, 10, ind, 1)
-  rd1 = make_sample_reader(100, ind, 0)
-  rd2 = make_sample_reader(200, ind, 1)
-  rd1.call
-  rd2.call
-  rd1.call
-  rd2.call
-  rd11 = copy_sample_reader(rd1)
-  rd22 = copy_sample_reader(rd2)
-  unless sample_reader?(rd11) and sample_reader?(rd22)
-    snd_display("copy_sample_reader (normal): %s %s?", rd11, rd22)
-  end
-  if mix_sample_reader?(rd11) or mix_sample_reader?(rd22) or 
-      track_sample_reader?(rd11) or track_sample_reader?(rd22) or 
-      region_sample_reader?(rd11) or region_sample_reader?(rd22)
-    snd_display("copy_sample_reader? trouble: %s %s?", rd11, rd22)
-  end
-  if (res1 = sample_reader_home(rd11)) != [ind, 0] or
-      (res2 = sample_reader_home(rd22)) != [ind, 1]
-    snd_display("copy_sample_reader home: %s %s?", res1, res2)
-  end
-  if (res1 = sample_reader_at_end?(rd11)) or (res2 = sample_reader_at_end?(rd22))
-    snd_display("copy_sample_reader end: %s %s?", res1, res2)
-  end
-  if (res1 = sample_reader_position(rd11)) != (res2 = sample_reader_position(rd1)) or res1 != 102 or
-      (res3 = sample_reader_position(rd22)) != (res4 = sample_reader_position(rd2)) or res3 != 202
-    snd_display("copy_sample_reader position: %s %s %s %s?", res1, res2, res3, res4)
-  end
-  v1 = Vct.new(12) do |i|
-    if i < 9
-      (i + 2) * 0.1
-    else
-      0.0
-    end
-  end
-  10.times do |i|
-    rd1v = rd1.call
-    rd11v = rd11.call
-    rd2v = next_sample(rd2)
-    rd22v = read_sample(rd22)
-    if fneq(rd1v, rd11v) or
-        fneq(rd1v, v1[i]) or
-        fneq(rd2v, rd22v) or
-        fneq(rd2v, v1[i])
-      snd_display("copy sample_reader vals at %d: %s %s %s %s %s?",
-                  i, rd1v, rd11v, rd2v, rd22v, v1[i])
-      break
-    end
-  end
-  free_sample_reader(rd1)
-  free_sample_reader(rd11)
-  #
-  mx1m = mix_vct(Vct.new(10) do |i| (i + 1) * 0.1 end,  95, ind, 0)
-  mx2m = mix_vct(Vct.new(10) do |i| (i + 1) * 0.1 end, 195, ind, 1)
-  mx1rd = make_mix_sample_reader(mx1m, 2)
-  mx2rd = make_mix_sample_reader(mx2m, 4)
-  mx1rd.call
-  mx1rd.call
-  val1 = mx1rd.call
-  val2 = mx2rd.call
-  if fneq(val1, val2) or fneq(val2, 0.5)
-    snd_display("mix_sample_reader (precopy) vals: %s %s?", val1, val2)
-  end
-  mx11rd = copy_sample_reader(mx1rd)
-  mx22rd = copy_sample_reader(mx2rd)
-  unless mix_sample_reader?(mx11rd) and mix_sample_reader?(mx22rd)
-    snd_display("copy_sample_reader (mix): %s %s?", mx11rd, mx22rd)
-  end
-  if sample_reader?(mx11rd) or sample_reader?(mx22rd) or 
-      track_sample_reader?(mx11rd) or track_sample_reader?(mx22rd) or 
-      region_sample_reader?(mx11rd) or region_sample_reader?(mx22rd)
-    snd_display("copy_sample_reader? trouble (mix): %s %s?", mx11rd, mx22rd)
-  end
-  if (res1 = sample_reader_home(mx11rd)) != mx1m or
-      (res2 = sample_reader_home(mx22rd)) != mx2m
-    snd_display("copy_sample_reader home (mix): %s %s?", res1, res2)
-  end
-  if (res1 = sample_reader_at_end?(mx11rd)) or (res2 = sample_reader_at_end?(mx22rd))
-    snd_display("copy_sample_reader end (mix): %s %s?", res1, res2)
-  end
-  if (res1 =sample_reader_position(mx11rd)) != (res2 =sample_reader_position(mx1rd)) or res1 != 5 or
-      (res3 = sample_reader_position(mx22rd)) != (res4 = sample_reader_position(mx2rd)) or res3 != 5
-    snd_display("copy_sample_reader position (mix): %s %s %s %s?", res1, res2, res3, res4)
-  end
-  if (res = Snd.catch do next_sample(mx11rd) end).first != :wrong_type_arg
-    snd_display("next_sample of mix reader: %s", res.inspect)
-  end
-  v1 = Vct.new(8) do |i|
-    if i < 5
-      (i + 6) * 0.1
-    else
-      0.0
-    end
-  end
-  6.times do |i|
-    mx1rdv = mx1rd.call
-    mx11rdv = mx11rd.call
-    mx2rdv = read_mix_sample(mx2rd)
-    mx22rdv = read_mix_sample(mx22rd)
-    if fneq(mx1rdv, mx11rdv) or
-        fneq(mx1rdv, v1[i]) or
-        fneq(mx2rdv, mx22rdv) or
-        fneq(mx2rdv, v1[i])
-      snd_display("copy sample_reader (mix) vals at %d: %s %s %s %s %s?",
-                  i, mx1rdv, mx11rdv, mx2rdv, mx22rdv, v1[i])
-      break
-    end
-  end
-  free_sample_reader(mx1rd)
-  free_sample_reader(mx11rd)
-  #
-  trk = make_track
-  set_mix_track(mx1m, trk)
-  set_mix_track(mx2m, trk)
-  mx1rd = make_track_sample_reader(trk, 0, 2)
-  mx2rd = make_track_sample_reader(trk, 1, 4)
-  mx1rd.call
-  mx1rd.call
-  val1 = mx1rd.call
-  val2 = mx2rd.call
-  if fneq(val1, val2) or fneq(val2, 0.5)
-    snd_display("track_sample_reader (precopy) vals: %s %s?", val1, val2)
-  end
-  mx11rd = copy_sample_reader(mx1rd)
-  mx22rd = copy_sample_reader(mx2rd)
-  unless track_sample_reader?(mx11rd) and track_sample_reader?(mx22rd)
-    snd_display("copy sample_reader (track): %s %s?", mx11rd, mx22rd)
-  end
-  if sample_reader?(mx11rd) or sample_reader?(mx22rd) or 
-      mix_sample_reader?(mx11rd) or mix_sample_reader?(mx22rd) or 
-      region_sample_reader?(mx11rd) or region_sample_reader?(mx22rd)
-    snd_display("copy_sample_reader? trouble (track): %s %s?", mx11rd, mx22rd)
-  end
-  if (res1 = sample_reader_home(mx11rd)) != [trk, 0] or
-      (res2 = sample_reader_home(mx22rd)) != [trk, 1]
-    snd_display("copy_sample_reader home (track): %s %s?", res1, res2)
-  end
-  if (res1 = sample_reader_at_end?(mx11rd)) or (res2 = sample_reader_at_end?(mx22rd))
-    snd_display("copy_sample_reader end (track): %s %s?", res1, res2)
-  end
-  if (res1 =sample_reader_position(mx11rd)) != (res2 =sample_reader_position(mx1rd)) or res1 != 5 or
-      (res3 = sample_reader_position(mx22rd)) != (res4 = sample_reader_position(mx2rd)) or res3 != 5
-    snd_display("copy_sample_reader position (track): %s %s %s %s?", res1, res2, res3, res4)
-  end
-  if (res = Snd.catch do next_sample(mx11rd) end).first != :wrong_type_arg
-    snd_display("next_sample of track reader: %s", res.inspect)
-  end
-  v1 = Vct.new(8) do |i|
-    if i < 5
-      (i + 6) * 0.1
-    else
-      0.0
-    end
-  end
-  6.times do |i|
-    mx1rdv = mx1rd.call
-    mx11rdv = mx11rd.call
-    mx2rdv = read_track_sample(mx2rd)
-    mx22rdv = read_track_sample(mx22rd)
-    if fneq(mx1rdv, mx11rdv) or
-        fneq(mx1rdv, v1[i]) or
-        fneq(mx2rdv, mx22rdv) or
-        fneq(mx2rdv, v1[i])
-      snd_display("copy_sample_reader (track) vals at %d: %s %s %s %s %s?",
-                  i, mx1rdv, mx11rdv, mx2rdv, mx22rdv, v1[i])
-      break
-    end
-  end
-  free_sample_reader(mx1rd)
-  free_sample_reader(mx11rd)
-  #
-  set_sync(1, ind)
-  reg = make_region(90, 220, ind, true)
-  if (res = region_frames(reg)) != 220 - 90 + 1
-    snd_display("make_region frames: %s?", res)
-  end
-  if (res = region_chans(reg)) != 2
-    snd_display("make_region chans: %s?", res)
-  end
-  if (res = region_frames(reg, 0)) != 220 - 90 + 1
-    snd_display("make_region frames[0]: %s?", res)
-  end
-  if (res = region_frames(reg, 1)) != 220 - 90 + 1
-    snd_display("make_region frames[1]: %s?", res)
-  end
-  if (res = region_position(reg)) != 90
-    snd_display("make_region position: %s?", res)
-  end
-  if (res = region_position(reg, 0)) != 90
-    snd_display("make_region position[0]: %s?", res)
-  end
-  if (res = region_position(reg, 1)) != 90
-    snd_display("make_region position[1]: %s?", res)
-  end
-  rd1 = make_region_sample_reader(  0, reg, 0)
-  rd2 = make_region_sample_reader(100, reg, 1)
-  rd11 = copy_sample_reader(rd1)
-  rd22 = copy_sample_reader(rd2)
-  unless region_sample_reader?(rd11) and region_sample_reader?(rd22)
-    snd_display("copy sample_reader (region): %s %s?", rd11, rd22)
-  end
-  if sample_reader?(rd11) or sample_reader?(rd22) or 
-      mix_sample_reader?(rd11) or mix_sample_reader?(rd22) or 
-      track_sample_reader?(rd11) or track_sample_reader?(rd22)
-    snd_display("copy sample_reader? trouble (region): %s %s?", rd11, rd22)
-  end
-  if (res1 = sample_reader_home(rd11)) != [reg, 0] or
-      (res2 = sample_reader_home(rd22)) != [reg, 1]
-    snd_display("copy sample_reader home (region): %s %s?", res1, res2)
-  end
-  if (res1 = sample_reader_at_end?(rd11)) or (res2 = sample_reader_at_end?(rd22))
-    snd_display("copy sample_reader end (region): %s %s?", res1, res2)
-  end
-  if (res1 = sample_reader_position(rd11)) != (res2 = sample_reader_position(rd1)) or res1 != 0 or
-      (res3 = sample_reader_position(rd22)) != (res4 = sample_reader_position(rd2)) or res3 != 100
-    snd_display("copy sample_reader position (region): %s %s %s %s?", res1, res2, res3, res4)
-  end
-  vct(0.000, 0.000, 0.000, 0.000, 0.000, 0.100, 0.200, 0.300,
-      0.400, 0.500, 0.600, 0.800, 1.000, 1.200, 1.400, 0.500,
-      0.600, 0.700, 0.800, 0.900).each_with_index do |val, i|
-    rd1v = rd1.call
-    rd11v = rd11.call
-    rd2v = read_region_sample(rd2)
-    rd22v = read_region_sample(rd22)
-    if fneq(rd1v, rd11v) or
-        fneq(rd1v, val) or
-        fneq(rd2v, rd22v) or
-        fneq(rd2v, val)
-      snd_display("copy_sample_reader (region) vals at %d: %s %s %s %s %s [%s %s]?",
-                  i, rd1v, rd11v, rd2v, rd22v, val, clipping, mus_clipping)
-      break
-    end
-  end
-  free_sample_reader(rd1)
-  free_sample_reader(rd11)
-  close_sound(ind)
 end
 
 def test119
-  old = tempo_control_bounds
-  if fneq(old[0], 0.0) or fneq(old[1], 8.0)
-    snd_display("tempo_control_bounds defaults: %s?", old)
-  end
-  set_tempo_control_bounds([0.0, 2.0])
-  old = tempo_control_bounds
-  if fneq(old[0], 0.0) or fneq(old[1], 2.0)
-    snd_display("set_tempo_control_bounds [0.0, 2.0]: %s?", old)
-  end
-  set_tempo_control_bounds([0.0, 8.0])
-  ind = new_sound("test.snd", :size, 10)
-  mx1 = mix_vct(Vct.new(2, 0.1), 0)
-  mx2 = mix_vct(Vct.new(2, 0.2), 2)
-  mx3 = mix_vct(Vct.new(2, 0.3), 4)
-  mx4 = mix_vct(Vct.new(2, 0.4), 6)
-  mx5 = mix_vct(Vct.new(2, 0.5), 8)
-  unless (res = channel2vct, vct(0.1, 0.1, 0.2, 0.2, 0.3, 0.3, 0.4, 0.4, 0.5, 0.5))
-    snd_display("delete_all_tracks init: %s?", res)
-  end
-  delete_all_tracks
-  unless (res = channel2vct, vct(0.1, 0.1, 0.2, 0.2, 0.3, 0.3, 0.4, 0.4, 0.5, 0.5))
-    snd_display("delete_all_tracks no-op: %s?", res)
-  end
-  trk = make_track(mx1, mx3)
-  trk1 = make_track
-  set_mix_track(mx4, trk1)
-  delete_all_tracks
-  unless (res = channel2vct, vct(0, 0, 0.2, 0.2, 0, 0, 0, 0, 0.5, 0.5))
-    snd_display("delete_all_tracks: %s?", res)
-  end
-  close_sound(ind)
   #
   ind = open_sound("oboe.snd")
   mx = mix_vct(Vct.new(100, 0.1), 1000)
@@ -24263,124 +21320,6 @@ def data_max1(beg, fin, snd, chn)
 end
 
 def test0010a
-  ind0 = view_sound("oboe.snd")
-  ind1 = view_sound("pistol.snd")
-  v0 = Vct.new(100)
-  v0.fill(0.1)
-  vc = [mix_vct(v0, 0, ind0),
-        mix_vct(v0, 1000, ind0),
-        mix_vct(v0, 2000, ind0),
-        mix_vct(v0, 3000, ind0),
-        mix_vct(v0, 4000, ind0),
-        mix_vct(v0, 0, ind1),
-        mix_vct(v0, 1000, ind1),
-        mix_vct(v0, 2000, ind1),
-        mix_vct(v0, 3000, ind1),
-        mix_vct(v0, 4000, ind1)]
-  t0 = make_track(vc[0], vc[3], vc[5])
-  t1 = make_track(vc[2], vc[6], vc[8])
-  set_track_amp(t0, 0.5)
-  with_time("transpose_track(t1, 3)") do transpose_track(t1, 3) end
-  set_track_color(t1, make_color_with_catch(0, 0, 1))
-  t0e = track_end(t0)
-  set_track_position(t0, 1000)
-  if (res = track_position(t0)) != 1000
-    snd_display("track_position: %s?", res)
-  end
-  if (res = track_end(t0)) != t0e + 1000
-    snd_display("track_end: %s?", res)
-  end
-  if (res = track_frames(t0)) != 3100
-    snd_display("track_frames: %s?", res)
-  end
-  retempo_track(t0, 2.0)
-  unless provided? :snd_nogui
-    col = color2list(track_color(t1))
-    if fneq(col[0], 0.0) or fneq(col[1], 0.0) or fneq(col[2], 1.0)
-      snd_display("track_color: %s?", col)
-    end
-  end
-  if (res = track_frames(t0)) != 1600
-    snd_display("track_tempo -> length: %s?", res)
-  end
-  close_sound(ind0)
-  close_sound(ind1)
-  #
-  ind0 = new_sound("fmv.snd", Mus_aifc, Mus_bshort, 22050, 1, "this is a comment")
-  v0 = make_array(10, 1.0)
-  insert_samples(0, 10, v0, ind0)
-  with_time("env_sound([0, 0, 1, 1], 0, 10, 1.0, ind0)") do
-    env_sound([0, 0, 1, 1], 0, 10, 1.0, ind0)
-  end
-  10.times do |i|
-    if fneq(sample(i), i * 0.1111)
-      snd_display("1 env_sound[%d]: %s?", i, sample(i))
-    end
-  end
-  undo_edit
-  env_sound(make_env([0, 0, 1, 1], :end, 9), 0, 10, 1.0, ind0)
-  10.times do |i|
-    if fneq(sample(i), i * 0.1111)
-      snd_display("2 env_sound[%d]: %s?", i, sample(i))
-    end
-  end
-  undo_edit
-  env_sound([0, 0, 0.5, 1, 1, 1], 0, 10, 0.0, ind0)
-  if fneq(sample(3), 0.0) or fneq(sample(8), 1.0)
-    snd_display("env_sound stepped: %s %s?", sample(3), sample(8))
-  end
-  undo_edit
-  env_sound([0, 0, 1, 1], 0, 10, 32.0, ind0)
-  if fneq(sample(3), 0.07) or fneq(sample(8), 0.67)
-    snd_display("env_sound exp: %s %s?", sample(3), sample(8))
-  end
-  undo_edit
-  env_sound(make_env([0, 0, 1, 1], :base, 32.0, :end, 9), 0, 10, 32.0, ind0)
-  if fneq(sample(3), 0.07) or fneq(sample(8), 0.67)
-    snd_display("env_sound exp: %s %s?", sample(3), sample(8))
-  end
-  undo_edit
-  env_sound([0, 2])
-  10.times do |i|
-    if fneq(sample(i), 2.0)
-      snd_display("3 env_sound[%d]: %s?", i, sample(i))
-    end
-  end
-  undo_edit
-  env_sound([0, 2], 2, 4, 1.0, ind0)
-  if fneq(sample(1), 1.0) or
-      fneq(sample(2), 2.0) or
-      fneq(sample(5), 2.0) or
-      fneq(sample(8), 1.0)
-    snd_display("3 env_sound exp: %s %s %s %s?", sample(1), sample(2),  sample(5), sample(8))
-  end
-  undo_edit
-  (1...10).each do |i| set_sample(i, 0.0) end
-  filter_sound([0, 1, 1, 0], 4)
-  if fneq(sample(1), 0.3678) or
-      fneq(sample(2), 0.3678) or
-      fneq(sample(3), 0.132) or
-      fneq(sample(4), 0.0)
-    snd_display("filter_sound env: %s?", samples(0, 8))
-  end
-  undo_edit
-  filter_sound([0, 1, 1, 0], 1024)
-  undo_edit
-  filter_sound(make_fir_filter(6, [0.1, 0.2, 0.3, 0.3, 0.2, 0.1].to_vct))
-  undo_edit
-  filter_sound(make_delay(120))
-  undo_edit
-  filter_sound(make_formant(0.99, 1200))
-  undo_edit
-  filter_sound([0.125, 0.25, 0.25, 0.125].to_vct, 4)
-  if fneq(sample(0), 0.125) or
-      fneq(sample(1), 0.25) or
-      fneq(sample(2), 0.25) or
-      fneq(sample(5), 0.0)
-    snd_display("filter_sound direct: %s?", samples(0, 8))
-  end
-  revert_sound(ind0)
-  close_sound(ind0)
 end
 
 def test0010
@@ -25714,7 +22653,6 @@ def test12
     rd = make_region_sample_reader(0, reg)
     snd_display("region_sample_reader mix: %s?", rd) if mix_sample_reader?(rd)
     snd_display("region_sample_reader region: %s?", rd) unless region_sample_reader?(rd)
-    snd_display("region_sample_reader track: %s?", rd) if track_sample_reader?(rd)
     snd_display("region_sample_reader normal: %s?", rd) if sample_reader?(rd)
     if (res = sample_reader_position(rd)).nonzero?
       snd_display("region_sample_reader position: %s?", res)
@@ -25768,38 +22706,15 @@ def test12
     snd_display("mix_sample_reader at end: %s?", val) if fneq(val, 0.0)
     free_sample_reader(rd)
     #
-    # track reader
-    #
     ind = open_sound("oboe.snd")
     reg = make_region(1000, 2000, ind, 0)
     md = mix_region(0, reg, ind, 0)
-    trk = make_track
-    set_mix_track(md, trk)
-    rd = make_track_sample_reader(trk)
-    val = rd.call
-    snd_display("track_sample_reader at start: %s?", val) if fneq(val, 0.0328)
-    unless string?(res = rd.to_s)
-      snd_display("track_sample_reader: %s?", res)
-    end
-    close_sound(ind)
-    if (res = Snd.catch do mix_property(save_md, :hi) end).first != :no_such_mix
-      snd_display("mix_property bad mix: %s", res.inspect)
-    end
-    unless string?(res = rd.to_s)
-      snd_display("track_sample_reader released: %s?", res)
-    end
-    val = read_track_sample(rd)
-    snd_display("track_sample_reader at end: %s?", val) if fneq(val, 0.0)
-    free_sample_reader(rd)
     #
     [:mix_amp,
-     :mix_tag_position,
-     :mix_track,
-     :mix_frames,
+     :mix_length,
      :mix_position,
      :mix_home,
      :mix_speed,
-     :mix_speed_style,
      :mix_tag_y].each do |func_sym|
       if (res = Snd.catch do snd_func(func_sym, md) end).first != :no_such_mix
         snd_display("%s: %s", func_sym, res.inspect)
@@ -25807,36 +22722,6 @@ def test12
     end
     $mix_click_hook.reset_hook!
     $close_hook.reset_hook!
-    #
-    ind = open_sound("oboe.snd")
-    reg = make_region(1000, 2000, ind, 0)
-    md1 = mix_region(0, reg, ind, 0)
-    md2 = mix_region(1000, reg, ind, 0)
-    trk = make_track(md1, md2)
-    rd = make_track_sample_reader(trk)
-    val = rd.call
-    snd_display("track_sample_reader (1) at start: %s?", val) if fneq(val, 0.0328)
-    unless string?(res = rd.to_s)
-      snd_display("track_sample_reader (1): %s?", res)
-    end
-    undo_edit(1)
-    delete_sample(5000)
-    unless string?(res = rd.to_s)
-      snd_display("track_sample_reader (1) released: %s?", res)
-    end
-    val = read_track_sample(rd)
-    snd_display("track_sample_reader (1) at end: %s?", val) if fneq(val, 0.0348)
-    set_with_mix_tags(false)
-    md1 = mix_region(0, reg)
-    snd_display("mix_region + false tags: %s?", md1) if md1 != -1
-    set_with_mix_tags(true)
-    close_sound(ind)
-    unless string?(res = rd.to_s)
-      snd_display("track_sample_reader (2) released: %s?", res)
-    end
-    val = read_track_sample(rd)
-    snd_display("track_sample_reader (2) at end: %s?", val) if fneq(val, 0.0)
-    free_sample_reader(rd)
     #
     sfiles = []
     ffiles = []
@@ -26762,10 +23647,6 @@ def test0213
         forget_region(reg) if region?(reg)
       }],
     [:convolve_with, lambda { | | convolve_with("1a.snd", 0.5, ind, 0)}],
-    [:delete_mix, lambda { | |
-        mx = mix_vct(make_vct(3, 0.2), 123)
-        delete_mix(mx) if mix?(mx)
-      }],
     [:delete_sample, lambda { | | delete_sample(123, ind, 0) }],
     [:delete_samples, lambda { | | delete_samples(123, 123, ind, 0) }],
     [:delete_selection, lambda { | |
@@ -26810,10 +23691,6 @@ def test0213
     [:mix_amp_env, lambda { | |
         mx = mix_vct(make_vct(3, 1.0), 123)
         set_mix_amp_env(mx, 0, [0, 0, 1, 1]) if mix?(mx)
-      }],
-    [:mix_track, lambda { | |
-        mx = mix_vct(make_vct(3, 1.0), 123)
-        set_mix_track(mx, make_track) if mix?(mx)
       }],
     [:mix_position, lambda { | |
         mx = mix_vct(make_vct(3, 1.0), 123)
@@ -26876,26 +23753,6 @@ def test0213
         ind1 = open_sound("1a.snd")
         swap_channels(ind, 0, ind1, 0)
         close_sound(ind1)
-      }],
-    [:track_amp, lambda { | |
-        tr = (tracks ? tracks.first : make_track)
-        mx = mix_vct(make_vct(3, 0.1), 0, ind, 0, true, "none", tr)
-        set_track_amp(tr, 0.5)
-      }],
-    [:track_amp_env, lambda { | |
-        tr = (tracks ? tracks.first : make_track)
-        mx = mix_vct(make_vct(3, 0.1), 0, ind, 0, true, "none", tr)
-        set_track_amp_env(tr, [0, 0, 1, 1])
-      }],
-    [:track_position, lambda { | |
-        tr = (tracks ? tracks.first : make_track)
-        mx = mix_vct(make_vct(3, 0.1), 0, ind, 0, true, "none", tr)
-        set_track_position(tr, 5)
-      }],
-    [:track_speed, lambda { | |
-        tr = (tracks ? tracks.first : make_track)
-        mx = mix_vct(make_vct(3, 0.1), 0, ind, 0, true, "none", tr)
-        set_track_speed(tr, 0.5)
       }],
     [:vct2channel, lambda { | | vct2channel(make_vct(3), 123, 3, ind, 0) }],
     [:vct2samples, lambda { | | vct2samples(123, 3, make_vct(3)) }],
@@ -29451,17 +26308,17 @@ def test0315
     snd_display("region_frames after src_selection: %s?", res)
   end
   reg_mix_id = mix_region(1500, id, ind, 0)
-  if (res1 = mix_frames(reg_mix_id)) != (res2 = region_frames(id))
+  if (res1 = mix_length(reg_mix_id)) != (res2 = region_frames(id))
     snd_display("mix_region: %s != %s?", res1, res2)
   end
   if (res = mix_home(reg_mix_id)) != [ind, 0]
     snd_display("mix_region mix_home %s [%s, 0]?", res, ind)
   end
   sel_mix_id = mix_selection(2500, ind, 0)
-  if (res1 = mix_frames(sel_mix_id)) != (res2 = selection_frames)
+  if (res1 = mix_length(sel_mix_id)) != (res2 = selection_frames)
     snd_display("mix_selection frames: %s != %s?", res1, res2)
   end
-  if ((res1 = mix_frames(reg_mix_id)) * 2 - (res2 = mix_frames(sel_mix_id))).abs > 3
+  if ((res1 = mix_length(reg_mix_id)) * 2 - (res2 = mix_length(sel_mix_id))).abs > 3
     snd_display("mix selection and region: %s %s %s %s?",
                 res1, res2, region_frames(id), selection_frames)
   end
@@ -32724,7 +29581,6 @@ def test0019
   old_contrast = contrast_control_bounds
   old_revlen = reverb_control_length_bounds
   old_revscl = reverb_control_scale_bounds
-  old_tempo = tempo_control_bounds
   set_tiny_font("8x13")
   set_peaks_font("8x13")
   set_bold_peaks_font("8x13")
@@ -32733,7 +29589,6 @@ def test0019
   set_reverb_control_scale_bounds([0.0, 2.5])
   set_reverb_control_length_bounds([0.0, 2.5])
   set_contrast_control_bounds([0.0, 2.5])
-  set_tempo_control_bounds([1.0, 2.5])
   save_state("s61.rb")
   close_sound(ind)
   Snd.regions.apply(:forget_region)
@@ -32757,9 +29612,6 @@ def test0019
   if reverb_control_length_bounds() != [0.0, 2.5]
     snd_display("save reverb_control_length_bounds: %s?", res)
   end
-  if tempo_control_bounds() != [1.0, 2.5]
-    snd_display("save tempo_control_bounds: %s?", res)
-  end
   set_tiny_font(old_tiny_font)
   set_peaks_font(old_peaks_font)
   set_bold_peaks_font(old_bold_peaks_font)
@@ -32768,7 +29620,6 @@ def test0019
   set_contrast_control_bounds(old_contrast)
   set_reverb_control_length_bounds(old_revlen)
   set_reverb_control_scale_bounds(old_revscl)
-  set_tempo_control_bounds(old_tempo)
   delete_file("s61.rb")
   close_sound(ind)
 end
@@ -33014,74 +29865,6 @@ def test0119
         end
         if (res = frames(ind, 0)) != 97
           snd_display("save_state backup del+insert len: %s?", res)
-        end
-      }],
-   # track/mix ops
-   [lambda { |ind|
-        mix1 = mix_vct(Vct.new(3, 0.3), 0)
-        mix2 = mix_vct(Vct.new(2, 0.2), 3)
-        mix3 = mix_vct(Vct.new(5, 0.5), 5)
-        trk = make_track
-        set_mix_track(mix1, trk)
-        set_mix_track(mix2, trk)
-        set_mix_track(mix3, trk)
-        set_track_position(trk, 10)
-      },
-    lambda { |ind|
-        if (res = edit_position(ind, 0)) != 7
-          snd_display("save_state track pos edpos: %s?", res)
-        end
-        unless vequal(res = channel2vct(0, 30, ind, 0),
-                      vct(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.3, 0.3, 0.3, 0.2, 0.2,
-                          0.5, 0.5, 0.5, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
-          snd_display("track pos save_state 6: %s?", res)
-        end
-        if (res = frames(ind, 0)) != 100
-          snd_display("save_state track pos len: %s?", res)
-        end
-      }],
-   [lambda { |ind|
-        mix1 = mix_vct(Vct.new(3, 0.3), 0)
-        mix2 = mix_vct(Vct.new(2, 0.2), 3)
-        mix3 = mix_vct(Vct.new(5, 0.5), 5)
-        trk = make_track
-        set_mix_track(mix1, trk)
-        set_mix_track(mix2, trk)
-        set_mix_track(mix3, trk)
-        set_track_amp(trk, 2.0)
-      },
-    lambda { |ind|
-        if (res = edit_position(ind, 0)) != 7
-          snd_display("save_state track amp edpos: %s?", res)
-        end
-        unless vequal(res = channel2vct(0, 20, ind, 0),
-                      vct(0.6, 0.6, 0.6, 0.4, 0.4, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
-          snd_display("track amp save_state 7: %s?", res.to_str)
-        end
-        if (res = frames(ind, 0)) != 100
-          snd_display("save_state track amp len: %s?", res)
-        end
-      }],
-   [lambda { |ind|
-        mix1 = mix_vct(Vct.new(3, 0.3), 0)
-        mix2 = mix_vct(Vct.new(2, 0.2), 3)
-        mix3 = mix_vct(Vct.new(5, 0.5), 5)
-        trk = make_track
-        set_mix_track(mix1, trk)
-        set_mix_track(mix2, trk)
-        set_mix_track(mix3, trk)
-        set_track_amp_env(trk, [0, 0, 1, 5])
-      },
-    lambda { |ind|
-        if (res = edit_position(ind, 0)) != 8
-          snd_display("save_state track amp env edpos: %s?", res)
-        end
-        unless vequal(res = channel2vct(0, 15, ind, 0),
-                      vct(0, 0.225, 0.45, 0.3, 0.5, 1.25, 1.562, 1.875, 2.188, 2.5, 0, 0, 0, 0, 0))
-          snd_display("track amp env save_state 8: %s?", res.to_str)
-        end
-        if (res = frames(ind, 0)) != 100
-          snd_display("save_state track amp env len: %s?", res)
         end
       }],
    # 2 embedded as_one_edits
@@ -36206,10 +32989,6 @@ def test0021
   if fneq(sample(20), -0.992) then snd_display("scale_to 1.0 Mus_byte (20): %s?", sample(20)) end
   close_sound(ind)
   # 
-  unless string?(res = snd_help(:transpose_track))
-    snd_display("help string for transpose_track: %s?", res)
-  end
-  #
   set_transform_graph_type(0)
   set_fft_window(6)
   set_show_y_zero(false)
@@ -41389,7 +38168,6 @@ def test0324
   mixd = dialog_widgets[16]
   idtxt = find_child(mixd, "mix-id")
   begtxt = find_child(mixd, "mix-times")
-  trktxt = find_child(mixd, "mix-track")
   playb = find_child(mixd, "mix-play")
   spdscr = find_child(mixd, "mix-speed")
   ampscr = find_child(mixd, "mix-amp")
@@ -41406,9 +38184,6 @@ def test0324
   set_mix_dialog_mix(id1)
   if (res = mix_dialog_mix) != id1
     snd_display("mix_dialog_mix: %s %s?", id1, res)
-  end
-  if (res = RXmTextGetString(trktxt)) != "0"
-    snd_display("mix initial track: %s", res)
   end
   if (res = RXmTextGetString(idtxt)) != id1.to_s
     snd_display("mix initial id: %s", res)
@@ -41489,107 +38264,6 @@ def test0324
     snd_display("why isn\'t mix-dialog alive?")
   end
   #
-  id3 = make_track
-  id1 = mix_vct(v, 1000, ind, 0, true)
-  id1 = mix_vct(v, 2000, ind, 0, true)
-  set_mix_track(id1, id3)
-  set_mix_track(id2, id3)
-  if (wid = view_tracks_dialog) != dialog_widgets[21]
-    snd_display("view_tracks_dialog: %s %s?", wid, dialog_widgets[21])
-  end
-  trackd = dialog_widgets[21]
-  idtxt = find_child(trackd, "track-id")
-  begtxt = find_child(trackd, "track-times")
-  trktxt = find_child(trackd, "track-track")
-  playb = find_child(trackd, "track-play")
-  spdscr = find_child(trackd, "track-speed")
-  ampscr = find_child(trackd, "track-amp")
-  ampenv = find_child(trackd, "track-amp-env-window")
-  temposcr = find_child(trackd, "track-tempo")
-  tempolab = find_child(trackd, "track-tempo-label")
-  db = find_child(trackd, "dB")
-  wave = find_child(trackd, "wave")
-  clip = find_child(trackd, "clip")
-  set_track_dialog_track(id3)
-  if (res = track_dialog_track) != id3
-    snd_display("track_dialog_track: %s %s?", id3, res)
-  end
-  if (res = RXmTextGetString(trktxt)) != "0"
-    snd_display("track initial track: %s", res)
-  end
-  if (res = RXmTextGetString(idtxt)) != id3.to_s
-    snd_display("track initial id: %s", res)
-  end
-  move_scroll(ampscr, 20)
-  click_button(playb)
-  move_scroll(spdscr, 20)
-  click_button(wave)
-  force_event
-  [spdscr, ampscr, temposcr].each do |scrl|
-    cb = RXmScrollBarCallbackStruct()
-    Rset_value(cb, 50)
-    Rset_event(cb, RXEvent())
-    RXtCallCallbacks(scrl, RXmNdragCallback, cb)
-  end
-  ["track-speed-label", "track-amp-label", "track-tempo-label"].map do |name|
-    find_child(trackd, name)
-  end.each do |w|
-    click_button(w, true, 0)
-    click_button(w, true, RControlMask)
-  end
-  if RXmDrawingArea?(ampenv)
-    xy = widget_size(ampenv)
-    x0 = (xy.car / 2.0).floor
-    y0 = (xy.cadr / 2.0).floor
-    click_event(ampenv, 1, 0, x0, y0)
-    drag_event(ampenv, 1, 0, x0, y0, x0 + 20, y0 + 20)
-  else
-    snd_display("track_dialog ampenv: %s?", ampenv)
-  end
-  force_event
-  edp = edit_position(ind)
-  click_button(RXmMessageBoxGetChild(trackd, RXmDIALOG_CANCEL_BUTTON))
-  force_event
-  if edp == edit_position(ind)
-    snd_display("apply mix env: %s?", edp)
-  else
-    undo_edit(1, ind, 0)
-  end
-  click_button(db)
-  force_event
-  click_button(clip)
-  force_event
-  click_button(clip)
-  force_event
-  click_button(wave)
-  force_event
-  click_button(db)
-  force_event
-  focus_widget(begtxt)
-  widget_string(begtxt, "0.5")
-  force_event
-  key_event(begtxt, Snd_return_key, 0)
-  force_event
-  widget_string(trktxt, "2")
-  force_event
-  key_event(trktxt, Snd_return_key, 0)
-  force_event
-  widget_string(idtxt, "2")
-  force_event
-  key_event(idtxt, Snd_return_key, 0)
-  force_event
-  RXtSetKeyboardFocus(trackd, RXmMessageBoxGetChild(trackd, RXmDIALOG_OK_BUTTON))
-  click_button(RXmMessageBoxGetChild(trackd, RXmDIALOG_OK_BUTTON)) # dismiss button
-  if RXtIsManaged(trackd) then RXtUnmanageChild(trackd) end
-  # 
-  RXtCallCallbacks(menu_option("Tracks"), RXmNactivateCallback, snd_global_state)
-  # see menu_option("Mixes")
-  snd_display("waiting for tracks dialog")
-  if RXtIsManaged(trackd = dialog_widgets[21])
-    RXtUnmanageChild(trackd)
-  else
-    snd_display("why isn\'t track-dialog alive?")
-  end
   close_sound(ind)
   #
   # print dialog
@@ -41939,17 +38613,17 @@ Procs =
    :insert_sound, :just_sounds, :key, :key_binding, :left_sample, :listener_color,
    :listener_font, :listener_prompt, :listener_selection, :listener_text_color, :main_widgets,
    :make_color, :make_graph_data, :make_mix_sample_reader, :make_player, :make_region,
-   :make_region_sample_reader, :make_sample_reader, :make_track_sample_reader, :map_chan,
+   :make_region_sample_reader, :make_sample_reader, :map_chan,
    :mark_color, :mark_name, :mark_sample, :mark_sync, :mark_sync_max, :mark_home, :marks,
    :mark?, :max_transform_peaks, :max_regions, :maxamp, :maxamp_position, :menu_widgets,
    :minibuffer_history_length, :min_dB, :log_freq_start, :mix, :mixes, :mix_amp, :mix_amp_env,
-   :mix_tag_position, :mix_color, :mix_track, :mix_frames, :mix?,
-   :view_mixes_dialog, :mix_position, :view_tracks_dialog, :track_dialog_track, :mix_dialog_mix,
-   :mix_speed_style, :mix_name, :mix_region, :mix_sample_reader?, :mix_selection,
+   :mix_color, :mix_length, :mix?,
+   :view_mixes_dialog, :mix_position, :mix_dialog_mix,
+   :mix_name, :mix_region, :mix_sample_reader?, :mix_selection,
    :mix_sound,
    :mix_home, :mix_speed, :mix_tag_height, :mix_tag_width, :mark_tag_height, :mark_tag_width,
    :mix_tag_y, :mix_vct, :mix_waveform_height, :time_graph_style, :lisp_graph_style,
-   :transform_graph_style, :read_mix_sample, :read_track_sample, :next_sample,
+   :transform_graph_style, :read_mix_sample, :next_sample,
    :transform_normalization, :equalize_panes, :open_file_dialog_directory,
    :open_raw_sound, :open_sound, :orientation_dialog, :peak_env_info, :peaks,
    :position_color, :position2x, :position2y, :previous_sample,
@@ -41983,7 +38657,7 @@ Procs =
    :speed_control, :speed_control_style, :speed_control_tones, :squelch_update, :srate,
    :src_sound, :src_selection, :start_progress_report, :stop_player, :stop_playing,
    :swap_channels, :syncd_marks, :sync, :sync_max, :sound_properties, :temp_dir, :text_focus_color,
-   :tiny_font, :track_sample_reader?, :region_sample_reader?, :transform_dialog,
+   :tiny_font, :region_sample_reader?, :transform_dialog,
    :transform_sample, :transform2vct, :transform_frames, :transform_type, :trap_segfault,
    :with_file_monitor, :optimization, :unbind_key, :update_transform_graph, :update_time_graph,
    :update_lisp_graph, :update_sound, :run_safety, :clm_table_size,
@@ -42068,11 +38742,9 @@ Procs =
    :reset_listener_cursor, :goto_listener_end, :sample_reader_home, :selection_chans,
    :selection_srate, :snd_gcs, :snd_font, :snd_color, :snd_warning, :sine_bank,
    :channel_data, :x_axis_label, :variable_graph?, :y_axis_label, :snd_url, :snd_urls,
-   :tempo_control_bounds, :free_player, :quit_button_color, :help_button_color,
-   :reset_button_color, :doit_button_color, :doit_again_button_color, :track, :tracks,
-   :track?, :make_track, :track_amp, :track_name, :track_position, :track_frames, :track_speed,
-   :track_tempo, :track_amp_env, :track_track, :delete_track, :delete_mix, :track_color,
-   :free_track, :track_speed_style, :delay_tick, :playing, :draw_axes, :copy_mix, :copy_track,
+   :free_player, :quit_button_color, :help_button_color,
+   :reset_button_color, :doit_button_color, :doit_again_button_color,
+   :delay_tick, :playing, :draw_axes, :copy_mix,
    :copy_sample_reader, :html_dir, :html_program, :make_fir_coeffs,
    :make_identity_mixer, :mus_interp_type, :mus_run, :phase_vocoder,
    :player_home, :redo_edit, :undo_edit, :widget_position, :widget_size,
@@ -42103,8 +38775,8 @@ Set_procs =
    :graphs_horizontal, :highlight_color, :just_sounds, :left_sample, :listener_color,
    :listener_font, :listener_prompt, :listener_text_color, :mark_color, :mark_name, :mark_sample,
    :mark_sync, :max_transform_peaks, :max_regions, :min_dB, :log_freq_start, :mix_amp,
-   :mix_amp_env, :mix_tag_position, :mix_color, :mix_name,
-   :mix_position, :mix_speed, :mix_speed_style, :mix_tag_height, :mix_tag_width, :mix_tag_y,
+   :mix_amp_env, :mix_color, :mix_name,
+   :mix_position, :mix_speed, :mix_tag_height, :mix_tag_width, :mix_tag_y,
    :mark_tag_width, :mark_tag_height, :mix_waveform_height, :transform_normalization,
    :open_file_dialog_directory, :equalize_panes, :position_color, :view_files_sort, :print_length,
    :pushed_button_color, :region_graph_style, :reverb_control_decay,
@@ -42122,12 +38794,12 @@ Set_procs =
    :wavelet_type, :x_bounds, :time_graph?, :wavo_hop, :wavo_trace, :with_gl,
    :with_mix_tags, :x_axis_style, :beats_per_minute, :zero_pad, :zoom_color, :zoom_focus_style,
    :with_relative_panes, :window_x, :window_y, :window_width, :window_height, :mix_dialog_mix,
-   :track_dialog_track, :beats_per_measure, :channels, :chans, :colormap, :comment, :data_format,
+   :beats_per_measure, :channels, :chans, :colormap, :comment, :data_format,
    :data_location, :data_size, :edit_position, :frames, :header_type, :maxamp,
    :minibuffer_history_length, :read_only, :right_sample, :sample, :samples, :selected_channel,
    :colormap_size, :selected_sound, :selection_position, :selection_frames,
    :selection_member?, :sound_loop_info, :srate, :time_graph_type, :x_position_slider,
-   :x_zoom_slider, :tempo_control_bounds, :y_position_slider, :y_zoom_slider, :sound_data_ref,
+   :x_zoom_slider, :y_position_slider, :y_zoom_slider, :sound_data_ref,
    :mus_array_print_length, :mus_float_equal_fudge_factor, :mus_cosines, :mus_data,
    :mus_feedback, :mus_feedforward,
    :mus_formant_radius, :mus_frequency, :mus_hop, :mus_increment, :mus_length, :mus_location,
@@ -42138,9 +38810,7 @@ Set_procs =
    :phase_vocoder_amps, :phase_vocoder_freqs, :phase_vocoder_outctr,
    :phase_vocoder_phase_increments, :phase_vocoder_phases, :mus_generator?, :read_sample,
    :help_button_color, :reset_button_color, :doit_button_color, :doit_again_button_color,
-   :track_amp, :track_name, :track_position, :track_speed, :track_speed_style, :track_tempo,
-   :track_amp_env,
-   :track_color, :html_dir, :html_program, :widget_position, :widget_size,
+   :html_dir, :html_program, :widget_position, :widget_size,
    :vct_ref, :frame_ref, :mixer_ref, :locsig_ref, :locsig_reverb_ref, :equalize_panes,
    :colormap?, :mus_reset, :mus_interp_type,
    :filter_control_coeffs,
@@ -42159,7 +38829,7 @@ Make_procs =
    :make_sine_summation, :make_square_wave, :make_src, :make_sum_of_cosines, :make_sum_of_sines,
    :make_table_lookup, :make_triangle_wave, :make_two_pole, :make_two_zero, :make_wave_train,
    :make_waveshape, :make_phase_vocoder, :make_ssb_am, :make_polyshape,
-   :make_color, :make_player, :make_track, :make_region, :make_scalar_mixer]
+   :make_color, :make_player, :make_region, :make_scalar_mixer]
 
 Keyargs =
   [:frequency, :initial_phase, :wave, :cosines, :amplitude, :ratio, :size,
@@ -42347,7 +39017,7 @@ def test0028
      :sine_summation?, :square_wave?, :src?, :sum_of_cosines?, :sum_of_sines?,
      :table_lookup?, :triangle_wave?, :two_pole?, :two_zero?, :wave_train?, :waveshape?,
      :color?, :mix_sample_reader?, :moving_average?, :ssb_am?, :sample_reader?,
-     :track_sample_reader?, :region_sample_reader?, :vct?]
+     :region_sample_reader?, :vct?]
   [Array.new(1), "hiho", sqrt(-1.0), 1.5, [1, 0], [0, 1]].each do |arg|
     procs_p.each do |n|
       if (tag = Snd.catch do snd_func(n, arg) end).first.kind_of?(TrueClass)
@@ -42373,21 +39043,6 @@ def test0028
           end
         end).first != :no_active_selection
       snd_display("selection %s: %s", n, tag)
-    end
-  end
-  trk = make_track
-  [:track, :track_amp, :track_name, :track_position, :track_frames,
-   :track_speed, :track_speed_style, :track_tempo,
-   :track_amp_env, :track_track, :delete_track, :track_color].each do |n|
-    if (tag = Snd.catch do snd_func(n, trk + 1) end).first != :no_such_track
-      snd_display("track %s: %s", n, tag)
-    end
-  end
-  [:track_amp, :track_name, :track_position, :track_speed, :track_speed_style,
-   :track_tempo, :track_amp_env, :track_track, :track_color
-  ].zip([1.0, 0, 1.0, 1.0, [0, 0, 1, 1], trk - 1, make_color_with_catch(1, 0, 0)]) do |n, a|
-    if (tag = Snd.catch do set_snd_func(n, trk + 1, a) end).first != :no_such_track
-      snd_display("set_track %s: %s", n, tag)
     end
   end
   # Array.new(1): *partials_* functions return :bad_type (odd length partials list?)
@@ -42619,22 +39274,22 @@ def test0128
     end
   end
   close_sound(index)
-  [:mix_amp, :mix_amp_env, :mix_tag_position, :mix_track, :mix_frames,
-   :mix_name, :mix_position, :mix_home, :mix_speed, :mix_speed_style,
+  [:mix_amp, :mix_amp_env, :mix_length,
+   :mix_name, :mix_position, :mix_home, :mix_speed,
    :mix_tag_y].each_with_index do |n, i|
     if (tag = Snd.catch do snd_func(n, $vct_5) end).first != :wrong_type_arg
       snd_display("%d: mix (1) procs %s: %s", i, n, tag)
     end
   end
-  [:mix_amp, :mix_tag_position, :mix_track, :mix_frames,
-   :mix_name, :mix_position, :mix_home, :mix_speed, :mix_speed_style,
+  [:mix_amp, :mix_length,
+   :mix_name, :mix_position, :mix_home, :mix_speed,
    :mix_tag_y].each_with_index do |n, i|
     if (tag = Snd.catch do snd_func(n, 1234) end).first != :no_such_mix
       snd_display("%d: mix (2) procs %s: %s", i, n, tag)
     end
   end
-  [:mix_tag_position, :mix_track, :mix_name, :mix_position,
-   :mix_speed, :mix_speed_style, :mix_tag_y].each_with_index do |n, i|
+  [:mix_name, :mix_position,
+   :mix_speed, :mix_tag_y].each_with_index do |n, i|
     tag = Snd.catch do set_snd_func(n, 1234, $vct_5) end
     if tag.car != :wrong_type_arg and tag.car != :no_such_mix
       snd_display("%d: set mix (3) procs %s: %s", i, n, tag)
@@ -42642,8 +39297,8 @@ def test0128
   end
   index = open_sound("oboe.snd")
   id = mix_sound("oboe.snd", 10)
-  [:mix_tag_position, :mix_track, :mix_name, :mix_position,
-   :mix_speed, :mix_speed_style, :mix_tag_y].each_with_index do |n, i|
+  [:mix_name, :mix_position,
+   :mix_speed, :mix_tag_y].each_with_index do |n, i|
     if (tag = Snd.catch do set_snd_func(n, id, $vct_5) end).first != :wrong_type_arg
       snd_display("%d: set mix (4) procs %s: %s", i, n, tag)
     end
@@ -42835,9 +39490,6 @@ def test0228
   check_error_tag(:out_of_range) do set_enved_style(12) end
   check_error_tag(:out_of_range) do make_color(1.5, 0.0, 0.0) end
   check_error_tag(:out_of_range) do make_color(-0.5, 0.0, 0.0) end
-  check_error_tag(:out_of_range) do set_tempo_control_bounds([9.0, 0.0]) end
-  check_error_tag(:wrong_type_arg) do set_tempo_control_bounds([0.0]) end
-  check_error_tag(:wrong_type_arg) do set_tempo_control_bounds([0.0, "hiho"]) end
   check_error_tag(:wrong_type_arg) do make_variable_graph(false) end
   if provided? :snd_motif
     check_error_tag(:arg_error) do make_variable_graph(main_widgets.cadr) end
@@ -42977,10 +39629,7 @@ def test0228
   make_region(0, 100, ind, 0)
   check_error_tag(:cannot_save) do save_selection("/bad/baddy.snd") end
   check_error_tag(:cannot_save) do save_region(regions.car, "/bad/baddy.snd") end
-  check_error_tag(:no_such_track) do make_track_sample_reader(0, 1234, 0) end
-  check_error_tag(:no_such_track) do make_track_sample_reader(1234, 0, 0) end
   check_error_tag(:no_such_mix) do make_mix_sample_reader(1234) end
-  check_error_tag(:no_such_mix) do set_mix_track(1234, 4321) end
   check_error_tag(:no_such_sound) do make_region(0, 12, 1234, true) end
   set_read_only(true, ind)
   check_error_tag(:cannot_save) do set_sound_loop_info(ind, [0, 0, 1, 1]) end
@@ -43042,13 +39691,11 @@ def test0228
   check_error_tag(:wrong_type_arg) do help_dialog([0, 1], "hiho") end
   check_error_tag(:wrong_type_arg) do info_dialog([0, 1], "hiho") end
   check_error_tag(:no_such_sound) do edit_header_dialog(1234) end
-  check_error_tag(:no_such_track) do make_track_sample_reader(0) end
   check_error_tag(:no_such_file) do open_sound("/bad/baddy.snd") end
   check_error_tag(:no_such_file) do open_raw_sound("/bad/baddy.snd", 1, 22050, Mus_lshort) end
   check_error_tag(:no_such_file) do view_sound("/bad/baddy.snd") end
   check_error_tag(:no_such_file) do make_sample_reader(0, "/bad/baddy.snd") end
   check_error_tag(:no_such_region) do make_region_sample_reader(0, 1234567) end
-  check_error_tag(:no_such_mix) do mix_tag_position(12345) end
   check_error_tag(:no_such_key) do bind_key(12345678, 0, false) end
   check_error_tag(:no_such_key) do bind_key(-1, 0, false) end
   check_error_tag(:no_such_key) do bind_key(12, 17, false) end

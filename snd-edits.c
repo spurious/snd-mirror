@@ -10494,13 +10494,11 @@ keep track of which files are in a given saved state batch, and a way to rename 
 /* -------------------- virtual mixes -------------------- */
 
   /* TODO: peak-envs after change [check all redisplays and maybe squelch cases]
-   * TODO: *.rb untracked
    * TODO: *.fs untracked
    * TODO: syncd mixes for stereo (automated that is via mix-drag-hook etc)
    * TODO: extreme tests such as water.scm [much flashing as grf updates -- need to flush pointless redisplays]
    * PERHAPS: mix-property display in dialog [add text widget?]
    * TODO: snd-test test 19: edit-list->function
-   * TODO: 28 mult case gc bug?
    * TODO: memlog: snd-edits.c[6135]: extend with zeros ed list not gc'd -- appears to come from g_ptree_channel?
    * TODO: unlist and read can be called on fully freed xen-allocated readers (valtmp)
    * TODO: mix-local show-waveform choice to reduce clutter
