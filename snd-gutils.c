@@ -5,8 +5,7 @@
 bool set_tiny_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
-  state_context *sgx;
-  sgx = ss->sgx;
+  if ((font) && (font[0] == '/')) return(false); /* pango accepts bogus font names, but then cairo segfaults trying to get the font height */
   fs = pango_font_description_from_string(font);
   if (fs)
     {
@@ -22,6 +21,7 @@ bool set_tiny_font(const char *font)
 bool set_listener_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
+  if ((font) && (font[0] == '/')) return(false);
   fs = pango_font_description_from_string(font);
   if (fs)
     {
@@ -38,6 +38,7 @@ bool set_listener_font(const char *font)
 bool set_peaks_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
+  if ((font) && (font[0] == '/')) return(false);
   fs = pango_font_description_from_string(font);
   if (fs)
     {
@@ -53,6 +54,7 @@ bool set_peaks_font(const char *font)
 bool set_bold_peaks_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
+  if ((font) && (font[0] == '/')) return(false);
   fs = pango_font_description_from_string(font);
   if (fs)
     {
@@ -68,6 +70,7 @@ bool set_bold_peaks_font(const char *font)
 bool set_axis_label_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
+  if ((font) && (font[0] == '/')) return(false);
   fs = pango_font_description_from_string(font);
   if (fs)
     {
@@ -86,6 +89,7 @@ bool set_axis_label_font(const char *font)
 bool set_axis_numbers_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
+  if ((font) && (font[0] == '/')) return(false);
   fs = pango_font_description_from_string(font);
   if (fs)
     {
@@ -800,6 +804,20 @@ GtkWidget *snd_gtk_entry_label_new(const char *label, color_info *color)
   return(rlw);
 }
 
+GtkWidget *make_info_widget(void)
+{
+  return(snd_gtk_entry_label_new(NULL, ss->sgx->highlight_color));
+}
+
+void info_widget_display(GtkWidget *w, const char *message)
+{
+  gtk_entry_set_text(GTK_ENTRY(w), message);
+}
+
+void info_widget_set_size(GtkWidget *w, int size)
+{
+  gtk_entry_set_width_chars(GTK_ENTRY(w), size);
+}
 
 void widget_int_to_text(GtkWidget *w, int val)
 {

@@ -39,7 +39,7 @@ hostname                                  value *hostname*
 #t set-show-listener drop
 
 \ defined in snd/snd-xen.c
-[undefined] clm-print [if] ' fth-print alias clm-print [then]
+[ifundef] clm-print <'> fth-print alias clm-print [then]
 : clm-message { fmt args -- str } ." \ " fmt args format .string cr ;
 
 *fth-verbose* [if] $" loading %S" '( *filename* ) clm-message [then]

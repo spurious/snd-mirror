@@ -354,6 +354,7 @@ char *shorter_tempnam(const char *udir, const char *prefix)
   return(tmpdir);
 }
 
+
 char *snd_tempnam(void)
 {
   /* problem here is that NULL passed back from Guile becomes "" which is not NULL from tempnam's point of view */
@@ -802,7 +803,7 @@ static void check_padding(void *p1, void *p2, size_t len, bool refill)
     {
       fprintf(stderr, "history pointer null??");
       describe_pointer(p1);
-      fprintf(stderr,")\n");
+      fprintf(stderr, ")\n");
       abort();
     }
   ip2 = (char *)p2;
@@ -811,7 +812,7 @@ static void check_padding(void *p1, void *p2, size_t len, bool refill)
       {
 	fprintf(stderr, "memory clobbered %d bytes before %p (", MEM_PAD_SIZE - i, p1);
 	describe_pointer(p1);
-	fprintf(stderr,")\n");
+	fprintf(stderr, ")\n");
 	abort();
       }
   if (refill)
@@ -821,7 +822,7 @@ static void check_padding(void *p1, void *p2, size_t len, bool refill)
       {
 	fprintf(stderr, "memory clobbered %d bytes after %p (", i, p1);
 	describe_pointer(p1);
-	fprintf(stderr,")\n");
+	fprintf(stderr, ")\n");
 	abort();
       }
 }
@@ -841,7 +842,7 @@ void check_pointer(void *ptr)
   void *rtp;
 
   if (ptr == NULL) return;
-  if (ptr == (void *)FREED_POINTER) {fprintf(stderr," pointer has been freed"); abort();}
+  if (ptr == (void *)FREED_POINTER) {fprintf(stderr, " pointer has been freed"); abort();}
 
   loc = (*((int *)(p3 - 4)));
   if ((loc < 0) || (loc > mem_size)) {fprintf(stderr, "loc clobbered: %p %d (%d)\n", ptr, loc, mem_size); abort();}
@@ -860,7 +861,7 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
   char *p3 = (char *)ptr;
 
   if (ptr == NULL) {fprintf(stderr, "attempt to free NULL"); mem_report(); abort();}
-  if (ptr == (void *)FREED_POINTER) {fprintf(stderr," attempt to free pointer twice"); abort();}
+  if (ptr == (void *)FREED_POINTER) {fprintf(stderr, " attempt to free pointer twice"); abort();}
 
   loc = (*((int *)(p3 - 4)));
   if ((loc < 0) || (loc > mem_size))
@@ -930,7 +931,7 @@ void *mem_calloc(size_t len, size_t size, const char *func, const char *file, in
     }
   memset(true_ptr, 0, len * size + 2 * MEM_PAD_SIZE);
   ptr = (char *)(true_ptr + MEM_PAD_SIZE);
-  if (ptr == NULL) {fprintf(stderr,"calloc->null"); abort();}
+  if (ptr == NULL) {fprintf(stderr, "calloc->null"); abort();}
   remember_pointer((void *)ptr, (void *)true_ptr, len * size, func, file, line);
   return((void *)ptr);
 }
@@ -951,7 +952,7 @@ void *mem_malloc(size_t len, const char *func, const char *file, int line)
       abort();
     }
   ptr = (char *)(true_ptr + MEM_PAD_SIZE);
-  if (ptr == NULL) {fprintf(stderr,"malloc->null"); abort();}
+  if (ptr == NULL) {fprintf(stderr, "malloc->null"); abort();}
   memset((void *)ptr, 3, len);  /* fill this block with some non-zero value */
   remember_pointer((void *)ptr, (void *)true_ptr, len, func, file, line);
   return((void *)ptr);
@@ -960,7 +961,7 @@ void *mem_malloc(size_t len, const char *func, const char *file, int line)
 void *mem_free(void *ptr, const char *func, const char *file, int line)
 {
   void *true_ptr;
-  /* fprintf(stderr,"free %s %s[%d]: %p\n", func, file, line, ptr); */
+  /* fprintf(stderr, "free %s %s[%d]: %p\n", func, file, line, ptr); */
   true_ptr = forget_pointer(ptr, func, file, line, true);
   free(true_ptr);
   return((void *)FREED_POINTER);
@@ -977,7 +978,7 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
   true_ptr = (char *)forget_pointer(ptr, func, file, line, false);
   new_true_ptr = (char *)realloc((void *)true_ptr, size + 2 * MEM_PAD_SIZE);
   new_ptr = (char *)(new_true_ptr + MEM_PAD_SIZE);
-  if (new_ptr == NULL) {fprintf(stderr,"realloc->null"); abort();}
+  if (new_ptr == NULL) {fprintf(stderr, "realloc->null"); abort();}
   remember_pointer((void *)new_ptr, (void *)new_true_ptr, size, func, file, line);
   return((void *)new_ptr);
 }
@@ -1047,6 +1048,7 @@ void dump_protection(FILE *Fp);
 void io_fds_in_use(int *open, int *closed, int *top);
 void describe_region(FILE *fd, void *ur);
 void describe_sync(FILE *fp, void *ptr);
+void describe_ed_fragment(FILE *Fp, void *ptr);
 
 typedef struct {int ptrs, loc, refsize; size_t sum; int *refs;} sumloc;
 
@@ -1191,6 +1193,9 @@ void mem_report(void)
 				    ed, (ed->origin) ? ed->origin : "null", 
 				    ed->beg, ed->len, ed_list_edit_type_to_string(ed->edit_type), ed->edit_type, ed->allocated_size);
 			  }
+			  break;
+			case PRINT_ED_FRAGMENT:
+			  describe_ed_fragment(Fp, pointers[orig_i]);
 			  break;
 			}
 		      /* other printable cases that would be nice: snd_info chn_info io_fd env_state ladspa sound_data mix */

@@ -124,4 +124,10 @@
 	       *output*))))))
 
 (with-sound () (green4 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 440 100 100 10))
+
+
+;;; to see the spectral differences:
+(map-channel (lambda (y) (*  0.5 (- (random 2.0) 1.0)))) ; white noise -- spectrum is flat at 1.0
+(let ((gr (make-green-noise 10000 .01))) (map-channel (lambda (y) (* .01 (brownian-noise gr))))) ; brownian falls off rapidly
+(let ((gr (make-green-noise 20000 1))) (map-channel (lambda (y) (green-noise gr 0.0)))) ; more or less 1/f -- falls off slowly
 |#

@@ -2541,7 +2541,7 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
    *   passes the reference through, which should be ok since it's read-only.
    */
   /*
-  fprintf(stderr,"set: %s(%s. %d) %s(%s, %d) failed\n", 
+  fprintf(stderr, "set: %s(%s. %d) %s(%s, %d) failed\n", 
 	  describe_xen_value(var, pt), type_name(var->type), var->type,
 	  describe_xen_value(init_val, pt), type_name(init_val->type), init_val->type);
   */
@@ -7445,7 +7445,7 @@ static void vct_reverse_1(int *args, ptree *pt)
 }
 static char *descr_vct_reverse_1(int *args, ptree *pt) 
 {
-  return(mus_format( VCT_PT " = vct_reverse(" VCT_PT "," INT_PT ")", args[0], DESC_VCT_RESULT, args[1], DESC_VCT_ARG_1, args[2], INT_ARG_2));
+  return(mus_format( VCT_PT " = vct_reverse(" VCT_PT ", " INT_PT ")", args[0], DESC_VCT_RESULT, args[1], DESC_VCT_ARG_1, args[2], INT_ARG_2));
 }
 static xen_value *vct_reverse_2(ptree *prog, xen_value **args, int num_args)
 {
@@ -9512,7 +9512,7 @@ static int grn_edit(void *arg)
 #if MUS_DEBUGGING
   if (outer->clms_size <= pt->args[0])
     {
-      fprintf(stderr,"outer: %p[%d] (%d)\n", outer->clms, pt->args[0], outer->clms_size);
+      fprintf(stderr, "outer: %p[%d] (%d)\n", outer->clms, pt->args[0], outer->clms_size);
       abort();
     }
 #endif
@@ -10296,7 +10296,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
 {
   XEN val = XEN_UNDEFINED;
   /*
-  fprintf(stderr,"xen_value_to_xen: %s %s\n", type_name(v->type), describe_xen_value(v, pt));
+  fprintf(stderr, "xen_value_to_xen: %s %s\n", type_name(v->type), describe_xen_value(v, pt));
   */
   switch (v->type)
     {
@@ -11205,7 +11205,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 		{
 		  /* should be clm-struct ref: ((setter moog-y) gen .1) for example */
 		  /* transform (back) to (set! (moog-y gen) .1) */
-		  /* fprintf(stderr,"got setter: %s\n", XEN_AS_STRING(form)); */
+		  /* fprintf(stderr, "got setter: %s\n", XEN_AS_STRING(form)); */
 		  return(generalized_set_form(prog,
 					      XEN_APPEND(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("set!"),
 								    XEN_LIST_2(XEN_CADR(function),
@@ -11483,7 +11483,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
     {
       int type;
       type = xen_to_run_type(form);
-      /* fprintf(stderr,"look for %s (%s)\n", XEN_AS_STRING(form), type_name(type)); */
+      /* fprintf(stderr, "look for %s (%s)\n", XEN_AS_STRING(form), type_name(type)); */
       switch (type)
 	{
 	case R_INT:     return(make_xen_value(R_INT, add_int_to_ptree(prog, R_XEN_TO_C_INT(form)), R_CONSTANT)); break;
@@ -11815,7 +11815,7 @@ static XEN eval_ptree_to_xen(ptree *pt)
    *   mus_error and a dynamic_wind -- the former isn't enough by itself because it doesn't
    *   fully unwind the stack, and the latter because the only leak case is through mus_error.
    */
-  /* fprintf(stderr,"result: %s\n", type_name(pt->result->type)); */
+  /* fprintf(stderr, "result: %s\n", type_name(pt->result->type)); */
 
   switch (pt->result->type)
     {
@@ -12403,7 +12403,7 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
   ptree *pt;
   current_optimization = SOURCE_OK;
 
-  /* fprintf(stderr,"run-eval: %s: %s\n", XEN_AS_STRING(code), XEN_AS_STRING(arg)); */
+  /* fprintf(stderr, "run-eval: %s: %s\n", XEN_AS_STRING(code), XEN_AS_STRING(arg)); */
 
   pt = make_ptree(8);
   pt->result = walk(pt, code, NEED_ANY_RESULT);

@@ -430,6 +430,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
       dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismiss_button, "quit_button");
+      set_stock_button_label(dismiss_button, _("Go Away"));
 
       color_button = sg_button_new_from_stock_with_label(_("Color"), GTK_STOCK_SELECT_COLOR);
       gtk_widget_set_name(color_button, "doit_button");

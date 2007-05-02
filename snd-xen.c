@@ -76,17 +76,17 @@ void dump_protection(FILE *Fp)
 	  if (!(XEN_EQ_P(gcdat, DEFAULT_GC_VALUE)))
 	    {
 #if HAVE_SCHEME
-	      fprintf(Fp,"  %s:%d %s", snd_protect_callers[i], i, XEN_AS_STRING(gcdat));
+	      fprintf(Fp, "  %s:%d %s", snd_protect_callers[i], i, XEN_AS_STRING(gcdat));
 #endif
 #if HAVE_GUILE
 	      if (XEN_HOOK_P(gcdat))
 		fprintf(Fp, " -> %s", XEN_AS_STRING(scm_hook_to_list(gcdat)));
 #endif
 #if HAVE_RUBY
-	      fprintf(Fp,"  %s:%d %d %s", snd_protect_callers[i], i, (int)gcdat, XEN_AS_STRING(gcdat));
+	      fprintf(Fp, "  %s:%d %d %s", snd_protect_callers[i], i, (int)gcdat, XEN_AS_STRING(gcdat));
 #endif
 #if HAVE_FORTH
-	      fprintf(Fp,"  %s:%d %s", snd_protect_callers[i], i, XEN_AS_STRING(gcdat));
+	      fprintf(Fp, "  %s:%d %s", snd_protect_callers[i], i, XEN_AS_STRING(gcdat));
 	      if (XEN_HOOK_P(gcdat))
 		fprintf(Fp, " -> %s", XEN_AS_STRING(XEN_HOOK_PROCEDURES(gcdat)));
 #endif

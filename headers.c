@@ -965,7 +965,7 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
 	break;
 
-      /* fprintf(stderr,"chunk: %c%c%c%c for %d\n", hdrbuf[0], hdrbuf[1], hdrbuf[2], hdrbuf[3], chunksize); */
+      /* fprintf(stderr, "chunk: %c%c%c%c for %d\n", hdrbuf[0], hdrbuf[1], hdrbuf[2], hdrbuf[3], chunksize); */
 
       if (match_four_chars((unsigned char *)hdrbuf, I_COMM))
 	{
@@ -1446,7 +1446,7 @@ static int read_caff_header(const char *filename, int fd)
 	  bits_per_channel = mus_char_to_ubint((unsigned char *)(hdrbuf + 40));
 	  chans = channels_per_frame;
 #if 0
-	  fprintf(stderr,"srate: %d, format: %c%c%c%c, %d, bytes: %d, frames: %d, chans: %d, bits: %d\n",
+	  fprintf(stderr, "srate: %d, format: %c%c%c%c, %d, bytes: %d, frames: %d, chans: %d, bits: %d\n",
 		  srate, hdrbuf[20], hdrbuf[21], hdrbuf[22], hdrbuf[23],
 		  format_flags, bytes_per_packet, frames_per_packet, channels_per_frame, bits_per_channel);
 #endif
@@ -1541,7 +1541,7 @@ static int read_caff_header(const char *filename, int fd)
 		}
 	    }
 #if 0
-	  fprintf(stderr,"data format: %d %s\n", data_format, mus_data_format_to_string(data_format));
+	  fprintf(stderr, "data format: %d %s\n", data_format, mus_data_format_to_string(data_format));
 #endif
 	}
       else
@@ -1557,14 +1557,14 @@ static int read_caff_header(const char *filename, int fd)
 		data_size = chunksize;
 	      else data_size = true_file_length - data_location;
 #if 0
-	      fprintf(stderr,"found data at " OFF_TD ", " OFF_TD "\n", data_location, data_size);
+	      fprintf(stderr, "found data at " OFF_TD ", " OFF_TD "\n", data_location, data_size);
 #endif
 	    }
 	  /* else edct or something for comment? */
 	      
 	}
 #if 0
-      fprintf(stderr,"at " OFF_TD ", chunk: %c%c%c%c for " OFF_TD "\n", offset, hdrbuf[0], hdrbuf[1], hdrbuf[2], hdrbuf[3], chunksize);
+      fprintf(stderr, "at " OFF_TD ", chunk: %c%c%c%c for " OFF_TD "\n", offset, hdrbuf[0], hdrbuf[1], hdrbuf[2], hdrbuf[3], chunksize);
 #endif
       chunksize += 12;
     }

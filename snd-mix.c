@@ -1332,14 +1332,19 @@ static XEN g_mix_amp_env(XEN n)
 static XEN g_set_mix_amp_env(XEN n, XEN val) 
 {
   env *e = NULL;
+  bool result;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_amp_env, "an integer");
   XEN_ASSERT_TYPE(XEN_LIST_P(val) || XEN_FALSE_P(val), val, XEN_ARG_2, S_setB S_mix_amp_env, "a list or " PROC_FALSE);
 
   if (XEN_LIST_P(val))
     e = get_env(val, S_setB S_mix_amp_env);
 
-  if (mix_set_amp_env_edit(XEN_TO_C_INT(n), e))
-    return(val);
+  result = mix_set_amp_env_edit(XEN_TO_C_INT(n), e);
+
+  /* e is copied by mix_set_amp_env_edit, and created by get_env (xen_to_env), so it should be freed here */
+  if (e) free_env(e);
+
+  if (result) return(val);
   return(snd_no_such_mix_error(S_setB S_mix_amp_env, n));  
 }
 
@@ -2947,4 +2952,4 @@ void finish_moving_mix_tag(int mix_id, int x)
 }
 
 
-/* TODO: set mix tag y should at least redpy that mix */
+/* TODO: set mix tag y should at least redpy that mix (if not squelched) */

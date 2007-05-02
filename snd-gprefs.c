@@ -1566,6 +1566,7 @@ widget_t start_preferences_dialog(void)
 
   dismissB = gtk_button_new_from_stock(GTK_STOCK_QUIT);
   gtk_widget_set_name(dismissB, "quit_button");
+  set_stock_button_label(dismissB, _("Go Away"));
 
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(preferences_dialog)->action_area), dismissB, true, true, 10);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(preferences_dialog)->action_area), revertB, true, true, 10);

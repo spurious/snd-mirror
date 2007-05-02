@@ -344,7 +344,7 @@ static gint unpost_mix_error(gpointer data)
 
 static void errors_to_mix_text(const char *msg, void *data)
 {
-  set_label(error_label, msg);
+  info_widget_display(error_label, msg);
   gtk_widget_show(error_frame);
   g_timeout_add_full(0, (guint32)5000, unpost_mix_error, NULL, NULL);
 }
@@ -552,6 +552,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->action_area), dismiss_button, false, true, 10);
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_mix_dialog, NULL);
       gtk_widget_show(dismiss_button);
+      set_stock_button_label(dismiss_button, _("Go Away"));
 
       previousb = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
       gtk_widget_set_name(previousb, "reset_button");
@@ -581,7 +582,7 @@ GtkWidget *make_mix_dialog(void)
       error_frame = gtk_frame_new(NULL);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->vbox), error_frame, false, false, 4);
 
-      error_label = gtk_label_new("");
+      error_label = make_info_widget();
       gtk_container_add(GTK_CONTAINER(error_frame), error_label);
       gtk_widget_show(error_label);
 

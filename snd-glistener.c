@@ -68,6 +68,7 @@ static void start_completion_dialog(int num_items, char **items)
 
       dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismiss_button, "quit_button");
+      set_stock_button_label(dismiss_button, _("Go Away"));
 
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(completion_dialog)->action_area), dismiss_button, false, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(completion_dialog)->action_area), help_button, false, true, 10);

@@ -748,6 +748,7 @@ static void start_view_color_dialog(bool managed)
 
       dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismiss_button, "quit_button");
+      set_stock_button_label(dismiss_button, _("Go Away"));
 
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ccd->dialog)->action_area), dismiss_button, false, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(ccd->dialog)->action_area), help_button, false, true, 10);
@@ -1134,6 +1135,7 @@ static void start_view_orientation_dialog(bool managed)
 
       dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismiss_button, "quit_button");
+      set_stock_button_label(dismiss_button, _("Go Away"));
 
       reset_button = gtk_button_new_from_stock(GTK_STOCK_REVERT_TO_SAVED);
       gtk_widget_set_name(reset_button, "reset_button");

@@ -273,6 +273,7 @@ static void create_help_monolog(void)
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), ok_button, false, true, 20);
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_help_dialog, NULL);
   gtk_widget_show(ok_button);
+  set_stock_button_label(ok_button, _("Go Away"));
 
   help_previous_button = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
   gtk_widget_set_name(help_previous_button, "reset_button");

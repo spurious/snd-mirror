@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Tue Feb 27 13:51:29 CET 2007
+\ Changed: Tue May 01 01:10:53 CEST 2007
 
 \ Commentary:
 \
@@ -53,14 +53,14 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 27-Feb-2007" value *clm-version*
+$" fth 1-May-2007" value *clm-version*
 
 \ defined in snd/snd-xen.c
-[undefined] snd-print   [if] : snd-print   ( str -- str )  dup .string ;             [then]
-[undefined] clm-print   [if] : clm-print   ( fmt args -- ) format snd-print drop ;   [then]
-[undefined] clm-message [if] : clm-message ( fmt args -- str ) ." \ " fth-print cr ; [then]
+[ifundef] snd-print   : snd-print   ( str -- str )  dup .string ;             [then]
+[ifundef] clm-print   : clm-print   ( fmt args -- ) format snd-print drop ;   [then]
+[ifundef] clm-message : clm-message ( fmt args -- str ) ." \ " fth-print cr ; [then]
 
-[undefined] flog10 [if]
+[ifundef] flog10
   ' flog  alias flog10
   ' fln   alias flog
   ' flnp1 alias flogp1
@@ -91,7 +91,7 @@ dl-load sndlib Init_sndlib
 [then]
 
 \ Also defined in examp.fs.
-[undefined] close-sound-extend [if]
+[ifundef] close-sound-extend
   \ 5 == notebook widget
   : close-sound-extend <{ snd -- }>
     main-widgets 5 list-ref false? unless

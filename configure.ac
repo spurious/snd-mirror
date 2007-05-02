@@ -1,6 +1,6 @@
 # Configuration script for Snd
 
-AC_INIT(snd, 9.0, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-9.tar.gz)
+AC_INIT(snd, 9.1, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-9.tar.gz)
 
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
@@ -19,7 +19,7 @@ LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
 PACKAGE=snd
-VERSION=9.0
+VERSION=9.1
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
@@ -243,6 +243,8 @@ AC_CHECK_DECLS(isinf,,,[#include <math.h>])
 
 AC_TYPE_MODE_T
 AC_TYPE_SIZE_T
+# AC_TYPE_SSIZE_T -- in the docs, but apparently doesn't actually work
+AC_CHECK_TYPE(ssize_t, int)
 AC_TYPE_PID_T
 
 AC_C_BIGENDIAN( [AC_DEFINE(MUS_LITTLE_ENDIAN, 0)

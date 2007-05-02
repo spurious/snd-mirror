@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Sun Apr 08 23:31:29 CEST 2007
+\ Changed: Wed May 02 00:28:48 CEST 2007
 
 \ Commentary:
 \
@@ -294,7 +294,6 @@ mus-audio-playback-amp value original-audio-amp
   stack-reset
   #t show-listener drop
   regions each ( r ) forget-region drop end-each
-  tracks  each ( t ) free-track    drop end-each
   0 set-view-files-sort drop
   clear-sincs drop
   sounds if stop-playing drop then
@@ -377,22 +376,22 @@ mus-audio-playback-amp value original-audio-amp
   : complex-test ( -- )
     \ edot-product (test008)
     0.0 vct( 1.0 ) edot-product dup 1.0 fneq if
-      1 >list $" edot 1.0: %s?" swap snd-display
+      $" edot 1.0: %s?" swap snd-display
     else
       drop
     then
     0.0 vct( 0.0 ) edot-product dup 0.0 fneq if
-      1 >list $" edot 0.0: %s?" swap snd-display
+      $" edot 0.0: %s?" swap snd-display
     else
       drop
     then
     0.0 #( 1.0 ) edot-product dup 1.0 fneq if
-      1 >list $" edot 1.0: %s?" swap snd-display
+      $" edot 1.0: %s?" swap snd-display
     else
       drop
     then
     0.0 #( 0+1i ) edot-product dup 0+1i cneq if
-      1 >list $" edot i: %s?" swap snd-display
+      $" edot i: %s?" swap snd-display
     else
       drop
     then
@@ -595,7 +594,7 @@ mus-audio-playback-amp value original-audio-amp
   3 :initial-contents '( 1.0 0.0 0.0 ) make-delay to d2
   3 :initial-contents '( 1.0 1.0 1.0 ) make-delay to d3
   d1 d2 d3 test-gen-equal
-  \ mix, track (test009)
+  \ mix (test009)
   "hiho.wave" mus-next mus-bshort 22050 1 new-sound { new-index }
   new-index select-sound drop
   0 new-index 0 find-mix to res
@@ -603,20 +602,16 @@ mus-audio-playback-amp value original-audio-amp
   "pistol.snd" 100 mix { mix-id }
   view-files-dialog { wid }
   mix-id mix-position { pos }
-  mix-id mix-frames { len }
-  mix-id mix-tag-position { anc }
+  mix-id mix-length { len }
   mix-id mix-speed { spd }
-  mix-id mix-speed-style { spdstyle }
-  mix-id mix-track { trk }
   mix-id mix-home { home-lst }
   home-lst car { snd }
   home-lst cadr { chn }
   mix-id 0 mix-amp { amp }
   mix-id make-mix-sample-reader { mr }
-  mr mix-sample-reader? unless $" %s is not mix-sample-reader?"  '( mr ) snd-display then
-  mr track-sample-reader?   if $" mix-sample-reader: track %s?"  '( mr ) snd-display then
-  mr region-sample-reader?  if $" mix-sample-reader: region %s?" '( mr ) snd-display then
-  mr sample-reader?         if $" mix-sample-reader: normal %s?" '( mr ) snd-display then
+  mr mix-sample-reader? unless $" %s is not mix-sample-reader?"  mr snd-display then
+  mr region-sample-reader?  if $" mix-sample-reader: region %s?" mr snd-display then
+  mr sample-reader?         if $" mix-sample-reader: normal %s?" mr snd-display then
   mr sample-reader-position to res
   res 0<> if $" mix sample-reader-position: %d?" '( res ) snd-display then
   mr sample-reader-at-end? if $" mix sample-reader-at-end: %s?" '( mr ) snd-display then
@@ -626,20 +621,20 @@ mus-audio-playback-amp value original-audio-amp
   res $" #<mix-sample-reader mi" string<> if
     $" mix sample-reader actually got: [%s]?" '( res ) snd-display
   then
-  mix-id 1234 <'> mix-amp #t nil fth-catch to res
+  1234 <'> mix-amp #t nil fth-catch to res
   stack-reset
-  res car 'no-such-channel object-equal? unless
-    $" mix-amp bad chan: %s" '( res ) snd-display
+  res car 'no-such-mix object-equal? unless
+    $" mix-amp bad id: %s" '( res ) snd-display
   then
-  mix-id 1234 0.1 <'> set-mix-amp #t nil fth-catch to res
+  1234 0.1 <'> set-mix-amp #t nil fth-catch to res
   stack-reset
-  res car 'no-such-channel object-equal? unless
-    $" set-mix-amp bad chan: %s" '( res ) snd-display
+  res car 'no-such-mix object-equal? unless
+    $" set-mix-amp bad id: %s" '( res ) snd-display
   then
-  mix-id 1234 '( 0 0 1 1 ) <'> set-mix-amp-env #t nil fth-catch to res
+  1234 '( 0 0 1 1 ) <'> set-mix-amp-env #t nil fth-catch to res
   stack-reset
-  res car 'no-such-channel object-equal? unless
-    $" set-mix-amp-env bad chan: %s" '( res ) snd-display
+  res car 'no-such-mix object-equal? unless
+    $" set-mix-amp-env bad id: %s" '( res ) snd-display
   then
   0.0 0.0 { mx sx }
   99 0 do
@@ -655,70 +650,19 @@ mus-audio-playback-amp value original-audio-amp
   mx sx fneq if $" read-mix-sample 100: %s %s?" '( mx sx ) snd-display then
   mr free-sample-reader drop
   \
-  100 pos <>   if $" mix-position: %d?"     '( pos ) snd-display then
-  41623 len <> if $" mix-frames: %d?"       '( len ) snd-display then
-  anc      0<> if $" mix-tag-position: %d?" '( anc ) snd-display then
-  trk      0<> if $" mix-track: %s?"        '( trk ) snd-display then
-  snd new-index <> if $" snd mix-home: %d?" '( snd ) snd-display then
-  chn      0<> if $" chn mix-home: %d?"     '( chn ) snd-display then
-  amp 1.0 fneq if $" mix-amp: %s?"          '( amp ) snd-display then
-  spd 1.0 fneq if $" mix-speed: %s?"        '( spd ) snd-display then
-  spdstyle new-index speed-control-style <> if
-    $" mix-speed-style: %s %s?" '( spdstyle new-index speed-control-style ) snd-display
-  then
+  100 pos <>   if $" mix-position: %d?"     pos snd-display then
+  41623 len <> if $" mix-length: %d?"       len snd-display then
+  snd new-index <> if $" snd mix-home: %d?" snd snd-display then
+  chn      0<> if $" chn mix-home: %d?"     chn snd-display then
+  amp 1.0 fneq if $" mix-amp: %s?"          amp snd-display then
+  spd 1.0 fneq if $" mix-speed: %s?"        spd snd-display then
   mix-id <'> play-mix 'mus-error nil fth-catch to res
   stack-reset
   res car exception? if $" can't play mix: %s" '( res ) snd-display then
-  mix-id -1 <'> set-mix-track #t nil fth-catch to res
-  stack-reset
-  res car 'out-of-range object-equal? unless
-    $" set-mix-track -1: %s" '( res ) snd-display
-  then
   mix-id 200 set-mix-position drop
   mix-id 0 0.5 set-mix-amp drop
   mix-id 2.0 set-mix-speed drop
-  mix-id speed-control-as-ratio set-mix-speed-style drop
-  mix-id mix-speed-style to res
-  res speed-control-as-ratio <> if $" set-mix-speed-style: %s?" '( res ) snd-display then
-  mix-id 123123 <'> set-mix-speed-style #t nil fth-catch to res
-  stack-reset
-  res car 'out-of-range object-equal? unless
-    $" set-mix-speed-style bad arg: %s" '( res ) snd-display
-  then
   \ 
-  mix-id make-track to trk
-  123123 <'> play-track #t nil fth-catch to res
-  stack-reset
-  res car 'no-such-track object-equal? unless
-    $" play-track bad track: %s" '( res ) snd-display
-  then
-  123123 #t <'> play-track #t nil fth-catch to res
-  stack-reset
-  res car 'no-such-track object-equal? unless
-    $" play-track bad track #t: %s" '( res ) snd-display
-  then
-  123123 0 <'> play-track #t nil fth-catch to res
-  stack-reset
-  res car 'no-such-track object-equal? unless
-    $" play-track bad track index: %s" '( res ) snd-display
-  then
-  "oboe.snd" 0 0 sounds car 0 #f #f 123123 <'> mix #t nil fth-catch to res
-  stack-reset
-  res car 'no-such-track object-equal? unless
-    $" mix bad track index: %s" '( res ) snd-display
-  then
-  3 0.1 make-vct 0 sounds car 0 #t $" bad mix-vct" 123123 <'> mix-vct #t nil fth-catch to res
-  stack-reset
-  res car 'no-such-track object-equal? unless
-    $" mix-vct bad track index: %s" '( res ) snd-display
-  then
-  trk 123 <'> track #t nil fth-catch to res
-  stack-reset
-  res car 'no-such-channel object-equal? unless
-    $" mix-vct bad track index: %s" '( res ) snd-display
-  then
-  trk play-track drop
-  mix-id 30 set-mix-tag-position drop
   mix-id 0 '( 0 0 1 1 ) set-mix-amp-env drop
   mix-id 0 mix-amp-env to res
   mix-id 0  mix-id 0 mix-amp-env  set-mix-amp-env drop
@@ -727,23 +671,19 @@ mus-audio-playback-amp value original-audio-amp
   mix-id 20 set-mix-tag-y drop
   mix-id mix-position to pos
   mix-id mix-speed to spd
-  mix-id mix-track to trk
   mix-id 0 mix-amp to amp
   mix-id mix-tag-y { my }
-  mix-id mix-tag-position to anc
-  200 pos <>   if $" set-mix-position: %d?"     '( pos ) snd-display then
-  spd 2.0 fneq if $" set-mix-speed: %s?"        '( spd ) snd-display then
-  trk track? unless $" set-mix-track: %s?"      '( trk ) snd-display then
-  my  20    <> if $" set-mix-tag-y: %d?"        '( my ) snd-display then
-  amp 0.5 fneq if $" set-mix-amp: %s?"          '( amp ) snd-display then
-  anc 30    <> if $" set-mix-tag-position: %d?" '( anc ) snd-display then
+  200 pos <>   if $" set-mix-position: %d?" pos snd-display then
+  spd 2.0 fneq if $" set-mix-speed: %s?"    spd snd-display then
+  my  20    <> if $" set-mix-tag-y: %d?"    my  snd-display then
+  amp 0.5 fneq if $" set-mix-amp: %s?"      amp snd-display then
   mix-id 0 mix-amp-env to res
-  res '( 0.0 0.0 1.0 1.0 ) list= unless $" set-mix-amp-env: %s?" '( res ) snd-display then
+  res '( 0.0 0.0 1.0 1.0 ) list= unless $" set-mix-amp-env: %s?" res snd-display then
   \
-  3 0.1 make-vct 100 mix-vct drop
+  3 0.1 make-vct 100 #f #f #t "" mix-vct drop
   0 set-cursor drop
   1 #f #f forward-mix { nid }
-  nid mix? if
+  nid mix? false? unless
     cursor { curs }
     curs nid mix-position <> if
       $" 1 forward-mix: %s %s %s?" '( nid curs nid mix-position ) snd-display
@@ -752,7 +692,7 @@ mus-audio-playback-amp value original-audio-amp
     $" 1 forward-mix: not a mix %s?" '( nid ) snd-display
   then
   2 #f #f forward-mix { nid1 }
-  nid1 mix? if
+  nid1 mix? false? unless
     cursor { curs }
     curs nid1 mix-position <> if
       $" 2 forward-mix: m0 %s m1 %s c %s p %s?" '( nid nid1 curs nid mix-position ) snd-display
@@ -761,7 +701,7 @@ mus-audio-playback-amp value original-audio-amp
     $" 2 forward-mix: not a mix %s?" '( nid1 ) snd-display
   then
   1 #f #f backward-mix to nid1
-  nid1 mix? if
+  nid1 mix? false? unless
     cursor { curs }
     curs nid1 mix-position <> if
       $" 1 backward-mix: m0 %s m1 %s c %s p %s?" '( nid nid1 curs nid mix-position ) snd-display
@@ -770,7 +710,7 @@ mus-audio-playback-amp value original-audio-amp
     $" 1 backward-mix: not a mix %s?" '( nid1 ) snd-display
   then
   100 #f #f find-mix to nid
-  nid mix? if
+  nid mix? false? unless
     nid mix-position 100 <> if
       new-index 0 mixes map *key* mix-position end-map { mx-pos }
       $" 100 find-mix: %s %s %s?" '( nid dup mix-position mx-pos ) snd-display
@@ -779,7 +719,7 @@ mus-audio-playback-amp value original-audio-amp
     $" 100 find-mix: not a mix %s?" '( nid ) snd-display
   then
   200 #f #f find-mix to nid
-  nid mix? if
+  nid mix? false? unless
     nid mix-position 200 <> if
       new-index 0 mixes map *key* mix-position end-map { mx-pos }
       $" 200 find-mix: %s %s %s?" '( nid dup mix-position mx-pos ) snd-display
@@ -802,182 +742,182 @@ mus-audio-playback-amp value original-audio-amp
   wid hide-widget drop
   \ envelopes (lists, vcts, arrays) (test015)
   1.0 vct( 0.0 0.0 2.0 1.0 )           1.0 envelope-interp dup 0.5 fneq if
-    $" envelope-interp 0.5: %s?" 1 >list snd-display
+    $" envelope-interp 0.5: %s?" swap snd-display
   else
     drop
   then
   1.0 '( 0.0 0.0 1.0 1.0 2.0 0.0 )     1.0 envelope-interp dup 1.0 fneq if
-    $" envelope-interp 1.0: %s?" 1 >list snd-display
+    $" envelope-interp 1.0: %s?" swap snd-display
   else
     drop
   then
   2.0 #( 0.0 0.0 1.0 1.0 )             1.0 envelope-interp dup 1.0 fneq if
-    $" envelope-interp 1.0: %s?" 1 >list snd-display
+    $" envelope-interp 1.0: %s?" swap snd-display
   else
     drop
   then
   0.0 #( 1.0 0.5 2.0 0.0 )             1.0 envelope-interp dup 0.5 fneq if
-    $" envelope-interp 0.5: %s?" 1 >list snd-display
+    $" envelope-interp 0.5: %s?" swap snd-display
   else
     drop
   then
   0.0 #( -1.0 0.0 0.0 1.0 1.0 -1.0 )   1.0 envelope-interp dup 1.0 fneq if
-    $" envelope-interp 1.0; %s?" 1 >list snd-display
+    $" envelope-interp 1.0; %s?" swap snd-display
   else
     drop
   then
   -0.5 #( -1.0 0.0 0.0 1.0 1.0 -1.0 )  1.0 envelope-interp dup 0.5 fneq if
-    $" envelope-interp 0.5: %s?" 1 >list snd-display
+    $" envelope-interp 0.5: %s?" swap snd-display
   else
     drop
   then
   -0.5 #( -1.0 -1.0 0.0 1.0 1.0 -1.0 ) 1.0 envelope-interp dup 0.0 fneq if
-    $" envelope-interp 0.0: %s?" 1 >list snd-display
+    $" envelope-interp 0.0: %s?" swap snd-display
   else
     drop
   then
   -0.5 #( -1.0 -1.0 1.0 1.0 )          1.0 envelope-interp dup -0.5 fneq if
-    $" envelope-interp -0.5: %s?" 1 >list snd-display
+    $" envelope-interp -0.5: %s?" swap snd-display
   else
     drop
   then
   -1.5 #( -1.0 -1.0 1.0 1.0 )          1.0 envelope-interp dup -1.0 fneq if
-    $" envelope-interp -1.0: %s?" 1 >list snd-display
+    $" envelope-interp -1.0: %s?" swap snd-display
   else
     drop
   then
   1.5 #( -1.0 -1.0 1.0 1.0 )           1.0 envelope-interp dup 1.0 fneq if
-    $" envelope-interp 1.0: %s?" 1 >list snd-display
+    $" envelope-interp 1.0: %s?" swap snd-display
   else
     drop
   then
   0.1 #( 0.0 0.0 1.0 1.0 )             1.0 envelope-interp dup 0.1 fneq if
-    $" envelope-interp 0.1: %s?" 1 >list snd-display
+    $" envelope-interp 0.1: %s?" swap snd-display
   else
     drop
   then
   0.1 #( 0.0 0.0 1.0 1.0 )            32.0 envelope-interp dup 0.01336172 fneq if
-    $" envelope-interp (exp 32): %s?" 1 >list snd-display
+    $" envelope-interp (exp 32): %s?" swap snd-display
   else
     drop
   then
   0.1 #( 0.0 0.0 1.0 1.0 )           0.012 envelope-interp dup 0.36177473 fneq if
-    $" envelope-interp (exp 0.012): %s?" 1 >list snd-display
+    $" envelope-interp (exp 0.012): %s?" swap snd-display
   else
     drop
   then
   0.3 #( 0.0 0.0 0.5 1.0 1.0 0.0 )     1.0 envelope-interp dup 0.6 fneq if
-    $" envelope-interp 0.6: %s?" 1 >list snd-display
+    $" envelope-interp 0.6: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 0.0 0.5 0.5 1.0 0.5 ) { v0 }
   #( 0.0 0.0 2.0 0.5 ) #( 0.0 0.0 1.0 2.0 2.0 1.0 ) multiply-envelopes dup v0 0 fveql unless
-    $" multiply-envelopes: %s?" 1 >list snd-display
+    $" multiply-envelopes: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 0.0 0.5 0.5 1.0 0.0 ) to v0
   #( 0.0 0.0 1.0 1.0 ) #( 0.0 0.0 1.0 1.0 2.0 0.0 ) multiply-envelopes dup v0 0 fveql unless
-    $" multiply-envelopes: %s?" 1 >list snd-display
+    $" multiply-envelopes: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 0.0 1.0 1.0 2.0 3.0 4.0 0.0 ) max-envelope dup 3.0 fneq if
-    $" 0 max-envelope: %s?" 1 >list snd-display
+    $" 0 max-envelope: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 1.0 ) max-envelope dup 1.0 fneq if
-    $" 1 max-envelope: %s?" 1 >list snd-display
+    $" 1 max-envelope: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 1.0 1.0 1.0 2.0 2.0 ) max-envelope dup 2.0 fneq if
-    $" 2 max-envelope: %s?" 1 >list snd-display
+    $" 2 max-envelope: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 -1.0 1.0 -2.0 ) max-envelope dup -1.0 fneq if
-    $" 3 max-envelope: %s?" 1 >list snd-display
+    $" 3 max-envelope: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 -2.0 1.0 -1.0 ) max-envelope dup -1.0 fneq if
-    $" 4 max-envelope: %s?" 1 >list snd-display
+    $" 4 max-envelope: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 0.0 1.0 1.0 2.0 3.0 4.0 0.0 ) min-envelope dup 0.0 fneq if
-    $" 0 min-envelope: %s?" 1 >list snd-display
+    $" 0 min-envelope: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 1.0 ) min-envelope dup 1.0 fneq if
-    $" 1 min-envelope: %s?" 1 >list snd-display
+    $" 1 min-envelope: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 1.0 1.0 1.0 2.0 2.0 ) min-envelope dup 1.0 fneq if
-    $" 2 min-envelope: %s?" 1 >list snd-display
+    $" 2 min-envelope: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 -1.0 1.0 -2.0 ) min-envelope dup -2.0 fneq if
-    $" 3 min-envelope: %s?" 1 >list snd-display
+    $" 3 min-envelope: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 -2.0 1.0 -1.0 ) min-envelope dup -2.0 fneq if
-    $" 4 min-envelope: %s?" 1 >list snd-display
+    $" 4 min-envelope: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 0.0 0.2 0.1 1.0 1.0 ) to v0
   #( 0.0 0.0 1.0 1.0 ) 0.1 0.2 #f #f stretch-envelope dup v0 0 fveql unless
-    $" stretch-envelope att: %s?" 1 >list snd-display
+    $" stretch-envelope att: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 0.0 0.2 0.1 1.1 1.0 1.6 0.5 2.0 0.0 ) to v0
   #( 0.0 0.0 1.0 1.0 2.0 0.0 ) 0.1 0.2 1.5 1.6 stretch-envelope dup v0 0 fveql unless
-    $" stretch-envelope dec: %s?" 1 >list snd-display
+    $" stretch-envelope dec: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 0.0 0.2 0.1 1.1 1.0 1.6 0.5 2.0 0.0 ) to v0
   #( 0.0 0.0 1.0 1.0 2.0 0.0 ) 0.1 0.2 1.5 1.6 stretch-envelope dup v0 0 fveql unless
-    $" stretch-envelope: %s?" 1 >list snd-display
+    $" stretch-envelope: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 0.0 0.5 1.5 1.0 1.0 ) to v0
   #( 0.0 0.0 1.0 1.0 2.0 0.0 ) #( 0.0 0.0 1.0 1.0 ) add-envelopes dup v0 0 fveql unless
-    $" add-envelopes: %s?" 1 >list snd-display
+    $" add-envelopes: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 0.0 1.0 2.0 ) to v0
   #( 0.0 0.0 1.0 1.0 ) 2.0 scale-envelope dup v0 0 fveql unless
-    $" scale-envelope: %s?" 1 >list snd-display
+    $" scale-envelope: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 1.0 1.0 0.0 ) to v0
   #( 0.0 0.0 1.0 1.0 ) reverse-envelope dup v0 0 fveql unless
-    $" reverse-envelope: %s?" 1 >list snd-display
+    $" reverse-envelope: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 0.0 1.5 1.0 2.0 0.0 ) to v0
   #( 0.0 0.0 0.5 1.0 2.0 0.0 ) reverse-envelope dup v0 0 fveql unless
-    $" reverse-envelope: %s?" 1 >list snd-display
+    $" reverse-envelope: %s?" swap snd-display
   else
     drop
   then
   #( 0.0 1.0 1.5 1.0 2.0 0.0 ) to v0
   #( 0.0 0.0 0.5 1.0 2.0 1.0 ) reverse-envelope dup v0 0 fveql unless
-    $" reverse-envelope: %s?" 1 >list snd-display
+    $" reverse-envelope: %s?" swap snd-display
   else
     drop
   then
@@ -1156,22 +1096,22 @@ mus-audio-playback-amp value original-audio-amp
   \ env.fs
   \ envelope-interp
   0.1 '( 0 0 1 1 ) 1.0 envelope-interp dup 0.1 fneq if
-    $" envelope-interp 0.1: %s?" swap 1 >list snd-display
+    $" envelope-interp 0.1: %s?" swap snd-display
   else
     drop
   then
   0.1 '( 0 0 1 1 ) 32.0 envelope-interp dup 0.01336172 fneq if
-    $" envelope-interp 0.013: %s?" swap 1 >list snd-display
+    $" envelope-interp 0.013: %s?" swap snd-display
   else
     drop
   then
   0.1 '( 0 0 1 1 ) 0.012 envelope-interp dup 0.36177473 fneq if
-    $" envelope-interp 0.361: %s?" swap 1 >list snd-display
+    $" envelope-interp 0.361: %s?" swap snd-display
   else
     drop
   then
   0.3 '( 0 0 0.5 1 1 0 ) 1.0 envelope-interp dup 0.6 fneq if
-    $" envelope-interp 0.3 '( 0 0 0.5 1 1 0 ): %s?" swap 1 >list snd-display
+    $" envelope-interp 0.3 '( 0 0 0.5 1 1 0 ): %s?" swap snd-display
   else
     drop
   then
@@ -1179,79 +1119,79 @@ mus-audio-playback-amp value original-audio-amp
   1.0 3.0 '( 0.0 0.0 5.0 1.0 ) window-envelope dup '( 1.0 0.2 3.0 0.6 ) feql if
     drop
   else
-    $" window-envelope: %s?" swap 1 >list snd-display
+    $" window-envelope: %s?" swap snd-display
   then
   \ multiply-envelopes
   '( 0 0 1 1 ) '( 0 0 1 1 2 0 ) multiply-envelopes dup '( 0 0 0.5 0.5 1 0 ) feql if
     drop
   else
-    $" multiply-envelopes: %s?" swap 1 >list snd-display
+    $" multiply-envelopes: %s?" swap snd-display
   then
   \ max-envelope
   '( 0 0 1 1 2 3 4 0 ) max-envelope dup 3.0 fneq if
-    $" max-envelopes (0): %s?" swap 1 >list snd-display
+    $" max-envelopes (0): %s?" swap snd-display
   else
     drop
   then
   '( 0 1 ) max-envelope dup 1.0 fneq if
-    $" max-envelopes (1): %s?" swap 1 >list snd-display
+    $" max-envelopes (1): %s?" swap snd-display
   else
     drop
   then
   '( 0 1 1 1 2 2 ) max-envelope dup 2.0 fneq if
-    $" max-envelopes (2): %s?" swap 1 >list snd-display
+    $" max-envelopes (2): %s?" swap snd-display
   else
     drop
   then
   '( 0 -1 1 -2 ) max-envelope dup -1.0 fneq if
-    $" max-envelopes (3): %s?" swap 1 >list snd-display
+    $" max-envelopes (3): %s?" swap snd-display
   else
     drop
   then
   '( 0 -2 1 -1 ) max-envelope dup -1.0 fneq if
-    $" max-envelopes (4): %s?" swap 1 >list snd-display
+    $" max-envelopes (4): %s?" swap snd-display
   else
     drop
   then
   \ min-envelope
   '( 0 0 1 1 2 3 4 0 ) min-envelope dup 0.0 fneq if
-    $" min-envelopes (0): %s?" swap 1 >list snd-display
+    $" min-envelopes (0): %s?" swap snd-display
   else
     drop
   then
   '( 0 1 ) min-envelope dup 1.0 fneq if
-    $" min-envelopes (1): %s?" swap 1 >list snd-display
+    $" min-envelopes (1): %s?" swap snd-display
   else
     drop
   then
   '( 0 1 1 1 2 2 ) min-envelope dup 1.0 fneq if
-    $" min-envelopes (2): %s?" swap 1 >list snd-display
+    $" min-envelopes (2): %s?" swap snd-display
   else
     drop
   then
   '( 0 -1 1 -2 ) min-envelope dup -2.0 fneq if
-    $" min-envelopes (3): %s?" swap 1 >list snd-display
+    $" min-envelopes (3): %s?" swap snd-display
   else
     drop
   then
   '( 0 -2 1 -1 ) min-envelope dup -2.0 fneq if
-    $" min-envelopes (4): %s?" swap 1 >list snd-display
+    $" min-envelopes (4): %s?" swap snd-display
   else
     drop
   then
   \ integrate-envelope
   '(  0 0 1 1 ) integrate-envelope dup 0.5 fneq if
-    $" integrate-envelopes (0): %s?" swap 1 >list snd-display
+    $" integrate-envelopes (0): %s?" swap snd-display
   else
     drop
   then
   '(  0 1 1 1 ) integrate-envelope dup 1.0 fneq if
-    $" integrate-envelopes (1): %s?" swap 1 >list snd-display
+    $" integrate-envelopes (1): %s?" swap snd-display
   else
     drop
   then
   '(  0 0 1 1 2 0.5 ) integrate-envelope dup 1.25 fneq if
-    $" integrate-envelopes (2): %s?" swap 1 >list snd-display
+    $" integrate-envelopes (2): %s?" swap snd-display
   else
     drop
   then
@@ -1259,104 +1199,104 @@ mus-audio-playback-amp value original-audio-amp
   '(  0 0 1 1 ) 0.1 0.2 #f #f stretch-envelope dup '( 0 0 0.2 0.1 1.0 1 ) feql if
     drop
   else
-    $" stretch-envelope att: %s?" swap 1 >list snd-display
+    $" stretch-envelope att: %s?" swap snd-display
   then
   '( 0 0 1 1 2 0 ) 0.1 0.2 1.5 1.6 stretch-envelope dup '( 0 0 0.2 0.1 1.1 1 1.6 0.5 2 0 ) feql if
     drop
   else
-    $" stretch-envelope dec: %s?" swap 1 >list snd-display
+    $" stretch-envelope dec: %s?" swap snd-display
   then
   \ add-envelopes
   '( 0 0 1 1 2 0 ) '( 0 0 1 1 ) add-envelopes dup '( 0 0 0.5 1.5 1 1 ) feql if
     drop
   else
-    $" add-envelopes: %s?" swap 1 >list snd-display
+    $" add-envelopes: %s?" swap snd-display
   then
   \ scale-envelope
   '( 0 0 1 1 ) 2 0 scale-envelope dup '( 0 0 1 2 ) feql if
     drop
   else
-    $" scale-envelope: %s?" swap 1 >list snd-display
+    $" scale-envelope: %s?" swap snd-display
   then
   '( 0 0 1 1 ) 2 1 scale-envelope dup '( 0 1 1 3 ) feql if
     drop
   else
-    $" scale-envelope off: %s?" swap 1 >list snd-display
+    $" scale-envelope off: %s?" swap snd-display
   then
   \ reverse-envelope
   '( 0 0 1 1 ) reverse-envelope dup '( 0 1 1 0 ) feql if
     drop
   else
-    $" reverse-envelope ramp: %s?" swap 1 >list snd-display
+    $" reverse-envelope ramp: %s?" swap snd-display
   then
   '( 0 0 0.5 1 2 0 ) reverse-envelope dup '( 0 0 1.5 1 2 0 ) feql if
     drop
   else
-    $" reverse-envelope ramp 2: %s?" swap 1 >list snd-display
+    $" reverse-envelope ramp 2: %s?" swap snd-display
   then
   '( 0 0 0.5 1 2 1 ) reverse-envelope dup '( 0 1 1.5 1 2 0 ) feql if
     drop
   else
-    $" reverse-envelope ramp 2: %s?" swap 1 >list snd-display
+    $" reverse-envelope ramp 2: %s?" swap snd-display
   then
   \ concatenate-envelopes (from snd/env.scm)
   '( 0 0 1 1 ) '( 0 1 1 0 ) 2 concatenate-envelopes dup '( 0.0 0 1.0 1 2.0 0 ) feql if
     drop
   else
-    $" concatenate-envelopes (0): %s?" swap 1 >list snd-display
+    $" concatenate-envelopes (0): %s?" swap snd-display
   then
   '( 0 0 1 1.5 ) '( 0 1 1 0 ) 2 concatenate-envelopes dup '( 0.0 0 1.0 1.5 1.01 1 2.01 0 ) feql if
     drop
   else
-    $" concatenate-envelopes (1): %s?" swap 1 >list snd-display
+    $" concatenate-envelopes (1): %s?" swap snd-display
   then
   \ envelope-concatenate (from clm/env.lisp)
   '( 0 0 1 1 ) '( 0 1 1 0 ) 2 envelope-concatenate dup '( 0.0 0 1.0 1 1.01 1 2.01 0 ) feql if
     drop
   else
-    $" envelope-concatenate (0): %s?" swap 1 >list snd-display
+    $" envelope-concatenate (0): %s?" swap snd-display
   then
   '( 0 0 1 1.5 ) '( 0 1 1 0 ) 2 envelope-concatenate dup '( 0.0 0 1.0 1.5 1.01 1 2.01 0 ) feql if
     drop
   else
-    $" envelope-concatenate (1): %s?" swap 1 >list snd-display
+    $" envelope-concatenate (1): %s?" swap snd-display
   then
   \ repeat-envelope
   '( 0 0 1 100 ) 2 repeat-envelope dup '( 0 0 1 100 1.01 0 2.01 100 ) feql if
     drop
   else
-    $" repeat-envelope (0): %s?" swap 1 >list snd-display
+    $" repeat-envelope (0): %s?" swap snd-display
   then
   '( 0 0 1.5 1 2 0 ) 2 repeat-envelope dup '( 0 0 1.5 1 2.0 0 3.5 1 4.0 0 ) feql if
     drop
   else
-    $" repeat-envelope (1): %s?" swap 1 >list snd-display
+    $" repeat-envelope (1): %s?" swap snd-display
   then
   '( 0 0 1.5 1 2 0 ) 2 #f #t repeat-envelope dup '( 0.0 0 0.75 1 1.0 0 1.75 1 2.0 0 ) feql if
     drop
   else
-    $" repeat-envelope (2): %s?" swap 1 >list snd-display
+    $" repeat-envelope (2): %s?" swap snd-display
   then
   '( 0 0 1.5 1 2 0 ) 2 #t repeat-envelope dup '( 0 0 1.5 1 2.0 0 2.5 1 4.0 0 ) feql if
     drop
   else
-    $" repeat-envelope (3): %s?" swap 1 >list snd-display
+    $" repeat-envelope (3): %s?" swap snd-display
   then
   '( 0 0 1.5 1 2 0 ) 3 repeat-envelope dup '( 0 0 1.5 1 2.0 0 3.5 1 4.0 0 5.5 1 6.0 0 ) feql if
     drop
   else
-    $" repeat-envelope (4): %s?" swap 1 >list snd-display
+    $" repeat-envelope (4): %s?" swap snd-display
   then
   \ normalize-envelope
   '( 0 0 1 1.5 2.0 1.0 ) normalize-envelope dup '( 0 0.0 1 1.0 2.0 0.667 ) feql if
     drop
   else
-    $" normalize-envelope (0): %s?" swap 1 >list snd-display
+    $" normalize-envelope (0): %s?" swap snd-display
   then
   '( 0 0 1 0.5 2 -0.8 ) normalize-envelope dup '( 0 0.0 1 0.625 2 -1.0 ) feql if
     drop
   else
-    $" normalize-envelope (1): %s?" swap 1 >list snd-display
+    $" normalize-envelope (1): %s?" swap snd-display
   then
   \ envelope-exp
   '( 0 0 1 1 ) 2.0 10 envelope-exp dup
@@ -1364,14 +1304,14 @@ mus-audio-playback-amp value original-audio-amp
   feql if
     drop
   else
-    $" envelope-exp (0): %s?" swap 1 >list snd-display
+    $" envelope-exp (0): %s?" swap snd-display
   then
   '( 0 0 1 1 2 0 ) 1.0 10 envelope-exp dup
   '( 0 0 0.2 0.2 0.4 0.4 0.6 0.6 0.8 0.8 1 1 1.2 0.8 1.4 0.6 1.6 0.4 1.8 0.2 2 0 )
   feql if
     drop
   else
-    $" envelope-exp (1): %s?" swap 1 >list snd-display
+    $" envelope-exp (1): %s?" swap snd-display
   then
 ;
 
@@ -1637,7 +1577,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
   then
 ;
 : test23-ssb-fm ( gen mg -- proc; y self -- val )
-  1 proc-create { prc } ( mg ) , ( gen ) ,
+  1 proc-create { prc } ( mg ) , ( gen ) , prc
  does> { y self -- val }
   self       @ { mg }
   self cell+ @ { gen }
@@ -1775,20 +1715,18 @@ include bird.fsm
      <'> listener-color <'> listener-font <'> listener-prompt <'> listener-selection
      <'> listener-text-color <'> main-widgets <'> make-color <'> make-graph-data
      <'> make-mix-sample-reader <'> make-player <'> make-region <'> make-region-sample-reader
-     <'> make-sample-reader <'> make-track-sample-reader <'> map-chan <'> mark-color
+     <'> make-sample-reader <'> map-chan <'> mark-color
      <'> mark-name <'> mark-sample <'> mark-sync <'> mark-sync-max
      <'> mark-home <'> marks <'> mark? <'>  max-transform-peaks
      <'> max-regions <'> maxamp <'> maxamp-position <'> menu-widgets
      <'> minibuffer-history-length <'> min-dB <'> log-freq-start <'> mix
-     <'> mixes <'> mix-amp <'> mix-amp-env <'> mix-tag-position
-     <'> mix-color <'> mix-track <'> mix-frames
-     <'> mix? <'> view-mixes-dialog <'> mix-position
-     <'> view-tracks-dialog <'> track-dialog-track <'> mix-dialog-mix
-     <'> mix-speed-style <'> mix-name <'> mix-region <'> mix-sample-reader?
+     <'> mixes <'> mix-amp <'> mix-amp-env <'> mix-color <'> mix-length
+     <'> mix? <'> view-mixes-dialog <'> mix-position <'> mix-dialog-mix
+     <'> mix-name <'> mix-region <'> mix-sample-reader?
      <'> mix-selection <'> mix-sound <'> mix-home <'> mix-speed
      <'> mix-tag-height <'> mix-tag-width <'> mark-tag-height <'> mark-tag-width
      <'> mix-tag-y <'> mix-vct <'> mix-waveform-height <'> time-graph-style
-     <'> lisp-graph-style <'> transform-graph-style <'> read-mix-sample <'> read-track-sample
+     <'> lisp-graph-style <'> transform-graph-style <'> read-mix-sample
      <'> next-sample <'> transform-normalization <'> equalize-panes <'> open-raw-sound
      <'> open-sound <'> orientation-dialog <'> previous-sample <'> peak-env-info
      <'> peaks <'> player? <'> players <'> position-color
@@ -1832,7 +1770,7 @@ include bird.fsm
      <'> src-sound <'> src-selection <'> start-progress-report <'> stop-player
      <'> stop-playing <'> swap-channels <'> syncd-marks <'> sync
      <'> sync-max <'> sound-properties <'> temp-dir <'> text-focus-color
-     <'> tiny-font <'> track-sample-reader? <'>  region-sample-reader? <'> transform-dialog
+     <'> tiny-font <'>  region-sample-reader? <'> transform-dialog
      <'> transform-sample <'> transform->vct <'> transform-frames <'> transform-type
      <'> trap-segfault <'> with-file-monitor <'> optimization <'> unbind-key
      <'> undo <'> update-transform-graph <'> update-time-graph <'> update-lisp-graph
@@ -1938,14 +1876,10 @@ include bird.fsm
      <'> sample-reader-home <'> selection-chans <'> selection-srate <'> snd-gcs
      <'> snd-font <'> snd-color <'> snd-warning <'> sine-bank
      <'> channel-data <'> x-axis-label <'> variable-graph? <'> y-axis-label
-     <'> snd-url <'> snd-urls <'> tempo-control-bounds <'> free-player
+     <'> snd-url <'> snd-urls <'> free-player
      <'> quit-button-color <'> help-button-color <'> reset-button-color <'> doit-button-color
-     <'> doit-again-button-color <'> track <'> tracks <'> track?
-     <'> make-track <'> track-amp <'> track-name <'> track-position
-     <'> track-frames <'> track-speed <'> track-tempo <'> track-amp-env
-     <'> track-track <'> delete-track <'> delete-mix <'> track-color
-     <'> free-track <'> track-speed-style <'> delay-tick <'> playing
-     <'> pausing <'> draw-axes <'> copy-mix <'> copy-track
+     <'> doit-again-button-color <'> delete-mix <'> delay-tick <'> playing
+     <'> pausing <'> draw-axes
      <'> copy-sample-reader <'> html-dir <'> html-program
      <'> make-fir-coeffs <'> make-identity-mixer <'> mus-interp-type <'> mus-run
      <'> phase-vocoder <'> player-home <'> redo-edit <'> undo-edit
@@ -1979,9 +1913,8 @@ include bird.fsm
      <'> listener-font <'> listener-prompt <'> listener-text-color <'> mark-color
      <'> mark-name <'> mark-sample <'> mark-sync <'> max-transform-peaks
      <'> max-regions <'> min-dB <'> log-freq-start <'> mix-amp
-     <'> mix-amp-env <'> mix-tag-position <'> mix-color
-     <'> mix-name <'> mix-position
-     <'> mix-speed <'> mix-speed-style <'> mix-tag-height <'> mix-tag-width
+     <'> mix-amp-env <'> mix-color <'> mix-name <'> mix-position
+     <'> mix-speed <'> mix-tag-height <'> mix-tag-width
      <'> mix-tag-y <'> mark-tag-width <'> mark-tag-height <'> mix-waveform-height
      <'> transform-normalization <'> equalize-panes <'> position-color
      <'> view-files-sort <'> print-length <'> pushed-button-color <'> view-files-amp
@@ -2006,14 +1939,14 @@ include bird.fsm
      <'> with-mix-tags <'> x-axis-style <'> beats-per-minute <'> zero-pad
      <'> zoom-color <'> zoom-focus-style <'> with-relative-panes <'>  window-x
      <'> window-y <'> window-width <'> window-height <'> mix-dialog-mix
-     <'> track-dialog-track <'> beats-per-measure <'> channels <'> chans
+     <'> beats-per-measure <'> channels <'> chans
      <'> colormap <'> comment <'> data-format <'> data-location
      <'> data-size <'> edit-position <'> frames <'> header-type
      <'> maxamp <'> minibuffer-history-length <'> read-only <'> right-sample
      <'> sample <'> samples <'> selected-channel <'> colormap-size
      <'> colormap? <'> selected-sound <'> selection-position <'> selection-frames
      <'> selection-member? <'> sound-loop-info <'> srate <'> time-graph-type
-     <'> x-position-slider <'> x-zoom-slider <'> tempo-control-bounds <'> y-position-slider
+     <'> x-position-slider <'> x-zoom-slider <'> y-position-slider
      <'> y-zoom-slider <'> sound-data-ref <'> mus-array-print-length
      <'> mus-float-equal-fudge-factor
      <'> mus-cosines <'> mus-data <'> mus-feedback <'> mus-feedforward
@@ -2026,9 +1959,7 @@ include bird.fsm
      <'> phase-vocoder-outctr
      <'> phase-vocoder-phase-increments <'> phase-vocoder-phases <'> quit-button-color
      <'> help-button-color
-     <'> reset-button-color <'> doit-button-color <'> doit-again-button-color <'> track-amp
-     <'> track-name <'> track-position <'> track-speed <'> track-speed-style
-     <'> track-tempo <'> track-amp-env <'> track-color <'> html-dir
+     <'> reset-button-color <'> doit-button-color <'> doit-again-button-color <'> html-dir
      <'> html-program <'> mus-interp-type <'> widget-position <'> widget-size
      <'> mixer-ref <'> frame-ref <'> locsig-ref <'> locsig-reverb-ref
      <'> mus-file-prescaler <'> mus-prescaler <'> mus-clipping <'> mus-file-clipping
@@ -2046,7 +1977,7 @@ include bird.fsm
      <'> make-square-wave <'> make-src <'> make-sum-of-cosines <'> make-sum-of-sines
      <'> make-table-lookup <'> make-triangle-wave <'> make-two-pole <'> make-two-zero
      <'> make-wave-train <'> make-waveshape <'> make-phase-vocoder <'> make-ssb-am
-     <'> make-polyshape <'> make-color <'> make-player <'> make-track
+     <'> make-polyshape <'> make-color <'> make-player
      <'> make-region <'> make-scalar-mixer ) constant make-procs
 
   #( :frequency :initial-phase :wave :cosines :amplitude :ratio :size :a0 :a1 :a2 :b1 :b2 :input 
@@ -2074,7 +2005,7 @@ include bird.fsm
   set-procs <'> set-arity-not-ok 4 array-reject constant set-procs03
   set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
 
-  [undefined] mus-audio-reinitialize [if] : mus-audio-reinitialize ( -- n ) 0 ; [then]
+  [ifundef] mus-audio-reinitialize : mus-audio-reinitialize ( -- n ) 0 ; [then]
   : close-sound-mc-cb { -- prc; y self -- val }
     1 proc-create "oboe.snd" open-sound , ( prc )
    does> { y self -- val }
@@ -2301,7 +2232,7 @@ include bird.fsm
        <'> sum-of-cosines? <'> sum-of-sines? <'> table-lookup? <'> triangle-wave?
        <'> two-pole? <'> two-zero? <'> wave-train? <'> waveshape?
        <'> color? <'> mix-sample-reader? <'> moving-average? <'> ssb-am?
-       <'> sample-reader? <'> track-sample-reader? <'> region-sample-reader? <'> vct? ) { ?prcs }
+       <'> sample-reader? <'> region-sample-reader? <'> vct? ) { ?prcs }
     args-1 each to arg
       ?prcs each to prc
 	arg prc #t nil fth-catch to tag
@@ -2339,31 +2270,6 @@ include bird.fsm
       tag list? if
 	tag car 'no-active-selection symbol= unless
 	  $" [1] selection %s: %s" '( prc tag ) snd-display
-	then
-      then
-    end-each
-    make-track { trk }
-    #( <'> track <'> track-amp <'> track-name <'> track-position
-       <'> track-frames <'> track-speed <'> track-speed-style <'> track-tempo
-       <'> track-amp-env <'> track-track <'> delete-track <'> track-color ) each to prc
-      trk 1+ prc #t nil fth-catch to tag
-      stack-reset
-      tag list? if
-	tag car 'no-such-track symbol= unless
-	  $" track %s: %s" '( prc tag ) snd-display
-	then
-      then
-    end-each
-    #( 1.0 "hiho" 0 1.0 speed-control-as-float 1.0 '( 0 0 1 1 ) trk 1- 1 0 0 make-color-with-catch )
-    { trk-args }
-    #( <'> track-amp <'> track-name <'> track-position <'> track-speed
-       <'> track-speed-style <'> track-tempo <'> track-amp-env <'> track-track
-       <'> track-color ) each to prc
-      trk 1+  trk-args i array-ref ( a )  prc set-xt #t nil fth-catch to tag
-      stack-reset
-      tag list? if
-	tag car 'no-such-track symbol= unless
-	  $" set track %s: %s" '( prc tag ) snd-display
 	then
       then
     end-each
@@ -2615,10 +2521,8 @@ include bird.fsm
       then
     end-each
     ind close-sound drop
-    #( <'> mix-amp <'> mix-amp-env <'> mix-tag-position
-       <'> mix-track <'> mix-frames
-       <'> mix-name <'> mix-position <'> mix-home <'> mix-speed
-       <'> mix-speed-style <'> mix-tag-y ) { mix-prcs }
+    #( <'> mix-amp <'> mix-amp-env <'> mix-length <'> mix-name
+       <'> mix-position <'> mix-home <'> mix-speed <'> mix-tag-y ) { mix-prcs }
     mix-prcs each to prc
       vct-5 prc #t nil fth-catch to tag
       stack-reset
@@ -2637,9 +2541,7 @@ include bird.fsm
 	then
       then
     end-each
-    #( <'> mix-tag-position <'> mix-track
-       <'> mix-name <'> mix-position <'> mix-home
-       <'> mix-speed <'> mix-speed-style <'> mix-tag-y ) { mix-set-prcs }
+    #( <'> mix-name <'> mix-position <'> mix-home <'> mix-speed <'> mix-tag-y ) { mix-set-prcs }
     mix-set-prcs each to prc
       1234 vct-5 prc set-xt #t nil fth-catch to tag
       stack-reset
@@ -2756,65 +2658,7 @@ include bird.fsm
       then
     end-each
     nil { hook }
-    #( after-graph-hook
-       after-lisp-graph-hook
-       lisp-graph-hook
-       before-transform-hook
-       mix-release-hook
-       save-hook
-       before-save-as-hook
-       after-save-as-hook
-       save-state-hook
-       new-sound-hook
-       mus-error-hook
-       mouse-enter-graph-hook
-       mouse-leave-graph-hook
-       open-raw-sound-hook
-       select-channel-hook
-       output-name-hook
-       after-open-hook
-       close-hook
-       draw-mark-hook
-       mark-click-hook
-       listener-click-hook
-       mix-click-hook
-       after-save-state-hook
-       before-save-state-hook
-       mark-hook
-       mark-drag-hook
-       mark-drag-triangle-hook
-       mix-drag-hook
-       name-click-hook
-       after-apply-controls-hook
-       open-hook
-       output-comment-hook
-       help-hook
-       play-hook
-       dac-hook
-       new-widget-hook
-       read-hook
-       bad-header-hook
-       snd-error-hook
-       snd-warning-hook
-       start-hook
-       start-playing-hook
-       stop-playing-hook
-       mouse-enter-listener-hook
-       mouse-leave-listener-hook
-       window-property-changed-hook
-       select-sound-hook
-       view-files-select-hook
-       during-open-hook
-       after-transform-hook
-       mouse-enter-label-hook
-       mouse-leave-label-hook
-       initial-graph-hook
-       graph-hook
-       key-press-hook
-       mouse-drag-hook
-       mouse-press-hook
-       mouse-click-hook
-       enved-hook ) each to hook
+    snd-hooks each to hook
       hook <'> noop 0 make-proc <'> add-hook! #t nil fth-catch to tag
       stack-reset
       tag list? if
@@ -2904,9 +2748,6 @@ include bird.fsm
     12                         <'> set-enved-style        'out-of-range     check-error-tag
     1.5 0.0 0.0                <'> make-color             'out-of-range     check-error-tag
     -0.5 0.0 0.0               <'> make-color             'out-of-range     check-error-tag
-    '( 9.0 0.0 )               <'> set-tempo-control-bounds 'out-of-range   check-error-tag
-    '( 0.0 )                   <'> set-tempo-control-bounds 'wrong-type-arg check-error-tag
-    '( 0.0 "hiho" )            <'> set-tempo-control-bounds 'wrong-type-arg check-error-tag
     #f                         <'> make-variable-graph    'wrong-type-arg   check-error-tag
     main-widgets 1 list-ref    <'> make-variable-graph    'arg-error        check-error-tag
     <'> graph->ps              'cannot-print     check-error-tag
@@ -2975,7 +2816,7 @@ include bird.fsm
     vct-3 32                   <'> filter-sound           'out-of-range     check-error-tag
     '( 0 0 1 1 ) 0             <'> filter-sound           'out-of-range     check-error-tag
     ind 0 12345 0              <'> swap-channels          'no-such-sound    check-error-tag
-    vct( 0.1 0.2 0.3 ) -1 ind 0 #t <'> mix-vct            'no-such-sample   check-error-tag
+    vct( 0.1 0.2 0.3 ) -1 ind 0 #t "" <'> mix-vct         'no-such-sample   check-error-tag
     8 0.0 make-vct 0 -123      <'> snd-spectrum           'out-of-range     check-error-tag
     8 0.0 make-vct 0 0         <'> snd-spectrum           'out-of-range     check-error-tag
     "/baddy/hiho"              <'> play                   'no-such-file     check-error-tag
@@ -3044,10 +2885,7 @@ include bird.fsm
     0 100 ind 0 make-region drop
     "/bad/baddy.snd"           <'> save-selection         'cannot-save      check-error-tag
     regions car "/bad/baddy.snd" <'> save-region          'cannot-save      check-error-tag
-    0 1234 0                   <'> make-track-sample-reader 'no-such-track  check-error-tag
-    1234 0 0                   <'> make-track-sample-reader 'no-such-track  check-error-tag
     1234                       <'> make-mix-sample-reader 'no-such-mix      check-error-tag
-    1234 4321                  <'> set-mix-track          'no-such-mix      check-error-tag
     0 12 1234 #t               <'> make-region            'no-such-sound    check-error-tag
     #t ind set-read-only drop
     ind '( 0 0 1 1 )           <'> set-sound-loop-info    'cannot-save      check-error-tag
@@ -3109,13 +2947,11 @@ include bird.fsm
     '( 0 1 ) "hiho"            <'> help-dialog             'wrong-type-arg  check-error-tag
     '( 0 1 ) "hiho"            <'> info-dialog             'wrong-type-arg  check-error-tag
     1234                       <'> edit-header-dialog      'no-such-sound   check-error-tag
-    0                          <'> make-track-sample-reader 'no-such-track  check-error-tag
     "/bad/baddy.snd"           <'> open-sound              'no-such-file    check-error-tag
     "/bad/baddy.snd" 1 22050 mus-lshort <'> open-raw-sound 'no-such-file    check-error-tag
     "/bad/baddy.snd"           <'> view-sound              'no-such-file    check-error-tag
     0 "/bad/baddy.snd"         <'> make-sample-reader      'no-such-file    check-error-tag
     0 1234567                  <'> make-region-sample-reader 'no-such-region check-error-tag
-    12345                      <'> mix-tag-position        'no-such-mix     check-error-tag
     12345678 0 #f              <'> bind-key                'no-such-key     check-error-tag
     -1 0 #f                    <'> bind-key                'no-such-key     check-error-tag
     12 17 #f                   <'> bind-key                'no-such-key     check-error-tag
@@ -3320,25 +3156,25 @@ include bird.fsm
 	end-each
       end-each
     end-each
-    \ set! 2 args
-    "set-2-args" '() clm-message
-    gc-run
-    less-args each to arg1
-      less-args each to arg2
-	less-args each to arg3
-	  set-procs02 each to prc
-	    arg1 arg2 arg3 prc set-xt #t nil fth-catch to tag
-	    stack-reset
-	    tag list? if
-	      tag car 'wrong-number-of-args symbol= if
-		$" set-procs02: (%s %s %s) %s %s" '( arg1 arg2 arg3 prc tag ) snd-display
+    all-args if
+      \ set! 2 args
+      "set-2-args" '() clm-message
+      gc-run
+      less-args each to arg1
+	less-args each to arg2
+	  less-args each to arg3
+	    set-procs02 each to prc
+	      arg1 arg2 arg3 prc set-xt #t nil fth-catch to tag
+	      stack-reset
+	      tag list? if
+		tag car 'wrong-number-of-args symbol= if
+		  $" set-procs02: (%s %s %s) %s %s" '( arg1 arg2 arg3 prc tag ) snd-display
+		then
 	      then
-	    then
+	    end-each
 	  end-each
 	end-each
       end-each
-    end-each
-    all-args if
       nil nil nil nil nil nil { arg5 arg6 arg7 arg8 arg9 arg0 }
       \ 3 args
       "3-args" '() clm-message
@@ -3711,7 +3547,7 @@ include bird.fsm
     \ take and need them.  So we have 'no-such-channel as first
     \ exception.
     \ frames ( snd chn edpos -- frms )
-    \ set-frames ( on snd chn -- val )
+    \ set-frames ( frms snd chn edpos -- val )
     1 ind 0 1 <'> set-frames #t nil fth-catch to tag
     stack-reset
     tag list? if
@@ -3856,7 +3692,7 @@ SIGINT lambda: ( sig -- )
   2 snd-exit drop
 ; signal value original-sig-handler
 
-[undefined] 30-test [if] <'> noop alias 30-test [then]
+[ifundef] 30-test <'> noop alias 30-test [then]
 
 let: ( -- )
   #() { numbs }

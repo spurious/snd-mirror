@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Fri Apr 06 00:26:04 CEST 2007
+\ Changed: Tue May 01 18:03:26 CEST 2007
 
 \ Commentary:
 \
@@ -145,7 +145,7 @@
 ;
 
 \ Also defined in clm.fs.
-[undefined] close-sound-extend [if]
+[ifundef] close-sound-extend
   \ 5 == notebook widget
   : close-sound-extend <{ snd -- }>
     main-widgets 5 list-ref false? unless
@@ -1950,7 +1950,7 @@ In most cases, this will be slightly offset from the true beginning of the note.
 
 \ ;;; -------- file->vct and a sort of cue-list, I think
 
-[undefined] file->vct [if]
+[ifundef] file->vct
   : file->vct ( file -- vct )
     doc" Returns a vct with FILE's data."
     { file }
@@ -1982,9 +1982,9 @@ hide
     note caddr ?dup-if else 1.0 then { amp }
     snd srate offset f* fround->s start + { beg }
     amp 1.0 f<> if
-      file file->vct amp vct-scale! beg snd chn #f "add-notes" 0 mix-vct drop
+      file file->vct amp vct-scale! beg snd chn #f "add-notes" mix-vct drop
     else
-      file beg 0 snd chn #f undef 0 mix drop
+      file beg 0 snd chn #f undef mix drop
     then
   end-each
   #f

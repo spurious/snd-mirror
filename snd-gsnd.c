@@ -136,7 +136,7 @@ void display_minibuffer_error(snd_info *sp, const char *str)
 	if (s1[i] == '\n')
 	  s1[i] = ' ';
     }
-  gtk_entry_set_text(GTK_ENTRY(ERROR_INFO(sp)), s1);
+  info_widget_display(ERROR_INFO(sp), s1);
   gtk_widget_show(ERROR_INFO(sp));
   gtk_widget_show(ERROR_INFO_FRAME(sp));
   if (!(sp->sgx->minibuffer_watcher))
@@ -1571,7 +1571,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 
       /* -------- minibuffer error display -------- */
 
-      ERROR_INFO(sp) = snd_gtk_entry_label_new(NULL, ss->sgx->highlight_color);
+      ERROR_INFO(sp) = make_info_widget();
       gtk_container_add(GTK_CONTAINER(ERROR_INFO_FRAME(sp)), ERROR_INFO(sp));
       gtk_widget_show(ERROR_INFO(sp));
 

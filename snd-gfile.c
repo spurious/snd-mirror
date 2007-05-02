@@ -1014,10 +1014,6 @@ static bool file_is_nonexistent_directory(fsb *fs)
   return(false);
 }
 
-#define NEW_INFO() snd_gtk_entry_label_new(NULL, ss->sgx->highlight_color)
-#define CHANGE_INFO(Widget, Message) gtk_entry_set_text(GTK_ENTRY(Widget), Message)
-#define SET_INFO_SIZE(Widget, Size) gtk_entry_set_width_chars(GTK_ENTRY(Widget), Size)
-
 static void post_sound_info(GtkWidget *info1, GtkWidget *info2, const char *filename, bool with_filename)
 {
   /* filename is known[strongly believed] to be a sound file, etc */
@@ -1031,14 +1027,14 @@ static void post_sound_info(GtkWidget *info1, GtkWidget *info2, const char *file
 	       (mus_sound_chans(filename) > 1) ? "s" : "",
 	       mus_sound_srate(filename),
 	       mus_sound_duration(filename));
-  CHANGE_INFO(info1, buf);
-  SET_INFO_SIZE(info1, 1 + strlen(buf));
+  info_widget_display(info1, buf);
+  info_widget_set_size(info1, 1 + strlen(buf));
   mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s, %s%s",
 	       mus_header_type_name(mus_sound_header_type(filename)),
 	       short_data_format_name(mus_sound_data_format(filename), filename),
 	       snd_strftime(", %d-%b-%Y", mus_sound_write_date(filename)));
-  CHANGE_INFO(info2, buf);
-  SET_INFO_SIZE(info2, 1 + strlen(buf));
+  info_widget_display(info2, buf);
+  info_widget_set_size(info2, 1 + strlen(buf));
 
   FREE(buf);
 }
@@ -1060,8 +1056,8 @@ static void clear_open_handlers(fsb *fs);
 
 static void unpost_file_info(file_dialog_info *fd)
 {
-  CHANGE_INFO(fd->info1,"");
-  CHANGE_INFO(fd->info2,"");
+  info_widget_display(fd->info1, "");
+  info_widget_display(fd->info2, "");
   clear_open_handlers(fd->fs);
 #if HAVE_FAM
   if (fd->info_filename_watcher)
@@ -1211,10 +1207,10 @@ static void open_innards(GtkWidget *vbox, void *data)
   gtk_container_set_border_width(GTK_CONTAINER(fd->vbox), 10);
   gtk_container_add(GTK_CONTAINER(fd->frame), fd->vbox);
 
-  fd->info1 = NEW_INFO();
+  fd->info1 = make_info_widget();
   gtk_box_pack_start(GTK_BOX(fd->vbox), fd->info1, true, true, 0);
 	
-  fd->info2 = NEW_INFO();
+  fd->info2 = make_info_widget();
   gtk_box_pack_start(GTK_BOX(fd->vbox), fd->info2, true, true, 0);
 
   gtk_widget_show(fd->frame);
@@ -1332,8 +1328,8 @@ static file_dialog_info *make_file_dialog(int read_only, const char *title, cons
     gtk_widget_show(spacer);
   }
 
-  CHANGE_INFO(fd->info1,"");
-  CHANGE_INFO(fd->info2,"");
+  info_widget_display(fd->info1, "");
+  info_widget_display(fd->info2, "");
 
   SG_SIGNAL_CONNECT(fs->file_text, "activate", file_ok_proc, (gpointer)fd);
 
@@ -1348,12 +1344,12 @@ static file_dialog_info *make_file_dialog(int read_only, const char *title, cons
 
 static void file_open_error(const char *error_msg, file_dialog_info *fd)
 {
-  CHANGE_INFO(fd->info1, error_msg);
-  SET_INFO_SIZE(fd->info1, strlen(error_msg));
+  info_widget_display(fd->info1, error_msg);
+  info_widget_set_size(fd->info1, strlen(error_msg));
   gtk_widget_show(fd->frame);
   gtk_widget_show(fd->vbox);
   gtk_widget_show(fd->info1);
-  CHANGE_INFO(fd->info2, "");
+  info_widget_display(fd->info2, "");
 }
 
 static void redirect_file_open_error(const char *error_msg, void *ufd)
@@ -1364,7 +1360,7 @@ static void redirect_file_open_error(const char *error_msg, void *ufd)
 
 static void clear_file_error_label(file_dialog_info *fd)
 {
-  CHANGE_INFO(fd->info1, "");
+  info_widget_display(fd->info1, "");
 #if HAVE_FAM
   if (fd->unsound_directory_watcher)
     {
@@ -1641,13 +1637,16 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 widget_t make_mix_file_dialog(bool managed)
 {
   if (mdat == NULL)
-    mdat = make_file_dialog(true, _("Mix"), _("mix:"), _("Mix"), FILE_MIX_DIALOG,
-			    (GtkSignalFunc)file_mix_ok_callback,
-			    NULL, /* no mkdir */
-			    (GtkSignalFunc)file_mix_delete_callback,
-			    (GtkSignalFunc)file_mix_cancel_callback,
-			    (GtkSignalFunc)file_mix_help_callback,
-			    GTK_STOCK_ADD);
+    {
+      mdat = make_file_dialog(true, _("Mix"), _("mix:"), _("Mix"), FILE_MIX_DIALOG,
+			      (GtkSignalFunc)file_mix_ok_callback,
+			      NULL, /* no mkdir */
+			      (GtkSignalFunc)file_mix_delete_callback,
+			      (GtkSignalFunc)file_mix_cancel_callback,
+			      (GtkSignalFunc)file_mix_help_callback,
+			      GTK_STOCK_ADD);
+      set_stock_button_label(mdat->fs->cancel_button, _("Go Away"));
+    }
   else
     {
       if (mdat->fs->reread_directory) 
@@ -2345,7 +2344,7 @@ file_data *make_file_data_panel(GtkWidget *parent, const char *name,
     }
 
   /* error */
-  fdat->error_text = snd_gtk_entry_label_new(NULL, ss->sgx->highlight_color);
+  fdat->error_text = make_info_widget();
   gtk_box_pack_end(GTK_BOX(parent), fdat->error_text, false, false, 0);
   gtk_widget_hide(fdat->error_text);
 
@@ -4222,7 +4221,7 @@ void vf_post_info(view_files_info *vdat, int pos)
 {
   char *title;
   title = mus_format("%s:", vdat->names[pos]);
-  CHANGE_INFO(vdat->left_title, title);
+  info_widget_display(vdat->left_title, title);
   FREE(title);
   post_sound_info(vdat->info1, vdat->info2, vdat->full_names[pos], false);
 }
@@ -4234,7 +4233,7 @@ void vf_post_selected_files_list(view_files_info *vdat)
   len = vdat->currently_selected_files;
 
   title = copy_string("selected files:");
-  CHANGE_INFO(vdat->left_title, title);
+  info_widget_display(vdat->left_title, title);
   FREE(title);
 
   if (len == 2)
@@ -4257,8 +4256,8 @@ void vf_post_selected_files_list(view_files_info *vdat)
 	}
     }
 
-  CHANGE_INFO(vdat->info1, msg1);
-  CHANGE_INFO(vdat->info2, msg2);
+  info_widget_display(vdat->info1, msg1);
+  info_widget_display(vdat->info2, msg2);
 
   FREE(msg1);
   FREE(msg2);
@@ -4274,11 +4273,11 @@ void vf_unpost_info(view_files_info *vdat)
   char *title;
 
   title = copy_string("(no files selected)");
-  CHANGE_INFO(vdat->left_title, title);
+  info_widget_display(vdat->left_title, title);
   FREE(title);
 
-  CHANGE_INFO(vdat->info1, "");
-  CHANGE_INFO(vdat->info2, "");
+  info_widget_display(vdat->info1, "");
+  info_widget_display(vdat->info2, "");
 
   set_sensitive(vdat->openB, false);
   set_sensitive(vdat->removeB, false);
@@ -4552,8 +4551,8 @@ static void vf_clear_mark(view_files_info *vdat)
 void vf_post_error(const char *error_msg, view_files_info *vdat)
 {
   vdat->error_p = true;
-  CHANGE_INFO(vdat->info1, error_msg);
-  CHANGE_INFO(vdat->info2, "|");
+  info_widget_display(vdat->info1, error_msg);
+  info_widget_display(vdat->info2, "|");
 }
 
 void redirect_vf_post_error(const char *error_msg, void *vdat)
@@ -4958,6 +4957,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       dismissB = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismissB, "quit_button");
+      set_stock_button_label(dismissB, _("Go Away"));
 
       resetB = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
       gtk_widget_set_name(resetB, "reset_button");
@@ -5136,14 +5136,14 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	widget_modify_bg(ltop_sep, GTK_STATE_NORMAL, ss->sgx->zoom_color);
 	gtk_widget_show(ltop_sep);
 
-	vdat->info1 = NEW_INFO();
+	vdat->info1 = make_info_widget();
 	gtk_box_pack_start(GTK_BOX(leftform), vdat->info1, false, true, 0);
-	CHANGE_INFO(vdat->info1, "|");
+	info_widget_display(vdat->info1, "|");
 	gtk_widget_show(vdat->info1);
 
-	vdat->info2 = NEW_INFO();
+	vdat->info2 = make_info_widget();
 	gtk_box_pack_start(GTK_BOX(leftform), vdat->info2, false, true, 0);
-	CHANGE_INFO(vdat->info2, "|");
+	info_widget_display(vdat->info2, "|");
 	gtk_widget_show(vdat->info2);
 
 	{

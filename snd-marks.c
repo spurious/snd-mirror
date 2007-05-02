@@ -667,7 +667,6 @@ typedef struct {
 
 void *sound_store_marks(snd_info *sp)
 {
-  /* in all channels, move current edit_ctr mark list to 0, freeing all the rest */
   int i;
   mark_info **res = NULL;
   marks_info *rtn = NULL;
@@ -683,17 +682,15 @@ void *sound_store_marks(snd_info *sp)
 	{
 	  ed_list *ed;
 	  ed = cp->edits[cp->edit_ctr];
-	  if ((ed) && (ed->marks) && (ed->mark_ctr >= 0))
+	  if (ed)
 	    {
-	      mark **mps;
-	      int j;
-	      mps = ed->marks;
 	      res[i] = (mark_info *)CALLOC(1, sizeof(mark_info));
-	      res[i]->marks = (mark **)CALLOC(ed->mark_size, sizeof(mark *)); 
-	      for (j = 0; j <= ed->mark_ctr; j++)
-		res[i]->marks[j] = copy_mark(mps[j]); /* TODO: can't we just grab the old array here, clearing the old reference? */
+	      res[i]->marks = ed->marks;
 	      res[i]->ctr = ed->mark_ctr;
 	      res[i]->size = ed->mark_size;
+	      ed->marks = NULL;
+	      ed->mark_size = 0;
+	      ed->mark_ctr = -1;
 	    }
 	}
     }

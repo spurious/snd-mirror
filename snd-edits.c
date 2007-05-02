@@ -4925,9 +4925,9 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		    }
 		  break;
 
-		  /* TODO */
 		case MIX_EDIT:
 		case CHANGE_MIX_EDIT:
+		  forth_func = ed->origin;
 		  break;
 
 		default:
@@ -5006,9 +5006,11 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 			       cp->chan);
 		  break;
 
-		  /* TODO */
 		case MIX_EDIT:
+		  fprintf(fd, "%s" PROC_SEP "sfile" PROC_SEP "%d", ed->origin, cp->chan);
+		  break;
 		case CHANGE_MIX_EDIT:
+		  fprintf(fd, "%s", ed->origin);
 		  break;
 
 		default:
@@ -5197,10 +5199,13 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  break;
 
 		case MIX_EDIT:
-		case CHANGE_MIX_EDIT:
-		  function = mus_format("%s (%s snd chn)", function, ed->origin);
+		  function = mus_format("%s (%s snd chn))", function, ed->origin);
 		  break;
-		  
+
+		case CHANGE_MIX_EDIT:
+		  function = mus_format("%s (%s))", function, ed->origin);
+		  break;
+
 		default: break;
 		}
 	    }
@@ -5315,10 +5320,12 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 					function, (first) ? "" : ";", TO_PROC_NAME(S_pad_channel), ed->beg, ed->len);
 		  break;
 
-		  /* TODO */
 		case MIX_EDIT:
-		case CHANGE_MIX_EDIT:
 		  function = mus_format("%s%s %s, snd, chn)", function, (first) ? "" : ";", ed->origin);
+		  break;
+
+		case CHANGE_MIX_EDIT:
+		  function = mus_format("%s%s %s)", function, (first) ? "" : ";", ed->origin);
 		  break;
 
 		default: break;
@@ -5433,9 +5440,12 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 					function, ed->beg, ed->len, S_pad_channel);
 		  break;
 
-		  /* TODO */
 		case MIX_EDIT:
+		  function = mus_format("%s snd chn %s drop", function, name);
+		  break;
+
 		case CHANGE_MIX_EDIT:
+		  function = mus_format("%s %s drop", function, name);
 		  break;
 
 		default: break;
@@ -5464,16 +5474,29 @@ static void ensure_ed_ptrees(ed_fragment *ed)
     ed->ptrees = (ed_ptrees *)CALLOC(1, sizeof(ed_ptrees));
 }
 
-#if MUS_DEBUGGING
-#define make_ed_fragment() make_ed_fragment_1(__FUNCTION__, __FILE__, __LINE__)
-static ed_fragment *make_ed_fragment_1(const char *func, const char *file, int line)
-{
-  return((ed_fragment *)mem_calloc(1, sizeof(ed_fragment), func, file, line));
-}
-#else
 static ed_fragment *make_ed_fragment(void)
 {
+#if MUS_DEBUGGING
+  ed_fragment *ed;
+  ed = (ed_fragment *)CALLOC(1, sizeof(ed_fragment));
+  set_printable(PRINT_ED_FRAGMENT);
+  return(ed);
+#else
   return((ed_fragment *)CALLOC(1, sizeof(ed_fragment)));
+#endif
+}
+
+#if MUS_DEBUGGING
+void describe_ed_fragment(FILE *Fp, void *ptr);
+void describe_ed_fragment(FILE *Fp, void *ptr)
+{
+  ed_fragment *ed = (ed_fragment *)ptr;
+  fprintf(Fp, "[%p, type: %s, snd: %d, out: " OFF_TD ", beg: " OFF_TD ", end: " OFF_TD ", scl: %.3f, ramps: %p, ptrees: %p, mixes: %p",
+	  ed, ((ed->typ >= ED_SIMPLE) && (ed->typ < NUM_OPS)) ? type_info[ed->typ].name : "unknown op",
+	  ed->snd, ed->out, ed->beg, ed->end, ed->scl, ed->ramps, ed->ptrees, ed->mixes);
+  if (ed->mixes)
+    fprintf(Fp, " (size: %d, sfs: %p)", ed->mixes->size, ed->mixes->mix_list);
+  fprintf(Fp, "]\n    ");
 }
 #endif
 
@@ -5507,12 +5530,7 @@ static void copy_ed_fragment(ed_fragment *new_ed, ed_fragment *old_ed)
       memcpy((void *)(new_ed->ptrees), (void *)(old_ed->ptrees), sizeof(ed_ptrees));
     }
   if (old_ed->mixes)
-    {
-#if MUS_DEBUGGING
-      if (new_ed->mixes) {fprintf(stderr, "ed mixes is not null in copy fragment?"); abort();}
-#endif
-      new_ed->mixes = copy_fragment_mixes(old_ed->mixes);
-    }
+    new_ed->mixes = copy_fragment_mixes(old_ed->mixes);
 }
 
 static ed_fragment *free_ed_fragment(ed_fragment *ed)
@@ -5544,6 +5562,7 @@ static ed_list *make_ed_list(int size)
   ed->fragments = (ed_fragment **)malloc(size * sizeof(ed_fragment *)); /* can't use MALLOC/FREE -- compiler dislikes the assignment in FREE */
   for (i = 0; i < size; i++)
     FRAGMENT(ed, i) = make_ed_fragment();
+
   ed->origin = NULL;
   ed->maxamp = -1.0;
   ed->maxamp_position = -1;
@@ -6191,11 +6210,12 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos, const cha
     copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
 
   /* make the zero fragment, fixup the end fragment */
-
+  if (FRAGMENT(new_ed, old_ed->size)) free_ed_fragment(FRAGMENT(new_ed, old_ed->size)); /* make room for extension */
   FRAGMENT(new_ed, old_ed->size) = FRAGMENT(new_ed, old_ed->size - 1);
   FRAGMENT_GLOBAL_POSITION(new_ed, old_ed->size) = new_len;
   
   cb = make_ed_fragment();
+  
   FRAGMENT(new_ed, old_ed->size - 1) = cb;
   ED_SOUND(cb) = EDIT_LIST_ZERO_MARK;
   ED_SCALER(cb) = 0.0;
@@ -6880,6 +6900,32 @@ bool virtual_mix_ok(chan_info *cp, int edpos, off_t beg, off_t dur)
   return(true);
 }
 
+static bool section_is_zero(chan_info *cp, off_t beg, off_t dur, int pos)
+{
+  ed_list *ed;
+  int i;
+  off_t end;
+
+  ed = cp->edits[pos];
+  end = beg + dur - 1;
+  for (i = 0; i < ed->size - 1; i++) 
+    {
+      off_t loc, next_loc;
+      int typ;
+      if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(true);
+      loc = FRAGMENT_GLOBAL_POSITION(ed, i);
+      if (loc > end) return(true);
+      typ = FRAGMENT_TYPE(ed, i);
+      next_loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);         /* i.e. next loc = current fragment end point */
+      /* this fragment (i) starts at loc, ends just before next_loc, is of type typ */
+      if ((next_loc > beg) &&
+	  (typ != ED_ZERO))
+	return(false);
+    }
+  return(true);
+}
+
+
 
 static ed_list *copy_and_split_list(off_t beg, off_t num, ed_list *current_state)
 {
@@ -6997,8 +7043,9 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
   if ((beg < 0) || 
       (num <= 0) ||
       (beg >= old_ed->samples) ||
-      (scl == 1.0))
-    return(true); 
+      (scl == 1.0) ||
+      (section_is_zero(cp, beg, num, pos)))
+    return(false); 
 
   len = old_ed->samples;
   if (!(prepare_edit_list(cp, pos, S_scale_channel))) 
@@ -7191,7 +7238,7 @@ static void setup_ramp_fragments(ed_list *new_ed, int i, double seg0, double seg
 
 static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
 			     off_t beg, off_t num, int pos, bool in_as_one_edit, const char *origin, 
-			     bool is_x, mus_any *e, int e_pos)
+			     bool is_xramp, mus_any *e, int xramp_seg_loc)
 {
   off_t len = 0;
   int i;
@@ -7203,8 +7250,9 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   old_ed = cp->edits[pos];
   if ((beg < 0) || 
       (num <= 0) ||
-      (beg >= old_ed->samples))
-    return(true); 
+      (beg >= old_ed->samples) ||
+      (section_is_zero(cp, beg, num, pos)))
+    return(false);  /* was true, but this is a no-op */
 
   if ((rmp0 == rmp1) || (num == 1))
     return(scale_channel(cp, rmp0, beg, num, pos, in_as_one_edit));
@@ -7237,7 +7285,7 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
 	{
 	  seg0 = seg1 + incr;
 	  seg1 = seg0 + (incr * (FRAGMENT_LENGTH(new_ed, i) - 1));
-	  setup_ramp_fragments(new_ed, i, seg0, seg1, scaler, offset, is_x);
+	  setup_ramp_fragments(new_ed, i, seg0, seg1, scaler, offset, is_xramp);
 	}
     }
   else 
@@ -7253,7 +7301,7 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
 	    {
 	      seg0 = seg1 + incr;
 	      seg1 = seg0 + (incr * (FRAGMENT_LENGTH(new_ed, i) - 1));
-	      setup_ramp_fragments(new_ed, i, seg0, seg1, scaler, offset, is_x);
+	      setup_ramp_fragments(new_ed, i, seg0, seg1, scaler, offset, is_xramp);
 	    }
 	}
     }
@@ -7261,7 +7309,7 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   new_ed->cursor = old_ed->cursor;
   new_ed->edit_type = RAMP_EDIT;
   new_ed->sound_location = 0;
-  if (!is_x)
+  if (!is_xramp)
     {
 #if HAVE_FORTH
       if (num == len)
@@ -7282,17 +7330,17 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
 #if HAVE_FORTH
       if (num == len)
 	new_ed->origin = mus_format("%.3f %.3f %.3f " OFF_TD PROC_SEP PROC_FALSE " %s",
-				    data[e_pos * 2 + 1], data[e_pos * 2 + 3], mus_increment(e), beg, origin);
+				    data[xramp_seg_loc * 2 + 1], data[xramp_seg_loc * 2 + 3], mus_increment(e), beg, origin);
       else
 	new_ed->origin = mus_format("%.3f %.3f %.3f " OFF_TD PROC_SEP OFF_TD " %s",
-				    data[e_pos * 2 + 1], data[e_pos * 2 + 3], mus_increment(e), beg, num, origin);
+				    data[xramp_seg_loc * 2 + 1], data[xramp_seg_loc * 2 + 3], mus_increment(e), beg, num, origin);
 #else
       if (num == len)
 	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%.3f" PROC_SEP "%.3f" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
-				    TO_PROC_NAME(origin), data[e_pos * 2 + 1], data[e_pos * 2 + 3], mus_increment(e), beg);
+				    TO_PROC_NAME(origin), data[xramp_seg_loc * 2 + 1], data[xramp_seg_loc * 2 + 3], mus_increment(e), beg);
       else
 	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%.3f" PROC_SEP "%.3f" PROC_SEP OFF_TD PROC_SEP OFF_TD, 
-				    TO_PROC_NAME(origin), data[e_pos * 2 + 1], data[e_pos * 2 + 3], mus_increment(e), beg, num);
+				    TO_PROC_NAME(origin), data[xramp_seg_loc * 2 + 1], data[xramp_seg_loc * 2 + 3], mus_increment(e), beg, num);
 #endif
     }
   new_ed->edpos = pos;
@@ -7315,9 +7363,9 @@ bool ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, i
 }
 
 bool xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
-		   off_t beg, off_t num, int pos, bool in_as_one_edit, mus_any *e, int e_pos)
+		   off_t beg, off_t num, int pos, bool in_as_one_edit, mus_any *e, int xramp_seg_loc)
 {
-  return(all_ramp_channel(cp, rmp0, rmp1, scaler, offset, beg, num, pos, in_as_one_edit, S_xramp_channel, true, e, e_pos));
+  return(all_ramp_channel(cp, rmp0, rmp1, scaler, offset, beg, num, pos, in_as_one_edit, S_xramp_channel, true, e, xramp_seg_loc));
 }
 
 static void make_ptree_fragment(ed_list *new_ed, int i, int ptree_loc, off_t beg, off_t num)
@@ -9083,6 +9131,7 @@ void as_one_edit(chan_info *cp, int one_edit)
 {
   bool need_backup = false;
   need_backup = (cp->edit_ctr > one_edit);      /* cp->edit_ctr will be changing, so save this */
+
   if (cp->edit_ctr >= one_edit)                 /* ">=" here because the origin needs to be set even if there were no extra edits */
     {
       if (ss->deferred_regions > 0)
@@ -9138,12 +9187,7 @@ static void finish_as_one_edit(chan_info *cp)
     {
       cp->in_as_one_edit--;
       if (cp->in_as_one_edit < 0)
-	{
-#if MUS_DEBUGGING
-	  fprintf(stderr, "in_as_one_edit: %d\n", cp->in_as_one_edit);
-#endif
-	  cp->in_as_one_edit = 0;
-	}
+	cp->in_as_one_edit = 0;
       as_one_edit(cp, cp->as_one_edit_positions[cp->in_as_one_edit] + 1);
       if (cp->in_as_one_edit == 0)
 	{
@@ -10494,18 +10538,13 @@ keep track of which files are in a given saved state batch, and a way to rename 
 /* -------------------- virtual mixes -------------------- */
 
   /* TODO: peak-envs after change [check all redisplays and maybe squelch cases]
-   * TODO: *.fs untracked
    * TODO: syncd mixes for stereo (automated that is via mix-drag-hook etc)
    * TODO: extreme tests such as water.scm [much flashing as grf updates -- need to flush pointless redisplays]
    * PERHAPS: mix-property display in dialog [add text widget?]
    * TODO: snd-test test 19: edit-list->function
-   * TODO: memlog: snd-edits.c[6135]: extend with zeros ed list not gc'd -- appears to come from g_ptree_channel?
    * TODO: unlist and read can be called on fully freed xen-allocated readers (valtmp)
    * TODO: mix-local show-waveform choice to reduce clutter
    * PERHAPS: access to mix index to support stuff like filter mix (mix-home?)
-
-   * what happens in ramp of zero? no-op in setup_ramp_fragments? -> env-channel is an edit
-
    */
 
 static int add_mix_op(int type)
@@ -10591,9 +10630,6 @@ static ed_list *make_mix_edit(ed_list *old_ed, off_t beg, off_t len, mix_state *
 {
   ed_list *new_ed;
   int i;
-  /*
-  fprintf(stderr,"make_mix_edit, beg: " OFF_TD ", len: " OFF_TD ", full: %d\n", beg, len, full_fragment);
-  */
   if (full_fragment)
     {
       new_ed = make_ed_list(old_ed->size);
@@ -10607,8 +10643,6 @@ static ed_list *make_mix_edit(ed_list *old_ed, off_t beg, off_t len, mix_state *
     }
   else 
     {
-      /* if mix at 0?? */
-
       new_ed = copy_and_split_list(beg, len, old_ed);
       for (i = 0; i < new_ed->size; i++) 
 	{
@@ -10743,8 +10777,6 @@ int mix_buffer_with_tag(chan_info *cp, mus_sample_t *data, off_t beg, off_t buf_
   if (backup)
     backup_edit_list(cp);
 
-  /* TODO: no update? */
-  update_graph(cp);
   return(ms->mix_id);
 }
 
@@ -10877,10 +10909,12 @@ snd_fd *make_virtual_mix_reader(chan_info *cp, off_t beg, off_t len, int index, 
   snd_fd *sf;
   snd_data *first_snd = NULL;
   off_t ind0, ind1, indx;
+
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd));
 #if MUS_DEBUGGING
   set_printable(PRINT_SND_FD);
 #endif
+
   sf->closure1 = XEN_UNDEFINED;
   sf->closure2 = XEN_UNDEFINED;
   sf->closure3 = XEN_UNDEFINED;
@@ -10899,11 +10933,9 @@ snd_fd *make_virtual_mix_reader(chan_info *cp, off_t beg, off_t len, int index, 
   sf->frag_pos = 0;
   ind0 = 0;
   indx = beg;
-  /*
-  fprintf(stderr,"virtual mix at " OFF_TD "\n", beg);
-  */
   ind1 = len;
   sf->fscaler = scl * MUS_FIX_TO_FLOAT;
+
   if ((scl == 1.0) &&
       (sf->fscaler == 1.0))
     {
@@ -10923,8 +10955,10 @@ snd_fd *make_virtual_mix_reader(chan_info *cp, off_t beg, off_t len, int index, 
 	  sf->rev_runf = previous_sample_value;
 	}
     }
+
   if (direction == READ_BACKWARD)
     swap_readers(sf);
+
   if (first_snd->type == SND_DATA_FILE)
     {
 
@@ -10970,11 +11004,14 @@ bool begin_mix_op(chan_info *cp, off_t old_beg, off_t old_len, off_t new_beg, of
       ed_fragment *cb;
       off_t old_pos;
       cb = make_ed_fragment();
+
       old_pos = FRAGMENT_GLOBAL_POSITION(old_ed, old_ed->size - 1);
       temp_ed = make_ed_list(old_ed->size + 1);
       for (i = 0; i < old_ed->size; i++) 
 	copy_ed_fragment(FRAGMENT(temp_ed, i), FRAGMENT(old_ed, i));
       FRAGMENT_GLOBAL_POSITION(temp_ed, old_ed->size - 1) = new_samples + 1;
+
+      if (FRAGMENT(temp_ed, old_ed->size)) free_ed_fragment(FRAGMENT(temp_ed, old_ed->size));
       FRAGMENT(temp_ed, old_ed->size) = FRAGMENT(temp_ed, old_ed->size - 1);
       FRAGMENT(temp_ed, old_ed->size - 1) = cb;
       ED_SOUND(cb) = EDIT_LIST_ZERO_MARK;
@@ -11076,9 +11113,6 @@ bool end_mix_op(chan_info *cp, off_t old_beg, off_t old_len)
       start_loc = check_splice_at(new_ed, old_beg, 1);
       if (old_len > 0)
 	check_splice_at(new_ed, old_beg + old_len, start_loc);
-      /*
-	fprintf(stderr,"after combine: %d\n", new_ed->size);
-      */
     }
   after_edit(cp);
   if (cp->edits[cp->edit_ctr - 1]->samples != cp->edits[cp->edit_ctr]->samples)

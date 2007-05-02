@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Thu Apr 26 00:26:31 CEST 2007
+\ Changed: Tue May 01 23:30:56 CEST 2007
 
 \ Commentary:
 \
@@ -62,7 +62,7 @@ require examp
 
 : mix-sound <{ file :optional start 0 -- id }>
   doc" Mixes FILE (all chans) at START in the currently selected sound."
-  file start #t undef undef undef undef undef mix
+  file start #t undef undef undef undef mix
 ;
 
 hide
@@ -145,7 +145,7 @@ previous
   doc" Sets VAL to KEY in the given mix's property list."
   { id key val }
   id mix? false? if 'no-such-mix '( get-func-name id ) fth-throw then
-  id dup mix-properties key val list-assoc-set! set-mix-properties
+  id dup mix-properties key val list-assoc-set! set-mix-properties drop
 ;
 
 : mix-click-sets-amp <{ id -- #t }>

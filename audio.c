@@ -7222,7 +7222,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
     err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyBufferSize, &sizeof_bufsize, &bufsize);
   if (err != noErr) 
     {
-      fprintf(stderr,"open audio output err: %d %s\n", (int)err, osx_error(err));
+      fprintf(stderr, "open audio output err: %d %s\n", (int)err, osx_error(err));
       return(MUS_ERROR);
     }
   /* now check for srate/chan mismatches and so on */
@@ -7230,7 +7230,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
   err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
   if (err != noErr)
     {
-      fprintf(stderr,"open audio output (get device format) err: %d %s\n", (int)err, osx_error(err));
+      fprintf(stderr, "open audio output (get device format) err: %d %s\n", (int)err, osx_error(err));
       return(MUS_ERROR);
     }
   /* current DAC state: device_desc.mChannelsPerFrame, (int)(device_desc.mSampleRate) */
@@ -7501,7 +7501,7 @@ int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
     err = AudioDeviceGetProperty(device, 0, true, kAudioDevicePropertyBufferSize, &sizeof_bufsize, &bufsize);
   if (err != noErr) 
     {
-      fprintf(stderr,"open audio input err: %d %s\n", (int)err, osx_error(err));
+      fprintf(stderr, "open audio input err: %d %s\n", (int)err, osx_error(err));
       return(MUS_ERROR);
     }
   open_for_input = true;
@@ -7529,7 +7529,7 @@ int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
     err = AudioDeviceStart(device, (AudioDeviceIOProc)reader);
   if (err != noErr) 
     {
-      fprintf(stderr,"add open audio input err: %d %s\n", (int)err, osx_error(err));
+      fprintf(stderr, "add open audio input err: %d %s\n", (int)err, osx_error(err));
       return(MUS_ERROR);
     }
   return(MUS_NO_ERROR);
@@ -7550,7 +7550,7 @@ int mus_audio_read(int line, char *buf, int bytes)
 	{
 	  err = AudioDeviceGetProperty(device, 0, true, kAudioDevicePropertyDeviceIsRunning, &sizeof_running, &running);
 	  if (err != noErr) 
-	    fprintf(stderr,"wait err: %s ", osx_error(err));
+	    fprintf(stderr, "wait err: %s ", osx_error(err));
 	}
     }
   to_buf = bufs[in_buf];
@@ -8274,7 +8274,7 @@ static int sndjack_init(void){
 
   while(num<SNDJACK_MAXSNDS){
     char temp[500];
-    sprintf(temp,"sndlib%d",num);
+    sprintf(temp, "sndlib%d",num);
     if ((sndjack_client=jack_client_new(temp)) != 0) {
       break;
     }
@@ -8310,7 +8310,7 @@ static int sndjack_init(void){
 
   for(ch=0;ch<numch;ch++){
     char temp[500];
-    sprintf(temp,"out_%d",ch+1);
+    sprintf(temp, "out_%d",ch+1);
     if((sndjack_channels[ch].port=jack_port_register(
 						     sndjack_client,
 						     strdup(temp),
@@ -8319,14 +8319,14 @@ static int sndjack_init(void){
 						     0
 						     ))==NULL)
       {
-	fprintf(stderr,"Error. Could not register jack port.\n");
+	fprintf(stderr, "Error. Could not register jack port.\n");
 	goto failed_register;
       }
   }
 
   for(ch=0;ch<sndjack_num_read_channels_allocated;ch++){
     char temp[500];
-    sprintf(temp,"in_%d",ch+1);
+    sprintf(temp, "in_%d",ch+1);
     if((sndjack_read_channels[ch].port=jack_port_register(
 							  sndjack_client,
 							  strdup(temp),
@@ -8335,7 +8335,7 @@ static int sndjack_init(void){
 							  0
 							  ))==NULL)
       {
-	fprintf(stderr,"Error. Could not register jack port.\n");
+	fprintf(stderr, "Error. Could not register jack port.\n");
 	goto failed_register;
       }
   }
@@ -8571,7 +8571,7 @@ static void *jack_mus_audio_watchdog(void *arg){
 
   par.sched_priority = sched_get_priority_max(SCHED_RR);
   if(sched_setscheduler(0,SCHED_RR,&par)==-1){
-    fprintf(stderr,"SNDLIB: Unable to set SCHED_RR realtime priority for the watchdog thread. No watchdog.\n");
+    fprintf(stderr, "SNDLIB: Unable to set SCHED_RR realtime priority for the watchdog thread. No watchdog.\n");
     goto exit;
   }
 
@@ -8581,11 +8581,11 @@ static void *jack_mus_audio_watchdog(void *arg){
 
     if(jack_mus_isrunning && jack_mus_watchdog_counter<last+10){
       struct sched_param par;
-      fprintf(stderr,"SNDLIB: Setting player to non-realtime for 2 seconds.\n");
+      fprintf(stderr, "SNDLIB: Setting player to non-realtime for 2 seconds.\n");
 
       par.sched_priority = 0;
       if(sched_setscheduler(jack_mus_player_pid,SCHED_OTHER,&par)==-1){
-	fprintf(stderr,"SNDLIB: Unable to set non-realtime priority. Must kill player thread. Sorry!\n");
+	fprintf(stderr, "SNDLIB: Unable to set non-realtime priority. Must kill player thread. Sorry!\n");
 	while(1){
 	  kill(jack_mus_player_pid,SIGKILL);
 	  sleep(2);
@@ -8597,15 +8597,15 @@ static void *jack_mus_audio_watchdog(void *arg){
       if(jack_mus_isrunning){
 	par.sched_priority = sched_get_priority_min(SCHED_RR)+1;
 	if(sched_setscheduler(jack_mus_player_pid,SCHED_RR,&par)==-1){
-	  fprintf(stderr,"SNDLIB: Could not set back to realtime priority...\n");
+	  fprintf(stderr, "SNDLIB: Could not set back to realtime priority...\n");
 	}else
-	  fprintf(stderr,"SNDLIB: Play thread set back to realtime priority.\n");
+	  fprintf(stderr, "SNDLIB: Play thread set back to realtime priority.\n");
       }
 
     }
   }
  exit:
-  fprintf(stderr,"SNDLIB: Watchdog exiting\n");
+  fprintf(stderr, "SNDLIB: Watchdog exiting\n");
 #endif
   return NULL;
 }
@@ -8621,7 +8621,7 @@ static void jack_mus_audio_set_realtime(void){
 
   if(watchdog_started==0){
     if(pthread_create(&jack_mus_watchdog_thread,NULL,jack_mus_audio_watchdog,NULL)!=0){
-      fprintf(stderr,"Could not create watchdog. Not running realtime\n");
+      fprintf(stderr, "Could not create watchdog. Not running realtime\n");
       return;
     }
     watchdog_started=1;
@@ -8631,9 +8631,9 @@ static void jack_mus_audio_set_realtime(void){
 
   par.sched_priority = sched_get_priority_min(SCHED_RR)+1;
   if(sched_setscheduler(0,SCHED_RR,&par)==-1){
-    fprintf(stderr,"SNDLIB: Unable to set SCHED_RR realtime priority for the player thread.\n");
+    fprintf(stderr, "SNDLIB: Unable to set SCHED_RR realtime priority for the player thread.\n");
   }{
-    //fprintf(stderr,"Set realtime priority\n");
+    //fprintf(stderr, "Set realtime priority\n");
   }
 #endif
 }
@@ -8643,7 +8643,7 @@ static void jack_mus_audio_set_non_realtime(void){
   struct sched_param par;
   par.sched_priority = 0;
   sched_setscheduler(0,SCHED_OTHER,&par);
-  //fprintf(stderr,"Set non-realtime priority\n");
+  //fprintf(stderr, "Set non-realtime priority\n");
   jack_mus_isrunning=0;
 #endif
 }
@@ -8864,18 +8864,18 @@ static void jack_describe_audio_state_1(void) {
   char temp[500];
 
   pprint("jack audio:\n");
-  sprintf(temp,"\tNumber of output channels: %d\n",sndjack_num_channels_allocated);pprint(temp);
-  sprintf(temp,"\tNumber of input channels: %d\n",sndjack_num_read_channels_allocated);pprint(temp);
-  sprintf(temp,"\tSamplerate: %d\n",jack_get_sample_rate(sndjack_client));pprint(temp);
-  sprintf(temp,"\tJack buffersize: %d\n",sj_jackbuffersize);pprint(temp);
-  sprintf(temp,"\tSndjack buffersize: %d\n",SNDJACK_BUFFERSIZE);pprint(temp);
-  sprintf(temp,"\tMax number of instances: %d\n",SNDJACK_MAXSNDS);pprint(temp);
-  sprintf(temp,"\tTotal number of frames delayed: %d\n",sj_totalxrun);pprint(temp);
-  sprintf(temp,"\tCurrent cpu-load: %f\n",jack_cpu_load(sndjack_client));pprint(temp);
-  sprintf(temp,"\tIs running realtime: %s\n",jack_is_realtime(sndjack_client)==1?"yes":"no");pprint(temp);
-  sprintf(temp,"\tResample quality (only used when needed): %s (%s)\n",src_get_name(SRC_QUALITY),src_get_description(SRC_QUALITY));pprint(temp);
-  sprintf(temp,"\tIs able to handle the following audio formats: %s %s %s\n",mus_data_format_to_string(MUS_BYTE),mus_data_format_to_string(MUS_COMP_SHORT),mus_data_format_to_string(MUS_COMP_FLOAT));pprint(temp);
-  sprintf(temp,"\tPrefered audio format: %s\n",mus_data_format_to_string(MUS_COMP_FLOAT));pprint(temp);
+  sprintf(temp, "\tNumber of output channels: %d\n",sndjack_num_channels_allocated);pprint(temp);
+  sprintf(temp, "\tNumber of input channels: %d\n",sndjack_num_read_channels_allocated);pprint(temp);
+  sprintf(temp, "\tSamplerate: %d\n",jack_get_sample_rate(sndjack_client));pprint(temp);
+  sprintf(temp, "\tJack buffersize: %d\n",sj_jackbuffersize);pprint(temp);
+  sprintf(temp, "\tSndjack buffersize: %d\n",SNDJACK_BUFFERSIZE);pprint(temp);
+  sprintf(temp, "\tMax number of instances: %d\n",SNDJACK_MAXSNDS);pprint(temp);
+  sprintf(temp, "\tTotal number of frames delayed: %d\n",sj_totalxrun);pprint(temp);
+  sprintf(temp, "\tCurrent cpu-load: %f\n",jack_cpu_load(sndjack_client));pprint(temp);
+  sprintf(temp, "\tIs running realtime: %s\n",jack_is_realtime(sndjack_client)==1?"yes":"no");pprint(temp);
+  sprintf(temp, "\tResample quality (only used when needed): %s (%s)\n",src_get_name(SRC_QUALITY),src_get_description(SRC_QUALITY));pprint(temp);
+  sprintf(temp, "\tIs able to handle the following audio formats: %s %s %s\n",mus_data_format_to_string(MUS_BYTE),mus_data_format_to_string(MUS_COMP_SHORT),mus_data_format_to_string(MUS_COMP_FLOAT));pprint(temp);
+  sprintf(temp, "\tPrefered audio format: %s\n",mus_data_format_to_string(MUS_COMP_FLOAT));pprint(temp);
 }
 
 
@@ -9514,7 +9514,7 @@ static void describe_audio_state_1(void)
 
 #if 0
   /* I don't see anything useful in all this mixer data, so I'll omit it */
-  fprintf(stderr,"/dev/mixer:\n");
+  fprintf(stderr, "/dev/mixer:\n");
   line = open("/dev/mixer", O_RDONLY | O_NDELAY);
   if (line == -1)
     return;
@@ -9526,8 +9526,8 @@ static void describe_audio_state_1(void)
       mdev.index = i;
       val = ioctl(line, AUDIO_MIXER_DEVINFO, &mdev);
       if (val != 0) break;
-      fprintf(stderr,"%d: name: %s ", i, mdev.label.name);
-      fprintf(stderr,"class: %d, type: %d, units: %s, chans: %d, delta: %d\n", 
+      fprintf(stderr, "%d: name: %s ", i, mdev.label.name);
+      fprintf(stderr, "class: %d, type: %d, units: %s, chans: %d, delta: %d\n", 
 	      mdev.mixer_class, mdev.type, mdev.un.v.units.name, mdev.un.v.num_channels, mdev.un.v.delta);
       mx.dev = i;
       ioctl(line, AUDIO_MIXER_READ, &mx);

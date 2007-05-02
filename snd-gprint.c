@@ -157,8 +157,8 @@ static void watch_print(GtkWidget *w, gpointer context)
 
 static void report_in_error_info(const char *msg, void *ignore)
 {
-  gtk_entry_set_text(GTK_ENTRY(print_error_text), msg);
-  gtk_entry_set_width_chars(GTK_ENTRY(print_error_text), 1 + snd_strlen(msg));
+  info_widget_display(print_error_text, msg);
+  info_widget_set_size(print_error_text, 1 + snd_strlen(msg));
   print_error = true;
   if (!(GTK_WIDGET_VISIBLE(print_error_text)))
     {
@@ -271,6 +271,7 @@ static void start_print_dialog(void)
 
       dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismiss_button, "quit_button");
+      set_stock_button_label(dismiss_button, _("Go Away"));
 
       print_ok_button = sg_button_new_from_stock_with_label(_("Print"), GTK_STOCK_PRINT);
       gtk_widget_set_name(print_ok_button, "doit_button");
@@ -305,7 +306,7 @@ static void start_print_dialog(void)
       gtk_widget_show(print_eps_or_lpr);
       set_dialog_widget(PRINT_DIALOG, print_dialog);
 
-      print_error_text = snd_gtk_entry_label_new(NULL, ss->sgx->highlight_color);
+      print_error_text = make_info_widget();
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(print_dialog)->vbox), print_error_text, false, false, 0);
       gtk_widget_hide(print_error_text);
     }
