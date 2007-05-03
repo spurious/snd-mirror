@@ -214,7 +214,7 @@ static bool prepare_edit_list(chan_info *cp, int pos, const char *caller)
 				      C_TO_XEN_INT(cp->edit_ctr))));
     }
   sp = cp->sound;
-  stop_amp_env(cp);
+  stop_peak_env(cp);
   if ((sp) && (sp->playing)) stop_playing_sound_without_hook(sp, PLAY_EDIT);
   increment_edit_ctr(cp);
   prune_edits(cp, cp->edit_ctr);
@@ -2500,7 +2500,9 @@ enum {ED_SIMPLE, ED_MIX_SIMPLE, ED_ZERO, ED_MIX_ZERO,
 		    if (sf->loc > sf->last) return(next_sound(sf));
 		    return(((sf->data[sf->loc++] * sf->fscaler) + read_sample(((mix_data *)(sf->mixes))->sfs[0])) * next_ramp_value(sf));
 		    
-		    does fscaler behave correctly here or would we need another scale slot?
+		    we'd need another scl slot somewhere -- mix-data? and subsequent mix would have to lock
+		      and we'd have yet another special case to watch for in scale-channel
+
 		    see 6872 virtual_mix_ok
 		  }
 
@@ -3718,7 +3720,7 @@ static void setup_mix(snd_fd *sf)
   int i, list_size, active_mixes = 0;
 
   if (sf->mixes) 
-    sf->mixes = (void *)free_mix_data((mix_data *)(sf->mixes)); /* PERHAPS: do this at end not start? */
+    sf->mixes = (void *)free_mix_data((mix_data *)(sf->mixes));
 
   md = (mix_data *)CALLOC(1, sizeof(mix_data));
   sf->mixes = (void *)md;
@@ -5669,7 +5671,7 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
       if (ed->marks)
 	free_mark_list(ed);
       if (ed->peak_env)
-	ed->peak_env = free_env_info(ed->peak_env);
+	ed->peak_env = free_peak_env_info(ed->peak_env);
       if (ed->fft)
 	ed->fft = free_enved_fft(ed->fft);
       if (ed->readers)
@@ -6152,7 +6154,7 @@ static bool insert_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
   ed->sound_location = 0;
   ed->maxamp = old_ed->maxamp;
   cp->edits[cp->edit_ctr] = ed;
-  amp_env_insert_zeros(cp, beg, num, edpos);
+  peak_env_insert_zeros(cp, beg, num, edpos);
 
   ripple_all(cp, beg, num);
   ripple_selection(ed, beg, num);
@@ -6225,7 +6227,7 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos, const cha
   ED_LOCAL_END(cb) = num - 1;
   new_ed->edit_type = ZERO_EDIT;
   cp->edits[cp->edit_ctr] = new_ed;
-  amp_env_insert_zeros(cp, beg, num, edpos);
+  peak_env_insert_zeros(cp, beg, num, edpos);
 
   ripple_all(cp, 0, 0);
   reflect_sample_change_in_axis(cp);
@@ -6262,7 +6264,7 @@ bool extend_edit_list(chan_info *cp, int edpos)
   cp->edits[cp->edit_ctr] = new_ed;
 
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks and mixes */
-  cp->edits[cp->edit_ctr]->peak_env = amp_env_copy(cp, false, edpos);
+  cp->edits[cp->edit_ctr]->peak_env = peak_env_copy(cp, false, edpos);
   after_edit(cp);
   return(true);
 }
@@ -7076,7 +7078,7 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
 	}
       new_ed->samples = len;
       cp->edits[cp->edit_ctr] = new_ed;
-      amp_env_scale_by(cp, scl, pos); /* this seems wasteful if this is an intermediate (in_as_one_edit etc) */
+      peak_env_scale_by(cp, scl, pos); /* this seems wasteful if this is an intermediate (in_as_one_edit etc) */
     }
   else 
     {
@@ -7102,7 +7104,7 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
 	      if (scl == 0.0) FRAGMENT_TYPE(new_ed, i) = ED_ZERO;
 	    }
 	}
-      amp_env_scale_selection_by(cp, scl, beg, num, pos);
+      peak_env_scale_selection_by(cp, scl, beg, num, pos);
     }
   new_ed->cursor = old_ed->cursor;
   new_ed->edit_type = SCALED_EDIT;
@@ -7480,7 +7482,7 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
 	  make_ptree_fragment(new_ed, i, ptree_loc, beg, num);
 	}
       if (env_it)
-	amp_env_ptree(cp, tree, pos, init_func);
+	peak_env_ptree(cp, tree, pos, init_func);
     }
   else 
     {
@@ -7496,7 +7498,7 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
 	    make_ptree_fragment(new_ed, i, ptree_loc, beg, num);
 	}
       if (env_it)
-	amp_env_ptree_selection(cp, tree, beg, num, pos, init_func);
+	peak_env_ptree_selection(cp, tree, beg, num, pos, init_func);
     }
   new_ed->cursor = old_ed->cursor;
   new_ed->edit_type = PTREE_EDIT;
@@ -7964,7 +7966,7 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   char *name;
   ed_list *new_ed, *old_ed;
   file_info *hdr0, *hdr1;
-  env_info *e0 = NULL, *e1 = NULL;
+  peak_env_info *e0 = NULL, *e1 = NULL;
 
   if ((!(prepare_edit_list(cp0, AT_CURRENT_EDIT_POSITION, S_swap_channels))) ||
       (!(prepare_edit_list(cp1, AT_CURRENT_EDIT_POSITION, S_swap_channels))))
@@ -7994,8 +7996,8 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   new1 = add_sound_file_to_edit_list(cp0, name,
 				     make_file_state(fd, hdr1, cp1->chan, 0, FILE_BUFFER_SIZE),
 				     hdr1, DONT_DELETE_ME, cp1->chan);
-  e0 = amp_env_copy(cp0, false, pos0);
-  if (e0) e1 = amp_env_copy(cp1, false, pos1);
+  e0 = peak_env_copy(cp0, false, pos0);
+  if (e0) e1 = peak_env_copy(cp1, false, pos1);
   old_ed = cp1->edits[pos1];
   new_ed = make_ed_list(old_ed->size);
   new_ed->edit_type = CHANGE_EDIT;
@@ -8041,8 +8043,8 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
     }
   else
     {
-      if (e0) e0 = free_env_info(e0);
-      if (e1) e1 = free_env_info(e1);
+      if (e0) e0 = free_peak_env_info(e0);
+      if (e1) e1 = free_peak_env_info(e1);
     }
 
   ripple_all(cp0, 0, 0);
@@ -8470,10 +8472,9 @@ bool redo_edit_with_sync(chan_info *cp, int count)
 
 /* -------------------- virtual mixes -------------------- */
 
-  /* TODO: check all redisplays and maybe squelch cases
-   * TODO: syncd mixes for stereo (automated that is via mix-drag-hook etc)
+  /* TODO: syncd mixes for stereo (automated that is via mix-drag-hook etc)
    * TODO: extreme tests such as water.scm [much flashing as grf updates -- need to flush pointless redisplays]
-   * PERHAPS: mix-property display in dialog [add text widget?]
+   * PERHAPS: mix-property display in dialog [add text widget? or use existing error info widget?]
    * TODO: unlist and read can be called on fully freed xen-allocated readers (valtmp)
    */
 

@@ -76,11 +76,11 @@ snd_info *snd_new_file(const char *newname, int header_type, int data_format, in
 typedef struct env_state {
   int slice, edpos;
   off_t samples, m;  
-  env_info *ep; 
+  peak_env_info *ep; 
   snd_fd *sf;
 } env_state;
 
-env_info *free_env_info(env_info *ep)
+peak_env_info *free_peak_env_info(peak_env_info *ep)
 {
   if (ep)
     {
@@ -91,7 +91,7 @@ env_info *free_env_info(env_info *ep)
   return(NULL);
 }
 
-env_info *free_amp_env(chan_info *cp, int pos)
+peak_env_info *free_peak_env(chan_info *cp, int pos)
 {
   /* can be either during channel close, or premature work proc removal */
   if ((cp) && 
@@ -99,17 +99,17 @@ env_info *free_amp_env(chan_info *cp, int pos)
       (pos < cp->edit_size) &&
       (cp->edits[pos]->peak_env))
     {
-      free_env_info(cp->edits[pos]->peak_env);
+      free_peak_env_info(cp->edits[pos]->peak_env);
       cp->edits[pos]->peak_env = NULL;
     }
   return(NULL);
 }
 
-/* during processing, cgx->amp_env_state -> env_state for that channel
- *  cgx->amp_env_in_progress is the associated X work proc
+/* during processing, cgx->peak_env_state -> env_state for that channel
+ *  cgx->peak_env_in_progress is the associated X work proc
  */
 
-void free_env_state(chan_info *cp)
+void free_peak_env_state(chan_info *cp)
 {
   /* env info is tied into cp edit list peak envs immediately upon env start, released via normal cp cleanups */
   /* this function just cleans up the current work proc stuff (amp_env in this case can be incomplete) */
@@ -120,14 +120,14 @@ void free_env_state(chan_info *cp)
       if (cgx)
 	{
 	  env_state *es;
-	  es = cgx->amp_env_state;
+	  es = cgx->peak_env_state;
 	  if (es)
 	    {
 	      es->sf = free_snd_fd(es->sf);
 	      FREE(es);
 	    }
-	  cgx->amp_env_state = NULL;
-	  cgx->amp_env_in_progress = 0;
+	  cgx->peak_env_state = NULL;
+	  cgx->peak_env_in_progress = 0;
 	}
     }
 }
@@ -135,10 +135,10 @@ void free_env_state(chan_info *cp)
 static env_state *make_env_state(chan_info *cp, off_t samples)
 {
   int pos;
-  env_info *ep;
+  peak_env_info *ep;
   env_state *es;
   if (samples <= 0) return(NULL);
-  stop_amp_env(cp);
+  stop_peak_env(cp);
   pos = cp->edit_ctr;
   es = (env_state *)CALLOC(1, sizeof(env_state));
   es->samples = samples;
@@ -153,11 +153,11 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
   else 
     {
       bool happy = false;
-      es->ep = (env_info *)CALLOC(1, sizeof(env_info));
+      es->ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
       ep = es->ep;
       if (pos > 0)
 	{
-	  env_info *old_ep;
+	  peak_env_info *old_ep;
 	  old_ep = cp->edits[pos - 1]->peak_env;
 	  if ((old_ep) && 
 	      (old_ep->completed))
@@ -188,9 +188,9 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 		      /* here we'll try to take advantage of an existing envelope */
 		      old_ep = cp->edits[pos - 1]->peak_env;
 		      ep->samps_per_bin = old_ep->samps_per_bin;
-		      ep->amp_env_size = (int)(ceil((double)(es->samples) / (double)(ep->samps_per_bin)));
-		      ep->data_max = (Float *)CALLOC(ep->amp_env_size, sizeof(Float));
-		      ep->data_min = (Float *)CALLOC(ep->amp_env_size, sizeof(Float));
+		      ep->peak_env_size = (int)(ceil((double)(es->samples) / (double)(ep->samps_per_bin)));
+		      ep->data_max = (Float *)CALLOC(ep->peak_env_size, sizeof(Float));
+		      ep->data_min = (Float *)CALLOC(ep->peak_env_size, sizeof(Float));
 		      start_bin = (int)(start / ep->samps_per_bin);
 		      ep->fmin = 1.0;
 		      ep->fmax = -1.0;
@@ -212,7 +212,7 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 			      old_end_bin += (1 - end_bin);
 			      end_bin = 1;
 			    }
-			  for (i = end_bin, j = old_end_bin; (i < ep->amp_env_size) && (j < old_ep->amp_env_size); i++, j++)
+			  for (i = end_bin, j = old_end_bin; (i < ep->peak_env_size) && (j < old_ep->peak_env_size); i++, j++)
 			    {
 			      ep->data_min[i] = old_ep->data_min[j];
 			      ep->data_max[i] = old_ep->data_max[j];
@@ -234,10 +234,10 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 	  /* 160e6 = about a hour at 44KHz */
 	  val = (int)(log((double)(es->samples)));
 	  if (val > 20) val = 20;
-	  ep->amp_env_size = snd_int_pow2(val);
-	  ep->samps_per_bin = (int)(ceil((double)(es->samples) / (double)(ep->amp_env_size)));
-	  ep->data_max = (Float *)CALLOC(ep->amp_env_size, sizeof(Float));
-	  ep->data_min = (Float *)CALLOC(ep->amp_env_size, sizeof(Float));
+	  ep->peak_env_size = snd_int_pow2(val);
+	  ep->samps_per_bin = (int)(ceil((double)(es->samples) / (double)(ep->peak_env_size)));
+	  ep->data_max = (Float *)CALLOC(ep->peak_env_size, sizeof(Float));
+	  ep->data_min = (Float *)CALLOC(ep->peak_env_size, sizeof(Float));
 	  ep->bin = 0;
 	  ep->top_bin = 0;
 	  ep->fmin = 1.0;
@@ -251,14 +251,14 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
   return(es);
 }
 
-void start_env_state(chan_info *cp)
+void start_peak_env_state(chan_info *cp)
 {
-  cp->cgx->amp_env_state = make_env_state(cp, CURRENT_SAMPLES(cp));
+  cp->cgx->peak_env_state = make_env_state(cp, CURRENT_SAMPLES(cp));
 }
 
-static bool tick_amp_env(chan_info *cp, env_state *es)
+static bool tick_peak_env(chan_info *cp, env_state *es)
 {
-  env_info *ep;
+  peak_env_info *ep;
   ep = es->ep;
   if (es->slice == 0)
     {
@@ -267,7 +267,7 @@ static bool tick_amp_env(chan_info *cp, env_state *es)
       snd_fd *sfd;
       if (ep->top_bin != 0)
 	lm = (ep->top_bin - ep->bin + 1);
-      else lm = (ep->amp_env_size - ep->bin);
+      else lm = (ep->peak_env_size - ep->bin);
       if (lm <= 0) lm = 1;
       samps_to_read = (off_t)(lm * ep->samps_per_bin);
       if (samps_to_read > 1000000)
@@ -276,7 +276,7 @@ static bool tick_amp_env(chan_info *cp, env_state *es)
 	  samps_to_read = (off_t)(lm * ep->samps_per_bin);
 	}
       sb = ep->bin;
-      if (sb >= ep->amp_env_size)
+      if (sb >= ep->peak_env_size)
 	{
 	  /* oops... */
 	  es->slice++;
@@ -290,7 +290,7 @@ static bool tick_amp_env(chan_info *cp, env_state *es)
 	}
       sfd = es->sf;
       if (sfd == NULL) return(false);
-      for (n = 0; (n < lm) && (sb < ep->amp_env_size); n++, sb++)
+      for (n = 0; (n < lm) && (sb < ep->peak_env_size); n++, sb++)
 	{
 	  Float ymin, ymax, val;
 	  int i;
@@ -331,20 +331,20 @@ static bool tick_amp_env(chan_info *cp, env_state *es)
     }
 }
 
-void finish_amp_env(chan_info *cp)
+void finish_peak_env(chan_info *cp)
 {
   chan_context *cgx;
   cgx = cp->cgx;
-  if ((cgx->amp_env_in_progress) && 
-      (cgx->amp_env_state))
+  if ((cgx->peak_env_in_progress) && 
+      (cgx->peak_env_state))
     {
-      while (!(tick_amp_env(cp, cgx->amp_env_state))); /* finish peak-env scan */
-      enved_reflect_amp_env_completion(cp->sound);
-      free_env_state(cp);
+      while (!(tick_peak_env(cp, cgx->peak_env_state))); /* finish peak-env scan */
+      enved_reflect_peak_env_completion(cp->sound);
+      free_peak_env_state(cp);
     }
 }
 
-idle_func_t get_amp_env(any_pointer_t ptr)
+idle_func_t get_peak_env(any_pointer_t ptr)
 {
   /* calculate the amp env of channel */
   chan_info *cp = (chan_info *)ptr;
@@ -356,18 +356,18 @@ idle_func_t get_amp_env(any_pointer_t ptr)
   pos = cp->edit_ctr;
   if ((pos == -1) || (!(cp->active)))
     {
-      free_env_state(cp);
+      free_peak_env_state(cp);
       return(BACKGROUND_QUIT);
     }
-  if (!(cgx->amp_env_state)) 
-    cgx->amp_env_state = make_env_state(cp, CURRENT_SAMPLES(cp));
-  es = cgx->amp_env_state;
+  if (!(cgx->peak_env_state)) 
+    cgx->peak_env_state = make_env_state(cp, CURRENT_SAMPLES(cp));
+  es = cgx->peak_env_state;
   if (es)
     {
-      if (tick_amp_env(cp, es))
+      if (tick_peak_env(cp, es))
 	{
-	  free_env_state(cp);
-	  enved_reflect_amp_env_completion(cp->sound);
+	  free_peak_env_state(cp);
+	  enved_reflect_peak_env_completion(cp->sound);
 	  if (cp->waiting_to_make_graph) 
 	    {
 	      cp->waiting_to_make_graph = false;
@@ -382,20 +382,20 @@ idle_func_t get_amp_env(any_pointer_t ptr)
   return(BACKGROUND_QUIT);
 }
 
-bool amp_env_maxamp_ok(chan_info *cp, int edpos)
+bool peak_env_maxamp_ok(chan_info *cp, int edpos)
 {
   if (cp)
     {
-      env_info *ep;
+      peak_env_info *ep;
       ep = cp->edits[edpos]->peak_env;
       return((ep) && (ep->completed));
     }
   return(false);
 }
 
-Float amp_env_maxamp(chan_info *cp, int edpos)
+Float peak_env_maxamp(chan_info *cp, int edpos)
 {
-  env_info *ep;
+  peak_env_info *ep;
   Float ymax;
   ep = cp->edits[edpos]->peak_env;
   ymax = -ep->fmin;
@@ -404,9 +404,9 @@ Float amp_env_maxamp(chan_info *cp, int edpos)
   return(ymax);
 }
 
-bool amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool start_new, int edit_pos, bool finish_env) 
+bool peak_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool start_new, int edit_pos, bool finish_env) 
 {
-  env_info *ep;
+  peak_env_info *ep;
   chan_context *cgx;
   cgx = cp->cgx;
   if ((!cgx) || (!(cp->edits)))
@@ -421,22 +421,22 @@ bool amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool s
 	  ((ep->top_bin != 0) && (bin > ep->top_bin)))
 	return(samples_per_pixel >= (Float)(ep->samps_per_bin));
     }
-  if ((finish_env) && (cgx->amp_env_in_progress) && (cgx->amp_env_state))
+  if ((finish_env) && (cgx->peak_env_in_progress) && (cgx->peak_env_state))
     {
       /* caller wants data, but a read is in progress -- finish it as quickly as possible */
-      finish_amp_env(cp);
+      finish_peak_env(cp);
       if (cp->waiting_to_make_graph) 
 	{
 	  cp->waiting_to_make_graph = false;
 	  update_graph(cp);
 	}
-      return(amp_env_usable(cp, samples_per_pixel, hisamp, start_new, edit_pos, false));
+      return(peak_env_usable(cp, samples_per_pixel, hisamp, start_new, edit_pos, false));
     }
   if ((start_new) &&
-      (!(cgx->amp_env_in_progress)) && 
+      (!(cgx->peak_env_in_progress)) && 
       (CURRENT_SAMPLES(cp) > PEAK_ENV_CUTOFF) &&
       (cp->sound->short_filename != NULL))             /* region browser jumped in too soon during autotest */
-    start_amp_env(cp);
+    start_peak_env(cp);
   return(false);
 }
 
@@ -447,7 +447,7 @@ static short local_grf_y(Float val, axis_info *ap)
   return((short)(ap->y_base + val * ap->y_scale));
 }
 
-int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int srate) 
+int peak_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int srate) 
 {
   Float step, x, pinc = 0.0;
   double xf, xk;
@@ -455,7 +455,7 @@ int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sra
   int xi;
   int j = 0;
   off_t i;
-  env_info *ep;
+  peak_env_info *ep;
   ep = cp->edits[cp->edit_ctr]->peak_env;
   step = samples_per_pixel / (Float)(ep->samps_per_bin);
   xf = (double)(ap->losamp) / (double)(ep->samps_per_bin);
@@ -472,8 +472,8 @@ int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sra
       k = (int)xf;
       xf += step;
       kk = (int)xf;
-      if (kk >= ep->amp_env_size) 
-	kk = ep->amp_env_size - 1;
+      if (kk >= ep->peak_env_size) 
+	kk = ep->peak_env_size - 1;
       for (; k <= kk; k++)
 	{
 	  if (ep->data_min[k] < ymin) ymin = ep->data_min[k];
@@ -497,31 +497,31 @@ int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sra
   return(j);
 }
 
-void amp_env_scale_by(chan_info *cp, Float scl, int pos)
+void peak_env_scale_by(chan_info *cp, Float scl, int pos)
 {
-  env_info *old_ep;
+  peak_env_info *old_ep;
   old_ep = cp->edits[pos]->peak_env;
   if ((old_ep) && (old_ep->completed))
     {
       int i;
-      env_info *new_ep;
+      peak_env_info *new_ep;
       new_ep = cp->edits[cp->edit_ctr]->peak_env;
       if ((new_ep) && 
-	  (new_ep->amp_env_size != old_ep->amp_env_size)) 
-	new_ep = free_amp_env(cp, cp->edit_ctr);
+	  (new_ep->peak_env_size != old_ep->peak_env_size)) 
+	new_ep = free_peak_env(cp, cp->edit_ctr);
       if (new_ep == NULL)
 	{
-	  new_ep = (env_info *)CALLOC(1, sizeof(env_info));
-	  new_ep->data_max = (Float *)MALLOC(old_ep->amp_env_size * sizeof(Float));
-	  new_ep->data_min = (Float *)MALLOC(old_ep->amp_env_size * sizeof(Float));
+	  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
+	  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
+	  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
 	}
-      new_ep->amp_env_size = old_ep->amp_env_size;
+      new_ep->peak_env_size = old_ep->peak_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       if (scl >= 0.0)
 	{
 	  new_ep->fmin = old_ep->fmin * scl;
 	  new_ep->fmax = old_ep->fmax * scl;
-	  for (i = 0; i < new_ep->amp_env_size; i++) 
+	  for (i = 0; i < new_ep->peak_env_size; i++) 
 	    {
 	      new_ep->data_min[i] = old_ep->data_min[i] * scl;
 	      new_ep->data_max[i] = old_ep->data_max[i] * scl;
@@ -531,7 +531,7 @@ void amp_env_scale_by(chan_info *cp, Float scl, int pos)
 	{
 	  new_ep->fmax = old_ep->fmin * scl;
 	  new_ep->fmin = old_ep->fmax * scl;
-	  for (i = 0; i < new_ep->amp_env_size; i++) 
+	  for (i = 0; i < new_ep->peak_env_size; i++) 
 	    {
 	      new_ep->data_max[i] = old_ep->data_min[i] * scl;
 	      new_ep->data_min[i] = old_ep->data_max[i] * scl;
@@ -544,7 +544,7 @@ void amp_env_scale_by(chan_info *cp, Float scl, int pos)
     }
 }
 
-void pick_one_bin(env_info *ep, int bin, off_t cursamp, chan_info *cp, int edpos)
+void pick_one_bin(peak_env_info *ep, int bin, off_t cursamp, chan_info *cp, int edpos)
 {
   snd_fd *sf;
   int n;
@@ -563,31 +563,31 @@ void pick_one_bin(env_info *ep, int bin, off_t cursamp, chan_info *cp, int edpos
   free_snd_fd(sf);
 }
 
-void amp_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num, int pos)
+void peak_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num, int pos)
 {
-  env_info *old_ep;
+  peak_env_info *old_ep;
   old_ep = cp->edits[pos]->peak_env;
   if ((old_ep) && (old_ep->completed))
     {
       Float fmax = -1.0, fmin = 1.0;
       off_t cursamp, start, end;
       int i;
-      env_info *new_ep;
+      peak_env_info *new_ep;
       new_ep = cp->edits[cp->edit_ctr]->peak_env;
       if ((new_ep) && 
-	  (new_ep->amp_env_size != old_ep->amp_env_size)) 
-	new_ep = free_amp_env(cp, cp->edit_ctr);
+	  (new_ep->peak_env_size != old_ep->peak_env_size)) 
+	new_ep = free_peak_env(cp, cp->edit_ctr);
       if (new_ep == NULL)
 	{
-	  new_ep = (env_info *)CALLOC(1, sizeof(env_info));
-	  new_ep->data_max = (Float *)MALLOC(old_ep->amp_env_size * sizeof(Float));
-	  new_ep->data_min = (Float *)MALLOC(old_ep->amp_env_size * sizeof(Float));
+	  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
+	  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
+	  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
 	}
-      new_ep->amp_env_size = old_ep->amp_env_size;
+      new_ep->peak_env_size = old_ep->peak_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       end = beg + num - 1;
       start = beg - new_ep->samps_per_bin;
-      for (i = 0, cursamp = 0; i < new_ep->amp_env_size; i++, cursamp += new_ep->samps_per_bin) 
+      for (i = 0, cursamp = 0; i < new_ep->peak_env_size; i++, cursamp += new_ep->samps_per_bin) 
 	{
 	  if ((cursamp >= end) || (cursamp <= start))
 	    {
@@ -624,23 +624,23 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num, 
     }
 }
 
-env_info *amp_env_section(chan_info *cp, off_t beg, off_t num, int edpos)
+peak_env_info *peak_env_section(chan_info *cp, off_t beg, off_t num, int edpos)
 {
   /* used in snd-region.c to create the region peak amp env */
-  env_info *old_ep, *new_ep = NULL;
+  peak_env_info *old_ep, *new_ep = NULL;
   Float fmax = -1.0, fmin = 1.0;
   int i, j;
   off_t cursamp, start, end;
   old_ep = cp->edits[edpos]->peak_env;
   if (old_ep == NULL) return(NULL);
-  new_ep = (env_info *)CALLOC(1, sizeof(env_info));
-  new_ep->data_max = (Float *)MALLOC(old_ep->amp_env_size * sizeof(Float));
-  new_ep->data_min = (Float *)MALLOC(old_ep->amp_env_size * sizeof(Float));
-  new_ep->amp_env_size = old_ep->amp_env_size;
+  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
+  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
+  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
+  new_ep->peak_env_size = old_ep->peak_env_size;
   new_ep->samps_per_bin = old_ep->samps_per_bin;
   end = beg + num - 1;
   start = beg - new_ep->samps_per_bin;
-  for (i = 0, j = 0, cursamp = 0; (i < new_ep->amp_env_size) && (cursamp < end); i++, cursamp += new_ep->samps_per_bin) 
+  for (i = 0, j = 0, cursamp = 0; (i < new_ep->peak_env_size) && (cursamp < end); i++, cursamp += new_ep->samps_per_bin) 
     {
       if (cursamp > start)
 	{
@@ -664,23 +664,23 @@ env_info *amp_env_section(chan_info *cp, off_t beg, off_t num, int edpos)
   return(new_ep);
 }
 
-env_info *copy_env_info(env_info *old_ep, bool reversed)
+peak_env_info *copy_peak_env_info(peak_env_info *old_ep, bool reversed)
 {
-  env_info *new_ep = NULL;
+  peak_env_info *new_ep = NULL;
   if ((old_ep) && 
       (old_ep->completed))
     {
       int i, j;
-      new_ep = (env_info *)CALLOC(1, sizeof(env_info));
-      new_ep->data_max = (Float *)MALLOC(old_ep->amp_env_size * sizeof(Float));
-      new_ep->data_min = (Float *)MALLOC(old_ep->amp_env_size * sizeof(Float));
-      new_ep->amp_env_size = old_ep->amp_env_size;
+      new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
+      new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
+      new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
+      new_ep->peak_env_size = old_ep->peak_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       new_ep->fmin = old_ep->fmin;
       new_ep->fmax = old_ep->fmax;
       if (reversed)
 	{
-	  for (i = 0, j = new_ep->amp_env_size - 1; i < new_ep->amp_env_size; i++, j--) 
+	  for (i = 0, j = new_ep->peak_env_size - 1; i < new_ep->peak_env_size; i++, j--) 
 	    {
 	      new_ep->data_min[j] = old_ep->data_min[i];
 	      new_ep->data_max[j] = old_ep->data_max[i];
@@ -688,8 +688,8 @@ env_info *copy_env_info(env_info *old_ep, bool reversed)
 	}
       else
 	{
-	  memcpy((void *)new_ep->data_min, (void *)old_ep->data_min, sizeof(Float) * new_ep->amp_env_size);
-	  memcpy((void *)new_ep->data_max, (void *)old_ep->data_max, sizeof(Float) * new_ep->amp_env_size);
+	  memcpy((void *)new_ep->data_min, (void *)old_ep->data_min, sizeof(Float) * new_ep->peak_env_size);
+	  memcpy((void *)new_ep->data_max, (void *)old_ep->data_max, sizeof(Float) * new_ep->peak_env_size);
 	}
       new_ep->completed = true;
       new_ep->bin = old_ep->bin;
@@ -699,40 +699,40 @@ env_info *copy_env_info(env_info *old_ep, bool reversed)
 }
 
 
-env_info *amp_env_copy(chan_info *cp, bool reversed, int edpos)
+peak_env_info *peak_env_copy(chan_info *cp, bool reversed, int edpos)
 {
-  return(copy_env_info(cp->edits[edpos]->peak_env, reversed));
+  return(copy_peak_env_info(cp->edits[edpos]->peak_env, reversed));
 }
 
 
 void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Float scaler, Float offset)
 {
-  env_info *old_ep;
+  peak_env_info *old_ep;
   old_ep = cp->edits[pos]->peak_env;
   if ((old_ep) && (old_ep->completed))
     {
       int i;
       mus_any *e;
       Float val, fmin, fmax;
-      env_info *new_ep;
+      peak_env_info *new_ep;
       new_ep = cp->edits[cp->edit_ctr]->peak_env;
       if ((new_ep) && 
-	  (new_ep->amp_env_size != old_ep->amp_env_size)) 
-	new_ep = free_amp_env(cp, cp->edit_ctr);
+	  (new_ep->peak_env_size != old_ep->peak_env_size)) 
+	new_ep = free_peak_env(cp, cp->edit_ctr);
       if (new_ep == NULL)
 	{
-	  new_ep = (env_info *)CALLOC(1, sizeof(env_info));
-	  new_ep->data_max = (Float *)MALLOC(old_ep->amp_env_size * sizeof(Float));
-	  new_ep->data_min = (Float *)MALLOC(old_ep->amp_env_size * sizeof(Float));
+	  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
+	  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
+	  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
 	}
-      new_ep->amp_env_size = old_ep->amp_env_size;
+      new_ep->peak_env_size = old_ep->peak_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       if (base == 1.0)
-	e = mus_make_env(brkpts, npts, scaler, offset, base, 0.0, 0, new_ep->amp_env_size - 1, brkpts);
-      else e = mus_make_env(brkpts, npts, 1.0, 0.0, base, 0.0, 0, new_ep->amp_env_size - 1, brkpts);
+	e = mus_make_env(brkpts, npts, scaler, offset, base, 0.0, 0, new_ep->peak_env_size - 1, brkpts);
+      else e = mus_make_env(brkpts, npts, 1.0, 0.0, base, 0.0, 0, new_ep->peak_env_size - 1, brkpts);
       fmin = 1.0;
       fmax = -1.0;
-      for (i = 0; i < new_ep->amp_env_size; i++) 
+      for (i = 0; i < new_ep->peak_env_size; i++) 
 	{
 	  val = mus_env(e);
 	  if (val >= 0.0)
@@ -760,7 +760,7 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Fl
 
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, int pos)
 {
-  env_info *old_ep;
+  peak_env_info *old_ep;
   old_ep = cp->edits[pos]->peak_env;
   if ((old_ep) && (old_ep->completed))
     {
@@ -769,24 +769,24 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
       Float fmax = -1.0, fmin = 1.0;
       int i;
       off_t cursamp, start, end;
-      env_info *new_ep;
+      peak_env_info *new_ep;
       new_ep = cp->edits[cp->edit_ctr]->peak_env;
       if ((new_ep) && 
-	  (new_ep->amp_env_size != old_ep->amp_env_size)) 
-	new_ep = free_amp_env(cp, cp->edit_ctr);
+	  (new_ep->peak_env_size != old_ep->peak_env_size)) 
+	new_ep = free_peak_env(cp, cp->edit_ctr);
       if (new_ep == NULL)
 	{
-	  new_ep = (env_info *)CALLOC(1, sizeof(env_info));
-	  new_ep->data_max = (Float *)MALLOC(old_ep->amp_env_size * sizeof(Float));
-	  new_ep->data_min = (Float *)MALLOC(old_ep->amp_env_size * sizeof(Float));
+	  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
+	  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
+	  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
 	}
-      new_ep->amp_env_size = old_ep->amp_env_size;
+      new_ep->peak_env_size = old_ep->peak_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       end = beg + num - 1;
       start = beg - new_ep->samps_per_bin;
       data = mus_data(e);
       xmax = data[mus_env_breakpoints(e) * 2 - 2];
-      for (i = 0, cursamp = 0; i < new_ep->amp_env_size; i++, cursamp += new_ep->samps_per_bin) 
+      for (i = 0, cursamp = 0; i < new_ep->peak_env_size; i++, cursamp += new_ep->samps_per_bin) 
 	{
 	  if ((cursamp >= end) || (cursamp <= start))
 	    {
@@ -826,27 +826,27 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
     }
 }
 
-void amp_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func)
+void peak_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func)
 {
-  env_info *old_ep;
+  peak_env_info *old_ep;
   old_ep = cp->edits[pos]->peak_env;
   if ((old_ep) && (old_ep->completed))
     {
       int i;
       vct *vlo = NULL, *vhi = NULL;
       Float fmin, fmax, dmin, dmax;
-      env_info *new_ep;
+      peak_env_info *new_ep;
       new_ep = cp->edits[cp->edit_ctr]->peak_env;
       if ((new_ep) && 
-	  (new_ep->amp_env_size != old_ep->amp_env_size)) 
-	new_ep = free_amp_env(cp, cp->edit_ctr);
+	  (new_ep->peak_env_size != old_ep->peak_env_size)) 
+	new_ep = free_peak_env(cp, cp->edit_ctr);
       if (new_ep == NULL)
 	{
-	  new_ep = (env_info *)CALLOC(1, sizeof(env_info));
-	  new_ep->data_max = (Float *)MALLOC(old_ep->amp_env_size * sizeof(Float));
-	  new_ep->data_min = (Float *)MALLOC(old_ep->amp_env_size * sizeof(Float));
+	  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
+	  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
+	  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
 	}
-      new_ep->amp_env_size = old_ep->amp_env_size;
+      new_ep->peak_env_size = old_ep->peak_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       fmin = 1.0;
       fmax = -1.0;
@@ -855,11 +855,11 @@ void amp_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func)
 	  /* probably faster to copy locally than protect from GC */
 	  vlo = mus_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
 							     C_TO_XEN_OFF_T(0),
-							     C_TO_XEN_OFF_T(new_ep->amp_env_size),
+							     C_TO_XEN_OFF_T(new_ep->peak_env_size),
 							     S_ptree_channel " init func"))));
 	  vhi = mus_vct_copy(vlo);
 	}
-      for (i = 0; i < new_ep->amp_env_size; i++) 
+      for (i = 0; i < new_ep->peak_env_size; i++) 
 	{
 	  if (vlo)
 	    {
@@ -895,13 +895,13 @@ void amp_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func)
     }
 }
 
-void amp_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t num, int pos, XEN init_func)
+void peak_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t num, int pos, XEN init_func)
 {
-  env_info *old_ep;
+  peak_env_info *old_ep;
   old_ep = cp->edits[pos]->peak_env;
   if ((old_ep) && (old_ep->completed))
     {
-      env_info *new_ep;
+      peak_env_info *new_ep;
       Float fmax = -1.0, fmin = 1.0, dmin, dmax;
       int i;
       bool closure = false, inited = false;
@@ -909,20 +909,20 @@ void amp_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t n
       off_t cursamp, start, end;
       new_ep = cp->edits[cp->edit_ctr]->peak_env;
       if ((new_ep) && 
-	  (new_ep->amp_env_size != old_ep->amp_env_size)) 
-	new_ep = free_amp_env(cp, cp->edit_ctr);
+	  (new_ep->peak_env_size != old_ep->peak_env_size)) 
+	new_ep = free_peak_env(cp, cp->edit_ctr);
       if (new_ep == NULL)
 	{
-	  new_ep = (env_info *)CALLOC(1, sizeof(env_info));
-	  new_ep->data_max = (Float *)MALLOC(old_ep->amp_env_size * sizeof(Float));
-	  new_ep->data_min = (Float *)MALLOC(old_ep->amp_env_size * sizeof(Float));
+	  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
+	  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
+	  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
 	}
-      new_ep->amp_env_size = old_ep->amp_env_size;
+      new_ep->peak_env_size = old_ep->peak_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       end = beg + num - 1;
       start = beg - new_ep->samps_per_bin;
       if (XEN_PROCEDURE_P(init_func)) closure = true;
-      for (i = 0, cursamp = 0; i < new_ep->amp_env_size; i++, cursamp += new_ep->samps_per_bin) 
+      for (i = 0, cursamp = 0; i < new_ep->peak_env_size; i++, cursamp += new_ep->samps_per_bin) 
 	{
 	  if ((cursamp >= end) || (cursamp <= start))
 	    {
@@ -979,33 +979,33 @@ void amp_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t n
     }
 }
 
-void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
+void peak_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
 {
-  env_info *old_ep;
+  peak_env_info *old_ep;
   old_ep = cp->edits[pos]->peak_env;
   if ((old_ep) && (old_ep->completed))
     {
       off_t end, old_samps, cur_samps;
       int i, j, subsamp, val, bins;
-      env_info *new_ep;
+      peak_env_info *new_ep;
       new_ep = cp->edits[cp->edit_ctr]->peak_env;
-      if (new_ep) new_ep = free_amp_env(cp, cp->edit_ctr);
+      if (new_ep) new_ep = free_peak_env(cp, cp->edit_ctr);
       old_samps = cp->edits[pos]->samples;
       cur_samps = CURRENT_SAMPLES(cp);
       val = (int)(log((double)(cur_samps)));
       if (val > 20) val = 20;
       val = snd_int_pow2(val);
-      subsamp = val / old_ep->amp_env_size;
+      subsamp = val / old_ep->peak_env_size;
       if (subsamp != 1) return;
-      new_ep = (env_info *)CALLOC(1, sizeof(env_info));
+      new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
       new_ep->samps_per_bin = old_ep->samps_per_bin;
-      new_ep->amp_env_size = (int)(ceil(cur_samps / new_ep->samps_per_bin));
+      new_ep->peak_env_size = (int)(ceil(cur_samps / new_ep->samps_per_bin));
       new_ep->completed = true;
       cp->edits[cp->edit_ctr]->peak_env = new_ep;
-      new_ep->bin = new_ep->amp_env_size;
-      new_ep->top_bin = new_ep->amp_env_size;
-      new_ep->data_max = (Float *)CALLOC(new_ep->amp_env_size, sizeof(Float));
-      new_ep->data_min = (Float *)CALLOC(new_ep->amp_env_size, sizeof(Float));
+      new_ep->bin = new_ep->peak_env_size;
+      new_ep->top_bin = new_ep->peak_env_size;
+      new_ep->data_max = (Float *)CALLOC(new_ep->peak_env_size, sizeof(Float));
+      new_ep->data_min = (Float *)CALLOC(new_ep->peak_env_size, sizeof(Float));
       new_ep->fmin = old_ep->fmin;
       if (new_ep->fmin > 0.0) new_ep->fmin = 0.0;
       new_ep->fmax = old_ep->fmax;
@@ -1015,8 +1015,8 @@ void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
 	{
 	  /* insert at start, so copy to end */
 	  i = (int)ceil(end / new_ep->samps_per_bin);
-	  bins = new_ep->amp_env_size - i;
-	  if (old_ep->amp_env_size < bins) bins = old_ep->amp_env_size;
+	  bins = new_ep->peak_env_size - i;
+	  if (old_ep->peak_env_size < bins) bins = old_ep->peak_env_size;
 	  memcpy((void *)(&(new_ep->data_min[i])), (void *)old_ep->data_min, sizeof(Float) * bins);
 	  memcpy((void *)(&(new_ep->data_max[i])), (void *)old_ep->data_max, sizeof(Float) * bins);
 	}
@@ -1026,7 +1026,7 @@ void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
 	    {
 	      /* copy start */
 	      bins = (int)floor(beg / old_ep->samps_per_bin);
-	      if (bins > old_ep->amp_env_size) bins = old_ep->amp_env_size;
+	      if (bins > old_ep->peak_env_size) bins = old_ep->peak_env_size;
 	      memcpy((void *)new_ep->data_min, (void *)old_ep->data_min, sizeof(Float) * bins);
 	      memcpy((void *)new_ep->data_max, (void *)old_ep->data_max, sizeof(Float) * bins);
 	    }
@@ -1038,22 +1038,22 @@ void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
 		  memcpy((void *)new_ep->data_min, (void *)old_ep->data_min, sizeof(Float) * i);
 		  memcpy((void *)new_ep->data_max, (void *)old_ep->data_max, sizeof(Float) * i);
 		}
-	      if (i < new_ep->amp_env_size)
+	      if (i < new_ep->peak_env_size)
 		{
 		  pick_one_bin(new_ep, i, i * old_ep->samps_per_bin, cp, cp->edit_ctr);
 		  i++;
 		}
 	      j = (int)floor(end / new_ep->samps_per_bin);
-	      if (j < new_ep->amp_env_size)
+	      if (j < new_ep->peak_env_size)
 		{
 		  pick_one_bin(new_ep, j, j * new_ep->samps_per_bin, cp, cp->edit_ctr);
 		  j++;
 		}
-	      if (i < old_ep->amp_env_size)
+	      if (i < old_ep->peak_env_size)
 		{
-		  bins = new_ep->amp_env_size - j;
-		  if ((i + bins) >= old_ep->amp_env_size)
-		    bins = old_ep->amp_env_size - i;
+		  bins = new_ep->peak_env_size - j;
+		  if ((i + bins) >= old_ep->peak_env_size)
+		    bins = old_ep->peak_env_size - i;
 		  memcpy((void *)(&(new_ep->data_min[j])), (void *)(&(old_ep->data_min[i])), sizeof(Float) * bins);
 		  memcpy((void *)(&(new_ep->data_max[j])), (void *)(&(old_ep->data_max[i])), sizeof(Float) * bins);
 		}
@@ -2413,7 +2413,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
 		{
 		  cp = sp->chans[i];
 		  if ((cp) && (cp->edits[cp->edit_ctr]->peak_env))
-		    cp->edits[cp->edit_ctr]->peak_env = free_amp_env(cp, cp->edit_ctr);
+		    cp->edits[cp->edit_ctr]->peak_env = free_peak_env(cp, cp->edit_ctr);
 		}
 	      snd_update_within_xen(sp, caller);
 	    }
@@ -4339,7 +4339,7 @@ at the given edit list position.  The data currently returned are whether \
 the envelopes are complete (they are the result of a background process), and the min and max data values."
 
   chan_info *cp;
-  env_info *ep;
+  peak_env_info *ep;
   int edpos;
   chan_context *cgx;
   ASSERT_CHANNEL(S_peak_env_info, snd, chn, 1);
@@ -4386,7 +4386,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   #define H_write_peak_env_info_file "(" S_write_peak_env_info_file " snd chn name): save current peak-env info in file"
   chan_info *cp;
   char *fullname = NULL;
-  env_info *ep;
+  peak_env_info *ep;
   int fd;
   int ibuf[PEAK_ENV_INTS];
   Float mbuf[PEAK_ENV_SAMPS];
@@ -4414,7 +4414,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   if (fullname) FREE(fullname);
   ep = cp->edits[0]->peak_env;
   ibuf[0] = ((ep->completed) ? 1 : 0) | PEAK_ENV_VERSION | (pack_env_info_type() << 16);
-  ibuf[1] = ep->amp_env_size;
+  ibuf[1] = ep->peak_env_size;
   ibuf[2] = ep->samps_per_bin;
   ibuf[3] = ep->bin;
   ibuf[4] = ep->top_bin;
@@ -4424,8 +4424,8 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
     ssize_t bytes;
     bytes = write(fd, (char *)ibuf, (PEAK_ENV_INTS * sizeof(int)));
     if (bytes != 0) bytes = write(fd, (char *)mbuf, (PEAK_ENV_SAMPS * sizeof(Float)));
-    if (bytes != 0) bytes = write(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(Float)));
-    if (bytes != 0) bytes = write(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(Float)));
+    if (bytes != 0) bytes = write(fd, (char *)(ep->data_min), (ep->peak_env_size * sizeof(Float)));
+    if (bytes != 0) bytes = write(fd, (char *)(ep->data_max), (ep->peak_env_size * sizeof(Float)));
     if (bytes == 0) fprintf(stderr, "write error in " S_write_peak_env_info_file);
   }
   snd_close(fd, fullname);
@@ -4435,15 +4435,15 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
 typedef enum {PEAK_ENV_NO_ERROR, PEAK_ENV_BAD_HEADER, PEAK_ENV_BAD_FORMAT, PEAK_ENV_BAD_SIZE, PEAK_ENV_NO_FILE, PEAK_ENV_NO_DATA} peak_env_error_t;
 static char *peak_env_error[6] = {"no error", "bad header", "bad format", "bad size", "no file", "no data in file"};
 
-static bool env_info_type_ok(int val)
+static bool peak_env_info_type_ok(int val)
 {
   return((val == 0) ||                            /* for backwards compatibility */
 	 (val == pack_env_info_type()));
 }
 
-static env_info *get_peak_env_info(const char *fullname, peak_env_error_t *error)
+static peak_env_info *get_peak_env_info(const char *fullname, peak_env_error_t *error)
 {
-  env_info *ep;
+  peak_env_info *ep;
   int fd, hdr = 0;
   ssize_t bytes;
   int ibuf[PEAK_ENV_INTS];
@@ -4467,7 +4467,7 @@ static env_info *get_peak_env_info(const char *fullname, peak_env_error_t *error
     (*error) = PEAK_ENV_BAD_HEADER;
   else
     {
-      if (!(env_info_type_ok(hdr >> 16)))
+      if (!(peak_env_info_type_ok(hdr >> 16)))
 	(*error) = PEAK_ENV_BAD_FORMAT;
       else
 	{
@@ -4485,19 +4485,19 @@ static env_info *get_peak_env_info(const char *fullname, peak_env_error_t *error
       snd_close(fd, fullname);
       return(NULL);
     }
-  ep = (env_info *)CALLOC(1, sizeof(env_info));
+  ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
   ep->completed = (bool)(hdr & 0xf); /* version number in higher bits */
-  ep->amp_env_size = ibuf[1];
+  ep->peak_env_size = ibuf[1];
   ep->samps_per_bin = ibuf[2];
   ep->bin = ibuf[3];
   ep->top_bin = ibuf[4];
   if (read(fd, (char *)mbuf, (PEAK_ENV_SAMPS * sizeof(Float))) == 0) fprintf(stderr, "%s: read error", fullname);
   ep->fmin = mbuf[0];
   ep->fmax = mbuf[1];
-  ep->data_min = (Float *)MALLOC(ep->amp_env_size * sizeof(Float));
-  ep->data_max = (Float *)MALLOC(ep->amp_env_size * sizeof(Float));
-  if (read(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(Float))) == 0) fprintf(stderr, "%s: read error", fullname);
-  if (read(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(Float))) == 0) fprintf(stderr, "%s: read error", fullname);
+  ep->data_min = (Float *)MALLOC(ep->peak_env_size * sizeof(Float));
+  ep->data_max = (Float *)MALLOC(ep->peak_env_size * sizeof(Float));
+  if (read(fd, (char *)(ep->data_min), (ep->peak_env_size * sizeof(Float))) == 0) fprintf(stderr, "%s: read error", fullname);
+  if (read(fd, (char *)(ep->data_max), (ep->peak_env_size * sizeof(Float))) == 0) fprintf(stderr, "%s: read error", fullname);
   snd_close(fd, fullname);
   return(ep);
 }
@@ -4505,7 +4505,7 @@ static env_info *get_peak_env_info(const char *fullname, peak_env_error_t *error
 static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
 {
   #define H_read_peak_env_info_file "(" S_read_peak_env_info_file " snd chn name): read stored peak-env info from file"
-  /* has to happen in initial_graph_hook to precede add_amp_env */
+  /* has to happen in initial_graph_hook to precede add_peak_env */
   chan_info *cp;
   peak_env_error_t err = PEAK_ENV_NO_ERROR;
   char *fullname;
@@ -4549,7 +4549,7 @@ static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
   return(name);
 }
 
-static XEN g_env_info_to_vcts(env_info *ep, int len)
+static XEN g_env_info_to_vcts(peak_env_info *ep, int len)
 {
   /* changed 5-Jan-03 to return vcts (Guile vector printer is stupid) */
   /* in snd-test this causes unfreed memory because the sound-icon-box saves all the data for each icon (vcts unfreed) */
@@ -4557,15 +4557,15 @@ static XEN g_env_info_to_vcts(env_info *ep, int len)
   int i, j, lim;
   vct *vmax, *vmin;
   int loc;
-  if ((len == 0) || (len > ep->amp_env_size))
-    lim = ep->amp_env_size;
+  if ((len == 0) || (len > ep->peak_env_size))
+    lim = ep->peak_env_size;
   else lim = len;
   res = XEN_LIST_2(xen_make_vct(lim, (Float *)CALLOC(lim, sizeof(Float))),
 		   xen_make_vct(lim, (Float *)CALLOC(lim, sizeof(Float))));
   loc = snd_protect(res);
   vmin = xen_to_vct(XEN_CAR(res));
   vmax = xen_to_vct(XEN_CADR(res));
-  if (ep->amp_env_size == lim)
+  if (ep->peak_env_size == lim)
     {
       for (i = 0; i < lim; i++)
 	{
@@ -4576,12 +4576,12 @@ static XEN g_env_info_to_vcts(env_info *ep, int len)
   else
     {
       Float cmax, cmin, incr, x;
-      incr = (Float)(ep->amp_env_size - 1) / (Float)lim; /* make extra room on left */
+      incr = (Float)(ep->peak_env_size - 1) / (Float)lim; /* make extra room on left */
       cmax = ep->fmin;
       cmin = ep->fmax;
       vmin->data[0] = ep->data_min[0];
       vmax->data[0] = ep->data_max[0];
-      for (i = 1, j = 1, x = 0.0; i < ep->amp_env_size; i++)
+      for (i = 1, j = 1, x = 0.0; i < ep->peak_env_size; i++)
 	{
 	  if (ep->data_max[i] > cmax) cmax = ep->data_max[i];
 	  if (ep->data_min[i] < cmin) cmin = ep->data_min[i];
@@ -4618,7 +4618,7 @@ static idle_func_t tick_it(any_pointer_t pet)
   env_tick *et = (env_tick *)pet;
   es = et->es;
   cp = et->cp;
-  val = tick_amp_env(cp, es);
+  val = tick_peak_env(cp, es);
   if (val)
     {
       free_snd_fd(es->sf);
@@ -4682,24 +4682,24 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
       if (cp)
 	{
 	  env_state *es;
-	  env_info *ep;
+	  peak_env_info *ep;
 	  int pos;
 	  pos = to_c_edit_position(cp, pts, S_channel_amp_envs, 3); /* here "pts" is edpos, not vector size */
 	  if (cp->edits == NULL)
 	    return(XEN_EMPTY_LIST);
 	  ep = cp->edits[pos]->peak_env; /* this can be null -- we run the peak envs if necessary */
 	  if (ep)
-	    return(g_env_info_to_vcts(ep, ep->amp_env_size));
+	    return(g_env_info_to_vcts(ep, ep->peak_env_size));
 	  /* force amp env to completion */
-	  stop_amp_env(cp);
+	  stop_peak_env(cp);
 	  es = make_env_state(cp, cp->edits[pos]->samples);
 	  if (es)
 	    {
-	      while (!(tick_amp_env(cp, es)));
+	      while (!(tick_peak_env(cp, es)));
 	      FREE(es);
 	      ep = cp->edits[pos]->peak_env;
 	      if (ep)
-		return(g_env_info_to_vcts(ep, ep->amp_env_size));
+		return(g_env_info_to_vcts(ep, ep->peak_env_size));
 	    }
 	  return(XEN_EMPTY_LIST);
 	}
@@ -4756,13 +4756,13 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 	  peakname = mus_expand_filename(XEN_TO_C_STRING(peak_filename));
 	  if (mus_file_probe(peakname))
 	    {
-	      env_info *ep;
+	      peak_env_info *ep;
 	      ep = get_peak_env_info(peakname, &err);
 	      if (ep)
 		{
 		  XEN vcts;
 		  vcts = g_env_info_to_vcts(ep, len);
-		  ep = free_env_info(ep);
+		  ep = free_peak_env_info(ep);
 		  if (peakname) FREE(peakname);
 		  return(vcts);
 		}
@@ -4797,7 +4797,7 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 	      id = (int)BACKGROUND_ADD(tick_it, (any_pointer_t)et);
 	      return(C_TO_XEN_INT(id));
 	    }
-	  while (!(tick_amp_env(cp, es)));
+	  while (!(tick_peak_env(cp, es)));
 	  free_snd_fd(es->sf);
 	  FREE(es);
 	  peak = g_env_info_to_vcts(cp->edits[0]->peak_env, len);

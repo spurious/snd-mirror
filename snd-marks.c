@@ -1499,7 +1499,7 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
       Float ymin, ymax, msamp;
       int xi;
       double xf;
-      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, false, cp->edit_ctr, (samps > PEAK_ENV_CUTOFF)))
+      if (peak_env_usable(cp, samples_per_pixel, ap->hisamp, false, cp->edit_ctr, (samps > PEAK_ENV_CUTOFF)))
 	{
 	  /* needs two sets of pointers and a frame within the amp env:
 	   *   sample given mark edit: i and xk
@@ -1509,7 +1509,7 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
 	   */
 	  double step, xk, xki;
 	  off_t ii, kk;
-	  env_info *ep;
+	  peak_env_info *ep;
 	  ep = cp->edits[cp->edit_ctr]->peak_env;
 	  step = samples_per_pixel / (Float)(ep->samps_per_bin);
 	  xf = (double)(ap->losamp) / (double)(ep->samps_per_bin);
@@ -1527,7 +1527,7 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
 	      if (((current_sample >= initial_sample) && 
 		   (i >= initial_sample) && 
 		   (i < current_sample)) ||
-		  (kk >= ep->amp_env_size))
+		  (kk >= ep->peak_env_size))
 		{
 		  ymin = 0.0;
 		  ymax = 0.0;

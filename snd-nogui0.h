@@ -52,8 +52,8 @@ typedef struct {
 } axis_context;
 
 typedef struct {
-  struct env_state *amp_env_state;
-  int amp_env_in_progress;
+  struct env_state *peak_env_state;
+  int peak_env_in_progress;
   axis_context *ax;
   int selected;
   int fft_in_progress;

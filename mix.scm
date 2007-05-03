@@ -76,15 +76,28 @@
 	v)
       (throw 'no-such-mix (list "mix->vct" id))))
 
-;;; TODO: save-mix too large for vct */
 
 (define (save-mix id filename)
   "(save-mix id filename) saves mix data (as floats) in file filename"
-  (let ((v (mix->vct id))
-	(fd (mus-sound-open-output filename (srate) 1 #f #f "")))
-    (mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
-    (mus-sound-close-output fd (* 4 (vct-length v)))))
-
+  (if (mix? id)
+      (if (< (mix-length id) 1000000)
+	  (let ((v (mix->vct id))
+		(fd (mus-sound-open-output filename (srate) 1 #f #f "")))
+	    (mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
+	    (mus-sound-close-output fd (* 4 (vct-length v))))
+	  (let* ((buflen 10000)
+		 (sd (make-sound-data 1 buflen))
+		 (len (mix-length id))
+		 (reader (make-mix-sample-reader id)))
+	    (do ((buf 0 (+ buf buflen)))
+		((>= buf len))
+	      (do ((i 0 (1+ i)))
+		  ((= i buflen))
+		(sound-data-set! sd 0 i (read-mix-sample reader)))
+	      (mus-sound-write fd 0 (1- buflen) 1 sd))
+	    (free-sample-reader reader)
+	    (mus-sound-close-output fd (* 4 len))))
+      (throw 'no-such-mix (list "save-mix" id))))
 
 (define (mix-maxamp id)
   "(mix-maxamp id) returns the max amp in the given mix"

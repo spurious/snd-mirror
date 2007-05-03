@@ -323,15 +323,15 @@ void stop_fft_in_progress(chan_info *cp)
     }
 }
 
-void stop_amp_env(chan_info *cp)
+void stop_peak_env(chan_info *cp)
 {
   chan_context *cgx;
   cgx = cp->cgx;
-  if ((cgx) && (cgx->amp_env_in_progress))
+  if ((cgx) && (cgx->peak_env_in_progress))
     {
-      BACKGROUND_REMOVE(cgx->amp_env_in_progress);
-      free_env_state(cp);
-      cgx->amp_env_in_progress = 0; 
+      BACKGROUND_REMOVE(cgx->peak_env_in_progress);
+      free_peak_env_state(cp);
+      cgx->peak_env_in_progress = 0; 
     }
 }
 
@@ -359,7 +359,7 @@ void chan_info_cleanup(chan_info *cp)
 	  BACKGROUND_REMOVE(cx->fft_in_progress);
 	  cx->fft_in_progress = 0;
 	}
-      stop_amp_env(cp);
+      stop_peak_env(cp);
       cleanup_cw(cp);
     }
 }
@@ -664,15 +664,15 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
   /* our initial edit_list size will be relatively small */
 }
 
-void start_amp_env(chan_info *cp)
+void start_peak_env(chan_info *cp)
 {
   chan_context *cgx;
   cgx = cp->cgx;
   if (cgx)
     {
-      if (cgx->amp_env_in_progress) stop_amp_env(cp);
-      start_env_state(cp);
-      cgx->amp_env_in_progress = BACKGROUND_ADD(get_amp_env, (any_pointer_t)cp);
+      if (cgx->peak_env_in_progress) stop_peak_env(cp);
+      start_peak_env_state(cp);
+      cgx->peak_env_in_progress = BACKGROUND_ADD(get_peak_env, (any_pointer_t)cp);
     }
 }
 
@@ -710,7 +710,7 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
   if ((CURRENT_SAMPLES(cp) > PEAK_ENV_CUTOFF) &&
       (cp->edits[0]->peak_env == NULL) &&              /* perhaps created in initial-graph-hook by read-peak-env-info-file */
       (cp->sound->short_filename != NULL))             /* region browser jumped in too soon during autotest */
-    start_amp_env(cp);
+    start_peak_env(cp);
 }
 
 static void set_y_bounds(axis_info *ap)
@@ -1317,8 +1317,8 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
   else
     {
       /* take min, max */
-      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, true, cp->edit_ctr, false)) /* true = start new background amp env process if needed */
-	j = amp_env_graph(cp, ap, samples_per_pixel, (normal) ? ((int)SND_SRATE(sp)) : 1);
+      if (peak_env_usable(cp, samples_per_pixel, ap->hisamp, true, cp->edit_ctr, false)) /* true = start new background amp env process if needed */
+	j = peak_env_graph(cp, ap, samples_per_pixel, (normal) ? ((int)SND_SRATE(sp)) : 1);
       else
 	{
 	  Float ymin, ymax;
@@ -1328,9 +1328,9 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
                                              /* we're trying to view a large portion of the (large) sound */
 	      chan_context *cgx;
 	      cgx = cp->cgx;
-	      if (cgx->amp_env_in_progress)
+	      if (cgx->peak_env_in_progress)
 		{                            /* is peak-env background process is still working on it */
-		  env_info *ep;
+		  peak_env_info *ep;
 		  ep = cp->edits[cp->edit_ctr]->peak_env;
 		  if ((ep) && samples_per_pixel >= (Float)(ep->samps_per_bin))
 		    {                        /* and it will be useful when it finishes */
@@ -1455,12 +1455,12 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
     }
   else
     {
-      if (amp_env_usable(cp, samples_per_pixel, hisamp, false, edit_pos, true)) 
+      if (peak_env_usable(cp, samples_per_pixel, hisamp, false, edit_pos, true)) 
 	{
 	  double step, xk;
 	  Float ymin, ymax;
 	  int k, kk;
-	  env_info *ep;
+	  peak_env_info *ep;
 	  data_size = pixels + 1;
 	  data = (Float *)CALLOC(data_size, sizeof(Float));
 	  data1 = (Float *)CALLOC(data_size, sizeof(Float));
@@ -1477,8 +1477,8 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 	      k = (int)xf;
 	      xf += step;
 	      kk = (int)xf;
-	      if (kk >= ep->amp_env_size) 
-		kk = ep->amp_env_size - 1;
+	      if (kk >= ep->peak_env_size) 
+		kk = ep->peak_env_size - 1;
 	      for (; k <= kk; k++)
 		{
 		  if (ep->data_min[k] < ymin) ymin = ep->data_min[k];
@@ -4677,7 +4677,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 	      /* any display-oriented background process must 1st be run to completion
 	       *       display checks for waiting process and does not update display if one found!
 	       */
-	      finish_amp_env(cp);
+	      finish_peak_env(cp);
 	      cp->waiting_to_make_graph = false;
 	      display_channel_time_data(cp);
 	      break;

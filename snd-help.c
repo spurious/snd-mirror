@@ -2,13 +2,6 @@
 #include "sndlib-strings.h"
 #include "clm-strings.h"
 
-/* TODO: audio setup help -- could check mutes/vols etc and report suspicious settings
- *       also the ALSA env vars, mus_audio_report etc
- *       also in special unsupported cases, like x86 solaris
- *       perhaps put bad vals in red? 
- */
-
-
 static char **snd_xrefs(const char *topic);
 static char **snd_xref_urls(const char *topic);
 

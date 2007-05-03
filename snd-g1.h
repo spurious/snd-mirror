@@ -441,7 +441,7 @@ void set_enved_undo_sensitive(bool val);
 void set_enved_save_sensitive(bool val);
 void set_enved_show_sensitive(bool val);
 void make_scrolled_env_list(void);
-void enved_reflect_amp_env_completion(snd_info *sp);
+void enved_reflect_peak_env_completion(snd_info *sp);
 void new_active_channel_alert(void);
 void env_redisplay(void);
 void env_redisplay_with_print(void);

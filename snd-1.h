@@ -110,12 +110,12 @@ typedef struct {
 } list_completer_info;
 
 typedef struct {
-  int samps_per_bin, amp_env_size;
+  int samps_per_bin, peak_env_size;
   Float fmax, fmin;
   Float *data_max, *data_min;
   bool completed;
   int bin, top_bin;
-} env_info;
+} peak_env_info;
 
 typedef struct {
   int fd, chans, bufsize;
@@ -179,7 +179,7 @@ typedef struct {
   off_t samples, cursor;
   int mark_size, mark_ctr;
   mark **marks;                        /* mark positions */
-  env_info *peak_env;                  /* peak amp env data */
+  peak_env_info *peak_env; 
   enved_fft *fft;                      /* overall fft data for envelope editor */
   void *readers;                       /* current readers of this edit (g++ stupidity forces us to use void* here -- type is sf_info, snd-edits.c) */
   void *mixes;
@@ -1269,8 +1269,8 @@ void set_sound_channel_style(snd_info *sp, channel_style_t val);
 void set_chan_fft_in_progress(chan_info *cp, idle_t fp);
 void stop_fft_in_progress(chan_info *cp);
 void goto_graph(chan_info *cp);
-void start_amp_env(chan_info *cp);
-void stop_amp_env(chan_info *cp);
+void start_peak_env(chan_info *cp);
+void stop_peak_env(chan_info *cp);
 bool chan_fft_in_progress(chan_info *cp);
 void force_fft_clear(chan_info *cp);
 void chan_info_cleanup(chan_info *cp);
@@ -1358,16 +1358,16 @@ axis_info *make_axis_info(chan_info *cp, double xmin, double xmax, Float ymin, F
 /* -------- snd-snd.c -------- */
 
 snd_info *get_sp(XEN snd_n, sp_sound_t accept_player);
-env_info *free_amp_env(chan_info *cp, int pos);
-void free_env_state(chan_info *cp);
-env_info *free_env_info(env_info *ep);
-void start_env_state(chan_info *cp);
-idle_func_t get_amp_env(any_pointer_t ptr);
-void finish_amp_env(chan_info *cp);
-bool amp_env_maxamp_ok(chan_info *cp, int edpos);
-Float amp_env_maxamp(chan_info *cp, int edpos);
-bool amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool start_new, int edit_pos, bool finish_env);
-int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int srate);
+peak_env_info *free_peak_env(chan_info *cp, int pos);
+void free_peak_env_state(chan_info *cp);
+peak_env_info *free_peak_env_info(peak_env_info *ep);
+void start_peak_env_state(chan_info *cp);
+idle_func_t get_peak_env(any_pointer_t ptr);
+void finish_peak_env(chan_info *cp);
+bool peak_env_maxamp_ok(chan_info *cp, int edpos);
+Float peak_env_maxamp(chan_info *cp, int edpos);
+bool peak_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool start_new, int edit_pos, bool finish_env);
+int peak_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int srate);
 char *shortname(snd_info *sp);
 char *shortname_indexed(snd_info *sp);
 void add_sound_data(char *filename, snd_info *sp, channel_graph_t graphed);
@@ -1381,10 +1381,11 @@ void stop_applying(snd_info *sp);
 void menu_apply_controls(snd_info *sp);
 void menu_reset_controls(snd_info *sp);
 void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Float scaler, Float offset);
+peak_env_info *copy_peak_env_info(peak_env_info *old_ep, bool reversed);
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, int pos);
-void amp_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func);
-void amp_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t num, int pos, XEN init_func);
-void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos);
+void peak_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func);
+void peak_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t num, int pos, XEN init_func);
+void peak_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos);
 snd_info *snd_new_file(const char *newname, int header_type, int data_format, int srate, int chans, const char *new_comment, off_t samples);
 #if XEN_HAVE_RATIOS
   void snd_rationalize(Float a, int *num, int *den);
@@ -1400,11 +1401,11 @@ void clear_listener_strings(void);
 void g_init_snd(void);
 XEN snd_no_such_sound_error(const char *caller, XEN n);
 
-void amp_env_scale_by(chan_info *cp, Float scl, int pos);
-void amp_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num, int pos);
-env_info *amp_env_copy(chan_info *cp, bool reversed, int edpos);
-env_info *amp_env_section(chan_info *cp, off_t beg, off_t num, int edpos);
-void pick_one_bin(env_info *ep, int bin, off_t cursamp, chan_info *cp, int edpos);
+void peak_env_scale_by(chan_info *cp, Float scl, int pos);
+void peak_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num, int pos);
+peak_env_info *peak_env_copy(chan_info *cp, bool reversed, int edpos);
+peak_env_info *peak_env_section(chan_info *cp, off_t beg, off_t num, int edpos);
+void pick_one_bin(peak_env_info *ep, int bin, off_t cursamp, chan_info *cp, int edpos);
 void remember_mini_string(snd_info *sp, const char *str);
 void restore_mini_string(snd_info *s, bool back);
 void clear_mini_strings(snd_info *sp);

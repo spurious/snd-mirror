@@ -48,7 +48,7 @@ typedef struct region {
   char *editor_name;
   int id;
   deferred_region *dr;      /* REGION_DEFERRED descriptor */
-  env_info **amp_envs;
+  peak_env_info **peak_envs;
   off_t *begs, *lens;
 } region;
 
@@ -88,14 +88,14 @@ static void free_region(region *r, int complete)
 	  if (r->end) FREE(r->end);
 	  if (r->begs) FREE(r->begs);
 	  if (r->lens) FREE(r->lens);
-	  if (r->amp_envs)
+	  if (r->peak_envs)
 	    {
 	      int i;
 	      for (i = 0; i < r->chans; i++)
-		if (r->amp_envs[i]) 
-		  r->amp_envs[i] = free_env_info(r->amp_envs[i]);
-	      FREE(r->amp_envs);
-	      r->amp_envs = NULL;
+		if (r->peak_envs[i]) 
+		  r->peak_envs[i] = free_peak_env_info(r->peak_envs[i]);
+	      FREE(r->peak_envs);
+	      r->peak_envs = NULL;
 	    }
 	}
       if (r->use_temp_file == REGION_FILE) /* we can delete this temp file because all references copy first */
@@ -442,8 +442,8 @@ file_info *fixup_region_data(chan_info *cp, int chan, int pos)
 	  cp->edit_ctr = ncp->edit_ctr;
 	  cp->edits[0]->samples = ncp->edits[0]->samples;
 	  cp->axis = ncp->axis;
-	  if ((r->amp_envs) && (r->amp_envs[chan]))
-	    cp->edits[0]->peak_env = r->amp_envs[chan];
+	  if ((r->peak_envs) && (r->peak_envs[chan]))
+	    cp->edits[0]->peak_env = r->peak_envs[chan];
 	  else
 	    {
 	      if (cp->edits[0]->peak_env)
@@ -711,13 +711,13 @@ int define_region(sync_info *si, off_t *ends)
       drp->edpos[i] = drp->cps[i]->edit_ctr;
       if (r->lens[i] > PEAK_ENV_CUTOFF)
 	{
-	  env_info *ep;
+	  peak_env_info *ep;
 	  ep = drp->cps[i]->edits[drp->edpos[i]]->peak_env;
 	  if ((ep) && (ep->completed))
 	    {
-	      if (r->amp_envs == NULL)
-		r->amp_envs = (env_info **)CALLOC(r->chans, sizeof(env_info *));
-	      r->amp_envs[i] = amp_env_section(drp->cps[i], r->begs[i], r->lens[i], drp->edpos[i]);
+	      if (r->peak_envs == NULL)
+		r->peak_envs = (peak_env_info **)CALLOC(r->chans, sizeof(peak_env_info *));
+	      r->peak_envs[i] = peak_env_section(drp->cps[i], r->begs[i], r->lens[i], drp->edpos[i]);
 	    }
 	}
     }
@@ -746,7 +746,7 @@ static void deferred_region_to_temp_file(region *r)
   sp0 = drp->cps[0]->sound;
   copy_ok = ((mus_header_writable(MUS_NEXT, sp0->hdr->format)) && 
 	     (r->chans == sp0->nchans) &&
-	     (r->amp_envs != NULL) &&
+	     (r->peak_envs != NULL) &&
 	     ((drp->len - 1) == r->lens[0]));
   if (copy_ok)
     for (i = 0; i < r->chans; i++)
@@ -754,7 +754,7 @@ static void deferred_region_to_temp_file(region *r)
 	  (drp->cps[i]->sound != sp0) ||
 	  (r->begs[i] != r->begs[0]) ||
 	  (r->lens[i] != (drp->len - 1)) ||
-	  (r->amp_envs[i] == NULL))
+	  (r->peak_envs[i] == NULL))
 	{
 	  copy_ok = false;
 	  break;
@@ -770,7 +770,7 @@ static void deferred_region_to_temp_file(region *r)
       int fdi, fdo;
       char *buffer;
       Float ymax = 0.0;
-      env_info *ep;
+      peak_env_info *ep;
       datumb = mus_bytes_per_sample(sp0->hdr->format);
 
       err = mus_write_header(r->filename, MUS_NEXT, r->srate, r->chans, drp->len * r->chans, sp0->hdr->format, "region deferred temp");
@@ -806,7 +806,7 @@ static void deferred_region_to_temp_file(region *r)
 	      snd_close(fdi, sp0->filename);
 	      for (i = 0; i < r->chans; i++)
 		{
-		  ep = r->amp_envs[i];
+		  ep = r->peak_envs[i];
 		  if (ymax < ep->fmax) 
 		    ymax = ep->fmax;
 		  if (ymax < -ep->fmin)
@@ -844,7 +844,7 @@ static void deferred_region_to_temp_file(region *r)
 	  sfs = (snd_fd **)CALLOC(r->chans, sizeof(snd_fd *));
 	  data = (mus_sample_t **)CALLOC(r->chans, sizeof(mus_sample_t *));
 	  datumb = mus_bytes_per_sample(hdr->format);
-	  /* here if amp_envs, maxamp exists */
+	  /* here if peak_envs, maxamp exists */
 	  for (i = 0; i < r->chans; i++)
 	    {
 	      sfs[i] = init_sample_read_any(r->begs[i], drp->cps[i], READ_FORWARD, drp->edpos[i]);

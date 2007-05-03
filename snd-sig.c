@@ -479,8 +479,8 @@ static Float channel_maxamp_and_position(chan_info *cp, int edpos, off_t *maxpos
   Float val;
   int pos;
   if (edpos == AT_CURRENT_EDIT_POSITION) pos = cp->edit_ctr; else pos = edpos;
-  if ((amp_env_maxamp_ok(cp, pos)) && (!maxpos))
-    return(amp_env_maxamp(cp, pos));
+  if ((peak_env_maxamp_ok(cp, pos)) && (!maxpos))
+    return(peak_env_maxamp(cp, pos));
   val = ed_maxamp(cp, pos);
   if (maxpos) (*maxpos) = ed_maxamp_position(cp, pos);
   if ((val >= 0.0) && ((!maxpos) || ((*maxpos) >= 0)))
@@ -2241,7 +2241,7 @@ void apply_filter(chan_info *ncp, int order, env *e, enved_progress_t from_enved
 static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XEN edp, const char *caller, int arg_pos)
 {
   snd_info *sp;
-  env_info *ep = NULL;
+  peak_env_info *ep = NULL;
   file_info *hdr = NULL;
   int i, j, ofd = 0, datumb = 0, err = 0, edpos = 0;
   bool section = false, temp_file;
@@ -2277,18 +2277,18 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
     }
   else temp_file = false;
   if ((beg == 0) && (dur == cp->edits[edpos]->samples))
-    ep = amp_env_copy(cp, true, edpos); /* true -> reversed */
+    ep = peak_env_copy(cp, true, edpos); /* true -> reversed */
   else 
     {
       int sbin, ebin;
       Float min1, max1;
-      ep = amp_env_copy(cp, false, edpos);
+      ep = peak_env_copy(cp, false, edpos);
       if (ep) 
 	{
 	  /* now reverse the selection */
 	  sbin = (int)ceil(beg / ep->samps_per_bin);
 	  ebin = (int)floor((beg + dur) / ep->samps_per_bin);
-	  if (ebin > ep->amp_env_size) ebin = ep->amp_env_size;
+	  if (ebin > ep->peak_env_size) ebin = ep->peak_env_size;
 	  for (i = sbin, j = ebin - 1; i < j; i++, j--)
 	    {
 	      min1 = ep->data_min[i];
@@ -2299,7 +2299,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
 	      ep->data_max[j] = max1;
 	    }
 	  if (sbin > 0) pick_one_bin(ep, sbin - 1, ep->samps_per_bin * (sbin - 1), cp, edpos);
-	  if (ebin < ep->amp_env_size) pick_one_bin(ep, ebin, ep->samps_per_bin * ebin, cp, edpos);
+	  if (ebin < ep->peak_env_size) pick_one_bin(ep, ebin, ep->samps_per_bin * ebin, cp, edpos);
 	}
       section = true; /* only for reverse_marks below */
     }
@@ -3025,7 +3025,7 @@ void cursor_zeros(chan_info *cp, off_t count, bool over_selection)
   if (!si) si = make_simple_sync(cp, CURSOR(cp));
   for (i = 0; i < si->chans; i++)
     {
-      /* if zeroing entire sound, set scalers and remake amp_env */
+      /* if zeroing entire sound, set scalers and remake peak_env */
       ncp = si->cps[i];
       if ((si->begs[i] == 0) && 
 	  (num >= CURRENT_SAMPLES(ncp)))
@@ -4445,9 +4445,9 @@ swap the indicated channels"
 	      if ((dur0 == 0) && (dur1 == 0)) return(XEN_FALSE);
 	      if ((editable_p(cp0)) && (editable_p(cp1)))
 		{
-		  env_info *e0, *e1;
-		  e0 = amp_env_copy(cp0, false, cp0->edit_ctr);
-		  e1 = amp_env_copy(cp1, false, cp1->edit_ctr);
+		  peak_env_info *e0, *e1;
+		  e0 = peak_env_copy(cp0, false, cp0->edit_ctr);
+		  e1 = peak_env_copy(cp1, false, cp1->edit_ctr);
 		  file_override_samples(dur1, cp1->sound->filename, cp0, cp1->chan, DONT_DELETE_ME, S_swap_channels);
 		  file_override_samples(dur0, cp0->sound->filename, cp1, cp0->chan, DONT_DELETE_ME, S_swap_channels);
 		  cp0->edits[cp0->edit_ctr]->peak_env = e1;

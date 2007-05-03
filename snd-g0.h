@@ -124,8 +124,8 @@ typedef struct {
   GtkWidget **chan_widgets;
   GtkObject **chan_adjs;
   idle_t fft_in_progress;
-  idle_t amp_env_in_progress;
-  struct env_state *amp_env_state;
+  idle_t peak_env_in_progress;
+  struct env_state *peak_env_state;
   axis_context *ax;
   bool selected;
   slist *edhist_list;

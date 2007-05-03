@@ -530,7 +530,7 @@ typedef struct {
   int tag_y;
   int sync;
   file_delete_t temporary;     /* in-filename was written by us and needs to be deleted when mix state is deleted */
-  env_info *peak_env;
+  peak_env_info *peak_env;
   XEN properties;
   int properties_gc_loc;
   color_t color;
@@ -646,7 +646,7 @@ static mix_info *free_mix_info(mix_info *md)
 	  md->properties = XEN_FALSE;
 	}
       if (md->peak_env)
-	md->peak_env = free_env_info(md->peak_env);
+	md->peak_env = free_peak_env_info(md->peak_env);
       FREE(md);
     }
   return(NULL);
@@ -1464,24 +1464,24 @@ static int local_grf_x(double val, axis_info *ap)
   return((int)(ap->x_base + val * ap->x_scale));
 }
 
-static env_info *make_mix_input_peak_env(mix_info *md)
+static peak_env_info *make_mix_input_peak_env(mix_info *md)
 {
   mix_state *ms;
   ms = current_mix_state(md);
   if (ms->len >= MIX_PEAK_ENV_CUTOFF)
     {
-      env_info *ep;
+      peak_env_info *ep;
       snd_fd *sf;
       int val, sb = 0;
       off_t n;
 
-      ep = (env_info *)CALLOC(1, sizeof(env_info));
+      ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
       val = (int)(log((double)(ms->len)));
       if (val > 20) val = 20;
-      ep->amp_env_size = snd_int_pow2(val);
-      ep->samps_per_bin = (int)(ceil((double)(ms->len) / (double)(ep->amp_env_size)));
-      ep->data_max = (Float *)CALLOC(ep->amp_env_size, sizeof(Float));
-      ep->data_min = (Float *)CALLOC(ep->amp_env_size, sizeof(Float));
+      ep->peak_env_size = snd_int_pow2(val);
+      ep->samps_per_bin = (int)(ceil((double)(ms->len) / (double)(ep->peak_env_size)));
+      ep->data_max = (Float *)CALLOC(ep->peak_env_size, sizeof(Float));
+      ep->data_min = (Float *)CALLOC(ep->peak_env_size, sizeof(Float));
       ep->fmin = 1.0;
       ep->fmax = -1.0;
 
@@ -1526,17 +1526,17 @@ static bool mix_input_peak_env_usable(mix_info *md, Float samples_per_pixel)
 
 /* TODO: after change mix speed, peak env is confused, or if mix dragged backwards */
 
-static env_info *env_on_env(env *e, env_info *peaks)
+static peak_env_info *env_on_env(env *e, peak_env_info *peaks)
 {
-  env_info *ep;
-  ep = copy_env_info(peaks, false);
+  peak_env_info *ep;
+  ep = copy_peak_env_info(peaks, false);
   if (ep)
     {
       int i;
       Float val;
       mus_any *me;
-      me = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, ep->amp_env_size - 1, NULL);
-      for (i = 0; i < ep->amp_env_size; i++) 
+      me = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, ep->peak_env_size - 1, NULL);
+      for (i = 0; i < ep->peak_env_size; i++) 
 	{
 	  val = mus_env(me);
 	  if (val >= 0.0)
@@ -1561,7 +1561,7 @@ static int prepare_mix_peak_env(mix_info *md, Float scl, int yoff, off_t newbeg,
   int i, j, mix_start;
   int lastx, newx;
   double xend, xstart, xstep, mix_samps_per_bin;
-  env_info *ep;
+  peak_env_info *ep;
   env *amp_env;
   Float ymin = 0.0, ymax = 0.0;
 
@@ -1594,7 +1594,7 @@ static int prepare_mix_peak_env(mix_info *md, Float scl, int yoff, off_t newbeg,
   xstep = mix_samps_per_bin / srate;
   lastx = local_grf_x(xstart, ap);
 
-  for (i = mix_start, j = 0; (xstart < xend) && (i < ep->amp_env_size); xstart += xstep, i++)
+  for (i = mix_start, j = 0; (xstart < xend) && (i < ep->peak_env_size); xstart += xstep, i++)
     {
       Float low, high;
       low = ep->data_min[i];
@@ -1617,7 +1617,7 @@ static int prepare_mix_peak_env(mix_info *md, Float scl, int yoff, off_t newbeg,
     }
 
   if (amp_env)
-    free_env_info(ep);
+    free_peak_env_info(ep);
 
   return(j);
 }

@@ -305,6 +305,7 @@ whenever they're in the current view."
 		      (lx (inexact->exact (round (* width (/ (left-sample snd chn) (frames snd chn)))))))
 		  (fill-rectangle (+ x-offset lx) chan-offset (max 1 (- rx lx)) height snd grf-chn selection-context))
 		(let ((old-env (channel-property 'inset-envelope snd chn)))
+		  ;; TODO: this could use the edit-propert instead and perhaps save some enveloping
 		  (if (and old-env
 			   (not new-peaks)
 			   (= width (car old-env))
@@ -322,8 +323,6 @@ whenever they're in the current view."
 			     (new-len (* width 2))
 			     (data-len (if (vct? data) (vct-length data) (vct-length (car data))))
 			     (step (/ data-len width)))
-
-			;; TODO: this is making graphs right and left?? (display "made new graph")
 
 			(if (< data-scaler 0.00000001)
 			    (begin

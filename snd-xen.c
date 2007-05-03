@@ -6,10 +6,8 @@
  *   In Scheme, delay is protected in clm2xen.c as %delay
  *              filter is defined in srfi-1 so we need protection against that
  *
- *   In Guile, frame? as %frame?
- *
- *   In Ruby, rand is protected as kernel_rand.
- *
+ *   In Guile, frame? is %frame?
+ *   In Ruby, rand is kernel_rand.
  *   In Forth, Snd's exit is named snd-exit.
  *
  *   In Gauche, apropos is defined in lib/gauche/interactive.scm
@@ -46,7 +44,6 @@
 
 /* TODO: (gauche)   stacktrace and errors->listener (current-load-history)
  * TODO: (gauche)   error in find lambda -> exit (need better error protection)
- * TODO: (gauche)   unwind-protects around scm_apply (snd-xen g_call)
  * TODO: (guile)    still no func name in backtrace ref to procedure-with-setter setter case (getter has name) -- need a test case
  */
 

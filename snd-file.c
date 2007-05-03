@@ -1873,7 +1873,7 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
 	  ed_list *ed;
 	  ed = ncp->edits[k];
 	  if (ed)
-	    ed->peak_env = free_amp_env(ncp, k);
+	    ed->peak_env = free_peak_env(ncp, k);
 	}
     }
 
