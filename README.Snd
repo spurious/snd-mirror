@@ -42,6 +42,7 @@ The configure program has several Snd-related arguments:
   
      --with-gtk                use Gtk+
        --with-builtin-gtkrc    include built-in gtkrc fallbacks (default=yes)
+       --with-cairo            use cairo graphics rather than gdk
   
      --with-no-gui             make Snd without any graphics support
   

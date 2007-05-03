@@ -5199,11 +5199,11 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  break;
 
 		case MIX_EDIT:
-		  function = mus_format("%s (%s snd chn))", function, ed->origin);
+		  function = mus_format("%s %s", function, ed->origin);
 		  break;
 
 		case CHANGE_MIX_EDIT:
-		  function = mus_format("%s (%s))", function, ed->origin);
+		  function = mus_format("%s %s", function, ed->origin);
 		  break;
 
 		default: break;
@@ -5321,11 +5321,11 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  break;
 
 		case MIX_EDIT:
-		  function = mus_format("%s%s %s, snd, chn)", function, (first) ? "" : ";", ed->origin);
+		  function = mus_format("%s%s %s", function, (first) ? "" : ";", ed->origin);
 		  break;
 
 		case CHANGE_MIX_EDIT:
-		  function = mus_format("%s%s %s)", function, (first) ? "" : ";", ed->origin);
+		  function = mus_format("%s%s %s", function, (first) ? "" : ";", ed->origin);
 		  break;
 
 		default: break;
@@ -5441,7 +5441,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  break;
 
 		case MIX_EDIT:
-		  function = mus_format("%s snd chn %s drop", function, name);
+		  function = mus_format("%s %s drop", function, name);
 		  break;
 
 		case CHANGE_MIX_EDIT:
@@ -8468,6 +8468,592 @@ bool redo_edit_with_sync(chan_info *cp, int count)
 
 
 
+/* -------------------- virtual mixes -------------------- */
+
+  /* TODO: check all redisplays and maybe squelch cases
+   * TODO: syncd mixes for stereo (automated that is via mix-drag-hook etc)
+   * TODO: extreme tests such as water.scm [much flashing as grf updates -- need to flush pointless redisplays]
+   * PERHAPS: mix-property display in dialog [add text widget?]
+   * TODO: unlist and read can be called on fully freed xen-allocated readers (valtmp)
+   */
+
+static int add_mix_op(int type)
+{
+  switch (type)
+    {
+    case ED_SIMPLE:     return(ED_MIX_SIMPLE); break;
+    case ED_MIX_SIMPLE: return(ED_MIX_SIMPLE); break;
+    case ED_ZERO:       return(ED_MIX_ZERO);  break;
+    case ED_MIX_ZERO:   return(ED_MIX_ZERO);  break;
+    case ED_RAMP:       return(ED_MIX_RAMP);  break;
+    case ED_MIX_RAMP:   return(ED_MIX_RAMP);  break;
+    case ED_RAMP2:      return(ED_MIX_RAMP2); break;
+    case ED_MIX_RAMP2:  return(ED_MIX_RAMP2); break;
+    case ED_RAMP3:      return(ED_MIX_RAMP3); break;
+    case ED_MIX_RAMP3:  return(ED_MIX_RAMP3); break;
+    case ED_RAMP4:      return(ED_MIX_RAMP4); break;
+    case ED_MIX_RAMP4:  return(ED_MIX_RAMP4); break;
+    default:
+      fprintf(stderr, "bad mix op!");
+      abort();
+      break;
+    }
+  return(-1);
+}
+
+static void make_mix_fragment(ed_list *new_ed, int i, mix_state *ms, off_t beg)
+{
+  ed_mixes *mxs;
+  int mloc = -1;
+  /* mix_loc = index into cp->sound arrays for reading the mixed-in data (buffer or file) */
+  /* i = index into ed_fragment list for this edit */
+  /* we're changing one fragment to add the mix */
+
+  FRAGMENT_TYPE(new_ed, i) = add_mix_op(FRAGMENT_TYPE(new_ed, i));
+  if (!(FRAGMENT_MIXES(new_ed, i)))
+    FRAGMENT_MIXES(new_ed, i) = (ed_mixes *)CALLOC(1, sizeof(ed_mixes));
+  mxs = FRAGMENT_MIXES(new_ed, i);
+  if (mxs->size == 0)
+    {
+      mxs->size = 1;
+      mxs->mix_list = (mix_state **)MALLOC(sizeof(mix_state *));
+      mloc = 0;
+    }
+  else
+    {
+      int j;
+      for (j = 0; j < mxs->size; j++)
+	if (MIX_LIST_STATE(mxs, j) == NULL)
+	  {
+	    mloc = j;
+	    break;
+	  }
+      if (mloc == -1)
+	{
+	  mloc = mxs->size;
+	  mxs->size++;
+	  mxs->mix_list = (mix_state **)REALLOC(mxs->mix_list, mxs->size * sizeof(mix_state *));
+	}
+    }
+  MIX_LIST_STATE(mxs, mloc) = ms;
+}
+
+static int remove_mix_op(int type)
+{
+  switch (type)
+    {
+    case ED_MIX_SIMPLE: return(ED_SIMPLE); break;
+    case ED_MIX_ZERO:   return(ED_ZERO);  break;
+    case ED_MIX_RAMP:   return(ED_RAMP);  break;
+    case ED_MIX_RAMP2:  return(ED_RAMP2); break;
+    case ED_MIX_RAMP3:  return(ED_RAMP3); break;
+    case ED_MIX_RAMP4:  return(ED_RAMP4); break;
+    default:
+      fprintf(stderr, "bad unmix op!");
+      abort();
+      break;
+    }
+  return(-1);
+}
+
+static ed_list *make_mix_edit(ed_list *old_ed, off_t beg, off_t len, mix_state *ms, bool full_fragment)
+{
+  ed_list *new_ed;
+  int i;
+  if (full_fragment)
+    {
+      new_ed = make_ed_list(old_ed->size);
+      new_ed->beg = 0;
+      new_ed->len = len;
+      for (i = 0; i < new_ed->size; i++) /* whole file changed in this case */
+	{
+	  copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
+	  make_mix_fragment(new_ed, i, ms, FRAGMENT_GLOBAL_POSITION(new_ed, i));
+	}
+    }
+  else 
+    {
+      new_ed = copy_and_split_list(beg, len, old_ed);
+      for (i = 0; i < new_ed->size; i++) 
+	{
+	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) > (beg + len - 1)) 
+	    break;                                                    /* not >= (1 sample selections) */
+	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) >= beg)
+	    make_mix_fragment(new_ed, i, ms, FRAGMENT_GLOBAL_POSITION(new_ed, i) - beg);
+	}
+    }
+
+  new_ed->cursor = old_ed->cursor;
+  new_ed->edit_type = MIX_EDIT;
+  new_ed->sound_location = old_ed->sound_location;
+  new_ed->selection_beg = old_ed->selection_beg;
+  new_ed->selection_end = old_ed->selection_end;
+  return(new_ed);
+}
+
+int mix_file_with_tag(chan_info *cp, const char *filename, int chan, off_t beg, file_delete_t auto_delete, const char *origin)
+{
+  off_t file_len, old_len, new_len;
+  int edpos;
+  int fd, mix_loc;
+  ed_list *new_ed, *old_ed;
+  file_info *hdr;
+  mix_state *ms;
+  bool backup = false;
+
+  hdr = make_file_info(filename, FILE_READ_ONLY, FILE_NOT_SELECTED);
+  if (chan >= hdr->chans)
+    return(NO_MIX_TAG);
+
+  edpos = cp->edit_ctr;
+  file_len = mus_sound_frames(filename);
+  old_ed = cp->edits[edpos];
+
+  if ((beg < 0) || 
+      (file_len <= 0))
+    return(NO_MIX_TAG); 
+
+  old_len = old_ed->samples;
+  if (beg + file_len > old_len)
+    {
+      if (!(extend_with_zeros(cp, old_len, beg + file_len - old_len, edpos, origin))) 
+	return(NO_MIX_TAG);
+      edpos = cp->edit_ctr;
+      new_len = beg + file_len;
+      old_ed = cp->edits[edpos];
+      backup = true;
+    }
+  else new_len = old_len; 
+
+  if (!(prepare_edit_list(cp, edpos, origin)))
+    return(NO_MIX_TAG);
+
+  fd = snd_open_read(filename);
+  snd_file_open_descriptors(fd,
+			    filename,
+			    hdr->format,
+			    hdr->data_location,
+			    hdr->chans,
+			    hdr->type);
+
+  mix_loc = add_sound_file_to_edit_list(cp, filename, 
+					make_file_state(fd, hdr, chan, 0, FILE_BUFFER_SIZE),
+					hdr, auto_delete,
+					chan);
+
+  ms = prepare_mix_state_for_channel(cp, mix_loc, beg, file_len);
+  new_ed = make_mix_edit(old_ed, beg, file_len, ms, ((beg == 0) && (file_len >= old_len)));
+  new_ed->samples = new_len;
+  new_ed->origin = copy_string(origin);
+  new_ed->edpos = edpos;
+  cp->edits[cp->edit_ctr] = new_ed;
+  add_ed_mix(cp->edits[cp->edit_ctr], ms);
+
+  ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
+  after_edit(cp);
+
+  if (backup)
+    backup_edit_list(cp);
+
+  update_graph(cp);
+  return(ms->mix_id);
+}
+
+int mix_buffer_with_tag(chan_info *cp, mus_sample_t *data, off_t beg, off_t buf_len, const char *origin)
+{
+  int edpos, mix_loc;
+  off_t old_len, new_len;
+  ed_list *old_ed, *new_ed;
+  bool backup = false;
+  mix_state *ms;
+
+  edpos = cp->edit_ctr;
+  old_ed = cp->edits[edpos];
+
+  if ((beg < 0) || 
+      (buf_len == 0))
+    return(NO_MIX_TAG);
+
+  old_len = old_ed->samples;
+  if (beg + buf_len > old_len)
+    {
+      if (!(extend_with_zeros(cp, old_len, beg + buf_len - old_len, edpos, origin))) 
+	return(NO_MIX_TAG);
+      edpos = cp->edit_ctr;
+      new_len = beg + buf_len;
+      old_ed = cp->edits[edpos];
+      backup = true;
+    }
+  else new_len = old_len; 
+
+  if (!(prepare_edit_list(cp, edpos, origin)))
+    return(NO_MIX_TAG);
+
+  prepare_sound_list(cp);
+  cp->sounds[cp->sound_ctr] = make_snd_data_buffer(data, (int)buf_len, cp->edit_ctr);
+  mix_loc = cp->sound_ctr;
+  
+  ms = prepare_mix_state_for_channel(cp, mix_loc, beg, buf_len);
+  new_ed = make_mix_edit(old_ed, beg, buf_len, ms, ((beg == 0) && (buf_len >= old_len)));
+  new_ed->samples = new_len;
+  new_ed->origin = copy_string(origin);
+  new_ed->edpos = edpos;
+  cp->edits[cp->edit_ctr] = new_ed;
+  add_ed_mix(cp->edits[cp->edit_ctr], ms);
+
+  ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
+  after_edit(cp);
+
+  if (backup)
+    backup_edit_list(cp);
+
+  return(ms->mix_id);
+}
+
+void unmix(chan_info *cp, mix_state *ms)
+{
+  /* assume both mix_list (via ripple) and ed fragments list are ready for the unmix */
+  int i;
+  ed_list *ed;
+  ed = cp->edits[cp->edit_ctr];
+  for (i = 0; i < ed->size; i++) 
+    {
+      if ((FRAGMENT_GLOBAL_POSITION(ed, i) >= ms->beg) &&
+	  (FRAGMENT_GLOBAL_POSITION(ed, i) < (ms->beg + ms->len)) &&
+	  (MIX_OP(FRAGMENT_TYPE(ed, i))))
+	{
+	  /* look for ms in the current fragment's mix list */
+	  int j, remaining_mixes = 0, mss_size;
+	  ed_mixes *mxl;
+	  mix_state **mss;
+	  mxl = FRAGMENT_MIXES(ed, i);
+	  mss = FRAGMENT_MIX_LIST(ed, i);
+	  mss_size = FRAGMENT_MIX_LIST_SIZE(ed, i);
+	  for (j = 0; j < mss_size; j++)
+	    if (mss[j])
+	      {
+		if (mss[j]->index == ms->index)
+		  mss[j] = NULL;
+		else remaining_mixes++;
+	      }
+	  if (remaining_mixes == 0)
+	    {
+	      FRAGMENT_TYPE(ed, i) = remove_mix_op(FRAGMENT_TYPE(ed, i));
+	      FREE(mss);
+	      FREE(mxl);
+	      FRAGMENT_MIXES(ed, i) = NULL;
+	    }
+	}
+    }
+}
+
+
+void remix(chan_info *cp, mix_state *ms)
+{
+  int i;
+  ed_list *new_ed;
+  new_ed = cp->edits[cp->edit_ctr];
+  for (i = 0; i < new_ed->size; i++) 
+    {
+      if (FRAGMENT_GLOBAL_POSITION(new_ed, i) > (ms->beg + ms->len - 1)) 
+	break;                                                    /* not >= (1 sample selections) */
+      if (FRAGMENT_GLOBAL_POSITION(new_ed, i) >= ms->beg)
+	make_mix_fragment(new_ed, i, ms, FRAGMENT_GLOBAL_POSITION(new_ed, i) - ms->beg);
+    }
+}
+
+
+static void ripple_mixes_1(chan_info *cp, off_t beg, off_t len, off_t change, Float scl)
+{
+  /* this is where most of the time goes in mixing! */
+  if ((cp) &&
+      (cp->edit_ctr > 0))
+    {
+      ed_list *ed;
+      int i, low_id = 0, high_id; /* low_id confuses the compiler, but it will always get set below (current_states starts NULL etc) */
+      mix_state **current_states = NULL;
+
+      ed = cp->edits[cp->edit_ctr];
+      /* this may have mixes already (current op was mix op) or might be null */
+      for (i = 0; i < ed->size; i++) 
+	{
+	  if ((FRAGMENT_MIXES(ed, i)) &&
+	      (FRAGMENT_MIX_LIST(ed, i)) &&
+	      (FRAGMENT_MIX_LIST_SIZE(ed, i) > 0))
+	    {
+	      int j;
+	      if (current_states == NULL)
+		{
+		  int size;
+		  low_id = lowest_mix_id();
+		  high_id = highest_mix_id();
+		  size = high_id - low_id + 1;
+		  current_states = (mix_state **)CALLOC(size, sizeof(mix_state *));
+		  preload_mixes(current_states, low_id, ed);
+		}
+	      for (j = 0; j < FRAGMENT_MIX_LIST_SIZE(ed, i); j++)
+		{
+		  mix_state *old_ms;
+		  old_ms = FRAGMENT_MIX_STATE(ed, i, j);            /* the old copy -- we (may) need to make a new one */
+		  if (old_ms)
+		    {
+		      mix_state *new_ms;
+		      new_ms = current_states[old_ms->mix_id - low_id];
+		      if (!new_ms)
+			{
+			  new_ms = copy_mix_state(old_ms);
+			  add_ed_mix(ed, new_ms);
+			  if (new_ms->beg >= beg)
+			    {
+			      if ((len != 0) &&
+				  (new_ms->beg < beg + len))
+				new_ms->scaler *= scl;
+			      if (change != 0)
+				new_ms->beg += change;
+			    }
+			}
+		      FRAGMENT_MIX_STATE(ed, i, j) = new_ms;
+		      current_states[new_ms->mix_id - low_id] = new_ms;
+		    }
+		}
+	    }
+	}
+      if (current_states) FREE(current_states);
+    }
+}
+
+static void ripple_mixes(chan_info *cp, off_t beg, off_t change)
+{
+  ripple_mixes_1(cp, beg, 0, change, 1.0);
+}
+
+static void ripple_mixes_with_scale(chan_info *cp, off_t beg, off_t len, Float scl)
+{
+  ripple_mixes_1(cp, beg, len, 0, scl);
+}
+
+
+snd_fd *make_virtual_mix_reader(chan_info *cp, off_t beg, off_t len, int index, Float scl, read_direction_t direction)
+{
+  snd_fd *sf;
+  snd_data *first_snd = NULL;
+  off_t ind0, ind1, indx;
+
+  sf = (snd_fd *)CALLOC(1, sizeof(snd_fd));
+#if MUS_DEBUGGING
+  set_printable(PRINT_SND_FD);
+#endif
+
+  sf->closure1 = XEN_UNDEFINED;
+  sf->closure2 = XEN_UNDEFINED;
+  sf->closure3 = XEN_UNDEFINED;
+  sf->protect1 = NOT_A_GC_LOC;
+  sf->protect2 = NOT_A_GC_LOC;
+  sf->protect3 = NOT_A_GC_LOC;
+  sf->region = INVALID_MIX_ID;
+  sf->type = MIX_READER;
+  sf->initial_samp = beg;
+  sf->cp = cp;
+  sf->direction = direction;
+  sf->current_state = initial_ed_list(0, len - 1);  /* need size field here to signal eof -- GC'd in free_mix_data */
+  sf->cb = FRAGMENT(sf->current_state, 0);
+  sf->edit_ctr = 0;
+  first_snd = cp->sounds[index];
+  sf->frag_pos = 0;
+  ind0 = 0;
+  indx = beg;
+  ind1 = len;
+  sf->fscaler = scl * MUS_FIX_TO_FLOAT;
+
+  if ((scl == 1.0) &&
+      (sf->fscaler == 1.0))
+    {
+      sf->runf = next_sample_value_unscaled;
+      sf->rev_runf = previous_sample_value_unscaled;
+    }
+  else
+    {
+      if (scl == 0.0)
+	{
+	  sf->runf = next_zero;
+	  sf->rev_runf = previous_zero;
+	}
+      else
+	{
+	  sf->runf = next_sample_value;
+	  sf->rev_runf = previous_sample_value;
+	}
+    }
+
+  if (direction == READ_BACKWARD)
+    swap_readers(sf);
+
+  if (first_snd->type == SND_DATA_FILE)
+    {
+
+      if (first_snd->inuse)
+	{
+	  first_snd = copy_snd_data(first_snd, beg, MIX_FILE_BUFFER_SIZE);
+	  if (!first_snd)
+	    return(cancel_reader(sf));
+	}
+
+      first_snd->inuse = true;
+      sf->current_sound = first_snd;
+      sf->data = first_snd->buffered_data;
+      if (direction == READ_FORWARD)
+	file_buffers_forward(ind0, ind1, indx, sf, first_snd);
+      else file_buffers_back(ind0, ind1, indx, sf, first_snd);
+    }
+  else 
+    {
+      sf->current_sound = NULL;
+      sf->data = first_snd->buffered_data;
+      sf->first = ind0;
+      sf->last = ind1;
+      sf->loc = indx;
+    }
+  return(sf);
+}
+
+bool begin_mix_op(chan_info *cp, off_t old_beg, off_t old_len, off_t new_beg, off_t new_len, int edpos, const char *caller)
+{
+  int i;
+  ed_list *new_ed, *old_ed, *temp_ed;
+  off_t new_samples;
+
+  old_ed = cp->edits[edpos];
+  if (!(prepare_edit_list(cp, edpos, caller))) 
+    return(false);
+
+  new_samples = new_beg + new_len;
+
+  if (new_samples > old_ed->samples)
+    {
+      ed_fragment *cb;
+      off_t old_pos;
+      cb = make_ed_fragment();
+
+      old_pos = FRAGMENT_GLOBAL_POSITION(old_ed, old_ed->size - 1);
+      temp_ed = make_ed_list(old_ed->size + 1);
+      for (i = 0; i < old_ed->size; i++) 
+	copy_ed_fragment(FRAGMENT(temp_ed, i), FRAGMENT(old_ed, i));
+      FRAGMENT_GLOBAL_POSITION(temp_ed, old_ed->size - 1) = new_samples + 1;
+
+      if (FRAGMENT(temp_ed, old_ed->size)) free_ed_fragment(FRAGMENT(temp_ed, old_ed->size));
+      FRAGMENT(temp_ed, old_ed->size) = FRAGMENT(temp_ed, old_ed->size - 1);
+      FRAGMENT(temp_ed, old_ed->size - 1) = cb;
+      ED_SOUND(cb) = EDIT_LIST_ZERO_MARK;
+      ED_SCALER(cb) = 0.0;
+      ED_TYPE(cb) = ED_ZERO;
+      ED_GLOBAL_POSITION(cb) = old_pos;
+      ED_LOCAL_POSITION(cb) = 0;
+      ED_LOCAL_END(cb) = new_samples - old_ed->samples;
+      /*
+      fprintf(stderr,"global pos: " OFF_TD ", pos: " OFF_TD ", " OFF_TD "\n", 
+	      old_pos, ED_LOCAL_POSITION(cb), ED_LOCAL_END(cb));
+      */
+    }
+  else temp_ed = old_ed;
+
+  if ((new_beg == old_beg) &&
+      (new_len == old_len))
+    {
+      if (temp_ed != old_ed)
+	new_ed = temp_ed;
+      else
+	{
+	  new_ed = make_ed_list(temp_ed->size);
+	  for (i = 0; i < temp_ed->size; i++) 
+	    copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(temp_ed, i));
+	}
+    }
+  else 
+    {
+      new_ed = copy_and_split_list(new_beg, new_len, temp_ed);
+      if (temp_ed != old_ed)
+	{
+	  for (i = 0; i < temp_ed->allocated_size; i++)
+	    free_ed_fragment(FRAGMENT(temp_ed, i));
+	  free(FRAGMENTS(temp_ed));
+	  FREE(temp_ed);
+	}
+    }
+  if (old_beg < new_beg)
+    {
+      new_ed->beg = old_beg;
+      new_ed->len = new_beg - old_beg + new_len;
+    }
+  else 
+    {
+      new_ed->beg = new_beg;
+      new_ed->len = old_beg - new_beg + new_len;
+    }
+
+  if (new_samples > old_ed->samples)
+    new_ed->samples = new_samples;
+  else new_ed->samples = old_ed->samples;
+
+  new_ed->cursor = old_ed->cursor;
+  new_ed->edit_type = CHANGE_MIX_EDIT;
+  new_ed->sound_location = old_ed->sound_location;
+  new_ed->origin = copy_string(caller);
+  new_ed->edpos = edpos;
+  new_ed->selection_beg = old_ed->selection_beg;
+  new_ed->selection_end = old_ed->selection_end;
+  cp->edits[cp->edit_ctr] = new_ed;
+  ripple_all(cp, 0, 0); /* 0,0 -> copy current mix (and mark) lists */
+  return(true);
+}
+
+static int check_splice_at(ed_list *new_ed, off_t beg, int start)
+{
+  int i;  
+  for (i = start; i < new_ed->size; i++)
+    {
+      if ((FRAGMENT_GLOBAL_POSITION(new_ed, i) == beg) &&
+	  ((FRAGMENT_TYPE(new_ed, i) == ED_SIMPLE) || (FRAGMENT_TYPE(new_ed, i) == ED_ZERO)) &&
+	  (FRAGMENT_TYPE(new_ed, i - 1) == FRAGMENT_TYPE(new_ed, i)) &&
+	  (FRAGMENT_SOUND(new_ed, i) == FRAGMENT_SOUND(new_ed, i - 1)) &&
+	  (FRAGMENT_SCALER(new_ed, i) == FRAGMENT_SCALER(new_ed, i -1)) &&
+	  (FRAGMENT_LOCAL_END(new_ed, i - 1) == FRAGMENT_LOCAL_POSITION(new_ed, i) - 1))
+	{
+	  int k;
+	  FRAGMENT_LOCAL_END(new_ed, i - 1) = FRAGMENT_LOCAL_END(new_ed, i);
+	  free_ed_fragment(FRAGMENT(new_ed, i));
+	  for (k = i + 1; k < new_ed->size; k++)
+	    FRAGMENT(new_ed, k - 1) = FRAGMENT(new_ed, k);
+	  FRAGMENT(new_ed, new_ed->size - 1) = NULL;
+	  new_ed->size--;
+	  return(i);
+	}
+    }
+  return(0);
+}
+
+bool end_mix_op(chan_info *cp, off_t old_beg, off_t old_len)
+{
+  /* if beg != 0, try to remove old splice points */
+  if (old_beg > 0)
+    {
+      int start_loc;
+      ed_list *new_ed;
+      new_ed = cp->edits[cp->edit_ctr];
+      start_loc = check_splice_at(new_ed, old_beg, 1);
+      if (old_len > 0)
+	check_splice_at(new_ed, old_beg + old_len, start_loc);
+    }
+  after_edit(cp);
+  if (cp->edits[cp->edit_ctr - 1]->samples != cp->edits[cp->edit_ctr]->samples)
+    reflect_sample_change_in_axis(cp);
+  reflect_mix_change(ANY_MIX_ID);
+  update_graph(cp);
+  return(true);
+}
+
+
+
+
 /* ----------------------- Xen connection -------------------------------- */
 
 static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
@@ -10532,596 +11118,6 @@ keep track of which files are in a given saved state batch, and a way to rename 
   report_unhit_entries();
 #endif
 }
-
-
-
-/* -------------------- virtual mixes -------------------- */
-
-  /* TODO: peak-envs after change [check all redisplays and maybe squelch cases]
-   * TODO: syncd mixes for stereo (automated that is via mix-drag-hook etc)
-   * TODO: extreme tests such as water.scm [much flashing as grf updates -- need to flush pointless redisplays]
-   * PERHAPS: mix-property display in dialog [add text widget?]
-   * TODO: snd-test test 19: edit-list->function
-   * TODO: unlist and read can be called on fully freed xen-allocated readers (valtmp)
-   * TODO: mix-local show-waveform choice to reduce clutter
-   * PERHAPS: access to mix index to support stuff like filter mix (mix-home?)
-   */
-
-static int add_mix_op(int type)
-{
-  switch (type)
-    {
-    case ED_SIMPLE:     return(ED_MIX_SIMPLE); break;
-    case ED_MIX_SIMPLE: return(ED_MIX_SIMPLE); break;
-    case ED_ZERO:       return(ED_MIX_ZERO);  break;
-    case ED_MIX_ZERO:   return(ED_MIX_ZERO);  break;
-    case ED_RAMP:       return(ED_MIX_RAMP);  break;
-    case ED_MIX_RAMP:   return(ED_MIX_RAMP);  break;
-    case ED_RAMP2:      return(ED_MIX_RAMP2); break;
-    case ED_MIX_RAMP2:  return(ED_MIX_RAMP2); break;
-    case ED_RAMP3:      return(ED_MIX_RAMP3); break;
-    case ED_MIX_RAMP3:  return(ED_MIX_RAMP3); break;
-    case ED_RAMP4:      return(ED_MIX_RAMP4); break;
-    case ED_MIX_RAMP4:  return(ED_MIX_RAMP4); break;
-    default:
-      fprintf(stderr, "bad mix op!");
-      abort();
-      break;
-    }
-  return(-1);
-}
-
-static void make_mix_fragment(ed_list *new_ed, int i, mix_state *ms, off_t beg)
-{
-  ed_mixes *mxs;
-  int mloc = -1;
-  /* mix_loc = index into cp->sound arrays for reading the mixed-in data (buffer or file) */
-  /* i = index into ed_fragment list for this edit */
-  /* we're changing one fragment to add the mix */
-
-  FRAGMENT_TYPE(new_ed, i) = add_mix_op(FRAGMENT_TYPE(new_ed, i));
-  if (!(FRAGMENT_MIXES(new_ed, i)))
-    FRAGMENT_MIXES(new_ed, i) = (ed_mixes *)CALLOC(1, sizeof(ed_mixes));
-  mxs = FRAGMENT_MIXES(new_ed, i);
-  if (mxs->size == 0)
-    {
-      mxs->size = 1;
-      mxs->mix_list = (mix_state **)MALLOC(sizeof(mix_state *));
-      mloc = 0;
-    }
-  else
-    {
-      int j;
-      for (j = 0; j < mxs->size; j++)
-	if (MIX_LIST_STATE(mxs, j) == NULL)
-	  {
-	    mloc = j;
-	    break;
-	  }
-      if (mloc == -1)
-	{
-	  mloc = mxs->size;
-	  mxs->size++;
-	  mxs->mix_list = (mix_state **)REALLOC(mxs->mix_list, mxs->size * sizeof(mix_state *));
-	}
-    }
-  MIX_LIST_STATE(mxs, mloc) = ms;
-}
-
-static int remove_mix_op(int type)
-{
-  switch (type)
-    {
-    case ED_MIX_SIMPLE: return(ED_SIMPLE); break;
-    case ED_MIX_ZERO:   return(ED_ZERO);  break;
-    case ED_MIX_RAMP:   return(ED_RAMP);  break;
-    case ED_MIX_RAMP2:  return(ED_RAMP2); break;
-    case ED_MIX_RAMP3:  return(ED_RAMP3); break;
-    case ED_MIX_RAMP4:  return(ED_RAMP4); break;
-    default:
-      fprintf(stderr, "bad unmix op!");
-      abort();
-      break;
-    }
-  return(-1);
-}
-
-static ed_list *make_mix_edit(ed_list *old_ed, off_t beg, off_t len, mix_state *ms, bool full_fragment)
-{
-  ed_list *new_ed;
-  int i;
-  if (full_fragment)
-    {
-      new_ed = make_ed_list(old_ed->size);
-      new_ed->beg = 0;
-      new_ed->len = len;
-      for (i = 0; i < new_ed->size; i++) /* whole file changed in this case */
-	{
-	  copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
-	  make_mix_fragment(new_ed, i, ms, FRAGMENT_GLOBAL_POSITION(new_ed, i));
-	}
-    }
-  else 
-    {
-      new_ed = copy_and_split_list(beg, len, old_ed);
-      for (i = 0; i < new_ed->size; i++) 
-	{
-	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) > (beg + len - 1)) 
-	    break;                                                    /* not >= (1 sample selections) */
-	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) >= beg)
-	    make_mix_fragment(new_ed, i, ms, FRAGMENT_GLOBAL_POSITION(new_ed, i) - beg);
-	}
-    }
-
-  new_ed->cursor = old_ed->cursor;
-  new_ed->edit_type = MIX_EDIT;
-  new_ed->sound_location = old_ed->sound_location;
-  new_ed->selection_beg = old_ed->selection_beg;
-  new_ed->selection_end = old_ed->selection_end;
-  return(new_ed);
-}
-
-int mix_file_with_tag(chan_info *cp, const char *filename, int chan, off_t beg, file_delete_t auto_delete, const char *origin)
-{
-  off_t file_len, old_len, new_len;
-  int edpos;
-  int fd, mix_loc;
-  ed_list *new_ed, *old_ed;
-  file_info *hdr;
-  mix_state *ms;
-  bool backup = false;
-
-  hdr = make_file_info(filename, FILE_READ_ONLY, FILE_NOT_SELECTED);
-  if (chan >= hdr->chans)
-    return(NO_MIX_TAG);
-
-  edpos = cp->edit_ctr;
-  file_len = mus_sound_frames(filename);
-  old_ed = cp->edits[edpos];
-
-  if ((beg < 0) || 
-      (file_len <= 0))
-    return(NO_MIX_TAG); 
-
-  old_len = old_ed->samples;
-  if (beg + file_len > old_len)
-    {
-      if (!(extend_with_zeros(cp, old_len, beg + file_len - old_len, edpos, origin))) 
-	return(NO_MIX_TAG);
-      edpos = cp->edit_ctr;
-      new_len = beg + file_len;
-      old_ed = cp->edits[edpos];
-      backup = true;
-    }
-  else new_len = old_len; 
-
-  if (!(prepare_edit_list(cp, edpos, origin)))
-    return(NO_MIX_TAG);
-
-  fd = snd_open_read(filename);
-  snd_file_open_descriptors(fd,
-			    filename,
-			    hdr->format,
-			    hdr->data_location,
-			    hdr->chans,
-			    hdr->type);
-
-  mix_loc = add_sound_file_to_edit_list(cp, filename, 
-					make_file_state(fd, hdr, chan, 0, FILE_BUFFER_SIZE),
-					hdr, auto_delete,
-					chan);
-
-  ms = prepare_mix_state_for_channel(cp, mix_loc, beg, file_len);
-  new_ed = make_mix_edit(old_ed, beg, file_len, ms, ((beg == 0) && (file_len >= old_len)));
-  new_ed->samples = new_len;
-  new_ed->origin = copy_string(origin);
-  new_ed->edpos = edpos;
-  cp->edits[cp->edit_ctr] = new_ed;
-  add_ed_mix(cp->edits[cp->edit_ctr], ms);
-
-  ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
-  after_edit(cp);
-
-  if (backup)
-    backup_edit_list(cp);
-
-  update_graph(cp);
-  return(ms->mix_id);
-}
-
-int mix_buffer_with_tag(chan_info *cp, mus_sample_t *data, off_t beg, off_t buf_len, const char *origin)
-{
-  int edpos, mix_loc;
-  off_t old_len, new_len;
-  ed_list *old_ed, *new_ed;
-  bool backup = false;
-  mix_state *ms;
-
-  edpos = cp->edit_ctr;
-  old_ed = cp->edits[edpos];
-
-  if ((beg < 0) || 
-      (buf_len == 0))
-    return(NO_MIX_TAG);
-
-  old_len = old_ed->samples;
-  if (beg + buf_len > old_len)
-    {
-      if (!(extend_with_zeros(cp, old_len, beg + buf_len - old_len, edpos, origin))) 
-	return(NO_MIX_TAG);
-      edpos = cp->edit_ctr;
-      new_len = beg + buf_len;
-      old_ed = cp->edits[edpos];
-      backup = true;
-    }
-  else new_len = old_len; 
-
-  if (!(prepare_edit_list(cp, edpos, origin)))
-    return(NO_MIX_TAG);
-
-  prepare_sound_list(cp);
-  cp->sounds[cp->sound_ctr] = make_snd_data_buffer(data, (int)buf_len, cp->edit_ctr);
-  mix_loc = cp->sound_ctr;
-  
-  ms = prepare_mix_state_for_channel(cp, mix_loc, beg, buf_len);
-  new_ed = make_mix_edit(old_ed, beg, buf_len, ms, ((beg == 0) && (buf_len >= old_len)));
-  new_ed->samples = new_len;
-  new_ed->origin = copy_string(origin);
-  new_ed->edpos = edpos;
-  cp->edits[cp->edit_ctr] = new_ed;
-  add_ed_mix(cp->edits[cp->edit_ctr], ms);
-
-  ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
-  after_edit(cp);
-
-  if (backup)
-    backup_edit_list(cp);
-
-  return(ms->mix_id);
-}
-
-void unmix(chan_info *cp, mix_state *ms)
-{
-  /* assume both mix_list (via ripple) and ed fragments list are ready for the unmix */
-  int i;
-  ed_list *ed;
-  ed = cp->edits[cp->edit_ctr];
-  for (i = 0; i < ed->size; i++) 
-    {
-      if ((FRAGMENT_GLOBAL_POSITION(ed, i) >= ms->beg) &&
-	  (FRAGMENT_GLOBAL_POSITION(ed, i) < (ms->beg + ms->len)) &&
-	  (MIX_OP(FRAGMENT_TYPE(ed, i))))
-	{
-	  /* look for ms in the current fragment's mix list */
-	  int j, remaining_mixes = 0, mss_size;
-	  ed_mixes *mxl;
-	  mix_state **mss;
-	  mxl = FRAGMENT_MIXES(ed, i);
-	  mss = FRAGMENT_MIX_LIST(ed, i);
-	  mss_size = FRAGMENT_MIX_LIST_SIZE(ed, i);
-	  for (j = 0; j < mss_size; j++)
-	    if (mss[j])
-	      {
-		if (mss[j]->index == ms->index)
-		  mss[j] = NULL;
-		else remaining_mixes++;
-	      }
-	  if (remaining_mixes == 0)
-	    {
-	      FRAGMENT_TYPE(ed, i) = remove_mix_op(FRAGMENT_TYPE(ed, i));
-	      FREE(mss);
-	      FREE(mxl);
-	      FRAGMENT_MIXES(ed, i) = NULL;
-	    }
-	}
-    }
-}
-
-
-void remix(chan_info *cp, mix_state *ms)
-{
-  int i;
-  ed_list *new_ed;
-  new_ed = cp->edits[cp->edit_ctr];
-  for (i = 0; i < new_ed->size; i++) 
-    {
-      if (FRAGMENT_GLOBAL_POSITION(new_ed, i) > (ms->beg + ms->len - 1)) 
-	break;                                                    /* not >= (1 sample selections) */
-      if (FRAGMENT_GLOBAL_POSITION(new_ed, i) >= ms->beg)
-	make_mix_fragment(new_ed, i, ms, FRAGMENT_GLOBAL_POSITION(new_ed, i) - ms->beg);
-    }
-}
-
-
-static void ripple_mixes_1(chan_info *cp, off_t beg, off_t len, off_t change, Float scl)
-{
-  /* this is where most of the time goes in mixing! */
-  if ((cp) &&
-      (cp->edit_ctr > 0))
-    {
-      ed_list *ed;
-      int i, low_id = 0, high_id; /* low_id confuses the compiler, but it will always get set below (current_states starts NULL etc) */
-      mix_state **current_states = NULL;
-
-      ed = cp->edits[cp->edit_ctr];
-      /* this may have mixes already (current op was mix op) or might be null */
-      for (i = 0; i < ed->size; i++) 
-	{
-	  if ((FRAGMENT_MIXES(ed, i)) &&
-	      (FRAGMENT_MIX_LIST(ed, i)) &&
-	      (FRAGMENT_MIX_LIST_SIZE(ed, i) > 0))
-	    {
-	      int j;
-	      if (current_states == NULL)
-		{
-		  int size;
-		  low_id = lowest_mix_id();
-		  high_id = highest_mix_id();
-		  size = high_id - low_id + 1;
-		  current_states = (mix_state **)CALLOC(size, sizeof(mix_state *));
-		  preload_mixes(current_states, low_id, ed);
-		}
-	      for (j = 0; j < FRAGMENT_MIX_LIST_SIZE(ed, i); j++)
-		{
-		  mix_state *old_ms;
-		  old_ms = FRAGMENT_MIX_STATE(ed, i, j);            /* the old copy -- we (may) need to make a new one */
-		  if (old_ms)
-		    {
-		      mix_state *new_ms;
-		      new_ms = current_states[old_ms->mix_id - low_id];
-		      if (!new_ms)
-			{
-			  new_ms = copy_mix_state(old_ms);
-			  add_ed_mix(ed, new_ms);
-			  if (new_ms->beg >= beg) /* TODO: >? needs = for scaling (mix at 0 etc) */
-			    {
-			      if ((len != 0) &&
-				  (new_ms->beg < beg + len))
-				new_ms->scaler *= scl;
-			      if (change != 0)
-				new_ms->beg += change;
-			    }
-			  /* TODO: peak-env changed? */
-			}
-		      FRAGMENT_MIX_STATE(ed, i, j) = new_ms;
-		      current_states[new_ms->mix_id - low_id] = new_ms;
-		    }
-		}
-	    }
-	}
-      if (current_states) FREE(current_states);
-    }
-}
-
-static void ripple_mixes(chan_info *cp, off_t beg, off_t change)
-{
-  ripple_mixes_1(cp, beg, 0, change, 1.0);
-}
-
-static void ripple_mixes_with_scale(chan_info *cp, off_t beg, off_t len, Float scl)
-{
-  ripple_mixes_1(cp, beg, len, 0, scl);
-}
-
-
-snd_fd *make_virtual_mix_reader(chan_info *cp, off_t beg, off_t len, int index, Float scl, read_direction_t direction)
-{
-  snd_fd *sf;
-  snd_data *first_snd = NULL;
-  off_t ind0, ind1, indx;
-
-  sf = (snd_fd *)CALLOC(1, sizeof(snd_fd));
-#if MUS_DEBUGGING
-  set_printable(PRINT_SND_FD);
-#endif
-
-  sf->closure1 = XEN_UNDEFINED;
-  sf->closure2 = XEN_UNDEFINED;
-  sf->closure3 = XEN_UNDEFINED;
-  sf->protect1 = NOT_A_GC_LOC;
-  sf->protect2 = NOT_A_GC_LOC;
-  sf->protect3 = NOT_A_GC_LOC;
-  sf->region = INVALID_MIX_ID;
-  sf->type = MIX_READER;
-  sf->initial_samp = beg;
-  sf->cp = cp;
-  sf->direction = direction;
-  sf->current_state = initial_ed_list(0, len - 1);  /* need size field here to signal eof -- GC'd in free_mix_data */
-  sf->cb = FRAGMENT(sf->current_state, 0);
-  sf->edit_ctr = 0;
-  first_snd = cp->sounds[index];
-  sf->frag_pos = 0;
-  ind0 = 0;
-  indx = beg;
-  ind1 = len;
-  sf->fscaler = scl * MUS_FIX_TO_FLOAT;
-
-  if ((scl == 1.0) &&
-      (sf->fscaler == 1.0))
-    {
-      sf->runf = next_sample_value_unscaled;
-      sf->rev_runf = previous_sample_value_unscaled;
-    }
-  else
-    {
-      if (scl == 0.0)
-	{
-	  sf->runf = next_zero;
-	  sf->rev_runf = previous_zero;
-	}
-      else
-	{
-	  sf->runf = next_sample_value;
-	  sf->rev_runf = previous_sample_value;
-	}
-    }
-
-  if (direction == READ_BACKWARD)
-    swap_readers(sf);
-
-  if (first_snd->type == SND_DATA_FILE)
-    {
-
-      if (first_snd->inuse)
-	{
-	  first_snd = copy_snd_data(first_snd, beg, MIX_FILE_BUFFER_SIZE);
-	  if (!first_snd)
-	    return(cancel_reader(sf));
-	}
-
-      first_snd->inuse = true;
-      sf->current_sound = first_snd;
-      sf->data = first_snd->buffered_data;
-      if (direction == READ_FORWARD)
-	file_buffers_forward(ind0, ind1, indx, sf, first_snd);
-      else file_buffers_back(ind0, ind1, indx, sf, first_snd);
-    }
-  else 
-    {
-      sf->current_sound = NULL;
-      sf->data = first_snd->buffered_data;
-      sf->first = ind0;
-      sf->last = ind1;
-      sf->loc = indx;
-    }
-  return(sf);
-}
-
-bool begin_mix_op(chan_info *cp, off_t old_beg, off_t old_len, off_t new_beg, off_t new_len, int edpos, const char *caller)
-{
-  int i;
-  ed_list *new_ed, *old_ed, *temp_ed;
-  off_t new_samples;
-
-  old_ed = cp->edits[edpos];
-  if (!(prepare_edit_list(cp, edpos, caller))) 
-    return(false);
-
-  new_samples = new_beg + new_len;
-
-  if (new_samples > old_ed->samples)
-    {
-      ed_fragment *cb;
-      off_t old_pos;
-      cb = make_ed_fragment();
-
-      old_pos = FRAGMENT_GLOBAL_POSITION(old_ed, old_ed->size - 1);
-      temp_ed = make_ed_list(old_ed->size + 1);
-      for (i = 0; i < old_ed->size; i++) 
-	copy_ed_fragment(FRAGMENT(temp_ed, i), FRAGMENT(old_ed, i));
-      FRAGMENT_GLOBAL_POSITION(temp_ed, old_ed->size - 1) = new_samples + 1;
-
-      if (FRAGMENT(temp_ed, old_ed->size)) free_ed_fragment(FRAGMENT(temp_ed, old_ed->size));
-      FRAGMENT(temp_ed, old_ed->size) = FRAGMENT(temp_ed, old_ed->size - 1);
-      FRAGMENT(temp_ed, old_ed->size - 1) = cb;
-      ED_SOUND(cb) = EDIT_LIST_ZERO_MARK;
-      ED_SCALER(cb) = 0.0;
-      ED_TYPE(cb) = ED_ZERO;
-      ED_GLOBAL_POSITION(cb) = old_pos;
-      ED_LOCAL_POSITION(cb) = 0;
-      ED_LOCAL_END(cb) = new_samples - old_ed->samples;
-      /*
-      fprintf(stderr,"global pos: " OFF_TD ", pos: " OFF_TD ", " OFF_TD "\n", 
-	      old_pos, ED_LOCAL_POSITION(cb), ED_LOCAL_END(cb));
-      */
-    }
-  else temp_ed = old_ed;
-
-  if ((new_beg == old_beg) &&
-      (new_len == old_len))
-    {
-      if (temp_ed != old_ed)
-	new_ed = temp_ed;
-      else
-	{
-	  new_ed = make_ed_list(temp_ed->size);
-	  for (i = 0; i < temp_ed->size; i++) 
-	    copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(temp_ed, i));
-	}
-    }
-  else 
-    {
-      new_ed = copy_and_split_list(new_beg, new_len, temp_ed);
-      if (temp_ed != old_ed)
-	{
-	  for (i = 0; i < temp_ed->allocated_size; i++)
-	    free_ed_fragment(FRAGMENT(temp_ed, i));
-	  free(FRAGMENTS(temp_ed));
-	  FREE(temp_ed);
-	}
-    }
-  if (old_beg < new_beg)
-    {
-      new_ed->beg = old_beg;
-      new_ed->len = new_beg - old_beg + new_len;
-    }
-  else 
-    {
-      new_ed->beg = new_beg;
-      new_ed->len = old_beg - new_beg + new_len;
-    }
-
-  if (new_samples > old_ed->samples)
-    new_ed->samples = new_samples;
-  else new_ed->samples = old_ed->samples;
-
-  new_ed->cursor = old_ed->cursor;
-  new_ed->edit_type = CHANGE_MIX_EDIT;
-  new_ed->sound_location = old_ed->sound_location;
-  new_ed->origin = copy_string(caller);
-  new_ed->edpos = edpos;
-  new_ed->selection_beg = old_ed->selection_beg;
-  new_ed->selection_end = old_ed->selection_end;
-  cp->edits[cp->edit_ctr] = new_ed;
-  ripple_all(cp, 0, 0); /* 0,0 -> copy current mix (and mark) lists */
-  return(true);
-}
-
-static int check_splice_at(ed_list *new_ed, off_t beg, int start)
-{
-  int i;  
-  for (i = start; i < new_ed->size; i++)
-    {
-      if ((FRAGMENT_GLOBAL_POSITION(new_ed, i) == beg) &&
-	  ((FRAGMENT_TYPE(new_ed, i) == ED_SIMPLE) || (FRAGMENT_TYPE(new_ed, i) == ED_ZERO)) &&
-	  (FRAGMENT_TYPE(new_ed, i - 1) == FRAGMENT_TYPE(new_ed, i)) &&
-	  (FRAGMENT_SOUND(new_ed, i) == FRAGMENT_SOUND(new_ed, i - 1)) &&
-	  (FRAGMENT_SCALER(new_ed, i) == FRAGMENT_SCALER(new_ed, i -1)) &&
-	  (FRAGMENT_LOCAL_END(new_ed, i - 1) == FRAGMENT_LOCAL_POSITION(new_ed, i) - 1))
-	{
-	  int k;
-	  FRAGMENT_LOCAL_END(new_ed, i - 1) = FRAGMENT_LOCAL_END(new_ed, i);
-	  free_ed_fragment(FRAGMENT(new_ed, i));
-	  for (k = i + 1; k < new_ed->size; k++)
-	    FRAGMENT(new_ed, k - 1) = FRAGMENT(new_ed, k);
-	  FRAGMENT(new_ed, new_ed->size - 1) = NULL;
-	  new_ed->size--;
-	  return(i);
-	}
-    }
-  return(0);
-}
-
-bool end_mix_op(chan_info *cp, off_t old_beg, off_t old_len)
-{
-  /* if beg != 0, try to remove old splice points */
-  if (old_beg > 0)
-    {
-      int start_loc;
-      ed_list *new_ed;
-      new_ed = cp->edits[cp->edit_ctr];
-      start_loc = check_splice_at(new_ed, old_beg, 1);
-      if (old_len > 0)
-	check_splice_at(new_ed, old_beg + old_len, start_loc);
-    }
-  after_edit(cp);
-  if (cp->edits[cp->edit_ctr - 1]->samples != cp->edits[cp->edit_ctr]->samples)
-    reflect_sample_change_in_axis(cp);
-  reflect_mix_change(ANY_MIX_ID);
-  update_graph(cp);
-  return(true);
-}
-
 
 /* from Anders:
 

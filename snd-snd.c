@@ -664,11 +664,11 @@ env_info *amp_env_section(chan_info *cp, off_t beg, off_t num, int edpos)
   return(new_ep);
 }
 
-env_info *amp_env_copy(chan_info *cp, bool reversed, int edpos)
+env_info *copy_env_info(env_info *old_ep, bool reversed)
 {
-  env_info *old_ep, *new_ep = NULL;
-  old_ep = cp->edits[edpos]->peak_env;
-  if ((old_ep) && (old_ep->completed))
+  env_info *new_ep = NULL;
+  if ((old_ep) && 
+      (old_ep->completed))
     {
       int i, j;
       new_ep = (env_info *)CALLOC(1, sizeof(env_info));
@@ -694,10 +694,16 @@ env_info *amp_env_copy(chan_info *cp, bool reversed, int edpos)
       new_ep->completed = true;
       new_ep->bin = old_ep->bin;
       new_ep->top_bin = old_ep->top_bin;
-      
     }
   return(new_ep);
 }
+
+
+env_info *amp_env_copy(chan_info *cp, bool reversed, int edpos)
+{
+  return(copy_env_info(cp->edits[edpos]->peak_env, reversed));
+}
+
 
 void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Float scaler, Float offset)
 {

@@ -4881,7 +4881,7 @@ This is the mix tag width in pixels (the default is 6).
 This is the mix tag y (vertical) offset; 0 (the default) is the top of the graph, so
 higher tag-y values position the tag lower in the graph. For
 example, if you know the frequency of the mix sound, you can reflect that in the tag height with:
-<pre
+<pre>
    (set! (mix-tag-y mix-id) (inexact-&gt;exact (round (* 100 (- 1.0 (/ (log (/ freq 40.0)) (* (log 2.0) 7)))))))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -7301,7 +7301,7 @@ function option to time the playing each mix in a sequence of mixes.  Another ex
 	 (osc (<a class=quiet href="clm.html#make-oscil">make-oscil</a> freq)))
     (<em class=red>play</em> (lambda ()
 	    (set! len (1- len))
-	    (if (<= len 0)        ; we've sent 22050 samples, so it's time to stop
+	    (if (&lt;= len 0)        ; we've sent 22050 samples, so it's time to stop
 		#f
 		(* amp (<a class=quiet href="clm.html#oscil">oscil</a> osc)))))))
 </pre></td></tr></table>

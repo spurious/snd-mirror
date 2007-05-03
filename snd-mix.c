@@ -313,6 +313,35 @@ int mix_complete_file(snd_info *sp, off_t beg, const char *fullname, bool with_t
   return(id);
 }
 
+static char *b2s(bool val) {return((val) ? (char *)PROC_TRUE : (char *)PROC_FALSE);} /* cast needed by g++ > 3.4 */
+
+static int mix_infos_ctr = 0;
+
+static char *tagged_mix_to_string(const char *mixinfile, off_t beg, int file_channel, bool delete_file)
+{
+#if HAVE_FORTH
+  return(mus_format("\"%s\" " OFF_TD " %d snd chn %s %s %s to -mix-%d", mixinfile, beg, file_channel, b2s(true), b2s(delete_file), S_mix, mix_infos_ctr));
+#endif
+#if HAVE_SCHEME
+  return(mus_format("(set! -mix-%d (%s \"%s\" " OFF_TD " %d snd chn %s %s))", mix_infos_ctr, S_mix, mixinfile, beg, file_channel, b2s(true), b2s(delete_file)));
+#endif
+#if HAVE_RUBY
+  return(mus_format("_mix_%d = %s(\"%s\", " OFF_TD ", %d, snd, chn, %s, %s)", mix_infos_ctr, TO_PROC_NAME(S_mix), mixinfile, beg, file_channel, b2s(true), b2s(delete_file)));
+#endif
+}
+
+static char *untagged_mix_to_string(const char *mixinfile, off_t beg, int file_channel, bool delete_file)
+{
+#if HAVE_FORTH
+  return(mus_format("\"%s\" " OFF_TD " %d snd chn %s %s %s", mixinfile, beg, file_channel, b2s(false), b2s(delete_file), S_mix));
+#endif
+#if HAVE_SCHEME
+  return(mus_format("(%s \"%s\" " OFF_TD " %d snd chn %s %s)", S_mix, mixinfile, beg, file_channel, b2s(false), b2s(delete_file)));
+#endif
+#if HAVE_RUBY
+  return(mus_format("%s(\"%s\", " OFF_TD ", %d, snd, chn, %s, %s)", TO_PROC_NAME(S_mix), mixinfile, beg, file_channel, b2s(false), b2s(delete_file)));
+#endif
+}
 
 int mix_file(off_t beg, off_t num, int chans, chan_info **cps, const char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int start_chan)
 {
@@ -328,29 +357,34 @@ int mix_file(off_t beg, off_t num, int chans, chan_info **cps, const char *mixin
     {
       chan_info *cp;
       cp = cps[i];
-      if (!origin)
-#if HAVE_FORTH
-	new_origin = mus_format("\"%s\" " OFF_TD " %d %s", mixinfile, beg, i, S_mix);
-#else
-        new_origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", TO_PROC_NAME(S_mix), mixinfile, beg, i);
-#endif
-      else new_origin = copy_string(origin);
 
       if ((!with_tag) ||
 	  (!virtual_mix_ok(cp, cp->edit_ctr, beg, num)))
-	mix_file_untagged(mixinfile, i + start_chan, cp, beg, num, temp, new_origin);
+	{
+	  /* not a virtual mix */
+	  if (!origin)
+	    new_origin = untagged_mix_to_string(mixinfile, beg, start_chan + i, temp == DELETE_ME);
+	  else new_origin = copy_string(origin);
+	  mix_file_untagged(mixinfile, i + start_chan, cp, beg, num, temp, new_origin);
+	}
       else 
 	{
+	  /* virtual mix */
 	  int cur_id;
+	  if (!origin)
+	    new_origin = tagged_mix_to_string(mixinfile, beg, start_chan + i, temp == DELETE_ME);
+	  else new_origin = copy_string(origin);
 	  cur_id = mix_file_with_tag(cp, mixinfile, i + start_chan, beg, temp, new_origin);
 	  if (id == MIX_FILE_NO_MIX) id = cur_id;
 	}
+
       if (new_origin) 
 	{
 	  FREE(new_origin); 
 	  new_origin = NULL;
 	}
     }
+
   for (i = 0; i < chans; i++) 
     update_graph(cps[i]);
   return(id);
@@ -377,7 +411,6 @@ static mix_state *make_mix_state(int id, int index, off_t beg, off_t len)
   ms->scaler = 1.0;
   ms->speed = 1.0;
   ms->beg = beg;
-  /* fprintf(stderr,"make mix %p at " OFF_TD "\n", ms, ms->beg); */
   ms->len = len;
   ms->amp_env = NULL;
   ms->index = index;
@@ -392,7 +425,6 @@ mix_state *copy_mix_state(mix_state *old_ms)
   ms->scaler = old_ms->scaler;
   ms->speed = old_ms->speed;
   ms->beg = old_ms->beg;
-  /* fprintf(stderr,"copy mix %p at " OFF_TD "\n", ms, ms->beg); */
   ms->len = old_ms->len;
   ms->index = old_ms->index;
   ms->amp_env = copy_env(old_ms->amp_env); /* this is the amp env (not the peak env) */
@@ -502,7 +534,6 @@ typedef struct {
   XEN properties;
   int properties_gc_loc;
   color_t color;
-  /* TODO: associated with each index (in mix_state) we need possibly a peak-env set */
   int x, y;  /* these are needed to know where to erase while dragging the tag */
 } mix_info;
 
@@ -524,7 +555,6 @@ static mix_state *current_mix_state(mix_info *md)
 #define MIX_INFO_INCREMENT 16
 static mix_info **mix_infos = NULL;
 static int mix_infos_size = 0;
-static int mix_infos_ctr = 0;
 
 bool mix_exists(int n) 
 {
@@ -854,7 +884,6 @@ off_t mix_position_from_id(int id)
 {
   mix_state *ms;
   ms = current_mix_state(md_from_id(id));
-  /* fprintf(stderr,"ms %p pos: " OFF_TD "\n", ms, ms->beg); */
   if (ms)
     return(ms->beg);
   return(0);
@@ -959,18 +988,6 @@ static int mix_tag_y_from_id(int id)
   return(0);
 }
 
-static int mix_set_tag_y_from_id(int id, int new_tag_y)
-{
-  mix_info *md;
-  md = md_from_id(id);
-  if (md)
-    {
-      md->tag_y = new_tag_y;
-      return(md->tag_y);
-    }
-  return(0);
-}
-
 static color_t mix_color_from_id(int mix_id)
 {
   mix_info *md;
@@ -1002,7 +1019,18 @@ bool mix_set_amp_edit(int id, Float amp)
       if (old_ms->scaler != amp)
 	{
 	  mix_state *ms;
-	  begin_mix_op(md->cp, old_ms->beg, old_ms->len, old_ms->beg, old_ms->len, md->cp->edit_ctr, S_setB S_mix_amp);
+	  char *origin;
+#if HAVE_FORTH
+	  origin = mus_format("-mix-%d %.4f set-mix-amp", id, amp);
+#endif
+#if HAVE_SCHEME
+	  origin = mus_format("(set! (mix-amp -mix-%d) %.4f)", id, amp);
+#endif
+#if HAVE_RUBY
+	  origin = mus_format("set_mix_amp(_mix_%d, %.4f)", id, amp);
+#endif
+	  begin_mix_op(md->cp, old_ms->beg, old_ms->len, old_ms->beg, old_ms->len, md->cp->edit_ctr, origin);
+	  FREE(origin);
 	  ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
 	  ms->scaler = amp;
 	  end_mix_op(md->cp, 0, 0);
@@ -1165,8 +1193,21 @@ bool mix_set_amp_env_edit(int id, env *e)
 	{
 	  chan_info *cp;
 	  mix_state *ms;
-	  cp = md->cp;
+	  char *origin, *envstr;
 	  
+	  envstr = env_to_string(e);
+#if HAVE_FORTH
+	  origin = mus_format("-mix-%d %s set-mix-amp-env", id, envstr);
+#endif
+#if HAVE_SCHEME
+	  origin = mus_format("(set! (mix-amp-env -mix-%d) %s)", id, envstr);
+#endif
+#if HAVE_RUBY
+	  origin = mus_format("set_mix_amp_env(_mix_%d, %s)", id, envstr);
+#endif
+	  FREE(envstr);
+
+	  cp = md->cp;
 	  begin_mix_op(cp, old_ms->beg, old_ms->len, old_ms->beg, old_ms->len, cp->edit_ctr, S_setB S_mix_amp_env); /* this does not change beg or len */
 	  ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
 	  if (ms->amp_env) free_env(ms->amp_env);
@@ -1197,11 +1238,16 @@ bool mix_set_position_edit(int id, off_t pos)
 	  mix_state *ms;
 	  char *origin;
 #if HAVE_FORTH
-	  origin = mus_format(" -mix-%d " OFF_TD " set-%s", id, pos, S_mix_position);
-#else
-	  origin = mus_format(PROC_SET_MIX OFF_TD PROC_CLOSE, TO_PROC_NAME(S_mix_position), id, pos);
+	  origin = mus_format("-mix-%d " OFF_TD " set-mix-position", id, pos);
+#endif
+#if HAVE_SCHEME
+	  origin = mus_format("(set! (mix-position -mix-%d) " OFF_TD ")", id, pos);
+#endif
+#if HAVE_RUBY
+	  origin = mus_format("set_mix_position(_mix_%d, " OFF_TD ")", id, pos);
 #endif
 	  begin_mix_op(md->cp, old_ms->beg, old_ms->len, pos, old_ms->len, md->cp->edit_ctr, origin); /* this does not change beg or len */
+
 	  FREE(origin);
 	  ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
 	  unmix(md->cp, ms);
@@ -1227,11 +1273,21 @@ bool mix_set_speed_edit(int id, Float spd)
 	  chan_info *cp;
 	  mix_state *ms;
 	  off_t len;
-	  
+	  char *origin;
+#if HAVE_FORTH
+	  origin = mus_format("-mix-%d %.4f set-mix-speed", id, spd);
+#endif
+#if HAVE_SCHEME
+	  origin = mus_format("(set! (mix-speed -mix-%d) %.4f)", id, spd);
+#endif
+#if HAVE_RUBY
+	  origin = mus_format("set_mix_speed(_mix_%d, %.4f)", id, spd);
+#endif
 	  cp = md->cp;
 	  len = snd_round_off_t((double)(md->in_samps) / (double)spd);
-	  begin_mix_op(cp, old_ms->beg, old_ms->len, old_ms->beg, len, cp->edit_ctr, S_setB S_mix_speed);
+	  begin_mix_op(cp, old_ms->beg, old_ms->len, old_ms->beg, len, cp->edit_ctr, origin);
 	  
+	  FREE(origin);
 	  ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
 	  ms->speed = spd;
 	  ms->len = len;
@@ -1249,6 +1305,701 @@ bool mix_set_speed_edit(int id, Float spd)
   return(false);
 }
 
+/* edit-list->function support for mixes:
+ *      mix list search for current channel, make outer let holding all names as (-mix-### ###)
+ *      origins for make-mix procs: (set! -mix-### (...))
+ *      origins otherwise, reference to mix: -mix-###
+ */
+
+char *edit_list_mix_init(chan_info *cp)
+{
+  char *new_list = NULL, *old_list = NULL;
+  mix_list *mxl;
+  mxl = (mix_list *)(cp->edits[cp->edit_ctr]->mixes);
+  if (mxl)
+    {
+      int i;
+      for (i = 0; i < mxl->size; i++)
+	if (mxl->list[i])
+	  {
+	    int id;
+	    id = mxl->list[i]->mix_id;
+
+	    old_list = new_list;
+#if HAVE_SCHEME
+	    new_list = mus_format("%s%s(-mix-%d %d)", 
+				  (old_list) ? old_list : "", 
+				  (old_list) ? " " : "",  /* strcat of previous + possible space */
+				  id, id);                  
+#endif
+#if HAVE_RUBY
+	    new_list = mus_format("%s%s_mix_%d = %d", 
+				  (old_list) ? old_list : "", 
+				  (old_list) ? "; " : "",  /* strcat of previous + possible space */
+				  id, id);                  
+#endif
+#if HAVE_FORTH
+	    new_list = mus_format("%s%s%d { -mix-%d }", 
+				  (old_list) ? old_list : "", 
+				  (old_list) ? " " : "",   /* strcat of previous + possible space */
+				  id, id);                  
+#endif
+	    if (old_list) FREE(old_list);
+	  }
+    }
+  return(new_list);
+}
+
+
+#define MIX_TAG_Y_OFFSET mix_tag_height(ss)
+
+int hit_mix(chan_info *cp, int x, int y) /* mix tag press in snd-chn.c */
+{
+  #define SLOPPY_MOUSE 3
+  mix_list *mxl;
+  mxl = (mix_list *)(cp->edits[cp->edit_ctr]->mixes); /* active mixes in the current edit of this channel */
+  if (mxl)
+    {
+      int i, width, height;
+      width = mix_tag_width(ss);
+      height = mix_tag_height(ss);
+      for (i = 0; i < mxl->size; i++)
+	{
+	  mix_state *ms;
+	  ms = mxl->list[i];
+	  if (ms)
+	    {
+	      int mx, my;
+	      mx = grf_x((double)(ms->beg) / (double)(SND_SRATE(cp->sound)), cp->axis);
+	      my = mix_infos[ms->mix_id]->tag_y + MIX_TAG_Y_OFFSET + cp->axis->y_offset;
+	      if ((x + SLOPPY_MOUSE >= (mx - width / 2)) && 
+		  (x - SLOPPY_MOUSE <= (mx + width / 2)) &&
+		  (y + SLOPPY_MOUSE >= (my - height)) && 
+		  (y - SLOPPY_MOUSE <= (my + 0)))
+		return(ms->mix_id);
+	    }
+	}
+    }
+  return(NO_MIX_TAG);
+}
+
+
+
+/* mix display */
+
+void channel_set_mix_tags_erased(chan_info *cp)
+{
+  mix_list *mxl;
+  mxl = (mix_list *)(cp->edits[cp->edit_ctr]->mixes);
+  if (mxl)
+    {
+      int i;
+      for (i = 0; i < mxl->size; i++)
+	if (mxl->list[i])
+	  {
+	    mix_info *md;
+	    md = mix_infos[mxl->list[i]->mix_id];
+	    md->y = MIX_TAG_ERASED;
+	  }
+    }
+}
+
+static void draw_mix_tag(mix_info *md, int x, int y)
+{
+  chan_info *cp;
+  int width, height;
+  axis_context *ax;
+  char *lab = NULL;
+
+#if USE_MOTIF
+  #define STRING_Y_OFFSET 3
+  #define STRING_HEIGHT 12
+#else
+  #define STRING_Y_OFFSET -8
+  #define STRING_HEIGHT 12
+#endif
+
+  cp = md->cp;
+
+  /* draw the mix tag */
+  width = mix_tag_width(ss);
+  height = mix_tag_height(ss);
+
+  if (md->y != MIX_TAG_ERASED)
+    {
+      /* erase old tag and name */
+      ax = erase_context(cp);
+      fill_rectangle(ax, md->x - width / 2 - 1, md->y - height - 1, width + 2, height + STRING_HEIGHT);
+      md->y = MIX_TAG_ERASED;
+    }
+
+  ax = mix_waveform_context(cp);
+  set_foreground_color(ax, md->color); 
+  fill_rectangle(ax, x - width / 2, y - height, width, height);
+  md->x = x;
+  md->y = y;
+
+  /* redraw the mix id underneath the tag */
+  set_tiny_numbers_font(cp);
+  if (cp->printing) ps_set_tiny_numbers_font();
+
+  if (md->name)
+    lab = copy_string(md->name);
+  else
+    {
+      lab = (char *)CALLOC(16, sizeof(char));
+      mus_snprintf(lab, 16, "%d", md->id);
+    }
+  ax = copy_context(cp);
+  draw_string(ax, x - width / 2, y + height / 2 + STRING_Y_OFFSET, lab, strlen(lab));
+  if (cp->printing) ps_draw_string(cp->axis, x - width / 2, y + height / 2 + STRING_Y_OFFSET, lab);
+
+  if (lab) {FREE(lab); lab = NULL;}
+}
+
+static int local_grf_x(double val, axis_info *ap)
+{
+  if (val >= ap->x1) return(ap->x_axis_x1);
+  if (val <= ap->x0) return(ap->x_axis_x0);
+  return((int)(ap->x_base + val * ap->x_scale));
+}
+
+static env_info *make_mix_input_peak_env(mix_info *md)
+{
+  mix_state *ms;
+  ms = current_mix_state(md);
+  if (ms->len >= MIX_PEAK_ENV_CUTOFF)
+    {
+      env_info *ep;
+      snd_fd *sf;
+      int val, sb = 0;
+      off_t n;
+
+      ep = (env_info *)CALLOC(1, sizeof(env_info));
+      val = (int)(log((double)(ms->len)));
+      if (val > 20) val = 20;
+      ep->amp_env_size = snd_int_pow2(val);
+      ep->samps_per_bin = (int)(ceil((double)(ms->len) / (double)(ep->amp_env_size)));
+      ep->data_max = (Float *)CALLOC(ep->amp_env_size, sizeof(Float));
+      ep->data_min = (Float *)CALLOC(ep->amp_env_size, sizeof(Float));
+      ep->fmin = 1.0;
+      ep->fmax = -1.0;
+
+      sf = make_virtual_mix_reader(md->cp, 0, ms->len, ms->index, 1.0, READ_FORWARD);
+
+      for (n = 0; n < ms->len; n += ep->samps_per_bin)
+	{
+	  Float ymin, ymax, val;
+	  int i;
+	  val = read_sample(sf);
+	  ymin = val;
+	  ymax = val;
+	  for (i = 1; i < ep->samps_per_bin; i++)
+	    {
+	      val = read_sample(sf);
+	      if (ymin > val) 
+		ymin = val; 
+	      else 
+		if (ymax < val) 
+		  ymax = val;
+	    }
+	  ep->data_max[sb] = ymax;
+	  ep->data_min[sb++] = ymin;
+	  if (ymin < ep->fmin) ep->fmin = ymin;
+	  if (ymax > ep->fmax) ep->fmax = ymax;
+	}
+
+      ep->completed = true;
+      free_snd_fd(sf);
+      return(ep);
+    }
+  return(NULL);
+}
+
+static bool mix_input_peak_env_usable(mix_info *md, Float samples_per_pixel) 
+{
+  if (!(md->peak_env))
+    md->peak_env = make_mix_input_peak_env(md);
+  return((md->peak_env) && 
+	 (samples_per_pixel >= (Float)(md->peak_env->samps_per_bin)));
+}
+
+/* TODO: after change mix speed, peak env is confused, or if mix dragged backwards */
+
+static env_info *env_on_env(env *e, env_info *peaks)
+{
+  env_info *ep;
+  ep = copy_env_info(peaks, false);
+  if (ep)
+    {
+      int i;
+      Float val;
+      mus_any *me;
+      me = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, ep->amp_env_size - 1, NULL);
+      for (i = 0; i < ep->amp_env_size; i++) 
+	{
+	  val = mus_env(me);
+	  if (val >= 0.0)
+	    {
+	      ep->data_min[i] = ep->data_min[i] * val;
+	      ep->data_max[i] = ep->data_max[i] * val;
+	    }
+	  else
+	    {
+	      ep->data_min[i] = ep->data_max[i] * val;
+	      ep->data_max[i] = ep->data_min[i] * val;
+	    }
+	}
+      mus_free(me);
+    }
+  return(ep);
+}
+
+
+static int prepare_mix_peak_env(mix_info *md, Float scl, int yoff, off_t newbeg, off_t newend, double srate, axis_info *ap)
+{
+  int i, j, mix_start;
+  int lastx, newx;
+  double xend, xstart, xstep, mix_samps_per_bin;
+  env_info *ep;
+  env *amp_env;
+  Float ymin = 0.0, ymax = 0.0;
+
+  amp_env = mix_amp_env_from_id(md->id);
+  if (!amp_env)
+    ep = md->peak_env;
+  else ep = env_on_env(amp_env, md->peak_env);
+
+  mix_samps_per_bin = (double)(ep->samps_per_bin) / mix_speed_from_id(md->id);
+
+  /* mix starts at newbeg, current display starts at lo,
+     mix goes to newend, current display goes to hi,
+  */
+
+  if (ap->losamp > newbeg)
+    {
+      mix_start = snd_round((double)(ap->losamp - newbeg) / mix_samps_per_bin);
+      xstart = ap->x0;
+    }
+  else 
+    {
+      mix_start = 0;
+      xstart = (double)(newbeg) / srate;
+    }
+
+  if (ap->hisamp < newend)
+    xend = ap->x1;
+  else xend = (double)(newend) / srate;
+
+  xstep = mix_samps_per_bin / srate;
+  lastx = local_grf_x(xstart, ap);
+
+  for (i = mix_start, j = 0; (xstart < xend) && (i < ep->amp_env_size); xstart += xstep, i++)
+    {
+      Float low, high;
+      low = ep->data_min[i];
+      high = ep->data_max[i];
+      newx = local_grf_x(xstart, ap);
+      if (newx > lastx)                  /* set lastx's bin (j) from min/max for that output bin */
+	{
+	  set_grf_points(lastx, j++,
+			 (int)(yoff - scl * ymin),
+			 (int)(yoff - scl * ymax));
+	  lastx = newx;
+	  ymin = low;
+	  ymax = high;
+	}
+      else
+	{
+	  if (high > ymax) ymax = high;
+	  if (low < ymin) ymin = low;
+	}
+    }
+
+  if (amp_env)
+    free_env_info(ep);
+
+  return(j);
+}
+
+/* currently 60% of "normal" time is here */
+
+static int prepare_mix_waveform(mix_info *md, mix_state *ms, axis_info *ap, Float scl, int yoff, double cur_srate, bool *two_sided)
+{
+  off_t i, newbeg, newend;
+  int pts = 0;
+  off_t samps;
+  bool widely_spaced;
+  Float samples_per_pixel;
+  double x, incr, initial_x;
+  Float ina;
+  off_t lo, hi;
+  snd_fd *sf = NULL;
+  int x_start, x_end;
+  double start_time;
+  newbeg = ms->beg;
+  newend = newbeg + ms->len;
+  lo = ap->losamp;
+  hi = ap->hisamp;
+  if ((newend <= lo) || (newbeg >= hi)) return(0);
+  if ((ap->y_axis_y0 - ap->y_axis_y1) < scl) return(0);
+  start_time = (double)(ap->losamp) / cur_srate;
+  x_start = ap->x_axis_x0;
+  x_end = ap->x_axis_x1;
+  if (newend > hi) newend = hi;
+  samps = ap->hisamp - ap->losamp + 1;
+  samples_per_pixel = (Float)((double)(samps - 1) / (Float)(x_end - x_start));
+
+  if ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE))
+    {
+      int j;
+      if (newbeg < lo) /* mix starts before current left x0 point */
+	{
+	  sf = make_virtual_mix_reader(md->cp, lo - newbeg, ms->len, ms->index, ms->scaler, READ_FORWARD);
+	  newbeg = lo;
+	}
+      else sf = make_virtual_mix_reader(md->cp, 0, ms->len, ms->index, ms->scaler, READ_FORWARD);
+
+      if (!sf) return(0);
+      if (samples_per_pixel < 1.0)
+	{
+	  incr = 1.0 / samples_per_pixel;
+	  initial_x = x_start;
+	  widely_spaced = true;
+	}
+      else
+	{
+	  incr = (double)1.0 /cur_srate;
+	  initial_x = start_time;
+	  widely_spaced = false;
+	}
+      x = initial_x + (incr * (newbeg - lo));
+      for (j = 0, i = newbeg; i <= newend; i++, j++, x += incr)
+	{
+	  ina = read_sample(sf);
+	  if (widely_spaced)
+	    set_grf_point((int)x, j, (int)(yoff - scl * ina));
+	  else set_grf_point(local_grf_x(x, ap), j, (int)(yoff - scl * ina));
+	}
+      free_snd_fd(sf);
+      pts = j;
+      (*two_sided) = false;
+    }
+  else
+    {
+      (*two_sided) = true;
+      if (mix_input_peak_env_usable(md, samples_per_pixel))
+	pts = prepare_mix_peak_env(md, scl, yoff, newbeg, newend, (double)cur_srate, ap);
+      else
+	{
+	  int xi, j;
+	  off_t endi;
+	  Float ymin, ymax, xf;
+	  if (newbeg < lo)
+	    {
+	      sf = make_virtual_mix_reader(md->cp, lo - newbeg, ms->len, ms->index, ms->scaler, READ_FORWARD);
+	      newbeg = lo;
+	    }
+	  else sf = make_virtual_mix_reader(md->cp, 0, ms->len, ms->index, ms->scaler, READ_FORWARD);
+	  if (!sf) return(0);
+
+	  j = 0;      /* graph point counter */
+	  x = ap->x0;
+	  xi = local_grf_x(x, ap);
+	  xf = 0.0;     /* samples per pixel counter */
+	  ymin = 100.0;
+	  ymax = -100.0;
+	  if (newend < hi) endi = newend; else endi = hi;
+	  for (i = lo; i < newbeg; i++)
+	    {
+	      xf += 1.0;
+	      if (xf > samples_per_pixel)
+		{
+		  xi++;
+		  xf -= samples_per_pixel;
+		}
+	    }
+	  for (i = newbeg; i <= endi; i++)
+	    {
+
+	      ina = read_sample(sf);
+	      if (ina > ymax) ymax = ina;
+	      if (ina < ymin) ymin = ina;
+	      xf += 1.0;
+	      if (xf > samples_per_pixel)
+		{
+		  set_grf_points(xi, j,
+				 (int)(yoff - scl * ymin),
+				 (int)(yoff - scl * ymax));
+		  j++;
+		  ymin = 100.0;
+		  ymax = -100.0;
+		  xi++;
+		  xf -= samples_per_pixel;
+		}
+	    }
+	  pts = j;
+	  free_snd_fd(sf);
+	}
+    }
+  return(pts);
+}
+
+int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided)
+{
+  mix_info *md;
+  mix_state *ms;
+  Float scl, x0, x1, y0, y1;
+  off_t old_lo, old_hi;
+  double cur_srate;
+  int pts;
+  md = md_from_id(mix_id);
+  if (!md) return(0);
+  scl = ap->y_axis_y0 - ap->y_axis_y1;
+  old_lo = ap->losamp;
+  old_hi = ap->hisamp;
+  x0 = ap->x0;
+  x1 = ap->x1;
+  y0 = ap->y0;
+  y1 = ap->y1;
+  cur_srate = (double)SND_SRATE(md->cp->sound);
+  ms = current_mix_state(md);
+  ap->losamp = ms->beg;
+  ap->hisamp = ms->beg + ms->len;
+  ap->x0 = (double)(ap->losamp) / cur_srate;
+  ap->x1 = (double)(ap->hisamp) / cur_srate;
+  ap->y0 = -1.0;
+  ap->y1 = 1.0;
+  init_axis_scales(ap);
+  pts = prepare_mix_waveform(md, ms, ap, scl * .5, (int)(scl * .5), cur_srate, two_sided);
+  ap->x0 = x0;
+  ap->x1 = x1;
+  ap->y0 = y0;
+  ap->y1 = y1;
+  ap->losamp = old_lo;
+  ap->hisamp = old_hi;
+  init_axis_scales(ap);
+  return(pts);
+}
+
+static void erase_mix_tag_and_waveform(mix_state *ms, chan_info *cp, axis_info *ap, int x, int y)
+{
+  int wave_width, wave_height, old_x;
+  wave_width = (int)(ms->len * ((double)(ap->x_axis_x1 - ap->x_axis_x0) / (double)(ap->hisamp - ap->losamp)));
+  wave_height = mix_waveform_height(ss);
+  old_x = x + mix_tag_width(ss) - 2;
+  if ((old_x + wave_width) > ap->x_axis_x1)
+    wave_width = ap->x_axis_x1 - old_x;
+  fill_rectangle(erase_context(cp), old_x, (y > wave_height) ? (y - wave_height) : 0, wave_width + 2, wave_height + 2);
+}
+
+static void draw_mix_tag_and_waveform(mix_info *md, mix_state *ms, int x)
+{
+  bool show_wave;
+  int y;
+  chan_info *cp;
+  axis_info *ap;
+
+  cp = md->cp;
+  ap = cp->axis;
+  show_wave = ((show_mix_waveforms(ss)) && (cp->show_mix_waveforms));
+  y = ap->y_offset + md->tag_y + MIX_TAG_Y_OFFSET;
+    
+  if ((show_wave) &&
+      (md->y != MIX_TAG_ERASED))
+    erase_mix_tag_and_waveform(ms, cp, ap, md->x, y);
+
+  if (ms->beg >= ap->losamp)
+    draw_mix_tag(md, x, y);
+
+  if (show_wave)
+    {
+      bool two_sided = false;
+      int pts;
+      pts = prepare_mix_waveform(md, ms, ap, mix_waveform_height(ss), y, (double)SND_SRATE(cp->sound), &two_sided);
+      if (pts > 0)
+	{
+	  axis_context *ax;
+	  ax = mix_waveform_context(cp);
+	  if (two_sided)
+	    draw_both_grf_points(cp->dot_size, ax, pts, cp->time_graph_style);
+	  else draw_grf_points(cp->dot_size, ax, pts, ap, ungrf_y(ap, y), cp->time_graph_style);
+	  copy_context(cp);
+	}
+    }
+}
+
+static void display_one_mix(mix_state *ms, chan_info *cp, axis_info *ap)
+{
+  if ((ms) && 
+      (ms->beg + ms->len > ap->losamp) && 
+      (ms->beg < ap->hisamp))
+    {
+      mix_info *md;
+      int x;
+      md = mix_infos[ms->mix_id];
+      x = grf_x((double)(ms->beg) / (double)SND_SRATE(cp->sound), ap);
+      if ((x + mix_tag_width(ss)) <= ap->x_axis_x1)  /* not cut off on right */
+	draw_mix_tag_and_waveform(md, ms, x);
+    }
+}
+
+void display_channel_mixes(chan_info *cp)
+{
+  /* called in display_channel_data if cp has active mixes
+   *   it used to draw the tag and waveform if show_mix_waveforms(ss), but I think the tag should be drawn in any case
+   */
+  mix_list *mxl;
+  if ((cp->sound->channel_style == CHANNELS_SUPERIMPOSED) ||
+      (cp->squelch_update))
+    return;
+  mxl = (mix_list *)(cp->edits[cp->edit_ctr]->mixes); /* active mixes in the current edit of this channel */
+  if (mxl)
+    {
+      int i;
+      for (i = 0; i < mxl->size; i++)
+	display_one_mix(mxl->list[i], cp, cp->axis);
+    }
+}
+
+
+#define MIX_WAIT_TIME    50
+static timeout_result_t watch_mix_proc = 0;
+
+static void stop_watch_mix_proc(void)
+{
+  if (watch_mix_proc != 0)
+    {
+      TIMEOUT_REMOVE(watch_mix_proc);
+      watch_mix_proc = 0;
+    }
+}
+
+static float watch_mix_x_incr = 1.0;
+
+static TIMEOUT_TYPE watch_mix(TIMEOUT_ARGS)
+{
+  mix_info *md = (mix_info *)context;
+  if (watch_mix_proc != 0)
+    {
+      watch_mix_x_incr *= 1.1;
+      move_mix_tag(md->id, (int)(md->x + watch_mix_x_incr));
+      watch_mix_proc = CALL_TIMEOUT(watch_mix, MIX_WAIT_TIME, md);
+    }
+  TIMEOUT_RESULT
+}
+
+
+static int edpos_before_drag = 0;
+static with_hook_t hookable_before_drag;
+static bool mix_dragged = false;
+static XEN mix_release_hook;
+static XEN mix_drag_hook;
+/* also mix_click_hook in snd-chn.c */
+
+
+void move_mix_tag(int mix_id, int x) 
+{
+  /* dragging mix, hit_mix returns id, called only from snd-chn.c */
+  mix_info *md;
+  mix_state *ms;
+  axis_info *ap;
+  chan_info *cp;
+
+  md = md_from_id(mix_id);
+  cp = md->cp;
+
+  if (!mix_dragged) /* starting to drag -- unmix now while we know the original position */
+    {
+      edpos_before_drag = cp->edit_ctr;
+      hookable_before_drag = cp->hookable;
+      cp->hookable = WITHOUT_HOOK;
+    }
+  else cp->edit_ctr = edpos_before_drag;
+  
+  mix_set_position_edit(mix_id, snd_round_off_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(cp->sound))));
+
+  mix_dragged = true;
+  ap = cp->axis;
+  ms = current_mix_state(md); 
+
+  if ((x > ap->x_axis_x1) || (x < ap->x_axis_x0)) 
+    {
+      /* we're outside the graph */
+      if (watch_mix_proc != 0)
+	{
+	  if ((x < ap->x_axis_x0) && (ap->x0 == ap->xmin)) return;
+	  if ((x > ap->x_axis_x1) && (ap->x1 == ap->xmax)) return;
+	}
+      else
+	{
+	  if (mix_dragged)
+	    {
+	      if (x < ap->x_axis_x0)
+		watch_mix_x_incr = -1.0;
+	      else watch_mix_x_incr = 1.0;
+	      watch_mix_proc = CALL_TIMEOUT(watch_mix, MIX_WAIT_TIME, md);
+	    }
+	}
+      x = move_axis(cp, ap, x); /* calls update_graph eventually (in snd-chn.c reset_x_display) */
+    }
+  else 
+    {
+      if (watch_mix_proc != 0) 
+	{
+	  stop_watch_mix_proc();
+	  watch_mix_proc = 0;
+	}
+    }
+
+  /* draw_mix_tag_and_waveform(md, ms, x); */
+  reflect_mix_change(mix_id);
+
+  display_channel_time_data(cp);
+
+  if (XEN_HOOKED(mix_drag_hook))
+    run_hook(mix_drag_hook,
+	     XEN_LIST_1(C_TO_XEN_INT(mix_id)),
+	     S_mix_drag_hook);
+}
+
+
+void finish_moving_mix_tag(int mix_id, int x)
+{
+  /* from mouse release after tag drag in snd-chn.c only */
+  mix_info *md;
+  off_t pos;
+  XEN res = XEN_FALSE;
+  chan_info *cp;
+
+  mix_dragged = false;
+  if (watch_mix_proc != 0) 
+    {
+      stop_watch_mix_proc();
+      watch_mix_proc = 0;
+    }
+
+  md = md_from_id(mix_id);
+  if (!md) return;
+  cp = md->cp;
+  
+  pos = snd_round_off_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(cp->sound)));
+
+  cp->hookable = hookable_before_drag;
+  undo_edit(cp, 1);
+
+  if (XEN_HOOKED(mix_release_hook))
+    res = run_progn_hook(mix_release_hook,
+			 XEN_LIST_2(C_TO_XEN_INT(mix_id),
+				    C_TO_XEN_OFF_T(pos - mix_position_from_id(mix_id))),
+			 S_mix_release_hook);
+
+  if (!(XEN_TRUE_P(res)))
+    {
+      mix_set_position_edit(mix_id, pos);
+      update_graph(cp);
+    }
+}
 
 
 /* xen connection */
@@ -1432,6 +2183,7 @@ static XEN g_mix_tag_y(XEN n)
   return(snd_no_such_mix_error(S_mix_tag_y, n));
 }
 
+
 static XEN g_set_mix_tag_y(XEN n, XEN val) 
 {
   int id;
@@ -1439,7 +2191,21 @@ static XEN g_set_mix_tag_y(XEN n, XEN val)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, S_setB S_mix_tag_y, "an integer");
   id = XEN_TO_C_INT(n);
   if (mix_exists(id))
-    mix_set_tag_y_from_id(id, XEN_TO_C_INT(val));
+    {
+      chan_info *cp;
+      mix_state *ms;
+      mix_info *md;
+      md = md_from_id(id);
+      ms = current_mix_state(md);
+      cp = md->cp;
+      if ((cp) &&
+	  (!(cp->squelch_update)))
+	erase_mix_tag_and_waveform(ms, cp, cp->axis, md->x, cp->axis->y_offset + md->tag_y + MIX_TAG_Y_OFFSET);
+      md->tag_y = XEN_TO_C_INT(val);
+      if ((cp) &&
+	  (!(cp->squelch_update)))
+	display_one_mix(ms, cp, cp->axis);
+    }
   else return(snd_no_such_mix_error(S_setB S_mix_tag_y, n));
   return(val);
 }
@@ -1722,7 +2488,22 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
   
   /* make_snd_data_buffer copies the data array, so we don't need GC protection */
   /*    we can't use v->data directly because the user might change it */
-  mix_id = mix_buffer_with_tag(cp, data, bg, len, edname);                          /* mix_index = cp->sound_ctr for this buffer */
+  {
+    char *new_origin;
+    /* (mix-vct (vct .1 .2 .3) 100 0 0 #t "mix-vct (vct .1 .2 .3)") */
+
+#if HAVE_FORTH
+    new_origin = mus_format(OFF_TD " snd chn %s to -mix-%d", bg, edname, mix_infos_ctr);
+#endif
+#if HAVE_SCHEME
+    new_origin = mus_format("(set! -mix-%d (%s " OFF_TD " snd chn))", mix_infos_ctr, edname, bg);
+#endif
+#if HAVE_RUBY
+    new_origin = mus_format("_mix_%d = %s(" OFF_TD ", snd, chn)", mix_infos_ctr, TO_PROC_NAME(edname), bg);
+#endif
+    mix_id = mix_buffer_with_tag(cp, data, bg, len, new_origin); 
+    FREE(new_origin);
+  }
 
 #if (!SNDLIB_USE_FLOATS)
   FREE(data);
@@ -1745,7 +2526,6 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
   int chans, id = NO_MIX_TAG, file_channel = 0;
   bool with_mixer, delete_file = false;
   off_t beg = 0, len = 0;
-  char *origin = NULL;
 
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mix, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_2, S_mix, "an integer");
@@ -1813,18 +2593,18 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
       else with_mixer = XEN_TO_C_BOOLEAN(tag);
     }
 
-#if HAVE_FORTH
-  origin = mus_format("\"%s\" " OFF_TD " %d %s", 
-		      name, beg, file_channel, S_mix);
-#else
-  origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", 
-		      TO_PROC_NAME(S_mix), name, beg, file_channel);
-#endif
-
   if (!with_mixer)
-    mix_file_untagged(name, file_channel, cp, beg, len, (delete_file) ? DELETE_ME : DONT_DELETE_ME, origin);
+    {
+      char *origin;
+      origin = untagged_mix_to_string(name, beg, file_channel, delete_file == DELETE_ME);
+      mix_file_untagged(name, file_channel, cp, beg, len, (delete_file) ? DELETE_ME : DONT_DELETE_ME, origin);
+      FREE(origin);
+    }
   else 
     {
+      char *origin;
+      origin = tagged_mix_to_string(name, beg, file_channel, delete_file == DELETE_ME);
+
       if (len < FILE_BUFFER_SIZE)
 	{
 	  mus_sample_t *data;
@@ -1843,11 +2623,10 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 	  if (!md->in_filename)
 	    md->in_filename = copy_string(name);
 	}
+      FREE(origin);
     }
 
   update_graph(cp);
-
-  FREE(origin);
   return(C_TO_XEN_INT(id));
 }
 
@@ -2120,11 +2899,6 @@ bool play_mix_from_id(int mix_id)
 }
 
 
-static XEN mix_release_hook;
-static XEN mix_drag_hook;
-/* also mix_click_hook in snd-chn.c */
-
-
 #ifdef XEN_ARGIFY_1
 
 XEN_NARGIFY_1(g_mix_position_w, g_mix_position)
@@ -2298,658 +3072,3 @@ void g_init_mix(void)
 
   mix_drag_hook = XEN_DEFINE_HOOK(S_mix_drag_hook, 1, H_mix_drag_hook); /* arg = id */
 }
-
-
-
-/* edit-list->function support for mixes:
- *      mix list search for current channel, make outer let holding all names as (-mix-### ###)
- *      origins for make-mix procs: (set! -mix-### (...))
- *      origins otherwise, reference to mix: -mix-###
- */
-
-char *edit_list_mix_init(chan_info *cp)
-{
-  char *new_list = NULL, *old_list = NULL;
-  mix_list *mxl;
-  mxl = (mix_list *)(cp->edits[cp->edit_ctr]->mixes);
-  if (mxl)
-    {
-      int i;
-      for (i = 0; i < mxl->size; i++)
-	if (mxl->list[i])
-	  {
-	    int id;
-	    id = mxl->list[i]->mix_id;
-
-	    old_list = new_list;
-#if HAVE_SCHEME
-	    new_list = mus_format("%s%s(-mix-%d %d)", 
-				  (old_list) ? old_list : "", 
-				  (old_list) ? " " : "",  /* strcat of previous + possible space */
-				  id, id);                  
-#endif
-#if HAVE_RUBY
-	    new_list = mus_format("%s%s_mix_%d = %d", 
-				  (old_list) ? old_list : "", 
-				  (old_list) ? "; " : "",  /* strcat of previous + possible space */
-				  id, id);                  
-#endif
-#if HAVE_FORTH
-	    new_list = mus_format("%s%s%d { -mix-%d }", 
-				  (old_list) ? old_list : "", 
-				  (old_list) ? " " : "",   /* strcat of previous + possible space */
-				  id, id);                  
-#endif
-	    if (old_list) FREE(old_list);
-	  }
-    }
-  return(new_list);
-}
-
-
-#define MIX_TAG_Y_OFFSET mix_tag_height(ss)
-
-int hit_mix(chan_info *cp, int x, int y) /* mix tag press in snd-chn.c */
-{
-  #define SLOPPY_MOUSE 3
-  mix_list *mxl;
-  mxl = (mix_list *)(cp->edits[cp->edit_ctr]->mixes); /* active mixes in the current edit of this channel */
-  if (mxl)
-    {
-      int i, width, height;
-      width = mix_tag_width(ss);
-      height = mix_tag_height(ss);
-      for (i = 0; i < mxl->size; i++)
-	{
-	  mix_state *ms;
-	  ms = mxl->list[i];
-	  if (ms)
-	    {
-	      int mx, my;
-	      mx = grf_x((double)(ms->beg) / (double)(SND_SRATE(cp->sound)), cp->axis);
-	      my = mix_infos[ms->mix_id]->tag_y + MIX_TAG_Y_OFFSET + cp->axis->y_offset;
-	      if ((x + SLOPPY_MOUSE >= (mx - width / 2)) && 
-		  (x - SLOPPY_MOUSE <= (mx + width / 2)) &&
-		  (y + SLOPPY_MOUSE >= (my - height)) && 
-		  (y - SLOPPY_MOUSE <= (my + 0)))
-		return(ms->mix_id);
-	    }
-	}
-    }
-  return(NO_MIX_TAG);
-}
-
-
-
-/* mix display */
-
-void channel_set_mix_tags_erased(chan_info *cp)
-{
-  mix_list *mxl;
-  mxl = (mix_list *)(cp->edits[cp->edit_ctr]->mixes);
-  if (mxl)
-    {
-      int i;
-      for (i = 0; i < mxl->size; i++)
-	if (mxl->list[i])
-	  {
-	    mix_info *md;
-	    md = mix_infos[mxl->list[i]->mix_id];
-	    md->y = MIX_TAG_ERASED;
-	  }
-    }
-}
-
-static void draw_mix_tag(mix_info *md, int x, int y)
-{
-  chan_info *cp;
-  int width, height;
-  axis_context *ax;
-  char *lab = NULL;
-
-#if USE_MOTIF
-  #define STRING_Y_OFFSET 3
-  #define STRING_HEIGHT 12
-#else
-  #define STRING_Y_OFFSET -8
-  #define STRING_HEIGHT 12
-#endif
-
-  cp = md->cp;
-
-  /* draw the mix tag */
-  width = mix_tag_width(ss);
-  height = mix_tag_height(ss);
-
-  if (md->y != MIX_TAG_ERASED)
-    {
-      /* erase old tag and name */
-      ax = erase_context(cp);
-      fill_rectangle(ax, md->x - width / 2 - 1, md->y - height - 1, width + 2, height + STRING_HEIGHT);
-      md->y = MIX_TAG_ERASED;
-    }
-
-  ax = mix_waveform_context(cp);
-  set_foreground_color(ax, md->color); 
-  fill_rectangle(ax, x - width / 2, y - height, width, height);
-  md->x = x;
-  md->y = y;
-
-  /* redraw the mix id underneath the tag */
-  set_tiny_numbers_font(cp);
-  if (cp->printing) ps_set_tiny_numbers_font();
-
-  if (md->name)
-    lab = copy_string(md->name);
-  else
-    {
-      lab = (char *)CALLOC(16, sizeof(char));
-      mus_snprintf(lab, 16, "%d", md->id);
-    }
-  ax = copy_context(cp);
-  draw_string(ax, x - width / 2, y + height / 2 + STRING_Y_OFFSET, lab, strlen(lab));
-  if (cp->printing) ps_draw_string(cp->axis, x - width / 2, y + height / 2 + STRING_Y_OFFSET, lab);
-
-  if (lab) {FREE(lab); lab = NULL;}
-}
-
-static int local_grf_x(double val, axis_info *ap)
-{
-  if (val >= ap->x1) return(ap->x_axis_x1);
-  if (val <= ap->x0) return(ap->x_axis_x0);
-  return((int)(ap->x_base + val * ap->x_scale));
-}
-
-static env_info *make_mix_input_peak_env(mix_info *md)
-{
-  mix_state *ms;
-  ms = current_mix_state(md);
-  if (ms->len >= MIX_PEAK_ENV_CUTOFF)
-    {
-      env_info *ep;
-      snd_fd *sf;
-      int val, sb = 0;
-      off_t n;
-
-      ep = (env_info *)CALLOC(1, sizeof(env_info));
-      val = (int)(log((double)(ms->len)));
-      if (val > 20) val = 20;
-      ep->amp_env_size = snd_int_pow2(val);
-      ep->samps_per_bin = (int)(ceil((double)(ms->len) / (double)(ep->amp_env_size)));
-      ep->data_max = (Float *)CALLOC(ep->amp_env_size, sizeof(Float));
-      ep->data_min = (Float *)CALLOC(ep->amp_env_size, sizeof(Float));
-      ep->fmin = 1.0;
-      ep->fmax = -1.0;
-
-      sf = make_virtual_mix_reader(md->cp, 0, ms->len, ms->index, 1.0, READ_FORWARD);
-
-      for (n = 0; n < ms->len; n += ep->samps_per_bin)
-	{
-	  Float ymin, ymax, val;
-	  int i;
-	  val = read_sample(sf);
-	  ymin = val;
-	  ymax = val;
-	  for (i = 1; i < ep->samps_per_bin; i++)
-	    {
-	      val = read_sample(sf);
-	      if (ymin > val) 
-		ymin = val; 
-	      else 
-		if (ymax < val) 
-		  ymax = val;
-	    }
-	  ep->data_max[sb] = ymax;
-	  ep->data_min[sb++] = ymin;
-	  if (ymin < ep->fmin) ep->fmin = ymin;
-	  if (ymax > ep->fmax) ep->fmax = ymax;
-	}
-
-      ep->completed = true;
-      free_snd_fd(sf);
-      return(ep);
-    }
-  return(NULL);
-}
-
-static bool mix_input_peak_env_usable(mix_info *md, Float samples_per_pixel) 
-{
-  if (!(md->peak_env))
-    md->peak_env = make_mix_input_peak_env(md);
-  return((md->peak_env) && 
-	 (samples_per_pixel >= (Float)(md->peak_env->samps_per_bin)));
-}
-
-static int prepare_mix_peak_env(mix_info *md, Float scl, int yoff, off_t newbeg, off_t newend, double srate, axis_info *ap)
-{
-  int i, j, mix_start;
-  int lastx, newx;
-  double xend, xstart, xstep;
-  env_info *ep;
-  Float ymin = 0.0, ymax = 0.0;
-
-  ep = md->peak_env;
-
-  /* mix starts at newbeg, current display starts at lo,
-     mix goes to newend, current display goes to hi,
-     ep->samps_per_bin is the mix input step size
-  */
-
-  if (ap->losamp > newbeg)
-    {
-      mix_start = snd_round((double)(ap->losamp - newbeg) / (double)(ep->samps_per_bin));
-      xstart = ap->x0;
-    }
-  else 
-    {
-      mix_start = 0;
-      xstart = (double)(newbeg) / srate;
-    }
-
-  if (ap->hisamp < newend)
-    xend = ap->x1;
-  else xend = (double)(newend) / srate;
-
-  xstep = (double)(ep->samps_per_bin) / srate;
-  lastx = local_grf_x(xstart, ap);
-
-  for (i = mix_start, j = 0; (xstart < xend) && (i < ep->amp_env_size); xstart += xstep, i++)
-    {
-      Float low, high;
-      low = ep->data_min[i];
-      high = ep->data_max[i];
-      newx = local_grf_x(xstart, ap);
-      if (newx > lastx)                  /* set lastx's bin (j) from min/max for that output bin */
-	{
-	  set_grf_points(lastx, j++,
-			 (int)(yoff - scl * ymin),
-			 (int)(yoff - scl * ymax));
-	  lastx = newx;
-	  ymin = low;
-	  ymax = high;
-	}
-      else
-	{
-	  if (high > ymax) ymax = high;
-	  if (low < ymin) ymin = low;
-	}
-    }
-
-  return(j);
-}
-
-/* currently 60% of "normal" time is here */
-
-static int prepare_mix_waveform(mix_info *md, mix_state *ms, axis_info *ap, Float scl, int yoff, double cur_srate, bool *two_sided)
-{
-  off_t i, newbeg, newend;
-  int pts = 0;
-  off_t samps;
-  bool widely_spaced;
-  Float samples_per_pixel;
-  double x, incr, initial_x;
-  Float ina;
-  off_t lo, hi;
-  snd_fd *sf = NULL;
-  int x_start, x_end;
-  double start_time;
-  newbeg = ms->beg;
-  newend = newbeg + ms->len;
-  lo = ap->losamp;
-  hi = ap->hisamp;
-  if ((newend <= lo) || (newbeg >= hi)) return(0);
-  if ((ap->y_axis_y0 - ap->y_axis_y1) < scl) return(0);
-  start_time = (double)(ap->losamp) / cur_srate;
-  x_start = ap->x_axis_x0;
-  x_end = ap->x_axis_x1;
-  if (newend > hi) newend = hi;
-  samps = ap->hisamp - ap->losamp + 1;
-  samples_per_pixel = (Float)((double)(samps - 1) / (Float)(x_end - x_start));
-
-  if ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE))
-    {
-      int j;
-      if (newbeg < lo) /* mix starts before current left x0 point */
-	{
-	  sf = make_virtual_mix_reader(md->cp, lo - newbeg, ms->len, ms->index, ms->scaler, READ_FORWARD);
-	  newbeg = lo;
-	}
-      else sf = make_virtual_mix_reader(md->cp, 0, ms->len, ms->index, ms->scaler, READ_FORWARD);
-
-      if (!sf) return(0);
-      if (samples_per_pixel < 1.0)
-	{
-	  incr = 1.0 / samples_per_pixel;
-	  initial_x = x_start;
-	  widely_spaced = true;
-	}
-      else
-	{
-	  incr = (double)1.0 /cur_srate;
-	  initial_x = start_time;
-	  widely_spaced = false;
-	}
-      x = initial_x + (incr * (newbeg - lo));
-      for (j = 0, i = newbeg; i <= newend; i++, j++, x += incr)
-	{
-	  ina = read_sample(sf);
-	  if (widely_spaced)
-	    set_grf_point((int)x, j, (int)(yoff - scl * ina));
-	  else set_grf_point(local_grf_x(x, ap), j, (int)(yoff - scl * ina));
-	}
-      free_snd_fd(sf);
-      pts = j;
-      (*two_sided) = false;
-    }
-  else
-    {
-      (*two_sided) = true;
-      if (mix_input_peak_env_usable(md, samples_per_pixel))
-	pts = prepare_mix_peak_env(md, scl, yoff, newbeg, newend, (double)cur_srate, ap);
-      else
-	{
-	  int xi, j;
-	  off_t endi;
-	  Float ymin, ymax, xf;
-	  if (newbeg < lo)
-	    {
-	      sf = make_virtual_mix_reader(md->cp, lo - newbeg, ms->len, ms->index, ms->scaler, READ_FORWARD);
-	      newbeg = lo;
-	    }
-	  else sf = make_virtual_mix_reader(md->cp, 0, ms->len, ms->index, ms->scaler, READ_FORWARD);
-	  if (!sf) return(0);
-
-	  j = 0;      /* graph point counter */
-	  x = ap->x0;
-	  xi = local_grf_x(x, ap);
-	  xf = 0.0;     /* samples per pixel counter */
-	  ymin = 100.0;
-	  ymax = -100.0;
-	  if (newend < hi) endi = newend; else endi = hi;
-	  for (i = lo; i < newbeg; i++)
-	    {
-	      xf += 1.0;
-	      if (xf > samples_per_pixel)
-		{
-		  xi++;
-		  xf -= samples_per_pixel;
-		}
-	    }
-	  for (i = newbeg; i <= endi; i++)
-	    {
-
-	      ina = read_sample(sf);
-	      if (ina > ymax) ymax = ina;
-	      if (ina < ymin) ymin = ina;
-	      xf += 1.0;
-	      if (xf > samples_per_pixel)
-		{
-		  set_grf_points(xi, j,
-				 (int)(yoff - scl * ymin),
-				 (int)(yoff - scl * ymax));
-		  j++;
-		  ymin = 100.0;
-		  ymax = -100.0;
-		  xi++;
-		  xf -= samples_per_pixel;
-		}
-	    }
-	  pts = j;
-	  free_snd_fd(sf);
-	}
-    }
-  return(pts);
-}
-
-int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided)
-{
-  mix_info *md;
-  mix_state *ms;
-  Float scl, x0, x1, y0, y1;
-  off_t old_lo, old_hi;
-  double cur_srate;
-  int pts;
-  md = md_from_id(mix_id);
-  if (!md) return(0);
-  scl = ap->y_axis_y0 - ap->y_axis_y1;
-  old_lo = ap->losamp;
-  old_hi = ap->hisamp;
-  x0 = ap->x0;
-  x1 = ap->x1;
-  y0 = ap->y0;
-  y1 = ap->y1;
-  cur_srate = (double)SND_SRATE(md->cp->sound);
-  ms = current_mix_state(md);
-  ap->losamp = ms->beg;
-  ap->hisamp = ms->beg + ms->len;
-  ap->x0 = (double)(ap->losamp) / cur_srate;
-  ap->x1 = (double)(ap->hisamp) / cur_srate;
-  ap->y0 = -1.0;
-  ap->y1 = 1.0;
-  init_axis_scales(ap);
-  pts = prepare_mix_waveform(md, ms, ap, scl * .5, (int)(scl * .5), cur_srate, two_sided);
-  ap->x0 = x0;
-  ap->x1 = x1;
-  ap->y0 = y0;
-  ap->y1 = y1;
-  ap->losamp = old_lo;
-  ap->hisamp = old_hi;
-  init_axis_scales(ap);
-  return(pts);
-}
-
-static void draw_mix_tag_and_waveform(mix_info *md, mix_state *ms, int x)
-{
-  bool show_wave;
-  int y, wave_height;
-  chan_info *cp;
-  axis_info *ap;
-
-  cp = md->cp;
-  ap = cp->axis;
-  wave_height = mix_waveform_height(ss);
-  show_wave = ((show_mix_waveforms(ss)) && (cp->show_mix_waveforms));
-  y = ap->y_offset + md->tag_y + MIX_TAG_Y_OFFSET;
-    
-  if ((show_wave) &&
-      (md->y != MIX_TAG_ERASED))
-    {
-      /* erase old wave */
-      int wave_width, old_x;
-      wave_width = (int)(ms->len * ((double)(ap->x_axis_x1 - ap->x_axis_x0) / (double)(ap->hisamp - ap->losamp)));
-      old_x = md->x + mix_tag_width(ss) - 2;
-      if ((old_x + wave_width) > ap->x_axis_x1)
-	wave_width = ap->x_axis_x1 - old_x;
-      fill_rectangle(erase_context(cp), old_x, (y > wave_height) ? (y - wave_height) : 0, wave_width + 2, wave_height + 2);
-    }
-
-  if (ms->beg >= ap->losamp)
-    draw_mix_tag(md, x, y);
-
-  if (show_wave)
-    {
-      bool two_sided = false;
-      int pts;
-      pts = prepare_mix_waveform(md, ms, ap, wave_height, y, (double)SND_SRATE(cp->sound), &two_sided);
-      if (pts > 0)
-	{
-	  axis_context *ax;
-	  ax = mix_waveform_context(cp);
-	  if (two_sided)
-	    draw_both_grf_points(cp->dot_size, ax, pts, cp->time_graph_style);
-	  else draw_grf_points(cp->dot_size, ax, pts, ap, ungrf_y(ap, y), cp->time_graph_style);
-	  copy_context(cp);
-	}
-    }
-}
-
-void display_channel_mixes(chan_info *cp)
-{
-  /* called in display_channel_data if cp has active mixes
-   *   it used to draw the tag and waveform if show_mix_waveforms(ss), but I think the tag should be drawn in any case
-   */
-  mix_list *mxl;
-  if ((cp->sound->channel_style == CHANNELS_SUPERIMPOSED) ||
-      (cp->squelch_update))
-    return;
-  mxl = (mix_list *)(cp->edits[cp->edit_ctr]->mixes); /* active mixes in the current edit of this channel */
-  if (mxl)
-    {
-      int i;
-      axis_info *ap;
-      ap = cp->axis;
-      for (i = 0; i < mxl->size; i++)
-	{
-	  mix_state *ms;
-	  ms = mxl->list[i];
-	  if ((ms) && 
-	      (ms->beg + ms->len > ap->losamp) && 
-	      (ms->beg < ap->hisamp))
-	    {
-	      mix_info *md;
-	      int x;
-	      md = mix_infos[ms->mix_id];
-	      x = grf_x((double)(ms->beg) / (double)SND_SRATE(cp->sound), ap);
-	      if ((x + mix_tag_width(ss)) <= ap->x_axis_x1)  /* not cut off on right */
-		draw_mix_tag_and_waveform(md, ms, x);
-	    }
-	}
-    }
-}
-
-
-#define MIX_WAIT_TIME    50
-static timeout_result_t watch_mix_proc = 0;
-static void stop_watch_mix_proc(void)
-{
-  if (watch_mix_proc != 0)
-    {
-      TIMEOUT_REMOVE(watch_mix_proc);
-      watch_mix_proc = 0;
-    }
-}
-
-static float watch_mix_x_incr = 1.0;
-
-static TIMEOUT_TYPE watch_mix(TIMEOUT_ARGS)
-{
-  mix_info *md = (mix_info *)context;
-  if (watch_mix_proc != 0)
-    {
-      watch_mix_x_incr *= 1.1;
-      move_mix_tag(md->id, (int)(md->x + watch_mix_x_incr));
-      watch_mix_proc = CALL_TIMEOUT(watch_mix, MIX_WAIT_TIME, md);
-    }
-  TIMEOUT_RESULT
-}
-
-
-static int edpos_before_drag = 0;
-static with_hook_t hookable_before_drag;
-static bool mix_dragged = false;
-
-void move_mix_tag(int mix_id, int x) 
-{
-  /* dragging mix, hit_mix returns id, called only from snd-chn.c */
-  mix_info *md;
-  mix_state *ms;
-  axis_info *ap;
-  chan_info *cp;
-
-  md = md_from_id(mix_id);
-  cp = md->cp;
-
-  if (!mix_dragged) /* starting to drag -- unmix now while we know the original position */
-    {
-      edpos_before_drag = cp->edit_ctr;
-      hookable_before_drag = cp->hookable;
-      cp->hookable = WITHOUT_HOOK;
-    }
-  else cp->edit_ctr = edpos_before_drag;
-  
-  mix_set_position_edit(mix_id, snd_round_off_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(cp->sound))));
-
-  mix_dragged = true;
-  ap = cp->axis;
-  ms = current_mix_state(md); 
-
-  if ((x > ap->x_axis_x1) || (x < ap->x_axis_x0)) 
-    {
-      /* we're outside the graph */
-      if (watch_mix_proc != 0)
-	{
-	  if ((x < ap->x_axis_x0) && (ap->x0 == ap->xmin)) return;
-	  if ((x > ap->x_axis_x1) && (ap->x1 == ap->xmax)) return;
-	}
-      else
-	{
-	  if (mix_dragged)
-	    {
-	      if (x < ap->x_axis_x0)
-		watch_mix_x_incr = -1.0;
-	      else watch_mix_x_incr = 1.0;
-	      watch_mix_proc = CALL_TIMEOUT(watch_mix, MIX_WAIT_TIME, md);
-	    }
-	}
-      x = move_axis(cp, ap, x); /* calls update_graph eventually (in snd-chn.c reset_x_display) */
-    }
-  else 
-    {
-      if (watch_mix_proc != 0) 
-	{
-	  stop_watch_mix_proc();
-	  watch_mix_proc = 0;
-	}
-    }
-
-  /* draw_mix_tag_and_waveform(md, ms, x); */
-  reflect_mix_change(mix_id);
-
-  display_channel_time_data(cp);
-
-  if (XEN_HOOKED(mix_drag_hook))
-    run_hook(mix_drag_hook,
-	     XEN_LIST_1(C_TO_XEN_INT(mix_id)),
-	     S_mix_drag_hook);
-}
-
-
-void finish_moving_mix_tag(int mix_id, int x)
-{
-  /* from mouse release after tag drag in snd-chn.c only */
-  mix_info *md;
-  off_t pos;
-  XEN res = XEN_FALSE;
-  chan_info *cp;
-
-  mix_dragged = false;
-  if (watch_mix_proc != 0) 
-    {
-      stop_watch_mix_proc();
-      watch_mix_proc = 0;
-    }
-
-  md = md_from_id(mix_id);
-  if (!md) return;
-  cp = md->cp;
-  
-  pos = snd_round_off_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(cp->sound)));
-
-  cp->hookable = hookable_before_drag;
-  undo_edit(cp, 1);
-
-  if (XEN_HOOKED(mix_release_hook))
-    res = run_progn_hook(mix_release_hook,
-			 XEN_LIST_2(C_TO_XEN_INT(mix_id),
-				    C_TO_XEN_OFF_T(pos - mix_position_from_id(mix_id))),
-			 S_mix_release_hook);
-
-  if (!(XEN_TRUE_P(res)))
-    {
-      mix_set_position_edit(mix_id, pos);
-      update_graph(cp);
-    }
-}
-
-
-/* TODO: set mix tag y should at least redpy that mix (if not squelched) */
