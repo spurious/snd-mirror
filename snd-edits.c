@@ -4451,53 +4451,17 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 
 off_t edit_changes_begin_at(chan_info *cp, int edpos)
 {
-  ed_list *ed, *old_ed;
-  int len, old_len, i, min_len;
-  old_ed = cp->edits[edpos - 1];
-  ed = cp->edits[edpos];
-  old_len = old_ed->size;
-  len = ed->size;
-  if (len < old_len) 
-    min_len = len;
-  else min_len = old_len;
-  for (i = 0; i < min_len; i ++)
-    if ((FRAGMENT_GLOBAL_POSITION(ed, i) != FRAGMENT_GLOBAL_POSITION(old_ed, i)) || 
-	(FRAGMENT_SOUND(ed, i) != FRAGMENT_SOUND(old_ed, i)) || 
-	(FRAGMENT_LOCAL_POSITION(ed, i) != FRAGMENT_LOCAL_POSITION(old_ed, i)) ||
-	(FRAGMENT_TYPE(ed, i) != FRAGMENT_TYPE(old_ed, i))) /* mix op may not change position//sound/local position */
-      {
-	if ((MIX_OP(FRAGMENT_TYPE(ed, i))) &&
-	    (FRAGMENT_GLOBAL_POSITION(ed, i) > FRAGMENT_GLOBAL_POSITION(old_ed, i)))
-	  return(FRAGMENT_GLOBAL_POSITION(old_ed, i));
-	return(FRAGMENT_GLOBAL_POSITION(ed, i));
-      }
-  return(0);
+  return(cp->edits[edpos]->beg);
 }
 
 off_t edit_changes_end_at(chan_info *cp, int edpos)
 {
-  ed_list *ed, *old_ed;
-  int len, old_len;
-  old_ed = cp->edits[edpos - 1];
-  ed = cp->edits[edpos];
-  old_len = old_ed->size - 1;
-  len = ed->size - 1;
-  if (FRAGMENT_SOUND(ed, len) == EDIT_LIST_END_MARK) len--;
-  if (FRAGMENT_SOUND(old_ed, old_len) == EDIT_LIST_END_MARK) old_len--;
-  while ((len >= 0) && (old_len >= 0))
-    {
-      if ((FRAGMENT_SOUND(ed, len) == FRAGMENT_SOUND(old_ed, old_len)) &&
-	  (FRAGMENT_LOCAL_END(ed, len) == FRAGMENT_LOCAL_END(old_ed, old_len)) &&
-	  (FRAGMENT_TYPE(ed, len) == FRAGMENT_TYPE(old_ed, old_len)))
-	{
-	  if (FRAGMENT_LOCAL_POSITION(ed, len) != FRAGMENT_LOCAL_POSITION(old_ed, old_len))
-	    return(cp->edits[edpos - 1]->samples - (FRAGMENT_LOCAL_END(ed, len) - FRAGMENT_LOCAL_POSITION(ed, len)));
-	  len--;
-	  old_len--;
-	}
-      else break;
-    }
-  return(0);
+  /*
+  if (cp->edits[edpos]->edit_type == DELETION_EDIT)
+    return(cp->edits[edpos]->beg + 1);
+    */
+  /* the env code assumes a deletion passes in the number deleted so that the copy knows where to start in the old env */
+  return(cp->edits[edpos]->beg + cp->edits[edpos]->len);
 }
 
 
@@ -5711,18 +5675,26 @@ void backup_edit_list(chan_info *cp)
 {
   int cur, i;
   ed_list *old_ed, *new_ed;
+  off_t old_end, new_end;
   cur = cp->edit_ctr;
   if (cur <= 0) return;
   new_ed = cp->edits[cur];
   old_ed = cp->edits[cur - 1];
   new_ed->edpos = old_ed->edpos;
   new_ed->backed_up = true;
+  
+  old_end = old_ed->beg + old_ed->len;
+  new_end = new_ed->beg + new_ed->len;
+  if (old_end > new_end) new_end = old_end;
+  if (old_ed->beg < new_ed->beg) new_ed->beg = old_ed->beg;
+  new_ed->len = new_end - new_ed->beg + 1;
 
   /* make sure backup_edit_list (as-one-edit) doesn't clobber our ptrees */
   /* this puts off gc of un-needed ptrees until close time -- a bit wasteful. */
   /*   it might be enough to save the second tree loc in ptree2 cases, and include it in the block above */
   if (old_ed->edit_type == PTREE_EDIT)
     old_ed->edit_type = INITIALIZE_EDIT; /* was ED_SIMPLE which is obviously confused -- anything but PTREE_EDIT should be ok */
+
   old_ed = free_ed_list(old_ed, cp);
   cp->edits[cur - 1] = new_ed;
   cp->edits[cur] = NULL;
@@ -5927,9 +5899,7 @@ static bool lock_affected_mixes(chan_info *cp, int edpos, off_t beg, off_t end)
   int i;
   bool changed = false;
   off_t change_beg = -1, change_end = -1, possible_beg = -1, fragment_beg, fragment_end;
-  /*
-  fprintf(stderr,"lock between: %d %d\n", (int)beg, (int)end);
-  */
+
   ed = cp->edits[edpos];
 
   /* first look for any directly affected mixes */
@@ -5946,9 +5916,6 @@ static bool lock_affected_mixes(chan_info *cp, int edpos, off_t beg, off_t end)
 	      (fragment_end >= beg) && /* hit a mix in the changing section */
 	      (change_beg < 0))
 	    {
-	      /*
-	      fprintf(stderr, "set change_beg to %d, %d %d\n", (int)possible_beg, (int)fragment_beg, (int)fragment_end);
-	      */
 	      change_beg = possible_beg; /* this should track all the way back to where the current mixes started */
 	      change_end = fragment_end;
 	    }
@@ -5961,9 +5928,7 @@ static bool lock_affected_mixes(chan_info *cp, int edpos, off_t beg, off_t end)
 	  if (fragment_beg > end) break;
 	}
     }
-  /*
-  fprintf(stderr, "affected: %d to %d\n", (int)change_beg, (int)change_end);
-  */
+
   if (change_beg >= 0)
     {
       /* now make the change edit, and make sure the affected mixes are removed from the mixes arrays */
@@ -7679,9 +7644,6 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
 	  sf->fscaler = MUS_FIX_TO_FLOAT * READER_SCALER(sf);
 	  if (ZERO_OP(READER_TYPE(sf)))
 	    {
-	      /*
-	      fprintf(stderr,"zero op loc: " OFF_TD "\n", indx);
-	      */
 	      sf->current_sound = NULL;
 	      sf->loc = indx;
 	      sf->first = ind0;
@@ -7690,9 +7652,6 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
 	      choose_accessor(sf);
 	      return(sf);
 	    }
-	  /*
-	  fprintf(stderr,"non-zero loc: " OFF_TD "\n", indx);
-	  */
 	  first_snd = sf->cp->sounds[READER_SOUND(sf)];
 	  if (!first_snd)
 	    return(cancel_reader(sf));
@@ -8506,6 +8465,7 @@ static void make_mix_fragment(ed_list *new_ed, int i, mix_state *ms, off_t beg)
 {
   ed_mixes *mxs;
   int mloc = -1;
+
   /* mix_loc = index into cp->sound arrays for reading the mixed-in data (buffer or file) */
   /* i = index into ed_fragment list for this edit */
   /* we're changing one fragment to add the mix */
@@ -8950,10 +8910,6 @@ bool begin_mix_op(chan_info *cp, off_t old_beg, off_t old_len, off_t new_beg, of
       ED_GLOBAL_POSITION(cb) = old_pos;
       ED_LOCAL_POSITION(cb) = 0;
       ED_LOCAL_END(cb) = new_samples - old_ed->samples;
-      /*
-      fprintf(stderr,"global pos: " OFF_TD ", pos: " OFF_TD ", " OFF_TD "\n", 
-	      old_pos, ED_LOCAL_POSITION(cb), ED_LOCAL_END(cb));
-      */
     }
   else temp_ed = old_ed;
 
@@ -8968,9 +8924,12 @@ bool begin_mix_op(chan_info *cp, off_t old_beg, off_t old_len, off_t new_beg, of
 	  for (i = 0; i < temp_ed->size; i++) 
 	    copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(temp_ed, i));
 	}
+      new_ed->beg = new_beg;
+      new_ed->len = new_len;
     }
   else 
     {
+      off_t old_end, new_end;
       new_ed = copy_and_split_list(new_beg, new_len, temp_ed);
       if (temp_ed != old_ed)
 	{
@@ -8979,16 +8938,14 @@ bool begin_mix_op(chan_info *cp, off_t old_beg, off_t old_len, off_t new_beg, of
 	  free(FRAGMENTS(temp_ed));
 	  FREE(temp_ed);
 	}
-    }
-  if (old_beg < new_beg)
-    {
-      new_ed->beg = old_beg;
-      new_ed->len = new_beg - old_beg + new_len;
-    }
-  else 
-    {
-      new_ed->beg = new_beg;
-      new_ed->len = old_beg - new_beg + new_len;
+      old_end = old_beg + old_len;
+      new_end = new_beg + new_len;
+      if (old_beg < new_beg)
+	new_ed->beg = old_beg;
+      else new_ed->beg = new_beg;
+      if (old_end > new_end)
+	new_ed->len = old_end - new_ed->beg + 1;
+      else new_ed->len = new_end - new_ed->beg + 1;
     }
 
   if (new_samples > old_ed->samples)
@@ -9770,7 +9727,8 @@ static void as_one_edit_set_origin(chan_info *cp, void *origin)
 static void finish_as_one_edit(chan_info *cp) 
 {
   /* if a sound was opened within as-one-edit, it will have 0 here and no array */
-  if ((cp->in_as_one_edit > 0) && (cp->as_one_edit_positions))
+  if ((cp->in_as_one_edit > 0) && 
+      (cp->as_one_edit_positions))
     {
       cp->in_as_one_edit--;
       if (cp->in_as_one_edit < 0)

@@ -2830,12 +2830,14 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	  for (k = 0, m = 1; k < len; k++, m += 2)
 	    {
 	      bool applied_ramp = false;
+
 	      if ((segbeg + segnum) > segend) 
 		segnum = segend - segbeg;
 	      else
 		if ((k == (len - 1)) && 
 		    ((segbeg + segnum) < segend))
 		  segnum = segend - segbeg; /* last value is sticky in envs */
+
 	      if (segnum > 0)
 		{
 		  if (k == 0) 
@@ -2879,12 +2881,15 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 		    }
 		  pos = si->cps[i]->edit_ctr;
 		}
+
+	      if (!edited) edited = applied_ramp;
+
 	      segbeg += segnum;
 	      if (segbeg >= segend) break;
 	      segnum = passes[k + 1] - passes[k];
 
-	      if (!edited) edited = applied_ramp;
 	    }
+
 	  if (edited)
 	    {
 	      if ((si->begs[i] == 0) && (dur == si->cps[i]->edits[env_pos]->samples))

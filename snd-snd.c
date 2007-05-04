@@ -175,12 +175,9 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 		{
 		  int start_bin, end_bin, old_end_bin;
 		  start = edit_changes_begin_at(cp, cp->edit_ctr);
-		  /* as-one-edit backs up edit records without resetting any beg/len values.
-		   *   but this is tricky stuff -- not worth pushing...
-		   */
 		  end = edit_changes_end_at(cp, cp->edit_ctr);
 		  /*
-		  fprintf(stderr,"peak env from " OFF_TD " to " OFF_TD "\n", start, end);
+		  fprintf(stderr,"repeak " OFF_TD " to " OFF_TD "\n", start, end);
 		  */
 		  if (snd_abs_off_t(end - start) < (samples / 2))
 		    {
@@ -194,6 +191,9 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 		      start_bin = (int)(start / ep->samps_per_bin);
 		      ep->fmin = 1.0;
 		      ep->fmax = -1.0;
+		      /*
+		      fprintf(stderr,"copy from 0 to %d\n", start_bin);
+		      */
 		      for (i = 0; i < start_bin; i++) 
 			{
 			  ep->data_min[i] = old_ep->data_min[i];
@@ -212,6 +212,9 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 			      old_end_bin += (1 - end_bin);
 			      end_bin = 1;
 			    }
+			  /*
+			  fprintf(stderr,"follow from (new) %d and (old) %d\n", end_bin, old_end_bin);
+			  */
 			  for (i = end_bin, j = old_end_bin; (i < ep->peak_env_size) && (j < old_ep->peak_env_size); i++, j++)
 			    {
 			      ep->data_min[i] = old_ep->data_min[j];
@@ -456,6 +459,7 @@ int peak_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sr
   int j = 0;
   off_t i;
   peak_env_info *ep;
+
   ep = cp->edits[cp->edit_ctr]->peak_env;
   step = samples_per_pixel / (Float)(ep->samps_per_bin);
   xf = (double)(ap->losamp) / (double)(ep->samps_per_bin);

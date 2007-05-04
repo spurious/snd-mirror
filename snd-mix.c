@@ -1289,9 +1289,10 @@ bool mix_set_speed_edit(int id, Float spd)
 	  
 	  FREE(origin);
 	  ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
+	  unmix(cp, ms);                      /*   but unmix before changing mix length! */
+
 	  ms->speed = spd;
 	  ms->len = len;
-	  unmix(cp, ms);
 	  
 	  if ((ms->speed != 1.0) || (ms->amp_env))
 	    ms->index = remake_mix_data(ms, md);
@@ -1997,6 +1998,7 @@ void finish_moving_mix_tag(int mix_id, int x)
   if (!(XEN_TRUE_P(res)))
     {
       mix_set_position_edit(mix_id, pos);
+      CURSOR(cp) = pos;
       update_graph(cp);
     }
 }

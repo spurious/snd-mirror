@@ -4935,7 +4935,7 @@ EDITS: 1
    (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 1, end_mark)
 
- (insert 10 10) ; insert-samples [1:4]:
+ (insert 1 20) ; insert-samples [1:4]:
    (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 1, cp->sounds[-1][0:8, 0.000])
    (at 10, cp->sounds[1][0:9, 1.000]) [buf: 10] 
@@ -5188,7 +5188,7 @@ EDITS: 5
 	    (snd-display ";new 21: ~A" (safe-display-edits ind 0 18)))
 	(set! (samples 30 10) (make-vct 10))
 	(if (not (string-=? (safe-display-edits ind 0 19) "
- (set 30 10) ; set-samples [19:5]:
+ (set 20 21) ; set-samples [19:5]:
    (at 0, cp->sounds[12][0:11, 1.000]) [buf: 12] 
    (at 12, cp->sounds[9][2:9, 1.000]) [buf: 10] 
    (at 20, cp->sounds[-1][0:9, 0.000])
@@ -12052,7 +12052,7 @@ EDITS: 5
 	    (if (not (= (edit-position ind 0) 1)) 
 		(snd-display ";as-one-edit 2 edpos: ~A" (edit-position ind 0))
 		(begin
-		  (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit test-2" "set" 0 20)))
+		  (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit test-2" "set" 0 21)))
 		      (snd-display ";as-one-edit 2 edlist: ~A" (edit-fragment 1 ind 0)))
 		  (if (not (equal? (edit-fragment 0 ind 0) (list #f "init" 0 50828)))
 		      (snd-display ";as-one-edit 2 original edlist: ~A" (edit-fragment 0 ind 0)))))
@@ -12088,7 +12088,7 @@ EDITS: 5
 	      (if (fneq (sample 10) 2.0) (snd-display ";as-one-edit 4: ~A" (sample 10 ind 0)))
 	      (if (not (= (edit-position ind 0) 1)) 
 		  (snd-display ";as-one-edit 4 edpos: ~A" (edit-position ind 0))
-		  (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit test-4" "set" 0 20)))
+		  (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit test-4" "set" 0 21)))
 		      (snd-display ";as-one-edit 4 edlist: ~A" (edit-fragment 1 ind 0))))
 	      (if (not (equal? (edit-fragment 1 ind2 0) (list "set-sample 1 1.0000" "set" 1 1)))
 		  (snd-display ";as-one-edit 3 2 edlist: ~A" (edit-fragment 1 ind2 0)))
@@ -12166,7 +12166,7 @@ EDITS: 5
 		(begin
 		  (snd-display ";nested as-one-edit 7 squelch is on")
 		  (set! (squelch-update) #f)))
-	    (if (not (equal? (edit-fragment 1 ind 0) (list "set-sample 300 0.6000" "set" 300 1)))
+	    (if (not (equal? (edit-fragment 1 ind 0) (list "set-sample 300 0.6000" "set" 100 204)))
 		(snd-display ";as-one-edit 7 edlist: ~A" (edit-fragment 1 ind 0)))
 	    
 	    (revert-sound ind)
@@ -12185,7 +12185,7 @@ EDITS: 5
 		(snd-display ";nested as-one-edit 8: ~A ~A ~A" (sample 100) (sample 200) (sample 300)))
 	    (if (not (= (edit-position ind 0) 1))
 		(snd-display ";nested as-one-edit 8 edpos: ~A" (edit-position ind 0)))
-	    (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit test-8" "set" 300 1)))
+	    (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit test-8" "set" 100 204)))
 		(snd-display ";as-one-edit 8 edlist: ~A" (edit-fragment 1 ind 0)))
 	    
 	    (revert-sound ind)
@@ -12205,7 +12205,7 @@ EDITS: 5
 		(snd-display ";nested as-one-edit 9: ~A ~A ~A" (sample 100) (sample 200) (sample 300)))
 	    (if (not (= (edit-position ind 0) 1))
 		(snd-display ";nested as-one-edit 9 edpos: ~A" (edit-position ind 0)))
-	    (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit test-9" "set" 300 1)))
+	    (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit test-9" "set" 100 204)))
 		(snd-display ";as-one-edit 9 edlist: ~A" (edit-fragment 1 ind 0)))
 	    
 	    (revert-sound ind)
@@ -12230,7 +12230,7 @@ EDITS: 5
 		(snd-display ";nested as-one-edit 10: ~A ~A ~A ~A" (sample 100) (sample 200) (sample 300) (sample 400)))
 	    (if (not (= (edit-position ind 0) 1))
 		(snd-display ";nested as-one-edit 10 edpos: ~A" (edit-position ind 0)))
-	    (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit test-10" "set" 300 1)))
+	    (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit test-10" "set" 100 305)))
 		(snd-display ";as-one-edit 10 edlist: ~A" (edit-fragment 1 ind 0)))
 	    
 	    ;; try implicit as-one-edits nested
@@ -12238,7 +12238,7 @@ EDITS: 5
 	    (env-channel-with-base '(0 0 1 1 2 .5 3 .25 4 0) 0.0 0 #f ind 0)
 	    (if (not (= (edit-position ind 0) 1)) (snd-display ";as-one-edit 11 edpos: ~A" (edit-position ind 0)))
 	    (if (not (equal? (edit-fragment 1 ind 0) 
-			     (list "env-channel-with-base '(0.000 0.000 1.000 1.000 2.000 0.500 3.000 0.250 4.000 0.000) 0.0000 0 #f" "scale" 38121 12707)))
+			     (list "env-channel-with-base '(0.000 0.000 1.000 1.000 2.000 0.500 3.000 0.250 4.000 0.000) 0.0000 0 #f" "scale" 0 50830)))
 		(snd-display ";as-one-edit 11: ~A" (edit-fragment 1 ind 0)))
 	    
 	    (revert-sound ind)
@@ -12247,7 +12247,7 @@ EDITS: 5
 	       (env-channel-with-base '(0 0 1 1 2 .5 3 .25 4 0) 0.0 0 #f ind 0))
 	     "as-one-edit 12")
 	    (if (not (= (edit-position ind 0) 1)) (snd-display ";as-one-edit 12 edpos: ~A" (edit-position ind 0)))
-	    (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit 12" "scale" 38121 12707)))
+	    (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit 12" "scale" 0 50830)))
 		(snd-display ";as-one-edit 12: ~A" (edit-fragment 1 ind 0)))
 	    
 	    (revert-sound ind)
@@ -12289,7 +12289,7 @@ EDITS: 1
    (at 0, cp->sounds[0][0:50827, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
- (set 1239 1) ; outer as-one-edit [1:9]:
+ (set 123 1120) ; outer as-one-edit [1:9]:
    (at 0, cp->sounds[0][0:122, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 123, cp->sounds[2][0:0, 1.000]) [buf: 1] 
    (at 124, cp->sounds[0][124:1235, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
@@ -34103,7 +34103,7 @@ EDITS: 6
    (at 1100, cp->sounds[0][1100:50827, 2.000]) [file: " cwd "oboe.snd[0]]
    (at 50828, end_mark)
 
- (ramp 2501 499) ; env-channel (make-env '(0.000 0.000 1.000 1.000 2.000 0.000) :base 1.0000 :end 999) 2000 1000 [4:9]:
+ (ramp 2000 1001) ; env-channel (make-env '(0.000 0.000 1.000 1.000 2.000 0.000) :base 1.0000 :end 999) 2000 1000 [4:9]:
    (at 0, cp->sounds[0][0:99, 2.000]) [file: " cwd "oboe.snd[0]]
    (at 100, cp->sounds[0][100:199, 2.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y) (+ y 0.1))]) [file: " cwd "oboe.snd[0]]
    (at 200, cp->sounds[0][200:999, 2.000]) [file: " cwd "oboe.snd[0]]
@@ -36024,7 +36024,7 @@ EDITS: 1
 	  (if (not (procedure? func)) 
 	      (snd-display ";edit-list->function 6: ~A" func))
 	  (if (not (string=? (object->string (procedure-source func)) 
-			     "(lambda (snd chn) (ramp-channel 0.0 1.0 0 #f snd chn))"))
+			     "(lambda (snd chn) (env-channel (quote (0.0 0.0 1.0 1.0)) 0 #f snd chn))"))
 	      (snd-display ";edit-list->function 6: ~A" (object->string (procedure-source func))))
 	  (func ind 0)
 	  (let ((mx (maxamp)))
