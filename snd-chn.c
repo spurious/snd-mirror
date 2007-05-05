@@ -6874,8 +6874,6 @@ The accessor edit-property is provided in extensions." XEN_FILE_EXTENSION "."
   return(XEN_VECTOR_REF(cp->edits[edpos]->properties, 0));
 }
 
-/* PERHAPS: save-state for edit-properties? */
-
 static XEN g_set_edit_properties(XEN on, XEN snd_n, XEN chn_n, XEN pos) 
 {
   chan_info *cp;

@@ -713,7 +713,7 @@ void global_fft_state(void)
 
 
 #if HAVE_SCHEME
-static void save_property_list(FILE *fd, XEN property_list, int chan)
+static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 {
   XEN ignore_list;
   ignore_list = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL("save-state-ignore"), property_list);
@@ -721,7 +721,12 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
     {
       if (chan == -1)
 	fprintf(fd, "%s(set! (%s sfile) \'%s)\n", white_space, S_sound_properties, XEN_AS_STRING(property_list));
-      else fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", white_space, S_channel_properties, chan, XEN_AS_STRING(property_list));
+      else 
+	{
+	  if (edpos == -1)
+	    fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", white_space, S_channel_properties, chan, XEN_AS_STRING(property_list));
+	  else fprintf(fd, "%s(set! (%s sfile %d %d) \'%s)\n", white_space, S_edit_properties, chan, edpos, XEN_AS_STRING(property_list));
+	}
     }
   else
     {
@@ -740,7 +745,12 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
 	{
 	  if (chan == -1)
 	    fprintf(fd, "%s(set! (%s sfile) \'%s)\n", white_space, S_sound_properties, XEN_AS_STRING(new_properties));
-	  else fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", white_space, S_channel_properties, chan, XEN_AS_STRING(new_properties));
+	  else 
+	    {
+	      if (edpos == -1)
+		fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", white_space, S_channel_properties, chan, XEN_AS_STRING(new_properties));
+	      else fprintf(fd, "%s(set! (%s sfile %d %d) \'%s)\n", white_space, S_edit_properties, chan, edpos, XEN_AS_STRING(new_properties));
+	    }
 	}
       snd_unprotect_at(gc_loc);
     }
@@ -755,15 +765,13 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
   if (!(XEN_VECTOR_P(ignore_list)))
     {
       if (chan == -1)
-	fprintf(fd, "%sset_%s(%s, sfile)\n",
-		white_space,
-		TO_PROC_NAME(S_sound_properties),
-		XEN_AS_STRING(property_list));
-      else fprintf(fd, "%sset_%s(%s, sfile, %d)\n",
-		   white_space,
-		   TO_PROC_NAME(S_channel_properties),
-		   XEN_AS_STRING(property_list),
-		   chan);
+	fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, TO_PROC_NAME(S_sound_properties), XEN_AS_STRING(property_list));
+      else 
+	{
+	  if (edpos == -1)
+	    fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, TO_PROC_NAME(S_channel_properties), XEN_AS_STRING(property_list), chan);
+	  else fprintf(fd, "%sset_%s(%s, sfile, %d, %d)\n", white_space, TO_PROC_NAME(S_edit_properties), XEN_AS_STRING(property_list), chan, edpos);
+	}
     }
   else
     {
@@ -790,15 +798,13 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
       if (!(XEN_NULL_P(new_properties)))
 	{
 	  if (chan == -1)
-	    fprintf(fd, "%sset_%s(%s, sfile)\n",
-		    white_space,
-		    TO_PROC_NAME(S_sound_properties),
-		    XEN_AS_STRING(new_properties));
-	  else fprintf(fd, "%sset_%s(%s, sfile, %d)\n",
-		       white_space,
-		       TO_PROC_NAME(S_channel_properties),
-		       XEN_AS_STRING(new_properties),
-		       chan);
+	    fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, TO_PROC_NAME(S_sound_properties), XEN_AS_STRING(new_properties));
+	  else 
+	    {
+	      if (edpos == -1)
+		fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, TO_PROC_NAME(S_channel_properties), XEN_AS_STRING(new_properties), chan);
+	      else fprintf(fd, "%sset_%s(%s, sfile, %d, %d)\n", white_space, TO_PROC_NAME(S_edit_properties), XEN_AS_STRING(new_properties), chan, edpos);
+	    }
 	}
       snd_unprotect_at(gc_loc);
     }
@@ -813,15 +819,13 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
   if (!(XEN_LIST_P(ignore_list)))
     {
       if (chan == -1)
-	fprintf(fd, "%s%s sfile set-%s drop\n",
-		white_space,
-		fth_to_c_dump(property_list),
-		S_sound_properties);
-      else fprintf(fd, "%s%s sfile %d set-%s drop\n",
-		   white_space,
-		   fth_to_c_dump(property_list),
-		   chan,
-		   S_channel_properties);
+	fprintf(fd, "%s%s sfile set-%s drop\n", white_space, fth_to_c_dump(property_list), S_sound_properties);
+      else 
+	{
+	  if (edpos == -1)
+	    fprintf(fd, "%s%s sfile %d set-%s drop\n", white_space, fth_to_c_dump(property_list), chan, S_channel_properties);
+	  else fprintf(fd, "%s%s sfile %d %d set-%s drop\n", white_space, fth_to_c_dump(property_list), chan, edpos, S_edit_properties);
+	}
     }
   else
     {
@@ -839,15 +843,13 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
       if (!(XEN_NULL_P(new_properties)))
 	{
 	  if (chan == -1)
-	    fprintf(fd, "%s%s sfile set-%s drop\n",
-		    white_space,
-		    fth_to_c_dump(new_properties),
-		    S_sound_properties);
-	  else fprintf(fd, "%s%s sfile %d set-%s drop\n",
-		       white_space,
-		       fth_to_c_dump(new_properties),
-		       chan,
-		       S_channel_properties);
+	    fprintf(fd, "%s%s sfile set-%s drop\n", white_space, fth_to_c_dump(new_properties), S_sound_properties);
+	  else 
+	    {
+	      if (edpos == -1)
+		fprintf(fd, "%s%s sfile %d set-%s drop\n", white_space, fth_to_c_dump(new_properties), chan, S_channel_properties);
+	      else fprintf(fd, "%s%s sfile %d %d set-%s drop\n", white_space, fth_to_c_dump(new_properties), chan, edpos, S_edit_properties);
+	    }
 	}
       snd_unprotect_at(gc_loc);
     }
@@ -1024,7 +1026,7 @@ static void save_sound_state(snd_info *sp, void *ptr)
       (XEN_LIST_P(XEN_VECTOR_REF(sp->properties, 0))) &&
       (!(XEN_NULL_P(XEN_VECTOR_REF(sp->properties, 0)))))
     {
-      save_property_list(fd, XEN_VECTOR_REF(sp->properties, 0), -1);
+      save_property_list(fd, XEN_VECTOR_REF(sp->properties, 0), -1, -1); /* sound-properties */
     }
   for (chan = 0; chan < sp->nchans; chan++)
     {
@@ -1088,7 +1090,7 @@ static void save_sound_state(snd_info *sp, void *ptr)
 	  (XEN_LIST_P(XEN_VECTOR_REF(cp->properties, 0))) &&
 	  (!(XEN_NULL_P(XEN_VECTOR_REF(cp->properties, 0)))))
 	{
-	  save_property_list(fd, XEN_VECTOR_REF(cp->properties, 0), chan);
+	  save_property_list(fd, XEN_VECTOR_REF(cp->properties, 0), chan, -1); /* channel-properties */
 	}
 
       /* ap->default_xlabel if not null, user explicitly set it */
@@ -1107,6 +1109,21 @@ static void save_sound_state(snd_info *sp, void *ptr)
       /* lisp_info is hidden in snd-chn.c */
 
       edit_history_to_file(fd, cp, true);
+      {
+	int i;
+	for (i = 0; i <= cp->edit_ctr; i++)
+	  {
+	    ed_list *ed;
+	    ed = cp->edits[i];
+	    if ((XEN_VECTOR_P(ed->properties)) &&
+		(XEN_LIST_P(XEN_VECTOR_REF(ed->properties, 0))) &&
+		(!(XEN_NULL_P(XEN_VECTOR_REF(ed->properties, 0)))))
+	      {
+		save_property_list(fd, XEN_VECTOR_REF(ed->properties, 0), chan, i); /* edit-properties */
+	      }
+	  }
+      }
+
       check_selection(fd, cp);
       if (selected_channel() == cp)
 	{

@@ -298,15 +298,16 @@ static void cp_deactivate_selection(chan_info *cp)
   if (ed) ed->selection_beg = NO_SELECTION;
 }
 
-static sync_info *selection_creation_chans = NULL;
+
+static sync_info *syncd_chans = NULL;
 
 void deactivate_selection(void)
 {
   for_each_normal_chan(cp_deactivate_selection);
   for_each_normal_chan(update_graph);
   call_selection_watchers(SELECTION_INACTIVE);
-  if (selection_creation_chans) 
-    selection_creation_chans = free_sync_info(selection_creation_chans);
+  if (syncd_chans) 
+    syncd_chans = free_sync_info(syncd_chans);
 }
 
 void reactivate_selection(chan_info *cp, off_t beg, off_t end)
@@ -326,31 +327,6 @@ void reactivate_selection(chan_info *cp, off_t beg, off_t end)
   ed->selection_maxamp = -1.0;
   ed->selection_maxamp_position = -1;
   call_selection_watchers(SELECTION_ACTIVE);
-}
-
-static void update_selection(chan_info *cp, off_t newend)
-{
-  ed_list *ed;
-  ed = cp->edits[cp->edit_ctr];
-  ed->selection_maxamp = -1.0;
-  ed->selection_maxamp_position = -1;
-  if ((newend != ed->selection_beg) && (newend != ed->selection_end)) /* redundant call from somewhere */
-    {
-      if (newend < ed->selection_beg) 
-	{
-	  if (newend >= 0)
-	    ed->selection_beg = newend;
-	  else ed->selection_beg = 0;
-	}
-      else 
-	{
-	  off_t samps;
-	  samps = CURRENT_SAMPLES(cp);
-	  if (newend < samps)
-	    ed->selection_end = newend;
-	  else ed->selection_end = samps - 1;
-	}
-    }
 }
 
 void ripple_selection(ed_list *ed, off_t beg, off_t num)
@@ -534,38 +510,27 @@ void insert_selection_from_menu(void)
 void start_selection_creation(chan_info *cp, off_t samp)
 {  
   int i;
-  if ((selection_creation_chans) && (selection_creates_region(ss)))
+  if ((syncd_chans) && 
+      (selection_creates_region(ss)))
     /* hmmm -- if keyboard selection in progress, then mouse press? */
     make_region_from_selection();
   deactivate_selection();
-  selection_creation_chans = sync_to_chan(cp);
-  for (i = 0; i < selection_creation_chans->chans; i++)
-    reactivate_selection(selection_creation_chans->cps[i], samp, samp);
+  syncd_chans = sync_to_chan(cp);
+  syncd_chans->begs[0] = samp;           /* begs not otherwise used here, so treat as pivot point */
+  for (i = 0; i < syncd_chans->chans; i++)
+    reactivate_selection(syncd_chans->cps[i], samp, samp);
 }
 
-static void redraw_selection(void);
-
-void update_possible_selection_in_progress(off_t samp)
-{
-  int i;
-  if (selection_creation_chans)
-    {
-      for (i = 0; i < selection_creation_chans->chans; i++)
-	update_selection(selection_creation_chans->cps[i], samp);
-      redraw_selection();
-    }
-}
-
-bool selection_creation_in_progress(void) {return(selection_creation_chans != NULL);}
+bool selection_creation_in_progress(void) {return(syncd_chans != NULL);}
 
 void finish_selection_creation(void)
 {
-  if (selection_creation_chans)
+  if (syncd_chans)
     {
       if (selection_creates_region(ss)) 
 	make_region_from_selection();
       call_selection_watchers(SELECTION_ACTIVE);
-      selection_creation_chans = free_sync_info(selection_creation_chans);      
+      syncd_chans = free_sync_info(syncd_chans);      
     }
 }
 
@@ -653,6 +618,41 @@ void display_selection(chan_info *cp)
     cp_redraw_selection(cp); /* draw just this chan */
 }
 
+void update_possible_selection_in_progress(off_t samp)
+{
+  if (syncd_chans)
+    {
+      int i;
+      off_t original_beg;
+      if (samp < 0) samp = 0;
+      original_beg = syncd_chans->begs[0];
+      for (i = 0; i < syncd_chans->chans; i++)
+	{
+	  chan_info *cp;
+	  ed_list *ed;
+	  off_t new_end;
+	  cp = syncd_chans->cps[i];
+	  ed = cp->edits[cp->edit_ctr];
+	  ed->selection_maxamp = -1.0;
+	  ed->selection_maxamp_position = -1;
+	  if (samp > CURRENT_SAMPLES(cp))
+	    new_end = CURRENT_SAMPLES(cp);
+	  else new_end = samp;
+	  if (new_end < original_beg)
+	    {
+	      ed->selection_beg = new_end;
+	      ed->selection_end = original_beg;
+	    }
+	  else
+	    {
+	      ed->selection_beg = original_beg;
+	      ed->selection_end = new_end;
+	    }
+	}
+      redraw_selection();
+    }
+}
+
 int make_region_from_selection(void)
 {
   off_t *ends = NULL;
@@ -700,8 +700,6 @@ int select_all(chan_info *cp)
 
 
 /* ---------------- selection mouse motion ---------------- */
-
-/* TODO: an oddity of mouse-driven selection definition: if move left of start, start is reset! */
 
 static int last_selection_x = 0;
 static timeout_result_t watch_selection_button = 0;

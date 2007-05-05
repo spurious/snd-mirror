@@ -387,6 +387,11 @@ typedef struct ed_fragment {               /* this name is necessary even in str
 } ed_fragment;
 
 
+/* another possible space-saver: split these into more cases: ed_ramp1, ed_ramp2 etc
+ *   ed_fragment itself could be as small as typ/out/snd/beg/end/scl
+ */
+
+
 /* two ed_fragment->snd markers */
 #define EDIT_LIST_END_MARK -2
 #define EDIT_LIST_ZERO_MARK -1
@@ -2493,6 +2498,7 @@ enum {ED_SIMPLE, ED_MIX_SIMPLE, ED_ZERO, ED_MIX_ZERO,
 
 
       /* SOMEDAY: MIX_XRAMP MIX_PTREE|_ZERO, perhaps other MIX_(X)RAMP_(X)RAMP... 
+
 	          RAMP_MIX is possible -- place ramp on the sum of the mixes and the direct:
 
 		  static Float next_ramp_one_mix(snd_fd *sf)
@@ -2501,7 +2507,8 @@ enum {ED_SIMPLE, ED_MIX_SIMPLE, ED_ZERO, ED_MIX_ZERO,
 		    return(((sf->data[sf->loc++] * sf->fscaler) + read_sample(((mix_data *)(sf->mixes))->sfs[0])) * next_ramp_value(sf));
 		    
 		    we'd need another scl slot somewhere -- mix-data? and subsequent mix would have to lock
-		      and we'd have yet another special case to watch for in scale-channel
+		      and we'd have yet another special case to watch for in scale-channel (not if we move the existing scaler)
+		      could have an ext_mix_data struct with the folded scaler
 
 		    see 6872 virtual_mix_ok
 		  }
@@ -4456,10 +4463,6 @@ off_t edit_changes_begin_at(chan_info *cp, int edpos)
 
 off_t edit_changes_end_at(chan_info *cp, int edpos)
 {
-  /*
-  if (cp->edits[edpos]->edit_type == DELETION_EDIT)
-    return(cp->edits[edpos]->beg + 1);
-    */
   /* the env code assumes a deletion passes in the number deleted so that the copy knows where to start in the old env */
   return(cp->edits[edpos]->beg + cp->edits[edpos]->len);
 }

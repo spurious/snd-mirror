@@ -1525,8 +1525,6 @@ static bool mix_input_peak_env_usable(mix_info *md, Float samples_per_pixel)
 	 (samples_per_pixel >= (Float)(md->peak_env->samps_per_bin)));
 }
 
-/* TODO: after change mix speed, peak env is confused, or if mix dragged backwards */
-
 static peak_env_info *env_on_env(env *e, peak_env_info *peaks)
 {
   peak_env_info *ep;
