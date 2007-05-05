@@ -1997,6 +1997,7 @@ void finish_moving_mix_tag(int mix_id, int x)
     {
       mix_set_position_edit(mix_id, pos);
       CURSOR(cp) = pos;
+      after_edit(cp);
       update_graph(cp);
     }
 }
@@ -2010,6 +2011,14 @@ static XEN snd_no_such_mix_error(const char *caller, XEN n)
 	XEN_LIST_2(C_TO_XEN_STRING(caller),
 		   n));
   return(XEN_FALSE);
+}
+
+void after_mix_edit(int id)
+{
+  mix_info *md;
+  md = md_from_id(id);
+  after_edit(md->cp);
+  update_graph(md->cp);
 }
 
 
@@ -2040,10 +2049,16 @@ static XEN g_mix_position(XEN n)
 
 static XEN g_set_mix_position(XEN n, XEN pos) 
 {
+  int id;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_position, "an integer");
   XEN_ASSERT_TYPE(XEN_OFF_T_P(pos), pos, XEN_ARG_2, S_setB S_mix_position, "an integer");
-  if (mix_set_position_edit(XEN_TO_C_INT(n), XEN_TO_C_OFF_T(pos)))
-    return(pos);
+
+  id = XEN_TO_C_INT(n);
+  if (mix_set_position_edit(id, XEN_TO_C_OFF_T(pos)))
+    {
+      after_mix_edit(id);
+      return(pos);
+    }
   return(snd_no_such_mix_error(S_setB S_mix_position, n));  
 }
 
@@ -2061,10 +2076,16 @@ static XEN g_mix_amp(XEN n)
 
 static XEN g_set_mix_amp(XEN n, XEN uval) 
 {
+  int id;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_amp, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(uval), uval, XEN_ARG_2, S_setB S_mix_amp, "a number");
-  if (mix_set_amp_edit(XEN_TO_C_INT(n), XEN_TO_C_DOUBLE(uval)))
-    return(uval);
+
+  id = XEN_TO_C_INT(n);
+  if (mix_set_amp_edit(id, XEN_TO_C_DOUBLE(uval)))
+    {
+      after_mix_edit(id);
+      return(uval);
+    }
   return(snd_no_such_mix_error(S_setB S_mix_amp, n));  
 }
 
@@ -2084,13 +2105,16 @@ static XEN g_set_mix_amp_env(XEN n, XEN val)
 {
   env *e = NULL;
   bool result;
+  int id;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_amp_env, "an integer");
   XEN_ASSERT_TYPE(XEN_LIST_P(val) || XEN_FALSE_P(val), val, XEN_ARG_2, S_setB S_mix_amp_env, "a list or " PROC_FALSE);
 
   if (XEN_LIST_P(val))
     e = get_env(val, S_setB S_mix_amp_env);
 
-  result = mix_set_amp_env_edit(XEN_TO_C_INT(n), e);
+  id = XEN_TO_C_INT(n);
+  result = mix_set_amp_env_edit(id, e);
+  after_mix_edit(id);
 
   /* e is copied by mix_set_amp_env_edit, and created by get_env (xen_to_env), so it should be freed here */
   if (e) free_env(e);
@@ -2113,10 +2137,16 @@ static XEN g_mix_speed(XEN n)
 
 static XEN g_set_mix_speed(XEN n, XEN uval) 
 {
+  int id;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_speed, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(uval), uval, XEN_ARG_2, S_setB S_mix_speed, "a number");
-  if (mix_set_speed_edit(XEN_TO_C_INT(n), XEN_TO_C_DOUBLE(uval)))
-    return(uval);
+
+  id = XEN_TO_C_INT(n);
+  if (mix_set_speed_edit(id, XEN_TO_C_DOUBLE(uval)))
+    {
+      after_mix_edit(id);
+      return(uval);
+    }
   return(snd_no_such_mix_error(S_setB S_mix_speed, n));
 }
 

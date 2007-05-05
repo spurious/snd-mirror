@@ -86,6 +86,7 @@ static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   speed_dragged = false;
   if (!(mix_is_active(mix_dialog_id))) return(false);
   mix_set_speed_edit(mix_dialog_id, 1.0);
+  after_mix_edit(mix_dialog_id);
   reflect_mix_speed(1.0);
   return(false);
 }
@@ -128,6 +129,7 @@ static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointe
   if (dragging)
     stop_dragging(mix_dialog_id);
   mix_set_speed_edit(mix_dialog_id, set_speed_label(w_speed_number, scrollbar_to_speed(GTK_ADJUSTMENT(w_speed_adj)->value)));
+  after_mix_edit(mix_dialog_id);
   return(false);
 }
 
@@ -172,6 +174,7 @@ static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
   if (!(mix_is_active(mix_dialog_id))) return(false);
   reflect_mix_amp(1.0);
   mix_set_amp_edit(mix_dialog_id, 1.0);
+  after_mix_edit(mix_dialog_id);
   GTK_ADJUSTMENT(w_amp_adj)->value = amp_to_scroll(amp_control_min(ss), 1.0, amp_control_max(ss));
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_amp_adj));
   return(false);
@@ -205,6 +208,7 @@ static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   scrollval = GTK_ADJUSTMENT(w_amp_adj)->value;
   reflect_mix_amp(scrollbar_to_amp(scrollval));
   mix_set_amp_edit(mix_dialog_id, scrollbar_to_amp(scrollval));
+  after_mix_edit(mix_dialog_id);
   return(false);
 }
 
@@ -402,7 +406,7 @@ static void beg_activated(GtkWidget *w, gpointer context)
       redirect_errors_to(NULL, NULL);
       if (beg >= 0.0)
 	mix_set_position_edit(mix_dialog_id, (off_t)(beg * SND_SRATE(cp->sound)));
-      reflect_mix_change(mix_dialog_id);
+      after_mix_edit(mix_dialog_id);
       FREE(up_to_colon);
     }
 }
@@ -477,6 +481,7 @@ static void apply_mix_dialog(GtkWidget *w, gpointer context)
       (!(default_env_p(dialog_env))))
     mix_set_amp_env_edit(mix_dialog_id, dialog_env);
   else mix_set_amp_env_edit(mix_dialog_id, NULL);
+  after_mix_edit(mix_dialog_id);
   mix_amp_env_resize(w_env);
 }
 

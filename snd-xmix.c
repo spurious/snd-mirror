@@ -79,6 +79,7 @@ static void speed_click_callback(Widget w, XtPointer context, XtPointer info)
 				   xmix_speed_control_style,
 				   speed_control_tones(ss),
 				   6));
+  after_mix_edit(mix_dialog_id);
   set_label(w_speed_number, speed_number_buffer);
   XtVaSetValues(w_speed, XmNvalue, speed_to_scrollbar(speed_control_min(ss), 1.0, speed_control_max(ss)), NULL);
 }
@@ -124,6 +125,7 @@ static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer i
   if (dragging)
     stop_dragging(mix_dialog_id);
   mix_set_speed_edit(mix_dialog_id, set_speed_label(w_speed_number, cb->value));
+  after_mix_edit(mix_dialog_id);
 }
 
 
@@ -162,6 +164,7 @@ static void amp_click_callback(Widget w, XtPointer context, XtPointer info)
 {
   if (!(mix_is_active(mix_dialog_id))) return;
   change_mix_amp(mix_dialog_id, 1.0);
+  after_mix_edit(mix_dialog_id);
   XtVaSetValues(w_amp, XmNvalue, amp_to_scroll(amp_control_min(ss), 1.0, amp_control_max(ss)), NULL);
 }
 
@@ -187,6 +190,7 @@ static void amp_valuechanged_callback(Widget w, XtPointer context, XtPointer inf
   if (dragging)
     stop_dragging(mix_dialog_id);
   change_mix_amp(mix_dialog_id, scrollbar_to_amp(ival));
+  after_mix_edit(mix_dialog_id);
 }
 
 
@@ -369,7 +373,7 @@ static void beg_activated(void)
       redirect_errors_to(NULL, NULL);
       if (beg >= 0.0)
 	mix_set_position_edit(mix_dialog_id, (off_t)(beg * SND_SRATE(cp->sound)));
-      reflect_mix_change(mix_dialog_id);
+      after_mix_edit(mix_dialog_id);
       FREE(up_to_colon);
       XtFree(val);
     }
@@ -383,6 +387,7 @@ static void apply_mix_dialog_callback(Widget w, XtPointer context, XtPointer inf
     mix_set_amp_env_edit(mix_dialog_id, dialog_env);
   else mix_set_amp_env_edit(mix_dialog_id, NULL);
   mix_amp_env_resize(w_env, NULL, NULL);
+  after_mix_edit(mix_dialog_id);
 }
 
 static void dismiss_mix_dialog_callback(Widget w, XtPointer context, XtPointer info) 

@@ -1584,6 +1584,7 @@ bool mix_set_position_edit(int id, off_t pos);
 bool mix_set_amp_env_edit(int id, env *e);
 bool mix_set_amp_edit(int id, Float amp);
 bool mix_set_speed_edit(int id, Float spd);
+void after_mix_edit(int id);
 
 int mix_complete_file(snd_info *sp, off_t beg, const char *fullname, bool with_tag, file_delete_t auto_delete, mix_sync_t all_chans);
 int mix_complete_file_at_cursor(snd_info *sp, const char *str);

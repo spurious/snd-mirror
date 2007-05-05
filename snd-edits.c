@@ -5410,11 +5410,11 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  break;
 
 		case MIX_EDIT:
-		  function = mus_format("%s %s drop", function, name);
+		  function = mus_format("%s %s drop", function, ed->origin);
 		  break;
 
 		case CHANGE_MIX_EDIT:
-		  function = mus_format("%s %s drop", function, name);
+		  function = mus_format("%s %s drop", function, ed->origin);
 		  break;
 
 		default: break;
@@ -8619,7 +8619,6 @@ int mix_file_with_tag(chan_info *cp, const char *filename, int chan, off_t beg, 
   if (backup)
     backup_edit_list(cp);
 
-  update_graph(cp);
   return(ms->mix_id);
 }
 
@@ -8964,6 +8963,7 @@ bool begin_mix_op(chan_info *cp, off_t old_beg, off_t old_len, off_t new_beg, of
   new_ed->selection_end = old_ed->selection_end;
   cp->edits[cp->edit_ctr] = new_ed;
   ripple_all(cp, 0, 0); /* 0,0 -> copy current mix (and mark) lists */
+
   return(true);
 }
 
@@ -9004,13 +9004,14 @@ bool end_mix_op(chan_info *cp, off_t old_beg, off_t old_len)
       if (old_len > 0)
 	check_splice_at(new_ed, old_beg + old_len, start_loc);
     }
-  after_edit(cp);
+
   if (cp->edits[cp->edit_ctr - 1]->samples != cp->edits[cp->edit_ctr]->samples)
     reflect_sample_change_in_axis(cp);
   reflect_mix_change(ANY_MIX_ID);
-  update_graph(cp);
+
   return(true);
 }
+
 
 
 

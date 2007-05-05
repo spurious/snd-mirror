@@ -758,7 +758,7 @@ static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 #endif
 
 #if HAVE_RUBY
-static void save_property_list(FILE *fd, XEN property_list, int chan)
+static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 {
   XEN ignore_list;
   ignore_list = rb_ary_assoc(property_list, C_STRING_TO_XEN_SYMBOL("save_state_ignore"));
@@ -812,7 +812,7 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
 #endif
 
 #if HAVE_FORTH
-static void save_property_list(FILE *fd, XEN property_list, int chan)
+static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 {
   XEN ignore_list;
   ignore_list = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL("save-state-ignore"), property_list);
@@ -857,7 +857,7 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
 #endif
 
 #if (!HAVE_EXTENSION_LANGUAGE)
-static void save_property_list(FILE *fd, XEN property_list, int chan) {}
+static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos) {}
 #endif
 
 static void check_selection(FILE *fd, chan_info *cp)
