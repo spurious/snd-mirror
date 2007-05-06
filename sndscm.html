@@ -6451,8 +6451,17 @@ mixes-maxamp returns the maxamp of the mixes in 'mix-list'.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="movemixes">move-mixes</a> <code>mix-list samps</code>
 </td></tr><tr><td></td><td>
-move-mixes moves each mix in 'mix-list' by 'samps' samples.
-</td></tr><tr><td colspan=2 height=16></td></tr>
+move-mixes moves each mix in 'mix-list' by 'samps' samples.  To move all sync'd mixes together whenever one of them is dragged:
+
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+(add-hook! <a class=quiet href="extsnd.html#mixreleasehook">mix-release-hook</a>
+	   (lambda (id samps-moved)
+	     (let ((result (= (<a class=quiet href="extsnd.html#mixsync">mix-sync</a> id) 0)))
+	       (if (not result)
+		   (<em class=red>move-mixes</em> (<a class=quiet href="#syncdmixes">syncd-mixes</a> (<a class=quiet href="extsnd.html#mixsync">mix-sync</a> id)) samps-moved))
+	       result)))
+</pre></td></tr></table>
+</td></tr><tr><td colspan=2></td></tr>
 
 
 <!-- pan-mix -->

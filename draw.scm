@@ -305,7 +305,6 @@ whenever they're in the current view."
 		      (lx (inexact->exact (round (* width (/ (left-sample snd chn) (frames snd chn)))))))
 		  (fill-rectangle (+ x-offset lx) chan-offset (max 1 (- rx lx)) height snd grf-chn selection-context))
 		(let ((old-env (channel-property 'inset-envelope snd chn)))
-
 		  (if (and old-env
 			   (not new-peaks)
 			   (= width (car old-env))
@@ -313,7 +312,6 @@ whenever they're in the current view."
 			   (= y-offset (list-ref old-env 5))
 			   (= (edit-position snd chn) (list-ref old-env 2)))
 		      (begin
-			;; (display "use old graph")
 			(set! data0 (list-ref old-env 3))
 			(set! data1 (list-ref old-env 4)))
 		      (let* ((data (make-graph-data snd chn current-edit-position 0 (frames snd chn)))
@@ -422,6 +420,7 @@ whenever they're in the current view."
 	#f))
   
   (set! current-window-display-is-running #t)
+
   (add-hook! after-open-hook 
     (lambda (s)
       (do ((i 0 (1+ i)))
@@ -430,11 +429,9 @@ whenever they're in the current view."
 	      (cons 'inset-envelope 
 		    (or (channel-property 'save-state-ignore s i) 
 			(list 'save-state-ignore))))
-	(add-hook! (undo-hook s i)
-		   (lambda ()
-		     (let ((vals (channel-property 'inset-envelope s i)))
-		       (if vals
-			   (list-set! vals 2 -2)))))))) ; set edit-position to impossible value
+	(add-hook! (undo-hook s i) (lambda () (set! (channel-property 'inset-envelope s i) #f)))
+	(add-hook! peak-env-hook (lambda (s c) (set! (channel-property 'inset-envelope s c) #f))))))
+
   (add-hook! after-graph-hook display-current-window-location)
   (add-hook! mouse-click-hook click-current-window-location)
   (add-hook! update-hook update-current-window-location))

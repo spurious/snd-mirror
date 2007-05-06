@@ -386,6 +386,7 @@
 #define S_output_name_hook              "output-name-hook"
 #define S_pad_channel                   "pad-channel"
 #define S_pausing                       "pausing"
+#define S_peak_env_hook                 "peak-env-hook"
 #define S_peak_env_info                 "peak-env-info"
 #define S_peaks                         "peaks"
 #define S_peaks_font                    "peaks-font"

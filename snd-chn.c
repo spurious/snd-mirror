@@ -210,6 +210,7 @@ void in_set_transform_graph_type(graph_type_t uval)
 static void chans_show_mix_waveforms(chan_info *cp, bool value)
 {
   cp->show_mix_waveforms = value;
+  update_graph(cp); 
 }
 
 static void set_show_mix_waveforms(bool val) 

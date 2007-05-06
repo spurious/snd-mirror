@@ -545,6 +545,26 @@ static mix_state *current_mix_state(mix_info *md)
   return(NULL);
 }
 
+#if 0
+static mix_state *mix_state_at_edpos(mix_info *md, int edpos)
+{
+  if (md)
+    {
+      if (edpos == AT_CURRENT_EDIT_POSITION)
+	return(current_mix_state(md));
+      else
+	{
+	  chan_info *cp;
+	  cp = md->cp;
+	  if ((edpos >= 0) && 
+	      (edpos < cp->edit_size) &&
+	      (cp->edits[edpos]))
+	    return(ed_mix_state(cp->edits[edpos], md->id));
+	}
+    }
+  return(NULL);
+}
+#endif
 
 
 /* for ease of access, all tagged mixes that are still accessible (perhaps via undo from fixed state, etc)
@@ -765,9 +785,6 @@ bool channel_has_active_mixes(chan_info *cp)
 {
   return(cp->edits[cp->edit_ctr]->mixes != NULL);
 }
-
-
-
 
 static void remove_temporary_mix_file(mix_info *md)
 {
@@ -1951,10 +1968,10 @@ void move_mix_tag(int mix_id, int x)
 	}
     }
 
-  /* draw_mix_tag_and_waveform(md, ms, x); */
   reflect_mix_change(mix_id);
 
   display_channel_time_data(cp);
+  /* draw_mix_tag_and_waveform(md, ms, x); */
 
   if (XEN_HOOKED(mix_drag_hook))
     run_hook(mix_drag_hook,
@@ -2017,8 +2034,11 @@ void after_mix_edit(int id)
 {
   mix_info *md;
   md = md_from_id(id);
-  after_edit(md->cp);
-  update_graph(md->cp);
+  if ((md) && (md->cp))
+    {
+      after_edit(md->cp);
+      update_graph(md->cp);
+    }
 }
 
 
@@ -2035,6 +2055,7 @@ static XEN g_mix_length(XEN n)
   return(snd_no_such_mix_error(S_mix_length, n));
 }
 
+/* if edpos, use mix_state_at_edpos to get ms */
 
 static XEN g_mix_position(XEN n) 
 {

@@ -8434,10 +8434,12 @@ bool redo_edit_with_sync(chan_info *cp, int count)
 
 /* -------------------- virtual mixes -------------------- */
 
-  /* TODO: syncd mixes for stereo (automated that is via mix-drag-hook etc)
-   * TODO: extreme tests such as water.scm [much flashing as grf updates -- need to flush pointless redisplays]
+  /* TODO: extreme tests such as water.scm [much flashing as grf updates -- need to flush pointless redisplays]
    * PERHAPS: mix-property display in dialog [add text widget? or use existing error info widget?]
    * TODO: unlist and read can be called on fully freed xen-allocated readers (valtmp)
+   * SOMEDAY: music notation for mix tags (clefs, staff lines, noteheads -- need specialization of tag display)
+   *          drag horizontally -> change onset, vertically -> change pitch
+   * PERHAPS: edpos args to various mix field (getters anyway), mix? mixes make-mix-sample-reader
    */
 
 static int add_mix_op(int type)

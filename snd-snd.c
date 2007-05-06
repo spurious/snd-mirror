@@ -334,6 +334,17 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
     }
 }
 
+static XEN peak_env_hook;
+
+static void run_peak_env_hook(chan_info *cp)
+{
+  if (XEN_HOOKED(peak_env_hook))
+    run_hook(peak_env_hook, 
+	     XEN_LIST_2(C_TO_XEN_INT(cp->sound->index),
+			C_TO_XEN_INT(cp->chan)),
+	     S_peak_env_hook);
+}
+
 void finish_peak_env(chan_info *cp)
 {
   chan_context *cgx;
@@ -378,6 +389,7 @@ idle_func_t get_peak_env(any_pointer_t ptr)
 	      update_graph(cp);
 	      cp->new_peaks = false;
 	    }
+	  run_peak_env_hook(cp);
 	  return(BACKGROUND_QUIT);
 	}
       else return(BACKGROUND_CONTINUE);
@@ -433,6 +445,7 @@ bool peak_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool 
 	  cp->waiting_to_make_graph = false;
 	  update_graph(cp);
 	}
+      run_peak_env_hook(cp);
       return(peak_env_usable(cp, samples_per_pixel, hisamp, start_new, edit_pos, false));
     }
   if ((start_new) &&
@@ -5154,8 +5167,11 @@ If it returns " PROC_TRUE ", the usual informative minibuffer babbling is squelc
 
   #define H_after_apply_controls_hook S_after_apply_controls_hook " (snd): called when " S_apply_controls " finishes."
 
-  name_click_hook =  XEN_DEFINE_HOOK(S_name_click_hook,   1, H_name_click_hook);       /* args = snd-index */
-  after_apply_controls_hook = XEN_DEFINE_HOOK(S_after_apply_controls_hook,  1, H_after_apply_controls_hook);      /* args = snd-index */
+  #define H_peak_env_hook S_peak_env_hook " (snd chn): called when a new peak env is ready."
+
+  name_click_hook =  XEN_DEFINE_HOOK(S_name_click_hook, 1, H_name_click_hook);                               /* args = snd-index */
+  after_apply_controls_hook = XEN_DEFINE_HOOK(S_after_apply_controls_hook, 1, H_after_apply_controls_hook);  /* args = snd-index */
+  peak_env_hook = XEN_DEFINE_HOOK(S_peak_env_hook, 2, H_peak_env_hook);                                      /* args = snd-index, chan */
 
   #define H_channels_separate "The value for " S_channel_style " that causes channel graphs to occupy separate panes"
   #define H_channels_combined "The value for " S_channel_style " that causes channel graphs to occupy one pane (set by the 'unite' button)"

@@ -1615,6 +1615,8 @@
 	(snd-display ";output-name-hook: ~A?" output-name-hook))
     (if (or (not (hook? output-comment-hook)) (not (hook-empty? output-comment-hook)))
 	(snd-display ";output-comment-hook: ~A?" output-comment-hook))
+    (if (or (not (hook? peak-env-hook)) (not (hook-empty? peak-env-hook)))
+	(snd-display ";peak-env-hook: ~A?" peak-env-hook))
     (if (or (not (hook? help-hook)) (not (hook-empty? help-hook)))
 	(snd-display ";help-hook: ~A?" help-hook))
     (if (or (not (hook? mark-drag-hook)) (not (hook-empty? mark-drag-hook)))
@@ -2135,9 +2137,9 @@
 		       'one-zero? 'open-file-dialog 'open-file-dialog-directory 'open-hook 'open-raw-sound 'open-raw-sound-hook
 		       'open-sound 'optimization 'optimization-hook 'orientation-dialog
 		       'orientation-hook 'oscil 'oscil? 'out-any 'outa
-		       'outb 'outc 'outd 'output-comment-hook 'output-name-hook
+		       'outb 'outc 'outd 'output-comment-hook 'output-name-hook 
 		       'override-samples-with-origin 'pad-channel 'partials->polynomial 'partials->wave 'partials->waveshape
-		       'parzen-window 'pausing 'peak-env-info 'peaks 'peaks-font
+		       'parzen-window 'pausing 'peak-env-hook 'peak-env-info 'peaks 'peaks-font
 		       'phase-partials->wave 'phase-vocoder 'phase-vocoder-amp-increments 'phase-vocoder-amps 'phase-vocoder-freqs
 		       'phase-vocoder-outctr 'phase-vocoder-phase-increments 'phase-vocoder-phases 'phase-vocoder? 'play
 		       'play-and-wait 'play-channel 'play-hook 'play-mix 'play-region
@@ -12282,24 +12284,24 @@ EDITS: 5
 	      (if (not (= (mark-sample m2) 1235)) (snd-display ";as-one-edit m2 sample: ~A (1235)" (mark-sample m2)))
 	      (if (not (= (mark-sample m3) 1238)) (snd-display ";as-one-edit m3 sample: ~A (1238)" (mark-sample m3)))
 	      (if (not (= (mark-sample m4) 1237)) (snd-display ";as-one-edit m4 sample: ~A (1237)" (mark-sample m4)))
-	      (if (not (string=? (display-edits ind 0) "
+	      (if (not (string=? (display-edits ind 0) (string-append "
 EDITS: 1
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000]) [file: " cwd "oboe.snd[0]]
    (at 50828, end_mark)
 
  (set 123 1120) ; outer as-one-edit [1:9]:
-   (at 0, cp->sounds[0][0:122, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:122, 1.000]) [file: " cwd "oboe.snd[0]]
    (at 123, cp->sounds[2][0:0, 1.000]) [buf: 1] 
-   (at 124, cp->sounds[0][124:1235, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 124, cp->sounds[0][124:1235, 1.000]) [file: " cwd "oboe.snd[0]]
    (at 1236, cp->sounds[1][0:0, 1.000]) [buf: 1] 
-   (at 1237, cp->sounds[0][1237:1237, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1237, cp->sounds[0][1237:1237, 1.000]) [file: " cwd "oboe.snd[0]]
    (at 1238, cp->sounds[3][0:0, 1.000]) [buf: 1] 
    (at 1239, cp->sounds[4][0:0, 1.000]) [buf: 1] 
-   (at 1240, cp->sounds[0][1240:50827, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1240, cp->sounds[0][1240:50827, 1.000]) [file: " cwd "oboe.snd[0]]
    (at 50828, end_mark)
-"))
+")))
 		  (snd-display ";as-one-edit edits: ~A" (display-edits ind 0)))
 	      
 	      (revert-sound ind))
@@ -12358,27 +12360,27 @@ EDITS: 1
 		    (snd-display ";as-one-edit didn't close sound? ~A ~A" ind2 (sounds))
 		    (close-sound ind2)))
 	      (if (not (= (edit-position ind 0) 2)) (snd-display ";edpos as-one-edit close original sound: ~A" (edit-position ind 0)))
-	      (if (not (string=? (display-edits ind 0) "
+	      (if (not (string=? (display-edits ind 0) (string-append "
 EDITS: 2
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000]) [file: " cwd "oboe.snd[0]]
    (at 50828, end_mark)
 
  (set 100 1) ; as-one-edit+open [1:4]:
-   (at 0, cp->sounds[0][0:99, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:99, 1.000]) [file: " cwd "oboe.snd[0]]
    (at 100, cp->sounds[1][0:0, 1.000]) [buf: 1] 
-   (at 101, cp->sounds[0][101:50827, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 101, cp->sounds[0][101:50827, 1.000]) [file: " cwd "oboe.snd[0]]
    (at 50828, end_mark)
 
  (set 200 1) ; as-one-edit+close [2:6]:
-   (at 0, cp->sounds[0][0:99, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:99, 1.000]) [file: " cwd "oboe.snd[0]]
    (at 100, cp->sounds[1][0:0, 1.000]) [buf: 1] 
-   (at 101, cp->sounds[0][101:199, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 101, cp->sounds[0][101:199, 1.000]) [file: " cwd "oboe.snd[0]]
    (at 200, cp->sounds[2][0:0, 1.000]) [buf: 1] 
-   (at 201, cp->sounds[0][201:50827, 1.000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 201, cp->sounds[0][201:50827, 1.000]) [file: " cwd "oboe.snd[0]]
    (at 50828, end_mark)
-"))
+")))
 		  (snd-display ";as-one-edit open+close: ~A" (display-edits ind 0))))
 	    
 	    (close-sound ind))  
@@ -26563,6 +26565,7 @@ EDITS: 2
     (add-hook! select-channel-hook arg2) (carg2 select-channel-hook)
     (add-hook! help-hook arg2) (carg2 help-hook)
     (add-hook! view-files-select-hook arg2) (carg2 view-files-select-hook)
+    (add-hook! peak-env-hook arg2) (carg2 peak-env-hook)
     
     (add-hook! save-state-hook arg1) (carg1 save-state-hook)
     (add-hook! new-sound-hook arg1) (carg1 new-sound-hook)
@@ -62023,6 +62026,7 @@ EDITS: 1
 			  (list open-raw-sound-hook 'open-raw-sound-hook)
 			  (list select-channel-hook 'select-channel-hook)
 			  (list output-name-hook 'output-name-hook)
+			  (list peak-env-hook 'peak-env-hook)
 			  (list after-open-hook 'after-open-hook)
 			  (list close-hook 'close-hook)
 			  (list draw-mark-hook 'draw-mark-hook)

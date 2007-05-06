@@ -207,6 +207,7 @@ need a String or Symbol, not %s"
   $clip_hook                    = Hook.new("$clip_hook", 1)
   $after_save_as_hook           = Hook.new("$after_save_as_hook", 3)
   $before_save_as_hook          = Hook.new("$before_save_as_hook", 7)
+  $peak_env_hook                = Hook.new("$peak_env_hook", 2)
   # unless --with-no-gui
   $color_hook                   = Hook.new("$color_hook", 0)
   # if --with-gtk
@@ -321,6 +322,7 @@ if defined? $after_graph_hook
                $orientation_hook,
                $listener_click_hook,
                $mix_click_hook,
+               $peak_env_hook,
                $before_save_state_hook,
                $after_save_state_hook,
                $mouse_enter_text_hook,

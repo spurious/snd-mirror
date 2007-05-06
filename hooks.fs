@@ -68,6 +68,7 @@ require examp
      orientation-hook
      output-comment-hook
      output-name-hook
+     peak-env-hook
      play-hook
      print-hook
      read-hook
