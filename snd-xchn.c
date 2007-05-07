@@ -853,6 +853,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	  n = attach_all_sides(args, n);
 	  XtSetArg(args[n], XmNsashIndent, 2); n++;
 	  XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+	  XtSetArg(args[n], XmNpaneMaximum, LOTSA_PIXELS); n++; 
 	  cw[W_top] = XtCreateManagedWidget("chn-top", xmPanedWindowWidgetClass, cw[W_form], args, n);
 	  XtAddEventHandler(cw[W_top], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 

@@ -44,7 +44,6 @@
 
 /* TODO: (gauche)   stacktrace and errors->listener (current-load-history)
  * TODO: (gauche)   error in find lambda -> exit (need better error protection)
- * TODO: (guile)    still no func name in backtrace ref to procedure-with-setter setter case (getter has name) -- need a test case
  */
 
 

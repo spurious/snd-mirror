@@ -894,7 +894,8 @@ typedef enum {XM_INT, XM_ULONG, XM_UCHAR, XM_FLOAT, XM_STRING, XM_XMSTRING, XM_S
 	      XM_TRANSFER_CALLBACK, XM_CONVERT_CALLBACK, XM_SEARCH_CALLBACK, XM_ORDER_CALLBACK,
 	      XM_QUALIFY_CALLBACK, XM_ALLOC_COLOR_CALLBACK, XM_POPUP_CALLBACK, XM_SCREEN_COLOR_CALLBACK,
 	      XM_DROP_CALLBACK, XM_TRANSFER_ENTRY_LIST, XM_DRAG_CALLBACK, XM_STRING_OR_XMSTRING, XM_PARSE_CALLBACK,
-	      XM_BOOLEAN_OR_INT, XM_POSITION, XM_SHORT, XM_ROW_INFO, XM_CURSOR
+	      XM_BOOLEAN_OR_INT, XM_POSITION, XM_SHORT, XM_ROW_INFO, XM_CURSOR,
+	      XM_NOT_A_RESOURCE
 } xm_resource_t;
 
 static xm_resource_t resource_type(char *resource);
@@ -27085,11 +27086,8 @@ static xm_resource_t resource_type(char *name)
   /* unfortunately, we have names like 100DPIString in the newer Motif widgets... */
   if ((ind < 0) || (ind >= LINKS_SIZE))
     {
-#if MUS_DEBUGGING
-      fprintf(stderr, "link %d for %s?\n", ind, name);
-      abort();
-#endif
-      return(XM_ULONG);
+      XEN_ERROR(XEN_ERROR_TYPE("no-such-resource"), XEN_LIST_1(C_TO_XEN_STRING(name)));
+      return(XM_NOT_A_RESOURCE);
     }
   start = hd_links[ind];
   if (start < 0)

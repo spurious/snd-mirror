@@ -5638,6 +5638,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNsashIndent, 2); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNspacing, 24); n++;
+      XtSetArg(args[n], XmNpaneMaximum, LOTSA_PIXELS); n++; 
       mainform = XtCreateManagedWidget("formd", xmPanedWindowWidgetClass, vdat->dialog, args, n);
 
       /* -------- left side controls -------- */

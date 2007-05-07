@@ -976,6 +976,7 @@ void snd_doit(int argc, char **argv)
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNallowResize, true); n++;
+  XtSetArg(args[n], XmNpaneMaximum, LOTSA_PIXELS); n++; 
   switch (sound_style(ss))
     {
     case SOUNDS_IN_SEPARATE_WINDOWS:

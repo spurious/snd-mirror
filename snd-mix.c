@@ -369,6 +369,11 @@ int mix_file(off_t beg, off_t num, int chans, chan_info **cps, const char *mixin
 	}
       else 
 	{
+
+	  /* TODO: surely we want MULTICHANNEL_DELETION in the chans>1 case?
+	   *       how to pass this in from scheme? 
+	   */
+
 	  /* virtual mix */
 	  int cur_id;
 	  if (!origin)
@@ -546,6 +551,8 @@ static mix_state *current_mix_state(mix_info *md)
 }
 
 #if 0
+/* if edpos args to various mix field (getters anyway), mix? mixes make-mix-sample-reader... */
+
 static mix_state *mix_state_at_edpos(mix_info *md, int edpos)
 {
   if (md)
@@ -2002,7 +2009,8 @@ void finish_moving_mix_tag(int mix_id, int x)
   pos = snd_round_off_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(cp->sound)));
 
   cp->hookable = hookable_before_drag;
-  undo_edit(cp, 1);
+  /* undo_edit(cp, 1); */ /* among other problems, this calls update_graph */
+  cp->edit_ctr--;
 
   if (XEN_HOOKED(mix_release_hook))
     res = run_progn_hook(mix_release_hook,
@@ -2055,8 +2063,6 @@ static XEN g_mix_length(XEN n)
   return(snd_no_such_mix_error(S_mix_length, n));
 }
 
-/* if edpos, use mix_state_at_edpos to get ms */
-
 static XEN g_mix_position(XEN n) 
 {
   int id;
@@ -2071,11 +2077,13 @@ static XEN g_mix_position(XEN n)
 static XEN g_set_mix_position(XEN n, XEN pos) 
 {
   int id;
+  off_t beg;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_position, "an integer");
   XEN_ASSERT_TYPE(XEN_OFF_T_P(pos), pos, XEN_ARG_2, S_setB S_mix_position, "an integer");
 
   id = XEN_TO_C_INT(n);
-  if (mix_set_position_edit(id, XEN_TO_C_OFF_T(pos)))
+  beg = beg_to_sample(pos, S_setB S_mix_position);
+  if (mix_set_position_edit(id, beg))
     {
       after_mix_edit(id);
       return(pos);

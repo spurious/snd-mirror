@@ -468,6 +468,7 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNtopWidget, sep1); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNallowResize, true); n++;
+  XtSetArg(args[n], XmNpaneMaximum, LOTSA_PIXELS); n++; 
   panes = XtCreateManagedWidget("panes", xmPanedWindowWidgetClass, formw, args, n);
 
   n = 0;

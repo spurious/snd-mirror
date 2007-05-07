@@ -2574,6 +2574,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	      as_one_edit(si->cps[i], local_edpos + 1);
 	      if (cp->edits[cp->edit_ctr]->origin) FREE(cp->edits[cp->edit_ctr]->origin);
 	      cp->edits[cp->edit_ctr]->origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, CURRENT_SAMPLES(si->cps[i]), base);
+	      after_edit(cp);
 	      update_graph(si->cps[i]);
 	      reflect_edit_history_change(si->cps[i]);
 	    }
@@ -2907,6 +2908,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 										   dur, 
 										   CURRENT_SAMPLES(si->cps[i]), 
 										   base);
+	      after_edit(cp);
 	      update_graph(si->cps[i]);
 	      reflect_edit_history_change(si->cps[i]);
 	    }

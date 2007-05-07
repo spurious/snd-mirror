@@ -7114,8 +7114,8 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
     {
       update_graph(cp);
       reflect_mix_change(ANY_MIX_ID);
+      after_edit(cp);  /* "as_one_edit" here is an envelope, so it's not a "real" edit -- after_edit called explicitly in snd-sig.c in this case */
     }
-  after_edit(cp);
 
   if (backup)
     backup_edit_list(cp);
@@ -7481,6 +7481,7 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   reflect_mix_change(ANY_MIX_ID);
   after_edit(cp);
+
   if (backup)
     backup_edit_list(cp);
   update_graph(cp);
@@ -8434,12 +8435,11 @@ bool redo_edit_with_sync(chan_info *cp, int count)
 
 /* -------------------- virtual mixes -------------------- */
 
-  /* TODO: extreme tests such as water.scm [much flashing as grf updates -- need to flush pointless redisplays]
+  /* TODO: extreme tests such as water.scm [much flashing as grf updates -- perhaps partial display?]
    * PERHAPS: mix-property display in dialog [add text widget? or use existing error info widget?]
    * TODO: unlist and read can be called on fully freed xen-allocated readers (valtmp)
    * SOMEDAY: music notation for mix tags (clefs, staff lines, noteheads -- need specialization of tag display)
    *          drag horizontally -> change onset, vertically -> change pitch
-   * PERHAPS: edpos args to various mix field (getters anyway), mix? mixes make-mix-sample-reader
    */
 
 static int add_mix_op(int type)
@@ -9672,13 +9672,12 @@ static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 
 /* ---------------------------------------- AS-ONE-EDIT ---------------------------------------- */
 
-/* SOMEDAY: during as-one-edit, backup when it's obvious to reduce edlist length
- */
-
 #define INITIAL_AS_ONE_EDIT_POSITIONS_SIZE 2
 
 void as_one_edit(chan_info *cp, int one_edit)
 {
+  /* it's not safe to back up during the as-one-edit function call because that function might refer back via the edpos args etc */
+
   bool need_backup = false;
   need_backup = (cp->edit_ctr > one_edit);      /* cp->edit_ctr will be changing, so save this */
 

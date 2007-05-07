@@ -1709,6 +1709,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       n = attach_all_sides(args, n);
       XtSetArg(args[n], XmNallowResize, true); n++;
       XtSetArg(args[n], XmNsashIndent, ss->channel_sash_indent); n++;
+      XtSetArg(args[n], XmNpaneMaximum, LOTSA_PIXELS); n++; /* Xm/Paned.c initializes this to 1000! */
       if (ss->channel_sash_size != 0)
 	{
 	  XtSetArg(args[n], XmNsashHeight, ss->channel_sash_size); n++;
