@@ -514,6 +514,55 @@ int peak_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sr
   return(j);
 }
 
+
+int peak_env_partial_graph(chan_info *cp, axis_info *ap, off_t beg, off_t end, Float samples_per_pixel, int srate)
+{
+  Float step, x;
+  double xf, xk;
+  Float ymin, ymax;
+  int xi;
+  int j = 0;
+  off_t i;
+  peak_env_info *ep;
+
+  ep = cp->edits[cp->edit_ctr]->peak_env;
+  step = samples_per_pixel / (Float)(ep->samps_per_bin);
+  xf = (double)(beg) / (double)(ep->samps_per_bin);
+  x = beg / srate;
+  xi = grf_x(x, ap);
+  i = beg;
+  xk = (double)i;
+
+  ymin = ep->fmax;
+  ymax = ep->fmin;
+
+  while (i <= end)
+    {
+      int k, kk;
+      k = (int)xf;
+      xf += step;
+      kk = (int)xf;
+      if (kk >= ep->peak_env_size) 
+	kk = ep->peak_env_size - 1;
+      for (; k <= kk; k++)
+	{
+	  if (ep->data_min[k] < ymin) ymin = ep->data_min[k];
+	  if (ep->data_max[k] > ymax) ymax = ep->data_max[k];
+	}
+      xk += samples_per_pixel;
+      i = (off_t)xk;
+      set_grf_points(xi, j,
+		     local_grf_y(ymin, ap),
+		     local_grf_y(ymax, ap));
+      xi++;
+      j++;
+      ymin = ep->fmax;
+      ymax = ep->fmin;
+    }
+  return(j);
+}
+
+
 void peak_env_scale_by(chan_info *cp, Float scl, int pos)
 {
   peak_env_info *old_ep;

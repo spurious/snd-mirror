@@ -8435,11 +8435,14 @@ bool redo_edit_with_sync(chan_info *cp, int count)
 
 /* -------------------- virtual mixes -------------------- */
 
-  /* TODO: extreme tests such as water.scm [much flashing as grf updates -- perhaps partial display?]
-   * PERHAPS: mix-property display in dialog [add text widget? or use existing error info widget?]
+  /* PERHAPS: mix-property display in dialog [add text widget? or use existing error info widget?]
    * TODO: unlist and read can be called on fully freed xen-allocated readers (valtmp)
    * SOMEDAY: music notation for mix tags (clefs, staff lines, noteheads -- need specialization of tag display)
    *          drag horizontally -> change onset, vertically -> change pitch
+   * TODO: in united or separated! 2nd chan mix-tag-y is confused about offset
+   * TODO: if sep then unite, goddamn channel gets 0 height??
+   * PERHAPS: if not show waveforms, and not mix-name, omit the mix id?
+   * TODO: mix-drag if syncd should at least move the other tag(s)
    */
 
 static int add_mix_op(int type)

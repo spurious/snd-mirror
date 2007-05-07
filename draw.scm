@@ -422,15 +422,29 @@ whenever they're in the current view."
   (set! current-window-display-is-running #t)
 
   (add-hook! after-open-hook 
-    (lambda (s)
-      (do ((i 0 (1+ i)))
-	  ((= i (chans s)))
-	(set! (channel-property 'save-state-ignore s i)
-	      (cons 'inset-envelope 
-		    (or (channel-property 'save-state-ignore s i) 
-			(list 'save-state-ignore))))
-	(add-hook! (undo-hook s i) (lambda () (set! (channel-property 'inset-envelope s i) #f)))
-	(add-hook! peak-env-hook (lambda (s c) (set! (channel-property 'inset-envelope s c) #f))))))
+	     (lambda (s)
+	       (do ((i 0 (1+ i)))
+		   ((= i (chans s)))
+		 (set! (channel-property 'save-state-ignore s i)
+		       (cons 'inset-envelope 
+			     (or (channel-property 'save-state-ignore s i) 
+				 (list 'save-state-ignore))))
+		 (add-hook! (undo-hook s i) 
+			    (lambda () 
+			      (set! (channel-property 'inset-envelope s i) #f))))))
+  (add-hook! peak-env-hook 
+	     (lambda (s c) 
+	       (set! (channel-property 'inset-envelope s c) #f)
+	       (if (channel-property 'mix-released s c)
+		   (begin
+		     (set! (channel-property 'mix-released s c) #f)
+		     (display-current-window-location s c)))))
+
+  (add-hook! mix-release-hook 
+	     (lambda (id samps-moved)
+	       (let ((home (mix-home id)))
+		 (set! (channel-property 'mix-released (car home) (cadr home)) #t)
+		 #f)))
 
   (add-hook! after-graph-hook display-current-window-location)
   (add-hook! mouse-click-hook click-current-window-location)

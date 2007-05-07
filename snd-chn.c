@@ -1263,6 +1263,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
       ap->hisamp = (off_t)(ap->x1 * cur_srate);
       if ((ap->losamp == 0) && (ap->hisamp == 0)) return(0);
     }
+
   x_start = ap->x_axis_x0;
   x_end = ap->x_axis_x1;
   samps = ap->hisamp - ap->losamp + 1;
@@ -1272,6 +1273,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
   if ((x_start == x_end) || (samps <= 1))
     samples_per_pixel = 0.01; /* any non-zero value < 1.0 should be ok here */
   else samples_per_pixel = (Float)((double)(samps - 1) / (double)pixels);
+
   if (cp->printing) ps_allocate_grf_points();
   if (normal)
     {
@@ -1413,6 +1415,131 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 
 int make_graph(chan_info *cp) {return(make_graph_1(cp, (double)(SND_SRATE(cp->sound)), true, NULL));}
 int make_background_graph(chan_info *cp, int srate, bool *two_sided) {return(make_graph_1(cp, (double)srate, false, two_sided));}
+
+int make_partial_graph(chan_info *cp, off_t beg, off_t end)
+{
+  /* assume here that everything is already checked and set up */
+  snd_info *sp;
+  int j = 0;
+  off_t samps;
+  int xi;
+  axis_info *ap;
+  Float samples_per_pixel, xf;
+  double x, incr, cur_srate, beg_in_seconds, end_in_seconds;
+  int pixels;
+  snd_fd *sf = NULL;
+  int x_start, x_end;
+  axis_context *ax = NULL;
+
+  sp = cp->sound;
+  cur_srate = (double)SND_SRATE(sp);
+  ap = cp->axis;
+  ax = copy_context(cp);
+
+  /* get samps / pixel */
+  x_start = ap->x_axis_x0;
+  x_end = ap->x_axis_x1;
+  samps = ap->hisamp - ap->losamp + 1;
+  pixels = x_end - x_start;
+  if (pixels >= POINT_BUFFER_SIZE) pixels = POINT_BUFFER_SIZE - 1;
+  if ((x_start == x_end) || (samps <= 1))
+    samples_per_pixel = 0.01; /* any non-zero value < 1.0 should be ok here */
+  else samples_per_pixel = (Float)((double)(samps - 1) / (double)pixels);
+
+  beg_in_seconds = (double)beg / cur_srate;
+  end_in_seconds = (double)end / cur_srate;
+  erase_rectangle(cp, ap->ax, 
+		  local_grf_x(beg_in_seconds, ap), 
+		  ap->y_axis_y1,
+		  local_grf_x(end_in_seconds, ap) - local_grf_x(beg_in_seconds, ap) + 1, 
+		  ap->y_axis_y0 - ap->y_axis_y1);
+
+  if ((samples_per_pixel < 1.0) ||
+      ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE)) ||
+      ((cp->time_graph_style == GRAPH_FILLED) && (samples_per_pixel < 25.0) && (samps < POINT_BUFFER_SIZE)))
+    {
+      int grfpts;
+      sf = init_sample_read(beg, cp, READ_FORWARD);
+      incr = (double)1.0 / cur_srate;
+      grfpts = (int)(end - beg + 1);
+
+      for (j = 0, x = beg_in_seconds; j < grfpts; j++, x += incr)
+	set_grf_point(local_grf_x(x, ap), j, local_grf_y(read_sample(sf), ap));
+
+      draw_grf_points(cp->dot_size, ax, j, ap, 0.0, cp->time_graph_style);
+    }
+  else
+    {
+      if (peak_env_usable(cp, samples_per_pixel, ap->hisamp, true, cp->edit_ctr, false)) /* true = start new background amp env process if needed */
+	j = peak_env_partial_graph(cp, ap, beg, end, samples_per_pixel, (int)SND_SRATE(sp));
+      else
+	{
+	  Float ymin, ymax;
+	  off_t ioff;
+	  if ((end - beg) > (CURRENT_SAMPLES(cp) / 4))
+	    {    
+                                             /* we're trying to view a large portion of the (large) sound */
+	      chan_context *cgx;
+	      cgx = cp->cgx;
+	      if (cgx->peak_env_in_progress)
+		{                            /* is peak-env background process is still working on it */
+		  peak_env_info *ep;
+		  ep = cp->edits[cp->edit_ctr]->peak_env;
+		  if ((ep) && samples_per_pixel >= (Float)(ep->samps_per_bin))
+		    {                        /* and it will be useful when it finishes */
+		      cp->waiting_to_make_graph = true;
+		      return(0);             /* so don't run two enormous data readers in parallel */
+		    }
+		}
+	    }
+	  sf = init_sample_read(beg, cp, READ_FORWARD);
+
+	  j = 0;      /* graph point counter */
+	  x = beg_in_seconds;
+	  xi = local_grf_x(x, ap);
+	  xf = 0.0;     /* samples per pixel counter */
+	  ymin = 1.0;
+	  ymax = -1.0;
+	  ap->changed = false;
+	  for (ioff = beg, xf = 0.0; ioff <= end; ioff++)
+	    {
+	      Float samp;
+	      samp = read_sample(sf);
+	      if (samp > ymax) ymax = samp;
+	      if (samp < ymin) ymin = samp;
+	      xf += 1.0;
+	      if (xf > samples_per_pixel)
+		{
+		  set_grf_points(xi, j, local_grf_y(ymin, ap), local_grf_y(ymax, ap));
+		  xi++;
+		  j++;
+		  xf -= samples_per_pixel;
+		  ymin = 1.0;
+		  ymax = -1.0;
+		}
+	    }
+	}
+      draw_both_grf_points(cp->dot_size, ax, j, cp->time_graph_style);
+    }
+
+  sf = free_snd_fd(sf);
+
+#if (!USE_CAIRO)
+  display_selection(cp);
+#endif
+  display_channel_marks(cp);
+  if (cp->show_y_zero) display_y_zero(cp);
+      
+  if ((cp->verbose_cursor) && (cp->cursor_on) &&
+      (CURSOR(cp) >= beg) && (CURSOR(cp) <= end) && 
+      ((sp->minibuffer_on == MINI_OFF) || (sp->minibuffer_on == MINI_CURSOR)))
+    {
+      show_cursor_info(cp); 
+      sp->minibuffer_on = MINI_CURSOR;
+    }
+
+  return(j);
+}
 
 /* these next two procedures split "make_graph" into two pieces; the first
  *   gets the data to be graphed, using the amp envs and so on, and
@@ -2996,7 +3123,7 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
     ap->ax = cp->cgx->ax;
   sp = cp->sound;
   setup_axis_context(cp, ap->ax);
-  /* here is where the graph is cleared(!) -- only use of erase_rectangle */
+  /* here is where the graph is cleared(!) -- only use of erase_rectangle (see also make_partial_graph) */
   if (erase_first == CLEAR_GRAPH)
     erase_rectangle(cp, ap->ax, ap->graph_x0, ap->y_offset, ap->width, ap->height); 
   make_axes_1(ap, 

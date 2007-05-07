@@ -1852,11 +1852,11 @@ static void draw_mix_tag_and_waveform(mix_info *md, mix_state *ms, int x)
     }
 }
 
-static void display_one_mix(mix_state *ms, chan_info *cp, axis_info *ap)
+static void display_one_mix_with_bounds(mix_state *ms, chan_info *cp, axis_info *ap, off_t beg, off_t end)
 {
   if ((ms) && 
-      (ms->beg + ms->len > ap->losamp) && 
-      (ms->beg < ap->hisamp))
+      (ms->beg + ms->len > beg) && 
+      (ms->beg < end))
     {
       mix_info *md;
       int x;
@@ -1867,7 +1867,12 @@ static void display_one_mix(mix_state *ms, chan_info *cp, axis_info *ap)
     }
 }
 
-void display_channel_mixes(chan_info *cp)
+static void display_one_mix(mix_state *ms, chan_info *cp)
+{
+  display_one_mix_with_bounds(ms, cp, cp->axis, cp->axis->losamp, cp->axis->hisamp);
+}
+
+static void display_channel_mixes_with_bounds(chan_info *cp, off_t beg, off_t end)
 {
   /* called in display_channel_data if cp has active mixes
    *   it used to draw the tag and waveform if show_mix_waveforms(ss), but I think the tag should be drawn in any case
@@ -1881,8 +1886,13 @@ void display_channel_mixes(chan_info *cp)
     {
       int i;
       for (i = 0; i < mxl->size; i++)
-	display_one_mix(mxl->list[i], cp, cp->axis);
+	display_one_mix_with_bounds(mxl->list[i], cp, cp->axis, beg, end);
     }
+}
+
+void display_channel_mixes(chan_info *cp)
+{
+  display_channel_mixes_with_bounds(cp, cp->axis->losamp, cp->axis->hisamp);
 }
 
 
@@ -1920,6 +1930,7 @@ static XEN mix_release_hook;
 static XEN mix_drag_hook;
 /* also mix_click_hook in snd-chn.c */
 
+static off_t drag_beg = 0, drag_end = 0;
 
 void move_mix_tag(int mix_id, int x) 
 {
@@ -1928,6 +1939,7 @@ void move_mix_tag(int mix_id, int x)
   mix_state *ms;
   axis_info *ap;
   chan_info *cp;
+  bool axis_changed = false;
 
   md = md_from_id(mix_id);
   cp = md->cp;
@@ -1937,6 +1949,8 @@ void move_mix_tag(int mix_id, int x)
       edpos_before_drag = cp->edit_ctr;
       hookable_before_drag = cp->hookable;
       cp->hookable = WITHOUT_HOOK;
+      drag_beg = mix_position_from_id(mix_id);
+      drag_end = drag_beg + mix_length_from_id(mix_id);
     }
   else cp->edit_ctr = edpos_before_drag;
   
@@ -1965,6 +1979,7 @@ void move_mix_tag(int mix_id, int x)
 	    }
 	}
       x = move_axis(cp, ap, x); /* calls update_graph eventually (in snd-chn.c reset_x_display) */
+      axis_changed = true;
     }
   else 
     {
@@ -1977,8 +1992,20 @@ void move_mix_tag(int mix_id, int x)
 
   reflect_mix_change(mix_id);
 
-  display_channel_time_data(cp);
-  /* draw_mix_tag_and_waveform(md, ms, x); */
+  if ((axis_changed) ||
+      (cp->sound->channel_style == CHANNELS_SUPERIMPOSED))
+    display_channel_time_data(cp);
+  else
+    {
+      off_t cur_end;
+      cur_end = ms->beg + ms->len;
+      if (cur_end > drag_end)
+	drag_end = cur_end;
+      if (ms->beg < drag_beg)
+	drag_beg = ms->beg;
+      make_partial_graph(cp, drag_beg, drag_end);
+      display_channel_mixes_with_bounds(cp, drag_beg, drag_end);
+    }
 
   if (XEN_HOOKED(mix_drag_hook))
     run_hook(mix_drag_hook,
@@ -2263,7 +2290,7 @@ static XEN g_set_mix_tag_y(XEN n, XEN val)
       md->tag_y = XEN_TO_C_INT(val);
       if ((cp) &&
 	  (!(cp->squelch_update)))
-	display_one_mix(ms, cp, cp->axis);
+	display_one_mix(ms, cp);
     }
   else return(snd_no_such_mix_error(S_setB S_mix_tag_y, n));
   return(val);
