@@ -1446,6 +1446,8 @@ int make_partial_graph(chan_info *cp, off_t beg, off_t end)
     samples_per_pixel = 0.01; /* any non-zero value < 1.0 should be ok here */
   else samples_per_pixel = (Float)((double)(samps - 1) / (double)pixels);
 
+  if (beg < ap->losamp) beg = ap->losamp;
+  if (end > ap->hisamp) end = ap->hisamp;
   beg_in_seconds = (double)beg / cur_srate;
   end_in_seconds = (double)end / cur_srate;
   erase_rectangle(cp, ap->ax, 

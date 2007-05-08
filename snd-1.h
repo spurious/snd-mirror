@@ -1608,6 +1608,7 @@ void finish_moving_mix_tag(int mix_tag, int x);
 int hit_mix(chan_info *cp, int x, int y);
 int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided);
 void display_channel_mixes(chan_info *cp);
+void display_channel_mixes_with_bounds(chan_info *cp, off_t beg, off_t end);
 
 bool play_mix_from_id(int mix_id);
 void drag_and_drop_mix_at_x_y(int data, const char *filename, int x, int y);

@@ -8350,13 +8350,13 @@ bool undo_edit_with_sync(chan_info *cp, int count)
     {
       if (cp)
 	{
-	  bool something_changed = false;
 	  snd_info *sp;
 	  sync_info *si = NULL;
 	  sp = cp->sound;
 	  if (sp->sync != 0) si = snd_sync(sp->sync);
 	  if (si)
 	    {
+	      bool something_changed = false;
 	      int i;
 	      for (i = 0; i < si->chans; i++) 
 		if (undo_edit(si->cps[i], count))
@@ -8411,13 +8411,13 @@ bool redo_edit_with_sync(chan_info *cp, int count)
     {
       if (cp)
 	{
-	  bool something_changed = false;
 	  snd_info *sp;
 	  sync_info *si = NULL;
 	  sp = cp->sound;
 	  if (sp->sync != 0) si = snd_sync(sp->sync);
 	  if (si)
 	    {
+	      bool something_changed = false;
 	      int i;
 	      for (i = 0; i < si->chans; i++) 
 		if (redo_edit(si->cps[i], count))
@@ -8443,6 +8443,7 @@ bool redo_edit_with_sync(chan_info *cp, int count)
    * TODO: if sep then unite, goddamn channel gets 0 height??
    * PERHAPS: if not show waveforms, and not mix-name, omit the mix id?
    * TODO: mix-drag if syncd should at least move the other tag(s)
+   * TODO: auto_delete args int-or-bool throughout
    */
 
 static int add_mix_op(int type)

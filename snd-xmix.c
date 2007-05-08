@@ -17,6 +17,8 @@ static env *dialog_env = NULL;
 static int edpos_before_drag;
 static with_hook_t hookable_before_drag;
 
+static off_t drag_beg = 0, drag_end = 0;
+
 static void start_dragging(int mix_id) 
 {
   chan_info *cp;
@@ -25,6 +27,8 @@ static void start_dragging(int mix_id)
   hookable_before_drag = cp->hookable;
   cp->hookable = WITHOUT_HOOK;
   dragging = true;
+  drag_beg = mix_position_from_id(mix_id);
+  drag_end = drag_beg + mix_length_from_id(mix_id);
 }
 
 static void keep_dragging(int mix_id) 
@@ -41,6 +45,27 @@ static void stop_dragging(int mix_id)
   undo_edit(cp, 1);
   cp->hookable = hookable_before_drag;
   dragging = false;
+}
+
+static void display_during_drag(int mix_id)
+{
+  chan_info *cp;
+  cp = mix_chan_info_from_id(mix_id);
+
+  if (cp->sound->channel_style == CHANNELS_SUPERIMPOSED)
+    display_channel_time_data(cp);
+  else
+    {
+      off_t cur_end, ms_beg;
+      ms_beg = mix_position_from_id(mix_id);
+      cur_end = ms_beg + mix_length_from_id(mix_id);
+      if (cur_end > drag_end)
+	drag_end = cur_end;
+      if (ms_beg < drag_beg)
+	drag_beg = ms_beg;
+      make_partial_graph(cp, drag_beg, drag_end);
+      display_channel_mixes_with_bounds(cp, drag_beg, drag_end);
+    }
 }
 
 
@@ -114,7 +139,7 @@ static void speed_drag_callback(Widget w, XtPointer context, XtPointer info)
     start_dragging(mix_dialog_id);
   else keep_dragging(mix_dialog_id);
   mix_set_speed_edit(mix_dialog_id, set_speed_label(w_speed_number, ival));
-  display_channel_time_data(mix_chan_info_from_id(mix_dialog_id));
+  display_during_drag(mix_dialog_id);
 }
 
 static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
@@ -178,7 +203,7 @@ static void amp_drag_callback(Widget w, XtPointer context, XtPointer info)
     start_dragging(mix_dialog_id);
   else keep_dragging(mix_dialog_id);
   change_mix_amp(mix_dialog_id, scrollbar_to_amp(ival));
-  display_channel_time_data(mix_chan_info_from_id(mix_dialog_id));
+  display_during_drag(mix_dialog_id);
 }
 
 static void amp_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
