@@ -30,6 +30,7 @@ require examp
      color-hook
      dac-hook
      draw-mark-hook
+     draw-mix-hook
      drop-hook
      during-open-hook
      enved-hook

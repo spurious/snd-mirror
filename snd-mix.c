@@ -1425,6 +1425,8 @@ void channel_set_mix_tags_erased(chan_info *cp)
     }
 }
 
+static XEN draw_mix_hook;
+
 static void draw_mix_tag(mix_info *md, int x, int y)
 {
   chan_info *cp;
@@ -1440,6 +1442,22 @@ static void draw_mix_tag(mix_info *md, int x, int y)
   #define STRING_HEIGHT 12
 #endif
 
+  if (XEN_HOOKED(draw_mix_hook))
+    {
+      XEN res;
+      res = run_progn_hook(draw_mix_hook,
+			   XEN_LIST_3(C_TO_XEN_INT(md->id), 
+				      C_TO_XEN_INT(x),
+				      C_TO_XEN_INT(y)),
+			   S_draw_mix_hook);
+      if (XEN_TRUE_P(res))
+	{
+	  md->x = x;
+	  md->y = y;
+	  return;
+	}
+    }
+
   cp = md->cp;
 
   /* draw the mix tag */
@@ -1454,11 +1472,12 @@ static void draw_mix_tag(mix_info *md, int x, int y)
       md->y = MIX_TAG_ERASED;
     }
 
+  md->x = x;
+  md->y = y;
+
   ax = mix_waveform_context(cp);
   set_foreground_color(ax, md->color); 
   fill_rectangle(ax, x - width / 2, y - height, width, height);
-  md->x = x;
-  md->y = y;
 
   /* redraw the mix id underneath the tag */
   set_tiny_numbers_font(cp);
@@ -3190,4 +3209,11 @@ void g_init_mix(void)
   #define H_mix_drag_hook S_mix_drag_hook " (id): called when a mix is dragged"
 
   mix_drag_hook = XEN_DEFINE_HOOK(S_mix_drag_hook, 1, H_mix_drag_hook); /* arg = id */
+
+  /* the name draw-mix-hook is inconsistent with the other mix hooks (mix-draw-hook?), but is intended to parallel draw-mark-hook */
+  #define H_draw_mix_hook S_draw_mix_hook " (id): called when a mix tag is about to be displayed"
+
+  draw_mix_hook = XEN_DEFINE_HOOK(S_draw_mix_hook, 3, H_draw_mix_hook); /* arg = id, x, y */
+
+  /* TODO: doc/test/use draw-mix-hook */
 }

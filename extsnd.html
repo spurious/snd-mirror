@@ -1621,9 +1621,17 @@ See <a href="sndscm.html#withlevelmeters">with-level-meters</a> in snd-motif.scm
 <tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="drawmarkhook">draw-mark-hook</a> (id)</code> [<b>progn</b>]
 </td></tr><tr><td></td><td colspan=2>
-This hook is called before a mark is drawn (in XOR mode). If the hook function returns #t, the mark is not drawn.  
+This hook is called before a mark is drawn (in XOR mode except in cairo). If the hook function returns #t, the mark is not drawn.  
 <a href="sndscm.html#marksynccolor">mark-sync-color</a>
 in snd-motif.scm uses this hook to draw sync'd marks in some other color than the current <a href="#markcolor">mark-color</a>.
+</td></tr><tr><td colspan=3 height=16></td></tr>
+
+
+<!-- draw-mix-hook -->
+<tr><td colspan=3 bgcolor="#f6f8ff">
+<code><a class=def name="drawmixhook">draw-mix-hook</a> (id x y)</code> [<b>progn</b>]
+</td></tr><tr><td></td><td colspan=2>
+This hook is called before a mix tag is drawn.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 

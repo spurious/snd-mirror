@@ -2021,7 +2021,7 @@
 		       'delete-selection 'delete-transform 'delete-watcher 'dialog-widgets 'disk-kspace
 		       'display-edits 'doit-again-button-color 'doit-button-color 'dolph-chebyshev-window 'dont-normalize
 		       'dot-product 'dot-size 'draw-axes 'draw-dot 'draw-dots
-		       'draw-line 'draw-lines 'draw-mark-hook 'draw-string 'drop-hook
+		       'draw-line 'draw-lines 'draw-mark-hook 'draw-mix-hook 'draw-string 'drop-hook
 		       'during-open-hook 'edit-fragment 'edit-header-dialog 'edit-hook 'edit-list->function
 		       'edit-position 'edit-tree 'edits 'edot-product 'env
 		       'env-channel 'env-channel-with-base 'env-interp 'env-selection 'env-sound
@@ -26618,6 +26618,7 @@ EDITS: 2
     (add-hook! mouse-leave-label-hook arg3) (carg3 mouse-leave-label-hook)
     (add-hook! initial-graph-hook arg3) (carg3 initial-graph-hook)
     (add-hook! after-save-as-hook arg3) (carg3 after-save-as-hook)
+    (add-hook! draw-mix-hook arg3) (carg3 draw-mix-hook)
     
     (add-hook! graph-hook arg4) (carg4 graph-hook)
     (add-hook! key-press-hook arg4) (carg4 key-press-hook)
@@ -62042,6 +62043,7 @@ EDITS: 1
 			  (list after-open-hook 'after-open-hook)
 			  (list close-hook 'close-hook)
 			  (list draw-mark-hook 'draw-mark-hook)
+			  (list draw-mix-hook 'draw-mix-hook)
 			  (list mark-click-hook 'mark-click-hook)
 			  (list listener-click-hook 'listener-click-hook)
 			  (list mix-click-hook 'mix-click-hook)
