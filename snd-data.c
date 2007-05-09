@@ -925,16 +925,28 @@ sync_info *free_sync_info(sync_info *si)
   return(NULL);
 }
 
+int syncd_channels(int sync)
+{
+  if (sync != 0)
+    {
+      int i, chans = 0;
+      snd_info *sp;
+      for (i = 0; i < ss->max_sounds; i++)
+	{
+	  sp = ss->sounds[i];
+	  if ((sp) && (sp->inuse == SOUND_NORMAL) && (sp->sync == sync)) 
+	    chans += sp->nchans;
+	}
+      return(chans);
+    }
+  return(0);
+}
+
 sync_info *snd_sync(int sync)
 {
-  int i, j, k, chans = 0;
+  int i, j, k, chans;
   snd_info *sp;
-  for (i = 0; i < ss->max_sounds; i++)
-    {
-      sp = ss->sounds[i];
-      if ((sp) && (sp->inuse == SOUND_NORMAL) && (sp->sync == sync)) 
-	chans += sp->nchans;
-    }
+  chans = syncd_channels(sync);
   if (chans > 0)
     {
       sync_info *si;

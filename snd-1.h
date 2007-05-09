@@ -870,11 +870,12 @@ void select_channel(snd_info *sp, int chan);
 chan_info *current_channel(void);
 sync_info *free_sync_info(sync_info *si);
 sync_info *snd_sync(int sync);
+int syncd_channels(int sync);
 sync_info *sync_to_chan(chan_info *cp);
 sync_info *make_simple_sync(chan_info *cp, off_t beg);
 snd_info *find_sound(const char *name, int nth);
 void display_info(snd_info *sp);
-
+void mix_display_during_drag(int mix_id, off_t drag_beg, off_t drag_end);
 void g_init_data(void);
 
 

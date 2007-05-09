@@ -363,21 +363,16 @@ int mix_file(off_t beg, off_t num, int chans, chan_info **cps, const char *mixin
 	{
 	  /* not a virtual mix */
 	  if (!origin)
-	    new_origin = untagged_mix_to_string(mixinfile, beg, start_chan + i, temp == DELETE_ME);
+	    new_origin = untagged_mix_to_string(mixinfile, beg, start_chan + i, temp != DONT_DELETE_ME);
 	  else new_origin = copy_string(origin);
 	  mix_file_untagged(mixinfile, i + start_chan, cp, beg, num, temp, new_origin);
 	}
       else 
 	{
-
-	  /* TODO: surely we want MULTICHANNEL_DELETION in the chans>1 case?
-	   *       how to pass this in from scheme? 
-	   */
-
 	  /* virtual mix */
 	  int cur_id;
 	  if (!origin)
-	    new_origin = tagged_mix_to_string(mixinfile, beg, start_chan + i, temp == DELETE_ME);
+	    new_origin = tagged_mix_to_string(mixinfile, beg, start_chan + i, temp != DONT_DELETE_ME);
 	  else new_origin = copy_string(origin);
 	  cur_id = mix_file_with_tag(cp, mixinfile, i + start_chan, beg, temp, new_origin);
 	  if (id == MIX_FILE_NO_MIX) id = cur_id;
@@ -1232,7 +1227,8 @@ bool mix_set_amp_env_edit(int id, env *e)
 	  FREE(envstr);
 
 	  cp = md->cp;
-	  begin_mix_op(cp, old_ms->beg, old_ms->len, old_ms->beg, old_ms->len, cp->edit_ctr, S_setB S_mix_amp_env); /* this does not change beg or len */
+	  begin_mix_op(cp, old_ms->beg, old_ms->len, old_ms->beg, old_ms->len, cp->edit_ctr, origin); /* this does not change beg or len */
+	  FREE(origin);
 	  ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
 	  if (ms->amp_env) free_env(ms->amp_env);
 	  ms->amp_env = copy_env(e);
@@ -2055,6 +2051,31 @@ void finish_moving_mix_tag(int mix_id, int x)
 }
 
 
+/* View:Mixes dialog display */
+
+void mix_display_during_drag(int mix_id, off_t drag_beg, off_t drag_end)
+{
+  chan_info *cp;
+  cp = mix_chan_info_from_id(mix_id);
+
+  if (cp->sound->channel_style == CHANNELS_SUPERIMPOSED)
+    display_channel_time_data(cp);
+  else
+    {
+      off_t cur_end, ms_beg;
+      ms_beg = mix_position_from_id(mix_id);
+      cur_end = ms_beg + mix_length_from_id(mix_id);
+      if (cur_end > drag_end)
+	drag_end = cur_end;
+      if (ms_beg < drag_beg)
+	drag_beg = ms_beg;
+      make_partial_graph(cp, drag_beg, drag_end);
+      display_channel_mixes_with_bounds(cp, drag_beg, drag_end);
+    }
+}
+
+
+
 /* xen connection */
 
 static XEN snd_no_such_mix_error(const char *caller, XEN n)
@@ -2661,9 +2682,21 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
     {
       if (XEN_TRUE_P(file_chn)) /* this used to be the default as well -- XEN_NOT_BOUND_P case */
 	{
+	  file_delete_t delete_choice;
+	  if (delete_file)
+	    {
+	      if ((chans > 1) &&
+		  (cp->sound->nchans > 1)) /* mix_complete_file sets sync locally so all we care about here is nchans */
+		{
+		  remember_temp(name, chans);
+		  delete_choice = MULTICHANNEL_DELETION;
+		}
+	      else delete_choice = DELETE_ME;
+	    }
+	  else delete_choice = DONT_DELETE_ME;
 	  return(C_TO_XEN_INT(mix_complete_file(cp->sound, beg, name, 
 						(XEN_NOT_BOUND_P(tag)) ? with_mix_tags(ss) : XEN_TO_C_BOOLEAN(tag),
-						(delete_file) ? DELETE_ME : DONT_DELETE_ME,
+						delete_choice,
 						MIX_SETS_SYNC_LOCALLY)));
 	}
     }

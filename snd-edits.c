@@ -3743,21 +3743,19 @@ static void setup_mix(snd_fd *sf)
     {
       int j = 0;
       md->sfs = (snd_fd **)CALLOC(md->size, sizeof(snd_fd *));
-#if 0
-      fprintf(stderr,"setup: beg: " OFF_TD ", f/l/fragpos: " OFF_TD ", " OFF_TD ", " OFF_TD ", local: " OFF_TD ", global: " OFF_TD ", mix %p: " OFF_TD ", dir: %d\n", 
-	      sf->loc, sf->first, sf->last, sf->frag_pos,
-	      READER_LOCAL_POSITION(sf), READER_GLOBAL_POSITION(sf), READER_MIX_STATE(sf, 0), READER_MIX_BEG(sf, 0), 
-	      sf->direction);
-#endif
       for (i = 0; i < list_size; i++)
-	if (READER_MIX_STATE(sf, i))
+	if ((READER_MIX_STATE(sf, i)) &&
+	    (READER_MIX_SCALER(sf, i) != 0.0))
 	  md->sfs[j++] = make_virtual_mix_reader(sf->cp, 
 						 sf->frag_pos + READER_GLOBAL_POSITION(sf) - READER_MIX_BEG(sf, i), /* global position - mix position + fragment start loc */
 						 READER_MIX_LENGTH(sf, i),        /* why this?? */
 						 READER_MIX_INDEX(sf, i), 
 						 READER_MIX_SCALER(sf, i), 
 						 sf->direction);
-
+#if MUS_DEBUGGING
+      if (j > active_mixes)
+	fprintf(stderr, "wrote past end og md->sfs array");
+#endif
       if (active_mixes == 1)
 	{
 	  if (READER_TYPE(sf) == ED_MIX_SIMPLE)
@@ -7494,7 +7492,7 @@ static mix_data *free_mix_data(mix_data *md)
 {
   if (md)
     {
-      if (md->sfs) 
+      if ((md->size > 0) && (md->sfs))
 	{
 	  int i;
 	  for (i = 0; i < md->size; i++)
@@ -8441,7 +8439,6 @@ bool redo_edit_with_sync(chan_info *cp, int count)
    *          drag horizontally -> change onset, vertically -> change pitch
    * TODO: in united or separated! 2nd chan mix-tag-y is confused about offset
    * TODO: if sep then unite, goddamn channel gets 0 height??
-   * PERHAPS: if not show waveforms, and not mix-name, omit the mix id?
    * TODO: mix-drag if syncd should at least move the other tag(s)
    * TODO: auto_delete args int-or-bool throughout
    */
