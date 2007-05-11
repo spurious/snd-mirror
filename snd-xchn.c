@@ -153,26 +153,6 @@ static void gsy_changed(int value, chan_info *cp)
   for_each_sound_chan(cp->sound, update_graph_or_warn);
 }
 
-void fixup_gsy(chan_info *cp, Float low, Float high)
-{
-  Widget wcp;
-  Float val, size;
-  int ival = 0;
-  wcp = channel_gsy(cp);
-  XtVaGetValues(wcp, XmNvalue, &ival, NULL);
-  val = (Float)ival / (Float)(SCROLLBAR_MAX);
-  XtVaGetValues(wcp, XmNsliderSize, &ival, NULL);
-  size = (Float)ival / (Float)(SCROLLBAR_MAX);
-  if ((val > low) || ((val + size) < high))
-    {
-      val = low;
-      if ((val + size) > 1.0) val = 1.0 - size;
-      ival = (int)(val * SCROLLBAR_MAX);
-      XtVaSetValues(wcp, XmNvalue, ival, NULL);
-      gsy_changed((int)(val * SCROLLBAR_MAX), cp);
-    }
-}
-
 Float gsy_value(chan_info *cp)
 {
   Widget wcp;

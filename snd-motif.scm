@@ -35,6 +35,7 @@
 ;;; set-root-window-color
 ;;; notebook-with-top-tabs (for Xemacs-like list of open files across the top of the window)
 ;;; create-audit-dialog
+;;; equalize-panes
 
 (use-modules (ice-9 common-list) (ice-9 format))
 
@@ -3158,3 +3159,16 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 					     (mus-audio-write audio-fd data frames)))))))))))))
   (XtManageChild audit-dialog))
 
+
+;;; -------- equalize-panes
+;;;
+;;; this used to be built-in, but never really worked right
+
+(define* (equalize-panes :optional snd)
+  (define (equalize-sound ind)
+    (let ((old-style (channel-style ind)))
+      (set! (channel-style ind) channels-combined)
+      (set! (channel-style ind) old-style)))
+  (if snd
+      (equalize-sound snd)
+      (for-each equalize-sound (sounds))))

@@ -499,6 +499,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+9-May:   peak-env-hook, draw-mix-hook.\n\
 1-May:   Snd 9.0.\n\
 16-Apr:  spokenword.scm thanks to Ville Koskinen.\n\
 8-Apr:   removed all track support.\n\
@@ -507,10 +508,6 @@ void about_snd_help(void)
          moved delete-mix to mix.scm.\n\
          moved mix-properties into C.\n\
 23-Mar:  recorder dialog removed -- a new one is underway...\n\
-22-Mar:  Snd 8.9.\n\
-14-Mar:  cairo graphics backend (--with-cairo configure choice).\n\
-1-Mar:   open-file-dialog-directory.\n\
-26-Feb:  clean.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

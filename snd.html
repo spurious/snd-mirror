@@ -288,30 +288,23 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 <tr>
 <td><a href="#openfile">View</a></td>
 <td><a href="#editheader">Edit Header</a></td>
-<td><a href="#menuequalizepanes">Equalize Panes</a></td>
+<td><a href="#viewy0">Show y=0</a></td>
 <td></td>
 <td><a href="#filtercontrol">Filter</a></td>
 </tr>
 <tr>
 <td><a href="#printfile">Print</a></td>
 <td></td>
-<td><a href="#viewy0">Show y=0</a></td>
+<td><a href="extsnd.html#xaxisstyle">X axis units</a></td>
 <td></td>
 <td><a href="#reverb">Reverb</a></td>
 </tr>
 <tr>
 <td><a href="#exitfile">Exit</a></td>
 <td></td>
-<td><a href="extsnd.html#xaxisstyle">X axis units</a></td>
-<td></td>
-<td><a href="#ampenvs">Envelope</a></td>
-</tr>
-<tr>
-<td></td>
-<td></td>
 <td><a href="extsnd.html#showaxes">Axes</a></td>
 <td></td>
-<td><a href="#marks">Mark</a></td>
+<td><a href="#ampenvs">Envelope</a></td>
 </tr>
 </table>
 
@@ -740,14 +733,12 @@ flushed (but see the function check-for-unsaved-edits in <a href="sndscm.html#ch
 <tr><td><a href="#unitebutton">Channel style</a></td><td>separate, combined or superimposed channels</td><td></td></tr>
 <tr><td><a href="#viewdots">Graph style</a></td><td>use dots, lines, filled polygons etc in the data displays</td><td></td></tr>
 <tr><td><a href="extsnd.html#withverbosecursor">Verbose cursor</a></td><td>describe the current sample every time the cursor moves</td><td></td></tr>
-<tr><td><a href="#menuequalizepanes">Equalize Panes</a></td><td>cleanup current Snd display</td><td></td></tr>
 <tr><td><a href="#viewy0">Show y=0</a></td><td>show or hide the y=0 line</td><td></td></tr>
 <tr><td><a href="extsnd.html#xaxisstyle">X axis units</a></td><td>x axis labelled in seconds, samples, percent of total</td><td></td></tr>
 </table>
 
         <!-- I(control panel):M(View: Show controls)(controls) --><!-- I(control panel):K(C-x C-o, C-x C-c)(cxco) -->
-        <!-- I(normalize display):M(View: Equalize Panes)(menuequalizepanes) --><!-- I(normalize display):A(menuequalizepanes) -->
-        <!-- I(normalize display):O(Popup: Equalize Panes) --><!-- I(combine channels):M(View: Channel style)(unitebutton) -->
+        <!-- I(combine channels):M(View: Channel style)(unitebutton) -->
         <!-- I(combine channels):A(unitebutton) --><!-- I(describe file):M(Popup: Info)(viewinfo) -->
         <!-- I(describe file):A(viewinfo) --><!-- I(describe file):O(Edit: Edit Header)(viewinfo) -->
         <!-- I(dots or lines):M(View: Dots)(viewdots) --><!-- I(dots or lines):O(dot-size: numberpad '.', '0')(dotsize) -->
@@ -764,11 +755,6 @@ to view the sound as dots rather than connected lines
 Y = 0, use the y=0 option.  The Region browser is described under
 <a href="#regions">Regions</a>.  To open the control panel, use Show Controls.
 To open or close the listener, use Open listener.
-When
-many files are displayed, and the pane buttons have
-been in use, the overall display can become a bit of
-a mess.  <A NAME="menuequalizepanes"></a>To return to a state where each file and channel
-has a 'normal' amount of space, use the Equalize Panes option.
 </p>
         <!-- I(dots or lines):A(viewdots) --><!-- I(y=0 line):A(viewy0) -->
 
@@ -2308,7 +2294,6 @@ For information on initialization, configuration, and connections to other progr
   <tr><td><a href="#movingwindow">move window ahead</a></td><td><br></td><td><a href="#cxf"><small>[Left], Cx f</small></a></td><td><a href="extsnd.html#rightsample"><small>right-sample</small></a></td><td><small>scroll bars</small></td></tr>
   <tr><td><a href="#movingwindow">move window back</a></td><td><br></td><td><a href="#movewindow"><small>[Right], Cx b</small></a></td><td><a href="extsnd.html#leftsample"><small>left-sample</small></a></td><td><small>scroll bars</small></td></tr>
   <tr><td><a href="#multichannel">multichannel ops</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sync"><small>sync</small></a></td><td><a href="#syncbutton"><small>sync button</small></a></td></tr>
-  <tr><td><a href="#menuequalizepanes">normalize display</a></td><td><small>View: <a href="#menuequalizepanes">Equalize Panes</a></small></td><td><br></td><td><a href="extsnd.html#equalizepanes"><small>equalize-panes</small></a></td><td><small>Popup: Equalize Panes</small></td></tr>
   <tr><td><a href="sndscm.html#menusdoc">normalize sound</a></td><td><small>Effects: <a href="sndscm.html#menusdoc">Normalize</a></small></td><td><br></td><td><a href="extsnd.html#scaleto"><small>scale-to</small></a></td><td><br></td></tr>
   <tr><td><a href="#cu">numeric arguments</a></td><td><br></td><td><a href="#kcu"><small>Cu</small></a></td><td><br></td><td><a href="#kcu"><small>see marks as args</small></a></td></tr>
   <tr><td><a href="#saveopen">open file</a></td><td><small>File: <a href="#openfile">Open</a></small></td><td><a href="#cxcf"><small>Cx Cf</small></a></td><td><a href="extsnd.html#opensound"><small>open-sound</small></a></td><td><small>Files dialog: click file</small></td></tr>

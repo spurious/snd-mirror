@@ -2126,10 +2126,6 @@ any editing operations."
 	  (sp->inuse == SOUND_NORMAL))
 	{
 	  select_channel(sp, 0);
-#if USE_MOTIF
-	  equalize_sound_panes(sp, sp->chans[0], false);
-	  for_each_chan(update_graph);
-#endif
 	  return(snd_n);
 	}
     }
@@ -4923,25 +4919,6 @@ update an on-going 'progress report' (an animated hour-glass icon) in snd using 
 }
 
 
-static XEN g_equalize_panes(XEN snd) 
-{
-  #define H_equalize_panes "(" S_equalize_panes " :optional snd): try to give all channels about the same screen space (Motif version only)"
-#if USE_MOTIF
-  if (XEN_NOT_BOUND_P(snd))
-    equalize_all_panes(); 
-  else 
-    {
-      snd_info *sp;
-      sp = get_sp(snd, NO_PLAYERS);
-      if ((sp) && (sp->inuse == SOUND_NORMAL))
-	equalize_sound_panes(sp,
-			     sp->chans[0],
-			     true);
-    }
-#endif
-  return(XEN_FALSE);
-}
-
 static XEN g_sounds(void)
 {
   #define H_sounds "(" S_sounds "): list of active sounds (a list of indices)"
@@ -5081,7 +5058,6 @@ XEN_ARGIFY_5(g_channel_amp_envs_w, g_channel_amp_envs);
 XEN_ARGIFY_1(g_start_progress_report_w, g_start_progress_report)
 XEN_ARGIFY_1(g_finish_progress_report_w, g_finish_progress_report)
 XEN_ARGIFY_5(g_progress_report_w, g_progress_report)
-XEN_ARGIFY_1(g_equalize_panes_w, g_equalize_panes)
 XEN_NARGIFY_0(g_sounds_w, g_sounds)
 #else
 #define g_sound_p_w g_sound_p
@@ -5203,7 +5179,6 @@ XEN_NARGIFY_0(g_sounds_w, g_sounds)
 #define g_start_progress_report_w g_start_progress_report
 #define g_finish_progress_report_w g_finish_progress_report
 #define g_progress_report_w g_progress_report
-#define g_equalize_panes_w g_equalize_panes
 #define g_sounds_w g_sounds
 #endif
 
@@ -5410,7 +5385,6 @@ If it returns " PROC_TRUE ", the usual informative minibuffer babbling is squelc
   XEN_DEFINE_PROCEDURE(S_write_peak_env_info_file, g_write_peak_env_info_file_w, 3, 0, 0, H_write_peak_env_info_file);
   XEN_DEFINE_PROCEDURE(S_read_peak_env_info_file,  g_read_peak_env_info_file_w,  3, 0, 0, H_read_peak_env_info_file);
   XEN_DEFINE_PROCEDURE(S_channel_amp_envs,         g_channel_amp_envs_w,         0, 5, 0, H_channel_amp_envs);
-  XEN_DEFINE_PROCEDURE(S_equalize_panes,           g_equalize_panes_w,           0, 1, 0, H_equalize_panes);
 
   XEN_DEFINE_PROCEDURE(S_sounds,                   g_sounds_w,                   0, 0, 0, H_sounds);
 

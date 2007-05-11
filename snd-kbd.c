@@ -1166,9 +1166,6 @@ static chan_info *goto_previous_graph(chan_info *cp, int count)
   if (ncp == vcp) return(ncp);
   if (!ncp) snd_error_without_format("goto previous graph failed!");
   select_channel(ncp->sound, ncp->chan);
-#if USE_MOTIF
-  equalize_sound_panes(ncp->sound, ncp, false);
-#endif
   return(ncp);
 }
 
@@ -1222,9 +1219,6 @@ static chan_info *goto_next_graph(chan_info *cp, int count)
   if (ncp == vcp) return(ncp);
   if (!ncp) snd_error_without_format("goto next graph failed!");
   select_channel(ncp->sound, ncp->chan);
-#if USE_MOTIF
-  equalize_sound_panes(ncp->sound, ncp, false);
-#endif
   return(ncp);
 }
 

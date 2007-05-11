@@ -7,9 +7,6 @@ typedef struct {
   sync_info *si;
   snd_fd **sfs;
   off_t dur;
-#if MUS_DEBUGGING
-  char *origin;
-#endif
 } sync_state;
 
 static void free_sync_state(sync_state *sc)
@@ -20,10 +17,6 @@ static void free_sync_state(sync_state *sc)
 	sc->si = free_sync_info(sc->si);
       if (sc->sfs) 
 	FREE(sc->sfs);
-#if MUS_DEBUGGING
-      if (sc->origin) 
-	FREE(sc->origin);
-#endif
       FREE(sc);
     }
 }
@@ -33,7 +26,7 @@ void describe_sync(FILE *fp, void *ptr);
 void describe_sync(FILE *fp, void *ptr)
 {
   sync_state *sc = (sync_state *)ptr;
-  fprintf(fp, "sync si: %p, dur: " OFF_TD ", sfs: %p [%s]\n", sc->si, sc->dur, sc->sfs, sc->origin);
+  fprintf(fp, "sync si: %p, dur: " OFF_TD ", sfs: %p", sc->si, sc->dur, sc->sfs);
 }
 #endif
 
@@ -195,9 +188,6 @@ static sync_state *get_sync_state_1(snd_info *sp, chan_info *cp, off_t beg, bool
       else return(NULL);
     }
   sc = (sync_state *)CALLOC(1, sizeof(sync_state));
-#if MUS_DEBUGGING
-  sc->origin = mus_format("%s[%d]: " OFF_TD " %s (%s)", sp->filename, cp->chan, beg, (over_selection) ? "selection" : "sound", caller);
-#endif
   sc->dur = dur;
   sc->sfs = sfs;
   sc->si = si;
@@ -243,7 +233,6 @@ static sync_state *get_sync_state_without_snd_fds(snd_info *sp, chan_info *cp, o
   sc = (sync_state *)CALLOC(1, sizeof(sync_state));
 #if MUS_DEBUGGING
   set_printable(PRINT_SYNC);
-  sc->origin = mus_format("%s[%d]: " OFF_TD " %s", sp->filename, cp->chan, beg, (over_selection) ? "selection" : "sound");
 #endif
   sc->dur = dur;
   sc->si = si;
@@ -2829,6 +2818,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	  return;
 	}
       si = sc->si;
+      /* in snd-test.scm, one sync_state pointer is lost here because env-channel requests edpos 2 (or is it 123?), but only 1 exists */
       for (i = 0; i < si->chans; i++) 
 	{
 	  bool edited = false;;

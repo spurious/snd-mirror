@@ -54,6 +54,17 @@ static void after_transform(chan_info *cp, Float scaler)
 	     S_after_transform_hook);
 }
 
+static void run_after_graph_hook(chan_info *cp)
+{
+  if ((cp->hookable == WITH_HOOK) &&
+      (XEN_HOOKED(after_graph_hook)))
+    run_hook(after_graph_hook,
+	     XEN_LIST_2(C_TO_XEN_INT(cp->sound->index),
+			C_TO_XEN_INT(cp->chan)),
+	     S_after_graph_hook);
+  /* (add-hook! after-graph-hook (lambda (a b) (snd-print (format #f "~A ~A" a b)))) */
+}
+
 static void set_y_bounds(axis_info *ap);
 
 static void chans_time_graph_type(chan_info *cp, int value)
@@ -1135,6 +1146,7 @@ static void display_channel_id(chan_info *cp, int height, int chans)
       if (cp->printing) ps_set_peak_numbers_font();
       x0 = 5;
       y0 = height + CHN_LABEL_OFFSET;
+
       if (cp->edit_ctr == 0)
 	mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%d]", cp->chan + 1);
       else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%d]: %d", cp->chan + 1, cp->edit_ctr);
@@ -3438,15 +3450,11 @@ static void display_channel_data_with_size(chan_info *cp,
 	  if (cp->show_y_zero) display_y_zero(cp);
 	  if ((channel_has_active_mixes(cp))) display_channel_mixes(cp);
 	}
+
       if ((sp->channel_style != CHANNELS_SUPERIMPOSED) && (height > 10))
 	display_channel_id(cp, height + offset, sp->nchans);
-      if ((cp->hookable == WITH_HOOK) &&
-	  (XEN_HOOKED(after_graph_hook)))
-	run_hook(after_graph_hook,
-		 XEN_LIST_2(C_TO_XEN_INT(cp->sound->index),
-			    C_TO_XEN_INT(cp->chan)),
-		 S_after_graph_hook);
-      /* (add-hook! after-graph-hook (lambda (a b) (snd-print (format #f "~A ~A" a b)))) */
+
+      run_after_graph_hook(cp);
     } 
 }
 

@@ -2613,13 +2613,10 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
   if (old_name)
     report_in_minibuffer(sp, _("(translated %s)"), old_name);
   map_over_children(SOUND_PANE(ss), color_sashes);
-  if (!(auto_resize(ss))) equalize_all_panes(); 
 
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
     {
       reset_controls(sp);
-      if ((sound_style(ss) == SOUNDS_HORIZONTAL) && (ss->active_sounds > 0)) /* active_sounds off-by-one here */
-	equalize_all_panes();
     }
   else 
     {
@@ -2633,7 +2630,6 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 		    XmNwidth, (Dimension)(widget_width(MAIN_SHELL(ss))),
 		    XmNheight, (Dimension)(chan_min_y * nchans), /* bugfix thanks to Paul @pobox */
 		    NULL);
-      if (nchans > 1) equalize_all_panes();
     }
 
   after_open(sp->index);
@@ -2682,127 +2678,6 @@ void set_sound_pane_file_label(snd_info *sp, char *str)
 }
 
 
-/* ---------------- normalize sounds ---------------- */
-
-static void even_channels(snd_info *sp, int height)
-{
-  int chans;
-  chans = sp->nchans;
-  if (chans > 1)
-    {
-      int val, i;
-      val = height / chans - 16;
-      if (val < 6) val = 6;
-      for (i = 0; i < chans; i++)
-	{
-	  chan_info *cp;
-	  cp = sp->chans[i];
-	  XtUnmanageChild(channel_main_pane(cp));
-	  XtVaSetValues(channel_main_pane(cp),
-			XmNpaneMinimum, val - 5,
-			XmNpaneMaximum, val + 5,
-			NULL);
-	}
-    }
-}
-
-static void even_sounds(snd_info *sp, int width)
-{
-  XtUnmanageChild(SND_PANE(sp));
-  XtVaSetValues(SND_PANE(sp),
-		XmNpaneMinimum, width - 5,
-		XmNpaneMaximum, width + 5,
-		NULL);
-}
-
-static void sound_open_pane(snd_info *sp)
-{
-  XtManageChild(SND_PANE(sp));
-}
-
-static void sound_unlock_pane(snd_info *sp)
-{
-  XtVaSetValues(SND_PANE(sp),
-		XmNpaneMinimum, 5,
-		XmNpaneMaximum, LOTSA_PIXELS,
-		NULL);
-}
-
-void equalize_sound_panes(snd_info *sp, chan_info *ncp, bool all_panes)
-{
-  /* make sp look ok, squeezing others if needed */
-  /* if there's already enough (i.e. ss->channel_min_height), just return */
-  /* this is used in goto_next_graph and goto_previous_graph (snd-chn.c) to open windows that are currently squeezed shut */
-  Dimension chan_y, total = 0;
-  int i;
-  chan_info *cp = NULL;
-  if ((!sp) || (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)) return;
-  if (sound_style(ss) != SOUNDS_HORIZONTAL)
-    {
-      if ((all_panes) && (sp->nchans > 1) && (sp->channel_style == CHANNELS_SEPARATE))
-	{
-	  for (i = 0; i < sp->nchans; i++)
-	    {
-	      XtVaGetValues(channel_main_pane(sp->chans[i]), XmNheight, &chan_y, NULL);
-	      total += chan_y;
-	    }
-	  total /= sp->nchans;
-	  for (i = 0; i < sp->nchans; i++)
-	    {
-	      cp = sp->chans[i];
-	      XtUnmanageChild(channel_main_pane(cp));
-	      XtVaSetValues(channel_main_pane(cp),
-			    XmNpaneMinimum, total - 5,
-			    XmNpaneMaximum, total + 5,
-			    NULL);
-	    }
-	  for (i = 0; i < sp->nchans; i++)
-	    {
-	      cp = sp->chans[i];
-	      XtManageChild(channel_main_pane(cp));
-	      XtVaSetValues(channel_main_pane(cp),
-			    XmNpaneMinimum, 5,
-			    XmNpaneMaximum, LOTSA_PIXELS,
-			    NULL);
-	    }
-	}
-      else
-	{
-	  /* several attempts to be fancy here just made a mess of the display */
-	  if (sp->channel_style == CHANNELS_SEPARATE)
-	    cp = ncp;
-	  else cp = ncp->sound->chans[0];
-	  XtVaGetValues(channel_main_pane(cp), XmNheight, &chan_y, NULL);
-	  if (chan_y < (Dimension)(ss->channel_min_height >> 1)) 
-	    {
-
-	      channel_lock_pane(cp, (ss->channel_min_height >> 1) + 10);
-	      channel_open_pane(cp);
-	      channel_unlock_pane(cp);
-	    }
-	}
-    }
-  else
-    {
-      chan_y = widget_width(channel_main_pane(ncp));
-      if (chan_y < 200)
-	{
-	  XtUnmanageChild(channel_main_pane(ncp));
-	  XtVaSetValues(channel_main_pane(ncp), XmNwidth, 200, NULL);
-	  XtManageChild(channel_main_pane(ncp));
-	}
-    }
-  if (sp->channel_style == CHANNELS_COMBINED)
-    {
-      Float low, high;
-      cp = any_selected_channel(sp);
-      high = (Float)(sp->nchans - cp->chan) / (Float)sp->nchans;
-      low = high - 1.0 / (Float)sp->nchans;
-      cp = sp->chans[0];
-      fixup_gsy(cp, low, high);
-    }
-}
-
 
 void color_filter_waveform(Pixel color)
 {
@@ -2815,76 +2690,6 @@ void color_filter_waveform(Pixel color)
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	display_filter_env(sp);
-    }
-}
-
-void equalize_all_panes(void)
-{
-  /* normalize: get size, #chans, #snds, set pane minima, force remanage(?), unlock */
-  int sounds = 0, chans, chan_y, height, width, screen_y, i;
-  snd_info *nsp;
-  if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
-    {
-      for (i = 0; i < ss->max_sounds; i++)
-	{
-	  nsp = ss->sounds[i];
-	  if ((snd_ok(nsp)) && (nsp->inuse == SOUND_NORMAL))
-	    {
-	      if (nsp->nchans > 1)
-		{
-		  height = widget_height(SND_PANE(nsp));
-		  even_channels(nsp, height);
-		  map_over_sound_chans(nsp, channel_open_pane);
-		  map_over_sound_chans(nsp, channel_unlock_pane);
-		}
-	    }
-	}
-      return;
-    }
-  for (i = 0; i < ss->max_sounds; i++) 
-    if ((snd_ok(ss->sounds[i])) && (ss->sounds[i]->inuse == SOUND_NORMAL))
-      sounds++;
-  if (sound_style(ss) == SOUNDS_VERTICAL)
-    {
-      height = widget_height(SOUND_PANE(ss)) - listener_height();
-      lock_listener_pane();
-      /* all are lined up vertically, so we can just make all chans the same size */
-      if (auto_resize(ss))
-	{
-	  screen_y = DisplayHeight(MAIN_DISPLAY(ss), DefaultScreen(MAIN_DISPLAY(ss)));
-	  if (height > screen_y) height = screen_y;
-	}
-      else XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, true, NULL); /* need temporary resize to change pane sizes below */
-      chans = active_channels(WITHOUT_VIRTUAL_CHANNELS);
-      if (chans > 1)
-	{
-	  /* now we try to make room for the sound ctrl bar, each channel, perhaps the menu */
-	  chan_y = ((height - (sounds * 20)) / chans) - 12;
-	  /* probably can be 14 or 12 -- seems to be margin related or something */
-	  map_over_separate_chans_with_int(channel_lock_pane, chan_y);
-	  map_over_separate_chans(channel_open_pane);
-	  map_over_separate_chans(channel_unlock_pane);
-	}
-      unlock_listener_pane();
-      if (!(auto_resize(ss))) XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, false, NULL);
-    }
-  else
-    {
-      if (sound_style(ss) == SOUNDS_HORIZONTAL)
-	{
-	  height = widget_height(SOUND_PANE(ss));
-	  if (sounds > 1) 
-	    {
-	      width = widget_width(MAIN_PANE(ss));
-	      width /= sounds;
-	      for_each_sound_with_int(even_sounds, width);
-	      for_each_sound(sound_open_pane);
-	      for_each_sound(sound_unlock_pane);
-	    }
-	  for_each_sound_with_int(even_channels, height);
-	  map_over_separate_chans(channel_open_pane);   /* manage the channel widgets */
-	  map_over_separate_chans(channel_unlock_pane); /* allow pane to be resized */
-	}
     }
 }
 
@@ -3055,8 +2860,6 @@ void reflect_sound_selection(snd_info *sp)
 	      if (status == XmPAGE_FOUND)
 		{
 		  XtVaSetValues(SOUND_PANE(ss), XmNcurrentPageNumber, page, NULL);
-		  if (sp->nchans > 1)
-		    equalize_sound_panes(sp, sp->chans[0], false);
 		}
 	    }
 	}

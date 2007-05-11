@@ -79,7 +79,6 @@ static void view_menu_update_1(Widget w, XtPointer info, XtPointer context) {vie
 static void view_separate_callback(Widget w, XtPointer info, XtPointer context) {set_channel_style(CHANNELS_SEPARATE);}
 static void view_combined_callback(Widget w, XtPointer info, XtPointer context) {set_channel_style(CHANNELS_COMBINED);}
 static void view_superimposed_callback(Widget w, XtPointer info, XtPointer context) {set_channel_style(CHANNELS_SUPERIMPOSED);}
-static void view_equalize_panes_callback(Widget w, XtPointer info, XtPointer context) {equalize_all_panes();}
 static void view_dots_callback(Widget w, XtPointer info, XtPointer context) {set_graph_style(GRAPH_DOTS);}
 static void view_lines_callback(Widget w, XtPointer info, XtPointer context) {set_graph_style(GRAPH_LINES);}
 static void view_filled_callback(Widget w, XtPointer info, XtPointer context) {set_graph_style(GRAPH_FILLED);}
@@ -478,10 +477,6 @@ Widget add_menu(void)
   XtAddCallback(view_combine_superimposed_menu, XmNactivateCallback, view_superimposed_callback, NULL);  
   if (channel_style(ss) == CHANNELS_SUPERIMPOSED) set_sensitive(view_combine_superimposed_menu, false);
 
-  view_equalize_panes_menu = XtCreateManagedWidget(_("Equalize Panes"), xmPushButtonWidgetClass, view_menu, in_args, in_n);
-  XtAddCallback(view_equalize_panes_menu, XmNactivateCallback, view_equalize_panes_callback, NULL);
-  XtVaSetValues(view_equalize_panes_menu, XmNmnemonic, 'N', NULL);
-
   view_zero_menu = XtCreateManagedWidget(_("Show Y = 0"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
   XtAddCallback(view_zero_menu, XmNactivateCallback, view_zero_callback, NULL);
   XtVaSetValues(view_zero_menu, XmNmnemonic, 'y', NULL);
@@ -732,7 +727,6 @@ void reflect_play_stop_in_popup_menu(void)
 static void popup_save_callback(Widget w, XtPointer info, XtPointer context) {save_edits_with_prompt(any_selected_sound());}
 static void popup_undo_callback(Widget w, XtPointer info, XtPointer context) {undo_edit_with_sync(current_channel(), 1);}
 static void popup_redo_callback(Widget w, XtPointer info, XtPointer context) {redo_edit_with_sync(current_channel(), 1);}
-static void popup_equalize_panes_callback(Widget w, XtPointer info, XtPointer context) {equalize_all_panes();}
 static void popup_info_callback(Widget w, XtPointer info, XtPointer context) 
 {
   snd_info *sp;
@@ -788,10 +782,6 @@ void create_popup_menu(void)
       popup_save_menu = XtCreateManagedWidget(_("Save"), xmPushButtonWidgetClass, popup_menu, args, n);
       XtAddCallback(popup_save_menu, XmNactivateCallback, popup_save_callback, NULL);
       XtVaSetValues(popup_save_menu, XmNsensitive, false, NULL);
-
-      popup_equalize_panes_menu = XtCreateManagedWidget(_("Equalize Panes"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_equalize_panes_menu, XmNsensitive, false, NULL);
-      XtAddCallback(popup_equalize_panes_menu, XmNactivateCallback, popup_equalize_panes_callback, NULL);
 
       popup_info_menu = XtCreateManagedWidget(_("Info"), xmPushButtonWidgetClass, popup_menu, args, n);
       XtVaSetValues(popup_info_menu, XmNsensitive, false, NULL);

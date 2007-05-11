@@ -2030,7 +2030,7 @@
 		       'enved-hook 'enved-in-dB 'enved-move-point 'enved-power 'enved-spectrum
 		       'enved-srate 'enved-style 'enved-target 'enved-wave? 'enved-waveform-color
 		       'envelope-exponential 'envelope-linear 'eps-bottom-margin 'eps-file
-		       'eps-left-margin 'eps-size 'equalize-panes 'exit 'exit-hook
+		       'eps-left-margin 'eps-size 'exit 'exit-hook
 		       'expand-control 'expand-control-bounds 'expand-control-hop 'expand-control-jitter 'expand-control-length
 		       'expand-control-ramp 'expand-control? 'exponential-window 'fft 'fft-log-frequency
 		       'fft-log-magnitude 'fft-window 'fft-window-alpha 'fft-window-beta 'file->array
@@ -28374,7 +28374,6 @@ EDITS: 2
 	  (if (< (frames) 100000) (play-and-wait))
 	  (scale-to .1 (choose-fd))
 	  (scale-by 2.0 (choose-fd))
-	  (equalize-panes)
 	  (save-controls)
 	  (set! (amp-control) .5)
 	  (test-panel amp-control 'amp-control)
@@ -49528,7 +49527,6 @@ EDITS: 1
 		       (select-sound ind)
 		       (select-channel 1)
 		       (set! (channel-style ind) channels-combined)
-		       (equalize-panes)
 		       (set! (channel-style ind) channels-separate)
 		       (set! (cursor) 100)
 		       (take-keyboard-focus cwid)
@@ -50457,7 +50455,7 @@ EDITS: 1
 		     (key-event fltord snd-return-key 0) (force-event))
 					;		(click-button (list-ref swids 4) #t ControlMask) ; Play button
 					;		(click-button (list-ref swids 4) #f 0)
-		   (equalize-panes))
+		   )
 		 (set! (show-controls ind) #f)
 		 (select-sound ind)
 		 (select-channel 1)
@@ -50531,7 +50529,6 @@ EDITS: 1
 		 (let ((ind2 (open-sound "4.aiff")))
 		   (set! (channel-style ind2) channels-combined)
 		   (XtCallCallbacks (menu-option "Equalize Panes") XmNactivateCallback (snd-global-state))
-		   (equalize-panes ind2)
 		   (for-each 
 		    (lambda (name style)
 		      (XtCallCallbacks (menu-option name) XmNactivateCallback (snd-global-state))
@@ -61116,7 +61113,7 @@ EDITS: 1
 		     mix-tag-y mix-vct mix-waveform-height time-graph-style lisp-graph-style transform-graph-style
 					;new-sound 
 		     read-mix-sample next-sample
-		     transform-normalization equalize-panes open-file-dialog-directory open-raw-sound open-sound orientation-dialog previous-sample
+		     transform-normalization open-file-dialog-directory open-raw-sound open-sound orientation-dialog previous-sample
 		     peak-env-info peaks ;play play-and-wait play-mix play-region play-selection
 		     player? players
 		     position-color position->x position->y add-directory-to-view-files-list add-file-to-view-files-list view-files-sort 
@@ -61243,7 +61240,7 @@ EDITS: 1
 			 mix-amp-env mix-color mix-name mix-position
 			 mix-speed mix-tag-height mix-tag-width mix-tag-y mark-tag-width mark-tag-height 
 			 mix-waveform-height transform-normalization open-file-dialog-directory
-			 equalize-panes position-color view-files-sort print-length pushed-button-color
+			 position-color view-files-sort print-length pushed-button-color
 			 view-files-amp view-files-speed view-files-speed-style view-files-amp-env
 			 view-files-files view-files-selected-files 
 			 region-graph-style reverb-control-decay reverb-control-feedback

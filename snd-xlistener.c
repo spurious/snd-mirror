@@ -1355,20 +1355,6 @@ void set_listener_text_font(void)
     XtVaSetValues(listener_text, XM_FONT_RESOURCE, ss->sgx->listener_fontlist, NULL);
 }
 
-void lock_listener_pane(void)
-{
-  int val;
-  val = listener_height();
-  if (val > 0)
-    XtVaSetValues(listener_pane, XmNpaneMinimum, val - 1, XmNpaneMaximum, val + 1, NULL);
-}
-
-void unlock_listener_pane(void)
-{
-  if ((listener_pane) && (XtIsManaged(listener_pane)))
-    XtVaSetValues(listener_pane, XmNpaneMinimum, 1, XmNpaneMaximum, LOTSA_PIXELS, NULL);
-}
-
 static XEN g_goto_listener_end(void)
 {
   #define H_goto_listener_end "(" S_goto_listener_end "): move cursor and scroll to bottom of listener pane"

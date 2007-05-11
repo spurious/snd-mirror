@@ -2028,7 +2028,6 @@ void move_mix_tag(int mix_id, int x)
 	     S_mix_drag_hook);
 }
 
-
 void finish_moving_mix_tag(int mix_id, int x)
 {
   /* from mouse release after tag drag in snd-chn.c only */
@@ -2065,7 +2064,11 @@ void finish_moving_mix_tag(int mix_id, int x)
       mix_set_position_edit(mix_id, pos);
       CURSOR(cp) = pos;
       after_edit(cp);
-      update_graph(cp);
+      update_graph(cp); /* this causes flashing, but it's next to impossible to fix
+			 *   display_channel_id assumes previous id was erased, as does any after_graph_hook function
+			 *   and we have to run lisp/fft graphs in any case (and the hook),
+			 *   but display_channel_data_1 erases the old graph, so it's hard to specialize for this case
+			 */
     }
 }
 

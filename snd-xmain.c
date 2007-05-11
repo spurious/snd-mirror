@@ -469,9 +469,6 @@ static idle_func_t startup_funcs(XtPointer context)
 	}
       if ((ss->init_window_height == 0) && (sound_style(ss) == SOUNDS_HORIZONTAL))
 	set_widget_height(MAIN_SHELL(ss), 200); /* otherwise it's just a title bar! */
-      if ((ss->active_sounds > 1) &&
-	  ((sound_style(ss) == SOUNDS_VERTICAL) || (sound_style(ss) == SOUNDS_HORIZONTAL)))
-	equalize_all_panes();
       if (ss->startup_errors)
 	{
 	  handle_listener(true); /* create it, if necessary */

@@ -21,7 +21,6 @@ enum {m_menu,
             o_focus_right_menu, o_focus_left_menu, o_focus_middle_menu, o_focus_active_menu,
           o_save_menu, o_save_state_menu, o_sep_menu, o_preferences_menu,
         v_menu, v_cascade_menu,
-          v_equalize_panes_menu, 
           v_graph_style_menu, v_graph_style_cascade_menu,
             v_lines_menu, v_dots_menu, v_filled_menu, v_dots_and_lines_menu, v_lollipops_menu,
           v_zero_menu, v_cursor_menu, v_controls_menu, v_listener_menu,
@@ -117,7 +116,6 @@ enum {m_menu,
 
 #define view_menu (ss->sgx->mw[v_menu])
 #define view_cascade_menu (ss->sgx->mw[v_cascade_menu])
-#define view_equalize_panes_menu (ss->sgx->mw[v_equalize_panes_menu])
 #define view_graph_style_menu (ss->sgx->mw[v_graph_style_menu])
 #define view_graph_style_cascade_menu (ss->sgx->mw[v_graph_style_cascade_menu])
 #define view_lines_menu (ss->sgx->mw[v_lines_menu])
@@ -157,15 +155,12 @@ enum {m_menu,
 #define view_bare_x_axis_menu (ss->sgx->mw[v_bare_x_axis_menu])
 #define view_sep2_menu (ss->sgx->mw[v_sep2_menu])
 
-enum {W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, 
-      W_pop_info, W_pop_apply, W_pop_reset, 
-      NUM_POPUP_WIDGETS};
+enum {W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_info, W_pop_apply, W_pop_reset, NUM_POPUP_WIDGETS};
 
 #define popup_play_menu (ss->sgx->pw[W_pop_play])
 #define popup_undo_menu (ss->sgx->pw[W_pop_undo])
 #define popup_redo_menu (ss->sgx->pw[W_pop_redo])
 #define popup_save_menu (ss->sgx->pw[W_pop_save])
-#define popup_equalize_panes_menu (ss->sgx->pw[W_pop_equalize_panes])
 #define popup_info_menu (ss->sgx->pw[W_pop_info])
 #define popup_apply_menu (ss->sgx->pw[W_pop_apply])
 #define popup_reset_menu (ss->sgx->pw[W_pop_reset])

@@ -1,6 +1,7 @@
 #include "snd.h"
 
-/* TODO: multiple mix dialogs
+/* PERHAPS: multiple mix dialogs
+ * PERHAPS: mix-property display in dialog [add text widget? or use existing error info widget?]
  */
 
 #define NAME_COLUMNS 8

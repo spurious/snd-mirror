@@ -24372,7 +24372,6 @@ def test14
     frames < 100000 and play_and_wait
     scale_to(0.1, choose_fd.call)
     scale_by(2.0, choose_fd.call)
-    equalize_panes
     save_controls
     set_amp_control(0.5)
     test_panel(:amp_control)
@@ -35582,7 +35581,6 @@ def test0024
     select_sound(ind)
     select_channel(1)
     set_channel_style(Channels_combined, ind)
-    equalize_panes
     set_channel_style(Channels_separate, ind)
     set_cursor(100)
     take_keyboard_focus(cwid)
@@ -36880,7 +36878,6 @@ def test0124
   force_event
   click_button(swids[4], true, RControlMask)
   click_button(swids[4], true, 0)
-  equalize_panes
   set_show_controls(false, ind)
   select_sound(ind)
   select_channel(1)
@@ -36978,8 +36975,6 @@ def test0124
   end
   ind2 = open_sound("4.aiff")
   set_channel_style(Channels_combined, ind2)
-  RXtCallCallbacks(menu_option("Equalize Panes"), RXmNactivateCallback, snd_global_state)
-  equalize_panes(ind2)
   [["combined", Channels_combined],
     ["superimposed", Channels_superimposed],
     ["separate", Channels_separate]].each do |name, style|
@@ -38624,7 +38619,7 @@ Procs =
    :mix_home, :mix_speed, :mix_tag_height, :mix_tag_width, :mark_tag_height, :mark_tag_width,
    :mix_tag_y, :mix_vct, :mix_waveform_height, :time_graph_style, :lisp_graph_style,
    :transform_graph_style, :read_mix_sample, :next_sample,
-   :transform_normalization, :equalize_panes, :open_file_dialog_directory,
+   :transform_normalization, :open_file_dialog_directory,
    :open_raw_sound, :open_sound, :orientation_dialog, :peak_env_info, :peaks,
    :position_color, :position2x, :position2y, :previous_sample,
    :add_directory_to_view_files_list, :add_file_to_view_files_list,
@@ -38778,7 +38773,7 @@ Set_procs =
    :mix_amp_env, :mix_color, :mix_name,
    :mix_position, :mix_speed, :mix_tag_height, :mix_tag_width, :mix_tag_y,
    :mark_tag_width, :mark_tag_height, :mix_waveform_height, :transform_normalization,
-   :open_file_dialog_directory, :equalize_panes, :position_color, :view_files_sort, :print_length,
+   :open_file_dialog_directory, :position_color, :view_files_sort, :print_length,
    :pushed_button_color, :region_graph_style, :reverb_control_decay,
    :reverb_control_feedback, :reverb_control_length, :reverb_control_lowpass,
    :reverb_control_scale, :time_graph_style, :lisp_graph_style, :transform_graph_style,
@@ -38811,7 +38806,7 @@ Set_procs =
    :phase_vocoder_phase_increments, :phase_vocoder_phases, :mus_generator?, :read_sample,
    :help_button_color, :reset_button_color, :doit_button_color, :doit_again_button_color,
    :html_dir, :html_program, :widget_position, :widget_size,
-   :vct_ref, :frame_ref, :mixer_ref, :locsig_ref, :locsig_reverb_ref, :equalize_panes,
+   :vct_ref, :frame_ref, :mixer_ref, :locsig_ref, :locsig_reverb_ref,
    :colormap?, :mus_reset, :mus_interp_type,
    :filter_control_coeffs,
    ((defined? window_property) ? :window_property : :widget_size), :mus_file_prescaler,

@@ -1727,7 +1727,7 @@ include bird.fsm
      <'> mix-tag-height <'> mix-tag-width <'> mark-tag-height <'> mark-tag-width
      <'> mix-tag-y <'> mix-vct <'> mix-waveform-height <'> time-graph-style
      <'> lisp-graph-style <'> transform-graph-style <'> read-mix-sample
-     <'> next-sample <'> transform-normalization <'> equalize-panes <'> open-raw-sound
+     <'> next-sample <'> transform-normalization <'> open-raw-sound
      <'> open-sound <'> orientation-dialog <'> previous-sample <'> peak-env-info
      <'> peaks <'> player? <'> players <'> position-color
      <'> position->x <'> position->y <'> add-directory-to-view-files-list
@@ -1916,7 +1916,7 @@ include bird.fsm
      <'> mix-amp-env <'> mix-color <'> mix-name <'> mix-position
      <'> mix-speed <'> mix-tag-height <'> mix-tag-width
      <'> mix-tag-y <'> mark-tag-width <'> mark-tag-height <'> mix-waveform-height
-     <'> transform-normalization <'> equalize-panes <'> position-color
+     <'> transform-normalization <'> position-color
      <'> view-files-sort <'> print-length <'> pushed-button-color <'> view-files-amp
      <'> view-files-speed <'> view-files-speed-style <'> view-files-amp-env <'> view-files-files
      <'> view-files-selected-files <'> region-graph-style <'> reverb-control-decay

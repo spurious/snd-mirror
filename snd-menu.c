@@ -60,11 +60,6 @@ void edit_menu_update(void)
 
 void view_menu_update(void)
 {
-#if USE_MOTIF  
-  /* does equalize panes make sense? */
-  set_sensitive(view_equalize_panes_menu, active_channels(WITHOUT_VIRTUAL_CHANNELS) > 1);
-#endif
-
   /* are there any viewable regions? */
   set_sensitive(view_region_menu, snd_regions() > 0);
 
@@ -181,10 +176,6 @@ void popup_menu_update(void)
   set_sensitive(popup_undo_menu, undoable_edits_p);
   set_sensitive(popup_redo_menu, redoable_edits_p);
   set_sensitive(popup_save_menu, undoable_edits_p);
-
-#if USE_MOTIF
-  set_sensitive(view_equalize_panes_menu, active_channels(WITHOUT_VIRTUAL_CHANNELS) > 1);
-#endif
 
   set_sensitive(popup_apply_menu, (file_p && (in_show_controls(ss))));
   set_sensitive(popup_reset_menu, (file_p && (in_show_controls(ss))));

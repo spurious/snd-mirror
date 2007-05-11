@@ -779,7 +779,6 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
     end
     entry("Select all") do |snd, chn, w| select_all(snd, chn) end
     entry("Unselect") do |snd, chn, w| set_selection_member?(false, true) end
-    entry("Equalize panes") do |snd, chn, w| equalize_panes end
     entry("Apply controls") do |snd, chn, w| apply_controls end
     entry("Reset controls") do |snd, chn, w| reset_controls end
     entry("Info") do |snd, chn, w|
@@ -881,8 +880,6 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
             eds[0] > 0 ? show_widget(w) : hide_widget(w)
           when "Play channel"
             channels(snd) > 1 ? show_widget(w) : hide_widget(w)
-          when "Equalize panes"
-            [Snd.sounds.length, channels(snd)].max > 1 ? show_widget(w) : hide_widget(w)
           when "Redo"
             eds[1] > 0 ? show_widget(w) : hide_widget(w)
           when "Mix selection", "Insert selection", "Unselect", "Replace with selection"
@@ -1133,7 +1130,6 @@ all saved edit lists.",
       cascade("Revert") do
         children(edited) do |snd| revert_sound(snd) end
       end
-      entry("Equalize panes") do |snd, chn, w| equalize_panes end
       cascade("Focus") do
         children(focused, true) do |snd|
           if widget?(main_widgets[Notebook_outer_pane])
@@ -1178,8 +1174,6 @@ all saved edit lists.",
         each_entry do |w1|
           if widget?(w1)
             case name = widget_name(w1)
-            when "Equalize panes"
-              Snd.sounds.length > 1 ? show_widget(w1) : hide_widget(w1)
             when "Help"
               if subject = listener_selection
                 change_label(w1, format("Help on %s", subject.inspect))

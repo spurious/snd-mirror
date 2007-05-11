@@ -328,9 +328,6 @@
       (list "Unselect"           xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i) 
 	      (set! (selection-member? #t) #f)))
-      (list "Equalize panes"     xmPushButtonWidgetClass every-menu 
-	    (lambda (w c i)
-	      (equalize-panes)))
       (list "Apply controls"     xmPushButtonWidgetClass every-menu
 	    (lambda (w c i)
 	      (apply-controls)))
@@ -972,10 +969,6 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
 		 (make-popdown-entry "Close" listener-popup close-sound every-menu #f #t)
 		 (make-popdown-entry "Save" listener-popup save-sound every-menu edited #t)
 		 (make-popdown-entry "Revert" listener-popup revert-sound every-menu edited #t)
-
-		 (let ((panes-widget (XtCreateManagedWidget "Equalize panes" xmPushButtonWidgetClass listener-popup every-menu)))
-		   (XtAddCallback panes-widget XmNactivateCallback (lambda (w c i) (equalize-panes)))
-		   panes-widget)
 
 		 (make-popdown-entry "Focus" listener-popup 
 				     (lambda (us)

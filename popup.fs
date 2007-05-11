@@ -437,7 +437,6 @@ let: ( -- menu )
 ;
 : pselall-cb <{ w c info -- val }> graph-popup-snd graph-popup-chn select-all ;
 : punsel-cb  <{ w c info -- val }> #f #t set-selection-member? ;
-: peqpan-cb  <{ w c info -- val }> equalize-panes ;
 : papcnt-cb  <{ w c info -- val }> #f 0 0 undef apply-controls ;
 : precnt-cb  <{ w c info -- val }> #f reset-controls ;
 : print-props { props -- str }
@@ -548,7 +547,6 @@ let: ( -- menu )
      #( $" Replace with selection" _ #f   ['] prepsel-cb  #f )
      #( $" Select all"       _ #f         ['] pselall-cb  #f )
      #( $" Unselect"         _ #f         ['] punsel-cb   #f )
-     #( $" Equalize panes"   _ #f         ['] peqpan-cb   #f )
      #( $" Apply controls"   _ #f         ['] papcnt-cb   #f )
      #( $" Reset controls"   _ #f         ['] precnt-cb   #f )
      #( $" Info"             _ #f         ['] pinfo-cb    #f )
@@ -584,9 +582,6 @@ let: ( -- menu )
       name $" Play channel" _ string= if
 	w snd channels 1 > if FXtManageChild else FXtUnmanageChild then drop
       else
-	name $" Equalize panes" _ string= if
-	  w snd channels 1 > sounds length 1 > || if FXtManageChild else FXtUnmanageChild then drop
-	else
 	  name $" Redo" _ string= if
 	    w eds cadr 0> if FXtManageChild else FXtUnmanageChild then drop
 	  else
@@ -610,7 +605,6 @@ let: ( -- menu )
 		  then
 		then
 	      then
-	    then
 	  then
 	then
       then
@@ -1139,9 +1133,6 @@ hide
 : list-clear-cb <{ w c info -- val }> clear-listener ;
 : listener-edit <{ w -- }>
   w FXtName { name }
-  name $" Equalize panes" _ string= if
-    w sounds length 1 > if FXtManageChild else FXtUnmanageChild then drop
-  else
     name "Help" _ string= if
       listener-selection { subject }
       subject if
@@ -1151,7 +1142,6 @@ hide
 	w FXtUnmanageChild drop
       then
     then
-  then
 ;
 : listener-popup-cb ( menu -- prc; w c i self -- )
   3 proc-create swap ,
@@ -1196,7 +1186,6 @@ let: ( -- )
      #( $" Close"    	   _ 'cascade   ['] close-sound-extend ['] identity-cb #t )
      #( $" Save"     	   _ 'cascade   ['] save-sound         ['] edited-cb   #t )
      #( $" Revert"   	   _ 'cascade   ['] revert-sound       ['] edited-cb   #t )
-     #( $" Equalize panes" _ #f         ['] peqpan-cb          #f )
      #( $" Focus"          _ 'cascade   ['] list-focus-cb      ['] focused-cb  #f )
      #( $" sep"              'separator #f                     #f )
      #( $" Exit"           _ #f         ['] exit-cb            #f ) ) make-popup-menu { menu }

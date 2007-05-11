@@ -8433,14 +8433,12 @@ bool redo_edit_with_sync(chan_info *cp, int count)
 
 /* -------------------- virtual mixes -------------------- */
 
-  /* PERHAPS: mix-property display in dialog [add text widget? or use existing error info widget?]
-   * TODO: unlist and read can be called on fully freed xen-allocated readers (valtmp)
-   * SOMEDAY: music notation for mix tags (clefs, staff lines, noteheads -- need specialization of tag display)
+  /* SOMEDAY: music notation for mix tags (clefs, staff lines, noteheads -- need specialization of tag display)
    *          drag horizontally -> change onset, vertically -> change pitch
-   * TODO: in united or separated! 2nd chan mix-tag-y is confused about offset
-   * TODO: if sep then unite, goddamn channel gets 0 height??
    * TODO: mix-drag if syncd should at least move the other tag(s)
-   * TODO: auto_delete args int-or-bool throughout
+   * TODO: auto_delete args int-or-bool throughout: mix, set-samples+file, insert-sound|samples+file.
+   *   typedef enum {DONT_DELETE_ME, DELETE_ME, ALREADY_DELETED, MULTICHANNEL_DELETION} file_delete_t;
+   *   so #f->0, #t->1(delete_me) or 3(multi delete), else error if not 2 -- does 2 ever make sense -- it is an internal check.
    */
 
 static int add_mix_op(int type)
@@ -8449,16 +8447,16 @@ static int add_mix_op(int type)
     {
     case ED_SIMPLE:     return(ED_MIX_SIMPLE); break;
     case ED_MIX_SIMPLE: return(ED_MIX_SIMPLE); break;
-    case ED_ZERO:       return(ED_MIX_ZERO);  break;
-    case ED_MIX_ZERO:   return(ED_MIX_ZERO);  break;
-    case ED_RAMP:       return(ED_MIX_RAMP);  break;
-    case ED_MIX_RAMP:   return(ED_MIX_RAMP);  break;
-    case ED_RAMP2:      return(ED_MIX_RAMP2); break;
-    case ED_MIX_RAMP2:  return(ED_MIX_RAMP2); break;
-    case ED_RAMP3:      return(ED_MIX_RAMP3); break;
-    case ED_MIX_RAMP3:  return(ED_MIX_RAMP3); break;
-    case ED_RAMP4:      return(ED_MIX_RAMP4); break;
-    case ED_MIX_RAMP4:  return(ED_MIX_RAMP4); break;
+    case ED_ZERO:       return(ED_MIX_ZERO);   break;
+    case ED_MIX_ZERO:   return(ED_MIX_ZERO);   break;
+    case ED_RAMP:       return(ED_MIX_RAMP);   break;
+    case ED_MIX_RAMP:   return(ED_MIX_RAMP);   break;
+    case ED_RAMP2:      return(ED_MIX_RAMP2);  break;
+    case ED_MIX_RAMP2:  return(ED_MIX_RAMP2);  break;
+    case ED_RAMP3:      return(ED_MIX_RAMP3);  break;
+    case ED_MIX_RAMP3:  return(ED_MIX_RAMP3);  break;
+    case ED_RAMP4:      return(ED_MIX_RAMP4);  break;
+    case ED_MIX_RAMP4:  return(ED_MIX_RAMP4);  break;
     default:
       fprintf(stderr, "bad mix op!");
       abort();
@@ -9273,6 +9271,11 @@ static void unlist_reader(snd_fd *fd)
 	if (fd == lst->rds[i])
 	  lst->rds[i] = NULL;
     }
+  /* unlist and read can be called on fully freed xen-allocated readers accessed through mixing,
+   *   but this happens only if the underlying sound has been closed -- nutty cases at the end
+   *   of snd-test.scm -- Snd goes on, but valgrind complains about it.  I don't think this is
+   *   a bug, since we're deliberately breaking the rules, so to speak.
+   */
 }
 
 static void sf_free(snd_fd *fd)

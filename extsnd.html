@@ -11710,20 +11710,6 @@ delete-watcher removes from the watcher list the function associated with id.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- equalize-panes -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="equalizepanes">equalize-panes</a> (:optional snd)</code>
-</td></tr><tr><td></td><td>
-This equalizes Snd panes (tries to make them the same size) as in the View:<a href="snd.html#menuequalizepanes">Equalize Panes</a> option.
-It is specific to Motif since Gtk paned window widgets are too simple-minded to get into this predicament.
-If the 'snd' argument is given, only that sound's panes are affected.
-
-<table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(add-hook! <a class=quiet href="#afteropenhook">after-open-hook</a> 
-  (lambda (n) (if (&gt; (<a class=quiet href="#channels">channels</a> n) 3) (<em class=red>equalize-panes</em>))))
-</pre></td></tr></table></td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- exit -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="exit">exit</a> ('exit-value')</code>
@@ -13110,7 +13096,6 @@ You can find out at run-time whether GL is loaded via <code>(provided? 'gl)</cod
 	<!-- I(y=0 line):L(show-y-zero)(showyzero) -->
 	<!-- I(dots or lines):L(graph-style)(graphstyle) -->
         <!-- I(combine channels):L(channel-style)(channelstyle) -->
-        <!-- I(normalize display):L(equalize-panes)(equalizepanes) -->
         <!-- I(control panel):L(show-controls)(showcontrols) -->
 	<!-- I(fft peaks):L(show-transform-peaks)(showtransformpeaks) -->
         <!-- I(fft peaks):O(peaks)(peaks) -->
