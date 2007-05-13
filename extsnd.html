@@ -1629,9 +1629,10 @@ in snd-motif.scm uses this hook to draw sync'd marks in some other color than th
 
 <!-- draw-mix-hook -->
 <tr><td colspan=3 bgcolor="#f6f8ff">
-<code><a class=def name="drawmixhook">draw-mix-hook</a> (id x y)</code> [<b>progn</b>]
+<code><a class=def name="drawmixhook">draw-mix-hook</a> (id old-x old-y x y)</code> [<b>progn</b>]
 </td></tr><tr><td></td><td colspan=2>
-This hook is called before a mix tag is drawn.
+This hook is called before a mix tag is drawn. If the hook function returns #t, the mix tag is not drawn by Snd (the
+assumption is that the hook function drew something).
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -4613,7 +4614,8 @@ starting at 'samp' in the output channel.
 mix returns the id mix or -1 (a simple mix, no tag).
 If 'with-mix-tags' is #f (the default is #t), the data is simply
 mixed without creating any mix objects. 
-The input file ('file') is not deleted by Snd unless 'auto-delete' is #t. 
+The input file ('file') is not deleted by Snd unless 'auto-delete' is #t (or 1 or 3). 
+auto-delete can be a boolean (#f = don't delete), or and integer: 0=don't delete, 1=delete, 3=delete but keep track of multichannel inputs.
 <br>
 <img src="mix1.png" alt="mixes" vspace=10 onmouseover="return escape('the mix tag is the red rectangle at the left end of the mix waveform.  The number under it is that mix\'s id.')">
 <br>
@@ -12786,9 +12788,10 @@ currently in the time-domain graph:
 
 <!-- fill-rectangle -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="fillrectangle">fill-rectangle</a> (x0 y0 width height snd chn context)</code>
+<code><a class=def name="fillrectangle">fill-rectangle</a> (x0 y0 width height snd chn context erase)</code>
 </td></tr><tr><td></td><td>
 This draws a filled rectangle in the current foreground color from ('x0 y0') of size ('width height').
+If 'erase' is #t, this function erases the rectangular area.
 See draw.scm, snd-motif.scm, or <a href="#showoriginal">show-original</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 

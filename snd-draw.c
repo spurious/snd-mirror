@@ -473,6 +473,7 @@ static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_2, S_draw_line, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x1), x1, XEN_ARG_3, S_draw_line, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y1), y1, XEN_ARG_4, S_draw_line, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_7, S_draw_line, "an integer such as " S_time_graph);
 #if USE_CAIRO
   {
     axis_context *axc;
@@ -506,6 +507,7 @@ static XEN g_draw_dot(XEN x0, XEN y0, XEN size, XEN snd, XEN chn, XEN ax)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_1, S_draw_dot, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_2, S_draw_dot, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(size), size, XEN_ARG_3, S_draw_dot, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_6, S_draw_dot, "an integer such as " S_time_graph);
   draw_dot(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dot),
 	   XEN_TO_C_INT(x0),
 	   XEN_TO_C_INT(y0),
@@ -513,20 +515,30 @@ static XEN g_draw_dot(XEN x0, XEN y0, XEN size, XEN snd, XEN chn, XEN ax)
   return(XEN_FALSE);
 }
 
-static XEN g_fill_rectangle(XEN x0, XEN y0, XEN width, XEN height, XEN snd, XEN chn, XEN ax)
+static XEN g_fill_rectangle(XEN x0, XEN y0, XEN width, XEN height, XEN snd, XEN chn, XEN ax, XEN erase)
 {
-  #define H_fill_rectangle "(" S_fill_rectangle " x0 y0 width height :optional snd chn (ax " S_time_graph ")): draw a filled rectangle"
+  #define H_fill_rectangle "(" S_fill_rectangle " x0 y0 width height :optional snd chn (ax " S_time_graph ") erase): draw a filled rectangle"
 
   ASSERT_CHANNEL(S_fill_rectangle, snd, chn, 5);
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_1, S_fill_rectangle, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_2, S_fill_rectangle, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(width), width, XEN_ARG_3, S_fill_rectangle, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(height), height, XEN_ARG_4, S_fill_rectangle, "a number");
-  fill_rectangle(TO_C_AXIS_CONTEXT(snd, chn, ax, S_fill_rectangle),
-		 XEN_TO_C_INT(x0),
-		 XEN_TO_C_INT(y0),
-		 XEN_TO_C_INT(width),
-		 XEN_TO_C_INT(height));
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_7, S_fill_rectangle, "an integer such as " S_time_graph);
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(erase), erase, XEN_ARG_8, S_fill_rectangle, "a boolean");
+  if ((XEN_BOOLEAN_P(erase)) &&
+      (XEN_TRUE_P(erase)))
+    erase_rectangle(get_cp(snd, chn, S_fill_rectangle),
+		    TO_C_AXIS_CONTEXT(snd, chn, ax, S_fill_rectangle),
+		    XEN_TO_C_INT(x0),
+		    XEN_TO_C_INT(y0),
+		    XEN_TO_C_INT(width),
+		    XEN_TO_C_INT(height));
+  else fill_rectangle(TO_C_AXIS_CONTEXT(snd, chn, ax, S_fill_rectangle),
+		      XEN_TO_C_INT(x0),
+		      XEN_TO_C_INT(y0),
+		      XEN_TO_C_INT(width),
+		      XEN_TO_C_INT(height));
   return(XEN_FALSE);
 }
 
@@ -539,6 +551,7 @@ static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax)
   XEN_ASSERT_TYPE(XEN_STRING_P(text), text, XEN_ARG_1, S_draw_string, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_2, S_draw_string, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_3, S_draw_string, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_6, S_draw_string, "an integer such as " S_time_graph);
   tmp = XEN_TO_C_STRING(text);
 #if USE_MOTIF
   /* snd-xdraw to make motif draw-string act in the same way (coordinate-wise) as gtk */
@@ -590,6 +603,7 @@ static XEN g_draw_lines(XEN pts, XEN snd, XEN chn, XEN ax)
   int vlen = 0;
   ASSERT_CHANNEL(S_draw_lines, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, XEN_ARG_1, S_draw_lines, "a vector");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_draw_lines, "an integer such as " S_time_graph);
   ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_lines);
   pack_pts = vector_to_points(pts, S_draw_lines, &vlen);
   draw_lines(ax1, pack_pts, vlen);
@@ -607,6 +621,7 @@ static XEN g_draw_dots(XEN pts, XEN size, XEN snd, XEN chn, XEN ax)
   int vlen = 0;
   ASSERT_CHANNEL(S_draw_dots, snd, chn, 3);
   XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, XEN_ARG_1, S_draw_dots, "a vector");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_5, S_draw_dots, "an integer such as " S_time_graph);
   ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dots);
   pack_pts = vector_to_points(pts, S_draw_dots, &vlen);
   draw_points(ax1,
@@ -626,6 +641,7 @@ static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
   int vlen = 0;
   ASSERT_CHANNEL(S_fill_polygon, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, XEN_ARG_1, S_fill_polygon, "a vector");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_fill_polygon, "an integer such as " S_time_graph);
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_fill_polygon);
   pack_pts = vector_to_points(pts, S_fill_polygon, &vlen);
 #if USE_MOTIF
@@ -715,7 +731,7 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 {
   axis_context *ax;
   ASSERT_CHANNEL(S_setB S_current_font, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_setB S_current_font, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_setB S_current_font, "an integer such as time-graph");
   XEN_ASSERT_TYPE((XEN_LIST_P(id)) &&
 		  (XEN_LIST_LENGTH(id) >= 2) &&
 		  (XEN_SYMBOL_P(XEN_CAR(id))) &&
@@ -732,7 +748,7 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
   axis_context *ax;
   chan_info *cp;
   ASSERT_CHANNEL(S_current_font, snd, chn, 1);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_3, S_current_font, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_3, S_current_font, "an integer such as time-graph");
   cp = get_cp(snd, chn, S_current_font);
   if (!cp) return(XEN_FALSE);
   ax = get_ax(cp,
@@ -756,7 +772,7 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 {
   axis_context *ax;
   ASSERT_CHANNEL(S_setB S_current_font, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_setB S_current_font, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_setB S_current_font, "an integer such as time-graph");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_setB S_current_font);
   XEN_ASSERT_TYPE((XEN_ULONG_P(id)) ||
 		  (XEN_LIST_P(id) && 
@@ -774,7 +790,7 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
   #define H_current_font "(" S_current_font " :optional snd chn (ax " S_time_graph ")): current font id"
   axis_context *ax;
   ASSERT_CHANNEL(S_current_font, snd, chn, 1);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_3, S_current_font, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_3, S_current_font, "an integer such as time-graph");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_current_font);
   return(XEN_WRAP_C_POINTER(ax->current_font));
 }
@@ -1788,7 +1804,7 @@ XEN_ARGIFY_6(g_draw_dot_w, g_draw_dot)
 XEN_ARGIFY_4(g_draw_lines_w, g_draw_lines)
 XEN_ARGIFY_5(g_draw_dots_w, g_draw_dots)
 XEN_ARGIFY_6(g_draw_string_w, g_draw_string)
-XEN_ARGIFY_7(g_fill_rectangle_w, g_fill_rectangle)
+XEN_ARGIFY_8(g_fill_rectangle_w, g_fill_rectangle)
 XEN_ARGIFY_4(g_fill_polygon_w, g_fill_polygon)
 XEN_ARGIFY_3(g_foreground_color_w, g_foreground_color)
 XEN_ARGIFY_4(g_set_foreground_color_w, g_set_foreground_color)
@@ -1954,7 +1970,7 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE(S_draw_lines,       g_draw_lines_w,     1, 3, 0, H_draw_lines); 
   XEN_DEFINE_PROCEDURE(S_draw_dots,        g_draw_dots_w,      1, 4, 0, H_draw_dots);
   XEN_DEFINE_PROCEDURE(S_draw_string,      g_draw_string_w,    3, 3, 0, H_draw_string);
-  XEN_DEFINE_PROCEDURE(S_fill_rectangle,   g_fill_rectangle_w, 4, 3, 0, H_fill_rectangle);
+  XEN_DEFINE_PROCEDURE(S_fill_rectangle,   g_fill_rectangle_w, 4, 4, 0, H_fill_rectangle);
   XEN_DEFINE_PROCEDURE(S_fill_polygon,     g_fill_polygon_w,   1, 3, 0, H_fill_polygon);
   XEN_DEFINE_PROCEDURE(S_main_widgets,     g_main_widgets_w,   0, 0, 0, H_main_widgets);
   XEN_DEFINE_PROCEDURE(S_dialog_widgets,   g_dialog_widgets_w, 0, 0, 0, H_dialog_widgets);

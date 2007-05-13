@@ -2429,7 +2429,7 @@
 	(set! (mus-header-raw-defaults) (list 44100 2 mus-bshort))
 	
 	(let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
-	  (if (not (string=? str "15-Feb 13:18 PST"))
+	  (if (not (string=? str "11-May 11:16 PDT"))
 	      (snd-display ";mus-sound-write-date oboe.snd: ~A?" str)))
 	(let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "pistol.snd")))))
 	  (if (not (string-=? str "01-Jul 13:06 PDT"))
@@ -2636,7 +2636,7 @@
 	(if (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 		 (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
 	    (snd-display ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd")))
-	(if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "15-Feb-2007 13:18"))
+	(if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "11-May-2007 11:16"))
 	    (snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
 	(play-sound-1 "oboe.snd")
 	
@@ -26618,7 +26618,6 @@ EDITS: 2
     (add-hook! mouse-leave-label-hook arg3) (carg3 mouse-leave-label-hook)
     (add-hook! initial-graph-hook arg3) (carg3 initial-graph-hook)
     (add-hook! after-save-as-hook arg3) (carg3 after-save-as-hook)
-    (add-hook! draw-mix-hook arg3) (carg3 draw-mix-hook)
     
     (add-hook! graph-hook arg4) (carg4 graph-hook)
     (add-hook! key-press-hook arg4) (carg4 key-press-hook)
@@ -26629,6 +26628,7 @@ EDITS: 2
     (add-hook! mouse-press-hook arg6) (carg6 mouse-press-hook)
     
     (add-hook! enved-hook arg5) (carg5 enved-hook)
+    (add-hook! draw-mix-hook arg5) (carg5 draw-mix-hook)
     
     (reset-almost-all-hooks)
     (for-each 

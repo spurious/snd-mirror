@@ -907,13 +907,11 @@ bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg, file_de
 bool delete_samples(off_t beg, off_t num, chan_info *cp, int edpos);
 bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos);
 bool file_change_samples(off_t beg, off_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos);
-/*
-bool file_mix_change_samples(off_t beg, off_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos, bool with_mix);
-*/
 bool file_override_samples(off_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin);
 Float chn_sample(off_t samp, chan_info *cp, int pos);
 void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length);
 bool editable_p(chan_info *cp);
+file_delete_t xen_to_file_delete_t(XEN auto_delete, const char *caller);
 snd_fd *free_snd_fd(snd_fd *sf);
 char *sample_reader_to_string(snd_fd *fd);
 bool sample_reader_p(XEN obj);

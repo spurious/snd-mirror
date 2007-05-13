@@ -436,7 +436,8 @@ So, (pan-mix \"oboe.snd\" 0 '(0 0 1 1)) goes from all chan 0 to all chan 1.
 is no longer accessible.  pan-mix returns a list of the id's of the mixes performing the
 panning operation."
 
-  (let ((index (or snd (selected-sound) (and (sounds) (car (sounds))))))
+  (let ((index (or snd (selected-sound) (and (sounds) (car (sounds)))))
+	(deletion-choice (if auto-delete 3 0))) ; multichannel deletion case
     (if (not (sound? index))
 	(throw 'no-such-sound (list "pan-mix" snd)))
     (if (not (file-exists? name))
@@ -467,8 +468,8 @@ panning operation."
 		   (list id))
 
 		 ;; mono to stereo
-		 (let ((id0 (mix name beg 0 index 0 (with-mix-tags) #f))
-		       (id1 (mix name beg 0 index 1 (with-mix-tags) auto-delete)))
+		 (let ((id0 (mix name beg 0 index 0 (with-mix-tags) deletion-choice))
+		       (id1 (mix name beg 0 index 1 (with-mix-tags) deletion-choice)))
 		   (if (and (mix? id0)
 			    (mix? id1))
 		       (begin
@@ -481,8 +482,8 @@ panning operation."
 	     (if (= receiving-chans 1)
 
 		 ;; stereo -> mono => scale or envelope both input chans into the output
-		 (let ((id0 (mix name beg 0 index 0 (with-mix-tags) #f))
-		       (id1 (mix name beg 1 index 0 (with-mix-tags) auto-delete)))
+		 (let ((id0 (mix name beg 0 index 0 (with-mix-tags) deletion-choice))
+		       (id1 (mix name beg 1 index 0 (with-mix-tags) deletion-choice)))
 		   (if (and (mix? id0)
 			    (mix? id1))
 		       (begin
@@ -491,10 +492,10 @@ panning operation."
 		   (list id0 id1))
 
 		 ;; stereo -> stereo => incoming chans are treated equally, each panned into outputs
-		 (let ((id00 (mix name beg 0 index 0 (with-mix-tags) #f)) ; TODO: multichan deletion here (if auto-delete)
-		       (id01 (mix name beg 0 index 1 (with-mix-tags) #f))
-		       (id10 (mix name beg 1 index 0 (with-mix-tags) #f))
-		       (id11 (mix name beg 1 index 1 (with-mix-tags) auto-delete)))
+		 (let ((id00 (mix name beg 0 index 0 (with-mix-tags) deletion-choice))
+		       (id01 (mix name beg 0 index 1 (with-mix-tags) deletion-choice))
+		       (id10 (mix name beg 1 index 0 (with-mix-tags) deletion-choice))
+		       (id11 (mix name beg 1 index 1 (with-mix-tags) deletion-choice)))
 		   (if (and (mix? id00)
 			    (mix? id01)
 			    (mix? id10)

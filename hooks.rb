@@ -188,7 +188,7 @@ need a String or Symbol, not %s"
   $stop_playing_selection_hook  = Hook.new("$stop_playing_selection_hook", 0)
   $after_apply_controls_hook    = Hook.new("$after_apply_controls_hook", 1)
   $draw_mark_hook               = Hook.new("$draw_mark_hook", 1)
-  $draw_mix_hook                = Hook.new("$draw_mix_hook", 3)
+  $draw_mix_hook                = Hook.new("$draw_mix_hook", 5)
   $bad_header_hook              = Hook.new("$bad_header_hook", 1)
   $save_state_hook              = Hook.new("$save_state_hook", 1)
   $new_sound_hook               = Hook.new("$new_sound_hook", 1)

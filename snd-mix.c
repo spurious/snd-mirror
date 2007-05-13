@@ -1446,7 +1446,9 @@ static void draw_mix_tag(mix_info *md, int x, int y)
     {
       XEN res;
       res = run_progn_hook(draw_mix_hook,
-			   XEN_LIST_3(C_TO_XEN_INT(md->id), 
+			   XEN_LIST_5(C_TO_XEN_INT(md->id), 
+				      C_TO_XEN_INT(md->x),
+				      C_TO_XEN_INT(md->y),
 				      C_TO_XEN_INT(x),
 				      C_TO_XEN_INT(y)),
 			   S_draw_mix_hook);
@@ -1660,8 +1662,6 @@ static int prepare_mix_peak_env(mix_info *md, Float scl, int yoff, off_t newbeg,
   return(j);
 }
 
-/* currently 60% of "normal" time is here */
-
 static int prepare_mix_waveform(mix_info *md, mix_state *ms, axis_info *ap, Float scl, int yoff, double cur_srate, bool *two_sided)
 {
   off_t i, newbeg, newend;
@@ -1670,11 +1670,11 @@ static int prepare_mix_waveform(mix_info *md, mix_state *ms, axis_info *ap, Floa
   bool widely_spaced;
   Float samples_per_pixel;
   double x, incr, initial_x;
-  Float ina;
   off_t lo, hi;
   snd_fd *sf = NULL;
   int x_start, x_end;
   double start_time;
+
   newbeg = ms->beg;
   newend = newbeg + ms->len;
   lo = ap->losamp;
@@ -1693,10 +1693,10 @@ static int prepare_mix_waveform(mix_info *md, mix_state *ms, axis_info *ap, Floa
       int j;
       if (newbeg < lo) /* mix starts before current left x0 point */
 	{
-	  sf = make_virtual_mix_reader(md->cp, lo - newbeg, ms->len, ms->index, ms->scaler, READ_FORWARD);
+	  sf = make_virtual_mix_reader(md->cp, lo - newbeg, ms->len, ms->index, ms->scaler * scl, READ_FORWARD);
 	  newbeg = lo;
 	}
-      else sf = make_virtual_mix_reader(md->cp, 0, ms->len, ms->index, ms->scaler, READ_FORWARD);
+      else sf = make_virtual_mix_reader(md->cp, 0, ms->len, ms->index, ms->scaler * scl, READ_FORWARD);
 
       if (!sf) return(0);
       if (samples_per_pixel < 1.0)
@@ -1714,10 +1714,11 @@ static int prepare_mix_waveform(mix_info *md, mix_state *ms, axis_info *ap, Floa
       x = initial_x + (incr * (newbeg - lo));
       for (j = 0, i = newbeg; i <= newend; i++, j++, x += incr)
 	{
-	  ina = read_sample(sf);
+	  int ina_i;
+	  ina_i = (int)(yoff - read_sample(sf));
 	  if (widely_spaced)
-	    set_grf_point((int)x, j, (int)(yoff - scl * ina));
-	  else set_grf_point(local_grf_x(x, ap), j, (int)(yoff - scl * ina));
+	    set_grf_point((int)x, j, ina_i);
+	  else set_grf_point(local_grf_x(x, ap), j, ina_i);
 	}
       free_snd_fd(sf);
       pts = j;
@@ -1735,10 +1736,10 @@ static int prepare_mix_waveform(mix_info *md, mix_state *ms, axis_info *ap, Floa
 	  Float ymin, ymax, xf;
 	  if (newbeg < lo)
 	    {
-	      sf = make_virtual_mix_reader(md->cp, lo - newbeg, ms->len, ms->index, ms->scaler, READ_FORWARD);
+	      sf = make_virtual_mix_reader(md->cp, lo - newbeg, ms->len, ms->index, ms->scaler * scl, READ_FORWARD);
 	      newbeg = lo;
 	    }
-	  else sf = make_virtual_mix_reader(md->cp, 0, ms->len, ms->index, ms->scaler, READ_FORWARD);
+	  else sf = make_virtual_mix_reader(md->cp, 0, ms->len, ms->index, ms->scaler * scl, READ_FORWARD);
 	  if (!sf) return(0);
 
 	  j = 0;      /* graph point counter */
@@ -1759,7 +1760,7 @@ static int prepare_mix_waveform(mix_info *md, mix_state *ms, axis_info *ap, Floa
 	    }
 	  for (i = newbeg; i <= endi; i++)
 	    {
-
+	      Float ina;
 	      ina = read_sample(sf);
 	      if (ina > ymax) ymax = ina;
 	      if (ina < ymin) ymin = ina;
@@ -1767,8 +1768,8 @@ static int prepare_mix_waveform(mix_info *md, mix_state *ms, axis_info *ap, Floa
 	      if (xf > samples_per_pixel)
 		{
 		  set_grf_points(xi, j,
-				 (int)(yoff - scl * ymin),
-				 (int)(yoff - scl * ymax));
+				 (int)(yoff - ymin),
+				 (int)(yoff - ymax));
 		  j++;
 		  ymin = 100.0;
 		  ymax = -100.0;
@@ -2653,7 +2654,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
   chan_info *cp = NULL;
   static char *name = NULL;
   int chans, id = NO_MIX_TAG, file_channel = 0;
-  bool with_mixer, delete_file = false;
+  bool with_mixer;
   off_t beg = 0, len = 0;
 
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mix, "a string");
@@ -2661,7 +2662,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(file_chn), file_chn, XEN_ARG_3, S_mix, "an integer");
   ASSERT_CHANNEL(S_mix, snd_n, chn_n, 4);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(tag), tag, XEN_ARG_6, S_mix, "a boolean");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, XEN_ARG_7, S_mix, "a boolean");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, XEN_ARG_7, S_mix, "a boolean or an integer");
   if (name) FREE(name);
 
   name = mus_expand_filename(XEN_TO_C_STRING(file));
@@ -2674,9 +2675,6 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 
   if (XEN_OFF_T_P(chn_samp_n))
     beg = XEN_TO_C_OFF_T(chn_samp_n);
-
-  if (XEN_BOOLEAN_P(auto_delete)) 
-    delete_file = XEN_TO_C_BOOLEAN(auto_delete);
 
   chans = mus_sound_chans(name);
   if (chans <= 0)
@@ -2704,18 +2702,26 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
     {
       if (XEN_TRUE_P(file_chn)) /* this used to be the default as well -- XEN_NOT_BOUND_P case */
 	{
-	  file_delete_t delete_choice;
-	  if (delete_file)
+	  file_delete_t delete_choice = DONT_DELETE_ME;
+	  if (XEN_INTEGER_P(auto_delete))
+	    delete_choice = (file_delete_t)XEN_TO_C_INT(auto_delete);
+	  else
 	    {
-	      if ((chans > 1) &&
-		  (cp->sound->nchans > 1)) /* mix_complete_file sets sync locally so all we care about here is nchans */
+	      if (XEN_BOOLEAN_P(auto_delete))
 		{
-		  remember_temp(name, chans);
-		  delete_choice = MULTICHANNEL_DELETION;
+		  if (XEN_TO_C_BOOLEAN(auto_delete))
+		    {
+		      if ((chans > 1) &&
+			  (cp->sound->nchans > 1)) /* mix_complete_file sets sync locally so all we care about here is nchans */
+			{
+			  remember_temp(name, chans);
+			  delete_choice = MULTICHANNEL_DELETION;
+			}
+		      else delete_choice = DELETE_ME;
+		    }
+		  else delete_choice = DONT_DELETE_ME;
 		}
-	      else delete_choice = DELETE_ME;
 	    }
-	  else delete_choice = DONT_DELETE_ME;
 	  return(C_TO_XEN_INT(mix_complete_file(cp->sound, beg, name, 
 						(XEN_NOT_BOUND_P(tag)) ? with_mix_tags(ss) : XEN_TO_C_BOOLEAN(tag),
 						delete_choice,
@@ -2734,39 +2740,42 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
       else with_mixer = XEN_TO_C_BOOLEAN(tag);
     }
 
-  if (!with_mixer)
-    {
-      char *origin;
-      origin = untagged_mix_to_string(name, beg, file_channel, delete_file == DELETE_ME);
-      mix_file_untagged(name, file_channel, cp, beg, len, (delete_file) ? DELETE_ME : DONT_DELETE_ME, origin);
-      FREE(origin);
-    }
-  else 
-    {
-      char *origin;
-      origin = tagged_mix_to_string(name, beg, file_channel, delete_file == DELETE_ME);
+  {
+    file_delete_t delete_file = DONT_DELETE_ME;
+    delete_file = xen_to_file_delete_t(auto_delete, S_mix);
+    if (!with_mixer)
+      {
+	char *origin;
+	origin = untagged_mix_to_string(name, beg, file_channel, delete_file == DELETE_ME);
+	mix_file_untagged(name, file_channel, cp, beg, len, delete_file, origin);
+	FREE(origin);
+      }
+    else 
+      {
+	char *origin;
+	origin = tagged_mix_to_string(name, beg, file_channel, delete_file == DELETE_ME);
 
-      if (len < FILE_BUFFER_SIZE)
-	{
-	  mus_sample_t *data;
-	  data = (mus_sample_t *)MALLOC(len * sizeof(mus_sample_t));
-	  len = mus_file_to_array(name, file_channel, 0, len, data); 
-	  id = mix_buffer_with_tag(cp, data, beg, len, origin);
-	  FREE(data);
-	  if (delete_file)
-	    snd_remove(name, REMOVE_FROM_CACHE);
-	}
-      else 
-	{
-	  mix_info *md;
-	  id = mix_file_with_tag(cp, name, file_channel, beg, (delete_file) ? DELETE_ME : DONT_DELETE_ME, origin);
-	  md = md_from_id(id);
-	  if (!md->in_filename)
-	    md->in_filename = copy_string(name);
-	}
-      FREE(origin);
-    }
-
+	if (len < FILE_BUFFER_SIZE)
+	  {
+	    mus_sample_t *data;
+	    data = (mus_sample_t *)MALLOC(len * sizeof(mus_sample_t));
+	    len = mus_file_to_array(name, file_channel, 0, len, data); 
+	    id = mix_buffer_with_tag(cp, data, beg, len, origin);
+	    FREE(data);
+	    if (delete_file == DELETE_ME)
+	      snd_remove(name, REMOVE_FROM_CACHE);
+	  }
+	else 
+	  {
+	    mix_info *md;
+	    id = mix_file_with_tag(cp, name, file_channel, beg, delete_file, origin);
+	    md = md_from_id(id);
+	    if (!md->in_filename)
+	      md->in_filename = copy_string(name);
+	  }
+	FREE(origin);
+      }
+  }
   update_graph(cp);
   return(C_TO_XEN_INT(id));
 }
@@ -3216,7 +3225,7 @@ void g_init_mix(void)
   /* the name draw-mix-hook is inconsistent with the other mix hooks (mix-draw-hook?), but is intended to parallel draw-mark-hook */
   #define H_draw_mix_hook S_draw_mix_hook " (id): called when a mix tag is about to be displayed"
 
-  draw_mix_hook = XEN_DEFINE_HOOK(S_draw_mix_hook, 3, H_draw_mix_hook); /* arg = id, x, y */
+  draw_mix_hook = XEN_DEFINE_HOOK(S_draw_mix_hook, 5, H_draw_mix_hook); /* arg = id, old-x, old-y, x, y */
 
   /* TODO: doc/test/use draw-mix-hook */
 }
