@@ -1447,6 +1447,7 @@ int make_partial_graph(chan_info *cp, off_t beg, off_t end)
   cur_srate = (double)SND_SRATE(sp);
   ap = cp->axis;
   ax = copy_context(cp);
+  if (beg > 0) beg--;
 
   /* get samps / pixel */
   x_start = ap->x_axis_x0;

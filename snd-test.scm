@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [539]
-;;;  test 1: defaults                           [1091]
-;;;  test 2: headers                            [1285]
-;;;  test 3: variables                          [1594]
-;;;  test 4: sndlib                             [2237]
-;;;  test 5: simple overall checks              [4707]
-;;;  test 6: vcts                               [12729]
-;;;  test 7: colors                             [13007]
-;;;  test 8: clm                                [13497]
-;;;  test 9: mix                                [23302]
-;;;  test 10: marks                             [24877]
-;;;  test 11: dialogs                           [25838]
-;;;  test 12: extensions                        [26083]
-;;;  test 13: menus, edit lists, hooks, etc     [26357]
-;;;  test 14: all together now                  [28022]
-;;;  test 15: chan-local vars                   [29056]
-;;;  test 16: regularized funcs                 [30667]
-;;;  test 17: dialogs and graphics              [35106]
-;;;  test 18: enved                             [35195]
-;;;  test 19: save and restore                  [35214]
-;;;  test 20: transforms                        [37009]
-;;;  test 21: new stuff                         [38844]
-;;;  test 22: run                               [40763]
-;;;  test 23: with-sound                        [46445]
-;;;  test 24: user-interface                    [48925]
-;;;  test 25: X/Xt/Xm                           [52355]
-;;;  test 26: Gtk                               [56939]
-;;;  test 27: GL                                [60795]
-;;;  test 28: errors                            [60919]
-;;;  test all done                              [63188]
-;;;  test the end                               [63424]
+;;;  test 0: constants                          [540]
+;;;  test 1: defaults                           [1092]
+;;;  test 2: headers                            [1286]
+;;;  test 3: variables                          [1595]
+;;;  test 4: sndlib                             [2240]
+;;;  test 5: simple overall checks              [4710]
+;;;  test 6: vcts                               [12731]
+;;;  test 7: colors                             [13009]
+;;;  test 8: clm                                [13499]
+;;;  test 9: mix                                [23304]
+;;;  test 10: marks                             [25046]
+;;;  test 11: dialogs                           [26007]
+;;;  test 12: extensions                        [26252]
+;;;  test 13: menus, edit lists, hooks, etc     [26523]
+;;;  test 14: all together now                  [28190]
+;;;  test 15: chan-local vars                   [29223]
+;;;  test 16: regularized funcs                 [30834]
+;;;  test 17: dialogs and graphics              [35305]
+;;;  test 18: enved                             [35394]
+;;;  test 19: save and restore                  [35413]
+;;;  test 20: transforms                        [37198]
+;;;  test 21: new stuff                         [39033]
+;;;  test 22: run                               [40973]
+;;;  test 23: with-sound                        [46655]
+;;;  test 24: user-interface                    [49135]
+;;;  test 25: X/Xt/Xm                           [52537]
+;;;  test 26: Gtk                               [57133]
+;;;  test 27: GL                                [60989]
+;;;  test 28: errors                            [61113]
+;;;  test all done                              [63384]
+;;;  test the end                               [63620]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -39,7 +39,7 @@
 (define all-args #f)
 (define test-at-random 0)
 ;(show-ptree 1)
-(define ptree-op-offset 7)
+(define ptree-op-offset 19)
 
 (if (and (provided? 'snd-guile) (provided? 'snd-gauche)) (display ";both switches are on?"))
 
@@ -24435,7 +24435,7 @@ EDITS: 2
 		  (snd-display ";src-mixes length: ~A" (mixes-length ids)))
 	      (let ((vals (channel->vct 10 15)))
 		(if (not (vequal vals (vct 0.100 0.211 0.311 0.408 0.508 0.505 0.495 0.505 0.508 0.460 0.362 0.262 0.152 0.052 0.000)))
-		    (snd-display ";sec-mixes 0.5 vals: ~A" vals)))
+		    (snd-display ";src-mixes 0.5 vals: ~A" vals)))
 	      (if (not (vequal (mix->vct (car ids)) (mix->vct (cadr ids))))
 		  (snd-display ";src-mixes vals don't match: ~A ~A" (mix->vct (car ids)) (mix->vct (cadr ids))))
 	      (undo)
@@ -24446,11 +24446,12 @@ EDITS: 2
 		  (snd-display ";transpose-mixes length: ~A" (mixes-length ids)))
 	      (let ((vals (channel->vct 10 15)))
 		(if (not (vequal vals (vct 0.100 0.211 0.311 0.408 0.508 0.505 0.495 0.505 0.508 0.460 0.362 0.262 0.152 0.052 0.000)))
-		    (snd-display ";sec-mixes 0.5 vals: ~A" vals)))
+		    (snd-display ";transpose-mixes 0.5 vals: ~A" vals)))
 	      (if (not (vequal (mix->vct (car ids)) (mix->vct (cadr ids))))
 		  (snd-display ";transpose-mixes vals don't match: ~A ~A" (mix->vct (car ids)) (mix->vct (cadr ids))))
 	      (revert-sound))
 	    
+	    ;; check various mix ops briefly
 	    (map-channel (lambda (y) 1.0))
 	    (env-channel '(0 0 1 1))
 	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
@@ -24514,6 +24515,161 @@ EDITS: 2
 	      (if (not (= (list-ref (cadr (edit-tree)) 7) 13))
 		  (snd-display ";mix on xramp edit-tree: ~A" (edit-tree))))
 	    
+	    (set! (edit-position ind 0) 1)
+	    (xramp-channel 1 0 32.0)
+	    (xramp-channel 1 0 32.0)
+	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
+	      (let ((vals (channel->vct 48 10)))
+		(if (not (vequal vals (vct 0.026 0.024 0.122 0.220 0.318 0.017 0.015 0.014 0.013 0.012)))
+		    (snd-display ";mix on xramp2: ~A" vals)))
+	      (if (or (not (mix? id)) (not (= (mix? id) id)))
+		  (snd-display ";mix on xramp2: ~A ~A" id (mix? id)))
+	      (if (not (= (list-ref (cadr (edit-tree)) 7) 15))
+		  (snd-display ";mix on xramp2 edit-tree: ~A" (edit-tree))))
+
+	    (set! (edit-position ind 0) 1)
+	    (xramp-channel 1 0 32.0)
+	    (xramp-channel 1 0 32.0)
+	    (ramp-channel 1 0)
+	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
+	      (let ((vals (channel->vct 48 10)))
+		(if (not (vequal vals (vct 0.013 0.012 0.111 0.210 0.309 0.008 0.007 0.006 0.006 0.005)))
+		    (snd-display ";mix on xramp2_ramp: ~A" vals)))
+	      (if (or (not (mix? id)) (not (= (mix? id) id)))
+		  (snd-display ";mix on xramp2_ramp: ~A ~A" id (mix? id)))
+	      (if (not (= (list-ref (cadr (edit-tree)) 7) 21))
+		  (snd-display ";mix on xramp2_ramp edit-tree: ~A" (edit-tree))))
+
+	    (set! (edit-position ind 0) 1)
+	    (xramp-channel 1 0 32.0)
+	    (xramp-channel 1 0 32.0)
+	    (ramp-channel 1 0)
+	    (ramp-channel 1 0)
+	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
+	      (let ((vals (channel->vct 48 10)))
+		(if (not (vequal vals (vct 0.007 0.006 0.105 0.205 0.304 0.004 0.003 0.003 0.002 0.002)))
+		    (snd-display ";mix on xramp2_ramp2: ~A" vals)))
+	      (if (or (not (mix? id)) (not (= (mix? id) id)))
+		  (snd-display ";mix on xramp2_ramp2: ~A ~A" id (mix? id)))
+	      (if (not (= (list-ref (cadr (edit-tree)) 7) 25))
+		  (snd-display ";mix on xramp2_ramp2 edit-tree: ~A" (edit-tree))))
+
+	    (set! (edit-position ind 0) 1)
+	    (xramp-channel 1 0 32.0)
+	    (ramp-channel 1 0)
+	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
+	      (let ((vals (channel->vct 48 10)))
+		(if (not (vequal vals (vct 0.082 0.077 0.173 0.268 0.364 0.060 0.056 0.053 0.049 0.046)))
+		    (snd-display ";mix on xramp_ramp: ~A" vals)))
+	      (if (or (not (mix? id)) (not (= (mix? id) id)))
+		  (snd-display ";mix on xramp_ramp: ~A ~A" id (mix? id)))
+	      (if (not (= (list-ref (cadr (edit-tree)) 7) 17))
+		  (snd-display ";mix on xramp_ramp edit-tree: ~A" (edit-tree))))
+
+	    (set! (edit-position ind 0) 1)
+	    (xramp-channel 1 0 32.0)
+	    (ramp-channel 1 0)
+	    (ramp-channel 1 0)
+	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
+	      (let ((vals (channel->vct 48 10)))
+		(if (not (vequal vals (vct 0.042 0.039 0.136 0.233 0.330 0.028 0.026 0.023 0.021 0.019)))
+		    (snd-display ";mix on xramp_ramp2: ~A" vals)))
+	      (if (or (not (mix? id)) (not (= (mix? id) id)))
+		  (snd-display ";mix on xramp_ramp2: ~A ~A" id (mix? id)))
+	      (if (not (= (list-ref (cadr (edit-tree)) 7) 19))
+		  (snd-display ";mix on xramp_ramp2 edit-tree: ~A" (edit-tree))))
+
+	    (set! (edit-position ind 0) 1)
+	    (xramp-channel 1 0 32.0)
+	    (ramp-channel 1 0)
+	    (ramp-channel 1 0)
+	    (ramp-channel 1 0)
+	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
+	      (let ((vals (channel->vct 48 10)))
+		(if (not (vequal vals (vct 0.022 0.020 0.118 0.216 0.314 0.013 0.012 0.010 0.009 0.008)))
+		    (snd-display ";mix on xramp_ramp3: ~A" vals)))
+	      (if (or (not (mix? id)) (not (= (mix? id) id)))
+		  (snd-display ";mix on xramp_ramp3: ~A ~A" id (mix? id)))
+	      (if (not (= (list-ref (cadr (edit-tree)) 7) 23))
+		  (snd-display ";mix on xramp_ramp3 edit-tree: ~A" (edit-tree))))
+
+	    (set! (edit-position ind 0) 1)
+	    (ptree-channel (lambda (y) (* y 0.5)))
+	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
+	      (let ((vals (channel->vct 48 10)))
+		(if (not (vequal vals (vct 0.500 0.500 0.600 0.700 0.800 0.500 0.500 0.500 0.500 0.500)))
+		    (snd-display ";mix on ptree: ~A" vals)))
+	      (if (or (not (mix? id)) (not (= (mix? id) id)))
+		  (snd-display ";mix on ptree: ~A ~A" id (mix? id)))
+	      (if (not (= (list-ref (cadr (edit-tree)) 7) 27))
+		  (snd-display ";mix on ptree edit-tree: ~A" (edit-tree))))
+
+	    (set! (edit-position ind 0) 1)
+	    (ramp-channel 1 0)
+	    (ptree-channel (lambda (y) (* y 0.5)))
+	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
+	      (let ((vals (channel->vct 48 10)))
+		(if (not (vequal vals (vct 0.258 0.253 0.347 0.442 0.537 0.232 0.227 0.222 0.217 0.212)))
+		    (snd-display ";mix on ptree_ramp: ~A" vals)))
+	      (if (or (not (mix? id)) (not (= (mix? id) id)))
+		  (snd-display ";mix on ptree_ramp: ~A ~A" id (mix? id)))
+	      (if (not (= (list-ref (cadr (edit-tree)) 7) 31))
+		  (snd-display ";mix on ptree_ramp edit-tree: ~A" (edit-tree))))
+
+	    (set! (edit-position ind 0) 1)
+	    (ramp-channel 1 0)
+	    (ramp-channel 1 0)
+	    (ptree-channel (lambda (y) (* y 0.5)))
+	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
+	      (let ((vals (channel->vct 48 10)))
+		(if (not (vequal vals (vct 0.133 0.128 0.222 0.318 0.413 0.108 0.103 0.099 0.094 0.090)))
+		    (snd-display ";mix on ptree_ramp2: ~A" vals)))
+	      (if (or (not (mix? id)) (not (= (mix? id) id)))
+		  (snd-display ";mix on ptree_ramp2: ~A ~A" id (mix? id)))
+	      (if (not (= (list-ref (cadr (edit-tree)) 7) 33))
+		  (snd-display ";mix on ptree_ramp2 edit-tree: ~A" (edit-tree))))
+
+	    (set! (edit-position ind 0) 1)
+	    (ramp-channel 1 0)
+	    (ramp-channel 1 0)
+	    (ramp-channel 1 0)
+	    (ptree-channel (lambda (y) (* y 0.5)))
+	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
+	      (let ((vals (channel->vct 48 10)))
+		(if (not (vequal vals (vct 0.068 0.064 0.161 0.257 0.354 0.050 0.047 0.044 0.041 0.038)))
+		    (snd-display ";mix on ptree_ramp3: ~A" vals)))
+	      (if (or (not (mix? id)) (not (= (mix? id) id)))
+		  (snd-display ";mix on ptree_ramp3: ~A ~A" id (mix? id)))
+	      (if (not (= (list-ref (cadr (edit-tree)) 7) 35))
+		  (snd-display ";mix on ptree_ramp3 edit-tree: ~A" (edit-tree))))
+
+	    (set! (edit-position ind 0) 1)
+	    (ramp-channel 1 0)
+	    (ramp-channel 1 0)
+	    (ramp-channel 1 0)
+	    (ramp-channel 1 0)
+	    (ptree-channel (lambda (y) (* y 0.5)))
+	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
+	      (let ((vals (channel->vct 48 10)))
+		(if (not (vequal vals (vct 0.035 0.033 0.130 0.228 0.325 0.023 0.021 0.020 0.018 0.016)))
+		    (snd-display ";mix on ptree_ramp4: ~A" vals)))
+	      (if (or (not (mix? id)) (not (= (mix? id) id)))
+		  (snd-display ";mix on ptree_ramp4: ~A ~A" id (mix? id)))
+	      (if (not (= (list-ref (cadr (edit-tree)) 7) 37))
+		  (snd-display ";mix on ptree_ramp4 edit-tree: ~A" (edit-tree))))
+
+	    (set! (edit-position ind 0) 0)
+	    (scale-by 0.0)
+	    (ptree-channel (lambda (y) 1.0))
+	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
+	      (let ((vals (channel->vct 48 10)))
+		(if (not (vequal vals (vct 1.000 1.000 1.100 1.200 1.300 1.000 1.000 1.000 1.000 1.000)))
+		    (snd-display ";mix on ptree_zero: ~A" vals)))
+	      (if (or (not (mix? id)) (not (= (mix? id) id)))
+		  (snd-display ";mix on ptree_zero: ~A ~A" id (mix? id)))
+	      (if (not (= (list-ref (cadr (edit-tree)) 7) 29))
+		  (snd-display ";mix on ptree_zero edit-tree: ~A" (edit-tree))))
+
 	    (revert-sound)
 	    (mix-vct (vct .1 .2 .3) 50)
 	    (reverse-sound)

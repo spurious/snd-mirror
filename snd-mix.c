@@ -359,7 +359,7 @@ int mix_file(off_t beg, off_t num, int chans, chan_info **cps, const char *mixin
       cp = cps[i];
 
       if ((!with_tag) ||
-	  (!virtual_mix_ok(cp, cp->edit_ctr, beg, num)))
+	  (!virtual_mix_ok(cp, cp->edit_ctr)))
 	{
 	  /* not a virtual mix */
 	  if (!origin)
@@ -2596,7 +2596,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
   v = XEN_TO_VCT(obj);
   len = v->length;
 
-  with_mixer = virtual_mix_ok(cp, cp->edit_ctr, bg, len);
+  with_mixer = virtual_mix_ok(cp, cp->edit_ctr);
   if (with_mixer)
     {
       if (XEN_NOT_BOUND_P(with_tag))
@@ -2734,7 +2734,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
   len = mus_sound_frames(name);
   if (len <= 0) return(XEN_FALSE);
 
-  with_mixer = virtual_mix_ok(cp, cp->edit_ctr, 0, len);
+  with_mixer = virtual_mix_ok(cp, cp->edit_ctr);
   if (with_mixer)
     {
       if (XEN_NOT_BOUND_P(tag))

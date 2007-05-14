@@ -967,7 +967,7 @@ int mix_file_with_tag(chan_info *cp, const char *filename, int chan, off_t beg, 
 void unmix(chan_info *cp, mix_state *ms);
 void remix(chan_info *cp, mix_state *ms);
 snd_fd *make_virtual_mix_reader(chan_info *cp, off_t beg, off_t len, int index, Float scl, read_direction_t direction);
-bool virtual_mix_ok(chan_info *cp, int edpos, off_t beg, off_t len);
+bool virtual_mix_ok(chan_info *cp, int edpos);
 bool begin_mix_op(chan_info *cp, off_t old_beg, off_t old_len, off_t new_beg, off_t new_len, int edpos, const char *caller);
 bool end_mix_op(chan_info *cp, off_t old_beg, off_t old_len);
 void prepare_sound_list(chan_info *cp);
