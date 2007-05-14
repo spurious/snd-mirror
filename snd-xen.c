@@ -1380,9 +1380,8 @@ static XEN g_snd_print(XEN msg)
     }
   listener_append(str);
   if (str) FREE(str);
-#if (!USE_GTK)
-  check_for_event();
-#endif
+  /* used to check for event in Motif case, but that is very dangerous -- check for infinite loop C-c needs to be somewhere else */
+  /* TODO: figure out a safe place for an infinite loop break check */
   return(msg);
 }
 

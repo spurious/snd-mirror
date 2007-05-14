@@ -1249,6 +1249,7 @@ bool mix_set_position_edit(int id, off_t pos)
 {
   mix_info *md;
   mix_state *old_ms = NULL;
+  if (pos < 0) pos = 0;
   md = md_from_id(id);
   if (md) old_ms = current_mix_state(md);
   if (old_ms)
@@ -2049,6 +2050,7 @@ void finish_moving_mix_tag(int mix_id, int x)
   cp = md->cp;
   
   pos = snd_round_off_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(cp->sound)));
+  if (pos < 0) pos = 0;
 
   cp->hookable = hookable_before_drag;
   /* undo_edit(cp, 1); */ /* among other problems, this calls update_graph */
