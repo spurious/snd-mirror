@@ -111,7 +111,7 @@
     (set! pathlist (cons v pathlist))
     #f))
 
-(define (fill-in score)
+(define* (fill-in score :rest args)
   (if (not (null? pathlist))
       (fill-polygon
        (make-polygon
@@ -153,6 +153,7 @@
 			,@body))
 		    #f #f))))
 
+(define t #t)
 (defmacro in-package (name) #f)
 (define (music-font score) #f)
 (define g-mustext (lambda args #f))
