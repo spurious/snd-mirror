@@ -4801,6 +4801,11 @@ feedback:
 </pre></td></tr></table>
 <img src="mixname.png" alt="mix name example" vspace=10>
 <p>
+But note names are a bother to read; musglyphs.scm has code to display notes using CMN glyphs.
+Here we use the draw-mix-hook to display our notes as a score:
+</p>
+<img src="mixcmn.png" alt="mix CMN example" vspace=10>
+<p>
 But in more complex cases, using a mix per note fills the screen with mix tags; it's probably cleaner
 to use multiple output files, collecting related notes in one file, then mixing these at the end:
 </p>
