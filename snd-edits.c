@@ -2607,10 +2607,14 @@ enum {ED_SIMPLE, ED_MIX_SIMPLE, ED_ZERO, ED_MIX_ZERO,
       ED_RAMP3_PTREE, ED_MIX_RAMP3_PTREE, ED_RAMP3_PTREE_ZERO, ED_MIX_RAMP3_PTREE_ZERO,
       ED_RAMP4_PTREE, ED_MIX_RAMP4_PTREE, ED_RAMP4_PTREE_ZERO, ED_MIX_RAMP4_PTREE_ZERO,
 
+      ED_RAMP_PTREE_RAMP, ED_RAMP2_PTREE_RAMP, ED_RAMP_PTREE_RAMP2,
+      ED_RAMP3_PTREE_RAMP, ED_RAMP_PTREE_RAMP3,
+      ED_RAMP2_PTREE_RAMP2, 
+
       ED_PTREE_XRAMP, ED_PTREE_XRAMP_RAMP, ED_PTREE_XRAMP2,
       ED_XRAMP_PTREE, ED_XRAMP_PTREE_ZERO, 
       ED_XRAMP2_PTREE, ED_XRAMP2_PTREE_ZERO, 
-      ED_RAMP_PTREE_RAMP, ED_RAMP2_PTREE_RAMP, ED_RAMP_PTREE_RAMP2,
+
       ED_RAMP_PTREE_XRAMP, ED_XRAMP_PTREE_RAMP, ED_RAMP2_PTREE_XRAMP,
       ED_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_ZERO,
       ED_XRAMP_PTREE_XRAMP, 
@@ -2619,8 +2623,7 @@ enum {ED_SIMPLE, ED_MIX_SIMPLE, ED_ZERO, ED_MIX_ZERO,
       ED_PTREE_XRAMP2_RAMP, ED_PTREE_XRAMP_RAMP2, ED_XRAMP_PTREE_RAMP2, ED_XRAMP_RAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP,
       ED_XRAMP2_PTREE_RAMP, ED_XRAMP_PTREE_XRAMP_RAMP, ED_RAMP_PTREE_XRAMP_RAMP, ED_RAMP_PTREE_XRAMP2, 
 
-      ED_RAMP3_PTREE_RAMP, ED_RAMP_PTREE_RAMP3,
-      ED_RAMP2_PTREE_RAMP2, ED_RAMP3_PTREE_XRAMP, ED_XRAMP_PTREE_RAMP3,
+      ED_RAMP3_PTREE_XRAMP, ED_XRAMP_PTREE_RAMP3,
       ED_RAMP2_PTREE_XRAMP2, ED_XRAMP2_PTREE_RAMP2,
       ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_PTREE_XRAMP_RAMP2, ED_RAMP_PTREE_XRAMP2_RAMP,
       ED_PTREE_XRAMP_RAMP3, ED_PTREE_XRAMP2_RAMP2,
@@ -2915,6 +2918,19 @@ static fragment_type_info type_info[NUM_OPS] = {
   {ED_MIX_RAMP4_PTREE_ZERO, -1, -1, -1, ED_MIX_RAMP4_PTREE_ZERO, ED_RAMP4_PTREE_ZERO, 1, 4, 0, true, 
    "ed_mix_ramp4_ptree_zero", next_mix_rampn_ptree, previous_mix_rampn_ptree, next_ramp4_value, previous_ramp4_value},
 
+  {ED_RAMP_PTREE_RAMP, ED_RAMP2_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_PTREE_RAMP_PTREE_RAMP, -1, -1, 1, 2, 0, false, 
+   "ed_ramp_ptree_ramp", next_ramp_ptree_ramp, previous_ramp_ptree_ramp, next_ramp_value, previous_ramp_value},
+  {ED_RAMP2_PTREE_RAMP, ED_RAMP3_PTREE_RAMP, ED_XRAMP_RAMP2_PTREE_RAMP, ED_PTREE_RAMP2_PTREE_RAMP, -1, -1, 1, 3, 0, false, 
+   "ed_ramp2_ptree_ramp", next_ramp2_ptree_ramp, previous_ramp2_ptree_ramp, next_ramp_value, previous_ramp_value},
+  {ED_RAMP_PTREE_RAMP2, ED_RAMP2_PTREE_RAMP2, ED_XRAMP_RAMP_PTREE_RAMP2, ED_PTREE_RAMP_PTREE_RAMP2, -1, -1, 1, 3, 0, false, 
+   "ed_ramp_ptree_ramp2", next_ramp_ptree_ramp2, previous_ramp_ptree_ramp2, next_ramp2_value, previous_ramp2_value},
+  {ED_RAMP3_PTREE_RAMP, -1, -1, ED_PTREE_RAMP3_PTREE_RAMP, -1, -1, 1, 4, 0, false, 
+   "ed_ramp3_ptree_ramp", next_ramp3_ptree_ramp, previous_ramp3_ptree_ramp, next_ramp_value, previous_ramp_value},
+  {ED_RAMP_PTREE_RAMP3, -1, -1, ED_PTREE_RAMP_PTREE_RAMP3, -1, -1, 1, 4, 0, false, 
+   "ed_ramp_ptree_ramp3", next_ramp_ptree_ramp3, previous_ramp_ptree_ramp3, next_ramp3_value, previous_ramp3_value},
+  {ED_RAMP2_PTREE_RAMP2, -1, -1, ED_PTREE_RAMP2_PTREE_RAMP2, -1, -1, 1, 4, 0, false, 
+   "ed_ramp2_ptree_ramp2", next_ramp2_ptree_ramp2, previous_ramp2_ptree_ramp2, next_ramp2_value, previous_ramp2_value},
+
   {ED_PTREE_XRAMP, ED_RAMP_PTREE_XRAMP, ED_XRAMP_PTREE_XRAMP, ED_PTREE2_XRAMP, -1, -1, 1, 0, 1, false, 
    "ed_ptree_xramp", next_ptree_xramp, previous_ptree_xramp, NULL, NULL},
   {ED_PTREE_XRAMP_RAMP, ED_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_PTREE_XRAMP_RAMP, ED_PTREE2_XRAMP_RAMP, -1, -1, 1, 1, 1, false, 
@@ -2929,12 +2945,6 @@ static fragment_type_info type_info[NUM_OPS] = {
    "ed_xramp2_ptree", next_xramp_ptree, previous_xramp_ptree, NULL, NULL},
   {ED_XRAMP2_PTREE_ZERO, ED_XRAMP2_RAMP_PTREE_ZERO, -1, ED_PTREE_XRAMP2_PTREE_ZERO, -1, -1, 1, 0, 2, true, 
    "ed_xramp2_ptree_zero", next_xramp_ptree, previous_xramp_ptree, NULL, NULL},
-  {ED_RAMP_PTREE_RAMP, ED_RAMP2_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_PTREE_RAMP_PTREE_RAMP, -1, -1, 1, 2, 0, false, 
-   "ed_ramp_ptree_ramp", next_ramp_ptree_ramp, previous_ramp_ptree_ramp, next_ramp_value, previous_ramp_value},
-  {ED_RAMP2_PTREE_RAMP, ED_RAMP3_PTREE_RAMP, ED_XRAMP_RAMP2_PTREE_RAMP, ED_PTREE_RAMP2_PTREE_RAMP, -1, -1, 1, 3, 0, false, 
-   "ed_ramp2_ptree_ramp", next_ramp2_ptree_ramp, previous_ramp2_ptree_ramp, next_ramp_value, previous_ramp_value},
-  {ED_RAMP_PTREE_RAMP2, ED_RAMP2_PTREE_RAMP2, ED_XRAMP_RAMP_PTREE_RAMP2, ED_PTREE_RAMP_PTREE_RAMP2, -1, -1, 1, 3, 0, false, 
-   "ed_ramp_ptree_ramp2", next_ramp_ptree_ramp2, previous_ramp_ptree_ramp2, next_ramp2_value, previous_ramp2_value},
   {ED_RAMP_PTREE_XRAMP, ED_RAMP2_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP, ED_PTREE_RAMP_PTREE_XRAMP, -1, -1, 1, 1, 1, false, 
    "ed_ramp_ptree_xramp", next_rampn_ptree_xramp, previous_rampn_ptree_xramp, next_ramp_value, previous_ramp_value},
   {ED_XRAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_XRAMP2_PTREE_RAMP, ED_PTREE_XRAMP_PTREE_RAMP, -1, -1, 1, 1, 1, false, 
@@ -2973,12 +2983,6 @@ static fragment_type_info type_info[NUM_OPS] = {
    "ed_ramp_ptree_xramp_ramp", next_ramp_ptree_xramp_ramp, previous_ramp_ptree_xramp_ramp, NULL, NULL},
   {ED_RAMP_PTREE_XRAMP2, ED_RAMP2_PTREE_XRAMP2, -1, ED_PTREE_RAMP_PTREE_XRAMP2, -1, -1, 1, 1, 2, false, 
    "ed_ramp_ptree_xramp2", next_rampn_ptree_xramp, previous_rampn_ptree_xramp, next_ramp_value, previous_ramp_value},
-  {ED_RAMP3_PTREE_RAMP, -1, -1, ED_PTREE_RAMP3_PTREE_RAMP, -1, -1, 1, 4, 0, false, 
-   "ed_ramp3_ptree_ramp", next_ramp3_ptree_ramp, previous_ramp3_ptree_ramp, next_ramp_value, previous_ramp_value},
-  {ED_RAMP_PTREE_RAMP3, -1, -1, ED_PTREE_RAMP_PTREE_RAMP3, -1, -1, 1, 4, 0, false, 
-   "ed_ramp_ptree_ramp3", next_ramp_ptree_ramp3, previous_ramp_ptree_ramp3, next_ramp3_value, previous_ramp3_value},
-  {ED_RAMP2_PTREE_RAMP2, -1, -1, ED_PTREE_RAMP2_PTREE_RAMP2, -1, -1, 1, 4, 0, false, 
-   "ed_ramp2_ptree_ramp2", next_ramp2_ptree_ramp2, previous_ramp2_ptree_ramp2, next_ramp2_value, previous_ramp2_value},
   {ED_RAMP3_PTREE_XRAMP, -1, -1, ED_PTREE_RAMP3_PTREE_XRAMP, -1, -1, 1, 3, 1, false, 
    "ed_ramp3_ptree_xramp", next_rampn_ptree_xramp, previous_rampn_ptree_xramp, next_ramp3_value, previous_ramp3_value},
   {ED_XRAMP_PTREE_RAMP3, -1, -1, ED_PTREE_XRAMP_PTREE_RAMP3, -1, -1, 1, 3, 1, false, 
@@ -3678,28 +3682,41 @@ static void check_type_info_entry(int op, int expected_ramps, int expected_xramp
     check_type_info_entry(type_info[op].add_xramp, expected_ramps, expected_xramps + 1, expected_ptrees, is_zero);
   if (type_info[op].add_ptree != -1) 
     check_type_info_entry(type_info[op].add_ptree, expected_ramps, expected_xramps, expected_ptrees + 1, is_zero);
+  if ((type_info[op].add_mix != -1) &&
+      (type_info[op].subtract_mix == -1)) /* not a loop! */
+    check_type_info_entry(type_info[op].add_mix, expected_ramps, expected_xramps, expected_ptrees, is_zero);
+
   if (type_info[op].ptrees == -1)
     fprintf(stderr, "%s ptrees: %d\n", type_info[op].name, type_info[op].ptrees);  
 
-  if (type_info[op].ramps + type_info[op].xramps < 4)
+  if (type_info[op].subtract_mix != -1)
     {
-      char *name;
-      int i;
-      name = strdup(type_info[op].name);
-      name += 3;
-      if (type_info[op].add_xramp == -1)
-	if (type_info[op].xramps < 2)
-	  fprintf(stderr, "ed_xramp_%s\n", name);
-      if (type_info[op].add_ramp == -1)
-	for (i = type_info[op].ramps + 1; i <= (4 - type_info[op].xramps); i++)
-	  fprintf(stderr, "ed_ramp_%s\n", name);
+      if ((type_info[op].add_mix != -1) && 
+	  (type_info[op].add_mix != op))
+	fprintf(stderr, "%s add_mix: %s\n", type_info[op].name, type_info[type_info[op].add_mix].name);
+
+      if (type_info[op].add_ramp != -1) fprintf(stderr, "%s add_ramp: %s\n", type_info[op].name, type_info[type_info[op].add_ramp].name);
+      if (type_info[op].add_xramp != -1) fprintf(stderr, "%s add_xramp: %s\n", type_info[op].name, type_info[type_info[op].add_xramp].name);
+      if (type_info[op].add_ptree != -1) fprintf(stderr, "%s add_ptree: %s\n", type_info[op].name, type_info[type_info[op].add_ptree].name);
+      if (type_info[type_info[op].subtract_mix].add_mix != op)
+	fprintf(stderr, "%s subtract: %s but its add: %s\n",
+		type_info[op].name, type_info[type_info[op].subtract_mix].name, 
+		(type_info[type_info[op].subtract_mix].add_mix != -1) ? type_info[type_info[type_info[op].subtract_mix].add_mix].name : "not an op");
     }
-  if ((PTREE1_OP(op)) && (type_info[op].add_ptree == -1))
+  else
     {
-      char *name;
-      name = strdup(type_info[op].name);
-      name += 3;
-      fprintf(stderr, "ed_ptree_%s no ptree2?\n", name);
+      if (type_info[op].ramps + type_info[op].xramps < 4)
+	{
+	  if ((type_info[op].add_xramp == -1) &&
+	      (type_info[op].xramps < 2))
+	    fprintf(stderr, "%s has no add xramp", type_info[op].name);
+	  if ((type_info[op].add_ramp == -1) &&
+	      (type_info[op].ramps < 4))
+	    fprintf(stderr, "%s has no add ramp", type_info[op].name);
+	}
+      if ((PTREE1_OP(op)) && 
+	  (type_info[op].add_ptree == -1))
+	fprintf(stderr, "%s has no ptree2?\n", type_info[op].name);
     }
 }
 #endif
@@ -8590,6 +8607,7 @@ bool redo_edit_with_sync(chan_info *cp, int count)
 
 		  }
 		  so RAMP|2|3|4_MIX|_ZERO XRAMP_MIX|_ZERO PTREE_MIX|ZERO?
+		  also MIX_RAMPn_PTREE_RAMPn
   */
 
 static int add_mix_op(int type)
