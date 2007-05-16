@@ -1381,7 +1381,7 @@ static XEN g_snd_print(XEN msg)
   listener_append(str);
   if (str) FREE(str);
   /* used to check for event in Motif case, but that is very dangerous -- check for infinite loop C-c needs to be somewhere else */
-  /* TODO: figure out a safe place for an infinite loop break check */
+  /*   now I think you can use SIGUSR1 (kill -10) instead */
   return(msg);
 }
 

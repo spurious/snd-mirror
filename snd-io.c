@@ -557,6 +557,11 @@ void remember_temp(const char *filename, int chans)
   else
     {
       for (i = 0; i < tempfiles_size; i++)
+	if ((tempfiles[i]) &&
+	    (tempfiles[i]->name) &&
+	    (strcmp(filename, tempfiles[i]->name) == 0))
+	  return;
+      for (i = 0; i < tempfiles_size; i++)
 	if (tempfiles[i] == NULL)
 	  break;
       if (i >= tempfiles_size)
@@ -575,12 +580,11 @@ void remember_temp(const char *filename, int chans)
   tmp->ticks = (int *)CALLOC(chans, sizeof(int));
 }
 
-static void forget_temp(const char *filename, int chan)
+void forget_temp(const char *filename, int chan)
 {
   int i, j;
   for (i = 0; i < tempfiles_size; i++)
     {
-      bool happy = false;
       tempfile_ctr *tmp;
       tmp = tempfiles[i];
       if ((tmp) && (strcmp(filename, tmp->name) == 0))
@@ -588,19 +592,13 @@ static void forget_temp(const char *filename, int chan)
 	  tmp->ticks[chan]--;
 	  for (j = 0; j < tmp->chans; j++)
 	    if (tmp->ticks[j] > 0) 
-	      {
-		happy = true;
-		return;
-	      }
-	  if (!happy)
-	    {
-	      snd_remove(tmp->name, REMOVE_FROM_CACHE);
-	      FREE(tmp->name);
-	      FREE(tmp->ticks);
-	      FREE(tmp);
-	      tempfiles[i] = NULL;
 	      return;
-	    }
+	  snd_remove(tmp->name, REMOVE_FROM_CACHE);
+	  FREE(tmp->name);
+	  FREE(tmp->ticks);
+	  FREE(tmp);
+	  tempfiles[i] = NULL;
+	  return;
 	}
     }
 #if MUS_DEBUGGING
@@ -644,7 +642,7 @@ snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_
   sd->filename = copy_string(name);
   sd->hdr = hdr;
   sd->temporary = temp;
-  if (temp == MULTICHANNEL_DELETION) tick_temp(name, temp_chan);
+  if ((temp == MULTICHANNEL_DELETION) || (temp == MULTICHANNEL_DELETION_IF_FILE)) tick_temp(name, temp_chan);
   sd->edit_ctr = ctr;
   sd->open = FD_OPEN;
   sd->inuse = false;

@@ -12211,6 +12211,10 @@ throws the error 'no-such-file:</p>
 debuggers to exit the current context, returning up a level in the
 stack of listeners.  Normally that means you jump out of a breakpoint
 or whatever and find yourself back at the top level.  <code>(throw 'snd-top-level)</code>.
+This catch is also the target of the SIGUSR1 signal, so if you're caught in an infinite
+loop and Snd won't respond to C-g or anything else, go to a shell, get the Snd
+process number ("PID" in the 'ps au' printout), then: kill -10 6141.  SIGUSR1 is
+signal 10, and we're using the kill program to send that signal to Snd (process 6141 in our example).
 </p>
 
 <br>

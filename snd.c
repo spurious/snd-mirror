@@ -8,6 +8,7 @@
 snd_state *ss = NULL;
 static XEN mus_error_hook;
 
+
 static bool ignore_mus_error(int type, char *msg)
 {
   XEN result = XEN_FALSE;
@@ -287,6 +288,19 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Just_Sounds = DEFAULT_JUST_SOUNDS;
 }
 
+#if HAVE_SETJMP_H
+#include <signal.h>
+static RETSIGTYPE snd_sigusr1(int ignored)
+{
+  /* if Snd is in an infinite loop, it should be possible to break out of it and
+   *    return to the listener prompt by getting the Snd process number and
+   *      kill -10 6141
+   *    to send process 6141 (Snd presumably) the SIGUSR1 signal.
+   */
+  XEN_ERROR(XEN_ERROR_TYPE("snd-top-level"), XEN_EMPTY_LIST);
+}
+#endif
+
 #if HAVE_GSL
 #include <gsl/gsl_ieee_utils.h>
 #include <gsl/gsl_errno.h>
@@ -422,6 +436,10 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   mus_print_set_handler(mus_print_to_snd);
 
   initialize_load_path(); /* merge SND_PATH entries into the load-path */
+
+#if HAVE_SETJMP_H
+  signal(SIGUSR1, snd_sigusr1);
+#endif
 
 #ifdef SND_AS_PD_EXTERNAL
   return;

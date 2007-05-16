@@ -353,6 +353,9 @@ int mix_file(off_t beg, off_t num, int chans, chan_info **cps, const char *mixin
   in_chans =  mus_sound_chans(mixinfile);
   if (chans > in_chans) chans = in_chans;
 
+  if (temp == MULTICHANNEL_DELETION)
+    remember_temp(mixinfile, in_chans);
+
   for (i = 0; i < chans; i++) 
     {
       chan_info *cp;
@@ -2744,7 +2747,11 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 
   {
     file_delete_t delete_file = DONT_DELETE_ME;
+
     delete_file = xen_to_file_delete_t(auto_delete, S_mix);
+    if ((delete_file == MULTICHANNEL_DELETION) || (delete_file == MULTICHANNEL_DELETION_IF_FILE))
+      remember_temp(name, chans);
+
     if (!with_mixer)
       {
 	char *origin;
@@ -2766,6 +2773,11 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 	    FREE(data);
 	    if (delete_file == DELETE_ME)
 	      snd_remove(name, REMOVE_FROM_CACHE);
+	    else
+	      {
+		if (delete_file == MULTICHANNEL_DELETION_IF_FILE)
+		  forget_temp(name, file_channel);
+	      }
 	  }
 	else 
 	  {

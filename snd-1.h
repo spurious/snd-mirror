@@ -628,8 +628,11 @@ int snd_file_open_descriptors(int tfd, const char *name, int format, off_t locat
 snd_io *make_file_state(int fd, file_info *hdr, int chan, off_t beg, int suggested_bufsize);
 void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
 void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
+
 void remember_temp(const char *filename, int chans);
+void forget_temp(const char *filename, int chan);
 void forget_temps(void);
+
 snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_delete_t temp, int ctr, int temp_chan);
 snd_data *copy_snd_data(snd_data *sd, off_t beg, int bufsize);
 snd_data *free_snd_data(snd_data *sf);
