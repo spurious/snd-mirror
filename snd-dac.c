@@ -1081,8 +1081,7 @@ bool add_mix_to_play_list(mix_state *ms, chan_info *cp, off_t beg_within_mix)
 		 #f
 		 (begin
              (set! samp (1+ samp)) 
-             (* .5 (oscil osc)))))))
-	     SOMEDAY: xen play + snd/chn = use those controls
+             (* .5 (oscil osc))))))) ; you can use explicit control panel accessors
  */
 
 static bool add_xen_to_play_list(XEN func)

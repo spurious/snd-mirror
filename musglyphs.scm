@@ -180,3 +180,217 @@
 
 (set! defvar old-defvar)
 (set! declare old-declare)
+
+
+
+;;; a portion of CMN here to make it easier to display notes
+
+(define (frequency->note-octave-and-accidental freq)
+  (define (frequency->pitch freq)
+    (define (log2 x) (/ (log x) (log 2.0)))
+    (inexact->exact (floor (* 12 (+ (log2 (/ freq 16.351)) (/ 1.0 24))))))
+
+  (define (pitch->note-octave-and-accidental pitch)
+    (let* ((pclass (modulo pitch 12))
+	   (octave (inexact->exact (floor (/ pitch 12))))
+	   (cclass (case pclass
+		     ((0) 0) 
+		     ((1) 0) ; c-sharp
+		     ((2) 1) 
+		     ((3) 2) ; e-flat
+		     ((4) 2) 
+		     ((5) 3) 
+		     ((6) 3) ; f-sharp
+		     ((7) 4) 
+		     ((8) 5) ; a-flat
+		     ((9) 5) 
+		     ((10) 6); b-flat
+		     ((11) 6))))
+      (list pclass octave 
+	    (if (or (= pclass 1) (= pclass 6))
+		:sharp
+		(if (or (= pclass 3) (= pclass 8) (= pclass 10))
+		    :flat
+		    #f))
+	    cclass
+	    pitch)))
+  
+  (pitch->note-octave-and-accidental (frequency->pitch freq)))
+
+(define (note-data->pclass val) (car val))
+(define (note-data->octave val) (cadr val))
+(define (note-data->accidental val) (caddr val))
+(define (note-data->cclass val) (cadddr val))
+(define (note-data->pitch val) (list-ref val 4))
+
+
+(define (draw-staff x0 y0 width line-sep)
+  (do ((line 0 (1+ line))
+       (x x0) 
+       (y y0 (+ y line-sep)))
+      ((= line 5))
+    (draw-line x y (+ x width) y)))
+
+
+(define treble-tag-y 30)
+(define bass-tag-y (+ treble-tag-y (* 4 (mix-waveform-height))))
+
+
+(define (draw-a-note freq dur x0 ty0 size with-clef treble)
+  (let* ((line-sep (* size .250))
+	 (note-data (frequency->note-octave-and-accidental freq))
+	 (accidental (note-data->accidental note-data))
+	 (cclass (note-data->cclass note-data))
+	 (octave (note-data->octave note-data))
+	 (pitch (note-data->pitch note-data))
+	 (y0 (if treble treble-tag-y bass-tag-y))
+	 (width (* (+ (if with-clef (if treble 0.9 1.2) 0.75)
+		      (if accidental 0.1 0.0) 
+		      (if (< dur .8) 0.5 0.0)) 
+		   size))
+	 (line (if treble 
+		   (+ (* (- 5 octave) 7) (- 3 cclass))
+		   (+ (* (- 3 octave) 7) (- 5 cclass)))))
+
+    (draw-staff x0 y0 width line-sep) 
+
+    (if with-clef
+	(begin
+	  (if treble 
+	      (draw-treble-clef x0 (+ y0 (* size .76)) size)
+	      (draw-bass-clef (+ x0 (* size .075)) (+ y0 (* size .26)) size))
+	  (set! x0 (+ x0 (* size .8))))
+	(if accidental
+	    (set! x0 (+ x0 (* size .1)))
+	    (set! x0 (+ x0 (* size .25)))))
+
+    ;; accidental
+    (if accidental
+	(begin
+	  ((if (eq? accidental :sharp) draw-sharp draw-flat) x0 (+ y0 (* .02 size) (* line-sep 0.5 line)) size)
+	  (set! x0 (+ x0 (* .25 size)))))
+
+    ;; notehead
+    ((if (< dur 1.5)
+	 draw-quarter-note
+	 (if (< dur 3.5)
+	     draw-half-note
+	     draw-whole-note))
+     x0 (+ y0 (* .02 size) (* line-sep 0.5 line))
+     size) 
+
+    ;; leger line(s)
+    (if (> line 9)
+	(do ((i 10 (+ i 2)))
+	    ((>= i line))
+	  (fill-rectangle (- x0 (* .1 size)) (+ y0 (* -.02 size) (* line-sep 0.5 i)) (* .5 size) (* .05 size))))
+    (if (< line 0)
+	(do ((i -2 (- i 2)))
+	    ((< i line))
+	  (fill-rectangle (- x0 (* .1 size)) (+ y0 (* -.02 size) (* line-sep 0.5 i)) (* .5 size) (* .05 size))))
+    
+    ;; stem
+    (if (< dur 3)
+	(if (> line 3)
+	    ;; stem up
+	    (fill-rectangle (+ x0 (* size .25)) (+ y0 (* .02 size) (* size -0.8) (* line-sep 0.5 line)) (* size .05) (* size 0.8))
+	    (fill-rectangle (- x0 (* size .02)) (+ y0 (* line-sep line 0.5)) (* size .05) (* size 0.8))))
+
+    ;; flags
+    (if (< dur .6)
+	(let ((base (+ y0 (* line-sep 0.5 line))))
+	  (if (> line 2)
+	      (draw-8th-flag-up (+ x0 (* size .25)) (+ base (* size -0.6)) size)
+	      (draw-8th-flag-down x0 (+ base (* .7 size)) size))
+	  (if (< dur .3)
+	      (begin
+		(if (> line 2)
+		    (draw-extend-flag-up (+ x0 (* size .25)) (+ base (* size -0.8)) size)
+		    (draw-extend-flag-down x0 (+ base (* .9 size)) size))
+		(if (< dur .15)
+		    (if (> line 2)
+			(draw-extend-flag-up (+ x0 (* size .25)) (+ base (* size -1.0)) size)
+			(draw-extend-flag-down x0 (+ base (* 1.1 size)) size)))))))
+    ))
+
+
+#|
+;; this is the example in the documentation
+
+(define (draw-mix-tag id ox oy x y)
+  (let ((width (mix-tag-width))
+	(height (mix-tag-height))
+	(home (mix-home id)))
+    (if (not (= oy -1)) ; already erased?
+	(fill-rectangle	(- ox 1 (/ width 2)) (- oy 1 height) (+ width 2) (+ height 2) (car home) (cadr home) time-graph #t))
+    (fill-rectangle (- x (/ width 2)) (- y height) width height (car home) (cadr home))))
+
+(add-hook! draw-mix-hook
+	   (lambda (id ox oy x y)
+	     (draw-mix-tag id ox oy x y)
+	     (draw-a-note (or (mix-property 'frequency id) 440.0)
+			  (/ (mix-length id) (srate))
+			  x y
+			  (* 2 (mix-waveform-height))
+			  #f
+			  (eq? (mix-property 'instrument id) 'violin))
+	     #t))
+
+(add-hook! after-graph-hook
+	   (lambda (s c)
+	     (let ((size (* 2 (mix-waveform-height))))
+	       (draw-staff 0 treble-tag-y (* 1.0 size) (* .25 size))
+	       (draw-staff 0 bass-tag-y (* 1.0 size) (* .25 size))
+	       (draw-treble-clef 0 (+ treble-tag-y (* size .76)) size)
+	       (draw-bass-clef (* size .075) (+ bass-tag-y (* size .26)) size))))
+
+(set! (mix-waveform-height) 20)
+
+(let ((oldie (find-sound "test.snd")))
+  (if (sound? oldie)
+      (close-sound oldie)))
+
+(let ((index (new-sound "test.snd" :channels 1)))
+  
+  (define (violin beg dur freq amp)
+    (let* ((frq-hz (* 2 (->frequency freq #t)))
+	   (id (mix (with-temp-sound () (fm-violin 0 dur frq-hz amp))
+		    (->sample beg) 0 index 0  ; start, file in-chan, sound, channel
+		    #t #t)))                  ; with tag and auto-delete
+      (set! (mix-property 'frequency id) frq-hz)
+      (set! (mix-property 'instrument id) 'violin)))
+  
+  (define (cello beg dur freq amp)
+    (let* ((frq-hz (* 2 (->frequency freq #t)))
+	   (id (mix (with-temp-sound () (fm-violin 0 dur frq-hz amp :fm-index 1.5))
+		    (->sample beg) 0 index 0
+		    #t #t)))
+      (set! (mix-property 'frequency id) frq-hz)
+      (set! (mix-property 'instrument id) 'cello)))
+  
+  (as-one-edit
+   (lambda ()
+     (violin 0 1 'e4 .2)  (violin 1 1.5 'g4 .2)  (violin 2.5 .5 'g3 .2)
+     (cello  0 1 'c3 .2)  (cello  1 1.5 'e3 .2)  (cello  2.5 .5 'g2 .2)
+     
+     (violin 3 3 'f4 .2)
+     (cello  3 3 'd3 .2)
+     
+     (violin 6 1 'e4 .2)   (violin 7 1 'g3 .2)   (violin 8 1 'e4 .2)
+     (cello  6 1 'c3 .2)   (cello  7 1 'g2 .2)   (cello  8 1 'c3 .2)
+     
+     (violin 9 3 'd4 .2)
+     (cello  9 3 'b2 .2)
+     
+     (violin 12 1 'f4 .2)  (violin 13 1.5 'a4 .2)  (violin 14.5 .5 'g3 .2)
+     (cello  12 1 'd3 .2)  (cello  13 1.5 'f3 .2)  (cello  14.5 .5 'g2 .2)
+     
+     (violin 15 3 'g4 .2)
+     (cello  15 3 'e3 .2)
+     
+     (violin 18 1 'f4 .2)  (violin 19 1 'g3 .2)  (violin 20 1 'f4 .2)
+     (cello  18 1 'd3 .2)  (cello  19 1 'g2 .2)  (cello  20 1 'd3 .2)
+     
+     (violin 21 3 'e4 .2)
+     (cello  21 3 'c3 .2))))
+|#

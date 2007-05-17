@@ -925,10 +925,12 @@ static Float previous_xrampn_rampn(snd_fd *sf)
 
 /* mix readers */
 
-static Float read_mix_list_samples(mix_readers *m)
+static Float read_mix_list_samples(snd_fd *sf)
 {
+  mix_readers *m;
   int i;
   Float sum = 0.0;
+  m = (mix_readers *)(sf->mixes);
   for (i = 0; i < m->size; i++)
     sum += read_sample(m->sfs[i]);
   return(sum);
@@ -938,7 +940,7 @@ static Float next_mix(snd_fd *sf)
 {
   /* read_sample here would call runf => next_mix => infinite recursion */
   if (sf->loc > sf->last) return(next_sound(sf)); /* next_sound here refers to whatever follows the mixed portion */
-  return((sf->data[sf->loc++] * sf->fscaler) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((sf->data[sf->loc++] * sf->fscaler) + read_mix_list_samples(sf));
 }
 /* if underlying data was scaled,and we added a mix, we couldn't share the existing scale, so
  *   and mixes can be added after subsequent scaling, so we're constrained to use the mix-amps
@@ -947,21 +949,21 @@ static Float next_mix(snd_fd *sf)
 static Float previous_mix(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf));
-  return((sf->data[sf->loc--] * sf->fscaler) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((sf->data[sf->loc--] * sf->fscaler) + read_mix_list_samples(sf));
 }
 
 static Float next_mix_zero(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf)); /* next_sound here refers to whatever follows the mixed portion */
   sf->loc++;
-  return(read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return(read_mix_list_samples(sf));
 }
 
 static Float previous_mix_zero(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf));
   sf->loc--;
-  return(read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return(read_mix_list_samples(sf));
 }
 
 static Float next_one_mix(snd_fd *sf)
@@ -993,97 +995,113 @@ static Float previous_one_mix_zero(snd_fd *sf)
 static Float next_mix_ramp(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp_value(sf))) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp_value(sf))) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_ramp(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp_value(sf))) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp_value(sf))) + read_mix_list_samples(sf));
 }
+
+#if WITH_RAMP_MIX
+static Float next_ramp_mix_zero(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound(sf));
+  sf->loc++;
+  return((read_mix_list_samples(sf)) * next_ramp_value(sf));
+}
+
+static Float previous_ramp_mix_zero(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound(sf));
+  sf->loc--;
+  return((read_mix_list_samples(sf)) * previous_ramp_value(sf));
+}
+#endif
 
 static Float next_mix_ramp2(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp2_value(sf))) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp2_value(sf))) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_ramp2(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp2_value(sf))) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp2_value(sf))) + read_mix_list_samples(sf));
 }
 
 static Float next_mix_ramp3(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp3_value(sf))) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp3_value(sf))) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_ramp3(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp3_value(sf))) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp3_value(sf))) + read_mix_list_samples(sf));
 }
 
 static Float next_mix_ramp4(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp4_value(sf))) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp4_value(sf))) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_ramp4(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp4_value(sf))) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp4_value(sf))) + read_mix_list_samples(sf));
 }
 
 static Float next_mix_xramp(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp_value(sf))) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp_value(sf))) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_xramp(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * READER_SCALER(sf) * previous_xramp_value(sf))) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * READER_SCALER(sf) * previous_xramp_value(sf))) + read_mix_list_samples(sf));
 }
 
 static Float next_mix_xramp2(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp2_value(sf))) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp2_value(sf))) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_xramp2(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * READER_SCALER(sf) * previous_xramp2_value(sf))) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * READER_SCALER(sf) * previous_xramp2_value(sf))) + read_mix_list_samples(sf));
 }
 
 static Float next_mix_xramp_ramp(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_xramp_ramp_value(sf))) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_xramp_ramp_value(sf))) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_xramp_ramp(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_xramp_ramp_value(sf))) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_xramp_ramp_value(sf))) + read_mix_list_samples(sf));
 }
 
 static Float next_mix_xrampn_rampn(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * (*(sf->rampf))(sf))) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * (*(sf->rampf))(sf))) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_xrampn_rampn(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * (*(sf->rev_rampf))(sf))) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * (*(sf->rev_rampf))(sf))) + read_mix_list_samples(sf));
 }
 
 
@@ -1162,13 +1180,13 @@ static Float previous_ptree(snd_fd *sf)
 static Float next_mix_ptree(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf)); 
-  return((READER_SCALER(sf) * next_ptree_value(sf)) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((READER_SCALER(sf) * next_ptree_value(sf)) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_ptree(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf)); 
-  return((READER_SCALER(sf) * previous_ptree_value(sf)) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((READER_SCALER(sf) * previous_ptree_value(sf)) + read_mix_list_samples(sf));
 }
 
 
@@ -1211,13 +1229,13 @@ static Float previous_ptree_rampn(snd_fd *sf)
 static Float next_mix_ptree_rampn(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf));
-  return((READER_SCALER(sf) * next_ptree_rampn_value(sf)) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((READER_SCALER(sf) * next_ptree_rampn_value(sf)) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_ptree_rampn(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf)); 
-  return((READER_SCALER(sf) * previous_ptree_rampn_value(sf)) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((READER_SCALER(sf) * previous_ptree_rampn_value(sf)) + read_mix_list_samples(sf));
 }
 
 
@@ -1298,86 +1316,86 @@ static Float previous_rampn_ptree(snd_fd *sf)
 static Float next_mix_rampn_ptree(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf)); 
-  return(((*(sf->rampf))(sf) * next_ptree_value(sf)) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return(((*(sf->rampf))(sf) * next_ptree_value(sf)) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_rampn_ptree(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf)); 
-  return(((*(sf->rev_rampf))(sf) * previous_ptree_value(sf)) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return(((*(sf->rev_rampf))(sf) * previous_ptree_value(sf)) + read_mix_list_samples(sf));
 }
 
 
 static Float next_mix_ramp_ptree_ramp(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf)); 
-  return((next_ramp1_2_value(sf) * next_ptree_rampn_value(sf)) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((next_ramp1_2_value(sf) * next_ptree_rampn_value(sf)) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_ramp_ptree_ramp(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf)); 
-  return((previous_ramp1_2_value(sf) * previous_ptree_rampn_value(sf)) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((previous_ramp1_2_value(sf) * previous_ptree_rampn_value(sf)) + read_mix_list_samples(sf));
 }
 
 static Float next_mix_ramp2_ptree_ramp(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf));
-  return((next_ramp2_2_value(sf) * next_ptree_rampn_value(sf)) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((next_ramp2_2_value(sf) * next_ptree_rampn_value(sf)) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_ramp2_ptree_ramp(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf)); 
-  return((previous_ramp2_2_value(sf) * previous_ptree_rampn_value(sf)) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((previous_ramp2_2_value(sf) * previous_ptree_rampn_value(sf)) + read_mix_list_samples(sf));
 }
 
 static Float next_mix_ramp3_ptree_ramp(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf)); 
-  return((next_ramp3_2_value(sf) * next_ptree_rampn_value(sf)) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((next_ramp3_2_value(sf) * next_ptree_rampn_value(sf)) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_ramp3_ptree_ramp(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf)); 
-  return((previous_ramp3_2_value(sf) * previous_ptree_rampn_value(sf)) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((previous_ramp3_2_value(sf) * previous_ptree_rampn_value(sf)) + read_mix_list_samples(sf));
 }
 
 static Float next_mix_ramp_ptree_ramp2(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf)); 
-  return((next_ramp1_3_value(sf) * next_ptree_rampn_value(sf)) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((next_ramp1_3_value(sf) * next_ptree_rampn_value(sf)) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_ramp_ptree_ramp2(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf)); 
-  return((previous_ramp1_3_value(sf) * previous_ptree_rampn_value(sf)) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((previous_ramp1_3_value(sf) * previous_ptree_rampn_value(sf)) + read_mix_list_samples(sf));
 }
 
 static Float next_mix_ramp2_ptree_ramp2(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf)); 
-  return((next_ramp2_3_value(sf) * next_ptree_rampn_value(sf)) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((next_ramp2_3_value(sf) * next_ptree_rampn_value(sf)) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_ramp2_ptree_ramp2(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf)); 
-  return((previous_ramp2_3_value(sf) * previous_ptree_rampn_value(sf)) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((previous_ramp2_3_value(sf) * previous_ptree_rampn_value(sf)) + read_mix_list_samples(sf));
 }
 
 static Float next_mix_ramp_ptree_ramp3(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf)); 
-  return((next_ramp1_4_value(sf) * next_ptree_rampn_value(sf)) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((next_ramp1_4_value(sf) * next_ptree_rampn_value(sf)) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_ramp_ptree_ramp3(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf)); 
-  return((previous_ramp1_4_value(sf) * previous_ptree_rampn_value(sf)) + read_mix_list_samples((mix_readers *)(sf->mixes)));
+  return((previous_ramp1_4_value(sf) * previous_ptree_rampn_value(sf)) + read_mix_list_samples(sf));
 }
 
 
@@ -2640,6 +2658,8 @@ static Float previous_ramp_ptree_xramp_ramp_ptree_xramp(snd_fd *sf)
    ptree zero cases use accessor-internal switch sf->zero
 */
 
+#define WITH_RAMP_MIX 0
+
 enum {ED_SIMPLE, ED_MIX_SIMPLE, ED_ZERO, ED_MIX_ZERO,
 
       ED_RAMP, ED_MIX_RAMP, ED_RAMP2, ED_MIX_RAMP2, ED_RAMP3, ED_MIX_RAMP3, ED_RAMP4, ED_MIX_RAMP4,
@@ -2809,7 +2829,9 @@ enum {ED_SIMPLE, ED_MIX_SIMPLE, ED_ZERO, ED_MIX_ZERO,
       ED_XRAMP_RAMP3_PTREE3, ED_XRAMP_RAMP3_PTREE3_ZERO, ED_XRAMP2_RAMP2_PTREE3, ED_XRAMP2_RAMP2_PTREE3_ZERO,
       ED_XRAMP_RAMP_PTREE3_RAMP2, ED_XRAMP_RAMP2_PTREE3_RAMP, ED_RAMP_PTREE3_XRAMP_RAMP2,
       ED_XRAMP_RAMP2_PTREE3_XRAMP, ED_XRAMP2_RAMP_PTREE3_RAMP, ED_RAMP2_PTREE3_XRAMP_RAMP, 
-
+#if WITH_RAMP_MIX
+      ED_RAMP_MIX_ZERO,
+#endif
       NUM_OPS
 };
 
@@ -2843,8 +2865,13 @@ static fragment_type_info type_info[NUM_OPS] = {
 
   {ED_ZERO, ED_ZERO, ED_ZERO, ED_PTREE_ZERO, ED_MIX_ZERO, -1, 0, 0, 0, true, 
    "ed_zero", next_zero, previous_zero, NULL, NULL},
+#if WITH_RAMP_MIX
+  {ED_MIX_ZERO, ED_RAMP_MIX_ZERO, -1, -1, ED_MIX_ZERO, ED_ZERO, 0, 0, 0, true, 
+   "ed_mix_zero", next_mix_zero, previous_mix_zero, NULL, NULL},
+#else
   {ED_MIX_ZERO, -1, -1, -1, ED_MIX_ZERO, ED_ZERO, 0, 0, 0, true, 
    "ed_mix_zero", next_mix_zero, previous_mix_zero, NULL, NULL},
+#endif
 
   {ED_RAMP, ED_RAMP2, ED_XRAMP_RAMP, ED_PTREE_RAMP, ED_MIX_RAMP, -1, 0, 1, 0, false, 
    "ed_ramp", next_ramp, previous_ramp, NULL, NULL},
@@ -3652,6 +3679,12 @@ static fragment_type_info type_info[NUM_OPS] = {
   {ED_RAMP2_PTREE3_XRAMP_RAMP, -1, -1, -1, -1, -1, 3, 3, 1, false, 
    "ed_ramp2_ptree3_xramp_ramp", next_ramp2_ptree_xramp_ramp, previous_ramp2_ptree_xramp_ramp, next_xramp_ramp_value, previous_xramp_ramp_value},
 
+#if WITH_RAMP_MIX
+  /* an experiment */
+  {ED_RAMP_MIX_ZERO, -1, -1, -1, -1, ED_ZERO, 0, 1, 0, true, 
+   "ed_ramp_mix_zero", next_ramp_mix_zero, previous_ramp_mix_zero, NULL, NULL},
+#endif
+
 };
 
 static bool PTREE123_OP(int type)
@@ -3768,10 +3801,17 @@ static void check_type_info_entry(int op, int expected_ramps, int expected_xramp
 	  (type_info[op].add_mix != op))
 	fprintf(stderr, "%s add_mix: %s\n", type_info[op].name, type_info[type_info[op].add_mix].name);
 
-      if (type_info[op].add_ramp != -1) fprintf(stderr, "%s add_ramp: %s\n", type_info[op].name, type_info[type_info[op].add_ramp].name);
+      if ((type_info[op].add_ramp != -1) &&
+	  (op != ED_MIX_ZERO))
+	fprintf(stderr, "%s add_ramp: %s\n", type_info[op].name, type_info[type_info[op].add_ramp].name);
       if (type_info[op].add_xramp != -1) fprintf(stderr, "%s add_xramp: %s\n", type_info[op].name, type_info[type_info[op].add_xramp].name);
       if (type_info[op].add_ptree != -1) fprintf(stderr, "%s add_ptree: %s\n", type_info[op].name, type_info[type_info[op].add_ptree].name);
+#if WITH_RAMP_MIX
+      if ((type_info[type_info[op].subtract_mix].add_mix != op) &&
+	  (op != ED_RAMP_MIX_ZERO))
+#else
       if (type_info[type_info[op].subtract_mix].add_mix != op)
+#endif
 	fprintf(stderr, "%s subtract: %s but its add: %s\n",
 		type_info[op].name, type_info[type_info[op].subtract_mix].name, 
 		(type_info[type_info[op].subtract_mix].add_mix != -1) ? type_info[type_info[type_info[op].subtract_mix].add_mix].name : "not an op");
@@ -4072,6 +4112,9 @@ static void choose_accessor(snd_fd *sf)
 
     case ED_RAMP:
     case ED_MIX_RAMP:
+#if WITH_RAMP_MIX
+    case ED_RAMP_MIX_ZERO:
+#endif
       setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
       break;
     case ED_RAMP2:
@@ -7426,6 +7469,10 @@ static void setup_ramp_fragments(ed_list *new_ed, int i, double seg0, double seg
 		}
 	    }
 	  FRAGMENT_TYPE(new_ed, i) = type_info[typ].add_ramp;
+#if WITH_RAMP_MIX
+	  if (FRAGMENT_TYPE(new_ed, i) == ED_RAMP_MIX_ZERO)
+	    FRAGMENT_SCALER(new_ed, i) = 1.0;
+#endif
 	}
     }
   
@@ -8667,21 +8714,22 @@ bool redo_edit_with_sync(chan_info *cp, int count)
 
 /* -------------------- virtual mixes -------------------- */
 
-  /* TODO: tmp231->musglyphs with drag vertically -> change pitch and recalc(?)
+  /* TODO: tmp231 with drag vertically -> change pitch and recalc(?)
    * TODO: mix-drag if syncd should at least move the other tag(s)
    * PERHAPS: RAMP_MIX is possible -- place ramp on the sum of the mixes and the direct:
 
 		  static Float next_ramp_one_mix(snd_fd *sf)
 		  {
 		    if (sf->loc > sf->last) return(next_sound(sf));
-		    return(((sf->data[sf->loc++] * sf->fscaler) + read_sample(((mix_readers *)(sf->mixes))->sfs[0])) * next_ramp_value(sf));
-		    
-		    we'd need another scl slot somewhere -- mix-data? and subsequent mix would have to lock
-		      and we'd have yet another special case to watch for in scale-channel (not if we move the existing scaler)
-		      could have an ext_mix_readers struct with the folded scaler
-
+		    return((sf->data[sf->loc++] * sf-mixes->fscaler) + 
+		            read_sample(((mix_readers *)(sf->mixes))->sfs[0])) * next_ramp_value(sf));
+                    where next_ramp_value includes READER_SCALER (the after-mix global scale factor)
+                    and mixes->fscaler saves the READER_SCALER * MUS_FIX_TO_FLOAT fixup [see line 7590]
 		  }
-		  so RAMP|2|3|4_MIX|_ZERO XRAMP_MIX|_ZERO PTREE_MIX|ZERO?
+		  so RAMP|2|3|4_MIX -- see WITH_RAMP_MIX above
+
+		  but... we currently optimize out ramps on zero -> ed_zero which means the
+		  envelope is lost if a ramped mix is subsequently moved
   */
 
 static int add_mix_op(int type)
