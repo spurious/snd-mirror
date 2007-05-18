@@ -1004,6 +1004,9 @@ static Float previous_mix_ramp(snd_fd *sf)
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp_value(sf))) + read_mix_list_samples(sf));
 }
 
+
+#define WITH_RAMP_MIX 0
+
 #if WITH_RAMP_MIX
 static Float next_ramp_mix_zero(snd_fd *sf)
 {
@@ -2658,8 +2661,6 @@ static Float previous_ramp_ptree_xramp_ramp_ptree_xramp(snd_fd *sf)
    ptree zero cases use accessor-internal switch sf->zero
 */
 
-#define WITH_RAMP_MIX 0
-
 enum {ED_SIMPLE, ED_MIX_SIMPLE, ED_ZERO, ED_MIX_ZERO,
 
       ED_RAMP, ED_MIX_RAMP, ED_RAMP2, ED_MIX_RAMP2, ED_RAMP3, ED_MIX_RAMP3, ED_RAMP4, ED_MIX_RAMP4,
@@ -3687,50 +3688,50 @@ static fragment_type_info type_info[NUM_OPS] = {
 
 };
 
-static bool PTREE123_OP(int type)
+static bool ptree123_op(int type)
 {
   return(type_info[type].ptrees > 0);
 }
 
-static bool PTREE1_OP(int type)
+static bool ptree1_op(int type)
 {
   return(type_info[type].ptrees == 1);
 }
 
-static bool PTREE2_OP(int type)
+static bool ptree2_op(int type)
 {
   return(type_info[type].ptrees == 2);
 }
 
-static bool PTREE23_OP(int type)
+static bool ptree23_op(int type)
 {
   return(type_info[type].ptrees > 1);
 }
 
-static bool PTREE3_OP(int type)
+static bool ptree3_op(int type)
 {
   return(type_info[type].ptrees == 3);
 }
 
-static bool ZERO_OP(int type)
+static bool zero_op(int type)
 {
   return(type_info[type].ptree_zero);
 }
 
-static bool RAMP_OP(int type)
+static bool ramp_op(int type)
 {
   return((type_info[type].ramps > 0) ||
 	 (type_info[type].xramps > 0));
 }
 
-static bool RAMP_OR_PTREE_OP(int type)
+static bool ramp_or_ptree_op(int type)
 {
   return((type_info[type].ramps > 0) ||
 	 (type_info[type].xramps > 0) ||
 	 (type_info[type].ptrees > 0));
 }
 
-static bool MIX_OP(int type)
+static bool mix_op(int type)
 {
   return(type_info[type].subtract_mix != -1); /* add mix means it's a mixable underlying op, not that it itself is a mix op */
 }
@@ -3827,7 +3828,7 @@ static void check_type_info_entry(int op, int expected_ramps, int expected_xramp
 	      (type_info[op].ramps < 4))
 	    fprintf(stderr, "%s has no add ramp", type_info[op].name);
 	}
-      if ((PTREE1_OP(op)) && 
+      if ((ptree1_op(op)) && 
 	  (type_info[op].add_ptree == -1))
 	fprintf(stderr, "%s has no ptree2?\n", type_info[op].name);
     }
@@ -4059,15 +4060,15 @@ static void choose_accessor(snd_fd *sf)
   /* most cases use floats */
   typ = READER_TYPE(sf);
 
-  if (PTREE123_OP(typ))
+  if (ptree123_op(typ))
     {
       sf->ptree1 = sf->cp->ptrees[READER_PTREE_INDEX(sf)];
       get_sf_closure(sf);
-      if (PTREE23_OP(typ))
+      if (ptree23_op(typ))
 	{
 	  sf->ptree2 = sf->cp->ptrees[READER_PTREE2_INDEX(sf)];
 	  get_sf_closure2(sf);
-	  if (PTREE3_OP(typ))
+	  if (ptree3_op(typ))
 	    {
 	      sf->ptree3 = sf->cp->ptrees[READER_PTREE3_INDEX(sf)];
 	      get_sf_closure3(sf);
@@ -4075,11 +4076,11 @@ static void choose_accessor(snd_fd *sf)
 	  else sf->ptree3 = NULL;
 	}
       else sf->ptree2 = NULL;
-      sf->zero = ZERO_OP(typ);
+      sf->zero = zero_op(typ);
       sf->xramp2 = (type_info[typ].xramps == 2);
     }
 
-  if (MIX_OP(typ))
+  if (mix_op(typ))
     setup_mix(sf);
 
 #if MUS_DEBUGGING
@@ -4642,7 +4643,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 		  FRAGMENT_LOCAL_POSITION(ed, j),
 		  FRAGMENT_LOCAL_END(ed, j),
 		  FRAGMENT_SCALER(ed, j));
-	  if (RAMP_OP(typ))
+	  if (ramp_op(typ))
 	    {
 	      if (type_info[typ].ramps > 0)
 		fprintf(outp, ", [1]%.3f -> %.3f", 
@@ -4669,12 +4670,12 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 			FRAGMENT_XRAMP_OFFSET2(ed, j),
 			FRAGMENT_XRAMP_SCALER2(ed, j));
 	    }
-	  if (PTREE123_OP(typ))
+	  if (ptree123_op(typ))
 	    {
 	      XEN code;
-	      if (PTREE23_OP(typ))
+	      if (ptree23_op(typ))
 		{
-		  if (PTREE3_OP(typ))
+		  if (ptree3_op(typ))
 		    {
 		      fprintf(outp, ", loc3: %d, pos3: " OFF_TD ", scl3: %.3f",
 			      FRAGMENT_PTREE3_INDEX(ed, j),
@@ -4703,7 +4704,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 #endif
 		}
 	    }
-	  if (MIX_OP(typ))
+	  if (mix_op(typ))
 	    {
 	      ed_mixes *mxs;
 	      mxs = FRAGMENT_MIXES(ed, j);
@@ -6066,7 +6067,7 @@ snd_info *sound_is_silence(snd_info *sp)
 
 static void new_leading_ramp(ed_fragment *new_start, ed_fragment *old_start, off_t samp)
 {
-  if (RAMP_OP(ED_TYPE(old_start)))
+  if (ramp_op(ED_TYPE(old_start)))
     {
       Float rmp1, rmp0;
       Float val;
@@ -6108,7 +6109,7 @@ static void new_leading_ramp(ed_fragment *new_start, ed_fragment *old_start, off
 
 static void new_trailing_ramp(ed_fragment *new_back, ed_fragment *old_back, off_t samp)
 {
-  if (RAMP_OP(ED_TYPE(old_back)))
+  if (ramp_op(ED_TYPE(old_back)))
     {
       Float rmp1, rmp0;
       Float val;
@@ -6149,14 +6150,14 @@ static void new_trailing_ramp(ed_fragment *new_back, ed_fragment *old_back, off_
       ED_RAMP4_BEG(new_back) = val;
       ED_RAMP4_END(new_back) = rmp1;
     }
-  if (PTREE123_OP(ED_TYPE(new_back)))
+  if (ptree123_op(ED_TYPE(new_back)))
     {
       ensure_ed_ptrees(new_back);
       ED_PTREE_POSITION(new_back) = ED_PTREE_POSITION(old_back) + samp - ED_GLOBAL_POSITION(old_back);
-      if (PTREE23_OP(ED_TYPE(new_back)))
+      if (ptree23_op(ED_TYPE(new_back)))
 	{
 	  ED_PTREE2_POSITION(new_back) = ED_PTREE2_POSITION(old_back) + samp - ED_GLOBAL_POSITION(old_back);
-	  if (PTREE3_OP(ED_TYPE(new_back)))
+	  if (ptree3_op(ED_TYPE(new_back)))
 	    ED_PTREE3_POSITION(new_back) = ED_PTREE3_POSITION(old_back) + samp - ED_GLOBAL_POSITION(old_back);
 	}
     }
@@ -6172,7 +6173,6 @@ static void ripple_all(chan_info *cp, off_t beg, off_t samps)
   ripple_mixes(cp, beg, samps);
   check_for_first_edit(cp);
 }
-
 
 static bool lock_affected_mixes(chan_info *cp, int edpos, off_t beg, off_t end)
 {
@@ -6191,16 +6191,18 @@ static bool lock_affected_mixes(chan_info *cp, int edpos, off_t beg, off_t end)
 
   ed = cp->edits[edpos];
 
-  /* first look for any directly affected mixes */
+  /* first look for any directly affected mixes -- even if beg=0 and end=samples I think we want to 
+   *    optimize the change as much as possible.
+   */
   for (i = 0; i < ed->size; i++)
     {
       fragment_beg = FRAGMENT_GLOBAL_POSITION(ed, i);
-      if (FRAGMENT_MIXES(ed, i)) /* not MIX_OP here because all "active" mixes might be silent in this fragment */
+      if (mix_op(FRAGMENT_TYPE(ed, i)))
 	{
 	  fragment_end = fragment_beg + FRAGMENT_LENGTH(ed, i);
 	  if (possible_beg < 0)
 	    possible_beg = fragment_beg;
-
+	  
 	  if ((fragment_beg <= end) &&
 	      (fragment_end >= beg) && /* hit a mix in the changing section */
 	      (change_beg < 0))
@@ -6224,12 +6226,10 @@ static bool lock_affected_mixes(chan_info *cp, int edpos, off_t beg, off_t end)
       char *temp_file_name;
       io_error_t err;
       off_t cur_len, cur_cursor;
-
+      
       cur_len = ed->samples;
       cur_cursor = ed->cursor;
-
       temp_file_name = snd_tempnam();
-
       err = channel_to_file_with_bounds(cp, temp_file_name, edpos, change_beg, change_end - change_beg + 1);
       if (err == IO_NO_ERROR) /* else snd_error earlier? */
 	{
@@ -6338,7 +6338,7 @@ static ed_list *insert_section_into_list(off_t samp, off_t num, ed_list *current
 		  ED_GLOBAL_POSITION(split_back_f) = samp + num; /* rippled */
 		  
 		  /* now fixup ramps/ptrees affected by the split */
-		  if (RAMP_OR_PTREE_OP(ED_TYPE(cur_f)))
+		  if (ramp_or_ptree_op(ED_TYPE(cur_f)))
 		    {
 		      new_leading_ramp(split_front_f, cur_f, samp);
 		      new_trailing_ramp(split_back_f, cur_f, samp);
@@ -6746,7 +6746,7 @@ static ed_list *delete_section_from_list(off_t beg, off_t num, ed_list *current_
 		  new_i++;
 		  ED_LOCAL_END(split_front_f) = ED_LOCAL_POSITION(split_front_f) + beg - ED_GLOBAL_POSITION(split_front_f) - 1;
 		  /* samp - global position = where in current fragment, offset that by its local offset, turn into end sample */
-		  if (RAMP_OR_PTREE_OP(ED_TYPE(cur_f)))
+		  if (ramp_or_ptree_op(ED_TYPE(cur_f)))
 		    new_leading_ramp(split_front_f, cur_f, beg);
 		}
 	      next_pos = FRAGMENT_GLOBAL_POSITION(current_state, (cur_i + 1));
@@ -6759,7 +6759,7 @@ static ed_list *delete_section_from_list(off_t beg, off_t num, ed_list *current_
 		  new_i++;
 		  ED_GLOBAL_POSITION(split_back_f) = beg;
 		  ED_LOCAL_POSITION(split_back_f) += end - ED_GLOBAL_POSITION(cur_f);
-		  if (RAMP_OR_PTREE_OP(ED_TYPE(cur_f)))
+		  if (ramp_or_ptree_op(ED_TYPE(cur_f)))
 		    new_trailing_ramp(split_back_f, cur_f, end);
 		}
 	    }
@@ -6844,7 +6844,9 @@ static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info 
   ed_list *del_state;
   off_t del_num, cur_end;
   ed_fragment *changed_f;
+
   if (num <= 0) return(NULL);
+
   cur_end = cp->edits[pos]->samples;
   del_num = cur_end - beg;
   if (num < del_num) del_num = num;
@@ -6855,7 +6857,9 @@ static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info 
       del_state = free_ed_list(del_state, cp);
     }
   else new_state = insert_section_into_list(beg, num, cp->edits[pos], &changed_f, origin, 1.0);
+
   (*rtn) = changed_f;
+
   if ((cp->edits) && (cp->edit_ctr > 0))
     {
       ed_list *old_state;
@@ -6864,8 +6868,10 @@ static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info 
       new_state->selection_end = old_state->selection_end;
     }
   new_state->edpos = pos;
+
   return(new_state);
 }
+
 
 bool file_change_samples(off_t beg, off_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos)
 {
@@ -7123,7 +7129,7 @@ bool ptree_or_sound_fragments_in_use(chan_info *cp, int pos)
       if ((index != 0) &&
 	  (index != EDIT_LIST_ZERO_MARK))
 	return(true);
-      if (PTREE123_OP(FRAGMENT_TYPE(ed, i)))
+      if (ptree123_op(FRAGMENT_TYPE(ed, i)))
 	return(true);
     }
   return(false);
@@ -7143,6 +7149,89 @@ bool virtual_mix_ok(chan_info *cp, int edpos)
       if (unmixable_op(FRAGMENT_TYPE(ed, i))) return(false);
     }
   return(true);
+}
+
+static bool found_mix_zero(chan_info *cp, int edpos)
+{
+  /* since a mix can be dragged anywhere, and we want to continue treating it as a virtual mix anywhere,
+   *   we have to make sure that envelopes don't optimize themselves out just because a section is zero.
+   */
+#if WITH_RAMP_MIX
+  ed_list *ed;
+  int i;
+  ed = cp->edits[edpos];
+  for (i = 0; i < ed->size - 1; i++) 
+    {
+      if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(false);
+      if (FRAGMENT_TYPE(ed, i) == ED_MIX_ZERO) {fprintf(stderr,"found mix zero in fragment %d\n", i); return(true);}
+    }
+#endif
+  return(false);
+}
+
+static bool found_virtual_mix(chan_info *cp, int edpos)
+{
+  ed_list *ed;
+  int i;
+  ed = cp->edits[edpos];
+  for (i = 0; i < ed->size - 1; i++) 
+    {
+      if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(false);
+      if (mix_op(FRAGMENT_TYPE(ed, i))) return(true);
+    }
+  return(false);
+}
+
+static bool found_unmixable_ptreed_op(chan_info *cp, int edpos, off_t beg, off_t end)
+{
+  ed_list *ed;
+  int i;
+  ed = cp->edits[edpos];
+  for (i = 0; i < ed->size - 1; i++) 
+    {
+      off_t loc, next_loc;
+      if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(false);
+      loc = FRAGMENT_GLOBAL_POSITION(ed, i);
+      if (loc > end) return(false);
+      next_loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);         /* i.e. next loc = current fragment end point */
+      /* this fragment (i) starts at loc, ends just before next_loc, is of type typ */
+      if (next_loc > beg)
+	{
+	  int after_ptree_op;
+	  after_ptree_op = type_info[FRAGMENT_TYPE(ed, i)].add_ptree;
+	  if ((after_ptree_op == -1) ||        /* this should not happen since we check for it ahead of time */
+	      (unmixable_op(after_ptree_op)))
+	    return(true);
+	}
+    }
+  return(false);
+}
+
+static bool found_unmixable_ramped_op(chan_info *cp, int edpos, off_t beg, off_t end, bool is_xramp)
+{
+  ed_list *ed;
+  int i;
+  ed = cp->edits[edpos];
+  for (i = 0; i < ed->size - 1; i++) 
+    {
+      off_t loc, next_loc;
+      if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(false);
+      loc = FRAGMENT_GLOBAL_POSITION(ed, i);
+      if (loc > end) return(false);
+      next_loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);         /* i.e. next loc = current fragment end point */
+      /* this fragment (i) starts at loc, ends just before next_loc, is of type typ */
+      if (next_loc > beg)
+	{
+	  int after_ramp_op;
+	  if (is_xramp)
+	    after_ramp_op = type_info[FRAGMENT_TYPE(ed, i)].add_xramp;
+	  else after_ramp_op = type_info[FRAGMENT_TYPE(ed, i)].add_ramp;
+	  if ((after_ramp_op == -1) ||        /* this should not happen since we check for it ahead of time */
+	      (unmixable_op(after_ramp_op)))
+	    return(true);
+	}
+    }
+  return(false);
 }
 
 static bool section_is_zero(chan_info *cp, off_t beg, off_t dur, int pos)
@@ -7224,7 +7313,7 @@ static ed_list *copy_and_split_list(off_t beg, off_t num, ed_list *current_state
 		      ED_LOCAL_POSITION(split_back_f) = ED_LOCAL_END(split_front_f) + 1;
 		      ED_GLOBAL_POSITION(split_back_f) = beg;
 		      /* now fixup ramps/ptrees affected by the split */
-		      if (RAMP_OR_PTREE_OP(ED_TYPE(cur_f)))
+		      if (ramp_or_ptree_op(ED_TYPE(cur_f)))
 			{
 			  new_leading_ramp(split_front_f, cur_f, beg);
 			  new_trailing_ramp(split_back_f, cur_f, beg);
@@ -7244,7 +7333,7 @@ static ed_list *copy_and_split_list(off_t beg, off_t num, ed_list *current_state
 		      ED_LOCAL_POSITION(split_back_f) = ED_LOCAL_END(split_front_f) + 1;
 		      ED_GLOBAL_POSITION(split_back_f) = end;
 		      /* now fixup ramps/ptrees affected by the split */
-		      if (RAMP_OR_PTREE_OP(ED_TYPE(cur_f)))
+		      if (ramp_or_ptree_op(ED_TYPE(cur_f)))
 			{
 			  if (ED_RAMPS(split_front_f))
 			    {
@@ -7289,7 +7378,7 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
       (num <= 0) ||
       (beg >= old_ed->samples) ||
       (scl == 1.0) ||
-      (section_is_zero(cp, beg, num, pos)))
+      ((section_is_zero(cp, beg, num, pos)) && (!(found_mix_zero(cp, pos)))))
     return(false); 
 
   len = old_ed->samples;
@@ -7500,7 +7589,7 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   if ((beg < 0) || 
       (num <= 0) ||
       (beg >= old_ed->samples) ||
-      (section_is_zero(cp, beg, num, pos)))
+      ((section_is_zero(cp, beg, num, pos)) && (!(found_mix_zero(cp, pos)))))
     return(false);  /* was true, but this is a no-op */
 
   if ((rmp0 == rmp1) || (num == 1))
@@ -7510,11 +7599,26 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   if (!(prepare_edit_list(cp, pos, origin))) 
     return(false);
 
-  if (lock_affected_mixes(cp, pos, beg, beg + num))
+  if (found_virtual_mix(cp, pos))
     {
-      pos = cp->edit_ctr;
-      increment_edit_ctr(cp);
-      backup = true;
+      off_t lock_beg, lock_end;
+      if (found_unmixable_ramped_op(cp, pos, beg, beg + num, is_xramp))
+	{
+	  lock_beg = 0;
+	  lock_end = len - 1;
+	}
+      else
+	{
+	  lock_beg = beg;
+	  lock_end = beg + num;
+	}
+      if (lock_affected_mixes(cp, pos, lock_beg, lock_end))
+	{
+	  pos = cp->edit_ctr;
+	  old_ed = cp->edits[pos]; 
+	  increment_edit_ctr(cp);
+	  backup = true;
+	}
     }
 
   incr = (double)(rmp1 - rmp0) / (double)(num - 1);
@@ -7631,7 +7735,7 @@ static void make_ptree_fragment(ed_list *new_ed, int i, int ptree_loc, off_t beg
       FRAGMENT_TYPE(new_ed, i) = ED_PTREE;
     }
   ensure_ed_ptrees(FRAGMENT(new_ed, i));
-  if (PTREE1_OP(FRAGMENT_TYPE(new_ed, i)))
+  if (ptree1_op(FRAGMENT_TYPE(new_ed, i)))
     {
       FRAGMENT_PTREE_INDEX(new_ed, i) = ptree_loc;
       FRAGMENT_PTREE_SCALER(new_ed, i) = MUS_SAMPLE_TO_FLOAT(FRAGMENT_SCALER(new_ed, i)); /* arg is mus_sample data, need convert to float */
@@ -7640,7 +7744,7 @@ static void make_ptree_fragment(ed_list *new_ed, int i, int ptree_loc, off_t beg
     }
   else 
     {
-      if (PTREE2_OP(FRAGMENT_TYPE(new_ed, i)))
+      if (ptree2_op(FRAGMENT_TYPE(new_ed, i)))
 	{
 	  FRAGMENT_PTREE2_INDEX(new_ed, i) = ptree_loc;
 	  FRAGMENT_PTREE2_SCALER(new_ed, i) = FRAGMENT_SCALER(new_ed, i); /* already float, so no need to convert */
@@ -7697,11 +7801,31 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
 	}
       return;
     }
-  if (lock_affected_mixes(cp, pos, beg, beg + num))
+
+  /* if there are any virtual mixes, we need to check the ptreed section for either mixes present, or
+   *    ptreed-opcodes that are unmixable (since the user may drag the virtual mix into this new section).
+   *    In the latter case, all mixes must be locked, not just those directly affected.
+   */
+  if (found_virtual_mix(cp, pos))
     {
-      pos = cp->edit_ctr;
-      increment_edit_ctr(cp);
-      backup = true;
+      off_t lock_beg, lock_end;
+      if (found_unmixable_ptreed_op(cp, pos, beg, beg + num))
+	{
+	  lock_beg = 0;
+	  lock_end = len - 1;
+	}
+      else
+	{
+	  lock_beg = beg;
+	  lock_end = beg + num;
+	}
+      if (lock_affected_mixes(cp, pos, lock_beg, lock_end))
+	{
+	  pos = cp->edit_ctr;
+	  old_ed = cp->edits[pos];  /* add ptrees to the changed list, not the original incoming list */
+	  increment_edit_ctr(cp);
+	  backup = true;
+	}
     }
 
   ptree_loc = add_ptree(cp);
@@ -7925,7 +8049,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
 	  indx = ind0 + sf->frag_pos;
 	  ind1 = READER_LOCAL_END(sf);                        /* cb->end */
 	  sf->fscaler = MUS_FIX_TO_FLOAT * READER_SCALER(sf);
-	  if (ZERO_OP(READER_TYPE(sf)))
+	  if (zero_op(READER_TYPE(sf)))
 	    {
 	      sf->current_sound = NULL;
 	      sf->loc = indx;
@@ -8053,7 +8177,7 @@ static void previous_sound_1(snd_fd *sf)
       ind0 = READER_LOCAL_POSITION(sf);
       ind1 = READER_LOCAL_END(sf);
       sf->fscaler = MUS_FIX_TO_FLOAT * READER_SCALER(sf);
-      if (ZERO_OP(READER_TYPE(sf)))
+      if (zero_op(READER_TYPE(sf)))
 	{
 	  sf->current_sound = NULL;
 	  sf->loc = ind1;
@@ -8148,7 +8272,7 @@ static void next_sound_1(snd_fd *sf)
       ind0 = READER_LOCAL_POSITION(sf);
       ind1 = READER_LOCAL_END(sf);
       sf->fscaler = MUS_FIX_TO_FLOAT * READER_SCALER(sf);
-      if (ZERO_OP(READER_TYPE(sf)))
+      if (zero_op(READER_TYPE(sf)))
 	{
 	  sf->current_sound = NULL;
 	  sf->loc = ind0;
@@ -8729,13 +8853,9 @@ bool redo_edit_with_sync(chan_info *cp, int count)
 		  so RAMP|2|3|4_MIX -- see WITH_RAMP_MIX above
 
 		  but... we currently optimize out ramps on zero -> ed_zero which means the
-		  envelope is lost if a ramped mix is subsequently moved
-  */
-
-static int add_mix_op(int type)
-{
-  return(type_info[type].add_mix);
-}
+		  envelope is lost if a ramped mix is subsequently moved -- so if env on 0, check
+		  first for any mix_zero ops in the fragment list?
+   */
 
 static void make_mix_fragment(ed_list *new_ed, int i, mix_state *ms, off_t beg)
 {
@@ -8746,7 +8866,7 @@ static void make_mix_fragment(ed_list *new_ed, int i, mix_state *ms, off_t beg)
   /* i = index into ed_fragment list for this edit */
   /* we're changing one fragment to add the mix */
 
-  FRAGMENT_TYPE(new_ed, i) = add_mix_op(FRAGMENT_TYPE(new_ed, i));
+  FRAGMENT_TYPE(new_ed, i) = type_info[FRAGMENT_TYPE(new_ed, i)].add_mix;
   if (!(FRAGMENT_MIXES(new_ed, i)))
     FRAGMENT_MIXES(new_ed, i) = (ed_mixes *)CALLOC(1, sizeof(ed_mixes));
   mxs = FRAGMENT_MIXES(new_ed, i);
@@ -8773,11 +8893,6 @@ static void make_mix_fragment(ed_list *new_ed, int i, mix_state *ms, off_t beg)
 	}
     }
   MIX_LIST_STATE(mxs, mloc) = ms;
-}
-
-static int remove_mix_op(int type)
-{
-  return(type_info[type].subtract_mix);
 }
 
 static ed_list *make_mix_edit(ed_list *old_ed, off_t beg, off_t len, mix_state *ms, bool full_fragment)
@@ -8943,7 +9058,7 @@ void unmix(chan_info *cp, mix_state *ms)
     {
       if ((FRAGMENT_GLOBAL_POSITION(ed, i) >= ms->beg) &&
 	  (FRAGMENT_GLOBAL_POSITION(ed, i) < (ms->beg + ms->len)) &&
-	  (MIX_OP(FRAGMENT_TYPE(ed, i))))
+	  (mix_op(FRAGMENT_TYPE(ed, i))))
 	{
 	  /* look for ms in the current fragment's mix list */
 	  int j, remaining_mixes = 0, mss_size;
@@ -8961,7 +9076,7 @@ void unmix(chan_info *cp, mix_state *ms)
 	      }
 	  if (remaining_mixes == 0)
 	    {
-	      FRAGMENT_TYPE(ed, i) = remove_mix_op(FRAGMENT_TYPE(ed, i));
+	      FRAGMENT_TYPE(ed, i) = type_info[FRAGMENT_TYPE(ed, i)].subtract_mix;
 	      FREE(mss);
 	      FREE(mxl);
 	      FRAGMENT_MIXES(ed, i) = NULL;
