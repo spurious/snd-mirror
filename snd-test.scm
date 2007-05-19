@@ -36194,8 +36194,8 @@ EDITS: 1
       (set! (channel-style) channels-separate)
       (delete-file "s61.scm"))
     
-    (let ((ind0 (open-sound "oboe.snd"))
-	  (ind1 (open-sound "oboe.snd")))
+    (let* ((ind0 (open-sound "oboe.snd"))
+	   (ind1 (open-sound "oboe.snd")))
       (if (not (= (find-sound "oboe.snd" 0) ind0))
 	  (snd-display ";find-sound 0: ~A ~A" ind0 (find-sound "oboe.snd" 0)))
       (if (not (= (find-sound "oboe.snd" 1) ind1))

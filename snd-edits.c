@@ -1,5 +1,6 @@
 #include "snd.h"
 
+
 static XEN save_hook;
 static bool dont_save(snd_info *sp, const char *newname)
 {
@@ -12,6 +13,7 @@ static bool dont_save(snd_info *sp, const char *newname)
   return(XEN_TRUE_P(res));
 }
 
+
 void after_edit(chan_info *cp)
 {
   reflect_edit_history_change(cp);
@@ -21,6 +23,7 @@ void after_edit(chan_info *cp)
       (XEN_HOOKED(cp->after_edit_hook)))
     run_hook(cp->after_edit_hook, XEN_EMPTY_LIST, S_after_edit_hook);
 }
+
 
 void free_sound_list(chan_info *cp)
 {
@@ -42,6 +45,7 @@ void free_sound_list(chan_info *cp)
       cp->sound_size = 0;
     }
 }
+
 
 static void release_pending_sounds(chan_info *cp, int edit_ctr)
 {
@@ -66,6 +70,7 @@ static void release_pending_sounds(chan_info *cp, int edit_ctr)
     }
 }
 
+
 #define EDIT_ALLOC_SIZE 32
 /* EDIT_ALLOC_SIZE is the allocation amount (pointers) each time cp->sounds is (re)allocated */
 
@@ -87,12 +92,14 @@ void prepare_sound_list(chan_info *cp)
     }
 }
 
+
 static int add_sound_file_to_edit_list(chan_info *cp, const char *name, snd_io *io, file_info *hdr, file_delete_t temp, int chan)
 {
   prepare_sound_list(cp);
   cp->sounds[cp->sound_ctr] = make_snd_data_file(name, io, hdr, temp, cp->edit_ctr, chan);
   return(cp->sound_ctr);
 }
+
 
 void free_ptree_list(chan_info *cp)
 {
@@ -119,6 +126,7 @@ void free_ptree_list(chan_info *cp)
   cp->ptree_ctr = -1;
   cp->ptree_size = 0;
 }
+
 
 static int add_ptree(chan_info *cp)
 {
@@ -152,6 +160,7 @@ static int add_ptree(chan_info *cp)
   return(cp->ptree_ctr);
 }
 
+
 static ed_list *free_ed_list(ed_list *ed, chan_info *cp);
 
 static void prune_edits(chan_info *cp, int edpt)
@@ -167,6 +176,7 @@ static void prune_edits(chan_info *cp, int edpt)
     }
 }
 
+
 bool editable_p(chan_info *cp)
 {
   if (!(cp->editable)) return(false);
@@ -181,6 +191,7 @@ bool editable_p(chan_info *cp)
   return(true);
 }
 
+
 static void increment_edit_ctr(chan_info *cp)
 {
   cp->edit_ctr++;
@@ -193,6 +204,7 @@ static void increment_edit_ctr(chan_info *cp)
       for (i = cp->edit_ctr; i < cp->edit_size; i++) cp->edits[i] = NULL; 
     }
 }
+
 
 static bool prepare_edit_list(chan_info *cp, int pos, const char *caller)
 {
@@ -220,6 +232,7 @@ static bool prepare_edit_list(chan_info *cp, int pos, const char *caller)
   prune_edits(cp, cp->edit_ctr);
   return(true);
 }
+
 
 static void reflect_sample_change_in_axis(chan_info *cp)
 {
@@ -249,6 +262,7 @@ static void reflect_sample_change_in_axis(chan_info *cp)
     }
 }
 
+
 void reflect_file_change_in_label(chan_info *cp)
 {
   snd_info *sp;
@@ -270,6 +284,7 @@ void reflect_file_change_in_label(chan_info *cp)
     }
 }
 
+
 static void check_for_first_edit(chan_info *cp)
 {
   if ((cp->cgx) && (cp->edit_ctr == 1)) /* first edit on this file (?) */
@@ -277,6 +292,7 @@ static void check_for_first_edit(chan_info *cp)
       reflect_file_change_in_label(cp);
     }
 }
+
 
 static XEN save_state_hook;
 
@@ -372,7 +388,6 @@ typedef struct mix_readers {
   snd_fd **sfs;
 } mix_readers;
 
-
 typedef struct ed_fragment {               /* this name is necessary even in straight C */
   short typ,                               /* code for accessor choice (ED_SIMPLE etc) */
         snd;                               /* either an index into the cp->sounds array (snd_data structs) or EDIT_LIST_END|ZERO_MARK */
@@ -391,11 +406,9 @@ typedef struct ed_fragment {               /* this name is necessary even in str
  *   ed_fragment itself could be as small as typ/out/snd/beg/end/scl
  */
 
-
 /* two ed_fragment->snd markers */
 #define EDIT_LIST_END_MARK -2
 #define EDIT_LIST_ZERO_MARK -1
-
 
 #define FRAGMENTS(Ed)                       (ed_fragment **)((Ed)->fragments)
 #define FRAGMENT(Ed, Pos)                  ((ed_fragment **)((Ed)->fragments))[Pos]
@@ -1004,25 +1017,6 @@ static Float previous_mix_ramp(snd_fd *sf)
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp_value(sf))) + read_mix_list_samples(sf));
 }
 
-
-#define WITH_RAMP_MIX 0
-
-#if WITH_RAMP_MIX
-static Float next_ramp_mix_zero(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound(sf));
-  sf->loc++;
-  return((read_mix_list_samples(sf)) * next_ramp_value(sf));
-}
-
-static Float previous_ramp_mix_zero(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound(sf));
-  sf->loc--;
-  return((read_mix_list_samples(sf)) * previous_ramp_value(sf));
-}
-#endif
-
 static Float next_mix_ramp2(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf));
@@ -1106,6 +1100,7 @@ static Float previous_mix_xrampn_rampn(snd_fd *sf)
   if (sf->loc < sf->first) return(previous_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * (*(sf->rev_rampf))(sf))) + read_mix_list_samples(sf));
 }
+
 
 
 
@@ -2830,9 +2825,7 @@ enum {ED_SIMPLE, ED_MIX_SIMPLE, ED_ZERO, ED_MIX_ZERO,
       ED_XRAMP_RAMP3_PTREE3, ED_XRAMP_RAMP3_PTREE3_ZERO, ED_XRAMP2_RAMP2_PTREE3, ED_XRAMP2_RAMP2_PTREE3_ZERO,
       ED_XRAMP_RAMP_PTREE3_RAMP2, ED_XRAMP_RAMP2_PTREE3_RAMP, ED_RAMP_PTREE3_XRAMP_RAMP2,
       ED_XRAMP_RAMP2_PTREE3_XRAMP, ED_XRAMP2_RAMP_PTREE3_RAMP, ED_RAMP2_PTREE3_XRAMP_RAMP, 
-#if WITH_RAMP_MIX
-      ED_RAMP_MIX_ZERO,
-#endif
+
       NUM_OPS
 };
 
@@ -2866,13 +2859,8 @@ static fragment_type_info type_info[NUM_OPS] = {
 
   {ED_ZERO, ED_ZERO, ED_ZERO, ED_PTREE_ZERO, ED_MIX_ZERO, -1, 0, 0, 0, true, 
    "ed_zero", next_zero, previous_zero, NULL, NULL},
-#if WITH_RAMP_MIX
-  {ED_MIX_ZERO, ED_RAMP_MIX_ZERO, -1, -1, ED_MIX_ZERO, ED_ZERO, 0, 0, 0, true, 
-   "ed_mix_zero", next_mix_zero, previous_mix_zero, NULL, NULL},
-#else
   {ED_MIX_ZERO, -1, -1, -1, ED_MIX_ZERO, ED_ZERO, 0, 0, 0, true, 
    "ed_mix_zero", next_mix_zero, previous_mix_zero, NULL, NULL},
-#endif
 
   {ED_RAMP, ED_RAMP2, ED_XRAMP_RAMP, ED_PTREE_RAMP, ED_MIX_RAMP, -1, 0, 1, 0, false, 
    "ed_ramp", next_ramp, previous_ramp, NULL, NULL},
@@ -3679,13 +3667,6 @@ static fragment_type_info type_info[NUM_OPS] = {
    "ed_xramp2_ramp_ptree3_ramp", next_xramp_ramp_ptree_ramp, previous_xramp_ramp_ptree_ramp, next_ramp_value, previous_ramp_value},
   {ED_RAMP2_PTREE3_XRAMP_RAMP, -1, -1, -1, -1, -1, 3, 3, 1, false, 
    "ed_ramp2_ptree3_xramp_ramp", next_ramp2_ptree_xramp_ramp, previous_ramp2_ptree_xramp_ramp, next_xramp_ramp_value, previous_xramp_ramp_value},
-
-#if WITH_RAMP_MIX
-  /* an experiment */
-  {ED_RAMP_MIX_ZERO, -1, -1, -1, -1, ED_ZERO, 0, 1, 0, true, 
-   "ed_ramp_mix_zero", next_ramp_mix_zero, previous_ramp_mix_zero, NULL, NULL},
-#endif
-
 };
 
 static bool ptree123_op(int type)
@@ -3807,12 +3788,8 @@ static void check_type_info_entry(int op, int expected_ramps, int expected_xramp
 	fprintf(stderr, "%s add_ramp: %s\n", type_info[op].name, type_info[type_info[op].add_ramp].name);
       if (type_info[op].add_xramp != -1) fprintf(stderr, "%s add_xramp: %s\n", type_info[op].name, type_info[type_info[op].add_xramp].name);
       if (type_info[op].add_ptree != -1) fprintf(stderr, "%s add_ptree: %s\n", type_info[op].name, type_info[type_info[op].add_ptree].name);
-#if WITH_RAMP_MIX
-      if ((type_info[type_info[op].subtract_mix].add_mix != op) &&
-	  (op != ED_RAMP_MIX_ZERO))
-#else
+
       if (type_info[type_info[op].subtract_mix].add_mix != op)
-#endif
 	fprintf(stderr, "%s subtract: %s but its add: %s\n",
 		type_info[op].name, type_info[type_info[op].subtract_mix].name, 
 		(type_info[type_info[op].subtract_mix].add_mix != -1) ? type_info[type_info[type_info[op].subtract_mix].add_mix].name : "not an op");
@@ -4113,9 +4090,6 @@ static void choose_accessor(snd_fd *sf)
 
     case ED_RAMP:
     case ED_MIX_RAMP:
-#if WITH_RAMP_MIX
-    case ED_RAMP_MIX_ZERO:
-#endif
       setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
       break;
     case ED_RAMP2:
@@ -4784,6 +4758,7 @@ char *edit_to_string(chan_info *cp, int edit)
   return(edbuf);
 }
 
+
 static void display_edits(chan_info *cp, FILE *outp, bool with_source)
 {
   int i;
@@ -4791,6 +4766,7 @@ static void display_edits(chan_info *cp, FILE *outp, bool with_source)
   for (i = 0; i <= cp->edit_ctr; i++)
     display_ed_list(cp, outp, i, cp->edits[i], with_source);
 }
+
 
 static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, snd_fd **sfs, off_t length)
 {
@@ -4909,6 +4885,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
   return(io_err);
 }
 
+
 static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, int edpos, off_t beg, off_t len)
 {
   snd_info *sp;
@@ -4943,6 +4920,7 @@ static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, 
   return(err);
 }
 
+
 static io_error_t channel_to_file(chan_info *cp, const char *ofile, int edpos)
 {
   return(channel_to_file_with_bounds(cp, ofile, edpos, 0, cp->edits[edpos]->samples));
@@ -4966,6 +4944,7 @@ static void fprintf_with_possible_embedded_string(FILE *fd, const char *str)
     }
   fputc('"', fd);
 }
+
 
 static char *edit_list_data_to_temp_file(chan_info *cp, ed_list *ed, file_delete_t delete_me, bool with_save_state_hook)
 {
@@ -4997,6 +4976,7 @@ static char *edit_list_data_to_temp_file(chan_info *cp, ed_list *ed, file_delete
   return(ofile);
 }
   
+
 #if HAVE_FORTH
 /*
  * ret_name: last word in origin (function name)
@@ -5018,6 +4998,7 @@ static char *split_origin(char *origin, char **ret_name)
   return NULL;
 }
 #endif
+
 
 void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 {
@@ -5341,6 +5322,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 #endif
     save_mark_list(fd, cp, false); /* false -> save just the current channel's marks */
 }
+
 
 static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 {
@@ -5718,17 +5700,20 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 #endif
 }
 
+
 static void ensure_ed_ramps(ed_fragment *ed)
 {
   if (!(ed->ramps))
     ed->ramps = (ed_ramps *)CALLOC(1, sizeof(ed_ramps));
 }
 
+
 static void ensure_ed_ptrees(ed_fragment *ed)
 {
   if (!(ed->ptrees))
     ed->ptrees = (ed_ptrees *)CALLOC(1, sizeof(ed_ptrees));
 }
+
 
 static ed_fragment *make_ed_fragment(void)
 {
@@ -5741,6 +5726,7 @@ static ed_fragment *make_ed_fragment(void)
   return((ed_fragment *)CALLOC(1, sizeof(ed_fragment)));
 #endif
 }
+
 
 #if MUS_DEBUGGING
 void describe_ed_fragment(FILE *Fp, void *ptr);
@@ -5756,6 +5742,7 @@ void describe_ed_fragment(FILE *Fp, void *ptr)
 }
 #endif
 
+
 static ed_mixes *copy_fragment_mixes(ed_mixes *old_mixes)
 {
   ed_mixes *ed;
@@ -5766,6 +5753,7 @@ static ed_mixes *copy_fragment_mixes(ed_mixes *old_mixes)
   memcpy((void *)(ed->mix_list), (void *)(old_mixes->mix_list), ed->size * sizeof(mix_state *));
   return(ed);
 }
+
 
 static void copy_ed_fragment(ed_fragment *new_ed, ed_fragment *old_ed)
 {
@@ -5789,6 +5777,7 @@ static void copy_ed_fragment(ed_fragment *new_ed, ed_fragment *old_ed)
     new_ed->mixes = copy_fragment_mixes(old_ed->mixes);
 }
 
+
 static ed_fragment *free_ed_fragment(ed_fragment *ed)
 {
   if (ed)
@@ -5804,6 +5793,7 @@ static ed_fragment *free_ed_fragment(ed_fragment *ed)
     }
   return(NULL);
 }
+
 
 static ed_list *make_ed_list(int size)
 {
@@ -5829,12 +5819,14 @@ static ed_list *make_ed_list(int size)
   return(ed);
 }
 
+
 void set_ed_maxamp(chan_info *cp, int edpos, Float val)
 {
   ed_list *ed;
   ed = cp->edits[edpos];
   ed->maxamp = val;
 }
+
 
 Float ed_maxamp(chan_info *cp, int edpos)
 {
@@ -5843,12 +5835,14 @@ Float ed_maxamp(chan_info *cp, int edpos)
   return(ed->maxamp);
 }
 
+
 void set_ed_maxamp_position(chan_info *cp, int edpos, off_t val)
 {
   ed_list *ed;
   ed = cp->edits[edpos];
   ed->maxamp_position = val;
 }
+
 
 off_t ed_maxamp_position(chan_info *cp, int edpos)
 {
@@ -5857,12 +5851,14 @@ off_t ed_maxamp_position(chan_info *cp, int edpos)
   return(ed->maxamp_position);
 }
 
+
 void set_ed_selection_maxamp(chan_info *cp, Float val)
 {
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];
   ed->selection_maxamp = val;
 }
+
 
 Float ed_selection_maxamp(chan_info *cp)
 {
@@ -5871,6 +5867,7 @@ Float ed_selection_maxamp(chan_info *cp)
   return(ed->selection_maxamp);
 }
 
+
 void set_ed_selection_maxamp_position(chan_info *cp, off_t val)
 {
   ed_list *ed;
@@ -5878,12 +5875,14 @@ void set_ed_selection_maxamp_position(chan_info *cp, off_t val)
   ed->selection_maxamp_position = val;
 }
 
+
 off_t ed_selection_maxamp_position(chan_info *cp)
 {
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];
   return(ed->selection_maxamp_position);
 }
+
 
 typedef struct {
   snd_fd **rds;
@@ -5961,6 +5960,7 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
   return(NULL);
 }
 
+
 void backup_edit_list(chan_info *cp)
 {
   int cur, i;
@@ -5999,6 +5999,7 @@ void backup_edit_list(chan_info *cp)
   reflect_edit_history_change(cp);
 }
 
+
 void free_edit_list(chan_info *cp)
 {
   if (cp)
@@ -6016,6 +6017,7 @@ void free_edit_list(chan_info *cp)
       cp->edit_size = 0;
     }
 }
+
 
 ed_list *initial_ed_list(off_t beg, off_t end)
 {
@@ -6047,6 +6049,7 @@ ed_list *initial_ed_list(off_t beg, off_t end)
   return(ed);
 }
 
+
 snd_info *sound_is_silence(snd_info *sp)
 {
   int i;
@@ -6064,6 +6067,7 @@ snd_info *sound_is_silence(snd_info *sp)
     }
   return(sp);
 }
+
 
 static void new_leading_ramp(ed_fragment *new_start, ed_fragment *old_start, off_t samp)
 {
@@ -6106,6 +6110,7 @@ static void new_leading_ramp(ed_fragment *new_start, ed_fragment *old_start, off
       ED_RAMP4_END(new_start) = rmp0 + (rmp1 - rmp0) * xpos;
     }
 }
+
 
 static void new_trailing_ramp(ed_fragment *new_back, ed_fragment *old_back, off_t samp)
 {
@@ -6163,6 +6168,7 @@ static void new_trailing_ramp(ed_fragment *new_back, ed_fragment *old_back, off_
     }
 }
 
+
 static void ripple_mixes(chan_info *cp, off_t beg, off_t change);
 static void ripple_mixes_with_scale(chan_info *cp, off_t beg, off_t len, Float scl);
 static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info *cp, ed_fragment **rtn, const char *origin);
@@ -6173,6 +6179,7 @@ static void ripple_all(chan_info *cp, off_t beg, off_t samps)
   ripple_mixes(cp, beg, samps);
   check_for_first_edit(cp);
 }
+
 
 static bool lock_affected_mixes(chan_info *cp, int edpos, off_t beg, off_t end)
 {
@@ -6361,6 +6368,7 @@ static ed_list *insert_section_into_list(off_t samp, off_t num, ed_list *current
   return(new_state);
 }
 
+
 static ed_list *insert_samples_into_list(off_t samp, off_t num, int pos, chan_info *cp, ed_fragment **rtn, const char *origin, Float scaler)
 {
   ed_list *new_state;
@@ -6489,6 +6497,7 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos, const cha
   return(true);
 }
 
+
 bool extend_edit_list(chan_info *cp, int edpos)
 {
   /* called by drag-mix (remix_file) in snd-mix.c to provide an "undo point" for mix reposition */
@@ -6522,6 +6531,7 @@ bool extend_edit_list(chan_info *cp, int edpos)
   after_edit(cp);
   return(true);
 }
+
 
 bool file_insert_samples(off_t beg, off_t num, const char *inserted_file, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos)
 {
@@ -6594,6 +6604,7 @@ bool file_insert_samples(off_t beg, off_t num, const char *inserted_file, chan_i
   return(false);
 }
 
+
 bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos)
 {
   off_t len;
@@ -6648,6 +6659,7 @@ bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, con
   return(true);
 }
 
+
 bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg, file_delete_t auto_delete)
 {
   int nc;
@@ -6691,6 +6703,7 @@ bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg, file_de
   FREE(filename);
   return(ok);
 }
+
 
 bool insert_complete_file_at_cursor(snd_info *sp, const char *filename)
 {
@@ -6777,6 +6790,7 @@ static ed_list *delete_section_from_list(off_t beg, off_t num, ed_list *current_
   new_state->sound_location = 0;
   return(new_state);
 }
+
 
 bool delete_samples(off_t beg, off_t num, chan_info *cp, int edpos)
 {
@@ -7006,6 +7020,7 @@ bool file_override_samples(off_t num, const char *tempfile, chan_info *cp, int c
   return(true);
 }
 
+
 bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos)
 {
   off_t prev_len, new_len;
@@ -7062,7 +7077,7 @@ bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, con
 
 /* -------------------------------- ramp/scale/ptree -------------------------------- */
 
-bool ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, bool is_xramp)
+bool unrampable(chan_info *cp, off_t beg, off_t dur, int pos, bool is_xramp)
 {
   /* from enveloper (snd-sig.c) */
   ed_list *ed;
@@ -7081,14 +7096,15 @@ bool ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos
       next_loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);             /* i.e. next loc = current fragment end point */
       /* fragment starts at loc, ends just before next_loc, is of type typ */
       if ((next_loc > beg) &&
-	  (((!is_xramp) && (type_info[typ].add_ramp == -1)) ||
+	  (((!is_xramp) && (type_info[typ].add_ramp == -1)) || 
 	   ((is_xramp) && (type_info[typ].add_xramp == -1))))
 	return(true);
     }
   return(false);
 }
 
-bool ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
+
+bool unptreeable(chan_info *cp, off_t beg, off_t dur, int pos)
 {
   /* from ptree-channel (snd-sig.c) check for pre-existing ptree-channel */
   ed_list *ed;
@@ -7115,6 +7131,7 @@ bool ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
   return(false);
 }
 
+
 bool ptree_or_sound_fragments_in_use(chan_info *cp, int pos)
 {
   /* (swap-channels): are there any non-simple/non-ramp edits? */
@@ -7135,6 +7152,7 @@ bool ptree_or_sound_fragments_in_use(chan_info *cp, int pos)
   return(false);
 }
 
+
 bool virtual_mix_ok(chan_info *cp, int edpos)
 {
   /* since a mix can be dragged anywhere, and we want to continue treating it as a virtual mix anywhere,
@@ -7151,23 +7169,6 @@ bool virtual_mix_ok(chan_info *cp, int edpos)
   return(true);
 }
 
-static bool found_mix_zero(chan_info *cp, int edpos)
-{
-  /* since a mix can be dragged anywhere, and we want to continue treating it as a virtual mix anywhere,
-   *   we have to make sure that envelopes don't optimize themselves out just because a section is zero.
-   */
-#if WITH_RAMP_MIX
-  ed_list *ed;
-  int i;
-  ed = cp->edits[edpos];
-  for (i = 0; i < ed->size - 1; i++) 
-    {
-      if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(false);
-      if (FRAGMENT_TYPE(ed, i) == ED_MIX_ZERO) {fprintf(stderr,"found mix zero in fragment %d\n", i); return(true);}
-    }
-#endif
-  return(false);
-}
 
 static bool found_virtual_mix(chan_info *cp, int edpos)
 {
@@ -7181,6 +7182,7 @@ static bool found_virtual_mix(chan_info *cp, int edpos)
     }
   return(false);
 }
+
 
 static bool found_unmixable_ptreed_op(chan_info *cp, int edpos, off_t beg, off_t end)
 {
@@ -7206,6 +7208,7 @@ static bool found_unmixable_ptreed_op(chan_info *cp, int edpos, off_t beg, off_t
     }
   return(false);
 }
+
 
 static bool found_unmixable_ramped_op(chan_info *cp, int edpos, off_t beg, off_t end, bool is_xramp)
 {
@@ -7234,6 +7237,7 @@ static bool found_unmixable_ramped_op(chan_info *cp, int edpos, off_t beg, off_t
   return(false);
 }
 
+
 static bool section_is_zero(chan_info *cp, off_t beg, off_t dur, int pos)
 {
   ed_list *ed;
@@ -7258,7 +7262,6 @@ static bool section_is_zero(chan_info *cp, off_t beg, off_t dur, int pos)
     }
   return(true);
 }
-
 
 
 static ed_list *copy_and_split_list(off_t beg, off_t num, ed_list *current_state)
@@ -7365,6 +7368,7 @@ static ed_list *copy_and_split_list(off_t beg, off_t num, ed_list *current_state
   return(new_state);
 }
 
+
 bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool in_as_one_edit, const char *origin)
 {
   /* copy current ed-list and reset scalers */
@@ -7378,7 +7382,7 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
       (num <= 0) ||
       (beg >= old_ed->samples) ||
       (scl == 1.0) ||
-      ((section_is_zero(cp, beg, num, pos)) && (!(found_mix_zero(cp, pos)))))
+      (section_is_zero(cp, beg, num, pos)))
     return(false); 
 
   len = old_ed->samples;
@@ -7487,10 +7491,12 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
   return(true);
 }
 
+
 bool scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool in_as_one_edit)
 {
   return(scale_channel_with_origin(cp, scl, beg, num, pos, in_as_one_edit, NULL));
 }
+
 
 static void setup_ramp_fragments(ed_list *new_ed, int i, double seg0, double seg1, Float scaler, Float offset, bool is_xramp)
 {
@@ -7558,10 +7564,6 @@ static void setup_ramp_fragments(ed_list *new_ed, int i, double seg0, double seg
 		}
 	    }
 	  FRAGMENT_TYPE(new_ed, i) = type_info[typ].add_ramp;
-#if WITH_RAMP_MIX
-	  if (FRAGMENT_TYPE(new_ed, i) == ED_RAMP_MIX_ZERO)
-	    FRAGMENT_SCALER(new_ed, i) = 1.0;
-#endif
 	}
     }
   
@@ -7589,7 +7591,7 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   if ((beg < 0) || 
       (num <= 0) ||
       (beg >= old_ed->samples) ||
-      ((section_is_zero(cp, beg, num, pos)) && (!(found_mix_zero(cp, pos)))))
+      (section_is_zero(cp, beg, num, pos)))
     return(false);  /* was true, but this is a no-op */
 
   if ((rmp0 == rmp1) || (num == 1))
@@ -7710,16 +7712,19 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   return(true);
 }
 
+
 bool ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, bool in_as_one_edit)
 {
   return(all_ramp_channel(cp, rmp0, rmp1, 0.0, 0.0, beg, num, pos, in_as_one_edit, S_ramp_channel, false, NULL, 0));
 }
+
 
 bool xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
 		   off_t beg, off_t num, int pos, bool in_as_one_edit, mus_any *e, int xramp_seg_loc)
 {
   return(all_ramp_channel(cp, rmp0, rmp1, scaler, offset, beg, num, pos, in_as_one_edit, S_xramp_channel, true, e, xramp_seg_loc));
 }
+
 
 static void make_ptree_fragment(ed_list *new_ed, int i, int ptree_loc, off_t beg, off_t num)
 {
@@ -7761,6 +7766,7 @@ static void make_ptree_fragment(ed_list *new_ed, int i, int ptree_loc, off_t beg
     }
   FRAGMENT_SCALER(new_ed, i) = 1.0;
 }
+
 
 void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, const char *origin)
 {
@@ -7914,6 +7920,7 @@ static mix_readers *free_mix_readers(mix_readers *md)
   return(NULL);
 }
 
+
 snd_fd *free_snd_fd_almost(snd_fd *sf)
 {
   if (sf) 
@@ -7964,6 +7971,7 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
   return(NULL);
 }
 
+
 snd_fd *free_snd_fd(snd_fd *sf)
 {
   if (sf)
@@ -7974,6 +7982,7 @@ snd_fd *free_snd_fd(snd_fd *sf)
   return(NULL);
 }
 
+
 off_t current_location(snd_fd *sf) 
 {
   /* only used by moving cursor code in snd-dac.c [and sample-reader-position] */
@@ -7981,6 +7990,7 @@ off_t current_location(snd_fd *sf)
     return(READER_GLOBAL_POSITION(sf) - READER_LOCAL_POSITION(sf) + sf->current_sound->io->beg + sf->loc);
   return(READER_GLOBAL_POSITION(sf) - READER_LOCAL_POSITION(sf) + sf->loc);
 }
+
 
 static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read_direction_t direction, int edit_position, int bufsize)
 {
@@ -8102,15 +8112,18 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   return(NULL);
 }
 
+
 snd_fd *init_sample_read_any(off_t samp, chan_info *cp, read_direction_t direction, int edit_position)
 {
   return(init_sample_read_any_with_bufsize(samp, cp, direction, edit_position, MIX_FILE_BUFFER_SIZE));
 }
 
+
 snd_fd *init_sample_read(off_t samp, chan_info *cp, read_direction_t direction)
 {
   return(init_sample_read_any_with_bufsize(samp, cp, direction, cp->edit_ctr, MIX_FILE_BUFFER_SIZE));
 }
+
 
 Float chn_sample(off_t samp, chan_info *cp, int pos)
 { 
@@ -8143,6 +8156,7 @@ Float chn_sample(off_t samp, chan_info *cp, int pos)
     }
   return(val);
 }
+
 
 static void previous_sound_1(snd_fd *sf) 
 {
@@ -8226,11 +8240,13 @@ static void previous_sound_1(snd_fd *sf)
     }
 }
 
+
 static Float previous_sound(snd_fd *sf)
 {
   previous_sound_1(sf);
   return(read_sample(sf));
 }
+
 
 static void next_sound_1(snd_fd *sf)
 {
@@ -8318,6 +8334,7 @@ static void next_sound_1(snd_fd *sf)
       file_buffers_forward(ind0, ind1, indx, sf, sf->current_sound);
     }
 }
+
 
 static Float next_sound(snd_fd *sf)
 {
@@ -8426,6 +8443,7 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   update_graph(cp1);
 }
 
+
 io_error_t save_edits_and_update_display(snd_info *sp)
 {
   /* open temp, write current state, rename to old, reopen and clear all state */
@@ -8533,6 +8551,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   return(IO_NO_ERROR);
 }
 
+
 io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int type, int format, int srate, const char *comment, int pos)
 { 
   /* assume we've already checked for (over)write permissions, and header-type+data-format writable,
@@ -8594,6 +8613,7 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int ty
   return(err);
 }
 
+
 io_error_t save_channel_edits(chan_info *cp, const char *ofile, int pos)
 {
   /* channel extraction -- does not (normally) cause reversion of edits, or change of in-window file, etc */
@@ -8636,6 +8656,7 @@ io_error_t save_channel_edits(chan_info *cp, const char *ofile, int pos)
   return(err);
 }
 
+
 bool has_unsaved_edits(snd_info *sp)
 {
   int i;
@@ -8644,6 +8665,7 @@ bool has_unsaved_edits(snd_info *sp)
       return(true);
   return(false);
 }
+
 
 static io_error_t save_edits_1(snd_info *sp, bool ask)
 {
@@ -8679,15 +8701,18 @@ static io_error_t save_edits_1(snd_info *sp, bool ask)
   return(err);
 }
 
+
 io_error_t save_edits(snd_info *sp)
 {
   return(save_edits_1(sp, true));
 }
 
+
 io_error_t save_edits_without_asking(snd_info *sp)
 {
   return(save_edits_1(sp, false));
 }
+
 
 void revert_edits(chan_info *cp)
 {
@@ -8707,6 +8732,7 @@ void revert_edits(chan_info *cp)
       (XEN_HOOKED(cp->undo_hook)))
     run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
 }
+
 
 /* how to handle something like safe-map-channel that wants to disallow undo? */
 
@@ -8739,6 +8765,7 @@ bool undo_edit(chan_info *cp, int count)
     }
   return(false);
 }
+
 
 bool undo_edit_with_sync(chan_info *cp, int count)
 {
@@ -8773,6 +8800,7 @@ bool undo_edit_with_sync(chan_info *cp, int count)
   return(false);
 }
 
+
 bool redo_edit(chan_info *cp, int count)
 {
   /* returns true if an edit history change occurred */
@@ -8804,6 +8832,7 @@ bool redo_edit(chan_info *cp, int count)
     }
   return(false);
 }
+
 
 bool redo_edit_with_sync(chan_info *cp, int count)
 {
@@ -8840,22 +8869,14 @@ bool redo_edit_with_sync(chan_info *cp, int count)
 
   /* TODO: tmp231 with drag vertically -> change pitch and recalc(?)
    * TODO: mix-drag if syncd should at least move the other tag(s)
-   * PERHAPS: RAMP_MIX is possible -- place ramp on the sum of the mixes and the direct:
-
-		  static Float next_ramp_one_mix(snd_fd *sf)
-		  {
-		    if (sf->loc > sf->last) return(next_sound(sf));
-		    return((sf->data[sf->loc++] * sf-mixes->fscaler) + 
-		            read_sample(((mix_readers *)(sf->mixes))->sfs[0])) * next_ramp_value(sf));
-                    where next_ramp_value includes READER_SCALER (the after-mix global scale factor)
-                    and mixes->fscaler saves the READER_SCALER * MUS_FIX_TO_FLOAT fixup [see line 7590]
-		  }
-		  so RAMP|2|3|4_MIX -- see WITH_RAMP_MIX above
-
-		  but... we currently optimize out ramps on zero -> ed_zero which means the
-		  envelope is lost if a ramped mix is subsequently moved -- so if env on 0, check
-		  first for any mix_zero ops in the fragment list?
    */
+
+/* ramp on mix is techically possible, but ambiguous -- currently if we mix, then ramp elsewhere, then drag the mix
+ *   to the ramped portion, the mix treats the ramp as prior data (adding);  if we had ramp_mix, it would want to
+ *   treat that ramp as an envelope on the mix if the ramp happened after the mix was established but as data if before.
+ *   Too tricky (and ptrees make it worse).  (We'd also need ED_RAMP_ZERO to make clean fixups upon drag and so on).
+ *   Three times and out so far...
+ */
 
 static void make_mix_fragment(ed_list *new_ed, int i, mix_state *ms, off_t beg)
 {
@@ -8895,6 +8916,7 @@ static void make_mix_fragment(ed_list *new_ed, int i, mix_state *ms, off_t beg)
   MIX_LIST_STATE(mxs, mloc) = ms;
 }
 
+
 static ed_list *make_mix_edit(ed_list *old_ed, off_t beg, off_t len, mix_state *ms, bool full_fragment)
 {
   ed_list *new_ed;
@@ -8929,6 +8951,7 @@ static ed_list *make_mix_edit(ed_list *old_ed, off_t beg, off_t len, mix_state *
   new_ed->selection_end = old_ed->selection_end;
   return(new_ed);
 }
+
 
 int mix_file_with_tag(chan_info *cp, const char *filename, int chan, off_t beg, file_delete_t auto_delete, const char *origin)
 {
@@ -8997,6 +9020,7 @@ int mix_file_with_tag(chan_info *cp, const char *filename, int chan, off_t beg, 
   return(ms->mix_id);
 }
 
+
 int mix_buffer_with_tag(chan_info *cp, mus_sample_t *data, off_t beg, off_t buf_len, const char *origin)
 {
   int edpos, mix_loc;
@@ -9047,6 +9071,7 @@ int mix_buffer_with_tag(chan_info *cp, mus_sample_t *data, off_t beg, off_t buf_
 
   return(ms->mix_id);
 }
+
 
 void unmix(chan_info *cp, mix_state *ms)
 {
@@ -9160,10 +9185,12 @@ static void ripple_mixes_1(chan_info *cp, off_t beg, off_t len, off_t change, Fl
     }
 }
 
+
 static void ripple_mixes(chan_info *cp, off_t beg, off_t change)
 {
   ripple_mixes_1(cp, beg, 0, change, 1.0);
 }
+
 
 static void ripple_mixes_with_scale(chan_info *cp, off_t beg, off_t len, Float scl)
 {
@@ -9254,6 +9281,7 @@ snd_fd *make_virtual_mix_reader(chan_info *cp, off_t beg, off_t len, int index, 
   return(sf);
 }
 
+
 bool begin_mix_op(chan_info *cp, off_t old_beg, off_t old_len, off_t new_beg, off_t new_len, int edpos, const char *caller)
 {
   int i;
@@ -9342,6 +9370,7 @@ bool begin_mix_op(chan_info *cp, off_t old_beg, off_t old_len, off_t new_beg, of
   return(true);
 }
 
+
 static int check_splice_at(ed_list *new_ed, off_t beg, int start)
 {
   int i;  
@@ -9366,6 +9395,7 @@ static int check_splice_at(ed_list *new_ed, off_t beg, int start)
     }
   return(0);
 }
+
 
 bool end_mix_op(chan_info *cp, off_t old_beg, off_t old_len)
 {
@@ -9448,6 +9478,7 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
   FREE(buf);
   return(res);
 }
+
 
 static XEN g_edit_fragment(XEN uctr, XEN snd, XEN chn)
 {
@@ -9583,6 +9614,7 @@ char *sample_reader_to_string(snd_fd *fd)
   return(desc);
 }
 
+
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(snd_fd, print_sf, sample_reader_to_string)
 
 /* make-sample-reader can refer to any edit of any sound, user can subsequently
@@ -9634,6 +9666,7 @@ static void list_reader(snd_fd *fd)
   else fprintf(stderr, "can't list reader?");
 }
 
+
 static void unlist_reader(snd_fd *fd)
 {
   if ((fd) && 
@@ -9655,6 +9688,7 @@ static void unlist_reader(snd_fd *fd)
    *   a bug, since we're deliberately breaking the rules, so to speak.
    */
 }
+
 
 static void sf_free(snd_fd *fd)
 {
@@ -9718,6 +9752,7 @@ static XEN g_sample_reader_position(XEN obj)
   return(XEN_ZERO);
 }
 
+
 static XEN g_sample_reader_home(XEN obj)
 {
   #define H_sample_reader_home "(" S_sample_reader_home " obj): (list sound-index chan-num) associated with a sound reader, or \
@@ -9741,10 +9776,12 @@ if 'obj' is a mix-sample-reader, the id of underlying mix"
   return(XEN_FALSE);
 }
 
+
 XEN g_c_make_sample_reader(snd_fd *fd)
 {
   XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
 }
+
 
 static XEN g_make_sample_reader(XEN samp_n, XEN snd, XEN chn, XEN dir1, XEN pos) /* "dir" confuses Mac OS-X Objective-C! */
 {
@@ -9805,6 +9842,7 @@ snd can be a filename, or a sound index number."
   return(XEN_FALSE);
 }
 
+
 static XEN g_make_region_sample_reader(XEN samp_n, XEN reg, XEN chn, XEN dir1)
 {
   #define H_make_region_sample_reader "(" S_make_region_sample_reader " :optional (start-samp 0) (region 0) (chn 0) (dir 1)): \
@@ -9850,6 +9888,7 @@ return a reader ready to access region's channel chn data starting at start-samp
   return(XEN_FALSE);
 }
 
+
 static XEN g_sample_reader_p(XEN obj)
 {
   #define H_sample_reader_p "(" S_sample_reader_p " obj): " PROC_TRUE " if obj is a sound sample-reader."
@@ -9862,6 +9901,7 @@ static XEN g_sample_reader_p(XEN obj)
   return(XEN_FALSE);
 }
 
+
 static XEN g_region_sample_reader_p(XEN obj)
 {
   #define H_region_sample_reader_p "(" S_region_sample_reader_p " obj): " PROC_TRUE " if obj is a region sample-reader."
@@ -9873,6 +9913,7 @@ static XEN g_region_sample_reader_p(XEN obj)
     }
   return(XEN_FALSE);
 }
+
 
 static XEN g_copy_sample_reader(XEN obj)
 {
@@ -9906,12 +9947,14 @@ static XEN g_copy_sample_reader(XEN obj)
   return(XEN_FALSE);
 }
 
+
 static XEN g_next_sample(XEN obj)
 {
   #define H_next_sample "(" S_next_sample " reader): next sample from reader"
   XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_next_sample, "a sample-reader");
   return(C_TO_XEN_DOUBLE(protected_next_sample(TO_SAMPLE_READER(obj))));
 }
+
 
 static XEN g_read_sample(XEN obj)
 {
@@ -9920,12 +9963,14 @@ static XEN g_read_sample(XEN obj)
   return(C_TO_XEN_DOUBLE(read_sample(TO_SAMPLE_READER(obj))));
 }
 
+
 static XEN g_previous_sample(XEN obj)
 {
   #define H_previous_sample "(" S_previous_sample " reader): previous sample from reader"
   XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_previous_sample, "a sample-reader");
   return(C_TO_XEN_DOUBLE(protected_previous_sample(TO_SAMPLE_READER(obj))));
 }
+
 
 static XEN g_free_sample_reader(XEN obj)
 {
@@ -9946,6 +9991,7 @@ static XEN g_free_sample_reader(XEN obj)
     return(g_free_mix_sample_reader(obj));
   return(xen_return_first(XEN_FALSE, obj));
 }
+
 
 static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 {
@@ -10003,6 +10049,7 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
   return(filename);
 }
 
+
 static XEN g_undo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 {
   #define H_undo "(" S_undo " :optional (count 1) snd chn): undo 'count' edits in snd's channel chn"
@@ -10026,6 +10073,7 @@ static XEN g_undo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
     return(C_TO_XEN_INT(1));
   return(XEN_ZERO);
 }
+
 
 static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 {
@@ -10072,6 +10120,7 @@ void as_one_edit(chan_info *cp, int one_edit)
     }
 }
 
+
 static void init_as_one_edit(chan_info *cp) 
 {
   if (cp->in_as_one_edit == 0)
@@ -10094,6 +10143,7 @@ static void init_as_one_edit(chan_info *cp)
   cp->in_as_one_edit++;
 }
 
+
 static void as_one_edit_set_origin(chan_info *cp, void *origin)
 {
   if (cp->as_one_edit_positions)
@@ -10110,6 +10160,7 @@ static void as_one_edit_set_origin(chan_info *cp, void *origin)
 	}
     }
 }
+
 
 static void finish_as_one_edit(chan_info *cp) 
 {
@@ -10130,6 +10181,7 @@ static void finish_as_one_edit(chan_info *cp)
 	}
     }
 }
+
 
 #if HAVE_GUILE_DYNAMIC_WIND && (SCM_DEBUG_TYPING_STRICTNESS != 2)
 static void before_as_one_edit(void *context)
@@ -10210,7 +10262,8 @@ scale samples in the given sound/channel between beg and beg + num by scaler."
   pos = to_c_edit_position(cp, edpos, S_scale_channel, 6);
   scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_channel), pos, NOT_IN_AS_ONE_EDIT);
   return(scl);
-}			  
+}
+			  
 
 static XEN g_normalize_channel(XEN scl, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
 {
@@ -10829,6 +10882,7 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
   chan_info *cp;
   int pos;
   off_t beg, len;
+
   XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_0), samp_0, XEN_ARG_1, S_change_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_OFF_T_P(samps), samps, XEN_ARG_2, S_change_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_P(origin), origin, XEN_ARG_3, S_change_samples_with_origin, "a string");
@@ -10951,6 +11005,7 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
   return(XEN_FALSE); /* not reached */
 }
 
+
 static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_insert_sample "(" S_insert_sample " sample value :optional snd chn edpos): insert 'value' at 'sample' in snd's channel chn"
@@ -10960,6 +11015,7 @@ static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   off_t beg;
   Float fval;
   mus_sample_t ival[1];
+
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_n), samp_n, XEN_ARG_1, S_insert_sample, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_insert_sample, "a number");
   ASSERT_CHANNEL(S_insert_sample, snd_n, chn_n, 3);
@@ -10979,6 +11035,7 @@ static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   FREE(origin);
   return(val);
 }
+
 
 static XEN g_insert_samples(XEN samp, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN edpos, XEN auto_delete, XEN caller)
 {
@@ -11057,6 +11114,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
   return(C_TO_XEN_OFF_T(len));
 }
 
+
 static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vect, XEN snd_n, XEN chn_n, XEN edpos, XEN date)
 {
   chan_info *cp;
@@ -11079,6 +11137,7 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
   return(xen_return_first(C_TO_XEN_OFF_T(len), vect));
 }
 
+
 static XEN g_delete_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_delete_sample "(" S_delete_sample " samp :optional snd chn edpos): delete sample 'samp' from snd's channel chn"
@@ -11100,6 +11159,7 @@ static XEN g_delete_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos)
     update_graph(cp);
   return(samp_n);
 }
+
 
 static XEN g_delete_samples(XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
 {
@@ -11169,6 +11229,7 @@ static int snd_to_sample_free(mus_any *ptr)
   return(0);
 }
 
+
 static char *snd_to_sample_buf = NULL;
 static char *snd_to_sample_describe(mus_any *ptr)
 {
@@ -11222,6 +11283,7 @@ static char *snd_to_sample_describe(mus_any *ptr)
   return(snd_to_sample_buf);
 }
 
+
 Float snd_to_sample_read(mus_any *ptr, off_t frame, int chan) 
 {
   snd_to_sample *spl = (snd_to_sample *)ptr;
@@ -11252,6 +11314,7 @@ Float snd_to_sample_read(mus_any *ptr, off_t frame, int chan)
   return(next_sample_value(spl->sfs[chan])); /* always end up going forward (for simpler code) */
 }
 
+
 static mus_any_class SND_TO_SAMPLE_CLASS = {
   -1,
   S_snd_to_sample,
@@ -11278,6 +11341,7 @@ static mus_any_class SND_TO_SAMPLE_CLASS = {
   0, 0, 0, 0, 0, 0, 0
 };
 
+
 static mus_any *make_snd_to_sample(snd_info *sp)
 {
   snd_to_sample *gen;
@@ -11291,12 +11355,14 @@ static mus_any *make_snd_to_sample(snd_info *sp)
   return((mus_any *)gen);
 }
 
+
 static XEN g_snd_to_sample_p(XEN os) 
 {
   #define H_snd_to_sample_p "(" S_snd_to_sample_p " gen): " PROC_TRUE " if gen is an " S_snd_to_sample " generator"
   return(C_TO_XEN_BOOLEAN((mus_xen_p(os)) && 
 			  (snd_to_sample_p(XEN_TO_MUS_ANY(os)))));
 }
+
 
 static XEN g_snd_to_sample(XEN os, XEN frame, XEN chan)
 {
@@ -11308,6 +11374,7 @@ static XEN g_snd_to_sample(XEN os, XEN frame, XEN chan)
 					    XEN_TO_C_OFF_T(frame), 
 					    XEN_TO_C_INT_OR_ELSE(chan, 0))));
 }
+
 
 static XEN g_make_snd_to_sample(XEN snd)
 {

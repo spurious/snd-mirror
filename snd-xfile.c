@@ -654,6 +654,7 @@ static void file_change_directory_callback(Widget w, XtPointer context, XtPointe
       pos = dirpos_list_top(fp->dir_list, leaving_dir);
       if (pos != POSITION_UNKNOWN)
 	XmListSetPos(w, pos);
+      FREE(leaving_dir);
     }
 }
 

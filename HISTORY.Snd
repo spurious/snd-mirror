@@ -1,5 +1,6 @@
 Snd change log
 
+ 21-May:     background-gradient (gtk+cairo only)
  9-May:      peak-env-hook, draw-mix-hook.
  1-May:      Snd 9.0.
  16-Apr:     removed mix-chans, mix-locked?, mix-inverted?, all track stuff

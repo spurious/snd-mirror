@@ -2054,10 +2054,10 @@ void finish_moving_mix_tag(int mix_id, int x)
   
   pos = snd_round_off_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(cp->sound)));
   if (pos < 0) pos = 0;
-
   cp->hookable = hookable_before_drag;
-  /* undo_edit(cp, 1); */ /* among other problems, this calls update_graph */
-  cp->edit_ctr--;
+  
+  if (cp->edit_ctr > edpos_before_drag) /* possibly dragged it back to start point, so not edit took place */
+    cp->edit_ctr--;
 
   if (XEN_HOOKED(mix_release_hook))
     res = run_progn_hook(mix_release_hook,
@@ -2067,14 +2067,16 @@ void finish_moving_mix_tag(int mix_id, int x)
 
   if (!(XEN_TRUE_P(res)))
     {
-      mix_set_position_edit(mix_id, pos);
-      CURSOR(cp) = pos;
-      after_edit(cp);
-      update_graph(cp); /* this causes flashing, but it's next to impossible to fix
-			 *   display_channel_id assumes previous id was erased, as does any after_graph_hook function
-			 *   and we have to run lisp/fft graphs in any case (and the hook),
-			 *   but display_channel_data_1 erases the old graph, so it's hard to specialize for this case
-			 */
+      if (mix_set_position_edit(mix_id, pos))
+	{
+	  CURSOR(cp) = pos;
+	  after_edit(cp);
+	  update_graph(cp); /* this causes flashing, but it's next to impossible to fix
+			     *   display_channel_id assumes previous id was erased, as does any after_graph_hook function
+			     *   and we have to run lisp/fft graphs in any case (and the hook),
+			     *   but display_channel_data_1 erases the old graph, so it's hard to specialize for this case
+			     */
+	}
     }
 }
 
@@ -3240,6 +3242,4 @@ void g_init_mix(void)
   #define H_draw_mix_hook S_draw_mix_hook " (id): called when a mix tag is about to be displayed"
 
   draw_mix_hook = XEN_DEFINE_HOOK(S_draw_mix_hook, 5, H_draw_mix_hook); /* arg = id, old-x, old-y, x, y */
-
-  /* TODO: doc/test/use draw-mix-hook */
 }

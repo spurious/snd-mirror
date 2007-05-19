@@ -1632,7 +1632,8 @@ in snd-motif.scm uses this hook to draw sync'd marks in some other color than th
 <code><a class=def name="drawmixhook">draw-mix-hook</a> (id old-x old-y x y)</code> [<b>progn</b>]
 </td></tr><tr><td></td><td colspan=2>
 This hook is called before a mix tag is drawn. If the hook function returns #t, the mix tag is not drawn by Snd (the
-assumption is that the hook function drew something).
+assumption is that the hook function drew something).  old-x and old-y are the previous mix tag positions (in case
+you're using draw-mix-hook to draw your own mix tag as in musglyphs.scm).  x and y give the current position.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -12565,6 +12566,15 @@ of FractInt's royal colormap):
 <td><img src="jetcolor.png" alt="colormaps"></td>
 <td><img src="hotcolor.png" alt="colormaps"></td>
 </tr></table>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- background-gradient -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="backgroundgradient">background-gradient</a> ()</code>
+</td></tr><tr><td></td><td>
+In Gtk+Cairo versions of Snd, this is the amount of background color gradient in the channel graphs (0.0, the default, means
+no gradient).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

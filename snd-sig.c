@@ -2590,11 +2590,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
   si = sc->si;
   if (base != 1.0) is_xramp = true;
   for (i = 0; i < si->chans; i++)
-    if (ramp_or_ptree_fragments_in_use(si->cps[i], 
-				       si->begs[i],
-				       dur,
-				       to_c_edit_position(si->cps[i], edpos, origin, arg_pos),
-				       is_xramp))
+    if (unrampable(si->cps[i], si->begs[i], dur, to_c_edit_position(si->cps[i], edpos, origin, arg_pos), is_xramp))
       {
 	rampable = false;
 	break;
@@ -3834,7 +3830,7 @@ the current sample, the vct returned by 'init-func', and the current read direct
   if (caller) {FREE(caller); caller = NULL;}
 #else
 
-  ptrees_present = ptree_fragments_in_use(cp, beg, dur, pos);
+  ptrees_present = unptreeable(cp, beg, dur, pos);
   if (XEN_PROCEDURE_P(init_func))
     {
       if (!(XEN_REQUIRED_ARGS_OK(init_func, 2)))
@@ -4764,6 +4760,7 @@ scale samples in the given sound/channel between beg and beg + num by a ramp goi
   chan_info *cp;
   off_t samp, samps;
   int pos;
+
   XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp0), rmp0, XEN_ARG_1, S_ramp_channel, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp1), rmp1, XEN_ARG_2, S_ramp_channel, "a number");
   ASSERT_SAMPLE_TYPE(S_ramp_channel, beg, XEN_ARG_3);
@@ -4776,7 +4773,7 @@ scale samples in the given sound/channel between beg and beg + num by a ramp goi
   pos = to_c_edit_position(cp, edpos, S_ramp_channel, 7);
   samps = dur_to_samples(num, samp, cp, pos, 4, S_ramp_channel);
 
-  if (ramp_or_ptree_fragments_in_use(cp, samp, samps, pos, false)) /* false - not xramp */
+  if (unrampable(cp, samp, samps, pos, false)) /* false - not xramp */
     {
       snd_info *sp;
       int old_sync;
@@ -4828,12 +4825,14 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
   off_t samp, samps;
   int pos;
   Float ebase = 1.0;
+
   XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp0), rmp0, XEN_ARG_1, S_xramp_channel, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp1), rmp1, XEN_ARG_2, S_xramp_channel, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(base), base, XEN_ARG_3, S_xramp_channel, "a number");
   ASSERT_SAMPLE_TYPE(S_xramp_channel, beg, XEN_ARG_4);
   ASSERT_SAMPLE_TYPE(S_xramp_channel, num, XEN_ARG_5);
   ASSERT_SOUND(S_xramp_channel, snd, 6);
+
   samp = beg_to_sample(beg, S_xramp_channel);
   cp = get_cp(snd, chn, S_xramp_channel);
   if (!cp) return(XEN_FALSE);
@@ -4842,7 +4841,8 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
   ebase = XEN_TO_C_DOUBLE(base);
   if (ebase < 0.0) 
     XEN_OUT_OF_RANGE_ERROR(S_xramp_channel, 3, base, "base ~A < 0.0?");
-  if (ramp_or_ptree_fragments_in_use(cp, samp, samps, pos, (ebase != 1.0)))
+
+  if (unrampable(cp, samp, samps, pos, (ebase != 1.0)))
     {
       snd_info *sp;
       int old_sync;

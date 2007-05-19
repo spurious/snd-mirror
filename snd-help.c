@@ -499,15 +499,10 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+21-May:  background-gradient (gtk+cairo only)\n\
 9-May:   peak-env-hook, draw-mix-hook.\n\
 1-May:   Snd 9.0.\n\
 16-Apr:  spokenword.scm thanks to Ville Koskinen.\n\
-8-Apr:   removed all track support.\n\
-6-Apr:   virtual mix changes: removed mix-chans, mix-locked?, mix-inverted?, delete-mix.\n\
-         added edit-properties, mix-sync.\n\
-         moved delete-mix to mix.scm.\n\
-         moved mix-properties into C.\n\
-23-Mar:  recorder dialog removed -- a new one is underway...\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

@@ -7,10 +7,6 @@
  *   also GdkColor is pretty well sequestered
  */
 
-/*
- * PERHAPS: background-gradient (0 = none)
- */
-
 void draw_line(axis_context *ax, int x0, int y0, int x1, int y1) 
 {
 #if USE_CAIRO
@@ -116,34 +112,37 @@ void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width,
 {
   /* used only to clear the overall graph window in snd-chn.c */
 #if USE_CAIRO
-#if 1
-  cairo_set_source_rgb(ax->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue);
-  cairo_rectangle(ax->cr, x0, y0, width, height);
-  cairo_fill(ax->cr);
-#else
-  {
-    /* try gradient background: looks ok, but display is slow */
-    cairo_pattern_t *pat;
-    /* this is shaded toward the right
-       pat = cairo_pattern_create_linear(0, 0, width, height);
-    */
-    /* this is shaded toward the bottom 
-     */
-    pat = cairo_pattern_create_linear(0, 0, 0, height);
-    cairo_pattern_add_color_stop_rgb(pat, 1, 
-				     mus_fclamp(0.0, ax->gc->bg_color->red - 0.1, 1.0), 
-				     mus_fclamp(0.0, ax->gc->bg_color->green - 0.1, 1.0), 
-				     mus_fclamp(0.0, ax->gc->bg_color->blue - 0.1, 1.0));
-    cairo_pattern_add_color_stop_rgb(pat, 0, 
-				     mus_fclamp(0.0, ax->gc->bg_color->red + 0.1, 1.0), 
-				     mus_fclamp(0.0, ax->gc->bg_color->green + 0.1, 1.0), 
-				     mus_fclamp(0.0, ax->gc->bg_color->blue + 0.1, 1.0));
-    cairo_rectangle(ax->cr, x0, y0, width, height);
-    cairo_set_source(ax->cr, pat);
-    cairo_fill(ax->cr);
-    cairo_pattern_destroy(pat);
-  }
-#endif
+  if (ss->sgx->bg_gradient < .01)
+    {
+      cairo_set_source_rgb(ax->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue);
+      cairo_rectangle(ax->cr, x0, y0, width, height);
+      cairo_fill(ax->cr);
+    }
+  else
+    {
+      Float grad;
+      grad = ss->sgx->bg_gradient;
+      /* try gradient background: looks ok, but display is slow */
+      cairo_pattern_t *pat;
+      /* this is shaded toward the right
+	 pat = cairo_pattern_create_linear(0, 0, width, height);
+      */
+      /* this is shaded toward the bottom 
+       */
+      pat = cairo_pattern_create_linear(0, 0, 0, height);
+      cairo_pattern_add_color_stop_rgb(pat, 1, 
+				       mus_fclamp(0.0, ax->gc->bg_color->red - grad, 1.0), 
+				       mus_fclamp(0.0, ax->gc->bg_color->green - grad, 1.0), 
+				       mus_fclamp(0.0, ax->gc->bg_color->blue - grad, 1.0));
+      cairo_pattern_add_color_stop_rgb(pat, 0, 
+				       mus_fclamp(0.0, ax->gc->bg_color->red + grad, 1.0), 
+				       mus_fclamp(0.0, ax->gc->bg_color->green + grad, 1.0), 
+				       mus_fclamp(0.0, ax->gc->bg_color->blue + grad, 1.0));
+      cairo_rectangle(ax->cr, x0, y0, width, height);
+      cairo_set_source(ax->cr, pat);
+      cairo_fill(ax->cr);
+      cairo_pattern_destroy(pat);
+    }
 #else
   if (ax->wn == NULL) return;
   gdk_draw_rectangle(ax->wn, erase_GC(cp), true, (gint)x0, (gint)y0, (gint)width, (gint)height);
@@ -503,8 +502,6 @@ void allocate_color_map(int colormap)
 
 #else
 /* cairo colormaps */
-
-/* PERHAPS: rectangles probably not needed */
 
 static int sono_bins = 0; /* total_bins */
 static int sono_colors = 0; /* colormap_size */
@@ -1404,8 +1401,33 @@ void set_with_gl(bool val)
 #endif
 }
 
+static XEN g_background_gradient(void) {return(C_TO_XEN_DOUBLE(ss->sgx->bg_gradient));}
+
+static XEN g_set_background_gradient(XEN val) 
+{
+  #define H_background_gradient "(" S_background_gradient "): channel graph background color gradient"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_background_gradient, "a number between 0 (none) and 1");
+
+  ss->sgx->bg_gradient = XEN_TO_C_DOUBLE(val);
+  for_each_chan(update_graph);
+
+  return(val);
+}
+
+
+#ifdef XEN_ARGIFY_1
+  XEN_NARGIFY_0(g_background_gradient_w, g_background_gradient)
+  XEN_NARGIFY_1(g_set_background_gradient_w, g_set_background_gradient)
+#else
+  #define g_background_gradient_w g_background_gradient
+  #define g_set_background_gradient_w g_set_background_gradient
+#endif
+
 void g_init_gxdraw(void)
 {
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_background_gradient, g_background_gradient_w, H_background_gradient,
+				   S_setB S_background_gradient, g_set_background_gradient_w,  0, 0, 1, 0);
+
   #define H_orientation_hook S_orientation_hook " (): called whenever one of the variables associated with the \
 orientation dialog changes"
   #define H_color_hook S_color_hook " (): called whenever one of the variables associated with the \

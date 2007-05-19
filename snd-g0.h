@@ -208,6 +208,7 @@ typedef struct {
   int num_dialogs, dialogs_size;
   bool graph_is_active;
   GtkWidget *requestor_dialog;
+  Float bg_gradient;
   
   GdkCursor *arrow_cursor, *wait_cursor, *graph_cursor;
   gint fam_port;
