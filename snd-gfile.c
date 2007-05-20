@@ -12,8 +12,6 @@
    View:Files
 */
 
-/* TODO: dir list pos */
-
 /* if icons do not get displayed, check the system preferences menu+toolbar dialog */
 
 

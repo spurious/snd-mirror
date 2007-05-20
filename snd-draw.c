@@ -20,6 +20,11 @@ void set_grf_point(int xi, int j, int yi)
   points[j].y = yi;
 }
 
+point_t *get_grf_points(void);
+point_t *get_grf_points1(void);
+point_t *get_grf_points(void) {return(points);} /* for snd-marks.c */
+point_t *get_grf_points1(void) {return(points1);}
+
 void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style)
 {
   int i;
@@ -106,97 +111,6 @@ void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float
 	}
       break;
     }
-}
-
-
-static void allocate_erase_grf_points(mark_context *ms)
-{
-  if (ms->p0 == NULL)
-    {
-      ms->p0 = (point_t *)CALLOC(POINT_BUFFER_SIZE, sizeof(point_t));
-      ms->p1 = (point_t *)CALLOC(POINT_BUFFER_SIZE, sizeof(point_t));
-    }
-}
-
-static void backup_erase_grf_points(mark_context *ms, int nj)
-{
-  ms->lastpj = nj;
-  memcpy((void *)(ms->p0), (void *)points, nj * sizeof(point_t));
-  memcpy((void *)(ms->p1), (void *)points1, nj * sizeof(point_t));
-}
-
-void mark_save_graph(mark_context *ms, int j)
-{
-  allocate_erase_grf_points(ms);
-  backup_erase_grf_points(ms, j);
-}
-
-void erase_and_draw_grf_points(mark_context *ms, chan_info *cp, int nj)
-{
-  chan_context *cx;
-  axis_context *ax;
-#if USE_MOTIF
-  GC draw_gc, undraw_gc;
-#else
-  gc_t *draw_gc, *undraw_gc;
-#endif
-  cx = cp->tcgx;
-  if (!cx) cx = cp->cgx;
-  ax = cx->ax;
-  undraw_gc = erase_GC(cp);
-  draw_gc = copy_GC(cp);
-  if (cp->time_graph_style == GRAPH_LINES)
-    {
-      ax->gc = undraw_gc;
-      draw_lines(ax, ms->p0, ms->lastpj);
-      ax->gc = draw_gc;
-      draw_lines(ax, points, nj);
-    }
-  else 
-    {
-      ax->gc = undraw_gc;
-      draw_points(ax, ms->p0, ms->lastpj, cp->dot_size);
-      ax->gc = draw_gc;
-      draw_points(ax, points, nj, cp->dot_size);
-    }
-  backup_erase_grf_points(ms, nj);
-  ax->gc = draw_gc;
-}
-
-void erase_and_draw_both_grf_points(mark_context *ms, chan_info *cp, int nj)
-{
-  chan_context *cx;
-  axis_context *ax;
-#if USE_MOTIF
-  GC draw_gc, undraw_gc;
-#else
-  gc_t *draw_gc, *undraw_gc;
-#endif
-  cx = cp->tcgx;
-  if (!cx) cx = cp->cgx;
-  ax = cx->ax;
-  undraw_gc = erase_GC(cp);
-  draw_gc = copy_GC(cp);
-  if (cp->time_graph_style == GRAPH_LINES)
-    {
-      ax->gc = undraw_gc;
-      draw_lines(ax, ms->p0, ms->lastpj);
-      draw_lines(ax, ms->p1, ms->lastpj);
-      ax->gc = draw_gc;
-      draw_lines(ax, points, nj);
-      draw_lines(ax, points1, nj);
-    }
-  else 
-    {
-      ax->gc = undraw_gc;
-      draw_points(ax, ms->p0, ms->lastpj, cp->dot_size);
-      draw_points(ax, ms->p1, ms->lastpj, cp->dot_size);
-      ax->gc = draw_gc;
-      draw_points(ax, points, nj, cp->dot_size);
-      draw_points(ax, points1, nj, cp->dot_size);
-    }
-  backup_erase_grf_points(ms, nj);
-  ax->gc = draw_gc;
 }
 
 
@@ -2088,9 +2002,6 @@ void set_grf_points(int xi, int j, int ymin, int ymax) {}
 void set_grf_point(int xi, int j, int yi) {}
 void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style) {}
 void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style) {}
-void erase_and_draw_grf_points(mark_context *ms, chan_info *cp, int nj) {}
-void erase_and_draw_both_grf_points(mark_context *ms, chan_info *cp, int nj) {}
-void mark_save_graph(mark_context *ms, int j) {}
 void draw_cursor(chan_info *cp) {}
 void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show) {}
 void show_mark_triangle(chan_info *cp, int x) {}

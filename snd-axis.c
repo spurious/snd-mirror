@@ -790,8 +790,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  else tdx = describe_ticks(ap->x_ticks, ap->x0, ap->x1, num_ticks, grid_scale); 
 	  break;
 	  
-	  /* PERHAPS: measure-positions or some such list + user interface support => interpolate unset measures */
-	  /*          e.g. grab measure number and drag it => drag (push) all others unset, click = set? */
+	  /* measure-positions or some such list could use marks */
 	  
 	case X_AXIS_AS_PERCENTAGE: 
 	  tdx = describe_ticks(ap->x_ticks, ap->x0 / ap->xmax, ap->x1 / ap->xmax, num_ticks, grid_scale); 

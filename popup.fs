@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Wed Apr 11 13:56:19 CEST 2007
+\ Changed: Sat May 12 16:41:05 CEST 2007
 
 \ Commentary:
 
@@ -582,29 +582,29 @@ let: ( -- menu )
       name $" Play channel" _ string= if
 	w snd channels 1 > if FXtManageChild else FXtUnmanageChild then drop
       else
-	  name $" Redo" _ string= if
-	    w eds cadr 0> if FXtManageChild else FXtUnmanageChild then drop
+	name $" Redo" _ string= if
+	  w eds cadr 0> if FXtManageChild else FXtUnmanageChild then drop
+	else
+	  name $" Mix selection"          _ string=
+	  name $" Insert selection"       _ string= ||
+	  name $" Unselect"               _ string= ||
+	  name $" Replace with selection" _ string= || if
+	    w selection? if FXtManageChild else FXtUnmanageChild then drop
 	  else
-	    name $" Mix selection"          _ string=
-	    name $" Insert selection"       _ string= ||
-	    name $" Unselect"               _ string= ||
-	    name $" Replace with selection" _ string= || if
-	      w selection? if FXtManageChild else FXtUnmanageChild then drop
+	    name $" Play from cursor" _ string= if
+	      w snd chn #f cursor 0> if FXtManageChild else FXtUnmanageChild then drop
 	    else
-	      name $" Play from cursor" _ string= if
-		w snd chn #f cursor 0> if FXtManageChild else FXtUnmanageChild then drop
+	      name $" Play original" _ string= if
+		w eds car 1 > if FXtManageChild else FXtUnmanageChild then drop
 	      else
-		name $" Play original" _ string= if
-		  w eds car 1 > if FXtManageChild else FXtUnmanageChild then drop
-		else
-		  name $" Delete mark"       _ string=
-		  name $" Delete all marks"  _ string= ||
-		  name $" To next mark"      _ string= ||
-		  name $" To last mark"      _ string= || if
-		    w snd chn #f marks null? unless FXtManageChild else FXtUnmanageChild then drop
-		  then
+		name $" Delete mark"       _ string=
+		name $" Delete all marks"  _ string= ||
+		name $" To next mark"      _ string= ||
+		name $" To last mark"      _ string= || if
+		  w snd chn #f marks null? unless FXtManageChild else FXtUnmanageChild then drop
 		then
 	      then
+	    then
 	  then
 	then
       then
@@ -1133,15 +1133,15 @@ hide
 : list-clear-cb <{ w c info -- val }> clear-listener ;
 : listener-edit <{ w -- }>
   w FXtName { name }
-    name "Help" _ string= if
-      listener-selection { subject }
-      subject if
-	w $" Help on %S" _ '( subject ) string-format change-label
-	w FXtManageChild drop
-      else
-	w FXtUnmanageChild drop
-      then
+  name "Help" _ string= if
+    listener-selection { subject }
+    subject if
+      w $" Help on %S" _ '( subject ) string-format change-label
+      w FXtManageChild drop
+    else
+      w FXtUnmanageChild drop
     then
+  then
 ;
 : listener-popup-cb ( menu -- prc; w c i self -- )
   3 proc-create swap ,

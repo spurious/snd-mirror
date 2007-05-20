@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 23:36:09 CET 2005
-\ Changed: Thu Feb 01 00:49:45 CET 2007
+\ Changed: Thu May 17 13:14:18 CEST 2007
 
 \ Commentary:
 
@@ -155,8 +155,8 @@ hide
 	vals 'y-offset      y-offset              hash-set!
 	'inset-envelope vals snd chn set-channel-property drop
       then
-      data0 snd grf-chn #f draw-lines drop
-      data1 if data1 snd grf-chn #f draw-lines drop then
+      data0 snd grf-chn time-graph draw-lines drop
+      data1 if data1 snd grf-chn time-graph draw-lines drop then
     then
   then
 ;

@@ -599,13 +599,6 @@ typedef struct {
   bool c, m, x;
 } key_info;
 
-typedef struct {
-  widget_t graph;
-  point_t *p0, *p1;
-  int lastpj;
-  color_t color;
-} mark_context;
-
 
 
 /* -------- snd-io.c -------- */
@@ -1728,9 +1721,6 @@ void set_grf_points(int xi, int j, int ymin, int ymax);
 void set_grf_point(int xi, int j, int yi);
 void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style);
 void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style);
-void mark_save_graph(mark_context *ms, int j);
-void erase_and_draw_grf_points(mark_context *ms, chan_info *cp, int j);
-void erase_and_draw_both_grf_points(mark_context *ms, chan_info *cp, int j);
 axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller);
 void g_init_draw(void);
 void set_dialog_widget(snd_dialog_t which, widget_t wid);

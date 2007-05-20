@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: can snd-marks dispense with the erase_and_draw stuff in snd-draw?
- */
-
 static int sync_max = 0;
 static int mark_id_counter = 0;
 
@@ -1171,6 +1168,14 @@ static syncdata *free_syncdata(syncdata *sd)
 static bool mark_control_clicked = false; /* C-click of mark -> drag data as mark is dragged */
 static off_t mark_initial_sample = 0;
 static syncdata *mark_sd = NULL;
+
+typedef struct {
+  widget_t graph;
+  point_t *p0, *p1;
+  int lastpj;
+  color_t color;
+} mark_context;
+
 static mark_context **mark_movers = NULL;
 
 static mark_context *make_mark_context(chan_info *cp)
@@ -1189,6 +1194,9 @@ static mark_context *free_mark_context(mark_context *ms)
   FREE(ms);
   return(NULL);
 }
+
+static void mark_save_graph(mark_context *ms, int j);
+static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_sample, int which);
 
 static void initialize_md_context(int size, chan_info **cps)
 {
@@ -1284,7 +1292,104 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
   return(NULL);
 }
 
-static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_sample, int which);
+static void allocate_erase_grf_points(mark_context *ms)
+{
+  if (ms->p0 == NULL)
+    {
+      ms->p0 = (point_t *)CALLOC(POINT_BUFFER_SIZE, sizeof(point_t));
+      ms->p1 = (point_t *)CALLOC(POINT_BUFFER_SIZE, sizeof(point_t));
+    }
+}
+
+point_t *get_grf_points(void);
+point_t *get_grf_points1(void);
+
+static void backup_erase_grf_points(mark_context *ms, int nj)
+{
+  ms->lastpj = nj;
+  memcpy((void *)(ms->p0), (void *)get_grf_points(), nj * sizeof(point_t));
+  memcpy((void *)(ms->p1), (void *)get_grf_points1(), nj * sizeof(point_t));
+}
+
+static void mark_save_graph(mark_context *ms, int j)
+{
+  allocate_erase_grf_points(ms);
+  backup_erase_grf_points(ms, j);
+}
+
+static void erase_and_draw_grf_points(mark_context *ms, chan_info *cp, int nj)
+{
+  chan_context *cx;
+  axis_context *ax;
+  point_t *points;
+#if USE_MOTIF
+  GC draw_gc, undraw_gc;
+#else
+  gc_t *draw_gc, *undraw_gc;
+#endif
+  points = get_grf_points();
+  cx = cp->tcgx;
+  if (!cx) cx = cp->cgx;
+  ax = cx->ax;
+  undraw_gc = erase_GC(cp);
+  draw_gc = copy_GC(cp);
+  if (cp->time_graph_style == GRAPH_LINES)
+    {
+      ax->gc = undraw_gc;
+      draw_lines(ax, ms->p0, ms->lastpj);
+      ax->gc = draw_gc;
+      draw_lines(ax, points, nj);
+    }
+  else 
+    {
+      ax->gc = undraw_gc;
+      draw_points(ax, ms->p0, ms->lastpj, cp->dot_size);
+      ax->gc = draw_gc;
+      draw_points(ax, points, nj, cp->dot_size);
+    }
+  backup_erase_grf_points(ms, nj);
+  ax->gc = draw_gc;
+}
+
+static void erase_and_draw_both_grf_points(mark_context *ms, chan_info *cp, int nj)
+{
+  chan_context *cx;
+  axis_context *ax;
+  point_t *points, *points1;
+#if USE_MOTIF
+  GC draw_gc, undraw_gc;
+#else
+  gc_t *draw_gc, *undraw_gc;
+#endif
+  points = get_grf_points();
+  points1 = get_grf_points1();
+  cx = cp->tcgx;
+  if (!cx) cx = cp->cgx;
+  ax = cx->ax;
+  undraw_gc = erase_GC(cp);
+  draw_gc = copy_GC(cp);
+  if (cp->time_graph_style == GRAPH_LINES)
+    {
+      ax->gc = undraw_gc;
+      draw_lines(ax, ms->p0, ms->lastpj);
+      draw_lines(ax, ms->p1, ms->lastpj);
+      ax->gc = draw_gc;
+      draw_lines(ax, points, nj);
+      draw_lines(ax, points1, nj);
+    }
+  else 
+    {
+      ax->gc = undraw_gc;
+      draw_points(ax, ms->p0, ms->lastpj, cp->dot_size);
+      draw_points(ax, ms->p1, ms->lastpj, cp->dot_size);
+      ax->gc = draw_gc;
+      draw_points(ax, points, nj, cp->dot_size);
+      draw_points(ax, points1, nj, cp->dot_size);
+    }
+  backup_erase_grf_points(ms, nj);
+  ax->gc = draw_gc;
+}
+
 
 static bool move_syncd_mark(chan_info *cp, mark *m, int x)
 {
