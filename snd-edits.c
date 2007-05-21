@@ -9227,7 +9227,7 @@ snd_fd *make_virtual_mix_reader(chan_info *cp, off_t beg, off_t len, int index, 
   sf->frag_pos = 0;
   ind0 = 0;
   indx = beg;
-  ind1 = len;
+  ind1 = len - 1; /* ind1 (LOCAL_END...) is a sample number, not a length */
   sf->fscaler = scl * MUS_FIX_TO_FLOAT;
 
   if ((scl == 1.0) &&

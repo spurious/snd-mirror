@@ -1109,7 +1109,7 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
 	    }
 	  else
 	    {
-	      for (i = 0; i < len; i++)
+ 	      for (i = 0; i < len; i++)
 		new_buffer[i] = MUS_FLOAT_TO_SAMPLE(mus_src(src_gen, 0.0, &src_input) * mus_env(egen));
 	    }
 	}
@@ -1317,7 +1317,6 @@ bool mix_set_speed_edit(int id, Float spd)
 
 	  ms->speed = spd;
 	  ms->len = len;
-	  
 	  if ((ms->speed != 1.0) || (ms->amp_env))
 	    ms->index = remake_mix_data(ms, md);
 	  else ms->index = md->original_index;
@@ -1692,7 +1691,8 @@ static int prepare_mix_waveform(mix_info *md, mix_state *ms, axis_info *ap, Floa
   samps = ap->hisamp - ap->losamp + 1;
   samples_per_pixel = (Float)((double)(samps - 1) / (Float)(x_end - x_start));
 
-  if ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE))
+  if ((samples_per_pixel < 1.0) ||
+      ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE)))
     {
       int j;
       if (newbeg < lo) /* mix starts before current left x0 point */
