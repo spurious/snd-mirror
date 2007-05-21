@@ -21,6 +21,7 @@ static void free_sync_state(sync_state *sc)
     }
 }
 
+
 #if MUS_DEBUGGING
 void describe_sync(FILE *fp, void *ptr);
 void describe_sync(FILE *fp, void *ptr)
@@ -30,16 +31,20 @@ void describe_sync(FILE *fp, void *ptr)
 }
 #endif
 
+
 int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos)
 {
   int pos;
   /* need to allow #f here for optargs */
   /* also remember that there might be no extension language */
+
 #if (!HAVE_EXTENSION_LANGUAGE)
   return(cp->edit_ctr);
 #endif
+
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edpos) || XEN_INTEGER_P(edpos) || XEN_PROCEDURE_P(edpos) || XEN_FALSE_P(edpos), 
 		  edpos, arg_pos, caller, "an integer, " PROC_FALSE ", or a procedure");
+
   if (XEN_PROCEDURE_P(edpos))
     {
       char *errmsg = NULL;
@@ -81,10 +86,12 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
   return(pos);
 }
 
+
 off_t to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int arg_pos)
 {
   return(cp->edits[to_c_edit_position(cp, edpos, caller, arg_pos)]->samples);
 }
+
 
 off_t beg_to_sample(XEN beg, const char *caller)
 {
@@ -97,6 +104,7 @@ off_t beg_to_sample(XEN beg, const char *caller)
   return(start);
 }
 
+
 off_t dur_to_samples(XEN dur, off_t beg, chan_info *cp, int edpos, int argn, const char *caller)
 {
   off_t samps;
@@ -105,6 +113,7 @@ off_t dur_to_samples(XEN dur, off_t beg, chan_info *cp, int edpos, int argn, con
     XEN_WRONG_TYPE_ARG_ERROR(caller, argn, dur, "a positive integer");
   return(samps);
 }
+
 
 static off_t end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller)
 {
@@ -128,7 +137,9 @@ static sync_state *get_sync_state_1(snd_info *sp, chan_info *cp, off_t beg, bool
   int i, pos;
   off_t dur = 0, pbeg;
   sync_state *sc;
+
   if ((!over_selection) && (sp == NULL)) return(NULL);
+
   if ((!over_selection) && (sp->sync != 0))
     {
       si = snd_sync(sp->sync);
@@ -194,11 +205,13 @@ static sync_state *get_sync_state_1(snd_info *sp, chan_info *cp, off_t beg, bool
   return(sc);
 }
 
+
 static sync_state *get_sync_state(snd_info *sp, chan_info *cp, off_t beg, bool over_selection, 
 				  read_direction_t forwards, XEN edpos, const char *caller, int arg_pos)
 {
   return(get_sync_state_1(sp, cp, beg, over_selection, forwards, 0, edpos, caller, arg_pos));
 }
+
 
 static sync_state *get_sync_state_without_snd_fds(snd_info *sp, chan_info *cp, off_t beg, bool over_selection)
 {
@@ -239,6 +252,7 @@ static sync_state *get_sync_state_without_snd_fds(snd_info *sp, chan_info *cp, o
   sc->sfs = NULL;
   return(sc);
 }
+
 
 static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XEN edpos, int arg_pos)
 {

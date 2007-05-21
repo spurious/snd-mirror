@@ -6782,7 +6782,13 @@ the clef instead.
 (draw-a-440 50 80 1.0)
 </pre></td></tr></table>
 <p>
-We obviously need a direct connection to CMN!
+A fancier <a href="extsnd.html#waltzexample">example</a> is included in musglyphs.scm.  It takes a list of notes, each mixed as a virtual mix,
+and displays the note pitches as music notation on two staves at the top of the graph. The two main
+drawing functions are draw-staff and draw-a-note.  The staves are drawn via an <a href="extsnd.html#aftergraphhook">after-graph-hook</a>
+function, and the notes are displayed via <a href="extsnd.html#drawmixhook">draw-mix-hook</a>.  
+<a href="extsnd.html#mixwaveformheight">mix-waveform-height</a> sets the overall size of the music notation.
+The note list data is passed into these functions by setting various <a href="extsnd.html#mixproperties">mix-properties</a>:
+'frequency and 'instrument (the first to give the pitch, the second the staff).
 </p>
 
 <br>
