@@ -6127,8 +6127,9 @@ Octave/WaveLab ASCII files can be translated by read-ascii (examp.scm).
 <br><br>
 To turn a data-format number into a string, use <a href="#musdataformatname">mus-data-format-name</a>. To get
 the data format of some sound file, use <a href="#mussounddataformat">mus-sound-data-format</a>.
-The default output (<a class=quiet href="#newsound">new-sound</a>, 
+The default output (<a class=quiet href="#newsound">new-sound</a>, and
 <a class=quiet href="#savesoundas">save-sound-as</a>) data-format is <a href="#defaultoutputdataformat">default-output-data-format</a>.
+To change a sound file's data-format, use <a href="#savesoundas">save-sound-as</a>.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -8131,8 +8132,17 @@ save the current fft peak info: <a href="#peaks">peaks</a><br>
 This saves 'sound' as 'file' (like the File Save as menu option).  If 'channel' is specified,
 only that channel is saved (it is extracted if necessary from the multichannel original).  
 'edit-position', if given, specifies which edit history position to save.
+The :srate argument refers only to the new sound file's header's srate field;
+the data is not resampled.  If you want to resample the data as it is saved, see
+the example under <a href="#beforesaveashook">before-save-as-hook</a>.  If :data-format
+is given, the sound file is written using that data format.
 Any omitted argument's value
 is taken from the sound being saved. 
+<pre>
+    (save-sound-as "test.snd" :data-format mus-bdouble :header-type mus-aifc)
+</pre>
+saves the currently selected sound as an AIFC file using big-endian doubles for the samples.
+<br><br>
 To start a parallel editing branch on a given file, you could:
 <pre>
     (save-sound-as "test.snd") (<a class=quiet href="#opensound">open-sound</a> "test.snd")
@@ -8811,10 +8821,16 @@ linear src: linear-src-channel in dsp.scm<br>
 <code><a class=def name="srcsound">src-sound</a> (num-or-env :optional base snd chn edpos)</code>
 </td></tr><tr><td></td><td>
 src-sound performs sampling rate conversion using 'warped sinc interpolation'.  The
-argument 'num-or-env' can be either a number or an envelope.  In 
-the latter case, 'base' sets the segment base (the default is 1.0 = linear).
+argument 'num-or-env', which sets the ratio between the new srate and the old, can be either a number or an envelope.  
+In the latter case, 'base' sets the segment base (the default is 1.0 = linear).
 A value greater than 1.0 causes the sound to be transposed up.
 A value less than 0.0 causes the sound to be reversed. 
+<code>(src-sound 2.0)</code> speeds the sound up by a factor
+of 2 (transposes it up an octave), whereas <code>(src-sound 0.5)</code>
+slows it down by the same factor (transposes it down an octave).
+<code>(src-sound '(0 1 1 2))</code> starts at the original speed, then
+gradually increases until, at the end of the sound, it is going
+twice as fast.
 <br><br>
 'num-or-env' can also be a CLM env generator (its duration should
 be the same as the original sound, and its segments should not pass through 0.0).  The following function can be used to predict

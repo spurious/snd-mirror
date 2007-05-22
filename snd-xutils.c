@@ -12,6 +12,7 @@
 #endif
 #endif
 
+
 static XmRenderTable get_xm_font(XFontStruct *ignore, const char *font, char *tag)
 {
   XmRendition tmp;
@@ -27,6 +28,7 @@ static XmRenderTable get_xm_font(XFontStruct *ignore, const char *font, char *ta
   /* XmRenditionFree(tmp); */ /* valgrind thinks this is a bad idea */
   return(tabl);
 }
+
 
 bool set_tiny_font(const char *font)
 {
@@ -46,6 +48,7 @@ bool set_tiny_font(const char *font)
   return(false);
 }
 
+
 bool set_listener_font(const char *font)
 {
   XFontStruct *fs = NULL;
@@ -64,6 +67,7 @@ bool set_listener_font(const char *font)
   return(false);
 }
 
+
 bool set_peaks_font(const char *font)
 {
   XFontStruct *fs = NULL;
@@ -81,6 +85,7 @@ bool set_peaks_font(const char *font)
   return(false);
 }
 
+
 bool set_bold_peaks_font(const char *font)
 {
   XFontStruct *fs = NULL;
@@ -97,6 +102,7 @@ bool set_bold_peaks_font(const char *font)
     }
   return(false);
 }
+
 
 bool set_axis_label_font(const char *font)
 {
@@ -116,6 +122,7 @@ bool set_axis_label_font(const char *font)
   return(false);
 }
 
+
 bool set_axis_numbers_font(const char *font)
 {
   XFontStruct *fs = NULL;
@@ -134,12 +141,14 @@ bool set_axis_numbers_font(const char *font)
   return(false);
 }
 
+
 int mark_name_width(const char *txt)
 {
   if (txt)
     return(XTextWidth(PEAKS_FONT(ss), txt, strlen(txt)));
   return(0);
 }
+
 
 int label_width(const char *txt, bool use_tiny_font)
 {
@@ -148,12 +157,14 @@ int label_width(const char *txt, bool use_tiny_font)
   else return(0);
 }
 
+
 int number_width(const char *num, bool use_tiny_font)
 {
   if (num)
     return(XTextWidth((use_tiny_font) ? TINY_FONT(ss) : AXIS_NUMBERS_FONT(ss), num, strlen(num)));
   return(0);
 }
+
 
 int number_height(bool use_tiny_font)
 {
@@ -164,6 +175,7 @@ int number_height(bool use_tiny_font)
   return(numbers_font->ascent);
 }
 
+
 int label_height(bool use_tiny_font)
 {
   XFontStruct *label_font;
@@ -173,10 +185,12 @@ int label_height(bool use_tiny_font)
   return(label_font->ascent + label_font->descent);
 }
 
+
 void clear_window(axis_context *ax)
 {
   if (ax) XClearWindow(ax->dp, ax->wn);
 }
+
 
 void map_over_children(Widget w, void (*func)(Widget uw))
 {
@@ -204,6 +218,7 @@ void map_over_children(Widget w, void (*func)(Widget uw))
     }
 }
 
+
 void map_over_children_with_color(Widget w, void (*func)(Widget uw, color_t color), color_t color)
 {
   if (w)
@@ -227,6 +242,7 @@ void map_over_children_with_color(Widget w, void (*func)(Widget uw, color_t colo
     }
 }
 
+
 void raise_dialog(Widget w)
 {
   /* since we're using non-transient message dialogs, the dialog window can become completely
@@ -242,6 +258,7 @@ void raise_dialog(Widget w)
       /* XtGrabNone means don't lock out events to rest of App (i.e. modeless dialog) */
     }
 }
+
 
 void set_main_color_of_widget(Widget w)
 {
@@ -264,6 +281,7 @@ void set_main_color_of_widget(Widget w)
     }
 }
 
+
 void set_label(Widget label, const char *str)
 {
   XmString s1;
@@ -271,6 +289,7 @@ void set_label(Widget label, const char *str)
   XtVaSetValues(label, XmNlabelString, s1, NULL);
   XmStringFree(s1);
 }
+
 
 char *get_label(Widget label)
 {
@@ -283,18 +302,25 @@ char *get_label(Widget label)
   return(text);
 }
 
-void set_button_label(Widget label, const char *str) {set_label(label, str);}
+
+void set_button_label(Widget label, const char *str) 
+{
+  set_label(label, str);
+}
+
 
 void set_title(const char *title)
 {
   XtVaSetValues(MAIN_SHELL(ss), XmNtitle, (char*)title, NULL);
 }
 
+
 void goto_window(Widget text)
 {
   if (XmIsTraversable(text))
     XmProcessTraversal(text, XmTRAVERSE_CURRENT);
 }
+
 
 XtCallbackList make_callback_list(XtCallbackProc callback, XtPointer closure)
 {
@@ -307,6 +333,7 @@ XtCallbackList make_callback_list(XtCallbackProc callback, XtPointer closure)
   return(nlist);
 }
 
+
 #include <Xm/SashP.h>
 void color_sashes(Widget w)
 {
@@ -314,6 +341,7 @@ void color_sashes(Widget w)
       (XtIsSubclass(w, xmSashWidgetClass)))
     XmChangeColor(w, (Pixel)ss->sgx->sash_color);
 }
+
 
 void check_for_event(void)
 {
@@ -340,6 +368,7 @@ void check_for_event(void)
   ss->checking_explicitly = false;
 }
 
+
 void color_cursor(Pixel color)
 {
   state_context *sx;
@@ -348,6 +377,7 @@ void color_cursor(Pixel color)
   XSetForeground(MAIN_DISPLAY(ss), sx->cursor_gc, (Pixel)(XOR(color, sx->graph_color)));
   XSetForeground(MAIN_DISPLAY(ss), sx->selected_cursor_gc, (Pixel)(XOR(color, sx->selected_graph_color)));
 }
+
 
 void color_marks(Pixel color)
 {
@@ -358,6 +388,7 @@ void color_marks(Pixel color)
   XSetForeground(MAIN_DISPLAY(ss), sx->selected_mark_gc, (Pixel)(XOR(color, sx->selected_graph_color)));
 }
 
+
 void color_selection(Pixel color)
 {
   state_context *sx;
@@ -366,6 +397,7 @@ void color_selection(Pixel color)
   XSetForeground(MAIN_DISPLAY(ss), sx->selection_gc, (Pixel)(XOR(color, sx->graph_color)));
   XSetForeground(MAIN_DISPLAY(ss), sx->selected_selection_gc, (Pixel)(XOR(color, sx->selected_graph_color)));
 }
+
 
 void color_graph(Pixel color)
 {
@@ -381,6 +413,7 @@ void color_graph(Pixel color)
   XSetForeground(dpy, sx->mark_gc, (Pixel)(XOR(sx->mark_color, color)));
 }
 
+
 void color_selected_graph(Pixel color)
 {
   Display *dpy;
@@ -395,6 +428,7 @@ void color_selected_graph(Pixel color)
   XSetForeground(dpy, sx->selected_mark_gc, (Pixel)(XOR(sx->mark_color, color)));
 }
 
+
 void color_data(Pixel color)
 {
   Display *dpy;
@@ -405,6 +439,7 @@ void color_data(Pixel color)
   XSetForeground(dpy, sx->basic_gc, color);
   XSetBackground(dpy, sx->erase_gc, color);
 }
+
 
 void color_selected_data(Pixel color)
 {
@@ -417,10 +452,12 @@ void color_selected_data(Pixel color)
   XSetBackground(dpy, sx->selected_erase_gc, color);
 }
 
+
 void recolor_graph(chan_info *cp, bool selected)
 {
   XtVaSetValues(channel_graph(cp), XmNbackground, (selected) ? ss->sgx->selected_graph_color : ss->sgx->graph_color, NULL);
 }
+
 
 void set_mix_color(Pixel color)
 {
@@ -434,20 +471,24 @@ void set_mix_color(Pixel color)
   
 }
 
+
 #if (!(HAVE_XPM_GET_ERROR_STRING))
 char *XpmGetErrorString(int err);
 char *XpmGetErrorString(int err) {return("");}
 #endif
+
 
 void set_sensitive(Widget wid, bool val) 
 {
   if (wid) XtSetSensitive(wid, val);
 }
 
+
 void set_toggle_button(Widget wid, bool val, bool passed, void *ignore) 
 {
   XmToggleButtonSetState(wid, (Boolean)val, (Boolean)passed);
 }
+
 
 Dimension widget_height(Widget w)
 {
@@ -456,6 +497,7 @@ Dimension widget_height(Widget w)
   return(height);
 }
 
+
 Dimension widget_width(Widget w)
 {
   Dimension width;
@@ -463,20 +505,24 @@ Dimension widget_width(Widget w)
   return(width);
 }
 
+
 void set_widget_height(Widget w, Dimension height)
 {
   XtVaSetValues(w, XmNheight, height, NULL);
 }
+
 
 void set_widget_width(Widget w, Dimension width)
 {
   XtVaSetValues(w, XmNwidth, width, NULL);
 }
 
+
 void set_widget_size(Widget w, Dimension width, Dimension height)
 {
   XtVaSetValues(w, XmNwidth, width, XmNheight, height, NULL);
 }
+
 
 Position widget_x(Widget w)
 {
@@ -485,6 +531,7 @@ Position widget_x(Widget w)
   return(x);
 }
 
+
 Position widget_y(Widget w)
 {
   Position y;
@@ -492,20 +539,24 @@ Position widget_y(Widget w)
   return(y);
 }
 
+
 void set_widget_x(Widget w, Position x)
 {
   XtVaSetValues(w, XmNx, x, NULL);
 }
+
 
 void set_widget_y(Widget w, Position y)
 {
   XtVaSetValues(w, XmNy, y, NULL);
 }
 
+
 void set_widget_position(Widget w, Position x, Position y)
 {
   XtVaSetValues(w, XmNx, x, XmNy, y, NULL);
 }
+
 
 Pixmap make_pixmap(unsigned char *bits, int width, int height, int depth, GC gc)
 {
@@ -522,6 +573,7 @@ Pixmap make_pixmap(unsigned char *bits, int width, int height, int depth, GC gc)
   return(nr);
 }
 
+
 idle_t add_work_proc(XtWorkProc func, XtPointer data)
 {
   /* during auto-testing I need to force the background procs to run to completion */
@@ -534,6 +586,7 @@ idle_t add_work_proc(XtWorkProc func, XtPointer data)
     }
 }
 
+
 int attach_all_sides(Arg *args, int n)
 {
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -542,6 +595,7 @@ int attach_all_sides(Arg *args, int n)
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   return(n);
 }
+
 
 void widget_int_to_text(Widget w, int val)
 {
@@ -552,6 +606,7 @@ void widget_int_to_text(Widget w, int val)
   FREE(str);
 }
 
+
 void widget_float_to_text(Widget w, Float val)
 {
   char *str;
@@ -561,6 +616,7 @@ void widget_float_to_text(Widget w, Float val)
   FREE(str);
 }
 
+
 void widget_off_t_to_text(Widget w, off_t val)
 {
   char *str;
@@ -569,6 +625,7 @@ void widget_off_t_to_text(Widget w, off_t val)
   XmTextFieldSetString(w, str);
   FREE(str);
 }
+
 
 static Pixmap rotate_text(Widget w, const char *str, XFontStruct *font, Float angle_in_degrees, int *nw, int *nh, Pixel bg, Pixel fg, GC d_gc)
 {
@@ -681,6 +738,7 @@ static Pixmap rotate_text(Widget w, const char *str, XFontStruct *font, Float an
   return(rotpix);
 }
 
+
 void draw_rotated_axis_label(chan_info *cp, axis_context *ax, const char *text, int x0, int y0)
 {
   Pixmap pix;
@@ -697,6 +755,7 @@ void draw_rotated_axis_label(chan_info *cp, axis_context *ax, const char *text, 
   XCopyArea(dp, pix, XtWindow(widget), ax->gc, 0, 0, w, h, x0, y0); /* XtWindow?? */
   XFreePixmap(dp, pix);  
 }
+
 
 void ensure_list_row_visible(widget_t list, int pos)
 {
@@ -721,6 +780,7 @@ void ensure_list_row_visible(widget_t list, int pos)
 	}
     }
 }
+
 
 void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
 {
@@ -749,6 +809,7 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
     }
   XmScrollBarSetValues(scrollbar, new_value, size, increment, page_increment, true);
 }
+
 
 XmString multi_line_label(const char *s, int *lines)
 {

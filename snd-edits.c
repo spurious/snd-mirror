@@ -4002,14 +4002,10 @@ static void setup_mix(snd_fd *sf)
 	    (READER_MIX_SCALER(sf, i) != 0.0))
 	  md->sfs[j++] = make_virtual_mix_reader(sf->cp, 
 						 sf->frag_pos + READER_GLOBAL_POSITION(sf) - READER_MIX_BEG(sf, i), /* global position - mix position + fragment start loc */
-						 READER_MIX_LENGTH(sf, i),        /* why this?? */
+						 READER_MIX_LENGTH(sf, i),
 						 READER_MIX_INDEX(sf, i), 
 						 READER_MIX_SCALER(sf, i), 
 						 sf->direction);
-#if MUS_DEBUGGING
-      if (j > active_mixes)
-	fprintf(stderr, "wrote past end og md->sfs array");
-#endif
       if (active_mixes == 1)
 	{
 	  if (READER_TYPE(sf) == ED_MIX_SIMPLE)
@@ -4570,6 +4566,7 @@ char *ed_list_edit_type_to_string(int type)
 }
 #endif
 
+
 static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool with_source)
 {
   int len, j, index;
@@ -4717,10 +4714,12 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
   fprintf(outp, "\n");
 }
 
+
 off_t edit_changes_begin_at(chan_info *cp, int edpos)
 {
   return(cp->edits[edpos]->beg);
 }
+
 
 off_t edit_changes_end_at(chan_info *cp, int edpos)
 {
@@ -4816,16 +4815,6 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 		  /* this is a dangerous time to check for an event -- if in lock_affected_mixes,
 		   *   the current edit is in progress, so any attempt to display will segfault
 		   */
-#if 0
-		  check_for_event();
-		  if ((ss->stopped_explicitly) || ((cp) && (!(cp->active))))
-		    {
-		      ss->stopped_explicitly = false;
-		      snd_warning_without_format(_("file save cancelled by C-g"));
-		      sl_err = MUS_INTERRUPTED;
-		      break;
-		    }
-#endif
 		}
 	    }
 	}
@@ -4853,16 +4842,6 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 		  total += FILE_BUFFER_SIZE;
 		  progress_report(cp->sound, NULL, 1, 1, (Float)((double)total / (double)length), NOT_FROM_ENVED);
 		}
-#if 0
-	      check_for_event();
-	      if ((ss->stopped_explicitly) || ((cp) && (!(cp->active))))
-		{
-		  ss->stopped_explicitly = false;
-		  snd_warning_without_format(_("file save cancelled by C-g"));
-		  sl_err = MUS_INTERRUPTED;
-		  break;
-		}
-#endif
 	    }
 	}
     }
@@ -8597,13 +8576,8 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int ty
 	  return(err);
 	}
     }
-  {
-    bool old_check;
-    old_check = ss->checking_explicitly;
-    ss->checking_explicitly = true;
-    err = snd_make_file(new_name, sp->nchans, hdr, sf, frames);
-    ss->checking_explicitly = old_check;
-  }
+
+  err = snd_make_file(new_name, sp->nchans, hdr, sf, frames);
 
   for (i = 0; i < sp->nchans; i++) 
     free_snd_fd(sf[i]);
@@ -8868,7 +8842,7 @@ bool redo_edit_with_sync(chan_info *cp, int count)
 /* -------------------- virtual mixes -------------------- */
 
   /* TODO: tmp231 with drag vertically -> change pitch and recalc(?)
-   * TODO: mix-drag if syncd should at least move the other tag(s)
+   * TODO: mix-drag if syncd should at least move the other tag(s) -- where is this?
    */
 
 /* ramp on mix is techically possible, but ambiguous -- currently if we mix, then ramp elsewhere, then drag the mix

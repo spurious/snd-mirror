@@ -3,13 +3,12 @@
 /* ---------------- mix dialog ---------------- */
 
 static GtkWidget *mix_dialog = NULL;
-static bool dragging = false;
 static int mix_dialog_id = INVALID_MIX_ID;
 static env *dialog_env = NULL;
 
+static bool dragging = false;
 static int edpos_before_drag;
 static with_hook_t hookable_before_drag;
-
 static off_t drag_beg = 0, drag_end = 0;
 
 static void start_dragging(int mix_id) 
@@ -24,12 +23,14 @@ static void start_dragging(int mix_id)
   drag_end = drag_beg + mix_length_from_id(mix_id);
 }
 
+
 static void keep_dragging(int mix_id) 
 {
   chan_info *cp;
   cp = mix_chan_info_from_id(mix_id);
   cp->edit_ctr = edpos_before_drag;
 }
+
 
 static void stop_dragging(int mix_id) 
 {
@@ -52,7 +53,6 @@ static bool speed_pressed = false, speed_dragged = false;
 static speed_style_t gmix_speed_control_style = SPEED_CONTROL_AS_FLOAT;
 static axis_context *mix_play_ax = NULL;
 
-
 static Float speed_to_scrollbar(Float minval, Float val, Float maxval)
 {
   if (val <= minval) return(0.0);
@@ -60,10 +60,12 @@ static Float speed_to_scrollbar(Float minval, Float val, Float maxval)
   return(0.9 * ((log(val) - log(minval)) / (log(maxval) - log(minval))));
 }
 
+
 static Float scrollbar_to_speed(Float scroll)
 {
   return(exp((scroll * (log(speed_control_max(ss)) - log(speed_control_min(ss))) / 0.9) + log(speed_control_min(ss))));
 }
+
 
 static Float set_speed_label(GtkWidget *label, Float in_speed)
 {
@@ -78,11 +80,13 @@ static Float set_speed_label(GtkWidget *label, Float in_speed)
   return(speed);
 }
 
+
 static void reflect_mix_speed(Float speed)
 {
   GTK_ADJUSTMENT(w_speed_adj)->value = speed_to_scrollbar(speed_control_min(ss), set_speed_label(w_speed_number, speed), speed_control_max(ss));
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_speed_adj));
 }
+
 
 static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -95,6 +99,7 @@ static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   reflect_mix_speed(1.0);
   return(false);
 }
+
 
 static gboolean speed_label_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -113,6 +118,7 @@ static gboolean speed_label_click_callback(GtkWidget *w, GdkEventButton *ev, gpo
   return(false);
 }
 
+
 static gboolean speed_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
   if (!speed_pressed) {speed_dragged = false; return(false);}
@@ -126,6 +132,7 @@ static gboolean speed_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer
   return(false);
 }
 
+
 static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data) 
 {
   speed_pressed = false;
@@ -138,12 +145,14 @@ static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointe
   return(false);
 }
 
+
 static gboolean speed_press_callback(GtkWidget *w, GdkEventButton *ev, gpointer data) 
 {
   speed_dragged = false;
   speed_pressed = true;
   return(false);
 }
+
 
 /* -------- amp -------- */
 
@@ -161,6 +170,7 @@ static Float scrollbar_to_amp(Float val)
   else return((val * (1.0 - amp_control_min(ss)) / (0.5 * 0.9)) + amp_control_min(ss));
 }
 
+
 static bool amp_pressed = false, amp_dragged = false;
 
 static void reflect_mix_amp(Float val)
@@ -171,6 +181,7 @@ static void reflect_mix_amp(Float val)
   mus_snprintf(sfs, 6, "%.2f", val);
   gtk_label_set_text(GTK_LABEL(w_amp_number), sfs);
 }
+
 
 static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -184,6 +195,7 @@ static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_amp_adj));
   return(false);
 }
+
 
 static gboolean amp_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
@@ -201,6 +213,7 @@ static gboolean amp_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer d
   return(false);
 }
 
+
 static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   Float scrollval;
@@ -217,6 +230,7 @@ static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   return(false);
 }
 
+
 static gboolean amp_press_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   amp_pressed = true;
@@ -227,6 +241,7 @@ static gboolean amp_press_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
 
 
 /* -------- amp-env -------- */
+
 static GtkWidget *w_env_frame, *w_env;
 static axis_context *ax = NULL;
 static gc_t *cur_gc;
@@ -250,6 +265,7 @@ static void show_mix_background_wave(int mix_id)
       gc_set_foreground(ax->gc, ss->sgx->black);
     }
 }
+
 
 static void mix_amp_env_resize(GtkWidget *w)
 {
@@ -280,6 +296,7 @@ static void mix_amp_env_resize(GtkWidget *w)
 #endif
 }
 
+
 static gboolean mix_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   if (!(mix_is_active(mix_dialog_id))) return(false);
@@ -289,6 +306,7 @@ static gboolean mix_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpoint
   return(false);
 }
 
+
 static gboolean mix_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   if (!(mix_is_active(mix_dialog_id))) return(false);
@@ -296,6 +314,7 @@ static gboolean mix_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpoi
   mix_amp_env_resize(w);
   return(false);
 }
+
 
 static gboolean mix_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
@@ -318,11 +337,13 @@ static gboolean mix_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpoin
   return(false);
 }
 
+
 static gboolean mix_amp_env_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   mix_amp_env_resize(w);
   return(false);
 }
+
 
 static gboolean mix_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
@@ -345,11 +366,13 @@ static void clear_mix_error(void)
     gtk_widget_hide(error_frame);
 }
 
+
 static gint unpost_mix_error(gpointer data)
 {
   clear_mix_error();
   return(0);
 }
+
 
 static void errors_to_mix_text(const char *msg, void *data)
 {
@@ -357,6 +380,7 @@ static void errors_to_mix_text(const char *msg, void *data)
   gtk_widget_show(error_frame);
   g_timeout_add_full(0, (guint32)5000, unpost_mix_error, NULL, NULL);
 }
+
 
 static void id_activated(GtkWidget *w, gpointer context)
 {
@@ -382,17 +406,20 @@ static void id_activated(GtkWidget *w, gpointer context)
     }
 }
 
+
 static gboolean id_check_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
   if (id_changed) id_activated(w_id, NULL);
   return(false);
 }
 
+
 static gboolean id_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   id_changed = true;
   return(false);
 }
+
 
 static void beg_activated(GtkWidget *w, gpointer context) 
 {
@@ -416,6 +443,7 @@ static void beg_activated(GtkWidget *w, gpointer context)
     }
 }
 
+
 static void widget_mix_to_text(GtkWidget *w, int id)
 {
   if (mix_name(id))
@@ -426,6 +454,7 @@ static void widget_mix_to_text(GtkWidget *w, int id)
 
 
 /* -------- mix play -------- */
+
 static bool mix_playing = false;
 
 void reflect_mix_play_stop(void)
@@ -435,6 +464,7 @@ void reflect_mix_play_stop(void)
   if (mix_play_ax)
     draw_picture(mix_play_ax, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
 }
+
 
 static void mix_play_callback(GtkWidget *w, gpointer context) 
 {
@@ -452,6 +482,7 @@ static void mix_play_callback(GtkWidget *w, gpointer context)
     }
 }
 
+
 static gboolean mix_play_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   draw_picture(mix_play_ax, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
@@ -465,17 +496,20 @@ static void mix_dB_callback(GtkWidget *w, gpointer context)
   mix_amp_env_resize(w_env);
 }
 
+
 static void mix_clip_callback(GtkWidget *w, gpointer context) 
 {
   spf->clip_p = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
   mix_amp_env_resize(w_env);
 }
 
+
 static void mix_wave_callback(GtkWidget *w, gpointer context) 
 {
   with_mix_background_wave = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
   mix_amp_env_resize(w_env);
 }
+
 
 static void apply_mix_dialog(GtkWidget *w, gpointer context)
 {
@@ -490,11 +524,13 @@ static void apply_mix_dialog(GtkWidget *w, gpointer context)
   mix_amp_env_resize(w_env);
 }
 
+
 static void dismiss_mix_dialog(GtkWidget *w, gpointer context)
 {
   clear_mix_error();
   gtk_widget_hide(mix_dialog);
 }
+
 
 static gint delete_mix_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
@@ -502,6 +538,7 @@ static gint delete_mix_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
   gtk_widget_hide(mix_dialog);
   return(true);
 }
+
 
 static GtkWidget *nextb, *previousb, *apply_button;
 
@@ -519,6 +556,7 @@ static void mix_next_callback(GtkWidget *w, gpointer context)
     }
 }
 
+
 static void mix_previous_callback(GtkWidget *w, gpointer context)
 {
   int id;
@@ -533,10 +571,12 @@ static void mix_previous_callback(GtkWidget *w, gpointer context)
     }
 }
 
+
 static void mix_dialog_help_callback(GtkWidget *w, gpointer context) 
 {
   mix_dialog_help();
 }
+
 
 GtkWidget *make_mix_dialog(void)
 {
@@ -563,18 +603,6 @@ GtkWidget *make_mix_dialog(void)
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_mix_dialog, NULL);
       gtk_widget_show(dismiss_button);
       set_stock_button_label(dismiss_button, _("Go Away"));
-
-      previousb = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
-      gtk_widget_set_name(previousb, "reset_button");
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->action_area), previousb, false, true, 10);
-      SG_SIGNAL_CONNECT(previousb, "clicked", mix_previous_callback, NULL);
-      gtk_widget_show(previousb);
-
-      nextb = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
-      gtk_widget_set_name(nextb, "doit_button");
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->action_area), nextb, false, true, 10);
-      SG_SIGNAL_CONNECT(nextb, "clicked", mix_next_callback, NULL);
-      gtk_widget_show(nextb);
 
       apply_button = sg_button_new_from_stock_with_label(_("Apply Env"), GTK_STOCK_APPLY);
       gtk_widget_set_name(apply_button, "doit_again_button");
@@ -644,6 +672,21 @@ GtkWidget *make_mix_dialog(void)
       gtk_container_add(GTK_CONTAINER(mix_play), mix_play_pix);
       gtk_widget_show(mix_play_pix);
       SG_SIGNAL_CONNECT(mix_play_pix, "expose_event", mix_play_pix_expose, NULL);
+
+
+      nextb = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
+      gtk_widget_set_name(nextb, "doit_button");
+      gtk_box_pack_end(GTK_BOX(rc), nextb, false, true, 6);
+      SG_SIGNAL_CONNECT(nextb, "clicked", mix_next_callback, NULL);
+      gtk_widget_show(nextb);
+      set_stock_button_label(nextb, _("Next"));
+
+      previousb = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
+      gtk_widget_set_name(previousb, "reset_button");
+      gtk_box_pack_end(GTK_BOX(rc), previousb, false, true, 6);
+      SG_SIGNAL_CONNECT(previousb, "clicked", mix_previous_callback, NULL);
+      gtk_widget_show(previousb);
+      set_stock_button_label(previousb, _("Previous"));
 
 
       /* SPEED */
@@ -777,6 +820,7 @@ GtkWidget *make_mix_dialog(void)
   return(mix_dialog);
 }
 
+
 void reflect_mix_change(int mix_id)
 {
   if ((mix_dialog) && 
@@ -849,10 +893,12 @@ void reflect_mix_change(int mix_id)
     }
 }
 
+
 int mix_dialog_mix(void) 
 {
   return(mix_dialog_id);
 }
+
 
 void mix_dialog_set_mix(int id) 
 {

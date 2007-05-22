@@ -15,6 +15,7 @@ void set_mark_sync(mark *m, int val)
     sync_max = val; 
 }
 
+
 static mark *make_mark_1(off_t samp, const char *name, int id, int sc)
 {
   mark *mp;
@@ -36,6 +37,7 @@ static mark *copy_mark(mark *m)
   return(make_mark_1(m->samp, m->name, m->id, m->sync));
 }
 
+
 static mark *free_mark(mark *mp)
 {
   if (mp)
@@ -45,6 +47,7 @@ static mark *free_mark(mark *mp)
     }
   return(NULL);
 }
+
 
 static mark *map_over_marks(chan_info *cp, mark *(*func)(chan_info *ncp, mark *mp1, void *p1), void *m, read_direction_t direction)
 {
@@ -83,6 +86,7 @@ static mark *map_over_marks(chan_info *cp, mark *(*func)(chan_info *ncp, mark *m
   return(NULL);
 }
 
+
 static mark *map_over_marks_with_int(chan_info *cp, mark *(*func)(chan_info *ncp, mark *mp1, int val1), int value, read_direction_t direction)
 {
   ed_list *ed;
@@ -119,6 +123,7 @@ static mark *map_over_marks_with_int(chan_info *cp, mark *(*func)(chan_info *ncp
     }
   return(NULL);
 }
+
 
 static mark *find_mark_id_1(chan_info *cp, mark *mp, int id)
 {
@@ -160,6 +165,7 @@ static mark *find_mark_from_id(int id, chan_info **cps, int pos)
   return(NULL);
 }
 
+
 off_t mark_id_to_sample(int id)
 {
   mark *m;
@@ -168,6 +174,7 @@ off_t mark_id_to_sample(int id)
     return(m->samp);
   return(-1);
 }
+
 
 static mark *find_named_mark_1(chan_info *cp, mark *mp, void *uname)
 {
@@ -181,6 +188,7 @@ static mark *find_named_mark(chan_info *cp, const char *name)
   return(map_over_marks(cp, find_named_mark_1, (void *)name, READ_FORWARD));
 }
 
+
 static mark *find_previous_mark_1(chan_info *cp, mark *mp, void *m)
 {
   if (mp->samp < (*((off_t *)m))) 
@@ -193,6 +201,7 @@ static mark *find_previous_mark(off_t current_sample, chan_info *cp)
   return(map_over_marks(cp, find_previous_mark_1, (void *)(&current_sample), READ_BACKWARD));
 }
 
+
 static mark *find_next_mark_1(chan_info *cp, mark *mp, void *m)
 {
   if (mp->samp > (*((off_t *)m))) 
@@ -204,6 +213,7 @@ static mark *find_next_mark(off_t current_sample, chan_info *cp)
 {
   return(map_over_marks(cp, find_next_mark_1, (void *)(&current_sample), READ_FORWARD));
 }
+
 
 static mark* marks_off_1(chan_info *cp, mark *mp, void *ignore)
 {
@@ -276,6 +286,7 @@ static mark *hit_mark_1(chan_info *cp, mark *mp, void *m)
   else return(mp);
 }
 
+
 static mark *hit_triangle_1(chan_info *cp, mark *mp, void *m)
 {
   /* m->samp = raw x mouse position */
@@ -295,6 +306,7 @@ static mark *hit_triangle_1(chan_info *cp, mark *mp, void *m)
   /* the last is assuming the triangle shape for hit detection */
   return(NULL);
 }
+
 
 mark *hit_triangle(chan_info *cp, int x, int y)
 {
@@ -332,6 +344,7 @@ static mark *moving_mark = NULL; /* used only while "off-screen" during axis mov
 static void move_axis_to_track_mark(chan_info *cp);
 
 static timeout_result_t watch_mouse_button = 0;
+
 static TIMEOUT_TYPE watch_mouse(TIMEOUT_ARGS)
 {
   chan_info *cp = (chan_info *)context;
@@ -343,12 +356,14 @@ static TIMEOUT_TYPE watch_mouse(TIMEOUT_ARGS)
   TIMEOUT_RESULT
 }
 
+
 static void start_mark_watching(chan_info *cp, mark *mp)
 {
   moving_mark = mp;
   watch_mouse_button = CALL_TIMEOUT(watch_mouse, 50, cp);
   watching_mouse = true;
 }
+
 
 static void cancel_mark_watch(chan_info *cp)
 {
@@ -357,6 +372,7 @@ static void cancel_mark_watch(chan_info *cp)
   watching_mouse = false;
   moving_mark = NULL;
 }
+
 
 static bool move_mark_1(chan_info *cp, mark *mp, int x)
 {
@@ -398,6 +414,7 @@ static bool move_mark_1(chan_info *cp, mark *mp, int x)
   return(redraw);
 }
 
+
 static int compare_mark_samps(const void *mp1, const void *mp2)
 {
   mark *m1, *m2;
@@ -407,6 +424,7 @@ static int compare_mark_samps(const void *mp1, const void *mp2)
   if (m1->samp == m2->samp) return(0);
   return(1);
 }
+
 
 static void sort_marks(chan_info *cp)
 {
@@ -432,6 +450,7 @@ off_t move_play_mark(chan_info *cp, off_t *mc, int cx)
   return((*mc) - cur_mc);
 }
 
+
 void finish_moving_play_mark(chan_info *cp)
 {
   snd_info *sp;
@@ -440,6 +459,7 @@ void finish_moving_play_mark(chan_info *cp)
   prev_cx = -1;
   sp->speed_control = 1.0;
 }
+
 
 typedef enum {MARK_ADD, MARK_DELETE, MARK_MOVE, MARKS_DELETE, MARK_RELEASE} mark_hook_reason_t;
 
@@ -455,6 +475,7 @@ static void run_mark_hook(chan_info *cp, int id, mark_hook_reason_t reason)
 	     S_mark_hook);
   run_watchers();
 }
+
 
 #define MARKS_ALLOC_SIZE 4
 
@@ -511,6 +532,7 @@ mark *add_mark(off_t samp, const char *name, chan_info *cp)
     }
 }
 
+
 bool delete_mark_samp(off_t samp, chan_info *cp)
 {
   if (cp)
@@ -556,6 +578,7 @@ bool delete_mark_samp(off_t samp, chan_info *cp)
   return(false);
 }
 
+
 static bool delete_mark_id(int id, chan_info *cp)
 {
   if (cp)
@@ -598,6 +621,7 @@ static bool delete_mark_id(int id, chan_info *cp)
   return(false);
 }
 
+
 static void delete_marks(chan_info *cp)
 {
   if (cp)
@@ -631,6 +655,7 @@ static void delete_marks(chan_info *cp)
     }
 }
 
+
 void free_mark_list(ed_list *ed)
 {
   if (ed->marks)
@@ -648,6 +673,7 @@ void free_mark_list(ed_list *ed)
       ed->mark_size = 0;
     }
 }
+
 
 /* save and restore across update-sound */
 
@@ -693,6 +719,7 @@ void *sound_store_marks(snd_info *sp)
     }
   return((void *)rtn);
 }
+
 
 void sound_restore_marks(snd_info *sp, void *mrk)
 {
@@ -747,6 +774,7 @@ static mark *find_nth_mark(chan_info *cp, int count)
   return(mp);
 }
 
+
 bool goto_mark(chan_info *cp, int count)
 {
   mark *mp;
@@ -757,12 +785,14 @@ bool goto_mark(chan_info *cp, int count)
   return(true);
 }
 
+
 void goto_named_mark(chan_info *cp, const char *name)
 {
   mark *mp;
   mp = find_named_mark(cp, name);
   if (mp) cursor_moveto(cp, mp->samp);
 }
+
 
 static mark *active_mark_1(chan_info *cp, mark *mp, void *ignore)
 {
@@ -777,6 +807,7 @@ mark *active_mark(chan_info *cp)
   return(map_over_marks(cp, active_mark_1, NULL, READ_FORWARD));
 }
 
+
 off_t mark_beg(chan_info *cp)
 {
   /* called only in snd-chn.c for active zoom */
@@ -785,6 +816,7 @@ off_t mark_beg(chan_info *cp)
   if (mp) return(mp->samp);
   return(-1);
 }
+
 
 typedef struct {
   off_t last_samp;
@@ -816,6 +848,7 @@ void display_channel_marks(chan_info *cp)
       map_over_marks(cp, display_channel_marks_1, (void *)(&ls), READ_FORWARD);
     }
 }
+
 
 void ripple_marks(chan_info *cp, off_t beg, off_t change)
 {
@@ -883,6 +916,7 @@ void ripple_marks(chan_info *cp, off_t beg, off_t change)
     }
 }
 
+
 bool mark_define_region(chan_info *cp, int count)
 {
   if ((cp) && (max_regions(ss) > 0))
@@ -928,6 +962,7 @@ bool mark_define_region(chan_info *cp, int count)
   return(false);
 }
 
+
 static mark *reverse_mark_1(chan_info *cp, mark *mp, void *um)
 {
   mark *m = (mark *)um;
@@ -967,6 +1002,7 @@ void reverse_marks(chan_info *cp, off_t beg, off_t dur) /* beg -1 for full sound
 	qsort((void *)mps, ed->mark_ctr + 1, sizeof(mark *), compare_mark_samps);
     }
 }
+
 
 void src_marks(chan_info *cp, Float ratio, off_t old_samps, off_t new_samps, off_t beg, bool over_selection)
 {
@@ -1013,6 +1049,7 @@ void src_marks(chan_info *cp, Float ratio, off_t old_samps, off_t new_samps, off
     }
 }
 
+
 void reset_marks(chan_info *cp, int cur_marks, off_t *samps, off_t end, off_t extension, bool over_selection)
 {
   ed_list *ed;
@@ -1039,6 +1076,7 @@ void reset_marks(chan_info *cp, int cur_marks, off_t *samps, off_t end, off_t ex
     }
 }
 
+
 void ripple_trailing_marks(chan_info *cp, off_t beg, off_t old_len, off_t new_len)
 {
   ed_list *ed;
@@ -1058,6 +1096,7 @@ void ripple_trailing_marks(chan_info *cp, off_t beg, off_t old_len, off_t new_le
 	}
     }
 }
+
 
 void swap_marks(chan_info *cp0, chan_info *cp1)
 {
@@ -1115,6 +1154,7 @@ static syncdata *make_syncdata(int sync)
   return(sd);
 }
 
+
 static void add_syncd_mark(syncdata *sd, mark *mp, chan_info *cp)
 {
   sd->marks[sd->mark_ctr] = mp;
@@ -1132,6 +1172,7 @@ static void add_syncd_mark(syncdata *sd, mark *mp, chan_info *cp)
     }
 }
 
+
 static mark *gather_local_syncd_marks(chan_info *cp, mark *mp, void *usd)
 {
   syncdata *sd = (syncdata *)usd;
@@ -1140,10 +1181,12 @@ static mark *gather_local_syncd_marks(chan_info *cp, mark *mp, void *usd)
   return(NULL);
 }
 
+
 static void gather_chan_syncd_marks(chan_info *cp, void *sd)
 {
   map_over_marks(cp, gather_local_syncd_marks, sd, READ_FORWARD);
 }
+
 
 static syncdata *gather_syncd_marks(int sync)
 {
@@ -1152,6 +1195,7 @@ static syncdata *gather_syncd_marks(int sync)
   for_each_normal_chan_with_void(gather_chan_syncd_marks, (void *)sd);
   return(sd);
 }
+
 
 static syncdata *free_syncdata(syncdata *sd)
 {
@@ -1164,6 +1208,7 @@ static syncdata *free_syncdata(syncdata *sd)
     }
   return(NULL);
 }
+
 
 static bool mark_control_clicked = false; /* C-click of mark -> drag data as mark is dragged */
 static off_t mark_initial_sample = 0;
@@ -1187,6 +1232,7 @@ static mark_context *make_mark_context(chan_info *cp)
   return(g);
 }
 
+
 static mark_context *free_mark_context(mark_context *ms)
 {
   if (ms->p0) {FREE(ms->p0); ms->p0 = NULL;}
@@ -1194,6 +1240,7 @@ static mark_context *free_mark_context(mark_context *ms)
   FREE(ms);
   return(NULL);
 }
+
 
 static void mark_save_graph(mark_context *ms, int j);
 static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_sample, int which);
@@ -1212,6 +1259,7 @@ static void initialize_md_context(int size, chan_info **cps)
     }
 }
 
+
 static void finalize_md_context(int size)
 {
   if (mark_movers)
@@ -1224,6 +1272,7 @@ static void finalize_md_context(int size)
       mark_movers = NULL;
     }
 }
+
 
 mark *hit_mark(chan_info *cp, int x, int y, int key_state)
 {
@@ -1292,6 +1341,9 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
   return(NULL);
 }
 
+
+#if (!USE_NO_GUI)
+
 static void allocate_erase_grf_points(mark_context *ms)
 {
   if (ms->p0 == NULL)
@@ -1311,11 +1363,13 @@ static void backup_erase_grf_points(mark_context *ms, int nj)
   memcpy((void *)(ms->p1), (void *)get_grf_points1(), nj * sizeof(point_t));
 }
 
+
 static void mark_save_graph(mark_context *ms, int j)
 {
   allocate_erase_grf_points(ms);
   backup_erase_grf_points(ms, j);
 }
+
 
 static void erase_and_draw_grf_points(mark_context *ms, chan_info *cp, int nj)
 {
@@ -1350,6 +1404,7 @@ static void erase_and_draw_grf_points(mark_context *ms, chan_info *cp, int nj)
   backup_erase_grf_points(ms, nj);
   ax->gc = draw_gc;
 }
+
 
 static void erase_and_draw_both_grf_points(mark_context *ms, chan_info *cp, int nj)
 {
@@ -1389,6 +1444,7 @@ static void erase_and_draw_both_grf_points(mark_context *ms, chan_info *cp, int 
   backup_erase_grf_points(ms, nj);
   ax->gc = draw_gc;
 }
+#endif
 
 
 static bool move_syncd_mark(chan_info *cp, mark *m, int x)
@@ -1433,6 +1489,7 @@ static bool move_syncd_mark(chan_info *cp, mark *m, int x)
   return(redraw);
 }
 
+
 static void move_axis_to_track_mark(chan_info *cp)
 {
   if (moving_mark)
@@ -1445,6 +1502,7 @@ static void move_axis_to_track_mark(chan_info *cp)
     }
 }
 
+
 void move_mark(chan_info *cp, mark *mp, int x) /* from mouse drag callback in snd-chn.c, called whenever mark is visible */
 {
   bool redraw;
@@ -1456,6 +1514,7 @@ void move_mark(chan_info *cp, mark *mp, int x) /* from mouse drag callback in sn
     make_mark_graph(cp, mark_initial_sample, mp->samp, 0);
   if (redraw) draw_mark(cp, cp->axis, mp);
 }
+
 
 static void edit_dragged_mark(chan_info *cp, mark *m, off_t initial_sample)
 {
@@ -1485,6 +1544,7 @@ static void edit_dragged_mark(chan_info *cp, mark *m, off_t initial_sample)
       update_graph(cp);
     }
 }
+
 
 void finish_moving_mark(chan_info *cp, mark *m) /* button release called from snd-chn.c */
 {
@@ -1531,6 +1591,7 @@ void finish_moving_mark(chan_info *cp, mark *m) /* button release called from sn
   if (mark_sd) mark_sd = free_syncdata(mark_sd);
 }
 
+
 void play_syncd_mark(chan_info *cp, mark *m)
 {
   syncdata *sd;
@@ -1541,8 +1602,10 @@ void play_syncd_mark(chan_info *cp, mark *m)
   if (sd) free_syncdata(sd);
 }
 
+
 static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_sample, int which)
 {
+#if (!USE_NO_GUI)
   snd_info *sp;
   int j = 0;
   off_t i, k, samps;
@@ -1735,7 +1798,9 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
 	}
     }
   free_snd_fd(sf);
+#endif
 }
+
 
 static XEN snd_no_such_mark_error(const char *caller, XEN id)
 {
@@ -1744,6 +1809,7 @@ static XEN snd_no_such_mark_error(const char *caller, XEN id)
 		       id));
   return(XEN_FALSE);
 }
+
 
 #if MUS_DEBUGGING && HAVE_SCHEME
 /* too hard to do this via mouse events in snd-test, so do it by hand here */
@@ -1812,6 +1878,7 @@ static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, const char *caller)
   return(XEN_FALSE);
 }
 
+
 static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, const char *caller)
 {
   chan_info *cp[1];
@@ -1847,6 +1914,7 @@ static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, const char *caller)
   return(val);
 }
 
+
 static XEN g_mark_p(XEN id_n)
 {
   #define H_mark_p "(" S_mark_p " id): " PROC_TRUE " if mark is active"
@@ -1854,6 +1922,7 @@ static XEN g_mark_p(XEN id_n)
     return(C_TO_XEN_BOOLEAN(find_mark_from_id(XEN_TO_C_INT(id_n), NULL, AT_CURRENT_EDIT_POSITION)));
   return(XEN_FALSE);
 }
+
 
 #if WITH_RUN
 bool r_mark_p(int n);
@@ -1890,6 +1959,7 @@ char *r_mark_name(int n)
 }
 #endif
 
+
 static XEN g_mark_sample(XEN mark_n, XEN pos_n) 
 {
   #define H_mark_sample "(" S_mark_sample " :optional id pos): mark's location (sample number) at edit history pos"
@@ -1905,6 +1975,7 @@ static XEN g_set_mark_sample(XEN mark_n, XEN samp_n)
   return(mark_set(mark_n, samp_n, MARK_SAMPLE, S_setB S_mark_sample));
 }
 
+
 static XEN g_mark_sync(XEN mark_n) 
 {
   #define H_mark_sync "(" S_mark_sync " :optional id): mark's sync value (default: 0)"
@@ -1918,6 +1989,7 @@ static XEN g_set_mark_sync(XEN mark_n, XEN sync_n)
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(sync_n), sync_n, XEN_ARG_2, S_setB S_mark_sync, "an integer");
   return(mark_set(mark_n, sync_n, MARK_SYNC, S_setB S_mark_sync));
 }
+
 
 static XEN g_mark_name(XEN mark_n) 
 {
@@ -1933,11 +2005,13 @@ static XEN g_set_mark_name(XEN mark_n, XEN name)
   return(mark_set(mark_n, name, MARK_NAME, S_setB S_mark_name));
 }
 
+
 static XEN g_mark_sync_max(void) 
 {
   #define H_mark_sync_max "(" S_mark_sync_max "): max mark sync value seen so far"
   return(C_TO_XEN_INT(mark_sync_max()));
 }
+
 
 static XEN g_mark_home(XEN mark_n)
 {
@@ -1945,6 +2019,7 @@ static XEN g_mark_home(XEN mark_n)
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ONLY_ARG, S_mark_home, "an integer");
   return(mark_get(mark_n, MARK_HOME, XEN_UNDEFINED, S_mark_home));
 }
+
 
 static XEN g_find_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos) 
 {
@@ -1987,6 +2062,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
   return(XEN_FALSE);
 }
 
+
 static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync) 
 {
   #define H_add_mark "(" S_add_mark " samp :optional snd chn name (sync 0)): add a mark at sample samp returning the mark id."
@@ -2023,6 +2099,7 @@ static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync)
   return(XEN_FALSE);
 }
 
+
 static XEN g_delete_mark(XEN id_n) 
 {
   #define H_delete_mark "(" S_delete_mark " id): delete mark id"
@@ -2040,6 +2117,7 @@ static XEN g_delete_mark(XEN id_n)
   return(id_n);
 }
 
+
 static XEN g_delete_marks(XEN snd_n, XEN chn_n) 
 {
   #define H_delete_marks "(" S_delete_marks " :optional snd chn): delete all marks in snd's channel chn"
@@ -2051,6 +2129,7 @@ static XEN g_delete_marks(XEN snd_n, XEN chn_n)
   return(XEN_FALSE);
 }
 
+
 static XEN int_array_to_list(int *arr, int i, int len)
 {
   if (i < len)
@@ -2059,6 +2138,7 @@ static XEN int_array_to_list(int *arr, int i, int len)
   else return(XEN_CONS(C_TO_XEN_INT(arr[i]), 
 		       XEN_EMPTY_LIST));
 }
+
 
 static int *syncd_marks(int sync)
 {
@@ -2074,6 +2154,7 @@ static int *syncd_marks(int sync)
   return(ids);
 }
 
+
 static XEN g_syncd_marks(XEN sync)
 {
   #define H_syncd_marks "(" S_syncd_marks " sync): list of mark ids that share a given sync value (" S_mark_sync ")"
@@ -2088,6 +2169,7 @@ static XEN g_syncd_marks(XEN sync)
   return(res);
 }
 
+
 static XEN g_mark_tag_width(void) {return(C_TO_XEN_INT(mark_tag_width(ss)));}
 static XEN g_set_mark_tag_width(XEN val) 
 {
@@ -2100,6 +2182,7 @@ static XEN g_set_mark_tag_width(XEN val)
   return(C_TO_XEN_INT(mark_tag_width(ss)));
 }
 
+
 static XEN g_mark_tag_height(void) {return(C_TO_XEN_INT(mark_tag_height(ss)));}
 static XEN g_set_mark_tag_height(XEN val) 
 {
@@ -2111,6 +2194,7 @@ static XEN g_set_mark_tag_height(XEN val)
   for_each_normal_chan(update_graph);
   return(C_TO_XEN_INT(mark_tag_height(ss)));
 }
+
 
 static int *channel_marks(chan_info *cp, int pos)
 {
@@ -2134,6 +2218,7 @@ static int *channel_marks(chan_info *cp, int pos)
     }
   return(ids);
 }
+
 
 static XEN g_marks(XEN snd_n, XEN chn_n, XEN pos_n) 
 {
@@ -2241,6 +2326,7 @@ static char *mark_sync_name(int cur_sync)
   return(result);
 }
 
+
 static char *map_mark_sync(chan_info *cp, mark *m, save_mark_info *sv)
 {
   /* if sync 0 just return "0",  else if already in syncs array, use _sync_n_ as name,
@@ -2284,6 +2370,7 @@ static char *map_mark_sync(chan_info *cp, mark *m, save_mark_info *sv)
   return(mark_sync_name(cur_sync));
 }
 
+
 static mark *save_mark(chan_info *cp, mark *m, void *info)
 {
   /* we're called within "sound_block" where "sfile" = current sound index */
@@ -2318,6 +2405,7 @@ static mark *save_mark(chan_info *cp, mark *m, void *info)
   FREE(mapped_sync);
   return(NULL); /* returning a mark here breaks out of the map mark loop */
 }
+
 
 void save_mark_list(FILE *fd, chan_info *cp, bool all_chans)
 {
@@ -2360,6 +2448,7 @@ void save_mark_list(FILE *fd, chan_info *cp, bool all_chans)
   if (sv->syncs) FREE(sv->syncs);
   FREE(sv);
 }  
+
 
 static XEN g_save_marks(XEN snd_n, XEN filename)
 {
@@ -2421,6 +2510,7 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
     }
   return(res);
 }
+
 
 static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
 {

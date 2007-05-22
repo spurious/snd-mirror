@@ -18,6 +18,7 @@ bool set_tiny_font(const char *font)
   return(false);
 }
 
+
 bool set_listener_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
@@ -35,6 +36,7 @@ bool set_listener_font(const char *font)
   return(false);
 }
 
+
 bool set_peaks_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
@@ -51,6 +53,7 @@ bool set_peaks_font(const char *font)
   return(false);
 }
 
+
 bool set_bold_peaks_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
@@ -66,6 +69,7 @@ bool set_bold_peaks_font(const char *font)
     }
   return(false);
 }
+
 
 bool set_axis_label_font(const char *font)
 {
@@ -86,6 +90,7 @@ bool set_axis_label_font(const char *font)
   return(false);
 }
 
+
 bool set_axis_numbers_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
@@ -104,6 +109,7 @@ bool set_axis_numbers_font(const char *font)
     }
   return(false);
 }
+
 
 int sg_text_width(const char *txt, PangoFontDescription *font)
 {
@@ -133,12 +139,14 @@ int sg_text_width(const char *txt, PangoFontDescription *font)
   return(wid);
 }
 
+
 int mark_name_width(const char *txt)
 {
   if (txt)
     return(sg_text_width(txt, PEAKS_FONT(ss)));
   return(0);
 }
+
 
 int label_width(const char *txt, bool use_tiny_font)
 {
@@ -147,12 +155,14 @@ int label_width(const char *txt, bool use_tiny_font)
   else return(0);
 }
 
+
 int number_width(const char *num, bool use_tiny_font)
 {
   if (num)
     return(sg_text_width(num, (use_tiny_font) ? TINY_FONT(ss) : AXIS_NUMBERS_FONT(ss)));
   return(0);
 }
+
 
 #if 0
 static int sg_font_width(PangoFontDescription *font)
@@ -176,6 +186,7 @@ static int sg_font_width(PangoFontDescription *font)
 }
 #endif
 
+
 static int sg_font_height(PangoFontDescription *font)
 {
   /* returns size in pixels */
@@ -198,6 +209,7 @@ static int sg_font_height(PangoFontDescription *font)
       
   return(hgt);
 }
+
 
 static PangoFontDescription *last_tiny_font = NULL, *last_numbers_font = NULL, *last_label_font = NULL;
 static int last_numbers_height = 14, last_tiny_height = 10, last_label_height = 14;
@@ -224,6 +236,7 @@ int number_height(bool use_tiny_font)
   return(hgt);
 }
 
+
 int label_height(bool use_tiny_font)
 {
   int hgt = 14;
@@ -246,10 +259,12 @@ int label_height(bool use_tiny_font)
   return(hgt);
 }
 
+
 void clear_window(axis_context *ax)
 {
   if (ax) gdk_window_clear(ax->wn);
 }
+
 
 void raise_dialog(GtkWidget *w)
 {
@@ -259,6 +274,7 @@ void raise_dialog(GtkWidget *w)
   gtk_widget_show(w);
   gtk_window_present(GTK_WINDOW(w));
 }
+
 
 static void set_stock_button_label_1(gpointer w1, gpointer label)
 {
@@ -276,20 +292,24 @@ static void set_stock_button_label_1(gpointer w1, gpointer label)
     }
 }
 
+
 void set_stock_button_label(GtkWidget *w, const char *new_label)
 {
   set_stock_button_label_1((gpointer)w, (gpointer)new_label);
 }
-		     
+	
+	     
 void set_button_label(GtkWidget *label, const char *str)
 {
   gtk_label_set_text(GTK_LABEL(GTK_BIN(label)->child), str);
 }
 
+
 void set_label(GtkWidget *label, const char *str)
 {
   gtk_label_set_text(GTK_LABEL(label), str);
 }
+
 
 void sg_left_justify_button(GtkWidget *button)
 {
@@ -297,6 +317,7 @@ void sg_left_justify_button(GtkWidget *button)
   gtk_misc_get_alignment(GTK_MISC(GTK_LABEL(GTK_BIN(button)->child)), &x, &y);
   gtk_misc_set_alignment(GTK_MISC(GTK_LABEL(GTK_BIN(button)->child)), 0.05, y);
 }
+
 
 void sg_left_justify_label(GtkWidget *label)
 {
@@ -326,6 +347,7 @@ void check_for_event(void)
   ss->checking_explicitly = false;
 }
 
+
 void force_update(GtkWidget *wid)
 {
   if ((wid) && (wid->window))
@@ -335,12 +357,14 @@ void force_update(GtkWidget *wid)
     }
 }
 
+
 void set_title(const char *title)
 {
 #ifndef SND_AS_WIDGET
   gtk_window_set_title(GTK_WINDOW(MAIN_SHELL(ss)), title);
 #endif
 }
+
 
 void goto_window(GtkWidget *text)
 {
@@ -358,6 +382,7 @@ void gc_set_foreground(gc_t *gp, color_info *color)
 #endif
 }
 
+
 void gc_set_background(gc_t *gp, color_info *color)
 {
 #if USE_CAIRO
@@ -366,6 +391,7 @@ void gc_set_background(gc_t *gp, color_info *color)
   gdk_gc_set_background(gp, color);
 #endif
 }
+
 
 void gc_set_foreground_xor(gc_t *gp, color_info *col1, color_info *col2)
 { 
@@ -382,12 +408,14 @@ void gc_set_foreground_xor(gc_t *gp, color_info *col1, color_info *col2)
 #endif
 }
 
+
 void gc_set_function(gc_t *gp, GdkFunction op)
 {
 #if (!USE_CAIRO)
   gdk_gc_set_function(gp, op);
 #endif
 }
+
 
 gc_t *gc_new(GdkDrawable *wn)
 {
@@ -410,6 +438,7 @@ void color_cursor(color_info *color)
   gc_set_foreground_xor(sx->selected_cursor_gc, color, sx->selected_graph_color);
 }
 
+
 void color_marks(color_info *color)
 {
   state_context *sx;
@@ -419,6 +448,7 @@ void color_marks(color_info *color)
   gc_set_foreground_xor(sx->selected_mark_gc, color, sx->selected_graph_color);
 }
 
+
 void color_selection(color_info *color)
 {
   state_context *sx;
@@ -427,6 +457,7 @@ void color_selection(color_info *color)
   gc_set_foreground_xor(sx->selection_gc, color, sx->graph_color);
   gc_set_foreground_xor(sx->selected_selection_gc, color, sx->selected_graph_color);
 }
+
 
 void color_graph(color_info *color)
 {
@@ -440,6 +471,7 @@ void color_graph(color_info *color)
   gc_set_foreground_xor(sx->mark_gc, sx->mark_color, color);
 }
 
+
 void color_selected_graph(color_info *color)
 {
   state_context *sx;
@@ -452,6 +484,7 @@ void color_selected_graph(color_info *color)
   gc_set_foreground_xor(sx->selected_mark_gc, sx->mark_color, color);
 }
 
+
 void color_data(color_info *color)
 {
   state_context *sx;
@@ -461,6 +494,7 @@ void color_data(color_info *color)
   gc_set_background(sx->erase_gc, color);
 }
 
+
 void color_selected_data(color_info *color)
 {
   state_context *sx;
@@ -469,6 +503,7 @@ void color_selected_data(color_info *color)
   gc_set_foreground(sx->selected_basic_gc, color);
   gc_set_background(sx->selected_erase_gc, color);
 }
+
 
 void set_mix_color(color_info *color)
 {
@@ -498,6 +533,7 @@ color_t rgb_to_color(Float r, Float g, Float b)
   return(ccolor);
 }
 
+
 #if USE_CAIRO
 GdkColor *rgb_to_gdk_color(color_t col)
 {
@@ -512,6 +548,7 @@ GdkColor *rgb_to_gdk_color(color_t col)
 }
 #endif
 
+
 void widget_modify_bg(GtkWidget *w, GtkStateType type, color_t color)
 {
 #if USE_CAIRO
@@ -523,6 +560,7 @@ void widget_modify_bg(GtkWidget *w, GtkStateType type, color_t color)
 #endif
 }
 
+
 void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color)
 {
 #if USE_CAIRO
@@ -531,6 +569,7 @@ void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color)
   gtk_widget_modify_fg(w, GTK_STATE_NORMAL, color);
 #endif
 }
+
 
 void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color)
 {
@@ -541,6 +580,7 @@ void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color)
 #endif
 }
 
+
 void widget_modify_text(GtkWidget *w, GtkStateType type, color_t color)
 {
 #if USE_CAIRO
@@ -550,6 +590,7 @@ void widget_modify_text(GtkWidget *w, GtkStateType type, color_t color)
 #endif
 }
 
+
 void recolor_graph(chan_info *cp, bool selected)
 {
   state_context *sx;
@@ -557,11 +598,13 @@ void recolor_graph(chan_info *cp, bool selected)
   widget_modify_bg(channel_graph(cp), GTK_STATE_NORMAL, (selected) ? sx->selected_graph_color : sx->graph_color);
 }
 
+
 void set_sensitive(GtkWidget *wid, bool val) 
 {
   if (wid) 
     gtk_widget_set_sensitive(wid, val);
 }
+
 
 void set_toggle_button(GtkWidget *wid, bool val, bool passed, void *data) 
 {
@@ -570,12 +613,14 @@ void set_toggle_button(GtkWidget *wid, bool val, bool passed, void *data)
   if (!passed) g_signal_handlers_unblock_matched(GTK_OBJECT(wid), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)data);
 }
 
+
 guint16 widget_height(GtkWidget *w)
 {
   gint x, y;
   gdk_drawable_get_size(w->window, &x, &y);
   return(y);
 }
+
 
 guint16 widget_width(GtkWidget *w)
 {
@@ -584,15 +629,18 @@ guint16 widget_width(GtkWidget *w)
   return(x);
 }
 
+
 void set_widget_height(GtkWidget *w, guint16 height)
 {
   set_widget_size(w, widget_width(w), height);
 }
 
+
 void set_widget_width(GtkWidget *w, guint16 width)
 {
   set_widget_size(w, width, widget_height(w));
 }
+
 
 gint16 widget_x(GtkWidget *w)
 {
@@ -601,6 +649,7 @@ gint16 widget_x(GtkWidget *w)
   return(x);
 }
 
+
 gint16 widget_y(GtkWidget *w)
 {
   gint x, y;
@@ -608,15 +657,18 @@ gint16 widget_y(GtkWidget *w)
   return(y);
 }
 
+
 void set_widget_x(GtkWidget *w, gint16 x)
 {
   gtk_window_move(GTK_WINDOW(w), x, widget_y(w));
 }
 
+
 void set_widget_y(GtkWidget *w, gint16 y)
 {
   gtk_window_move(GTK_WINDOW(w), widget_x(w), y);
 }
+
 
 void set_widget_size(GtkWidget *w, guint16 width, guint16 height)
 {
@@ -636,20 +688,24 @@ void set_widget_size(GtkWidget *w, guint16 width, guint16 height)
 #endif
 }
 
+
 void set_widget_position(GtkWidget *w, gint16 x, gint16 y)
 {
   gtk_window_move(GTK_WINDOW(w), x, y);
 }
+
 
 void set_user_data(GObject *obj, gpointer data)
 {
   g_object_set_data(obj, "snd-data", data);
 }
 
+
 gpointer get_user_data(GObject *obj)
 {
   return(g_object_get_data(obj, "snd-data"));
 }
+
 
 void set_user_int_data(GObject *obj, int data)
 {
@@ -659,12 +715,14 @@ void set_user_int_data(GObject *obj, int data)
   g_object_set_data(obj, "snd-data", (gpointer)gdata);
 }
 
+
 int get_user_int_data(GObject *obj)
 {
   gpointer gdata;
   gdata = g_object_get_data(obj, "snd-data");
   return(((int *)gdata)[0]);
 }
+
 
 void reset_user_int_data(GObject *obj, int data)
 {
@@ -684,6 +742,7 @@ char *sg_get_text(GtkWidget *w, int start, int end)
   return(gtk_text_buffer_get_text(buf, &s, &e, true));
 }
 
+
 void sg_text_delete(GtkWidget *w, int start, int end)
 {
   GtkTextIter s, e;
@@ -693,6 +752,7 @@ void sg_text_delete(GtkWidget *w, int start, int end)
   gtk_text_buffer_get_iter_at_offset(buf, &e, end); 
   gtk_text_buffer_delete(buf, &s, &e);
 }
+
 
 void sg_text_insert(GtkWidget *w, const char *text)
 {
@@ -707,6 +767,7 @@ void sg_text_insert(GtkWidget *w, const char *text)
   else gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(w)), "", 0);
 }
 
+
 void sg_set_cursor(GtkWidget *w, int position)
 {
   GtkTextIter pos;
@@ -716,6 +777,7 @@ void sg_set_cursor(GtkWidget *w, int position)
   gtk_text_buffer_place_cursor(buf, &pos);
   gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(w), gtk_text_buffer_get_insert(buf));
 }
+
 
 int sg_cursor_position(GtkWidget *w)
 {
@@ -727,6 +789,7 @@ int sg_cursor_position(GtkWidget *w)
   gtk_text_buffer_get_iter_at_mark(buf, &pos, m);
   return(gtk_text_iter_get_offset(&pos));
 }
+
 
 GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *paner, bool resize)
 {
@@ -753,6 +816,7 @@ GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *paner
   return(new_text);
 }
 
+
 void sg_make_resizable(GtkWidget *w)
 {
   if (GTK_IS_DIALOG(w))
@@ -761,6 +825,7 @@ void sg_make_resizable(GtkWidget *w)
       gtk_window_set_resizable(GTK_WINDOW(w), true);
     }
 }
+
 
 idle_t add_work_proc(GtkFunction func, gpointer data)
 {
@@ -774,6 +839,7 @@ idle_t add_work_proc(GtkFunction func, gpointer data)
     }
 }
 
+
 GtkWidget *snd_gtk_dialog_new(void)
 {
   GtkWidget *w;
@@ -781,6 +847,7 @@ GtkWidget *snd_gtk_dialog_new(void)
   g_object_ref(w); 
   return(w);
 }
+
 
 GtkWidget *snd_gtk_highlight_label_new(const char *label)
 {
@@ -790,6 +857,7 @@ GtkWidget *snd_gtk_highlight_label_new(const char *label)
   gtk_button_set_relief(GTK_BUTTON(rlw), GTK_RELIEF_HALF);
   return(rlw);
 }
+
 
 GtkWidget *snd_gtk_entry_label_new(const char *label, color_info *color)
 {
@@ -804,20 +872,24 @@ GtkWidget *snd_gtk_entry_label_new(const char *label, color_info *color)
   return(rlw);
 }
 
+
 GtkWidget *make_info_widget(void)
 {
   return(snd_gtk_entry_label_new(NULL, ss->sgx->highlight_color));
 }
+
 
 void info_widget_display(GtkWidget *w, const char *message)
 {
   gtk_entry_set_text(GTK_ENTRY(w), message);
 }
 
+
 void info_widget_set_size(GtkWidget *w, int size)
 {
   gtk_entry_set_width_chars(GTK_ENTRY(w), size);
 }
+
 
 void widget_int_to_text(GtkWidget *w, int val)
 {
@@ -828,6 +900,7 @@ void widget_int_to_text(GtkWidget *w, int val)
   FREE(str);
 }
 
+
 void widget_float_to_text(GtkWidget *w, Float val)
 {
   char *str;
@@ -837,6 +910,7 @@ void widget_float_to_text(GtkWidget *w, Float val)
   FREE(str);
 }
 
+
 void widget_off_t_to_text(GtkWidget *w, off_t val)
 {
   char *str;
@@ -845,6 +919,7 @@ void widget_off_t_to_text(GtkWidget *w, off_t val)
   gtk_entry_set_text(GTK_ENTRY(w), str);
   FREE(str);
 }
+
 
 void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
 {
@@ -871,6 +946,7 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
   if (new_value != v->value)
     gtk_adjustment_set_value(v, new_value);
 }
+
 
 GtkWidget *sg_button_new_from_stock_with_label(const char *text, gchar *stock_id)
 {
@@ -907,6 +983,7 @@ static void slist_item_clicked(GtkWidget *w, gpointer gp)
 			      lst->select_callback_data);
 }
 
+
 static gboolean slist_item_button_pressed(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   slist *lst = (slist *)data;
@@ -914,6 +991,7 @@ static gboolean slist_item_button_pressed(GtkWidget *w, GdkEventButton *ev, gpoi
     return((*(lst->button_press_callback))(ev, lst->button_press_callback_data));
   return(false);
 }
+
 
 static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
 {
@@ -931,6 +1009,7 @@ static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
   gtk_widget_show(item);
   return(item);
 }
+
 
 slist *slist_new_with_title_and_table_data(const char *title,
 					   GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
@@ -1001,15 +1080,18 @@ slist *slist_new_with_title_and_table_data(const char *title,
   return(lst);
 }
 
+
 slist *slist_new(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned)
 {
   return(slist_new_with_title_and_table_data(NULL, parent, initial_items, num_items, paned, 0, 0, 0, 0));
 }
 
+
 slist *slist_new_with_title(const char *title, GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned)
 {
   return(slist_new_with_title_and_table_data(title, parent, initial_items, num_items, paned, 0, 0, 0, 0));
 }
+
 
 void slist_clear(slist *lst)
 {
@@ -1026,12 +1108,14 @@ void slist_clear(slist *lst)
   lst->selected_item = SLIST_NO_ITEM_SELECTED;
 }
 
+
 static int slist_row(GtkWidget *item)
 {
   gpointer gdata;
   gdata = g_object_get_data(G_OBJECT(item), "slist-row");
   return(((int *)gdata)[0]);
 }
+
 
 static void slist_set_row(GtkWidget *item, int row)
 {
@@ -1040,6 +1124,7 @@ static void slist_set_row(GtkWidget *item, int row)
   gdata[0] = row;
   g_object_set_data(G_OBJECT(item), "slist-row", (gpointer)gdata);
 }
+
 
 #define INITIAL_SLIST_LENGTH 8
 
@@ -1069,10 +1154,12 @@ void slist_append(slist *lst, const char *name)
     }
 }
 
+
 void slist_moveto(slist *lst, int row)
 {
   ensure_scrolled_window_row_visible(lst->topics, row, lst->num_items);
 }
+
 
 void slist_select(slist *lst, int row)
 {
@@ -1082,6 +1169,7 @@ void slist_select(slist *lst, int row)
     widget_modify_bg(lst->items[row], GTK_STATE_NORMAL, ss->sgx->light_blue);
   lst->selected_item = row;
 }
+
 
 char *slist_selection(slist *lst)
 {
