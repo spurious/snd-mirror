@@ -3526,6 +3526,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
   int vals, i, arglist_len;
   XEN edpos = XEN_UNDEFINED, index = XEN_UNDEFINED;
   bool got_edpos = false, free_outcom = false;
+
   keys[0] = kw_file;
   keys[1] = kw_sound;
   keys[2] = kw_header_type;
@@ -3537,6 +3538,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
   for (i = 0; i < 16; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+
   vals = mus_optkey_unscramble(S_save_sound_as, 8, keys, args, orig_arg);
   if (vals > 0)
     {
@@ -3559,23 +3561,28 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 	}
       outcom = mus_optkey_to_string(keys[7], S_save_sound_as, orig_arg[7], NULL);
     }
+
   if ((file == NULL) || (directory_p(file)))
     XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_save_sound_as),
 			 C_TO_XEN_STRING("no output file?")));
+
   ASSERT_SOUND(S_save_sound_as, index, 2);
   sp = get_sp(index, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_save_sound_as, index));
   hdr = sp->hdr;
+
   if (ht == -1) ht = hdr->type;
   if (!(mus_header_writable(ht, -2)))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
 			 C_TO_XEN_STRING(_("can't write this header type:")),
 			 C_TO_XEN_STRING(mus_header_type_name(ht))));
+
   if (sr == -1) 
     sr = hdr->srate;
+
   if (df == -1) 
     {
       /* try to find some writable data_format */
@@ -3601,8 +3608,10 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 			 C_TO_XEN_STRING(_("can't write this combination of header type and data format:")),
 			 C_TO_XEN_STRING(mus_header_type_name(ht)),
 			 C_TO_XEN_STRING(mus_data_format_name(df))));
+
   if (chan >= sp->nchans)
     return(snd_no_such_channel_error(S_save_sound_as, index, keys[5]));
+
   if (got_edpos)
     {
       edit_position = to_c_edit_position(sp->chans[(chan >= 0) ? chan : 0], edpos, S_save_sound_as, 7);
@@ -3616,6 +3625,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 					  C_TO_XEN_INT(i),
 					  C_TO_XEN_INT(sp->chans[i]->edit_ctr))));
     }
+
   fname = mus_expand_filename(file);
   if (outcom == NULL) 
     {
@@ -3625,7 +3635,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
   if (!(run_before_save_as_hook(sp, fname, false, sr, ht, df, outcom)))
     {
       if (chan >= 0)
-	io_err = save_channel_edits(sp->chans[chan], fname, edit_position);
+	io_err = channel_to_file_with_settings(sp->chans[chan], fname, ht, df, sr, outcom, edit_position);
       else io_err = save_edits_without_display(sp, fname, ht, df, sr, outcom, edit_position);
     }
   if (free_outcom) 

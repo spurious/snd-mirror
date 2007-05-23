@@ -4865,7 +4865,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 }
 
 
-static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, int edpos, off_t beg, off_t len)
+static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, int edpos, off_t beg, off_t len, file_info *hdr)
 {
   snd_info *sp;
   snd_fd **sf;
@@ -4885,7 +4885,7 @@ static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, 
     }
   else
     {
-      err = snd_make_file(ofile, 1, sp->hdr, sf, len);
+      err = snd_make_file(ofile, 1, hdr, sf, len);
       free_snd_fd(sf[0]);
       FREE(sf);
       if ((err != IO_NO_ERROR) &&
@@ -4900,10 +4900,38 @@ static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, 
 }
 
 
-static io_error_t channel_to_file(chan_info *cp, const char *ofile, int edpos)
+static io_error_t channel_to_file(chan_info *cp, const char *ofile, int edpos) /* preserves cp->sound's header settings */
 {
-  return(channel_to_file_with_bounds(cp, ofile, edpos, 0, cp->edits[edpos]->samples));
+  return(channel_to_file_with_bounds(cp, ofile, edpos, 0, cp->edits[edpos]->samples, cp->sound->hdr));
 }
+
+/* TODO: snd-test for channel extraction + header changes */
+
+io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, int type, int format, int srate, const char *comment, int pos)
+{ 
+  file_info *hdr, *ohdr;
+  io_error_t err = IO_NO_ERROR;
+  ohdr = cp->sound->hdr;
+  hdr = copy_header(new_name, ohdr);
+  hdr->format = format;
+  hdr->srate = srate;
+  hdr->type = type;
+  if (comment) 
+    hdr->comment = copy_string(comment); 
+  else hdr->comment = NULL;
+  hdr->data_location = 0; /* in case comment changes it */
+
+  if (pos == AT_CURRENT_EDIT_POSITION)
+    pos = cp->edit_ctr;
+
+  err = channel_to_file_with_bounds(cp, new_name, pos, 0, cp->edits[pos]->samples, hdr);
+
+  free_file_info(hdr);
+  return(err);
+}
+
+
+
 
 /* these are used internally by the save-state process */
 #define S_change_samples_with_origin    "change-samples-with-origin"
@@ -6216,7 +6244,7 @@ static bool lock_affected_mixes(chan_info *cp, int edpos, off_t beg, off_t end)
       cur_len = ed->samples;
       cur_cursor = ed->cursor;
       temp_file_name = snd_tempnam();
-      err = channel_to_file_with_bounds(cp, temp_file_name, edpos, change_beg, change_end - change_beg + 1);
+      err = channel_to_file_with_bounds(cp, temp_file_name, edpos, change_beg, change_end - change_beg + 1, cp->sound->hdr);
       if (err == IO_NO_ERROR) /* else snd_error earlier? */
 	{
 	  file_info *hdr;
@@ -8586,7 +8614,6 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int ty
 
   return(err);
 }
-
 
 io_error_t save_channel_edits(chan_info *cp, const char *ofile, int pos)
 {
