@@ -5907,6 +5907,9 @@ This closes 'snd' (the same as the File:Close menu item). To close all sounds:
     ;; equivalent to:
     (for-each close-sound (<a class=quiet href="#sounds">sounds</a>))
 </pre>
+Before the sound is actually closed, <a class=quiet href="#beforeclosehook">before-close-hook</a> 
+is called, then <a class=quiet href="#closehook">close-hook</a>,
+then the sound is closed.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -7169,7 +7172,20 @@ opens a sound read-only, or you can set <a class=quiet href="#readonly">read-onl
 closes a file opened by open-sound.  There are a variety of hooks that are invoked during the sound opening process:
 <a class=quiet href="#duringopenhook">during-open-hook</a>, <a class=quiet href="#openhook">open-hook</a>, 
 <a class=quiet href="#afteropenhook">after-open-hook</a>,
-<a class=quiet href="#initialgraphhook">initial-graph-hook</a>, <a class=quiet href="#openrawsoundhook">open-raw-sound-hook</a>.  There are
+<a class=quiet href="#initialgraphhook">initial-graph-hook</a>, <a class=quiet href="#openrawsoundhook">open-raw-sound-hook</a>.  
+The sequence of actions is:
+<pre>
+    bad header?: <a class=quiet href="#badheaderhook">bad-header-hook</a> -- can cancel request
+    no header?:  <a class=quiet href="#openrawsoundhook">open-raw-sound-hook</a> -- can cancel request
+    file ok: 
+         <a class=quiet href="#openhook">open-hook</a> -- can change filename
+         file opened (no data read yet)
+             <a class=quiet href="#duringopenhook">during-open-hook</a> (can set prescaling etc)
+         data read, no graphics yet
+         <a class=quiet href="#afteropenhook">after-open-hook</a>
+         <a class=quiet href="#initialgraphhook">initial-graph-hook</a>
+</pre>
+There are
 other ways to get at sound file data: <a class=quiet href="#makesamplereader">make-sample-reader</a> can be given a filename,
 rather than a sound index; file-&gt;vct in examp.scm; 
 <a class=quiet href="#mussoundopeninput">mus-sound-open-input</a> and
@@ -7378,6 +7394,15 @@ The "reasons" that might be passed to the stop-procedure are:
     8    file edited
     9    C-t
 </small></pre>
+
+The hooks called during a play operation are:
+<pre>
+    when a play request occurs: <a class=quiet href="#startplayinghook">start-playing-hook</a> -- can cancel the request, also <a class=quiet href="#startplayingselectionhook">start-playing-selection-hook</a>
+        (any number of sounds can be playing at once)
+    as each buffer is sent to the audio device: <a class=quiet href="#playhook">play-hook</a> and <a class=quiet href="#dachook">dac-hook</a>
+    as each sound ends: <a class=quiet href="#stopplayinghook">stop-playing-hook</a>, <a class=quiet href="#stopplayingselectionhook">stop-playing-selection-hook</a>
+    close audio device: <a class=quiet href="#stopdachook">stop-dac-hook</a>
+</pre>
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -8159,6 +8184,14 @@ To define an explicit channel extraction function:<br>
     Forth:
     : extract-channel { filename snd chn } filename snd :channel chn save-sound-as ;
 </pre>
+The hooks called during a save operation are:
+<pre>
+    <a class=quiet href="#beforesaveashook">before-save-as-hook</a> -- can cancel the request or set its output parameters
+    <a class=quiet href="#savehook">save-hook</a>
+        sound saved
+          if any sample is clipped during save, <a class=quiet href="#cliphook">clip-hook</a>
+    <a class=quiet href="#aftersaveashook">after-save-as-hook</a>
+</pre>
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -8821,7 +8854,7 @@ linear src: linear-src-channel in dsp.scm<br>
 <code><a class=def name="srcsound">src-sound</a> (num-or-env :optional base snd chn edpos)</code>
 </td></tr><tr><td></td><td>
 src-sound performs sampling rate conversion using 'warped sinc interpolation'.  The
-argument 'num-or-env', which sets the ratio between the new srate and the old, can be either a number or an envelope.  
+argument 'num-or-env', which sets the ratio between the old and the new srate, can be either a number or an envelope.  
 In the latter case, 'base' sets the segment base (the default is 1.0 = linear).
 A value greater than 1.0 causes the sound to be transposed up.
 A value less than 0.0 causes the sound to be reversed. 
@@ -11739,6 +11772,12 @@ delete-watcher removes from the watcher list the function associated with id.
 <code><a class=def name="exit">exit</a> ('exit-value')</code>
 </td></tr><tr><td></td><td>
 This exits Snd.  Scheme's exit function is renamed %exit.  In Forth, this function is snd-exit.
+The hooks associated with this function are:
+<pre>
+    <a class=quiet href="#beforeexithook">before-exit-hook</a> -- can cancel exit request
+    <a class=quiet href="#exithook">exit-hook</a>
+    Snd cleans up and exits
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -12591,6 +12630,7 @@ of FractInt's royal colormap):
 </td></tr><tr><td></td><td>
 In Gtk+Cairo versions of Snd, this is the amount of background color gradient in the channel graphs (0.0, the default, means
 no gradient).
+<img src="bggrad.png" alt="graph with background gradient" vspace=10>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

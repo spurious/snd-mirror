@@ -4905,13 +4905,13 @@ static io_error_t channel_to_file(chan_info *cp, const char *ofile, int edpos) /
   return(channel_to_file_with_bounds(cp, ofile, edpos, 0, cp->edits[edpos]->samples, cp->sound->hdr));
 }
 
-/* TODO: snd-test for channel extraction + header changes */
-
 io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, int type, int format, int srate, const char *comment, int pos)
 { 
   file_info *hdr, *ohdr;
+  snd_info *sp;
   io_error_t err = IO_NO_ERROR;
-  ohdr = cp->sound->hdr;
+  sp = cp->sound;
+  ohdr = sp->hdr;
   hdr = copy_header(new_name, ohdr);
   hdr->format = format;
   hdr->srate = srate;
@@ -4923,6 +4923,13 @@ io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, in
 
   if (pos == AT_CURRENT_EDIT_POSITION)
     pos = cp->edit_ctr;
+
+  if ((strcmp(new_name, sp->filename) == 0) &&      /* overwriting current file with one of its channels */
+      ((sp->user_read_only) || (sp->file_read_only)))
+    {
+      snd_error(_("can't save channel %d as %s (%s is write-protected)"), cp->chan, new_name, sp->short_filename);
+      return(IO_WRITE_PROTECTED);
+    }
 
   err = channel_to_file_with_bounds(cp, new_name, pos, 0, cp->edits[pos]->samples, hdr);
 
@@ -8626,7 +8633,7 @@ io_error_t save_channel_edits(chan_info *cp, const char *ofile, int pos)
   if (strcmp(ofile, sp->filename) == 0)       /* overwriting current file with one of its channels */
     {
       char *nfile = NULL;
-      if (sp->user_read_only || sp->file_read_only)
+      if ((sp->user_read_only) || (sp->file_read_only))
 	{
 	  snd_error(_("can't save channel as %s (%s is write-protected)"), ofile, sp->short_filename);
 	  return(IO_WRITE_PROTECTED);
