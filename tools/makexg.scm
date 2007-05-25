@@ -115,6 +115,16 @@
 (define checks-210 '())
 (define check-types-210 '())
 
+(define funcs-211 '())
+(define strings-211 '())
+(define ints-211 '())
+(define names-211 '())
+(define types-211 '())
+(define casts-211 '())
+(define checks-211 '())
+(define check-types-211 '())
+
+
 (define cairo-funcs '())
 (define cairo-png-funcs '())
 (define cairo-ints '())
@@ -420,10 +430,13 @@
 								  (if (or (eq? extra 'callback-210)
 									  (eq? extra '210))
 								      (set! types-210 (cons type types-210))
-								      (if (eq? extra 'cairo)
-									  (set! cairo-types (cons type cairo-types))
-									  (if (not (member type types))
-									      (set! types (cons type types))))))))))))))))
+								      (if (or (eq? extra 'callback-211)
+									      (eq? extra '211))
+									  (set! types-211 (cons type types-211))
+									  (if (eq? extra 'cairo)
+									      (set! cairo-types (cons type cairo-types))
+									      (if (not (member type types))
+										  (set! types (cons type types)))))))))))))))))
 			(set! type #f))
 		      (if (> i (1+ sp))
 			  (set! type (substring args (1+ sp) i))))
@@ -1166,6 +1179,22 @@
 		(set! funcs-210 (cons (list name type strs args) funcs-210)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
+(define* (CFNC-211 data #:optional spec)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(no-way "CFNC-211: ~A~%" (list name data))
+	(let ((type (car-str data)))
+	  (if (not (member type all-types))
+	      (begin
+		(set! all-types (cons type all-types))
+		(set! types-211 (cons type types-211))))
+	  (let ((strs (parse-args args '211)))
+	    (if spec
+		(set! funcs-211 (cons (list name type strs args spec) funcs-211))
+		(set! funcs-211 (cons (list name type strs args) funcs-211)))
+	    (set! names (cons (cons name (func-type strs)) names)))))))
+
 (define* (CAIRO-FUNC data #:optional spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
@@ -1294,6 +1323,13 @@
       (begin
 	(set! strings-210 (cons name strings-210))
 	(set! names-210 (cons (cons name 'string) names-210)))))
+
+(define (CSTR-211 name)
+  (if (assoc name names-211)
+      (no-way "~A CSTR-211~%" name)
+      (begin
+	(set! strings-211 (cons name strings-211))
+	(set! names-211 (cons (cons name 'string) names-211)))))
 
 (define (CDBL name)
   (if (assoc name names)
@@ -1444,6 +1480,14 @@
 	(set! ints-210 (cons name ints-210))
 	(set! names (cons (cons name 'int) names)))))
 
+(define* (CINT-211 name #:optional type)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CINT-211~%" name)
+      (begin
+	(set! ints-211 (cons name ints-211))
+	(set! names (cons (cons name 'int) names)))))
+
 (define* (CAIRO-INT name #:optional type)
   (save-declared-type type)
   (if (assoc name names)
@@ -1517,6 +1561,13 @@
       (no-way "~A CCAST-210~%" name)
       (begin
 	(set! casts-210 (cons (list name type) casts-210))
+	(set! names (cons (cons name 'def) names)))))
+
+(define (CCAST-211 name type)
+  (if (assoc name names)
+      (no-way "~A CCAST-211~%" name)
+      (begin
+	(set! casts-211 (cons (list name type) casts-211))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (CCHK name type)
@@ -1605,6 +1656,17 @@
 	      (set! all-check-types (cons type all-check-types))
 	      (set! check-types-210 (cons type check-types-210))))
 	(set! checks-210 (cons (list name type) checks-210))
+	(set! names (cons (cons name 'def) names)))))
+
+(define (CCHK-211 name type)
+  (if (assoc name names)
+      (no-way "~A CCHK-211~%" name)
+      (begin
+	(if (not (member type all-check-types))
+	    (begin
+	      (set! all-check-types (cons type all-check-types))
+	      (set! check-types-211 (cons type check-types-211))))
+	(set! checks-211 (cons (list name type) checks-211))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (STRUCT data)
@@ -1728,6 +1790,12 @@
   (thunk)
   (dpy "#endif~%~%"))
 
+(define (with-211 dpy thunk)
+  (dpy "#if HAVE_GTK_WINDOW_GET_OPACITY~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
+
 (define (with-cairo dpy thunk)
   (dpy "#if HAVE_CAIRO_CREATE~%")
   (thunk)
@@ -1742,6 +1810,7 @@
   (dpy "#if HAVE_CAIRO_GET_USER_DATA~%")
   (thunk)
   (dpy "#endif~%~%"))
+
 
 
 
@@ -1762,6 +1831,7 @@
 (hey " *     HAVE_GTK_TREE_VIEW_GET_VISIBLE_RANGE for 2.7.3~%")
 (hey " *     HAVE_GTK_LINK_BUTTON_NEW for 2.9.0~%")
 (hey " *     HAVE_GTK_LABEL_GET_LINE_WRAP_MODE for 2.10.0~%")
+(hey " *     HAVE_GTK_WINDOW_GET_OPACITY for 2.11.0~%")
 (hey " *     HAVE_CAIRO_CREATE for cairo~%")
 (hey " *     HAVE_CAIRO_GET_USER_DATA for cairo 1.4.0~%")
 (hey " *~%")
@@ -2087,6 +2157,7 @@
 (if (not (null? types-270)) (with-270 hey (lambda () (for-each type-it (reverse types-270)))))
 (if (not (null? types-290)) (with-290 hey (lambda () (for-each type-it (reverse types-290)))))
 (if (not (null? types-210)) (with-210 hey (lambda () (for-each type-it (reverse types-210)))))
+(if (not (null? types-211)) (with-211 hey (lambda () (for-each type-it (reverse types-211)))))
 (if (not (null? cairo-types)) (with-cairo hey (lambda () (for-each type-it (reverse cairo-types)))))
 (if (not (null? cairo-types-140)) (with-cairo-140 hey (lambda () (for-each type-it (reverse cairo-types-140)))))
 
@@ -2723,6 +2794,7 @@
 (if (not (null? funcs-273)) (with-273 hey (lambda () (for-each handle-func (reverse funcs-273)))))
 (if (not (null? funcs-290)) (with-290 hey (lambda () (for-each handle-func (reverse funcs-290)))))
 (if (not (null? funcs-210)) (with-210 hey (lambda () (for-each handle-func (reverse funcs-210)))))
+(if (not (null? funcs-211)) (with-211 hey (lambda () (for-each handle-func (reverse funcs-211)))))
 (if (not (null? cairo-funcs)) (with-cairo hey (lambda () (for-each handle-func (reverse cairo-funcs)))))
 (if (not (null? cairo-png-funcs)) (with-cairo-png hey (lambda () (for-each handle-func (reverse cairo-png-funcs)))))
 (if (not (null? cairo-funcs-140)) (with-cairo-140 hey (lambda () (for-each handle-func (reverse cairo-funcs-140)))))
@@ -2748,6 +2820,7 @@
 (if (not (null? casts-256)) (with-256 hey (lambda () (for-each cast-it (reverse casts-256)))))
 (if (not (null? casts-290)) (with-290 hey (lambda () (for-each cast-it (reverse casts-290)))))
 (if (not (null? casts-210)) (with-210 hey (lambda () (for-each cast-it (reverse casts-210)))))
+(if (not (null? casts-211)) (with-211 hey (lambda () (for-each cast-it (reverse casts-211)))))
 
 ;;; checks have to use the built-in macros, not local symbol-based type checks
 
@@ -2763,6 +2836,7 @@
 (if (not (null? checks-256)) (with-256 hey (lambda () (for-each make-check (reverse checks-256)))))
 (if (not (null? checks-290)) (with-290 hey (lambda () (for-each make-check (reverse checks-290)))))
 (if (not (null? checks-210)) (with-210 hey (lambda () (for-each make-check (reverse checks-210)))))
+(if (not (null? checks-211)) (with-211 hey (lambda () (for-each make-check (reverse checks-211)))))
 
 
 (hey "~%~%/* ---------------------------------------- special functions ---------------------------------------- */~%~%")
@@ -3078,6 +3152,7 @@
 (if (not (null? funcs-273)) (with-273 hey (lambda () (for-each argify-func (reverse funcs-273)))))
 (if (not (null? funcs-290)) (with-290 hey (lambda () (for-each argify-func (reverse funcs-290)))))
 (if (not (null? funcs-210)) (with-210 hey (lambda () (for-each argify-func (reverse funcs-210)))))
+(if (not (null? funcs-211)) (with-211 hey (lambda () (for-each argify-func (reverse funcs-211)))))
 (if (not (null? cairo-funcs)) (with-cairo hey (lambda () (for-each argify-func (reverse cairo-funcs)))))
 (if (not (null? cairo-png-funcs)) (with-cairo-png hey (lambda () (for-each argify-func (reverse cairo-png-funcs)))))
 (if (not (null? cairo-funcs-140)) (with-cairo-140 hey (lambda () (for-each argify-func (reverse cairo-funcs-140)))))
@@ -3101,6 +3176,7 @@
 (if (not (null? casts-256)) (with-256 hey (lambda () (for-each ruby-cast (reverse casts-256)))))
 (if (not (null? casts-290)) (with-290 hey (lambda () (for-each ruby-cast (reverse casts-290)))))
 (if (not (null? casts-210)) (with-210 hey (lambda () (for-each ruby-cast (reverse casts-210)))))
+(if (not (null? casts-211)) (with-211 hey (lambda () (for-each ruby-cast (reverse casts-211)))))
 
 (define (ruby-check func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func))))
 (for-each ruby-check (reverse checks))
@@ -3111,6 +3187,7 @@
 (if (not (null? checks-256)) (with-256 hey (lambda () (for-each ruby-check (reverse checks-256)))))
 (if (not (null? checks-290)) (with-290 hey (lambda () (for-each ruby-check (reverse checks-290)))))
 (if (not (null? checks-210)) (with-210 hey (lambda () (for-each ruby-check (reverse checks-210)))))
+(if (not (null? checks-211)) (with-211 hey (lambda () (for-each ruby-check (reverse checks-211)))))
 
 
 (for-each (lambda (field) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) struct-fields)
@@ -3152,6 +3229,7 @@
 (if (not (null? funcs-273)) (with-273 hey (lambda () (for-each unargify-func (reverse funcs-273)))))
 (if (not (null? funcs-290)) (with-290 hey (lambda () (for-each unargify-func (reverse funcs-290)))))
 (if (not (null? funcs-210)) (with-210 hey (lambda () (for-each unargify-func (reverse funcs-210)))))
+(if (not (null? funcs-211)) (with-211 hey (lambda () (for-each unargify-func (reverse funcs-211)))))
 (if (not (null? cairo-funcs)) (with-cairo hey (lambda () (for-each unargify-func (reverse cairo-funcs)))))
 (if (not (null? cairo-png-funcs)) (with-cairo-png hey (lambda () (for-each unargify-func (reverse cairo-png-funcs)))))
 (if (not (null? cairo-funcs-140)) (with-cairo-140 hey (lambda () (for-each unargify-func (reverse cairo-funcs-140)))))
@@ -3174,6 +3252,7 @@
 (if (not (null? casts-256)) (with-256 hey (lambda () (for-each ruby-uncast (reverse casts-256)))))
 (if (not (null? casts-290)) (with-290 hey (lambda () (for-each ruby-uncast (reverse casts-290)))))
 (if (not (null? casts-210)) (with-210 hey (lambda () (for-each ruby-uncast (reverse casts-210)))))
+(if (not (null? casts-211)) (with-211 hey (lambda () (for-each ruby-uncast (reverse casts-211)))))
 
 (define (ruby-uncheck func) (hey "#define gxg_~A_w gxg_~A~%" (no-arg (car func)) (no-arg (car func))))
 (for-each ruby-uncheck (reverse checks))
@@ -3184,6 +3263,7 @@
 (if (not (null? checks-256)) (with-256 hey (lambda () (for-each ruby-uncheck (reverse checks-256)))))
 (if (not (null? checks-290)) (with-290 hey (lambda () (for-each ruby-uncheck (reverse checks-290)))))
 (if (not (null? checks-210)) (with-210 hey (lambda () (for-each ruby-uncheck (reverse checks-210)))))
+(if (not (null? checks-211)) (with-211 hey (lambda () (for-each ruby-uncheck (reverse checks-211)))))
 
 (for-each (lambda (field) (hey "#define gxg_~A_w gxg_~A~%" field field)) struct-fields)
 (for-each (lambda (field) (hey "#define gxg_~A_w gxg_~A~%" field field)) settable-struct-fields)
@@ -3248,6 +3328,7 @@
 (if (not (null? funcs-273)) (with-273 hey (lambda () (for-each defun (reverse funcs-273)))))
 (if (not (null? funcs-290)) (with-290 hey (lambda () (for-each defun (reverse funcs-290)))))
 (if (not (null? funcs-210)) (with-210 hey (lambda () (for-each defun (reverse funcs-210)))))
+(if (not (null? funcs-211)) (with-211 hey (lambda () (for-each defun (reverse funcs-211)))))
 (if (not (null? cairo-funcs)) (with-cairo hey (lambda () (for-each defun (reverse cairo-funcs)))))
 (if (not (null? cairo-png-funcs)) (with-cairo-png hey (lambda () (for-each defun (reverse cairo-png-funcs)))))
 (if (not (null? cairo-funcs-140)) (with-cairo-140 hey (lambda () (for-each defun (reverse cairo-funcs-140)))))
@@ -3269,6 +3350,7 @@
 (if (not (null? casts-256)) (with-256 hey (lambda () (for-each cast-out (reverse casts-256)))))
 (if (not (null? casts-290)) (with-290 hey (lambda () (for-each cast-out (reverse casts-290)))))
 (if (not (null? casts-210)) (with-210 hey (lambda () (for-each cast-out (reverse casts-210)))))
+(if (not (null? casts-211)) (with-211 hey (lambda () (for-each cast-out (reverse casts-211)))))
 
 (hey "  XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);~%")
 (hey "  XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);~%")
@@ -3293,6 +3375,7 @@
 (if (not (null? checks-256)) (with-256 hey (lambda () (for-each check-out (reverse checks-256)))))
 (if (not (null? checks-290)) (with-290 hey (lambda () (for-each check-out (reverse checks-290)))))
 (if (not (null? checks-210)) (with-210 hey (lambda () (for-each check-out (reverse checks-210)))))
+(if (not (null? checks-211)) (with-211 hey (lambda () (for-each check-out (reverse checks-211)))))
 
 (hey "}~%~%")
 
@@ -3366,6 +3449,8 @@
     (with-290 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-290)))))
 (if (not (null? ints-210))
     (with-210 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-210)))))
+(if (not (null? ints-211))
+    (with-211 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-211)))))
 (if (not (null? cairo-ints))
     (with-cairo hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse cairo-ints)))))
 (if (not (null? cairo-ints-140))
@@ -3436,6 +3521,8 @@
     (with-290 hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings-290)))))
 (if (not (null? strings-210))
     (with-210 hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings-210)))))
+(if (not (null? strings-211))
+    (with-211 hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings-211)))))
 (hey "}~%~%")
 
 

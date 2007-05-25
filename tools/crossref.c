@@ -107,7 +107,7 @@ static int add_count(char *name, int curfile)
 #define MAX_CHARS 1048576
 /* xg.c is 2.7 Mb */
 
-static char *get_call(char *input, int input_loc, int curname_len, char *curname, int chars)
+static char *get_call(char *input, int input_loc, int curname_len, char *curname, int chars, char *filename)
 {
   int start = 0, end = 0, i;
   for (i = input_loc - curname_len; i >= 0; i--)
@@ -136,9 +136,16 @@ static char *get_call(char *input, int input_loc, int curname_len, char *curname
   if ((start != 0) && (end > start))
     {
       char *value;
-      int n, k;
-      value = (char *)calloc(end - start + 1, sizeof(char));
-      for (n = start, k = 0; n < end; n++, k++)
+      int n, k, m;
+      m = strlen(filename);
+      value = (char *)calloc(end - start + 1 + m + 4, sizeof(char));
+      for (n = 0; n < m; n++)
+	value[n] = filename[n];
+      value[n++] = ' ';
+      value[n++] = ':';
+      value[n++] = ' ';
+      k = n;
+      for (n = start; n < end; n++, k++)
 	value[k] = input[n];
       return(value);
     }
@@ -524,7 +531,7 @@ int main(int argc, char **argv)
 				      if (lines[loc] == NULL)
 					{
 					  lines[loc] = (char **)calloc(MAX_LINES, sizeof(char *));
-					  lines[loc][0] = get_call(input, j, k, curname, chars);
+					  lines[loc][0] = get_call(input, j, k, curname, chars, files[i]);
 					}
 				      else
 					{
@@ -532,7 +539,7 @@ int main(int argc, char **argv)
 					  for (m = 0; m < MAX_LINES; m++)
 					    if (lines[loc][m] == NULL)
 					      {
-						lines[loc][m] = get_call(input, j, k, curname, chars);
+						lines[loc][m] = get_call(input, j, k, curname, chars, files[i]);
 						break;
 					      }
 					}

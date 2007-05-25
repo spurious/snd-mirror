@@ -57528,7 +57528,7 @@ EDITS: 1
 	    (list gtk_entry_new GTK_IS_ENTRY 'GTK_IS_ENTRY)
 	    (list gtk_event_box_new GTK_IS_EVENT_BOX 'GTK_IS_EVENT_BOX)
 	    (list (lambda () (gtk_file_chooser_button_new "hiho" GTK_FILE_CHOOSER_ACTION_OPEN)) GTK_IS_FILE_CHOOSER_BUTTON 'GTK_IS_FILE_CHOOSER_BUTTON)
-	    (list (lambda () (gtk_file_selection_new "hi")) GTK_IS_FILE_SELECTION 'GTK_IS_FILE_SELECTION)
+;	    (list (lambda () (gtk_file_selection_new "hi")) GTK_IS_FILE_SELECTION 'GTK_IS_FILE_SELECTION)
 	    (list gtk_fixed_new GTK_IS_FIXED 'GTK_IS_FIXED)
 	    (list gtk_font_selection_new GTK_IS_FONT_SELECTION 'GTK_IS_FONT_SELECTION)
 	    (list (lambda () (gtk_font_selection_dialog_new "hi")) GTK_IS_FONT_SELECTION_DIALOG 'GTK_IS_FONT_SELECTION_DIALOG)
@@ -58135,26 +58135,28 @@ EDITS: 1
 	  
 	  (let* ((_gboolean (gtk_rc_reparse_all))
 		 (_GtkRcStyle_ (gtk_rc_style_new))
-		 (_GScanner_ (gtk_rc_scanner_new))
+;		 (_GScanner_ (gtk_rc_scanner_new))
 		 (_GtkWidget_ (gtk_label_new "hiho"))
 		 (_GtkStyle_ (gtk_rc_get_style _GtkWidget_))
 		 (_GtkRcStyle1_ (gtk_rc_style_copy _GtkRcStyle_))
-		 (_guint (gtk_binding_parse_binding _GScanner_))
+;		 (_guint (gtk_binding_parse_binding _GScanner_))
 		 (_GdkColor_ (let ((tmp (GdkColor)))
 			       (gdk_color_parse "red" tmp)
 			       (let ((col (gdk_color_copy tmp)))
 				 (gdk_rgb_find_color (gdk_colormap_get_system) col)
 				 col)))
-		 (_guint1 (gtk_rc_parse_color _GScanner_ _GdkColor_))
+;		 (_guint1 (gtk_rc_parse_color _GScanner_ _GdkColor_))
 		 (_gchar_ (gtk_rc_find_module_in_path "hiho"))
-		 (_list (gtk_rc_parse_priority _GScanner_))
-		 (_list1 (gtk_rc_parse_state _GScanner_)))
+;		 (_list (gtk_rc_parse_priority _GScanner_))
+;		 (_list1 (gtk_rc_parse_state _GScanner_))
+		 )
 	    (gtk_rc_add_default_file "Snd.gtkrc")
 	    (gtk_rc_parse "Snd.gtkrc")
 	    (gtk_rc_parse_string "widget \"*.preset_button\" style \"reset\"")
-	    (gtk_rc_style_ref _GtkRcStyle_)
-	    (gtk_rc_style_unref _GtkRcStyle_)
-	    (gtk_accel_map_load_scanner _GScanner_))
+;	    (gtk_rc_style_ref _GtkRcStyle_)
+;	    (gtk_rc_style_unref _GtkRcStyle_)
+;	    (gtk_accel_map_load_scanner _GScanner_)
+	    )
 	  
 	  (let* ((_GtkPaned_ (GTK_PANED (gtk_hpaned_new)))
 		 (_GtkPaned1_ (GTK_PANED (gtk_vpaned_new)))
@@ -58729,7 +58731,7 @@ EDITS: 1
 		 (_GtkFileChooserDialog_ (GTK_FILE_CHOOSER_DIALOG (gtk_file_chooser_dialog_new 
 								   "save" (GTK_WINDOW (cadr (main-widgets)))
 								   GTK_FILE_CHOOSER_ACTION_SAVE (list GTK_STOCK_OK GTK_RESPONSE_ACCEPT))))
-		 (_GtkFileSelection_ (GTK_FILE_SELECTION (gtk_file_selection_new "delete")))
+;		 (_GtkFileSelection_ (GTK_FILE_SELECTION (gtk_file_selection_new "delete")))
 		 (_GtkWidget_ (gtk_file_chooser_widget_new_with_backend 0 "linux"))
 		 (_GtkFileFilter_ (gtk_file_filter_new))
 		 (_GdkColor_ (let ((tmp (GdkColor)))
@@ -58768,8 +58770,9 @@ EDITS: 1
 		 (_GSList3_ (gtk_file_chooser_list_shortcut_folders _GtkFileChooser_))
 		 (_GSList4_ (gtk_file_chooser_list_shortcut_folder_uris _GtkFileChooser_))
 		 (_gboolean7 (gtk_file_chooser_get_use_preview_label _GtkFileChooser_))
-		 (_gchar_9 (gtk_file_selection_get_filename _GtkFileSelection_))
-		 (_gboolean8 (gtk_file_selection_get_select_multiple _GtkFileSelection_)))
+;		 (_gchar_9 (gtk_file_selection_get_filename _GtkFileSelection_))
+;		 (_gboolean8 (gtk_file_selection_get_select_multiple _GtkFileSelection_))
+		 )
 	    (if (not _gboolean) (snd-display ";dialog opacity"))
 	    (if _gboolean1 (snd-display ";dialog palette"))
 	    (if (not (= _guint16 65535)) (snd-display ";dialog alpha: ~A" _guint16))
@@ -58792,14 +58795,14 @@ EDITS: 1
 		(snd-display ";dialog folder uri: ~A" _gchar_8))
 	    (if (not _gboolean6) (snd-display ";dialog not active"))
 	    (if (not _gboolean7) (snd-display ";dialog not use preview"))
-	    (if (not (string=? _gchar_9 (getcwd))) (snd-display ";dialog sel filename: ~A" _gchar_9))
-	    (if _gboolean8 (snd-display ";dialog has sel mult"))
-	    (gtk_file_selection_show_fileop_buttons _GtkFileSelection_)
-	    (gtk_file_selection_hide_fileop_buttons _GtkFileSelection_)
+;	    (if (not (string=? _gchar_9 (getcwd))) (snd-display ";dialog sel filename: ~A" _gchar_9))
+;	    (if _gboolean8 (snd-display ";dialog has sel mult"))
+;	    (gtk_file_selection_show_fileop_buttons _GtkFileSelection_)
+;	    (gtk_file_selection_hide_fileop_buttons _GtkFileSelection_)
 	    (gtk_dialog_set_has_separator _GtkDialog_ #t)
-	    (gtk_file_selection_set_filename _GtkFileSelection_ (string-append home-dir "/test.snd"))
-	    (set! _gchar_9 (gtk_file_selection_get_filename _GtkFileSelection_))
-	    (if (not (string=? _gchar_9 (string-append home-dir "/test.snd"))) (snd-display ";set dialog filename: ~A" _gchar_9))
+;	    (gtk_file_selection_set_filename _GtkFileSelection_ (string-append home-dir "/test.snd"))
+;	    (set! _gchar_9 (gtk_file_selection_get_filename _GtkFileSelection_))
+;	    (if (not (string=? _gchar_9 (string-append home-dir "/test.snd"))) (snd-display ";set dialog filename: ~A" _gchar_9))
 	    (gtk_file_chooser_set_filename _GtkFileChooser_ (string-append home-dir "/test.snd"))
 	    (let ((_gboolean (gtk_file_chooser_set_current_folder _GtkFileChooser_ "/home/bil/sf1")))
 	      (set! _gchar_6 (gtk_file_chooser_get_current_folder _GtkFileChooser_))
@@ -58830,7 +58833,7 @@ EDITS: 1
 	    (gtk_color_selection_get_previous_color _GtkColorSelection_ _GdkColor_)
 	    
 	    (gtk_color_selection_palette_to_string _GdkColor_ 0)
-	    (gtk_file_selection_complete _GtkFileSelection_ "/home/bil/cl/test.sn")
+;	    (gtk_file_selection_complete _GtkFileSelection_ "/home/bil/cl/test.sn")
 	    
 	    (gtk_file_chooser_select_filename _GtkFileChooser_ (string-append home-dir "/test.snd"))
 	    (gtk_file_chooser_set_uri _GtkFileChooser_ (string-append home-dir "/test.snd"))
@@ -58853,7 +58856,7 @@ EDITS: 1
 	    (gtk_file_filter_get_needed _GtkFileFilter_)
 	    (gtk_file_chooser_add_filter _GtkFileChooser_ _GtkFileFilter_)
 	    (gtk_file_chooser_remove_filter _GtkFileChooser_ _GtkFileFilter_)
-	    (gtk_file_selection_set_select_multiple _GtkFileSelection_ #f)
+;	    (gtk_file_selection_set_select_multiple _GtkFileSelection_ #f)
 	    (gtk_dialog_set_response_sensitive _GtkDialog_ 0 #f)
 					;	      (let ((vals (gtk_file_chooser_add_shortcut_folder _GtkFileChooser_ home-dir)))
 					;		(if (not (equal? vals (list #t #f))) (snd-display ";add shortcut: ~A" vals)))
@@ -59984,7 +59987,7 @@ EDITS: 1
 		       (_GList_ (pango_itemize _PangoContext_ "hiho" 0 0 _PangoAttrList_ _PangoAttrIterator_)))
 					;			 (_GList_1 (pango_reorder_items _GList_))
 		  (pango_glyph_string_set_size _PangoGlyphString_ 10)
-		  (pango_glyph_string_extents _PangoGlyphString_ _PangoFont_ _PangoRectangle_1 _PangoRectangle_2)
+;		  (pango_glyph_string_extents _PangoGlyphString_ _PangoFont_ _PangoRectangle_1 _PangoRectangle_2)
 					;		    (gdk_pango_context_set_colormap _PangoContext_ (gdk_colormap_get_system))
 		  (pango_font_description_unset_fields _PangoFontDescription_ _PangoFontMask)
 		  (pango_layout_context_changed _PangoLayout_)
@@ -60082,7 +60085,7 @@ EDITS: 1
 		   (_GtkImageType (gtk_image_get_storage_type _GtkImage_)))
 	      (gtk_image_set_from_stock _GtkImage_ GTK_STOCK_CANCEL 32)
 	      (let* ((_GdkPixbuf_ (gtk_image_get_pixbuf (GTK_IMAGE (gtk_image_new)))) ; -> #f
-		     (_GdkPixbufLoader_ (gdk_pixbuf_loader_new))
+;		     (_GdkPixbufLoader_ (gdk_pixbuf_loader_new))
 		     (_GdkImage_1 (gdk_image_new GDK_IMAGE_NORMAL _GdkVisual_ 32 32))
 		     (_GdkImage_2 (gdk_drawable_copy_to_image wn _GdkImage_1 0 0 0 0 32 32))
 		     (_GdkPixbuf_1 (gdk_pixbuf_get_from_image _GdkPixbuf_ _GdkImage_1 _GdkColormap_ 0 0 0 0 32 32))
@@ -60194,9 +60197,9 @@ EDITS: 1
 	  (let ((dialog (gtk_about_dialog_new)))
 	    ;; sort of half-implemented, apparently
 	    (if (not (GTK_IS_ABOUT_DIALOG dialog)) (snd-display ";about dialog isn't?"))
-	    (gtk_about_dialog_set_name (GTK_ABOUT_DIALOG dialog) "About Dialog")
-	    (let ((name (gtk_about_dialog_get_name (GTK_ABOUT_DIALOG dialog))))
-	      (if (not (string=? name "About Dialog")) (snd-display ";about dialog name: ~A" name)))
+;	    (gtk_about_dialog_set_name (GTK_ABOUT_DIALOG dialog) "About Dialog")
+;	    (let ((name (gtk_about_dialog_get_name (GTK_ABOUT_DIALOG dialog))))
+;	      (if (not (string=? name "About Dialog")) (snd-display ";about dialog name: ~A" name)))
 	    (gtk_about_dialog_set_version (GTK_ABOUT_DIALOG dialog) "1234.4321.89765")
 	    (let ((version (gtk_about_dialog_get_version (GTK_ABOUT_DIALOG dialog))))
 	      (if (not (string=? version "1234.4321.89765")) (snd-display ";about dialog version: ~A" version)))
@@ -60218,11 +60221,11 @@ EDITS: 1
 		       (not (string=? website_label "The Home Of About")))
 		  (snd-display ";about dialog website_label: ~A" website_label)))
 	    (gtk_about_dialog_set_authors (GTK_ABOUT_DIALOG dialog) (list->c-array (list "Who" "Why") "gchar**"))
-	    (let ((authors (c-array->list (gtk_about_dialog_get_name (GTK_ABOUT_DIALOG dialog)) 2)))
-	      (if (and (list? authors)
-		       (string? (car authors))
-		       (not (string=? (car authors) "Who Else?")))
-		  (snd-display ";about dialog authors: ~A" authors)))
+;	    (let ((authors (c-array->list (gtk_about_dialog_get_name (GTK_ABOUT_DIALOG dialog)) 2)))
+;	      (if (and (list? authors)
+;		       (string? (car authors))
+;		       (not (string=? (car authors) "Who Else?")))
+;		  (snd-display ";about dialog authors: ~A" authors)))
 	    (gtk_about_dialog_set_documenters (GTK_ABOUT_DIALOG dialog) (list->c-array (list "gah" "use an o") "gchar**"))
 	    (let ((documenters (c-array->list (gtk_about_dialog_get_documenters (GTK_ABOUT_DIALOG dialog)) 2)))
 	      (if (and (list? documenters)
@@ -60236,12 +60239,12 @@ EDITS: 1
 		       (not (string=? (car artists) "Me!")))
 		  (snd-display ";about dialog artists: ~A" artists)))
 	    (gtk_about_dialog_set_translator_credits (GTK_ABOUT_DIALOG dialog) "he did it all")
-	    (let ((translator_credits (gtk_about_dialog_get_name (GTK_ABOUT_DIALOG dialog))))
-	      ;; oops...
-	      (if (and (string? translator_credits)
-		       (not (string=? translator_credits "he did it all"))
-		       (not (string=? translator_credits "About Dialog"))) ; surely a bug in gtk
-		  (snd-display ";about dialog translator_credits: ~A" translator_credits)))
+;	    (let ((translator_credits (gtk_about_dialog_get_name (GTK_ABOUT_DIALOG dialog))))
+;	      ;; oops...
+;	      (if (and (string? translator_credits)
+;		       (not (string=? translator_credits "he did it all"))
+;		       (not (string=? translator_credits "About Dialog"))) ; surely a bug in gtk
+;		  (snd-display ";about dialog translator_credits: ~A" translator_credits)))
 	    (gtk_widget_show dialog)
 	    (gtk_widget_hide dialog))
 	  
@@ -60370,7 +60373,7 @@ EDITS: 1
 		   g_free g_signal_lookup g_source_remove g_type_from_name g_type_is_a
 		   g_type_name g_type_parent g_type_qname gdk_atom_intern gdk_init
 		   gdk_init_check gdk_pixmap_new gdk_set_show_events gdk_threads_enter gdk_threads_init
-		   gdk_threads_leave gdk_utf8_to_string_target gtk_accel_map_load gtk_accel_map_load_fd gtk_accel_map_load_scanner
+		   gdk_threads_leave gdk_utf8_to_string_target gtk_accel_map_load gtk_accel_map_load_fd ;gtk_accel_map_load_scanner
 		   gtk_accel_map_lookup_entry gtk_accel_map_save gtk_accel_map_save_fd gtk_button_new_with_label gtk_check_button_new_with_label
 		   gtk_check_menu_item_new_with_label gtk_color_selection_palette_from_string gtk_disable_setlocale gtk_icon_size_from_name 
 		   gtk_image_menu_item_new_with_label
@@ -60391,9 +60394,11 @@ EDITS: 1
 		   GDK_EVENT_VISIBILITY GDK_EVENT_WINDOWSTATE GDK_GC GDK_IMAGE GDK_IS_COLORMAP
 		   GDK_IS_DEVICE GDK_IS_DISPLAY GDK_IS_DRAG_CONTEXT GDK_IS_DRAWABLE GDK_IS_GC
 		   GDK_IS_IMAGE GDK_IS_KEYMAP GDK_IS_PANGO_RENDERER GDK_IS_PIXBUF GDK_IS_PIXBUF_ANIMATION
-		   GDK_IS_PIXBUF_ANIMATION_ITER GDK_IS_PIXBUF_LOADER GDK_IS_PIXMAP GDK_IS_SCREEN GDK_IS_VISUAL
+		   GDK_IS_PIXBUF_ANIMATION_ITER ;GDK_IS_PIXBUF_LOADER 
+		   GDK_IS_PIXMAP GDK_IS_SCREEN GDK_IS_VISUAL
 		   GDK_IS_WINDOW GDK_KEYMAP GDK_PANGO_RENDERER GDK_PIXBUF GDK_PIXBUF_ANIMATION
-		   GDK_PIXBUF_ANIMATION_ITER GDK_PIXBUF_LOADER GDK_PIXMAP GDK_SCREEN GDK_VISUAL
+		   GDK_PIXBUF_ANIMATION_ITER ;GDK_PIXBUF_LOADER 
+		   GDK_PIXMAP GDK_SCREEN GDK_VISUAL
 		   GDK_WINDOW GPOINTER GTK_ABOUT_DIALOG GTK_ACCEL_GROUP GTK_ACCEL_LABEL
 		   GTK_ACCEL_MAP GTK_ACCESSIBLE GTK_ACTION GTK_ACTION_GROUP GTK_ADJUSTMENT
 		   GTK_ALIGNMENT GTK_ARROW GTK_ASPECT_FRAME GTK_BIN GTK_BOX
@@ -60403,7 +60408,7 @@ EDITS: 1
 		   GTK_COLOR_BUTTON GTK_COLOR_SELECTION GTK_COLOR_SELECTION_DIALOG GTK_COMBO_BOX GTK_COMBO_BOX_ENTRY
 		   GTK_CONTAINER GTK_CURVE GTK_DIALOG GTK_DRAWING_AREA GTK_EDITABLE
 		   GTK_ENTRY GTK_ENTRY_COMPLETION GTK_EVENT_BOX GTK_EXPANDER GTK_FILE_CHOOSER
-		   GTK_FILE_CHOOSER_BUTTON GTK_FILE_CHOOSER_DIALOG GTK_FILE_CHOOSER_WIDGET GTK_FILE_FILTER GTK_FILE_SELECTION
+		   GTK_FILE_CHOOSER_BUTTON GTK_FILE_CHOOSER_DIALOG GTK_FILE_CHOOSER_WIDGET GTK_FILE_FILTER ;GTK_FILE_SELECTION
 		   GTK_FIXED GTK_FONT_BUTTON GTK_FONT_SELECTION GTK_FONT_SELECTION_DIALOG GTK_FRAME
 		   GTK_GAMMA_CURVE GTK_HANDLE_BOX GTK_HBOX GTK_HBUTTON_BOX GTK_HPANED
 		   GTK_HRULER GTK_HSCALE GTK_HSCROLLBAR GTK_HSEPARATOR GTK_ICON_FACTORY
@@ -60418,7 +60423,8 @@ EDITS: 1
 		   GTK_IS_COMBO_BOX GTK_IS_COMBO_BOX_ENTRY GTK_IS_CONTAINER GTK_IS_CURVE GTK_IS_DIALOG
 		   GTK_IS_DRAWING_AREA GTK_IS_EDITABLE GTK_IS_ENTRY GTK_IS_ENTRY_COMPLETION GTK_IS_EVENT_BOX
 		   GTK_IS_EXPANDER GTK_IS_FILE_CHOOSER GTK_IS_FILE_CHOOSER_BUTTON GTK_IS_FILE_CHOOSER_DIALOG GTK_IS_FILE_CHOOSER_WIDGET
-		   GTK_IS_FILE_FILTER GTK_IS_FILE_SELECTION GTK_IS_FIXED GTK_IS_FONT_BUTTON GTK_IS_FONT_SELECTION
+		   GTK_IS_FILE_FILTER ;GTK_IS_FILE_SELECTION 
+		   GTK_IS_FIXED GTK_IS_FONT_BUTTON GTK_IS_FONT_SELECTION
 		   GTK_IS_FONT_SELECTION_DIALOG GTK_IS_FRAME GTK_IS_GAMMA_CURVE GTK_IS_HANDLE_BOX GTK_IS_HBOX
 		   GTK_IS_HBUTTON_BOX GTK_IS_HPANED GTK_IS_HRULER GTK_IS_HSCALE GTK_IS_HSCROLLBAR
 		   GTK_IS_HSEPARATOR GTK_IS_ICON_FACTORY GTK_IS_ICON_THEME GTK_IS_ICON_VIEW GTK_IS_IMAGE
@@ -60521,8 +60527,9 @@ EDITS: 1
 		   gdk_pixbuf_copy gdk_pixbuf_copy_area gdk_pixbuf_error_quark gdk_pixbuf_fill
 		   gdk_pixbuf_get_bits_per_sample gdk_pixbuf_get_colorspace gdk_pixbuf_get_from_drawable gdk_pixbuf_get_from_image gdk_pixbuf_get_has_alpha
 		   gdk_pixbuf_get_height gdk_pixbuf_get_n_channels gdk_pixbuf_get_option gdk_pixbuf_get_pixels gdk_pixbuf_get_rowstride
-		   gdk_pixbuf_get_width gdk_pixbuf_loader_close gdk_pixbuf_loader_get_animation gdk_pixbuf_loader_get_pixbuf
-		   gdk_pixbuf_loader_new gdk_pixbuf_loader_new_with_type gdk_pixbuf_loader_write gdk_pixbuf_new
+		   gdk_pixbuf_get_width 
+		   ;gdk_pixbuf_loader_close gdk_pixbuf_loader_get_animation gdk_pixbuf_loader_get_pixbuf
+		   ;gdk_pixbuf_loader_new gdk_pixbuf_loader_new_with_type gdk_pixbuf_loader_write gdk_pixbuf_new
 		   gdk_pixbuf_new_from_data gdk_pixbuf_new_from_file gdk_pixbuf_new_from_inline gdk_pixbuf_new_from_xpm_data gdk_pixbuf_new_subpixbuf
 		   gdk_pixbuf_render_pixmap_and_mask gdk_pixbuf_render_pixmap_and_mask_for_colormap gdk_pixbuf_render_threshold_alpha 
 		   gdk_pixbuf_saturate_and_pixelate gdk_pixbuf_savev
@@ -60568,12 +60575,12 @@ EDITS: 1
 		   gdk_window_stick gdk_window_thaw_updates   gdk_window_unmaximize gdk_window_unstick gdk_window_withdraw
 		   gtk_about_dialog_get_artists gtk_about_dialog_get_authors 
 		   gtk_about_dialog_get_comments gtk_about_dialog_get_copyright gtk_about_dialog_get_documenters
-		   gtk_about_dialog_get_license gtk_about_dialog_get_logo gtk_about_dialog_get_logo_icon_name gtk_about_dialog_get_name 
+		   gtk_about_dialog_get_license gtk_about_dialog_get_logo gtk_about_dialog_get_logo_icon_name ;gtk_about_dialog_get_name 
 		   gtk_about_dialog_get_translator_credits
 		   gtk_about_dialog_get_version gtk_about_dialog_get_website gtk_about_dialog_get_website_label gtk_about_dialog_new
 		   gtk_about_dialog_set_artists gtk_about_dialog_set_authors gtk_about_dialog_set_comments 
 		   gtk_about_dialog_set_copyright gtk_about_dialog_set_documenters
-		   gtk_about_dialog_set_license gtk_about_dialog_set_logo gtk_about_dialog_set_logo_icon_name gtk_about_dialog_set_name 
+		   gtk_about_dialog_set_license gtk_about_dialog_set_logo gtk_about_dialog_set_logo_icon_name ;gtk_about_dialog_set_name 
 		   gtk_about_dialog_set_translator_credits
 		   gtk_about_dialog_set_version gtk_about_dialog_set_website gtk_about_dialog_set_website_label gtk_accel_group_activate gtk_accel_group_connect
 		   gtk_accel_group_connect_by_path gtk_accel_group_disconnect gtk_accel_group_disconnect_key gtk_accel_group_find gtk_accel_group_from_accel_closure
@@ -60593,8 +60600,10 @@ EDITS: 1
 		   gtk_action_new gtk_action_set_sensitive gtk_action_set_visible gtk_adjustment_changed gtk_adjustment_clamp_page
 		   gtk_adjustment_get_value gtk_adjustment_new gtk_adjustment_set_value gtk_adjustment_value_changed
 		   gtk_alignment_get_padding gtk_alignment_new gtk_alignment_set gtk_alignment_set_padding
-		   gtk_alternative_dialog_button_order gtk_arrow_new gtk_arrow_set   gtk_aspect_frame_new gtk_aspect_frame_set gtk_bin_get_child gtk_binding_entry_add_signall
-		   gtk_binding_entry_clear gtk_binding_entry_remove gtk_binding_parse_binding gtk_binding_set_activate gtk_binding_set_add_path
+		   gtk_alternative_dialog_button_order gtk_arrow_new gtk_arrow_set   gtk_aspect_frame_new gtk_aspect_frame_set gtk_bin_get_child ;gtk_binding_entry_add_signall
+		   ;gtk_binding_entry_clear 
+		   gtk_binding_entry_remove ;gtk_binding_parse_binding 
+		   gtk_binding_set_activate gtk_binding_set_add_path
 		   gtk_binding_set_by_class gtk_binding_set_find gtk_binding_set_new gtk_bindings_activate gtk_border_copy
 		   gtk_border_free gtk_box_get_homogeneous gtk_box_get_spacing
 		   gtk_box_pack_end gtk_box_pack_end_defaults gtk_box_pack_start gtk_box_pack_start_defaults gtk_box_query_child_packing
@@ -60711,11 +60720,13 @@ EDITS: 1
 		   gtk_file_chooser_widget_new 
 		   gtk_file_chooser_widget_new_with_backend gtk_file_filter_add_custom gtk_file_filter_add_mime_type
 		   gtk_file_filter_add_pattern gtk_file_filter_add_pixbuf_formats gtk_file_filter_filter gtk_file_filter_get_name gtk_file_filter_get_needed
-		   gtk_file_filter_new gtk_file_filter_set_name gtk_file_selection_complete gtk_file_selection_get_filename
-		   gtk_file_selection_get_select_multiple gtk_file_selection_get_selections 
-		   gtk_file_selection_hide_fileop_buttons gtk_file_selection_new
-		   gtk_file_selection_set_filename gtk_file_selection_set_select_multiple 
-		   gtk_file_selection_show_fileop_buttons gtk_fixed_get_has_window
+		   gtk_file_filter_new gtk_file_filter_set_name 
+		   ;gtk_file_selection_complete gtk_file_selection_get_filename
+		   ;gtk_file_selection_get_select_multiple gtk_file_selection_get_selections 
+		   ;gtk_file_selection_hide_fileop_buttons gtk_file_selection_new
+		   ;gtk_file_selection_set_filename gtk_file_selection_set_select_multiple 
+		   ;gtk_file_selection_show_fileop_buttons 
+		   gtk_fixed_get_has_window
 		   gtk_fixed_move gtk_fixed_new gtk_fixed_put gtk_fixed_set_has_window gtk_font_button_get_font_name
 		   gtk_font_button_get_show_size gtk_font_button_get_show_style gtk_font_button_get_title gtk_font_button_get_use_font
 		   gtk_font_button_get_use_size gtk_font_button_new gtk_font_button_new_with_font gtk_font_button_set_font_name gtk_font_button_set_show_size
@@ -60832,9 +60843,11 @@ EDITS: 1
 		   gtk_range_get_update_policy gtk_range_get_value gtk_range_set_adjustment gtk_range_set_increments gtk_range_set_inverted
 		   gtk_range_set_range gtk_range_set_update_policy gtk_range_set_value gtk_rc_add_default_file gtk_rc_get_default_files
 		   gtk_rc_get_im_module_file gtk_rc_get_im_module_path gtk_rc_get_module_dir gtk_rc_get_style gtk_rc_get_theme_dir
-		   gtk_rc_parse gtk_rc_parse_color gtk_rc_parse_priority gtk_rc_parse_state ;gtk_rc_parse_string
-		   gtk_rc_reparse_all gtk_rc_scanner_new gtk_rc_set_default_files gtk_rc_style_copy
-		   gtk_rc_style_new gtk_rc_style_ref gtk_rc_style_unref gtk_requisition_copy gtk_requisition_free
+		   gtk_rc_parse ;gtk_rc_parse_color gtk_rc_parse_priority gtk_rc_parse_state gtk_rc_parse_string
+		   gtk_rc_reparse_all ;gtk_rc_scanner_new 
+		   gtk_rc_set_default_files gtk_rc_style_copy
+		   gtk_rc_style_new gtk_requisition_copy gtk_requisition_free
+		   ;gtk_rc_style_ref gtk_rc_style_unref 
 		   gtk_ruler_draw_pos gtk_ruler_draw_ticks gtk_ruler_get_metric gtk_ruler_get_range
 		   gtk_ruler_set_metric gtk_ruler_set_range gtk_scale_get_digits gtk_scale_get_draw_value
 		   gtk_scale_get_layout gtk_scale_get_layout_offsets gtk_scale_get_value_pos gtk_scale_set_digits

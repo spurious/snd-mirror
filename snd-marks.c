@@ -1444,6 +1444,8 @@ static void erase_and_draw_both_grf_points(mark_context *ms, chan_info *cp, int 
   backup_erase_grf_points(ms, nj);
   ax->gc = draw_gc;
 }
+#else
+static void mark_save_graph(mark_context *ms, int j) {}
 #endif
 
 
