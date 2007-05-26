@@ -499,6 +499,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+28-May:  mus-sound-mark-info.\n\
 21-May:  background-gradient (gtk+cairo only)\n\
 9-May:   peak-env-hook, draw-mix-hook.\n\
 1-May:   Snd 9.0.\n\

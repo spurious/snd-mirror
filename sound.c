@@ -514,6 +514,18 @@ static sound_file *fill_sf_record(const char *name, sound_file *sf)
   sf->fact_samples = mus_header_fact_samples();
   sf->block_align = mus_header_block_align();
   sf->write_date = local_file_write_date(name);
+  if ((sf->header_type == MUS_AIFF) || (sf->header_type == MUS_AIFC))
+    {
+      int *marker_ids, *marker_positions;
+      sf->markers = mus_header_mark_info(&marker_ids, &marker_positions);
+      if (sf->markers > 0)
+	{
+	  sf->marker_ids = (int *)MALLOC(sf->markers * sizeof(int));
+	  sf->marker_positions = (int *)MALLOC(sf->markers * sizeof(int));
+	  memcpy((void *)(sf->marker_ids), (void *)marker_ids, sizeof(int) * sf->markers);
+	  memcpy((void *)(sf->marker_positions), (void *)marker_positions, sizeof(int) * sf->markers);
+	}
+    }
   if (mus_header_loop_mode(0) > 0)
     {
       sf->loop_modes = (int *)CALLOC(2, sizeof(int));
@@ -660,6 +672,19 @@ void mus_sound_set_loop_info(const char *arg, int *loop)
       sf->base_note = loop[4];
       sf->base_detune = loop[5];
     }
+}
+
+int mus_sound_mark_info(const char *arg, int **mark_ids, int **mark_positions)
+{
+  sound_file *sf; 
+  sf = getsf(arg); 
+  if (sf)
+    {
+      (*mark_ids) = sf->marker_ids;
+      (*mark_positions) = sf->marker_positions;
+      return(sf->markers);
+    }
+  return(0);
 }
 
 char *mus_sound_comment(const char *name)

@@ -68,6 +68,25 @@ end1 start2 end2 base-note base-detune mode1 mode2)"
   return(sres);
 }
 
+static XEN g_mus_sound_mark_info(XEN gfilename)
+{
+  #define H_mus_sound_mark_info "(" S_mus_sound_mark_info " filename): aifc header mark info as a list of lists: ((id pos)...)"
+  int *mark_ids, *mark_positions;
+  int marks = 0;
+  XEN sres = XEN_EMPTY_LIST;
+  XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, S_mus_sound_mark_info, "a string"); 
+  marks = mus_sound_mark_info(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)), &mark_ids, &mark_positions);
+  if (marks > 0)
+    {
+      int i;
+      for (i = 0; i < marks; i++)
+	sres = XEN_CONS(XEN_LIST_2(C_TO_XEN_INT(mark_ids[i]),
+				   C_TO_XEN_INT(mark_positions[i])),
+			sres);
+    }
+  return(sres);
+}
+
 static XEN gmus_sound(const char *caller, int (*func)(const char *file), XEN gfilename)
 {
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, caller, "a string"); 
@@ -2019,6 +2038,7 @@ XEN_NARGIFY_1(g_mus_sound_comment_w, g_mus_sound_comment)
 XEN_NARGIFY_1(g_mus_sound_write_date_w, g_mus_sound_write_date)
 XEN_NARGIFY_1(g_mus_bytes_per_sample_w, g_mus_bytes_per_sample)
 XEN_NARGIFY_1(g_mus_sound_loop_info_w, g_mus_sound_loop_info)
+XEN_NARGIFY_1(g_mus_sound_mark_info_w, g_mus_sound_mark_info)
 XEN_NARGIFY_1(g_mus_sound_maxamp_w, g_mus_sound_maxamp)
 XEN_NARGIFY_2(g_mus_sound_set_maxamp_w, g_mus_sound_set_maxamp)
 XEN_NARGIFY_1(g_mus_sound_maxamp_exists_w, g_mus_sound_maxamp_exists)
@@ -2126,6 +2146,7 @@ XEN_NARGIFY_2(g_sound_data_equalp_w, equalp_sound_data)
 #define g_mus_sound_write_date_w g_mus_sound_write_date
 #define g_mus_bytes_per_sample_w g_mus_bytes_per_sample
 #define g_mus_sound_loop_info_w g_mus_sound_loop_info
+#define g_mus_sound_mark_info_w g_mus_sound_mark_info
 #define g_mus_sound_maxamp_w g_mus_sound_maxamp
 #define g_mus_sound_set_maxamp_w g_mus_sound_set_maxamp
 #define g_mus_sound_maxamp_exists_w g_mus_sound_maxamp_exists
@@ -2377,6 +2398,7 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_sound_write_date,     g_mus_sound_write_date_w,       1, 0, 0, H_mus_sound_write_date);
   XEN_DEFINE_PROCEDURE(S_mus_bytes_per_sample,     g_mus_bytes_per_sample_w,       1, 0, 0, H_mus_bytes_per_sample);
   XEN_DEFINE_PROCEDURE(S_mus_sound_loop_info,      g_mus_sound_loop_info_w,        1, 0, 0, H_mus_sound_loop_info);
+  XEN_DEFINE_PROCEDURE(S_mus_sound_mark_info,      g_mus_sound_mark_info_w,        1, 0, 0, H_mus_sound_mark_info);
   XEN_DEFINE_PROCEDURE(S_mus_sound_maxamp_exists,  g_mus_sound_maxamp_exists_w,    1, 0, 0, H_mus_sound_maxamp_exists);
   XEN_DEFINE_PROCEDURE(S_mus_sound_forget,         g_mus_sound_forget_w,           1, 0, 0, H_mus_sound_forget);
   XEN_DEFINE_PROCEDURE(S_mus_sound_prune,          g_mus_sound_prune_w,            0, 0, 0, H_mus_sound_prune);
@@ -2582,6 +2604,7 @@ void mus_sndlib_xen_initialize(void)
 	       S_mus_sound_header_type,
 	       S_mus_sound_length,
 	       S_mus_sound_loop_info,
+	       S_mus_sound_mark_info,
 	       S_mus_sound_maxamp,
 	       S_mus_sound_maxamp_exists,
 	       S_mus_sound_open_input,

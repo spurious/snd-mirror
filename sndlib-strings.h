@@ -116,6 +116,7 @@
 #define S_mus_sound_header_type         "mus-sound-header-type"
 #define S_mus_sound_length              "mus-sound-length"
 #define S_mus_sound_loop_info           "mus-sound-loop-info"
+#define S_mus_sound_mark_info           "mus-sound-mark-info"
 #define S_mus_sound_maxamp              "mus-sound-maxamp"
 #define S_mus_sound_maxamp_exists       "mus-sound-maxamp-exists?"
 #define S_mus_sound_open_input          "mus-sound-open-input"

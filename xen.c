@@ -1648,7 +1648,7 @@ XEN xen_gauche_eval_c_string(char *arg)
 #else
       result = Scm_EvalRec(Scm_ReadFromCString(arg), SCM_OBJ(Scm_UserModule()));
 
-      /* TODO: Gauche: use ScmPacket here for error reporting 
+      /* TODO: Gauche: use ScmEvalPacket here for error reporting [src/main.c] -- also there's some g++ problem with Scm__OutputString or something
 
       Scm_Eval -> -1 for error, packet arg has info
 

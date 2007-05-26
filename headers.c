@@ -221,7 +221,12 @@ int mus_header_loop_end(int which)        {if (loop_ends) return(loop_ends[which
 int mus_header_mark_position(int id)      {int i; for (i = 0; i < markers; i++) {if (marker_ids[i] == id) return(marker_positions[i]);} return(-1);}
 int mus_header_base_detune(void)          {return(base_detune);}
 int mus_header_base_note(void)            {return(base_note);}
-
+int mus_header_mark_info(int **m_ids, int **m_positions)
+{
+  (*m_ids) = marker_ids;
+  (*m_positions) = marker_positions;
+  return(markers);
+}
 
 int mus_bytes_per_sample(int format)
 {
@@ -970,6 +975,11 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
   data_format = MUS_BSHORT;
   srate = 0;
   chans = 0;
+  markers = 0;
+  if (marker_ids) FREE(marker_ids); 
+  if (marker_positions) FREE(marker_positions);
+  marker_ids = NULL;
+  marker_positions = NULL;
   happy = true;
   true_file_length = SEEK_FILE_LENGTH(fd);
   update_form_size = mus_char_to_ubint((unsigned char *)(hdrbuf + 4 + overall_offset)); /* should be file-size - 8 unless there are multiple forms */

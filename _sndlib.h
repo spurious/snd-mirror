@@ -367,6 +367,7 @@ int mus_sound_prune(void);
 void mus_sound_report_cache(FILE *fp);
 int *mus_sound_loop_info(const char *arg);
 void mus_sound_set_loop_info(const char *arg, int *loop);
+int mus_sound_mark_info(const char *arg, int **mark_ids, int **mark_positions);
 
 int mus_sound_open_input(const char *arg);
 int mus_sound_open_output(const char *arg, int srate, int chans, int data_format, int header_type, const char *comment);
@@ -541,6 +542,7 @@ int mus_header_loop_mode(int which);
 int mus_header_loop_start(int which);
 int mus_header_loop_end(int which);
 int mus_header_mark_position(int id);
+int mus_header_mark_info(int **marker_ids, int **marker_positions);
 int mus_header_base_note(void);
 int mus_header_base_detune(void);
 void mus_header_set_raw_defaults(int sr, int chn, int frm);

@@ -1586,6 +1586,13 @@
 				(close-sound ind))))))
 		  (list "/home/bil/./sf1/o2.voc" "~/./sf1/o2.voc" "~/cl/../sf1/o2.voc" "/home/bil/cl/../sf1/o2.voc")
 		  (list "/home/bil/sf1/o2.voc" "/home/bil/sf1/o2.voc" "/home/bil/sf1/o2.voc" "/home/bil/sf1/o2.voc"))
+
+	(let ((lst (mus-sound-mark-info (string-append sf-dir "forest.aiff"))))
+	  (if (not (equal? lst '((4 1) (3 0) (2 144332) (1 24981))))
+	      (snd-display ";mus-sound-mark-info forest: ~A" lst)))
+	(let ((lst (mus-sound-mark-info (string-append sf-dir "traffic.aiff"))))
+	  (if (not (equal? lst '((4 1) (3 0) (2 171931) (1 99461))))
+	      (snd-display ";mus-sound-mark-info traffic: ~A" lst)))
 	)))
 
 
@@ -2126,7 +2133,7 @@
 		       'mus-run 'mus-scaler 'mus-set-formant-radius-and-frequency 'mus-sound-chans 'mus-sound-close-input
 		       'mus-sound-close-output 'mus-sound-comment 'mus-sound-data-format 'mus-sound-data-location 'mus-sound-datum-size
 		       'mus-sound-duration 'mus-sound-forget 'mus-sound-frames 'mus-sound-header-type 'mus-sound-length
-		       'mus-sound-loop-info 'mus-sound-maxamp 'mus-sound-maxamp-exists? 'mus-sound-open-input 'mus-sound-open-output
+		       'mus-sound-loop-info 'mus-sound-mark-info 'mus-sound-maxamp 'mus-sound-maxamp-exists? 'mus-sound-open-input 'mus-sound-open-output
 		       'mus-sound-prune 'mus-sound-read 'mus-sound-reopen-output 'mus-sound-report-cache 'mus-sound-samples
 		       'mus-sound-seek-frame 'mus-sound-srate 'mus-sound-type-specifier 'mus-sound-write 'mus-sound-write-date
 		       'mus-soundfont 'mus-srate 'mus-sun-set-outputs 'mus-svx 'mus-ubshort
@@ -41277,7 +41284,7 @@ EDITS: 1
 	(env-channel '(0 0 1 1 2 0))
 	(if (not (= (edit-position) 1)) (snd-display ";ramp over 0: ~A" (edit-position)))  
 	(if (not (string=? (car (edit-fragment 1)) "scale-channel 0.000 0 #f"))
-	    (snd-display "env over 0 clobbered origin: ~A" (edit-fragment 1)))
+	    (snd-display ";ramp over 0 clobbered origin: ~A" (edit-fragment 1)))
 	(xramp-channel 0 1 32.0)
 	(if (not (= (edit-position) 1)) (snd-display ";ramp over 0: ~A" (edit-position)))  
 	(env-channel-with-base '(0 0 1 1 2 0 3 1) 0.0)  
@@ -61648,7 +61655,7 @@ EDITS: 1
 		     mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location data-size
 		     mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length
 		     mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment mus-sound-write-date
-		     mus-bytes-per-sample mus-sound-loop-info mus-audio-report mus-sun-set-outputs mus-netbsd-set-outputs
+		     mus-bytes-per-sample mus-sound-loop-info mus-sound-mark-info mus-audio-report mus-sun-set-outputs mus-netbsd-set-outputs
 					;mus-alsa-buffers mus-alsa-buffer-size 
 		     mus-alsa-squelch-warning
 					;mus-alsa-device mus-alsa-playback-device mus-alsa-capture-device 
@@ -62159,7 +62166,7 @@ EDITS: 1
 		    (list mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size
 			  mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format
 			  mus-sound-length mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment
-			  mus-sound-write-date mus-bytes-per-sample mus-sound-loop-info mus-sound-maxamp
+			  mus-sound-write-date mus-bytes-per-sample mus-sound-loop-info mus-sound-mark-info mus-sound-maxamp
 			  mus-sound-maxamp-exists? mus-header-type->string mus-data-format->string))
 	  
 	  (for-each (lambda (n)
@@ -62173,7 +62180,7 @@ EDITS: 1
 		    (list mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size
 			  mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format
 			  mus-sound-length mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment
-			  mus-sound-write-date mus-bytes-per-sample mus-sound-loop-info mus-sound-maxamp
+			  mus-sound-write-date mus-bytes-per-sample mus-sound-loop-info mus-sound-mark-info mus-sound-maxamp
 			  mus-sound-maxamp-exists? mus-header-type->string mus-data-format->string))
 	  
 	  (for-each (lambda (n)

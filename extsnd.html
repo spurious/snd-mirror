@@ -4106,7 +4106,24 @@ and the second two (0 0 above) refer to the release.
 The 5th and 6th list entries are the base note and detune values (60 0 above).
 For historical reasons, the 7th and 8th entries are the sustain and release modes (1 0 above).
 See also <a href="#soundloopinfo">sound-loop-info</a>.
-</td></tr><tr><td colspan=2 height-16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mus-sound-mark-info -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundmarkinfo">mus-sound-mark-info</a> (filename)</code>
+</td></tr><tr><td></td><td>
+This function refers to the "mark" info that is sometimes found in aifc and aiff headers.
+It returns a list of lists (or an empty list if there are no marks),
+each inner list being (mark-id mark-position).  The mark-id is a number that identifies it for
+use with mus-sound-loop-info, and the mark-position is its sample number in the file.
+Normally, this information is already included in the mus-sound-loop-info list:
+<pre>
+    :<em class=typing>(mus-sound-mark-info "/home/bil/sf1/forest.aiff")</em>
+    <em class=listener>((4 1) (3 0) (2 144332) (1 24981))</em>
+    :<em class=typing>(mus-sound-loop-info "/home/bil/sf1/forest.aiff")</em>
+    <em class=listener>(24981 144332 0 0 60 0 1 0)</em>
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mus-sound-maxamp -->
