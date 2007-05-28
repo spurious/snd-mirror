@@ -9,6 +9,7 @@ static axis_context *recorder_ax = NULL;
 static int meter_width = 0, meter_height = 0, meters_width = 0;
 static bool meters_in_db = false;
 
+
 static void stop_recording(void)
 {
   recording = false;
@@ -17,6 +18,7 @@ static void stop_recording(void)
   recorder_total_bytes = 0;
   set_stock_button_label(record_button, _("Record"));
 }
+
 
 static gint close_recorder(GtkWidget *w, GdkEvent *event, gpointer context)
 {
@@ -28,6 +30,7 @@ static gint close_recorder(GtkWidget *w, GdkEvent *event, gpointer context)
   return(true);
 }
 
+
 static void quit_recorder(GtkWidget *w, gpointer context) 
 {
   /* Quit button in the recorder dialog */
@@ -37,10 +40,12 @@ static void quit_recorder(GtkWidget *w, gpointer context)
   gtk_widget_hide(recorder);
 }
 
+
 static void recorder_help(GtkWidget *w, gpointer context) 
 {
   recording_help();
 }
+
 
 static void display_meters(Float *maxes)
 {
@@ -127,6 +132,7 @@ static void display_meters(Float *maxes)
 #endif
 }
 
+
 static void start_recording(void)
 {
   recorder_filename = (char *)gtk_entry_get_text(GTK_ENTRY(recorder_output));
@@ -145,6 +151,7 @@ static void start_recording(void)
     }
 }
 
+
 static int look_for_format (float *mixer_vals, int format)
 {
   int i, lim;
@@ -154,6 +161,7 @@ static int look_for_format (float *mixer_vals, int format)
       return(format);
   return(-1);
 }
+
 
 static void start_reading(void)
 {
@@ -247,12 +255,14 @@ static void start_reading(void)
   /* TODO: if err, report it */
 }
 
+
 static void start_or_stop_recorder(GtkWidget *w, gpointer context) 
 {
   if (recording)
     stop_recording();
   else start_recording();
 }
+
 
 static gboolean meters_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
@@ -264,10 +274,12 @@ static gboolean meters_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer data
   return(false);
 }
 
+
 static void db_callback(GtkWidget *w, gpointer context)
 {
   meters_in_db = (bool)(GTK_TOGGLE_BUTTON(w)->active);
 }
+
 
 widget_t record_file(void) 
 {

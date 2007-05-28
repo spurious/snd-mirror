@@ -53,6 +53,7 @@
   #define TWO_PI (2.0 * M_PI)
 #endif
 
+
 #if (!HAVE_MEMMOVE)
 /* from libit */
 static void *memmove (char *dest, const char *source, unsigned int length)
@@ -85,7 +86,9 @@ enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PAS
       MUS_MOVE_SOUND,
       MUS_INITIAL_GEN_TAG};
 
+
 static char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", "lagrange", "bezier", "hermite"};
+
 static char *interp_type_to_string(int type)
 {
   if ((type >= 0) && (type < MUS_NUM_INTERPS))
@@ -95,15 +98,19 @@ static char *interp_type_to_string(int type)
 
 
 static int mus_class_tag = MUS_INITIAL_GEN_TAG;
+
 int mus_make_class_tag(void) {return(mus_class_tag++);}
 
 
 static Float sampling_rate = MUS_DEFAULT_SAMPLING_RATE;
+
 static Float w_rate = (TWO_PI / MUS_DEFAULT_SAMPLING_RATE);
 
 
 static Float float_equal_fudge_factor = 0.0000001;
+
 Float mus_float_equal_fudge_factor(void) {return(float_equal_fudge_factor);}
+
 Float mus_set_float_equal_fudge_factor(Float val) 
 {
   Float prev; 
@@ -114,7 +121,9 @@ Float mus_set_float_equal_fudge_factor(Float val)
 
 
 static int array_print_length = MUS_DEFAULT_ARRAY_PRINT_LENGTH;
+
 int mus_array_print_length(void) {return(array_print_length);}
+
 int mus_set_array_print_length(int val) 
 {
   int prev; 
@@ -125,7 +134,9 @@ int mus_set_array_print_length(int val)
 
 
 static int clm_file_buffer_size = MUS_DEFAULT_FILE_BUFFER_SIZE;
+
 int mus_file_buffer_size(void) {return(clm_file_buffer_size);}
+
 int mus_set_file_buffer_size(int size) 
 {
   int prev; 
@@ -133,6 +144,7 @@ int mus_set_file_buffer_size(int size)
   clm_file_buffer_size = size; 
   return(prev);
 }
+
 
 #define DESCRIBE_BUFFER_SIZE 2048
 static char describe_buffer[DESCRIBE_BUFFER_SIZE];
@@ -151,6 +163,7 @@ static bool check_gen(mus_any *ptr, const char *name)
   return(true);
 }
 
+
 char *mus_name(mus_any *ptr) 
 {
   if (ptr == NULL)
@@ -162,11 +175,14 @@ char *mus_name(mus_any *ptr)
 Float mus_radians_to_hz(Float rads) {return(rads / w_rate);}
 Float mus_hz_to_radians(Float hz) {return(hz * w_rate);}
 
+
 Float mus_degrees_to_radians(Float degree) {return(degree * TWO_PI / 360.0);}
 Float mus_radians_to_degrees(Float rads) {return(rads * 360.0 / TWO_PI);}
 
+
 Float mus_db_to_linear(Float x) {return(pow(10.0, x / 20.0));}
 Float mus_linear_to_db(Float x) {if (x > 0.0) return(20.0 * log10(x)); return(-100.0);}
+
 
 Float mus_srate(void) {return(sampling_rate);}
 Float mus_set_srate(Float val) 
@@ -180,6 +196,7 @@ Float mus_set_srate(Float val)
     }
   return(prev);
 }
+
 
 off_t mus_seconds_to_samples(Float secs) {return((off_t)(secs * sampling_rate));}
 Float mus_samples_to_seconds(off_t samps) {return((Float)((double)samps / (double)sampling_rate));}
@@ -238,6 +255,7 @@ static char *float_array_to_string(Float *arr, int len, int loc)
   return(base);
 }
 
+
 static char *clm_array_to_string(mus_any **gens, int num_gens, char *name, char *indent)
 {
   char *descr = NULL;
@@ -270,6 +288,7 @@ static char *clm_array_to_string(mus_any **gens, int num_gens, char *name, char 
     }
   return(descr);
 }
+
 
 static char *int_array_to_string(int *arr, int num_ints, char *name)
 {
@@ -311,6 +330,7 @@ int mus_free(mus_any *gen)
   return(mus_error(MUS_NO_FREE, "can't free %s", mus_name(gen)));
 }
 
+
 char *mus_describe(mus_any *gen)
 {
   if (gen == NULL)
@@ -320,6 +340,7 @@ char *mus_describe(mus_any *gen)
   else mus_error(MUS_NO_DESCRIBE, "can't describe %s", mus_name(gen));
   return(NULL);
 }
+
 
 bool mus_equalp(mus_any *p1, mus_any *p2)
 {
@@ -332,6 +353,7 @@ bool mus_equalp(mus_any *p1, mus_any *p2)
   return(true); /* (eq nil nil) */
 }
 
+
 void mus_reset(mus_any *gen)
 {
   if ((check_gen(gen, S_mus_reset)) &&
@@ -339,6 +361,7 @@ void mus_reset(mus_any *gen)
     (*(gen->core->reset))(gen);
   else mus_error(MUS_NO_RESET, "can't reset %s", mus_name(gen));
 }
+
 
 Float mus_frequency(mus_any *gen)
 {
@@ -348,6 +371,7 @@ Float mus_frequency(mus_any *gen)
   return((Float)mus_error(MUS_NO_FREQUENCY, "can't get %s's frequency", mus_name(gen)));
 }
 
+
 Float mus_set_frequency(mus_any *gen, Float val)
 {
   if ((check_gen(gen, S_setB S_mus_frequency)) &&
@@ -355,6 +379,7 @@ Float mus_set_frequency(mus_any *gen, Float val)
     return((*(gen->core->set_frequency))(gen, val));
   return((Float)mus_error(MUS_NO_FREQUENCY, "can't set %s's frequency", mus_name(gen)));
 }
+
 
 Float mus_phase(mus_any *gen)
 {
@@ -364,6 +389,7 @@ Float mus_phase(mus_any *gen)
   return((Float)mus_error(MUS_NO_PHASE, "can't get %s's phase", mus_name(gen)));
 }
 
+
 Float mus_set_phase(mus_any *gen, Float val)
 {
   if ((check_gen(gen, S_setB S_mus_phase)) &&
@@ -371,6 +397,7 @@ Float mus_set_phase(mus_any *gen, Float val)
     return((*(gen->core->set_phase))(gen, val));
   return((Float)mus_error(MUS_NO_PHASE, "can't set %s's phase", mus_name(gen)));
 }
+
 
 Float mus_scaler(mus_any *gen)
 {
@@ -380,6 +407,7 @@ Float mus_scaler(mus_any *gen)
   return((Float)mus_error(MUS_NO_SCALER, "can't get %s's scaler", mus_name(gen)));
 }
 
+
 Float mus_set_scaler(mus_any *gen, Float val)
 {
   if ((check_gen(gen, S_setB S_mus_scaler)) &&
@@ -387,6 +415,7 @@ Float mus_set_scaler(mus_any *gen, Float val)
     return((*(gen->core->set_scaler))(gen, val));
   return((Float)mus_error(MUS_NO_SCALER, "can't set %s's scaler", mus_name(gen)));
 }
+
 
 Float mus_offset(mus_any *gen)
 {
@@ -396,6 +425,7 @@ Float mus_offset(mus_any *gen)
   return((Float)mus_error(MUS_NO_OFFSET, "can't get %s's offset", mus_name(gen)));
 }
 
+
 Float mus_set_offset(mus_any *gen, Float val)
 {
   if ((check_gen(gen, S_setB S_mus_offset)) &&
@@ -403,6 +433,7 @@ Float mus_set_offset(mus_any *gen, Float val)
     return((*(gen->core->set_offset))(gen, val));
   return((Float)mus_error(MUS_NO_OFFSET, "can't set %s's offset", mus_name(gen)));
 }
+
 
 Float mus_width(mus_any *gen)
 {
@@ -412,6 +443,7 @@ Float mus_width(mus_any *gen)
   return((Float)mus_error(MUS_NO_WIDTH, "can't get %s's width", mus_name(gen)));
 }
 
+
 Float mus_set_width(mus_any *gen, Float val)
 {
   if ((check_gen(gen, S_setB S_mus_width)) &&
@@ -419,6 +451,7 @@ Float mus_set_width(mus_any *gen, Float val)
     return((*(gen->core->set_width))(gen, val));
   return((Float)mus_error(MUS_NO_WIDTH, "can't set %s's width", mus_name(gen)));
 }
+
 
 Float mus_increment(mus_any *gen)
 {
@@ -428,6 +461,7 @@ Float mus_increment(mus_any *gen)
   return((Float)mus_error(MUS_NO_INCREMENT, "can't get %s's increment", mus_name(gen)));
 }
 
+
 Float mus_set_increment(mus_any *gen, Float val)
 {
   if ((check_gen(gen, S_setB S_mus_increment)) &&
@@ -436,6 +470,7 @@ Float mus_set_increment(mus_any *gen, Float val)
   return((Float)mus_error(MUS_NO_INCREMENT, "can't set %s's increment", mus_name(gen)));
 }
 
+
 void *mus_environ(mus_any *gen)
 {
   if (check_gen(gen, "mus-environ"))
@@ -443,12 +478,14 @@ void *mus_environ(mus_any *gen)
   return(NULL);
 }
 
+
 void *mus_set_environ(mus_any *gen, void *e)
 {
   if (check_gen(gen, S_setB "mus-environ")) 
     return((*(gen->core->set_closure))(gen, e));
   return(NULL);
 }
+
 
 Float mus_run(mus_any *gen, Float arg1, Float arg2)
 {
@@ -458,6 +495,7 @@ Float mus_run(mus_any *gen, Float arg1, Float arg2)
   return((Float)mus_error(MUS_NO_RUN, "can't run %s", mus_name(gen)));
 }
 
+
 off_t mus_length(mus_any *gen)
 {
   if ((check_gen(gen, S_mus_length)) &&
@@ -465,6 +503,7 @@ off_t mus_length(mus_any *gen)
     return((*(gen->core->length))(gen));
   return(mus_error(MUS_NO_LENGTH, "can't get %s's length", mus_name(gen)));
 }
+
 
 off_t mus_set_length(mus_any *gen, off_t len)
 {
@@ -474,6 +513,7 @@ off_t mus_set_length(mus_any *gen, off_t len)
   return(mus_error(MUS_NO_LENGTH, "can't set %s's length", mus_name(gen)));
 }
 
+
 int mus_channels(mus_any *gen)
 {
   if ((check_gen(gen, S_mus_channels)) &&
@@ -481,6 +521,7 @@ int mus_channels(mus_any *gen)
     return((*(gen->core->channels))(gen));
   return(mus_error(MUS_NO_CHANNELS, "can't get %s's channels", mus_name(gen)));
 }
+
 
 int mus_channel(mus_any *gen)
 {
@@ -490,6 +531,7 @@ int mus_channel(mus_any *gen)
   return(mus_error(MUS_NO_CHANNEL, "can't get %s's channel", mus_name(gen)));
 }
 
+
 off_t mus_hop(mus_any *gen)
 {
   if ((check_gen(gen, S_mus_hop)) &&
@@ -497,6 +539,7 @@ off_t mus_hop(mus_any *gen)
     return((*(gen->core->hop))(gen));
   return(mus_error(MUS_NO_HOP, "can't get %s's hop value", mus_name(gen)));
 }
+
 
 off_t mus_set_hop(mus_any *gen, off_t len)
 {
@@ -506,6 +549,7 @@ off_t mus_set_hop(mus_any *gen, off_t len)
   return(mus_error(MUS_NO_HOP, "can't set %s's hop value", mus_name(gen)));
 }
 
+
 off_t mus_ramp(mus_any *gen)
 {
   if ((check_gen(gen, S_mus_ramp)) &&
@@ -513,6 +557,7 @@ off_t mus_ramp(mus_any *gen)
     return((*(gen->core->ramp))(gen));
   return(mus_error(MUS_NO_RAMP, "can't get %s's ramp value", mus_name(gen)));
 }
+
 
 off_t mus_set_ramp(mus_any *gen, off_t len)
 {
@@ -522,6 +567,7 @@ off_t mus_set_ramp(mus_any *gen, off_t len)
   return(mus_error(MUS_NO_RAMP, "can't set %s's ramp value", mus_name(gen)));
 }
 
+
 Float *mus_data(mus_any *gen)
 {
   if ((check_gen(gen, S_mus_data)) &&
@@ -530,6 +576,7 @@ Float *mus_data(mus_any *gen)
   mus_error(MUS_NO_DATA, "can't get %s's data", mus_name(gen));
   return(NULL);
 }
+
 
 /* every case that implements the data or set data functions needs to include
  * a var-allocated flag, since all such memory has to be handled via vcts
@@ -551,6 +598,7 @@ Float *mus_set_data(mus_any *gen, Float *new_data)
   return(new_data);
 }
 
+
 Float *mus_xcoeffs(mus_any *gen)
 {
   if ((check_gen(gen, S_mus_xcoeffs)) &&
@@ -559,6 +607,7 @@ Float *mus_xcoeffs(mus_any *gen)
   mus_error(MUS_NO_XCOEFFS, "can't get %s's xcoeffs", mus_name(gen));
   return(NULL);
 }
+
 
 Float *mus_ycoeffs(mus_any *gen)
 {
@@ -569,6 +618,7 @@ Float *mus_ycoeffs(mus_any *gen)
   return(NULL);
 }
 
+
 Float mus_xcoeff(mus_any *gen, int index)
 {
   if ((check_gen(gen, S_mus_xcoeff)) &&
@@ -576,6 +626,7 @@ Float mus_xcoeff(mus_any *gen, int index)
     return((*(gen->core->xcoeff))(gen, index));
   return(mus_error(MUS_NO_XCOEFF, "can't get %s's xcoeff[%d] value", mus_name(gen), index));
 }
+
 
 Float mus_set_xcoeff(mus_any *gen, int index, Float val)
 {
@@ -585,6 +636,7 @@ Float mus_set_xcoeff(mus_any *gen, int index, Float val)
   return(mus_error(MUS_NO_XCOEFF, "can't set %s's xcoeff[%d] value", mus_name(gen), index));
 }
 
+
 Float mus_ycoeff(mus_any *gen, int index)
 {
   if ((check_gen(gen, S_mus_ycoeff)) &&
@@ -593,6 +645,7 @@ Float mus_ycoeff(mus_any *gen, int index)
   return(mus_error(MUS_NO_YCOEFF, "can't get %s's ycoeff[%d] value", mus_name(gen), index));
 }
 
+
 Float mus_set_ycoeff(mus_any *gen, int index, Float val)
 {
   if ((check_gen(gen, S_setB S_mus_ycoeff)) &&
@@ -600,6 +653,7 @@ Float mus_set_ycoeff(mus_any *gen, int index, Float val)
     return((*(gen->core->set_ycoeff))(gen, index, val));
   return(mus_error(MUS_NO_YCOEFF, "can't set %s's ycoeff[%d] value", mus_name(gen), index));
 }
+
 
 off_t mus_location(mus_any *gen)
 {
@@ -620,6 +674,7 @@ Float mus_contrast_enhancement(Float sig, Float index) {return(sin((sig * M_PI_2
 
 void mus_clear_array(Float *arr, int size) {memset((void *)arr, 0, size * sizeof(Float));}
 
+
 bool mus_arrays_are_equal(Float *arr1, Float *arr2, Float fudge, int len)
 {
   int i;
@@ -638,6 +693,7 @@ bool mus_arrays_are_equal(Float *arr1, Float *arr2, Float fudge, int len)
   return(true);
 }
 
+
 static bool clm_arrays_are_equal(Float *arr1, Float *arr2, int len)
 {
   return(mus_arrays_are_equal(arr1, arr2, float_equal_fudge_factor, len));
@@ -653,10 +709,12 @@ Float mus_dot_product(Float *data1, Float *data2, int size)
   return(sum);
 }
 
+
 #if HAVE_COMPLEX_TRIG
 #if HAVE_FORTH 
   #include "xen.h" 
 #endif 
+
 complex double mus_edot_product(complex double freq, complex double *data, int size)
 {
   int i;
@@ -666,6 +724,7 @@ complex double mus_edot_product(complex double freq, complex double *data, int s
   return(sum);
 }
 #endif
+
 
 Float mus_polynomial(Float *coeffs, Float x, int ncoeffs)
 {
@@ -679,12 +738,14 @@ Float mus_polynomial(Float *coeffs, Float x, int ncoeffs)
   return(sum);
 }
 
+
 void mus_multiply_arrays(Float *data, Float *window, int len)
 {
   int i;
   for (i = 0; i < len; i++) 
     data[i] *= window[i];
 }
+
 
 void mus_rectangular_to_polar(Float *rl, Float *im, int size) 
 {
@@ -700,6 +761,7 @@ void mus_rectangular_to_polar(Float *rl, Float *im, int size)
     }
 }
 
+
 void mus_polar_to_rectangular(Float *rl, Float *im, int size) 
 {
   int i; 
@@ -711,6 +773,7 @@ void mus_polar_to_rectangular(Float *rl, Float *im, int size)
       im[i] = temp;
     }
 }
+
 
 static Float *array_normalize(Float *table, int table_size)
 {
@@ -753,6 +816,7 @@ Float mus_array_interp(Float *wave, Float phase, int size)
     }
 }
 
+
 static Float mus_array_all_pass_interp(Float *wave, Float phase, int size, Float yn1)
 {
   /* from Perry Cook */
@@ -772,6 +836,7 @@ static Float mus_array_all_pass_interp(Float *wave, Float phase, int size, Float
     return(wave[int_part] + wave[inx] - yn1);
   else return(wave[int_part] + ((1.0 - frac_part) / (1 + frac_part)) * (wave[inx] - yn1));
 }
+
 
 static Float mus_array_lagrange_interp(Float *wave, Float x, int size)
 {
@@ -797,6 +862,7 @@ static Float mus_array_lagrange_interp(Float *wave, Float x, int size)
 	 (wave[x0] * (1.0 - pp)) + 
 	 (wave[xp1] * 0.5 * (p + pp)));
 }
+
 
 static Float mus_array_hermite_interp(Float *wave, Float x, int size)
 {
@@ -829,6 +895,7 @@ static Float mus_array_hermite_interp(Float *wave, Float x, int size)
   return(((c3 * p + c2) * p + c1) * p + c0);
 }
 
+
 static Float mus_array_bezier_interp(Float *wave, Float x, int size)
 {
   int x0, x1, x2, x3;
@@ -856,6 +923,7 @@ static Float mus_array_bezier_interp(Float *wave, Float x, int size)
   ay = y3 - y0 - cy - by;
   return(y0 + p * (cy + (p * (by + (p * ay)))));
 }
+
 
 Float mus_interpolate(mus_interp_t type, Float x, Float *table, int table_size, Float y)
 {

@@ -8,6 +8,62 @@ static off_t recorder_total_bytes = 0;
 static axis_context *recorder_ax = NULL;
 static int meter_width = 0, meter_height = 0, meters_width = 0;
 static bool meters_in_db = false;
+static Widget file_label;
+
+#define RECORDER_HEIGHT 300
+
+
+/* error handling */
+
+static bool record_error_watching = false, record_error = false;
+static Widget error_info;
+
+static void clear_record_error(void);
+
+static void watch_record_error(Widget w, XtPointer context, XtPointer info)
+{
+  clear_record_error();
+}
+
+
+static char *base_message(void)
+{
+  return(mus_format("srate: %d, chans: %d", recorder_srate, recorder_chans));
+}
+
+
+static void clear_record_error(void)
+{
+  XmString s1; 
+  char *bmsg;
+  XtVaSetValues(error_info, XmNbackground, ss->sgx->basic_color, NULL);
+  record_error = false;
+  bmsg = base_message();
+  s1 = XmStringCreateLocalized(bmsg);
+  FREE(bmsg);
+  XtVaSetValues(error_info, XmNlabelString, s1, NULL);
+  XmStringFree(s1);
+  if (record_error_watching)
+    {
+      record_error_watching = false;
+      XtRemoveCallback(recorder_output, XmNvalueChangedCallback, watch_record_error, NULL);
+    }
+}
+
+
+static void report_in_error_info(const char *msg, void *ignore)
+{
+  XmString s1;
+  if ((!msg) || (!(*msg))) return;
+  XtVaSetValues(error_info, XmNbackground, ss->sgx->highlight_color, NULL);
+  record_error = true;
+  s1 = XmStringCreateLocalized((char *)msg);
+  XtVaSetValues(error_info, XmNlabelString, s1, NULL);
+  record_error_watching = true;
+  XtAddCallback(recorder_output, XmNvalueChangedCallback, watch_record_error, NULL);
+  XmStringFree(s1);
+}
+
 
 static void stop_recording(void)
 {
@@ -21,6 +77,7 @@ static void stop_recording(void)
   XmStringFree(s2);
 }
 
+
 static void close_recorder(Widget w, XtPointer context, XtPointer info)
 {
   /* window manager close button */
@@ -30,19 +87,23 @@ static void close_recorder(Widget w, XtPointer context, XtPointer info)
   XtUnmanageChild(recorder);
 }
 
+
 static void quit_recorder(Widget w, XtPointer context, XtPointer info) 
 {
   /* Quit button in the recorder dialog */
+  clear_record_error();
   if (recording)
     stop_recording();
   reading = false;
   XtUnmanageChild(recorder);
 }
 
+
 static void recorder_help(Widget w, XtPointer context, XtPointer info)
 {
   recording_help();
 }
+
 
 static void display_meters(Float *maxes)
 {
@@ -87,9 +148,11 @@ static void display_meters(Float *maxes)
     }
 }
 
+
 static void start_recording(void)
 {
   char *str;
+  clear_record_error();
   if (recorder_filename) FREE(recorder_filename);
   str = XmTextGetString(recorder_output);
   if (!str)
@@ -99,11 +162,11 @@ static void start_recording(void)
       recorder_filename = copy_string(str);
       XtFree(str);
     }
+  redirect_snd_error_to(report_in_error_info, NULL);
   recorder_fd = mus_sound_open_output(recorder_filename, recorder_srate, recorder_chans, recorder_format, MUS_NEXT, NULL);
+  redirect_snd_error_to(NULL, NULL);
   if (recorder_fd < 0)
     {
-      fprintf(stderr,"open output file chans: %d, srate: %d, format: %s -> %d\n", 
-	      recorder_chans, recorder_srate, mus_data_format_short_name(recorder_format), recorder_fd);
       recording = false;
     }
   else 
@@ -116,6 +179,7 @@ static void start_recording(void)
     }
 }
 
+
 static int look_for_format (float *mixer_vals, int format)
 {
   int i, lim;
@@ -126,6 +190,7 @@ static int look_for_format (float *mixer_vals, int format)
   return(-1);
 }
 
+
 static void start_reading(void)
 {
   Float *maxes;
@@ -134,12 +199,17 @@ static void start_reading(void)
   int input_device, buffer_size, err = MUS_NO_ERROR;
   unsigned char *inbuf;
 
+  clear_record_error();
+
   mus_audio_mixer_read(MUS_AUDIO_DEFAULT, MUS_AUDIO_CHANNEL, MIXER_SIZE, mixer_vals);
   recorder_chans = (int)mixer_vals[0];
   if (recorder_chans > 4) recorder_chans = 8;
   if (recorder_chans <= 0)
     {
-      fprintf(stderr,"chans: %d?\n", recorder_chans);
+      char *msg;
+      msg = mus_format("chans: %d?\n", recorder_chans);
+      report_in_error_info(msg, NULL);
+      FREE(msg);
       reading = false;
       return;
     }
@@ -174,9 +244,11 @@ static void start_reading(void)
   input_device = mus_audio_open_input(MUS_AUDIO_DEFAULT, recorder_srate, recorder_chans, recorder_format, buffer_size);
   if (input_device < 0)
     {
-      fprintf(stderr,"open input failed: chans: %d, srate: %d, format: %s, size: %d -> %d\n", 
-	      recorder_chans, recorder_srate, mus_data_format_short_name(recorder_format), buffer_size, input_device);
-
+      char *msg;
+      msg = mus_format("open input failed: chans: %d, srate: %d, format: %s, size: %d -> %d\n", 
+		       recorder_chans, recorder_srate, mus_data_format_short_name(recorder_format), buffer_size, input_device);
+      report_in_error_info(msg, NULL);
+      FREE(msg);
       reading = false;
       return;
     }
@@ -194,7 +266,12 @@ static void start_reading(void)
 	  ssize_t bytes;
 	  bytes = write(recorder_fd, (char *)inbuf, buffer_size);
 	  if (bytes != buffer_size)
-	    fprintf(stderr, "recorder wrote " SSIZE_TD " bytes of %d requested?", bytes, buffer_size);
+	    {
+	      char *msg;
+	      msg = mus_format("recorder wrote " SSIZE_TD " bytes of %d requested?", bytes, buffer_size);
+	      report_in_error_info(msg, NULL);
+	      FREE(msg);
+	    }
 	  recorder_total_bytes += buffer_size;
 	}
       check_for_event();  /* watch for close event or "go away" clicked */
@@ -202,16 +279,28 @@ static void start_reading(void)
       err = mus_samples_peak(inbuf, buffer_size, recorder_chans, recorder_format, maxes);
       if (err != MUS_ERROR) 
 	display_meters(maxes);
-      else fprintf(stderr,"mus samples peak: %d\n", err);
+      else 
+	{
+	  char *msg;
+	  msg = mus_format("mus samples peak: %d\n", err);
+	  report_in_error_info(msg, NULL);
+	  FREE(msg);
+	}
     }
+
   if (err != MUS_NO_ERROR)
-    fprintf(stderr,"error: %s\n", mus_error_type_to_string(err));
-  else fprintf(stderr,"done\n");
+    {
+      char *msg;
+      msg = mus_format("error: %s\n", mus_error_type_to_string(err));
+      report_in_error_info(msg, NULL);
+      FREE(msg);
+    }
 
   mus_audio_close(input_device);
   FREE(inbuf);
   FREE(maxes);
 }
+
 
 static void start_or_stop_recorder(Widget w, XtPointer context, XtPointer info)
 {
@@ -219,6 +308,7 @@ static void start_or_stop_recorder(Widget w, XtPointer context, XtPointer info)
     stop_recording();
   else start_recording();
 }
+
 
 static void meters_resize(Widget w, XtPointer context, XtPointer info)
 {
@@ -229,10 +319,12 @@ static void meters_resize(Widget w, XtPointer context, XtPointer info)
   display_meters(NULL);
 }
 
+
 static void db_callback(Widget w, XtPointer context, XtPointer info)
 {
   meters_in_db = (bool)XmToggleButtonGetState(w);
 }
+
 
 widget_t record_file(void) 
 {
@@ -259,8 +351,10 @@ widget_t record_file(void)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_ANY); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      XtSetArg(args[n], XmNheight, 175); n++;
+      XtSetArg(args[n], XmNheight, RECORDER_HEIGHT); n++;
       recorder = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Record"), args, n);
+
+      record_button = XmMessageBoxGetChild(recorder, XmDIALOG_OK_BUTTON);
 
       XtAddCallback(recorder, XmNcancelCallback, quit_recorder, NULL);
       XtAddCallback(recorder, XmNhelpCallback, recorder_help, NULL);
@@ -281,14 +375,51 @@ widget_t record_file(void)
       recorder_filename = copy_string("test.snd");
 
       {
-	Widget form, dl, db_button, sep;
+	Widget sep, sep1, form, db_button, error_info_box, error_info_frame;
+
 	n = 0;
 	form = XtCreateManagedWidget("form", xmFormWidgetClass, recorder, args, n);
 
+	/* error/info display */
+	n = 0;
+	XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
+	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+	XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+	XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+	XtSetArg(args[n], XmNallowResize, true); n++; 
+	XtSetArg(args[n], XmNmargin, 20); n++;
+	error_info_box = XtCreateManagedWidget("error-box", xmRowColumnWidgetClass, form, args, n);
+	
+	n = 0;
+	XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	XtSetArg(args[n], XmNmarginHeight, 4); n++;
+	error_info_frame = XtCreateManagedWidget("error-frame", xmFrameWidgetClass, error_info_box, args, n);
+	
+	n = 0;
+	XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
+	error_info = XtCreateManagedWidget("error-info", xmLabelWidgetClass, error_info_frame, args, n);
+
+	n = 0;
+	XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
+	XtSetArg(args[n], XmNbottomWidget, error_info_box); n++;
+	XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
+	XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+	XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+	XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
+	XtSetArg(args[n], XmNheight, 10); n++;
+	sep1 = XtCreateManagedWidget("sep1", xmSeparatorWidgetClass, form, args, n);
+
+
+	/* dB button, filename */
 	n = 0;
 	XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
 	XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
-	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
+	XtSetArg(args[n], XmNbottomWidget, sep1); n++;
 	XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
 	XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
 	XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
@@ -298,15 +429,17 @@ widget_t record_file(void)
 	n = 0;
 	XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
 	XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
+	XtSetArg(args[n], XmNbottomWidget, sep1); n++;
 	XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
 	XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-	dl = XtCreateManagedWidget(_("file:"), xmLabelWidgetClass, form, args, n);
+	file_label = XtCreateManagedWidget(_("file:"), xmLabelWidgetClass, form, args, n);
 
 	n = 0;
 	XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-	XtSetArg(args[n], XmNleftWidget, dl); n++;
-	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+	XtSetArg(args[n], XmNleftWidget, file_label); n++;
+	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
+	XtSetArg(args[n], XmNbottomWidget, sep1); n++;
 	XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
 	XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
 	XtSetArg(args[n], XmNrightWidget, db_button); n++;
@@ -317,7 +450,7 @@ widget_t record_file(void)
 	XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
 	XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
 	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
-	XtSetArg(args[n], XmNbottomWidget, db_button); n++;
+	XtSetArg(args[n], XmNbottomWidget, recorder_output); n++;
 	XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
 	XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
 	XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
@@ -325,12 +458,15 @@ widget_t record_file(void)
 	XtSetArg(args[n], XmNheight, 10); n++;
 	sep = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, form, args, n);
 
+
+	/* meters */
 	n = 0;
 	XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
 	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
 	XtSetArg(args[n], XmNbottomWidget, sep); n++;
 	XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
 	XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+	XtSetArg(args[n], XmNheight, 50); n++;
 	meters = XtCreateManagedWidget("meters", xmDrawingAreaWidgetClass, form, args, n);
 	
 	XtAddCallback(db_button, XmNvalueChangedCallback, db_callback, NULL);
@@ -357,6 +493,7 @@ widget_t record_file(void)
       XtAddCallback(meters, XmNresizeCallback, meters_resize, NULL);
       XtAddCallback(meters, XmNexposeCallback, meters_resize, NULL);
       
+      XtVaSetValues(recorder, XmNheight, RECORDER_HEIGHT, NULL);
     }
   else 
     {

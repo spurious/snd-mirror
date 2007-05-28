@@ -577,6 +577,29 @@ static void mix_dialog_help_callback(GtkWidget *w, gpointer context)
   mix_dialog_help();
 }
 
+#if 0
+#if USE_CAIRO
+static axis_context *gax = NULL;
+static gboolean mix_dialog_expose(GtkWidget *widget, GdkEventExpose *expose)
+{
+  if (!gax)
+    {
+      gc_t *ggc;
+      ggc = gc_new(MAIN_WINDOW(ss));
+      gc_set_background(ggc, ss->sgx->white);
+      gc_set_foreground(ggc, ss->sgx->basic_color);
+      gax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      gax->wn = widget->window;
+      gax->w = widget;
+      gax->gc = ggc;
+    }
+  gax->cr = gdk_cairo_create(widget->window);
+  erase_rectangle(NULL, gax, 0, 0, widget->allocation.width, widget->allocation.height);
+  cairo_destroy(gax->cr);
+  return(false);
+}
+#endif
+#endif
 
 GtkWidget *make_mix_dialog(void)
 {
@@ -590,6 +613,12 @@ GtkWidget *make_mix_dialog(void)
 
       mix_dialog_id = any_mix_id();
       mix_dialog = snd_gtk_dialog_new();
+#if 0
+#if USE_CAIRO
+      gtk_widget_set_app_paintable(mix_dialog, true);
+      g_signal_connect(mix_dialog, "expose-event", G_CALLBACK(mix_dialog_expose), NULL);
+#endif
+#endif
       SG_SIGNAL_CONNECT(mix_dialog, "delete_event", delete_mix_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(mix_dialog), _("Mixes"));
       sg_make_resizable(mix_dialog);

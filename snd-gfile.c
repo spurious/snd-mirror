@@ -177,6 +177,8 @@ static void fsb_update_lists(fsb *fs)
 	gtk_adjustment_set_value(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)), list_top);
       }
     else slist_moveto(fs->file_list, 0);
+
+
   }
 
   fs->current_files = files;
@@ -221,6 +223,7 @@ static void fsb_directory_select_callback(const char *dir_name, int row, void *d
       strcpy(fs->directory_name, old_name);
       strcat(fs->directory_name, dir_name);
       strcat(fs->directory_name, "/");
+
       FREE(old_name);
     }
 
@@ -229,6 +232,7 @@ static void fsb_directory_select_callback(const char *dir_name, int row, void *d
   fsb_update_lists(fs);
   if (fs->directory_select_callback)
     (*(fs->directory_select_callback))((const char *)(fs->directory_name), fs->directory_select_data);
+
 }
 
 static char *fsb_fullname(fsb *fs, const char *filename)
@@ -359,6 +363,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
 
   fs->cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
   gtk_widget_set_name(fs->cancel_button, "quit_button");
+  set_stock_button_label(fs->cancel_button, _("Go Away"));
 
   fs->mkdir_button = sg_button_new_from_stock_with_label(_("Mkdir"), GTK_STOCK_REFRESH);
   gtk_widget_set_name(fs->mkdir_button, "reset_button");
@@ -1643,7 +1648,6 @@ widget_t make_mix_file_dialog(bool managed)
 			      (GtkSignalFunc)file_mix_cancel_callback,
 			      (GtkSignalFunc)file_mix_help_callback,
 			      GTK_STOCK_ADD);
-      set_stock_button_label(mdat->fs->cancel_button, _("Go Away"));
     }
   else
     {
@@ -2197,7 +2201,7 @@ file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   formats = type_and_format_to_position(fdat, header_type, data_format);
   nformats = fdat->formats;
 
-  form = gtk_hbox_new(false, 0);
+  form = gtk_hbox_new(false, 8);
   gtk_box_pack_start(GTK_BOX(parent), form, false, false, 4);
   gtk_widget_show(form);
 
@@ -3272,6 +3276,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
 
   cancelB = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
   gtk_widget_set_name(cancelB, "quit_button");
+  set_stock_button_label(cancelB, _("Go Away"));
 
   resetB = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
   gtk_widget_set_name(resetB, "reset_button");
@@ -3560,6 +3565,7 @@ widget_t make_new_file_dialog(bool managed)
 
       cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
       gtk_widget_set_name(cancel_button, "quit_button");
+      set_stock_button_label(cancel_button, _("Go Away"));
 
       new_file_ok_button = sg_button_new_from_stock_with_label(_("Ok"), GTK_STOCK_NEW);
       gtk_widget_set_name(new_file_ok_button, "doit_button");
@@ -3923,6 +3929,7 @@ GtkWidget *edit_header(snd_info *sp)
 
       cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
       gtk_widget_set_name(cancel_button, "quit_button");
+      set_stock_button_label(cancel_button, _("Go Away"));
 
       ep->save_button = gtk_button_new_from_stock(GTK_STOCK_SAVE);
       gtk_widget_set_name(ep->save_button, "doit_button");

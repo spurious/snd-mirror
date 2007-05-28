@@ -19,6 +19,7 @@ const char *io_error_name(io_error_t err)
   return(mus_format("unknown io_error: %d", err));
 }
 
+
 /* these are needed as C ints below */
 #ifndef MUS_DEBUGGING
   #define MUS_DEBUGGING 0
@@ -26,6 +27,7 @@ const char *io_error_name(io_error_t err)
 #ifndef USE_NO_GUI
   #define USE_NO_GUI 0
 #endif
+
 
 static XEN snd_error_hook; 
 static XEN snd_warning_hook; 
@@ -45,6 +47,7 @@ void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd)
   ss->snd_warning_data = data;
 }
 
+
 #ifdef SND_AS_WIDGET
 static void (*snd_error_display)(const char *msg);
 
@@ -54,11 +57,13 @@ void set_error_display(void (*func)(const char *msg))
 }
 #endif
 
+
 void redirect_snd_error_to(void (*handler)(const char *error_msg, void *ufd), void *data)
 {
   ss->snd_error_handler = handler;
   ss->snd_error_data = data;
 }
+
 
 static void snd_error_1(const char *msg, bool with_redirection_and_hook)
 {
@@ -118,6 +123,7 @@ static void snd_error_1(const char *msg, bool with_redirection_and_hook)
 #endif
   /* end USE_NO_GUI */
 }
+
 
 static void snd_warning_1(const char *msg)
 {
@@ -179,10 +185,12 @@ void snd_warning(char *format, ...)
   snd_warning_1(snd_error_buffer);
 }
 
+
 void snd_warning_without_format(const char *msg)
 {
   snd_warning_1(msg);
 }
+
 
 void snd_error(char *format, ...)
 {
@@ -199,15 +207,18 @@ void snd_error(char *format, ...)
   snd_error_1(snd_error_buffer, true);
 }
 
+
 void snd_error_without_redirection_or_hook(const char *msg)
 {
   snd_error_1(msg, false);
 }
 
+
 void snd_error_without_format(const char *msg)
 {
   snd_error_1(msg, true);
 }
+
 
 static XEN g_snd_error(XEN msg)
 {
@@ -221,6 +232,7 @@ static XEN g_snd_error(XEN msg)
 			 msg));
   return(msg);
 }
+
   
 static XEN g_snd_warning(XEN msg)
 {

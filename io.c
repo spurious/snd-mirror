@@ -29,6 +29,7 @@
 
 #include "_sndlib.h"
 
+
 void mus_bint_to_char(unsigned char *j, int x)
 {
   unsigned char *ox = (unsigned char *)&x;
@@ -38,6 +39,7 @@ void mus_bint_to_char(unsigned char *j, int x)
   memcpy((void *)j, (void *)ox, 4);
 #endif
 }
+
 
 int mus_char_to_bint(const unsigned char *inp)
 {
@@ -51,6 +53,7 @@ int mus_char_to_bint(const unsigned char *inp)
   return(o);
 }
 
+
 void mus_lint_to_char(unsigned char *j, int x)
 {
   unsigned char *ox = (unsigned char *)&x;
@@ -60,6 +63,7 @@ void mus_lint_to_char(unsigned char *j, int x)
   memcpy((void *)j, (void *)ox, 4);
 #endif
 }
+
 
 int mus_char_to_lint(const unsigned char *inp)
 {
@@ -73,6 +77,7 @@ int mus_char_to_lint(const unsigned char *inp)
   return(o);
 }
 
+
 void mus_boff_t_to_char(unsigned char *j, off_t x)
 {
   unsigned char *ox = (unsigned char *)&x;
@@ -82,6 +87,7 @@ void mus_boff_t_to_char(unsigned char *j, off_t x)
   j[0] = ox[7]; j[1] = ox[6]; j[2] = ox[5]; j[3] = ox[4]; j[4] = ox[3]; j[5] = ox[2]; j[6] = ox[1]; j[7] = ox[0];
 #endif
 }
+
 
 off_t mus_char_to_boff_t(const unsigned char *inp)
 {
@@ -95,6 +101,7 @@ off_t mus_char_to_boff_t(const unsigned char *inp)
   return(o);
 }
 
+
 void mus_loff_t_to_char(unsigned char *j, off_t x)
 {
   unsigned char *ox = (unsigned char *)&x;
@@ -104,6 +111,7 @@ void mus_loff_t_to_char(unsigned char *j, off_t x)
   j[0] = ox[7]; j[1] = ox[6]; j[2] = ox[5]; j[3] = ox[4]; j[4] = ox[3]; j[5] = ox[2]; j[6] = ox[1]; j[7] = ox[0];
 #endif
 }
+
 
 off_t mus_char_to_loff_t(const unsigned char *inp)
 {
@@ -117,6 +125,7 @@ off_t mus_char_to_loff_t(const unsigned char *inp)
   return(o);
 }
 
+
 void mus_bfloat_to_char(unsigned char *j, float x)
 {
   unsigned char *ox = (unsigned char *)&x;
@@ -126,6 +135,7 @@ void mus_bfloat_to_char(unsigned char *j, float x)
   memcpy((void *)j, (void *)ox, 4);
 #endif
 }
+
 
 float mus_char_to_bfloat(const unsigned char *inp)
 {
@@ -139,6 +149,7 @@ float mus_char_to_bfloat(const unsigned char *inp)
   return(o);
 }
 
+
 void mus_lfloat_to_char(unsigned char *j, float x)
 {
   unsigned char *ox = (unsigned char *)&x;
@@ -148,6 +159,7 @@ void mus_lfloat_to_char(unsigned char *j, float x)
   memcpy((void *)j, (void *)ox, 4);
 #endif
 }
+
 
 float mus_char_to_lfloat(const unsigned char *inp)
 {
@@ -161,6 +173,7 @@ float mus_char_to_lfloat(const unsigned char *inp)
   return(o);
 }
 
+
 void mus_bshort_to_char(unsigned char *j, short x)
 {
   unsigned char *ox = (unsigned char *)&x;
@@ -170,6 +183,7 @@ void mus_bshort_to_char(unsigned char *j, short x)
   memcpy((void *)j, (void *)ox, 2); /* I wonder if this is faster */
 #endif
 }
+
 
 short mus_char_to_bshort(const unsigned char *inp)
 {
@@ -183,6 +197,7 @@ short mus_char_to_bshort(const unsigned char *inp)
   return(o);
 }
 
+
 void mus_lshort_to_char(unsigned char *j, short x)
 {
   unsigned char *ox = (unsigned char *)&x;
@@ -192,6 +207,7 @@ void mus_lshort_to_char(unsigned char *j, short x)
   memcpy((void *)j, (void *)ox, 2);
 #endif
 }
+
 
 short mus_char_to_lshort(const unsigned char *inp)
 {
@@ -205,6 +221,7 @@ short mus_char_to_lshort(const unsigned char *inp)
   return(o);
 }
 
+
 void mus_ubshort_to_char(unsigned char *j, unsigned short x)
 {
   unsigned char *ox = (unsigned char *)&x;
@@ -214,6 +231,7 @@ void mus_ubshort_to_char(unsigned char *j, unsigned short x)
   memcpy((void *)j, (void *)ox, 2);
 #endif
 }
+
 
 unsigned short mus_char_to_ubshort(const unsigned char *inp)
 {
@@ -227,6 +245,7 @@ unsigned short mus_char_to_ubshort(const unsigned char *inp)
   return(o);
 }
 
+
 void mus_ulshort_to_char(unsigned char *j, unsigned short x)
 {
   unsigned char *ox = (unsigned char *)&x;
@@ -236,6 +255,7 @@ void mus_ulshort_to_char(unsigned char *j, unsigned short x)
   memcpy((void *)j, (void *)ox, 2);
 #endif
 }
+
 
 unsigned short mus_char_to_ulshort(const unsigned char *inp)
 {
@@ -249,6 +269,7 @@ unsigned short mus_char_to_ulshort(const unsigned char *inp)
   return(o);
 }
 
+
 void mus_bdouble_to_char(unsigned char *j, double x)
 {
   unsigned char *ox = (unsigned char *)&x;
@@ -258,6 +279,7 @@ void mus_bdouble_to_char(unsigned char *j, double x)
   memcpy((void *)j, (void *)ox, 8);
 #endif
 }
+
 
 double mus_char_to_ldouble(const unsigned char *inp)
 {
@@ -271,6 +293,7 @@ double mus_char_to_ldouble(const unsigned char *inp)
   return(o);
 }
 
+
 void mus_ldouble_to_char(unsigned char *j, double x)
 {
   unsigned char *ox = (unsigned char *)&x;
@@ -280,6 +303,7 @@ void mus_ldouble_to_char(unsigned char *j, double x)
   j[0] = ox[7]; j[1] = ox[6]; j[2] = ox[5]; j[3] = ox[4]; j[4] = ox[3]; j[5] = ox[2]; j[6] = ox[1]; j[7] = ox[0];
 #endif
 }
+
 
 double mus_char_to_bdouble(const unsigned char *inp)
 {
@@ -293,6 +317,7 @@ double mus_char_to_bdouble(const unsigned char *inp)
   return(o);
 }
 
+
 int mus_char_to_uninterpreted_int(const unsigned char *inp)
 {
   int o;
@@ -300,6 +325,7 @@ int mus_char_to_uninterpreted_int(const unsigned char *inp)
   memcpy((void *)outp, (void *)inp, 4);
   return(o);
 }
+
 
 unsigned int mus_char_to_ubint(const unsigned char *inp)
 {
@@ -312,6 +338,7 @@ unsigned int mus_char_to_ubint(const unsigned char *inp)
 #endif
   return(o);
 }
+
 
 unsigned int mus_char_to_ulint(const unsigned char *inp)
 {
@@ -431,9 +458,11 @@ static bool clipping_default = false;
 bool mus_clipping(void) {return(clipping_default);}
 bool mus_set_clipping(bool new_value) {clipping_default = new_value; return(new_value);}
 
+
 static Float prescaler_default = 1.0;
 Float mus_prescaler(void) {return(prescaler_default);}
 Float mus_set_prescaler(Float new_value) {prescaler_default = new_value; return(new_value);}
+
 
 typedef struct {
   char *name;
@@ -446,6 +475,7 @@ typedef struct {
 static int io_fd_size = 0;
 static io_fd **io_fds = NULL;
 #define IO_FD_ALLOC_SIZE 8
+
 
 int mus_file_open_descriptors(int tfd, const char *name, int format, int size /* datum size */, off_t location, int chans, int type)
 {
@@ -493,6 +523,7 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
   return(MUS_NO_ERROR);
 }
 
+
 bool mus_file_clipping(int tfd)
 {
   io_fd *fd;
@@ -500,6 +531,7 @@ bool mus_file_clipping(int tfd)
   fd = io_fds[tfd];
   return(fd->clipping);
 }
+
 
 int mus_file_set_clipping(int tfd, bool clipped)
 {
@@ -510,6 +542,7 @@ int mus_file_set_clipping(int tfd, bool clipped)
   return(MUS_NO_ERROR);
 }
 
+
 int mus_file_set_header_type(int tfd, int type)
 {
   io_fd *fd;
@@ -519,6 +552,7 @@ int mus_file_set_header_type(int tfd, int type)
   return(MUS_NO_ERROR);
 }
 
+
 int mus_file_header_type(int tfd)
 {
   io_fd *fd;
@@ -527,6 +561,7 @@ int mus_file_header_type(int tfd)
   return(fd->header_type);
 }
 
+
 Float mus_file_prescaler(int tfd) 
 {
   io_fd *fd;
@@ -534,6 +569,7 @@ Float mus_file_prescaler(int tfd)
   fd = io_fds[tfd];
   return(fd->prescaler);
 }
+
 
 Float mus_file_set_prescaler(int tfd, Float val) 
 {
@@ -544,6 +580,7 @@ Float mus_file_set_prescaler(int tfd, Float val)
   return(val);
 }
 
+
 char *mus_file_fd_name(int tfd)
 {
   io_fd *fd;
@@ -551,6 +588,7 @@ char *mus_file_fd_name(int tfd)
   fd = io_fds[tfd];
   return(fd->name);
 }
+
 
 int mus_file_set_chans(int tfd, int chans)
 {
@@ -575,6 +613,7 @@ int mus_file_open_read(const char *arg)
   return(fd);
 }
 
+
 bool mus_file_probe(const char *arg) 
 {
 #if HAVE_ACCESS
@@ -592,6 +631,7 @@ bool mus_file_probe(const char *arg)
 #endif
 }
 
+
 int mus_file_open_write(const char *arg)
 {
   int fd;
@@ -605,10 +645,12 @@ int mus_file_open_write(const char *arg)
   return(fd);
 }
 
+
 int mus_file_create(const char *arg)
 {
   return(CREAT(arg, 0666));
 }
+
 
 int mus_file_reopen_write(const char *arg)
 {
@@ -620,6 +662,7 @@ int mus_file_reopen_write(const char *arg)
 #endif
   return(fd);
 }
+
 
 int mus_file_close(int fd)
 {
@@ -1004,20 +1047,24 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
   return(total_read);
 }
 
+
 int mus_file_read_any(int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t **cm)
 {
   return(mus_read_any_1(tfd, beg, chans, nints, bufs, cm, NULL));
 }
+
 
 int mus_file_read_file(int tfd, int beg, int chans, int nints, mus_sample_t **bufs)
 {
   return(mus_read_any_1(tfd, beg, chans, nints, bufs, NULL, NULL));
 }
 
+
 int mus_file_read_buffer(int charbuf_data_format, int beg, int chans, int nints, mus_sample_t **bufs, char *charbuf)
 {
   return(mus_read_any_1(charbuf_data_format, beg, chans, nints, bufs, NULL, charbuf)); 
 }
+
 
 int mus_file_read(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
 {
@@ -1038,6 +1085,7 @@ int mus_file_read(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
       }
   return(num);
 }
+
 
 int mus_file_read_chans(int tfd, int beg, int end, int chans, mus_sample_t **bufs, mus_sample_t **cm)
 {
@@ -1304,15 +1352,18 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
   return(MUS_NO_ERROR);
 }
 
+
 int mus_file_write(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
 {
   return(mus_write_1(tfd, beg, end, chans, bufs, NULL, false));
 }
 
+
 int mus_file_write_file(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
 {
   return(mus_write_1(tfd, beg, end, chans, bufs, NULL, false));
 }
+
 
 int mus_file_write_buffer(int charbuf_data_format, int beg, int end, int chans, mus_sample_t **bufs, char *charbuf, bool clipped)
 {
@@ -1342,6 +1393,7 @@ char *strdup (const char *str)
 }
 #endif
 
+
 #if (!HAVE_FILENO)
 /* this is needed by XtAppAddInput */
 int fileno(FILE *fp)
@@ -1357,12 +1409,14 @@ int fileno(FILE *fp)
 }
 #endif
 
+
 static int sndlib_strlen(const char *str)
 {
   /* strlen(NULL) -> seg fault! */
   if ((str) && (*str)) return(strlen(str));
   return(0);
 }
+
 
 char *mus_getcwd(void)
 {
@@ -1395,6 +1449,7 @@ char *mus_getcwd(void)
 #endif
   return(pwd);
 }
+
 
 char *mus_expand_filename(const char *filename)
 {
@@ -1520,6 +1575,7 @@ void mus_snprintf(char *buffer, int buffer_len, const char *format, ...)
   va_end(ap);
 }
 
+
 #define MUS_FORMAT_STRING_MAX 1024
 
 char *mus_format(const char *format, ...)
@@ -1544,6 +1600,7 @@ char *mus_format(const char *format, ...)
   return(rtn);
 }
 
+
 Float mus_fclamp(Float lo, Float val, Float hi) 
 {
   if (val > hi) 
@@ -1554,6 +1611,7 @@ Float mus_fclamp(Float lo, Float val, Float hi)
     else return(val);
 }
 
+
 int mus_iclamp(int lo, int val, int hi) 
 {
   if (val > hi) 
@@ -1563,6 +1621,7 @@ int mus_iclamp(int lo, int val, int hi)
       return(lo); 
     else return(val);
 }
+
 
 off_t mus_oclamp(off_t lo, off_t val, off_t hi) 
 {
