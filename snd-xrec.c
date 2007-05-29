@@ -15,7 +15,7 @@ static Widget file_label;
 
 /* error handling */
 
-static bool record_error_watching = false, record_error = false;
+static bool record_error_watching = false;
 static Widget error_info;
 
 static void clear_record_error(void);
@@ -37,7 +37,6 @@ static void clear_record_error(void)
   XmString s1; 
   char *bmsg;
   XtVaSetValues(error_info, XmNbackground, ss->sgx->basic_color, NULL);
-  record_error = false;
   bmsg = base_message();
   s1 = XmStringCreateLocalized(bmsg);
   FREE(bmsg);
@@ -56,7 +55,6 @@ static void report_in_error_info(const char *msg, void *ignore)
   XmString s1;
   if ((!msg) || (!(*msg))) return;
   XtVaSetValues(error_info, XmNbackground, ss->sgx->highlight_color, NULL);
-  record_error = true;
   s1 = XmStringCreateLocalized((char *)msg);
   XtVaSetValues(error_info, XmNlabelString, s1, NULL);
   record_error_watching = true;

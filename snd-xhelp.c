@@ -12,6 +12,7 @@ static with_word_wrap_t outer_with_wrap = WITHOUT_WORD_WRAP;
 static char **help_urls = NULL;
 
 static int old_help_text_width = 0; 
+
 static void help_expose(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   int curwid;
@@ -32,6 +33,7 @@ static void help_expose(Widget w, XtPointer context, XEvent *event, Boolean *con
 	}
     }
 }
+
 
 static XmString parse_crossref(const char *xref)
 {
@@ -82,6 +84,7 @@ static XmString parse_crossref(const char *xref)
   return(xs);
 }
 
+
 static char *find_highlighted_text(XmString xs)
 {
   /* search xs for text in "url_text" rendition, returning first such portion */
@@ -119,12 +122,15 @@ static char *find_highlighted_text(XmString xs)
   return(NULL);
 }
 
+
 static Widget related_items = NULL;
+
 static char *help_completer(char *text, void *data) 
 {
   return(command_completer(text, data));
   /* might want to look at help topics too */
 } 
+
 
 static bool new_help(const char *pattern, bool complain)
 {
@@ -163,6 +169,7 @@ static bool new_help(const char *pattern, bool complain)
   return(false);
 }
 
+
 static char **help_history = NULL;
 static int help_history_size = 0;
 static int help_history_pos = 0;
@@ -194,6 +201,7 @@ static void add_pattern_to_help_history(const char *pattern)
   help_history[help_history_pos++] = copy_string(pattern);
 }
 
+
 static void help_next_callback(Widget w, XtPointer context, XtPointer info) 
 {
   if ((help_history_pos < help_history_size) && 
@@ -206,6 +214,7 @@ static void help_next_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+
 static void help_previous_callback(Widget w, XtPointer context, XtPointer info) 
 {
   if ((help_history_pos > 1) &&
@@ -217,6 +226,7 @@ static void help_previous_callback(Widget w, XtPointer context, XtPointer info)
       help_needed = true;
     }
 }
+
 
 static void help_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -246,6 +256,7 @@ static void help_browse_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+
 static void help_double_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* double-click item in "related items" list */
@@ -274,6 +285,7 @@ static void help_double_click_callback(Widget w, XtPointer context, XtPointer in
     }
 }
 
+
 static Widget help_search = NULL;
 
 static void ok_callback(Widget w, XtPointer context, XtPointer info) 
@@ -283,6 +295,7 @@ static void ok_callback(Widget w, XtPointer context, XtPointer info)
   if ((!active_widget) || (active_widget != help_search))
     XtUnmanageChild(help_dialog);
 }
+
 
 static void text_release_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
@@ -304,6 +317,7 @@ static void text_release_callback(Widget w, XtPointer context, XEvent *event, Bo
     }
 }
 
+
 static void help_search_callback(Widget w, XtPointer context, XtPointer info)
 {
   char *pattern = NULL;
@@ -312,6 +326,7 @@ static void help_search_callback(Widget w, XtPointer context, XtPointer info)
     XmTextFieldSetString(w, "");
   if (pattern) XtFree(pattern);
 }
+
 
 static Widget help_next_button = NULL, help_previous_button = NULL;
 static XmRendition texts[2];
@@ -496,6 +511,7 @@ static void create_help_monolog(void)
   set_dialog_widget(HELP_DIALOG, help_dialog);
 }
 
+
 int help_text_width(const char *txt, int start, int end)
 {
 #if 0
@@ -519,6 +535,7 @@ int help_text_width(const char *txt, int start, int end)
 #endif
   return((end - start) * 8);
 }
+
 
 Widget snd_help(const char *subject, const char *helpstr, with_word_wrap_t with_wrap)
 {
@@ -549,6 +566,7 @@ Widget snd_help(const char *subject, const char *helpstr, with_word_wrap_t with_
   XtSetSensitive(help_previous_button, (help_history_pos > 1));
   return(help_dialog);
 }
+
 
 Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls)
 {
@@ -588,6 +606,7 @@ Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_w
   return(w);
 }
 
+
 void snd_help_append(const char *text)
 {
   if (help_text) 
@@ -596,10 +615,12 @@ void snd_help_append(const char *text)
 		 (char *)text);
 }
 
+
 void snd_help_back_to_top(void)
 {
   if (help_text) XmTextShowPosition(help_text, 0);
 }
+
 
 bool help_dialog_is_active(void)
 {

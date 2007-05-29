@@ -14,11 +14,13 @@ static void dismiss_help_dialog(GtkWidget *w, gpointer context)
   gtk_widget_hide(help_dialog);
 }
 
+
 static gint delete_help_dialog(GtkWidget *w, GdkEvent *event, gpointer context) 
 {
   gtk_widget_hide(help_dialog);
   return(true);
 }
+
 
 #define HELP_ROWS 12
 #define HELP_COLUMNS 72
@@ -36,6 +38,7 @@ static void add_help_text(GtkWidget *text, const char *message)
   sg_text_insert(text, (char *)message);
 }
 
+
 int help_text_width(const char *txt, int start, int end)
 {
 #if 0
@@ -49,6 +52,7 @@ int help_text_width(const char *txt, int start, int end)
 #endif
   return((end - start) * 8);
 }
+
 
 static with_word_wrap_t outer_with_wrap = WITHOUT_WORD_WRAP;
 static int old_help_text_width = 0;
@@ -76,6 +80,7 @@ static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer 
     }
   return(false);
 }
+
 
 static bool new_help(const char *pattern, bool complain)
 {
@@ -114,6 +119,7 @@ static bool new_help(const char *pattern, bool complain)
   return(false);
 }
 
+
 static char **help_history = NULL;
 static int help_history_size = 0;
 static int help_history_pos = 0;
@@ -145,6 +151,7 @@ static void add_pattern_to_help_history(const char *pattern)
   help_history[help_history_pos++] = copy_string(pattern);
 }
 
+
 static void help_next_callback(GtkWidget *w, gpointer context)
 {
   if ((help_history_pos < help_history_size) && 
@@ -157,6 +164,7 @@ static void help_next_callback(GtkWidget *w, gpointer context)
     }
 }
 
+
 static void help_previous_callback(GtkWidget *w, gpointer context)
 {
   if ((help_history_pos > 1) &&
@@ -168,6 +176,7 @@ static void help_previous_callback(GtkWidget *w, gpointer context)
       help_needed = true;
     }
 }
+
 
 static char *find_highlighted_text(const char *value)
 {
@@ -196,6 +205,7 @@ static char *find_highlighted_text(const char *value)
   return(NULL);
 }
 
+
 static void help_browse_callback(const char *name, int row, void *data)
 {
   char *topic = NULL;
@@ -216,6 +226,7 @@ static void help_browse_callback(const char *name, int row, void *data)
 	}
     }
 }
+
 
 static gboolean text_release_callback(GtkTreeSelection *selection, gpointer *gp)
 {
@@ -245,6 +256,7 @@ static gboolean text_release_callback(GtkTreeSelection *selection, gpointer *gp)
   return(false);
 }
 
+
 static void search_activated(GtkWidget *w, gpointer context)
 { 
   char *str = NULL;
@@ -252,6 +264,7 @@ static void search_activated(GtkWidget *w, gpointer context)
   if (new_help(str, true))
     gtk_entry_set_text(GTK_ENTRY(w), "");
 }
+
 
 static GtkWidget *help_next_button = NULL, *help_previous_button = NULL;
 
@@ -314,6 +327,7 @@ static void create_help_monolog(void)
   set_dialog_widget(HELP_DIALOG, help_dialog);
 }
 
+
 GtkWidget *snd_help(const char *subject, const char *helpstr, with_word_wrap_t with_wrap)
 {
   /* place help string in scrollable help window */
@@ -338,6 +352,7 @@ GtkWidget *snd_help(const char *subject, const char *helpstr, with_word_wrap_t w
   return(help_dialog);
 }
 
+
 GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls)
 {
   GtkWidget *w;
@@ -352,10 +367,12 @@ GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, with_wo
   return(w);
 }
 
+
 void snd_help_append(const char *text)
 {
   if (help_text) sg_text_insert(help_text, text);
 }
+
 
 void snd_help_back_to_top(void)
 {
@@ -368,6 +385,7 @@ void snd_help_back_to_top(void)
       gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(help_text), &pos, 0.0, true, 0.0, 0.0);
     }
 }
+
 
 bool help_dialog_is_active(void)
 {

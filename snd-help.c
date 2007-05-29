@@ -1374,8 +1374,10 @@ To move the cursor from one mix to the next, in the same manner as C-j moves thr
 void recording_help(void) 
 {
   snd_help_with_xrefs("Record", 
+"Snd's recorder is very simple; for complex recording tasks, use Ardour.  The record dialog presents one or two VU meters (just \
+the curve and a needle), a text widget for the output sound file name, a button to change the meters from linear to dB, and \
+the usual buttons along the bottom to start or stop the recorder, provide help, and exit.",
 
-"This is being totally rewritten.  Nothing works yet.",
 		      WITH_WORD_WRAP,
 		      NULL,
 		      NULL);

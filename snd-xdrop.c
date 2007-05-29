@@ -19,6 +19,7 @@ static int drop_watchers_size = 0;
 
 #define DROP_WATCHER_SIZE_INCREMENT 2
 
+
 static int add_drop_watcher(Widget w, 
 			    void (*drop_watcher)(Widget w, const char *message, Position x, Position y, void *data), 
 			    void (*drag_watcher)(Widget w, const char *message, Position x, Position y, drag_style_t dtype, void *data), 
@@ -56,6 +57,7 @@ static int add_drop_watcher(Widget w,
   return(loc);
 }
 
+
 #if 0
 static bool remove_drop_watcher(int loc)
 {
@@ -71,6 +73,7 @@ static bool remove_drop_watcher(int loc)
   return(false);
 }
 #endif
+
 
 static drop_watcher_t *find_drop_watcher(Widget caller)
 {
@@ -103,6 +106,7 @@ static Atom uri_list;                /* rox uses this -- looks just like text/pl
 static Atom TEXT;                    /* ditto */
 
 static XEN drop_hook;
+
 
 static char *atom_to_string(Atom type, XtPointer value, unsigned long length)
 {
@@ -146,6 +150,7 @@ static char *atom_to_string(Atom type, XtPointer value, unsigned long length)
     }
   return(str);
 }
+
 
 static Position mx, my;
 
@@ -201,6 +206,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
       FREE(str);
     }
 }
+
 
 static void handle_drop(Widget w, XtPointer context, XtPointer info) 
 {
@@ -266,6 +272,7 @@ static void handle_drop(Widget w, XtPointer context, XtPointer info)
 
   XmDropTransferStart(cb->dragContext, args, n);
 }
+
 
 static void handle_drag(Widget w, XtPointer context, XtPointer info)
 {

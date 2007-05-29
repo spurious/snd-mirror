@@ -7,10 +7,12 @@
 
 static GtkPrintSettings *settings = NULL;
 
+
 static void begin_print(GtkPrintOperation *operation, GtkPrintContext *context,	gpointer data)
 {
   gtk_print_operation_set_n_pages(operation, 1);
 }
+
 
 static void draw_page(GtkPrintOperation *operation, GtkPrintContext *context, gint page_num, gpointer data)
 {
@@ -61,9 +63,11 @@ static void draw_page(GtkPrintOperation *operation, GtkPrintContext *context, gi
   }
 }
 
+
 static void end_print(GtkPrintOperation *operation, GtkPrintContext *context, gpointer data)
 {
 }
+
 
 void file_print_callback(GtkWidget *w, gpointer info) 
 {
@@ -96,12 +100,14 @@ void file_print_callback(GtkWidget *w, gpointer info)
     }
 }
 
+
 widget_t make_file_print_dialog(bool managed, bool direct_to_printer) 
 {
   /* xen print-dialog code */ 
   file_print_callback(NULL, NULL);
   return(NULL);
 }
+
 
 void save_print_dialog_state(FILE *fd) 
 {
@@ -116,10 +122,12 @@ static GtkWidget *print_ok_button, *print_message;
 static GtkWidget *print_error_text = NULL;
 static char print_string[PRINT_BUFFER_SIZE];
 
+
 static void print_help_callback(GtkWidget *w, gpointer context)
 {
   print_dialog_help();
 }
+
 
 static void print_cancel_callback(GtkWidget *w, gpointer context)
 {
@@ -127,11 +135,13 @@ static void print_cancel_callback(GtkWidget *w, gpointer context)
   gtk_widget_hide(print_dialog);
 }
 
+
 static gint print_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(print_dialog);
   return(true);
 }
+
 
 static bool print_watching = false, print_error = false;
 static gulong print_text_id = 0, print_button_id = 0;
@@ -150,10 +160,12 @@ static void clear_error(void)
     }
 }
 
+
 static void watch_print(GtkWidget *w, gpointer context)
 {
   clear_error();
 }
+
 
 static void report_in_error_info(const char *msg, void *ignore)
 {
@@ -169,12 +181,14 @@ static void report_in_error_info(const char *msg, void *ignore)
     }
 }
 
+
 static int lpr(char *name)
 {
   /* make some desultory effort to print the file */
   mus_snprintf(print_string, PRINT_BUFFER_SIZE, "lpr %s", name);
   return(system(print_string));
 }
+
 
 static printing_t printing = NOT_PRINTING;
 
@@ -252,6 +266,7 @@ static void print_ok_callback(GtkWidget *w, gpointer context)
   if (quit) gtk_widget_hide(print_dialog);
 }
 
+
 static void start_print_dialog(void)
 {
   if (!print_dialog)
@@ -312,6 +327,7 @@ static void start_print_dialog(void)
     }
 }
 
+
 void file_print_callback(GtkWidget *w, gpointer context)
 {
   start_print_dialog();
@@ -326,6 +342,7 @@ void file_print_callback(GtkWidget *w, gpointer context)
   gtk_widget_show(print_dialog);
 }
 
+
 widget_t make_file_print_dialog(bool managed, bool direct_to_printer)
 {
   start_print_dialog();
@@ -333,6 +350,7 @@ widget_t make_file_print_dialog(bool managed, bool direct_to_printer)
   if (managed) gtk_widget_show(print_dialog);
   return(print_dialog);
 }
+
 
 void save_print_dialog_state(FILE *fd)
 {

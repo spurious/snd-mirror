@@ -7,10 +7,12 @@ static Widget edit_find_dialog, edit_find_text, cancelB, edit_find_label, findne
 static Widget find_error_frame = NULL, find_error_label = NULL;
 
 static void clear_find_error(void);
+
 static void edit_find_modify_callback(Widget w, XtPointer context, XtPointer info)
 {
   clear_find_error();
 }
+
 
 static void clear_find_error(void)
 {
@@ -21,6 +23,7 @@ static void clear_find_error(void)
    *   means the text we're typing gets lost 
    */
 }
+
 
 static void errors_to_find_text(const char *msg, void *data)
 {
@@ -46,16 +49,19 @@ static void errors_to_find_text(const char *msg, void *data)
   XtAddCallback(edit_find_text, XmNmodifyVerifyCallback, edit_find_modify_callback, NULL);
 }
 
+
 static void stop_search_if_error(const char *msg, void *data)
 {
   errors_to_find_text(msg, data);
   ss->stopped_explicitly = true; /* should be noticed in global_search in snd-find.c */
 }
 
+
 static void edit_find_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   find_dialog_help();
 } 
+
 
 static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointer context, XtPointer info)
 { /* "Find" is the label here */
@@ -113,14 +119,31 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
     }
 } 
 
-void set_find_dialog_label(const char *str) {if (edit_find_label) set_label(edit_find_label, str);}
-static void edit_find_next_callback(Widget w, XtPointer context, XtPointer info) {edit_find_ok_callback(READ_FORWARD, w, context, info);}
-static void edit_find_previous_callback(Widget w, XtPointer context, XtPointer info) {edit_find_ok_callback(READ_BACKWARD, w, context, info);}
+
+void set_find_dialog_label(const char *str) 
+{
+  if (edit_find_label) 
+    set_label(edit_find_label, str);
+}
+
+
+static void edit_find_next_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  edit_find_ok_callback(READ_FORWARD, w, context, info);
+}
+
+
+static void edit_find_previous_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  edit_find_ok_callback(READ_BACKWARD, w, context, info);
+}
+
 
 static void find_dialog_close(Widget w, XtPointer context, XtPointer info)
 {
   clear_find_error();
 }
+
 
 static void edit_find_cancel_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -136,6 +159,7 @@ static void edit_find_cancel_callback(Widget w, XtPointer context, XtPointer inf
     }
   else edit_find_next_callback(w, context, info);
 } 
+
 
 static void make_edit_find_dialog(bool managed)
 {
@@ -249,10 +273,12 @@ static void make_edit_find_dialog(bool managed)
     }
 }
 
+
 void edit_find_callback(Widget w, XtPointer context, XtPointer info)
 {
   make_edit_find_dialog(true);
 }
+
 
 void save_find_dialog_state(FILE *fd)
 {
@@ -294,6 +320,7 @@ void save_find_dialog_state(FILE *fd)
     }
 }
 
+
 static XEN g_find_dialog(XEN managed, XEN text)
 {
   #define H_find_dialog "(" S_find_dialog " :optional managed text): create and activate the Edit:Find dialog, return the dialog widget. \
@@ -306,6 +333,7 @@ If 'text' is included, it is preloaded into the find dialog text widget."
   return(XEN_WRAP_WIDGET(edit_find_dialog));
 }
 
+
 static XEN g_find_dialog_widgets(void)
 {
   if (edit_find_dialog)
@@ -317,6 +345,7 @@ static XEN g_find_dialog_widgets(void)
 		     XEN_EMPTY_LIST))))));
   return(XEN_EMPTY_LIST);
 }
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_find_dialog_w, g_find_dialog)

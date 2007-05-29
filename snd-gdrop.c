@@ -12,6 +12,7 @@ static int drop_watchers_size = 0;
 
 #define DROP_WATCHER_SIZE_INCREMENT 2
 
+
 static int add_drop_watcher(GtkWidget *w, 
 			    void (*drop_watcher)(GtkWidget *w, const char *message, int x, int y, void *data), 
 			    void (*drag_watcher)(GtkWidget *w, const char *message, int x, int y, drag_style_t dtype, void *data), 
@@ -49,6 +50,7 @@ static int add_drop_watcher(GtkWidget *w,
   return(loc);
 }
 
+
 static drop_watcher_t *find_drop_watcher(GtkWidget *caller)
 {
   if (drop_watchers)
@@ -82,6 +84,7 @@ static GtkTargetEntry target_table[] = {
 
 static XEN drop_hook;
 
+
 static void drag_data_received(GtkWidget *caller, GdkDragContext *context, gint mx, gint my, 
 			       GtkSelectionData *data, guint info, guint time)
 {
@@ -92,9 +95,11 @@ static void drag_data_received(GtkWidget *caller, GdkDragContext *context, gint 
       gsize bread, bwritten;
       GError *error;
       char *str;
+
       if (info == TARGET_STRING)
 	str = (char *)(data->data);
       else str = (char *)g_filename_from_utf8((gchar *)(data->data), data->length, &bread, &bwritten, &error);
+
       if ((!(XEN_HOOKED(drop_hook))) || 
 	  (!(XEN_TRUE_P(run_or_hook(drop_hook,
 				    XEN_LIST_1(C_TO_XEN_STRING(str)),
@@ -141,6 +146,7 @@ static void drag_data_received(GtkWidget *caller, GdkDragContext *context, gint 
   gtk_drag_finish(context, false, false, time);
 }
 
+
 static void drag_leave(GtkWidget *w, GdkDragContext *context, guint time)
 {
   drop_watcher_t *d;
@@ -148,6 +154,7 @@ static void drag_leave(GtkWidget *w, GdkDragContext *context, guint time)
   if ((d) && (d->drag_watcher))
     (*(d->drag_watcher))(w, NULL, 0, 0, DRAG_LEAVE, d->context);
 }
+ 
 
 static gboolean drag_motion(GtkWidget *w, GdkDragContext *context, gint x, gint y, guint time)
 {
@@ -157,6 +164,7 @@ static gboolean drag_motion(GtkWidget *w, GdkDragContext *context, gint x, gint 
     (*(d->drag_watcher))(w, NULL, x, y, DRAG_MOTION, d->context);
   return(true); /* this is what the examples return in gtk/tests/testdnd.c -- don't know what it means, if anything */
 }
+ 
 
 void add_drag_and_drop(GtkWidget *w, 
 		       void (*drop_watcher)(GtkWidget *w, const char *message, int x, int y, void *data), 
@@ -169,6 +177,7 @@ void add_drag_and_drop(GtkWidget *w,
   SG_SIGNAL_CONNECT(w, "drag_leave", drag_leave, NULL);
   add_drop_watcher(w, drop_watcher, drag_watcher, context);
 }
+ 
 
 void add_drop(GtkWidget *w, 
 	      void (*drop_watcher)(GtkWidget *w, const char *message, int x, int y, void *data), 

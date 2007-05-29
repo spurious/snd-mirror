@@ -1,6 +1,6 @@
 #include "snd.h"
 
-static GtkWidget *recorder = NULL, *meters = NULL, *record_button = NULL, *recorder_output = NULL;
+static GtkWidget *recorder = NULL, *meters = NULL, *record_button = NULL, *recorder_output = NULL, *info;
 static bool reading = false, recording = false;
 static char *recorder_filename = "test.snd";
 static int recorder_fd = -1, recorder_srate = 44100, recorder_chans = 2, recorder_format = MUS_LFLOAT;
@@ -9,9 +9,55 @@ static axis_context *recorder_ax = NULL;
 static int meter_width = 0, meter_height = 0, meters_width = 0;
 static bool meters_in_db = false;
 
+#define RECORDER_WIDTH 300
+#define RECORDER_HEIGHT 200
+
+static bool recorder_watching = false;
+static gulong recorder_text_id = 0;
+
+static char *base_message(void)
+{
+  return(mus_format("srate: %d, chans: %d", recorder_srate, recorder_chans));
+}
+
+
+static void clear_error(void)
+{
+  char *msg;
+  msg = base_message();
+  info_widget_display(info, msg);
+  FREE(msg);
+  widget_modify_base(info, GTK_STATE_NORMAL, ss->sgx->basic_color);
+  widget_modify_base(info, GTK_STATE_ACTIVE, ss->sgx->basic_color);
+  if (recorder_watching)
+    {
+      recorder_watching = false;
+      g_signal_handler_disconnect(recorder_output, recorder_text_id);
+      recorder_text_id = 0;
+    }
+}
+
+
+static void watch_info(GtkWidget *w, gpointer context)
+{
+  clear_error();
+}
+
+
+static void report_in_error_info(const char *msg, void *ignore)
+{
+  info_widget_display(info, msg);
+  widget_modify_base(info, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  widget_modify_base(info, GTK_STATE_ACTIVE, ss->sgx->highlight_color);
+  /*   info_widget_set_size(info, 1 + snd_strlen(msg)); */
+  recorder_watching = true;
+  recorder_text_id = SG_SIGNAL_CONNECT(recorder_output, "changed", watch_info, NULL);
+}
+
 
 static void stop_recording(void)
 {
+  clear_error();
   recording = false;
   mus_sound_close_output(recorder_fd, recorder_total_bytes);
   recorder_fd = -1;
@@ -135,13 +181,14 @@ static void display_meters(Float *maxes)
 
 static void start_recording(void)
 {
+  clear_error();
   recorder_filename = (char *)gtk_entry_get_text(GTK_ENTRY(recorder_output));
   if (recorder_filename == NULL) recorder_filename = copy_string("test.snd");
+  redirect_snd_error_to(report_in_error_info, NULL);
   recorder_fd = mus_sound_open_output(recorder_filename, recorder_srate, recorder_chans, recorder_format, MUS_NEXT, NULL);
+  redirect_snd_error_to(NULL, NULL);
   if (recorder_fd < 0)
     {
-      fprintf(stderr,"open output file chans: %d, srate: %d, format: %s -> %d\n", 
-	      recorder_chans, recorder_srate, mus_data_format_short_name(recorder_format), recorder_fd);
       recording = false;
     }
   else 
@@ -171,12 +218,16 @@ static void start_reading(void)
   int input_device, buffer_size, err = MUS_NO_ERROR;
   unsigned char *inbuf;
 
+  clear_error();
   mus_audio_mixer_read(MUS_AUDIO_DEFAULT, MUS_AUDIO_CHANNEL, MIXER_SIZE, mixer_vals);
   recorder_chans = (int)mixer_vals[0];
   if (recorder_chans > 4) recorder_chans = 8;
   if (recorder_chans <= 0)
     {
-      fprintf(stderr,"chans: %d?\n", recorder_chans);
+      char *msg;
+      msg = mus_format("chans: %d?", recorder_chans);
+      report_in_error_info(msg, NULL);
+      FREE(msg);
       reading = false;
       return;
     }
@@ -212,8 +263,11 @@ static void start_reading(void)
   input_device = mus_audio_open_input(MUS_AUDIO_DEFAULT, recorder_srate, recorder_chans, recorder_format, buffer_size);
   if (input_device < 0)
     {
-      fprintf(stderr,"open input failed: chans: %d, srate: %d, format: %s, size: %d -> %d\n", 
-	      recorder_chans, recorder_srate, mus_data_format_short_name(recorder_format), buffer_size, input_device);
+      char *msg;
+      msg = mus_format("open input failed: chans: %d, srate: %d, format: %s, size: %d -> %d", 
+		       recorder_chans, recorder_srate, mus_data_format_short_name(recorder_format), buffer_size, input_device);
+      report_in_error_info(msg, NULL);
+      FREE(msg);
 
       /* TODO: try some fallbacks -- different srate/chans etc */
       
@@ -234,7 +288,12 @@ static void start_reading(void)
 	  ssize_t bytes;
 	  bytes = write(recorder_fd, (char *)inbuf, buffer_size);
 	  if (bytes != buffer_size)
-	    fprintf(stderr, "recorder wrote " SSIZE_TD " bytes of %d requested?", bytes, buffer_size);
+	    {
+	      char *msg;
+	      msg = mus_format("recorder wrote " SSIZE_TD " bytes of %d requested?", bytes, buffer_size);
+	      report_in_error_info(msg, NULL);
+	      FREE(msg);
+	    }
 	  recorder_total_bytes += buffer_size;
 	}
       check_for_event();  /* watch for close event or "go away" clicked */
@@ -242,11 +301,21 @@ static void start_reading(void)
       err = mus_samples_peak(inbuf, buffer_size, recorder_chans, recorder_format, maxes);
       if (err != MUS_ERROR) 
 	display_meters(maxes);
-      else fprintf(stderr,"mus samples peak: %d\n", err);
+      else
+	{
+	  char *msg;
+	  msg = mus_format("mus samples peak: %d", err);
+	  report_in_error_info(msg, NULL);
+	  FREE(msg);
+	}
     }
   if (err != MUS_NO_ERROR)
-    fprintf(stderr,"error: %s\n", mus_error_type_to_string(err));
-  else fprintf(stderr,"done\n");
+    {
+      char *msg;
+      msg = mus_format("error: %s", mus_error_type_to_string(err));
+      report_in_error_info(msg, NULL);
+      FREE(msg);
+    }
 
   mus_audio_close(input_device);
   FREE(inbuf);
@@ -292,7 +361,7 @@ widget_t record_file(void)
       gtk_window_set_title(GTK_WINDOW(recorder), _("Record"));
       sg_make_resizable(recorder);
       gtk_widget_realize(recorder);
-      gtk_window_resize(GTK_WINDOW(recorder), 350, 150);
+      gtk_window_resize(GTK_WINDOW(recorder), RECORDER_WIDTH, RECORDER_HEIGHT);
 
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(help_button, "help_button");
@@ -339,6 +408,30 @@ widget_t record_file(void)
       gtk_box_pack_end(GTK_BOX(hbox), db_button, false, false, 10);
       gtk_widget_show(db_button);
       SG_SIGNAL_CONNECT(db_button, "toggled", db_callback, NULL);
+
+      {
+	GtkWidget *frame, *hbox, *fsep;
+
+	hbox = gtk_hbox_new(false, 0);
+	gtk_box_pack_end(GTK_BOX(GTK_DIALOG(recorder)->vbox), hbox, false, false, 8);
+	gtk_widget_show(hbox);
+
+	fsep = gtk_hseparator_new();
+	gtk_box_pack_start(GTK_BOX(hbox), fsep, false, false, 20);
+	widget_modify_bg(fsep, GTK_STATE_NORMAL, ss->sgx->basic_color);
+	gtk_widget_show(fsep);
+
+	frame = gtk_frame_new(NULL);
+	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
+	/* gtk_container_set_border_width(GTK_CONTAINER(frame), 1); */
+	/* widget_modify_bg(frame, GTK_STATE_NORMAL, ss->sgx->zoom_color); */
+	gtk_box_pack_start(GTK_BOX(hbox), frame, false, false, 0);
+	gtk_widget_show(frame);
+
+	info = snd_gtk_entry_label_new(NULL, ss->sgx->basic_color);
+	gtk_container_add(GTK_CONTAINER(frame), info);
+	gtk_widget_show(info);
+      }
 
       gtk_widget_show(recorder);
       set_dialog_widget(RECORDER_DIALOG, recorder);

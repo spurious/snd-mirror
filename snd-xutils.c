@@ -275,7 +275,8 @@ void set_main_color_of_widget(Widget w)
 	      (cur_color != ss->sgx->doit_button_color) &&
 	      (cur_color != ss->sgx->doit_again_button_color) &&
 	      (cur_color != ss->sgx->reset_button_color) &&
-	      (cur_color != ss->sgx->highlight_color))
+	      (cur_color != ss->sgx->highlight_color) &&
+	      (cur_color != ss->sgx->white))
 	    XmChangeColor(w, (Pixel)ss->sgx->basic_color);
 	}
     }

@@ -13,6 +13,7 @@ static void print_help_callback(Widget w, XtPointer context, XtPointer info)
   print_dialog_help();
 }
 
+
 static void clear_print_error(void);
 
 static void print_cancel_callback(Widget w, XtPointer context, XtPointer info)
@@ -26,6 +27,7 @@ static void print_cancel_callback(Widget w, XtPointer context, XtPointer info)
   /* else it's the <cr> from the text widget probably */
 }
 
+
 static int lpr(char *name)
 {
   /* make some desultory effort to print the file */
@@ -33,13 +35,16 @@ static int lpr(char *name)
   return(system(print_string));
 }
 
+
 static void watch_print(Widget w, XtPointer context, XtPointer info)
 {
   clear_print_error();
 }
 
+
 static Widget rc;
 static bool print_watching = false, print_error = false;
+
 static void clear_print_error(void)
 {
   XtUnmanageChild(rc);
@@ -54,6 +59,7 @@ static void clear_print_error(void)
       XtRemoveCallback(print_eps_or_lpr, XmNvalueChangedCallback, watch_print, NULL);
     }
 }
+
 
 static void report_in_error_info(const char *msg, void *ignore)
 {
@@ -85,6 +91,7 @@ static void report_in_error_info(const char *msg, void *ignore)
     }
   XmStringFree(s1);
 }
+
 
 static printing_t printing = NOT_PRINTING;
 
@@ -177,6 +184,7 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
   if (quit) 
     XtUnmanageChild(print_dialog);
 }
+
 
 static void start_print_dialog(XmString xmstr4, bool managed)
 {
@@ -292,6 +300,7 @@ static void start_print_dialog(XmString xmstr4, bool managed)
     }
 }
 
+
 widget_t make_file_print_dialog(bool managed, bool direct_to_printer)
 {
   XmString xmstr4;
@@ -301,6 +310,7 @@ widget_t make_file_print_dialog(bool managed, bool direct_to_printer)
   XmToggleButtonSetState(print_eps_or_lpr, direct_to_printer, false);
   return(print_dialog);
 }
+
 
 void file_print_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -317,6 +327,7 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
   start_print_dialog(xmstr4, true);
   XmStringFree(xmstr4);
 }
+
 
 void save_print_dialog_state(FILE *fd)
 {

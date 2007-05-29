@@ -1,131 +1,25 @@
-Snd 9.0
-
-I discarded the old recorder and the track support, and completely 
-revamped the virtual mix support -- enough changes to warrant a new 
-major version.
+Snd 9.1
 
 
-the recorder:
-  completely discarded the old recorder and its functions -- these are gone:
-    recorder-autoload
-    recorder-buffer-size
-    recorder-file
-    recorder-file-hook
-    recorder-gain
-    recorder-in-amp
-    recorder-in-chans
-    recorder-in-data-format
-    recorder-in-device
-    recorder-max-duration
-    recorder-out-amp
-    recorder-out-chans
-    recorder-out-data-format
-    recorder-out-header-type
-    recorder-srate
-    recorder-trigger
-    vu-in-dB
-    vu-size
-  due to hardware troubles, I haven't fully tested the new recorder.
+peak-env-hook
+draw-mix-hook
 
-tracks:
-  removed:             replacement:
-    copy-track
-    delete-all-tracks     silence-all-mixes
-    delete-track          silence-mixes
-    filter-track
-    free-track
-    lock-track            
-    make-track
-    make-track-frame-reader 
-    make-track-sample-reader
-    mix-track
-    play-track            play-mixes
-    read-track-frame 
-    read-track-sample
-    retempo-track         scale-tempo
-    reverse-track         scale-tempo by a negative scaler
-    save-track            save-mixes
-    set-all-tracks        sync-mixes
-    track                 (now any list of mix ids) -- syncd-mixes follows the mix-sync value
-    track->sound-data     (see save-mixes)
-    track->vct            (see save-mixes)
-    track-amp             scale-mixes
-    track-amp-env         env-mixes
-    track-chans
-    track-color           color-mixes
-    track-dialog-track
-    track-frames          mixes-length
-    track-maxamp          mixes-maxamp
-    track-name
-    track-position        move-mixes
-    track-property
-    track-sample-reader?
-    track-speed           src-mixes
-    track-speed-style
-    track-tag-y           set-mixes-tag-y
-    track-tempo           scale-tempo
-    track-track
-    track?                (now just a list)
-    tracks
-    transpose-track       transpose-mixes
-    view-tracks-dialog
+background-gradient (gtk+cairo only)
+sound-mark-info
 
-  removed track-colors.scm and mix-menu.scm
+moved equalize-panes to snd-motif.scm
 
-  removed all track-related arguments from functions such as mix-vct, mix, and
-    mix-region
+in cmn: 
+  Michael Edwards added a way to change a staff name (new-staff-name)
+  I did half of the :old-style layout bugfix (the staves are laid out correctly, I think, but first-staff clefs are omitted)
 
-  removed tempo-control-bounds
+in clm:
+  changes for ACL 8.1
 
-  completely rewrote the virtual mix support:  these are gone:
-    copy-mix
-    delete-mix (set mix-amp to 0.0)
-    mix-chans (each mix is one chan in -> one chan out)
-    mix-inverted?
-    mix-locked?
-    mix-speed-style
-    mix-tag-position
-
-  changed
-    mix-frames -> mix-length
-    delete-all-mixes -> silence-all-mixes
-    pan-mix (mix.scm) and all its friends
- 
-  added 
-    edit-properties
-    edit-property accessor in extensions.scm
-    mix-sync
-
-    mix.scm:
-      scale-mixes
-      silence-mixes
-      move-mixes
-      src-mixes
-      transpose-mixes
-      color-mixes
-      set-mixes-tag-y
-      mixes-maxamp
-      scale-tempo
-      mixes-length
-      save-mixes
-      env-mixes
-      sync-all-mixes
-      syncd-mixes
-      play-mixes
-
-  moved mix-properties into C.
-
-  "mix" function now handles one channel in and out and the position defaults to 0 (not the cursor)
-
-the 1st arg to "play" can be a function that produces samples to be sent to the DAC, or
-  controls other such processes -- see play-mixes in mix.scm for an example. 
+SIGUSR1 (kill -10) throws Snd back to its top level -- a way, perhaps, to get out
+  of any infinite loop.
 
 
-as always, infinite Ruby and Forth improvements thanks to Mike
+Thanks!: Michael Edwards, Etienne Deleflie, Joshua Parmenter
 
-spokenword.scm thanks to Ville Koskinen
-
-checked: fftw 3.2a, cairo 1.4.2|4, sbcl 1.0.4, pango 1.16.2|4, Gauche 0.8.10
-
-
-Thanks!: Mike Scholz, Esben Stien, Michael Edwards, Ville Koskinen, "bigcab"
+checked: Ruby 1.8.6, sbcl 1.0.5, gtk 2.10.12|2.11.0, ACL 8.1, pango 1.17.0, glib 2.13.2

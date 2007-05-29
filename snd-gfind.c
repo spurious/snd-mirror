@@ -14,6 +14,7 @@ static gboolean find_modify_key_press(GtkWidget *w, GdkEventKey *event, gpointer
   return(false);
 }
 
+
 static void clear_find_error(void)
 {
   if ((find_error_frame) && (GTK_WIDGET_VISIBLE(find_error_frame)))
@@ -25,12 +26,14 @@ static void clear_find_error(void)
     }
 }
 
+
 static void errors_to_find_text(const char *msg, void *data)
 {
   set_label(find_error_label, msg);
   gtk_widget_show(find_error_frame);
   find_key_press_handler_id = SG_SIGNAL_CONNECT(edit_find_text, "key_press_event", find_modify_key_press, NULL);
 }
+
 
 static void stop_search_if_error(const char *msg, void *data)
 {
@@ -50,6 +53,7 @@ static void edit_find_dismiss(GtkWidget *w, gpointer context)
     }
 } 
 
+
 static gint edit_find_delete(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   clear_find_error();
@@ -57,10 +61,12 @@ static gint edit_find_delete(GtkWidget *w, GdkEvent *event, gpointer context)
   return(true);
 }
 
+
 static void edit_find_help(GtkWidget *w, gpointer context) 
 {
   find_dialog_help();
 } 
+
 
 static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer context) 
 { /* "Find" is the label here */
@@ -112,9 +118,25 @@ static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer co
     }
 } 
 
-void set_find_dialog_label(const char *str) {if (edit_find_label) set_label(edit_find_label, str);}
-static void edit_find_next(GtkWidget *w, gpointer context) {edit_find_find(READ_FORWARD, w, context);}
-static void edit_find_previous(GtkWidget *w, gpointer context) {edit_find_find(READ_BACKWARD, w, context);}
+
+void set_find_dialog_label(const char *str) 
+{
+  if (edit_find_label) 
+    set_label(edit_find_label, str);
+}
+
+
+static void edit_find_next(GtkWidget *w, gpointer context) 
+{
+  edit_find_find(READ_FORWARD, w, context);
+}
+
+
+static void edit_find_previous(GtkWidget *w, gpointer context) 
+{
+  edit_find_find(READ_BACKWARD, w, context);
+}
+
 
 static void make_edit_find_dialog(bool managed)
 {
@@ -189,10 +211,12 @@ static void make_edit_find_dialog(bool managed)
     }
 }
 
+
 void edit_find_callback(GtkWidget *w, gpointer context)
 {
   make_edit_find_dialog(true);
 }
+
 
 void save_find_dialog_state(FILE *fd)
 {
@@ -234,6 +258,7 @@ void save_find_dialog_state(FILE *fd)
     }
 }
 
+
 static XEN g_find_dialog(XEN managed, XEN text)
 {
   #define H_find_dialog "(" S_find_dialog " :optional managed text): create and activate the Edit:Find dialog, return the dialog widget"
@@ -244,6 +269,7 @@ static XEN g_find_dialog(XEN managed, XEN text)
     gtk_entry_get_text(GTK_ENTRY(edit_find_text));
   return(XEN_WRAP_WIDGET(edit_find_dialog));
 }
+
 
 static XEN g_find_dialog_widgets(void)
 {
@@ -256,6 +282,7 @@ static XEN g_find_dialog_widgets(void)
 		     XEN_EMPTY_LIST))))));
   return(XEN_EMPTY_LIST);
 }
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_find_dialog_w, g_find_dialog)

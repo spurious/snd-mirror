@@ -5,21 +5,25 @@ void draw_line(axis_context *ax, int x0, int y0, int x1, int y1)
   XDrawLine(ax->dp, ax->wn, ax->gc, x0, y0, x1, y1);
 }
 
+
 void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height)
 {
   XFillRectangle(ax->dp, ax->wn, ax->gc, x0, y0, width, height);
 }
+
 
 void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width, int height)
 {
   XFillRectangle(ax->dp, ax->wn, erase_GC(cp), x0, y0, width, height);
 }
 
+
 void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
 {
   if ((str) && (*str))
     XDrawString(ax->dp, ax->wn, ax->gc, x0, y0, str, len);
 }
+
 
 void gtk_style_draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
 {
@@ -35,6 +39,7 @@ void gtk_style_draw_string(axis_context *ax, int x0, int y0, const char *str, in
   else XDrawString(ax->dp, ax->wn, ax->gc, x0, y0, str, len); /* not sure why this happens... */
   /* XFreeFont here is trouble, but handling it as above seems ok -- Font.c in xlib does allocate new space */
 }
+
 
 static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list ap)
 {
@@ -52,6 +57,7 @@ static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list a
   FREE(pts);
 }
 
+
 void fill_polygon(axis_context *ax, int points, ...)
 { /* currently used only in snd-marks.c */
   va_list ap;
@@ -60,6 +66,7 @@ void fill_polygon(axis_context *ax, int points, ...)
   draw_polygon_va(ax, true, points, ap);
   va_end(ap);
 }
+
 
 void draw_polygon(axis_context *ax, int points, ...)
 { /* currently used only in snd-marks.c */
@@ -70,11 +77,13 @@ void draw_polygon(axis_context *ax, int points, ...)
   va_end(ap);
 }
 
+
 void draw_lines(axis_context *ax, point_t *points, int num)
 {
   if (num == 0) return;
   XDrawLines(ax->dp, ax->wn, ax->gc, points, num, CoordModeOrigin);
 }
+
 
 void draw_points(axis_context *ax, point_t *points, int num, int size)
 {
@@ -102,6 +111,7 @@ void draw_points(axis_context *ax, point_t *points, int num, int size)
     }
 }
 
+
 #if 0
 void draw_point(axis_context *ax, point_t point, int size)
 {
@@ -116,6 +126,7 @@ void draw_point(axis_context *ax, point_t point, int size)
 }
 #endif
 
+
 void draw_dot(axis_context *ax, int x, int y, int size)
 {
   XFillArc(ax->dp, ax->wn, ax->gc, 
@@ -125,10 +136,10 @@ void draw_dot(axis_context *ax, int x, int y, int size)
 	   360 * 64);
 }
 
-static XPoint polypts[4];
 
 void fill_polygons(axis_context *ax, point_t *points, int num, int y0)
 {
+  XPoint polypts[4];
   int i;
   for (i = 1; i < num; i++)
     {
@@ -144,8 +155,10 @@ void fill_polygons(axis_context *ax, point_t *points, int num, int y0)
     }
 }
 
+
 void fill_two_sided_polygons(axis_context *ax, point_t *points, point_t *points1, int num)
 {
+  XPoint polypts[4];
   int i;
   for (i = 1; i < num; i++)
     {
@@ -177,6 +190,7 @@ void setup_axis_context(chan_info *cp, axis_context *ax)
 
 
 /* colormaps */
+
 #define BLACK_AND_WHITE_COLORMAP 0
 /* defined as enum member in snd-gxcolormaps.c */
 
@@ -187,6 +201,7 @@ static int current_colormap = BLACK_AND_WHITE_COLORMAP;
 static XRectangle **sono_data = NULL; /* each entry in sono_data is an array of colormap_size arrays: sono_data[colormap_size][total_bins] */
 static int sono_colors = 0;           /* tracks colormap_size */
 static GC colormap_GC;
+
 
 void check_colormap_sizes(int colors)
 {
@@ -221,6 +236,7 @@ void check_colormap_sizes(int colors)
     }
 }
 
+
 void initialize_colormap(void)
 {
   state_context *sx;
@@ -235,17 +251,20 @@ void initialize_colormap(void)
   current_colors = (Pixel *)CALLOC(current_colors_size, sizeof(Pixel));
 }
 
+
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1)
 {
   XSetForeground(ax->dp, colormap_GC, current_colors[color]);
   XDrawLine(ax->dp, ax->wn, colormap_GC, x0, y0, x1, y1);
 }
 
+
 void draw_sono_rectangles(axis_context *ax, int color, int jmax)
 {
   XSetForeground(ax->dp, colormap_GC, current_colors[color]);
   XFillRectangles(ax->dp, ax->wn, colormap_GC, sono_data[color], jmax); 
 }
+
 
 void set_sono_rectangle(int j, int color, int x, int y, int width, int height)
 {
@@ -256,6 +275,7 @@ void set_sono_rectangle(int j, int color, int x, int y, int width, int height)
   r[j].width = width;
   r[j].height = height;
 }
+
 
 void allocate_sono_rects(int bins)
 {
@@ -272,6 +292,7 @@ void allocate_sono_rects(int bins)
     }
 }
 
+
 void allocate_color_map(int colormap)
 {
   static bool warned_color = false;
@@ -283,11 +304,14 @@ void allocate_color_map(int colormap)
       Display *dpy;
       int scr;
       tmp_color.flags = DoRed | DoGreen | DoBlue;
+
       dpy = XtDisplay(MAIN_SHELL(ss));
       scr = DefaultScreen(dpy);
       cmap = DefaultColormap(dpy, scr);
+
       /* 8-bit color displays can't handle all these colors, apparently, so we have to check status */
       if (current_colormap != BLACK_AND_WHITE_COLORMAP) XFreeColors(dpy, cmap, current_colors, current_colors_size, 0);
+
       for (i = 0; i < current_colors_size; i++)
 	{
 	  get_current_color(colormap, i, &(tmp_color.red), &(tmp_color.green), &(tmp_color.blue));
@@ -314,11 +338,13 @@ void allocate_color_map(int colormap)
 /* -------- color browser -------- */
 
 static XEN color_hook;
+
 static void check_color_hook(void)
 {
   if (XEN_HOOKED(color_hook))
     run_hook(color_hook, XEN_EMPTY_LIST, S_color_hook);
 }
+
 
 typedef struct {
   Widget dialog;
@@ -330,11 +356,13 @@ typedef struct {
 
 static color_chooser_info *ccd = NULL;
 
+
 static void update_graph_setting_fft_changed(chan_info *cp)
 {
   cp->fft_changed = FFT_CHANGE_LOCKED;
   update_graph(cp);
 }
+
 
 static void invert_color_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -345,6 +373,7 @@ static void invert_color_callback(Widget w, XtPointer context, XtPointer info)
   for_each_chan(update_graph_setting_fft_changed);
 }
 
+
 void set_color_inverted(bool val)
 {
   in_set_color_inverted(val);
@@ -354,6 +383,7 @@ void set_color_inverted(bool val)
   if (!(ss->graph_hook_active)) 
     for_each_chan(update_graph_setting_fft_changed);
 }
+
 
 static void scale_color_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -370,6 +400,7 @@ static void scale_color_callback(Widget w, XtPointer context, XtPointer info)
   for_each_chan(update_graph_setting_fft_changed);
 }
 
+
 static void reflect_color_scale(Float val)
 {
   if (val < 0.02)
@@ -382,6 +413,7 @@ static void reflect_color_scale(Float val)
     }
 }
 
+
 void set_color_scale(Float val)
 {
   in_set_color_scale(val);
@@ -390,6 +422,7 @@ void set_color_scale(Float val)
   if (!(ss->graph_hook_active)) 
     for_each_chan(update_graph_setting_fft_changed);
 }
+
 
 static void list_color_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -403,6 +436,7 @@ static void list_color_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+
 void set_color_map(int val)
 {
   in_set_color_map(val);
@@ -413,6 +447,7 @@ void set_color_map(int val)
     for_each_chan(update_graph_setting_fft_changed);
 }
 
+
 static void cutoff_color_callback(Widget w, XtPointer context, XtPointer info) /* cutoff point */
 {
   /* cutoff point for color chooser */
@@ -422,6 +457,7 @@ static void cutoff_color_callback(Widget w, XtPointer context, XtPointer info) /
   check_color_hook();
   for_each_chan(update_graph_setting_fft_changed);
 }
+
 
 void set_color_cutoff(Float val)
 {
@@ -439,10 +475,12 @@ static void dismiss_color_callback(Widget w, XtPointer context, XtPointer info)
   XtUnmanageChild(cd->dialog);
 }
 
+
 static void help_color_callback(Widget w, XtPointer context, XtPointer info)
 {
   color_dialog_help();
 }
+
 
 void reflect_color_list(bool setup_time)
 {
@@ -466,6 +504,7 @@ void reflect_color_list(bool setup_time)
       FREE(cmaps);
     }
 }
+
 
 /* I tried a scrolled window with each colormap name in an appropriate color, but it looked kinda dumb */
 
@@ -521,7 +560,6 @@ static void start_view_color_dialog(bool managed)
       XtSetArg(args[n], XmNleftPosition, 60); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNlistMarginWidth, 3); n++;
       ccd->list = XmCreateScrolledList(mainform, "colormap-list", args, n);
@@ -645,15 +683,18 @@ static void start_view_color_dialog(bool managed)
     }
 }
 
+
 void view_color_callback(Widget w, XtPointer context, XtPointer info)
 {
   start_view_color_dialog(true);
 }
 
+
 bool color_dialog_is_active(void)
 {
   return((ccd) && (ccd->dialog) && (XtIsManaged(ccd->dialog)));
 }
+
 
 Widget start_color_dialog(bool managed)
 {
@@ -666,11 +707,13 @@ Widget start_color_dialog(bool managed)
 /* -------- orientation browser -------- */
 
 static XEN orientation_hook;
+
 static void check_orientation_hook(void)
 {
   if (XEN_HOOKED(orientation_hook))
     run_hook(orientation_hook, XEN_EMPTY_LIST, S_orientation_hook);
 }
+
 
 typedef struct {
   Widget dialog;
@@ -680,6 +723,7 @@ typedef struct {
 #define HOP_MAX 20
 
 static orientation_info *oid = NULL;
+
 
 static XmString scale_label(const char *orig_label, int value, bool dec)
 {
@@ -692,6 +736,7 @@ static XmString scale_label(const char *orig_label, int value, bool dec)
   FREE(lab);
   return(x);
 }
+
 
 static void scale_set_label(const char *orig_label, Widget w, int value, bool dec)
 {
@@ -712,6 +757,7 @@ static void scale_set_label(const char *orig_label, Widget w, int value, bool de
   XmStringFree(x);
 }
 
+
 static void ax_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
@@ -722,6 +768,7 @@ static void ax_orientation_callback(Widget w, XtPointer context, XtPointer info)
   check_orientation_hook();
   for_each_chan(update_graph);
 }
+
 
 void set_spectro_x_angle(Float val)
 {
@@ -738,6 +785,7 @@ void set_spectro_x_angle(Float val)
     for_each_chan(update_graph);
 }
 
+
 static void ay_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
@@ -748,6 +796,7 @@ static void ay_orientation_callback(Widget w, XtPointer context, XtPointer info)
   check_orientation_hook();
   for_each_chan(update_graph);
 }
+
 
 void set_spectro_y_angle(Float val)
 {
@@ -764,6 +813,7 @@ void set_spectro_y_angle(Float val)
     for_each_chan(update_graph);
 }
 
+
 static void az_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
@@ -774,6 +824,7 @@ static void az_orientation_callback(Widget w, XtPointer context, XtPointer info)
   check_orientation_hook();
   for_each_chan(update_graph);
 }
+
 
 void set_spectro_z_angle(Float val)
 {
@@ -790,6 +841,7 @@ void set_spectro_z_angle(Float val)
     for_each_chan(update_graph);
 }
 
+
 static void sx_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
@@ -800,6 +852,7 @@ static void sx_orientation_callback(Widget w, XtPointer context, XtPointer info)
   check_orientation_hook();
   for_each_chan(update_graph);
 }
+
 
 void set_spectro_x_scale(Float val)
 {
@@ -817,6 +870,7 @@ void set_spectro_x_scale(Float val)
     for_each_chan(update_graph);
 }
 
+
 static void sy_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
@@ -827,6 +881,7 @@ static void sy_orientation_callback(Widget w, XtPointer context, XtPointer info)
   check_orientation_hook();
   for_each_chan(update_graph);
 }
+
 
 void set_spectro_y_scale(Float val)
 {
@@ -844,6 +899,7 @@ void set_spectro_y_scale(Float val)
     for_each_chan(update_graph);
 }
 
+
 static void sz_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
@@ -854,6 +910,7 @@ static void sz_orientation_callback(Widget w, XtPointer context, XtPointer info)
   check_orientation_hook();
   for_each_chan(update_graph);
 }
+
 
 void set_spectro_z_scale(Float val)
 {
@@ -871,10 +928,12 @@ void set_spectro_z_scale(Float val)
     for_each_chan(update_graph);
 }
 
+
 static void chans_spectro_hop(chan_info *cp, int value)
 {
   cp->spectro_hop = value;
 }
+
 
 static void hop_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -888,6 +947,7 @@ static void hop_orientation_callback(Widget w, XtPointer context, XtPointer info
   check_orientation_hook();
   for_each_chan(update_graph);
 }
+
 
 void set_spectro_hop(int val)
 {
@@ -908,6 +968,7 @@ void set_spectro_hop(int val)
     }
 }
 
+
 static void chans_spectro_cut(chan_info *cp) {cp->fft_changed = FFT_CHANGE_LOCKED;}
 
 static void cut_orientation_callback(Widget w, XtPointer context, XtPointer info) 
@@ -921,6 +982,7 @@ static void cut_orientation_callback(Widget w, XtPointer context, XtPointer info
   check_orientation_hook();
   set_spectro_cutoff_and_redisplay((Float)(cbs->value) * 0.01); /* calls in_set... */
 } 
+
 
 void set_spectro_cutoff(Float val)
 {
@@ -936,6 +998,7 @@ void set_spectro_cutoff(Float val)
     for_each_chan(update_graph_setting_fft_changed);
 }
 
+
 static int fixup_angle(Float ang)
 {
   int na;
@@ -944,6 +1007,7 @@ static int fixup_angle(Float ang)
   na = na % 360;
   return(na);
 }
+
 
 void reflect_spectro(void)
 {
@@ -968,6 +1032,7 @@ void reflect_spectro(void)
     }
 }
 
+
 void set_with_gl(bool val)
 {
 #if HAVE_GL
@@ -981,6 +1046,7 @@ void set_with_gl(bool val)
 #endif
 } 
 
+
 #if HAVE_GL
 static void with_gl_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -991,19 +1057,21 @@ static void with_gl_callback(Widget w, XtPointer context, XtPointer info)
   sgl_set_currents();
   for_each_chan(update_graph);
 }
-
 #endif
+
 
 static void help_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   orientation_dialog_help();
 }
 
+
 static void dismiss_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   orientation_info *od = (orientation_info *)context;
   XtUnmanageChild(od->dialog);
 }
+
 
 static void reset_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -1012,6 +1080,7 @@ static void reset_orientation_callback(Widget w, XtPointer context, XtPointer in
   reflect_spectro();
   for_each_chan(update_graph);
 }
+
 
 static void start_view_orientation_dialog(bool managed)
 {
@@ -1292,21 +1361,25 @@ static void start_view_orientation_dialog(bool managed)
     }
 }
 
+
 void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
 {
   start_view_orientation_dialog(true);
 }
+
 
 bool orientation_dialog_is_active(void)
 {
   return((oid) && (oid->dialog) && (XtIsManaged(oid->dialog)));
 }
 
+
 widget_t start_orientation_dialog(bool managed)
 {
   start_view_orientation_dialog(managed);
   return(oid->dialog);
 }
+
 
 void g_init_gxdraw(void)
 {
