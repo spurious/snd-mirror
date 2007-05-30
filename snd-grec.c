@@ -304,9 +304,11 @@ static void start_reading(void)
       else
 	{
 	  char *msg;
-	  msg = mus_format("mus samples peak: %d", err);
+	  msg = mus_format("data conversion problem; format is %s\n", mus_data_format_name(recorder_format));
 	  report_in_error_info(msg, NULL);
 	  FREE(msg);
+	  err = MUS_NO_ERROR;
+	  break;
 	}
     }
   if (err != MUS_NO_ERROR)
@@ -320,8 +322,6 @@ static void start_reading(void)
   mus_audio_close(input_device);
   FREE(inbuf);
   FREE(maxes);
-
-  /* TODO: if err, report it */
 }
 
 
@@ -453,5 +453,3 @@ widget_t record_file(void)
   return(recorder);
 }
 
-
-/* TODO: doc new rec */

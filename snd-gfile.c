@@ -131,7 +131,25 @@ static void fsb_update_lists(fsb *fs)
   for (i = 0; i < files->len; i++) 
     slist_append(fs->directory_list, files->files[i]->filename);
   free_dir_info(files);
-  slist_moveto(fs->directory_list, 0);
+
+  /* set directory list position */
+  {
+    position_t list_top;
+    char *dir_case;
+    dir_case = mus_format("dir:%s", fs->directory_name);
+    list_top = dirpos_list_top(fs->dir_list, dir_case);
+    if (list_top != POSITION_UNKNOWN)
+      {
+	GtkAdjustment *adj;
+	adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->directory_list->scroller));
+	if (adj->upper < files->len * 16)
+	  adj->upper = files->len * 16;
+	adj = gtk_viewport_get_vadjustment(GTK_VIEWPORT(gtk_widget_get_parent(fs->directory_list->topics)));
+	gtk_adjustment_set_value(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->directory_list->scroller)), list_top);
+      }
+    else slist_moveto(fs->directory_list, 0);
+    FREE(dir_case);
+  }
 
   /* reload file list */
   if (fs->current_files) free_dir_info(fs->current_files);
@@ -158,7 +176,7 @@ static void fsb_update_lists(fsb *fs)
 	slist_append(fs->file_list, files->files[i]->filename);
     }
 
-  /* TODO: also set directory list position */
+  /* set file list position */
   {
     position_t list_top;
     list_top = dirpos_list_top(fs->dir_list, fs->directory_name);
@@ -177,8 +195,6 @@ static void fsb_update_lists(fsb *fs)
 	gtk_adjustment_set_value(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)), list_top);
       }
     else slist_moveto(fs->file_list, 0);
-
-
   }
 
   fs->current_files = files;
@@ -203,6 +219,7 @@ static void fsb_update_lists(fsb *fs)
 static void fsb_directory_select_callback(const char *dir_name, int row, void *data)
 {
   fsb *fs = (fsb *)data;
+
   if (strcmp(dir_name, PARENT_DIRECTORY) == 0)
     {
       int i, slash_loc = 0, len;
@@ -215,6 +232,18 @@ static void fsb_directory_select_callback(const char *dir_name, int row, void *d
   else
     {
       char *old_name;
+
+      if (row > 0) /* not ".." */
+	/* save current directory list position */
+	{
+	  position_t position;
+	  char *dir_case;
+	  dir_case = mus_format("dir:%s", fs->directory_name);
+	  position = gtk_adjustment_get_value(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->directory_list->scroller)));
+	  dirpos_update(fs->dir_list, dir_case, position);
+	  FREE(dir_case);
+	}
+
       old_name = fs->directory_name;
       fs->directory_name = (char *)CALLOC(strlen(old_name) + strlen(dir_name) + 3, sizeof(char));
 #if MUS_DEBUGGING
@@ -262,7 +291,7 @@ static void fsb_file_select_callback(const char *file_name, int row, void *data)
       if (fs->file_select_callback)
 	(*(fs->file_select_callback))((const char *)fullname, fs->file_select_data);
 
-      /* save current list position */
+      /* save current file list position */
       {
 	position_t position;
 	position = gtk_adjustment_get_value(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)));

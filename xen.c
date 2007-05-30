@@ -1638,6 +1638,7 @@ void xen_gauche_permanent_object(XEN obj)
   Scm_DefineConst(Scm_UserModule(), SCM_SYMBOL(Scm_Gensym(SCM_STRING(C_TO_XEN_STRING("Snd")))), obj);
 }
 
+
 XEN xen_gauche_eval_c_string(char *arg)
 {
   XEN result = XEN_FALSE;
@@ -1648,7 +1649,10 @@ XEN xen_gauche_eval_c_string(char *arg)
 #else
       result = Scm_EvalRec(Scm_ReadFromCString(arg), SCM_OBJ(Scm_UserModule()));
 
-      /* TODO: Gauche: use ScmEvalPacket here for error reporting [src/main.c] -- also there's some g++ problem with Scm__OutputString or something
+      /* TODO: Gauche: use ScmEvalPacket here for error reporting [src/main.c] -- 
+       *       also there's some g++ problem with Scm__GetOutputString which is declared in gauche/port.h
+       *       but if you include gauche/port.h, all hell breaks loose.
+       */
 
       Scm_Eval -> -1 for error, packet arg has info
 

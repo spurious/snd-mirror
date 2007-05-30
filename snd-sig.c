@@ -2,12 +2,14 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
+
 /* collect syncd chans */
 typedef struct {
   sync_info *si;
   snd_fd **sfs;
   off_t dur;
 } sync_state;
+
 
 static void free_sync_state(sync_state *sc)
 {
@@ -454,6 +456,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
   return(NULL);
 }
 
+
 /* amplitude scaling */
 
 void scale_by(chan_info *cp, Float *ur_scalers, int len, bool over_selection)
@@ -487,6 +490,7 @@ void scale_by(chan_info *cp, Float *ur_scalers, int len, bool over_selection)
   free_sync_info(si);
 }
 
+
 static Float channel_maxamp_and_position(chan_info *cp, int edpos, off_t *maxpos)
 {
   /* maxamp position is not tracked in peak env because it gloms up the code, and cannot easily be saved/restored in the peak env files */
@@ -505,10 +509,12 @@ static Float channel_maxamp_and_position(chan_info *cp, int edpos, off_t *maxpos
   return(val);
 }
 
+
 Float channel_maxamp(chan_info *cp, int edpos)
 {
   return(channel_maxamp_and_position(cp, edpos, NULL));
 }
+
 
 off_t channel_maxamp_position(chan_info *cp, int edpos)
 {
@@ -516,6 +522,7 @@ off_t channel_maxamp_position(chan_info *cp, int edpos)
   channel_maxamp_and_position(cp, edpos, &maxpos);
   return(maxpos);
 }
+
 
 bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool over_selection)
 {
@@ -643,6 +650,7 @@ bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool over
   free_sync_info(si);
   return(scaled);
 }
+
 
 static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, int pos0, int pos1)
 {
@@ -804,6 +812,7 @@ static Float src_input_as_needed(void *arg, int direction)
   return(read_sample(sf));
 }
 
+
 static src_state *make_src(Float srate, snd_fd *sf, Float initial_srate)
 {
   src_state *sr;
@@ -820,12 +829,14 @@ static src_state *make_src(Float srate, snd_fd *sf, Float initial_srate)
   return(sr);
 }
 
+
 static src_state *free_src(src_state *sr)
 {
   mus_free(sr->gen);
   FREE(sr);
   return(NULL);
 }
+
 
 static int off_t_compare(const void *a, const void *b)
 {
@@ -836,6 +847,7 @@ static int off_t_compare(const void *a, const void *b)
   if (*m1 == *m2) return(0);
   return(1);
 }
+
 
 static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, Float ratio, mus_any *egen, 
 				    enved_progress_t from_enved, const char *origin, bool over_selection, int curchan, int chans,
@@ -1119,6 +1131,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   return(NULL);
 }
 
+
 void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num, 
 		    enved_progress_t from_enved, const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos)
 {
@@ -1218,6 +1231,7 @@ static Float *get_filter_coeffs(int order, env *e)
   return(a);
 }
 
+
 void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int order, bool dBing)
 {
   /* not cp->min_dB here -- this is sound panel related which refers to ss->min_dB */
@@ -1269,6 +1283,7 @@ void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int or
   FREE(im);
   FREE(coeffs);
 }
+
 
 static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int edpos, off_t overlap, const char *origin)
 {
@@ -1371,10 +1386,12 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
 #define TWO_30 1073741824
 #define MAX_SINGLE_FFT_SIZE 1048576
 
+
 static Float convolve_next_sample(void *ptr, int dir)
 {
   return(read_sample(((snd_fd *)ptr)));
 }
+
 
 static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t beg, off_t dur, 
 				const char *origin, enved_progress_t from_enved, Float *precalculated_coeffs)
@@ -1541,6 +1558,7 @@ typedef struct {
   mus_sample_t **data;
 } pfilter_direct_args_t;
   
+
 static pfilter_direct_args_t *make_pfilter_direct_arg(chan_info *cp, int order, env *e, snd_fd *sf, off_t beg, off_t dur, 
 						      const char *origin, bool truncate, enved_progress_t from_enved,
 						      bool over_selection, mus_any *gen, Float *precalculated_coeffs)
@@ -1568,6 +1586,7 @@ static pfilter_direct_args_t *make_pfilter_direct_arg(chan_info *cp, int order, 
   arg->data = NULL;
   return(arg);
 }
+
 
 static void *pfilter_direct_init(void *context)
 {
@@ -1599,6 +1618,7 @@ static void *pfilter_direct_init(void *context)
   else arg->temp_file = false;
   return(context);
 }
+
 
 static void *pfilter_direct_run(void *context)
 {
@@ -1787,6 +1807,7 @@ static void *pfilter_direct_run(void *context)
   return(NULL);
 }
 
+
 static void *pfilter_direct_finish(void *context)
 {
   pfilter_direct_args_t *arg = (pfilter_direct_args_t *)context;
@@ -1804,6 +1825,7 @@ static void *pfilter_direct_finish(void *context)
   return(NULL);
 }
 #endif
+
 
 static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t beg, off_t dur, 
 			   const char *origin, bool truncate, enved_progress_t from_enved,
@@ -2034,6 +2056,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
   return(NULL);
 }
 
+
 static char *filter_channel(chan_info *cp, int order, env *e, off_t beg, off_t dur, int edpos, const char *origin, bool truncate, Float *coeffs)
 {
   bool over_selection;
@@ -2057,6 +2080,7 @@ static char *filter_channel(chan_info *cp, int order, env *e, off_t beg, off_t d
   free_snd_fd(sf);
   return(errstr);
 }
+
 
 static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_progress_t from_enved, 
 				   const char *caller, const char *origin, bool over_selection, Float *ur_a, 
@@ -2252,6 +2276,7 @@ void apply_filter(chan_info *ncp, int order, env *e, enved_progress_t from_enved
     }
 }
 
+
 static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XEN edp, const char *caller, int arg_pos)
 {
   snd_info *sp;
@@ -2367,6 +2392,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
   return(NULL);
 }
 
+
 static void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int arg_pos)
 {
   sync_state *sc;
@@ -2425,6 +2451,7 @@ static void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int ar
     }
   free_sync_state(sc);
 }
+
 
 static char *edit_list_envelope(mus_any *egen, off_t beg, off_t env_dur, off_t called_dur, off_t chan_dur, Float base)
 {
@@ -3073,6 +3100,7 @@ void cursor_zeros(chan_info *cp, off_t count, bool over_selection)
   si = free_sync_info(si);
 }
 
+
 static void smooth_channel(chan_info *cp, off_t beg, off_t dur, int edpos)
 {
   mus_sample_t *data = NULL;
@@ -3106,6 +3134,7 @@ static void smooth_channel(chan_info *cp, off_t beg, off_t dur, int edpos)
   FREE(data);
 }
 
+
 void cos_smooth(chan_info *cp, off_t beg, off_t num, bool over_selection)
 {
   /* verbatim, so to speak from Dpysnd */
@@ -3123,6 +3152,7 @@ void cos_smooth(chan_info *cp, off_t beg, off_t num, bool over_selection)
     smooth_channel(si->cps[i], si->begs[i], num, si->cps[i]->edit_ctr);
   free_sync_state(sc);
 }
+
 
 static char *run_channel(chan_info *cp, struct ptree *pt, off_t beg, off_t dur, int edpos, const char *origin, const char *caller)
 {
@@ -3211,6 +3241,7 @@ typedef struct {
   snd_fd **fds;
   int len;
 } scale_and_src_data;
+
 
 static Float scale_and_src_input(void *data, int direction)
 {
@@ -3389,6 +3420,7 @@ char *scale_and_src(char **files, int len, int max_chans, Float amp, Float speed
 
 #define MUS_OUTA_1(Frame, Val, Fd) ((*(Fd->core)->write_sample))(Fd, Frame, 0, Val)
 /* avoids all the CLM error checking */
+
 
 static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, const char *fallback_caller) 
 { 
@@ -3682,6 +3714,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   return(xen_return_first(res, org));
 }
 
+
 static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off_t beg, off_t num, int pos, const char *origin)
 { 
   snd_fd *sf = NULL;
@@ -3774,6 +3807,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
   update_graph(cp); 
   return(proc);
 }
+
 
 static XEN g_ptree_channel(XEN proc_and_list, XEN s_beg, XEN s_dur, XEN snd, XEN chn, 
 			   XEN edpos, XEN env_too, XEN init_func, XEN origin)
@@ -3910,6 +3944,7 @@ typedef struct {
   bool reporting;
 } scan_context;
 
+
 static scan_context *make_scan_context(XEN p, off_t b, off_t n, snd_fd *f, snd_info *s, const char *orig, bool count)
 {
   scan_context *sc;
@@ -3925,11 +3960,13 @@ static scan_context *make_scan_context(XEN p, off_t b, off_t n, snd_fd *f, snd_i
   return(sc);
 }
 
+
 static void before_scan(void *ignore)
 {
   /* we could possibly catch call/cc into previous scan here, but that requires an smob for the context */
   /*   put init_sample_read here, update sc->beg in scan body, don't free context explicitly */
 }
+
 
 static XEN scan_body(void *context)
 {
@@ -3980,6 +4017,7 @@ static XEN scan_body(void *context)
   return(XEN_FALSE);
 }
 
+
 static void after_scan(void *context)
 {
   scan_context *sc = (scan_context *)context;
@@ -3988,6 +4026,7 @@ static void after_scan(void *context)
   FREE(sc);
 }
 #endif
+
 
 static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
 		     const char *caller, bool counting, XEN edpos, int arg_pos, XEN s_dur)
@@ -4136,6 +4175,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   return(XEN_FALSE);
 }
 
+
 static XEN g_scan_chan(XEN proc, XEN beg, XEN end, XEN snd, XEN chn, XEN edpos) 
 { 
   #if HAVE_SCHEME
@@ -4156,6 +4196,7 @@ if 'func' returns non-" PROC_FALSE ", the scan stops, and the value is returned 
   ASSERT_CHANNEL(S_scan_chan, snd, chn, 4); 
   return(g_sp_scan(proc, beg, end, snd, chn, S_scan_chan, false, edpos, 6, XEN_FALSE));
 }
+
 
 static XEN g_scan_channel(XEN proc, XEN beg, XEN dur, XEN snd, XEN chn, XEN edpos) 
 { 
@@ -4178,6 +4219,7 @@ if func returns non-" PROC_FALSE ", the scan stops, and the value is returned to
   return(g_sp_scan(proc, beg, XEN_FALSE, snd, chn, S_scan_channel, false, edpos, 6, (XEN_BOUND_P(dur)) ? dur : XEN_FALSE));
 }
 
+
 static XEN g_map_chan(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos) 
 {
   #if HAVE_SCHEME
@@ -4196,6 +4238,7 @@ apply func to samples in current channel; edname is the edit history name for th
   return(g_map_chan_1(proc, s_beg, s_end, org, snd, chn, edpos, XEN_FALSE, S_map_chan));
 }
 
+
 static XEN g_map_channel(XEN proc, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN org) 
 {
   #if HAVE_SCHEME
@@ -4213,6 +4256,7 @@ apply func to samples in current channel; edname is the edit history name for th
 
   return(g_map_chan_1(proc, s_beg, XEN_FALSE, org, snd, chn, edpos, (XEN_BOUND_P(s_dur)) ? s_dur : XEN_FALSE, S_map_channel));
 }
+
 
 static XEN g_find_channel(XEN expr, XEN sample, XEN snd_n, XEN chn_n, XEN edpos)
 {
@@ -4234,6 +4278,7 @@ the current sample, to each sample in snd's channel chn, starting at 'start-samp
   return(g_sp_scan(expr, sample, XEN_FALSE, snd_n, chn_n, S_find_channel, false, edpos, 5, XEN_FALSE));
 }
 
+
 static XEN g_count_matches(XEN expr, XEN sample, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #if HAVE_SCHEME
@@ -4253,6 +4298,7 @@ samples satisfy func (a function of one argument, the current sample, returning 
   return(g_sp_scan(expr, sample, XEN_FALSE, snd_n, chn_n, S_count_matches, true, edpos, 5, XEN_FALSE));
 }
 
+
 static XEN g_smooth_sound(XEN beg, XEN num, XEN snd_n, XEN chn_n)
 {
   #define H_smooth_sound "(" S_smooth_sound " :optional (start-samp 0) (samps len) snd chn): smooth \
@@ -4269,6 +4315,7 @@ data from start-samp for samps in snd's channel chn"
   cos_smooth(cp, start, samps, OVER_SOUND); 
   return(beg);
 }
+
 
 static XEN g_smooth_channel(XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos)
 {
@@ -4291,6 +4338,7 @@ smooth data from beg for dur in snd's channel chn"
   return(beg);
 }
 
+
 static XEN g_smooth_selection(void)
 {
   #define H_smooth_selection "(" S_smooth_selection "): smooth the data in the currently selected portion"
@@ -4303,6 +4351,7 @@ static XEN g_smooth_selection(void)
   return(XEN_TRUE);
 }
 
+
 static XEN g_reverse_sound(XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_reverse_sound "(" S_reverse_sound " :optional snd chn edpos): reverse snd's channel chn"
@@ -4313,6 +4362,7 @@ static XEN g_reverse_sound(XEN snd_n, XEN chn_n, XEN edpos)
   reverse_sound(cp, OVER_SOUND, edpos, 3);
   return(XEN_FALSE);
 }
+
 
 static XEN g_reverse_selection(void)
 {
@@ -4325,6 +4375,7 @@ static XEN g_reverse_selection(void)
   reverse_sound(cp, OVER_SELECTION, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
   return(XEN_FALSE);
 }
+
 
 static XEN g_reverse_channel(XEN s_beg, XEN s_dur, XEN snd_n, XEN chn_n, XEN edpos)
 {
@@ -4361,6 +4412,7 @@ static XEN g_reverse_channel(XEN s_beg, XEN s_dur, XEN snd_n, XEN chn_n, XEN edp
   return(s_beg);
 }
 
+
 static XEN g_insert_silence(XEN beg, XEN num, XEN snd, XEN chn)
 {
   #define H_insert_silence "(" S_insert_silence " beg num :optional snd chn): insert num zeros at beg in snd's chn"
@@ -4381,6 +4433,7 @@ static XEN g_insert_silence(XEN beg, XEN num, XEN snd, XEN chn)
   return(beg);
 }
 
+
 static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
 {
   #define H_pad_channel "(" S_pad_channel " beg dur :optional snd chn edpos): insert dur zeros at beg in snd's chn"
@@ -4400,6 +4453,7 @@ static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
     update_graph(cp);
   return(beg);
 }
+
 
 static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN dur, XEN edpos0, XEN edpos1)
 {
@@ -4489,6 +4543,7 @@ swap the indicated channels"
   return(XEN_FALSE);
 }
 
+
 static Float *load_Floats(XEN scalers, int *result_len, const char *caller)
 {
   int len = 0, i;
@@ -4534,6 +4589,7 @@ static Float *load_Floats(XEN scalers, int *result_len, const char *caller)
   return(scls);
 }
 
+
 static XEN g_scale_to(XEN scalers, XEN snd_n, XEN chn_n)
 {
   #define H_scale_to "(" S_scale_to " :optional (norms 1.0) snd chn): \
@@ -4555,6 +4611,7 @@ normalize snd to norms (following sync); norms can be a float or a vct/list of f
   return(XEN_FALSE);
 }
 
+
 static XEN g_scale_by(XEN scalers, XEN snd_n, XEN chn_n)
 {
   #define H_scale_by "(" S_scale_by " scalers :optional snd chn): \
@@ -4572,6 +4629,7 @@ scale snd by scalers (following sync); scalers can be a float or a vct/list of f
   FREE(scls);
   return(scalers);
 }
+
 
 static XEN g_scale_selection_to(XEN scalers)
 {
@@ -4591,6 +4649,7 @@ static XEN g_scale_selection_to(XEN scalers)
   return(snd_no_active_selection_error(S_scale_selection_to));
 }
 
+
 static XEN g_scale_selection_by(XEN scalers)
 {
   #define H_scale_selection_by "(" S_scale_selection_by " scalers): scale selected portion by scalers"
@@ -4605,6 +4664,7 @@ static XEN g_scale_selection_by(XEN scalers)
     }
   return(snd_no_active_selection_error(S_scale_selection_by));
 }
+
 
 static XEN g_clm_channel(XEN gen, XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, XEN edpos, XEN overlap, XEN origin)
 {
@@ -4644,6 +4704,7 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
   return(gen);
 }
 
+
 static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN ebase, chan_info *cp, XEN edpos, const char *caller, bool over_selection)
 {
   if (XEN_LIST_P(edata))
@@ -4677,6 +4738,7 @@ static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN ebase, chan_info *cp, XE
   return(XEN_FALSE);
 }
 
+
 static XEN g_env_selection(XEN edata, XEN base)
 {
   #define H_env_selection "(" S_env_selection " env :optional (env-base 1.0)): \
@@ -4689,6 +4751,7 @@ apply envelope to the selection using env-base to determine how breakpoints are 
 		 C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 
 		 S_env_selection, OVER_SELECTION));
 }
+
 
 static XEN g_env_sound(XEN edata, XEN samp_n, XEN samps, XEN base, XEN snd_n, XEN chn_n, XEN edpos)
 {
@@ -4709,6 +4772,7 @@ either to the end of the sound or for samps samples, with segments interpolating
   dur = dur_to_samples(samps, beg, cp, pos, XEN_ARG_3, S_env_sound);
   return(g_env_1(edata, beg, dur, base, cp, edpos, S_env_sound, OVER_SOUND));
 }
+
 
 static XEN g_env_channel(XEN gen, XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
 {
@@ -4738,6 +4802,7 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
   return(val);
 }
 
+
 static XEN g_env_channel_with_base(XEN gen, XEN base, XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_env_channel_with_base "(" S_env_channel_with_base " clm-env-gen-or-envelope :optional (base 1.0) (beg 0) (dur len) snd chn edpos): \
@@ -4765,6 +4830,7 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
   sp->sync = old_sync;
   return(val);
 }
+
 
 static XEN g_ramp_channel(XEN rmp0, XEN rmp1, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
 {
@@ -4829,6 +4895,7 @@ scale samples in the given sound/channel between beg and beg + num by a ramp goi
     }
   return(rmp0);
 }			  
+
 
 static XEN g_xramp_channel(XEN rmp0, XEN rmp1, XEN base, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
 {
@@ -4922,6 +4989,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
   return(rmp0);
 }			  
 
+
 static XEN g_fft(XEN reals, XEN imag, XEN sign)
 {
   #define H_fft "(" S_fft " reals imags :optional (sign 1)): fft the data returning the result in reals. \
@@ -4967,6 +5035,7 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
     }
   return(xen_return_first(reals, imag));
 }
+
 
 static XEN g_snd_spectrum(XEN data, XEN win, XEN len, XEN linear_or_dB, XEN beta, XEN in_place, XEN normalized)
 {
@@ -5088,6 +5157,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   return(xen_return_first(xen_make_vct(n, rdat), data, win)); /* xen_make_vct uses the data array directly (frees upon gc) */
 }
 
+
 static XEN g_convolve_with_1(XEN file, XEN new_amp, chan_info *cp, XEN edpos, const char *caller)
 {
   /* cp NULL -> selection (see above) */
@@ -5122,6 +5192,7 @@ static XEN g_convolve_with_1(XEN file, XEN new_amp, chan_info *cp, XEN edpos, co
   return(xen_return_first(file, new_amp));
 }
 
+
 static XEN g_convolve_with(XEN file, XEN new_amp, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_convolve_with "(" S_convolve_with " file :optional (amp 1.0) snd chn edpos): \
@@ -5134,6 +5205,7 @@ convolve file with snd's channel chn (or the currently sync'd channels); amp is 
   return(g_convolve_with_1(file, new_amp, cp, edpos, S_convolve_with));
 }
 
+
 static XEN g_convolve_selection_with(XEN file, XEN new_amp)
 {
   #define H_convolve_selection_with "(" S_convolve_selection_with " file :optional (amp 1.0)): \
@@ -5143,6 +5215,7 @@ convolve the selection with file; amp is the resultant peak amp"
     return(snd_no_active_selection_error(S_convolve_selection_with));
   return(g_convolve_with_1(file, new_amp, NULL, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_convolve_selection_with));
 }
+
 
 enum {SRC_ENV_NO_ERROR, SRC_ENV_HIT_ZERO, SRC_ENV_THROUGH_ZERO};
 
@@ -5257,6 +5330,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
   return(ratio_or_env);
 }
 
+
 static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, bool over_selection)
 {
   chan_info *cp;
@@ -5322,6 +5396,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd_n, XEN chn_n, XEN edpos,
   return(xen_return_first(ratio_or_env, ebase));
 }
 
+
 static XEN g_src_sound(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_src_sound "(" S_src_sound " ratio-or-env :optional (base 1.0) snd chn edpos): \
@@ -5329,6 +5404,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope. A ne
 
   return(g_src_1(ratio_or_env, base, snd_n, chn_n, edpos, S_src_sound, OVER_SOUND));
 }
+
 
 static XEN g_src_selection(XEN ratio_or_env, XEN base)
 {
@@ -5339,6 +5415,7 @@ sampling-rate convert the currently selected data by ratio (which can be an enve
     return(snd_no_active_selection_error(S_src_selection));
   return(g_src_1(ratio_or_env, base, XEN_FALSE, XEN_FALSE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_src_selection, OVER_SELECTION));
 }
+
 
 static XEN g_filter_channel(XEN e, XEN order, XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos, XEN truncate, XEN origin)
 {
@@ -5394,6 +5471,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
     }
   return(e);
 }
+
 
 static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, const char *origin, bool over_selection, bool truncate)
 {
@@ -5486,6 +5564,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
   return(xen_return_first(XEN_TRUE, e));
 }
 
+
 static XEN g_filter_sound(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, XEN origin)
 {
   #define H_filter_sound "(" S_filter_sound " filter :optional order snd chn edpos origin): \
@@ -5496,6 +5575,7 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
 		    S_filter_sound, (XEN_STRING_P(origin)) ? XEN_TO_C_STRING(origin) : NULL, 
 		    OVER_SOUND, false));
 }
+
 
 static XEN g_filter_selection(XEN e, XEN order, XEN truncate)
 {
@@ -5510,6 +5590,7 @@ cut off filter output at end of selection, else mix"
 		    S_filter_selection, NULL, 
 		    OVER_SELECTION, XEN_TO_C_BOOLEAN(truncate)));
 }
+
 
 static XEN g_sinc_width(void) {return(C_TO_XEN_INT(sinc_width(ss)));}
 static XEN g_set_sinc_width(XEN val) 

@@ -2,6 +2,7 @@
 
 
 static XEN save_hook;
+
 static bool dont_save(snd_info *sp, const char *newname)
 {
   XEN res = XEN_FALSE;
@@ -955,7 +956,7 @@ static Float next_mix(snd_fd *sf)
   if (sf->loc > sf->last) return(next_sound(sf)); /* next_sound here refers to whatever follows the mixed portion */
   return((sf->data[sf->loc++] * sf->fscaler) + read_mix_list_samples(sf));
 }
-/* if underlying data was scaled,and we added a mix, we couldn't share the existing scale, so
+/* if underlying data was scaled,and we added a mix, we couldn't share the existing scale,
  *   and mixes can be added after subsequent scaling, so we're constrained to use the mix-amps
  */
 
@@ -8884,6 +8885,11 @@ bool redo_edit_with_sync(chan_info *cp, int count)
  *   treat that ramp as an envelope on the mix if the ramp happened after the mix was established but as data if before.
  *   Too tricky (and ptrees make it worse).  (We'd also need ED_RAMP_ZERO to make clean fixups upon drag and so on).
  *   Three times and out so far...
+ *   ...
+ *   but, if the envelope is global, it is not ambiguous, (except that we have scaled portions?) --
+ *     still the ramp-but-no-mix sections need special handling (ramp_mix with 0 mixes?),
+ *     as do the ramp-as-scale-but-no-mix portions (scale_mix? -- confusing name)
+ *   so: use env-mixes where possible
  */
 
 static void make_mix_fragment(ed_list *new_ed, int i, mix_state *ms, off_t beg)

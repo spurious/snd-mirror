@@ -1908,13 +1908,13 @@ into a bunch of mono files:
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandruby">Snd with Ruby</a></h3></td></tr></table>
 
 <p>Ruby is an extension language described as an "object-oriented Perl".
-It provides a different syntax from that of Scheme; all the *.scm
-files have corresponding *.rb files (written by Mike Scholz), so there's
+It provides a different syntax from that of Scheme; most of the *.scm (Scheme)
+files have corresponding *.rb (Ruby) files (written by Mike Scholz), so there's
 no penalty for using Ruby rather than Scheme.  The only drawback is that
-all the documentation assumes Scheme.  The differences however, are not
+the documentation uses Scheme.  The differences between Scheme and Ruby, however, are not
 too severe.
-In Ruby, all
-the "-" are "_", "-&gt;" is "2", hooks and current_sound have "$" prepended
+In Ruby, the following changes are made in the function names (as presented in Scheme):
+"-" becomes "_", "-&gt;" becomes "2", hooks and current_sound have "$" prepended
 (since they are global variables from Ruby's point of view), and all the constants are capitalized
 (e.g. Autocorrelation).  The generalized set! functions are replaced
 by "set_" plus the base name (e.g. set_window_width), with arguments

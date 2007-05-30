@@ -280,9 +280,11 @@ static void start_reading(void)
       else 
 	{
 	  char *msg;
-	  msg = mus_format("mus samples peak: %d\n", err);
+	  msg = mus_format("data conversion problem; format is %s\n", mus_data_format_name(recorder_format));
 	  report_in_error_info(msg, NULL);
 	  FREE(msg);
+	  err = MUS_NO_ERROR;
+	  break;
 	}
     }
 
