@@ -17,6 +17,7 @@ static Widget region_ww = NULL;
 static Widget mix_button = NULL, save_as_button = NULL, insert_button = NULL;
 static regrow *region_row(int n);
 
+
 static void set_current_region(int rg)
 {
   bool reg_ok = false;
@@ -28,6 +29,7 @@ static void set_current_region(int rg)
   if (mix_button) XtSetSensitive(mix_button, reg_ok);
   if (insert_button) XtSetSensitive(insert_button, reg_ok);
 }
+
 
 void reflect_regions_in_region_browser(void)
 {
@@ -41,6 +43,7 @@ void reflect_regions_in_region_browser(void)
     }
 }
 
+
 void reflect_no_regions_in_region_browser(void)
 {
   if (rsp)
@@ -53,6 +56,7 @@ void reflect_no_regions_in_region_browser(void)
     }
 }
 
+
 static void region_update_graph(chan_info *cp)
 {
   if (current_region == -1) return;
@@ -61,6 +65,7 @@ static void region_update_graph(chan_info *cp)
   update_graph(cp);
   rsp->nchans = 1;
 }
+
 
 void reflect_region_graph_style(void)
 {
@@ -77,6 +82,7 @@ void reflect_region_graph_style(void)
     }
 }
 
+
 static void unhighlight_region(void)
 {
   if (current_region != -1)
@@ -88,6 +94,7 @@ static void unhighlight_region(void)
     }
 }
 
+
 static void highlight_region(void)
 {
   if (current_region != -1)
@@ -98,6 +105,7 @@ static void highlight_region(void)
       XtVaSetValues(oldr->nm, XmNbackground, ss->sgx->zoom_color, NULL);
     }
 }
+
 
 static void make_region_labels(file_info *hdr)
 {
@@ -114,6 +122,7 @@ static void make_region_labels(file_info *hdr)
   set_label(reg_maxtxt, str);
   FREE(str);
 }
+
 
 void update_region_browser(bool grf_too)
 {
@@ -157,20 +166,24 @@ void update_region_browser(bool grf_too)
     }
 }
 
+
 static void region_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XtUnmanageChild(region_dialog);
 }
+
 
 bool region_browser_is_active(void)
 {
   return((region_dialog) && (XtIsRealized(region_dialog)));
 }
 
+
 static void region_resize_callback(Widget w, XtPointer context, XtPointer info)
 {
   region_update_graph((chan_info *)context);
 }
+
 
 void delete_region_and_update_browser(int pos)
 {
@@ -191,16 +204,19 @@ void delete_region_and_update_browser(int pos)
     }
 }
 
+
 static void region_unlist_callback(Widget w, XtPointer context, XtPointer info) 
 {
   if (current_region != -1)
     delete_region_and_update_browser(current_region);
 }
 
+
 static void region_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   region_dialog_help();
 }
+
 
 static void region_insert_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -209,6 +225,7 @@ static void region_insert_callback(Widget w, XtPointer context, XtPointer info)
     paste_region(region_list_position_to_id(current_region), selected_channel());
 }
 
+
 static void region_mix_callback(Widget w, XtPointer context, XtPointer info) 
 {
   if ((current_region != -1) &&
@@ -216,11 +233,13 @@ static void region_mix_callback(Widget w, XtPointer context, XtPointer info)
     add_region(region_list_position_to_id(current_region), selected_channel());
 }
 
+
 static void region_save_callback(Widget w, XtPointer context, XtPointer info) 
 {
   if (current_region != -1)
     make_region_save_as_dialog(true);
 }
+
 
 static void region_up_arrow_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -237,6 +256,7 @@ static void region_up_arrow_callback(Widget w, XtPointer context, XtPointer info
     }
 }
 
+
 static void region_down_arrow_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp;
@@ -251,6 +271,7 @@ static void region_down_arrow_callback(Widget w, XtPointer context, XtPointer in
       region_update_graph(cp);
     }
 }
+
 
 static void region_focus_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -282,6 +303,7 @@ void reflect_play_region_stop(int n)
     }
 }
 
+
 static void region_play_callback(Widget w, XtPointer context, XtPointer info) 
 {
   regrow *r = (regrow *)context;
@@ -290,17 +312,20 @@ static void region_play_callback(Widget w, XtPointer context, XtPointer info)
   else stop_playing_region(region_list_position_to_id(r->pos), PLAY_BUTTON_UNSET);
 }
 
+
 static void region_print_callback(Widget w, XtPointer context, XtPointer info) 
 {
   if (current_region != -1)
     region_print(eps_file(ss), _("region"), rsp->chans[0]);
 }
 
+
 static void region_edit_callback(Widget w, XtPointer context, XtPointer info) 
 {
   if (current_region != -1) 
     region_edit(current_region);
 }
+
 
 static void reflect_file_in_region_browser(ss_watcher_reason_t reason, void *ignore)
 {
@@ -313,11 +338,13 @@ static void reflect_file_in_region_browser(ss_watcher_reason_t reason, void *ign
     }
 }
 
+
 char *regrow_get_label(void *ur)
 {
   regrow *r = (regrow *)ur;
   return(get_label(r->nm));
 }
+
 
 int regrow_get_pos(void *ur)
 {
@@ -325,15 +352,18 @@ int regrow_get_pos(void *ur)
   return(r->pos);
 }
 
+
 static void regrow_mouse_enter_label(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   mouse_enter_label(context, REGION_VIEWER);
 }
 
+
 static void regrow_mouse_leave_label(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   mouse_leave_label(context, REGION_VIEWER);
 }
+
 
 static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callback, XtCallbackProc name_callback)
 {
@@ -393,6 +423,7 @@ static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callb
   FREE(n3);
   return(r);
 }
+
 
 static void make_region_dialog(void)
 {
@@ -647,6 +678,7 @@ static void make_region_dialog(void)
   set_dialog_widget(REGION_DIALOG, region_dialog);
 }
 
+
 void view_region_callback(Widget w, XtPointer context, XtPointer info)
 {
   /* put up scrollable dialog describing/playing/editing the region list */
@@ -660,11 +692,13 @@ void view_region_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+
 bool region_dialog_is_active(void)
 {
   return((region_dialog != NULL) && 
 	 (XtIsManaged(region_dialog)));
 }
+
 
 void allocate_region_rows(int n)
 {
@@ -677,6 +711,7 @@ void allocate_region_rows(int n)
       region_rows_size = n;
     }
 }
+
 
 static regrow *region_row(int n)
 {
@@ -696,10 +731,12 @@ static regrow *region_row(int n)
   return(NULL);
 }
 
+
 int region_dialog_region(void)
 {
   return(region_list_position_to_id(current_region));
 }
+
 
 static XEN g_view_regions_dialog(void) 
 {
@@ -709,11 +746,13 @@ static XEN g_view_regions_dialog(void)
   return(XEN_WRAP_WIDGET(region_dialog));
 }
 
+
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_view_regions_dialog_w, g_view_regions_dialog)
 #else
 #define g_view_regions_dialog_w g_view_regions_dialog
 #endif
+
 
 void g_init_gxregion(void)
 {

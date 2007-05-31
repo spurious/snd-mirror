@@ -6459,8 +6459,10 @@ move-mixes moves each mix in 'mix-list' by 'samps' samples.  To move all sync'd 
 	     (let ((result (= (<a class=quiet href="extsnd.html#mixsync">mix-sync</a> id) 0)))
 	       (if (not result)
 		   (<em class=red>move-mixes</em> (<a class=quiet href="#syncdmixes">syncd-mixes</a> (<a class=quiet href="extsnd.html#mixsync">mix-sync</a> id)) samps-moved))
-	       result)))
+	       result))
+           #t) ; add this function to the end of the hook function list (this is a progn hook)
 </pre></td></tr></table>
+See also <a href="#snapmixtobeat">snap-syncd-mixes-to-beat</a>.
 </td></tr><tr><td colspan=2></td></tr>
 
 
@@ -6471,7 +6473,11 @@ move-mixes moves each mix in 'mix-list' by 'samps' samples.  To move all sync'd 
 pan-mix
 mixes 'file' into the current sound starting at 'beg' using the envelope 'env'
 to pan the mixed samples (0: all chan 1, 1: all chan 0).
-So, <code>(pan-mix \"oboe.snd\" 1000 '(0 0 1 1))</code> goes from all chan 0 to all chan 1.
+So, 
+<pre>
+    (pan-mix \"oboe.snd\" 1000 '(0 0 1 1))
+</pre>
+goes from all chan 0 to all chan 1.
 'auto-delete' determines
 whether the in-coming file should be treated as a temporary file and deleted when the mix
 is no longer accessible.
@@ -6500,6 +6506,14 @@ pan-mix-selection is similar to pan-mix above, but mixes the current selection, 
 </td></tr><tr><td></td><td>
 pan-mix-vct is similar to pan-mix above, but mixes a vct, rather than a file.
 The vct data represents one channel of sound.
+To sync all the panned mixes together:
+<pre>
+    (let ((new-sync (1+ (<a class=quiet href="extsnd.html#mixsyncmax">mix-sync-max</a>))))
+      (for-each
+        (lambda (id)
+         (set! (<a class=quiet href="extsnd.html#mixsync">mix-sync</a> id) new-sync))
+       (<em class=red>pan-mix-vct</em> (<a class=quiet href="extsnd.html#makevct">make-vct</a> 10 .5) 100 '(0 0 1 1))))
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -6569,11 +6583,11 @@ silence-mixes sets the amplitude of each mix in 'mix-list' to 0.0.
 
 <!-- snap-mix-to-beat -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="snapmixtobeat">snap-mix-to-beat</a> <code>(at-tag-position)</code>
+<a class=def name="snapmixtobeat">snap-mix-to-beat</a> <code>()</code>
 </td></tr><tr><td></td><td>
 snap-mix-to-beat forces a dragged mix to end up on a beat (see <a href="extsnd.html#xaxisstyle">x-axis-in-beats</a>).
-If 'at-tag-position' is #t, the tagged point, rather than the mix beginning falls on the beat.
-Reset <a href="extsnd.html#mixreleasehook">mix-release-hook</a> to cancel this action.
+To turn this off, <code>(remove-hook! mix-release-hook snap-mix-1)</code>.  To snap the dragged mix,
+and every other mix syncd to it, use <b>snap-syncd-mixes-to-beat</b>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

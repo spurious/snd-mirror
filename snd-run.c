@@ -6373,6 +6373,7 @@ BOOL_INT_OP(region_ok);
 bool r_mark_p(int n);
 BOOL_INT_OP(r_mark_p);
 INT_VOID_OP(mark_sync_max);
+INT_VOID_OP(mix_sync_max);
 INT_VOID_OP(selection_chans);
 static char *r_temp_dir(void) {return(temp_dir(ss));}
 static char *r_save_dir(void) {return(save_dir(ss));}
@@ -12384,6 +12385,7 @@ static void init_walkers(void)
   INIT_WALKER(S_mark_sync, make_walker(r_mark_sync_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
   INIT_WALKER(S_mark_sample, make_walker(r_mark_sample_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
   INIT_WALKER(S_mark_sync_max, make_walker(mark_sync_max_1, NULL, NULL, 0, 0, R_INT, false, 0));
+  INIT_WALKER(S_mix_sync_max, make_walker(mix_sync_max_1, NULL, NULL, 0, 0, R_INT, false, 0));
   INIT_WALKER(S_selection_chans, make_walker(selection_chans_1, NULL, NULL, 0, 0, R_INT, false, 0));
   INIT_WALKER(S_temp_dir, make_walker(r_temp_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
   INIT_WALKER(S_save_dir, make_walker(r_save_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));

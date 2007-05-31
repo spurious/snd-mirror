@@ -8877,7 +8877,6 @@ bool redo_edit_with_sync(chan_info *cp, int count)
 /* -------------------- virtual mixes -------------------- */
 
   /* TODO: tmp231 with drag vertically -> change pitch and recalc(?)
-   * TODO: mix-drag if syncd should at least move the other tag(s) -- where is this?
    */
 
 /* ramp on mix is techically possible, but ambiguous -- currently if we mix, then ramp elsewhere, then drag the mix

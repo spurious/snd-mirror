@@ -28,6 +28,7 @@ static char *mini_lock_xpm[] = {
 
 char **mini_lock_bits(void) {return(mini_lock_xpm);}
 
+
 static char *blank_xpm[] = {
 "18 18 5 1",
 "-      c None s None",
@@ -56,6 +57,7 @@ static char *blank_xpm[] = {
 
 char **blank_bits(void) {return(blank_xpm);}
 
+
 static char *speed_l_xpm[] = {
 "16 12 5 1",
 "-      c None s None",
@@ -78,6 +80,7 @@ static char *speed_l_xpm[] = {
 
 char **speed_l_bits(void) {return(speed_l_xpm);}
 
+
 static char * speed_r_xpm[] = {
 "16 12 5 1",
 "-      c None s None",
@@ -99,6 +102,7 @@ static char * speed_r_xpm[] = {
 "-------X----------"};
 
 char **speed_r_bits(void) {return(speed_r_xpm);}
+
 
 /* bomb for out-of-date in-core data fuse shortens with sparks flying off; */
 
@@ -284,6 +288,7 @@ char **mini_glass_bits(int n)
     }
 }
 
+
 /* from HView */
 static char *stop_sign_xpm[] = {
 "17 17 5 1",
@@ -379,6 +384,7 @@ static char *snd_icon_xpm[] = {
 char **snd_icon_bits(void) {return(snd_icon_xpm);}
 #endif
 
+
 #if USE_MOTIF
 static unsigned char snd_plain_bits[] = {
    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x32, 0x00, 0x00, 0xf0, 0x01, 0x00,
@@ -429,6 +435,7 @@ static char *speaker_xpm[] = {
 "--------XXX-"};
 
 char **speaker_bits(void) {return(speaker_xpm);}
+
 
 static char *blue_speaker_xpm[] = {
 "12 12 3 1",

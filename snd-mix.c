@@ -221,6 +221,7 @@ typedef struct {
 
 static void before_mix_file(void *ignore) {}
 
+
 static XEN mix_file_body(void *context)
 {
   mix_file_context *mx = (mix_file_context *)context;
@@ -228,6 +229,7 @@ static XEN mix_file_body(void *context)
   id = mix_file(mx->beg, mx->len, mx->chans, mx->cps, mx->fullname, mx->auto_delete, NULL, mx->with_tag, 0);
   return(C_TO_XEN_INT(id));
 }
+
 
 static void after_mix_file(void *context)
 {
@@ -243,6 +245,7 @@ static void after_mix_file(void *context)
   FREE(mx);
 }
 #endif
+
 
 int mix_complete_file(snd_info *sp, off_t beg, const char *fullname, bool with_tag, file_delete_t auto_delete, mix_sync_t all_chans)
 {
@@ -313,7 +316,12 @@ int mix_complete_file(snd_info *sp, off_t beg, const char *fullname, bool with_t
   return(id);
 }
 
-static char *b2s(bool val) {return((val) ? (char *)PROC_TRUE : (char *)PROC_FALSE);} /* cast needed by g++ > 3.4 */
+
+static char *b2s(bool val) 
+{
+  return((val) ? (char *)PROC_TRUE : (char *)PROC_FALSE);  /* cast needed by g++ > 3.4 */
+} 
+
 
 static int mix_infos_ctr = 0;
 
@@ -330,6 +338,7 @@ static char *tagged_mix_to_string(const char *mixinfile, off_t beg, int file_cha
 #endif
 }
 
+
 static char *untagged_mix_to_string(const char *mixinfile, off_t beg, int file_channel, bool delete_file)
 {
 #if HAVE_FORTH
@@ -342,6 +351,7 @@ static char *untagged_mix_to_string(const char *mixinfile, off_t beg, int file_c
   return(mus_format("%s(\"%s\", " OFF_TD ", %d, snd, chn, %s, %s)", TO_PROC_NAME(S_mix), mixinfile, beg, file_channel, b2s(false), b2s(delete_file)));
 #endif
 }
+
 
 int mix_file(off_t beg, off_t num, int chans, chan_info **cps, const char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int start_chan)
 {
@@ -406,6 +416,7 @@ static mix_state *free_mix_state(mix_state *ms)
   return(NULL);
 }
 
+
 static mix_state *make_mix_state(int id, int index, off_t beg, off_t len)
 {
   mix_state *ms;
@@ -419,6 +430,7 @@ static mix_state *make_mix_state(int id, int index, off_t beg, off_t len)
   ms->index = index;
   return(ms);
 }
+
 
 mix_state *copy_mix_state(mix_state *old_ms)
 {
@@ -455,6 +467,7 @@ void free_ed_mixes(void *ptr)
     }
 }
 
+
 mix_state *add_ed_mix(ed_list *ed, mix_state *ms)
 {
   mix_list *mxl;
@@ -489,6 +502,7 @@ mix_state *add_ed_mix(ed_list *ed, mix_state *ms)
   return(ms);
 }
 
+
 void preload_mixes(mix_state **mixes, int low_id, ed_list *ed)
 {
   mix_list *mxl;
@@ -501,6 +515,7 @@ void preload_mixes(mix_state **mixes, int low_id, ed_list *ed)
 	  mixes[mxl->list[i]->mix_id - low_id] = mxl->list[i];
     }
 }
+
 
 static mix_state *ed_mix_state(ed_list *ed, int mix_id)
 {
@@ -548,6 +563,7 @@ static mix_state *current_mix_state(mix_info *md)
   return(NULL);
 }
 
+
 #if 0
 /* if edpos args to various mix field (getters anyway), mix? mixes make-mix-sample-reader... */
 
@@ -588,11 +604,13 @@ bool mix_exists(int n)
 	 (mix_infos[n]));
 }
 
+
 bool mix_is_active(int n)
 {
   return((mix_exists(n)) &&
 	 (current_mix_state(mix_infos[n])));
 }
+
 
 static mix_info *md_from_id(int n) 
 {
@@ -600,6 +618,7 @@ static mix_info *md_from_id(int n)
     return(mix_infos[n]);
   return(NULL);
 }
+
 
 int any_mix_id(void)
 {
@@ -610,6 +629,7 @@ int any_mix_id(void)
   return(INVALID_MIX_ID);
 }
 
+
 int next_mix_id(int id)
 {
   int i;
@@ -618,6 +638,7 @@ int next_mix_id(int id)
       return(i);
   return(INVALID_MIX_ID);
 }
+
 
 int previous_mix_id(int id)
 {
@@ -630,7 +651,9 @@ int previous_mix_id(int id)
   return(INVALID_MIX_ID);
 }
 
+
 static int last_lowest_id = 0;
+
 int lowest_mix_id(void)
 {
   int i;
@@ -643,6 +666,7 @@ int lowest_mix_id(void)
   return(INVALID_MIX_ID);
 }
 
+
 int highest_mix_id(void)
 {
   int i;
@@ -651,6 +675,7 @@ int highest_mix_id(void)
       return(i);
   return(INVALID_MIX_ID);
 }
+
 
 static mix_info *free_mix_info(mix_info *md)
 {
@@ -677,6 +702,7 @@ static mix_info *free_mix_info(mix_info *md)
   return(NULL);
 }
 
+
 void free_channel_mixes(chan_info *cp)
 {
   /* called in snd-data.c during chan_info cleanup */
@@ -698,6 +724,7 @@ char *mix_name(int id)
   return(NULL);
 }
 
+
 int mix_name_to_id(const char *name)
 {
   int i, loc_so_far = -1;
@@ -716,6 +743,7 @@ int mix_name_to_id(const char *name)
       }
   return(loc_so_far);
 }
+
 
 static mix_info *make_mix_info(chan_info *cp)
 {
@@ -751,6 +779,7 @@ static mix_info *make_mix_info(chan_info *cp)
   return(md);
 }
 
+
 mix_state *prepare_mix_state_for_channel(chan_info *cp, int mix_loc, off_t beg, off_t len)
 {
   mix_info *md;
@@ -759,6 +788,7 @@ mix_state *prepare_mix_state_for_channel(chan_info *cp, int mix_loc, off_t beg, 
   md->in_samps = len;
   return(make_mix_state(md->id, mix_loc, beg, len)); 
 }
+
 
 static void map_over_channel_mixes(chan_info *cp, void (*func)(mix_info *umx))
 {
@@ -771,6 +801,7 @@ static void map_over_channel_mixes(chan_info *cp, void (*func)(mix_info *umx))
 	(*func)(md);
     }
 }
+
 
 bool channel_has_mixes(chan_info *cp)
 {
@@ -786,10 +817,12 @@ bool channel_has_mixes(chan_info *cp)
   return(false);
 }
 
+
 bool channel_has_active_mixes(chan_info *cp)
 {
   return(cp->edits[cp->edit_ctr]->mixes != NULL);
 }
+
 
 static void remove_temporary_mix_file(mix_info *md)
 {
@@ -797,6 +830,7 @@ static void remove_temporary_mix_file(mix_info *md)
       (mus_file_probe(md->in_filename)))
     snd_remove(md->in_filename, REMOVE_FROM_CACHE);
 }
+
 
 void delete_any_remaining_mix_temp_files_at_exit(chan_info *cp)
 {
@@ -814,6 +848,7 @@ static int compare_mix_positions(const void *umx1, const void *umx2)
   if (mx1 == mx2) return(0);
   return(-1);
 }
+
 
 void goto_mix(chan_info *cp, int count)
 {
@@ -877,6 +912,7 @@ void goto_mix(chan_info *cp, int count)
     }
 }
 
+
 off_t zoom_focus_mix_in_channel_to_position(chan_info *cp)
 {
   mix_list *mxl;
@@ -911,6 +947,7 @@ off_t mix_position_from_id(int id)
   return(0);
 }
 
+
 off_t mix_length_from_id(int id)
 {
   mix_state *ms;
@@ -919,6 +956,7 @@ off_t mix_length_from_id(int id)
     return(ms->len);
   return(0);
 }
+
 
 Float mix_amp_from_id(int id)
 {
@@ -929,6 +967,7 @@ Float mix_amp_from_id(int id)
   return(0.0);
 }
 
+
 Float mix_speed_from_id(int id)
 {
   mix_state *ms;
@@ -937,6 +976,7 @@ Float mix_speed_from_id(int id)
     return(ms->speed);
   return(0.0);
 }
+
 
 env *mix_amp_env_from_id(int id)
 {
@@ -959,6 +999,9 @@ static int mix_sync_from_id(int id)
   return(0);
 }
 
+
+static int current_mix_sync_max = 0;
+
 static int mix_set_sync_from_id(int id, int new_sync)
 {
   mix_info *md;
@@ -966,10 +1009,13 @@ static int mix_set_sync_from_id(int id, int new_sync)
   if (md)
     {
       md->sync = new_sync;
+      if (new_sync > current_mix_sync_max)
+	current_mix_sync_max = new_sync;
       return(md->sync);
     }
   return(0);
 }
+
 
 static char *mix_name_from_id(int id)
 {
@@ -979,6 +1025,7 @@ static char *mix_name_from_id(int id)
     return(md->name);
   return(0);
 }
+
 
 static char *mix_set_name_from_id(int id, const char *new_name)
 {
@@ -992,6 +1039,7 @@ static char *mix_set_name_from_id(int id, const char *new_name)
   return(0);
 }
 
+
 chan_info *mix_chan_info_from_id(int id)
 {
   mix_info *md;
@@ -1000,6 +1048,7 @@ chan_info *mix_chan_info_from_id(int id)
     return(md->cp);
   return(NULL);
 }
+
 
 static int mix_tag_y_from_id(int id)
 {
@@ -1010,6 +1059,7 @@ static int mix_tag_y_from_id(int id)
   return(0);
 }
 
+
 static color_t mix_color_from_id(int mix_id)
 {
   mix_info *md;
@@ -1018,6 +1068,7 @@ static color_t mix_color_from_id(int mix_id)
     return(md->color);
   return(ss->sgx->mix_color);
 }
+
 
 static color_t mix_set_color_from_id(int id, color_t new_color)
 {
@@ -1062,10 +1113,12 @@ bool mix_set_amp_edit(int id, Float amp)
   return(false);
 }
 
+
 static Float src_input(void *arg, int direction)
 {
   return(read_sample((snd_fd *)arg));
 }
+
 
 static int remake_mix_data(mix_state *ms, mix_info *md)
 {
@@ -1203,6 +1256,7 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
   return(cp->sound_ctr);
 }
 
+
 bool mix_set_amp_env_edit(int id, env *e)
 {
   mix_info *md;
@@ -1248,6 +1302,7 @@ bool mix_set_amp_env_edit(int id, env *e)
   return(false);
 }
 
+
 bool mix_set_position_edit(int id, off_t pos)
 {
   mix_info *md;
@@ -1283,6 +1338,7 @@ bool mix_set_position_edit(int id, off_t pos)
     }
   return(false);
 }
+
 
 bool mix_set_speed_edit(int id, Float spd)
 {
@@ -1328,6 +1384,13 @@ bool mix_set_speed_edit(int id, Float spd)
     }
   return(false);
 }
+
+/* mix-samples/set-mix-samples? 
+ *   combine mix_set_amp_env_edit with remake_mix_data accepting either vct or filename
+ *   one problem is how to handle md->peak_env: currently I think it is based on the original
+ *     and src stretches/mix-env uses env-on-env, so it's never remade.
+ */
+
 
 /* edit-list->function support for mixes:
  *      mix list search for current channel, make outer let holding all names as (-mix-### ###)
@@ -1428,6 +1491,7 @@ void channel_set_mix_tags_erased(chan_info *cp)
     }
 }
 
+
 static XEN draw_mix_hook;
 
 static void draw_mix_tag(mix_info *md, int x, int y)
@@ -1502,12 +1566,14 @@ static void draw_mix_tag(mix_info *md, int x, int y)
   if (lab) {FREE(lab); lab = NULL;}
 }
 
+
 static int local_grf_x(double val, axis_info *ap)
 {
   if (val >= ap->x1) return(ap->x_axis_x1);
   if (val <= ap->x0) return(ap->x_axis_x0);
   return((int)(ap->x_base + val * ap->x_scale));
 }
+
 
 static peak_env_info *make_mix_input_peak_env(mix_info *md)
 {
@@ -1561,6 +1627,7 @@ static peak_env_info *make_mix_input_peak_env(mix_info *md)
   return(NULL);
 }
 
+
 static bool mix_input_peak_env_usable(mix_info *md, Float samples_per_pixel) 
 {
   if (!(md->peak_env))
@@ -1568,6 +1635,7 @@ static bool mix_input_peak_env_usable(mix_info *md, Float samples_per_pixel)
   return((md->peak_env) && 
 	 (samples_per_pixel >= (Float)(md->peak_env->samps_per_bin)));
 }
+
 
 static peak_env_info *env_on_env(env *e, peak_env_info *peaks)
 {
@@ -1664,6 +1732,7 @@ static int prepare_mix_peak_env(mix_info *md, Float scl, int yoff, off_t newbeg,
 
   return(j);
 }
+
 
 static int prepare_mix_waveform(mix_info *md, mix_state *ms, axis_info *ap, Float scl, int yoff, double cur_srate, bool *two_sided)
 {
@@ -1788,6 +1857,7 @@ static int prepare_mix_waveform(mix_info *md, mix_state *ms, axis_info *ap, Floa
   return(pts);
 }
 
+
 int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided)
 {
   mix_info *md;
@@ -1825,6 +1895,7 @@ int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided)
   return(pts);
 }
 
+
 static void erase_mix_tag_and_waveform(mix_state *ms, chan_info *cp, axis_info *ap, int x, int y)
 {
   int wave_width, wave_height, old_x;
@@ -1835,6 +1906,7 @@ static void erase_mix_tag_and_waveform(mix_state *ms, chan_info *cp, axis_info *
     wave_width = ap->x_axis_x1 - old_x;
   fill_rectangle(erase_context(cp), old_x, (y > wave_height) ? (y - wave_height) : 0, wave_width + 2, wave_height + 2);
 }
+
 
 static void draw_mix_tag_and_waveform(mix_info *md, mix_state *ms, int x)
 {
@@ -1872,6 +1944,7 @@ static void draw_mix_tag_and_waveform(mix_info *md, mix_state *ms, int x)
     }
 }
 
+
 static void display_one_mix_with_bounds(mix_state *ms, chan_info *cp, axis_info *ap, off_t beg, off_t end)
 {
   if ((ms) && 
@@ -1887,10 +1960,12 @@ static void display_one_mix_with_bounds(mix_state *ms, chan_info *cp, axis_info 
     }
 }
 
+
 static void display_one_mix(mix_state *ms, chan_info *cp)
 {
   display_one_mix_with_bounds(ms, cp, cp->axis, cp->axis->losamp, cp->axis->hisamp);
 }
+
 
 void display_channel_mixes_with_bounds(chan_info *cp, off_t beg, off_t end)
 {
@@ -1910,6 +1985,7 @@ void display_channel_mixes_with_bounds(chan_info *cp, off_t beg, off_t end)
     }
 }
 
+
 void display_channel_mixes(chan_info *cp)
 {
   display_channel_mixes_with_bounds(cp, cp->axis->losamp, cp->axis->hisamp);
@@ -1927,6 +2003,7 @@ static void stop_watch_mix_proc(void)
       watch_mix_proc = 0;
     }
 }
+
 
 static float watch_mix_x_incr = 1.0;
 
@@ -2033,6 +2110,7 @@ void move_mix_tag(int mix_id, int x)
 	     S_mix_drag_hook);
 }
 
+
 void finish_moving_mix_tag(int mix_id, int x)
 {
   /* from mouse release after tag drag in snd-chn.c only */
@@ -2056,7 +2134,7 @@ void finish_moving_mix_tag(int mix_id, int x)
   if (pos < 0) pos = 0;
   cp->hookable = hookable_before_drag;
   
-  if (cp->edit_ctr > edpos_before_drag) /* possibly dragged it back to start point, so not edit took place */
+  if (cp->edit_ctr > edpos_before_drag) /* possibly dragged it back to start point, so no edit took place */
     cp->edit_ctr--;
 
   if (XEN_HOOKED(mix_release_hook))
@@ -2116,6 +2194,7 @@ static XEN snd_no_such_mix_error(const char *caller, XEN n)
   return(XEN_FALSE);
 }
 
+
 void after_mix_edit(int id)
 {
   mix_info *md;
@@ -2141,6 +2220,7 @@ static XEN g_mix_length(XEN n)
   return(snd_no_such_mix_error(S_mix_length, n));
 }
 
+
 static XEN g_mix_position(XEN n) 
 {
   int id;
@@ -2151,6 +2231,7 @@ static XEN g_mix_position(XEN n)
     return(C_TO_XEN_OFF_T(mix_position_from_id(id)));
   return(snd_no_such_mix_error(S_mix_position, n));
 }
+
 
 static XEN g_set_mix_position(XEN n, XEN pos) 
 {
@@ -2181,6 +2262,7 @@ static XEN g_mix_amp(XEN n)
   return(snd_no_such_mix_error(S_mix_amp, n));
 }
 
+
 static XEN g_set_mix_amp(XEN n, XEN uval) 
 {
   int id;
@@ -2207,6 +2289,7 @@ static XEN g_mix_amp_env(XEN n)
     return(env_to_xen(mix_amp_env_from_id(id)));
   return(snd_no_such_mix_error(S_mix_amp_env, n));
 }
+
 
 static XEN g_set_mix_amp_env(XEN n, XEN val) 
 {
@@ -2242,6 +2325,7 @@ static XEN g_mix_speed(XEN n)
   return(snd_no_such_mix_error(S_mix_speed, n));
 }
 
+
 static XEN g_set_mix_speed(XEN n, XEN uval) 
 {
   int id;
@@ -2272,6 +2356,7 @@ static XEN g_mix_name(XEN n)
   return(snd_no_such_mix_error(S_mix_name, n));
 }
 
+
 static XEN g_set_mix_name(XEN n, XEN val) 
 {
   int id;
@@ -2296,6 +2381,7 @@ static XEN g_mix_sync(XEN n)
   return(snd_no_such_mix_error(S_mix_sync, n));
 }
 
+
 static XEN g_set_mix_sync(XEN n, XEN val) 
 {
   int id;
@@ -2306,6 +2392,13 @@ static XEN g_set_mix_sync(XEN n, XEN val)
     mix_set_sync_from_id(id, XEN_TO_C_INT(val));
   else return(snd_no_such_mix_error(S_setB S_mix_sync, n));
   return(val);
+}
+
+
+static XEN g_mix_sync_max(void) 
+{
+  #define H_mix_sync_max "(" S_mix_sync_max "): max mix sync value seen so far"
+  return(C_TO_XEN_INT(current_mix_sync_max));
 }
 
 
@@ -2368,6 +2461,7 @@ The accessor mix-property is provided in mix." XEN_FILE_EXTENSION "."
   return(XEN_VECTOR_REF(md->properties, 0));
 }
 
+
 static XEN g_set_mix_properties(XEN n, XEN val)
 {
   mix_info *md;
@@ -2414,6 +2508,7 @@ void color_mixes(color_t color)
   for_each_normal_chan(update_graph);
 }
 
+
 static XEN g_mix_color(XEN mix_id) 
 {
   #define H_mix_color "(" S_mix_color " :optional mix-id): color of all mix tags (if mix-id is omitted), or of mix-id's tag"
@@ -2421,6 +2516,7 @@ static XEN g_mix_color(XEN mix_id)
     return(XEN_WRAP_PIXEL(mix_color_from_id(XEN_TO_C_INT(mix_id))));
   return(XEN_WRAP_PIXEL(ss->sgx->mix_color));
 }
+
 
 static XEN g_set_mix_color(XEN color, XEN mix_id)
 {
@@ -2445,11 +2541,13 @@ static void update_mix_waveforms(chan_info *cp)
     update_graph(cp);
 }
 
+
 static XEN g_mix_waveform_height(void) 
 {
   #define H_mix_waveform_height "(" S_mix_waveform_height "): max height (pixels) of mix waveforms (20)"
   return(C_TO_XEN_INT(mix_waveform_height(ss)));
 }
+
 
 static XEN g_set_mix_waveform_height(XEN val) 
 {
@@ -2468,6 +2566,7 @@ static XEN g_with_mix_tags(void)
   return(C_TO_XEN_BOOLEAN(with_mix_tags(ss)));
 }
 
+
 static XEN g_set_with_mix_tags(XEN val) 
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_with_mix_tags, "a boolean");
@@ -2481,6 +2580,7 @@ static XEN g_mix_tag_width(void)
   #define H_mix_tag_width "(" S_mix_tag_width "): width (pixels) of mix tags (6)"
   return(C_TO_XEN_INT(mix_tag_width(ss)));
 }
+
 
 static XEN g_set_mix_tag_width(XEN val) 
 {
@@ -2498,6 +2598,7 @@ static XEN g_mix_tag_height(void)
   #define H_mix_tag_height "(" S_mix_tag_height "): height (pixels) of mix tags (14)"
   return(C_TO_XEN_INT(mix_tag_height(ss)));
 }
+
 
 static XEN g_set_mix_tag_height(XEN val) 
 {
@@ -2812,6 +2913,7 @@ bool mix_sample_reader_p(XEN obj)
   return(XEN_OBJECT_TYPE_P(obj, mf_tag));
 }
 
+
 #define TO_MIX_SAMPLE_READER(obj) ((mix_fd *)XEN_OBJECT_REF(obj))
 #define MIX_SAMPLE_READER_P(Obj) XEN_OBJECT_TYPE_P(Obj, mf_tag)
 
@@ -2822,11 +2924,13 @@ void *xen_to_mix_sample_reader(XEN obj)
   return(NULL);
 }
 
+
 static XEN g_mix_sample_reader_p(XEN obj) 
 {
   #define H_mix_sample_reader_p "(" S_mix_sample_reader_p " obj): " PROC_TRUE " if obj is a mix-sample-reader"
   return(C_TO_XEN_BOOLEAN(mix_sample_reader_p(obj)));
 }
+
 
 static char *mix_sample_reader_to_string(mix_fd *fd) 
 {
@@ -2855,6 +2959,7 @@ static char *mix_sample_reader_to_string(mix_fd *fd)
 }
 
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(mix_fd, print_mf, mix_sample_reader_to_string)
+
 
 static void mf_free(mix_fd *fd)
 {
@@ -2921,6 +3026,7 @@ XEN g_copy_mix_sample_reader(XEN obj)
 				  C_TO_XEN_OFF_T(current_location(mf->sf))));
 }
 
+
 XEN g_mix_sample_reader_home(XEN obj)
 {
   mix_fd *mf;
@@ -2928,11 +3034,13 @@ XEN g_mix_sample_reader_home(XEN obj)
   return(C_TO_XEN_INT(mf->md->id));
 }
 
+
 bool mix_sample_reader_at_end_p(void *ptr)
 {
   mix_fd *mf = (mix_fd *)ptr;
   return(mf->sf->at_eof);
 }
+
 
 XEN g_mix_sample_reader_at_end_p(XEN obj)
 {
@@ -2941,6 +3049,7 @@ XEN g_mix_sample_reader_at_end_p(XEN obj)
   return(C_TO_XEN_BOOLEAN(mix_sample_reader_at_end_p(mf)));
 }
 
+
 XEN g_mix_sample_reader_position(XEN obj)
 {
   mix_fd *mf;
@@ -2948,6 +3057,7 @@ XEN g_mix_sample_reader_position(XEN obj)
   if (mix_sample_reader_at_end_p(mf)) return(XEN_ZERO);
   return(C_TO_XEN_OFF_T(current_location(mf->sf)));
 }
+
 
 XEN g_free_mix_sample_reader(XEN obj)
 {
@@ -2966,11 +3076,19 @@ XEN g_free_mix_sample_reader(XEN obj)
 
 
 /* these are for snd-run */
+
+int mix_sync_max(void)
+{
+  return(current_mix_sync_max);
+}
+
+
 Float run_read_mix_sample(void *ptr) 
 {
   mix_fd *mf = (mix_fd *)ptr;
   return(read_sample(mf->sf));
 }
+
 
 void *run_make_mix_sample_reader(int id, off_t beg) 
 {
@@ -2992,10 +3110,12 @@ void *run_make_mix_sample_reader(int id, off_t beg)
   return(NULL);
 }
 
+
 char *run_mix_sample_reader_to_string(void *ptr) 
 {
   return(mix_sample_reader_to_string((mix_fd *)ptr));
 }
+
 
 void run_free_mix_sample_reader(void *ptr) 
 {
@@ -3012,11 +3132,13 @@ static XEN g_view_mixes_dialog(void)
   return(XEN_WRAP_WIDGET(w));
 }
 
+
 static XEN g_mix_dialog_mix(void)
 {
   #define H_mix_dialog_mix "(" S_mix_dialog_mix "): current mix id displayed in mix dialog."
   return(C_TO_XEN_INT(mix_dialog_mix()));
 }
+
 
 static XEN g_set_mix_dialog_mix(XEN val)
 {
@@ -3024,6 +3146,7 @@ static XEN g_set_mix_dialog_mix(XEN val)
   mix_dialog_set_mix(XEN_TO_C_INT(val));
   return(val);
 }
+
 
 static bool play_mix(mix_info *md, off_t beg)
 {
@@ -3040,6 +3163,7 @@ static bool play_mix(mix_info *md, off_t beg)
   return(false);
 }
 
+
 static XEN g_play_mix(XEN num, XEN beg)
 {
   #define H_play_mix "(" S_play_mix " id :optional (beg 0)): play mix.  'beg' is where to start playing."
@@ -3054,6 +3178,7 @@ static XEN g_play_mix(XEN num, XEN beg)
   play_mix(md, samp); 
   return(num);
 }
+
 
 bool play_mix_from_id(int mix_id) 
 {
@@ -3082,6 +3207,7 @@ XEN_NARGIFY_1(g_mix_tag_y_w, g_mix_tag_y)
 XEN_NARGIFY_2(g_set_mix_tag_y_w, g_set_mix_tag_y)
 XEN_NARGIFY_1(g_mix_sync_w, g_mix_sync)
 XEN_NARGIFY_2(g_set_mix_sync_w, g_set_mix_sync)
+XEN_NARGIFY_0(g_mix_sync_max_w, g_mix_sync_max)
 XEN_NARGIFY_1(g_mix_length_w, g_mix_length)
 XEN_NARGIFY_1(g_mix_home_w, g_mix_home)
 XEN_NARGIFY_1(g_mix_properties_w, g_mix_properties)
@@ -3129,6 +3255,7 @@ XEN_NARGIFY_1(g_set_mix_dialog_mix_w, g_set_mix_dialog_mix)
 #define g_set_mix_tag_y_w g_set_mix_tag_y
 #define g_mix_sync_w g_mix_sync
 #define g_set_mix_sync_w g_set_mix_sync
+#define g_mix_sync_max_w g_mix_sync_max
 #define g_mix_length_w g_mix_length
 #define g_mix_home_w g_mix_home
 #define g_mix_properties_w g_mix_properties
@@ -3202,6 +3329,7 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE(S_mix_p,                  g_mix_p_w,                  1, 0, 0, H_mix_p);
   XEN_DEFINE_PROCEDURE(S_mix_length,             g_mix_length_w,             1, 0, 0, H_mix_length);
   XEN_DEFINE_PROCEDURE(S_view_mixes_dialog,      g_view_mixes_dialog_w,      0, 0, 0, H_view_mixes_dialog);
+  XEN_DEFINE_PROCEDURE(S_mix_sync_max,           g_mix_sync_max_w,           0, 0, 0, H_mix_sync_max);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_position,   g_mix_position_w,   H_mix_position,   S_setB S_mix_position,   g_set_mix_position_w,   1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_speed,      g_mix_speed_w,      H_mix_speed,      S_setB S_mix_speed,      g_set_mix_speed_w,      1, 0, 2, 0);

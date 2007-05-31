@@ -16,6 +16,7 @@ static GtkWidget *srate_text, *length_text, *chans_text, *maxamp_text;
 static GtkWidget *save_as_button = NULL, *insert_button = NULL, *mix_button = NULL;
 static regrow *region_row(int n);
 
+
 static void set_current_region(int rg)
 {
   bool reg_ok = false;
@@ -27,6 +28,7 @@ static void set_current_region(int rg)
   if (mix_button) gtk_widget_set_sensitive(mix_button, reg_ok);
   if (insert_button) gtk_widget_set_sensitive(insert_button, reg_ok);
 }
+
 
 void reflect_regions_in_region_browser(void)
 {
@@ -40,6 +42,7 @@ void reflect_regions_in_region_browser(void)
     }
 }
 
+
 void reflect_no_regions_in_region_browser(void)
 {
   if (rsp)
@@ -52,6 +55,7 @@ void reflect_no_regions_in_region_browser(void)
     }
 }
 
+
 static void region_update_graph(chan_info *cp)
 {
   if (current_region == -1) return;
@@ -60,6 +64,7 @@ static void region_update_graph(chan_info *cp)
   update_graph(cp);
   rsp->nchans = 1;
 }
+
 
 void reflect_region_graph_style(void)
 {
@@ -76,6 +81,7 @@ void reflect_region_graph_style(void)
     }
 }
 
+
 static void unhighlight_region(void)
 {
   if (current_region != -1)
@@ -89,6 +95,7 @@ static void unhighlight_region(void)
     }
 }
 
+
 static void highlight_region(void)
 {
   if (current_region != -1)
@@ -101,6 +108,7 @@ static void highlight_region(void)
       widget_modify_base(oldr->rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
     }
 }
+
 
 static void make_region_labels(file_info *hdr)
 {
@@ -117,6 +125,7 @@ static void make_region_labels(file_info *hdr)
   set_label(maxamp_text, str);
   FREE(str);
 }
+
 
 void update_region_browser(bool grf_too)
 {
@@ -159,16 +168,19 @@ void update_region_browser(bool grf_too)
     }
 }
 
+
 static gint region_browser_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(region_dialog);
   return(true);
 }
 
+
 static void region_ok_callback(GtkWidget *w, gpointer context)
 {
   gtk_widget_hide(region_dialog);
 }
+
 
 bool region_browser_is_active(void)
 {
@@ -176,17 +188,20 @@ bool region_browser_is_active(void)
 	 (GTK_WIDGET_VISIBLE(region_dialog)));
 }
 
+
 static gboolean region_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
   region_update_graph((chan_info *)data);
   return(false);
 }
 
+
 static gboolean region_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   region_update_graph((chan_info *)data);
   return(false);
 }
+
 
 void delete_region_and_update_browser(int pos)
 {
@@ -207,11 +222,13 @@ void delete_region_and_update_browser(int pos)
     }
 }
 
+
 static void region_unlist_callback(GtkWidget *w, gpointer context)
 {
   if (current_region != -1)
     delete_region_and_update_browser(current_region);
 }
+
 
 static void region_insert_callback(GtkWidget *w, gpointer context)
 {
@@ -220,6 +237,7 @@ static void region_insert_callback(GtkWidget *w, gpointer context)
     paste_region(region_list_position_to_id(current_region), selected_channel());
 }
 
+
 static void region_mix_callback(GtkWidget *w, gpointer context)
 {
   if ((current_region != -1) &&
@@ -227,16 +245,19 @@ static void region_mix_callback(GtkWidget *w, gpointer context)
     add_region(region_list_position_to_id(current_region), selected_channel());
 }
 
+
 static void region_save_callback(GtkWidget *w, gpointer context)
 {
   if (current_region != -1)
     make_region_save_as_dialog(true);
 }
 
+
 static void region_help_callback(GtkWidget *w, gpointer context)
 {
   region_dialog_help();
 }
+
 
 static gboolean region_up_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -254,6 +275,7 @@ static gboolean region_up_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpoin
   return(false);
 }
 
+
 static gboolean region_down_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   chan_info *cp;
@@ -269,6 +291,7 @@ static gboolean region_down_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpo
     }
   return(false);
 }
+
 
 static void region_focus_callback(GtkWidget *w, gpointer context) /* button clicked callback */
 {
@@ -288,6 +311,7 @@ static void region_focus_callback(GtkWidget *w, gpointer context) /* button clic
   region_update_graph(cp);
 }
 
+
 void reflect_play_region_stop(int n)
 {
   if (region_rows)
@@ -298,6 +322,7 @@ void reflect_play_region_stop(int n)
     }
 }
 
+
 static void region_play_callback(GtkWidget *w, gpointer context)
 {
   regrow *r = (regrow *)context;
@@ -306,11 +331,13 @@ static void region_play_callback(GtkWidget *w, gpointer context)
   else stop_playing_region(region_list_position_to_id(r->pos), PLAY_BUTTON_UNSET);
 }
 
+
 static void region_print_callback(GtkWidget *w, gpointer context)
 {
   if (current_region != -1)
     region_print(eps_file(ss), "region", rsp->chans[0]);
 }
+
 
 static void region_edit_callback(GtkWidget *w, gpointer context)
 {
@@ -318,11 +345,13 @@ static void region_edit_callback(GtkWidget *w, gpointer context)
     region_edit(current_region);
 }
 
+
 static gboolean region_labels_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
   g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
   return(false);
 }
+
 
 static void reflect_file_in_region_browser(ss_watcher_reason_t reason, void *ignore)
 {
@@ -335,11 +364,13 @@ static void reflect_file_in_region_browser(ss_watcher_reason_t reason, void *ign
     }
 }
 
+
 char *regrow_get_label(void *ur)
 {
   regrow *r = (regrow *)ur;
   return((char *)gtk_label_get_text(GTK_LABEL(GTK_BIN(r->nm)->child)));
 }
+
 
 int regrow_get_pos(void *ur)
 {
@@ -347,17 +378,20 @@ int regrow_get_pos(void *ur)
   return(r->pos);
 }
 
+
 static gboolean regrow_mouse_enter_label(GtkWidget *w, GdkEventCrossing *ev, gpointer gp)
 {
   mouse_enter_label((void *)gp, REGION_VIEWER);
   return(false);
 }
 
+
 static gboolean regrow_mouse_leave_label(GtkWidget *w, GdkEventCrossing *ev, gpointer gp)
 {
   mouse_leave_label((void *)gp, REGION_VIEWER);
   return(false);
 }
+
 
 static regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignalFunc name_callback)
 {
@@ -389,6 +423,7 @@ static regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignal
 
   return(r);
 }
+
 
 static GtkWidget *print_button, *edit_button, *unlist_button;
 static GtkWidget *dismiss_button, *help_button;
@@ -585,6 +620,7 @@ static void make_region_dialog(void)
   set_dialog_widget(REGION_DIALOG, region_dialog);
 }
 
+
 void view_region_callback(GtkWidget *w, gpointer context)
 {
   /* put up scrollable dialog describing/playing/editing the region list */
@@ -598,11 +634,13 @@ void view_region_callback(GtkWidget *w, gpointer context)
     }
 }
 
+
 bool region_dialog_is_active(void)
 {
   return((region_dialog != NULL) && 
 	 (GTK_WIDGET_VISIBLE(region_dialog)));
 }
+
 
 void allocate_region_rows(int n)
 {
@@ -615,6 +653,7 @@ void allocate_region_rows(int n)
       region_rows_size = n;
     }
 }
+
 
 static regrow *region_row(int n)
 {
@@ -632,10 +671,12 @@ static regrow *region_row(int n)
   return(NULL);
 }
 
+
 int region_dialog_region(void)
 {
   return(region_list_position_to_id(current_region));
 }
+
 
 static XEN g_view_regions_dialog(void) 
 {
@@ -645,11 +686,13 @@ static XEN g_view_regions_dialog(void)
   return(XEN_WRAP_WIDGET(region_dialog));
 }
 
+
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_view_regions_dialog_w, g_view_regions_dialog)
 #else
 #define g_view_regions_dialog_w g_view_regions_dialog
 #endif
+
 
 void g_init_gxregion(void)
 {

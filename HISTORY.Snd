@@ -1,5 +1,6 @@
 Snd change log
 
+ 1-June:     mix-sync-max.
  28-May:     mus-sound-mark-info.
  21-May:     background-gradient (gtk+cairo only).
  9-May:      peak-env-hook, draw-mix-hook.

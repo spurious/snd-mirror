@@ -344,6 +344,7 @@
 #define S_mix_selection                 "mix-selection"
 #define S_mix_speed                     "mix-speed"
 #define S_mix_sync                      "mix-sync"
+#define S_mix_sync_max                  "mix-sync-max"
 #define S_mix_tag_height                "mix-tag-height"
 #define S_mix_tag_width                 "mix-tag-width"
 #define S_mix_tag_y                     "mix-tag-y"

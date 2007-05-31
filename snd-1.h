@@ -1569,6 +1569,7 @@ Float mix_amp_from_id(int id);
 Float mix_speed_from_id(int id);
 env *mix_amp_env_from_id(int id);
 chan_info *mix_chan_info_from_id(int id);
+int mix_sync_max(void);
 
 mix_state *prepare_mix_state_for_channel(chan_info *cp, int mix_loc, off_t beg, off_t len);
 mix_state *add_ed_mix(ed_list *ed, mix_state *ms);

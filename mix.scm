@@ -36,9 +36,11 @@
 	  (#t lst)))
   (for-each func (reverse (flatten tree))))
 
+
 (define (mix-sound file start)
   "(mix-sound file start) mixes file (all chans) at start in the currently selected sound."
   (mix file start #t))
+
 
 (define (silence-all-mixes)
   "(silence-all-mixes) sets all mix amps to 0"
@@ -99,6 +101,7 @@
 	    (mus-sound-close-output fd (* 4 len))))
       (throw 'no-such-mix (list "save-mix" id))))
 
+
 (define (mix-maxamp id)
   "(mix-maxamp id) returns the max amp in the given mix"
   (if (mix? id)
@@ -116,23 +119,52 @@
       (throw 'no-such-mix (list "mix-maxamp" id))))
 	  
 
-(define* (snap-mix-to-beat)
-  "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute).  reset mix-release-hook to cancel"
-  (add-hook! mix-release-hook
-	     (lambda (id samps-moved)
-	       (let* ((samp (+ samps-moved (mix-position id)))
-		      (snd (car (mix-home id)))
-		      (chn (cadr (mix-home id)))
-		      (bps (/ (beats-per-minute snd chn) 60.0))
-		      (sr (srate snd))
-		      (beat (floor (/ (* samp bps) sr)))
-		      (lower (inexact->exact (floor (/ (* beat sr) bps))))
-		      (higher (inexact->exact (floor (/ (* (1+ beat) sr) bps)))))
-		 (set! (mix-position id)
-		       (if (< (- samp lower) (- higher samp))
+;;; -------- snap dragged mix(es) to the nearest beat
+
+(define (snap-mix-1 id samps-moved)
+  (let* ((samp (+ samps-moved (mix-position id)))
+	 (snd (car (mix-home id)))
+	 (chn (cadr (mix-home id)))
+	 (bps (/ (beats-per-minute snd chn) 60.0))
+	 (sr (srate snd))
+	 (beat (floor (/ (* samp bps) sr)))
+	 (lower (inexact->exact (floor (/ (* beat sr) bps))))
+	 (higher (inexact->exact (floor (/ (* (1+ beat) sr) bps)))))
+    (set! (mix-position id)
+	  (if (< (- samp lower) (- higher samp))
+	      (max 0 lower)
+	      higher))
+    #t))
+
+(define (snap-mix-to-beat)
+  "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute).  (remove-hook! mix-release-hook snap-mix-1) to cancel."
+  (add-hook! mix-release-hook snap-mix-1 #t))
+
+
+(define (snap-syncd-mixes-1 id samps-moved)
+  (let* ((samp (+ samps-moved (mix-position id)))
+	 (snd (car (mix-home id)))
+	 (chn (cadr (mix-home id)))
+	 (bps (/ (beats-per-minute snd chn) 60.0))
+	 (sr (srate snd))
+	 (beat (floor (/ (* samp bps) sr)))
+	 (lower (inexact->exact (floor (/ (* beat sr) bps))))
+	 (higher (inexact->exact (floor (/ (* (1+ beat) sr) bps))))
+	 (new-position (if (< (- samp lower) (- higher samp))
 			   (max 0 lower)
 			   higher))
-		 #t))))
+	 (true-samps-moved (- new-position (mix-position id))))
+    (if (= (mix-sync id) 0)
+	(set! (mix-position id) new-position)
+	(move-mixes (syncd-mixes (mix-sync id)) true-samps-moved))
+    #t))
+ 
+(define (snap-syncd-mixes-to-beat)
+  "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute). \
+All mixes sync'd to it are also moved the same number of samples. (remove-hook! mix-release-hook snap-syncd-mixes-1) to cancel."
+  (add-hook! mix-release-hook snap-syncd-mixes-1 #t))
+
+
 
 
 ;;; --------- mix-property
@@ -275,12 +307,14 @@
   (if (not (= semitones 0))
       (src-mixes mix-list (expt 2.0 (/ semitones 12.0)))))
 
+
 (define (color-mixes mix-list col)
   "(color-mixes mix-list color) sets the tag and waveform color of each mix in 'mix-list' to 'color'"
   (for-each
    (lambda (m)
      (set! (mix-color m) col))
    mix-list))
+
 
 (define (set-mixes-tag-y mix-list new-y)
   "(set-mixes-tag-y mix-list new-y) sets the mix tag vertical position of each mix in 'mix-list' to 'new-y'.  The \
@@ -294,6 +328,7 @@ example, if you know the frequency of the mix sound, you can reflect that in the
      (set! (mix-tag-y m) new-y))
    mix-list))
   
+
 (define (mixes-maxamp mix-list)
   "(mixes-maxamp mix-list) returns the maximum amplitude of the data in the mixes in 'mix-list'"
   (let ((mx 0.0))
@@ -302,6 +337,7 @@ example, if you know the frequency of the mix sound, you can reflect that in the
        (set! mx (max mx (mix-maxamp m))))
      mix-list)
     mx))
+
 
 (define (scale-tempo mix-list tempo-scl)
   "(scale-tempo mix-list scl) changes the rate at which the mixes in 'mix-list' occur to reflect \

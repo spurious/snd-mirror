@@ -2002,7 +2002,8 @@ This hook is called when a mix is dragged.
 <code><a class=def name="mixreleasehook">mix-release-hook</a> (id samps)</code> [<b>progn</b>]
 </td></tr><tr><td></td><td colspan=2>
 This hook is called after a mix has been dragged by the mouse to a new position. 'id' is the mix id,
-'samps' is the number of samples moved during the drag.  If its function returns #t, the actual remix is the 
+'samps' is the number of samples moved during the drag.  If its function returns #t, the final position
+of the mix is
 hook's responsibility.  See <a href="sndscm.html#snapmarktobeat">snap-mix-to-beat</a> in mix.scm.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
@@ -4900,6 +4901,13 @@ mix-speed is the speed (resampling ratio) of 'mix'; 1.0 (the default) means no r
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixsync">mix-sync</a> (mix)</code>
 </td></tr><tr><td></td><td>
 mix-sync is an integer, like <a href="#sync">sync</a> that you can use to group mixes.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mix-sync-max -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixsyncmax">mix-sync-max</a> ()</code>
+</td></tr><tr><td></td><td>
+This is the maximum mix sync value seen so far.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

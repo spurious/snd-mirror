@@ -2092,7 +2092,7 @@
 		       'maxamp-position 'menu-widgets 'min-dB 'minibuffer-history-length 'mix
 		       'mix-amp 'mix-amp-env 'mix-click-hook 'mix-color
 		       'mix-dialog-mix 'mix-drag-hook 'mix-file-dialog 'mix-length 'mix-home
-		       'mix-name 'mix-position 'mix-region 'mix-release-hook 'mix-sync
+		       'mix-name 'mix-position 'mix-region 'mix-release-hook 'mix-sync 'mix-sync-max
 		       'mix-sample-reader? 'mix-selection 'mix-speed 'mix-tag-height
 		       'mix-tag-width 'mix-tag-y
 		       'mix-vct 'mix-waveform-height 'mix? 'mixer*
@@ -23770,6 +23770,7 @@ EDITS: 2
 		(if (not (= (mix-position id) 20)) (snd-display ";after pad mix pos: ~A" (mix-position id)))
 		(set! (mix-sync id) 2)
 		(if (not (= (mix-sync id) 2)) (snd-display ";set mix sync 2: ~A" (mix-sync id)))
+		(if (< (mix-sync-max) 2) (snd-display ";mix-sync-max: ~A" (mix-sync-max)))
 		(pad-channel 50 10)
 		(if (or (not (mix? id)) (not (number? (mix? id)))) (snd-display ";padded 50 mix not active?"))
 		(if (not (= (mix-position id) 20)) (snd-display ";after pad 50 mix pos: ~A" (mix-position id)))
@@ -61612,7 +61613,7 @@ EDITS: 1
 		     mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions
 		     maxamp maxamp-position menu-widgets minibuffer-history-length min-dB log-freq-start mix mixes mix-amp mix-amp-env
 		     mix-color mix-length mix? view-mixes-dialog mix-position
-		     mix-dialog-mix mix-name 
+		     mix-dialog-mix mix-name mix-sync-max
 		     mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width mark-tag-height mark-tag-width
 		     mix-tag-y mix-vct mix-waveform-height time-graph-style lisp-graph-style transform-graph-style
 					;new-sound 

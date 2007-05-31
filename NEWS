@@ -6,6 +6,7 @@ draw-mix-hook
 
 background-gradient (gtk+cairo only)
 sound-mark-info
+mix-sync-max
 
 moved equalize-panes to snd-motif.scm
 
@@ -22,4 +23,5 @@ SIGUSR1 (kill -10) throws Snd back to its top level -- a way, perhaps, to get ou
 
 Thanks!: Michael Edwards, Etienne Deleflie, Joshua Parmenter
 
-checked: Ruby 1.8.6, sbcl 1.0.5, gtk 2.10.12|2.11.0, ACL 8.1, pango 1.17.0, glib 2.13.2
+checked: Ruby 1.8.6, sbcl 1.0.5, gtk 2.10.12|2.11.0, ACL 8.1, pango 1.17.0|1, 
+         glib 2.13.2
