@@ -250,7 +250,9 @@
 		   size))
 	 (line (if treble 
 		   (+ (* (- 5 octave) 7) (- 3 cclass))
-		   (+ (* (- 3 octave) 7) (- 5 cclass)))))
+		   (+ (* (- 3 octave) 7) (- 5 cclass))))
+	 (notehead-x x0)
+	 (notehead-y y0))
 
     (draw-staff x0 y0 width line-sep) 
 
@@ -271,13 +273,14 @@
 	  (set! x0 (+ x0 (* .25 size)))))
 
     ;; notehead
+    (set! notehead-y (+ y0 (* .02 size) (* line-sep 0.5 line)))
+    (set! notehead-x x0)
     ((if (< dur 1.5)
 	 draw-quarter-note
 	 (if (< dur 3.5)
 	     draw-half-note
 	     draw-whole-note))
-     x0 (+ y0 (* .02 size) (* line-sep 0.5 line))
-     size) 
+     notehead-x notehead-y size)
 
     ;; leger line(s)
     (if (> line 9)
@@ -311,7 +314,7 @@
 		    (if (> line 2)
 			(draw-extend-flag-up (+ x0 (* size .25)) (+ base (* size -1.0)) size)
 			(draw-extend-flag-down x0 (+ base (* 1.1 size)) size)))))))
-    ))
+    (list notehead-x notehead-y)))
 
 
 #|
@@ -394,3 +397,123 @@
      (violin 21 3 'e4 .2)
      (cello  21 3 'c3 .2))))
 |#
+
+#|
+;;; here is the same example, but with vertical drag interpreted as pitch change:
+
+(set! (show-mix-waveforms) #f)
+
+(add-hook! draw-mix-hook
+	   (lambda (id ox oy x y)
+	     (let* ((xy (draw-a-note (or (mix-property 'frequency id) 440.0)
+				     (/ (mix-length id) (srate))
+				     x y
+				     (* 2 (mix-waveform-height))
+				     #f
+				     (eq? (mix-property 'instrument id) 'violin)))
+		    (note-x (inexact->exact (round (car xy))))
+		    (note-y (inexact->exact (round (- (cadr xy) (mix-tag-height))))))
+	       (if (not (mix-property 'original-tag-y id))
+		   (begin
+		     (set! (mix-property 'original-frequency id) (mix-property 'frequency id))
+		     (set! (mix-property 'original-tag-y id) note-y)
+		     (set! (mix-property 'interval id) 0)))
+	       (list note-x note-y))))
+
+(add-hook! after-graph-hook
+	   (lambda (s c)
+	     (let ((size (* 2 (mix-waveform-height))))
+	       (draw-staff 0 treble-tag-y (* 1.0 size) (* .25 size))
+	       (draw-staff 0 bass-tag-y (* 1.0 size) (* .25 size))
+	       (draw-treble-clef 0 (+ treble-tag-y (* size .76)) size)
+	       (draw-bass-clef (* size .075) (+ bass-tag-y (* size .26)) size))))
+
+(add-hook! mix-drag-hook
+	   (lambda (n x y)
+	     (let ((orig-y (mix-property 'original-tag-y n)))
+	       (if orig-y
+		   (let ((interval (inexact->exact (round (/ (* 12 (- (+ (mix-tag-height) orig-y) y))
+							     (* 2 (mix-waveform-height))))))
+			 (current-interval (mix-property 'interval n)))
+		     ;; this gives the number of semitones we have drifted
+		     (if (not (= current-interval interval))
+			 (begin
+			   (set! (mix-property 'interval n) interval)
+			   (set! (mix-property 'frequency n) (* (mix-property 'original-frequency n)
+								(expt 2.0 (/ interval 12.0)))))))))))
+	       
+(add-hook! mix-release-hook
+	   (lambda (id samps)
+	     (as-one-edit
+	      (lambda ()
+		(set! (mix-position id) (+ samps (mix-position id)))
+		(let ((interval (mix-property 'interval id)))
+		  (if (not (= interval 0))
+		      (let ((last-interval (mix-property 'last-interval id)))
+			(if (or (not last-interval)
+				(not (= last-interval interval)))
+			    (set! (mix-speed id) (expt 2.0 (/ interval 12.0))))))
+		  (set! (mix-property 'last-interval id) interval))))
+	     #t))
+
+(set! (mix-waveform-height) 20)
+
+(let ((oldie (find-sound "test.snd")))
+  (if (sound? oldie)
+      (close-sound oldie)))
+
+(let ((violin-sync 1)
+      (violin-color (make-color 0 0 0.85)) ; blueish
+      (cello-sync 2)
+      (cello-color (make-color 1 .7 0)) ; orangeish
+      (index (new-sound "test.snd" :channels 1))) ; :size (* 22050 22))))
+  
+  (define (violin beg dur freq amp)
+    (let* ((frq-hz (* 2 (->frequency freq #t)))
+	   (id (mix (with-temp-sound () (fm-violin 0 dur frq-hz amp))
+		    (->sample beg) 0 index 0  ; start, file in-chan, sound, channel
+		    #t #t)))                  ; with tag and auto-delete
+      (set! (mix-property 'frequency id) frq-hz)
+      (set! (mix-property 'instrument id) 'violin)
+      (set! (mix-sync id) violin-sync)
+      (set! (mix-color id) violin-color)))
+  
+  (define (cello beg dur freq amp)
+    (let* ((frq-hz (* 2 (->frequency freq #t)))
+	   (id (mix (with-temp-sound () (fm-violin 0 dur frq-hz amp :fm-index 1.5))
+		    (->sample beg) 0 index 0
+		    #t #t)))
+      (set! (mix-property 'frequency id) frq-hz)
+      (set! (mix-property 'instrument id) 'cello)
+      (set! (mix-sync id) cello-sync)
+      (set! (mix-color id) cello-color)))
+  
+  (as-one-edit
+   (lambda ()
+     (violin 0 1 'e4 .2)  (violin 1 1.5 'g4 .2)  (violin 2.5 .5 'g3 .2)
+     (cello  0 1 'c3 .2)  (cello  1 1.5 'e3 .2)  (cello  2.5 .5 'g2 .2)
+     
+     (violin 3 3 'f4 .2)
+     (cello  3 3 'd3 .2)
+     
+     (violin 6 1 'e4 .2)   (violin 7 1 'g3 .2)   (violin 8 1 'e4 .2)
+     (cello  6 1 'c3 .2)   (cello  7 1 'g2 .2)   (cello  8 1 'c3 .2)
+     
+     (violin 9 3 'd4 .2)
+     (cello  9 3 'b2 .2)
+     
+     (violin 12 1 'f4 .2)  (violin 13 1.5 'a4 .2)  (violin 14.5 .5 'g3 .2)
+     (cello  12 1 'd3 .2)  (cello  13 1.5 'f3 .2)  (cello  14.5 .5 'g2 .2)
+     
+     (violin 15 3 'g4 .2)
+     (cello  15 3 'e3 .2)
+     
+     (violin 18 1 'f4 .2)  (violin 19 1 'g3 .2)  (violin 20 1 'f4 .2)
+     (cello  18 1 'd3 .2)  (cello  19 1 'g2 .2)  (cello  20 1 'd3 .2)
+     
+     (violin 21 3 'e4 .2)
+     (cello  21 3 'c3 .2)
+     
+     index)))
+|#
+

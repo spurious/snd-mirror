@@ -1,5 +1,6 @@
 #include "snd.h"
 
+
 static gint timed_eval(gpointer in_code)
 {
 #if HAVE_EXTENSION_LANGUAGE
@@ -11,9 +12,11 @@ static gint timed_eval(gpointer in_code)
   return(0);
 }
 
+
 static XEN g_in(XEN ms, XEN code)
 {
   #define H_in "(" S_in " msecs thunk): invoke thunk in msecs milliseconds (named call_in in Ruby)"
+
 #if HAVE_EXTENSION_LANGUAGE
   XEN_ASSERT_TYPE(XEN_NUMBER_P(ms), ms, XEN_ARG_1, S_in, "a number");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code), code, XEN_ARG_2, S_in, "a procedure");
@@ -33,6 +36,7 @@ static XEN g_in(XEN ms, XEN code)
     }
   else XEN_BAD_ARITY_ERROR(S_in, 2, code, "should take no args");
 #endif
+
   return(ms);
 }
 
@@ -49,15 +53,18 @@ static XEN g_color_to_list(XEN obj)
 			  obj));
 }
 
+
 static XEN g_make_color(XEN r, XEN g, XEN b)
 {
   #define H_make_color "(" S_make_color " r g b): return a color object with the indicated rgb values"
   color_info *ccolor;
   Float rf, gf, bf;
+
   XEN_ASSERT_TYPE(XEN_NUMBER_P(r), r, XEN_ARG_1, S_make_color, "a number");
   /* someday accept a list as r */
   XEN_ASSERT_TYPE(XEN_NUMBER_P(g), g, XEN_ARG_2, S_make_color, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(b), b, XEN_ARG_3, S_make_color, "a number");
+
   rf = check_color_range(S_make_color, r);
   gf = check_color_range(S_make_color, g);
   bf = check_color_range(S_make_color, b);
@@ -77,6 +84,7 @@ static XEN g_make_color(XEN r, XEN g, XEN b)
   return(XEN_WRAP_PIXEL(ccolor));
 }
 
+
 void color_unselected_graphs(color_t color)
 {
   int i;
@@ -94,6 +102,7 @@ void color_unselected_graphs(color_t color)
 	  }
     }
 }
+
 
 void color_chan_components(color_t color, slider_choice_t which_component)
 {
@@ -125,11 +134,13 @@ void color_chan_components(color_t color, slider_choice_t which_component)
     }
 }
 
+
 static XEN g_graph_cursor(void)
 {
   #define H_graph_cursor "(" S_graph_cursor "): current graph cursor shape"
   return(C_TO_XEN_INT(in_graph_cursor(ss)));
 }
+
 
 static XEN g_set_graph_cursor(XEN curs)
 {
@@ -145,6 +156,7 @@ static XEN g_set_graph_cursor(XEN curs)
   else XEN_OUT_OF_RANGE_ERROR(S_setB S_graph_cursor, 1, curs, "~A: invalid cursor");
   return(curs);
 }
+
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_2(g_in_w, g_in)

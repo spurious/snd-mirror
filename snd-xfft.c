@@ -2,6 +2,7 @@
 
 #include "snd.h"
 
+
 static Widget transform_dialog = NULL; /* main dialog shell */
 static Widget type_list, size_list, wavelet_list, window_list, window_beta_scale, window_alpha_scale;
 static Widget db_button, peaks_button, logfreq_button, sono_button, spectro_button, normo_button, normalize_button, selection_button;
@@ -24,10 +25,12 @@ static char *transform_size_names[NUM_TRANSFORM_SIZES] =
 static off_t transform_sizes[NUM_TRANSFORM_SIZES] = 
   {32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576, 4194304};
 
+
 static Float fp_dB(Float py)
 {
   return((py <= ss->lin_dB) ? 0.0 : (1.0 - (20.0 * log10(py) / min_dB(ss))));
 }
+
 
 static int local_grf_x(double val, axis_info *ap)
 {
@@ -36,12 +39,14 @@ static int local_grf_x(double val, axis_info *ap)
   return((int)(ap->x_base + val * ap->x_scale));
 }
 
+
 static int local_grf_y(Float val, axis_info *ap)
 {
   if (val >= ap->y1) return(ap->y_axis_y1);
   if (val <= ap->y0) return(ap->y_axis_y0);
   return((int)(ap->y_base + val * ap->y_scale));
 }
+
 
 static axis_info *axis_ap = NULL;
 
@@ -124,6 +129,7 @@ static void graph_redisplay(void)
     }
 }
 
+
 static void get_fft_window_data(void)
 {
   int i;
@@ -138,12 +144,14 @@ static void get_fft_window_data(void)
     graph_fftr[i] = (graph_fftr[i] + 80.0) / 80.0; /* min dB here is -80 */
 }
 
+
 static void chans_transform_size(chan_info *cp, off_t size)
 {
   cp->transform_size = size;
   if (cp->fft) 
     cp->fft->size = size;
 }
+
 
 static void size_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -156,10 +164,12 @@ static void size_browse_callback(Widget w, XtPointer context, XtPointer info)
   set_label(graph_label, mus_fft_window_name(fft_window(ss)));
 }
 
+
 static void chans_wavelet_type(chan_info *cp, int value)
 {
   cp->wavelet_type = value;
 }
+
 
 static void wavelet_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -192,10 +202,12 @@ static void window_browse_callback(Widget w, XtPointer context, XtPointer info)
   else XtVaSetValues(window_alpha_scale, XmNbackground, ss->sgx->basic_color, NULL);
 }
 
+
 static void chans_transform_type(chan_info *cp, int value) 
 {
   cp->transform_type = value;
 }
+
 
 static void transform_type_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -223,6 +235,7 @@ static void graph_transform_once_callback(Widget w, XtPointer context, XtPointer
     for_each_chan(calculate_fft);
 }
 
+
 static void sonogram_callback(Widget w, XtPointer context, XtPointer info)
 {
   graph_type_t old_type;
@@ -235,6 +248,7 @@ static void sonogram_callback(Widget w, XtPointer context, XtPointer info)
   if (old_type != GRAPH_AS_SONOGRAM)
     for_each_chan(calculate_fft);
 }
+
 
 static void spectrogram_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -249,10 +263,12 @@ static void spectrogram_callback(Widget w, XtPointer context, XtPointer info)
     for_each_chan(calculate_fft);
 }
 
+
 static void map_show_transform_peaks(chan_info *cp, bool value) 
 {
   cp->show_transform_peaks = value;
 }
+
 
 static void peaks_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -265,11 +281,13 @@ static void peaks_callback(Widget w, XtPointer context, XtPointer info)
   for_each_chan(calculate_fft);
 }
 
+
 static void chans_fft_log_magnitude(chan_info *cp, bool value)
 {
   cp->fft_log_magnitude = value;
   cp->fft_changed = FFT_CHANGE_LOCKED;
 }
+
 
 static void db_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -283,11 +301,13 @@ static void db_callback(Widget w, XtPointer context, XtPointer info)
   for_each_chan(calculate_fft);
 }
 
+
 static void chans_fft_log_frequency(chan_info *cp, bool value)
 {
   cp->fft_log_frequency = value;
   cp->fft_changed = FFT_CHANGE_LOCKED;
 }
+
 
 static void logfreq_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -300,11 +320,13 @@ static void logfreq_callback(Widget w, XtPointer context, XtPointer info)
   for_each_chan(calculate_fft);
 }
 
+
 static void chans_transform_normalization(chan_info *cp, int value)
 {
   cp->transform_normalization = (fft_normalize_t)value;
   cp->fft_changed = FFT_CHANGE_LOCKED;
 }
+
 
 static void normalize_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -316,6 +338,7 @@ static void normalize_callback(Widget w, XtPointer context, XtPointer info)
   for_each_chan_with_int(chans_transform_normalization, (int)choice);
   for_each_chan(calculate_fft);
 }
+
 
 static void selection_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -341,6 +364,7 @@ static void beta_callback(Widget w, XtPointer context, XtPointer info)
     }
 } 
 
+
 #define FFT_WINDOW_ALPHA_SCALER 100.0
 
 static void alpha_callback(Widget w, XtPointer context, XtPointer info)
@@ -358,10 +382,12 @@ static void alpha_callback(Widget w, XtPointer context, XtPointer info)
     }
 } 
 
+
 static void graph_resize_callback(Widget w, XtPointer context, XtPointer info)
 {
   graph_redisplay();
 }
+
 
 static void dismiss_transform_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -371,20 +397,24 @@ static void dismiss_transform_callback(Widget w, XtPointer context, XtPointer in
     XtUnmanageChild(transform_dialog);
 }
 
+
 static void orient_transform_callback(Widget w, XtPointer context, XtPointer info)
 {
   start_orientation_dialog(true);
 }
+
 
 static void color_transform_callback(Widget w, XtPointer context, XtPointer info)
 {
   start_color_dialog(true);
 }
 
+
 static void help_transform_callback(Widget w, XtPointer context, XtPointer info)
 {
   transform_dialog_help();
 }
+
 
 static void blue_textfield_unfocus_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -392,11 +422,13 @@ static void blue_textfield_unfocus_callback(Widget w, XtPointer context, XtPoint
   XtVaSetValues(w, XmNcursorPositionVisible, false, NULL);
 }
 
+
 static void blue_mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   XtVaSetValues(w, XmNbackground, ss->sgx->lighter_blue, NULL);
   XtVaSetValues(w, XmNcursorPositionVisible, false, NULL);
 }
+
 
 static void white_mouse_enter_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
@@ -411,10 +443,12 @@ static void clear_fft_error(void)
     XtUnmanageChild(error_frame);
 }
 
+
 static void unpost_fft_error(XtPointer data, XtIntervalId *id)
 {
   clear_fft_error();
 }
+
 
 static void errors_to_fft_text(const char *msg, void *data)
 {
@@ -444,6 +478,7 @@ void reflect_peaks_in_transform_dialog(void)
     widget_int_to_text(peak_txt, max_transform_peaks(ss));
 }
 
+
 static void peaks_activate_callback(Widget w, XtPointer context, XtPointer info)
 {
   char *str;
@@ -464,11 +499,13 @@ static void peaks_activate_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+
 void reflect_log_freq_start_in_transform_dialog(void)
 {
   if (transform_dialog)
     widget_float_to_text(freq_base_txt, log_freq_start(ss));
 }
+
 
 static void log_freq_start_activate_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -487,11 +524,13 @@ static void log_freq_start_activate_callback(Widget w, XtPointer context, XtPoin
     }
 }
 
+
 void reflect_min_db_in_transform_dialog(void)
 {
   if (transform_dialog)
     widget_float_to_text(db_txt, min_dB(ss));
 }
+
 
 static void min_db_activate_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -510,7 +549,9 @@ static void min_db_activate_callback(Widget w, XtPointer context, XtPointer info
     }
 }
 
+
 static bool need_callback = true;
+
 Widget fire_up_transform_dialog(bool managed)
 {
   Widget mainform, type_frame, type_form, type_label, size_frame, size_form, size_label, display_frame, display_form, display_label;
@@ -1151,12 +1192,15 @@ Widget fire_up_transform_dialog(bool managed)
   return(transform_dialog);
 }
 
+
 bool transform_dialog_is_active(void)
 {
   return((transform_dialog) && (XtIsManaged(transform_dialog)));
 }
 
+
 /* various set- cases need to be reflected in the transform dialog */
+
 void set_fft_window_beta(Float val)
 {
   in_set_fft_window_beta(val);
@@ -1171,6 +1215,7 @@ void set_fft_window_beta(Float val)
     for_each_chan(calculate_fft);
 }
 
+
 void set_fft_window_alpha(Float val)
 {
   in_set_fft_window_alpha(val);
@@ -1184,6 +1229,7 @@ void set_fft_window_alpha(Float val)
   if (!(ss->graph_hook_active)) 
     for_each_chan(calculate_fft);
 }
+
 
 void set_transform_graph_type(graph_type_t val)
 {
@@ -1213,6 +1259,7 @@ void set_transform_graph_type(graph_type_t val)
     for_each_chan(calculate_fft);
 }
 
+
 void set_transform_size(off_t val)
 {
   for_each_chan(force_fft_clear);
@@ -1230,6 +1277,7 @@ void set_transform_size(off_t val)
     }
   if (!(ss->graph_hook_active)) for_each_chan(calculate_fft);
 }
+
 
 void set_fft_window(mus_fft_window_t val)
 {
@@ -1250,6 +1298,7 @@ void set_fft_window(mus_fft_window_t val)
     }
 }
   
+
 void set_transform_type(int val)
 {
   if (transform_p(val))
@@ -1263,6 +1312,7 @@ void set_transform_type(int val)
     }
 }
 
+
 void set_wavelet_type(int val)
 {
   if (transform_dialog) XmListSelectPos(wavelet_list, val, false);
@@ -1273,7 +1323,7 @@ void set_wavelet_type(int val)
     for_each_chan(calculate_fft);
 }
 
-/* various set- cases need to be reflected in the transform dialog */
+
 void set_show_transform_peaks(bool val)
 {
   in_set_show_transform_peaks(val);
@@ -1283,6 +1333,7 @@ void set_show_transform_peaks(bool val)
   if (!(ss->graph_hook_active)) 
     for_each_chan(calculate_fft);
 }
+
 
 void set_fft_log_frequency(bool val)
 {
@@ -1294,6 +1345,7 @@ void set_fft_log_frequency(bool val)
     for_each_chan(calculate_fft);
 }
 
+
 void set_fft_log_magnitude(bool val)
 {
   in_set_fft_log_magnitude(val);
@@ -1303,6 +1355,7 @@ void set_fft_log_magnitude(bool val)
   if (!(ss->graph_hook_active)) 
     for_each_chan(calculate_fft);
 }
+
 
 void set_transform_normalization(fft_normalize_t val)
 {
@@ -1314,6 +1367,7 @@ void set_transform_normalization(fft_normalize_t val)
     for_each_chan(calculate_fft);
 }
 
+
 void set_show_selection_transform(bool show)
 {
   in_set_show_selection_transform(show);
@@ -1322,6 +1376,7 @@ void set_show_selection_transform(bool show)
   if (!(ss->graph_hook_active)) 
     for_each_chan(calculate_fft);
 }
+
 
 void make_transform_type_list(void)
 {

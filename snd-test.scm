@@ -27074,7 +27074,6 @@ EDITS: 2
     (add-hook! after-save-state-hook arg1) (carg1 after-save-state-hook)
     (add-hook! before-save-state-hook arg1) (carg1 before-save-state-hook)
     (add-hook! mark-drag-hook arg1) (carg1 mark-drag-hook)
-    (add-hook! mix-drag-hook arg1) (carg1 mix-drag-hook)
     (add-hook! name-click-hook arg1) (carg1 name-click-hook)
     (add-hook! after-apply-controls-hook arg1) (carg1 after-apply-controls-hook)
     (add-hook! open-hook arg1) (carg1 open-hook)
@@ -27110,6 +27109,7 @@ EDITS: 2
     (add-hook! mouse-leave-label-hook arg3) (carg3 mouse-leave-label-hook)
     (add-hook! initial-graph-hook arg3) (carg3 initial-graph-hook)
     (add-hook! after-save-as-hook arg3) (carg3 after-save-as-hook)
+    (add-hook! mix-drag-hook arg3) (carg3 mix-drag-hook)
     
     (add-hook! graph-hook arg4) (carg4 graph-hook)
     (add-hook! key-press-hook arg4) (carg4 key-press-hook)

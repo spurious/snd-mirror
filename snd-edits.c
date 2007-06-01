@@ -8876,9 +8876,6 @@ bool redo_edit_with_sync(chan_info *cp, int count)
 
 /* -------------------- virtual mixes -------------------- */
 
-  /* TODO: tmp231 with drag vertically -> change pitch and recalc(?)
-   */
-
 /* ramp on mix is techically possible, but ambiguous -- currently if we mix, then ramp elsewhere, then drag the mix
  *   to the ramped portion, the mix treats the ramp as prior data (adding);  if we had ramp_mix, it would want to
  *   treat that ramp as an envelope on the mix if the ramp happened after the mix was established but as data if before.

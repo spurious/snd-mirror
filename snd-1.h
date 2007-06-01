@@ -1598,7 +1598,7 @@ XEN g_free_mix_sample_reader(XEN obj);
 char *edit_list_mix_init(chan_info *cp);
 void channel_set_mix_tags_erased(chan_info *cp);
 void color_mixes(color_t color);
-void move_mix_tag(int mix_tag, int x);
+void move_mix_tag(int mix_tag, int x, int y);
 void finish_moving_mix_tag(int mix_tag, int x);
 int hit_mix(chan_info *cp, int x, int y);
 int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided);

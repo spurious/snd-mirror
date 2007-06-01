@@ -200,7 +200,7 @@ need a String or Symbol, not %s"
   $mouse_enter_text_hook        = Hook.new("$mouse_enter_text_hook", 1)
   $mouse_leave_text_hook        = Hook.new("$mouse_leave_text_hook", 1)
   $optimization_hook            = Hook.new("$optimization_hook", 1)
-  $mix_drag_hook                = Hook.new("$mix_drag_hook", 1)
+  $mix_drag_hook                = Hook.new("$mix_drag_hook", 3)
   $mark_drag_triangle_hook      = Hook.new("$mark_drag_triangle_hook", 4)
   $start_playing_selection_hook = Hook.new("$start_playing_selection_hook", 0)
   $before_exit_hook             = Hook.new("$before_exit_hook", 0)

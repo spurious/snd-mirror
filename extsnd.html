@@ -1631,9 +1631,11 @@ in snd-motif.scm uses this hook to draw sync'd marks in some other color than th
 <tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="drawmixhook">draw-mix-hook</a> (id old-x old-y x y)</code> [<b>progn</b>]
 </td></tr><tr><td></td><td colspan=2>
-This hook is called before a mix tag is drawn. If the hook function returns #t, the mix tag is not drawn by Snd (the
+This hook is called before a mix tag is drawn. If the hook function returns either #t or a list, the mix tag is not drawn by Snd (the
 assumption is that the hook function drew something).  old-x and old-y are the previous mix tag positions (in case
 you're using draw-mix-hook to draw your own mix tag as in musglyphs.scm).  x and y give the current position.
+If the hook function returns a list, its two elements (integers) are treated as the mix's tag x and y locations
+for subsequent mouse click hit detection.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -1985,15 +1987,17 @@ in mix.scm for a fancier version):
 
 <!-- mix-drag-hook -->
 <tr><td colspan=3 bgcolor="#f6f8ff">
-<code><a class=def name="mixdraghook">mix-drag-hook</a> (id)</code>
+<code><a class=def name="mixdraghook">mix-drag-hook</a> (id x y)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called when a mix is dragged.
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (add-hook! <em class=red>mix-drag-hook</em>
-  (lambda (n) 
+  (lambda (n x y) 
     (<a class=quiet href="#reportinminibuffer">report-in-minibuffer</a> 
-      (format #f "mix ~A at ~D: ~,3F" n (<a class=quiet href="#mixposition">mix-position</a> n) (/ (<a class=quiet href="#mixposition">mix-position</a> n) (<a class=quiet href="#srate">srate</a>))))))
+      (format #f "mix ~A at ~D: ~,3F" 
+        n (<a class=quiet href="#mixposition">mix-position</a> n) 
+        (exact->inexact (/ (<a class=quiet href="#mixposition">mix-position</a> n) (<a class=quiet href="#srate">srate</a>)))))))
 </pre></td></tr></table></td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -4626,7 +4630,7 @@ Say we have a mix whose id is 123:</p>
 
 <!-- mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mix">mix</a> (file :optional samp in-chan snd chn with-mix-tags auto-delete)</code>
-</td></tr><tr><td></td><td>
+</td></tr><tr><td width=60></td><td>
 mix is one of the basic mixing functions. 
 mix mixes the 'in-chan' channel of the file 'file' into the given channel
 starting at 'samp' in the output channel.
@@ -4757,6 +4761,12 @@ mix-home returns a list containing the mix's output sound index and channel numb
     <em class=listener>1</em>
     :<em class=typing>(mix-home 1)</em>
     <em class=listener>(0 0 "/home/bil/cl/pistol.snd" 0)</em>
+    ;; (list output-sound-index output-channel input-filename input-channel)
+    :<em class=typing>(mix-vct (make-vct 100 .1) 2000)</em>
+    <em class=listener>2</em>
+    :<em class=typing>(mix-home 2)</em>
+    <em class=listener>(0 0 #f 0)</em>
+    ;;   #f: no input file
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4932,7 +4942,8 @@ This is the mix tag y (vertical) offset; 0 (the default) is the top of the graph
 higher tag-y values position the tag lower in the graph. For
 example, if you know the frequency of the mix sound, you can reflect that in the tag height with:
 <pre>
-   (set! (mix-tag-y mix-id) (inexact-&gt;exact (round (* 100 (- 1.0 (/ (log (/ freq 40.0)) (* (log 2.0) 7)))))))
+   (set! (mix-tag-y mix-id) 
+         (inexact-&gt;exact (round (* 100 (- 1.0 (/ (log (/ freq 40.0)) (* (log 2.0) 7)))))))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 

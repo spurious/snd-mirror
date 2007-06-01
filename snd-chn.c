@@ -2,10 +2,12 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
+
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
  *   but there's no way to trap the outer resizing event and
  *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
  */
+
 
 chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
 {
@@ -44,6 +46,7 @@ static XEN graph_hook;
 static XEN after_graph_hook;
 static XEN after_lisp_graph_hook;
 
+
 static void after_transform(chan_info *cp, Float scaler)
 {
   if (XEN_HOOKED(after_transform_hook))
@@ -53,6 +56,7 @@ static void after_transform(chan_info *cp, Float scaler)
 			C_TO_XEN_DOUBLE(scaler)),
 	     S_after_transform_hook);
 }
+
 
 static void run_after_graph_hook(chan_info *cp)
 {
@@ -64,6 +68,7 @@ static void run_after_graph_hook(chan_info *cp)
 	     S_after_graph_hook);
   /* (add-hook! after-graph-hook (lambda (a b) (snd-print (format #f "~A ~A" a b)))) */
 }
+
 
 static void set_y_bounds(axis_info *ap);
 
@@ -86,6 +91,7 @@ static void set_time_graph_type(graph_type_t val)
   for_each_chan_with_int(chans_time_graph_type, (int)val);
 }
 
+
 static void chans_wavo_hop(chan_info *cp, int hop)
 {
   cp->wavo_hop = hop;
@@ -102,6 +108,7 @@ static void set_wavo_hop(int uval)
   for_each_chan_with_int(chans_wavo_hop, val);
 }
 
+
 static void chans_wavo_trace(chan_info *cp, int value)
 {
   cp->wavo_trace = value;
@@ -117,6 +124,7 @@ void set_wavo_trace(int uval)
   in_set_wavo_trace(val); 
   for_each_chan_with_int(chans_wavo_trace, val);
 }
+
 
 static void set_beats_per_minute(Float val) 
 {
@@ -146,6 +154,7 @@ static void set_beats_per_measure(int val)
     }
 }
 
+
 static void chans_max_transform_peaks(chan_info *cp, int value)
 {
   cp->max_transform_peaks = value;
@@ -156,6 +165,7 @@ void set_max_transform_peaks(int val)
   in_set_max_transform_peaks(val); 
   for_each_chan_with_int(chans_max_transform_peaks, val);
 }
+
 
 static void chans_zero_pad(chan_info *cp, int value)
 {
@@ -169,6 +179,7 @@ static void set_zero_pad(int val)
   for_each_chan_with_int(chans_zero_pad, val);
 }
 
+
 static void chans_show_grid(chan_info *cp, int value)
 {
   cp->show_grid = (with_grid_t)value;
@@ -180,6 +191,7 @@ static void set_show_grid(with_grid_t val)
   in_set_show_grid(val);
   for_each_chan_with_int(chans_show_grid, (int)val);
 }
+
 
 static void chans_grid_density(chan_info *cp, Float value)
 {
@@ -193,6 +205,7 @@ static void set_grid_density(Float val)
   for_each_chan_with_float(chans_grid_density, val);
 }
 
+
 static void chans_show_sonogram_cursor(chan_info *cp, bool value)
 {
   cp->show_sonogram_cursor = value;
@@ -204,6 +217,7 @@ static void set_show_sonogram_cursor(bool val)
   in_set_show_sonogram_cursor(val);
   for_each_chan_with_bool(chans_show_sonogram_cursor, val);
 }
+
 
 static void chans_transform_graph_type(chan_info *cp, int value)
 {
@@ -218,6 +232,7 @@ void in_set_transform_graph_type(graph_type_t uval)
   for_each_chan_with_int(chans_transform_graph_type, (int)val);
 }
 
+
 static void chans_show_mix_waveforms(chan_info *cp, bool value)
 {
   cp->show_mix_waveforms = value;
@@ -229,6 +244,7 @@ static void set_show_mix_waveforms(bool val)
   in_set_show_mix_waveforms(val); 
   for_each_chan_with_bool(chans_show_mix_waveforms, val);
 }
+
 
 static void chans_show_axes(chan_info *cp, int value)
 {
@@ -242,6 +258,7 @@ void set_show_axes(show_axes_t val)
   for_each_chan_with_int(chans_show_axes, (int)val);
 }
 
+
 static void chans_graphs_horizontal(chan_info *cp, bool value)
 {
   cp->graphs_horizontal = value;
@@ -254,6 +271,7 @@ static void set_graphs_horizontal(bool val)
   for_each_chan_with_bool(chans_graphs_horizontal, val);
 }
 
+
 static void chans_fft_window(chan_info *cp, int value)
 {
   cp->fft_window = (mus_fft_window_t)value;
@@ -265,6 +283,7 @@ void in_set_fft_window(mus_fft_window_t val)
   in_set_fft_window_1(val); 
   for_each_chan_with_int(chans_fft_window, (int)val);
 }
+
 
 void chans_field(fcp_t field, Float val)
 {
@@ -293,9 +312,11 @@ void chans_field(fcp_t field, Float val)
     }
 }
 
+
 void combine_sound(snd_info *sp) {change_channel_style(sp, CHANNELS_COMBINED);}
 void superimpose_sound(snd_info *sp) {change_channel_style(sp, CHANNELS_SUPERIMPOSED);}
 void separate_sound(snd_info *sp) {change_channel_style(sp, CHANNELS_SEPARATE);}
+
 
 void set_sound_channel_style(snd_info *sp, channel_style_t val)
 {
@@ -309,16 +330,19 @@ void set_sound_channel_style(snd_info *sp, channel_style_t val)
     }
 }
 
+
 bool chan_fft_in_progress(chan_info *cp)
 {
   /* fft_in_progress is a background process only if sonogram/spectrogram */
   return((bool)(cp->cgx->fft_in_progress));
 }
 
+
 void set_chan_fft_in_progress(chan_info *cp, idle_t fp) 
 {
   cp->cgx->fft_in_progress = fp;
 }
+
 
 void stop_fft_in_progress(chan_info *cp)
 {
@@ -335,6 +359,7 @@ void stop_fft_in_progress(chan_info *cp)
     }
 }
 
+
 void stop_peak_env(chan_info *cp)
 {
   chan_context *cgx;
@@ -347,6 +372,7 @@ void stop_peak_env(chan_info *cp)
     }
 }
 
+
 void force_fft_clear(chan_info *cp)
 {
   if ((cp->cgx) && (cp->cgx->fft_in_progress))
@@ -358,6 +384,7 @@ void force_fft_clear(chan_info *cp)
   if (cp->fft) cp->fft = free_fft_info(cp->fft);
   cp_free_fft_state(cp);
 }
+
 
 void chan_info_cleanup(chan_info *cp)
 {
@@ -376,6 +403,7 @@ void chan_info_cleanup(chan_info *cp)
     }
 }
 
+
 static void set_spectro_start(Float val) 
 {
   in_set_spectro_start(val);
@@ -383,6 +411,7 @@ static void set_spectro_start(Float val)
   if (!(ss->graph_hook_active)) 
     for_each_chan(update_graph);
 }
+
 
 static void chans_dot_size(chan_info *cp, int value)
 {
@@ -399,6 +428,7 @@ void set_dot_size(int val)
     }
 }
 
+
 static void chans_cursor_size(chan_info *cp, int value)
 {
   cp->cursor_size = value;
@@ -413,6 +443,7 @@ static void set_cursor_size(int val)
       for_each_chan_with_int(chans_cursor_size, val);
     }
 }
+
 
 static void chans_cursor_style(chan_info *cp, int value)
 {
@@ -435,6 +466,7 @@ static void set_cursor_style(cursor_style_t val)
   for_each_chan_with_int(chans_cursor_style, (int)val);
 }
 
+
 static void chans_tracking_cursor_style(chan_info *cp, int value)
 {
   cp->tracking_cursor_style = (cursor_style_t)value;
@@ -446,6 +478,7 @@ static void set_tracking_cursor_style(cursor_style_t val)
   for_each_chan_with_int(chans_tracking_cursor_style, (int)val);
 }
 
+
 chan_info *virtual_selected_channel(chan_info *cp)
 {
   snd_info *sp;
@@ -454,6 +487,7 @@ chan_info *virtual_selected_channel(chan_info *cp)
     return(cp);
   else return(sp->chans[sp->selected_channel]);
 }
+
 
 static int calculate_fft_1(chan_info *cp, bool update_display)
 {
@@ -475,11 +509,15 @@ void calculate_fft(chan_info *cp)
   calculate_fft_1(cp, FORCE_REDISPLAY);
 }
 
+
 static bool updating = false;
+
 
 #if HAVE_GUILE_DYNAMIC_WIND
 static void before_dpy(void *ignore) {}
+
 static void after_dpy(void *context) {updating = false;}
+
 static XEN dpy_body(void *context)
 {
   chan_info *cp = (chan_info *)context;
@@ -490,6 +528,7 @@ static XEN dpy_body(void *context)
   return(XEN_FALSE);
 }
 #endif
+
 
 static void update_graph_1(chan_info *cp, bool warn)
 {
@@ -546,15 +585,18 @@ static void update_graph_1(chan_info *cp, bool warn)
 #endif
 }
 
+
 void update_graph(chan_info *cp)
 {
   update_graph_1(cp, false);
 }
 
+
 void update_graph_or_warn(chan_info *cp)
 {
   update_graph_1(cp, true);
 }
+
 
 #define INITIAL_EDIT_SIZE 8
 
@@ -676,6 +718,7 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
   /* our initial edit_list size will be relatively small */
 }
 
+
 void start_peak_env(chan_info *cp)
 {
   chan_context *cgx;
@@ -687,6 +730,7 @@ void start_peak_env(chan_info *cp)
       cgx->peak_env_in_progress = BACKGROUND_ADD(get_peak_env, (any_pointer_t)cp);
     }
 }
+
 
 void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
 {
@@ -725,6 +769,7 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
     start_peak_env(cp);
 }
 
+
 static void set_y_bounds(axis_info *ap)
 {
   Float range;
@@ -738,6 +783,7 @@ static void set_y_bounds(axis_info *ap)
     }
   if (ap->y0 < ap->ymin) ap->y0 = ap->ymin;
 }
+
 
 void set_x_bounds(axis_info *ap)
 {
@@ -761,6 +807,7 @@ void set_x_bounds(axis_info *ap)
   if (ap->x0 < ap->xmin) ap->x0 = ap->xmin;
   ap->changed = true;
 }
+
 
 void apply_y_axis_change(axis_info *ap, chan_info *cp)
 {
@@ -794,6 +841,7 @@ void apply_y_axis_change(axis_info *ap, chan_info *cp)
     }
 }
 
+
 void set_x_axis_x0x1(chan_info *cp, double x0, double x1) 
 {
   axis_info *ap;
@@ -814,6 +862,7 @@ void set_x_axis_x0x1(chan_info *cp, double x0, double x1)
   ap->changed = true;
 }
 
+
 static void set_x_axis_x0(chan_info *cp, off_t left)
 {
   if (cp)
@@ -833,6 +882,7 @@ static void set_x_axis_x0(chan_info *cp, off_t left)
     }
 }
 
+
 static void set_x_axis_x1(chan_info *cp, off_t right)
 {
   if (cp)
@@ -849,6 +899,7 @@ static void set_x_axis_x1(chan_info *cp, off_t right)
     }
 }
 
+
 void reset_x_display(chan_info *cp, double sx, double zx)
 {
   axis_info *ap;
@@ -860,6 +911,7 @@ void reset_x_display(chan_info *cp, double sx, double zx)
   resize_zx(cp);
   update_graph_or_warn(cp);
 }
+
 
 static void update_xs(chan_info *ncp, axis_info *ap)
 {
@@ -876,6 +928,7 @@ static void update_xs(chan_info *ncp, axis_info *ap)
       reset_x_display(ncp, ap->sx * scl, ap->zx * scl);
     }
 }
+
 
 void apply_x_axis_change(axis_info *ap, chan_info *cp)
 {
@@ -902,6 +955,7 @@ void apply_x_axis_change(axis_info *ap, chan_info *cp)
     }
 }
 
+
 #define NO_ZOOM_FOCUS_LOCATION -1
 
 static off_t zoom_focus_location(chan_info *cp)
@@ -924,6 +978,7 @@ static off_t zoom_focus_location(chan_info *cp)
 
   return(NO_ZOOM_FOCUS_LOCATION);
 }
+
 
 void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
 {
@@ -1023,6 +1078,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
   apply_x_axis_change(ap, cp);
 }
 
+
 void sx_incremented(chan_info *cp, double amount)
 {
   axis_info *ap;
@@ -1033,6 +1089,7 @@ void sx_incremented(chan_info *cp, double amount)
   apply_x_axis_change(ap, cp);
   resize_sx(cp);
 }
+
 
 void zx_incremented(chan_info *cp, double amount)
 { /* kbd arrows etc -- needs to be able to return to original */
@@ -1049,6 +1106,7 @@ void zx_incremented(chan_info *cp, double amount)
       resize_zx(cp);
     }
 }
+
 
 int move_axis(chan_info *cp, axis_info *ap, int x)
 {
@@ -1074,6 +1132,7 @@ int move_axis(chan_info *cp, axis_info *ap, int x)
   return(nx);
 }
 
+
 void set_axes(chan_info *cp, double x0, double x1, Float y0, Float y1)
 {
   axis_info *ap;
@@ -1098,7 +1157,9 @@ void set_axes(chan_info *cp, double x0, double x1, Float y0, Float y1)
   resize_zy(cp);
 }
 
+
 /* these are copies from snd-axis.c; didn't want to use macros here */
+
 static int local_grf_x(double val, axis_info *ap)
 {
   if (val >= ap->x1) return(ap->x_axis_x1);
@@ -1112,6 +1173,7 @@ static int local_grf_y(Float val, axis_info *ap)
   if (val <= ap->y0) return(ap->y_axis_y0);
   return((int)(ap->y_base + val * ap->y_scale));
 }
+
 
 static void display_y_zero(chan_info *cp)
 {
@@ -1127,6 +1189,7 @@ static void display_y_zero(chan_info *cp)
     }
 }
 
+
 #if USE_MOTIF
   #define CHN_LABEL_OFFSET -5
 #else
@@ -1134,6 +1197,7 @@ static void display_y_zero(chan_info *cp)
 #endif
 
 static char chn_id_str[LABEL_BUFFER_SIZE];
+
 
 static void display_channel_id(chan_info *cp, int height, int chans)
 {
@@ -1163,11 +1227,13 @@ static void display_channel_id(chan_info *cp, int height, int chans)
     }
 }
 
+
 #if USE_MOTIF
   #define SELECTION_FFT_LABEL_OFFSET -3
 #else
   #define SELECTION_FFT_LABEL_OFFSET -15
 #endif
+
 
 static void display_selection_transform_size(chan_info *cp, axis_info *fap)
 {
@@ -1185,8 +1251,8 @@ static void display_selection_transform_size(chan_info *cp, axis_info *fap)
   if (cp->printing) ps_draw_string(fap, x0, y0, chn_id_str);
 }
 
-snd_info *make_simple_channel_display(int srate, int initial_length, 
-				      fw_button_t with_arrows, graph_style_t grf_style, widget_t container, bool with_events)
+
+snd_info *make_simple_channel_display(int srate, int initial_length, fw_button_t with_arrows, graph_style_t grf_style, widget_t container, bool with_events)
 {
   snd_info *sp;
   chan_info *cp;
@@ -1222,8 +1288,10 @@ snd_info *make_simple_channel_display(int srate, int initial_length,
   return(sp);
 }
 
+
 static axis_context *combined_context(chan_info *cp);
 static void make_wavogram(chan_info *cp);
+
 
 static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_sided)
 {
@@ -1425,8 +1493,18 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
   return(j);
 }
 
-int make_graph(chan_info *cp) {return(make_graph_1(cp, (double)(SND_SRATE(cp->sound)), true, NULL));}
-int make_background_graph(chan_info *cp, int srate, bool *two_sided) {return(make_graph_1(cp, (double)srate, false, two_sided));}
+
+int make_graph(chan_info *cp) 
+{
+  return(make_graph_1(cp, (double)(SND_SRATE(cp->sound)), true, NULL));
+}
+
+
+int make_background_graph(chan_info *cp, int srate, bool *two_sided) 
+{
+  return(make_graph_1(cp, (double)srate, false, two_sided));
+}
+
 
 int make_partial_graph(chan_info *cp, off_t beg, off_t end)
 {
@@ -1556,6 +1634,7 @@ int make_partial_graph(chan_info *cp, off_t beg, off_t end)
   return(j);
 }
 
+
 /* these next two procedures split "make_graph" into two pieces; the first
  *   gets the data to be graphed, using the amp envs and so on, and
  *   the second displays it.  (The first cp+pos may have no relation
@@ -1682,8 +1761,8 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
   else return(xen_make_vct(data_size, data));
 }
 
-void draw_graph_data(chan_info *cp, off_t losamp, off_t hisamp, int data_size, 
-		     Float *data, Float *data1, axis_context *ax, graph_style_t style)
+
+void draw_graph_data(chan_info *cp, off_t losamp, off_t hisamp, int data_size, Float *data, Float *data1, axis_context *ax, graph_style_t style)
 {
   off_t i, samps;
   int xi;
@@ -1735,6 +1814,7 @@ static int compare_peak_amps(const void *pk1, const void *pk2)
   else if (((fft_peak *)pk1)->amp == ((fft_peak *)pk2)->amp) return(0);
   return(1);
 }
+
 
 static char ampstr[LABEL_BUFFER_SIZE];
 #define AMP_ROOM 35
@@ -1855,6 +1935,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
   if (peak_freqs) FREE(peak_freqs); 
   if (peak_amps) FREE(peak_amps);
 }
+
 
 #define BLACK_AND_WHITE_COLORMAP 0
 /* defined as enum member in snd-gxcolormaps.c */
@@ -2075,6 +2156,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
   if (with_hook == WITH_HOOK) after_transform(cp, scale);
 }
 
+
 static int skew_color(Float x)
 {
   Float base, val;
@@ -2092,6 +2174,7 @@ static int skew_color(Float x)
     return(pos - 1);
   return(0);
 }
+
 
 static void make_sonogram(chan_info *cp)
 { 
@@ -2249,6 +2332,7 @@ static void make_sonogram(chan_info *cp)
     }
 }
 
+
 static void rotate_matrix(Float xangle, Float yangle, Float zangle, Float xscl, Float yscl, Float zscl, Float *mat)
 {
   /* return rotation matrix for rotation through angles xangle, yangle, then zangle with scaling by xscl, yscl, zscl */
@@ -2275,6 +2359,7 @@ static void rotate_matrix(Float xangle, Float yangle, Float zangle, Float xscl, 
   mat[8] = cosx * cosy * zscl;
 }
 
+
 static void rotate(Float *xyz, Float *mat)
 { /* use rotation/scaling matrix set up by rotate_matrix to rotate and scale the vector xyz */
   Float x, y, z;
@@ -2285,6 +2370,7 @@ static void rotate(Float *xyz, Float *mat)
   xyz[1] = mat[3] * x + mat[4] * y + mat[5] * z;
   xyz[2] = mat[6] * x + mat[7] * y + mat[8] * z;
 }
+
 
 #if HAVE_GL
 
@@ -2304,6 +2390,7 @@ void reset_spectro(void)
   #include <GL/glu.h>
 #endif
 
+
 static GLdouble unproject_to_x(int x, int y)
 {
 #if HAVE_GLU
@@ -2322,6 +2409,7 @@ static GLdouble unproject_to_x(int x, int y)
   return(0.0);
 #endif
 }
+
 
 static GLdouble unproject_to_y(int x, int y)
 {
@@ -2357,6 +2445,7 @@ void reset_spectro(void)
 }
 #endif
 
+
 static void display_channel_lisp_data(chan_info *cp);
 static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool erase_first, with_grid_t grid, log_axis_t log_axes, show_axes_t axes);
 
@@ -2384,6 +2473,7 @@ static void set_up_for_gl(chan_info *cp)
 #endif
 }
 
+
 static void gl_display(chan_info *cp)
 {
 #if USE_MOTIF
@@ -2396,11 +2486,13 @@ static void gl_display(chan_info *cp)
 #endif
 }
 
+
 #if USE_CAIRO
   #define GL_COLOR_SET(R, G, B) glColor3d(R, G, B)
 #else
   #define GL_COLOR_SET(R, G, B) glColor3us(R, G, B)
 #endif
+
 
 static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool use_dB, Float min_dB,
 			   rgb_t br, rgb_t bg, rgb_t bb)
@@ -2496,6 +2588,7 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool us
   js = NULL;
   glEndList();
 }
+
 
 static bool gl_warned_already = false;
 
@@ -2780,6 +2873,7 @@ static bool make_spectrogram(chan_info *cp)
   return(false);
 }
 
+
 static void make_wavogram(chan_info *cp)
 {
   snd_info *sp;
@@ -2952,6 +3046,7 @@ static void make_wavogram(chan_info *cp)
   free_snd_fd(sf);
 }
 
+
 typedef struct lisp_grf {
   int *len;
   Float **data;
@@ -2961,7 +3056,12 @@ typedef struct lisp_grf {
   show_axes_t show_axes;
 } lisp_grf;
 
-axis_info *lisp_info_axis(chan_info *cp) {return(cp->lisp_info->axis);}
+
+axis_info *lisp_info_axis(chan_info *cp) 
+{
+  return(cp->lisp_info->axis);
+}
+
 
 void free_lisp_info(chan_info *cp)
 {
@@ -2987,6 +3087,7 @@ void free_lisp_info(chan_info *cp)
 	}
     }
 }
+
 
 static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 {
@@ -3131,6 +3232,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
     }
 }
 
+
 static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool erase_first, with_grid_t grid, log_axis_t log_axes, show_axes_t axes)
 {
   snd_info *sp;
@@ -3156,8 +3258,10 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 	      cp->grid_density);
 }
 
+
 static void draw_sonogram_cursor(chan_info *cp);
 static void draw_graph_cursor(chan_info *cp);
+
 
 static void display_channel_data_with_size(chan_info *cp, 
 					   int width, int height, int offset, 
@@ -3459,6 +3563,7 @@ static void display_channel_data_with_size(chan_info *cp,
     } 
 }
 
+
 static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp, bool just_time, bool save_cr)
 {
   snd_info *sp;
@@ -3536,25 +3641,30 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
     }
 }
 
+
 void display_channel_fft_data(chan_info *cp)
 {
   display_channel_data_1(cp, true, false, false, false);
 }
+
 
 static void display_channel_lisp_data(chan_info *cp)
 {
   display_channel_data_1(cp, false, true, false, false);
 }
 
+
 void display_channel_time_data(chan_info *cp)
 {
   display_channel_data_1(cp, false, false, true, false);
 }
 
+
 void display_channel_data(chan_info *cp)
 {
   display_channel_data_1(cp, false, false, false, false);
 }
+
 
 void display_channel_data_for_print(chan_info *cp)
 {
@@ -3569,9 +3679,16 @@ static void draw_graph_cursor(chan_info *cp)
 {
   axis_info *ap;
   ap = cp->axis;
-  if ((CURSOR(cp) < ap->losamp) || (CURSOR(cp) > ap->hisamp)) return;
-  if ((cp->chan > 0) && (cp->sound->channel_style == CHANNELS_SUPERIMPOSED)) return;
+  if ((CURSOR(cp) < ap->losamp) || 
+      (CURSOR(cp) > ap->hisamp)) 
+    return;
+
+  if ((cp->chan > 0) && 
+      (cp->sound->channel_style == CHANNELS_SUPERIMPOSED)) 
+    return;
+
   if (cp->cursor_visible) erase_cursor(cp);
+
   cp->cx = local_grf_x((double)(CURSOR(cp)) / (double)SND_SRATE(cp->sound), ap); /* not float -- this matters in very long files (i.e. > 40 minutes) */
   if (cp->just_zero)
     cp->cy = local_grf_y(0.0, ap);
@@ -3579,6 +3696,7 @@ static void draw_graph_cursor(chan_info *cp)
   draw_cursor(cp);
   cp->cursor_visible = true;
 }
+
 
 static void draw_sonogram_cursor_1(chan_info *cp)
 {
@@ -3612,6 +3730,7 @@ static void draw_sonogram_cursor_1(chan_info *cp)
 #endif
 }
 
+
 static void draw_sonogram_cursor(chan_info *cp)
 {
   if ((cp->graph_transform_p) &&
@@ -3626,6 +3745,7 @@ static void draw_sonogram_cursor(chan_info *cp)
       cp->fft_cursor_visible = true;
     }
 }
+
 
 kbd_cursor_t cursor_decision(chan_info *cp)
 {
@@ -3655,6 +3775,7 @@ kbd_cursor_t cursor_decision(chan_info *cp)
     }
   return(CURSOR_IN_VIEW);
 }
+
 
 void handle_cursor(chan_info *cp, kbd_cursor_t redisplay)
 {
@@ -3711,6 +3832,7 @@ void handle_cursor(chan_info *cp, kbd_cursor_t redisplay)
   update_possible_selection_in_progress(CURSOR(cp));
 }
 
+
 void handle_cursor_with_sync(chan_info *cp, kbd_cursor_t redisplay)
 {
   snd_info *sp;
@@ -3726,6 +3848,7 @@ void handle_cursor_with_sync(chan_info *cp, kbd_cursor_t redisplay)
     }
   else handle_cursor(cp, redisplay);
 }
+
 
 void cursor_moveto(chan_info *cp, off_t samp)
 {
@@ -3752,10 +3875,12 @@ void cursor_moveto(chan_info *cp, off_t samp)
     }
 }
 
+
 void cursor_move(chan_info *cp, off_t samps)
 {
   cursor_moveto(cp, CURSOR(cp) + samps);
 }
+
 
 void cursor_moveto_without_verbosity(chan_info *cp, off_t samp)
 {
@@ -3769,6 +3894,7 @@ void cursor_moveto_without_verbosity(chan_info *cp, off_t samp)
   cp->verbose_cursor = old_verbose;
   cp->sound->sync = old_sync;
 }
+
 
 void cursor_moveto_with_window(chan_info *cp, off_t samp, off_t left_samp, off_t window_size)
 {
@@ -3798,6 +3924,7 @@ void cursor_moveto_with_window(chan_info *cp, off_t samp, off_t left_samp, off_t
   if (ap->x_ambit != 0.0)
     reset_x_display(cp, (gx - ap->xmin) / ap->x_ambit, ap->zx);
 }
+
 
 void show_cursor_info(chan_info *cp)
 {
@@ -3865,6 +3992,7 @@ void show_cursor_info(chan_info *cp)
   FREE(s2);
 }
 
+
 void goto_graph(chan_info *cp)
 {
   if ((cp) && (!(cp->squelch_update)))
@@ -3876,6 +4004,7 @@ void goto_graph(chan_info *cp)
       else goto_window(channel_graph(sp->chans[0]));
     }
 }
+
 
 
 /* ---------------- graphics callbacks ---------------- */
@@ -3937,6 +4066,7 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
     }
   return(CLICK_NOGRAPH);
 }
+
 
 static char *describe_fft_point(chan_info *cp, int x, int y)
 {
@@ -4009,6 +4139,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
   return(copy_string("?"));
 }
 
+
 void fftb(chan_info *cp, bool on)
 {
   cp->graph_transform_p = on;
@@ -4016,12 +4147,14 @@ void fftb(chan_info *cp, bool on)
   calculate_fft(cp);
 }
 
+
 void waveb(chan_info *cp, bool on)
 {
   cp->graph_time_p = on;
   set_toggle_button(channel_w(cp), on, false, (void *)cp);
   update_graph_or_warn(cp);
 }
+
 
 static void propagate_wf_state(snd_info *sp)
 {
@@ -4041,6 +4174,7 @@ static void propagate_wf_state(snd_info *sp)
     }
   for_each_sound_chan(sp, update_graph_or_warn);
 }
+
 
 void f_button_callback(chan_info *cp, bool on, bool with_control)
 {
@@ -4075,6 +4209,7 @@ void f_button_callback(chan_info *cp, bool on, bool with_control)
     }
 }
 
+
 void w_button_callback(chan_info *cp, bool on, bool with_control)
 {
   snd_info *sp;
@@ -4108,6 +4243,7 @@ void w_button_callback(chan_info *cp, bool on, bool with_control)
     }
 }
 
+
 bool key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
 {
   /* called by every key-intercepting widget in the entire sound pane */
@@ -4137,6 +4273,7 @@ bool key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
   return(false);
 }
 
+
 chan_info *which_channel(snd_info *sp, int y)
 {
   int i;
@@ -4153,6 +4290,7 @@ chan_info *which_channel(snd_info *sp, int y)
   return(ncp);
 }
 
+
 static Float fft_axis_extent(chan_info *cp)
 {
   axis_info *ap;
@@ -4162,10 +4300,12 @@ static Float fft_axis_extent(chan_info *cp)
   else return((Float)(ap->y_axis_y0 - ap->y_axis_y1));
 }
 
+
 static void calculate_syncd_fft(chan_info *cp, int value)
 {
   if (cp->sound->sync == value) calculate_fft(cp);
 }
+
 
 static bool dragged = false;
 static oclock_t mouse_down_time;
@@ -4183,13 +4323,17 @@ static chan_info *dragged_cp;
 static int press_x, press_y;
 #endif
 
+
 void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, oclock_t time)
 {
   snd_info *sp;
+
   sp = cp->sound;
   if ((!(cp->active)) || (sp == NULL)) return; /* autotest silliness */
+
   /* if combining, figure out which virtual channel the mouse is in */
   if (sp->channel_style == CHANNELS_COMBINED) cp = which_channel(sp, y);
+
   mouse_down_time = time;
 #ifdef MUS_MAC_OSX
   press_x = x;
@@ -4238,11 +4382,13 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
     }
 }
 
+
 #if USE_MOTIF
   #define BUTTON_2 Button2
 #else
   #define BUTTON_2 2
 #endif
+
 
 void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, int button)
 {
@@ -4432,9 +4578,11 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
     }
 }
 
+
 static oclock_t first_time = 0;
 static off_t mouse_cursor = 0;
 static XEN mark_drag_triangle_hook;
+
 
 void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 {
@@ -4507,7 +4655,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 	    case CLICK_WAVE:
 	      if (mix_tag != NO_MIX_TAG)
 		{
-		  move_mix_tag(mix_tag, x);
+		  move_mix_tag(mix_tag, x, y);
 		  dragged = true;
 		  return;
 		}
@@ -4581,6 +4729,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
     }
 }
 
+
 void channel_resize(chan_info *cp)
 {
   snd_info *sp;
@@ -4593,6 +4742,7 @@ void channel_resize(chan_info *cp)
     }
   else update_graph_or_warn(cp);
 }
+
 
 void edit_history_select(chan_info *cp, int row)
 {
@@ -4670,6 +4820,7 @@ axis_context *set_context(chan_info *cp, chan_gc_t gc)
   return(ax);
 }
 
+
 axis_context *copy_context(chan_info *cp)            {return(set_context(cp, CHAN_GC));}
 axis_context *erase_context(chan_info *cp)           {return(set_context(cp, CHAN_IGC));}
 axis_context *selection_context(chan_info *cp)       {return(set_context(cp, CHAN_SELGC));}
@@ -4677,6 +4828,8 @@ axis_context *cursor_context(chan_info *cp)          {return(set_context(cp, CHA
 axis_context *mark_tag_context(chan_info *cp)        {return(set_context(cp, CHAN_MGC));}
 axis_context *mix_waveform_context(chan_info *cp)    {return(set_context(cp, CHAN_MXGC));}
 static axis_context *combined_context(chan_info *cp) {return(set_context(cp, CHAN_TMPGC));}
+
+
 
 typedef enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GRAPH_LISP_P, CP_AP_LOSAMP, CP_AP_HISAMP, CP_SQUELCH_UPDATE,
 	      CP_EDIT_CTR, CP_CURSOR_STYLE, CP_EDIT_HOOK, CP_UNDO_HOOK, CP_AFTER_EDIT_HOOK,
@@ -4691,6 +4844,7 @@ typedef enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GR
 	      CP_BEATS_PER_MINUTE, CP_EDPOS_CURSOR, CP_SHOW_GRID, CP_SHOW_SONOGRAM_CURSOR, CP_GRID_DENSITY, CP_MAXAMP_POSITION,
 	      CP_EDPOS_MAXAMP_POSITION, CP_BEATS_PER_MEASURE, CP_FFT_WINDOW_ALPHA, CP_TRACKING_CURSOR_STYLE
 } cp_field_t;
+
 
 static XEN cp_edpos;
 static int cp_edpos_loc = NOT_A_GC_LOC;
@@ -4877,6 +5031,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
   return(XEN_FALSE);
 }
 
+
 static int g_imin(int mn, XEN val, int def)
 {
   int nval;
@@ -4885,6 +5040,7 @@ static int g_imin(int mn, XEN val, int def)
   return(mn);
 }
 
+
 static int g_omin(off_t mn, XEN val, off_t def)
 {
   off_t nval;
@@ -4892,6 +5048,7 @@ static int g_omin(off_t mn, XEN val, off_t def)
   if (nval >= mn) return(nval);
   return(mn);
 }
+
 
 static void reset_y_display(chan_info *cp, double sy, double zy)
 {
@@ -4904,12 +5061,14 @@ static void reset_y_display(chan_info *cp, double sy, double zy)
   apply_y_axis_change(ap, cp);
 }
 
+
 static void chans_x_axis_style(chan_info *cp, int value);
 
 static bool call_update_graph = true;
 #define MAX_SPECTRO_SCALE 1000.0
 #define MAX_SPECTRO_ANGLE 360.0
 #define MIN_SPECTRO_ANGLE -360.0
+
 
 static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char *caller)
 {
@@ -5341,11 +5500,13 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
   return(C_TO_XEN_BOOLEAN(val));
 }
 
+
 static XEN g_update_time_graph(XEN snd, XEN chn) 
 {
   #define H_update_time_graph "(" S_update_time_graph " :optional snd chn): redraw snd channel chn's graphs"
   return(channel_get(snd, chn, CP_UPDATE_TIME, S_update_time_graph));
 }
+
 
 static XEN g_update_transform_graph(XEN snd, XEN chn) 
 {
@@ -5353,11 +5514,13 @@ static XEN g_update_transform_graph(XEN snd, XEN chn)
   return(channel_get(snd, chn, CP_UPDATE_TRANSFORM_GRAPH, S_update_transform_graph));
 }
 
+
 static XEN g_update_lisp_graph(XEN snd, XEN chn) 
 {
   #define H_update_lisp_graph "(" S_update_lisp_graph " :optional snd chn): redraw snd channel chn's lisp graph"
   return(channel_get(snd, chn, CP_UPDATE_LISP, S_update_lisp_graph));
 }
+
 
 static XEN g_edit_position(XEN snd_n, XEN chn_n) 
 {
@@ -5373,6 +5536,8 @@ static XEN g_set_edit_position(XEN on, XEN snd_n, XEN chn_n)
 
 WITH_THREE_SETTER_ARGS(g_set_edit_position_reversed, g_set_edit_position)
 
+
+
 static XEN g_transform_graph_p(XEN snd_n, XEN chn_n) 
 {
   #define H_transform_graph_p "(" S_transform_graph_p " :optional snd chn): " PROC_TRUE " if fft display is active in snd's channel chn"
@@ -5386,6 +5551,8 @@ static XEN g_set_transform_graph_p(XEN on, XEN snd_n, XEN chn_n)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_transform_graph_p_reversed, g_set_transform_graph_p)
+
+
 
 static XEN g_time_graph_p(XEN snd_n, XEN chn_n) 
 {
@@ -5401,6 +5568,8 @@ static XEN g_set_time_graph_p(XEN on, XEN snd_n, XEN chn_n)
 
 WITH_THREE_SETTER_ARGS(g_set_time_graph_p_reversed, g_set_time_graph_p)
 
+
+
 static XEN g_lisp_graph_p(XEN snd_n, XEN chn_n) 
 {
   #define H_lisp_graph_p "(" S_lisp_graph_p " :optional snd chn): " PROC_TRUE " if lisp-generated data display is active in snd's channel chn"
@@ -5414,6 +5583,8 @@ static XEN g_set_lisp_graph_p(XEN on, XEN snd_n, XEN chn_n)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_lisp_graph_p_reversed, g_set_lisp_graph_p)
+
+
 
 static XEN g_cursor(XEN snd_n, XEN chn_n, XEN edpos) 
 {
@@ -5452,6 +5623,8 @@ static XEN g_set_cursor(XEN on, XEN snd_n, XEN chn_n, XEN edpos)
 }
 
 WITH_FOUR_SETTER_ARGS(g_set_cursor_reversed, g_set_cursor)
+
+
 
 static XEN g_cursor_style(XEN snd_n, XEN chn_n) 
 {
@@ -5512,6 +5685,8 @@ static XEN g_set_cursor_style(XEN on, XEN snd_n, XEN chn_n)
 
 WITH_THREE_SETTER_ARGS(g_set_cursor_style_reversed, g_set_cursor_style)
 
+
+
 static XEN g_tracking_cursor_style(XEN snd_n, XEN chn_n) 
 {
   #define H_tracking_cursor_style "(" S_tracking_cursor_style " :optional snd chn): current tracking cursor style in snd's channel chn. \
@@ -5541,6 +5716,8 @@ static XEN g_set_tracking_cursor_style(XEN on, XEN snd_n, XEN chn_n)
 
 WITH_THREE_SETTER_ARGS(g_set_tracking_cursor_style_reversed, g_set_tracking_cursor_style)
 
+
+
 static XEN g_cursor_size(XEN snd_n, XEN chn_n) 
 {
   #define H_cursor_size "(" S_cursor_size " :optional snd chn): current cursor size in snd's channel chn"
@@ -5560,11 +5737,14 @@ static XEN g_set_cursor_size(XEN on, XEN snd_n, XEN chn_n)
 
 WITH_THREE_SETTER_ARGS(g_set_cursor_size_reversed, g_set_cursor_size)
 
+
+
 static XEN g_cursor_position(XEN snd, XEN chn)
 {
   #define H_cursor_position "(" S_cursor_position " :optional snd chn): current cursor position (x y in pixels) in snd's channel chn"
   return(channel_get(snd, chn, CP_CURSOR_POSITION, S_cursor_position));
 }
+
 
 static XEN g_frames(XEN snd_n, XEN chn_n, XEN edpos)
 {
@@ -5592,6 +5772,8 @@ static XEN g_set_frames(XEN on, XEN snd_n, XEN chn_n)
 
 WITH_THREE_SETTER_ARGS(g_set_frames_reversed, g_set_frames)
 
+
+
 static XEN g_maxamp(XEN snd_n, XEN chn_n, XEN edpos) 
 {
   #define H_maxamp "(" S_maxamp " :optional snd chn edpos): maxamp of data in snd's channel chn"
@@ -5618,6 +5800,8 @@ static XEN g_set_maxamp(XEN on, XEN snd_n, XEN chn_n)
 
 WITH_THREE_SETTER_ARGS(g_set_maxamp_reversed, g_set_maxamp)
 
+
+
 static XEN g_maxamp_position(XEN snd_n, XEN chn_n, XEN edpos) 
 {
   #define H_maxamp_position "(" S_maxamp_position " :optional snd chn edpos): location of maxamp of data in snd's channel chn"
@@ -5636,6 +5820,7 @@ static XEN g_maxamp_position(XEN snd_n, XEN chn_n, XEN edpos)
   return(channel_get(snd_n, chn_n, CP_MAXAMP_POSITION, S_maxamp_position));
 }
 
+
 static XEN g_squelch_update(XEN snd_n, XEN chn_n) 
 {
   #define H_squelch_update "(" S_squelch_update " :optional snd chn): " PROC_TRUE " if updates (redisplays) are turned off in snd's channel chn"
@@ -5649,6 +5834,8 @@ static XEN g_set_squelch_update(XEN on, XEN snd_n, XEN chn_n)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_squelch_update_reversed, g_set_squelch_update)
+
+
 
 static XEN g_ap_sx(XEN snd_n, XEN chn_n) 
 {
@@ -5664,6 +5851,8 @@ static XEN g_set_ap_sx(XEN on, XEN snd_n, XEN chn_n)
 
 WITH_THREE_SETTER_ARGS(g_set_ap_sx_reversed, g_set_ap_sx)
 
+
+
 static XEN g_ap_sy(XEN snd_n, XEN chn_n) 
 {
   #define H_y_position_slider "(" S_y_position_slider " :optional snd chn): current y axis position slider of snd channel chn"
@@ -5677,6 +5866,8 @@ static XEN g_set_ap_sy(XEN on, XEN snd_n, XEN chn_n)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_ap_sy_reversed, g_set_ap_sy)
+
+
 
 static XEN g_ap_zx(XEN snd_n, XEN chn_n) 
 {
@@ -5693,6 +5884,7 @@ static XEN g_set_ap_zx(XEN on, XEN snd_n, XEN chn_n)
 WITH_THREE_SETTER_ARGS(g_set_ap_zx_reversed, g_set_ap_zx)
 
 
+
 static XEN g_ap_zy(XEN snd_n, XEN chn_n) 
 {
   #define H_y_zoom_slider "(" S_y_zoom_slider " :optional snd chn): current y axis zoom slider of snd channel chn"
@@ -5706,6 +5898,8 @@ static XEN g_set_ap_zy(XEN on, XEN snd_n, XEN chn_n)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_ap_zy_reversed, g_set_ap_zy)
+
+
 
 static XEN g_edit_hook(XEN snd_n, XEN chn_n) 
 {
@@ -5727,6 +5921,7 @@ the edit is aborted. \n  " edit_hook_example
   return(channel_get(snd_n, chn_n, CP_EDIT_HOOK, S_edit_hook));
 }
 
+
 static XEN g_after_edit_hook(XEN snd_n, XEN chn_n) 
 {
   #if HAVE_SCHEME
@@ -5746,6 +5941,7 @@ arguments. " S_after_edit_hook " is called after an edit, but before " S_after_g
   return(channel_get(snd_n, chn_n, CP_AFTER_EDIT_HOOK, S_after_edit_hook));
 }
 
+
 static XEN g_undo_hook(XEN snd_n, XEN chn_n) 
 {
   #define H_undo_hook "(" S_undo_hook " :optional snd chn): snd's channel chn's " S_undo_hook ". \
@@ -5754,6 +5950,7 @@ arguments. " S_undo_hook " is called just after any undo, redo, or revert that a
 
   return(channel_get(snd_n, chn_n, CP_UNDO_HOOK, S_undo_hook));
 }
+
 
 static XEN g_show_y_zero(XEN snd, XEN chn)
 {
@@ -5786,6 +5983,8 @@ static XEN g_set_show_y_zero(XEN on, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_show_y_zero_reversed, g_set_show_y_zero)
 
+
+
 static XEN g_show_grid(XEN snd, XEN chn)
 {
   #define H_show_grid "(" S_show_grid " :optional snd chn): " PROC_TRUE " if Snd should display a background grid in the graphs"
@@ -5804,6 +6003,8 @@ static XEN g_set_show_grid(XEN on, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_show_grid_reversed, g_set_show_grid)
+
+
 
 static XEN g_grid_density(XEN snd, XEN chn)
 {
@@ -5824,6 +6025,8 @@ static XEN g_set_grid_density(XEN on, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_grid_density_reversed, g_set_grid_density)
 
+
+
 static XEN g_show_sonogram_cursor(XEN snd, XEN chn)
 {
   #define H_show_sonogram_cursor "(" S_show_sonogram_cursor " :optional snd chn): " PROC_TRUE " if Snd should display a cursor in the sonogram"
@@ -5843,6 +6046,8 @@ static XEN g_set_show_sonogram_cursor(XEN on, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_show_sonogram_cursor_reversed, g_set_show_sonogram_cursor)
 
+
+
 static XEN g_min_dB(XEN snd, XEN chn) 
 {
   #define H_min_dB "(" S_min_dB " :optional snd chn): min dB value displayed in fft graphs using dB scales (default: -60)"
@@ -5850,7 +6055,6 @@ static XEN g_min_dB(XEN snd, XEN chn)
     return(channel_get(snd, chn, CP_MIN_DB, S_min_dB));
   return(C_TO_XEN_DOUBLE(min_dB(ss)));
 }
-
 
 static void update_db_graph(chan_info *cp, Float new_db)
 {
@@ -5895,6 +6099,8 @@ static XEN g_set_min_dB(XEN val, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_min_dB_reversed, g_set_min_dB)
 
+
+
 static XEN g_fft_window_beta(XEN snd, XEN chn) 
 {
   #define H_fft_window_beta "(" S_fft_window_beta " :optional snd chn): fft window beta parameter value"
@@ -5917,6 +6123,8 @@ static XEN g_set_fft_window_beta(XEN val, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_fft_window_beta_reversed, g_set_fft_window_beta)
+
+
 
 static XEN g_fft_window_alpha(XEN snd, XEN chn) 
 {
@@ -5941,6 +6149,8 @@ static XEN g_set_fft_window_alpha(XEN val, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_fft_window_alpha_reversed, g_set_fft_window_alpha)
 
+
+
 static XEN g_spectro_cutoff(XEN snd, XEN chn) 
 {
   #define H_spectro_cutoff "(" S_spectro_cutoff " :optional snd chn): max frequency shown in spectra (1.0 = srate/2)"
@@ -5963,6 +6173,8 @@ static XEN g_set_spectro_cutoff(XEN val, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_spectro_cutoff_reversed, g_set_spectro_cutoff)
+
+
 
 static XEN g_spectro_start(XEN snd, XEN chn) 
 {
@@ -5987,6 +6199,8 @@ static XEN g_set_spectro_start(XEN val, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_spectro_start_reversed, g_set_spectro_start)
 
+
+
 static XEN g_spectro_x_angle(XEN snd, XEN chn) 
 {
   #define H_spectro_x_angle "(" S_spectro_x_angle " :optional snd chn): spectrogram x-axis viewing angle (90.0)"
@@ -6005,6 +6219,8 @@ static XEN g_set_spectro_x_angle(XEN val, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_spectro_x_angle_reversed, g_set_spectro_x_angle)
+
+
 
 static XEN g_spectro_x_scale(XEN snd, XEN chn) 
 {
@@ -6025,6 +6241,8 @@ static XEN g_set_spectro_x_scale(XEN val, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_spectro_x_scale_reversed, g_set_spectro_x_scale)
 
+
+
 static XEN g_spectro_y_angle(XEN snd, XEN chn) 
 {
   #define H_spectro_y_angle "(" S_spectro_y_angle " :optional snd chn): spectrogram y-axis viewing angle (0.0)"
@@ -6043,6 +6261,8 @@ static XEN g_set_spectro_y_angle(XEN val, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_spectro_y_angle_reversed, g_set_spectro_y_angle)
+
+
 
 static XEN g_spectro_y_scale(XEN snd, XEN chn) 
 {
@@ -6063,6 +6283,8 @@ static XEN g_set_spectro_y_scale(XEN val, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_spectro_y_scale_reversed, g_set_spectro_y_scale)
 
+
+
 static XEN g_spectro_z_angle(XEN snd, XEN chn) 
 {
   #define H_spectro_z_angle "(" S_spectro_z_angle " :optional snd chn): spectrogram z-axis viewing angle (-2.0)"
@@ -6081,6 +6303,8 @@ static XEN g_set_spectro_z_angle(XEN val, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_spectro_z_angle_reversed, g_set_spectro_z_angle)
+
+
 
 static XEN g_spectro_z_scale(XEN snd, XEN chn) 
 {
@@ -6101,6 +6325,8 @@ static XEN g_set_spectro_z_scale(XEN val, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_spectro_z_scale_reversed, g_set_spectro_z_scale)
 
+
+
 static XEN g_spectro_hop(XEN snd, XEN chn)
 {
   #define H_spectro_hop "(" S_spectro_hop " :optional snd chn): hop amount (pixels) in spectral displays"
@@ -6119,6 +6345,7 @@ static XEN g_set_spectro_hop(XEN val, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_spectro_hop_reversed, g_set_spectro_hop)
+
 
 
 static XEN g_show_marks(XEN snd, XEN chn)
@@ -6152,6 +6379,8 @@ static XEN g_set_show_marks(XEN on, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_show_marks_reversed, g_set_show_marks)
 
+
+
 static XEN g_show_transform_peaks(XEN snd, XEN chn)
 {
   #define H_show_transform_peaks "(" S_show_transform_peaks " :optional snd chn): " PROC_TRUE " if fft display should include peak list"
@@ -6171,6 +6400,8 @@ static XEN g_set_show_transform_peaks(XEN val, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_show_transform_peaks_reversed, g_set_show_transform_peaks)
 
+
+
 static XEN g_zero_pad(XEN snd, XEN chn)
 {
   #define H_zero_pad "(" S_zero_pad " :optional snd chn): zero padding used in fft as a multiple of fft size (0)"
@@ -6189,6 +6420,8 @@ static XEN g_set_zero_pad(XEN val, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_zero_pad_reversed, g_set_zero_pad)
+
+
 
 static XEN g_wavelet_type(XEN snd, XEN chn)
 {
@@ -6213,6 +6446,8 @@ static XEN g_set_wavelet_type(XEN val, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_wavelet_type_reversed, g_set_wavelet_type)
 
+
+
 static XEN g_fft_log_frequency(XEN snd, XEN chn)
 {
   #define H_fft_log_frequency "(" S_fft_log_frequency " :optional snd chn): " PROC_TRUE " if fft displays use log on the frequency axis"
@@ -6231,6 +6466,8 @@ static XEN g_set_fft_log_frequency(XEN on, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_fft_log_frequency_reversed, g_set_fft_log_frequency)
+
+
 
 static XEN g_fft_log_magnitude(XEN snd, XEN chn)
 {
@@ -6251,6 +6488,8 @@ static XEN g_set_fft_log_magnitude(XEN on, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_fft_log_magnitude_reversed, g_set_fft_log_magnitude)
 
+
+
 static XEN g_show_mix_waveforms(XEN snd, XEN chn)
 {
   #define H_show_mix_waveforms "(" S_show_mix_waveforms " :optional snd chn): " PROC_TRUE " if Snd should display mix waveforms (above the main waveform)"
@@ -6269,6 +6508,8 @@ static XEN g_set_show_mix_waveforms(XEN on, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_show_mix_waveforms_reversed, g_set_show_mix_waveforms)
+
+
 
 static XEN g_verbose_cursor(XEN snd, XEN chn)
 {
@@ -6303,6 +6544,7 @@ static XEN g_set_verbose_cursor(XEN on, XEN snd, XEN chn)
 WITH_THREE_SETTER_ARGS(g_set_verbose_cursor_reversed, g_set_verbose_cursor)
 
 
+
 static XEN g_time_graph_type(XEN snd, XEN chn)
 {
   #define H_time_graph_type "(" S_time_graph_type " :optional snd chn): " S_graph_as_wavogram " if Snd's time domain display is a 'wavogram',\
@@ -6327,6 +6569,8 @@ static XEN g_set_time_graph_type(XEN val, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_time_graph_type_reversed, g_set_time_graph_type)
 
+
+
 static XEN g_wavo_hop(XEN snd, XEN chn)
 {
   #define H_wavo_hop "(" S_wavo_hop " :optional snd chn): wavogram spacing between successive traces"
@@ -6346,6 +6590,8 @@ static XEN g_set_wavo_hop(XEN val, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_wavo_hop_reversed, g_set_wavo_hop)
 
+
+
 static XEN g_wavo_trace(XEN snd, XEN chn)
 {
   #define H_wavo_trace "(" S_wavo_trace " :optional snd chn): length (samples) of each trace in the wavogram (64)"
@@ -6364,6 +6610,8 @@ static XEN g_set_wavo_trace(XEN val, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_wavo_trace_reversed, g_set_wavo_trace)
+
+
 
 static XEN g_transform_size(XEN snd, XEN chn)
 {
@@ -6391,6 +6639,8 @@ static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_transform_size_reversed, g_set_transform_size)
 
+
+
 static XEN g_transform_graph_type(XEN snd, XEN chn)
 {
   #define H_transform_graph_type "(" S_transform_graph_type " :optional snd chn) can \
@@ -6414,6 +6664,8 @@ static XEN g_set_transform_graph_type(XEN val, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_transform_graph_type_reversed, g_set_transform_graph_type)
+
+
 
 static XEN g_fft_window(XEN snd, XEN chn)
 {
@@ -6449,6 +6701,8 @@ static XEN g_set_fft_window(XEN val, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_fft_window_reversed, g_set_fft_window)
 
+
+
 static XEN g_transform_type(XEN snd, XEN chn)
 {
   #define H_transform_type "(" S_transform_type " :optional snd chn): transform type; can be one of " S_fourier_transform ", \
@@ -6474,6 +6728,8 @@ static XEN g_set_transform_type(XEN val, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_transform_type_reversed, g_set_transform_type)
+
+
 
 static XEN g_transform_normalization(XEN snd, XEN chn)
 {
@@ -6502,6 +6758,8 @@ static XEN g_set_transform_normalization(XEN val, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_transform_normalization_reversed, g_set_transform_normalization)
 
+
+
 static XEN g_max_transform_peaks(XEN snd, XEN chn)
 {
   #define H_max_transform_peaks "(" S_max_transform_peaks " :optional snd chn): max number of fft peaks reported in fft display"
@@ -6529,6 +6787,7 @@ static XEN g_set_max_transform_peaks(XEN n, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_max_transform_peaks_reversed, g_set_max_transform_peaks)
+
 
 
 static XEN g_graph_style(XEN snd, XEN chn)
@@ -6579,6 +6838,8 @@ static XEN g_set_graph_style(XEN style, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_graph_style_reversed, g_set_graph_style)
 
+
+
 static XEN g_time_graph_style(XEN snd, XEN chn)
 {
   #define H_time_graph_style "(" S_time_graph_style " snd chn): time domain graph drawing style. \
@@ -6600,6 +6861,8 @@ static XEN g_set_time_graph_style(XEN style, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_time_graph_style_reversed, g_set_time_graph_style)
 
+
+
 static XEN g_lisp_graph_style(XEN snd, XEN chn)
 {
   #define H_lisp_graph_style "(" S_lisp_graph_style " snd chn): lisp graph drawing style. \
@@ -6620,6 +6883,8 @@ static XEN g_set_lisp_graph_style(XEN style, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_lisp_graph_style_reversed, g_set_lisp_graph_style)
+
+
 
 static XEN g_transform_graph_style(XEN snd, XEN chn)
 {
@@ -6643,6 +6908,7 @@ static XEN g_set_transform_graph_style(XEN style, XEN snd, XEN chn)
 WITH_THREE_SETTER_ARGS(g_set_transform_graph_style_reversed, g_set_transform_graph_style)
 
 
+
 static XEN g_dot_size(XEN snd, XEN chn)
 {
   #define H_dot_size "(" S_dot_size " :optional snd chn): size in pixels of dots when graphing with dots (1)"
@@ -6663,6 +6929,8 @@ static XEN g_set_dot_size(XEN size, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_dot_size_reversed, g_set_dot_size)
+
+
 
 static XEN g_x_axis_style(XEN snd, XEN chn)
 {
@@ -6730,6 +6998,8 @@ static XEN g_set_x_axis_style(XEN style, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_x_axis_style_reversed, g_set_x_axis_style)
 
+
+
 static XEN g_beats_per_minute(XEN snd, XEN chn)
 {
   #define H_beats_per_minute "(" S_beats_per_minute " :optional snd chn): beats per minute if " S_x_axis_style " is " S_x_axis_in_beats
@@ -6755,6 +7025,8 @@ static XEN g_set_beats_per_minute(XEN beats, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_beats_per_minute_reversed, g_set_beats_per_minute)
 
+
+
 static XEN g_beats_per_measure(XEN snd, XEN chn)
 {
   #define H_beats_per_measure "(" S_beats_per_measure " :optional snd chn): beats per measure if " S_x_axis_style " is " S_x_axis_in_measures
@@ -6777,6 +7049,8 @@ static XEN g_set_beats_per_measure(XEN beats, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_beats_per_measure_reversed, g_set_beats_per_measure)
+
+
 
 static XEN g_show_axes(XEN snd, XEN chn)
 {
@@ -6809,6 +7083,8 @@ static XEN g_set_show_axes(XEN on, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_show_axes_reversed, g_set_show_axes)
 
+
+
 static XEN g_graphs_horizontal(XEN snd, XEN chn)
 {
   #define H_graphs_horizontal "(" S_graphs_horizontal " :optional snd chn): " PROC_TRUE " if the time domain, fft, and lisp graphs are layed out horizontally"
@@ -6827,6 +7103,8 @@ static XEN g_set_graphs_horizontal(XEN val, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_graphs_horizontal_reversed, g_set_graphs_horizontal)
+
+
 
 
 static void write_transform_peaks(FILE *fd, chan_info *ucp)
@@ -6900,6 +7178,7 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
   if (si) si = free_sync_info(si);
 }
 
+
 static XEN g_peaks(XEN filename, XEN snd_n, XEN chn_n)
 {
   #define H_peaks "(" S_peaks " :optional filename snd chn): write current fft peaks data to filename, or \
@@ -6947,6 +7226,7 @@ to the info dialog if filename is omitted"
   return(filename);
 }
 
+
 static XEN g_left_sample(XEN snd_n, XEN chn_n) 
 {
   #define H_left_sample "(" S_left_sample " :optional snd chn): left sample number in time domain window"
@@ -6961,6 +7241,8 @@ static XEN g_set_left_sample(XEN on, XEN snd_n, XEN chn_n)
 
 WITH_THREE_SETTER_ARGS(g_set_left_sample_reversed, g_set_left_sample)
 
+
+
 static XEN g_right_sample(XEN snd_n, XEN chn_n) 
 {
   #define H_right_sample "(" S_right_sample " :optional snd chn): right sample number in time domain window"
@@ -6974,6 +7256,8 @@ static XEN g_set_right_sample(XEN on, XEN snd_n, XEN chn_n)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_right_sample_reversed, g_set_right_sample)
+
+
 
 static XEN g_channel_properties(XEN snd_n, XEN chn_n) 
 {
@@ -6991,6 +7275,7 @@ static XEN g_set_channel_properties(XEN on, XEN snd_n, XEN chn_n)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_channel_properties_reversed, g_set_channel_properties)
+
 
 
 static XEN g_edit_properties(XEN snd_n, XEN chn_n, XEN pos) 
@@ -7033,6 +7318,7 @@ static XEN g_set_edit_properties(XEN on, XEN snd_n, XEN chn_n, XEN pos)
 WITH_FOUR_SETTER_ARGS(g_set_edit_properties_reversed, g_set_edit_properties)
 
 
+
 static XEN g_edits(XEN snd_n, XEN chn_n)
 {
   #define H_edits "(" S_edits " :optional snd chn): -> (list undoable-edits redoable-edits) in snd's channel chn"
@@ -7046,6 +7332,7 @@ static XEN g_edits(XEN snd_n, XEN chn_n)
   return(XEN_LIST_2(C_TO_XEN_INT(cp->edit_ctr),
 		    C_TO_XEN_INT(i - cp->edit_ctr - 1)));
 }
+
 
 static XEN g_x_bounds(XEN snd_n, XEN chn_n)
 {
@@ -7095,6 +7382,19 @@ static XEN g_set_x_bounds(XEN bounds, XEN snd_n, XEN chn_n)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_x_bounds_reversed, g_set_x_bounds)
+
+
+
+static XEN g_y_bounds(XEN snd_n, XEN chn_n)
+{
+  #define H_y_bounds "(" S_y_bounds " :optional snd chn): a list (y0 y1) giving the current y axis bounds of snd channel chn"
+  chan_info *cp;
+  ASSERT_CHANNEL(S_y_bounds, snd_n, chn_n, 1);
+  cp = get_cp(snd_n, chn_n, S_y_bounds);
+  if (!cp) return(XEN_FALSE);
+  return(XEN_LIST_2(C_TO_XEN_DOUBLE(cp->axis->y0),
+		    C_TO_XEN_DOUBLE(cp->axis->y1)));
+}
 
 static XEN g_set_y_bounds(XEN bounds, XEN snd_n, XEN chn_n)
 {
@@ -7157,16 +7457,7 @@ static XEN g_set_y_bounds(XEN bounds, XEN snd_n, XEN chn_n)
 
 WITH_THREE_SETTER_ARGS(g_set_y_bounds_reversed, g_set_y_bounds)
 
-static XEN g_y_bounds(XEN snd_n, XEN chn_n)
-{
-  #define H_y_bounds "(" S_y_bounds " :optional snd chn): a list (y0 y1) giving the current y axis bounds of snd channel chn"
-  chan_info *cp;
-  ASSERT_CHANNEL(S_y_bounds, snd_n, chn_n, 1);
-  cp = get_cp(snd_n, chn_n, S_y_bounds);
-  if (!cp) return(XEN_FALSE);
-  return(XEN_LIST_2(C_TO_XEN_DOUBLE(cp->axis->y0),
-		    C_TO_XEN_DOUBLE(cp->axis->y1)));
-}
+
 
 static XEN g_graph(XEN ldata, XEN xlabel, XEN x0, XEN x1, XEN y0, XEN y1, XEN snd_n, XEN chn_n, XEN force_display, XEN show_axes)
 {
@@ -7348,6 +7639,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
    */
 }
 
+
 #if HAVE_GL
 #define S_glSpectrogram "glSpectrogram"
 static XEN g_gl_spectrogram(XEN data, XEN gl_list, XEN cutoff, XEN use_dB, XEN min_dB, XEN scale, XEN br, XEN bg, XEN bb)
@@ -7391,6 +7683,7 @@ data and passes it to openGL.  See snd-gl.scm for an example."
 }
 #endif
 
+
 static XEN g_channel_data(XEN snd, XEN chn)
 {
   #define H_channel_data "(" S_channel_data " :optional snd chn) returns the in-core samples associated with the \
@@ -7422,6 +7715,7 @@ given channel.  Currently, this must be a channel (sound) created by " S_make_va
   return(XEN_FALSE);
 }
 
+
 static XEN g_variable_graph_p(XEN index)
 {
   #define H_variable_graph_p "(" S_variable_graph_p " :optional snd): " PROC_TRUE " if snd is the index of a variable graph (from " S_make_variable_graph ")."
@@ -7432,6 +7726,7 @@ static XEN g_variable_graph_p(XEN index)
     return(C_TO_XEN_BOOLEAN(sp->inuse == SOUND_WRAPPER));
   return(XEN_FALSE);
 }
+
 
 /* free-variable-graph is much too tricky because callbacks can be invoked after the
  *   controlling snd_info struct has been freed.  In Motif it appears to work to call
@@ -7488,12 +7783,14 @@ to a standard Snd channel graph placed in the widget 'container'."
   return(C_TO_XEN_INT(sp->index));
 }
 
+
 static XEN g_zoom_focus_style(void) 
 {
   if (zoom_focus_style(ss) != ZOOM_FOCUS_PROC)
     return(C_TO_XEN_INT((int)zoom_focus_style(ss)));
   return(ss->zoom_focus_proc);
 }
+
 
 static XEN g_set_zoom_focus_style(XEN focus) 
 {
@@ -7531,7 +7828,9 @@ be a function of 6 args (snd chan zx x0 x1 range) that returns the new window le
   return(focus);
 }
 
+
 static XEN g_with_gl(void) {return(C_TO_XEN_BOOLEAN(with_gl(ss)));}
+
 static XEN g_set_with_gl(XEN val) 
 {
   #define H_with_gl "(" S_with_gl "): " PROC_TRUE " if Snd should use GL graphics"
@@ -7847,6 +8146,7 @@ XEN_NARGIFY_1(g_set_with_gl_w, g_set_with_gl)
   #define g_gl_spectrogram_w g_gl_spectrogram
 #endif
 #endif
+
 
 void g_init_chn(void)
 {

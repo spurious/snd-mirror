@@ -545,7 +545,7 @@ typedef struct {
   char *in_filename;
   off_t in_samps;
   int in_chan;
-  int tag_y;
+  int tag_x, tag_y;
   int sync;
   file_delete_t temporary;     /* in-filename was written by us and needs to be deleted when mix state is deleted */
   peak_env_info *peak_env;
@@ -771,6 +771,7 @@ static mix_info *make_mix_info(chan_info *cp)
   md->temporary = DONT_DELETE_ME;
   md->color = ss->sgx->mix_color;
   md->tag_y = 0;
+  md->tag_x = 0;
   md->name = NULL;
   md->y = MIX_TAG_ERASED;
   md->peak_env = NULL;
@@ -1457,7 +1458,9 @@ int hit_mix(chan_info *cp, int x, int y) /* mix tag press in snd-chn.c */
 	  if (ms)
 	    {
 	      int mx, my;
-	      mx = grf_x((double)(ms->beg) / (double)(SND_SRATE(cp->sound)), cp->axis);
+	      mx = mix_infos[ms->mix_id]->tag_x;
+	      if (mx <= 0)
+		mx = grf_x((double)(ms->beg) / (double)(SND_SRATE(cp->sound)), cp->axis);
 	      my = mix_infos[ms->mix_id]->tag_y + MIX_TAG_Y_OFFSET + cp->axis->y_offset;
 	      if ((x + SLOPPY_MOUSE >= (mx - width / 2)) && 
 		  (x - SLOPPY_MOUSE <= (mx + width / 2)) &&
@@ -1519,10 +1522,15 @@ static void draw_mix_tag(mix_info *md, int x, int y)
 				      C_TO_XEN_INT(x),
 				      C_TO_XEN_INT(y)),
 			   S_draw_mix_hook);
-      if (XEN_TRUE_P(res))
+      if (!(XEN_FALSE_P(res)))
 	{
 	  md->x = x;
 	  md->y = y;
+	  if (XEN_LIST_P(res))
+	    {
+	      md->tag_x = XEN_TO_C_INT(XEN_CAR(res));
+	      md->tag_y = XEN_TO_C_INT(XEN_CADR(res));
+	    }
 	  return;
 	}
     }
@@ -2013,7 +2021,7 @@ static TIMEOUT_TYPE watch_mix(TIMEOUT_ARGS)
   if (watch_mix_proc != 0)
     {
       watch_mix_x_incr *= 1.1;
-      move_mix_tag(md->id, (int)(md->x + watch_mix_x_incr));
+      move_mix_tag(md->id, (int)(md->x + watch_mix_x_incr), md->y);
       watch_mix_proc = CALL_TIMEOUT(watch_mix, MIX_WAIT_TIME, md);
     }
   TIMEOUT_RESULT
@@ -2029,9 +2037,9 @@ static XEN mix_drag_hook;
 
 static off_t drag_beg = 0, drag_end = 0;
 
-void move_mix_tag(int mix_id, int x) 
+void move_mix_tag(int mix_id, int x, int y) 
 {
-  /* dragging mix, hit_mix returns id, called only from snd-chn.c */
+  /* dragging mix, hit_mix returns id, called only from snd-chn.c and above (watch_mix) */
   mix_info *md;
   mix_state *ms;
   axis_info *ap;
@@ -2106,7 +2114,9 @@ void move_mix_tag(int mix_id, int x)
 
   if (XEN_HOOKED(mix_drag_hook))
     run_hook(mix_drag_hook,
-	     XEN_LIST_1(C_TO_XEN_INT(mix_id)),
+	     XEN_LIST_3(C_TO_XEN_INT(mix_id),
+			C_TO_XEN_INT(x),
+			C_TO_XEN_INT(y)),
 	     S_mix_drag_hook);
 }
 
@@ -3362,9 +3372,9 @@ void g_init_mix(void)
 
   mix_release_hook = XEN_DEFINE_HOOK(S_mix_release_hook, 2, H_mix_release_hook);
 
-  #define H_mix_drag_hook S_mix_drag_hook " (id): called when a mix is dragged"
+  #define H_mix_drag_hook S_mix_drag_hook " (id x y): called when a mix is dragged"
 
-  mix_drag_hook = XEN_DEFINE_HOOK(S_mix_drag_hook, 1, H_mix_drag_hook); /* arg = id */
+  mix_drag_hook = XEN_DEFINE_HOOK(S_mix_drag_hook, 3, H_mix_drag_hook); /* args = id, mouse x, mouse or tag y */
 
   /* the name draw-mix-hook is inconsistent with the other mix hooks (mix-draw-hook?), but is intended to parallel draw-mark-hook */
   #define H_draw_mix_hook S_draw_mix_hook " (id): called when a mix tag is about to be displayed"
