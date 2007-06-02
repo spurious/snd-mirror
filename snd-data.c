@@ -1,5 +1,6 @@
 #include "snd.h"
 
+
 chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
 {
   chan_info *cp; /* may be re-used */
@@ -114,6 +115,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   return(cp);
 }
 
+
 static chan_info *free_chan_info(chan_info *cp)
 {
   /* this does not free the associated widgets -- they are merely unmanaged */
@@ -213,6 +215,7 @@ static chan_info *free_chan_info(chan_info *cp)
   return(cp);  /* pointer is left for possible future re-use */
 }
 
+
 snd_info *make_basic_snd_info(int chans)
 {
   snd_info *sp = NULL;
@@ -223,6 +226,7 @@ snd_info *make_basic_snd_info(int chans)
   sp->properties_loc = NOT_A_GC_LOC;
   return(sp);
 }
+
 
 void initialize_control_panel(snd_info *sp)
 {
@@ -282,6 +286,7 @@ void initialize_control_panel(snd_info *sp)
   sp->filter_control_changed = false;
   sp->saved_controls = NULL;
 }
+
 
 snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int snd_slot, bool read_only)
 {
@@ -343,6 +348,7 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
   sp->with_tracking_cursor = with_tracking_cursor(ss);
   return(sp);
 }
+
 
 void free_snd_info(snd_info *sp)
 {
@@ -432,6 +438,7 @@ void free_snd_info(snd_info *sp)
   reflect_mix_change(ANY_MIX_ID);
 }
 
+
 snd_info *completely_free_snd_info(snd_info *sp)
 {
   int i;
@@ -467,6 +474,7 @@ snd_info *completely_free_snd_info(snd_info *sp)
   return(NULL);
 }
 
+
 void for_each_chan_with_int(void (*func)(chan_info *ncp, int val), int value)
 {
   int i, j;
@@ -481,6 +489,7 @@ void for_each_chan_with_int(void (*func)(chan_info *ncp, int val), int value)
 	    (*func)(cp, value);
     }
 }
+
 
 void for_each_chan_with_off_t(void (*func)(chan_info *ncp, off_t val), off_t value)
 {
@@ -497,6 +506,7 @@ void for_each_chan_with_off_t(void (*func)(chan_info *ncp, off_t val), off_t val
     }
 }
 
+
 void for_each_chan_with_bool(void (*func)(chan_info *ncp, bool val), bool value)
 {
   int i, j;
@@ -511,6 +521,7 @@ void for_each_chan_with_bool(void (*func)(chan_info *ncp, bool val), bool value)
 	    (*func)(cp, value);
     }
 }
+
 
 void for_each_chan_with_float(void (*func)(chan_info *ncp, Float val), Float value)
 {
@@ -527,6 +538,7 @@ void for_each_chan_with_float(void (*func)(chan_info *ncp, Float val), Float val
     }
 }
 
+
 void for_each_chan(void (*func)(chan_info *ncp))
 {
   int i, j;
@@ -541,6 +553,7 @@ void for_each_chan(void (*func)(chan_info *ncp))
 	    (*func)(cp);
     }
 }
+
 
 void for_each_normal_chan_with_void(void (*func)(chan_info *ncp, void *ptr), void *userptr)
 {
@@ -557,6 +570,7 @@ void for_each_normal_chan_with_void(void (*func)(chan_info *ncp, void *ptr), voi
     }
 }
 
+
 void for_each_normal_chan_with_int(void (*func)(chan_info *ncp, int val), int value)
 {
   int i, j;
@@ -571,6 +585,7 @@ void for_each_normal_chan_with_int(void (*func)(chan_info *ncp, int val), int va
 	    (*func)(cp, value);
     }
 }
+
 
 void for_each_normal_chan_with_refint(void (*func)(chan_info *ncp, int *val), int *value)
 {
@@ -587,6 +602,7 @@ void for_each_normal_chan_with_refint(void (*func)(chan_info *ncp, int *val), in
     }
 }
 
+
 void for_each_normal_chan(void (*func)(chan_info *ncp))
 {
   int i, j;
@@ -602,20 +618,17 @@ void for_each_normal_chan(void (*func)(chan_info *ncp))
     }
 }
 
-bool map_over_sound_chans_with_int(snd_info *sp, bool (*func)(chan_info *ncp, int val1), int value)
+
+void map_over_sound_chans_with_int(snd_info *sp, void (*func)(chan_info *ncp, int val1), int value)
 {
   /* non-zero = abort map, skips inactive sounds */
   int j;
-  bool val = false;
-  chan_info *cp;
+   chan_info *cp;
   for (j = 0; j < sp->nchans; j++)
     if ((cp = sp->chans[j]))
-      {
-	val = (*func)(cp, value);
-	if (val) return(val);
-      }
-  return(val);
+      (*func)(cp, value);
 }
+
 
 bool map_over_sound_chans(snd_info *sp, bool (*func)(chan_info *ncp))
 {
@@ -632,6 +645,7 @@ bool map_over_sound_chans(snd_info *sp, bool (*func)(chan_info *ncp))
   return(val);
 }
 
+
 void for_each_sound_chan(snd_info *sp, void (*func)(chan_info *ncp))
 {
   int j;
@@ -640,6 +654,7 @@ void for_each_sound_chan(snd_info *sp, void (*func)(chan_info *ncp))
     if ((cp = sp->chans[j]))
       (*func)(cp);
 }
+
 
 void for_each_sound(void (*func)(snd_info *usp))
 {
@@ -653,6 +668,7 @@ void for_each_sound(void (*func)(snd_info *usp))
     }
 }
 
+
 void for_each_sound_with_void(void (*func)(snd_info *usp, void *ptr), void *userptr)
 {
   int i;
@@ -664,6 +680,7 @@ void for_each_sound_with_void(void (*func)(snd_info *usp, void *ptr), void *user
 	(*func)(sp, userptr);
     }
 }
+
 
 bool map_over_separate_chans(bool (*func)(chan_info *ncp))
 {
@@ -685,12 +702,14 @@ bool map_over_separate_chans(bool (*func)(chan_info *ncp))
   return(val);
 }
 
+
 bool snd_ok(snd_info *sp) 
 {
   return((sp) && 
 	 (sp->inuse != SOUND_IDLE) && 
 	 (sp->active));
 }
+
 
 int active_channels(virtual_channels_t count_virtual_channels)
 {
@@ -710,6 +729,7 @@ int active_channels(virtual_channels_t count_virtual_channels)
     }
   return(chans);
 }
+
 
 #define SOUNDS_ALLOC_SIZE 4
 
@@ -749,6 +769,7 @@ int find_free_sound_slot(int desired_chans)
   return(j);
 }
 
+
 int find_free_sound_slot_for_channel_display(void)
 {
   int i, j;
@@ -760,6 +781,7 @@ int find_free_sound_slot_for_channel_display(void)
   for (i = j; i < ss->max_sounds; i++) ss->sounds[i] = NULL;
   return(j);
 }
+
 
 static snd_info *any_active_sound(void)
 {
@@ -774,6 +796,7 @@ static snd_info *any_active_sound(void)
   return(NULL);
 }
 
+
 snd_info *selected_sound(void)
 {
   if ((ss->selected_sound != NO_SELECTION) &&
@@ -783,6 +806,7 @@ snd_info *selected_sound(void)
   return(NULL);
 }
 
+
 snd_info *any_selected_sound(void)
 {
   snd_info *sp;
@@ -790,6 +814,7 @@ snd_info *any_selected_sound(void)
   if (!sp) sp = any_active_sound();
   return(sp);
 }
+
 
 chan_info *any_selected_channel(snd_info *sp)
 {
@@ -800,6 +825,7 @@ chan_info *any_selected_channel(snd_info *sp)
     return(sp->chans[chan]);
   return(NULL);
 }
+
 
 chan_info *selected_channel(void)
 {
@@ -812,6 +838,7 @@ chan_info *selected_channel(void)
     }
   return(NULL);
 }
+
 
 static XEN select_sound_hook;
 static XEN select_channel_hook;
@@ -834,6 +861,7 @@ static void select_sound(snd_info *sp)
   run_watchers();
 }
 
+
 chan_info *color_selected_channel(snd_info *sp)
 {
   chan_info *ncp;
@@ -843,6 +871,7 @@ chan_info *color_selected_channel(snd_info *sp)
   update_graph(ncp); /* update any indication of change in selected channel (channel id for example) */
   return(ncp);
 }
+
 
 void select_channel(snd_info *sp, int chan)
 {
@@ -870,6 +899,7 @@ void select_channel(snd_info *sp, int chan)
     }
 }
 
+
 chan_info *current_channel(void)
 {
   snd_info *sp = NULL;
@@ -879,6 +909,7 @@ chan_info *current_channel(void)
   if (sp) return(any_selected_channel(sp));
   return(NULL);
 }
+
 
 sync_info *free_sync_info(sync_info *si)
 {
@@ -892,6 +923,7 @@ sync_info *free_sync_info(sync_info *si)
     }
   return(NULL);
 }
+
 
 int syncd_channels(int sync)
 {
@@ -909,6 +941,7 @@ int syncd_channels(int sync)
     }
   return(0);
 }
+
 
 sync_info *snd_sync(int sync)
 {
@@ -935,6 +968,7 @@ sync_info *snd_sync(int sync)
   return(NULL);
 }
 
+
 sync_info *make_simple_sync(chan_info *cp, off_t beg)
 {
   sync_info *si;
@@ -947,6 +981,7 @@ sync_info *make_simple_sync(chan_info *cp, off_t beg)
   return(si);
 }
 
+
 sync_info *sync_to_chan(chan_info *cp)
 {
   snd_info *sp;
@@ -955,6 +990,7 @@ sync_info *sync_to_chan(chan_info *cp)
     return(snd_sync(sp->sync));
   return(make_simple_sync(cp, 0));
 }
+
 
 snd_info *find_sound(const char *name, int nth)
 {
@@ -978,6 +1014,7 @@ snd_info *find_sound(const char *name, int nth)
   return(NULL);
 }
 
+
 static char *display_maxamps(const char *filename, int chans)
 {
   char *ampstr;
@@ -999,6 +1036,7 @@ static char *display_maxamps(const char *filename, int chans)
   FREE(times);
   return(ampstr);
 }
+
 
 void display_info(snd_info *sp)
 {
@@ -1043,6 +1081,7 @@ void display_info(snd_info *sp)
 	}
     }
 }
+
 
 #if MUS_DEBUGGING && HAVE_GUILE
 static XEN g_display_info(void)

@@ -468,7 +468,7 @@ void free_ed_mixes(void *ptr)
 }
 
 
-mix_state *add_ed_mix(ed_list *ed, mix_state *ms)
+void add_ed_mix(ed_list *ed, mix_state *ms)
 {
   mix_list *mxl;
   int loc = -1;
@@ -499,7 +499,6 @@ mix_state *add_ed_mix(ed_list *ed, mix_state *ms)
 	}
     }
   mxl->list[loc] = ms;
-  return(ms);
 }
 
 
@@ -1085,6 +1084,7 @@ static color_t mix_set_color_from_id(int id, color_t new_color)
 bool mix_set_amp_edit(int id, Float amp)
 {
   mix_info *md;
+  bool edited = false;
   mix_state *old_ms = NULL;
   md = md_from_id(id);
   if (md) old_ms = current_mix_state(md); /* needed for edit bounds and existence check */
@@ -1103,15 +1103,17 @@ bool mix_set_amp_edit(int id, Float amp)
 #if HAVE_RUBY
 	  origin = mus_format("set_mix_amp(_mix_%d, %.4f)", id, amp);
 #endif
-	  begin_mix_op(md->cp, old_ms->beg, old_ms->len, old_ms->beg, old_ms->len, md->cp->edit_ctr, origin);
+	  edited = begin_mix_op(md->cp, old_ms->beg, old_ms->len, old_ms->beg, old_ms->len, md->cp->edit_ctr, origin);
 	  FREE(origin);
-	  ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
-	  ms->scaler = amp;
-	  end_mix_op(md->cp, 0, 0);
+	  if (edited)
+	    {
+	      ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
+	      ms->scaler = amp;
+	      end_mix_op(md->cp, 0, 0);
+	    }
 	}
-      return(true);
     }
-  return(false);
+  return(edited);
 }
 
 
@@ -1261,6 +1263,7 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
 bool mix_set_amp_env_edit(int id, env *e)
 {
   mix_info *md;
+  bool edited = false;
   mix_state *old_ms = NULL;
   md = md_from_id(id);
   if (md) old_ms = current_mix_state(md); /* needed for edit bounds and existence check */
@@ -1285,28 +1288,31 @@ bool mix_set_amp_env_edit(int id, env *e)
 	  FREE(envstr);
 
 	  cp = md->cp;
-	  begin_mix_op(cp, old_ms->beg, old_ms->len, old_ms->beg, old_ms->len, cp->edit_ctr, origin); /* this does not change beg or len */
+	  edited = begin_mix_op(cp, old_ms->beg, old_ms->len, old_ms->beg, old_ms->len, cp->edit_ctr, origin); /* this does not change beg or len */
 	  FREE(origin);
-	  ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
-	  if (ms->amp_env) free_env(ms->amp_env);
-	  ms->amp_env = copy_env(e);
+	  if (edited)
+	    {
+	      ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
+	      if (ms->amp_env) free_env(ms->amp_env);
+	      ms->amp_env = copy_env(e);
 
-	  /* can't use mus_env (as the reader op) here because we need to run backwards */
-	  if ((e) || (ms->speed != 1.0))
-	    ms->index = remake_mix_data(ms, md);
-	  else ms->index = md->original_index;
+	      /* can't use mus_env (as the reader op) here because we need to run backwards */
+	      if ((e) || (ms->speed != 1.0))
+		ms->index = remake_mix_data(ms, md);
+	      else ms->index = md->original_index;
 	  
-	  end_mix_op(cp, 0, 0);
+	      end_mix_op(cp, 0, 0);
+	    }
 	}
-      return(true);
     }
-  return(false);
+  return(edited);
 }
 
 
 bool mix_set_position_edit(int id, off_t pos)
 {
   mix_info *md;
+  bool edited = false;
   mix_state *old_ms = NULL;
   if (pos < 0) pos = 0;
   md = md_from_id(id);
@@ -1326,24 +1332,27 @@ bool mix_set_position_edit(int id, off_t pos)
 #if HAVE_RUBY
 	  origin = mus_format("set_mix_position(_mix_%d, " OFF_TD ")", id, pos);
 #endif
-	  begin_mix_op(md->cp, old_ms->beg, old_ms->len, pos, old_ms->len, md->cp->edit_ctr, origin); /* this does not change beg or len */
+	  edited = begin_mix_op(md->cp, old_ms->beg, old_ms->len, pos, old_ms->len, md->cp->edit_ctr, origin); /* this does not change beg or len */
 
 	  FREE(origin);
-	  ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
-	  unmix(md->cp, ms);
-	  ms->beg = pos;
-	  remix(md->cp, ms);
-	  end_mix_op(md->cp, (old_ms->beg != pos) ? old_ms->beg : 0, old_ms->len);
+	  if (edited)
+	    {
+	      ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
+	      unmix(md->cp, ms);
+	      ms->beg = pos;
+	      remix(md->cp, ms);
+	      end_mix_op(md->cp, (old_ms->beg != pos) ? old_ms->beg : 0, old_ms->len);
+	    }
 	}
-      return(true);
     }
-  return(false);
+  return(edited);
 }
 
 
 bool mix_set_speed_edit(int id, Float spd)
 {
   mix_info *md;
+  bool edited = false;
   mix_state *old_ms = NULL;
   md = md_from_id(id);
   if (md) old_ms = current_mix_state(md); /* needed for edit bounds and existence check */
@@ -1366,24 +1375,26 @@ bool mix_set_speed_edit(int id, Float spd)
 #endif
 	  cp = md->cp;
 	  len = snd_round_off_t((double)(md->in_samps) / (double)spd);
-	  begin_mix_op(cp, old_ms->beg, old_ms->len, old_ms->beg, len, cp->edit_ctr, origin);
+	  edited = begin_mix_op(cp, old_ms->beg, old_ms->len, old_ms->beg, len, cp->edit_ctr, origin);
 	  
 	  FREE(origin);
-	  ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
-	  unmix(cp, ms);                      /*   but unmix before changing mix length! */
+	  if (edited)
+	    {
+	      ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
+	      unmix(cp, ms);                      /*   but unmix before changing mix length! */
 
-	  ms->speed = spd;
-	  ms->len = len;
-	  if ((ms->speed != 1.0) || (ms->amp_env))
-	    ms->index = remake_mix_data(ms, md);
-	  else ms->index = md->original_index;
-	  
-	  remix(cp, ms);
-	  end_mix_op(cp, 0, 0); /* old_ms->beg, old_ms->len); */
+	      ms->speed = spd;
+	      ms->len = len;
+	      if ((ms->speed != 1.0) || (ms->amp_env))
+		ms->index = remake_mix_data(ms, md);
+	      else ms->index = md->original_index;
+	      
+	      remix(cp, ms);
+	      end_mix_op(cp, 0, 0); /* old_ms->beg, old_ms->len); */
+	    }
 	}
-      return(true);
     }
-  return(false);
+  return(edited);
 }
 
 /* mix-samples/set-mix-samples? 
@@ -2251,13 +2262,14 @@ static XEN g_set_mix_position(XEN n, XEN pos)
   XEN_ASSERT_TYPE(XEN_OFF_T_P(pos), pos, XEN_ARG_2, S_setB S_mix_position, "an integer");
 
   id = XEN_TO_C_INT(n);
+  if (!(mix_is_active(id)))
+    return(snd_no_such_mix_error(S_setB S_mix_position, n));
+
   beg = beg_to_sample(pos, S_setB S_mix_position);
   if (mix_set_position_edit(id, beg))
-    {
-      after_mix_edit(id);
-      return(pos);
-    }
-  return(snd_no_such_mix_error(S_setB S_mix_position, n));  
+    after_mix_edit(id);
+
+  return(pos);
 }
 
 
@@ -2280,12 +2292,13 @@ static XEN g_set_mix_amp(XEN n, XEN uval)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(uval), uval, XEN_ARG_2, S_setB S_mix_amp, "a number");
 
   id = XEN_TO_C_INT(n);
+  if (!(mix_is_active(id)))
+    return(snd_no_such_mix_error(S_setB S_mix_amp, n));
+
   if (mix_set_amp_edit(id, XEN_TO_C_DOUBLE(uval)))
-    {
-      after_mix_edit(id);
-      return(uval);
-    }
-  return(snd_no_such_mix_error(S_setB S_mix_amp, n));  
+    after_mix_edit(id);
+
+  return(uval);
 }
 
 
@@ -2304,23 +2317,23 @@ static XEN g_mix_amp_env(XEN n)
 static XEN g_set_mix_amp_env(XEN n, XEN val) 
 {
   env *e = NULL;
-  bool result;
   int id;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_amp_env, "an integer");
   XEN_ASSERT_TYPE(XEN_LIST_P(val) || XEN_FALSE_P(val), val, XEN_ARG_2, S_setB S_mix_amp_env, "a list or " PROC_FALSE);
 
+  id = XEN_TO_C_INT(n);
+  if (!(mix_is_active(id)))
+    return(snd_no_such_mix_error(S_setB S_mix_amp_env, n));  
+
   if (XEN_LIST_P(val))
     e = get_env(val, S_setB S_mix_amp_env);
 
-  id = XEN_TO_C_INT(n);
-  result = mix_set_amp_env_edit(id, e);
-  after_mix_edit(id);
+  if (mix_set_amp_env_edit(id, e))
+    after_mix_edit(id);
 
   /* e is copied by mix_set_amp_env_edit, and created by get_env (xen_to_env), so it should be freed here */
   if (e) free_env(e);
-
-  if (result) return(val);
-  return(snd_no_such_mix_error(S_setB S_mix_amp_env, n));  
+  return(val);
 }
 
 
@@ -2343,12 +2356,13 @@ static XEN g_set_mix_speed(XEN n, XEN uval)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(uval), uval, XEN_ARG_2, S_setB S_mix_speed, "a number");
 
   id = XEN_TO_C_INT(n);
+  if (!(mix_is_active(id)))
+    return(snd_no_such_mix_error(S_setB S_mix_speed, n));  
+
   if (mix_set_speed_edit(id, XEN_TO_C_DOUBLE(uval)))
-    {
-      after_mix_edit(id);
-      return(uval);
-    }
-  return(snd_no_such_mix_error(S_setB S_mix_speed, n));
+    after_mix_edit(id);
+
+  return(uval);
 }
 
 

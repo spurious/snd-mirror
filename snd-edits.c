@@ -6513,41 +6513,6 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos, const cha
 }
 
 
-bool extend_edit_list(chan_info *cp, int edpos)
-{
-  /* called by drag-mix (remix_file) in snd-mix.c to provide an "undo point" for mix reposition */
-  /*   when both sides of the mix are currently zeroed out -- that is, no edit takes place, */
-  /*   but it's confusing to the user not to have the position change show up in the history list */
-  int i;
-  ed_list *new_ed, *old_ed;
-
-  old_ed = cp->edits[edpos];
-  if (!(prepare_edit_list(cp, edpos, S_pad_channel))) return(false);
-
-  new_ed = make_ed_list(old_ed->size);
-  new_ed->beg = 0;
-  new_ed->len = old_ed->samples;
-  new_ed->samples = old_ed->samples;
-  new_ed->cursor = old_ed->cursor;
-  for (i = 0; i < new_ed->size; i++) 
-    copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
-  new_ed->edit_type = EXTEND_EDIT;
-  new_ed->sound_location = 0;
-  new_ed->origin = copy_string(S_pad_channel);
-  new_ed->edpos = edpos;
-  new_ed->selection_beg = old_ed->selection_beg;
-  new_ed->selection_end = old_ed->selection_end;
-  new_ed->maxamp = old_ed->maxamp;
-  new_ed->maxamp_position = old_ed->maxamp_position;
-  cp->edits[cp->edit_ctr] = new_ed;
-
-  ripple_all(cp, 0, 0); /* 0,0 -> copy marks and mixes */
-  cp->edits[cp->edit_ctr]->peak_env = peak_env_copy(cp, false, edpos);
-  after_edit(cp);
-  return(true);
-}
-
-
 bool file_insert_samples(off_t beg, off_t num, const char *inserted_file, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos)
 {
   off_t len;
@@ -9407,7 +9372,7 @@ static int check_splice_at(ed_list *new_ed, off_t beg, int start)
 }
 
 
-bool end_mix_op(chan_info *cp, off_t old_beg, off_t old_len)
+void end_mix_op(chan_info *cp, off_t old_beg, off_t old_len)
 {
   /* if beg != 0, try to remove old splice points */
   if (old_beg > 0)
@@ -9423,8 +9388,6 @@ bool end_mix_op(chan_info *cp, off_t old_beg, off_t old_len)
   if (cp->edits[cp->edit_ctr - 1]->samples != cp->edits[cp->edit_ctr]->samples)
     reflect_sample_change_in_axis(cp);
   reflect_mix_change(ANY_MIX_ID);
-
-  return(true);
 }
 
 

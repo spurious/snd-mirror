@@ -528,6 +528,23 @@ static void mix_previous_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
+static Pixmap make_pixmap(unsigned char *bits, int width, int height, int depth, GC gc)
+{
+  Pixmap rb, nr;
+  rb = XCreateBitmapFromData(MAIN_DISPLAY(ss), 
+			     RootWindowOfScreen(XtScreen(MAIN_PANE(ss))), 
+			     (const char *)bits, 
+			     width, height);
+  nr = XCreatePixmap(MAIN_DISPLAY(ss), 
+		     RootWindowOfScreen(XtScreen(MAIN_PANE(ss))), 
+		     width, height, depth);
+  XCopyPlane(MAIN_DISPLAY(ss), rb, nr, gc, 0, 0, width, height, 0, 0, 1);
+  XFreePixmap(MAIN_DISPLAY(ss), rb);
+  return(nr);
+}
+
+
+
 #define p_speaker_width 12
 #define p_speaker_height 12
 static unsigned char p_speaker_bits[] = {

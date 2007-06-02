@@ -1506,7 +1506,7 @@ int make_background_graph(chan_info *cp, int srate, bool *two_sided)
 }
 
 
-int make_partial_graph(chan_info *cp, off_t beg, off_t end)
+void make_partial_graph(chan_info *cp, off_t beg, off_t end)
 {
   /* assume here that everything is already checked and set up */
   snd_info *sp;
@@ -1581,7 +1581,7 @@ int make_partial_graph(chan_info *cp, off_t beg, off_t end)
 		  if ((ep) && samples_per_pixel >= (Float)(ep->samps_per_bin))
 		    {                        /* and it will be useful when it finishes */
 		      cp->waiting_to_make_graph = true;
-		      return(0);             /* so don't run two enormous data readers in parallel */
+		      return;               /* so don't run two enormous data readers in parallel */
 		    }
 		}
 	    }
@@ -1630,8 +1630,6 @@ int make_partial_graph(chan_info *cp, off_t beg, off_t end)
       show_cursor_info(cp); 
       sp->minibuffer_on = MINI_CURSOR;
     }
-
-  return(j);
 }
 
 

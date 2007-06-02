@@ -399,7 +399,8 @@
 |#
 
 #|
-;;; here is the same example, but with vertical drag interpreted as pitch change:
+;;; here is the same example, but with vertical drag interpreted as pitch change, and the
+;;;   note head itself is the mix tag:
 
 (set! (show-mix-waveforms) #f)
 

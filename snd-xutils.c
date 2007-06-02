@@ -559,22 +559,6 @@ void set_widget_position(Widget w, Position x, Position y)
 }
 
 
-Pixmap make_pixmap(unsigned char *bits, int width, int height, int depth, GC gc)
-{
-  Pixmap rb, nr;
-  rb = XCreateBitmapFromData(MAIN_DISPLAY(ss), 
-			     RootWindowOfScreen(XtScreen(MAIN_PANE(ss))), 
-			     (const char *)bits, 
-			     width, height);
-  nr = XCreatePixmap(MAIN_DISPLAY(ss), 
-		     RootWindowOfScreen(XtScreen(MAIN_PANE(ss))), 
-		     width, height, depth);
-  XCopyPlane(MAIN_DISPLAY(ss), rb, nr, gc, 0, 0, width, height, 0, 0, 1);
-  XFreePixmap(MAIN_DISPLAY(ss), rb);
-  return(nr);
-}
-
-
 idle_t add_work_proc(XtWorkProc func, XtPointer data)
 {
   /* during auto-testing I need to force the background procs to run to completion */

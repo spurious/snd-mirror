@@ -130,7 +130,7 @@ static void fsb_update_lists(fsb *fs)
 
   for (i = 0; i < files->len; i++) 
     slist_append(fs->directory_list, files->files[i]->filename);
-  free_dir_info(files);
+  files = free_dir_info(files);
 
   /* set directory list position */
   {
@@ -152,7 +152,7 @@ static void fsb_update_lists(fsb *fs)
   }
 
   /* reload file list */
-  if (fs->current_files) free_dir_info(fs->current_files);
+  if (fs->current_files) fs->current_files = free_dir_info(fs->current_files);
   slist_clear(fs->file_list);
 
   pattern = filename_without_directory(fsb_filter_text(fs)); /* a pointer into the text */

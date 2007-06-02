@@ -572,7 +572,7 @@ dir_info *find_filtered_files_in_dir_with_pattern(const char *name, int filter_c
     full_dir = find_filtered_files_in_dir(name, filter_choice);
   else full_dir = find_files_in_dir(name);
   pattern_dir = find_files_from_pattern(full_dir, pattern);
-  free_dir_info(full_dir);
+  full_dir = free_dir_info(full_dir);
   return(pattern_dir);
 }
 
@@ -3463,7 +3463,7 @@ void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname
 	  int i;
 	  for (i = 0; i < sound_files->len; i++) 
 	    add_file_to_view_files_list(vdat, sound_files->files[i]->filename, sound_files->files[i]->full_filename);
-	  free_dir_info(sound_files);
+	  sound_files = free_dir_info(sound_files);
 	}
     }
 }
@@ -4652,7 +4652,7 @@ static XEN g_sound_files_in_directory(XEN dirname)
 	  int i;
 	  for (i = dp->len - 1; i >= 0; i--)
 	    res = XEN_CONS(C_TO_XEN_STRING(dp->files[i]->filename), res);
-	  free_dir_info(dp);
+	  dp = free_dir_info(dp);
 	}
       FREE(name);
     }

@@ -846,7 +846,7 @@ void for_each_normal_chan_with_void(void (*func)(chan_info *ncp, void *ptr), voi
 void for_each_normal_chan_with_int(void (*func)(chan_info *ncp, int val), int value);
 void for_each_normal_chan_with_refint(void (*func)(chan_info *ncp, int *val), int *value);
 bool map_over_sound_chans(snd_info *sp, bool (*func)(chan_info *ncp));
-bool map_over_sound_chans_with_int(snd_info *sp, bool (*func)(chan_info *ncp, int val1), int value);
+void map_over_sound_chans_with_int(snd_info *sp, void (*func)(chan_info *ncp, int val1), int value);
 void for_each_sound_chan(snd_info *sp, void (*func)(chan_info *ncp));
 void for_each_sound(void (*func)(snd_info *usp));
 void for_each_sound_with_void(void (*func)(snd_info *usp, void *ptr), void *userptr);
@@ -894,7 +894,6 @@ void free_sound_list(chan_info *cp);
 void free_ptree_list(chan_info *cp);
 void after_edit(chan_info *cp);
 bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos, const char *origin);
-bool extend_edit_list(chan_info *cp, int edpos);
 bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos);
 bool file_insert_samples(off_t beg, off_t num, const char *tempfile, chan_info *cp, int chan, 
 			 file_delete_t auto_delete, const char *origin, int edpos);
@@ -966,7 +965,7 @@ void remix(chan_info *cp, mix_state *ms);
 snd_fd *make_virtual_mix_reader(chan_info *cp, off_t beg, off_t len, int index, Float scl, read_direction_t direction);
 bool virtual_mix_ok(chan_info *cp, int edpos);
 bool begin_mix_op(chan_info *cp, off_t old_beg, off_t old_len, off_t new_beg, off_t new_len, int edpos, const char *caller);
-bool end_mix_op(chan_info *cp, off_t old_beg, off_t old_len);
+void end_mix_op(chan_info *cp, off_t old_beg, off_t old_len);
 void prepare_sound_list(chan_info *cp);
 
 
@@ -1271,7 +1270,7 @@ void chan_info_cleanup(chan_info *cp);
 void display_channel_data_for_print(chan_info *cp);
 void update_graph(chan_info *cp);
 void update_graph_or_warn(chan_info *cp);
-int make_partial_graph(chan_info *cp, off_t beg, off_t end);
+void make_partial_graph(chan_info *cp, off_t beg, off_t end);
 void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed);
 void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t graphed);
 void set_x_bounds(axis_info *ap);
@@ -1572,7 +1571,7 @@ chan_info *mix_chan_info_from_id(int id);
 int mix_sync_max(void);
 
 mix_state *prepare_mix_state_for_channel(chan_info *cp, int mix_loc, off_t beg, off_t len);
-mix_state *add_ed_mix(ed_list *ed, mix_state *ms);
+void add_ed_mix(ed_list *ed, mix_state *ms);
 mix_state *copy_mix_state(mix_state *old_ms);
 
 void g_init_mix(void);
