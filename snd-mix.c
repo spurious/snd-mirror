@@ -2910,9 +2910,12 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 	  {
 	    mix_info *md;
 	    id = mix_file_with_tag(cp, name, file_channel, beg, delete_file, origin);
-	    md = md_from_id(id);
-	    if (!md->in_filename)
-	      md->in_filename = copy_string(name);
+	    if (mix_exists(id))   /* if edit is blocked, mix_file can return NO_MIX_TAG (-1) */
+	      {
+		md = md_from_id(id);
+		if (!md->in_filename)
+		  md->in_filename = copy_string(name);
+	      }
 	  }
 	FREE(origin);
       }

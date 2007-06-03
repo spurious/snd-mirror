@@ -1249,16 +1249,16 @@ To delay playing until data is available:
   
 
 %%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Control Flow}
-\begin{description}
-\item[\scheme|(call-with-current-continuation proc)|] \hspace{\stretch{1}} Special form \newline
-  
-  I think it works as in scheme, but I'm surprised how
-  simple it was to implement...
-  
- (Not a very efficient function)
-
-\end{description}
+%\subsubsection{Control Flow}
+%\begin{description}
+%\item[\scheme|(call-with-current-continuation proc)|] \hspace{\stretch{1}} Special form \newline
+%  
+%  I think it works as in scheme, but I'm surprised how
+%  simple it was to implement...
+%  
+% (Not a very efficient function)
+%
+%\end{description}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -1402,7 +1402,7 @@ Works as in scheme, except that setting Guile variables will not affect the Guil
     works as in scheme
   
 
-\item[\scheme|(not ...)|] \hspace{\stretch{1}} Function \newline
+\item[\scheme|(not ...)|] \hspace{\stretch{1}} Special form \newline
   
     works as in scheme
   
@@ -1415,19 +1415,19 @@ Works as in scheme, except that setting Guile variables will not affect the Guil
 %%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Iteration}
 \begin{description}
-\item[\scheme|(while <test> <body>)|] \hspace{\stretch{1}} Special form \newline
+\item[\scheme|(while <test> <body>)|] \hspace{\stretch{1}} Macro \newline
   
-  Works as in Guile, including both break and continue. (Does not expand
-  to a recursive function.)
+  Works as in Guile.(Expands to a recursive function.)
   
-\item[\scheme|(break)|] \hspace{\stretch{1}} Special form \newline
-  
-    Used to break out of a while loop. (Not a very efficient function)
 
-  
-\item[\scheme|(continue)|] \hspace{\stretch{1}} Special form \newline
-  
-  goto the top of a while loop.  (Not a very efficient function)
+%\item[\scheme|(break)|] \hspace{\stretch{1}} Special form \newline
+%  
+%    Used to break out of a while loop. (Not a very efficient function)
+%
+%  
+%\item[\scheme|(continue)|] \hspace{\stretch{1}} Special form \newline
+%  
+%  goto the top of a while loop.  (Not a very efficient function)
   
 
 
@@ -1715,6 +1715,12 @@ For now, you can order the execution by using the fact that instances are always
 %\section{Credits}
 \newpage
 \section{History}
+
+03.06.2006: Redefined \scheme|while| to be a recursive funcion. Using c's while never really worked properly.
+            Removed \scheme|break| and \scheme|continue|. They never really worked either.
+	    Removed \scheme|call-with-current-continuation| which certainly never really worked very well.
+
+08.07.2005-02.06.2006: Various changes
 
 08.07.2005: Various bugs fixed, added gliding shared vars and midi. Changed behaviour for read-bus and write-bus.
 

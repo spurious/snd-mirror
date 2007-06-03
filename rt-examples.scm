@@ -250,9 +250,9 @@
 
 
 #!
-(define filename "/home/kjetil/cemb2.wav")
+(define filename "/gammelhd/home/kjetil/cemb2.wav")
 
-(play-once filename))
+(play-once filename)
 
 (define p (loopplay filename))
 (-> p stop)
@@ -520,7 +520,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 (define l (ladspatest))
 (ladspa-set! (-> l am-pitchshift) 0 1.5)
 (make-ladspa-gui (-> l am-pitchshift))
-(make-ladspa-gui (-> l am-pitchshift2))
+;;(make-ladspa-gui (-> l am-pitchshift2))
 (-> l stop)
 (rte-info)
 (rte-silence!)
@@ -688,7 +688,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 			 (stop data1))))))
   
 #!
-(define filename "/home/kjetil/flute2.wav")
+(define filename "/gammelhd/home/kjetil/flute2.wav")
 (start-synth filename 60)
 (start-synth filename 68)
 (start-synth filename 78)
@@ -699,6 +699,8 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
   (rte-silence!))
 
 #!
+
+
 
 
 
@@ -804,7 +806,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
   
 
 #!
-(define filename "/home/kjetil/flute2.wav")
+(define filename "/gammelhd/home/kjetil/flute2.wav")
 (midisoftsampler filename 60))
 (midisoftsampler filename 68))
 (midisoftsampler filename 78))

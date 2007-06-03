@@ -1,5 +1,6 @@
 #include "snd.h"
 
+
 static GtkWidget *completion_dialog = NULL;
 static GtkWidget *listener_text = NULL;
 static slist *completion_list = NULL;
@@ -7,6 +8,7 @@ static int printout_end;
 #define LISTENER_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))
 
 static bool listener_awaiting_completion = false;
+
 
 static void list_completions_callback(const char *name, int row, void *data)
 {
@@ -32,16 +34,19 @@ static void list_completions_callback(const char *name, int row, void *data)
   gtk_widget_hide(completion_dialog);
 }
 
+
 static void dismiss_completion_callback(GtkWidget *w, gpointer context)
 {
   listener_awaiting_completion = false;
   gtk_widget_hide(completion_dialog);
 }
 
+
 static void help_completion_callback(GtkWidget *w, gpointer context)
 {
   completion_dialog_help();
 }
+
 
 static gint delete_completion_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
@@ -49,6 +54,7 @@ static gint delete_completion_dialog(GtkWidget *w, GdkEvent *event, gpointer con
   gtk_widget_hide(completion_dialog);
   return(true);
 }
+
 
 static void start_completion_dialog(int num_items, char **items)
 {
@@ -111,6 +117,7 @@ int save_listener_text(FILE *fp)
   return(0);
 }
 
+
 void append_listener_text(int end, const char *msg)
 {
   /* "end" arg needed in Motif */
@@ -123,6 +130,7 @@ void append_listener_text(int end, const char *msg)
       sg_text_insert(listener_text, (char *)msg);
     }
 }
+
 
 static GtkTextTag *prompt_not_editable = NULL;
 
@@ -139,6 +147,7 @@ static void append_listener_prompt()
       gtk_text_buffer_insert_with_tags(LISTENER_BUFFER, &pos, listener_prompt_with_cr(), ss->listener_prompt_length + 1, prompt_not_editable, NULL);
     }
 }
+
 
 static void listener_completion(int end)
 {
@@ -190,11 +199,13 @@ static void listener_completion(int end)
     }
 }
 
+
 void snd_completion_help(int matches, char **pbuffer) 
 {
   if (matches > 0)
     start_completion_dialog(matches, pbuffer);
 }
+
 
 
 /* ---------------- command widget replacement ---------------- */
@@ -210,6 +221,7 @@ void listener_append(const char *msg)
     }
 }
 
+
 void listener_append_and_prompt(const char *msg)
 {
   if (msg)
@@ -223,11 +235,13 @@ void listener_append_and_prompt(const char *msg)
     }
 }
 
+
 static void command_return_callback(void)
 {
   if (!(ss->error_lock))
     command_return(listener_text, printout_end);
 }
+
 
 static void back_to_start(void)
 {
@@ -250,6 +264,7 @@ static void back_to_start(void)
   if (full_str) g_free(full_str);
 }
 
+
 void listener_delete_text(int new_end)
 {
   int old_end;
@@ -257,6 +272,7 @@ void listener_delete_text(int new_end)
   if (new_end < old_end)
     sg_text_delete(listener_text, new_end, old_end);
 }
+
 
 static void clear_back_to_prompt(GtkWidget *w)
 {
@@ -267,6 +283,7 @@ static void clear_back_to_prompt(GtkWidget *w)
   if (end <= beg) return;
   sg_text_delete(w, beg, end);
 }
+
 
 #if HAVE_GTK_TEXT_BUFFER_SELECT_RANGE && HAVE_GTK_WIDGET_GET_CLIPBOARD
 static void ctrl_k(GtkWidget *w)
@@ -285,6 +302,7 @@ static void ctrl_k(GtkWidget *w)
 }
 #endif
 
+
 static void sg_text_replace(GtkWidget *w, int beg, int end, char *text)
 {
   GtkTextIter pos, endpos, pos1;
@@ -296,6 +314,7 @@ static void sg_text_replace(GtkWidget *w, int beg, int end, char *text)
   gtk_text_buffer_get_iter_at_offset(buf, &pos1, beg);
   gtk_text_buffer_insert(buf, &pos1, text, strlen(text));
 }
+
 
 static void text_transpose(GtkWidget *w)
 {
@@ -313,6 +332,7 @@ static void text_transpose(GtkWidget *w)
       sg_set_cursor(w, curpos + 2);
     }
 }
+
 
 static void word_upper(GtkWidget *w, int cap, int up)
 {
@@ -372,6 +392,7 @@ static void listener_help(void)
     }
 }
 
+
 static GtkTextTag *flash_tag = NULL;
 static int flashes = 0;
 static int paren_pos = -1;
@@ -388,6 +409,7 @@ static void add_inverse(int pos)
   gtk_text_buffer_apply_tag(buf, flash_tag, &start, &end);
 }
 
+
 static void remove_inverse(int pos)
 {
   GtkTextIter start, end;
@@ -398,6 +420,7 @@ static void remove_inverse(int pos)
   if (!flash_tag) flash_tag = gtk_text_buffer_create_tag(buf, "red_background", "background", "red", NULL);
   gtk_text_buffer_remove_tag(buf, flash_tag, &start, &end);
 }
+
 
 static gint flash_unbalanced_paren(gpointer data)
 {
@@ -412,6 +435,7 @@ static gint flash_unbalanced_paren(gpointer data)
     }
   return(0);
 }
+
 
 bool highlight_unbalanced_paren(void)
 {
@@ -456,6 +480,7 @@ static void add_underline(int pos)
   gtk_text_buffer_apply_tag(buf, tag, &start, &end);
 }
 
+
 static void remove_underline(int pos)
 {
   GtkTextIter start, end;
@@ -466,6 +491,7 @@ static void remove_underline(int pos)
   if (!tag) tag = gtk_text_buffer_create_tag(buf, "underline", "underline", PANGO_UNDERLINE_DOUBLE, NULL);
   gtk_text_buffer_remove_tag(buf, tag, &start, &end);
 }
+
 
 static void check_parens(void)
 {
@@ -493,11 +519,13 @@ static void check_parens(void)
     }
 }
 
+
 static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   check_parens();
   return(false);
 }
+
 
 static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
@@ -637,6 +665,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
   return(false);
 }
 
+
 static XEN listener_click_hook; 
 
 static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -645,11 +674,13 @@ static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer
   return(false);
 }
 
+
 static gboolean listener_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   check_parens();
   return(false);
 }
+
 
 static XEN mouse_enter_listener_hook;
 static XEN mouse_leave_listener_hook;
@@ -667,6 +698,7 @@ static bool cursor_blinks(GtkWidget *w)
 }
 #endif
 
+
 static bool cursor_set_blinks(GtkWidget *w, bool blinks)
 {
   GtkSettings *settings;
@@ -674,6 +706,7 @@ static bool cursor_set_blinks(GtkWidget *w, bool blinks)
   g_object_set(settings, "gtk-cursor-blink", (gboolean)blinks, NULL);
   return(blinks);
 }
+
 
 static gboolean listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
@@ -685,6 +718,7 @@ static gboolean listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpoi
   return(false);
 }
 
+
 static gboolean listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
   if (XEN_HOOKED(mouse_leave_listener_hook))
@@ -694,6 +728,7 @@ static gboolean listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gp
   cursor_set_blinks(w, false);
   return(false);
 }
+
 
 static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
@@ -706,6 +741,7 @@ static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
   return(false);
 }
 
+
 static gboolean mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
   widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->basic_color);
@@ -717,11 +753,13 @@ static gboolean mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
   return(false);
 }
 
+
 void connect_mouse_to_text(GtkWidget *text)
 {
   SG_SIGNAL_CONNECT(text, "enter_notify_event", mouse_enter_text_callback, NULL);
   SG_SIGNAL_CONNECT(text, "leave_notify_event", mouse_leave_text_callback, NULL);
 }
+
 
 GtkWidget *snd_entry_new(GtkWidget *container, snd_entry_bg_t with_white_background)
 {
@@ -741,6 +779,7 @@ GtkWidget *snd_entry_new(GtkWidget *container, snd_entry_bg_t with_white_backgro
   connect_mouse_to_text(text);
   return(text);
 }
+
 
 static void make_command_widget(int height)
 {
@@ -897,10 +936,12 @@ static void make_command_widget(int height)
     }
 }
 
+
 void goto_listener(void) 
 {
   goto_window(listener_text);
 }
+
 
 void color_listener(color_info *pix)
 {
@@ -909,12 +950,14 @@ void color_listener(color_info *pix)
     widget_modify_base(listener_text, GTK_STATE_NORMAL, ss->sgx->listener_color);
 }
 
+
 void color_listener_text(color_info *pix)
 {
   ss->sgx->listener_text_color = pix;
   if (listener_text) 
     widget_modify_text(listener_text, GTK_STATE_NORMAL, ss->sgx->listener_text_color);
 }
+
 
 void handle_listener(bool open)
 {
@@ -937,10 +980,12 @@ void handle_listener(bool open)
     }
 }
 
+
 bool listener_exists(void)
 {
   return((bool)listener_text);
 }
+
 
 int listener_height(void) 
 {
@@ -949,12 +994,14 @@ int listener_height(void)
   else return(0);
 }
 
+
 int listener_width(void) 
 {
   if ((listener_text) && (GTK_WIDGET_VISIBLE(listener_text)))
     return(widget_width(listener_text)); 
   else return(0);
 }
+
 
 static XEN g_listener_selection(void)
 {
@@ -977,11 +1024,13 @@ static XEN g_listener_selection(void)
   return(res);
 }
 
+
 void set_listener_text_font(void)
 {
   if (listener_text)
     gtk_widget_modify_font(GTK_WIDGET(listener_text), LISTENER_FONT(ss));
 }
+
 
 static XEN g_reset_listener_cursor(void)
 {
@@ -991,11 +1040,13 @@ static XEN g_reset_listener_cursor(void)
   return(XEN_FALSE);
 }
 
+
 void clear_listener(void)
 {
   if (listener_text)
     sg_text_delete(listener_text, 1, sg_cursor_position(listener_text));
 }
+
 
 static XEN g_goto_listener_end(void)
 {
@@ -1009,6 +1060,7 @@ static XEN g_goto_listener_end(void)
     }
   return(XEN_FALSE);
 }
+
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_listener_selection_w, g_listener_selection)

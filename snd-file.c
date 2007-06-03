@@ -1352,9 +1352,9 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
       reflect_file_change_in_title();
       sp->file_watcher = fam_monitor_file(sp->filename, (void *)sp, fam_sp_action);
     }
-  map_over_separate_chans(channel_open_pane);
+  for_each_separate_chan(channel_open_pane);
 #if USE_MOTIF
-  map_over_separate_chans(channel_unlock_pane);
+  for_each_separate_chan(channel_unlock_pane);
 #endif
   if (sp) 
     {

@@ -214,7 +214,7 @@ GtkWidget *channel_graph(chan_info *cp);
 bool channel_graph_is_visible(chan_info *cp);
 GtkWidget *channel_up_arrow(chan_info *cp);
 GtkWidget *channel_down_arrow(chan_info *cp);
-bool channel_open_pane(chan_info *cp);
+void channel_open_pane(chan_info *cp);
 void set_zx_scrollbar_value(chan_info *cp, Float value);
 void resize_sx(chan_info *cp);
 void resize_zx(chan_info *cp);

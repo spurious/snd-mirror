@@ -1,17 +1,21 @@
 #include "snd.h"
 
+
 enum {W_top, W_form, W_main_window, W_edhist, W_wf_buttons, W_f, W_w, W_left_scrollers, W_zy, W_sy,
       W_bottom_scrollers, W_sx, W_zx, W_graph, W_gzy, W_gsy,
       NUM_CHAN_WIDGETS
 };
 
+
 #define DEFAULT_EDIT_HISTORY_WIDTH 1
+
 
 Widget channel_main_pane(chan_info *cp)
 {
   if ((cp) && (cp->cgx)) return(cp->cgx->chan_widgets[W_form]);
   return(NULL);
 }
+
 
 Widget channel_graph(chan_info *cp)      {return(cp->cgx->chan_widgets[W_graph]);}
 Widget channel_sx(chan_info *cp)         {return(cp->cgx->chan_widgets[W_sx]);}
@@ -22,6 +26,7 @@ static Widget channel_gsy(chan_info *cp) {return(cp->cgx->chan_widgets[W_gsy]);}
 static Widget channel_gzy(chan_info *cp) {return(cp->cgx->chan_widgets[W_gzy]);}
 Widget channel_w(chan_info *cp)          {return(cp->cgx->chan_widgets[W_w]);}
 Widget channel_f(chan_info *cp)          {return(cp->cgx->chan_widgets[W_f]);}
+
 
 bool channel_graph_is_visible(chan_info *cp)
 {
@@ -39,10 +44,14 @@ bool channel_graph_is_visible(chan_info *cp)
 	   (XtIsManaged(w_snd_pane(cp->sound))))));
 }
 
+
 #define EDIT_HISTORY_LIST(Cp) (Cp->cgx)->chan_widgets[W_edhist]
 
+
 static Float sqr(Float a) {return(a * a);}
+
 static Float cube(Float a) {return(a * a * a);}
+
 
 static Float get_scrollbar(Widget w, int val, int scrollbar_max)
 {
@@ -51,6 +60,7 @@ static Float get_scrollbar(Widget w, int val, int scrollbar_max)
   XtVaGetValues(w, XmNsliderSize, &size, NULL);
   return((Float)val / (Float)(scrollbar_max - size));
 }
+
 
 static void sy_changed(int value, chan_info *cp)
 {
@@ -61,6 +71,7 @@ static void sy_changed(int value, chan_info *cp)
   ap->sy = (1.0 - ap->zy) * low;
   apply_y_axis_change(ap, cp);
 }
+
 
 #define SCROLLBAR_SX_MAX 2000
 
@@ -75,6 +86,7 @@ static void sx_changed(int value, chan_info *cp)
   apply_x_axis_change(ap, cp);
 }
 
+
 static void zy_changed(int value, chan_info *cp)
 { 
   axis_info *ap;
@@ -88,6 +100,7 @@ static void zy_changed(int value, chan_info *cp)
   apply_y_axis_change(ap, cp);
   resize_sy(cp);
 }
+
 
 #define X_RANGE_CHANGEOVER 20.0
 
@@ -110,10 +123,12 @@ static void zx_changed(int value, chan_info *cp)
   resize_sx(cp);
 }
 
+
 void set_zx_scrollbar_value(chan_info *cp, Float value)
 {
   XtVaSetValues(channel_zx(cp), XmNvalue, (int)(value * SCROLLBAR_MAX), NULL);
 }
+
 
 static void set_scrollbar(Widget w, Float position, Float range, int scrollbar_max) /* position and range 0 to 1.0 */
 {
@@ -131,6 +146,7 @@ static void set_scrollbar(Widget w, Float position, Float range, int scrollbar_m
 		NULL);
 }
 
+
 static void gzy_changed(int value, chan_info *cp)
 {
   Float chan_frac, new_gsy, new_size;
@@ -145,6 +161,7 @@ static void gzy_changed(int value, chan_info *cp)
   for_each_sound_chan(cp->sound, update_graph_or_warn);
 }
 
+
 static void gsy_changed(int value, chan_info *cp)
 {
   Float low;
@@ -152,6 +169,7 @@ static void gsy_changed(int value, chan_info *cp)
   cp->gsy = (1.0 - cp->gzy) * low;
   for_each_sound_chan(cp->sound, update_graph_or_warn);
 }
+
 
 Float gsy_value(chan_info *cp)
 {
@@ -162,6 +180,7 @@ Float gsy_value(chan_info *cp)
   return((Float)ival / (Float)(SCROLLBAR_MAX));
 }
 
+
 Float gsy_size(chan_info *cp)
 {
   Widget wcp;
@@ -170,6 +189,7 @@ Float gsy_size(chan_info *cp)
   XtVaGetValues(wcp, XmNsliderSize, &ival, NULL);
   return((Float)ival / (Float)(SCROLLBAR_MAX));
 }
+
 
 void initialize_scrollbars(chan_info *cp)
 {
@@ -189,6 +209,7 @@ void initialize_scrollbars(chan_info *cp)
       set_scrollbar(channel_gzy(cp), cp->gzy, 1.0 / (Float)(sp->nchans), SCROLLBAR_MAX);
     }
 }
+
 
 void resize_sy(chan_info *cp)
 {
@@ -213,6 +234,7 @@ void resize_sx(chan_info *cp)
 		  SCROLLBAR_SX_MAX);
 }
 
+
 void resize_zx(chan_info *cp)
 {
   axis_info *ap;
@@ -222,6 +244,7 @@ void resize_zx(chan_info *cp)
   else set_scrollbar(channel_zx(cp), pow(ap->zx * .9, 1.0 / 3.0), .1, SCROLLBAR_MAX);
 }
 
+
 void resize_zy(chan_info *cp)
 {
   axis_info *ap;
@@ -230,22 +253,22 @@ void resize_zy(chan_info *cp)
 }
 
 
-bool channel_open_pane(chan_info *cp)
+void channel_open_pane(chan_info *cp)
 {
   XtManageChild(channel_main_pane(cp));
-  return(false);
 }
 
-bool channel_unlock_pane(chan_info *cp)
+
+void channel_unlock_pane(chan_info *cp)
 {
   XtVaSetValues(channel_main_pane(cp),
 		XmNpaneMinimum, 5,
 		XmNpaneMaximum, LOTSA_PIXELS,
 		NULL);
-  return(false);
 }
 
-bool channel_lock_pane(chan_info *cp, int val)
+
+static void channel_lock_pane(chan_info *cp, int val)
 {
   if (val < 6) val = 6;
   XtUnmanageChild(channel_main_pane(cp));
@@ -253,8 +276,8 @@ bool channel_lock_pane(chan_info *cp, int val)
 		XmNpaneMinimum, val - 5,
 		XmNpaneMaximum, val + 5,
 		NULL);
-  return(false);
 }
+
 
 static void sy_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -264,6 +287,7 @@ static void sy_drag_callback(Widget w, XtPointer context, XtPointer info)
     sy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
+
 static void sy_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
@@ -271,6 +295,7 @@ static void sy_valuechanged_callback(Widget w, XtPointer context, XtPointer info
   if (cp->active)
     sy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
+
 
 static void sx_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -280,6 +305,7 @@ static void sx_drag_callback(Widget w, XtPointer context, XtPointer info)
     sx_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
+
 static void sx_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
@@ -287,6 +313,7 @@ static void sx_valuechanged_callback(Widget w, XtPointer context, XtPointer info
   if (cp->active)
     sx_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
+
 
 static void sx_increment_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -297,12 +324,14 @@ static void sx_increment_callback(Widget w, XtPointer context, XtPointer info)
     sx_incremented(cp, 1.0);
 }
 
+
 static void sx_decrement_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
   if (cp->active)
     sx_incremented(cp, -1.0);
 }
+
 
 static void zy_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -312,6 +341,7 @@ static void zy_drag_callback(Widget w, XtPointer context, XtPointer info)
     zy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
+
 static void zy_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
@@ -319,6 +349,7 @@ static void zy_valuechanged_callback(Widget w, XtPointer context, XtPointer info
   if (cp->active)
     zy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
+
 
 static void zx_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -328,6 +359,7 @@ static void zx_drag_callback(Widget w, XtPointer context, XtPointer info)
     zx_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
+
 static void zx_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
@@ -335,6 +367,7 @@ static void zx_valuechanged_callback(Widget w, XtPointer context, XtPointer info
   if (cp->active)
     zx_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
+
 
 static void gzy_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -344,6 +377,7 @@ static void gzy_drag_callback(Widget w, XtPointer context, XtPointer info)
     gzy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
+
 static void gzy_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
@@ -352,6 +386,7 @@ static void gzy_valuechanged_callback(Widget w, XtPointer context, XtPointer inf
     gzy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
+
 static void gsy_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
@@ -359,6 +394,7 @@ static void gsy_drag_callback(Widget w, XtPointer context, XtPointer info)
   if (cp->active)
     gsy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
+
 
 static void gsy_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -380,6 +416,7 @@ static void f_toggle_callback(Widget w, XtPointer context, XtPointer info)
   f_button_callback((chan_info *)context, cb->set, (ev->state & snd_ControlMask));
 }
 
+
 static void w_toggle_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
@@ -388,6 +425,7 @@ static void w_toggle_callback(Widget w, XtPointer context, XtPointer info)
   ev = (XButtonEvent *)(cb->event);
   w_button_callback((chan_info *)context, cb->set, (ev->state & snd_ControlMask));
 }
+
 
 static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -415,10 +453,12 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
   else update_graph_or_warn(cp);
 }
 
+
 static void channel_resize_callback(Widget w, XtPointer context, XtPointer info)
 {
   channel_resize((chan_info *)context);
 }
+
 
 static XEN mouse_enter_graph_hook;
 static XEN mouse_leave_graph_hook;
@@ -435,6 +475,7 @@ static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolea
   XDefineCursor(XtDisplay(w), XtWindow(w), ss->sgx->graph_cursor);
 }
 
+
 static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   int data;
@@ -447,6 +488,7 @@ static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolea
   XUndefineCursor(XtDisplay(w), XtWindow(w));
 }
 
+
 static void graph_button_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XButtonEvent *ev = (XButtonEvent *)event;
@@ -456,11 +498,13 @@ static void graph_button_press(Widget w, XtPointer context, XEvent *event, Boole
   else graph_button_press_callback((chan_info *)context, ev->x, ev->y, ev->state, ev->button, ev->time);
 }
 
+
 static void graph_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XButtonEvent *ev = (XButtonEvent *)event;
   graph_button_release_callback((chan_info *)context, ev->x, ev->y, ev->state, ev->button);
 }
+
 
 static void graph_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 { /* mouse drag */
@@ -476,6 +520,7 @@ static void graph_button_motion(Widget w, XtPointer context, XEvent *event, Bool
   graph_button_motion_callback((chan_info *)context, ev->x, ev->y, ev->time);
 }
 
+
 static int no_padding(Arg *args, int n)
 {
   XtSetArg(args[n], XmNmarginHeight, 0); n++;
@@ -487,6 +532,7 @@ static int no_padding(Arg *args, int n)
   return(n);
 }
 
+
 static void hide_gz_scrollbars(snd_info *sp)
 {
   Widget w;
@@ -495,6 +541,7 @@ static void hide_gz_scrollbars(snd_info *sp)
   w = channel_gzy(sp->chans[0]);
   if ((w) && (XtIsManaged(w))) XtUnmanageChild(w);
 }
+
 
 static void show_gz_scrollbars(snd_info *sp)
 {
@@ -515,6 +562,7 @@ static void history_select_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
   edit_history_select((chan_info *)context, cbs->item_position - 1);
 }
+
 
 #if WITH_RELATIVE_PANES
 #include <Xm/SashP.h>
@@ -592,6 +640,7 @@ static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
     }
 }
 
+
 static void watch_edit_history_sash(Widget w, XtPointer closure, XtPointer info)
 {
   SashCallData call_data = (SashCallData)info;
@@ -611,6 +660,7 @@ static void watch_edit_history_sash(Widget w, XtPointer closure, XtPointer info)
     }
 }
 #endif
+
 
 void reflect_edit_history_change(chan_info *cp)
 {
@@ -680,6 +730,7 @@ void reflect_edit_history_change(chan_info *cp)
 #endif
 }
 
+
 void reflect_edit_counter_change(chan_info *cp)
 {
   /* undo/redo/revert -- change which line is highlighted */
@@ -707,6 +758,7 @@ void reflect_edit_counter_change(chan_info *cp)
     call_sp_watchers(cp->sound, SP_REVERT_WATCHER, SP_REVERTED);
 }
 
+
 /* for combined cases, the incoming chan_info pointer is always chan[0], 
  * but the actual channel depends on placement if mouse oriented.
  * virtual_selected_channel(cp) (snd-chn.c) retains the current selected channel
@@ -725,6 +777,7 @@ void graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont)
   key_press_callback(any_selected_channel(sp), ev->x, ev->y, ev->state, keysym);
 }
  
+
 static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   /* called by every key-intercepting widget in the entire sound pane */
@@ -740,6 +793,7 @@ static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boole
   key_press_callback(cp, ev->x, ev->y, ev->state, keysym);
 }
 
+
 static void channel_drop_watcher(Widget w, const char *str, Position x, Position y, void *context)
 {
 #if (SIZEOF_INT == SIZEOF_VOID_P)
@@ -751,6 +805,7 @@ static void channel_drop_watcher(Widget w, const char *str, Position x, Position
 #endif
   drag_and_drop_mix_at_x_y((int)data, str, x, y);
 }
+
 
 static void channel_drag_watcher(Widget w, const char *str, Position x, Position y, drag_style_t dtype, void *context)
 {
@@ -784,6 +839,7 @@ static void channel_drag_watcher(Widget w, const char *str, Position x, Position
 	}
     }
 }
+
 
 int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Widget main, fw_button_t button_style, bool with_events)
 {
@@ -1142,6 +1198,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
   return(0);
 }
 
+
 static void set_graph_font(chan_info *cp, XFontStruct *bf)
 {
   chan_context *cx;
@@ -1151,9 +1208,13 @@ static void set_graph_font(chan_info *cp, XFontStruct *bf)
   XSetFont(XtDisplay(cx->chan_widgets[W_graph]), copy_GC(cp), bf->fid);
 }
 
+
 void set_peak_numbers_font(chan_info *cp) {set_graph_font(cp, PEAKS_FONT(ss));}
+
 void set_tiny_numbers_font(chan_info *cp) {set_graph_font(cp, TINY_FONT(ss));}
+
 void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, BOLD_PEAKS_FONT(ss));}
+
 
 color_t get_foreground_color(axis_context *ax)
 {
@@ -1162,10 +1223,12 @@ color_t get_foreground_color(axis_context *ax)
   return(gv.foreground);
 }
 
+
 void set_foreground_color(axis_context *ax, Pixel color)
 {
   XSetForeground(MAIN_DISPLAY(ss), ax->gc, color);
 }
+
 
 GC copy_GC(chan_info *cp)
 {
@@ -1174,6 +1237,7 @@ GC copy_GC(chan_info *cp)
   if (cp->cgx->selected) return(sx->selected_basic_gc);
   return(sx->basic_gc);
 }
+
 
 GC erase_GC(chan_info *cp)
 {
@@ -1190,6 +1254,7 @@ GC erase_GC(chan_info *cp)
   return(sx->erase_gc);
 }
 
+
 void free_fft_pix(chan_info *cp)
 {
   if ((cp->cgx->fft_pix != None) &&
@@ -1199,6 +1264,7 @@ void free_fft_pix(chan_info *cp)
   cp->cgx->fft_pix = None;
   cp->cgx->fft_pix_ready = false;
 }
+
 
 bool restore_fft_pix(chan_info *cp, axis_context *ax)
 {
@@ -1211,6 +1277,7 @@ bool restore_fft_pix(chan_info *cp, axis_context *ax)
 	    cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0);
   return(true);
 }
+
 
 void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y1)
 {
@@ -1237,6 +1304,7 @@ void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int 
   cp->cgx->fft_pix_ready = true;
 }
 
+
 void cleanup_cw(chan_info *cp)
 {
   if ((cp) && (cp->cgx))
@@ -1259,6 +1327,7 @@ void cleanup_cw(chan_info *cp)
 	}
     }
 }
+
 
 void change_channel_style(snd_info *sp, channel_style_t new_style)
 {
@@ -1337,13 +1406,9 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		{
 		  /* height = total space available */
 		  height /= sp->nchans;
-		  map_over_sound_chans_with_int(sp, channel_lock_pane, height);
-		  map_over_sound_chans(sp, channel_open_pane);
-		  map_over_sound_chans(sp, channel_unlock_pane);
-		  /*
-		  for (i = 0; i < sp->nchans; i++) 
-		    reset_mix_graph_parent(sp->chans[i]);
-		  */
+		  for_each_sound_chan_with_int(sp, channel_lock_pane, height);
+		  for_each_sound_chan(sp, channel_open_pane);
+		  for_each_sound_chan(sp, channel_unlock_pane);
 		  pcp = sp->chans[0];
 		  ap = pcp->axis;
 		  for (i = 1; i < sp->nchans; i++)
@@ -1379,6 +1444,7 @@ bool fixup_cp_cgx_ax_wn(chan_info *cp)
   (cp->cgx->ax)->wn = XtWindow(cp->cgx->chan_widgets[W_graph]); 
   return(true);
 }
+
 
 static XEN g_channel_widgets(XEN snd, XEN chn)
 {

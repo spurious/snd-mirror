@@ -1,5 +1,6 @@
 #include "snd.h"
 
+
 enum {
     W_main_window,
     W_graph_window,
@@ -16,6 +17,7 @@ enum {
 
 enum {W_zy_adj, W_zx_adj, W_sy_adj, W_sx_adj, W_gzy_adj, W_gsy_adj, NUM_CHAN_ADJS};
 
+
 GtkWidget *channel_graph(chan_info *cp)      {return(cp->cgx->chan_widgets[W_graph]);}
 GtkWidget *channel_sx(chan_info *cp)         {return(cp->cgx->chan_widgets[W_sx]);}
 GtkWidget *channel_sy(chan_info *cp)         {return(cp->cgx->chan_widgets[W_sy]);}
@@ -28,7 +30,9 @@ GtkWidget *channel_f(chan_info *cp)          {return(cp->cgx->chan_widgets[W_f])
 GtkWidget *channel_up_arrow(chan_info *cp)   {return(cp->cgx->chan_widgets[W_up_ev]);}
 GtkWidget *channel_down_arrow(chan_info *cp) {return(cp->cgx->chan_widgets[W_down_ev]);}
 
+
 #define EDIT_HISTORY_LIST(Cp) (Cp->cgx)->edhist_list
+
 
 static GtkWidget *channel_main_pane(chan_info *cp) {return(cp->cgx->chan_widgets[W_main_window]);}
 static GtkObject *gsy_adj(chan_info *cp)           {return(cp->cgx->chan_adjs[W_gsy_adj]);}
@@ -38,8 +42,11 @@ static GtkObject *sx_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_
 static GtkObject *zy_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_zy_adj]);}
 static GtkObject *zx_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_zx_adj]);}
 
+
 static Float sqr(Float a) {return(a * a);}
+
 static Float cube(Float a) {return(a * a * a);}
+
 
 bool channel_graph_is_visible(chan_info *cp)
 {
@@ -57,11 +64,12 @@ bool channel_graph_is_visible(chan_info *cp)
 	   (GTK_WIDGET_VISIBLE(w_snd_pane(cp->sound))))));
 }
 
-bool channel_open_pane(chan_info *cp)
+
+void channel_open_pane(chan_info *cp)
 {
   gtk_widget_show(channel_main_pane(cp));
-  return(false);
 }
+
 
 static void sy_changed(float value, chan_info *cp)
 {
@@ -72,6 +80,7 @@ static void sy_changed(float value, chan_info *cp)
   apply_y_axis_change(ap, cp);
 }
 
+
 static void sx_changed(float value, chan_info *cp)
 {
   axis_info *ap;
@@ -79,6 +88,7 @@ static void sx_changed(float value, chan_info *cp)
   ap->sx = value;
   apply_x_axis_change(ap, cp);
 }
+
 
 static void zy_changed(float value, chan_info *cp)
 { 
@@ -93,6 +103,7 @@ static void zy_changed(float value, chan_info *cp)
   apply_y_axis_change(ap, cp);
   resize_sy(cp);
 }
+
 
 #define X_RANGE_CHANGEOVER 20.0
 
@@ -115,6 +126,7 @@ static void zx_changed(float value, chan_info *cp)
   resize_sx(cp);
 }
 
+
 void set_zx_scrollbar_value(chan_info *cp, Float value)
 {
   GtkObject *adj;
@@ -123,12 +135,14 @@ void set_zx_scrollbar_value(chan_info *cp, Float value)
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj));
 }
 
+
 static void set_scrollbar(GtkObject *adj, Float position, Float range) /* position and range 0 to 1.0 */
 {
   GTK_ADJUSTMENT(adj)->page_size = range;
   GTK_ADJUSTMENT(adj)->value = position;
   gtk_adjustment_changed(GTK_ADJUSTMENT(adj));
 }
+
 
 static void gzy_changed(float value, chan_info *cp)
 {
@@ -138,21 +152,25 @@ static void gzy_changed(float value, chan_info *cp)
   for_each_sound_chan(cp->sound, update_graph_or_warn);
 }
 
+
 static void gsy_changed(float value, chan_info *cp)
 {
   cp->gsy = cp->gzy * value;
   for_each_sound_chan(cp->sound, update_graph_or_warn);
 }
 
+
 Float gsy_value(chan_info *cp)
 {
   return(1.0 - GTK_ADJUSTMENT(gsy_adj(cp))->value - GTK_ADJUSTMENT(gsy_adj(cp))->page_size);
 }
 
+
 Float gsy_size(chan_info *cp)
 {
   return(GTK_ADJUSTMENT(gsy_adj(cp))->page_size);
 }
+
 
 void initialize_scrollbars(chan_info *cp)
 {
@@ -175,6 +193,7 @@ void initialize_scrollbars(chan_info *cp)
     }
 }
 
+
 void resize_sy(chan_info *cp)
 {
   /* something changed the y axis view, so the scale scroller needs to reflect that change (in size and position) */
@@ -190,6 +209,7 @@ void resize_sy(chan_info *cp)
     }
 }
 
+
 void resize_sx(chan_info *cp)
 {
   axis_info *ap;
@@ -202,6 +222,7 @@ void resize_sx(chan_info *cp)
 		  (ap->x1 - ap->x0) / ap->x_ambit);
 }
 
+
 void resize_zx(chan_info *cp)
 {
   axis_info *ap;
@@ -211,12 +232,14 @@ void resize_zx(chan_info *cp)
   else set_scrollbar(zx_adj(cp), pow(ap->zx, 1.0 / 3.0), .1);
 }
 
+
 void resize_zy(chan_info *cp)
 {
   axis_info *ap;
   ap = cp->axis;
   set_scrollbar(zy_adj(cp), 1.0 - sqrt(ap->zy), .1);
 }
+
 
 static void sy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
@@ -227,6 +250,7 @@ static void sy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
     sy_changed(1.0 - adj->value, cp);
 }
 
+
 static void sx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
@@ -234,6 +258,7 @@ static void sx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
   if (cp->active)
     sx_changed(adj->value, cp);
 }
+
 
 static void zy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
@@ -243,6 +268,7 @@ static void zy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
     zy_changed(1.0 - adj->value, cp);
 }
 
+
 static void zx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
@@ -250,6 +276,7 @@ static void zx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
   if (cp->active)
     zx_changed(adj->value, cp);
 }
+
 
 static void gzy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
@@ -259,6 +286,7 @@ static void gzy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
     gzy_changed(1.0 - adj->value, cp);
 }
 
+
 static void gsy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
@@ -267,12 +295,15 @@ static void gsy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
     gsy_changed(1.0 - adj->value, cp);
 }
 
+
 static int last_f_state = 0;
+
 static gboolean f_toggle_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 { 
   last_f_state = ev->state;
   return(false);
 }
+
 
 static void f_toggle_click_callback(GtkWidget *w, gpointer data)
 {
@@ -281,12 +312,15 @@ static void f_toggle_click_callback(GtkWidget *w, gpointer data)
 		    (last_f_state & snd_ControlMask));
 }
 
+
 static int last_w_state = 0;
+
 static gboolean w_toggle_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 { 
   last_w_state = ev->state;
   return(false);
 }
+
 
 static void w_toggle_click_callback(GtkWidget *w, gpointer data)
 {
@@ -294,6 +328,7 @@ static void w_toggle_click_callback(GtkWidget *w, gpointer data)
 		    (GTK_TOGGLE_BUTTON(w)->active), 
 		    (last_w_state & snd_ControlMask));
 }
+
 
 #define MIN_REGRAPH_X 12
 #define MIN_REGRAPH_Y 7
@@ -314,11 +349,13 @@ static gboolean channel_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpoint
   return(false);
 }
 
+
 static gboolean channel_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
   channel_resize((chan_info *)data);
   return(false);
 }
+
 
 static XEN mouse_enter_graph_hook;
 static XEN mouse_leave_graph_hook;
@@ -337,6 +374,7 @@ static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer d
   return(false);
 }
 
+
 static gboolean graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
   int pdata;
@@ -350,6 +388,7 @@ static gboolean graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer d
   return(false);
 }
 
+
 static void hide_gz_scrollbars(snd_info *sp)
 {
   chan_info *cp;
@@ -360,6 +399,7 @@ static void hide_gz_scrollbars(snd_info *sp)
       gtk_widget_hide(channel_gzy(cp));
     }
 }
+
 
 static void show_gz_scrollbars(snd_info *sp)
 {
@@ -379,6 +419,7 @@ static void history_select_callback(const char *name, int row, void *data)
 {
   edit_history_select((chan_info *)data, row);
 }
+
 
 static void remake_edit_history(chan_info *cp)
 {
@@ -443,6 +484,7 @@ static void remake_edit_history(chan_info *cp)
   goto_graph(cp);
 }
 
+
 void reflect_edit_history_change(chan_info *cp)
 {
   /* new edit so it is added, and any trailing lines removed */
@@ -459,6 +501,7 @@ void reflect_edit_history_change(chan_info *cp)
     }
   else remake_edit_history(cp);
 }
+
 
 void reflect_edit_counter_change(chan_info *cp)
 {
@@ -506,6 +549,7 @@ static gboolean real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer dat
   return(true);
 }
 
+
 gboolean graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
 {
   chan_info *cp = (chan_info *)data;
@@ -521,6 +565,7 @@ gboolean graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   return(true);
 }
  
+
 static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   if ((NO_BUCKY_BITS_P(ev->state)) && 
@@ -544,11 +589,13 @@ static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer da
   return(false);
 }
 
+
 static gboolean graph_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   graph_button_release_callback((chan_info *)data, (int)(ev->x), (int)(ev->y), ev->state, ev->button);
   return(false);
 }
+
 
 static gboolean graph_scroll(GtkWidget *w, GdkEventScroll *ev, gpointer data)
 {
@@ -556,6 +603,7 @@ static gboolean graph_scroll(GtkWidget *w, GdkEventScroll *ev, gpointer data)
   graph_button_release_callback((chan_info *)data, (int)(ev->x), (int)(ev->y), ev->state, ev->direction + 4);
   return(false);
 }
+
 
 static gboolean graph_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
@@ -575,6 +623,7 @@ static gboolean graph_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer d
   return(false);
 }
 
+
 #if HAVE_GL
 static const gint config_attributes[] = {
   GDK_GL_DOUBLEBUFFER,
@@ -587,10 +636,12 @@ static const gint config_attributes[] = {
 };
 #endif
 
+
 static void channel_drop_watcher(GtkWidget *w, const char *filename, int x, int y, void *data)
 {
   drag_and_drop_mix_at_x_y(get_user_int_data(G_OBJECT(w)), filename, x, y);
 }
+
 
 static void channel_drag_watcher(GtkWidget *w, const char *filename, int x, int y, drag_style_t dtype, void *context)
 {
@@ -623,6 +674,7 @@ static void channel_drag_watcher(GtkWidget *w, const char *filename, int x, int 
 	}
     }
 }
+
 
 int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, GtkWidget *main, fw_button_t button_style, bool with_events)
 {
@@ -846,6 +898,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
   return(0);
 }
 
+
 static void set_graph_font(chan_info *cp, PangoFontDescription *fnt)
 {
   chan_context *cx;
@@ -854,8 +907,11 @@ static void set_graph_font(chan_info *cp, PangoFontDescription *fnt)
   cx->ax->current_font = fnt;
 }
 
+
 void set_peak_numbers_font(chan_info *cp) {set_graph_font(cp, PEAKS_FONT(ss));}
+
 void set_tiny_numbers_font(chan_info *cp) {set_graph_font(cp, TINY_FONT(ss));}
+
 void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, BOLD_PEAKS_FONT(ss));}
 
 
@@ -870,10 +926,12 @@ color_t get_foreground_color(axis_context *ax)
 #endif
 }
 
+
 void set_foreground_color(axis_context *ax, color_info *color)
 {
   gc_set_foreground(ax->gc, color);
 }
+
 
 gc_t *copy_GC(chan_info *cp)
 {
@@ -882,6 +940,7 @@ gc_t *copy_GC(chan_info *cp)
   if (cp->cgx->selected) return(sx->selected_basic_gc);
   return(sx->basic_gc);
 }
+
 
 gc_t *erase_GC(chan_info *cp)
 {
@@ -906,6 +965,7 @@ void free_fft_pix(chan_info *cp)
   cp->cgx->fft_pix = NULL;
   cp->cgx->fft_pix_ready = false;
 }
+
 
 bool restore_fft_pix(chan_info *cp, axis_context *ax)
 {
@@ -947,6 +1007,7 @@ void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int 
 #endif
 }
 
+
 #if USE_CAIRO
 /* -------- time graph cursor erasure -------- */
 
@@ -957,6 +1018,7 @@ void free_cursor_pix(chan_info *cp)
   cp->cgx->cursor_pix = NULL;
   cp->cgx->cursor_pix_ready = false;
 }
+
 
 bool restore_cursor_pix(chan_info *cp, axis_context *ax)
 {
@@ -973,6 +1035,7 @@ bool restore_cursor_pix(chan_info *cp, axis_context *ax)
   return(false);
 }
 
+
 void save_cursor_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y0)
 {
   if ((fwidth <= 0) || (fheight <= 0)) return;
@@ -986,6 +1049,7 @@ void save_cursor_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, i
   cp->cgx->cursor_pix_ready = (cp->cgx->cursor_pix != NULL);
 }
 
+
 /* -------- sonogram cursor erasure -------- */
 
 void free_sono_cursor_pix(chan_info *cp)
@@ -995,6 +1059,7 @@ void free_sono_cursor_pix(chan_info *cp)
   cp->cgx->sono_cursor_pix = NULL;
   cp->cgx->sono_cursor_pix_ready = false;
 }
+
 
 bool restore_sono_cursor_pix(chan_info *cp, axis_context *ax)
 {
@@ -1010,6 +1075,7 @@ bool restore_sono_cursor_pix(chan_info *cp, axis_context *ax)
     }
   return(false);
 }
+
 
 void save_sono_cursor_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y0)
 {
@@ -1056,6 +1122,7 @@ void cleanup_cw(chan_info *cp)
 	}
     }
 }
+
 
 void change_channel_style(snd_info *sp, channel_style_t new_style)
 {
@@ -1130,7 +1197,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  /* height[0] = total space available */
 		  height[0] /= sp->nchans;
 
-		  map_over_sound_chans(sp, channel_open_pane);
+		  for_each_sound_chan(sp, channel_open_pane);
 		  /* for (i = 0; i < sp->nchans; i++) reset_mix_graph_parent(sp->chans[i]); */
 		  pcp = sp->chans[0];
 		  ap = pcp->axis;
@@ -1159,6 +1226,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
     }
 }
 
+
 bool fixup_cp_cgx_ax_wn(chan_info *cp)
 {
   GtkWidget *w; 
@@ -1171,6 +1239,7 @@ bool fixup_cp_cgx_ax_wn(chan_info *cp)
   ax->w = w;
   return(w->window != NULL);
 }
+
 
 static XEN g_channel_widgets(XEN snd, XEN chn)
 {
@@ -1202,6 +1271,7 @@ edhist (8)gsy (9)gzy (10)main (11)sx_adj (12)sy_adj (13)zx_adj (14)zy_adj (15)gs
 			 XEN_CONS(XEN_WRAP_ADJ(gzy_adj(cp)),
                           XEN_EMPTY_LIST))))))))))))))))));
 }
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_channel_widgets_w, g_channel_widgets)

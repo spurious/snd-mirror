@@ -1,16 +1,18 @@
 #include "snd.h"
 
+
 #define OVERRIDE_TOGGLE 1
 /* Motif 2.0 defines control-button1 to be "take focus" -- this is not a good idea!! */
 
 static Widget listener_text = NULL;
-
 static Widget completions_dialog = NULL, completions_list = NULL;
+
 
 static void completions_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   completion_dialog_help();
 }
+
 
 static void unpost_completion_from_modify(Widget w, XtPointer context, XtPointer info);
 static void unpost_completion_from_activate(Widget w, XtPointer context, XtPointer info);
@@ -24,10 +26,12 @@ static void unpost_completion(Widget w)
   ss->sgx->completion_requestor_dialog = NULL;    
 }
 
+
 static void unpost_completion_from_activate(Widget w, XtPointer context, XtPointer info)
 {
   unpost_completion(w);
 }
+
 
 static void unpost_completion_from_modify(Widget w, XtPointer context, XtPointer info)
 {
@@ -35,6 +39,7 @@ static void unpost_completion_from_modify(Widget w, XtPointer context, XtPointer
   cbs->doit = true; 
   unpost_completion(w);
 }
+
 
 static void completions_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -76,6 +81,7 @@ static void completions_browse_callback(Widget w, XtPointer context, XtPointer i
   unpost_completion(requestor);
 }
 
+
 static void completions_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
   Widget requestor;
@@ -84,6 +90,7 @@ static void completions_ok_callback(Widget w, XtPointer context, XtPointer info)
   else requestor = ss->sgx->completion_requestor;
   unpost_completion(requestor);
 }
+
 
 static void create_completions_dialog(char *title)
 {
@@ -126,12 +133,14 @@ static void create_completions_dialog(char *title)
   set_dialog_widget(COMPLETION_DIALOG, completions_dialog);
 }
 
+
 static void unpost_completion_dialog(Widget w, XtPointer context, XtPointer info)
 {
   XtRemoveCallback(w, XmNcancelCallback, unpost_completion_dialog, NULL);
   if (ss->sgx->completion_requestor)
     unpost_completion(ss->sgx->completion_requestor);
 }
+
 
 void snd_completion_help(int matches, char **buffer)
 {
@@ -196,16 +205,19 @@ void textfield_focus_callback(Widget w, XtPointer context, XtPointer info)
   XtVaSetValues(w, XmNcursorPositionVisible, true, NULL);
 }
 
+
 void textfield_unfocus_callback(Widget w, XtPointer context, XtPointer info)
 {
   XtVaSetValues(w, XmNbackground, ss->sgx->basic_color, NULL);
   XtVaSetValues(w, XmNcursorPositionVisible, false, NULL);
 }
 
+
 static void textfield_no_color_focus_callback(Widget w, XtPointer context, XtPointer info)
 {
   XtVaSetValues(w, XmNcursorPositionVisible, true, NULL);
 }
+
 
 static void textfield_no_color_unfocus_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -223,6 +235,7 @@ static void No_op(Widget w, XEvent *ev, char **str, Cardinal *num)
   /* return does not cause widget activation in many textfield cases -- it is a true no-op */
 }
 
+
 #define snd_K_u XK_u 
 #define snd_K_x XK_x 
 
@@ -237,6 +250,7 @@ static void Activate_keyboard(Widget w, XEvent *ev, char **str, Cardinal *num)
       keyboard_command(cp, (str[0][0] == 'u') ? snd_K_u : snd_K_x, CONTROL_KEY);
     }
 }
+
 
 static char *listener_selection = NULL;
 
@@ -257,6 +271,7 @@ static void Kill_line(Widget w, XEvent *ev, char **str, Cardinal *num)
     }
 }
 
+
 static void Yank(Widget w, XEvent *ev, char **str, Cardinal *num) 
 {
   /* copy current selection at current cursor position */
@@ -271,6 +286,7 @@ static void Yank(Widget w, XEvent *ev, char **str, Cardinal *num)
       XmTextClearSelection(w, ev->xkey.time); /* so C-y + edit doesn't forbid the edit */
     }
 }
+
 
 static int printout_end = 0;
 
@@ -294,10 +310,12 @@ static void Begin_of_line(Widget w, XEvent *ev, char **ustr, Cardinal *num)
   else XmTextSetCursorPosition(w, 1);
 }
 
+
 static void Delete_region(Widget w, XEvent *ev, char **str, Cardinal *num) 
 {
   XmTextCut(w, CurrentTime);
 }
+
 
 static XmTextPosition down_pos, last_pos;
 static XEN listener_click_hook; 
@@ -321,6 +339,7 @@ static void B1_press(Widget w, XEvent *event, char **str, Cardinal *num)
 	     S_listener_click_hook);
 }
 
+
 static void B1_move(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   XmTextPosition pos;
@@ -332,6 +351,7 @@ static void B1_move(Widget w, XEvent *event, char **str, Cardinal *num)
     XmTextSetHighlight(w, down_pos, pos, XmHIGHLIGHT_SELECTED);
   last_pos = pos;
 }
+
 
 static void B1_release(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
@@ -347,6 +367,7 @@ static void B1_release(Widget w, XEvent *event, char **str, Cardinal *num)
       listener_selection = XmTextGetSelection(w);
     }
 }
+
 
 static void Text_transpose(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
@@ -364,6 +385,7 @@ static void Text_transpose(Widget w, XEvent *event, char **str, Cardinal *num)
       XmTextSetCursorPosition(w, curpos + 1);
     }
 }
+
 
 static void Complain(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
@@ -385,6 +407,7 @@ static void Complain(Widget w, XEvent *event, char **str, Cardinal *num)
   if (old_text) XtFree(old_text);
   FREE(new_text);
 }
+
 
 static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
@@ -436,6 +459,7 @@ static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num)
     }
 }
 
+
 static Widget *cmpwids = NULL;
 static int cmpwids_size = 0;
 
@@ -460,6 +484,7 @@ static void add_completer_widget(Widget w, int row)
     }
 }
 
+
 static Widget widget_to_dialog(Widget w)
 {
   /* find dialog parent of w, if any */
@@ -478,6 +503,7 @@ static Widget widget_to_dialog(Widget w)
     }
   return(NULL);
 }
+
 
 static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
@@ -550,6 +576,7 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
     }
 }
 
+
 void append_listener_text(int end, const char *msg)
 {
   if (listener_text)
@@ -559,6 +586,7 @@ void append_listener_text(int end, const char *msg)
       XmTextSetCursorPosition(listener_text, XmTextGetLastPosition(listener_text));
     }
 }
+
 
 static bool dont_check_motion = false;
 
@@ -575,17 +603,20 @@ void listener_delete_text(int new_end)
     }
 }
 
+
 static void Listener_Meta_P(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   listener_delete_text(printout_end + 1);
   restore_listener_string(true);
 }
 
+
 static void Listener_Meta_N(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   listener_delete_text(printout_end + 1);
   restore_listener_string(false);
 }
+
 
 int save_listener_text(FILE *fp)
 {
@@ -605,6 +636,7 @@ int save_listener_text(FILE *fp)
   return(0);
 }
 
+
 static void Listener_help(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   char *source = NULL;
@@ -619,6 +651,7 @@ static void Listener_help(Widget w, XEvent *event, char **str, Cardinal *num)
   provide_listener_help(source);
   FREE(source);
 }
+
 
 static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
@@ -690,20 +723,24 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
     }
 }
 
+
 static void Listener_clear(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   clear_listener();
 }
+
 
 static void Listener_g(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   control_g(any_selected_sound());
 }
 
+
 static void Listener_Backup(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   backup_listener_to_previous_command();
 }
+
 
 #define NUM_ACTS 20
 static XtActionsRec acts[NUM_ACTS] = {
@@ -728,6 +765,7 @@ static XtActionsRec acts[NUM_ACTS] = {
   {"delete-to-previous-command", Listener_Backup},
   {"complain", Complain},
 };
+
 
 /* translation tables for emacs compatibility and better inter-widget communication */
 /* these values are listed in lib/Xm/Transltns.c */
@@ -775,6 +813,7 @@ static char TextTrans2[] =
 	<Key>Return:	    activate()\n";
 static XtTranslations transTable2 = NULL;
 
+
 /* same (but not activatable), try to avoid causing the currently active pushbutton widget to appear to be activated by <cr> in the text widget */
 static char TextTrans6[] =
        "Ctrl <Key>a:	    beginning-of-line()\n\
@@ -799,6 +838,7 @@ static char TextTrans6[] =
 	<Key>Tab:	    name-completion()\n\
 	<Key>Return:	    no-op()\n";
 static XtTranslations transTable6 = NULL;
+
 
 /* for text (multi-line) widgets */
 static char TextTrans3[] =
@@ -843,8 +883,8 @@ static char TextTrans3[] =
 	<Key>Return:	    newline()\n";
 static XtTranslations transTable3 = NULL;
 
-/* for lisp listener */
 
+/* for lisp listener */
 static char TextTrans4[] =
        "Ctrl <Key>a:	    begin-of-line()\n\
 	Ctrl <Key>b:	    backward-character()\n\
@@ -897,6 +937,7 @@ static char TextTrans4[] =
 static XtTranslations transTable4 = NULL;
 
 
+
 /* -------- text related widgets -------- */
 
 static XEN mouse_enter_text_hook;
@@ -910,6 +951,7 @@ void mouse_enter_text_callback(Widget w, XtPointer context, XEvent *event, Boole
 	     S_mouse_enter_text_hook);
 }
 
+
 void mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   if (XEN_HOOKED(mouse_leave_text_hook))
@@ -917,6 +959,7 @@ void mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event, Boole
 	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
 	     S_mouse_leave_text_hook);
 }
+
 
 Widget make_textfield_widget(char *name, Widget parent, Arg *args, int n, text_cr_t activatable, int completer)
 {
@@ -962,6 +1005,7 @@ Widget make_textfield_widget(char *name, Widget parent, Arg *args, int n, text_c
   return(df);
 }
 
+
 void add_completer_to_textfield(Widget w, int completer)
 {
   /* used to make file selection dialog act like other text field widgets */
@@ -975,6 +1019,7 @@ void add_completer_to_textfield(Widget w, int completer)
   XtOverrideTranslations(w, transTable2);
   add_completer_widget(w, completer);
 }
+
 
 Widget make_text_widget(char *name, Widget parent, Arg *args, int n)
 {
@@ -1017,6 +1062,7 @@ void listener_append(const char *msg)
     }
 }
  
+
 static Widget listener_pane = NULL; 
 
 void listener_append_and_prompt(const char *msg)
@@ -1035,11 +1081,13 @@ void listener_append_and_prompt(const char *msg)
     }
 }
 
+
 static void command_return_callback(Widget w, XtPointer context, XtPointer info)
 {
   if (!(ss->error_lock))
     command_return(w, printout_end);
 }
+
 
 static int flashes = 0;
 static int paren_pos = -1;
@@ -1060,6 +1108,7 @@ static void flash_unbalanced_paren(XtPointer context, XtIntervalId *id)
       paren_pos = -1;
     }
 }
+
 
 bool highlight_unbalanced_paren(void)
 {
@@ -1092,6 +1141,7 @@ bool highlight_unbalanced_paren(void)
   return(success);
 }
 
+
 static int last_highlight_position = -1;
 
 static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
@@ -1122,6 +1172,7 @@ static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+
 static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
@@ -1141,6 +1192,7 @@ static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+
 static XEN mouse_enter_listener_hook;
 static XEN mouse_leave_listener_hook;
 
@@ -1152,6 +1204,7 @@ static void listener_focus_callback(Widget w, XtPointer context, XEvent *event, 
 	     S_mouse_enter_listener_hook);
 }
 
+
 static void listener_unfocus_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   if (XEN_HOOKED(mouse_leave_listener_hook))
@@ -1159,6 +1212,7 @@ static void listener_unfocus_callback(Widget w, XtPointer context, XEvent *event
 	     XEN_LIST_1(XEN_WRAP_WIDGET(listener_text)), /* not w */
 	     S_mouse_leave_listener_hook);
 }
+
 
 static void make_command_widget(int height)
 {
@@ -1218,12 +1272,14 @@ static void make_command_widget(int height)
     }
 }
 
+
 void goto_listener(void) 
 {
   goto_window(listener_text);
   XmTextSetCursorPosition(listener_text, XmTextGetLastPosition(listener_text) + 1);
   XmTextSetInsertionPosition(listener_text, XmTextGetLastPosition(listener_text) + 1);
 }
+
 
 void color_listener(Pixel pix)
 {
@@ -1232,12 +1288,14 @@ void color_listener(Pixel pix)
     XmChangeColor(listener_text, pix);
 }
 
+
 void color_listener_text(Pixel pix)
 {
   ss->sgx->listener_text_color = pix;
   if (listener_text)
     XtVaSetValues(listener_text, XmNforeground, pix, NULL);
 }
+
 
 void handle_listener(bool open)
 {
@@ -1260,10 +1318,12 @@ void handle_listener(bool open)
   else XtUnmanageChild(listener_pane);
 }
 
+
 bool listener_exists(void)
 {
   return((bool)listener_text);
 }
+
 
 int listener_height(void)
 {
@@ -1272,12 +1332,14 @@ int listener_height(void)
   else return(0);
 }
 
+
 int listener_width(void)
 {
   if ((listener_text) && (XtIsManaged(listener_pane)))
     return(widget_width(listener_text)); 
   else return(0);
 }
+
 
 #if OVERRIDE_TOGGLE
 static char ToggleTrans2[] =
@@ -1291,6 +1353,7 @@ static void override_toggle_translation(Widget w)
 }
 #endif
 
+
 Widget make_togglebutton_widget(char *name, Widget parent, Arg *args, int n)
 {
   Widget w;
@@ -1301,6 +1364,7 @@ Widget make_togglebutton_widget(char *name, Widget parent, Arg *args, int n)
   return(w);
 }
 
+
 Widget make_pushbutton_widget(char *name, Widget parent, Arg *args, int n)
 {
   Widget w;
@@ -1310,6 +1374,7 @@ Widget make_pushbutton_widget(char *name, Widget parent, Arg *args, int n)
 #endif
   return(w);
 }
+
 
 static XEN g_listener_selection(void)
 {
@@ -1328,6 +1393,7 @@ static XEN g_listener_selection(void)
   return(res);
 }
 
+
 static XEN g_reset_listener_cursor(void)
 {
   #define H_reset_listener_cursor "(" S_reset_listener_cursor "): reset listener cursor to the default pointer"
@@ -1336,6 +1402,7 @@ static XEN g_reset_listener_cursor(void)
 		    XtWindow(listener_text)); 
   return(XEN_FALSE);
 }
+
 
 void clear_listener(void)
 {
@@ -1349,11 +1416,13 @@ void clear_listener(void)
     }
 }
 
+
 void set_listener_text_font(void)
 {
   if (listener_text)
     XtVaSetValues(listener_text, XM_FONT_RESOURCE, ss->sgx->listener_fontlist, NULL);
 }
+
 
 static XEN g_goto_listener_end(void)
 {

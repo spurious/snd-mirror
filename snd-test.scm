@@ -32,7 +32,7 @@
 ;;;  test all done                              [63583]
 ;;;  test the end                               [63819]
 
-;;; TODO: test all edit ops (mix especially) with edit-hook to disallow edit 
+;;; TODO: ptree fir filter
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -28324,6 +28324,45 @@ EDITS: 2
 	       (lambda (w)
 		 (focus-widget w)))
     (describe-hook mouse-enter-text-hook)
+    (reset-almost-all-hooks)
+    
+    (let ((ind (open-sound "oboe.snd")))
+      (scale-by 2.0)
+      (add-hook! (edit-hook ind 0) (lambda () #t))
+      (mix-vct (make-vct 10 .1) 0)
+      (if (not (= (edit-position ind 0) 1)) (snd-display ";mix-vct: blocked edit: ~A" (edit-position ind 0)))
+      (if (not (equal? (mixes ind 0) '())) (snd-display ";mix-vct edit-hook: mixes: ~A" (mixes ind 0)))
+      (mix "pistol.snd" 1000)
+      (if (not (= (edit-position ind 0) 1)) (snd-display ";mix: blocked edit: ~A" (edit-position ind 0)))
+      (if (not (equal? (mixes ind 0) '())) (snd-display ";mix edit-hook: mixes: ~A" (mixes ind 0)))
+      (reset-hook! (edit-hook ind 0))
+      (let ((mx (mix-vct (make-vct 10 .1) 1000)))
+	(if (not (= (edit-position ind 0) 2)) (snd-display ";mix-vct: unblocked edit: ~A" (edit-position ind 0)))
+	(if (not (equal? (mixes ind 0) (list mx))) (snd-display ";mix-vct un edit-hook: mixes: ~A" (mixes ind 0)))
+	(add-hook! (edit-hook ind 0) (lambda () #t))
+	(set! (mix-amp mx) 2.0)
+	(if (not (= (edit-position ind 0) 2)) (snd-display ";mix amp: blocked edit: ~A" (edit-position ind 0)))
+	(if (fneq (mix-amp mx) 1.0) (snd-display ";mix amp: blocked edit: ~A" (mix-amp mx)))
+	(set! (mix-amp-env mx) '(0 0 1 1 2 0))
+	(if (not (= (edit-position ind 0) 2)) (snd-display ";mix amp env: blocked edit: ~A" (edit-position ind 0)))
+	(if (not (null? (mix-amp-env mx))) (snd-display ";mix amp env: blocked edit: ~A" (mix-amp-env mx)))
+	(set! (mix-speed mx) 2.0)
+	(if (not (= (edit-position ind 0) 2)) (snd-display ";mix speed: blocked edit: ~A" (edit-position ind 0)))
+	(if (fneq (mix-speed mx) 1.0) (snd-display ";mix speed: blocked edit: ~A" (mix-speed mx)))
+	(set! (mix-position mx) 2000)
+	(if (not (= (edit-position ind 0) 2)) (snd-display ";mix position: blocked edit: ~A" (edit-position ind 0)))
+	(if (not (= (mix-position mx) 1000)) (snd-display ";mix position: blocked edit: ~A" (mix-position mx)))
+	(mix-vct (make-vct 10 .2) 0)
+	(if (not (= (edit-position ind 0) 2)) (snd-display ";mix-vct 1: blocked edit: ~A" (edit-position ind 0)))
+	(if (not (equal? (mixes ind 0) (list mx))) (snd-display ";mix-vct 1 edit-hook: mixes: ~A" (mixes ind 0)))
+	)
+      (close-sound ind))
+
+    (let ((ind (open-sound "oboe.snd")))
+      (if (not (hook-empty? (edit-hook ind 0))) (snd-display ";edit-hook not cleared at close?"))
+      (if (not (hook-empty? (after-edit-hook ind 0))) (snd-display ";after-edit-hook not cleared at close?"))
+      (close-sound ind))
+
     (reset-almost-all-hooks)
     
     ;; before|after-save-as-hook

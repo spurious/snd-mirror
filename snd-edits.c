@@ -3871,7 +3871,6 @@ static void get_sf_closure(snd_fd *sf)
 {
   XEN proc;
   proc = sf->cp->ptree_inits[READER_PTREE_INDEX(sf)];
-  /* if ((XEN_BOUND_P(sf->closure1)) && (!(XEN_EQ_P(sf->closure1, empty_closure)))) */
   if (sf->protect1 != NOT_A_GC_LOC)
     {
       snd_unprotect_at(sf->protect1);
@@ -3882,7 +3881,7 @@ static void get_sf_closure(snd_fd *sf)
     {
       sf->closure1 = XEN_CALL_2(proc,
 				C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE_POSITION(sf)),
-				C_TO_XEN_OFF_T(READER_PTREE_DUR(sf)),
+				C_TO_XEN_OFF_T(READER_PTREE_DUR(sf)),	/* ptree_dur is the original (full) ptree-channel duration */
 				S_ptree_channel " init func");
       if (XEN_BOUND_P(sf->closure1))
 	{
@@ -3896,7 +3895,6 @@ static void get_sf_closure2(snd_fd *sf)
 {
   XEN proc;
   proc = sf->cp->ptree_inits[READER_PTREE2_INDEX(sf)];
-  /* if ((XEN_BOUND_P(sf->closure2)) && (!(XEN_EQ_P(sf->closure2, empty_closure)))) */
   if (sf->protect2 != NOT_A_GC_LOC)
     {
       snd_unprotect_at(sf->protect2);
@@ -3921,7 +3919,6 @@ static void get_sf_closure3(snd_fd *sf)
 {
   XEN proc;
   proc = sf->cp->ptree_inits[READER_PTREE3_INDEX(sf)];
-  /* if ((XEN_BOUND_P(sf->closure3)) && (!(XEN_EQ_P(sf->closure3, empty_closure)))) */
   if (sf->protect3 != NOT_A_GC_LOC)
     {
       snd_unprotect_at(sf->protect3);

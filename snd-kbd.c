@@ -18,6 +18,7 @@ static named_macro **named_macros = NULL;
 static int named_macro_ctr = 0;
 static int named_macro_size = 0;
 
+
 static void allocate_macro_cmds(void)
 {
   int i, old_size;
@@ -32,6 +33,7 @@ static void allocate_macro_cmds(void)
     }
 }
 
+
 static void start_defining_macro(void)
 {
   macro_size = 0;
@@ -39,12 +41,14 @@ static void start_defining_macro(void)
   if ((!macro_cmds) || (macro_size == macro_cmd_size)) allocate_macro_cmds();
 }
 
+
 static void stop_defining_macro(void)
 {
   /* the last C-x ) went into the macro before we noticed it should not have */
   macro_size -= 2;
   defining_macro = false;
 }
+
 
 static void execute_last_macro(chan_info *cp, int count)
 {
@@ -57,6 +61,7 @@ static void execute_last_macro(chan_info *cp, int count)
 			 macro_cmds[i]->state);
 }
 
+
 static void continue_macro(int keysym, int state)
 {
   if (!(macro_cmds[macro_size])) macro_cmds[macro_size] = (macro_cmd *)CALLOC(1, sizeof(macro_cmd));
@@ -66,6 +71,7 @@ static void continue_macro(int keysym, int state)
   if (macro_size == macro_cmd_size) 
     allocate_macro_cmds();
 }
+
 
 static named_macro *name_macro(char *name)
 {
@@ -91,6 +97,7 @@ static named_macro *name_macro(char *name)
   return(nm);
 }
 
+
 static void name_last_macro (char *name)
 {
   named_macro *nm;
@@ -107,6 +114,7 @@ static void name_last_macro (char *name)
       mc->state = macro_cmds[i]->state;
     }
 }
+
 
 static void save_macro_1(named_macro *nm, FILE *fd)
 {
@@ -150,12 +158,14 @@ static void save_macro_1(named_macro *nm, FILE *fd)
 #endif
 }
 
+
 void save_macro_state (FILE *fd)
 {
   int i;
   for (i = 0; i < named_macro_ctr; i++) 
     save_macro_1(named_macros[i], fd);
 }
+
 
 static bool execute_named_macro_1(chan_info *cp, const char *name, off_t count)
 {
@@ -186,6 +196,7 @@ static bool execute_named_macro_1(chan_info *cp, const char *name, off_t count)
     }
   return(false);
 }
+
 
 static void execute_named_macro(chan_info *cp, char *name, off_t count)
 {
@@ -238,6 +249,7 @@ static key_entry *user_keymap = NULL;
 static int keymap_size = 0;
 static int keymap_top = 0;
 
+
 int in_user_keymap(int key, int state, bool cx_extended)
 {
   int i;
@@ -250,6 +262,7 @@ int in_user_keymap(int key, int state, bool cx_extended)
       return(i);
   return(-1);
 }
+
 
 #define NUM_BUILT_IN_KEY_BINDINGS 76
 
@@ -340,6 +353,7 @@ static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
 static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS];
 #endif
 
+
 void map_over_key_bindings(bool (*func)(int key, int state, bool cx, char *pinfo, XEN xf))
 {
   int i;
@@ -352,6 +366,7 @@ void map_over_key_bindings(bool (*func)(int key, int state, bool cx, char *pinfo
 		 user_keymap[i].func)))
       return;
 }
+
 
 static key_info *make_key_info(key_entry k)
 {
@@ -369,6 +384,7 @@ static key_info *make_key_info(key_entry k)
   ki->x = k.cx_extended;
   return(ki);
 }
+
 
 key_info *find_prefs_key_binding(const char *prefs_name)
 {
@@ -392,6 +408,7 @@ key_info *find_prefs_key_binding(const char *prefs_name)
   ki->x = false;
   return(ki);
 }
+
 
 char *key_binding_description(int key, int state, bool cx_extended)
 {
@@ -431,6 +448,7 @@ char *key_binding_description(int key, int state, bool cx_extended)
       return(built_in_key_bindings[pos].origin);
   return(NULL);
 }
+
 
 void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, const char *origin, const char *prefs_info)
 {
@@ -496,6 +514,7 @@ void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, 
     user_keymap[i].gc_loc = snd_protect(func);
 }
 
+
 static void call_user_keymap(int hashedsym, int count)
 {
   kbd_cursor_t res = KEYBOARD_NO_ACTION;
@@ -515,6 +534,7 @@ static void call_user_keymap(int hashedsym, int count)
   handle_cursor(selected_channel(), res);
 }
 
+
 /* ---------------- minibuffer ---------------- */
 
 void string_to_minibuffer(snd_info *sp, const char *buf)
@@ -531,6 +551,7 @@ void string_to_minibuffer(snd_info *sp, const char *buf)
     }
 }
 
+
 void report_in_minibuffer(snd_info *sp, const char *format, ...)
 {
   char *buf;
@@ -542,6 +563,7 @@ void report_in_minibuffer(snd_info *sp, const char *format, ...)
   string_to_minibuffer(sp, buf);
   FREE(buf);
 }
+
 
 void clear_minibuffer(snd_info *sp)
 {
@@ -558,10 +580,12 @@ void clear_minibuffer(snd_info *sp)
   sp->prompting = false;
 }
 
+
 void clear_minibuffer_prompt(snd_info *sp)
 {
   make_minibuffer_label(sp, "     ");
 }
+
 
 static void prompt(snd_info *sp, char *msg, char *preload)
 {
@@ -577,12 +601,14 @@ static void prompt(snd_info *sp, char *msg, char *preload)
   goto_minibuffer(sp);
 }
 
+
 static void get_amp_expression(snd_info *sp, int count, bool over_selection) 
 {
   prompt(sp, _("env:"), NULL); 
   sp->amp_count = count; 
   sp->selectioning = over_selection;
 }
+
 
 static void prompt_named_mark(chan_info *cp) 
 {
@@ -594,10 +620,12 @@ static void prompt_named_mark(chan_info *cp)
   sp->marking = CURSOR(cp) + 1; /*  + 1 so it's not confused with 0 (if (sp->marking)...) */
 }
 
+
 void errors_to_minibuffer(const char *msg, void *data)
 {
   display_minibuffer_error((snd_info *)data, msg);
 }
+
 
 void printout_to_minibuffer(const char *msg, void *data)
 {
@@ -1058,6 +1086,7 @@ static void cursor_moveto_end(chan_info *cp)
   cursor_moveto(cp, CURRENT_SAMPLES(cp) - 1);
 }
 
+
 static void set_window_bounds(chan_info *cp, int count) 
 {
   /* count = sample number to start at */
@@ -1070,6 +1099,7 @@ static void set_window_bounds(chan_info *cp, int count)
       reset_x_display(cp, sx, ap->zx);
     }
 }
+
 
 static void set_window_size(chan_info *cp, int count) 
 {
@@ -1084,6 +1114,7 @@ static void set_window_size(chan_info *cp, int count)
     }
 }
 
+
 static void set_window_percentage(chan_info *cp, int count) 
 {
   /* set percentage of file within window */
@@ -1093,6 +1124,7 @@ static void set_window_percentage(chan_info *cp, int count)
   zx = (double)count / (double)SND_SRATE(cp->sound);
   reset_x_display(cp, ap->sx, zx);
 }
+
 
 static void window_frames_selection(chan_info *cp)
 {
@@ -1113,6 +1145,7 @@ static void window_frames_selection(chan_info *cp)
 	set_x_axis_x0x1(sp->chans[0], x0, x1);
     }
 }
+
 
 static chan_info *goto_next_graph(chan_info *cp, int count);
 
@@ -1169,6 +1202,7 @@ static chan_info *goto_previous_graph(chan_info *cp, int count)
   return(ncp);
 }
 
+
 static chan_info *goto_next_graph(chan_info *cp, int count)
 {
   snd_info *sp;
@@ -1222,6 +1256,7 @@ static chan_info *goto_next_graph(chan_info *cp, int count)
   return(ncp);
 }
 
+
 void save_edits_with_prompt(snd_info *sp)
 {
   io_error_t err;
@@ -1272,6 +1307,7 @@ static off_t get_count_1(char *number_buffer, int number_ctr, bool dot_seen, cha
   return(i);
 }
 
+
 static off_t get_count(char *number_buffer, int number_ctr, bool dot_seen, chan_info *cp, bool mark_wise)
 {
   off_t val, old_cursor;
@@ -1284,6 +1320,7 @@ static off_t get_count(char *number_buffer, int number_ctr, bool dot_seen, chan_
   CURSOR(cp) = old_cursor;
   return(val);
 }
+
 
 #define NUMBER_BUFFER_SIZE 12
 
@@ -1306,6 +1343,7 @@ static bool stop_selecting(int keysym, int state)
 	 (keysym == snd_K_Y) || (keysym == snd_K_y));
 }
 
+
 static char *key_to_name(int keysym) 
 {
   if (keysym) 
@@ -1316,6 +1354,7 @@ static char *key_to_name(int keysym)
     }
   return("NUL");
 }
+
 
 static int number_ctr = 0;
 static bool dot_seen = false;
@@ -1348,6 +1387,7 @@ void control_g(snd_info *sp)
 #ifndef SND_KEYMASK
   #define SND_KEYMASK (snd_ControlMask | snd_MetaMask)
 #endif
+
 
 void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 {
@@ -2131,6 +2171,7 @@ char *make_key_name(char *buf, int buf_size, int key, int state, bool extended)
   return(buf);
 }
 
+
 static int key_name_to_key(XEN key, const char *caller)
 {
   /* Ruby thinks chars are strings */
@@ -2161,6 +2202,7 @@ static int key_name_to_key(XEN key, const char *caller)
   return(0);
 }
 
+
 static XEN check_for_key_error(int k, int s, const char *caller)
 {
   if ((k < MIN_KEY_CODE) || (k > MAX_KEY_CODE) ||
@@ -2172,6 +2214,7 @@ static XEN check_for_key_error(int k, int s, const char *caller)
 				    C_TO_XEN_INT(s))));
   return(XEN_FALSE);
 }
+
 
 static XEN g_key_binding(XEN key, XEN state, XEN cx_extended)
 {
@@ -2190,6 +2233,7 @@ prefixed with C-x. 'key' can be a character, a key name such as 'Home', or an in
     return(user_keymap[i].func);
   return(XEN_UNDEFINED);
 }
+
 
 static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origin, XEN prefs_info, const char *caller)
 {
@@ -2231,6 +2275,7 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
   return(code);
 }
 
+
 static XEN g_bind_key(XEN key, XEN state, XEN code, XEN cx_extended, XEN origin, XEN prefs_info)
 {
   #define H_bind_key "(" S_bind_key " key modifiers func :optional extended origin prefs-info: \
@@ -2245,11 +2290,13 @@ or \"?a\" in Ruby."
   return(g_bind_key_1(key, state, code, cx_extended, origin, prefs_info, S_bind_key));
 }
 
+
 static XEN g_unbind_key(XEN key, XEN state, XEN cx_extended)
 {
   #define H_unbind_key "(" S_unbind_key " key state :optional extended): undo the effect of a prior " S_bind_key " call."
   return(g_bind_key_1(key, state, XEN_FALSE, cx_extended, XEN_UNDEFINED, XEN_UNDEFINED, S_unbind_key));
 }
+
 
 static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
 {
@@ -2267,6 +2314,7 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
   keyboard_command(cp, k, s);
   return(kbd);
 }
+
 
 static XEN g_save_macros(XEN file)
 {
@@ -2290,6 +2338,7 @@ static XEN g_save_macros(XEN file)
     }
   return(file);
 }
+
 
 /* this doesn't display the full prompt in motif, but I can't find any way to fix it */
 
@@ -2350,6 +2399,7 @@ passed as a string to the prompt callback function; otherwise it is evaluated fi
   return(callback);
 }
 
+
 static XEN g_report_in_minibuffer(XEN msg, XEN snd_n, XEN as_error)
 {
   #define H_report_in_minibuffer "(" S_report_in_minibuffer " msg :optional snd as-error): display msg in snd's minibuffer. \
@@ -2367,6 +2417,7 @@ If 'as-error' is " PROC_TRUE ", place the message in the minibuffer's error labe
   return(msg);
 }
 
+
 static XEN g_clear_minibuffer(XEN snd)
 {
   #define H_clear_minibuffer "(" S_clear_minibuffer " :optional snd) clears snd's minibuffer (erasing any \
@@ -2380,6 +2431,7 @@ error message as well)."
   return(XEN_FALSE);
 }
 
+
 static XEN g_control_g_x(void)
 {
   #define H_control_g_x "(" S_c_g_x "): simulate C-g"
@@ -2387,7 +2439,9 @@ static XEN g_control_g_x(void)
   return(XEN_FALSE);
 }
 
+
 #define S_snd_simulate_keystroke "snd-simulate-keystroke"
+
 static XEN g_snd_simulate_keystroke(XEN snd, XEN chn, XEN key, XEN state)
 {
   /* intended for testing */
@@ -2400,6 +2454,7 @@ static XEN g_snd_simulate_keystroke(XEN snd, XEN chn, XEN key, XEN state)
   keyboard_command(cp, XEN_TO_C_INT(key), XEN_TO_C_INT(state));
   return(key);
 }
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_3(g_key_binding_w, g_key_binding)

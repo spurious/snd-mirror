@@ -58,15 +58,11 @@ and run simple lisp[4] functions.
 
 (c-load-from-path eval-c)
 
-    
-
-
-
-;; Various general functions and macros
+;; general functions and macros
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (eval-c  (string-append "-I" snd-header-files-path)
-	 "#include <mus-config.h>"
+	 "#include <config.h>"
 	 "#include <clm.h>"
 	 "#include <xen.h>"
 	 "#include <clm2xen.h>"
@@ -3731,19 +3727,20 @@ and run simple lisp[4] functions.
 
 
 
-;(define-rt-macro (while test . body)
-;  (let ((whilefunc (rt-gensym))
-;	(dasfunc (rt-gensym)))
-;    `(let* ((,whilefunc (lambda ()
-;			 (let* ((_rt_breakcontsig 0)
-;				(,dasfunc (lambda ()
-;					    (rt-while ,test
-;						      (begin
-;							,@body)))))
-;			   (if (< (rt-setjmp/setjmp _rt_breakcontsig) 2)
-;			       (,dasfunc))))))
-;       (,whilefunc))))
+(define-rt-macro (while test . body)
+  (let ((whilefunc (rt-gensym))
+	(dasfunc (rt-gensym)))
+    `(let* ((,whilefunc (lambda ()
+			 (let* ((_rt_breakcontsig 0)
+				(,dasfunc (lambda ()
+					    (rt-while ,test
+						      (begin
+							,@body)))))
+			   (if (< (rt-setjmp/setjmp _rt_breakcontsig) 2)
+			       (,dasfunc))))))
+       (,whilefunc))))
 
+#|
 (define-rt-macro (while test . body)
   (define (rec-search term)
     (call-with-current-continuation
@@ -3764,12 +3761,15 @@ and run simple lisp[4] functions.
 			 ,@body)))
 	`(rt-while ,test
 		   ,@body))))
+|#
 
 (define-c-macro (rt-while test . body)
   `(while ,test ,@body))
 (define-c-macro (rt-setjmp/setjmp das-sig)
   `(setjmp ,das-sig))
 
+#|
+;; Implementaions for these are just hacks.
 (define-rt-macro (break)
   `(rt-break/longjmp _rt_breakcontsig))
 (define-c-macro (rt-break/longjmp das-sig)
@@ -3778,7 +3778,7 @@ and run simple lisp[4] functions.
   `(rt-continue/longjmp _rt_breakcontsig))
 (define-c-macro (rt-continue/longjmp das-sig)
   `(longjmp ,das-sig 1))
-
+|#
 
 
 (define-rt-macro (do variables test . commands)
@@ -3847,6 +3847,7 @@ and run simple lisp[4] functions.
 
 !#
 
+#|
 ;; This is bad. Return-values from continuations shouldn't be limited to floats only. (Type is set immediately for let-variables)
 ;; void-returning functions aren't supported.
 (define-rt-macro (call-with-current-continuation func)
@@ -3862,6 +3863,8 @@ and run simple lisp[4] functions.
        (if (= (rt-setjmp/setjmp _rt_breakcontsig) 0)
 	   (set! ,res (,thunk)))
        ,res)))
+|#
+
 
 	    
 (define-rt-macro (printf string . rest)
@@ -4706,7 +4709,7 @@ and run simple lisp[4] functions.
 
 
 (eval-c (string-append "-I" snd-header-files-path " " (string #\`) "pkg-config --libs sndfile" (string #\`) )
-	"#include <mus-config.h>"
+	"#include <config.h>"
 	"#include <clm.h>"
 	"#include <xen.h>"
 	"#include <clm2xen.h>"
@@ -5537,7 +5540,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 
 (eval-c (<-> "-I" snd-header-files-path " ")
-	"#include <mus-config.h>"
+	"#include <config.h>"
 	"#include <ladspa.h>"
 	"#include <clm.h>"
 	"#include <xen.h>"
@@ -5975,7 +5978,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 (define *rt-rb-overlap* 10) ;; 10% overlap
 
 (eval-c (<-> "-I" snd-header-files-path " -ffast-math ")
-	"#include <mus-config.h>"
+	"#include <config.h>"
 	"#include <clm.h>"
 	"#include <xen.h>"
 	"#include <vct.h>"
@@ -6424,7 +6427,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 ;; scm_to_vct
 (rt-ec-function <vct-*> rt_scm_to_vct (lambda (,rt-globalvardecl (<SCM> name))
 				     ,(if (rt-is-safety?)
-					  `(if (vct_p name)
+					  `(if (mus_vct_p name)
 					       (return (XEN_TO_VCT name))
 					       (begin
 						 (rt_error rt_globals (string "Variable is not a VCT."))
@@ -7424,7 +7427,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 	  
 	  (apply eval-c-non-macro (append (list (<-> "-I" snd-header-files-path " -ffast-math ") ;; "-ffast-math") ;; " -Werror "
 						#f
-						"#include <mus-config.h>"
+						"#include <config.h>"
 						"#include <math.h>"
 						"#include <clm.h>"
 						"#include <xen.h>"
