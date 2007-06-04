@@ -1,6 +1,7 @@
 #include "snd.h"
 #include "snd-menu.h"
 
+
 #if (!USE_NO_GUI)
 void edit_menu_update(void)
 {
@@ -58,6 +59,7 @@ void edit_menu_update(void)
     set_menu_label(edit_header_menu, (any_sp->hdr->type == MUS_RAW) ? _("Add Header") : _("Edit Header"));
 }
 
+
 void view_menu_update(void)
 {
   /* are there any viewable regions? */
@@ -103,6 +105,7 @@ void view_menu_update(void)
   /* set_sensitive(view_files_menu, get_view_files_end() >= 0); */
 }
 
+
 void options_menu_update(void)
 {
   /* zoom focus style */
@@ -111,6 +114,7 @@ void options_menu_update(void)
   set_sensitive(options_focus_middle_menu, zoom_focus_style(ss) != ZOOM_FOCUS_MIDDLE);
   set_sensitive(options_focus_active_menu, zoom_focus_style(ss) != ZOOM_FOCUS_ACTIVE);
 }
+
 
 void file_menu_update(void)
 {
@@ -138,6 +142,7 @@ void file_menu_update(void)
     activate_widget(file_close_all_menu);
   else deactivate_widget(file_close_all_menu);
 }
+
 
 void popup_menu_update(void)
 {
@@ -182,6 +187,7 @@ void popup_menu_update(void)
 }
 #endif
 
+
 void reflect_file_revert_in_label(snd_info *sp)
 {
   if (sp->sgx)
@@ -192,6 +198,7 @@ void reflect_file_revert_in_label(snd_info *sp)
 	set_sound_pane_file_label(sp, shortname_indexed(sp));
     }
 }
+
 
 static void file_update(snd_info *sp)
 {
@@ -206,10 +213,12 @@ static void file_update(snd_info *sp)
     }
 }
 
+
 void update_file_from_menu(void)
 {
   for_each_sound(file_update);
 }
+
 
 void revert_file_from_menu(void)
 {
@@ -224,6 +233,7 @@ void revert_file_from_menu(void)
     }
 }
 
+
 void save_options_from_menu(void)
 {
   char *filename;
@@ -235,12 +245,15 @@ void save_options_from_menu(void)
     }
 }
 
+
 static bool save_state_error_p = false;
+
 static void save_state_from_menu_error_handler(const char *msg, void *ignore)
 {
   snd_warning_without_format(msg);
   save_state_error_p = true;
 }
+
 
 void save_state_from_menu(void)
 {
@@ -274,11 +287,13 @@ static XEN snd_no_such_menu_error(const char *caller, XEN id)
   return(XEN_FALSE);
 }
 
+
 static XEN *menu_functions = NULL;
 static int *menu_functions_loc = NULL;
 static int callbacks_size = 0;
 static int callb = 0;
 #define CALLBACK_INCR 16
+
 
 static int make_callback_slot(void)
 {
@@ -309,6 +324,7 @@ static int make_callback_slot(void)
   return(old_callb);
 }
 
+
 static void add_callback(int slot, XEN callback)
 {
   if ((slot >= 0) && (slot < callbacks_size))
@@ -317,6 +333,7 @@ static void add_callback(int slot, XEN callback)
       menu_functions_loc[slot] = snd_protect(callback);
     }
 }
+
 
 void unprotect_callback(int slot)
 {
@@ -331,6 +348,7 @@ void unprotect_callback(int slot)
       menu_functions[slot] = XEN_FALSE;  /* not XEN_UNDEFINED -- need a way to distinguish "no callback" from "recyclable slot" */
     }
 }
+
 
 static XEN gl_add_to_main_menu(XEN label, XEN callback)
 {
@@ -355,6 +373,7 @@ static XEN gl_add_to_main_menu(XEN label, XEN callback)
   else menu_functions[slot] = XEN_UNDEFINED;
   return(C_TO_XEN_INT(g_add_to_main_menu(XEN_TO_C_STRING(label), slot)));
 }
+
 
 static XEN gl_add_to_menu(XEN menu, XEN label, XEN callback, XEN gpos)
 {
@@ -402,11 +421,13 @@ func (a function of no args) when the new menu is activated. Returns the new men
   return(XEN_WRAP_WIDGET(result));
 }
 
+
 void g_snd_callback(int callb)
 {
   if ((callb >= 0) && (XEN_BOUND_P(menu_functions[callb])))
     XEN_CALL_0(menu_functions[callb], "menu callback func");
 }
+
 
 static XEN gl_remove_from_menu(XEN menu, XEN label)
 {
@@ -419,6 +440,7 @@ static XEN gl_remove_from_menu(XEN menu, XEN label)
     return(snd_no_such_menu_error(S_remove_from_menu, menu));
   return(C_TO_XEN_INT(g_remove_from_menu(m, XEN_TO_C_STRING(label))));
 }
+
 
 static XEN g_main_menu(XEN which)
 {

@@ -849,6 +849,11 @@ static int off_t_compare(const void *a, const void *b)
 }
 
 
+/* PERHAPS: src ratio of -1 is the same as reverse  (reverse_channel or reverse_sound)
+ *            also can we use -2 and -.5 below in the special cases?
+ */
+
+
 static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, Float ratio, mus_any *egen, 
 				    enved_progress_t from_enved, const char *origin, bool over_selection, int curchan, int chans,
 				    bool *clm_err)
@@ -1113,7 +1118,20 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	    }
 	}
 
-      /* SOMEDAY: src-peak-env => ideally just a change in the bin size after copy */
+      /* SOMEDAY: src-peak-env => ideally just a change in the bin size after copy:
+       *  if previous exists and src is not changing (egen null)
+       *    and samps_per_bin / ratio is very close to an integer, 
+       *    just copy and reset samps_per_bin.  If its a ratio but not close
+       *    perhaps src the env??
+       *
+       *     cp->edits[sf->edit_ctr]->peak_env->samps_per_bin
+       *       peak_env_info *copy_peak_env_info(peak_env_info *old_ep, bool reversed)
+       *     ep = peak_env_copy(cp, false, edpos); false -> not reversed (or maybe it could be if src<0) ; edpos from sf->edit_ctr ; no check needed
+       *     ep->samps_per_bin /= ratio
+       *   if ((beg == 0) && (dur == cp->edits[edpos]->samples))
+       *      ep = peak_env_copy(cp, true, edpos);
+       *   else env selection
+       */
 
       update_graph(cp);
     }
@@ -5446,6 +5464,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   env *e_1 = NULL;
   vct *v = NULL;
   Float *coeffs = NULL;
+
   XEN_ASSERT_TYPE(XEN_LIST_P(e) || MUS_VCT_P(e), e, XEN_ARG_1, S_filter_channel, "an envelope or a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, S_filter_channel, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_9, S_filter_channel, "a string");

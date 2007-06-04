@@ -18,6 +18,7 @@
   )
 */
 
+
 bool is_prompt(const char *str, int beg)
 {
   int i, j;
@@ -29,6 +30,7 @@ bool is_prompt(const char *str, int beg)
     return(true);
   return(false);
 }
+
 
 bool within_prompt(const char *str, int beg, int end)
 {
@@ -48,6 +50,7 @@ bool within_prompt(const char *str, int beg, int end)
       }
   return(false);
 }
+
 
 int find_matching_paren(char *str, int parens, int pos, int *highlight_pos)
 {
@@ -106,6 +109,7 @@ int find_matching_paren(char *str, int parens, int pos, int *highlight_pos)
     }
   return(parens);
 }
+
 
 int check_balance(char *expr, int start, int end, bool in_listener) 
 {
@@ -231,12 +235,15 @@ int check_balance(char *expr, int start, int end, bool in_listener)
   return(0);
 }
 
+
 static char listener_prompt_buffer[LABEL_BUFFER_SIZE];
+
 char *listener_prompt_with_cr(void)
 {
   mus_snprintf(listener_prompt_buffer, LABEL_BUFFER_SIZE, "\n%s", listener_prompt(ss));
   return(listener_prompt_buffer);
 }
+
 
 static void provide_listener_help_1(char *source, int start, int end)
 {
@@ -252,6 +259,7 @@ static void provide_listener_help_1(char *source, int start, int end)
       listener_append_and_prompt(XEN_TO_C_STRING(result));
     }
 }
+
 
 void provide_listener_help(char *source)
 {
@@ -283,10 +291,12 @@ void provide_listener_help(char *source)
     }
 }
 
+
 bool listener_is_visible(void)
 {
   return(listener_height() > 5);
 }
+
 
 #if (!USE_NO_GUI)
 #if USE_GTK
@@ -322,6 +332,7 @@ static XEN read_hook;
 static int current_listener_position = -1, listener_positions_size = 0;
 static int *listener_positions = NULL;
 
+
 static void add_listener_position(int pos)
 {
   if (listener_positions_size == 0)
@@ -354,6 +365,7 @@ static void add_listener_position(int pos)
   listener_positions[current_listener_position] = pos;
 }
 
+
 void backup_listener_to_previous_command(void)
 {
   if (current_listener_position > 0)
@@ -365,6 +377,7 @@ void backup_listener_to_previous_command(void)
 #else
 void backup_listener_to_previous_command(void) {}
 #endif
+
 
 void command_return(widget_t w, int last_prompt)
 {
@@ -604,6 +617,7 @@ void command_return(widget_t w, int last_prompt)
 #endif
 }
 
+
 static XEN g_save_listener(XEN filename)
 {
   #define H_save_listener "(" S_save_listener " filename): saves the current listener text in filename"
@@ -626,12 +640,14 @@ static XEN g_save_listener(XEN filename)
   return(filename);
 }
 
+
 static XEN g_clear_listener(void)
 {
   #define H_clear_listener "(" S_clear_listener "): removes listener text from the beginning to the cursor"
   clear_listener();
   return(XEN_FALSE);
 }
+
 
 static XEN g_show_listener(XEN val) 
 {
@@ -642,12 +658,14 @@ static XEN g_show_listener(XEN val)
   return(C_TO_XEN_BOOLEAN(listener_is_visible()));
 }
 
+
 static XEN g_set_show_listener(XEN val)
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_show_listener, "a boolean");
   handle_listener(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(listener_is_visible()));
 }
+
 
 void set_listener_prompt(const char *new_prompt)
 {
@@ -697,7 +715,9 @@ void set_listener_prompt(const char *new_prompt)
   
 }
 
+
 static XEN g_listener_prompt(void) {return(C_TO_XEN_STRING(listener_prompt(ss)));}
+
 static XEN g_set_listener_prompt(XEN val) 
 {
   #define H_listener_prompt "(" S_listener_prompt "): the current lisp listener prompt character ('>') "
@@ -706,6 +726,7 @@ static XEN g_set_listener_prompt(XEN val)
   set_listener_prompt(copy_string(XEN_TO_C_STRING(val)));
   return(C_TO_XEN_STRING(listener_prompt(ss)));
 }
+
 
 static XEN g_snd_completion(XEN text)
 {

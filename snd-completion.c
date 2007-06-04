@@ -1,11 +1,13 @@
 #include "snd.h"
 #include "sndlib-strings.h"
 
+
 static char *current_match = NULL;
 
 /* TAB completion requires knowing what is currently defined, which requires scrounging
  *   around in the symbol tables (an "obarray" in Guile, hash table in Gauche, vector in Ruby)
  */
+
 
 #if HAVE_GAUCHE
 static int completions(char *text)
@@ -64,12 +66,15 @@ static int completions(char *text)
 }
 #endif
 
+
 #if HAVE_GUILE
 #if defined(SCM_MODULE_OBARRAY)
+
 static int xen_return_first_int(int a, ...)
 {
   return(a);
 }
+
 
 static int scan_tab(XEN tab, char *text, int len, int matches)
 {
@@ -129,6 +134,7 @@ static int scan_tab(XEN tab, char *text, int len, int matches)
   return(xen_return_first_int(matches, handle, ls, tab));
 }
 
+
 static int completions(char *text)
 {
   int len, matches = 0;
@@ -146,11 +152,15 @@ static int completions(char *text)
     }
   return(xen_return_first_int(matches, curmod, uses));
 }
+
 #else
+
 static int completions(char *text) {return(0);}
+
 #endif
 #endif
 /* end Guile && SCM_MODULE_OBARRAY */
+
 
 #if HAVE_RUBY
 static XEN snd_rb_methods(void)
@@ -161,6 +171,7 @@ static XEN snd_rb_methods(void)
   return(rb_class_private_instance_methods(1, argv, rb_mKernel));
   /* rb_ary_new here -- should we free? */
 }
+
 
 static int completions(char *text)
 {
@@ -198,6 +209,7 @@ static int completions(char *text)
 }
 #endif
 
+
 #if HAVE_FORTH
 static int completions(char *text)
 {
@@ -225,9 +237,11 @@ static int completions(char *text)
 }
 #endif
 
+
 #if (!HAVE_EXTENSION_LANGUAGE)
 static int completions(char *text) {return(0);}
 #endif
+
 
 #if HAVE_FORTH
 bool separator_char_p(char c)
@@ -261,6 +275,7 @@ bool separator_char_p(char c)
 	 (c != '$'));
 }
 #endif
+
 
 char *command_completer(char *original_text, void *data)
 {
@@ -312,6 +327,7 @@ char *command_completer(char *original_text, void *data)
   return(copy_string(original_text));
 }
 
+
 /* ---------------- COMMAND/FILENAME COMPLETIONS ---------------- */
 
 typedef char *(*completer_func)(char *text, void *data);
@@ -319,6 +335,7 @@ static completer_func *completer_funcs = NULL;
 static void **completer_data = NULL;
 static int completer_funcs_size = 0;
 static int completer_funcs_end = 0;
+
 
 int add_completer_func(char *(*func)(char *text, void *context), void *data)
 {
@@ -344,15 +361,19 @@ int add_completer_func(char *(*func)(char *text, void *context), void *data)
   return(completer_funcs_end - 1);
 }
 
+
 static int completion_matches = 0;
+
 int get_completion_matches(void) {return(completion_matches);}
 void set_completion_matches(int matches) {completion_matches = matches;}
+
 static bool save_completions = 0;
 static char **possible_completions = NULL;
 static int possible_completions_size = 0;
 static int possible_completions_ctr = 0;
 
 void set_save_completions(bool save) {save_completions = save;}
+
 
 void add_possible_completion(const char *text)
 {
@@ -376,11 +397,13 @@ void add_possible_completion(const char *text)
     }
 }
 
+
 void display_completions(void)
 {
   if (possible_completions_ctr > 0)
     snd_completion_help(possible_completions_ctr, possible_completions);
 }
+
 
 char *complete_text(char *text, int func)
 {
@@ -393,6 +416,7 @@ char *complete_text(char *text, int func)
   else return(copy_string(text));
 }
 
+
 void clear_possible_completions(void) 
 {
   int i;
@@ -404,6 +428,7 @@ void clear_possible_completions(void)
       }
   possible_completions_ctr = 0;
 }
+
 
 static list_completer_info *srate_info = NULL;
 
@@ -424,6 +449,7 @@ static void init_srate_list(void)
     }
 }
 
+
 char *srate_list_to_string(int row)
 {
   if ((srate_info) &&
@@ -432,11 +458,13 @@ char *srate_list_to_string(int row)
   return(NULL);
 }
 
+
 list_completer_info *srate_list(void)
 {
   init_srate_list();
   return(srate_info);
 }
+
 
 void add_srate_to_completion_list(int srate)
 {
@@ -460,17 +488,20 @@ void add_srate_to_completion_list(int srate)
   srate_info->values[srate_info->num_values++] = str;
 }
 
+
 char *srate_completer(char *text, void * data)
 {
   init_srate_list();
   return(list_completer(text, (void *)srate_info));
 }
 
+
 #if HAVE_DIRENT_H
   #include <dirent.h>
 #endif
 
 enum {ANY_FILE_TYPE, SOUND_FILE_TYPE};
+
 
 static char *filename_completer_1(char *text, int file_type)
 {
@@ -555,15 +586,18 @@ static char *filename_completer_1(char *text, int file_type)
   return(copy_string(text));
 }
 
+
 char *filename_completer(char *text, void *data)
 {
   return(filename_completer_1(text, ANY_FILE_TYPE));
 }
 
+
 char *sound_filename_completer(char *text, void *data)
 {
   return(filename_completer_1(text, SOUND_FILE_TYPE));
 }
+
 
 static bool use_sound_filename_completer(sp_filing_t filing)
 {
@@ -571,6 +605,7 @@ static bool use_sound_filename_completer(sp_filing_t filing)
 	 (filing == CHANGE_FILING) || /* C-x C-q */
 	 (filing == INSERT_FILING));   /* C-x C-i */
 }
+
 
 char *info_completer(char *text, void *data)
 {
@@ -616,6 +651,7 @@ char *info_completer(char *text, void *data)
   return(command_completer(text, NULL));
 }
 
+
 static int find_indentation(char *str, int loc)
 {
   int line_beg = 0, open_paren = -1, parens, i;
@@ -641,6 +677,7 @@ static int find_indentation(char *str, int loc)
   if (line_beg == 0) return(1);
   return(open_paren - line_beg + 2);
 }
+
 
 char *complete_listener_text(char *old_text, int end, bool *try_completion, char **to_file_text)
 {
@@ -720,6 +757,7 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
   (*to_file_text) = file_text;
   return(new_text);
 }
+
 
 char *list_completer(char *text, void *data)
 {

@@ -2,6 +2,7 @@
 
 /* create Postscript version of graph */
 
+
 static char *pbuf = NULL;
 static int bbx = 0, bby = 0, bx0 = 0, by0 = 0;
 static int ps_fd;
@@ -9,6 +10,7 @@ static int ps_fd;
 static char *nbuf = NULL;
 static int nbuf_ctr = 0;
 #define NBUF_SIZE 8192
+
 
 static void ps_flush(int fd)
 {
@@ -21,6 +23,7 @@ static void ps_flush(int fd)
       memset((void *)nbuf, 0, NBUF_SIZE);
     }
 }
+
 
 static void ps_write(const char *buf)
 {
@@ -39,6 +42,7 @@ static void ps_write(const char *buf)
     }
   memset((void *)buf, 0, PRINT_BUFFER_SIZE);
 }
+
 
 static char *previous_locale = NULL;
 
@@ -74,6 +78,7 @@ static int start_ps_graph(const char *output, const char *title)
   return(0);
 }
 
+
 static void ps_graph(chan_info *cp, int x0, int y0)
 {
   cp->printing = PRINTING;
@@ -82,6 +87,7 @@ static void ps_graph(chan_info *cp, int x0, int y0)
   display_channel_data(cp);
   cp->printing = NOT_PRINTING;
 }
+
 
 static void end_ps_graph(void)
 {
@@ -110,6 +116,7 @@ static void end_ps_graph(void)
     }
 }
 
+
 /* the x and y values in the "points" are relative to grf_x/y:
  *
  *  x: ap->x_axis_x0 + (val - ap->x0) * ap->x_scale
@@ -123,6 +130,7 @@ static int reflect_y(axis_info *ap, int y)
   return(ap->height - y);
 }
 
+
 static Float *xpts = NULL;
 static Float *ypts = NULL;
 static Float *ypts1 = NULL;
@@ -134,6 +142,7 @@ void ps_allocate_grf_points(void)
   if (!ypts1) ypts1 = (Float *)CALLOC(POINT_BUFFER_SIZE, sizeof(Float));
 }
 
+
 void ps_set_grf_points(double x, int j, Float ymin, Float ymax) 
 {
   xpts[j] = x;
@@ -141,21 +150,25 @@ void ps_set_grf_points(double x, int j, Float ymin, Float ymax)
   ypts1[j] = ymax;
 }
 
+
 void ps_set_grf_point(double x, int j, Float y) 
 {
   xpts[j] = x;
   ypts[j] = y;
 }
 
+
 static Float ps_grf_x(axis_info *ap, Float val)
 {
   return(ap->x_axis_x0 + bx0 + (val - ap->x0) * ap->x_scale);
 }
 
+
 static Float ps_grf_y(axis_info *ap, Float val)
 {
   return(by0 + ap->height - (ap->y_axis_y0 + (val - ap->y0) * ap->y_scale));
 }
+
 
 static void ps_draw_lines(axis_info *ap, int j, Float *xpts, Float *ypts)
 {
@@ -171,6 +184,7 @@ static void ps_draw_lines(axis_info *ap, int j, Float *xpts, Float *ypts)
   ps_write(pbuf);
 }
 
+
 static void ps_draw_dots(axis_info *ap, int j, Float *xpts, Float *ypts, int dot_size)
 {
   int i;
@@ -182,6 +196,7 @@ static void ps_draw_dots(axis_info *ap, int j, Float *xpts, Float *ypts, int dot
       ps_write(pbuf);
     }
 }
+
 
 static void ps_fill_polygons(axis_info *ap, int j, Float *xpts, Float *ypts, Float y0)
 {
@@ -200,6 +215,7 @@ static void ps_fill_polygons(axis_info *ap, int j, Float *xpts, Float *ypts, Flo
       ps_write(pbuf);
     }
 }
+
 
 void ps_draw_grf_points(axis_info *ap, int j, Float y0, graph_style_t graph_style, int dot_size) 
 {
@@ -240,6 +256,7 @@ void ps_draw_grf_points(axis_info *ap, int j, Float y0, graph_style_t graph_styl
       break;
     }
 }
+
 
 void ps_draw_both_grf_points(axis_info *ap, int j, graph_style_t graph_style, int dot_size) 
 {
@@ -302,6 +319,7 @@ void ps_draw_both_grf_points(axis_info *ap, int j, graph_style_t graph_style, in
     }
 }
 
+
 static int last_color = -1;
 
 void ps_draw_sono_rectangle(axis_info *ap, int color, Float x, Float y, Float width, Float height)
@@ -318,12 +336,14 @@ void ps_draw_sono_rectangle(axis_info *ap, int color, Float x, Float y, Float wi
   ps_write(pbuf);
 }
 
+
 void ps_reset_color(void)
 {
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " 0 setgray\n");
   ps_write(pbuf);
   last_color = -1;
 }
+
 
 #if USE_MOTIF || USE_GTK
 static void ps_set_color(color_t color)
@@ -355,6 +375,7 @@ static void ps_set_color(color_t color)
 }
 #endif
 
+
 void ps_bg(axis_info *ap, axis_context *ax)
 {
   /* get background color, fill graph, then set foreground for axis */
@@ -383,6 +404,7 @@ void ps_bg(axis_info *ap, axis_context *ax)
   ps_fg(cp, ax);
 }
 
+
 void ps_fg(chan_info *cp, axis_context *ax)
 {
   /* set foreground color for subsequent line drawing */
@@ -401,7 +423,9 @@ void ps_fg(chan_info *cp, axis_context *ax)
 #endif
 }
 
+
 /* the rest are in real coordinates except upsidedown from PS point of view */
+
 void ps_draw_line(axis_info *ap, int x0, int y0, int x1, int y1) 
 {
   int py0, py1, px0, px1;
@@ -417,6 +441,7 @@ void ps_draw_line(axis_info *ap, int x0, int y0, int x1, int y1)
   ps_write(pbuf);
 }
 
+
 void ps_draw_spectro_line(axis_info *ap, int color, Float x0, Float y0, Float x1, Float y1)
 {
   /* these are in local coords */
@@ -430,6 +455,7 @@ void ps_draw_spectro_line(axis_info *ap, int color, Float x0, Float y0, Float x1
     }
   ps_draw_line(ap, (int)x0, (int)y0, (int)x1, (int)y1);
 }
+
 
 void ps_fill_rectangle(axis_info *ap, int x0, int y0, int width, int height) 
 {
@@ -446,6 +472,7 @@ void ps_fill_rectangle(axis_info *ap, int x0, int y0, int width, int height)
   ps_write(pbuf);
 }
 
+
 void ps_draw_string(axis_info *ap, int x0, int y0, const char *str) 
 {
   int px0, py0;
@@ -460,11 +487,13 @@ void ps_draw_string(axis_info *ap, int x0, int y0, const char *str)
   ps_write(pbuf);
 }
 
+
 void ps_set_number_font(void) 
 {
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " /Courier findfont 15 scalefont setfont\n");
   ps_write(pbuf);
 }
+
 
 void ps_set_label_font(void) 
 {
@@ -472,17 +501,20 @@ void ps_set_label_font(void)
   ps_write(pbuf);
 }
 
+
 void ps_set_bold_peak_numbers_font(void) 
 {
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " /Times-Bold findfont 14 scalefont setfont\n");
   ps_write(pbuf);
 }
 
+
 void ps_set_peak_numbers_font(void) 
 {
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " /Times-Roman findfont 14 scalefont setfont\n");
   ps_write(pbuf);
 }
+
 
 void ps_set_tiny_numbers_font(void) 
 {
@@ -542,6 +574,7 @@ static char *snd_print_or_error(const char *output)
   else return(copy_string(_("print sound: eps file name needed")));
 }
 
+
 bool snd_print(const char *output)
 {
   char *error;
@@ -554,6 +587,7 @@ bool snd_print(const char *output)
     }
   return(true);
 }
+
 
 void region_print(const char *output, const char *title, chan_info *cp)
 {
@@ -570,6 +604,7 @@ void region_print(const char *output, const char *title, chan_info *cp)
     }
   else snd_error_without_format(_("print region: eps file name needed"));
 }
+
 
 void print_enved(const char *output, int y0)
 {
@@ -588,6 +623,7 @@ void print_enved(const char *output, int y0)
     }
   else snd_error_without_format(_("print envelope: eps file name needed"));
 }
+
 
 static XEN g_graph_to_ps(XEN filename)
 {
@@ -623,6 +659,7 @@ static XEN g_graph_to_ps(XEN filename)
 
 #define NUM_GL2PS_TYPES 6
 static int gl2ps_types[NUM_GL2PS_TYPES] = {GL2PS_EPS, GL2PS_PS, GL2PS_PDF, GL2PS_TEX, GL2PS_SVG, GL2PS_PGF};
+
 
 static XEN g_gl_graph_to_ps(XEN filename, XEN output_type, XEN snd, XEN chn)
 {
@@ -692,6 +729,7 @@ OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
   return(xen_return_first(C_TO_XEN_STRING(file), filename));
 }
   
+
 char *gl2ps_version(void);
 char *gl2ps_version(void)
 {
@@ -700,6 +738,7 @@ char *gl2ps_version(void)
   snprintf(buf, 128, "gl2ps %d.%d.%d", GL2PS_MAJOR_VERSION, GL2PS_MINOR_VERSION, GL2PS_PATCH_VERSION);
   return(buf);
 }
+
 
 void gl2ps_text(const char *msg);
 void gl2ps_text(const char *msg)
@@ -720,6 +759,7 @@ static XEN g_gl_graph_to_ps(XEN filename, XEN output_type, XEN snd, XEN chn)
 
 
 static XEN g_eps_file(void) {return(C_TO_XEN_STRING(eps_file(ss)));}
+
 static XEN g_set_eps_file(XEN val) 
 {
   #define H_eps_file "(" S_eps_file "): File:Print and " S_graph_to_ps " file name (snd.eps)"
@@ -729,8 +769,11 @@ static XEN g_set_eps_file(XEN val)
   return(C_TO_XEN_STRING(eps_file(ss)));
 }
 
+
 #define MAX_EPS_MARGIN 1000.0
+
 static XEN g_eps_left_margin(void) {return(C_TO_XEN_DOUBLE(eps_left_margin(ss)));}
+
 static XEN g_set_eps_left_margin(XEN val) 
 {
   #define H_eps_left_margin "(" S_eps_left_margin "): File:Print and " S_graph_to_ps " left margin"
@@ -739,7 +782,9 @@ static XEN g_set_eps_left_margin(XEN val)
   return(C_TO_XEN_DOUBLE(eps_left_margin(ss)));
 }
 
+
 static XEN g_eps_bottom_margin(void) {return(C_TO_XEN_DOUBLE(eps_bottom_margin(ss)));}
+
 static XEN g_set_eps_bottom_margin(XEN val) 
 {
   #define H_eps_bottom_margin "(" S_eps_bottom_margin "): File:Print and " S_graph_to_ps " bottom margin"
@@ -748,7 +793,9 @@ static XEN g_set_eps_bottom_margin(XEN val)
   return(C_TO_XEN_DOUBLE(eps_bottom_margin(ss)));
 }
 
+
 static XEN g_eps_size(void) {return(C_TO_XEN_DOUBLE(eps_size(ss)));}
+
 static XEN g_set_eps_size(XEN val) 
 {
   #define MAX_EPS_SIZE 1000.0
@@ -757,6 +804,7 @@ static XEN g_set_eps_size(XEN val)
   set_eps_size(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_EPS_SIZE));
   return(C_TO_XEN_DOUBLE(eps_size(ss)));
 }
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_1(g_graph_to_ps_w, g_graph_to_ps)

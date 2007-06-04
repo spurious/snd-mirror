@@ -12,10 +12,12 @@
 #include <math.h>
 #include "xen.h"
 
+
 XEN xen_return_first(XEN a, ...)
 {
   return(a);
 }
+
 
 /* ------------------------------ GUILE ------------------------------ */
 
@@ -35,6 +37,7 @@ off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
   return(fallback);
 }
 
+
 off_t xen_to_c_off_t(XEN obj)
 {
   if (XEN_EXACT_P(obj))
@@ -46,6 +49,7 @@ off_t xen_to_c_off_t(XEN obj)
   return((off_t)XEN_TO_C_DOUBLE(obj)); /* inexact integer squeezed through somewhere */
 }
 
+
 XEN c_to_xen_off_t(off_t val)
 {
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
@@ -54,6 +58,7 @@ XEN c_to_xen_off_t(off_t val)
     return(C_TO_XEN_INT(val));
 #endif
 }
+
 
 char *xen_version(void)
 {
@@ -67,10 +72,12 @@ char *xen_version(void)
   return(buf);
 }
 
+
 void xen_repl(int argc, char **argv)
 {
   scm_shell(argc, argv); 
 }
+
 
 void xen_gc_mark(XEN val)
 {
@@ -95,12 +102,14 @@ double xen_to_c_double(XEN a)
   return(num);
 }
 
+
 double xen_to_c_double_or_else(XEN a, double b) 
 {
   if (XEN_NUMBER_P(a))
     return(xen_to_c_double(a));
   return(b);
 }
+
 
 bool xen_integer_p(XEN a) 
 {
@@ -122,6 +131,7 @@ bool xen_integer_p(XEN a)
   return(false);
 #endif
 }
+
 
 int xen_to_c_int(XEN a)
 {
@@ -148,6 +158,7 @@ int xen_to_c_int(XEN a)
 #endif
 }
 
+
 int xen_to_c_int_or_else(XEN obj, int fallback)
 {
   /* don't want errors about floats with non-zero fractions etc */
@@ -156,12 +167,14 @@ int xen_to_c_int_or_else(XEN obj, int fallback)
   return(fallback);
 }
 
+
 void xen_initialize(void)
 {
 #if HAVE_SCM_INIT_GUILE
   scm_init_guile();
 #endif
 }
+
 
 void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), 
 					    char *get_help, XEN (*set_func)(), XEN local_doc,
@@ -198,6 +211,7 @@ void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(),
 #endif
 }
 
+
 void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_func)(), 
 						     char *get_help, XEN (*set_func)(), XEN (*reversed_set_func)(), 
 						     XEN local_doc, int get_req, int get_opt, int set_req, int set_opt)
@@ -232,6 +246,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #endif
 }
 
+
 XEN xen_guile_create_hook(const char *name, int args, const char *help, XEN local_doc)
 {
   /* make-hook + documentation */
@@ -243,6 +258,7 @@ XEN xen_guile_create_hook(const char *name, int args, const char *help, XEN loca
   return(hook);
 }
 
+
 #if XEN_DEBUGGING && HAVE_SCM_C_DEFINE_GSUBR
 XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int opt, int rst)
 {
@@ -252,6 +268,7 @@ XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int op
   return(scm_c_define_gsubr(name, req, opt, rst, func));
 }
 #endif
+
 
 XEN xen_guile_add_to_load_path(char *path)
 {
@@ -273,6 +290,7 @@ XEN xen_guile_add_to_load_path(char *path)
   return(result);
 }
 
+
 #if HAVE_SCM_C_MAKE_RECTANGULAR
 static char **xen_temp_strings = NULL;
 static int xen_temp_strings_ctr = 0;
@@ -282,6 +300,7 @@ static int xen_temp_strings_ctr = 0;
 static char **stored_strings = NULL;
 static int stored_strings_ctr = 0;
 #endif
+
 
 char *xen_guile_to_c_string_with_eventual_free(XEN str)
 {
@@ -322,6 +341,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str)
 #endif
 
 
+
 /* ------------------------------ RUBY ------------------------------ */
 
 #if HAVE_RUBY
@@ -338,6 +358,7 @@ XEN rb_documentation(XEN name)
     return(rb_property(name, XEN_DOCUMENTATION_SYMBOL));
 }
 
+
 XEN rb_set_documentation(XEN name, XEN help)
 {
   XEN_ASSERT_TYPE((XEN_STRING_P(name) || XEN_SYMBOL_P(name)), name, XEN_ARG_1, S_add_help, "a char* or symbol");
@@ -349,11 +370,13 @@ XEN rb_set_documentation(XEN name, XEN help)
   return(name);
 }
 
+
 static XEN g_add_help(XEN name, XEN help)
 {
 #define H_add_help S_add_help"(name, help)  add help to topic or function name (String or Symbol)"
   return(rb_set_documentation(name, help));
 }
+
 
 static XEN g_get_help(XEN name)
 {
@@ -365,11 +388,13 @@ return help associated with name (String or Symbol) or false"
     return(rb_documentation(name));
 }
 
+
 void xen_initialize(void)
 {
   ruby_init();
   Init_Hook();
 }
+
 
 off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
 {
@@ -385,6 +410,7 @@ off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
   return(fallback);
 }
 
+
 off_t xen_to_c_off_t(XEN obj)
 {
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
@@ -394,6 +420,7 @@ off_t xen_to_c_off_t(XEN obj)
 #endif
 }
 
+
 XEN c_to_xen_off_t(off_t val)
 {
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
@@ -402,6 +429,7 @@ XEN c_to_xen_off_t(off_t val)
     return(C_TO_XEN_INT(val));
 #endif
 }
+
 
 int xen_to_c_int_or_else(XEN obj, int fallback)
 {
@@ -414,12 +442,14 @@ int xen_to_c_int_or_else(XEN obj, int fallback)
   return(fallback);
 }
 
+
 void xen_gc_mark(XEN val)
 {
 #if HAVE_REASONABLE_RB_GC_MARK
   rb_gc_mark(val);
 #endif
 }
+
 
 XEN xen_rb_cdr(XEN val)
 {
@@ -433,6 +463,7 @@ XEN xen_rb_cdr(XEN val)
   return(val);
 }
 
+
 XEN xen_rb_cons(XEN arg1, XEN arg2)
 {
   if (XEN_NULL_P(arg2))
@@ -442,10 +473,12 @@ XEN xen_rb_cons(XEN arg1, XEN arg2)
   return(rb_ary_unshift(arg2, arg1)); /* arg2 assumed to be array here in Ruby */
 }
 
+
 XEN xen_rb_cons2(XEN arg1, XEN arg2, XEN arg3)
 {
   return(rb_ary_unshift(xen_rb_cons(arg2, arg3), arg1));
 }
+
 
 XEN xen_rb_ary_new_with_initial_element(long num, XEN element)
 {
@@ -456,6 +489,7 @@ XEN xen_rb_ary_new_with_initial_element(long num, XEN element)
     rb_ary_store(arr, i, element);
   return(arr);
 }
+
 
 static char *last_name1 = NULL, *last_name2 = NULL, *last_name3; /* too much of a bother to free the return values over and over */
 
@@ -499,6 +533,7 @@ static char *scheme_to_ruby(const char *name)
   return(new_name);
 }
 
+
 char *xen_scheme_constant_to_ruby(const char *name)
 {
   /* upcase 1st char */
@@ -507,6 +542,7 @@ char *xen_scheme_constant_to_ruby(const char *name)
   new_name[0] = toupper(new_name[0]);
   return(new_name);
 }
+
 
 char *xen_scheme_procedure_to_ruby(const char *name)
 {
@@ -540,6 +576,7 @@ char *xen_scheme_procedure_to_ruby(const char *name)
   return(new_name);
 }
 
+
 char *xen_scheme_global_variable_to_ruby(const char *name)
 {
   /* prepend $ */
@@ -558,7 +595,9 @@ char *xen_scheme_global_variable_to_ruby(const char *name)
   return(new_name);
 }
 
+
 /* looks for global variables and constants (functions too?) */
+
 bool xen_rb_defined_p(const char *name)
 {
   char *var_name = scheme_to_ruby(name);
@@ -577,6 +616,7 @@ bool xen_rb_defined_p(const char *name)
     }
 }
 
+
 #ifndef RARRAY_PTR 
   #define RB_ARRAY_PTR(Ary) RARRAY(Ary)->ptr 
   #define RB_ARRAY_LEN(Ary) RARRAY(Ary)->len 
@@ -585,6 +625,7 @@ bool xen_rb_defined_p(const char *name)
   #define RB_ARRAY_LEN(Ary) RARRAY_LEN(Ary) 
 #endif 
  
+
 int xen_rb_list_length(XEN obj) 
 { 
   if (XEN_VECTOR_P(obj)) 
@@ -594,7 +635,9 @@ int xen_rb_list_length(XEN obj)
   return(-1); 
 } 
 
+
 /* XEN_CAR, XEN_CADR..., XEN_LIST_REF, XEN_VECTOR_REF */
+
 XEN xen_rb_list_ref(XEN obj, int index)
 {
   if (XEN_VECTOR_P(obj))
@@ -602,13 +645,16 @@ XEN xen_rb_list_ref(XEN obj, int index)
   return(XEN_EMPTY_LIST);
 }
 
+
 /* XEN_LIST_SET, XEN_VECTOR_SET */
+
 XEN xen_rb_list_set(XEN obj, int index, XEN value)
 {
   if (XEN_VECTOR_P(obj))
     rb_ary_store(obj, (long)index, value);
   return(value);
 }
+
 
 char *xen_version(void)
 {
@@ -630,6 +676,7 @@ char *xen_version(void)
   return(buf);
 }
 
+
 #if HAVE_READLINE
   #include <readline/readline.h>
   #include <readline/history.h>
@@ -644,6 +691,7 @@ static XEN xen_rb_report_error(XEN nada, XEN err_info)
   fprintf(stderr,"error: %s\n", XEN_AS_STRING(err_info));
   return(XEN_FALSE);
 }
+
 
 static char *rb_prompt = NULL;
 
@@ -683,11 +731,13 @@ static XEN xen_rb_rep(XEN ig)
   return(ig);
 }
 
+
 void xen_rb_repl_set_prompt(const char *prompt)
 {
   if (rb_prompt) free(rb_prompt);
   rb_prompt = strdup(prompt);
 }
+
 
 static XEN xen_rb_rescue(XEN val)
 {
@@ -698,12 +748,14 @@ static XEN xen_rb_rescue(XEN val)
 		   XEN_FALSE));
 }
 
+
 #ifndef HAVE_RB_ERRINFO
 XEN rb_errinfo(void)
 {
   return ruby_errinfo;
 }
 #endif
+
 
 void xen_repl(int argc, char **argv)
 {
@@ -721,6 +773,7 @@ void xen_repl(int argc, char **argv)
     }
 }
 
+
 XEN xen_rb_eval_string_with_error(char *str)
 {
   int status = 0;
@@ -731,6 +784,7 @@ XEN xen_rb_eval_string_with_error(char *str)
   return(res);
 }
 
+
 XEN xen_rb_load_file_with_error(XEN file)
 {
   int status = 0;
@@ -739,6 +793,7 @@ XEN xen_rb_load_file_with_error(XEN file)
     return(XEN_TO_STRING(rb_errinfo()));
   return(XEN_TRUE);
 }
+
 
 XEN xen_rb_add_to_load_path(char *path)
 {
@@ -750,7 +805,9 @@ XEN xen_rb_add_to_load_path(char *path)
   return(XEN_FALSE);
 }
 
+
 static char *lstbuf = NULL;
+
 static char *xen_rb_list_to_s(XEN lst)
 {
   int i, len;
@@ -766,12 +823,14 @@ static char *xen_rb_list_to_s(XEN lst)
   return(lstbuf);
 }
 
+
 void xen_rb_raise(XEN type, XEN info)
 {
   rb_raise(rb_eStandardError, "%s: %s\n", 
 	   rb_id2name(type), 
 	   xen_rb_list_to_s(info));
 }
+
 
 int xen_rb_required_args(XEN val)
 {
@@ -781,6 +840,7 @@ int xen_rb_required_args(XEN val)
   if (args < 0) return(abs(args + 1));
   return(args);
 }
+
 
 XEN xen_rb_obj_as_string(XEN obj)
 {
@@ -794,10 +854,12 @@ XEN xen_rb_obj_as_string(XEN obj)
   return(result);
 }
 
+
 static XEN xen_rb_apply_1(XEN args)
 {
   return(rb_apply(XEN_CAR(args), rb_intern("call"), XEN_CADR(args)));
 }
+
 
 XEN xen_rb_apply(XEN func, XEN args)
 {
@@ -811,10 +873,12 @@ XEN xen_rb_apply(XEN func, XEN args)
   return(val);
 }
 
+
 static XEN xen_rb_funcall_0_inner(XEN args)
 {
   return(rb_funcall(args, rb_intern("call"), 0));
 }
+
 
 XEN xen_rb_funcall_0(XEN func)
 {
@@ -827,6 +891,7 @@ XEN xen_rb_funcall_0(XEN func)
     return(XEN_TO_STRING(rb_errinfo()));
   return(val);
 }
+
 
 #if (!HAVE_RB_ARY_DUP)
 XEN xen_rb_copy_list(XEN val) 
@@ -843,15 +908,18 @@ XEN xen_rb_copy_list(XEN val)
 } 
 #endif
 
+
 XEN xen_rb_str_new2(char *arg)
 {
   return(rb_str_new2((arg) ? arg : ""));
 }
 
+
 double xen_rb_to_c_double_or_else(XEN a, double b) 
 {
   return(XEN_NUMBER_P(a) ? NUM2DBL(a) : b);
 }
+
 
 int xen_rb_to_c_int_or_else(XEN a, int b) 
 {
@@ -859,6 +927,7 @@ int xen_rb_to_c_int_or_else(XEN a, int b)
   if (XEN_NUMBER_P(a)) return((int)(NUM2DBL(a)));
   return(b);
 }
+
 
 /* class Hook */
  
@@ -869,12 +938,14 @@ static XEN hook_alloc(XEN klass)
   return(Data_Wrap_Struct(klass, 0, 0, 0));
 }
 
+
 #define XEN_CLASS_HOOK_P(Arg)              rb_obj_is_kind_of(Arg, xen_rb_cHook)
 
 bool xen_rb_hook_p(XEN obj)
 {
   return(XEN_CLASS_HOOK_P(obj));
 }
+
 
 bool xen_rb_hook_empty_p(XEN obj) 
 { 
@@ -883,11 +954,13 @@ bool xen_rb_hook_empty_p(XEN obj)
   return(true); 
 } 
 
+
 /*
  * @name = "$name_of_hook"
  * @arity = arity of procedure(s),         default 0
  * @procs = [["named proc1", proc1], ...]
  */
+
 static XEN xen_rb_hook_initialize(int argc, XEN *argv, XEN hook)
 {
   XEN name, arity, help;
@@ -912,10 +985,12 @@ static XEN xen_rb_hook_initialize(int argc, XEN *argv, XEN hook)
   return(hook);
 }
 
+
 /*
  * To create a simple hook in C, see xen.h, XEN_DEFINE_SIMPLE_HOOK.
  * To create a global hook variables, see xen_rb_create_hook() below.
  */
+
 XEN xen_rb_hook_c_new(char *name, int arity, char *help)
 {
   XEN args[3];
@@ -924,6 +999,7 @@ XEN xen_rb_hook_c_new(char *name, int arity, char *help)
   args[2] = C_TO_XEN_STRING(help);
   return(xen_rb_hook_initialize(3, args, hook_alloc(xen_rb_cHook)));
 }
+
 
 /*
   RUBY_RELEASE_DATE < "2004-03-18" ? old : new
@@ -961,6 +1037,7 @@ bool xen_rb_arity_ok(int rargs, int args)
   else /* NEW_RUBY_ARITY */
     return((rargs >= 0) ? (rargs == args) : (abs(rargs) <= args));
 }
+
  
 static XEN xen_rb_hook_add_hook(int argc, XEN *argv, XEN hook)
 {
@@ -975,6 +1052,7 @@ static XEN xen_rb_hook_add_hook(int argc, XEN *argv, XEN hook)
   return(hook);
 }
 
+
 static XEN xen_rb_hook_remove_hook(XEN hook, XEN name)
 {
   XEN ary;
@@ -982,12 +1060,14 @@ static XEN xen_rb_hook_remove_hook(XEN hook, XEN name)
   return(rb_ary_delete(ary, rb_ary_assoc(ary, name)));
 }
 
+
 XEN xen_rb_hook_reset_hook(XEN hook)
 {
   if (XEN_CLASS_HOOK_P(hook))
     rb_ary_clear(rb_iv_get(hook, "@procs"));
   return(hook);
 }
+
 
 static XEN xen_rb_hook_names(XEN hook)
 {
@@ -1004,6 +1084,7 @@ static XEN xen_rb_hook_names(XEN hook)
     }
   return(ret);
 }
+
 
 XEN xen_rb_hook_to_a(XEN hook)
 {
@@ -1025,6 +1106,7 @@ XEN xen_rb_hook_to_a(XEN hook)
   return(ret);
 }
 
+
 static XEN xen_rb_hook_run_hook(XEN hook)
 {
   if (RB_ARRAY_LEN(rb_iv_get(hook, "@procs"))) 
@@ -1032,11 +1114,13 @@ static XEN xen_rb_hook_run_hook(XEN hook)
   return(hook);
 }
 
+
 /*
  * Calls all hook-procedures but returns only the last result; use
  * $var_hook.run_hook { |prc| ret << prc.call(*args) } for collecting
  * results.
  */
+
 static XEN xen_rb_hook_call(int argc, XEN *argv, XEN hook)
 {
   XEN result = Qnil, rest, procs;
@@ -1051,30 +1135,36 @@ static XEN xen_rb_hook_call(int argc, XEN *argv, XEN hook)
   return(result);
 }
 
+
 static XEN xen_rb_hook_is_empty_p(XEN hook)
 {
   return(C_TO_XEN_BOOLEAN(RB_ARRAY_LEN(rb_iv_get(hook, "@procs")) == 0)); 
 }
+
  
 static XEN xen_rb_hook_length(XEN hook)
 {
   return(C_TO_XEN_INT(RB_ARRAY_LEN(rb_iv_get(hook, "@procs")))); 
 }
 
+
 static XEN xen_rb_hook_name(XEN hook)
 {
   return(rb_iv_get(hook, "@name"));
 }
+
 
 static XEN xen_rb_hook_describe(XEN hook)
 {
   return(XEN_OBJECT_HELP(xen_rb_hook_name(hook)));
 }
 
+
 static XEN xen_rb_hook_arity(XEN hook)
 {
   return(rb_iv_get(hook, "@arity"));
 }
+
 
 static XEN xen_rb_hook_inspect(XEN hook)
 {
@@ -1090,11 +1180,13 @@ static XEN xen_rb_hook_inspect(XEN hook)
   return(str);
 }    
 
+
 /* bil -- added xen_rb_create_hook for XEN_DEFINE_HOOK in xen.h, 13-Jun-05 --
  *   seems to work, but I'm guessing, especially the rb_gv_set line.
  *   I can't use rb_define_variable here, as in the old version, because it takes a pointer
  *   to the new variable, which in this case is a local variable => segfault.
  */
+
 XEN xen_rb_create_hook(char *name, int arity, char *help)
 {
   XEN var, hook_name;
@@ -1123,6 +1215,7 @@ XEN xen_rb_create_hook(char *name, int arity, char *help)
 #if USE_SND
 void snd_rb_raise(XEN type, XEN info); /* XEN_ERROR */
 #endif
+
 
 #ifndef RSTRING_LEN 
   #define RB_STR_LEN(str)                RSTRING(str)->len 
@@ -1157,10 +1250,12 @@ static XEN xen_rb_make_hook(int argc, XEN *argv, XEN klass)
   return(rb_gv_set(XEN_TO_C_STRING(name), hook)); 
 }
 
+
 static XEN xen_rb_is_hook_p(XEN klass, XEN obj)
 {
   return(C_TO_XEN_BOOLEAN(XEN_CLASS_HOOK_P(obj)));
 }
+
 
 /*
  * Hook.new(name, arity = 0, help = "")
@@ -1192,11 +1287,13 @@ static XEN xen_rb_new(int argc, XEN *argv, XEN klass)
 }
 #endif
 
+
 static XEN rb_object_properties = XEN_FALSE;
 
 #define S_property       "property"
 #define S_set_property   "set_property"
 #define S_properties     "properties"
+
 
 XEN rb_property(XEN obj, XEN key)
 {
@@ -1214,6 +1311,7 @@ if key exists, return obj's value (maybe nil) associated with key otherwise fals
   else
     return(rb_hash_aref(props, key));
 }
+
 
 XEN rb_set_property(XEN obj, XEN key, XEN value)
 {
@@ -1237,11 +1335,13 @@ set key-value pair for obj and return value"
   return(value);
 }
 
+
 XEN rb_properties(void)
 {
 #define H_properties S_properties "()  return all properties of rb_object_properties (a hash)"
   return(rb_object_properties);
 }
+
 
 XEN_ARGIFY_1(g_get_help_w, g_get_help);
 XEN_NARGIFY_2(g_add_help_w, g_add_help);
@@ -1298,6 +1398,8 @@ void Init_Hook(void)
 
 #endif
 
+
+
 /* ------------------------------ FORTH ------------------------------ */
 
 #if HAVE_FORTH
@@ -1307,10 +1409,12 @@ char *xen_version(void)
   return(fth_format("Fth: %s, Xen: " XEN_VERSION, FTH_VERSION));
 }
 
+
 void xen_gc_mark(XEN val)
 {
   fth_gc_mark(val);
 }
+
 
 /*
  * A simple interpreter:
@@ -1331,6 +1435,7 @@ void xen_repl(int argc, char **argv)
   fth_repl(argc, argv);
 }
 
+
 off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
 {
   if (XEN_NUMBER_P(obj))
@@ -1338,17 +1443,21 @@ off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
   return(fallback);
 }
 
+
 off_t xen_to_c_off_t(XEN obj)
 {
   return(fth_long_long_ref(obj));
 }
+
 
 XEN c_to_xen_off_t(off_t obj)
 {
   return(fth_make_long_long(obj));
 }
 
+
 static ficlWord *snd_exit_xt; 
+
 static void fth_snd_exit(int n) 
 { 
   if (!snd_exit_xt) 
@@ -1358,6 +1467,7 @@ static void fth_snd_exit(int n)
   ficlStackDrop(FTH_FICL_STACK(), 1); 
 } 
  
+
 void xen_initialize(void)
 {
   fth_init();
@@ -1365,6 +1475,8 @@ void xen_initialize(void)
 }
 
 #endif 	/* HAVE_FORTH */
+
+
 
 
 /* ------------------------------ GAUCHE ------------------------------ */
@@ -1383,6 +1495,7 @@ char *xen_version(void)
   return(buf);
 }
 
+
 off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
 {
   if (XEN_OFF_T_P(obj))
@@ -1392,15 +1505,18 @@ off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
   return(fallback);
 }
 
+
 off_t xen_to_c_off_t(XEN obj)
 {
   return(Scm_GetInteger64(obj));
 }
 
+
 XEN c_to_xen_off_t(off_t val)
 {
   return(Scm_MakeInteger64(val));
 }
+
 
 int xen_to_c_int_or_else(XEN obj, int fallback)
 {
@@ -1408,6 +1524,7 @@ int xen_to_c_int_or_else(XEN obj, int fallback)
     return(XEN_TO_C_INT(obj));
   return(fallback);
 }
+
 
 double xen_to_c_double(XEN a) 
 {
@@ -1421,11 +1538,13 @@ double xen_to_c_double(XEN a)
   return(num);
 }
 
+
 void xen_repl(int argc, char **argv)
 {
   XEN_EVAL_C_STRING("(if (not (defined? 'gauche-repl-prompt)) (define gauche-repl-prompt \">\"))");
   XEN_EVAL_C_STRING("(read-eval-print-loop #f #f #f (lambda () (display gauche-repl-prompt (current-output-port)) (flush (current-output-port))))");
 }
+
 
 static XEN g_defined_p(XEN sym)
 {
@@ -1433,9 +1552,11 @@ static XEN g_defined_p(XEN sym)
   return(C_TO_XEN_BOOLEAN(Scm_FindBinding(Scm_UserModule(), SCM_SYMBOL(sym), false) != NULL));
 }
 
+
 void xen_gc_mark(XEN val)
 {
 }
+
 
 void xen_gauche_load_args(XEN *args, int incoming_args, int args_size, XEN *arg_list)
 {
@@ -1452,6 +1573,7 @@ void xen_gauche_load_args(XEN *args, int incoming_args, int args_size, XEN *arg_
     }
 }
 
+
 static XEN help_hash_table = XEN_FALSE;
 
 XEN xen_gauche_help(XEN sym)
@@ -1464,12 +1586,14 @@ XEN xen_gauche_help(XEN sym)
   return(XEN_FALSE);
 }
 
+
 void xen_gauche_set_help(XEN sym, const char *help)
 {
   if (XEN_STRING_P(sym))
     Scm_HashTableAdd(SCM_HASH_TABLE(help_hash_table), SCM_INTERN(XEN_TO_C_STRING(sym)), (help) ? C_TO_XEN_STRING(help) : XEN_FALSE);
   else Scm_HashTableAdd(SCM_HASH_TABLE(help_hash_table), sym, (help) ? C_TO_XEN_STRING(help) : XEN_FALSE);
 }
+
 
 XEN xen_gauche_define_constant(const char *name, int value, const char *help)
 {
@@ -1479,6 +1603,7 @@ XEN xen_gauche_define_constant(const char *name, int value, const char *help)
   xen_gauche_set_help(sym, help);
   return(obj);
 }
+
 
 #ifndef __cplusplus
 void xen_gauche_define_procedure(char *Name, XEN (*Func)(), int ReqArg, int OptArg, int RstArg, char *Doc)
@@ -1492,6 +1617,7 @@ void xen_gauche_define_procedure(char *Name, XEN (*Func)(), int ReqArg, int OptA
   Scm_Define(SCM_MODULE(Scm_UserModule()), SCM_SYMBOL(sym), proc);
 }
 
+
 void xen_gauche_define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), 
 					     int get_req, int get_opt, int set_req, int set_opt)
 {
@@ -1504,6 +1630,7 @@ void xen_gauche_define_procedure_with_setter(char *get_name, XEN (*get_func)(), 
   Scm_SetterSet((ScmProcedure *)proc, (ScmProcedure *)set_proc, false);
 }
 
+
 void xen_gauche_define_procedure_with_reversed_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), XEN (*reversed_set_func)(), 
 						      int get_req, int get_opt, int set_req, int set_opt)
 {
@@ -1515,7 +1642,9 @@ void xen_gauche_define_procedure_with_reversed_setter(char *get_name, XEN (*get_
   set_proc = Scm_MakeSubr(reversed_set_func, NULL, set_req, set_opt, SCM_MAKE_STR_COPYING(get_name));
   Scm_SetterSet((ScmProcedure *)proc, (ScmProcedure *)set_proc, false);
 }
+
 #else
+
 void xen_gauche_define_procedure(char *Name, 
 				 ScmHeaderRec* (*Func)(ScmHeaderRec**, int, void*), 
 				 int ReqArg, int OptArg, int RstArg, char *Doc)
@@ -1528,6 +1657,7 @@ void xen_gauche_define_procedure(char *Name,
   xen_gauche_set_help(sym, Doc);
   Scm_Define(SCM_MODULE(Scm_UserModule()), SCM_SYMBOL(sym), proc);
 }
+
 
 void xen_gauche_define_procedure_with_reversed_setter(char *get_name, 
 						      ScmHeaderRec* (*get_func)(ScmHeaderRec**, int, void*), 
@@ -1545,6 +1675,7 @@ void xen_gauche_define_procedure_with_reversed_setter(char *get_name,
   Scm_SetterSet((ScmProcedure *)proc, (ScmProcedure *)set_proc, false);
 }
 
+
 void xen_gauche_define_procedure_with_setter(char *get_name, 
 					     ScmHeaderRec* (*get_func)(ScmHeaderRec**, int, void*), 
 					     char *get_help, 
@@ -1561,6 +1692,7 @@ void xen_gauche_define_procedure_with_setter(char *get_name,
 }
 #endif
 
+
 void xen_gauche_list_set_x(XEN Lst, int Loc, XEN Val)
 {
   /* modelled on Scm_ListRef in src/list.c */
@@ -1575,6 +1707,7 @@ void xen_gauche_list_set_x(XEN Lst, int Loc, XEN Val)
   SCM_SET_CAR(Lst, Val);
 }
 
+
 XEN xen_gauche_load_file(char *file)
 {
 #if GAUCHE_API_0_8_10 || GAUCHE_API_0_9
@@ -1586,12 +1719,14 @@ XEN xen_gauche_load_file(char *file)
   return(XEN_FALSE);
 }
 
+
 XEN xen_gauche_add_to_load_path(char *path)
 {
   if (XEN_FALSE_P(Scm_Member(C_TO_XEN_STRING(path), XEN_LOAD_PATH, SCM_CMP_EQUAL))) /* scheme spec says eq? and eqv? of strings is unspecified */
     Scm_AddLoadPath(path, false);
   return(XEN_FALSE);
 }
+
 
 XEN xen_gauche_object_to_string(XEN obj)
 {
@@ -1630,6 +1765,7 @@ XEN xen_gauche_object_to_string(XEN obj)
   return(XEN_PORT_TO_STRING(ostr));
 }
 
+
 void xen_gauche_permanent_object(XEN obj)
 {
   /* I can't see how you're supposed to protect something from the gc, so I'll try
@@ -1652,25 +1788,24 @@ XEN xen_gauche_eval_c_string(char *arg)
       /* TODO: Gauche: use ScmEvalPacket here for error reporting [src/main.c] -- 
        *       also there's some g++ problem with Scm__GetOutputString which is declared in gauche/port.h
        *       but if you include gauche/port.h, all hell breaks loose.
+       *
+       * Scm_Eval -> -1 for error, packet arg has info
+       *
+       * int Scm_LoadFromPort(ScmPort *port, int flags, ScmLoadPacket *result);
+       * int Scm_Load(ScmPort *port, int flags, ScmLoadPacket *result);
+       * int Scm_Require(ScmObj feature, int flags, ScmLoadPacket *result);
+       * int Scm_Eval(ScmObj form, ScmObj env, ScmEvalPacket *packet);
+       * int Scm_EvalCString(const char *form, ScmObj env, ScmEvalPacket *packet);
+       * int Scm_Apply(ScmObj proc, ScmObj args, ScmEvalPacket *packet);
+       * To make the new API behave as the old, pass SCM_LOAD_PROPAGATE_ERROR for flags and NULL for result.
+       * typedef struct ScmEvalPacketRec {
+       * ScmObj results[SCM_VM_MAX_VALUES];
+       * int    numResults;
+       * ScmObj exception;
+       * ScmModule *module; 'Current module' after evaluation
+       * } ScmEvalPacket;
+       *
        */
-
-      Scm_Eval -> -1 for error, packet arg has info
-
-      int Scm_LoadFromPort(ScmPort *port, int flags, ScmLoadPacket *result);
-      int Scm_Load(ScmPort *port, int flags, ScmLoadPacket *result);
-      int Scm_Require(ScmObj feature, int flags, ScmLoadPacket *result);
-      int Scm_Eval(ScmObj form, ScmObj env, ScmEvalPacket *packet);
-      int Scm_EvalCString(const char *form, ScmObj env, ScmEvalPacket *packet);
-      int Scm_Apply(ScmObj proc, ScmObj args, ScmEvalPacket *packet);
-      To make the new API behave as the old, pass SCM_LOAD_PROPAGATE_ERROR for flags and NULL for result.
-      typedef struct ScmEvalPacketRec {
-      ScmObj results[SCM_VM_MAX_VALUES];
-      int    numResults;
-      ScmObj exception;
-      ScmModule *module; 'Current module' after evaluation
-      } ScmEvalPacket;
-
-      */
 
 #endif
     }
@@ -1684,6 +1819,7 @@ XEN xen_gauche_eval_c_string(char *arg)
   return(result);
 }
 
+
 typedef struct {
   XEN_OBJECT_TYPE type;
   void *data;
@@ -1692,6 +1828,7 @@ typedef struct {
 static XEN_OBJECT_TYPE smob_type = 0;
 static ScmClass **smob_classes = NULL;
 static int smob_classes_size = 0;
+
 
 XEN xen_gauche_make_object(XEN_OBJECT_TYPE type, void *val, XEN_MARK_OBJECT_TYPE (*protect_func)(XEN obj))
 {
@@ -1705,6 +1842,7 @@ XEN xen_gauche_make_object(XEN_OBJECT_TYPE type, void *val, XEN_MARK_OBJECT_TYPE
   return(obj);
 }
 
+
 void *xen_gauche_object_ref(XEN obj)
 {
   smob *s;
@@ -1713,6 +1851,7 @@ void *xen_gauche_object_ref(XEN obj)
     return(s->data);
   return(NULL);
 }
+
 
 XEN_OBJECT_TYPE xen_gauche_new_type(const char *name, ScmClassPrintProc print, ScmForeignCleanupProc cleanup)
 {
@@ -1740,6 +1879,7 @@ XEN_OBJECT_TYPE xen_gauche_new_type(const char *name, ScmClassPrintProc print, S
   return(current_type);
 }
 
+
 bool xen_gauche_type_p(XEN obj, XEN_OBJECT_TYPE type)
 {
   smob *s;
@@ -1751,6 +1891,7 @@ bool xen_gauche_type_p(XEN obj, XEN_OBJECT_TYPE type)
     }
   return(false);
 }
+
 
 void xen_gauche_provide(const char *feature)
 {
@@ -1766,10 +1907,12 @@ void xen_gauche_provide(const char *feature)
   free(expr);
 }
 
+
 const char *xen_gauche_features(void)
 {
   return(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")));
 }
+
 
 static XEN g_xen_gauche_provide(XEN feature)
 {
@@ -1779,12 +1922,14 @@ static XEN g_xen_gauche_provide(XEN feature)
   return(feature);
 }
 
+
 static XEN g_xen_gauche_provided_p(XEN feature)
 {
   if (XEN_SYMBOL_P(feature))
     return(C_TO_XEN_BOOLEAN(Scm_ProvidedP(SCM_OBJ(SCM_SYMBOL_NAME(feature)))));
   return(C_TO_XEN_BOOLEAN(Scm_ProvidedP(feature)));
 }
+
 
 /* hooks */
 
@@ -1795,6 +1940,7 @@ typedef struct {
 
 static XEN_OBJECT_TYPE ghook_tag;
 
+
 static ghook *make_ghook(int arity)
 {
   ghook *hook;
@@ -1804,6 +1950,7 @@ static ghook *make_ghook(int arity)
   return(hook);
 }
 
+
 static void free_ghook(ghook *hook)
 {
   if (hook)
@@ -1812,6 +1959,7 @@ static void free_ghook(ghook *hook)
       free(hook);
     }
 }
+
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(ghook, free_hook, free_ghook)
 
@@ -1830,8 +1978,10 @@ static char *hook_to_string(ghook *hook)
   return(NULL);
 }
 
+
 #define FREE free
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(ghook, print_hook, hook_to_string)
+
 
 static XEN_MARK_OBJECT_TYPE mark_ghook(XEN obj)
 {
@@ -1841,10 +1991,15 @@ static XEN_MARK_OBJECT_TYPE mark_ghook(XEN obj)
   return(XEN_FALSE);
 }
 
+
 static int ghook_arity(ghook *hook) {return(hook->arity);}
+
 static XEN ghook_functions(ghook *hook) {return(hook->functions);}
+
 static void reset_ghook(ghook *hook) {hook->functions = XEN_EMPTY_LIST;}
+
 bool xen_gauche_hook_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, ghook_tag));}
+
 
 static void add_ghook(ghook *hook, XEN function, bool at_end) 
 {
@@ -1853,10 +2008,12 @@ static void add_ghook(ghook *hook, XEN function, bool at_end)
   else hook->functions = XEN_CONS(function, hook->functions);
 }
 
+
 static XEN g_hook_p(XEN val) 
 {
   return(C_TO_XEN_BOOLEAN(xen_gauche_hook_p(val)));
 }
+
 
 static XEN g_hook_empty_p(XEN hook)
 {
@@ -1864,10 +2021,12 @@ static XEN g_hook_empty_p(XEN hook)
   return(C_TO_XEN_BOOLEAN(XEN_NULL_P(ghook_functions((ghook *)XEN_OBJECT_REF(hook)))));
 }
 
+
 bool xen_gauche_hook_empty_p(XEN hook)
 {
   return(XEN_NULL_P(ghook_functions((ghook *)XEN_OBJECT_REF(hook))));
 }
+
 
 static XEN g_make_hook(XEN arity, XEN help)
 {
@@ -1877,6 +2036,7 @@ static XEN g_make_hook(XEN arity, XEN help)
   hook = make_ghook(XEN_TO_C_INT(arity));
   return(xen_gauche_make_object(ghook_tag, (void *)hook, mark_ghook));
 }
+
 
 static XEN g_add_hook(XEN hook, XEN function, XEN position)
 {
@@ -1895,6 +2055,7 @@ static XEN g_add_hook(XEN hook, XEN function, XEN position)
   return(hook);
 }
 
+
 XEN xen_gauche_reset_hook(XEN hook)
 {
   ghook *obj;
@@ -1904,6 +2065,7 @@ XEN xen_gauche_reset_hook(XEN hook)
   Scm_ForeignPointerAttrSet(SCM_FOREIGN_POINTER(hook), SCM_INTERN("functions"), obj->functions);  
   return(hook);
 }
+
 
 static XEN g_run_hook(XEN all_args)
 {
@@ -1933,6 +2095,7 @@ static XEN g_run_hook(XEN all_args)
   return(val);
 }
 
+
 static XEN g_remove_hook(XEN hook, XEN function)
 {
   ghook *obj;
@@ -1944,11 +2107,13 @@ static XEN g_remove_hook(XEN hook, XEN function)
   return(hook);
 }
 
+
 XEN xen_gauche_hook_to_list(XEN hook)
 {
   XEN_ASSERT_TYPE(xen_gauche_hook_p(hook), hook, XEN_ONLY_ARG, "reset-hook!", "a hook");
   return(ghook_functions((ghook *)XEN_OBJECT_REF(hook)));
 }
+
 
 XEN xen_gauche_define_hook(const char *name, int arity, const char *help)
 {
@@ -2049,32 +2214,39 @@ char *xen_version(void)
 #endif
 }
 
+
 void xen_repl(int argc, char **argv)
 {
 }
+
 
 void xen_initialize(void)
 {
 }
 
+
 void xen_gc_mark(XEN val)
 {
 }
+
 
 int xen_to_c_int_or_else(XEN obj, int fallback)
 {
   return(fallback);
 }
 
+
 off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
 {
   return(0);
 }
 
+
 off_t xen_to_c_off_t(XEN obj)
 {
   return(0);
 }
+
 
 XEN c_to_xen_off_t(off_t val)
 {
