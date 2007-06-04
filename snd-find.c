@@ -1,6 +1,7 @@
 #include "snd.h"
 
 static bool search_in_progress = false;
+
 typedef struct 
 {
   int n; 
@@ -12,6 +13,7 @@ typedef struct
 } gfd;
 
 #define MANY_PASSES 10000
+
 
 static void prepare_global_search(chan_info *cp, void *g0)
 {
@@ -33,6 +35,7 @@ static void prepare_global_search(chan_info *cp, void *g0)
   if (this_dur > g->dur) g->dur = this_dur;
   if (g->fds[g->n] != NULL) g->n++;
 }
+
 
 #define KEEP_SEARCHING false
 #define STOP_SEARCHING true
@@ -108,6 +111,7 @@ static bool run_global_search(gfd *g)
   g->inc++;
   return(KEEP_SEARCHING);
 }
+
 
 static char search_message[PRINT_BUFFER_SIZE];
 
@@ -224,16 +228,19 @@ char *global_search(read_direction_t direction)
   return(search_message);
 }
 
+
 #define REPORT_TICKS 10
 #define TREE_REPORT_TICKS 100
 
 static bool find_eval_error_p = false;
+
 static void send_find_errors_to_minibuffer(const char *msg, void *data)
 {
   find_eval_error_p = true;
   display_minibuffer_error((snd_info *)data, msg);
   ss->stopped_explicitly = true;
 }
+
 
 static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 {
@@ -328,6 +335,7 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
     return(i + XEN_TO_C_INT(res));
   return(i);
 }
+
 
 static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 {
@@ -432,6 +440,7 @@ static void get_find_expression(snd_info *sp, int count)
   sp->search_count = count;
 }
 
+
 void cursor_search(chan_info *cp, int count)
 {
   /* called only in snd-kbd so all errors should go to minibuffer, and search should be stopped upon error */
@@ -517,6 +526,7 @@ void cursor_search(chan_info *cp, int count)
     }
 }
 
+
 void clear_sound_search_procedure(snd_info *sp, bool clear_expr_too)
 {
   if (XEN_PROCEDURE_P(sp->search_proc)) 
@@ -536,6 +546,7 @@ void clear_sound_search_procedure(snd_info *sp, bool clear_expr_too)
       sp->search_tree = NULL;
     }
 }
+
 
 void clear_global_search_procedure(bool clear_expr_too)
 {
@@ -557,6 +568,7 @@ void clear_global_search_procedure(bool clear_expr_too)
     }
 }
 
+
 static XEN g_search_procedure(XEN snd)
 {
   #define H_search_procedure "(" S_search_procedure " :optional snd): global (if no 'snd' specified) or sound-local search function"
@@ -571,6 +583,7 @@ static XEN g_search_procedure(XEN snd)
     }
   return(ss->search_proc);
 }
+
 
 static XEN g_set_search_procedure(XEN snd, XEN proc)
 {

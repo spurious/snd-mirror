@@ -2,6 +2,7 @@
 
 /* envelope editor and viewer */
 
+
 static Widget enved_dialog = NULL;
 static Widget applyB, apply2B, cancelB, drawer, showB, saveB, revertB, undoB, redoB;
 static Widget printB, brkptL, graphB, fltB, ampB, srcB, clipB;
@@ -28,12 +29,14 @@ static bool FIR_p = true;
 static bool old_clip_p = false;
 static bool ignore_button_release = false;
 
+
 static void fixup_axis_context(axis_context *ax, Widget w, GC gc)
 {
   ax->dp = XtDisplay(w);
   ax->wn = XtWindow(w);
   if (gc) ax->gc = gc;
 }
+
 
 axis_info *enved_make_axis(const char *name, axis_context *ax, 
 			   int ex0, int ey0, int width, int height, 
@@ -58,6 +61,7 @@ axis_info *enved_make_axis(const char *name, axis_context *ax,
   return(axis);
 }
 
+
 static void display_env(env *e, const char *name, GC cur_gc, int x0, int y0, int width, int height, bool dots, printing_t printing)
 {
   axis_context *ax = NULL;  
@@ -71,10 +75,12 @@ static void display_env(env *e, const char *name, GC cur_gc, int x0, int y0, int
   FREE(ax);
 }
 
+
 void display_enved_env_with_selection(env *e, const char *name, int x0, int y0, int width, int height, bool dots, printing_t printing)
 {
   display_env(e, name, (selected_env == e) ? rgc : gc, x0, y0, width, height, dots, printing);
 }
+
 
 static void reflect_segment_state(void)
 {
@@ -85,6 +91,7 @@ static void reflect_segment_state(void)
       if ((active_env) && (!(showing_all_envs))) env_redisplay();
     }
 }
+
 
 static void prepare_env_edit(env *new_env)
 {
@@ -99,13 +106,16 @@ static void prepare_env_edit(env *new_env)
   reflect_segment_state();
 }
 
+
 void set_enved_redo_sensitive(bool val) {set_sensitive(redoB, val);}
 void set_enved_revert_sensitive(bool val) {set_sensitive(revertB, val);}
 void set_enved_undo_sensitive(bool val) {set_sensitive(undoB, val);}
 void set_enved_save_sensitive(bool val) {set_sensitive(saveB, val);}
 void set_enved_show_sensitive(bool val) {set_sensitive(showB, val);}
 
+
 static bool use_listener_font = false;
+
 void make_scrolled_env_list(void)
 {
   XmString *strs;
@@ -124,12 +134,14 @@ void make_scrolled_env_list(void)
   FREE(strs);
 }
 
+
 void enved_reflect_peak_env_completion(snd_info *sp)
 {
   if ((enved_dialog) && (active_channel) && (enved_wave_p(ss)))
     if (active_channel->sound == sp) 
       env_redisplay();
 }
+
 
 void new_active_channel_alert(void)
 {
@@ -141,6 +153,7 @@ void new_active_channel_alert(void)
     }
 }
 
+
 static void dismiss_enved_callback(Widget w, XtPointer context, XtPointer info) 
 {
   if (ss->checking_explicitly)
@@ -148,10 +161,12 @@ static void dismiss_enved_callback(Widget w, XtPointer context, XtPointer info)
   else XtUnmanageChild(enved_dialog);
 }
 
+
 static void help_enved_callback(Widget w, XtPointer context, XtPointer info) 
 {
   envelope_editor_dialog_help();
 }
+
 
 static bool within_selection_src = false;
 
@@ -238,6 +253,7 @@ static void apply_enved(void)
     }
 }
 
+
 static void env_redisplay_1(printing_t printing)
 {
   if (enved_dialog_is_active())
@@ -263,8 +279,10 @@ static void env_redisplay_1(printing_t printing)
     }
 }
 
+
 void env_redisplay(void) {env_redisplay_1(NOT_PRINTING);}
 void env_redisplay_with_print(void) {env_redisplay_1(PRINTING);}
+
 
 static void enved_reset(void)
 {
@@ -294,17 +312,21 @@ static void enved_reset(void)
   env_redisplay();
 }
 
+
 static void clear_point_label(void);
+
 static void clear_xenv_error(void)
 {
   if (brkptL) 
     clear_point_label();
 }
 
+
 static void unpost_xenv_error(XtPointer data, XtIntervalId *id)
 {
   clear_xenv_error();
 }
+
 
 static void errors_to_xenv_text(const char *msg, void *data)
 {
@@ -314,6 +336,7 @@ static void errors_to_xenv_text(const char *msg, void *data)
 		  (XtTimerCallbackProc)unpost_xenv_error,
 		  NULL);
 }
+
 
 static void order_field_activated(void)
 {
@@ -334,6 +357,7 @@ static void order_field_activated(void)
     }
   if (str) XtFree(str);
 }
+
 
 static void text_field_activated(void)
 { /* might be breakpoints to load or an envelope name (<cr> in enved text field) */
@@ -378,6 +402,7 @@ static void text_field_activated(void)
   if (name) XtFree(name);
 }
 
+
 static void save_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
   char *name = NULL;
@@ -392,6 +417,7 @@ static void save_button_pressed(Widget w, XtPointer context, XtPointer info)
   if (name) XtFree(name);
 }
 
+
 #if MUS_DEBUGGING
 static XEN g_apply_enved(void)
 {
@@ -400,6 +426,7 @@ static XEN g_apply_enved(void)
   return(XEN_FALSE);
 }
 #endif
+
 
 static void apply_enved_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -419,6 +446,7 @@ static void apply_enved_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+
 static void undo_and_apply_enved_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* undo previous amp env, then apply */
@@ -433,6 +461,7 @@ static void undo_and_apply_enved_callback(Widget w, XtPointer context, XtPointer
   apply_enved();
   last_active_channel = active_channel;
 }
+
 
 static void select_or_edit_env(int pos)
 {
@@ -455,10 +484,12 @@ static void select_or_edit_env(int pos)
   set_sensitive(deleteB, true);
 }
 
+
 static void clear_point_label(void)
 {
   XtVaSetValues(brkptL, XmNlabelType, XmSTRING, XmNlabelString, NULL, NULL);
 }
+
 
 void enved_display_point_label(Float x, Float y)
 {
@@ -469,6 +500,7 @@ void enved_display_point_label(Float x, Float y)
   set_button_label(brkptL, brkpt_buf);
 }
 
+
 void display_enved_progress(char *str, Pixmap pix)
 {
   if (pix == 0)
@@ -478,6 +510,7 @@ void display_enved_progress(char *str, Pixmap pix)
 		     XmNlabelPixmap, pix, 
 		     NULL);
 }
+
 
 #ifdef MUS_MAC_OSX
 static int press_x, press_y;
@@ -497,6 +530,7 @@ static void drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boo
       env_redisplay();
     }
 }
+
 
 static void drawer_button_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
@@ -535,6 +569,7 @@ static void drawer_button_press(Widget w, XtPointer context, XEvent *event, Bool
     }
 }
 
+
 static void drawer_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   if (ignore_button_release)
@@ -550,6 +585,7 @@ static void drawer_button_release(Widget w, XtPointer context, XEvent *event, Bo
     }
 }
 
+
 static void drawer_resize(Widget w, XtPointer context, XtPointer info) 
 {
   /* update display, can be either view of all envs or sequence of current envs */
@@ -558,6 +594,7 @@ static void drawer_resize(Widget w, XtPointer context, XtPointer info)
   env_redisplay();
 }
 
+
 static void show_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
   /* if show all (as opposed to show current), loop through loaded LV_LISTs */
@@ -565,6 +602,7 @@ static void show_button_pressed(Widget w, XtPointer context, XtPointer info)
   set_button_label(showB, (showing_all_envs) ? _("edit env") : _("view envs"));
   env_redisplay();
 }
+
 
 static void selection_button_pressed(Widget s, XtPointer context, XtPointer info) 
 {
@@ -575,6 +613,7 @@ static void selection_button_pressed(Widget s, XtPointer context, XtPointer info
       (!showing_all_envs))
     env_redisplay();
 }
+
 
 static void delete_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
@@ -596,6 +635,7 @@ static void delete_button_pressed(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+
 static void revert_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
   revert_env_edit();
@@ -606,6 +646,7 @@ static void revert_button_pressed(Widget w, XtPointer context, XtPointer info)
   env_redisplay();
 }
 
+
 static void undo_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
   undo_env_edit();
@@ -614,6 +655,7 @@ static void undo_button_pressed(Widget w, XtPointer context, XtPointer info)
   env_redisplay();
 }
 
+
 static void redo_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
   redo_env_edit();
@@ -621,6 +663,7 @@ static void redo_button_pressed(Widget w, XtPointer context, XtPointer info)
   active_env = enved_next_env();
   env_redisplay();
 }
+
 
 static void reflect_apply_state(void)
 {
@@ -633,6 +676,7 @@ static void reflect_apply_state(void)
     env_redisplay();
 }
 
+
 static void freq_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   in_set_enved_target(ENVED_SPECTRUM);
@@ -640,6 +684,7 @@ static void freq_button_callback(Widget w, XtPointer context, XtPointer info)
   set_enved_clip_p(true);
   reflect_apply_state();
 }
+
 
 static void amp_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -649,6 +694,7 @@ static void amp_button_callback(Widget w, XtPointer context, XtPointer info)
   reflect_apply_state();
 }
 
+
 static void src_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   if (enved_target(ss) == ENVED_SPECTRUM)
@@ -657,15 +703,18 @@ static void src_button_callback(Widget w, XtPointer context, XtPointer info)
   reflect_apply_state();
 }
 
+
 static void reset_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   enved_reset();
 }
 
+
 void enved_print(char *name)
 {
   print_enved(name, env_window_height);
 }
+
 
 static void print_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
@@ -673,12 +722,14 @@ static void print_button_pressed(Widget w, XtPointer context, XtPointer info)
   file_print_callback(w, context, info); /* eventually calls enved_print -> print_enved -> env_redisplay_with_print */
 }
 
+
 static void env_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmListCallbackStruct *cb = (XmListCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
   select_or_edit_env(cb->item_position - 1);
 }
+
 
 static void graph_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -688,6 +739,7 @@ static void graph_button_callback(Widget w, XtPointer context, XtPointer info)
   env_redisplay();
 }
 
+
 static void dB_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
@@ -695,12 +747,14 @@ static void dB_button_callback(Widget w, XtPointer context, XtPointer info)
   env_redisplay();
 }
 
+
 static void clip_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   in_set_enved_clip_p(cb->set);
 }
+
 
 static void exp_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -715,6 +769,7 @@ static void exp_button_callback(Widget w, XtPointer context, XtPointer info)
   reflect_segment_state();
 }
 
+
 static void lin_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* a push button */
@@ -727,6 +782,7 @@ static void lin_button_callback(Widget w, XtPointer context, XtPointer info)
     }
   reflect_segment_state();
 }
+
 
 #define BASE_MAX 400
 #define BASE_MID 200
@@ -758,6 +814,7 @@ static void make_base_label(Float bval)
     }
 }
 
+
 static void base_changed(int val)
 {
   Float bval;
@@ -780,6 +837,7 @@ static void base_changed(int val)
     set_sensitive(saveB, true); /* what about undo/redo here? */
 }
 
+
 static void reflect_changed_base(Float val)
 {
   int ival;
@@ -800,12 +858,14 @@ static void reflect_changed_base(Float val)
   make_base_label(val);
 }
 
+
 static void base_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScrollBarCallbackStruct *sb = (XmScrollBarCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   base_changed(sb->value);
 }
+
 
 static int base_last_value = BASE_MID;
 
@@ -816,6 +876,7 @@ static void base_valuechanged_callback(Widget w, XtPointer context, XtPointer in
   base_last_value = sb->value;
   base_changed(sb->value);
 }
+
 
 static void base_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -831,6 +892,7 @@ static void base_click_callback(Widget w, XtPointer context, XtPointer info)
   XtVaSetValues(baseScale, XmNvalue, val, NULL);
 }
 
+
 static void FIR_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
@@ -838,6 +900,7 @@ static void FIR_click_callback(Widget w, XtPointer context, XtPointer info)
   set_label(w, (FIR_p) ? "fir" : "fft");
   if (enved_wave_p(ss)) env_redisplay();
 }
+
 
 static void reflect_sound_state(void)
 {
@@ -847,10 +910,12 @@ static void reflect_sound_state(void)
   set_sensitive(apply2B, file_p);
 }
 
+
 static void reflect_file_in_enved(ss_watcher_reason_t reason, void *ignore)
 {
   if (enved_dialog) reflect_sound_state();
 }
+
 
 static void enved_selection_watcher(selection_watcher_reason_t reason, void *data);
 
@@ -1449,6 +1514,7 @@ Widget create_envelope_editor(void)
   return(enved_dialog);
 }
 
+
 void set_enved_clip_p(bool val) 
 {
   in_set_enved_clip_p(val); 
@@ -1456,10 +1522,12 @@ void set_enved_clip_p(bool val)
     XmToggleButtonSetState(clipB, (Boolean)val, false);
 }
 
+
 void reflect_enved_style(void)
 {
   reflect_segment_state();
 }
+
 
 void set_enved_target(enved_target_t val) 
 {
@@ -1468,12 +1536,14 @@ void set_enved_target(enved_target_t val)
     reflect_apply_state();
 }
 
+
 void set_enved_wave_p(bool val) 
 {
   in_set_enved_wave_p(val); 
   if (enved_dialog) 
     XmToggleButtonSetState(graphB, (Boolean)val, false);
 }
+
 
 void set_enved_in_dB(bool val) 
 {
@@ -1482,6 +1552,7 @@ void set_enved_in_dB(bool val)
     XmToggleButtonSetState(dBB, (Boolean)val, false);
 }
 
+
 void set_enved_base(Float val) 
 {
   in_set_enved_base(val); 
@@ -1489,10 +1560,12 @@ void set_enved_base(Float val)
     reflect_changed_base(val);
 }
 
+
 bool enved_dialog_is_active(void)
 {
   return((enved_dialog) && (XtIsManaged(enved_dialog)));
 }
+
 
 void set_enved_filter_order(int order)
 {
@@ -1512,6 +1585,7 @@ void set_enved_filter_order(int order)
     }
 }
 
+
 static void enved_reflect_selection(bool on)
 {
   if ((enved_dialog) && (!within_selection_src))
@@ -1529,6 +1603,7 @@ static void enved_reflect_selection(bool on)
     }
 }
 
+
 static void enved_selection_watcher(selection_watcher_reason_t reason, void *data)
 {
   switch (reason)
@@ -1538,6 +1613,7 @@ static void enved_selection_watcher(selection_watcher_reason_t reason, void *dat
     default:                 enved_reflect_selection(selection_is_active()); break;
     }
 }
+
 
 void color_enved_waveform(Pixel pix)
 {
@@ -1551,11 +1627,13 @@ void color_enved_waveform(Pixel pix)
     }
 }
 
+
 static XEN g_enved_envelope(void)
 {
   #define H_enved_envelope "(" S_enved_envelope "): current envelope editor displayed (active) envelope"
   return(env_to_xen(active_env));
 }
+
 
 static XEN g_set_enved_envelope(XEN e)
 {
@@ -1573,11 +1651,13 @@ static XEN g_set_enved_envelope(XEN e)
   return(e);
 }
 
+
 static XEN g_enved_filter(void)
 {
   #define H_enved_filter "(" S_enved_filter "): envelope editor FIR/FFT filter choice (#t: FIR)"
   return(C_TO_XEN_BOOLEAN(FIR_p));
 }
+
 
 static XEN g_set_enved_filter(XEN type)
 {
@@ -1587,6 +1667,7 @@ static XEN g_set_enved_filter(XEN type)
     set_label(firB, (FIR_p) ? "fir" : "fft");
   return(type);
 }
+
 
 #if MUS_DEBUGGING
 static XEN g_enved_dialog_widgets(void)
@@ -1621,6 +1702,8 @@ static XEN g_enved_dialog_widgets(void)
 				     XEN_EMPTY_LIST)))))))))))))))))))))))))));
   return(XEN_EMPTY_LIST);
 }
+
+
 static XEN g_enved_axis_info(void)
 {
   axis_info *ap;
@@ -1638,6 +1721,7 @@ static XEN g_enved_axis_info(void)
   return(XEN_EMPTY_LIST);
 }
 #endif
+
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_enved_filter_w, g_enved_filter)

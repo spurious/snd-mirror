@@ -123,6 +123,8 @@ void free_ptree_list(chan_info *cp)
       cp->ptree_inits = NULL;
       FREE(cp->init_locs);
       cp->init_locs = NULL;
+      FREE(cp->init_args);
+      cp->init_args = NULL;
     }
   cp->ptree_ctr = -1;
   cp->ptree_size = 0;
@@ -148,6 +150,8 @@ static int add_ptree(chan_info *cp)
  	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->ptree_inits[i] = XEN_FALSE;
  	  cp->init_locs = (int *)REALLOC(cp->init_locs, cp->ptree_size * sizeof(int));
  	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->init_locs[i] = -1;
+ 	  cp->init_args = (int *)REALLOC(cp->init_args, cp->ptree_size * sizeof(int));
+ 	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->init_args[i] = 2;
  	}
        else 
  	{
@@ -156,6 +160,8 @@ static int add_ptree(chan_info *cp)
  	  for (i = 0; i < cp->ptree_size; i++) cp->ptree_inits[i] = XEN_FALSE;
  	  cp->init_locs = (int *)CALLOC(cp->ptree_size, sizeof(int));
  	  for (i = 0; i < cp->ptree_size; i++) cp->init_locs[i] = -1;
+ 	  cp->init_args = (int *)CALLOC(cp->ptree_size, sizeof(int));
+ 	  for (i = 0; i < cp->ptree_size; i++) cp->init_args[i] = 2;
 	}
     }
   return(cp->ptree_ctr);
@@ -377,6 +383,8 @@ typedef struct {
         ptree_dur,                         /* original (unfragmented) segment length */
         ptree_pos2, ptree_dur2, ptree_pos3, ptree_dur3;
 } ed_ptrees;
+
+/* TODO: add dir arg to init func storing arg# in cp data accessed through ptree_loc */
 
 typedef struct {
   int size;                                /* size of mix_list, but some entries can be empty */
@@ -1107,33 +1115,6 @@ static Float previous_mix_xrampn_rampn(snd_fd *sf)
 
 /* ---------------- ptree ---------------- */
 
-static Float next_pxramp_value(snd_fd *sf)
-{
-  Float val;
-  val = (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
-  sf->curval4 += sf->incr4;
-  if (sf->xramp2)
-    {
-      val *= (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval3)));
-      sf->curval3 += sf->incr3;
-    }
-  return(val);
-}
-
-static Float previous_pxramp_value(snd_fd *sf)
-{
-  Float val;
-  val = (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
-  sf->curval4 -= sf->incr4;
-  if (sf->xramp2)
-    {
-      val *= (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval3)));
-      sf->curval3 -= sf->incr3;
-    }
-  return(val);
-}
-
-
 static Float next_ptree_value(snd_fd *sf)
 {
   Float val1 = 0.0;
@@ -1250,6 +1231,35 @@ static Float next_ptree_xramp_value(snd_fd *sf)
     }
   return(val1);
 }
+
+
+static Float next_pxramp_value(snd_fd *sf)
+{
+  Float val;
+  val = (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
+  sf->curval4 += sf->incr4;
+  if (sf->xramp2)
+    {
+      val *= (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval3)));
+      sf->curval3 += sf->incr3;
+    }
+  return(val);
+}
+
+
+static Float previous_pxramp_value(snd_fd *sf)
+{
+  Float val;
+  val = (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
+  sf->curval4 -= sf->incr4;
+  if (sf->xramp2)
+    {
+      val *= (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval3)));
+      sf->curval3 -= sf->incr3;
+    }
+  return(val);
+}
+
 
 static Float next_ptree_pxramp_value(snd_fd *sf)
 {
@@ -3879,10 +3889,16 @@ static void get_sf_closure(snd_fd *sf)
   sf->closure1 = empty_closure;
   if (XEN_PROCEDURE_P(proc))
     {
-      sf->closure1 = XEN_CALL_2(proc,
-				C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE_POSITION(sf)),
-				C_TO_XEN_OFF_T(READER_PTREE_DUR(sf)),	/* ptree_dur is the original (full) ptree-channel duration */
-				S_ptree_channel " init func");
+      if (sf->cp->init_args[READER_PTREE_INDEX(sf)] == 3)
+	sf->closure1 = XEN_CALL_3(proc,
+				  C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE_POSITION(sf)),
+				  C_TO_XEN_OFF_T(READER_PTREE_DUR(sf)),	/* ptree_dur is the original (full) ptree-channel duration */
+				  C_TO_XEN_BOOLEAN(sf->direction == READ_FORWARD),
+				  S_ptree_channel " init func");
+      else sf->closure1 = XEN_CALL_2(proc,
+				     C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE_POSITION(sf)),
+				     C_TO_XEN_OFF_T(READER_PTREE_DUR(sf)),	/* ptree_dur is the original (full) ptree-channel duration */
+				     S_ptree_channel " init func");
       if (XEN_BOUND_P(sf->closure1))
 	{
 	  sf->protect1 = snd_protect(sf->closure1);
@@ -3903,10 +3919,16 @@ static void get_sf_closure2(snd_fd *sf)
   sf->closure2 = empty_closure;
   if (XEN_PROCEDURE_P(proc))
     {
-      sf->closure2 = XEN_CALL_2(proc,
-				C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE2_POSITION(sf)),
-				C_TO_XEN_OFF_T(READER_PTREE2_DUR(sf)),
-				S_ptree_channel " init func");
+      if (sf->cp->init_args[READER_PTREE2_INDEX(sf)] == 3)
+	sf->closure2 = XEN_CALL_3(proc,
+				  C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE2_POSITION(sf)),
+				  C_TO_XEN_OFF_T(READER_PTREE2_DUR(sf)),
+				  C_TO_XEN_BOOLEAN(sf->direction == READ_FORWARD),
+				  S_ptree_channel " init func");
+      else sf->closure2 = XEN_CALL_2(proc,
+				     C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE2_POSITION(sf)),
+				     C_TO_XEN_OFF_T(READER_PTREE2_DUR(sf)),
+				     S_ptree_channel " init func");
       if (XEN_BOUND_P(sf->closure2))
 	{
 	  sf->protect2 = snd_protect(sf->closure2);
@@ -3927,10 +3949,16 @@ static void get_sf_closure3(snd_fd *sf)
   sf->closure3 = empty_closure;
   if (XEN_PROCEDURE_P(proc))
     {
-      sf->closure3 = XEN_CALL_2(proc,
-				C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE3_POSITION(sf)),
-				C_TO_XEN_OFF_T(READER_PTREE3_DUR(sf)),
-				S_ptree_channel " init func");
+      if (sf->cp->init_args[READER_PTREE3_INDEX(sf)] == 3)
+	sf->closure3 = XEN_CALL_3(proc,
+				  C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE3_POSITION(sf)),
+				  C_TO_XEN_OFF_T(READER_PTREE3_DUR(sf)),
+				  C_TO_XEN_BOOLEAN(sf->direction == READ_FORWARD),
+				  S_ptree_channel " init func");
+      else sf->closure3 = XEN_CALL_2(proc,
+				     C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE3_POSITION(sf)),
+				     C_TO_XEN_OFF_T(READER_PTREE3_DUR(sf)),
+				     S_ptree_channel " init func");
       if (XEN_BOUND_P(sf->closure3))
 	{
 	  sf->protect3 = snd_protect(sf->closure3);
@@ -7817,6 +7845,9 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
     {
       cp->init_locs[ptree_loc] = snd_protect(init_func);
       cp->ptree_inits[ptree_loc] = init_func;
+      if (XEN_REQUIRED_ARGS_OK(init_func, 3))
+	cp->init_args[ptree_loc] = 3;
+      else cp->init_args[ptree_loc] = 2;
     }
   else cp->ptree_inits[ptree_loc] = XEN_FALSE;
 
@@ -11601,3 +11632,78 @@ append the rest?
         the basic accessor sequence can be (*(arr[1]))(sf, ((*(arr[0]))(sf, sf->data[loc...]))) --
         means changing function type slightly, and ptree_zero case is sticky, and scalers are tricky 
 */
+
+#if 0
+
+/* for virtual filter (and ultimately virtual src), 
+ * this almost works! -- it only fails if you pivot around a one sample change:
+
+(define (virtual-filter-channel coeffs beg dur snd chn edpos)
+  (ptree-channel
+
+   (lambda (y data forward)
+     (declare (y real) (data vct) (forward boolean))
+     (let* ((sum 0.0)
+	    (order (inexact->exact (floor (vct-ref data 0))))
+	    (cur-loc (inexact->exact (floor (vct-ref data 1))))
+	    (coeffs-0 2)
+	    (begin-state-0 (+ coeffs-0 order)))
+
+       (if forward
+	   (begin
+	     (do ((i (- order 1) (1- i)))
+		 ((= i 0))
+	       (vct-set! data (+ i begin-state-0) (vct-ref data (+ i -1 begin-state-0))))
+	     (vct-set! data begin-state-0 y)
+	     (set! cur-loc (1+ cur-loc))
+	     (do ((i 0 (1+ i)))
+		 ((= i order))
+	       (set! sum (+ sum (* (vct-ref data (+ coeffs-0 i)) 
+				   (vct-ref data (+ begin-state-0 i)))))))
+
+	   (let ((pos (max 0 (- cur-loc order))))
+	     (if (< pos 0)
+		 (set! y 0.0)
+		 (set! y (sample pos snd chn edpos)))
+	     (do ((i 0 (1+ i)))
+		 ((= i order))
+	       (set! sum (+ sum (* (vct-ref data (+ coeffs-0 i)) 
+				   (vct-ref data (+ begin-state-0 i))))))
+	     (do ((i 0 (1+ i)))
+		 ((= i (1- order)))
+	       (vct-set! data (+ i begin-state-0) (vct-ref data (+ i 1 begin-state-0))))
+	     (vct-set! data (+ begin-state-0 order -1) y)
+	     (set! cur-loc (1- cur-loc))))
+       (vct-set! data 1 cur-loc)
+       sum))
+
+   beg dur snd chn edpos #f
+
+   (lambda (frag-beg frag-dur forward)
+     (let* ((order (vct-length coeffs))
+	    (d (make-vct (+ 2 (* 2 order)))))
+       (vct-set! d 0 order)
+       (do ((i 0 (1+ i)))
+	   ((= i order))
+	 (vct-set! d (+ i 2) (vct-ref coeffs i)))
+       (let ((start (- (+ frag-beg beg) order))
+	     (i (1- order)))
+	 (if (not forward)
+	     (set! start (1+ start)))
+	 (if (< start 0)
+	     (do ()
+		 ((= start 0))
+	       (vct-set! d (+ i 2 order) 0)
+	       (set! i (1- i))
+	       (set! start (1+ start))))
+	 (if (>= i 0)
+	     (let ((rd (make-sample-reader start snd chn 1 edpos)))
+	       (do ()
+		   ((= i -1))
+		 (vct-set! d (+ i 2 order) (rd))
+		 (set! i (1- i)))
+	       (free-sample-reader rd)))
+	 (vct-set! d 1 (+ frag-beg beg))
+	 d)))))
+*/
+#endif

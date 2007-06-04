@@ -14,6 +14,7 @@
 #define NS_VERSION      "_MOZILLA_VERSION"
 #define NS_COMMAND      "_MOZILLA_COMMAND"
 
+
 static Window compare_window(Display *display, Window window, char *id)
 {
   Atom type;
@@ -33,6 +34,7 @@ static Window compare_window(Display *display, Window window, char *id)
   return(found);
 }
 
+
 static Window find_window(Display *display, 
 			  Window starting_window, 
 			  char *name, 
@@ -51,6 +53,7 @@ static Window find_window(Display *display,
     XFree((char *)children);
   return(window);
 }
+
 
 bool send_mozilla(const char *html_viewer, const char *url)
 {
@@ -88,6 +91,7 @@ bool send_mozilla(const char *html_viewer, const char *url)
   return(true);
 }
 
+
 static XEN g_send_mozilla(XEN cmd)
 {
   #define H_send_mozilla "(" S_send_mozilla " cmd): find an html-reader (or start it if necessary), and send it the \
@@ -95,6 +99,7 @@ string 'cmd'.  cmd should be a URL."
   XEN_ASSERT_TYPE(XEN_STRING_P(cmd), cmd, XEN_ONLY_ARG, S_send_mozilla, "a string");
   return(C_TO_XEN_BOOLEAN(send_mozilla(html_program(ss), XEN_TO_C_STRING(cmd))));
 }
+
 
 static void change_window_property(char *winat, char *name, char *command)
 {
@@ -114,6 +119,7 @@ static void change_window_property(char *winat, char *name, char *command)
       XFlush(dpy);
     }
 }
+
 
 static XEN g_window_property(XEN winat, XEN name)
 {
@@ -146,6 +152,7 @@ static XEN g_window_property(XEN winat, XEN name)
   return(result);
 }
 
+
 static XEN g_set_window_property(XEN winat, XEN name, XEN command)
 {
   char *c = NULL;
@@ -160,6 +167,7 @@ static XEN g_set_window_property(XEN winat, XEN name, XEN command)
   if (c) FREE(c);
   return(XEN_FALSE);
 }
+
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_send_mozilla_w, g_send_mozilla)

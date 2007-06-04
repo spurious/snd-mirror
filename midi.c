@@ -71,6 +71,7 @@ static char **midi_names = NULL;
 static int *midi_directions = NULL;
 static int midis = 0;
 
+
 static int new_midi_line(const char *name, snd_rawmidi_t *line, snd_rawmidi_params_t *params, int input)
 {
   int i, loc = -1;
@@ -108,6 +109,7 @@ static int new_midi_line(const char *name, snd_rawmidi_t *line, snd_rawmidi_para
   return(loc);
 }
 
+
 static int midi_open(const char *name, int input)
 {
   int err; 
@@ -142,9 +144,13 @@ static int midi_open(const char *name, int input)
   return(new_midi_line(name, line, params, input));
 }
 
+
 /* name is apparently of the form "hw:%d,%d" card dev  or  "/dev/snd/midiC0D0"  */
+
 int mus_midi_open_read(const char *name)  {return(midi_open(name, MIDI_READ));}
+
 int mus_midi_open_write(const char *name) {return(midi_open(name, MIDI_WRITE));}
+
 
 int mus_midi_close(int line)
 {
@@ -170,6 +176,7 @@ int mus_midi_close(int line)
   return(0);
 }
 
+
 int mus_midi_read(int line, unsigned char *buffer, int bytes)
 {
   if ((line < 0) || (line >= midis)) return(-1);
@@ -182,6 +189,7 @@ int mus_midi_read(int line, unsigned char *buffer, int bytes)
 #endif
   return(-1);
 }
+
 
 int mus_midi_write(int line, unsigned char *buffer, int bytes)
 {
@@ -196,12 +204,15 @@ int mus_midi_write(int line, unsigned char *buffer, int bytes)
   return(-1);
 }
 
+
 static char devname[64];
+
 char *mus_midi_device_name(int sysdev)
 {
   sprintf(devname, "hw:%d,%d", MUS_AUDIO_SYSTEM(sysdev), MUS_AUDIO_DEVICE(sysdev));
   return(devname);
 }
+
 
 /* snd_rawmidi_drop to clear or snd_rawmidi_drain|flush_output */
 
@@ -257,6 +268,7 @@ static int midis = 0;
 static int midi_initialized = 0;
 static int midi_ports = 0;
 
+
 static void mus_midi_initialize(void)
 {
   if (midi_initialized == 0)
@@ -271,6 +283,7 @@ static void mus_midi_initialize(void)
       midi_initialized = 1;
     }
 }
+
 
 static int new_midi_line(const char *name, MDport line, int input)
 {
@@ -306,6 +319,7 @@ static int new_midi_line(const char *name, MDport line, int input)
   return(loc);
 }
 
+
 int midi_open(const char *name, int input)
 {
   MDport md;
@@ -326,8 +340,11 @@ int midi_open(const char *name, int input)
   return(new_midi_line(name, md, input));
 }
 
+
 int mus_midi_open_read(const char *name)  {return(midi_open(name, MIDI_READ));}
+
 int mus_midi_open_write(const char *name) {return(midi_open(name, MIDI_WRITE));}
+
 
 int mus_midi_close(int line) 
 {
@@ -336,6 +353,7 @@ int mus_midi_close(int line)
   midi_lines[line] = NULL;
   return(0);
 }
+
 
 int mus_midi_read(int line, unsigned char *buffer, int bytes)
 {
@@ -360,6 +378,7 @@ int mus_midi_read(int line, unsigned char *buffer, int bytes)
   return(mus_error(MUS_MIDI_READ_ERROR, "can't read from output %s", midi_names[line]));
 #endif
 }
+
 
 int mus_midi_write(int line, unsigned char *buffer, int bytes)
 {
@@ -389,6 +408,7 @@ int mus_midi_write(int line, unsigned char *buffer, int bytes)
 #endif
 }
 
+
 char *mus_midi_device_name(int sysdev)
 {
   mus_midi_initialize();
@@ -396,6 +416,7 @@ char *mus_midi_device_name(int sysdev)
     return(mdGetName(MUS_AUDIO_DEVICE(sysdev)));
   return(NULL);
 }
+
 
 char *mus_midi_describe(void)
 {
@@ -419,7 +440,9 @@ char *mus_midi_describe(void)
 #endif
 
 
+
 /* ---------------- OSS ---------------- */
+
 #if HAVE_OSS && (!HAVE_ALSA)
 #define MIDI_OK
 
@@ -452,11 +475,17 @@ char *mus_midi_describe(void)
 #endif
 
 int mus_midi_open_read(const char *name) {return(open(name, O_RDONLY, O_NONBLOCK));}  /* name should be "/dev/sequencer" */
+
 int mus_midi_open_write(const char *name) {return(open(name, O_RDWR, O_NONBLOCK));}   /* O_WRONLY? */
+
 int mus_midi_close(int line) {return(close(line));}
+
 int mus_midi_read(int line, unsigned char *buffer, int bytes) {return(read(line, buffer, bytes));}
+
 int mus_midi_write(int line, unsigned char *buffer, int bytes) {return(write(line, buffer, bytes));}
+
 char *mus_midi_device_name(int sysdev) {return("/dev/sequencer");}
+
 
 char *mus_midi_describe(void)
 {
@@ -510,6 +539,7 @@ char *mus_midi_describe(void)
 
 /* for now, just one in and one out */
 
+
 char *mus_midi_describe(void)
 {
   int i, n;
@@ -544,6 +574,7 @@ char *mus_midi_describe(void)
   return(buf);
 }
 
+
 #define BUFFER_SIZE 1024
 static MIDIClientRef us = NULL;
 static MIDIPortRef inp = NULL, outp = NULL;
@@ -559,6 +590,7 @@ static void init_midi(void)
       writer = 0;
     }
 }
+
 
 static void midi_read_callback(const MIDIPacketList *list, void *ref, void *con)
 {
@@ -577,6 +609,7 @@ static void midi_read_callback(const MIDIPacketList *list, void *ref, void *con)
     }
 }
 
+
 int mus_midi_read(int line, unsigned char *buf, int bytes)
 {
   int i;
@@ -591,7 +624,9 @@ int mus_midi_read(int line, unsigned char *buf, int bytes)
   return(bytes);
 }
 
+
 static Byte bb[1024];
+
 int mus_midi_write(int line, unsigned char *buffer, int bytes)
 {
   MIDIPacketList *list = (MIDIPacketList *)bb;
@@ -604,6 +639,7 @@ int mus_midi_write(int line, unsigned char *buffer, int bytes)
   return(0);
 }
 
+
 int mus_midi_open_read(const char *name)
 {
   init_midi();
@@ -615,6 +651,7 @@ int mus_midi_open_read(const char *name)
   return(0);
 }
 
+
 int mus_midi_open_write(const char *name)
 {
   init_midi();
@@ -625,10 +662,12 @@ int mus_midi_open_write(const char *name)
   return(1);
 }
 
+
 int mus_midi_close(int line)
 {
   return(0);
 }
+
 
 char *mus_midi_device_name(int sysdev) {return("none");}
 
@@ -637,6 +676,7 @@ char *mus_midi_device_name(int sysdev) {return("none");}
 
 
 /* ---------------- stubs ---------------- */
+
 #ifndef MIDI_OK
 int mus_midi_open_read(const char *name) {return(-1);}
 int mus_midi_open_write(const char *name) {return(-1);}
@@ -649,6 +689,7 @@ char *mus_midi_describe(void) {return(NULL);}            /* result should be fre
 
 
 /* ---------------- XEN ---------------- */
+
 /* tie foregoing into Xen */
 
 #if HAVE_EXTENSION_LANGUAGE
@@ -663,12 +704,14 @@ char *mus_midi_describe(void) {return(NULL);}            /* result should be fre
 #define S_mus_midi_device_name "mus-midi-device-name"
 #define S_mus_midi_describe    "mus-midi-describe"
 
+
 static XEN g_mus_midi_open_read(XEN name)
 {
   #define H_mus_midi_open_read "(" S_mus_midi_open_read " name): opens midi input port, returns int id"
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_mus_midi_open_read, "a string");
   return(C_TO_XEN_INT(mus_midi_open_read(XEN_TO_C_STRING(name))));
 }
+
 
 static XEN g_mus_midi_open_write(XEN name)
 {
@@ -677,12 +720,14 @@ static XEN g_mus_midi_open_write(XEN name)
   return(C_TO_XEN_INT(mus_midi_open_write(XEN_TO_C_STRING(name))));
 }
 
+
 static XEN g_mus_midi_close(XEN line)
 {
   #define H_mus_midi_close "(" S_mus_midi_close " line): closes midi port"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(line), line, XEN_ONLY_ARG, S_mus_midi_close, "an integer");
   return(C_TO_XEN_INT(mus_midi_close(XEN_TO_C_INT(line))));
 }
+
 
 static XEN g_mus_midi_read(XEN line, XEN bytes) /* returns list of midi bytes */
 {
@@ -706,6 +751,7 @@ static XEN g_mus_midi_read(XEN line, XEN bytes) /* returns list of midi bytes */
   return(lst);
 }
 
+
 static XEN g_mus_midi_write(XEN line, XEN buffer)
 {
   #define H_mus_midi_write "(" S_mus_midi_write " line byte-list): sends byte-list to midi port"
@@ -725,6 +771,7 @@ static XEN g_mus_midi_write(XEN line, XEN buffer)
   return(C_TO_XEN_INT(err));
 }
 
+
 static XEN g_mus_midi_device_name(XEN dev)
 {
   /* sndlib style sys|dev packing, dev optional */
@@ -732,6 +779,7 @@ static XEN g_mus_midi_device_name(XEN dev)
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(dev), dev, XEN_ONLY_ARG, S_mus_midi_device_name, "and integer");
   return(C_TO_XEN_STRING(mus_midi_device_name(XEN_TO_C_INT_OR_ELSE(dev, 0))));
 }
+
 
 static XEN g_mus_midi_describe(void)
 {
@@ -746,6 +794,7 @@ static XEN g_mus_midi_describe(void)
     }
   return(res);
 }
+
 
 #ifdef XEN_ARGIFY_1
   XEN_NARGIFY_1(g_mus_midi_open_read_w, g_mus_midi_open_read)

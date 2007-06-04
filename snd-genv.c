@@ -2,6 +2,7 @@
 
 /* envelope editor and viewer */
 
+
 static GtkWidget *enved_dialog = NULL;
 static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB, *resetB, *firB = NULL;
 static GtkWidget *revertB, *undoB, *redoB, *printB, *brktxtL, *brkpixL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB, *deleteB;
@@ -32,6 +33,7 @@ static bool ignore_button_release = false;
 
 static axis_context *pix_ax = NULL;
 
+
 static void fixup_axis_context(axis_context *ax, GtkWidget *w, gc_t *gc)
 {
   ax->wn = w->window;
@@ -39,6 +41,7 @@ static void fixup_axis_context(axis_context *ax, GtkWidget *w, gc_t *gc)
   if (gc) ax->gc = gc;
   ax->current_font = AXIS_NUMBERS_FONT(ss);
 }
+
 
 axis_info *enved_make_axis(const char *name, axis_context *ax, 
 			   int ex0, int ey0, int width, int height, 
@@ -69,6 +72,7 @@ axis_info *enved_make_axis(const char *name, axis_context *ax,
   return(axis);
 }
 
+
 static void display_env(env *e, const char *name, gc_t *cur_gc, int x0, int y0, int width, int height, bool dots, printing_t printing)
 {
   axis_context *ax = NULL;  
@@ -87,10 +91,12 @@ static void display_env(env *e, const char *name, gc_t *cur_gc, int x0, int y0, 
   FREE(ax);
 }
 
+
 void display_enved_env_with_selection(env *e, const char *name, int x0, int y0, int width, int height, bool dots, printing_t printing)
 {
   display_env(e, name, (selected_env == e) ? rgc : gc, x0, y0, width, height, dots, printing);
 }
+
 
 static void reflect_segment_state(void);
 
@@ -107,11 +113,13 @@ static void prepare_env_edit(env *new_env)
   reflect_segment_state();
 }
 
+
 void set_enved_redo_sensitive(bool val) {set_sensitive(redoB, val);}
 void set_enved_revert_sensitive(bool val) {set_sensitive(revertB, val);}
 void set_enved_undo_sensitive(bool val) {set_sensitive(undoB, val);}
 void set_enved_save_sensitive(bool val) {set_sensitive(saveB, val);}
 void set_enved_show_sensitive(bool val) {set_sensitive(showB, val);}
+
 
 void make_scrolled_env_list(void)
 {
@@ -123,6 +131,7 @@ void make_scrolled_env_list(void)
   gtk_widget_show(env_list->scroller);
 }
 
+
 void enved_reflect_peak_env_completion(snd_info *sp)
 {
   if ((enved_dialog) && (active_channel) && (enved_wave_p(ss)))
@@ -131,6 +140,7 @@ void enved_reflect_peak_env_completion(snd_info *sp)
 	env_redisplay();
     }
 }
+
 
 void new_active_channel_alert(void)
 {
@@ -142,10 +152,12 @@ void new_active_channel_alert(void)
     }
 }
 
+
 static void dismiss_enved_callback(GtkWidget *w, gpointer context)
 {
   gtk_widget_hide(enved_dialog);
 }
+
 
 static gint delete_enved_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
@@ -153,10 +165,12 @@ static gint delete_enved_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
   return(true);
 }
 
+
 static void help_enved_callback(GtkWidget *w, gpointer context)
 {
   envelope_editor_dialog_help();
 }
+
 
 static bool within_selection_src = false;
 
@@ -243,6 +257,7 @@ static void apply_enved(void)
     }
 }
 
+
 static void env_redisplay_1(printing_t printing)
 {
   if (enved_dialog_is_active())
@@ -273,20 +288,25 @@ static void env_redisplay_1(printing_t printing)
     }
 }
 
+
 void env_redisplay(void) {env_redisplay_1(NOT_PRINTING);}
 void env_redisplay_with_print(void) {env_redisplay_1(PRINTING);}
+
 
 static void enved_filter_order_callback(GtkWidget *w, gpointer data)
 {
   set_enved_filter_order(gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(orderL)));
 }
 
+
 static void clear_point_label(void);
+
 static void clear_genv_error(void)
 {
   if (brktxtL) 
     clear_point_label();
 }
+
 
 static gint unpost_genv_error(gpointer data)
 {
@@ -294,11 +314,13 @@ static gint unpost_genv_error(gpointer data)
   return(0);
 }
 
+
 static void errors_to_genv_text(const char *msg, void *data)
 {
   set_button_label(brktxtL, msg);
   g_timeout_add_full(0, (guint32)5000, unpost_genv_error, NULL, NULL);
 }
+
 
 static void text_field_activated(GtkWidget *w, gpointer context)
 { /* might be breakpoints to load or an envelope name (<cr> in enved text field) */
@@ -340,6 +362,7 @@ static void text_field_activated(GtkWidget *w, gpointer context)
     }
 }
 
+
 static void save_button_pressed(GtkWidget *w, gpointer context)
 {
   char *name = NULL;
@@ -353,12 +376,14 @@ static void save_button_pressed(GtkWidget *w, gpointer context)
   env_redisplay();
 }
 
+
 static void apply_enved_callback(GtkWidget *w, gpointer context)
 {
   /* apply current envs to currently sync'd channels */
   apply_enved();
   last_active_channel = active_channel;
 }
+
 
 static void undo_and_apply_enved_callback(GtkWidget *w, gpointer context)
 {
@@ -375,6 +400,7 @@ static void undo_and_apply_enved_callback(GtkWidget *w, gpointer context)
   last_active_channel = active_channel;
 }
 
+
 static void reflect_segment_state(void)
 {
   if (enved_dialog)
@@ -384,6 +410,7 @@ static void reflect_segment_state(void)
       if ((active_env) && (!(showing_all_envs))) env_redisplay();
     }
 }
+
 
 static void select_or_edit_env(int pos)
 {
@@ -406,6 +433,7 @@ static void select_or_edit_env(int pos)
   set_sensitive(deleteB, true);
 }
 
+
 #define BLANK_LABEL "              "
 
 static void clear_point_label(void)
@@ -414,6 +442,7 @@ static void clear_point_label(void)
     fill_rectangle(pix_ax, 0, 4, 24, 24);
   set_button_label(brktxtL, BLANK_LABEL);
 }
+
 
 static char brkpt_buf[LABEL_BUFFER_SIZE];
 
@@ -424,6 +453,7 @@ void enved_display_point_label(Float x, Float y)
   else mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.3f", x, y);
   set_button_label(brktxtL, brkpt_buf);
 }
+
 
 void display_enved_progress(char *str, picture_t *pix)
 {
@@ -437,12 +467,14 @@ void display_enved_progress(char *str, picture_t *pix)
   else set_button_label(brktxtL, BLANK_LABEL);
 }
 
+
 static gboolean brkpixL_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   if (pix_ax)
     fill_rectangle(pix_ax, 0, 4, 24, 24);
   return(false);
 }
+
 
 static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
@@ -471,6 +503,7 @@ static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer 
     }
   return(false);
 }
+
 
 static gboolean drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -505,6 +538,7 @@ static gboolean drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer d
   return(false);
 }
 
+
 static gboolean drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   if (ignore_button_release)
@@ -521,6 +555,7 @@ static gboolean drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpointer
   return(false);
 }
 
+
 static gboolean drawer_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   env_window_width = widget_width(w);
@@ -528,6 +563,7 @@ static gboolean drawer_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
   env_redisplay();
   return(false);
 }
+
 
 static gboolean drawer_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
@@ -538,6 +574,7 @@ static gboolean drawer_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer data
   return(false);
 }
 
+
 static void show_button_pressed(GtkWidget *w, gpointer context)
 {
   /* if show all (as opposed to show current), loop through loaded LV_LISTs */
@@ -545,6 +582,7 @@ static void show_button_pressed(GtkWidget *w, gpointer context)
   set_button_label(showB, (showing_all_envs) ? _("edit env") : _("view envs"));
   env_redisplay();
 }
+
 
 static void selection_button_pressed(GtkWidget *w, gpointer context)
 {
@@ -555,6 +593,7 @@ static void selection_button_pressed(GtkWidget *w, gpointer context)
       (!showing_all_envs)) 
     env_redisplay();
 }
+
 
 static void delete_button_pressed(GtkWidget *w, gpointer context)
 {
@@ -576,6 +615,7 @@ static void delete_button_pressed(GtkWidget *w, gpointer context)
     }
 }
 
+
 static void revert_button_pressed(GtkWidget *w, gpointer context)
 {
   revert_env_edit();
@@ -586,6 +626,7 @@ static void revert_button_pressed(GtkWidget *w, gpointer context)
   env_redisplay();
 }
 
+
 static void undo_button_pressed(GtkWidget *w, gpointer context)
 {
   undo_env_edit();
@@ -594,6 +635,7 @@ static void undo_button_pressed(GtkWidget *w, gpointer context)
   env_redisplay();
 }
 
+
 static void redo_button_pressed(GtkWidget *w, gpointer context)
 {
   redo_env_edit();
@@ -601,6 +643,7 @@ static void redo_button_pressed(GtkWidget *w, gpointer context)
   active_env = enved_next_env();
   env_redisplay();
 }
+
 
 static void reflect_apply_state(void)
 {
@@ -611,6 +654,7 @@ static void reflect_apply_state(void)
   if ((!showing_all_envs) && (enved_wave_p(ss))) env_redisplay();
 }
 
+
 static void flt_button_pressed(GtkWidget *w, gpointer context)
 {
   in_set_enved_target(ENVED_SPECTRUM);
@@ -618,6 +662,7 @@ static void flt_button_pressed(GtkWidget *w, gpointer context)
   set_enved_clip_p(true);
   reflect_apply_state();
 }
+
 
 static void amp_button_pressed(GtkWidget *w, gpointer context)
 {
@@ -627,6 +672,7 @@ static void amp_button_pressed(GtkWidget *w, gpointer context)
   reflect_apply_state();
 }
 
+
 static void src_button_pressed(GtkWidget *w, gpointer context)
 {
   if (enved_target(ss) == ENVED_SPECTRUM)
@@ -634,6 +680,7 @@ static void src_button_pressed(GtkWidget *w, gpointer context)
   in_set_enved_target(ENVED_SRATE);
   reflect_apply_state();
 }
+
 
 static void enved_reset(void)
 {
@@ -662,15 +709,18 @@ static void enved_reset(void)
   env_redisplay();
 }
 
+
 static void reset_button_pressed(GtkWidget *w, gpointer context)
 {
   enved_reset();
 }
 
+
 void enved_print(char *name)
 {
   print_enved(name, env_window_height);
 }
+
 
 static void print_button_pressed(GtkWidget *w, gpointer context)
 {
@@ -678,10 +728,12 @@ static void print_button_pressed(GtkWidget *w, gpointer context)
   file_print_callback(w, context);
 }
 
+
 static void env_browse_callback(const char *name, int row, void *data)
 {
   select_or_edit_env(row);
 }
+
 
 static void graph_button_callback(GtkWidget *w, gpointer context)
 {
@@ -689,16 +741,19 @@ static void graph_button_callback(GtkWidget *w, gpointer context)
   env_redisplay();
 }
 
+
 static void dB_button_callback(GtkWidget *w, gpointer context)
 {
   in_set_enved_in_dB(GTK_TOGGLE_BUTTON(w)->active);
   env_redisplay();
 }
 
+
 static void clip_button_callback(GtkWidget *w, gpointer context)
 {
   in_set_enved_clip_p(GTK_TOGGLE_BUTTON(w)->active);
 }
+
 
 static void exp_button_pressed(GtkWidget *w, gpointer context)
 {
@@ -711,6 +766,7 @@ static void exp_button_pressed(GtkWidget *w, gpointer context)
   reflect_segment_state();
 }
 
+
 static void lin_button_pressed(GtkWidget *w, gpointer context)
 {
   set_enved_style(ENVELOPE_LINEAR);
@@ -721,6 +777,7 @@ static void lin_button_pressed(GtkWidget *w, gpointer context)
     }
   reflect_segment_state();
 }
+
 
 static void make_base_label(Float bval)
 {
@@ -745,6 +802,7 @@ static void make_base_label(Float bval)
     }
 }
 
+
 static void base_changed(Float val)
 {
   Float bval;
@@ -765,6 +823,7 @@ static void base_changed(Float val)
   make_base_label(bval);
   if ((active_env) && (enved_style(ss) == ENVELOPE_EXPONENTIAL)) set_sensitive(saveB, true); /* what about undo/redo here? */
 }
+
 
 static void reflect_changed_base(Float val)
 {
@@ -787,10 +846,12 @@ static void reflect_changed_base(Float val)
   make_base_label(val);
 }
 
+
 static void base_changed_callback(GtkAdjustment *adj, gpointer context)
 {
   base_changed(adj->value);
 }
+
 
 static void fir_button_pressed(GtkWidget *w, gpointer context)
 {
@@ -798,6 +859,7 @@ static void fir_button_pressed(GtkWidget *w, gpointer context)
   set_button_label(firB, (FIR_p) ? "fir" : "fft");
   if (enved_wave_p(ss)) env_redisplay();
 }
+
 
 static void reflect_sound_state(void)
 {
@@ -807,10 +869,12 @@ static void reflect_sound_state(void)
   set_sensitive(apply2B, file_p);
 }
 
+
 static void reflect_file_in_enved(ss_watcher_reason_t reason, void *ignore)
 {
   if (enved_dialog) reflect_sound_state();
 }
+
 
 static void enved_selection_watcher(selection_watcher_reason_t reason, void *data);
 #define BB_MARGIN 3
@@ -1130,6 +1194,7 @@ GtkWidget *create_envelope_editor(void)
   return(enved_dialog);
 }
 
+
 #if USE_CAIRO
 GdkDrawable *enved_pix_wn(void);
 GdkDrawable *enved_pix_wn(void)
@@ -1138,16 +1203,19 @@ GdkDrawable *enved_pix_wn(void)
 }
 #endif
 
+
 void set_enved_clip_p(bool val) 
 {
   in_set_enved_clip_p(val); 
   if (enved_dialog) set_toggle_button(clipB, val, false, NULL);
 }
 
+
 void reflect_enved_style(void)
 {
   reflect_segment_state();
 }
+
 
 void set_enved_target(enved_target_t val) 
 {
@@ -1155,11 +1223,13 @@ void set_enved_target(enved_target_t val)
   if (enved_dialog) reflect_apply_state();
 }
 
+
 void set_enved_wave_p(bool val) 
 {
   in_set_enved_wave_p(val); 
   if (enved_dialog) set_toggle_button(graphB, val, false, NULL);
 }
+
 
 void set_enved_in_dB(bool val) 
 {
@@ -1167,16 +1237,19 @@ void set_enved_in_dB(bool val)
   if (enved_dialog) set_toggle_button(dBB, val, false, NULL);
 }
 
+
 void set_enved_base(Float val) 
 {
   in_set_enved_base(val); 
   if (enved_dialog) reflect_changed_base(val);
 }
 
+
 bool enved_dialog_is_active(void)
 {
   return((enved_dialog) && (GTK_WIDGET_VISIBLE(enved_dialog)));
 }
+
 
 void set_enved_filter_order(int order)
 {
@@ -1196,6 +1269,7 @@ void set_enved_filter_order(int order)
     }
 }
 
+
 static void enved_reflect_selection(bool on)
 {
   if ((enved_dialog) && (!within_selection_src))
@@ -1213,6 +1287,7 @@ static void enved_reflect_selection(bool on)
     }
 }
 
+
 static void enved_selection_watcher(selection_watcher_reason_t reason, void *data)
 {
   switch (reason)
@@ -1222,6 +1297,7 @@ static void enved_selection_watcher(selection_watcher_reason_t reason, void *dat
     default:                 enved_reflect_selection(selection_is_active()); break;
     }
 }
+
 
 void color_enved_waveform(color_info *pix)
 {
@@ -1233,11 +1309,13 @@ void color_enved_waveform(color_info *pix)
     }
 }
 
+
 static XEN g_enved_envelope(void)
 {
   #define H_enved_envelope "(" S_enved_envelope "): current envelope editor displayed (active) envelope"
   return(env_to_xen(active_env));
 }
+
 
 static XEN g_set_enved_envelope(XEN e)
 {
@@ -1255,11 +1333,13 @@ static XEN g_set_enved_envelope(XEN e)
   return(e);
 }
 
+
 static XEN g_enved_filter(void)
 {
   #define H_enved_filter "(" S_enved_filter "): envelope editor FIR/FFT filter choice (#t: FIR)"
   return(C_TO_XEN_BOOLEAN(FIR_p));
 }
+
 
 static XEN g_set_enved_filter(XEN type)
 {
@@ -1269,6 +1349,7 @@ static XEN g_set_enved_filter(XEN type)
     set_button_label(firB, (FIR_p) ? "fir" : "fft");
   return(type);
 }
+
 
 #if MUS_DEBUGGING
 static XEN g_enved_dialog_widgets(void)
@@ -1303,6 +1384,7 @@ static XEN g_enved_dialog_widgets(void)
 				     XEN_EMPTY_LIST)))))))))))))))))))))))))));
   return(XEN_EMPTY_LIST);
 }
+
 
 static XEN g_enved_axis_info(void)
 {

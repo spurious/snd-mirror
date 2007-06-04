@@ -24,6 +24,7 @@ static bool ignore_mus_error(int type, char *msg)
   RETSIGTYPE top_level_catch(int ignore);
 #endif
 
+
 void mus_error_to_snd(int type, char *msg)
 {
   /* it's possible to get here outside any catch, and in Guile a throw in that case
@@ -55,6 +56,7 @@ void mus_error_to_snd(int type, char *msg)
     }
 }
 
+
 static void mus_print_to_snd(char *msg)
 {
   if (!ss)
@@ -78,6 +80,7 @@ static void mus_print_to_snd(char *msg)
 	  listener_append("\n");
       }
 }
+
 
 static void initialize_load_path(void)
 {
@@ -123,6 +126,7 @@ static void initialize_load_path(void)
       FREE(dirnames);
     }
 }
+
 
 void snd_set_global_defaults(bool need_cleanup)
 {
@@ -288,8 +292,10 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Just_Sounds = DEFAULT_JUST_SOUNDS;
 }
 
+
 #if HAVE_SETJMP_H
 #include <signal.h>
+
 static RETSIGTYPE snd_sigusr1(int ignored)
 {
   /* if Snd is in an infinite loop, it should be possible to break out of it and
@@ -301,9 +307,11 @@ static RETSIGTYPE snd_sigusr1(int ignored)
 }
 #endif
 
+
 #if HAVE_GSL
 #include <gsl/gsl_ieee_utils.h>
 #include <gsl/gsl_errno.h>
+
 /* default gsl error handler apparently aborts main program! */
 
 static void snd_gsl_error(const char *reason, const char *file, int line, int gsl_errno)
@@ -318,6 +326,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 				  C_TO_XEN_INT(gsl_errno))));
 }
 #endif
+
 
 #if SND_AS_WIDGET
   snd_state *snd_main(int argc, char **argv)
@@ -468,6 +477,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   #endif
 #endif
 
+
 #ifdef SND_AS_PD_EXTERNAL
 int snd_pd_main(void){
   char *argv[]={"pd","-noglob","-noinit"};
@@ -475,6 +485,7 @@ int snd_pd_main(void){
   return 0;
 }
 #endif
+
 
 void g_init_base(void)
 {

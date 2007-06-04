@@ -44,6 +44,7 @@
 
 /* TODO: (gauche)   stacktrace and errors->listener (current-load-history)
  * TODO: (gauche)   error in find lambda -> exit (need better error protection)
+ * TODO: (all) if 'wrong-number-of-args (or equivalent in unguile), add snd-help ?
  */
 
 

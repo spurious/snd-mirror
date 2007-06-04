@@ -6540,24 +6540,26 @@ static void maxamp_f(int *args, ptree *pt)
 {
   chan_info *cp; 
   cp = run_get_cp(1, args, pt->ints);
-  if (cp) FLOAT_RESULT = channel_maxamp(cp, AT_CURRENT_EDIT_POSITION);
+  if (cp) FLOAT_RESULT = channel_maxamp(cp, INT_ARG_3);
 }
 
 static char *descr_maxamp_f(int *args, ptree *pt) 
 {
-  return(mus_format( FLT_PT " = maxamp(" INT_PT ", " INT_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
+  return(mus_format( FLT_PT " = maxamp(" INT_PT ", " INT_PT ", " INT_PT ")", 
+		     args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
 
 static xen_value *maxamp_1(ptree *pt, xen_value **args, int num_args)
 {
-  xen_value *true_args[3];
+  xen_value *true_args[4];
   xen_value *rtn;
   int k;
   run_opt_arg(pt, args, num_args, 1, true_args);
   run_opt_arg(pt, args, num_args, 2, true_args);
+  run_opt_arg(pt, args, num_args, 3, true_args);
   true_args[0] = args[0];
-  rtn = package(pt, R_FLOAT, maxamp_f, descr_maxamp_f, true_args, 2);
-  for (k = num_args + 1; k <= 2; k++) FREE(true_args[k]);
+  rtn = package(pt, R_FLOAT, maxamp_f, descr_maxamp_f, true_args, 3);
+  for (k = num_args + 1; k <= 3; k++) FREE(true_args[k]);
   return(rtn);
 }
 
@@ -6566,12 +6568,31 @@ static xen_value *maxamp_1(ptree *pt, xen_value **args, int num_args)
 
 static void sample_f(int *args, ptree *pt) 
 {
-  chan_info *cp;
-  cp = selected_channel();
-  if (cp) FLOAT_RESULT = chn_sample(INT_ARG_1, cp, cp->edit_ctr);
+  chan_info *cp; 
+  cp = run_get_cp(2, args, pt->ints);
+  if (cp) 
+    FLOAT_RESULT = chn_sample(INT_ARG_1, cp, (INT_ARG_4 == AT_CURRENT_EDIT_POSITION) ? cp->edit_ctr : INT_ARG_4);
 }
-static char *descr_sample_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = sample(" INT_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1));}
-static xen_value *sample_1(ptree *pt, xen_value **args, int num_args) {return(package(pt, R_FLOAT, sample_f, descr_sample_f, args, 1));}
+static char *descr_sample_f(int *args, ptree *pt) 
+{
+  return(mus_format( FLT_PT " = sample(" INT_PT ", " INT_PT ", " INT_PT ", " INT_PT ")", 
+		     args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3, args[4], INT_ARG_4));
+
+}
+static xen_value *sample_1(ptree *pt, xen_value **args, int num_args) 
+{
+  xen_value *true_args[5];
+  xen_value *rtn;
+  int k;
+  run_opt_arg(pt, args, num_args, 2, true_args);
+  run_opt_arg(pt, args, num_args, 3, true_args);
+  run_opt_arg(pt, args, num_args, 4, true_args);
+  true_args[0] = args[0];
+  true_args[1] = args[1];
+  rtn = package(pt, R_FLOAT, sample_f, descr_sample_f, true_args, 4);
+  for (k = num_args + 1; k <= 4; k++) FREE(true_args[k]);
+  return(rtn);
+}
 
 
 /* ---------------- srate ---------------- */
@@ -11760,6 +11781,11 @@ int evaluate_ptree_1f2b(struct ptree *pt, Float arg)
 Float evaluate_ptreec(struct ptree *pt, Float arg, XEN object, bool dir, int type)
 {
   /* set the "val" (current sample) arg */
+
+  /* this assumes the init func returns the correct type of "data".  This will segfault:
+   *    (define (tp) (ptree-channel (lambda (y data forward) (declare (y real)) (+ y .1)) 0 10 0 0 1 #f (lambda (b d) #f)))
+   */
+
   pt->dbls[pt->args[0]] = arg;
   if (pt->arity > 1)
     {
@@ -12366,8 +12392,8 @@ static void init_walkers(void)
   INIT_WALKER(S_frames, make_walker(frames_1, NULL, NULL, 0, 3, R_INT, false, 0));
   INIT_WALKER(S_cursor, make_walker(cursor_1, NULL, NULL, 0, 2, R_INT, false, 0));
   INIT_WALKER(S_add_mark, make_walker(add_mark_1, NULL, NULL, 1, 3, R_INT, false, 0));
-  INIT_WALKER(S_maxamp, make_walker(maxamp_1, NULL, NULL, 0, 2, R_FLOAT, false, 0));
-  INIT_WALKER(S_sample, make_walker(sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
+  INIT_WALKER(S_maxamp, make_walker(maxamp_1, NULL, NULL, 0, 3, R_FLOAT, false, 0));
+  INIT_WALKER(S_sample, make_walker(sample_1, NULL, NULL, 1, 4, R_FLOAT, false, 1, R_INT));
   INIT_WALKER(S_srate, make_walker(srate_1, NULL, NULL, 0, 1, R_INT, false, 0));
   INIT_WALKER(S_channels, make_walker(channels_1, NULL, NULL, 0, 1, R_INT, false, 0));
   INIT_WALKER(S_c_g, make_walker(c_g_p_1, NULL, NULL, 0, 0, R_BOOL, false, 0));

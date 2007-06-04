@@ -2,6 +2,7 @@
 #include "clm2xen.h"
 #include "sndlib2xen.h"
 
+
 /* we need error catcher from FFTW (memerr = exit) */
 
 #if WITH_SHARED_SNDLIB
@@ -113,6 +114,7 @@ static void wavelet_transform(Float *data, int num, Float *cc, int cc_size)
   if (cr) FREE(cr);
 }
 
+
 /* these are from daub.h musicdsp.org, Computed by Kazuo Hatano, Aichi Institute of Technology. */
 /* static Float Daub1[2] = { 7.07106781186e-01, 7.07106781186e-01}; */
 static Float Daub2[4] = { 4.82962913144e-01, 8.36516303737e-01, 2.24143868042e-01,-1.29409522551e-01};
@@ -202,6 +204,7 @@ char *wavelet_name(int i) {return(wavelet_names_1[i]);}
 char **wavelet_names(void) {return(wavelet_names_1);}
 
 
+
 /* -------------------------------- HAAR TRANSFORM -------------------------------- */
 /*
  * from fxt/haar/haar.cc
@@ -232,6 +235,7 @@ static void haar_transform(Float *f, int n)
   f[0] *= v;
   FREE(g);
 }
+
 
 
 /* -------------------------------- WALSH TRANSFORM -------------------------------- */
@@ -391,6 +395,7 @@ int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size)
   return(pks);
 }
 
+
 #define MIN_CHECK 0.000001
 
 /* somday: still more ints -> off_ts */
@@ -497,10 +502,12 @@ int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, in
   return(k);
 }
 
+
 static Float beta_maxes[MUS_NUM_FFT_WINDOWS] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
 						1.0, 1.0, 15.0, 10.0, 10.0, 10.0, 1.0, 18.0, 10.0, 1.0, 18.0, 18.0,
 						1.0, 1.0, 1.0};
 Float fft_beta_max(mus_fft_window_t win) {return(beta_maxes[(int)win]);}
+
 
 
 static char *transform_type_names[NUM_BUILTIN_TRANSFORM_TYPES] = {"Fourier", "Wavelet", "Walsh", "Autocorrelate", "Cepstrum", "Haar"};
@@ -518,6 +525,7 @@ typedef struct {
 
 static added_transform **added_transforms = NULL;
 static int added_transforms_size = 0;
+
 
 static added_transform *new_transform(void)
 {
@@ -551,6 +559,7 @@ static added_transform *new_transform(void)
   return(added_transforms[loc]);
 }
 
+
 static int add_transform(const char *name, const char *xlabel, Float lo, Float hi, XEN proc)
 {
   added_transform *af;
@@ -564,6 +573,7 @@ static int add_transform(const char *name, const char *xlabel, Float lo, Float h
   return(af->type);
 }
 
+
 static added_transform *type_to_transform(int type)
 {
   int loc;
@@ -573,12 +583,14 @@ static added_transform *type_to_transform(int type)
   return(NULL);
 }
 
+
 bool transform_p(int type)
 {
   if (type < 0) return(false);
   if (type < NUM_BUILTIN_TRANSFORM_TYPES) return(true);
   return(type_to_transform(type) != NULL);
 }
+
 
 /* delete-transform would also need to remove its name from the various UI lists */
 
@@ -595,6 +607,7 @@ char *transform_name(int type)
   return("unknown");
 }
 
+
 char *transform_program_name(int type)
 {
   if (transform_p(type))
@@ -608,6 +621,7 @@ char *transform_program_name(int type)
   return("unknown");
 }
 
+
 static char *added_transform_xlabel(int type)
 {
   added_transform *af;
@@ -615,6 +629,7 @@ static char *added_transform_xlabel(int type)
   if (af) return(af->xlabel);
   return("unknown");
 }
+
 
 static Float added_transform_lo(int type)
 {
@@ -624,6 +639,7 @@ static Float added_transform_lo(int type)
   return(0.0);
 }
 
+
 static Float added_transform_hi(int type)
 {
   added_transform *af;
@@ -632,6 +648,7 @@ static Float added_transform_hi(int type)
   return(1.0);
 }
 
+
 static XEN added_transform_proc(int type)
 {
   added_transform *af;
@@ -639,6 +656,7 @@ static XEN added_transform_proc(int type)
   if (af) return(af->proc);
   return(XEN_FALSE);
 }
+
 
 void set_transform_position(int i, int j)
 {
@@ -650,10 +668,12 @@ void set_transform_position(int i, int j)
     }
 }
 
+
 int max_transform_type(void)
 {
   return(NUM_BUILTIN_TRANSFORM_TYPES + added_transforms_size);
 }
+
 
 int transform_type_to_position(int type)
 {
@@ -664,6 +684,7 @@ int transform_type_to_position(int type)
   if (af) return(af->row);
   return(-1);
 }
+
 
 int transform_position_to_type(int pos)
 {
@@ -680,7 +701,6 @@ int transform_position_to_type(int pos)
   return(-1);
 }
 
-static XEN before_transform_hook;
 
 static char *spectro_xlabel(chan_info *cp)
 {
@@ -705,6 +725,7 @@ static char *spectro_xlabel(chan_info *cp)
     }
   return(NULL);
 }
+
 
 static void make_sonogram_axes(chan_info *cp)
 {
@@ -768,6 +789,7 @@ static void make_sonogram_axes(chan_info *cp)
     }
 }
 
+
 typedef struct fft_state {
   off_t size;
   mus_fft_window_t wintype;
@@ -786,9 +808,11 @@ typedef struct fft_state {
   Float cutoff;
 } fft_state;
 
+
 #if (!HAVE_DECL_HYPOT)
 static double hypot(double r, double i) {return(sqrt(r * r + i * i));}
 #endif
+
 
 void fourier_spectrum(snd_fd *sf, Float *fft_data, off_t fft_size_1, off_t data_len_1, Float *window)
 {
@@ -827,6 +851,9 @@ void fourier_spectrum(snd_fd *sf, Float *fft_data, off_t fft_size_1, off_t data_
   }
 #endif
 }
+
+
+static XEN before_transform_hook;
 
 static void apply_fft(fft_state *fs)
 {
@@ -928,6 +955,7 @@ static void apply_fft(fft_state *fs)
     }
   free_snd_fd(sf);
 }
+
 
 static void display_fft(fft_state *fs)
 {
@@ -1089,6 +1117,7 @@ static void display_fft(fft_state *fs)
     }
 }
 
+
 static fft_state *free_fft_state(fft_state *fs)
 {
   if (fs) 
@@ -1099,11 +1128,13 @@ static fft_state *free_fft_state(fft_state *fs)
   return(NULL);
 }
 
+
 void cp_free_fft_state(chan_info *cp)
 {
   if (cp->fft_data)
     cp->fft_data = (fft_state *)free_fft_state(cp->fft_data);
 }
+
 
 bool fft_window_beta_in_use(mus_fft_window_t win) 
 {
@@ -1118,10 +1149,12 @@ bool fft_window_beta_in_use(mus_fft_window_t win)
 	 (win == MUS_ULTRASPHERICAL_WINDOW));
 }
 
+
 bool fft_window_alpha_in_use(mus_fft_window_t win) 
 {
   return(win == MUS_ULTRASPHERICAL_WINDOW);
 }
+
 
 static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
 {
@@ -1198,6 +1231,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
   return(fs);
 }
 
+
 static fft_info *make_fft_info(off_t size, mus_fft_window_t window, Float alpha, Float beta)
 {
   fft_info *fp;
@@ -1211,6 +1245,7 @@ static fft_info *make_fft_info(off_t size, mus_fft_window_t window, Float alpha,
   return(fp);
 }
 
+
 void set_fft_info_xlabel(chan_info *cp, const char *new_label)
 {
   if ((cp) && (cp->fft))
@@ -1222,6 +1257,7 @@ void set_fft_info_xlabel(chan_info *cp, const char *new_label)
     }
 }
 
+
 fft_info *free_fft_info(fft_info *fp)
 {
   fp->chan = NULL;
@@ -1231,6 +1267,7 @@ fft_info *free_fft_info(fft_info *fp)
   FREE(fp);
   return(NULL);
 }
+
 
 static void one_fft(fft_state *fs)
 {
@@ -1294,6 +1331,7 @@ static void one_fft(fft_state *fs)
   display_fft(fs);
 }
 
+
 void single_fft(chan_info *cp, bool update_display, bool force_recalc)
 {
   if (cp->transform_size < 2) return;
@@ -1301,6 +1339,7 @@ void single_fft(chan_info *cp, bool update_display, bool force_recalc)
   one_fft(cp->fft_data);
   if (update_display) display_channel_fft_data(cp);
 }
+
 
 
 /* -------------------------------- GRAPH_AS_SONOGRAM -------------------------------- */
@@ -1341,6 +1380,7 @@ typedef struct sonogram_state {
   bool force_recalc;
 } sonogram_state;
 
+
 void clear_transform_edit_ctrs(chan_info *cp)
 {
   if (cp->fft_data)
@@ -1356,6 +1396,7 @@ void clear_transform_edit_ctrs(chan_info *cp)
       lsg->edit_ctr = -1;
     }
 }
+
 
 void *make_sonogram_state(chan_info *cp, bool force_recalc)
 {
@@ -1385,12 +1426,14 @@ void *make_sonogram_state(chan_info *cp, bool force_recalc)
   return((void *)sg);
 }
 
+
 void free_sonogram_fft_state(void *ptr)
 {
   sonogram_state *sg = (sonogram_state *)ptr;
   if (sg->fs) free_fft_state(sg->fs);
   sg->fs = NULL;
 }
+
 
 void free_sono_info(chan_info *cp)
 {
@@ -1411,6 +1454,7 @@ void free_sono_info(chan_info *cp)
       cp->sonogram_data = NULL;
     }
 }
+
 
 static sono_slice_t set_up_sonogram(sonogram_state *sg)
 {
@@ -1515,6 +1559,7 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
   return(SONO_RUN);
 }
 
+
 static sono_slice_t run_all_ffts(sonogram_state *sg)
 {
   fft_state *fs;
@@ -1577,6 +1622,7 @@ static sono_slice_t run_all_ffts(sonogram_state *sg)
   return(SONO_RUN);
 }
 
+
 static sono_slice_t cleanup_sonogram(sonogram_state *sg)
 {
   if (sg)
@@ -1611,6 +1657,7 @@ static sono_slice_t cleanup_sonogram(sonogram_state *sg)
   return(SONO_DONE);
 }
 
+
 idle_func_t sonogram_in_slices(void *sono)
 {
   sonogram_state *sg = (sonogram_state *)sono;
@@ -1635,17 +1682,20 @@ idle_func_t sonogram_in_slices(void *sono)
   return(BACKGROUND_CONTINUE);
 }
 
+
 void sono_update(chan_info *cp)
 {
   if (cp->transform_graph_type != GRAPH_ONCE) make_sonogram_axes(cp);
   update_graph(cp);
 }
 
+
 void set_spectro_cutoff_and_redisplay(Float val)
 {
   in_set_spectro_cutoff(val); 
   for_each_chan(sono_update);
 }
+
 
 static void spectral_multiply(Float* rl1, Float* rl2, int n)
 {
@@ -1670,6 +1720,7 @@ static void spectral_multiply(Float* rl1, Float* rl2, int n)
       rl2[nn2] = -rl2[j];
     }
 }
+
 
 void c_convolve(const char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
 		int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, enved_progress_t from_enved, int ip, int total_chans)
@@ -1780,6 +1831,7 @@ void c_convolve(const char *fname, Float amp, int filec, off_t filehdr, int filt
     }
 }
 
+
 static XEN g_autocorrelate(XEN reals)
 {
   #define H_autocorrelate "(" S_autocorrelate " data): in place autocorrelation of data (a vct)"
@@ -1790,6 +1842,7 @@ static XEN g_autocorrelate(XEN reals)
   autocorrelation(v1->data, v1->length);
   return(reals);
 }
+
 
 static XEN g_add_transform(XEN name, XEN xlabel, XEN lo, XEN hi, XEN proc)
 {
@@ -1824,6 +1877,7 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
 					  proc)));
 }
 
+
 static XEN g_transform_frames(XEN snd, XEN chn)
 {
   #define H_transform_frames "(" S_transform_frames " :optional snd chn): \
@@ -1846,6 +1900,7 @@ and otherwise return a list (total-size active-bins active-slices)"
 			    C_TO_XEN_INT(si->target_bins)));
   return(XEN_ZERO);
 }
+
 
 static XEN g_transform_sample(XEN bin, XEN slice, XEN snd_n, XEN chn_n)
 {
@@ -1905,6 +1960,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
   return(XEN_FALSE);
 }  
 
+
 static XEN g_transform_to_vct(XEN snd_n, XEN chn_n, XEN v)
 {
   #define H_transform_to_vct "(" S_transform_to_vct " :optional snd chn obj): \
@@ -1956,6 +2012,7 @@ return a vct (obj if it's passed), with the current transform data from snd's ch
     }
   return(XEN_FALSE);
 }  
+
 
 static XEN g_snd_transform(XEN type, XEN data, XEN hint)
 {
@@ -2027,12 +2084,14 @@ static XEN g_transform_p(XEN type)
   return(C_TO_XEN_BOOLEAN(transform_p(XEN_TO_C_INT(type))));
 }
 
+
 static int deleted_type = 0;
 static void unset_deleted_transform_type(chan_info *cp)
 {
   if (cp->transform_type == deleted_type)
     cp->transform_type = DEFAULT_TRANSFORM_TYPE;
 }
+
 
 static XEN g_delete_transform(XEN type)
 {
@@ -2061,6 +2120,7 @@ static XEN g_delete_transform(XEN type)
   return(XEN_FALSE);
 }
 
+
 static void update_log_freq_fft_graph(chan_info *cp)
 {
   if ((!(cp->active)) ||
@@ -2074,13 +2134,16 @@ static void update_log_freq_fft_graph(chan_info *cp)
   calculate_fft(cp);
 }
 
+
 void set_log_freq_start(Float base)
 {
   in_set_log_freq_start(base);
   for_each_chan(update_log_freq_fft_graph);
 }
 
+
 static XEN g_log_freq_start(void) {return(C_TO_XEN_DOUBLE(log_freq_start(ss)));}
+
 static XEN g_set_log_freq_start(XEN val) 
 {
   Float base;
@@ -2096,7 +2159,9 @@ static XEN g_set_log_freq_start(XEN val)
   return(C_TO_XEN_DOUBLE(log_freq_start(ss)));
 }
 
+
 static XEN g_show_selection_transform(void) {return(C_TO_XEN_BOOLEAN(show_selection_transform(ss)));}
+
 static XEN g_set_show_selection_transform(XEN val) 
 {
   #define H_show_selection_transform "(" S_show_selection_transform "): " PROC_TRUE " if transform display reflects selection, not time-domain window"

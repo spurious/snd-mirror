@@ -1112,6 +1112,9 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 		reset_marks(cp, cur_marks, new_marks, beg + dur, (k - dur), full_chan);
 	    }
 	}
+
+      /* SOMEDAY: src-peak-env => ideally just a change in the bin size after copy */
+
       update_graph(cp);
     }
   else
@@ -3730,10 +3733,16 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
     return(XEN_TRUE);
   if (XEN_PROCEDURE_P(init_func))
     {
-      v = XEN_CALL_2(init_func,
-		     C_TO_XEN_OFF_T(0),
-		     C_TO_XEN_OFF_T(num),
-		     origin);
+      if (XEN_REQUIRED_ARGS_OK(init_func, 3))
+	v = XEN_CALL_3(init_func,
+		       C_TO_XEN_OFF_T(0),
+		       C_TO_XEN_OFF_T(num),
+		       XEN_TRUE,             /* reading forward */
+		       origin);
+      else v = XEN_CALL_2(init_func,
+			  C_TO_XEN_OFF_T(0),
+			  C_TO_XEN_OFF_T(num),
+			  origin);
       loc = snd_protect(v);
     }
   temp_file = (num > MAX_BUFFER_SIZE);
@@ -3818,8 +3827,8 @@ current sample, if init-func is not specified), comes about as an implicit chang
 This is similar to scaling and some envelope operations in that no data actually changes.  If 'peak-env-also' is " PROC_TRUE ", \
 the same function is applied to the peak env values to get the new version. \
 If 'proc' needs some state, it can be supplied in a vct returned by 'init-func'. \
-'init-func' is a function of 2 args, the current fragment-relative begin position, \
-and the overall fragment duration. In this case, 'proc' is a function of 3 args: \
+'init-func' is a function of 2 or 3 args, the current fragment-relative begin position, \
+the overall fragment duration, and optionally the read direction. In this case, 'proc' is a function of 3 args: \
 the current sample, the vct returned by 'init-func', and the current read direction."
 
   chan_info *cp;
@@ -3879,13 +3888,16 @@ the current sample, the vct returned by 'init-func', and the current read direct
 #else
 
   ptrees_present = unptreeable(cp, beg, dur, pos);
+
   if (XEN_PROCEDURE_P(init_func))
     {
-      if (!(XEN_REQUIRED_ARGS_OK(init_func, 2)))
-	XEN_BAD_ARITY_ERROR(S_ptree_channel, 8, init_func, "init-func must take 2 args");
+      if ((!(XEN_REQUIRED_ARGS_OK(init_func, 2))) &&
+	  (!(XEN_REQUIRED_ARGS_OK(init_func, 3))))
+	XEN_BAD_ARITY_ERROR(S_ptree_channel, 8, init_func, "init-func must take 2 or 3 args");
       if (!(XEN_REQUIRED_ARGS_OK(proc, 3)))
 	XEN_BAD_ARITY_ERROR(S_ptree_channel, 1, proc, "main func must take 3 args if the init-func is present");
       if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
+
       if (!ptrees_present)
 	{
 	  pt = form_to_ptree_3_f(proc_and_list);
@@ -3898,6 +3910,7 @@ the current sample, the vct returned by 'init-func', and the current read direct
 	      return(proc_and_list);
 	    }
 	}
+
       /* fallback on map chan */
       g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
       if (backup)
@@ -3905,6 +3918,9 @@ the current sample, the vct returned by 'init-func', and the current read direct
       if (caller) {FREE(caller); caller = NULL;}
       return(proc_and_list);
     }
+
+  /* no init-func from here on */
+
   if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
   if (XEN_REQUIRED_ARGS_OK(proc, 1))
     pt = form_to_ptree_1_f(proc_and_list);

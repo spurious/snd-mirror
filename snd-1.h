@@ -324,7 +324,7 @@ typedef struct chan_info {
   int ptree_ctr;
   struct ptree **ptrees;
   XEN *ptree_inits;
-  int *init_locs;
+  int *init_locs, *init_args;
   fft_info *fft;           /* possibly null fft data */
   struct snd_info *sound;  /* containing sound */
   axis_info *axis;         /* time domain axis */

@@ -3,6 +3,7 @@
 /* rather than try to track error indications through infinite levels of nested calls,
  *   I think I'll just issue a warning, and let the redirection mechanism deal with it.
  */
+
 void snd_remove(const char *name, cache_remove_t forget)
 {
   int err;
@@ -12,6 +13,7 @@ void snd_remove(const char *name, cache_remove_t forget)
   if (err != 0)
     snd_warning("remove %s: %s", name, snd_io_strerror());
 }
+
 
 void snd_close(int fd, const char *name)
 {
@@ -26,6 +28,7 @@ void snd_close(int fd, const char *name)
 	snd_warning("close %s: %s", name, snd_io_strerror());
     }
 }
+
 
 void snd_fclose(FILE *fd, const char *name)
 {
@@ -59,6 +62,7 @@ FILE *snd_fopen(const char *filename, const char *modes)
   return(result);
 }
 
+
 int snd_open(const char *filename, int flags, mode_t mode)
 {
   int result = 0;
@@ -78,6 +82,7 @@ int snd_open(const char *filename, int flags, mode_t mode)
   return(result);
 }
 
+
 int snd_creat(const char *filename, mode_t mode)
 {
   int result = 0;
@@ -92,6 +97,7 @@ int snd_creat(const char *filename, mode_t mode)
     }
   return(result);
 }
+
 
 io_error_t move_file(const char *oldfile, const char *newfile)
 {
@@ -109,6 +115,7 @@ io_error_t move_file(const char *oldfile, const char *newfile)
     }
   return(err);
 }
+
 
 io_error_t copy_file(const char *oldname, const char *newname)
 {
@@ -164,6 +171,7 @@ static void c_io_bufclr(snd_io *io, int beg)
     }
 }
 
+
 static void reposition_file_buffers_1(off_t loc, snd_io *io)
 {
   /* called when loc is outside the current in-core frame for the file pointed to by io */
@@ -192,6 +200,7 @@ static void reposition_file_buffers_1(off_t loc, snd_io *io)
     }
   io->end = io->beg + io->bufsize - 1;
 }
+
 
 static void reposition_file_buffers(snd_data *sd, off_t index)
 {
@@ -232,9 +241,11 @@ static void reposition_file_buffers(snd_data *sd, off_t index)
     }
 }
 
+
 #if MUS_DEBUGGING
 static int ios_size = 0;
 static snd_io **ios = NULL;
+
 static void add_io(snd_io *p)
 {
   int loc = -1;
@@ -264,6 +275,7 @@ static void add_io(snd_io *p)
   ios[loc] = p;
 }
 
+
 static void remove_io(snd_io *p)
 {
   int i;
@@ -274,6 +286,7 @@ static void remove_io(snd_io *p)
 	return;
       }
 }
+
 
 void io_fds_in_use(int *open, int *closed, int *top);
 void io_fds_in_use(int *open, int *closed, int *top)
@@ -296,6 +309,7 @@ void io_fds_in_use(int *open, int *closed, int *top)
   (*top) = high;
 }
 #endif
+
 
 snd_io *make_file_state(int fd, file_info *hdr, int chan, off_t beg, int suggested_bufsize)
 {
@@ -323,6 +337,7 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, off_t beg, int suggest
   return(io);
 }
 
+
 void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd)
 {
   /* need to track in-core buffer and file-relative index */
@@ -337,6 +352,7 @@ void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_da
     sf->last = ind1 - cur_snd->io->beg;
   else sf->last = cur_snd->io->bufsize - 1;
 }
+
 
 void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd)
 {
@@ -396,6 +412,7 @@ static void close_temp_files(chan_info *cp, int *closed)
     }
 }
 
+
 static int too_many_files_cleanup(void)
 {
   int *closed;
@@ -415,6 +432,7 @@ static int too_many_files_cleanup(void)
 #endif
   return(rtn);
 }
+
 
 int snd_open_read(const char *arg) 
 {
@@ -450,14 +468,17 @@ int snd_reopen_write(const char *arg)
   return(fd);
 }
 
+
 static int local_mus_error = MUS_NO_ERROR;
 static mus_error_handler_t *old_error_handler;
+
 static void local_mus_error_to_snd(int type, char *msg) 
 {
   local_mus_error = type;
   if (ss->io_error_info) FREE(ss->io_error_info);
   ss->io_error_info = copy_string(msg);
 }
+
 
 io_error_t sndlib_error_to_snd(int sndlib_err)
 {
@@ -492,6 +513,7 @@ io_error_t sndlib_error_to_snd(int sndlib_err)
   return(IO_UNKNOWN_SNDLIB_ERROR);
 }
 
+
 int snd_file_open_descriptors(int fd, const char *name, int format, off_t location, int chans, int type)
 {
   int sl_err = MUS_NO_ERROR;
@@ -500,6 +522,7 @@ int snd_file_open_descriptors(int fd, const char *name, int format, off_t locati
     snd_warning("%s: open file descriptors: %s", name, mus_error_type_to_string(sl_err));
   return(sl_err);
 }
+
 
 io_error_t snd_write_header(const char *name, int type, int srate, int chans,
 			    off_t samples, int format, const char *comment,
@@ -532,6 +555,7 @@ io_error_t snd_write_header(const char *name, int type, int srate, int chans,
   return(sndlib_error_to_snd(local_mus_error));
 }
 
+
 /* there are a few special-case multi-channel temp files that need a kind of reference count to handle deletion */
 /* this machinery affects only these special cases, not temp files in general */
 
@@ -543,6 +567,7 @@ typedef struct {
 
 static tempfile_ctr **tempfiles = NULL;
 static int tempfiles_size = 0;
+
 
 void remember_temp(const char *filename, int chans)
 {
@@ -580,6 +605,7 @@ void remember_temp(const char *filename, int chans)
   tmp->ticks = (int *)CALLOC(chans, sizeof(int));
 }
 
+
 void forget_temp(const char *filename, int chan)
 {
   int i, j;
@@ -606,6 +632,7 @@ void forget_temp(const char *filename, int chan)
 #endif
 }
 
+
 static void tick_temp(const char *filename, int chan)
 {
   int i;
@@ -624,6 +651,7 @@ static void tick_temp(const char *filename, int chan)
 #endif
 }
 
+
 void forget_temps(void)
 {
   int i;
@@ -631,6 +659,7 @@ void forget_temps(void)
     if ((tempfiles[i]) && (mus_file_probe(tempfiles[i]->name)))
       snd_remove(tempfiles[i]->name, REMOVE_FROM_CACHE);
 }
+
 
 snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_delete_t temp, int ctr, int temp_chan)
 {
@@ -651,6 +680,7 @@ snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_
   sd->data_bytes = (hdr->samples) * (mus_bytes_per_sample(hdr->format)) + hdr->data_location;
   return(sd);
 }
+
 
 snd_data *copy_snd_data(snd_data *sd, off_t beg, int bufsize)
 {
@@ -684,6 +714,7 @@ snd_data *copy_snd_data(snd_data *sd, off_t beg, int bufsize)
   return(sf);
 }
 
+
 snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr)
 {
   snd_data *sf;
@@ -706,6 +737,7 @@ snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr)
   return(sf);
 }
 
+
 snd_data *make_snd_data_buffer_for_simple_channel(int len)
 {
   snd_data *sf;
@@ -718,6 +750,7 @@ snd_data *make_snd_data_buffer_for_simple_channel(int len)
   sf->data_bytes = len * sizeof(mus_sample_t);
   return(sf);
 }
+
 
 snd_data *free_snd_data(snd_data *sd)
 {
@@ -787,6 +820,7 @@ snd_data *free_snd_data(snd_data *sd)
   return(NULL);
 }
 
+
 int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err)
 {
   /* returns io fd */
@@ -827,6 +861,7 @@ int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err
   lseek(ofd, hdr->data_location, SEEK_SET);
   return(ofd);
 }
+
 
 io_error_t close_temp_file(const char *filename, int ofd, int type, off_t bytes)
 {
