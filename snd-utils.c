@@ -1,5 +1,6 @@
 #include "snd.h"
 
+
 int snd_round(double x) /* needs to be double here (not Float) for x axis calcs */
 {
   int i;
@@ -7,6 +8,7 @@ int snd_round(double x) /* needs to be double here (not Float) for x axis calcs 
   if ((x - i) > 0.5) return(i + 1);
   return(i);
 }
+
 
 off_t snd_round_off_t(double x)
 {
@@ -16,11 +18,13 @@ off_t snd_round_off_t(double x)
   return(i);
 }
 
+
 off_t snd_abs_off_t(off_t val)
 {
   /* div is also limited to int */
   return((val < 0) ? -val : val);
 }
+
 
 #define POW2_SIZE 31
 static int ipow2s[POW2_SIZE] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 
@@ -32,6 +36,7 @@ int snd_int_pow2(int n)
   return(ipow2s[n]);
 }
 
+
 off_t snd_off_t_pow2(int n)
 {
   if ((n < 0) || (n > 46)) return(0);
@@ -39,6 +44,7 @@ off_t snd_off_t_pow2(int n)
     return((off_t)ipow2s[n]);
   return((off_t)ipow2s[16] * (off_t)ipow2s[n - 16]);  /* can't store an array as above -- compiler complaints */
 }
+
 
 int snd_to_int_pow2(int n)
 {
@@ -50,6 +56,7 @@ int snd_to_int_pow2(int n)
   return(0);
 }
 
+
 int snd_int_log2(int n)
 {
   /* round down */
@@ -60,7 +67,9 @@ int snd_int_log2(int n)
   return(0);
 }
 
+
 #define MAX_FLOAT_DIFF_FOR_EQUAL 0.0000001
+
 bool snd_feq(Float val1, Float val2)
 {
   /* if some float can be affected by a widget, we can easily get float inaccuracies that confuse "==" (in gtk in particular) */
@@ -69,12 +78,14 @@ bool snd_feq(Float val1, Float val2)
   return(false);
 }
 
+
 #if !(defined(__GNUC__) && (!(defined(__cplusplus))))
 Float in_dB(Float min_dB, Float lin_dB, Float val)
 {
   return((val <= lin_dB) ? min_dB : (20.0 * log10(val)));
 }
 #endif
+
 
 #if MUS_DEBUGGING
 char *copy_string_1(const char *str, const char *func, const char *file, int line)
@@ -97,12 +108,14 @@ char *copy_string(const char *str)
 }
 #endif
 
+
 int snd_strlen(const char *str)
 {
   /* strlen(NULL) -> seg fault! */
   if ((str) && (*str)) return(strlen(str));
   return(0);
 }
+
 
 char *snd_strcat(char *errmsg, const char *str, int *size)
 {
@@ -121,10 +134,12 @@ char *snd_strcat(char *errmsg, const char *str, int *size)
   return(errmsg);
 }
 
+
 #if HAVE_STRFTIME
 #define TIME_STR_SIZE 64
 static char time_buf[TIME_STR_SIZE];
 #endif
+
 
 char *snd_local_time(void)
 {
@@ -138,6 +153,7 @@ char *snd_local_time(void)
 #endif
 }
 
+
 char *snd_strftime(const char *format, time_t date)
 {
 #if HAVE_STRFTIME
@@ -148,6 +164,7 @@ char *snd_strftime(const char *format, time_t date)
 #endif
 }
 
+
 char *snd_io_strerror(void) /* "snd_strerror" is exported by ALSA! */
 {
   if (ss->local_errno != 0)
@@ -157,12 +174,14 @@ char *snd_io_strerror(void) /* "snd_strerror" is exported by ALSA! */
   return(NULL);
 }
 
+
 char *snd_open_strerror(void)
 {
   if (ss->local_open_errno != 0)
     return(strerror(ss->local_open_errno));
   return(snd_io_strerror());
 }
+
 
 char *string_to_colon(char *val)
 {
@@ -182,6 +201,7 @@ char *string_to_colon(char *val)
   return(up_to_colon);
 }
 
+
 char *filename_without_directory(const char *name)
 {
   /* since I don't want to mess with freeing these guys, I'll just return a pointer into the name */
@@ -193,6 +213,7 @@ char *filename_without_directory(const char *name)
       last_slash = i + 1;
   return((char *)(name + last_slash));
 }
+
 
 char *just_filename(char *name)
 {
@@ -209,6 +230,7 @@ char *just_filename(char *name)
   return(nodir);
 }
 
+
 char *just_directory(const char *name)
 {
   int i, len, last_slash = 0;
@@ -222,6 +244,7 @@ char *just_directory(const char *name)
     strncpy(dirname, name, last_slash);
   return(dirname);
 }
+
 
 char *file_to_string(const char *filename)
 { 
@@ -245,6 +268,7 @@ char *file_to_string(const char *filename)
   return(content);
 }
 
+
 char *vstr(const char *format, va_list ap)
 {
   char *buf;
@@ -258,6 +282,7 @@ char *vstr(const char *format, va_list ap)
  #endif
   return(buf);
 }
+
 
 disk_space_t disk_space_p(off_t bytes, const char *filename)
 {
@@ -291,6 +316,7 @@ disk_space_t disk_space_p(off_t bytes, const char *filename)
 #endif
 
 static char decimal_pt;
+
 static char local_decimal_point(void)
 {
 #if HAVE_LANGINFO_DECIMAL_POINT
@@ -301,6 +327,7 @@ static char local_decimal_point(void)
 #endif
   return('.');
 }
+
 
 char *prettyf(double num, int tens)
 { 
@@ -321,6 +348,7 @@ char *prettyf(double num, int tens)
   return(copy_string(prtbuf));
 }
 
+
 static char *get_tmpdir(void)
 {
   char *tmpdir = NULL;
@@ -338,7 +366,9 @@ static char *get_tmpdir(void)
   return(tmpdir);
 }
 
+
 static int sect_ctr = 0;
+
 char *shorter_tempnam(const char *udir, const char *prefix)
 {
   /* tempnam turns out names that are inconveniently long (in this case the filename is user-visible) */
@@ -364,6 +394,7 @@ char *snd_tempnam(void)
     return(shorter_tempnam(udir, "snd_"));
   return(shorter_tempnam(NULL, "snd_"));
 }
+
 
 void snd_exit(int val)
 {
@@ -404,12 +435,14 @@ char *fam_event_name(int code)
   return("unknown");
 }
 
+
 static const char *fam_error_to_string(int err)
 {
   if (err > 0)
     return(FamErrlist[err]); /* not sure this actually does anything anymore */
   return("0");
 }
+
 
 static void fam_check(void)
 {
@@ -480,6 +513,7 @@ static fam_info *make_fam_info(FAMRequest *rp, void *data, void (*action)(struct
   fp->rp = rp;
   return(fp);
 }
+
   
 static FAMRequest *fam_monitor(void)
 {
@@ -527,9 +561,8 @@ static FAMRequest *fam_monitor(void)
   return(NULL);
 }
 
-fam_info *fam_monitor_file(const char *filename, 
-			   void *data, 
-			   void (*action)(struct fam_info *fp, FAMEvent *fe))
+
+fam_info *fam_monitor_file(const char *filename, void *data, void (*action)(struct fam_info *fp, FAMEvent *fe))
 {
   fam_info *fp = NULL;
   FAMRequest *rp = NULL;
@@ -564,9 +597,8 @@ fam_info *fam_monitor_file(const char *filename,
   return(NULL);
 }
 
-fam_info *fam_monitor_directory(const char *dir_name,
-				void *data, 
-				void (*action)(struct fam_info *fp, FAMEvent *fe))
+
+fam_info *fam_monitor_directory(const char *dir_name, void *data, void (*action)(struct fam_info *fp, FAMEvent *fe))
 {
   fam_info *fp = NULL;
   FAMRequest *rp = NULL;
@@ -597,6 +629,7 @@ fam_info *fam_monitor_directory(const char *dir_name,
     }
   return(NULL);
 }
+
 
 fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
 {
@@ -631,19 +664,17 @@ fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
 #else
 /* no fam */
 
-fam_info *fam_monitor_file(const char *filename, 
-			   void *data, 
-			   void (*action)(struct fam_info *fp, FAMEvent *fe))
+fam_info *fam_monitor_file(const char *filename, void *data, void (*action)(struct fam_info *fp, FAMEvent *fe))
 {
   return(NULL);
 }
 
-fam_info *fam_monitor_directory(const char *dir_name,
-				void *data, 
-				void (*action)(struct fam_info *fp, FAMEvent *fe))
+
+fam_info *fam_monitor_directory(const char *dir_name, void *data, void (*action)(struct fam_info *fp, FAMEvent *fe))
 {
   return(NULL);
 }
+
 
 fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
 {
@@ -651,11 +682,13 @@ fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
   return(NULL);
 }
 
+
 char *fam_event_name(int code)
 {
   return("no fam!");
 }
 #endif
+
 
 fam_info *fam_unmonitor_directory(const char *filename, fam_info *fp)
 {
@@ -663,7 +696,9 @@ fam_info *fam_unmonitor_directory(const char *filename, fam_info *fp)
 }
 
 
+
 /* ---------------- memory tracking etc ---------------- */
+
 #if MUS_DEBUGGING
 
 /* mtrace-style malloc hooks are not very useful here since I don't care
@@ -692,6 +727,7 @@ static char *kmg(size_t num)
   return(str);
 }
 
+
 #define MEM_PAD_SIZE 32
 static int mem_size = 0, max_mem_size = 0;
 static size_t *sizes = NULL;
@@ -703,6 +739,7 @@ static int *lines = NULL;
 static int mem_location = -1;
 static int mem_locations = 0;
 static int *lines_hit = NULL;
+
 
 static int find_mem_location(const char *func, const char *file, int line)
 {
@@ -759,6 +796,7 @@ static int find_mem_location(const char *func, const char *file, int line)
   return(mem_location);
 }
 
+
 static void fdescribe_pointer(FILE *fp, void *p)
 {
   if (p)
@@ -777,12 +815,15 @@ static void fdescribe_pointer(FILE *fp, void *p)
   else fprintf(fp, "null");
 }
 
+
 static void describe_pointer(void *p)
 {
   fdescribe_pointer(stderr, p);
 }
 
+
 static char pad[MEM_PAD_SIZE] = {'W','I','L','L','I','A','M',' ','G','A','R','D','N','E','R',' ','S','C','H','O','T','T','S','T','A','E','D','T',' ','D','M','A'};
+
 static void set_padding(void *p1, void *p2, size_t len, int loc)
 {
   char *p3 = (char *)p1;
@@ -793,6 +834,7 @@ static void set_padding(void *p1, void *p2, size_t len, int loc)
 
   (*((int *)(p3 - 4))) = loc;
 }
+
 
 static void check_padding(void *p1, void *p2, size_t len, bool refill)
 {
@@ -827,13 +869,16 @@ static void check_padding(void *p1, void *p2, size_t len, bool refill)
       }
 }
 
+
 static int last_loc = -1;
-#define FREED_POINTER 0x99999999
 
 void set_printable(int val)
 {
   printable[last_loc] = val;
 }
+
+
+#define FREED_POINTER 0x99999999
 
 void check_pointer(void *ptr)
 {
@@ -850,6 +895,7 @@ void check_pointer(void *ptr)
   rtp = true_pointers[loc];
   check_padding(ptr, rtp, sizes[loc], false);
 }
+
 
 static int *freed = NULL;
 static int freed_out = 0, freed_in = 0;
@@ -881,6 +927,7 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
   return(rtp);
 }
 
+
 static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *func, const char *file, int line)
 {
   int i, loc, temp;
@@ -911,6 +958,7 @@ static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *f
   return(loc);
 }
 
+
 #define MAX_MALLOC (1 << 30)
 
 void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line)
@@ -936,6 +984,7 @@ void *mem_calloc(size_t len, size_t size, const char *func, const char *file, in
   return((void *)ptr);
 }
 
+
 void *mem_malloc(size_t len, const char *func, const char *file, int line)
 {
   char *ptr, *true_ptr;
@@ -958,6 +1007,7 @@ void *mem_malloc(size_t len, const char *func, const char *file, int line)
   return((void *)ptr);
 }
 
+
 void *mem_free(void *ptr, const char *func, const char *file, int line)
 {
   void *true_ptr;
@@ -966,6 +1016,7 @@ void *mem_free(void *ptr, const char *func, const char *file, int line)
   free(true_ptr);
   return((void *)FREED_POINTER);
 }
+
 
 void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line)
 {
@@ -982,6 +1033,7 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
   remember_pointer((void *)new_ptr, (void *)new_true_ptr, size, func, file, line);
   return((void *)new_ptr);
 }
+
 
 static char *mem_stats(FILE *Fp, int ub)
 {
@@ -1033,6 +1085,7 @@ static char *mem_stats(FILE *Fp, int ub)
   return(result);
 }
 
+
 static const char *reader_type_to_string(int type)
 {
   switch (type)
@@ -1043,6 +1096,7 @@ static const char *reader_type_to_string(int type)
     }
   return("unknown reader type");
 }
+
 
 void dump_protection(FILE *Fp);
 void io_fds_in_use(int *open, int *closed, int *top);
@@ -1058,6 +1112,7 @@ static int sloc_bigger(const void *a, const void *b)
   sumloc d2 = *(sumloc *)b;
   return(d1.sum < d2.sum);
 }
+
 
 void mem_report(void)
 {
@@ -1225,6 +1280,7 @@ void mem_report(void)
 
 #endif
 
+
 #if (MUS_DEBUGGING) && (HAVE_CLOCK)
 
 #if HAVE_SYS_TIME_H
@@ -1240,6 +1296,7 @@ void stop_timing(void) {fprintf(stderr, "time: %d ",(int)((clock() - start) * 10
 
 #if HAVE_SCHEME
 #define S_file_to_string "file->string"
+
 static XEN g_file_to_string(XEN name)
 { 
   char *contents;

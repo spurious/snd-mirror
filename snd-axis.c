@@ -1,5 +1,6 @@
 #include "snd.h"
 
+
 typedef struct tick_descriptor {
   double hi, lo; 
   int max_ticks;
@@ -9,6 +10,7 @@ typedef struct tick_descriptor {
   char *min_label, *max_label;
   Float grid_scale;
 } tick_descriptor;
+
 
 static tick_descriptor *free_tick_descriptor(tick_descriptor *td)
 {
@@ -21,16 +23,19 @@ static tick_descriptor *free_tick_descriptor(tick_descriptor *td)
   return(NULL);
 }
 
+
 static tick_descriptor *describe_ticks(tick_descriptor *gd_td, double lo, double hi, int max_ticks, Float grid_scale)
 {
   /* given absolute (unchangeable) axis bounds lo and hi, and maximum number of ticks to use, find a "pretty" tick placement */
   /* much of the work here involves floating point rounding problems.  We assume the tick labeller will round as well */
+
   tick_descriptor *td;
   int ten, hib, lob, offset = 0;
   double flog10, plog10;
   double frac, ften, hilo_diff, eten, flt_ten, flt_ften;
   double inside, mfdiv, mten, mften;
   int mticks, mdiv;
+
   if (!gd_td)
     td = (tick_descriptor *)CALLOC(1, sizeof(tick_descriptor));
   else 
@@ -120,6 +125,7 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, double lo, double
   return(td);
 }
 
+
 static bool first_beat(chan_info *cp, double val)
 {
   int measure, beat;
@@ -131,6 +137,7 @@ static bool first_beat(chan_info *cp, double val)
   return((beat == 0) &&
 	 (beat_frac < .001));
 }
+
 
 static char *measure_number(int bpm, double val)
 {
@@ -158,6 +165,7 @@ static char *measure_number(int bpm, double val)
   else snprintf(buf, 64, "%d(%d)", 1 + measure, 1 + beat);
   return(buf);
 }
+
 
 static char *clock_number(double loc, int tens)
 {
@@ -195,6 +203,7 @@ static char *clock_number(double loc, int tens)
   return(buf);
 }
 
+
 static char *location_to_string(double loc, int style, int bpm, int tens)
 {
   if (tens == 0) tens = 1; /* in x axis we want the ".0" */
@@ -213,6 +222,7 @@ static char *location_to_string(double loc, int style, int bpm, int tens)
   return(prettyf(loc, tens));
 }
 
+
 char *x_axis_location_to_string(chan_info *cp, double loc)
 {
   if (cp)
@@ -229,6 +239,7 @@ char *x_axis_location_to_string(chan_info *cp, double loc)
     }
   return(prettyf(loc, 2));
 }
+
 
 axis_info *free_axis_info(axis_info *ap)
 {
@@ -255,6 +266,7 @@ axis_info *free_axis_info(axis_info *ap)
   return(NULL);
 }
 
+
 int grf_x(double val, axis_info *ap)
 {
   if (val >= ap->x1) return(ap->x_axis_x1);
@@ -262,12 +274,14 @@ int grf_x(double val, axis_info *ap)
   return((int)(ap->x_base + val * ap->x_scale));
 }
 
+
 int grf_y(Float val, axis_info *ap)
 {
   if (val >= ap->y1) return(ap->y_axis_y1);
   if (val <= ap->y0) return(ap->y_axis_y0);
   return((int)(ap->y_base + val * ap->y_scale));
 }
+
 
 void init_axis_scales(axis_info *ap)
 {
@@ -280,6 +294,7 @@ void init_axis_scales(axis_info *ap)
   else ap->y_scale = (Float)(ap->y_axis_y1 - ap->y_axis_y0) / (ap->y1 - ap->y0);
   ap->y_base = (Float)(ap->y_axis_y0 - ap->y0 * ap->y_scale);
 }
+
 
 static int tick_grf_x(double val, axis_info *ap, x_axis_style_t style, int srate)
 {
@@ -312,12 +327,15 @@ static int tick_grf_x(double val, axis_info *ap, x_axis_style_t style, int srate
   return(-32768);
 }
 
+
 #if HAVE_GL
   #if MUS_WITH_GL2PS
     void gl2ps_text(const char *msg);
   #endif
+
 static bool gl_fonts_activated = false;
 static int label_base, number_base;
+
 static void activate_gl_fonts(void)
 {
 #if USE_MOTIF
@@ -344,6 +362,7 @@ static void activate_gl_fonts(void)
 #endif
 }
 
+
 void reload_label_font(void)
 {
 #if USE_MOTIF
@@ -364,6 +383,7 @@ void reload_label_font(void)
     }
 #endif
 }
+
 
 void reload_number_font(void)
 {
@@ -387,6 +407,7 @@ void reload_number_font(void)
 }
 #endif
 
+
 static void draw_horizontal_grid_line(int y, axis_info *ap, axis_context *ax)
 {
   color_t old_color;
@@ -398,6 +419,7 @@ static void draw_horizontal_grid_line(int y, axis_info *ap, axis_context *ax)
   set_foreground_color(ax, old_color);
 }
 
+
 static void draw_vertical_grid_line(int x, axis_info *ap, axis_context *ax)
 {
   color_t old_color;
@@ -408,6 +430,7 @@ static void draw_vertical_grid_line(int x, axis_info *ap, axis_context *ax)
   draw_line(ax, x, ap->x_axis_y0, x, ap->y_axis_y1);
   set_foreground_color(ax, old_color);
 }
+
 
 static void draw_x_number(const char *label, int x, int y, int hgt, axis_info *ap, axis_context *ax, printing_t printing)
 {
@@ -422,6 +445,7 @@ static void draw_x_number(const char *label, int x, int y, int hgt, axis_info *a
     ps_draw_string(ap, x, y, label);
 }
 
+
 static void draw_y_number(const char *label, int x, int y, int hgt, axis_info *ap, axis_context *ax, printing_t printing)
 {
   /* from motif point of view, gtk is down by font height (ascent) in pixels */
@@ -435,6 +459,7 @@ static void draw_y_number(const char *label, int x, int y, int hgt, axis_info *a
     ps_draw_string(ap, x, y, label);
 }
 
+
 static void draw_label(const char *label, int x, int y, int yoff, axis_info *ap, axis_context *ax, printing_t printing)
 {
   /* from motif point of view, gtk is down by font height (ascent) in pixels */
@@ -446,6 +471,7 @@ static void draw_label(const char *label, int x, int y, int yoff, axis_info *ap,
     ps_draw_string(ap, x, y, label);
 }
 
+
 static void draw_vertical_tick(int x, int y0, int y1, axis_info *ap, axis_context *ax, printing_t printing, bool include_grid)
 {
   draw_line(ax, x, y1, x, y0);
@@ -453,12 +479,14 @@ static void draw_vertical_tick(int x, int y0, int y1, axis_info *ap, axis_contex
   if (include_grid) draw_vertical_grid_line(x, ap, ax);
 }
 
+
 static void draw_horizontal_tick(int x0, int x1, int y, axis_info *ap, axis_context *ax, printing_t printing, bool include_grid)
 {
   draw_line(ax, x0, y, x1, y);
   if (printing) ps_draw_line(ap, x0, y, x1, y);
   if (include_grid) draw_horizontal_grid_line(y, ap, ax);
 }
+
 
 static void draw_log_tick_label(const char *label, int logx, int y, int hgt, int x_label_width, int right_border_width, 
 				axis_info *ap, axis_context *ax, printing_t printing, bool use_tiny_font)
@@ -477,6 +505,7 @@ static void draw_log_tick_label(const char *label, int logx, int y, int hgt, int
     draw_x_number(label, tx0, y, hgt, ap, ax, printing);
 }
 
+
 static void use_tiny(axis_context *ax, printing_t printing)
 {
 #if USE_MOTIF
@@ -489,6 +518,7 @@ static void use_tiny(axis_context *ax, printing_t printing)
 #endif
   if (printing) ps_set_tiny_numbers_font();
 }
+
 
 static void set_numbers_font(axis_context *ax, printing_t printing, bool use_tiny_font)
 {
@@ -507,6 +537,7 @@ static void set_numbers_font(axis_context *ax, printing_t printing, bool use_tin
       if (printing) ps_set_number_font();
     }
 }
+
 
 static void set_labels_font(axis_context *ax, printing_t printing, bool use_tiny_font)
 {
@@ -1368,6 +1399,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
     }
 }
 
+
 axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, Float ymax, 
 			   char *xlabel, double x0, double x1, Float y0, Float y1, axis_info *old_ap)
 {
@@ -1403,12 +1435,14 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, 
   return(ap);
 }
 
+
 #if (!USE_NO_GUI)
 
 #define TO_C_AXIS_INFO(Snd, Chn, Ap, Caller)	\
   get_ap(get_cp(Snd, Chn, Caller),				     \
          (axis_info_t)XEN_TO_C_INT_OR_ELSE(Ap, (int)TIME_AXIS_INFO), \
          Caller)
+
 
 static XEN g_x_to_position(XEN val, XEN snd, XEN chn, XEN ap)
 {
@@ -1420,6 +1454,7 @@ static XEN g_x_to_position(XEN val, XEN snd, XEN chn, XEN ap)
 			    TO_C_AXIS_INFO(snd, chn, ap, S_x_to_position))));
 }
 
+
 static XEN g_y_to_position(XEN val, XEN snd, XEN chn, XEN ap)
 {
   #define H_y_to_position "(" S_y_to_position " val :optional snd chn (ax " S_time_graph ")): y pixel loc of val"
@@ -1429,6 +1464,7 @@ static XEN g_y_to_position(XEN val, XEN snd, XEN chn, XEN ap)
   return(C_TO_XEN_INT(grf_y(XEN_TO_C_DOUBLE(val),
 			    TO_C_AXIS_INFO(snd, chn, ap, S_y_to_position))));
 }
+
 
 static XEN g_position_to_x(XEN val, XEN snd, XEN chn, XEN ap)
 {
@@ -1440,6 +1476,7 @@ static XEN g_position_to_x(XEN val, XEN snd, XEN chn, XEN ap)
 				 XEN_TO_C_INT(val))));
 }
 
+
 static XEN g_position_to_y(XEN val, XEN snd, XEN chn, XEN ap)
 {
   #define H_position_to_y "(" S_position_to_y " val :optional snd chn (ax " S_time_graph ")): y axis value corresponding to pixel val"
@@ -1449,6 +1486,7 @@ static XEN g_position_to_y(XEN val, XEN snd, XEN chn, XEN ap)
   return(C_TO_XEN_DOUBLE(ungrf_y(TO_C_AXIS_INFO(snd, chn, ap, S_position_to_y),
 				 XEN_TO_C_INT(val))));
 }
+
 
 static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
 {
@@ -1509,6 +1547,7 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
     #define XEN_SND_GC_P(Value) 0
   #endif
 #endif
+
 
 static XEN g_draw_axes(XEN args)
 {
@@ -1646,6 +1685,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   return(xen_return_first(val, args));
 }
 
+
 static XEN g_x_axis_label(XEN snd, XEN chn, XEN ax)
 {
   #define H_x_axis_label "(" S_x_axis_label " :optional snd chn (ax " S_time_graph ")): current x axis label"
@@ -1683,6 +1723,7 @@ static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
 
 WITH_FOUR_SETTER_ARGS(g_set_x_axis_label_reversed, g_set_x_axis_label)
   
+
 static XEN g_y_axis_label(XEN snd, XEN chn, XEN ax)
 {
   #define H_y_axis_label "(" S_y_axis_label " :optional snd chn (ax " S_time_graph ")): current y axis label"
@@ -1710,6 +1751,7 @@ static XEN g_set_y_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
 
 WITH_FOUR_SETTER_ARGS(g_set_y_axis_label_reversed, g_set_y_axis_label)
   
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_4(g_x_to_position_w, g_x_to_position)
 XEN_ARGIFY_4(g_y_to_position_w, g_y_to_position)

@@ -1,5 +1,6 @@
 #include "snd.h"
 
+
 #define FALLBACK_FONT "Monospace 14"
 
 #if USE_CAIRO
@@ -69,6 +70,7 @@
 #define SASH_INDENT -6
 #define AUTO_RESIZE_DEFAULT true
 
+
 #ifndef SND_AS_WIDGET
 static gint window_close(GtkWidget *w, GdkEvent *event, gpointer context)
 {
@@ -77,7 +79,9 @@ static gint window_close(GtkWidget *w, GdkEvent *event, gpointer context)
   return(false);
 }
 
+
 static GtkWidget **iconify_active_dialogs = NULL;
+
 static gint window_iconify(GtkWidget *w, GdkEventWindowState *event, gpointer context)
 {
   int i;
@@ -118,6 +122,7 @@ static gint window_iconify(GtkWidget *w, GdkEventWindowState *event, gpointer co
 }
 #endif
 
+
 #if (!HAVE_FAM)
 static guint auto_update_proc = 0;
 
@@ -133,6 +138,7 @@ static gint auto_update_check(gpointer context)
   return(0);
 }
 
+
 void auto_update_restart(void)
 {
   if (auto_update_proc == 0)
@@ -141,6 +147,7 @@ void auto_update_restart(void)
 #else
 void auto_update_restart(void) {}
 #endif
+
 
 static GdkAtom snd_v, snd_c;
 
@@ -181,6 +188,7 @@ static gboolean who_called(GtkWidget *w, GdkEvent *event, gpointer context)
 }
 #endif
 
+
 #if HAVE_SETJMP_H
 #include <setjmp.h>
 
@@ -195,6 +203,7 @@ static RETSIGTYPE segv(int ignored)
 #endif
 
 static jmp_buf top_level_jump;
+
 RETSIGTYPE top_level_catch(int ignore);
 RETSIGTYPE top_level_catch(int ignore)
 {
@@ -202,9 +211,11 @@ RETSIGTYPE top_level_catch(int ignore)
 }
 #endif
 
+
 static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
 static bool noglob = false, noinit = false, batch = false, nostdin = false, nogtkrc = false;
+
 
 #if HAVE_EXTENSION_LANGUAGE
 static gint stdin_id = 0;
@@ -235,6 +246,7 @@ static void get_stdin_string(gpointer context, gint fd, int condition)
   FREE(buf);
 }
 #endif
+
 
 static void setup_gcs(void)
 {
@@ -314,6 +326,7 @@ static void setup_gcs(void)
   initialize_colormap();
 }
 
+
 #if USE_CAIRO
 static void save_a_color(FILE *Fp, color_info *default_color, color_info *current_color, const char *ext_name)
 #else
@@ -360,6 +373,7 @@ static void save_a_color(FILE *Fp, const char *def_name, color_info *current_col
 #endif
 }
 
+
 void save_colors(FILE *Fp)
 {
   save_a_color(Fp, BASIC_COLOR, ss->sgx->basic_color, S_basic_color);
@@ -383,6 +397,7 @@ void save_colors(FILE *Fp)
   save_a_color(Fp, TEXT_FOCUS_COLOR, ss->sgx->text_focus_color, S_text_focus_color);
 }
 
+
 #if HAVE_EXTENSION_LANGUAGE
 static gboolean io_invoke(GIOChannel *source, GIOCondition condition, gpointer data)
 {
@@ -390,6 +405,7 @@ static gboolean io_invoke(GIOChannel *source, GIOCondition condition, gpointer d
   return(true);
 }
 #endif
+
 
 static int tm_slice = 0;
 
@@ -493,6 +509,7 @@ static idle_func_t startup_funcs(gpointer context)
   return(BACKGROUND_CONTINUE);
 }
 
+
 #ifndef SND_AS_WIDGET
 static void set_up_icon(void)
 {
@@ -502,6 +519,7 @@ static void set_up_icon(void)
   gdk_window_set_icon(MAIN_WINDOW(ss), NULL, pix, mask);
 }
 #endif
+
 
 color_t get_in_between_color(color_t fg, color_t bg)
 {
@@ -522,6 +540,7 @@ color_t get_in_between_color(color_t fg, color_t bg)
 #endif
   return(new_color);
 }
+
 
 #if USE_CAIRO
   #define get_color(Color, Ignore1, Ignore2, Ignore3) Color
@@ -553,6 +572,7 @@ static color_info *get_color(char *defined_color, char *fallback_color, char *se
 }
 #endif
 
+
 static void notebook_switch_page(GtkNotebook *w, GtkNotebookPage *page_widget, gint page_num)
 {
   /* as far as I can tell there's nothing that a user can do with the idiotic page_widget argument --
@@ -575,6 +595,7 @@ static void notebook_switch_page(GtkNotebook *w, GtkNotebookPage *page_widget, g
 	}
     }
 }
+
 
 #ifdef SND_AS_WIDGET
 GtkWidget *snd_as_widget(int argc, char **argv, GtkWidget *parent, void (*error_func)(const char *msg))
@@ -1068,6 +1089,7 @@ class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n			\
 #endif
 }
  
+
  void g_init_gxmain(void)
  {
 #if HAVE_EXTENSION_LANGUAGE

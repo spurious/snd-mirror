@@ -849,8 +849,8 @@ static int off_t_compare(const void *a, const void *b)
 }
 
 
-/* PERHAPS: src ratio of -1 is the same as reverse  (reverse_channel or reverse_sound)
- *            also can we use -2 and -.5 below in the special cases?
+/* TODO: src ratio of -1 is the same as reverse  (reverse_channel or reverse_sound)
+ * TODO: do the marks get reset correctly if negative src ratio?
  */
 
 
@@ -871,18 +871,23 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   mus_sample_t *idata;
   io_error_t io_err = IO_NO_ERROR;
   src_state *sr;
+
   if ((ratio == 1.0) && (egen == NULL)) return(NULL);
+
   sp = cp->sound;
   if (!(editable_p(cp))) return(NULL); /* edit hook result perhaps */
+
   sr = make_src(ratio, sf, ratio);
   if (sr == NULL) 
     {
       (*clm_err) = true;
       return(mus_format("invalid src ratio: %f\n", ratio));
     }
+
   full_chan = ((beg == 0) && (dur == CURRENT_SAMPLES(cp)));
   reporting = ((sp) && (dur > REPORTING_SIZE) && (!(cp->squelch_update)));
   if (reporting) start_progress_report(sp, from_enved);
+
   ofile = snd_tempnam();
   hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
   ofd = open_temp_file(ofile, 1, hdr, &io_err);
@@ -893,15 +898,17 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 			origin, ofile, 
 			snd_open_strerror()));
     }
+
   data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
   data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
   datumb = mus_bytes_per_sample(hdr->format);
   idata = data[0];
   j = 0;
   ss->stopped_explicitly = false;
+
   if (egen == NULL)
     {
-      if ((ratio == 0.5) || (ratio == 2.0))
+      if ((ratio == 0.5) || (ratio == 2.0)) /* read forward is built-in in the mus_src_20 (7176) and mus_src_05 cases */
 	{
 	  for (k = 0; sr->sample < dur; k++)
 	    {
@@ -1037,12 +1044,14 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	    }
 	}
     }
+
   if (reporting) finish_progress_report(sp, from_enved);
   sr = free_src(sr);
   if ((!(ss->stopped_explicitly)) && (j > 0)) 
     mus_file_write(ofd, 0, j - 1, 1, data);
   close_temp_file(ofile, ofd, hdr->type, k * datumb);
   hdr = free_file_info(hdr);
+
   if (!(ss->stopped_explicitly))
     {
       char *new_origin = NULL;
@@ -1088,6 +1097,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	  if (envstr) FREE(envstr);
 	  free_env(newe);
 	}
+
       if (!full_chan)
 	{
 	  /* here we need delete followed by insert since dur is probably different */
@@ -1105,7 +1115,9 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	  update_graph(cp);
 	}
       else file_override_samples(k, ofile, cp, 0, DELETE_ME, new_origin);
+
       if (new_origin) FREE(new_origin);
+
       /* not file_change_samples because that would not necessarily change the current file length */
       if (cp->edits[cp->edit_ctr]->marks)
 	{
@@ -1118,20 +1130,27 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	    }
 	}
 
-      /* SOMEDAY: src-peak-env => ideally just a change in the bin size after copy:
-       *  if previous exists and src is not changing (egen null)
-       *    and samps_per_bin / ratio is very close to an integer, 
-       *    just copy and reset samps_per_bin.  If its a ratio but not close
-       *    perhaps src the env??
-       *
-       *     cp->edits[sf->edit_ctr]->peak_env->samps_per_bin
-       *       peak_env_info *copy_peak_env_info(peak_env_info *old_ep, bool reversed)
-       *     ep = peak_env_copy(cp, false, edpos); false -> not reversed (or maybe it could be if src<0) ; edpos from sf->edit_ctr ; no check needed
-       *     ep->samps_per_bin /= ratio
-       *   if ((beg == 0) && (dur == cp->edits[edpos]->samples))
-       *      ep = peak_env_copy(cp, true, edpos);
-       *   else env selection
-       */
+      /* if possible, copy the previous amp env and change the samps_per_bin to reflect ratio */
+      if ((full_chan) && (egen == NULL) &&          /* just ratio -- egen is freed by caller */
+	  (!(cp->edits[cp->edit_ctr]->peak_env)))   /* can this happen? */
+	{
+	  peak_env_info *ep;
+	  ep = cp->edits[sf->edit_ctr]->peak_env; /* previous peak env (sf is freed by caller) */
+	  if (ep)
+	    {
+	      Float bratio;
+	      int iratio;
+	      bratio = ep->samps_per_bin / fabs(ratio);
+	      iratio = (int)bratio;
+	      if ((bratio - iratio) < .001)
+		{
+		  peak_env_info *new_ep;
+		  new_ep = copy_peak_env_info(ep, (ratio < 0.0));
+		  new_ep->samps_per_bin = iratio;
+		  cp->edits[cp->edit_ctr]->peak_env = new_ep;
+		}
+	    }
+	}
 
       update_graph(cp);
     }
@@ -1141,6 +1160,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
       /* should we remove the temp file here? */
       ss->stopped_explicitly = false;
     }
+
   if (old_marks) FREE(old_marks);
   old_marks = NULL;
   if (new_marks) FREE(new_marks);
@@ -2086,7 +2106,8 @@ static char *filter_channel(chan_info *cp, int order, env *e, off_t beg, off_t d
   if ((order == 1) && (coeffs != NULL) && (e == NULL))
     {
       /* a silly optimization... */
-      scale_channel(cp, coeffs[0], beg, dur, edpos, NOT_IN_AS_ONE_EDIT);
+      if (coeffs[0] != 1.0)
+	scale_channel(cp, coeffs[0], beg, dur, edpos, NOT_IN_AS_ONE_EDIT);
       return(NULL);
     }
   over_selection = ((beg != 0) || (dur < CURRENT_SAMPLES(cp)));
@@ -5321,6 +5342,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
   dur = dur_to_samples(dur_n, beg, cp, pos, 3, S_src_channel);
   if (dur == 0) return(XEN_FALSE);
   if (beg > cp->edits[pos]->samples) return(XEN_FALSE);
+
   if (XEN_NUMBER_P(ratio_or_env))
     {
       ratio = XEN_TO_C_DOUBLE(ratio_or_env);
@@ -5348,7 +5370,11 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 	  else XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "~A: envelope passes through 0.0");
 	}
     }
-  sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
+
+  if (ratio > 0.0)
+    sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
+  else sf = init_sample_read_any(beg + dur - 1, cp, READ_BACKWARD, pos);
+
   errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, NOT_FROM_ENVED, S_src_channel, OVER_SOUND, 1, 1, &clm_err);
   sf = free_snd_fd(sf);
   if (need_free) mus_free(egen);
@@ -5372,9 +5398,14 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd_n, XEN chn_n, XEN edpos,
   cp = get_cp(snd_n, chn_n, caller);
   if (!cp) return(XEN_FALSE);
   if (XEN_NUMBER_P(ratio_or_env))
-    src_env_or_num(cp, NULL, XEN_TO_C_DOUBLE(ratio_or_env), 
-		   true, NOT_FROM_ENVED, caller,
-		   over_selection, NULL, edpos, 5);
+    {
+      Float ratio;
+      ratio = XEN_TO_C_DOUBLE(ratio_or_env);
+      if (ratio != 1.0)
+	src_env_or_num(cp, NULL, ratio,
+		       true, NOT_FROM_ENVED, caller,
+		       over_selection, NULL, edpos, 5);
+    }
   else 
     {
       int error = SRC_ENV_NO_ERROR;
@@ -5628,6 +5659,7 @@ cut off filter output at end of selection, else mix"
 
 
 static XEN g_sinc_width(void) {return(C_TO_XEN_INT(sinc_width(ss)));}
+
 static XEN g_set_sinc_width(XEN val) 
 {
   #define H_sinc_width "(" S_sinc_width "): sampling rate conversion sinc width (10). \

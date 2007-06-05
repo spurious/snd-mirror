@@ -4,6 +4,7 @@
   #include <X11/xpm.h>
 #endif
 
+
 #ifndef MUS_SGI
   #define TOGGLE_MARGIN 0
 #endif
@@ -23,6 +24,7 @@ enum {W_pane,
       W_error_info_box, W_error_info_frame, W_error_info_label,
       NUM_SND_WIDGETS
 };
+
 
 Widget unite_button(snd_info *sp) {return(sp->sgx->snd_widgets[W_unite]);}
 Widget w_snd_pane(snd_info *sp)   {return(sp->sgx->snd_widgets[W_pane]);}
@@ -83,10 +85,12 @@ Widget w_snd_pane(snd_info *sp)   {return(sp->sgx->snd_widgets[W_pane]);}
 #define FILTER_ORDER_DOWN(Sp)    Sp->sgx->snd_widgets[W_filter_order_down]
 #define FILTER_FRAME(Sp)         Sp->sgx->snd_widgets[W_filter_frame]
 
+
 static void watch_minibuffer(Widget w, XtPointer context, XtPointer info)
 {
   clear_minibuffer_error((snd_info *)context);
 }
+
 
 void clear_minibuffer_error(snd_info *sp)
 {
@@ -106,6 +110,7 @@ void clear_minibuffer_error(snd_info *sp)
 		NULL);
   XtManageChild(NAME_BOX(sp));
 }
+
 
 void display_minibuffer_error(snd_info *sp, const char *str) 
 {
@@ -154,10 +159,12 @@ void display_minibuffer_error(snd_info *sp, const char *str)
     }
 }
 
+
 void goto_minibuffer(snd_info *sp)
 {
   if (sp) goto_window(MINIBUFFER_TEXT(sp));
 }
+
 
 void set_minibuffer_string(snd_info *sp, char *str, bool update) 
 {
@@ -166,17 +173,20 @@ void set_minibuffer_string(snd_info *sp, char *str, bool update)
   if (update) XmUpdateDisplay(MINIBUFFER_TEXT(sp));
 }
 
+
 void set_minibuffer_cursor_position(snd_info *sp, int pos)
 {
   if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return;
   XmTextSetCursorPosition(MINIBUFFER_TEXT(sp), pos);
 }
 
+
 char *get_minibuffer_string(snd_info *sp) 
 {
   if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return(NULL);
   return(XmTextGetString(MINIBUFFER_TEXT(sp)));
 }
+
 
 void make_minibuffer_label(snd_info *sp , char *str)
 {
@@ -194,10 +204,12 @@ void make_minibuffer_label(snd_info *sp , char *str)
     }
 }
 
+
 static void name_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   sp_name_click((snd_info *)context);
 }
+
 
 static void stop_sign_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -222,6 +234,7 @@ int amp_to_scroll(Float minval, Float val, Float maxval)
   return(snd_round(0.9 * 0.5 * SCROLLBAR_MAX * ((val - minval) / (1.0 - minval))));
 }
 
+
 static int scroll_to_amp(snd_info *sp, int val)
 {
   char amp_number_buffer[6];
@@ -243,6 +256,7 @@ static int scroll_to_amp(snd_info *sp, int val)
   return(val);
 }
 
+
 void set_amp(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
@@ -252,6 +266,7 @@ void set_amp(snd_info *sp, Float val)
 		     scroll_to_amp(sp, amp_to_scroll(sp->amp_control_min, val, sp->amp_control_max)),
 		     NULL);
 }
+
 
 static void amp_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -265,11 +280,13 @@ static void amp_click_callback(Widget w, XtPointer context, XtPointer info)
   else set_amp(sp, 1.0);
 }
 
+
 static void amp_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   scroll_to_amp((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
 }
+
 
 static void amp_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -295,12 +312,14 @@ XmString initial_speed_label(speed_style_t style)
     }
 }
 
+
 static int speed_to_scroll(Float minval, Float val, Float maxval)
 {
   if (val <= minval) return(0);
   if (val >= maxval) return((int)(0.9 * SCROLLBAR_MAX));
   return(snd_round(0.9 * SCROLLBAR_MAX * ((log(val) - log(minval)) / (log(maxval) - log(minval)))));
 }
+
 
 static int scroll_to_speed(snd_info *sp, int ival)
 {
@@ -317,6 +336,7 @@ static int scroll_to_speed(snd_info *sp, int ival)
   return(ival);
 }
 
+
 void set_speed(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
@@ -326,6 +346,7 @@ void set_speed(snd_info *sp, Float val)
 		     scroll_to_speed(sp, speed_to_scroll(sp->speed_control_min, val, sp->speed_control_max)),
 		     NULL);
 }
+
 
 static void speed_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -343,6 +364,7 @@ static void speed_click_callback(Widget w, XtPointer context, XtPointer info)
 #endif
 }
 
+
 static void speed_label_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_info *sp = (snd_info *)context;
@@ -357,6 +379,7 @@ static void speed_label_click_callback(Widget w, XtPointer context, XtPointer in
   set_speed(sp, sp->speed_control);  /* remake label */
 }
 
+
 static void speed_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
 #if (HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR)
@@ -369,6 +392,7 @@ static void speed_drag_callback(Widget w, XtPointer context, XtPointer info)
     snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
 #endif
 }
+
 
 static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -383,6 +407,7 @@ static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer i
   sp->last_speed_control = sp->saved_speed_control;
   sp->saved_speed_control = sp->speed_control;
 }
+
 
 void toggle_direction_arrow(snd_info *sp, bool state)
 {
@@ -401,6 +426,7 @@ static int expand_to_scroll(Float minval, Float val, Float maxval)
   return(snd_round(0.9 * SCROLLBAR_MAX * ((log(val) - log(minval)) / (log(maxval) - log(minval)))));
 }
 
+
 static int scroll_to_expand(snd_info *sp, int val)
 {
   char expand_number_buffer[6];
@@ -418,6 +444,7 @@ static int scroll_to_expand(snd_info *sp, int val)
   return(val);
 }
 
+
 void set_expand(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
@@ -427,6 +454,7 @@ void set_expand(snd_info *sp, Float val)
 		     scroll_to_expand(sp, expand_to_scroll(sp->expand_control_min, val, sp->expand_control_max)),
 		     NULL);
 }
+
 
 static void expand_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -440,11 +468,13 @@ static void expand_click_callback(Widget w, XtPointer context, XtPointer info)
   else set_expand(sp, 1.0);
 }
 
+
 static void expand_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   scroll_to_expand((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
 }
+
 
 static void expand_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -456,6 +486,7 @@ static void expand_valuechanged_callback(Widget w, XtPointer context, XtPointer 
   sp->saved_expand_control = sp->expand_control;
 }
 
+
 static void expand_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
@@ -464,6 +495,7 @@ static void expand_button_callback(Widget w, XtPointer context, XtPointer info)
   sp->expand_control_p = cb->set;
   XmChangeColor(EXPAND_SCROLLBAR(sp), (Pixel)((sp->expand_control_p) ? (ss->sgx->position_color) : (ss->sgx->basic_color)));
 }
+
 
 void toggle_expand_button(snd_info *sp, bool state)
 {
@@ -482,6 +514,7 @@ static int contrast_to_scroll(Float minval, Float val, Float maxval)
   return(snd_round((val - minval) / (maxval - minval) * 0.9 * SCROLLBAR_MAX));
 }
 
+
 static int scroll_to_contrast(snd_info *sp, int val)
 {
   char contrast_number_buffer[6];
@@ -490,6 +523,7 @@ static int scroll_to_contrast(snd_info *sp, int val)
   set_label(CONTRAST_LABEL(sp), contrast_number_buffer);
   return(val);
 }
+
 
 void set_contrast(snd_info *sp, Float val)
 {
@@ -500,6 +534,7 @@ void set_contrast(snd_info *sp, Float val)
 		     scroll_to_contrast(sp, contrast_to_scroll(sp->contrast_control_min, val, sp->contrast_control_max)),
 		     NULL);
 }
+
 
 static void contrast_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -513,11 +548,13 @@ static void contrast_click_callback(Widget w, XtPointer context, XtPointer info)
   else set_contrast(sp, 0.0);
 }
 
+
 static void contrast_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   scroll_to_contrast((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
 }
+
 
 static void contrast_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -529,6 +566,7 @@ static void contrast_valuechanged_callback(Widget w, XtPointer context, XtPointe
   sp->saved_contrast_control = sp->contrast_control;
 }
 
+
 static void contrast_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_info *sp = (snd_info *)context;
@@ -537,6 +575,7 @@ static void contrast_button_callback(Widget w, XtPointer context, XtPointer info
   sp->contrast_control_p = cb->set;
   XmChangeColor(CONTRAST_SCROLLBAR(sp), (Pixel)((sp->contrast_control_p) ? (ss->sgx->position_color) : (ss->sgx->basic_color)));
 }
+
 
 void toggle_contrast_button(snd_info *sp, bool state)
 {
@@ -555,7 +594,9 @@ static int revscl_to_scroll(Float minval, Float val, Float maxval)
   return(snd_round(0.9 * SCROLLBAR_MAX * (pow(val, 0.333) - pow(minval, 0.333)) / (pow(maxval, 0.333) - pow(minval, 0.333))));
 }
 
+
 static Float cube(Float a) {return(a*a*a);}
+
 
 static int scroll_to_revscl(snd_info *sp, int val)
 {
@@ -575,6 +616,7 @@ static int scroll_to_revscl(snd_info *sp, int val)
   return(val);
 }
 
+
 void set_revscl(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
@@ -584,6 +626,7 @@ void set_revscl(snd_info *sp, Float val)
 		     scroll_to_revscl(sp, revscl_to_scroll(sp->reverb_control_scale_min, val, sp->reverb_control_scale_max)),
 		     NULL);
 }
+
 
 static void revscl_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -597,10 +640,12 @@ static void revscl_click_callback(Widget w, XtPointer context, XtPointer info)
   else set_revscl(sp, 0.0);
 }
 
+
 static void revscl_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   scroll_to_revscl((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
 }
+
 
 static void revscl_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -622,6 +667,7 @@ static int revlen_to_scroll(Float minval, Float val, Float maxval)
   return(snd_round((val - minval) / (maxval - minval) * 0.9 * SCROLLBAR_MAX));
 }
 
+
 static int scroll_to_revlen(snd_info *sp, int val)
 {
   char revlen_number_buffer[5];
@@ -632,6 +678,7 @@ static int scroll_to_revlen(snd_info *sp, int val)
   return(val);
 }
 
+
 void set_revlen(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
@@ -641,6 +688,7 @@ void set_revlen(snd_info *sp, Float val)
 		     scroll_to_revlen(sp, revlen_to_scroll(sp->reverb_control_length_min, val, sp->reverb_control_length_max)),
 		     NULL);
 }
+
 
 static void revlen_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -654,11 +702,13 @@ static void revlen_click_callback(Widget w, XtPointer context, XtPointer info)
   else set_revlen(sp, 1.0);
 }
 
+
 static void revlen_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   scroll_to_revlen((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
 }
+
 
 static void revlen_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -670,6 +720,7 @@ static void revlen_valuechanged_callback(Widget w, XtPointer context, XtPointer 
   sp->saved_reverb_control_length = sp->reverb_control_length;
 }
 
+
 static void reverb_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_info *sp = (snd_info *)context;
@@ -679,6 +730,7 @@ static void reverb_button_callback(Widget w, XtPointer context, XtPointer info)
   XmChangeColor(REVLEN_SCROLLBAR(sp), (Pixel)((sp->reverb_control_p) ? (ss->sgx->position_color) : (ss->sgx->basic_color)));
   XmChangeColor(REVSCL_SCROLLBAR(sp), (Pixel)((sp->reverb_control_p) ? (ss->sgx->position_color) : (ss->sgx->basic_color)));
 }
+
 
 void toggle_reverb_button(snd_info *sp, bool state)
 {
@@ -698,12 +750,14 @@ static void filter_button_callback(Widget w, XtPointer context, XtPointer info)
   sp->filter_control_p = cb->set;
 }
 
+
 void toggle_filter_button(snd_info *sp, bool state)
 {
   if (IS_PLAYER(sp))
     sp->filter_control_p = state;
   else XmToggleButtonSetState(FILTER_BUTTON(sp), (Boolean)state, true);
 }
+
 
 static void filter_textfield_deactivate(snd_info *sp)
 {
@@ -712,6 +766,7 @@ static void filter_textfield_deactivate(snd_info *sp)
   if (active_chan)
     goto_window(channel_graph(active_chan));
 }
+
 
 #define MIN_FILTER_GRAPH_HEIGHT 20
 
@@ -750,6 +805,7 @@ void display_filter_env(snd_info *sp)
   FREE(ax);
 }
 
+
 void set_filter_text(snd_info *sp, char *str)
 {
   if (!(IS_PLAYER(sp)))
@@ -759,6 +815,7 @@ void set_filter_text(snd_info *sp, char *str)
 #ifdef MUS_MAC_OSX
 static int press_x, press_y;
 #endif
+
 
 static void filter_drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
@@ -774,6 +831,7 @@ static void filter_drawer_button_motion(Widget w, XtPointer context, XEvent *eve
   display_filter_env(sp);
   sp->filter_control_changed = true;
 }
+
 
 static void filter_drawer_button_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
@@ -791,6 +849,7 @@ static void filter_drawer_button_press(Widget w, XtPointer context, XEvent *even
     display_filter_env(sp);
 }
 
+
 static void filter_drawer_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   char *tmpstr = NULL;
@@ -802,11 +861,13 @@ static void filter_drawer_button_release(Widget w, XtPointer context, XEvent *ev
   sp->filter_control_changed = true;
 }
 
+
 static void filter_drawer_resize(Widget w, XtPointer context, XtPointer info) 
 {
   snd_info *sp = (snd_info *)context;
   display_filter_env(sp);
 }
+
 
 static void filter_dB_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -816,6 +877,7 @@ static void filter_dB_callback(Widget w, XtPointer context, XtPointer info)
   sp->filter_control_in_dB = (cb->set);
   display_filter_env(sp);
 }
+
 
 void set_filter_in_dB(snd_info *sp, bool val)
 {
@@ -827,6 +889,7 @@ void set_filter_in_dB(snd_info *sp, bool val)
     }
 }
 
+
 static void new_in_hz(snd_info *sp, bool val)
 {
   sp->filter_control_in_hz = val;
@@ -837,6 +900,7 @@ static void new_in_hz(snd_info *sp, bool val)
   sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
 }
 
+
 static void filter_hz_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_info *sp = (snd_info *)context;
@@ -845,6 +909,7 @@ static void filter_hz_callback(Widget w, XtPointer context, XtPointer info)
   new_in_hz(sp, cb->set);
   display_filter_env(sp);
 }
+
 
 void set_filter_in_hz(snd_info *sp, bool val)
 {
@@ -855,6 +920,7 @@ void set_filter_in_hz(snd_info *sp, bool val)
       display_filter_env(sp);
     }
 }
+
 
 void set_filter_order(snd_info *sp, int order)
 {
@@ -869,11 +935,13 @@ void set_filter_order(snd_info *sp, int order)
   sp->filter_control_changed = true;
 }
 
+
 static void filter_order_up_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_info *sp = (snd_info *)context;
   set_filter_order(sp, sp->filter_control_order + 2);
 }
+
 
 static void filter_order_down_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -881,6 +949,7 @@ static void filter_order_down_callback(Widget w, XtPointer context, XtPointer in
   if (sp->filter_control_order > 2)
     set_filter_order(sp, sp->filter_control_order - 2);
 }
+
 
 static void get_filter_order(snd_info *sp, char *str)
 {
@@ -892,6 +961,7 @@ static void get_filter_order(snd_info *sp, char *str)
   if (order <= 0) order = 2;
   sp->filter_control_order = order;
 }
+
 
 static void filter_activate_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -933,6 +1003,7 @@ static void filter_activate_callback(Widget w, XtPointer context, XtPointer info
   sp->filter_control_changed = true;
 }
 
+
 static void filter_order_activate_callback(Widget w, XtPointer context, XtPointer info)
 {
   char *str;
@@ -948,6 +1019,7 @@ static void filter_order_activate_callback(Widget w, XtPointer context, XtPointe
   filter_textfield_deactivate(sp);
 }
 
+
 void filter_env_changed(snd_info *sp, env *e)
 {
   /* turn e back into a string for textfield widget */
@@ -962,7 +1034,9 @@ void filter_env_changed(snd_info *sp, env *e)
   sp->filter_control_changed = true;
 }
 
+
 /* ---------------- PLAY BUTTON ---------------- */
+
 void set_play_button(snd_info *sp, bool val)
 {
   if ((sp->sgx) && (!(IS_PLAYER(sp))))
@@ -971,6 +1045,7 @@ void set_play_button(snd_info *sp, bool val)
       set_open_file_play_button(val);
     }
 }
+
 
 static void play_button_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -997,6 +1072,7 @@ static void play_button_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+
 typedef struct {bool pausing; } pause_data;
 
 static void set_play_button_pause(snd_info *sp, void *ptr)
@@ -1012,6 +1088,7 @@ static void set_play_button_pause(snd_info *sp, void *ptr)
     }
 }
 
+
 void play_button_pause(bool pausing)
 {
   pause_data *pd;
@@ -1020,6 +1097,7 @@ void play_button_pause(bool pausing)
   for_each_sound_with_void(set_play_button_pause, (void *)pd);
   FREE(pd);
 }
+
 
 void set_control_panel_play_button(snd_info *sp)
 {
@@ -1058,6 +1136,7 @@ static void set_sync_color(snd_info *sp)
     }
 }
 
+
 void syncb(snd_info *sp, int on)
 {
   sp->sync = on;
@@ -1068,6 +1147,7 @@ void syncb(snd_info *sp, int on)
       XmToggleButtonSetState(SYNC_BUTTON(sp), (on != 0), false); /* need actual bool here, not a cast! */
     }
 }
+
 
 static void sync_button_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -1279,6 +1359,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 
 static Widget *sashes = NULL;
 static int sashes_size = 0;
+
 static void remember_sash(Widget w)
 {
   /* add callback only once (means remembering which widgets already have our callback */
@@ -1313,6 +1394,7 @@ static void remember_sash(Widget w)
   XtAddCallback(w, XmNcallback, watch_sash, NULL);
 }
 
+
 static void add_sash_watchers(Widget w)
 {
   /* if relative panes, add sash watchers to the outer paned window sashes (SOUND_PANE(ss)) */
@@ -1341,7 +1423,9 @@ static bool cant_write(char *name)
 #endif
 }
 
+
 /* bitmaps for the playback direction arrow */
+
 static unsigned char speed_r_bits1[] = {
    0x00, 0x04, 0x10, 0x08, 0x00, 0x10, 0x04, 0x20, 0x00, 0x40, 0xa5, 0xbf,
    0x00, 0x40, 0x04, 0x20, 0x00, 0x10, 0x10, 0x08, 0x00, 0x04, 0x00, 0x00};
@@ -1367,6 +1451,7 @@ void show_lock(snd_info *sp)
     }
 }
 
+
 void hide_lock(snd_info *sp)
 {
   if ((sp->sgx) && (mini_lock))
@@ -1377,17 +1462,20 @@ void hide_lock(snd_info *sp)
   /* these Pixmaps can be null if the colormap is screwed up */
 }
 
+
 static void show_stop_sign(snd_info *sp)
 {
   if ((sp->sgx) && (stop_sign))
     XtVaSetValues(STOP_ICON(sp), XmNlabelPixmap, stop_sign, NULL);
 }
 
+
 static void hide_stop_sign(snd_info *sp)
 {
   if ((sp->sgx) && (blank_pixmap))
     XtVaSetValues(STOP_ICON(sp), XmNlabelPixmap, blank_pixmap, NULL);
 }
+
 
 void show_bomb(snd_info *sp)
 {
@@ -1401,6 +1489,7 @@ void show_bomb(snd_info *sp)
   sp->bomb_ctr++; 
 }
 
+
 void hide_bomb(snd_info *sp)
 {
   if (sp->sgx)
@@ -1410,6 +1499,7 @@ void hide_bomb(snd_info *sp)
     }
   sp->bomb_ctr = 0;
 }
+
 
 #define BOMB_TIME 200
 
@@ -1431,6 +1521,7 @@ static void tick_bomb(XtPointer context, XtIntervalId *id)
     }
 }
 
+
 void start_bomb(snd_info *sp)
 {
   sp->bomb_ctr = 0;
@@ -1444,11 +1535,13 @@ void start_bomb(snd_info *sp)
     }
 }
 
+
 void stop_bomb(snd_info *sp)
 {
   hide_bomb(sp);
   sp->bomb_in_progress = false;
 }
+
 
 static void show_hourglass(snd_info *sp, int glass)
 {
@@ -1459,6 +1552,7 @@ static void show_hourglass(snd_info *sp, int glass)
     }
 }
 
+
 static void hide_hourglass(snd_info *sp)
 {
   if (sp->sgx)
@@ -1468,6 +1562,7 @@ static void hide_hourglass(snd_info *sp)
     }
 }
 
+
 static char *bits_to_string(char **icon)
 {
   /* show first few lines */
@@ -1476,6 +1571,7 @@ static char *bits_to_string(char **icon)
   mus_snprintf(buf, 128, "\n%s\n%s\n%s...", icon[0], icon[1], icon[2]);
   return(buf);
 }
+
 
 static void allocate_icons(Widget w)
 { 
@@ -1533,6 +1629,7 @@ static void allocate_icons(Widget w)
   mini_lock_allocated = true;
 }
 
+
 static void change_pixmap_background(Widget w, Pixmap orig, Pixel old_color, Pixel new_color, int width, int height)
 {
   XImage *before;
@@ -1565,6 +1662,7 @@ static void change_pixmap_background(Widget w, Pixmap orig, Pixel old_color, Pix
   XFreeGC(dp, draw_gc);
 }
 
+
 void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color)
 {
   int i;
@@ -1589,6 +1687,7 @@ void show_bomb(snd_info *sp) {}
 void hide_bomb(snd_info *sp) {}
 #endif
 
+
 static Pixmap spd_r, spd_l;
 static bool spd_ok = false;
 
@@ -1597,6 +1696,7 @@ static void close_sound_dialog(Widget w, XtPointer context, XtPointer info)
   snd_info *sp = (snd_info *)context;
   if (sp) snd_close_file(sp);
 }
+
 
 static void attach_minibuffer(snd_info *sp)
 {
@@ -1607,6 +1707,7 @@ static void attach_minibuffer(snd_info *sp)
 		NULL);
   XtManageChild(MINIBUFFER_TEXT(sp));
 }
+
 
 snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 {  
@@ -2637,6 +2738,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
   return(sp);
 }
 
+
 void snd_info_cleanup(snd_info *sp)
 {
   if ((sp) && (sp->sgx))
@@ -2667,6 +2769,7 @@ void snd_info_cleanup(snd_info *sp)
     }
 }
 
+
 void set_sound_pane_file_label(snd_info *sp, char *str)
 {
   if ((sp->name_string == NULL) || (strcmp(sp->name_string, str) != 0))
@@ -2676,7 +2779,6 @@ void set_sound_pane_file_label(snd_info *sp, char *str)
       set_button_label(SND_NAME(sp), str); /* this causes an expose event, so it's worth minimizing */
     }
 }
-
 
 
 void color_filter_waveform(Pixel color)
@@ -2692,6 +2794,7 @@ void color_filter_waveform(Pixel color)
 	display_filter_env(sp);
     }
 }
+
 
 void show_controls(snd_info *sp)
 {
@@ -2712,15 +2815,18 @@ void show_controls(snd_info *sp)
 		NULL);
 }
 
+
 void hide_controls(snd_info *sp)
 {
   XtUnmanageChild(CONTROLS(sp));
 }
 
+
 bool showing_controls(snd_info *sp)
 {
   return((bool)(XtIsManaged(CONTROLS(sp))));
 }
+
 
 void show_all_controls(void)
 {
@@ -2734,6 +2840,7 @@ void show_all_controls(void)
     }
 }
 
+
 void hide_all_controls(void)
 {
   int i;
@@ -2745,6 +2852,7 @@ void hide_all_controls(void)
 	hide_controls(sp);
     }
 }
+
 
 int control_panel_height(snd_info *sp)
 {
@@ -2796,6 +2904,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
   check_for_event();
 }
 
+
 void finish_progress_report(snd_info *sp, enved_progress_t from_enved)
 {
 #if (!HAVE_XPM)
@@ -2818,6 +2927,7 @@ void finish_progress_report(snd_info *sp, enved_progress_t from_enved)
 #endif
 }
 
+
 void start_progress_report(snd_info *sp, enved_progress_t from_enved)
 {
   if (sp->inuse != SOUND_NORMAL) return;
@@ -2832,6 +2942,7 @@ void start_progress_report(snd_info *sp, enved_progress_t from_enved)
     display_enved_progress("", 0);
 #endif
 }
+
 
 void reflect_sound_selection(snd_info *sp)
 {
@@ -2891,6 +3002,7 @@ widgets: (0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter
 	           XEN_EMPTY_LIST)))))))))));
 }
 
+
 #if MUS_DEBUGGING && HAVE_GUILE && WITH_RELATIVE_PANES
 static XEN g_sash(void)
 {
@@ -2901,6 +3013,7 @@ static XEN g_sash(void)
       lst = XEN_CONS(XEN_WRAP_WIDGET(sashes[i]), lst);
   return(lst);
 }
+
 
 static XEN g_watch_sash(void)
 {
@@ -2918,6 +3031,7 @@ static XEN g_watch_sash(void)
   return(XEN_FALSE);
 }
 #endif
+
 
 #ifdef XEN_ARGIFY_1
   XEN_ARGIFY_1(g_sound_widgets_w, g_sound_widgets)

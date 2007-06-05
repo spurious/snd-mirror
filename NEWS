@@ -1,8 +1,8 @@
 Snd 9.1
 
+Two new hooks: peak-env-hook, draw-mix-hook
 
-peak-env-hook
-draw-mix-hook
+added mouse position args to mix-drag-hook
 
 background-gradient (gtk+cairo only)
 sound-mark-info
@@ -12,16 +12,17 @@ moved equalize-panes to snd-motif.scm
 
 in cmn: 
   Michael Edwards added a way to change a staff name (new-staff-name)
-  I did half of the :old-style layout bugfix (the staves are laid out correctly, I think, but first-staff clefs are omitted)
+  I did half of the :old-style layout bugfix (the staves are laid out correctly, I think)
+
+new rt-compiler.scm et al thanks to Kjetil
 
 in clm:
   changes for ACL 8.1
 
-SIGUSR1 (kill -10) throws Snd back to its top level -- a way, perhaps, to get out
-  of any infinite loop.
+SIGUSR1 (kill -10) throws Snd back to its top level
 
 
-Thanks!: Michael Edwards, Etienne Deleflie, Joshua Parmenter
+Thanks!: Michael Edwards, Etienne Deleflie, Joshua Parmenter, Kjetil Matheussen
 
-checked: Ruby 1.8.6, sbcl 1.0.5, gtk 2.10.12|2.11.0, ACL 8.1, pango 1.17.0|1, 
-         glib 2.13.2
+checked: Ruby 1.8.6, sbcl 1.0.5, gtk 2.10.12|2.11.0|1, ACL 8.1, pango 1.17.0|1|2, 
+         glib 2.13.2|3

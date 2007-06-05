@@ -20,6 +20,7 @@ enum {W_amp_adj, W_speed_adj, W_contrast_adj, W_expand_adj, W_revscl_adj,
       NUM_SND_ADJS
 };
 
+
 GtkWidget *unite_button(snd_info *sp)   {return(sp->sgx->snd_widgets[W_unite]);}
 
 GtkWidget *w_snd_pane(snd_info *sp)     {return(sp->sgx->snd_widgets[W_pane]);}
@@ -113,6 +114,7 @@ static void watch_minibuffer(GtkWidget *w, gpointer context)
   clear_minibuffer_error((snd_info *)context);
 }
 
+
 void clear_minibuffer_error(snd_info *sp)
 {
   gtk_widget_hide(ERROR_INFO_FRAME(sp));
@@ -123,6 +125,7 @@ void clear_minibuffer_error(snd_info *sp)
       sp->sgx->minibuffer_watcher = 0;
     }
 }
+
 
 void display_minibuffer_error(snd_info *sp, const char *str) 
 {
@@ -163,6 +166,7 @@ void show_lock(snd_info *sp)
     }
 }
 
+
 void hide_lock(snd_info *sp)
 {
   if (mini_lock)
@@ -172,17 +176,20 @@ void hide_lock(snd_info *sp)
     }
 }
 
+
 static void show_stop_sign(snd_info *sp)
 {
   if ((sp->sgx) && (stop_sign))
     draw_picture(sp->sgx->stop_pix_ax, stop_sign, 0, 0, 0, 4, 18, 16);
 }
 
+
 static void hide_stop_sign(snd_info *sp)
 {
   if ((sp->sgx) && (blank))
     draw_picture(sp->sgx->stop_pix_ax, blank, 0, 0, 0, 4, 18, 16);
 }
+
 
 void show_bomb(snd_info *sp)
 {
@@ -196,6 +203,7 @@ void show_bomb(snd_info *sp)
   sp->bomb_ctr++; 
 }
 
+
 void hide_bomb(snd_info *sp)
 {
   if (sp->sgx)
@@ -205,6 +213,7 @@ void hide_bomb(snd_info *sp)
     }
   sp->bomb_ctr = 0;
 }
+
 
 #define BOMB_TIME 200
 
@@ -224,6 +233,7 @@ static gint tick_bomb(gpointer data)
   return(0);
 }
 
+
 void start_bomb(snd_info *sp)
 {
   sp->bomb_ctr = 0;
@@ -233,6 +243,7 @@ void start_bomb(snd_info *sp)
       g_timeout_add_full(0, (guint32)BOMB_TIME, tick_bomb, (gpointer)sp, NULL);
     }
 }
+
 
 void stop_bomb(snd_info *sp)
 {
@@ -248,16 +259,20 @@ static void show_hourglass(snd_info *sp, int glass)
     draw_picture(sp->sgx->name_pix_ax, hourglasses[glass], 0, 0, 0, 4, 18, 16);
 }
 
+
 static void hide_hourglass(snd_info *sp)
 {
   if (sp->sgx)
     draw_picture(sp->sgx->name_pix_ax, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
 }
+
 #else
+
 static GdkDrawable *sound_pix_wn(snd_info *sp)
 {
   return(GDK_DRAWABLE(NAME_PIX(sp)->window));
 }
+
 
 static void show_happy_face(GdkDrawable *wn, Float pct)
 {
@@ -302,6 +317,7 @@ static void show_happy_face(GdkDrawable *wn, Float pct)
   cairo_destroy(cr);
 }
 
+
 static void hide_happy_face(GdkDrawable *wn)
 {
   cairo_t *cr;
@@ -312,6 +328,7 @@ static void hide_happy_face(GdkDrawable *wn)
   cairo_destroy(cr);
 }
 #endif
+
 
 static void make_pixmaps(void)
 {
@@ -335,6 +352,7 @@ static void make_pixmaps(void)
       mini_lock_allocated = true;
     }
 }
+
 
 static gboolean name_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
@@ -360,11 +378,13 @@ void goto_minibuffer(snd_info *sp)
     }
 }
 
+
 void set_minibuffer_cursor_position(snd_info *sp, int pos)
 {
   if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return;
   gtk_editable_set_position(GTK_EDITABLE(MINIBUFFER_TEXT(sp)), pos);
 }
+
 
 char *get_minibuffer_string(snd_info *sp) 
 {
@@ -372,7 +392,9 @@ char *get_minibuffer_string(snd_info *sp)
   return(copy_string((char *)gtk_entry_get_text(GTK_ENTRY(MINIBUFFER_TEXT(sp)))));
 } 
 
+
 static char stupid[1] = {'\0'};
+
 void set_minibuffer_string(snd_info *sp, char *str, bool update) 
 {
   if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return;
@@ -381,11 +403,13 @@ void set_minibuffer_string(snd_info *sp, char *str, bool update)
   else gtk_entry_set_text(GTK_ENTRY(MINIBUFFER_TEXT(sp)), stupid);
 }
 
+
 void make_minibuffer_label(snd_info *sp, char *str)
 {
   if (sp->inuse != SOUND_NORMAL) return;
   gtk_label_set_text(GTK_LABEL(MINIBUFFER_LABEL(sp)), str);
 }
+
 
 static void minibuffer_activate_callback(GtkWidget *w, gpointer data)
 {
@@ -393,6 +417,7 @@ static void minibuffer_activate_callback(GtkWidget *w, gpointer data)
   snd_minibuffer_activate(sp, 0, false);
   sp->sgx->mini_active = true;
 }
+
 
 static gboolean minibuffer_key_callback(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
@@ -424,6 +449,7 @@ static gboolean minibuffer_key_callback(GtkWidget *w, GdkEventKey *event, gpoint
   return(false);
 }
 
+
 static gboolean minibuffer_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
@@ -431,6 +457,7 @@ static gboolean minibuffer_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpoin
     sp->sgx->mini_active = true;
   return(false);
 }
+
 
 static gboolean minibuffer_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
@@ -449,6 +476,7 @@ static void set_button_base(GtkWidget *w, color_info *col)
   widget_modify_base(w, GTK_STATE_PRELIGHT, col);
 }
 
+
 void set_play_button(snd_info *sp, bool val)
 {
   if ((sp->sgx) && (!(IS_PLAYER(sp))))
@@ -456,6 +484,7 @@ void set_play_button(snd_info *sp, bool val)
       set_toggle_button(PLAY_BUTTON(sp), val, false, (void *)sp);
     }
 }
+
 
 void set_control_panel_play_button(snd_info *sp)
 {
@@ -465,6 +494,7 @@ void set_control_panel_play_button(snd_info *sp)
       set_button_base(PLAY_BUTTON(sp), ss->sgx->white);
     }
 }
+
 
 static int last_play_state = 0;
 /* these "last-*-state" variables are trying to catch C-M-click info which is then used
@@ -476,6 +506,7 @@ static gboolean play_button_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   last_play_state = ev->state;
   return(false);
 }
+
 
 static void play_button_click_callback(GtkWidget *w, gpointer data)
 {
@@ -503,6 +534,7 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
   else set_button_base(w, ss->sgx->white);
 }
 
+
 typedef struct {bool pausing; } pause_data;
 
 static void set_play_button_pause(snd_info *sp, void *ptr)
@@ -521,6 +553,7 @@ static void set_play_button_pause(snd_info *sp, void *ptr)
     }
 }
 
+
 void play_button_pause(bool pausing)
 {
   pause_data *pd;
@@ -529,6 +562,7 @@ void play_button_pause(bool pausing)
   for_each_sound_with_void(set_play_button_pause, (void *)pd);
   FREE(pd);
 }
+
 
 static void set_sync_color(snd_info *sp)
 {
@@ -545,6 +579,7 @@ static void set_sync_color(snd_info *sp)
     }
 }
 
+
 void syncb(snd_info *sp, int on)
 {
   sp->sync = on;
@@ -556,6 +591,7 @@ void syncb(snd_info *sp, int on)
     }
 }
 
+
 static int last_sync_state = 0;
 
 static gboolean sync_button_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -563,6 +599,7 @@ static gboolean sync_button_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   last_sync_state = ev->state;
   return(false);
 }
+
 
 static void sync_button_click(GtkWidget *w, gpointer data)
 {
@@ -591,6 +628,7 @@ static void sync_button_click(GtkWidget *w, gpointer data)
     }
 }
 
+
 static int last_combine_state = 0;
 
 static gboolean unite_button_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -599,6 +637,7 @@ static gboolean unite_button_callback(GtkWidget *w, GdkEventButton *ev, gpointer
   last_combine_state = ev->state;
   return(false);
 }
+
 
 static void unite_button_click(GtkWidget *w, gpointer data)
 {
@@ -615,6 +654,7 @@ static void unite_button_click(GtkWidget *w, gpointer data)
   else val = CHANNELS_SEPARATE;
   set_sound_channel_style(sp, val);
 }
+
 
 static gboolean name_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -633,6 +673,7 @@ Float amp_to_scroll(Float minval, Float val, Float maxval)
     return(0.9 * 0.5 * (1.0 + (val - 1.0) / (maxval - 1.0)));
   return(0.9 * 0.5 * ((val - minval) / (1.0 - minval)));
 }
+
 
 static Float scroll_to_amp(snd_info *sp, Float val)
 {
@@ -655,6 +696,7 @@ static Float scroll_to_amp(snd_info *sp, Float val)
   return(val);
 }
 
+
 void set_amp(snd_info *sp, Float amp) 
 {
   if (IS_PLAYER(sp))
@@ -670,6 +712,7 @@ void set_amp(snd_info *sp, Float amp)
     }
 }
 
+
 static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
@@ -681,10 +724,12 @@ static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
   return(false);
 }
 
+
 static void amp_changed_callback(GtkAdjustment *adj, gpointer data)
 {
   scroll_to_amp((snd_info *)data, (Float)(adj->value));
 }
+
 
 static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -704,6 +749,7 @@ static Float speed_to_scroll(Float minval, Float val, Float maxval)
   return(0.9 * ((log(val) - log(minval)) / (log(maxval) - log(minval))));
 }
 
+
 static Float scroll_to_speed(snd_info *sp, Float ival)
 {
   char speed_number_buffer[6];
@@ -716,7 +762,9 @@ static Float scroll_to_speed(snd_info *sp, Float ival)
   return(ival);
 }
 
+
 static bool ignore_callback = false;
+
 void set_speed(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
@@ -731,6 +779,7 @@ void set_speed(snd_info *sp, Float val)
       ignore_callback = false;
     }
 }
+
 
 static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -747,6 +796,7 @@ static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   return(false);
 }
 
+
 static gboolean speed_label_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
@@ -761,6 +811,7 @@ static gboolean speed_label_click_callback(GtkWidget *w, GdkEventButton *ev, gpo
   return(false);
 }
 
+
 static void speed_changed_callback(GtkAdjustment *adj, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
@@ -772,6 +823,7 @@ static void speed_changed_callback(GtkAdjustment *adj, gpointer data)
 #endif
 }
 
+
 static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
@@ -780,12 +832,14 @@ static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointe
   return(false);
 }
 
+
 static void draw_speed_arrow(snd_info *sp)
 {
   if (sp->speed_control_direction == 1)
     draw_picture(sp->sgx->speed_arrow_ax, speed_r, 0, 0, 0, 4, 18, 16);
   else draw_picture(sp->sgx->speed_arrow_ax, speed_l, 0, 0, 0, 4, 18, 16);
 }
+
 
 static gboolean speed_arrow_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -796,11 +850,14 @@ static gboolean speed_arrow_press(GtkWidget *w, GdkEventButton *ev, gpointer dat
   draw_speed_arrow(sp);
   return(false);
 }
+
+
 static gboolean speed_arrow_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   draw_speed_arrow((snd_info *)data);
   return(false);
 }
+
 
 void toggle_direction_arrow(snd_info *sp, bool state)
 {
@@ -820,6 +877,7 @@ static Float expand_to_scroll(Float minval, Float val, Float maxval)
   return(0.9 * ((log(val) - log(minval)) / (log(maxval) - log(minval))));
 }
 
+
 static Float scroll_to_expand(snd_info *sp, Float val)
 {
   char expand_number_buffer[6];
@@ -837,6 +895,7 @@ static Float scroll_to_expand(snd_info *sp, Float val)
   return(val);
 }
 
+
 void set_expand(snd_info *sp, Float val) 
 {
   if (IS_PLAYER(sp))
@@ -852,11 +911,13 @@ void set_expand(snd_info *sp, Float val)
     }
 }
 
+
 static void expand_changed_callback(GtkAdjustment *adj, gpointer data)
 {
   if (ignore_callback) return;
   scroll_to_expand((snd_info *)data, adj->value);
 }
+
 
 static gboolean expand_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -865,6 +926,7 @@ static gboolean expand_release_callback(GtkWidget *w, GdkEventButton *ev, gpoint
   sp->saved_expand_control = sp->expand_control;
   return(false);
 }
+
 
 static gboolean expand_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -877,6 +939,7 @@ static gboolean expand_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer
   return(false);
 }
 
+
 static void expand_button_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
@@ -884,6 +947,7 @@ static void expand_button_callback(GtkWidget *w, gpointer context)
   /* to change the trough color: (widget_modify_bg (list-ref (channel-widgets) 3) GTK_STATE_ACTIVE (zoom-color)) */
   /*   and the slider color:     (widget_modify_bg (list-ref (channel-widgets) 3) GTK_STATE_PRELIGHT (highlight-color)) */
 }
+
 
 void toggle_expand_button(snd_info *sp, bool state)
 {
@@ -902,6 +966,7 @@ static Float contrast_to_scroll(Float minval, Float val, Float maxval)
   return((val - minval) / (maxval - minval) * 0.9);
 }
 
+
 static Float scroll_to_contrast(snd_info *sp, Float val)
 {
   char contrast_number_buffer[6];
@@ -910,6 +975,7 @@ static Float scroll_to_contrast(snd_info *sp, Float val)
   gtk_label_set_text(GTK_LABEL(CONTRAST_LABEL(sp)), contrast_number_buffer);
   return(val);
 }
+
 
 void set_contrast(snd_info *sp, Float val) 
 {
@@ -926,6 +992,7 @@ void set_contrast(snd_info *sp, Float val)
     }
 }
 
+
 static gboolean contrast_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
@@ -937,12 +1004,14 @@ static gboolean contrast_click_callback(GtkWidget *w, GdkEventButton *ev, gpoint
   return(false);
 }
 
+
 static void contrast_changed_callback(GtkAdjustment *adj, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
   if (ignore_callback) return;
   scroll_to_contrast(sp, adj->value);
 }
+
 
 static gboolean contrast_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -951,6 +1020,7 @@ static gboolean contrast_release_callback(GtkWidget *w, GdkEventButton *ev, gpoi
   sp->saved_contrast_control = sp->contrast_control;
   return(false);
 }
+
 
 static void contrast_button_callback(GtkWidget *w, gpointer context)
 {
@@ -976,7 +1046,9 @@ static Float revscl_to_scroll(Float minval, Float val, Float maxval)
   return(0.9 * (pow(val, 0.333) - pow(minval, 0.333)) / (pow(maxval, 0.333) - pow(minval, 0.333)));
 }
 
+
 static Float cube(Float a) {return(a*a*a);}
+
 
 static Float scroll_to_revscl(snd_info *sp, Float val)
 {
@@ -995,6 +1067,7 @@ static Float scroll_to_revscl(snd_info *sp, Float val)
   return(val);
 }
 
+
 void set_revscl(snd_info *sp, Float val) 
 {
   if (IS_PLAYER(sp))
@@ -1010,6 +1083,7 @@ void set_revscl(snd_info *sp, Float val)
     }
 }
 
+
 static gboolean revscl_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
@@ -1021,11 +1095,13 @@ static gboolean revscl_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer
   return(false);
 }
 
+
 static void revscl_changed_callback(GtkAdjustment *adj, gpointer data)
 {
   if (ignore_callback) return;
   scroll_to_revscl((snd_info *)data, adj->value);
 }
+
 
 static gboolean revscl_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -1043,6 +1119,7 @@ static Float revlen_to_scroll(Float minval, Float val, Float maxval)
   return((val - minval) / (maxval - minval) * 0.9);
 }
 
+
 static Float scroll_to_revlen(snd_info *sp, Float val)
 {
   char revlen_number_buffer[5];
@@ -1052,6 +1129,7 @@ static Float scroll_to_revlen(snd_info *sp, Float val)
   gtk_label_set_text(GTK_LABEL(REVLEN_LABEL(sp)), revlen_number_buffer);
   return(val);
 }
+
 
 void set_revlen(snd_info *sp, Float val)
 {
@@ -1068,6 +1146,7 @@ void set_revlen(snd_info *sp, Float val)
     }
 }
 
+
 static gboolean revlen_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
@@ -1079,11 +1158,13 @@ static gboolean revlen_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer
   return(false);
 }
 
+
 static void revlen_changed_callback(GtkAdjustment *adj, gpointer data)
 {
   if (ignore_callback) return;
   scroll_to_revlen((snd_info *)data, adj->value);
 }
+
 
 static gboolean revlen_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -1093,11 +1174,13 @@ static gboolean revlen_release_callback(GtkWidget *w, GdkEventButton *ev, gpoint
   return(false);
 }
 
+
 static void reverb_button_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
   sp->reverb_control_p = GTK_TOGGLE_BUTTON(w)->active;
 }
+
 
 void toggle_reverb_button(snd_info *sp, bool state)
 {
@@ -1149,6 +1232,7 @@ void display_filter_env(snd_info *sp)
   FREE(ax);
 }
 
+
 static gboolean filter_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
   if (BUTTON1_PRESSED(ev->state))
@@ -1173,6 +1257,7 @@ static gboolean filter_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gp
   return(false);
 }
 
+
 static gboolean filter_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
@@ -1183,6 +1268,7 @@ static gboolean filter_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpo
     display_filter_env(sp);
   return(false);
 }
+
 
 static gboolean filter_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -1196,6 +1282,7 @@ static gboolean filter_drawer_button_release(GtkWidget *w, GdkEventButton *ev, g
   return(false);
 }
 
+
 void set_filter_text(snd_info *sp, char *str)
 {
   if (!(IS_PLAYER(sp)))
@@ -1206,12 +1293,14 @@ void set_filter_text(snd_info *sp, char *str)
     }
 }
 
+
 static gboolean filter_drawer_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
   display_filter_env(sp);
   return(false);
 }
+
 
 static gboolean filter_drawer_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
@@ -1220,11 +1309,13 @@ static gboolean filter_drawer_resize(GtkWidget *w, GdkEventConfigure *ev, gpoint
   return(false);
 }
 
+
 static void filter_button_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
   sp->filter_control_p = GTK_TOGGLE_BUTTON(w)->active;
 }
+
 
 void toggle_filter_button(snd_info *sp, bool state)
 {
@@ -1233,12 +1324,14 @@ void toggle_filter_button(snd_info *sp, bool state)
   else set_toggle_button(FILTER_RIGHT_BUTTON(sp), state, true, (void *)sp);
 }
 
+
 static void filter_db_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
   sp->filter_control_in_dB = GTK_TOGGLE_BUTTON(w)->active;
   display_filter_env(sp);
 }
+
 
 void set_filter_in_dB(snd_info *sp, bool val)
 {
@@ -1250,6 +1343,7 @@ void set_filter_in_dB(snd_info *sp, bool val)
     }
 }
 
+
 static void new_in_hz(snd_info *sp, bool val)
 {
   sp->filter_control_in_hz = val;
@@ -1260,12 +1354,14 @@ static void new_in_hz(snd_info *sp, bool val)
   sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
 }
 
+
 static void filter_hz_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
   new_in_hz(sp, GTK_TOGGLE_BUTTON(w)->active);
   display_filter_env(sp);
 }
+
 
 void set_filter_in_hz(snd_info *sp, bool val)
 {
@@ -1277,6 +1373,7 @@ void set_filter_in_hz(snd_info *sp, bool val)
     }
 }
 
+
 static void set_filter_order_1(snd_info *sp, int order, bool setadj)
 {
   sp->filter_control_order = order;
@@ -1286,12 +1383,14 @@ static void set_filter_order_1(snd_info *sp, int order, bool setadj)
   sp->filter_control_changed = true;
 }  
 
+
 void set_filter_order(snd_info *sp, int order) 
 {
   if (IS_PLAYER(sp))
     sp->filter_control_order = order;
   else set_filter_order_1(sp, order, true);
 }
+
 
 static void filter_order_callback(GtkWidget *w, gpointer data)
 {
@@ -1303,6 +1402,7 @@ static void filter_order_callback(GtkWidget *w, gpointer data)
   sp->filter_control_order = order;
   set_filter_order_1(sp, order, false);
 }
+
 
 static void filter_activate_callback(GtkWidget *w, gpointer context)
 {
@@ -1320,6 +1420,7 @@ static void filter_activate_callback(GtkWidget *w, gpointer context)
   display_filter_env(sp);
   sp->filter_control_changed = true;
 }
+
 
 void filter_env_changed(snd_info *sp, env *e)
 {
@@ -1340,6 +1441,7 @@ void filter_env_changed(snd_info *sp, env *e)
     }
   sp->filter_control_changed = true;
 }
+
 
 void color_filter_waveform(color_info *color)
 {
@@ -1367,6 +1469,7 @@ static int cant_write(char *name)
 #endif
 }
 
+
 static gint close_sound_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
@@ -1374,6 +1477,7 @@ static gint close_sound_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
   gtk_widget_hide(sp->sgx->dialog); 
   return(true);
 } 
+
 
 static gboolean stop_sign_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -1890,6 +1994,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
   return(sp);
 }
 
+
 void set_sound_pane_file_label(snd_info *sp, char *str)
 {
   if ((sp->name_string == NULL) || (strcmp(sp->name_string, str) != 0))
@@ -1899,6 +2004,7 @@ void set_sound_pane_file_label(snd_info *sp, char *str)
       set_label(NAME_BUTTON(sp), str);
     }
 }
+
 
 void snd_info_cleanup(snd_info *sp)
 {
@@ -1936,10 +2042,12 @@ void show_controls(snd_info *sp)
   /* gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), (gint)(widget_height(SOUND_PANE(ss)) * .75)); (glistener) */
 }
 
+
 void hide_controls(snd_info *sp)
 {
   gtk_widget_hide_all(CONTROL_PANEL(sp));
 }
+
 
 bool showing_controls(snd_info *sp)
 {
@@ -1961,6 +2069,7 @@ void show_all_controls(void)
     }
 }
 
+
 void hide_all_controls(void)
 {
   int i;
@@ -1973,6 +2082,7 @@ void hide_all_controls(void)
 	hide_controls(sp);
     }
 }
+
 
 int control_panel_height(snd_info *sp)
 {
@@ -2008,6 +2118,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
   check_for_event();
 }
 
+
 void finish_progress_report(snd_info *sp, enved_progress_t from_enved)
 {
   if (sp->inuse != SOUND_NORMAL) return;
@@ -2031,6 +2142,7 @@ void finish_progress_report(snd_info *sp, enved_progress_t from_enved)
   if (!(ss->stopped_explicitly)) clear_minibuffer(sp);
 }
 
+
 void start_progress_report(snd_info *sp, enved_progress_t from_enved)
 {
   if (sp->inuse != SOUND_NORMAL) return;
@@ -2044,6 +2156,7 @@ void start_progress_report(snd_info *sp, enved_progress_t from_enved)
       show_stop_sign(sp);
     }
 }
+
 
 void reflect_sound_selection(snd_info *sp)
 {
@@ -2092,6 +2205,7 @@ pane-box (10)name-form"
 		   XEN_CONS(XEN_WRAP_WIDGET(NAME_HBOX(sp)),
 	            XEN_EMPTY_LIST))))))))))));
 }
+
 
 #ifdef XEN_ARGIFY_1
   XEN_ARGIFY_1(g_sound_widgets_w, g_sound_widgets)

@@ -1,6 +1,7 @@
 #include "snd.h"
 #include "clm2xen.h"
 
+
 /* -------- watcher lists -------- */
 
 typedef struct {
@@ -12,6 +13,7 @@ static selection_watcher **selection_watchers = NULL;
 static int selection_watchers_size = 0;
 
 #define SELECTION_WATCHER_SIZE_INCREMENT 2
+
 
 int add_selection_watcher(void (*watcher)(selection_watcher_reason_t reason, void *data), void *context)
 {
@@ -45,6 +47,7 @@ int add_selection_watcher(void (*watcher)(selection_watcher_reason_t reason, voi
   return(loc);
 }
 
+
 void remove_selection_watcher(int loc)
 {
   if ((selection_watchers) &&
@@ -56,6 +59,7 @@ void remove_selection_watcher(int loc)
       selection_watchers[loc] = NULL;
     }
 }
+
 
 void call_selection_watchers(selection_watcher_reason_t reason)
 {
@@ -77,6 +81,7 @@ static bool cp_has_selection(chan_info *cp)
   ed = cp->edits[cp->edit_ctr];
   return((ed) && (ed->selection_beg != NO_SELECTION));
 }
+
 
 static bool map_over_chans(bool (*func)(chan_info *ncp))
 {
@@ -100,16 +105,19 @@ static bool map_over_chans(bool (*func)(chan_info *ncp))
   return(val);
 }
 
+
 bool selection_is_active(void)
 {
   /* is selection active in any channel */
   return(map_over_chans(cp_has_selection));
 }
 
+
 bool selection_is_active_in_channel(chan_info *cp)
 {
   return((cp) && (cp_has_selection(cp)));
 }
+
 
 static bool selection_is_visible(chan_info *cp)
 {
@@ -123,11 +131,13 @@ static bool selection_is_visible(chan_info *cp)
 	 (ap->hisamp > ed->selection_beg));
 }
 
+
 bool selection_is_visible_in_channel(chan_info *cp)
 {
   return((cp_has_selection(cp)) && 
 	 (selection_is_visible(cp)));
 }
+
 
 static off_t off_t_map_over_chans(off_t (*func)(chan_info *, off_t *), off_t *userptr)
 {
@@ -149,6 +159,7 @@ static off_t off_t_map_over_chans(off_t (*func)(chan_info *, off_t *), off_t *us
   return(val);
 }
 
+
 static off_t cp_selection_beg(chan_info *cp, off_t *beg) 
 {
   ed_list *ed;
@@ -161,6 +172,7 @@ static off_t cp_selection_beg(chan_info *cp, off_t *beg)
   return(0);
 }
 
+
 off_t selection_beg(chan_info *cp)
 {
   off_t beg[1];
@@ -170,6 +182,7 @@ off_t selection_beg(chan_info *cp)
   else off_t_map_over_chans(cp_selection_beg, beg);
   return(beg[0]);
 }
+
 
 static void cp_set_selection_beg(chan_info *cp, off_t beg)
 {
@@ -184,10 +197,12 @@ static void cp_set_selection_beg(chan_info *cp, off_t beg)
   ed->selection_maxamp_position = -1;
 }
 
+
 off_t selection_end(chan_info *cp) /* never called without selection_member check in advance */
 {
   return(cp->edits[cp->edit_ctr]->selection_end);
 }
+
 
 static off_t cp_selection_len(chan_info *cp, off_t *ptr)
 {
@@ -198,10 +213,12 @@ static off_t cp_selection_len(chan_info *cp, off_t *ptr)
   return(0);
 }
 
+
 off_t selection_len(void)
 {
   return(off_t_map_over_chans(cp_selection_len, NULL));
 }
+
 
 static void cp_set_selection_len(chan_info *cp, off_t len)
 {
@@ -215,10 +232,12 @@ static void cp_set_selection_len(chan_info *cp, off_t len)
   ed->selection_maxamp_position = -1;
 }
 
+
 static void selection_chans_1(chan_info *cp, int *counter)
 {
   if (cp_has_selection(cp)) counter[0]++;
 }
+
 
 int selection_chans(void)
 {
@@ -228,6 +247,7 @@ int selection_chans(void)
   return(count[0]);
 }
 
+
 static off_t selection_srate_1(chan_info *cp, off_t *ignored)
 {
   if (cp_has_selection(cp)) 
@@ -235,12 +255,14 @@ static off_t selection_srate_1(chan_info *cp, off_t *ignored)
   return(0);
 }
 
+
 int selection_srate(void)
 {
   if (selection_is_active())
     return((int)off_t_map_over_chans(selection_srate_1, NULL));
   return(0);
 }
+
 
 Float selection_maxamp(chan_info *cp)
 {
@@ -261,11 +283,13 @@ Float selection_maxamp(chan_info *cp)
   return(val);
 }
 
+
 static off_t selection_maxamp_position(chan_info *cp)
 {
   selection_maxamp(cp);
   return(ed_selection_maxamp_position(cp));
 }
+
 
 static void cp_delete_selection(chan_info *cp)
 {
@@ -279,6 +303,7 @@ static void cp_delete_selection(chan_info *cp)
     }
 }
 
+
 bool delete_selection(cut_selection_regraph_t regraph)
 {
   if (selection_is_active())
@@ -290,6 +315,7 @@ bool delete_selection(cut_selection_regraph_t regraph)
     }
   return(false);
 }
+
 
 static void cp_deactivate_selection(chan_info *cp)
 {
@@ -310,6 +336,7 @@ void deactivate_selection(void)
     syncd_chans = free_sync_info(syncd_chans);
 }
 
+
 void reactivate_selection(chan_info *cp, off_t beg, off_t end)
 {
   ed_list *ed;
@@ -328,6 +355,7 @@ void reactivate_selection(chan_info *cp, off_t beg, off_t end)
   ed->selection_maxamp_position = -1;
   call_selection_watchers(SELECTION_ACTIVE);
 }
+
 
 void ripple_selection(ed_list *ed, off_t beg, off_t num)
 {
@@ -353,6 +381,7 @@ void ripple_selection(ed_list *ed, off_t beg, off_t num)
     }
 }
 
+
 static void next_selection_chan(chan_info *cp, void *sidata)
 {
   if (cp_has_selection(cp))
@@ -366,6 +395,7 @@ static void next_selection_chan(chan_info *cp, void *sidata)
     }
 }
 
+
 sync_info *selection_sync(void)
 {
   sync_info *si;
@@ -378,6 +408,7 @@ sync_info *selection_sync(void)
   for_each_normal_chan_with_void(next_selection_chan, (void *)si);
   return(si);
 }
+
 
 static int mix_selection(chan_info *cp, sync_info *si_out, off_t beg, io_error_t *err, int start_chan)
 {
@@ -407,6 +438,7 @@ static int mix_selection(chan_info *cp, sync_info *si_out, off_t beg, io_error_t
   return(id);
 }
 
+
 void add_selection_or_region(int reg, chan_info *cp)
 {
   /* in all cases, this has a local sound to report in (kbd, xmenu) */
@@ -433,6 +465,7 @@ void add_selection_or_region(int reg, chan_info *cp)
     }
   else snd_error_without_format("no channel to mix into?");
 }
+
 
 static io_error_t insert_selection(chan_info *cp, sync_info *si_out, off_t beg)
 {
@@ -477,6 +510,7 @@ static io_error_t insert_selection(chan_info *cp, sync_info *si_out, off_t beg)
   return(io_err);
 }
 
+
 void insert_selection_or_region(int reg, chan_info *cp)
 {
   io_error_t err = IO_NO_ERROR;
@@ -498,6 +532,7 @@ void insert_selection_or_region(int reg, chan_info *cp)
 			     io_error_name(err));
     }
 }
+
 
 void insert_selection_from_menu(void)
 {
@@ -521,7 +556,9 @@ void start_selection_creation(chan_info *cp, off_t samp)
     reactivate_selection(syncd_chans->cps[i], samp, samp);
 }
 
+
 bool selection_creation_in_progress(void) {return(syncd_chans != NULL);}
+
 
 void finish_selection_creation(void)
 {
@@ -533,6 +570,7 @@ void finish_selection_creation(void)
       syncd_chans = free_sync_info(syncd_chans);      
     }
 }
+
 
 static void cp_redraw_selection(chan_info *cp)
 {
@@ -580,6 +618,7 @@ static void cp_redraw_selection(chan_info *cp)
 #endif
 }
 
+
 static void redraw_selection(void)
 {
   int i;
@@ -612,11 +651,13 @@ static void redraw_selection(void)
     }
 }
 
+
 void display_selection(chan_info *cp)
 { 
   if (selection_is_visible(cp))
     cp_redraw_selection(cp); /* draw just this chan */
 }
+
 
 void update_possible_selection_in_progress(off_t samp)
 {
@@ -653,6 +694,7 @@ void update_possible_selection_in_progress(off_t samp)
     }
 }
 
+
 int make_region_from_selection(void)
 {
   off_t *ends = NULL;
@@ -674,6 +716,7 @@ int make_region_from_selection(void)
   if (ends) FREE(ends);
   return(id);
 }
+
 
 int select_all(chan_info *cp)
 {
@@ -713,6 +756,7 @@ void cancel_selection_watch(void)
 
 static void move_selection_1(chan_info *cp, int x);
 
+
 static TIMEOUT_TYPE watch_selection(TIMEOUT_ARGS)
 {
   chan_info *cp = (chan_info *)context;
@@ -723,6 +767,7 @@ static TIMEOUT_TYPE watch_selection(TIMEOUT_ARGS)
     }
   TIMEOUT_RESULT
 }
+
 
 static void move_selection_1(chan_info *cp, int x)
 {
@@ -743,11 +788,13 @@ static void move_selection_1(chan_info *cp, int x)
   redraw_selection();
 }
 
+
 void move_selection(chan_info *cp, int x)
 {
   last_selection_x = x; /* called in snd-xchn -- sets last_selection_x */
   move_selection_1(cp, x);
 }
+
 
 io_error_t save_selection(const char *ofile, int type, int format, int srate, const char *comment, int chan)
 {
@@ -922,6 +969,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
   return(io_err);
 }
 
+
 static XEN g_delete_selection(void)
 {
   #define H_delete_selection "(" S_delete_selection "): delete the currently selected portion"
@@ -932,6 +980,7 @@ static XEN g_delete_selection(void)
     }
   return(snd_no_active_selection_error(S_delete_selection));
 }
+
 
 static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
 {
@@ -961,6 +1010,7 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
     }
   return(snd_no_active_selection_error(S_insert_selection));
 }
+
 
 static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
 {
@@ -995,11 +1045,13 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
   return(snd_no_active_selection_error(S_mix_selection));
 }
 
+
 static XEN g_selection_p(void)
 {
   #define H_selection_p "(" S_selection_p "): " PROC_TRUE " if selection is currently active, visible, etc"
   return(C_TO_XEN_BOOLEAN(selection_is_active()));
 }
+
 
 static XEN g_selection_position(XEN snd, XEN chn)
 {
@@ -1019,6 +1071,7 @@ static XEN g_selection_position(XEN snd, XEN chn)
     }
   return(snd_no_active_selection_error(S_selection_position));
 }
+
 
 static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
 {
@@ -1057,6 +1110,7 @@ static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_selection_position_reversed, g_set_selection_position)
 
+
 static XEN g_selection_frames(XEN snd, XEN chn)
 {
   #define H_selection_frames "(" S_selection_frames " :optional snd chn): selection length"
@@ -1075,6 +1129,7 @@ static XEN g_selection_frames(XEN snd, XEN chn)
     }
   return(snd_no_active_selection_error(S_selection_frames));
 }
+
 
 static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
 {
@@ -1115,6 +1170,7 @@ static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_selection_frames_reversed, g_set_selection_frames)
 
+
 static XEN g_selection_member(XEN snd, XEN chn)
 {
   #define H_selection_member "(" S_selection_member " :optional snd chn): " PROC_TRUE " if snd's channel chn is a member of the current selection"
@@ -1124,6 +1180,7 @@ static XEN g_selection_member(XEN snd, XEN chn)
   if (!cp) return(XEN_FALSE);
   return(C_TO_XEN_BOOLEAN(selection_is_active_in_channel(cp)));
 }
+
 
 static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
 {
@@ -1152,6 +1209,7 @@ static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
 
 WITH_THREE_SETTER_ARGS(g_set_selection_member_reversed, g_set_selection_member)
 
+
 static XEN g_select_all(XEN snd_n, XEN chn_n)
 {
   #define H_select_all "(" S_select_all " :optional snd chn): make a new selection containing all of snd's channel chn. \
@@ -1167,6 +1225,7 @@ If sync is set, all chans are included.  The new region id is returned (if " S_s
   else return(XEN_TRUE);
 }
 
+
 static XEN kw_header_type, kw_data_format, kw_comment, kw_file, kw_srate, kw_channel;
 
 static void init_selection_keywords(void)
@@ -1178,6 +1237,7 @@ static void init_selection_keywords(void)
   kw_srate = XEN_MAKE_KEYWORD("srate");
   kw_channel = XEN_MAKE_KEYWORD("channel");
 }
+
 
 static XEN g_save_selection(XEN arglist)
 {
@@ -1244,17 +1304,20 @@ save the current selection in file using the indicated file attributes.  If chan
   return(args[orig_arg[0] - 1]);
 }
 
+
 static XEN g_selection_chans(void)
 {
   #define H_selection_chans "(" S_selection_chans "): chans in active selection"
   return(C_TO_XEN_INT(selection_chans()));
 }
 
+
 static XEN g_selection_srate(void)
 {
   #define H_selection_srate "(" S_selection_srate "): selection srate"
   return(C_TO_XEN_INT(selection_srate()));
 }
+
 
 static XEN g_selection_maxamp(XEN snd, XEN chn)
 {
@@ -1266,6 +1329,7 @@ static XEN g_selection_maxamp(XEN snd, XEN chn)
   return(C_TO_XEN_DOUBLE(selection_maxamp(cp)));
 }
 
+
 static XEN g_selection_maxamp_position(XEN snd, XEN chn)
 {
   #define H_selection_maxamp_position "(" S_selection_maxamp_position " :optional snd chn): location of selection maxamp (0 = start of selection)"
@@ -1275,6 +1339,7 @@ static XEN g_selection_maxamp_position(XEN snd, XEN chn)
   if (!cp) return(XEN_FALSE);
   return(C_TO_XEN_OFF_T(selection_maxamp_position(cp)));
 }
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_selection_position_w, g_selection_position)

@@ -9606,10 +9606,12 @@ char *sample_reader_to_string(snd_fd *fd)
       else 
 	{
 	  if (cp)
-	    mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader: %s[%d: %d] from " OFF_TD ", at " OFF_TD ">",
-			 name, cp->chan, fd->edit_ctr, fd->initial_samp, current_location(fd));
-	  else mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader: %s from " OFF_TD ", at " OFF_TD ">",
-			    name, fd->initial_samp, current_location(fd));
+	    mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader: %s[%d: %d] from " OFF_TD ", at " OFF_TD ", %s>",
+			 name, cp->chan, fd->edit_ctr, fd->initial_samp, current_location(fd), 
+			 (fd->direction == READ_BACKWARD) ? "backward" : "forward");
+	  else mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader: %s from " OFF_TD ", at " OFF_TD ", %s>",
+			    name, fd->initial_samp, current_location(fd),
+			    (fd->direction == READ_BACKWARD) ? "backward" : "forward");
 	}
     }
   return(desc);
@@ -11639,7 +11641,11 @@ append the rest?
 #if 0
 
 /* for virtual filter (and ultimately virtual src), 
- * this almost works! -- it only fails if you pivot around a one sample change:
+ * this almost works! -- it can repeat one sample if previous-sample after next-sample (but the standard case repeats as well!)
+ *   sample-reader-position is ahead 1 if reading forward, back 1 if reading backward,
+ *   so in C, I guess we could use that for "cur-loc"
+
+;; (virtual-filter-channel (vct 1.0 .5 .25) 0 10 0 0 1)
 
 (define (virtual-filter-channel coeffs beg dur snd chn edpos)
   (ptree-channel
@@ -11649,64 +11655,77 @@ append the rest?
      (let* ((sum 0.0)
 	    (order (inexact->exact (floor (vct-ref data 0))))
 	    (cur-loc (inexact->exact (floor (vct-ref data 1))))
-	    (coeffs-0 2)
-	    (begin-state-0 (+ coeffs-0 order)))
+	    (init-time (> (vct-ref data 2) 0.0))
+	    (last-forward (> (vct-ref data 3) 0.0))
+	    (coeffs-0 4)
+	    (state-0 (+ coeffs-0 order)))
 
-       (if forward
+       (if (eq? last-forward forward)
+       (if init-time
 	   (begin
-	     (do ((i (- order 1) (1- i)))
-		 ((= i 0))
-	       (vct-set! data (+ i begin-state-0) (vct-ref data (+ i -1 begin-state-0))))
-	     (vct-set! data begin-state-0 y)
-	     (set! cur-loc (1+ cur-loc))
-	     (do ((i 0 (1+ i)))
-		 ((= i order))
-	       (set! sum (+ sum (* (vct-ref data (+ coeffs-0 i)) 
-				   (vct-ref data (+ begin-state-0 i)))))))
+	     (vct-set! data 2 -1.0))
+	   (begin
+	     (if forward
+		 (begin
+		   (do ((i (- order 1) (1- i)))
+		       ((= i 0))
+		     (vct-set! data (+ i state-0) (vct-ref data (+ i -1 state-0))))
+		   (vct-set! data state-0 y)
+		   (set! cur-loc (1+ cur-loc)))
 
-	   (let ((pos (max 0 (- cur-loc order))))
-	     (if (< pos 0)
-		 (set! y 0.0)
-		 (set! y (sample pos snd chn edpos)))
-	     (do ((i 0 (1+ i)))
-		 ((= i order))
-	       (set! sum (+ sum (* (vct-ref data (+ coeffs-0 i)) 
-				   (vct-ref data (+ begin-state-0 i))))))
-	     (do ((i 0 (1+ i)))
-		 ((= i (1- order)))
-	       (vct-set! data (+ i begin-state-0) (vct-ref data (+ i 1 begin-state-0))))
-	     (vct-set! data (+ begin-state-0 order -1) y)
-	     (set! cur-loc (1- cur-loc))))
+		 (let ((pos (max 0 (- cur-loc order))))
+		   (if (< pos 0)
+		       (set! y 0.0)
+		       (set! y (sample pos snd chn edpos)))
+		   (do ((i 0 (1+ i)))
+		       ((= i (1- order)))
+		     (vct-set! data (+ i state-0) (vct-ref data (+ i 1 state-0))))
+		   (vct-set! data (+ state-0 order -1) y)
+		   (set! cur-loc (1- cur-loc))))))
+       )
+
+       (do ((i 0 (1+ i)))
+	   ((= i order))
+	 (set! sum (+ sum (* (vct-ref data (+ coeffs-0 i)) 
+			     (vct-ref data (+ state-0 i))))))
+
        (vct-set! data 1 cur-loc)
+       (if forward (vct-set! data 3 1.0) (vct-set! data 3 -1.0))
+       
        sum))
 
    beg dur snd chn edpos #f
 
    (lambda (frag-beg frag-dur forward)
      (let* ((order (vct-length coeffs))
-	    (d (make-vct (+ 2 (* 2 order)))))
+	    (coeffs-0 4)
+	    (state-0 (+ order coeffs-0))
+	    (d (make-vct (+ coeffs-0 (* 2 order)))))
        (vct-set! d 0 order)
+       (vct-set! d 2 1.0) ; first sample flag
+       (if forward (vct-set! d 3 1.0) (vct-set! d 3 -1.0))
+
        (do ((i 0 (1+ i)))
 	   ((= i order))
-	 (vct-set! d (+ i 2) (vct-ref coeffs i)))
-       (let ((start (- (+ frag-beg beg) order))
+	 (vct-set! d (+ i coeffs-0) (vct-ref coeffs i)))
+
+       (let ((start (- (+ 1 frag-beg beg) order))
 	     (i (1- order)))
-	 (if (not forward)
-	     (set! start (1+ start)))
 	 (if (< start 0)
 	     (do ()
 		 ((= start 0))
-	       (vct-set! d (+ i 2 order) 0)
+	       (vct-set! d (+ i state-0) 0)
 	       (set! i (1- i))
 	       (set! start (1+ start))))
 	 (if (>= i 0)
 	     (let ((rd (make-sample-reader start snd chn 1 edpos)))
 	       (do ()
 		   ((= i -1))
-		 (vct-set! d (+ i 2 order) (rd))
+		 (vct-set! d (+ i state-0) (rd))
 		 (set! i (1- i)))
 	       (free-sample-reader rd)))
 	 (vct-set! d 1 (+ frag-beg beg))
+
 	 d)))))
 */
 #endif
