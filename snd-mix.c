@@ -73,7 +73,7 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
 	      if ((disk_space_p(num * mus_bytes_per_sample(ohdr->format), ofile)) == DISK_SPACE_OK)
 		{
 		  snd_fd *sf = NULL;
-		  int ifd;
+		  int ifd = 0;
 		  sf = init_sample_read(beg, cp, READ_FORWARD);
 		  if (sf)
 		    ifd = snd_open_read(filename);

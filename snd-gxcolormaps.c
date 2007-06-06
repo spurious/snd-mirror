@@ -763,7 +763,7 @@ static XEN g_set_colormap(XEN val)
 {
   int index;
   #define H_colormap "(" S_colormap "): current colormap choice. \
-This should be an integer between 0 and the current colormap table top (default: 15).  The maps (from 0 to 15) are: \
+This should be an integer between 0 and the current colormap table top (default: 0).  The maps (from 0 to 14) are: \
 black-and-white, gray, hot, cool, bone, copper, pink, jet, prism, autumn, winter, \
 spring, summer, rainbow, and flag.  These names are defined in rgb.scm."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_colormap, "an integer"); 

@@ -6677,3 +6677,14 @@
 (CFNC-211 "void gtk_window_set_startup_id GtkWindow* window gchar* startup_id")
 (CFNC-211 "void gtk_window_set_opacity GtkWindow* window gdouble opacity")
 (CFNC-211 "gdouble gtk_window_get_opacity GtkWindow* window")
+
+
+;;; for 2.11.1:
+
+;(CFNC-2111 "gboolean gdk_display_supports_composite GdkDisplay* display")
+;(CFNC-2111 "void gdk_window_set_composited GdkWindow* window gboolean composited")
+;(CFNC-2111 "void gtk_text_buffer_add_mark GtkTextBuffer* buffer GtkTextMark* mark GtkTextIter* where")
+;(CFNC-2111 "void gtk_text_layout_invalidate_cursors GtkTextLayout* layout GtkTextIter* start GtkTextIter* end")
+;(CFNC-2111 "void gtk_text_layout_cursors_changed GtkTextLayout* layout gint y gint old_height gint new_height")
+;(CFNC-2111 "GtkTextMark* gtk_text_mark_new gchar* name gboolean left_gravity")
+;;; this enum is commented out above (CINT-2111 "GTK_PRINT_CAPABILITY_NUMBER_UP" "GtkPrintCapabilities")

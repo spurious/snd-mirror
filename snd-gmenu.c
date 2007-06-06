@@ -1,6 +1,7 @@
 #include "snd.h"
 #include "snd-menu.h"
 
+
 static const char *ml[NUM_MENU_WIDGETS];
 
 void set_menu_label(GtkWidget *w, const char *label) {if (w) set_button_label(w, label);}
@@ -38,6 +39,7 @@ static void edit_redo_callback(GtkWidget *w, gpointer info) {redo_edit_with_sync
 
 static bool selection_play_stop = false;
 
+
 static void edit_play_callback(GtkWidget *w, gpointer info) 
 {
   if (selection_play_stop)
@@ -50,11 +52,13 @@ static void edit_play_callback(GtkWidget *w, gpointer info)
     }
 }
 
+
 void reflect_play_selection_stop(void)
 {
   set_menu_label(edit_play_menu, _("Play Selection"));
   selection_play_stop = false;
 }
+
 
 static void edit_header_callback_1(GtkWidget *w, gpointer info)
 {
@@ -62,6 +66,7 @@ static void edit_header_callback_1(GtkWidget *w, gpointer info)
   sp = any_selected_sound();
   if (sp) edit_header(sp);
 }
+
 
 #if HAVE_EXTENSION_LANGUAGE
 static void edit_find_callback_1(GtkWidget *w, gpointer info)
@@ -169,6 +174,7 @@ static void help_colors_callback(GtkWidget *w, gpointer info) {colors_help();}
 
 void check_menu_labels(int key, int state, bool extended) {}
 
+
 static void menu_drop_watcher(GtkWidget *w, const char *filename, int x, int y, void *data)
 {
   snd_info *sp = NULL;
@@ -177,7 +183,9 @@ static void menu_drop_watcher(GtkWidget *w, const char *filename, int x, int y, 
   if (sp) select_channel(sp, 0);
 }
 
+
 static bool have_drag_title = false;
+
 static void menu_drag_watcher(GtkWidget *w, const char *str, int x, int y, drag_style_t dtype, void *data)
 {
   char *new_title;
@@ -963,11 +971,13 @@ GtkWidget *add_menu(void)
   return(main_menu);
 }
 
+
 /* -------------------------------- POPUP MENU -------------------------------- */
 
 static GtkWidget *popup_menu = NULL;
 static const char *pl[NUM_POPUP_WIDGETS];
 static bool stopping = false;
+
 
 static void popup_play_callback(GtkWidget *w, gpointer info) 
 {
@@ -992,12 +1002,14 @@ static void popup_play_callback(GtkWidget *w, gpointer info)
   gtk_widget_hide(popup_menu);
 }
 
- void reflect_play_stop_in_popup_menu(void)
+
+void reflect_play_stop_in_popup_menu(void)
 {
   stopping = false;
   if (popup_menu)
     set_button_label(popup_play_menu, _("Play"));
 }
+
 
 static void popup_save_callback(GtkWidget *w, gpointer info) 
 {
@@ -1005,17 +1017,20 @@ static void popup_save_callback(GtkWidget *w, gpointer info)
   gtk_widget_hide(popup_menu);
 }
 
+
 static void popup_undo_callback(GtkWidget *w, gpointer info) 
 {
   undo_edit_with_sync(current_channel(), 1);
   gtk_widget_hide(popup_menu);
 }
 
+
 static void popup_redo_callback(GtkWidget *w, gpointer info) 
 {
   redo_edit_with_sync(current_channel(), 1);
   gtk_widget_hide(popup_menu);
 }
+
 
 static void popup_info_callback(GtkWidget *w, gpointer info) 
 {
@@ -1025,17 +1040,20 @@ static void popup_info_callback(GtkWidget *w, gpointer info)
   gtk_widget_hide(popup_menu);
 }
 
+
 static void popup_apply_callback(GtkWidget *w, gpointer info) 
 {
   menu_apply_controls(any_selected_sound());
   gtk_widget_hide(popup_menu);
 }
 
+
 static void popup_reset_callback(GtkWidget *w, gpointer info) 
 {
   menu_reset_controls(any_selected_sound());
   gtk_widget_hide(popup_menu);
 }
+
 
 static void create_popup_menu(guint button, oclock_t time)
 {
@@ -1121,6 +1139,7 @@ static void create_popup_menu(guint button, oclock_t time)
   gtk_menu_popup(GTK_MENU(popup_menu), NULL, NULL, NULL, NULL, button, time);
 }
 
+
 static XEN gtk_popup_hook;
 
 void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, int chn)
@@ -1164,6 +1183,7 @@ static int callb2option(int callb)
   return(-1);
 }
 
+
 static void SND_callback(GtkWidget *w, gpointer info) 
 {
   int callb, opt;
@@ -1172,6 +1192,7 @@ static void SND_callback(GtkWidget *w, gpointer info)
   if (opt != -1)
     g_snd_callback(callb);
 }
+
 
 GtkWidget *menu_widget(int which_menu)
 {
@@ -1187,6 +1208,7 @@ GtkWidget *menu_widget(int which_menu)
     }
   return(NULL);
 }
+
 
 static void add_option(GtkWidget *w, int which_menu, const char *label, int callb)
 {
@@ -1220,6 +1242,7 @@ static void add_option(GtkWidget *w, int which_menu, const char *label, int call
   added_options_callb[added_options_pos] = callb;
   added_options_pos++;
 }
+
 
 static int remove_option(int which_menu, const char *label)
 {
@@ -1255,6 +1278,7 @@ static int remove_option(int which_menu, const char *label)
   return(INVALID_MENU);
 }
 
+
 int g_add_to_main_menu(char *label, int slot)
 {
   GtkWidget *m, *mc;
@@ -1275,10 +1299,12 @@ int g_add_to_main_menu(char *label, int slot)
   return(new_menu);
 }
 
+
 GtkWidget *get_help_menu_widget(void)
 {
   return(help_cascade_menu);
 }
+
 
 GtkWidget *g_add_to_menu(int which_menu, const char *label, int callb, int position)
 {
@@ -1313,6 +1339,7 @@ GtkWidget *g_add_to_menu(int which_menu, const char *label, int callb, int posit
   return(m);
 }
 
+
 int g_remove_from_menu(int which_menu, const char *label)
 {
   return(remove_option(which_menu, label));
@@ -1331,6 +1358,7 @@ static XEN g_menu_widgets(void)
 	       XEN_CONS(XEN_WRAP_WIDGET(popup_menu),
 	        XEN_EMPTY_LIST))))))));
 }
+
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_menu_widgets_w, g_menu_widgets)

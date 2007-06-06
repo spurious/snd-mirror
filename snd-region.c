@@ -2,13 +2,16 @@
 #include "sndlib-strings.h"
 #include "clm2xen.h"
 
+
 #define REGION_FILE 1
 #define REGION_DEFERRED 0
+
 /* region data can be stored either in a temp file that is deleted when the region is deleted (hence must be copied upon insert or mix)
  *    or as a descriptor of current chan/beg/num/edpos locs.  The descriptor form is used until some use is made of the data
  *    that requires a file anyway (e.g. mixing), or if the data the descriptor depends on is about to be flushed (e.g. the
  *    underlying edit list is about to be cleared, or the file is being closed, etc).
  */
+
 
 #define CLEAR_REGION_DATA 0
 #define COMPLETE_DELETION 1
@@ -22,6 +25,7 @@ typedef struct {
   int *edpos;
 } deferred_region;
 
+
 static deferred_region *free_deferred_region(deferred_region *dr)
 {
   if (dr)
@@ -32,6 +36,7 @@ static deferred_region *free_deferred_region(deferred_region *dr)
     }
   return(NULL);
 }
+
 
 typedef struct region {
   int chans;
@@ -52,6 +57,7 @@ typedef struct region {
   off_t *begs, *lens;
 } region;
 
+
 #if MUS_DEBUGGING
 void describe_region(FILE *fd, void *ur);
 void describe_region(FILE *fd, void *ur)
@@ -66,6 +72,7 @@ void describe_region(FILE *fd, void *ur)
 	  r->name, r->start, r->end);
 }
 #endif
+
 
 static void deferred_region_to_temp_file(region *r);
 
@@ -115,6 +122,7 @@ static void free_region(region *r, int complete)
     }
 }
 
+
 static region **regions = NULL;
 static int regions_size = 0, regions_allocated_size = 0;
 
@@ -144,6 +152,7 @@ void allocate_regions(int numreg)
   regions_size = numreg;
 }
 
+
 static void set_max_regions(int n)
 {
   if (n >= 0)
@@ -153,6 +162,7 @@ static void set_max_regions(int n)
       in_set_max_regions(n);
     }
 }
+
 
 int region_id_to_list_position(int id)
 {
@@ -165,6 +175,7 @@ int region_id_to_list_position(int id)
   return(INVALID_REGION);
 }
 
+
 int region_list_position_to_id(int n) 
 {
   if ((n >= 0) && 
@@ -173,6 +184,7 @@ int region_list_position_to_id(int n)
     return(regions[n]->id);
   return(INVALID_REGION);
 }
+
 
 static region *id_to_region(int id)
 {
@@ -185,10 +197,12 @@ static region *id_to_region(int id)
   return(NULL);
 }
 
+
 bool region_ok(int id) 
 {
   return(id_to_region(id) != NULL);
 }
+
 
 off_t region_len(int n) 
 {
@@ -199,6 +213,7 @@ off_t region_len(int n)
   return(0);
 }
 
+
 int region_chans(int n) 
 {  
   region *r;
@@ -208,6 +223,7 @@ int region_chans(int n)
   return(0);
 }
 
+
 int region_srate(int n) 
 {  
   region *r;
@@ -216,6 +232,7 @@ int region_srate(int n)
     return(r->srate); 
   return(0);
 }
+
 
 Float region_maxamp(int n) 
 {
@@ -229,6 +246,7 @@ Float region_maxamp(int n)
     }
   return(0.0);
 }
+
 
 static off_t region_maxamp_position(int n) 
 {
@@ -266,6 +284,7 @@ static off_t region_maxamp_position(int n)
   return(-1);
 }
 
+
 static Float region_sample(int reg, int chn, off_t samp)
 {
   region *r;
@@ -295,6 +314,7 @@ static Float region_sample(int reg, int chn, off_t samp)
   return(0.0);
 }
 
+
 off_t region_current_location(snd_fd *fd)
 {
   region *r;
@@ -310,6 +330,7 @@ off_t region_current_location(snd_fd *fd)
     }
   return(-1);
 }
+
 
 static void region_samples(int reg, int chn, off_t beg, off_t num, Float *data)
 {
@@ -347,6 +368,7 @@ static void region_samples(int reg, int chn, off_t beg, off_t num, Float *data)
     }
 }
 
+
 static int first_region_active(void)
 {
   int i;
@@ -356,6 +378,7 @@ static int first_region_active(void)
   return(NO_REGIONS);
 }
 
+
 static int check_regions(void)
 {
   int act;
@@ -364,6 +387,7 @@ static int check_regions(void)
     reflect_no_regions_in_region_browser();
   return(act);
 }
+
 
 static void make_region_readable(region *r)
 {
@@ -419,6 +443,7 @@ static void make_region_readable(region *r)
   r->rsp = regsp;
 }
 
+
 file_info *fixup_region_data(chan_info *cp, int chan, int pos)
 {
   /* for region browser labels */
@@ -456,6 +481,7 @@ file_info *fixup_region_data(chan_info *cp, int chan, int pos)
   return(NULL);
 }
 
+
 void for_each_region_chan_with_refint(void (*func)(chan_info *ncp, int *val), int *value)
 {
   /* used only in snd-io.c to remove dangling temp files (probably can't actually happen) */
@@ -474,6 +500,7 @@ void for_each_region_chan_with_refint(void (*func)(chan_info *ncp, int *val), in
 	  }
     }
 }
+
 
 region_state *region_report(void)
 {
@@ -502,6 +529,7 @@ region_state *region_report(void)
   return(rs);
 }
 
+
 char *region_description(int rg)
 {
   region *r;
@@ -510,6 +538,7 @@ char *region_description(int rg)
     return(mus_format("region data from %s (%s : %s)", r->name, r->start, r->end));
   return(NULL);
 }
+
 
 void free_region_state(region_state *r)
 {
@@ -524,6 +553,7 @@ void free_region_state(region_state *r)
     }
 }
 
+
 int remove_region_from_list(int pos) /* region browser */
 {
   int i, id;
@@ -536,6 +566,7 @@ int remove_region_from_list(int pos) /* region browser */
   regions[regions_size - 1] = NULL;
   return(check_regions());
 }
+
 
 static void add_to_region_list(region *r) 
 {
@@ -560,6 +591,7 @@ static void add_to_region_list(region *r)
   regions[0] = r;
   if (!r) check_regions();
 }
+
 
 #define NOT_EDITABLE -2
 
@@ -646,6 +678,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, io_error_t 
   return(id);
 }
 
+
 static io_error_t paste_region_2(int n, chan_info *cp, bool add, off_t beg)
 {
   io_error_t err = IO_NO_ERROR;
@@ -654,8 +687,18 @@ static io_error_t paste_region_2(int n, chan_info *cp, bool add, off_t beg)
   return(err);
 }
 
-io_error_t paste_region(int n, chan_info *cp) {return(paste_region_2(n, cp, false, CURSOR(cp)));}
-io_error_t add_region(int n, chan_info *cp) {return(paste_region_2(n, cp, true, CURSOR(cp)));}
+
+io_error_t paste_region(int n, chan_info *cp) 
+{
+  return(paste_region_2(n, cp, false, CURSOR(cp)));
+}
+
+
+io_error_t add_region(int n, chan_info *cp) 
+{
+  return(paste_region_2(n, cp, true, CURSOR(cp)));
+}
+
 
 int define_region(sync_info *si, off_t *ends)
 {
@@ -725,6 +768,7 @@ int define_region(sync_info *si, off_t *ends)
   if (region_browser_is_active()) update_region_browser(true);
   return(r->id);
 }
+
 
 static void deferred_region_to_temp_file(region *r)
 {
@@ -890,6 +934,7 @@ static void deferred_region_to_temp_file(region *r)
   r->dr = free_deferred_region(r->dr);
 }
 
+
 void sequester_deferred_regions(chan_info *cp, int edit_top)
 {
   region *r;
@@ -917,6 +962,7 @@ void sequester_deferred_regions(chan_info *cp, int edit_top)
     }
 }
 
+
 snd_fd *init_region_read(off_t beg, int n, int chan, read_direction_t direction)
 {
   /* conjure up a reasonable looking ed list and sound list */
@@ -942,6 +988,7 @@ snd_fd *init_region_read(off_t beg, int n, int chan, read_direction_t direction)
   return(NULL);
 }
 
+
 void cleanup_region_temp_files(void)
 { /* called upon exit to get rid of lingering region-related temp files */
   int i;
@@ -960,6 +1007,7 @@ void cleanup_region_temp_files(void)
     }
 }
 
+
 int snd_regions(void)
 {
   int i, num;
@@ -969,6 +1017,7 @@ int snd_regions(void)
       num++;
   return(num);
 }
+
 
 /* (restore-region n chans len srate maxamp name start end filename [date-and-length]) */
 
@@ -1027,6 +1076,7 @@ void save_regions(FILE *fd)
     }
 }
 
+
 void region_edit(int pos)
 {
   /* from region browser:
@@ -1076,6 +1126,7 @@ void region_edit(int pos)
   else snd_error(_("edit region: no region at position %d!"), pos);
 }
 
+
 void clear_region_backpointer(snd_info *sp)
 {
   if (sp->edited_region)
@@ -1092,6 +1143,7 @@ void clear_region_backpointer(snd_info *sp)
       sp->edited_region = NULL;
     }
 }
+
 
 void save_region_backpointer(snd_info *sp)
 {
@@ -1129,6 +1181,7 @@ void save_region_backpointer(snd_info *sp)
 	update_region_browser(true);
     }
 }
+
 
 io_error_t save_region(int rg, const char *name, int type, int format, const char *comment)
 {
@@ -1227,6 +1280,7 @@ static XEN snd_no_such_region_error(const char *caller, XEN n)
   return(XEN_FALSE);
 }
 
+
 static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, XEN name, XEN start, XEN end, XEN filename, XEN date)
 {
   /* internal function used by save-state mechanism -- not intended for external use */
@@ -1265,6 +1319,7 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
   return(C_TO_XEN_INT(r->id));
 }
 
+
 static XEN g_insert_region(XEN samp_n, XEN reg_n, XEN snd_n, XEN chn_n) /* opt reg_n */
 {
   #define H_insert_region "("  S_insert_region " :optional (start-samp 0) (region-id 0) snd chn): \
@@ -1292,11 +1347,13 @@ insert region data into snd's channel chn starting at start-samp"
   return(reg_n);
 }
 
+
 static XEN g_max_regions(void) 
 {
   #define H_max_regions "(" S_max_regions "): max number of regions saved on the region list"
   return(C_TO_XEN_INT(max_regions(ss)));
 }
+
 
 static XEN g_set_max_regions(XEN n) 
 {
@@ -1311,6 +1368,7 @@ static XEN g_set_max_regions(XEN n)
   return(C_TO_XEN_INT(max_regions(ss)));
 }
 
+
 static XEN g_region_p(XEN n)
 {
   #define H_region_p "(" S_region_p " reg): " PROC_TRUE " if region is active"
@@ -1318,6 +1376,7 @@ static XEN g_region_p(XEN n)
     return(C_TO_XEN_BOOLEAN(region_ok(XEN_REGION_TO_C_INT(n))));
   return(XEN_FALSE);
 }
+
 
 static XEN g_region_frames(XEN n, XEN chan) 
 {
@@ -1338,6 +1397,7 @@ static XEN g_region_frames(XEN n, XEN chan)
   return(C_TO_XEN_OFF_T(r->lens[chn] + 1));
 }
 
+
 static XEN g_region_position(XEN n, XEN chan) 
 {
   region *r;
@@ -1354,6 +1414,7 @@ static XEN g_region_position(XEN n, XEN chan)
   r = id_to_region(rg);
   return(C_TO_XEN_OFF_T(r->begs[chn]));
 }
+
 
 typedef enum {REGION_SRATE, REGION_CHANS, REGION_MAXAMP, REGION_FORGET, REGION_PLAY, REGION_MAXAMP_POSITION, REGION_HOME} region_field_t;
 
@@ -1385,12 +1446,14 @@ static XEN region_get(region_field_t field, XEN n, const char *caller)
   return(XEN_FALSE);
 }
 
+
 static XEN g_region_srate(XEN n) 
 {
   #define H_region_srate "(" S_region_srate " :optional (reg 0)): region (nominal) srate"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_srate, "a region id");
   return(region_get(REGION_SRATE, n, S_region_srate));
 }
+
 
 static XEN g_region_chans(XEN n) 
 {
@@ -1399,12 +1462,14 @@ static XEN g_region_chans(XEN n)
   return(region_get(REGION_CHANS, n, S_region_chans));
 }
 
+
 static XEN g_region_home(XEN n) 
 {
   #define H_region_home "(" S_region_home " :optional (reg 0): a list with the region source sound name and position info"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_home, "a region id");
   return(region_get(REGION_HOME, n, S_region_home));
 }
+
 
 static XEN g_region_maxamp(XEN n) 
 {
@@ -1413,6 +1478,7 @@ static XEN g_region_maxamp(XEN n)
   return(region_get(REGION_MAXAMP, n, S_region_maxamp));
 }
 
+
 static XEN g_region_maxamp_position(XEN n) 
 {
   #define H_region_maxamp_position "(" S_region_maxamp_position " :optional (reg 0)): first sample where region maxamp occurs"
@@ -1420,12 +1486,14 @@ static XEN g_region_maxamp_position(XEN n)
   return(region_get(REGION_MAXAMP_POSITION, n, S_region_maxamp_position));
 }
 
+
 static XEN g_forget_region(XEN n) 
 {
   #define H_forget_region "(" S_forget_region " :optional (reg 0)): remove region reg from the region list"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_forget_region, "a region id");
   return(region_get(REGION_FORGET, n, S_forget_region));
 }
+
 
 static XEN g_play_region(XEN n, XEN wait, XEN stop_proc) 
 {
@@ -1447,6 +1515,7 @@ static XEN g_play_region(XEN n, XEN wait, XEN stop_proc)
   return(n);
 }
 
+
 static XEN g_regions(void) 
 {
   #define H_regions "(" S_regions "): current active regions (a list of region ids)"
@@ -1458,6 +1527,7 @@ static XEN g_regions(void)
       result = XEN_CONS(C_INT_TO_XEN_REGION(regions[i]->id), result);
   return(result);
 }
+
 
 static XEN g_make_region(XEN beg, XEN end, XEN snd_n, XEN chn_n)
 {
@@ -1529,6 +1599,7 @@ selection is used."
   return(C_INT_TO_XEN_REGION(id));
 }
 
+
 static XEN kw_header_type, kw_data_format, kw_comment, kw_file;
 
 static void init_region_keywords(void)
@@ -1539,6 +1610,7 @@ static void init_region_keywords(void)
   kw_file = XEN_MAKE_KEYWORD("file");
 }
 
+
 static void save_region_to_xen_error(const char *msg, void *data)
 {
   redirect_snd_error_to(NULL, NULL);
@@ -1546,6 +1618,7 @@ static void save_region_to_xen_error(const char *msg, void *data)
 	    XEN_LIST_2(C_TO_XEN_STRING(S_save_region),
 		       C_TO_XEN_STRING(msg)));
 }
+
 
 static XEN g_save_region(XEN n, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
@@ -1599,6 +1672,7 @@ using data format (default depends on machine byte order), header type (" S_mus_
   return(args[orig_arg[0] - 1]); /* -> filename, parallel save-selection */
 }
 
+
 static XEN g_mix_region(XEN chn_samp_n, XEN reg_n, XEN snd_n, XEN chn_n, XEN reg_chn)
 {
   #define H_mix_region "(" S_mix_region " :optional (chn-samp 0) (region 0) snd chn (region-chan #t)): \
@@ -1631,6 +1705,7 @@ mix region's channel region-chan (or all chans if region-chan is " PROC_TRUE ") 
   return(C_TO_XEN_INT(id));
 }
 
+
 static XEN g_region_sample(XEN samp_n, XEN reg_n, XEN chn_n)
 {
   #define H_region_sample "(" S_region_sample " :optional (samp 0) (region 0) (chan 0)): region's sample at samp in chan"
@@ -1649,6 +1724,7 @@ static XEN g_region_sample(XEN samp_n, XEN reg_n, XEN chn_n)
     return(C_TO_XEN_DOUBLE(region_sample(rg, chan, samp)));
   else return(snd_no_such_channel_error(S_region_sample, XEN_LIST_1(reg_n), chn_n));
 }
+
 
 static XEN g_region_to_vct(XEN beg_n, XEN num, XEN reg_n, XEN chn_n, XEN v)
 {
@@ -1699,7 +1775,9 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
   return(XEN_FALSE);
 }
 
+
 static XEN g_region_graph_style(void) {return(C_TO_XEN_INT(region_graph_style(ss)));}
+
 static XEN g_set_region_graph_style(XEN val) 
 {
   graph_style_t style;
@@ -1717,6 +1795,7 @@ and " S_graph_dots_and_lines "."
     }
   return(val);
 }
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_10(g_restore_region_w, g_restore_region)

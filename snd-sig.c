@@ -848,10 +848,7 @@ static int off_t_compare(const void *a, const void *b)
   return(1);
 }
 
-
-/* TODO: src ratio of -1 is the same as reverse  (reverse_channel or reverse_sound)
- * TODO: do the marks get reset correctly if negative src ratio?
- */
+static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XEN edp, const char *caller, int arg_pos);
 
 
 static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, Float ratio, mus_any *egen, 
@@ -872,7 +869,13 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   io_error_t io_err = IO_NO_ERROR;
   src_state *sr;
 
-  if ((ratio == 1.0) && (egen == NULL)) return(NULL);
+  if (egen == NULL)
+    {
+      if (ratio == 1.0) 
+	return(NULL);
+      if (ratio == -1.0)
+	return(reverse_channel(cp, sf, beg, dur, C_TO_XEN_INT(sf->edit_ctr), origin, 0));
+    }
 
   sp = cp->sound;
   if (!(editable_p(cp))) return(NULL); /* edit hook result perhaps */
@@ -5371,7 +5374,8 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 	}
     }
 
-  if (ratio > 0.0)
+  /* TODO: env src with negative vals? and better check here */
+  if (ratio >= 0.0) /* ratio == 0.0 if env in use (gad...) */
     sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   else sf = init_sample_read_any(beg + dur - 1, cp, READ_BACKWARD, pos);
 

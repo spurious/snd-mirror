@@ -66,8 +66,11 @@
 #include "sndlib-strings.h"
 
 #include <limits.h>
+
+
 #define BIGGEST_4_BYTE_SIGNED_INT   LONG_MAX
 #define BIGGEST_4_BYTE_UNSIGNED_INT ULONG_MAX
+
 
 static const unsigned char I_DSND[4] = {'.','s','n','d'};  /* NeXT/Sun/Dec/SGI/AFsp first word */
 static const unsigned char I_FORM[4] = {'F','O','R','M'};  /* AIFF first word */
@@ -159,6 +162,7 @@ static int *marker_ids = NULL, *marker_positions = NULL;
 
 static bool hdrbuf_is_inited = false;
 
+
 /* for CLM */
 void mus_reset_headers_c(void) 
 {
@@ -221,12 +225,14 @@ int mus_header_loop_end(int which)        {if (loop_ends) return(loop_ends[which
 int mus_header_mark_position(int id)      {int i; for (i = 0; i < markers; i++) {if (marker_ids[i] == id) return(marker_positions[i]);} return(-1);}
 int mus_header_base_detune(void)          {return(base_detune);}
 int mus_header_base_note(void)            {return(base_note);}
+
 int mus_header_mark_info(int **m_ids, int **m_positions)
 {
   (*m_ids) = marker_ids;
   (*m_positions) = marker_positions;
   return(markers);
 }
+
 
 int mus_bytes_per_sample(int format)
 {
@@ -259,8 +265,16 @@ int mus_bytes_per_sample(int format)
 }
 
 
-off_t mus_samples_to_bytes (int format, off_t size) {return(size * (mus_bytes_per_sample(format)));}
-off_t mus_bytes_to_samples (int format, off_t size) {return((off_t)(size / (mus_bytes_per_sample(format))));}
+off_t mus_samples_to_bytes (int format, off_t size) 
+{
+  return(size * (mus_bytes_per_sample(format)));
+}
+
+
+off_t mus_bytes_to_samples (int format, off_t size) 
+{
+  return((off_t)(size / (mus_bytes_per_sample(format))));
+}
 
 
 static bool equal_big_or_little_endian(const unsigned char *n1, const unsigned int n2)
@@ -268,11 +282,13 @@ static bool equal_big_or_little_endian(const unsigned char *n1, const unsigned i
   return((mus_char_to_ubint(n1) == n2) || (mus_char_to_ulint(n1) == n2));
 }
 
+
 static short big_or_little_endian_short(const unsigned char *n, bool little)
 {
   if (little) return(mus_char_to_lshort(n));
   return(mus_char_to_bshort(n));
 }
+
 
 static int big_or_little_endian_int(const unsigned char *n, bool little)
 {
@@ -280,11 +296,13 @@ static int big_or_little_endian_int(const unsigned char *n, bool little)
   return(mus_char_to_bint(n));
 }
 
+
 static unsigned int big_or_little_endian_uint(const unsigned char *n, bool little)
 {
   if (little) return(mus_char_to_ulint(n));
   return(mus_char_to_ubint(n));
 }
+
 
 static float big_or_little_endian_float(const unsigned char *n, bool little)
 {
@@ -388,6 +406,7 @@ const char *mus_header_type_name(int type)
     }
 }
 
+
 const char *mus_data_format_name(int format)
 {
   switch (format)
@@ -417,6 +436,7 @@ const char *mus_data_format_name(int format)
     default:                   return("unknown");                                  break;
     }
 }
+
 
 const char *mus_data_format_short_name(int format)
 {
@@ -448,11 +468,13 @@ const char *mus_data_format_short_name(int format)
     }
 }
 
+
 #if HAVE_RUBY
   #define TO_LANG(Str) strdup(xen_scheme_constant_to_ruby(Str))
 #else
   #define TO_LANG(Str) Str
 #endif
+
 
 char *mus_header_type_to_string(int type)
 {
@@ -474,6 +496,7 @@ char *mus_header_type_to_string(int type)
     }
   return(NULL);
 }
+
 
 char *mus_data_format_to_string(int format)
 {
@@ -505,6 +528,7 @@ char *mus_data_format_to_string(int format)
   return(NULL);
 }
 
+
 static const char *any_data_format_name(int sndlib_format)
 {
   if (MUS_DATA_FORMAT_OK(sndlib_format))
@@ -512,6 +536,7 @@ static const char *any_data_format_name(int sndlib_format)
   else return(mus_header_original_format_name(mus_header_original_format(),
 					      mus_header_type()));
 }
+
 
 #define SEEK_FILE_LENGTH(File) lseek(File, 0L, SEEK_END)
 static int read_bicsf_header(const char *filename, int fd);
@@ -784,6 +809,7 @@ int mus_header_write_next_header(int fd, int wsrate, int wchans, int loc, int si
  * There was also (briefly) an AIFS file, now deprecated.
  */
 
+
 /* ieee-80 conversions -- design by committee! */
 /* this code taken from CSound sources -- apparently originally written by Malcolm Slaney at Apple */
 
@@ -798,6 +824,7 @@ static double myUlongToDouble(unsigned int ul)
   return val;
 }
 
+
 static unsigned int myDoubleToUlong(double val)
 {
   unsigned int ul;
@@ -805,6 +832,7 @@ static unsigned int myDoubleToUlong(double val)
   else ul = ULPOW2TO31 | (unsigned int)(val-DPOW2TO31);
   return ul;
 }
+
 
 static double ieee_80_to_double(unsigned char *p)
 {
@@ -826,6 +854,7 @@ static double ieee_80_to_double(unsigned char *p)
       return sign ? -val : val;
     }
 }
+
 
 static void double_to_ieee_80(double val, unsigned char *p)
 {
@@ -2530,12 +2559,14 @@ static void soundfont_entry(const char *name, int start, int end, int loop_start
   soundfont_entries++;
 }
 
+
 int mus_header_sf2_entries(void) {return(soundfont_entries);}
 char *mus_header_sf2_name(int n) {return(soundfont_names[n]);}
 int mus_header_sf2_start(int n) {return(soundfont_starts[n]);}
 int mus_header_sf2_end(int n) {return(soundfont_ends[n]);}
 int mus_header_sf2_loop_start(int n) {return(soundfont_loop_starts[n]);}
 int mus_header_sf2_loop_end(int n) {return(soundfont_loop_ends[n]);}
+
 
 static int read_soundfont_header(const char *filename, int fd)
 {
@@ -3414,6 +3445,7 @@ static int read_nvf_header(const char *filename, int fd)
 }
 
 
+
 /* ------------------------------------ ADC ------------------------------------ 
  * also known as OGI format
  * TIMIT format is identical except it omits the data format field (header size claims to be bytes)
@@ -3568,6 +3600,7 @@ static int read_sndt_header(const char *filename, int fd)
 }
 
 
+
 /* ------------------------------------ Covox v8 ------------------------------------- 
  *
  *  0: 377 125 377 252 377 125 377 252 x x 0's to 16
@@ -3585,6 +3618,7 @@ static int read_covox_header(const char *filename, int fd)
   if (data_size < 0) return(mus_error(MUS_HEADER_READ_FAILED, "%s: data_size = " OFF_TD "?", filename, data_size));
   return(MUS_NO_ERROR);
 }
+
 
 
 /* ------------------------------------ SMP ------------------------------------- 
@@ -3620,6 +3654,7 @@ static int read_smp_header(const char *filename, int fd)
     }
   return(MUS_NO_ERROR);
 }
+
 
 
 /* ------------------------------------ SPPACK ------------------------------------- 
@@ -3679,6 +3714,7 @@ static int read_sppack_header(const char *filename, int fd)
     data_size = mus_bytes_to_samples(data_format, true_file_length - data_location);
   return(MUS_NO_ERROR);
 }
+
 
 
 /* ------------------------------------ ESPS (Entropic Signal Processing System) ------------------------------------- 
@@ -3839,6 +3875,7 @@ static int read_inrs_header(const char *filename, int fd, int loc)
   data_size = mus_bytes_to_samples(data_format, true_file_length - data_location);
   return(MUS_NO_ERROR);
 }
+
 
 
 /* ------------------------------------ MAUD ------------------------------------- 
@@ -4030,6 +4067,7 @@ static int read_csl_header(const char *filename, int fd)
 }
 
 
+
 /* ------------------------------------ snack SMP ------------------------------------- 
  *
  * there's apparently yet another "smp" format (from nist??)
@@ -4073,6 +4111,7 @@ static int read_file_samp_header(const char *filename, int fd)
   data_size = mus_bytes_to_samples(data_format, true_file_length - data_location);
   return(MUS_NO_ERROR);
 }
+
 
 
 /* ------------------------------------ Sound Designer I -------------------------------------
@@ -4284,6 +4323,7 @@ static int read_srfs_header(const char *filename, int fd)
 }
 
 
+
 /* ------------------------------------ Quicktime -------------------------------------
  *
  * infinitely complicated -- see Quicktime File Format doc from Apple.
@@ -4301,6 +4341,7 @@ static int read_qt_header(const char *filename, int fd)
   data_format = MUS_UBYTE;
   return(MUS_NO_ERROR);
 }
+
 
 
 /* ------------------------------------ SBStudioII -------------------------------------
@@ -4392,6 +4433,7 @@ static int read_sbstudio_header(const char *filename, int fd)
   data_size = mus_bytes_to_samples(data_format, data_size);
   return(MUS_NO_ERROR);
 }
+
 
 
 /* ------------------------------------ Delusion Sound -------------------------------------
@@ -4501,6 +4543,7 @@ static int read_tx16w_header(const char *filename, int fd)
 }
 
 
+
 /* ------------------------------------ Yamaha SY-85 and SY-99 -------------------------------------
  *
  * more reverse engineering...
@@ -4526,6 +4569,7 @@ static int read_sy85_header(const char *filename, int fd)
 }
 
 
+
 /* ------------------------------------ Kurzweil 2000 -------------------------------------
  * 
  * "PRAM" then header len as big endian int??
@@ -4545,6 +4589,7 @@ static int read_kurzweil_2000_header(const char *filename, int fd)
 }
 
 
+
 /* ------------------------------------ Korg -------------------------------------
  * 
  * "SMP1" -- guessing on the rest
@@ -4561,6 +4606,7 @@ static int read_korg_header(const char *filename, int fd)
   data_size = mus_bytes_to_samples(data_format, data_size);
   return(MUS_NO_ERROR);
 }
+
 
 
 /* ------------------------------------ Maui -------------------------------------
@@ -4583,6 +4629,7 @@ static int read_maui_header(const char *filename, int fd)
   data_format = MUS_LSHORT;
   return(MUS_NO_ERROR);
 }
+
 
 
 /* ------------------------------------ Impulse Tracker -------------------------------------
@@ -4640,6 +4687,7 @@ static int read_akai3_header(const char *filename, int fd)
 #endif
 
 
+
 /* ------------------------------------ AKAI 4 -------------------------------------
  * 
  * 1, 4, info from Paul Kellet -- lost the url ("MPC-2000")
@@ -4656,6 +4704,7 @@ static int read_akai4_header(const char *filename, int fd)
   data_size = mus_bytes_to_samples(data_format, data_size);
   return(MUS_NO_ERROR);
 }
+
 
 
 /* ------------------------------------ PVF (portable voice format) -------------------------------------
@@ -4705,6 +4754,7 @@ static int read_pvf_header(const char *filename, int fd)
   data_size = mus_bytes_to_samples(data_format, true_file_length - data_location);
   return(MUS_NO_ERROR);
 }
+
 
 
 /* ------------------------------------ Ultratracker WaveSample -------------------------------------
@@ -4786,6 +4836,7 @@ static int read_sample_dump_header(const char *filename, int fd)
   data_size = mus_bytes_to_samples(data_format, data_size);
   return(MUS_NO_ERROR);
 }
+
 
 
 /* ------------------------------------ Digiplayer ST3 -------------------------------------
@@ -4934,6 +4985,7 @@ static int read_diamondware_header(const char *filename, int fd)
 }
 
 
+
 /* ------------------------------------ Ensoniq Paris -------------------------------------
  * _paf -> Ensoniq Paris?  (this info from libaudiofile)
  *  0   paf (or fap)
@@ -4976,6 +5028,7 @@ static int read_paf_header(const char *filename, int fd)
     data_size = mus_bytes_to_samples(data_format, true_file_length - 2048);
   return(MUS_NO_ERROR);
 }
+
 
 
 /* ------------------------------------ Comdisco SPW -------------------------------------
@@ -5103,6 +5156,7 @@ static int read_comdisco_header(const char *filename, int fd)
 }
 
 
+
 /* ------------------------------------ MS ASF -------------------------------------
  *
  * asf format is described at http://www.microsoft.com/asf/specs.htm
@@ -5191,6 +5245,7 @@ static int read_no_header(const char *filename, int fd)
   return(MUS_NO_ERROR);
 }
 
+
 void mus_header_set_raw_defaults(int sr, int chn, int frm)
 {
   if (sr > 0) header_raw_srate = sr;
@@ -5198,12 +5253,14 @@ void mus_header_set_raw_defaults(int sr, int chn, int frm)
   if (MUS_DATA_FORMAT_OK(frm)) header_raw_format = frm;
 }
 
+
 void mus_header_raw_defaults(int *sr, int *chn, int *frm)
 {
   (*sr) = header_raw_srate;
   (*chn) = header_raw_chans;
   (*frm) = header_raw_format;
 }
+
 
 
 /* ------------------------------------ all together now ------------------------------------ */

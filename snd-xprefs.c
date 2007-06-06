@@ -1,6 +1,7 @@
 #include "snd.h"
 #include "sndlib-strings.h"
 
+
 /* preferences dialog; layout design taken from webmail
  */
 
@@ -21,6 +22,7 @@ static bool prefs_helping = false, prefs_unsaved = false;
 static char *prefs_saved_filename = NULL;
 static char *include_load_path = NULL;
 
+
 #define MID_POSITION 40
 #define COLOR_POSITION 50
 #define FIRST_COLOR_POSITION 6
@@ -39,6 +41,7 @@ static char *include_load_path = NULL;
 
 #define STARTUP_WIDTH 925
 #define STARTUP_HEIGHT 800
+
 
 typedef struct prefs_info {
   Widget label, text, arrow_up, arrow_down, arrow_right, error, toggle, scale, toggle2, toggle3;
@@ -79,6 +82,7 @@ static void post_prefs_error(const char *msg, prefs_info *data);
   static void va_post_prefs_error(const char *msg, prefs_info *data, ...);
 #endif
 
+
 #define GET_TOGGLE(Toggle)        (XmToggleButtonGetState(Toggle) == XmSET)
 #define SET_TOGGLE(Toggle, Value) XmToggleButtonSetState(Toggle, Value, false)
 #define GET_TEXT(Text)            XmTextFieldGetString(Text)
@@ -101,6 +105,7 @@ static int get_scale_1(Widget scale)
 
 #define GET_SCALE()               (get_scale_1(prf->scale) * 0.01)
 
+
 static void set_radio_button(prefs_info *prf, int which)
 {
   if ((which >= 0) && (which < prf->num_buttons))
@@ -115,6 +120,7 @@ static void set_radio_button(prefs_info *prf, int which)
       prf->radio_button = prf->radio_buttons[which];
     }
 }
+
 
 static int which_radio_button(prefs_info *prf)
 {
@@ -135,6 +141,7 @@ static void prefs_help_click_callback(Widget w, XtPointer context, XtPointer inf
   prefs_help((prefs_info *)context);
 }
 
+
 static void prefs_tooltip_help(XtPointer context, XtIntervalId *id)
 {
   prefs_info *prf = (prefs_info *)context;
@@ -143,6 +150,7 @@ static void prefs_tooltip_help(XtPointer context, XtIntervalId *id)
   else prefs_helping = false;
   prf->help_id = 0;
 }
+
 
 static void mouse_enter_pref_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
@@ -154,6 +162,7 @@ static void mouse_enter_pref_callback(Widget w, XtPointer context, XEvent *event
 				   (XtPointer)prf);
 }
 
+
 static void mouse_leave_pref_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   prefs_info *prf = (prefs_info *)context;
@@ -164,10 +173,12 @@ static void mouse_leave_pref_callback(Widget w, XtPointer context, XEvent *event
     }
 }
 
+
 static void mouse_help_click_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   prefs_help((prefs_info *)context);
 }
+
 
 static bool prefs_dialog_error_is_posted = false;
 
@@ -182,6 +193,7 @@ static void post_prefs_dialog_error(const char *message, void *data)
   prefs_dialog_error_is_posted = (message != NULL);
 }
 
+
 static void clear_prefs_dialog_error(void)
 {
   if (prefs_dialog_error_is_posted)
@@ -190,6 +202,7 @@ static void clear_prefs_dialog_error(void)
       post_prefs_dialog_error(NULL, NULL);
     }
 }
+
 
 static void prefs_change_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -227,6 +240,7 @@ static Widget make_row_label(prefs_info *prf, const char *label, Widget box, Wid
   return(w);
 }
 
+
 /* ---------------- row inner label widget ---------------- */
 
 static Widget make_row_inner_label(prefs_info *prf, const char *label, Widget left_widget, Widget box, Widget top_widget)
@@ -252,6 +266,7 @@ static Widget make_row_inner_label(prefs_info *prf, const char *label, Widget le
   return(w);
 }
 
+
 /* ---------------- row middle separator widget ---------------- */
 
 static Widget make_row_middle_separator(Widget label, Widget box, Widget top_widget)
@@ -274,6 +289,7 @@ static Widget make_row_middle_separator(Widget label, Widget box, Widget top_wid
   return(XtCreateManagedWidget("sep", xmSeparatorWidgetClass, box, args, n));
 }
 
+
 /* ---------------- row inner separator widget ---------------- */
 
 static Widget make_row_inner_separator(int width, Widget left_widget, Widget box, Widget top_widget)
@@ -294,6 +310,7 @@ static Widget make_row_inner_separator(int width, Widget left_widget, Widget box
   XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
   return(XtCreateManagedWidget("sep1", xmSeparatorWidgetClass, box, args, n));
 }
+
 
 /* ---------------- row help widget ---------------- */
 
@@ -343,6 +360,7 @@ static Widget make_row_help(prefs_info *prf, const char *label, Widget box, Widg
   return(helper);
 }
 
+
 static Widget make_row_error(prefs_info *prf, Widget box, Widget left_widget, Widget top_widget)
 {
   Arg args[20];
@@ -367,6 +385,7 @@ static Widget make_row_error(prefs_info *prf, Widget box, Widget left_widget, Wi
 
   return(w);
 }
+
 
 /* ---------------- row toggle widget ---------------- */
 
@@ -419,6 +438,7 @@ static void remove_arrow_func(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+
 static void arrow_func_up(XtPointer context, XtIntervalId *id)
 {
   prefs_info *prf = (prefs_info *)context;
@@ -435,6 +455,7 @@ static void arrow_func_up(XtPointer context, XtIntervalId *id)
       else prf->power_id = 0;
     }
 }
+
 
 static void arrow_func_down(XtPointer context, XtIntervalId *id)
 {
@@ -453,6 +474,7 @@ static void arrow_func_down(XtPointer context, XtIntervalId *id)
     }
 }
 
+
 static void call_arrow_down_press(Widget w, XtPointer context, XtPointer info) 
 {
   prefs_info *prf = (prefs_info *)context;
@@ -468,6 +490,7 @@ static void call_arrow_down_press(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+
 static void call_arrow_up_press(Widget w, XtPointer context, XtPointer info) 
 {
   prefs_info *prf = (prefs_info *)context;
@@ -482,6 +505,7 @@ static void call_arrow_up_press(Widget w, XtPointer context, XtPointer info)
       else prf->power_id = 0;
     }
 }
+
 
 static Widget make_row_arrows(prefs_info *prf, Widget box, Widget left_widget, Widget top_widget)
 {
@@ -526,6 +550,7 @@ static Widget make_row_arrows(prefs_info *prf, Widget box, Widget left_widget, W
   return(prf->arrow_up);
 }
 
+
 /* ---------------- bool row ---------------- */
 
 static void call_toggle_func(Widget w, XtPointer context, XtPointer info)
@@ -534,6 +559,7 @@ static void call_toggle_func(Widget w, XtPointer context, XtPointer info)
   if ((prf) && (prf->toggle_func))
     (*(prf->toggle_func))(prf);
 }
+
 
 static prefs_info *prefs_row_with_toggle(const char *label, const char *varname, bool current_value,
 					 Widget box, Widget top_widget, 
@@ -563,6 +589,7 @@ static void call_toggle2_func(Widget w, XtPointer context, XtPointer info)
   if ((prf) && (prf->toggle2_func))
     (*(prf->toggle2_func))(prf);
 }
+
 
 static prefs_info *prefs_row_with_two_toggles(const char *label, const char *varname, 
 					      const char *label1, bool value1,
@@ -636,12 +663,14 @@ static Widget make_row_text(prefs_info *prf, const char *text_value, int cols, W
   return(w);
 }
 
+
 static void call_text_func(Widget w, XtPointer context, XtPointer info) 
 {
   prefs_info *prf = (prefs_info *)context;
   if ((prf) && (prf->text_func))
     (*(prf->text_func))(prf);
 }
+
 
 static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char *varname, bool current_value,
 						   const char *text_label, const char *text_value, int cols,
@@ -669,6 +698,7 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
 
   return(prf);
 }
+
 
 static prefs_info *prefs_row_with_toggle_with_two_texts(const char *label, const char *varname, bool current_value,
 							const char *label1, const char *text1, 
@@ -781,6 +811,7 @@ static void call_radio_func(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+
 static Widget make_row_radio_box(prefs_info *prf,
 				 const char **labels, int num_labels, int current_value,
 				 Widget box, Widget left_widget, Widget top_widget)
@@ -833,6 +864,7 @@ static Widget make_row_radio_box(prefs_info *prf,
   return(w);
 }
 
+
 static prefs_info *prefs_row_with_radio_box(const char *label, const char *varname, 
 					    const char **labels, int num_labels, int current_value,
 					    Widget box, Widget top_widget, 
@@ -849,6 +881,7 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
   help = make_row_help(prf, varname, box, top_widget, prf->toggle);
   return(prf);
 }
+
 
 /* ---------------- radio box + number ---------------- */
 
@@ -889,6 +922,7 @@ static void call_scale_func(Widget w, XtPointer context, XtPointer info)
     (*(prf->scale_func))(prf);
 }
 
+
 static void call_scale_text_func(Widget w, XtPointer context, XtPointer info)
 {
   prefs_info *prf = (prefs_info *)context;
@@ -896,12 +930,14 @@ static void call_scale_text_func(Widget w, XtPointer context, XtPointer info)
     (*(prf->text_func))(prf);
 }
 
+
 static void prefs_scale_callback(Widget w, XtPointer context, XtPointer info)
 {
   prefs_info *prf = (prefs_info *)context;
   XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)info;
   float_to_textfield(prf->text, (cb->value * prf->scale_max) / 100.0);
 }
+
 
 static prefs_info *prefs_row_with_scale(const char *label, const char *varname, 
 					Float max_val, Float current_value,
@@ -1061,12 +1097,14 @@ static list_entry *make_list_entry(prefs_info *prf, char *value)
   return(le);
 }
 
+
 static void prefs_list_callback(Widget w, XtPointer context, XtPointer info)
 {
   list_entry *le = (list_entry *)context;
   if ((le) && (le->prf->list_func))
     (*(le->prf->list_func))(le->prf, le->value);
 }
+
 
 static prefs_info *prefs_row_with_list(const char *label, const char *varname, const char *value,
 				       const char **values, int num_values,
@@ -1192,6 +1230,7 @@ static XColor *rgb_to_color_1(Float r, Float g, Float b)
   return(new_color);
 }
 
+
 static color_t rgb_to_color(Float r, Float g, Float b)
 {
   color_t temp;
@@ -1201,6 +1240,7 @@ static color_t rgb_to_color(Float r, Float g, Float b)
   FREE(color);
   return(temp);
 }
+
 
 static void pixel_to_rgb(Pixel pix, float *r, float *g, float *b)
 {
@@ -1214,6 +1254,7 @@ static void pixel_to_rgb(Pixel pix, float *r, float *g, float *b)
   (*g) = RGB_TO_FLOAT(tmp_color.green);
   (*b) = RGB_TO_FLOAT(tmp_color.blue);
 }
+
 
 static void reflect_color(prefs_info *prf)
 {
@@ -1241,10 +1282,12 @@ static void reflect_color(prefs_info *prf)
   float_to_textfield(prf->btxt, b);
 }
 
+
 static void prefs_color_callback(Widget w, XtPointer context, XtPointer info)
 {
   reflect_color((prefs_info *)context);
 }
+
 
 static void unpost_color_error(XtPointer data, XtIntervalId *id)
 {
@@ -1254,6 +1297,7 @@ static void unpost_color_error(XtPointer data, XtIntervalId *id)
   black_text(prf);
   set_label(prf->label, prf->saved_label);
 }
+
 
 static void errors_to_color_text(const char *msg, void *data)
 {
@@ -1266,6 +1310,7 @@ static void errors_to_color_text(const char *msg, void *data)
 		  (XtTimerCallbackProc)unpost_color_error,
 		  data);
 }
+
 
 static void prefs_r_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -1281,6 +1326,7 @@ static void prefs_r_callback(Widget w, XtPointer context, XtPointer info)
   if (str) XtFree(str);
 }
 
+
 static void prefs_g_callback(Widget w, XtPointer context, XtPointer info)
 {
   prefs_info *prf = (prefs_info *)context;
@@ -1295,6 +1341,7 @@ static void prefs_g_callback(Widget w, XtPointer context, XtPointer info)
   if (str) XtFree(str);
 }
 
+
 static void prefs_b_callback(Widget w, XtPointer context, XtPointer info)
 {
   prefs_info *prf = (prefs_info *)context;
@@ -1308,6 +1355,7 @@ static void prefs_b_callback(Widget w, XtPointer context, XtPointer info)
   if (!(prf->got_error)) reflect_color(prf);
   if (str) XtFree(str);
 }
+
 
 static void prefs_call_color_func_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -1324,6 +1372,7 @@ static void prefs_call_color_func_callback(Widget w, XtPointer context, XtPointe
     }
 }
 
+
 static void scale_set_color(prefs_info *prf, color_t pixel)
 {
   float r = 0.0, g = 0.0, b = 0.0;
@@ -1336,6 +1385,7 @@ static void scale_set_color(prefs_info *prf, color_t pixel)
   XmScaleSetValue(prf->bscl, (int)(100 * b));
   XtVaSetValues(prf->color, XmNbackground, pixel, NULL);
 }
+
 
 static Pixel red, green, blue;
 
@@ -1497,6 +1547,7 @@ static Widget make_inter_topic_separator(Widget topics)
   return(XtCreateManagedWidget("sep", xmSeparatorWidgetClass, topics, args, n));
 }
 
+
 /* ---------------- variable separator ---------------- */
 
 static Widget make_inter_variable_separator(Widget topics, Widget top_widget)
@@ -1515,6 +1566,7 @@ static Widget make_inter_variable_separator(Widget topics, Widget top_widget)
   return(XtCreateManagedWidget("sep", xmSeparatorWidgetClass, topics, args, n));
 }
 
+
 /* ---------------- top-level contents label ---------------- */
 
 static Widget make_top_level_label(const char *label, Widget parent)
@@ -1530,6 +1582,7 @@ static Widget make_top_level_label(const char *label, Widget parent)
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
   return(XtCreateManagedWidget(label, xmLabelWidgetClass, parent, args, n));
 }
+
 
 static Widget make_top_level_box(Widget topics)
 {
@@ -1571,6 +1624,7 @@ static void wm_delete_callback(Widget w, XtPointer context, XtPointer info)
   prefs_helping = false;
 }
 
+
 static void preferences_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   prefs_helping = true;
@@ -1584,6 +1638,7 @@ You can also request help on a given topic by clicking the variable name on the 
 	   WITH_WORD_WRAP);
 }
 
+
 static void preferences_quit_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* if helping, should we unmanage the help dialog as well? */
@@ -1592,6 +1647,7 @@ static void preferences_quit_callback(Widget w, XtPointer context, XtPointer inf
   if (XmGetFocusWidget(preferences_dialog) == XmMessageBoxGetChild(preferences_dialog, XmDIALOG_OK_BUTTON))
     XtUnmanageChild(preferences_dialog);
 }
+
 
 static void prefs_set_dialog_title(const char *filename)
 {
@@ -1616,15 +1672,18 @@ static void prefs_set_dialog_title(const char *filename)
   XmStringFree(title);
 }
 
+
 static void preferences_revert_callback(Widget w, XtPointer context, XtPointer info) 
 {
   preferences_revert_or_clear(true);
 }
 
+
 static void preferences_clear_callback(Widget w, XtPointer context, XtPointer info) 
 {
   preferences_revert_or_clear(false);
 }
+
 
 static void preferences_save_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -1647,6 +1706,7 @@ static void clear_prefs_error(Widget w, XtPointer context, XtPointer info)
   set_label(prf->error, "");
 }
 
+
 static void post_prefs_error(const char *msg, prefs_info *prf)
 {
   ASSERT_WIDGET_TYPE(XmIsLabel(prf->error), prf->error);
@@ -1654,6 +1714,7 @@ static void post_prefs_error(const char *msg, prefs_info *prf)
   set_label(prf->error, msg);
   XtAddCallback(prf->text, XmNvalueChangedCallback, clear_prefs_error, (XtPointer)prf);
 }
+
 
 static void va_post_prefs_error(const char *msg, prefs_info *data, ...)
 {

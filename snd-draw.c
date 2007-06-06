@@ -1,5 +1,6 @@
 #include "snd.h"
 
+
 #if (!USE_NO_GUI)
 
 /* our "current path" */
@@ -14,16 +15,19 @@ void set_grf_points(int xi, int j, int ymin, int ymax)
   points1[j].y = ymin;
 }
 
+
 void set_grf_point(int xi, int j, int yi)
 {
   points[j].x = xi;
   points[j].y = yi;
 }
 
+
 point_t *get_grf_points(void);
 point_t *get_grf_points1(void);
 point_t *get_grf_points(void) {return(points);} /* for snd-marks.c */
 point_t *get_grf_points1(void) {return(points1);}
+
 
 void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style)
 {
@@ -71,6 +75,7 @@ void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t g
       break;
     }
 }
+
 
 void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style)
 {
@@ -319,6 +324,7 @@ void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
 #endif
 }
 
+
 void show_mark_triangle(chan_info *cp, int x)
 {
   int y0;
@@ -350,6 +356,7 @@ static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
 				  C_TO_XEN_INT(cp->chan))));
   return(NULL);
 }
+
 
 #define TO_C_AXIS_CONTEXT(Snd, Chn, Ax, Caller) \
   get_ax(get_cp(Snd, Chn, Caller), \
@@ -413,6 +420,7 @@ static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax)
   return(XEN_FALSE);
 }
 
+
 static XEN g_draw_dot(XEN x0, XEN y0, XEN size, XEN snd, XEN chn, XEN ax)
 {
   #define H_draw_dot "(" S_draw_dot " x0 y0 size :optional snd chn (ax " S_time_graph ")): draw a dot"
@@ -428,6 +436,7 @@ static XEN g_draw_dot(XEN x0, XEN y0, XEN size, XEN snd, XEN chn, XEN ax)
 	   XEN_TO_C_INT_OR_ELSE(size, 1));
   return(XEN_FALSE);
 }
+
 
 static XEN g_fill_rectangle(XEN x0, XEN y0, XEN width, XEN height, XEN snd, XEN chn, XEN ax, XEN erase)
 {
@@ -456,6 +465,7 @@ static XEN g_fill_rectangle(XEN x0, XEN y0, XEN width, XEN height, XEN snd, XEN 
   return(XEN_FALSE);
 }
 
+
 static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax)
 {
   #define H_draw_string "(" S_draw_string " text x0 y0 :optional snd chn (ax " S_time_graph ")): draw a string"
@@ -480,6 +490,7 @@ static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax)
 	      snd_strlen(tmp));
   return(text);
 }
+
 
 static point_t *vector_to_points(XEN pts, const char *caller, int *vector_len)
 {
@@ -507,6 +518,7 @@ static point_t *vector_to_points(XEN pts, const char *caller, int *vector_len)
   return(pack_pts);
 }
 
+
 static XEN g_draw_lines(XEN pts, XEN snd, XEN chn, XEN ax)
 {
   /* pts should be a vector of integers as (x y) pairs */
@@ -524,6 +536,7 @@ static XEN g_draw_lines(XEN pts, XEN snd, XEN chn, XEN ax)
   FREE(pack_pts);
   return(pts);
 }
+
 
 static XEN g_draw_dots(XEN pts, XEN size, XEN snd, XEN chn, XEN ax)
 {
@@ -546,6 +559,7 @@ static XEN g_draw_dots(XEN pts, XEN size, XEN snd, XEN chn, XEN ax)
   return(pts);
 }
 
+
 static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
 { 
   #define H_fill_polygon "(" S_fill_polygon " points :optional snd chn (ax " S_time_graph ")): draw a filled polygon"
@@ -566,6 +580,7 @@ static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
   FREE(pack_pts);
   return(pts);
 }
+
 
 static XEN g_make_bezier(XEN args1)
 {
@@ -608,6 +623,7 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
   return(pts);
 }
 
+
 static XEN g_foreground_color(XEN snd, XEN chn, XEN xax)
 {
   #define H_foreground_color "(" S_foreground_color " :optional snd chn (ax " S_time_graph ")): current drawing color"
@@ -620,6 +636,7 @@ static XEN g_foreground_color(XEN snd, XEN chn, XEN xax)
   ax = get_ax(cp, XEN_TO_C_INT_OR_ELSE(xax, CHAN_GC), S_foreground_color);
   return(XEN_WRAP_PIXEL(get_foreground_color(ax)));
 }
+
 
 static XEN g_set_foreground_color(XEN color, XEN snd, XEN chn, XEN ax)
 {
@@ -655,6 +672,7 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
   XSetFont(ax->dp, ax->gc, ax->current_font);
   return(id);
 }
+
 
 static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 {
@@ -733,6 +751,7 @@ return either a vct (if the graph has one trace), or a list of two vcts (the two
 			 XEN_TO_C_OFF_T_OR_ELSE(hi, -1)));
 }
 
+
 static XEN g_graph_data(XEN data, XEN snd, XEN chn, XEN ax, XEN lo, XEN hi, XEN style)
 {
   #define H_graph_data "(" S_graph_data " data :optional snd chn (context " S_copy_context ") low high graph-style): \
@@ -772,6 +791,7 @@ data in the recipient's graph between points low and high in the drawing mode gr
   return(data);
 }
 
+
 static XEN g_main_widgets(void)
 {
   #define H_main_widgets "(" S_main_widgets "): top level \
@@ -797,6 +817,7 @@ widgets (list (0)main-app (1)main-shell (2)main-pane (3)sound-pane (4)listener-p
   return(res);
 }
 
+
 static XEN dialog_widgets;
 static XEN new_widget_hook;
 /* ideally this would be an "after method" on XtCreateWidget or gtk_new_* */
@@ -807,6 +828,7 @@ void run_new_widget_hook(widget_t w)
     run_hook(new_widget_hook, XEN_LIST_1(XEN_WRAP_WIDGET(w)), S_new_widget_hook);
 }
 
+
 static void check_dialog_widget_table(void)
 {
   if (!(XEN_VECTOR_P(dialog_widgets)))
@@ -815,6 +837,7 @@ static void check_dialog_widget_table(void)
       XEN_PROTECT_FROM_GC(dialog_widgets);
     }
 }
+
 
 static XEN g_dialog_widgets(void)
 {
@@ -829,6 +852,7 @@ static XEN g_dialog_widgets(void)
   check_dialog_widget_table();
   return(XEN_VECTOR_TO_LIST(dialog_widgets));
 }
+
 
 void set_dialog_widget(snd_dialog_t which, widget_t wid)
 {
@@ -868,6 +892,7 @@ void set_dialog_widget(snd_dialog_t which, widget_t wid)
   run_new_widget_hook(wid);
 }
 
+
 static XEN g_widget_position(XEN wid)
 {
   #define H_widget_position "(" S_widget_position " wid): widget's position, (list x y), in pixels"
@@ -881,6 +906,7 @@ static XEN g_widget_position(XEN wid)
   return(XEN_LIST_2(C_TO_XEN_INT(widget_x(w)),
 		    C_TO_XEN_INT(widget_y(w))));
 }
+
 
 static XEN g_set_widget_position(XEN wid, XEN xy)
 {
@@ -899,6 +925,7 @@ static XEN g_set_widget_position(XEN wid, XEN xy)
   return(wid);
 }
 
+
 static XEN g_widget_size(XEN wid)
 {
   #define H_widget_size "(" S_widget_size " wid): widget's size, (list width height), in pixels"
@@ -912,6 +939,7 @@ static XEN g_widget_size(XEN wid)
   return(XEN_LIST_2(C_TO_XEN_INT(widget_width(w)),
 		    C_TO_XEN_INT(widget_height(w))));
 }
+
 
 static XEN g_set_widget_size(XEN wid, XEN wh)
 {
@@ -929,6 +957,7 @@ static XEN g_set_widget_size(XEN wid, XEN wh)
 			    wh));
   return(wid);
 }
+
 
 static XEN g_widget_text(XEN wid)
 {
@@ -993,6 +1022,7 @@ static XEN g_widget_text(XEN wid)
   return(res);
 }
 
+
 static XEN g_set_widget_text(XEN wid, XEN text)
 {
   widget_t w;
@@ -1020,6 +1050,7 @@ static XEN g_set_widget_text(XEN wid, XEN text)
   return(text);
 }
 
+
 static XEN g_hide_widget(XEN wid)
 {
   #define H_hide_widget "(" S_hide_widget " widget): hide or undisplay widget"
@@ -1040,6 +1071,7 @@ static XEN g_hide_widget(XEN wid)
   return(wid);
 }
 
+
 static XEN g_show_widget(XEN wid)
 {
   #define H_show_widget "(" S_show_widget " widget): show or display widget"
@@ -1059,6 +1091,7 @@ static XEN g_show_widget(XEN wid)
 			    wid));
   return(wid);
 }
+
 
 static XEN g_focus_widget(XEN wid)
 {
@@ -1116,6 +1149,7 @@ fltenv_basic) (13 fltenv_data))."
   return(XEN_EMPTY_LIST);
 }
 
+
 static XEN g_snd_color(XEN choice)
 {
   #define H_snd_color "(" S_snd_color " num): color associated with 'num' -- see table of colors in snd-draw.c"
@@ -1166,6 +1200,7 @@ static XEN g_snd_color(XEN choice)
     }
   return(XEN_WRAP_PIXEL(col));
 }
+
 
 static XEN g_snd_font(XEN choice)
 {
@@ -1219,6 +1254,7 @@ void sgl_save_currents(void)
   vals[5] = spectro_z_scale(ss);
 }
 
+
 void sgl_set_currents(void)
 {
   Float *vals;
@@ -1240,6 +1276,7 @@ void sgl_set_currents(void)
 #endif
 
 
+
 /* -------- shared color funcs -------- */
 
 static XEN g_color_p(XEN obj) 
@@ -1247,6 +1284,7 @@ static XEN g_color_p(XEN obj)
   #define H_color_p "(" S_color_p " obj): " PROC_TRUE " if obj is a color"
   return(C_TO_XEN_BOOLEAN(XEN_PIXEL_P(obj)));
 }
+
 
 Float check_color_range(const char *caller, XEN val)
 {
@@ -1257,6 +1295,7 @@ Float check_color_range(const char *caller, XEN val)
   return(rf);
 }
 
+
 static XEN g_set_cursor_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_cursor_color, "a color"); 
@@ -1265,11 +1304,13 @@ static XEN g_set_cursor_color(XEN color)
   return(color);
 }
 
+
 static XEN g_cursor_color(void) 
 {
   #define H_cursor_color "(" S_cursor_color "): cursor color"
   return(XEN_WRAP_PIXEL(ss->sgx->cursor_color));
 }
+
 
 #if USE_MOTIF
 static void highlight_recolor_everything(widget_t w, color_t color)
@@ -1287,6 +1328,7 @@ static void highlight_recolor_everything(widget_t w, color_t color)
 }
 #endif
 
+
 void set_highlight_color(color_t color)
 {
   color_t old_color;
@@ -1297,6 +1339,7 @@ void set_highlight_color(color_t color)
 #endif
 }
 
+
 static XEN g_set_highlight_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_highlight_color, "a color"); 
@@ -1304,11 +1347,13 @@ static XEN g_set_highlight_color(XEN color)
   return(color);
 }
 
+
 static XEN g_highlight_color(void) 
 {
   #define H_highlight_color "(" S_highlight_color "): color of highlighted text or buttons"
   return(XEN_WRAP_PIXEL(ss->sgx->highlight_color));
 }
+
 
 static XEN g_set_mark_color(XEN color) 
 {
@@ -1318,17 +1363,20 @@ static XEN g_set_mark_color(XEN color)
   return(color);
 }
 
+
 static XEN g_mark_color(void) 
 {
   #define H_mark_color "(" S_mark_color "): mark color"
   return(XEN_WRAP_PIXEL(ss->sgx->mark_color));
 }
 
+
 void set_zoom_color(color_t color)
 {
   ss->sgx->zoom_color = color; 
   color_chan_components(ss->sgx->zoom_color, COLOR_ZOOM);
 }
+
 
 static XEN g_set_zoom_color(XEN color) 
 {
@@ -1337,17 +1385,20 @@ static XEN g_set_zoom_color(XEN color)
   return(color);
 }
 
+
 static XEN g_zoom_color(void) 
 {
   #define H_zoom_color "(" S_zoom_color "): color of zoom sliders"
   return(XEN_WRAP_PIXEL(ss->sgx->zoom_color));
 }
 
+
 void set_position_color(color_t color)
 {
   ss->sgx->position_color = color; 
   color_chan_components(ss->sgx->position_color, COLOR_POSITION);
 }
+
 
 static XEN g_set_position_color(XEN color) 
 {
@@ -1356,11 +1407,13 @@ static XEN g_set_position_color(XEN color)
   return(color);
 }
 
+
 static XEN g_position_color(void) 
 {
   #define H_position_color "(" S_position_color "): color of position sliders"
   return(XEN_WRAP_PIXEL(ss->sgx->position_color));
 }
+
 
 static XEN g_set_listener_color(XEN color) 
 {
@@ -1369,11 +1422,13 @@ static XEN g_set_listener_color(XEN color)
   return(color);
 }
 
+
 static XEN g_listener_color(void) 
 {
   #define H_listener_color "(" S_listener_color "): background color of the lisp listener"
   return(XEN_WRAP_PIXEL(ss->sgx->listener_color));
 }
+
 
 static XEN g_set_listener_text_color(XEN color) 
 {
@@ -1382,11 +1437,13 @@ static XEN g_set_listener_text_color(XEN color)
   return(color);
 }
 
+
 static XEN g_listener_text_color(void) 
 {
   #define H_listener_text_color "(" S_listener_text_color "): text color in the lisp listener"
   return(XEN_WRAP_PIXEL(ss->sgx->listener_text_color));
 }
+
 
 static XEN g_set_enved_waveform_color(XEN color) 
 {
@@ -1395,11 +1452,13 @@ static XEN g_set_enved_waveform_color(XEN color)
   return(color);
 }
 
+
 static XEN g_enved_waveform_color(void) 
 {
   #define H_enved_waveform_color "(" S_enved_waveform_color "): color of the envelope editor wave display"
   return(XEN_WRAP_PIXEL(ss->sgx->enved_waveform_color));
 }
+
 
 static XEN g_set_filter_control_waveform_color(XEN color) 
 {
@@ -1408,11 +1467,13 @@ static XEN g_set_filter_control_waveform_color(XEN color)
   return(color);
 }
 
+
 static XEN g_filter_control_waveform_color(void) 
 {
   #define H_filter_control_waveform_color "(" S_filter_control_waveform_color "): color of the filter waveform"
   return(XEN_WRAP_PIXEL(ss->sgx->filter_control_waveform_color));
 }
+
 
 static XEN g_set_selection_color(XEN color) 
 {
@@ -1422,11 +1483,13 @@ static XEN g_set_selection_color(XEN color)
   return(color);
 }
 
+
 static XEN g_selection_color(void) 
 {
   #define H_selection_color "(" S_selection_color "): selection color"
   return(XEN_WRAP_PIXEL(ss->sgx->selection_color));
 }
+
 
 static XEN g_set_text_focus_color(XEN color) 
 {
@@ -1435,11 +1498,13 @@ static XEN g_set_text_focus_color(XEN color)
   return(color);
 }
 
+
 static XEN g_text_focus_color(void) 
 {
   #define H_text_focus_color "(" S_text_focus_color "): color used to show a text field has focus"
   return(XEN_WRAP_PIXEL(ss->sgx->text_focus_color));
 }
+
 
 static XEN g_set_sash_color(XEN color) 
 {
@@ -1448,11 +1513,13 @@ static XEN g_set_sash_color(XEN color)
   return(color);
 }
 
+
 static XEN g_sash_color(void) 
 {
   #define H_sash_color "(" S_sash_color "): color used to draw paned window sashes"
   return(XEN_WRAP_PIXEL(ss->sgx->sash_color));
 }
+
 
 static XEN g_set_help_button_color(XEN color) 
 {
@@ -1461,11 +1528,13 @@ static XEN g_set_help_button_color(XEN color)
   return(color);
 }
 
+
 static XEN g_help_button_color(void) 
 {
   #define H_help_button_color "(" S_help_button_color "): color used to draw help buttons"
   return(XEN_WRAP_PIXEL(ss->sgx->help_button_color));
 }
+
 
 static XEN g_set_quit_button_color(XEN color) 
 {
@@ -1474,11 +1543,13 @@ static XEN g_set_quit_button_color(XEN color)
   return(color);
 }
 
+
 static XEN g_quit_button_color(void) 
 {
   #define H_quit_button_color "(" S_quit_button_color "): color used to draw quit (dismiss, cancel) buttons"
   return(XEN_WRAP_PIXEL(ss->sgx->quit_button_color));
 }
+
 
 static XEN g_set_doit_button_color(XEN color) 
 {
@@ -1487,11 +1558,13 @@ static XEN g_set_doit_button_color(XEN color)
   return(color);
 }
 
+
 static XEN g_doit_button_color(void) 
 {
   #define H_doit_button_color "(" S_doit_button_color "): color used to draw doit (Ok, Apply) buttons"
   return(XEN_WRAP_PIXEL(ss->sgx->doit_button_color));
 }
+
 
 static XEN g_set_doit_again_button_color(XEN color) 
 {
@@ -1500,11 +1573,13 @@ static XEN g_set_doit_again_button_color(XEN color)
   return(color);
 }
 
+
 static XEN g_doit_again_button_color(void) 
 {
   #define H_doit_again_button_color "(" S_doit_again_button_color "): color used to doit again (Undo&Apply) buttons"
   return(XEN_WRAP_PIXEL(ss->sgx->doit_again_button_color));
 }
+
 
 static XEN g_set_reset_button_color(XEN color) 
 {
@@ -1512,6 +1587,7 @@ static XEN g_set_reset_button_color(XEN color)
   ss->sgx->reset_button_color = XEN_UNWRAP_PIXEL(color);
   return(color);
 }
+
 
 static XEN g_reset_button_color(void) 
 {
@@ -1526,6 +1602,7 @@ static XEN g_data_color(void)
   return(XEN_WRAP_PIXEL(ss->sgx->data_color));
 }
 
+
 void set_data_color(color_t color)
 {
   color_data(color);
@@ -1533,12 +1610,14 @@ void set_data_color(color_t color)
   for_each_chan(update_graph);
 }
 
+
 static XEN g_set_data_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_data_color, "a color"); 
   set_data_color(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
+
 
 void set_selected_data_color(color_t color)
 {
@@ -1549,6 +1628,7 @@ void set_selected_data_color(color_t color)
   if (cp) update_graph(cp);
 }
 
+
 static XEN g_set_selected_data_color(XEN color)
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_selected_data_color, "a color"); 
@@ -1556,11 +1636,13 @@ static XEN g_set_selected_data_color(XEN color)
   return(color);
 }
 
+
 static XEN g_selected_data_color(void) 
 {
   #define H_selected_data_color "(" S_selected_data_color "): color used for selected data"
   return(XEN_WRAP_PIXEL(ss->sgx->selected_data_color));
 }
+
 
 void set_graph_color(color_t color)
 {
@@ -1569,6 +1651,7 @@ void set_graph_color(color_t color)
   ss->sgx->grid_color = get_in_between_color(ss->sgx->data_color, ss->sgx->graph_color);
 }
 
+
 static XEN g_set_graph_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_graph_color, "a color");
@@ -1576,11 +1659,13 @@ static XEN g_set_graph_color(XEN color)
   return(color);
 }
 
+
 static XEN g_graph_color(void) 
 {
   #define H_graph_color "(" S_graph_color "): background color used for unselected data"
   return(XEN_WRAP_PIXEL(ss->sgx->graph_color));
 }
+
 
 void set_selected_graph_color(color_t color)
 {
@@ -1598,6 +1683,7 @@ void set_selected_graph_color(color_t color)
     }
 }
 
+
 static XEN g_set_selected_graph_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_selected_graph_color, "a color");
@@ -1605,11 +1691,13 @@ static XEN g_set_selected_graph_color(XEN color)
   return(color);
 }
 
+
 static XEN g_selected_graph_color(void) 
 {
   #define H_selected_graph_color "(" S_selected_graph_color "): background color of selected data"
   return(XEN_WRAP_PIXEL(ss->sgx->selected_graph_color));
 }
+
 
 #if USE_MOTIF
 static void recolor_button(widget_t w)
@@ -1627,6 +1715,7 @@ static void recolor_button(widget_t w)
 }
 #endif
 
+
 static XEN g_set_pushed_button_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_pushed_button_color, "a color"); 
@@ -1637,17 +1726,20 @@ static XEN g_set_pushed_button_color(XEN color)
   return(color);
 }
 
+
 static XEN g_pushed_button_color(void) 
 {
   #define H_pushed_button_color "(" S_pushed_button_color "): color of a pushed button"
   return(XEN_WRAP_PIXEL(ss->sgx->pushed_button_color));
 }
 
+
 static XEN g_basic_color(void) 
 {
   #define H_basic_color "(" S_basic_color "): Snd's basic color"
   return(XEN_WRAP_PIXEL(ss->sgx->basic_color));
 }
+
 
 #if USE_GTK
 static void recolor_everything_1(widget_t w, gpointer color)
@@ -1659,6 +1751,7 @@ static void recolor_everything_1(widget_t w, gpointer color)
 	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything_1, color);
     }
 }
+
 
 static void recolor_everything(widget_t w, gpointer color)
 {
@@ -1672,6 +1765,7 @@ static void recolor_everything(widget_t w, gpointer color)
 }
 #endif
 
+
 #if USE_MOTIF
 static void recolor_everything(widget_t w, color_t color)
 {
@@ -1684,6 +1778,7 @@ static void recolor_everything(widget_t w, color_t color)
     }
 }
 #endif
+
 
 void set_basic_color(color_t color)
 {
@@ -1702,6 +1797,7 @@ void set_basic_color(color_t color)
   make_mixer_icons_transparent_again(old_color, ss->sgx->basic_color);
 #endif
 }
+
 
 static XEN g_set_basic_color(XEN color) 
 {

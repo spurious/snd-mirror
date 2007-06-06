@@ -20,6 +20,7 @@
 
 #include "snd.h"
 
+
 #define TRANS_BUF_SIZE 8192
 
 static char write_error_buffer[PRINT_BUFFER_SIZE];
@@ -56,6 +57,7 @@ static ssize_t snd_checked_write(int fd, unsigned char *buf, ssize_t bytes, cons
   return(bytes_written);
 }
 
+
 static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, const char *filename)
 {
   /* handle little-endian swap if necessary */
@@ -72,7 +74,9 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, const cha
   return(snd_checked_write(fd, buf, bytes, filename));
 }
 
+
 #define RETURN_MUS_IO_ERROR(IO_Func, IO_Name) return(mus_error(MUS_CANT_OPEN_FILE, "translator: %s(%s) %s", IO_Func, IO_Name, snd_io_strerror()))
+
 
 #define RETURN_MUS_WRITE_ERROR(OldName, NewName) \
   do { \
@@ -82,10 +86,13 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, const cha
     } \
   while (false)
 
+
 #define RETURN_MUS_ALLOC_ERROR(OldName, Bytes, VariableName) \
   return(mus_error(MUS_MEMORY_ALLOCATION_FAILED, "translate %s: can't allocate %d bytes for %s", OldName, Bytes, VariableName))
 
+
 /* I'm using the same variable names in most cases below, so these two macros save lots of repetition */
+
 #define CLEANUP(OldName, NewName)		\
   do { \
     if (fs != -1) snd_close(fs, NewName); \
@@ -93,6 +100,7 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, const cha
       if (buf) FREE(buf); \
      } \
   while (false)
+
 
 #define STARTUP(OldName, NewName, BufSize, BufType) \
   do { \
@@ -812,6 +820,7 @@ static int read_ibm_adpcm(const char *oldname, const char *newname, char *hdr)
  */
 
 static int indexTable[16] = {-1, -1, -1, -1, 2, 4, 6, 8, -1, -1, -1, -1, 2, 4, 6, 8};
+
 static int stepsizeTable[89] = {7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41, 45,
 				50, 55, 60, 66, 73, 80, 88, 97, 107, 118, 130, 143, 157, 173, 190, 209, 230, 253, 279, 307,
 				337, 371, 408, 449, 494, 544, 598, 658, 724, 796, 876, 963, 1060, 1166, 1282, 1411, 1552, 1707, 1878, 2066,
@@ -927,6 +936,7 @@ static short oki_step_size[49] = { 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41,
 
 static short oki_adjust[8] = {-1, -1, -1, -1, 2, 4, 6, 8};
 
+
 static short oki_adpcm_decode(char code, struct oki_adpcm_status *stat) 
 {
   short diff, E8, SS8, samp; /* SS apparently a predefined macro in Solaris 10.4/opteron */
@@ -947,6 +957,7 @@ static short oki_adpcm_decode(char code, struct oki_adpcm_status *stat)
     return(32767);
   return(samp << 4);
 }
+
 
 static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
 {
@@ -1005,6 +1016,8 @@ static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
   return(MUS_NO_ERROR);
 }
 
+
+
 /* -------------------------------- 12 bit cases --------------------------------
  */
 
@@ -1056,6 +1069,7 @@ static int read_12bit(const char *oldname, const char *newname, char *hdr)
  */
 
 struct g72x_state {long yl; short yu; short dms; short dml; short ap; short a[2]; short b[6]; short pk[2]; short dq[6]; short sr[2]; char td;};
+
 static short power2[15] = {1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80, 0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000};
 
 static int quan(int val, short *table, int size)
@@ -1065,6 +1079,7 @@ static int quan(int val, short *table, int size)
     if (val < *table++) break;
   return (i);
 }
+
 
 static int fmult(int an, int srn)
 {
@@ -1079,6 +1094,7 @@ static int fmult(int an, int srn)
   retval = (wanexp >= 0) ? ((wanmant << wanexp) & 0x7FFF) : (wanmant >> -wanexp);
   return (((an ^ srn) < 0) ? -retval : retval);
 }
+
 
 static void g72x_init_state(struct g72x_state *state_ptr)
 {
@@ -1102,6 +1118,7 @@ static void g72x_init_state(struct g72x_state *state_ptr)
   state_ptr->td = 0;
 }
 
+
 static int predictor_zero(struct g72x_state *state_ptr)
 {
   int i, sezi;
@@ -1110,10 +1127,12 @@ static int predictor_zero(struct g72x_state *state_ptr)
   return (sezi);
 }
 
+
 static int predictor_pole(struct g72x_state *state_ptr)
 {
   return (fmult(state_ptr->a[1] >> 2, state_ptr->sr[1]) + fmult(state_ptr->a[0] >> 2, state_ptr->sr[0]));
 }
+
 
 static int step_size(struct g72x_state *state_ptr)
 {
@@ -1130,6 +1149,7 @@ static int step_size(struct g72x_state *state_ptr)
     }
 }
 
+
 static int reconstruct(int sign, int dqln, int y)
 {
   short	dql, dex, dqt, dq;
@@ -1142,6 +1162,7 @@ static int reconstruct(int sign, int dqln, int y)
     return ((sign) ? (dq - 0x8000) : dq);
   }
 }
+
 
 static void update(int	code_size, int y, int wi, int fi, int dq, int sr, int dqsez, struct g72x_state *state_ptr)
 {
@@ -1239,6 +1260,7 @@ static void update(int	code_size, int y, int wi, int fi, int dq, int sr, int dqs
     state_ptr->ap += (-state_ptr->ap) >> 4;
 }
 
+
 static int g721_decoder(int i, struct g72x_state *state_ptr)
 {
   static short dqlntab[16] = {-2048, 4, 135, 213, 273, 323, 373, 425, 425, 373, 323, 273, 213, 135, 4, -2048};
@@ -1258,6 +1280,7 @@ static int g721_decoder(int i, struct g72x_state *state_ptr)
   return (sr << 2);
 }
 
+
 static int g723_24_decoder(int	i, struct g72x_state *state_ptr)
 {
   static short dqlntab[8] = {-2048, 135, 273, 373, 373, 273, 135, -2048};
@@ -1276,6 +1299,7 @@ static int g723_24_decoder(int	i, struct g72x_state *state_ptr)
   update(3, y, witab[i], fitab[i], dq, sr, dqsez, state_ptr);
   return (sr << 2);
 }
+
 
 static int g723_40_decoder(int i, struct g72x_state *state_ptr)
 {
@@ -1299,6 +1323,7 @@ static int g723_40_decoder(int i, struct g72x_state *state_ptr)
   return (sr << 2);
 }
 
+
 static bool unpack_input(FILE *fin, unsigned char *code, int bits)
 {
   static unsigned int in_buffer = 0;
@@ -1319,6 +1344,7 @@ static bool unpack_input(FILE *fin, unsigned char *code, int bits)
   in_bits -= bits;
   return(true);
 }
+
 
 static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, int which_g)
 {
@@ -1438,6 +1464,7 @@ static const char *any_format_name(const char *name)
   else return(mus_header_original_format_name(mus_sound_original_format(name),
 					      mus_sound_header_type(name)));
 }
+
 
 int snd_translate(const char *oldname, const char *newname, int type)
 {

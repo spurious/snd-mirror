@@ -1,5 +1,6 @@
 /* this file included as text in snd-g|xprefs.c */
 
+
 static void int_to_textfield(widget_t w, int val)
 {
   char *str;
@@ -8,6 +9,7 @@ static void int_to_textfield(widget_t w, int val)
   SET_TEXT(w, str);
   FREE(str);
 }
+
 
 static void off_t_to_textfield(widget_t w, off_t val)
 {
@@ -18,6 +20,7 @@ static void off_t_to_textfield(widget_t w, off_t val)
   FREE(str);
 }
 
+
 static void float_to_textfield(widget_t w, Float val)
 {
   char *str;
@@ -27,6 +30,7 @@ static void float_to_textfield(widget_t w, Float val)
   FREE(str);
 }
 
+
 static void float_1_to_textfield(widget_t w, Float val)
 {
   char *str;
@@ -35,6 +39,7 @@ static void float_1_to_textfield(widget_t w, Float val)
   SET_TEXT(w, str);
   FREE(str);
 }
+
 
 static TIMEOUT_TYPE unpost_any_error(TIMEOUT_ARGS)
 {
@@ -46,6 +51,7 @@ static TIMEOUT_TYPE unpost_any_error(TIMEOUT_ARGS)
   TIMEOUT_RESULT
 }
 
+
 static void any_error_to_text(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
@@ -54,6 +60,7 @@ static void any_error_to_text(const char *msg, void *data)
   set_label(prf->label, msg);
   TIMEOUT(unpost_any_error);
 }
+
 
 static void redirect_post_prefs_error(const char *msg, void *data)
 {
@@ -94,6 +101,7 @@ static void remember_pref(prefs_info *prf,
   prefs[prefs_top++] = prf;
 }
 
+
 static void reflect_prefs(void)
 {
   int i;
@@ -106,6 +114,7 @@ static void reflect_prefs(void)
 	(*(prf->reflect_func))(prf);
     }
 }
+
 
 static void revert_prefs(void)
 {
@@ -120,6 +129,7 @@ static void revert_prefs(void)
     }
 }
 
+
 static void clear_prefs(void)
 {
   int i;
@@ -132,6 +142,7 @@ static void clear_prefs(void)
 	(*(prf->clear_func))(prf);
     }
 }
+
 
 static void preferences_revert_or_clear(bool revert)
 {
@@ -160,6 +171,7 @@ static void preferences_revert_or_clear(bool revert)
   prefs_set_dialog_title(NULL);
 }
 
+
 static bool local_access(char *dir)
 {
   int err;
@@ -175,6 +187,7 @@ static bool local_access(char *dir)
   return(err != -1);
 }
 
+
 static bool string_member_p(char *val, char **lst, int len)
 {
   int i;
@@ -185,6 +198,7 @@ static bool string_member_p(char *val, char **lst, int len)
       return(true);
   return(false);
 }
+
 
 static char **load_path_to_string_array(int *len)
 {
@@ -208,6 +222,7 @@ static char **load_path_to_string_array(int *len)
   return(cdirs);
 }
 
+
 static void add_local_load_path(FILE *fd, char *path)
 {
 #if HAVE_GUILE
@@ -224,6 +239,7 @@ static void add_local_load_path(FILE *fd, char *path)
   fprintf(fd, "(add-to-load-path \"%s\")\n", path); /* see snd-xen.c */
 #endif
 }
+
 
 static void save_prefs(const char *filename)
 {
@@ -300,6 +316,7 @@ static void save_prefs(const char *filename)
   prefs_set_dialog_title(filename);
 }
 
+
 static char *trim_string(const char *str)
 {
   int i = 0, len, j = 0, k, m;
@@ -314,7 +331,9 @@ static char *trim_string(const char *str)
   return(trimmed_str);
 }
 
+
 static char key_buf[16];
+
 static char *possibly_quote(char *key)
 {
   int i, j, len;
@@ -335,6 +354,7 @@ static char *possibly_quote(char *key)
 #endif
   return(key_buf);
 }
+
 
 static void prefs_help(prefs_info *prf)
 {
@@ -380,6 +400,7 @@ static void prefs_help(prefs_info *prf)
     }
 }
 
+
 #if HAVE_RUBY
 static char *no_stars(const char *name)
 {
@@ -393,6 +414,7 @@ static char *no_stars(const char *name)
   else return(copy_string(name));
 }
 #endif
+
 
 static void prefs_variable_set(const char *name, XEN val)
 {
@@ -417,6 +439,7 @@ static void prefs_variable_set(const char *name, XEN val)
 #endif
 }
 
+
 static void prefs_variable_save(FILE *fd, const char *name, const char *file, XEN val)
 {
 #if HAVE_SCHEME
@@ -438,6 +461,7 @@ static void prefs_variable_save(FILE *fd, const char *name, const char *file, XE
   fprintf(fd, "%s set-%s drop\n", XEN_AS_STRING(val), name);
 #endif
 }
+
 
 static XEN prefs_variable_get(const char *name)
 {
@@ -461,6 +485,7 @@ static XEN prefs_variable_get(const char *name)
   return(XEN_FALSE);
 }
 
+
 static void xen_load_file_with_path_and_extension(const char *file)
 {
   /* file is bare (no extension, no directory) file name */
@@ -469,6 +494,7 @@ static void xen_load_file_with_path_and_extension(const char *file)
   XEN_LOAD_FILE_WITH_PATH(str);
   FREE(str);
 }
+
 
 static void prefs_function_call_0(const char *func)
 {
@@ -486,6 +512,7 @@ static void prefs_function_call_0(const char *func)
   FREE(str);
 }
 
+
 static void prefs_function_call_1(const char *func, XEN arg)
 {
   char *str;
@@ -501,6 +528,7 @@ static void prefs_function_call_1(const char *func, XEN arg)
   XEN_EVAL_C_STRING(str);
   FREE(str);
 }
+
 
 static void prefs_function_save_0(FILE *fd, const char *name, const char *file)
 {
@@ -523,6 +551,7 @@ static void prefs_function_save_0(FILE *fd, const char *name, const char *file)
   fprintf(fd, "%s\n", name); /* drop?? */
 #endif
 }
+
 
 static void prefs_function_save_1(FILE *fd, const char *name, const char *file, XEN val)
 {
@@ -666,11 +695,13 @@ static void reflect_show_listener(prefs_info *prf)
   SET_TOGGLE(prf->toggle, prefs_show_listener);
 }
 
+
 static void show_listener_toggle(prefs_info *prf)
 {
   prefs_show_listener = GET_TOGGLE(prf->toggle);
   handle_listener(prefs_show_listener);
 }
+
 
 static void save_show_listener(prefs_info *prf, FILE *fd)
 {
@@ -679,11 +710,13 @@ static void save_show_listener(prefs_info *prf, FILE *fd)
     prefs_function_save_1(fd, "show-listener", NULL, XEN_TRUE);
 }
 
+
 static void revert_show_listener(prefs_info *prf)
 {
   prefs_show_listener = rts_show_listener;
   handle_listener(rts_show_listener);
 }
+
 
 static void clear_show_listener(prefs_info *prf)
 {
@@ -1021,6 +1054,7 @@ static void axis_label_font_text(prefs_info *prf)
   if (str) {FREE_TEXT(str);}
 }
 
+
 /* ---------------- axis-numbers-font ---------------- */
 
 static char *rts_axis_numbers_font = NULL;
@@ -1058,6 +1092,7 @@ static void axis_numbers_font_text(prefs_info *prf)
     }
   if (str) {FREE_TEXT(str);}
 }
+
 
 /* ---------------- peaks-font ---------------- */
 
@@ -1097,6 +1132,7 @@ static void peaks_font_text(prefs_info *prf)
   if (str) {FREE_TEXT(str);}
 }
 
+
 /* ---------------- bold-peaks-font ---------------- */
 
 static char *rts_bold_peaks_font = NULL;
@@ -1134,6 +1170,7 @@ static void bold_peaks_font_text(prefs_info *prf)
     }
   if (str) {FREE_TEXT(str);}
 }
+
 
 /* ---------------- tiny-font ---------------- */
 

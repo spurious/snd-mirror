@@ -1,6 +1,7 @@
 #include "snd.h"
 #include "sndlib-strings.h"
 
+
 static GtkWidget *preferences_dialog = NULL, *load_path_text_widget = NULL;
 
 static bool prefs_helping = false, prefs_unsaved = false;
@@ -14,6 +15,7 @@ static char *include_load_path = NULL;
 
 #define STARTUP_WIDTH 925
 #define STARTUP_HEIGHT 800
+
 
 typedef struct prefs_info {
   GtkWidget *label, *text, *arrow_up, *arrow_down, *arrow_right, *error, *toggle, *scale, *toggle2, *toggle3;
@@ -58,6 +60,7 @@ static void post_prefs_error(const char *msg, prefs_info *data);
   static void va_post_prefs_error(const char *msg, prefs_info *data, ...);
 #endif
 
+
 #define GET_TOGGLE(Toggle)        gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(Toggle))
 #define SET_TOGGLE(Toggle, Value) set_toggle_button(Toggle, Value, false, (void *)prf)
 #define GET_TEXT(Text)            get_text(Text)
@@ -71,11 +74,13 @@ static void post_prefs_error(const char *msg, prefs_info *data);
 #define red_text(Prf)
 /* gdk_gc_set_foreground(Prf->label->style->black_gc, ss->sgx->red) no effect? */
 
+
 static void set_radio_button(prefs_info *prf, int which)
 {
   if ((which >= 0) && (which < prf->num_buttons))
     set_toggle_button(prf->radio_buttons[which], true, false, (void *)prf);
 }
+
 
 #define which_radio_button(Prf)   get_user_int_data(G_OBJECT(Prf->radio_button))
 
@@ -88,6 +93,7 @@ static void sg_entry_set_text(GtkEntry* entry, const char *text)
     gtk_entry_set_text(entry, (gchar *)text);
   else gtk_entry_set_text(entry, " ");
 }
+
 
 static void set_text(GtkWidget *w, char *value)
 {
@@ -106,6 +112,7 @@ static void set_text(GtkWidget *w, char *value)
 #endif
     }
 }
+
 
 static char *get_text(GtkWidget *w)
 {
@@ -131,6 +138,7 @@ static gboolean prefs_help_click_callback(GtkWidget *w, GdkEventButton *ev, gpoi
   return(false);
 }
 
+
 static gboolean prefs_tooltip_help(gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
@@ -140,6 +148,7 @@ static gboolean prefs_tooltip_help(gpointer context)
   prf->help_id = 0;
   return(false);
 }
+
 
 static gboolean mouse_enter_pref_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer context)
 {
@@ -152,6 +161,7 @@ static gboolean mouse_enter_pref_callback(GtkWidget *w, GdkEventCrossing *ev, gp
   return(false);
 }
 
+
 static gboolean mouse_leave_pref_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
@@ -163,6 +173,7 @@ static gboolean mouse_leave_pref_callback(GtkWidget *w, GdkEventCrossing *ev, gp
   return(false);
 }
 
+
 static bool prefs_dialog_error_is_posted = false;
 
 static void post_prefs_dialog_error(const char *message, void *data)
@@ -170,6 +181,7 @@ static void post_prefs_dialog_error(const char *message, void *data)
   gtk_window_set_title(GTK_WINDOW(preferences_dialog), (char *)message);
   prefs_dialog_error_is_posted = (message != NULL);
 }
+
 
 static void clear_prefs_dialog_error(void)
 {
@@ -179,6 +191,7 @@ static void clear_prefs_dialog_error(void)
       post_prefs_dialog_error(NULL, NULL);
     }
 }
+
 
 static void prefs_change_callback(GtkWidget *w, gpointer context)
 {
@@ -191,6 +204,7 @@ static void prefs_change_callback(GtkWidget *w, gpointer context)
 static GtkSizeGroup *label_group;
 static GtkSizeGroup *help_group;
 static GtkSizeGroup *widgets_group;
+
 
 static color_info *rscl_color, *gscl_color, *bscl_color;
 
@@ -222,6 +236,7 @@ static GtkWidget *make_row_label(prefs_info *prf, const char *label, GtkWidget *
   return(w);
 }
 
+
 /* ---------------- row inner label widget ---------------- */
 
 static GtkWidget *make_row_inner_label(prefs_info *prf, const char *label, GtkWidget *box)
@@ -244,6 +259,7 @@ static GtkWidget *make_row_inner_label(prefs_info *prf, const char *label, GtkWi
   return(w);
 }
 
+
 /* ---------------- row middle separator widget ---------------- */
 
 static GtkWidget *make_row_middle_separator(GtkWidget *box)
@@ -256,6 +272,7 @@ static GtkWidget *make_row_middle_separator(GtkWidget *box)
   return(w);
 }
 
+
 /* ---------------- row inner separator widget ---------------- */
 
 static GtkWidget *make_row_inner_separator(int width, GtkWidget *box)
@@ -267,6 +284,7 @@ static GtkWidget *make_row_inner_separator(int width, GtkWidget *box)
   gtk_widget_show(w);
   return(w);
 }
+
 
 /* ---------------- row help widget ---------------- */
 
@@ -292,6 +310,7 @@ static GtkWidget *make_row_help(prefs_info *prf, const char *label, GtkWidget *b
   return(w);
 }
 
+
 /* ---------------- row toggle widget ---------------- */
 
 static GtkWidget *make_row_toggle_with_label(prefs_info *prf, bool current_value, GtkWidget *box, const char *label)
@@ -311,6 +330,7 @@ static GtkWidget *make_row_toggle_with_label(prefs_info *prf, bool current_value
 
   return(w);
 }
+
 
 static GtkWidget *make_row_toggle(prefs_info *prf, bool current_value, GtkWidget *box)
 {
@@ -335,6 +355,7 @@ static GtkWidget *make_row_error(prefs_info *prf, GtkWidget *box)
   return(w);
 }
 
+
 /* ---------------- row arrows ---------------- */
 
 static gboolean remove_arrow_func(GtkWidget *w, GdkEventButton *ev, gpointer context)
@@ -347,6 +368,7 @@ static gboolean remove_arrow_func(GtkWidget *w, GdkEventButton *ev, gpointer con
     }
   return(false);
 }
+
 
 static gint arrow_func_up(gpointer context)
 {
@@ -366,6 +388,7 @@ static gint arrow_func_up(gpointer context)
   return(0);
 }
 
+
 static gint arrow_func_down(gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
@@ -384,6 +407,7 @@ static gint arrow_func_down(gpointer context)
   return(0);
 }
 
+
 static gboolean call_arrow_down_press(GtkWidget *w, GdkEventButton *ev, gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
@@ -400,6 +424,7 @@ static gboolean call_arrow_down_press(GtkWidget *w, GdkEventButton *ev, gpointer
   return(false);
 }
 
+
 static gboolean call_arrow_up_press(GtkWidget *w, GdkEventButton *ev, gpointer context) 
 {
   prefs_info *prf = (prefs_info *)context;
@@ -415,6 +440,7 @@ static gboolean call_arrow_up_press(GtkWidget *w, GdkEventButton *ev, gpointer c
     }
   return(false);
 }
+
 
 static GtkWidget *make_row_arrows(prefs_info *prf, GtkWidget *box)
 {
@@ -465,6 +491,7 @@ static void call_toggle_func(GtkWidget *w, gpointer context)
     (*(prf->toggle_func))(prf);
 }
 
+
 static prefs_info *prefs_row_with_toggle(const char *label, const char *varname, bool current_value,
 					 GtkWidget *box,
 					 void (*toggle_func)(prefs_info *prf))
@@ -505,6 +532,7 @@ static void call_toggle2_func(GtkWidget *w, gpointer context)
   if ((prf) && (prf->toggle2_func))
     (*(prf->toggle2_func))(prf);
 }
+
 
 static prefs_info *prefs_row_with_two_toggles(const char *label, const char *varname, 
 					      const char *label1, bool value1,
@@ -579,12 +607,14 @@ static GtkWidget *make_row_text(prefs_info *prf, const char *text_value, int col
   return(w);
 }
 
+
 static void call_text_func(GtkWidget *w, gpointer context) 
 {
   prefs_info *prf = (prefs_info *)context;
   if ((prf) && (prf->text_func))
     (*(prf->text_func))(prf);
 }
+
 
 static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char *varname, bool current_value,
 						   const char *text_label, const char *text_value, int cols,
@@ -622,6 +652,7 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
 
   return(prf);
 }
+
 
 static prefs_info *prefs_row_with_toggle_with_two_texts(const char *label, const char *varname, bool current_value,
 							const char *label1, const char *text1, 
@@ -763,6 +794,7 @@ static void call_radio_func(GtkWidget *w, gpointer context)
     }
 }
 
+
 static GtkWidget *make_row_radio_box(prefs_info *prf,
 				     const char **labels, int num_labels, int current_value,
 				     GtkWidget *box)
@@ -828,6 +860,7 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
   return(prf);
 }
 
+
 static prefs_info *prefs_row_with_radio_box_and_number(const char *label, const char *varname, 
 						       const char **labels, int num_labels, int current_value,
 						       int number, const char *text_value, int text_cols,
@@ -878,6 +911,7 @@ static void call_scale_func(GtkAdjustment *w, gpointer context)
     (*(prf->scale_func))(prf);
 }
 
+
 static void call_scale_text_func(GtkWidget *w, gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
@@ -885,11 +919,13 @@ static void call_scale_text_func(GtkWidget *w, gpointer context)
     (*(prf->text_func))(prf);
 }
 
+
 static void prefs_scale_callback(GtkWidget *w, gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
   float_to_textfield(prf->text, GTK_ADJUSTMENT(prf->adj)->value * prf->scale_max);
 }
+
 
 static prefs_info *prefs_row_with_scale(const char *label, const char *varname, 
 					Float max_val, Float current_value,
@@ -1018,6 +1054,7 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
   return(prf);
 }
 
+
 /* ---------------- number row ---------------- */
 
 static prefs_info *prefs_row_with_number(const char *label, const char *varname, const char *value, int cols,
@@ -1105,6 +1142,7 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
 }
 #endif
 
+
 /* ---------------- color selector row(s) ---------------- */
 
 static void pixel_to_rgb(color_t pix, float *r, float *g, float *b)
@@ -1113,6 +1151,7 @@ static void pixel_to_rgb(color_t pix, float *r, float *g, float *b)
   (*g) = RGB_TO_FLOAT(pix->green);
   (*b) = RGB_TO_FLOAT(pix->blue);
 }
+
 
 static void scale_set_color(prefs_info *prf, color_t pixel)
 {
@@ -1126,6 +1165,7 @@ static void scale_set_color(prefs_info *prf, color_t pixel)
   gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->badj), b);
   widget_modify_bg(prf->color, GTK_STATE_NORMAL, pixel);
 }
+
 
 static void reflect_color(prefs_info *prf)
 {
@@ -1150,10 +1190,12 @@ static void reflect_color(prefs_info *prf)
   float_to_textfield(prf->btxt, b);
 }
 
+
 static void prefs_color_callback(GtkWidget *w, gpointer context)
 {
   reflect_color((prefs_info *)context);
 }
+
 
 static gint unpost_color_error(gpointer data)
 {
@@ -1164,6 +1206,7 @@ static gint unpost_color_error(gpointer data)
   return(0);
 }
 
+
 static void errors_to_color_text(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
@@ -1171,6 +1214,7 @@ static void errors_to_color_text(const char *msg, void *data)
   gtk_label_set_text(GTK_LABEL(prf->label), msg);
   TIMEOUT(unpost_color_error);
 }
+
 
 static void prefs_r_callback(GtkWidget *w, gpointer context)
 {
@@ -1188,6 +1232,7 @@ static void prefs_r_callback(GtkWidget *w, gpointer context)
     }
 }
 
+
 static void prefs_g_callback(GtkWidget *w, gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
@@ -1203,6 +1248,7 @@ static void prefs_g_callback(GtkWidget *w, gpointer context)
       reflect_color(prf);
     }
 }
+
 
 static void prefs_b_callback(GtkWidget *w, gpointer context)
 {
@@ -1220,6 +1266,7 @@ static void prefs_b_callback(GtkWidget *w, gpointer context)
     }
 }
 
+
 static void prefs_call_color_func_callback(GtkWidget *w, gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
@@ -1232,6 +1279,7 @@ static void prefs_call_color_func_callback(GtkWidget *w, gpointer context)
       (*(prf->color_func))(prf, r, g, b);
     }
 }
+
 
 static prefs_info *prefs_color_selector_row(const char *label, const char *varname, 
 					    color_t current_pixel,
@@ -1366,6 +1414,7 @@ static GtkWidget *make_inter_topic_separator(GtkWidget *topics)
   /* height = INTER_TOPIC_SPACE no line */
 }
 
+
 /* ---------------- variable separator ---------------- */
 
 static GtkWidget *make_inter_variable_separator(GtkWidget *topics)
@@ -1378,6 +1427,7 @@ static GtkWidget *make_inter_variable_separator(GtkWidget *topics)
   return(w);
   /* height = INTER_VARIABLE_SPACE no line */
 }
+
 
 /* ---------------- top-level contents label ---------------- */
 
@@ -1398,6 +1448,7 @@ static GtkWidget *make_top_level_label(const char *label, GtkWidget *parent)
   return(w);
 }
 
+
 static GtkWidget *make_top_level_box(GtkWidget *topics)
 {
   GtkWidget *w, *frame;
@@ -1410,6 +1461,7 @@ static GtkWidget *make_top_level_box(GtkWidget *topics)
   gtk_widget_show(w);
   return(w);
 }
+
 
 static GtkWidget *make_inner_label(const char *label, GtkWidget *parent)
 {
@@ -1437,12 +1489,14 @@ static gint preferences_delete_callback(GtkWidget *w, GdkEvent *event, gpointer 
   return(true);
 }
 
+
 static void preferences_dismiss_callback(GtkWidget *w, gpointer context) 
 {
   prefs_helping = false;
   clear_prefs_dialog_error();
   gtk_widget_hide(preferences_dialog);
 }
+
 
 static void preferences_help_callback(GtkWidget *w, gpointer context) 
 {
@@ -1456,6 +1510,7 @@ information if the mouse lingers over some variable -- sort of a tooltip that st
 You can also request help on a given topic by clicking the variable name on the far right.",
 	   WITH_WORD_WRAP);
 }
+
 
 static void prefs_set_dialog_title(const char *filename)
 {
@@ -1475,15 +1530,18 @@ static void prefs_set_dialog_title(const char *filename)
   FREE(str);
 }
 
+
 static void preferences_revert_callback(GtkWidget *w, gpointer context) 
 {
   preferences_revert_or_clear(true);
 }
 
+
 static void preferences_clear_callback(GtkWidget *w, gpointer context) 
 {
   preferences_revert_or_clear(false);
 }
+
 
 static void preferences_save_callback(GtkWidget *w, gpointer context) 
 {
@@ -1507,6 +1565,7 @@ static void clear_prefs_error(GtkWidget *w, gpointer context)
   set_label(prf->error, "");
 }
 
+
 static void post_prefs_error(const char *msg, prefs_info *prf)
 {
   prf->got_error = true;
@@ -1515,6 +1574,7 @@ static void post_prefs_error(const char *msg, prefs_info *prf)
     g_signal_handler_disconnect(prf->text, prf->erase_id);
   prf->erase_id = SG_SIGNAL_CONNECT(prf->text, "changed", clear_prefs_error, (gpointer)prf);
 }
+
 
 static void va_post_prefs_error(const char *msg, prefs_info *data, ...)
 {

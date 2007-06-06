@@ -2,6 +2,7 @@
 #include "snd-menu.h"
 #include <X11/cursorfont.h>
 
+
 void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, label);}
 
 /* -------------------------------- FILE MENU -------------------------------- */
@@ -36,6 +37,7 @@ static void edit_redo_callback(Widget w, XtPointer info, XtPointer context) {red
 
 static void edit_menu_update_1(Widget w, XtPointer info, XtPointer context) {edit_menu_update();}
 
+
 static bool selection_play_stop = false;
 
 static void edit_play_callback(Widget w, XtPointer info, XtPointer context) 
@@ -52,11 +54,13 @@ static void edit_play_callback(Widget w, XtPointer info, XtPointer context)
     }
 }
 
+
 void reflect_play_selection_stop(void)
 {
   set_menu_label(edit_play_menu, _("Play Selection"));
   selection_play_stop = false;
 }
+
 
 static void edit_header_callback_1(Widget w, XtPointer info, XtPointer context)
 {
@@ -64,6 +68,7 @@ static void edit_header_callback_1(Widget w, XtPointer info, XtPointer context)
   sp = any_selected_sound();
   if (sp) edit_header(sp);
 }
+
 
 #if HAVE_EXTENSION_LANGUAGE
 static void edit_find_callback_1(Widget w, XtPointer info, XtPointer context) 
@@ -91,6 +96,7 @@ static void view_mix_dialog_callback(Widget w, XtPointer info, XtPointer context
 static void view_zero_callback(Widget w, XtPointer info, XtPointer context){set_show_y_zero((!(show_y_zero(ss))));}
 static void view_cursor_callback(Widget w, XtPointer info, XtPointer context){set_verbose_cursor((!(verbose_cursor(ss))));}
 
+
 static void view_controls_callback(Widget w, XtPointer info, XtPointer context)
 {
   in_set_show_controls(ss, !in_show_controls(ss));
@@ -98,6 +104,7 @@ static void view_controls_callback(Widget w, XtPointer info, XtPointer context)
     show_all_controls();
   else hide_all_controls(); 
 }
+
 static void view_region_callback_1(Widget w, XtPointer info, XtPointer context) {view_region_callback(w, info, context);}
 static void view_orientation_callback_1(Widget w, XtPointer info, XtPointer context) {view_orientation_callback(w, info, context);}
 static void view_color_callback_1(Widget w, XtPointer info, XtPointer context) {view_color_callback(w, info, context);}
@@ -196,6 +203,7 @@ void check_menu_labels(int key, int state, bool extended)
     }
 }
 
+
 /* -------------------------------- MAIN MENU -------------------------------- */
 
 static void menu_drag_watcher(Widget w, const char *str, Position x, Position y, drag_style_t dtype, void *data)
@@ -218,6 +226,7 @@ static void menu_drag_watcher(Widget w, const char *str, Position x, Position y,
     }
 }
 
+
 static void menu_drop_watcher(Widget w, const char *str, Position x, Position y, void *data)
 {
   snd_info *sp = NULL;
@@ -226,10 +235,12 @@ static void menu_drop_watcher(Widget w, const char *str, Position x, Position y,
   if (sp) select_channel(sp, 0);
 }
 
+
 void add_menu_drop(void)
 {
   add_drag_and_drop(main_menu, menu_drop_watcher, menu_drag_watcher, NULL);
 }
+
 
 Widget add_menu(void)
 {
@@ -693,6 +704,7 @@ static Widget popup_menu = NULL;
 
 static void popup_menu_update_1(Widget w, XtPointer info, XtPointer context) {popup_menu_update();}
 
+
 static bool stopping = false;
 
 static void popup_play_callback(Widget w, XtPointer info, XtPointer context) 
@@ -717,6 +729,7 @@ static void popup_play_callback(Widget w, XtPointer info, XtPointer context)
     }
 }
 
+
 void reflect_play_stop_in_popup_menu(void)
 {
   stopping = false;
@@ -724,9 +737,11 @@ void reflect_play_stop_in_popup_menu(void)
     set_button_label(popup_play_menu, _("Play"));
 }
 
+
 static void popup_save_callback(Widget w, XtPointer info, XtPointer context) {save_edits_with_prompt(any_selected_sound());}
 static void popup_undo_callback(Widget w, XtPointer info, XtPointer context) {undo_edit_with_sync(current_channel(), 1);}
 static void popup_redo_callback(Widget w, XtPointer info, XtPointer context) {redo_edit_with_sync(current_channel(), 1);}
+
 static void popup_info_callback(Widget w, XtPointer info, XtPointer context) 
 {
   snd_info *sp;
@@ -742,6 +757,7 @@ void post_popup(XButtonPressedEvent *event)
   XmMenuPosition(popup_menu, event);
   XtManageChild(popup_menu);
 }
+
 
 void create_popup_menu(void)
 {
@@ -815,12 +831,14 @@ static void SND_callback(Widget w, XtPointer info, XtPointer context)
   if (callb < 0) fprintf(stderr,"%s callback: %d\n", XtName(w), callb); /* this exists solely to prevent an inexplicable segfault in dual x86_64 FC4 systems?? */
 }
 
+
 static void GHC_callback(Widget w, XtPointer info, XtPointer context) 
 {
   int slot;
   XtVaGetValues(w, XmNuserData, &slot, NULL);
   g_snd_callback(CALL_INDEX(slot)); /* main menu cascading callback */
 }
+
 
 #include <X11/IntrinsicP.h>
 
@@ -851,6 +869,7 @@ Widget menu_widget(int which_menu)
   return(NULL);
 }
 
+
 static bool or_over_children(Widget w, bool (*func)(Widget uw, const char *ustr), const char *str)
 {
   if (w)
@@ -867,6 +886,7 @@ static bool or_over_children(Widget w, bool (*func)(Widget uw, const char *ustr)
     }
   return(false);
 }
+
 
 static bool clobber_menu(Widget w, const char *name)
 {
@@ -886,6 +906,7 @@ static bool clobber_menu(Widget w, const char *name)
   return(false);
 }
 
+
 int g_remove_from_menu(int which_menu, const char *label)
 {
   Widget top_menu;
@@ -898,11 +919,13 @@ int g_remove_from_menu(int which_menu, const char *label)
   return(INVALID_MENU);
 }
 
+
 static void set_widget_name(Widget w, const char *new_name)
 {
   /* based on XtName in Xt/Intrinsic.c, Xt/Create.c, and Xt/ResourceI.h */
   w->core.xrm_name = XrmStringToName(new_name);
 }
+
 
 static int new_menu = 5;
 
@@ -928,6 +951,7 @@ int g_add_to_main_menu(char *label, int slot)
   if (auto_resize(ss)) XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, true, NULL);
   return(new_menu);
 }
+
 
 Widget g_add_to_menu(int which_menu, const char *label, int callb, int position)
 {
@@ -985,6 +1009,7 @@ static XEN g_menu_widgets(void)
 	       XEN_CONS(XEN_WRAP_WIDGET(popup_menu),
 	        XEN_EMPTY_LIST))))))));
 }
+
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_menu_widgets_w, g_menu_widgets)

@@ -165,6 +165,7 @@ static XtResource resources[] = {
   {"doitagainbuttoncolor", "Doitagainbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, doit_again_button_color), XmRString, (XtPointer)DOIT_AGAIN_BUTTON_COLOR}
 };
 
+
 #ifndef SND_AS_WIDGET
 static void window_close(Widget w, XtPointer context, XtPointer info)
 {
@@ -172,6 +173,7 @@ static void window_close(Widget w, XtPointer context, XtPointer info)
   snd_exit_cleanly(EXIT_FORCED);
 }
 #endif
+
 
 #if (!HAVE_FAM)
 static XtIntervalId auto_update_proc = 0;
@@ -190,6 +192,7 @@ static void auto_update_check(XtPointer context, XtIntervalId *id)
   else auto_update_proc = 0;
 }
 
+
 void auto_update_restart(void)
 {
   if (auto_update_proc == 0)
@@ -202,9 +205,11 @@ void auto_update_restart(void)
 void auto_update_restart(void) {}
 #endif
 
+
 #ifndef SND_AS_WIDGET
 /* handle iconification */
 static Widget *iconify_active_dialogs = NULL;
+
 static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XMapEvent *ev = (XMapEvent *)event;
@@ -266,9 +271,11 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
 }
 #endif
 
+
 #ifndef SND_AS_WIDGET
 static Atom snd_v, snd_c;
 #endif
+
 
 #if HAVE_EXTENSION_LANGUAGE
 static XEN window_property_changed_hook;
@@ -308,6 +315,7 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
 #endif
 #endif
 
+
 #if HAVE_SETJMP_H
 #include <setjmp.h>
 
@@ -322,11 +330,13 @@ static RETSIGTYPE segv(int ignored)
 #endif
 
 static jmp_buf top_level_jump;
+
 RETSIGTYPE top_level_catch(int ignore);
 RETSIGTYPE top_level_catch(int ignore)
 {
   longjmp(top_level_jump, 1);
 }
+
 
 #if MUS_DEBUGGING
 static void trap_xt_error(String message)
@@ -374,6 +384,7 @@ static void get_stdin_string(XtPointer context, int *fd, XtInputId *id)
   FREE(buf);
 }
 #endif
+
 
 static int tm_slice = 0;
 
@@ -483,6 +494,7 @@ static idle_func_t startup_funcs(XtPointer context)
   return(BACKGROUND_CONTINUE);
 }
 
+
 #ifndef SND_AS_WIDGET
 #if (ICON_TYPE == PLAIN_ICON) || ((ICON_TYPE == XPM_ICON) && (!HAVE_XPM))
 static void SetupIcon(Widget shell)
@@ -499,6 +511,7 @@ static void SetupIcon(Widget shell)
 
 #if (ICON_TYPE == XPM_ICON) && (HAVE_XPM)
 #include <X11/xpm.h>
+
 static void SetupIcon(Widget shell)
 {
   Display *dpy;
@@ -519,6 +532,7 @@ static void SetupIcon(Widget shell)
 #endif
 #endif
 
+
 #ifndef SND_AS_WIDGET
 static void muffle_warning(char *name, char *type, char *klass, char *defaultp, char **params, unsigned int *num_params)
 {
@@ -532,6 +546,7 @@ static void muffle_warning(char *name, char *type, char *klass, char *defaultp, 
 #endif
 }
 #endif
+
 
 static void notebook_page_changed_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -558,6 +573,7 @@ static void notebook_page_changed_callback(Widget w, XtPointer context, XtPointe
     }
 }
 
+
 color_t get_in_between_color(color_t fg, color_t bg)
 {
   Colormap cmap;
@@ -581,6 +597,7 @@ color_t get_in_between_color(color_t fg, color_t bg)
     return(fg);
   return(new_color.pixel);
 }
+
 
 static Pixel get_color(Widget shell, const char *rs_color, const char *defined_color, 
 		       const char *fallback_color, const char *second_fallback_color, bool use_white)
@@ -614,6 +631,7 @@ static Pixel get_color(Widget shell, const char *rs_color, const char *defined_c
     }
   return(tmp_color.pixel);
 }
+
 
 static void save_a_color(FILE *Fp, Display *dpy, Colormap cmap, const char *rs_name, const char *def_name, Pixel pix, const char *ext_name)
 {
@@ -656,6 +674,7 @@ static void save_a_color(FILE *Fp, Display *dpy, Colormap cmap, const char *rs_n
 #endif
 }
 
+
 void save_colors(FILE *Fp)
 {
   Colormap cmap;
@@ -694,6 +713,7 @@ void save_colors(FILE *Fp)
   save_a_color(Fp, dpy, cmap, snd_rs.filter_control_waveform_color, FILTER_CONTROL_WAVEFORM_COLOR, ss->sgx->filter_control_waveform_color, S_filter_control_waveform_color);
 }
 
+
 #ifdef SND_AS_WIDGET
 
 void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn)
@@ -709,6 +729,7 @@ static char *fallbacks[] = {
   "*enableToggleVisual: True",
  NULL
 };
+
 
 void snd_doit(int argc, char **argv)
 {
@@ -1142,12 +1163,14 @@ void snd_doit(int argc, char **argv)
   
 }
 
+
 #if HAVE_GL
 static XEN g_snd_glx_context(void)
 {
   return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GLXContext"), 
 		    C_TO_XEN_ULONG((unsigned long)(ss->sgx->cx))));
 } 
+
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_snd_glx_context_w, g_snd_glx_context)

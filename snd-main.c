@@ -3,11 +3,13 @@
 #include "sndlib-strings.h"
 #include "clm2xen.h"
 
+
 static void remove_temp_files(chan_info *cp)
 {
   free_sound_list(cp);
   delete_any_remaining_mix_temp_files_at_exit(cp);
 }
+
 
 static XEN exit_hook;
 static XEN before_exit_hook;
@@ -49,6 +51,7 @@ bool snd_exit_cleanly(bool force_exit)
 #endif
   return(true);
 }
+
 
 void sound_not_current(snd_info *sp)
 {
@@ -107,6 +110,7 @@ int add_ss_watcher(ss_watcher_t type, void (*watcher)(ss_watcher_reason_t reason
   ss->watchers[loc]->type = type;
   return(loc);
 }
+
 
 void call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason)
 {
@@ -170,11 +174,13 @@ static void save_loaded_files_list(FILE *fd, const char *current_filename)
 }
 #endif
 
+
 static bool fneq(Float a, Float b)
 {
   /* floating point != replacement */
   return(fabs(a - b) > .00001);
 }
+
 
 static char *cursor_style_name(cursor_style_t style)
 {
@@ -185,6 +191,7 @@ static char *cursor_style_name(cursor_style_t style)
     default: /* proc?? */ return(TO_VAR_NAME(S_cursor_cross)); break;
     }
 }
+
 
 static char *show_axes2string(show_axes_t ax)
 {
@@ -199,6 +206,7 @@ static char *show_axes2string(show_axes_t ax)
     }
 }
 
+
 static char *zoom_focus_style_name(zoom_focus_t choice)
 {
   switch (choice)
@@ -211,6 +219,7 @@ static char *zoom_focus_style_name(zoom_focus_t choice)
     }
 }
 
+
 static char *transform_normalization_name(fft_normalize_t choice)
 {
   switch (choice)
@@ -222,6 +231,7 @@ static char *transform_normalization_name(fft_normalize_t choice)
     default:                  return(TO_VAR_NAME(S_normalize_by_channel)); break;
     }
 }
+
 
 static char *graph_style_name(graph_style_t choice)
 {
@@ -236,6 +246,7 @@ static char *graph_style_name(graph_style_t choice)
     }
 }
 
+
 static char *transform_graph_type_name(graph_type_t choice)
 {
   switch (choice)
@@ -246,6 +257,7 @@ static char *transform_graph_type_name(graph_type_t choice)
     }
 }
 
+
 static char *time_graph_type_name(graph_type_t choice)
 {
   switch (choice)
@@ -254,6 +266,7 @@ static char *time_graph_type_name(graph_type_t choice)
     default:                return(TO_VAR_NAME(S_graph_once));        break;
     }
 }
+
 
 static char *x_axis_style_name(x_axis_style_t choice)
 {
@@ -268,6 +281,7 @@ static char *x_axis_style_name(x_axis_style_t choice)
     }
 }
 
+
 static char *speed_control_style_name(speed_style_t choice)
 {
   switch (choice)
@@ -277,6 +291,7 @@ static char *speed_control_style_name(speed_style_t choice)
     default:                        return(TO_VAR_NAME(S_speed_control_as_float));    break;
     }
 }
+
 
 static char *channel_style_name(channel_style_t choice)
 {
@@ -288,6 +303,7 @@ static char *channel_style_name(channel_style_t choice)
     }
 }
 
+
 static char *enved_target_name(enved_target_t choice)
 {
   switch (choice)
@@ -298,10 +314,13 @@ static char *enved_target_name(enved_target_t choice)
     }
 }
 
+
 static char *b2s(bool val) {return((val) ? (char *)PROC_TRUE : (char *)PROC_FALSE);} /* cast needed by g++ > 3.4 */
+
 
 #define white_space "      "
 static bool b_ok = false;
+
 
 #if HAVE_RUBY
 static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "set_%s(%s)\n", TO_PROC_NAME(name), val);}
@@ -339,6 +358,7 @@ static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan)
   {fprintf(fd, "%sset_%s([%f, %f], sfile, %d)\n", white_space, TO_PROC_NAME(name), val1, val2, chan);}
 #endif
 
+
 #if HAVE_FORTH
 static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "%s set-%s drop\n", val, name);}
 static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "\"%s\" set-%s drop\n", val, name);}
@@ -373,6 +393,7 @@ static void pcp_sf(FILE *fd, const char *name, Float val, int chan)
 static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan) 
   {fprintf(fd, "%s'( %f %f ) sfile %d set-%s drop\n", white_space, val1, val2, chan, name);}
 #endif
+
 
 #if HAVE_SCHEME || (!HAVE_EXTENSION_LANGUAGE)
 static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "(set! (%s) %s)\n", name, val);}
@@ -412,6 +433,7 @@ static void pcp_sf(FILE *fd, const char *name, Float val, int chan)
 static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan) 
   {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) (list %f %f))\n", white_space, name, chan, val1, val2);}
 #endif
+
 
 static void save_options(FILE *fd)
 {
@@ -467,7 +489,7 @@ static void save_options(FILE *fd)
   if (wavo_hop(ss) != DEFAULT_WAVO_HOP) pss_sd(fd, S_wavo_hop, wavo_hop(ss));
   if (wavo_trace(ss) != DEFAULT_WAVO_TRACE) pss_sd(fd, S_wavo_trace, wavo_trace(ss));
   if (spectro_hop(ss) != DEFAULT_SPECTRO_HOP) pss_sd(fd, S_spectro_hop, spectro_hop(ss));
-  if (color_map(ss) != DEFAULT_COLOR_MAP) pss_sd(fd, S_colormap, color_map(ss));
+  if ((color_map(ss) != DEFAULT_COLOR_MAP) && (color_map(ss) <= 14)) pss_sd(fd, S_colormap, color_map(ss)); /* 14=top of built-in set; else we need (if (colormap? ...) ...) */
   if (color_map_size(ss) != DEFAULT_COLOR_MAP_SIZE) pss_sd(fd, S_colormap_size, color_map_size(ss));
   if (wavelet_type(ss) != DEFAULT_WAVELET_TYPE) pss_sd(fd, S_wavelet_type, wavelet_type(ss));
   if (cursor_style(ss) != DEFAULT_CURSOR_STYLE) pss_ss(fd, S_cursor_style, cursor_style_name(cursor_style(ss)));
@@ -646,7 +668,9 @@ static void save_options(FILE *fd)
     }
 }
 
+
 /* next two are for the help menu */
+
 void global_control_panel_state(void)
 {
   char *buf;
@@ -681,6 +705,7 @@ void global_control_panel_state(void)
   snd_help_back_to_top();
   FREE(buf);
 }
+
 
 void global_fft_state(void)
 {
@@ -757,6 +782,7 @@ static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 }
 #endif
 
+
 #if HAVE_RUBY
 static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 {
@@ -811,6 +837,7 @@ static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 }
 #endif
 
+
 #if HAVE_FORTH
 static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 {
@@ -856,9 +883,11 @@ static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 }
 #endif
 
+
 #if (!HAVE_EXTENSION_LANGUAGE)
 static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos) {}
 #endif
+
 
 static void check_selection(FILE *fd, chan_info *cp)
 {
@@ -872,6 +901,7 @@ static void check_selection(FILE *fd, chan_info *cp)
       pcp_sod(fd, S_selection_frames, end - beg + 1, cp->chan);     
     }
 }
+
 
 static int find_sound_nth(snd_info *nsp)
 {
@@ -887,6 +917,7 @@ static int find_sound_nth(snd_info *nsp)
     }
   return(which);
 }
+
 
 void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth)
 {
@@ -920,6 +951,7 @@ void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth)
 #endif
 }
 
+
 void close_save_sound_block(FILE *fd, bool need_f)
 {
 #if HAVE_RUBY
@@ -935,6 +967,7 @@ void close_save_sound_block(FILE *fd, bool need_f)
 #endif
 }
 
+
 static bool default_envelope_p(env *e)
 {
   return((e) &&
@@ -945,6 +978,7 @@ static bool default_envelope_p(env *e)
 	 (e->data[2] == 1.0) &&
 	 (e->data[3] == 1.0));
 }
+
 
 static void save_sound_state(snd_info *sp, void *ptr) 
 {
@@ -1144,6 +1178,7 @@ static void save_sound_state(snd_info *sp, void *ptr)
   close_save_sound_block(fd, !b_ok);
 }
 
+
 static XEN after_save_state_hook;
 static XEN before_save_state_hook;
 
@@ -1331,6 +1366,7 @@ char *save_options_in_prefs(void)
 #endif
 }
 
+
 #if 0
 static char *file_extension(char *arg)
 {
@@ -1342,6 +1378,7 @@ static char *file_extension(char *arg)
   return(dot);
 }
 #endif
+
 
 static XEN start_hook;
 
@@ -1355,6 +1392,7 @@ static bool dont_start(char *filename)
   return(XEN_TRUE_P(res));
 }
 
+
 static char *startup_filename = NULL;
 static int script_arg = 0, script_argn = 0;
 static char **script_args;
@@ -1365,7 +1403,14 @@ static XEN g_script_arg(void)
   return(C_TO_XEN_INT(script_arg));
 }
 
-static XEN g_set_script_arg(XEN arg) {script_arg = XEN_TO_C_INT(arg); return(arg);}
+
+static XEN g_set_script_arg(XEN arg) 
+{
+  script_arg = XEN_TO_C_INT(arg); 
+  return(arg);
+}
+
+
 static XEN g_script_args(void)
 {
   #define H_script_args "(" S_script_args "): the args passed to Snd at startup as a list of strings"
@@ -1376,10 +1421,12 @@ static XEN g_script_args(void)
   return(lst);
 }
 
+
 static void printout_to_stdout(const char *msg, void *ignore)
 {
   puts(msg);
 }
+
 
 int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool with_title, int args)
 {
@@ -1506,6 +1553,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
   return(auto_open_ctr + 1);
 }
 
+
 static void save_state_error_handler(const char *msg, void *data)
 {
   char *filename = (char *)data;
@@ -1521,6 +1569,7 @@ static void save_state_error_handler(const char *msg, void *data)
 	    XEN_LIST_2(C_TO_XEN_STRING(S_save_state),
 		       fname));
 }
+
 
 static XEN g_save_state(XEN filename) 
 {
@@ -1544,6 +1593,7 @@ default " S_save_state " filename is " DEFAULT_SAVE_STATE_FILE ". It can be chan
   return(res);
 }
 
+
 static XEN g_exit(XEN val) 
 {
   #define H_exit "(" S_exit "): exit Snd"
@@ -1551,6 +1601,7 @@ static XEN g_exit(XEN val)
     snd_exit(XEN_TO_C_INT_OR_ELSE(val, 1)); 
   return(XEN_FALSE);
 }
+
 
 static int snd_access(char *dir, const char *caller)
 {
@@ -1574,7 +1625,9 @@ static int snd_access(char *dir, const char *caller)
   return(1);
 }
 
+
 static XEN g_temp_dir(void) {return(C_TO_XEN_STRING(temp_dir(ss)));}
+
 static XEN g_set_temp_dir(XEN val) 
 {
   #define H_temp_dir "(" S_temp_dir "): name of directory for temp files (or " PROC_FALSE "=null)"
@@ -1589,7 +1642,9 @@ static XEN g_set_temp_dir(XEN val)
   return(C_TO_XEN_STRING(temp_dir(ss)));
 }
 
+
 static XEN g_ladspa_dir(void) {return(C_TO_XEN_STRING(ladspa_dir(ss)));}
+
 static XEN g_set_ladspa_dir(XEN val) 
 {
   #define H_ladspa_dir "(" S_ladspa_dir "): name of directory for ladspa plugin libraries"
@@ -1601,7 +1656,9 @@ static XEN g_set_ladspa_dir(XEN val)
   return(C_TO_XEN_STRING(ladspa_dir(ss)));
 }
 
+
 static XEN g_save_state_file(void) {return(C_TO_XEN_STRING(save_state_file(ss)));}
+
 static XEN g_set_save_state_file(XEN val) 
 {
   char *filename;
@@ -1613,7 +1670,9 @@ static XEN g_set_save_state_file(XEN val)
   return(C_TO_XEN_STRING(save_state_file(ss)));
 }
 
+
 static XEN g_save_dir(void) {return(C_TO_XEN_STRING(save_dir(ss)));}
+
 static XEN g_set_save_dir(XEN val) 
 {
   #define H_save_dir "(" S_save_dir "): name of directory for saved state data (or " PROC_FALSE "=null)"
@@ -1628,7 +1687,9 @@ static XEN g_set_save_dir(XEN val)
   return(C_TO_XEN_STRING(save_dir(ss)));
 }
 
+
 static XEN g_open_file_dialog_directory(void) {return(C_TO_XEN_STRING(open_file_dialog_directory(ss)));}
+
 static XEN g_set_open_file_dialog_directory(XEN val) 
 {
   #define H_open_file_dialog_directory "(" S_open_file_dialog_directory "): name of directory for initial open file dialog search"
@@ -1657,6 +1718,7 @@ static int snd_screen_height(void)
 #endif
 }
 
+
 static int snd_screen_width(void)
 {
 #if USE_MOTIF
@@ -1670,11 +1732,13 @@ static int snd_screen_width(void)
 #endif
 }
 
+
 static XEN g_window_height(void) 
 {
   #define H_window_height "(" S_window_height "): current Snd window height in pixels"
   return(C_TO_XEN_INT(widget_height(MAIN_SHELL(ss))));
 }
+
 
 static XEN g_set_window_height(XEN height) 
 {
@@ -1691,11 +1755,13 @@ static XEN g_set_window_height(XEN height)
   return(height);
 }
 
+
 static XEN g_window_width(void) 
 {
   #define H_window_width "(" S_window_width "): current Snd window width in pixels"
   return(C_TO_XEN_INT(widget_width(MAIN_SHELL(ss))));
 }
+
 
 static XEN g_set_window_width(XEN width) 
 {
@@ -1712,11 +1778,13 @@ static XEN g_set_window_width(XEN width)
   return(width);
 }
 
+
 static XEN g_window_x(void) 
 {
   #define H_window_x "(" S_window_x "): current Snd window x position in pixels"
   return(C_TO_XEN_INT(widget_x(MAIN_SHELL(ss))));
 }
+
 
 static XEN g_set_window_x(XEN val) 
 {
@@ -1731,11 +1799,13 @@ static XEN g_set_window_x(XEN val)
   return(val);
 }
 
+
 static XEN g_window_y(void) 
 {
   #define H_window_y "(" S_window_y "): current Snd window y position in pixels"
   return(C_TO_XEN_INT(widget_y(MAIN_SHELL(ss))));
 }
+
 
 static XEN g_set_window_y(XEN val) 
 {
@@ -1750,11 +1820,13 @@ static XEN g_set_window_y(XEN val)
   return(val);
 }
 
+
 static XEN g_just_sounds(void)
 {
   #define H_just_sounds "(" S_just_sounds "): the 'just sounds' choice in the file chooser dialog"
   return(C_TO_XEN_BOOLEAN(just_sounds(ss)));
 }
+
 
 static XEN g_set_just_sounds(XEN on) 
 {
@@ -1764,7 +1836,9 @@ static XEN g_set_just_sounds(XEN on)
   return(C_TO_XEN_BOOLEAN(just_sounds(ss)));
 }
 
+
 static XEN g_tiny_font(void) {return(C_TO_XEN_STRING(tiny_font(ss)));}
+
 static XEN g_set_tiny_font(XEN val) 
 {
   #define H_tiny_font "(" S_tiny_font "): font use for some info in the graphs"
@@ -1773,7 +1847,9 @@ static XEN g_set_tiny_font(XEN val)
   return(C_TO_XEN_STRING(tiny_font(ss)));
 }
 
+
 static XEN g_axis_label_font(void) {return(C_TO_XEN_STRING(axis_label_font(ss)));}
+
 static XEN g_set_axis_label_font(XEN val) 
 {
   #define H_axis_label_font "(" S_axis_label_font "): font used for axis labels"
@@ -1782,7 +1858,9 @@ static XEN g_set_axis_label_font(XEN val)
   return(C_TO_XEN_STRING(axis_label_font(ss)));
 }
 
+
 static XEN g_axis_numbers_font(void) {return(C_TO_XEN_STRING(axis_numbers_font(ss)));}
+
 static XEN g_set_axis_numbers_font(XEN val) 
 {
   #define H_axis_numbers_font "(" S_axis_numbers_font "): font used for axis numbers"
@@ -1791,7 +1869,9 @@ static XEN g_set_axis_numbers_font(XEN val)
   return(C_TO_XEN_STRING(axis_numbers_font(ss)));
 }
 
+
 static XEN g_listener_font(void) {return(C_TO_XEN_STRING(listener_font(ss)));}
+
 static XEN g_set_listener_font(XEN val) 
 {
   #define H_listener_font "(" S_listener_font "): font used by the lisp listener"
@@ -1800,7 +1880,9 @@ static XEN g_set_listener_font(XEN val)
   return(C_TO_XEN_STRING(listener_font(ss)));
 }
 
+
 static XEN g_bold_peaks_font(void) {return(C_TO_XEN_STRING(bold_peaks_font(ss)));}
+
 static XEN g_set_bold_peaks_font(XEN val) 
 {
   #define H_bold_peaks_font "(" S_bold_peaks_font "): bold font used by fft peak display"
@@ -1809,7 +1891,9 @@ static XEN g_set_bold_peaks_font(XEN val)
   return(C_TO_XEN_STRING(bold_peaks_font(ss)));
 }
 
+
 static XEN g_peaks_font(void) {return(C_TO_XEN_STRING(peaks_font(ss)));}
+
 static XEN g_set_peaks_font(XEN val) 
 {
   #define H_peaks_font "(" S_peaks_font "): normal font used by fft peak display"
@@ -1820,6 +1904,7 @@ static XEN g_set_peaks_font(XEN val)
 
 
 static XEN g_audio_output_device(void) {return(C_TO_XEN_INT(audio_output_device(ss)));}
+
 static XEN g_set_audio_output_device(XEN val) 
 {
   #define H_audio_output_device "(" S_audio_output_device "): the current sndlib default output device (" S_mus_audio_default ")"
@@ -1828,7 +1913,9 @@ static XEN g_set_audio_output_device(XEN val)
   return(C_TO_XEN_INT(audio_output_device(ss)));
 }
 
+
 static XEN g_audio_input_device(void) {return(C_TO_XEN_INT(audio_input_device(ss)));}
+
 static XEN g_set_audio_input_device(XEN val) 
 {
   #define H_audio_input_device "(" S_audio_input_device "): the current sndlib default input device (" S_mus_audio_default ")"
@@ -1837,7 +1924,9 @@ static XEN g_set_audio_input_device(XEN val)
   return(C_TO_XEN_INT(audio_input_device(ss)));
 }
 
+
 static XEN g_minibuffer_history_length(void) {return(C_TO_XEN_INT(minibuffer_history_length(ss)));}
+
 static XEN g_set_minibuffer_history_length(XEN val) 
 {
   #define H_minibuffer_history_length "(" S_minibuffer_history_length "): the minibuffer history length. \
@@ -1850,7 +1939,9 @@ This pertains to the M-p and M-n commands."
   return(C_TO_XEN_INT(minibuffer_history_length(ss)));
 }
 
+
 static XEN g_auto_resize(void) {return(C_TO_XEN_BOOLEAN(auto_resize(ss)));}
+
 static XEN g_set_auto_resize(XEN val) 
 {
   #define H_auto_resize "(" S_auto_resize "): " PROC_TRUE " if Snd can change its main window size as it pleases (default: " PROC_TRUE ")"
@@ -1862,7 +1953,9 @@ static XEN g_set_auto_resize(XEN val)
   return(C_TO_XEN_BOOLEAN(auto_resize(ss)));
 }
 
+
 static XEN g_color_cutoff(void) {return(C_TO_XEN_DOUBLE(color_cutoff(ss)));}
+
 static XEN g_set_color_cutoff(XEN val) 
 {
   #define H_color_cutoff "(" S_color_cutoff "): color map cutoff point (default .003).  Any values \
@@ -1874,7 +1967,9 @@ below the cutoff are displayed in the background color"
   return(C_TO_XEN_DOUBLE(color_cutoff(ss)));
 }
 
+
 static XEN g_color_inverted(void) {return(C_TO_XEN_BOOLEAN(color_inverted(ss)));}
+
 static XEN g_set_color_inverted(XEN val) 
 {
   #define H_color_inverted "(" S_color_inverted "): whether the colormap in operation should be inverted"
@@ -1883,7 +1978,9 @@ static XEN g_set_color_inverted(XEN val)
   return(C_TO_XEN_BOOLEAN(color_inverted(ss)));
 }
 
+
 static XEN g_color_scale(void) {return(C_TO_XEN_DOUBLE(color_scale(ss)));}
+
 static XEN g_set_color_scale(XEN val) 
 {
   #define H_color_scale "(" S_color_scale "): darkness setting for colormaps (0.5)"
@@ -1894,7 +1991,9 @@ static XEN g_set_color_scale(XEN val)
   return(C_TO_XEN_DOUBLE(color_scale(ss)));
 }
 
+
 static XEN g_selection_creates_region(void) {return(C_TO_XEN_BOOLEAN(selection_creates_region(ss)));}
+
 static XEN g_set_selection_creates_region(XEN val) 
 {
   #define H_selection_creates_region "(" S_selection_creates_region "): " PROC_TRUE " if a region should be created each time a selection is made. \
@@ -1905,7 +2004,9 @@ regions (saved selections), you can speed up many operations by setting this fla
   return(C_TO_XEN_BOOLEAN(selection_creates_region(ss)));
 }
 
+
 static XEN g_print_length(void) {return(C_TO_XEN_INT(print_length(ss)));}
+
 static XEN g_set_print_length(XEN val) 
 {
   int len;
@@ -1919,7 +2020,9 @@ static XEN g_set_print_length(XEN val)
   return(C_TO_XEN_INT(print_length(ss)));
 }
 
+
 static XEN g_show_indices(void) {return(C_TO_XEN_BOOLEAN(show_indices(ss)));}
+
 static XEN g_set_show_indices(XEN val) 
 {
   #define H_show_indices "(" S_show_indices "): " PROC_TRUE " if sound name should be preceded by its index in the sound display."
@@ -1928,7 +2031,9 @@ static XEN g_set_show_indices(XEN val)
   return(C_TO_XEN_BOOLEAN(show_indices(ss)));
 }
 
+
 static XEN g_show_backtrace(void) {return(C_TO_XEN_BOOLEAN(show_backtrace(ss)));}
+
 static XEN g_set_show_backtrace(XEN val) 
 {
   #define H_show_backtrace "(" S_show_backtrace "): " PROC_TRUE " to show backtrace automatically upon error"
@@ -1937,7 +2042,9 @@ static XEN g_set_show_backtrace(XEN val)
   return(C_TO_XEN_BOOLEAN(show_backtrace(ss)));
 }
 
+
 static XEN g_trap_segfault(void) {return(C_TO_XEN_BOOLEAN(trap_segfault(ss)));}
+
 static XEN g_set_trap_segfault(XEN val) 
 {
   #define H_trap_segfault "(" S_trap_segfault "): " PROC_TRUE " if Snd should try to trap (and whine about) segfaults"
@@ -1946,7 +2053,9 @@ static XEN g_set_trap_segfault(XEN val)
   return(C_TO_XEN_BOOLEAN(trap_segfault(ss)));
 }
 
+
 static XEN g_with_relative_panes(void) {return(C_TO_XEN_BOOLEAN(with_relative_panes(ss)));}
+
 static XEN g_set_with_relative_panes(XEN val) 
 {
   #define H_with_relative_panes "(" S_with_relative_panes "): " PROC_TRUE " if multichannel sounds should try to maintain relative pane sizes"
@@ -1955,7 +2064,9 @@ static XEN g_set_with_relative_panes(XEN val)
   return(C_TO_XEN_BOOLEAN(with_relative_panes(ss)));
 }
 
+
 static XEN g_with_background_processes(void) {return(C_TO_XEN_BOOLEAN(with_background_processes(ss)));}
+
 static XEN g_set_with_background_processes(XEN val) 
 {
   #define H_with_background_processes "(" S_with_background_processes "): " PROC_TRUE " if Snd should use background (idle time) processing"
@@ -1964,7 +2075,9 @@ static XEN g_set_with_background_processes(XEN val)
   return(C_TO_XEN_BOOLEAN(with_background_processes(ss)));
 }
 
+
 static XEN g_with_file_monitor(void) {return(C_TO_XEN_BOOLEAN(with_file_monitor(ss)));}
+
 static XEN g_set_with_file_monitor(XEN val) 
 {
   #define H_with_file_monitor "(" S_with_file_monitor "): " PROC_TRUE " if the file alteration monitor is active"
@@ -1973,11 +2086,13 @@ static XEN g_set_with_file_monitor(XEN val)
   return(C_TO_XEN_BOOLEAN(with_file_monitor(ss)));
 }
 
+
 static XEN g_snd_version(void) 
 {
   #define H_snd_version "(" S_snd_version "): current Snd version (a string)"
   return(C_TO_XEN_STRING(SND_DATE));
 }
+
 
 static XEN g_color_dialog(XEN managed) 
 {
@@ -1988,6 +2103,7 @@ static XEN g_color_dialog(XEN managed)
   return(XEN_WRAP_WIDGET(w));
 }
 
+
 static XEN g_orientation_dialog(XEN managed) 
 {
   widget_t w;
@@ -1997,6 +2113,7 @@ static XEN g_orientation_dialog(XEN managed)
   return(XEN_WRAP_WIDGET(w));
 }
 
+
 static XEN g_transform_dialog(XEN managed) 
 {
   widget_t w;
@@ -2005,6 +2122,7 @@ static XEN g_transform_dialog(XEN managed)
   w = fire_up_transform_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
 }
+
 
 static XEN g_print_dialog(XEN managed, XEN direct_to_printer) 
 {
@@ -2016,6 +2134,7 @@ static XEN g_print_dialog(XEN managed, XEN direct_to_printer)
   return(XEN_WRAP_WIDGET(w));
 }
 
+
 static XEN g_preferences_dialog(void)
 {
   widget_t w;
@@ -2024,11 +2143,13 @@ static XEN g_preferences_dialog(void)
   return(XEN_WRAP_WIDGET(w));
 }
 
+
 static XEN g_recorder_dialog(void) 
 {
   #define H_recorder_dialog "(" S_recorder_dialog "): start the Recorder"
   return(XEN_WRAP_WIDGET(record_file()));
 }
+
 
 static XEN g_abort(void)
 {
@@ -2036,6 +2157,7 @@ static XEN g_abort(void)
   abort();
   return(XEN_FALSE);
 }
+
 
 static XEN g_abortq(void)
 {
