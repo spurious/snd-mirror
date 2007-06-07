@@ -1148,9 +1148,12 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	      if ((bratio - iratio) < .001)
 		{
 		  peak_env_info *new_ep;
-		  new_ep = copy_peak_env_info(ep, (ratio < 0.0));
-		  new_ep->samps_per_bin = iratio;
-		  cp->edits[cp->edit_ctr]->peak_env = new_ep;
+		  new_ep = copy_peak_env_info(ep, (ratio < 0.0)); /* might return NULL if ep but not ep->completed */
+		  if (new_ep)
+		    {
+		      new_ep->samps_per_bin = iratio;
+		      cp->edits[cp->edit_ctr]->peak_env = new_ep;
+		    }
 		}
 	    }
 	}
@@ -4580,7 +4583,7 @@ swap the indicated channels"
 		  e1 = peak_env_copy(cp1, false, cp1->edit_ctr);
 		  file_override_samples(dur1, cp1->sound->filename, cp0, cp1->chan, DONT_DELETE_ME, S_swap_channels);
 		  file_override_samples(dur0, cp0->sound->filename, cp1, cp0->chan, DONT_DELETE_ME, S_swap_channels);
-		  cp0->edits[cp0->edit_ctr]->peak_env = e1;
+		  cp0->edits[cp0->edit_ctr]->peak_env = e1; /* can be NULL */
 		  cp1->edits[cp1->edit_ctr]->peak_env = e0;
 		  swap_marks(cp0, cp1);
 		  update_graph(cp0);

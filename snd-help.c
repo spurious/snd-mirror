@@ -499,6 +499,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+7-June:  Snd 9.1.\n\
 1-June:  mix-sync-max.\n\
 28-May:  mus-sound-mark-info.\n\
 21-May:  background-gradient (gtk+cairo only)\n\
