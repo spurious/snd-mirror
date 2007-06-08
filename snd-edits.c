@@ -7386,7 +7386,7 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
   if ((beg < 0) || 
       (num <= 0) ||
       (beg >= old_ed->samples) ||
-      (scl == 1.0) ||
+      ((scl == 1.0) && (pos == cp->edit_ctr)) ||
       (section_is_zero(cp, beg, num, pos)))
     return(false); 
 
@@ -11728,4 +11728,6 @@ append the rest?
 
 	 d)))))
 */
+
+   /* filter on filter if combined orders < max, convolve coeffs */
 #endif

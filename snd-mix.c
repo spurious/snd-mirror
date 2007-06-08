@@ -33,7 +33,7 @@ static bool mix_vct_untagged(vct *v, chan_info *cp, off_t beg, const char *origi
     data[i] += read_sample_to_mus_sample(sf);
   sf = free_snd_fd(sf);
 
-  result = change_samples(beg, len, data, cp, origin, cp->edit_ctr);
+  result = change_samples(beg, len, data, cp, origin, cp->edit_ctr); /* cp->edit_ctr since mix-vct has no edpos arg, similarly mix */
   if (result) update_graph(cp);
 
 #if (!SNDLIB_USE_FLOATS)

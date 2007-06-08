@@ -32,8 +32,6 @@
 ;;;  test all done                              [63583]
 ;;;  test the end                               [63819]
 
-;;; TODO: ptree fir filter
-
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)

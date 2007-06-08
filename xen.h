@@ -16,7 +16,7 @@
 
 /* HISTORY:
  *
- *  28-Apr-07: changes for Gauche API changes in versions 0.8.8, 0.8.10, and 0.9.
+ *  28-Apr-07: Gauche API changes in versions 0.8.8, 0.8.10, and 0.9.
  *  14-Feb-07: XEN_PUTS and friends for fth (Mike).
  *  17-Jan-07: rb_errinfo changes (Mike Scholz).
  *  --------
