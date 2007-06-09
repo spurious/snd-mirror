@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Tue Feb 13 09:21:16 CET 2007
+\ Changed: Thu Jun 07 14:45:39 CEST 2007
 
 \ src-duration             ( en -- dur )
 \ dolph                    ( n gamma -- im )
@@ -1640,7 +1640,7 @@ hide
 : ssbaoe-cb { mx ssbs bands beg dur snd chn edpos -- prc; self -- val }
   0.0 { nmx }
   nmx ssbs bands ssbmc-cb { proc }
-  0 proc-create proc , mx , nmx , beg , snd , chn , edpos , ( prc )
+  0 proc-create proc , mx , nmx , beg , dur , snd , chn , edpos , ( prc )
  does> { self -- val }
   self           @ { proc }
   self 1 cells + @ { mx }
@@ -1689,7 +1689,7 @@ hide
 : ssbeaoe-cb { mx ssbs bands frenvs beg dur snd chn edpos -- prc; self -- val }
   0.0 { nmx }
   nmx ssbs bands frenvs ssbemc-cb { proc }
-  0 proc-create proc , mx , nmx , beg , snd , chn , edpos , ( prc )
+  0 proc-create proc , mx , nmx , beg , dur , snd , chn , edpos , ( prc )
  does> { self -- val }
   self           @ { proc }
   self 1 cells + @ { mx }

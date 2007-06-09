@@ -1199,7 +1199,7 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
   sp = cp->sound;
   /* get current syncd chans */
   sc = get_sync_state(sp, cp, 0, over_selection, 
-		      (ratio < 0.0) ? READ_BACKWARD : READ_FORWARD, /* 0->beg, 0->over_selection (ratio = 0.0 if from_enved) */
+		      (ratio < 0.0) ? READ_BACKWARD : READ_FORWARD, /* 0->beg, 0->over_selection (ratio = 0.0 if from_enved) */ /* TODO: e->data[1] < 0 */
 		      edpos,
 		      origin, arg_pos);      
   if (sc == NULL) return;
@@ -5378,14 +5378,20 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 	{
 	  XEN data;
 	  data = mus_array_to_list(mus_data(egen), 0, mus_env_breakpoints(egen) * 2);
-	  if (need_free) {mus_free(egen); need_free = false;}
+	  if (need_free) 
+	    {
+	      mus_free(egen); 
+	      need_free = false;
+	    }
 	  if (error == SRC_ENV_HIT_ZERO)
 	    XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "~A: envelope hits 0.0");
 	  else XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "~A: envelope passes through 0.0");
+	  return(XEN_FALSE); /* just for clarity... */
 	}
     }
 
   /* TODO: env src with negative vals? and better check here */
+
   if (ratio >= 0.0) /* ratio == 0.0 if env in use (gad...) */
     sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   else sf = init_sample_read_any(beg + dur - 1, cp, READ_BACKWARD, pos);
@@ -5468,7 +5474,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd_n, XEN chn_n, XEN edpos,
 	    }
 	  else
 	    src_env_or_num(cp, NULL, 
-			   (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
+			   (mus_phase(egen) >= 0.0) ? 1.0 : -1.0, /* mus_phase of env apparently = current_value(!) */
 			   false, NOT_FROM_ENVED, caller, 
 			   over_selection, egen, edpos, 5);
 	}

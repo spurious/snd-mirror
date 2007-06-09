@@ -3,34 +3,34 @@
 ;;;  test 0: constants                          [540]
 ;;;  test 1: defaults                           [1092]
 ;;;  test 2: headers                            [1286]
-;;;  test 3: variables                          [1595]
-;;;  test 4: sndlib                             [2240]
-;;;  test 5: simple overall checks              [4710]
-;;;  test 6: vcts                               [12731]
-;;;  test 7: colors                             [13009]
-;;;  test 8: clm                                [13499]
-;;;  test 9: mix                                [23304]
-;;;  test 10: marks                             [25245]
-;;;  test 11: dialogs                           [26206]
-;;;  test 12: extensions                        [26451]
-;;;  test 13: menus, edit lists, hooks, etc     [26722]
-;;;  test 14: all together now                  [28389]
-;;;  test 15: chan-local vars                   [29422]
-;;;  test 16: regularized funcs                 [31033]
-;;;  test 17: dialogs and graphics              [35504]
-;;;  test 18: enved                             [35593]
-;;;  test 19: save and restore                  [35612]
-;;;  test 20: transforms                        [37397]
-;;;  test 21: new stuff                         [39232]
-;;;  test 22: run                               [41172]
-;;;  test 23: with-sound                        [46854]
-;;;  test 24: user-interface                    [49334]
-;;;  test 25: X/Xt/Xm                           [52736]
-;;;  test 26: Gtk                               [57332]
-;;;  test 27: GL                                [61188]
-;;;  test 28: errors                            [61312]
-;;;  test all done                              [63583]
-;;;  test the end                               [63819]
+;;;  test 3: variables                          [1602]
+;;;  test 4: sndlib                             [2247]
+;;;  test 5: simple overall checks              [4768]
+;;;  test 6: vcts                               [12789]
+;;;  test 7: colors                             [13067]
+;;;  test 8: clm                                [13557]
+;;;  test 9: mix                                [23362]
+;;;  test 10: marks                             [25371]
+;;;  test 11: dialogs                           [26332]
+;;;  test 12: extensions                        [26577]
+;;;  test 13: menus, edit lists, hooks, etc     [26848]
+;;;  test 14: all together now                  [28554]
+;;;  test 15: chan-local vars                   [29587]
+;;;  test 16: regularized funcs                 [31198]
+;;;  test 17: dialogs and graphics              [35911]
+;;;  test 18: enved                             [36000]
+;;;  test 19: save and restore                  [36019]
+;;;  test 20: transforms                        [37804]
+;;;  test 21: new stuff                         [39639]
+;;;  test 22: run                               [41579]
+;;;  test 23: with-sound                        [47268]
+;;;  test 24: user-interface                    [49748]
+;;;  test 25: X/Xt/Xm                           [53150]
+;;;  test 26: Gtk                               [57746]
+;;;  test 27: GL                                [61615]
+;;;  test 28: errors                            [61739]
+;;;  test all done                              [64010]
+;;;  test the end                               [64246]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -31587,6 +31587,23 @@ EDITS: 2
 		  #f)))
 	  #f)))
   
+  (define* (edit-difference s1 c1 e1 e2 :optional (offset 0))
+    (let* ((r1 (make-sample-reader 0 s1 c1 1 e1))
+	   (r2 (make-sample-reader offset s1 c1 1 e2))
+	   (max-diff 0.0)
+	   (max-loc 0)
+	   (N (frames s1 c1 e1)))
+      (do ((i 0 (1+ i)))
+	  ((= i N))
+	(let ((diff (abs (- (r1) (r2)))))
+	  (if (> diff max-diff)
+	      (begin
+		(set! max-diff diff)
+		(set! max-loc i)))))
+      (if (> max-diff 0.0)
+	  (list max-diff max-loc)
+	  #f)))
+
   (define (check-edit-tree expected-tree expected-vals name)
     (define (vequal-at v0 v1)
       (call-with-current-continuation
@@ -35661,6 +35678,231 @@ EDITS: 1
 		))
 	      (set! (optimization) old-opt)))
 	
+	(let ((ind (new-sound "fmv.snd" :size 50))
+	      (sw (sinc-width)))
+	  (set! (sinc-width) 10)
+	  (set! (sample 20 ind 0) 0.5)
+	  (let ((edpos (edit-position ind 0)))
+
+	    ;; -------- no-ops
+	    (src-channel 1)
+	    (if (not (= (edit-position ind 0) edpos)) (snd-display ";src-channel 1 as no-op: ~A ~A" edpos (edit-position ind 0)))
+	    (src-sound 1)
+	    (if (not (= (edit-position ind 0) edpos)) (snd-display ";src-sound 1 as no-op: ~A ~A" edpos (edit-position ind 0)))
+	    (select-all)
+	    (src-selection 1)
+	    (if (not (= (edit-position ind 0) edpos)) (snd-display ";src-selection 1 as no-op: ~A ~A" edpos (edit-position ind 0)))
+
+	    (filter-channel (vct 1.0))
+	    (if (not (= (edit-position ind 0) edpos)) (snd-display ";filter-channel 1 as no-op: ~A ~A" edpos (edit-position ind 0)))
+	    
+	    (env-channel '(0 1 1 1))
+	    (if (not (= (edit-position ind 0) edpos)) (snd-display ";env-channel 1 as no-op: ~A ~A" edpos (edit-position ind 0)))
+	    (env-sound '(0 1 1 1))
+	    (if (not (= (edit-position ind 0) edpos)) (snd-display ";env-sound 1 as no-op: ~A ~A" edpos (edit-position ind 0)))
+	    (env-selection '(0 1 1 1))
+	    (if (not (= (edit-position ind 0) edpos)) (snd-display ";env-selection 1 as no-op: ~A ~A" edpos (edit-position ind 0)))
+	    
+	    (scale-channel 1)
+	    (if (not (= (edit-position ind 0) edpos)) (snd-display ";scale-channel 1 as no-op: ~A ~A" edpos (edit-position ind 0)))
+	    (scale-by 1)
+	    (if (not (= (edit-position ind 0) edpos)) (snd-display ";scale-by 1 as no-op: ~A ~A" edpos (edit-position ind 0)))
+	    (scale-selection-by 1)
+	    (if (not (= (edit-position ind 0) edpos)) (snd-display ";scale-selection 1 as no-op: ~A ~A" edpos (edit-position ind 0)))
+
+	    ;; -------- other special cases
+	    (src-channel -1)
+	    (reverse-channel)
+	    (let ((diff (edit-difference ind 0 edpos (edit-position ind 0))))
+	      (if diff (snd-display ";src -1 and reverse diff: ~A" diff)))
+
+	    (set! (edit-position ind 0) edpos)
+	    (scale-by 2)
+	    (filter-channel (vct 2) 1 0 #f ind 0 edpos)
+	    (let ((diff (edit-difference ind 0 (1+ edpos) (+ edpos 2))))
+	      (if diff (snd-display ";scale and filter 2 diff: ~A" diff)))
+
+	    ;; -------- not no-ops!
+	    (scale-channel 1.0 0 #f ind 0 edpos)
+	    (let ((diff (edit-difference ind 0 edpos (edit-position ind 0))))
+	      (if diff (snd-display ";edpos scale 1 diff: ~A" diff)))
+	    (if (fneq (maxamp ind 0) 0.5) (snd-display ";scale 1 of original: ~A" (maxamp ind 0)))
+	    (if (= (edit-position ind 0) (+ edpos 2)) 
+		(snd-display ";edpos scl copy opted out?")
+		(undo))
+
+	    (filter-channel (vct 1) 1 0 #f ind 0 edpos)
+	    (let ((diff (edit-difference ind 0 edpos (edit-position ind 0))))
+	      (if diff (snd-display ";edpos flt 1 diff: ~A" diff)))
+	    (if (= (edit-position ind 0) (+ edpos 2)) 
+		(snd-display ";edpos flt copy opted out?")
+		(undo))
+	    
+	    (env-channel '(0 1 1 1) 0 #f ind 0 edpos)
+	    (let ((diff (edit-difference ind 0 edpos (edit-position ind 0))))
+	      (if diff (snd-display ";edpos env 1 diff: ~A" diff)))
+	    (if (= (edit-position ind 0) (+ edpos 2)) 
+		(snd-display ";edpos env copy opted out?")
+		(undo))
+	    
+	    (src-channel 1.0 0 #f ind 0 edpos)
+	    (let ((diff (edit-difference ind 0 edpos (edit-position ind 0))))
+	      (if (and diff (> (car diff) .0001)) (snd-display ";edpos src 1 diff: ~A" diff)))
+	    (if (= (edit-position ind 0) (+ edpos 2)) 
+		(snd-display ";edpos src copy opted out?")
+		(undo))
+
+	    (set! edpos (edit-position ind 0))
+	    (let ((len (frames ind 0)))
+	      (src-channel 0.5)
+
+	      (scale-channel 1.0 0 #f ind 0 edpos)
+	      (let ((diff (edit-difference ind 0 edpos (edit-position ind 0))))
+		(if diff (snd-display ";1 edpos scale 1 diff: ~A" diff)))
+	      (if (not (= (frames ind 0) len))
+		  (snd-display ";scl len edpos: ~A ~A" len (frames ind 0)))
+	      (undo)
+
+	      (filter-channel (vct 1) 1 0 #f ind 0 edpos)
+	      (let ((diff (edit-difference ind 0 edpos (edit-position ind 0))))
+		(if diff (snd-display ";1 edpos flt 1 diff: ~A" diff)))
+	      (if (not (= (frames ind 0) len))
+		  (snd-display ";flt len edpos: ~A ~A" len (frames ind 0)))
+	      (undo)
+	    
+	      (env-channel '(0 1 1 1) 0 #f ind 0 edpos)
+	      (let ((diff (edit-difference ind 0 edpos (edit-position ind 0))))
+		(if diff (snd-display ";1 edpos env 1 diff: ~A" diff)))
+	      (if (not (= (frames ind 0) len))
+		  (snd-display ";env len edpos: ~A ~A" len (frames ind 0)))
+	      (undo)
+	    
+	      (reverse-channel 0 #f ind 0 edpos)
+	      (reverse-channel 0 #f ind 0)
+	      (let ((diff (edit-difference ind 0 edpos (edit-position ind 0))))
+		(if diff (snd-display ";1 edpos rev 1 diff: ~A" diff)))
+	      (if (not (= (frames ind 0) len))
+		  (snd-display ";rev len edpos: ~A ~A" len (frames ind 0)))
+	      (undo 2)
+	    
+	      (src-channel 1.0 0 #f ind 0 edpos)
+	      (let ((diff (edit-difference ind 0 edpos (edit-position ind 0))))
+		(if (and diff (> (car diff) .0001)) (snd-display ";1 edpos src 1 diff: ~A" diff)))
+	      (if (> (abs (- (frames ind 0) len)) 2)
+		  (snd-display ";src len edpos: ~A ~A" len (frames ind 0)))
+	      (undo)
+
+	      (let ((opt (optimization)))
+		(set! (optimization) 0)
+		(map-channel (lambda (y) y) 0 #f ind 0 edpos)
+		(set! (optimization) opt))
+	      (let ((diff (edit-difference ind 0 edpos (edit-position ind 0))))
+		(if diff (snd-display ";1 edpos map 1 diff: ~A" diff)))
+	      (if (not (= (frames ind 0) len))
+		  (snd-display ";map len edpos: ~A ~A" len (frames ind 0)))
+	      (undo)
+
+	      (ptree-channel (lambda (y) y) 0 #f ind 0 edpos)
+	      (let ((diff (edit-difference ind 0 edpos (edit-position ind 0))))
+		(if diff (snd-display ";1 edpos ptree 1 diff: ~A" diff)))
+	      (if (not (= (frames ind 0) len))
+		  (snd-display ";ptree len edpos: ~A ~A" len (frames ind 0)))
+	      (undo)
+
+	      (smooth-channel 0 len ind 0 edpos)
+	      (if (not (= (frames ind 0) len))
+		  (snd-display ";smooth len edpos: ~A ~A" len (frames ind 0)))
+	      (undo)
+
+	      (clm-channel (make-one-zero 1.0 0.0) 0 #f ind 0 edpos)
+	      (let ((diff (edit-difference ind 0 edpos (edit-position ind 0))))
+		(if diff (snd-display ";1 edpos clm 1 diff: ~A" diff)))
+	      (if (not (= (frames ind 0) len))
+		  (snd-display ";clm len edpos: ~A ~A" len (frames ind 0)))
+	      (undo))
+
+	    ;; dur of 0 is ignored no matter what -- else I have a million special cases
+	    ;;   -> insert 0 at other edpos, delete 0, change 0 (x|ramp-channel) (map? etc)
+
+	    (revert-sound ind)
+	    (close-sound ind)
+	    
+	    ;; -------- reach back with partial edit
+	    (set! ind (new-sound "fmv.snd" :size 10))
+	    (as-one-edit
+	     (lambda ()
+	       (do ((i 0 (1+ i)))
+		   ((= i 10))
+		 (set! (sample i) (* i .01)))))
+	    (set! edpos (edit-position ind 0))
+	    
+	    (pad-channel 0 10 ind 0)
+	    (pad-channel 20 10 ind 0)
+	    (set! (samples 0 10 ind 0) (make-vct 10 .5))
+	    (set! (samples 20 10 ind 0) (make-vct 10 -.75))
+	    
+	    (pad-channel 0 10 ind 0 edpos)
+	    (if (not (= (frames ind 0) 20)) (snd-display ";pad edpos len: ~A" (frames ind 0)))
+	    (if (fneq (maxamp ind 0) .09) (snd-display ";pad edpos max: ~A" (maxamp ind 0)))
+	    (undo)
+
+	    (delete-samples 0 5 ind 0 edpos)
+	    (if (not (= (frames ind 0) 5)) (snd-display ";del edpos len: ~A" (frames ind 0)))
+	    (if (fneq (maxamp ind 0) .09) (snd-display ";del edpos max: ~A" (maxamp ind 0)))
+	    (undo)
+
+	    (set! (samples 5 5 ind 0 #f "set" 0 edpos) (make-vct 5 0.0))
+	    (if (not (= (frames ind 0) 10)) (snd-display ";set edpos len: ~A" (frames ind 0)))
+	    (if (fneq (maxamp ind 0) .04) (snd-display ";set edpos max: ~A" (maxamp ind 0)))
+	    (undo)
+
+	    (ramp-channel 0.0 1.0 0 5 ind 0 edpos)
+	    (if (not (= (frames ind 0) 10)) (snd-display ";rmp edpos len: ~A" (frames ind 0)))
+	    (if (fneq (maxamp ind 0) .09) (snd-display ";rmp edpos max: ~A" (maxamp ind 0)))
+	    (undo)
+
+	    (xramp-channel 0.0 1.0 32.0 5 5 ind 0 edpos)
+	    (if (not (= (frames ind 0) 10)) (snd-display ";xrmp edpos len: ~A" (frames ind 0)))
+	    (if (fneq (maxamp ind 0) .09) (snd-display ";xrmp edpos max: ~A" (maxamp ind 0)))
+	    (undo)
+
+	    (env-channel '(0 0 1 1) 0 5 ind 0 edpos)
+	    (if (not (= (frames ind 0) 10)) (snd-display ";env edpos len: ~A" (frames ind 0)))
+	    (if (fneq (maxamp ind 0) .09) (snd-display ";env edpos max: ~A" (maxamp ind 0)))
+	    (undo)
+
+	    (ptree-channel (lambda (y) y) 0 5 ind 0 edpos)
+	    (if (not (= (frames ind 0) 10)) (snd-display ";ptree edpos len: ~A" (frames ind 0)))
+	    (if (fneq (maxamp ind 0) .09) (snd-display ";ptree edpos max: ~A" (maxamp ind 0)))
+	    (undo)
+
+	    (smooth-channel 0 5 ind 0 edpos)
+	    (if (not (= (frames ind 0) 10)) (snd-display ";smooth edpos len: ~A" (frames ind 0)))
+	    (if (fneq (maxamp ind 0) .09) (snd-display ";smooth edpos max: ~A" (maxamp ind 0)))
+	    (undo)
+
+	    (src-channel 0.5 0 5 ind 0 edpos)
+	    (if (not (= (frames ind 0) 16)) (snd-display ";src edpos len: ~A" (frames ind 0)))
+	    (if (fneq (maxamp ind 0) .09) (snd-display ";src edpos max: ~A" (maxamp ind 0)))
+	    (undo)
+
+	    (reverse-channel 0 5 ind 0 edpos)
+	    (if (not (= (frames ind 0) 10)) (snd-display ";rev edpos len: ~A" (frames ind 0)))
+	    (if (fneq (maxamp ind 0) .09) (snd-display ";rev edpos max: ~A" (maxamp ind 0)))
+	    (undo)
+
+	    (filter-channel (vct .1 .2 .1) 3 0 5 ind 0 edpos #t) ; truncate
+	    (if (not (= (frames ind 0) 10)) (snd-display ";flt edpos len: ~A" (frames ind 0)))
+	    (if (fneq (maxamp ind 0) .09) (snd-display ";flt edpos max: ~A" (maxamp ind 0)))
+	    (undo)
+
+	    (scale-channel 1.5 0 5 ind 0 edpos)
+	    (if (not (= (frames ind 0) 10)) (snd-display ";scl edpos len: ~A" (frames ind 0)))
+	    (if (fneq (maxamp ind 0) .09) (snd-display ";scl edpos max: ~A" (maxamp ind 0)))
+	    (undo)
+
+	    (close-sound ind)))
+
 	))
     ))
 

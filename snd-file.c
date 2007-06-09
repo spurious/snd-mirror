@@ -2037,24 +2037,25 @@ enum {H_NEXT, H_AIFC, H_RIFF, H_RF64, H_RAW, H_AIFF, H_IRCAM, H_NIST, H_CAFF, /*
       H_MPEG, H_MIDI, H_SHORTEN,                                              /* readable via external programs */
       H_SIZE};
 
-static int h_num_formats[H_SIZE] = {8 /* next */, 13 /* aifc */,  8 /* riff */, 8 /* rf64 */, 18 /* raw */, 4 /* aiff */, 5  /* ircam */, 7 /* nist */, 13 /* caff */,
+static int h_num_formats[H_SIZE] = {12 /* next */, 13 /* aifc */,  8 /* riff */, 8 /* rf64 */, 18 /* raw */, 4 /* aiff */, 5  /* ircam */, 7 /* nist */, 13 /* caff */,
 				    1 /* ogg */,  1  /* flac */,  1 /* speex */, 1 /* tta */, 1 /*wavpack */,
 				    1 /* mpeg */, 1  /* midi */,  1 /* shorten */};
 #define H_DFS_MAX 18
 
-static int h_dfs[H_SIZE][H_DFS_MAX] = { /* next */  {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW, MUS_B24INT, MUS_BDOUBLE},
-					/* aifc */  {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BINT, MUS_ALAW, MUS_B24INT,
-						     MUS_BFLOAT, MUS_BDOUBLE, MUS_UBYTE, MUS_LSHORT, MUS_LINT, MUS_L24INT, MUS_UBSHORT},
-					/* riff */  {MUS_MULAW, MUS_ALAW, MUS_UBYTE, MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE, MUS_L24INT},
-					/* rf64 */  {MUS_MULAW, MUS_ALAW, MUS_UBYTE, MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE, MUS_L24INT},
-					/* raw  */  {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW,
+static int h_dfs[H_SIZE][H_DFS_MAX] = { /* next */  {MUS_BFLOAT, MUS_BSHORT, MUS_LSHORT, MUS_LFLOAT, 
+						     MUS_MULAW, MUS_BYTE, MUS_BINT, MUS_ALAW, MUS_B24INT, MUS_BDOUBLE, MUS_LINT, MUS_LDOUBLE},
+					/* aifc */  {MUS_BFLOAT, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BINT, MUS_ALAW, MUS_B24INT,
+						     MUS_BDOUBLE, MUS_UBYTE, MUS_LSHORT, MUS_LINT, MUS_L24INT, MUS_UBSHORT},
+					/* riff */  {MUS_LFLOAT, MUS_LSHORT, MUS_MULAW, MUS_ALAW, MUS_UBYTE, MUS_LINT, MUS_LDOUBLE, MUS_L24INT},
+					/* rf64 */  {MUS_LFLOAT, MUS_LSHORT, MUS_MULAW, MUS_ALAW, MUS_UBYTE, MUS_LINT, MUS_LDOUBLE, MUS_L24INT},
+					/* raw  */  {MUS_BFLOAT, MUS_LFLOAT, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BINT, MUS_ALAW,
 						     MUS_UBYTE, MUS_B24INT, MUS_BDOUBLE, MUS_LSHORT, MUS_LINT,
-						     MUS_LFLOAT, MUS_LDOUBLE, MUS_UBSHORT, MUS_ULSHORT, MUS_L24INT, MUS_BINTN, MUS_LINTN},
+						     MUS_LDOUBLE, MUS_UBSHORT, MUS_ULSHORT, MUS_L24INT, MUS_BINTN, MUS_LINTN},
 					/* aiff */  {MUS_BSHORT, MUS_BINT, MUS_BYTE, MUS_B24INT},
-					/* ircam */ {MUS_BSHORT, MUS_MULAW, MUS_BFLOAT, MUS_BINT, MUS_ALAW},
+					/* ircam */ {MUS_BFLOAT, MUS_BSHORT, MUS_MULAW, MUS_BINT, MUS_ALAW},
 					/* nist */  {MUS_BSHORT, MUS_LSHORT, MUS_BINT, MUS_LINT, MUS_BYTE, MUS_B24INT, MUS_L24INT},
-					/* caff  */ {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINTN, MUS_ALAW,
-						     MUS_B24INT, MUS_BDOUBLE, MUS_LSHORT, MUS_LINTN, MUS_L24INT, MUS_LFLOAT, MUS_LDOUBLE},
+					/* caff  */ {MUS_BFLOAT, MUS_BSHORT, MUS_LFLOAT, MUS_LSHORT, MUS_MULAW, MUS_BYTE, MUS_BINTN, MUS_ALAW,
+						     MUS_B24INT, MUS_BDOUBLE, MUS_LINTN, MUS_L24INT, MUS_LDOUBLE},
 					/* ogg */   {MUS_LSHORT},
 					/* flac */  {MUS_LSHORT},
 					/* speex */ {MUS_LSHORT},
@@ -2070,7 +2071,6 @@ static char *h_names[H_SIZE] = {"next ", "aifc ", "wave ", "rf64", "raw  ", "aif
 static int h_pos_to_type[H_SIZE] = {MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_RF64, MUS_RAW, MUS_AIFF, MUS_IRCAM, MUS_NIST, MUS_CAFF, -1, -1, -1, -1, -1, -1, -1, -1};
 static int h_type_to_pos[MUS_NUM_HEADER_TYPES];
 static int h_type_to_h[MUS_NUM_HEADER_TYPES];
-static int h_default_format_to_pos[H_SIZE] = {0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 void initialize_format_lists(void)
 {
@@ -2279,7 +2279,7 @@ static int h_to_format_pos(int h, int frm)
   for (i = 0; i < h_num_formats[h]; i++)
     if (h_dfs[h][i] == frm)
       return(i);
-  return(h_default_format_to_pos[h]);
+  return(0);
 }
 
 char **type_and_format_to_position(file_data *fdat, int type, int format)

@@ -753,7 +753,7 @@ void ensure_list_row_visible(widget_t list, int pos)
 		    XmNitemCount, &num_rows,
 		    NULL);
       if (pos <= top)
-	XmListSetPos(list, pos + 1);
+	XmListSetPos(list, pos); /* was pos+1?? (new file dialog data format list off by 1 in that case) */
       else
 	{
 	  if (pos >= (top + visible))
