@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 34
-#define MUS_DATE "22-Feb-07"
+#define MUS_REVISION 35
+#define MUS_DATE "12-June-07"
 
 /*
  * 22-Feb:     mus_big_fft and mus_spectrum_t.

@@ -1062,6 +1062,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
       /* egen null -> use ratio, else env, if dur=samples #f */
       if (egen == NULL)
 	{
+	  /* TODO: there seems to be no edpos here?? */
 #if HAVE_FORTH
 	  if (dur == CURRENT_SAMPLES(cp))
 	    new_origin = mus_format("%.4f" PROC_SEP OFF_TD PROC_SEP PROC_FALSE " %s", ratio, beg, S_src_channel);
@@ -2117,7 +2118,7 @@ static char *filter_channel(chan_info *cp, int order, env *e, off_t beg, off_t d
 	scale_channel(cp, coeffs[0], beg, dur, edpos, NOT_IN_AS_ONE_EDIT);
       return(NULL);
     }
-  over_selection = ((beg != 0) || (dur < CURRENT_SAMPLES(cp)));
+  over_selection = ((beg != 0) || (dur < cp->edits[edpos]->samples));
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
 #if HAVE_FFTW || HAVE_FFTW3
   if ((!over_selection) &&
@@ -2578,7 +2579,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	  }
       if ((scalable) && 
 	  (beg == 0) && 
-	  (dur >= CURRENT_SAMPLES(cp)) &&
+	  (dur >= CURRENT_SAMPLES(cp)) && /* TODO: this should be edpos */
 	  (cp->edit_ctr == to_c_edit_position(cp, edpos, origin, arg_pos)))
 	{
 	  scale_by(cp, val, 1, over_selection);
@@ -2861,7 +2862,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	    {
 	      int pos;
 	      pos = to_c_edit_position(si->cps[i], edpos, origin, arg_pos);
-	      new_origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, CURRENT_SAMPLES(si->cps[i]), base);
+	      new_origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, CURRENT_SAMPLES(si->cps[i]), base); /* TODO: edpos or delay it */
 	      if (temp_file)
 		{
 		  file_change_samples(si->begs[i], dur, ofile, si->cps[i], i, 
@@ -5324,6 +5325,10 @@ static Float check_src_envelope(int pts, Float *data, int *error)
   return(res);
 }
 
+/* TODO: (src-channel '(0 1 0 2)) -> weird result
+ * TODO: (src-channel '(0 -1 1 -2)) -> 0's throughout
+ */
+
 
 static XEN g_src_channel(XEN ratio_or_env, XEN beg_n, XEN dur_n, XEN snd_n, XEN chn_n, XEN edpos)
 {
@@ -5392,9 +5397,12 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 
   /* TODO: env src with negative vals? and better check here */
 
-  if (ratio >= 0.0) /* ratio == 0.0 if env in use (gad...) */
+
+  if (((egen) && (mus_phase(egen) >= 0.0)) ||
+      ((!egen) && (ratio >= 0.0))) /* ratio == 0.0 if env in use (gad...) */
     sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   else sf = init_sample_read_any(beg + dur - 1, cp, READ_BACKWARD, pos);
+
 
   errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, NOT_FROM_ENVED, S_src_channel, OVER_SOUND, 1, 1, &clm_err);
   sf = free_snd_fd(sf);

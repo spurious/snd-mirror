@@ -524,6 +524,11 @@ it works; if, for example, you have Motif in /usr/local/lib and
 If Snd using Lesstif is messed up, that's Lesstif's problem!  I'm
 not trying to support this anymore.
 
+In Fedora 7, openMotif will need /usr/include/X11/extensions/Print.h
+/usr/include/X11/bitmaps/gray, and /usr/X11R6/lib/libXp.so.  I copy these
+from old machines, but there must be a better way...
+
+
 
 ---- Gtk+: ----
 

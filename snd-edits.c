@@ -10292,7 +10292,7 @@ scale samples in the given sound/channel between beg and beg + num to norm."
   samps = dur_to_samples(num, samp, cp, pos, 3, S_normalize_channel);
 
 #if HAVE_FORTH
-  if ((samp == 0) && (samps == CURRENT_SAMPLES(cp)))
+  if ((samp == 0) && (samps == cp->edits[pos]->samples))
     {
       cur_max = channel_maxamp(cp, pos);
       origin = mus_format("%.3f 0 " PROC_FALSE " %s", norm, S_normalize_channel);
@@ -10303,7 +10303,7 @@ scale samples in the given sound/channel between beg and beg + num to norm."
       origin = mus_format("%.3f " OFF_TD PROC_SEP OFF_TD " %s", norm, samp, samps, S_normalize_channel);
     }
 #else
-  if ((samp == 0) && (samps == CURRENT_SAMPLES(cp)))
+  if ((samp == 0) && (samps == cp->edits[pos]->samples))
     {
       cur_max = channel_maxamp(cp, pos);
       origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "0" PROC_SEP PROC_FALSE, TO_PROC_NAME(S_normalize_channel), norm);
@@ -10607,7 +10607,7 @@ the new data's end."
       off_t curlen;
       char *fname;
 
-      curlen = CURRENT_SAMPLES(cp);
+      curlen = cp->edits[pos]->samples;
 
       fname = XEN_TO_C_STRING(vect);
       if (!mus_file_probe(fname))
@@ -11153,7 +11153,7 @@ static XEN g_delete_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos)
   if (!cp) return(XEN_FALSE);
   samp = beg_to_sample(samp_n, S_delete_sample);
   pos = to_c_edit_position(cp, edpos, S_delete_sample, 4);
-  if ((samp < 0) || (samp > CURRENT_SAMPLES(cp)))
+  if ((samp < 0) || (samp > cp->edits[pos]->samples))
     XEN_ERROR(NO_SUCH_SAMPLE,
 	      XEN_LIST_4(C_TO_XEN_STRING(S_delete_sample),
 			 samp_n,

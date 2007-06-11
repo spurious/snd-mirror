@@ -3968,6 +3968,8 @@ typedef struct {
   Float *x, *y, *state;
 } flt;
 
+/* handling symmetric coeffs to reduce multiplies was actually slower than the normal form */
+
 Float mus_filter(mus_any *ptr, Float input)
 {
   flt *gen = (flt *)ptr;
@@ -3985,15 +3987,7 @@ Float mus_filter(mus_any *ptr, Float input)
   return(xout + (gen->state[0] * gen->x[0]));
 }
 
-/* in the common low-order symmetrical coeffs case, we can speed fir_filter
-   up by about 40% by gathering the same-coeff cases before the multiply,
-   but in the current context, the coeffs can change at any time,
-   and I'd rather not slow down the basic case (via a check in the make
-   function and a (*run) specialization) to try to automate it;
-   the extra cases could be handled explicitly by the user, but that
-   goes against all the other such cases, where the optimizations
-   are handled internally (snd-run for example).
-*/
+
 Float mus_fir_filter(mus_any *ptr, Float input)
 {
   Float xout = 0.0;
@@ -4007,6 +4001,7 @@ Float mus_fir_filter(mus_any *ptr, Float input)
     }
   return(xout + (gen->state[0] * gen->x[0]));
 }
+
 
 Float mus_iir_filter(mus_any *ptr, Float input)
 {

@@ -6688,3 +6688,9 @@
 ;(CFNC-2111 "void gtk_text_layout_cursors_changed GtkTextLayout* layout gint y gint old_height gint new_height")
 ;(CFNC-2111 "GtkTextMark* gtk_text_mark_new gchar* name gboolean left_gravity")
 ;;; this enum is commented out above (CINT-2111 "GTK_PRINT_CAPABILITY_NUMBER_UP" "GtkPrintCapabilities")
+
+;;; for 2.11.2:
+
+;(CFNC-2112 "GtkWidget* gtk_tree_view_column_get_tree_view GtkTreeViewColumn* tree_column")
+
+
