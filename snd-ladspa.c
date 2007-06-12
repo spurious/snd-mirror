@@ -741,7 +741,8 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
       if (XEN_LIST_P(reader))
 	{
 	  for (i = 0; i < readers; i++)
-	    sf[i] = xen_to_sample_reader(XEN_LIST_REF(reader, i));
+	    if (!(XEN_FALSE_P(XEN_LIST_REF(reader, i))))
+	      sf[i] = xen_to_sample_reader(XEN_LIST_REF(reader, i));
 	}
       else sf[0] = xen_to_sample_reader(reader);
     }
@@ -799,8 +800,17 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
       /* Prepare the input data. */
       if (readers > 0)
 	for (i = 0; i < readers; i++)
-	  for (lSampleIndex = 0; lSampleIndex < lBlockSize; lSampleIndex++) {
-	    pfInputBuffer[i][lSampleIndex] = read_sample(sf[i]);
+	  {
+	    if (sf[i])
+	      {
+		for (lSampleIndex = 0; lSampleIndex < lBlockSize; lSampleIndex++) 
+		  pfInputBuffer[i][lSampleIndex] = read_sample(sf[i]);
+	      }
+	    else
+	      {
+		for (lSampleIndex = 0; lSampleIndex < lBlockSize; lSampleIndex++) 
+		  pfInputBuffer[i][lSampleIndex] = 0.0;
+	      }
 	  }
 
       /* Run the plugin. */
@@ -843,7 +853,7 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
       for (i = 0, j = 0; i < outchans; i++)
 	{
 	  off_t beg;
-	  if (sf)
+	  if ((sf) && (sf[j]))
 	    {
 	      ncp = sf[j]->cp;
 	      beg = sf[j]->initial_samp;

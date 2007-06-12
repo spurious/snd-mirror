@@ -17,20 +17,20 @@
 ;;;  test 14: all together now                  [28554]
 ;;;  test 15: chan-local vars                   [29587]
 ;;;  test 16: regularized funcs                 [31198]
-;;;  test 17: dialogs and graphics              [35911]
-;;;  test 18: enved                             [36000]
-;;;  test 19: save and restore                  [36019]
-;;;  test 20: transforms                        [37804]
-;;;  test 21: new stuff                         [39639]
-;;;  test 22: run                               [41579]
-;;;  test 23: with-sound                        [47268]
-;;;  test 24: user-interface                    [49748]
-;;;  test 25: X/Xt/Xm                           [53150]
-;;;  test 26: Gtk                               [57746]
-;;;  test 27: GL                                [61615]
-;;;  test 28: errors                            [61739]
-;;;  test all done                              [64010]
-;;;  test the end                               [64246]
+;;;  test 17: dialogs and graphics              [36090]
+;;;  test 18: enved                             [36179]
+;;;  test 19: save and restore                  [36198]
+;;;  test 20: transforms                        [37983]
+;;;  test 21: new stuff                         [39818]
+;;;  test 22: run                               [41758]
+;;;  test 23: with-sound                        [47447]
+;;;  test 24: user-interface                    [49927]
+;;;  test 25: X/Xt/Xm                           [53329]
+;;;  test 26: Gtk                               [57925]
+;;;  test 27: GL                                [61794]
+;;;  test 28: errors                            [61918]
+;;;  test all done                              [64189]
+;;;  test the end                               [64425]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -30612,10 +30612,10 @@ EDITS: 2
 				  e (src-duration e) (frames) (+ 7500 (* (src-duration e) 2500))))
 		 (let ((vals (freq-peak 0 ind 256)))
 		   (if (f5neq (car vals) 500.0)
-		       (snd-display ";src-channel section (make-env f0) ~A: ~A" f0 vals)))
+		       (snd-display ";src-channel section (make-env e) ~A: ~A" e vals)))
 		 (let ((vals (freq-peak (- (+ 7500 (inexact->exact (floor (* (src-duration e) 2500)))) 256) ind 256)))
 		   (if (f5neq (car vals) 500.0)
-		       (snd-display ";src-channel section (make-env f1) ~A: ~A" f0 vals)))
+		       (snd-display ";src-channel section (make-env e) ~A: ~A" e vals)))
 		 (undo))
 	       (list (list 0 1 1 2) (list 0 2 1 1) (list 0 1 1 2 2 1) (list 0 .5 1 1) (list 0 .5 1 2)))
 	      
@@ -30646,10 +30646,10 @@ EDITS: 2
 				  e (src-duration e) (frames) (+ 7500 (* (src-duration e) 2500))))
 		 (let ((vals (freq-peak 0 ind 256)))
 		   (if (f5neq (car vals) 500.0)
-		       (snd-display ";src-selection section (make-env f0) ~A: ~A" f0 vals)))
+		       (snd-display ";src-selection section (make-env e) ~A: ~A" e vals)))
 		 (let ((vals (freq-peak (- (+ 7500 (inexact->exact (floor (* (src-duration e) 2500)))) 256) ind 256)))
 		   (if (f5neq (car vals) 500.0)
-		       (snd-display ";src-selection section (make-env f1) ~A: ~A" f0 vals)))
+		       (snd-display ";src-selection section (make-env e) ~A: ~A" e vals)))
 		 (undo))
 	       (list (list 0 1 1 2) (list 0 2 1 1) (list 0 1 1 2 2 1) (list 0 .5 1 1) (list 0 .5 1 2)))
 	      
@@ -30661,10 +30661,10 @@ EDITS: 2
 				  e (src-duration e) (frames) (+ 7500 (* (src-duration e) 2500))))
 		 (let ((vals (freq-peak 0 ind 256)))
 		   (if (f5neq (car vals) 500.0)
-		       (snd-display ";src-selection section (env f0) ~A: ~A" f0 vals)))
+		       (snd-display ";src-selection section (env e) ~A: ~A" e vals)))
 		 (let ((vals (freq-peak (- (+ 7500 (inexact->exact (floor (* (src-duration e) 2500)))) 256) ind 256)))
 		   (if (f5neq (car vals) 500.0)
-		       (snd-display ";src-selection section (env f1) ~A: ~A" f0 vals)))
+		       (snd-display ";src-selection section (env f1) ~A: ~A" e vals)))
 		 (undo))
 	       (list (list 0 1 1 2) (list 0 2 1 1) (list 0 1 1 2 2 1) (list 0 .5 1 1) (list 0 .5 1 2)))
 	      
@@ -31725,6 +31725,102 @@ EDITS: 2
       (if c0 (snd-display ";~A swap c0: ~A" name c0))
       (if c1 (snd-display ";~A swap c1: ~A" name c1))))
   
+
+  (define (virtual-filter-channel coeffs beg dur snd chn edpos)
+    (ptree-channel
+     
+     (lambda (y data forward)
+       (declare (y real) (data vct) (forward boolean))
+       (let* ((sum 0.0)
+	      (order (inexact->exact (floor (vct-ref data 0))))
+	      (cur-loc (inexact->exact (floor (vct-ref data 1))))
+	      (init-time (> (vct-ref data 2) 0.0))
+	      (last-forward (> (vct-ref data 3) 0.0))
+	      (coeffs-0 4)
+	      (state-0 (+ coeffs-0 order)))
+	 
+	 (if (eq? last-forward forward)
+	     (if init-time
+		 (begin
+		   (vct-set! data 2 -1.0))
+		 (begin
+		   (if forward
+		       (begin
+			 (do ((i (- order 1) (1- i)))
+			     ((= i 0))
+			   (vct-set! data (+ i state-0) (vct-ref data (+ i -1 state-0))))
+			 (vct-set! data state-0 y)
+			 (set! cur-loc (1+ cur-loc)))
+		       
+		       (let ((pos (max 0 (- cur-loc order))))
+			 (if (< pos 0)
+			     (set! y 0.0)
+			     (set! y (sample pos snd chn edpos)))
+			 (do ((i 0 (1+ i)))
+			     ((= i (1- order)))
+			   (vct-set! data (+ i state-0) (vct-ref data (+ i 1 state-0))))
+			 (vct-set! data (+ state-0 order -1) y)
+			 (set! cur-loc (1- cur-loc))))))
+	     )
+	 
+	 (do ((i 0 (1+ i)))
+	     ((= i order))
+	   (set! sum (+ sum (* (vct-ref data (+ coeffs-0 i)) 
+			       (vct-ref data (+ state-0 i))))))
+	 
+	 (vct-set! data 1 cur-loc)
+	 (if forward (vct-set! data 3 1.0) (vct-set! data 3 -1.0))
+	 
+	 sum))
+     
+     beg dur snd chn edpos #f
+     
+     (lambda (frag-beg frag-dur forward)
+       (let* ((order (vct-length coeffs))
+	      (coeffs-0 4)
+	      (state-0 (+ order coeffs-0))
+	      (d (make-vct (+ coeffs-0 (* 2 order)))))
+	 (vct-set! d 0 order)
+	 (vct-set! d 2 1.0) ; first sample flag
+	 (if forward (vct-set! d 3 1.0) (vct-set! d 3 -1.0))
+	 
+	 (do ((i 0 (1+ i)))
+	     ((= i order))
+	   (vct-set! d (+ i coeffs-0) (vct-ref coeffs i)))
+	 
+	 (let ((start (- (+ 1 frag-beg beg) order))
+	       (i (1- order)))
+	   (if (< start 0)
+	       (do ()
+		   ((= start 0))
+		 (vct-set! d (+ i state-0) 0)
+		 (set! i (1- i))
+		 (set! start (1+ start))))
+	   (if (>= i 0)
+	       (let ((rd (make-sample-reader start snd chn 1 edpos)))
+		 (do ()
+		     ((= i -1))
+		   (vct-set! d (+ i state-0) (rd))
+		   (set! i (1- i)))
+		 (free-sample-reader rd)))
+	   (vct-set! d 1 (+ frag-beg beg))
+	   
+	   d)))))
+
+  (define (convolve-coeffs v1 v2)
+    (let* ((v1-len (vct-length v1))
+	   (v2-len (vct-length v2))
+	   (res-len (+ v1-len v2-len -1))
+	   (vres (make-vct res-len)))
+      (do ((i 0 (1+ i)))
+	  ((= i res-len))
+	(let ((sum 0.0))
+	  (do ((j (max 0 (1+ (- i v2-len))) (1+ j)))
+	      ((> j (min i (1- v1-len))))
+	    (set! sum (+ sum (* (vct-ref v1 j) 
+				(vct-ref v2 (- i j))))))
+	  (vct-set! vres i sum)))
+      vres))
   
   (begin
     
@@ -35925,6 +36021,122 @@ EDITS: 1
 	    (if (not (vequal (channel->vct 0 20) (make-vct 20 0.5))) (snd-display ";ptree edpos: ~A" (channel->vct 0 20)))
 	    (undo)
 	    (close-sound ind)))
+
+	;; virtual filter as ptree
+	(let ((ind (new-sound "fmv.snd" :size 20)))
+	  (set! (sample 5) 1.0)
+	  
+	  ;; forward all
+	  (filter-channel (vct 1.0 0.5 0.25))
+	  (let ((data (channel->vct 0 20)))
+	    (undo)
+	    (virtual-filter-channel (vct 1.0 0.5 0.25) 0 #f ind 0 1)
+	    (let ((vdata (channel->vct 0 20)))
+	      (undo)
+	      (if (not (vequal data vdata))
+		  (snd-display ";virtual filter: ~%  standard: ~A~%   virtual: ~A~%" data vdata))))
+	  
+	  ;; reverse all
+	  (filter-channel (vct 0.25 0.5 1.0))
+	  (reverse-sound)
+	  (let ((data (channel->vct 3 20))) ; filter-channel assumes ring
+	    (undo 2)
+	    (virtual-filter-channel (vct 0.25 0.5 1.0) 0 #f ind 0 1)
+	    (reverse-sound)
+	    (let ((vdata (channel->vct 0 20)))
+	      (undo 2)
+	      (if (not (vequal data vdata))
+		  (snd-display ";reverse virtual filter: ~%  standard: ~A~%   virtual: ~A~%" data vdata))))
+	  
+	  ;; insert block
+	  (filter-channel (vct 0.25 0.5 1.0 0.9 0.6 0.3))
+	  (pad-channel 8 5)
+	  (let ((data (channel->vct 0 20)))
+	    (undo 2)
+	    (virtual-filter-channel (vct 0.25 0.5 1.0 0.9 0.6 0.3) 0 #f ind 0 1)
+	    (pad-channel 8 5)
+	    (let ((vdata (channel->vct 0 20)))
+	      (undo 2)
+	      (if (not (vequal data vdata))
+		  (snd-display ";pad virtual filter: ~%  standard: ~A~%   virtual: ~A~%" data vdata))))
+	  
+	  ;; delete block
+	  (filter-channel (vct 0.25 0.5 1.0 0.9 0.6 0.3))
+	  (delete-samples 7 2)
+	  (let ((data (channel->vct 0 20)))
+	    (undo 2)
+	    (virtual-filter-channel (vct 0.25 0.5 1.0 0.9 0.6 0.3) 0 #f ind 0 1)
+	    (delete-samples 7 2)
+	    (let ((vdata (channel->vct 0 20)))
+	      (undo 2)
+	      (if (not (vequal data vdata))
+		  (snd-display ";delete virtual filter: ~%  standard: ~A~%   virtual: ~A~%" data vdata))))
+	  
+	  ;; forward partial
+	  (filter-channel (vct 1.0 0.5 0.25) 3 3 10) ; 3=order! + pre-ring?? -- this is too clever
+	  (let ((data (channel->vct 0 20)))
+	    (undo)
+	    (virtual-filter-channel (vct 1.0 0.5 0.25) 3 10 ind 0 1)
+	    (let ((vdata (channel->vct 2 20)))
+	      (undo)
+	      (if (not (vequal data vdata))
+		  (snd-display ";partial virtual filter: ~%  standard: ~A~%   virtual: ~A~%" data vdata))))
+	  
+	  ;; forward partial reversed
+	  (filter-channel (vct 1.0 0.5 0.25 .6 .3) 5 2 10)
+	  (reverse-sound)
+	  (let ((data (channel->vct 2 20)))
+	    (undo 2)
+	    (virtual-filter-channel (vct 1.0 0.5 0.25 .6 .3) 2 10 ind 0 1)
+	    (reverse-sound)
+	    (let ((vdata (channel->vct 0 20)))
+	      (undo)
+	      (if (not (vequal data vdata))
+		  (snd-display ";partial virtual filter reversed: ~%  standard: ~A~%   virtual: ~A~%" data vdata))))
+	  
+	  (close-sound ind))
+
+	(let ((ind (new-sound "fmv.snd" :size 20)))
+	  (set! (sample 5) 1.0)
+	  (filter-channel (vct 1.0 0.5))
+	  (filter-channel (vct 1.0 0.5))
+	  (let ((data (channel->vct 0 20)))
+	    (undo 2)
+	    (let ((v (convolve-coeffs (vct 1.0 0.5) (vct 1.0 0.5))))
+	      (filter-channel v)
+	      (let ((vdata (channel->vct 0 20)))
+		(if (not (vequal data vdata)) 
+		    (snd-display ";filter convolved: ~%  standard: ~A~%   virtual: ~A~%" data vdata)))
+	      (undo)))
+	  (let ((v1 (make-vct 8))
+		(v2 (make-vct 5)))
+	    (do ((i 0 (1+ i))) ((= i 8)) (vct-set! v1 i (random 1.0)))
+	    (do ((i 0 (1+ i))) ((= i 5)) (vct-set! v2 i (random 1.0)))
+	    (filter-channel v1)
+	    (filter-channel v2)
+	    (let ((data (channel->vct 0 20)))
+	      (undo 2)
+	      (let ((v (convolve-coeffs v1 v2)))
+		(filter-channel v)
+		(let ((vdata (channel->vct 0 20)))
+		  (if (not (vequal data vdata)) 
+		      (snd-display ";random filter convolved: ~%  standard: ~A~%   virtual: ~A~%" data vdata)))
+		(undo))))
+	  (let ((v1 (make-vct 18))
+		(v2 (make-vct 15)))
+	    (do ((i 0 (1+ i))) ((= i 18)) (vct-set! v1 i (random 1.0)))
+	    (do ((i 0 (1+ i))) ((= i 15)) (vct-set! v2 i (random 1.0)))
+	    (filter-channel v1)
+	    (filter-channel v2)
+	    (let ((data (channel->vct 0 20)))
+	      (undo 2)
+	      (let ((v (convolve-coeffs v1 v2)))
+		(filter-channel v)
+		(let ((vdata (channel->vct 0 20)))
+		  (if (not (vequal data vdata)) 
+		      (snd-display ";big random filter convolved: ~%  standard: ~A~%   virtual: ~A~%" data vdata)))
+		(undo))))
+	  (close-sound ind))
 
 	))
     ))

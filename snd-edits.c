@@ -11727,7 +11727,24 @@ append the rest?
 	 (vct-set! d 1 (+ frag-beg beg))
 
 	 d)))))
+
+(define (convolve-coeffs v1 v2)
+  (let* ((v1-len (vct-length v1))
+	 (v2-len (vct-length v2))
+	 (res-len (+ v1-len v2-len -1))
+	 (vres (make-vct res-len)))
+    (do ((i 0 (1+ i)))
+	((= i res-len))
+      (let ((sum 0.0))
+	(do ((j (max 0 (1+ (- i v2-len))) (1+ j)))
+	    ((> j (min i (1- v1-len))))
+	  (set! sum (+ sum (* (vct-ref v1 j) 
+			      (vct-ref v2 (- i j))))))
+	(vct-set! vres i sum)))
+    vres))
+
 */
 
    /* filter on filter if combined orders < max, convolve coeffs */
+
 #endif

@@ -813,19 +813,19 @@ static Float src_input_as_needed(void *arg, int direction)
 }
 
 
-static src_state *make_src(Float srate, snd_fd *sf, Float initial_srate)
+static src_state *make_src(Float srate, snd_fd *sf)
 {
   src_state *sr;
   if ((sinc_width(ss) > MUS_MAX_CLM_SINC_WIDTH) ||
       (sinc_width(ss) < 0) ||
-      (fabs(initial_srate) > MUS_MAX_CLM_SRC))
+      (fabs(srate) > MUS_MAX_CLM_SRC))
     return(NULL);
   sr = (src_state *)CALLOC(1, sizeof(src_state));
   sr->sf = sf;
-  if (initial_srate >= 0.0) sr->dir = 1; else sr->dir = -1;
-  sr->gen = mus_make_src(&src_input_as_needed, initial_srate, sinc_width(ss), (void *)sr);
+  if (srate >= 0.0) sr->dir = 1; else sr->dir = -1;          /* if env on src, this will be 0.0 even if env vals are < 0.0 */
+  sr->gen = mus_make_src(&src_input_as_needed, srate, sinc_width(ss), (void *)sr);
   mus_set_increment(sr->gen, srate);
-  sr->sample = 0; /* this is how the old form worked */
+  sr->sample = 0;
   return(sr);
 }
 
@@ -880,12 +880,18 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   sp = cp->sound;
   if (!(editable_p(cp))) return(NULL); /* edit hook result perhaps */
 
-  sr = make_src(ratio, sf, ratio);
+  sr = make_src(ratio, sf);  /* ratio is 0.0 if egen because the envelope is the srate, but it's passed as the "sr-change" arg */
+  if ((egen) &&
+      (mus_phase(egen) < 0.0))
+    sr->dir = -1;
+
   if (sr == NULL) 
     {
       (*clm_err) = true;
       return(mus_format("invalid src ratio: %f\n", ratio));
     }
+
+  /* TODO: or beg=end and ratio<0? */
 
   full_chan = ((beg == 0) && (dur == cp->edits[sf->edit_ctr]->samples)); /* not CURRENT_SAMPLES here! */
 
@@ -966,12 +972,14 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   else
     {
       off_t next_pass;
-      Float env_val;
       off_t cur_mark_sample = -1;
       int cur_mark = 0, cur_new_mark = 0;
-      /* envelope case -- have to go by sr->sample, not output sample counter, also check marks */
+      Float env_val;
+
       cur_mark_sample = -1;
-      env_val = mus_env(egen);
+      env_val = mus_env(egen); 
+      /* envelope case -- have to go by sr->sample, not output sample counter, also check marks */
+
       if ((cp->edits[cp->edit_ctr]->marks) && 
 	  (cp->edits[cp->edit_ctr]->mark_ctr >= 0))
 	{
@@ -1062,13 +1070,13 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
       /* egen null -> use ratio, else env, if dur=samples #f */
       if (egen == NULL)
 	{
-	  /* TODO: there seems to be no edpos here?? */
+
 #if HAVE_FORTH
-	  if (dur == CURRENT_SAMPLES(cp))
+	  if (dur == cp->edits[sf->edit_ctr]->samples)
 	    new_origin = mus_format("%.4f" PROC_SEP OFF_TD PROC_SEP PROC_FALSE " %s", ratio, beg, S_src_channel);
 	  else new_origin = mus_format("%.4f" PROC_SEP OFF_TD PROC_SEP OFF_TD " %s", ratio, beg, dur, S_src_channel);
 #else
-	  if (dur == CURRENT_SAMPLES(cp))
+	  if (dur == cp->edits[sf->edit_ctr]->samples)
 	    new_origin = mus_format("%s" PROC_OPEN "%.4f" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, TO_PROC_NAME(S_src_channel), ratio, beg);
 	  else new_origin = mus_format("%s" PROC_OPEN "%.4f" PROC_SEP OFF_TD PROC_SEP OFF_TD, TO_PROC_NAME(S_src_channel), ratio, beg, dur);
 #endif
@@ -1081,10 +1089,11 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	  base = mus_increment(egen);
 	  newe = make_envelope_with_offset_and_scaler(mus_data(egen), mus_env_breakpoints(egen) * 2, mus_offset(egen), mus_scaler(egen));
 	  envstr = env_to_string(newe);
+
 #if HAVE_FORTH
 	  if (base == 1.0)
 	    {
-	      if (dur == CURRENT_SAMPLES(cp))
+	      if (dur == cp->edits[sf->edit_ctr]->samples)
 		new_origin = mus_format("%s" PROC_SEP OFF_TD PROC_SEP PROC_FALSE " %s", envstr, beg, S_src_channel);
 	      else new_origin = mus_format("%s" PROC_SEP OFF_TD PROC_SEP OFF_TD " %s", envstr, beg, dur, S_src_channel);
 	    }
@@ -1092,7 +1101,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 #else
 	  if (base == 1.0)
 	    {
-	      if (dur == CURRENT_SAMPLES(cp))
+	      if (dur == cp->edits[sf->edit_ctr]->samples)
 		new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, TO_PROC_NAME(S_src_channel), envstr, beg);
 	      else new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP OFF_TD PROC_SEP OFF_TD, TO_PROC_NAME(S_src_channel), envstr, beg, dur);
 	    }
@@ -1815,11 +1824,11 @@ static void *pfilter_direct_run(void *context)
 	  v->data = arg->precalculated_coeffs;
 	  vstr = mus_vct_to_readable_string(v);
 #if HAVE_FORTH
-	  if (arg->dur == (order + CURRENT_SAMPLES(cp)))
+	  if (arg->dur == (order + cp->edits[sf->edit_ctr]->samples))
 	    arg->new_origin = mus_format("%s %d " OFF_TD PROC_SEP PROC_FALSE " %s", vstr, order, beg, S_filter_channel);
 	  else arg->new_origin = mus_format("%s %d " OFF_TD PROC_SEP OFF_TD " %s", vstr, order, beg, arg->dur, S_filter_channel);
 #else
-	  if (arg->dur == (order + CURRENT_SAMPLES(cp)))
+	  if (arg->dur == (order + cp->edits[sf->edit_ctr]->samples))
 	    arg->new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
 				    TO_PROC_NAME(S_filter_channel), vstr, order, beg);
 	  else arg->new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP OFF_TD PROC_SEP OFF_TD, 
@@ -1834,11 +1843,11 @@ static void *pfilter_direct_run(void *context)
 	  char *envstr;
 	  envstr = env_to_string(arg->e);
 #if HAVE_FORTH
-	  if (arg->dur == (order + CURRENT_SAMPLES(cp)))
+	  if (arg->dur == (order + cp->edits[sf->edit_ctr]->samples))
 	    arg->new_origin = mus_format("%s %d " OFF_TD PROC_SEP PROC_FALSE " %s", envstr, order, beg, S_filter_channel);
 	  else arg->new_origin = mus_format("%s %d " OFF_TD PROC_SEP OFF_TD " %s", envstr, order, beg, arg->dur, S_filter_channel);
 #else
-	  if (arg->dur == (order + CURRENT_SAMPLES(cp)))
+	  if (arg->dur == (order + cp->edits[sf->edit_ctr]->samples))
 	    arg->new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
 				    TO_PROC_NAME(S_filter_channel), envstr, order, beg);
 	  else arg->new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP OFF_TD PROC_SEP OFF_TD, 
@@ -2055,11 +2064,11 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
 	  v->data = precalculated_coeffs;
 	  vstr = mus_vct_to_readable_string(v);
 #if HAVE_FORTH
-	  if (dur == (order + CURRENT_SAMPLES(cp)))
+	  if (dur == (order + cp->edits[sf->edit_ctr]->samples))
 	    new_origin = mus_format("%s %d " OFF_TD PROC_SEP PROC_FALSE " %s", vstr, order, beg, S_filter_channel);
 	  else new_origin = mus_format("%s %d " OFF_TD PROC_SEP OFF_TD " %s", vstr, order, beg, dur, S_filter_channel);
 #else
-	  if (dur == (order + CURRENT_SAMPLES(cp)))
+	  if (dur == (order + cp->edits[sf->edit_ctr]->samples))
 	    new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
 				    TO_PROC_NAME(S_filter_channel), vstr, order, beg);
 	  else new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP OFF_TD PROC_SEP OFF_TD, 
@@ -2074,11 +2083,11 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
 	  char *envstr;
 	  envstr = env_to_string(e);
 #if HAVE_FORTH
-	  if (dur == (order + CURRENT_SAMPLES(cp)))
+	  if (dur == (order + cp->edits[sf->edit_ctr]->samples))
 	    new_origin = mus_format("%s %d " OFF_TD PROC_SEP PROC_FALSE " %s", envstr, order, beg, S_filter_channel);
 	  else new_origin = mus_format("%s %d " OFF_TD PROC_SEP OFF_TD " %s", envstr, order, beg, dur, S_filter_channel);
 #else
-	  if (dur == (order + CURRENT_SAMPLES(cp)))
+	  if (dur == (order + cp->edits[sf->edit_ctr]->samples))
 	    new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
 				    TO_PROC_NAME(S_filter_channel), envstr, order, beg);
 	  else new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP OFF_TD PROC_SEP OFF_TD, 
@@ -2578,12 +2587,16 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	    break;
 	  }
       if ((scalable) && 
-	  (beg == 0) && 
-	  (dur >= CURRENT_SAMPLES(cp)) && /* TODO: this should be edpos */
-	  (cp->edit_ctr == to_c_edit_position(cp, edpos, origin, arg_pos)))
+	  (beg == 0))
 	{
-	  scale_by(cp, val, 1, over_selection);
-	  return;
+	  int pos;
+	  pos = to_c_edit_position(cp, edpos, origin, arg_pos);
+	  if ((cp->edit_ctr == pos) &&
+	      (dur >= cp->edits[pos]->samples))
+	    {
+	      scale_by(cp, val, 1, over_selection);
+	      return;
+	    }
 	}
     }
   else scalable = false;
@@ -2862,7 +2875,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	    {
 	      int pos;
 	      pos = to_c_edit_position(si->cps[i], edpos, origin, arg_pos);
-	      new_origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, CURRENT_SAMPLES(si->cps[i]), base); /* TODO: edpos or delay it */
+	      new_origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, CURRENT_SAMPLES(si->cps[i]), base);
 	      if (temp_file)
 		{
 		  file_change_samples(si->begs[i], dur, ofile, si->cps[i], i, 
@@ -4559,10 +4572,16 @@ swap the indicated channels"
     {
       int pos0, pos1;
       off_t dur0, dur1, beg0 = 0, num;
+
       if (XEN_NUMBER_P(beg)) 
 	beg0 = XEN_TO_C_OFF_T(beg);
-      dur0 = CURRENT_SAMPLES(cp0);
-      dur1 = CURRENT_SAMPLES(cp1);
+
+      pos0 = to_c_edit_position(cp0, edpos0, S_swap_channels, 7);
+      pos1 = to_c_edit_position(cp1, edpos1, S_swap_channels, 8);
+
+      dur0 = cp0->edits[pos0]->samples;
+      dur1 = cp1->edits[pos1]->samples;
+
       if (XEN_NUMBER_P(dur)) 
 	num = XEN_TO_C_OFF_T(dur);
       else
@@ -4571,11 +4590,11 @@ swap the indicated channels"
 	    num = dur0; 
 	  else num = dur1; /* was min here 13-Dec-02 */
 	}
-      pos0 = to_c_edit_position(cp0, edpos0, S_swap_channels, 7);
-      pos1 = to_c_edit_position(cp1, edpos1, S_swap_channels, 8);
+
       if ((beg0 != 0) ||
 	  ((num != dur0) && (num != dur1))) /* if just a section being swapped, use readers */
 	swap_channels(cp0, cp1, beg0, num, pos0, pos1);
+
       else
 	{
 	  if ((pos0 == 0) &&
@@ -5399,7 +5418,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 
 
   if (((egen) && (mus_phase(egen) >= 0.0)) ||
-      ((!egen) && (ratio >= 0.0))) /* ratio == 0.0 if env in use (gad...) */
+      ((!egen) && (ratio >= 0.0))) /* ratio == 0.0 if env in use because env is the srate (as change arg) */
     sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   else sf = init_sample_read_any(beg + dur - 1, cp, READ_BACKWARD, pos);
 
