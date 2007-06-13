@@ -17,20 +17,21 @@
 ;;;  test 14: all together now                  [28554]
 ;;;  test 15: chan-local vars                   [29587]
 ;;;  test 16: regularized funcs                 [31198]
-;;;  test 17: dialogs and graphics              [36090]
-;;;  test 18: enved                             [36179]
-;;;  test 19: save and restore                  [36198]
-;;;  test 20: transforms                        [37983]
-;;;  test 21: new stuff                         [39818]
-;;;  test 22: run                               [41758]
-;;;  test 23: with-sound                        [47447]
-;;;  test 24: user-interface                    [49927]
-;;;  test 25: X/Xt/Xm                           [53329]
-;;;  test 26: Gtk                               [57925]
-;;;  test 27: GL                                [61794]
-;;;  test 28: errors                            [61918]
-;;;  test all done                              [64189]
-;;;  test the end                               [64425]
+;;;  test 17: dialogs and graphics              [36208]
+;;;  test 18: enved                             [36297]
+;;;  test 19: save and restore                  [36316]
+;;;  test 20: transforms                        [38101]
+;;;  test 21: new stuff                         [39936]
+;;;  test 22: run                               [41876]
+;;;  test 23: with-sound                        [47565]
+;;;  test 24: user-interface                    [50045]
+;;;  test 25: X/Xt/Xm                           [53447]
+;;;  test 26: Gtk                               [58043]
+;;;  test 27: GL                                [61912]
+;;;  test 28: errors                            [62036]
+;;;  test all done                              [64307]
+;;;  test the end                               [64543]
+
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -9158,11 +9159,11 @@ EDITS: 5
 		    (undo 1 obind)
 		    (set! (filter-control? obind) #t)
 		    (set! (filter-control-order obind) 40)
-		    (set! (filter-control-envelope obind) '(0 0 1 .5 1 0))
+		    (set! (filter-control-envelope obind) '(0 0 1 .5 2 0))
 		    (apply-controls obind)
 		    (let ((fltamp (maxamp obind))
 			  (fltdur (frames obind)))
-		      (if (> (abs (- fltamp .01)) .005) (snd-display ";apply filter scale: ~A?" fltamp))
+		      (if (> (abs (- fltamp .03)) .005) (snd-display ";apply filter scale: ~A?" fltamp))
 		      (if (> (- fltdur (+ 40 50828)) 256) (snd-display ";apply filter length: ~A?" fltdur))
 		      (undo 1 obind)))))))
 	  (revert-sound obind)
@@ -31604,6 +31605,19 @@ EDITS: 2
 	  (list max-diff max-loc)
 	  #f)))
 
+  (define* (edit-distance s1 c1 e1 e2 :optional (offset 0))
+    (let* ((r1 (make-sample-reader 0 s1 c1 1 e1))
+	   (r2 (make-sample-reader offset s1 c1 1 e2))
+	   (sum 0.0)
+	   (N (frames s1 c1 e1)))
+      (do ((i 0 (1+ i)))
+	  ((= i N))
+	(let ((f1 (r1))
+	      (f2 (r2)))
+	  (set! sum (+ sum (abs (- (* f1 f1) (* f2 f2)))))))
+      (sqrt sum)))
+
+
   (define (check-edit-tree expected-tree expected-vals name)
     (define (vequal-at v0 v1)
       (call-with-current-continuation
@@ -36138,6 +36152,55 @@ EDITS: 1
 		(undo))))
 	  (close-sound ind))
 
+	(let ((ind (new-sound "fmv.snd" :size 100)))
+	  (set! (sample 5) .5)
+	  (set! (sample 85) .5)
+	  
+	  (src-channel -1.001) ; avoid optimization
+	  (src-channel '(0 -1.0 1 -1.0) 0 #f ind 0 2)
+	  (let ((dis (edit-distance ind 0 3 4)))
+	    (if (> dis .2) (snd-display ";src-channel -1, distance: ~A" dis)))
+	  (undo 2)
+	  
+	  (src-channel 1.001) ; avoid optimization
+	  (src-channel '(0 1.0 1 1.0) 0 #f ind 0 2)
+	  (let ((dis (edit-distance ind 0 3 4)))
+	    (if (> dis .2) (snd-display ";src-channel 1, distance: ~A" dis)))
+	  (undo 2)
+	  
+	  (for-each
+	   (lambda (rate)
+	     (src-channel rate)
+	     (src-channel (list 0 rate 1 rate) 0 #f ind 0 2)
+	     (let ((dis (edit-distance ind 0 3 4)))
+	       (if (> dis .2) (snd-display ";src-channel ~A, distance: ~A" rate dis)))
+	     (undo 2))
+	   (list 2.0 -2.0 0.5 -0.5 1.5 -1.5 3.0 -3.0 0.2 -0.2))
+	  
+	  
+	  (src-sound -1.001) ; avoid optimization
+	  (src-sound '(0 -1.0 1 -1.0) 1.0 ind 0 2)
+	  (let ((dis (edit-distance ind 0 3 4)))
+	    (if (> dis .2) (snd-display ";src-sound -1, distance: ~A" dis)))
+	  (undo 2)
+	  
+	  (src-sound 1.001) ; avoid optimization
+	  (src-sound '(0 1.0 1 1.0) 1.0 ind 0 2)
+	  (let ((dis (edit-distance ind 0 3 4)))
+	    (if (> dis .2) (snd-display ";src-sound 1, distance: ~A" dis)))
+	  (undo 2)
+	  
+	  (for-each
+	   (lambda (rate)
+	     (src-sound rate)
+	     (src-sound (list 0 rate 1 rate) 1.0 ind 0 2)
+	     (let ((dis (edit-distance ind 0 3 4)))
+	       (if (> dis .2) (snd-display ";src-sound ~A, distance: ~A" rate dis)))
+	     (undo 2))
+	   (list 2.0 -2.0 0.5 -0.5 1.5 -1.5 3.0 -3.0 0.2 -0.2))
+	  
+	  (close-sound ind))
+	
 	))
     ))
 

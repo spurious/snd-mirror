@@ -384,8 +384,6 @@ typedef struct {
         ptree_pos2, ptree_dur2, ptree_pos3, ptree_dur3;
 } ed_ptrees;
 
-/* TODO: add dir arg to init func storing arg# in cp data accessed through ptree_loc */
-
 typedef struct {
   int size;                                /* size of mix_list, but some entries can be empty */
   mix_state **mix_list;

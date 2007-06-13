@@ -4665,9 +4665,9 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
   Float *edata;
   seg *e = NULL;
   for (i = 2; i < npts * 2; i += 2)
-    if (brkpts[i - 2] > brkpts[i])
+    if (brkpts[i - 2] >= brkpts[i])
       {
-	mus_error(MUS_BAD_ENVELOPE, S_make_env ": env at breakpoint %d: x axis value %f > %f", i / 2, brkpts[i - 2], brkpts[i]);
+	mus_error(MUS_BAD_ENVELOPE, S_make_env ": env at breakpoint %d: x axis value: %f >= previous x value: %f", i / 2, brkpts[i - 2], brkpts[i]);
 	return(NULL);
       }
   e = (seg *)clm_calloc(1, sizeof(seg), S_make_env);

@@ -13,19 +13,19 @@
 #include <ladspa.h>
 #include <dirent.h>
 
-/* CHANGES:
- *
- * bil: 1-Sep-05: moved stuff around for better error handling.
- *                added code to handle 0-input plugins ("analog osc" in swh for example).
- * bil: 21-Sep-03 added plugin help menu item.
- * bil: 1-Aug-03  added direct struct readers for LADSPA_Descriptor
- * bil: 6-Jan-03  use FREE, not free.
- * bil: 21-Nov-02 better checks for C-g interrupt.
- * bil: 2-May-02  use off_t for sample number.
- * bil: 14-Dec-01 various C++ cleanups.
- * bil: 28-Nov-01 input chans need not equal output chans now.
- * bil: 15-Oct-01 added some error returns (rather than snd_error).  multichannel plugin support.
- * bil: 20-Sep-01 changed location of pfInputBuffer to avoid glomming up the stack with a huge array.
+/* 
+ * 12-Jun-07 reader can be #f.
+ * 1-Sep-05  moved stuff around for better error handling.
+ *           added code to handle 0-input plugins ("analog osc" in swh for example).
+ * 21-Sep-03 added plugin help menu item.
+ * 1-Aug-03  added direct struct readers for LADSPA_Descriptor
+ * 6-Jan-03  use FREE, not free.
+ * 21-Nov-02 better checks for C-g interrupt.
+ * 2-May-02  use off_t for sample number.
+ * 14-Dec-01 various C++ cleanups.
+ * 28-Nov-01 input chans need not equal output chans now.
+ * 15-Oct-01 added some error returns (rather than snd_error).  multichannel plugin support.
+ * 20-Sep-01 changed location of pfInputBuffer to avoid glomming up the stack with a huge array.
  */
 
 /*****************************************************************************/
@@ -556,7 +556,7 @@ the number of samples to process, and an `origin' for edit lists. The \
 ladspa-plugin-configuration is a list containing the plugin-file and \
 plugin-label for the LADSPA plugin, as provided by " S_list_ladspa ", followed \
 by any arguments. The reader argument can also be a list of readers. \
-Information about about parameters can be acquired using " S_analyse_ladspa "."
+Information about parameters can be acquired using " S_analyse_ladspa "."
 
   const LADSPA_Descriptor *psDescriptor;
   char *pcFilename, *pcLabel, *pcTmp;

@@ -1321,7 +1321,7 @@ $va_hook.to_a
 open-hook ' open-buffer 1 make-proc add-hook!
 open-hook "open-buffer" remove-hook!
 open-hook reset-hook!
-open-hook hook->list
+open-hook hook-&gt;list
 
 2 "A simple hook." create-hook my-new-hook
 my-new-hook ' + 2 make-proc add-hook!
@@ -5904,7 +5904,11 @@ See also mark-explode in marks.scm.
 <code><a class=def name="channels">channels</a> (:optional <em class=narg>snd</em>)</code> 
 <br><code><a class=def name="chans">chans</a> (:optional <em class=narg>snd</em>)</code>
 </td></tr><tr><td></td><td>
-This function returns the number of channels in 'snd'.
+This function returns the number of channels in 'snd'.  It can be set, but the result is a new
+version of the underlying sound with the header changed to reflect the new number of channels.
+That is, no new data is created, but the existing data is reapportioned to the new channels:
+<code>(set! (channels) 2)</code>; this is not undo-able (except by calling it again with the
+original number of channels -- the data is not touched).
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -10258,6 +10262,27 @@ edit sequences can be compared.
     (load scm)
     (delete-file scm)
     sfile))
+</pre></td></tr></table>
+
+We can also use save-edit-history (with some trouble) to split a sound off
+into an independent Snd process:
+
+<table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
+(define* (separate-sound :optional snd)
+  (let* ((tmpf (<a class=quiet href="#sndtempnam">snd-tempnam</a>))
+	 (scm (string-append (substring tmpf 0 (- (string-length tmpf) 3)) "scm"))
+	 (scm1 (string-append (substring tmpf 0 (- (string-length tmpf) 4)) "-1.scm"))
+	 (oldsnd (or snd (<a class=quiet href="#selectedsound">selected-sound</a>)))
+	 (name (<a class=quiet href="#filename">file-name</a> oldsnd)))
+    (if (not (string? (<a class=quiet href="#savedir">save-dir</a>))) (set! (<a class=quiet href="#savedir">save-dir</a>) "/tmp"))
+    (<em class=red>save-edit-history</em> scm oldsnd)
+    (<a class=quiet href="#closesound">close-sound</a> oldsnd)
+    (with-output-to-file
+	scm1
+      (lambda ()
+	(display (format #f "(define sfile (<a class=quiet href="#opensound">open-sound</a> ~S))~%" name))
+	(display (format #f "(load ~S)~%" scm))))
+    (system (format #f "snd ~A &" scm1))))
 </pre></td></tr></table>
 
 </td></tr><tr><td></td><td></td></tr>

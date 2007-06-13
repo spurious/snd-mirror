@@ -127,7 +127,46 @@
 
 
 ;;; to see the spectral differences:
-(map-channel (lambda (y) (*  0.5 (- (random 2.0) 1.0)))) ; white noise -- spectrum is flat at 1.0
-(let ((gr (make-green-noise 10000 .01))) (map-channel (lambda (y) (* .01 (brownian-noise gr))))) ; brownian falls off rapidly
-(let ((gr (make-green-noise 20000 1))) (map-channel (lambda (y) (green-noise gr 0.0)))) ; more or less 1/f -- falls off slowly
+
+(add-transform "psd" "spectrum" 0.0 1.0
+	       ;; check the log/log plot
+	       (lambda (len reader)
+		 (let ((data (make-vct (* 2 len))))
+		   (do ((i 0 (1+ i)))
+		       ((= i (* 2 len)))
+		     (vct-set! data i (reader)))
+		   (snd-spectrum (autocorrelate data)))))
+
+(let ((ind (new-sound "test.snd" :size 20000)))
+
+  ;; white noise -- spectrum is flat at 1.0
+  (map-channel (lambda (y) 
+		 (*  0.5 (- (random 2.0) 1.0))))
+
+  ;; brownian falls off rapidly
+  (let ((gr (make-green-noise 10000 .01))) 
+    (map-channel (lambda (y) 
+		   (* .01 (brownian-noise gr)))))
+
+  ;; more or less 1/f -- falls off slowly
+  ;;   my informal explanation is that each time we bounce off an edge, we're transferring energy from
+  ;;   from a low frequency into some higher frequency.  I believe this is still Brownian noise however.
+  (let ((gr (make-green-noise 20000 1))) 
+    (map-channel (lambda (y) 
+		   (green-noise gr 0.0)))) 
+
+  ;; Orfanidis rands 1/f idea:
+  (let ((rans (make-vector 12))
+	(oct 2.0))
+    (do ((i 0 (1+ i)))
+	((= i 12))
+      (vector-set! rans i (make-rand (/ (srate) oct)))
+      (set! oct (* 2 oct)))
+    (map-channel (lambda (y)
+		   (let ((sum 0.0))
+		     (do ((i 0 (1+ i)))
+			 ((= i 12))
+		       (set! sum (+ sum (rand (vector-ref rans i)))))
+		     (/ sum 12.0))))))
+
 |#

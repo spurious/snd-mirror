@@ -891,8 +891,6 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
       return(mus_format("invalid src ratio: %f\n", ratio));
     }
 
-  /* TODO: or beg=end and ratio<0? */
-
   full_chan = ((beg == 0) && (dur == cp->edits[sf->edit_ctr]->samples)); /* not CURRENT_SAMPLES here! */
 
   reporting = ((sp) && (dur > REPORTING_SIZE) && (!(cp->squelch_update)));
@@ -1209,7 +1207,7 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
   sp = cp->sound;
   /* get current syncd chans */
   sc = get_sync_state(sp, cp, 0, over_selection, 
-		      (ratio < 0.0) ? READ_BACKWARD : READ_FORWARD, /* 0->beg, 0->over_selection (ratio = 0.0 if from_enved) */ /* TODO: e->data[1] < 0 */
+		      (ratio < 0.0) ? READ_BACKWARD : READ_FORWARD, /* 0->beg, 0->over_selection (ratio = 0.0 if from_enved) */ 
 		      edpos,
 		      origin, arg_pos);      
   if (sc == NULL) return;
@@ -5344,10 +5342,6 @@ static Float check_src_envelope(int pts, Float *data, int *error)
   return(res);
 }
 
-/* TODO: (src-channel '(0 1 0 2)) -> weird result
- * TODO: (src-channel '(0 -1 1 -2)) -> 0's throughout
- */
-
 
 static XEN g_src_channel(XEN ratio_or_env, XEN beg_n, XEN dur_n, XEN snd_n, XEN chn_n, XEN edpos)
 {
@@ -5414,14 +5408,10 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 	}
     }
 
-  /* TODO: env src with negative vals? and better check here */
-
-
   if (((egen) && (mus_phase(egen) >= 0.0)) ||
       ((!egen) && (ratio >= 0.0))) /* ratio == 0.0 if env in use because env is the srate (as change arg) */
     sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   else sf = init_sample_read_any(beg + dur - 1, cp, READ_BACKWARD, pos);
-
 
   errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, NOT_FROM_ENVED, S_src_channel, OVER_SOUND, 1, 1, &clm_err);
   sf = free_snd_fd(sf);
