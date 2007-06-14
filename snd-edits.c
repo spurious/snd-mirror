@@ -409,10 +409,6 @@ typedef struct ed_fragment {               /* this name is necessary even in str
 } ed_fragment;
 
 
-/* another possible space-saver: split these into more cases: ed_ramp1, ed_ramp2 etc
- *   ed_fragment itself could be as small as typ/out/snd/beg/end/scl
- */
-
 /* two ed_fragment->snd markers */
 #define EDIT_LIST_END_MARK -2
 #define EDIT_LIST_ZERO_MARK -1
@@ -11642,6 +11638,9 @@ append the rest?
  * this almost works! -- it can repeat one sample if previous-sample after next-sample (but the standard case repeats as well!)
  *   sample-reader-position is ahead 1 if reading forward, back 1 if reading backward,
  *   so in C, I guess we could use that for "cur-loc"
+ *
+ *   but how to store in ed_fragment?
+ *   and how often is this actually going to be used?
 
 ;; (virtual-filter-channel (vct 1.0 .5 .25) 0 10 0 0 1)
 

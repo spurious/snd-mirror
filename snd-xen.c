@@ -44,7 +44,6 @@
 
 /* TODO: (gauche)   stacktrace and errors->listener (current-load-history)
  * TODO: (gauche)   error in find lambda -> exit (need better error protection)
- * TODO: (all) if 'wrong-number-of-args (or equivalent in unguile), add snd-help ?
  */
 
 
@@ -93,6 +92,7 @@ void dump_protection(FILE *Fp)
     }
 }
 #endif
+
 
 #if MUS_DEBUGGING
 int snd_protect_1(XEN obj, const char *caller)
@@ -180,6 +180,7 @@ int snd_protect(XEN obj)
   return(gc_last_set);
 }
 
+
 #if MUS_DEBUGGING
 void snd_unprotect_at_1(int loc, const char *func, const char *file, int line)
 #else
@@ -196,6 +197,7 @@ void snd_unprotect_at(int loc)
       gc_last_cleared = loc;
     }
 }
+
 
 XEN snd_protected_at(int loc)
 {
@@ -215,6 +217,7 @@ void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *da
   ss->xen_error_data = data;
 }
 
+
 static void call_xen_error_handler(const char *msg)
 {
   /* make sure it doesn't call itself recursively */
@@ -229,11 +232,13 @@ static void call_xen_error_handler(const char *msg)
   ss->xen_error_data = old_xen_error_data;
 }
 
+
 void redirect_snd_print_to(void (*handler)(const char *msg, void *ufd), void *data)
 {
   ss->snd_print_handler = handler;
   ss->snd_print_data = data;
 }
+
 
 void redirect_everything_to(void (*handler)(const char *msg, void *ufd), void *data)
 {
@@ -243,12 +248,14 @@ void redirect_everything_to(void (*handler)(const char *msg, void *ufd), void *d
   redirect_snd_print_to(handler, data);
 }
 
+
 void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data)
 {
   redirect_snd_error_to(handler, data);
   redirect_xen_error_to(handler, data);
   redirect_snd_warning_to(handler, data);
 }
+
 
 static char *gl_print(XEN result);
 
@@ -419,7 +426,8 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
       /* this code is not called in snd-test test 28 because there all errors are caught explicitly */
 
       if ((XEN_STRING_P(XEN_CAR(throw_args))) &&
-	  (XEN_EQ_P(tag, XEN_ERROR_TYPE("wrong-type-arg"))))
+	  ((XEN_EQ_P(tag, XEN_ERROR_TYPE("wrong-type-arg"))) ||
+	   (XEN_EQ_P(tag, XEN_ERROR_TYPE("wrong-number-of-args")))))
 	{
 	  XEN str;
 	  str = g_snd_help_with_search(XEN_CAR(throw_args), 400, false);
@@ -599,6 +607,8 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 #endif
 /* end HAVE_RUBY */
 
+
+
 /* if error occurs in sndlib, mus-error wants to throw to user-defined catch
  *   (or our own global catch), but if the sndlib function was not called by the user, 
  *   the attempt to throw to a non-existent catch tag exits the main program!!
@@ -625,6 +635,7 @@ static XEN snd_internal_stack_catch(XEN tag,
   return(result);
 }
 
+
 XEN snd_throw(XEN key, XEN args)
 {
   if (ss->catch_exists)
@@ -638,16 +649,19 @@ XEN snd_throw(XEN key, XEN args)
   return(XEN_FALSE);
 }
 
+
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
   return(snd_internal_stack_catch(XEN_TRUE, body, body_data, snd_catch_scm_error, (void *)caller));
 }
+
 
 #if (SCM_DEBUG_TYPING_STRICTNESS != 2)
 static XEN g_call0_1(void *arg)
 {
   return(XEN_CALL_0_NO_CATCH((XEN)arg));
 }
+
 
 XEN g_call0(XEN proc, const char *caller) /* replacement for gh_call0 -- protect ourselves from premature exit(!$#%@$) */
 {
@@ -657,10 +671,12 @@ XEN g_call0(XEN proc, const char *caller) /* replacement for gh_call0 -- protect
 XEN g_call0(XEN proc, const char *caller) {return(XEN_FALSE);}
 #endif
 
+
 static XEN g_call1_1(void *arg)
 {
   return(XEN_CALL_1_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1]));
 }
+
 
 XEN g_call1(XEN proc, XEN arg, const char *caller)
 {
@@ -670,10 +686,12 @@ XEN g_call1(XEN proc, XEN arg, const char *caller)
   return(snd_catch_any(g_call1_1, (void *)args, caller));
 }
 
+
 static XEN g_call_any_1(void *arg)
 {
   return(XEN_APPLY_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1]));
 }
+
 
 XEN g_call_any(XEN proc, XEN arglist, const char *caller)
 {
@@ -683,10 +701,12 @@ XEN g_call_any(XEN proc, XEN arglist, const char *caller)
   return(snd_catch_any(g_call_any_1, (void *)args, caller));
 }
 
+
 static XEN g_call2_1(void *arg)
 {
   return(XEN_CALL_2_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1], ((XEN *)arg)[2]));
 }
+
 
 XEN g_call2(XEN proc, XEN arg1, XEN arg2, const char *caller)
 {
@@ -697,10 +717,12 @@ XEN g_call2(XEN proc, XEN arg1, XEN arg2, const char *caller)
   return(snd_catch_any(g_call2_1, (void *)args, caller));
 }
 
+
 static XEN g_call3_1(void *arg)
 {
   return(XEN_CALL_3_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1], ((XEN *)arg)[2], ((XEN *)arg)[3]));
 }
+
 
 XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller)
 {
@@ -730,6 +752,7 @@ static ScmObj repl_error_handle(ScmObj *args, int nargs, void *data)
     Scm_ReportError(args[0]);
     return SCM_TRUE;
 }
+
 
 ScmObj Scm_VMRepl(ScmObj reader, ScmObj evaluator,
                   ScmObj printer, ScmObj prompter)
@@ -761,6 +784,7 @@ ScmObj Scm_VMRepl(ScmObj reader, ScmObj evaluator,
  *   format   - SCM_STACK_TRACE_FORMAT_* enum value.  EXPERIMENTAL.
  */
 
+
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
   XEN result = XEN_FALSE;
@@ -778,12 +802,14 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 }
 #endif
 
+
 #if HAVE_RUBY || HAVE_FORTH
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
   return((*body)(body_data));
 }
 #endif
+
 
 #if (!HAVE_EXTENSION_LANGUAGE)
 /* no extension language but user managed to try to evaluate something -- one way is to
@@ -796,6 +822,7 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 }
 #endif
 
+
 bool procedure_arity_ok(XEN proc, int args)
 {
   XEN arity;
@@ -807,11 +834,13 @@ bool procedure_arity_ok(XEN proc, int args)
   return(xen_rb_arity_ok(rargs, args));
 #endif
 
+
 #if HAVE_FORTH
   rargs = XEN_TO_C_INT(arity);
   if (rargs != args)
     return(false);
 #endif
+
 
 #if HAVE_GUILE
   {
@@ -825,6 +854,7 @@ bool procedure_arity_ok(XEN proc, int args)
     if ((restargs == 0) && ((rargs + oargs) < args)) return(false);
   }
 #endif
+
 
 #if HAVE_GAUCHE
   {
@@ -840,6 +870,7 @@ bool procedure_arity_ok(XEN proc, int args)
 
   return(true);
 }
+
 
 char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name, int argn)
 {
@@ -926,6 +957,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
   return(NULL);
 }
 
+
 XEN snd_no_such_file_error(const char *caller, XEN filename)
 {
   XEN_ERROR(NO_SUCH_FILE,
@@ -934,6 +966,7 @@ XEN snd_no_such_file_error(const char *caller, XEN filename)
 		       C_TO_XEN_STRING(snd_open_strerror())));
   return(XEN_FALSE);
 }
+
 
 XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn)
 {
@@ -961,12 +994,14 @@ XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn)
   return(XEN_FALSE);
 }
 
+
 XEN snd_no_active_selection_error(const char *caller)
 {
   XEN_ERROR(XEN_ERROR_TYPE("no-active-selection"),
 	    XEN_LIST_1(C_TO_XEN_STRING(caller)));
   return(XEN_FALSE);
 }
+
 
 XEN snd_bad_arity_error(const char *caller, XEN errstr, XEN proc)
 {
@@ -993,6 +1028,7 @@ XEN eval_str_wrapper(void *data)
   return(XEN_EVAL_C_STRING((char *)data));
 }
 
+
 #if (SCM_DEBUG_TYPING_STRICTNESS != 2)
 XEN eval_form_wrapper(void *data)
 {
@@ -1005,15 +1041,18 @@ XEN eval_form_wrapper(void *data)
 }
 #endif
 
+
 static XEN string_to_form_1(void *data)
 {
   return(C_STRING_TO_XEN_FORM((char *)data));
 }
 
+
 XEN string_to_form(char *str)
 {
   return(snd_catch_any(string_to_form_1, (void *)str, (const char *)str));  /* catch needed else #< in input (or incomplete form) exits Snd! */
 }
+
 
 static XEN eval_file_wrapper(void *data)
 {
@@ -1048,6 +1087,7 @@ char *g_print_1(XEN obj) /* free return val */
   return(NULL);
 #endif
 }
+
 
 static char *gl_print(XEN result)
 {
@@ -1091,6 +1131,7 @@ static char *gl_print(XEN result)
   return(newbuf);
 }
 
+
 void snd_report_result(XEN result, const char *buf)
 {
   /* kbd macros, startup evalled args */
@@ -1117,6 +1158,7 @@ void snd_report_result(XEN result, const char *buf)
   if (str) FREE(str);
 }
 
+
 void snd_report_listener_result(XEN form)
 {
 #if HAVE_RUBY || HAVE_FORTH || HAVE_GAUCHE
@@ -1127,6 +1169,7 @@ void snd_report_listener_result(XEN form)
 #endif
 }
 
+
 static char *stdin_str = NULL;
 
 void clear_stdin(void)
@@ -1134,6 +1177,7 @@ void clear_stdin(void)
   if (stdin_str) FREE(stdin_str);
   stdin_str = NULL;
 }
+
 
 static char *stdin_check_for_full_expression(char *newstr)
 {
@@ -1163,10 +1207,12 @@ static char *stdin_check_for_full_expression(char *newstr)
   return(stdin_str);
 }
 
+
 static void string_to_stdout(const char *msg, void *ignored)
 {
   fprintf(stdout, "%s\n", msg);
 }
+
 
 void snd_eval_stdin_str(char *buf)
 {
@@ -1193,6 +1239,7 @@ void snd_eval_stdin_str(char *buf)
     }
 }
 
+
 static void string_to_stderr_and_listener(const char *msg, void *ignore)
 {
   fprintf(stderr, "%s\n", msg);
@@ -1213,6 +1260,7 @@ static void string_to_stderr_and_listener(const char *msg, void *ignore)
       else ss->startup_errors = copy_string(msg); /* initial prompt is already there */
     }
 }
+
 
 static bool snd_load_init_file_1(const char *filename)
 {
@@ -1253,6 +1301,7 @@ static bool snd_load_init_file_1(const char *filename)
   if (fullname) FREE(fullname);
   return(happy);
 }
+
 
 void snd_load_init_file(bool no_global, bool no_init)
 {
@@ -1327,6 +1376,7 @@ void snd_load_init_file(bool no_global, bool no_init)
 #endif
 }
 
+
 static char *find_source_file(char *orig);
 
 void snd_load_file(char *filename)
@@ -1364,6 +1414,7 @@ void snd_load_file(char *filename)
 #endif
 }
 
+
 static XEN g_snd_print(XEN msg)
 {
   #define H_snd_print "(" S_snd_print " str): display str in the listener window"
@@ -1386,6 +1437,7 @@ static XEN g_snd_print(XEN msg)
   return(msg);
 }
 
+
 static XEN print_hook;
 
 bool listener_print_p(const char *msg)
@@ -1402,6 +1454,7 @@ bool listener_print_p(const char *msg)
     }
  return(XEN_FALSE_P(res));
 }
+
 
 void check_features_list(char *features)
 {
@@ -1479,6 +1532,7 @@ Float string_to_Float(char *str, Float lo, const char *field_name)
 #endif
 }
 
+
 int string_to_int(char *str, int lo, const char *field_name) 
 {
 #if HAVE_EXTENSION_LANGUAGE
@@ -1509,6 +1563,7 @@ int string_to_int(char *str, int lo, const char *field_name)
   return(res);
 #endif
 }
+
 
 off_t string_to_off_t(char *str, off_t lo, const char *field_name)
 {
@@ -1541,6 +1596,7 @@ off_t string_to_off_t(char *str, off_t lo, const char *field_name)
 #endif
 }
 
+
 XEN run_progn_hook(XEN hook, XEN args, const char *caller)
 {
   /* Guile built-in scm_c_run_hook doesn't return the value of the hook procedure(s) and exits on error */
@@ -1554,6 +1610,7 @@ XEN run_progn_hook(XEN hook, XEN args, const char *caller)
   return(xen_return_first(result, args));
 }
 
+
 XEN run_hook(XEN hook, XEN args, const char *caller)
 {
   XEN procs = XEN_HOOK_PROCEDURES(hook);
@@ -1566,6 +1623,7 @@ XEN run_hook(XEN hook, XEN args, const char *caller)
     }
   return(xen_return_first(XEN_FALSE, args));
 }
+
 
 XEN run_or_hook(XEN hook, XEN args, const char *caller)
 {
@@ -1601,6 +1659,7 @@ static XEN g_mus_audio_describe(void)
   return(XEN_TRUE);
 }
 
+
 #if HAVE_SCHEME && HAVE_DLFCN_H
 #include <dlfcn.h>
 /* these are included because libtool's dlopen is incredibly stupid */
@@ -1634,15 +1693,18 @@ static XEN g_dlopen(XEN name)
   return(XEN_FALSE);
 }
 
+
 static XEN g_dlclose(XEN handle)
 {
   return(C_TO_XEN_INT(dlclose((void *)(XEN_UNWRAP_C_POINTER(handle)))));
 }
 
+
 static XEN g_dlerror(void)
 {
   return(C_TO_XEN_STRING(dlerror()));
 }
+
 
 static XEN g_dlinit(XEN handle, XEN func)
 {
@@ -1653,8 +1715,8 @@ static XEN g_dlinit(XEN handle, XEN func)
   ((snd_dl_func)proc)();
   return(XEN_TRUE);
 }
-
 #endif
+
 
 static XEN g_little_endian(void)
 {
@@ -1665,10 +1727,12 @@ static XEN g_little_endian(void)
 #endif
 }
 
+
 static XEN g_snd_global_state(void)
 {
   return(XEN_WRAP_C_POINTER(ss));
 }
+
 
 #if MUS_DEBUGGING
 static XEN g_snd_sound_pointer(XEN snd)
@@ -1680,6 +1744,7 @@ static XEN g_snd_sound_pointer(XEN snd)
     return(C_TO_XEN_ULONG((unsigned long)(ss->sounds[s])));
   return(XEN_FALSE);
 }
+
 
 #if HAVE_GUILE
 static XEN g_snd_stdin_test(XEN str)
@@ -1713,6 +1778,7 @@ static XEN g_gc_off(void)
 #endif
   return(XEN_FALSE);
 }
+
 
 static XEN g_gc_on(void) 
 {
@@ -1757,6 +1823,7 @@ static XEN g_continuation_p(XEN obj)
 #endif
 #endif
 
+
 #if (!HAVE_GAUCHE)
 static XEN g_fmod(XEN a, XEN b)
 {
@@ -1766,6 +1833,7 @@ static XEN g_fmod(XEN a, XEN b)
 }
 #endif
 
+
 #if HAVE_SPECIAL_FUNCTIONS
 static XEN g_j0(XEN x)
 {
@@ -1774,12 +1842,14 @@ static XEN g_j0(XEN x)
   return(C_TO_XEN_DOUBLE(j0(XEN_TO_C_DOUBLE(x))));
 }
 
+
 static XEN g_j1(XEN x)
 {
   #define H_j1 "(j1 x): returns the regular cylindrical bessel function J1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "j1", " a number");
   return(C_TO_XEN_DOUBLE(j1(XEN_TO_C_DOUBLE(x))));
 }
+
 
 static XEN g_jn(XEN order, XEN x)
 {
@@ -1789,6 +1859,7 @@ static XEN g_jn(XEN order, XEN x)
   return(C_TO_XEN_DOUBLE(jn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
 }
 
+
 static XEN g_y0(XEN x)
 {
   #define H_y0 "(y0 x): returns the irregular cylindrical bessel function Y0(x)"
@@ -1796,12 +1867,14 @@ static XEN g_y0(XEN x)
   return(C_TO_XEN_DOUBLE(y0(XEN_TO_C_DOUBLE(x))));
 }
 
+
 static XEN g_y1(XEN x)
 {
   #define H_y1 "(y1 x): returns the irregular cylindrical bessel function Y1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "y1", " a number");
   return(C_TO_XEN_DOUBLE(y1(XEN_TO_C_DOUBLE(x))));
 }
+
 
 static XEN g_yn(XEN order, XEN x)
 {
@@ -1811,6 +1884,7 @@ static XEN g_yn(XEN order, XEN x)
   return(C_TO_XEN_DOUBLE(yn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
 }
 
+
 static XEN g_erf(XEN x)
 {
   #define H_erf "(erf x): returns the error function erf(x)"
@@ -1818,12 +1892,14 @@ static XEN g_erf(XEN x)
   return(C_TO_XEN_DOUBLE(erf(XEN_TO_C_DOUBLE(x))));
 }
 
+
 static XEN g_erfc(XEN x)
 {
   #define H_erfc "(erfc x): returns the complementary error function erfc(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "erfc", " a number");
   return(C_TO_XEN_DOUBLE(erfc(XEN_TO_C_DOUBLE(x))));
 }
+
 
 static XEN g_lgamma(XEN x)
 {
@@ -1833,12 +1909,14 @@ static XEN g_lgamma(XEN x)
 }
 #endif
 
+
 static XEN g_i0(XEN x)
 {
   #define H_i0 "(i0 x): returns the modified cylindrical bessel function I0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "i0", " a number");
   return(C_TO_XEN_DOUBLE(mus_bessi0(XEN_TO_C_DOUBLE(x))));
 }
+
 
 #if HAVE_GSL
 
@@ -1849,6 +1927,7 @@ static XEN g_gsl_ellipk(XEN k)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(k), k, XEN_ONLY_ARG, "gsl-ellipk", "a number");
   return(C_TO_XEN_DOUBLE(gsl_sf_ellint_Kcomp(sqrt(XEN_TO_C_DOUBLE(k)), GSL_PREC_APPROX)));
 }
+
 
 #include <gsl/gsl_sf_elljac.h>
 static XEN g_gsl_ellipj(XEN u, XEN m)
@@ -1865,9 +1944,12 @@ static XEN g_gsl_ellipj(XEN u, XEN m)
 		    C_TO_XEN_DOUBLE(dn)));
 }
 
+
 #if MUS_DEBUGGING && HAVE_GUILE
 /* use gsl gegenbauer to check our function */
+
 #include <gsl/gsl_sf_gegenbauer.h>
+
 static XEN g_gsl_gegenbauer(XEN n, XEN lambda, XEN x)
 {
   gsl_sf_result val;
@@ -1876,7 +1958,9 @@ static XEN g_gsl_gegenbauer(XEN n, XEN lambda, XEN x)
 }
 #endif
 
+
 #include <gsl/gsl_dht.h>
+
 static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
 {
   #define H_gsl_dht "(gsl-dht size data nu xmax): Hankel transform of data (a vct)"
@@ -1908,6 +1992,7 @@ static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
     }
   return(data);
 }
+
 
 #if HAVE_COMPLEX_TRIG && (!HAVE_RUBY) && HAVE_SCM_MAKE_COMPLEX
 #include <gsl/gsl_poly.h>
@@ -1944,6 +2029,7 @@ static XEN g_gsl_roots(XEN poly)
 #endif
 #endif
 
+
 #if HAVE_GAUCHE
 static XEN g_random(XEN val)
 {
@@ -1951,6 +2037,8 @@ static XEN g_random(XEN val)
     return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(val))));
   return(C_TO_XEN_DOUBLE(mus_frandom(XEN_TO_C_DOUBLE(val))));
 }
+
+
 #if HAVE_SYS_TIME_H
   #include <sys/time.h>
 #endif
@@ -1958,6 +2046,7 @@ static XEN g_random(XEN val)
 /* this number is overflowing (gauche int = 29 bits) if left as a bare int */
 static XEN g_get_internal_real_time(void) {return(C_TO_XEN_INT((int)(100.0 * ((double)clock() / (double)CLOCKS_PER_SEC))));}
 #endif
+
 
 #if HAVE_GUILE
 /* libguile/read.c */
@@ -2012,6 +2101,7 @@ static XEN g_delete_watcher(XEN id)
   return(id);
 }
 
+
 void run_watchers(void)
 {
   if (watchers)
@@ -2022,6 +2112,7 @@ void run_watchers(void)
 	  XEN_CALL_0(snd_protected_at(watchers[i]), "run watcher");
     }
 }
+
 
 static XEN g_add_watcher(XEN func)
 {
@@ -2059,6 +2150,7 @@ returns its id (an integer, used by " S_delete_watcher "). "
   return(C_TO_XEN_INT(floc));
 }
 
+
 /* TODO: watcher fs / rb  */
 
 
@@ -2086,6 +2178,7 @@ static void add_source_file_extension(const char *ext)
   source_file_extensions_end++;
 }
 
+
 bool source_file_p(const char *name)
 {
   int i, dot_loc = -1, len;
@@ -2110,6 +2203,7 @@ bool source_file_p(const char *name)
   return(false);
 }
 
+
 void save_added_source_file_extensions(FILE *fd)
 {
   int i;
@@ -2128,6 +2222,7 @@ void save_added_source_file_extensions(FILE *fd)
       }
 }
 
+
 static XEN g_add_source_file_extension(XEN ext)
 {
   #define H_add_source_file_extension "(" S_add_source_file_extension " ext):  add the file extension 'ext' to the list of source file extensions"
@@ -2135,6 +2230,7 @@ static XEN g_add_source_file_extension(XEN ext)
   add_source_file_extension(XEN_TO_C_STRING(ext));
   return(ext);
 }
+
 
 static char *find_source_file(char *orig)
 {
@@ -2272,9 +2368,11 @@ XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
   #endif
 #endif
 
+
 #if HAVE_GL && (!JUST_GL)
  void Init_libgl(void);
 #endif
+
 
 #if HAVE_GUILE
 #define S_write_byte "write-byte"
@@ -2290,6 +2388,7 @@ static XEN g_write_byte(XEN byte) /* this collides with CM */
 }
 #endif
 
+
 #if HAVE_GAUCHE
 static XEN g_eval_string(XEN str)
 {
@@ -2299,7 +2398,9 @@ static XEN g_eval_string(XEN str)
     return(XEN_EVAL_C_STRING(cstr));
   return(XEN_FALSE);
 }
+
 XEN_NARGIFY_1(g_eval_string_w, g_eval_string)
+
 
 static XEN g_ftell(XEN fd)
 {
@@ -2636,17 +2737,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
   /* Gauche doesn't handle documentation strings correctly */
   XEN_EVAL_C_STRING("(defmacro define+ (args . body) `(define ,args ,@(cdr body)))"); /* strip out documentation string if embedded defines */
-#endif
-
-#if 0
-#if HAVE_GUILE || HAVE_GAUCHE
-  /* R6RS change: define ->inexact and ->exact if not already defined */
-  if (!(XEN_DEFINED_P("->exact")))
-    {
-      XEN_EVAL_C_STRING("(define ->inexact exact->inexact)");
-      XEN_EVAL_C_STRING("(define ->exact inexact->exact)");
-    }
-#endif
 #endif
 
 #if HAVE_RUBY
