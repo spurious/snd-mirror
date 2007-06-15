@@ -2803,6 +2803,7 @@ void mus_sndlib_xen_initialize(void)
 #endif
 }
 
+
 #if WITH_MODULES
 void mus_sndlib_xen_initialize(void)
 {

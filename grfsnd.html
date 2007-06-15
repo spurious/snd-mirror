@@ -2149,16 +2149,22 @@ than one input is required, the first argument to apply-ladspa should be a list 
 <p><a name="ladspachannel"></a>The "regularized" version of apply-ladspa could be defined:
 </p>
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define* (ladspa-channel ladspa-data #:optional nbeg ndur nsnd nchn nedpos)
-  (let* ((beg (or nbeg 0)) 
-	 (snd (or nsnd (<a class=quiet href="extsnd.html#selectedsound">selected-sound</a>) (car (<a class=quiet href="extsnd.html#sounds">sounds</a>))))
-	 (chn (or nchn (<a class=quiet href="extsnd.html#selectedchannel">selected-channel</a>)))
+(define* (ladspa-channel ladspa-data #:optional (beg 0) ndur nsnd nchn (edpos -1))
+  (let* ((selsnd (<a class=quiet href="extsnd.html#selectedsound">selected-sound</a>))
+	 (selchn (<a class=quiet href="extsnd.html#selectedchannel">selected-channel</a>))
+	 (snd (or nsnd selsnd (car (<a class=quiet href="extsnd.html#sounds">sounds</a>))))
+	 (chn (or nchn sndchn))
 	 (dur (or ndur (- (<a class=quiet href="extsnd.html#frames">frames</a> snd chn) beg)))
-	 (edpos (or nedpos current-edit-position))
 	 (reader (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> beg snd chn 1 edpos)))
-    (<em class=red>apply-ladspa</em> reader ladspa-data dur "apply-ladspa")
-    (<a class=quiet href="extsnd.html#freesamplereader">free-sample-reader</a> reader)))
+    (<a class=quiet href="extsnd.html#selectsound">select-sound</a> snd)
+    (<a class=quiet href="extsnd.html#selectchannel">select-channel</a> chn)
+    (let ((result (<em class=red>apply-ladspa</em> reader ladspa-data dur "apply-ladspa")))
+      (<a class=quiet href="extsnd.html#freesamplereader">free-sample-reader</a> reader)
+      (if selsnd (<a class=quiet href="extsnd.html#selectsound">select-sound</a> selsnd))
+      (if selchn (<a class=quiet href="extsnd.html#selectchannel">select-channel</a> selchn))
+      result)))
 </pre></td></tr></table>
+
 <p>There are also functions to access the LADSPA descriptor directly:
 </p>
 <pre>

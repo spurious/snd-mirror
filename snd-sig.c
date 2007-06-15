@@ -1586,6 +1586,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
 }
 #endif
 
+
 #if MUS_WITH_THREADS
 static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t beg, off_t dur, 
 			   const char *origin, bool truncate, enved_progress_t from_enved,

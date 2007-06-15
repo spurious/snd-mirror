@@ -9163,7 +9163,7 @@ EDITS: 5
 		    (apply-controls obind)
 		    (let ((fltamp (maxamp obind))
 			  (fltdur (frames obind)))
-		      (if (> (abs (- fltamp .03)) .005) (snd-display ";apply filter scale: ~A?" fltamp))
+		      (if (> (abs (- fltamp .02)) .005) (snd-display ";apply filter scale: ~A?" fltamp))
 		      (if (> (- fltdur (+ 40 50828)) 256) (snd-display ";apply filter length: ~A?" fltdur))
 		      (undo 1 obind)))))))
 	  (revert-sound obind)
@@ -47562,6 +47562,7 @@ EDITS: 1
 	))))
 
 
+; (set! *clm-notehook* (lambda args (display (format #f "~A~%" args))))
 
 ;;; ---------------- test 23: with-sound ----------------
 
@@ -48714,7 +48715,8 @@ EDITS: 1
 		(if (file-exists? "test.rev") (snd-display ";perhaps reverb not deleted in ws?"))
 		(close-sound ind))))
 	
-	(let ((val 0))
+	(let ((val 0)
+	      (old-hook *clm-notehook*))
 	  (set! *clm-notehook* (lambda args (set! val 1)))
 	  (with-sound () (fm-violin 0 .1 440 .1))
 	  (if (not (= val 1)) (snd-display ";*clm-notehook*: ~A ~A" val *clm-notehook*))
@@ -48722,7 +48724,7 @@ EDITS: 1
 	  (if (not (= val 2)) (snd-display ";:notehook: ~A" val))
 	  (with-sound () (fm-violin 0 .1 440 .1))
 	  (if (not (= val 1)) (snd-display ";*clm-notehook* (1): ~A ~A" val *clm-notehook*))
-	  (set! *clm-notehook* #f))
+	  (set! *clm-notehook* old-hook))
 	
 	(set! *clm-channels* 1)
 	(set! *clm-srate* 22050)

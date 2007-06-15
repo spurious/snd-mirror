@@ -2366,7 +2366,7 @@
 		       (gains (cadr vals)))
 		  (if group
 		      ;; we have to interpolate a new point that lies on the shared
-		      ;; edge of the adyacent groups so that the speakers opposite
+		      ;; edge of the adjacent groups so that the speakers opposite
 		      ;; the edge have zero gain when the trajectory switches groups
 		      (let* ((edge (equalp-intersection (group-vertices group)
 							(group-vertices prev-group))))
@@ -2379,13 +2379,13 @@
 					 (yi (cadr pint))
 					 (zi (third pint))
 					 (di (distance xi yi zi))
-					 (ti (+ prev-time (* (/ (distance (- xi prev-x)
-									  (- yi prev-y)
-									  (- zi prev-z))
-								(distance (- x prev-x)
-									  (- y prev-y)
-									  (- z prev-z)))
-							     (- time prev-time)))))
+					 (ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
+										      (- yi prev-y)
+										      (- zi prev-z))
+									    (distance (- x prev-x)
+										      (- y prev-y)
+										      (- z prev-z)))
+									 (- time prev-time))))))
 				    ;; see if we are inside the previous group
 				    ;; we can be on either side due to roundoff errors
 				    (let* ((vals (calculate-gains xi yi zi prev-group))
@@ -2409,13 +2409,13 @@
 				      (let* ((xi (car pint))
 					     (yi (cadr pint))
 					     (di (distance xi yi 0.0))
-					     (ti (+ prev-time (* (/ (distance (- xi prev-x)
-									      (- yi prev-y)
-									      0.0)
-								    (distance (- x prev-x)
-									      (- y prev-y)
-									      0.0))
-								 (- time prev-time)))))
+					     (ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
+											  (- yi prev-y)
+											  0.0)
+										(distance (- x prev-x)
+											  (- y prev-y)
+											  0.0))
+									     (- time prev-time))))))
 					;; see if we are inside the previous group
 					;; we can be on either side due to roundoff errors
 					(let* ((vals (calculate-gains xi yi 0.0 prev-group))

@@ -103,6 +103,7 @@
 #include "clm-strings.h"
 #include "sndlib-strings.h"
 
+
 static XEN optimization_hook;
 
 #define S_run_safety "run-safety"
@@ -110,6 +111,7 @@ enum {RUN_UNSAFE, RUN_SAFE};
 static int run_safety = RUN_UNSAFE;
 
 #define DESCRIBE_PTREE 1
+
 
 #if WITH_RUN
 
@@ -168,11 +170,16 @@ static int run_safety = RUN_UNSAFE;
 #define DOUBLE_TO_STRING_WITH_RADIX(a, b)   XEN_TO_C_STRING(Scm_NumberToString(C_TO_XEN_DOUBLE(a), b, false))
 #define XEN_LIST_REF_WRAPPED(a, b)          Scm_ListRef(a, XEN_TO_C_INT(b), false)
 
+
 /* obj is a symbol, I think */
+
 #define XEN_WALKER(Obj)                     gauche_walker(Obj)
 #define XEN_SET_WALKER(Obj, Val)            gauche_set_walker(Obj, Val)
+
 /* Prop is always walk_sym, Val is always ulong result of make_walker */
+
 #define XEN_PROCEDURE_WITH_SETTER_P(Proc)   C_TO_XEN_BOOLEAN(Scm_HasSetter(Proc))
+
 
 static XEN walker_hash_table = XEN_FALSE;
 
@@ -184,12 +191,14 @@ static XEN gauche_walker(XEN func)
   return(XEN_FALSE);
 }
 
+
 static XEN gauche_set_walker(XEN func, XEN walker)
 {
   Scm_HashTableAdd(SCM_HASH_TABLE(walker_hash_table), func, walker);
   return(walker);
 }
 #endif
+
 
 #define FLT_PT  "d%d(%.4f)"
 #define PTR_PT  "i%d(%p)"
@@ -218,6 +227,7 @@ static XEN gauche_set_walker(XEN func, XEN walker)
   static XEN walk_sym;
 #endif
 
+
 /* find and set (Scheme) variable values */
 
 #if HAVE_GUILE
@@ -228,6 +238,7 @@ static void xen_symbol_name_set_value(const char *a, XEN b)
   if (!(XEN_FALSE_P(var)))
     XEN_VARIABLE_SET(var, b);
 }
+
 
 static XEN symbol_to_value(XEN code, XEN sym, bool *local)
 {
@@ -278,6 +289,7 @@ static XEN symbol_to_value(XEN code, XEN sym, bool *local)
   return(new_val);
 }
 
+
 static void symbol_set_value(XEN code, XEN sym, XEN new_val)
 {
   XEN var = XEN_FALSE;
@@ -321,6 +333,7 @@ static void symbol_set_value(XEN code, XEN sym, XEN new_val)
 }
 #endif
 
+
 #if HAVE_GAUCHE
 static void xen_symbol_name_set_value(const char *a, XEN b)
 {
@@ -334,6 +347,7 @@ static void xen_symbol_name_set_value(const char *a, XEN b)
     }
   /* fprintf(stderr, "can't find %s", a); */
 }
+
 
 static XEN symbol_to_value(XEN code, XEN sym, bool *local)
 {
@@ -353,6 +367,7 @@ static XEN symbol_to_value(XEN code, XEN sym, bool *local)
   /* fprintf(stderr, "can't find %s", XEN_AS_STRING(sym)); */
   return(XEN_UNDEFINED);
 }
+
 
 static void symbol_set_value(XEN code, XEN sym, XEN new_val)
 {
@@ -378,6 +393,7 @@ enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST, R_PAIR,
       R_NUMBER_SOUND_DATA, R_ANY}; /* last 8 for walker arg checks */
 
 #define BUILT_IN_TYPES 30
+
 static int last_type = R_ANY;
 static int type_names_size = BUILT_IN_TYPES;
 static char **type_names = NULL;
@@ -387,6 +403,7 @@ static char *basic_type_names[BUILT_IN_TYPES] = {"unspecified", "int", "float", 
 						 "float-vector", "int-vector", "vct-vector", "clm-struct-vector", "clm-vector", 
 						 "number", "cons", "vector", "xen", "number or clm", "number or vct", 
 						 "number or sound-data", "any"};
+
 static void init_type_names(void)
 {
   int i;
@@ -395,12 +412,14 @@ static void init_type_names(void)
     type_names[i] = basic_type_names[i];
 }
 
+
 static char *type_name(int id) 
 {
   if ((id >= R_UNSPECIFIED) && (id <= last_type)) 
     return(type_names[id]); 
   return("unknown");
 }
+
 
 static int add_new_type(const char *new_type)
 {
@@ -416,6 +435,7 @@ static int add_new_type(const char *new_type)
   return(last_type);
 }
 
+
 static int name_to_type(const char *name)
 {
   int i;
@@ -424,6 +444,7 @@ static int name_to_type(const char *name)
       return(i);
   return(R_UNSPECIFIED);
 }
+
 
 #define POINTER_P(Type) (((Type) >= R_VCT) && ((Type) <= R_CLM_VECTOR)) /* exclude R_ANY */
 #define VECTOR_P(Type) (((Type) >= R_FLOAT_VECTOR) && ((Type) <= R_CLM_VECTOR))
@@ -521,6 +542,7 @@ typedef struct triple {
   bool no_opt;
 } triple;
 
+
 static int allocate_xen_vars(ptree *pt, int size)
 {
   int cur;
@@ -541,6 +563,7 @@ static int allocate_xen_vars(ptree *pt, int size)
   return(cur);
 }
 
+
 static triple *free_triple(triple *trp)
 {
   if (trp->args) FREE(trp->args);
@@ -549,12 +572,14 @@ static triple *free_triple(triple *trp)
   return(NULL);
 }
 
+
 static char *describe_triple(triple *trp, ptree *pt)
 {
   if (trp->descr)
     return((*(trp->descr))(trp->args, pt));
   return(NULL);
 }
+
 
 static xen_value *make_xen_value(int typ, int address, xen_value_constant_t constant)
 {
@@ -566,6 +591,7 @@ static xen_value *make_xen_value(int typ, int address, xen_value_constant_t cons
   v->gc = false;
   return(v);
 }
+
 
 #define OPTIMIZER_WARNING_BUFFER_SIZE 1024
 static char optimizer_warning_buffer[OPTIMIZER_WARNING_BUFFER_SIZE];
@@ -592,6 +618,7 @@ static xen_value *run_warn(const char *format, ...)
   return(NULL); /* this is so we can insert the call into the error return call chain */
 }
 
+
 static xen_value *run_warn_with_free(char *str)
 {
   XEN msg;
@@ -605,10 +632,12 @@ static xen_value *run_warn_with_free(char *str)
   return(NULL);
 }
 
+
 static xen_value *copy_xen_value(xen_value *v)
 {
   return(make_xen_value(v->type, v->addr, v->constant));
 }
+
 
 static char *describe_xen_value(xen_value *v, ptree *pt);
 
@@ -631,6 +660,7 @@ static char *describe_xen_var(xen_var *var, ptree *pt)
   return(buf);
 }
 
+
 static continuation *free_goto(continuation *c)
 {
   if (c)
@@ -642,6 +672,7 @@ static continuation *free_goto(continuation *c)
     }
   return(NULL);
 }
+
 
 #define INITIAL_INT_CTR 2
 
@@ -660,6 +691,7 @@ static xen_var *find_var_in_ptree(ptree *pt, const char *name)
   return(NULL);
 }
 
+
 static xen_var *find_var_in_ptree_via_addr(ptree *pt, int type, int addr)
 {
   /* search backwards for shadowing */
@@ -677,6 +709,7 @@ static xen_var *find_var_in_ptree_via_addr(ptree *pt, int type, int addr)
   return(NULL);
 }
 
+
 static char *str_append(char *oldstr, int *oldsize, char *newstr)
 {
   oldstr = snd_strcat(oldstr, newstr, oldsize);
@@ -684,10 +717,12 @@ static char *str_append(char *oldstr, int *oldsize, char *newstr)
   return(oldstr);
 }
 
+
 XEN ptree_code(struct ptree *pt)
 {
   return(pt->form);
 }
+
 
 static char *describe_ptree(ptree *pt)
 {
@@ -810,6 +845,7 @@ static char *describe_ptree(ptree *pt)
   return(buf);
 }
 
+
 static char *describe_xen_value_1(int type, int addr, ptree *pt)
 {
   switch (type)
@@ -899,10 +935,12 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
   return(NULL);
 }
 
+
 static char *describe_xen_value(xen_value *v, ptree *pt)
 {
   return(describe_xen_value_1(v->type, v->addr, pt));
 }
+
 
 static bool got_lambda = false; /* a temporary kludge?? */
 
@@ -924,6 +962,7 @@ static ptree *make_ptree(int initial_data_size)
   pt->form_loc = NOT_A_GC_LOC;
   return(pt);
 }
+
 
 static ptree *attach_to_ptree(ptree *pt)
 {
@@ -948,6 +987,7 @@ static ptree *attach_to_ptree(ptree *pt)
   new_tree->initial_pc = 0;
   return(new_tree);
 }
+
 
 static void unattach_ptree(ptree *inner, ptree *outer)
 {
@@ -1066,6 +1106,7 @@ static void int_vect_into_vector(vect *v, XEN vectr)
     XEN_VECTOR_SET(vectr, i, R_C_TO_XEN_INT(v->data.ints[i]));
 }
 
+
 static void free_vect(vect *v, int type)
 {
   if (v)
@@ -1081,6 +1122,7 @@ static void free_vect(vect *v, int type)
     }
 }
 
+
 static void clm_struct_restore(ptree *prog, xen_var *var);
 
 static vct *vector_to_vct(XEN vectr)
@@ -1093,13 +1135,10 @@ static vct *vector_to_vct(XEN vectr)
   for (i = 0; i < len; i++) 
     if (XEN_DOUBLE_P(XEN_VECTOR_REF(vectr, i)))
       v->data[i] = (Float)XEN_TO_C_DOUBLE(XEN_VECTOR_REF(vectr, i));
-    else
-      {
-	mus_vct_free(v);
-	return(NULL);
-      }
+    else return(mus_vct_free(v));
   return(v);
 }
+
 
 static void vct_into_vector(vct *v, XEN vectr)
 {
@@ -1108,6 +1147,7 @@ static void vct_into_vector(vct *v, XEN vectr)
   for (i = 0; i < len; i++) 
     XEN_VECTOR_SET(vectr, i, C_TO_XEN_DOUBLE(v->data[i]));
 }
+
 
 static xen_var *free_xen_var(ptree *prog, xen_var *var)
 {
@@ -1172,6 +1212,7 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
   return(NULL);
 }
 
+
 static ptree *free_embedded_ptree(ptree *pt)
 {
   if (pt)
@@ -1191,6 +1232,7 @@ static ptree *free_embedded_ptree(ptree *pt)
     }
   return(NULL);
 }
+
 
 void free_ptree(struct ptree *pt)
 {
@@ -1233,8 +1275,7 @@ void free_ptree(struct ptree *pt)
 			      for (k = 0; k < pt->vct_ctr; k++)
 				if ((k != v->addr) && (pt->vcts[k] == pt->vcts[v->addr]))
 				  pt->vcts[k] = NULL;
-			      mus_vct_free(pt->vcts[v->addr]); 
-			      pt->vcts[v->addr] = NULL;   
+			      pt->vcts[v->addr] = mus_vct_free(pt->vcts[v->addr]); 
 			    }
 			  break;
 			case R_SOUND_DATA: 
@@ -1420,6 +1461,7 @@ void free_ptree(struct ptree *pt)
     }
 }
 
+
 static triple *add_triple_to_ptree(ptree *pt, triple *trp)
 {
   if (pt->triple_ctr >= pt->program_size)
@@ -1442,6 +1484,7 @@ static triple *add_triple_to_ptree(ptree *pt, triple *trp)
   return(trp);
 }
 
+
 static int add_int_to_ptree(ptree *pt, Int value)
 {
   int cur;
@@ -1455,6 +1498,7 @@ static int add_int_to_ptree(ptree *pt, Int value)
   return(cur);
 }
 
+
 static int add_dbl_to_ptree(ptree *pt, Double value)
 {
   int cur;
@@ -1467,6 +1511,7 @@ static int add_dbl_to_ptree(ptree *pt, Double value)
   pt->dbls[cur] = value;
   return(cur);
 }
+
 
 static int add_vct_to_ptree(ptree *pt, vct *value)
 {
@@ -1487,6 +1532,7 @@ static int add_vct_to_ptree(ptree *pt, vct *value)
   return(cur);
 }
 
+
 static int add_sound_data_to_ptree(ptree *pt, sound_data *value)
 {
   int cur;
@@ -1505,6 +1551,7 @@ static int add_sound_data_to_ptree(ptree *pt, sound_data *value)
   pt->sds[cur] = value;
   return(cur);
 }
+
 
 static int add_loc_to_protected_list(ptree *pt, int loc);
 
@@ -1538,6 +1585,7 @@ static int add_clm_to_ptree(ptree *pt, mus_any *value, XEN orig)
   return(cur);
 }
 
+
 static int add_vect_to_ptree(ptree *pt, vect *value)
 {
   int cur;
@@ -1556,6 +1604,7 @@ static int add_vect_to_ptree(ptree *pt, vect *value)
   pt->vects[cur] = value;
   return(cur);
 }
+
 
 static int add_fnc_to_ptree(ptree *pt, ptree *value)
 {
@@ -1576,6 +1625,7 @@ static int add_fnc_to_ptree(ptree *pt, ptree *value)
   return(cur);
 }
 
+
 static int add_xen_to_ptree(ptree *pt, XEN value)
 {
   int cur;
@@ -1592,6 +1642,7 @@ static int add_xen_to_ptree(ptree *pt, XEN value)
   pt->xens[cur] = value;
   return(cur);
 }
+
 
 static int add_reader_to_ptree(ptree *pt, snd_fd *value)
 {
@@ -1612,6 +1663,7 @@ static int add_reader_to_ptree(ptree *pt, snd_fd *value)
   return(cur);
 }
 
+
 static int add_mix_reader_to_ptree(ptree *pt, struct mix_fd *value)
 {
   int cur;
@@ -1631,6 +1683,7 @@ static int add_mix_reader_to_ptree(ptree *pt, struct mix_fd *value)
   return(cur);
 }
 
+
 static xen_var *new_xen_var(const char *name, xen_value *v)
 {
   xen_var *var;
@@ -1642,6 +1695,7 @@ static xen_var *new_xen_var(const char *name, xen_value *v)
   var->unsettable = false;
   return(var);
 }
+
 
 static void add_var_to_ptree(ptree *pt, const char *name, xen_value *v)
 {
@@ -1663,6 +1717,7 @@ static void add_var_to_ptree(ptree *pt, const char *name, xen_value *v)
     }
   pt->vars[pt->var_ctr++] = new_xen_var(name, v);
 }
+
 
 static int add_outer_var_to_ptree(ptree *pt, const char *name, xen_value *v)
 {
@@ -1686,6 +1741,7 @@ static int add_outer_var_to_ptree(ptree *pt, const char *name, xen_value *v)
   return(cur);
 }
 
+
 static int add_string_to_ptree(ptree *pt, char *str)
 {
   int cur;
@@ -1705,6 +1761,7 @@ static int add_string_to_ptree(ptree *pt, char *str)
   pt->strs[cur] = str;
   return(cur);
 }
+
 
 static xen_value *add_empty_var_to_ptree(ptree *prog, int type)
 {
@@ -1737,6 +1794,7 @@ static xen_value *add_empty_var_to_ptree(ptree *prog, int type)
     }
   return(make_xen_value(type, add_int_to_ptree(prog, 0), R_VARIABLE)); 
 }
+
 
 static xen_value *transfer_value(ptree *prog, xen_value *v)
 {
@@ -1773,6 +1831,7 @@ static xen_value *transfer_value(ptree *prog, xen_value *v)
   return(make_xen_value(v->type, add_int_to_ptree(prog, prog->ints[v->addr]), R_VARIABLE));
 }
 
+
 static void add_xen_value_to_gcs(ptree *pt, xen_value *v)
 {
   if (pt->gc_ctr >= pt->gcs_size)
@@ -1792,6 +1851,7 @@ static void add_xen_value_to_gcs(ptree *pt, xen_value *v)
   pt->gcs[pt->gc_ctr++] = v;
 }
 
+
 static void add_obj_to_gcs(ptree *pt, int type, int addr)
 {
   xen_value *v;
@@ -1799,6 +1859,7 @@ static void add_obj_to_gcs(ptree *pt, int type, int addr)
   v->gc = true;
   add_xen_value_to_gcs(pt, v);
 }
+
 
 static int add_loc_to_protected_list(ptree *pt, int loc)
 {
@@ -1822,6 +1883,7 @@ static int add_loc_to_protected_list(ptree *pt, int loc)
   pt->gc_protected[pt->gc_protected_ctr++] = loc;
   return(loc);
 }
+
 
 static vect *read_int_vector(XEN vectr)
 {
@@ -1849,6 +1911,7 @@ static vect *read_int_vector(XEN vectr)
   return(v);
 }
 
+
 static vect *read_vct_vector(XEN vectr)
 {
   int len, i;
@@ -1874,6 +1937,7 @@ static vect *read_vct_vector(XEN vectr)
     }
   return(v);
 }
+
 
 static vect *read_clm_vector(XEN vectr)
 {
@@ -1904,6 +1968,7 @@ static vect *read_clm_vector(XEN vectr)
   return(v);
 }
 
+
 static vect *read_clm_struct_vector(XEN vectr)
 {
   int len, i;
@@ -1918,6 +1983,7 @@ static vect *read_clm_struct_vector(XEN vectr)
   return(v);
 }
 
+
 static vect *read_vector(XEN vector, int type)
 {
   switch (type)
@@ -1929,6 +1995,7 @@ static vect *read_vector(XEN vector, int type)
     }
   return(NULL);
 }
+
 
 int xen_to_run_type(XEN val)
 {
@@ -1988,6 +2055,7 @@ int xen_to_run_type(XEN val)
     }
   return(R_UNSPECIFIED);
 }
+
 
 static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
 {
@@ -2075,6 +2143,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
   return(v);
 }
 
+
 static continuation *add_goto_to_ptree(ptree *pt, const char *name)
 {
   continuation *c;
@@ -2102,6 +2171,7 @@ static continuation *add_goto_to_ptree(ptree *pt, const char *name)
   add_var_to_ptree(pt, name, c->jump);
   return(c);
 }
+
 
 static void erase_goto(ptree *prog, const char *name)
 {
@@ -2154,6 +2224,7 @@ static void eval_ptree(ptree *pt)
   PC = pt->initial_pc; /* don't reset closure junk after initial evaluation */
 }
 
+
 static void eval_embedded_ptree(ptree *prog, ptree *pt)
 {
   Int old_pc, old_all_done;
@@ -2192,6 +2263,7 @@ static void eval_embedded_ptree(ptree *prog, ptree *pt)
   pt->ints[1] = old_all_done;
 }
 
+
 static triple *make_triple(void (*function)(int *arg_addrs, ptree *pt),
 			   char *(*descr)(int *arg_addrs, ptree *pt), 
 			   xen_value **typed_args, int args)
@@ -2211,6 +2283,7 @@ static triple *make_triple(void (*function)(int *arg_addrs, ptree *pt),
   trp->descr = descr;
   return(trp);
 }
+
 
 static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt), 
 			      char *(*descr)(int *arg_addrs, ptree *pt), 
@@ -2238,6 +2311,7 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
   trp->descr = descr;
   return(trp);
 }
+
 
 #define BOOL_RESULT pt->ints[args[0]]
 #define BOOL_ARG_1 ((bool)(pt->ints[args[1]]))
@@ -2351,17 +2425,22 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define DESC_VECT_ARG_1 ((args[1] < pt->vect_ctr) ? pt->vects[args[1]] : NULL)
 #define DESC_VECT_ARG_2 ((args[2] < pt->vect_ctr) ? pt->vects[args[2]] : NULL)
 
+
 static void quit(int *args, ptree *pt) {ALL_DONE = (Int)true;}
 static char *descr_quit(int *args, ptree *pt) {return(copy_string("quit"));}
+
 
 static void jump(int *args, ptree *pt) {PC += pt->ints[args[0]];}
 static char *descr_jump(int *args, ptree *pt) {return(mus_format("jump " INT_PT , args[0], INT_RESULT));}
 
+
 static void jump_abs(int *args, ptree *pt) {PC = pt->ints[args[0]];}
 static char *descr_jump_abs(int *args, ptree *pt) {return(mus_format("goto " INT_PT , args[0], INT_RESULT));}
 
+
 static void jump_indirect(int *args, ptree *pt) {PC = pt->ints[pt->ints[args[0]]];}
 static char *descr_jump_indirect(int *args, ptree *pt) {return(mus_format("goto [" INT_PT "=" INT_STR, args[0], INT_RESULT, pt->ints[pt->ints[args[0]]]));}
+
 
 static void jump_if(int *args, ptree *pt) {if (pt->ints[args[1]] != 0) PC += pt->ints[args[0]];}
 static char *descr_jump_if(int *args, ptree *pt) 
@@ -2369,11 +2448,13 @@ static char *descr_jump_if(int *args, ptree *pt)
   return(mus_format("if (" BOOL_PT ") jump " INT_PT , args[1], B2S(INT_ARG_1), args[0], INT_RESULT));
 }
 
+
 static void jump_if_equal(int *args, ptree *pt) {if (pt->ints[args[1]] == pt->ints[args[2]]) PC = pt->ints[args[0]];}
 static char *descr_jump_if_equal(int *args, ptree *pt) 
 {
   return(mus_format("if (" INT_PT " == " INT_PT ") goto " INT_PT , args[1], INT_ARG_1, args[2], INT_ARG_2, args[0], INT_RESULT));
 }
+
 
 static void jump_if_not(int *args, ptree *pt) {if (pt->ints[args[1]] == 0) PC += pt->ints[args[0]];}
 static char *descr_jump_if_not(int *args, ptree *pt) 
@@ -2381,55 +2462,70 @@ static char *descr_jump_if_not(int *args, ptree *pt)
   return(mus_format("if (!" BOOL_PT ") jump " INT_PT , args[1], B2S(INT_ARG_1), args[0], INT_RESULT));
 }
 
+
 static void store_i(int *args, ptree *pt) {INT_RESULT = INT_ARG_1;}
 static char *descr_store_i(int *args, ptree *pt) {return(mus_format( INT_PT " = " INT_PT , args[0], INT_RESULT, args[1], INT_ARG_1));}
+
 
 static void store_f(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_1;}
 static char *descr_store_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = " FLT_PT , args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
 
+
 static void store_f_i(int *args, ptree *pt) {INT_RESULT = (Int)FLOAT_ARG_1;}
 static char *descr_store_f_i(int *args, ptree *pt) {return(mus_format( INT_PT " = " FLT_PT , args[0], INT_RESULT, args[1], FLOAT_ARG_1));}
+
 
 static void store_i_f(int *args, ptree *pt) {FLOAT_RESULT = (Double)INT_ARG_1;}
 static char *descr_store_i_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = " INT_PT , args[0], FLOAT_RESULT, args[1], INT_ARG_1));}
 
+
 static void store_false(int *args, ptree *pt) {BOOL_RESULT = (Int)false;}
 static char *descr_store_false(int *args, ptree *pt) {return(mus_format( BOOL_PT " = 0", args[0], B2S(BOOL_RESULT)));}
 
+
 static void store_true(int *args, ptree *pt) {BOOL_RESULT = (Int)true;}
 static char *descr_store_true(int *args, ptree *pt) {return(mus_format( BOOL_PT " = 1", args[0], B2S(BOOL_RESULT)));}
+
 
 static void store_b_b(int *args, ptree *pt) {BOOL_RESULT = BOOL_ARG_1;}
 static char *descr_store_b_b(int *args, ptree *pt) 
   {return(mus_format( BOOL_PT " = " BOOL_PT , args[0], B2S(BOOL_RESULT), args[1], B2S(BOOL_ARG_1)));}
 
+
 static void store_b_clm(int *args, ptree *pt) {BOOL_RESULT = (bool)(CLM_ARG_1);}
 static char *descr_store_b_clm(int *args, ptree *pt) 
   {return(mus_format( BOOL_PT " = (bool)" CLM_PT , args[0], B2S(BOOL_RESULT), args[1], DESC_CLM_ARG_1));}
+
 
 static void store_b_vct(int *args, ptree *pt) {BOOL_RESULT = (bool)(VCT_ARG_1);}
 static char *descr_store_b_vct(int *args, ptree *pt) 
   {return(mus_format( BOOL_PT " = (bool)" VCT_PT , args[0], B2S(BOOL_RESULT), args[1], DESC_VCT_ARG_1));}
 
+
 static void store_b_reader(int *args, ptree *pt) {BOOL_RESULT = (bool)(READER_ARG_1);}
 static char *descr_store_b_reader(int *args, ptree *pt) 
   {return(mus_format( BOOL_PT " = (bool)" RD_PT , args[0], B2S(BOOL_RESULT), args[1], DESC_READER_ARG_1));}
+
 
 static void store_b_mix_reader(int *args, ptree *pt) {BOOL_RESULT = (bool)(MIX_READER_ARG_1);}
 static char *descr_store_b_mix_reader(int *args, ptree *pt) 
   {return(mus_format( BOOL_PT " = (bool)" MIX_SAMPLE_READER_PT , args[0], B2S(BOOL_RESULT), args[1], DESC_MIX_READER_ARG_1));}
 
+
 static void store_b_sd(int *args, ptree *pt) {BOOL_RESULT = (bool)(SOUND_DATA_ARG_1);}
 static char *descr_store_b_sd(int *args, ptree *pt) 
   {return(mus_format( BOOL_PT " = (bool)" SD_PT , args[0], B2S(BOOL_RESULT), args[1], DESC_SOUND_DATA_ARG_1));}
+
 
 static void store_c(int *args, ptree *pt) {CHAR_RESULT = (int)CHAR_ARG_1;}
 static char *descr_store_c(int *args, ptree *pt) 
   {return(mus_format( CHR_PT " = " CHR_PT , args[0], (char)(CHAR_RESULT), args[1], CHAR_ARG_1));}
 
+
 static void store_x(int *args, ptree *pt) {XEN_RESULT = RXEN_ARG_1;}
 static char *descr_store_x(int *args, ptree *pt) 
   {return(mus_format( XEN_PT " = " XEN_PT , args[0], DESC_XEN_RESULT, args[1], DESC_RXEN_ARG_1));}
+
 
 static void store_s(int *args, ptree *pt) 
 {
@@ -2440,6 +2536,7 @@ static char *descr_store_s(int *args, ptree *pt)
 {
   return(mus_format( STR_PT " = " STR_PT , args[0], STRING_RESULT, args[1], STRING_ARG_1));
 }
+
 
 #if 0
 static void store_v(int *args, ptree *pt) {VCT_RESULT = VCT_ARG_1;}
@@ -2454,6 +2551,7 @@ static char *descr_store_g(int *args, ptree *pt)
 }
 #endif
 
+
 static xen_value *convert_int_to_dbl(ptree *prog, xen_value *i)
 {
   xen_value *val;
@@ -2463,6 +2561,7 @@ static xen_value *convert_int_to_dbl(ptree *prog, xen_value *i)
   else add_triple_to_ptree(prog, va_make_triple(store_i_f, descr_store_i_f, 2, val, i));
   return(val);
 }
+
 
 static xen_value *convert_dbl_to_int(ptree *prog, xen_value *i, bool exact)
 {
@@ -2476,6 +2575,7 @@ static xen_value *convert_dbl_to_int(ptree *prog, xen_value *i, bool exact)
   else add_triple_to_ptree(prog, va_make_triple(store_f_i, descr_store_f_i, 2, v, i));
   return(v);
 }
+
 
 static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
 {
@@ -2548,6 +2648,7 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
   return(NULL);
 }
 
+
 static triple *set_var_no_opt(ptree *pt, xen_value *var, xen_value *init_val)
 {
   triple *trp;
@@ -2555,6 +2656,7 @@ static triple *set_var_no_opt(ptree *pt, xen_value *var, xen_value *init_val)
   if (trp) trp->no_opt = true;
   return(trp);
 }
+
 
 static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result);
 
@@ -2581,6 +2683,7 @@ static xen_value *walk_sequence(ptree *prog, XEN body, walk_result_t need_result
     }
   return(v);
 }
+
 
 static xen_value *lambda_form(ptree *prog, XEN form, bool separate, xen_value **args, int num_args, XEN local_proc);
 
@@ -2614,6 +2717,7 @@ static char *define_form(ptree *prog, XEN form)
   return(NULL);
 }
 
+
 static XEN handle_defines(ptree *prog, XEN forms)
 {
   if (!(XEN_LIST_P(forms))) return(forms);
@@ -2639,6 +2743,7 @@ static XEN handle_defines(ptree *prog, XEN forms)
     }
   return(forms);
 }
+
 
 static char *parallel_binds(ptree *prog, XEN old_lets, const char *name)
 {
@@ -2689,6 +2794,7 @@ static char *parallel_binds(ptree *prog, XEN old_lets, const char *name)
   return(NULL);
 }
 
+
 static char *sequential_binds(ptree *prog, XEN old_lets, const char *name)
 {
   XEN lets;
@@ -2715,6 +2821,7 @@ static char *sequential_binds(ptree *prog, XEN old_lets, const char *name)
     }
   return(NULL);
 }
+
 
 static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool separate, xen_value **cur_args, int num_args)
 {
@@ -2794,6 +2901,7 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
   return(NULL);
 }
 
+
 static void undefine_locals(ptree *prog, int locals_loc)
 {
   int i;
@@ -2802,6 +2910,7 @@ static void undefine_locals(ptree *prog, int locals_loc)
   prog->var_ctr = locals_loc;
 }
 
+
 static xen_value *walk_then_undefine(ptree *prog, XEN form, walk_result_t need_result, const char *name, int locals_loc)
 {
   xen_value *v;
@@ -2809,6 +2918,7 @@ static xen_value *walk_then_undefine(ptree *prog, XEN form, walk_result_t need_r
   undefine_locals(prog, locals_loc);
   return(v);
 }
+
 
 static xen_value *lambda_form(ptree *prog, XEN form, bool separate, xen_value **args, int num_args, XEN local_proc)
 {
@@ -2860,10 +2970,12 @@ static xen_value *lambda_form(ptree *prog, XEN form, bool separate, xen_value **
   return(walk_then_undefine(prog, XEN_CDDR(form), NEED_ANY_RESULT, "lambda", locals_loc));
 }
 
+
 static xen_value *begin_form(ptree *prog, XEN form, walk_result_t need_result)
 {
   return(walk_then_undefine(prog, XEN_CDR(form), need_result, "begin", prog->var_ctr));
 }
+
 
 static xen_value *let_star_form(ptree *prog, XEN form, walk_result_t need_result)
 {
@@ -2875,6 +2987,7 @@ static xen_value *let_star_form(ptree *prog, XEN form, walk_result_t need_result
   if (!got_lambda) prog->initial_pc = prog->triple_ctr;
   return(walk_then_undefine(prog, XEN_CDDR(form), need_result, "let*", locals_loc));
 }
+
 
 static xen_value *let_form(ptree *prog, XEN form, walk_result_t need_result)
 {
@@ -2890,6 +3003,7 @@ static xen_value *let_form(ptree *prog, XEN form, walk_result_t need_result)
   return(walk_then_undefine(prog, XEN_CDDR(form), need_result, "let", locals_loc));
 }
 
+
 static xen_value *coerce_to_boolean(ptree *prog, xen_value *v)
 {
   xen_value *temp;
@@ -2898,6 +3012,7 @@ static xen_value *coerce_to_boolean(ptree *prog, xen_value *v)
   FREE(v);
   return(temp);
 }
+
 
 static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
 {
@@ -3008,6 +3123,7 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
   return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
 }
 
+
 static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
 {
   xen_value *result = NULL, *test_value = NULL, *clause_value = NULL, *jump_to_next_clause = NULL;
@@ -3103,6 +3219,7 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
   if (result) FREE(result);
   return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
 }
+
 
 static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
 {
@@ -3225,6 +3342,7 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
   return(NULL);
 }
 
+
 static bool list_member(XEN symb, XEN varlst)
 {
   XEN lst;
@@ -3233,6 +3351,7 @@ static bool list_member(XEN symb, XEN varlst)
       return(true);
   return(false);
 }
+
 
 static bool tree_member(XEN varlst, XEN expr)
 {
@@ -3254,6 +3373,7 @@ static bool tree_member(XEN varlst, XEN expr)
   return(tree_member(varlst, XEN_CDR(expr)));
 }
 
+
 static xen_value *do_warn_of_type_trouble(int var_type, int expr_type, XEN form)
 {
   /* 
@@ -3266,6 +3386,7 @@ static xen_value *do_warn_of_type_trouble(int var_type, int expr_type, XEN form)
 		  type_name(var_type),
 		  type_name(expr_type)));
 }
+
 
 static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 {
@@ -3458,6 +3579,7 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
   return(result);
 }
 
+
 static xen_value *callcc_form(ptree *prog, XEN form, walk_result_t need_result)
 {
   XEN func_form, continuation_name;
@@ -3487,6 +3609,7 @@ static xen_value *callcc_form(ptree *prog, XEN form, walk_result_t need_result)
   erase_goto(prog, c->name); /* now access to this depends on a set! somewhere */
   return(v);
 }
+
 
 static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
 {
@@ -3540,6 +3663,7 @@ static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
   FREE(fixups);
   return(result);
 }
+
 
 static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
 {
@@ -3595,6 +3719,7 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
   return(result);
 }
 
+
 static xen_value *lookup_generalized_set(ptree *prog, XEN accessor, xen_value *arg0, xen_value *arg1, xen_value *arg2, xen_value *new_value);
 
 static xen_value *generalized_set_form(ptree *prog, XEN form)
@@ -3645,6 +3770,7 @@ static xen_value *generalized_set_form(ptree *prog, XEN form)
     }
   return(run_warn("generalized set! for %s not implemented yet", XEN_AS_STRING(settee)));
 }
+
 
 static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
 {
@@ -3747,6 +3873,7 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
   return(run_warn("set! variable problem: %s", XEN_AS_STRING(form)));
 }
 
+
 static xen_value *package(ptree *prog,
 			  int type, 
 			  void (*function)(int *arg_addrs, ptree *pt),
@@ -3758,6 +3885,7 @@ static xen_value *package(ptree *prog,
   add_triple_to_ptree(prog, make_triple(function, descr, args, num_args + 1));
   return(args[0]);
 }
+
 
 static xen_value *temp_package(ptree *prog,
 			  int type, 
@@ -3775,16 +3903,19 @@ static xen_value *temp_package(ptree *prog,
   return(args[0]);
 }
 
+
 static void dbl_check_1(int *args, ptree *pt)
 {
 #if HAVE_DECL_ISNAN
   if (isnan(FLOAT_ARG_1)) mus_error(MUS_ARG_OUT_OF_RANGE, "float arg 1 is NaN");
 #endif
 }
+
 static char *descr_dbl_check_1(int *args, ptree *pt)
 {
   return(mus_format("if (isnan(" FLT_PT ") mus-error", args[1], FLOAT_ARG_1));
 }
+
 
 static void dbl_check_2(int *args, ptree *pt)
 {
@@ -3792,10 +3923,12 @@ static void dbl_check_2(int *args, ptree *pt)
   if (isnan(FLOAT_ARG_2)) mus_error(MUS_ARG_OUT_OF_RANGE, "float arg 2 is NaN");
 #endif
 }
+
 static char *descr_dbl_check_2(int *args, ptree *pt)
 {
   return(mus_format("if (isnan(" FLT_PT ") mus-error", args[2], FLOAT_ARG_2));
 }
+
 
 static void dbl_check_3(int *args, ptree *pt)
 {
@@ -3803,10 +3936,12 @@ static void dbl_check_3(int *args, ptree *pt)
   if (isnan(FLOAT_ARG_3)) mus_error(MUS_ARG_OUT_OF_RANGE, "float arg 3 is NaN");
 #endif
 }
+
 static char *descr_dbl_check_3(int *args, ptree *pt)
 {
   return(mus_format("if (isnan(" FLT_PT ") mus-error", args[3], FLOAT_ARG_3));
 }
+
 
 static void safe_package(ptree *prog,
 			       int type, 
@@ -3833,6 +3968,7 @@ static void safe_package(ptree *prog,
 #endif
 }
 
+
 static xen_value *package_n(ptree *prog,
 			    int type, 
 			    void (*function)(int *arg_addrs, ptree *pt),
@@ -3854,6 +3990,7 @@ static xen_value *package_n(ptree *prog,
   return(args[0]);
 }
 
+
 static char *describe_dbl_args(const char *func, int num_args, int *args, Double *dbls, int start)
 {
   char *buf, *str;
@@ -3873,6 +4010,7 @@ static char *describe_dbl_args(const char *func, int num_args, int *args, Double
   return(buf);
 }
 
+
 static char *describe_int_args(const char *func, int num_args, int *args, Int *ints, int start)
 {
   char *buf, *str;
@@ -3891,6 +4029,7 @@ static char *describe_int_args(const char *func, int num_args, int *args, Int *i
   FREE(str);
   return(buf);
 }
+
 
 static int float_all_args(ptree *prog, int num_args, xen_value **args, bool float_result)
 {
@@ -3918,16 +4057,20 @@ static int float_all_args(ptree *prog, int num_args, xen_value **args, bool floa
   return(j - 1);
 }
 
+
 /* ---------------- multiply ---------------- */
 
 static void multiply_f2(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 * FLOAT_ARG_2);}
 static char *descr_multiply_f2(int *args, ptree *pt) {return(describe_dbl_args("*", 2, args, pt->dbls, 1));}
 
+
 static void multiply_f3(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 * FLOAT_ARG_2 * FLOAT_ARG_3);}
 static char *descr_multiply_f3(int *args, ptree *pt) {return(describe_dbl_args("*", 3, args, pt->dbls, 1));}
 
+
 static void multiply_f4(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 * FLOAT_ARG_2 * FLOAT_ARG_3 * FLOAT_ARG_4);}
 static char *descr_multiply_f4(int *args, ptree *pt) {return(describe_dbl_args("*", 4, args, pt->dbls, 1));}
+
 
 static void multiply_fn(int *args, ptree *pt) 
 {
@@ -3938,14 +4081,18 @@ static void multiply_fn(int *args, ptree *pt)
 }
 static char *descr_multiply_fn(int *args, ptree *pt) {return(describe_dbl_args("*", pt->ints[args[1]] + 1, args, pt->dbls, 2));}
 
+
 static void multiply_i2(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 * INT_ARG_2);}
 static char *descr_multiply_i2(int *args, ptree *pt) {return(describe_int_args("*", 2, args, pt->ints, 1));}
+
 
 static void multiply_i3(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 * INT_ARG_2 * INT_ARG_3);}
 static char *descr_multiply_i3(int *args, ptree *pt) {return(describe_int_args("*", 3, args, pt->ints, 1));}
 
+
 static void multiply_i4(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 * INT_ARG_2 * INT_ARG_3 * INT_ARG_4);}
 static char *descr_multiply_i4(int *args, ptree *pt) {return(describe_int_args("*", 4, args, pt->ints, 1));}
+
 
 static void multiply_in(int *args, ptree *pt)
 {
@@ -3956,6 +4103,7 @@ static void multiply_in(int *args, ptree *pt)
 }
 
 static char *descr_multiply_in(int *args, ptree *pt) {return(describe_int_args("*", pt->ints[args[1]] + 1, args, pt->ints, 2));}
+
 
 static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 {
@@ -4012,14 +4160,18 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 static void add_f2(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 + FLOAT_ARG_2);}
 static char *descr_add_f2(int *args, ptree *pt) {return(describe_dbl_args("+", 2, args, pt->dbls, 1));}
 
+
 static void add_f3(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 + FLOAT_ARG_2 + FLOAT_ARG_3);}
 static char *descr_add_f3(int *args, ptree *pt) {return(describe_dbl_args("+", 3, args, pt->dbls, 1));}
+
 
 static void add_f4(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 + FLOAT_ARG_2 + FLOAT_ARG_3 + FLOAT_ARG_4);}
 static char *descr_add_f4(int *args, ptree *pt) {return(describe_dbl_args("+", 4, args, pt->dbls, 1));}
 
+
 static void add_f5(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 + FLOAT_ARG_2 + FLOAT_ARG_3 + FLOAT_ARG_4 + FLOAT_ARG_5);}
 static char *descr_add_f5(int *args, ptree *pt) {return(describe_dbl_args("+", 5, args, pt->dbls, 1));}
+
 
 static void add_fn(int *args, ptree *pt) 
 {
@@ -4030,14 +4182,18 @@ static void add_fn(int *args, ptree *pt)
 }
 static char *descr_add_fn(int *args, ptree *pt) {return(describe_dbl_args("+", pt->ints[args[1]] + 1, args, pt->dbls, 2));}
 
+
 static void add_i2(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 + INT_ARG_2);}
 static char *descr_add_i2(int *args, ptree *pt) {return(describe_int_args("+", 2, args, pt->ints, 1));}
+
 
 static void add_i3(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 + INT_ARG_2 + INT_ARG_3);}
 static char *descr_add_i3(int *args, ptree *pt) {return(describe_int_args("+", 3, args, pt->ints, 1));}
 
+
 static void add_i4(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 + INT_ARG_2 + INT_ARG_3 + INT_ARG_4);}
 static char *descr_add_i4(int *args, ptree *pt) {return(describe_int_args("+", 4, args, pt->ints, 1));}
+
 
 static void add_in(int *args, ptree *pt)
 {
@@ -4046,6 +4202,7 @@ static void add_in(int *args, ptree *pt)
   INT_RESULT = pt->ints[args[2]];
   for (i = 1; i < n; i++) INT_RESULT += pt->ints[args[i + 2]];
 }
+
 
 static char *descr_add_in(int *args, ptree *pt) {return(describe_int_args("+", pt->ints[args[1]] + 1, args, pt->ints, 2));}
 
@@ -4097,16 +4254,20 @@ static xen_value *add(ptree *prog, xen_value **args, int num_args)
   return(package_n(prog, R_INT, add_in, descr_add_in, args, num_args));
 }
 
+
 /* ---------------- subtract ---------------- */
 
 static void subtract_f1(int *args, ptree *pt) {FLOAT_RESULT = -(FLOAT_ARG_1);}
 static char *descr_subtract_f1(int *args, ptree *pt) {return(mus_format( FLT_PT " = -" FLT_PT , args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
 
+
 static void subtract_f2(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 - FLOAT_ARG_2);}
 static char *descr_subtract_f2(int *args, ptree *pt) {return(describe_dbl_args("-", 2, args, pt->dbls, 1));}
 
+
 static void subtract_f3(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 - FLOAT_ARG_2 - FLOAT_ARG_3);}
 static char *descr_subtract_f3(int *args, ptree *pt) {return(describe_dbl_args("-", 3, args, pt->dbls, 1));}
+
 
 static void subtract_fn(int *args, ptree *pt) 
 {
@@ -4115,16 +4276,21 @@ static void subtract_fn(int *args, ptree *pt)
   FLOAT_RESULT = FLOAT_ARG_2;
   for (i = 1; i < n; i++) FLOAT_RESULT -= pt->dbls[args[i + 2]];
 }
+
 static char *descr_subtract_fn(int *args, ptree *pt) {return(describe_dbl_args("-", pt->ints[args[1]] + 1, args, pt->dbls, 2));}
+
 
 static void subtract_i1(int *args, ptree *pt) {INT_RESULT = -(INT_ARG_1);}
 static char *descr_subtract_i1(int *args, ptree *pt) {return(mus_format( INT_PT " = -" INT_PT , args[0], INT_RESULT, args[1], INT_ARG_1));}
 
+
 static void subtract_i2(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 - INT_ARG_2);}
 static char *descr_subtract_i2(int *args, ptree *pt) {return(describe_int_args("-", 2, args, pt->ints, 1));}
 
+
 static void subtract_i3(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 - INT_ARG_2 - INT_ARG_3);}
 static char *descr_subtract_i3(int *args, ptree *pt) {return(describe_int_args("-", 3, args, pt->ints, 1));}
+
 
 static void subtract_in(int *args, ptree *pt)
 {
@@ -4133,6 +4299,7 @@ static void subtract_in(int *args, ptree *pt)
   INT_RESULT = pt->ints[args[2]];
   for (i = 1; i < n; i++) INT_RESULT -= pt->ints[args[i + 2]];
 }
+
 
 static char *descr_subtract_in(int *args, ptree *pt) {return(describe_int_args("-", pt->ints[args[1]] + 1, args, pt->ints, 2));}
 
@@ -4200,8 +4367,12 @@ static xen_value *subtract(ptree *prog, xen_value **args, int num_args)
 
 static void one_minus_f(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_1 - 1.0;}
 static char *descr_one_minus_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = " FLT_PT " - 1.0", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
+
+
 static void one_minus_i(int *args, ptree *pt) {INT_RESULT = INT_ARG_1 - 1;}
 static char *descr_one_minus_i(int *args, ptree *pt) {return(mus_format( INT_PT " = " INT_PT " - 1", args[0], INT_RESULT, args[1], INT_ARG_1));}
+
+
 static xen_value *one_minus(ptree *prog, xen_value **args, int num_args)
 {
   if (prog->constants == 1)
@@ -4215,10 +4386,15 @@ static xen_value *one_minus(ptree *prog, xen_value **args, int num_args)
   else return(package(prog, R_FLOAT, one_minus_f, descr_one_minus_f, args, 1));
 }
 
+
 static void one_plus_f(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_1 + 1.0;}
 static char *descr_one_plus_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = " FLT_PT " + 1.0", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
+
+
 static void one_plus_i(int *args, ptree *pt) {INT_RESULT = INT_ARG_1 + 1;}
 static char *descr_one_plus_i(int *args, ptree *pt) {return(mus_format( INT_PT " = " INT_PT " + 1", args[0], INT_RESULT, args[1], INT_ARG_1));}
+
+
 static xen_value *one_plus(ptree *prog, xen_value **args, int num_args)
 {
   if (prog->constants == 1)
@@ -4241,14 +4417,17 @@ static char *descr_divide_f1(int *args, ptree *pt)
   return(mus_format( FLT_PT " = 1.0 / " FLT_PT , args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));
 }
 
+
 static void divide_if1(int *args, ptree *pt) {INT_RESULT = (Int)(1.0 / FLOAT_ARG_1);}
 static char *descr_divide_if1(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = 1.0 / " FLT_PT , args[0], INT_RESULT, args[1], FLOAT_ARG_1));
 }
 
+
 static void divide_f2(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 / FLOAT_ARG_2);}
 static char *descr_divide_f2(int *args, ptree *pt) {return(describe_dbl_args("/", 2, args, pt->dbls, 1));}
+
 
 static void divide_if2(int *args, ptree *pt) {INT_RESULT = (Int)(FLOAT_ARG_1 / FLOAT_ARG_2);}
 static char *descr_divide_if2(int *args, ptree *pt)
@@ -4256,12 +4435,14 @@ static char *descr_divide_if2(int *args, ptree *pt)
   return(mus_format( INT_PT " = " FLT_PT " / " FLT_PT , args[0], INT_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2));
 }
 	
+
 static void divide_f3(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 / (FLOAT_ARG_2 * FLOAT_ARG_3));}
 static char *descr_divide_f3(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = " FLT_PT " / (" FLT_PT " * " FLT_PT ")", 
 		     args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2, args[3], FLOAT_ARG_3));
 }
+
 
 static void divide_fn(int *args, ptree *pt) 
 {
@@ -4290,6 +4471,7 @@ static char *descr_divide_fn(int *args, ptree *pt)
   FREE(str);
   return(buf);
 }
+
 
 static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 {
@@ -4392,10 +4574,12 @@ static char *describe_rel_f_args(const char *func, int num_args, int *args, ptre
   return(buf);
 }
 
+
 static char *describe_rel_i_args(const char *func, int num_args, int *args, Int *ints, int start)
 {
   return(describe_int_args(func, num_args, args, ints, start));
 }
+
 
 static void float_rel_constant_args(ptree *prog, int num_args, xen_value **args)
 {
@@ -4409,6 +4593,7 @@ static void float_rel_constant_args(ptree *prog, int num_args, xen_value **args)
 	FREE(old_loc);
       }
 }
+
 
 static void float_rel_args(ptree *prog, int num_args, xen_value **args)
 {
@@ -4518,6 +4703,8 @@ static char *descr_max_f2(int *args, ptree *pt)
 {
   return(mus_format( FLT_PT " = max(" FLT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2));
 }
+
+
 static void max_fn(int *args, ptree *pt)
 {
   int i, n;
@@ -4528,6 +4715,7 @@ static void max_fn(int *args, ptree *pt)
     if (pt->dbls[args[i + 1]] > mx) mx = pt->dbls[args[i + 1]];
   FLOAT_RESULT = mx;
 }
+
 static char *descr_max_min_fn(int *args, ptree *pt, const char *which) 
 {
   char *buf, *str;
@@ -4547,12 +4735,16 @@ static char *descr_max_min_fn(int *args, ptree *pt, const char *which)
   FREE(str);
   return(buf);
 }
+
 static char *descr_max_fn(int *args, ptree *pt) {return(descr_max_min_fn(args, pt, "max"));}
+
 static void max_i2(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 > INT_ARG_2) ? INT_ARG_1 : INT_ARG_2;}
 static char *descr_max_i2(int *args, ptree *pt)
 {
   return(mus_format( INT_PT " = max(" INT_PT ", " INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
+
+
 static void max_in(int *args, ptree *pt)
 {
   int i, n;
@@ -4563,6 +4755,7 @@ static void max_in(int *args, ptree *pt)
     if (pt->ints[args[i + 1]] > mx) mx = pt->ints[args[i + 1]];
   INT_RESULT = mx;
 }
+
 static char *descr_max_min_in(int *args, ptree *pt, const char *which)
 {
   char *buf, *str;
@@ -4582,7 +4775,10 @@ static char *descr_max_min_in(int *args, ptree *pt, const char *which)
   FREE(str);
   return(buf);
 }
+
 static char *descr_max_in(int *args, ptree *pt) {return(descr_max_min_in(args, pt, "max"));}
+
+
 static xen_value *max_1(ptree *prog, xen_value **args, int num_args)
 {
   if (num_args == 1) return(copy_xen_value(args[1]));
@@ -4624,6 +4820,7 @@ static char *descr_min_f2(int *args, ptree *pt)
 {
   return(mus_format( FLT_PT " = min(" FLT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2));
 }
+
 static void min_fn(int *args, ptree *pt)
 {
   int i, n;
@@ -4635,11 +4832,16 @@ static void min_fn(int *args, ptree *pt)
   FLOAT_RESULT = mx;
 }
 static char *descr_min_fn(int *args, ptree *pt) {return(descr_max_min_fn(args, pt, "min"));}
+
+
 static void min_i2(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 > INT_ARG_2) ? INT_ARG_2 : INT_ARG_1;}
+
 static char *descr_min_i2(int *args, ptree *pt)
 {
   return(mus_format( INT_PT " = min(" INT_PT ", " INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
+
+
 static void min_in(int *args, ptree *pt)
 {
   int i, n;
@@ -4650,7 +4852,10 @@ static void min_in(int *args, ptree *pt)
     if (pt->ints[args[i + 1]] < mx) mx = pt->ints[args[i + 1]];
   INT_RESULT = mx;
 }
+
 static char *descr_min_in(int *args, ptree *pt) {return(descr_max_min_in(args, pt, "min"));}
+
+
 static xen_value *min_1(ptree *prog, xen_value **args, int num_args)
 {
   if (num_args == 1) return(copy_xen_value(args[1]));
@@ -4689,10 +4894,12 @@ static xen_value *min_1(ptree *prog, xen_value **args, int num_args)
 /* ---------------- not ---------------- */
 
 static void not_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(!(INT_ARG_1));}
+
 static char *descr_not_b(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = (!(" INT_PT "))", args[0], B2S(BOOL_RESULT), args[1], INT_ARG_1));
 }
+
 static xen_value *not_p(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type != R_BOOL)
@@ -4707,40 +4914,50 @@ static xen_value *not_p(ptree *prog, xen_value **args, int num_args)
 
 static void eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(INT_ARG_1 == INT_ARG_2);} /* safe because float arg -> #f below */
 static void vct_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(VCT_ARG_1 == VCT_ARG_2);} 
+
 static void sd_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(SOUND_DATA_ARG_1 == SOUND_DATA_ARG_2);} 
 static void xen_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)XEN_EQ_P(RXEN_ARG_1, RXEN_ARG_2);}
+
 static void clm_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(CLM_ARG_1 == CLM_ARG_2);}
 static void reader_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(READER_ARG_1 == READER_ARG_2);} /* safe because float arg -> #f below */
+
 static void mix_reader_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(MIX_READER_ARG_1 == MIX_READER_ARG_2);} /* safe because float arg -> #f below */
 
 static char *descr_eq_b(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = eq?(" INT_PT ", " INT_PT ")", args[0], B2S(BOOL_RESULT), args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
+
 static char *descr_vct_eq_b(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = eq?(" VCT_PT ", " VCT_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2));
 }
+
 static char *descr_sd_eq_b(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = eq?(" SD_PT ", " SD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_SOUND_DATA_ARG_1, args[2], DESC_SOUND_DATA_ARG_2));
 }
+
 static char *descr_xen_eq_b(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = eq?(" LST_PT ", " LST_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_RXEN_ARG_1, args[2], DESC_RXEN_ARG_2));
 }
+
 static char *descr_clm_eq_b(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = eq?(" CLM_PT ", " CLM_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_CLM_ARG_1, args[2], DESC_CLM_ARG_2));
 }
+
 static char *descr_reader_eq_b(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = eq?(" RD_PT ", " RD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_READER_ARG_1, args[2], DESC_READER_ARG_2));
 }
+
 static char *descr_mix_reader_eq_b(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = eq?(" MIX_SAMPLE_READER_PT ", " MIX_SAMPLE_READER_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_MIX_READER_ARG_1, args[2], DESC_MIX_READER_ARG_2));
 }
+
 
 static xen_value *eq_p(ptree *prog, xen_value **args, int num_args)
 {
@@ -4772,35 +4989,45 @@ static xen_value *eq_p(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_BOOL, eq_b, descr_eq_b, args, 2));
 }
 
+
 /* -------- eqv/equal -------- */
 
 static void vct_eqv_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(mus_vct_equalp(VCT_ARG_1, VCT_ARG_2));} 
+
 static void sd_eqv_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(sound_data_equalp(SOUND_DATA_ARG_1, SOUND_DATA_ARG_2));} 
+
 static void xen_eqv_b(int *args, ptree *pt) {BOOL_RESULT = (Int)XEN_EQV_P(RXEN_ARG_1, RXEN_ARG_2);}
+
 static void eqv_fb(int *args, ptree *pt) {BOOL_RESULT = (Int)(FLOAT_ARG_1 == FLOAT_ARG_2);}
+
 static void eqv_clm(int *args, ptree *pt) {BOOL_RESULT = (Int)mus_equalp(CLM_ARG_1, CLM_ARG_2);}
 
 static char *descr_eqv_fb(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = eqv?(" FLT_PT ", " FLT_PT ")", args[0], B2S(BOOL_RESULT), args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2));
 }
+
 static char *descr_vct_eqv_b(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = eqv?(" VCT_PT ", " VCT_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2));
 }
+
 static char *descr_sd_eqv_b(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = eqv?(" SD_PT ", " SD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_SOUND_DATA_ARG_1, args[2], DESC_SOUND_DATA_ARG_2));
 }
+
 static char *descr_xen_eqv_b(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = eqv?(" LST_PT ", " LST_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_RXEN_ARG_1, args[2], DESC_RXEN_ARG_2));
 }
+
 static char *descr_eqv_clm(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = equal?(" CLM_PT ", " CLM_PT ")", 
 		     args[0], B2S(BOOL_RESULT), args[1], DESC_CLM_ARG_1, args[2], DESC_CLM_ARG_2));
 }
+
 
 static xen_value *eqv_p(ptree *prog, xen_value **args, int num_args)
 {
@@ -4830,11 +5057,15 @@ static xen_value *eqv_p(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_BOOL, eq_b, descr_eq_b, args, 2));
 }
 
+
 static void xen_equal_b(int *args, ptree *pt) {BOOL_RESULT = (Int)XEN_EQUAL_P(RXEN_ARG_1, RXEN_ARG_2);}
+
 static char *descr_xen_equal_b(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = equal?(" LST_PT ", " LST_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_RXEN_ARG_1, args[2], DESC_RXEN_ARG_2));
 }
+
+
 static xen_value *equal_p(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == args[2]->type)
@@ -4862,11 +5093,15 @@ static xen_value *convert_to_int(ptree *pt, xen_value *v)
     }
   return(v);
 }
+
 static void odd_i(int *args, ptree *pt) {BOOL_RESULT = (Int)(INT_ARG_1 & 1);}
+
 static char *descr_odd_i(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = odd?(" INT_PT ")", args[0], B2S(BOOL_RESULT), args[1], INT_ARG_1));
 }
+
+
 static xen_value *odd_p(ptree *prog, xen_value **args, int num_args)
 {
   args[1] = convert_to_int(prog, args[1]);
@@ -4876,11 +5111,15 @@ static xen_value *odd_p(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_BOOL, odd_i, descr_odd_i, args, 1));
 }
 
+
 static void even_i(int *args, ptree *pt) {BOOL_RESULT = (Int)(!(INT_ARG_1 & 1));}
+
 static char *descr_even_i(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = even?(" INT_PT ")", args[0], B2S(BOOL_RESULT), args[1], INT_ARG_1));
 }
+
+
 static xen_value *even_p(ptree *prog, xen_value **args, int num_args)
 {
   args[1] = convert_to_int(prog, args[1]);
@@ -4889,6 +5128,7 @@ static xen_value *even_p(ptree *prog, xen_value **args, int num_args)
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (!(prog->ints[args[1]->addr] & 1))), R_CONSTANT));
   return(package(prog, R_BOOL, even_i, descr_even_i, args, 1));
 }
+
 
 #define INT_POS_P(CName, SName, COp) \
 static void CName ## _i(int *args, ptree *pt) {BOOL_RESULT = (Int)(INT_ARG_1 COp 0);} \
@@ -4931,6 +5171,7 @@ static void single_to_float(ptree *prog, xen_value **args, int num)
   add_triple_to_ptree(prog, va_make_triple(store_i_f, descr_store_i_f, 2, args[num], old_loc));
   FREE(old_loc);
 }
+
 
 /* ---------------- sin, cos, tan ---------------- */
 
@@ -4987,11 +5228,15 @@ FL_OP(atanh)
 #endif
 FL_OP(mus_bessi0)
 
+
 static void atan2_f(int *args, ptree *pt) {FLOAT_RESULT = atan2(FLOAT_ARG_1, FLOAT_ARG_2);}
+
 static char *descr_atan2_f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = atan2(" FLT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2));
 }
+
+
 static xen_value *atan2_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_value *temp;
@@ -5012,12 +5257,16 @@ static xen_value *atan2_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, atan2_f, descr_atan2_f, args, 2));
 }
 
+
 #if HAVE_SPECIAL_FUNCTIONS
 static void jn_f(int *args, ptree *pt) {FLOAT_RESULT = jn(INT_ARG_1, FLOAT_ARG_2);}
+
 static char *descr_jn_f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = jn(" INT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2));
 }
+
+
 static xen_value *jn_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_value *temp;
@@ -5031,7 +5280,10 @@ static xen_value *jn_1(ptree *prog, xen_value **args, int num_args)
     return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, jn(prog->ints[args[1]->addr], prog->dbls[args[2]->addr])), R_CONSTANT));
   return(package(prog, R_FLOAT, jn_f, descr_jn_f, args, 2));
 }
+
+
 static void yn_f(int *args, ptree *pt) {FLOAT_RESULT = yn(INT_ARG_1, FLOAT_ARG_2);}
+
 static char *descr_yn_f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = yn(" INT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2));
@@ -5064,9 +5316,15 @@ static Double f_round(Double x)
 }
 
 static void round_f(int *args, ptree *pt) {FLOAT_RESULT = f_round(FLOAT_ARG_1);}
+
 static char *descr_round_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = round(" FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
+
+
 static void round_i(int *args, ptree *pt) {INT_RESULT = (Int)f_round(FLOAT_ARG_1);}
+
 static char *descr_round_i(int *args, ptree *pt) {return(mus_format( INT_PT " = (Int)round(" FLT_PT ")", args[0], INT_RESULT, args[1], FLOAT_ARG_1));}
+
+
 static xen_value *round_1(ptree *prog, xen_value **args, int num_args)
 {
   /* (round 1) -> 1.0! */
@@ -5094,15 +5352,21 @@ static Double f_truncate(Double x)
 }
 
 static void truncate_f(int *args, ptree *pt) {FLOAT_RESULT = f_truncate(FLOAT_ARG_1);}
+
 static char *descr_truncate_f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = truncate(" FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));
 }
+
+
 static void truncate_i(int *args, ptree *pt) {INT_RESULT = (Int)f_truncate(FLOAT_ARG_1);}
+
 static char *descr_truncate_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = truncate(" FLT_PT ")", args[0], INT_RESULT, args[1], FLOAT_ARG_1));
 }
+
+
 static xen_value *truncate_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == R_INT)
@@ -5122,8 +5386,10 @@ static xen_value *truncate_1(ptree *prog, xen_value **args, int num_args)
 
 static void floor_f(int *args, ptree *pt) {FLOAT_RESULT = floor(FLOAT_ARG_1);}
 static char *descr_floor_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = floor(" FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
+
 static void floor_i(int *args, ptree *pt) {INT_RESULT = (Int)floor(FLOAT_ARG_1);}
 static char *descr_floor_i(int *args, ptree *pt) {return(mus_format( INT_PT " = (Int)floor(" FLT_PT ")", args[0], INT_RESULT, args[1], FLOAT_ARG_1));}
+
 static xen_value *floor_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == R_INT)
@@ -5139,12 +5405,15 @@ static xen_value *floor_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, floor_f, descr_floor_f, args, 1));
 }
 
+
 /* ---------------- ceiling ---------------- */
 
 static void ceiling_f(int *args, ptree *pt) {FLOAT_RESULT = ceil(FLOAT_ARG_1);}
 static char *descr_ceiling_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = ceil(" FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
+
 static void ceiling_i(int *args, ptree *pt) {INT_RESULT = (Int)ceil(FLOAT_ARG_1);}
 static char *descr_ceiling_i(int *args, ptree *pt) {return(mus_format( INT_PT " = (Int)ceil(" FLT_PT ")", args[0], INT_RESULT, args[1], FLOAT_ARG_1));}
+
 static xen_value *ceiling_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == R_INT)
@@ -5160,6 +5429,7 @@ static xen_value *ceiling_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, ceiling_f, descr_ceiling_f, args, 1));
 }
 
+
 /* ---------------- exact->inexact ---------------- */
 
 static xen_value *exact2inexact_1(ptree *prog, xen_value **args, int num_args)
@@ -5173,6 +5443,7 @@ static xen_value *exact2inexact_1(ptree *prog, xen_value **args, int num_args)
 
 static void i2e_f(int *args, ptree *pt) {INT_RESULT = (Int)floor(FLOAT_ARG_1 + 0.5);}
 static char *descr_i2e_f(int *args, ptree *pt) {return(mus_format( INT_PT " = floor(" FLT_PT " + 0.5)", args[0], INT_RESULT, args[1], FLOAT_ARG_1));}
+
 static xen_value *inexact2exact_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == R_INT)
@@ -5201,12 +5472,14 @@ static Int c_gcd_1(Int a, Int b)
     }
 }
 
+
 static Int c_gcd(Int a, Int b)
 {
   if (a < 0) a = -a;
   if (b < 0) b = -b;
   return(c_gcd_1(a, b));
 }
+
 
 static Int c_lcm(Int a, Int b)
 {
@@ -5215,6 +5488,7 @@ static Int c_lcm(Int a, Int b)
   if (b < 0) b = -b;
   return((a * b) / c_gcd_1(a, b));
 }
+
 
 static void gcd_in(int *args, ptree *pt)
 {
@@ -5230,13 +5504,18 @@ static void gcd_in(int *args, ptree *pt)
     }
   INT_RESULT = mx;
 }
+
 static char *descr_gcd_in(int *args, ptree *pt) {return(descr_max_min_in(args, pt, "gcd"));}
 
+
 static void gcd_i(int *args, ptree *pt) {INT_RESULT = c_gcd(INT_ARG_1, INT_ARG_2);}
+
 static char *descr_gcd_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = gcd(" INT_PT ", " INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
+
+
 static xen_value *gcd_1(ptree *prog, xen_value **args, int num_args)
 {
   int i;
@@ -5274,11 +5553,15 @@ static xen_value *gcd_1(ptree *prog, xen_value **args, int num_args)
   return(package_n(prog, R_INT, gcd_in, descr_gcd_in, args, num_args));
 }
 
+
 static void lcm_i(int *args, ptree *pt) {INT_RESULT = c_lcm(INT_ARG_1, INT_ARG_2);}
+
 static char *descr_lcm_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = lcm(" INT_PT ", " INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
+
+
 static void lcm_in(int *args, ptree *pt)
 {
   int i, n;
@@ -5293,7 +5576,9 @@ static void lcm_in(int *args, ptree *pt)
     }
   INT_RESULT = mx;
 }
+
 static char *descr_lcm_in(int *args, ptree *pt) {return(descr_max_min_in(args, pt, "lcm"));}
+
 
 static xen_value *lcm_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -5346,11 +5631,15 @@ static Int c_mod(Int x, Int y)
   return(z);
 }
 
+
 static void modulo_i(int *args, ptree *pt) {INT_RESULT = c_mod(INT_ARG_1, INT_ARG_2);}
+
 static char *descr_modulo_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = modulo(" INT_PT ", " INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
+
+
 static xen_value *modulo_1(ptree *prog, xen_value **args, int num_args)
 {
   args[1] = convert_to_int(prog, args[1]);
@@ -5362,11 +5651,15 @@ static xen_value *modulo_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_INT, modulo_i, descr_modulo_i, args, 2));
 }
 
+
 static void remainder_i(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 % INT_ARG_2);}
+
 static char *descr_remainder_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = (" INT_PT " %% " INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
+
+
 static xen_value *remainder_1(ptree *prog, xen_value **args, int num_args)
 {
   args[1] = convert_to_int(prog, args[1]);
@@ -5378,11 +5671,15 @@ static xen_value *remainder_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_INT, remainder_i, descr_remainder_i, args, 2));
 }
 
+
 static void quotient_i(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 / INT_ARG_2);}
+
 static char *descr_quotient_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = (" INT_PT " / " INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
+
+
 static xen_value *quotient_1(ptree *prog, xen_value **args, int num_args)
 {
   args[1] = convert_to_int(prog, args[1]);
@@ -5399,10 +5696,13 @@ static xen_value *quotient_1(ptree *prog, xen_value **args, int num_args)
 /* ---------------- logand, logior, logxor, lognot, ash ---------------- */
 
 static void logand_i(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 & INT_ARG_2);}
+
 static char *descr_logand_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = (" INT_PT " & " INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
+
+
 static xen_value *logand_1(ptree *prog, xen_value **args, int num_args)
 {
   if (prog->constants == 2)
@@ -5410,11 +5710,15 @@ static xen_value *logand_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_INT, logand_i, descr_logand_i, args, 2));
 }
 
+
 static void logior_i(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 | INT_ARG_2);}
+
 static char *descr_logior_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = (" INT_PT " | " INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
+
+
 static xen_value *logior_1(ptree *prog, xen_value **args, int num_args)
 {
   if (prog->constants == 2)
@@ -5422,14 +5726,19 @@ static xen_value *logior_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_INT, logior_i, descr_logior_i, args, 2));
 }
 
+
 #ifndef XOR
   #define XOR(a, b) ((~((a) & (b))) & ((a) | (b)))
 #endif
+
 static void logxor_i(int *args, ptree *pt) {INT_RESULT = XOR(INT_ARG_1, INT_ARG_2);}
+
 static char *descr_logxor_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = logxor(" INT_PT ", " INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
+
+
 static xen_value *logxor_1(ptree *prog, xen_value **args, int num_args)
 {
   if (prog->constants == 2)
@@ -5437,14 +5746,18 @@ static xen_value *logxor_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_INT, logxor_i, descr_logxor_i, args, 2));
 }
 
+
 static void lognot_i(int *args, ptree *pt) {INT_RESULT = ~INT_ARG_1;}
+
 static char *descr_lognot_i(int *args, ptree *pt) {return(mus_format( INT_PT " = ~" INT_PT , args[0], INT_RESULT, args[1], INT_ARG_1));}
+
 static xen_value *lognot_1(ptree *prog, xen_value **args, int num_args)
 {
   if (prog->constants == 1)
     return(make_xen_value(R_INT, add_int_to_ptree(prog, ~(prog->ints[args[1]->addr])), R_CONSTANT));
   return(package(prog, R_INT, lognot_i, descr_lognot_i, args, 1));
 }
+
 
 static Int c_ash(Int arg1, Int arg2)
 {
@@ -5454,10 +5767,13 @@ static Int c_ash(Int arg1, Int arg2)
 }
 
 static void ash_i(int *args, ptree *pt) {INT_RESULT = c_ash(INT_ARG_1, INT_ARG_2);}
+
 static char *descr_ash_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = ash(" INT_PT ", " INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
+
+
 static xen_value *ash_1(ptree *prog, xen_value **args, int num_args)
 {
   if (prog->constants == 2)
@@ -5469,10 +5785,13 @@ static xen_value *ash_1(ptree *prog, xen_value **args, int num_args)
 /* ---------------- expt ---------------- */
 
 static void expt_f(int *args, ptree *pt) {FLOAT_RESULT = pow(FLOAT_ARG_1, FLOAT_ARG_2);}
+
 static char *descr_expt_f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = pow(" FLT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2));
 }
+
+
 static xen_value *expt_1(ptree *prog, xen_value **args, int num_args)
 {
   if (current_optimization < COMPLEX_OK) return(NULL);
@@ -5493,8 +5812,10 @@ static xen_value *expt_1(ptree *prog, xen_value **args, int num_args)
 
 static void abs_f(int *args, ptree *pt) {FLOAT_RESULT = fabs(FLOAT_ARG_1);}
 static char *descr_abs_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = fabs(" FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
+
 static void abs_i(int *args, ptree *pt) {INT_RESULT = ((INT_ARG_1 >= 0) ? INT_ARG_1 : (-INT_ARG_1));} /* not abs=32 bit truncation */
 static char *descr_abs_i(int *args, ptree *pt) {return(mus_format( INT_PT " = abs(" INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1));}
+
 static xen_value *abs_1(ptree *prog, xen_value **args, int num_args)
 {
   if (prog->constants == 1)
@@ -5531,6 +5852,7 @@ static char *descr_random_mf_1(int *args, ptree *pt) {return(mus_format( FLT_PT 
 static void random_i(int *args, ptree *pt) {INT_RESULT = mus_irandom(INT_ARG_1);}
 static char *descr_random_i(int *args, ptree *pt) {return(mus_format( INT_PT " = random(" INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1));}
 
+
 static xen_value *random_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == R_INT)
@@ -5540,6 +5862,7 @@ static xen_value *random_1(ptree *prog, xen_value **args, int num_args)
     return(package(prog, R_FLOAT, random_f_1, descr_random_f_1, args, 0));
   return(package(prog, R_FLOAT, random_f, descr_random_f, args, 1));
 }
+
 
 static xen_value *mus_random_r(ptree *prog, xen_value **args, int num_args)
 {
@@ -5589,6 +5912,7 @@ static xen_value * SName(ptree *pt, xen_value **args, int num_args) \
 CHARC(char_upcase, toupper)
 CHARC(char_downcase, tolower)
 
+
 static xen_value *char_to_integer(ptree *pt, xen_value **args, int num_args)
 {
   xen_value *newv;
@@ -5596,6 +5920,7 @@ static xen_value *char_to_integer(ptree *pt, xen_value **args, int num_args)
   newv->type = R_INT;
   return(newv);
 }
+
 
 static xen_value **upcase_args(ptree *pt, xen_value **args, int num_args)
 {
@@ -5628,6 +5953,7 @@ static void string_n(int *args, ptree *pt)
   STRING_RESULT = (char *)CALLOC(n + 1, sizeof(char));
   for (i = 1; i <= n; i++) STRING_RESULT[i - 1] = (char)(pt->ints[args[i + 1]]);
 }
+
 static char *descr_string_n(int *args, ptree *pt)
 {
   int i, n, len;
@@ -5646,6 +5972,8 @@ static char *descr_string_n(int *args, ptree *pt)
   buf = snd_strcat(buf, ")", &len);
   return(buf);
 }
+
+
 static xen_value *string_1(ptree *pt, xen_value **args, int num_args)
 {
   if (pt->constants == num_args)
@@ -5660,11 +5988,15 @@ static xen_value *string_1(ptree *pt, xen_value **args, int num_args)
   return(package_n(pt, R_STRING, string_n, descr_string_n, args, num_args));
 }
 
+
 static void strlen_1(int *args, ptree *pt) {INT_RESULT = snd_strlen(STRING_ARG_1);}
+
 static char *descr_strlen_1(int *args, ptree *pt)
 {
   return(mus_format( INT_PT " = string-length(" STR_PT ")", args[0], INT_RESULT, args[1], STRING_ARG_1));
 }
+
+
 static xen_value *string_length_1(ptree *pt, xen_value **args, int num_args)
 {
   if (args[1]->constant == R_CONSTANT)
@@ -5672,21 +6004,26 @@ static xen_value *string_length_1(ptree *pt, xen_value **args, int num_args)
   return(package(pt, R_INT, strlen_1, descr_strlen_1, args, 1));
 }
 
+
 static void strcpy_1(int *args, ptree *pt) 
 {
   if (STRING_RESULT) FREE(STRING_RESULT);
   STRING_RESULT = copy_string(STRING_ARG_1);
 }
+
 static char *descr_strcpy_1(int *args, ptree *pt) 
 {
   return(mus_format( STR_PT " = string-copy(" STR_PT ")", args[0], STRING_RESULT, args[1], STRING_ARG_1));
 }
+
+
 static xen_value *string_copy_1(ptree *pt, xen_value **args, int num_args)
 {
   if (args[1]->constant == R_CONSTANT)
     return(make_xen_value(R_STRING, add_string_to_ptree(pt, copy_string(pt->strs[args[1]->addr])), R_CONSTANT));
   return(package(pt, R_STRING, strcpy_1, descr_strcpy_1, args, 1));
 }
+
 
 static void strfill_1(int *args, ptree *pt) 
 {
@@ -5695,10 +6032,13 @@ static void strfill_1(int *args, ptree *pt)
   if (len > 0)
     memset((void *)(STRING_RESULT), (char)(CHAR_ARG_1), len);
 }
+
 static char *descr_strfill_1(int *args, ptree *pt) 
 {
   return(mus_format( STR_PT " = string-fill!(" CHR_PT ")", args[0], STRING_RESULT, args[1], CHAR_ARG_1));
 }
+
+
 static xen_value *string_fill_1(ptree *pt, xen_value **args, int num_args)
 {
   if (args[1]->constant == R_CONSTANT)
@@ -5707,12 +6047,16 @@ static xen_value *string_fill_1(ptree *pt, xen_value **args, int num_args)
   return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
 }
 
+
 static void strset_1(int *args, ptree *pt) {STRING_RESULT[INT_ARG_1] = (char)(CHAR_ARG_2);}
+
 static char *descr_strset_1(int *args, ptree *pt) 
 {
   return(mus_format( STR_PT " = string-set!(" INT_PT ", " CHR_PT ")", 
 		    args[0], STRING_RESULT, args[1], INT_ARG_1, args[2], CHAR_ARG_2));
 }
+
+
 static xen_value *string_set_1(ptree *pt, xen_value **args, int num_args)
 {
   if (args[1]->constant == R_CONSTANT)
@@ -5721,19 +6065,24 @@ static xen_value *string_set_1(ptree *pt, xen_value **args, int num_args)
   return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
 }
 
+
 static void strref_1(int *args, ptree *pt) {CHAR_RESULT = (char)(STRING_ARG_1[INT_ARG_2]);}
+
 static char *descr_strref_1(int *args, ptree *pt) 
 {
   return(mus_format( CHR_PT " = string-ref(" STR_PT ", " INT_PT ")", 
 		    args[0], (INT_RESULT == 0) ? '@' : ((char)(CHAR_RESULT)), 
 		    args[1], STRING_ARG_1, args[2], INT_ARG_2));
 }
+
+
 static xen_value *string_ref_1(ptree *pt, xen_value **args, int num_args)
 {
   if ((args[1]->constant == R_CONSTANT) && (args[2]->constant == R_CONSTANT))
     return(make_xen_value(R_CHAR, add_int_to_ptree(pt, (int)(pt->strs[args[1]->addr][pt->ints[args[2]->addr]])), R_CONSTANT));
   return(package(pt, R_CHAR, strref_1, descr_strref_1, args, 2));
 }
+
 
 #define VECT_STRING_SIZE 16
 
@@ -5784,24 +6133,35 @@ static char *vect_to_string(vect *v, int type)
 }
 
 static char *int_vect_to_string(vect *v) {return(vect_to_string(v, R_INT_VECTOR));}
+
 static char *clm_vect_to_string(vect *v) {return(vect_to_string(v, R_CLM_VECTOR));}
+
 static char *clm_struct_vect_to_string(vect *v) {return(vect_to_string(v, R_CLM_STRUCT_VECTOR));}
+
 static char *vct_vect_to_string(vect *v) {return(vect_to_string(v, R_VCT_VECTOR));}
 
 static void display_str(int *args, ptree *pt) {fprintf(stderr, "%s", STRING_ARG_1);}
 static char *descr_display_str(int *args, ptree *pt) {return(mus_format("display(" STR_PT ")", args[1], STRING_ARG_1));}
+
 static void display_int(int *args, ptree *pt) {fprintf(stderr, INT_STR, INT_ARG_1);}
 static char *descr_display_int(int *args, ptree *pt) {return(mus_format("display(" INT_PT ")", args[1], INT_ARG_1));}
+
 static void display_flt(int *args, ptree *pt) {fprintf(stderr, "%.6f", FLOAT_ARG_1);}
 static char *descr_display_flt(int *args, ptree *pt) {return(mus_format("display(" FLT_PT ")", args[1], FLOAT_ARG_1));}
+
 static void display_lst(int *args, ptree *pt) {fprintf(stderr, "%s", XEN_AS_STRING(RXEN_ARG_1));}
 static char *descr_display_lst(int *args, ptree *pt) {return(mus_format("display(" LST_PT ")", args[1], DESC_RXEN_ARG_1));}
+
 static void display_symbol(int *args, ptree *pt) {fprintf(stderr, "%s", XEN_AS_STRING(RXEN_ARG_1));}
 static char *descr_display_symbol(int *args, ptree *pt) {return(mus_format("display(" KEY_PT ")", args[1], DESC_RXEN_ARG_1));}
+
 static void display_key(int *args, ptree *pt) {fprintf(stderr, "%s", XEN_AS_STRING(RXEN_ARG_1));}
 static char *descr_display_key(int *args, ptree *pt) {return(mus_format("display(" KEY_PT ")", args[1], DESC_RXEN_ARG_1));}
+
 static void display_clm(int *args, ptree *pt) {fprintf(stderr, "%s", mus_describe(CLM_ARG_1));}
 static char *descr_display_clm(int *args, ptree *pt) {return(mus_format("display(" CLM_PT ")", args[1], DESC_CLM_ARG_1));}
+
+
 static void display_vct(int *args, ptree *pt) 
 {
   char *v = NULL;
@@ -5812,7 +6172,9 @@ static void display_vct(int *args, ptree *pt)
       FREE(v);
     }
 }
+
 static char *descr_display_vct(int *args, ptree *pt) {return(mus_format("display(" VCT_PT ")", args[1], DESC_VCT_ARG_1));}
+
 
 static void display_int_vect(int *args, ptree *pt) 
 {
@@ -5820,19 +6182,26 @@ static void display_int_vect(int *args, ptree *pt)
   buf = int_vect_to_string(VECT_ARG_1);
   if (buf) {fprintf(stderr, "%s", buf); FREE(buf); }
 }
+
 static char *descr_display_vect(int *args, ptree *pt) {return(mus_format("display(" VECT_PT ")", args[1], DESC_VECT_ARG_1));}
+
+
 static void display_clm_vect(int *args, ptree *pt) 
 {
   char *buf = NULL;
   buf = clm_vect_to_string(VECT_ARG_1);
   if (buf) {fprintf(stderr, "%s", buf); FREE(buf); }
 }
+
+
 static void display_clm_struct_vect(int *args, ptree *pt) 
 {
   char *buf = NULL;
   buf = clm_struct_vect_to_string(VECT_ARG_1);
   if (buf) {fprintf(stderr, "%s", buf); FREE(buf); }
 }
+
+
 static void display_vct_vect(int *args, ptree *pt) 
 {
   char *buf = NULL;
@@ -5840,18 +6209,26 @@ static void display_vct_vect(int *args, ptree *pt)
   if (buf) {fprintf(stderr, "%s", buf); FREE(buf); }
 }
 
+
 static void display_rd(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = sample_reader_to_string(READER_ARG_1)); FREE(buf);}
 static char *descr_display_rd(int *args, ptree *pt) {return(mus_format("display(" RD_PT ")", args[1], DESC_READER_ARG_1));}
+
 static void display_mf(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = run_mix_sample_reader_to_string(MIX_READER_ARG_1)); FREE(buf);}
 static char *descr_display_mf(int *args, ptree *pt) {return(mus_format("display(" MIX_SAMPLE_READER_PT ")", args[1], DESC_MIX_READER_ARG_1));}
+
 static void display_sd(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = sound_data_to_string(SOUND_DATA_ARG_1)); FREE(buf);}
 static char *descr_display_sd(int *args, ptree *pt) {return(mus_format("display(" SD_PT ")", args[1], DESC_SOUND_DATA_ARG_1));}
+
 static void display_chr(int *args, ptree *pt) {fprintf(stderr, "%c", (char)(INT_ARG_1));}
 static char *descr_display_chr(int *args, ptree *pt) {return(mus_format("display(" CHR_PT ")", args[1], CHAR_ARG_1));}
+
 static void display_bool(int *args, ptree *pt) {fprintf(stderr, "%s", B2S(INT_ARG_1));}
 static char *descr_display_bool(int *args, ptree *pt) {return(mus_format("display(" BOOL_PT ")", args[1], B2S(INT_ARG_1)));}
+
 static void display_con(int *args, ptree *pt) {fprintf(stderr, GO_PT, args[1]);}
 static char *descr_display_con(int *args, ptree *pt) {return(mus_format("display(" GO_PT ")", args[1]));}
+
+
 static void display_func(int *args, ptree *pt) 
 {
   char *p = NULL;
@@ -5862,7 +6239,10 @@ static void display_func(int *args, ptree *pt)
       FREE(p);
     }
 }
+
 static char *descr_display_func(int *args, ptree *pt) {return(mus_format("display(" FNC_PT ")", args[1], DESC_FNC_ARG_1));}
+
+
 static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
 {
   switch (args[1]->type)
@@ -5898,6 +6278,7 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
   return(NULL);
 }
 
+
 static xen_value *symbol2string_1(ptree *pt, xen_value **args, int num_args)
 {
   return(make_xen_value(R_STRING, 
@@ -5905,13 +6286,18 @@ static xen_value *symbol2string_1(ptree *pt, xen_value **args, int num_args)
 			R_CONSTANT));
 }
 
+
 static void snd_print_s(int *args, ptree *pt) {listener_append(STRING_ARG_1);}
 static char *descr_snd_print_s(int *args, ptree *pt) {return(mus_format("snd_print(" STR_PT ")", args[1], STRING_ARG_1));}
+
 static xen_value *snd_print_1(ptree *pt, xen_value **args, int num_args) {return(package(pt, R_BOOL, snd_print_s, descr_snd_print_s, args, 1));}
+
 
 static void snd_warning_s(int *args, ptree *pt) {snd_warning(STRING_ARG_1);}
 static char *descr_snd_warning_s(int *args, ptree *pt) {return(mus_format("snd_warning(" STR_PT ")", args[1], STRING_ARG_1));}
+
 static xen_value *snd_warning_1(ptree *pt, xen_value **args, int num_args) {return(package(pt, R_BOOL, snd_warning_s, descr_snd_warning_s, args, 1));}
+
 
 static void strmake_c(int *args, ptree *pt, char c) 
 {
@@ -5922,22 +6308,28 @@ static void strmake_c(int *args, ptree *pt, char c)
   STRING_RESULT = (char *)CALLOC(n + 1, sizeof(char));
   for (i = 1; i <= n; i++) STRING_RESULT[i - 1] = c;
 }
+
 static void strmake_1(int *args, ptree *pt) {strmake_c(args, pt, ' ');}
+
 static void strmake_2(int *args, ptree *pt) {strmake_c(args, pt, CHAR_ARG_2);}
+
 static char *descr_strmake_1(int *args, ptree *pt) 
 {
   return(mus_format( STR_PT " = make-string(" INT_PT ")", args[0], STRING_RESULT, args[1], INT_ARG_1));
 }
+
 static char *descr_strmake_2(int *args, ptree *pt) 
 {
   return(mus_format( STR_PT " = make-string(" INT_PT ", " CHR_PT ")", args[0], STRING_RESULT, args[1], INT_ARG_1, args[1], CHAR_ARG_2));
 }
+
 static xen_value *make_string_1(ptree *pt, xen_value **args, int num_args)
 {
   if (num_args == 1)
     return(package(pt, R_STRING, strmake_1, descr_strmake_1, args, 1));
   return(package(pt, R_STRING, strmake_2, descr_strmake_2, args, 2));
 }
+
 
 static char *substring(const char *str, int start, int end)
 {
@@ -5949,6 +6341,7 @@ static char *substring(const char *str, int start, int end)
   for (i = 0; i < len; i++) newstr[i] = str[i + start];
   return(newstr);
 }
+
 static void substr_1(int *args, ptree *pt) 
 {
   int start, end, len, arg_len;
@@ -5968,12 +6361,14 @@ static void substr_1(int *args, ptree *pt)
 	STRING_RESULT[i] = STRING_ARG_1[i + start];
     }
 }
+
 static char *descr_substr_1(int *args, ptree *pt) 
 {
   return(mus_format( STR_PT " = substring(" STR_PT ", " INT_PT ", " INT_PT ")", 
 		    args[0], STRING_RESULT, args[1], STRING_ARG_1,
 		    args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
+
 static xen_value *substring_1(ptree *pt, xen_value **args, int num_args)
 {
   if (pt->constants == 3)
@@ -6014,6 +6409,7 @@ static char *descr_strn(int *args, ptree *pt, const char *which, bool bool_resul
   return(buf);
 }
 
+
 static char *string_append(ptree *pt, xen_value **args, int num_args)
 {
   int i, len = 0;
@@ -6026,6 +6422,7 @@ static char *string_append(ptree *pt, xen_value **args, int num_args)
       strcat(str, pt->strs[args[i + 1]->addr]);
   return(str);
 }
+
 static void appendstr_n(int *args, ptree *pt) 
 {
   int i, n, len = 0;
@@ -6037,7 +6434,9 @@ static void appendstr_n(int *args, ptree *pt)
     if (pt->strs[args[i + 1]])
       strcat(STRING_RESULT, pt->strs[args[i + 1]]);
 }
+
 static char *descr_appendstr_n(int *args, ptree *pt)  {return(descr_strn(args, pt, "string-append", false));}
+
 static xen_value *string_append_1(ptree *pt, xen_value **args, int num_args)
 {
   if (num_args == 0)
@@ -6048,6 +6447,7 @@ static xen_value *string_append_1(ptree *pt, xen_value **args, int num_args)
     return(copy_xen_value(args[1]));
   return(package_n(pt, R_STRING, appendstr_n, descr_appendstr_n, args, num_args));
 }
+
 
 #define STR_REL_OP(CName, SName, COp) \
 static bool str_ ## CName ## _n(ptree *pt, xen_value **args, int num_args) \
@@ -6094,6 +6494,7 @@ STR_REL_OP(leq, string<=?, >)
 STR_REL_OP(gt, string>?, <=)
 STR_REL_OP(lt, string<?, >=)
 
+
 #define STR_CI_REL_OP(CName, SName, COp) \
 static bool str_ci_ ## CName ## _n(ptree *pt, xen_value **args, int num_args) \
 { \
@@ -6134,29 +6535,41 @@ STR_CI_REL_OP(lt, string<?, >=)
 
 /* fallback on Guile's number->string */
 static char *f2s_1(Double n) {return(copy_string(DOUBLE_TO_STRING(n)));}
+
 static char *f2s_2(Double n, int rad) {return(copy_string(DOUBLE_TO_STRING_WITH_RADIX(n, rad)));}
+
 static char *i2s_1(Int n) {return(copy_string(INTEGER_TO_STRING(n)));}
+
 static char *i2s_2(Int n, int rad) {return(copy_string(INTEGER_TO_STRING_WITH_RADIX(n, rad)));}
+
 static void number2string_f1(int *args, ptree *pt) {if (STRING_RESULT) FREE(STRING_RESULT); STRING_RESULT = f2s_1(FLOAT_ARG_1);}
+
 static void number2string_f2(int *args, ptree *pt) {if (STRING_RESULT) FREE(STRING_RESULT); STRING_RESULT = f2s_2(FLOAT_ARG_1, INT_ARG_2);}
+
 static void number2string_i1(int *args, ptree *pt) {if (STRING_RESULT) FREE(STRING_RESULT); STRING_RESULT = i2s_1(INT_ARG_1);}
+
 static void number2string_i2(int *args, ptree *pt) {if (STRING_RESULT) FREE(STRING_RESULT); STRING_RESULT = i2s_2(INT_ARG_1, INT_ARG_2);}
+
 static char *descr_number2string_f1(int *args, ptree *pt) 
 {
   return(mus_format( STR_PT " = number->string(" FLT_PT ")", args[0], STRING_RESULT, args[1], FLOAT_ARG_1));
 }
+
 static char *descr_number2string_f2(int *args, ptree *pt) 
 {
   return(mus_format( STR_PT " = number->string(" FLT_PT ", " INT_PT ")", args[0], STRING_RESULT, args[1], FLOAT_ARG_1, args[2], INT_ARG_2));
 }
+
 static char *descr_number2string_i1(int *args, ptree *pt) 
 {
   return(mus_format( STR_PT " = number->string(" INT_PT ")", args[0], STRING_RESULT, args[1], INT_ARG_1));
 }
+
 static char *descr_number2string_i2(int *args, ptree *pt) 
 {
   return(mus_format( STR_PT " = number->string(" INT_PT ", " INT_PT ")", args[0], STRING_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
+
 static xen_value *number2string_1(ptree *prog, xen_value **args, int num_args)
 {
   if ((args[1]->type == R_INT) || (args[1]->type == R_FLOAT))
@@ -6302,10 +6715,12 @@ static void funcall_nf(int *args, ptree *pt)
       break;
     }
 }
+
 static char *descr_funcall_nf(int *args, ptree *pt) 
 {
   return(mus_format("%d = funcall(" FNC_PT " ...)", args[0], args[1], DESC_FNC_ARG_1));
 }
+
 static xen_value *funcall_n(ptree *prog, xen_value **args, int num_args, xen_value *sf)
 {
   ptree *func;
@@ -6338,32 +6753,39 @@ static xen_value *goto_0(ptree *prog, xen_value **args, xen_value *sf)
   return(args[0]);
 }
 
+
 /* ---------------- simple snd ops ---------------- */
+
 #define INT_INT_OP(CName) \
 static void CName ## _i(int *args, ptree *pt) {INT_RESULT = CName(INT_ARG_1);} \
 static char *descr_ ## CName ## _i(int *args, ptree *pt) {return(mus_format( INT_PT " = " #CName "(" INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1));} \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, CName ## _i, descr_ ##CName ## _i, args, 1));}
+
 
 #define FLOAT_INT_OP(CName) \
 static void CName ## _i(int *args, ptree *pt) {FLOAT_RESULT = CName(INT_ARG_1);} \
 static char *descr_ ## CName ## _i(int *args, ptree *pt) {return(mus_format( FLT_PT " = " #CName "(" INT_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1));} \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, CName ## _i, descr_ ##CName ## _i, args, 1));}
 
+
 #define BOOL_INT_OP(CName) \
 static void CName ## _i(int *args, ptree *pt) {BOOL_RESULT = CName(INT_ARG_1);} \
 static char *descr_ ## CName ## _i(int *args, ptree *pt) {return(mus_format( BOOL_PT " = " #CName "(" INT_PT ")", args[0], B2S(BOOL_RESULT), args[1], INT_ARG_1));} \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_BOOL, CName ## _i, descr_ ##CName ## _i, args, 1));}
+
 
 #define INT_VOID_OP(CName) \
 static void CName ## _i(int *args, ptree *pt) {INT_RESULT = CName();} \
 static char *descr_ ## CName ## _i(int *args, ptree *pt) {return(mus_format( INT_PT " = " #CName "()", args[0], INT_RESULT));} \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, CName ## _i, descr_ ##CName ## _i, args, 0));}
 
+
 /* must copy string here because free_ptree will free all temp strings */
 #define STR_VOID_OP(CName) \
 static void CName ## _i(int *args, ptree *pt) {if (STRING_RESULT) FREE(STRING_RESULT); STRING_RESULT = copy_string(CName());} \
 static char *descr_ ## CName ## _i(int *args, ptree *pt) {return(mus_format( STR_PT " = " #CName "()", args[0], STRING_RESULT));} \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_STRING, CName ## _i, descr_ ##CName ## _i, args, 0));}
+
 
 INT_INT_OP(mus_bytes_per_sample)
 bool r_sound_p(int i);
@@ -6410,6 +6832,7 @@ static snd_info *run_get_sp(int offset, int *args, Int *ints)
   return(NULL);
 }
 
+
 static chan_info *run_get_cp(int offset, int *args, Int *ints)
 {
   snd_info *sp;
@@ -6427,6 +6850,7 @@ static chan_info *run_get_cp(int offset, int *args, Int *ints)
   return(NULL);
 }
 
+
 static void run_opt_arg(ptree *pt, xen_value **args, int num_args, int i, xen_value **true_args)
 {
   if (num_args < i)
@@ -6439,6 +6863,7 @@ static void run_opt_arg(ptree *pt, xen_value **args, int num_args, int i, xen_va
     }
 }
 
+
 /* ---------------- edit-position ---------------- */
 
 static void edit_position_i(int *args, ptree *pt) 
@@ -6448,10 +6873,12 @@ static void edit_position_i(int *args, ptree *pt)
   if (cp) INT_RESULT = cp->edit_ctr;
 }
 
+
 static char *descr_edit_position_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = edit_position(" INT_PT ", " INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
+
 
 static xen_value *edit_position_1(ptree *pt, xen_value **args, int num_args)
 {
@@ -6466,6 +6893,7 @@ static xen_value *edit_position_1(ptree *pt, xen_value **args, int num_args)
   return(rtn);
 }
 
+
 /* ---------------- cursor ---------------- */
 
 static void cursor_i(int *args, ptree *pt) 
@@ -6475,10 +6903,12 @@ static void cursor_i(int *args, ptree *pt)
   if (cp) INT_RESULT = CURSOR(cp);
 }
 
+
 static char *descr_cursor_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = cursor(" INT_PT ", " INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
+
 
 static xen_value *cursor_1(ptree *pt, xen_value **args, int num_args)
 {
@@ -6513,11 +6943,13 @@ static void add_mark_i(int *args, ptree *pt)
     }
 }
 
+
 static char *descr_add_mark_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = " S_add_mark "(" INT_PT ", " INT_PT ", " INT_PT ")", 
 		     args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
+
 
 static xen_value *add_mark_1(ptree *pt, xen_value **args, int num_args)
 {
@@ -6543,11 +6975,13 @@ static void maxamp_f(int *args, ptree *pt)
   if (cp) FLOAT_RESULT = channel_maxamp(cp, INT_ARG_3);
 }
 
+
 static char *descr_maxamp_f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = maxamp(" INT_PT ", " INT_PT ", " INT_PT ")", 
 		     args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
+
 
 static xen_value *maxamp_1(ptree *pt, xen_value **args, int num_args)
 {
@@ -6573,12 +7007,16 @@ static void sample_f(int *args, ptree *pt)
   if (cp) 
     FLOAT_RESULT = chn_sample(INT_ARG_1, cp, (INT_ARG_4 == AT_CURRENT_EDIT_POSITION) ? cp->edit_ctr : INT_ARG_4);
 }
+
+
 static char *descr_sample_f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = sample(" INT_PT ", " INT_PT ", " INT_PT ", " INT_PT ")", 
 		     args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3, args[4], INT_ARG_4));
 
 }
+
+
 static xen_value *sample_1(ptree *pt, xen_value **args, int num_args) 
 {
   xen_value *true_args[5];
@@ -6604,10 +7042,12 @@ static void srate_i(int *args, ptree *pt)
   if (sp) INT_RESULT = SND_SRATE(sp);
 }
 
+
 static char *descr_srate_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = srate(" INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1));
 }
+
 
 static xen_value *srate_1(ptree *pt, xen_value **args, int num_args)
 {
@@ -6631,10 +7071,12 @@ static void channels_i(int *args, ptree *pt)
   if (sp) INT_RESULT = sp->nchans;
 }
 
+
 static char *descr_channels_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = channels(" INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1));
 }
+
 
 static xen_value *channels_1(ptree *pt, xen_value **args, int num_args)
 {
@@ -6676,10 +7118,12 @@ static void c_g_p(int *args, ptree *pt)
 #endif
 }
 
+
 static char *descr_c_g_p(int *args, ptree *pt)
 {
   return(mus_format( BOOL_PT " = " S_c_g "()", args[0], B2S(BOOL_RESULT)));
 }
+
 
 static xen_value *c_g_p_1(ptree *pt, xen_value **args, int num_args)
 {
@@ -6689,20 +7133,24 @@ static xen_value *c_g_p_1(ptree *pt, xen_value **args, int num_args)
 
 static void vct_check_1(int *args, ptree *pt) {if (!(VCT_ARG_1)) mus_error(MUS_NO_DATA, "arg 1 (vct) is null");}
 static char *descr_vct_check_1(int *args, ptree *pt) {return(mus_format("if (!(" VCT_PT ")) mus-error", args[1], DESC_VCT_ARG_1));}
+
 static void vct_check_2(int *args, ptree *pt) {if (!(VCT_ARG_2)) mus_error(MUS_NO_DATA, "arg 2 (vct) is null");}
 static char *descr_vct_check_2(int *args, ptree *pt) {return(mus_format("if (!(" VCT_PT ")) mus-error", args[2], DESC_VCT_ARG_2));}
 
 
 /* ---------------- autocorrelate ---------------- */
+
 static char *descr_autocorrelate_0(int *args, ptree *pt) 
 {
   return(mus_format("autocorrelate(" VCT_PT ")", args[1], DESC_VCT_ARG_1));
 }
+
 static void autocorrelate_0(int *args, ptree *pt) 
 {
   autocorrelation(VCT_ARG_1->data, VCT_ARG_1->length);
   VCT_RESULT = VCT_ARG_1;
 }
+
 static xen_value *autocorrelate_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
@@ -6726,11 +7174,13 @@ static void frames_i(int *args, ptree *pt)
     }
 }
 
+
 static char *descr_frames_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = frames(" INT_PT ", " INT_PT ", " INT_PT ")", 
 		     args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
+
 
 static xen_value *frames_1(ptree *pt, xen_value **args, int num_args)
 {
@@ -6759,10 +7209,12 @@ static void report_in_minibuffer_s(int *args, ptree *pt)
     string_to_minibuffer(sp, STRING_ARG_1);
 }
 
+
 static char *descr_report_in_minibuffer_s(int *args, ptree *pt) 
 {
   return(mus_format("report_in_minibuffer(" STR_PT ", " INT_PT ")", args[1], STRING_ARG_1, args[2], INT_ARG_2));
 }
+
 
 static xen_value *report_in_minibuffer_1(ptree *pt, xen_value **args, int num_args)
 {
@@ -6781,11 +7233,14 @@ static xen_value *report_in_minibuffer_1(ptree *pt, xen_value **args, int num_ar
 /* ---------------- sample-reader stuff ---------------- */
 
 static void reader_f(int *args, ptree *pt) {FLOAT_RESULT = read_sample(READER_ARG_1);}
+
 static char *descr_reader(int *args, ptree *pt, const char *which) 
 {
   return(mus_format( FLT_PT " = %s(" RD_PT ")", args[0], FLOAT_RESULT, which, args[1], DESC_READER_ARG_1));
 }
+
 static char *descr_reader_f(int *args, ptree *pt) {return(descr_reader(args, pt, S_read_sample));}
+
 static xen_value *reader_0(ptree *prog, xen_value **args, xen_value *sf)
 {
   if (args[0]) FREE(args[0]);
@@ -6793,14 +7248,20 @@ static xen_value *reader_0(ptree *prog, xen_value **args, xen_value *sf)
   add_triple_to_ptree(prog, va_make_triple(reader_f, descr_reader_f, 2, args[0], sf));
   return(args[0]);
 }
+
 static xen_value *reader_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, reader_f, descr_reader_f, args, 1));}
 
 static char *descr_next_reader_f(int *args, ptree *pt) {return(descr_reader(args, pt, S_next_sample));}
+
 static void next_reader_f(int *args, ptree *pt) {FLOAT_RESULT = protected_next_sample(READER_ARG_1);}
+
 static xen_value *next_sample_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, next_reader_f, descr_next_reader_f, args, 1));}
 
+
 static char *descr_previous_reader_f(int *args, ptree *pt) {return(descr_reader(args, pt, S_previous_sample));}
+
 static void previous_reader_f(int *args, ptree *pt) {FLOAT_RESULT = protected_previous_sample(READER_ARG_1);}
+
 static xen_value *previous_sample_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, previous_reader_f, descr_previous_reader_f, args, 1));}
 
 
@@ -6808,12 +7269,14 @@ static char *descr_reader_at_end_b_s(int *args, ptree *pt)
 {
   return(mus_format( BOOL_PT " = " S_sample_reader_at_end_p "(" RD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_READER_ARG_1));
 }
+
 static char *descr_reader_at_end_b_m(int *args, ptree *pt)
 {
   return(mus_format( BOOL_PT " = (mix-)" S_sample_reader_at_end_p "(" RD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_MIX_READER_ARG_1));
 }
 
 static void reader_at_end_b_s(int *args, ptree *pt) {BOOL_RESULT = READER_ARG_1->at_eof;}
+
 static void reader_at_end_b_m(int *args, ptree *pt) {BOOL_RESULT = mix_sample_reader_at_end_p(MIX_READER_ARG_1);}
 
 static xen_value *sample_reader_at_end_p_1(ptree *prog, xen_value **args, int num_args) 
@@ -6832,6 +7295,7 @@ static char *descr_make_sample_reader_r(int *args, ptree *pt)
 		    args[0], DESC_READER_RESULT, 
 		    args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3, args[4], INT_ARG_4, args[5], INT_ARG_5));
 }
+
 static void make_sample_reader_r(int *args, ptree *pt) 
 {
   chan_info *cp = NULL;
@@ -6848,6 +7312,7 @@ static void make_sample_reader_r(int *args, ptree *pt)
       READER_RESULT = init_sample_read_any(INT_ARG_1, cp, direction, pos);
     }
 }
+
 static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args)
 {
   xen_value *true_args[6];
@@ -6882,11 +7347,13 @@ static char *descr_make_region_sample_reader_r(int *args, ptree *pt)
   return(mus_format( RD_PT " = " S_make_region_sample_reader "(" INT_PT ", " INT_PT ", " INT_PT ")",
 		    args[0], DESC_READER_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
+
 static void make_region_sample_reader_r(int *args, ptree *pt) 
 {
   free_snd_fd(READER_RESULT);
   READER_RESULT = init_region_read(INT_ARG_1, INT_ARG_2, INT_ARG_3, READ_FORWARD); /* beg reg chn */
 }
+
 static xen_value *make_region_sample_reader_1(ptree *pt, xen_value **args, int num_args)
 {
   xen_value *rtn;
@@ -6899,11 +7366,14 @@ static xen_value *make_region_sample_reader_1(ptree *pt, xen_value **args, int n
 /* -------- mix -------- */
 
 static void mix_reader_f(int *args, ptree *pt) {FLOAT_RESULT = run_read_mix_sample(MIX_READER_ARG_1);}
+
 static char *descr_mix_reader(int *args, ptree *pt, const char *which) 
 {
   return(mus_format( FLT_PT " = %s(" MIX_SAMPLE_READER_PT ")", args[0], FLOAT_RESULT, which, args[1], DESC_MIX_READER_ARG_1));
 }
+
 static char *descr_mix_reader_f(int *args, ptree *pt) {return(descr_mix_reader(args, pt, S_read_mix_sample));}
+
 static xen_value *mix_reader_0(ptree *prog, xen_value **args, xen_value *sf)
 {
   if (args[0]) FREE(args[0]);
@@ -6911,22 +7381,28 @@ static xen_value *mix_reader_0(ptree *prog, xen_value **args, xen_value *sf)
   add_triple_to_ptree(prog, va_make_triple(mix_reader_f, descr_mix_reader_f, 2, args[0], sf));
   return(args[0]);
 }
+
 static xen_value *mix_reader_1(ptree *prog, xen_value **args, int num_args) 
 {
   return(package(prog, R_FLOAT, mix_reader_f, descr_mix_reader_f, args, 1));
 }
+
 
 static char *descr_make_mix_sample_reader_r2(int *args, ptree *pt)
 {
   return(mus_format( MIX_SAMPLE_READER_PT " = " S_make_mix_sample_reader "(" INT_PT ", " INT_PT ")",
 		    args[0], DESC_MIX_READER_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
+
 static char *descr_make_mix_sample_reader_r1(int *args, ptree *pt)
 {
   return(mus_format( MIX_SAMPLE_READER_PT " = " S_make_mix_sample_reader "(" INT_PT ", 0)", args[0], DESC_MIX_READER_RESULT, args[1], INT_ARG_1));
 }
+
 static void make_mix_sample_reader_r2(int *args, ptree *pt) {MIX_READER_RESULT = (struct mix_fd *)run_make_mix_sample_reader(INT_ARG_1, INT_ARG_2);}
+
 static void make_mix_sample_reader_r1(int *args, ptree *pt) {MIX_READER_RESULT = (struct mix_fd *)run_make_mix_sample_reader(INT_ARG_1, 0);}
+
 static xen_value *make_mix_sample_reader_1(ptree *pt, xen_value **args, int num_args)
 {
   xen_value *rtn;
@@ -6937,19 +7413,23 @@ static xen_value *make_mix_sample_reader_1(ptree *pt, xen_value **args, int num_
   return(rtn);
 }
 
+
 /* ---------------- vector stuff ---------------- */
 
 /* float vectors are handled as vcts
  */
 
 /* length */
+
 static void vector_length_f(int *args, ptree *pt) {INT_RESULT = VCT_ARG_1->length;}
+
 static void vector_length_i(int *args, ptree *pt) {INT_RESULT = VECT_ARG_1->length;}
 
 static char *descr_vector_length_f(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = vector_length(" VCT_PT ")", args[0], INT_RESULT, args[1], DESC_VCT_ARG_1));
 }
+
 static char *descr_vector_length(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = vector_length(" VECT_PT ")", args[0], INT_RESULT, args[1], DESC_VECT_ARG_1));
@@ -6968,35 +7448,47 @@ static xen_value *vector_length_1(ptree *prog, xen_value **args, int num_args)
   return(NULL);
 }
 
+
 /* ref */
+
 static void vector_ref_f(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[INT_ARG_2];}
+
 static void vector_ref_i(int *args, ptree *pt) {INT_RESULT = VECT_ARG_1->data.ints[INT_ARG_2];}
+
 static void vector_ref_v(int *args, ptree *pt) {VCT_RESULT = VECT_ARG_1->data.vcts[INT_ARG_2];}
+
 static void vector_ref_c(int *args, ptree *pt) {CLM_RESULT = VECT_ARG_1->data.gens[INT_ARG_2];}
+
 static void vector_ref_x(int *args, ptree *pt) {XEN_RESULT = VECT_ARG_1->data.structs[INT_ARG_2];}
 
 static char *descr_vector_ref_f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = vector_ref(" VCT_PT ", " INT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1, args[2], INT_ARG_2));
 }
+
 static char *descr_vector_ref_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = vector_ref(" VECT_PT ", " INT_PT ")", args[0], INT_RESULT, args[1], DESC_VECT_ARG_1, args[2], INT_ARG_2));
 }
+
 static char *descr_vector_ref_v(int *args, ptree *pt) 
 {
   return(mus_format( VCT_PT " = vector_ref(" VECT_PT ", " INT_PT ")", args[0], DESC_VCT_RESULT, args[1], DESC_VECT_ARG_1, args[2], INT_ARG_2));
 }
+
 static char *descr_vector_ref_c(int *args, ptree *pt) 
 {
   return(mus_format( CLM_PT " = vector_ref(" VECT_PT ", " INT_PT ")", args[0], DESC_CLM_RESULT, args[1], DESC_VECT_ARG_1, args[2], INT_ARG_2));
 }
+
 static char *descr_vector_ref_x(int *args, ptree *pt) 
 {
   return(mus_format( XEN_PT " = vector_ref(" VECT_PT ", " INT_PT ")", args[0], DESC_XEN_RESULT, args[1], DESC_VECT_ARG_1, args[2], INT_ARG_2));
 }
 
+
 static int clm_struct_to_type(XEN xstruct);
+
 static xen_value *vector_ref_1(ptree *prog, xen_value **args, int num_args)
 {
   switch (args[1]->type)
@@ -7014,32 +7506,42 @@ static xen_value *vector_ref_1(ptree *prog, xen_value **args, int num_args)
 
 
 /* set */
+
 static void vector_set_f(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = FLOAT_ARG_3;}
+
 static void vector_set_i(int *args, ptree *pt) {VECT_ARG_1->data.ints[INT_ARG_2] = INT_ARG_3;}
+
 static void vector_set_v(int *args, ptree *pt) {VECT_ARG_1->data.vcts[INT_ARG_2] = VCT_ARG_3;}
+
 static void vector_set_c(int *args, ptree *pt) {VECT_ARG_1->data.gens[INT_ARG_2] = CLM_ARG_3;}
+
 static void vector_set_x(int *args, ptree *pt) {VECT_ARG_1->data.structs[INT_ARG_2] = RXEN_ARG_3;}
 
 static char *descr_vector_set_f(int *args, ptree *pt) 
 {
   return(mus_format("vector_set(" VCT_PT ", " INT_PT ", " FLT_PT ")", args[1], DESC_VCT_ARG_1, args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
 }
+
 static char *descr_vector_set_i(int *args, ptree *pt) 
 {
   return(mus_format("vector_set(" VECT_PT ", " INT_PT ", " INT_PT ")", args[1], DESC_VECT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
+
 static char *descr_vector_set_v(int *args, ptree *pt) 
 {
   return(mus_format("vector_set(" VECT_PT ", " INT_PT ", " VCT_PT ")", args[1], DESC_VECT_ARG_1, args[2], INT_ARG_2, args[3], DESC_VCT_ARG_3));
 }
+
 static char *descr_vector_set_c(int *args, ptree *pt) 
 {
   return(mus_format("vector_set(" VECT_PT ", " INT_PT ", " CLM_PT ")", args[1], DESC_VECT_ARG_1, args[2], INT_ARG_2, args[3], DESC_CLM_ARG_3));
 }
+
 static char *descr_vector_set_x(int *args, ptree *pt) 
 {
   return(mus_format("vector_set(" VECT_PT ", " INT_PT ", " XEN_PT ")", args[1], DESC_VECT_ARG_1, args[2], INT_ARG_2, args[3], DESC_RXEN_ARG_3));
 }
+
 
 static xen_value *vector_set_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -7074,22 +7576,27 @@ static xen_value *vector_set_1(ptree *prog, xen_value **args, int num_args)
 
 
 /* fill */
+
 static void vector_fill_f(int *args, ptree *pt) 
 {
   int i; for (i = 0; i < VCT_ARG_1->length; i++) VCT_ARG_1->data[i] = FLOAT_ARG_2;
 }
+
 static void vector_fill_i(int *args, ptree *pt) 
 {
   int i; for (i = 0; i < VECT_ARG_1->length; i++) VECT_ARG_1->data.ints[i] = INT_ARG_2;
 }
+
 static void vector_fill_v(int *args, ptree *pt) 
 {
   int i; for (i = 0; i < VECT_ARG_1->length; i++) VECT_ARG_1->data.vcts[i] = VCT_ARG_2;
 }
+
 static void vector_fill_c(int *args, ptree *pt)
 {
   int i; for (i = 0; i < VECT_ARG_1->length; i++) VECT_ARG_1->data.gens[i] = CLM_ARG_2;
 }
+
 static void vector_fill_x(int *args, ptree *pt)
 {
   int i; for (i = 0; i < VECT_ARG_1->length; i++) VECT_ARG_1->data.structs[i] = RXEN_ARG_2;
@@ -7099,18 +7606,22 @@ static char *descr_vector_fill_f(int *args, ptree *pt)
 {
   return(mus_format("vector_fill(" VCT_PT ", " FLT_PT ")", args[1], DESC_VCT_ARG_1, args[2], FLOAT_ARG_2));
 }
+
 static char *descr_vector_fill_i(int *args, ptree *pt) 
 {
   return(mus_format("vector_fill(" VECT_PT ", " INT_PT ")", args[1], DESC_VECT_ARG_1, args[2], INT_ARG_2));
 }
+
 static char *descr_vector_fill_v(int *args, ptree *pt) 
 {
   return(mus_format("vector_fill(" VECT_PT ", " VCT_PT ")", args[1], DESC_VECT_ARG_1, args[2], DESC_VCT_ARG_2));
 }
+
 static char *descr_vector_fill_c(int *args, ptree *pt) 
 {
   return(mus_format("vector_fill(" VECT_PT ", " CLM_PT ")", args[1], DESC_VECT_ARG_1, args[2], DESC_CLM_ARG_2));
 }
+
 static char *descr_vector_fill_x(int *args, ptree *pt) 
 {
   return(mus_format("vector_fill(" VECT_PT ", " XEN_PT ")", args[1], DESC_VECT_ARG_1, args[2], DESC_RXEN_ARG_2));
@@ -7149,54 +7660,73 @@ static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
 /* ---------------- vct stuff ---------------- */
 
 static void vct_check_arg_1(int *args, ptree *pt) {if ((!args) || (!(VCT_ARG_1))) mus_error(MUS_NO_DATA, "arg 1 (vct) is null");}
+
 static char *descr_vct_check_arg_1(int *args, ptree *pt) {return(mus_format("if (!(" VCT_PT ") mus-error", args[1], DESC_VCT_ARG_1));}
+
 static void vct_check_index_1(int *args, ptree *pt) {if (VCT_ARG_1->length < 2) mus_error(MUS_NO_DATA, "vct index (1) too high");}
+
 static void vct_check_index_2(int *args, ptree *pt) {if (VCT_ARG_1->length < 3) mus_error(MUS_NO_DATA, "vct index (2) too high");}
+
 static void vct_check_index(int *args, ptree *pt) 
 {
   if (VCT_ARG_1->length <= INT_ARG_2) 
     mus_error(MUS_NO_DATA, "vct index (" INT_PT ") too high (len = %d)", args[2], INT_ARG_2, VCT_ARG_1->length);
 }
 
+
 static char *descr_vct_check_index_1(int *args, ptree *pt) {return(mus_format("if (" VCT_PT "->length < 2) mus-error", args[1], DESC_VCT_ARG_1));}
+
 static char *descr_vct_check_index_2(int *args, ptree *pt) {return(mus_format("if (" VCT_PT "->length < 3) mus-error", args[1], DESC_VCT_ARG_1));}
+
 static char *descr_vct_check_index(int *args, ptree *pt) 
 {
   return(mus_format("if (" VCT_PT "->length < " INT_PT ") mus-error", args[1], DESC_VCT_ARG_1, args[2], INT_ARG_2));
 }
 
+
 static void vct_length_i(int *args, ptree *pt) {INT_RESULT = VCT_ARG_1->length;}
+
 static char *descr_vct_length_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = vct_length(" VCT_PT ")", args[0], INT_RESULT, args[1], DESC_VCT_ARG_1));
 }
+
 static xen_value *vct_length_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_arg_1, descr_vct_check_arg_1, args, 1);
   return(package(prog, R_INT, vct_length_i, descr_vct_length_i, args, 1));
 }
 
+
 static void vct_constant_ref_0(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[0];}
+
 static void vct_constant_ref_1(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[1];}
+
 static void vct_constant_ref_2(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[2];}
+
 static char *descr_vct_constant_ref_0(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = vct_ref(" VCT_PT ", 0)", args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1));
 }
+
 static char *descr_vct_constant_ref_1(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = vct_ref(" VCT_PT ", 1)", args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1));
 }
+
 static char *descr_vct_constant_ref_2(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = vct_ref(" VCT_PT ", 2)", args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1));
 }
 
+
 static void vct_ref_f(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[INT_ARG_2];}
+
 static char *descr_vct_ref_f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = vct_ref(" VCT_PT ", " INT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1, args[2], INT_ARG_2));
 }
+
 static xen_value *vct_ref_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_arg_1, descr_vct_check_arg_1, args, 1);
@@ -7219,32 +7749,43 @@ static xen_value *vct_ref_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, vct_ref_f, descr_vct_ref_f, args, 2));
 }
 
+
 static void vct_constant_set_0(int *args, ptree *pt) {VCT_ARG_1->data[0] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
+
 static void vct_constant_set_1(int *args, ptree *pt) {VCT_ARG_1->data[1] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
+
 static void vct_constant_set_2(int *args, ptree *pt) {VCT_ARG_1->data[2] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
+
 static void vct_set_f(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
 
 static char *descr_vct_constant_set_0(int *args, ptree *pt) 
 {
   return(mus_format("vct_set!(" VCT_PT ", 0, " FLT_PT ")",  args[1], DESC_VCT_ARG_1, args[3], FLOAT_ARG_3));
 }
+
 static char *descr_vct_constant_set_1(int *args, ptree *pt) 
 {
   return(mus_format("vct_set!(" VCT_PT ", 1, " FLT_PT ")",  args[1], DESC_VCT_ARG_1, args[3], FLOAT_ARG_3));
 }
+
 static char *descr_vct_constant_set_2(int *args, ptree *pt) 
 {
   return(mus_format("vct_set!(" VCT_PT ", 2, " FLT_PT ")",  args[1], DESC_VCT_ARG_1, args[3], FLOAT_ARG_3));
 }
+
 static char *descr_vct_set_f(int *args, ptree *pt) 
 {
   return(mus_format("vct_set!(" VCT_PT ", " INT_PT ", " FLT_PT ")", args[1], DESC_VCT_ARG_1, args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
 }
+
 static void vct_set_i(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = (Float)INT_ARG_3; FLOAT_RESULT = (Double)INT_ARG_3;}
+
 static char *descr_vct_set_i(int *args, ptree *pt) 
 {
   return(mus_format("vct_set!(" VCT_PT ", " INT_PT ", " INT_PT ")", args[1], DESC_VCT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
+
+
 static void vct_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
 {
   /* set! vct-ref */
@@ -7263,6 +7804,8 @@ static void vct_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value 
     }
   else add_triple_to_ptree(prog, va_make_triple(vct_set_f, descr_vct_set_f, 4, NULL, in_v, in_v1, v));
 }
+
+
 static xen_value *vct_set_2(ptree *prog, xen_value **args, int num_args)
 {
   /* vct-set! */
@@ -7294,15 +7837,19 @@ static xen_value *vct_set_2(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, vct_set_i, descr_vct_set_i, args, 3));
 }
 
+
+
 static void make_vct_v(int *args, ptree *pt) 
 {
   if (VCT_RESULT) mus_vct_free(VCT_RESULT);
   VCT_RESULT = mus_vct_make(INT_ARG_1);
 }
+
 static char *descr_make_vct_v(int *args, ptree *pt) 
 {
   return(mus_format( VCT_PT " = make_vct(" INT_PT ")", args[0], DESC_VCT_RESULT, args[1], INT_ARG_1));
 }
+
 static void make_vct_v2(int *args, ptree *pt) 
 {
   vct *v;
@@ -7312,10 +7859,13 @@ static void make_vct_v2(int *args, ptree *pt)
   VCT_RESULT = v;
   for (i = 0; i < v->length; i++) v->data[i] = FLOAT_ARG_2;
 }
+
 static char *descr_make_vct_v2(int *args, ptree *pt) 
 {
   return(mus_format( VCT_PT " = make_vct(" INT_PT ", " FLT_PT ")", args[0], DESC_VCT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2));
 }
+
+
 static xen_value *make_vct_1(ptree *prog, xen_value **args, int num_args)
 {
   args[0] = make_xen_value(R_VCT, add_vct_to_ptree(prog, NULL), R_VARIABLE);
@@ -7325,6 +7875,7 @@ static xen_value *make_vct_1(ptree *prog, xen_value **args, int num_args)
   else add_triple_to_ptree(prog, va_make_triple(make_vct_v2, descr_make_vct_v2, 3, args[0], args[1], args[2]));
   return(args[0]);
 }
+
 
 static xen_value *make_vector_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -7336,20 +7887,23 @@ static xen_value *make_vector_1(ptree *prog, xen_value **args, int num_args)
   return(args[0]);
 }
 
+
 static void vct_v(int *args, ptree *pt) 
 {
   int i;
   vct *v;
-  if (VCT_RESULT) mus_vct_free(VCT_RESULT);
+  if (VCT_RESULT) VCT_RESULT = mus_vct_free(VCT_RESULT);
   v = mus_vct_make(pt->ints[args[1]]);
   for (i = 0; i < v->length; i++)
     v->data[i] = pt->dbls[args[i + 2]];
   VCT_RESULT = v;
 }
+
 static char *descr_vct_v(int *args, ptree *pt) 
 {
   return(mus_format( VCT_PT " = vct(" INT_PT " ...)", args[0], DESC_VCT_RESULT, args[1], INT_ARG_1));
 }
+
 static xen_value *vct_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_value *rtn;
@@ -7359,15 +7913,18 @@ static xen_value *vct_1(ptree *prog, xen_value **args, int num_args)
   return(rtn);
 }
 
+
 static void vct_copy_v(int *args, ptree *pt) 
 {
   if (VCT_RESULT) mus_vct_free(VCT_RESULT);
   VCT_RESULT = mus_vct_copy(VCT_ARG_1);
 }
+
 static char *descr_vct_copy_v(int *args, ptree *pt) 
 {
   return(mus_format( VCT_PT " = vct_copy(" VCT_PT ")", args[0], DESC_VCT_RESULT, args[1], DESC_VCT_ARG_1));
 }
+
 static xen_value *vct_copy_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
@@ -7376,6 +7933,7 @@ static xen_value *vct_copy_1(ptree *prog, xen_value **args, int num_args)
   add_triple_to_ptree(prog, va_make_triple(vct_copy_v, descr_vct_copy_v, 2, args[0], args[1]));
   return(args[0]);
 }
+
 
 #define VCT_OP_1(SName, CName, COp) \
 static void vct_ ## CName ## _f(int *args, ptree *pt) \
@@ -7406,6 +7964,7 @@ VCT_OP_1(fill!, fill, =)
 VCT_OP_1(scale!, scale, *=)
 VCT_OP_1(offset!, offset, +=)
 
+
 #define VCT_OP_2(SName, CName, COp) \
 static void vct_ ## CName ## _f(int *args, ptree *pt) \
 { \
@@ -7435,6 +7994,7 @@ VCT_OP_2(add!, add, +=)
 VCT_OP_2(multiply!, multiply, *=)
 VCT_OP_2(subtract!, subtract, -=)
 
+
 static void vct_reverse_v(vct *v, int len)
 {
   int i, j;
@@ -7449,6 +8009,7 @@ static void vct_reverse_v(vct *v, int len)
 	}
     }
 }
+
 static void vct_reverse_0(int *args, ptree *pt) 
 {
   vct *v;
@@ -7456,19 +8017,23 @@ static void vct_reverse_0(int *args, ptree *pt)
   vct_reverse_v(v, v->length);
   VCT_RESULT = v;
 }
+
 static char *descr_vct_reverse_0(int *args, ptree *pt) 
 {
   return(mus_format( VCT_PT " = vct_reverse(" VCT_PT ")", args[0], DESC_VCT_RESULT, args[1], DESC_VCT_ARG_1));
 }
+
 static void vct_reverse_1(int *args, ptree *pt) 
 {
   vct_reverse_v(VCT_ARG_1, INT_ARG_2);
   VCT_RESULT = VCT_ARG_1;
 }
+
 static char *descr_vct_reverse_1(int *args, ptree *pt) 
 {
   return(mus_format( VCT_PT " = vct_reverse(" VCT_PT ", " INT_PT ")", args[0], DESC_VCT_RESULT, args[1], DESC_VCT_ARG_1, args[2], INT_ARG_2));
 }
+
 static xen_value *vct_reverse_2(ptree *prog, xen_value **args, int num_args)
 {
   if (num_args == 1)
@@ -7493,6 +8058,7 @@ static xen_value *vct_times_1(ptree *prog, xen_value **args, int num_args)
   return(vct_scale_1(prog, args, num_args));
 }
 
+
 static xen_value *vct_plus_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_value *temp;
@@ -7508,6 +8074,7 @@ static xen_value *vct_plus_1(ptree *prog, xen_value **args, int num_args)
   args[2] = temp;
   return(vct_offset_1(prog, args, num_args));
 }
+
 
 /* ---------------- vct->channel ---------------- */
 
@@ -7542,6 +8109,7 @@ static char *descr_vct_to_channel_v(int *args, ptree *pt)
   return(mus_format("vct->channel(" VCT_PT ", " INT_PT ", " INT_PT ")", args[1], VCT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
 
+
 static xen_value *vct_to_channel_1(ptree *pt, xen_value **args, int num_args)
 {
   xen_value *true_args[6];
@@ -7563,8 +8131,11 @@ static xen_value *vct_to_channel_1(ptree *pt, xen_value **args, int num_args)
 /* ---------------- sound-data ---------------- */
 
 static void sound_data_check_1(int *args, ptree *pt) {if ((!args) || (!(SOUND_DATA_ARG_1))) mus_error(MUS_NO_DATA, "arg 1 (sound-data) is null");}
+
 static char *descr_sound_data_check_1(int *args, ptree *pt) {return(mus_format("if (!(" SD_PT ")) mus-error", args[1], DESC_SOUND_DATA_ARG_1));}
+
 static void sound_data_check_2(int *args, ptree *pt) {if ((!args) || (!(SOUND_DATA_ARG_2))) mus_error(MUS_NO_DATA, "arg 2 (sound-data) is null");}
+
 static char *descr_sound_data_check_2(int *args, ptree *pt) {return(mus_format("if (!(" SD_PT ")) mus-error", args[2], DESC_SOUND_DATA_ARG_2));}
 
 static void sound_data_check_index(int *args, ptree *pt) 
@@ -7574,6 +8145,7 @@ static void sound_data_check_index(int *args, ptree *pt)
   if (SOUND_DATA_ARG_1->length <= INT_ARG_3) 
     mus_error(MUS_NO_DATA, "sound-data index (" INT_PT ") too high (length = %d)", args[3], INT_ARG_3, SOUND_DATA_ARG_1->length);
 }
+
 static char *descr_sound_data_check_index(int *args, ptree *pt) 
 {
   return(mus_format("if ((" SD_PT "->chans < " INT_PT ") || (" SD_PT "->length < " INT_PT ")) mus-error", 
@@ -7583,10 +8155,12 @@ static char *descr_sound_data_check_index(int *args, ptree *pt)
 
 
 static void sound_data_length_i(int *args, ptree *pt) {INT_RESULT = SOUND_DATA_ARG_1->length;}
+
 static char *descr_sound_data_length_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = " S_sound_data_length "(" SD_PT ")", args[0], INT_RESULT, args[1], DESC_SOUND_DATA_ARG_1));
 }
+
 static xen_value *sound_data_length_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, sound_data_check_1, descr_sound_data_check_1, args, 1);
@@ -7595,10 +8169,12 @@ static xen_value *sound_data_length_1(ptree *prog, xen_value **args, int num_arg
 
 
 static void sound_data_chans_i(int *args, ptree *pt) {INT_RESULT = SOUND_DATA_ARG_1->chans;}
+
 static char *descr_sound_data_chans_i(int *args, ptree *pt) 
 {
   return(mus_format( INT_PT " = " S_sound_data_chans "(" SD_PT ")", args[0], INT_RESULT, args[1], DESC_SOUND_DATA_ARG_1));
 }
+
 static xen_value *sound_data_chans_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, sound_data_check_1, descr_sound_data_check_1, args, 1);
@@ -7607,10 +8183,12 @@ static xen_value *sound_data_chans_1(ptree *prog, xen_value **args, int num_args
 
 
 static void sound_data_peak_f(int *args, ptree *pt) {FLOAT_RESULT = sound_data_peak(SOUND_DATA_ARG_1);}
+
 static char *descr_sound_data_peak_f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = " S_sound_data_peak "(" SD_PT ")", args[0], FLOAT_RESULT, args[1], DESC_SOUND_DATA_ARG_1));
 }
+
 static xen_value *sound_data_peak_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, sound_data_check_1, descr_sound_data_check_1, args, 1);
@@ -7623,10 +8201,12 @@ static void sound_data_copy_f(int *args, ptree *pt)
   if (SOUND_DATA_RESULT) sound_data_free(SOUND_DATA_RESULT); /* this is how make works, so I guess we should be consistent */
   SOUND_DATA_RESULT = sound_data_copy(SOUND_DATA_ARG_1);
 }
+
 static char *descr_sound_data_copy_f(int *args, ptree *pt) 
 {
   return(mus_format( SD_PT " = " S_sound_data_copy "(" SD_PT ")", args[0], SOUND_DATA_RESULT, args[1], DESC_SOUND_DATA_ARG_1));
 }
+
 static xen_value *sound_data_copy_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, sound_data_check_1, descr_sound_data_check_1, args, 1);
@@ -7638,10 +8218,12 @@ static xen_value *sound_data_copy_1(ptree *prog, xen_value **args, int num_args)
 
 
 static void sound_data_reverse_f(int *args, ptree *pt) {SOUND_DATA_RESULT = sound_data_reverse(SOUND_DATA_ARG_1);}
+
 static char *descr_sound_data_reverse_f(int *args, ptree *pt) 
 {
   return(mus_format( SD_PT " = " S_sound_data_reverseB "(" SD_PT ")", args[0], SOUND_DATA_RESULT, args[1], DESC_SOUND_DATA_ARG_1));
 }
+
 static xen_value *sound_data_reverse_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, sound_data_check_1, descr_sound_data_check_1, args, 1);
@@ -7650,11 +8232,13 @@ static xen_value *sound_data_reverse_1(ptree *prog, xen_value **args, int num_ar
 
 
 static void sound_data_ref_f(int *args, ptree *pt) {FLOAT_RESULT = SOUND_DATA_ARG_1->data[INT_ARG_2][INT_ARG_3];}
+
 static char *descr_sound_data_ref_f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = " S_sound_data_ref "(" SD_PT ", " INT_PT ", " INT_PT ")", 
 		     args[0], FLOAT_RESULT, args[1], DESC_SOUND_DATA_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
+
 static xen_value *sound_data_ref_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) 
@@ -7671,6 +8255,7 @@ static void sound_data_set_f(int *args, ptree *pt)
   SOUND_DATA_ARG_1->data[INT_ARG_2][INT_ARG_3] = FLOAT_ARG_4;
   FLOAT_RESULT = FLOAT_ARG_4;
 }
+
 static void sound_data_set_i(int *args, ptree *pt) 
 {
   SOUND_DATA_ARG_1->data[INT_ARG_2][INT_ARG_3] = (Float)INT_ARG_4;
@@ -7682,11 +8267,13 @@ static char *descr_sound_data_set_i(int *args, ptree *pt)
   return(mus_format("sound_data_set!(" SD_PT ", " INT_PT ", " INT_PT ", " INT_PT ")", 
 		    args[1], DESC_SOUND_DATA_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3, args[4], INT_ARG_4));
 }
+
 static char *descr_sound_data_set_f(int *args, ptree *pt) 
 {
   return(mus_format(S_sound_data_setB "(" SD_PT ", " INT_PT ", " INT_PT ", " FLT_PT ")", 
 		    args[1], DESC_SOUND_DATA_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3, args[4], FLOAT_ARG_4));
 }
+
 
 static void sound_data_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
 {
@@ -7696,6 +8283,7 @@ static void sound_data_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen
   /* v->type known to be R_FLOAT (generalized set insists) */
   add_triple_to_ptree(prog, va_make_triple(sound_data_set_f, descr_sound_data_set_f, 5, NULL, in_v, in_v1, in_v2, v));
 }
+
 
 static xen_value *sound_data_set_2(ptree *prog, xen_value **args, int num_args)
 {
@@ -7718,10 +8306,12 @@ static void make_sound_data_v(int *args, ptree *pt)
   if (SOUND_DATA_RESULT) sound_data_free(SOUND_DATA_RESULT);
   SOUND_DATA_RESULT = c_make_sound_data(INT_ARG_1, INT_ARG_2);
 }
+
 static char *descr_make_sound_data_v(int *args, ptree *pt) 
 {
   return(mus_format( SD_PT " = " S_make_sound_data "(" INT_PT ", " INT_PT ")", args[0], DESC_SOUND_DATA_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
+
 static xen_value *make_sound_data_1(ptree *prog, xen_value **args, int num_args)
 {
   args[0] = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, NULL), R_VARIABLE);
@@ -7732,11 +8322,13 @@ static xen_value *make_sound_data_1(ptree *prog, xen_value **args, int num_args)
 
 
 static void sound_data_scale_f(int *args, ptree *pt) {SOUND_DATA_RESULT = sound_data_scale(SOUND_DATA_ARG_1, FLOAT_ARG_2);}
+
 static char *descr_sound_data_scale_f(int *args, ptree *pt) 
 {
   return(mus_format( SD_PT " = " S_sound_data_scaleB "(" SD_PT ", " FLT_PT ")", 
 		     args[0], DESC_SOUND_DATA_RESULT, args[1], SOUND_DATA_ARG_1, args[2], FLOAT_ARG_2));
 }
+
 static xen_value *sound_data_scale_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_value *temp;
@@ -7753,11 +8345,13 @@ static xen_value *sound_data_scale_1(ptree *prog, xen_value **args, int num_args
 
 
 static void sound_data_offset_f(int *args, ptree *pt) {SOUND_DATA_RESULT = sound_data_offset(SOUND_DATA_ARG_1, FLOAT_ARG_2);}
+
 static char *descr_sound_data_offset_f(int *args, ptree *pt) 
 {
   return(mus_format( SD_PT " = "S_sound_data_offsetB "(" SD_PT ", " FLT_PT ")", 
 		     args[0], DESC_SOUND_DATA_RESULT, args[1], SOUND_DATA_ARG_1, args[2], FLOAT_ARG_2));
 }
+
 static xen_value *sound_data_offset_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_value *temp;
@@ -7774,11 +8368,13 @@ static xen_value *sound_data_offset_1(ptree *prog, xen_value **args, int num_arg
 
 
 static void sound_data_fill_f(int *args, ptree *pt) {SOUND_DATA_RESULT = sound_data_fill(SOUND_DATA_ARG_1, FLOAT_ARG_2);}
+
 static char *descr_sound_data_fill_f(int *args, ptree *pt) 
 {
   return(mus_format( SD_PT " = " S_sound_data_fillB "(" SD_PT ", " FLT_PT ")",
 		     args[0], DESC_SOUND_DATA_RESULT, args[1], SOUND_DATA_ARG_1, args[2], FLOAT_ARG_2));
 }
+
 static xen_value *sound_data_fill_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_value *temp;
@@ -7795,11 +8391,13 @@ static xen_value *sound_data_fill_1(ptree *prog, xen_value **args, int num_args)
 
 
 static void sound_data_add_f(int *args, ptree *pt) {SOUND_DATA_RESULT = sound_data_add(SOUND_DATA_ARG_1, SOUND_DATA_ARG_2);}
+
 static char *descr_sound_data_add_f(int *args, ptree *pt) 
 {
   return(mus_format( SD_PT " = " S_sound_data_addB "(" SD_PT ", " SD_PT ")",
 		     args[0], DESC_SOUND_DATA_RESULT, args[1], SOUND_DATA_ARG_1, args[2], SOUND_DATA_ARG_2));
 }
+
 static xen_value *sound_data_add_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) 
@@ -7812,11 +8410,13 @@ static xen_value *sound_data_add_1(ptree *prog, xen_value **args, int num_args)
 
 
 static void sound_data_multiply_f(int *args, ptree *pt) {SOUND_DATA_RESULT = sound_data_multiply(SOUND_DATA_ARG_1, SOUND_DATA_ARG_2);}
+
 static char *descr_sound_data_multiply_f(int *args, ptree *pt) 
 {
   return(mus_format( SD_PT " = " S_sound_data_multiplyB "(" SD_PT ", " SD_PT ")",
 		     args[0], DESC_SOUND_DATA_RESULT, args[1], SOUND_DATA_ARG_1, args[2], SOUND_DATA_ARG_2));
 }
+
 static xen_value *sound_data_multiply_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) 
@@ -7952,6 +8552,7 @@ static char *descr_gen(int *args, ptree *pt, const char *which, int num_args)
     if (!mus_ ## Name ## _p(CLM_ARG_1)) mus_error(MUS_NO_GEN, #Name ": bad arg: %s", (CLM_ARG_1) ? mus_name(CLM_ARG_1) : "null");} \
   static char *descr_ ## Name ## _check(int *args, ptree *pt) {return(mus_format("if (!" #Name "?(" CLM_PT ")) mus-error", args[1], DESC_CLM_ARG_1));}
 
+
 #define GEN_P_1(Name) \
   static char *descr_ ## Name ## _0p(int *args, ptree *pt) { \
     return(mus_format(BOOL_PT " = " #Name "?(" CLM_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_CLM_ARG_1));} \
@@ -7959,18 +8560,23 @@ static char *descr_gen(int *args, ptree *pt, const char *which, int num_args)
   static xen_value * Name ## _p(ptree *prog, xen_value **args, int num_args) { \
     return(package(prog, R_BOOL, Name ## _0p, descr_ ## Name ## _0p, args, 1));}
 
+
 #define GEN2_0(Name) \
   static char *descr_ ## Name ## _0f(int *args, ptree *pt) {return(descr_gen(args, pt, #Name, 0));} \
   static void Name ## _0f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, 0.0);}  
+
 #define GEN2_0_OPT(Name) \
   static char *descr_ ## Name ## _0f(int *args, ptree *pt) {return(descr_gen(args, pt, #Name, 0));} \
   static void Name ## _0f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name ## _1 (CLM_ARG_1);}  
+
 #define GEN1_0(Name) \
   static char *descr_ ## Name ## _0f(int *args, ptree *pt) {return(descr_gen(args, pt, #Name, 0));} \
   static void Name ## _0f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1);}  
+
 #define GEN2_1(Name) \
   static char *descr_ ## Name ## _1f(int *args, ptree *pt) {return(descr_gen(args, pt, #Name, 1));} \
   static void Name ## _1f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, FLOAT_ARG_2);}
+
 
 #define GEN3(Name) \
   static char *descr_ ## Name ## _0f(int *args, ptree *pt) {return(descr_gen(args, pt, #Name, 0));} \
@@ -7990,12 +8596,16 @@ static char *descr_gen(int *args, ptree *pt, const char *which, int num_args)
     return(package(prog, R_FLOAT, Name ## _2f, descr_ ## Name ## _2f, args, 3)); \
   }
 
+
 static char *descr_oscil_0f_1(int *args, ptree *pt) {return(descr_gen(args, pt, "oscil", 0));}
 static void oscil_0f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_0(CLM_ARG_1);}
+
 static char *descr_oscil_1f_1(int *args, ptree *pt) {return(descr_gen(args, pt, "oscil", 1));}
 static void oscil_1f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_1(CLM_ARG_1, FLOAT_ARG_2);}
+
 static char *descr_oscil_2f(int *args, ptree *pt) {return(descr_gen(args, pt, "oscil", 2));}
 static void oscil_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
+
 GEN_P(oscil)
 
 static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
@@ -8010,6 +8620,7 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, oscil_2f, descr_oscil_2f, args, 3));
 }
 
+
 #define GEN2(Name) \
   GEN2_0(Name) \
   GEN2_1(Name) \
@@ -8021,6 +8632,7 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
     if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
     return(package(prog, R_FLOAT, Name ## _1f, descr_ ## Name ## _1f, args, 2)); \
   }
+
 #define GEN2_OPT(Name) \
   GEN2_0_OPT(Name) \
   GEN2_1(Name) \
@@ -8053,6 +8665,7 @@ static char *descr_int_gen0(int *args, ptree *pt, const char *which)
 {
   return(mus_format( INT_PT " = %s(" CLM_PT , args[0], INT_RESULT, which, args[1], DESC_CLM_ARG_1));
 }
+
 #define INT_GEN0(Name) \
   static char *descr_ ## Name ## _0i(int *args, ptree *pt) {return(descr_int_gen0(args, pt, #Name));} \
   static void Name ## _0i(int *args, ptree *pt) {INT_RESULT = mus_ ## Name (CLM_ARG_1);} \
@@ -8100,14 +8713,23 @@ GEN1(readin)
 GEN2_OPT(wave_train)
 GEN2_OPT(table_lookup)
 
+
 static char *descr_polyshape_no_args(int *args, ptree *pt) {return(descr_gen(args, pt, S_polyshape, 0));}
+
 static void polyshape_no_index_no_fm(int *args, ptree *pt) {FLOAT_RESULT = mus_polyshape_0(CLM_ARG_1);}
+
 static char *descr_polyshape_one_arg(int *args, ptree *pt) {return(descr_gen(args, pt, S_polyshape, 1));}
+
 static void polyshape_index_no_fm(int *args, ptree *pt) {FLOAT_RESULT = mus_polyshape_1(CLM_ARG_1, FLOAT_ARG_2);}
+
 static char *descr_polyshape_two_args(int *args, ptree *pt) {return(descr_gen(args, pt, S_polyshape, 2));}
+
 static void polyshape_index_fm(int *args, ptree *pt) {FLOAT_RESULT = mus_polyshape(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
+
 static void polyshape_no_index_fm(int *args, ptree *pt) {FLOAT_RESULT = mus_polyshape_2(CLM_ARG_1, FLOAT_ARG_3);}
+
 GEN_P(polyshape)
+
 static xen_value *polyshape_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, polyshape_check, descr_polyshape_check, args, num_args);
@@ -8135,9 +8757,13 @@ static xen_value *polyshape_1(ptree *prog, xen_value **args, int num_args)
 
 
 static char *descr_tap_0f(int *args, ptree *pt) {return(descr_gen(args, pt, S_tap, 0));}
+
 static void tap_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_tap_1(CLM_ARG_1);}  
+
 static char *descr_tap_1f(int *args, ptree *pt) {return(descr_gen(args, pt, S_tap, 1));}
+
 static void tap_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_tap(CLM_ARG_1, FLOAT_ARG_2);}
+
 static xen_value *tap_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, delay_check, descr_delay_check, args, 1);
@@ -8147,14 +8773,18 @@ static xen_value *tap_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, tap_1f, descr_tap_1f, args, 2));
 }
 
+
 static char *descr_delay_tick_1f(int *args, ptree *pt) {return(descr_gen(args, pt, S_delay_tick, 1));}
+
 static void delay_tick_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_delay_tick(CLM_ARG_1, FLOAT_ARG_2);}
+
 static xen_value *delay_tick_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, delay_check, descr_delay_check, args, 1);
   if (args[2]->type == R_INT) single_to_float(prog, args, 2);
   return(package(prog, R_FLOAT, delay_tick_1f, descr_delay_tick_1f, args, 2));
 }
+
 
 GEN0(increment)
 GEN0(frequency)
@@ -8186,6 +8816,7 @@ GEN_P(locsig)
 GEN_P(move_sound)
 
 
+
 /* -------- mus-channels --------
  *
  * this is special because *output* can be a vct or sound-data object 
@@ -8212,9 +8843,13 @@ static char *descr_mus_channels_f(int *args, ptree *pt)
 }
 
 static void mus_channels_i(int *args, ptree *pt) {INT_RESULT = mus_channels(CLM_ARG_1);}
+
 static void mus_channels_v(int *args, ptree *pt) {INT_RESULT = 1;}
+
 static void mus_channels_f(int *args, ptree *pt) {INT_RESULT = 0;}
+
 static void mus_channels_s(int *args, ptree *pt) {INT_RESULT = SOUND_DATA_ARG_1->chans;}
+
 
 static xen_value *mus_channels_0(ptree *prog, xen_value **args, int num_args)
 {
@@ -8232,12 +8867,16 @@ static char *descr_close_0(int *args, ptree *pt)
 {
   return(mus_format( INT_PT " = " S_mus_close "(" CLM_PT ")", args[0], INT_RESULT, args[1], DESC_CLM_ARG_1));
 }
+
 static char *descr_close_0_noop(int *args, ptree *pt)
 {
   return(mus_format( INT_PT " = " S_mus_close "()", args[0], INT_RESULT));
 }
+
 static void close_0(int *args, ptree *pt) {INT_RESULT = mus_close_file(CLM_ARG_1);}
+
 static void close_0_noop(int *args, ptree *pt) {INT_RESULT = 0;}
+
 static xen_value *mus_close_0(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == R_CLM)
@@ -8245,24 +8884,30 @@ static xen_value *mus_close_0(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_INT, close_0_noop, descr_close_0_noop, args, 1));
 }
 
+
 static char *descr_reset_0(int *args, ptree *pt)
 {
   return(mus_format(S_mus_reset "(" CLM_PT ")", args[1], DESC_CLM_ARG_1));
 }
+
 static void reset_0(int *args, ptree *pt) {mus_reset(CLM_ARG_1);}
+
 static xen_value *mus_reset_0(ptree *prog, xen_value **args, int num_args)
 {
   return(package(prog, R_CLM, reset_0, descr_reset_0, args, 1));
 }
 
+
 static char *descr_set_formant_radius_and_frequency_2f(int *args, ptree *pt) 
 {
   return(descr_gen(args, pt, S_mus_set_formant_radius_and_frequency, 2));
 }
+
 static void set_formant_radius_and_frequency_2f(int *args, ptree *pt) 
 {
   mus_set_formant_radius_and_frequency(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);
 }  
+
 static xen_value *set_formant_radius_and_frequency_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, formant_check, descr_formant_check, args, 1);
@@ -8273,7 +8918,9 @@ static xen_value *set_formant_radius_and_frequency_1(ptree *prog, xen_value **ar
 
 
 static char *descr_move_locsig_2f(int *args, ptree *pt) {return(descr_gen(args, pt, S_move_locsig, 2));}
-static void move_locsig_2f(int *args, ptree *pt) {mus_move_locsig(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}  
+
+static void move_locsig_2f(int *args, ptree *pt) {mus_move_locsig(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);} 
+ 
 static xen_value *move_locsig_1(ptree *prog, xen_value **args, int num_args)
 { 
   if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, locsig_check, descr_locsig_check, args, 1);
@@ -8285,6 +8932,7 @@ static char *descr_str_gen0(int *args, ptree *pt, const char *which)
 {
   return(mus_format( STR_PT " = %s(" CLM_PT ")", args[0], STRING_RESULT, which, args[1], DESC_CLM_ARG_1));
 }
+
 #define STR_GEN0(Name) \
   static char *descr_ ## Name ## _0s(int *args, ptree *pt) {return(descr_str_gen0(args, pt, #Name));} \
   static void Name ## _0s(int *args, ptree *pt) \
@@ -8306,6 +8954,7 @@ static char *descr_ref_gen0(int *args, ptree *pt, const char *which)
 {
   return(mus_format( FLT_PT " = %s(" CLM_PT ", " INT_PT ")", args[0], FLOAT_RESULT, which, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2));
 }
+
 #define REF_GEN0(Name, SName) \
   static char *descr_ ## Name ## _0r(int *args, ptree *pt) {return(descr_ref_gen0(args, pt, #Name));} \
   static void Name ## _0r(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, INT_ARG_2);} \
@@ -8324,10 +8973,12 @@ static char *descr_set_gen0(int *args, ptree *pt, const char *which)
 {
   return(mus_format("%s(" CLM_PT ", " INT_PT ", " FLT_PT ")", which, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
 }
+
 static char *descr_set_gen0_i(int *args, ptree *pt, const char *which)
 {
   return(mus_format("%s(" CLM_PT ", " INT_PT ", " INT_PT ")", which, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
+
 #define SET_GEN0(Name, SName) \
   static char *descr_ ## Name ## _0r(int *args, ptree *pt) {return(descr_set_gen0(args, pt, #Name));} \
   static void Name ## _0r(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);} \
@@ -8355,30 +9006,37 @@ static char *descr_mixer_ref_0(int *args, ptree *pt)
   return(mus_format( FLT_PT " = " S_mixer_ref "(" CLM_PT ", " INT_PT ", " INT_PT ")", 
 		    args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
+
 static void mixer_ref_0(int *args, ptree *pt) {FLOAT_RESULT = mus_mixer_ref(CLM_ARG_1, INT_ARG_2, INT_ARG_3);}
+
 static xen_value *mixer_ref_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, mixer_check, descr_mixer_check, args, 1);
   return(package(prog, R_FLOAT, mixer_ref_0, descr_mixer_ref_0, args, 3));
 }
+
 static char *descr_mixer_set_0(int *args, ptree *pt)
 {
   return(mus_format(S_mixer_set "(" CLM_PT ", " INT_PT ", " INT_PT ", " FLT_PT ")", 
 		    args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3, args[4], FLOAT_ARG_4));
 }
+
 static void mixer_set_0(int *args, ptree *pt) 
 {
   mus_mixer_set(CLM_ARG_1, INT_ARG_2, INT_ARG_3, FLOAT_ARG_4);
 }
+
 static char *descr_mixer_set_i(int *args, ptree *pt)
 {
   return(mus_format(S_mixer_set "(" CLM_PT ", " INT_PT ", " INT_PT ", " INT_PT ")", 
 		    args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3, args[4], INT_ARG_4));
 }
+
 static void mixer_set_i(int *args, ptree *pt) 
 {
   mus_mixer_set(CLM_ARG_1, INT_ARG_2, INT_ARG_3, (Float)INT_ARG_4);
 }
+
 static xen_value *mixer_set_2(ptree *prog, xen_value **args, int num_args)
 {
   /* mixer-set! */
@@ -8387,11 +9045,13 @@ static xen_value *mixer_set_2(ptree *prog, xen_value **args, int num_args)
     return(package(prog, R_FLOAT, mixer_set_0, descr_mixer_set_0, args, 4));
   return(package(prog, R_FLOAT, mixer_set_i, descr_mixer_set_i, args, 4));
 }
+
 static void mixer_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
 {
   /* set! mixer-ref */
   add_triple_to_ptree(prog, va_make_triple(mixer_set_0, descr_mixer_set_0, 5, NULL, in_v, in_v1, in_v2, v));
 }
+
 
 /* ---------------- xcoeff/ycoeff ---------------- */
 
@@ -8399,14 +9059,18 @@ static char *descr_xcoeff_0(int *args, ptree *pt)
 {
   return(mus_format( FLT_PT " = " S_mus_xcoeff "(" CLM_PT ", " INT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2));
 }
+
 static void xcoeff_0(int *args, ptree *pt) {FLOAT_RESULT = mus_xcoeff(CLM_ARG_1, INT_ARG_2);}
+
 static xen_value *mus_xcoeff_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, xcoeff_0, descr_xcoeff_0, args, 2));}
 
 static char *descr_set_xcoeff_0(int *args, ptree *pt)
 {
   return(mus_format(S_setB S_mus_xcoeff "(" CLM_PT ", " INT_PT ", " FLT_PT ")", args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
 }
+
 static void set_xcoeff_0(int *args, ptree *pt) {mus_set_xcoeff(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
+
 static void mus_set_xcoeff_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
 {
   add_triple_to_ptree(prog, va_make_triple(set_xcoeff_0, descr_set_xcoeff_0, 4, NULL, in_v, in_v1, v));
@@ -8417,14 +9081,18 @@ static char *descr_ycoeff_0(int *args, ptree *pt)
 {
   return(mus_format( FLT_PT " = " S_mus_ycoeff "(" CLM_PT ", " INT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2));
 }
+
 static void ycoeff_0(int *args, ptree *pt) {FLOAT_RESULT = mus_ycoeff(CLM_ARG_1, INT_ARG_2);}
+
 static xen_value *mus_ycoeff_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, ycoeff_0, descr_ycoeff_0, args, 2));}
 
 static char *descr_set_ycoeff_0(int *args, ptree *pt)
 {
   return(mus_format(S_setB S_mus_ycoeff "(" CLM_PT ", " INT_PT ", " FLT_PT ")", args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
 }
+
 static void set_ycoeff_0(int *args, ptree *pt) {mus_set_ycoeff(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
+
 static void mus_set_ycoeff_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
 {
   add_triple_to_ptree(prog, va_make_triple(set_ycoeff_0, descr_set_ycoeff_0, 4, NULL, in_v, in_v1, v));
@@ -8435,6 +9103,7 @@ static char *descr_set_int_gen0(int *args, ptree *pt, const char *which)
 {
   return(mus_format("mus-%s(" CLM_PT ") = " INT_PT , which, args[0], DESC_CLM_RESULT, args[1], INT_ARG_1));
 }
+
 #define SET_INT_GEN0(Name) \
   static char *descr_set_ ## Name ## _i(int *args, ptree *pt) {return(descr_set_int_gen0(args, pt, #Name));} \
   static void set_ ## Name ## _i(int *args, ptree *pt) {mus_set_ ## Name (CLM_RESULT, INT_ARG_1);} \
@@ -8449,10 +9118,12 @@ SET_INT_GEN0(hop)
 SET_INT_GEN0(length)
 SET_INT_GEN0(cosines)
 
+
 static char *descr_set_dbl_gen0(int *args, ptree *pt, const char *which)
 {
   return(mus_format("mus-%s(" CLM_PT ") = " FLT_PT , which, args[0], DESC_CLM_RESULT, args[1], FLOAT_ARG_1));
 }
+
 #define SET_DBL_GEN0(Name) \
   static char *descr_set_ ## Name ## _f(int *args, ptree *pt) {return(descr_set_dbl_gen0(args, pt, #Name));} \
   static void set_ ## Name ## _f(int *args, ptree *pt) {mus_set_ ## Name (CLM_RESULT, FLOAT_ARG_1);} \
@@ -8472,45 +9143,56 @@ SET_DBL_GEN0(formant_radius)
 
 
 /* ---------------- polynomial ---------------- */
+
 static char *descr_polynomial_1f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = polynomial(" VCT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1, args[2], FLOAT_ARG_2));
 }
+
 static void polynomial_1f(int *args, ptree *pt) 
 {
   FLOAT_RESULT = mus_polynomial(VCT_ARG_1->data, FLOAT_ARG_2, VCT_ARG_1->length);
 }
+
 static xen_value *polynomial_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, polynomial_1f, descr_polynomial_1f, args, 2));}
 
+
 /* ---------------- mus-fft ---------------- */
+
 static char *descr_mus_fft_2v(int *args, ptree *pt) 
 {
   return(mus_format(S_mus_fft "(" VCT_PT ", " VCT_PT ")", args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2));
 }
+
 static void mus_fft_2v(int *args, ptree *pt) 
 {
   mus_fft(VCT_ARG_1->data, VCT_ARG_2->data, VCT_ARG_1->length, 1);
   VCT_RESULT = VCT_ARG_1;
 }
+
 static char *descr_mus_fft_2v_1(int *args, ptree *pt) 
 {
   return(mus_format(S_mus_fft "(" VCT_PT ", " VCT_PT ", " INT_PT ")", args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2, args[3], INT_ARG_3));
 }
+
 static void mus_fft_2v_1(int *args, ptree *pt) 
 {
   mus_fft(VCT_ARG_1->data, VCT_ARG_2->data, INT_ARG_3, 1);
   VCT_RESULT = VCT_ARG_1;
 }
+
 static char *descr_mus_fft_2v_2(int *args, ptree *pt) 
 {
   return(mus_format(S_mus_fft "(" VCT_PT ", " VCT_PT ", " INT_PT ", " INT_PT ")", 
 		    args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2, args[3], INT_ARG_3, args[4], INT_ARG_4));
 }
+
 static void mus_fft_2v_2(int *args, ptree *pt) 
 {
   mus_fft(VCT_ARG_1->data, VCT_ARG_2->data, INT_ARG_3, INT_ARG_4);
   VCT_RESULT = VCT_ARG_1;
 }
+
 static xen_value *mus_fft_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
@@ -8520,25 +9202,31 @@ static xen_value *mus_fft_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_VCT, mus_fft_2v_2, descr_mus_fft_2v_2, args, 4));
 }
 
+
 /* ----------------fft ---------------- */
+
 static char *descr_fft_2v(int *args, ptree *pt) 
 {
   return(mus_format("fft(" VCT_PT ", " VCT_PT ")", args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2));
 }
+
 static void fft_2v(int *args, ptree *pt) 
 {
   mus_fft(VCT_ARG_1->data, VCT_ARG_2->data, VCT_ARG_1->length, 1);
   VCT_RESULT = VCT_ARG_1;
 }
+
 static char *descr_fft_2v_1(int *args, ptree *pt) 
 {
   return(mus_format("fft(" VCT_PT ", " VCT_PT ", len, " INT_PT ")", args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2, args[3], INT_ARG_3));
 }
+
 static void fft_2v_1(int *args, ptree *pt) 
 {
   mus_fft(VCT_ARG_1->data, VCT_ARG_2->data, VCT_ARG_1->length, INT_ARG_3);
   VCT_RESULT = VCT_ARG_1;
 }
+
 static xen_value *fft_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
@@ -8547,18 +9235,24 @@ static xen_value *fft_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_VCT, fft_2v_1, descr_fft_2v_1, args, 3));
 }
 
+
 /* ---------------- file->sample ---------------- */
+
 static char *descr_file_to_sample_1f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = file->sample(" CLM_PT ", " INT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2));
 }
+
 static char *descr_file_to_sample_2f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = file->sample(" CLM_PT ", " INT_PT ", " INT_PT ")", 
 		    args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
+
 static void file_to_sample_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_file_to_sample(CLM_ARG_1, INT_ARG_2, 0);}
+
 static void file_to_sample_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_file_to_sample(CLM_ARG_1, INT_ARG_2, INT_ARG_3);}
+
 static xen_value *file_to_sample_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, file_to_sample_check, descr_file_to_sample_check, args, 1);
@@ -8566,18 +9260,24 @@ static xen_value *file_to_sample_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, file_to_sample_2f, descr_file_to_sample_2f, args, 3));
 }
 
+
 /* ---------------- snd->sample ---------------- */
+
 static char *descr_snd_to_sample_1f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = snd->sample(" CLM_PT ", " INT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2));
 }
+
 static char *descr_snd_to_sample_2f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = snd->sample(" CLM_PT ", " INT_PT ", " INT_PT ")", 
 		    args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
+
 static void snd_to_sample_1f(int *args, ptree *pt) {FLOAT_RESULT = snd_to_sample_read(CLM_ARG_1, INT_ARG_2, 0);}
+
 static void snd_to_sample_2f(int *args, ptree *pt) {FLOAT_RESULT = snd_to_sample_read(CLM_ARG_1, INT_ARG_2, INT_ARG_3);}
+
 static xen_value *snd_to_sample_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (num_args == 2) return(package(prog, R_FLOAT, snd_to_sample_1f, descr_snd_to_sample_1f, args, 2));
@@ -8590,6 +9290,7 @@ static char *descr_snd_to_sample_0p(int *args, ptree *pt)
 }
  
 static void snd_to_sample_0p(int *args, ptree *pt) {BOOL_RESULT = (Int)snd_to_sample_p(CLM_ARG_1);}
+
 static xen_value *snd_to_sample_1p(ptree *prog, xen_value **args, int num_args)
 {
   return(package(prog, R_BOOL, snd_to_sample_0p, descr_snd_to_sample_0p, args, 1));
@@ -8598,12 +9299,15 @@ static xen_value *snd_to_sample_1p(ptree *prog, xen_value **args, int num_args)
 
 
 /* ---------------- sample->file ---------------- */
+
 static char *descr_sample_to_file_4(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = sample->file(" CLM_PT ", " INT_PT ", " INT_PT ", " FLT_PT ")", 
 		    args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3, args[4], FLOAT_ARG_4));
 }
+
 static void sample_to_file_4(int *args, ptree *pt) {FLOAT_RESULT = mus_sample_to_file(CLM_ARG_1, INT_ARG_2, INT_ARG_3, FLOAT_ARG_4);}
+
 static xen_value *sample_to_file_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, sample_to_file_check, descr_sample_to_file_check, args, 1);
@@ -8612,6 +9316,7 @@ static xen_value *sample_to_file_1(ptree *prog, xen_value **args, int num_args)
 
 
 /* ---------------- locsig ---------------- */
+
 static char *descr_locsig_3(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = locsig((" CLM_PT ", " INT_PT ", " FLT_PT ")", 
@@ -8672,11 +9377,14 @@ static xen_value *move_sound_1(ptree *prog, xen_value **args, int num_args)
 
 
 /* ---------------- env-interp ---------------- */
+
 static char *descr_env_interp_2(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = " S_env_interp "(" FLT_PT ", " CLM_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], DESC_CLM_ARG_2));
 }
+
 static void env_interp_2(int *args, ptree *pt) {FLOAT_RESULT = mus_env_interp(FLOAT_ARG_1, CLM_ARG_2);}
+
 static xen_value *env_interp_1(ptree *prog, xen_value **args, int num_args) 
 {
   return(package(prog, R_FLOAT, env_interp_2, descr_env_interp_2, args, 2));
@@ -8750,24 +9458,29 @@ FRAME_OP(mus_mixer_add, mixer+, mus_mixer_offset)
 
 
 /* ---------------- frame->frame ---------------- */
+
 static char *descr_frame_to_frame_2(int *args, ptree *pt)
 {
   return(mus_format( CLM_PT " = frame->frame(" CLM_PT ", " CLM_PT ")", args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_CLM_ARG_2));
 }
+
 static char *descr_frame_to_frame_3(int *args, ptree *pt)
 {
   return(mus_format( CLM_PT " = frame->frame(" CLM_PT ", " CLM_PT ", " CLM_PT ")",
 		    args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_CLM_ARG_2, args[3], DESC_CLM_ARG_3));
 }
+
 static void frame_to_frame_2(int *args, ptree *pt)
 {
   if (CLM_RESULT) mus_free(CLM_RESULT);
   CLM_RESULT = mus_frame_to_frame(CLM_ARG_1, CLM_ARG_2, NULL);
 }
+
 static void frame_to_frame_3(int *args, ptree *pt)
 {
   CLM_RESULT = mus_frame_to_frame(CLM_ARG_1, CLM_ARG_2, CLM_ARG_3);
 }
+
 static xen_value *frame_to_frame_1(ptree *prog, xen_value **args, int num_args)
 {
   if (num_args == 2) return(package(prog, R_CLM, frame_to_frame_2, descr_frame_to_frame_2, args, 2));
@@ -8776,64 +9489,81 @@ static xen_value *frame_to_frame_1(ptree *prog, xen_value **args, int num_args)
 
 
 /* ---------------- frame->sample ---------------- */
+
 static char *descr_frame_to_sample_2(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = frame->sample(" CLM_PT ", " CLM_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_CLM_ARG_2));
 }
+
 static void frame_to_sample_2(int *args, ptree *pt) 
 {
   FLOAT_RESULT = mus_frame_to_sample(CLM_ARG_1, CLM_ARG_2);
 }
+
 static xen_value *frame_to_sample_1(ptree *prog, xen_value **args, int num_args) 
 {
   return(package(prog, R_FLOAT, frame_to_sample_2, descr_frame_to_sample_2, args, 2));
 }
 
+
 /* ---------------- sample->frame ---------------- */
+
 static char *descr_sample_to_frame_2(int *args, ptree *pt) 
 {
   return(mus_format( CLM_PT " = sample->frame(" CLM_PT ", " FLT_PT ")", 
 		     args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], FLOAT_ARG_2));
 }
+
 static void sample_to_frame_2(int *args, ptree *pt) {CLM_RESULT = mus_sample_to_frame(CLM_ARG_1, FLOAT_ARG_2, CLM_RESULT);}
+
 /* there may be a memory leak here -- how does the possibly new frame get gc'd? */
+
 static char *descr_sample_to_frame_3(int *args, ptree *pt) 
 {
   return(mus_format( CLM_PT " = sample->frame(" CLM_PT ", " FLT_PT ", " CLM_PT ")", 
 		     args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_CLM_ARG_3));
 }
+
 static void sample_to_frame_3(int *args, ptree *pt) 
 {
   CLM_RESULT = mus_sample_to_frame(CLM_ARG_1, FLOAT_ARG_2, CLM_ARG_3);
 }
+
 static xen_value *sample_to_frame_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (num_args == 2) return(package(prog, R_CLM, sample_to_frame_2, descr_sample_to_frame_2, args, 2));
   return(package(prog, R_CLM, sample_to_frame_3, descr_sample_to_frame_3, args, 3));
 }
 
+
 /* ---------------- frame->file ---------------- */
+
 static char *descr_frame_to_file_3(int *args, ptree *pt) 
 {
   return(mus_format( CLM_PT " = frame->file((" CLM_PT ", " INT_PT ", " CLM_PT ")", 
 		    args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], DESC_CLM_ARG_3));
 }
+
 static void frame_to_file_3(int *args, ptree *pt) 
 {
   CLM_RESULT = mus_frame_to_file(CLM_ARG_1, INT_ARG_2, CLM_ARG_3);
 }
+
 static xen_value *frame_to_file_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, frame_to_file_check, descr_frame_to_file_check, args, 1);
   return(package(prog, R_CLM, frame_to_file_3, descr_frame_to_file_3, args, 3));
 }
 
+
 /* ---------------- file->frame ---------------- */
+
 static char *descr_file_to_frame_3(int *args, ptree *pt) 
 {
   return(mus_format( CLM_PT " = file->frame((" CLM_PT ", " INT_PT ", " CLM_PT ")", 
 		    args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], DESC_CLM_ARG_3));
 }
+
 static void file_to_frame_3(int *args, ptree *pt) 
 {
   CLM_RESULT = mus_file_to_frame(CLM_ARG_1, INT_ARG_2, CLM_ARG_3);
@@ -8844,11 +9574,13 @@ static char *descr_file_to_frame_2(int *args, ptree *pt)
   return(mus_format( CLM_PT " = file->frame((" CLM_PT ", " INT_PT ")", 
 		     args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2));
 }
+
 static void file_to_frame_2(int *args, ptree *pt) 
 {
   if (CLM_RESULT) mus_free(CLM_RESULT);
   CLM_RESULT = mus_file_to_frame(CLM_ARG_1, INT_ARG_2, NULL);
 }
+
 static xen_value *file_to_frame_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, file_to_frame_check, descr_file_to_frame_check, args, 1);
@@ -8861,12 +9593,18 @@ static xen_value *file_to_frame_1(ptree *prog, xen_value **args, int num_args)
 /* ---------------- out-any ---------------- */
 
 static void outa_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 0, CLM_ARG_3);}
+
 static void outb_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 1, CLM_ARG_3);}
+
 static void outc_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 2, CLM_ARG_3);}
+
 static void outd_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 3, CLM_ARG_3);}
+
 static void out_any_4(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, INT_ARG_3, CLM_ARG_4);} 
 
+
 static void out_f_3(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2;}
+
 static void out_any_f_4(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2;}
 
 static void out_vct_3(int *args, ptree *pt) 
@@ -9055,10 +9793,13 @@ static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
 /* ---------------- in-any ---------------- */
 
 static void ina_2(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, 0, CLM_ARG_2);}
+
 static void inb_2(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, 1, CLM_ARG_2);}
+
 static void in_any_3(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, INT_ARG_2, CLM_ARG_3);}
 
 static void in_f_2(int *args, ptree *pt) {FLOAT_RESULT = 0.0;}
+
 static void in_any_f_3(int *args, ptree *pt) {FLOAT_RESULT = 0.0;}
 
 static void in_vct_2(int *args, ptree *pt) 
@@ -9191,50 +9932,62 @@ static xen_value *in_any_1(ptree *prog, xen_value **args, int num_args)
 
 
 /* ---------------- array-interp ---------------- */
+
 static char *descr_array_interp_1f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = " S_array_interp "(" VCT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1, args[2], FLOAT_ARG_2));
 }
+
 static void array_interp_1f(int *args, ptree *pt) 
 {
   FLOAT_RESULT = mus_array_interp(VCT_ARG_1->data, FLOAT_ARG_2, VCT_ARG_1->length);
 }
+
 static char *descr_array_interp_2f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = " S_array_interp "(" VCT_PT ", " FLT_PT ", " INT_PT ")", 
 		     args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1, args[2], FLOAT_ARG_2, args[3], INT_ARG_3));
 }
+
 static void array_interp_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_array_interp(VCT_ARG_1->data, FLOAT_ARG_2, INT_ARG_3);}
+
 static xen_value *array_interp_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (num_args == 2) return(package(prog, R_FLOAT, array_interp_1f, descr_array_interp_1f, args, 2));
   return(package(prog, R_FLOAT, array_interp_2f, descr_array_interp_2f, args, 3));
 }
 
+
 /* ---------------- mus-interpolate ---------------- */
+
 static char *descr_mus_interpolate_3f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = "S_mus_interpolate "(" INT_PT ", " FLT_PT ", " VCT_PT ")", 
 		     args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_VCT_ARG_3));
 }
+
 static void mus_interpolate_3f(int *args, ptree *pt) 
 {
   FLOAT_RESULT = mus_interpolate((mus_interp_t)(INT_ARG_1), FLOAT_ARG_2, VCT_ARG_3->data, VCT_ARG_3->length, 0.0);
 }
+
 static char *descr_mus_interpolate_4f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = " S_mus_interpolate "(" INT_PT ", " FLT_PT ", " VCT_PT ", " INT_PT ")", 
 		     args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_VCT_ARG_3, args[4], INT_ARG_4));
 }
+
 static void mus_interpolate_4f(int *args, ptree *pt) 
 {
   FLOAT_RESULT = mus_interpolate((mus_interp_t)(INT_ARG_1), FLOAT_ARG_2, VCT_ARG_3->data, INT_ARG_4, 0.0);
 }
+
 static char *descr_mus_interpolate_5f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = " S_mus_interpolate "(" INT_PT ", " FLT_PT ", " VCT_PT ", " INT_PT ", " FLT_PT ")", 
 		     args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_VCT_ARG_3, args[4], INT_ARG_4, args[5], FLOAT_ARG_5));
 }
+
 static void mus_interpolate_5f(int *args, ptree *pt) 
 {
   FLOAT_RESULT = mus_interpolate((mus_interp_t)(INT_ARG_1), FLOAT_ARG_2, VCT_ARG_3->data, INT_ARG_4, FLOAT_ARG_5);
@@ -9249,10 +10002,12 @@ static xen_value *mus_interpolate_1(ptree *prog, xen_value **args, int num_args)
 
 
 /* ---------------- vct-peak ---------------- */
+
 static char *descr_vct_peak_v(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = " S_vct_peak "(" VCT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1));
 }
+
 static void vct_peak_v(int *args, ptree *pt) 
 {
   int i;
@@ -9268,6 +10023,7 @@ static void vct_peak_v(int *args, ptree *pt)
     }
   FLOAT_RESULT = val;
 }
+
 static xen_value *vct_peak_1(ptree *prog, xen_value **args, int num_args) 
 {
   return(package(prog, R_FLOAT, vct_peak_v, descr_vct_peak_v, args, 1));
@@ -9275,12 +10031,15 @@ static xen_value *vct_peak_1(ptree *prog, xen_value **args, int num_args)
 
 
 /* ---------------- clear_array ---------------- */
+
 static char *descr_clear_array_1f(int *args, ptree *pt) {return(mus_format("clear_array(" VCT_PT ")", args[1], DESC_VCT_ARG_1));}
+
 static void clear_array_1f(int *args, ptree *pt) 
 {
   mus_clear_array(VCT_ARG_1->data, VCT_ARG_1->length);
   VCT_RESULT = VCT_ARG_1;
 }
+
 static xen_value *clear_array_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
@@ -9356,11 +10115,17 @@ VCT_2_F(sine_bank, sine-bank)
 VCT_2_F(dot_product, dot-product)
 
 static void clm_0f(int *args, ptree *pt) {if (CLM_ARG_1) FLOAT_RESULT = MUS_RUN(CLM_ARG_1, 0.0, 0.0);}
-static char *descr_clm_0f(int *args, ptree *pt) {return(descr_gen(args, pt, mus_name(CLM_ARG_1), 0));} 
+
+static char *descr_clm_0f(int *args, ptree *pt) {return(descr_gen(args, pt, mus_name(CLM_ARG_1), 0));}
+ 
 static void clm_1f(int *args, ptree *pt) {if (CLM_ARG_1) FLOAT_RESULT = MUS_RUN(CLM_ARG_1, FLOAT_ARG_2, 0.0);}
+
 static char *descr_clm_1f(int *args, ptree *pt) {return(descr_gen(args, pt, mus_name(CLM_ARG_1), 1));} 
+
 static void clm_2f(int *args, ptree *pt) {if (CLM_ARG_1) FLOAT_RESULT = MUS_RUN(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
+
 static char *descr_clm_2f(int *args, ptree *pt) {return(descr_gen(args, pt, mus_name(CLM_ARG_1), 2));} 
+
 static xen_value *clm_n(ptree *prog, xen_value **args, int num_args, xen_value *sf)
 {
   xen_value *temp;
@@ -9388,16 +10153,20 @@ static xen_value *clm_n(ptree *prog, xen_value **args, int num_args, xen_value *
   return(args[0]);
 }
 
+
 /* ---------------- spectrum ---------------- */
+
 static char *descr_mus_spectrum_3v(int *args, ptree *pt) 
 {
   return(mus_format("spectrum(" VCT_PT ", " VCT_PT ", " VCT_PT ")", args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2, args[3], DESC_VCT_ARG_3));
 }
+
 static void mus_spectrum_3v(int *args, ptree *pt) 
 {
   mus_spectrum(VCT_ARG_1->data, VCT_ARG_2->data, (VCT_ARG_3) ? (VCT_ARG_3->data) : NULL, VCT_ARG_1->length, MUS_SPECTRUM_NORMALIZED);
   VCT_RESULT = VCT_ARG_1;
 }
+
 static char *descr_mus_spectrum_4v(int *args, ptree *pt) 
 {
   if (VCT_ARG_3)
@@ -9406,6 +10175,7 @@ static char *descr_mus_spectrum_4v(int *args, ptree *pt)
   return(mus_format("spectrum(" VCT_PT ", " VCT_PT ", #f, " INT_PT ")", 
 		    args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2, args[4], INT_ARG_4));
 }
+
 static void mus_spectrum_4v(int *args, ptree *pt) 
 {
   mus_spectrum(VCT_ARG_1->data, 
@@ -9415,6 +10185,7 @@ static void mus_spectrum_4v(int *args, ptree *pt)
 	       (mus_spectrum_t)INT_ARG_4);
   VCT_RESULT = VCT_ARG_1;
 }
+
 static xen_value *mus_spectrum_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (run_safety == RUN_SAFE) 
@@ -9444,26 +10215,33 @@ static Float src_input(void *arg, int direction)
   eval_embedded_ptree(pt, outer);
   return(outer->dbls[pt->result->addr]);
 }
+
 static char *descr_src_2f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = src(" CLM_PT ", " FLT_PT ", " FNC_PT ")",
 		    args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_FNC_ARG_3));
 }
+
 static void src_2f(int *args, ptree *pt) 
 {
   ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = FNC_ARG_3;
   FLOAT_RESULT = mus_src(CLM_ARG_1, FLOAT_ARG_2, src_input);
 }
+
 static char *descr_src_1f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = src(" CLM_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], FLOAT_ARG_2));
 }
+
 static void src_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_src(CLM_ARG_1, FLOAT_ARG_2, NULL);}
+
 static char *descr_src_0f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = src(" CLM_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1));
 }
+
 static void src_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_src(CLM_ARG_1, 0.0, NULL);}
+
 static xen_value *src_1(ptree *prog, xen_value **args, int num_args) 
 {
   /* input function arg may be #f */
@@ -9494,16 +10272,20 @@ static char *descr_convolve_1f(int *args, ptree *pt)
 {
   return(mus_format( FLT_PT " = convolve(" CLM_PT ", " FNC_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_FNC_ARG_2));
 }
+
 static void convolve_1f(int *args, ptree *pt)
 {
   ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = FNC_ARG_2;
   FLOAT_RESULT = mus_convolve(CLM_ARG_1, src_input);
 }
+
 static char *descr_convolve_0f(int *args, ptree *pt)
 {
   return(mus_format( FLT_PT " = convolve(" CLM_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1));
 }
+
 static void convolve_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_convolve(CLM_ARG_1, NULL);}
+
 static xen_value *convolve_1(ptree *prog, xen_value **args, int num_args)
 {
   if (num_args == 2)
@@ -9548,6 +10330,7 @@ static char *descr_granulate_2f(int *args, ptree *pt)
   return(mus_format( FLT_PT " = granulate(" CLM_PT ", " FNC_PT ", " FNC_PT ")",
           args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_FNC_ARG_2, args[3], DESC_FNC_ARG_3));
 }
+
 static void granulate_2f(int *args, ptree *pt)
 {
   mus_xen *gn = (mus_xen *)mus_environ(CLM_ARG_1);
@@ -9555,30 +10338,37 @@ static void granulate_2f(int *args, ptree *pt)
   gn->edit_ptree = FNC_ARG_3;
   FLOAT_RESULT = mus_granulate_with_editor(CLM_ARG_1, src_input, grn_edit);
 }
+
 static char *descr_granulate_2f_split(int *args, ptree *pt)
 {
   return(mus_format( FLT_PT " = granulate(" CLM_PT ", null, " FNC_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[3], DESC_FNC_ARG_3));
 }
+
 static void granulate_2f_split(int *args, ptree *pt)
 {
   mus_xen *gn = (mus_xen *)mus_environ(CLM_ARG_1);
   gn->edit_ptree = FNC_ARG_3;
   FLOAT_RESULT = mus_granulate_with_editor(CLM_ARG_1, NULL, grn_edit);
 }
+
 static char *descr_granulate_1f(int *args, ptree *pt)
 {
   return(mus_format( FLT_PT " = granulate(" CLM_PT ", " FNC_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_FNC_ARG_2));
 }
+
 static void granulate_1f(int *args, ptree *pt)
 {
   ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = FNC_ARG_2;
   FLOAT_RESULT = mus_granulate(CLM_ARG_1, src_input);
 }
+
 static char *descr_granulate_0f(int *args, ptree *pt)
 {
   return(mus_format( FLT_PT " = granulate(" CLM_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1));
 }
+
 static void granulate_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_granulate(CLM_ARG_1, NULL);}
+
 static xen_value *granulate_1(ptree *prog, xen_value **args, int num_args)
 {
   bool got_input = false;
@@ -9654,6 +10444,7 @@ static char *descr_phase_vocoder_5f(int *args, ptree *pt)
 		     (INT_ARG_1 & 4) ? args[5] : 0, (INT_ARG_1 & 4) ? DESC_FNC_ARG_5 : 0,
 		     (INT_ARG_1 & 8) ? args[6] : 0, (INT_ARG_1 & 8) ? DESC_FNC_ARG_6 : 0));
 }
+
 static void phase_vocoder_5f(int *args, ptree *pt)
 {
   /* in-coming arg1 is descr of which funcs are active -- all arg ctrs are shifted over one to make room */
@@ -9669,20 +10460,25 @@ static void phase_vocoder_5f(int *args, ptree *pt)
 						(INT_ARG_1 & 4) ? grn_edit : NULL, 
 						(INT_ARG_1 & 8) ? pv_synthesize : NULL);
 }
+
 static char *descr_phase_vocoder_1f(int *args, ptree *pt)
 {
   return(mus_format( FLT_PT " = " S_phase_vocoder "(" CLM_PT ", " FNC_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_FNC_ARG_2));
 }
+
 static void phase_vocoder_1f(int *args, ptree *pt)
 {
   ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = FNC_ARG_2;
   FLOAT_RESULT = mus_phase_vocoder(CLM_ARG_1, src_input);
 }
+
 static char *descr_phase_vocoder_0f(int *args, ptree *pt)
 {
   return(mus_format( FLT_PT " = " S_phase_vocoder "(" CLM_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1));
 }
+
 static void phase_vocoder_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_phase_vocoder(CLM_ARG_1, NULL);}
+
 static xen_value *phase_vocoder_1(ptree *prog, xen_value **args, int num_args)
 {
   bool got_input = false, got_edit = false, got_analyze = false, got_synthesize = false;
@@ -9770,6 +10566,7 @@ static xen_value *phase_vocoder_1(ptree *prog, xen_value **args, int num_args)
   }
 }
 
+
 #define PV_VCT_1(Name) \
 static char *descr_pv_ ## Name ## _1(int *args, ptree *pt) \
 { \
@@ -9801,14 +10598,19 @@ PV_VCT_1(freqs)
 PV_VCT_1(phases)
 PV_VCT_1(phase_increments)
 
+
 INT_GEN0(phase_vocoder_outctr)
+
+
 #if 0
   /* this code needs to be folded into generalized set! */
 static char *descr_pv_set_outctr(int *args, ptree *pt)
 {
   return(mus_format(S_setB S_phase_vocoder_outctr "(" CLM_PT ", " INT_PT ")" , args[0], DESC_CLM_RESULT, args[1], INT_ARG_1));
 }
+
 static void pv_set_outctr(int *args, ptree *pt) {mus_phase_vocoder_set_outctr(CLM_RESULT, INT_ARG_1);}
+
 static xen_value *mus_phase_vocoder_set_outctr_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, phase_vocoder_check, descr_phase_vocoder_check, args, 1);
@@ -9816,13 +10618,16 @@ static xen_value *mus_phase_vocoder_set_outctr_1(ptree *prog, xen_value **args, 
 }
 #endif
 
+
 /* ---------------- contrast_enhancement ---------------- */
 
 static void contrast_enhancement_f(int *args, ptree *pt) {FLOAT_RESULT = mus_contrast_enhancement(FLOAT_ARG_1, FLOAT_ARG_2);}
+
 static char *descr_contrast_enhancement_f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = " S_contrast_enhancement "(" FLT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2));
 }
+
 static xen_value *contrast_enhancement_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == R_INT) single_to_float(prog, args, 1);
@@ -9830,13 +10635,16 @@ static xen_value *contrast_enhancement_1(ptree *prog, xen_value **args, int num_
   return(package(prog, R_FLOAT, contrast_enhancement_f, descr_contrast_enhancement_f, args, 2));
 }
 
+
 /* ---------------- ring_modulate ---------------- */
 
 static void ring_modulate_f(int *args, ptree *pt) {FLOAT_RESULT = mus_ring_modulate(FLOAT_ARG_1, FLOAT_ARG_2);}
+
 static char *descr_ring_modulate_f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = " S_ring_modulate "(" FLT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2));
 }
+
 static xen_value *ring_modulate_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == R_INT) single_to_float(prog, args, 1);
@@ -9844,14 +10652,17 @@ static xen_value *ring_modulate_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, ring_modulate_f, descr_ring_modulate_f, args, 2));
 }
 
+
 /* ---------------- amplitude_modulate ---------------- */
 
 static void amplitude_modulate_f(int *args, ptree *pt) {FLOAT_RESULT = mus_amplitude_modulate(FLOAT_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
+
 static char *descr_amplitude_modulate_f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = " S_amplitude_modulate "(" FLT_PT ", " FLT_PT ", " FLT_PT ")", 
 		    args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2, args[3], FLOAT_ARG_3));
 }
+
 static xen_value *amplitude_modulate_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == R_INT) single_to_float(prog, args, 1);
@@ -9884,53 +10695,65 @@ SND_STR_OP(mus_sound_length)
 SND_STR_OP(mus_sound_type_specifier)
 SND_STR_OP(mus_sound_forget)
 
+
 static void mus_sound_duration_f(int *args, ptree *pt) {FLOAT_RESULT = mus_sound_duration(STRING_ARG_1);}
+
 static char *descr_mus_sound_duration_f(int *args, ptree *pt)
 {
   return(mus_format( FLT_PT " = " S_mus_sound_duration "(" STR_PT ")", args[0], FLOAT_RESULT, args[1], STRING_ARG_1));
 }
+
 static xen_value *mus_sound_duration_1(ptree *prog, xen_value **args, int num_args)
 {
   return(package(prog, R_FLOAT, mus_sound_duration_f, descr_mus_sound_duration_f, args, 1));
 }
+
 
 static void mus_sound_comment_f(int *args, ptree *pt) 
 {
   if (STRING_RESULT) FREE(STRING_RESULT);
   STRING_RESULT = mus_sound_comment(STRING_ARG_1);
 }
+
 static char *descr_mus_sound_comment_f(int *args, ptree *pt)
 {
   return(mus_format( STR_PT " = " S_mus_sound_comment "(" STR_PT ")", args[0], STRING_RESULT, args[1], STRING_ARG_1));
 }
+
 static xen_value *mus_sound_comment_1(ptree *prog, xen_value **args, int num_args)
 {
   return(package(prog, R_STRING, mus_sound_comment_f, descr_mus_sound_comment_f, args, 1));
 }
+
 
 static void mus_header_type_name_f(int *args, ptree *pt) 
 {
   if (STRING_RESULT) FREE(STRING_RESULT);
   STRING_RESULT = copy_string(mus_header_type_name(INT_ARG_1));
 }
+
 static char *descr_mus_header_type_name_f(int *args, ptree *pt)
 {
   return(mus_format( STR_PT " = " S_mus_header_type_name "(" INT_PT ")", args[0], STRING_RESULT, args[1], INT_ARG_1));
 }
+
 static xen_value *mus_header_type_name_1(ptree *prog, xen_value **args, int num_args)
 {
   return(package(prog, R_STRING, mus_header_type_name_f, descr_mus_header_type_name_f, args, 1));
 }
+
 
 static void mus_data_format_name_f(int *args, ptree *pt) 
 {
   if (STRING_RESULT) FREE(STRING_RESULT);
   STRING_RESULT = copy_string(mus_data_format_name(INT_ARG_1));
 }
+
 static char *descr_mus_data_format_name_f(int *args, ptree *pt)
 {
   return(mus_format( STR_PT " = " S_mus_data_format_name "(" INT_PT ")", args[0], STRING_RESULT, args[1], INT_ARG_1));
 }
+
 static xen_value *mus_data_format_name_1(ptree *prog, xen_value **args, int num_args)
 {
   return(package(prog, R_STRING, mus_data_format_name_f, descr_mus_data_format_name_f, args, 1));
@@ -9942,24 +10765,29 @@ static void mus_header_type_to_string_f(int *args, ptree *pt)
   if (STRING_RESULT) FREE(STRING_RESULT);
   STRING_RESULT = copy_string(mus_header_type_to_string(INT_ARG_1));
 }
+
 static char *descr_mus_header_type_to_string_f(int *args, ptree *pt)
 {
   return(mus_format( STR_PT " = " S_mus_header_type_to_string "(" INT_PT ")", args[0], STRING_RESULT, args[1], INT_ARG_1));
 }
+
 static xen_value *mus_header_type_to_string_1(ptree *prog, xen_value **args, int num_args)
 {
   return(package(prog, R_STRING, mus_header_type_to_string_f, descr_mus_header_type_to_string_f, args, 1));
 }
+
 
 static void mus_data_format_to_string_f(int *args, ptree *pt) 
 {
   if (STRING_RESULT) FREE(STRING_RESULT);
   STRING_RESULT = copy_string(mus_data_format_to_string(INT_ARG_1));
 }
+
 static char *descr_mus_data_format_to_string_f(int *args, ptree *pt)
 {
   return(mus_format( STR_PT " = " S_mus_data_format_to_string "(" INT_PT ")", args[0], STRING_RESULT, args[1], INT_ARG_1));
 }
+
 static xen_value *mus_data_format_to_string_1(ptree *prog, xen_value **args, int num_args)
 {
   return(package(prog, R_STRING, mus_data_format_to_string_f, descr_mus_data_format_to_string_f, args, 1));
@@ -9967,11 +10795,13 @@ static xen_value *mus_data_format_to_string_1(ptree *prog, xen_value **args, int
 
 
 /* ---------------- formant-bank ---------------- */
+
 static char *descr_formant_bank_f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = " S_formant_bank "(" VCT_PT ", " VECT_PT ", " FLT_PT ")", 
 		    args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1, args[2], DESC_VECT_ARG_2, args[3], FLOAT_ARG_3));
 }
+
 static void formant_bank_f(int *args, ptree *pt) 
 {
   FLOAT_RESULT = mus_formant_bank(VCT_ARG_1->data, 
@@ -9979,6 +10809,7 @@ static void formant_bank_f(int *args, ptree *pt)
 				  FLOAT_ARG_3, 
 				  VCT_ARG_1->length);
 }
+
 static xen_value *formant_bank_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[3]->type == R_INT) single_to_float(prog, args, 3);
@@ -9987,17 +10818,24 @@ static xen_value *formant_bank_1(ptree *prog, xen_value **args, int num_args)
 
 
 /* ---------------- mus-srate ---------------- */
+
 static char *descr_srate_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = " S_mus_srate, args[0], FLOAT_RESULT));}
+
 static void srate_f(int *args, ptree *pt) {FLOAT_RESULT = mus_srate();}
+
 static xen_value *mus_srate_1(ptree *prog, xen_value **args, int num_args) 
 {
   return(package(prog, R_FLOAT, srate_f, descr_srate_f, args, 0));
 }
 
 static char *descr_set_srate_f(int *args, ptree *pt) {return(mus_format(S_mus_srate " = " FLT_PT , args[1], FLOAT_ARG_1));}
+
 static void set_srate_f(int *args, ptree *pt) {mus_set_srate(FLOAT_ARG_1); FLOAT_RESULT = mus_srate();}
+
 static char *descr_set_srate_i(int *args, ptree *pt) {return(mus_format(S_mus_srate " = " INT_PT , args[1], INT_ARG_1));}
+
 static void set_srate_i(int *args, ptree *pt) {mus_set_srate((Float)INT_ARG_1); FLOAT_RESULT = mus_srate();}
+
 static void mus_set_srate_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
 {
   if (v->type == R_FLOAT)
@@ -10033,6 +10871,7 @@ static xen_value *mus_ ## Name ## _1(ptree *prog, xen_value **args, int num_args
 MUS_VCT_1(data, 0)
 MUS_VCT_1(xcoeffs, 1)
 MUS_VCT_1(ycoeffs, 2)
+
 
 static xen_value *boolean_p_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -10120,9 +10959,13 @@ static xen_value *pair_p_1(ptree *prog, xen_value **args, int num_args)
 }
 
 static xen_value *char_ge_1(ptree *prog, xen_value **args, int num_args) {return(greater_than_or_equal(prog, false, args, num_args));}
+
 static xen_value *char_gt_1(ptree *prog, xen_value **args, int num_args) {return(greater_than(prog, false, args, num_args));}
+
 static xen_value *char_le_1(ptree *prog, xen_value **args, int num_args) {return(less_than_or_equal(prog, false, args, num_args));}
+
 static xen_value *char_lt_1(ptree *prog, xen_value **args, int num_args) {return(less_than(prog, false, args, num_args));}
+
 static xen_value *char_eq_1(ptree *prog, xen_value **args, int num_args) {return(numbers_equal(prog, false, args, num_args));}
 
 static xen_value *char_ci_ge_1(ptree *prog, xen_value **args, int num_args) 
@@ -10151,9 +10994,13 @@ static xen_value *char_ci_eq_1(ptree *prog, xen_value **args, int num_args)
 }
 
 static xen_value *ge_1(ptree *prog, xen_value **args, int num_args) {return(greater_than_or_equal(prog, prog->float_result, args, num_args));}
+
 static xen_value *gt_1(ptree *prog, xen_value **args, int num_args) {return(greater_than(prog, prog->float_result, args, num_args));}
+
 static xen_value *le_1(ptree *prog, xen_value **args, int num_args) {return(less_than_or_equal(prog, prog->float_result, args, num_args));}
+
 static xen_value *lt_1(ptree *prog, xen_value **args, int num_args) {return(less_than(prog, prog->float_result, args, num_args));}
+
 static xen_value *eq_1(ptree *prog, xen_value **args, int num_args) {return(numbers_equal(prog, prog->float_result, args, num_args));}
 
 static xen_value *unwrap_xen_object_1(ptree *prog, XEN form, const char *origin, bool constant)
@@ -10203,15 +11050,18 @@ static xen_value *unwrap_xen_object_1(ptree *prog, XEN form, const char *origin,
   return(run_warn("%s: non-simple arg: %s", origin, XEN_AS_STRING(form)));
 }
 
+
 static xen_value *unwrap_xen_object(ptree *prog, XEN form, const char *origin)
 {
   return(unwrap_xen_object_1(prog, form, origin, false));
 }
 
+
 static xen_value *unwrap_constant_xen_object(ptree *prog, XEN form, const char *origin)
 {
   return(unwrap_xen_object_1(prog, form, origin, true));
 }
+
 
 static XEN get_lst(ptree *prog, xen_value **args) 
 {
@@ -10221,6 +11071,7 @@ static XEN get_lst(ptree *prog, xen_value **args)
     return(prog->xens[args[1]->addr]);
   return(XEN_UNDEFINED);
 }
+
 
 static xen_value *car_1(ptree *prog, xen_value **args, int num_args) {return(unwrap_xen_object(prog, XEN_CAR(get_lst(prog, args)), "car"));}
 static xen_value *caar_1(ptree *prog, xen_value **args, int num_args) {return(unwrap_xen_object(prog, XEN_CAAR(get_lst(prog, args)), "caar"));}
@@ -10249,12 +11100,14 @@ static xen_value *null_p_1(ptree *prog, xen_value **args, int num_args)
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, XEN_NULL_P(get_lst(prog, args))), R_CONSTANT));
 }
 
+
 static xen_value *atanx_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (num_args == 1)
     return(atan_1(prog, args, num_args));
   return(atan2_1(prog, args, num_args));
 }
+
 
 static xen_value *integer_to_char_1(ptree *prog, xen_value **args, int num_args) 
 {
@@ -10264,12 +11117,17 @@ static xen_value *integer_to_char_1(ptree *prog, xen_value **args, int num_args)
   return(newv);
 }
 
+
 static xen_value *declare_1(ptree *prog, XEN form, walk_result_t ignore) {return(make_xen_value(R_UNSPECIFIED, -1, R_VARIABLE));}
+
 static xen_value *lambda_preform(ptree *prog, XEN form, walk_result_t ignore) {return(lambda_form(prog, form, true, NULL, 0, XEN_FALSE));}
+
+
 static xen_value *quote_form(ptree *prog, XEN form, walk_result_t ignore) 
 {
   return(unwrap_constant_xen_object(prog, XEN_CADR(form), "quote"));
 }
+
 
 /* clm-print and xen args support */
 
@@ -10288,6 +11146,7 @@ static bool xenable(xen_value *v)
     }
   return(false);
 }
+
 
 static XEN wrap_generator(ptree *pt, int addr)
 {
@@ -10313,6 +11172,7 @@ static XEN wrap_generator(ptree *pt, int addr)
     return(mus_xen_to_object(gn));
   }
 }
+
 
 static XEN xen_value_to_xen(ptree *pt, xen_value *v)
 {
@@ -10359,6 +11219,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
   return(XEN_FALSE);
 }
 
+
 static triple *make_xen_arg_triple(ptree *pt,
 				   void (*function)(int *arg_addrs, ptree *pt),
 				   char *(*descr)(int *arg_addrs, ptree *pt), 
@@ -10387,6 +11248,7 @@ static triple *make_xen_arg_triple(ptree *pt,
   return(trp);
 }
 
+
 static xen_value *package_n_xen_args(ptree *prog,
 				     int type, 
 				     void (*function)(int *arg_addrs, ptree *pt),
@@ -10411,6 +11273,7 @@ static xen_value *package_n_xen_args(ptree *prog,
   FREE(new_args);
   return(rtn);
 }
+
 
 static char *describe_xen_args(const char *caller, int result_type, int *args, ptree *pt)
 {
@@ -10453,6 +11316,7 @@ static char *describe_xen_args(const char *caller, int result_type, int *args, p
   return(buf);
 }
 
+
 static XEN xen_values_to_list(ptree *pt, int *args)
 {
   XEN lst = XEN_EMPTY_LIST;
@@ -10466,6 +11330,7 @@ static XEN xen_values_to_list(ptree *pt, int *args)
     }
   return(lst);
 }
+
 
 #if (SCM_DEBUG_TYPING_STRICTNESS != 2)
   static XEN format_func = XEN_FALSE;
@@ -10487,10 +11352,12 @@ static xen_value *format_1(ptree *prog, xen_value **args, int num_args)
   return(package_n_xen_args(prog, R_STRING, format_s, descr_format_s, args, num_args));
 }
 
+
 static char *descr_throw_s_1(int *args, ptree *pt) 
 {
   return(mus_format("throw('%s)", (XEN_BOUND_P(pt->xens[args[1]])) ? XEN_AS_STRING(pt->xens[args[1]]) : "#f"));
 }
+
 static void throw_s_1(int *args, ptree *pt) 
 {
   XEN res;
@@ -10500,10 +11367,13 @@ static void throw_s_1(int *args, ptree *pt)
   pt = NULL;
   XEN_THROW(res, XEN_FALSE);
 }
+
 static xen_value *throw_1(ptree *prog, xen_value **args, int num_args)
 {
   return(package(prog, R_BOOL, throw_s_1, descr_throw_s_1, args, 1));
 }
+
+
 
 typedef struct {
   xen_value *(*walker)(ptree *prog, xen_value **args, int num_args);
@@ -10547,6 +11417,7 @@ static walk_info *make_walker(xen_value *(*walker)(ptree *prog, xen_value **args
   return(w);
 }
 
+
 static void clm_print_s(int *args, ptree *pt) 
 {
   if (STRING_RESULT) FREE(STRING_RESULT);
@@ -10557,6 +11428,7 @@ static void clm_print_s(int *args, ptree *pt)
 static char *descr_clm_print_s(int *args, ptree *pt) {return(describe_xen_args("clm_print", R_STRING, args, pt));}
 
 static bool clm_print_walk_property_set = false;
+
 static xen_value *clm_print_1(ptree *prog, xen_value **args, int num_args)
 {
   if (!clm_print_walk_property_set)
@@ -10572,6 +11444,7 @@ static xen_value *clm_print_1(ptree *prog, xen_value **args, int num_args)
     }
   return(package_n_xen_args(prog, R_STRING, clm_print_s, descr_clm_print_s, args, num_args));
 }
+
 
 static bool format_walk_property_set = false;
 
@@ -10633,6 +11506,7 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, boo
     }
   return(run_warn("format not defined"));
 }
+
 
 /* -------- CLM make functions -------- */
 
@@ -10720,6 +11594,7 @@ CLM_MAKE_FUNC(wave_train)
 CLM_MAKE_FUNC(waveshape)
 CLM_MAKE_FUNC(polyshape)
 
+
 static void make_fft_window_0(int *args, ptree *pt)
 {
   XEN res;
@@ -10731,7 +11606,9 @@ static void make_fft_window_0(int *args, ptree *pt)
   add_loc_to_protected_list(pt, snd_protect(res));
   VCT_RESULT = xen_to_vct(res);
 }
+
 static char *descr_make_fft_window_0(int *args, ptree *pt) {return(describe_xen_args(S_make_fft_window, R_VCT, args, pt));}
+
 static xen_value *make_fft_window_1(ptree *prog, xen_value **args, int num_args)
 {
   return(package_n_xen_args(prog, R_VCT, make_fft_window_0, descr_make_fft_window_0, args, num_args));
@@ -10827,6 +11704,7 @@ static int *clm_struct_types = NULL;
 static char **clm_struct_names = NULL;
 
 #define S_add_clm_field "add-clm-field"
+
 static XEN g_add_clm_field(XEN name, XEN offset, XEN type) /* type=field type (a symbol or #f) */
 {
   #define H_add_clm_field "def-clm-struct tie-in to run optimizer"
@@ -10880,11 +11758,13 @@ static XEN g_add_clm_field(XEN name, XEN offset, XEN type) /* type=field type (a
   return(name);
 }
 
+
 static char **clm_qtypes = NULL;
 static int clm_types_size = 0;
 static int clm_types_top = 0;
 
 #define S_add_clm_type "add-clm-type"
+
 static XEN g_add_clm_type(XEN name)
 {
   #define H_add_clm_type "def-clm-struct tie-in to run optimizer"
@@ -10910,15 +11790,18 @@ static XEN g_add_clm_type(XEN name)
   return(name);
 }
 
+
 static int clm_struct_to_type(XEN xstruct)
 {
   return(name_to_type(XEN_SYMBOL_TO_C_STRING(XEN_CAR(xstruct))));
 }
 
+
 static bool check_clm_type(XEN sym, const char *type)
 {
   return(strcmp(type, XEN_SYMBOL_TO_C_STRING(sym)) == 0);
 }
+
 
 /* to avoid GC complications and take advantage of the type decisions,
  *   def_clm_struct lists are allocated space as local variable of the
@@ -11004,6 +11887,7 @@ static char *descr_clm_struct_ref_r(int *args, ptree *pt)
   return(result);
 }
 
+
 static void clm_struct_ref_r(int *args, ptree *pt)
 {
   XEN lst;
@@ -11015,6 +11899,7 @@ static void clm_struct_ref_r(int *args, ptree *pt)
 		pt->ints[args[3]],               /* result type */
 		args[0]);                        /* result address */
 }
+
 
 static char *descr_clm_struct_set_r(int *args, ptree *pt)
 {
@@ -11028,6 +11913,7 @@ static char *descr_clm_struct_set_r(int *args, ptree *pt)
   return(result);
 }
 
+
 static void clm_struct_set_r(int *args, ptree *pt)
 {
   XEN lst;
@@ -11040,6 +11926,7 @@ static void clm_struct_set_r(int *args, ptree *pt)
       FREE(v);
     }
 }
+
 
 static xen_value *clm_struct_ref(ptree *prog, xen_value *v, int struct_loc, xen_value *set_v)
 {
@@ -11096,6 +11983,7 @@ static xen_value *clm_struct_ref(ptree *prog, xen_value *v, int struct_loc, xen_
   return(make_xen_value(run_type, addr, R_VARIABLE));
 }
 
+
 static void clm_struct_restore(ptree *prog, xen_var *var)
 {
   XEN lst;
@@ -11149,10 +12037,12 @@ static xen_value *clean_up(xen_value *result, xen_value **args, int args_size)
   return(result);
 }
 
+
 static bool vowel_p(char b)
 {
   return((b == 'a') || (b == 'e') || (b == 'i') || (b == 'o') || (b == 'u'));
 }
+
 
 static xen_value *arg_warn(ptree *prog, const char *funcname, int arg_num, xen_value **args, const char *correct_type)
 {
@@ -11174,6 +12064,7 @@ static xen_value *arg_warn(ptree *prog, const char *funcname, int arg_num, xen_v
 	     (vowel_p(correct_type[0])) ? "n" : "", correct_type);
   return(NULL);
 }
+
 
 static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 {
@@ -11534,6 +12425,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
   return(NULL);
 }
 
+
 static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
 {
   char *accessor;
@@ -11618,6 +12510,7 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
   return(NULL);
 }
 
+
 typedef enum {NO_PTREE_DISPLAY, STDERR_PTREE_DISPLAY, LISTENER_PTREE_DISPLAY, GCAT_PTREE_WITHOUT_DISPLAY} ptree_display_t;
 
 #ifndef DESCRIBE_PTREE_INIT
@@ -11636,6 +12529,7 @@ with the DESCRIBE_PTREE flag set."
   ptree_on = (ptree_display_t)XEN_TO_C_INT(on);
   return(on);
 }
+
 
 static struct ptree *form_to_ptree(XEN code)
 {
@@ -11687,6 +12581,7 @@ static struct ptree *form_to_ptree(XEN code)
   return(NULL);
 }
 
+
 /* ---------------- various tree-building wrappers ---------------- */
 
 struct ptree *form_to_ptree_1_f(XEN code)
@@ -11702,6 +12597,7 @@ struct ptree *form_to_ptree_1_f(XEN code)
   return(NULL);
 }
 
+
 struct ptree *form_to_ptree_3_f(XEN code)
 {
   ptree *pt;
@@ -11714,6 +12610,7 @@ struct ptree *form_to_ptree_3_f(XEN code)
     }
   return(NULL);
 }
+
 
 struct ptree *form_to_ptree_0_f(XEN code)
 {
@@ -11728,6 +12625,7 @@ struct ptree *form_to_ptree_0_f(XEN code)
   return(NULL);
 }
 
+
 struct ptree *form_to_ptree_1_b(XEN code)
 {
   ptree *pt;
@@ -11740,6 +12638,7 @@ struct ptree *form_to_ptree_1_b(XEN code)
     }
   return(NULL);
 }
+
 
 struct ptree *form_to_ptree_1_b_without_env(XEN code)
 {
@@ -11756,6 +12655,7 @@ Float evaluate_ptree_1f2f(struct ptree *pt, Float arg)
   return(pt->dbls[pt->result->addr]);
 }
 
+
 Float evaluate_ptree_1f1v1b2f(struct ptree *pt, Float arg, vct *v, bool dir)
 {
   pt->dbls[pt->args[0]] = arg;
@@ -11765,11 +12665,13 @@ Float evaluate_ptree_1f1v1b2f(struct ptree *pt, Float arg, vct *v, bool dir)
   return(pt->dbls[pt->result->addr]);
 }
 
+
 Float evaluate_ptree_0f2f(struct ptree *pt)
 {
   eval_ptree(pt);
   return(pt->dbls[pt->result->addr]);
 }
+
 
 int evaluate_ptree_1f2b(struct ptree *pt, Float arg)
 {
@@ -11777,6 +12679,7 @@ int evaluate_ptree_1f2b(struct ptree *pt, Float arg)
   eval_ptree(pt);
   return(pt->ints[pt->result->addr]);
 }
+
 
 Float evaluate_ptreec(struct ptree *pt, Float arg, XEN object, bool dir, int type)
 {
@@ -11831,6 +12734,7 @@ Float evaluate_ptreec(struct ptree *pt, Float arg, XEN object, bool dir, int typ
   eval_ptree(pt);
   return(pt->dbls[pt->result->addr]);
 }
+
 
 static XEN eval_ptree_to_xen(ptree *pt)
 {
@@ -11892,6 +12796,7 @@ static XEN eval_ptree_to_xen(ptree *pt)
   free_ptree(pt);
   return(result);
 }
+
 
 static void init_walkers(void)
 {
@@ -12426,6 +13331,7 @@ static void init_walkers(void)
   INIT_WALKER(S_fft, make_walker(fft_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
 }
 
+
 static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
 {
   ptree *pt;
@@ -12500,6 +13406,7 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
   return(XEN_FALSE);
 }
 
+
 static XEN g_run(XEN proc_and_code)
 {
   #define H_run "(" S_run " thunk): try to optimize the procedure passed as its argument, \
@@ -12523,6 +13430,7 @@ to Scheme and is equivalent to (thunk)."
 }
 
 #else
+
 struct ptree *form_to_ptree_1_b(XEN code) {return(NULL);}
 struct ptree *form_to_ptree_3_f(XEN code) {return(NULL);}
 struct ptree *form_to_ptree_1_b_without_env(XEN code) {return(NULL);}
@@ -12539,7 +13447,11 @@ int xen_to_run_type(XEN val) {return(0);}
 #endif
 /* endif WITH_RUN */
 
+
+
+
 static XEN g_optimization(void) {return(C_TO_XEN_INT(optimization(ss)));}
+
 static XEN g_set_optimization(XEN val) 
 {
 #if HAVE_GUILE
@@ -12554,7 +13466,9 @@ static XEN g_set_optimization(XEN val)
   return(C_TO_XEN_INT(optimization(ss)));
 }
 
+
 static XEN g_run_safety(void) {return(C_TO_XEN_INT(run_safety));}
+
 static XEN g_set_run_safety(XEN val) 
 {
   #define H_run_safety "(" S_run_safety "): the current 'run' safety level (default 0 = off)"
@@ -12564,6 +13478,7 @@ static XEN g_set_run_safety(XEN val)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_run_safety, XEN_ONLY_ARG, val, "must be 0 (no checks) or 1 (with checks)");
   return(C_TO_XEN_INT(run_safety));
 }
+
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_optimization_w, g_optimization)
@@ -12590,6 +13505,7 @@ XEN_ARGIFY_4(g_run_eval_w, g_run_eval)
 #define g_run_eval_w g_run_eval
 #endif
 #endif
+
 
 void g_init_run(void)
 {

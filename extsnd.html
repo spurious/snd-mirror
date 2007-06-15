@@ -8446,6 +8446,13 @@ This gives the selected channel in 'snd'; you can set it to select a channel.  I
 <code><a class=def name="selectedsound">selected-sound</a> ()</code>
 </td></tr><tr><td></td><td>
 This gives the currently selected sound (its index, of course); you can set it to select a sound. It returns #f is there is no selected sound. 
+A common trope is:
+<pre>
+    (or (selected-sound) 
+        (and (not (null? (<a class=quiet href="#sounds">sounds</a>)))
+             (car (<a class=quiet href="#sounds">sounds</a>))))
+</pre>
+which returns the currently selected sound, if any, and failing that, any other sound that is currently open.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 

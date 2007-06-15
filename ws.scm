@@ -358,7 +358,7 @@ returning you to the true top-level."
 			     args))))
 		(lambda args
 		  ;; hit mus-error -- not usually continuable -- can we send a stack to the debugger here?
-		  (display "hit mus-error")
+		  (display (format #f "with-sound mus-error: ~{~A~^ ~}~%" (cdr args)))
 		  (snd-print (format #f "with-sound mus-error: ~{~A~^ ~}~%" (cdr args)))
 		  (set! flush-reverb #t)))
 		  
