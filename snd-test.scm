@@ -31740,87 +31740,6 @@ EDITS: 2
       (if c1 (snd-display ";~A swap c1: ~A" name c1))))
   
 
-  (define (virtual-filter-channel coeffs beg dur snd chn edpos)
-    (ptree-channel
-     
-     (lambda (y data forward)
-       (declare (y real) (data vct) (forward boolean))
-       (let* ((sum 0.0)
-	      (order (inexact->exact (floor (vct-ref data 0))))
-	      (cur-loc (inexact->exact (floor (vct-ref data 1))))
-	      (init-time (> (vct-ref data 2) 0.0))
-	      (last-forward (> (vct-ref data 3) 0.0))
-	      (coeffs-0 4)
-	      (state-0 (+ coeffs-0 order)))
-	 
-	 (if (eq? last-forward forward)
-	     (if init-time
-		 (begin
-		   (vct-set! data 2 -1.0))
-		 (begin
-		   (if forward
-		       (begin
-			 (do ((i (- order 1) (1- i)))
-			     ((= i 0))
-			   (vct-set! data (+ i state-0) (vct-ref data (+ i -1 state-0))))
-			 (vct-set! data state-0 y)
-			 (set! cur-loc (1+ cur-loc)))
-		       
-		       (let ((pos (max 0 (- cur-loc order))))
-			 (if (< pos 0)
-			     (set! y 0.0)
-			     (set! y (sample pos snd chn edpos)))
-			 (do ((i 0 (1+ i)))
-			     ((= i (1- order)))
-			   (vct-set! data (+ i state-0) (vct-ref data (+ i 1 state-0))))
-			 (vct-set! data (+ state-0 order -1) y)
-			 (set! cur-loc (1- cur-loc))))))
-	     )
-	 
-	 (do ((i 0 (1+ i)))
-	     ((= i order))
-	   (set! sum (+ sum (* (vct-ref data (+ coeffs-0 i)) 
-			       (vct-ref data (+ state-0 i))))))
-	 
-	 (vct-set! data 1 cur-loc)
-	 (if forward (vct-set! data 3 1.0) (vct-set! data 3 -1.0))
-	 
-	 sum))
-     
-     beg dur snd chn edpos #f
-     
-     (lambda (frag-beg frag-dur forward)
-       (let* ((order (vct-length coeffs))
-	      (coeffs-0 4)
-	      (state-0 (+ order coeffs-0))
-	      (d (make-vct (+ coeffs-0 (* 2 order)))))
-	 (vct-set! d 0 order)
-	 (vct-set! d 2 1.0) ; first sample flag
-	 (if forward (vct-set! d 3 1.0) (vct-set! d 3 -1.0))
-	 
-	 (do ((i 0 (1+ i)))
-	     ((= i order))
-	   (vct-set! d (+ i coeffs-0) (vct-ref coeffs i)))
-	 
-	 (let ((start (- (+ 1 frag-beg beg) order))
-	       (i (1- order)))
-	   (if (< start 0)
-	       (do ()
-		   ((= start 0))
-		 (vct-set! d (+ i state-0) 0)
-		 (set! i (1- i))
-		 (set! start (1+ start))))
-	   (if (>= i 0)
-	       (let ((rd (make-sample-reader start snd chn 1 edpos)))
-		 (do ()
-		     ((= i -1))
-		   (vct-set! d (+ i state-0) (rd))
-		   (set! i (1- i)))
-		 (free-sample-reader rd)))
-	   (vct-set! d 1 (+ frag-beg beg))
-	   
-	   d)))))
-
   (define (convolve-coeffs v1 v2)
     (let* ((v1-len (vct-length v1))
 	   (v2-len (vct-length v2))
@@ -58541,8 +58460,6 @@ EDITS: 1
 	    (if (not _gboolean22) (snd-display ";WIDGET DOUBLE BUFFERED"))
 					;	      (pango_attr_list_ref _PangoAttrList_)
 					;	      (pango_attr_list_unref _PangoAttrList_)
-	    (gtk_widget_ref _GtkWidget_)
-	    (gtk_widget_unref _GtkWidget_)
 	    (gtk_label_set_text _GtkLabel_ "another label")
 	    (if (not (string=? (gtk_label_get_text _GtkLabel_) "another label")) (snd-display ";set label text: ~A" (gtk_label_get_text _GtkLabel_)))
 	    (gtk_label_set_attributes _GtkLabel_ _PangoAttrList_)
@@ -59223,13 +59140,12 @@ EDITS: 1
 		 (_GtkStyle1_ (gtk_style_copy _GtkStyle_))
 		 (_GtkStyle2_ (gtk_widget_get_style _GtkWidget_))
 		 (_GtkStyle3_ (gtk_style_attach _GtkStyle_ _GdkWindow_))
-		 (_GtkWidget1_ (gtk_widget_ref _GtkWidget_))
+		 (_GtkWidget1_ _GtkWidget_)
 		 (_gboolean (gtk_widget_activate _GtkWidget_))
 		 (_gboolean1 (gtk_widget_is_focus _GtkWidget_))
 		 (_gchar_ (gtk_widget_get_name _GtkWidget_))
 		 (_gboolean2 (gtk_widget_get_child_visible _GtkWidget_))
 		 (_GtkWidget2_ (gtk_widget_get_parent _GtkWidget_))
-;		 (_GdkExtensionMode (gtk_widget_get_extension_events _GtkWidget_))
 		 (_GtkWidget3_ (gtk_widget_get_toplevel _GtkWidget_))
 		 (_GdkVisual_ (gtk_widget_get_visual _GtkWidget_))
 		 (_AtkObject_ (gtk_widget_get_accessible _GtkWidget_))
@@ -59273,7 +59189,6 @@ EDITS: 1
 	    (gtk_widget_set_events _GtkWidget5_ 0)
 	    (gtk_widget_add_events _GtkWidget5_ 0)
 	    (gtk_widget_set_direction _GtkWidget5_ GTK_TEXT_DIR_RTL)
-	    (gtk_widget_unref _GtkWidget1_)
 	    (gtk_widget_set_no_show_all _GtkWidget5_ #f)
 	    (gtk_widget_set_size_request _GtkWidget5_ 100 100)
 	    (gtk_style_detach _GtkStyle_)
@@ -60376,7 +60291,6 @@ EDITS: 1
 	    (gtk_accel_label_get_accel_widget _GtkAccelLabel_)
 	    (gtk_accel_map_add_filter "*.snd")
 	    (gtk_menu_detach _GtkMenu_)
-	    (gtk_menu_item_remove_submenu _GtkMenuItem_)
 	    (gtk_radio_menu_item_set_group _GtkRadioMenuItem_ #f)
 	    (gtk_accelerator_set_default_mod_mask GDK_MOD1_MASK)
 	    (gtk_window_remove_accel_group _GtkWindow_ _GtkAccelGroup_)
@@ -61397,7 +61311,7 @@ EDITS: 1
 		   gtk_menu_bar_new gtk_menu_detach gtk_menu_get_accel_group gtk_menu_get_active gtk_menu_get_attach_widget
 		   gtk_menu_get_for_attach_widget gtk_menu_get_tearoff_state gtk_menu_get_title gtk_menu_item_activate
 		   gtk_menu_item_deselect gtk_menu_item_get_right_justified gtk_menu_item_get_submenu gtk_menu_item_new
-		   gtk_menu_item_new_with_mnemonic gtk_menu_item_remove_submenu gtk_menu_item_select gtk_menu_item_set_accel_path gtk_menu_item_set_right_justified
+		   gtk_menu_item_new_with_mnemonic gtk_menu_item_select gtk_menu_item_set_accel_path gtk_menu_item_set_right_justified
 		   gtk_menu_item_set_submenu gtk_menu_item_toggle_size_allocate gtk_menu_item_toggle_size_request gtk_menu_new gtk_menu_popdown
 		   gtk_menu_popup gtk_menu_reorder_child gtk_menu_reposition gtk_menu_set_accel_group gtk_menu_set_accel_path
 		   gtk_menu_set_active gtk_menu_set_monitor gtk_menu_set_screen gtk_menu_set_tearoff_state gtk_menu_set_title
@@ -61653,8 +61567,8 @@ EDITS: 1
 		   gtk_tree_view_set_hover_selection gtk_tree_view_set_model gtk_tree_view_set_reorderable
 		   gtk_tree_view_set_row_separator_func gtk_tree_view_set_rules_hint gtk_tree_view_set_search_column 
 		   gtk_tree_view_set_search_equal_func gtk_tree_view_set_vadjustment
-		   gtk_tree_view_tree_to_widget_coords gtk_tree_view_unset_rows_drag_dest 
-		   gtk_tree_view_unset_rows_drag_source gtk_tree_view_widget_to_tree_coords gtk_true
+		   gtk_tree_view_unset_rows_drag_dest 
+		   gtk_tree_view_unset_rows_drag_source gtk_true
 		   gtk_ui_manager_add_ui gtk_ui_manager_add_ui_from_file gtk_ui_manager_add_ui_from_string 
 		   gtk_ui_manager_ensure_update gtk_ui_manager_get_accel_group
 		   gtk_ui_manager_get_action gtk_ui_manager_get_action_groups gtk_ui_manager_get_add_tearoffs gtk_ui_manager_get_ui
@@ -61678,7 +61592,7 @@ EDITS: 1
 		   gtk_widget_map gtk_widget_mnemonic_activate gtk_widget_modify_base gtk_widget_modify_bg gtk_widget_modify_fg
 		   gtk_widget_modify_font gtk_widget_modify_style gtk_widget_modify_text gtk_widget_path gtk_widget_pop_colormap
 		   gtk_widget_pop_composite_child gtk_widget_push_colormap gtk_widget_push_composite_child gtk_widget_queue_draw gtk_widget_queue_draw_area
-		   gtk_widget_queue_resize gtk_widget_queue_resize_no_redraw gtk_widget_realize gtk_widget_ref gtk_widget_region_intersect
+		   gtk_widget_queue_resize gtk_widget_queue_resize_no_redraw gtk_widget_realize gtk_widget_region_intersect
 		   gtk_widget_remove_accelerator gtk_widget_remove_mnemonic_label gtk_widget_render_icon gtk_widget_reparent gtk_widget_reset_rc_styles
 		   gtk_widget_reset_shapes gtk_widget_send_expose gtk_widget_set_accel_path gtk_widget_set_app_paintable gtk_widget_set_child_visible
 		   gtk_widget_set_colormap gtk_widget_set_composite_name gtk_widget_set_default_colormap gtk_widget_set_default_direction gtk_widget_set_direction
@@ -61687,7 +61601,7 @@ EDITS: 1
 		   gtk_widget_set_parent gtk_widget_set_parent_window gtk_widget_set_redraw_on_allocate gtk_widget_set_scroll_adjustments gtk_widget_set_sensitive
 		   gtk_widget_set_size_request gtk_widget_set_state gtk_widget_set_style gtk_widget_shape_combine_mask gtk_widget_show
 		   gtk_widget_show_all gtk_widget_show_now gtk_widget_size_allocate gtk_widget_size_request gtk_widget_thaw_child_notify
-		   gtk_widget_translate_coordinates gtk_widget_unmap gtk_widget_unparent gtk_widget_unrealize gtk_widget_unref
+		   gtk_widget_translate_coordinates gtk_widget_unmap gtk_widget_unparent gtk_widget_unrealize
 		   gtk_window_activate_default gtk_window_activate_focus gtk_window_activate_key gtk_window_add_accel_group gtk_window_add_embedded_xid
 		   gtk_window_add_mnemonic gtk_window_begin_move_drag gtk_window_begin_resize_drag gtk_window_deiconify gtk_window_get_accept_focus
 		   gtk_window_get_decorated gtk_window_get_default_icon_list gtk_window_get_default_size gtk_window_get_destroy_with_parent gtk_window_get_focus

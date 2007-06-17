@@ -9582,14 +9582,6 @@ static XEN gxg_gtk_menu_item_get_submenu(XEN menu_item)
   return(C_TO_XEN_GtkWidget_(gtk_menu_item_get_submenu(XEN_TO_C_GtkMenuItem_(menu_item))));
 }
 
-static XEN gxg_gtk_menu_item_remove_submenu(XEN menu_item)
-{
-  #define H_gtk_menu_item_remove_submenu "void gtk_menu_item_remove_submenu(GtkMenuItem* menu_item)"
-  XEN_ASSERT_TYPE(XEN_GtkMenuItem__P(menu_item), menu_item, 1, "gtk_menu_item_remove_submenu", "GtkMenuItem*");
-  gtk_menu_item_remove_submenu(XEN_TO_C_GtkMenuItem_(menu_item));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_menu_item_select(XEN menu_item)
 {
   #define H_gtk_menu_item_select "void gtk_menu_item_select(GtkMenuItem* menu_item)"
@@ -16401,32 +16393,6 @@ GdkRectangle* visible_rect)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_tree_view_widget_to_tree_coords(XEN tree_view, XEN wx, XEN wy, XEN ignore_tx, XEN ignore_ty)
-{
-  #define H_gtk_tree_view_widget_to_tree_coords "void gtk_tree_view_widget_to_tree_coords(GtkTreeView* tree_view, \
-gint wx, gint wy, gint* [tx], gint* [ty])"
-  gint ref_tx;
-  gint ref_ty;
-  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_widget_to_tree_coords", "GtkTreeView*");
-  XEN_ASSERT_TYPE(XEN_gint_P(wx), wx, 2, "gtk_tree_view_widget_to_tree_coords", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(wy), wy, 3, "gtk_tree_view_widget_to_tree_coords", "gint");
-  gtk_tree_view_widget_to_tree_coords(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_gint(wx), XEN_TO_C_gint(wy), &ref_tx, &ref_ty);
-  return(XEN_LIST_2(C_TO_XEN_gint(ref_tx), C_TO_XEN_gint(ref_ty)));
-}
-
-static XEN gxg_gtk_tree_view_tree_to_widget_coords(XEN tree_view, XEN tx, XEN ty, XEN ignore_wx, XEN ignore_wy)
-{
-  #define H_gtk_tree_view_tree_to_widget_coords "void gtk_tree_view_tree_to_widget_coords(GtkTreeView* tree_view, \
-gint tx, gint ty, gint* [wx], gint* [wy])"
-  gint ref_wx;
-  gint ref_wy;
-  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_tree_to_widget_coords", "GtkTreeView*");
-  XEN_ASSERT_TYPE(XEN_gint_P(tx), tx, 2, "gtk_tree_view_tree_to_widget_coords", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(ty), ty, 3, "gtk_tree_view_tree_to_widget_coords", "gint");
-  gtk_tree_view_tree_to_widget_coords(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_gint(tx), XEN_TO_C_gint(ty), &ref_wx, &ref_wy);
-  return(XEN_LIST_2(C_TO_XEN_gint(ref_wx), C_TO_XEN_gint(ref_wy)));
-}
-
 static XEN gxg_gtk_tree_view_enable_model_drag_source(XEN tree_view, XEN start_button_mask, XEN targets, XEN n_targets, XEN actions)
 {
   #define H_gtk_tree_view_enable_model_drag_source "void gtk_tree_view_enable_model_drag_source(GtkTreeView* tree_view, \
@@ -16853,21 +16819,6 @@ static XEN gxg_GTK_WIDGET_UNSET_FLAGS(XEN wid, XEN flag)
   XEN_ASSERT_TYPE(XEN_GtkWidget__P(wid), wid, 1, "GTK_WIDGET_UNSET_FLAGS", "GtkWidget*");
   XEN_ASSERT_TYPE(XEN_int_P(flag), flag, 2, "GTK_WIDGET_UNSET_FLAGS", "int");
   GTK_WIDGET_UNSET_FLAGS(XEN_TO_C_GtkWidget_(wid), XEN_TO_C_int(flag));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_widget_ref(XEN widget)
-{
-  #define H_gtk_widget_ref "GtkWidget* gtk_widget_ref(GtkWidget* widget)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_ref", "GtkWidget*");
-  return(C_TO_XEN_GtkWidget_(gtk_widget_ref(XEN_TO_C_GtkWidget_(widget))));
-}
-
-static XEN gxg_gtk_widget_unref(XEN widget)
-{
-  #define H_gtk_widget_unref "void gtk_widget_unref(GtkWidget* widget)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_unref", "GtkWidget*");
-  gtk_widget_unref(XEN_TO_C_GtkWidget_(widget));
   return(XEN_FALSE);
 }
 
@@ -35043,7 +34994,6 @@ XEN_NARGIFY_1(gxg_gtk_menu_item_new_with_label_w, gxg_gtk_menu_item_new_with_lab
 XEN_NARGIFY_1(gxg_gtk_menu_item_new_with_mnemonic_w, gxg_gtk_menu_item_new_with_mnemonic)
 XEN_NARGIFY_2(gxg_gtk_menu_item_set_submenu_w, gxg_gtk_menu_item_set_submenu)
 XEN_NARGIFY_1(gxg_gtk_menu_item_get_submenu_w, gxg_gtk_menu_item_get_submenu)
-XEN_NARGIFY_1(gxg_gtk_menu_item_remove_submenu_w, gxg_gtk_menu_item_remove_submenu)
 XEN_NARGIFY_1(gxg_gtk_menu_item_select_w, gxg_gtk_menu_item_select)
 XEN_NARGIFY_1(gxg_gtk_menu_item_deselect_w, gxg_gtk_menu_item_deselect)
 XEN_NARGIFY_1(gxg_gtk_menu_item_activate_w, gxg_gtk_menu_item_activate)
@@ -35707,8 +35657,6 @@ XEN_ARGIFY_7(gxg_gtk_tree_view_get_path_at_pos_w, gxg_gtk_tree_view_get_path_at_
 XEN_NARGIFY_4(gxg_gtk_tree_view_get_cell_area_w, gxg_gtk_tree_view_get_cell_area)
 XEN_NARGIFY_4(gxg_gtk_tree_view_get_background_area_w, gxg_gtk_tree_view_get_background_area)
 XEN_NARGIFY_2(gxg_gtk_tree_view_get_visible_rect_w, gxg_gtk_tree_view_get_visible_rect)
-XEN_ARGIFY_5(gxg_gtk_tree_view_widget_to_tree_coords_w, gxg_gtk_tree_view_widget_to_tree_coords)
-XEN_ARGIFY_5(gxg_gtk_tree_view_tree_to_widget_coords_w, gxg_gtk_tree_view_tree_to_widget_coords)
 XEN_NARGIFY_5(gxg_gtk_tree_view_enable_model_drag_source_w, gxg_gtk_tree_view_enable_model_drag_source)
 XEN_NARGIFY_4(gxg_gtk_tree_view_enable_model_drag_dest_w, gxg_gtk_tree_view_enable_model_drag_dest)
 XEN_NARGIFY_1(gxg_gtk_tree_view_unset_rows_drag_source_w, gxg_gtk_tree_view_unset_rows_drag_source)
@@ -35761,8 +35709,6 @@ XEN_NARGIFY_1(gxg_GTK_WIDGET_RECEIVES_DEFAULT_w, gxg_GTK_WIDGET_RECEIVES_DEFAULT
 XEN_NARGIFY_1(gxg_GTK_WIDGET_DOUBLE_BUFFERED_w, gxg_GTK_WIDGET_DOUBLE_BUFFERED)
 XEN_NARGIFY_2(gxg_GTK_WIDGET_SET_FLAGS_w, gxg_GTK_WIDGET_SET_FLAGS)
 XEN_NARGIFY_2(gxg_GTK_WIDGET_UNSET_FLAGS_w, gxg_GTK_WIDGET_UNSET_FLAGS)
-XEN_NARGIFY_1(gxg_gtk_widget_ref_w, gxg_gtk_widget_ref)
-XEN_NARGIFY_1(gxg_gtk_widget_unref_w, gxg_gtk_widget_unref)
 XEN_NARGIFY_1(gxg_gtk_widget_destroy_w, gxg_gtk_widget_destroy)
 XEN_ARGIFY_2(gxg_gtk_widget_destroyed_w, gxg_gtk_widget_destroyed)
 XEN_NARGIFY_1(gxg_gtk_widget_unparent_w, gxg_gtk_widget_unparent)
@@ -38901,7 +38847,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_menu_item_new_with_mnemonic_w gxg_gtk_menu_item_new_with_mnemonic
 #define gxg_gtk_menu_item_set_submenu_w gxg_gtk_menu_item_set_submenu
 #define gxg_gtk_menu_item_get_submenu_w gxg_gtk_menu_item_get_submenu
-#define gxg_gtk_menu_item_remove_submenu_w gxg_gtk_menu_item_remove_submenu
 #define gxg_gtk_menu_item_select_w gxg_gtk_menu_item_select
 #define gxg_gtk_menu_item_deselect_w gxg_gtk_menu_item_deselect
 #define gxg_gtk_menu_item_activate_w gxg_gtk_menu_item_activate
@@ -39565,8 +39510,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_tree_view_get_cell_area_w gxg_gtk_tree_view_get_cell_area
 #define gxg_gtk_tree_view_get_background_area_w gxg_gtk_tree_view_get_background_area
 #define gxg_gtk_tree_view_get_visible_rect_w gxg_gtk_tree_view_get_visible_rect
-#define gxg_gtk_tree_view_widget_to_tree_coords_w gxg_gtk_tree_view_widget_to_tree_coords
-#define gxg_gtk_tree_view_tree_to_widget_coords_w gxg_gtk_tree_view_tree_to_widget_coords
 #define gxg_gtk_tree_view_enable_model_drag_source_w gxg_gtk_tree_view_enable_model_drag_source
 #define gxg_gtk_tree_view_enable_model_drag_dest_w gxg_gtk_tree_view_enable_model_drag_dest
 #define gxg_gtk_tree_view_unset_rows_drag_source_w gxg_gtk_tree_view_unset_rows_drag_source
@@ -39619,8 +39562,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_WIDGET_DOUBLE_BUFFERED_w gxg_GTK_WIDGET_DOUBLE_BUFFERED
 #define gxg_GTK_WIDGET_SET_FLAGS_w gxg_GTK_WIDGET_SET_FLAGS
 #define gxg_GTK_WIDGET_UNSET_FLAGS_w gxg_GTK_WIDGET_UNSET_FLAGS
-#define gxg_gtk_widget_ref_w gxg_gtk_widget_ref
-#define gxg_gtk_widget_unref_w gxg_gtk_widget_unref
 #define gxg_gtk_widget_destroy_w gxg_gtk_widget_destroy
 #define gxg_gtk_widget_destroyed_w gxg_gtk_widget_destroyed
 #define gxg_gtk_widget_unparent_w gxg_gtk_widget_unparent
@@ -42766,7 +42707,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_menu_item_new_with_mnemonic, gxg_gtk_menu_item_new_with_mnemonic_w, 1, 0, 0, H_gtk_menu_item_new_with_mnemonic);
   XG_DEFINE_PROCEDURE(gtk_menu_item_set_submenu, gxg_gtk_menu_item_set_submenu_w, 2, 0, 0, H_gtk_menu_item_set_submenu);
   XG_DEFINE_PROCEDURE(gtk_menu_item_get_submenu, gxg_gtk_menu_item_get_submenu_w, 1, 0, 0, H_gtk_menu_item_get_submenu);
-  XG_DEFINE_PROCEDURE(gtk_menu_item_remove_submenu, gxg_gtk_menu_item_remove_submenu_w, 1, 0, 0, H_gtk_menu_item_remove_submenu);
   XG_DEFINE_PROCEDURE(gtk_menu_item_select, gxg_gtk_menu_item_select_w, 1, 0, 0, H_gtk_menu_item_select);
   XG_DEFINE_PROCEDURE(gtk_menu_item_deselect, gxg_gtk_menu_item_deselect_w, 1, 0, 0, H_gtk_menu_item_deselect);
   XG_DEFINE_PROCEDURE(gtk_menu_item_activate, gxg_gtk_menu_item_activate_w, 1, 0, 0, H_gtk_menu_item_activate);
@@ -43430,8 +43370,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tree_view_get_cell_area, gxg_gtk_tree_view_get_cell_area_w, 4, 0, 0, H_gtk_tree_view_get_cell_area);
   XG_DEFINE_PROCEDURE(gtk_tree_view_get_background_area, gxg_gtk_tree_view_get_background_area_w, 4, 0, 0, H_gtk_tree_view_get_background_area);
   XG_DEFINE_PROCEDURE(gtk_tree_view_get_visible_rect, gxg_gtk_tree_view_get_visible_rect_w, 2, 0, 0, H_gtk_tree_view_get_visible_rect);
-  XG_DEFINE_PROCEDURE(gtk_tree_view_widget_to_tree_coords, gxg_gtk_tree_view_widget_to_tree_coords_w, 3, 2, 0, H_gtk_tree_view_widget_to_tree_coords);
-  XG_DEFINE_PROCEDURE(gtk_tree_view_tree_to_widget_coords, gxg_gtk_tree_view_tree_to_widget_coords_w, 3, 2, 0, H_gtk_tree_view_tree_to_widget_coords);
   XG_DEFINE_PROCEDURE(gtk_tree_view_enable_model_drag_source, gxg_gtk_tree_view_enable_model_drag_source_w, 5, 0, 0, H_gtk_tree_view_enable_model_drag_source);
   XG_DEFINE_PROCEDURE(gtk_tree_view_enable_model_drag_dest, gxg_gtk_tree_view_enable_model_drag_dest_w, 4, 0, 0, H_gtk_tree_view_enable_model_drag_dest);
   XG_DEFINE_PROCEDURE(gtk_tree_view_unset_rows_drag_source, gxg_gtk_tree_view_unset_rows_drag_source_w, 1, 0, 0, H_gtk_tree_view_unset_rows_drag_source);
@@ -43484,8 +43422,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_WIDGET_DOUBLE_BUFFERED, gxg_GTK_WIDGET_DOUBLE_BUFFERED_w, 1, 0, 0, H_GTK_WIDGET_DOUBLE_BUFFERED);
   XG_DEFINE_PROCEDURE(GTK_WIDGET_SET_FLAGS, gxg_GTK_WIDGET_SET_FLAGS_w, 2, 0, 0, H_GTK_WIDGET_SET_FLAGS);
   XG_DEFINE_PROCEDURE(GTK_WIDGET_UNSET_FLAGS, gxg_GTK_WIDGET_UNSET_FLAGS_w, 2, 0, 0, H_GTK_WIDGET_UNSET_FLAGS);
-  XG_DEFINE_PROCEDURE(gtk_widget_ref, gxg_gtk_widget_ref_w, 1, 0, 0, H_gtk_widget_ref);
-  XG_DEFINE_PROCEDURE(gtk_widget_unref, gxg_gtk_widget_unref_w, 1, 0, 0, H_gtk_widget_unref);
   XG_DEFINE_PROCEDURE(gtk_widget_destroy, gxg_gtk_widget_destroy_w, 1, 0, 0, H_gtk_widget_destroy);
   XG_DEFINE_PROCEDURE(gtk_widget_destroyed, gxg_gtk_widget_destroyed_w, 1, 1, 0, H_gtk_widget_destroyed);
   XG_DEFINE_PROCEDURE(gtk_widget_unparent, gxg_gtk_widget_unparent_w, 1, 0, 0, H_gtk_widget_unparent);
@@ -47582,7 +47518,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("24-May-07"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("16-Jun-07"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

@@ -3275,6 +3275,7 @@ zoom-spectrum sets the transform size to correspond to the time-domain window si
 <tr><td colspan=2 height=16></td></tr>
 
 
+
 <!-- -------------------------------- examp FILTERS -------------------------------- -->
 <tr><td colspan=2 bgcolor="lightgreen"><center><A NAME="ssfilters">filters</A></center></td><td></td></tr>
 
@@ -3391,7 +3392,20 @@ osc-formants sets up any number of independently oscillating formants, then call
 'amounts' are "deviations" -- they scale the oscillator outputs which set the runtime
 formant frequencies (thereby setting the width of the warbling).
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- virtual-filter-channel -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def NAME="virtualfilterchannel">virtual-filter-channnel</em> <code>coeffs :optional beg dur snd chn edpos</code>
+</td></tr><tr><td></td><td>
+This is a virtual edit version of <a href="extsnd.html#filterchannel">filter-channel</a>.
+<pre>
+    (virtual-filter-channel (vct 1.0 .5 .25) 0 10 0 0 1)
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
+
 
 
 <!-- -------------------------------- examp SOUND EFFECTS -------------------------------- -->

@@ -19,8 +19,6 @@ A CD building script.
 
 "waterfall" spectrum display in oscope.scm.
 
-A robust noise reduction technique.
-
 Physical model of a thunder machine.
 
 Should the Scheme/Ruby files be gettext-ized?  Here's a Guile example:

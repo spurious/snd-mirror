@@ -403,7 +403,6 @@ typedef struct ed_fragment {               /* this name is necessary even in str
         end;                               /* index into the associated data => end point of data used in current segment */
   Float scl;                               /* segment scaler */
   ed_ramps *ramps;
-  /* could use union here except that it might complicate the task of copy_ed_fragment below */
   ed_ptrees *ptrees;
   ed_mixes *mixes; 
 } ed_fragment;
@@ -519,7 +518,7 @@ typedef struct ed_fragment {               /* this name is necessary even in str
 #define ED_PTREE2_POSITION(Ed)  (Ed)->ptrees->ptree_pos2
 #define ED_PTREE3_POSITION(Ed)  (Ed)->ptrees->ptree_pos3
 #define ED_RAMPS(Ed)            (Ed)->ramps
-#define ED_PTRESS(Ed)           (Ed)->ptrees
+#define ED_PTREES(Ed)           (Ed)->ptrees
 #define ED_MIXES(Ed)            (Ed)->mixes
 #define ED_MIX_LIST_SIZE(Ed)    (Ed)->mixes->size
 #define ED_MIX_LIST(Ed)         (Ed)->mixes->mix_list
@@ -5744,8 +5743,8 @@ static void ensure_ed_ramps(ed_fragment *ed)
 
 static void ensure_ed_ptrees(ed_fragment *ed)
 {
-  if (!(ed->ptrees))
-    ed->ptrees = (ed_ptrees *)CALLOC(1, sizeof(ed_ptrees));
+  if (!(ED_PTREES(ed)))
+    ED_PTREES(ed) = (ed_ptrees *)CALLOC(1, sizeof(ed_ptrees));
 }
 
 
@@ -5769,9 +5768,9 @@ void describe_ed_fragment(FILE *Fp, void *ptr)
   ed_fragment *ed = (ed_fragment *)ptr;
   fprintf(Fp, "[%p, type: %s, snd: %d, out: " OFF_TD ", beg: " OFF_TD ", end: " OFF_TD ", scl: %.3f, ramps: %p, ptrees: %p, mixes: %p",
 	  ed, ((ed->typ >= ED_SIMPLE) && (ed->typ < NUM_OPS)) ? type_info[ed->typ].name : "unknown op",
-	  ed->snd, ed->out, ed->beg, ed->end, ed->scl, ed->ramps, ed->ptrees, ed->mixes);
-  if (ed->mixes)
-    fprintf(Fp, " (size: %d, sfs: %p)", ed->mixes->size, ed->mixes->mix_list);
+	  ed->snd, ed->out, ed->beg, ed->end, ed->scl, ed->ramps, ED_PTREES(ed), ED_MIXES(ed));
+  if (ED_MIXES(ed))
+    fprintf(Fp, " (size: %d, sfs: %p)", ED_MIX_LIST_SIZE(ed), ED_MIX_LIST(ed));
   fprintf(Fp, "]\n    ");
 }
 #endif
@@ -5802,13 +5801,13 @@ static void copy_ed_fragment(ed_fragment *new_ed, ed_fragment *old_ed)
       ensure_ed_ramps(new_ed);
       memcpy((void *)(new_ed->ramps), (void *)(old_ed->ramps), sizeof(ed_ramps));
     }
-  if (old_ed->ptrees)
+  if (ED_PTREES(old_ed))
     {
       ensure_ed_ptrees(new_ed);
-      memcpy((void *)(new_ed->ptrees), (void *)(old_ed->ptrees), sizeof(ed_ptrees));
+      memcpy((void *)(ED_PTREES(new_ed)), (void *)(ED_PTREES(old_ed)), sizeof(ed_ptrees));
     }
-  if (old_ed->mixes)
-    new_ed->mixes = copy_fragment_mixes(old_ed->mixes);
+  if (ED_MIXES(old_ed))
+    ED_MIXES(new_ed) = copy_fragment_mixes(ED_MIXES(old_ed));
 }
 
 
@@ -5817,11 +5816,11 @@ static ed_fragment *free_ed_fragment(ed_fragment *ed)
   if (ed)
     {
       if (ed->ramps) FREE(ed->ramps);
-      if (ed->ptrees) FREE(ed->ptrees);
-      if (ed->mixes) 
+      if (ED_PTREES(ed)) FREE(ED_PTREES(ed));
+      if (ED_MIXES(ed)) 
 	{
-	  if (ed->mixes->mix_list) FREE(ed->mixes->mix_list);
-	  FREE(ed->mixes);
+	  if (ED_MIX_LIST(ed)) FREE(ED_MIX_LIST(ed));
+	  FREE(ED_MIXES(ed));
 	}
       FREE(ed);
     }
@@ -5984,10 +5983,10 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
 	  ed->properties_gc_loc = NOT_A_GC_LOC;
 	  ed->properties = XEN_FALSE;
 	}
-      if (ed->mixes)
+      if (ED_MIXES(ed))
 	{
-	  free_ed_mixes(ed->mixes);
-	  ed->mixes = NULL;
+	  free_ed_mixes(ED_MIXES(ed));
+	  ED_MIXES(ed) = NULL;
 	}
       FREE(ed);
     }
@@ -8054,7 +8053,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
 	  (ED_SOUND(cb) == EDIT_LIST_END_MARK))             /* i.e. we went one too far */
 	{
 	  off_t ind0, ind1, indx;
-	  sf->cb = FRAGMENT(ed, i - 1);  /* so back up one */
+	  sf->cb = FRAGMENT(ed, i - 1);                     /* so back up one */
 	  sf->cbi = i - 1;
 	  sf->frag_pos = samp - READER_GLOBAL_POSITION(sf);
 	  ind0 = READER_LOCAL_POSITION(sf);                   /* cb->beg */
@@ -11632,116 +11631,16 @@ append the rest?
 	
 */
 
-#if 0
-
-/* for virtual filter (and ultimately virtual src), 
+/* for virtual filter (and ultimately virtual src), see virtual-filter-channel (examp.scm) and convolve-coeffs (snd-test.scm)
  * this almost works! -- it can repeat one sample if previous-sample after next-sample (but the standard case repeats as well!)
  *   sample-reader-position is ahead 1 if reading forward, back 1 if reading backward,
  *   so in C, I guess we could use that for "cur-loc"
- *
  *   but how to store in ed_fragment?
  *   and how often is this actually going to be used?
+ *   and if we need the peak env anyway, why not write the data out somewhere?
+ * filter on filter if combined orders < max, convolve coeffs
+ *
+ * reverse is too tricky: we'd need to reverse the ed list and remember to reverse it internally on any subsequent list change (deletion etc)
+ *    then the reader would need the start-time fixups (not hard) internally reading backward, but next-sound at end not previous
+ */
 
-;; (virtual-filter-channel (vct 1.0 .5 .25) 0 10 0 0 1)
-
-(define (virtual-filter-channel coeffs beg dur snd chn edpos)
-  (ptree-channel
-
-   (lambda (y data forward)
-     (declare (y real) (data vct) (forward boolean))
-     (let* ((sum 0.0)
-	    (order (inexact->exact (floor (vct-ref data 0))))
-	    (cur-loc (inexact->exact (floor (vct-ref data 1))))
-	    (init-time (> (vct-ref data 2) 0.0))
-	    (last-forward (> (vct-ref data 3) 0.0))
-	    (coeffs-0 4)
-	    (state-0 (+ coeffs-0 order)))
-
-       (if (eq? last-forward forward)
-       (if init-time
-	   (begin
-	     (vct-set! data 2 -1.0))
-	   (begin
-	     (if forward
-		 (begin
-		   (do ((i (- order 1) (1- i)))
-		       ((= i 0))
-		     (vct-set! data (+ i state-0) (vct-ref data (+ i -1 state-0))))
-		   (vct-set! data state-0 y)
-		   (set! cur-loc (1+ cur-loc)))
-
-		 (let ((pos (max 0 (- cur-loc order))))
-		   (if (< pos 0)
-		       (set! y 0.0)
-		       (set! y (sample pos snd chn edpos)))
-		   (do ((i 0 (1+ i)))
-		       ((= i (1- order)))
-		     (vct-set! data (+ i state-0) (vct-ref data (+ i 1 state-0))))
-		   (vct-set! data (+ state-0 order -1) y)
-		   (set! cur-loc (1- cur-loc))))))
-       )
-
-       (do ((i 0 (1+ i)))
-	   ((= i order))
-	 (set! sum (+ sum (* (vct-ref data (+ coeffs-0 i)) 
-			     (vct-ref data (+ state-0 i))))))
-
-       (vct-set! data 1 cur-loc)
-       (if forward (vct-set! data 3 1.0) (vct-set! data 3 -1.0))
-       
-       sum))
-
-   beg dur snd chn edpos #f
-
-   (lambda (frag-beg frag-dur forward)
-     (let* ((order (vct-length coeffs))
-	    (coeffs-0 4)
-	    (state-0 (+ order coeffs-0))
-	    (d (make-vct (+ coeffs-0 (* 2 order)))))
-       (vct-set! d 0 order)
-       (vct-set! d 2 1.0) ; first sample flag
-       (if forward (vct-set! d 3 1.0) (vct-set! d 3 -1.0))
-
-       (do ((i 0 (1+ i)))
-	   ((= i order))
-	 (vct-set! d (+ i coeffs-0) (vct-ref coeffs i)))
-
-       (let ((start (- (+ 1 frag-beg beg) order))
-	     (i (1- order)))
-	 (if (< start 0)
-	     (do ()
-		 ((= start 0))
-	       (vct-set! d (+ i state-0) 0)
-	       (set! i (1- i))
-	       (set! start (1+ start))))
-	 (if (>= i 0)
-	     (let ((rd (make-sample-reader start snd chn 1 edpos)))
-	       (do ()
-		   ((= i -1))
-		 (vct-set! d (+ i state-0) (rd))
-		 (set! i (1- i)))
-	       (free-sample-reader rd)))
-	 (vct-set! d 1 (+ frag-beg beg))
-
-	 d)))))
-
-(define (convolve-coeffs v1 v2)
-  (let* ((v1-len (vct-length v1))
-	 (v2-len (vct-length v2))
-	 (res-len (+ v1-len v2-len -1))
-	 (vres (make-vct res-len)))
-    (do ((i 0 (1+ i)))
-	((= i res-len))
-      (let ((sum 0.0))
-	(do ((j (max 0 (1+ (- i v2-len))) (1+ j)))
-	    ((> j (min i (1- v1-len))))
-	  (set! sum (+ sum (* (vct-ref v1 j) 
-			      (vct-ref v2 (- i j))))))
-	(vct-set! vres i sum)))
-    vres))
-
-*/
-
-   /* filter on filter if combined orders < max, convolve coeffs */
-
-#endif
