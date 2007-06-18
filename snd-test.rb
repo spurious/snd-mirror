@@ -14002,7 +14002,7 @@ def test048
   gen.scaler = 0.75
   snd_display("sine_summation set_scaler: %s?", gen.scaler) if fneq(gen.scaler, 0.75)
   snd_display("sine_summation cosines: %d?", gen.cosines) if fneq(gen.cosines, 1)
-  snd_display("sine_summation increment: %s?", gen.increment) if fneq(gen.increment, 1.0)
+  snd_display("sine_summation offset: %s?", gen.offset) if fneq(gen.offset, 1.0)
   test_gen_equal(make_sine_summation(440),
                  make_sine_summation(440),
                  make_sine_summation(400))
@@ -14119,7 +14119,7 @@ def test048
   snd_display("asymmetric_fm set_scaler: %s?", gen.scaler) if fneq(gen.scaler, 1.0)
   gen.scaler = 0.5
   snd_display("asymmetric_fm set_scaler: %s?", gen.scaler) if fneq(gen.scaler, 0.5)
-  snd_display("asymmetric_fm increment: %s?", gen.increment) if fneq(gen.increment, 1.0)
+  snd_display("asymmetric_fm offset: %s?", gen.offset) if fneq(gen.offset, 1.0)
   test_gen_equal(make_asymmetric_fm(440),
                  make_asymmetric_fm(440),
                  make_asymmetric_fm(100))

@@ -2,10 +2,12 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 35
-#define MUS_DATE "12-June-07"
+#define MUS_REVISION 36
+#define MUS_DATE "19-June-07"
 
 /*
+ * 19-June:    mus-increment on gens with a notion of frequency (phase increment); 
+ *               to make room for this, asymmetric-fm ratio and sine-summation b moved to mus-offset.
  * 22-Feb:     mus_big_fft and mus_spectrum_t.
  * 21-Feb:     mus_fft_window_name.
  * 14-Feb:     three more fft window choices.

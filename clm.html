@@ -523,6 +523,7 @@ To get a cosine (as opposed to sin), set the initial-phase to (/ pi 2).
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-cosines</em></td><td>1 (no setf)</td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
 </table>
 <br>
 <pre>
@@ -812,6 +813,7 @@ mus-interp-linear, mus-interp-lagrange, mus-interp-bezier, or mus-interp-hermite
 <tr><td><em class=gen>mus-data</em></td><td>wave array</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>wave size (no setf)</td></tr>
 <tr><td><em class=gen>mus-interp-type</em></td><td>interpolation choice (no setf)</td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>table increment per sample</td></tr>
 </table>
 <pre>
 <br>
@@ -881,6 +883,7 @@ a polynomial.  <i>kind</i> can be <b>mus-chebyshev-first-kind</b> or <b>mus-cheb
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>wave array (no setf)</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>wave size (no setf)</td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
 </table>
 <pre>
 <br>
@@ -1008,6 +1011,7 @@ Even more amusing is this algorithm:
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>amplitude arg used in make-&lt;gen&gt;</td></tr>
 <tr><td><em class=gen>mus-width</em></td><td>width of square-wave pulse (0.0 to 1.0)</td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
 </table>
 <pre>
 <br>
@@ -1059,6 +1063,7 @@ cancel except the last.
 <tr><td><em class=gen>mus-scaler</em></td><td>(/ 1.0 cosines)</td></tr>
 <tr><td><em class=gen>mus-cosines</em></td><td>cosines arg  used in make-&lt;gen&gt;</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>same as mus-cosines</td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
 </table>
 <pre>
 <br>
@@ -1141,6 +1146,7 @@ but perhaps a filter is a simpler approach.
 <tr><td><em class=gen>mus-scaler</em></td><td>dependent on number of sines</td></tr>
 <tr><td><em class=gen>mus-cosines</em></td><td>sines arg  used in make-&lt;gen&gt;</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>same as mus-cosines</td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
 </table>
 <pre>
 <br>
@@ -1174,6 +1180,7 @@ based on:
 <tr><td><em class=gen>mus-xcoeff</em></td><td>FIR filter coeff</td></tr>
 <tr><td><em class=gen>mus-xcoeffs</em></td><td>embedded Hilbert transform FIR filter coeffs</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>embedded filter state</td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
 </table>
 <pre>
 <br>
@@ -1316,6 +1323,7 @@ way around Lisp's clumsy mechanism for repeating a random number sequence.
 <tr><td><em class=gen>mus-scaler</em></td><td>amplitude arg used in make-&lt;gen&gt;</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>distribution table length</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>distribution table, if any</td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
 </table>
 <pre>
 <br>
@@ -2437,7 +2445,8 @@ in functions that do what the phase-vocoder would have done without any function
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>"a" parameter; sideband scaler</td></tr>
 <tr><td><em class=gen>mus-cosines</em></td><td>"n" parameter</td></tr>
-<tr><td><em class=gen>mus-increment</em></td><td>"ratio" parameter</td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
+<tr><td><em class=gen>mus-offset</em></td><td>"ratio" parameter</td></tr>
 </table>
 <br>
 <pre>
@@ -2489,7 +2498,8 @@ don't set <i>a</i> to 1.0!).
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>"r" parameter; sideband scaler</td></tr>
-<tr><td><em class=gen>mus-increment</em></td><td>"ratio" parameter</td></tr>
+<tr><td><em class=gen>mus-offset</em></td><td>"ratio" parameter</td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
 </table>
 <br>
 <pre>

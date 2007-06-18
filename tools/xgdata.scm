@@ -2151,7 +2151,7 @@
 (CFNC "GtkWidget* gtk_menu_item_new_with_mnemonic gchar* label")
 (CFNC "void gtk_menu_item_set_submenu GtkMenuItem* menu_item GtkWidget* submenu")
 (CFNC "GtkWidget* gtk_menu_item_get_submenu GtkMenuItem* menu_item")
-(CFNC "void gtk_menu_item_remove_submenu GtkMenuItem* menu_item")
+;;; (CFNC "void gtk_menu_item_remove_submenu GtkMenuItem* menu_item") ; out 2.11.3
 (CFNC "void gtk_menu_item_select GtkMenuItem* menu_item")
 (CFNC "void gtk_menu_item_deselect GtkMenuItem* menu_item")
 (CFNC "void gtk_menu_item_activate GtkMenuItem* menu_item")
@@ -3274,8 +3274,8 @@
 (CFNC "void gtk_tree_view_get_cell_area GtkTreeView* tree_view GtkTreePath* @path GtkTreeViewColumn* @column GdkRectangle* rect")
 (CFNC "void gtk_tree_view_get_background_area GtkTreeView* tree_view GtkTreePath* @path GtkTreeViewColumn* @column GdkRectangle* rect")
 (CFNC "void gtk_tree_view_get_visible_rect GtkTreeView* tree_view GdkRectangle* visible_rect")
-(CFNC "void gtk_tree_view_widget_to_tree_coords GtkTreeView* tree_view gint wx gint wy gint* [tx] gint* [ty]")
-(CFNC "void gtk_tree_view_tree_to_widget_coords GtkTreeView* tree_view gint tx gint ty gint* [wx] gint* [wy]")
+;;; (out 2.11.3) (CFNC "void gtk_tree_view_widget_to_tree_coords GtkTreeView* tree_view gint wx gint wy gint* [tx] gint* [ty]")
+;;; (out 2.11.3) (CFNC "void gtk_tree_view_tree_to_widget_coords GtkTreeView* tree_view gint tx gint ty gint* [wx] gint* [wy]")
 (CFNC "void gtk_tree_view_enable_model_drag_source GtkTreeView* tree_view GdkModifierType start_button_mask GtkTargetEntry* targets gint n_targets GdkDragAction actions")
 (CFNC "void gtk_tree_view_enable_model_drag_dest GtkTreeView* tree_view GtkTargetEntry* targets gint n_targets GdkDragAction actions")
 (CFNC "void gtk_tree_view_unset_rows_drag_source GtkTreeView* tree_view")
@@ -3398,8 +3398,8 @@
 ;;;;(CFNC "GtkType gtk_widget_get_type void")
 ;;; (CFNC "GtkWidget* gtk_widget_new GtkType type gchar* first_property_name ...")
 ;;; any type vals here
-(CFNC "GtkWidget* gtk_widget_ref GtkWidget* widget")
-(CFNC "void gtk_widget_unref GtkWidget* widget")
+;;; (out 2.11.3) (CFNC "GtkWidget* gtk_widget_ref GtkWidget* widget")
+;;; (out 2.11.3) (CFNC "void gtk_widget_unref GtkWidget* widget")
 (CFNC "void gtk_widget_destroy GtkWidget* widget")
 (CFNC "void gtk_widget_destroyed GtkWidget* widget GtkWidget** [widget_pointer]")
 (CFNC "void gtk_widget_unparent GtkWidget* widget")
@@ -6689,8 +6689,27 @@
 ;(CFNC-2111 "GtkTextMark* gtk_text_mark_new gchar* name gboolean left_gravity")
 ;;; this enum is commented out above (CINT-2111 "GTK_PRINT_CAPABILITY_NUMBER_UP" "GtkPrintCapabilities")
 
+
 ;;; for 2.11.2:
 
 ;(CFNC-2112 "GtkWidget* gtk_tree_view_column_get_tree_view GtkTreeViewColumn* tree_column")
 
+
+;;; for 2.11.3
+;;; new headers gtkbuildable builder (XML UI builder -- not important)
+
+;(CSTR-2113 "GTK_STOCK_DISCARD")
+;(CFNC-2113 "void gtk_text_layout_set_overwrite_mode GtkTextLayout* layout gboolean overwrite")
+;(CFNC-2113 "void gtk_tooltip_set_text GtkTooltip* tooltip gchar* text" 'const)
+;(CFNC-2113 "void gtk_tree_view_convert_widget_to_tree_coords GtkTreeView* tree_view gint wx gint wy gint* [tx] gint* [ty]")
+;(CFNC-2113 "void gtk_tree_view_convert_tree_to_widget_coords GtkTreeView* tree_view gint tx gint ty gint* [wx] gint* [wy]")
+;(CFNC-2113 "void gtk_tree_view_convert_widget_to_bin_window_coords GtkTreeView* tree_view gint wx gint wy gint* [bx] gint* [by]")
+;(CFNC-2113 "void gtk_tree_view_convert_bin_window_to_widget_coords GtkTreeView* tree_view gint bx gint by gint* [wx] gint* [wy]")
+;(CFNC-2113 "void gtk_tree_view_convert_tree_to_bin_window_coords GtkTreeView* tree_view gint tx gint ty gint* [bx] gint* [by]")
+;(CFNC-2113 "void gtk_tree_view_convert_bin_window_to_tree_coords GtkTreeView* tree_view gint bx gint by gint* [tx] gint* [ty]")
+;(CFNC-2113 "void gtk_widget_modify_cursor GtkWidget* widget GdkColor* primary GdkColor* secondary")
+;(CFNC-2113 "void gtk_widget_set_tooltip_text GtkWidget* widget gchar* text" 'const)
+;(CFNC-2113 "gchar* gtk_widget_get_tooltip_text GtkWidget* widget")
+;(CFNC-2113 "void gtk_widget_set_tooltip_markup GtkWidget* widget gchar* markup" 'const)
+;(CFNC-2113 "gchar* gtk_widget_get_tooltip_markup GtkWidget* widget")
 

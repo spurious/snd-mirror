@@ -2326,20 +2326,29 @@
 	(let ((len (speaker-config-number speakers)))
 	  (do ((i 0 (1+ i)))
 	      ((= i len))
-	    (vector-set! channel-gains i (cons time (vector-ref channel-gains i)))
-	    (vector-set! channel-gains i (cons (vector-ref outputs i) (vector-ref channel-gains i)))))
+	    (if (or (null? (vector-ref channel-gains i))
+		    (> time (cadr (vector-ref channel-gains i))))
+		(begin
+		  (vector-set! channel-gains i (cons time (vector-ref channel-gains i)))
+		  (vector-set! channel-gains i (cons (vector-ref outputs i) (vector-ref channel-gains i)))))))
 
 	(if (> rev-channels 1)
 	    (do ((i 0 (1+ i)))
 		((= i rev-channels))
-	      (vector-set! channel-rev-gains i (cons time (vector-ref channel-rev-gains i)))
-	      (vector-set! channel-rev-gains i (cons (vector-ref rev-outputs i) (vector-ref channel-rev-gains i)))))
+	      (if (or (null? (vector-ref channel-rev-gains i))
+		      (> time (cadr (vector-ref channel-rev-gains i))))
+		  (begin
+		    (vector-set! channel-rev-gains i (cons time (vector-ref channel-rev-gains i)))
+		    (vector-set! channel-rev-gains i (cons (vector-ref rev-outputs i) (vector-ref channel-rev-gains i)))))))
 
 	;; push reverb gain into envelope for mono reverb
 	(if (= rev-channels 1)
 	    (begin
-	      (vector-set! channel-rev-gains 0 (cons time (vector-ref channel-rev-gains 0)))
-	      (vector-set! channel-rev-gains 0 (cons ratt (vector-ref channel-rev-gains 0)))))))
+	      (if (or (null? (vector-ref channel-rev-gains 0))
+		      (> time (cadr (vector-ref channel-rev-gains 0))))
+		  (begin
+		    (vector-set! channel-rev-gains 0 (cons time (vector-ref channel-rev-gains 0)))
+		    (vector-set! channel-rev-gains 0 (cons ratt (vector-ref channel-rev-gains 0)))))))))
 
     ;; Render a trajectory breakpoint through amplitude panning
     (define (famplitude-panning x y z dist time q)
@@ -2642,8 +2651,11 @@
 	(if (or (not max-dist) (> dist max-dist))
 	    (set! max-dist dist))
 	;; push delay for current point (for doppler)
-	(set! delay (cons time delay))
-	(set! delay (cons (dist->samples dist) delay))
+	(if (or (null? delay)
+		(> time (cadr delay)))
+	    (begin
+	      (set! delay (cons time delay))
+	      (set! delay (cons (dist->samples dist) delay))))
 
 	;; do the rendering of the point
 	(if (= render-using amplitude-panning)
@@ -2769,6 +2781,7 @@
 			 rev-gains               ; reverb gain envelopes, one for each reverb channel
 			 out-map)                ; mapping of speakers to output channels
       (list 'dlocs start end out-channels rev-channels path delay rev out-delays gains rev-gains out-map))
+
     ;; (define dlocs-start (make-procedure-with-setter (lambda (a) (list-ref a 1)) (lambda (a b) (list-set! a 1 b))))
     ;; (define dlocs-end (make-procedure-with-setter (lambda (a) (list-ref a 2)) (lambda (a b) (list-set! a 2 b))))
     ;; (define dlocs-out-channels (make-procedure-with-setter (lambda (a) (list-ref a 3)) (lambda (a b) (list-set! a 3 b))))
@@ -2808,11 +2821,11 @@
 	   (len (vct-length delays)))
       (do ((channel 0 (1+ channel)))
 	  ((= channel len))
-	(let ((delay (vct-ref delays channel))) ; pushed above I think
-	  (vector-set! out-delays channel (if (not (= delay 0.0))
-					      (make-delay (time->samples delay))
+	(let ((delayo (vct-ref delays channel)))
+	  (vector-set! out-delays channel (if (not (= delayo 0.0))
+					      (make-delay (time->samples delayo))
 					      #f))
-	  (set! max-out-delay (max max-out-delay delay)))))
+	  (set! max-out-delay (max max-out-delay delayo)))))
 
     (set! min-delay (dist->samples min-dist))                                   ; delay from the minimum distance to the listener
     (set! start (dist->samples (- first-dist (if initial-delay 0.0 min-dist)))) ; sample at which signal first arrives to the listener
@@ -2868,7 +2881,7 @@
 				  :offset (if initial-delay 0.0 (- min-delay))
 				  :duration real-dur)
 		 :path (make-delay 0 :max-size (max 1 (+ (ceiling (dist->samples max-dist)) 1)))
-		 :rev (make-env (if (number? reverb-amount) ; ass opposed to an envelope I guess
+		 :rev (make-env (if (number? reverb-amount) ; as opposed to an envelope I guess
 				    (list 0 reverb-amount 1 reverb-amount)
 				    reverb-amount)
 				:duration real-dur)))

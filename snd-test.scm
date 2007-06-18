@@ -14896,6 +14896,9 @@ EDITS: 2
     (gen 0.0)
     (if (fneq (mus-phase gen) 1.0) (snd-display ";~A phase(1, 0): ~A" gen (mus-phase gen)))
     (set! (mus-frequency gen) (radians->hz 2.0))
+    (if (fneq (mus-increment gen) 2.0) (snd-display ";~A increment: ~A" gen (mus-increment gen)))
+    (set! (mus-increment gen) 2.0)
+    (if (fneq (mus-frequency gen) (radians->hz 2.0)) (snd-display ";~A set increment: ~A ~A" gen (mus-increment gen) (hz->radians (mus-frequency gen))))
     (gen 0.0)
     (if (fneq (mus-phase gen) 3.0) (snd-display ";~A phase(1, 2): ~A ~A" gen (mus-phase gen) (mus-frequency gen)))
     (gen 1.0)
@@ -16887,7 +16890,7 @@ EDITS: 2
       (set! (mus-scaler gen) 0.75)
       (if (fneq (mus-scaler gen) 0.75) (snd-display ";mus-scaler (set a) sine-summation: ~A" (mus-scaler gen)))
       (if (not (= (mus-cosines gen) 1)) (snd-display ";mus-cosines sine-summation: ~A" (mus-cosines gen)))
-      (if (fneq (mus-increment gen) 1.0) (snd-display ";mus-increment sine-summation: ~A" (mus-increment gen))))
+      (if (fneq (mus-offset gen) 1.0) (snd-display ";mus-offset sine-summation: ~A" (mus-offset gen))))
     
     (test-gen-equal (make-sine-summation 440.0) (make-sine-summation 440.0) (make-sine-summation 100.0))
     (test-gen-equal (make-sine-summation 440.0) (make-sine-summation 440.0) (make-sine-summation 440.0 1.0))
@@ -16904,7 +16907,7 @@ EDITS: 2
       (if (fneq (mus-frequency gen6) 500.0) (snd-display ";sine-summation frequency (500): ~F?" (mus-frequency gen6)))
       (if (fneq (mus-scaler gen6) 0.1) (snd-display ";mus-scaler (a) sine-summation (.1): ~A" (mus-scaler gen6)))
       (if (not (= (mus-cosines gen6) 10)) (snd-display ";mus-cosines sine-summation (10): ~A" (mus-cosines gen6)))
-      (if (fneq (mus-increment gen6) 0.4) (snd-display ";mus-increment sine-summation (0.4): ~A" (mus-increment gen6)))
+      (if (fneq (mus-offset gen6) 0.4) (snd-display ";mus-offset sine-summation (0.4): ~A" (mus-offset gen6)))
       
       (let ((happy #t))
 	(do ((i 0 (1+ i)))
@@ -17093,7 +17096,7 @@ EDITS: 2
       (if (fneq (mus-scaler gen) 1.0) (snd-display ";mus-scaler (r) asymmetric-fm: ~A" (mus-scaler gen)))
       (set! (mus-scaler gen) 0.5)
       (if (fneq (mus-scaler gen) 0.5) (snd-display ";mus-scaler (set r) asymmetric-fm: ~A" (mus-scaler gen)))
-      (if (fneq (mus-increment gen) 1.0) (snd-display ";mus-increment asymmetric-fm: ~A" (mus-increment gen))))
+      (if (fneq (mus-offset gen) 1.0) (snd-display ";mus-offset asymmetric-fm: ~A" (mus-offset gen))))
     
     (test-gen-equal (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0) (make-asymmetric-fm 100.0))
     (test-gen-equal (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0 1.0))
@@ -47687,7 +47690,7 @@ EDITS: 1
 	     ((= i end)) 
 	   (outa i (* amp (fir-filter flt (comb dly (rand r)))) *output*))))))
   
-  (define* (dloc-sinewave start-time duration freq amp 
+  (definstrument (dloc-sinewave start-time duration freq amp 
 			  :key (amp-env '(0 1 1 1))
 			  (path (make-path :path '(-10 10 0 5 10 10))))
     (let* ((vals (make-dlocsig :start-time start-time
@@ -47704,7 +47707,7 @@ EDITS: 1
 	       ((= i end))
 	     (dlocsig dloc i (* (env aenv) (oscil osc)))))))))
   
-  (define* (dlocsig-sinewave-1 start-time duration freq amp 
+  (definstrument (dlocsig-sinewave-1 start-time duration freq amp 
 			       :key (amp-env '(0 1 1 1))
 			       (path (make-path :path '(-10 10 0 5 10 10)))
 			       (decode amplitude-panning)

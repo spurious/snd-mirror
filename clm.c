@@ -1011,6 +1011,9 @@ static int free_oscil(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
 static Float oscil_freq(mus_any *ptr) {return(mus_radians_to_hz(((osc *)ptr)->freq));}
 static Float set_oscil_freq(mus_any *ptr, Float val) {((osc *)ptr)->freq = mus_hz_to_radians(val); return(val);}
 
+static Float oscil_increment(mus_any *ptr) {return(((osc *)ptr)->freq);}
+static Float set_oscil_increment(mus_any *ptr, Float val) {((osc *)ptr)->freq = val; return(val);}
+
 static Float oscil_phase(mus_any *ptr) {return(fmod(((osc *)ptr)->phase, TWO_PI));}
 static Float set_oscil_phase(mus_any *ptr, Float val) {((osc *)ptr)->phase = val; return(val);}
 
@@ -1045,7 +1048,9 @@ static mus_any_class OSCIL_CLASS = {
   &set_oscil_freq,
   &oscil_phase,
   &set_oscil_phase,
-  0, 0, 0, 0,
+  0, 0, 
+  &oscil_increment,
+  &set_oscil_increment,
   &mus_oscil,
   MUS_NOT_SPECIAL, 
   NULL,
@@ -1109,6 +1114,9 @@ static void sum_of_cosines_reset(mus_any *ptr) {((cosp *)ptr)->phase = 0.0;}
 static Float sum_of_cosines_freq(mus_any *ptr) {return(mus_radians_to_hz(((cosp *)ptr)->freq));}
 static Float set_sum_of_cosines_freq(mus_any *ptr, Float val) {((cosp *)ptr)->freq = mus_hz_to_radians(val); return(val);}
 
+static Float sum_of_cosines_increment(mus_any *ptr) {return(((cosp *)ptr)->freq);}
+static Float set_sum_of_cosines_increment(mus_any *ptr, Float val) {((cosp *)ptr)->freq = val; return(val);}
+
 static Float sum_of_cosines_phase(mus_any *ptr) {return(fmod(((cosp *)ptr)->phase, TWO_PI));}
 static Float set_sum_of_cosines_phase(mus_any *ptr, Float val) {((cosp *)ptr)->phase = val; return(val);}
 
@@ -1164,7 +1172,8 @@ static mus_any_class SUM_OF_COSINES_CLASS = {
   &set_sum_of_cosines_phase,
   &sum_of_cosines_scaler,
   &set_sum_of_cosines_scaler,
-  0, 0,
+  &sum_of_cosines_increment,
+  &set_sum_of_cosines_increment,
   &run_sum_of_cosines,
   MUS_NOT_SPECIAL, 
   NULL,
@@ -1277,7 +1286,8 @@ static mus_any_class SUM_OF_SINES_CLASS = {
   &set_sum_of_cosines_phase,
   &sum_of_cosines_scaler,
   &set_sum_of_cosines_scaler,
-  0, 0,
+  &sum_of_cosines_increment,
+  &set_sum_of_cosines_increment,
   &run_sum_of_sines,
   MUS_NOT_SPECIAL, 
   NULL,
@@ -1318,10 +1328,14 @@ static void asyfm_reset(mus_any *ptr) {((asyfm *)ptr)->phase = 0.0;}
 static Float asyfm_freq(mus_any *ptr) {return(mus_radians_to_hz(((asyfm *)ptr)->freq));}
 static Float set_asyfm_freq(mus_any *ptr, Float val) {((asyfm *)ptr)->freq = mus_hz_to_radians(val); return(val);}
 
+static Float asyfm_increment(mus_any *ptr) {return(((asyfm *)ptr)->freq);}
+static Float set_asyfm_increment(mus_any *ptr, Float val) {((asyfm *)ptr)->freq = val; return(val);}
+
 static Float asyfm_phase(mus_any *ptr) {return(fmod(((asyfm *)ptr)->phase, TWO_PI));}
 static Float set_asyfm_phase(mus_any *ptr, Float val) {((asyfm *)ptr)->phase = val; return(val);}
 
 static Float asyfm_ratio(mus_any *ptr) {return(((asyfm *)ptr)->ratio);}
+
 static Float asyfm_r(mus_any *ptr) {return(((asyfm *)ptr)->r);}
 static Float set_asyfm_r(mus_any *ptr, Float val) 
 {
@@ -1401,11 +1415,13 @@ static mus_any_class ASYMMETRIC_FM_CLASS = {
   &set_asyfm_phase,
   &asyfm_r,
   &set_asyfm_r,
-  &asyfm_ratio, 0,
+  &asyfm_increment,
+  &set_asyfm_increment,
   &mus_asymmetric_fm,
   MUS_NOT_SPECIAL, 
   NULL, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  &asyfm_ratio, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &asyfm_reset,
@@ -1447,6 +1463,9 @@ static void sss_reset(mus_any *ptr) {((sss *)ptr)->phase = 0.0;}
 
 static Float sss_freq(mus_any *ptr) {return(mus_radians_to_hz(((sss *)ptr)->freq));}
 static Float set_sss_freq(mus_any *ptr, Float val) {((sss *)ptr)->freq = mus_hz_to_radians(val); return(val);}
+
+static Float sss_increment(mus_any *ptr) {return(((sss *)ptr)->freq);}
+static Float set_sss_increment(mus_any *ptr, Float val) {((sss *)ptr)->freq = val; return(val);}
 
 static Float sss_phase(mus_any *ptr) {return(fmod(((sss *)ptr)->phase, TWO_PI));}
 static Float set_sss_phase(mus_any *ptr, Float val) {((sss *)ptr)->phase = val; return(val);}
@@ -1529,11 +1548,13 @@ static mus_any_class SINE_SUMMATION_CLASS = {
   &set_sss_phase,
   &sss_a,
   &set_sss_a,
-  &sss_b, 0,
+  &sss_increment,
+  &set_sss_increment,
   &run_sine_summation,
   MUS_NOT_SPECIAL, 
   NULL, 0,
-  0, 0, 0, 0, 0, 0, 
+  &sss_b, 
+  0, 0, 0, 0, 0, 
   &sss_n, /* mus-cosines */
   0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
@@ -1650,6 +1671,9 @@ static Float *table_lookup_data(mus_any *ptr) {return(((tbl *)ptr)->table);}
 static Float table_lookup_freq(mus_any *ptr) {return((((tbl *)ptr)->freq * sampling_rate) / (Float)(((tbl *)ptr)->table_size));}
 static Float set_table_lookup_freq(mus_any *ptr, Float val) {((tbl *)ptr)->freq = (val * ((tbl *)ptr)->table_size) / sampling_rate; return(val);}
 
+static Float table_lookup_increment(mus_any *ptr) {return(((tbl *)ptr)->freq);}
+static Float set_table_lookup_increment(mus_any *ptr, Float val) {((tbl *)ptr)->freq = val; return(val);}
+
 static Float table_lookup_phase(mus_any *ptr) {return(fmod(((TWO_PI * ((tbl *)ptr)->phase) / ((tbl *)ptr)->table_size), TWO_PI));}
 static Float set_table_lookup_phase(mus_any *ptr, Float val) {((tbl *)ptr)->phase = (val * ((tbl *)ptr)->table_size) / TWO_PI; return(val);}
 
@@ -1715,7 +1739,8 @@ static mus_any_class TABLE_LOOKUP_CLASS = {
   &table_lookup_phase,
   &set_table_lookup_phase,
   0, 0,
-  0, 0,
+  &table_lookup_increment,
+  &set_table_lookup_increment,
   &run_table_lookup,
   MUS_NOT_SPECIAL, 
   NULL,
@@ -1778,6 +1803,9 @@ static int free_ws(mus_any *pt)
 static Float ws_freq(mus_any *ptr) {return(mus_frequency(((ws *)ptr)->o));}
 static Float set_ws_freq(mus_any *ptr, Float val) {return(mus_set_frequency(((ws *)ptr)->o, val));}
 
+static Float ws_increment(mus_any *ptr) {return(mus_increment(((ws *)ptr)->o));}
+static Float set_ws_increment(mus_any *ptr, Float val) {return(mus_set_increment(((ws *)ptr)->o, val));}
+
 static Float ws_phase(mus_any *ptr) {return(mus_phase(((ws *)ptr)->o));}
 static Float set_ws_phase(mus_any *ptr, Float val) {return(mus_set_phase(((ws *)ptr)->o, val));}
 
@@ -1838,7 +1866,8 @@ static mus_any_class WAVESHAPE_CLASS = {
   &ws_phase,
   &set_ws_phase,
   0, 0,
-  0, 0,
+  &ws_increment,
+  &set_ws_increment,
   &mus_waveshape,
   MUS_NOT_SPECIAL, 
   NULL, 0,
@@ -2055,7 +2084,8 @@ static mus_any_class POLYSHAPE_CLASS = {
   &ws_phase,
   &set_ws_phase,
   0, 0,
-  0, 0,
+  &ws_increment,
+  &set_ws_increment,
   &mus_polyshape,
   MUS_NOT_SPECIAL, 
   NULL, 0,
@@ -2183,6 +2213,7 @@ static Float mus_wave_train_any(mus_any *ptr, Float fm)
 
 Float mus_wave_train(mus_any *ptr, Float fm) {return(mus_wave_train_any(ptr, fm / w_rate));}
 Float mus_wave_train_1(mus_any *ptr) {return(mus_wave_train(ptr, 0.0));}
+
 static Float run_wave_train(mus_any *ptr, Float fm, Float unused) {return(mus_wave_train_any(ptr, fm / w_rate));}
 
 static int free_wt(mus_any *p) 
@@ -2950,6 +2981,9 @@ bool mus_sawtooth_wave_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_
 static Float sw_freq(mus_any *ptr) {return(mus_radians_to_hz(((sw *)ptr)->freq));}
 static Float set_sw_freq(mus_any *ptr, Float val) {((sw *)ptr)->freq = mus_hz_to_radians(val); return(val);}
 
+static Float sw_increment(mus_any *ptr) {return(((sw *)ptr)->freq);}
+static Float set_sw_increment(mus_any *ptr, Float val) {((sw *)ptr)->freq = val; return(val);}
+
 static Float sw_phase(mus_any *ptr) {return(fmod(((sw *)ptr)->phase, TWO_PI));}
 static Float set_sw_phase(mus_any *ptr, Float val) {((sw *)ptr)->phase = val; return(val);}
 
@@ -3003,7 +3037,8 @@ static mus_any_class SAWTOOTH_WAVE_CLASS = {
   &set_sw_phase,
   &sawtooth_scaler,
   &set_sawtooth_scaler,
-  0, 0,
+  &sw_increment,
+  &set_sw_increment,
   &run_sawtooth_wave,
   MUS_NOT_SPECIAL, 
   NULL, 0,
@@ -3068,7 +3103,8 @@ static mus_any_class SQUARE_WAVE_CLASS = {
   &set_sw_phase,
   &square_wave_scaler,
   &set_square_wave_scaler,
-  0, 0,
+  &sw_increment,
+  &set_sw_increment,
   &run_square_wave,
   MUS_NOT_SPECIAL, 
   NULL, 0,
@@ -3144,7 +3180,8 @@ static mus_any_class TRIANGLE_WAVE_CLASS = {
   &set_sw_phase,
   &triangle_wave_scaler,
   &set_triangle_wave_scaler,
-  0, 0,
+  &sw_increment,
+  &set_sw_increment,
   &run_triangle_wave,
   MUS_NOT_SPECIAL, 
   NULL, 0,
@@ -3213,7 +3250,8 @@ static mus_any_class PULSE_TRAIN_CLASS = {
   &set_sw_phase,
   &pulse_train_scaler,
   &set_pulse_train_scaler,
-  0, 0,
+  &sw_increment,
+  &set_sw_increment,
   &run_pulse_train,
   MUS_NOT_SPECIAL, 
   NULL, 0,
@@ -3336,6 +3374,7 @@ Float mus_rand_interp(mus_any *ptr, Float fm)
 
 static Float run_rand(mus_any *ptr, Float fm, Float unused) {return(mus_rand(ptr, fm));}
 static Float run_rand_interp(mus_any *ptr, Float fm, Float unused) {return(mus_rand_interp(ptr, fm));}
+
 bool mus_rand_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_RAND));}
 bool mus_rand_interp_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_RAND_INTERP));}
 
@@ -3343,6 +3382,9 @@ static int free_noi(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
 
 static Float noi_freq(mus_any *ptr) {return(mus_radians_to_hz(((noi *)ptr)->freq));}
 static Float set_noi_freq(mus_any *ptr, Float val) {((noi *)ptr)->freq = mus_hz_to_radians(val); return(val);}
+
+static Float noi_increment(mus_any *ptr) {return(((noi *)ptr)->freq);}
+static Float set_noi_increment(mus_any *ptr, Float val) {((noi *)ptr)->freq = val; return(val);}
 
 static Float noi_phase(mus_any *ptr) {return(fmod(((noi *)ptr)->phase, TWO_PI));}
 static Float set_noi_phase(mus_any *ptr, Float val) {((noi *)ptr)->phase = val; return(val);}
@@ -3410,7 +3452,8 @@ static mus_any_class RAND_INTERP_CLASS = {
   &set_noi_phase,
   &noi_scaler,
   &set_noi_scaler,
-  0, 0,
+  &noi_increment, /* (phase increment) */
+  &set_noi_increment,
   &run_rand_interp,
   MUS_NOT_SPECIAL, 
   NULL, 0,
@@ -3435,7 +3478,8 @@ static mus_any_class RAND_CLASS = {
   &set_noi_phase,
   &noi_scaler,
   &set_noi_scaler,
-  0, 0,
+  &noi_increment, /* (phase increment) */
+  &set_noi_increment,
   &run_rand,
   MUS_NOT_SPECIAL, 
   NULL, 0,
@@ -8868,6 +8912,19 @@ static Float set_ssb_am_freq(mus_any *ptr, Float val)
   return(val);
 }
 
+static Float ssb_am_increment(mus_any *ptr) 
+{
+  return(((osc *)((ssbam *)ptr)->sin_osc)->freq);
+}
+
+static Float set_ssb_am_increment(mus_any *ptr, Float val) 
+{
+  ssbam *gen = (ssbam *)ptr;
+  ((osc *)(gen->sin_osc))->freq = val;
+  ((osc *)(gen->cos_osc))->freq = val;
+  return(val);
+}
+
 static Float ssb_am_phase(mus_any *ptr) 
 {
   return(fmod(((osc *)((ssbam *)ptr)->cos_osc)->phase - 0.5 * M_PI, TWO_PI));
@@ -8885,6 +8942,7 @@ static Float set_ssb_am_phase(mus_any *ptr, Float val)
 
 static off_t ssb_am_cosines(mus_any *ptr) {return(1);}
 static off_t ssb_am_order(mus_any *ptr) {return(mus_order(((ssbam *)ptr)->dly));}
+
 static int ssb_am_interp_type(mus_any *ptr) {return(delay_interp_type(((ssbam *)ptr)->dly));}
 
 static Float *ssb_am_data(mus_any *ptr) {return(filter_data(((ssbam *)ptr)->hilbert));}
@@ -8937,7 +8995,9 @@ static mus_any_class SSB_AM_CLASS = {
   &set_ssb_am_freq,
   &ssb_am_phase,
   &set_ssb_am_phase,
-  0, 0, 0, 0,
+  0, 0, 
+  &ssb_am_increment,
+  &set_ssb_am_increment,
   &ssb_am_run,
   MUS_NOT_SPECIAL, 
   NULL,

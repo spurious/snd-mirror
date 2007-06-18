@@ -150,7 +150,9 @@
 
   ;; more or less 1/f -- falls off slowly
   ;;   my informal explanation is that each time we bounce off an edge, we're transferring energy from
-  ;;   from a low frequency into some higher frequency.  I believe this is still Brownian noise however.
+  ;;   from a low frequency into some higher frequency.  This is still Brownian noise however --
+  ;;   see Resnick, "Adventures in Stochastic Processes" p 497.
+
   (let ((gr (make-green-noise 20000 1))) 
     (map-channel (lambda (y) 
 		   (green-noise gr 0.0)))) 
