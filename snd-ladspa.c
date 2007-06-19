@@ -14,6 +14,7 @@
 #include <dirent.h>
 
 /* 
+ * 19-Jun-07 added beg dur snd chn args to apply-ladspa.
  * 12-Jun-07 reader can be #f.
  * 1-Sep-05  moved stuff around for better error handling.
  *           added code to handle 0-input plugins ("analog osc" in swh for example).
@@ -548,9 +549,10 @@ a user interface edit the parameter in a useful way."
 static XEN g_apply_ladspa(XEN reader,
 			  XEN ladspa_plugin_configuration,
 			  XEN samples,
-			  XEN origin)
+			  XEN origin,
+			  XEN snd, XEN chn) /* these two args added (much) later */
 {
-#define H_apply_ladspa "(" S_apply_ladspa " reader (list library plugin pars) dur origin): apply a LADSPA plugin to process a \
+#define H_apply_ladspa "(" S_apply_ladspa " reader (list library plugin pars) dur origin :optional snd chn): apply a LADSPA plugin to process a \
 sound. The parameters are soundfile-reader, a ladspa-plugin-configuration, \
 the number of samples to process, and an `origin' for edit lists. The \
 ladspa-plugin-configuration is a list containing the plugin-file and \
@@ -580,6 +582,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   LADSPA_Data **pfOutputBuffer = NULL;
   io_error_t io_err = IO_NO_ERROR;
   snd_fd *tmp_fd;
+  bool cp_from_reader = false;
 
   if (!g_bLADSPAInitialised)
     loadLADSPA();
@@ -618,6 +621,8 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 		  origin,
 		  XEN_ARG_4,
 		  S_apply_ladspa, "a string");
+
+  ASSERT_CHANNEL(S_apply_ladspa, snd, chn, 5);
 
   /* Plugin. */
   pcTmp = XEN_TO_C_STRING(XEN_CAR(ladspa_plugin_configuration));
@@ -665,19 +670,21 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   FREE(msg);
   pfControls = (LADSPA_Data *)MALLOC(psDescriptor->PortCount * sizeof(LADSPA_Data));
 
-  if (inchans > 0)
-    {
-      if (XEN_LIST_P(reader))
-	tmp_fd = xen_to_sample_reader(XEN_LIST_REF(reader, 0));
-      else tmp_fd = xen_to_sample_reader(reader);
-      cp = tmp_fd->cp;
-      sp = cp->sound;
-    }
+  if (XEN_BOUND_P(snd))
+    cp = get_cp(snd, chn, S_apply_ladspa);
   else
     {
-      sp = selected_sound();
-      cp = selected_channel();
+      if (inchans > 0)
+	{
+	  if (XEN_LIST_P(reader))
+	    tmp_fd = xen_to_sample_reader(XEN_LIST_REF(reader, 0));
+	  else tmp_fd = xen_to_sample_reader(reader);
+	  cp = tmp_fd->cp;
+	  cp_from_reader = true;
+	}
+      else cp = selected_channel();
     }
+  sp = cp->sound;
 
   /* Get parameters. */
   xenParameters = XEN_COPY_ARG(XEN_CDR(XEN_CDR(ladspa_plugin_configuration)));
@@ -853,7 +860,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
       for (i = 0, j = 0; i < outchans; i++)
 	{
 	  off_t beg;
-	  if ((sf) && (sf[j]))
+	  if ((cp_from_reader) && (sf) && (sf[j]))
 	    {
 	      ncp = sf[j]->cp;
 	      beg = sf[j]->initial_samp;
@@ -1204,7 +1211,7 @@ static XEN g_ladspa_connect_port(XEN desc, XEN ptr, XEN port, XEN data)
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_2(g_analyse_ladspa_w, g_analyse_ladspa)
 XEN_NARGIFY_2(g_ladspa_descriptor_w, g_ladspa_descriptor)
-XEN_NARGIFY_4(g_apply_ladspa_w, g_apply_ladspa)
+XEN_ARGIFY_6(g_apply_ladspa_w, g_apply_ladspa)
 XEN_NARGIFY_0(g_init_ladspa_w, g_init_ladspa)
 XEN_NARGIFY_0(g_list_ladspa_w, g_list_ladspa)
 XEN_NARGIFY_1(g_ladspa_Label_w, g_ladspa_Label)
@@ -1255,7 +1262,7 @@ void g_ladspa_to_snd(void)
 {
   XEN_DEFINE_PROCEDURE(S_analyse_ladspa,    g_analyse_ladspa_w,    2, 0, 0, H_analyse_ladspa); /* British spelling not used anywhere else, so why here? */
   XEN_DEFINE_PROCEDURE("analyze-ladspa",    g_analyse_ladspa_w,    2, 0, 0, H_analyse_ladspa);
-  XEN_DEFINE_PROCEDURE(S_apply_ladspa,      g_apply_ladspa_w,      4, 0, 0, H_apply_ladspa);
+  XEN_DEFINE_PROCEDURE(S_apply_ladspa,      g_apply_ladspa_w,      4, 2, 0, H_apply_ladspa);
   XEN_DEFINE_PROCEDURE(S_init_ladspa,       g_init_ladspa_w,       0, 0, 0, H_init_ladspa);
   XEN_DEFINE_PROCEDURE(S_list_ladspa,       g_list_ladspa_w,       0, 0, 0, H_list_ladspa);
   XEN_DEFINE_PROCEDURE(S_ladspa_descriptor, g_ladspa_descriptor_w, 2, 0, 0, H_ladspa_descriptor);

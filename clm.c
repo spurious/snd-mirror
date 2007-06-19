@@ -7976,7 +7976,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
     case MUS_BOHMAN_WINDOW:
       {
 	Float ramp;
-	/* definition from diracdelta docs */
+	/* definition from diracdelta docs -- used in bispectrum ("minimum bispectrum bias supremum") */
 	for (i = 0, j = size - 1, angle = M_PI, ramp = 0.0; i <= midn; i++, j--, angle -= freq, ramp += rate)
 	  {
 	    window[i] = ramp * cos(angle) + (1.0 / M_PI) * sin(angle);
