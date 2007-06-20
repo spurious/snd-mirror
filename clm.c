@@ -7976,7 +7976,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
     case MUS_BOHMAN_WINDOW:
       {
 	Float ramp;
-	/* definition from diracdelta docs -- used in bispectrum ("minimum bispectrum bias supremum") */
+	/* definition from diracdelta docs and "DSP Handbook" -- used in bispectrum ("minimum bispectrum bias supremum") */
 	for (i = 0, j = size - 1, angle = M_PI, ramp = 0.0; i <= midn; i++, j--, angle -= freq, ramp += rate)
 	  {
 	    window[i] = ramp * cos(angle) + (1.0 / M_PI) * sin(angle);
@@ -9089,20 +9089,29 @@ static int mix_type(int out_chans, int in_chans, mus_any *umx, mus_any ***envs)
   return(IDENTITY_MIX);
 }
 
+
 void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start, off_t out_frames, off_t in_start, mus_any *umx, mus_any ***envs)
 {
   int in_chans, out_chans, mix_chans, mixtype;
   mus_mixer *mx = (mus_mixer *)umx;
   off_t inc, outc, offi;
   mus_frame *frin, *frthru = NULL;
+
   out_chans = mus_channels(outf);
-  if (out_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", mus_describe(outf), out_chans);
+  if (out_chans <= 0) 
+    mus_error(MUS_NO_CHANNELS, "%s chans: %d", mus_describe(outf), out_chans);
+
   in_chans = mus_channels(inf);
-  if (in_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", mus_describe(inf), in_chans);
-  if (out_chans > in_chans) mix_chans = out_chans; else mix_chans = in_chans;
+  if (in_chans <= 0) 
+    mus_error(MUS_NO_CHANNELS, "%s chans: %d", mus_describe(inf), in_chans);
+  if (out_chans > in_chans) 
+    mix_chans = out_chans; 
+  else mix_chans = in_chans;
+
   mixtype = mix_type(out_chans, in_chans, umx, envs);
   frin = (mus_frame *)mus_make_empty_frame(mix_chans);
   frthru = (mus_frame *)mus_make_empty_frame(mix_chans);
+
   switch (mixtype)
     {
     case ENVELOPED_MONO_MIX:
@@ -9150,10 +9159,16 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
 {
   int in_chans, out_chans, min_chans, mixtype;
   out_chans = mus_sound_chans(outfile);
-  if (out_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", outfile, out_chans);
+
+  if (out_chans <= 0) 
+    mus_error(MUS_NO_CHANNELS, "%s chans: %d", outfile, out_chans);
+
   in_chans = mus_sound_chans(infile);
-  if (in_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", infile, in_chans);
-  if (out_chans > in_chans) min_chans = in_chans; else min_chans = out_chans;
+  if (in_chans <= 0) 
+    mus_error(MUS_NO_CHANNELS, "%s chans: %d", infile, in_chans);
+  if (out_chans > in_chans) 
+    min_chans = in_chans; else min_chans = out_chans;
+
   mixtype = mix_type(out_chans, in_chans, umx, envs);
   if (mixtype == ALL_MIX)
     {
@@ -9173,6 +9188,7 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
       mus_any *e;
       mus_sample_t **obufs, **ibufs;
       off_t offk, curoutframes;
+
       /* highly optimizable cases */
       obufs = (mus_sample_t **)clm_calloc(out_chans, sizeof(mus_sample_t *), "mix output");
       for (i = 0; i < out_chans; i++) 
@@ -9192,6 +9208,7 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
       mus_file_seek_frame(ofd, out_start);
       mus_file_read(ofd, 0, clm_file_buffer_size - 1, out_chans, obufs);
       mus_file_seek_frame(ofd, out_start);
+
       switch (mixtype)
 	{
 	case IDENTITY_MONO_MIX:
@@ -9299,6 +9316,7 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
 	  break;
 
 	}
+
       if (j > 0) 
 	mus_file_write(ofd, 0, j - 1, out_chans, obufs);
       if (curoutframes < (out_frames + out_start)) 

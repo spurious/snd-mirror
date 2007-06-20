@@ -5659,7 +5659,7 @@ The following substitutions can be made:
 <a href="#smoothsound">smooth-sound</a> beg dur s c                        <a href="#smoothchannel">smooth-channel</a> beg dur s c e
 <a href="#srcsound">src-sound</a> num base s c e                        <a href="#srcchannel">src-channel</a> ratio-or-env beg dur s c e
 <a href="#undo">undo</a> edits s c                                  <a href="#undochannel">undo-channel</a> edits s c
-<a href="grfsnd.html#applyladspa">apply-ladspa</a> reader dat dur origin              <a href="grfsnd.html#ladspachannel">ladspa-channel</a> dat beg dur s c e
+<a href="grfsnd.html#applyladspa">apply-ladspa</a> reader dat dur origin snd chn      <a href="grfsnd.html#ladspachannel">ladspa-channel</a> dat beg dur s c e
 </small>
 </pre>
 <p><small>Another case that might deserve "regularization" is <a class=quiet href="#makesamplereader">make-sample-reader</a> which confusingly interpolates
@@ -10292,7 +10292,7 @@ into an independent Snd process:
       (lambda ()
 	(display (format #f "(define sfile (<a class=quiet href="#opensound">open-sound</a> ~S))~%" name))
 	(display (format #f "(load ~S)~%" scm))))
-    (system (format #f "snd ~A &" scm1))))
+    (system (format #f "snd ~A &amp;" scm1))))
 </pre></td></tr></table>
 
 </td></tr><tr><td></td><td></td></tr>

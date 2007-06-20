@@ -258,6 +258,7 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 		   (add-chan-to-selection beg end s i))))
 	   (sounds))))))
 
+
 ;;; -------- delete selected portion and smooth the splice
 
 (define (delete-selection-and-smooth)
@@ -677,6 +678,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; an obvious extension of this idea is to use the blackman fft window formulas
 ;;;   to get sharper sinusoids (i.e. use the sum of n cosines, rather than just 1)
 
+
 ;;; -------- blackman4-ramp, blackman4-env-channel
 
 (define* (blackman4-ramp rmp0 rmp1 :optional (beg 0) dur snd chn edpos)
@@ -749,6 +751,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; (env-squared-channel '(0 0 1 1 2 -.5 3 1))
 
+
 ;;; -------- ramp-expt, env-expt-channel
 
 (define* (ramp-expt rmp0 rmp1 exponent :optional (symmetric #t) (beg 0) dur snd chn edpos)
@@ -783,6 +786,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 			 (ramp-expt r0 r1 exponent symmetric b d s c e))
 		       beg dur snd chn edpos
 		       (format #f "env-expt-channel '~A ~A ~A ~A ~A" env exponent symmetric beg dur))))
+
 
 ;;; -------- offset-channel 
 
@@ -1120,7 +1124,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; -------- show-selection
 
 (define (show-selection)
-  "(show-selection) adjusts graph ounds to display the selected portion"
+  "(show-selection) adjusts graph bounds to display the selected portion"
   (if (selection?)
       (let ((beg #f)
 	    (end #f))

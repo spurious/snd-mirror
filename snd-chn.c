@@ -7365,8 +7365,7 @@ static XEN g_set_x_bounds(XEN bounds, XEN snd_n, XEN chn_n)
 	  sp = cp->sound;
 	  if (sp->nchans > 1)
 	    {
-	      if (((XEN_NOT_BOUND_P(chn_n)) && (cp->sound->channel_style == CHANNELS_COMBINED)) ||
-		  (XEN_TRUE_P(chn_n)))
+	      if ((XEN_NOT_BOUND_P(chn_n)) && (cp->sound->channel_style == CHANNELS_COMBINED))
 		{
 		  int i;
 		  for (i = 0; i < sp->nchans; i++)

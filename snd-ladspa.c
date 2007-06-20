@@ -1321,5 +1321,3 @@ void g_ladspa_to_snd(void)
 
 #endif
 #endif
-
-

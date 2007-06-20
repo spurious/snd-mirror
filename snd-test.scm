@@ -1,37 +1,36 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [540]
-;;;  test 1: defaults                           [1092]
-;;;  test 2: headers                            [1286]
-;;;  test 3: variables                          [1602]
-;;;  test 4: sndlib                             [2247]
-;;;  test 5: simple overall checks              [4768]
-;;;  test 6: vcts                               [12789]
-;;;  test 7: colors                             [13067]
-;;;  test 8: clm                                [13557]
-;;;  test 9: mix                                [23362]
-;;;  test 10: marks                             [25371]
-;;;  test 11: dialogs                           [26332]
-;;;  test 12: extensions                        [26577]
-;;;  test 13: menus, edit lists, hooks, etc     [26848]
-;;;  test 14: all together now                  [28554]
-;;;  test 15: chan-local vars                   [29587]
-;;;  test 16: regularized funcs                 [31198]
-;;;  test 17: dialogs and graphics              [36208]
-;;;  test 18: enved                             [36297]
-;;;  test 19: save and restore                  [36316]
-;;;  test 20: transforms                        [38101]
-;;;  test 21: new stuff                         [39936]
-;;;  test 22: run                               [41876]
-;;;  test 23: with-sound                        [47565]
-;;;  test 24: user-interface                    [50045]
-;;;  test 25: X/Xt/Xm                           [53447]
-;;;  test 26: Gtk                               [58043]
-;;;  test 27: GL                                [61912]
-;;;  test 28: errors                            [62036]
-;;;  test all done                              [64307]
-;;;  test the end                               [64543]
-
+;;;  test 0: constants                          [541]
+;;;  test 1: defaults                           [1093]
+;;;  test 2: headers                            [1287]
+;;;  test 3: variables                          [1603]
+;;;  test 4: sndlib                             [2248]
+;;;  test 5: simple overall checks              [4769]
+;;;  test 6: vcts                               [12792]
+;;;  test 7: colors                             [13070]
+;;;  test 8: clm                                [13560]
+;;;  test 9: mix                                [23368]
+;;;  test 10: marks                             [25605]
+;;;  test 11: dialogs                           [26566]
+;;;  test 12: extensions                        [26811]
+;;;  test 13: menus, edit lists, hooks, etc     [27082]
+;;;  test 14: all together now                  [28788]
+;;;  test 15: chan-local vars                   [29821]
+;;;  test 16: regularized funcs                 [31432]
+;;;  test 17: dialogs and graphics              [36500]
+;;;  test 18: enved                             [36590]
+;;;  test 19: save and restore                  [36609]
+;;;  test 20: transforms                        [38394]
+;;;  test 21: new stuff                         [40229]
+;;;  test 22: run                               [42169]
+;;;  test 23: with-sound                        [47865]
+;;;  test 24: user-interface                    [50346]
+;;;  test 25: X/Xt/Xm                           [53748]
+;;;  test 26: Gtk                               [58344]
+;;;  test 27: GL                                [62208]
+;;;  test 28: errors                            [62332]
+;;;  test all done                              [64611]
+;;;  test the end                               [64847]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -8502,6 +8501,8 @@ EDITS: 5
 		 (= (transform-frames) 0))
 	    (snd-display ";transform-graph? transform-frames ~A?" (transform-frames)))
 	(update-transform-graph)
+	(let ((tag (catch #t (lambda () (peaks "/baddy/hiho")) (lambda args (car args)))))
+	  (if (not (eq? tag 'cant-open-file)) (snd-display ";peaks bad file: ~A" tag)))
 	(peaks "tmp.peaks")
 	(if (defined? 'read-line)
 	    (let ((p (open-input-file "tmp.peaks")))
@@ -24591,7 +24592,15 @@ EDITS: 2
 		  (snd-display ";mix on env: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 5)))
 		  (snd-display ";mix on env edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.485 0.495 0.605 0.715 0.825 0.535 0.545 0.556 0.566 0.576))))
+		    (snd-display ";read mix on env reversed: ~A" data)))
 	      (undo))
+
 	    (env-channel '(0 0 1 1))
 	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
 	      (let ((vals (channel->vct 48 10)))
@@ -24601,7 +24610,15 @@ EDITS: 2
 		  (snd-display ";mix on env 1: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 7)))
 		  (snd-display ";mix on env1 edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.235 0.245 0.355 0.465 0.576 0.287 0.298 0.309 0.320 0.331))))
+		    (snd-display ";read mix on env1 reversed: ~A" data)))
 	      (undo))
+
 	    (env-channel '(0 0 1 1))
 	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
 	      (let ((vals (channel->vct 48 10)))
@@ -24611,7 +24628,15 @@ EDITS: 2
 		  (snd-display ";mix on env 2: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 9)))
 		  (snd-display ";mix on env2 edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.114 0.121 0.229 0.337 0.445 0.153 0.162 0.171 0.181 0.191))))
+		    (snd-display ";read mix on env2 reversed: ~A" data)))
 	      (undo))
+
 	    (env-channel '(0 0 1 1))
 	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
 	      (let ((vals (channel->vct 48 10)))
@@ -24621,7 +24646,15 @@ EDITS: 2
 		  (snd-display ";mix on env 3: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 11)))
 		  (snd-display ";mix on env3 edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.055 0.060 0.165 0.270 0.376 0.082 0.089 0.095 0.102 0.110))))
+		    (snd-display ";read mix on env3 reversed: ~A" data)))
 	      (undo))
+
 	    (env-channel '(0 0 1 1))
 	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
 	      (let ((vals (channel->vct 48 10)))
@@ -24631,6 +24664,13 @@ EDITS: 2
 		  (snd-display ";mix on env 4: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 1)))
 		  (snd-display ";mix on env4 edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.027 0.030 0.133 0.236 0.340 0.044 0.048 0.053 0.058 0.063))))
+		    (snd-display ";read mix on env4 reversed: ~A" data)))
 	      (undo))
 	    
 	    (set! (edit-position ind 0) 1)
@@ -24642,7 +24682,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on xramp: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 13)))
-		  (snd-display ";mix on xramp edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on xramp edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.160 0.153 0.247 0.341 0.435 0.129 0.124 0.118 0.113 0.108))))
+		    (snd-display ";read mix on xramp reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (xramp-channel 1 0 32.0)
@@ -24654,7 +24701,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on xramp2: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 15)))
-		  (snd-display ";mix on xramp2 edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on xramp2 edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.026 0.024 0.122 0.220 0.318 0.017 0.015 0.014 0.013 0.012))))
+		    (snd-display ";read mix on xramp2 reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (xramp-channel 1 0 32.0)
@@ -24667,7 +24721,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on xramp2_ramp: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 21)))
-		  (snd-display ";mix on xramp2_ramp edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on xramp2_ramp edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.013 0.012 0.111 0.210 0.309 0.008 0.007 0.006 0.006 0.005))))
+		    (snd-display ";read mix on xramp2_ramp reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (xramp-channel 1 0 32.0)
@@ -24681,7 +24742,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on xramp2_ramp2: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 25)))
-		  (snd-display ";mix on xramp2_ramp2 edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on xramp2_ramp2 edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.007 0.006 0.105 0.205 0.304 0.004 0.003 0.003 0.002 0.002))))
+		    (snd-display ";read mix on xramp2_ramp2 reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (xramp-channel 1 0 32.0)
@@ -24693,7 +24761,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on xramp_ramp: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 17)))
-		  (snd-display ";mix on xramp_ramp edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on xramp_ramp edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.082 0.077 0.173 0.268 0.364 0.060 0.056 0.053 0.049 0.046))))
+		    (snd-display ";read mix on xramp_ramp reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (xramp-channel 1 0 32.0)
@@ -24706,7 +24781,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on xramp_ramp2: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 19)))
-		  (snd-display ";mix on xramp_ramp2 edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on xramp_ramp2 edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.042 0.039 0.136 0.233 0.330 0.028 0.026 0.023 0.021 0.019))))
+		    (snd-display ";read mix on xramp_ramp2 reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (xramp-channel 1 0 32.0)
@@ -24720,7 +24802,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on xramp_ramp3: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 23)))
-		  (snd-display ";mix on xramp_ramp3 edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on xramp_ramp3 edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.022 0.020 0.118 0.216 0.314 0.013 0.012 0.010 0.009 0.008))))
+		    (snd-display ";read mix on xramp_ramp3 reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (ptree-channel (lambda (y) (* y 0.5)))
@@ -24731,7 +24820,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ptree: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 27)))
-		  (snd-display ";mix on ptree edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ptree edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.500 0.500 0.600 0.700 0.800 0.500 0.500 0.500 0.500 0.500))))
+		    (snd-display ";read mix on ptree reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (ramp-channel 1 0)
@@ -24743,7 +24839,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ptree_ramp: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 31)))
-		  (snd-display ";mix on ptree_ramp edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ptree_ramp edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.258 0.253 0.347 0.442 0.537 0.232 0.227 0.222 0.217 0.212))))
+		    (snd-display ";read mix on ptree_ramp reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (ramp-channel 1 0)
@@ -24756,7 +24859,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ptree_ramp2: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 33)))
-		  (snd-display ";mix on ptree_ramp2 edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ptree_ramp2 edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.133 0.128 0.222 0.318 0.413 0.108 0.103 0.099 0.094 0.090))))
+		    (snd-display ";read mix on ptree_ramp2 reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (ramp-channel 1 0)
@@ -24770,7 +24880,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ptree_ramp3: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 35)))
-		  (snd-display ";mix on ptree_ramp3 edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ptree_ramp3 edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.068 0.064 0.161 0.257 0.354 0.050 0.047 0.044 0.041 0.038))))
+		    (snd-display ";read mix on ptree_ramp3 reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (ramp-channel 1 0)
@@ -24785,7 +24902,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ptree_ramp4: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 37)))
-		  (snd-display ";mix on ptree_ramp4 edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ptree_ramp4 edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.035 0.033 0.130 0.228 0.325 0.023 0.021 0.020 0.018 0.016))))
+		    (snd-display ";read mix on ptree_ramp4 reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 0)
 	    (scale-by 0.0)
@@ -24797,7 +24921,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ptree_zero: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 29)))
-		  (snd-display ";mix on ptree_zero edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ptree_zero edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 1.000 1.000 1.100 1.200 1.300 1.000 1.000 1.000 1.000 1.000))))
+		    (snd-display ";read mix on ptree_zero reversed: ~A" data))))
 	    
 	    (revert-sound)
 	    (map-channel (lambda (y) 1.0))
@@ -24810,7 +24941,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp_ptree: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 39)))
-		  (snd-display ";mix on ramp_ptree edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ramp_ptree edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.258 0.253 0.347 0.442 0.537 0.232 0.227 0.222 0.217 0.212))))
+		    (snd-display ";read mix on ramp_ptree reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (ptree-channel (lambda (y) (* y 0.5)))
@@ -24823,7 +24961,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp2_ptree: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 43)))
-		  (snd-display ";mix on ramp2_ptree edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ramp2_ptree edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.133 0.128 0.222 0.318 0.413 0.108 0.103 0.099 0.094 0.090))))
+		    (snd-display ";read mix on ramp2_ptree reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (ptree-channel (lambda (y) (* y 0.5)))
@@ -24837,7 +24982,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp3_ptree: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 47)))
-		  (snd-display ";mix on ramp3_ptree edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ramp3_ptree edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.068 0.064 0.161 0.257 0.354 0.050 0.047 0.044 0.041 0.038))))
+		    (snd-display ";read mix on ramp3_ptree reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (ptree-channel (lambda (y) (* y 0.5)))
@@ -24852,8 +25004,15 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp4_ptree: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 51)))
-		  (snd-display ";mix on ramp4_ptree edit-tree: ~A" (edit-tree))))
-	    
+		  (snd-display ";mix on ramp4_ptree edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.035 0.033 0.130 0.228 0.325 0.023 0.021 0.020 0.018 0.016))))
+		    (snd-display ";read mix on ramp4_ptree reversed: ~A" data))))
+
 	    (set! (edit-position ind 0) 1)
 	    (scale-by 0.0)
 	    (ptree-channel (lambda (y) 0.5))
@@ -24865,7 +25024,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp_ptree_zero: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 41)))
-		  (snd-display ";mix on ramp_ptree_zero edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ramp_ptree_zero edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.258 0.253 0.347 0.442 0.537 0.232 0.227 0.222 0.217 0.212))))
+		    (snd-display ";read mix on ramp_ptree_zero reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (scale-by 0.0)
@@ -24879,7 +25045,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp2_ptree_zero: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 45)))
-		  (snd-display ";mix on ramp2_ptree_zero edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ramp2_ptree_zero edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.133 0.128 0.222 0.318 0.413 0.108 0.103 0.099 0.094 0.090))))
+		    (snd-display ";read mix on ramp2_ptree_zero reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (scale-by 0.0)
@@ -24894,7 +25067,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp3_ptree_zero: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 49)))
-		  (snd-display ";mix on ramp3_ptree_zero edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ramp3_ptree_zero edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.068 0.064 0.161 0.257 0.354 0.050 0.047 0.044 0.041 0.038))))
+		    (snd-display ";read mix on ramp3_ptree_zero reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (scale-by 0.0)
@@ -24910,7 +25090,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp4_ptree_zero: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 53)))
-		  (snd-display ";mix on ramp4_ptree_zero edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ramp4_ptree_zero edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.035 0.033 0.130 0.228 0.325 0.023 0.021 0.020 0.018 0.016))))
+		    (snd-display ";read mix on ramp4_ptree_zero reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (ramp-channel 1 0)
@@ -24923,7 +25110,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp_ptree_ramp: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 55)))
-		  (snd-display ";mix on ramp_ptree_ramp edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ramp_ptree_ramp edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.133 0.128 0.222 0.318 0.413 0.108 0.103 0.099 0.094 0.090))))
+		    (snd-display ";read mix on ramp_ptree_ramp reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (ramp-channel 1 0)
@@ -24937,7 +25131,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp_ptree_ramp2: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 57)))
-		  (snd-display ";mix on ramp_ptree_ramp2 edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ramp_ptree_ramp2 edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.068 0.064 0.161 0.257 0.354 0.050 0.047 0.044 0.041 0.038))))
+		    (snd-display ";read mix on ramp_ptree_ramp2 reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (ramp-channel 1 0)
@@ -24952,7 +25153,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp_ptree_ramp3: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 59)))
-		  (snd-display ";mix on ramp_ptree_ramp3 edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ramp_ptree_ramp3 edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.035 0.033 0.130 0.228 0.325 0.023 0.021 0.020 0.018 0.016))))
+		    (snd-display ";read mix on ramp_ptree_ramp3 reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (ramp-channel 1 0)
@@ -24966,7 +25174,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp2_ptree_ramp: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 61)))
-		  (snd-display ";mix on ramp2_ptree_ramp edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ramp2_ptree_ramp edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.068 0.064 0.161 0.257 0.354 0.050 0.047 0.044 0.041 0.038))))
+		    (snd-display ";read mix on ramp2_ptree_ramp reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (ramp-channel 1 0)
@@ -24981,7 +25196,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp3_ptree_ramp: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 63)))
-		  (snd-display ";mix on ramp3_ptree_ramp edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ramp3_ptree_ramp edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.035 0.033 0.130 0.228 0.325 0.023 0.021 0.020 0.018 0.016))))
+		    (snd-display ";read mix on ramp3_ptree_ramp reversed: ~A" data))))
 	    
 	    (set! (edit-position ind 0) 1)
 	    (ramp-channel 1 0)
@@ -24996,7 +25218,14 @@ EDITS: 2
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp2_ptree_ramp2: ~A ~A" id (mix? id)))
 	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 65)))
-		  (snd-display ";mix on ramp2_ptree_ramp2 edit-tree: ~A" (edit-tree))))
+		  (snd-display ";mix on ramp2_ptree_ramp2 edit-tree: ~A" (edit-tree)))
+	      (let ((data (make-vct 10))
+		    (reader (make-sample-reader 57 ind 0 -1)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (vct-set! data i (reader)))
+		(if (not (vequal data (vct-reverse! (vct 0.035 0.033 0.130 0.228 0.325 0.023 0.021 0.020 0.018 0.016))))
+		    (snd-display ";read mix on ramp2_ptree_ramp2 reversed: ~A" data))))
 	    
 	    (revert-sound)
 	    (mix-vct (vct .1 .2 .3) 50)
@@ -26807,7 +27036,7 @@ EDITS: 2
 		  (mix-click-sets-amp)
 		  (let* ((ind (open-sound "oboe.snd"))
 			 (reg (make-region 1000 2000 ind 0))
-			 (md (mix-region 0 reg ind 0))
+			 (md (mix-region 0 reg ind 0 0))
 			 (rd (make-mix-sample-reader md)))
 		    (set! (mix-property :hi md) "hi")
 		    (set! save-md md)
@@ -33094,7 +33323,8 @@ EDITS: 2
 					     (* y (vct-ref data 0)))
 					   0 (frames) ind 0 #f #f
 					   (lambda (pos dur)
-					     (vct 0.5)))))
+					     (vct 0.5))))
+		 )
 	   (list "ramp-ptree" "ramp-ptreec")
 	   (list #t #t))
 	  (close-sound ind))
@@ -36123,6 +36353,144 @@ EDITS: 1
 	  
 	  (close-sound ind))
 	
+
+	;; additional coverage tests
+
+	(let ((ind (new-sound "test.snd" :size 10)))
+	  (vct->channel (make-vct 10 .4))
+	  (make-selection 3 7) ; beg end just for confusion
+	  (env-selection '(0 0.5 1 0.5))
+	  (let ((data (channel->vct)))
+	    (if (not (vequal data (vct .4 .4 .4 .2 .2 .2 .2 .2 .4 .4)))
+		(snd-display ";env-selection constant: ~A" data)))
+	  (undo)
+	  (let ((edpos (edit-position ind 0)))
+	    (smooth-channel 10 10 ind 0)
+	    (if (not (= (edit-position ind 0) edpos))
+		(snd-display ";smooth past end: ~A ~A" (edit-position ind 0) edpos))
+	    
+	    (let ((ctr 0))
+	      (map-channel (lambda (y) (set! ctr (1+ ctr)) (if (> ctr 3) #t (* y 2)))))
+	    (if (not (= (frames ind 0) 3)) 
+		(snd-display ";map-channel -> #t at 3: ~A" (frames ind 0))
+		(if (not (vequal (channel->vct) (vct 0.8 0.8 0.8)))
+		    (snd-display ";map-channel #t result: ~A" (channel->vct))))
+	    
+	    (undo)
+	    (let ((ctr 0))
+	      (map-channel (lambda (y) (set! ctr (1+ ctr)) (if (= ctr 3) (make-vct 5 .1) (* y .5)))))
+	    (if (not (= (frames ind 0) 14)) 
+		(snd-display ";map-channel -> vct at 3: ~A" (frames ind 0))
+		(if (not (vequal (channel->vct) (vct 0.200 0.200 0.100 0.100 0.100 0.100 0.100 0.200 0.200 0.200 0.200 0.200 0.200 0.200)))
+		    (snd-display ";map-channel vct result: ~A" (channel->vct))))
+	    
+	    (undo)
+	    (let ((data (make-vct 2 0.0)))
+	      (map-channel (lambda (y) (vct-set! data 0 y) data)))
+	    (if (not (= (frames ind 0) 20))
+		(snd-display ";map-channel -> vct ptree: ~A" (frames ind 0))
+		(if (not (vequal (channel->vct) (vct 0.400 0.000 0.400 0.000 0.400 0.000 0.400 0.000 0.400 0.000 0.400 0.000 0.400 0.000 0.400 0.000 0.400 0.000 0.400 0.000)))
+		    (snd-display ";map-channel vct ptree result: ~A" (channel->vct))))
+	    
+	    (undo))
+	  
+	  (set! (amp-control ind) 2.0)
+	  (apply-controls ind 1 0)
+	  (if (> (abs (- (maxamp ind 0) .8)) .01) (snd-display ";apply-controls 10: ~A" (channel->vct)))
+	  (undo)
+	  (set! (amp-control ind) 2.0)
+	  (apply-controls ind 1 5)
+	  (if (not (vequal (channel->vct 0 5) (vct 0.4 0.4 0.4 0.4 0.4)))
+	      (snd-display ";apply controls from 5: ~A" (channel->vct)))
+	  (if (ffneq (sample 5) .8) (snd-display ";apply-controls at 5: ~A" (sample 5)))
+	  (let ((tag (catch 'no-such-edit
+			    (lambda ()
+			      (save-sound-as "nope.snd" :edit-position 21))
+			    (lambda args (car args)))))
+	    (if (not (eq? tag 'no-such-edit)) (snd-display ";save-sound-as at bad edpos: ~A" tag)))
+	  (let ((tag (catch 'no-such-edit
+			    (lambda ()
+			      (peak-env-info ind 0 21))
+			    (lambda args (car args)))))
+	    (if (not (eq? tag 'no-such-edit)) (snd-display ";peak-env-info at bad edpos: ~A" tag)))
+	  (let ((tag (catch 'no-such-file
+			    (lambda ()
+			      (channel-amp-envs "/baddy/hiho"))
+			    (lambda args (car args)))))
+	    (if (not (eq? tag 'no-such-file)) (snd-display ";channel-amp-envs bad file: ~A" tag)))
+	  
+	  (close-sound ind))
+	
+	
+	(let ((ind (open-sound "oboe.snd")))
+	  (let ((ctr 0))
+	    (map-channel (lambda (y) (set! ctr (1+ ctr)) (if (> ctr 3) #t (* y 2)))))
+	  (if (not (= (frames ind 0) 3)) 
+	      (snd-display ";map-channel oboe -> #t at 3: ~A" (frames ind 0))
+	      (if (not (vequal (channel->vct) (vct 0.0 -.001 -.001)))
+		  (snd-display ";map-channel #t oboe result: ~A" (channel->vct))))
+	  
+	  (undo)
+	  (let ((ctr 0))
+	    (map-channel (lambda (y) (set! ctr (1+ ctr)) (if (= ctr 3) (make-vct 5 .1) (* y .5)))))
+	  (if (not (= (frames ind 0) (+ 50828 4)))
+	      (snd-display ";map-channel oboe -> vct at 3: ~A" (frames ind 0))
+	      (if (not (vequal (channel->vct 0 10) (vct 0.000 -0.000 0.100 0.100 0.100 0.100 0.100 -0.000 -0.000 -0.000)))
+		  (snd-display ";map-channel vct result: ~A" (channel->vct 0 10))))
+	  
+	  (undo)
+	  (let ((data (make-vct 2 0.0)))
+	    (map-channel (lambda (y) (vct-set! data 0 y) data)))
+	  (if (not (= (frames ind 0) (* 2 50828)))
+	      (snd-display ";map-channel oboe -> vct ptree: ~A" (frames ind 0))
+	      (if (not (vequal (channel->vct 0 10) (vct 0.000 0.000 -0.000 0.000 -0.000 0.000 -0.000 0.000 -0.000 0.0)))
+		  (snd-display ";map-channel vct ptree result: ~A" (channel->vct 0 10))))
+	  
+	  (revert-sound)
+	  
+	  (close-sound ind))
+	
+	
+	
+	(let ((ind (open-sound "2.snd")))
+	  (ramp-channel 0.9 1.0)
+	  (ramp-channel 0.9 1.0)
+	  (xramp-channel 0.9 1.0 32.0)
+	  (xramp-channel 0.9 1.0 32.0) ; make it unrampable for apply_env
+	  (set! (sync ind) 1)
+	  (let ((mxs (maxamp ind #t)))
+	    (env-sound '(0 .25 1 0.5))
+	    (if (or (not (= (edit-position ind 0) 5)) (not (= (edit-position ind 1) 1)))
+		(snd-display ";env-sound sync'd: ~A ~A" (edit-position ind 0) (edit-position ind 1)))
+	    (let ((mxs1 (maxamp ind #t)))
+	      (if (or (fneq (car mxs) (* 2.0 (car mxs1)))
+		      (fneq (cadr mxs) (* 2.0 (cadr mxs1))))
+		  (snd-display ";env-sound sync'd maxes: ~A -> ~A" mxs mxs1)))
+	    (undo 1))
+	  
+	  (close-sound ind))
+	
+	
+	(let ((ind (new-sound :channels 2 :size 10)))
+	  (map-channel (lambda (y) 1.0))
+	  (ramp-channel 0.9 1.0)
+	  (ramp-channel 0.9 1.0)
+	  (xramp-channel 0.9 1.0 32.0)
+	  (xramp-channel 0.9 1.0 32.0) ; make it unrampable for apply_env
+	  
+	  (set! (sync ind) 1)
+	  (let ((mxs (maxamp ind #t)))
+	    (env-sound '(0 .25 1 0.5))
+	    (if (or (not (= (edit-position ind 0) 6)) (not (= (edit-position ind 1) 1)))
+		(snd-display ";env-sound sync'd buf: ~A ~A" (edit-position ind 0) (edit-position ind 1)))
+	    (let ((mxs1 (maxamp ind #t)))
+	      (if (or (fneq (car mxs) (* 2.0 (car mxs1)))
+		      (fneq (cadr mxs) (* 2.0 (cadr mxs1))))
+		  (snd-display ";env-sound sync'd maxes buf: ~A -> ~A" mxs mxs1)))
+	    (undo 1))
+	  
+	  (close-sound ind))
+
 	))
     ))
 
@@ -36185,6 +36553,7 @@ EDITS: 1
 	  (fill-rectangle 20 20 100 100 ind 0)
 	  (make-bezier 0 0 20 20 40 30 60 10 10)
 	  (update-time-graph ind 0)
+	  (fill-rectangle 20 20 100 100 ind 0 time-graph #t)
 	  (reset-hook! after-graph-hook)
 	  (reset-hook! lisp-graph-hook)
 	  
@@ -44706,6 +45075,12 @@ EDITS: 1
 	  (let ((ok 0.0))
 	    (run (lambda () (set! ok (mix-speed mx))))
 	    (if (fneq ok 1.0) (snd-display ";run mix-speed?")))
+	  (let ((ok 0.0))
+	    (run (lambda () (set! ok (mix-amp mx))))
+	    (if (fneq ok 1.0) (snd-display ";run mix-amp?")))
+	  (let ((ok 0))
+	    (run (lambda () (set! ok (mix-sync-max))))
+	    (if (= ok 0) (snd-display ";run mix-sync-max 0?")))
 	  
 	  (let ((ok 0))
 	    (run (lambda () (set! ok (region-chans reg))))
@@ -62118,7 +62493,7 @@ EDITS: 1
 		     mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions
 		     maxamp maxamp-position menu-widgets minibuffer-history-length min-dB log-freq-start mix mixes mix-amp mix-amp-env
 		     mix-color mix-length mix? view-mixes-dialog mix-position
-		     mix-dialog-mix mix-name mix-sync-max
+		     mix-dialog-mix mix-name mix-sync-max mix-sync mix-properties
 		     mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width mark-tag-height mark-tag-width
 		     mix-tag-y mix-vct mix-waveform-height time-graph-style lisp-graph-style transform-graph-style
 					;new-sound 
@@ -62247,7 +62622,7 @@ EDITS: 1
 			 graph-color graph-cursor graph-style lisp-graph? graphs-horizontal highlight-color
 			 just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
 			 mark-name mark-sample mark-sync max-transform-peaks max-regions min-dB log-freq-start mix-amp
-			 mix-amp-env mix-color mix-name mix-position
+			 mix-amp-env mix-color mix-name mix-position mix-sync mix-properties
 			 mix-speed mix-tag-height mix-tag-width mix-tag-y mark-tag-width mark-tag-height 
 			 mix-waveform-height transform-normalization open-file-dialog-directory
 			 position-color view-files-sort print-length pushed-button-color
@@ -63368,6 +63743,8 @@ EDITS: 1
 		  (check-error-tag 'wrong-type-arg (lambda () (src-sound 3.0 1.0 #t)))
 		  (check-error-tag 'wrong-type-arg (lambda () (src-sound 3.0 1.0 ind #t)))
 		  (check-error-tag 'no-such-edit (lambda () (display-edits ind 0 123)))
+		  (check-error-tag 'no-such-edit (lambda () (marks ind 0 123)))
+		  (check-error-tag 'no-such-edit (lambda () (save-sound-as "test.snd" :edit-position 123)))
 		  (close-sound ind))
 		(check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
 		(check-error-tag 'cannot-save (lambda () (save-state "/bad/baddy")))
@@ -63440,6 +63817,12 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (make-polyshape 440.0 :partials '(1 1) :kind 3)))
 		(check-error-tag 'wrong-type-arg (lambda () (set! (mus-header-raw-defaults) 1234)))
 		(check-error-tag 'wrong-type-arg (lambda () (set! (mus-header-raw-defaults) (list 44100 2.123 "hi"))))
+		(check-error-tag 'no-such-mix (lambda () (mix-sync (1+ (mix-sync-max)))))
+		(check-error-tag 'no-such-mix (lambda () (set! (mix-sync (1+ (mix-sync-max))) 1)))
+		(check-error-tag 'no-such-mix (lambda () (mix-properties (1+ (mix-sync-max)))))
+		(check-error-tag 'no-such-mix (lambda () (set! (mix-properties (1+ (mix-sync-max))) 1)))
+		(check-error-tag 'no-such-mix (lambda () (play-mix (1+ (mix-sync-max)))))
+		(check-error-tag 'no-such-auto-delete-choice (lambda () (insert-sound "1a.snd" 0 ind 0 0 123)))
 		))
 	  
 	  (if (provided? 'snd-motif)
