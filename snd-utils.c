@@ -991,7 +991,8 @@ void *mem_malloc(size_t len, const char *func, const char *file, int line)
   if ((len == 0) || (len > MAX_MALLOC))
     {
       fprintf(stderr, "%s:%s[%d] attempt to malloc %Zu bytes", func, file, line, len);
-      mem_report(); abort();
+      mem_report(); 
+      abort();
     }
   true_ptr = (char *)malloc(len + 2 * MEM_PAD_SIZE);
   if (!true_ptr)
@@ -1024,7 +1025,8 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
   if ((size == 0) || (size > MAX_MALLOC))
     {
       fprintf(stderr, "%s:%s[%d] attempt to realloc %Zu bytes", func, file, line, size);
-      mem_report(); abort();
+      mem_report(); 
+      abort();
     }
   true_ptr = (char *)forget_pointer(ptr, func, file, line, false);
   new_true_ptr = (char *)realloc((void *)true_ptr, size + 2 * MEM_PAD_SIZE);

@@ -39,7 +39,8 @@
 (define all-args #f)
 (define test-at-random 0)
 ;(show-ptree 1)
-(define ptree-op-offset 33)
+(define ptree-op-offset 34)
+(define mix-ptree-op-offset 1)
 
 (if (and (provided? 'snd-guile) (provided? 'snd-gauche)) (display ";both switches are on?"))
 
@@ -2070,14 +2071,14 @@
 		       'ladspa-instantiate 'ladspa-run 'ladspa-run-adding 'ladspa-set-run-adding-gain 'left-sample
 		       'linear->db 'lisp-graph 'lisp-graph-hook 'lisp-graph-style 'lisp-graph?
 		       'list->vct 'list-ladspa 'listener-click-hook 'listener-color 'listener-font
-		       'listener-prompt 'listener-selection 'listener-text-color 'locsig
+		       'listener-prompt 'listener-selection 'listener-text-color 'little-endian? 'locsig
 		       'locsig-ref 'locsig-reverb-ref 'locsig-reverb-set! 'locsig-set! 'locsig-type
 		       'locsig? 'log-freq-start 'main-menu 'main-widgets 'make-all-pass
 		       'make-asymmetric-fm 'make-moving-average 'make-bezier 'make-color 'make-comb 'make-filtered-comb
 		       'make-convolve 'make-delay 'make-env 'make-fft-window 'make-file->frame
 		       'make-file->sample 'make-filter 'make-fir-coeffs 'make-fir-filter 'make-formant
 		       'make-frame 'make-frame->file 'make-granulate 'make-graph-data 'make-iir-filter
-		       'make-locsig 'make-mix-sample-reader 'make-mixer 'make-notch 'make-one-pole
+		       'make-locsig 'make-mix-sample-reader 'make-mixer 'make-move-sound 'make-notch 'make-one-pole
 		       'make-one-zero 'make-oscil 'make-phase-vocoder 'make-player 'make-polyshape
 		       'make-pulse-train 'make-rand 'make-rand-interp 'make-readin
 		       'make-region 'make-region-sample-reader 'make-sample->file 'make-sample-reader 'make-sawtooth-wave
@@ -2092,14 +2093,14 @@
 		       'maxamp-position 'menu-widgets 'min-dB 'minibuffer-history-length 'mix
 		       'mix-amp 'mix-amp-env 'mix-click-hook 'mix-color
 		       'mix-dialog-mix 'mix-drag-hook 'mix-file-dialog 'mix-length 'mix-home
-		       'mix-name 'mix-position 'mix-region 'mix-release-hook 'mix-sync 'mix-sync-max
+		       'mix-name 'mix-position 'mix-properties 'mix-region 'mix-release-hook 'mix-sync 'mix-sync-max
 		       'mix-sample-reader? 'mix-selection 'mix-speed 'mix-tag-height
 		       'mix-tag-width 'mix-tag-y
 		       'mix-vct 'mix-waveform-height 'mix? 'mixer*
 		       'mixer+ 'mixer-ref 'mixer-set! 'mixer?
 		       'mixes 'mouse-click-hook 'mouse-drag-hook 'mouse-enter-graph-hook
 		       'mouse-enter-label-hook 'mouse-enter-listener-hook 'mouse-enter-text-hook 'mouse-leave-graph-hook 'mouse-leave-label-hook
-		       'mouse-leave-listener-hook 'mouse-leave-text-hook 'mouse-press-hook 'move-locsig 'multiply-arrays
+		       'mouse-leave-listener-hook 'mouse-leave-text-hook 'mouse-press-hook 'move-locsig 'move-sound 'move-sound? 'multiply-arrays
 		       'mus-aifc 'mus-aiff 'mus-alaw 'mus-alsa-buffer-size 'mus-alsa-buffers
 		       'mus-alsa-capture-device 'mus-alsa-device 'mus-alsa-playback-device 'mus-alsa-squelch-warning 'mus-apply
 		       'mus-array-print-length 'mus-float-equal-fudge-factor 'mus-audio-adat-in 'mus-audio-adat-out 'mus-audio-aes-in 'mus-audio-aes-out
@@ -2213,7 +2214,7 @@
 		       'transform-graph? 'transform-normalization 'transform-sample 'transform-size 'transform-type
 		       'transform? 'trap-segfault 'triangle-wave 'triangle-wave? 'tukey-window
 		       'two-pole 'two-pole? 'two-zero 'two-zero? 'ultraspherical-window
-		       'unbind-key  'undo 'undo-hook 'update-hook 'update-lisp-graph
+		       'unbind-key  'undo 'undo-edit 'undo-hook 'update-hook 'update-lisp-graph
 		       'update-sound 'update-time-graph 'update-transform-graph 'variable-graph? 'vct
 		       'vct* 'vct+ 'vct->channel 'vct->list 'vct->sound-data
 		       'vct->string 'vct->vector 'vct-add! 'vct-copy
@@ -19147,9 +19148,9 @@ EDITS: 2
       (set! (mus-data gen) (phase-partials->wave (list 1 1 0 2 1 (* pi .5)) #f #t)))
     
     (let ((tag (catch #t (lambda () (phase-partials->wave (list 1 .3 2 .2))) (lambda args (car args)))))
-      (if (not (eq? tag 'arg-error)) (snd-display ";bad length arg to phase-partials->wave: ~A" tag)))
+      (if (not (eq? tag 'wrong-type-arg)) (snd-display ";bad length arg to phase-partials->wave: ~A" tag)))
     (let ((tag (catch #t (lambda () (phase-partials->wave (list "hiho" .3 2 .2))) (lambda args (car args)))))
-      (if (not (eq? tag 'arg-error)) (snd-display ";bad harmonic arg to phase-partials->wave: ~A" tag)))
+      (if (not (eq? tag 'wrong-type-arg)) (snd-display ";bad harmonic arg to phase-partials->wave: ~A" tag)))
     (let ((tag (catch #t (lambda () (phase-partials->wave (list))) (lambda args (car args)))))
       (if (not (eq? tag 'no-data)) (snd-display ";nil list to phase-partials->wave: ~A" tag)))
     
@@ -19293,7 +19294,7 @@ EDITS: 2
     (let ((tag (catch #t (lambda () (partials->waveshape (list .5 .3 .2))) (lambda args (car args)))))
       (if (not (eq? tag 'bad-type)) (snd-display ";odd length arg to partials->waveshape: ~A" tag)))
     (let ((tag (catch #t (lambda () (phase-partials->wave (list 1 .3 2 .2))) (lambda args (car args)))))
-      (if (not (eq? tag 'arg-error)) (snd-display ";bad length arg to phase-partials->wave: ~A" tag)))
+      (if (not (eq? tag 'wrong-type-arg)) (snd-display ";bad length arg to phase-partials->wave: ~A" tag)))
     
     (let ((d11 (partials->waveshape '(1 1) 16)))
       (if (not (vequal d11 (vct -1.000 -0.867 -0.733 -0.600 -0.467 -0.333 -0.200 -0.067 0.067 0.200 0.333 0.467 0.600 0.733 0.867 1.000)))
@@ -24819,7 +24820,7 @@ EDITS: 2
 		    (snd-display ";mix on ptree: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ptree: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 27)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 27))))
 		  (snd-display ";mix on ptree edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -24838,7 +24839,7 @@ EDITS: 2
 		    (snd-display ";mix on ptree_ramp: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ptree_ramp: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 31)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 31))))
 		  (snd-display ";mix on ptree_ramp edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -24858,7 +24859,7 @@ EDITS: 2
 		    (snd-display ";mix on ptree_ramp2: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ptree_ramp2: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 33)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 33))))
 		  (snd-display ";mix on ptree_ramp2 edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -24879,7 +24880,7 @@ EDITS: 2
 		    (snd-display ";mix on ptree_ramp3: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ptree_ramp3: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 35)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 35))))
 		  (snd-display ";mix on ptree_ramp3 edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -24901,7 +24902,7 @@ EDITS: 2
 		    (snd-display ";mix on ptree_ramp4: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ptree_ramp4: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 37)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 37))))
 		  (snd-display ";mix on ptree_ramp4 edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -24920,7 +24921,7 @@ EDITS: 2
 		    (snd-display ";mix on ptree_zero: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ptree_zero: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 29)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 29))))
 		  (snd-display ";mix on ptree_zero edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -24940,7 +24941,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp_ptree: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp_ptree: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 39)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 39))))
 		  (snd-display ";mix on ramp_ptree edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -24960,7 +24961,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp2_ptree: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp2_ptree: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 43)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 43))))
 		  (snd-display ";mix on ramp2_ptree edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -24981,7 +24982,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp3_ptree: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp3_ptree: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 47)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 47))))
 		  (snd-display ";mix on ramp3_ptree edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -25003,7 +25004,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp4_ptree: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp4_ptree: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 51)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 51))))
 		  (snd-display ";mix on ramp4_ptree edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -25023,7 +25024,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp_ptree_zero: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp_ptree_zero: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 41)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 41))))
 		  (snd-display ";mix on ramp_ptree_zero edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -25044,7 +25045,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp2_ptree_zero: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp2_ptree_zero: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 45)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 45))))
 		  (snd-display ";mix on ramp2_ptree_zero edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -25066,7 +25067,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp3_ptree_zero: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp3_ptree_zero: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 49)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 49))))
 		  (snd-display ";mix on ramp3_ptree_zero edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -25089,7 +25090,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp4_ptree_zero: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp4_ptree_zero: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 53)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 53))))
 		  (snd-display ";mix on ramp4_ptree_zero edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -25109,7 +25110,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp_ptree_ramp: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp_ptree_ramp: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 55)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 55))))
 		  (snd-display ";mix on ramp_ptree_ramp edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -25130,7 +25131,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp_ptree_ramp2: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp_ptree_ramp2: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 57)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 57))))
 		  (snd-display ";mix on ramp_ptree_ramp2 edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -25152,7 +25153,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp_ptree_ramp3: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp_ptree_ramp3: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 59)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 59))))
 		  (snd-display ";mix on ramp_ptree_ramp3 edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -25173,7 +25174,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp2_ptree_ramp: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp2_ptree_ramp: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 61)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 61))))
 		  (snd-display ";mix on ramp2_ptree_ramp edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -25195,7 +25196,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp3_ptree_ramp: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp3_ptree_ramp: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 63)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 63))))
 		  (snd-display ";mix on ramp3_ptree_ramp edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -25217,7 +25218,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp2_ptree_ramp2: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp2_ptree_ramp2: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 65)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) (+ mix-ptree-op-offset 65))))
 		  (snd-display ";mix on ramp2_ptree_ramp2 edit-tree: ~A" (edit-tree)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -51546,9 +51547,11 @@ EDITS: 1
 			    (append-to-minibuffer ")")
 			    (key-event minibuffer snd-return-key 0) (force-event))
 			  (lambda args #f))
+#|
 		   (let ((str (widget-text minibuffer)))
 		     (if (not (string=? str "\"oboe.snd\""))
 			 (snd-display ";completed mini: ~A" str)))
+|#
 		   (set! (widget-text minibuffer) "")
 		   (focus-widget minibuffer)
 		   (key-event minibuffer (char->integer #\j) 4) (force-event)
@@ -53176,6 +53179,7 @@ EDITS: 1
 			 (snd-display ";no mix file dialog?"))
 		     
 		     
+#|
 		     ;; ---------------- edit header dialog ----------------
 		     (let ((ind (open-sound "oboe.snd")))
 		       (define (type->pos type)
@@ -53372,6 +53376,7 @@ EDITS: 1
 			     (click-button cancel))
 			 (force-event)
 			 (close-sound ind)))
+|#
 		     
 		     ;; ---------------- edit:find dialog ----------------
 		     (find-dialog)
@@ -62346,17 +62351,6 @@ EDITS: 1
   
   (define (traced a) (+ 2 a))
   
-  (define (make-identity-mixer chans)
-    (if (and (integer? chans) 
-	     (< chans 256))
-	(let ((m1 (make-mixer chans)))
-	  (if (mixer? m1)
-	      (do ((i 0 (1+ i)))
-		  ((= i chans))
-		(mixer-set! m1 i i 1.0)))
-	  m1)
-	#f))
-  
   (define (extract-channel filename snd chn)
     (save-sound-as filename snd #f #f #f chn))
   
@@ -62464,9 +62458,9 @@ EDITS: 1
 		     auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
 		     basic-color bind-key bomb c-g? apply-controls change-samples-with-origin channel-style
 		     channel-widgets channels chans peaks-font bold-peaks-font close-sound
-		     color-cutoff color-dialog colormap-ref add-colormap delete-colormap colormap-size colormap-name
+		     color-cutoff color-dialog colormap-ref add-colormap delete-colormap colormap-size colormap-name colormap?
 		     color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
-		     contrast-control? convolve-selection-with convolve-with channel-properties 
+		     contrast-control? convolve-selection-with convolve-with channel-properties controls->channel
 		     amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 		     reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
 		     auto-update-interval count-matches current-font cursor cursor-color with-tracking-cursor cursor-size
@@ -62474,7 +62468,7 @@ EDITS: 1
 		     default-output-chans default-output-data-format default-output-srate default-output-header-type define-envelope
 		     delete-mark delete-marks forget-region delete-sample delete-samples
 		     delete-selection dialog-widgets display-edits dot-size draw-dot draw-dots draw-line
-		     draw-lines draw-string edit-header-dialog edit-fragment edit-position edit-tree edits env-selection
+		     draw-lines draw-string edit-header-dialog edit-fragment edit-list->function edit-position edit-tree edits env-selection
 		     env-sound enved-envelope enved-base enved-clip? enved-in-dB enved-dialog enved-style enved-power
 		     enved-target enved-waveform-color enved-wave? eps-file eps-left-margin 
 		     eps-bottom-margin eps-size expand-control expand-control-hop expand-control-jitter expand-control-length expand-control-ramp
@@ -62482,7 +62476,7 @@ EDITS: 1
 		     transform-graph-type fft-window transform-graph? view-files-dialog mix-file-dialog file-name fill-polygon
 		     fill-rectangle filter-sound filter-control-in-dB filter-control-envelope enved-filter-order enved-filter
 		     filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control? find-channel
-		     find-mark find-sound finish-progress-report foreground-color insert-file-dialog
+		     find-mark find-sound finish-progress-report foreground-color insert-file-dialog file-write-date
 		     frames free-sample-reader graph transform? delete-transform add-watcher delete-watcher
 		     graph-color graph-cursor graph-data graph->ps gl-graph->ps graph-style lisp-graph?  graphs-horizontal header-type
 		     help-dialog info-dialog highlight-color in insert-region insert-sample insert-samples
@@ -62497,7 +62491,7 @@ EDITS: 1
 		     mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width mark-tag-height mark-tag-width
 		     mix-tag-y mix-vct mix-waveform-height time-graph-style lisp-graph-style transform-graph-style
 					;new-sound 
-		     read-mix-sample next-sample
+		     read-mix-sample next-sample read-region-sample
 		     transform-normalization open-file-dialog-directory open-raw-sound open-sound orientation-dialog previous-sample
 		     peak-env-info peaks ;play play-and-wait play-mix play-region play-selection
 		     player? players
@@ -62532,12 +62526,12 @@ EDITS: 1
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 		     with-mix-tags with-relative-panes with-gl write-peak-env-info-file x-axis-style beats-per-measure
 		     beats-per-minute x-bounds x-position-slider x->position x-zoom-slider mus-header-type->string mus-data-format->string
-		     y-bounds y-position-slider y->position y-zoom-slider zero-pad zoom-color zoom-focus-style
+		     y-bounds y-position-slider y->position y-zoom-slider zero-pad zoom-color zoom-focus-style mus-set-formant-radius-and-frequency
 		     mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location data-size
 		     mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length
 		     mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment mus-sound-write-date
 		     mus-bytes-per-sample mus-sound-loop-info mus-sound-mark-info mus-audio-report mus-sun-set-outputs mus-netbsd-set-outputs
-					;mus-alsa-buffers mus-alsa-buffer-size 
+					;mus-alsa-buffers mus-alsa-buffer-size mus-apply
 		     mus-alsa-squelch-warning
 					;mus-alsa-device mus-alsa-playback-device mus-alsa-capture-device 
 		     mus-sound-maxamp mus-sound-maxamp-exists? 
@@ -62565,10 +62559,10 @@ EDITS: 1
 		     make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-ssb-am make-table-lookup make-triangle-wave
 		     make-two-pole make-two-zero make-wave-train make-waveshape mixer* mixer-ref mixer-set! mixer? mixer+
 		     move-sound make-move-sound move-sound? mus-float-equal-fudge-factor
-		     multiply-arrays mus-array-print-length mus-channel mus-channels make-polyshape polyshape?
+		     multiply-arrays mus-array-print-length mus-channel mus-channels make-polyshape polyshape polyshape?
 		     mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-formant-radius mus-frequency
 		     mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-mix mus-order mus-output?  mus-phase
-		     mus-ramp mus-random mus-scaler mus-srate mus-xcoeffs mus-ycoeffs notch notch? one-pole one-pole?
+		     mus-ramp mus-random mus-scaler mus-srate mus-xcoeff mus-xcoeffs mus-ycoeff mus-ycoeffs notch notch? one-pole one-pole?
 		     one-zero one-zero? oscil oscil? out-any outa outb outc outd partials->polynomial
 		     partials->wave partials->waveshape phase-partials->wave polynomial pulse-train pulse-train?
 		     radians->degrees radians->hz rand rand-interp rand-interp?  rand? readin readin?  rectangular->polar
@@ -62578,7 +62572,7 @@ EDITS: 1
 		     two-zero? wave-train wave-train?  waveshape waveshape?  make-vct vct-add! vct-subtract!  vct-copy
 		     vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! mus-audio-describe vct-peak
 		     vct? list->vct vct->list vector->vct vct->vector vct-move! vct-reverse! vct-subseq vct little-endian? vct->string
-		     clm-channel env-channel map-channel scan-channel play-channel 
+		     clm-channel env-channel env-channel-with-base map-channel scan-channel play-channel 
 		     reverse-channel seconds->samples samples->seconds
 		     smooth-channel vct->channel channel->vct src-channel scale-channel ramp-channel pad-channel normalize-channel
 		     cursor-position clear-listener mus-sound-prune mus-sound-forget xramp-channel ptree-channel
@@ -62597,9 +62591,8 @@ EDITS: 1
 		     quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 		     
 		     delay-tick playing pausing draw-axes copy-sample-reader html-dir html-program
-		     make-fir-coeffs make-identity-mixer mus-interp-type mus-run phase-vocoder
+		     make-fir-coeffs mus-interp-type mus-run phase-vocoder
 		     player-home redo-edit undo-edit widget-position widget-size 
-		     (if (defined? 'window-property) window-property identity)
 		     focus-widget 
 		     ))
 	     
@@ -62651,10 +62644,7 @@ EDITS: 1
 			 phase-vocoder-amp-increments phase-vocoder-amps 
 			 phase-vocoder-freqs phase-vocoder-outctr phase-vocoder-phase-increments phase-vocoder-phases 
 			 quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
-			 
 			 html-dir html-program mus-interp-type widget-position widget-size 
-			 (if (defined? 'window-property) window-property widget-size)
-			 
 			 mixer-ref frame-ref locsig-ref locsig-reverb-ref
 			 mus-file-prescaler mus-prescaler mus-clipping mus-file-clipping mus-header-raw-defaults
 			 ))
@@ -62700,7 +62690,31 @@ EDITS: 1
 			       "list->vct" "vct" "formant-bank"
 			       ))
 	     )
+#|
+	(for-each 
+	 (lambda (n)
+	   (if (and (not (member n procs0))
+		    (not (member n procs1))
+		    (not (member n procs2))
+		    (not (member n procs3))
+		    (not (member n procs4))
+		    (not (member n procs5))
+		    (not (member n procs6))
+		    (not (member n procs8))
+		    (not (member n procs10)))
+	       (snd-display ";not in any list: ~A" n)))
+	 procs)
 	
+	(for-each 
+	 (lambda (n)
+	   (if (and (not (member n set-procs0))
+		    (not (member n set-procs1))
+		    (not (member n set-procs2))
+		    (not (member n set-procs3))
+		    (not (member n set-procs4)))
+	       (snd-display ";not in any set list: ~A" n)))
+	 set-procs)
+|#	
 	(if all-args
 	    (snd-display ";procs 0: ~A ~A, 1: ~A ~A, 2: ~A ~A, 3: ~A ~A, 4: ~A ~A, 5: ~A, 6: ~A, 7: ~A, 8: ~A, 10: ~A"
 			 (length procs0) (length set-procs0) 
@@ -63496,8 +63510,8 @@ EDITS: 1
 		(check-error-tag 'bad-arity (lambda () (bind-key (char->integer #\p) 0 (lambda (a b) (play-often (max 1 a))))))
 		(check-error-tag 'bad-arity (lambda () (set! (zoom-focus-style) (lambda (a) 0))))
 		(check-error-tag 'wrong-type-arg (lambda () (mus-mix "oboe.snd" "pistol.snd" 0 12 0 (make-mixer 1 1.0) "a string")))
-		(check-error-tag 'bad-header (lambda () (mus-mix "test.snd" (string-append sf-dir "bad_chans.aifc"))))
-		(check-error-tag 'mus-error (lambda () (mus-mix "test.snd" (string-append sf-dir "bad_length.aifc"))))
+		(check-error-tag 'bad-header (lambda () (mus-mix "oboe.snd" (string-append sf-dir "bad_chans.aifc"))))
+		(check-error-tag 'mus-error (lambda () (mus-mix "oboe.snd" (string-append sf-dir "bad_length.aifc"))))
 		(check-error-tag 'bad-header (lambda () (mus-mix (string-append sf-dir "bad_chans.aifc") "oboe.snd")))
 		(check-error-tag 'no-such-sound (lambda () (set! (sound-loop-info 123) '(0 0 1 1))))
 		(check-error-tag 'bad-header (lambda () (new-sound "fmv.snd" mus-nist mus-bfloat 22050 2 "this is a comment")))
@@ -63507,7 +63521,6 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (snd-transform 20 (make-vct 4))))
 		(check-error-tag 'bad-header (lambda () (mus-sound-maxamp (string-append sf-dir "bad_chans.snd"))))
 		(check-error-tag 'bad-header (lambda () (set! (mus-sound-maxamp (string-append sf-dir "bad_chans.snd")) '(0.0 0.0))))
-		(check-error-tag 'mus-error (lambda () (play (string-append sf-dir "midi60.mid"))))
 		(check-error-tag 'mus-error (lambda () (make-iir-filter :order 32 :ycoeffs (make-vct 4))))
 		(check-error-tag 'mus-error (lambda () (make-iir-filter :coeffs (make-vct 4) :ycoeffs (make-vct 4))))
 		(check-error-tag 'mus-error (lambda () (make-fir-filter :coeffs (make-vct 4) :xcoeffs (make-vct 4))))
@@ -63560,7 +63573,6 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (make-color 1.5 0.0 0.0)))
 		(check-error-tag 'out-of-range (lambda () (make-color -0.5 0.0 0.0)))
 		(check-error-tag 'wrong-type-arg (lambda () (make-variable-graph #f)))
-		(if (provided? 'snd-motif) (check-error-tag 'arg-error (lambda () (make-variable-graph (list-ref (main-widgets) 1)))))
 		(check-error-tag 'cannot-print (lambda () (graph->ps)))
 		(let ((ind (open-sound "oboe.snd"))) 
 		  (set! (selection-creates-region) #t)
@@ -63745,6 +63757,7 @@ EDITS: 1
 		  (check-error-tag 'no-such-edit (lambda () (display-edits ind 0 123)))
 		  (check-error-tag 'no-such-edit (lambda () (marks ind 0 123)))
 		  (check-error-tag 'no-such-edit (lambda () (save-sound-as "test.snd" :edit-position 123)))
+		  (check-error-tag 'no-such-auto-delete-choice (lambda () (insert-sound "1a.snd" 0 0 ind 0 0 123)))
 		  (close-sound ind))
 		(check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
 		(check-error-tag 'cannot-save (lambda () (save-state "/bad/baddy")))
@@ -63822,7 +63835,6 @@ EDITS: 1
 		(check-error-tag 'no-such-mix (lambda () (mix-properties (1+ (mix-sync-max)))))
 		(check-error-tag 'no-such-mix (lambda () (set! (mix-properties (1+ (mix-sync-max))) 1)))
 		(check-error-tag 'no-such-mix (lambda () (play-mix (1+ (mix-sync-max)))))
-		(check-error-tag 'no-such-auto-delete-choice (lambda () (insert-sound "1a.snd" 0 ind 0 0 123)))
 		))
 	  
 	  (if (provided? 'snd-motif)

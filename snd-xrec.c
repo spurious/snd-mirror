@@ -161,7 +161,9 @@ static void start_recording(void)
       XtFree(str);
     }
   redirect_snd_error_to(report_in_error_info, NULL);
-  recorder_fd = mus_sound_open_output(recorder_filename, recorder_srate, recorder_chans, recorder_format, MUS_NEXT, NULL);
+  recorder_fd = mus_sound_open_output(recorder_filename, recorder_srate, recorder_chans, recorder_format, 
+				      (recorder_format == MUS_LFLOAT) ? MUS_RIFF : MUS_NEXT, 
+				      NULL);
   redirect_snd_error_to(NULL, NULL);
   if (recorder_fd < 0)
     {

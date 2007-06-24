@@ -17,6 +17,7 @@
 
 (if (not (provided? 'snd-snd8.scm)) (load-from-path "snd8.scm")) ; samples->sound-data
 
+
 (define* (open-play-output :optional out-chans out-srate out-format out-bufsize)
   ;; returns (list audio-fd chans frames)
   (let* ((outchans (or out-chans 1))
@@ -24,7 +25,8 @@
 	 (pframes (or out-bufsize 256))
 	 (frm (or out-format (if (little-endian?) mus-lshort mus-bshort)))
 	 (outbytes (* pframes 2))     ; 2 here since we'll first try to send short (16-bit) data to the DAC
-	 (audio-fd ;; ALSA throws an error where the rest of the audio cases simply report failure
+	 (audio-fd 
+	  ;; ALSA throws an error where the rest of the audio cases simply report failure
 	  ;;   so we turn off the "error" printout, catch the error itself, and toss it
 	  (let ((no-error (hook-empty? mus-error-hook)))
 	    (if no-error
@@ -141,7 +143,7 @@
 ;;; -------- play while looping continuously between two movable marks
 
 (define (loop-between-marks m1 m2 bufsize)
-  "(loop-between-marks mark1 mark2 buffersize) plays while looping between two marks"
+  "(loop-between-marks mark1 mark2 buffersize) plays while looping between two marks.  C-g exits the loop."
   (let* ((pos1 (mark-sample m1))
 	 (pos2 (mark-sample m2))
 	 (beg (min pos1 pos2))

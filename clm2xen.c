@@ -2351,7 +2351,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 			 C_TO_XEN_STRING("partials list empty?"),
 			 partials));
   if ((len % 3) != 0)
-    XEN_ERROR(XEN_ERROR_TYPE("arg-error"),
+    XEN_ERROR(XEN_ERROR_TYPE("wrong-type-arg"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_phase_partials_to_wave), 
 			 C_TO_XEN_STRING("partials list should have 3 entries for each harmonic (number amp phase)"),
 			 partials));

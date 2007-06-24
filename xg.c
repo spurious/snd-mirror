@@ -27870,23 +27870,6 @@ static XEN gxg_gtk_recent_manager_get_default(void)
   return(C_TO_XEN_GtkRecentManager_(gtk_recent_manager_get_default()));
 }
 
-static XEN gxg_gtk_recent_manager_get_for_screen(XEN screen)
-{
-  #define H_gtk_recent_manager_get_for_screen "GtkRecentManager* gtk_recent_manager_get_for_screen(GdkScreen* screen)"
-  XEN_ASSERT_TYPE(XEN_GdkScreen__P(screen), screen, 1, "gtk_recent_manager_get_for_screen", "GdkScreen*");
-  return(C_TO_XEN_GtkRecentManager_(gtk_recent_manager_get_for_screen(XEN_TO_C_GdkScreen_(screen))));
-}
-
-static XEN gxg_gtk_recent_manager_set_screen(XEN manager, XEN screen)
-{
-  #define H_gtk_recent_manager_set_screen "void gtk_recent_manager_set_screen(GtkRecentManager* manager, \
-GdkScreen* screen)"
-  XEN_ASSERT_TYPE(XEN_GtkRecentManager__P(manager), manager, 1, "gtk_recent_manager_set_screen", "GtkRecentManager*");
-  XEN_ASSERT_TYPE(XEN_GdkScreen__P(screen), screen, 2, "gtk_recent_manager_set_screen", "GdkScreen*");
-  gtk_recent_manager_set_screen(XEN_TO_C_GtkRecentManager_(manager), XEN_TO_C_GdkScreen_(screen));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_recent_manager_remove_item(XEN manager, XEN uri, XEN ignore_error)
 {
   #define H_gtk_recent_manager_remove_item "gboolean gtk_recent_manager_remove_item(GtkRecentManager* manager, \
@@ -36954,8 +36937,6 @@ XEN_NARGIFY_2(gxg_gtk_recent_filter_filter_w, gxg_gtk_recent_filter_filter)
 XEN_NARGIFY_0(gxg_gtk_recent_manager_error_quark_w, gxg_gtk_recent_manager_error_quark)
 XEN_NARGIFY_0(gxg_gtk_recent_manager_new_w, gxg_gtk_recent_manager_new)
 XEN_NARGIFY_0(gxg_gtk_recent_manager_get_default_w, gxg_gtk_recent_manager_get_default)
-XEN_NARGIFY_1(gxg_gtk_recent_manager_get_for_screen_w, gxg_gtk_recent_manager_get_for_screen)
-XEN_NARGIFY_2(gxg_gtk_recent_manager_set_screen_w, gxg_gtk_recent_manager_set_screen)
 XEN_ARGIFY_3(gxg_gtk_recent_manager_remove_item_w, gxg_gtk_recent_manager_remove_item)
 XEN_ARGIFY_3(gxg_gtk_recent_manager_lookup_item_w, gxg_gtk_recent_manager_lookup_item)
 XEN_NARGIFY_2(gxg_gtk_recent_manager_has_item_w, gxg_gtk_recent_manager_has_item)
@@ -40807,8 +40788,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_recent_manager_error_quark_w gxg_gtk_recent_manager_error_quark
 #define gxg_gtk_recent_manager_new_w gxg_gtk_recent_manager_new
 #define gxg_gtk_recent_manager_get_default_w gxg_gtk_recent_manager_get_default
-#define gxg_gtk_recent_manager_get_for_screen_w gxg_gtk_recent_manager_get_for_screen
-#define gxg_gtk_recent_manager_set_screen_w gxg_gtk_recent_manager_set_screen
 #define gxg_gtk_recent_manager_remove_item_w gxg_gtk_recent_manager_remove_item
 #define gxg_gtk_recent_manager_lookup_item_w gxg_gtk_recent_manager_lookup_item
 #define gxg_gtk_recent_manager_has_item_w gxg_gtk_recent_manager_has_item
@@ -44667,8 +44646,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_recent_manager_error_quark, gxg_gtk_recent_manager_error_quark_w, 0, 0, 0, H_gtk_recent_manager_error_quark);
   XG_DEFINE_PROCEDURE(gtk_recent_manager_new, gxg_gtk_recent_manager_new_w, 0, 0, 0, H_gtk_recent_manager_new);
   XG_DEFINE_PROCEDURE(gtk_recent_manager_get_default, gxg_gtk_recent_manager_get_default_w, 0, 0, 0, H_gtk_recent_manager_get_default);
-  XG_DEFINE_PROCEDURE(gtk_recent_manager_get_for_screen, gxg_gtk_recent_manager_get_for_screen_w, 1, 0, 0, H_gtk_recent_manager_get_for_screen);
-  XG_DEFINE_PROCEDURE(gtk_recent_manager_set_screen, gxg_gtk_recent_manager_set_screen_w, 2, 0, 0, H_gtk_recent_manager_set_screen);
   XG_DEFINE_PROCEDURE(gtk_recent_manager_remove_item, gxg_gtk_recent_manager_remove_item_w, 2, 1, 0, H_gtk_recent_manager_remove_item);
   XG_DEFINE_PROCEDURE(gtk_recent_manager_lookup_item, gxg_gtk_recent_manager_lookup_item_w, 2, 1, 0, H_gtk_recent_manager_lookup_item);
   XG_DEFINE_PROCEDURE(gtk_recent_manager_has_item, gxg_gtk_recent_manager_has_item_w, 2, 0, 0, H_gtk_recent_manager_has_item);
@@ -47518,7 +47495,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("16-Jun-07"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-Jun-07"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

@@ -2840,3 +2840,36 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	   
 	 d)))))
 
+#|
+;;; if we could stack up ptrees like mixes:
+
+(define (add-channel scl orig-beg new-beg dur snd chn edpos)
+  (ptree-channel
+     
+   (lambda (y data forward)
+     (declare (y real) (data sample-reader) (forward boolean))
+     (+ y (* scl (if forward 
+		     (next-sample data) 
+		     (previous-sample data)))))
+   
+   new-beg dur snd chn -1 #f
+   
+   (lambda (frag-beg frag-dur forward)
+     (make-sample-reader (+ frag-beg orig-beg) snd chn 
+			 (if forward 1 -1) 
+			 (if (>= edpos 0) edpos (edit-position snd chn))))))
+
+;;; (add-channel 0.5 0 10000 (frames 0 0) 0 0 0)
+
+(define (virtual-filter-channel coeffs beg dur snd chn edpos)
+  (let ((order (vct-length coeffs))
+	(pos (if (>= edpos 0) edpos (edit-position snd chn))))
+    (as-one-edit
+     (lambda ()
+       (scale-channel 0.0 beg dur snd chn edpos) ; so that filter replaces original
+       (do ((i 0 (1+ i)))
+	   ((= i order))
+	 (add-channel (vct-ref coeffs i) beg (+ beg i) dur snd chn pos))))))
+
+;;; (virtual-filter-channel (vct 1.0 0.5 0.25) 0 (frames 0 0) 0 0 0)
+|#

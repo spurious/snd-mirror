@@ -256,6 +256,7 @@ typedef struct {
   Float scaler, speed;
   env *amp_env;
   int index;           /* cp->sounds index (src writes a new temp file) */
+  bool editable;
 } mix_state;
 
 typedef struct fam_info {
