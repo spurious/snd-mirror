@@ -230,6 +230,7 @@ Gerd Rausch:            the Sam 9407 support.
 Steven Schultz:         the BSD port.
 Ludger Brummer and Charles Nichols: the Mac-OSX port.
 Thomas Klausner:        the NetBSD port.
+Steve Beet:             minGW
 Plus many other contributions from
   Fernando Lopez-Lezcano, 
   Tom Roth,

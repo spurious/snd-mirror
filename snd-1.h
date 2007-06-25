@@ -203,17 +203,9 @@ typedef struct snd_fd {
   struct snd_info *local_sp;
   Float fscaler;
   off_t frag_pos;
-  struct ptree *ptree1, *ptree2, *ptree3; /* ptree struct defined in snd-run.c */
-  XEN closure1, closure2, closure3;
-  int protect1, protect2, protect3;
-  int type1, type2, type3;
-  double incr1, curval1, incr2, curval2, incr3, curval3, incr4, curval4;
-  bool zero, xramp2;
   int edit_ctr, region;
   reader_t type;
-  Float (*rampf)(struct snd_fd *sf);
-  Float (*rev_rampf)(struct snd_fd *sf);
-  void *mixes;
+  void *ptrees, *ramps, *mixes;
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;

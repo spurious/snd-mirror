@@ -1754,6 +1754,10 @@ case "$host" in
 	    AUDIO_SYSTEM=Windoze
 	fi
 	;;
+    *-*-mingw*)
+	AC_DEFINE(MUS_WINDOZE)
+	audio_system=Windoze
+	;;
     *-apple-*)
 	if test "$with_jack" != yes ; then 
 	    AC_DEFINE(MUS_MAC_OSX)
