@@ -1410,12 +1410,14 @@ int fileno(FILE *fp)
 #endif
 
 
+#if !(defined(MUS_WINDOZE) && (!(defined(__CYGWIN__))))
 static int sndlib_strlen(const char *str)
 {
   /* strlen(NULL) -> seg fault! */
   if ((str) && (*str)) return(strlen(str));
   return(0);
 }
+#endif
 
 
 char *mus_getcwd(void)

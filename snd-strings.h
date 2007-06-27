@@ -319,6 +319,8 @@
 #define S_marks                         "marks"
 #define S_max_regions                   "max-regions"
 #define S_max_transform_peaks           "max-transform-peaks"
+#define S_max_virtual_ptrees            "max-virtual-ptrees"
+#define S_max_virtual_xramps            "max-virtual-xramps"
 #define S_maxamp                        "maxamp"
 #define S_maxamp_position               "maxamp-position"
 #define S_menu_widgets                  "menu-widgets"

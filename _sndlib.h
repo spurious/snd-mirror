@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 20
-#define SNDLIB_REVISION 4
-#define SNDLIB_DATE "26-Mar-07"
+#define SNDLIB_REVISION 5
+#define SNDLIB_DATE "26-Jun-07"
 
 #include <mus-config.h>
 
@@ -25,20 +25,20 @@
 #endif
 #endif
 
-#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
-  #if (SIZEOF_OFF_T == SIZEOF_LONG)
-    #define OFF_TD "%ld"
-  #else
-    #define OFF_TD "%lld"
-  #endif
+#if (SIZEOF_OFF_T == SIZEOF_LONG)
+  #define OFF_TD "%ld"
 #else
-  #define OFF_TD "%d"
+  #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
+    #define OFF_TD "%lld"
+  #else
+    #define OFF_TD "%d"
+  #endif
 #endif
 
-#if (defined(SIZEOF_SSIZE_T)) && (SIZEOF_SSIZE_T > 4)
-  #define SSIZE_TD "%ld"
-#else
+#if (SIZEOF_SSIZE_T == SIZEOF_INT)
   #define SSIZE_TD "%d"
+#else
+  #define SSIZE_TD "%ld"
 #endif
 
 #ifndef MUS_LITTLE_ENDIAN
