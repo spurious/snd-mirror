@@ -3901,7 +3901,7 @@ the current sample, the vct returned by 'init-func', and the current read direct
   bool backup = false;
   int pos;
 #if WITH_RUN
-  bool ptrees_present = false;
+  bool too_many_ptrees = false;
   struct ptree *pt = NULL;
 #endif
   XEN proc = XEN_FALSE;
@@ -3951,7 +3951,7 @@ the current sample, the vct returned by 'init-func', and the current read direct
   if (caller) {FREE(caller); caller = NULL;}
 #else
 
-  ptrees_present = unptreeable(cp, beg, dur, pos);
+  too_many_ptrees = unptreeable(cp, beg, dur, pos);
 
   if (XEN_PROCEDURE_P(init_func))
     {
@@ -3962,7 +3962,7 @@ the current sample, the vct returned by 'init-func', and the current read direct
 	XEN_BAD_ARITY_ERROR(S_ptree_channel, 1, proc, "main func must take 3 args if the init-func is present");
       if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
 
-      if (!ptrees_present)
+      if (!too_many_ptrees)
 	{
 	  pt = form_to_ptree_3_f(proc_and_list);
 	  if (pt)
@@ -3990,13 +3990,13 @@ the current sample, the vct returned by 'init-func', and the current read direct
     pt = form_to_ptree_1_f(proc_and_list);
   else
     {
-      if ((!ptrees_present) && (XEN_REQUIRED_ARGS_OK(proc, 3)))
+      if ((!too_many_ptrees) && (XEN_REQUIRED_ARGS_OK(proc, 3)))
 	pt = form_to_ptree_3_f(proc_and_list); /* caller forgot init_func, but maybe it's ok anyway */
                                                /* (ptree-channel (lambda (y data dir) (* y 2))) */
     }
   if (pt)
     {
-      if (ptrees_present)
+      if (too_many_ptrees)
 	{
 	  run_channel(cp, pt, beg, dur, pos, caller, S_ptree_channel);
 	  free_ptree(pt);

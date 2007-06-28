@@ -7800,7 +7800,7 @@ EDITS: 5
 				   (snd-display ";ptree3 12: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
-			       (if (not (feql (car (edit-tree)) (list 0 2 0 10 1.0 0.0 0.0 0)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 (+ ptree-op-offset 326))))
 				   (snd-display ";ptree3 13: ~A" (edit-tree)))
 			       
 			       ;; ptree3-zero + ramps
@@ -11580,6 +11580,7 @@ EDITS: 5
 		     (vals2 #f)
 		     (scl 1.0)
 		     (scalers '())
+		     (saved-scalers '())
 		     (edpos (edit-position ind 0)))
 		
 		(let ((op1 (list 0 3 5))
@@ -11609,7 +11610,7 @@ EDITS: 5
 			      (set! vals1 (channel->vct 0 100 ind 0))
 			      (let ((rvals (reversed-channel->vct 0 100 ind 0)))
 				(if (not (vequal rvals vals1))
-				    (snd-display ";virtual op reversed tests: ~A(~A~A) * ~A: ~A ~A => ~A"
+				    (snd-display ";1 virtual op reversed tests: ~A(~A~A) * ~A: ~A ~A => ~A"
 						 (op-name second) (op-name first)
 						 (if (= k 1) "(ptree_zero)" "")
 						 scalers vals1 rvals
@@ -11617,6 +11618,7 @@ EDITS: 5
 			      (set! (edit-position ind 0) edpos)
 			      (set! (optimization) 0)
 			      (set! scalers (reverse scalers))
+			      (set! saved-scalers scalers)
 			      (scale-by (car scalers)) (set! scalers (cdr scalers))
 			      (if (= first 5) (map1) (if (= first 6) (map2) (op first)))
 			      (scale-by (car scalers)) (set! scalers (cdr scalers))
@@ -11625,10 +11627,10 @@ EDITS: 5
 			      (set! (optimization) oldopt)
 			      (set! vals2 (channel->vct 0 100 ind 0))
 			      (if (not (vequal vals1 vals2)) 
-				  (snd-display ";virtual op tests: ~A(~A~A) * ~A: ~A ~A => ~A at ~A"
+				  (snd-display ";1 virtual op tests: ~A(~A~A) * ~A: ~A ~A => ~A at ~A"
 					       (op-name second) (op-name first)
 					       (if (= k 1) "(ptree_zero)" "")
-					       scalers vals1 vals2
+					       saved-scalers vals1 vals2
 					       (vct-peak (vct-subtract! (vct-copy vals1) vals2))
 					       (let* ((pks (vct-subtract! (vct-copy vals1) vals2))
 						      (pk (abs (vct-ref pks 0)))
@@ -11642,10 +11644,10 @@ EDITS: 5
 					       ))
 			      (let ((rvals (reversed-channel->vct 0 100 ind 0)))
 				(if (not (vequal rvals vals2))
-				    (snd-display ";virtual op reversed tests (2): ~A(~A~A) * ~A: ~A ~A => ~A"
+				    (snd-display ";1 virtual op reversed tests (2): ~A(~A~A) * ~A: ~A ~A => ~A"
 						 (op-name second) (op-name first)
 						 (if (= k 1) "(ptree_zero)" "")
-						 scalers vals2 rvals
+						 saved-scalers vals2 rvals
 						 (vct-peak (vct-subtract! (vct-copy vals2) rvals)))))
 			      (set! (edit-position ind 0) edpos))))
 		      op2))
@@ -11687,7 +11689,7 @@ EDITS: 5
 				     (set! vals1 (channel->vct 0 100 ind 0))
 				     (let ((rvals (reversed-channel->vct 0 100 ind 0)))
 				       (if (not (vequal rvals vals1))
-					   (snd-display ";virtual op reversed tests: ~A(~A(~A~A)) * ~A: ~A ~A => ~A"
+					   (snd-display ";2 virtual op reversed tests: ~A(~A(~A~A)) * ~A: ~A ~A => ~A"
 							(op-name third) (op-name second) (op-name first)
 							(if (= k 1) "(ptree_zero)" "")
 							scalers vals1 rvals
@@ -11695,6 +11697,7 @@ EDITS: 5
 				     (set! (edit-position ind 0) edpos)
 				     (set! (optimization) 0)
 				     (set! scalers (reverse scalers))
+				     (set! saved-scalers scalers)				     
 				     (scale-by (car scalers)) (set! scalers (cdr scalers))
 				     (if (= first 5) (map1) (if (= first 6) (map2) (op first)))
 				     (scale-by (car scalers)) (set! scalers (cdr scalers))
@@ -11705,8 +11708,8 @@ EDITS: 5
 				     (set! (optimization) oldopt)
 				     (set! vals2 (channel->vct 0 100 ind 0))
 				     (if (not (vequal vals1 vals2)) 
-					 (snd-display ";virtual op tests: ~A * ~A(~A(~A~A)): ~A ~A => ~A at ~A"
-						      scalers (op-name third) (op-name second) (op-name first) 
+					 (snd-display ";2 virtual op tests: ~A * ~A(~A(~A~A)): ~A ~A => ~A at ~A"
+						      saved-scalers (op-name third) (op-name second) (op-name first) 
 						      (if (= k 1) "(ptree_zero)" "")
 						      vals1 vals2
 						      (vct-peak (vct-subtract! (vct-copy vals1) vals2))
@@ -11722,10 +11725,10 @@ EDITS: 5
 						      ))
 				     (let ((rvals (reversed-channel->vct 0 100 ind 0)))
 				       (if (not (vequal rvals vals2))
-					   (snd-display ";virtual op reversed tests (2): ~A(~A(~A~A)) * ~A: ~A ~A => ~A"
+					   (snd-display ";2 virtual op reversed tests (2): ~A(~A(~A~A)) * ~A: ~A ~A => ~A"
 							(op-name third) (op-name second) (op-name first)
 							(if (= k 1) "(ptree_zero)" "")
-							scalers vals2 rvals
+							saved-scalers vals2 rvals
 							(vct-peak (vct-subtract! (vct-copy vals2) rvals)))))
 				     (set! (edit-position ind 0) edpos))))
 			     op3)))
@@ -11779,7 +11782,7 @@ EDITS: 5
 					    (set! vals1 (channel->vct 0 100 ind 0))
 					    (let ((rvals (reversed-channel->vct 0 100 ind 0)))
 					      (if (not (vequal rvals vals1))
-						  (snd-display ";virtual op reversed tests: ~A(~A(~A(~A~A))) * ~A: ~A ~A => ~A"
+						  (snd-display ";3 virtual op reversed tests: ~A(~A(~A(~A~A))) * ~A: ~A ~A => ~A"
 							       (op-name fourth) (op-name third) (op-name second) (op-name first)
 							       (if (= k 1) "(ptree_zero)" "")
 							       scalers vals1 rvals
@@ -11787,6 +11790,7 @@ EDITS: 5
 					    (set! (edit-position ind 0) edpos)
 					    (set! (optimization) 0)
 					    (set! scalers (reverse scalers))
+					    (set! saved-scalers scalers)
 					    (scale-by (car scalers)) (set! scalers (cdr scalers))
 					    (if (= first 5) (map1) (if (= first 6) (map2) (op first)))
 					    (scale-by (car scalers)) (set! scalers (cdr scalers))
@@ -11799,8 +11803,8 @@ EDITS: 5
 					    (set! (optimization) oldopt)
 					    (set! vals2 (channel->vct 0 100 ind 0))
 					    (if (not (vequal vals1 vals2)) 
-						(snd-display ";virtual op tests: ~A * ~A(~A(~A(~A~A))): ~A ~A => ~A at ~A"
-							     scalers
+						(snd-display ";3 virtual op tests: ~A * ~A(~A(~A(~A~A))):~%  opt vals:   ~A~%  unopt vals: ~A~%  => ~A at ~A"
+							     saved-scalers
 							     (op-name fourth) (op-name third) (op-name second) (op-name first)
 							     (if (= k 1) "(ptree_zero)" "") 
 							     vals1 vals2
@@ -11817,10 +11821,10 @@ EDITS: 5
 							     ))
 					    (let ((rvals (reversed-channel->vct 0 100 ind 0)))
 					      (if (not (vequal rvals vals2))
-						  (snd-display ";virtual op reversed tests (2): ~A(~A(~A(~A~A))) * ~A: ~A ~A => ~A"
+						  (snd-display ";3 virtual op reversed tests (2): ~A(~A(~A(~A~A))) * ~A: ~A ~A => ~A"
 							       (op-name fourth) (op-name third) (op-name second) (op-name first)
 							       (if (= k 1) "(ptree_zero)" "")
-							       scalers vals2 rvals
+							       saved-scalers vals2 rvals
 							       (vct-peak (vct-subtract! (vct-copy vals2) rvals)))))
 					    (set! (edit-position ind 0) edpos))))
 				    op4)))
@@ -11888,7 +11892,7 @@ EDITS: 5
 						       (set! vals1 (channel->vct 0 100 ind 0))
 						       (let ((rvals (reversed-channel->vct 0 100 ind 0)))
 							 (if (not (vequal rvals vals1))
-							     (snd-display ";virtual op reversed tests: ~A(~A(~A(~A(~A~A)))) * ~A: ~A ~A => ~A"
+							     (snd-display ";4 virtual op reversed tests: ~A(~A(~A(~A(~A~A)))) * ~A: ~A ~A => ~A"
 									  (op-name fifth) (op-name fourth) (op-name third) (op-name second) (op-name first)
 									  (if (= k 1) "(ptree_zero)" "")
 									  scalers vals1 rvals
@@ -11896,6 +11900,7 @@ EDITS: 5
 						       (set! (edit-position ind 0) edpos)
 						       (set! (optimization) 0)
 						       (set! scalers (reverse scalers))
+						       (set! saved-scalers scalers)
 						       (scale-by (car scalers)) (set! scalers (cdr scalers))
 						       (if (= first 5) (map1) (if (= first 6) (map2) (op first)))
 						       (scale-by (car scalers)) (set! scalers (cdr scalers))
@@ -11910,8 +11915,8 @@ EDITS: 5
 						       (set! (optimization) oldopt)
 						       (set! vals2 (channel->vct 0 100 ind 0))
 						       (if (not (vequal vals1 vals2)) 
-							   (snd-display ";virtual op tests: ~A * ~A(~A(~A(~A(~A~A)))): ~A ~A => ~A at ~A"
-									scalers
+							   (snd-display ";4 virtual op tests: ~A * ~A(~A(~A(~A(~A~A)))): ~A ~A => ~A at ~A"
+									saved-scalers
 									(op-name fifth) (op-name fourth) (op-name third) (op-name second) (op-name first)
 									(if (= k 1) "(ptree_zero)" "") 
 									vals1 vals2
@@ -11928,10 +11933,10 @@ EDITS: 5
 									))
 						       (let ((rvals (reversed-channel->vct 0 100 ind 0)))
 							 (if (not (vequal rvals vals2))
-							     (snd-display ";virtual op reversed tests (2): ~A(~A(~A(~A(~A~A)))) * ~A: ~A ~A => ~A"
+							     (snd-display ";4 virtual op reversed tests (2): ~A(~A(~A(~A(~A~A)))) * ~A: ~A ~A => ~A"
 									  (op-name fifth) (op-name fourth) (op-name third) (op-name second) (op-name first)
 									  (if (= k 1) "(ptree_zero)" "")
-									  scalers vals2 rvals
+									  saved-scalers vals2 rvals
 									  (vct-peak (vct-subtract! (vct-copy vals2) rvals)))))
 						       (set! (edit-position ind 0) edpos))))
 					       op5)))
@@ -12021,7 +12026,7 @@ EDITS: 5
 							      (set! vals1 (channel->vct 0 100 ind 0))
 							      (let ((rvals (reversed-channel->vct 0 100 ind 0)))
 								(if (not (vequal rvals vals1))
-								    (snd-display ";virtual op reversed tests: ~A(~A(~A(~A(~A(~A~A))))) * ~A: ~A ~A => ~A"
+								    (snd-display ";5 virtual op reversed tests: ~A(~A(~A(~A(~A(~A~A))))) * ~A: ~A ~A => ~A"
 										 (op-name sixth) (op-name fifth) (op-name fourth) 
 										 (op-name third) (op-name second) (op-name first)
 										 (if (= k 1) "(ptree_zero)" "")
@@ -12030,6 +12035,7 @@ EDITS: 5
 							      (set! (edit-position ind 0) edpos)
 							      (set! (optimization) 0)
 							      (set! scalers (reverse scalers))
+							      (set! saved-scalers scalers)
 							      (scale-by (car scalers)) (set! scalers (cdr scalers))
 							      (if (= first 5) (map1) (if (= first 6) (map2) (op first)))
 							      (scale-by (car scalers)) (set! scalers (cdr scalers))
@@ -12046,8 +12052,8 @@ EDITS: 5
 							      (set! (optimization) oldopt)
 							      (set! vals2 (channel->vct 0 100 ind 0))
 							      (if (not (vequal vals1 vals2)) 
-								  (snd-display ";virtual op tests: ~A * ~A(~A(~A(~A(~A(~A~A))))): ~A ~A => ~A at ~A"
-									       scalers
+								  (snd-display ";5 virtual op tests: ~A * ~A(~A(~A(~A(~A(~A~A))))): ~A ~A => ~A at ~A"
+									       saved-scalers
 									       (op-name sixth) (op-name fifth) (op-name fourth) 
 									       (op-name third) (op-name second) (op-name first)
 									       (if (= k 1) "(ptree_zero)" "") 
@@ -12065,11 +12071,11 @@ EDITS: 5
 									       ))
 							      (let ((rvals (reversed-channel->vct 0 100 ind 0)))
 								(if (not (vequal rvals vals2))
-								    (snd-display ";virtual op reversed tests (2): ~A(~A(~A(~A(~A(~A~A))))) * ~A: ~A ~A => ~A"
+								    (snd-display ";5 virtual op reversed tests (2): ~A(~A(~A(~A(~A(~A~A))))) * ~A: ~A ~A => ~A"
 										 (op-name sixth) (op-name fifth) (op-name fourth) 
 										 (op-name third) (op-name second) (op-name first)
 										 (if (= k 1) "(ptree_zero)" "")
-										 scalers vals2 rvals
+										 saved-scalers vals2 rvals
 										 (vct-peak (vct-subtract! (vct-copy vals2) rvals)))))
 							      (set! (edit-position ind 0) edpos))))
 						      op6)))
@@ -12784,6 +12790,41 @@ EDITS: 2
 	    (close-sound ind0))
 	  
 	  ))
+
+      (let ((ind (new-sound "test.snd" :size 20)))
+	
+	(vct->channel (make-vct 20 1.0))
+	(ramp-channel 0 1)
+	(env-sound '(0 1 1 .5 2 .5 3 1) 0 20 .6)
+	(let ((data (channel->vct)))
+	  (if (not (vequal data (vct 0.000 0.049 0.091 0.123 0.146 0.158 0.158 0.184 0.211 0.237 0.263 0.289 0.316 0.342 0.444 0.549 0.658 0.770 0.884 1.000)))
+	      (snd-display ";env-sound xramp with flat segment: ~A" data)))
+	(ptree-channel (lambda (y) (+ y .5)))
+	(xramp-channel .1 .2 32.0)
+	(let ((data (channel->vct)))
+	  (if (not (vequal data (vct 0.050 0.055 0.060 0.064 0.067 0.069 0.070 0.074 0.079 0.084 0.089 0.095 0.102 0.111 0.130 0.154 0.181 0.214 0.253 0.300)))
+	      (snd-display ";ramp->xramp->ptree->xramp: ~A" data)))
+	
+	(set! (edit-position) 1)
+	(ramp-channel 0 1)
+	(env-sound '(0 1 1 0.0 2 0.0 3 1) 0 20 .6)
+	(ptree-channel (lambda (y) (+ y .5)))
+	(xramp-channel .1 .2 32.0)
+	(let ((data (channel->vct)))
+	  (if (not (vequal data (vct 0.050 0.055 0.058 0.060 0.060 0.058 0.053 0.054 0.055 0.057 0.058 0.060 0.063 0.066 0.090 0.119 0.153 0.193 0.241 0.300)))
+	      (snd-display ";1 ramp->xramp->ptree->xramp: ~A" data)))
+	
+	(set! (edit-position) 1)
+	(env-sound '(0 1 1 0.5 2 0.5 3 1) 0 20 .6)
+	(env-sound '(0 1 1 0 2 0 3 1) 0 20)
+	(ptree-channel (lambda (y) (+ y .5)))
+	(xramp-channel .1 .2 32.0)
+	(let ((data (channel->vct)))
+	  (if (not (vequal data (vct 0.150 0.129 0.109 0.091 0.076 0.063 0.053 0.054 0.055 0.057 0.058 0.060 0.063 0.066 0.083 0.107 0.139 0.181 0.234 0.300)))
+	      (snd-display ";2 ramp->xramp->ptree->xramp: ~A" data)))
+	
+	(close-sound ind))
+
       (clear-save-state-files)
       )
     ))
@@ -40998,7 +41039,7 @@ EDITS: 1
 	      (snd-display ";env-chan 0.01 seg: ~A" data)))
 	(undo)
 	(close-sound snd))
-      
+
       (let ((ind1 (open-sound "now.snd"))
 	    (ind2 (open-sound "oboe.snd")))
 	(let ((val (channel-mean ind1 0)))
