@@ -20,25 +20,17 @@ static bool mix_vct_untagged(vct *v, chan_info *cp, off_t beg, const char *origi
   bool result = false;
 
   len = v->length;
-#if SNDLIB_USE_FLOATS
-  data = v->data;
-#else
-  data = (mus_sample_t *)CALLOC(len, sizeof(mus_sample_t));
-  for (i = 0; i < len; i++)
-    data[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
-#endif
+  data = (mus_sample_t *)CALLOC(len, sizeof(mus_sample_t)); /* don't add into v->data! */
 
   sf = init_sample_read(beg, cp, READ_FORWARD);
   for (i = 0; i < len; i++)
-    data[i] += read_sample_to_mus_sample(sf);
+    data[i] = read_sample_to_mus_sample(sf) + MUS_FLOAT_TO_SAMPLE(v->data[i]);
   sf = free_snd_fd(sf);
 
   result = change_samples(beg, len, data, cp, origin, cp->edit_ctr); /* cp->edit_ctr since mix-vct has no edpos arg, similarly mix */
   if (result) update_graph(cp);
 
-#if (!SNDLIB_USE_FLOATS)
   FREE(data);
-#endif
   return(result);
 }
 
@@ -2765,6 +2757,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
 #if HAVE_RUBY
     new_origin = mus_format("_mix_%d = %s(" OFF_TD ", snd, chn)", mix_infos_ctr, TO_PROC_NAME(edname), bg);
 #endif
+
     mix_id = mix_buffer_with_tag(cp, data, bg, len, new_origin); 
     FREE(new_origin);
   }

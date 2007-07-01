@@ -36,11 +36,12 @@
 
 (define tests 1)
 (define keep-going #f)
-(define all-args #f)
+(define all-args #t)
 (define test-at-random 0)
 ;(show-ptree 1)
-(define ptree-op-offset 34)
-(define mix-ptree-op-offset 1)
+(define ptree-op-offset 0)
+(define ptree3-op-offset 0)
+(define mix-ptree-op-offset 0)
 
 (if (and (provided? 'snd-guile) (provided? 'snd-gauche)) (display ";both switches are on?"))
 
@@ -303,6 +304,9 @@
     (let ((result (equal? v0 v1)))
       (set! (mus-float-equal-fudge-factor) old-fudge)
       result)))
+
+(define (vmaxdiff v0 v1)
+  (vct-peak (vct-subtract! (vct-copy v0) v1)))
 
 (define (sd-equal v0 v1)
   "sound-data equal within .001"
@@ -7766,41 +7770,41 @@ EDITS: 5
 			       (ptree-channel (lambda (y) (* y 2.0)))
 			       (if (not (vequal (channel->vct) (make-vct 11 4.0)))
 				   (snd-display ";ptree3 1: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 (+ ptree-op-offset 286))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 17)))
 				   (snd-display ";ptree3 2: ~A" (edit-tree)))
 			       
 			       (scale-channel 0.25)
 			       (if (not (vequal (channel->vct) (make-vct 11 1.0)))
 				   (snd-display ";ptree3 3: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.250 0.0 0.0 (+ ptree-op-offset 286))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.250 0.0 0.0 17)))
 				   (snd-display ";ptree3 4: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000)))
 				   (snd-display ";ptree3 5: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 (+ ptree-op-offset 294))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 25)))
 				   (snd-display ";ptree3 6: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.010 0.040 0.090 0.160 0.250 0.360 0.490 0.640 0.810 1.000)))
 				   (snd-display ";ptree3 7: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 (+ ptree-op-offset 296))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 25)))
 				   (snd-display ";ptree3 8: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.001 0.008 0.027 0.064 0.125 0.216 0.343 0.512 0.729 1.000)))
 				   (snd-display ";ptree3 9: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 (+ ptree-op-offset 298))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 25)))
 				   (snd-display ";ptree3 10: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.000 0.002 0.008 0.026 0.062 0.130 0.240 0.410 0.656 1.000)))
 				   (snd-display ";ptree3 11: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 (+ ptree-op-offset 326))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 25)))
 				   (snd-display ";ptree3 12: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 (+ ptree-op-offset 326))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 25)))
 				   (snd-display ";ptree3 13: ~A" (edit-tree)))
 			       
 			       ;; ptree3-zero + ramps
@@ -7813,37 +7817,37 @@ EDITS: 5
 			       (ptree-channel (lambda (y) (* y 2.0)))
 			       (if (not (vequal (channel->vct) (make-vct 11 4.0)))
 				   (snd-display ";ptree3 14: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 0.0 0.0 (+ ptree-op-offset 289))))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 0.0 0.0 19)))
 				   (snd-display ";ptree3 15: ~A" (edit-tree)))
 			       
 			       (scale-channel 0.25)
 			       (if (not (vequal (channel->vct) (make-vct 11 1.0)))
 				   (snd-display ";ptree3 16: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.250 0.0 0.0 (+ ptree-op-offset 289))))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.250 0.0 0.0 19)))
 				   (snd-display ";ptree3 17: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000)))
 				   (snd-display ";ptree3 18: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.25 -1.490e-9 1.0 (+ ptree-op-offset 295))))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.25 -1.490e-9 1.0 27)))
 				   (snd-display ";ptree3 19: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.010 0.040 0.090 0.160 0.250 0.360 0.490 0.640 0.810 1.000)))
 				   (snd-display ";ptree3 20: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.25 -1.490e-9 1.0 (+ ptree-op-offset 297))))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.25 -1.490e-9 1.0 27)))
 				   (snd-display ";ptree3 21: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.001 0.008 0.027 0.064 0.125 0.216 0.343 0.512 0.729 1.000)))
 				   (snd-display ";ptree3 22: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.25 -1.490e-9 1.0 (+ ptree-op-offset 299))))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.25 -1.490e-9 1.0 27)))
 				   (snd-display ";ptree3 23: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.000 0.002 0.008 0.026 0.062 0.130 0.240 0.410 0.656 1.000)))
 				   (snd-display ";ptree3 24: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.25 -1.490e-9 1.0 (+ ptree-op-offset 327))))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.25 -1.490e-9 1.0 27)))
 				   (snd-display ";ptree3 25: ~A" (edit-tree)))
 			       
 			       (revert-sound ind)
@@ -7859,7 +7863,7 @@ EDITS: 5
 			       (scale-channel 0.1)
 			       (if (not (vequal (channel->vct) (vct 0.188 0.188 0.188 0.188 0.188 0.188 0.188 0.188 0.188 0.188 0.188)))
 				   (snd-display ";ptree3 26: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.100000001490116 0.0 0.0 (+ ptree-op-offset 286))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.100000001490116 0.0 0.0 17)))
 				   (snd-display ";ptree3 27: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -7871,7 +7875,7 @@ EDITS: 5
 			       (ptree-channel (lambda (y) (* y 2.0)))
 			       (if (not (vequal (channel->vct) (vct 3.000 3.100 3.200 3.300 3.400 3.500 3.600 3.700 3.800 3.900 4.000)))
 				   (snd-display ";ptree3 28: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 (+ ptree-op-offset 287))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 21)))
 				   (snd-display ";ptree3 29: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -7883,7 +7887,7 @@ EDITS: 5
 			       (ptree-channel (lambda (y) (* y 2.0)))
 			       (if (not (vequal (channel->vct) (vct 3.000 3.010 3.040 3.090 3.160 3.250 3.360 3.490 3.640 3.810 4.000)))
 				   (snd-display ";ptree3 30: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 (+ ptree-op-offset 290))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 21)))
 				   (snd-display ";ptree3 31: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -7896,7 +7900,7 @@ EDITS: 5
 			       (ptree-channel (lambda (y) (* y 2.0)))
 			       (if (not (vequal (channel->vct) (vct 3.000 3.001 3.008 3.027 3.064 3.125 3.216 3.343 3.512 3.729 4.000)))
 				   (snd-display ";ptree3 32: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 (+ ptree-op-offset 291))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 21)))
 				   (snd-display ";ptree3 33: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -7910,7 +7914,7 @@ EDITS: 5
 			       (ptree-channel (lambda (y) (* y 2.0)))
 			       (if (not (vequal (channel->vct) (vct 3.000 3.000 3.002 3.008 3.026 3.062 3.130 3.240 3.410 3.656 4.000)))
 				   (snd-display ";ptree3 34: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 (+ ptree-op-offset 328))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 21)))
 				   (snd-display ";ptree3 35: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -7923,32 +7927,32 @@ EDITS: 5
 			       (xramp-channel 0.0 1.0 10.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.115 0.260 0.442 0.672 0.961 1.325 1.783 2.360 3.086 4.000)))
 				   (snd-display ";ptree3 36: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 (+ ptree-op-offset 300))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 29)))
 				   (snd-display ";ptree3 37: ~A" (edit-tree)))
 			       
 			       (xramp-channel 0.0 1.0 10.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.003 0.017 0.049 0.113 0.231 0.439 0.795 1.392 2.381 4.000)))
 				   (snd-display ";ptree3 38: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 (+ ptree-op-offset 302))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 29)))
 				   (snd-display ";ptree3 39: ~A" (edit-tree)))
 			       
 			       (undo)
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.012 0.052 0.133 0.269 0.481 0.795 1.248 1.888 2.777 4.000)))
 				   (snd-display ";ptree3 40: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 (+ ptree-op-offset 310))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 31)))
 				   (snd-display ";ptree3 41: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.001 0.010 0.040 0.108 0.240 0.477 0.874 1.510 2.500 4.000)))
 				   (snd-display ";ptree3 42: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 (+ ptree-op-offset 313))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 31)))
 				   (snd-display ";ptree3 43: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.000 0.002 0.012 0.043 0.120 0.286 0.612 1.208 2.250 4.000)))
 				   (snd-display ";ptree3 44: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 (+ ptree-op-offset 341))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 31)))
 				   (snd-display ";ptree3 45: ~A" (edit-tree)))
 			       
 			       (revert-sound ind)
@@ -7961,32 +7965,32 @@ EDITS: 5
 			       (xramp-channel 0.0 1.0 10.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.115 0.260 0.442 0.672 0.961 1.325 1.783 2.360 3.086 4.000)))
 				   (snd-display ";ptree3 46: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 0.0 0.0 (+ ptree-op-offset 301))))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 0.0 0.0 30)))
 				   (snd-display ";ptree3 47: ~A" (edit-tree)))
 			       
 			       (xramp-channel 0.0 1.0 10.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.003 0.017 0.049 0.113 0.231 0.439 0.795 1.392 2.381 4.000)))
 				   (snd-display ";ptree3 48: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 0.0 0.0 (+ ptree-op-offset 303))))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 0.0 0.0 30)))
 				   (snd-display ";ptree3 49: ~A" (edit-tree)))
 			       
 			       (undo)
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.012 0.052 0.133 0.269 0.481 0.795 1.248 1.888 2.777 4.000)))
 				   (snd-display ";ptree3 50: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 -1.490e-9 1.0 (+ ptree-op-offset 311))))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 -1.490e-9 1.0 32)))
 				   (snd-display ";ptree3 51: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.001 0.010 0.040 0.108 0.240 0.477 0.874 1.510 2.500 4.000)))
 				   (snd-display ";ptree3 52: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 -1.490e-9 1.0 (+ ptree-op-offset 314))))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 -1.490e-9 1.0 32)))
 				   (snd-display ";ptree3 53: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.000 0.002 0.012 0.043 0.120 0.286 0.612 1.208 2.250 4.000)))
 				   (snd-display ";ptree3 54: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 -1.490e-9 1.0 (+ ptree-op-offset 342))))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 -1.490e-9 1.0 32)))
 				   (snd-display ";ptree3 55: ~A" (edit-tree)))
 			       
 			       (revert-sound ind)
@@ -7998,7 +8002,7 @@ EDITS: 5
 			       (ptree-channel (lambda (y) (* y 2.0)))
 			       (if (not (vequal (channel->vct) (vct 3.000 3.029 3.065 3.111 3.168 3.240 3.331 3.446 3.590 3.771 4.000)))
 				   (snd-display ";ptree3 56: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 (+ ptree-op-offset 288))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 23)))
 				   (snd-display ";ptree3 57: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -8010,7 +8014,7 @@ EDITS: 5
 			       (ptree-channel (lambda (y) (* y 2.0)))
 			       (if (not (vequal (channel->vct) (vct 3.000 3.003 3.013 3.033 3.067 3.120 3.199 3.312 3.472 3.694 4.000)))
 				   (snd-display ";ptree3 58: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 (+ ptree-op-offset 292))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 24)))
 				   (snd-display ";ptree3 59: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -8022,7 +8026,7 @@ EDITS: 5
 			       (ptree-channel (lambda (y) (* y 2.0)))
 			       (if (not (vequal (channel->vct) (vct 3.000 3.001 3.004 3.012 3.028 3.058 3.110 3.199 3.348 3.595 4.000)))
 				   (snd-display ";ptree3 60: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 (+ ptree-op-offset 293))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 23)))
 				   (snd-display ";ptree3 61: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -8034,7 +8038,7 @@ EDITS: 5
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.303 0.613 0.933 1.267 1.620 1.999 2.412 2.872 3.394 4.000)))
 				   (snd-display ";ptree3 62: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 (+ ptree-op-offset 307))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 34)))
 				   (snd-display ";ptree3 63: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -8047,7 +8051,7 @@ EDITS: 5
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.030 0.123 0.280 0.507 0.810 1.199 1.688 2.298 3.055 4.000)))
 				   (snd-display ";ptree3 64: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 (+ ptree-op-offset 309))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 34)))
 				   (snd-display ";ptree3 65: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -8062,7 +8066,7 @@ EDITS: 5
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.003 0.025 0.084 0.203 0.405 0.720 1.182 1.838 2.749 4.000)))
 				   (snd-display ";ptree3 66: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 (+ ptree-op-offset 332))))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 34)))
 				   (snd-display ";ptree3 67: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -8178,6 +8182,8 @@ EDITS: 5
 	 (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
 	 (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen))
 	
+	(set! (print-length) 200)
+
 	;; 3 case
 	(for-each
 	 (lambda (func check)
@@ -8195,9 +8201,13 @@ EDITS: 5
 		 (func2)
 		 (check2 data)
 		 (if (not (vvequal data (channel->vct)))
-		     (snd-display ";3 case: ~A(~A(~A)): ~A" (procedure-name func2) (procedure-name func1) (procedure-name func) (channel->vct)))
+		     (snd-display ";3 case: ~A(~A(~A)): off by ~A~%; calc: ~A~%; chan: ~A" 
+				  (procedure-name func2) (procedure-name func1) (procedure-name func) 
+				  (vmaxdiff data (channel->vct)) data (channel->vct)))
 		 (if (not (vvequal data (rev-channel->vct)))
-		     (snd-display ";3 rev case: ~A(~A(~A)): ~A" (procedure-name func2) (procedure-name func1) (procedure-name func) (rev-channel->vct))))
+		     (snd-display ";3 rev case: ~A(~A(~A)) off by ~A:~%; calc: ~A~%; chan: ~A" 
+				  (procedure-name func2) (procedure-name func1) (procedure-name func) 
+				  (vmaxdiff data (rev-channel->vct)) data (rev-channel->vct))))
 	       (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
 	       (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
 	    (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
@@ -11357,7 +11367,7 @@ EDITS: 5
 		   (f2)
 		   (let ((v2 (channel->vct 0 100 ind 0)))
 		     (if (not (vequal v1 v2))
-			 (snd-display ";env reordering test ~A: ~A ~A" name v1 v2))
+			 (snd-display ";env reordering test ~A:~%; ~A~%; ~A" name v1 v2))
 		     (set! (edit-position ind 0) edpos)))
 		 (if try-scale
 		     (begin
@@ -11369,7 +11379,7 @@ EDITS: 5
 			 (scale-by 2.0)
 			 (let ((v2 (channel->vct 0 100 ind 0)))
 			   (if (not (vequal v1 v2))
-			       (snd-display ";scaled (2) env reordering test ~A: ~A ~A" name v1 v2))
+			       (snd-display ";scaled (2) env reordering test ~A:~%; ~A~%; ~A" name v1 v2))
 			   (set! (edit-position ind 0) edpos)))
 		       (f1)
 		       (scale-by .5)
@@ -11379,7 +11389,7 @@ EDITS: 5
 			 (f2)
 			 (let ((v2 (channel->vct 0 100 ind 0)))
 			   (if (not (vequal v1 v2))
-			       (snd-display ";scaled (.5) env reordering test ~A: ~A ~A" name v1 v2))
+			       (snd-display ";scaled (.5) env reordering test ~A:~%; ~A~%; ~A" name v1 v2))
 			   (set! (edit-position ind 0) edpos)))))))
 	     
 	     (list (list "ramp-xramp" #t
@@ -11610,7 +11620,7 @@ EDITS: 5
 			      (set! vals1 (channel->vct 0 100 ind 0))
 			      (let ((rvals (reversed-channel->vct 0 100 ind 0)))
 				(if (not (vequal rvals vals1))
-				    (snd-display ";1 virtual op reversed tests: ~A(~A~A) * ~A: ~A ~A => ~A"
+				    (snd-display ";1 virtual op reversed tests: ~A(~A~A) * ~A:~%; ~A~%; ~A => ~A"
 						 (op-name second) (op-name first)
 						 (if (= k 1) "(ptree_zero)" "")
 						 scalers vals1 rvals
@@ -11627,7 +11637,7 @@ EDITS: 5
 			      (set! (optimization) oldopt)
 			      (set! vals2 (channel->vct 0 100 ind 0))
 			      (if (not (vequal vals1 vals2)) 
-				  (snd-display ";1 virtual op tests: ~A(~A~A) * ~A: ~A ~A => ~A at ~A"
+				  (snd-display ";1 virtual op tests: ~A(~A~A) * ~A:~%; ~A~%; ~A => ~A at ~A"
 					       (op-name second) (op-name first)
 					       (if (= k 1) "(ptree_zero)" "")
 					       saved-scalers vals1 vals2
@@ -11644,7 +11654,7 @@ EDITS: 5
 					       ))
 			      (let ((rvals (reversed-channel->vct 0 100 ind 0)))
 				(if (not (vequal rvals vals2))
-				    (snd-display ";1 virtual op reversed tests (2): ~A(~A~A) * ~A: ~A ~A => ~A"
+				    (snd-display ";1 virtual op reversed tests (2): ~A(~A~A) * ~A:~%; ~A~%; ~A => ~A"
 						 (op-name second) (op-name first)
 						 (if (= k 1) "(ptree_zero)" "")
 						 saved-scalers vals2 rvals
@@ -11689,7 +11699,7 @@ EDITS: 5
 				     (set! vals1 (channel->vct 0 100 ind 0))
 				     (let ((rvals (reversed-channel->vct 0 100 ind 0)))
 				       (if (not (vequal rvals vals1))
-					   (snd-display ";2 virtual op reversed tests: ~A(~A(~A~A)) * ~A: ~A ~A => ~A"
+					   (snd-display ";2 virtual op reversed tests: ~A(~A(~A~A)) * ~A:~%; ~A~%; ~A => ~A"
 							(op-name third) (op-name second) (op-name first)
 							(if (= k 1) "(ptree_zero)" "")
 							scalers vals1 rvals
@@ -11725,7 +11735,7 @@ EDITS: 5
 						      ))
 				     (let ((rvals (reversed-channel->vct 0 100 ind 0)))
 				       (if (not (vequal rvals vals2))
-					   (snd-display ";2 virtual op reversed tests (2): ~A(~A(~A~A)) * ~A: ~A ~A => ~A"
+					   (snd-display ";2 virtual op reversed tests (2): ~A(~A(~A~A)) * ~A:~%; ~A~%; ~A => ~A"
 							(op-name third) (op-name second) (op-name first)
 							(if (= k 1) "(ptree_zero)" "")
 							saved-scalers vals2 rvals
@@ -11782,7 +11792,7 @@ EDITS: 5
 					    (set! vals1 (channel->vct 0 100 ind 0))
 					    (let ((rvals (reversed-channel->vct 0 100 ind 0)))
 					      (if (not (vequal rvals vals1))
-						  (snd-display ";3 virtual op reversed tests: ~A(~A(~A(~A~A))) * ~A: ~A ~A => ~A"
+						  (snd-display ";3 virtual op reversed tests: ~A(~A(~A(~A~A))) * ~A:~%; ~A~%; ~A => ~A"
 							       (op-name fourth) (op-name third) (op-name second) (op-name first)
 							       (if (= k 1) "(ptree_zero)" "")
 							       scalers vals1 rvals
@@ -12533,7 +12543,7 @@ EDITS: 2
 		(snd-display ";sine-ramp 1 0: ~A" (channel->vct)))
 	    (if (and (> (optimization) 0)
 		     (provided? 'snd-guile))
-		(if (not (string=? (edit-fragment-type-name (list-ref (car (edit-tree)) 7)) "ed_ptree2_zero"))
+		(if (not (string=? (edit-fragment-type-name (list-ref (car (edit-tree)) 7)) "ed_ptree_zero"))
 		    (snd-display ";sine-ramp tree op: ~A ~A" (edit-fragment-type-name (list-ref (car (edit-tree)) 7)) (edit-tree))))
 	    (close-sound ind)
 	    (set! ind (new-sound  "test.snd" mus-next mus-bfloat 22050 1 "sine-env tests" 100))
@@ -12825,6 +12835,8 @@ EDITS: 2
 	
 	(close-sound ind))
 
+      
+      
       (clear-save-state-files)
       )
     ))
