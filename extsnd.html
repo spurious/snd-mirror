@@ -797,7 +797,8 @@ This is the default header type when a new file is created,
 or a save dialog is opened. (The default, <code>mus-next</code>, stands for the NeXT/Sun sound file header).
 The available output header-types are:
 <pre onmouseover="return escape('mus-riff is our name for Microsoft wav, mus-rf64 is the EBU 64-bit RIFF-replacement header, mus-nist refers to NIST-SPHERE files, mus-next and mus-sun are the same, mus-aiff is the obsolete predecessor to mus-aifc, mus-bicsf and mus-ircam are extensions of mus-next headers, mus-raw means &quot;headerless&quot;, mus-soundfont refers to Emu\'s extension of mus-riff files, mus-voc refers to Creative Voice File, and mus-svx refers to 8SVX headers.  Many other headers are supported read-only.')">
-    mus-next mus-aifc mus-riff mus-rf64 mus-nist mus-raw mus-ircam mus-aiff mus-soundfont mus-bicsf mus-voc mus-svx mus-caff
+    mus-next mus-aifc mus-riff mus-rf64 mus-nist mus-raw mus-ircam mus-aiff 
+    mus-soundfont mus-bicsf mus-voc mus-svx mus-caff
 </pre>
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
@@ -964,6 +965,25 @@ This sets the maximum size of the region list, the number of regions that are ac
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
+<!-- max-virtual-ptrees -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="maxvirtualptrees">max-virtual-ptrees</a></code></td>
+<td bgcolor="#f6f8ff"><code>3</code></td></tr><tr><td></td><td colspan=2>
+This sets the maximum number of parse-trees (see <a href="#ptreechannel">ptree-channel</a>) that the
+virtual editor will allow in any virtual edit (once the maximum is reached, the operation is handled
+locally, not via a virtual edit).
+</td></tr><tr><td colspan=3 height=16></td></tr>
+
+
+<!-- max-virtual-xramps -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="maxvirtualxramps">max-virtual-xramps</a></code></td>
+<td bgcolor="#f6f8ff"><code>2</code></td></tr><tr><td></td><td colspan=2>
+This sets the maximum number of exponential envelopes that the
+virtual editor will allow in any virtual edit (once the maximum is reached, the operation is handled
+with a bunch of multiplies, not via a virtual edit).  The default value of 2 reflects the age of Snd --
+in the bad old days, two exponential envelopes actually made a noticeable blip in the load.  
+</td></tr><tr><td colspan=3 height=16></td></tr>
+
+
 <!-- minibuffer-history-length -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="minibufferhistorylength">minibuffer-history-length</a></code></td>
 <td bgcolor="#f6f8ff"><code>8</code></td></tr><tr><td></td><td colspan=2>
@@ -990,7 +1010,7 @@ The actual values of the optimization switch are:
     0:  no optimization (use the standard Scheme parser/evaluator)
     1:  optimize simple stuff (if complex result possible, give up)
     2:  assume nothing will return a complex number
-    3:  if an undefined global variable is encountered, try to determine its eventual type from the context
+    3:  if an undefined variable is encountered, try to guess its type
     4:  make questionable assumptions about variable types
     5:  make dangerous assumptions about variable locations (for set!)
     6:  try to splice in user-defined functions
@@ -1003,6 +1023,7 @@ find out what the optimizer found confusing:
 <pre>
     (add-hook! <a class=quiet href="#optimizationhook">optimization-hook</a> (lambda (n) (display (format #f "opt: ~A~%" n))))
 </pre>
+See also <a href="#maxvirtualxramps">max-virtual-xramps</a> and <a href="#maxvirtualptrees">max-virtual-ptrees</a>.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
