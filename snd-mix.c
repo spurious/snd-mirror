@@ -420,7 +420,6 @@ static mix_state *make_mix_state(int id, int index, off_t beg, off_t len)
   ms->len = len;
   ms->amp_env = NULL;
   ms->index = index;
-  ms->editable = true;
   return(ms);
 }
 
@@ -436,7 +435,6 @@ mix_state *copy_mix_state(mix_state *old_ms)
   ms->len = old_ms->len;
   ms->index = old_ms->index;
   ms->amp_env = copy_env(old_ms->amp_env); /* this is the amp env (not the peak env) */
-  ms->editable = old_ms->editable;
   return(ms);
 }
 

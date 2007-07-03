@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [541]
-;;;  test 1: defaults                           [1093]
-;;;  test 2: headers                            [1287]
-;;;  test 3: variables                          [1603]
-;;;  test 4: sndlib                             [2248]
-;;;  test 5: simple overall checks              [4769]
-;;;  test 6: vcts                               [12792]
-;;;  test 7: colors                             [13070]
-;;;  test 8: clm                                [13560]
-;;;  test 9: mix                                [23368]
-;;;  test 10: marks                             [25605]
-;;;  test 11: dialogs                           [26566]
-;;;  test 12: extensions                        [26811]
-;;;  test 13: menus, edit lists, hooks, etc     [27082]
-;;;  test 14: all together now                  [28788]
-;;;  test 15: chan-local vars                   [29821]
-;;;  test 16: regularized funcs                 [31432]
-;;;  test 17: dialogs and graphics              [36500]
-;;;  test 18: enved                             [36590]
-;;;  test 19: save and restore                  [36609]
-;;;  test 20: transforms                        [38394]
-;;;  test 21: new stuff                         [40229]
-;;;  test 22: run                               [42169]
-;;;  test 23: with-sound                        [47865]
-;;;  test 24: user-interface                    [50346]
-;;;  test 25: X/Xt/Xm                           [53748]
-;;;  test 26: Gtk                               [58344]
-;;;  test 27: GL                                [62208]
-;;;  test 28: errors                            [62332]
-;;;  test all done                              [64611]
-;;;  test the end                               [64847]
+;;;  test 0: constants                          [542]
+;;;  test 1: defaults                           [1100]
+;;;  test 2: headers                            [1296]
+;;;  test 3: variables                          [1612]
+;;;  test 4: sndlib                             [2257]
+;;;  test 5: simple overall checks              [4778]
+;;;  test 6: vcts                               [13604]
+;;;  test 7: colors                             [13882]
+;;;  test 8: clm                                [14372]
+;;;  test 9: mix                                [24180]
+;;;  test 10: marks                             [26393]
+;;;  test 11: dialogs                           [27354]
+;;;  test 12: extensions                        [27599]
+;;;  test 13: menus, edit lists, hooks, etc     [27870]
+;;;  test 14: all together now                  [29576]
+;;;  test 15: chan-local vars                   [30609]
+;;;  test 16: regularized funcs                 [32220]
+;;;  test 17: dialogs and graphics              [37288]
+;;;  test 18: enved                             [37378]
+;;;  test 19: save and restore                  [37397]
+;;;  test 20: transforms                        [39182]
+;;;  test 21: new stuff                         [41017]
+;;;  test 22: run                               [42957]
+;;;  test 23: with-sound                        [48653]
+;;;  test 24: user-interface                    [51134]
+;;;  test 25: X/Xt/Xm                           [54540]
+;;;  test 26: Gtk                               [59136]
+;;;  test 27: GL                                [63000]
+;;;  test 28: errors                            [63124]
+;;;  test all done                              [65410]
+;;;  test the end                               [65646]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -7565,12 +7565,19 @@ EDITS: 5
 			       (xramp-channel 0.0 1.0 0.32)
 			       (xramp-channel 0.0 1.0 32.0)
 			       (xramp-channel 0.0 1.0 32.0)
-			       (if (not (string=? (safe-display-edits ind 0 4) "
+			       (if (< (max-virtual-xramps) 3)
+				   (if (not (string=? (safe-display-edits ind 0 4) "
  (set 0 11) ; env-channel-with-base '(0.000 0.000 1.000 1.000) 32.0000 0 #f [4:2]:
    (at 0, cp->sounds[2][0:10, 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-				   (snd-display ";xramp+xramp+xramp: ~A" (safe-display-edits ind 0 4)))
+				       (snd-display ";xramp+xramp+xramp: ~A" (safe-display-edits ind 0 4)))
+				   (if (not (string=? (safe-display-edits ind 0 4) "
+ (ramp 0 11) ; xramp-channel 0.000 1.000 32.000 0 #f [4:2]:
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> -1.139, off: 1.471, scl: -1.471, [2]0.000 -> 3.466, off: -0.032, scl: 0.032, [3]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 11, end_mark)
+"))
+				       (snd-display ";xramp+xramp+xramp (maxed): ~A" (safe-display-edits ind 0 4))))
 			       (undo 3)
 			       
 			       ;; xramp+xramp+ramp (now optimized)
@@ -7775,41 +7782,41 @@ EDITS: 5
 			       (ptree-channel (lambda (y) (* y 2.0)))
 			       (if (not (vequal (channel->vct) (make-vct 11 4.0)))
 				   (snd-display ";ptree3 1: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 17)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 16)))
 				   (snd-display ";ptree3 2: ~A" (edit-tree)))
 			       
 			       (scale-channel 0.25)
 			       (if (not (vequal (channel->vct) (make-vct 11 1.0)))
 				   (snd-display ";ptree3 3: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.250 0.0 0.0 17)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.250 0.0 0.0 16)))
 				   (snd-display ";ptree3 4: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000)))
 				   (snd-display ";ptree3 5: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 25)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 26)))
 				   (snd-display ";ptree3 6: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.010 0.040 0.090 0.160 0.250 0.360 0.490 0.640 0.810 1.000)))
 				   (snd-display ";ptree3 7: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 25)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 26)))
 				   (snd-display ";ptree3 8: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.001 0.008 0.027 0.064 0.125 0.216 0.343 0.512 0.729 1.000)))
 				   (snd-display ";ptree3 9: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 25)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 26)))
 				   (snd-display ";ptree3 10: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.000 0.002 0.008 0.026 0.062 0.130 0.240 0.410 0.656 1.000)))
 				   (snd-display ";ptree3 11: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 25)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 26)))
 				   (snd-display ";ptree3 12: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 25)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.25 -1.490e-9 1.0 26)))
 				   (snd-display ";ptree3 13: ~A" (edit-tree)))
 			       
 			       ;; ptree3-zero + ramps
@@ -7822,37 +7829,37 @@ EDITS: 5
 			       (ptree-channel (lambda (y) (* y 2.0)))
 			       (if (not (vequal (channel->vct) (make-vct 11 4.0)))
 				   (snd-display ";ptree3 14: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 0.0 0.0 19)))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 0.0 0.0 18)))
 				   (snd-display ";ptree3 15: ~A" (edit-tree)))
 			       
 			       (scale-channel 0.25)
 			       (if (not (vequal (channel->vct) (make-vct 11 1.0)))
 				   (snd-display ";ptree3 16: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.250 0.0 0.0 19)))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.250 0.0 0.0 18)))
 				   (snd-display ";ptree3 17: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000)))
 				   (snd-display ";ptree3 18: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.25 -1.490e-9 1.0 27)))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.25 -1.490e-9 1.0 28)))
 				   (snd-display ";ptree3 19: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.010 0.040 0.090 0.160 0.250 0.360 0.490 0.640 0.810 1.000)))
 				   (snd-display ";ptree3 20: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.25 -1.490e-9 1.0 27)))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.25 -1.490e-9 1.0 28)))
 				   (snd-display ";ptree3 21: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.001 0.008 0.027 0.064 0.125 0.216 0.343 0.512 0.729 1.000)))
 				   (snd-display ";ptree3 22: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.25 -1.490e-9 1.0 27)))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.25 -1.490e-9 1.0 28)))
 				   (snd-display ";ptree3 23: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.000 0.002 0.008 0.026 0.062 0.130 0.240 0.410 0.656 1.000)))
 				   (snd-display ";ptree3 24: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.25 -1.490e-9 1.0 27)))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 0.25 -1.490e-9 1.0 28)))
 				   (snd-display ";ptree3 25: ~A" (edit-tree)))
 			       
 			       (revert-sound ind)
@@ -7868,7 +7875,7 @@ EDITS: 5
 			       (scale-channel 0.1)
 			       (if (not (vequal (channel->vct) (vct 0.188 0.188 0.188 0.188 0.188 0.188 0.188 0.188 0.188 0.188 0.188)))
 				   (snd-display ";ptree3 26: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.100000001490116 0.0 0.0 17)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 0.100000001490116 0.0 0.0 16)))
 				   (snd-display ";ptree3 27: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -7880,7 +7887,7 @@ EDITS: 5
 			       (ptree-channel (lambda (y) (* y 2.0)))
 			       (if (not (vequal (channel->vct) (vct 3.000 3.100 3.200 3.300 3.400 3.500 3.600 3.700 3.800 3.900 4.000)))
 				   (snd-display ";ptree3 28: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 21)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 20)))
 				   (snd-display ";ptree3 29: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -7892,7 +7899,7 @@ EDITS: 5
 			       (ptree-channel (lambda (y) (* y 2.0)))
 			       (if (not (vequal (channel->vct) (vct 3.000 3.010 3.040 3.090 3.160 3.250 3.360 3.490 3.640 3.810 4.000)))
 				   (snd-display ";ptree3 30: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 21)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 20)))
 				   (snd-display ";ptree3 31: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -7905,7 +7912,7 @@ EDITS: 5
 			       (ptree-channel (lambda (y) (* y 2.0)))
 			       (if (not (vequal (channel->vct) (vct 3.000 3.001 3.008 3.027 3.064 3.125 3.216 3.343 3.512 3.729 4.000)))
 				   (snd-display ";ptree3 32: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 21)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 20)))
 				   (snd-display ";ptree3 33: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -7919,7 +7926,7 @@ EDITS: 5
 			       (ptree-channel (lambda (y) (* y 2.0)))
 			       (if (not (vequal (channel->vct) (vct 3.000 3.000 3.002 3.008 3.026 3.062 3.130 3.240 3.410 3.656 4.000)))
 				   (snd-display ";ptree3 34: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 21)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 20)))
 				   (snd-display ";ptree3 35: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -7932,32 +7939,32 @@ EDITS: 5
 			       (xramp-channel 0.0 1.0 10.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.115 0.260 0.442 0.672 0.961 1.325 1.783 2.360 3.086 4.000)))
 				   (snd-display ";ptree3 36: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 29)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 30)))
 				   (snd-display ";ptree3 37: ~A" (edit-tree)))
 			       
 			       (xramp-channel 0.0 1.0 10.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.003 0.017 0.049 0.113 0.231 0.439 0.795 1.392 2.381 4.000)))
 				   (snd-display ";ptree3 38: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 29)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 30)))
 				   (snd-display ";ptree3 39: ~A" (edit-tree)))
 			       
 			       (undo)
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.012 0.052 0.133 0.269 0.481 0.795 1.248 1.888 2.777 4.000)))
 				   (snd-display ";ptree3 40: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 31)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 34)))
 				   (snd-display ";ptree3 41: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.001 0.010 0.040 0.108 0.240 0.477 0.874 1.510 2.500 4.000)))
 				   (snd-display ";ptree3 42: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 31)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 34)))
 				   (snd-display ";ptree3 43: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.000 0.002 0.012 0.043 0.120 0.286 0.612 1.208 2.250 4.000)))
 				   (snd-display ";ptree3 44: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 31)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 34)))
 				   (snd-display ";ptree3 45: ~A" (edit-tree)))
 			       
 			       (revert-sound ind)
@@ -7970,32 +7977,32 @@ EDITS: 5
 			       (xramp-channel 0.0 1.0 10.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.115 0.260 0.442 0.672 0.961 1.325 1.783 2.360 3.086 4.000)))
 				   (snd-display ";ptree3 46: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 0.0 0.0 30)))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 0.0 0.0 32)))
 				   (snd-display ";ptree3 47: ~A" (edit-tree)))
 			       
 			       (xramp-channel 0.0 1.0 10.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.003 0.017 0.049 0.113 0.231 0.439 0.795 1.392 2.381 4.000)))
 				   (snd-display ";ptree3 48: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 0.0 0.0 30)))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 0.0 0.0 32)))
 				   (snd-display ";ptree3 49: ~A" (edit-tree)))
 			       
 			       (undo)
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.012 0.052 0.133 0.269 0.481 0.795 1.248 1.888 2.777 4.000)))
 				   (snd-display ";ptree3 50: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 -1.490e-9 1.0 32)))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 -1.490e-9 1.0 36)))
 				   (snd-display ";ptree3 51: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.001 0.010 0.040 0.108 0.240 0.477 0.874 1.510 2.500 4.000)))
 				   (snd-display ";ptree3 52: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 -1.490e-9 1.0 32)))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 -1.490e-9 1.0 36)))
 				   (snd-display ";ptree3 53: ~A" (edit-tree)))
 			       
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.000 0.002 0.012 0.043 0.120 0.286 0.612 1.208 2.250 4.000)))
 				   (snd-display ";ptree3 54: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 -1.490e-9 1.0 32)))
+			       (if (not (feql (car (edit-tree)) (list 0 0 0 10 1.0 -1.490e-9 1.0 36)))
 				   (snd-display ";ptree3 55: ~A" (edit-tree)))
 			       
 			       (revert-sound ind)
@@ -8007,7 +8014,7 @@ EDITS: 5
 			       (ptree-channel (lambda (y) (* y 2.0)))
 			       (if (not (vequal (channel->vct) (vct 3.000 3.029 3.065 3.111 3.168 3.240 3.331 3.446 3.590 3.771 4.000)))
 				   (snd-display ";ptree3 56: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 23)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 22)))
 				   (snd-display ";ptree3 57: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -8031,7 +8038,7 @@ EDITS: 5
 			       (ptree-channel (lambda (y) (* y 2.0)))
 			       (if (not (vequal (channel->vct) (vct 3.000 3.001 3.004 3.012 3.028 3.058 3.110 3.199 3.348 3.595 4.000)))
 				   (snd-display ";ptree3 60: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 23)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 22)))
 				   (snd-display ";ptree3 61: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -8043,7 +8050,7 @@ EDITS: 5
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.303 0.613 0.933 1.267 1.620 1.999 2.412 2.872 3.394 4.000)))
 				   (snd-display ";ptree3 62: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 34)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 39)))
 				   (snd-display ";ptree3 63: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -8056,7 +8063,7 @@ EDITS: 5
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.030 0.123 0.280 0.507 0.810 1.199 1.688 2.298 3.055 4.000)))
 				   (snd-display ";ptree3 64: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 34)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 39)))
 				   (snd-display ";ptree3 65: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -8071,7 +8078,7 @@ EDITS: 5
 			       (ramp-channel 0.0 1.0)
 			       (if (not (vequal (channel->vct) (vct 0.000 0.003 0.025 0.084 0.203 0.405 0.720 1.182 1.838 2.749 4.000)))
 				   (snd-display ";ptree3 66: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 34)))
+			       (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 -1.490e-9 1.0 39)))
 				   (snd-display ";ptree3 67: ~A" (edit-tree)))
 			       (revert-sound ind)
 			       
@@ -8082,8 +8089,11 @@ EDITS: 5
 			       (ptree-channel (lambda (y) (* y 0.1)))
 			       (if (not (vequal (channel->vct) (make-vct 11 0.4)))
 				   (snd-display ";ptree4: ~A" (channel->vct)))
-			       (if (not (feql (car (edit-tree)) (list 0 2 0 10 1.0 0.0 0.0 0)))
-				   (snd-display ";ptree4: ~A" (edit-tree)))
+			       (if (< (max-virtual-ptrees) 4)
+				   (if (not (feql (car (edit-tree)) (list 0 2 0 10 1.0 0.0 0.0 0)))
+				       (snd-display ";ptree4: ~A" (edit-tree)))
+				   (if (not (feql (car (edit-tree)) (list 0 1 0 10 1.0 0.0 0.0 16)))
+				       (snd-display ";ptree4 (maxed): ~A" (edit-tree))))
 			       
 			       (close-sound ind))
 			     ) (snd-display ";skipping ptree cases")) ; end 'run cases?
@@ -8142,6 +8152,411 @@ EDITS: 5
 	    (vct-set! cos-data i (cos ang))
 	    (set! ang (+ ang incr))))
 	
+	(let ((old-pmax (max-virtual-ptrees))
+	      (old-xmax (max-virtual-xramps)))
+	  
+	  (set! (max-virtual-ptrees) 10)
+	  (set! (max-virtual-xramps) 10)
+	  
+	  (let ((ind (new-sound "test.snd" :size 20)))
+	    (vct->channel (make-vct 20 1.0))
+	    
+	    (env-channel '(0 0 1 1 2 1 3 0))
+	    (let ((ramp-to-1 (channel->vct)))
+	      (undo)
+	      (xramp-channel 0 1 8)
+	      (let ((xramp-to-1 (channel->vct)))
+		(undo)
+		(ptree-channel (lambda (y) (* y 2.5)))
+		(let ((pdata (channel->vct)))
+		  (undo)
+		  
+		  ;; -------- ramp-ptree-ramp -------- 
+		  
+		  (set! (edit-position) 1)
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (ptree-channel (lambda (y) (* y 2.5)))
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (let ((rpr (channel->vct)))
+		    (let ((nrpr (vct-multiply! 
+				 (vct-multiply! 
+				  (vct-multiply! (make-vct 20 1.0) ramp-to-1)
+				  pdata)
+				 ramp-to-1)))
+		      (if (not (vequal rpr nrpr))
+			  (snd-display ";~A simple rpr:~%; ~A~%; ~A" k rpr nrpr))))
+		  
+		  (set! (edit-position) 1)
+		  (scale-by 3.0)
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (scale-by 1.25)
+		  (ptree-channel (lambda (y) (* y 2.5)))
+		  (scale-by -0.8)
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (scale-by -1.234)
+		  (let ((rpr (channel->vct)))
+		    (let ((nrpr (vct-scale!
+				 (vct-multiply! 
+				  (vct-scale! 
+				   (vct-multiply! 
+				    (vct-scale! 
+				     (vct-multiply! (make-vct 20 3.0) ramp-to-1) 
+				     1.25)
+				    pdata)
+				   -0.8)
+				  ramp-to-1)
+				 -1.234)))
+		      (if (not (vequal rpr nrpr))
+			  (snd-display ";~A 3.0 1.25 -0.8 -1.234 * rpr:~%; ~A~%; ~A" k rpr nrpr))))
+		  
+		  
+		  ;; -------- ramp-ptree-xramp -------- 
+		  
+		  (set! (edit-position) 1)
+		  (xramp-channel 0 1 8)
+		  (ptree-channel (lambda (y) (* y 2.5)))
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (let ((rpr (channel->vct)))
+		    (let ((nrpr (vct-multiply! 
+				 (vct-multiply! 
+				  (vct-multiply! (make-vct 20 1.0) xramp-to-1)
+				  pdata)
+				 ramp-to-1)))
+		      (if (not (vequal rpr nrpr))
+			  (snd-display ";~A simple rpx:~%; ~A~%; ~A" k rpr nrpr))))
+		  
+		  (set! (edit-position) 1)
+		  (scale-by 3.0)
+		  (xramp-channel 0 1 8)
+		  (scale-by 1.25)
+		  (ptree-channel (lambda (y) (* y 2.5)))
+		  (scale-by -0.8)
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (scale-by -1.234)
+		  (let ((rpr (channel->vct)))
+		    (let ((nrpr (vct-scale!
+				 (vct-multiply! 
+				  (vct-scale! 
+				   (vct-multiply! 
+				    (vct-scale! 
+				     (vct-multiply! (make-vct 20 3.0) xramp-to-1) 
+				     1.25)
+				    pdata)
+				   -0.8)
+				  ramp-to-1)
+				 -1.234)))
+		      (if (not (vequal rpr nrpr))
+			  (snd-display ";~A 3.0 1.25 -0.8 -1.234 * rpx:~%; ~A~%; ~A" k rpr nrpr))))
+		  
+		  
+		  ;; -------- ramp-ptree-xramp-ramp -------- 
+		  
+		  (set! (edit-position) 1)
+		  (xramp-channel 0 1 8)
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (ptree-channel (lambda (y) (* y 2.5)))
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (let ((rpr (channel->vct)))
+		    (let ((nrpr (vct-multiply! 
+				 (vct-multiply! 
+				  (vct-multiply! 
+				   (vct-multiply! (make-vct 20 1.0) ramp-to-1)
+				   xramp-to-1)
+				  pdata)
+				 ramp-to-1)))
+		      (if (not (vequal rpr nrpr))
+			  (snd-display ";~A simple rpxr:~%; ~A~%; ~A" k rpr nrpr))))
+		  
+		  (set! (edit-position) 1)
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (scale-by 3.0)
+		  (xramp-channel 0 1 8)
+		  (scale-by 1.25)
+		  (ptree-channel (lambda (y) (* y 2.5)))
+		  (scale-by -0.8)
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (scale-by -1.0)
+		  (let ((rpr (channel->vct)))
+		    (let ((nrpr (vct-scale!
+				 (vct-multiply! 
+				  (vct-scale! 
+				   (vct-multiply! 
+				    (vct-scale! 
+				     (vct-multiply!
+				      (vct-multiply! (make-vct 20 3.0) ramp-to-1)
+				      xramp-to-1) 
+				     1.25)
+				    pdata)
+				   -0.8)
+				  ramp-to-1)
+				 -1.0)))
+		      (if (not (vequal rpr nrpr))
+			  (snd-display ";~A 3.0 1.25 -0.8 -1.234 * rpxr:~%; ~A~%; ~A" k rpr nrpr))))
+		  
+		  
+		  ;; -------- xramp-ptree-ramp -------- 
+		  
+		  (set! (edit-position) 1)
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (ptree-channel (lambda (y) (* y 2.5)))
+		  (xramp-channel 0 1 8)
+		  (let ((xpr (channel->vct)))
+		    (let ((nxpr (vct-multiply! 
+				 (vct-multiply! 
+				  (vct-multiply! (make-vct 20 1.0) ramp-to-1)
+				  pdata)
+				 xramp-to-1)))
+		      (if (not (vequal xpr nxpr))
+			  (snd-display ";~A simple xpr:~%; ~A~%; ~A" k xpr nxpr))))
+		  
+		  (set! (edit-position) 1)
+		  (scale-by 3.0)
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (scale-by 1.25)
+		  (ptree-channel (lambda (y) (* y 2.5)))
+		  (scale-by -0.8)
+		  (xramp-channel 0 1 8)
+		  (scale-by -1.234)
+		  (let ((xpr (channel->vct)))
+		    (let ((nxpr (vct-scale!
+				 (vct-multiply! 
+				  (vct-scale! 
+				   (vct-multiply! 
+				    (vct-scale! 
+				     (vct-multiply! (make-vct 20 3.0) ramp-to-1) 
+				     1.25)
+				    pdata)
+				   -0.8)
+				  xramp-to-1)
+				 -1.234)))
+		      (if (not (vequal xpr nxpr))
+			  (snd-display ";~A 3.0 1.25 -0.8 -1.234 * xpr:~%; ~A~%; ~A" k xpr nxpr))))
+		  
+		  
+		  ;; -------- xramp-ptree-xramp -------- 
+		  
+		  (set! (edit-position) 1)
+		  (xramp-channel 0 1 8)
+		  (ptree-channel (lambda (y) (* y 2.5)))
+		  (xramp-channel 0 1 8)
+		  (let ((xpr (channel->vct)))
+		    (let ((nxpr (vct-multiply! 
+				 (vct-multiply! 
+				  (vct-multiply! (make-vct 20 1.0) xramp-to-1)
+				  pdata)
+				 xramp-to-1)))
+		      (if (not (vequal xpr nxpr))
+			  (snd-display ";~A simple xpx:~%; ~A~%; ~A" k xpr nxpr))))
+		  
+		  (set! (edit-position) 1)
+		  (scale-by 3.0)
+		  (xramp-channel 0 1 8)
+		  (scale-by 1.25)
+		  (ptree-channel (lambda (y) (* y 2.5)))
+		  (scale-by -0.8)
+		  (xramp-channel 0 1 8)
+		  (scale-by -1.234)
+		  (let ((xpr (channel->vct)))
+		    (let ((nxpr (vct-scale!
+				 (vct-multiply! 
+				  (vct-scale! 
+				   (vct-multiply! 
+				    (vct-scale! 
+				     (vct-multiply! (make-vct 20 3.0) xramp-to-1) 
+				     1.25)
+				    pdata)
+				   -0.8)
+				  xramp-to-1)
+				 -1.234)))
+		      (if (not (vequal xpr nxpr))
+			  (snd-display ";~A 3.0 1.25 -0.8 -1.234 * xpx:~%; ~A~%; ~A" k xpr nxpr))))
+		  
+		  
+		  ;; -------- xramp-ptree-xramp-ramp --------
+		  
+		  (set! (edit-position) 1)
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (xramp-channel 0 1 8)
+		  (ptree-channel (lambda (y) (* y 2.5)))
+		  (xramp-channel 0 1 8)
+		  (let ((xpr (channel->vct)))
+		    (let ((nxpr (vct-multiply! 
+				 (vct-multiply! 
+				  (vct-multiply! 
+				   (vct-multiply! (make-vct 20 1.0) ramp-to-1)
+				   xramp-to-1)
+				  pdata)
+				 xramp-to-1)))
+		      (if (not (vequal xpr nxpr))
+			  (snd-display ";~A simple xpxr:~%; ~A~%; ~A" k xpr nxpr))))
+		  
+		  (set! (edit-position) 1)
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (scale-by 3.0)
+		  (xramp-channel 0 1 8)
+		  (scale-by 1.25)
+		  (ptree-channel (lambda (y) (* y 2.5)))
+		  (scale-by -0.8)
+		  (xramp-channel 0 1 8)
+		  (scale-by -1.234)
+		  (let ((xpr (channel->vct)))
+		    (let ((nxpr (vct-scale!
+				 (vct-multiply! 
+				  (vct-scale! 
+				   (vct-multiply! 
+				    (vct-scale! 
+				     (vct-multiply!
+				      (vct-multiply! (make-vct 20 3.0) ramp-to-1)
+				      xramp-to-1) 
+				     1.25)
+				    pdata)
+				   -0.8)
+				  xramp-to-1)
+				 -1.234)))
+		      (if (not (vequal xpr nxpr))
+			  (snd-display ";~A 3.0 1.25 -0.8 -1.234 * xpxr:~%; ~A~%; ~A" k xpr nxpr))))
+		  
+		  
+		  ;; -------- xramp-ramp-ptree-ramp -------- 
+		  
+		  (set! (edit-position) 1)
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (ptree-channel (lambda (y) (* y 2.5)))
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (xramp-channel 0 1 8)
+		  (let ((xpr (channel->vct)))
+		    (let ((nxpr (vct-multiply!
+				 (vct-multiply! 
+				  (vct-multiply! 
+				   (vct-multiply! (make-vct 20 1.0) ramp-to-1)
+				   pdata)
+				  ramp-to-1)
+				 xramp-to-1)))
+		      (if (not (vequal xpr nxpr))
+			  (snd-display ";~A simple xrpr:~%; ~A~%; ~A" k xpr nxpr))))
+		  
+		  (set! (edit-position) 1)
+		  (scale-by 3.0)
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (scale-by 1.25)
+		  (ptree-channel (lambda (y) (* y 2.5)))
+		  (scale-by -0.8)
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (scale-by -1.234)
+		  (xramp-channel 0 1 8)
+		  (let ((xpr (channel->vct)))
+		    (let ((nxpr (vct-multiply!
+				 (vct-scale!
+				  (vct-multiply! 
+				   (vct-scale! 
+				    (vct-multiply! 
+				     (vct-scale! 
+				      (vct-multiply! (make-vct 20 3.0) ramp-to-1) 
+				      1.25)
+				     pdata)
+				    -0.8)
+				   ramp-to-1)
+				  -1.234)
+				 xramp-to-1)))
+		      (if (not (vequal xpr nxpr))
+			  (snd-display ";~A 3.0 1.25 -0.8 -1.234 * xrpr:~%; ~A~%; ~A" k xpr nxpr))))
+		  
+		  ;; -------- xramp-ramp-ptree-xramp -------- 
+		  
+		  (set! (edit-position) 1)
+		  (xramp-channel 0 1 8)
+		  (ptree-channel (lambda (y) (* y 2.5)))
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (xramp-channel 0 1 8)
+		  (let ((xpr (channel->vct)))
+		    (let ((nxpr (vct-multiply!
+				 (vct-multiply! 
+				  (vct-multiply! 
+				   (vct-multiply! (make-vct 20 1.0) xramp-to-1)
+				   pdata)
+				  ramp-to-1)
+				 xramp-to-1)))
+		      (if (not (vequal xpr nxpr))
+			  (snd-display ";~A simple xrpx:~%; ~A~%; ~A" k xpr nxpr))))
+		  
+		  (set! (edit-position) 1)
+		  (scale-by 3.0)
+		  (xramp-channel 0 1 8)
+		  (scale-by 1.25)
+		  (ptree-channel (lambda (y) (* y 2.5)))
+		  (scale-by -0.8)
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (scale-by -1.234)
+		  (xramp-channel 0 1 8)
+		  (let ((xpr (channel->vct)))
+		    (let ((nxpr (vct-multiply!
+				 (vct-scale!
+				  (vct-multiply! 
+				   (vct-scale! 
+				    (vct-multiply! 
+				     (vct-scale! 
+				      (vct-multiply! (make-vct 20 3.0) xramp-to-1) 
+				      1.25)
+				     pdata)
+				    -0.8)
+				   ramp-to-1)
+				  -1.234)
+				 xramp-to-1)))
+		      (if (not (vequal xpr nxpr))
+			  (snd-display ";~A 3.0 1.25 -0.8 -1.234 * xrpx:~%; ~A~%; ~A" k xpr nxpr))))
+		  
+		  
+		  
+		  ;; -------- xramp-ramp-ptree-xramp-ramp -------- 
+		  
+		  (set! (edit-position) 1)
+		  (xramp-channel 0 1 8)
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (ptree-channel (lambda (y) (* y 2.5)))
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (xramp-channel 0 1 8)
+		  (let ((xpr (channel->vct)))
+		    (let ((nxpr (vct-multiply!
+				 (vct-multiply! 
+				  (vct-multiply! 
+				   (vct-multiply! (vct-multiply! (make-vct 20 1.0) xramp-to-1) ramp-to-1)
+				   pdata)
+				  ramp-to-1)
+				 xramp-to-1)))
+		      (if (not (vequal xpr nxpr))
+			  (snd-display ";~A simple xrpxr:~%; ~A~%; ~A" k xpr nxpr))))
+		  
+		  (set! (edit-position) 1)
+		  (scale-by 3.0)
+		  (xramp-channel 0 1 8)
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (scale-by 1.25)
+		  (ptree-channel (lambda (y) (* y 2.5)))
+		  (scale-by -0.8)
+		  (env-channel '(0 0 1 1 2 1 3 0))
+		  (scale-by -1.234)
+		  (xramp-channel 0 1 8)
+		  (let ((xpr (channel->vct)))
+		    (let ((nxpr (vct-multiply!
+				 (vct-scale!
+				  (vct-multiply! 
+				   (vct-scale! 
+				    (vct-multiply! 
+				     (vct-scale! 
+				      (vct-multiply! (vct-multiply! (make-vct 20 3.0) xramp-to-1) ramp-to-1)
+				      1.25)
+				     pdata)
+				    -0.8)
+				   ramp-to-1)
+				  -1.234)
+				 xramp-to-1)))
+		      (if (not (vequal xpr nxpr))
+			  (snd-display ";~A 3.0 1.25 -0.8 -1.234 * xrpxr:~%; ~A~%; ~A" k xpr nxpr))))
+		  
+		  (close-sound ind)))))
+	  (set! (max-virtual-ptrees) old-pmax)
+	  (set! (max-virtual-xramps) old-xmax))
+
 	(set! (squelch-update ind) #t)
 	
 	;; 0 case
@@ -12099,10 +12514,353 @@ EDITS: 5
 				 op3)))
 			  op2))
 		       op1)))))
-	    (if (and (provided? 'snd-motif)
-		     (provided? 'xm))
-		(let* ((edhist (list-ref (channel-widgets ind 0) 7))
-		       (edp (XtParent edhist)))
+
+	    (if all-args ; include mix in cycling tests
+		(let ((old-ptrees (max-virtual-ptrees))
+		      (old-xramps (max-virtual-xramps)))
+		  
+		  (set! (max-virtual-ptrees) 10)
+		  (set! (max-virtual-xramps) 10)
+		  
+		  (letrec ((local-vequal (lambda (v0 v1 n)
+					   (let ((old-fudge (mus-float-equal-fudge-factor)))
+					     (set! (mus-float-equal-fudge-factor) (* n .001))
+					     (let ((result (equal? v0 v1)))
+					       (set! (mus-float-equal-fudge-factor) old-fudge)
+					       result))))
+			   
+			   (add-1 (lambda (ind)
+				    (ptree-channel (lambda (y) (+ y 1.0)) 0 20 ind 0)
+				    (let ((data (channel->vct 0 20 ind 1)))
+				      (vct-offset! data 1.0)
+				      (vct->channel data 0 20 ind 1))))
+			   
+			   (ramp-1 (lambda (ind)
+				     (ramp-channel 0 1.0 0 21 ind 0)
+				     (let ((data (channel->vct 0 20 ind 1)))
+				       (do ((i 0 (1+ i))
+					    (val 0 (+ val .05)))
+					   ((= i 20))
+					 (vct-set! data i (* (vct-ref data i) val)))
+				       (vct->channel data 0 20 ind 1))))
+			   
+			   (mix-1 (lambda (ind)
+				    (let ((mdata (vct 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 -0.5)))
+				      (mix-vct mdata 5 ind 0 #t)
+				      (let ((data (channel->vct 5 10 ind 1)))
+					(vct-add! data mdata)
+					(vct->channel data 5 10 ind 1)))))
+			   
+			   (env-1 (lambda (ind)
+				    (env-channel '(0 0 1 1 2 1 3 0) 0 20 ind 0)
+				    (let ((e1 (vct 0.0 0.166667 0.333333 0.5 0.666667 0.833333 1.0 1.0 1.0 1.0 
+						   1.0 1.0 1.0 1.0 0.833333 0.666667 0.5 0.333333 0.166667 0.0))
+					  (data (channel->vct 0 20 ind 1)))
+				      (vct-multiply! data e1)
+				      (vct->channel data 0 20 ind 1))))
+			   
+			   (env-2 (lambda (ind)
+				    (env-channel-with-base '(0 0 1 1 2 1 3 0) 8.0 0 20 ind 0)
+				    (let ((e1 (vct 0.0 0.059173 0.142857 0.261204 0.428571 0.665265 1.0 1.0 1.0 
+						   1.0 1.0 1.0 1.0 1.0 0.665265 0.428571 0.261204 0.142857 0.059173 0.0))
+					  (data (channel->vct 0 20 ind 1)))
+				      (vct-multiply! data e1)
+				      (vct->channel data 0 20 ind 1))))
+			   
+			   (env-3 (lambda (ind)
+				    (env-channel '(0 1 1 0 2 0 3 1) 0 20 ind 0)
+				    (let ((e1 (vct 1.0 0.833333 0.666667 0.5 0.333333 0.166667 0.0 0.0 0.0 0.0 
+						   0.0 0.0 0.0 0.0 0.166667 0.333333 0.5 0.666667 0.833333 1.0))
+					  (data (channel->vct 0 20 ind 1)))
+				      (vct-multiply! data e1)
+				      (vct->channel data 0 20 ind 1))))
+			   
+			   (env-4 (lambda (ind)
+				    (env-channel-with-base '(0 1 1 0 2 0 3 1) 8.0 0 20 ind 0)
+				    (let ((e1 (vct 1.0 0.665265 0.428571 0.261204 0.142857 0.059173 0.0 0.0 0.0 
+						   0.0 0.0 0.0 0.0 0.0 0.059173 0.142857 0.261204 0.428571 0.665265 1.0))
+					  (data (channel->vct 0 20 ind 1)))
+				      (vct-multiply! data e1)
+				      (vct->channel data 0 20 ind 1))))
+			   
+			   (env-5 (lambda (ind)
+				    (env-channel '(0 1 1 .5 2 .5 3 1) 0 20 ind 0)
+				    (let ((e1 (vct 1.0 0.916667 0.833333 0.750000 0.666667 0.583333 0.5 0.5 0.5 
+						   0.5 0.5 0.5 0.5 0.5 0.583333 0.666667 0.750000 0.833333 0.916667 1.0))
+					  (data (channel->vct 0 20 ind 1)))
+				      (vct-multiply! data e1)
+				      (vct->channel data 0 20 ind 1))))
+			   
+			   (env-6 (lambda (ind)
+				    (env-channel-with-base '(0 1 1 .5 2 .5 3 1) 8.0 0 20 ind 0)
+				    (let ((e1 (vct 1.0 0.832632 0.714286 0.630602 0.571429 0.529587 0.5 0.5 0.5 
+						   0.5 0.5 0.5 0.5 0.5 0.529587 0.571429 0.630602 0.714286 0.832632 1.0))
+					  (data (channel->vct 0 20 ind 1)))
+				      (vct-multiply! data e1)
+				      (vct->channel data 0 20 ind 1))))
+			   
+			   (set-1 (lambda (ind)
+				    (set! (sample 10 ind 0) -0.5)
+				    (let ((data (channel->vct 0 20 ind 1)))
+				      (vct-set! data 10 -0.5)
+				      (vct->channel data 0 20 ind 1))))
+			   
+			   (scl-1 (lambda (ind)
+				    (ptree-channel (lambda (y data forward)
+						     (declare (y real) (data vct) (forward boolean))
+						     (* y (vct-ref data 0)))
+						   0 20 ind 0 #f #f
+						   (lambda (pos dur)
+						     (vct 0.625)))
+				    (scale-channel 0.625 0 20 ind 1)))
+			   
+			   (rvequal (lambda (ind name n)
+				      (let ((r1 (make-sample-reader 19 ind 0 -1))
+					    (r2 (make-sample-reader 19 ind 1 -1))
+					    (v1 (make-vct 20))
+					    (v2 (make-vct 20)))
+					(do ((i 0 (1+ i)))
+					    ((= i 20))
+					  (vct-set! v1 i (r1))
+					  (vct-set! v2 i (r2)))
+					(if (not (local-vequal v1 v2 n))
+					    (snd-display ";!~A reversed: ~A ~A" name v1 v2))
+					(free-sample-reader r1)
+					(free-sample-reader r2)))))
+		    
+		    (let ((all-ops (list add-1 ramp-1 mix-1 env-1 env-2 env-3 env-4 env-5 env-6 set-1 scl-1))
+			  (all-op-names (list 'add-1 'ramp-1 'mix-1 'env-1 'env-2 'env-3 'env-4 'env-5 'env-6 'set-1 'scl-1))
+			  (two-ops (list add-1 ramp-1))
+			  (two-op-names (list 'add-1 'ramp-1)))
+		      
+		      (let ((ind (new-sound "test.snd" :size 20 :channels 2)))
+			
+			(set! (squelch-update ind 0) #t)
+			(set! (squelch-update ind 1) #t)
+			
+			(for-each ; check that they are the same
+			 (lambda (op op-name)
+			   (do ((k 0 (1+ k)))
+			       ((= k 2))
+			     (if (= k 1)
+				 (vct->channel (make-vct 20 0.0) 0 20 ind 1)
+				 (begin
+				   (vct->channel (make-vct 20 1.0) 0 20 ind 0)
+				   (vct->channel (make-vct 20 1.0) 0 20 ind 1)))
+			     (op ind)
+			     (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
+				 (snd-display ";unequal: ~A:~%; ~A~%; ~A" op-name (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1))
+				 (rvequal ind op-name 1))
+			     (revert-sound ind)))
+			 all-ops all-op-names)
+			
+			;; 2 ops
+			(for-each
+			 (lambda (op2 op2-name)
+			   (for-each
+			    (lambda (op1 op1-name)
+			      (let ((op-name (format #f "~A(~A)" op2-name op1-name)))
+				(do ((k 0 (1+ k)))
+				    ((= k 2))
+				  (if (= k 1)
+				      (vct->channel (make-vct 20 0.0) 0 20 ind 1)
+				      (begin
+					(vct->channel (make-vct 20 1.0) 0 20 ind 0)
+					(vct->channel (make-vct 20 1.0) 0 20 ind 1)))
+				  (op1 ind)
+				  (op2 ind)
+				  (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
+				      (snd-display ";unequal: ~A~A:~%; ~A~%; ~A" op-name (if (= k 0) "[0]" "") (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1))
+				      (rvequal ind op-name 1))
+				  (revert-sound ind))))
+			    all-ops all-op-names))
+			 all-ops all-op-names)
+			
+			;; 3 ops
+			(for-each
+			 (lambda (op3 op3-name)
+			   (for-each
+			    (lambda (op2 op2-name)
+			      (for-each
+			       (lambda (op1 op1-name)
+				 (let ((op-name (format #f "~A(~A(~A))" op3-name op2-name op1-name)))
+				   (do ((k 0 (1+ k)))
+				       ((= k 2))
+				     (if (= k 1)
+					 (vct->channel (make-vct 20 0.0) 0 20 ind 1)
+					 (begin
+					   (vct->channel (make-vct 20 1.0) 0 20 ind 0)
+					   (vct->channel (make-vct 20 1.0) 0 20 ind 1)))
+				     (op1 ind)
+				     (op2 ind)
+				     (op3 ind)
+				     (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
+					 (snd-display ";unequal: ~A:~%; ~A~%; ~A" op-name (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1))
+					 (rvequal ind op-name 1))
+				     (revert-sound ind))))
+			       all-ops all-op-names))
+			    all-ops all-op-names))
+			 all-ops all-op-names)
+			
+			;; 4 ops
+			(for-each
+			 (lambda (op4 op4-name)
+			   (for-each
+			    (lambda (op3 op3-name)
+			      (for-each
+			       (lambda (op2 op2-name)
+				 (for-each
+				  (lambda (op1 op1-name)
+				    (let ((op-name (format #f "~A(~A(~A(~A)))" op4-name op3-name op2-name op1-name)))
+				      (do ((k 0 (1+ k)))
+					  ((= k 2))
+					(if (= k 1)
+					    (vct->channel (make-vct 20 0.0) 0 20 ind 1)
+					    (begin
+					      (vct->channel (make-vct 20 1.0) 0 20 ind 0)
+					      (vct->channel (make-vct 20 1.0) 0 20 ind 1)))
+					(op1 ind)
+					(op2 ind)
+					(op3 ind)
+					(op4 ind)
+					(if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
+					    (snd-display ";unequal: ~A~A:~%; ~A~%; ~A" op-name (if (= k 0) "[0]" "") (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1))
+					    (rvequal ind op-name 1))
+					(revert-sound ind))))
+				  all-ops all-op-names))
+			       all-ops all-op-names))
+			    all-ops all-op-names))
+			 all-ops all-op-names)
+			
+			;; 5 ops
+			(for-each
+			 (lambda (op5 op5-name)
+			   (for-each
+			    (lambda (op4 op4-name)
+			      (for-each
+			       (lambda (op3 op3-name)
+				 (for-each
+				  (lambda (op2 op2-name)
+				    (for-each
+				     (lambda (op1 op1-name)
+				       (let ((op-name (format #f "~A(~A(~A(~A(~A))))" op5-name op4-name op3-name op2-name op1-name)))
+					 (do ((k 0 (1+ k)))
+					     ((= k 2))
+					   (if (= k 1)
+					       (vct->channel (make-vct 20 0.0) 0 20 ind 1)
+					       (begin
+						 (vct->channel (make-vct 20 1.0) 0 20 ind 0)
+						 (vct->channel (make-vct 20 1.0) 0 20 ind 1)))
+					   (op1 ind)
+					   (op2 ind)
+					   (op3 ind)
+					   (op4 ind)
+					   (op5 ind)
+					   (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
+					       (snd-display ";unequal: ~A ~A in ~A:~%; ~A~%; ~A" 
+							    op-name 
+							    (map (lambda (lst) (edit-fragment-type-name (list-ref lst 7))) (edit-tree ind 0))
+							    (edit-tree ind 0)
+							    (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1))
+					       (rvequal ind op-name 1))
+					   (revert-sound ind))))
+				     all-ops all-op-names))
+				  all-ops all-op-names))
+			       all-ops all-op-names))
+			    all-ops all-op-names))
+			 all-ops all-op-names)
+			
+			;; 6 ops
+			(for-each
+			 (lambda (op6 op6-name)
+			   (for-each
+			    (lambda (op5 op5-name)
+			      (for-each
+			       (lambda (op4 op4-name)
+				 (for-each
+				  (lambda (op3 op3-name)
+				    (for-each
+				     (lambda (op2 op2-name)
+				       (for-each
+					(lambda (op1 op1-name)
+					  (let ((op-name (format #f "~A(~A(~A(~A(~A(~A)))))" op6-name op5-name op4-name op3-name op2-name op1-name)))
+					    (do ((k 0 (1+ k)))
+						((= k 2))
+					      (if (= k 1)
+						  (vct->channel (make-vct 20 0.0) 0 20 ind 1)
+						  (begin
+						    (vct->channel (make-vct 20 1.0) 0 20 ind 0)
+						    (vct->channel (make-vct 20 1.0) 0 20 ind 1)))
+					      (op1 ind)
+					      (op2 ind)
+					      (op3 ind)
+					      (op4 ind)
+					      (op5 ind)
+					      (op6 ind)
+					      (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
+						  (snd-display ";unequal: ~A:~%; ~A~%; ~A" op-name (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1))
+						  (rvequal ind op-name 1))
+					      (revert-sound ind))))
+					two-ops two-op-names))
+				     all-ops all-op-names))
+				  all-ops all-op-names))
+			       all-ops all-op-names))
+			    all-ops all-op-names))
+			 two-ops two-op-names)
+			
+			;; 7 ops
+			(for-each
+			 (lambda (op7 op7-name)
+			   (for-each
+			    (lambda (op6 op6-name)
+			      (for-each
+			       (lambda (op5 op5-name)
+				 (for-each
+				  (lambda (op4 op4-name)
+				    (for-each
+				     (lambda (op3 op3-name)
+				       (for-each
+					(lambda (op2 op2-name)
+					  (for-each
+					   (lambda (op1 op1-name)
+					     (let ((op-name (format #f "~A(~A(~A(~A(~A(~A(~A))))))" op7-name op6-name op5-name op4-name op3-name op2-name op1-name)))
+					       (do ((k 0 (1+ k)))
+						   ((= k 2))
+						 (if (= k 1)
+						     (vct->channel (make-vct 20 0.0) 0 20 ind 1)
+						     (begin
+						       (vct->channel (make-vct 20 1.0) 0 20 ind 0)
+						       (vct->channel (make-vct 20 1.0) 0 20 ind 1)))
+						 (op1 ind)
+						 (op2 ind)
+						 (op3 ind)
+						 (op4 ind)
+						 (op5 ind)
+						 (op6 ind)
+						 (op7 ind)
+						 (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
+						     (snd-display ";unequal: ~A:~%; ~A~%; ~A" op-name (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1))
+						     (rvequal ind op-name 1))
+						 (revert-sound ind))))
+					   two-ops two-op-names))
+					all-ops all-op-names))
+				     all-ops all-op-names))
+				  all-ops all-op-names))
+			       two-ops two-op-names))
+			    two-ops two-op-names))
+			 two-ops two-op-names)
+			
+			(set! (squelch-update ind 0) #f)
+			(set! (squelch-update ind 1) #f)
+			(set! (max-virtual-ptrees) old-ptrees)
+			(set! (max-virtual-xramps) old-xramps)
+			
+			)))))
+		
+		(if (and (provided? 'snd-motif)
+			 (provided? 'xm))
+		    (let* ((edhist (list-ref (channel-widgets ind 0) 7))
+			   (edp (XtParent edhist)))
 		  (XtUnmanageChild edp) 
 		  (XtVaSetValues edp (list XmNpaneMinimum 1))  ; not 0 here -- Xt warnings
 		  (XtManageChild edp)))
@@ -24599,7 +25357,7 @@ EDITS: 2
 		(snd-display ";mix lock 5: ~A ~A" id (mix? id)))
 	    (undo)
 	    (xramp-channel 0.0 1.0 32.0 0 20)
-	    (if (or (not (mix? id)) (number? (mix? id)))
+	    (if (or (not (mix? id)) (not (= (mix? id) id)))
 		(snd-display ";mix lock 6: ~A ~A" id (mix? id)))
 	    (undo 2)
 	    (delete-sample 52)
@@ -24878,7 +25636,7 @@ EDITS: 2
 		    (snd-display ";mix on ptree: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ptree: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 18)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 17)))
 		  (snd-display ";mix on ptree edit-tree: ~A" (list-ref (cadr (edit-tree)) 7)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -24897,7 +25655,7 @@ EDITS: 2
 		    (snd-display ";mix on ptree_ramp: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ptree_ramp: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 22)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 21)))
 		  (snd-display ";mix on ptree_ramp edit-tree: ~A" (list-ref (cadr (edit-tree)) 7)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -24917,7 +25675,7 @@ EDITS: 2
 		    (snd-display ";mix on ptree_ramp2: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ptree_ramp2: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 22)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 21)))
 		  (snd-display ";mix on ptree_ramp2 edit-tree: ~A" (list-ref (cadr (edit-tree)) 7)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -24938,7 +25696,7 @@ EDITS: 2
 		    (snd-display ";mix on ptree_ramp3: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ptree_ramp3: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 22)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 21)))
 		  (snd-display ";mix on ptree_ramp3 edit-tree: ~A" (list-ref (cadr (edit-tree)) 7)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -24960,7 +25718,7 @@ EDITS: 2
 		    (snd-display ";mix on ptree_ramp4: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ptree_ramp4: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 22)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 21)))
 		  (snd-display ";mix on ptree_ramp4 edit-tree: ~A" (list-ref (cadr (edit-tree)) 7)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -24979,7 +25737,7 @@ EDITS: 2
 		    (snd-display ";mix on ptree_zero: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ptree_zero: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 20)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 19)))
 		  (snd-display ";mix on ptree_zero edit-tree: ~A" (list-ref (cadr (edit-tree)) 7)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -24999,7 +25757,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp_ptree: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp_ptree: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 26)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 27)))
 		  (snd-display ";mix on ramp_ptree edit-tree: ~A" (list-ref (cadr (edit-tree)) 7)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -25019,7 +25777,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp2_ptree: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp2_ptree: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 26)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 27)))
 		  (snd-display ";mix on ramp2_ptree edit-tree: ~A" (list-ref (cadr (edit-tree)) 7)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -25040,7 +25798,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp3_ptree: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp3_ptree: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 26)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 27)))
 		  (snd-display ";mix on ramp3_ptree edit-tree: ~A" (list-ref (cadr (edit-tree)) 7)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -25062,7 +25820,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp4_ptree: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp4_ptree: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 26)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 27)))
 		  (snd-display ";mix on ramp4_ptree edit-tree: ~A" (list-ref (cadr (edit-tree)) 7)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -25082,7 +25840,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp_ptree_zero: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp_ptree_zero: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 28)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 29)))
 		  (snd-display ";mix on ramp_ptree_zero edit-tree: ~A" (list-ref (cadr (edit-tree)) 7)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -25103,7 +25861,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp2_ptree_zero: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp2_ptree_zero: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 28)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 29)))
 		  (snd-display ";mix on ramp2_ptree_zero edit-tree: ~A" (list-ref (cadr (edit-tree)) 7)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -25125,7 +25883,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp3_ptree_zero: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp3_ptree_zero: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 28)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 29)))
 		  (snd-display ";mix on ramp3_ptree_zero edit-tree: ~A" (list-ref (cadr (edit-tree)) 7)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))
@@ -25148,7 +25906,7 @@ EDITS: 2
 		    (snd-display ";mix on ramp4_ptree_zero: ~A" vals)))
 	      (if (and tag (or (not (mix? id)) (not (= (mix? id) id))))
 		  (snd-display ";mix on ramp4_ptree_zero: ~A ~A" id (mix? id)))
-	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 28)))
+	      (if (and tag (not (= (list-ref (cadr (edit-tree)) 7) 29)))
 		  (snd-display ";mix on ramp4_ptree_zero edit-tree: ~A" (list-ref (cadr (edit-tree)) 7)))
 	      (let ((data (make-vct 10))
 		    (reader (make-sample-reader 57 ind 0 -1)))

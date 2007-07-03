@@ -336,7 +336,7 @@ char *run_save_state_hook(char *file)
  * redo: push position foward
  * No actual changes are flushed out to the file system until the file is saved.
  *
- * the editing possibilities are insert, change, delete, scale, zero, [x]ramp[2,3], ptree. 
+ * the editing possibilities are insert, change, delete, scale, zero, env, mix, ptree. 
  * All input goes through these lists (with minor exceptions -- see chn_sample below).
  *
  * The accessors are highly optimized (split into numerous choices) since everything else in Snd
@@ -344,34 +344,26 @@ char *run_save_state_hook(char *file)
  *   267 MHz PC (and equivalent Sun) can play stereo 44KHz through the double xramp op (or ptree2!)
  *   without glitches, and on a modern machine the readers scarcely register in loadav.
  *
- * (3.2 GHz):          -ffast-math  (double)   (3.8 GHz, float):
- *    straight     21    20           26             22
- *    ramp         24    21           26             25
- *    ramp2        27    22           27             29
- *    ramp3        38    24           29             33
- *    ramp4        35    44           30             43
- *    ptree-zero   46    47           61             49
- *    ptree        52    58           71             57
- *    ptreec       80    80           93             74
- *    ptree2       105  100          107             94
- *    ptree3       129  125          157            128
- *    xramp        152   94          140 (91)       121
- *    xramp2       290  148          242 (154)      211
- *    cosine       304  270          355 (290)      199
+ * (3.2 GHz):          -ffast-math  (double)   (3.8 GHz, float): after arrayification:
+ *    straight     21    20           26             22             17
+ *    ramp         24    21           26             25             20
+ *    ramp2        27    22           27             29             25
+ *    ramp3        38    24           29             33             38
+ *    ramp4        35    44           30             43             43
+ *    ptree-zero   46    47           61             49             46
+ *    ptree        52    58           71             57             52
+ *    ptreec       80    80           93             74             65
+ *    ptree2       105  100          107             94             83
+ *    ptree3       129  125          157            128            114
+ *    xramp        152   94          140 (91)       121            111
+ *    xramp2       290  148          242 (154)      211            206
+ *    cosine       304  270          355 (290)      199            194
+ *    mix                                                           20
  *
  * I tried a flattened version (using ed_fragment* rather than ed_fragment**) which involves fewer calls on malloc,
  *   but the edit list is a "real" list -- we do internal insertions and deletions and so on, so it's simpler
  *   to use in the current form.
  */
-
-
-/* TODO: ramp_mix and friends
- *
- * array of ops: ops + num
- *                RAMP, XRAMP, PTREE, MIX, SCALE
- *               val starts either at 0 or sf->data[loc]
- */
-
 
 static int max_virtual_ptrees = 3, max_virtual_xramps = 2;
 
@@ -387,9 +379,9 @@ typedef struct {
 } xramp_state;
 
 typedef struct {
-  int ramps;
+  short ramps;
   ramp_state *ramp_list;
-  int xramps;
+  short xramps;
   xramp_state *xramp_list;
 } ed_ramps;
 
@@ -398,7 +390,7 @@ typedef struct {
 
 typedef struct {
   Float scl;                                /* scales the arg to the ptree */
-  int loc;                                  /* index into the cp->ptrees array */
+  short loc;                                /* index into the cp->ptrees array */
   off_t pos,                                /* segment position within original at time of ptree edit */
         dur;                                /* original (unfragmented) segment length */
 } ptree_state;
@@ -412,7 +404,7 @@ typedef struct {
 /* fragment mix info */
 
 typedef struct {
-  int size;                                /* size of mix_list, but some entries can be empty */
+  short size;                              /* size of mix_list, but some entries can be empty */
   mix_state **mix_list;
 } ed_mixes;
 
@@ -451,9 +443,9 @@ typedef struct {
 /* reader ramp info */
 
 typedef struct {
-  int ramps;
+  short ramps;
   double *incrs, *vals;
-  int xramps;
+  short xramps;
   double *xincrs, *xvals;
   Float (*rampf)(struct snd_fd *sf);
   Float (*rev_rampf)(struct snd_fd *sf);
@@ -463,7 +455,7 @@ typedef struct {
 /* reader mix info */
 
 typedef struct {
-  int size;
+  short size;
   snd_fd **sfs;
 } reader_mixes;
 
@@ -958,96 +950,90 @@ static Float previous_one_mix_zero(snd_fd *sf)
 
 static Float next_mix_ramp1(snd_fd *sf)
 {
-  if (sf->loc > sf->last) return(next_sound(sf));
+  if (sf->loc > sf->last) 
+    return(next_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp1_value(sf))) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_ramp1(snd_fd *sf)
 {
-  if (sf->loc < sf->first) return(previous_sound(sf));
+  if (sf->loc < sf->first)
+    return(previous_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp1_value(sf))) + read_mix_list_samples(sf));
 }
 
 
-
-/* will need the zero case too */
-/*   this is not a mix_op currently -- subtract_mix field has to be -1 */
-static Float next_ramp_mix(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++]) + read_mix_list_samples(sf)) * next_ramp1_value(sf));
-  /* what about scaler on underlying data? */
-}
-
-static Float previous_ramp_mix(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--]) + read_mix_list_samples(sf)) * previous_ramp1_value(sf));
-}
-
-
-
 static Float next_mix_ramp2(snd_fd *sf)
 {
-  if (sf->loc > sf->last) return(next_sound(sf));
+  if (sf->loc > sf->last) 
+    return(next_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp2_value(sf))) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_ramp2(snd_fd *sf)
 {
-  if (sf->loc < sf->first) return(previous_sound(sf));
+  if (sf->loc < sf->first) 
+    return(previous_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp2_value(sf))) + read_mix_list_samples(sf));
 }
 
 
 static Float next_mix_ramp(snd_fd *sf)
 {
-  if (sf->loc > sf->last) return(next_sound(sf));
+  if (sf->loc > sf->last) 
+    return(next_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp_value(sf))) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_ramp(snd_fd *sf)
 {
-  if (sf->loc < sf->first) return(previous_sound(sf));
+  if (sf->loc < sf->first) 
+    return(previous_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp_value(sf))) + read_mix_list_samples(sf));
 }
 
 
 static Float next_mix_xramp1(snd_fd *sf)
 {
-  if (sf->loc > sf->last) return(next_sound(sf));
+  if (sf->loc > sf->last) 
+    return(next_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp1_value(sf))) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_xramp1(snd_fd *sf)
 {
-  if (sf->loc < sf->first) return(previous_sound(sf));
+  if (sf->loc < sf->first) 
+    return(previous_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * READER_SCALER(sf) * previous_xramp1_value(sf))) + read_mix_list_samples(sf));
 }
 
 
 static Float next_mix_xramp(snd_fd *sf)
 {
-  if (sf->loc > sf->last) return(next_sound(sf));
+  if (sf->loc > sf->last)
+    return(next_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp_value(sf))) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_xramp(snd_fd *sf)
 {
-  if (sf->loc < sf->first) return(previous_sound(sf));
+  if (sf->loc < sf->first)
+    return(previous_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * READER_SCALER(sf) * previous_xramp_value(sf))) + read_mix_list_samples(sf));
 }
 
 
 static Float next_mix_xramp_f_ramp_f(snd_fd *sf)
 {
-  if (sf->loc > sf->last) return(next_sound(sf));
+  if (sf->loc > sf->last)
+    return(next_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * (*(READER_RAMPF(sf)))(sf))) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_xramp_f_ramp_f(snd_fd *sf)
 {
-  if (sf->loc < sf->first) return(previous_sound(sf));
+  if (sf->loc < sf->first) 
+    return(previous_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * (*(READER_REV_RAMPF(sf)))(sf))) + read_mix_list_samples(sf));
 }
 
@@ -1099,13 +1085,15 @@ static Float previous_ptree(snd_fd *sf)
 
 static Float next_mix_ptree(snd_fd *sf)
 {
-  if (sf->loc > sf->last) return(next_sound(sf)); 
+  if (sf->loc > sf->last) 
+    return(next_sound(sf)); 
   return((READER_SCALER(sf) * next_ptree_value(sf)) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_ptree(snd_fd *sf)
 {
-  if (sf->loc < sf->first) return(previous_sound(sf)); 
+  if (sf->loc < sf->first) 
+    return(previous_sound(sf)); 
   return((READER_SCALER(sf) * previous_ptree_value(sf)) + read_mix_list_samples(sf));
 }
 
@@ -1156,13 +1144,15 @@ static Float previous_ptree_ramp_f(snd_fd *sf)
 
 static Float next_mix_ptree_ramp_f(snd_fd *sf)
 {
-  if (sf->loc > sf->last) return(next_sound(sf));
+  if (sf->loc > sf->last) 
+    return(next_sound(sf));
   return((READER_SCALER(sf) * next_ptree_ramp_f_value(sf)) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_ptree_ramp_f(snd_fd *sf)
 {
-  if (sf->loc < sf->first) return(previous_sound(sf)); 
+  if (sf->loc < sf->first) 
+    return(previous_sound(sf)); 
   return((READER_SCALER(sf) * previous_ptree_ramp_f_value(sf)) + read_mix_list_samples(sf));
 }
 
@@ -1211,6 +1201,21 @@ static Float previous_ptree_xramp(snd_fd *sf)
 }
 
 
+static Float next_mix_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) 
+    return(next_sound(sf)); 
+  else return((READER_SCALER(sf) * next_ptree_xramp_value(sf)) + read_mix_list_samples(sf));
+}
+
+static Float previous_mix_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) 
+    return(previous_sound(sf)); 
+  else return((READER_SCALER(sf) * previous_ptree_xramp_value(sf)) + read_mix_list_samples(sf));
+}
+
+
 static Float next_ramp_f_ptree(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
@@ -1228,13 +1233,15 @@ static Float previous_ramp_f_ptree(snd_fd *sf)
 
 static Float next_mix_ramp_f_ptree(snd_fd *sf)
 {
-  if (sf->loc > sf->last) return(next_sound(sf)); 
+  if (sf->loc > sf->last) 
+    return(next_sound(sf)); 
   return(((*(READER_RAMPF(sf)))(sf) * next_ptree_value(sf)) + read_mix_list_samples(sf));
 }
 
 static Float previous_mix_ramp_f_ptree(snd_fd *sf)
 {
-  if (sf->loc < sf->first) return(previous_sound(sf)); 
+  if (sf->loc < sf->first) 
+    return(previous_sound(sf)); 
   return(((*(READER_REV_RAMPF(sf)))(sf) * previous_ptree_value(sf)) + read_mix_list_samples(sf));
 }
 
@@ -1251,6 +1258,21 @@ static Float previous_xramp_ptree(snd_fd *sf)
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
   else return(previous_xramp_value(sf) * READER_SCALER(sf) * previous_ptree_value(sf));
+}
+
+
+static Float next_mix_xramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last) 
+    return(next_sound(sf)); 
+  else return((next_xramp_value(sf) * READER_SCALER(sf) * next_ptree_value(sf)) + read_mix_list_samples(sf));
+}
+
+static Float previous_mix_xramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first) 
+    return(previous_sound(sf)); 
+  else return((previous_xramp_value(sf) * READER_SCALER(sf) * previous_ptree_value(sf)) + read_mix_list_samples(sf));
 }
 
 
@@ -1609,34 +1631,72 @@ static Float previous_ptree_xramp_ramp_ptree_ramp_f(snd_fd *sf)
 }
 
 
-/* PERHAPS: tmp262 smaller in snd-test
- * PERHAPS: more top mix ops
- * PERHAPS: if exp env short, use stored table
- */
 
-enum {ED_SIMPLE, ED_MIX_SIMPLE, 
-      ED_ZERO, ED_MIX_ZERO,
-      ED_RAMP1, ED_MIX_RAMP1, ED_RAMP2, ED_MIX_RAMP2, ED_XRAMP1, ED_MIX_XRAMP1,
+static Float next_xramp_ramp_ptree_xramp_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last) 
+    return(next_sound(sf)); 
+  else return(READER_SCALER(sf) *                                 /* could go in top  scaler (as others earlier) */
+	      next_xramp_ramp_from_split_value(sf) *              /* this is unscaled */
+	      next_ptree_from_split_value(sf, next_unscaled_xramp_ramp_to_split_value(sf) * next_ptree_to_split_value(sf)));
+}
 
-      ED_RAMP, ED_MIX_RAMP,
-      ED_XRAMP, ED_MIX_XRAMP,
-      ED_XRAMP_RAMP, ED_MIX_XRAMP_RAMP,
+static Float previous_xramp_ramp_ptree_xramp_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first) 
+    return(previous_sound(sf)); 
+  else return(READER_SCALER(sf) * 
+	      previous_xramp_ramp_from_split_value(sf) *
+	      previous_ptree_from_split_value(sf, previous_unscaled_xramp_ramp_to_split_value(sf) * previous_ptree_to_split_value(sf)));
+}
 
-      ED_RAMP_MIX,
 
-      ED_PTREE, ED_MIX_PTREE, ED_PTREE_ZERO, ED_MIX_PTREE_ZERO,
-      ED_PTREE_RAMP, ED_MIX_PTREE_RAMP,
-      ED_PTREE_XRAMP, ED_PTREE_XRAMP_RAMP,
 
-      ED_RAMP_PTREE, ED_MIX_RAMP_PTREE, ED_RAMP_PTREE_ZERO, ED_MIX_RAMP_PTREE_ZERO,
-      ED_XRAMP_PTREE, ED_XRAMP_PTREE_ZERO, 
-      ED_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_ZERO, 
 
+/* this is a kind of state machine for the virtual editor: if, for example, the current
+     op is ed_ramp and we want to add an xramp, we look at the add_xramp field of 
+     ed_ramp's type_info struct, and if it's not -1, the add_xramp field is the
+     new virtual editor op; otherwise the op is collapsed to a change edit.
+     So, to add a new entry, make the accessor, and fill in the fields that
+     can reach it.  Since, for example, ramp->xramp is flipped to xramp->ramp
+     since a(b()) == b(a()) in this case, there can be several ways to reach
+     a given op. Then fix the ramp segments in choose_accessor.  The first
+     struct field is redundant, but makes editing this table much easier. 
+*/
+
+enum {ED_SIMPLE,                ED_MIX, 
+      ED_ZERO,                  ED_MIX_ZERO,
+
+      /* simple envelope special cases */
+      ED_RAMP1,                 ED_MIX_RAMP1, 
+      ED_RAMP2,                 ED_MIX_RAMP2,
+      ED_XRAMP1,                ED_MIX_XRAMP1,
+
+      /* envelopes */
+      ED_RAMP,                  ED_MIX_RAMP,
+      ED_XRAMP,                 ED_MIX_XRAMP,
+      ED_XRAMP_RAMP,            ED_MIX_XRAMP_RAMP,
+
+      /* ptrees */
+      ED_PTREE,                 ED_MIX_PTREE, 
+      ED_PTREE_ZERO,            ED_MIX_PTREE_ZERO,
+      ED_PTREE_RAMP,            ED_MIX_PTREE_RAMP,
+      ED_PTREE_XRAMP,           ED_MIX_PTREE_XRAMP,  
+      ED_PTREE_XRAMP_RAMP,      ED_MIX_PTREE_XRAMP_RAMP,
+
+      ED_RAMP_PTREE,            ED_MIX_RAMP_PTREE, 
+      ED_RAMP_PTREE_ZERO,       ED_MIX_RAMP_PTREE_ZERO,
+      ED_XRAMP_PTREE,           ED_MIX_XRAMP_PTREE, 
+      ED_XRAMP_PTREE_ZERO,      ED_MIX_XRAMP_PTREE_ZERO, 
+      ED_XRAMP_RAMP_PTREE,      ED_MIX_XRAMP_RAMP_PTREE, 
+      ED_XRAMP_RAMP_PTREE_ZERO, ED_MIX_XRAMP_RAMP_PTREE_ZERO,
+
+      /* split envelopes */
       ED_RAMP_PTREE_RAMP, ED_RAMP_PTREE_XRAMP, ED_RAMP_PTREE_XRAMP_RAMP,
       ED_XRAMP_PTREE_RAMP, ED_XRAMP_PTREE_XRAMP, ED_XRAMP_PTREE_XRAMP_RAMP, 
       ED_XRAMP_RAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP,
 
-      
+      /* split ptrees/envelopes */
       ED_PTREE_RAMP_PTREE, ED_PTREE_RAMP_PTREE_ZERO,
       ED_PTREE_XRAMP_PTREE, ED_PTREE_XRAMP_PTREE_ZERO, 
       ED_PTREE_XRAMP_RAMP_PTREE, ED_PTREE_XRAMP_RAMP_PTREE_ZERO, 
@@ -1644,6 +1704,17 @@ enum {ED_SIMPLE, ED_MIX_SIMPLE,
       ED_PTREE_RAMP_PTREE_RAMP, ED_PTREE_RAMP_PTREE_XRAMP, ED_PTREE_RAMP_PTREE_XRAMP_RAMP,
       ED_PTREE_XRAMP_PTREE_RAMP, ED_PTREE_XRAMP_PTREE_XRAMP, ED_PTREE_XRAMP_PTREE_XRAMP_RAMP, 
       ED_PTREE_XRAMP_RAMP_PTREE_RAMP, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP,
+
+      ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE,
+      ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO,
+
+#if 0      
+      /* double split -- all ramps treated via xramp_ramp -- needs two added split fields */
+      ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP,
+      ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE,
+      ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO,
+      ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP,
+#endif
 
       NUM_OPS
 };
@@ -1661,19 +1732,7 @@ typedef struct {
 } fragment_type_info;
 
 
-/* this is a kind of state machine for the virtual editor: if, for example, the current
-     op is ed_ramp and we want to add an xramp, we look at the add_xramp field of 
-     ed_ramp's type_info struct, and if it's not -1, the add_xramp field is the
-     new virtual editor op; otherwise the op is collapsed to a change edit.
-     So, to add a new entry, make the accessor, and fill in the fields that
-     can reach it.  Since, for example, ramp->xramp is flipped to xramp->ramp
-     since a(b()) == b(a()) in this case, there can be several ways to reach
-     a given op. Then fix the ramp segments in choose_accessor.  The first
-     struct field is redundant, but makes editing this table much easier. 
-*/
-
-enum {NO_SCALE, SIMPLE_SCALE, SCALE_R, SCALE_P, SCALE_P_R, SCALE_X
-};
+enum {NO_SCALE, SIMPLE_SCALE, SCALE_R, SCALE_P, SCALE_P_R, SCALE_X};
 
 #define NO_PTREE false
 #define NO_RAMP false
@@ -1686,150 +1745,328 @@ enum {NO_SCALE, SIMPLE_SCALE, SCALE_R, SCALE_P, SCALE_P_R, SCALE_X
 
 static fragment_type_info type_info[NUM_OPS] = {
 
-  {ED_SIMPLE, ED_RAMP1, ED_XRAMP1, ED_PTREE, ED_MIX_SIMPLE, -1, NO_PTREE, NO_RAMP, ON_DATA, NO_MIX, SIMPLE_SCALE,
-   "ed_simple", next_sample_value, previous_sample_value, NULL, NULL},
-  {ED_MIX_SIMPLE, -1, -1, -1, ED_MIX_SIMPLE, ED_SIMPLE, NO_PTREE, NO_RAMP, ON_DATA, MIXED, NO_SCALE,
-   "ed_mix_simple", next_mix, previous_mix, NULL, NULL},
+  {ED_SIMPLE, ED_RAMP1, ED_XRAMP1, ED_PTREE, ED_MIX, -1, 
+   NO_PTREE, NO_RAMP, ON_DATA, NO_MIX, SIMPLE_SCALE,
+   "ed_simple", next_sample_value, previous_sample_value, 
+   NULL, NULL},
 
-  {ED_ZERO, ED_ZERO, ED_ZERO, ED_PTREE_ZERO, ED_MIX_ZERO, -1, NO_PTREE, NO_RAMP, ON_ZERO, NO_MIX, NO_SCALE,
-   "ed_zero", next_zero, previous_zero, NULL, NULL},
-  {ED_MIX_ZERO, -1, -1, -1, ED_MIX_ZERO, ED_ZERO, NO_PTREE, NO_RAMP, ON_ZERO, MIXED, NO_SCALE,
-   "ed_mix_zero", next_mix_zero, previous_mix_zero, NULL, NULL},
+  {ED_MIX, -1, -1, -1, ED_MIX, ED_SIMPLE, 
+   NO_PTREE, NO_RAMP, ON_DATA, MIXED, NO_SCALE,
+   "ed_mix_simple", next_mix, previous_mix, 
+   NULL, NULL},
 
-  {ED_RAMP1, ED_RAMP2, ED_XRAMP_RAMP, ED_PTREE_RAMP, ED_MIX_RAMP1, -1, NO_PTREE, RAMPED, ON_DATA, NO_MIX, SCALE_R,
-   "ed_ramp1", next_ramp1, previous_ramp1, NULL, NULL},
-  {ED_MIX_RAMP1, -1, -1, -1, ED_MIX_RAMP1, ED_RAMP1, NO_PTREE, RAMPED, ON_DATA, MIXED, SCALE_R,
-   "ed_mix_ramp1", next_mix_ramp1, previous_mix_ramp1, NULL, NULL},
+  {ED_ZERO, ED_ZERO, ED_ZERO, ED_PTREE_ZERO, ED_MIX_ZERO, -1, 
+   NO_PTREE, NO_RAMP, ON_ZERO, NO_MIX, NO_SCALE,
+   "ed_zero", next_zero, previous_zero, 
+   NULL, NULL},
 
-  {ED_RAMP2, ED_RAMP, ED_XRAMP_RAMP, ED_PTREE_RAMP, ED_MIX_RAMP2, -1, NO_PTREE, RAMPED, ON_DATA, NO_MIX, SCALE_R,
-   "ed_ramp2", next_ramp_f, previous_ramp_f, next_ramp2_value, previous_ramp2_value},
-  {ED_MIX_RAMP2, -1, -1, -1, ED_MIX_RAMP2, ED_RAMP2, NO_PTREE, RAMPED, ON_DATA, MIXED, SCALE_R,
-   "ed_mix_ramp2", next_mix_ramp2, previous_mix_ramp2, NULL, NULL},
+  {ED_MIX_ZERO, -1, -1, -1, ED_MIX_ZERO, ED_ZERO, 
+   NO_PTREE, NO_RAMP, ON_ZERO, MIXED, NO_SCALE,
+   "ed_mix_zero", next_mix_zero, previous_mix_zero, 
+   NULL, NULL},
 
-  {ED_XRAMP1, ED_XRAMP_RAMP, ED_XRAMP, ED_PTREE_XRAMP, ED_MIX_XRAMP1, -1, NO_PTREE, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_xramp1", next_xramp1, previous_xramp1, NULL, NULL},
-  {ED_MIX_XRAMP1, -1, -1, -1, ED_MIX_XRAMP1, ED_XRAMP1, NO_PTREE, RAMPED, ON_DATA, MIXED, NO_SCALE,
-   "ed_mix_xramp1", next_mix_xramp1, previous_mix_xramp1, NULL, NULL},
+  {ED_RAMP1, ED_RAMP2, ED_XRAMP_RAMP, ED_PTREE_RAMP, ED_MIX_RAMP1, -1, 
+   NO_PTREE, RAMPED, ON_DATA, NO_MIX, SCALE_R,
+   "ed_ramp1", next_ramp1, previous_ramp1, 
+   NULL, NULL},
 
-  {ED_RAMP, ED_RAMP, ED_XRAMP_RAMP, ED_PTREE_RAMP, ED_MIX_RAMP, -1, NO_PTREE, RAMPED, ON_DATA, NO_MIX, SCALE_R,
-   "ed_ramp", next_ramp, previous_ramp, NULL, NULL},
-  {ED_MIX_RAMP, -1, -1, -1, ED_MIX_RAMP, ED_RAMP, NO_PTREE, RAMPED, ON_DATA, MIXED, SCALE_R,
-   "ed_mix_ramp", next_mix_ramp, previous_mix_ramp, NULL, NULL},
+  {ED_MIX_RAMP1, -1, -1, -1, ED_MIX_RAMP1, ED_RAMP1, 
+   NO_PTREE, RAMPED, ON_DATA, MIXED, SCALE_R,
+   "ed_mix_ramp1", next_mix_ramp1, previous_mix_ramp1, 
+   NULL, NULL},
 
-  {ED_XRAMP, ED_XRAMP_RAMP, ED_XRAMP, ED_PTREE_XRAMP, ED_MIX_XRAMP, -1, NO_PTREE, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_xramp", next_xramp, previous_xramp, NULL, NULL},
-  {ED_MIX_XRAMP, -1, -1, -1, ED_MIX_XRAMP, ED_XRAMP, NO_PTREE, RAMPED, ON_DATA, MIXED, NO_SCALE,
-   "ed_mix_xramp", next_mix_xramp, previous_mix_xramp, NULL, NULL},
+  {ED_RAMP2, ED_RAMP, ED_XRAMP_RAMP, ED_PTREE_RAMP, ED_MIX_RAMP2, -1, 
+   NO_PTREE, RAMPED, ON_DATA, NO_MIX, SCALE_R,
+   "ed_ramp2", next_ramp_f, previous_ramp_f, 
+   next_ramp2_value, previous_ramp2_value},
 
-  {ED_XRAMP_RAMP, ED_XRAMP_RAMP, ED_XRAMP_RAMP, ED_PTREE_XRAMP_RAMP, ED_MIX_XRAMP_RAMP, -1, NO_PTREE, RAMPED, ON_DATA, NO_MIX, SCALE_R,
-   "ed_xramp_ramp", next_ramp_f, previous_ramp_f, next_xramp_ramp_value, previous_xramp_ramp_value},
-  {ED_MIX_XRAMP_RAMP, -1, -1, -1, ED_MIX_XRAMP_RAMP, ED_XRAMP_RAMP, NO_PTREE, RAMPED, ON_DATA, MIXED, SCALE_R,
-   "ed_mix_xramp_ramp", next_mix_xramp_f_ramp_f, previous_mix_xramp_f_ramp_f, next_xramp_ramp_value, previous_xramp_ramp_value},
+  {ED_MIX_RAMP2, -1, -1, -1, ED_MIX_RAMP2, ED_RAMP2, 
+   NO_PTREE, RAMPED, ON_DATA, MIXED, SCALE_R,
+   "ed_mix_ramp2", next_mix_ramp2, previous_mix_ramp2, 
+   NULL, NULL},
 
+  {ED_XRAMP1, ED_XRAMP_RAMP, ED_XRAMP, ED_PTREE_XRAMP, ED_MIX_XRAMP1, -1, 
+   NO_PTREE, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_xramp1", next_xramp1, previous_xramp1, 
+   NULL, NULL},
+  
+  {ED_MIX_XRAMP1, -1, -1, -1, ED_MIX_XRAMP1, ED_XRAMP1, 
+   NO_PTREE, RAMPED, ON_DATA, MIXED, NO_SCALE,
+   "ed_mix_xramp1", next_mix_xramp1, previous_mix_xramp1, 
+   NULL, NULL},
 
-  /* unimplemented */
-  {ED_RAMP_MIX, -1, -1, -1, -1, -1, NO_PTREE, RAMPED, ON_DATA, MIXED, NO_SCALE,
-   "ed_ramp_mix", next_ramp_mix, previous_ramp_mix, NULL, NULL},
+  {ED_RAMP, ED_RAMP, ED_XRAMP_RAMP, ED_PTREE_RAMP, ED_MIX_RAMP, -1, 
+   NO_PTREE, RAMPED, ON_DATA, NO_MIX, SCALE_R,
+   "ed_ramp", next_ramp, previous_ramp, 
+   NULL, NULL},
+
+  {ED_MIX_RAMP, -1, -1, -1, ED_MIX_RAMP, ED_RAMP, 
+   NO_PTREE, RAMPED, ON_DATA, MIXED, SCALE_R,
+   "ed_mix_ramp", next_mix_ramp, previous_mix_ramp, 
+   NULL, NULL},
+
+  {ED_XRAMP, ED_XRAMP_RAMP, ED_XRAMP, ED_PTREE_XRAMP, ED_MIX_XRAMP, -1,
+   NO_PTREE, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_xramp", next_xramp, previous_xramp, 
+   NULL, NULL},
+
+  {ED_MIX_XRAMP, -1, -1, -1, ED_MIX_XRAMP, ED_XRAMP, 
+   NO_PTREE, RAMPED, ON_DATA, MIXED, NO_SCALE,
+   "ed_mix_xramp", next_mix_xramp, previous_mix_xramp, 
+   NULL, NULL},
+
+  {ED_XRAMP_RAMP, ED_XRAMP_RAMP, ED_XRAMP_RAMP, ED_PTREE_XRAMP_RAMP, ED_MIX_XRAMP_RAMP, -1, 
+   NO_PTREE, RAMPED, ON_DATA, NO_MIX, SCALE_R,
+   "ed_xramp_ramp", next_ramp_f, previous_ramp_f, 
+   next_xramp_ramp_value, previous_xramp_ramp_value},
+
+  {ED_MIX_XRAMP_RAMP, -1, -1, -1, ED_MIX_XRAMP_RAMP, ED_XRAMP_RAMP, 
+   NO_PTREE, RAMPED, ON_DATA, MIXED, SCALE_R,
+   "ed_mix_xramp_ramp", next_mix_xramp_f_ramp_f, previous_mix_xramp_f_ramp_f, 
+   next_xramp_ramp_value, previous_xramp_ramp_value},
 
 
   /* ptree */
-  {ED_PTREE, ED_RAMP_PTREE, ED_XRAMP_PTREE, ED_PTREE, ED_MIX_PTREE, -1, PTREED, NO_RAMP, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree", next_ptree, previous_ptree, NULL, NULL},
-  {ED_MIX_PTREE, -1, -1, -1, ED_MIX_PTREE, ED_PTREE, PTREED, NO_RAMP, ON_DATA, MIXED, NO_SCALE,
-   "ed_mix_ptree", next_mix_ptree, previous_mix_ptree, NULL, NULL},
+  {ED_PTREE, ED_RAMP_PTREE, ED_XRAMP_PTREE, ED_PTREE, ED_MIX_PTREE, -1, 
+   PTREED, NO_RAMP, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_ptree", next_ptree, previous_ptree, 
+   NULL, NULL},
 
-  {ED_PTREE_ZERO, ED_RAMP_PTREE_ZERO, ED_XRAMP_PTREE_ZERO, ED_PTREE_ZERO, ED_MIX_PTREE_ZERO, -1, PTREED, NO_RAMP, ON_ZERO, NO_MIX, NO_SCALE,
-   "ed_ptree_zero", next_ptree, previous_ptree, NULL, NULL},
-  {ED_MIX_PTREE_ZERO, -1, -1, -1, ED_MIX_PTREE_ZERO, ED_PTREE_ZERO, PTREED, NO_RAMP, ON_ZERO, MIXED, NO_SCALE,
-   "ed_mix_ptree_zero", next_mix_ptree, previous_mix_ptree, NULL, NULL},
+  {ED_MIX_PTREE, -1, -1, -1, ED_MIX_PTREE, ED_PTREE, 
+   PTREED, NO_RAMP, ON_DATA, MIXED, NO_SCALE,
+   "ed_mix_ptree", next_mix_ptree, previous_mix_ptree, 
+   NULL, NULL},
 
-  {ED_PTREE_RAMP, ED_RAMP_PTREE_RAMP, ED_XRAMP_PTREE_RAMP, ED_PTREE_RAMP, ED_MIX_PTREE_RAMP, -1, PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_P,
-   "ed_ptree_ramp", next_ptree_ramp_f, previous_ptree_ramp_f, next_ramp_value, previous_ramp_value},
-  {ED_MIX_PTREE_RAMP, -1, -1, -1, ED_MIX_PTREE_RAMP, ED_PTREE_RAMP, PTREED, RAMPED, ON_DATA, MIXED, SCALE_P,
-   "ed_mix_ptree_ramp", next_mix_ptree_ramp_f, previous_mix_ptree_ramp_f, next_ramp_value, previous_ramp_value},
+  {ED_PTREE_ZERO, ED_RAMP_PTREE_ZERO, ED_XRAMP_PTREE_ZERO, ED_PTREE_ZERO, ED_MIX_PTREE_ZERO, -1, 
+   PTREED, NO_RAMP, ON_ZERO, NO_MIX, NO_SCALE,
+   "ed_ptree_zero", next_ptree, previous_ptree, 
+   NULL, NULL},
 
-  {ED_PTREE_XRAMP, ED_RAMP_PTREE_XRAMP, ED_XRAMP_PTREE_XRAMP, ED_PTREE_XRAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp", next_ptree_xramp, previous_ptree_xramp, NULL, NULL},
-  {ED_PTREE_XRAMP_RAMP, ED_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_PTREE_XRAMP_RAMP, ED_PTREE_XRAMP_RAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_P,
-   "ed_ptree_xramp_ramp", next_ptree_ramp_f, previous_ptree_ramp_f, next_xramp_ramp_value, previous_xramp_ramp_value},
+  {ED_MIX_PTREE_ZERO, -1, -1, -1, ED_MIX_PTREE_ZERO, ED_PTREE_ZERO, 
+   PTREED, NO_RAMP, ON_ZERO, MIXED, NO_SCALE,
+   "ed_mix_ptree_zero", next_mix_ptree, previous_mix_ptree, 
+   NULL, NULL},
+
+  {ED_PTREE_RAMP, ED_RAMP_PTREE_RAMP, ED_XRAMP_PTREE_RAMP, ED_PTREE_RAMP, ED_MIX_PTREE_RAMP, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_P,
+   "ed_ptree_ramp", next_ptree_ramp_f, previous_ptree_ramp_f, 
+   next_ramp_value, previous_ramp_value},
+
+  {ED_MIX_PTREE_RAMP, -1, -1, -1, ED_MIX_PTREE_RAMP, ED_PTREE_RAMP, 
+   PTREED, RAMPED, ON_DATA, MIXED, SCALE_P,
+   "ed_mix_ptree_ramp", next_mix_ptree_ramp_f, previous_mix_ptree_ramp_f, 
+   next_ramp_value, previous_ramp_value},
+
+  {ED_PTREE_XRAMP, ED_RAMP_PTREE_XRAMP, ED_XRAMP_PTREE_XRAMP, ED_PTREE_XRAMP, ED_MIX_PTREE_XRAMP, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_ptree_xramp", next_ptree_xramp, previous_ptree_xramp, 
+   NULL, NULL},
+
+  {ED_MIX_PTREE_XRAMP, -1, -1, -1, ED_MIX_PTREE_XRAMP, ED_PTREE_XRAMP, 
+   PTREED, RAMPED, ON_DATA, MIXED, NO_SCALE,
+   "ed_mix_ptree_xramp", next_mix_ptree_xramp, previous_mix_ptree_xramp, 
+   NULL, NULL},
+
+  {ED_PTREE_XRAMP_RAMP, ED_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_PTREE_XRAMP_RAMP, ED_PTREE_XRAMP_RAMP, ED_MIX_PTREE_XRAMP_RAMP, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_P,
+   "ed_ptree_xramp_ramp", next_ptree_ramp_f, previous_ptree_ramp_f, 
+   next_xramp_ramp_value, previous_xramp_ramp_value},
+
+  {ED_MIX_PTREE_XRAMP_RAMP, -1, -1, -1, ED_MIX_PTREE_XRAMP_RAMP, ED_PTREE_XRAMP_RAMP, 
+   PTREED, RAMPED, ON_DATA, MIXED, SCALE_P,
+   "ed_mix_ptree_xramp_ramp", next_mix_ptree_ramp_f, previous_mix_ptree_ramp_f, 
+   next_xramp_ramp_value, previous_xramp_ramp_value},
 
 
-  {ED_RAMP_PTREE, ED_RAMP_PTREE, ED_XRAMP_RAMP_PTREE, ED_PTREE_RAMP_PTREE, ED_MIX_RAMP_PTREE, -1, PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_R,
-   "ed_ramp_ptree", next_ramp_f_ptree, previous_ramp_f_ptree, next_ramp_value, previous_ramp_value},
-  {ED_MIX_RAMP_PTREE, -1, -1, -1, ED_MIX_RAMP_PTREE, ED_RAMP_PTREE, PTREED, RAMPED, ON_DATA, MIXED, SCALE_R,
-   "ed_mix_ramp_ptree", next_mix_ramp_f_ptree, previous_mix_ramp_f_ptree, next_ramp_value, previous_ramp_value},
+  {ED_RAMP_PTREE, ED_RAMP_PTREE, ED_XRAMP_RAMP_PTREE, ED_PTREE_RAMP_PTREE, ED_MIX_RAMP_PTREE, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_R,
+   "ed_ramp_ptree", next_ramp_f_ptree, previous_ramp_f_ptree, 
+   next_ramp_value, previous_ramp_value},
 
-  {ED_RAMP_PTREE_ZERO, ED_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_ZERO, ED_PTREE_RAMP_PTREE_ZERO, ED_MIX_RAMP_PTREE_ZERO, -1, PTREED, RAMPED, ON_ZERO, NO_MIX, SCALE_R,
-   "ed_ramp_ptree_zero", next_ramp_f_ptree, previous_ramp_f_ptree, next_ramp_value, previous_ramp_value},
-  {ED_MIX_RAMP_PTREE_ZERO, -1, -1, -1, ED_MIX_RAMP_PTREE_ZERO, ED_RAMP_PTREE_ZERO, PTREED, RAMPED, ON_ZERO, MIXED, SCALE_R,
-   "ed_mix_ramp_ptree_zero", next_mix_ramp_f_ptree, previous_mix_ramp_f_ptree, next_ramp_value, previous_ramp_value},
+  {ED_MIX_RAMP_PTREE, -1, -1, -1, ED_MIX_RAMP_PTREE, ED_RAMP_PTREE, 
+   PTREED, RAMPED, ON_DATA, MIXED, SCALE_R,
+   "ed_mix_ramp_ptree", next_mix_ramp_f_ptree, previous_mix_ramp_f_ptree, 
+   next_ramp_value, previous_ramp_value},
 
-  {ED_XRAMP_PTREE, ED_XRAMP_RAMP_PTREE, ED_XRAMP_PTREE, ED_PTREE_XRAMP_PTREE, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_xramp_ptree", next_xramp_ptree, previous_xramp_ptree, NULL, NULL},
-  {ED_XRAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_PTREE_ZERO, ED_PTREE_XRAMP_PTREE_ZERO, -1, -1, PTREED, RAMPED, ON_ZERO, NO_MIX, NO_SCALE,
-   "ed_xramp_ptree_zero", next_xramp_ptree, previous_xramp_ptree, NULL, NULL},
+  {ED_RAMP_PTREE_ZERO, ED_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_ZERO, ED_PTREE_RAMP_PTREE_ZERO, ED_MIX_RAMP_PTREE_ZERO, -1, 
+   PTREED, RAMPED, ON_ZERO, NO_MIX, SCALE_R,
+   "ed_ramp_ptree_zero", next_ramp_f_ptree, previous_ramp_f_ptree, 
+   next_ramp_value, previous_ramp_value},
 
-  {ED_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE, ED_PTREE_XRAMP_RAMP_PTREE, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_R,
-   "ed_xramp_ramp_ptree", next_ramp_f_ptree, previous_ramp_f_ptree, next_xramp_ramp_value, previous_xramp_ramp_value},
-  {ED_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_ZERO, ED_PTREE_XRAMP_RAMP_PTREE_ZERO, -1, -1, PTREED, RAMPED, ON_ZERO, NO_MIX, SCALE_R,
-   "ed_xramp_ramp_ptree_zero", next_ramp_f_ptree, previous_ramp_f_ptree, next_xramp_ramp_value, previous_xramp_ramp_value},
+  {ED_MIX_RAMP_PTREE_ZERO, -1, -1, -1, ED_MIX_RAMP_PTREE_ZERO, ED_RAMP_PTREE_ZERO, 
+   PTREED, RAMPED, ON_ZERO, MIXED, SCALE_R,
+   "ed_mix_ramp_ptree_zero", next_mix_ramp_f_ptree, previous_mix_ramp_f_ptree, 
+   next_ramp_value, previous_ramp_value},
+
+  {ED_XRAMP_PTREE, ED_XRAMP_RAMP_PTREE, ED_XRAMP_PTREE, ED_PTREE_XRAMP_PTREE, ED_MIX_XRAMP_PTREE, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_xramp_ptree", next_xramp_ptree, previous_xramp_ptree, 
+   NULL, NULL},
+
+  {ED_MIX_XRAMP_PTREE, -1, -1, -1, ED_MIX_XRAMP_PTREE, ED_XRAMP_PTREE, 
+   PTREED, RAMPED, ON_DATA, MIXED, NO_SCALE,
+   "ed_mix_xramp_ptree", next_mix_xramp_ptree, previous_mix_xramp_ptree, 
+   NULL, NULL},
+
+  {ED_XRAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_PTREE_ZERO, ED_PTREE_XRAMP_PTREE_ZERO, ED_MIX_XRAMP_PTREE_ZERO, -1, 
+   PTREED, RAMPED, ON_ZERO, NO_MIX, NO_SCALE,
+   "ed_xramp_ptree_zero", next_xramp_ptree, previous_xramp_ptree, 
+   NULL, NULL},
+
+  {ED_MIX_XRAMP_PTREE_ZERO, -1, -1, -1, ED_MIX_XRAMP_PTREE_ZERO, ED_XRAMP_PTREE_ZERO, 
+   PTREED, RAMPED, ON_ZERO, MIXED, NO_SCALE,
+   "ed_mix_xramp_ptree_zero", next_mix_xramp_ptree, previous_mix_xramp_ptree, 
+   NULL, NULL},
+
+  {ED_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE, ED_PTREE_XRAMP_RAMP_PTREE, ED_MIX_XRAMP_RAMP_PTREE, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_R,
+   "ed_xramp_ramp_ptree", next_ramp_f_ptree, previous_ramp_f_ptree, 
+   next_xramp_ramp_value, previous_xramp_ramp_value},
+
+  {ED_MIX_XRAMP_RAMP_PTREE, -1, -1, -1, ED_MIX_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE, 
+   PTREED, RAMPED, ON_DATA, MIXED, SCALE_R,
+   "ed_mix_xramp_ramp_ptree", next_mix_ramp_f_ptree, previous_mix_ramp_f_ptree, 
+   next_xramp_ramp_value, previous_xramp_ramp_value},
+
+  {ED_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_ZERO, ED_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_MIX_XRAMP_RAMP_PTREE_ZERO, -1,
+   PTREED, RAMPED, ON_ZERO, NO_MIX, SCALE_R,
+   "ed_xramp_ramp_ptree_zero", next_ramp_f_ptree, previous_ramp_f_ptree, 
+   next_xramp_ramp_value, previous_xramp_ramp_value},
+
+  {ED_MIX_XRAMP_RAMP_PTREE_ZERO, -1, -1, -1, ED_MIX_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_ZERO, 
+   PTREED, RAMPED, ON_ZERO, MIXED, SCALE_R,
+   "ed_mix_xramp_ramp_ptree_zero", next_mix_ramp_f_ptree, previous_mix_ramp_f_ptree, 
+   next_xramp_ramp_value, previous_xramp_ramp_value},
 
   
   /* split ramps */
-  {ED_RAMP_PTREE_RAMP, ED_RAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_PTREE_RAMP_PTREE_RAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_P_R,
-   "ed_ramp_ptree_ramp", next_ramp_ptree_ramp_f, previous_ramp_ptree_ramp_f, next_ramp_to_split_value, previous_ramp_to_split_value},
-  {ED_RAMP_PTREE_XRAMP, ED_RAMP_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP, ED_PTREE_RAMP_PTREE_XRAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_R,
-   "ed_ramp_ptree_xramp", next_ramp_ptree_ramp_f, previous_ramp_ptree_ramp_f, next_xramp_to_split_value, previous_xramp_to_split_value},
-  {ED_RAMP_PTREE_XRAMP_RAMP, ED_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_PTREE_RAMP_PTREE_XRAMP_RAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_X,
-   "ed_ramp_ptree_xramp_ramp", next_ramp_ptree_ramp_f, previous_ramp_ptree_ramp_f, next_xramp_ramp_to_split_value, previous_xramp_ramp_to_split_value},
+  {ED_RAMP_PTREE_RAMP, ED_RAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_PTREE_RAMP_PTREE_RAMP, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_P_R,
+   "ed_ramp_ptree_ramp", next_ramp_ptree_ramp_f, previous_ramp_ptree_ramp_f, 
+   next_ramp_to_split_value, previous_ramp_to_split_value},
 
-  {ED_XRAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_XRAMP_PTREE_RAMP, ED_PTREE_XRAMP_PTREE_RAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_P,
-   "ed_xramp_ptree_ramp", next_xramp_ptree_ramp_f, previous_xramp_ptree_ramp_f, next_ramp_to_split_value, previous_ramp_to_split_value},
-  {ED_XRAMP_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP, ED_XRAMP_PTREE_XRAMP, ED_PTREE_XRAMP_PTREE_XRAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_xramp_ptree_xramp", next_xramp_ptree_ramp_f, previous_xramp_ptree_ramp_f, next_xramp_to_split_value, previous_xramp_to_split_value},
-  {ED_XRAMP_PTREE_XRAMP_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_PTREE_XRAMP_RAMP, ED_PTREE_XRAMP_PTREE_XRAMP_RAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_xramp_ptree_xramp_ramp", next_xramp_ptree_ramp_f, previous_xramp_ptree_ramp_f, next_xramp_ramp_to_split_value, previous_xramp_ramp_to_split_value},
+  {ED_RAMP_PTREE_XRAMP, ED_RAMP_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP, ED_PTREE_RAMP_PTREE_XRAMP, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_R,
+   "ed_ramp_ptree_xramp", next_ramp_ptree_ramp_f, previous_ramp_ptree_ramp_f, 
+   next_xramp_to_split_value, previous_xramp_to_split_value},
 
-  {ED_XRAMP_RAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_PTREE_XRAMP_RAMP_PTREE_RAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_P_R,
-   "ed_xramp_ramp_ptree_ramp", next_xramp_ramp_ptree_ramp_f, previous_xramp_ramp_ptree_ramp_f, next_ramp_to_split_value, previous_ramp_to_split_value},
-  {ED_XRAMP_RAMP_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_R,
-   "ed_xramp_ramp_ptree_xramp", next_xramp_ramp_ptree_ramp_f, previous_xramp_ramp_ptree_ramp_f, next_xramp_to_split_value, previous_xramp_to_split_value},
-  {ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_X,
-   "ed_xramp_ramp_ptree_xramp_ramp", next_xramp_ramp_ptree_ramp_f, previous_xramp_ramp_ptree_ramp_f, next_xramp_ramp_to_split_value, previous_xramp_ramp_to_split_value},
+  {ED_RAMP_PTREE_XRAMP_RAMP, ED_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_PTREE_RAMP_PTREE_XRAMP_RAMP, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_X,
+   "ed_ramp_ptree_xramp_ramp", next_ramp_ptree_ramp_f, previous_ramp_ptree_ramp_f, 
+   next_xramp_ramp_to_split_value, previous_xramp_ramp_to_split_value},
+
+  {ED_XRAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_XRAMP_PTREE_RAMP, ED_PTREE_XRAMP_PTREE_RAMP, -1, -1,
+   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_P,
+   "ed_xramp_ptree_ramp", next_xramp_ptree_ramp_f, previous_xramp_ptree_ramp_f, 
+   next_ramp_to_split_value, previous_ramp_to_split_value},
+
+  {ED_XRAMP_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP, ED_XRAMP_PTREE_XRAMP, ED_PTREE_XRAMP_PTREE_XRAMP, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_xramp_ptree_xramp", next_xramp_ptree_ramp_f, previous_xramp_ptree_ramp_f, 
+   next_xramp_to_split_value, previous_xramp_to_split_value},
+
+  {ED_XRAMP_PTREE_XRAMP_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_PTREE_XRAMP_RAMP, ED_PTREE_XRAMP_PTREE_XRAMP_RAMP, -1, -1,
+   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_xramp_ptree_xramp_ramp", next_xramp_ptree_ramp_f, previous_xramp_ptree_ramp_f, 
+   next_xramp_ramp_to_split_value, previous_xramp_ramp_to_split_value},
+
+  {ED_XRAMP_RAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_PTREE_XRAMP_RAMP_PTREE_RAMP, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_P_R,
+   "ed_xramp_ramp_ptree_ramp", next_xramp_ramp_ptree_ramp_f, previous_xramp_ramp_ptree_ramp_f, 
+   next_ramp_to_split_value, previous_ramp_to_split_value},
+
+  {ED_XRAMP_RAMP_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_R,
+   "ed_xramp_ramp_ptree_xramp", next_xramp_ramp_ptree_ramp_f, previous_xramp_ramp_ptree_ramp_f, 
+   next_xramp_to_split_value, previous_xramp_to_split_value},
+
+  {ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_X,
+   "ed_xramp_ramp_ptree_xramp_ramp", next_xramp_ramp_ptree_ramp_f, previous_xramp_ramp_ptree_ramp_f, 
+   next_xramp_ramp_to_split_value, previous_xramp_ramp_to_split_value},
 
 
   /* split ptrees */
-  {ED_PTREE_RAMP_PTREE, -1, -1, ED_PTREE_RAMP_PTREE, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+  {ED_PTREE_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE, ED_PTREE_RAMP_PTREE, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
    "ed_ptree_ramp_ptree", next_ptree_ramp_f_ptree, previous_ptree_ramp_f_ptree, next_ramp_value, previous_ramp_value},
-  {ED_PTREE_RAMP_PTREE_ZERO, -1, -1, ED_PTREE_RAMP_PTREE_ZERO, -1, -1, PTREED, RAMPED, ON_ZERO, NO_MIX, NO_SCALE,
-   "ed_ptree_ramp_ptree_zero", next_ptree_ramp_f_ptree, previous_ptree_ramp_f_ptree, next_ramp_value, previous_ramp_value},
-  {ED_PTREE_XRAMP_PTREE, -1, -1, ED_PTREE_XRAMP_PTREE, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ptree", next_ptree_ramp_f_ptree, previous_ptree_ramp_f_ptree, next_xramp_value, previous_xramp_value},
-  {ED_PTREE_XRAMP_PTREE_ZERO, -1, -1, ED_PTREE_XRAMP_PTREE_ZERO, -1, -1, PTREED, RAMPED, ON_ZERO, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ptree_zero", next_ptree_ramp_f_ptree, previous_ptree_ramp_f_ptree, next_xramp_value, previous_xramp_value},
-  {ED_PTREE_XRAMP_RAMP_PTREE, -1, -1, ED_PTREE_XRAMP_RAMP_PTREE, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ramp_ptree", next_ptree_ramp_f_ptree, previous_ptree_ramp_f_ptree, next_xramp_ramp_value, previous_xramp_ramp_value},
-  {ED_PTREE_XRAMP_RAMP_PTREE_ZERO, -1, -1, ED_PTREE_XRAMP_RAMP_PTREE_ZERO, -1, -1, PTREED, RAMPED, ON_ZERO, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ramp_ptree_zero", next_ptree_ramp_f_ptree, previous_ptree_ramp_f_ptree, next_xramp_ramp_value, previous_xramp_ramp_value},
 
-  {ED_PTREE_RAMP_PTREE_RAMP, -1, -1, ED_PTREE_RAMP_PTREE_RAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_ramp_ptree_ramp", next_ptree_ramp_ptree_ramp_f, previous_ptree_ramp_ptree_ramp_f, next_ramp_to_split_value, previous_ramp_to_split_value},
-  {ED_PTREE_RAMP_PTREE_XRAMP, -1, -1, ED_PTREE_RAMP_PTREE_XRAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_ramp_ptree_xramp", next_ptree_ramp_ptree_ramp_f, previous_ptree_ramp_ptree_ramp_f, next_unscaled_xramp_to_split_value, previous_unscaled_xramp_to_split_value},
-  {ED_PTREE_RAMP_PTREE_XRAMP_RAMP, -1, -1, ED_PTREE_RAMP_PTREE_XRAMP_RAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_ramp_ptree_xramp_ramp", next_ptree_ramp_ptree_ramp_f, previous_ptree_ramp_ptree_ramp_f, next_unscaled_xramp_ramp_to_split_value, previous_unscaled_xramp_ramp_to_split_value},
-  {ED_PTREE_XRAMP_PTREE_RAMP, -1, -1, ED_PTREE_XRAMP_PTREE_RAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ptree_ramp", next_ptree_xramp_ptree_ramp_f, previous_ptree_xramp_ptree_ramp_f, next_ramp_to_split_value, previous_ramp_to_split_value},
-  {ED_PTREE_XRAMP_PTREE_XRAMP, -1, -1, ED_PTREE_XRAMP_PTREE_XRAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ptree_xramp", next_ptree_xramp_ptree_ramp_f, previous_ptree_xramp_ptree_ramp_f, next_unscaled_xramp_to_split_value, previous_unscaled_xramp_to_split_value},
-  {ED_PTREE_XRAMP_PTREE_XRAMP_RAMP, -1, -1, ED_PTREE_XRAMP_PTREE_XRAMP_RAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ptree_xramp_ramp", next_ptree_xramp_ptree_ramp_f, previous_ptree_xramp_ptree_ramp_f, next_unscaled_xramp_ramp_to_split_value, previous_unscaled_xramp_ramp_to_split_value},
-    {ED_PTREE_XRAMP_RAMP_PTREE_RAMP, -1, -1, ED_PTREE_XRAMP_RAMP_PTREE_RAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ramp_ptree_ramp", next_ptree_xramp_ramp_ptree_ramp_f, previous_ptree_xramp_ramp_ptree_ramp_f, next_ramp_to_split_value, previous_ramp_to_split_value},
-  {ED_PTREE_XRAMP_RAMP_PTREE_XRAMP, -1, -1, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ramp_ptree_xramp", next_ptree_xramp_ramp_ptree_ramp_f, previous_ptree_xramp_ramp_ptree_ramp_f, next_unscaled_xramp_to_split_value, previous_unscaled_xramp_to_split_value},
-  {ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP, -1, -1, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP, -1, -1, PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ramp_ptree_xramp_ramp", next_ptree_xramp_ramp_ptree_ramp_f, previous_ptree_xramp_ramp_ptree_ramp_f, next_unscaled_xramp_ramp_to_split_value, previous_unscaled_xramp_ramp_to_split_value},
+  {ED_PTREE_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_PTREE_RAMP_PTREE_ZERO, -1, -1, 
+   PTREED, RAMPED, ON_ZERO, NO_MIX, NO_SCALE,
+   "ed_ptree_ramp_ptree_zero", next_ptree_ramp_f_ptree, previous_ptree_ramp_f_ptree, next_ramp_value, previous_ramp_value},
+
+  {ED_PTREE_XRAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE, ED_PTREE_XRAMP_PTREE, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_ptree_xramp_ptree", next_ptree_ramp_f_ptree, previous_ptree_ramp_f_ptree, next_xramp_value, previous_xramp_value},
+
+  {ED_PTREE_XRAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_PTREE_XRAMP_PTREE_ZERO, -1, -1, 
+   PTREED, RAMPED, ON_ZERO, NO_MIX, NO_SCALE,
+   "ed_ptree_xramp_ptree_zero", next_ptree_ramp_f_ptree, previous_ptree_ramp_f_ptree, next_xramp_value, previous_xramp_value},
+
+  {ED_PTREE_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE, ED_PTREE_XRAMP_RAMP_PTREE, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_ptree_xramp_ramp_ptree", next_ptree_ramp_f_ptree, previous_ptree_ramp_f_ptree, 
+   next_xramp_ramp_value, previous_xramp_ramp_value},
+
+  {ED_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_PTREE_XRAMP_RAMP_PTREE_ZERO, -1, -1, 
+   PTREED, RAMPED, ON_ZERO, NO_MIX, NO_SCALE,
+   "ed_ptree_xramp_ramp_ptree_zero", next_ptree_ramp_f_ptree, previous_ptree_ramp_f_ptree, 
+   next_xramp_ramp_value, previous_xramp_ramp_value},
+
+  {ED_PTREE_RAMP_PTREE_RAMP, -1, -1, ED_PTREE_RAMP_PTREE_RAMP, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_ptree_ramp_ptree_ramp", next_ptree_ramp_ptree_ramp_f, previous_ptree_ramp_ptree_ramp_f, 
+   next_ramp_to_split_value, previous_ramp_to_split_value},
+
+  {ED_PTREE_RAMP_PTREE_XRAMP, -1, -1, ED_PTREE_RAMP_PTREE_XRAMP, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_ptree_ramp_ptree_xramp", next_ptree_ramp_ptree_ramp_f, previous_ptree_ramp_ptree_ramp_f, 
+   next_unscaled_xramp_to_split_value, previous_unscaled_xramp_to_split_value},
+
+  {ED_PTREE_RAMP_PTREE_XRAMP_RAMP, -1, -1, ED_PTREE_RAMP_PTREE_XRAMP_RAMP, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_ptree_ramp_ptree_xramp_ramp", next_ptree_ramp_ptree_ramp_f, previous_ptree_ramp_ptree_ramp_f, 
+   next_unscaled_xramp_ramp_to_split_value, previous_unscaled_xramp_ramp_to_split_value},
+
+  {ED_PTREE_XRAMP_PTREE_RAMP, -1, -1, ED_PTREE_XRAMP_PTREE_RAMP, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_ptree_xramp_ptree_ramp", next_ptree_xramp_ptree_ramp_f, previous_ptree_xramp_ptree_ramp_f, 
+   next_ramp_to_split_value, previous_ramp_to_split_value},
+
+  {ED_PTREE_XRAMP_PTREE_XRAMP, -1, -1, ED_PTREE_XRAMP_PTREE_XRAMP, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_ptree_xramp_ptree_xramp", next_ptree_xramp_ptree_ramp_f, previous_ptree_xramp_ptree_ramp_f, 
+   next_unscaled_xramp_to_split_value, previous_unscaled_xramp_to_split_value},
+
+  {ED_PTREE_XRAMP_PTREE_XRAMP_RAMP, -1, -1, ED_PTREE_XRAMP_PTREE_XRAMP_RAMP, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_ptree_xramp_ptree_xramp_ramp", next_ptree_xramp_ptree_ramp_f, previous_ptree_xramp_ptree_ramp_f, 
+   next_unscaled_xramp_ramp_to_split_value, previous_unscaled_xramp_ramp_to_split_value},
+
+  {ED_PTREE_XRAMP_RAMP_PTREE_RAMP, -1, -1, ED_PTREE_XRAMP_RAMP_PTREE_RAMP, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_ptree_xramp_ramp_ptree_ramp", next_ptree_xramp_ramp_ptree_ramp_f, previous_ptree_xramp_ramp_ptree_ramp_f, 
+   next_ramp_to_split_value, previous_ramp_to_split_value},
+
+  {ED_PTREE_XRAMP_RAMP_PTREE_XRAMP, -1, -1, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_ptree_xramp_ramp_ptree_xramp", next_ptree_xramp_ramp_ptree_ramp_f, previous_ptree_xramp_ramp_ptree_ramp_f, 
+   next_unscaled_xramp_to_split_value, previous_unscaled_xramp_to_split_value},
+
+  {ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP, -1, -1, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_ptree_xramp_ramp_ptree_xramp_ramp", next_ptree_xramp_ramp_ptree_ramp_f, previous_ptree_xramp_ramp_ptree_ramp_f, 
+   next_unscaled_xramp_ramp_to_split_value, previous_unscaled_xramp_ramp_to_split_value},
+  
+  {ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE, -1, -1, -1, 
+   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+   "ed_xramp_ramp_ptree_xramp_ramp_ptree", next_xramp_ramp_ptree_xramp_ramp_ptree, previous_xramp_ramp_ptree_xramp_ramp_ptree, 
+   NULL, NULL},
+  
+  {ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, -1, -1, -1, 
+   PTREED, RAMPED, ON_ZERO, NO_MIX, NO_SCALE,
+   "ed_xramp_ramp_ptree_xramp_ramp_ptree_zero", next_xramp_ramp_ptree_xramp_ramp_ptree, previous_xramp_ramp_ptree_xramp_ramp_ptree, 
+   NULL, NULL},
   
 };
 
@@ -1843,6 +2080,12 @@ static bool ptree_op(int type)
 static bool split_ptree_op(int type)
 {
   return(type >= ED_PTREE_RAMP_PTREE);  /* order matters here */
+}
+
+
+static bool double_split_op(int type)
+{
+  return(type >= ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE);
 }
 
 
@@ -2079,7 +2322,7 @@ static void setup_mix(snd_fd *sf)
 						 sf->direction);
       if (active_mixes == 1)
 	{
-	  if (READER_TYPE(sf) == ED_MIX_SIMPLE)
+	  if (READER_TYPE(sf) == ED_MIX)
 	    {
 	      sf->runf = next_one_mix;
 	      sf->rev_runf = previous_one_mix;
@@ -2095,24 +2338,6 @@ static void setup_mix(snd_fd *sf)
 	}
     }
 }
-
-#if 0
-static void clear_previous_ptrees(snd_fd *sf)
-{
-  if (sf->ptrees)
-    {
-      int i;
-      for (i = 0; i < READER_PTREE_LIST_SIZE(sf); i++)
-	{
-	  if (READER_PTREE_GC_LOC(sf, i) != NOT_A_GC_LOC)
-	    snd_unprotect_at(READER_PTREE_GC_LOC(sf, i));
-	  READER_PTREE_CLOSURE(sf, i) = XEN_UNDEFINED;
-	  READER_PTREE_GC_LOC(sf, i) = NOT_A_GC_LOC;
-	  READER_PTREE(sf, i) = NULL;
-	}
-    }
-}
-#endif
 
 
 static void setup_ptrees(snd_fd *sf, int typ)
@@ -2259,18 +2484,6 @@ static void setup_ramps(snd_fd *sf, int typ)
 
 static void scale_ramp(snd_fd *sf, int rmp, Float scl)
 {
-#if MUS_DEBUGGING
-  if (!(READER_INCRS(sf))) 
-    {
-      fprintf(stderr,"no incrs in scale_ramp!");
-      abort();
-    }
-  if (READER_RAMPS(sf) <= rmp)
-    {
-      fprintf(stderr,"no ramp in incr: %d %d\n", READER_RAMPS(sf), rmp);
-      abort();
-    }
-#endif
   READER_INCR(sf, rmp) *= scl;
   READER_VAL(sf, rmp) *= scl;
 }
@@ -3488,11 +3701,6 @@ static int ensure_ed_ptrees(ed_fragment *ed, int size)
 {
   if (ED_PTREES(ed))
     {
-#if MUS_DEBUGGING
-      /* TODO: in this case, make it the new smaller size! */
-      if (size < ED_PTREE_LIST_SIZE(ed))
-	fprintf(stderr, "ensure ptree size disagreement: %s %d %d\n", type_info[ED_TYPE(ed)].name, size, ED_PTREE_LIST_SIZE(ed));
-#endif
       if (ED_PTREE_LIST_SIZE(ed) < size)
 	{
 	  ED_PTREE_LIST_SIZE(ed) = size;
@@ -5360,7 +5568,7 @@ bool scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool
 static void add_ramp_to_fragment(ed_list *new_ed, int i, double seg0, double seg1, Float scaler, Float offset, bool is_xramp)
 {
   ed_fragment *ed;
-  int rmps = 0, xrmps = 0, loc;
+  int rmps = 0, xrmps = 0, loc, typ;
 
   ed = FRAGMENT(new_ed, i);
   if (ED_TYPE(ed) == ED_ZERO) return;
@@ -5382,6 +5590,7 @@ static void add_ramp_to_fragment(ed_list *new_ed, int i, double seg0, double seg
   else rmps++;
 
   ensure_ed_ramps(ed, rmps, xrmps);
+  typ = ED_TYPE(ed);
 
   if (is_xramp)
     {
@@ -5390,14 +5599,21 @@ static void add_ramp_to_fragment(ed_list *new_ed, int i, double seg0, double seg
       ED_XRAMP_END(ed, loc) = seg1;
       ED_XRAMP_SCALER(ed, loc) = scaler;
       ED_XRAMP_OFFSET(ed, loc) = offset;
-      ED_TYPE(ed) = type_info[ED_TYPE(ed)].add_xramp;
+      ED_TYPE(ed) = type_info[typ].add_xramp;
     }
   else
     {
       loc = rmps - 1;
       ED_RAMP_BEG(ed, loc) = seg0;
       ED_RAMP_END(ed, loc) = seg1;
-      ED_TYPE(ed) = type_info[ED_TYPE(ed)].add_ramp;
+      ED_TYPE(ed) = type_info[typ].add_ramp;
+    }
+
+  if ((double_split_op(ED_TYPE(ed))) &&
+      (!(double_split_op(typ))))
+    {
+      ED_RSPLIT(ed) = (is_xramp) ? rmps : loc;
+      ED_XSPLIT(ed) = (is_xramp) ? loc : xrmps;
     }
 }
 
@@ -6709,15 +6925,9 @@ bool redo_edit_with_sync(chan_info *cp, int count)
  *   but, if the envelope is global, it is not ambiguous, (except that we have scaled portions?) --
  *     still the ramp-but-no-mix sections need special handling (ramp_mix with 0 mixes?),
  *     as do the ramp-as-scale-but-no-mix portions (scale_mix? -- confusing name)
- *   so: use env-mixes where possible
- *
- * what about virtual-mix-no-tag?  (scale+delay -> filter) -- if env added after, untag it but keep it virtual
- *   virtual delay (delay-channel in extensions), virtual filter (examp)
- *   editable field in mix_state (so it follows edit list)
- *     if not editable, no tag, not waveform, no dialog access, no set! access [mix_set_amp_edit etc]
- *   then all the x_mix_x ops
- *   the choice of when to mix-as-change could reflect this uneditable-mix possibility as well
- *   ?? mix then env then mix? -- this would require reader support
+ *   ...
+ *   this (ramp_mix as edit with locked mixes) turned out to be too tricky -- scaling especially is a mess.
+ *   (scaling can't be globalized without saving the pre-mix scaler on every mix, for a start)
  */
 
 static void make_mix_fragment(ed_list *new_ed, int i, mix_state *ms, off_t beg)
@@ -7792,10 +8002,6 @@ static XEN g_copy_sample_reader(XEN obj)
 					C_TO_XEN_INT(fd->cp->chan),
 					C_TO_XEN_INT((fd->direction == READ_FORWARD) ? 1 : -1), /* Scheme side is different from C side */
 					C_TO_XEN_INT(fd->edit_ctr)));
-#if MUS_DEBUGGING
-	  if (fd->type != REGION_READER)
-	    fprintf(stderr, "copy sample reader got %d\n", fd->type);
-#endif
 	  return(g_make_region_sample_reader(C_TO_XEN_OFF_T(region_current_location(fd)),
 					     C_TO_XEN_INT(fd->region),
 					     C_TO_XEN_INT(fd->cp->chan),
