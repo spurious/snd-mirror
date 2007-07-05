@@ -2789,23 +2789,11 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	    }
 	  else
 	    {
-	      if (mus_env_linear_p(egen))
+	      for (j = 0; j < dur; j++)
 		{
-		  for (j = 0; j < dur; j++)
-		    {
-		      egen_val = mus_env_linear(egen);
-		      for (k = 0; k < si->chans; k++)
-			data[k][j] = MUS_FLOAT_TO_SAMPLE(read_sample(sfs[k]) * egen_val);
-		    }
-		}
-	      else
-		{
-		  for (j = 0; j < dur; j++)
-		    {
-		      egen_val = mus_env(egen);
-		      for (k = 0; k < si->chans; k++)
-			data[k][j] = MUS_FLOAT_TO_SAMPLE(read_sample(sfs[k]) * egen_val);
-		    }
+		  egen_val = mus_env(egen);
+		  for (k = 0; k < si->chans; k++)
+		    data[k][j] = MUS_FLOAT_TO_SAMPLE(read_sample(sfs[k]) * egen_val);
 		}
 	    }
 	}
@@ -2840,16 +2828,8 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	    }
 	  else
 	    {
-	      if (mus_env_linear_p(egen))
-		{
-		  for (j = 0; j < dur; j++)
-		    idata[j] = MUS_FLOAT_TO_SAMPLE(read_sample(sf) * mus_env_linear(egen));
-		}
-	      else
-		{
-		  for (j = 0; j < dur; j++)
-		    idata[j] = MUS_FLOAT_TO_SAMPLE(read_sample(sf) * mus_env(egen));
-		}
+	      for (j = 0; j < dur; j++)
+		idata[j] = MUS_FLOAT_TO_SAMPLE(read_sample(sf) * mus_env(egen));
 	    }
 	}
       if (temp_file)
@@ -2921,13 +2901,17 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	}
       si = sc->si;
       /* in snd-test.scm, one sync_state pointer is lost here because env-channel requests edpos 2 (or is it 123?), but only 1 exists */
+      /*
+      fprintf(stderr,"env...\n");
+      */
+
       for (i = 0; i < si->chans; i++) 
 	{
 	  bool edited = false;;
 	  if (!(editable_p(si->cps[i]))) continue;
 	  segbeg = si->begs[i];
 	  segend = si->begs[i] + dur;
-	  segnum = passes[0] + 1;
+	  segnum = passes[0];
 	  local_edpos = si->cps[i]->edit_ctr; /* for as_one_edit backup */
 	  pos = to_c_edit_position(si->cps[i], edpos, origin, arg_pos);
 	  env_pos = pos;
@@ -2938,10 +2922,12 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	      if ((segbeg + segnum) > segend) 
 		segnum = segend - segbeg;
 	      else
-		if ((k == (len - 1)) && 
+		if ((k >= (len - 2)) && 
 		    ((segbeg + segnum) < segend))
 		  segnum = segend - segbeg; /* last value is sticky in envs */
-
+	      /*
+	      fprintf(stderr,"segnum: " OFF_TD ", segbeg: " OFF_TD ", segend: " OFF_TD ", rates[%d of %d]: %f\n", segnum, segbeg, segend, k, len, rates[k]);
+	      */
 	      if (segnum > 0)
 		{
 		  if (k == 0) 
@@ -2950,14 +2936,14 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 			{
 			  power = mus_env_initial_power(egen);
 			  applied_ramp = xramp_channel(si->cps[i], 
-						       (Float)power,
-						       power + rates[0] * (segnum - 1),
+						       power,
+						       rates[0],
 						       scaler, offset, segbeg, segnum, pos, IN_AS_ONE_EDIT, egen, 0);
-			  power += rates[0] * (segnum - 1);
+			  power *= exp(log(rates[0]) * segnum);
 			}
 		      else applied_ramp = ramp_channel(si->cps[i], 
-						       (Float)(offset + scaler * data[m]),
-						       (Float)(offset + scaler * data[m + 2]), 
+						       offset + scaler * data[m],
+						       rates[0],
 						       segbeg, segnum, pos, IN_AS_ONE_EDIT);
 		    }
 		  else 
@@ -2966,10 +2952,10 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 			/* divide by segnum since we end at the break point and don't want to repeat it, so go to next position in env */
 			{
 			  applied_ramp = xramp_channel(si->cps[i], 
-						       power + rates[k],
-						       power + rates[k] * segnum,
+						       power, 
+						       rates[k],
 						       scaler, offset, segbeg, segnum, pos, IN_AS_ONE_EDIT, egen, k);
-			  power += rates[k] * segnum;
+			  power *= exp(log(rates[k]) * segnum);
 			}
 		      else 
 			{
@@ -2978,8 +2964,8 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 							 (Float)(offset + scaler * data[m]), 
 							 segbeg, segnum, pos, IN_AS_ONE_EDIT);
 			  else applied_ramp = ramp_channel(si->cps[i], 
-							   (Float)(offset + (scaler * (data[m] + ((data[m + 2] - data[m]) / (double)segnum)))),
-							   (Float)(offset + scaler * data[m + 2]), 
+							   offset + scaler * data[m],
+							   rates[k],
 							   segbeg, segnum, pos, IN_AS_ONE_EDIT);
 			}
 		    }
@@ -2991,7 +2977,9 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	      segbeg += segnum;
 	      if (segbeg >= segend) break;
 	      segnum = passes[k + 1] - passes[k];
-
+	      /*
+	      fprintf(stderr, "passes[%d]: " OFF_TD ", passes[%d]: " OFF_TD "\n", k+1, passes[k+1], k, passes[k]);
+	      */
 	    }
 
 	  if (edited)
@@ -4926,6 +4914,7 @@ scale samples in the given sound/channel between beg and beg + num by a ramp goi
   chan_info *cp;
   off_t samp, samps;
   int pos;
+  double seg0, seg1;
 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp0), rmp0, XEN_ARG_1, S_ramp_channel, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp1), rmp1, XEN_ARG_2, S_ramp_channel, "a number");
@@ -4948,24 +4937,25 @@ scale samples in the given sound/channel between beg and beg + num by a ramp goi
       sp = cp->sound;
       old_sync = sp->sync;
       sp->sync = 0;
-      val = g_env_1(XEN_LIST_4(C_TO_XEN_DOUBLE(0.0), 
-			       rmp0,
-			       C_TO_XEN_DOUBLE(1.0), 
-			       rmp1),
+      val = g_env_1(XEN_LIST_4(C_TO_XEN_DOUBLE(0.0), rmp0, C_TO_XEN_DOUBLE(1.0), rmp1),
 		    samp, samps, C_TO_XEN_DOUBLE(1.0), cp, edpos, S_ramp_channel, false);
       sp->sync = old_sync;
       return(val);
     }
 
-  if (ramp_channel(cp, XEN_TO_C_DOUBLE(rmp0), XEN_TO_C_DOUBLE(rmp1), samp, samps, pos, NOT_IN_AS_ONE_EDIT))
+  seg0 = XEN_TO_C_DOUBLE(rmp0);
+  seg1 = XEN_TO_C_DOUBLE(rmp1);
+
+  if (ramp_channel(cp, seg0, (seg1 - seg0) / (double)(samps - 1),
+		   samp, samps, pos, NOT_IN_AS_ONE_EDIT))
     {
       if (cp->edits[pos]->peak_env)
 	{
 	  Float data[4];
 	  data[0] = 0.0;
-	  data[1] = XEN_TO_C_DOUBLE(rmp0);
+	  data[1] = seg0;
 	  data[2] = 1.0;
-	  data[3] = XEN_TO_C_DOUBLE(rmp1);
+	  data[3] = seg1;
 	  if ((samp == 0) && 
 	      (samps >= cp->edits[pos]->samples))
 	    amp_env_env(cp, data, 2, pos, 1.0, 1.0, 0.0);
@@ -5005,6 +4995,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
   if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_xramp_channel, 8);
   samps = dur_to_samples(num, samp, cp, pos, 4, S_xramp_channel);
+
   ebase = XEN_TO_C_DOUBLE(base);
   if (ebase < 0.0) 
     XEN_OUT_OF_RANGE_ERROR(S_xramp_channel, 3, base, "base ~A < 0.0?");
@@ -5017,10 +5008,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
       sp = cp->sound;
       old_sync = sp->sync;
       sp->sync = 0;
-      val = g_env_1(XEN_LIST_4(C_TO_XEN_DOUBLE(0.0), 
-			       rmp0,
-			       C_TO_XEN_DOUBLE(1.0), 
-			       rmp1),
+      val = g_env_1(XEN_LIST_4(C_TO_XEN_DOUBLE(0.0), rmp0, C_TO_XEN_DOUBLE(1.0), rmp1),
 		    samp, samps, base, cp, edpos, S_xramp_channel, false);
       sp->sync = old_sync;
       return(val);
@@ -5031,26 +5019,31 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
       double *rates;
       off_t *passes;
       mus_any *e;
-      Float r0, r1;
+      double seg0, seg1;
+
+      seg0 = XEN_TO_C_DOUBLE(rmp0);
+
       if (ebase == 0.0)
-	scale_channel(cp, XEN_TO_C_DOUBLE(rmp0), samp, samps, pos, NOT_IN_AS_ONE_EDIT);
+	scale_channel(cp, seg0, samp, samps, pos, NOT_IN_AS_ONE_EDIT);
       else
 	{
+	  seg1 = XEN_TO_C_DOUBLE(rmp1);
+
 	  if (ebase == 1.0)
-	    ramp_channel(cp, XEN_TO_C_DOUBLE(rmp0), XEN_TO_C_DOUBLE(rmp1), samp, samps, pos, NOT_IN_AS_ONE_EDIT);
+	    ramp_channel(cp, seg0, (seg1 - seg0) / (double)(samps - 1), samp, samps, pos, NOT_IN_AS_ONE_EDIT);
 	  else
 	    {
 	      data = (Float *)CALLOC(4, sizeof(Float));
 	      data[0] = 0.0;
-	      data[1] = XEN_TO_C_DOUBLE(rmp0);
+	      data[1] = seg0;
 	      data[2] = 1.0;
-	      data[3] = XEN_TO_C_DOUBLE(rmp1);
+	      data[3] = seg1;
 	      e = mus_make_env(data, 2, 1.0, 0.0, ebase, 0.0, samp, samp + samps - 1, NULL);
-	      r0 = mus_env_initial_power(e);
+
 	      rates = mus_env_rates(e);
 	      passes = mus_env_passes(e);
-	      r1 = r0 + passes[0] * rates[0];
-	      if (xramp_channel(cp, r0, r1, mus_env_scaler(e), mus_env_offset(e), samp, samps, pos, NOT_IN_AS_ONE_EDIT, e, 0))
+
+	      if (xramp_channel(cp, mus_env_initial_power(e), rates[0], mus_env_scaler(e), mus_env_offset(e), samp, samps, pos, NOT_IN_AS_ONE_EDIT, e, 0))
 		{
 		  if (cp->edits[pos]->peak_env)
 		    {

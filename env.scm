@@ -38,7 +38,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 		    (* (- x (car env))
 		       (/ (- (cadddr env) (cadr env))
 			  (- (caddr env) (car env)))))
-		 (+ (cadr env)
+		 (+ (cadr env) ; this does not exactly match xramp-channel
 		    (* (/ (- (cadddr env) (cadr env))
 			  (- base 1.0))
 		       (- (expt base (/ (- x (car env))

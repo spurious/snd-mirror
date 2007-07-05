@@ -6713,3 +6713,7 @@
 ;(CFNC-2113 "void gtk_widget_set_tooltip_markup GtkWidget* widget gchar* markup" 'const)
 ;(CFNC-2113 "gchar* gtk_widget_get_tooltip_markup GtkWidget* widget")
 
+;;; for 2.11.5
+;(CFNC-2115 "gboolean gtk_tree_view_is_rubber_banding_active GtkTreeView* tree_view")
+
+

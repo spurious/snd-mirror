@@ -4434,127 +4434,191 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
 
 typedef enum {ENV_SEG, ENV_STEP, ENV_EXP} env_style_t;
 
+
 typedef struct {
   mus_any_class *core;
   double rate, current_value, base, offset, scaler, power, init_y, init_power, original_scaler, original_offset;
-  off_t pass, end;
+  off_t loc, end;
   env_style_t style;
   int index, size;
   bool data_allocated;
   Float *original_data;
   double *rates;
-  off_t *passes;
+  off_t *locs;
 } seg;
 
-/* what about breakpoint triples for per-segment exp envs? */
+/* What about breakpoint triples for per-segment exp envs? */
 
-bool mus_env_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_ENV));}
-bool mus_env_linear_p(mus_any *ptr) {return(mus_env_p(ptr) && (((seg *)ptr)->style == ENV_SEG));}
+/* I used to use exp directly, but:
+
+    (define (texp1 start end num)
+      (let* ((ls (log start))
+	     (le (log end))
+	     (cf (exp (/ (- le ls) (1- num))))
+	     (max-diff 0.0)
+	     (xstart start))
+        (do ((i 0 (1+ i)))
+	    ((= i num) 
+	     max-diff)
+          (let ((val1 (* start (exp (* (/ i (1- num)) (- le ls)))))
+	        (val2 xstart))
+	    (set! xstart (* xstart cf))
+	    (set! max-diff (max max-diff (abs (- val1 val2))))))))
+      
+    returns:
+
+    :(texp1 1.0 3.0 1000000)
+    2.65991229042584e-10
+    :(texp1 1.0 10.0 100000000)
+    2.24604939091932e-8
+    :(texp1 10.0 1000.0 100000000)
+    4.11786902532185e-6
+    :(texp1 1.0 1.1 100000000)
+    1.28246036013024e-9
+    :(texp1 10.0 1000.0 1000000000)
+    4.39423240550241e-5
+
+    so the repeated multiply version is more than accurate enough
+*/
+
+
+bool mus_env_p(mus_any *ptr) 
+{
+  return((ptr) && 
+	 (ptr->core->type == MUS_ENV));
+}
+
 
 Float mus_env(mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
   Float val;
+
   val = gen->current_value;
-  if ((gen->index < gen->size) && (gen->pass >= gen->passes[gen->index]))
+
+  if ((gen->index < gen->size) && 
+      (gen->loc >= gen->locs[gen->index]))
     {
       gen->index++;
       gen->rate = gen->rates[gen->index];
     }
+
   switch (gen->style)
     {
-    case ENV_SEG: gen->current_value += gen->rate; break;
-    case ENV_STEP: gen->current_value = gen->rate; break;
+    case ENV_SEG: 
+      gen->current_value += gen->rate; 
+      break;
+
+    case ENV_STEP: 
+      gen->current_value = gen->rate; 
+      break;
+
     case ENV_EXP:
-      if (gen->rate != 0.0)
-	{
-	  gen->power += gen->rate;
-	  gen->current_value = gen->offset + (gen->scaler * exp(gen->power));
-	}
+      gen->power *= gen->rate;
+      gen->current_value = gen->offset + (gen->scaler * gen->power);
       break;
     }
-  gen->pass++;
+
+  gen->loc++;
   return(val);
 }
 
-Float mus_env_linear(mus_any *ptr)
+
+static Float run_env(mus_any *ptr, Float unused1, Float unused2) 
 {
-  seg *gen = (seg *)ptr;
-  Float val;
-  val = gen->current_value;
-  if ((gen->index < gen->size) && (gen->pass >= gen->passes[gen->index]))
-    {
-      gen->index++;
-      gen->rate = gen->rates[gen->index];
-    }
-  gen->current_value += gen->rate;
-  gen->pass++;
-  return(val);
+  return(mus_env(ptr));
 }
 
-static Float run_env(mus_any *ptr, Float unused1, Float unused2) {return(mus_env(ptr));}
 
-static void dmagify_env(seg *e, Float *data, int pts, off_t dur, Float scaler)
+static void dmagify_env(seg *e, Float *data, int pts, off_t dur, double scaler)
 { 
   int i, j;
-  off_t passes;
-  double curx, curpass = 0.0;
-  double x0, y0, x1 = 0.0, y1 = 0.0, xmag = 1.0;
+  double xscl = 1.0, cur_loc = 0.0;
+
   e->size = pts;
-  if (pts > 1)
-    {
-      x1 = data[0];
-      if (data[pts * 2 - 2] != x1)
-	xmag = (double)(dur - 1) / (double)(data[pts * 2 - 2] - x1); /* was dur, 7-Apr-02 */
-      y1 = data[1];
-    }
+
+  if ((pts > 1) &&
+      (data[pts * 2 - 2] != data[0]))
+    xscl = (double)(dur - 1) / (double)(data[pts * 2 - 2] - data[0]); /* was dur, 7-Apr-02 */
+
   e->rates = (double *)clm_calloc(pts, sizeof(double), "env rates");
-  e->passes = (off_t *)clm_calloc(pts, sizeof(off_t), "env passes");
+  e->locs = (off_t *)clm_calloc(pts, sizeof(off_t), "env locs");
+
   for (j = 0, i = 2; i < pts * 2; i += 2, j++)
     {
-      x0 = x1;
+      off_t samps;
+      double cur_dx, x0, y0, x1, y1;
+
+      x0 = data[i - 2];
       x1 = data[i];
-      y0 = y1;
+      y0 = data[i - 1];
       y1 = data[i + 1];
-      curx = xmag * (x1 - x0);
-      if (curx < 1.0) curx = 1.0;
-      curpass += curx;
+
+      cur_dx = xscl * (x1 - x0);
+      if (cur_dx < 1.0) cur_dx = 1.0;
+      cur_loc += cur_dx;
+
       if (e->style == ENV_STEP)
-	e->passes[j] = (off_t)curpass; /* this is the change boundary (confusing...) */
-      else e->passes[j] = (off_t)(curpass + 0.5);
+	e->locs[j] = (off_t)cur_loc; /* this is the change boundary (confusing...) */
+      else e->locs[j] = (off_t)(cur_loc + 0.5);
+
       if (j == 0) 
-	passes = e->passes[0]; 
-      else passes = e->passes[j] - e->passes[j - 1];
-      if (e->style == ENV_STEP)
-	e->rates[j] = e->offset + (scaler * y0);
-      else
+	samps = e->locs[0]; 
+      else samps = e->locs[j] - e->locs[j - 1];
+
+      switch (e->style)
 	{
-	  if ((y0 == y1) || (passes == 0))
+	case ENV_STEP:
+	  e->rates[j] = e->offset + (scaler * y0);
+	  break;
+
+	case ENV_SEG:
+	  if ((y0 == y1) || (samps == 0))
 	    e->rates[j] = 0.0;
-	  else e->rates[j] = scaler * (y1 - y0) / (double)passes;
+	  else e->rates[j] = scaler * (y1 - y0) / (double)samps;
+	  break;
+
+	case ENV_EXP:
+	  if ((y0 == y1) || (samps == 0))
+	    e->rates[j] = 1.0;
+	  else e->rates[j] = exp((y1 - y0) / (double)samps);
+	  break;
 	}
     }
-  if ((pts > 1) && (e->passes[pts - 2] != e->end))
-    e->passes[pts - 2] = e->end;
-  if ((pts > 1) && (e->style == ENV_STEP))
+
+  if ((pts > 1) && 
+      (e->locs[pts - 2] != e->end))
+    e->locs[pts - 2] = e->end;
+
+  if ((pts > 1) && 
+      (e->style != ENV_SEG))
     e->rates[pts - 1] = e->rates[pts - 2]; /* stick at last value, which in this case is the value (not 0 as increment) */
-  e->passes[pts - 1] = 100000000;
+
+  e->locs[pts - 1] = 1000000000;
 }
 
-static Float *fixup_exp_env(seg *e, Float *data, int pts, Float offset, Float scaler, Float base)
+
+static Float *fixup_exp_env(seg *e, Float *data, int pts, double offset, double scaler, double base)
 {
-  Float min_y, max_y, val = 0.0, tmp = 0.0, b1;
+  double min_y, max_y, val = 0.0, tmp = 0.0, b1;
   int len, i;
   bool flat;
   Float *result = NULL;
-  if ((base <= 0.0) || (base == 1.0)) return(NULL);
+
+  if ((base <= 0.0) || 
+      (base == 1.0)) 
+    return(NULL);
+
   min_y = offset + scaler * data[1];
   max_y = min_y;
-  b1 = base - 1.0;
   len = pts * 2;
+
+  /* fill "result" with x and (offset+scaler*y) */
+
   result = (Float *)clm_calloc(len, sizeof(Float), "env data");
   result[0] = data[0];
   result[1] = min_y;
+
   for (i = 2; i < len; i += 2)
     {
       tmp = offset + scaler * data[i + 1];
@@ -4563,8 +4627,13 @@ static Float *fixup_exp_env(seg *e, Float *data, int pts, Float offset, Float sc
       if (tmp < min_y) min_y = tmp;
       if (tmp > max_y) max_y = tmp;
     }
+
+  b1 = base - 1.0;
   flat = (min_y == max_y);
-  if (!flat) val = 1.0 / (max_y - min_y);
+  if (!flat) 
+    val = 1.0 / (max_y - min_y);
+
+  /* now logify result */
   for (i = 1; i < len; i += 2)
     {
       if (flat) 
@@ -4572,10 +4641,12 @@ static Float *fixup_exp_env(seg *e, Float *data, int pts, Float offset, Float sc
       else tmp = val * (result[i] - min_y);
       result[i] = log(1.0 + (tmp * b1));
     }
+
   e->scaler = (max_y - min_y) / b1;
   e->offset = min_y;
   return(result);
 }
+
 
 static bool env_equalp(mus_any *p1, mus_any *p2)
 {
@@ -4584,7 +4655,7 @@ static bool env_equalp(mus_any *p1, mus_any *p2)
   if (p1 == p2) return(true);
   return((e1) && (e2) &&
 	 (e1->core->type == e2->core->type) &&
-	 (e1->pass == e2->pass) &&
+	 (e1->loc == e2->loc) &&
 	 (e1->end == e2->end) &&
 	 (e1->style == e2->style) &&
 	 (e1->index == e2->index) &&
@@ -4601,6 +4672,7 @@ static bool env_equalp(mus_any *p1, mus_any *p2)
 	 (clm_arrays_are_equal(e1->original_data, e2->original_data, e1->size * 2)));
 }
 
+
 static char *describe_env(mus_any *ptr)
 {
   char *str = NULL;
@@ -4608,19 +4680,20 @@ static char *describe_env(mus_any *ptr)
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
 	       S_env ": %s, pass: " OFF_TD " (dur: " OFF_TD "), index: %d, scaler: %.4f, offset: %.4f, data: %s",
 	       ((e->style == ENV_SEG) ? "linear" : ((e->style == ENV_EXP) ? "exponential" : "step")),
-	       e->pass, e->end + 1, e->index,
+	       e->loc, e->end + 1, e->index,
 	       e->original_scaler, e->original_offset,
 	       str = float_array_to_string(e->original_data, e->size * 2, 0));
   if (str) FREE(str);
   return(describe_buffer);
 }
 
+
 static int free_env_gen(mus_any *pt) 
 {
   seg *ptr = (seg *)pt;
   if (ptr) 
     {
-      if (ptr->passes) FREE(ptr->passes);
+      if (ptr->locs) FREE(ptr->locs);
       if (ptr->rates) FREE(ptr->rates);
       if ((ptr->original_data) && (ptr->data_allocated)) FREE(ptr->original_data);
       FREE(ptr); 
@@ -4628,27 +4701,39 @@ static int free_env_gen(mus_any *pt)
   return(0);
 }
 
+
 static Float *env_data(mus_any *ptr) {return(((seg *)ptr)->original_data);} /* mus-data */
-static Float env_scaler(mus_any *ptr) {return(((seg *)ptr)->original_scaler);}
+
+static Float env_scaler(mus_any *ptr) {return(((seg *)ptr)->original_scaler);} /* "Float" for mus-scaler */
 
 static Float env_offset(mus_any *ptr) {return(((seg *)ptr)->original_offset);}
+
 static Float set_env_offset(mus_any *ptr, Float val) {((seg *)ptr)->original_offset = val; return(val);}
 
 int mus_env_breakpoints(mus_any *ptr) {return(((seg *)ptr)->size);}
+
 static off_t env_length(mus_any *ptr) {return((((seg *)ptr)->end));}
+
 static Float env_current_value(mus_any *ptr) {return(((seg *)ptr)->current_value);}
 
-off_t *mus_env_passes(mus_any *gen) {return(((seg *)gen)->passes);}
+off_t *mus_env_passes(mus_any *gen) {return(((seg *)gen)->locs);}
+
 double *mus_env_rates(mus_any *gen) {return(((seg *)gen)->rates);}
 
 static int env_position(mus_any *ptr) {return(((seg *)ptr)->index);}
+
 double mus_env_offset(mus_any *gen) {return(((seg *)gen)->offset);}
+
 double mus_env_scaler(mus_any *gen) {return(((seg *)gen)->scaler);}
+
 double mus_env_initial_power(mus_any *gen) {return(((seg *)gen)->init_power);}
 
-static off_t seg_pass(mus_any *ptr) {return(((seg *)ptr)->pass);}
+static off_t seg_pass(mus_any *ptr) {return(((seg *)ptr)->loc);}
+
 static void set_env_location(mus_any *ptr, off_t val);
+
 static off_t seg_set_pass(mus_any *ptr, off_t val) {set_env_location(ptr, val); return(val);}
+
 
 static Float env_increment(mus_any *rd)
 {
@@ -4657,15 +4742,17 @@ static Float env_increment(mus_any *rd)
   return(((seg *)rd)->base);
 }
 
+
 static void env_reset(mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
   gen->current_value = gen->init_y;
-  gen->pass = 0;
+  gen->loc = 0;
   gen->index = 0;
   gen->rate = gen->rates[0];
   gen->power = gen->init_power;
 }
+
 
 static mus_any_class ENV_CLASS = {
   MUS_ENV,
@@ -4702,12 +4789,13 @@ static mus_any_class ENV_CLASS = {
  *   perhaps #define mus_make_env_with_dur(Brkpts, Pts, Scaler, Offset, Base, Dur) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, 0.0, 0, Dur - 1, NULL)
  */
 
-mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float base, Float duration, off_t start, off_t end, Float *odata)
+mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, double base, double duration, off_t start, off_t end, Float *odata)
 {
   int i;
   off_t dur_in_samples;
   Float *edata;
   seg *e = NULL;
+
   for (i = 2; i < npts * 2; i += 2)
     if (brkpts[i - 2] >= brkpts[i])
       {
@@ -4716,11 +4804,14 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
 		  float_array_to_string(brkpts, npts * 2, 0));
 	return(NULL);
       }
+
   e = (seg *)clm_calloc(1, sizeof(seg), S_make_env);
   e->core = &ENV_CLASS;
+
   if (duration != 0.0)
     dur_in_samples = (off_t)(duration * sampling_rate);
   else dur_in_samples = (end - start + 1);
+
   e->init_y = offset + scaler * brkpts[1];
   e->current_value = e->init_y;
   e->rate = 0.0;
@@ -4730,8 +4821,9 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
   e->original_scaler = scaler;
   e->base = base;
   e->end = (dur_in_samples - 1);
-  e->pass = 0;
-  e->index = 0; /* ? */
+  e->loc = 0;
+  e->index = 0;
+
   if (odata)
     e->original_data = odata;
   else
@@ -4740,10 +4832,8 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
       e->data_allocated = true;
     }
   if (e->original_data != brkpts)
-    {
-      memcpy((void *)(e->original_data), (void *)brkpts, npts * 2 *sizeof(Float));
-      /* for (i = 0; i < npts * 2; i++) e->original_data[i] = brkpts[i]; */
-    }
+    memcpy((void *)(e->original_data), (void *)brkpts, npts * 2 *sizeof(Float));
+
   if (base == 0.0)
     {
       e->style = ENV_STEP;
@@ -4759,6 +4849,7 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
       else
 	{
 	  e->style = ENV_EXP;
+
 	  edata = fixup_exp_env(e, brkpts, npts, offset, scaler, base);
 	  if (edata == NULL)
 	    {
@@ -4766,48 +4857,62 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
 	      FREE(e);
 	      return(NULL);
 	    }
+
 	  dmagify_env(e, edata, npts, dur_in_samples, 1.0);
-	  e->power = edata[1];
+
+	  e->power = exp(edata[1]);
 	  e->init_power = e->power;
-	  FREE(edata);
 	  e->offset -= e->scaler;
+	  /*
+	  fprintf(stderr,"power: %f, offset: %f, scaler: %f, rates[0]: %f\n", 
+		  e->power, e->offset, e->scaler, e->rates[0]);
+	  */
+	  FREE(edata);
 	}
     }
+
   e->rate = e->rates[0];
+
   return((mus_any *)e);
 }
+
 
 static void set_env_location(mus_any *ptr, off_t val)
 {
   /* doesn't this ignore the original notion of a "start" time? */
   seg *gen = (seg *)ptr;
   off_t ctr = 0;
-  if (gen->pass == val) return;
-  if (gen->pass > val)
+
+  if (gen->loc == val) return;
+
+  if (gen->loc > val)
     mus_reset(ptr);
-  else ctr = gen->pass;
-  gen->pass = val;
-  while ((gen->index < gen->size) && 
+  else ctr = gen->loc;
+  gen->loc = val;
+
+  while ((gen->index < (gen->size - 1)) && /* this was gen->size */
 	 (ctr < val))
     {
-      off_t passes;
-      if (val > gen->passes[gen->index])
-	passes = gen->passes[gen->index] - ctr;
-      else passes = val - ctr;
+      off_t samps;
+      if (val > gen->locs[gen->index])
+	samps = gen->locs[gen->index] - ctr;
+      else samps = val - ctr;
       switch (gen->style)
 	{
 	case ENV_SEG: 
-	  gen->current_value += (passes * gen->rate);
+	  gen->current_value += (samps * gen->rate);
 	  break;
+
 	case ENV_STEP: 
 	  gen->current_value = gen->rate; 
 	  break;
+
 	case ENV_EXP: 
-	  gen->power += (passes * gen->rate); 
-	  gen->current_value = gen->offset + (gen->scaler * exp(gen->power));
+	  gen->power *= exp(samps * log(gen->rate));
+	  gen->current_value = gen->offset + (gen->scaler * gen->power);
 	  break;
 	}
-      ctr += passes;
+      ctr += samps;
       if (ctr < val)
 	{
 	  gen->index++;
@@ -4817,7 +4922,8 @@ static void set_env_location(mus_any *ptr, off_t val)
     }
 }
 
-Float mus_env_interp(Float x, mus_any *ptr)
+
+double mus_env_interp(double x, mus_any *ptr)
 {
   /* the accuracy depends on the duration here -- more samples = more accurate */
   seg *gen = (seg *)ptr;

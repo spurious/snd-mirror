@@ -906,8 +906,8 @@ snd_fd *xen_to_sample_reader(XEN obj);
 snd_fd *free_snd_fd_almost(snd_fd *sf);
 bool scale_channel(chan_info *cp, Float scaler, off_t beg, off_t num, int pos, bool in_as_one_edit);
 bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool in_as_one_edit, const char *origin);
-bool ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, bool in_as_one_edit);
-bool xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
+bool ramp_channel(chan_info *cp, double start, double incr, off_t beg, off_t num, int pos, bool in_as_one_edit);
+bool xramp_channel(chan_info *cp, double start, double incr, double scaler, double offset, 
 		   off_t beg, off_t num, int pos, bool in_as_one_edit, mus_any *e, int xramp_seg_loc);
 void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, const char *origin);
 snd_fd *init_sample_read(off_t samp, chan_info *cp, read_direction_t direction);

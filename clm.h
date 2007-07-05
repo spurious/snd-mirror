@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 36
-#define MUS_DATE "19-June-07"
+#define MUS_REVISION 37
+#define MUS_DATE "5-July-07"
 
 /*
+ * 5-July:     changed some Floats to doubles in env funcs.
  * 19-June:    mus-increment on gens with a notion of frequency (phase increment); 
  *               to make room for this, asymmetric-fm ratio and sine-summation b moved to mus-offset.
  * 22-Feb:     mus_big_fft and mus_spectrum_t.
@@ -42,7 +43,6 @@
  * --------
  * 20-Dec:     changed "jitter" handling if hop < .05 in granulate.
  * 15-Dec:     mus_generator? for type checks (clm2xen).
- * 14-Dec:     mus_env_linear.
  * 11-Sep:     removed buffer generator.
  * 6-Sep:      removed mus_oscil_bank, mus_bank.
  * 24-Aug:     removed mus_inspect method -- overlaps mus_describe and is useless given gdb capabilities.
@@ -521,17 +521,15 @@ Float mus_polyshape_0(mus_any *ptr);
 bool mus_polyshape_p(mus_any *ptr);
 
 Float mus_env(mus_any *ptr);
-Float mus_env_linear(mus_any *ptr);
-mus_any *mus_make_env(Float *brkpts, int pts, Float scaler, Float offset, Float base, Float duration, off_t start, off_t end, Float *odata);
+mus_any *mus_make_env(Float *brkpts, int pts, double scaler, double offset, double base, double duration, off_t start, off_t end, Float *odata);
 bool mus_env_p(mus_any *ptr);
-bool mus_env_linear_p(mus_any *ptr);
-Float mus_env_interp(Float x, mus_any *env);
-off_t *mus_env_passes(mus_any *gen); /* for Snd */
-double *mus_env_rates(mus_any *gen); /* for Snd */
-double mus_env_offset(mus_any *gen); /* for Snd */
-double mus_env_scaler(mus_any *gen); /* for Snd */
+double mus_env_interp(double x, mus_any *env);
+off_t *mus_env_passes(mus_any *gen);        /* for Snd */
+double *mus_env_rates(mus_any *gen);        /* for Snd */
+double mus_env_offset(mus_any *gen);        /* for Snd */
+double mus_env_scaler(mus_any *gen);        /* for Snd */
 double mus_env_initial_power(mus_any *gen); /* for Snd */
-int mus_env_breakpoints(mus_any *gen); /* for Snd */
+int mus_env_breakpoints(mus_any *gen);      /* for Snd */
 #define mus_position(Gen) mus_channels(Gen)
 
 bool mus_frame_p(mus_any *ptr);
