@@ -2901,9 +2901,6 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	}
       si = sc->si;
       /* in snd-test.scm, one sync_state pointer is lost here because env-channel requests edpos 2 (or is it 123?), but only 1 exists */
-      /*
-      fprintf(stderr,"env...\n");
-      */
 
       for (i = 0; i < si->chans; i++) 
 	{
@@ -2925,9 +2922,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 		if ((k >= (len - 2)) && 
 		    ((segbeg + segnum) < segend))
 		  segnum = segend - segbeg; /* last value is sticky in envs */
-	      /*
-	      fprintf(stderr,"segnum: " OFF_TD ", segbeg: " OFF_TD ", segend: " OFF_TD ", rates[%d of %d]: %f\n", segnum, segbeg, segend, k, len, rates[k]);
-	      */
+
 	      if (segnum > 0)
 		{
 		  if (k == 0) 
@@ -2977,9 +2972,6 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	      segbeg += segnum;
 	      if (segbeg >= segend) break;
 	      segnum = passes[k + 1] - passes[k];
-	      /*
-	      fprintf(stderr, "passes[%d]: " OFF_TD ", passes[%d]: " OFF_TD "\n", k+1, passes[k+1], k, passes[k]);
-	      */
 	    }
 
 	  if (edited)

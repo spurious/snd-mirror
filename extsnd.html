@@ -974,16 +974,6 @@ locally, not via a virtual edit).
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
-<!-- max-virtual-xramps -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="maxvirtualxramps">max-virtual-xramps</a></code></td>
-<td bgcolor="#f6f8ff"><code>2</code></td></tr><tr><td></td><td colspan=2>
-This sets the maximum number of exponential envelopes that the
-virtual editor will allow in any virtual edit (once the maximum is reached, the operation is handled
-with a bunch of multiplies, not via a virtual edit).  The default value of 2 reflects the age of Snd --
-in the bad old days, two exponential envelopes actually made a noticeable blip in the load.  
-</td></tr><tr><td colspan=3 height=16></td></tr>
-
-
 <!-- minibuffer-history-length -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="minibufferhistorylength">minibuffer-history-length</a></code></td>
 <td bgcolor="#f6f8ff"><code>8</code></td></tr><tr><td></td><td colspan=2>
@@ -1023,7 +1013,7 @@ find out what the optimizer found confusing:
 <pre>
     (add-hook! <a class=quiet href="#optimizationhook">optimization-hook</a> (lambda (n) (display (format #f "opt: ~A~%" n))))
 </pre>
-See also <a href="#maxvirtualxramps">max-virtual-xramps</a> and <a href="#maxvirtualptrees">max-virtual-ptrees</a>.
+See also <a href="#maxvirtualptrees">max-virtual-ptrees</a>.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -7213,7 +7203,7 @@ To be informed whenever a new sound is created, use <a href="#newsoundhook">new-
 normalize-channel
 scales (changes the amplitude) of a sound so that its new peak amplitude is 'norm'.  This
 is the "regularized" form of <a href="#scaleto">scale-to</a>.
-The multichannel version is <a href="sndscm.html#normalizesound">normalize-sound</a> in frame.scm.
+The multichannel version is <a href="sndscm.html#normalizesound">normalize-sound</a> in extensions.scm.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 

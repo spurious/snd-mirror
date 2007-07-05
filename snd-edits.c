@@ -354,18 +354,21 @@ char *run_save_state_hook(char *file)
  *    ptree        52    58           71             57             52
  *    ptreec       80    80           93             74             65
  *    ptree2       105  100          107             94             83
- *    ptree3       129  125          157            128            114 xramp changed:
+ *    ptree3       129  125          157            128            114 
+ *    cosine       304  270          355 (290)      199            194 xramp changed:
  *    xramp        152   94          140 (91)       121            111   23
  *    xramp2       290  148          242 (154)      211            206   38
- *    cosine       304  270          355 (290)      199            194
- *    mix                                                           20
+ *    mix                                                                38
+ *    ramp10                                                             88
+ *    xramp10                                                            96
+ *    mix10                                                             169
  *
  * I tried a flattened version (using ed_fragment* rather than ed_fragment**) which involves fewer calls on malloc,
  *   but the edit list is a "real" list -- we do internal insertions and deletions and so on, so it's simpler
  *   to use in the current form.
  */
 
-static int max_virtual_ptrees = 3, max_virtual_xramps = 100;
+static int max_virtual_ptrees = 3;
 
 
 /* fragment ramp info */
@@ -684,11 +687,11 @@ static Float next_xramp1_value(snd_fd *sf)
 {
   Float val;
   val = (READER_XRAMP_OFFSET(sf, 0) + (READER_XRAMP_SCALER(sf, 0) * READER_XVAL(sf, 0)));
-  /*   fprintf(stderr,"next xramp: %f = (%f + (%f * %f))\n", val, READER_XRAMP_OFFSET(sf, 0), READER_XRAMP_SCALER(sf, 0), READER_XVAL(sf, 0)); */
-
   READER_XVAL(sf, 0) *= READER_XINCR(sf, 0);
   return(val);
 }
+
+/* PERHAPS: invert READER_INCR if xramp so we have multiply, not divide */
 
 static Float previous_xramp1_value(snd_fd *sf)
 {
@@ -4157,10 +4160,6 @@ static void new_before_ramp(ed_fragment *new_before, ed_fragment *old_before, of
 	{
 	  ED_RAMP_INCR(new_before, i) = ED_RAMP_INCR(old_before, i);
 	  ED_RAMP_START(new_before, i) = ED_RAMP_START(old_before, i);
-	  /*
-	  fprintf(stderr,"new leader: %f += %f\n", 
-		  ED_RAMP_START(new_before, i), ED_RAMP_INCR(new_before, i));
-	  */
 	}
 
       for (i = 0; i < xrmps; i++)
@@ -4169,10 +4168,6 @@ static void new_before_ramp(ed_fragment *new_before, ed_fragment *old_before, of
 	  ED_XRAMP_SCALER(new_before, i) = ED_XRAMP_SCALER(old_before, i);
 	  ED_XRAMP_INCR(new_before, i) = ED_XRAMP_INCR(old_before, i);
 	  ED_XRAMP_START(new_before, i) = ED_XRAMP_START(old_before, i);
-	  /*
-	  fprintf(stderr,"new leader: %f + %f * ( %f *= %f)\n", 
-		  ED_XRAMP_OFFSET(new_before, i), ED_XRAMP_SCALER(new_before, i), ED_XRAMP_START(new_before, i), ED_XRAMP_INCR(new_before, i));
-	  */
 	}
     }
 }
@@ -4192,10 +4187,6 @@ static void new_after_ramp(ed_fragment *new_after, ed_fragment *old_after, off_t
 	{
 	  ED_RAMP_INCR(new_after, i) = ED_RAMP_INCR(old_after, i);
 	  ED_RAMP_START(new_after, i) = ED_RAMP_START(old_after, i) + ED_RAMP_INCR(old_after, i) * (double)(samp - ED_GLOBAL_POSITION(old_after));
-	  /*
-	  fprintf(stderr,"new trailer: %f += %f\n", 
-		  ED_RAMP_START(new_after, i), ED_RAMP_INCR(new_after, i));
-	  */
 	}
 
       for (i = 0; i < xrmps; i++)
@@ -4204,10 +4195,6 @@ static void new_after_ramp(ed_fragment *new_after, ed_fragment *old_after, off_t
 	  ED_XRAMP_SCALER(new_after, i) = ED_XRAMP_SCALER(old_after, i);
 	  ED_XRAMP_INCR(new_after, i) = ED_XRAMP_INCR(old_after, i);
 	  ED_XRAMP_START(new_after, i) = ED_XRAMP_START(old_after, i) * exp(log(ED_XRAMP_INCR(old_after, i)) * (double)(samp - ED_GLOBAL_POSITION(old_after)));
-	  /*
-	  fprintf(stderr,"new trailer: %f + %f * ( %f *= %f)\n", 
-		  ED_XRAMP_OFFSET(new_after, i), ED_XRAMP_SCALER(new_after, i), ED_XRAMP_START(new_after, i), ED_XRAMP_INCR(new_after, i));
-	  */
 	}
     }
   if ((ED_PTREES(new_after)) && (ED_PTREES(old_after)))
@@ -5115,9 +5102,7 @@ bool unrampable(chan_info *cp, off_t beg, off_t dur, int pos, bool is_xramp)
 	  (((!is_xramp) && 
 	    (type_info[typ].add_ramp == -1)) || 
 	   ((is_xramp) && 
-	    ((type_info[typ].add_xramp == -1) ||
-	     ((FRAGMENT_RAMPS(ed, i)) &&
-	      (FRAGMENT_XRAMP_LIST_SIZE(ed, i) >= max_virtual_xramps))))))
+	    ((type_info[typ].add_xramp == -1)))))
 	return(true);
     }
   return(false);
@@ -9484,21 +9469,6 @@ static XEN g_set_max_virtual_ptrees(XEN num)
 }
 
 
-static XEN g_max_virtual_xramps(void)
-{
-  #define H_max_virtual_xramps "(" S_max_virtual_xramps "): most exponential envelopes running at once in virtual edits"
-  return(C_TO_XEN_INT(max_virtual_xramps));
-}
-
-static XEN g_set_max_virtual_xramps(XEN num)
-{
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ONLY_ARG, S_setB S_max_virtual_xramps, "integer");
-  max_virtual_xramps = XEN_TO_C_INT(num);
-  return(num);
-}
-
-
-
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_5(g_make_sample_reader_w, g_make_sample_reader)
 XEN_ARGIFY_4(g_make_region_sample_reader_w, g_make_region_sample_reader)
@@ -9541,8 +9511,6 @@ XEN_ARGIFY_1(g_make_snd_to_sample_w, g_make_snd_to_sample)
 XEN_ARGIFY_4(g_edit_list_to_function_w, g_edit_list_to_function)
 XEN_NARGIFY_0(g_max_virtual_ptrees_w, g_max_virtual_ptrees)
 XEN_NARGIFY_1(g_set_max_virtual_ptrees_w, g_set_max_virtual_ptrees)
-XEN_NARGIFY_0(g_max_virtual_xramps_w, g_max_virtual_xramps)
-XEN_NARGIFY_1(g_set_max_virtual_xramps_w, g_set_max_virtual_xramps)
 #else
 #define g_make_sample_reader_w g_make_sample_reader
 #define g_make_region_sample_reader_w g_make_region_sample_reader
@@ -9585,8 +9553,6 @@ XEN_NARGIFY_1(g_set_max_virtual_xramps_w, g_set_max_virtual_xramps)
 #define g_edit_list_to_function_w g_edit_list_to_function
 #define g_max_virtual_ptrees_w g_max_virtual_ptrees
 #define g_set_max_virtual_ptrees_w g_set_max_virtual_ptrees
-#define g_max_virtual_xramps_w g_max_virtual_xramps
-#define g_set_max_virtual_xramps_w g_set_max_virtual_xramps
 #endif
 
 
@@ -9675,8 +9641,6 @@ void g_init_edits(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_max_virtual_ptrees, g_max_virtual_ptrees_w, H_max_virtual_ptrees,
 				   S_setB S_max_virtual_ptrees, g_set_max_virtual_ptrees_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_max_virtual_xramps, g_max_virtual_xramps_w, H_max_virtual_xramps,
-				   S_setB S_max_virtual_xramps, g_set_max_virtual_xramps_w,  0, 0, 1, 0);
 
 
   #define H_save_hook S_save_hook " (snd name): called each time a file is about to be saved. \

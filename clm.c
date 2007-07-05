@@ -4419,11 +4419,6 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
 
 /* ---------------- env ---------------- */
 
-/* although a pain, this way of doing env is 5 times faster than a table lookup,
- * in the linear segment and step cases.  In the exponential case, it is
- * only slightly slower (but more accurate).
- */
-
 /* user defined env: 
  *  new-env-type (remove env_style_t->int, export presets, perhaps add sinusoid and power env to presets)
  *    needs init func (to package up particular call), run func -- split out all preset cases here?
@@ -4863,10 +4858,6 @@ mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, dou
 	  e->power = exp(edata[1]);
 	  e->init_power = e->power;
 	  e->offset -= e->scaler;
-	  /*
-	  fprintf(stderr,"power: %f, offset: %f, scaler: %f, rates[0]: %f\n", 
-		  e->power, e->offset, e->scaler, e->rates[0]);
-	  */
 	  FREE(edata);
 	}
     }
