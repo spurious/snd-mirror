@@ -1031,10 +1031,6 @@ XM_TYPE(GtkPageSet, GtkPageSet)
 XM_TYPE_PTR_2(GtkSettings_, GtkSettings*)
 #endif
 
-#if HAVE_GTK_WINDOW_GET_OPACITY
-XM_TYPE_PTR(GKeyFile_, GKeyFile*)
-#endif
-
 #if HAVE_CAIRO_CREATE
 XM_TYPE_PTR(cairo_t_, cairo_t*)
 XM_TYPE_PTR(cairo_surface_t_, cairo_surface_t*)
@@ -29906,58 +29902,6 @@ GError** [error])"
    }
 }
 
-static XEN gxg_gtk_page_setup_new_from_key_file(XEN key_file, XEN group_name, XEN ignore_error)
-{
-  #define H_gtk_page_setup_new_from_key_file "GtkPageSetup* gtk_page_setup_new_from_key_file(GKeyFile* key_file, \
-gchar* group_name, GError** [error])"
-  GError* ref_error = NULL;
-  XEN_ASSERT_TYPE(XEN_GKeyFile__P(key_file), key_file, 1, "gtk_page_setup_new_from_key_file", "GKeyFile*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(group_name), group_name, 2, "gtk_page_setup_new_from_key_file", "gchar*");
-  {
-    XEN result = XEN_FALSE;
-    result = C_TO_XEN_GtkPageSetup_(gtk_page_setup_new_from_key_file(XEN_TO_C_GKeyFile_(key_file), XEN_TO_C_gchar_(group_name), 
-                                                                     &ref_error));
-    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
-   }
-}
-
-static XEN gxg_gtk_page_setup_to_key_file(XEN setup, XEN key_file, XEN group_name)
-{
-  #define H_gtk_page_setup_to_key_file "void gtk_page_setup_to_key_file(GtkPageSetup* setup, GKeyFile* key_file, \
-gchar* group_name)"
-  XEN_ASSERT_TYPE(XEN_GtkPageSetup__P(setup), setup, 1, "gtk_page_setup_to_key_file", "GtkPageSetup*");
-  XEN_ASSERT_TYPE(XEN_GKeyFile__P(key_file), key_file, 2, "gtk_page_setup_to_key_file", "GKeyFile*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(group_name), group_name, 3, "gtk_page_setup_to_key_file", "gchar*");
-  gtk_page_setup_to_key_file(XEN_TO_C_GtkPageSetup_(setup), XEN_TO_C_GKeyFile_(key_file), XEN_TO_C_gchar_(group_name));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paper_size_new_from_key_file(XEN key_file, XEN group_name, XEN ignore_error)
-{
-  #define H_gtk_paper_size_new_from_key_file "GtkPaperSize* gtk_paper_size_new_from_key_file(GKeyFile* key_file, \
-gchar* group_name, GError** [error])"
-  GError* ref_error = NULL;
-  XEN_ASSERT_TYPE(XEN_GKeyFile__P(key_file), key_file, 1, "gtk_paper_size_new_from_key_file", "GKeyFile*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(group_name), group_name, 2, "gtk_paper_size_new_from_key_file", "gchar*");
-  {
-    XEN result = XEN_FALSE;
-    result = C_TO_XEN_GtkPaperSize_(gtk_paper_size_new_from_key_file(XEN_TO_C_GKeyFile_(key_file), XEN_TO_C_gchar_(group_name), 
-                                                                     &ref_error));
-    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
-   }
-}
-
-static XEN gxg_gtk_paper_size_to_key_file(XEN size, XEN key_file, XEN group_name)
-{
-  #define H_gtk_paper_size_to_key_file "void gtk_paper_size_to_key_file(GtkPaperSize* size, GKeyFile* key_file, \
-gchar* group_name)"
-  XEN_ASSERT_TYPE(XEN_GtkPaperSize__P(size), size, 1, "gtk_paper_size_to_key_file", "GtkPaperSize*");
-  XEN_ASSERT_TYPE(XEN_GKeyFile__P(key_file), key_file, 2, "gtk_paper_size_to_key_file", "GKeyFile*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(group_name), group_name, 3, "gtk_paper_size_to_key_file", "gchar*");
-  gtk_paper_size_to_key_file(XEN_TO_C_GtkPaperSize_(size), XEN_TO_C_GKeyFile_(key_file), XEN_TO_C_gchar_(group_name));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_print_settings_new_from_file(XEN file_name, XEN ignore_error)
 {
   #define H_gtk_print_settings_new_from_file "GtkPrintSettings* gtk_print_settings_new_from_file(gchar* file_name, \
@@ -29984,32 +29928,6 @@ gchar* file_name, GError** [error])"
                                                           &ref_error));
     return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
    }
-}
-
-static XEN gxg_gtk_print_settings_new_from_key_file(XEN key_file, XEN group_name, XEN ignore_error)
-{
-  #define H_gtk_print_settings_new_from_key_file "GtkPrintSettings* gtk_print_settings_new_from_key_file(GKeyFile* key_file, \
-gchar* group_name, GError** [error])"
-  GError* ref_error = NULL;
-  XEN_ASSERT_TYPE(XEN_GKeyFile__P(key_file), key_file, 1, "gtk_print_settings_new_from_key_file", "GKeyFile*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(group_name), group_name, 2, "gtk_print_settings_new_from_key_file", "gchar*");
-  {
-    XEN result = XEN_FALSE;
-    result = C_TO_XEN_GtkPrintSettings_(gtk_print_settings_new_from_key_file(XEN_TO_C_GKeyFile_(key_file), XEN_TO_C_gchar_(group_name), 
-                                                                             &ref_error));
-    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
-   }
-}
-
-static XEN gxg_gtk_print_settings_to_key_file(XEN settings, XEN key_file, XEN group_name)
-{
-  #define H_gtk_print_settings_to_key_file "void gtk_print_settings_to_key_file(GtkPrintSettings* settings, \
-GKeyFile* key_file, gchar* group_name)"
-  XEN_ASSERT_TYPE(XEN_GtkPrintSettings__P(settings), settings, 1, "gtk_print_settings_to_key_file", "GtkPrintSettings*");
-  XEN_ASSERT_TYPE(XEN_GKeyFile__P(key_file), key_file, 2, "gtk_print_settings_to_key_file", "GKeyFile*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(group_name), group_name, 3, "gtk_print_settings_to_key_file", "gchar*");
-  gtk_print_settings_to_key_file(XEN_TO_C_GtkPrintSettings_(settings), XEN_TO_C_GKeyFile_(key_file), XEN_TO_C_gchar_(group_name));
-  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_range_set_show_fill_level(XEN range, XEN show_fill_level)
@@ -37160,14 +37078,8 @@ XEN_NARGIFY_1(gxg_gtk_entry_get_cursor_hadjustment_w, gxg_gtk_entry_get_cursor_h
 XEN_NARGIFY_1(gxg_gtk_icon_theme_list_contexts_w, gxg_gtk_icon_theme_list_contexts)
 XEN_ARGIFY_2(gxg_gtk_page_setup_new_from_file_w, gxg_gtk_page_setup_new_from_file)
 XEN_ARGIFY_3(gxg_gtk_page_setup_to_file_w, gxg_gtk_page_setup_to_file)
-XEN_ARGIFY_3(gxg_gtk_page_setup_new_from_key_file_w, gxg_gtk_page_setup_new_from_key_file)
-XEN_NARGIFY_3(gxg_gtk_page_setup_to_key_file_w, gxg_gtk_page_setup_to_key_file)
-XEN_ARGIFY_3(gxg_gtk_paper_size_new_from_key_file_w, gxg_gtk_paper_size_new_from_key_file)
-XEN_NARGIFY_3(gxg_gtk_paper_size_to_key_file_w, gxg_gtk_paper_size_to_key_file)
 XEN_ARGIFY_2(gxg_gtk_print_settings_new_from_file_w, gxg_gtk_print_settings_new_from_file)
 XEN_ARGIFY_3(gxg_gtk_print_settings_to_file_w, gxg_gtk_print_settings_to_file)
-XEN_ARGIFY_3(gxg_gtk_print_settings_new_from_key_file_w, gxg_gtk_print_settings_new_from_key_file)
-XEN_NARGIFY_3(gxg_gtk_print_settings_to_key_file_w, gxg_gtk_print_settings_to_key_file)
 XEN_NARGIFY_2(gxg_gtk_range_set_show_fill_level_w, gxg_gtk_range_set_show_fill_level)
 XEN_NARGIFY_1(gxg_gtk_range_get_show_fill_level_w, gxg_gtk_range_get_show_fill_level)
 XEN_NARGIFY_2(gxg_gtk_range_set_restrict_to_fill_level_w, gxg_gtk_range_set_restrict_to_fill_level)
@@ -41011,14 +40923,8 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_icon_theme_list_contexts_w gxg_gtk_icon_theme_list_contexts
 #define gxg_gtk_page_setup_new_from_file_w gxg_gtk_page_setup_new_from_file
 #define gxg_gtk_page_setup_to_file_w gxg_gtk_page_setup_to_file
-#define gxg_gtk_page_setup_new_from_key_file_w gxg_gtk_page_setup_new_from_key_file
-#define gxg_gtk_page_setup_to_key_file_w gxg_gtk_page_setup_to_key_file
-#define gxg_gtk_paper_size_new_from_key_file_w gxg_gtk_paper_size_new_from_key_file
-#define gxg_gtk_paper_size_to_key_file_w gxg_gtk_paper_size_to_key_file
 #define gxg_gtk_print_settings_new_from_file_w gxg_gtk_print_settings_new_from_file
 #define gxg_gtk_print_settings_to_file_w gxg_gtk_print_settings_to_file
-#define gxg_gtk_print_settings_new_from_key_file_w gxg_gtk_print_settings_new_from_key_file
-#define gxg_gtk_print_settings_to_key_file_w gxg_gtk_print_settings_to_key_file
 #define gxg_gtk_range_set_show_fill_level_w gxg_gtk_range_set_show_fill_level
 #define gxg_gtk_range_get_show_fill_level_w gxg_gtk_range_get_show_fill_level
 #define gxg_gtk_range_set_restrict_to_fill_level_w gxg_gtk_range_set_restrict_to_fill_level
@@ -44869,14 +44775,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_icon_theme_list_contexts, gxg_gtk_icon_theme_list_contexts_w, 1, 0, 0, H_gtk_icon_theme_list_contexts);
   XG_DEFINE_PROCEDURE(gtk_page_setup_new_from_file, gxg_gtk_page_setup_new_from_file_w, 1, 1, 0, H_gtk_page_setup_new_from_file);
   XG_DEFINE_PROCEDURE(gtk_page_setup_to_file, gxg_gtk_page_setup_to_file_w, 2, 1, 0, H_gtk_page_setup_to_file);
-  XG_DEFINE_PROCEDURE(gtk_page_setup_new_from_key_file, gxg_gtk_page_setup_new_from_key_file_w, 2, 1, 0, H_gtk_page_setup_new_from_key_file);
-  XG_DEFINE_PROCEDURE(gtk_page_setup_to_key_file, gxg_gtk_page_setup_to_key_file_w, 3, 0, 0, H_gtk_page_setup_to_key_file);
-  XG_DEFINE_PROCEDURE(gtk_paper_size_new_from_key_file, gxg_gtk_paper_size_new_from_key_file_w, 2, 1, 0, H_gtk_paper_size_new_from_key_file);
-  XG_DEFINE_PROCEDURE(gtk_paper_size_to_key_file, gxg_gtk_paper_size_to_key_file_w, 3, 0, 0, H_gtk_paper_size_to_key_file);
   XG_DEFINE_PROCEDURE(gtk_print_settings_new_from_file, gxg_gtk_print_settings_new_from_file_w, 1, 1, 0, H_gtk_print_settings_new_from_file);
   XG_DEFINE_PROCEDURE(gtk_print_settings_to_file, gxg_gtk_print_settings_to_file_w, 2, 1, 0, H_gtk_print_settings_to_file);
-  XG_DEFINE_PROCEDURE(gtk_print_settings_new_from_key_file, gxg_gtk_print_settings_new_from_key_file_w, 2, 1, 0, H_gtk_print_settings_new_from_key_file);
-  XG_DEFINE_PROCEDURE(gtk_print_settings_to_key_file, gxg_gtk_print_settings_to_key_file_w, 3, 0, 0, H_gtk_print_settings_to_key_file);
   XG_DEFINE_PROCEDURE(gtk_range_set_show_fill_level, gxg_gtk_range_set_show_fill_level_w, 2, 0, 0, H_gtk_range_set_show_fill_level);
   XG_DEFINE_PROCEDURE(gtk_range_get_show_fill_level, gxg_gtk_range_get_show_fill_level_w, 1, 0, 0, H_gtk_range_get_show_fill_level);
   XG_DEFINE_PROCEDURE(gtk_range_set_restrict_to_fill_level, gxg_gtk_range_set_restrict_to_fill_level_w, 2, 0, 0, H_gtk_range_set_restrict_to_fill_level);
@@ -47495,7 +47395,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-Jun-07"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("05-Jul-07"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

@@ -2904,7 +2904,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 
       for (i = 0; i < si->chans; i++) 
 	{
-	  bool edited = false;;
+	  bool edited = false;
 	  if (!(editable_p(si->cps[i]))) continue;
 	  segbeg = si->begs[i];
 	  segend = si->begs[i] + dur;
@@ -2954,7 +2954,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 			}
 		      else 
 			{
-			  if (k == (len - 1)) /* oops -- must have sticky end in play here? */
+			  if (k == (len - 1)) /* oops -- must have sticky end in play here? this doesn't work if a clm env passed */
 			    applied_ramp = scale_channel(si->cps[i], 
 							 (Float)(offset + scaler * data[m]), 
 							 segbeg, segnum, pos, IN_AS_ONE_EDIT);

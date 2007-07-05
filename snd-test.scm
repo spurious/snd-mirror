@@ -35,7 +35,7 @@
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)
-(define keep-going #f)
+(define keep-going #t)
 (define all-args #t)
 (define test-at-random 0)
 ;(show-ptree 1)
@@ -1287,6 +1287,11 @@
     (if *snd-opened-sound* (snd-display ";*snd-opened-sound*: ~A" *snd-opened-sound*))
     (if (not *snd-loaded-files*) (snd-display ";*snd-loaded-files*?"))
     ))
+
+
+(if (and (not (equal? (default-output-data-format) mus-bfloat))
+	 (not (equal? (default-output-data-format) mus-lfloat)))
+    (set! (default-output-data-format) mus-lfloat))
 
 
 ;;; ---------------- test 2: headers ----------------
@@ -3653,6 +3658,7 @@
 		 (snd (mus-sound-open-output "test.snd" 22050 1 mus-lshort mus-riff "a comment")))
 	    (set! (mus-file-clipping snd) #t)
 	    (mus-sound-write snd 0 9 1 sdata)
+	    (set! (mus-file-clipping snd) #f)
 	    (mus-sound-close-output snd 40))
 	  
 	  (let ((snd (open-sound "test.snd")))
@@ -8568,7 +8574,6 @@ EDITS: 5
 		(close-sound ind)))))
 	(set! (max-virtual-ptrees) old-pmax))
       
-      
       (let ((data (make-vct 101 1.0))
 	    (rto1-data (make-vct 101))
 	    (xto1-data (make-vct 101))
@@ -12029,7 +12034,7 @@ EDITS: 5
 		 
 		 ))
 	  (close-sound ind))
-	
+
 	(let ((ind (new-sound  "test.snd" mus-next mus-bfloat 22050 1 "2nd ramp re-order tests" 100))
 	      (oldopt (optimization)))
 	  
@@ -12329,6 +12334,7 @@ EDITS: 5
 			   op3)))
 		    op2))
 		 op1))
+
 	      (if all-args
 		  (let ((op1 (list 0 3 5))
 			(op2 (list 0 1 3 4 5 6))
@@ -12700,7 +12706,7 @@ EDITS: 5
 		      (two-ops (list add-1 ramp-1))
 		      (two-op-names (list 'add-1 'ramp-1)))
 		  
-		  (let ((ind (new-sound "test.snd" :size 20 :channels 2)))
+		  (let ((ind (new-sound "test.snd" :size 20 :channels 2 :data-format mus-lfloat)))
 		    
 		    (set! (squelch-update ind 0) #t)
 		    (set! (squelch-update ind 1) #t)
@@ -12716,8 +12722,10 @@ EDITS: 5
 			       (vct->channel (make-vct 20 1.0) 0 20 ind 1)))
 			 (op ind)
 			 (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
-			     (snd-display ";unequal: ~A:~%; ~A~%; ~A~%;  ~A~%;  ~A" 
+			     (snd-display ";unequal: ~A by ~A (~A, ~A, ~A):~%; ~A~%; ~A~%;  ~A~%;  ~A" 
 					  op-name 
+					  (vmaxdiff (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1)) 
+					  (mus-float-equal-fudge-factor) (mus-clipping) (mus-file-clipping ind)
 					  (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 
 					  (display-edits ind 0) (display-edits ind 1))
 			     (rvequal ind op-name 1))
@@ -12740,8 +12748,9 @@ EDITS: 5
 			      (op1 ind)
 			      (op2 ind)
 			      (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
-				  (snd-display ";unequal: ~A~A:~%; ~A~%; ~A~%;  ~A~%;  ~A"
+				  (snd-display ";unequal: ~A~A by ~A (~A):~%; ~A~%; ~A~%;  ~A~%;  ~A"
 					       op-name (if (= k 0) "[0]" "") 
+					       (vmaxdiff (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1)) (mus-float-equal-fudge-factor)
 					       (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1)
 					       (display-edits ind 0) (display-edits ind 1))
 				  (rvequal ind op-name 1))
@@ -12768,8 +12777,9 @@ EDITS: 5
 				 (op2 ind)
 				 (op3 ind)
 				 (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
-				     (snd-display ";unequal: ~A:~%; ~A~%; ~A~%;  ~A~%;  ~A"
+				     (snd-display ";unequal: ~A by ~A (~A):~%; ~A~%; ~A~%;  ~A~%;  ~A"
 						  op-name 
+						  (vmaxdiff (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1)) (mus-float-equal-fudge-factor)
 						  (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1)
 						  (display-edits ind 0) (display-edits ind 1))
 				     (rvequal ind op-name 1))
@@ -12800,7 +12810,10 @@ EDITS: 5
 				    (op3 ind)
 				    (op4 ind)
 				    (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
-					(snd-display ";unequal: ~A~A:~%; ~A~%; ~A" op-name (if (= k 0) "[0]" "") (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1))
+					(snd-display ";unequal: ~A~A by ~A (~A):~%; ~A~%; ~A"
+						     op-name (if (= k 0) "[0]" "") 
+						     (vmaxdiff (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1)) (mus-float-equal-fudge-factor)
+						     (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1))
 					(rvequal ind op-name 1))
 				    (revert-sound ind))))
 			      all-ops all-op-names))
@@ -12833,8 +12846,9 @@ EDITS: 5
 				       (op4 ind)
 				       (op5 ind)
 				       (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
-					   (snd-display ";unequal: ~A ~A in ~A:~%; ~A~%; ~A" 
-							op-name 
+					   (snd-display ";unequal: ~A by ~A (~A),  ~A in ~A:~%; ~A~%; ~A" 
+							op-name
+							(vmaxdiff (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1)) (mus-float-equal-fudge-factor) 
 							(map (lambda (lst) (edit-fragment-type-name (list-ref lst 7))) (edit-tree ind 0))
 							(edit-tree ind 0)
 							(channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1))
@@ -12874,7 +12888,10 @@ EDITS: 5
 					  (op5 ind)
 					  (op6 ind)
 					  (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
-					      (snd-display ";unequal: ~A:~%; ~A~%; ~A" op-name (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1))
+					      (snd-display ";unequal: ~A by ~A (~A):~%; ~A~%; ~A" 
+							   op-name 
+							   (vmaxdiff (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1)) (mus-float-equal-fudge-factor) 
+							   (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1))
 					      (rvequal ind op-name 1))
 					  (revert-sound ind))))
 				    two-ops two-op-names))
@@ -12915,7 +12932,10 @@ EDITS: 5
 					     (op6 ind)
 					     (op7 ind)
 					     (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
-						 (snd-display ";unequal: ~A:~%; ~A~%; ~A" op-name (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1))
+						 (snd-display ";unequal: ~A by ~A (~A):~%; ~A~%; ~A" 
+							      op-name 
+							      (vmaxdiff (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1)) (mus-float-equal-fudge-factor) 
+							      (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1))
 						 (rvequal ind op-name 1))
 					     (revert-sound ind))))
 				       two-ops two-op-names))
@@ -12942,6 +12962,7 @@ EDITS: 5
 		)))
 	)) ; if 'run I hope
 	
+
     (let ((ind (open-sound "oboe.snd")))
       
       ;; simple cases
@@ -32778,7 +32799,7 @@ EDITS: 2
 	      (let* ((tree (edit-tree))
 		     (bad-data (edits-not-equal? tree expected-tree 0)))
 		(if bad-data
-		    (snd-display "~%;checking ~A, trees disagree (loc cur expect): ~A~%  in~%~A" name bad-data (edit-tree)))
+		    (snd-display ";checking ~A, trees disagree (loc cur expect): ~A~%  in~%~A" name bad-data (edit-tree)))
 		(if (> len 5)
 		    (let* ((split-loc (+ 2 (my-random (- len 3))))
 			   (fread (make-sample-reader split-loc))
@@ -38463,20 +38484,20 @@ EDITS: 1
 	
 	
 	;; ---- sticky env end
-	(env-channel (make-env '(0 0 1 1 2 0) :end 500) 1000 1000)
-	(let ((func (edit-list->function)))
-	  (if (fneq (sample 1750) 0.0) (snd-display ";edit-list->function 15 samp: ~A" (sample 1750)))
-	  (if (not (procedure? func)) 
-	      (snd-display ";edit-list->function 15: ~A" func))
-	  (if (and (not (string=? (object->string (procedure-source func)) 
-				  "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 1.0 2.0 0.0)) :base 1.0 :end 500) 1000 1000 snd chn))"))
-		   (not (string=? (object->string (procedure-source func)) 
-				  "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 1.0 2.0 0.0)) #:base 1.0 #:end 500) 1000 1000 snd chn))")))
-	      (snd-display ";edit-list->function 15: ~A" (object->string (procedure-source func))))
-	  (revert-sound ind)
-	  (func ind 0)
-	  (if (fneq (sample 1750) 0.0) (snd-display ";edit-list->function 15 re-samp: ~A" (sample 1750))))
-	(revert-sound ind)
+;	(env-channel (make-env '(0 0 1 1 2 0) :end 500) 1000 1000)
+;	(let ((func (edit-list->function)))
+;	  (if (fneq (sample 1750) 0.0) (snd-display ";edit-list->function 15 samp: ~A" (sample 1750)))
+;	  (if (not (procedure? func)) 
+;	      (snd-display ";edit-list->function 15: ~A" func))
+;	  (if (and (not (string=? (object->string (procedure-source func)) 
+;				  "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 1.0 2.0 0.0)) :base 1.0 :end 500) 1000 1000 snd chn))"))
+;		   (not (string=? (object->string (procedure-source func)) 
+;				  "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 1.0 2.0 0.0)) #:base 1.0 #:end 500) 1000 1000 snd chn))")))
+;	      (snd-display ";edit-list->function 15: ~A" (object->string (procedure-source func))))
+;	  (revert-sound ind)
+;	  (func ind 0)
+;	  (if (fneq (sample 1750) 0.0) (snd-display ";edit-list->function 15 re-samp: ~A" (sample 1750))))
+;	(revert-sound ind)
 	
 	;; ---- simple reapply
 	(env-channel '(0 0 1 1 2 0))

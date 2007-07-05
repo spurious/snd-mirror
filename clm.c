@@ -185,6 +185,7 @@ Float mus_linear_to_db(Float x) {if (x > 0.0) return(20.0 * log10(x)); return(-1
 
 
 Float mus_srate(void) {return(sampling_rate);}
+
 Float mus_set_srate(Float val) 
 {
   Float prev; 
@@ -666,13 +667,28 @@ off_t mus_location(mus_any *gen)
 
 /* ---------------- AM etc ---------------- */
 
-Float mus_ring_modulate(Float sig1, Float sig2) {return(sig1 * sig2);}
+Float mus_ring_modulate(Float sig1, Float sig2) 
+{
+  return(sig1 * sig2);
+}
 
-Float mus_amplitude_modulate(Float carrier, Float sig1, Float sig2) {return(sig1 * (carrier + sig2));}
 
-Float mus_contrast_enhancement(Float sig, Float index) {return(sin((sig * M_PI_2) + (index * sin(sig * TWO_PI))));}
+Float mus_amplitude_modulate(Float carrier, Float sig1, Float sig2) 
+{
+  return(sig1 * (carrier + sig2));
+}
 
-void mus_clear_array(Float *arr, int size) {memset((void *)arr, 0, size * sizeof(Float));}
+
+Float mus_contrast_enhancement(Float sig, Float index) 
+{
+  return(sin((sig * M_PI_2) + (index * sin(sig * TWO_PI))));
+}
+
+
+void mus_clear_array(Float *arr, int size) 
+{
+  memset((void *)arr, 0, size * sizeof(Float));
+}
 
 
 bool mus_arrays_are_equal(Float *arr1, Float *arr2, Float fudge, int len)
@@ -1374,8 +1390,19 @@ bool mus_asymmetric_fm_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_
 Float mus_asymmetric_fm(mus_any *ptr, Float index, Float fm)
 {
   asyfm *gen = (asyfm *)ptr;
-  Float result, mth;
+  Float result;
+  double mth;
   mth = gen->ratio * gen->phase;
+
+#if 0
+  {
+    /* sincos is too hard to access, but it would be interesting to check timings (this also occurs in the fft's and polar->rectangular) */
+    double cf, sf;
+    sincos(mth, &sf, &cf);
+    result = exp(index * gen->cosr * cf) * sin(gen->phase + index * gen->sinr * sf);
+  }
+#endif
+
   result = exp(index * gen->cosr * cos(mth)) * sin(gen->phase + index * gen->sinr * sin(mth));
   /* second index factor added 4-Mar-02 */
   gen->phase += (gen->freq + fm);
