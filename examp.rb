@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Sat Mar 24 23:51:35 CET 2007
+# Changed: Fri Jun 01 11:57:35 CEST 2007
 
 # Commentary:
 #
@@ -282,7 +282,6 @@
 #  Snd.debug_trace(*args)
 #  Snd.sounds
 #  Snd.regions
-#  Snd.tracks
 #  Snd.marks(snd, chn)
 #  Snd.snd(snd)
 #  Snd.chn(chn)
@@ -2127,7 +2126,7 @@ def install_eval_hooks(file, retval, input, hook, &reset_cursor)
   eval_line = ""
   prompt = Snd_prompt.new(eval_level)
   reset_cursor.nil? or reset_cursor.call
-  $exit_hook.add_hook!(file) do prompt.reset end
+  $exit_hook.add_hook!(file) do | | prompt.reset end
   hook.add_hook!(file) do |line|
     eval_line << line << "\n"
     eval_level += Snd_eval.count_level(line)
@@ -2567,10 +2566,6 @@ class Snd
 
     def regions
       (Kernel.regions or []).reverse
-    end
-
-    def tracks
-      (Kernel.tracks or []).reverse
     end
     
     def marks(snd = false, chn = false)

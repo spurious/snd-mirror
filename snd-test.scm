@@ -1289,8 +1289,8 @@
     ))
 
 
-(if (and (not (equal? (default-output-data-format) mus-bfloat))
-	 (not (equal? (default-output-data-format) mus-lfloat)))
+(if (and (not (= (default-output-data-format) mus-bfloat))
+	 (not (= (default-output-data-format) mus-lfloat)))
     (set! (default-output-data-format) mus-lfloat))
 
 

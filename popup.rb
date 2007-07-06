@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Changed: Thu Oct 19 23:27:34 CEST 2006
+# Changed: Sat May 12 16:49:07 CEST 2007
 
 # Commentary:
 #
@@ -967,9 +967,6 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
                      ["Dolph-Chebyshev", Dolph_chebyshev_window],
                      ["Hann-Poisson", Hann_poisson_window],
                      ["Connes", Connes_window],
-                     ["Bartlett-Hann", Bartlett_hann_window],
-                     ["Bohman", Bohman_window],
-                     ["Flat top", Flat_top_window],
                      ["Samaraki", Samaraki_window],
                      ["Ultraspherical", Ultraspherical_window]]) do |snd, chn, val|
         set_fft_window(val, snd, choose_chan.call(snd, chn))
@@ -1173,8 +1170,7 @@ all saved edit lists.",
         end
         each_entry do |w1|
           if widget?(w1)
-            case name = widget_name(w1)
-            when "Help"
+            if (name = widget_name(w1)) == "Help"
               if subject = listener_selection
                 change_label(w1, format("Help on %s", subject.inspect))
                 show_widget(w1)

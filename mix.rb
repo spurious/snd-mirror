@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Feb 22 13:40:33 CET 2005
-# Changed: Thu Apr 26 00:02:03 CEST 2007
+# Changed: Thu Jul 05 22:19:55 CEST 2007
 
 # Commentary:
 #
@@ -19,7 +19,7 @@
 #
 #  mix_property(id, key)
 #  set_mix_property(id, key, val)
-#  mix_click_sets_amp(id)
+#  mix_click_sets_amp
 #  mix_click_info(id)
 #  mix_name2id(name)
 #
@@ -145,7 +145,11 @@ returns the value associated with KEY in the given mix's property list, or false
   def mix_property(id, key)
     Snd.raise(:no_such_mix, id) unless mix?(id)
     if (data = mix_properties(id)) and (res = data.assoc(key))
-      res.cdr
+      if (val = res.cdr).length == 1
+        val.car
+      else
+        val
+      end
     else
       false
     end
@@ -165,20 +169,22 @@ sets the value VAL to KEY in the given mix's property list.")
     else                        # new list
       set_mix_properties(id, [[key, val]])
     end
+    val
   end
 
-  def mix_click_sets_amp(id)
-    unless mix_property(id, :zero)
-      set_mix_property(id, :amp, mix_amp(id))
-      set_mix_amp(id, 0.0)
-      set_mix_property(id, :zero, true)
-    else
-      set_mix_amp(id, mix_property(id, :amp))
-      set_mix_property(id, :zero, false)
+  def mix_click_sets_amp
+    $mix_click_hook.add_hook!("mix-click-sets-amp") do |id|
+      unless mix_property(id, :zero)
+        set_mix_property(id, :amp, mix_amp(id))
+        set_mix_amp(id, 0.0)
+        set_mix_property(id, :zero, true)
+      else
+        set_mix_amp(id, mix_property(id, :amp))
+        set_mix_property(id, :zero, false)
+      end
+      true
     end
-    true
   end
-  # $mix_click_hook.add_hook!("mix-click-sets-amp", &method(:mix_click_sets_amp).to_proc)
 
   # 
   # === Mix Click Info ===

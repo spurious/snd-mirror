@@ -2747,13 +2747,28 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
     /* (mix-vct (vct .1 .2 .3) 100 0 0 #t "mix-vct (vct .1 .2 .3)") */
 
 #if HAVE_FORTH
-    new_origin = mus_format(OFF_TD " snd chn %s to -mix-%d", bg, edname, mix_infos_ctr);
+    /* vct( 0.1 0.2 0.3 ) 100 snd chn #t "vct( 0.1 0.2, 0.3 )" mix-vct */ 
+    { 
+      if (edname && *edname) 
+	{ 
+	  char *name; 
+	  if ((name = strrchr(edname, ' '))) 
+	    name++; 
+	  else 
+	    name = S_mix_vct; 
+	  new_origin = mus_format("%.*s " OFF_TD " snd chn %s to -mix-%d", 
+				  strlen(edname) - strlen(name) - 1, edname, 
+				  bg, name, mix_infos_ctr); 
+	} 
+      else new_origin = mus_format("vct( 0 ) " OFF_TD " snd chn %s to -mix-%d", bg, S_mix_vct, mix_infos_ctr); 
+    } 
 #endif
 #if HAVE_SCHEME
     new_origin = mus_format("(set! -mix-%d (%s " OFF_TD " snd chn))", mix_infos_ctr, edname, bg);
 #endif
 #if HAVE_RUBY
-    new_origin = mus_format("_mix_%d = %s(" OFF_TD ", snd, chn)", mix_infos_ctr, TO_PROC_NAME(edname), bg);
+    /* mix_vct(vct(0.1, 0.2, 0.3), 100, snd, chn, true, "mix_vct(vct(0.1, 0.2, 0.3)") */ 
+    new_origin = mus_format("_mix_%d = %s, " OFF_TD ", snd, chn)", mix_infos_ctr, edname, bg); 
 #endif
 
     mix_id = mix_buffer_with_tag(cp, data, bg, len, new_origin); 

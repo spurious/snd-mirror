@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Wed Apr 18 02:18:00 CEST 2007
+\ Changed: Thu Jul 05 10:41:36 CEST 2007
 
 \ Commentary:
 \
@@ -1439,10 +1439,11 @@ instrument: reson <{ start dur pitch amp
 ;
 
 \ STK's feedback-fm instrument named CelloN in Sambox-land
-instrument: cellon <{ start dur pitch0
-     amp ampfun betafun beta0 beta1 betaat betadc ampat ampdc
+instrument: cellon <{ start dur pitch0 amp ampfun
+     betafun beta0 beta1 betaat betadc ampat ampdc
      pitch1 glissfun glissat glissdc
-     pvibfreq pvibpc pvibfun pvibat pvibdc rvibfreq rvibpc rvibfun -- }>
+     pvibfreq pvibpc pvibfun pvibat pvibdc
+     rvibfreq rvibpc rvibfun -- }>
   pitch1 f0= if pitch0 else pitch1 then { pit1 }
   :frequency pitch0                               make-oscil         { carr }
   0.5 -0.5                                        make-one-zero      { low }
@@ -1485,10 +1486,17 @@ instrument: cellon <{ start dur pitch0
 
 : cellon-test <{ :optional start 0.0 dur 1.0 -- }>
   start now!
-  '( 0 0 25 1 75 1 100 0 ) { env1 }
-  '( 0 0 100 0 ) { env2 }
   
-  now@ dur 220 0.5 env1 env1 0.75 1 0 0 0 0 220 env1 0 0 0 0 env2 0 0 0 0 env2 cellon
+  now@ dur 220 0.5
+  '( 0 0 25 1 75 1 100 0 )		\ ampfun
+  '( 0 0 25 1 75 1 100 0 )		\ betafun
+  0.75 1 0 0 0 0 220
+  '( 0 0 25 1 75 1 100 0 )		\ glissfun
+  0 0 0 0
+  '( 0 0 100 0 )			\ pvibfun
+  0 0 0 0
+  '( 0 0 100 0 )			\ rvibfun
+  cellon
   dur 0.2 f+ step
 ;
 

@@ -309,6 +309,10 @@ def vcneql(a, b)
   end
 end
 
+def vmaxdiff(v0, v1)
+  v0.dup.subtract(v1).peak
+end
+
 def rs(val)
   random(1.0) < val
 end
@@ -1256,6 +1260,8 @@ def test00
             [:mark_tag_height, 4],
             [:mark_tag_width, 10],
             [:max_regions, 16],
+            [:max_virtual_ptrees, 3],
+            [:max_virtual_xramps, 2],
             [:max_transform_peaks, 100],
             [:min_dB, -60.0],
             [:minibuffer_history_length, 8],
@@ -1393,159 +1399,158 @@ def test01
         $better_colormap = ($good_colormap..19).detect do |c| colormap?(c) end
       end
     end
-    controls = [
-      [:ask_before_overwrite, false],
-      [:audio_output_device, 0],
-      [:auto_resize, true],
-      [:auto_update, false],
-      [:channel_style, 1],
-      [:color_cutoff, 0.003],
-      [:color_inverted, true],
-      [:color_scale, 1.0],
-      unless provided? :snd_nogui
-        [:colormap, $good_colormap]
-      end,
-      [:clipping, false],
-      [:contrast_control_amp, 1.0],
-      [:cursor_location_offset, 0],
-      [:cursor_size, 15], 
-      [:cursor_style, Cursor_cross],
-      [:cursor_update_interval, 0.05],
-      [:dac_combines_channels, true],
-      [:dac_size, 256],
-      [:default_output_chans, 1],
-      [:default_output_data_format, Mus_bshort],
-      [:default_output_header_type, Mus_next],
-      [:default_output_srate, 22050],
-      [:dot_size, 1],
-      [:enved_base, 1.0],
-      [:enved_clip?, false],
-      unless provided? :snd_nogui
-        [:enved_filter, true]
-      end,
-      [:enved_filter_order, 40],
-      [:enved_in_dB, false],
-      [:enved_power, 3.0],
-      [:enved_style, Envelope_linear],
-      [:enved_target, 0],
-      [:enved_wave?, false],
-      [:eps_bottom_margin, 0.0],
-      [:eps_file, "snd.eps"],
-      [:eps_left_margin, 0.0],
-      [:eps_size, 1.0],
-      [:expand_control_hop, 0.05],
-      [:expand_control_jitter, 0.1],
-      [:expand_control_length, 0.15],
-      [:expand_control_ramp, 0.4],
-      [:fft_log_frequency, false],
-      [:fft_log_magnitude, false],
-      [:fft_window, 6],
-      [:fft_window_alpha, 0.0],
-      [:fft_window_beta, 0.0],
-      [:filter_control_in_dB, false],
-      [:filter_control_in_hz, false],
-      [:filter_control_order, 20],
-      unless provided? :snd_nogui
-        [:graph_cursor, 34]
-      end,
-      [:graph_style, Graph_lines],
-      [:graphs_horizontal, true],
-      [:grid_density, 1.0],
-      [:html_dir, "."],
-      [:html_program, "firefox"],
-      [:just_sounds, false],
-      [:ladspa_dir, ""],
-      [:listener_prompt, ">"],
-      [:log_freq_start, 32.0],
-      [:max_regions, 16],
-      [:max_transform_peaks, 100],
-      [:min_dB, -60.0],
-      [:minibuffer_history_length, 8],
-      [:print_length, 12],
-      [:region_graph_style, Graph_lines],
-      [:reverb_control_feedback, 1.09],
-      [:reverb_control_lowpass, 0.7],
-      [:save_state_file, "saved-snd.rb"],
-      [:selection_creates_region, true],
-      [:show_axes, 1],
-      [:show_backtrace, false],
-      [:show_controls, false],
-      [:show_grid, false],
-      [:show_indices, false],
-      [:show_marks, true],
-      [:show_mix_waveforms, true],
-      [:show_selection_transform, false],
-      [:show_sonogram_cursor, false],
-      [:show_transform_peaks, false],
-      [:show_y_zero, false],
-      [:sinc_width, 10],
-      [:spectro_cutoff, 1.0],
-      [:spectro_hop, 4],
-      [:spectro_start, 0.0],
-      [:spectro_x_angle, (provided?(:gl) ? 300.0 : 90.0)],
-      [:spectro_x_scale, (provided?(:gl) ? 1.5 : 1.0)],
-      [:spectro_y_angle, (provided?(:gl) ? 320.0 : 0.0)],
-      [:spectro_y_scale, 1.0],
-      [:spectro_z_angle, (provided?(:gl) ? 0.0 : 358.0)],
-      [:spectro_z_scale, (provided?(:gl) ? 1.0 : 0.1)],
-      [:temp_dir, ""],
-      unless provided? :snd_nogui
-        [:tiny_font, if provided? :snd_motif
-                       "6x12"
-                     elsif provided? :snd_gtk
-                       "Monospace 8"
-                     end]
-      end,
-      [:beats_per_measure, 4],
-      [:beats_per_minute, 60.0],
-      [:clm_table_size, 512],
-      [:mark_tag_height, 4],
-      [:mark_tag_width, 10],
-      [:mix_tag_height, 14],
-      [:mix_tag_width, 6],
-      [:mix_waveform_height, 20],
-      [:optimization, 0],
-      [:run_safety, 0],
-      [:time_graph_type, Graph_once],
-      [:tracking_cursor_style, Cursor_cross],
-      [:transform_graph_type, 0],
-      [:transform_normalization, Normalize_by_channel],
-      [:transform_size, 512],
-      [:transform_type, 0],
-      [:wavelet_type, 0],
-      [:wavo_hop, 3],
-      [:wavo_trace, 64],
-      [:with_mix_tags, (provided?(:snd_nogui) ? false : true)],
-      [:with_relative_panes, true],
-      [:with_verbose_cursor, false],
-      [:x_axis_style, 0],
-      [:zero_pad, 0],
-      [:zoom_focus_style, 2]]
-    specials = [
-      :amp_control,
-      :contrast_control,
-      :contrast_control?,
-      :expand_control,
-      :expand_control?,
-      :transform_graph?,
-      :filter_control_coeffs,
-      :filter_control_envelope,
-      :filter_control?,
-      :lisp_graph?,
-      :read_only,
-      :reverb_control_length,
-      :reverb_control_scale,
-      :reverb_control?,
-      :speed_control,
-      :sync,
-      :time_graph?]
-    cadr = [
-      [:amp_control_bounds, 8.0],
-      [:contrast_control_bounds, 10.0],
-      [:expand_control_bounds, 20.0],
-      [:reverb_control_length_bounds, 5.0],
-      [:reverb_control_scale_bounds, 4.0],
-      [:speed_control_bounds, 20.0]]
+    controls = [[:ask_before_overwrite, false],
+                [:audio_output_device, 0],
+                [:auto_resize, true],
+                [:auto_update, false],
+                [:channel_style, 1],
+                [:color_cutoff, 0.003],
+                [:color_inverted, true],
+                [:color_scale, 1.0],
+                unless provided? :snd_nogui
+                  [:colormap, $good_colormap]
+                end,
+                [:clipping, false],
+                [:contrast_control_amp, 1.0],
+                [:cursor_location_offset, 0],
+                [:cursor_size, 15], 
+                [:cursor_style, Cursor_cross],
+                [:cursor_update_interval, 0.05],
+                [:dac_combines_channels, true],
+                [:dac_size, 256],
+                [:default_output_chans, 1],
+                [:default_output_data_format, Mus_bshort],
+                [:default_output_header_type, Mus_next],
+                [:default_output_srate, 22050],
+                [:dot_size, 1],
+                [:enved_base, 1.0],
+                [:enved_clip?, false],
+                unless provided? :snd_nogui
+                  [:enved_filter, true]
+                end,
+                [:enved_filter_order, 40],
+                [:enved_in_dB, false],
+                [:enved_power, 3.0],
+                [:enved_style, Envelope_linear],
+                [:enved_target, 0],
+                [:enved_wave?, false],
+                [:eps_bottom_margin, 0.0],
+                [:eps_file, "snd.eps"],
+                [:eps_left_margin, 0.0],
+                [:eps_size, 1.0],
+                [:expand_control_hop, 0.05],
+                [:expand_control_jitter, 0.1],
+                [:expand_control_length, 0.15],
+                [:expand_control_ramp, 0.4],
+                [:fft_log_frequency, false],
+                [:fft_log_magnitude, false],
+                [:fft_window, 6],
+                [:fft_window_alpha, 0.0],
+                [:fft_window_beta, 0.0],
+                [:filter_control_in_dB, false],
+                [:filter_control_in_hz, false],
+                [:filter_control_order, 20],
+                unless provided? :snd_nogui
+                  [:graph_cursor, 34]
+                end,
+                [:graph_style, Graph_lines],
+                [:graphs_horizontal, true],
+                [:grid_density, 1.0],
+                [:html_dir, "."],
+                [:html_program, "firefox"],
+                [:just_sounds, false],
+                [:ladspa_dir, ""],
+                [:listener_prompt, ">"],
+                [:log_freq_start, 32.0],
+                [:max_regions, 16],
+                [:max_virtual_ptrees, 3],
+                [:max_virtual_xramps, 2],
+                [:max_transform_peaks, 100],
+                [:min_dB, -60.0],
+                [:minibuffer_history_length, 8],
+                [:print_length, 12],
+                [:region_graph_style, Graph_lines],
+                [:reverb_control_feedback, 1.09],
+                [:reverb_control_lowpass, 0.7],
+                [:save_state_file, "saved-snd.rb"],
+                [:selection_creates_region, true],
+                [:show_axes, 1],
+                [:show_backtrace, false],
+                [:show_controls, false],
+                [:show_grid, false],
+                [:show_indices, false],
+                [:show_marks, true],
+                [:show_mix_waveforms, true],
+                [:show_selection_transform, false],
+                [:show_sonogram_cursor, false],
+                [:show_transform_peaks, false],
+                [:show_y_zero, false],
+                [:sinc_width, 10],
+                [:spectro_cutoff, 1.0],
+                [:spectro_hop, 4],
+                [:spectro_start, 0.0],
+                [:spectro_x_angle, (provided?(:gl) ? 300.0 : 90.0)],
+                [:spectro_x_scale, (provided?(:gl) ? 1.5 : 1.0)],
+                [:spectro_y_angle, (provided?(:gl) ? 320.0 : 0.0)],
+                [:spectro_y_scale, 1.0],
+                [:spectro_z_angle, (provided?(:gl) ? 0.0 : 358.0)],
+                [:spectro_z_scale, (provided?(:gl) ? 1.0 : 0.1)],
+                [:temp_dir, ""],
+                unless provided? :snd_nogui
+                  [:tiny_font, if provided? :snd_motif
+                                 "6x12"
+                               elsif provided? :snd_gtk
+                                 "Monospace 8"
+                               end]
+                end,
+                [:beats_per_measure, 4],
+                [:beats_per_minute, 60.0],
+                [:clm_table_size, 512],
+                [:mark_tag_height, 4],
+                [:mark_tag_width, 10],
+                [:mix_tag_height, 14],
+                [:mix_tag_width, 6],
+                [:mix_waveform_height, 20],
+                [:optimization, 0],
+                [:run_safety, 0],
+                [:time_graph_type, Graph_once],
+                [:tracking_cursor_style, Cursor_cross],
+                [:transform_graph_type, 0],
+                [:transform_normalization, Normalize_by_channel],
+                [:transform_size, 512],
+                [:transform_type, 0],
+                [:wavelet_type, 0],
+                [:wavo_hop, 3],
+                [:wavo_trace, 64],
+                [:with_mix_tags, (provided?(:snd_nogui) ? false : true)],
+                [:with_relative_panes, true],
+                [:with_verbose_cursor, false],
+                [:x_axis_style, 0],
+                [:zero_pad, 0],
+                [:zoom_focus_style, 2]]
+    specials = [:amp_control,
+                :contrast_control,
+                :contrast_control?,
+                :expand_control,
+                :expand_control?,
+                :transform_graph?,
+                :filter_control_coeffs,
+                :filter_control_envelope,
+                :filter_control?,
+                :lisp_graph?,
+                :read_only,
+                :reverb_control_length,
+                :reverb_control_scale,
+                :reverb_control?,
+                :speed_control,
+                :sync,
+                :time_graph?]
+    cadr = [[:amp_control_bounds, 8.0],
+            [:contrast_control_bounds, 10.0],
+            [:expand_control_bounds, 20.0],
+            [:reverb_control_length_bounds, 5.0],
+            [:reverb_control_scale_bounds, 4.0],
+            [:speed_control_bounds, 20.0]]
     test001(controls, :normal)
     test001(specials, :without_error)
     test001(cadr, :cadr)
@@ -4665,46 +4670,35 @@ EDITS: 0
   end
   insert_samples(10, 10, make_vct(10))
   str = format("
-EDITS: 2
+EDITS: 1
 
  (begin) [0:2]:
    (at 0, cp->sounds[0][0:0, 0.000]) [file: %s/test.snd[0]]
    (at 1, end_mark)
 
- (silence 1 9) ; pad-channel [1:3]:
-   (at 0, cp->sounds[0][0:0, 0.000]) [file: %s/test.snd[0]]
-   (at 1, cp->sounds[-1][0:8, 0.000])
-   (at 10, end_mark)
-
- (insert 10 10) ; insert_samples [2:4]:
+ (insert 1 20) ; insert_samples [1:4]:
    (at 0, cp->sounds[0][0:0, 0.000]) [file: %s/test.snd[0]]
    (at 1, cp->sounds[-1][0:8, 0.000])
    (at 10, cp->sounds[1][0:9, 1.000]) [buf: 10] 
    (at 20, end_mark)
-", Dir.pwd, Dir.pwd, Dir.pwd)
+", Dir.pwd, Dir.pwd)
   if (res = safe_display_edits) != str
     snd_display("new 1: %s %s?", str, res)
   end
   undo_edit
   insert_samples(0, 10, make_vct(10))
   str = format("
-EDITS: 2
+EDITS: 1
 
  (begin) [0:2]:
    (at 0, cp->sounds[0][0:0, 0.000]) [file: %s/test.snd[0]]
    (at 1, end_mark)
 
- (silence 1 9) ; pad-channel [1:3]:
-   (at 0, cp->sounds[0][0:0, 0.000]) [file: %s/test.snd[0]]
-   (at 1, cp->sounds[-1][0:8, 0.000])
-   (at 10, end_mark)
-
- (insert 0 10) ; insert_samples [2:4]:
+ (insert 0 10) ; insert_samples [1:3]:
    (at 0, cp->sounds[1][0:9, 1.000]) [buf: 10] 
    (at 10, cp->sounds[0][0:0, 0.000]) [file: %s/test.snd[0]]
-   (at 11, cp->sounds[-1][0:8, 0.000])
-   (at 20, end_mark)
-", Dir.pwd, Dir.pwd, Dir.pwd)
+   (at 11, end_mark)
+", Dir.pwd, Dir.pwd)
   if (res = safe_display_edits) != str
     snd_display("new 2: %s %s?", str, res)
   end
@@ -4930,14 +4924,7 @@ EDITS: 5
 ")
   set_samples(30, 10, make_vct(10))
   test_output.call("
- (silence 20 11) ; pad-channel [19:4]:
-   (at 0, cp->sounds[12][0:11, 1.000]) [buf: 12] 
-   (at 12, cp->sounds[9][2:9, 1.000]) [buf: 10] 
-   (at 20, cp->sounds[-1][0:10, 0.000])
-   (at 31, end_mark)
-")
-  test_output.call("
- (set 30 10) ; set-samples [20:5]:
+ (set 20 21) ; set-samples [19:5]:
    (at 0, cp->sounds[12][0:11, 1.000]) [buf: 12] 
    (at 12, cp->sounds[9][2:9, 1.000]) [buf: 10] 
    (at 20, cp->sounds[-1][0:9, 0.000])
@@ -5245,14 +5232,14 @@ def test025
   xramp_channel(0.0, 1.0, 32.0)
   test_output.call(2, "
  (ramp 0 10) ; xramp_channel(0.000, 1.000, 32.000, 0, false [2:2]:
-   (at 0, cp->sounds[1][0:9, 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:9, 1.000, [1]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 ")
   undo_edit
   xramp_channel(0.0, 1.0, 0.325)
   test_output.call(2, "
  (ramp 0 10) ; xramp_channel(0.000, 1.000, 0.325, 0, false [2:2]:
-   (at 0, cp->sounds[1][0:9, 1.000, [4]0.000 -> -1.124, off: 1.481, scl: -1.481]) [buf: 10] 
+   (at 0, cp->sounds[1][0:9, 1.000, [1]0.000 -> -1.124, off: 1.481, scl: -1.481]) [buf: 10] 
    (at 10, end_mark)
 ")
   undo_edit
@@ -5273,7 +5260,7 @@ def test025
   xramp_channel(0.5, 1.5, 32.0)
   test_output.call(2, "
  (ramp 0 10) ; xramp_channel(0.500, 1.500, 32.000, 0, false [2:2]:
-   (at 0, cp->sounds[1][0:9, 1.000, [4]0.000 -> 3.466, off: 0.468, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:9, 1.000, [1]0.000 -> 3.466, off: 0.468, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 ")
   if fneq(maxamp, 1.5) or fneq(sample(0), 0.5)
@@ -5283,7 +5270,7 @@ def test025
   xramp_channel(-0.5, 1.5, 32.0)
   test_output.call(2, "
  (ramp 0 10) ; xramp_channel(-0.500, 1.500, 32.000, 0, false [2:2]:
-   (at 0, cp->sounds[1][0:9, 1.000, [4]0.000 -> 3.466, off: -0.565, scl: 0.065]) [buf: 10] 
+   (at 0, cp->sounds[1][0:9, 1.000, [1]0.000 -> 3.466, off: -0.565, scl: 0.065]) [buf: 10] 
    (at 10, end_mark)
 ")
   if fneq(maxamp, 1.5) or fneq(sample(0), -0.5)
@@ -5295,7 +5282,7 @@ def test025
   scale_channel(0.5)
   test_output.call(3, "
  (scale 0 10) ; scale_channel(0.500, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:9, 0.500, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 ")
   ctr = 0
@@ -5313,7 +5300,7 @@ def test025
   delete_sample(0)
   test_output.call(3, "
  (delete 0 1) ; delete_samples(0, 1 [3:2]:
-   (at 0, cp->sounds[1][1:9, 1.000, [4]0.385 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][1:9, 1.000, [1]0.385 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 9, end_mark)
 ")
   ctr = 1
@@ -5331,7 +5318,7 @@ def test025
   delete_samples(0, 2)
   test_output.call(3, "
  (delete 0 2) ; delete_samples(0, 2 [3:2]:
-   (at 0, cp->sounds[1][2:9, 1.000, [4]0.770 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][2:9, 1.000, [1]0.770 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 8, end_mark)
 ")
   ctr = 2
@@ -5350,32 +5337,32 @@ def test025
   delete_sample(0)
   test_output.call(4, "
  (delete 0 1) ; delete_samples(0, 1 [4:2]:
-   (at 0, cp->sounds[1][2:9, 1.000, [4]0.770 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][2:9, 1.000, [1]0.770 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 8, end_mark)
 ")
   undo_edit(2)
   delete_sample(4)
   test_output.call(3, "
  (delete 4 1) ; delete_samples(4, 1 [3:3]:
-   (at 0, cp->sounds[1][0:3, 1.000, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
-   (at 4, cp->sounds[1][5:9, 1.000, [4]1.925 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 4, cp->sounds[1][5:9, 1.000, [1]1.925 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 9, end_mark)
 ")
   undo_edit
   delete_samples(4, 2)
   test_output.call(3, "
  (delete 4 2) ; delete_samples(4, 2 [3:3]:
-   (at 0, cp->sounds[1][0:3, 1.000, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
-   (at 4, cp->sounds[1][6:9, 1.000, [4]2.310 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 4, cp->sounds[1][6:9, 1.000, [1]2.310 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 8, end_mark)
 ")
   undo_edit
   scale_channel(0.5, 4, 2)
   test_output.call(3, "
  (scale 4 2) ; scale_channel(0.500, 4, 2 [3:4]:
-   (at 0, cp->sounds[1][0:3, 1.000, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
-   (at 4, cp->sounds[1][4:5, 0.500, [4]1.540 -> 1.925, off: -0.032, scl: 0.032]) [buf: 10] 
-   (at 6, cp->sounds[1][6:9, 1.000, [4]2.310 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 4, cp->sounds[1][4:5, 0.500, [1]1.540 -> 1.925, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 6, cp->sounds[1][6:9, 1.000, [1]2.310 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 ")
   ctr = 0
@@ -5395,35 +5382,35 @@ def test025
   scale_channel(0.5, 0, 2)
   test_output.call(3, "
  (scale 0 2) ; scale_channel(0.500, 0, 2 [3:3]:
-   (at 0, cp->sounds[1][0:1, 0.500, [4]0.000 -> 0.385, off: -0.032, scl: 0.032]) [buf: 10] 
-   (at 2, cp->sounds[1][2:9, 1.000, [4]0.770 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:1, 0.500, [1]0.000 -> 0.385, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 2, cp->sounds[1][2:9, 1.000, [1]0.770 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 ")
   undo_edit
   pad_channel(4, 2)
   test_output.call(3, "
  (silence 4 2) ; pad-channel [3:4]:
-   (at 0, cp->sounds[1][0:3, 1.000, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[-1][0:1, 0.000])
-   (at 6, cp->sounds[1][4:9, 1.000, [4]1.540 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 6, cp->sounds[1][4:9, 1.000, [1]1.540 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 12, end_mark)
 ")
   undo_edit
   set_sample(4, 1.0)
   test_output.call(3, "
  (set 4 1) ; set_sample(4, 1.0000 [3:4]:
-   (at 0, cp->sounds[1][0:3, 1.000, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
-   (at 5, cp->sounds[1][5:9, 1.000, [4]1.925 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 5, cp->sounds[1][5:9, 1.000, [1]1.925 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 ")
   undo_edit
   set_samples(4, 2, make_vct(2))
   test_output.call(3, "
  (set 4 2) ; set-samples [3:4]:
-   (at 0, cp->sounds[1][0:3, 1.000, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[2][0:1, 1.000]) [buf: 2] 
-   (at 6, cp->sounds[1][6:9, 1.000, [4]2.310 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 6, cp->sounds[1][6:9, 1.000, [1]2.310 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 ")
   undo_edit
@@ -5431,9 +5418,9 @@ def test025
   set_samples(4, 2, make_vct(2))
   test_output.call(4, "
  (set 4 2) ; set-samples [4:4]:
-   (at 0, cp->sounds[1][0:3, 0.500, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:3, 0.500, [1]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[2][0:1, 1.000]) [buf: 2] 
-   (at 6, cp->sounds[1][6:9, 0.500, [4]2.310 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 6, cp->sounds[1][6:9, 0.500, [1]2.310 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 ")
   close_sound(ind)
@@ -5673,7 +5660,7 @@ def test045
   xramp_channel(0.0, 1.0, 32.0)
   test_output.call(3, "
  (ramp 0 11) ; xramp_channel(0.000, 1.000, 32.000, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   unless vequal(case1 = channel2vct,
@@ -5683,15 +5670,15 @@ def test045
   scale_channel(0.5)
   test_output.call(4, "
  (scale 0 11) ; scale_channel(0.500, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 0.500, [1]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 0.500, [1]0.000 -> 1.000, [2]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo_edit
   scale_channel(0.5, 0, 5)
   test_output.call(4, "
  (scale 0 5) ; scale_channel(0.500, 0, 5 [4:3]:
-   (at 0, cp->sounds[1][0:4, 0.500, [1]0.000 -> 0.400, [4]0.000 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 5, cp->sounds[1][5:10, 1.000, [1]0.500 -> 1.000, [4]1.733 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:4, 0.500, [1]0.000 -> 0.400, [2]0.000 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 5, cp->sounds[1][5:10, 1.000, [1]0.500 -> 1.000, [2]1.733 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   unless vequal(case2 = channel2vct,
@@ -5702,16 +5689,16 @@ def test045
   scale_channel(0.5, 2, 4)
   test_output.call(4, "
  (scale 2 4) ; scale_channel(0.500, 2, 4 [4:4]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 2, cp->sounds[1][2:5, 0.500, [1]0.200 -> 0.500, [4]0.693 -> 1.733, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 6, cp->sounds[1][6:10, 1.000, [1]0.600 -> 1.000, [4]2.079 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [2]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 2, cp->sounds[1][2:5, 0.500, [1]0.200 -> 0.500, [2]0.693 -> 1.733, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 6, cp->sounds[1][6:10, 1.000, [1]0.600 -> 1.000, [2]2.079 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo_edit(2)
   xramp_channel(0.75, 0.25, 32.0)
   test_output.call(3, "
  (ramp 0 11) ; xramp_channel(0.750, 0.250, 32.000, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [4]3.466 -> 0.000, off: 0.234, scl: 0.016]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]3.466 -> 0.000, off: 0.234, scl: 0.016]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo_edit
@@ -5719,7 +5706,7 @@ def test045
   test_output.call(3, "
  (ramp 2 6) ; xramp_channel(0.200, 0.600, 3.000, 2, 6 [3:4]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100]) [buf: 11] 
-   (at 2, cp->sounds[1][2:7, 1.000, [1]0.200 -> 0.700, [4]0.000 -> 1.099, off: 0.000, scl: 0.200]) [buf: 11] 
+   (at 2, cp->sounds[1][2:7, 1.000, [1]0.200 -> 0.700, [2]0.000 -> 1.099, off: 0.000, scl: 0.200]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
@@ -5727,8 +5714,8 @@ def test045
   test_output.call(4, "
  (scale 0 5) ; scale_channel(0.500, 0, 5 [4:5]:
    (at 0, cp->sounds[1][0:1, 0.500, [1]0.000 -> 0.100]) [buf: 11] 
-   (at 2, cp->sounds[1][2:4, 0.500, [1]0.200 -> 0.400, [4]0.000 -> 0.439, off: 0.000, scl: 0.200]) [buf: 11] 
-   (at 5, cp->sounds[1][5:7, 1.000, [1]0.500 -> 0.700, [4]0.659 -> 1.099, off: 0.000, scl: 0.200]) [buf: 11] 
+   (at 2, cp->sounds[1][2:4, 0.500, [1]0.200 -> 0.400, [2]0.000 -> 0.439, off: 0.000, scl: 0.200]) [buf: 11] 
+   (at 5, cp->sounds[1][5:7, 1.000, [1]0.500 -> 0.700, [2]0.659 -> 1.099, off: 0.000, scl: 0.200]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
@@ -5737,9 +5724,9 @@ def test045
   test_output.call(4, "
  (set 4 1) ; set_sample(4, 0.5000 [4:6]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100]) [buf: 11] 
-   (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.300, [4]0.000 -> 0.220, off: 0.000, scl: 0.200]) [buf: 11] 
+   (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.300, [2]0.000 -> 0.220, off: 0.000, scl: 0.200]) [buf: 11] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
-   (at 5, cp->sounds[1][5:7, 1.000, [1]0.500 -> 0.700, [4]0.659 -> 1.099, off: 0.000, scl: 0.200]) [buf: 11] 
+   (at 5, cp->sounds[1][5:7, 1.000, [1]0.500 -> 0.700, [2]0.659 -> 1.099, off: 0.000, scl: 0.200]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
@@ -5750,7 +5737,7 @@ def test045
   ramp_channel(0.0, 1.0)
   test_output.call(3, "
  (ramp 0 11) ; ramp_channel(0.000, 1.000, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   unless vequal(case1, (res = channel2vct))
@@ -5759,15 +5746,15 @@ def test045
   scale_channel(0.5)
   test_output.call(4, "
  (scale 0 11) ; scale_channel(0.500, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 0.500, [1]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 0.500, [1]0.000 -> 1.000, [2]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo_edit
   scale_channel(0.5, 0, 5)
   test_output.call(4, "
  (scale 0 5) ; scale_channel(0.500, 0, 5 [4:3]:
-   (at 0, cp->sounds[1][0:4, 0.500, [1]0.000 -> 0.400, [4]0.000 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 5, cp->sounds[1][5:10, 1.000, [1]0.500 -> 1.000, [4]1.733 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:4, 0.500, [1]0.000 -> 0.400, [2]0.000 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 5, cp->sounds[1][5:10, 1.000, [1]0.500 -> 1.000, [2]1.733 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   unless vequal(case2, (res = channel2vct))
@@ -5777,45 +5764,45 @@ def test045
   scale_channel(0.5, 2, 4)
   test_output.call(4, "
  (scale 2 4) ; scale_channel(0.500, 2, 4 [4:4]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 2, cp->sounds[1][2:5, 0.500, [1]0.200 -> 0.500, [4]0.693 -> 1.733, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 6, cp->sounds[1][6:10, 1.000, [1]0.600 -> 1.000, [4]2.079 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [2]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 2, cp->sounds[1][2:5, 0.500, [1]0.200 -> 0.500, [2]0.693 -> 1.733, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 6, cp->sounds[1][6:10, 1.000, [1]0.600 -> 1.000, [2]2.079 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo_edit(2)
   ramp_channel(0.75, 0.25)
   test_output.call(3, "
  (ramp 0 11) ; ramp_channel(0.750, 0.250, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]0.750 -> 0.250, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.750 -> 0.250, [2]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo_edit
   ramp_channel(0.2, 0.6, 2, 6)
   test_output.call(3, "
  (ramp 2 6) ; ramp_channel(0.200, 0.600, 2, 6 [3:4]:
-   (at 0, cp->sounds[1][0:1, 1.000, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 2, cp->sounds[1][2:7, 1.000, [1]0.200 -> 0.600, [4]0.693 -> 2.426, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 8, cp->sounds[1][8:10, 1.000, [4]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 2, cp->sounds[1][2:7, 1.000, [1]0.200 -> 0.600, [2]0.693 -> 2.426, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 8, cp->sounds[1][8:10, 1.000, [1]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   scale_channel(0.5, 0, 5)
   test_output.call(4, "
  (scale 0 5) ; scale_channel(0.500, 0, 5 [4:5]:
-   (at 0, cp->sounds[1][0:1, 0.500, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 2, cp->sounds[1][2:4, 0.500, [1]0.200 -> 0.360, [4]0.693 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 5, cp->sounds[1][5:7, 1.000, [1]0.440 -> 0.600, [4]1.733 -> 2.426, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 8, cp->sounds[1][8:10, 1.000, [4]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 0.500, [1]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 2, cp->sounds[1][2:4, 0.500, [1]0.200 -> 0.360, [2]0.693 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 5, cp->sounds[1][5:7, 1.000, [1]0.440 -> 0.600, [2]1.733 -> 2.426, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 8, cp->sounds[1][8:10, 1.000, [1]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo_edit
   set_sample(4, 0.5)
   test_output.call(4, "
  (set 4 1) ; set_sample(4, 0.5000 [4:6]:
-   (at 0, cp->sounds[1][0:1, 1.000, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280, [4]0.693 -> 1.040, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280, [2]0.693 -> 1.040, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
-   (at 5, cp->sounds[1][5:7, 1.000, [1]0.440 -> 0.600, [4]1.733 -> 2.426, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 8, cp->sounds[1][8:10, 1.000, [4]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 5, cp->sounds[1][5:7, 1.000, [1]0.440 -> 0.600, [2]1.733 -> 2.426, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 8, cp->sounds[1][8:10, 1.000, [1]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   close_sound(ind)
@@ -5838,7 +5825,7 @@ def test055
   ramp_channel(0.0, 1.0)
   test_output.call(4, "
  (ramp 0 11) ; ramp_channel(0.000, 1.000, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [3]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   unless vequal(case1 = channel2vct,
@@ -5848,15 +5835,15 @@ def test055
   scale_channel(0.5)
   test_output.call(5, "
  (scale 0 11) ; scale_channel(0.500, 0, false [5:2]:
-   (at 0, cp->sounds[1][0:10, 0.500, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 0.500, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [3]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo_edit
   scale_channel(0.5, 0, 5)
   test_output.call(5, "
  (scale 0 5) ; scale_channel(0.500, 0, 5 [5:3]:
-   (at 0, cp->sounds[1][0:4, 0.500, [1]0.000 -> 0.400, [2]0.000 -> 0.400, [4]0.000 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 5, cp->sounds[1][5:10, 1.000, [1]0.500 -> 1.000, [2]0.500 -> 1.000, [4]1.733 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:4, 0.500, [1]0.000 -> 0.400, [2]0.000 -> 0.400, [3]0.000 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 5, cp->sounds[1][5:10, 1.000, [1]0.500 -> 1.000, [2]0.500 -> 1.000, [3]1.733 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   unless vequal(case2 = channel2vct,
@@ -5867,45 +5854,45 @@ def test055
   scale_channel(0.5, 2, 4)
   test_output.call(5, "
  (scale 2 4) ; scale_channel(0.500, 2, 4 [5:4]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [2]0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 2, cp->sounds[1][2:5, 0.500, [1]0.200 -> 0.500, [2]0.200 -> 0.500, [4]0.693 -> 1.733, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 6, cp->sounds[1][6:10, 1.000, [1]0.600 -> 1.000, [2]0.600 -> 1.000, [4]2.079 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [2]0.000 -> 0.100, [3]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 2, cp->sounds[1][2:5, 0.500, [1]0.200 -> 0.500, [2]0.200 -> 0.500, [3]0.693 -> 1.733, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 6, cp->sounds[1][6:10, 1.000, [1]0.600 -> 1.000, [2]0.600 -> 1.000, [3]2.079 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo_edit(2)
   ramp_channel(0.75, 0.25)
   test_output.call(4, "
  (ramp 0 11) ; ramp_channel(0.750, 0.250, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.750 -> 0.250, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.750 -> 0.250, [3]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo_edit
   ramp_channel(0.2, 0.6, 2, 6)
   test_output.call(4, "
  (ramp 2 6) ; ramp_channel(0.200, 0.600, 2, 6 [4:4]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 2, cp->sounds[1][2:7, 1.000, [1]0.200 -> 0.700, [2]0.200 -> 0.600, [4]0.693 -> 2.426, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000, [4]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [2]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 2, cp->sounds[1][2:7, 1.000, [1]0.200 -> 0.700, [2]0.200 -> 0.600, [3]0.693 -> 2.426, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000, [2]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   scale_channel(0.5, 0, 5)
   test_output.call(5, "
  (scale 0 5) ; scale_channel(0.500, 0, 5 [5:5]:
-   (at 0, cp->sounds[1][0:1, 0.500, [1]0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 2, cp->sounds[1][2:4, 0.500, [1]0.200 -> 0.400, [2]0.200 -> 0.360, [4]0.693 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 5, cp->sounds[1][5:7, 1.000, [1]0.500 -> 0.700, [2]0.440 -> 0.600, [4]1.733 -> 2.426, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000, [4]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 0.500, [1]0.000 -> 0.100, [2]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 2, cp->sounds[1][2:4, 0.500, [1]0.200 -> 0.400, [2]0.200 -> 0.360, [3]0.693 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 5, cp->sounds[1][5:7, 1.000, [1]0.500 -> 0.700, [2]0.440 -> 0.600, [3]1.733 -> 2.426, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000, [2]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo_edit
   set_sample(4, 0.5)
   test_output.call(5, "
  (set 4 1) ; set_sample(4, 0.5000 [5:6]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.300, [2]0.200 -> 0.280, [4]0.693 -> 1.040, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [2]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.300, [2]0.200 -> 0.280, [3]0.693 -> 1.040, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
-   (at 5, cp->sounds[1][5:7, 1.000, [1]0.500 -> 0.700, [2]0.440 -> 0.600, [4]1.733 -> 2.426, off: -0.032, scl: 0.032]) [buf: 11] 
-   (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000, [4]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 5, cp->sounds[1][5:7, 1.000, [1]0.500 -> 0.700, [2]0.440 -> 0.600, [3]1.733 -> 2.426, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000, [2]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   revert_sound
@@ -5917,7 +5904,7 @@ def test055
   xramp_channel(0.0, 1.0, 32.0)
   test_output.call(4, "
  (ramp 0 11) ; xramp_channel(0.000, 1.000, 32.000, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [3]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   unless vequal(case1, (res = channel2vct))
@@ -5954,16 +5941,16 @@ def test065
   ramp_channel(0.0, 1.0)
   test_output.call(14, "
  (ramp 0 100) ; ramp_channel(0.000, 1.000, 0, false [14:11]:
-   (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.091, [2]0.000 -> 0.091, [4]3.466 -> 3.151, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 10, cp->sounds[1][10:19, 0.500, [1]0.101 -> 0.192, [2]0.101 -> 0.192, [4]3.116 -> 2.801, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 0.500, [1]0.202 -> 0.293, [2]0.202 -> 0.293, [4]2.766 -> 2.451, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 0.500, [1]0.303 -> 0.394, [2]0.303 -> 0.394, [4]2.416 -> 2.100, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 0.500, [1]0.404 -> 0.495, [2]0.404 -> 0.495, [4]2.065 -> 1.750, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 0.500, [1]0.505 -> 0.596, [2]0.505 -> 0.596, [4]1.715 -> 1.400, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 0.500, [1]0.606 -> 0.697, [2]0.606 -> 0.697, [4]1.365 -> 1.050, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 0.500, [1]0.707 -> 0.798, [2]0.707 -> 0.798, [4]1.015 -> 0.700, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 80, cp->sounds[1][80:89, 0.500, [1]0.808 -> 0.899, [2]0.808 -> 0.899, [4]0.665 -> 0.350, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000, [2]0.909 -> 1.000, [4]0.315 -> -0.000, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.091, [2]0.000 -> 0.091, [3]3.466 -> 3.151, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 0.500, [1]0.101 -> 0.192, [2]0.101 -> 0.192, [3]3.116 -> 2.801, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 0.500, [1]0.202 -> 0.293, [2]0.202 -> 0.293, [3]2.766 -> 2.451, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 0.500, [1]0.303 -> 0.394, [2]0.303 -> 0.394, [3]2.416 -> 2.100, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 0.500, [1]0.404 -> 0.495, [2]0.404 -> 0.495, [3]2.065 -> 1.750, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 0.500, [1]0.505 -> 0.596, [2]0.505 -> 0.596, [3]1.715 -> 1.400, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 0.500, [1]0.606 -> 0.697, [2]0.606 -> 0.697, [3]1.365 -> 1.050, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 0.500, [1]0.707 -> 0.798, [2]0.707 -> 0.798, [3]1.015 -> 0.700, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 0.500, [1]0.808 -> 0.899, [2]0.808 -> 0.899, [3]0.665 -> 0.350, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000, [2]0.909 -> 1.000, [3]0.315 -> -0.000, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 100, end_mark)
 ")
   unless vequal(case3, res = channel2vct)
@@ -5977,13 +5964,13 @@ def test065
   ramp_channel(0.0, 1.0, 25, 10)
   test_output.call(5, "
  (ramp 25 10) ; ramp_channel(0.000, 1.000, 25, 10 [5:8]:
-   (at 0, cp->sounds[1][0:9, 1.000, [4]3.466 -> 3.151, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 10, cp->sounds[1][10:24, 1.000, [1]0.000 -> 0.737, [4]3.116 -> 2.626, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 25, cp->sounds[1][25:29, 1.000, [1]0.789 -> 1.000, [2]0.000 -> 0.444, [4]2.591 -> 2.451, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 30, cp->sounds[1][30:34, 1.000, [1]0.556 -> 1.000, [4]2.416 -> 2.275, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 35, cp->sounds[1][35:49, 1.000, [4]2.240 -> 1.750, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 1.000, [1]0.000 -> 1.000, [4]1.715 -> 1.400, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 60, cp->sounds[1][60:99, 1.000, [4]1.365 -> 0.000, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 0, cp->sounds[1][0:9, 1.000, [1]3.466 -> 3.151, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 10, cp->sounds[1][10:24, 1.000, [1]0.000 -> 0.737, [2]3.116 -> 2.626, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 25, cp->sounds[1][25:29, 1.000, [1]0.789 -> 1.000, [2]0.000 -> 0.444, [3]2.591 -> 2.451, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 30, cp->sounds[1][30:34, 1.000, [1]0.556 -> 1.000, [2]2.416 -> 2.275, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 35, cp->sounds[1][35:49, 1.000, [1]2.240 -> 1.750, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 1.000, [1]0.000 -> 1.000, [2]1.715 -> 1.400, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 60, cp->sounds[1][60:99, 1.000, [1]1.365 -> 0.000, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 100, end_mark)
 ")
   close_sound(ind)
@@ -6001,16 +5988,16 @@ def test065
   xramp_channel(1.0, 0.0, 32.0)
   test_output.call(13, "
  (ramp 0 100) ; xramp_channel(1.000, 0.000, 32.000, 0, false [13:11]:
-   (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.091, [4]3.466 -> 3.151, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 10, cp->sounds[1][10:19, 0.500, [1]0.101 -> 0.192, [4]3.116 -> 2.801, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 0.500, [1]0.202 -> 0.293, [4]2.766 -> 2.451, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 0.500, [1]0.303 -> 0.394, [4]2.416 -> 2.100, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 0.500, [1]0.404 -> 0.495, [4]2.065 -> 1.750, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 0.500, [1]0.505 -> 0.596, [4]1.715 -> 1.400, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 0.500, [1]0.606 -> 0.697, [4]1.365 -> 1.050, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 0.500, [1]0.707 -> 0.798, [4]1.015 -> 0.700, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 80, cp->sounds[1][80:89, 0.500, [1]0.808 -> 0.899, [4]0.665 -> 0.350, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000, [4]0.315 -> -0.000, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.091, [2]3.466 -> 3.151, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 0.500, [1]0.101 -> 0.192, [2]3.116 -> 2.801, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 0.500, [1]0.202 -> 0.293, [2]2.766 -> 2.451, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 0.500, [1]0.303 -> 0.394, [2]2.416 -> 2.100, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 0.500, [1]0.404 -> 0.495, [2]2.065 -> 1.750, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 0.500, [1]0.505 -> 0.596, [2]1.715 -> 1.400, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 0.500, [1]0.606 -> 0.697, [2]1.365 -> 1.050, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 0.500, [1]0.707 -> 0.798, [2]1.015 -> 0.700, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 0.500, [1]0.808 -> 0.899, [2]0.665 -> 0.350, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000, [2]0.315 -> -0.000, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 100, end_mark)
 ")
   unless vequal(case3, res = channel2vct)
@@ -6023,32 +6010,32 @@ def test065
   test_output.call(4, "
  (ramp 25 10) ; xramp_channel(0.000, 1.000, 3.000, 25, 10 [4:8]:
    (at 0, cp->sounds[1][0:9, 1.000]) [buf: 100] 
-   (at 10, cp->sounds[1][10:24, 1.000, [4]0.000 -> 0.810, off: -0.500, scl: 0.500]) [buf: 100] 
-   (at 25, cp->sounds[1][25:29, 1.000, [3]0.000 -> 0.488, [4]0.867 -> 1.099, off: -0.500, scl: 0.500, off2: -0.500, scl2: 0.500]) [buf: 100] 
-   (at 30, cp->sounds[1][30:34, 1.000, [4]0.610 -> 1.099, off: -0.500, scl: 0.500]) [buf: 100] 
+   (at 10, cp->sounds[1][10:24, 1.000, [1]0.000 -> 0.810, off: -0.500, scl: 0.500]) [buf: 100] 
+   (at 25, cp->sounds[1][25:29, 1.000, [1]0.867 -> 1.099, off: -0.500, scl: 0.500, [2]0.000 -> 0.488, off: -0.500, scl: 0.500]) [buf: 100] 
+   (at 30, cp->sounds[1][30:34, 1.000, [1]0.610 -> 1.099, off: -0.500, scl: 0.500]) [buf: 100] 
    (at 35, cp->sounds[1][35:49, 1.000]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 1.000, [4]0.000 -> 1.099, off: -0.500, scl: 0.500]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 1.000, [1]0.000 -> 1.099, off: -0.500, scl: 0.500]) [buf: 100] 
    (at 60, cp->sounds[1][60:99, 1.000]) [buf: 100] 
    (at 100, end_mark)
 ")
   revert_sound
-  test_name = "multi-xramp-ramp"
+  test_name = "multi-xramp-ramp 3"
   map_channel($init_channel, 0, 100)
   10.times do |i| scale_channel(0.5, i * 10, 10) end
   xramp_channel(1.0, 0.0, 32.0)
   ramp_channel(0.0, 1.0)
   test_output.call(13, "
  (ramp 0 100) ; ramp_channel(0.000, 1.000, 0, false [13:11]:
-   (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.091, [4]3.466 -> 3.151, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 10, cp->sounds[1][10:19, 0.500, [1]0.101 -> 0.192, [4]3.116 -> 2.801, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 0.500, [1]0.202 -> 0.293, [4]2.766 -> 2.451, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 0.500, [1]0.303 -> 0.394, [4]2.416 -> 2.100, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 0.500, [1]0.404 -> 0.495, [4]2.065 -> 1.750, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 0.500, [1]0.505 -> 0.596, [4]1.715 -> 1.400, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 0.500, [1]0.606 -> 0.697, [4]1.365 -> 1.050, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 0.500, [1]0.707 -> 0.798, [4]1.015 -> 0.700, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 80, cp->sounds[1][80:89, 0.500, [1]0.808 -> 0.899, [4]0.665 -> 0.350, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000, [4]0.315 -> -0.000, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.091, [2]3.466 -> 3.151, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 0.500, [1]0.101 -> 0.192, [2]3.116 -> 2.801, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 0.500, [1]0.202 -> 0.293, [2]2.766 -> 2.451, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 0.500, [1]0.303 -> 0.394, [2]2.416 -> 2.100, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 0.500, [1]0.404 -> 0.495, [2]2.065 -> 1.750, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 0.500, [1]0.505 -> 0.596, [2]1.715 -> 1.400, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 0.500, [1]0.606 -> 0.697, [2]1.365 -> 1.050, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 0.500, [1]0.707 -> 0.798, [2]1.015 -> 0.700, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 0.500, [1]0.808 -> 0.899, [2]0.665 -> 0.350, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000, [2]0.315 -> -0.000, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 100, end_mark)
 ")
   undo_edit(12)
@@ -6075,7 +6062,7 @@ def test065
   xramp_channel(0.0, 1.0, 2.0)
   test_output.call(3, "
  (ramp 0 11) ; xramp_channel(0.000, 1.000, 2.000, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [3]0.000 -> 0.693, [4]0.000 -> 0.693, off: -1.000, scl: 1.000, off2: -1.000, scl2: 1.000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 0.693, off: -1.000, scl: 1.000, [2]0.000 -> 0.693, off: -1.000, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
   unless vequal(res = channel2vct,
@@ -6085,15 +6072,15 @@ def test065
   scale_channel(0.5)
   test_output.call(4, "
  (scale 0 11) ; scale_channel(0.500, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 0.500, [3]0.000 -> 0.693, [4]0.000 -> 0.693, off: -1.000, scl: 1.000, off2: -1.000, scl2: 1.000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 0.500, [1]0.000 -> 0.693, off: -1.000, scl: 1.000, [2]0.000 -> 0.693, off: -1.000, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo_edit
   scale_channel(0.5, 0, 5)
   test_output.call(4, "
  (scale 0 5) ; scale_channel(0.500, 0, 5 [4:3]:
-   (at 0, cp->sounds[1][0:4, 0.500, [3]0.000 -> 0.277, [4]0.000 -> 0.277, off: -1.000, scl: 1.000, off2: -1.000, scl2: 1.000]) [buf: 11] 
-   (at 5, cp->sounds[1][5:10, 1.000, [3]0.347 -> 0.693, [4]0.347 -> 0.693, off: -1.000, scl: 1.000, off2: -1.000, scl2: 1.000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:4, 0.500, [1]0.000 -> 0.277, off: -1.000, scl: 1.000, [2]0.000 -> 0.277, off: -1.000, scl: 1.000]) [buf: 11] 
+   (at 5, cp->sounds[1][5:10, 1.000, [1]0.347 -> 0.693, off: -1.000, scl: 1.000, [2]0.347 -> 0.693, off: -1.000, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
   unless vequal(res = channel2vct,
@@ -6104,45 +6091,45 @@ def test065
   scale_channel(0.5, 2, 4)
   test_output.call(4, "
  (scale 2 4) ; scale_channel(0.500, 2, 4 [4:4]:
-   (at 0, cp->sounds[1][0:1, 1.000, [3]0.000 -> 0.069, [4]0.000 -> 0.069, off: -1.000, scl: 1.000, off2: -1.000, scl2: 1.000]) [buf: 11] 
-   (at 2, cp->sounds[1][2:5, 0.500, [3]0.139 -> 0.347, [4]0.139 -> 0.347, off: -1.000, scl: 1.000, off2: -1.000, scl2: 1.000]) [buf: 11] 
-   (at 6, cp->sounds[1][6:10, 1.000, [3]0.416 -> 0.693, [4]0.416 -> 0.693, off: -1.000, scl: 1.000, off2: -1.000, scl2: 1.000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.069, off: -1.000, scl: 1.000, [2]0.000 -> 0.069, off: -1.000, scl: 1.000]) [buf: 11] 
+   (at 2, cp->sounds[1][2:5, 0.500, [1]0.139 -> 0.347, off: -1.000, scl: 1.000, [2]0.139 -> 0.347, off: -1.000, scl: 1.000]) [buf: 11] 
+   (at 6, cp->sounds[1][6:10, 1.000, [1]0.416 -> 0.693, off: -1.000, scl: 1.000, [2]0.416 -> 0.693, off: -1.000, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo_edit(2)
   xramp_channel(0.75, 0.25, 0.3)
   test_output.call(3, "
  (ramp 0 11) ; xramp_channel(0.750, 0.250, 0.300, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [3]-1.204 -> 0.000, [4]0.000 -> 0.693, off: -1.000, scl: 1.000, off2: 0.964, scl2: -0.714]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 0.693, off: -1.000, scl: 1.000, [2]-1.204 -> 0.000, off: 0.964, scl: -0.714]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo_edit
   xramp_channel(0.2, 0.6, 32.0, 2, 6)
   test_output.call(3, "
  (ramp 2 6) ; xramp_channel(0.200, 0.600, 32.000, 2, 6 [3:4]:
-   (at 0, cp->sounds[1][0:1, 1.000, [4]0.000 -> 0.069, off: -1.000, scl: 1.000]) [buf: 11] 
-   (at 2, cp->sounds[1][2:7, 1.000, [3]0.000 -> 3.466, [4]0.139 -> 0.485, off: -1.000, scl: 1.000, off2: 0.187, scl2: 0.013]) [buf: 11] 
-   (at 8, cp->sounds[1][8:10, 1.000, [4]0.555 -> 0.693, off: -1.000, scl: 1.000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.069, off: -1.000, scl: 1.000]) [buf: 11] 
+   (at 2, cp->sounds[1][2:7, 1.000, [1]0.139 -> 0.485, off: -1.000, scl: 1.000, [2]0.000 -> 3.466, off: 0.187, scl: 0.013]) [buf: 11] 
+   (at 8, cp->sounds[1][8:10, 1.000, [1]0.555 -> 0.693, off: -1.000, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
   scale_channel(0.5, 0, 5)
   test_output.call(4, "
  (scale 0 5) ; scale_channel(0.500, 0, 5 [4:5]:
-   (at 0, cp->sounds[1][0:1, 0.500, [4]0.000 -> 0.069, off: -1.000, scl: 1.000]) [buf: 11] 
-   (at 2, cp->sounds[1][2:4, 0.500, [3]0.000 -> 1.386, [4]0.139 -> 0.277, off: -1.000, scl: 1.000, off2: 0.187, scl2: 0.013]) [buf: 11] 
-   (at 5, cp->sounds[1][5:7, 1.000, [3]2.079 -> 3.466, [4]0.347 -> 0.485, off: -1.000, scl: 1.000, off2: 0.187, scl2: 0.013]) [buf: 11] 
-   (at 8, cp->sounds[1][8:10, 1.000, [4]0.555 -> 0.693, off: -1.000, scl: 1.000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 0.500, [1]0.000 -> 0.069, off: -1.000, scl: 1.000]) [buf: 11] 
+   (at 2, cp->sounds[1][2:4, 0.500, [1]0.139 -> 0.277, off: -1.000, scl: 1.000, [2]0.000 -> 1.386, off: 0.187, scl: 0.013]) [buf: 11] 
+   (at 5, cp->sounds[1][5:7, 1.000, [1]0.347 -> 0.485, off: -1.000, scl: 1.000, [2]2.079 -> 3.466, off: 0.187, scl: 0.013]) [buf: 11] 
+   (at 8, cp->sounds[1][8:10, 1.000, [1]0.555 -> 0.693, off: -1.000, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo_edit
   set_sample(4, 0.5)
   test_output.call(4, "
  (set 4 1) ; set_sample(4, 0.5000 [4:6]:
-   (at 0, cp->sounds[1][0:1, 1.000, [4]0.000 -> 0.069, off: -1.000, scl: 1.000]) [buf: 11] 
-   (at 2, cp->sounds[1][2:3, 1.000, [3]0.000 -> 0.693, [4]0.139 -> 0.208, off: -1.000, scl: 1.000, off2: 0.187, scl2: 0.013]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.069, off: -1.000, scl: 1.000]) [buf: 11] 
+   (at 2, cp->sounds[1][2:3, 1.000, [1]0.139 -> 0.208, off: -1.000, scl: 1.000, [2]0.000 -> 0.693, off: 0.187, scl: 0.013]) [buf: 11] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
-   (at 5, cp->sounds[1][5:7, 1.000, [3]2.079 -> 3.466, [4]0.347 -> 0.485, off: -1.000, scl: 1.000, off2: 0.187, scl2: 0.013]) [buf: 11] 
-   (at 8, cp->sounds[1][8:10, 1.000, [4]0.555 -> 0.693, off: -1.000, scl: 1.000]) [buf: 11] 
+   (at 5, cp->sounds[1][5:7, 1.000, [1]0.347 -> 0.485, off: -1.000, scl: 1.000, [2]2.079 -> 3.466, off: 0.187, scl: 0.013]) [buf: 11] 
+   (at 8, cp->sounds[1][8:10, 1.000, [1]0.555 -> 0.693, off: -1.000, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo_edit(3)
@@ -6156,16 +6143,16 @@ def test065
   xramp_channel(1.0, 0.0, 0.3)
   test_output.call(13, "
  (ramp 0 100) ; xramp_channel(1.000, 0.000, 0.300, 0, false [13:11]:
-   (at 0, cp->sounds[1][0:9, 0.500, [3]-1.204 -> -1.095, [4]0.000 -> 0.100, off: -0.500, scl: 0.500, off2: 1.429, scl2: -1.429]) [buf: 100] 
-   (at 10, cp->sounds[1][10:19, 0.500, [3]-1.082 -> -0.973, [4]0.111 -> 0.211, off: -0.500, scl: 0.500, off2: 1.429, scl2: -1.429]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 0.500, [3]-0.961 -> -0.851, [4]0.222 -> 0.322, off: -0.500, scl: 0.500, off2: 1.429, scl2: -1.429]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 0.500, [3]-0.839 -> -0.730, [4]0.333 -> 0.433, off: -0.500, scl: 0.500, off2: 1.429, scl2: -1.429]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 0.500, [3]-0.718 -> -0.608, [4]0.444 -> 0.544, off: -0.500, scl: 0.500, off2: 1.429, scl2: -1.429]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 0.500, [3]-0.596 -> -0.486, [4]0.555 -> 0.655, off: -0.500, scl: 0.500, off2: 1.429, scl2: -1.429]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 0.500, [3]-0.474 -> -0.365, [4]0.666 -> 0.766, off: -0.500, scl: 0.500, off2: 1.429, scl2: -1.429]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 0.500, [3]-0.353 -> -0.243, [4]0.777 -> 0.877, off: -0.500, scl: 0.500, off2: 1.429, scl2: -1.429]) [buf: 100] 
-   (at 80, cp->sounds[1][80:89, 0.500, [3]-0.231 -> -0.122, [4]0.888 -> 0.988, off: -0.500, scl: 0.500, off2: 1.429, scl2: -1.429]) [buf: 100] 
-   (at 90, cp->sounds[1][90:99, 0.500, [3]-0.109 -> -0.000, [4]0.999 -> 1.099, off: -0.500, scl: 0.500, off2: 1.429, scl2: -1.429]) [buf: 100] 
+   (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.100, off: -0.500, scl: 0.500, [2]-1.204 -> -1.095, off: 1.429, scl: -1.429]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 0.500, [1]0.111 -> 0.211, off: -0.500, scl: 0.500, [2]-1.082 -> -0.973, off: 1.429, scl: -1.429]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 0.500, [1]0.222 -> 0.322, off: -0.500, scl: 0.500, [2]-0.961 -> -0.851, off: 1.429, scl: -1.429]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 0.500, [1]0.333 -> 0.433, off: -0.500, scl: 0.500, [2]-0.839 -> -0.730, off: 1.429, scl: -1.429]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 0.500, [1]0.444 -> 0.544, off: -0.500, scl: 0.500, [2]-0.718 -> -0.608, off: 1.429, scl: -1.429]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 0.500, [1]0.555 -> 0.655, off: -0.500, scl: 0.500, [2]-0.596 -> -0.486, off: 1.429, scl: -1.429]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 0.500, [1]0.666 -> 0.766, off: -0.500, scl: 0.500, [2]-0.474 -> -0.365, off: 1.429, scl: -1.429]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 0.500, [1]0.777 -> 0.877, off: -0.500, scl: 0.500, [2]-0.353 -> -0.243, off: 1.429, scl: -1.429]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 0.500, [1]0.888 -> 0.988, off: -0.500, scl: 0.500, [2]-0.231 -> -0.122, off: 1.429, scl: -1.429]) [buf: 100] 
+   (at 90, cp->sounds[1][90:99, 0.500, [1]0.999 -> 1.099, off: -0.500, scl: 0.500, [2]-0.109 -> -0.000, off: 1.429, scl: -1.429]) [buf: 100] 
    (at 100, end_mark)
 ")
   close_sound(ind)
@@ -6307,7 +6294,7 @@ def test075
   xramp_channel(0.0, 1.0, 32.0)
   test_output.call(3, "
  (ramp 0 11) ; xramp_channel(0.000, 1.000, 32.000, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   idx = -1
@@ -6317,7 +6304,7 @@ def test075
   xramp_channel(0.0, 1.0, 32.0)
   test_output.call(3, "
  (ramp 0 11) ; xramp_channel(0.000, 1.000, 32.000, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [3]0.000 -> 3.466, [4]0.000 -> -1.139, off: 1.471, scl: -1.471, off2: -0.032, scl2: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> -1.139, off: 1.471, scl: -1.471, [2]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   idx = -1
@@ -6326,11 +6313,19 @@ def test075
   xramp_channel(0.0, 1.0, 0.32)
   xramp_channel(0.0, 1.0, 32.0)
   xramp_channel(0.0, 1.0, 32.0)
-  test_output.call(4, "
+  if max_virtual_xramps < 3
+    test_output.call(4, "
  (set 0 11) ; env_channel_with_base([0.000, 0.000, 1.000, 1.000], 32.0000, 0, false [4:2]:
    (at 0, cp->sounds[2][0:10, 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
+  else
+    test_output.call(4, "
+ (set 0 11) ; xramp_channel(0.000, 1.000, 32.000, 0, false [4:2]:
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> -1.139, off: 1.471, scl: -1.471, [2]0.000 -> 3.466, off: -0.032, scl: 0.032, [3]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 11, end_mark)
+")
+  end
   idx = -1
   test_name = "xramp+xramp+ramp"
   undo_edit(3)
@@ -6339,7 +6334,7 @@ def test075
   ramp_channel(0.0, 1.0)
   test_output.call(4, "
  (ramp 0 11) ; ramp_channel(0.000, 1.000, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [3]0.000 -> 3.466, [4]0.000 -> -1.139, off: 1.471, scl: -1.471, off2: -0.032, scl2: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> -1.139, off: 1.471, scl: -1.471, [3]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   idx = -1
@@ -6349,7 +6344,7 @@ def test075
   ramp_channel(0.0, 1.0)
   test_output.call(3, "
  (ramp 0 11) ; ramp_channel(0.000, 1.000, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   idx = -1
@@ -6360,7 +6355,7 @@ def test075
   xramp_channel(0.0, 1.0, 32.0)
   test_output.call(4, "
  (ramp 0 11) ; xramp_channel(0.000, 1.000, 32.000, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [3]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   idx = -1
@@ -6891,6 +6886,9 @@ def test105
     snd_display("transform_graph? transform-frames: %d?", trandform_frames)
   end
   update_transform_graph
+  if (tag = Snd.catch do peaks("/baddy/hiho") end).first != :cant_open_file
+    snd_display("peaks bad file: %s", tag.inspect)
+  end
   peaks("tmp.peaks")
   pks_data = IO.readlines("tmp.peaks")
   if /Snd: fft peaks/ !~ pks_data[0]
@@ -7125,7 +7123,7 @@ def test105
   if res = Snd.catch do region2vct(12345678, 1, r0) end.first
     snd_display("region2vct 12345678: %s", res.inspect)
   end
-  if (res = format("%s", rd)) != "#<sample-reader: oboe.snd[0: 0] from 0, at 0>"
+  if (res = format("%s", rd)) != "#<sample-reader: oboe.snd[0: 0] from 0, at 0, forward>"
     snd_display("sample_reader actually got: %s", res)
   end
   erd = rd
@@ -7669,11 +7667,11 @@ def test125
   undo_edit(1, obind)
   set_filter_control?(true, obind)
   set_filter_control_order(40, obind)
-  set_filter_control_envelope([0, 0, 1, 0.5, 1, 0], obind)
+  set_filter_control_envelope([0, 0, 1, 0.5, 2, 0], obind)
   apply_controls(obind)
   fltamp = maxamp(obind)
   fltdur = frames(obind)
-  snd_display("apply filter scale: %s?", fltamp) if (fltamp - 0.01).abs > 0.03 # orig 0.005
+  snd_display("apply filter scale: %s?", fltamp) if (fltamp - 0.02).abs > 0.005
   snd_display("apply filter length: %d?", fltdur) if fltdur - (40 + 50828) > 256
   undo_edit(1, obind)
   revert_sound(obind)
@@ -12164,6 +12162,13 @@ def fm_test(gen)
     snd_display("%s phase(1, 0): %s?", gen, res)
   end
   gen.frequency = radians2hz(2.0)
+  if fneq(res = gen.increment, 2.0)
+    snd_display("%s increment: %s", gen, res)
+  end
+  gen.increment = 2.0
+  if fneq(res = gen.frequency, radians2hz(2.0))
+    snd_display("%s set increment: %s %s", gen, gen.increment, hz2radians(res))
+  end
   gen.run(0.0)
   if fneq(res = gen.phase, 3.0)
     snd_display("%s phase(1, 2): %s %s?", gen, res, gen.frequency)
@@ -14030,8 +14035,8 @@ def test048
   if (res = gen6.cosines) != 10
     snd_display("sine_summation cosines (10): %d?", res)
   end
-  if fneq(res = gen6.increment, 0.4)
-    snd_display("sine_summation increment (0.4): %s?", res)
+  if fneq(res = gen6.offset, 0.4)
+    snd_display("sine_summation offset (0.4): %s?", res)
   end
   100.times do |i|
     ss = sine_summation(gen1, 0.0)
@@ -16091,10 +16096,10 @@ def test098
   end
   gen.data = phase_partials2wave([1, 1, 0, 2, 1, HALF_PI], false, true)
   #
-  if (res = Snd.catch do phase_partials2wave([1, 0.3, 2, 0.2]) end).first != :arg_error
+  if (res = Snd.catch do phase_partials2wave([1, 0.3, 2, 0.2]) end).first != :wrong_type_arg
     snd_display("bad length arg to phase_partials2wave: %s", res.inspect)
   end
-  if (res = Snd.catch do phase_partials2wave(["hiho", 0.3, 2, 0.2]) end).first != :arg_error
+  if (res = Snd.catch do phase_partials2wave(["hiho", 0.3, 2, 0.2]) end).first != :wrong_type_arg
     snd_display("bad harmonic arg to phase_partials2wave: %s", res.inspect)
   end
   if (res = Snd.catch do phase_partials2wave([]) end).first != :no_data
@@ -16230,7 +16235,7 @@ def test098
   if (res = Snd.catch do partials2waveshape([0.5, 0.3, 0.2]) end).first != :bad_type
     snd_display("odd length arg to partials2waveshape: %s", res.inspect)
   end
-  if (res = Snd.catch do phase_partials2wave([1, 0.3, 2, 0.2]) end).first != :arg_error
+  if (res = Snd.catch do phase_partials2wave([1, 0.3, 2, 0.2]) end).first != :wrong_type_arg
     snd_display("bad length arg to phase_partials2wave: %s", res.inspect)
   end
   # 
@@ -16826,7 +16831,7 @@ def test108
   end
   print_and_check(gen,
                   "snd->sample",
-                  "snd->sample: reading 2.snd (2 chans) at 1499:[#<sample-reader: 2.snd[0: 0] from 1490, at 1500>, #<sample-reader: 2.snd[1: 0] from 1490, at 1500>]")
+                  "snd->sample: reading 2.snd (2 chans) at 1499:[#<sample-reader: 2.snd[0: 0] from 1490, at 1500, forward>, #<sample-reader: 2.snd[1: 0] from 1490, at 1500, forward>]")
   snd_display("%s not snd2sample?", gen) unless snd2sample?(gen)
   snd_display("%s not input?", gen) unless mus_input?(gen)
   snd_display("snd2sample length: %s?", gen.length) if gen.length != frames(ind)
@@ -20486,7 +20491,7 @@ def test009
   spd = mix_speed(mix_id)
   snd, chn = mix_home(mix_id)[0, 2]
   nam = mix_name(mix_id)
-  amp = mix_amp(mix_id, 0)
+  amp = mix_amp(mix_id)
   mr = make_mix_sample_reader(mix_id)
   snd_display("%s not mix_sample_reader?", mr) unless mix_sample_reader?(mr)
   snd_display("mix_sample_reader: region %s?", mr) if region_sample_reader?(mr)
@@ -20500,15 +20505,6 @@ def test009
   end
   if mr.to_s[0, 22] != "#<mix-sample-reader mi"
     snd_display("mix_sample_reader actually got: [%s]?", mr.to_s[0, 22])
-  end
-  if (res = Snd.catch do mix_amp(mix_id, 1234) end).first != :no_such_channel
-    snd_display("mix_amp bad chan: %s", res.inspect)
-  end
-  if (res = Snd.catch do set_mix_amp(mix_id, 1234, 0.1) end).first != :no_such_channel
-    snd_display("set_mix_amp bad chan: %s", res.inspect)
-  end
-  if (res = Snd.catch do set_mix_amp_env(mix_id, 1234, [0, 0, 1, 1]) end).first != :no_such_channel
-    snd_display("set_mix_amp_env bad chan: %s", res.inspect)
   end
   99.times do |i|
     mx = i.odd? ? read_mix_sample(mr) : read_mix_sample(mr)
@@ -20542,24 +20538,24 @@ def test009
   set_mix_name(mix_id, false)
   unless (res = mix_name(mix_id)).null? then snd_display("mix_name false: %s?", res) end
   set_mix_position(mix_id, 200)
-  set_mix_amp(mix_id, 0, 0.5)
+  set_mix_amp(mix_id, 0.5)
   set_mix_speed(mix_id, 2.0)
-  set_mix_amp_env(mix_id, 0, [0, 0, 1, 1])
-  val = mix_amp_env(mix_id, 0)
-  set_mix_amp_env(mix_id, 0, mix_amp_env(mix_id, 0))
-  unless vequal(res = mix_amp_env(mix_id, 0), val)
+  set_mix_amp_env(mix_id, [0, 0, 1, 1])
+  val = mix_amp_env(mix_id)
+  set_mix_amp_env(mix_id, mix_amp_env(mix_id))
+  unless vequal(res = mix_amp_env(mix_id), val)
     snd_display("set_mix_amp_env to self: %s %s?", val, res)
   end
   set_mix_tag_y(mix_id, 20)
   pos = mix_position(mix_id)
   spd = mix_speed(mix_id)
-  amp = mix_amp(mix_id, 0)
+  amp = mix_amp(mix_id)
   my = mix_tag_y(mix_id)
   snd_display("set_mix_position: %d?", pos) if pos != 200
   snd_display("set_mix_speed: %s?", spd) if fneq(spd, 2.0)
   snd_display("set_mix_mix_tag_y: %d?", my) if my != 20
   snd_display("set_mix_amp: %s?", amp) if fneq(amp, 0.5)
-  if (res = mix_amp_env(mix_id, 0)) != [0, 0, 1, 1]
+  if (res = mix_amp_env(mix_id)) != [0, 0, 1, 1]
     snd_display("set_mix_amp_env: %s?", res)
   end
   #
@@ -20588,7 +20584,7 @@ def test009
   set_mix_waveform_height(40)
   set_mix_property(mix_id, :hiho, 123)
   if (res = mix_property(mix_id, :hiho)) != 123
-    snd_display("mix_property: %s?", res)
+    snd_display("mix_property (123): %s?", res)
   end
   if (res = mix_property(mix_id, :not_there))
     snd_display("mix_not_property: %s?", res)
@@ -20855,28 +20851,28 @@ def test029
   revert_sound(ind)
   delete_sample(25, ind, 1)
   if mix?(md) or mix?(md + 1)
-    snd_display("undo mix stereo selection: %s %s?", mix?(dm), mix?(md + 1))
+    snd_display("undo mix stereo selection: %s %s?", mix?(md), mix?(md + 1))
   end
   close_sound(ind)
 end
 
 def test_mix_disconnect(name, id0, chn0, id1, chn1)
-  amp0 = mix_amp(id0, chn0)
-  amp1 = mix_amp(id1, chn1)
-  env0 = mix_amp_env(id0, chn0)
-  env1 = mix_amp_env(id1, chn1)
-  set_mix_amp(id0, chn0, mix_amp(id0, chn0) * 0.5)
-  if fneq(mix_amp(id0, chn0), 0.5 * amp0) or
-      fneq(mix_amp(id1, chn1), amp1)
+  amp0 = mix_amp(id0)
+  amp1 = mix_amp(id1)
+  env0 = mix_amp_env(id0)
+  env1 = mix_amp_env(id1)
+  set_mix_amp(id0, mix_amp(id0) * 0.5)
+  if fneq(mix_amp(id0), 0.5 * amp0) or
+      fneq(mix_amp(id1), amp1)
     snd_display("pan_mix disconnect amp %s: %s (%s) %s (%s)?",
-                name, mix_amp(id0, chn0), amp0, mix_amp(id1, chn1), amp1)
+                name, mix_amp(id0), amp0, mix_amp(id1), amp1)
   end
-  set_mix_amp_env(id1, chn1, [0.0, random(1.0), 1.0, random(1.0)])
-  if mix_amp_env(id0, chn0) != env0 or (not vequal(mix_amp_env(id1, chn1), (env1 or [])))
+  set_mix_amp_env(id1, [0.0, random(1.0), 1.0, random(1.0)])
+  if mix_amp_env(id0) != env0 or (not vequal(mix_amp_env(id1), (env1 or [])))
     snd_display("pan_mix disconnect amp_env %s: %s (%s) %s (%s)?",
                 name,
-                mix_amp_env(id0, chn0), env0,
-                mix_amp_env(id1, chn1), env1)
+                mix_amp_env(id0), env0,
+                mix_amp_env(id1), env1)
   end
   if id0 != id1
     pos0 = mix_position(id0)
@@ -20893,25 +20889,6 @@ def test_mix_disconnect(name, id0, chn0, id1, chn1)
       snd_display("pan_mix disconnect speed %s: %s (%s) %s (%s)?",
                   name, mix_speed(id0), spd0, mix_speed(id1), spd1)
     end
-  end
-end
-
-def check_copied_mix(original, copy, pos)
-  snd_display("copy_mix returns bad mix: %s?", copy) unless mix?(copy)
-  if (res1 = mix_length(copy)) != (res2 = mix_length(original))
-    snd_display("copy_mix frames: %s %s?", res1, res2)
-  end
-  if (res = mix_position(copy)) != pos
-    snd_display("copy_mix set position: %s %s?", res, pos)
-  end
-  if (res1 = mix_speed(copy)) != (res2 = mix_speed(original))
-    snd_display("copy_mix speed: %s %s?", res1, res2)
-  end
-  if (res1 = mix_maxamp(copy)) != (res2 = mix_maxamp(original))
-    snd_display("copy_mix maxamp: %s %s?", res1, res2)
-  end
-  if (res1 = mix_home(copy)) != (res2 = mix_home(original))
-    snd_display("copy_mix home: %s %s?", res1, res2)
   end
 end
 
@@ -20940,7 +20917,7 @@ def test039
   v.fill(0.5)
   vct2channel(v)
   mx = mix_vct(v, 10)
-  set_mix_amp_env(mx, 0, [0, 0, 1, 1])
+  set_mix_amp_env(mx, [0, 0, 1, 1])
   hi = make_mix_sample_reader(mx, 0)
   ho = make_mix_sample_reader(mx, 10)
   10.times do |i|
@@ -20967,16 +20944,16 @@ def test039
   if (res1 = mix_position(id)) != mix_position(id) or (res2 = edit_position(ind, 0)) != 2
     snd_display("mix_position 2 (no-op): %s %s?", res1, res2)
   end
-  set_mix_amp(id, 0, 1.0)
-  if fneq(res1 = mix_amp(id, 0), 1.0) or (res2 = edit_position(ind, 0)) != 2
+  set_mix_amp(id, 1.0)
+  if fneq(res1 = mix_amp(id), 1.0) or (res2 = edit_position(ind, 0)) != 2
     snd_display("mix_amp no-op: %s %s?", res1, res2)
   end
-  set_mix_amp(id, 0, 0.5)
-  if fneq(res1 = mix_amp(id, 0), 0.5) or (res2 = edit_position(ind, 0)) != 3
+  set_mix_amp(id, 0.5)
+  if fneq(res1 = mix_amp(id), 0.5) or (res2 = edit_position(ind, 0)) != 3
     snd_display("mix_amp 0.5: %s %s?", res1, res2)
   end
-  set_mix_amp(id, 0, mix_amp(id, 0))
-  if fneq(res1 = mix_amp(id, 0), 0.5) or (res2 = edit_position(ind, 0)) != 3
+  set_mix_amp(id, mix_amp(id))
+  if fneq(res1 = mix_amp(id), 0.5) or (res2 = edit_position(ind, 0)) != 3
     snd_display("mix_amp no-op: %s %s?", res1, res2)
   end
   set_mix_speed(id, 1.0)
@@ -20991,13 +20968,13 @@ def test039
   if fneq(res1 = mix_speed(id), 0.5) or (res2 = edit_position(ind, 0)) != 4
     snd_display("mix_speed 2 no-op: %s %s?", res1, res2)
   end
-  set_mix_amp_env(id, 0, [0, 0, 1, 1])
+  set_mix_amp_env(id, [0, 0, 1, 1])
   if (res = edit_position(ind, 0)) != 5
-    snd_display("mix_amp init: %s %s?", mix_amp_env(id, 0), res)
+    snd_display("mix_amp init: %s %s?", mix_amp_env(id), res)
   end
-  set_mix_amp_env(id, 0, [0, 0, 1, 1])
+  set_mix_amp_env(id, [0, 0, 1, 1])
   if (res = edit_position(ind, 0)) != 5
-    snd_display("mix_amp no-op: %s %s?", mix_amp_env(id, 0), res)
+    snd_display("mix_amp no-op: %s %s?", mix_amp_env(id), res)
   end
   close_sound(ind)
   #
@@ -21037,73 +21014,6 @@ def test039
     dismiss_all_dialogs
     close_sound(ind)
   end
-  #
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "copy_mix tests", 300)
-  mix1 = mix_vct(Vct.new(10, 0.5), 10)
-  copy_mix1 = copy_mix(mix1)
-  old_color = mix_color(mix1)
-  set_mix_color(mix1, make_color_with_catch(0, 1, 1))
-  new_color = mix_color(mix1)
-  if provided? :snd_motif
-    if new_color != (res = make_color_with_catch(0, 1, 1))
-      snd_display("mix_color %s %s %s %s?", mix1, res, new_color, old_color)
-    end
-  end
-  check_copied_mix(mix1, copy_mix1, 10)
-  set_mix_amp(mix1, 2.0)
-  copy_mix1 = copy_mix(mix1, 20)
-  check_copied_mix(mix1, copy_mix1, 20)
-  set_mix_speed(mix1, 2.0)
-  copy_mix1 = copy_mix(mix1, 40)
-  check_copied_mix(mix1, copy_mix1, 40)
-  set_mix_amp_env(mix1, 0, [0, 0, 1, 1])
-  copy_mix1 = copy_mix(mix1, 60)
-  check_copied_mix(mix1, copy_mix1, 60)
-  copy_mix1 = copy_mix(mix1, 80)
-  check_copied_mix(mix1, copy_mix1, 80)
-  set_mix_position(mix1, 100)
-  copy_mix1 = copy_mix(mix1)
-  check_copied_mix(mix1, copy_mix1, 100)
-  mix1 = mix("2a.snd", 100, true, ind)
-  set_mix_amp(mix1, 0, 0.5)
-  set_mix_amp(mix1, 1, 0.5)
-  set_mix_amp_env(mix1,0, [0, 1, 1, 0])
-  copy_mix1 = copy_mix(mix1, 200)
-  check_copied_mix(mix1, copy_mix1, 200)
-  set_mix_amp_env(mix1,0, [0, 0, 1, 1])
-  copy_mix1 = copy_mix(mix1, 300)
-  check_copied_mix(mix1, copy_mix1, 300)
-  mix2 = copy_mix(copy_mix1, 500)
-  check_copied_mix(copy_mix1, mix2, 500)
-  close_sound(ind)
-  #
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 4, "copy_mix tests", 300)
-  mix1 = mix("2a.snd", 10, true, ind, 2)
-  copy_mix1 = copy_mix(mix1, 20)
-  check_copied_mix(mix1, copy_mix1, 20)
-  close_sound(ind)
-  # 
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "copy_mix tests", 300)
-  old_color = mix_color
-  set_mix_color(make_color_with_catch(1, 1, 0))
-  mix1 = mix_vct(Vct.new(10, 0.5), 10)
-  if provided? :snd_motif
-    if (res1 = mix_color) != (res2 = make_color_with_catch(1, 1, 0)) or
-        (res3 = mix_color(mix1)) != make_color_with_catch(1, 1, 0)
-      snd_display("set_mix_color %s %s %s %s?", res1, res3, res2, old_color)
-    end
-  end
-  set_mix_color(old_color)
-  save_mix(mix1, "test.snd")
-  ind1 = open_sound("test.snd")
-  if (res1 = frames(ind1)) != (res2 = mix_length(mix1))
-    snd_display("save_mix frames: %s %s?", res1, res2)
-  end
-  unless vequal(res1 = channel2vct(0, 10, ind1), res2 = mix2vct(mix1))
-    snd_display("save_mix data: %s %s?", res1, res2)
-  end
-  close_sound(ind1)
-  close_sound(ind)
   # 
   ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "lock mix tests", 300)
   mix1 = mix_vct(Vct.new(10, 0.5), 10)
@@ -21132,26 +21042,9 @@ def test039
   # 
 end
 
-def test049
-end
-
-def test059
-end
-
-def test079
-end
-
-def test089
-end
-
-def test099
-end
-
-def test109
-end
-
 def test119
   #
+  set_with_mix_tags(true)
   ind = open_sound("oboe.snd")
   mx = mix_vct(Vct.new(100, 0.1), 1000)
   fr = mus_sound_frames("1a.snd")
@@ -21219,9 +21112,6 @@ def test119
   ].each do |func, beg, lock, name|
     edpos = edit_position(ind, 0)
     func.call
-    if (res = mix_position(mx)) != beg
-      snd_display("%s mix lock beg: %s %s?", name, beg, res)
-    end
     set_edit_position(edpos, ind, 0)
   end
   close_sound(ind)
@@ -21268,17 +21158,6 @@ def test09
     test019
     test029
     test039
-    test049
-    test059
-    test069
-    test079
-    test089
-    test099
-    let(with_mix_tags) do |old_mix_tag|
-      set_with_mix_tags(false)
-      test109
-      set_with_mix_tags(old_mix_tag)
-    end
     test119
     $after_test_hook.call(9)
   end
@@ -22669,8 +22548,6 @@ def test12
       snd_display("region_sample_reader: %s?", res)
     end
     close_sound(ind)
-    val = next_sample(rd)
-    snd_display("region_sample_reader at 1: %s?", val) if fneq(val, 0.0348)
     forget_region(reg)
     val = read_sample(rd)
     snd_display("region_sample_reader at end: %s?", val) if fneq(val, 0.0)
@@ -22682,13 +22559,13 @@ def test12
     save_md = 0
     mix_click_sets_amp
     ind = open_sound("oboe.snd")
-    reg = make_region(1000, 2000, ind, 0)
+    reg = make_region(1000, 2000, ind, 0, 0)
     md = mix_region(0, reg, ind, 0)
     rd = make_mix_sample_reader(md)
     set_mix_property(md, :hi, "hi")
     save_md = md
     if (res = mix_property(md, :hi)) != "hi"
-      snd_display("mix_property: %s?", res)
+      snd_display("mix_property (hi): %s?", res)
     end
     val = rd.call
     snd_display("mix_sample_reader at start: %s?", val) if fneq(val, 0.0328)
@@ -23686,11 +23563,11 @@ def test0213
     [:mix, lambda { | | mix("1a.snd", 123) }],
     [:mix_amp, lambda { | |
         mx = mix_vct(make_vct(3, 1.0), 123)
-        set_mix_amp(mx, 0, 0.123) if mix?(mx)
+        set_mix_amp(mx, 0.123) if mix?(mx)
       }],
     [:mix_amp_env, lambda { | |
         mx = mix_vct(make_vct(3, 1.0), 123)
-        set_mix_amp_env(mx, 0, [0, 0, 1, 1]) if mix?(mx)
+        set_mix_amp_env(mx, [0, 0, 1, 1]) if mix?(mx)
       }],
     [:mix_position, lambda { | |
         mx = mix_vct(make_vct(3, 1.0), 123)
@@ -27080,12 +26957,16 @@ def init_sound(val, dur, chns)
 end
 
 def check_back_and_forth(ind, name, v)
+  happy = true
   unless vequal(res = channel2vct(0, frames, ind, 0), v)
+    happy = false
     snd_display("%s forth: %s %s?", name, res, v)
   end
   unless vequal(res = reversed_read(ind, 0), v)
+    happy = false
     snd_display("%s back: %s %s?", name, res, v)
   end
+  happy
 end
 
 def check_both_chans(ind, name, f0, f1)
@@ -27469,65 +27350,65 @@ def test0116
     set_sync(mx + 1, ind)
     ["2a.snd", "1a.snd", "4a.snd"].each do |in_snd|
       [lambda { |posfunc|
-          chn = [random(out_chans + 1), out_chans - 1].min
-          unless vequal(res = channel2vct(0, frames(ind, chn), ind, chn, 0), [0.0].to_vct)
-            snd_display("start bad: %s?", res)
-          end
-          set_sample(0, 0.1, ind, chn)
-          unless vequal(res = channel2vct(0, frames(ind, chn), ind, chn), [0.1].to_vct)
-            snd_display("set bad: %s?", res)
-          end
-          pad_channel(0, 1, ind, chn, posfunc.call)
-          if proc?(pos = posfunc.call) then pos = pos.call(ind, chn) end
-          data = channel2vct(0, frames(ind, chn), ind, chn)
-          if (pos.zero? and (not vequal(data, [0.0, 0.0].to_vct))) or
-              ((pos == Current_edit_position or pos == edit_position(ind, chn)) and
-                 (not vequal(data, [0.0, 0.1].to_vct))) or
-              (pos == edit_position(ind, chn) - 1 and
-                 (not vequal(data, [0.0, 0.0].to_vct)))
-            snd_display("pos[%d]: edpos %s of %s, pad result[%s, %s]: %s?",
-                        chn, pos,
-                        edit_position(ind, chn),
-                        frames(ind, chn, pos),
-                        frames(ind, chn),
-                        data)
-          end
-          if channels(ind) > 1
-            channels(ind).times do |i|
-              next if chn == i
-              unless vequal(res = channel2vct(0, frames(ind, i), ind, i), [0.0].to_vct)
-                snd_display("pad[%s / %s] empty: %s?", i, chn, data)
-              end
-            end
-          end
-        },
+         chn = [random(out_chans + 1), out_chans - 1].min
+         unless vequal(res = channel2vct(0, frames(ind, chn), ind, chn, 0), [0.0].to_vct)
+           snd_display("start bad: %s?", res)
+         end
+         set_sample(0, 0.1, ind, chn)
+         unless vequal(res = channel2vct(0, frames(ind, chn), ind, chn), [0.1].to_vct)
+           snd_display("set bad: %s?", res)
+         end
+         pad_channel(0, 1, ind, chn, posfunc.call)
+         if proc?(pos = posfunc.call) then pos = pos.call(ind, chn) end
+         data = channel2vct(0, frames(ind, chn), ind, chn)
+         if (pos.zero? and (not vequal(data, [0.0, 0.0].to_vct))) or
+             ((pos == Current_edit_position or pos == edit_position(ind, chn)) and
+              (not vequal(data, [0.0, 0.1].to_vct))) or
+             (pos == edit_position(ind, chn) - 1 and
+              (not vequal(data, [0.0, 0.0].to_vct)))
+           snd_display("pos[%d]: edpos %s of %s, pad result[%s, %s]: %s?",
+                       chn, pos,
+                       edit_position(ind, chn),
+                       frames(ind, chn, pos),
+                       frames(ind, chn),
+                       data)
+         end
+         if channels(ind) > 1
+           channels(ind).times do |i|
+             next if chn == i
+             unless vequal(res = channel2vct(0, frames(ind, i), ind, i), [0.0].to_vct)
+               snd_display("pad[%s / %s] empty: %s?", i, chn, data)
+             end
+           end
+         end
+       },
        lambda { |posfunc|
-          chn = [random(out_chans + 1), out_chans - 1].min
-          set_sample(0, 0.1, ind, chn)
-          scale_channel(2.0, 0, 1, ind, chn, posfunc.call)
-          if proc?(pos = posfunc.call) then pos = pos.call(ind, chn) end
-          data = channel2vct(0, frames(ind, chn), ind, chn)
-          if (pos.zero? and (not vequal(data, [0.0].to_vct))) or
-              ((pos == Current_edit_position or pos == edit_position(ind, chn)) and
-                 (not vequal(data, [0.2].to_vct))) or
-              (pos == edit_position(ind, chn) - 1 and
-                 (not vequal(data, [0.0].to_vct)))
-            snd_display("pos[%d]: edpos %s of %s, scale result[%s, %s]: %s?",
-                        chn, pos,
-                        edit_position(ind, chn),
-                        frames(ind, chn, pos),
-                        frames(ind, chn),
-                        data)
-          end
-          if channels(ind) > 1
-            channels(ind).times do |i|
-              next if chn == i
-              unless vequal(res = channel2vct(0, frames(ind, i), ind, i), [0.0].to_vct)
-                snd_display("scale[%s / %s] empty: %s?", i, chn, data)
-              end
-            end
-          end
-        }].each do |func|
+         chn = [random(out_chans + 1), out_chans - 1].min
+         set_sample(0, 0.1, ind, chn)
+         set_sample(0, sample(0, ind, chn, posfunc.call()) * 2.0, ind, chn, posfunc.call())
+         if proc?(pos = posfunc.call) then pos = pos.call(ind, chn) end
+         data = channel2vct(0, frames(ind, chn), ind, chn)
+         if (pos.zero? and (not vequal(data, [0.0].to_vct))) or
+             ((pos == Current_edit_position or pos == edit_position(ind, chn)) and
+              (not vequal(data, [0.2].to_vct))) or
+             (pos == edit_position(ind, chn) - 1 and
+              (not vequal(data, [0.0].to_vct)))
+           snd_display("pos[%d]: edpos %s of %s, set *2 result[%s, %s]: %s?",
+                       chn, pos,
+                       edit_position(ind, chn),
+                       frames(ind, chn, pos),
+                       frames(ind, chn),
+                       data)
+         end
+         if channels(ind) > 1
+           channels(ind).times do |i|
+             next if chn == i
+             unless vequal(res = channel2vct(0, frames(ind, i), ind, i), [0.0].to_vct)
+               snd_display("scale[%s / %s] empty: %s?", i, chn, data)
+             end
+           end
+         end
+       }].each do |func|
         [lambda { Current_edit_position },
          lambda { 0 },
          lambda { lambda { |s, c| edit_position(s, c) - 1 } },
@@ -29022,7 +28903,7 @@ def test0516
      [:mix_tag,               lambda { |snd, i| mix("pistol.snd", 10 * i, 0, snd, 0, true) }],
      [:mix_scale_to,          lambda { |snd, i|
           mx = mix("pistol.snd", 100 * i)
-          set_mix_amp(mx, 0, 0.01)
+          set_mix_amp(mx, 0.01)
         }],
      [:mix_amp,               lambda { |snd, i| mx = mix("pistol.snd", 100 * i); scale_to(0.5)}],
      [:src_sound_1,           lambda { |snd, i| src_sound(2.0); undo_edit }],
@@ -29114,6 +28995,7 @@ def test17
     fill_rectangle(20, 20, 100, 100, ind, 0)
     make_bezier(0, 0, 20, 20, 40, 30, 60, 10, 10)
     update_time_graph(ind, 0)
+    fill_rectangle(20, 20, 100, 100, ind, 0, Time_graph, true)
     $after_graph_hook.reset_hook!
     $lisp_graph_hook.reset_hook!
     #
@@ -29185,7 +29067,7 @@ def clm_channel_test(snd = false, chn = false)
 end
 
 def make_v_mix(snd = false, chn = false)
-  mix_vct([0.1, 0.2, 0.3].to_vct, 100, snd, chn, true, "make_v_mix(")
+  mix_vct([0.1, 0.2, 0.3].to_vct, 100, snd, chn, true, "mix_vct(vct(0.1, 0.2, 0.3)")
 end
 
 def test0019
@@ -30816,45 +30698,27 @@ def test0319
   unless proc?(func = edit_list2function)
     snd_display("edit_list2function mix 1: %s?", func)
   end
-  if (res = func.source) != format("Proc.new {|snd, chn| _mix_%d = %d;  _mix_%d = make_v_mix(snd, chn); set_mix_position(_mix_%d, 200) }", id, id, id, id)
+  if (res = func.source) != format("Proc.new {|snd, chn| _mix_%d = %d;  _mix_%d = mix_vct(vct(0.1, 0.2, 0.3), 100, snd, chn); set_mix_position(_mix_%d, 200) }", id, id, id, id)
     snd_display("edit_list2function mix 1: %s", res)
   end
   revert_sound(ind)
   func.call(ind, 0)
-  if (res1 = mixes(ind, 0)).nil? or (res2 = mix_position(mixes(ind, 0).first)) != 200
+  if (res1 = mixes(ind, 0)).nil? or
+      (res2 = mixes(ind, 0).detect do |m| integer?(mix?(m)) and mix_position(m) end)
     snd_display("edit_list2function mix 1 repos: %s %s?", res1, res2)
   end
   revert_sound(ind)
-  # mix-inverted?
-  id = make_v_mix(ind, 0)
-  unless proc?(func = edit_list2function)
-    snd_display("edit_list2function mix 2: %s?", func)
-  end
-  revert_sound(ind)
-  func.call(ind, 0)
-  revert_sound(ind)
-  # mix-locked?
-  id = make_v_mix(ind, 0)
-  unless proc?(func = edit_list2function)
-    snd_display("edit_list2function mix 3: %s?", func)
-  end
-  revert_sound(ind)
-  func.call(ind, 0)
-  revert_sound(ind)
   # mix-amp
   id = make_v_mix(ind, 0)
-  set_mix_amp(id, 0, 0.5)
+  set_mix_amp(id, 0.5)
   unless proc?(func = edit_list2function)
     snd_display("edit_list2function mix 4: %s?", func)
   end
-  if (res = func.source) != format("Proc.new {|snd, chn| _mix_%d = %d;  _mix_%d = make_v_mix(snd, chn); set_mix_amp(_mix_%d, 0, 0.5000) }", id, id, id, id)
+  if (res = func.source) != format("Proc.new {|snd, chn| _mix_%d = %d;  _mix_%d = mix_vct(vct(0.1, 0.2, 0.3), 100, snd, chn); set_mix_amp(_mix_%d, 0.5000) }", id, id, id, id)
     snd_display("edit_list2function mix 4: %s", res)
   end
   revert_sound(ind)
   func.call(ind, 0)
-  if (res1 = mixes(ind, 0)).nil? or fneq(res2 = mix_amp(mixes(ind, 0).first), 0.5)
-    snd_display("edit_list2function mix 4 reamp: %s %s?", res1, res2)
-  end
   revert_sound(ind)
   # mix-speed
   id = make_v_mix(ind, 0)
@@ -30862,14 +30726,11 @@ def test0319
   unless proc?(func = edit_list2function)
     snd_display("edit_list2function mix 5: %s?", func)
   end
-  if (res = func.source) != format("Proc.new {|snd, chn| _mix_%d = %d;  _mix_%d = make_v_mix(snd, chn); set_mix_speed(_mix_%d, 0.5000) }", id, id, id, id)
+  if (res = func.source) != format("Proc.new {|snd, chn| _mix_%d = %d;  _mix_%d = mix_vct(vct(0.1, 0.2, 0.3), 100, snd, chn); set_mix_speed(_mix_%d, 0.5000) }", id, id, id, id)
     snd_display("edit_list2function mix 5: %s", res)
   end
   revert_sound(ind)
   func.call(ind, 0)
-  if (res1 = mixes(ind, 0)).nil? or fneq(res2 = mix_speed(mixes(ind, 0).first), 0.5)
-    snd_display("edit_list2function mix 5 respeed: %s %s?", res1, res2)
-  end
   revert_sound(ind)
   close_sound(ind)
   # 
@@ -32599,7 +32460,6 @@ def test0220
       snd_display("down_oct: %d %s %s %s?", i, val1, val2, val3)
     end
   end
-  kalman_filter_channel
   close_sound(ind)
   # 
   d0 = Vct.new(8)
@@ -34787,6 +34647,7 @@ def test0223
   end
   #
   val = 0
+  old_hook = $clm_notehook
   $clm_notehook = lambda do |*args| val = 1 end
   with_sound(:comment, "$clm_notehook") do fm_violin(0, 0.1, 440, 0.1) end
   if val != 1 then snd_display("$clm_notehook (1): %s %s?", val, $clm_notehook.inspect) end
@@ -34796,7 +34657,7 @@ def test0223
   if val != 2 then snd_display(":notehook: %s?", val) end
   with_sound(:comment, "$clm_notehook (2)") do fm_violin(0, 0.1, 440, 0.1) end
   if val != 1 then snd_display("$clm_notehook (2): %s %s?", val, $clm_notehook.inspect) end
-  $clm_notehook = nil
+  $clm_notehook = old_hook
   # 
   $clm_channels = 1
   $clm_srate = 22050
@@ -36544,9 +36405,11 @@ def test0024
   force_event
   key_event(minibuffer, Snd_return_key, 0)
   force_event
+=begin
   if (res = widget_text(minibuffer)) != "oboe.snd"
     snd_display("completed minibuffer: %s?", res.inspect)
   end
+=end
   set_widget_text(minibuffer, "")
   focus_widget(minibuffer)
   key_event(minibuffer, ?j, 4)
@@ -37436,7 +37299,6 @@ def test0224
   force_event
   unless sound?(ind = find_sound("oboe.snd"))
     snd_display("file:open failed?")
-  else
     close_sound(ind)
   end
   open_file_dialog
@@ -37955,9 +37817,10 @@ def test0324
   click_button(insert_button)
   if (res = edit_position(curind, 0)) != edpos + 1
     snd_display("vf insert edpos: %s %s?", res, edpos)
-  end
-  if (res = edit_tree(curind, 0, edpos + 1))[edpos + 1].car != nd
-    snd_display("insert at end: %s %s?", nd, res)
+  else
+    if (res = edit_tree(curind, 0, edpos + 1))[edpos + 1].car != nd
+      snd_display("insert at end: %s %s?", nd, res)
+    end
   end
   revert_sound(curind)
   click_event(at_beginning_button, 1, 0, 0, 0)
@@ -38544,18 +38407,6 @@ end
 
 # ---------------- test 28: errors ----------------
 
-def make_identity_mixer(chans)
-  if integer?(chans) and chans < 256
-    m1 = make_mixer(chans)
-    if mixer?(m1)
-      chans.times do |i| mixer_set!(m1, i, i, 1.0) end
-    end
-    m1
-  else
-    false
-  end
-end
-
 def check_error_tag(expected_tag, &thunk)
   if (tag = Snd.catch do thunk.call end).first != expected_tag
     snd_display("%s %s: %s at line %s",
@@ -38583,11 +38434,12 @@ Procs =
    :cursor_color, :with_tracking_cursor, :cursor_size, :cursor_style, :tracking_cursor_style,
    :dac_combines_channels, :dac_size, :clipping, :data_color, :data_format, :data_location,
    :data_size, :default_output_chans, :default_output_data_format, :default_output_srate,
-   :default_output_header_type, :insert_file_dialog,
+   :default_output_header_type, :insert_file_dialog, :file_write_date,
    :define_envelope, :delete_mark, :delete_marks, :forget_region, :delete_sample,
    :delete_samples, :delete_selection, :dialog_widgets, :display_edits, :dot_size,
    :draw_dot, :draw_dots, :draw_line, :draw_lines, :draw_string, :edit_header_dialog,
-   :edit_fragment, :edit_position, :edit_tree, :edits, :env_selection, :env_sound,
+   :edit_fragment, :edit_list2function, :edit_position, :edit_tree, :edits, :env_selection,
+   :env_sound,
    :enved_envelope, :enved_base, :enved_clip?, :enved_in_dB, :enved_dialog, :enved_style,
    :enved_power, :enved_target, :enved_waveform_color, :enved_wave?, :eps_file, :eps_left_margin,
    :eps_bottom_margin, :eps_size, :expand_control, :expand_control_hop, :expand_control_jitter,
@@ -38610,18 +38462,19 @@ Procs =
    :make_color, :make_graph_data, :make_mix_sample_reader, :make_player, :make_region,
    :make_region_sample_reader, :make_sample_reader, :map_chan,
    :mark_color, :mark_name, :mark_sample, :mark_sync, :mark_sync_max, :mark_home, :marks,
-   :mark?, :max_transform_peaks, :max_regions, :maxamp, :maxamp_position, :menu_widgets,
+   :mark?, :max_transform_peaks, :max_regions, :max_virtual_ptrees, :max_virtual_xramps,
+   :maxamp, :maxamp_position, :menu_widgets,
    :minibuffer_history_length, :min_dB, :log_freq_start, :mix, :mixes, :mix_amp, :mix_amp_env,
    :mix_color, :mix_length, :mix?,
    :view_mixes_dialog, :mix_position, :mix_dialog_mix,
-   :mix_name, :mix_region, :mix_sample_reader?, :mix_selection,
-   :mix_sound,
+   :mix_name, :mix_sync_max, :mix_sync, :mix_properties,
+   :mix_region, :mix_sample_reader?, :mix_selection, :mix_sound,
    :mix_home, :mix_speed, :mix_tag_height, :mix_tag_width, :mark_tag_height, :mark_tag_width,
    :mix_tag_y, :mix_vct, :mix_waveform_height, :time_graph_style, :lisp_graph_style,
-   :transform_graph_style, :read_mix_sample, :next_sample,
+   :transform_graph_style, :read_mix_sample, :next_sample, :read_region_sample,
    :transform_normalization, :open_file_dialog_directory,
-   :open_raw_sound, :open_sound, :orientation_dialog, :peak_env_info, :peaks,
-   :position_color, :position2x, :position2y, :previous_sample,
+   :open_raw_sound, :open_sound, :orientation_dialog, :previous_sample, :peak_env_info, :peaks,
+   :position_color, :position2x, :position2y,
    :add_directory_to_view_files_list, :add_file_to_view_files_list,
    :view_files_amp, :view_files_speed, :view_files_files, :view_files_selected_files,
    :view_files_speed_style, :view_files_amp_env,
@@ -38640,7 +38493,7 @@ Procs =
    :save_marks, :save_region, :save_selection, :save_sound, :save_sound_as, :save_state,
    :save_state_file, :scale_by, :scale_selection_by, :scale_selection_to, :scale_to,
    :scan_chan, :search_procedure, :select_all, :select_channel, :select_sound, :selected_channel,
-   :selected_data_color, :selected_graph_color, :colormap?, :selected_sound, :selection_position,
+   :selected_data_color, :selected_graph_color, :selected_sound, :selection_position,
    :selection_color, :selection_creates_region, :selection_frames, :selection_member?,
    :selection?, :short_file_name, :show_axes, :show_backtrace, :show_controls,
    :show_transform_peaks, :show_indices, :show_listener, :show_marks, :show_mix_waveforms,
@@ -38662,11 +38515,12 @@ Procs =
    :x_axis_style, :beats_per_measure, :beats_per_minute, :x_bounds, :x_position_slider,
    :x2position, :x_zoom_slider, :mus_header_type2string, :mus_data_format2string, :y_bounds,
    :y_position_slider, :y2position, :y_zoom_slider, :zero_pad, :zoom_color, :zoom_focus_style,
+   :mus_set_format_radius_and_frequency,
    :mus_sound_samples, :mus_sound_frames, :mus_sound_duration, :mus_sound_datum_size,
    :mus_sound_data_location, :data_size, :mus_sound_chans, :mus_sound_srate,
    :mus_sound_header_type, :mus_sound_data_format, :mus_sound_length, :mus_sound_type_specifier,
    :mus_header_type_name, :mus_data_format_name, :mus_sound_comment, :mus_sound_write_date,
-   :mus_bytes_per_sample, :mus_sound_loop_info, :mus_audio_report,
+   :mus_bytes_per_sample, :mus_sound_loop_info, :mus_sound_mark_info, :mus_audio_report,
    :mus_sun_set_outputs, :mus_netbsd_set_outputs,
    :mus_sound_maxamp, :mus_sound_maxamp_exists?, :mus_file_prescaler, :mus_prescaler,
    :mus_clipping, :mus_file_clipping, :mus_header_raw_defaults,
@@ -38696,7 +38550,8 @@ Procs =
    :make_triangle_wave, :make_two_pole, :make_two_zero, :make_wave_train, :make_waveshape,
    :mixer_multiply, :mixer_ref, :mixer_set!, :mixer?, :mixer_add,
    :move_sound, :make_move_sound, :move_sound?, :mus_float_equal_fudge_factor, :multiply_arrays,
-   :mus_array_print_length, :mus_channel, :mus_channels, :make_polyshape, :polyshape?, :mus_close,
+   :mus_array_print_length, :mus_channel, :mus_channels, :make_polyshape, :polyshape, :polyshape?,
+   :mus_close,
    :mus_cosines, :mus_data, :mus_feedback, :mus_feedforward, :mus_fft, :mus_formant_radius,
    :mus_frequency, :mus_hop, :mus_increment, :mus_input?, :mus_file_name, :mus_length,
    :mus_location, :mus_mix, :mus_order, :mus_output?, :mus_phase, :mus_ramp, :mus_random,
@@ -38713,7 +38568,8 @@ Procs =
    :vct_subtract!, :vct_copy, :vct_length, :vct_multiply!, :vct_offset!, :vct_ref, :vct_scale!,
    :vct_fill!, :vct_set!, :mus_audio_describe, :vct_peak, :vct?, :list2vct, :vct2list,
    :vector2vct, :vct2vector, :vct_move!, :vct_reverse!, :vct_subseq, :vct, :little_endian?,
-   :vct2string, :clm_channel, :env_channel, :map_channel, :scan_channel, :play_channel,
+   :vct2string, :clm_channel, :env_channel, :map_channel_with_base, :map_channel,
+   :scan_channel, :play_channel,
    :reverse_channel, :seconds2samples, :samples2seconds, :vct2channel,
    # FIXME
    # :smooth_channel (snd-sig.c, 3051):
@@ -38739,12 +38595,10 @@ Procs =
    :channel_data, :x_axis_label, :variable_graph?, :y_axis_label, :snd_url, :snd_urls,
    :free_player, :quit_button_color, :help_button_color,
    :reset_button_color, :doit_button_color, :doit_again_button_color,
-   :delay_tick, :playing, :draw_axes, :copy_mix,
+   :delay_tick, :playing, :draw_axes,
    :copy_sample_reader, :html_dir, :html_program, :make_fir_coeffs,
-   :make_identity_mixer, :mus_interp_type, :mus_run, :phase_vocoder,
-   :player_home, :redo_edit, :undo_edit, :widget_position, :widget_size,
-   ((defined? window_property) ? :window_property : :identity),
-   :focus_widget]
+   :mus_interp_type, :mus_run, :phase_vocoder,
+   :player_home, :redo_edit, :undo_edit, :widget_position, :widget_size, :focus_widget]
 
 Set_procs =
   [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_output_device,
@@ -38770,8 +38624,9 @@ Set_procs =
    :graphs_horizontal, :highlight_color, :just_sounds, :left_sample, :listener_color,
    :listener_font, :listener_prompt, :listener_text_color, :mark_color, :mark_name, :mark_sample,
    :mark_sync, :max_transform_peaks, :max_regions, :min_dB, :log_freq_start, :mix_amp,
-   :mix_amp_env, :mix_color, :mix_name,
-   :mix_position, :mix_speed, :mix_tag_height, :mix_tag_width, :mix_tag_y,
+   :mix_amp_env, :mix_color, :mix_name, :mix_position, :mix_sync, :mix_properties,
+   :max_virtual_ptrees, :max_virtual_xramps,
+   :mix_speed, :mix_tag_height, :mix_tag_width, :mix_tag_y,
    :mark_tag_width, :mark_tag_height, :mix_waveform_height, :transform_normalization,
    :open_file_dialog_directory, :position_color, :view_files_sort, :print_length,
    :pushed_button_color, :region_graph_style, :reverb_control_decay,
@@ -38807,9 +38662,8 @@ Set_procs =
    :help_button_color, :reset_button_color, :doit_button_color, :doit_again_button_color,
    :html_dir, :html_program, :widget_position, :widget_size,
    :vct_ref, :frame_ref, :mixer_ref, :locsig_ref, :locsig_reverb_ref,
-   :colormap?, :mus_reset, :mus_interp_type,
-   :filter_control_coeffs,
-   ((defined? window_property) ? :window_property : :widget_size), :mus_file_prescaler,
+   :mus_reset, :mus_interp_type,
+   :filter_control_coeffs, :mus_file_prescaler,
    :mus_clipping, :mus_prescaler, :mus_header_raw_defaults,
    :view_files_amp, :view_files_speed, :view_files_files, :view_files_selected_files,
    :view_files_speed_style, :view_files_amp_env]
@@ -39105,13 +38959,13 @@ def test0028
       snd_display("mus_gen %s: %s", n, tag)
     end
   end
-  mus_procs =
-    [:mus_sound_samples, :mus_sound_frames, :mus_sound_duration, :mus_sound_datum_size,
-     :mus_sound_data_location, :mus_sound_chans, :mus_sound_srate, :mus_sound_header_type,
-     :mus_sound_data_format, :mus_sound_length, :mus_sound_type_specifier, :mus_header_type_name,
-     :mus_data_format_name, :mus_sound_comment, :mus_sound_write_date, :mus_bytes_per_sample,
-     :mus_sound_loop_info, :mus_sound_maxamp, :mus_sound_maxamp_exists?, :mus_header_type2string,
-     :mus_data_format2string]
+  mus_procs = [:mus_sound_samples, :mus_sound_frames, :mus_sound_duration, :mus_sound_datum_size,
+               :mus_sound_data_location, :mus_sound_chans, :mus_sound_srate, :mus_sound_header_type,
+               :mus_sound_data_format, :mus_sound_length, :mus_sound_type_specifier,
+               :mus_header_type_name, :mus_data_format_name, :mus_sound_comment,
+               :mus_sound_write_date, :mus_bytes_per_sample, :mus_sound_loop_info,
+               :mus_sound_mark_info, :mus_sound_maxamp, :mus_sound_maxamp_exists?,
+               :mus_header_type2string, :mus_data_format2string]
   mus_procs.each do |n|
     if (tag = Snd.catch do snd_func(n, $vct_5) end).first != :wrong_type_arg
       snd_display("mus_sound %s: %s", n, tag)
@@ -39137,8 +38991,8 @@ def test0128
   mus_sound_forget("/bad/baddy")
   [:channel_widgets, :count_matches, :cursor, :channel_properties, :with_tracking_cursor,
    :cursor_position, :cursor_size, :cursor_style, :tracking_cursor_style, :delete_sample,
-   :display_edits, :dot_size, :draw_dots, :draw_lines, :edit_fragment, :edit_position, :edit_tree,
-   :edits, :fft_window_alpha,
+   :display_edits, :dot_size, :draw_dots, :draw_lines, :edit_fragment, :edit_list2function,
+   :edit_position, :edit_tree, :edits, :env_selection, :fft_window_alpha,
    :fft_window_beta, :fft_log_frequency, :fft_log_magnitude, :transform_size,
    :transform_graph_type, :fft_window, :transform_graph?, :find_channel, :graph, :graph_style,
    :lisp_graph?, :insert_region, :insert_sound, :time_graph_style, :lisp_graph_style,
@@ -39373,8 +39227,8 @@ def test0128
     :mix_release_hook, :save_hook, :before_save_as_hook, :after_save_as_hook,
     :save_state_hook, :new_sound_hook, :mus_error_hook, :mouse_enter_graph_hook,
     :mouse_leave_graph_hook, :open_raw_sound_hook, :select_channel_hook,
-    :output_name_hook, :after_open_hook, :close_hook, :draw_mark_hook,
-    :mark_click_hook, :listener_click_hook, :mix_click_hook,
+    :output_name_hook, :peak_env_hook, :after_open_hook, :close_hook, :draw_mark_hook,
+    :draw_mix_hook, :mark_click_hook, :listener_click_hook, :mix_click_hook,
     :after_save_state_hook, :before_save_state_hook, :mark_hook, :mark_drag_hook,
     :mark_drag_triangle_hook, :mix_drag_hook, :name_click_hook, :after_apply_controls_hook,
     :open_hook, :output_comment_hook, :help_hook, :play_hook, :dac_hook,
@@ -39418,11 +39272,8 @@ def test0228
   check_error_tag(:wrong_type_arg) do
     mus_mix("oboe.snd", "pistol.snd", 0, 12, 0, make_mixer(1, 1.0), "a string")
   end
-	ind = new_sound("test.snd")
-  check_error_tag(:bad_header) do mus_mix("test.snd", $sf_dir + "bad_chans.aifc") end
-  check_error_tag(:mus_error) do mus_mix("test.snd", $sf_dir + "bad_length.aifc") end
-	close_sound(ind)
-	delete_file("test.snd")
+  check_error_tag(:bad_header) do mus_mix("oboe.snd", $sf_dir + "bad_chans.aifc") end
+  check_error_tag(:mus_error) do mus_mix("oboe.snd", $sf_dir + "bad_length.aifc") end
   check_error_tag(:bad_header) do mus_mix($sf_dir + "bad_chans.aifc", "oboe.snd") end
   check_error_tag(:no_such_sound) do set_sound_loop_info(123, [0, 0, 1, 1]) end
   check_error_tag(:bad_header) do
@@ -39434,7 +39285,6 @@ def test0228
   check_error_tag(:out_of_range) do snd_transform(20, make_vct(4)) end
   check_error_tag(:bad_header) do mus_sound_maxamp($sf_dir + "bad_chans.snd") end
   check_error_tag(:bad_header) do set_mus_sound_maxamp($sf_dir + "bad_chans.snd", [0.0, 0.0]) end
-  check_error_tag(:mus_error) do play($sf_dir + "midi60.mid") end
   check_error_tag(:mus_error) do make_iir_filter(:order, 32, :ycoeffs, make_vct(4)) end
   check_error_tag(:mus_error) do make_iir_filter(:coeffs, make_vct(4), :ycoeffs, make_vct(4)) end
   check_error_tag(:mus_error) do make_iir_filter(:coeffs, make_vct(4), :xcoeffs, make_vct(4)) end
@@ -39486,9 +39336,6 @@ def test0228
   check_error_tag(:out_of_range) do make_color(1.5, 0.0, 0.0) end
   check_error_tag(:out_of_range) do make_color(-0.5, 0.0, 0.0) end
   check_error_tag(:wrong_type_arg) do make_variable_graph(false) end
-  if provided? :snd_motif
-    check_error_tag(:arg_error) do make_variable_graph(main_widgets.cadr) end
-  end
   check_error_tag(:cannot_print) do graph2ps end
   ind = open_sound("oboe.snd")
   set_selection_creates_region(true)
@@ -39675,6 +39522,9 @@ def test0228
   check_error_tag(:wrong_type_arg) do src_sound(3.0, 1.0, true) end
   check_error_tag(:wrong_type_arg) do src_sound(3.0, 1.0, ind, true) end
   check_error_tag(:no_such_edit) do display_edits(ind, 0, 123) end
+  check_error_tag(:no_such_edit) do marks(ind, 0, 123) end
+  check_error_tag(:no_such_edit) do save_sound_as("test.snd", :edit_position, 123) end
+  check_error_tag(:no_such_auto_delete_choice) do insert_sound("1a.snd", 0, 0, ind, 0, 0, 123) end
   close_sound(ind)
   check_error_tag(:bad_arity) do add_transform("hiho", "time", 0, 1, lambda do | | 1.0 end) end
   check_error_tag(:cannot_save) do save_state("/bad/baddy") end
@@ -39787,6 +39637,11 @@ def test0228
   check_error_tag(:out_of_range) do make_polyshape(440.0, :partials, [1, 1], :kind, 3) end
   check_error_tag(:wrong_type_arg) do set_mus_header_raw_defaults(1234) end
   check_error_tag(:wrong_type_arg) do set_mus_header_raw_defaults([44100, 2.123, "hi"]) end
+  check_error_tag(:no_such_mix) do mix_sync(mix_sync_max + 1) end
+  check_error_tag(:no_such_mix) do set_mix_sync(mix_sync_max + 1, 1) end
+  check_error_tag(:no_such_mix) do mix_properties(mix_sync_max + 1) end
+  check_error_tag(:no_such_mix) do set_mix_properties(mix_sync_max + 1, 1) end
+  check_error_tag(:no_such_mix) do play_mix(mix_sync_max + 1) end
   if provided? :snd_motif
     [:widget_position, :widget_size, :widget_text,
       :hide_widget, :show_widget, :focus_widget].each do |n|

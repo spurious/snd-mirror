@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Sep 16 01:27:09 CEST 2003
-# Changed: Mon Dec 11 04:59:30 CET 2006
+# Changed: Fri Jul 06 01:04:39 CEST 2007
 
 # Instruments work with
 #   with_sound (CLM (sample2file gens) and Snd)
@@ -771,6 +771,7 @@ def wurley(start, dur, freq, amp)
   g1 = 0.307
   g2 = 0.5 * amp * 0.307
   g3 = 0.117
+  dur = [dur, 0.3].max
   ampenv = make_env(:envelope, [0, 0, 1, 1, 9, 1, 10, 0], :duration, dur)
   indenv = make_env(:envelope, [0, 0, 0.001, 1, 0.15, 0, dur, 0], :duration, dur)
   resenv = make_env(:envelope, [0, 0, 0.001, 1, 0.25, 0, dur, 0], :duration, dur)
@@ -789,6 +790,7 @@ def rhodey(start, dur, freq, amp, base = 0.5)
   osc1 = make_oscil(freq * 0.5)
   osc2 = make_oscil(freq)
   osc3 = make_oscil(freq * 15.0)
+  dur = [dur, 0.3].max
   ampenv1 = make_env(:envelope, [0, 0, 0.005, 1, dur, 0], :base, base, :duration, dur)
   ampenv2 = make_env(:envelope, [0, 0, 0.001, 1, dur, 0], :base, base * 1.5, :duration, dur)
   ampenv3 = make_env(:envelope, [0, 0, 0.001, 1, 0.25, 0, dur, 0], :base, base * 4, :duration, dur)
@@ -809,6 +811,7 @@ def hammondoid(start, dur, freq, amp)
   osc1 = make_oscil(freq * 1.997)
   osc2 = make_oscil(freq * 3.006)
   osc3 = make_oscil(freq * 6.009)
+  dur = [dur, 0.1].max
   ampenv1 = make_env(:envelope, [0, 0, 0.005, 1, dur - 0.008, 1, dur, 0], :duration, dur)
   ampenv2 = make_env(:envelope, [0, 0, 0.005, 1, dur, 0], :duration, dur)
   g0 = 0.25 * 0.75 * amp
@@ -828,6 +831,7 @@ def metal(start, dur, freq, amp)
   osc1 = make_oscil(freq * 4.0 * 0.999)
   osc2 = make_oscil(freq * 3.0 * 1.001)
   osc3 = make_oscil(freq * 0.5 * 1.002)
+  dur = [dur, 0.1].max
   ampenv0 = make_env(:envelope, [0, 0, 0.001, 1, dur - 0.002, 1, dur, 0], :duration, dur)
   ampenv1 = make_env(:envelope, [0, 0, 0.001, 1, dur - 0.011, 1, dur, 0], :duration, dur)
   ampenv2 = make_env(:envelope, [0, 0, 0.01, 1, dur - 0.015, 1, dur, 0], :duration, dur)

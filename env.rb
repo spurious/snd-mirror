@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Sep 20 23:24:17 CEST 2003
-# Changed: Mon Dec 11 05:01:18 CET 2006
+# Changed: Fri Jun 01 11:50:24 CEST 2007
 
 # Commentary:
 #
@@ -758,7 +758,7 @@ def install_save_peak_env
   $close_hook.add_hook!(hook_name) do |snd|
     peak_env.save_info_at_close(snd)
   end
-  $exit_hook.add_hook!(hook_name) do
+  $exit_hook.add_hook!(hook_name) do | |
     Snd.sounds.each do |snd| peak_env.save_info_at_close(snd) end
   end
 end
