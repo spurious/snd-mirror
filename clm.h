@@ -7,6 +7,7 @@
 
 /*
  * 5-July:     changed some Floats to doubles in env funcs.
+ *               exp envs now use repeated multiplies rather than direct exp call.
  * 19-June:    mus-increment on gens with a notion of frequency (phase increment); 
  *               to make room for this, asymmetric-fm ratio and sine-summation b moved to mus-offset.
  * 22-Feb:     mus_big_fft and mus_spectrum_t.

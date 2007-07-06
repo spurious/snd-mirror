@@ -8222,7 +8222,7 @@ save the current fft peak info: <a href="#peaks">peaks</a><br>
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="savesoundas">save-sound-as</a> (<a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :sound :header-type :data-format :srate :channel :edit-position :comment)</code>
 </td></tr><tr><td></td><td>
-This saves 'sound' as 'file' (like the File Save as menu option).  If 'channel' is specified,
+This saves 'sound' as 'file' (like the 'File:Save as' menu option).  If 'channel' is specified,
 only that channel is saved (it is extracted if necessary from the multichannel original).  
 'edit-position', if given, specifies which edit history position to save.
 The :srate argument refers only to the new sound file's header's srate field;
@@ -8230,7 +8230,7 @@ the data is not resampled.  If you want to resample the data as it is saved, see
 the example under <a href="#beforesaveashook">before-save-as-hook</a>.  If :data-format
 is given, the sound file is written using that data format.
 Any omitted argument's value
-is taken from the sound being saved. 
+is taken from the sound being saved. save-sound-as returns the new file name.
 <pre>
     (save-sound-as "test.snd" :data-format mus-bdouble :header-type mus-aifc)
 </pre>

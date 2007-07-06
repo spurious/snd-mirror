@@ -341,7 +341,7 @@ char *run_save_state_hook(char *file)
  *
  * The accessors are highly optimized (split into numerous choices) since everything else in Snd
  *   goes through the accessors to get at the data.  My tests indicate that even a lowly old
- *   267 MHz PC (and equivalent Sun) can play stereo 44KHz through the double xramp op (or ptree2!)
+ *   267 MHz PC (and equivalent Sun) can play stereo 44KHz through the ptree2 op
  *   without glitches, and on a modern machine the readers scarcely register in loadav.
  *
  * (3.2 GHz):          -ffast-math  (double)   (3.8 GHz, float): after arrayification:
@@ -691,7 +691,9 @@ static Float next_xramp1_value(snd_fd *sf)
   return(val);
 }
 
-/* PERHAPS: invert READER_INCR if xramp so we have multiply, not divide */
+/* ideally we'd invert the increment if reading an xramp in reverse, making this a multiply, not a divide,
+ *   but then we'd need a fixup when the reader changes direction -- probably not worth the complexity.
+ */
 
 static Float previous_xramp1_value(snd_fd *sf)
 {
@@ -2987,6 +2989,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
   ed_list *ed;
 #if HAVE_FORTH
   char *forth_func = NULL;
+  bool mix_ed = false;
 #endif
   edits = cp->edit_ctr;
   while ((edits < (cp->edit_size - 1)) && 
@@ -3143,6 +3146,10 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 
 		case MIX_EDIT:
 		case CHANGE_MIX_EDIT:
+		  mix_ed = true;
+		  fprintf(fd, "sfile value snd\n");
+		  fprintf(fd, "      %d     value chn\n", cp->chan);
+		  fprintf(fd, "      ");
 		  forth_func = ed->origin;
 		  break;
 
@@ -3243,8 +3250,15 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 #if HAVE_RUBY
 	      else fprintf(fd, ", false");
 #endif
-#if HAVE_SCHEME || HAVE_FORTH
+#if HAVE_SCHEME
 	      else fprintf(fd, " #f");
+#endif
+#if HAVE_FORTH
+	      else
+		{
+		  if (!mix_ed)
+		    fprintf(fd, " #f");
+		}
 #endif
 #if HAVE_GUILE
 	      if (ed->edit_type == PTREE_EDIT)
@@ -3276,7 +3290,9 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		  FREE(nfile);
 		}
 #if HAVE_FORTH
-	      fprintf(fd, " %s drop\n", forth_func);
+	      if (mix_ed)
+		fprintf(fd, " %s\n", forth_func);
+	      else fprintf(fd, " %s drop\n", forth_func);
 #else
 	      fprintf(fd, ")\n"); /* works for both Ruby and Scheme */
 #endif
@@ -3658,11 +3674,11 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  break;
 
 		case MIX_EDIT:
-		  function = mus_format("%s %s drop", function, ed->origin);
+		  function = mus_format("%s %s", function, ed->origin);
 		  break;
 
 		case CHANGE_MIX_EDIT:
-		  function = mus_format("%s %s drop", function, ed->origin);
+		  function = mus_format("%s %s", function, ed->origin);
 		  break;
 
 		default: break;
@@ -5586,7 +5602,9 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
   ed_list *new_ed, *old_ed;
   bool backup = false;
   double rstart;
-
+  /*
+  fprintf(stderr,"ramp: %f %f %f %f " OFF_TD " " OFF_TD "\n", start, incr, scaler, offset, beg, num);
+  */
   old_ed = cp->edits[pos];
   if ((beg < 0) || 
       (num <= 0) ||
@@ -5728,9 +5746,6 @@ bool xramp_channel(chan_info *cp, double start, double incr, double scaler, doub
 {
   return(all_ramp_channel(cp, start, incr, scaler, offset, beg, num, pos, in_as_one_edit, S_xramp_channel, true, e, xramp_seg_loc));
 }
-
-/* TODO: all snd-sig refs and g_ramp_channel
-*/
 
 
 static void add_ptree_to_fragment(ed_list *new_ed, int i, int ptree_loc, off_t beg, off_t num)
@@ -9682,14 +9697,6 @@ write out a temp-file of the state as now?  And how to import it
 into some arbitrary place in the tree again?  Would pasting it in
 be analogous to take a certain stage of the edit-history and
 append the rest?
-*/
-
-/* 
-      change over to an array of functions: ramp_start_number, xramp+scale, ptree(zero), etc
-        the basic accessor sequence can be (*(arr[1]))(sf, ((*(arr[0]))(sf, sf->data[loc...]))) --
-        means changing function type slightly, and ptree_zero case is sticky, and scalers are tricky 
-
-	it may be necessary to switch to a list of functions rather than the state machine used currently
 */
 
 /* for virtual filter (and ultimately virtual src), see virtual-filter-channel (examp.scm) and convolve-coeffs (snd-test.scm)

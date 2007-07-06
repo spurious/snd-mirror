@@ -4612,9 +4612,21 @@ static void dmagify_env(seg *e, Float *data, int pts, off_t dur, double scaler)
       (e->locs[pts - 2] != e->end))
     e->locs[pts - 2] = e->end;
 
-  if ((pts > 1) && 
-      (e->style != ENV_SEG))
-    e->rates[pts - 1] = e->rates[pts - 2]; /* stick at last value, which in this case is the value (not 0 as increment) */
+  if (pts > 1)
+    {
+      switch (e->style)
+      {
+      case ENV_STEP:
+	e->rates[pts - 1] = e->rates[pts - 2]; /* stick at last value, which in this case is the value (not an increment) */
+	break;
+      case ENV_SEG:
+	e->rates[pts - 1] = 0.0;
+	break;
+      case ENV_EXP:
+	e->rates[pts - 1] = 1.0;
+	break;
+      }
+    }
 
   e->locs[pts - 1] = 1000000000;
 }

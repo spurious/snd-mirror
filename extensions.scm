@@ -549,7 +549,6 @@ If 'check' is #f, the hooks are removed."
 
 (define* (mix-channel file-data :optional beg dur snd chn edpos)
   "(mix-channel file :optional beg dur snd chn edpos) mixes in file. file can be the file name or a list (file-name [beg [channel]])"
-  ;; TODO: should this create and return a mix instead?
   (let* ((file-name (if (string? file-data) file-data (car file-data)))
 	 (file-beg (if (or (string? file-data) 
 			   (< (length file-data) 2)) 
