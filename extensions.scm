@@ -19,12 +19,15 @@
 ;;; channels-equal
 ;;; mono->stereo, mono-files->stereo, stereo->mono
 
+
 (use-modules (ice-9 common-list) (ice-9 optargs) (ice-9 format))
 (provide 'snd-extensions.scm)
+
 
 (if (and (provided? 'snd-gauche)
 	 (not (provided? 'gauche-optargs.scm)))
     (load-from-path "gauche-optargs.scm"))
+
 
 (if (not (defined? 'remove-if))
     (define (remove-if pred l) ; from guile/ice-9/common-list.scm
@@ -33,6 +36,7 @@
 	(cond ((null? l) (reverse! result))
 	      ((pred (car l)) (loop (cdr l) result))
 	      (else (loop (cdr l) (cons (car l) result)))))))
+
 
 (if (not (defined? 'find-if))
     (define (find-if pred l)
@@ -60,6 +64,7 @@
 	   (set-cdr! old-val new-val)
 	   (set! (channel-properties snd chn) (cons (cons key new-val) (channel-properties snd chn))))
        new-val))))
+
 
 (define channel-sync
   (make-procedure-with-setter
@@ -176,6 +181,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
   "(map-sound-files func :optional dir) applies func to each sound file in dir"
   (map func (sound-files-in-directory (or dir "."))))
 
+
 (define* (for-each-sound-file func :optional dir)
   "(for-each-sound-file func :optional dir) applies func to each sound file in dir"
   (for-each func (sound-files-in-directory (or dir "."))))
@@ -190,6 +196,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
            (lambda args #f)))
   "/home/bil/sf")
 |#
+
 
 (define* (match-sound-files func :optional dir)
   "(match-sound-files func :optional dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
@@ -547,28 +554,64 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- mix-channel, insert-channel, c-channel
 
-(define* (mix-channel file-data :optional beg dur snd chn edpos)
-  "(mix-channel file :optional beg dur snd chn edpos) mixes in file. file can be the file name or a list (file-name [beg [channel]])"
-  (let* ((file-name (if (string? file-data) file-data (car file-data)))
-	 (file-beg (if (or (string? file-data) 
-			   (< (length file-data) 2)) 
+(define* (mix-channel input-data :optional (beg 0) dur snd (chn 0) edpos with-tag)
+
+  "(mix-channel file :optional beg dur snd chn edpos with-tag) mixes in file. file can be the file name, a sound index, or \
+a list (file-name-or-sound-index [beg [channel]])."
+
+  (let* ((input (if (not (list? input-data)) input-data (car input-data)))
+	 (input-beg (if (or (not (list? input-data))
+			   (< (length input-data) 2)) 
 		       0 
-		       (cadr file-data)))
-	 (file-channel (if (or (string? file-data) 
-			       (< (length file-data) 3))
+		       (cadr input-data)))
+	 (input-channel (if (or (not (list? input-data))
+			       (< (length input-data) 3))
 			   0 
-			   (caddr file-data)))
-	 (len (or dur (- (mus-sound-frames file-name) file-beg)))
+			   (caddr input-data)))
+	 (len (or dur (- (if (string? input)
+			     (mus-sound-frames input) 
+			     (frames input input-channel))
+			 input-beg)))
 	 (start (or beg 0)))
-    (if (< start 0) (throw 'no-such-sample (list "mix-channel" beg)))
-    (if (> len 0)
-	(let ((reader (make-sample-reader file-beg file-name file-channel)))
-	  (map-channel (lambda (val)
-			 (+ val (next-sample reader)))
-		       start len snd chn edpos
-		       (if (string? file-data)
-			   (format #f "mix-channel ~S ~A ~A" file-data beg dur)
-			   (format #f "mix-channel '~A ~A ~A" file-data beg dur)))))))
+    (if (< start 0) 
+	(throw 'no-such-sample (list "mix-channel" beg))
+	(if (> len 0)
+	    (if (not with-tag)
+
+		;; not a virtual mix
+		(let ((reader (make-sample-reader input-beg input input-channel)))
+		  (map-channel (lambda (val)
+				 (+ val (next-sample reader)))
+			       start len snd chn edpos
+			       (if (string? input-data)
+				   (format #f "mix-channel ~S ~A ~A" input-data beg dur)
+				   (format #f "mix-channel '~A ~A ~A" input-data beg dur))))
+
+		;; a virtual mix -- use simplest method available
+		(if (number? input)
+		    ;; sound index case
+		    (if (< len 1000000)
+			(mix-vct (channel->vct input-beg len input input-channel) start snd chn #t)
+			(let* ((output-name (snd-tempnam))
+			       (output (new-sound output-name :size len))
+			       (reader (make-sample-reader input-beg input input-channel)))
+			  (map-channel (lambda (val) (next-sample reader)) 0 len output 0)
+			  (save-sound output)
+			  (close-sound output)
+			  (mix output-name start 0 snd chn #t #t)))
+		    ;; file input
+		    (if (and (= start 0) (= len (mus-sound-frames input)))
+			;; mixing entire file
+			(mix input start 0 snd chn #t #f) ; don't delete it!
+			;; mixing part of file
+			(let* ((output-name (snd-tempnam))
+			       (output (new-sound output-name :size len))
+			       (reader (make-sample-reader input-beg input input-channel)))
+			  (map-channel (lambda (val) (next-sample reader)) 0 len output 0)
+			  (save-sound output)
+			  (close-sound output)
+			  (mix output-name start 0 snd chn #t #t)))))))))
+
 
 (define* (insert-channel file-data :optional beg dur snd chn edpos)
   "(insert-channel file :optional beg dur snd chn edpos) inserts the file. file can be the file name or a list (file-name [beg [channel]])"
@@ -601,6 +644,7 @@ If 'check' is #f, the hooks are removed."
   (if (and snd (not (= (sync snd) 0)) chn)
       (set! (edit-position snd chn) (+ (edit-position snd chn) edits))
       (redo edits snd)))
+
 
 (define* (undo-channel :optional (edits 1) snd chn)
   "(undo-channel (edits 1) snd chn) is the regularized version of undo"
@@ -668,6 +712,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	    (- rmp1 rmp0))))
    (format #f "sine-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))
 
+
 (define* (sine-env-channel env :optional (beg 0) dur snd chn edpos)
   "(sine-env-channel env :optional (beg 0) dur snd chn edpos) connects env's dots with sinusoids"
   (any-env-channel env sine-ramp beg dur snd chn edpos (format #f "sine-env-channel '~A ~A ~A" env beg dur)))
@@ -706,6 +751,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	    (- rmp1 rmp0))))
    (format #f "blackman4-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))
 
+
 (define* (blackman4-env-channel env :optional (beg 0) dur snd chn edpos)
   "(blackman4-env-channel env :optional (beg 0) dur snd chn edpos) uses the blackman4 window to connect the dots in 'env'"
   (any-env-channel env blackman4-ramp beg dur snd chn edpos (format #f "blackman4-env-channel '~A ~A ~A" env beg dur)))
@@ -739,6 +785,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	   (vct (* (- frag-dur frag-beg) incr) (- incr) rmp1 (- rmp0 rmp1))
 	   (vct (* frag-beg incr) incr rmp0 (- rmp1 rmp0)))))
    (format #f "ramp-squared ~A ~A ~A ~A ~A" rmp0 rmp1 symmetric beg dur)))
+
 
 (define* (env-squared-channel env :optional (symmetric #t) (beg 0) dur snd chn edpos)
   "(env-squared-channel env :optional (symmetric #t) (beg 0) dur snd chn edpos) connects env's dots with x^2 curves"
@@ -776,6 +823,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	   (vct (* frag-beg incr) incr rmp0 (- rmp1 rmp0) exponent))))
    (format #f "ramp-expt ~A ~A ~A ~A ~A ~A" rmp0 rmp1 exponent symmetric beg dur)))
 
+
 (define* (env-expt-channel env exponent :optional (symmetric #t) (beg 0) dur snd chn edpos)
   "(env-expt-channel env exponent :optional (symmetric #t) (beg 0) dur snd chn edpos) connects env's dots with x^exponent curves"
   (if (= exponent 1.0)
@@ -794,6 +842,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   (let ((dc amount))
     (ptree-channel (lambda (y) (+ y dc)) beg dur snd chn edpos #t #f
 		   (format #f "offset-channel ~A ~A ~A" amount beg dur))))
+
 
 (define* (offset-sound off :optional (beg 0) dur snd)
   "(offset-sound off :optional beg dur snd) adds 'off' to every sample in 'snd'"
@@ -830,6 +879,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
     (ptree-channel (lambda (y) (+ y (mus-random dither) (mus-random dither))) beg dur snd chn edpos #t #f
 		   (format #f "dither-channel ~,8F ~A ~A" amount beg dur))))
 
+
 (define* (dither-sound :optional (amount .00006) (beg 0) dur snd)
   "(dither-sound :optional (amount .00006) beg dur snd) adds dithering to every channel of 'snd'"
   (let ((index (or snd (selected-sound) (car (sounds)))))
@@ -851,6 +901,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
        (sin (+ (* y 0.5 pi) (* ind (sin (* y 2.0 pi))))))
      beg dur snd chn edpos #f #f
      (format #f "contrast-channel ~A ~A ~A" index beg dur))))
+
 
 (define* (contrast-sound index :optional (beg 0) dur snd)
   "(contrast-sound index :optional beg dur snd) applies contrast-enhancement to every channel of 'snd'"
@@ -954,6 +1005,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 				     (> (abs (- val y)) diff)))
 				 0 len s1 c1)))))))
 
+
 (define* (channels-equal? snd1 chn1 snd2 chn2 :optional (allowable-difference 0.0))
   "(channels-equal? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff)"
   (let ((len1 (frames snd1 chn1))
@@ -977,6 +1029,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
     (set! (edit-position snd2 chn2) old-ed2)
     ind))
 
+
 (define (mono-files->stereo new-name chan1-name chan2-name)
   "(mono-files->stereo new-name file1 file2) combines two mono files into the stereo file 'new-name'"
   ;; (mono-files->stereo "test.snd" "oboe.snd" "pistol.snd")
@@ -986,6 +1039,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
     (close-sound ind1)
     (close-sound ind2)
     ind3))
+
 
 (define (stereo->mono orig-snd chan1-name chan2-name)
   "(stereo->mono stereo-sound new-chan1 new-chan2) splits a stereo sound into two mono sounds named 'new-chan1' and 'new-chan2'"
@@ -1043,6 +1097,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   (set! prefs-initial-dur dur)
   (set! prefs-show-full-duration full)
   (add-hook! initial-graph-hook prefs-initial-bounds))
+
 (define (prefs-deactivate-initial-bounds)
   "(prefs-deactivate-initial-bounds) deactivates the preferences dialog initial graph bounds settings"
   (set! prefs-initial-beg 0.0)

@@ -1397,6 +1397,7 @@ Float mus_asymmetric_fm(mus_any *ptr, Float index, Float fm)
 #if 0
   {
     /* sincos is too hard to access, but it would be interesting to check timings (this also occurs in the fft's and polar->rectangular) */
+    /*   my quick tests indicate that sincos is about 25% faster than sin+cos */
     double cf, sf;
     sincos(mth, &sf, &cf);
     result = exp(index * gen->cosr * cf) * sin(gen->phase + index * gen->sinr * sf);
@@ -2424,7 +2425,9 @@ static char *describe_delay(mus_any *ptr)
 		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
   else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 		    S_delay ": line[%d, %s]: %s", 
-		    gen->size, interp_type_to_string(gen->type), str = float_array_to_string(gen->line, gen->size, gen->loc));
+		    gen->size, 
+		    interp_type_to_string(gen->type), 
+		    str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);
 }

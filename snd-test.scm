@@ -1,42 +1,42 @@
 ;;; Snd tests
 ;;;
 ;;;  test 0: constants                          [542]
-;;;  test 1: defaults                           [1100]
-;;;  test 2: headers                            [1296]
-;;;  test 3: variables                          [1612]
-;;;  test 4: sndlib                             [2257]
-;;;  test 5: simple overall checks              [4778]
-;;;  test 6: vcts                               [13604]
-;;;  test 7: colors                             [13882]
-;;;  test 8: clm                                [14372]
-;;;  test 9: mix                                [24180]
-;;;  test 10: marks                             [26393]
-;;;  test 11: dialogs                           [27354]
-;;;  test 12: extensions                        [27599]
-;;;  test 13: menus, edit lists, hooks, etc     [27870]
-;;;  test 14: all together now                  [29576]
-;;;  test 15: chan-local vars                   [30609]
-;;;  test 16: regularized funcs                 [32220]
-;;;  test 17: dialogs and graphics              [37288]
-;;;  test 18: enved                             [37378]
-;;;  test 19: save and restore                  [37397]
-;;;  test 20: transforms                        [39182]
-;;;  test 21: new stuff                         [41017]
-;;;  test 22: run                               [42957]
-;;;  test 23: with-sound                        [48653]
-;;;  test 24: user-interface                    [51134]
-;;;  test 25: X/Xt/Xm                           [54540]
-;;;  test 26: Gtk                               [59136]
-;;;  test 27: GL                                [63000]
-;;;  test 28: errors                            [63124]
-;;;  test all done                              [65410]
-;;;  test the end                               [65646]
+;;;  test 1: defaults                           [1097]
+;;;  test 2: headers                            [1297]
+;;;  test 3: variables                          [1613]
+;;;  test 4: sndlib                             [2258]
+;;;  test 5: simple overall checks              [4780]
+;;;  test 6: vcts                               [13697]
+;;;  test 7: colors                             [13975]
+;;;  test 8: clm                                [14465]
+;;;  test 9: mix                                [24305]
+;;;  test 10: marks                             [26518]
+;;;  test 11: dialogs                           [27479]
+;;;  test 12: extensions                        [27724]
+;;;  test 13: menus, edit lists, hooks, etc     [27995]
+;;;  test 14: all together now                  [29701]
+;;;  test 15: chan-local vars                   [30734]
+;;;  test 16: regularized funcs                 [32345]
+;;;  test 17: dialogs and graphics              [37332]
+;;;  test 18: enved                             [37422]
+;;;  test 19: save and restore                  [37441]
+;;;  test 20: transforms                        [39226]
+;;;  test 21: new stuff                         [41061]
+;;;  test 22: run                               [43001]
+;;;  test 23: with-sound                        [48697]
+;;;  test 24: user-interface                    [51178]
+;;;  test 25: X/Xt/Xm                           [54584]
+;;;  test 26: Gtk                               [59180]
+;;;  test 27: GL                                [63044]
+;;;  test 28: errors                            [63168]
+;;;  test all done                              [65454]
+;;;  test the end                               [65690]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)
-(define keep-going #t)
-(define all-args #t)
+(define keep-going #f)
+(define all-args #f)
 (define test-at-random 0)
 ;(show-ptree 1)
 
@@ -33116,8 +33116,56 @@ EDITS: 2
 	  (if (not (= (frames oboe 0) (* 2 (frames oboe 0 0))))
 	      (snd-display ";insert-channel frames: ~A ~A" (frames oboe 0) (frames oboe 0 0)))
 	  (revert-sound oboe))
-	
 	(close-sound oboe)
+
+	(let* ((ind (new-sound "test.snd" :size 10 :channels 2)))
+	  (set! (sample 3 ind 0) .5)
+	  (set! (sample 2 ind 1) -.4)
+	  (save-sound-as "fmv.snd")
+	  (revert-sound ind)
+	  (let ((val (mix-channel "fmv.snd")))
+	    (if (mix? val)
+		(snd-display ";mix-channel returned a mix: ~A?" val)))
+	  (if (not (vequal (channel->vct 0 #f ind 1) (make-vct 10 0.0)))
+	      (snd-display ";mix-channel mixed channel 1: A?" (channel->vct 0 #f ind 1)))
+	  (if (not (vequal (channel->vct 0 #f ind 0) (vct 0 0 0 .5 0 0 0 0 0 0)))
+	      (snd-display ";mix-channel chan 0: ~A" (channel->vct 0 #f ind 0)))
+	  (revert-sound ind)
+	  (let ((val (mix-channel (list "fmv.snd" 2 1) 0 #f ind 0)))
+	    (if (mix? val)
+		(snd-display ";mix-channel 2 returned a mix: ~A?" val)))
+	  (if (not (vequal (channel->vct 0 #f ind 1) (make-vct 10 0.0)))
+	      (snd-display ";mix-channel mixed channel 1a: A?" (channel->vct 0 #f ind 1)))
+	  (if (not (vequal (channel->vct 0 #f ind 0) (vct -.4 0 0 0 0 0 0 0 0 0)))
+	      (snd-display ";mix-channel chan 0a: ~A" (channel->vct 0 #f ind 0)))
+	  (revert-sound ind)
+	  (set! (sample 2 ind 1) -.4)
+	  (let ((val (mix-channel (list ind 2 1) 0 #f ind 0 -1 #t)))
+	    (if (not (mix? val))
+		(snd-display ";mix-channel with-tag: ~A" val)))
+	  (if (not (vequal (channel->vct 0 #f ind 1) (vct 0 0 -.4 0 0 0 0 0 0 0)))
+	      (snd-display ";mix-channel mixed channel 1b: A?" (channel->vct 0 #f ind 1)))
+	  (if (not (vequal (channel->vct 0 #f ind 0) (vct -.4 0 0 0 0 0 0 0 0 0)))
+	      (snd-display ";mix-channel chan 0b: ~A" (channel->vct 0 #f ind 0)))
+	  (revert-sound ind)
+	  (let ((val (mix-channel (list "fmv.snd" 2 1) 0 #f ind 0 -1 #t)))
+	    (if (not (mix? val))
+		(snd-display ";mix-channel file with-tag: ~A" val)))
+	  (if (not (vequal (channel->vct 0 #f ind 1) (make-vct 10 0.0)))
+	      (snd-display ";mix-channel mixed channel 1c: A?" (channel->vct 0 #f ind 1)))
+	  (if (not (vequal (channel->vct 0 #f ind 0) (vct -.4 0 0 0 0 0 0 0 0 0)))
+	      (snd-display ";mix-channel chan 0c: ~A" (channel->vct 0 #f ind 0)))
+	  (revert-sound ind)
+	  (let ((val (mix-channel (list "fmv.snd") 0 #f ind 1 -1 #t)))
+	    (if (not (mix? val))
+		(snd-display ";mix-channel file 1 with-tag: ~A" val)))
+	  (if (not (vequal (channel->vct 0 #f ind 0) (make-vct 10 0.0)))
+	      (snd-display ";mix-channel mixed channel 0d: A?" (channel->vct 0 #f ind 1)))
+	  (if (not (vequal (channel->vct 0 #f ind 1) (vct 0 0 0 .5 0 0 0 0 0 0)))
+	      (snd-display ";mix-channel chan 1d: ~A" (channel->vct 0 #f ind 1)))
+	  (revert-sound ind)
+	  (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
+	  (close-sound ind))
 	
 	(if (not (= (default-output-chans) 1)) (set! (default-output-chans) 1))
 	(let ((ind (new-sound "fmv.snd"))

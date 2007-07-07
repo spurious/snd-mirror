@@ -4650,7 +4650,7 @@ a region.  It selects the 'dur' samples starting at 'beg' in the given channel.
 </td></tr><tr><td></td><td>
 mix-channel is a "regularized" version of the file mixing functions (<a class=quiet href="extsnd.html#mix">mix</a> and 
 <a href="#mixsound">mix-sound</a>).
-Its first argument can be either a filename (a string) or a list containing the filename, the
+Its first argument can be either a filename (a string), a sound index, or a list containing the filename (or index), the
 start point in the file, and (optionally) the channel of the file to mix:
 <pre>
     (mix-channel "pistol.snd")             ; mixing starts at sample 0, entire sound is mixed
@@ -6446,7 +6446,7 @@ mix-&gt;vct returns a mix's samples in a vct.
 
 <!-- mixes-length -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def NAME="mixeslength">mixes-length</A> <code>mix-list</code>
+<em class=emdef>mixes-length</em> <code>mix-list</code>
 </td></tr><tr><td></td><td>
 mixes-length returns the number of samples between the start of the first mix in 'mix-list' and
 the last end point.
@@ -6455,7 +6455,7 @@ the last end point.
 
 <!-- mixes-maxamp -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def NAME="mixesmaxamp">mixes-maxamp</A> <code>mix-list</code>
+<em class=emdef>mixes-maxamp</em> <code>mix-list</code>
 </td></tr><tr><td></td><td>
 mixes-maxamp returns the maxamp of the mixes in 'mix-list'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -6500,7 +6500,7 @@ is no longer accessible.
 
 <!-- pan-mix-region -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="panmixregion">pan-mix-region</A> <code>region beg env :optional snd chn</code>
+<em class=emdef>pan-mix-region</em> <code>region beg env :optional snd chn</code>
 </td></tr><tr><td></td><td>
 pan-mix-region is similar to pan-mix above, but mixes a region, rather than a file.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -6508,7 +6508,7 @@ pan-mix-region is similar to pan-mix above, but mixes a region, rather than a fi
 
 <!-- pan-mix-selection -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="panmixselection">pan-mix-selection</A> <code>beg env :optional snd chn</code>
+<em class=emdef>pan-mix-selection</em> <code>beg env :optional snd chn</code>
 </td></tr><tr><td></td><td>
 pan-mix-selection is similar to pan-mix above, but mixes the current selection, rather than a file.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -6573,7 +6573,7 @@ scale-tempo changes the positions of the mixes in 'mix-list' to reflect a tempo 
 
 <!-- set-mixes-tag-y -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def NAME="setmixestagy">set-mixes-tag-y</A> <code>mix-list new-y</code>
+<em class=emdef>set-mixes-tag-y</em> <code>mix-list new-y</code>
 </td></tr><tr><td></td><td>
 set-mixes-tag-y sets the tag y location of each mix in 'mix-list' to 'new-y'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -6615,7 +6615,7 @@ src-mixes scales the speed (resampling ratio) of each mix in 'mix-list' by 'scl'
 
 <!-- sync-all-mixes -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def NAME="syncallmixes">sync-all-mixes</A> <code>:optional (new-sync 1)</code>
+<em class=emdef>sync-all-mixes</em> <code>:optional (new-sync 1)</code>
 </td></tr><tr><td></td><td>
 sync-all-mixes sets the mix-sync field of every active mix to 'new-sync'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
