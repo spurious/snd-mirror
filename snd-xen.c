@@ -18,6 +18,7 @@
 
 /* Other extension language possibilities:
  *
+ * ch:          (C)      not open source?
  * chicken:     (Scheme) looks clean, but no vararg functions, no bignums, gc protection looks iffy, not clear
  *                         how to call C function from Scheme.
  * ecl:         (CL)     do-able; will require that all direct refs be through xen.c (can't include its header files!)
@@ -58,6 +59,7 @@ static int gc_last_set = NOT_A_GC_LOC;
 #if MUS_DEBUGGING
 static char **snd_protect_callers = NULL; /* static char* const *callers? no thanks... */
 static int cur_gc_index = 0, max_gc_index = 0;
+
 void dump_protection(FILE *Fp);
 void dump_protection(FILE *Fp)
 {
@@ -267,14 +269,19 @@ static XEN snd_format_if_needed(XEN args)
   int i, start = 0, num_args, format_info_len, err_size = 8192;
   bool got_tilde = false, was_formatted = false;
   char *format_info = NULL, *errmsg = NULL;
+
   num_args = XEN_LIST_LENGTH(args);
   if (num_args == 1) return(XEN_CAR(args));
+
   format_info = copy_string(XEN_TO_C_STRING(XEN_CAR(args)));
   format_info_len = snd_strlen(format_info);
+
   if (XEN_LIST_P(XEN_CADR(args)))
     format_args = XEN_COPY_ARG(XEN_CADR(args)); /* protect Ruby case, a no-op in Guile */
   else format_args = XEN_CADR(args);
+
   errmsg = (char *)CALLOC(err_size, sizeof(char));
+
   for (i = 0; i < format_info_len; i++)
     {
       if (format_info[i] == '~')
@@ -1965,10 +1972,12 @@ static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
 {
   #define H_gsl_dht "(gsl-dht size data nu xmax): Hankel transform of data (a vct)"
   int n;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_1, "gsl-dht", "an integer");
   XEN_ASSERT_TYPE(MUS_VCT_P(data), data, XEN_ARG_2, "gsl-dht", "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(nu), nu, XEN_ARG_3, "gsl-dht", "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(xmax), xmax, XEN_ARG_4, "gsl-dht", "a number");
+
   n = XEN_TO_C_INT(size);
   if (n <= 0)
     XEN_OUT_OF_RANGE_ERROR("gsl-dht", XEN_ARG_1, size, "must be > 0");
@@ -1977,16 +1986,23 @@ static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
       double *indata, *outdata;
       int i;
       vct *v;
+
       gsl_dht *t = gsl_dht_new(n, XEN_TO_C_DOUBLE(nu), XEN_TO_C_DOUBLE(xmax));
+
       indata = (double *)CALLOC(n, sizeof(double));
       outdata = (double *)CALLOC(n, sizeof(double));
+
       v = XEN_TO_VCT(data);
       for (i = 0; i < n; i++)
 	indata[i] = v->data[i];
+
       gsl_dht_apply(t, indata, outdata);
+
       for (i = 0; i < n; i++)
 	v->data[i] = outdata[i];
+
       gsl_dht_free(t);
+
       FREE(indata);
       FREE(outdata);
     }
@@ -2006,21 +2022,27 @@ static XEN g_gsl_roots(XEN poly)
   double complex *z;
   gsl_poly_complex_workspace *w;
   XEN result;
+
   XEN_ASSERT_TYPE(XEN_VECTOR_P(poly), poly, XEN_ONLY_ARG, "gsl-roots", "a vector");
+
   n = XEN_VECTOR_LENGTH(poly);
   w = gsl_poly_complex_workspace_alloc(n);
   z = (double complex *)calloc(n, sizeof(double complex));
   p = (double *)calloc(n, sizeof(double));
+
   for (i = 0; i < n; i++)
     p[i] = XEN_TO_C_DOUBLE(XEN_VECTOR_REF(poly, i));
+
   gsl_poly_complex_solve(p, n, w, (gsl_complex_packed_ptr)z);
   gsl_poly_complex_workspace_free (w);
+
   result = XEN_MAKE_VECTOR(n - 1, XEN_ZERO);
   loc = snd_protect(result);
   for (i = 0; i < n - 1; i++)
     if (__imag__(z[i]) != 0.0)
       XEN_VECTOR_SET(result, i, C_TO_XEN_COMPLEX(z[i]));
     else XEN_VECTOR_SET(result, i, C_TO_XEN_DOUBLE(__real__(z[i])));
+
   free(z);
   free(p);
   snd_unprotect_at(loc);
@@ -2044,12 +2066,32 @@ static XEN g_random(XEN val)
 #endif
 
 /* this number is overflowing (gauche int = 29 bits) if left as a bare int */
-static XEN g_get_internal_real_time(void) {return(C_TO_XEN_INT((int)(100.0 * ((double)clock() / (double)CLOCKS_PER_SEC))));}
+static XEN g_get_internal_real_time(void) 
+{
+  return(C_TO_XEN_INT((int)(100.0 * ((double)clock() / (double)CLOCKS_PER_SEC))));
+}
 #endif
 
 
 #if HAVE_GUILE
 /* libguile/read.c */
+
+/* this doesn't always work correctly -- the # reader is called at a different place in
+ *    libguile/read.c than the built-in #! !# reader, and insists on returning a value.
+ *    That value (#f here) screws up code such as:
+ *
+ *      (define (gad a)
+ *        (let ((b a))
+ *          b
+ *      #|
+ *          a comment
+ *      |#
+ *          ))
+ * 
+ *   which returns #f, not b.  I can't see how to fix this.  (This style of comment
+ *   does work in Gauche).
+ */
+
 static XEN g_skip_block_comment(XEN ch, XEN port)
 {
   int bang_seen = 0;
@@ -2637,6 +2679,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
   XEN_EVAL_C_STRING("(define *snd-remember-paths* #t)");
+
   XEN_EVAL_C_STRING("(set! %load-hook \
                        (lambda (filename)\
                          (if %load-verbosely\
@@ -2654,6 +2697,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                                        (if (and (not (member new-path %load-path))\
                                                 (not (string=? (substring curfile (max 0 (- last-slash 5)) last-slash) \"ice-9\")))\
 	                                   (set! %load-path (append %load-path (list new-path)))))))))");
+
   /* the "ice-9" business is to keep us from loading ice-9/debug.scm when we intend our own debug.scm.
    *   load-from-path can still be fooled, but the user will have to work at it.
    *   If you load Guile's debug.scm by mistake (set! %load-verbosely #t) to see Snd's names get clobbered!
@@ -2697,6 +2741,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                          proc))");
 
   XEN_EVAL_C_STRING("(define (throw . args) (raise args))");
+
   XEN_EVAL_C_STRING("(define (catch tag body error-handler)                                                         \
                        (guard (err                                                                                  \
  	                        ((and (condition-has-type? err <error>)                                             \

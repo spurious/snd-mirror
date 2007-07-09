@@ -2009,7 +2009,16 @@ This hook is called when a mix is dragged.
       (format #f "mix ~A at ~D: ~,3F" 
         n (<a class=quiet href="#mixposition">mix-position</a> n) 
         (exact->inexact (/ (<a class=quiet href="#mixposition">mix-position</a> n) (<a class=quiet href="#srate">srate</a>)))))))
-</pre></td></tr></table></td></tr><tr><td colspan=3 height=16></td></tr>
+</pre></td></tr></table>
+
+A neat example is to set up an empty sound with a 1.0 in sample 0, mix in a vct containing one element of 0.5, then set
+up this mix-drag-hook:
+<pre>
+    (add-hook! mix-drag-hook (lambda (id x y) (update-transform-graph)))
+</pre>
+and turn on the FFT graph.  As you drag the mix, you can see the spectral effect of that
+moving value as a comb filter.
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- mix-release-hook -->
@@ -2599,7 +2608,24 @@ the returned procedure to make sure the mark pane is reactivated right away when
     (lambda (updated-snd)
       ;; this code executed when update is complete
       (<a class=quiet href="#sndprint">snd-print</a> "ok!"))))
-</pre></td></tr></table></td></tr><tr><td colspan=3 height=16></td></tr>
+</pre></td></tr></table>
+
+Say we're editing a sound in several different windows, and want to save and re-apply any
+edits we may have in the other windows when we save the sound from one window (all the others
+then get the exploding bomb icon because their underlying data has changed):
+
+<table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
+(let ((eds #f))
+  (add-hook! <em class=red>update-hook</em>
+	     (lambda (cursnd)     ; called before actual update -- save our edits
+	       (set! eds (<a href="#editlisttofunction">edit-list-&gt;function</a> cursnd 0))
+	       (lambda (newsnd)   ; called after update -- reapply our edits
+		 (if eds (eds newsnd 0))))))
+</pre></td></tr></table>
+
+Actually this only works if there are just two windows on the same (mono) sound.  I suppose for
+trickier cases, we could set up an association list with the old sound index ("cursnd" above) and its edits.
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- view-files-select-hook -->

@@ -499,9 +499,9 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
-1-July:  max-virtual-ptrees and max-virtual-xramps.\n\
+9-July:  snddiff.scm.\n\
+1-July:  max-virtual-ptrees.\n\
 7-June:  Snd 9.1.\n\
-1-June:  mix-sync-max.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

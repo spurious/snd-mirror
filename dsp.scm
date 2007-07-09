@@ -1920,7 +1920,7 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 ;;; there are a million gotchas here.  The primary one is that the inverse filter
 ;;;   can "explode" -- the coefficients can grow without bound.  For example, any
 ;;;   filter returned by spectrum->coeffs above will be a problem (it always returns
-;;;   a "linear phase" filter).
+;;;   a "linear phase" filter).  Could this be used to remove reverb?
 
 (define (invert-filter fcoeffs)
   "(invert-filter coeffs) tries to return an inverse filter to undo the effect of the FIR filter coeffs."

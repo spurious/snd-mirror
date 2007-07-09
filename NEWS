@@ -1,33 +1,20 @@
-Snd 9.1
+Snd 9.2
 
-more work on the virtual mix support
+many Forth/Ruby improvements thanks to Mike.
 
-Two new hooks: peak-env-hook, draw-mix-hook
+RIFF bugfix and minGW configure info thanks to Steve Beet.
 
-added mouse position args to mix-drag-hook
+snddiff.scm
+virtual-filter-channel (examp.scm)
+max-virtual-ptrees (greatly expanded virtual editor)
 
-background-gradient (gtk+cairo only)
+added optional snd chn args to apply-ladspa and with-tag to mix-channel
+power spectral density as transform (green.scm)
 
-sound-mark-info
+clm: mus-increment on gens with a notion of frequency (phase increment); 
+       to make room for this, asymmetric-fm ratio and sine-summation b moved to mus-offset.
+     exp envs optimized
 
-mix-sync-max
+Thanks!: Mike Scholz, Plutek?, Etienne Deleflie, Steve Beet, Kjetil Matheussen, unknown_error
 
-moved equalize-panes to snd-motif.scm
-
-new rt-compiler.scm et al thanks to Kjetil
-
-SIGUSR1 (kill -10) throws Snd back to its top level
-
-in cmn: 
-  Michael Edwards added a way to change a staff name (new-staff-name)
-  I did half of the :old-style layout bugfix (the staves are laid out correctly, I think)
-
-in clm:
-  changes for ACL 8.1
-
-
-
-Thanks!: Michael Edwards, Etienne Deleflie, Joshua Parmenter, Kjetil Matheussen
-
-checked: Ruby 1.8.6, sbcl 1.0.5, gtk 2.10.12|2.11.0|1, ACL 8.1, pango 1.17.0|1|2, 
-         glib 2.13.2|3
+Checked: gtk 2.11.2|3|4|5, cairo 1.4.8|10, Fedora 7, sbcl 1.0.6|7

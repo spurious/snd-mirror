@@ -239,7 +239,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	(fft rl2 im2 1)
 	(let* ((tmprl (vct-copy rl1))
 	       (tmpim (vct-copy im1))
-	       (data3 (make-vct fftlen2)))
+	       (data3 (make-vct fftlen)))
 	  (vct-multiply! tmprl rl2)     ; (* tempr1 tempr2)
 	  (vct-multiply! tmpim im2)     ; (* tempi1 tempi2)
 	  (vct-multiply! im2 rl1)       ; (* tempr1 tempi2)
@@ -247,9 +247,9 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	  (vct-add! tmprl tmpim)        ; add the first two
 	  (vct-subtract! im2 rl2)       ; subtract the 4th from the 3rd
 	  (fft tmprl im2 -1)
-	  (vct-add! data3 tmprl)        ; copy into data3 (which is half the size of tmprl)
+	  (vct-add! data3 tmprl)        ; copy into data3
 	  (vct-scale! data3 fftscale)   ; scale by fftscale
-	  (graph data3 "lag time" 0 fftlen2)))
+	  (graph data3 "lag time" 0 fftlen)))
       (report-in-minibuffer "vct-correlate wants stereo input")))
 
 ;(add-hook! graph-hook correlate)
