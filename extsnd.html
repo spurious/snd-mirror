@@ -549,6 +549,9 @@ Extensions to Snd can be found in:
 <tr><td bgcolor="#f6f8ff"><a href="sndscm.html#sndgldoc">snd-gl</a></td>
     <td bgcolor="#f6f8ff" onmouseover="return escape('a waterfall fft graph, GL state readbacks')">OpenGL examples (gl.c)</td></tr>
 
+<tr><td bgcolor="#f6f8ff"><a href="sndscm.html#snddiffdoc">snddiff</a></td>
+    <td bgcolor="#f6f8ff" onmouseover="return escape('a diff or maybe grep function for sounds')">sound difference detection</td></tr>
+
 <tr><td><a href="sndscm.html#sndmotifdoc">snd-motif, snd-gtk, snd-xm</a></td>
     <td onmouseover="return escape('user interface extensions using the libxm modules: add-mark-pane,\
  display-scanned-synthesis, load-font, with-level-meters, variable-display, smpte labels, etc')">Motif/Gtk module (xm.c, xg.c)</td></tr>
@@ -2624,7 +2627,8 @@ then get the exploding bomb icon because their underlying data has changed):
 </pre></td></tr></table>
 
 Actually this only works if there are just two windows on the same (mono) sound.  I suppose for
-trickier cases, we could set up an association list with the old sound index ("cursnd" above) and its edits.
+trickier cases, we could set up an association list with the old sound index ("cursnd" above) and its edits,
+but it's probably better to bind some keystroke to a function that performs the same operations.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 

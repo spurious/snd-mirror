@@ -1261,7 +1261,6 @@ def test00
             [:mark_tag_width, 10],
             [:max_regions, 16],
             [:max_virtual_ptrees, 3],
-            [:max_virtual_xramps, 2],
             [:max_transform_peaks, 100],
             [:min_dB, -60.0],
             [:minibuffer_history_length, 8],
@@ -1464,7 +1463,6 @@ def test01
                 [:log_freq_start, 32.0],
                 [:max_regions, 16],
                 [:max_virtual_ptrees, 3],
-                [:max_virtual_xramps, 2],
                 [:max_transform_peaks, 100],
                 [:min_dB, -60.0],
                 [:minibuffer_history_length, 8],
@@ -6313,19 +6311,12 @@ def test075
   xramp_channel(0.0, 1.0, 0.32)
   xramp_channel(0.0, 1.0, 32.0)
   xramp_channel(0.0, 1.0, 32.0)
-  if max_virtual_xramps < 3
-    test_output.call(4, "
- (set 0 11) ; env_channel_with_base([0.000, 0.000, 1.000, 1.000], 32.0000, 0, false [4:2]:
-   (at 0, cp->sounds[2][0:10, 1.000]) [buf: 11] 
-   (at 11, end_mark)
-")
-  else
-    test_output.call(4, "
+  test_output.call(4, "
  (set 0 11) ; xramp_channel(0.000, 1.000, 32.000, 0, false [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> -1.139, off: 1.471, scl: -1.471, [2]0.000 -> 3.466, off: -0.032, scl: 0.032, [3]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
-  end
+
   idx = -1
   test_name = "xramp+xramp+ramp"
   undo_edit(3)
@@ -38462,7 +38453,7 @@ Procs =
    :make_color, :make_graph_data, :make_mix_sample_reader, :make_player, :make_region,
    :make_region_sample_reader, :make_sample_reader, :map_chan,
    :mark_color, :mark_name, :mark_sample, :mark_sync, :mark_sync_max, :mark_home, :marks,
-   :mark?, :max_transform_peaks, :max_regions, :max_virtual_ptrees, :max_virtual_xramps,
+   :mark?, :max_transform_peaks, :max_regions, :max_virtual_ptrees,
    :maxamp, :maxamp_position, :menu_widgets,
    :minibuffer_history_length, :min_dB, :log_freq_start, :mix, :mixes, :mix_amp, :mix_amp_env,
    :mix_color, :mix_length, :mix?,
@@ -38625,7 +38616,7 @@ Set_procs =
    :listener_font, :listener_prompt, :listener_text_color, :mark_color, :mark_name, :mark_sample,
    :mark_sync, :max_transform_peaks, :max_regions, :min_dB, :log_freq_start, :mix_amp,
    :mix_amp_env, :mix_color, :mix_name, :mix_position, :mix_sync, :mix_properties,
-   :max_virtual_ptrees, :max_virtual_xramps,
+   :max_virtual_ptrees,
    :mix_speed, :mix_tag_height, :mix_tag_width, :mix_tag_y,
    :mark_tag_width, :mark_tag_height, :mix_waveform_height, :transform_normalization,
    :open_file_dialog_directory, :position_color, :view_files_sort, :print_length,

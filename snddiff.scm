@@ -63,34 +63,52 @@
 	      (list 'differences diff-data)
 	      #f)))))
 
-#|
+
 (define (vct-size v)
   (sqrt (dot-product v v)))
 
-(define (unconvolve-1 v0 v1 impulse-response)  ; assume here that v0 is the original and that we're aligned
+(define (unconvolve-1 v0 v1 impulse-response)  ; assume here that v0 is the original and that we're aligned, and both are trimmed at the front
   (let ((pos -1)
 	(len (vct-length v0)))
+
     (do ((i 0 (1+ i)))
 	((or (>= pos 0)
 	     (= i len)))
       (if (not (= (vct-ref v1 i) 0.0))
 	  (set! pos i)))
-    (let ((scl (/ (vct-ref v1 pos) (vct-ref v0 pos)))
-	  (size (vct-size v1)))
-      (vct-subtract! v1 (vct-scale! (vct-copy v0) scl))
+    
+    (if (>= pos 0) ; if still -1, must be all zero 
+	(let ((scl (/ (vct-ref v1 pos) (vct-ref v0 0)))
+	      (size (vct-size v1)))
+	  (vct-subtract! 
+	   (vct-move! v1 0 pos)            ; align new copy with original (todo: move doesn't clear trailing entries)
+	   (vct-scale! (vct-copy v0) scl)) ; subtract original scaled to fit first none zero point
 
-      ; (snd-display ";pos: ~A, scl: ~A, sizes: ~A ~A" pos scl size (vct-size v1))
-
-      (if (< (vct-size v1) size)
-	  (unconvolve-1 v0 v1 (cons scl impulse-response))
-	  impulse-response))))
+	  ; (snd-display ";pos: ~A, scl: ~A, sizes: ~A ~A" pos scl size (vct-size v1))
+	  
+	  (if (< (vct-size v1) size)
+	      (unconvolve-1 v0 v1 (cons (list scl pos) impulse-response))
+	      impulse-response))
+	impulse-response)))
 
 (define (unconvolve v0 v1)
-  (let ((result (unconvolve-1 v0 (vct-copy v1) '())))
-    (if (not (null? result))
-	(reverse result)
-	#f)))
-|#  
+  (let ((trim -1)
+	(len (min (vct-length v0) (vct-length v1))))
+    (do ((i 0 (1+ i)))
+	((or (> trim -1)
+	     (= i len)))
+      (if (or (not (= (vct-ref v0 i) 0.0))
+	      (not (= (vct-ref v1 i) 0.0)))
+	  (set! trim i)))
+    (if (> trim 0)
+	(begin
+	  (vct-move! v0 0 trim)
+	  (vct-move! v1 0 trim)))
+    (let ((result (unconvolve-1 v0 (vct-copy v1) '())))
+      (if (not (null? result))
+	  (list 'filter (reverse result))
+	  #f))))
+
   
 
 (define (snddiff-2 snd0 chn0 snd1 chn1)
@@ -116,10 +134,10 @@
 
 	;; align sounds and  zero out any non-overlapping sections, keeping track of whether they are zero beforehand
 	(let ((lag (lag? snd0 chn0 snd1 chn1))
-	      (pre0 0.0)
-	      (pre1 0.0)
-	      (post0 0.0)
-	      (post1 0.0))
+	      (pre0 #f)
+	      (pre1 #f)
+	      (post0 #f)
+	      (post1 #f))
 
 	  (if (> lag 0)
 	      (begin
@@ -147,8 +165,12 @@
 
 	  (let ((s0 (channel->vct 0 #f snd0 chn0))
 		(s1 (channel->vct 0 #f snd1 chn1)))
-	    (or (and (snddiff-1 s0 s1 0.0)
-		     (list 'lag lag pre0 pre1 post0 post1))
+	    (or (let ((res (snddiff-1 s0 s1 0.0)))
+		  (if res
+		      (if (> lag 0)
+			  (list 'lag lag res pre0 pre1 post0 post1)
+			  (list res pre0 pre1 post0 post1))
+		      #f))
 		(let* ((pos (maxamp-position snd0 chn0))
 		       (mx0 (sample pos snd0 chn0))
 		       (mx1 (sample pos snd1 chn1)) ; use actual values to keep possible sign difference
@@ -172,4 +194,5 @@
     (let ((result (snddiff-2 snd0 chn0 snd1 chn1)))
       (set! (edit-position snd0 chn0) edpos0)
       (set! (edit-position snd1 chn1) edpos1)
-      result)))
+      (or result
+	  (unconvolve (channel->vct 0 #f snd0 chn0) (channel->vct 0 #f snd1 chn1))))))
