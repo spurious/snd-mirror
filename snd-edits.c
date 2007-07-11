@@ -3799,6 +3799,7 @@ static void copy_ed_fragment(ed_fragment *new_ed, ed_fragment *old_ed)
   new_ed->end = old_ed->end;
   new_ed->scl = old_ed->scl;
 
+  /* TODO: it is possible that ramps already exists! */
   if (ED_RAMPS(old_ed))
     ED_RAMPS(new_ed) = copy_fragment_ramps(ED_RAMPS(old_ed));
 
@@ -4191,6 +4192,12 @@ static void new_before_ramp(ed_fragment *new_before, ed_fragment *old_before, of
 
 static void new_after_ramp(ed_fragment *new_after, ed_fragment *old_after, off_t samp)
 {
+  off_t dur;
+  double d_dur;
+
+  dur = samp - ED_GLOBAL_POSITION(old_after);
+  d_dur = (double)dur;
+
   if (ramp_op(ED_TYPE(old_after)))
     {
       int i, rmps, xrmps;
@@ -4202,7 +4209,7 @@ static void new_after_ramp(ed_fragment *new_after, ed_fragment *old_after, off_t
       for (i = 0; i < rmps; i++)
 	{
 	  ED_RAMP_INCR(new_after, i) = ED_RAMP_INCR(old_after, i);
-	  ED_RAMP_START(new_after, i) = ED_RAMP_START(old_after, i) + ED_RAMP_INCR(old_after, i) * (double)(samp - ED_GLOBAL_POSITION(old_after));
+	  ED_RAMP_START(new_after, i) = ED_RAMP_START(old_after, i) + ED_RAMP_INCR(old_after, i) * d_dur;
 	}
 
       for (i = 0; i < xrmps; i++)
@@ -4210,7 +4217,7 @@ static void new_after_ramp(ed_fragment *new_after, ed_fragment *old_after, off_t
 	  ED_XRAMP_OFFSET(new_after, i) = ED_XRAMP_OFFSET(old_after, i);
 	  ED_XRAMP_SCALER(new_after, i) = ED_XRAMP_SCALER(old_after, i);
 	  ED_XRAMP_INCR(new_after, i) = ED_XRAMP_INCR(old_after, i);
-	  ED_XRAMP_START(new_after, i) = ED_XRAMP_START(old_after, i) * exp(log(ED_XRAMP_INCR(old_after, i)) * (double)(samp - ED_GLOBAL_POSITION(old_after)));
+	  ED_XRAMP_START(new_after, i) = ED_XRAMP_START(old_after, i) * exp(log(ED_XRAMP_INCR(old_after, i)) * d_dur);
 	}
     }
   if ((ED_PTREES(new_after)) && (ED_PTREES(old_after)))
@@ -4218,7 +4225,7 @@ static void new_after_ramp(ed_fragment *new_after, ed_fragment *old_after, off_t
       int i, trees;
       trees = ensure_ed_ptrees(new_after, ED_PTREE_LIST_SIZE(old_after));
       for (i = 0; i < trees; i++)
-	ED_PTREE_POSITION(new_after, i) = ED_PTREE_POSITION(old_after, i) + samp - ED_GLOBAL_POSITION(old_after);
+	ED_PTREE_POSITION(new_after, i) = ED_PTREE_POSITION(old_after, i) + dur;
     }
 }
 
@@ -4382,7 +4389,7 @@ static ed_list *insert_section_into_list(off_t samp, off_t num, ed_list *current
 	      if (FRAGMENT_GLOBAL_POSITION(current_state, (cur_i + 1)) > samp)
 		{
 		  ed_fragment *split_front_f, *split_back_f;
-		  /* split current at samp */
+		  /* split current at samp */  /* TODO: is there a leak here? */
 		  split_front_f = new_f;
 		  copy_ed_fragment(split_front_f, cur_f);
 		  ED_LOCAL_END(split_front_f) = ED_LOCAL_POSITION(split_front_f) + samp - ED_GLOBAL_POSITION(split_front_f) - 1;

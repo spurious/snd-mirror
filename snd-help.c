@@ -499,9 +499,9 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+12-Jul:  Snd 9.2.\n\
 9-July:  snddiff.scm.\n\
 1-July:  max-virtual-ptrees.\n\
-7-June:  Snd 9.1.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",
