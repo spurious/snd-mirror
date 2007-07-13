@@ -6453,6 +6453,11 @@ static XEN g_ssb_bank(XEN ssbs, XEN filters, XEN inval, XEN size)
 }
 
 
+#define S_mus_frandom "mus-frandom"
+#define S_mus_irandom "mus-irandom"
+static XEN g_mus_frandom(XEN val) {return(C_TO_XEN_DOUBLE(mus_frandom(XEN_TO_C_DOUBLE(val))));}
+static XEN g_mus_irandom(XEN val) {return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(val))));}
+
 
 /* ---------------- export ---------------- */
 
@@ -6719,6 +6724,8 @@ XEN_NARGIFY_4(g_ssb_bank_w, g_ssb_bank)
 XEN_NARGIFY_0(g_clm_table_size_w, g_clm_table_size)
 XEN_NARGIFY_1(g_set_clm_table_size_w, g_set_clm_table_size)
 XEN_NARGIFY_1(g_mus_generator_p_w, g_mus_generator_p)
+XEN_NARGIFY_1(g_mus_frandom_w, g_mus_frandom)
+XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
 #if HAVE_GAUCHE
 XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #endif
@@ -6985,6 +6992,8 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_clm_table_size_w g_clm_table_size
 #define g_set_clm_table_size_w g_set_clm_table_size
 #define g_mus_generator_p_w g_mus_generator_p
+#define g_mus_frandom_w g_mus_frandom
+#define g_mus_irandom_w g_mus_irandom
 #endif
 
 
@@ -7114,6 +7123,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_array_interp,         g_array_interp_w,         2, 1, 0, H_array_interp);
   XEN_DEFINE_PROCEDURE(S_mus_interpolate,      g_mus_interpolate_w,      3, 2, 0, H_mus_interpolate);
   XEN_DEFINE_PROCEDURE(S_sine_bank,            g_sine_bank_w,            2, 1, 0, H_sine_bank);
+  XEN_DEFINE_PROCEDURE(S_mus_frandom,          g_mus_frandom_w,          1, 0, 0, "internal testing function");
+  XEN_DEFINE_PROCEDURE(S_mus_irandom,          g_mus_irandom_w,          1, 0, 0, "internal testing function");
 
   #define H_rectangular_window     "The un-window, so to speak"
   #define H_hann_window            "A simple raised cosine window"

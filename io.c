@@ -809,6 +809,7 @@ static const int mulaw[256] = {
   #define MUS_SAMPLE_UNSCALED(n) ((n) * (1 << (MUS_SAMPLE_BITS - 16)))
 #endif
 
+
 static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t **cm, char *inbuf)
 {
   int loclim;
@@ -819,15 +820,19 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
   mus_sample_t *buffer;
   float prescaling;
   bool from_buffer = false;
+
   if (nints <= 0) return(0);
   if (inbuf) from_buffer = true;
+
   if (!from_buffer)
     {
       if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
 	return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_read: no file descriptors!"));
+
       fd = io_fds[tfd];
       if (fd->data_format == MUS_UNKNOWN) 
 	return(mus_error(MUS_FILE_CLOSED, "mus_read: invalid data format for %s", fd->name));
+
       format = fd->data_format;
       siz = fd->bytes_per_sample;
       if ((format == MUS_OUT_FORMAT) && 
@@ -869,6 +874,7 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
       prescaling = (float)(MUS_FLOAT_TO_SAMPLE(1.0));
       format = tfd;
     }
+
   siz_chans = siz * chans;
   leftover = (nints * siz_chans);
   k = (BUFLIM) % siz_chans;
@@ -877,6 +883,7 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
   else buflim = BUFLIM;
   total_read = 0;
   loc = beg;
+
   while (leftover > 0)
     {
       bytes = leftover;

@@ -3799,7 +3799,6 @@ static void copy_ed_fragment(ed_fragment *new_ed, ed_fragment *old_ed)
   new_ed->end = old_ed->end;
   new_ed->scl = old_ed->scl;
 
-  /* TODO: it is possible that ramps already exists! */
   if (ED_RAMPS(old_ed))
     ED_RAMPS(new_ed) = copy_fragment_ramps(ED_RAMPS(old_ed));
 
@@ -3811,16 +3810,43 @@ static void copy_ed_fragment(ed_fragment *new_ed, ed_fragment *old_ed)
 }
 
 
+static void copy_checked_ed_fragment(ed_fragment *new_ed, ed_fragment *old_ed)
+{
+  /* insert list special case */
+  if ((ED_RAMPS(old_ed)) &&
+      (ED_RAMPS(new_ed)))
+    {
+      if (ED_RAMP_LIST(new_ed))	FREE(ED_RAMP_LIST(new_ed));
+      if (ED_XRAMP_LIST(new_ed)) FREE(ED_XRAMP_LIST(new_ed));
+      FREE(ED_RAMPS(new_ed));
+    }
+
+  if ((ED_PTREES(old_ed)) &&
+      (ED_PTREES(new_ed)))
+    {
+      if (ED_PTREE_LIST(new_ed)) FREE(ED_PTREE_LIST(new_ed));
+      FREE(ED_PTREES(new_ed));
+    }
+
+  if ((ED_MIXES(old_ed)) &&
+      (ED_MIXES(new_ed)))
+    {
+      if (ED_MIX_LIST(new_ed)) FREE(ED_MIX_LIST(new_ed));
+      FREE(ED_MIXES(new_ed));
+    }
+
+  copy_ed_fragment(new_ed, old_ed);
+}
+
+
 static void clear_ed_fragment(ed_fragment *ed)
 {
   /* used by free_ed_fragment and when zeroing a copied fragment */
 
   if (ED_RAMPS(ed))
     {
-      if (ED_RAMP_LIST(ed))
-	FREE(ED_RAMP_LIST(ed));
-      if (ED_XRAMP_LIST(ed))
-	FREE(ED_XRAMP_LIST(ed));
+      if (ED_RAMP_LIST(ed)) FREE(ED_RAMP_LIST(ed));
+      if (ED_XRAMP_LIST(ed)) FREE(ED_XRAMP_LIST(ed));
       FREE(ED_RAMPS(ed));
       ED_RAMPS(ed) = NULL;
     }
@@ -4389,9 +4415,9 @@ static ed_list *insert_section_into_list(off_t samp, off_t num, ed_list *current
 	      if (FRAGMENT_GLOBAL_POSITION(current_state, (cur_i + 1)) > samp)
 		{
 		  ed_fragment *split_front_f, *split_back_f;
-		  /* split current at samp */  /* TODO: is there a leak here? */
+		  /* split current at samp */
 		  split_front_f = new_f;
-		  copy_ed_fragment(split_front_f, cur_f);
+		  copy_checked_ed_fragment(split_front_f, cur_f);
 		  ED_LOCAL_END(split_front_f) = ED_LOCAL_POSITION(split_front_f) + samp - ED_GLOBAL_POSITION(split_front_f) - 1;
 		  /* samp - global position = where in current fragment, offset that by its local offset, turn into end sample */
 		  

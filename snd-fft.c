@@ -407,6 +407,7 @@ int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, in
   Float minval, la, ra, ca, logca, logra, logla, offset, fscl, ascl, bscl;
   Float *peaks;
   int *inds;
+
   peaks = (Float *)CALLOC(num_peaks, sizeof(Float));
   inds = (int *)CALLOC(num_peaks, sizeof(int));
   fscl = (Float)srate / (Float)fftsize2;
@@ -419,6 +420,7 @@ int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, in
   minval = 0.0; /* (Float)fftsize2/100000.0; */
   ascl = 0.0;
   pkj = 0;
+
   for (i = 0; i < fftsize2 - hop; i += hop)
     {
       la = ca;
@@ -460,13 +462,16 @@ int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, in
 	    }
 	}
     }
+
   /* now we have the peaks; turn these into interpolated peaks/amps, and sort */
   if (ascl > 0.0) 
     ascl = 1.0 / ascl; 
   else ascl = 1.0;
+
   if (fft_scale > 0.0) 
     bscl = fft_scale / ascl; 
   else bscl = 1.0;
+
   for (i = 0, k = 0; i < pks; i++)
     {
       j = inds[i];
@@ -495,6 +500,7 @@ int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, in
       if (found[k].freq < 0.0) found[k].freq = 0.0;
       if (found[k].amp > 0.0) k++;
     }
+
   for (i = k; i < num_peaks; i++) found[i].freq = 1.0; /* move blank case to end of sorted list */
   qsort((void *)found, pks, sizeof(fft_peak), compare_peaks);
   FREE(peaks);
@@ -863,10 +869,12 @@ static void apply_fft(fft_state *fs)
   off_t data_len;
   snd_fd *sf;
   chan_info *cp;
+
   cp = fs->cp;
   fft_data = fs->data;
   data_len = cp->transform_size;
   if (data_len > fs->size) data_len = fs->size;
+
   if ((show_selection_transform(ss)) && 
       (selection_is_active_in_channel(cp)) && 
       (fs->datalen > 0))
@@ -890,43 +898,51 @@ static void apply_fft(fft_state *fs)
       else
 	ind0 = cp->axis->losamp + fs->beg;
     }
+
   sf = init_sample_read(ind0, cp, READ_FORWARD);
   if (sf == NULL) return;
+
   switch (cp->transform_type)
     {
     case FOURIER:
       fourier_spectrum(sf, fft_data, fs->size, data_len, fs->window);
       break;
+
     case WAVELET:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample(sf);
       if (data_len < fs->size) 
 	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
       wavelet_transform(fft_data, fs->size, wavelet_data[cp->wavelet_type], wavelet_sizes[cp->wavelet_type]);
       break;
+
     case HAAR:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample(sf);
       if (data_len < fs->size) 
 	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
       haar_transform(fft_data, fs->size);
       break;
+
     case CEPSTRUM:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample(sf);
       if (data_len < fs->size) 
 	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
       cepstrum(fft_data, fs->size);
       break;
+
     case WALSH:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample(sf);
       if (data_len < fs->size) 
 	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
       walsh_transform(fft_data, fs->size);
       break;
+
     case AUTOCORRELATION:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample(sf);
       if (data_len < fs->size) 
 	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
       autocorrelation(fft_data, fs->size);
       break;
+
     default:
       {
 	XEN res = XEN_FALSE, sfd;
@@ -953,6 +969,7 @@ static void apply_fft(fft_state *fs)
       }
       break;
     }
+
   free_snd_fd(sf);
 }
 
@@ -969,12 +986,16 @@ static void display_fft(fft_state *fs)
   chan_info *ncp;
   snd_info *sp;
   int i, j, lo, hi;
+
   cp = fs->cp;
   if ((cp == NULL) || (!(cp->active))) return;
+
   fp = cp->fft;
   if (fp == NULL) return; /* can happen if selection transform set, but no selection */
+
   data = fp->data;
   if (data == NULL) return;
+
   sp = cp->sound;
   if (cp->transform_graph_type == GRAPH_ONCE)
     {
@@ -987,19 +1008,23 @@ static void display_fft(fft_state *fs)
 	    min_freq = log_freq_start(ss);
 	  else min_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectro_start);
 	  break;
+
 	case WAVELET: case WALSH: case HAAR:
 	  max_freq = fs->size * cp->spectro_cutoff; 
 	  min_freq = fs->size * cp->spectro_start; 
 	  break;
+
 	case AUTOCORRELATION: case CEPSTRUM:
 	  max_freq = fs->size * cp->spectro_cutoff / 2; 
 	  min_freq = fs->size * cp->spectro_start / 2; 
 	  break;
+
 	default:
 	  min_freq = added_transform_lo(cp->transform_type) * fs->size * cp->spectro_cutoff; 
 	  max_freq = added_transform_hi(cp->transform_type) * fs->size * cp->spectro_cutoff; 
 	  break;
 	}
+
       if (cp->transform_normalization == DONT_NORMALIZE)
 	{
 	  lo = 0;
@@ -1018,6 +1043,7 @@ static void display_fft(fft_state *fs)
 	      lo = (int)(fs->size * cp->spectro_start);
 	    }
 	}
+
       data_max = 0.0;
       if ((cp->transform_normalization == NORMALIZE_BY_SOUND) ||
 	  ((cp->transform_normalization == DONT_NORMALIZE) && 
@@ -1057,6 +1083,7 @@ static void display_fft(fft_state *fs)
 		}
 	    }
 	}
+
       if (data_max == 0.0) data_max = 1.0;
       if (cp->transform_normalization != DONT_NORMALIZE)
 	scale = 1.0 / data_max;
@@ -1083,6 +1110,7 @@ static void display_fft(fft_state *fs)
 	      scale = 1.0;
 	    }
 	}
+
       if (cp->fft_log_magnitude) 
 	{
 	  /* the DONT_NORMALIZE option is ignored because it really looks dumb in this context */
@@ -1106,6 +1134,7 @@ static void display_fft(fft_state *fs)
 	      max_val = 1.0;
 	    }
 	}
+
       fp->scale = scale;
       fp->axis = make_axis_info(cp,
 				min_freq, max_freq,
@@ -1163,7 +1192,9 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
   bool reuse_old = false;
   off_t fftsize;
   off_t dbeg = 0, dlen = 0;
+
   ap = cp->axis;
+
   if ((show_selection_transform(ss)) && 
       (cp->transform_graph_type == GRAPH_ONCE) && 
       (selection_is_active_in_channel(cp)))
@@ -1185,6 +1216,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
       if (fftsize < 2) fftsize = 2;
       cp->selection_transform_size = 0;
     }
+
   if ((!force_recalc) && (cp->fft_data) && (cp->selection_transform_size == 0))
     {
       fs = cp->fft_data;
@@ -1204,6 +1236,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
 	  (fs->edit_ctr == cp->edit_ctr))
 	reuse_old = true;
     }
+
   if (!reuse_old)
     {
       cp_free_fft_state(cp);
@@ -1224,6 +1257,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
       fs->alpha = cp->fft_window_alpha;
       fs->beta = cp->fft_window_beta;
     }
+
   fs->done = reuse_old;
   fs->beg = 0;
   fs->databeg = dbeg;
@@ -1302,7 +1336,9 @@ static void one_fft(fft_state *fs)
 	  static Float last_beta = 0.0;
 	  static Float last_alpha = 0.0;
 	  static Float *last_window = NULL;
+
 	  fs->window = (Float *)CALLOC(fs->size, sizeof(Float));
+
 	  if ((fs->wintype != last_wintype) ||
 	      (fs->size != last_size) ||
 	      (fs->beta != last_beta) ||
@@ -1623,38 +1659,43 @@ static sono_slice_t run_all_ffts(sonogram_state *sg)
 }
 
 
-static sono_slice_t cleanup_sonogram(sonogram_state *sg)
+static void finish_sonogram(sonogram_state *sg)
 {
   if (sg)
     {
       chan_info *cp;
       cp = sg->cp;
-      if (!(cp->graph_transform_p))
+      if ((!(cp->active)) ||
+	  (!(cp->graph_transform_p)))
 	{
-	  if (sg->fs) sg->fs = free_fft_state(sg->fs);
-	  return(SONO_DONE);
+	  if (sg->fs) 
+	    sg->fs = free_fft_state(sg->fs);
 	}
-      if ((sg->scp != NULL) && (sg->outlim > 1))
-	make_sonogram_axes(cp);
-      if (sg->fs) sg->fs = free_fft_state(sg->fs);
-      cp->fft_data = NULL;
-      set_chan_fft_in_progress(cp, 0); /* i.e. clear it */
-      if ((sg->scp != NULL) && (sg->outlim > 1))
+      else
 	{
-	  display_channel_fft_data(cp);
-	  if (sg->outer == sg->outlim) sg->done = true;
-	  sg->old_scale = (sg->scp)->scale;
-	}
-      else sg->done = true;
-      if ((cp->last_sonogram) && (cp->last_sonogram != sg)) FREE(cp->last_sonogram);
-      cp->last_sonogram = sg;
-      if (sg->minibuffer_needs_to_be_cleared)
-	{
-	  finish_progress_report(cp->sound, NOT_FROM_ENVED);
-	  sg->minibuffer_needs_to_be_cleared = false;
+	  if ((sg->scp != NULL) && (sg->outlim > 1))
+	    make_sonogram_axes(cp);
+	  if (sg->fs)
+	    sg->fs = free_fft_state(sg->fs);
+	  cp->fft_data = NULL;
+	  set_chan_fft_in_progress(cp, 0); /* i.e. clear it */
+	  if ((sg->scp != NULL) && (sg->outlim > 1))
+	    {
+	      display_channel_fft_data(cp);
+	      if (sg->outer == sg->outlim) sg->done = true;
+	      sg->old_scale = (sg->scp)->scale;
+	    }
+	  else sg->done = true;
+	  if ((cp->last_sonogram) && (cp->last_sonogram != sg)) 
+	    FREE(cp->last_sonogram);
+	  cp->last_sonogram = sg;
+	  if (sg->minibuffer_needs_to_be_cleared)
+	    {
+	      finish_progress_report(cp->sound, NOT_FROM_ENVED);
+	      sg->minibuffer_needs_to_be_cleared = false;
+	    }
 	}
     }
-  return(SONO_DONE);
 }
 
 
@@ -1664,18 +1705,25 @@ idle_func_t sonogram_in_slices(void *sono)
   chan_info *cp;
   cp = sg->cp;
   cp->temp_sonogram = NULL;
-  if (!(cp->graph_transform_p))
+  if ((!(cp->active)) ||
+      (!(cp->graph_transform_p)))
     {
-      if (sg) cleanup_sonogram(sg);
+      if ((sg) && (sg->fs)) sg->fs = free_fft_state(sg->fs);
       return(BACKGROUND_QUIT);
     }
   switch (sg->slice)
     {
-    case SONO_INIT: sg->slice = set_up_sonogram(sg);                           break; 
-    case SONO_RUN:  sg->slice = run_all_ffts(sg);                              break; 
-    case SONO_QUIT: sg->slice = cleanup_sonogram(sg); return(BACKGROUND_QUIT); break;
+    case SONO_INIT: 
+      sg->slice = set_up_sonogram(sg); 
+      break; 
+
+    case SONO_RUN:  
+      sg->slice = run_all_ffts(sg); 
+      break; 
+
+    case SONO_QUIT:
     default: 
-      cleanup_sonogram(sg); 
+      finish_sonogram(sg); 
       return(BACKGROUND_QUIT); 
       break;
     }

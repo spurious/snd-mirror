@@ -413,6 +413,12 @@ static void free_dac_info(dac_info *dp, play_stop_t reason)
       dp->stop_procedure = XEN_FALSE;
       dp->stop_procedure_gc_loc = NOT_A_GC_LOC;
     }
+  if (dp->func_gc_loc != NOT_A_GC_LOC)
+    {
+      snd_unprotect_at(dp->func_gc_loc);
+      dp->func = XEN_FALSE;
+      dp->func_gc_loc = NOT_A_GC_LOC;
+    }
   if (dp->a) {FREE(dp->a); dp->a = NULL; dp->a_size = 0;}
   dp->chn_fd = free_snd_fd(dp->chn_fd);
   if (dp->spd) free_expand(dp->spd);

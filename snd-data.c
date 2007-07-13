@@ -1086,6 +1086,7 @@ static XEN g_display_info(void)
 }
 #endif
 
+
 void g_init_data(void)
 {
   #define H_select_sound_hook S_select_sound_hook " (snd): called whenever a sound is selected."

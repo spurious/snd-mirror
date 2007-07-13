@@ -6,8 +6,7 @@ RIFF bugfix and minGW configure info thanks to Steve Beet.
 
 snddiff.scm
 virtual-filter-channel (examp.scm)
-max-virtual-ptrees (greatly expanded virtual editor)
-
+max-virtual-ptrees (and a greatly expanded virtual editor)
 added optional snd chn args to apply-ladspa and with-tag to mix-channel
 power spectral density as transform (green.scm)
 
@@ -15,6 +14,6 @@ clm: mus-increment on gens with a notion of frequency (phase increment);
        to make room for this, asymmetric-fm ratio and sine-summation b moved to mus-offset.
      exp envs optimized
 
-Thanks!: Mike Scholz, Plutek?, Etienne Deleflie, Steve Beet, Kjetil Matheussen, unknown_error
+Thanks!: Mike Scholz, Plutek, Etienne Deleflie, Steve Beet, Kjetil Matheussen, unknown_error
 
 Checked: gtk 2.11.2|3|4|5, cairo 1.4.8|10, Fedora 7, sbcl 1.0.6|7
