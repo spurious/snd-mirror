@@ -386,7 +386,7 @@ Float *sample_linear_env(env *e, int order)
   if (ordp < order) ordp = order;
   got_local_error = false;
   old_error_handler = mus_error_set_handler(local_mus_error);
-  ge = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, 1000 * ordp, NULL);
+  ge = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 1000 * ordp, NULL);
   mus_error_set_handler(old_error_handler);
   if (!got_local_error)
     {

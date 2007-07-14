@@ -125,13 +125,11 @@
 		      (base 1)
 		      (duration 0)
 		      (end 0)
-		      (start 0)
 		      (cutoff -70)
 		      (error 0.01))
   (make-env :envelope (db-envelope envelope cutoff error)
 	    :scaler scaler :offset offset
-	    :base base :duration duration :end end
-	    :start start))
+	    :base base :duration duration :end end))
 
 ;;; Pitch envelopes (y units are semitone and octave intervals)
 
@@ -151,12 +149,10 @@
 			     (base 1)
 			     (duration 0)
 			     (end 0)
-			     (start 0)
 			     (error 0.01))
   (make-env :envelope (semitones-envelope envelope around error)
 	    :scaler scaler :offset offset
-	    :base base :duration duration :end end
-	    :start start))
+	    :base base :duration duration :end end))
 
 (define* (octaves-envelope envelope :optional (around 1.0) (error 0.01))
   (exp-envelope envelope
@@ -174,12 +170,11 @@
 			   (base 1)
 			   (duration 0)
 			   (end 0)
-			   (start 0)
 			   (error 0.01))
   (make-env :envelope (octaves-envelope envelope around error)
 	    :scaler scaler :offset offset
-	    :base base :duration duration :end end
-	    :start start))
+	    :base base :duration duration :end end))
+
 
 ;;; *************************
 ;;;    GRANI (clm-ins.scm)
@@ -208,6 +203,7 @@
 ;;; Mar 27 2003: added option for sending grains to all channels (requested by
 ;;;              Oded Ben-Tal)
 ;;; Jun 17 2006: made some changes for the run macro (Bill)
+;;; Jul 14 2007: removed :start args (Bill)
 ;;;-----------------------------------------------------------------------------
 ;;; Auxiliary functions
 

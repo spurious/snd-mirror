@@ -814,14 +814,14 @@ void fm_violin(float start, float dur, float frequency, float amplitude, float f
       fmosc3 = mus_make_oscil(frequency * fm3_rat, 0.0);
     }
   else fmosc1 = mus_make_oscil(frequency, 0.0);
-  ampf = mus_make_env(amp_env, 4, amplitude, 0.0, 1.0, dur, 0, 0, NULL);
-  indf1 = mus_make_env(fm_env, 4, norm, 0.0, 1.0, dur, 0, 0, NULL);
+  ampf = mus_make_env(amp_env, 4, amplitude, 0.0, 1.0, dur, 0, NULL);
+  indf1 = mus_make_env(fm_env, 4, norm, 0.0, 1.0, dur, 0, NULL);
   if (gliss_amp != 0.0) 
-    frqf = mus_make_env(frq_env, 4, gliss_amp * frq_scl, 0.0, 1.0, dur, 0, 0, NULL);
+    frqf = mus_make_env(frq_env, 4, gliss_amp * frq_scl, 0.0, 1.0, dur, 0, NULL);
   if (easy_case == 0)
     {
-      indf2 = mus_make_env(fm_env, 4, index2, 0.0, 1.0, dur, 0, 0, NULL);
-      indf3 = mus_make_env(fm_env, 4, index3, 0.0, 1.0, dur, 0, 0, NULL);
+      indf2 = mus_make_env(fm_env, 4, index2, 0.0, 1.0, dur, 0, NULL);
+      indf3 = mus_make_env(fm_env, 4, index3, 0.0, 1.0, dur, 0, NULL);
     }
   pervib = mus_make_triangle_wave(pervibfrq, frq_scl * pervibamp, 0.0);
   ranvib = mus_make_rand_interp(ranvibfrq, frq_scl * ranvibamp);

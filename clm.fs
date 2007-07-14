@@ -1208,7 +1208,7 @@ event: inst-test ( -- )
       :frequency freq offset i 6 - 0.03 f* f* f+
       :partials '( 1 1  5 0.7  6 0.7  7 0.7  8 0.7  9 0.7  10 0.7 ) make-waveshape
     end-map { waveshbank }
-    :envelope ampenv :scaler amp 0.25 f* :start beg :end end make-env { amp-env }
+    :envelope ampenv :scaler amp 0.25 f* :end end make-env { amp-env }
     end 0.0 make-vct map!
       0.0 ( wvsum ) waveshbank each ( wv ) 1.0 0.0 waveshape f+ end-each ( wvsum ) amp-env env f*
     end-map ( output )

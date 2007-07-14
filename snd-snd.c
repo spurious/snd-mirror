@@ -813,8 +813,8 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Fl
       new_ep->peak_env_size = old_ep->peak_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       if (base == 1.0)
-	e = mus_make_env(brkpts, npts, scaler, offset, base, 0.0, 0, new_ep->peak_env_size - 1, brkpts);
-      else e = mus_make_env(brkpts, npts, 1.0, 0.0, base, 0.0, 0, new_ep->peak_env_size - 1, brkpts);
+	e = mus_make_env(brkpts, npts, scaler, offset, base, 0.0, new_ep->peak_env_size - 1, brkpts);
+      else e = mus_make_env(brkpts, npts, 1.0, 0.0, base, 0.0, new_ep->peak_env_size - 1, brkpts);
       fmin = 1.0;
       fmax = -1.0;
       for (i = 0; i < new_ep->peak_env_size; i++) 

@@ -486,7 +486,7 @@ def stereo_flute(start, dur, freq, flow, *args)
          [:ran_amount, 0.03])
   beg        = seconds2samples(start)
   flowf      = make_env(:envelope, flow_envelope, :scaler, flow,
-                        :start, beg, :end, beg + seconds2samples(dur - decay))
+                        :end, beg + seconds2samples(dur - decay))
   periodic_vib = make_oscil(:frequency, vib_rate)
   ran_vib    = make_rand_interp(:frequency, ran_rate)
   breath     = make_rand(:frequency, @srate / 2.0, :amplitude, 1)

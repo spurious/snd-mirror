@@ -624,9 +624,8 @@ using Scheme (Snd/CLM) syntax:
       duration      ; seconds
       (offset 0.0)  ; value added to every y value
       base          ; type of connecting line between break-points
-      end           ; (- end start) =&gt; duration in samples (can be used instead of duration)
-      (start 0)     ; can be used in conjunction with end
-      dur           ; duration in samples (can be used instead of <i>start</i> and <i>end</i>)
+      end           ; end point in samples (similar to <i>dur</i>)
+      dur           ; duration in samples (can be used instead of <i>end</i>)
   <a class=def name="env">env</a> e
   <a class=def name="env?">env?</a> e
   <a class=def name="env-interp">env-interp</a> x env &amp;optional (base 1.0)
@@ -3796,6 +3795,13 @@ directory (see also the file <a href="ins">ins</a>), and in various
 	<td><a href="dsp.scm">dsp.scm</a></td>
     </tr>
 
+<tr><td>shepard</td>            
+    <td>Shepard tones (Juan Reyes)</td>      
+    <td><a href="shepard.ins">shepard.ins</a></td>    
+	<td><a href="sndscm.html#wsdoc">sndscm.html</a></td>
+	<td></td>
+    </tr>
+
 <tr><td>singer</td>            
     <td>Perry Cook's vocal tract physical model</td>      
     <td><a href="singer.ins">singer.ins</a></td>    
@@ -4018,8 +4024,8 @@ void c_bird(double start, double dur, double frequency, double freqskew, double 
   beg = start * mus_srate();
   end = start + dur * mus_srate();
   osc = mus_make_oscil(frequency, 0.0);
-  amp_env = mus_make_env(ampdata, amppts, amplitude, 0.0, 1.0, dur, beg, end, NULL);
-  freq_env = mus_make_env(freqdata, freqpts, mus_hz_to_radians(freqskew), 0.0, 1.0, dur, beg, end, NULL);
+  amp_env = mus_make_env(ampdata, amppts, amplitude, 0.0, 1.0, dur, 0, NULL);
+  freq_env = mus_make_env(freqdata, freqpts, mus_hz_to_radians(freqskew), 0.0, 1.0, dur, 0, NULL);
   for (i = beg; i &lt; end; i++)
     mus_sample_to_file(output, i, 0, 
 		       mus_env(amp_env) * 

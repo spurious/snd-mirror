@@ -5221,11 +5221,11 @@ static mus_any_class ENV_CLASS = {
 };
 
 
-/* make-env (C, scm, lisp) should use :dur, not :end, and should dispense with :start
+/* make-env (C, scm, lisp) should use :dur, not :end
  *   perhaps #define mus_make_env_with_dur(Brkpts, Pts, Scaler, Offset, Base, Dur) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, 0.0, 0, Dur - 1, NULL)
  */
 
-mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, double base, double duration, off_t start, off_t end, Float *odata)
+mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, double base, double duration, off_t end, Float *odata)
 {
   int i;
   off_t dur_in_samples;
@@ -5246,7 +5246,7 @@ mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, dou
 
   if (duration != 0.0)
     dur_in_samples = (off_t)(duration * sampling_rate);
-  else dur_in_samples = (end - start + 1);
+  else dur_in_samples = (end + 1);
 
   e->init_y = offset + scaler * brkpts[1];
   e->current_value = e->init_y;
@@ -5308,10 +5308,8 @@ mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, dou
   return((mus_any *)e);
 }
 
-
 static void set_env_location(mus_any *ptr, off_t val)
 {
-  /* doesn't this ignore the original notion of a "start" time? */
   seg *gen = (seg *)ptr;
   off_t ctr = 0;
 

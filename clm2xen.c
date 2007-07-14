@@ -4235,19 +4235,19 @@ static XEN g_env(XEN obj)
 
 static XEN g_make_env(XEN arglist)
 {
-  #define H_make_env "(" S_make_env " :envelope (:scaler 1.0) :duration (:offset 0.0) (:base 1.0) :end (:start 0) :dur): \
+  #define H_make_env "(" S_make_env " :envelope (:scaler 1.0) :duration (:offset 0.0) (:base 1.0) :end :dur): \
 return a new envelope generator.  'envelope' is a list of break-point pairs. To create the envelope, \
 these points are offset by 'offset', scaled by 'scaler', and mapped over the time interval defined by \
-either 'duration' (seconds) or 'start' and 'end' (samples).  If 'base' is 1.0, the connecting segments \
+either 'duration' (seconds) or 'end' (samples).  If 'base' is 1.0, the connecting segments \
 are linear, if 0.0 you get a step function, and anything else produces an exponential connecting segment."
 
   mus_any *ge;
   XEN args[MAX_ARGLIST_LEN]; 
-  XEN keys[8];
-  int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  XEN keys[7];
+  int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
   int vals, i, len = 0, arglist_len;
   Float base = 1.0, scaler = 1.0, offset = 0.0, duration = 0.0;
-  off_t start = 0, end = 0, dur = 0;
+  off_t end = 0, dur = 0;
   int npts = 0;
   Float *brkpts = NULL, *odata = NULL;
   XEN lst;
@@ -4258,8 +4258,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   keys[3] = kw_offset;
   keys[4] = kw_base;
   keys[5] = kw_end;
-  keys[6] = kw_start;
-  keys[7] = kw_dur;
+  keys[6] = kw_dur;
 
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
@@ -4270,7 +4269,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
 
-  vals = mus_optkey_unscramble(S_make_env, 8, keys, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_env, 7, keys, args, orig_arg);
   if (vals > 0)
     {
       scaler = mus_optkey_to_float(keys[1], S_make_env, orig_arg[1], 1.0);
@@ -4289,15 +4288,9 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
       if (end < 0) 
 	XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[5], keys[5], "end ~A < 0?");
 
-      start = mus_optkey_to_off_t(keys[6], S_make_env, orig_arg[6], 0);
-      if (start < 0) 
-	XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[6], keys[6], "start ~A < 0?");
-      if ((start > end) && (end != 0)) 
-	XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[6], keys[6], "start ~A > end?");
-
-      dur = mus_optkey_to_off_t(keys[7], S_make_env, orig_arg[7], 0);
+      dur = mus_optkey_to_off_t(keys[6], S_make_env, orig_arg[6], 0);
       if (dur < 0) 
-	XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[7], keys[7], "dur ~A < 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[6], keys[6], "dur ~A < 0?");
 
       /* env data is a list, checked last to let the preceding throw wrong-type error before calloc  */
       if (!(XEN_KEYWORD_P(keys[0])))
@@ -4330,20 +4323,19 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 			 C_TO_XEN_STRING("no envelope?")));
   if (dur > 0)
     {
-      if ((end > 0) && ((end - start + 1) != dur))
+      if ((end > 0) && ((end + 1) != dur))
 	{
 	  if (brkpts) FREE(brkpts);
 	  if (odata) FREE(odata);
 	  XEN_ERROR(CLM_ERROR,
 		    XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
-			       C_TO_XEN_STRING("end (~A) and dur (~A) specified, but dur != end-start+1"),
-			       XEN_LIST_2(keys[5], keys[7])));
+			       C_TO_XEN_STRING("end (~A) and dur (~A) specified, but dur != end+1"),
+			       XEN_LIST_2(keys[5], keys[6])));
 	}
-      start = 0;
       end = dur - 1;
     }
   old_error_handler = mus_error_set_handler(local_mus_error);
-  ge = mus_make_env(brkpts, npts, scaler, offset, base, duration, start, end, odata);
+  ge = mus_make_env(brkpts, npts, scaler, offset, base, duration, end, odata);
   mus_error_set_handler(old_error_handler);
   FREE(brkpts);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct(mus_env_breakpoints(ge) * 2, odata))));

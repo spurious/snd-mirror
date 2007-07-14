@@ -16021,9 +16021,6 @@ def test088
   if (res = Snd.catch do make_env(:envelope, [0, 0], :end, -1) end).first != :out_of_range
     snd_display("make_env bad end: %s", res.inspect)
   end
-  if (res = Snd.catch do make_env(:envelope, [0, 0], :start, -1) end).first != :out_of_range
-    snd_display("make_env bad start: %s", res.inspect)
-  end
   if (res = Snd.catch do make_env(:envelope, [0, 0], :dur, -1) end).first != :out_of_range
     snd_display("make_env bad dur: %s", res.inspect)
   end
@@ -39388,7 +39385,6 @@ def test0228
   check_error_tag(:out_of_range) do src_sound(make_env([0, 1, 1, 0], :end, 10)) end
   check_error_tag(:out_of_range) do src_sound(make_env([0, 1, 1, -1], :end, 10)) end
   check_error_tag(:out_of_range) do src_sound(make_env([0, -1, 1, 1], :end, 10)) end
-  check_error_tag(:out_of_range) do make_env([0, -1, 1, 1], :start, 100, :end, 10) end
   check_error_tag(:mus_error) do make_readin(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) end
   check_error_tag(:out_of_range) do filter_sound($vct_3, 32) end
   check_error_tag(:out_of_range) do filter_sound([0, 0, 1, 1], 0) end

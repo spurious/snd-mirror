@@ -25,7 +25,7 @@
   (let* ((beg (inexact->exact (floor (* beg (mus-srate)))))
 	 (len (inexact->exact (floor (* dur (mus-srate)))))
 	 (end (+ beg len))
-	 (ampf (make-env :envelope ampenv :scaler amplitude :start beg :end end))
+	 (ampf (make-env :envelope ampenv :scaler amplitude :end end))
 	 (loc (make-locsig degree dist reverb  *output* *reverb* (mus-channels *output*)))
 	 (vinut      (make-vct bufsize)) 
 	 (vinbridge  (make-vct bufsize))

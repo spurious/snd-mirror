@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 37
-#define MUS_DATE "5-July-07"
+#define MUS_REVISION 38
+#define MUS_DATE "16-July-07"
 
 /*
+ * 16-July:    removed start arg from mus_make_env (see mus_make_env_with_start).
  * 5-July:     changed some Floats to doubles in env funcs.
  *               exp envs now use repeated multiplies rather than direct exp call.
  * 19-June:    mus-increment on gens with a notion of frequency (phase increment); 
@@ -522,7 +523,8 @@ Float mus_polyshape_0(mus_any *ptr);
 bool mus_polyshape_p(mus_any *ptr);
 
 Float mus_env(mus_any *ptr);
-mus_any *mus_make_env(Float *brkpts, int pts, double scaler, double offset, double base, double duration, off_t start, off_t end, Float *odata);
+mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, double base, double duration, off_t end, Float *odata);
+#define mus_make_env_with_start(Brkpts, Pts, Scaler, Offset, Base, Duration, Start, End, Odata) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, Duration, End - Start, Odata)
 bool mus_env_p(mus_any *ptr);
 double mus_env_interp(double x, mus_any *env);
 off_t *mus_env_passes(mus_any *gen);        /* for Snd */

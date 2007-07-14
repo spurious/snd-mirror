@@ -2811,7 +2811,6 @@ include bird.fsm
     '( 0 1 1 0 )  :end 10 make-env <'> src-sound          'out-of-range     check-error-tag
     '( 0 1 1 -1 ) :end 10 make-env <'> src-sound          'out-of-range     check-error-tag
     '( 0 -1 1 1 ) :end 10 make-env <'> src-sound          'out-of-range     check-error-tag
-    '( 0 -1 1 1 ) :start 100 :end 10 <'> make-env         'out-of-range     check-error-tag
     0.0 0.0 0.0 0.0 0.0 0.0 0.0 <'> make-readin           'mus-error        check-error-tag
     vct-3 32                   <'> filter-sound           'out-of-range     check-error-tag
     '( 0 0 1 1 ) 0             <'> filter-sound           'out-of-range     check-error-tag
