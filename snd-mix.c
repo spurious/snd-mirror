@@ -1,17 +1,5 @@
 #include "snd.h"
 
-#if HAVE_SCHEME
-  #define PROC_SET_MIX "set! (%s -mix-%d) "
-  #define PROC_SET_TRACK "set! (%s %d) "
-  #define PROC_SET_TRACK_CHANNEL "set! (%s %d %d) "
-#else
-  #define PROC_SET_MIX "set_%s(_mix_%d, "
-  #define PROC_SET_TRACK "set_%s(%d, "
-  #define PROC_SET_TRACK_CHANNEL "set_%s(%d, %d, "
-#endif
-
-#define MIX_PEAK_ENV_CUTOFF 20000
-
 static bool mix_vct_untagged(vct *v, chan_info *cp, off_t beg, const char *origin)
 {
   mus_sample_t *data;
@@ -1585,6 +1573,8 @@ static int local_grf_x(double val, axis_info *ap)
   return((int)(ap->x_base + val * ap->x_scale));
 }
 
+
+#define MIX_PEAK_ENV_CUTOFF 20000
 
 static peak_env_info *make_mix_input_peak_env(mix_info *md)
 {

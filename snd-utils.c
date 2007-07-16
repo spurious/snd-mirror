@@ -906,13 +906,13 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
   void *rtp;
   char *p3 = (char *)ptr;
 
-  if (ptr == NULL) {fprintf(stderr, "attempt to free NULL"); mem_report(); abort();}
-  if (ptr == (void *)FREED_POINTER) {fprintf(stderr, " attempt to free pointer twice"); abort();}
+  if (ptr == NULL) {fprintf(stderr, "%s:%s[%d] attempt to free NULL", func, file, line); mem_report(); abort();}
+  if (ptr == (void *)FREED_POINTER) {fprintf(stderr, "%s:%s[%d] attempt to free pointer twice", func, file, line); abort();}
 
   loc = (*((int *)(p3 - 4)));
   if ((loc < 0) || (loc > mem_size))
     {
-      fprintf(stderr, "loc clobbered: %p %d (%d)\n", ptr, loc, mem_size);
+      fprintf(stderr, "%s:%s[%d] loc clobbered: %p %d (%d)\n", func, file, line, ptr, loc, mem_size);
       abort();
     }
   freed[freed_in++] = loc;

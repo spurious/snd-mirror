@@ -893,6 +893,7 @@ static prefs_info *prefs_row_with_radio_box_and_number(const char *label, const 
 						       void (*arrow_up_func)(prefs_info *prf), void (*arrow_down_func)(prefs_info *prf), 
 						       void (*text_func)(prefs_info *prf))
 {
+  /* TODO: check why "number" is ignored here */
   prefs_info *prf = NULL;
   Widget sep, help;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));

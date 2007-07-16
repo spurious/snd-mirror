@@ -4189,7 +4189,7 @@ static void ensure_ed_ramps(ed_fragment *ed, int rmps, int xrmps)
 }
 
 
-static void new_before_ramp(ed_fragment *new_before, ed_fragment *old_before, off_t samp)
+static void new_before_ramp(ed_fragment *new_before, ed_fragment *old_before)
 {
   if (ramp_op(ED_TYPE(old_before)))
     {
@@ -4434,7 +4434,7 @@ static ed_list *insert_section_into_list(off_t samp, off_t num, ed_list *current
 		  /* now fixup ramps/ptrees affected by the split */
 		  if (ramp_or_ptree_op(ED_TYPE(cur_f)))
 		    {
-		      new_before_ramp(split_front_f, cur_f, samp);
+		      new_before_ramp(split_front_f, cur_f);
 		      new_after_ramp(split_back_f, cur_f, samp);
 		    }
 		}
@@ -4812,7 +4812,7 @@ static ed_list *delete_section_from_list(off_t beg, off_t num, ed_list *current_
 		  ED_LOCAL_END(split_front_f) = ED_LOCAL_POSITION(split_front_f) + beg - ED_GLOBAL_POSITION(split_front_f) - 1;
 		  /* samp - global position = where in current fragment, offset that by its local offset, turn into end sample */
 		  if (ramp_or_ptree_op(ED_TYPE(cur_f)))
-		    new_before_ramp(split_front_f, cur_f, beg);
+		    new_before_ramp(split_front_f, cur_f);
 		}
 	      next_pos = FRAGMENT_GLOBAL_POSITION(current_state, (cur_i + 1));
 	      if (next_pos > end)
@@ -5375,7 +5375,7 @@ static ed_list *copy_and_split_list(off_t beg, off_t num, ed_list *current_state
 		      /* now fixup ramps/ptrees affected by the split */
 		      if (ramp_or_ptree_op(ED_TYPE(cur_f)))
 			{
-			  new_before_ramp(split_front_f, cur_f, beg);
+			  new_before_ramp(split_front_f, cur_f);
 			  new_after_ramp(split_back_f, cur_f, beg);
 			  mid_f = split_back_f;
 			}
@@ -5412,7 +5412,7 @@ static ed_list *copy_and_split_list(off_t beg, off_t num, ed_list *current_state
 			      for (i = 0; i < xrmps; i++)
 				xramp_begs[i] = ED_XRAMP_START(split_front_f, i);
 
-			      new_before_ramp(split_front_f, cur_f, end);
+			      new_before_ramp(split_front_f, cur_f);
 
 			      if (mid_f == split_front_f)
 				{
@@ -6942,7 +6942,7 @@ bool redo_edit_with_sync(chan_info *cp, int count)
  *   (scaling can't be globalized without saving the pre-mix scaler on every mix, for a start)
  */
 
-static void make_mix_fragment(ed_list *new_ed, int i, mix_state *ms, off_t beg)
+static void make_mix_fragment(ed_list *new_ed, int i, mix_state *ms)
 {
   ed_mixes *mxs;
   int mloc = -1;
@@ -6994,7 +6994,7 @@ static ed_list *make_mix_edit(ed_list *old_ed, off_t beg, off_t len, mix_state *
 	{
 	  copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
 	  if (i < new_ed->size - 1)
-	    make_mix_fragment(new_ed, i, ms, FRAGMENT_GLOBAL_POSITION(new_ed, i));
+	    make_mix_fragment(new_ed, i, ms);
 	}
     }
   else 
@@ -7006,7 +7006,7 @@ static ed_list *make_mix_edit(ed_list *old_ed, off_t beg, off_t len, mix_state *
 	    break;                                                    /* not >= (1 sample selections) */
 	  if ((FRAGMENT_GLOBAL_POSITION(new_ed, i) >= beg) &&
 	      (i < new_ed->size - 1))
-	    make_mix_fragment(new_ed, i, ms, FRAGMENT_GLOBAL_POSITION(new_ed, i) - beg);
+	    make_mix_fragment(new_ed, i, ms);
 	}
     }
 
@@ -7188,7 +7188,7 @@ void remix(chan_info *cp, mix_state *ms)
       if (FRAGMENT_GLOBAL_POSITION(new_ed, i) > (ms->beg + ms->len - 1)) 
 	break;                                                    /* not >= (1 sample selections) */
       if (FRAGMENT_GLOBAL_POSITION(new_ed, i) >= ms->beg)
-	make_mix_fragment(new_ed, i, ms, FRAGMENT_GLOBAL_POSITION(new_ed, i) - ms->beg);
+	make_mix_fragment(new_ed, i, ms);
     }
 }
 

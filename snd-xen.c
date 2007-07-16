@@ -183,11 +183,7 @@ int snd_protect(XEN obj)
 }
 
 
-#if MUS_DEBUGGING
-void snd_unprotect_at_1(int loc, const char *func, const char *file, int line)
-#else
 void snd_unprotect_at(int loc)
-#endif
 {
 #if MUS_DEBUGGING
   cur_gc_index--;

@@ -1028,12 +1028,10 @@ bool procedure_arity_ok(XEN proc, int args);
 #if MUS_DEBUGGING
   int snd_protect_1(XEN obj, const char *caller);
   #define snd_protect(Obj) snd_protect_1(Obj, c__FUNCTION__)
-  #define snd_unprotect_at(Loc) snd_unprotect_at_1(Loc, __FUNCTION__, __FILE__, __LINE__)
-  void snd_unprotect_at_1(int loc, const char *func, const char *file, int line);
 #else
   int snd_protect(XEN obj);
-  void snd_unprotect_at(int loc);
 #endif
+void snd_unprotect_at(int loc);
 
 XEN snd_protected_at(int loc);
 XEN run_or_hook(XEN hook, XEN args, const char *caller);

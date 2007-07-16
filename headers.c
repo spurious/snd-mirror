@@ -1478,7 +1478,7 @@ char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends)
  */
 
 
-static int read_caff_header(const char *filename, int fd)
+static int read_caff_header(int fd)
 {
   off_t chunksize = 8, offset = 0;
   bool happy = false;
@@ -2050,7 +2050,7 @@ static int write_riff_header(int fd, int wsrate, int wchans, int siz, int format
   /*   2nd 36 is for "JUNK" chunk, 8 is data chunk header */
 
   write_four_chars((unsigned char *)hdrbuf, I_RIFF);
-  mus_lint_to_char((unsigned char *)(hdrbuf + 4), data_location + siz);
+  mus_lint_to_char((unsigned char *)(hdrbuf + 4), data_location + siz - 8); /* added -8 25-June-07 */
   write_four_chars((unsigned char *)(hdrbuf + 8), I_WAVE);
   header_write(fd, hdrbuf, 12);
 
@@ -2332,7 +2332,7 @@ static int write_rf64_header(int fd, int wsrate, int wchans, off_t size, int for
   /* ds64 chunk */
   write_four_chars((unsigned char *)hdrbuf, I_ds64);
   mus_lint_to_char((unsigned char *)(hdrbuf + 4), 28);
-  mus_loff_t_to_char((unsigned char *)(hdrbuf + 8), data_location + size);
+  mus_loff_t_to_char((unsigned char *)(hdrbuf + 8), data_location + size - 8); /* -8 added 25-June-07 */
   mus_loff_t_to_char((unsigned char *)(hdrbuf + 16), size);
   mus_loff_t_to_char((unsigned char *)(hdrbuf + 24), size);
   mus_lint_to_char((unsigned char *)(hdrbuf + 32), 0); /* "table size" */
@@ -2379,7 +2379,7 @@ static int mus_header_convert_riff_to_rf64(const char *filename, off_t size)
   /* convert the "JUNK" chunk to be a "ds64" chunk */
   write_four_chars((unsigned char *)hdrbuf, I_ds64);
   mus_lint_to_char((unsigned char *)(hdrbuf + 4), 28);
-  mus_loff_t_to_char((unsigned char *)(hdrbuf + 8), data_location + size);
+  mus_loff_t_to_char((unsigned char *)(hdrbuf + 8), data_location + size - 8);
   mus_loff_t_to_char((unsigned char *)(hdrbuf + 16), size);
   mus_loff_t_to_char((unsigned char *)(hdrbuf + 24), size);
   header_write(fd, hdrbuf, 36);
@@ -5233,7 +5233,7 @@ static int header_raw_srate = 44100;
 static int header_raw_chans = 2;
 static int header_raw_format = MUS_BSHORT;
 
-static int read_no_header(const char *filename, int fd)
+static int read_no_header(int fd)
 {
   srate = header_raw_srate;
   chans = header_raw_chans;
@@ -5330,7 +5330,7 @@ static int mus_header_read_1(const char *filename, int fd)
   if (bytes < 4) 
     {
       header_type = MUS_RAW;
-      return(read_no_header(filename, fd));
+      return(read_no_header(fd));
     }
   if ((match_four_chars((unsigned char *)hdrbuf, I_DSND)) || 
       (match_four_chars((unsigned char *)hdrbuf, I_DECN)))
@@ -5431,7 +5431,7 @@ static int mus_header_read_1(const char *filename, int fd)
       if (bytes < 32) /* INITIAL_READ_SIZE */
 	return(mus_error(MUS_HEADER_READ_FAILED, "%s CAFF header truncated? found only " SSIZE_TD " bytes", filename, bytes));
       header_type = MUS_CAFF;
-      return(read_caff_header(filename, fd));
+      return(read_caff_header(fd));
     }
   if (match_four_chars((unsigned char *)hdrbuf, I_SOUN))
     {
@@ -5745,7 +5745,7 @@ static int mus_header_read_1(const char *filename, int fd)
     }
 
   header_type = MUS_RAW;
-  return(read_no_header(filename, fd));
+  return(read_no_header(fd));
 }
 
 
@@ -5949,7 +5949,7 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
       /* read sets current update_form_size, data_format, data_size, update_ssnd_location, update_rf64_location */
       /* assume here that this really is an rf64 file (i.e. -1 for form size and data chunk size */
       lseek(fd, update_rf64_location, SEEK_SET);
-      mus_loff_t_to_char((unsigned char *)hdrbuf, data_location + size);
+      mus_loff_t_to_char((unsigned char *)hdrbuf, data_location + size - 8); /* 25-June-07 */
       mus_loff_t_to_char((unsigned char *)(hdrbuf + 8), size);
       mus_loff_t_to_char((unsigned char *)(hdrbuf + 16), size);
       header_write(fd, hdrbuf, 24);

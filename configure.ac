@@ -2102,15 +2102,15 @@ if test "$enable_snd_debug" = yes ; then
   if test "$GCC" = yes ; then
     if test "$LOCAL_LANGUAGE" = "Ruby" ; then
       if test "$CC" = "g++" ; then
-        CFLAGS="$CFLAGS -O -g3 -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+        CFLAGS="$CFLAGS -O -g3 -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall -Winit-self -Wsequence-point -Wmissing-field-initializers"
       else
-        CFLAGS="$CFLAGS -O -g3 -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+        CFLAGS="$CFLAGS -O -g3 -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall -Winit-self -Wsequence-point -Wmissing-field-initializers"
       fi
     else
       if test "$CC" = "g++" ; then
-        CFLAGS="$CFLAGS -O -g3 -Wredundant-decls -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+        CFLAGS="$CFLAGS -O -g3 -Wredundant-decls -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall -Winit-self -Wsequence-point -Wmissing-field-initializers"
       else
-        CFLAGS="$CFLAGS -O -g3 -Wredundant-decls -Wcast-align -Wmissing-prototypes -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+        CFLAGS="$CFLAGS -O -g3 -Wredundant-decls -Wcast-align -Wmissing-prototypes -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall -Winit-self -Wsequence-point -Wmissing-field-initializers"
       fi
     fi
   fi

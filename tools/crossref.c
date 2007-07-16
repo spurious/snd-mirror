@@ -52,6 +52,9 @@ int add_name(char *name, char *hdr)
   int i;
   if (name == NULL) return(-1);
   if ((isdigit(name[0])) || (strlen(name) == 1)) return(-1);
+
+  if (isupper(name[0])) return(-1);
+
   if ((strlen(name) > 2) && ((strncmp(name, "SCM", 3) == 0) ||
 			     (strncmp(name, "scm", 3) == 0) ||
 			     (strncmp(name, "clm_", 4) == 0) ||
@@ -59,6 +62,7 @@ int add_name(char *name, char *hdr)
 			     (strncmp(name, "gh_", 3) == 0) ||
 			     (strncmp(name, "GDK", 3) == 0) ||
 			     (strncmp(name, "XK_", 3) == 0) ||
+			     (strncmp(name, "snd_K", 5) == 0) ||
 			     (strncmp(name, "XEN", 3) == 0) ||
 			     (strncmp(name, "xen", 3) == 0)))
 
@@ -217,7 +221,7 @@ int main(int argc, char **argv)
   add_header("sndlib2xen.h");
   add_header("clm2xen.h");
   add_header("snd.h");
-#if 1
+#if 0
   add_header("snd-strings.h");
   add_header("sndlib-strings.h");
   add_header("clm-strings.h");
