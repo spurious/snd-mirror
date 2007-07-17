@@ -696,6 +696,12 @@ void free_channel_mixes(chan_info *cp)
 }
 
 
+void reset_mix_ctr(void)
+{
+  mix_infos_ctr = 0;
+}
+
+
 char *mix_name(int id)
 {
   if (mix_exists(id))

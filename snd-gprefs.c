@@ -863,7 +863,7 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
 
 static prefs_info *prefs_row_with_radio_box_and_number(const char *label, const char *varname, 
 						       const char **labels, int num_labels, int current_value,
-						       int number, const char *text_value, int text_cols,
+						       const char *text_value, int text_cols,
 						       GtkWidget *box,
 						       void (*toggle_func)(prefs_info *prf),
 						       void (*arrow_up_func)(prefs_info *prf), void (*arrow_down_func)(prefs_info *prf), 
@@ -2537,7 +2537,7 @@ widget_t start_preferences_dialog(void)
     rts_speed_control_style = speed_control_style(ss);
     prf = prefs_row_with_radio_box_and_number("speed control choice", S_speed_control_style,
 					      speed_control_styles, NUM_SPEED_CONTROL_STYLES, (int)speed_control_style(ss),
-					      speed_control_tones(ss), str, 6,
+					      str, 6,
 					      clm_box,
 					      speed_control_choice, speed_control_up, speed_control_down, speed_control_text);
     remember_pref(prf, reflect_speed_control, save_speed_control, NULL, NULL, revert_speed_control);

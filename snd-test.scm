@@ -2760,7 +2760,11 @@
 	       (vct-set! v 6 0.0)
 	       (do ((i 7 (1+ i)))
 		   ((= i len))
-		 (vct-set! v i (- 1.0 (random 2.0))))
+		 (let ((val (random 2.0)))
+		   (if (or (> val 2.0)
+			   (< val 0.0))
+		       (snd-display ";random 2.0 -> ~A?" val))
+		   (vct-set! v i (- 1.0 val))))
 	       (vct->channel v 0 len ind 0)
 	       (save-sound-as "test1.snd" ind mus-next :data-format type)
 	       (close-sound ind)
@@ -30606,9 +30610,9 @@ EDITS: 2
 	      (list 'cursor-style cursor-style #f cursor-cross cursor-line)
 	      (list 'tracking-cursor-style tracking-cursor-style #f cursor-cross cursor-line)
 	      (list 'clipping clipping #f #f #t)
-	      (list 'default-output-chans default-output-chans #f 1 8)
+					;(list 'default-output-chans default-output-chans #f 1 8)
 					;(list 'default-output-data-format default-output-data-format #f 1 12)
-	      (list 'default-output-srate default-output-srate #f 22050 44100)
+					;(list 'default-output-srate default-output-srate #f 22050 44100)
 					;(list 'default-output-header-type default-output-header-type #f 0 2)
 	      (list 'dot-size dot-size #f 1 10)
 	      (list 'enved-base enved-base #f 0.01  100.0)
@@ -31176,8 +31180,8 @@ EDITS: 2
 		    (snd-display ";search-for-click: ~A" vals)))
 	      (close-sound ind))
 	    
-	    (let ((ind1 (new-sound :size 20))
-		  (ind2 (new-sound :size 20)))
+	    (let ((ind1 (new-sound :size 20 :comment "new-sound for sound-via-sound"))
+		  (ind2 (new-sound :size 20 :comment "2nd new-sound for sound-via-sound")))
 	      (let ((val -0.05)) (map-channel (lambda (y) (set! val (+ val .05)) val) 0 20 ind1))
 	      (let ((val 1.1)) (map-channel (lambda (y) (set! val (- val .1)) val) 0 20 ind2))
 	      (select-sound ind1)
@@ -37279,18 +37283,15 @@ EDITS: 1
 	      (snd-display ";map-channel oboe -> vct ptree: ~A" (frames ind 0))
 	      (if (not (vequal (channel->vct 0 10) (vct 0.000 0.000 -0.000 0.000 -0.000 0.000 -0.000 0.000 -0.000 0.0)))
 		  (snd-display ";map-channel vct ptree result: ~A" (channel->vct 0 10))))
-	  
 	  (revert-sound)
-	  
 	  (close-sound ind))
-	
-	
-	
+
 	(let ((ind (open-sound "2.snd")))
 	  (ramp-channel 0.9 1.0)
 	  (ramp-channel 0.9 1.0)
 	  (xramp-channel 0.9 1.0 32.0)
-	  (xramp-channel 0.9 1.0 32.0) ; make it unrampable for apply_env
+	  (xramp-channel 0.9 1.0 32.0)
+	  (mix-vct (vct .01 .02) 10000 ind 0 #t)
 	  (set! (sync ind) 1)
 	  (let ((mxs (maxamp ind #t)))
 	    (env-sound '(0 .25 1 0.5))
@@ -37299,17 +37300,16 @@ EDITS: 1
 		      (fneq (cadr mxs) (* 2.0 (cadr mxs1))))
 		  (snd-display ";env-sound sync'd maxes: ~A -> ~A" mxs mxs1)))
 	    (undo 1))
-	  
 	  (close-sound ind))
-	
-	
-	(let ((ind (new-sound :channels 2 :size 10)))
+
+
+	(let ((ind (new-sound :channels 2 :size 10 :comment "new-sound for ramp2-xramp2")))
 	  (map-channel (lambda (y) 1.0))
 	  (ramp-channel 0.9 1.0)
 	  (ramp-channel 0.9 1.0)
 	  (xramp-channel 0.9 1.0 32.0)
-	  (xramp-channel 0.9 1.0 32.0) ; make it unrampable for apply_env
-	  
+	  (xramp-channel 0.9 1.0 32.0)
+	  (mix-vct (vct .1 .2) 1 ind 0 #t)	  
 	  (set! (sync ind) 1)
 	  (let ((mxs (maxamp ind #t)))
 	    (env-sound '(0 .25 1 0.5))
@@ -37318,8 +37318,13 @@ EDITS: 1
 		      (fneq (cadr mxs) (* 2.0 (cadr mxs1))))
 		  (snd-display ";env-sound sync'd maxes buf: ~A -> ~A" mxs mxs1)))
 	    (undo 1))
-	  
-	  (close-sound ind))
+	  (let ((name (file-name ind)))
+	    (if (not (= (srate ind) (default-output-srate)))
+		(snd-display ";new-sound default srate: ~A ~A" (srate ind) (default-output-srate)))
+	    (close-sound ind)
+	    (if (not (file-exists? name))
+		(snd-display ";new-sound temp? ~A" name)
+		(delete-file name))))
 
 	))
     ))
@@ -38858,7 +38863,7 @@ EDITS: 1
 	    (close-sound ind)
 	    (if (file-exists? new-file-name) (delete-file new-file-name))))
 	
-	(let ((ind (new-sound :channels 8 :size 10)))
+	(let ((ind (new-sound :channels 8 :size 10 :comment "new-sound for scramble-channels")))
 	  (do ((i 0 (1+ i))) ((= i 8)) (set! (sample i ind i) .5))
 	  (scramble-channels 1 2 3 4 7 6 5 0)
 	  (if (or (fneq (sample 1 ind 0) .5)

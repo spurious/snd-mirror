@@ -1510,13 +1510,15 @@ void snd_close_file(snd_info *sp)
   call_selection_watchers(SELECTION_IN_DOUBT);
   call_ss_watchers(SS_FILE_OPEN_WATCHER, SS_FILE_CLOSED);
   if (chosen_sp)
+    select_channel(chosen_sp, 0);
+  else 
     {
-#if MUS_DEBUGGING
-      if (!(snd_ok(chosen_sp))) {fprintf(stderr, "bad select at close"); abort();}
-#endif
-      select_channel(chosen_sp, 0);
+      ss->selected_sound = NO_SELECTION;
+      if ((!(ss->exiting)) && 
+	  (ss->active_sounds <= 0) &&     /* not sure about this -- it includes variable graphs that may never be closed */
+	  (any_selected_sound() == NULL)) /* paranoia */
+	reset_mix_ctr();
     }
-  else ss->selected_sound = NO_SELECTION;
 }
 
 #define TEMP_SOUND_INDEX 123456

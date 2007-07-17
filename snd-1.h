@@ -1548,6 +1548,7 @@ int next_mix_id(int id);
 int previous_mix_id(int id);
 int lowest_mix_id(void);
 int highest_mix_id(void);
+void reset_mix_ctr(void);
 void preload_mixes(mix_state **mixes, int low_id, ed_list *ed);
 void free_channel_mixes(chan_info *cp);
 void delete_any_remaining_mix_temp_files_at_exit(chan_info *cp);

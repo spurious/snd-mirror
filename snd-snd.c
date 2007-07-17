@@ -3827,10 +3827,12 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   vals = mus_optkey_unscramble(S_new_sound, 7, keys, args, orig_arg);
+
   ht = default_output_header_type(ss);
   df = default_output_data_format(ss);
   sr = default_output_srate(ss);
   ch = default_output_chans(ss);
+
   if (vals > 0)
     {
       file = mus_optkey_to_string(keys[0], S_new_sound, orig_arg[0], NULL);
@@ -3841,6 +3843,7 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
       com = mus_optkey_to_string(keys[5], S_new_sound, orig_arg[5], NULL);
       len = mus_optkey_to_off_t(keys[6], S_new_sound, orig_arg[6], len);
     }
+
   if (!(MUS_HEADER_TYPE_OK(ht)))
     XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[1], keys[1], "~A: invalid header type");
   if (!(MUS_DATA_FORMAT_OK(df)))
@@ -3856,11 +3859,13 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
     XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[4], keys[4], "channels ~A <= 0?");
   if (len < 0)
     XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[6], keys[6], "size ~A < 0?");
+
   if (file)
     str = mus_expand_filename(file);
   else str = snd_tempnam();
   mus_sound_forget(str);
-  err = snd_write_header(str, ht, sr, ch, len * ch, df, com, NULL);
+
+  err = snd_write_header(str, ht, sr, ch, len * ch, df, com, NULL); /* last arg is loop info */
   if (err == -1)
     {
       if (str) {FREE(str); str = NULL;}

@@ -1270,6 +1270,27 @@ make
 ./snd -noinit --features "'clm 'snd-guile"
 make allclean
 
+echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
+echo ' ------                GUILE_CONFIG_path=/home/bil/test/guile-1.8.1/g181/bin --with-static-xm  '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet CFLAGS="-I/home/bil/test/guile-1.8.1/g181/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/guile-1.8.1/g181/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/guile-1.8.1/g181/bin --with-static-xm
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-guile"
+make allclean
+
+echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
+echo ' ------                GUILE_CONFIG_path=/home/bil/test/guile-1.8.2/g182/bin --with-static-xm  '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet CFLAGS="-I/home/bil/test/guile-1.8.2/g182/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/guile-1.8.2/g182/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/guile-1.8.2/g182/bin --with-static-xm
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-guile"
+make allclean
 
 cp ~/sndlib/* .
 echo ' -------------------------------------------------------------------------------- '
