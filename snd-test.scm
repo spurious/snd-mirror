@@ -5,32 +5,32 @@
 ;;;  test 2: headers                            [1293]
 ;;;  test 3: variables                          [1609]
 ;;;  test 4: sndlib                             [2254]
-;;;  test 5: simple overall checks              [4776]
-;;;  test 6: vcts                               [13693]
-;;;  test 7: colors                             [13971]
-;;;  test 8: clm                                [14461]
-;;;  test 9: mix                                [24298]
-;;;  test 10: marks                             [26511]
-;;;  test 11: dialogs                           [27472]
-;;;  test 12: extensions                        [27717]
-;;;  test 13: menus, edit lists, hooks, etc     [27988]
-;;;  test 14: all together now                  [29694]
-;;;  test 15: chan-local vars                   [30727]
-;;;  test 16: regularized funcs                 [32339]
-;;;  test 17: dialogs and graphics              [37329]
-;;;  test 18: enved                             [37419]
-;;;  test 19: save and restore                  [37438]
-;;;  test 20: transforms                        [39223]
-;;;  test 21: new stuff                         [41121]
-;;;  test 22: run                               [43061]
-;;;  test 23: with-sound                        [48757]
-;;;  test 24: user-interface                    [51238]
-;;;  test 25: X/Xt/Xm                           [54644]
-;;;  test 26: Gtk                               [59240]
-;;;  test 27: GL                                [63104]
-;;;  test 28: errors                            [63228]
-;;;  test all done                              [65513]
-;;;  test the end                               [65749]
+;;;  test 5: simple overall checks              [4780]
+;;;  test 6: vcts                               [13697]
+;;;  test 7: colors                             [13975]
+;;;  test 8: clm                                [14465]
+;;;  test 9: mix                                [24302]
+;;;  test 10: marks                             [26515]
+;;;  test 11: dialogs                           [27476]
+;;;  test 12: extensions                        [27721]
+;;;  test 13: menus, edit lists, hooks, etc     [27992]
+;;;  test 14: all together now                  [29698]
+;;;  test 15: chan-local vars                   [30731]
+;;;  test 16: regularized funcs                 [32343]
+;;;  test 17: dialogs and graphics              [37334]
+;;;  test 18: enved                             [37424]
+;;;  test 19: save and restore                  [37443]
+;;;  test 20: transforms                        [39228]
+;;;  test 21: new stuff                         [41126]
+;;;  test 22: run                               [43117]
+;;;  test 23: with-sound                        [48813]
+;;;  test 24: user-interface                    [51294]
+;;;  test 25: X/Xt/Xm                           [54700]
+;;;  test 26: Gtk                               [59296]
+;;;  test 27: GL                                [63160]
+;;;  test 28: errors                            [63284]
+;;;  test all done                              [65569]
+;;;  test the end                               [65805]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -41129,6 +41129,7 @@ EDITS: 1
     (define (load-font name) #f))
 
 (if (not (provided? 'snd-clean.scm)) (load "clean.scm"))
+(if (not (provided? 'snd-snddiff.scm)) (load "snddiff.scm"))
 
 
 (define (snd_test_21)
@@ -43059,6 +43060,56 @@ EDITS: 1
 	(env-channel-with-base '(0 0 1 1 2 0 3 1) 0.0)  
 	(if (not (= (edit-position) 1)) (snd-display ";ramp over 0: ~A" (edit-position)))
 	(close-sound ind))
+
+      ;; snddiff.scm
+      (let ((ind0 (open-sound "oboe.snd"))
+	    (ind1 (open-sound "oboe.snd")))
+	(let ((diff (snddiff ind0 0 ind1 0)))
+	  (if (not (equal? diff 'no-difference))
+	      (snd-display ";snddiff of same sound: ~A" diff)))
+	(scale-channel 2.0 ind1)
+	(let ((diff (snddiff ind0 0 ind1 0)))
+	  (if (or (not (eq? (car diff) 'scale))
+		  (fneq (cadr diff) 2.0))
+	      (snd-display ";snddiff scale by 2: ~A" diff)))
+	(revert-sound ind1)
+	(set! (sample 100 ind0 0) 1.0)
+	(let* ((diff (snddiff ind0 0 ind1 0))
+	       (info (and diff (list? diff) (= (length diff) 2) (= (length (car (cadr diff))) 3) (car (cadr diff)))))
+	  (if (or (not (eq? (car diff) 'differences))
+		  (not info)
+		  (not (= (car info) 100))
+		  (fneq (cadr info) 1.0)
+		  (fneq (caddr info) -3.051e-4))
+	      (snd-display ";snddiff change sample 100: ~A" diff)))
+	(revert-sound ind0)
+	(pad-channel 0 100 ind0 0)
+	(let ((diff (snddiff ind0 0 ind1 0)))
+	  (if (or (not (eq? (list-ref diff 0) 'lag))
+		  (not (= (list-ref diff 1) 100))
+		  (not (eq? (list-ref diff 2) 'no-difference))
+		  (fneq (list-ref diff 3) 0.0)
+		  (not (eq? (list-ref diff 4) #f))
+		  (not (eq? (list-ref diff 5) #f))
+		  (not (eq? (list-ref diff 6) #f)))
+	      (snd-display ";snddiff + lag: ~A" diff)))
+	(revert-sound ind0)
+	(filter-channel (vct 1.0 0.5 0.25) 3 0 #f ind1 0)
+	(let* ((diff (snddiff ind0 0 ind1 0))
+	       (info (and (cadr diff) (= (length (cadr diff)) 3) (cadr diff))))
+	  (if (or (not (eq? (car diff) 'filter))
+		  (not diff)
+		  (fneq (car (car info)) 1.0)
+		  (fneq (car (cadr info)) 0.5)
+		  (fneq (car (caddr info)) 0.25)
+		  (not (= (cadr (car info)) 0))
+		  (not (= (cadr (cadr info)) 1))
+		  (not (= (cadr (caddr info)) 1)))
+	      (snd-display ";snddiff filter: ~A" diff)))
+	(revert-sound ind1)
+	
+	(close-sound ind0)
+	(close-sound ind1))
       
       )))
 

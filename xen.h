@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 8
+#define XEN_MINOR_VERSION 9
 #define XEN_VERSION "2.8"
 
 /* HISTORY:
  *
+ *  18-Jul-07: Gauche error handling changes.
  *  28-Apr-07: Gauche API changes in versions 0.8.8, 0.8.10, and 0.9.
  *  14-Feb-07: XEN_PUTS and friends for fth (Mike).
  *  17-Jan-07: rb_errinfo changes (Mike Scholz).
@@ -1611,12 +1612,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define C_TO_XEN_STRING(a)           (a) ? SCM_MAKE_STR_COPYING(a) : XEN_FALSE
 #define C_TO_XEN_STRINGN(Str, Len)   Scm_MakeString(Str, Len, Len, SCM_MAKSTR_COPYING)
 #define C_STRING_TO_XEN_FORM(Str)    Scm_ReadFromCString(Str)
-
-#if GAUCHE_API_0_8_8 || GAUCHE_API_0_9
-  #define XEN_EVAL_FORM(Form)          Scm_EvalRec(Form, SCM_OBJ(Scm_UserModule()))
-#else
-  #define XEN_EVAL_FORM(Form)          Scm_Eval(Form, SCM_OBJ(Scm_UserModule()))
-#endif
+#define XEN_EVAL_FORM(Form)          xen_gauche_eval_form(Form)
 #define XEN_EVAL_C_STRING(Arg)       xen_gauche_eval_c_string(Arg)
 #define XEN_SYMBOL_P(Arg)            SCM_SYMBOLP(Arg)
 #define XEN_SYMBOL_TO_C_STRING(a)    XEN_TO_C_STRING(SCM_SYMBOL_NAME(a))
@@ -1629,6 +1625,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_DEFINE_CONSTANT(Name, Value, Help) xen_gauche_define_constant(Name, Value, Help)
 #define XEN_DEFINE_VARIABLE(Name, Var, Value)  Var = SCM_DEFINE(Scm_UserModule(), Name, Value)
 #define C_STRING_TO_XEN_SYMBOL(a)           SCM_INTERN(a)
+#define XEN_STRING_TO_SYMBOL(Str)           C_STRING_TO_XEN_SYMBOL(XEN_TO_C_STRING(Str))
 #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a) Scm_FindBinding(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(a)), false)
 #define XEN_SYMBOL_TO_VARIABLE(a)           Scm_FindBinding(Scm_UserModule(), SCM_SYMBOL(a), false)
 #define XEN_VARIABLE_REF(Var)               Scm_SymbolValue(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(Var)))
@@ -1934,6 +1931,7 @@ void xen_gauche_permanent_object(XEN obj);
 double xen_to_c_double(XEN a);
 void xen_gauche_load_args(XEN *args, int incoming_args, int args_size, XEN *arg_list);
 XEN xen_gauche_eval_c_string(char *arg);
+XEN xen_gauche_eval_form(XEN form);
 void xen_gauche_provide(const char *feature);
 const char *xen_gauche_features(void);
 XEN xen_gauche_make_object(XEN_OBJECT_TYPE type, void *val, XEN_MARK_OBJECT_TYPE (*protect_func)(XEN obj));

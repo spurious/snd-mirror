@@ -1,4 +1,6 @@
-(load "t.scm")
+(use-modules (ice-9 optargs) (ice-9 format))
+(provide 'snd-snddiff.scm)
+
 
 (define (cross-correlate snd0 chn0 snd1 chn1)
   (let* ((len0 (frames snd0 chn0))

@@ -750,6 +750,10 @@ static mix_info *make_mix_info(chan_info *cp)
 	}
     }
   md = (mix_info *)CALLOC(1, sizeof(mix_info));
+#if MUS_DEBUGGING
+  if (mix_infos[mix_infos_ctr])
+    fprintf(stderr, "mix[%d] still exists! %p\n", mix_infos_ctr, mix_infos[mix_infos_ctr]);
+#endif
   mix_infos[mix_infos_ctr] = md;
   md->id = mix_infos_ctr++;
   md->cp = cp;

@@ -587,16 +587,11 @@ void command_return(widget_t w, int last_prompt)
        *   eval_str_wrapper can't be used since it assumes the string is still valid.
        *   I assume the form is ok because the continuation will preserve it somehow.
        */
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_GAUCHE
       if ((snd_strlen(str) > 1) || (str[0] != '\n'))
 	form = string_to_form(str);
 #else
-#if HAVE_GAUCHE
-      if ((snd_strlen(str) > 1) || (str[0] != '\n'))
-	form = xen_gauche_eval_c_string(str);
-#else
       form = XEN_EVAL_C_STRING(str);
-#endif
 #endif
       FREE(str);
       str = NULL;

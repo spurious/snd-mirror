@@ -13,6 +13,7 @@
  *   In Gauche, apropos is defined in lib/gauche/interactive.scm
  *              optimizer needs local variable access [this is not currently possible -- perhaps in 1.0 says Shiro]
  *              random is implemented via mus-i|frandom (clm.c).
+ *              error handling is pessimal, but I've wasted enough time on it.
  */
 
 
@@ -41,10 +42,6 @@
  * s-lang:      (C)      probably doable -- would need to wrap everything in my own struct, and 7 args max is too few.
  * squirrel:    ()       c++, like lua in call sequence
  * stklos:      (Scheme) doesn't build libstklos yet, and has many non-unique names in its headers (checked 0.82)
- */
-
-/* TODO: (gauche)   stacktrace and errors->listener (current-load-history)
- * TODO: (gauche)   error in find lambda -> exit (need better error protection)
  */
 
 
@@ -740,67 +737,15 @@ XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller)
 
 
 #if HAVE_GAUCHE
-
-#if 0
-SCM_EXTERN void Scm_ShowStackTrace(ScmPort *out, ScmObj stacklite,
-                                   int maxdepth, int skip, int offset,
-                                   int format);
-
-				   SCM_EXTERN void Scm_ReportError(ScmObj e); /* calls stack trace */
-
-
-static ScmObj repl_error_handle(ScmObj *args, int nargs, void *data)
-{
-    SCM_ASSERT(nargs == 1);
-    Scm_ReportError(args[0]);
-    return SCM_TRUE;
-}
-
-
-ScmObj Scm_VMRepl(ScmObj reader, ScmObj evaluator,
-                  ScmObj printer, ScmObj prompter)
-{
-    ScmObj ehandler, reploop;
-    ScmObj *packet = SCM_NEW_ARRAY(ScmObj, 4);
-    packet[0] = reader;
-    packet[1] = evaluator;
-    packet[2] = printer;
-    packet[3] = prompter;
-    ehandler = Scm_MakeSubr(repl_error_handle, packet, 1, 0, SCM_FALSE);
-    reploop = Scm_MakeSubr(repl_main, packet, 0, 0, SCM_FALSE);
-    Scm_VMPushCC(repl_loop_cc, (void**)packet, 4);
-    return Scm_VMWithErrorHandler(ehandler, reploop);
-}
-
-#endif
-/*
- * Show stack trace.
- *   stacklite - return value of Scm_GetStackLite
- *   maxdepth - maximum # of stacks to be shown.
- *              0 to use the default.  -1 for unlimited.
-
- *   skip     - ignore this number of frames.  Useful to call this from
- *              a Scheme error handling routine, in order to skip the
- *              frames of the handler itself.
- *   offset   - add this to the frame number.  Useful to show a middle part
- *              of frames only, by combining the skip parameter.
- *   format   - SCM_STACK_TRACE_FORMAT_* enum value.  EXPERIMENTAL.
- */
-
-
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
   XEN result = XEN_FALSE;
-
   SCM_UNWIND_PROTECT {
     result = (*body)(body_data);
   }
   SCM_WHEN_ERROR {
-    fprintf(stderr, "Error!");
-    /* SCM_NEXT_HANDLER; */
   }
   SCM_END_PROTECT;
-
   return(result);
 }
 #endif
@@ -837,13 +782,11 @@ bool procedure_arity_ok(XEN proc, int args)
   return(xen_rb_arity_ok(rargs, args));
 #endif
 
-
 #if HAVE_FORTH
   rargs = XEN_TO_C_INT(arity);
   if (rargs != args)
     return(false);
 #endif
-
 
 #if HAVE_GUILE
   {
@@ -857,7 +800,6 @@ bool procedure_arity_ok(XEN proc, int args)
     if ((restargs == 0) && ((rargs + oargs) < args)) return(false);
   }
 #endif
-
 
 #if HAVE_GAUCHE
   {
@@ -1021,13 +963,6 @@ XEN snd_bad_arity_error(const char *caller, XEN errstr, XEN proc)
 
 XEN eval_str_wrapper(void *data)
 {
-#if MUS_DEBUGGING
-  if (data == NULL)
-    {
-      fprintf(stderr, "null string passed to eval_str_wrapper");
-      abort();
-    }
-#endif
   return(XEN_EVAL_C_STRING((char *)data));
 }
 
@@ -1164,10 +1099,10 @@ void snd_report_result(XEN result, const char *buf)
 
 void snd_report_listener_result(XEN form)
 {
-#if HAVE_RUBY || HAVE_FORTH || HAVE_GAUCHE
+#if HAVE_RUBY || HAVE_FORTH
   snd_report_result(form, "\n");
 #endif
-#if HAVE_GUILE && (SCM_DEBUG_TYPING_STRICTNESS != 2)
+#if (HAVE_GUILE && (SCM_DEBUG_TYPING_STRICTNESS != 2)) || HAVE_GAUCHE
   snd_report_result(snd_catch_any(eval_form_wrapper, (void *)form, NULL), "\n");
 #endif
 }

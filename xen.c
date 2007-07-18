@@ -1708,18 +1708,6 @@ void xen_gauche_list_set_x(XEN Lst, int Loc, XEN Val)
 }
 
 
-XEN xen_gauche_load_file(char *file)
-{
-#if GAUCHE_API_0_8_10 || GAUCHE_API_0_9
-  Scm_Load(file, 0, NULL);
-#else
-  Scm_Load(file, 0); /* returns an int, but we want (XEN) error indication */
-#endif
-  /* flags is or of SCM_LOAD_QUIET_NOFILE SCM_LOAD_IGNORE_CODING */
-  return(XEN_FALSE);
-}
-
-
 XEN xen_gauche_add_to_load_path(char *path)
 {
   if (XEN_FALSE_P(Scm_Member(C_TO_XEN_STRING(path), XEN_LOAD_PATH, SCM_CMP_EQUAL))) /* scheme spec says eq? and eqv? of strings is unspecified */
@@ -1775,6 +1763,16 @@ void xen_gauche_permanent_object(XEN obj)
 }
 
 
+#if (!(GAUCHE_API_0_8_8 || GAUCHE_API_0_8_10 || GAUCHE_API_0_9))
+
+XEN xen_gauche_load_file(char *file)
+{
+  Scm_Load(file, 0); /* returns an int, but we want (XEN) error indication */
+  /* flags is or of SCM_LOAD_QUIET_NOFILE SCM_LOAD_IGNORE_CODING */
+  return(XEN_FALSE);
+}
+
+
 XEN xen_gauche_eval_c_string(char *arg)
 {
   XEN result = XEN_FALSE;
@@ -1784,29 +1782,6 @@ XEN xen_gauche_eval_c_string(char *arg)
       result = Scm_EvalCString(arg, SCM_OBJ(Scm_UserModule()));
 #else
       result = Scm_EvalRec(Scm_ReadFromCString(arg), SCM_OBJ(Scm_UserModule()));
-
-      /* TODO: Gauche: use ScmEvalPacket here for error reporting [src/main.c] -- 
-       *       also there's some g++ problem with Scm__GetOutputString which is declared in gauche/port.h
-       *       but if you include gauche/port.h, all hell breaks loose.
-       *
-       * Scm_Eval -> -1 for error, packet arg has info
-       *
-       * int Scm_LoadFromPort(ScmPort *port, int flags, ScmLoadPacket *result);
-       * int Scm_Load(ScmPort *port, int flags, ScmLoadPacket *result);
-       * int Scm_Require(ScmObj feature, int flags, ScmLoadPacket *result);
-       * int Scm_Eval(ScmObj form, ScmObj env, ScmEvalPacket *packet);
-       * int Scm_EvalCString(const char *form, ScmObj env, ScmEvalPacket *packet);
-       * int Scm_Apply(ScmObj proc, ScmObj args, ScmEvalPacket *packet);
-       * To make the new API behave as the old, pass SCM_LOAD_PROPAGATE_ERROR for flags and NULL for result.
-       * typedef struct ScmEvalPacketRec {
-       * ScmObj results[SCM_VM_MAX_VALUES];
-       * int    numResults;
-       * ScmObj exception;
-       * ScmModule *module; 'Current module' after evaluation
-       * } ScmEvalPacket;
-       *
-       */
-
 #endif
     }
   SCM_WHEN_ERROR 
@@ -1818,6 +1793,68 @@ XEN xen_gauche_eval_c_string(char *arg)
   SCM_END_PROTECT;
   return(result);
 }
+
+XEN xen_gauche_eval_form(XEN form)
+{
+#if HAVE_SCM_EVALREC
+  return(Scm_EvalRec(form, SCM_OBJ(Scm_UserModule())));
+#else
+  return(Scm_Eval(form, SCM_OBJ(Scm_UserModule())));
+#endif
+}
+
+#else
+
+/* after endless attempts to redirect the goddamn current-error-port or get stack trace to work, I give up! */
+
+#if USE_SND
+static void report_error(ScmObj e)
+{
+  char str[1024];
+  snprintf(str, 1024, "\n%s: %s", XEN_TO_C_STRING(Scm_ConditionTypeName(e)), XEN_TO_C_STRING(Scm_ConditionMessage(e)));
+  listener_append(str); 
+}
+#else
+static void report_error(ScmObj e)
+{
+  Scm_ReportError(e);
+}
+#endif
+
+
+XEN xen_gauche_load_file(char *file)
+{
+  ScmLoadPacket lpak;
+  if (Scm_Load(file, 0, &lpak) < 0)
+    report_error(lpak.exception);
+  return(XEN_FALSE);
+}
+
+
+XEN xen_gauche_eval_c_string(char *arg)
+{
+  ScmEvalPacket epak;
+  if (Scm_EvalCString(arg, SCM_OBJ(Scm_UserModule()), &epak) < 0) 
+    {
+      report_error(epak.exception);
+      return(XEN_FALSE);
+    }
+  return(epak.results[0]);
+}
+
+
+XEN xen_gauche_eval_form(XEN form)
+{
+  ScmEvalPacket epak;
+  if (Scm_Eval(form, SCM_OBJ(Scm_UserModule()), &epak) < 0) 
+    {
+      report_error(epak.exception);
+      return(XEN_FALSE);
+    }
+  return(epak.results[0]);
+}
+
+#endif
 
 
 typedef struct {

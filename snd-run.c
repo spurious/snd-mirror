@@ -209,7 +209,6 @@ static XEN gauche_set_walker(XEN func, XEN walker)
 #define KEY_PT  "key%d(%p)"
 #define RD_PT   "rd%d(%p)"
 #define MIX_SAMPLE_READER_PT   "mf%d(%p)"
-#define TF_PT   "tf%d(%p)"
 #define CLM_PT  "clm%d(%p)"
 #define FNC_PT  "fnc%d(%p)"
 #define VCT_PT  "vct%d(%p)"
@@ -12693,11 +12692,13 @@ Float evaluate_ptreec(struct ptree *pt, Float arg, XEN object, bool dir, int typ
   if (pt->arity > 1)
     {
       int addr;
+
       /* set the "dir" (read direction) arg */
       pt->ints[pt->args[2]] = (Int)dir;
 
       /* set the "state" (init-func return value) arg -- "type" is decided when init-func is evaluated */
       addr = pt->args[1];
+
       switch (type)
 	{
 	case R_FLOAT:        pt->dbls[addr] = (Double)XEN_TO_C_DOUBLE(object);                              break;
