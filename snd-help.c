@@ -499,6 +499,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+19-Jul:  sndclm.html (Snd-specific version of clm.html).\n\
 12-Jul:  Snd 9.2.\n\
 9-July:  snddiff.scm.\n\
 1-July:  max-virtual-ptrees.\n\

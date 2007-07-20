@@ -172,7 +172,7 @@ Forth:  "/home/bil/cl" add-load-path
 ----------------------------------------------------------------
 
 The documentation is in snd.html, extsnd.html, grfsnd.html, sndscm.html,
-sndlib.html, clm.html, fm.html, and libxm.html.  There's also a fancier 
+sndlib.html, sndclm.html, fm.html, and libxm.html.  There's also a fancier 
 wrapper for the documentation: snd1.html.  A brief change log is in HISTORY.Snd.
 Dave Phillips has written a tutorial: see the tutorial directory.
 

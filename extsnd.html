@@ -37,7 +37,7 @@
 <td><small><a href="snd.html" onmouseover="return escape('basic Snd user-interface documentation')">snd.html</a></small></td>
 <td><small><a href="grfsnd.html" onmouseover="return escape('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
 <td><small><a href="sndscm.html" onmouseover="return escape('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
-<td><small><a href="clm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">clm.html</a></small></td>
+<td><small><a href="sndclm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">sndclm.html</a></small></td>
 <td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
 <td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd\'s extension language')">libxm.html</a></small></td>
 <td><small><a href="index.html" onmouseover="return escape('this is an actual index, not some introductory file')">index.html</a></small></td>
@@ -2255,7 +2255,7 @@ If the function returns #t, the usual highly informative minibuffer babbling is 
 <tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="newsoundhook">new-sound-hook</a> (filename)</code>
 </td></tr><tr><td></td><td colspan=2>
-This hook is called whenever a new sound file is being created.  <a href="clm.html#sound-let">sound-let</a> in ws.scm uses
+This hook is called whenever a new sound file is being created.  <a href="sndclm.html#sound-let">sound-let</a> in ws.scm uses
 this hook to keep track of newly created temporary sounds so that it can delete them once they are no longer needed.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
@@ -2737,7 +2737,7 @@ thing.  If you want to refer to the currently selected sound explicitly, either 
 as the sound index or <a href="#selectedsound">selected-sound</a>.
 </p>
 
-<p>Some functions take <a class=quiet href="clm.html#optional-key">optional-key</a> arguments, as in CLM.
+<p>Some functions take <a class=quiet href="sndclm.html#optional-key">optional-key</a> arguments, as in CLM.
 These are marked "&amp;optional-key" below, followed by the keywords themselves. As in CLM,
 the keywords can be omitted.
 </p>
@@ -3026,7 +3026,7 @@ make-snd-&gt;sample creates a Snd data reader for use with CLM's in-any, file-&g
 </td></tr><tr><td><br></td><td>
 snd-&gt;sample gets the next sample from the data accessed by 'gen', similar to file-&gt;sample.
 If *reverb* is a snd-&gt;sample generator, for example,
-<a class=quiet href="clm.html#ina">ina</a> and <a class=quiet href="clm.html#filetosample">file-&gt;sample</a> actually call snd-&gt;sample.
+<a class=quiet href="sndclm.html#ina">ina</a> and <a class=quiet href="sndclm.html#filetosample">file-&gt;sample</a> actually call snd-&gt;sample.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -3173,7 +3173,7 @@ copy transform data: <a href="#transformtovct">transform-&gt;vct</a><br>
 copy sound-data: <a href="#sounddatatovct">sound-data-&gt;vct</a><br>
 copy a frame: <a href="sndscm.html#framecopy">frame-copy</a>, <a href="sndscm.html#frametovct">frame-&gt;vct</a><br>
 copy vector: <a href="#vectortovct">vector-&gt;vct</a><br>
-copy random state: Guile: copy-random-state, or use <a href="clm.html#mus-set-rand-seed">mus-rand-seed</a><br>
+copy random state: Guile: copy-random-state, or use <a href="sndclm.html#mus-set-rand-seed">mus-rand-seed</a><br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
@@ -3321,7 +3321,7 @@ This changes (edits) the channel, so 'origin' provides a way to name the edit (f
 Since with-sound can write its output to a vct, we can use it with vct-&gt;channel to paste in an fm-violin note as
 an edit:
 <pre>
-  (vct-&gt;channel (<a class=quiet href="clm.html#with-sound">with-sound</a> (:output (make-vct 22050)) (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> 0 1 440 .1)))
+  (vct-&gt;channel (<a class=quiet href="sndclm.html#with-sound">with-sound</a> (:output (make-vct 22050)) (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> 0 1 440 .1)))
 </pre>
 To add such a note to whatever is already present, use either <a href="#mixvct">mix-vct</a> or 
 <a href="sndscm.html#mixsounddata">mix-sound-data</a>.
@@ -3402,7 +3402,7 @@ there are also several functions that create and fill vcts with data:</p>
 </pre>
 
 <p>We could combine some of these vct functions to implement Horner's rule
-(the <a href="clm.html#polynomial">polynomial</a> generator) over an entire
+(the <a href="sndclm.html#polynomial">polynomial</a> generator) over an entire
 channel:
 </p>
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
@@ -3429,7 +3429,7 @@ This is a do-loop (or for-each) over a vct, calling some
 function to get the values to assign into the vct.  For example</p>
 <pre>
   (<a class=quiet href="#vctmap">vct-map!</a> out-data (lambda () 
-                       (<a class=quiet href="clm.html#convolve">convolve</a> cnv (lambda (dir) 
+                       (<a class=quiet href="sndclm.html#convolve">convolve</a> cnv (lambda (dir) 
                                        (<a class=quiet href="#readsample">read-sample</a> sf)))))
 </pre>
 <p>in the cnvtest function in <a href="sndscm.html#exampdoc">examp.scm</a> is calling the convolve generator and
@@ -3743,13 +3743,13 @@ or <a href="#musaudioopenoutput">mus-audio-open-output</a>).
 <pre>
 (let* ((audio-fd (<a class=quiet href="#musaudioopenoutput">mus-audio-open-output</a> mus-audio-default 22050 1 mus-lshort 1024))
        ;; open DAC at srate 22050, 1 channel, 1024 bytes per buffer
-       (osc (<a class=quiet href="clm.html#make-oscil">make-oscil</a> 440.0))                       ; make a sine wave at 440 Hz
+       (osc (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a> 440.0))                       ; make a sine wave at 440 Hz
        (data (<a class=quiet href="#makesounddata">make-sound-data</a> 1 512)))                ; output buffer (1 chan, 512 samples)
   (do ((beg 0 (+ beg 512)))                           ; fill a buffer at a time
       ((&gt; beg 22050))                                 ;   stop playing after 1 second
     (do ((i 0 (1+ i)))                                ; write each sample of the sinusoid
 	((= i 512))                                   ;   until this buffer is full
-      (<a class=quiet href="#sounddataset">sound-data-set!</a> data 0 i (* .1 (<a class=quiet href="clm.html#oscil">oscil</a> osc))))  ;   .1 amp
+      (<a class=quiet href="#sounddataset">sound-data-set!</a> data 0 i (* .1 (<a class=quiet href="sndclm.html#oscil">oscil</a> osc))))  ;   .1 amp
     (<a class=quiet href="#musaudiowrite">mus-audio-write</a> audio-fd data 512))              ; send a buffer to the DAC
   (<em class=red>mus-audio-close</em> audio-fd))                         ; close the DAC
 </pre>
@@ -4699,8 +4699,8 @@ We can use <a href="sndscm.html#dlocsigdoc">dlocsig</a> in conjunction with mix 
   "mix file at start-time in the currently selected sound following the given dlocsig path"
   (let* ((duration (<a class=quiet href="#mussoundduration">mus-sound-duration</a> file))
 	 (rd (<a class=quiet href="#makesamplereader">make-sample-reader</a> 0 file))
-	 (start (inexact-&gt;exact (round (* (<a class=quiet href="clm.html#mussrate">mus-srate</a>) start-time))))
-         (tmp-sound (<a class=quiet href="clm.html#sound-let">with-temp-sound</a> (:channels (<a class=quiet href="#channels">channels</a>) :srate (<a class=quiet href="#mussoundsrate">mus-sound-srate</a> file))
+	 (start (inexact-&gt;exact (round (* (<a class=quiet href="sndclm.html#mussrate">mus-srate</a>) start-time))))
+         (tmp-sound (<a class=quiet href="sndclm.html#sound-let">with-temp-sound</a> (:channels (<a class=quiet href="#channels">channels</a>) :srate (<a class=quiet href="#mussoundsrate">mus-sound-srate</a> file))
 
          ;; We use with-temp-sound here rather than sound-let because mix normally expects its input file to
          ;; be around until it decides it doesn't need it anymore, but sound-let deletes all its temp files.
@@ -4883,8 +4883,8 @@ to use multiple output files, collecting related notes in one file, then mixing 
 ;; open two output files, one for the violin notes, the other for the cellos
 ;;   then mix them into "test.snd"
 
-(let ((violins (<a class=quiet href="clm.html#make-sampletofile">make-sample-&gt;file</a> "violins.snd" 1 mus-lfloat mus-next))
-      (cellos (<a class=quiet href="clm.html#make-sampletofile">make-sample-&gt;file</a> "cellos.snd" 1 mus-lfloat mus-next)))
+(let ((violins (<a class=quiet href="sndclm.html#make-sampletofile">make-sample-&gt;file</a> "violins.snd" 1 mus-lfloat mus-next))
+      (cellos (<a class=quiet href="sndclm.html#make-sampletofile">make-sample-&gt;file</a> "cellos.snd" 1 mus-lfloat mus-next)))
 
   (define (violin beg dur freq amp)
     (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> (:continue-old-file #t :output "violins.snd") 
@@ -4902,8 +4902,8 @@ to use multiple output files, collecting related notes in one file, then mixing 
     (<a class=quiet href="#mix">mix</a> "violins.snd")
     (<a class=quiet href="#mix">mix</a> "cellos.snd"))
 
-    (<a class=quiet href="clm.html#mus-close">mus-close</a> violins)
-    (<a class=quiet href="clm.html#mus-close">mus-close</a> cellos))
+    (<a class=quiet href="sndclm.html#mus-close">mus-close</a> violins)
+    (<a class=quiet href="sndclm.html#mus-close">mus-close</a> cellos))
 </pre></td></tr></table>
 </td></tr><tr><td colspan=2 height=32></td></tr>
 
@@ -5265,7 +5265,7 @@ rather than creating a new vct.
 (define (region-rms n)
   (let* ((data (<em class=red>region-&gt;vct</em> 0 0 n)) ; len=0 =&gt; entire region
 	 (len (<a class=quiet href="#vctlength">vct-length</a> data)))
-    (sqrt (/ (<a class=quiet href="clm.html#dot-product">dot-product</a> data data len) len))))
+    (sqrt (/ (<a class=quiet href="sndclm.html#dot-product">dot-product</a> data data len) len))))
 </pre></td></tr></table>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5296,10 +5296,10 @@ deleted.
 
 
 <!-- save-region -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="saveregion">save-region</a> (reg <a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :header-type :data-format :comment) </code>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="saveregion">save-region</a> (reg <a class=quiet href="sndclm.html#optional-key">&amp;optional-key</a> :file :header-type :data-format :comment) </code>
 </td></tr><tr><td></td><td>
 save-region saves the region 'reg' in 'file' in the given data format and header type.
-It returns the output filename.  The arguments after 'reg' are <a class=quiet href="clm.html#optional-key">optional-key</a>
+It returns the output filename.  The arguments after 'reg' are <a class=quiet href="sndclm.html#optional-key">optional-key</a>
 args (that is, they are normal keyword arguments, but the keywords are optional).  The following calls are equivalent:
 <pre>
     (save-region 2 "reg0.snd")
@@ -5364,7 +5364,7 @@ env-selection applies 'envelope' to the selection. (as an amplitude envelope).
 These are equivalent:
 <pre>
   (env-selection '(0 0 1 1 2 0))
-  (env-selection (<a class=quiet href="clm.html#make-env">make-env</a> '(0 0 1 1 2 0) :end (<a class=quiet href="#selectionframes">selection-frames</a>)))
+  (env-selection (<a class=quiet href="sndclm.html#make-env">make-env</a> '(0 0 1 1 2 0) :end (<a class=quiet href="#selectionframes">selection-frames</a>)))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5418,7 +5418,7 @@ reverse-selection reverses the selection.
 
 
 <!-- save-selection -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="saveselection">save-selection</a> (<a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file (:header-type mus-next) :data-format :srate :comment :channel)</code>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="saveselection">save-selection</a> (<a class=quiet href="sndclm.html#optional-key">&amp;optional-key</a> :file (:header-type mus-next) :data-format :srate :comment :channel)</code>
 </td></tr><tr><td></td><td>
 save-selection saves the selection in 'file'.  If 'channel' is given, it saves only that channel.
 See popup.scm for an example.
@@ -5977,16 +5977,16 @@ This is used by some of the <a class=quiet href="#regularizedargs">regularized</
 	 (dur (or ndur (- (<a class=quiet href="#frames">frames</a> snd chn) beg)))
 	 (edpos (or nedpos current-edit-position))
 	 (reader (<a class=quiet href="#makesamplereader">make-sample-reader</a> beg snd chn 1 edpos))
-	 (cgen (<a class=quiet href="clm.html#make-convolve">make-convolve</a> :filter kernel 
+	 (cgen (<a class=quiet href="sndclm.html#make-convolve">make-convolve</a> :filter kernel 
                               :input (lambda (dir)
 				       (<a class=quiet href="#readsample">read-sample</a> reader)))))
     (<em class=red>clm-channel</em> cgen beg dur snd chn edpos)
     (<a class=quiet href="#freesamplereader">free-sample-reader</a> reader)))
 
-(define (difference) (<em class=red>clm-channel</em> (<a class=quiet href="clm.html#make-two-zero">make-two-zero</a> 1 -1)))
-(define (wobble) (<em class=red>clm-channel</em> (<a class=quiet href="clm.html#make-sum-of-cosines">make-sum-of-cosines</a> 3 50)))
-(define (hold-nose) (<em class=red>clm-channel</em> (<a class=quiet href="clm.html#make-sum-of-cosines">make-sum-of-cosines</a> 3 1)))
-(define (bad-reception) (<em class=red>clm-channel</em> (<a class=quiet href="clm.html#make-sum-of-cosines">make-sum-of-cosines</a> 5 10)))
+(define (difference) (<em class=red>clm-channel</em> (<a class=quiet href="sndclm.html#make-two-zero">make-two-zero</a> 1 -1)))
+(define (wobble) (<em class=red>clm-channel</em> (<a class=quiet href="sndclm.html#make-sum-of-cosines">make-sum-of-cosines</a> 3 50)))
+(define (hold-nose) (<em class=red>clm-channel</em> (<a class=quiet href="sndclm.html#make-sum-of-cosines">make-sum-of-cosines</a> 3 1)))
+(define (bad-reception) (<em class=red>clm-channel</em> (<a class=quiet href="sndclm.html#make-sum-of-cosines">make-sum-of-cosines</a> 5 10)))
 </pre></td></tr></table>
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
@@ -6313,7 +6313,7 @@ To get .1 seconds of attack and decay:
 </pre>
 
 <A NAME="envexamples"></a>
-An envelope in Snd is a list of breakpoints. It can be packaged as a CLM generator (an 'env') via <a href="clm.html#make-env">make-env</a>.
+An envelope in Snd is a list of breakpoints. It can be packaged as a CLM generator (an 'env') via <a href="sndclm.html#make-env">make-env</a>.
 It can be declared via define just like any other variable, or with <a href="#defvar">defvar</a> (for CLM/Snd intercompatibility),
 or with <a href="#defineenvelope">define-envelope</a>.
 <!-- INDEX envexamples:Envelopes -->
@@ -6324,7 +6324,7 @@ or with <a href="#defineenvelope">define-envelope</a>.
 envelopes in Snd:<br>
 envelope sound: <a href="#envchannel">env-channel</a>, <a href="#envsound">env-sound</a><br>
 Other enveloping functions: <a href="#rampchannel">ramp-channel</a>, <a href="#xrampchannel">xramp-channel</a>, <a href="#smoothchannel">smooth-channel</a><br>
-The CLM env generator: <a href="clm.html#make-env">env</a>, many examples in examp.scm, new-effects.scm, etc<br>
+The CLM env generator: <a href="sndclm.html#make-env">env</a>, many examples in examp.scm, new-effects.scm, etc<br>
 Various operations on envelopes: <a href="sndscm.html#envdoc">env.scm</a><br>
 Peak env files: <a href="sndscm.html#peakenvdoc">peak-env.scm</a><br>
 The envelope editor: <a href="snd.html#editenvelope">Edit or View and Envelope</a><br>
@@ -6332,7 +6332,7 @@ Panning: place-sound in examp.scm<br>
 Envelope over mix: <a href="sndscm.html#envelopedmix">enveloped-mix</a><br>
 Local envelope editor: <a href="sndscm.html#enveddoc">enved.scm</a>, xm-enved.scm<br>
 Read sound indexed through envelope: <a href="sndscm.html#envsoundinterp">env-sound-interp</a><br>
-Cosine as envelope: <a href="#cosinechannel">cosine-channel</a>, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>, <a href="clm.html#bellcurve">bell-curve</a><br>
+Cosine as envelope: <a href="#cosinechannel">cosine-channel</a>, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>, <a href="sndclm.html#bellcurve">bell-curve</a><br>
 envelope with sinusoidal connections between points: <a href="sndscm.html#sineenvchannel">sine-env-channel</a><br>
 envelope with separate base for each segment: <a href="#powenvchannel">powenv-channel</a><br>
 envelope with x^2 connections: <a href="sndscm.html#envsquaredchannel">env-squared-channel</a><br>
@@ -6351,7 +6351,7 @@ peak amp follower: <a href="sndscm.html#movingmax">moving-max</a><br>
 <code><a class=def name="envchannelwithbase">env-channel-with-base</a> (envelope-or-env-gen :optional base beg dur snd chn edpos)</code>
 </td></tr><tr><td></td><td>
 env-channel-with-base is a slight variation on env-channel.  There are times when it's a bother
-to call <a href="clm.html#make-env">make-env</a> just to get an exponential envelope.
+to call <a href="sndclm.html#make-env">make-env</a> just to get an exponential envelope.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -6380,7 +6380,7 @@ env_sound([0.0, 0.0, 1.0, 1.0, 2.0, 0.0])
 <img src="ampenv2.png" alt="ampenvs">
 </td></tr></table>
 
-As mentioned in <a href="clm.html#make-env">clm.html</a>, 
+As mentioned in <a href="sndclm.html#make-env">sndclm.html</a>, 
 'env-base' determines how the break-points are connected.  If it is 1.0 (the
 default), you get straight line segments.  'env-base' = 0.0 gives a step
 function (the envelope changes its value suddenly to the new one without any
@@ -6393,10 +6393,10 @@ curve's exponent and 'env-base'.  Here's a brief restatement:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define (compare-exp k)
-   (let ((e (<a class=quiet href="clm.html#make-env">make-env</a> (list 0 1 1 (exp (- k))) :base (exp k) :end 10)))
+   (let ((e (<a class=quiet href="sndclm.html#make-env">make-env</a> (list 0 1 1 (exp (- k))) :base (exp k) :end 10)))
       (do ((i 0 (1+ i )))
          ((= i 10))
-         (<a class=quiet href="#sndprint">snd-print</a> (format #f "~A ~A~%" (<a class=quiet href="clm.html#env">env</a> e) (exp (* (- k) (/ i 10.0))))))))
+         (<a class=quiet href="#sndprint">snd-print</a> (format #f "~A ~A~%" (<a class=quiet href="sndclm.html#env">env</a> e) (exp (* (- k) (/ i 10.0))))))))
 </pre></td></tr></table>
 
 If 'envelope' is a CLM env generator, 'env-base' 
@@ -6502,10 +6502,10 @@ CLM filtering to a sound.  See also <a href="#clmchannel">clm-channel</a>.
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (<em class=red>filter-sound</em> '(0 1 1 0) 1024)                             ; FIR filter given frequency response
 (<em class=red>filter-sound</em> (<a class=quiet href="#vct">vct</a> .1 .2 .3 .3 .2 .1) 6)                   ; FIR filter given actual coefficients
-(<em class=red>filter-sound</em> (<a class=quiet href="clm.html#make-fir-filter">make-fir-filter</a> 6 (<a class=quiet href="#vct">vct</a> .1 .2 .3 .3 .2 .1))) ; CLM FIR filter
-(<em class=red>filter-sound</em> (<a class=quiet href="clm.html#make-delay">make-delay</a> 120))                            ; CLM delay (same as insert-silence)
-(<em class=red>filter-sound</em> (<a class=quiet href="clm.html#make-formant">make-formant</a> .99 1200))                     ; CLM formant
-(<em class=red>filter-sound</em> (<a class=quiet href="clm.html#make-filter">make-filter</a> 2 (<a class=quiet href="#vct">vct</a> 1 -1) (<a class=quiet href="#vct">vct</a> 0 -0.99)))    ; remove DC
+(<em class=red>filter-sound</em> (<a class=quiet href="sndclm.html#make-fir-filter">make-fir-filter</a> 6 (<a class=quiet href="#vct">vct</a> .1 .2 .3 .3 .2 .1))) ; CLM FIR filter
+(<em class=red>filter-sound</em> (<a class=quiet href="sndclm.html#make-delay">make-delay</a> 120))                            ; CLM delay (same as insert-silence)
+(<em class=red>filter-sound</em> (<a class=quiet href="sndclm.html#make-formant">make-formant</a> .99 1200))                     ; CLM formant
+(<em class=red>filter-sound</em> (<a class=quiet href="sndclm.html#make-filter">make-filter</a> 2 (<a class=quiet href="#vct">vct</a> 1 -1) (<a class=quiet href="#vct">vct</a> 0 -0.99)))    ; remove DC
 </pre></td></tr></table>
 
 If you want to use the cascade filter structure, rather than the canonical
@@ -6513,7 +6513,7 @@ form of CLM's filter generator:
 
 <pre>
     (define (<a class=quiet href="sndscm.html#makebiquad">make-biquad</a> a0 a1 a2 b1 b2)
-      (<a class=quiet href="clm.html#make-filter">make-filter</a> 3 (<a class=quiet href="#vct">vct</a> a0 a1 a2) (<a class=quiet href="#vct">vct</a> 0.0 b1 b2)))
+      (<a class=quiet href="sndclm.html#make-filter">make-filter</a> 3 (<a class=quiet href="#vct">vct</a> a0 a1 a2) (<a class=quiet href="#vct">vct</a> 0.0 b1 b2)))
 </pre>
 
 If you have coefficients for the cascade form, but have no scruples about using 
@@ -6527,7 +6527,7 @@ some other form, see cascade-&gt;canonical in dsp.scm, and the examples that fol
 <br>
 <A NAME="filtersinsnd">Filters</a> in Snd:<br>
 filter a sound: <a href="#filtersound">filter-sound</a>, <a href="#filterchannel">filter-channel</a>, and <a href="#clmchannel">clm-channel</a><br>
-CLM filter generators: <a href="clm.html#filters">filter, one-pole, formant, comb, notch, all-pass, etc</a><br>
+CLM filter generators: <a href="sndclm.html#filters">filter, one-pole, formant, comb, notch, all-pass, etc</a><br>
 lowpass filter: make-lowpass in dsp.scm<br>
 highpass filter: make-highpass in dsp.scm<br>
 bandpass filter: make-bandpass in dsp.scm<br>
@@ -7059,17 +7059,17 @@ something:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define (<A NAME="mapsilence">map-silence</a> in-silence replacement)
-  (let ((buffer (<a class=quiet href="clm.html#make-moving-average">make-moving-average</a> 128))
+  (let ((buffer (<a class=quiet href="sndclm.html#make-moving-average">make-moving-average</a> 128))
         (silence (/ in-silence 128)))
     (lambda (y)
-      (let ((sum-of-squares (<a class=quiet href="clm.html#moving-average">moving-average</a> buffer (* y y))))
+      (let ((sum-of-squares (<a class=quiet href="sndclm.html#moving-average">moving-average</a> buffer (* y y))))
         (if (&gt; sum-of-squares silence) y replacement)))))
 
 (<em class=red>map-channel</em> (map-silence .01 0.0))  ; squelch background noise
 (<em class=red>map-channel</em> (map-silence .001 #f))  ; remove silences altogether
 </pre></td></tr></table>
 
-Here we're using 'buffer', a CLM <a href="clm.html#moving-average">moving-average</a> generator, to track the
+Here we're using 'buffer', a CLM <a href="sndclm.html#moving-average">moving-average</a> generator, to track the
 RMS value of the last 128 input samples.
 When that falls below
 the argument 'silence', we replace the current sample with 'replacement'.
@@ -7158,7 +7158,7 @@ Region maxamp: <a href="#regionmaxamp">region-maxamp</a><br>
 Selection maxamp: <a href="#selectionmaxamp">selection-maxamp</a><br>
 Sound data object maxamp: <a href="#sounddatamaxamp">sound-data-maxamp</a><br>
 Vct maxamp: <a href="#vctpeak">vct-peak</a><br>
-CLM's sound maxamp: <a href="clm.html#sound-maxamp">sound-maxamp</a> (same as mus-sound-maxamp)<br>
+CLM's sound maxamp: <a href="sndclm.html#sound-maxamp">sound-maxamp</a> (same as mus-sound-maxamp)<br>
 To set the y axis bounds to reflect the channel's maxamp: <a href="#ybounds">y-bounds</a><br>
 Mix maxamp: <a href="sndscm.html#mixmaxamp">mix-maxamp</a><br>
 maxamp locations: <a href="#maxampposition">maxamp-position</a>, <a href="#regionmaxampposition">region-maxamp-position</a>, <a href="#selectionmaxampposition">selection-maxamp-position</a>
@@ -7198,7 +7198,7 @@ actual dB value calculated to -140.0 or -180.0 (depending on which function is c
 
 <!-- new-sound -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="newsound">new-sound</a> (<a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :header-type :data-format :srate :channels :comment :size)</code>
+<code><a class=def name="newsound">new-sound</a> (<a class=quiet href="sndclm.html#optional-key">&amp;optional-key</a> :file :header-type :data-format :srate :channels :comment :size)</code>
 </td></tr><tr><td></td><td>
 new-sound creates a new sound named 'file'.  The following function opens a new sound named "test.snd",
 extends it to 'dur' samples, and initializes all samples to 'val':
@@ -7239,7 +7239,7 @@ The multichannel version is <a href="sndscm.html#normalizesound">normalize-sound
 
 <!-- open-raw-sound -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="openrawsound">open-raw-sound</a> (<a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :channels :srate :data-format)</code>
+<code><a class=def name="openrawsound">open-raw-sound</a> (<a class=quiet href="sndclm.html#optional-key">&amp;optional-key</a> :file :channels :srate :data-format)</code>
 </td></tr><tr><td></td><td>
 This opens 'file' as a raw (no header) sound in the layout specified.
 If the file has a header, it is not ignored (use <code>(set! (<a class=quiet href="#dataformat">data-format</a> ...))</code>
@@ -7285,8 +7285,8 @@ other ways to get at sound file data: <a class=quiet href="#makesamplereader">ma
 rather than a sound index; file-&gt;vct in examp.scm; 
 <a class=quiet href="#mussoundopeninput">mus-sound-open-input</a> and
 there are a variety of CLM-based functions such as
-<a class=quiet href="clm.html#filetosample">file-&gt;sample</a> and
-<a class=quiet href="clm.html#filetoarray">file-&gt;array</a>.
+<a class=quiet href="sndclm.html#filetosample">file-&gt;sample</a> and
+<a class=quiet href="sndclm.html#filetoarray">file-&gt;array</a>.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -7435,12 +7435,12 @@ function option to time the playing each mix in a sequence of mixes.  Another ex
 (define (play-sine freq amp)
   "(play-sine freq amp) plays a 1 second sinewave at freq and amp"
   (let* ((len 22050)
-	 (osc (<a class=quiet href="clm.html#make-oscil">make-oscil</a> freq)))
+	 (osc (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a> freq)))
     (<em class=red>play</em> (lambda ()
 	    (set! len (1- len))
 	    (if (&lt;= len 0)        ; we've sent 22050 samples, so it's time to stop
 		#f
-		(* amp (<a class=quiet href="clm.html#oscil">oscil</a> osc)))))))
+		(* amp (<a class=quiet href="sndclm.html#oscil">oscil</a> osc)))))))
 </pre></td></tr></table>
 
 <!-- INDEX playexamples:Playing -->
@@ -7822,7 +7822,7 @@ is accessed is not foolish:
   (let ((dither (* .5 amount)))
     (<em class=red>ptree-channel</em> 
       (lambda (y) 
-        (+ y (<a class=quiet href="clm.html#mus-random">mus-random</a> dither) (<a class=quiet href="clm.html#mus-random">mus-random</a> dither))) 
+        (+ y (<a class=quiet href="sndclm.html#mus-random">mus-random</a> dither) (<a class=quiet href="sndclm.html#mus-random">mus-random</a> dither))) 
       beg dur snd chn edpos #t)))
 </pre></td></tr></table>
 
@@ -8100,8 +8100,8 @@ reversed reverb.  As a hack, you can reverse a sound (modulo a one sample rotati
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2)))))
 	 (rl (<a class=quiet href="#channeltovct">channel-&gt;vct</a> 0 fsize snd 0))
 	 (im (<a class=quiet href="#makevct">make-vct</a> fsize)))
-    (<a class=quiet href="clm.html#fft">mus-fft</a> rl im fsize)
-    (<a class=quiet href="clm.html#fft">mus-fft</a> rl im fsize)
+    (<a class=quiet href="sndclm.html#fft">mus-fft</a> rl im fsize)
+    (<a class=quiet href="sndclm.html#fft">mus-fft</a> rl im fsize)
     (<a class=quiet href="#vctscale">vct-scale!</a> rl (/ 1.0 fsize))
     (<a class=quiet href="#vcttochannel">vct-&gt;channel</a> (<a class=quiet href="#vctsubseq">vct-subseq</a> rl (- fsize len) fsize) 0 len snd 0)))
 </pre></td></tr></table>
@@ -8140,12 +8140,12 @@ of the speed of CL+run+C in CLM.  Currently, only Guile and Gauche support this 
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define (ws-sine freq)
-  (let ((o (<a class=quiet href="clm.html#make-oscil">make-oscil</a> freq)))
+  (let ((o (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a> freq)))
     (<em class=red>run</em>
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 100))
-	 (<a class=quiet href="clm.html#outa">outa</a> i (<a class=quiet href="clm.html#oscil">oscil</a> o) *output*))))))
+	 (<a class=quiet href="sndclm.html#outa">outa</a> i (<a class=quiet href="sndclm.html#oscil">oscil</a> o) *output*))))))
 </pre></td></tr></table>
 
 Functions embedded within run (leaving aside the "thunk" argument itself) need to declare the type of their arguments (the type defaults to integer, and
@@ -8250,7 +8250,7 @@ save the current fft peak info: <a href="#peaks">peaks</a><br>
 
 <!-- save-sound-as -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="savesoundas">save-sound-as</a> (<a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :sound :header-type :data-format :srate :channel :edit-position :comment)</code>
+<code><a class=def name="savesoundas">save-sound-as</a> (<a class=quiet href="sndclm.html#optional-key">&amp;optional-key</a> :file :sound :header-type :data-format :srate :channel :edit-position :comment)</code>
 </td></tr><tr><td></td><td>
 This saves 'sound' as 'file' (like the 'File:Save as' menu option).  If 'channel' is specified,
 only that channel is saved (it is extracted if necessary from the multichannel original).  
@@ -8322,8 +8322,8 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 (<a class=quiet href="#mapchannel">map-channel</a> (lambda (val) (* val 2.0)))
 (set! (<a class=quiet href="#maxamp">maxamp</a>) (* 2 (<a class=quiet href="#maxamp">maxamp</a>)))
 (<a class=quiet href="#envsound">env-sound</a> '(0 2 1 2))
-(<a class=quiet href="#envchannel">env-channel</a> (<a class=quiet href="clm.html#make-env">make-env</a> '(0 1 1 1) :scaler 2.0 :end (1- (<a class=quiet href="#frames">frames</a>))))
-(<a class=quiet href="#clmchannel">clm-channel</a> (<a class=quiet href="clm.html#make-one-zero">make-one-zero</a> :a0 2.0 :a1 0.0))
+(<a class=quiet href="#envchannel">env-channel</a> (<a class=quiet href="sndclm.html#make-env">make-env</a> '(0 1 1 1) :scaler 2.0 :end (1- (<a class=quiet href="#frames">frames</a>))))
+(<a class=quiet href="#clmchannel">clm-channel</a> (<a class=quiet href="sndclm.html#make-one-zero">make-one-zero</a> :a0 2.0 :a1 0.0))
 (<a class=quiet href="#filterchannel">filter-channel</a> (vct 2.0) 1)
 (<a class=quiet href="#vcttochannel">vct-&gt;channel</a> (<a class=quiet href="#vctscale">vct-scale!</a> (<a class=quiet href="#channeltovct">channel-&gt;vct</a>) 2.0) 0)
 (<a class=quiet href="sndscm.html#sounddatatosound">sound-data-&gt;sound</a> (<a class=quiet href="#sounddata*">sound-data*</a> (<a class=quiet href="sndscm.html#soundtosounddata">sound-&gt;sound-data</a>) 2.0))
@@ -8333,11 +8333,11 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 
 (let ((flt (<a class=quiet href="#makevct">make-vct</a> 8)))
   (<a class=quiet href="#vctset">vct-set!</a> flt 0 2.0)
-  (let ((cnv (<a class=quiet href="clm.html#make-convolve">make-convolve</a> :filter flt))
+  (let ((cnv (<a class=quiet href="sndclm.html#make-convolve">make-convolve</a> :filter flt))
 	(sf (<a class=quiet href="#makesamplereader">make-sample-reader</a> 0)))
     (<a class=quiet href="#mapchannel">map-channel</a>
      (lambda (val)
-       (<a class=quiet href="clm.html#convolve">convolve</a> cnv (lambda (dir) 
+       (<a class=quiet href="sndclm.html#convolve">convolve</a> cnv (lambda (dir) 
                        (<a class=quiet href="#readsample">read-sample</a> sf)))))))
 
 (vct-&gt;channel (poly* (channel-&gt;vct 0 (frames)) (vct 2.0))) ; poly.scm (sound = polynomial coeffs)
@@ -8346,10 +8346,10 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
        (fsize (expt 2 (ceiling (/ (log len) (log 2)))))
        (rl (<a class=quiet href="#channeltovct">channel-&gt;vct</a> 0 fsize))
        (im (<a class=quiet href="#makevct">make-vct</a> fsize)))
-  (<a class=quiet href="clm.html#fft">mus-fft</a> rl im fsize)
-  (<a class=quiet href="clm.html#fft">mus-fft</a> rl im fsize)
-  (<a class=quiet href="clm.html#fft">mus-fft</a> rl im fsize)
-  (<a class=quiet href="clm.html#fft">mus-fft</a> rl im fsize)
+  (<a class=quiet href="sndclm.html#fft">mus-fft</a> rl im fsize)
+  (<a class=quiet href="sndclm.html#fft">mus-fft</a> rl im fsize)
+  (<a class=quiet href="sndclm.html#fft">mus-fft</a> rl im fsize)
+  (<a class=quiet href="sndclm.html#fft">mus-fft</a> rl im fsize)
   (<a class=quiet href="#vcttochannel">vct-&gt;channel</a> (<a class=quiet href="#vctscale">vct-scale!</a> rl (/ 2.0 (* fsize fsize))) 0 len))
 
 (do ((i 0 (1+ i)))
@@ -8547,21 +8547,21 @@ file; 'auto-delete' set to #t asks Snd to handle cleanup).
 The form (set! (<a class=quiet href="#samples">samples</a> samp samps 'snd chn trunc edname infile-chan edpos auto-delete') data) can also be used.
 'env-sound-interp' in examp.scm has an example of the file version, using
 sound-data objects and mus-sound-write to create a temporary file, but
-it's probably simpler to use <a href="clm.html#with-sound">with-sound</a> (see also linear-src-channel in dsp.scm):
+it's probably simpler to use <a href="sndclm.html#with-sound">with-sound</a> (see also linear-src-channel in dsp.scm):
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define (step-src)
   (let* ((rd (<a class=quiet href="#makesamplereader">make-sample-reader</a> 0))
-	 (o (<a class=quiet href="clm.html#make-oscil">make-oscil</a> 2205.0))
-	 (s (<a class=quiet href="clm.html#make-src">make-src</a> :srate 0.0))
-	 (incr (+ 2.0 (<a class=quiet href="clm.html#oscil">oscil</a> o)))	  
+	 (o (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a> 2205.0))
+	 (s (<a class=quiet href="sndclm.html#make-src">make-src</a> :srate 0.0))
+	 (incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil">oscil</a> o)))	  
 	 (tempfile (<em class=red>with-sound</em> (:output (<a class=quiet href="#sndtempnam">snd-tempnam</a>) :srate (<a class=quiet href="#srate">srate</a>) :to-snd #f)
-		     (<a class=quiet href="clm.html#run">run</a> (lambda ()
+		     (<a class=quiet href="sndclm.html#run">run</a> (lambda ()
 			    (do ((samp 0 (1+ samp)))
 				((or (c-g?) (<a class=quiet href="#samplereaderatendQ">sample-reader-at-end?</a> rd)))
-			      (<a class=quiet href="clm.html#out-any">out-any</a> samp (<a class=quiet href="clm.html#src">src</a> s incr (lambda (dir) (<a class=quiet href="#readsample">read-sample</a> rd))) 0 *output*)
+			      (<a class=quiet href="sndclm.html#out-any">out-any</a> samp (<a class=quiet href="sndclm.html#src">src</a> s incr (lambda (dir) (<a class=quiet href="#readsample">read-sample</a> rd))) 0 *output*)
 			      (if (= (modulo samp 2205) 0)
-				  (set! incr (+ 2.0 (<a class=quiet href="clm.html#oscil">oscil</a> o)))))))))
+				  (set! incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil">oscil</a> o)))))))))
 	 (len (<a class=quiet href="#mussoundframes">mus-sound-frames</a> tempfile)))
     (<em class=red>set-samples</em> 0 (1- len) tempfile #f #f #t "step-src" 0 #f #t)))
 </pre></td></tr></table>
@@ -8934,10 +8934,10 @@ resample all chans: <a href="#srcsound">src-sound</a><br>
 resample selection: <a href="#srcsoundselection">src-selection</a><br>
 resample mix: speed control in <a href="snd.html#mixdialog">Mix dialog</a> (also <a href="#applycontrols">apply-controls</a>)<br>
 resample via drawn envelope: srate in <a href="snd.html#editenvelope">Envelope editor</a><br>
-resample via CLM gen: <a href="clm.html#src">src</a><br>
+resample via CLM gen: <a href="sndclm.html#src">src</a><br>
 resample with independent time control (ssb-am): <a href="sndscm.html#ssbbank">ssb-bank</a> in dsp.scm<br>
 resample with independent time control (granulate): expand in <a href="#customcontrols">control panel</a>, <a href="sndscm.html#expsrc">expsrc</a> and <a href="sndscm.html#expsnd">expsnd</a><br>
-resample with independent time control (vocoder): <a href="clm.html#phase-vocoder">phase-vocoder</a> (this never works)<br>
+resample with independent time control (vocoder): <a href="sndclm.html#phase-vocoder">phase-vocoder</a> (this never works)<br>
 another time stretcher (autocorrelation):<a href="sndscm.html#rubbersound">rubber-sound</a> (this takes forever and rarely works)<br>
 resampling-based sound effects: <a href="sndscm.html#hellodentist">hello-dentist</a>, <a href="sndscm.html#fp">fp</a> ("Forbidden Planet"), flange and chorus in dsp.scm and new-effects.scm<br>
 the digital zipper: <a href="sndscm.html#zipdoc">zipper</a><br>
@@ -9822,7 +9822,7 @@ rattling effect.
 <code><a class=def name="filtercontrolcoeffs">filter-control-coeffs</a> (:optional <em class=narg>snd</em>)</code>
 </td></tr><tr><td></td><td>
 The <a class=quiet href="snd.html#filtercontrol">filter</a> coefficients (read-only currently).  It is
-a vct suitable for use with the <a href="clm.html#filter">filter generator</a> or with
+a vct suitable for use with the <a href="sndclm.html#filter">filter generator</a> or with
 <a href="#filtersound">filter-sound</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -10427,11 +10427,11 @@ This code ties the Hilbert transform in dsp.scm into the user-interface:
     (let ((flt (<a class=quiet href="sndscm.html#makehilberttransform">make-hilbert-transform</a> 40)))
       (do ((i 0 (1+ i))) ; preload first samples
 	  ((= i 40))
-	(<a class=quiet href="clm.html#fir-filter">fir-filter</a> flt (<a class=quiet href="#readsample">read-sample</a> fd)))
+	(<a class=quiet href="sndclm.html#fir-filter">fir-filter</a> flt (<a class=quiet href="#readsample">read-sample</a> fd)))
       (<a class=quiet href="#vctmap">vct-map!</a> 
        (<a class=quiet href="#makevct">make-vct</a> len) 
        (lambda () 
-	 (<a class=quiet href="clm.html#fir-filter">fir-filter</a> flt (<a class=quiet href="#readsample">read-sample</a> fd)))))))
+	 (<a class=quiet href="sndclm.html#fir-filter">fir-filter</a> flt (<a class=quiet href="#readsample">read-sample</a> fd)))))))
 </pre></td></tr></table>
 
 If GSL is included in Snd (via the --wth-gsl configuration switch), the following code ties in the (slow) Hankel transform:
@@ -10470,7 +10470,7 @@ a subsequent add-transform.
 </td></tr><tr><td></td><td>
 This performs an FFT on vcts 'rl' and 'im' (the real and imaginary parts of the
 input data). 'sgn' is 1 for an FFT, -1 for an inverse FFT; (the default is 1).
-The CLM <a href="clm.html#fft">fft</a> function is called <a name="musfft">mus-fft</a> in Snd.
+The CLM <a href="sndclm.html#fft">fft</a> function is called <a name="musfft">mus-fft</a> in Snd.
 The only difference between the two is that Snd's fft determines the fft size from 
 the size of the vcts passed to it, whereas CLM's takes the size as an argument.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -10522,17 +10522,17 @@ This returns #t if 'type' refers to an active transform type.
 <A NAME="fftexamples"></a>
 <TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <small><blockquote>
-CLM fft function: <a href="clm.html#fft">mus-fft</a><br>
-CLM spectrum: <a href="clm.html#spectrum">spectrum</a><br>
+CLM fft function: <a href="sndclm.html#fft">mus-fft</a><br>
+CLM spectrum: <a href="sndclm.html#spectrum">spectrum</a><br>
 Snd spectrum: <a href="#sndspectrum">snd-spectrum</a><br>
 Cross Correlation: <a href="sndscm.html#correlate">correlate</a><br>
-FFT window: <a href="clm.html#make-fft-window">make-fft-window</a><br>
+FFT window: <a href="sndclm.html#make-fft-window">make-fft-window</a><br>
 Dolph-Chebyshev window in Scheme: <a href="sndscm.html#dolph">dolph</a><br>
 Hartley transform in Scheme: <a href="sndscm.html#dht">dht</a><br>
 Spectral edit dialog: <a href="snd.html#editenvelope">Envelope Editor</a><br>
 <br>
 fft-based filter: <a href="sndscm.html#fftedit">fft-edit</a>, <a href="sndscm.html#fftenvedit">fft-env-edit</a>, <a href="sndscm.html#fftenvinterp">fft-env-interp</a>, <a href="sndscm.html#fftsquelch">fft-squelch</a>, <a href="sndscm.html#fftcancel">fft-cancel</a><br>
-phase-vocoder: <a href="clm.html#phase-vocoder">phase-vocoder</a>. <a href="sndscm.html#pvocdoc">pvoc</a><br>
+phase-vocoder: <a href="sndclm.html#phase-vocoder">phase-vocoder</a>. <a href="sndscm.html#pvocdoc">pvoc</a><br>
 transposition via fft: <a href="sndscm.html#downoct">down-oct</a><br>
 phase rotation via fft: <a href="sndscm.html#zerophase">zero-phase, rotate-phase</a><br>
 duration change via autocorrelation: <a href="sndscm.html#rubberdoc">rubber-sound</a><br>
@@ -12110,7 +12110,7 @@ In Forth, this variable is named *loaded-files*; in Ruby I think it is $". <!-- 
 When a sound file is opened, Snd looks for a file with the same 
 name but with an appended ".scm" extension.  If such a file is found, 
 it is loaded automatically.  The variable *snd-opened-sound* is set to 
-the newly opened sound's index.  This supports the <a href="clm.html#snd-memo">snd-memo</a> feature 
+the newly opened sound's index.  This supports the <a href="sndclm.html#snd-memo">snd-memo</a> feature 
 in CLM, but can be used independently of CLM to store marks, selections,
 or whatever that you want associated with a particular sound. Confusingly
 enough, this is a variable, unlike all the others -- that is, you
@@ -13413,7 +13413,7 @@ You can find out at run-time whether GL is loaded via <code>(provided? 'gl)</cod
 <td><small><a href="snd.html" onmouseover="return escape('basic Snd user-interface documentation')">snd.html</a></small></td>
 <td><small><a href="grfsnd.html" onmouseover="return escape('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
 <td><small><a href="sndscm.html" onmouseover="return escape('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
-<td><small><a href="clm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">clm.html</a></small></td>
+<td><small><a href="sndclm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">sndclm.html</a></small></td>
 <td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
 <td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd\'s extension language')">libxm.html</a></small></td>
 <td><small><a href="index.html" onmouseover="return escape('an actual index, not some introductory file')">index.html</a></small></td>

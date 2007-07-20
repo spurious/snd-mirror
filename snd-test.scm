@@ -12731,6 +12731,11 @@ EDITS: 5
 			     (rvequal ind op-name 1))
 			 (revert-sound ind)))
 		     all-ops all-op-names)
+
+		    (close-sound ind)
+		    (set! ind (new-sound "test.snd" :size 20 :channels 2 :data-format mus-lfloat))
+		    (set! (squelch-update ind 0) #t)
+		    (set! (squelch-update ind 1) #t)
 		    
 		    ;; 2 ops
 		    (for-each
@@ -12757,6 +12762,11 @@ EDITS: 5
 			      (revert-sound ind))))
 			all-ops all-op-names))
 		     all-ops all-op-names)
+		    
+		    (close-sound ind)
+		    (set! ind (new-sound "test.snd" :size 20 :channels 2 :data-format mus-lfloat))
+		    (set! (squelch-update ind 0) #t)
+		    (set! (squelch-update ind 1) #t)
 		    
 		    ;; 3 ops
 		    (for-each
@@ -12787,6 +12797,11 @@ EDITS: 5
 			   all-ops all-op-names))
 			all-ops all-op-names))
 		     all-ops all-op-names)
+		    
+		    (close-sound ind)
+		    (set! ind (new-sound "test.snd" :size 20 :channels 2 :data-format mus-lfloat))
+		    (set! (squelch-update ind 0) #t)
+		    (set! (squelch-update ind 1) #t)
 		    
 		    ;; 4 ops
 		    (for-each
@@ -12820,6 +12835,11 @@ EDITS: 5
 			   all-ops all-op-names))
 			all-ops all-op-names))
 		     all-ops all-op-names)
+		    
+		    (close-sound ind)
+		    (set! ind (new-sound "test.snd" :size 20 :channels 2 :data-format mus-lfloat))
+		    (set! (squelch-update ind 0) #t)
+		    (set! (squelch-update ind 1) #t)
 		    
 		    ;; 5 ops
 		    (for-each
@@ -12859,6 +12879,11 @@ EDITS: 5
 			   all-ops all-op-names))
 			all-ops all-op-names))
 		     all-ops all-op-names)
+		    
+		    (close-sound ind)
+		    (set! ind (new-sound "test.snd" :size 20 :channels 2 :data-format mus-lfloat))
+		    (set! (squelch-update ind 0) #t)
+		    (set! (squelch-update ind 1) #t)
 		    
 		    ;; 6 ops
 		    (for-each
@@ -12900,6 +12925,11 @@ EDITS: 5
 			   all-ops all-op-names))
 			all-ops all-op-names))
 		     two-ops two-op-names)
+		    
+		    (close-sound ind)
+		    (set! ind (new-sound "test.snd" :size 20 :channels 2 :data-format mus-lfloat))
+		    (set! (squelch-update ind 0) #t)
+		    (set! (squelch-update ind 1) #t)
 		    
 		    ;; 7 ops
 		    (for-each
@@ -24135,6 +24165,30 @@ EDITS: 2
       (do ((i 0 (1+ i))) ((= i 12)) (vct-set! odata i (moving-length g (vct-ref data i))))
       (if (not (vequal odata (vct 0.100 0.224 0.374 0.548 0.735 0.927 1.122 1.319 1.517 1.715 1.565 1.345 0.000 0.000 0.000)))
 	  (snd-display ";moving-length odata: ~A" odata))
+      
+      (let ((ind (new-sound "test.snd" :size 20)))
+	(set! (sample 3) 1.0)
+	(let ((gen1 (make-smoothing-filter 5))
+	      (gen2 (make-fir-filter 5 (vct .125 .25 .25 .25 .125))))
+	  (map-channel (lambda (y) (smoothing-filter gen1 y)))
+	  (let ((data1 (channel->vct)))
+	    (undo)
+	    (map-channel (lambda (y) (fir-filter gen2 y)))
+	    (let ((data2 (channel->vct)))
+	      (if (not (vequal data1 data2))
+		  (snd-display ";smoothing-filter and fir:~%;  ~A~%:   ~A" data1 data2)))
+	    (undo)))
+	(let ((gen1 (make-weighted-moving-average 4))
+	      (gen2 (make-fir-filter 4 (vct 0.4 0.3 0.2 0.1))))
+	  (map-channel (lambda (y) (weighted-moving-average gen1 y)))
+	  (let ((data1 (channel->vct)))
+	    (undo)
+	    (map-channel (lambda (y) (fir-filter gen2 y)))
+	    (let ((data2 (channel->vct)))
+	      (if (not (vequal data1 data2))
+		  (snd-display ";weighted-moving-average and fir:~%;  ~A~%:   ~A" data1 data2)))
+	    (undo)))
+	(close-sound ind))
       
       (do ((i 0 (1+ i)))
 	  ((= i 10))

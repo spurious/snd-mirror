@@ -2063,6 +2063,56 @@ a running window of the last 'size' inputs, returning the euclidean length of th
 ;;; moving-mean = average
 ;;; moving-variance? = (sum of (y - average)^2) n = (average (* (- y average-overall) (- y average-overall)))
 |#
+
+
+;;; ----------------
+;;;
+;;; more moving-average cases
+
+;;; a simple modification is to round-off the edges:
+
+(define make-smoothing-filter make-moving-average)
+
+(define (smoothing-filter gen sig)
+  (let* ((val (moving-average gen sig))
+	 (old-sig (tap gen))
+	 (n (mus-order gen)))
+    (* (/ n (1- n))   ; scale back to 1.0
+       (- val (* (mus-increment gen) 0.5 (+ old-sig sig))))))
+
+
+;;; exponential weights
+
+(define (make-exponentially-weighted-moving-average order)
+  (make-one-pole (/ 1.0 order)
+		 (/ (- order) (+ 1.0 order))))
+
+(define exponentially-weighted-moving-average one-pole)
+
+
+;;; arithmetic (1/n) weights
+
+(define (make-weighted-moving-average order)
+  (list (let ((gen (make-moving-average order)))
+	  (set! (mus-increment gen) 1.0)
+	  gen)
+	0.0
+	0.0))
+
+(define (weighted-moving-average gen-list sig)
+  (let* ((gen (car gen-list))
+	 (n (mus-order gen))
+	 (den (/ (* (1+ n) n) 2))
+	 (num (cadr gen-list))
+	 (sum (caddr gen-list)))
+    (set! num (- (+ num (* n sig)) sum))
+    (set! sum (moving-average gen sig))
+    (list-set! gen-list 1 num)
+    (list-set! gen-list 2 sum)
+    (/ num den)))
+
+
+;;; TODO: doc/index these [smoothing-filter, weighted-moving-average, exponentially-weighted-moving-average]
 	 
 
 

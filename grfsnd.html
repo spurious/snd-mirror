@@ -33,7 +33,7 @@
 <td><small><a href="snd.html" onmouseover="return escape('basic Snd user-interface documentation')">snd.html</a></small></td>
 <td><small><a href="extsnd.html" onmouseover="return escape('Snd extension and customization')">extsnd.html</a></small></td>
 <td><small><a href="sndscm.html" onmouseover="return escape('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
-<td><small><a href="clm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">clm.html</a></small></td>
+<td><small><a href="sndclm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">sndclm.html</a></small></td>
 <td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
 <td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
 <td><small><a href="index.html" onmouseover="return escape('an actual index, not some introductory file')">index.html</a></small></td>
@@ -979,7 +979,7 @@ In Gtk, the arguments are different, but the basic idea is the same:
 <br>
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithclm">Snd and CLM</a></h3></td></tr></table>
 
-<p>The files clm.c, clm.h, and clm2xen.c implement <a href="clm.html#clmtop">CLM</a> (a Music V implementation),
+<p>The files clm.c, clm.h, and clm2xen.c implement <a href="sndclm.html#clmtop">CLM</a> (a Music V implementation),
 included in Snd when it is built.
 You can see what a generator does, or a group of generators, by running them in the
 listener, and using the graph and spectrum functions.  Say we have
@@ -1005,10 +1005,10 @@ these declarations in ~/.snd:
 
 <p>Now we can open the listener, and type:</p>
 <pre>
-    (define hi (<a class=quiet href="clm.html#make-oscil">make-oscil</a>))
-    (run-gen (lambda () (<a class=quiet href="clm.html#oscil">oscil</a> hi)))
-    (define ho (<a class=quiet href="clm.html#make-oscil">make-oscil</a>))
-    (run-fft (lambda () (<a class=quiet href="clm.html#oscil">oscil</a> hi (* .5 (<a class=quiet href="clm.html#oscil">oscil</a> ho)))))
+    (define hi (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a>))
+    (run-gen (lambda () (<a class=quiet href="sndclm.html#oscil">oscil</a> hi)))
+    (define ho (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a>))
+    (run-fft (lambda () (<a class=quiet href="sndclm.html#oscil">oscil</a> hi (* .5 (<a class=quiet href="sndclm.html#oscil">oscil</a> ho)))))
 </pre>
 <p>Any CLM instrument or function can be used in this way 
 to edit sounds.  Say we want an echo effect:</p>
@@ -1016,16 +1016,16 @@ to edit sounds.  Say we want an echo effect:</p>
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (define echo 
   (lambda (scaler secs)
-    (let ((del (<a class=quiet href="clm.html#make-delay">make-delay</a> (round (* secs (<a class=quiet href="extsnd.html#srate">srate</a>))))))
+    (let ((del (<a class=quiet href="sndclm.html#make-delay">make-delay</a> (round (* secs (<a class=quiet href="extsnd.html#srate">srate</a>))))))
       (lambda (inval)
-        (+ inval (<a class=quiet href="clm.html#delay">delay</a> del (* scaler (+ (<a class=quiet href="clm.html#tap">tap</a> del) inval))))))))
+        (+ inval (<a class=quiet href="sndclm.html#delay">delay</a> del (* scaler (+ (<a class=quiet href="sndclm.html#tap">tap</a> del) inval))))))))
 </pre></td></tr></table>
 
 <p>
 Here 'scaler' sets
 how loud subsequent echos are, and 'secs' sets how far apart they
 are in seconds.  'echo' uses the 'secs' argument to create
-a delay line (<a href="clm.html#make-delay">make-delay</a>) using the current sound's
+a delay line (<a href="sndclm.html#make-delay">make-delay</a>) using the current sound's
 sampling rate to turn the 'secs' parameter into samples.
 echo then returns a closure, that is, a function with
 associated variables (in this case 'del' and 'scaler');
@@ -1054,18 +1054,18 @@ producing the echo.
 <p>The Common Lisp version is:</p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(<a class=quiet href="clm.html#definstrument">definstrument</a> echo (beg dur scaler secs file)
-  (let ((del (<a class=quiet href="clm.html#make-delay">make-delay</a> (round (* secs *srate*))))
-	(inf (<a class=quiet href="clm.html#open-input">open-input</a> file))
+(<a class=quiet href="sndclm.html#definstrument">definstrument</a> echo (beg dur scaler secs file)
+  (let ((del (<a class=quiet href="sndclm.html#make-delay">make-delay</a> (round (* secs *srate*))))
+	(inf (<a class=quiet href="sndclm.html#open-input">open-input</a> file))
 	(j 0))
     (run
      (loop for i from beg below (+ beg dur) do
-       (let ((inval (<a class=quiet href="clm.html#ina">ina</a> j inf)))
-	 (<a class=quiet href="clm.html#outa">outa</a> i (+ inval (<a class=quiet href="clm.html#delay">delay</a> del (* scaler (+ (<a class=quiet href="clm.html#tap">tap</a> del) inval)))))
+       (let ((inval (<a class=quiet href="sndclm.html#ina">ina</a> j inf)))
+	 (<a class=quiet href="sndclm.html#outa">outa</a> i (+ inval (<a class=quiet href="sndclm.html#delay">delay</a> del (* scaler (+ (<a class=quiet href="sndclm.html#tap">tap</a> del) inval)))))
 	 (incf j))))
-    (<a class=quiet href="clm.html#close-input">close-input</a> inf)))
+    (<a class=quiet href="sndclm.html#close-input">close-input</a> inf)))
 
-;;; (<a class=quiet href="clm.html#with-sound">with-sound</a> () (echo 0 60000 .5 1.0 "pistol.snd"))
+;;; (<a class=quiet href="sndclm.html#with-sound">with-sound</a> () (echo 0 60000 .5 1.0 "pistol.snd"))
 </pre></td></tr></table>
 
 <p>Generators are "applicable" in most versions of Snd: the generator knows its type, so the
@@ -1098,7 +1098,7 @@ an oscil or a sawtooth-wave:
     <em class=listener>0.125050634145737</em>
 </pre>
 
-<p>clm.html has lots of information about CLM.  For historical reasons, it is oriented toward
+<p>sndclm.html has lots of information about CLM.  For historical reasons, it is oriented toward
 Common Lisp, rather than Scheme, but it should not be hard to move back and forth.
 There are a few minor differences, mostly involving global variable names.
 For example,
@@ -1111,8 +1111,8 @@ variable *clm-locsig-type*.
 <pre>
 (define comb-filter 
   (lambda (scaler size)
-    (let ((cmb (<a class=quiet href="clm.html#make-comb">make-comb</a> scaler size)))
-      (lambda (x) (<a class=quiet href="clm.html#comb">comb</a> cmb x)))))
+    (let ((cmb (<a class=quiet href="sndclm.html#make-comb">make-comb</a> scaler size)))
+      (lambda (x) (<a class=quiet href="sndclm.html#comb">comb</a> cmb x)))))
 
 ; (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (comb-filter .8 32))
 
@@ -1120,11 +1120,11 @@ variable *clm-locsig-type*.
 
 (define comb-chord
   (lambda (scaler size amp)
-    (let ((c1 (<a class=quiet href="clm.html#make-comb">make-comb</a> scaler size))
-	  (c2 (<a class=quiet href="clm.html#make-comb">make-comb</a> scaler (* size .75)))
-	  (c3 (<a class=quiet href="clm.html#make-comb">make-comb</a> scaler (* size 1.2))))
+    (let ((c1 (<a class=quiet href="sndclm.html#make-comb">make-comb</a> scaler size))
+	  (c2 (<a class=quiet href="sndclm.html#make-comb">make-comb</a> scaler (* size .75)))
+	  (c3 (<a class=quiet href="sndclm.html#make-comb">make-comb</a> scaler (* size 1.2))))
       (lambda (x)
-        (* amp (+ (<a class=quiet href="clm.html#comb">comb</a> c1 x) (<a class=quiet href="clm.html#comb">comb</a> c2 x) (<a class=quiet href="clm.html#comb">comb</a> c3 x)))))))
+        (* amp (+ (<a class=quiet href="sndclm.html#comb">comb</a> c1 x) (<a class=quiet href="sndclm.html#comb">comb</a> c2 x) (<a class=quiet href="sndclm.html#comb">comb</a> c3 x)))))))
 
 ; (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (comb-chord .95 60 .3))
 
@@ -1138,9 +1138,9 @@ variable *clm-locsig-type*.
 
 (define zcomb
   (lambda (scaler size pm)
-    (let ((cmb (<a class=quiet href="clm.html#make-comb">make-comb</a> scaler size :max-size (+ size 1 (<a class=quiet href="sndscm.html#maxenvelope">max-envelope</a> pm 0))))
-	  (penv (<a class=quiet href="clm.html#make-env">make-env</a> :envelope pm :end (<a class=quiet href="extsnd.html#frames">frames</a>))))
-      (lambda (x) (<a class=quiet href="clm.html#comb">comb</a> cmb x (env penv))))))
+    (let ((cmb (<a class=quiet href="sndclm.html#make-comb">make-comb</a> scaler size :max-size (+ size 1 (<a class=quiet href="sndscm.html#maxenvelope">max-envelope</a> pm 0))))
+	  (penv (<a class=quiet href="sndclm.html#make-env">make-env</a> :envelope pm :end (<a class=quiet href="extsnd.html#frames">frames</a>))))
+      (lambda (x) (<a class=quiet href="sndclm.html#comb">comb</a> cmb x (env penv))))))
 
 ; (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (zcomb .8 32 '(0 0 1 10)))
 
@@ -1148,13 +1148,13 @@ variable *clm-locsig-type*.
 
 (define formants
   (lambda (r1 f1 r2 f2 r3 f3)
-    (let ((fr1 (<a class=quiet href="clm.html#make-formant">make-formant</a> r1 f1))
-	  (fr2 (<a class=quiet href="clm.html#make-formant">make-formant</a> r2 f2))
-	  (fr3 (<a class=quiet href="clm.html#make-formant">make-formant</a> r3 f3)))
+    (let ((fr1 (<a class=quiet href="sndclm.html#make-formant">make-formant</a> r1 f1))
+	  (fr2 (<a class=quiet href="sndclm.html#make-formant">make-formant</a> r2 f2))
+	  (fr3 (<a class=quiet href="sndclm.html#make-formant">make-formant</a> r3 f3)))
       (lambda (x)
-	(+ (<a class=quiet href="clm.html#formant">formant</a> fr1 x)
-	   (<a class=quiet href="clm.html#formant">formant</a> fr2 x)
-	   (<a class=quiet href="clm.html#formant">formant</a> fr3 x))))))
+	(+ (<a class=quiet href="sndclm.html#formant">formant</a> fr1 x)
+	   (<a class=quiet href="sndclm.html#formant">formant</a> fr2 x)
+	   (<a class=quiet href="sndclm.html#formant">formant</a> fr3 x))))))
 
 ; (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (formants .01 900 .02 1800 .01 2700))
 
@@ -1162,11 +1162,11 @@ variable *clm-locsig-type*.
 
 (define moving-formant
   (lambda (radius move)
-    (let ((frm (<a class=quiet href="clm.html#make-formant">make-formant</a> radius (cadr move)))
-	  (menv (<a class=quiet href="clm.html#make-env">make-env</a> :envelope move :end (<a class=quiet href="extsnd.html#frames">frames</a>))))
+    (let ((frm (<a class=quiet href="sndclm.html#make-formant">make-formant</a> radius (cadr move)))
+	  (menv (<a class=quiet href="sndclm.html#make-env">make-env</a> :envelope move :end (<a class=quiet href="extsnd.html#frames">frames</a>))))
       (lambda (x)
-        (let ((val (<a class=quiet href="clm.html#formant">formant</a> frm x)))
-	  (set! (<a class=quiet href="clm.html#mus-frequency">mus-frequency</a> frm) (env menv))
+        (let ((val (<a class=quiet href="sndclm.html#formant">formant</a> frm x)))
+	  (set! (<a class=quiet href="sndclm.html#mus-frequency">mus-frequency</a> frm) (env menv))
 	  val)))))
 
 ; (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (moving-formant .01 '(0 1200 1 2400)))
@@ -1175,14 +1175,14 @@ variable *clm-locsig-type*.
 
 (define fp
   (lambda (sr osamp osfrq)
-    (let* ((os (<a class=quiet href="clm.html#make-oscil">make-oscil</a> osfrq))
-	   (sr (<a class=quiet href="clm.html#make-src">make-src</a> :srate sr))
+    (let* ((os (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a> osfrq))
+	   (sr (<a class=quiet href="sndclm.html#make-src">make-src</a> :srate sr))
 	   (len (<a class=quiet href="extsnd.html#frames">frames</a>))
 	   (sf (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a>))
 	   (out-data (<a class=quiet href="extsnd.html#makevct">make-vct</a> len)))
       (<a class=quiet href="extsnd.html#vctmap">vct-map!</a> out-data
 		  (lambda () 
-		    (<a class=quiet href="clm.html#src">src</a> sr (* osamp (<a class=quiet href="clm.html#oscil">oscil</a> os))
+		    (<a class=quiet href="sndclm.html#src">src</a> sr (* osamp (<a class=quiet href="sndclm.html#oscil">oscil</a> os))
 			 (lambda (dir)
 			   (if (&gt; dir 0)
 			       (<a class=quiet href="extsnd.html#nextsample">next-sample</a> sf)
@@ -1200,16 +1200,16 @@ variable *clm-locsig-type*.
 
 (define <A class=def NAME="expsrc">expsrc</a>
   (lambda (rate)
-    (let* ((gr (<a class=quiet href="clm.html#make-granulate">make-granulate</a> :expansion rate))
-	   (sr (<a class=quiet href="clm.html#make-src">make-src</a> :srate rate))
+    (let* ((gr (<a class=quiet href="sndclm.html#make-granulate">make-granulate</a> :expansion rate))
+	   (sr (<a class=quiet href="sndclm.html#make-src">make-src</a> :srate rate))
 	   (vsize 1024)
 	   (vbeg 0)
 	   (v (<a class=quiet href="extsnd.html#channeltovct">channel-&gt;vct</a> 0 vsize))
 	   (inctr 0))
       (lambda (inval)
-        (<a class=quiet href="clm.html#src">src</a> sr 0.0
+        (<a class=quiet href="sndclm.html#src">src</a> sr 0.0
 	  (lambda (dir)
-	    (<a class=quiet href="clm.html#granulate">granulate</a> gr
+	    (<a class=quiet href="sndclm.html#granulate">granulate</a> gr
 	      (lambda (dir)
 		(let ((val (<a class=quiet href="extsnd.html#vctref">vct-ref</a> v inctr)))
 		  (set! inctr (+ inctr dir))
@@ -1236,7 +1236,7 @@ You can load Rick Taube's CM into Snd as Scheme code:
 <p>In most CLM instruments, including all those in clm-ins.scm, the assumption is that 
 you're reading and writing a temp file, calling the instruments within with-sound.
 The special generator snd-&gt;sample provides a way to redirect
-the CLM input handlers (<a class=quiet href="clm.html#in-any">in-any</a> in particular) to a Snd sound (via its index).
+the CLM input handlers (<a class=quiet href="sndclm.html#in-any">in-any</a> in particular) to a Snd sound (via its index).
 </p>
 <br>
 
@@ -2438,7 +2438,7 @@ at configuration time, and use the <a href="extsnd.html#glgraphtops">gl-graph-&g
 <td><small><a href="snd.html" onmouseover="return escape('basic Snd user-interface documentation')">snd.html</a></small></td>
 <td><small><a href="extsnd.html" onmouseover="return escape('Snd extension and customization')">extsnd.html</a></small></td>
 <td><small><a href="sndscm.html" onmouseover="return escape('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
-<td><small><a href="clm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">clm.html</a></small></td>
+<td><small><a href="sndclm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">sndclm.html</a></small></td>
 <td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
 <td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
 <td><small><a href="index.html" onmouseover="return escape('an actual index, not some introductory file')">index.html</a></small></td>
