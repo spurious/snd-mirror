@@ -965,8 +965,8 @@ else
 	AC_CHECK_LIB(m, gtk_label_get_line_wrap_mode, [AC_DEFINE(HAVE_GTK_LABEL_GET_LINE_WRAP_MODE)], ,$GTK_LIBS)
 	# for 2.10.0
 	AC_CHECK_LIB(m, gtk_print_operation_new, [AC_DEFINE(HAVE_GTK_PRINT_OPERATION_NEW)], ,$GTK_LIBS)
-	# for 2.11.0
-	AC_CHECK_LIB(m, gtk_window_get_opacity, [AC_DEFINE(HAVE_GTK_WINDOW_GET_OPACITY)], ,$GTK_LIBS)
+	# for 2.11.0..6
+	AC_CHECK_LIB(m, gtk_widget_get_has_tooltip, [AC_DEFINE(HAVE_GTK_WIDGET_GET_HAS_TOOLTIP)], ,$GTK_LIBS)
 
 	# for gdk|pango_cairo 
 	AC_CHECK_LIB(m, gdk_cairo_create, 

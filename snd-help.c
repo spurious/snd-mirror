@@ -2,11 +2,16 @@
 #include "sndlib-strings.h"
 #include "clm-strings.h"
 
+/* TODO: a watcher on the listener -- as something is typed, if help dialog is posted,
+ *          give help or list of completions.  Or possibly use minibuffer?
+ */
+
 static char **snd_xrefs(const char *topic);
 static char **snd_xref_urls(const char *topic);
 
 static char **snd_itoa_strs = NULL;
 static int snd_itoa_ctr = 0, snd_itoa_size = 0;
+
 static char *snd_itoa(int n)
 {
   char *str;
@@ -31,6 +36,7 @@ static char *snd_itoa(int n)
   return(str);
 }
 
+
 static void free_snd_itoa(void)
 {
   int i;
@@ -43,6 +49,7 @@ static void free_snd_itoa(void)
   snd_itoa_ctr = 0;
 }
 
+
 static char *format_to_name(int bits)
 {
   if (bits == 4)
@@ -51,6 +58,7 @@ static char *format_to_name(int bits)
     return(copy_string("double"));
   return(mus_format("int%d", bits));
 }
+
 
 static char *sndlib_consistency_check(void)
 {
@@ -75,6 +83,7 @@ static char *sndlib_consistency_check(void)
   return(NULL);
 }
 
+
 static char *vstrcat(char *arg1, ...)
 {
   char *buf;
@@ -94,6 +103,7 @@ static char *vstrcat(char *arg1, ...)
   va_end(ap);
   return(buf);
 }
+
 
 static char *main_snd_xrefs[13] = {
   "{CLM}: sound synthesis",
@@ -127,6 +137,7 @@ static char *main_snd_xref_urls[13] = {
   NULL,
 };
 
+
 static void main_snd_help(const char *subject, ...)
 {
   va_list ap;
@@ -137,6 +148,7 @@ static void main_snd_help(const char *subject, ...)
   va_end(ap);
   snd_help_back_to_top();
 }  
+
 
 #if USE_MOTIF
   #include <X11/IntrinsicP.h>
@@ -166,6 +178,7 @@ static void main_snd_help(const char *subject, ...)
 #else
   #define XM_VERSION_NAME "xg-version"
 #endif
+
 
 static char *xm_version(void)
 {
@@ -210,6 +223,7 @@ static char *xm_version(void)
   return("");
 }
 
+
 #if HAVE_GL
 #if (!JUST_GL)
  void Init_libgl(void);
@@ -245,6 +259,7 @@ static char *gl_version(void)
     }
   return("");
 }
+
 
 #if MUS_WITH_GL2PS
   char *gl2ps_version(void); /* snd-print.c */
@@ -317,6 +332,7 @@ static char *glx_version(void)
   return(version);
 }
 #endif
+
 
 char *version_info(void)
 {
@@ -471,6 +487,7 @@ char *version_info(void)
 #endif
   return(result);
 }
+
 
 void about_snd_help(void)
 {
@@ -1515,12 +1532,14 @@ static void show_key_help(int key, int state, bool cx, char *help)
     }
 }
 
+
 static bool find_unbuckified_keys(int key, int state, bool cx, char *ignored, XEN func)
 {
   if ((key > 256) && (state == 0) && (!cx) && (XEN_BOUND_P(func)))
     show_key_help(key, state, cx, key_binding_description(key, state, cx));
   return(false);
 }
+
 
 static bool find_buckified_keys(int key, int state, bool cx, char *ignored, XEN func)
 {
@@ -1529,12 +1548,14 @@ static bool find_buckified_keys(int key, int state, bool cx, char *ignored, XEN 
   return(false);
 }
 
+
 static bool find_unbuckified_cx_keys(int key, int state, bool cx, char *ignored, XEN func)
 {
   if ((key > 256) && (state == 0) && (cx) && (XEN_BOUND_P(func)))
     show_key_help(key, state, cx, key_binding_description(key, state, cx));
   return(false);
 }
+
 
 static bool find_buckified_cx_keys(int key, int state, bool cx, char *ignored, XEN func)
 {
@@ -1543,12 +1564,14 @@ static bool find_buckified_cx_keys(int key, int state, bool cx, char *ignored, X
   return(false);
 }
 
+
 static bool find_leftover_keys(int key, int state, bool cx, char *ignored, XEN func)
 {
   if ((key > 256) && (state & snd_MetaMask))
     show_key_help(key, state, cx, key_binding_description(key, state, cx));
   return(false);
 }
+
 
 void key_binding_help(void)
 {
@@ -1805,7 +1828,7 @@ void filter_help(void)
 
 #if HAVE_EXTENSION_LANGUAGE
 "There is an FIR Filter in the control panel, a filtering option in the envelope editor dialog, and a variety of other filters scattered around; \
-see clm.html, dsp." XEN_FILE_EXTENSION " and analog-filters." XEN_FILE_EXTENSION " in particular. The \
+see sndclm.html, dsp." XEN_FILE_EXTENSION " and analog-filters." XEN_FILE_EXTENSION " in particular. The \
 built-in filtering functions include: \n\
 \n\
   " S_filter_channel " (env :optional order beg dur snd chn edpos trunc origin)\n\
@@ -1891,7 +1914,7 @@ void resample_help(void)
 
 #if HAVE_EXTENSION_LANGUAGE
 "There is a sampling rate changer in the control panel, and a resampling option in the envelope \
-editor dialog; see also clm.html and examp." XEN_FILE_EXTENSION ". \
+editor dialog; see also sndclm.html and examp." XEN_FILE_EXTENSION ". \
 The basic resampling functions are:\n\
 \n\
   " S_src_channel " (num-or-env :optional beg dur snd chn edpos)\n\
@@ -2764,6 +2787,7 @@ static char *edit_header_urls[11] = {
   NULL
 };
 
+
 void edit_header_dialog_help(void)
 {
   snd_help_with_xrefs("Edit Header",
@@ -2873,6 +2897,7 @@ static void copy_help(void)
 		      snd_xref_urls("Copy"));
 }
 
+
 static void cursor_help(void)
 {
   snd_help_with_xrefs("Cursor",
@@ -2882,6 +2907,7 @@ various cursor moving commands apply to it.  See also 'Tracking cursor'",
 		      snd_xrefs("Cursor"),
 		      snd_xref_urls("Cursor"));
 }
+
 
 static void tracking_cursor_help(void)
 {
@@ -2893,6 +2919,7 @@ playing a sound, set " S_with_tracking_cursor " to " PROC_TRUE ". See also 'Curs
 		      snd_xref_urls("Tracking cursor"));
 }
 
+
 static void smooth_help(void)
 {
   snd_help_with_xrefs("Smoothing",
@@ -2903,6 +2930,7 @@ out any clicks.  See also 'Filter'",
 		      snd_xref_urls("Smooth"));
 }
 
+
 static void maxamp_help(void)
 {
   snd_help_with_xrefs("Maxamp",
@@ -2911,6 +2939,7 @@ static void maxamp_help(void)
 		      snd_xrefs("Maxamp"),
 		      snd_xref_urls("Maxamp"));
 }
+
 
 static void reverse_help(void)
 {
@@ -2921,6 +2950,7 @@ static void reverse_help(void)
 		      snd_xref_urls("Reverse"));
 }
 
+
 static void noise_reduction_help(void)
 {
   snd_help_with_xrefs("Noise Reduction",
@@ -2929,6 +2959,7 @@ static void noise_reduction_help(void)
 		      snd_xrefs("Noise Reduction"),
 		      snd_xref_urls("Noise Reduction"));
 }
+
 
 static void random_numbers_help(void)
 {
@@ -2963,6 +2994,7 @@ you can often get periods to line up vertically, making a pretty picture.",
 		      Wavogram_xrefs,
 		      Wavogram_urls);
 }
+
 
 static void window_size_help(void)
 {
@@ -3010,6 +3042,7 @@ static int min_strlen(const char *a, const char *b)
   if (lena < lenb) return(lena);
   return(lenb);
 }
+
 
 static char *topic_url(const char *topic)
 {
@@ -3060,6 +3093,7 @@ static help_func help_funcs[NUM_XREFS] = {
   &wavogram_help
 };
 
+
 static char **snd_xrefs(const char *topic)
 {
   int i;
@@ -3069,6 +3103,7 @@ static char **snd_xrefs(const char *topic)
   return(NULL);
 }
 
+
 static char **snd_xref_urls(const char *topic)
 {
   int i;
@@ -3077,6 +3112,7 @@ static char **snd_xref_urls(const char *topic)
       return(xref_url_tables[i]);
   return(NULL);
 }
+
 
 static int levenstein(const char *s1, const char *s2)
 {
@@ -3107,6 +3143,7 @@ static int levenstein(const char *s1, const char *s2)
   return(val);
 }
 
+
 static int help_name_to_url(const char *name)
 {
   int i, l = 0, u = HELP_NAMES_SIZE - 1;
@@ -3124,6 +3161,7 @@ static int help_name_to_url(const char *name)
   return(-1);
 }
 
+
 char *snd_url(const char *name)
 {
   /* (snd-url "save-sound-as") -> "extsnd.html#savesoundas" */
@@ -3135,6 +3173,7 @@ char *snd_url(const char *name)
     }
   return(NULL);
 }
+
 
 static char *call_grep(const char *defstr, const char *name, const char *endstr, char *path, char *tempfile)
 {
@@ -3154,6 +3193,7 @@ static char *call_grep(const char *defstr, const char *name, const char *endstr,
     return(file_to_string(tempfile)); /* NULL if nothing found */
   return(NULL);
 }
+
 
 static char *snd_finder(const char *name, bool got_help)
 {
@@ -3239,6 +3279,7 @@ static char *snd_finder(const char *name, bool got_help)
   return(command);
 }
 
+
 bool snd_topic_help(const char *topic)
 {
   /* called only in snd-x|ghelp.c */
@@ -3316,6 +3357,7 @@ bool snd_topic_help(const char *topic)
   return(false);
 }
 
+
 static bool strings_might_match(const char *a, const char *b, int len)
 {
   int i;
@@ -3331,6 +3373,7 @@ static bool strings_might_match(const char *a, const char *b, int len)
     }
   return(true);
 }
+
 
 char **help_name_to_xrefs(const char *name)
 {
@@ -3362,6 +3405,7 @@ char **help_name_to_xrefs(const char *name)
       }
   return(xrefs);
 }
+
 
 char* word_wrap(const char *text, int widget_len)
 {
@@ -3490,6 +3534,7 @@ char* word_wrap(const char *text, int widget_len)
   return(new_text);
 }
 
+
 #define DOC_DIRECTORIES 6
 static char *doc_directories[DOC_DIRECTORIES] = {
   "/usr/share/doc/snd-" SND_VERSION,
@@ -3532,6 +3577,7 @@ static char *html_directory(void)
     if (mus_file_probe(doc_files[i])) return(copy_string(doc_directories[i]));
   return(NULL);
 }
+
 
 void url_to_html_viewer(const char *url)
 {
@@ -3576,6 +3622,7 @@ void name_to_html_viewer(const char *red_text)
     url_to_html_viewer(url);
 }
 
+
 static XEN help_hook;
 static XEN output_comment_hook;
 
@@ -3604,6 +3651,7 @@ static char *run_string_hook(XEN hook, const char *caller, char *initial_string,
     }
   return(copy_string(initial_string));
 }
+
 
 char *output_comment(file_info *hdr)
 {
@@ -3897,6 +3945,7 @@ XEN g_snd_help(XEN text, int widget_wid)
   return(xen_return_first(g_snd_help_with_search(text, widget_wid, true), text));
 }
 
+
 static XEN g_listener_help(XEN arg, XEN formatted)
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(formatted), formatted, XEN_ARG_2, S_snd_help, "a boolean");
@@ -3905,17 +3954,20 @@ static XEN g_listener_help(XEN arg, XEN formatted)
   return(g_snd_help(arg, listener_width()));
 }
 
+
 void set_html_dir(char *new_dir)
 {
   if (html_dir(ss)) FREE(html_dir(ss));
   set_html_dir_1(new_dir);
 }
 
+
 static XEN g_html_dir(void) 
 {
   #define H_html_dir "(" S_html_dir "): location of Snd documentation"
   return(C_TO_XEN_STRING(html_dir(ss)));
 }
+
 
 static XEN g_set_html_dir(XEN val) 
 {
@@ -3924,11 +3976,13 @@ static XEN g_set_html_dir(XEN val)
   return(val);
 }
 
+
 static XEN g_html_program(void) 
 {
   #define H_html_program "(" S_html_program "): name of documentation reader (mozilla, by default)"
   return(C_TO_XEN_STRING(html_program(ss)));
 }
+
 
 static XEN g_set_html_program(XEN val) 
 {
@@ -3937,6 +3991,7 @@ static XEN g_set_html_program(XEN val)
   set_html_program(copy_string(XEN_TO_C_STRING(val))); 
   return(val);
 }
+
 
 static XEN g_snd_url(XEN name)
 {
@@ -3947,6 +4002,7 @@ static XEN g_snd_url(XEN name)
     return(C_TO_XEN_STRING(snd_url(XEN_TO_C_STRING(name))));
   return(C_TO_XEN_STRING(snd_url(XEN_SYMBOL_TO_C_STRING(name))));
 }
+
 
 static XEN g_snd_urls(void)
 {
@@ -3961,7 +4017,9 @@ static XEN g_snd_urls(void)
   return(lst);
 }
 
+
 static char **refs = NULL, **urls = NULL;
+
 static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
 {
   #define H_help_dialog "(" S_help_dialog " subject message xrefs urls): start the Help window with subject and message"

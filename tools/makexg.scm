@@ -123,6 +123,7 @@
 (define casts-211 '())
 (define checks-211 '())
 (define check-types-211 '())
+(define ulongs-211 '())
 
 
 (define cairo-funcs '())
@@ -1392,6 +1393,14 @@
 	(set! ulongs-290 (cons (list name type spec-name) ulongs-290))
 	(set! names (cons (cons name 'ulong) names)))))
 
+(define* (CLNG-211 name #:optional type spec-name)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CLNG-211~%" name)
+      (begin
+	(set! ulongs-211 (cons (list name type spec-name) ulongs-211))
+	(set! names (cons (cons name 'ulong) names)))))
+
 (define* (CINT name #:optional type)
   (save-declared-type type)
   (if (assoc name names)
@@ -1791,7 +1800,7 @@
   (dpy "#endif~%~%"))
 
 (define (with-211 dpy thunk)
-  (dpy "#if HAVE_GTK_WINDOW_GET_OPACITY~%")
+  (dpy "#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP~%")
   (thunk)
   (dpy "#endif~%~%"))
 
@@ -1831,7 +1840,7 @@
 (hey " *     HAVE_GTK_TREE_VIEW_GET_VISIBLE_RANGE for 2.7.3~%")
 (hey " *     HAVE_GTK_LINK_BUTTON_NEW for 2.9.0~%")
 (hey " *     HAVE_GTK_LABEL_GET_LINE_WRAP_MODE for 2.10.0~%")
-(hey " *     HAVE_GTK_WINDOW_GET_OPACITY for 2.11.0~%")
+(hey " *     HAVE_GTK_WIDGET_GET_HAS_TOOLTIP for 2.11.n~%")
 (hey " *     HAVE_CAIRO_CREATE for cairo~%")
 (hey " *     HAVE_CAIRO_GET_USER_DATA for cairo 1.4.0~%")
 (hey " *~%")
@@ -3473,6 +3482,8 @@
     (with-256 hey (lambda () (for-each (lambda (vals) (let ((val (car vals))) (hey "  DEFINE_ULONG(~A);~%" val))) (reverse ulongs-256)))))
 (if (not (null? ulongs-290))
     (with-290 hey (lambda () (for-each (lambda (vals) (let ((val (car vals))) (hey "  DEFINE_ULONG(~A);~%" val))) (reverse ulongs-290)))))
+(if (not (null? ulongs-211))
+    (with-211 hey (lambda () (for-each (lambda (vals) (let ((val (car vals))) (hey "  DEFINE_ULONG(~A);~%" val))) (reverse ulongs-211)))))
      
 
 (hey "}~%~%")

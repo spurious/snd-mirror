@@ -10,7 +10,6 @@
 ;;; remove top level menu
 ;;; keep-file-dialog-open-upon-ok
 ;;; snd-clock-icon
-;;; add "tooltip" to a widget
 ;;; bring possibly-obscured dialog to top
 ;;; select-file
 ;;; with-level-meters
@@ -857,14 +856,6 @@ Reverb-feedback sets the scaler on the feedback.
     (cairo_destroy cr)))
 
 |#
-
-
-;;; -------- add "tooltip" to a widget
-;;;
-;;; (add-tooltip (cadr (channel-widgets)) "the w button")
-
-(define (add-tooltip widget tip)
-  (gtk_tooltips_set_tip (gtk_tooltips_new) widget tip ""))
 
 
 ;;; -------- bring possibly-obscured dialog to top

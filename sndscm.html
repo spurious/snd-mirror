@@ -2664,7 +2664,13 @@ See also <a href="#polydoc">poly.scm</a>.
 <em class=emdef>make-moving-rms</em> <code>:optional (size 128)</code><br>
 <a class=def name="movingrms">moving-rms</a> <code>gen y</code><br>
 <em class=emdef>make-moving-length</em> <code>:optional (size 128)</code><br>
-<a class=def name="movinglength">moving-length</a> <code>gen y</code>
+<a class=def name="movinglength">moving-length</a> <code>gen y</code><br>
+<em class=emdef>make-smoothing-filter</em> ; same as <a href="sndclm.html#make-moving-average">make-moving-average</a><br>
+<a class=def name="smoothingfilter">smoothing-filter</a> <code>gen y</code><br>
+<em class=emdef>make-weighted-moving-average</em> <code>order</code><br>
+<a class=def name="weightedmovingaverage">weighted-moving-average</a> <code>gen y</code><br>
+<em class=emdef>make-exponentially-weighted-moving-average</em> <code>order</code><br>
+<a class=def name="exponentiallyweightedmovingaverage">exponentially-weighted-moving-average</a> <code>gen y</code>
 </td></tr><tr><td></td><td>
 moving-max is a specialization
 of the <a href="sndclm.html#delay">delay</a> generator; it produces an envelope that tracks the peak amplitude of the last 'size' samples.
@@ -2689,6 +2695,9 @@ The other "moving" generators are specializations of the <a href="sndclm.html#mo
 generator.  moving-sum keeps the ongoing sum of absolute values, moving-length the square root of the sum
 of squares, and moving-rms the square root of the sum of squares divided by the size.
 moving-rms is used in <a href="#overlayrmsenv">overlay-rms-env</a> in draw.scm.
+smoothing-filter is a version of moving-average with rounded edges.  weighted-moving-average weights the
+table entries by 1/n.  Similarly exponentially-weighted-moving-average applies exponential weights (it is
+actually just a one-pole filter -- this generator wins the "longest-name-for-simplest-effect" award).
 </td></tr><tr><td colspan=2 height=32></td></tr>
 
 
@@ -6361,6 +6370,15 @@ you want to your initialization file.
 <a class=def name="colormixes">color-mixes</a> <code>mix-list new-color</code>
 </td></tr><tr><td></td><td>
 color-mixes sets the color of each mix in 'mix-list' to 'new-color'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- delay-channel-mixes -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="delaychannelmixes">delay-channel-mixes</a> <code>beg dur :optional snd chn</code>
+</td></tr><tr><td></td><td>
+delay-channel-mixes adds dur (which can be negative) to the
+begin time of each mix that starts after beg in the given channel.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

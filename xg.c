@@ -14,7 +14,7 @@
  *     HAVE_GTK_TREE_VIEW_GET_VISIBLE_RANGE for 2.7.3
  *     HAVE_GTK_LINK_BUTTON_NEW for 2.9.0
  *     HAVE_GTK_LABEL_GET_LINE_WRAP_MODE for 2.10.0
- *     HAVE_GTK_WINDOW_GET_OPACITY for 2.11.0
+ *     HAVE_GTK_WIDGET_GET_HAS_TOOLTIP for 2.11.n
  *     HAVE_CAIRO_CREATE for cairo
  *     HAVE_CAIRO_GET_USER_DATA for cairo 1.4.0
  *
@@ -747,8 +747,6 @@ XM_TYPE_PTR_1(GtkToolbar_, GtkToolbar*)
 #define C_TO_XEN_GtkToolbarStyle(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkToolbarStyle(Arg) (GtkToolbarStyle)(XEN_TO_C_INT(Arg))
 #define XEN_GtkToolbarStyle_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR(GtkTooltips_, GtkTooltips*)
-XM_TYPE_PTR_2(GtkTooltipsData_, GtkTooltipsData*)
 XM_TYPE_PTR_1(GtkTreeDragSource_, GtkTreeDragSource*)
 XM_TYPE_PTR_1(GtkTreeDragDest_, GtkTreeDragDest*)
 XM_TYPE_PTR(GtkTreeRowReference_, GtkTreeRowReference*)
@@ -1029,6 +1027,10 @@ XM_TYPE(GtkPrintPages, GtkPrintPages)
 XM_TYPE_PTR(GtkPageRange_, GtkPageRange*)
 XM_TYPE(GtkPageSet, GtkPageSet)
 XM_TYPE_PTR_2(GtkSettings_, GtkSettings*)
+#endif
+
+#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
+XM_TYPE_PTR(GtkTooltip_, GtkTooltip*)
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -14421,55 +14423,6 @@ static XEN gxg_gtk_toolbar_get_tooltips(XEN toolbar)
   return(C_TO_XEN_gboolean(gtk_toolbar_get_tooltips(XEN_TO_C_GtkToolbar_(toolbar))));
 }
 
-static XEN gxg_gtk_tooltips_new(void)
-{
-  #define H_gtk_tooltips_new "GtkTooltips* gtk_tooltips_new( void)"
-  return(C_TO_XEN_GtkTooltips_(gtk_tooltips_new()));
-}
-
-static XEN gxg_gtk_tooltips_enable(XEN tooltips)
-{
-  #define H_gtk_tooltips_enable "void gtk_tooltips_enable(GtkTooltips* tooltips)"
-  XEN_ASSERT_TYPE(XEN_GtkTooltips__P(tooltips), tooltips, 1, "gtk_tooltips_enable", "GtkTooltips*");
-  gtk_tooltips_enable(XEN_TO_C_GtkTooltips_(tooltips));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_tooltips_disable(XEN tooltips)
-{
-  #define H_gtk_tooltips_disable "void gtk_tooltips_disable(GtkTooltips* tooltips)"
-  XEN_ASSERT_TYPE(XEN_GtkTooltips__P(tooltips), tooltips, 1, "gtk_tooltips_disable", "GtkTooltips*");
-  gtk_tooltips_disable(XEN_TO_C_GtkTooltips_(tooltips));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_tooltips_set_tip(XEN tooltips, XEN widget, XEN tip_text, XEN tip_private)
-{
-  #define H_gtk_tooltips_set_tip "void gtk_tooltips_set_tip(GtkTooltips* tooltips, GtkWidget* widget, \
-gchar* tip_text, gchar* tip_private)"
-  XEN_ASSERT_TYPE(XEN_GtkTooltips__P(tooltips), tooltips, 1, "gtk_tooltips_set_tip", "GtkTooltips*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 2, "gtk_tooltips_set_tip", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(tip_text), tip_text, 3, "gtk_tooltips_set_tip", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(tip_private), tip_private, 4, "gtk_tooltips_set_tip", "gchar*");
-  gtk_tooltips_set_tip(XEN_TO_C_GtkTooltips_(tooltips), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(tip_text), XEN_TO_C_gchar_(tip_private));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_tooltips_data_get(XEN widget)
-{
-  #define H_gtk_tooltips_data_get "GtkTooltipsData* gtk_tooltips_data_get(GtkWidget* widget)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_tooltips_data_get", "GtkWidget*");
-  return(C_TO_XEN_GtkTooltipsData_(gtk_tooltips_data_get(XEN_TO_C_GtkWidget_(widget))));
-}
-
-static XEN gxg_gtk_tooltips_force_window(XEN tooltips)
-{
-  #define H_gtk_tooltips_force_window "void gtk_tooltips_force_window(GtkTooltips* tooltips)"
-  XEN_ASSERT_TYPE(XEN_GtkTooltips__P(tooltips), tooltips, 1, "gtk_tooltips_force_window", "GtkTooltips*");
-  gtk_tooltips_force_window(XEN_TO_C_GtkTooltips_(tooltips));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_tree_drag_source_row_draggable(XEN drag_source, XEN path)
 {
   #define H_gtk_tree_drag_source_row_draggable "gboolean gtk_tree_drag_source_row_draggable(GtkTreeDragSource* drag_source, \
@@ -23227,19 +23180,6 @@ static XEN gxg_gtk_tool_item_get_expand(XEN tool_item)
   return(C_TO_XEN_gboolean(gtk_tool_item_get_expand(XEN_TO_C_GtkToolItem_(tool_item))));
 }
 
-static XEN gxg_gtk_tool_item_set_tooltip(XEN tool_item, XEN tooltips, XEN tip_text, XEN tip_private)
-{
-  #define H_gtk_tool_item_set_tooltip "void gtk_tool_item_set_tooltip(GtkToolItem* tool_item, GtkTooltips* tooltips, \
-gchar* tip_text, gchar* tip_private)"
-  XEN_ASSERT_TYPE(XEN_GtkToolItem__P(tool_item), tool_item, 1, "gtk_tool_item_set_tooltip", "GtkToolItem*");
-  XEN_ASSERT_TYPE(XEN_GtkTooltips__P(tooltips), tooltips, 2, "gtk_tool_item_set_tooltip", "GtkTooltips*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(tip_text), tip_text, 3, "gtk_tool_item_set_tooltip", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(tip_private), tip_private, 4, "gtk_tool_item_set_tooltip", "gchar*");
-  gtk_tool_item_set_tooltip(XEN_TO_C_GtkToolItem_(tool_item), XEN_TO_C_GtkTooltips_(tooltips), XEN_TO_C_gchar_(tip_text), 
-                            XEN_TO_C_gchar_(tip_private));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_tool_item_set_use_drag_window(XEN toolitem, XEN use_drag_window)
 {
   #define H_gtk_tool_item_set_use_drag_window "void gtk_tool_item_set_use_drag_window(GtkToolItem* toolitem, \
@@ -23971,20 +23911,6 @@ gint* [y])"
   XEN_ASSERT_TYPE(XEN_GtkScale__P(scale), scale, 1, "gtk_scale_get_layout_offsets", "GtkScale*");
   gtk_scale_get_layout_offsets(XEN_TO_C_GtkScale_(scale), &ref_x, &ref_y);
   return(XEN_LIST_2(C_TO_XEN_gint(ref_x), C_TO_XEN_gint(ref_y)));
-}
-
-static XEN gxg_gtk_tooltips_get_info_from_tip_window(XEN tip_window, XEN ignore_tooltips, XEN ignore_current_widget)
-{
-  #define H_gtk_tooltips_get_info_from_tip_window "gboolean gtk_tooltips_get_info_from_tip_window(GtkWindow* tip_window, \
-GtkTooltips** [tooltips], GtkWidget** [current_widget])"
-  GtkTooltips* ref_tooltips = NULL;
-  GtkWidget* ref_current_widget = NULL;
-  XEN_ASSERT_TYPE(XEN_GtkWindow__P(tip_window), tip_window, 1, "gtk_tooltips_get_info_from_tip_window", "GtkWindow*");
-  {
-    XEN result = XEN_FALSE;
-    result = C_TO_XEN_gboolean(gtk_tooltips_get_info_from_tip_window(XEN_TO_C_GtkWindow_(tip_window), &ref_tooltips, &ref_current_widget));
-    return(XEN_LIST_3(result, C_TO_XEN_GtkTooltips_(ref_tooltips), C_TO_XEN_GtkWidget_(ref_current_widget)));
-   }
 }
 
 static XEN gxg_gtk_combo_box_entry_new_text(void)
@@ -25163,19 +25089,6 @@ static XEN gxg_gtk_menu_tool_button_get_menu(XEN button)
   #define H_gtk_menu_tool_button_get_menu "GtkWidget* gtk_menu_tool_button_get_menu(GtkMenuToolButton* button)"
   XEN_ASSERT_TYPE(XEN_GtkMenuToolButton__P(button), button, 1, "gtk_menu_tool_button_get_menu", "GtkMenuToolButton*");
   return(C_TO_XEN_GtkWidget_(gtk_menu_tool_button_get_menu(XEN_TO_C_GtkMenuToolButton_(button))));
-}
-
-static XEN gxg_gtk_menu_tool_button_set_arrow_tooltip(XEN button, XEN tooltips, XEN tip_text, XEN tip_private)
-{
-  #define H_gtk_menu_tool_button_set_arrow_tooltip "void gtk_menu_tool_button_set_arrow_tooltip(GtkMenuToolButton* button, \
-GtkTooltips* tooltips, gchar* tip_text, gchar* tip_private)"
-  XEN_ASSERT_TYPE(XEN_GtkMenuToolButton__P(button), button, 1, "gtk_menu_tool_button_set_arrow_tooltip", "GtkMenuToolButton*");
-  XEN_ASSERT_TYPE(XEN_GtkTooltips__P(tooltips), tooltips, 2, "gtk_menu_tool_button_set_arrow_tooltip", "GtkTooltips*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(tip_text), tip_text, 3, "gtk_menu_tool_button_set_arrow_tooltip", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(tip_private), tip_private, 4, "gtk_menu_tool_button_set_arrow_tooltip", "gchar*");
-  gtk_menu_tool_button_set_arrow_tooltip(XEN_TO_C_GtkMenuToolButton_(button), XEN_TO_C_GtkTooltips_(tooltips), XEN_TO_C_gchar_(tip_text), 
-                                         XEN_TO_C_gchar_(tip_private));
-  return(XEN_FALSE);
 }
 
 static XEN gxg_gdk_display_supports_clipboard_persistence(XEN display)
@@ -29637,7 +29550,7 @@ static XEN gxg_gdk_cairo_region(XEN cr, XEN region)
 
 #endif
 
-#if HAVE_GTK_WINDOW_GET_OPACITY
+#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 static XEN gxg_gtk_about_dialog_get_program_name(XEN about)
 {
   #define H_gtk_about_dialog_get_program_name "gchar* gtk_about_dialog_get_program_name(GtkAboutDialog* about)"
@@ -30093,6 +30006,393 @@ static XEN gxg_gtk_window_get_opacity(XEN window)
   #define H_gtk_window_get_opacity "gdouble gtk_window_get_opacity(GtkWindow* window)"
   XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_get_opacity", "GtkWindow*");
   return(C_TO_XEN_gdouble(gtk_window_get_opacity(XEN_TO_C_GtkWindow_(window))));
+}
+
+static XEN gxg_gdk_display_supports_composite(XEN display)
+{
+  #define H_gdk_display_supports_composite "gboolean gdk_display_supports_composite(GdkDisplay* display)"
+  XEN_ASSERT_TYPE(XEN_GdkDisplay__P(display), display, 1, "gdk_display_supports_composite", "GdkDisplay*");
+  return(C_TO_XEN_gboolean(gdk_display_supports_composite(XEN_TO_C_GdkDisplay_(display))));
+}
+
+static XEN gxg_gdk_window_set_composited(XEN window, XEN composited)
+{
+  #define H_gdk_window_set_composited "void gdk_window_set_composited(GdkWindow* window, gboolean composited)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_composited", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(composited), composited, 2, "gdk_window_set_composited", "gboolean");
+  gdk_window_set_composited(XEN_TO_C_GdkWindow_(window), XEN_TO_C_gboolean(composited));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_text_buffer_add_mark(XEN buffer, XEN mark, XEN where)
+{
+  #define H_gtk_text_buffer_add_mark "void gtk_text_buffer_add_mark(GtkTextBuffer* buffer, GtkTextMark* mark, \
+GtkTextIter* where)"
+  XEN_ASSERT_TYPE(XEN_GtkTextBuffer__P(buffer), buffer, 1, "gtk_text_buffer_add_mark", "GtkTextBuffer*");
+  XEN_ASSERT_TYPE(XEN_GtkTextMark__P(mark), mark, 2, "gtk_text_buffer_add_mark", "GtkTextMark*");
+  XEN_ASSERT_TYPE(XEN_GtkTextIter__P(where), where, 3, "gtk_text_buffer_add_mark", "GtkTextIter*");
+  gtk_text_buffer_add_mark(XEN_TO_C_GtkTextBuffer_(buffer), XEN_TO_C_GtkTextMark_(mark), XEN_TO_C_GtkTextIter_(where));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_text_mark_new(XEN name, XEN left_gravity)
+{
+  #define H_gtk_text_mark_new "GtkTextMark* gtk_text_mark_new(gchar* name, gboolean left_gravity)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(name), name, 1, "gtk_text_mark_new", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(left_gravity), left_gravity, 2, "gtk_text_mark_new", "gboolean");
+  return(C_TO_XEN_GtkTextMark_(gtk_text_mark_new(XEN_TO_C_gchar_(name), XEN_TO_C_gboolean(left_gravity))));
+}
+
+static XEN gxg_gtk_tree_view_column_get_tree_view(XEN tree_column)
+{
+  #define H_gtk_tree_view_column_get_tree_view "GtkWidget* gtk_tree_view_column_get_tree_view(GtkTreeViewColumn* tree_column)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeViewColumn__P(tree_column), tree_column, 1, "gtk_tree_view_column_get_tree_view", "GtkTreeViewColumn*");
+  return(C_TO_XEN_GtkWidget_(gtk_tree_view_column_get_tree_view(XEN_TO_C_GtkTreeViewColumn_(tree_column))));
+}
+
+static XEN gxg_gtk_tooltip_set_text(XEN tooltip, XEN text)
+{
+  #define H_gtk_tooltip_set_text "void gtk_tooltip_set_text(GtkTooltip* tooltip, gchar* text)"
+  XEN_ASSERT_TYPE(XEN_GtkTooltip__P(tooltip), tooltip, 1, "gtk_tooltip_set_text", "GtkTooltip*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(text), text, 2, "gtk_tooltip_set_text", "gchar*");
+  gtk_tooltip_set_text(XEN_TO_C_GtkTooltip_(tooltip), (const gchar*)XEN_TO_C_gchar_(text));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tree_view_convert_widget_to_tree_coords(XEN tree_view, XEN wx, XEN wy, XEN ignore_tx, XEN ignore_ty)
+{
+  #define H_gtk_tree_view_convert_widget_to_tree_coords "void gtk_tree_view_convert_widget_to_tree_coords(GtkTreeView* tree_view, \
+gint wx, gint wy, gint* [tx], gint* [ty])"
+  gint ref_tx;
+  gint ref_ty;
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_convert_widget_to_tree_coords", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_gint_P(wx), wx, 2, "gtk_tree_view_convert_widget_to_tree_coords", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(wy), wy, 3, "gtk_tree_view_convert_widget_to_tree_coords", "gint");
+  gtk_tree_view_convert_widget_to_tree_coords(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_gint(wx), XEN_TO_C_gint(wy), &ref_tx, 
+                                              &ref_ty);
+  return(XEN_LIST_2(C_TO_XEN_gint(ref_tx), C_TO_XEN_gint(ref_ty)));
+}
+
+static XEN gxg_gtk_tree_view_convert_tree_to_widget_coords(XEN tree_view, XEN tx, XEN ty, XEN ignore_wx, XEN ignore_wy)
+{
+  #define H_gtk_tree_view_convert_tree_to_widget_coords "void gtk_tree_view_convert_tree_to_widget_coords(GtkTreeView* tree_view, \
+gint tx, gint ty, gint* [wx], gint* [wy])"
+  gint ref_wx;
+  gint ref_wy;
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_convert_tree_to_widget_coords", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_gint_P(tx), tx, 2, "gtk_tree_view_convert_tree_to_widget_coords", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(ty), ty, 3, "gtk_tree_view_convert_tree_to_widget_coords", "gint");
+  gtk_tree_view_convert_tree_to_widget_coords(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_gint(tx), XEN_TO_C_gint(ty), &ref_wx, 
+                                              &ref_wy);
+  return(XEN_LIST_2(C_TO_XEN_gint(ref_wx), C_TO_XEN_gint(ref_wy)));
+}
+
+static XEN gxg_gtk_tree_view_convert_widget_to_bin_window_coords(XEN tree_view, XEN wx, XEN wy, XEN ignore_bx, XEN ignore_by)
+{
+  #define H_gtk_tree_view_convert_widget_to_bin_window_coords "void gtk_tree_view_convert_widget_to_bin_window_coords(GtkTreeView* tree_view, \
+gint wx, gint wy, gint* [bx], gint* [by])"
+  gint ref_bx;
+  gint ref_by;
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_convert_widget_to_bin_window_coords", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_gint_P(wx), wx, 2, "gtk_tree_view_convert_widget_to_bin_window_coords", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(wy), wy, 3, "gtk_tree_view_convert_widget_to_bin_window_coords", "gint");
+  gtk_tree_view_convert_widget_to_bin_window_coords(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_gint(wx), XEN_TO_C_gint(wy), 
+                                                    &ref_bx, &ref_by);
+  return(XEN_LIST_2(C_TO_XEN_gint(ref_bx), C_TO_XEN_gint(ref_by)));
+}
+
+static XEN gxg_gtk_tree_view_convert_bin_window_to_widget_coords(XEN tree_view, XEN bx, XEN by, XEN ignore_wx, XEN ignore_wy)
+{
+  #define H_gtk_tree_view_convert_bin_window_to_widget_coords "void gtk_tree_view_convert_bin_window_to_widget_coords(GtkTreeView* tree_view, \
+gint bx, gint by, gint* [wx], gint* [wy])"
+  gint ref_wx;
+  gint ref_wy;
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_convert_bin_window_to_widget_coords", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_gint_P(bx), bx, 2, "gtk_tree_view_convert_bin_window_to_widget_coords", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(by), by, 3, "gtk_tree_view_convert_bin_window_to_widget_coords", "gint");
+  gtk_tree_view_convert_bin_window_to_widget_coords(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_gint(bx), XEN_TO_C_gint(by), 
+                                                    &ref_wx, &ref_wy);
+  return(XEN_LIST_2(C_TO_XEN_gint(ref_wx), C_TO_XEN_gint(ref_wy)));
+}
+
+static XEN gxg_gtk_tree_view_convert_tree_to_bin_window_coords(XEN tree_view, XEN tx, XEN ty, XEN ignore_bx, XEN ignore_by)
+{
+  #define H_gtk_tree_view_convert_tree_to_bin_window_coords "void gtk_tree_view_convert_tree_to_bin_window_coords(GtkTreeView* tree_view, \
+gint tx, gint ty, gint* [bx], gint* [by])"
+  gint ref_bx;
+  gint ref_by;
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_convert_tree_to_bin_window_coords", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_gint_P(tx), tx, 2, "gtk_tree_view_convert_tree_to_bin_window_coords", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(ty), ty, 3, "gtk_tree_view_convert_tree_to_bin_window_coords", "gint");
+  gtk_tree_view_convert_tree_to_bin_window_coords(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_gint(tx), XEN_TO_C_gint(ty), 
+                                                  &ref_bx, &ref_by);
+  return(XEN_LIST_2(C_TO_XEN_gint(ref_bx), C_TO_XEN_gint(ref_by)));
+}
+
+static XEN gxg_gtk_tree_view_convert_bin_window_to_tree_coords(XEN tree_view, XEN bx, XEN by, XEN ignore_tx, XEN ignore_ty)
+{
+  #define H_gtk_tree_view_convert_bin_window_to_tree_coords "void gtk_tree_view_convert_bin_window_to_tree_coords(GtkTreeView* tree_view, \
+gint bx, gint by, gint* [tx], gint* [ty])"
+  gint ref_tx;
+  gint ref_ty;
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_convert_bin_window_to_tree_coords", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_gint_P(bx), bx, 2, "gtk_tree_view_convert_bin_window_to_tree_coords", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(by), by, 3, "gtk_tree_view_convert_bin_window_to_tree_coords", "gint");
+  gtk_tree_view_convert_bin_window_to_tree_coords(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_gint(bx), XEN_TO_C_gint(by), 
+                                                  &ref_tx, &ref_ty);
+  return(XEN_LIST_2(C_TO_XEN_gint(ref_tx), C_TO_XEN_gint(ref_ty)));
+}
+
+static XEN gxg_gtk_widget_modify_cursor(XEN widget, XEN primary, XEN secondary)
+{
+  #define H_gtk_widget_modify_cursor "void gtk_widget_modify_cursor(GtkWidget* widget, GdkColor* primary, \
+GdkColor* secondary)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_modify_cursor", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(primary), primary, 2, "gtk_widget_modify_cursor", "GdkColor*");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(secondary), secondary, 3, "gtk_widget_modify_cursor", "GdkColor*");
+  gtk_widget_modify_cursor(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GdkColor_(primary), XEN_TO_C_GdkColor_(secondary));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_set_tooltip_text(XEN widget, XEN text)
+{
+  #define H_gtk_widget_set_tooltip_text "void gtk_widget_set_tooltip_text(GtkWidget* widget, gchar* text)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_set_tooltip_text", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(text), text, 2, "gtk_widget_set_tooltip_text", "gchar*");
+  gtk_widget_set_tooltip_text(XEN_TO_C_GtkWidget_(widget), (const gchar*)XEN_TO_C_gchar_(text));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_get_tooltip_text(XEN widget)
+{
+  #define H_gtk_widget_get_tooltip_text "gchar* gtk_widget_get_tooltip_text(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_tooltip_text", "GtkWidget*");
+  return(C_TO_XEN_gchar_(gtk_widget_get_tooltip_text(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_widget_set_tooltip_markup(XEN widget, XEN markup)
+{
+  #define H_gtk_widget_set_tooltip_markup "void gtk_widget_set_tooltip_markup(GtkWidget* widget, gchar* markup)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_set_tooltip_markup", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(markup), markup, 2, "gtk_widget_set_tooltip_markup", "gchar*");
+  gtk_widget_set_tooltip_markup(XEN_TO_C_GtkWidget_(widget), (const gchar*)XEN_TO_C_gchar_(markup));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_get_tooltip_markup(XEN widget)
+{
+  #define H_gtk_widget_get_tooltip_markup "gchar* gtk_widget_get_tooltip_markup(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_tooltip_markup", "GtkWidget*");
+  return(C_TO_XEN_gchar_(gtk_widget_get_tooltip_markup(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_tree_view_is_rubber_banding_active(XEN tree_view)
+{
+  #define H_gtk_tree_view_is_rubber_banding_active "gboolean gtk_tree_view_is_rubber_banding_active(GtkTreeView* tree_view)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_is_rubber_banding_active", "GtkTreeView*");
+  return(C_TO_XEN_gboolean(gtk_tree_view_is_rubber_banding_active(XEN_TO_C_GtkTreeView_(tree_view))));
+}
+
+static XEN gxg_gtk_icon_view_convert_widget_to_bin_window_coords(XEN icon_view, XEN wx, XEN wy, XEN ignore_bx, XEN ignore_by)
+{
+  #define H_gtk_icon_view_convert_widget_to_bin_window_coords "void gtk_icon_view_convert_widget_to_bin_window_coords(GtkIconView* icon_view, \
+gint wx, gint wy, gint* [bx], gint* [by])"
+  gint ref_bx;
+  gint ref_by;
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_convert_widget_to_bin_window_coords", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_gint_P(wx), wx, 2, "gtk_icon_view_convert_widget_to_bin_window_coords", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(wy), wy, 3, "gtk_icon_view_convert_widget_to_bin_window_coords", "gint");
+  gtk_icon_view_convert_widget_to_bin_window_coords(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_gint(wx), XEN_TO_C_gint(wy), 
+                                                    &ref_bx, &ref_by);
+  return(XEN_LIST_2(C_TO_XEN_gint(ref_bx), C_TO_XEN_gint(ref_by)));
+}
+
+static XEN gxg_gtk_icon_view_set_tooltip_item(XEN icon_view, XEN tooltip, XEN path)
+{
+  #define H_gtk_icon_view_set_tooltip_item "void gtk_icon_view_set_tooltip_item(GtkIconView* icon_view, \
+GtkTooltip* tooltip, GtkTreePath* path)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_set_tooltip_item", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_GtkTooltip__P(tooltip), tooltip, 2, "gtk_icon_view_set_tooltip_item", "GtkTooltip*");
+  XEN_ASSERT_TYPE(XEN_GtkTreePath__P(path), path, 3, "gtk_icon_view_set_tooltip_item", "GtkTreePath*");
+  gtk_icon_view_set_tooltip_item(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_GtkTooltip_(tooltip), XEN_TO_C_GtkTreePath_(path));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_icon_view_set_tooltip_cell(XEN icon_view, XEN tooltip, XEN path, XEN cell)
+{
+  #define H_gtk_icon_view_set_tooltip_cell "void gtk_icon_view_set_tooltip_cell(GtkIconView* icon_view, \
+GtkTooltip* tooltip, GtkTreePath* path, GtkCellRenderer* cell)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_set_tooltip_cell", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_GtkTooltip__P(tooltip), tooltip, 2, "gtk_icon_view_set_tooltip_cell", "GtkTooltip*");
+  XEN_ASSERT_TYPE(XEN_GtkTreePath__P(path), path, 3, "gtk_icon_view_set_tooltip_cell", "GtkTreePath*");
+  XEN_ASSERT_TYPE(XEN_GtkCellRenderer__P(cell), cell, 4, "gtk_icon_view_set_tooltip_cell", "GtkCellRenderer*");
+  gtk_icon_view_set_tooltip_cell(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_GtkTooltip_(tooltip), XEN_TO_C_GtkTreePath_(path), 
+                                 XEN_TO_C_GtkCellRenderer_(cell));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_icon_view_get_tooltip_context(XEN icon_view, XEN ignore_x, XEN ignore_y, XEN keyboard_tip, XEN ignore_model, XEN ignore_path, XEN iter)
+{
+  #define H_gtk_icon_view_get_tooltip_context "gboolean gtk_icon_view_get_tooltip_context(GtkIconView* icon_view, \
+gint* [x], gint* [y], gboolean keyboard_tip, GtkTreeModel** [model], GtkTreePath** [path], GtkTreeIter* iter)"
+  gint ref_x;
+  gint ref_y;
+  GtkTreeModel* ref_model = NULL;
+  GtkTreePath* ref_path = NULL;
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_get_tooltip_context", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(keyboard_tip), keyboard_tip, 4, "gtk_icon_view_get_tooltip_context", "gboolean");
+  XEN_ASSERT_TYPE(XEN_GtkTreeIter__P(iter) || XEN_FALSE_P(iter), iter, 7, "gtk_icon_view_get_tooltip_context", "GtkTreeIter*");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(gtk_icon_view_get_tooltip_context(XEN_TO_C_GtkIconView_(icon_view), &ref_x, &ref_y, XEN_TO_C_gboolean(keyboard_tip), 
+                                                                 &ref_model, &ref_path, XEN_TO_C_GtkTreeIter_(iter)));
+    return(XEN_LIST_5(result, C_TO_XEN_gint(ref_x), C_TO_XEN_gint(ref_y), C_TO_XEN_GtkTreeModel_(ref_model), C_TO_XEN_GtkTreePath_(ref_path)));
+   }
+}
+
+static XEN gxg_gtk_icon_view_set_tooltip_column(XEN icon_view, XEN column)
+{
+  #define H_gtk_icon_view_set_tooltip_column "void gtk_icon_view_set_tooltip_column(GtkIconView* icon_view, \
+gint column)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_set_tooltip_column", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_gint_P(column), column, 2, "gtk_icon_view_set_tooltip_column", "gint");
+  gtk_icon_view_set_tooltip_column(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_gint(column));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_icon_view_get_tooltip_column(XEN icon_view )
+{
+  #define H_gtk_icon_view_get_tooltip_column "gint gtk_icon_view_get_tooltip_column(GtkIconView* icon_view, \
+)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view ), icon_view , 1, "gtk_icon_view_get_tooltip_column", "GtkIconView*");
+  return(C_TO_XEN_gint(gtk_icon_view_get_tooltip_column(XEN_TO_C_GtkIconView_(icon_view ))));
+}
+
+static XEN gxg_gtk_menu_tool_button_set_arrow_tooltip_text(XEN button, XEN text)
+{
+  #define H_gtk_menu_tool_button_set_arrow_tooltip_text "void gtk_menu_tool_button_set_arrow_tooltip_text(GtkMenuToolButton* button, \
+gchar* text)"
+  XEN_ASSERT_TYPE(XEN_GtkMenuToolButton__P(button), button, 1, "gtk_menu_tool_button_set_arrow_tooltip_text", "GtkMenuToolButton*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(text), text, 2, "gtk_menu_tool_button_set_arrow_tooltip_text", "gchar*");
+  gtk_menu_tool_button_set_arrow_tooltip_text(XEN_TO_C_GtkMenuToolButton_(button), (const gchar*)XEN_TO_C_gchar_(text));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_menu_tool_button_set_arrow_tooltip_markup(XEN button, XEN markup)
+{
+  #define H_gtk_menu_tool_button_set_arrow_tooltip_markup "void gtk_menu_tool_button_set_arrow_tooltip_markup(GtkMenuToolButton* button, \
+gchar* markup)"
+  XEN_ASSERT_TYPE(XEN_GtkMenuToolButton__P(button), button, 1, "gtk_menu_tool_button_set_arrow_tooltip_markup", "GtkMenuToolButton*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(markup), markup, 2, "gtk_menu_tool_button_set_arrow_tooltip_markup", "gchar*");
+  gtk_menu_tool_button_set_arrow_tooltip_markup(XEN_TO_C_GtkMenuToolButton_(button), (const gchar*)XEN_TO_C_gchar_(markup));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tool_item_set_tooltip_text(XEN tool_item, XEN text)
+{
+  #define H_gtk_tool_item_set_tooltip_text "void gtk_tool_item_set_tooltip_text(GtkToolItem* tool_item, \
+gchar* text)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItem__P(tool_item), tool_item, 1, "gtk_tool_item_set_tooltip_text", "GtkToolItem*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(text), text, 2, "gtk_tool_item_set_tooltip_text", "gchar*");
+  gtk_tool_item_set_tooltip_text(XEN_TO_C_GtkToolItem_(tool_item), (const gchar*)XEN_TO_C_gchar_(text));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tool_item_set_tooltip_markup(XEN tool_item, XEN markup)
+{
+  #define H_gtk_tool_item_set_tooltip_markup "void gtk_tool_item_set_tooltip_markup(GtkToolItem* tool_item, \
+gchar* markup)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItem__P(tool_item), tool_item, 1, "gtk_tool_item_set_tooltip_markup", "GtkToolItem*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(markup), markup, 2, "gtk_tool_item_set_tooltip_markup", "gchar*");
+  gtk_tool_item_set_tooltip_markup(XEN_TO_C_GtkToolItem_(tool_item), (const gchar*)XEN_TO_C_gchar_(markup));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tooltip_set_tip_area(XEN tooltip, XEN rect)
+{
+  #define H_gtk_tooltip_set_tip_area "void gtk_tooltip_set_tip_area(GtkTooltip* tooltip, GdkRectangle* rect)"
+  XEN_ASSERT_TYPE(XEN_GtkTooltip__P(tooltip), tooltip, 1, "gtk_tooltip_set_tip_area", "GtkTooltip*");
+  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(rect), rect, 2, "gtk_tooltip_set_tip_area", "GdkRectangle*");
+  gtk_tooltip_set_tip_area(XEN_TO_C_GtkTooltip_(tooltip), XEN_TO_C_GdkRectangle_(rect));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tree_view_set_tooltip_row(XEN tree_view, XEN tooltip, XEN path)
+{
+  #define H_gtk_tree_view_set_tooltip_row "void gtk_tree_view_set_tooltip_row(GtkTreeView* tree_view, \
+GtkTooltip* tooltip, GtkTreePath* path)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_set_tooltip_row", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_GtkTooltip__P(tooltip), tooltip, 2, "gtk_tree_view_set_tooltip_row", "GtkTooltip*");
+  XEN_ASSERT_TYPE(XEN_GtkTreePath__P(path), path, 3, "gtk_tree_view_set_tooltip_row", "GtkTreePath*");
+  gtk_tree_view_set_tooltip_row(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_GtkTooltip_(tooltip), XEN_TO_C_GtkTreePath_(path));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tree_view_set_tooltip_cell(XEN tree_view, XEN tooltip, XEN path, XEN column, XEN cell)
+{
+  #define H_gtk_tree_view_set_tooltip_cell "void gtk_tree_view_set_tooltip_cell(GtkTreeView* tree_view, \
+GtkTooltip* tooltip, GtkTreePath* path, GtkTreeViewColumn* column, GtkCellRenderer* cell)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_set_tooltip_cell", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_GtkTooltip__P(tooltip), tooltip, 2, "gtk_tree_view_set_tooltip_cell", "GtkTooltip*");
+  XEN_ASSERT_TYPE(XEN_GtkTreePath__P(path), path, 3, "gtk_tree_view_set_tooltip_cell", "GtkTreePath*");
+  XEN_ASSERT_TYPE(XEN_GtkTreeViewColumn__P(column), column, 4, "gtk_tree_view_set_tooltip_cell", "GtkTreeViewColumn*");
+  XEN_ASSERT_TYPE(XEN_GtkCellRenderer__P(cell), cell, 5, "gtk_tree_view_set_tooltip_cell", "GtkCellRenderer*");
+  gtk_tree_view_set_tooltip_cell(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_GtkTooltip_(tooltip), XEN_TO_C_GtkTreePath_(path), 
+                                 XEN_TO_C_GtkTreeViewColumn_(column), XEN_TO_C_GtkCellRenderer_(cell));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tree_view_get_tooltip_context(XEN tree_view, XEN ignore_x, XEN ignore_y, XEN keyboard_tip, XEN ignore_model, XEN ignore_path, XEN iter)
+{
+  #define H_gtk_tree_view_get_tooltip_context "gboolean gtk_tree_view_get_tooltip_context(GtkTreeView* tree_view, \
+gint* [x], gint* [y], gboolean keyboard_tip, GtkTreeModel** [model], GtkTreePath** [path], GtkTreeIter* iter)"
+  gint ref_x;
+  gint ref_y;
+  GtkTreeModel* ref_model = NULL;
+  GtkTreePath* ref_path = NULL;
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_get_tooltip_context", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(keyboard_tip), keyboard_tip, 4, "gtk_tree_view_get_tooltip_context", "gboolean");
+  XEN_ASSERT_TYPE(XEN_GtkTreeIter__P(iter) || XEN_FALSE_P(iter), iter, 7, "gtk_tree_view_get_tooltip_context", "GtkTreeIter*");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(gtk_tree_view_get_tooltip_context(XEN_TO_C_GtkTreeView_(tree_view), &ref_x, &ref_y, XEN_TO_C_gboolean(keyboard_tip), 
+                                                                 &ref_model, &ref_path, XEN_TO_C_GtkTreeIter_(iter)));
+    return(XEN_LIST_5(result, C_TO_XEN_gint(ref_x), C_TO_XEN_gint(ref_y), C_TO_XEN_GtkTreeModel_(ref_model), C_TO_XEN_GtkTreePath_(ref_path)));
+   }
+}
+
+static XEN gxg_gtk_tree_view_set_tooltip_column(XEN tree_view, XEN column)
+{
+  #define H_gtk_tree_view_set_tooltip_column "void gtk_tree_view_set_tooltip_column(GtkTreeView* tree_view, \
+gint column)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_set_tooltip_column", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_gint_P(column), column, 2, "gtk_tree_view_set_tooltip_column", "gint");
+  gtk_tree_view_set_tooltip_column(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_gint(column));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tree_view_get_tooltip_column(XEN tree_view )
+{
+  #define H_gtk_tree_view_get_tooltip_column "gint gtk_tree_view_get_tooltip_column(GtkTreeView* tree_view, \
+)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view ), tree_view , 1, "gtk_tree_view_get_tooltip_column", "GtkTreeView*");
+  return(C_TO_XEN_gint(gtk_tree_view_get_tooltip_column(XEN_TO_C_GtkTreeView_(tree_view ))));
+}
+
+static XEN gxg_gtk_widget_set_has_tooltip(XEN widget, XEN has_tooltip)
+{
+  #define H_gtk_widget_set_has_tooltip "void gtk_widget_set_has_tooltip(GtkWidget* widget, gboolean has_tooltip)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_set_has_tooltip", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(has_tooltip), has_tooltip, 2, "gtk_widget_set_has_tooltip", "gboolean");
+  gtk_widget_set_has_tooltip(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gboolean(has_tooltip));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_get_has_tooltip(XEN widget)
+{
+  #define H_gtk_widget_get_has_tooltip "gboolean gtk_widget_get_has_tooltip(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_has_tooltip", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_widget_get_has_tooltip(XEN_TO_C_GtkWidget_(widget))));
 }
 
 #endif
@@ -32116,7 +32416,6 @@ static XEN gxg_GTK_TEXT_TAG_TABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN
 static XEN gxg_GTK_TEXT_VIEW(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkTextView_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_TOGGLE_BUTTON(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkToggleButton_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_TOOLBAR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkToolbar_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_TOOLTIPS(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkTooltips_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_TREE_DRAG_SOURCE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkTreeDragSource_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_TREE_DRAG_DEST(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkTreeDragDest_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_TREE_MODEL(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkTreeModel_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -32231,6 +32530,10 @@ static XEN gxg_GTK_PRINT_OPERATION_PREVIEW(XEN obj) {return((WRAPPED_OBJECT_P(ob
 static XEN gxg_GTK_PRINT_SETTINGS(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkPrintSettings_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
 
+#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
+static XEN gxg_GTK_TOOLTIP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkTooltip_"), XEN_CADR(obj)) : XEN_FALSE);}
+#endif
+
 static XEN gxg_GDK_IS_COLORMAP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_COLORMAP((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_DRAG_CONTEXT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_DRAG_CONTEXT((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_DRAWABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_DRAWABLE((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
@@ -32334,7 +32637,6 @@ static XEN gxg_GTK_IS_TEXT_TAG_TABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_O
 static XEN gxg_GTK_IS_TEXT_VIEW(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TEXT_VIEW((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_TOGGLE_BUTTON(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TOGGLE_BUTTON((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_TOOLBAR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TOOLBAR((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_TOOLTIPS(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TOOLTIPS((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_TREE_DRAG_SOURCE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TREE_DRAG_SOURCE((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_TREE_DRAG_DEST(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TREE_DRAG_DEST((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_TREE_MODEL(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TREE_MODEL((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
@@ -32430,6 +32732,10 @@ static XEN gxg_GTK_IS_PRINT_CONTEXT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OB
 static XEN gxg_GTK_IS_PRINT_OPERATION(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_PRINT_OPERATION((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_PRINT_OPERATION_PREVIEW(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_PRINT_OPERATION_PREVIEW((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_PRINT_SETTINGS(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_PRINT_SETTINGS((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
+#endif
+
+#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
+static XEN gxg_GTK_IS_TOOLTIP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TOOLTIP((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 #endif
 
 
@@ -35365,12 +35671,6 @@ XEN_NARGIFY_1(gxg_gtk_toolbar_get_orientation_w, gxg_gtk_toolbar_get_orientation
 XEN_NARGIFY_1(gxg_gtk_toolbar_get_style_w, gxg_gtk_toolbar_get_style)
 XEN_NARGIFY_1(gxg_gtk_toolbar_get_icon_size_w, gxg_gtk_toolbar_get_icon_size)
 XEN_NARGIFY_1(gxg_gtk_toolbar_get_tooltips_w, gxg_gtk_toolbar_get_tooltips)
-XEN_NARGIFY_0(gxg_gtk_tooltips_new_w, gxg_gtk_tooltips_new)
-XEN_NARGIFY_1(gxg_gtk_tooltips_enable_w, gxg_gtk_tooltips_enable)
-XEN_NARGIFY_1(gxg_gtk_tooltips_disable_w, gxg_gtk_tooltips_disable)
-XEN_NARGIFY_4(gxg_gtk_tooltips_set_tip_w, gxg_gtk_tooltips_set_tip)
-XEN_NARGIFY_1(gxg_gtk_tooltips_data_get_w, gxg_gtk_tooltips_data_get)
-XEN_NARGIFY_1(gxg_gtk_tooltips_force_window_w, gxg_gtk_tooltips_force_window)
 XEN_NARGIFY_2(gxg_gtk_tree_drag_source_row_draggable_w, gxg_gtk_tree_drag_source_row_draggable)
 XEN_NARGIFY_2(gxg_gtk_tree_drag_source_drag_data_delete_w, gxg_gtk_tree_drag_source_drag_data_delete)
 XEN_NARGIFY_3(gxg_gtk_tree_drag_source_drag_data_get_w, gxg_gtk_tree_drag_source_drag_data_get)
@@ -36321,7 +36621,6 @@ XEN_NARGIFY_2(gxg_gtk_tool_item_set_homogeneous_w, gxg_gtk_tool_item_set_homogen
 XEN_NARGIFY_1(gxg_gtk_tool_item_get_homogeneous_w, gxg_gtk_tool_item_get_homogeneous)
 XEN_NARGIFY_2(gxg_gtk_tool_item_set_expand_w, gxg_gtk_tool_item_set_expand)
 XEN_NARGIFY_1(gxg_gtk_tool_item_get_expand_w, gxg_gtk_tool_item_get_expand)
-XEN_NARGIFY_4(gxg_gtk_tool_item_set_tooltip_w, gxg_gtk_tool_item_set_tooltip)
 XEN_NARGIFY_2(gxg_gtk_tool_item_set_use_drag_window_w, gxg_gtk_tool_item_set_use_drag_window)
 XEN_NARGIFY_1(gxg_gtk_tool_item_get_use_drag_window_w, gxg_gtk_tool_item_get_use_drag_window)
 XEN_NARGIFY_2(gxg_gtk_tool_item_set_visible_horizontal_w, gxg_gtk_tool_item_set_visible_horizontal)
@@ -36406,7 +36705,6 @@ XEN_NARGIFY_2(gxg_gtk_radio_menu_item_new_with_mnemonic_from_widget_w, gxg_gtk_r
 XEN_NARGIFY_2(gxg_gtk_radio_menu_item_new_with_label_from_widget_w, gxg_gtk_radio_menu_item_new_with_label_from_widget)
 XEN_NARGIFY_1(gxg_gtk_scale_get_layout_w, gxg_gtk_scale_get_layout)
 XEN_ARGIFY_3(gxg_gtk_scale_get_layout_offsets_w, gxg_gtk_scale_get_layout_offsets)
-XEN_ARGIFY_3(gxg_gtk_tooltips_get_info_from_tip_window_w, gxg_gtk_tooltips_get_info_from_tip_window)
 XEN_NARGIFY_0(gxg_gtk_combo_box_entry_new_text_w, gxg_gtk_combo_box_entry_new_text)
 XEN_NARGIFY_1(gxg_gtk_drag_source_get_target_list_w, gxg_gtk_drag_source_get_target_list)
 XEN_NARGIFY_2(gxg_gtk_drag_source_set_target_list_w, gxg_gtk_drag_source_set_target_list)
@@ -36553,7 +36851,6 @@ XEN_NARGIFY_2(gxg_gtk_menu_tool_button_new_w, gxg_gtk_menu_tool_button_new)
 XEN_NARGIFY_1(gxg_gtk_menu_tool_button_new_from_stock_w, gxg_gtk_menu_tool_button_new_from_stock)
 XEN_NARGIFY_2(gxg_gtk_menu_tool_button_set_menu_w, gxg_gtk_menu_tool_button_set_menu)
 XEN_NARGIFY_1(gxg_gtk_menu_tool_button_get_menu_w, gxg_gtk_menu_tool_button_get_menu)
-XEN_NARGIFY_4(gxg_gtk_menu_tool_button_set_arrow_tooltip_w, gxg_gtk_menu_tool_button_set_arrow_tooltip)
 XEN_NARGIFY_1(gxg_gdk_display_supports_clipboard_persistence_w, gxg_gdk_display_supports_clipboard_persistence)
 XEN_NARGIFY_1(gxg_gtk_about_dialog_get_logo_icon_name_w, gxg_gtk_about_dialog_get_logo_icon_name)
 XEN_NARGIFY_2(gxg_gtk_about_dialog_set_logo_icon_name_w, gxg_gtk_about_dialog_set_logo_icon_name)
@@ -37052,7 +37349,7 @@ XEN_NARGIFY_2(gxg_gdk_cairo_rectangle_w, gxg_gdk_cairo_rectangle)
 XEN_NARGIFY_2(gxg_gdk_cairo_region_w, gxg_gdk_cairo_region)
 #endif
 
-#if HAVE_GTK_WINDOW_GET_OPACITY
+#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 XEN_NARGIFY_1(gxg_gtk_about_dialog_get_program_name_w, gxg_gtk_about_dialog_get_program_name)
 XEN_NARGIFY_2(gxg_gtk_about_dialog_set_program_name_w, gxg_gtk_about_dialog_set_program_name)
 XEN_NARGIFY_2(gxg_gtk_notebook_set_group_w, gxg_gtk_notebook_set_group)
@@ -37100,6 +37397,42 @@ XEN_NARGIFY_1(gxg_gtk_widget_trigger_tooltip_query_w, gxg_gtk_widget_trigger_too
 XEN_NARGIFY_2(gxg_gtk_window_set_startup_id_w, gxg_gtk_window_set_startup_id)
 XEN_NARGIFY_2(gxg_gtk_window_set_opacity_w, gxg_gtk_window_set_opacity)
 XEN_NARGIFY_1(gxg_gtk_window_get_opacity_w, gxg_gtk_window_get_opacity)
+XEN_NARGIFY_1(gxg_gdk_display_supports_composite_w, gxg_gdk_display_supports_composite)
+XEN_NARGIFY_2(gxg_gdk_window_set_composited_w, gxg_gdk_window_set_composited)
+XEN_NARGIFY_3(gxg_gtk_text_buffer_add_mark_w, gxg_gtk_text_buffer_add_mark)
+XEN_NARGIFY_2(gxg_gtk_text_mark_new_w, gxg_gtk_text_mark_new)
+XEN_NARGIFY_1(gxg_gtk_tree_view_column_get_tree_view_w, gxg_gtk_tree_view_column_get_tree_view)
+XEN_NARGIFY_2(gxg_gtk_tooltip_set_text_w, gxg_gtk_tooltip_set_text)
+XEN_ARGIFY_5(gxg_gtk_tree_view_convert_widget_to_tree_coords_w, gxg_gtk_tree_view_convert_widget_to_tree_coords)
+XEN_ARGIFY_5(gxg_gtk_tree_view_convert_tree_to_widget_coords_w, gxg_gtk_tree_view_convert_tree_to_widget_coords)
+XEN_ARGIFY_5(gxg_gtk_tree_view_convert_widget_to_bin_window_coords_w, gxg_gtk_tree_view_convert_widget_to_bin_window_coords)
+XEN_ARGIFY_5(gxg_gtk_tree_view_convert_bin_window_to_widget_coords_w, gxg_gtk_tree_view_convert_bin_window_to_widget_coords)
+XEN_ARGIFY_5(gxg_gtk_tree_view_convert_tree_to_bin_window_coords_w, gxg_gtk_tree_view_convert_tree_to_bin_window_coords)
+XEN_ARGIFY_5(gxg_gtk_tree_view_convert_bin_window_to_tree_coords_w, gxg_gtk_tree_view_convert_bin_window_to_tree_coords)
+XEN_NARGIFY_3(gxg_gtk_widget_modify_cursor_w, gxg_gtk_widget_modify_cursor)
+XEN_NARGIFY_2(gxg_gtk_widget_set_tooltip_text_w, gxg_gtk_widget_set_tooltip_text)
+XEN_NARGIFY_1(gxg_gtk_widget_get_tooltip_text_w, gxg_gtk_widget_get_tooltip_text)
+XEN_NARGIFY_2(gxg_gtk_widget_set_tooltip_markup_w, gxg_gtk_widget_set_tooltip_markup)
+XEN_NARGIFY_1(gxg_gtk_widget_get_tooltip_markup_w, gxg_gtk_widget_get_tooltip_markup)
+XEN_NARGIFY_1(gxg_gtk_tree_view_is_rubber_banding_active_w, gxg_gtk_tree_view_is_rubber_banding_active)
+XEN_ARGIFY_5(gxg_gtk_icon_view_convert_widget_to_bin_window_coords_w, gxg_gtk_icon_view_convert_widget_to_bin_window_coords)
+XEN_NARGIFY_3(gxg_gtk_icon_view_set_tooltip_item_w, gxg_gtk_icon_view_set_tooltip_item)
+XEN_NARGIFY_4(gxg_gtk_icon_view_set_tooltip_cell_w, gxg_gtk_icon_view_set_tooltip_cell)
+XEN_ARGIFY_7(gxg_gtk_icon_view_get_tooltip_context_w, gxg_gtk_icon_view_get_tooltip_context)
+XEN_NARGIFY_2(gxg_gtk_icon_view_set_tooltip_column_w, gxg_gtk_icon_view_set_tooltip_column)
+XEN_NARGIFY_1(gxg_gtk_icon_view_get_tooltip_column_w, gxg_gtk_icon_view_get_tooltip_column)
+XEN_NARGIFY_2(gxg_gtk_menu_tool_button_set_arrow_tooltip_text_w, gxg_gtk_menu_tool_button_set_arrow_tooltip_text)
+XEN_NARGIFY_2(gxg_gtk_menu_tool_button_set_arrow_tooltip_markup_w, gxg_gtk_menu_tool_button_set_arrow_tooltip_markup)
+XEN_NARGIFY_2(gxg_gtk_tool_item_set_tooltip_text_w, gxg_gtk_tool_item_set_tooltip_text)
+XEN_NARGIFY_2(gxg_gtk_tool_item_set_tooltip_markup_w, gxg_gtk_tool_item_set_tooltip_markup)
+XEN_NARGIFY_2(gxg_gtk_tooltip_set_tip_area_w, gxg_gtk_tooltip_set_tip_area)
+XEN_NARGIFY_3(gxg_gtk_tree_view_set_tooltip_row_w, gxg_gtk_tree_view_set_tooltip_row)
+XEN_NARGIFY_5(gxg_gtk_tree_view_set_tooltip_cell_w, gxg_gtk_tree_view_set_tooltip_cell)
+XEN_ARGIFY_7(gxg_gtk_tree_view_get_tooltip_context_w, gxg_gtk_tree_view_get_tooltip_context)
+XEN_NARGIFY_2(gxg_gtk_tree_view_set_tooltip_column_w, gxg_gtk_tree_view_set_tooltip_column)
+XEN_NARGIFY_1(gxg_gtk_tree_view_get_tooltip_column_w, gxg_gtk_tree_view_get_tooltip_column)
+XEN_NARGIFY_2(gxg_gtk_widget_set_has_tooltip_w, gxg_gtk_widget_set_has_tooltip)
+XEN_NARGIFY_1(gxg_gtk_widget_get_has_tooltip_w, gxg_gtk_widget_get_has_tooltip)
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -37427,7 +37760,6 @@ XEN_NARGIFY_1(gxg_GTK_TEXT_TAG_TABLE_w, gxg_GTK_TEXT_TAG_TABLE)
 XEN_NARGIFY_1(gxg_GTK_TEXT_VIEW_w, gxg_GTK_TEXT_VIEW)
 XEN_NARGIFY_1(gxg_GTK_TOGGLE_BUTTON_w, gxg_GTK_TOGGLE_BUTTON)
 XEN_NARGIFY_1(gxg_GTK_TOOLBAR_w, gxg_GTK_TOOLBAR)
-XEN_NARGIFY_1(gxg_GTK_TOOLTIPS_w, gxg_GTK_TOOLTIPS)
 XEN_NARGIFY_1(gxg_GTK_TREE_DRAG_SOURCE_w, gxg_GTK_TREE_DRAG_SOURCE)
 XEN_NARGIFY_1(gxg_GTK_TREE_DRAG_DEST_w, gxg_GTK_TREE_DRAG_DEST)
 XEN_NARGIFY_1(gxg_GTK_TREE_MODEL_w, gxg_GTK_TREE_MODEL)
@@ -37542,6 +37874,10 @@ XEN_NARGIFY_1(gxg_GTK_PRINT_OPERATION_PREVIEW_w, gxg_GTK_PRINT_OPERATION_PREVIEW
 XEN_NARGIFY_1(gxg_GTK_PRINT_SETTINGS_w, gxg_GTK_PRINT_SETTINGS)
 #endif
 
+#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
+XEN_NARGIFY_1(gxg_GTK_TOOLTIP_w, gxg_GTK_TOOLTIP)
+#endif
+
 XEN_NARGIFY_1(gxg_GDK_IS_COLORMAP_w, gxg_GDK_IS_COLORMAP)
 XEN_NARGIFY_1(gxg_GDK_IS_DRAG_CONTEXT_w, gxg_GDK_IS_DRAG_CONTEXT)
 XEN_NARGIFY_1(gxg_GDK_IS_DRAWABLE_w, gxg_GDK_IS_DRAWABLE)
@@ -37645,7 +37981,6 @@ XEN_NARGIFY_1(gxg_GTK_IS_TEXT_TAG_TABLE_w, gxg_GTK_IS_TEXT_TAG_TABLE)
 XEN_NARGIFY_1(gxg_GTK_IS_TEXT_VIEW_w, gxg_GTK_IS_TEXT_VIEW)
 XEN_NARGIFY_1(gxg_GTK_IS_TOGGLE_BUTTON_w, gxg_GTK_IS_TOGGLE_BUTTON)
 XEN_NARGIFY_1(gxg_GTK_IS_TOOLBAR_w, gxg_GTK_IS_TOOLBAR)
-XEN_NARGIFY_1(gxg_GTK_IS_TOOLTIPS_w, gxg_GTK_IS_TOOLTIPS)
 XEN_NARGIFY_1(gxg_GTK_IS_TREE_DRAG_SOURCE_w, gxg_GTK_IS_TREE_DRAG_SOURCE)
 XEN_NARGIFY_1(gxg_GTK_IS_TREE_DRAG_DEST_w, gxg_GTK_IS_TREE_DRAG_DEST)
 XEN_NARGIFY_1(gxg_GTK_IS_TREE_MODEL_w, gxg_GTK_IS_TREE_MODEL)
@@ -37741,6 +38076,10 @@ XEN_NARGIFY_1(gxg_GTK_IS_PRINT_CONTEXT_w, gxg_GTK_IS_PRINT_CONTEXT)
 XEN_NARGIFY_1(gxg_GTK_IS_PRINT_OPERATION_w, gxg_GTK_IS_PRINT_OPERATION)
 XEN_NARGIFY_1(gxg_GTK_IS_PRINT_OPERATION_PREVIEW_w, gxg_GTK_IS_PRINT_OPERATION_PREVIEW)
 XEN_NARGIFY_1(gxg_GTK_IS_PRINT_SETTINGS_w, gxg_GTK_IS_PRINT_SETTINGS)
+#endif
+
+#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
+XEN_NARGIFY_1(gxg_GTK_IS_TOOLTIP_w, gxg_GTK_IS_TOOLTIP)
 #endif
 
 XEN_NARGIFY_1(gxg_parent_w, gxg_parent)
@@ -39210,12 +39549,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_toolbar_get_style_w gxg_gtk_toolbar_get_style
 #define gxg_gtk_toolbar_get_icon_size_w gxg_gtk_toolbar_get_icon_size
 #define gxg_gtk_toolbar_get_tooltips_w gxg_gtk_toolbar_get_tooltips
-#define gxg_gtk_tooltips_new_w gxg_gtk_tooltips_new
-#define gxg_gtk_tooltips_enable_w gxg_gtk_tooltips_enable
-#define gxg_gtk_tooltips_disable_w gxg_gtk_tooltips_disable
-#define gxg_gtk_tooltips_set_tip_w gxg_gtk_tooltips_set_tip
-#define gxg_gtk_tooltips_data_get_w gxg_gtk_tooltips_data_get
-#define gxg_gtk_tooltips_force_window_w gxg_gtk_tooltips_force_window
 #define gxg_gtk_tree_drag_source_row_draggable_w gxg_gtk_tree_drag_source_row_draggable
 #define gxg_gtk_tree_drag_source_drag_data_delete_w gxg_gtk_tree_drag_source_drag_data_delete
 #define gxg_gtk_tree_drag_source_drag_data_get_w gxg_gtk_tree_drag_source_drag_data_get
@@ -40166,7 +40499,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_tool_item_get_homogeneous_w gxg_gtk_tool_item_get_homogeneous
 #define gxg_gtk_tool_item_set_expand_w gxg_gtk_tool_item_set_expand
 #define gxg_gtk_tool_item_get_expand_w gxg_gtk_tool_item_get_expand
-#define gxg_gtk_tool_item_set_tooltip_w gxg_gtk_tool_item_set_tooltip
 #define gxg_gtk_tool_item_set_use_drag_window_w gxg_gtk_tool_item_set_use_drag_window
 #define gxg_gtk_tool_item_get_use_drag_window_w gxg_gtk_tool_item_get_use_drag_window
 #define gxg_gtk_tool_item_set_visible_horizontal_w gxg_gtk_tool_item_set_visible_horizontal
@@ -40251,7 +40583,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_radio_menu_item_new_with_label_from_widget_w gxg_gtk_radio_menu_item_new_with_label_from_widget
 #define gxg_gtk_scale_get_layout_w gxg_gtk_scale_get_layout
 #define gxg_gtk_scale_get_layout_offsets_w gxg_gtk_scale_get_layout_offsets
-#define gxg_gtk_tooltips_get_info_from_tip_window_w gxg_gtk_tooltips_get_info_from_tip_window
 #define gxg_gtk_combo_box_entry_new_text_w gxg_gtk_combo_box_entry_new_text
 #define gxg_gtk_drag_source_get_target_list_w gxg_gtk_drag_source_get_target_list
 #define gxg_gtk_drag_source_set_target_list_w gxg_gtk_drag_source_set_target_list
@@ -40398,7 +40729,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_menu_tool_button_new_from_stock_w gxg_gtk_menu_tool_button_new_from_stock
 #define gxg_gtk_menu_tool_button_set_menu_w gxg_gtk_menu_tool_button_set_menu
 #define gxg_gtk_menu_tool_button_get_menu_w gxg_gtk_menu_tool_button_get_menu
-#define gxg_gtk_menu_tool_button_set_arrow_tooltip_w gxg_gtk_menu_tool_button_set_arrow_tooltip
 #define gxg_gdk_display_supports_clipboard_persistence_w gxg_gdk_display_supports_clipboard_persistence
 #define gxg_gtk_about_dialog_get_logo_icon_name_w gxg_gtk_about_dialog_get_logo_icon_name
 #define gxg_gtk_about_dialog_set_logo_icon_name_w gxg_gtk_about_dialog_set_logo_icon_name
@@ -40897,7 +41227,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_cairo_region_w gxg_gdk_cairo_region
 #endif
 
-#if HAVE_GTK_WINDOW_GET_OPACITY
+#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 #define gxg_gtk_about_dialog_get_program_name_w gxg_gtk_about_dialog_get_program_name
 #define gxg_gtk_about_dialog_set_program_name_w gxg_gtk_about_dialog_set_program_name
 #define gxg_gtk_notebook_set_group_w gxg_gtk_notebook_set_group
@@ -40945,6 +41275,42 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_window_set_startup_id_w gxg_gtk_window_set_startup_id
 #define gxg_gtk_window_set_opacity_w gxg_gtk_window_set_opacity
 #define gxg_gtk_window_get_opacity_w gxg_gtk_window_get_opacity
+#define gxg_gdk_display_supports_composite_w gxg_gdk_display_supports_composite
+#define gxg_gdk_window_set_composited_w gxg_gdk_window_set_composited
+#define gxg_gtk_text_buffer_add_mark_w gxg_gtk_text_buffer_add_mark
+#define gxg_gtk_text_mark_new_w gxg_gtk_text_mark_new
+#define gxg_gtk_tree_view_column_get_tree_view_w gxg_gtk_tree_view_column_get_tree_view
+#define gxg_gtk_tooltip_set_text_w gxg_gtk_tooltip_set_text
+#define gxg_gtk_tree_view_convert_widget_to_tree_coords_w gxg_gtk_tree_view_convert_widget_to_tree_coords
+#define gxg_gtk_tree_view_convert_tree_to_widget_coords_w gxg_gtk_tree_view_convert_tree_to_widget_coords
+#define gxg_gtk_tree_view_convert_widget_to_bin_window_coords_w gxg_gtk_tree_view_convert_widget_to_bin_window_coords
+#define gxg_gtk_tree_view_convert_bin_window_to_widget_coords_w gxg_gtk_tree_view_convert_bin_window_to_widget_coords
+#define gxg_gtk_tree_view_convert_tree_to_bin_window_coords_w gxg_gtk_tree_view_convert_tree_to_bin_window_coords
+#define gxg_gtk_tree_view_convert_bin_window_to_tree_coords_w gxg_gtk_tree_view_convert_bin_window_to_tree_coords
+#define gxg_gtk_widget_modify_cursor_w gxg_gtk_widget_modify_cursor
+#define gxg_gtk_widget_set_tooltip_text_w gxg_gtk_widget_set_tooltip_text
+#define gxg_gtk_widget_get_tooltip_text_w gxg_gtk_widget_get_tooltip_text
+#define gxg_gtk_widget_set_tooltip_markup_w gxg_gtk_widget_set_tooltip_markup
+#define gxg_gtk_widget_get_tooltip_markup_w gxg_gtk_widget_get_tooltip_markup
+#define gxg_gtk_tree_view_is_rubber_banding_active_w gxg_gtk_tree_view_is_rubber_banding_active
+#define gxg_gtk_icon_view_convert_widget_to_bin_window_coords_w gxg_gtk_icon_view_convert_widget_to_bin_window_coords
+#define gxg_gtk_icon_view_set_tooltip_item_w gxg_gtk_icon_view_set_tooltip_item
+#define gxg_gtk_icon_view_set_tooltip_cell_w gxg_gtk_icon_view_set_tooltip_cell
+#define gxg_gtk_icon_view_get_tooltip_context_w gxg_gtk_icon_view_get_tooltip_context
+#define gxg_gtk_icon_view_set_tooltip_column_w gxg_gtk_icon_view_set_tooltip_column
+#define gxg_gtk_icon_view_get_tooltip_column_w gxg_gtk_icon_view_get_tooltip_column
+#define gxg_gtk_menu_tool_button_set_arrow_tooltip_text_w gxg_gtk_menu_tool_button_set_arrow_tooltip_text
+#define gxg_gtk_menu_tool_button_set_arrow_tooltip_markup_w gxg_gtk_menu_tool_button_set_arrow_tooltip_markup
+#define gxg_gtk_tool_item_set_tooltip_text_w gxg_gtk_tool_item_set_tooltip_text
+#define gxg_gtk_tool_item_set_tooltip_markup_w gxg_gtk_tool_item_set_tooltip_markup
+#define gxg_gtk_tooltip_set_tip_area_w gxg_gtk_tooltip_set_tip_area
+#define gxg_gtk_tree_view_set_tooltip_row_w gxg_gtk_tree_view_set_tooltip_row
+#define gxg_gtk_tree_view_set_tooltip_cell_w gxg_gtk_tree_view_set_tooltip_cell
+#define gxg_gtk_tree_view_get_tooltip_context_w gxg_gtk_tree_view_get_tooltip_context
+#define gxg_gtk_tree_view_set_tooltip_column_w gxg_gtk_tree_view_set_tooltip_column
+#define gxg_gtk_tree_view_get_tooltip_column_w gxg_gtk_tree_view_get_tooltip_column
+#define gxg_gtk_widget_set_has_tooltip_w gxg_gtk_widget_set_has_tooltip
+#define gxg_gtk_widget_get_has_tooltip_w gxg_gtk_widget_get_has_tooltip
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -41272,7 +41638,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_TEXT_VIEW_w gxg_GTK_TEXT_VIEW
 #define gxg_GTK_TOGGLE_BUTTON_w gxg_GTK_TOGGLE_BUTTON
 #define gxg_GTK_TOOLBAR_w gxg_GTK_TOOLBAR
-#define gxg_GTK_TOOLTIPS_w gxg_GTK_TOOLTIPS
 #define gxg_GTK_TREE_DRAG_SOURCE_w gxg_GTK_TREE_DRAG_SOURCE
 #define gxg_GTK_TREE_DRAG_DEST_w gxg_GTK_TREE_DRAG_DEST
 #define gxg_GTK_TREE_MODEL_w gxg_GTK_TREE_MODEL
@@ -41387,6 +41752,10 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_PRINT_SETTINGS_w gxg_GTK_PRINT_SETTINGS
 #endif
 
+#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
+#define gxg_GTK_TOOLTIP_w gxg_GTK_TOOLTIP
+#endif
+
 #define gxg_GDK_IS_COLORMAP_w gxg_GDK_IS_COLORMAP
 #define gxg_GDK_IS_DRAG_CONTEXT_w gxg_GDK_IS_DRAG_CONTEXT
 #define gxg_GDK_IS_DRAWABLE_w gxg_GDK_IS_DRAWABLE
@@ -41490,7 +41859,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_TEXT_VIEW_w gxg_GTK_IS_TEXT_VIEW
 #define gxg_GTK_IS_TOGGLE_BUTTON_w gxg_GTK_IS_TOGGLE_BUTTON
 #define gxg_GTK_IS_TOOLBAR_w gxg_GTK_IS_TOOLBAR
-#define gxg_GTK_IS_TOOLTIPS_w gxg_GTK_IS_TOOLTIPS
 #define gxg_GTK_IS_TREE_DRAG_SOURCE_w gxg_GTK_IS_TREE_DRAG_SOURCE
 #define gxg_GTK_IS_TREE_DRAG_DEST_w gxg_GTK_IS_TREE_DRAG_DEST
 #define gxg_GTK_IS_TREE_MODEL_w gxg_GTK_IS_TREE_MODEL
@@ -41586,6 +41954,10 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_PRINT_OPERATION_w gxg_GTK_IS_PRINT_OPERATION
 #define gxg_GTK_IS_PRINT_OPERATION_PREVIEW_w gxg_GTK_IS_PRINT_OPERATION_PREVIEW
 #define gxg_GTK_IS_PRINT_SETTINGS_w gxg_GTK_IS_PRINT_SETTINGS
+#endif
+
+#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
+#define gxg_GTK_IS_TOOLTIP_w gxg_GTK_IS_TOOLTIP
 #endif
 
 #define gxg_parent_w gxg_parent
@@ -43062,12 +43434,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_toolbar_get_style, gxg_gtk_toolbar_get_style_w, 1, 0, 0, H_gtk_toolbar_get_style);
   XG_DEFINE_PROCEDURE(gtk_toolbar_get_icon_size, gxg_gtk_toolbar_get_icon_size_w, 1, 0, 0, H_gtk_toolbar_get_icon_size);
   XG_DEFINE_PROCEDURE(gtk_toolbar_get_tooltips, gxg_gtk_toolbar_get_tooltips_w, 1, 0, 0, H_gtk_toolbar_get_tooltips);
-  XG_DEFINE_PROCEDURE(gtk_tooltips_new, gxg_gtk_tooltips_new_w, 0, 0, 0, H_gtk_tooltips_new);
-  XG_DEFINE_PROCEDURE(gtk_tooltips_enable, gxg_gtk_tooltips_enable_w, 1, 0, 0, H_gtk_tooltips_enable);
-  XG_DEFINE_PROCEDURE(gtk_tooltips_disable, gxg_gtk_tooltips_disable_w, 1, 0, 0, H_gtk_tooltips_disable);
-  XG_DEFINE_PROCEDURE(gtk_tooltips_set_tip, gxg_gtk_tooltips_set_tip_w, 4, 0, 0, H_gtk_tooltips_set_tip);
-  XG_DEFINE_PROCEDURE(gtk_tooltips_data_get, gxg_gtk_tooltips_data_get_w, 1, 0, 0, H_gtk_tooltips_data_get);
-  XG_DEFINE_PROCEDURE(gtk_tooltips_force_window, gxg_gtk_tooltips_force_window_w, 1, 0, 0, H_gtk_tooltips_force_window);
   XG_DEFINE_PROCEDURE(gtk_tree_drag_source_row_draggable, gxg_gtk_tree_drag_source_row_draggable_w, 2, 0, 0, H_gtk_tree_drag_source_row_draggable);
   XG_DEFINE_PROCEDURE(gtk_tree_drag_source_drag_data_delete, gxg_gtk_tree_drag_source_drag_data_delete_w, 2, 0, 0, H_gtk_tree_drag_source_drag_data_delete);
   XG_DEFINE_PROCEDURE(gtk_tree_drag_source_drag_data_get, gxg_gtk_tree_drag_source_drag_data_get_w, 3, 0, 0, H_gtk_tree_drag_source_drag_data_get);
@@ -44018,7 +44384,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tool_item_get_homogeneous, gxg_gtk_tool_item_get_homogeneous_w, 1, 0, 0, H_gtk_tool_item_get_homogeneous);
   XG_DEFINE_PROCEDURE(gtk_tool_item_set_expand, gxg_gtk_tool_item_set_expand_w, 2, 0, 0, H_gtk_tool_item_set_expand);
   XG_DEFINE_PROCEDURE(gtk_tool_item_get_expand, gxg_gtk_tool_item_get_expand_w, 1, 0, 0, H_gtk_tool_item_get_expand);
-  XG_DEFINE_PROCEDURE(gtk_tool_item_set_tooltip, gxg_gtk_tool_item_set_tooltip_w, 4, 0, 0, H_gtk_tool_item_set_tooltip);
   XG_DEFINE_PROCEDURE(gtk_tool_item_set_use_drag_window, gxg_gtk_tool_item_set_use_drag_window_w, 2, 0, 0, H_gtk_tool_item_set_use_drag_window);
   XG_DEFINE_PROCEDURE(gtk_tool_item_get_use_drag_window, gxg_gtk_tool_item_get_use_drag_window_w, 1, 0, 0, H_gtk_tool_item_get_use_drag_window);
   XG_DEFINE_PROCEDURE(gtk_tool_item_set_visible_horizontal, gxg_gtk_tool_item_set_visible_horizontal_w, 2, 0, 0, H_gtk_tool_item_set_visible_horizontal);
@@ -44103,7 +44468,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_radio_menu_item_new_with_label_from_widget, gxg_gtk_radio_menu_item_new_with_label_from_widget_w, 2, 0, 0, H_gtk_radio_menu_item_new_with_label_from_widget);
   XG_DEFINE_PROCEDURE(gtk_scale_get_layout, gxg_gtk_scale_get_layout_w, 1, 0, 0, H_gtk_scale_get_layout);
   XG_DEFINE_PROCEDURE(gtk_scale_get_layout_offsets, gxg_gtk_scale_get_layout_offsets_w, 1, 2, 0, H_gtk_scale_get_layout_offsets);
-  XG_DEFINE_PROCEDURE(gtk_tooltips_get_info_from_tip_window, gxg_gtk_tooltips_get_info_from_tip_window_w, 1, 2, 0, H_gtk_tooltips_get_info_from_tip_window);
   XG_DEFINE_PROCEDURE(gtk_combo_box_entry_new_text, gxg_gtk_combo_box_entry_new_text_w, 0, 0, 0, H_gtk_combo_box_entry_new_text);
   XG_DEFINE_PROCEDURE(gtk_drag_source_get_target_list, gxg_gtk_drag_source_get_target_list_w, 1, 0, 0, H_gtk_drag_source_get_target_list);
   XG_DEFINE_PROCEDURE(gtk_drag_source_set_target_list, gxg_gtk_drag_source_set_target_list_w, 2, 0, 0, H_gtk_drag_source_set_target_list);
@@ -44250,7 +44614,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_menu_tool_button_new_from_stock, gxg_gtk_menu_tool_button_new_from_stock_w, 1, 0, 0, H_gtk_menu_tool_button_new_from_stock);
   XG_DEFINE_PROCEDURE(gtk_menu_tool_button_set_menu, gxg_gtk_menu_tool_button_set_menu_w, 2, 0, 0, H_gtk_menu_tool_button_set_menu);
   XG_DEFINE_PROCEDURE(gtk_menu_tool_button_get_menu, gxg_gtk_menu_tool_button_get_menu_w, 1, 0, 0, H_gtk_menu_tool_button_get_menu);
-  XG_DEFINE_PROCEDURE(gtk_menu_tool_button_set_arrow_tooltip, gxg_gtk_menu_tool_button_set_arrow_tooltip_w, 4, 0, 0, H_gtk_menu_tool_button_set_arrow_tooltip);
   XG_DEFINE_PROCEDURE(gdk_display_supports_clipboard_persistence, gxg_gdk_display_supports_clipboard_persistence_w, 1, 0, 0, H_gdk_display_supports_clipboard_persistence);
   XG_DEFINE_PROCEDURE(gtk_about_dialog_get_logo_icon_name, gxg_gtk_about_dialog_get_logo_icon_name_w, 1, 0, 0, H_gtk_about_dialog_get_logo_icon_name);
   XG_DEFINE_PROCEDURE(gtk_about_dialog_set_logo_icon_name, gxg_gtk_about_dialog_set_logo_icon_name_w, 2, 0, 0, H_gtk_about_dialog_set_logo_icon_name);
@@ -44749,7 +45112,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_cairo_region, gxg_gdk_cairo_region_w, 2, 0, 0, H_gdk_cairo_region);
 #endif
 
-#if HAVE_GTK_WINDOW_GET_OPACITY
+#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
   XG_DEFINE_PROCEDURE(gtk_about_dialog_get_program_name, gxg_gtk_about_dialog_get_program_name_w, 1, 0, 0, H_gtk_about_dialog_get_program_name);
   XG_DEFINE_PROCEDURE(gtk_about_dialog_set_program_name, gxg_gtk_about_dialog_set_program_name_w, 2, 0, 0, H_gtk_about_dialog_set_program_name);
   XG_DEFINE_PROCEDURE(gtk_notebook_set_group, gxg_gtk_notebook_set_group_w, 2, 0, 0, H_gtk_notebook_set_group);
@@ -44797,6 +45160,42 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_window_set_startup_id, gxg_gtk_window_set_startup_id_w, 2, 0, 0, H_gtk_window_set_startup_id);
   XG_DEFINE_PROCEDURE(gtk_window_set_opacity, gxg_gtk_window_set_opacity_w, 2, 0, 0, H_gtk_window_set_opacity);
   XG_DEFINE_PROCEDURE(gtk_window_get_opacity, gxg_gtk_window_get_opacity_w, 1, 0, 0, H_gtk_window_get_opacity);
+  XG_DEFINE_PROCEDURE(gdk_display_supports_composite, gxg_gdk_display_supports_composite_w, 1, 0, 0, H_gdk_display_supports_composite);
+  XG_DEFINE_PROCEDURE(gdk_window_set_composited, gxg_gdk_window_set_composited_w, 2, 0, 0, H_gdk_window_set_composited);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_add_mark, gxg_gtk_text_buffer_add_mark_w, 3, 0, 0, H_gtk_text_buffer_add_mark);
+  XG_DEFINE_PROCEDURE(gtk_text_mark_new, gxg_gtk_text_mark_new_w, 2, 0, 0, H_gtk_text_mark_new);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_tree_view, gxg_gtk_tree_view_column_get_tree_view_w, 1, 0, 0, H_gtk_tree_view_column_get_tree_view);
+  XG_DEFINE_PROCEDURE(gtk_tooltip_set_text, gxg_gtk_tooltip_set_text_w, 2, 0, 0, H_gtk_tooltip_set_text);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_convert_widget_to_tree_coords, gxg_gtk_tree_view_convert_widget_to_tree_coords_w, 3, 2, 0, H_gtk_tree_view_convert_widget_to_tree_coords);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_convert_tree_to_widget_coords, gxg_gtk_tree_view_convert_tree_to_widget_coords_w, 3, 2, 0, H_gtk_tree_view_convert_tree_to_widget_coords);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_convert_widget_to_bin_window_coords, gxg_gtk_tree_view_convert_widget_to_bin_window_coords_w, 3, 2, 0, H_gtk_tree_view_convert_widget_to_bin_window_coords);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_convert_bin_window_to_widget_coords, gxg_gtk_tree_view_convert_bin_window_to_widget_coords_w, 3, 2, 0, H_gtk_tree_view_convert_bin_window_to_widget_coords);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_convert_tree_to_bin_window_coords, gxg_gtk_tree_view_convert_tree_to_bin_window_coords_w, 3, 2, 0, H_gtk_tree_view_convert_tree_to_bin_window_coords);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_convert_bin_window_to_tree_coords, gxg_gtk_tree_view_convert_bin_window_to_tree_coords_w, 3, 2, 0, H_gtk_tree_view_convert_bin_window_to_tree_coords);
+  XG_DEFINE_PROCEDURE(gtk_widget_modify_cursor, gxg_gtk_widget_modify_cursor_w, 3, 0, 0, H_gtk_widget_modify_cursor);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_tooltip_text, gxg_gtk_widget_set_tooltip_text_w, 2, 0, 0, H_gtk_widget_set_tooltip_text);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_tooltip_text, gxg_gtk_widget_get_tooltip_text_w, 1, 0, 0, H_gtk_widget_get_tooltip_text);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_tooltip_markup, gxg_gtk_widget_set_tooltip_markup_w, 2, 0, 0, H_gtk_widget_set_tooltip_markup);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_tooltip_markup, gxg_gtk_widget_get_tooltip_markup_w, 1, 0, 0, H_gtk_widget_get_tooltip_markup);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_is_rubber_banding_active, gxg_gtk_tree_view_is_rubber_banding_active_w, 1, 0, 0, H_gtk_tree_view_is_rubber_banding_active);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_convert_widget_to_bin_window_coords, gxg_gtk_icon_view_convert_widget_to_bin_window_coords_w, 3, 2, 0, H_gtk_icon_view_convert_widget_to_bin_window_coords);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_set_tooltip_item, gxg_gtk_icon_view_set_tooltip_item_w, 3, 0, 0, H_gtk_icon_view_set_tooltip_item);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_set_tooltip_cell, gxg_gtk_icon_view_set_tooltip_cell_w, 4, 0, 0, H_gtk_icon_view_set_tooltip_cell);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_tooltip_context, gxg_gtk_icon_view_get_tooltip_context_w, 3, 4, 0, H_gtk_icon_view_get_tooltip_context);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_set_tooltip_column, gxg_gtk_icon_view_set_tooltip_column_w, 2, 0, 0, H_gtk_icon_view_set_tooltip_column);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_tooltip_column, gxg_gtk_icon_view_get_tooltip_column_w, 1, 0, 0, H_gtk_icon_view_get_tooltip_column);
+  XG_DEFINE_PROCEDURE(gtk_menu_tool_button_set_arrow_tooltip_text, gxg_gtk_menu_tool_button_set_arrow_tooltip_text_w, 2, 0, 0, H_gtk_menu_tool_button_set_arrow_tooltip_text);
+  XG_DEFINE_PROCEDURE(gtk_menu_tool_button_set_arrow_tooltip_markup, gxg_gtk_menu_tool_button_set_arrow_tooltip_markup_w, 2, 0, 0, H_gtk_menu_tool_button_set_arrow_tooltip_markup);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_set_tooltip_text, gxg_gtk_tool_item_set_tooltip_text_w, 2, 0, 0, H_gtk_tool_item_set_tooltip_text);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_set_tooltip_markup, gxg_gtk_tool_item_set_tooltip_markup_w, 2, 0, 0, H_gtk_tool_item_set_tooltip_markup);
+  XG_DEFINE_PROCEDURE(gtk_tooltip_set_tip_area, gxg_gtk_tooltip_set_tip_area_w, 2, 0, 0, H_gtk_tooltip_set_tip_area);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_tooltip_row, gxg_gtk_tree_view_set_tooltip_row_w, 3, 0, 0, H_gtk_tree_view_set_tooltip_row);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_tooltip_cell, gxg_gtk_tree_view_set_tooltip_cell_w, 5, 0, 0, H_gtk_tree_view_set_tooltip_cell);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_tooltip_context, gxg_gtk_tree_view_get_tooltip_context_w, 3, 4, 0, H_gtk_tree_view_get_tooltip_context);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_tooltip_column, gxg_gtk_tree_view_set_tooltip_column_w, 2, 0, 0, H_gtk_tree_view_set_tooltip_column);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_tooltip_column, gxg_gtk_tree_view_get_tooltip_column_w, 1, 0, 0, H_gtk_tree_view_get_tooltip_column);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_has_tooltip, gxg_gtk_widget_set_has_tooltip_w, 2, 0, 0, H_gtk_widget_set_has_tooltip);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_has_tooltip, gxg_gtk_widget_get_has_tooltip_w, 1, 0, 0, H_gtk_widget_get_has_tooltip);
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -45117,7 +45516,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_TEXT_VIEW, gxg_GTK_TEXT_VIEW_w, 1, 0, 0, "(GTK_TEXT_VIEW obj) casts obj to GTK_TEXT_VIEW");
   XG_DEFINE_PROCEDURE(GTK_TOGGLE_BUTTON, gxg_GTK_TOGGLE_BUTTON_w, 1, 0, 0, "(GTK_TOGGLE_BUTTON obj) casts obj to GTK_TOGGLE_BUTTON");
   XG_DEFINE_PROCEDURE(GTK_TOOLBAR, gxg_GTK_TOOLBAR_w, 1, 0, 0, "(GTK_TOOLBAR obj) casts obj to GTK_TOOLBAR");
-  XG_DEFINE_PROCEDURE(GTK_TOOLTIPS, gxg_GTK_TOOLTIPS_w, 1, 0, 0, "(GTK_TOOLTIPS obj) casts obj to GTK_TOOLTIPS");
   XG_DEFINE_PROCEDURE(GTK_TREE_DRAG_SOURCE, gxg_GTK_TREE_DRAG_SOURCE_w, 1, 0, 0, "(GTK_TREE_DRAG_SOURCE obj) casts obj to GTK_TREE_DRAG_SOURCE");
   XG_DEFINE_PROCEDURE(GTK_TREE_DRAG_DEST, gxg_GTK_TREE_DRAG_DEST_w, 1, 0, 0, "(GTK_TREE_DRAG_DEST obj) casts obj to GTK_TREE_DRAG_DEST");
   XG_DEFINE_PROCEDURE(GTK_TREE_MODEL, gxg_GTK_TREE_MODEL_w, 1, 0, 0, "(GTK_TREE_MODEL obj) casts obj to GTK_TREE_MODEL");
@@ -45232,6 +45630,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_PRINT_SETTINGS, gxg_GTK_PRINT_SETTINGS_w, 1, 0, 0, "(GTK_PRINT_SETTINGS obj) casts obj to GTK_PRINT_SETTINGS");
 #endif
 
+#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
+  XG_DEFINE_PROCEDURE(GTK_TOOLTIP, gxg_GTK_TOOLTIP_w, 1, 0, 0, "(GTK_TOOLTIP obj) casts obj to GTK_TOOLTIP");
+#endif
+
   XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints_w, 1, 0, 0, H_freeGdkPoints);
@@ -45342,7 +45744,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_TEXT_VIEW, gxg_GTK_IS_TEXT_VIEW_w, 1, 0, 0, "(GTK_IS_TEXT_VIEW obj): #t if obj is a GTK_IS_TEXT_VIEW");
   XG_DEFINE_PROCEDURE(GTK_IS_TOGGLE_BUTTON, gxg_GTK_IS_TOGGLE_BUTTON_w, 1, 0, 0, "(GTK_IS_TOGGLE_BUTTON obj): #t if obj is a GTK_IS_TOGGLE_BUTTON");
   XG_DEFINE_PROCEDURE(GTK_IS_TOOLBAR, gxg_GTK_IS_TOOLBAR_w, 1, 0, 0, "(GTK_IS_TOOLBAR obj): #t if obj is a GTK_IS_TOOLBAR");
-  XG_DEFINE_PROCEDURE(GTK_IS_TOOLTIPS, gxg_GTK_IS_TOOLTIPS_w, 1, 0, 0, "(GTK_IS_TOOLTIPS obj): #t if obj is a GTK_IS_TOOLTIPS");
   XG_DEFINE_PROCEDURE(GTK_IS_TREE_DRAG_SOURCE, gxg_GTK_IS_TREE_DRAG_SOURCE_w, 1, 0, 0, "(GTK_IS_TREE_DRAG_SOURCE obj): #t if obj is a GTK_IS_TREE_DRAG_SOURCE");
   XG_DEFINE_PROCEDURE(GTK_IS_TREE_DRAG_DEST, gxg_GTK_IS_TREE_DRAG_DEST_w, 1, 0, 0, "(GTK_IS_TREE_DRAG_DEST obj): #t if obj is a GTK_IS_TREE_DRAG_DEST");
   XG_DEFINE_PROCEDURE(GTK_IS_TREE_MODEL, gxg_GTK_IS_TREE_MODEL_w, 1, 0, 0, "(GTK_IS_TREE_MODEL obj): #t if obj is a GTK_IS_TREE_MODEL");
@@ -45438,6 +45839,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_PRINT_OPERATION, gxg_GTK_IS_PRINT_OPERATION_w, 1, 0, 0, "(GTK_IS_PRINT_OPERATION obj): #t if obj is a GTK_IS_PRINT_OPERATION");
   XG_DEFINE_PROCEDURE(GTK_IS_PRINT_OPERATION_PREVIEW, gxg_GTK_IS_PRINT_OPERATION_PREVIEW_w, 1, 0, 0, "(GTK_IS_PRINT_OPERATION_PREVIEW obj): #t if obj is a GTK_IS_PRINT_OPERATION_PREVIEW");
   XG_DEFINE_PROCEDURE(GTK_IS_PRINT_SETTINGS, gxg_GTK_IS_PRINT_SETTINGS_w, 1, 0, 0, "(GTK_IS_PRINT_SETTINGS obj): #t if obj is a GTK_IS_PRINT_SETTINGS");
+#endif
+
+#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
+  XG_DEFINE_PROCEDURE(GTK_IS_TOOLTIP, gxg_GTK_IS_TOOLTIP_w, 1, 0, 0, "(GTK_IS_TOOLTIP obj): #t if obj is a GTK_IS_TOOLTIP");
 #endif
 
 }
@@ -46796,7 +47201,7 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_PRINT_ERROR_NOMEM);
 #endif
 
-#if HAVE_GTK_WINDOW_GET_OPACITY
+#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
   DEFINE_INTEGER(GTK_BUTTONBOX_CENTER);
   DEFINE_INTEGER(GTK_ICON_LOOKUP_GENERIC_FALLBACK);
   DEFINE_INTEGER(GTK_PRINT_ERROR_INVALID_FILE);
@@ -47026,7 +47431,6 @@ static void define_integers(void)
   DEFINE_ULONG(GTK_TYPE_TEXT_VIEW);
   DEFINE_ULONG(GTK_TYPE_TOGGLE_BUTTON);
   DEFINE_ULONG(GTK_TYPE_TOOLBAR);
-  DEFINE_ULONG(GTK_TYPE_TOOLTIPS);
   DEFINE_ULONG(GTK_TYPE_TREE_DRAG_SOURCE);
   DEFINE_ULONG(GTK_TYPE_TREE_DRAG_DEST);
   DEFINE_ULONG(GTK_TYPE_TREE_MODEL);
@@ -47192,6 +47596,10 @@ static void define_integers(void)
   DEFINE_ULONG(GTK_TYPE_STATUS_ICON);
   DEFINE_ULONG(GTK_TYPE_RECENT_MANAGER);
   DEFINE_ULONG(GTK_TYPE_RECENT_FILTER);
+#endif
+
+#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
+  DEFINE_ULONG(GTK_TYPE_TOOLTIP);
 #endif
 
 }
@@ -47376,6 +47784,10 @@ static void define_strings(void)
   DEFINE_STRING(GTK_PRINT_SETTINGS_OUTPUT_URI);
 #endif
 
+#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
+  DEFINE_STRING(GTK_STOCK_DISCARD);
+#endif
+
 }
 
 /* -------------------------------- initialization -------------------------------- */
@@ -47395,7 +47807,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("05-Jul-07"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-Jul-07"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

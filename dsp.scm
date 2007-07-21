@@ -2112,8 +2112,6 @@ a running window of the last 'size' inputs, returning the euclidean length of th
     (/ num den)))
 
 
-;;; TODO: doc/index these [smoothing-filter, weighted-moving-average, exponentially-weighted-moving-average]
-	 
 
 
 ;;; ----------------

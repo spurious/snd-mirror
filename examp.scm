@@ -229,7 +229,6 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	     (ilen (+ 1 (- rs ls)))
 	     (pow2 (inexact->exact (ceiling (/ (log ilen) (log 2)))))
 	     (fftlen (inexact->exact (expt 2 pow2)))
-	     (fftlen2 (/ fftlen 2))
 	     (fftscale (/ 1.0 fftlen))
 	     (rl1 (channel->vct ls fftlen snd 0))
 	     (rl2 (channel->vct ls fftlen snd 1))

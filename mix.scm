@@ -576,3 +576,21 @@ starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all c
     (mus-sound-close-output fd (* 4 (vct-length v)))
     (pan-mix temp-file beg pan snd chn #t)))
 
+
+
+;;; -------- delay-channel-mixes
+;;; TODO: snd-test delay-channel-mixes
+
+(define* (delay-channel-mixes beg dur :optional snd chn)
+  "(delay-channel-mixes beg dur :optional snd chn) adds dur (which can be negative) to the \
+begin time of each mix that starts after beg in the given channel"
+  (for-each
+   (lambda (m)
+     (if (>= (mix-position m) beg)
+	 (set! (mix-position m) (max 0 (+ (mix-position m) dur)))))
+   (mixes (or snd 
+	      (selected-sound) 
+	      (car (sounds))) 
+	  (or chn 0))))
+
+

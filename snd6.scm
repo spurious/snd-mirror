@@ -108,10 +108,7 @@
   ;; old mus-sound-seek = lseek fd data-location+loc-as-16-in-bytes seek-set
   ;; but there's no direct way to get the data-format and chans from the file descriptor
   ;; so in this replacement, there are two added args
-  (let* ((datum-bytes (mus-bytes-per-sample format))
-	 ;; (fixup-loc (inexact->exact (floor (/ (* loc datum-bytes) (* 2 chans)))))
-	 )
-    (mus-sound-seek-frame fd loc)))
+  (mus-sound-seek-frame fd loc))
 
 (if (not (provided? 'snd-mix.scm)) (load-from-path "mix.scm"))
 

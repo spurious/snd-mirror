@@ -1,5 +1,3 @@
-;;; -*- syntax: common-lisp; package: user; base: 10; mode: lisp -*-
-;;;
 ;;; index -- read clm.html (or whatever) and make a column-ized index
 ;;; html-check -- look for dangling hrefs
 
@@ -7,7 +5,7 @@
 
 ;;; (index '("cmn.html") "test.html" 4 nil nil nil t)
 
-;;; (index '("extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "clm.html") "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t)
+;;; (index '("extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "sndclm.html") "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t)
 ;;;   use (make-index)
 
 ;;; for snd.html table, see snd-index.cl (snd-index "test.html")
@@ -373,7 +371,7 @@
 			      (warn "<!-- INDEX but no --> for ~A" dline)
 			    (when (or (not no-bold)
 				      (and with-scm
-					   (not (string= "clm.html" file))))
+					   (not (string= "sndclm.html" file))))
 			      (setf current-general g)
 			      (setf (aref generals g) (my-subseq dline (+ compos 11) epos))
 			      (setf (aref gfiles g) file)
@@ -385,7 +383,7 @@
 				(warn "<!-- main-index but no --> for ~A" dline)
 			      (when (or (not no-bold)
 					(and with-scm
-					     (not (string= "clm.html" file))))
+					     (not (string= "sndclm.html" file))))
 				(setf (aref names n) (my-subseq dline (+ indpos 16) epos))
 				(setf (aref files n) file)
 				(incf n))))
@@ -576,9 +574,9 @@
 ;;; --------------------------------------------------------------------------------
 ;;; html-check looks for dangling references etc
 
-(defvar array-size 8192)
+(defvar array-size (* 4 8192))
 
-;;; (html-check '("sndlib.html" "snd.html" "clm.html" "extsnd.html" "grfsnd.html" "sndscm.html" "fm.html" "balance.html" "snd-contents.html"))
+;;; (html-check '("sndlib.html" "snd.html" "sndclm.html" "extsnd.html" "grfsnd.html" "sndscm.html" "fm.html" "balance.html" "snd-contents.html"))
 
 (defun html-check (files)
   (let ((name 0)
@@ -860,13 +858,13 @@
     (list names hrefs)))
 
 (defun check-all ()
-  (html-check '("sndlib.html" "snd.html" "clm.html" "extsnd.html" "grfsnd.html"
+  (html-check '("sndlib.html" "snd.html" "clm.html" "extsnd.html" "grfsnd.html" "sndclm.html"
 		"sndscm.html" "fm.html" "balance.html" "quick.html"
 		"xen.html" "libxm.html" "cmn.html" "index.html")))
 
 (defun make-index ()
   (check-all)
-  (index '("snd.html" "extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "clm.html" "fm.html" "quick.html")
+  (index '("snd.html" "extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "sndclm.html" "fm.html" "quick.html")
 	 "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t))
 
 

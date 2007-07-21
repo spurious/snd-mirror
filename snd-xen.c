@@ -41,7 +41,8 @@
  * rscheme:     (Scheme) serious name-space problems
  * s-lang:      (C)      probably doable -- would need to wrap everything in my own struct, and 7 args max is too few.
  * squirrel:    ()       c++, like lua in call sequence
- * stklos:      (Scheme) doesn't build libstklos yet, and has many non-unique names in its headers (checked 0.82)
+ * stklos:      (Scheme) doesn't build libstklos yet, and has many non-unique names in its headers (checked 0.96)
+ *                         this is probably do-able once stklos has a library and some sort of eval-c-string function.
  */
 
 
@@ -206,7 +207,7 @@ XEN snd_protected_at(int loc)
 
 static char *last_file_loaded = NULL;
 
-void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *data) /* currently could be local */
+void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *data)
 {
   ss->xen_error_handler = handler;
   ss->xen_error_data = data;

@@ -4,7 +4,7 @@
     (begin
       (if (not (provided? 'snd-snd7.scm)) (load-from-path "snd7.scm"))           ; backward-mix
       (if (not (provided? 'snd-play.scm)) (load-from-path "play.scm"))           ; play-until-c-g
-      (if (not (provided? 'snd-snd-motif.scm))                                   ; add-main-pane, add-tooltip (etc)
+      (if (not (provided? 'snd-snd-motif.scm))                                   ; add-main-pane
 	  (load-from-path "snd-motif.scm"))))
 
 (if (provided? 'snd-motif)
@@ -1241,8 +1241,8 @@
 	
 (if (provided? 'snd-gtk)
     (let* ((main-pane (caddr (main-widgets)))                       ; MAIN_PANE = top level vbox = (caddr (main-widgets))
-	   (toolbar (gtk_toolbar_new))
-	   (tips (gtk_tooltips_new)))
+	   (toolbar (gtk_toolbar_new)))
+
       (gtk_box_pack_start (GTK_BOX main-pane) toolbar #f #f 0)
       (gtk_box_reorder_child (GTK_BOX main-pane) toolbar 1)         ; put toolbar just under the top level menubar
       (gtk_widget_show toolbar)
@@ -1251,43 +1251,36 @@
 	(gtk_toolbar_insert (GTK_TOOLBAR toolbar) open-button -1) ; -1 => put at end
 ;	(gtk_tool_item_set_is_important (GTK_TOOL_ITEM open-button) #f)
 	(gtk_widget_show (GTK_WIDGET open-button))
-	(gtk_tool_item_set_tooltip (GTK_TOOL_ITEM open-button) tips "open sound" #f)
 	(g_signal_connect open-button "clicked" (lambda (w data) (open-file-dialog))))
 	  
       (let ((close-button (gtk_tool_button_new_from_stock GTK_STOCK_CLOSE)))
 	(gtk_toolbar_insert (GTK_TOOLBAR toolbar) close-button -1)
 	(gtk_widget_show (GTK_WIDGET close-button))
-	(gtk_tool_item_set_tooltip (GTK_TOOL_ITEM close-button) tips "close selected sound" #f)
 	(g_signal_connect close-button "clicked" (lambda (w data) (if (not (null? (sounds))) (close-sound)))))
 	  
       (let ((save-as-button (gtk_tool_button_new_from_stock GTK_STOCK_SAVE_AS)))
 	(gtk_toolbar_insert (GTK_TOOLBAR toolbar) save-as-button -1)
 	(gtk_widget_show (GTK_WIDGET save-as-button))
-	(gtk_tool_item_set_tooltip (GTK_TOOL_ITEM save-as-button) tips "save selected sound in new file" #f)
 	(g_signal_connect save-as-button "clicked" (lambda (w data) (if (not (null? (sounds))) (save-sound-dialog)))))
 
       (let ((undo-button (gtk_tool_button_new_from_stock GTK_STOCK_UNDO)))
 	(gtk_toolbar_insert (GTK_TOOLBAR toolbar) undo-button -1)
 	(gtk_widget_show (GTK_WIDGET undo-button))
-	(gtk_tool_item_set_tooltip (GTK_TOOL_ITEM undo-button) tips "undo last edit" #f)
 	(g_signal_connect undo-button "clicked" (lambda (w data) (if (not (null? (sounds))) (undo)))))
 	  
       (let ((redo-button (gtk_tool_button_new_from_stock GTK_STOCK_REDO)))
 	(gtk_toolbar_insert (GTK_TOOLBAR toolbar) redo-button -1)
 	(gtk_widget_show (GTK_WIDGET redo-button))
-	(gtk_tool_item_set_tooltip (GTK_TOOL_ITEM redo-button) tips "redo last undone edit" #f)
 	(g_signal_connect redo-button "clicked" (lambda (w data) (if (not (null? (sounds))) (redo)))))
 
       (let ((sof-button (gtk_tool_button_new_from_stock GTK_STOCK_GOTO_FIRST)))
 	(gtk_toolbar_insert (GTK_TOOLBAR toolbar) sof-button -1)
 	(gtk_widget_show (GTK_WIDGET sof-button))
-	(gtk_tool_item_set_tooltip (GTK_TOOL_ITEM sof-button) tips "move cursor to start of file" #f)
 	(g_signal_connect sof-button "clicked" (lambda (w data) (if (not (null? (sounds))) (set! (cursor) 0)))))
 
       (let ((sow-button (gtk_tool_button_new_from_stock GTK_STOCK_GO_BACK)))
 	(gtk_toolbar_insert (GTK_TOOLBAR toolbar) sow-button -1)
 	(gtk_widget_show (GTK_WIDGET sow-button))
-	(gtk_tool_item_set_tooltip (GTK_TOOL_ITEM sow-button) tips "move back one window" #f)
 	(g_signal_connect sow-button "clicked" (lambda (w data) 
 						 (if (not (null? (sounds))) 
 						     (if (> (left-sample) 0) 
@@ -1296,7 +1289,6 @@
       (let ((sof-button (gtk_tool_button_new_from_stock GTK_STOCK_GO_FORWARD)))
 	(gtk_toolbar_insert (GTK_TOOLBAR toolbar) sof-button -1)
 	(gtk_widget_show (GTK_WIDGET sof-button))
-	(gtk_tool_item_set_tooltip (GTK_TOOL_ITEM sof-button) tips "go forward one window" #f)
 	(g_signal_connect sof-button "clicked" (lambda (w data) 
 						 (if (not (null? (sounds))) 
 						     (if (< (right-sample) (frames)) (set! (left-sample) (right-sample)))))))
@@ -1304,13 +1296,11 @@
       (let ((sof-button (gtk_tool_button_new_from_stock GTK_STOCK_GOTO_LAST)))
 	(gtk_toolbar_insert (GTK_TOOLBAR toolbar) sof-button -1)
 	(gtk_widget_show (GTK_WIDGET sof-button))
-	(gtk_tool_item_set_tooltip (GTK_TOOL_ITEM sof-button) tips "move cursor to end of file" #f)
 	(g_signal_connect sof-button "clicked" (lambda (w data) (if (not (null? (sounds))) (set! (cursor) (1- (frames)))))))
 
       (let ((sof-button (gtk_tool_button_new_from_stock GTK_STOCK_ZOOM_IN)))
 	(gtk_toolbar_insert (GTK_TOOLBAR toolbar) sof-button -1)
 	(gtk_widget_show (GTK_WIDGET sof-button))
-	(gtk_tool_item_set_tooltip (GTK_TOOL_ITEM sof-button) tips "zoom in" #f)
 	(g_signal_connect sof-button "clicked" (lambda (w data)
 						 (if (not (null? (sounds))) 
 						     (let ((midpoint (* 0.5 (apply + (x-bounds))))
@@ -1321,7 +1311,6 @@
       (let ((sof-button (gtk_tool_button_new_from_stock GTK_STOCK_ZOOM_OUT)))
 	(gtk_toolbar_insert (GTK_TOOLBAR toolbar) sof-button -1)
 	(gtk_widget_show (GTK_WIDGET sof-button))
-	(gtk_tool_item_set_tooltip (GTK_TOOL_ITEM sof-button) tips "zoom out" #f)
 	(g_signal_connect sof-button "clicked" (lambda (w data)
 						 (if (not (null? (sounds))) 
 						     (let ((midpoint (* 0.5 (apply + (x-bounds))))
@@ -1333,9 +1322,6 @@
       (let ((exit-button (gtk_tool_button_new_from_stock GTK_STOCK_QUIT)))
 	(gtk_toolbar_insert (GTK_TOOLBAR toolbar) exit-button -1) ; -1 => put at end
 	(gtk_widget_show (GTK_WIDGET exit-button))
-	(gtk_tool_item_set_tooltip (GTK_TOOL_ITEM exit-button) tips "exit Snd" #f)
 	(g_signal_connect exit-button "clicked" (lambda (w data) (exit))))
 
-      (gtk_toolbar_set_tooltips (GTK_TOOLBAR toolbar) #t)
-      (gtk_tooltips_enable (GTK_TOOLTIPS tips))
       ))

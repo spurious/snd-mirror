@@ -9935,8 +9935,7 @@ EDITS: 5
 	  (close-sound ind1)
 	  (close-sound ind2))
 	
-	(let* ((ind (open-sound "now.snd"))
-	       (cur-amp (amp-control ind)))
+	(let* ((ind (open-sound "now.snd")))
 	  (if (not (= now-snd-index ind)) (snd-display ";*snd-opened-sound*: ~A ~A ~A" *snd-opened-sound* ind now-snd-index))
 	  (set! (amp-control ind) .5)
 	  (if (ffneq (amp-control ind) .5) (snd-display ";amp-control (.5): ~A?" (amp-control ind)))
@@ -10724,8 +10723,7 @@ EDITS: 5
 		  (peak-env-equal? "delete peak" ind e1 .0001))
 		(scale-selection-by -.333)
 		(let* ((e1 (channel-amp-envs ind 0 4))
-		       (mx3 (vct-peak (car e1)))
-		       (mx4 (vct-peak (cadr e1))))
+		       (mx3 (vct-peak (car e1))))
 		  (if (fneq (maxamp ind 0) mx)
 		      (snd-display ";maxamp after minus abs selection scale: ~A ~A" mx (maxamp ind 0)))
 		  (if (fneq (maxamp ind 0) mx3)
@@ -46148,6 +46146,11 @@ EDITS: 1
 	  (vct-map! v (lambda () (do ((i 0 (1+ i))) ((= i 3) 0.0) (set! a "ho"))))
 	  (if (not (string=? a "ho")) (snd-display ";s a: ~A" a)))
 	(itst '(do ((i 0 (1+ i))) ((= i 3) 0) (vct-scale! (make-vct 3) 1.0)) 0)
+	(let ((v (make-vct 8)))
+	  (vct-set! v 4 1.0)
+	  (run (lambda () (vct-move! v 0 1)))
+	  (if (not (vequal v (vct 0 0 0 1 0 0 0 0)))
+	      (snd-display ";vct-move! in run: ~A" v)))
 	
 	(let ((vect (make-vector 2 1.5))
 	      (v (make-vct 2)))
@@ -59427,7 +59430,7 @@ EDITS: 1
 	    (list gtk_drawing_area_new GTK_IS_DRAWING_AREA 'GTK_IS_DRAWING_AREA)
 	    (list gtk_entry_new GTK_IS_ENTRY 'GTK_IS_ENTRY)
 	    (list gtk_event_box_new GTK_IS_EVENT_BOX 'GTK_IS_EVENT_BOX)
-	    (list (lambda () (gtk_file_chooser_button_new "hiho" GTK_FILE_CHOOSER_ACTION_OPEN)) GTK_IS_FILE_CHOOSER_BUTTON 'GTK_IS_FILE_CHOOSER_BUTTON)
+;	    (list (lambda () (gtk_file_chooser_button_new "hiho" GTK_FILE_CHOOSER_ACTION_OPEN)) GTK_IS_FILE_CHOOSER_BUTTON 'GTK_IS_FILE_CHOOSER_BUTTON)
 ;	    (list (lambda () (gtk_file_selection_new "hi")) GTK_IS_FILE_SELECTION 'GTK_IS_FILE_SELECTION)
 	    (list gtk_fixed_new GTK_IS_FIXED 'GTK_IS_FIXED)
 	    (list gtk_font_selection_new GTK_IS_FONT_SELECTION 'GTK_IS_FONT_SELECTION)
@@ -59465,7 +59468,6 @@ EDITS: 1
 	    (list gtk_text_view_new GTK_IS_TEXT_VIEW 'GTK_IS_TEXT_VIEW)
 	    (list gtk_toggle_button_new GTK_IS_TOGGLE_BUTTON 'GTK_IS_TOGGLE_BUTTON)
 	    (list gtk_toolbar_new GTK_IS_TOOLBAR 'GTK_IS_TOOLBAR)
-	    (list gtk_tooltips_new GTK_IS_TOOLTIPS 'GTK_IS_TOOLTIPS)
 	    (list gtk_tree_view_column_new GTK_IS_TREE_VIEW_COLUMN 'GTK_IS_TREE_VIEW_COLUMN)
 	    (list gtk_tree_view_new GTK_IS_TREE_VIEW 'GTK_IS_TREE_VIEW)
 	    (list gtk_vbutton_box_new GTK_IS_VBUTTON_BOX 'GTK_IS_VBUTTON_BOX)
@@ -60334,17 +60336,13 @@ EDITS: 1
 	    (if _gboolean2 (snd-display ";set spin snaps"))
 	    (if (not (feql _list1 (list 0.0 1.0))) (snd-display ";set spin range: ~A" _list1)))
 	  
-	  (let* ((_GtkTooltips_ (gtk_tooltips_new))
-		 (_GtkToolbar_ (GTK_TOOLBAR (gtk_toolbar_new)))
+	  (let* ((_GtkToolbar_ (GTK_TOOLBAR (gtk_toolbar_new)))
 		 (_GtkWidget_ (cadr (main-widgets)))
 		 (_GtkWindow_ (GTK_WINDOW _GtkWidget_))
 		 (_GtkToolItem_ (gtk_tool_item_new))
 		 (_GtkSeparatorToolItem_ (GTK_SEPARATOR_TOOL_ITEM (gtk_separator_tool_item_new)))
 		 (_GtkToggleToolButton_ (GTK_TOGGLE_TOOL_BUTTON (gtk_toggle_tool_button_new)))
 		 (_GtkToolItem8_ (gtk_toggle_tool_button_new_from_stock GTK_STOCK_CANCEL))
-		 (_gboolean (gtk_toolbar_get_tooltips _GtkToolbar_))
-		 (_GtkTooltipsData_ (gtk_tooltips_data_get _GtkWidget_))
-		 (_list (gtk_tooltips_get_info_from_tip_window _GtkWindow_))
 		 (_GtkOrientation (gtk_toolbar_get_orientation _GtkToolbar_))
 		 (_GtkToolbarStyle (gtk_toolbar_get_style _GtkToolbar_))
 		 (_GtkIconSize (gtk_toolbar_get_icon_size _GtkToolbar_))
@@ -60377,9 +60375,6 @@ EDITS: 1
 		 (_gboolean10 (gtk_separator_tool_item_get_draw _GtkSeparatorToolItem_))
 		 (_GtkToolItem5_ (gtk_radio_tool_button_new_from_stock #f GTK_STOCK_CANCEL)))
 	    
-	    (if (not _gboolean) (snd-display ";toolbar not tooltips"))
-	    (if (not (equal? _list (list #f #f #f))) (snd-display ";tooltips from window: ~A" _list))
-	    (if (not (= _GtkOrientation 0)) (snd-display ";tooltips orientation: ~A" _GtkOrientation))
 	    (if (not (= _GtkToolbarStyle 2)) (snd-display ";toolbar style: ~A" _GtkToolbarStyle))
 	    (if (not (= _GtkIconSize 3)) (snd-display ";toolbar icon size: ~A" _GtkIconSize))
 	    (if (not (= _gint 0)) (snd-display ";toolbar items: ~A" _gint))
@@ -60400,11 +60395,6 @@ EDITS: 1
 	    
 	    (gtk_radio_tool_button_set_group _GtkRadioToolButton_ #f)
 	    (gtk_toggle_tool_button_set_active _GtkToggleToolButton_ #t)
-	    (gtk_tooltips_enable _GtkTooltips_)
-	    (gtk_tooltips_disable _GtkTooltips_)
-	    (gtk_tooltips_force_window _GtkTooltips_)
-	    (gtk_toolbar_set_tooltips _GtkToolbar_ #t)
-	    (gtk_tooltips_set_tip _GtkTooltips_ _GtkWidget_ "hi" "ho")
 	    (gtk_toolbar_unset_style _GtkToolbar_)
 	    (gtk_toolbar_set_orientation _GtkToolbar_ GTK_ORIENTATION_HORIZONTAL)
 	    (gtk_toolbar_set_style _GtkToolbar_ GTK_TOOLBAR_TEXT)
@@ -60418,8 +60408,7 @@ EDITS: 1
 	    (gtk_tool_item_set_visible_horizontal _GtkToolItem_ #t)
 	    (gtk_tool_item_set_visible_vertical _GtkToolItem_ #f)
 	    (gtk_tool_item_set_is_important _GtkToolItem_ #t)
-	    (gtk_separator_tool_item_set_draw _GtkSeparatorToolItem_ #f)
-	    (gtk_tool_item_set_tooltip _GtkToolItem_ _GtkTooltips_ "hi" "ho"))
+	    (gtk_separator_tool_item_set_draw _GtkSeparatorToolItem_ #f))
 	  
 	  (let* ((_GtkButtonBox_ (GTK_BUTTON_BOX (gtk_vbutton_box_new)))
 		 (_GtkWidget_ (gtk_hbutton_box_new))
@@ -60623,12 +60612,12 @@ EDITS: 1
 		 (_GtkFontSelection_ (GTK_FONT_SELECTION (gtk_font_selection_new)))
 		 (dialog (gtk_dialog_new_with_buttons "title" (GTK_WINDOW (cadr (main-widgets))) 0 
 						      (list GTK_STOCK_OK GTK_RESPONSE_ACCEPT GTK_STOCK_CANCEL GTK_RESPONSE_REJECT)))
-		 (_GtkFileChooser_ (GTK_FILE_CHOOSER (gtk_file_chooser_widget_new GTK_FILE_CHOOSER_ACTION_OPEN)))
-		 (_GtkFileChooserDialog_ (GTK_FILE_CHOOSER_DIALOG (gtk_file_chooser_dialog_new 
-								   "save" (GTK_WINDOW (cadr (main-widgets)))
-								   GTK_FILE_CHOOSER_ACTION_SAVE (list GTK_STOCK_OK GTK_RESPONSE_ACCEPT))))
+;		 (_GtkFileChooser_ (GTK_FILE_CHOOSER (gtk_file_chooser_widget_new GTK_FILE_CHOOSER_ACTION_OPEN)))
+;		 (_GtkFileChooserDialog_ (GTK_FILE_CHOOSER_DIALOG (gtk_file_chooser_dialog_new 
+;								   "save" (GTK_WINDOW (cadr (main-widgets)))
+;								   GTK_FILE_CHOOSER_ACTION_SAVE (list GTK_STOCK_OK GTK_RESPONSE_ACCEPT))))
 ;		 (_GtkFileSelection_ (GTK_FILE_SELECTION (gtk_file_selection_new "delete")))
-		 (_GtkWidget_ (gtk_file_chooser_widget_new_with_backend 0 "linux"))
+;		 (_GtkWidget_ (gtk_file_chooser_widget_new_with_backend 0 "linux"))
 		 (_GtkFileFilter_ (gtk_file_filter_new))
 		 (_GdkColor_ (let ((tmp (GdkColor)))
 			       (gdk_color_parse "red" tmp)
@@ -60647,25 +60636,25 @@ EDITS: 1
 		 (_gchar_4 (gtk_font_selection_dialog_get_preview_text _GtkFontSelectionDialog_))
 		 (_gboolean3 (gtk_dialog_get_has_separator _GtkDialog_))
 		 (_GtkWidget_1 (gtk_dialog_add_button _GtkDialog_ "yow" 1))
-		 (_GtkFileChooserAction (gtk_file_chooser_get_action _GtkFileChooser_))
-		 (_gboolean4 (gtk_file_chooser_get_local_only _GtkFileChooser_))
-		 (_gboolean5 (gtk_file_chooser_get_select_multiple _GtkFileChooser_))
-		 (_gchar_5 (gtk_file_chooser_get_filename _GtkFileChooser_))
-		 (_GSList_ (gtk_file_chooser_get_filenames _GtkFileChooser_))
-		 (_gchar_6 (gtk_file_chooser_get_current_folder _GtkFileChooser_))
-		 (_gchar_7 (gtk_file_chooser_get_uri _GtkFileChooser_))
-		 (_GSList1_ (gtk_file_chooser_get_uris _GtkFileChooser_))
-		 (_gchar_8 (gtk_file_chooser_get_current_folder_uri _GtkFileChooser_))
-		 (_GtkWidget_2 (gtk_file_chooser_get_preview_widget _GtkFileChooser_))
-		 (_gboolean6 (gtk_file_chooser_get_preview_widget_active _GtkFileChooser_))
-		 (_char_ (gtk_file_chooser_get_preview_filename _GtkFileChooser_))
-		 (_char_1 (gtk_file_chooser_get_preview_uri _GtkFileChooser_))
-		 (_GtkWidget_3 (gtk_file_chooser_get_extra_widget _GtkFileChooser_))
-		 (_GSList2_ (gtk_file_chooser_list_filters _GtkFileChooser_))
-		 (_GtkFileFilter1_ (gtk_file_chooser_get_filter _GtkFileChooser_))
-		 (_GSList3_ (gtk_file_chooser_list_shortcut_folders _GtkFileChooser_))
-		 (_GSList4_ (gtk_file_chooser_list_shortcut_folder_uris _GtkFileChooser_))
-		 (_gboolean7 (gtk_file_chooser_get_use_preview_label _GtkFileChooser_))
+;		 (_GtkFileChooserAction (gtk_file_chooser_get_action _GtkFileChooser_))
+;		 (_gboolean4 (gtk_file_chooser_get_local_only _GtkFileChooser_))
+;		 (_gboolean5 (gtk_file_chooser_get_select_multiple _GtkFileChooser_))
+;		 (_gchar_5 (gtk_file_chooser_get_filename _GtkFileChooser_))
+;		 (_GSList_ (gtk_file_chooser_get_filenames _GtkFileChooser_))
+;		 (_gchar_6 (gtk_file_chooser_get_current_folder _GtkFileChooser_))
+;		 (_gchar_7 (gtk_file_chooser_get_uri _GtkFileChooser_))
+;		 (_GSList1_ (gtk_file_chooser_get_uris _GtkFileChooser_))
+;		 (_gchar_8 (gtk_file_chooser_get_current_folder_uri _GtkFileChooser_))
+;		 (_GtkWidget_2 (gtk_file_chooser_get_preview_widget _GtkFileChooser_))
+;		 (_gboolean6 (gtk_file_chooser_get_preview_widget_active _GtkFileChooser_))
+;		 (_char_ (gtk_file_chooser_get_preview_filename _GtkFileChooser_))
+;		 (_char_1 (gtk_file_chooser_get_preview_uri _GtkFileChooser_))
+;		 (_GtkWidget_3 (gtk_file_chooser_get_extra_widget _GtkFileChooser_))
+;		 (_GSList2_ (gtk_file_chooser_list_filters _GtkFileChooser_))
+;		 (_GtkFileFilter1_ (gtk_file_chooser_get_filter _GtkFileChooser_))
+;		 (_GSList3_ (gtk_file_chooser_list_shortcut_folders _GtkFileChooser_))
+;		 (_GSList4_ (gtk_file_chooser_list_shortcut_folder_uris _GtkFileChooser_))
+;		 (_gboolean7 (gtk_file_chooser_get_use_preview_label _GtkFileChooser_))
 ;		 (_gchar_9 (gtk_file_selection_get_filename _GtkFileSelection_))
 ;		 (_gboolean8 (gtk_file_selection_get_select_multiple _GtkFileSelection_))
 		 )
@@ -60679,39 +60668,39 @@ EDITS: 1
 	    (if (not (string=? _gchar_3 "Sans 12")) (snd-display ";dialog font: ~A" _gchar_3))
 	    (if (not (string=? _gchar_4 "abcdefghijk ABCDEFGHIJK")) (snd-display ";dialog preview text: ~A" _gchar_4))
 	    (if (not _gboolean3) (snd-display ";dialog no sep"))
-	    (if (not (= _GtkFileChooserAction 0)) (snd-display ";dialog action: ~A" _GtkFileChooserAction))
-	    (if (not _gboolean4) (snd-display ";dialog not local"))
-	    (if _gboolean5 (snd-display ";dialog sel mult"))
-	    (if _gchar_5 (snd-display ";dialog filename: ~A" _gchar_5))
-	    (if (or (not (string? _gchar_6)) (not (string=? _gchar_6 (getcwd)))) (snd-display ";dialog folder: ~A" _gchar_6))
-	    (if _gchar_7 (snd-display ";dialog uri: ~A" _gchar_7))
-	    (if (or (not (string? _gchar_8)) 
-		    (and (not (string=? _gchar_8 "file:///home/bil/cl"))
-			 (not (string=? _gchar_8 "file:///home/bil/snd-9"))))
-		(snd-display ";dialog folder uri: ~A" _gchar_8))
-	    (if (not _gboolean6) (snd-display ";dialog not active"))
-	    (if (not _gboolean7) (snd-display ";dialog not use preview"))
+;	    (if (not (= _GtkFileChooserAction 0)) (snd-display ";dialog action: ~A" _GtkFileChooserAction))
+;	    (if (not _gboolean4) (snd-display ";dialog not local"))
+;	    (if _gboolean5 (snd-display ";dialog sel mult"))
+;	    (if _gchar_5 (snd-display ";dialog filename: ~A" _gchar_5))
+;	    (if (or (not (string? _gchar_6)) (not (string=? _gchar_6 (getcwd)))) (snd-display ";dialog folder: ~A" _gchar_6))
+;	    (if _gchar_7 (snd-display ";dialog uri: ~A" _gchar_7))
+;	    (if (or (not (string? _gchar_8)) 
+;		    (and (not (string=? _gchar_8 "file:///home/bil/cl"))
+;			 (not (string=? _gchar_8 "file:///home/bil/snd-9"))))
+;		(snd-display ";dialog folder uri: ~A" _gchar_8))
+;	    (if (not _gboolean6) (snd-display ";dialog not active"))
+;	    (if (not _gboolean7) (snd-display ";dialog not use preview"))
 ;	    (if (not (string=? _gchar_9 (getcwd))) (snd-display ";dialog sel filename: ~A" _gchar_9))
 ;	    (if _gboolean8 (snd-display ";dialog has sel mult"))
 ;	    (gtk_file_selection_show_fileop_buttons _GtkFileSelection_)
 ;	    (gtk_file_selection_hide_fileop_buttons _GtkFileSelection_)
-	    (gtk_dialog_set_has_separator _GtkDialog_ #t)
+;	    (gtk_dialog_set_has_separator _GtkDialog_ #t)
 ;	    (gtk_file_selection_set_filename _GtkFileSelection_ (string-append home-dir "/test.snd"))
 ;	    (set! _gchar_9 (gtk_file_selection_get_filename _GtkFileSelection_))
 ;	    (if (not (string=? _gchar_9 (string-append home-dir "/test.snd"))) (snd-display ";set dialog filename: ~A" _gchar_9))
-	    (gtk_file_chooser_set_filename _GtkFileChooser_ (string-append home-dir "/test.snd"))
-	    (let ((_gboolean (gtk_file_chooser_set_current_folder _GtkFileChooser_ "/home/bil/sf1")))
-	      (set! _gchar_6 (gtk_file_chooser_get_current_folder _GtkFileChooser_))
-	      (if (or (not (string? _gchar_6)) 
-		      (not (string=? _gchar_6 "/home/bil/sf1"))) 
-		  (snd-display ";set dialog chooser folder: ~A" _gchar_6)))
-	    
-					;	      (gtk_font_selection_set_font_name _GtkFontSelection_ "Monospace 10")
+;	    (gtk_file_chooser_set_filename _GtkFileChooser_ (string-append home-dir "/test.snd"))
+;	    (let ((_gboolean (gtk_file_chooser_set_current_folder _GtkFileChooser_ "/home/bil/sf1")))
+;	      (set! _gchar_6 (gtk_file_chooser_get_current_folder _GtkFileChooser_))
+;	      (if (or (not (string? _gchar_6)) 
+;		      (not (string=? _gchar_6 "/home/bil/sf1"))) 
+;		  (snd-display ";set dialog chooser folder: ~A" _gchar_6)))
+;	      (gtk_font_selection_set_font_name _GtkFontSelection_ "Monospace 10")
 	    (gtk_color_selection_set_current_alpha _GtkColorSelection_ 12345)
 	    (gtk_color_selection_set_previous_alpha _GtkColorSelection_ 54321)
 	    (gtk_dialog_set_default_response _GtkDialog_ 0)
 	    (gtk_color_selection_set_has_palette _GtkColorSelection_ #t)
 	    
+#|
 	    (gtk_file_chooser_select_all _GtkFileChooser_)
 	    (gtk_file_chooser_unselect_all _GtkFileChooser_)
 	    
@@ -60722,6 +60711,7 @@ EDITS: 1
 	    (gtk_file_chooser_set_action _GtkFileChooser_ GTK_FILE_CHOOSER_ACTION_SAVE)
 	    (gtk_file_chooser_set_local_only _GtkFileChooser_ #t)
 	    (gtk_file_chooser_set_filter _GtkFileChooser_ (gtk_file_filter_new))
+|#
 	    
 	    (gtk_color_selection_set_current_color _GtkColorSelection_ _GdkColor_)
 	    (gtk_color_selection_get_current_color _GtkColorSelection_ _GdkColor_)
@@ -60731,6 +60721,7 @@ EDITS: 1
 	    (gtk_color_selection_palette_to_string _GdkColor_ 0)
 ;	    (gtk_file_selection_complete _GtkFileSelection_ "/home/bil/cl/test.sn")
 	    
+#|
 	    (gtk_file_chooser_select_filename _GtkFileChooser_ (string-append home-dir "/test.snd"))
 	    (gtk_file_chooser_set_uri _GtkFileChooser_ (string-append home-dir "/test.snd"))
 	    (gtk_file_chooser_select_uri _GtkFileChooser_ (string-append home-dir "/test.snd"))
@@ -60752,6 +60743,7 @@ EDITS: 1
 	    (gtk_file_filter_get_needed _GtkFileFilter_)
 	    (gtk_file_chooser_add_filter _GtkFileChooser_ _GtkFileFilter_)
 	    (gtk_file_chooser_remove_filter _GtkFileChooser_ _GtkFileFilter_)
+|#
 ;	    (gtk_file_selection_set_select_multiple _GtkFileSelection_ #f)
 	    (gtk_dialog_set_response_sensitive _GtkDialog_ 0 #f)
 					;	      (let ((vals (gtk_file_chooser_add_shortcut_folder _GtkFileChooser_ home-dir)))
@@ -62252,15 +62244,15 @@ EDITS: 1
 	    (if (not (GTK_IS_CELL_RENDERER_COMBO cell0)) (snd-display ";not cell renderer combo?"))
 	    (if (not (GTK_IS_CELL_RENDERER_PROGRESS cell1)) (snd-display ";not cell renderer progress?")))
 	  
-	  (let ((GtkW (GTK_FILE_CHOOSER_BUTTON (gtk_file_chooser_button_new "hiho" GTK_FILE_CHOOSER_ACTION_OPEN))))
-	    (if (not (GTK_IS_FILE_CHOOSER_BUTTON GtkW))
-		(snd-display ";file chooser button new -> ~A" GtkW)
-		(begin
-		  (if (not (string=? (gtk_file_chooser_button_get_title GtkW) "hiho"))
-		      (snd-display ";file chooser button get title: ~A" (gtk_file_chooser_button_get_title GtkW)))
-		  (gtk_file_chooser_button_set_title GtkW "a title")
-		  (if (not (string=? (gtk_file_chooser_button_get_title GtkW) "a title"))
-		      (snd-display ";file chooser button set title: ~A" (gtk_file_chooser_button_get_title GtkW))))))
+;	  (let ((GtkW (GTK_FILE_CHOOSER_BUTTON (gtk_file_chooser_button_new "hiho" GTK_FILE_CHOOSER_ACTION_OPEN))))
+;	    (if (not (GTK_IS_FILE_CHOOSER_BUTTON GtkW))
+;		(snd-display ";file chooser button new -> ~A" GtkW)
+;		(begin
+;		  (if (not (string=? (gtk_file_chooser_button_get_title GtkW) "hiho"))
+;		      (snd-display ";file chooser button get title: ~A" (gtk_file_chooser_button_get_title GtkW)))
+;		  (gtk_file_chooser_button_set_title GtkW "a title")
+;		  (if (not (string=? (gtk_file_chooser_button_get_title GtkW) "a title"))
+;		      (snd-display ";file chooser button set title: ~A" (gtk_file_chooser_button_get_title GtkW))))))
 	  
 	  
 	  (let* ((breakable-gtk-procs 
@@ -62333,7 +62325,7 @@ EDITS: 1
 		   GTK_IS_SEPARATOR_TOOL_ITEM GTK_IS_SIZE_GROUP GTK_IS_SOCKET GTK_IS_SPIN_BUTTON GTK_IS_STATUSBAR
 		   GTK_IS_STYLE GTK_IS_TABLE GTK_IS_TEAROFF_MENU_ITEM GTK_IS_TEXT_BUFFER GTK_IS_TEXT_CHILD_ANCHOR
 		   GTK_IS_TEXT_MARK GTK_IS_TEXT_TAG GTK_IS_TEXT_TAG_TABLE GTK_IS_TEXT_VIEW GTK_IS_TOGGLE_ACTION
-		   GTK_IS_TOGGLE_BUTTON GTK_IS_TOGGLE_TOOL_BUTTON GTK_IS_TOOLBAR GTK_IS_TOOLTIPS GTK_IS_TOOL_BUTTON
+		   GTK_IS_TOGGLE_BUTTON GTK_IS_TOGGLE_TOOL_BUTTON GTK_IS_TOOLBAR GTK_IS_TOOL_BUTTON
 		   GTK_IS_TOOL_ITEM GTK_IS_TREE_DRAG_DEST GTK_IS_TREE_DRAG_SOURCE GTK_IS_TREE_MODEL GTK_IS_TREE_MODEL_FILTER
 		   GTK_IS_TREE_MODEL_SORT GTK_IS_TREE_SELECTION GTK_IS_TREE_SORTABLE GTK_IS_TREE_STORE GTK_IS_TREE_VIEW
 		   GTK_IS_TREE_VIEW_COLUMN GTK_IS_UI_MANAGER GTK_IS_VBOX GTK_IS_VBUTTON_BOX GTK_IS_VIEWPORT
@@ -62348,7 +62340,7 @@ EDITS: 1
 		   GTK_SIZE_GROUP GTK_SOCKET GTK_SPIN_BUTTON GTK_STATUSBAR GTK_STYLE
 		   GTK_TABLE GTK_TEAROFF_MENU_ITEM GTK_TEXT_BUFFER GTK_TEXT_CHILD_ANCHOR GTK_TEXT_MARK
 		   GTK_TEXT_TAG GTK_TEXT_TAG_TABLE GTK_TEXT_VIEW GTK_TOGGLE_ACTION GTK_TOGGLE_BUTTON
-		   GTK_TOGGLE_TOOL_BUTTON GTK_TOOLBAR GTK_TOOLTIPS GTK_TOOL_BUTTON GTK_TOOL_ITEM
+		   GTK_TOGGLE_TOOL_BUTTON GTK_TOOLBAR GTK_TOOL_BUTTON GTK_TOOL_ITEM
 		   GTK_TREE_DRAG_DEST GTK_TREE_DRAG_SOURCE GTK_TREE_MODEL GTK_TREE_MODEL_FILTER GTK_TREE_MODEL_SORT
 		   GTK_TREE_SELECTION GTK_TREE_SORTABLE GTK_TREE_STORE GTK_TREE_VIEW GTK_TREE_VIEW_COLUMN
 		   GTK_UI_MANAGER GTK_VBOX GTK_VBUTTON_BOX GTK_VIEWPORT GTK_VPANED
@@ -62592,8 +62584,8 @@ EDITS: 1
 		   gtk_expander_new_with_mnemonic gtk_expander_set_expanded gtk_expander_set_label gtk_expander_set_label_widget gtk_expander_set_spacing
 		   gtk_expander_set_use_markup gtk_expander_set_use_underline gtk_false gtk_file_chooser_add_filter gtk_file_chooser_add_shortcut_folder
 		   gtk_file_chooser_add_shortcut_folder_uri gtk_file_chooser_button_get_title 
-		   gtk_file_chooser_button_get_width_chars gtk_file_chooser_button_new
-		   gtk_file_chooser_button_new_with_backend gtk_file_chooser_button_new_with_dialog 
+		   gtk_file_chooser_button_get_width_chars ;gtk_file_chooser_button_new
+		   ;gtk_file_chooser_button_new_with_backend ;gtk_file_chooser_button_new_with_dialog 
 		   gtk_file_chooser_button_set_title gtk_file_chooser_button_set_width_chars
 		   gtk_file_chooser_dialog_new gtk_file_chooser_get_action gtk_file_chooser_get_current_folder 
 		   gtk_file_chooser_get_current_folder_uri gtk_file_chooser_get_extra_widget
@@ -62612,8 +62604,8 @@ EDITS: 1
 		   gtk_file_chooser_set_preview_widget_active gtk_file_chooser_set_select_multiple gtk_file_chooser_set_show_hidden
 		   gtk_file_chooser_set_uri gtk_file_chooser_set_use_preview_label gtk_file_chooser_unselect_all 
 		   gtk_file_chooser_unselect_filename gtk_file_chooser_unselect_uri
-		   gtk_file_chooser_widget_new 
-		   gtk_file_chooser_widget_new_with_backend gtk_file_filter_add_custom gtk_file_filter_add_mime_type
+		   ;gtk_file_chooser_widget_new 
+		   ;gtk_file_chooser_widget_new_with_backend gtk_file_filter_add_custom gtk_file_filter_add_mime_type
 		   gtk_file_filter_add_pattern gtk_file_filter_add_pixbuf_formats gtk_file_filter_filter gtk_file_filter_get_name gtk_file_filter_get_needed
 		   gtk_file_filter_new gtk_file_filter_set_name 
 		   ;gtk_file_selection_complete gtk_file_selection_get_filename
@@ -62703,7 +62695,7 @@ EDITS: 1
 		   gtk_menu_shell_activate_item gtk_menu_shell_append gtk_menu_shell_cancel gtk_menu_shell_deactivate gtk_menu_shell_deselect
 		   gtk_menu_shell_insert gtk_menu_shell_prepend gtk_menu_shell_select_first gtk_menu_shell_select_item
 		   gtk_menu_tool_button_get_menu gtk_menu_tool_button_new 
-		   gtk_menu_tool_button_new_from_stock gtk_menu_tool_button_set_arrow_tooltip
+		   gtk_menu_tool_button_new_from_stock 
 		   gtk_menu_tool_button_set_menu gtk_misc_get_alignment gtk_misc_get_padding 
 		   gtk_misc_set_alignment gtk_misc_set_padding gtk_notebook_append_page gtk_notebook_append_page_menu gtk_notebook_get_current_page
 		   gtk_notebook_get_menu_label gtk_notebook_get_menu_label_text gtk_notebook_get_n_pages gtk_notebook_get_nth_page gtk_notebook_get_scrollable
@@ -62867,14 +62859,13 @@ EDITS: 1
 		   gtk_tool_item_get_use_drag_window gtk_tool_item_get_visible_horizontal
 		   gtk_tool_item_get_visible_vertical gtk_tool_item_new gtk_tool_item_rebuild_menu gtk_tool_item_retrieve_proxy_menu_item gtk_tool_item_set_expand
 		   gtk_tool_item_set_homogeneous gtk_tool_item_set_is_important 
-		   gtk_tool_item_set_proxy_menu_item gtk_tool_item_set_tooltip gtk_tool_item_set_use_drag_window
+		   gtk_tool_item_set_proxy_menu_item; gtk_tool_item_set_tooltip gtk_tool_item_set_use_drag_window
 		   gtk_tool_item_set_visible_horizontal gtk_tool_item_set_visible_vertical 
 		   gtk_toolbar_get_drop_index gtk_toolbar_get_icon_size gtk_toolbar_get_item_index
 		   gtk_toolbar_get_n_items gtk_toolbar_get_nth_item gtk_toolbar_get_orientation gtk_toolbar_get_relief_style gtk_toolbar_get_show_arrow
-		   gtk_toolbar_get_style gtk_toolbar_get_tooltips gtk_toolbar_insert gtk_toolbar_new
-		   gtk_toolbar_set_orientation gtk_toolbar_set_show_arrow gtk_toolbar_set_style gtk_toolbar_set_tooltips gtk_toolbar_unset_style
-		   gtk_tooltips_data_get gtk_tooltips_disable gtk_tooltips_enable gtk_tooltips_force_window gtk_tooltips_get_info_from_tip_window
-		   gtk_tooltips_new gtk_tooltips_set_tip gtk_tree_drag_dest_drag_data_received   gtk_tree_drag_dest_row_drop_possible gtk_tree_drag_source_drag_data_delete 
+		   gtk_toolbar_get_style gtk_toolbar_insert gtk_toolbar_new
+		   gtk_toolbar_set_orientation gtk_toolbar_set_show_arrow gtk_toolbar_set_style gtk_toolbar_unset_style
+		   gtk_tree_drag_dest_drag_data_received   gtk_tree_drag_dest_row_drop_possible gtk_tree_drag_source_drag_data_delete 
 		   gtk_tree_drag_source_drag_data_get gtk_tree_drag_source_row_draggable
 		   gtk_tree_get_row_drag_data gtk_tree_iter_copy gtk_tree_iter_free gtk_tree_model_filter_clear_cache
 					;	      gtk_tree_model_filter_convert_child_iter_to_iter 

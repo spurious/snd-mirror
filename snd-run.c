@@ -8075,6 +8075,59 @@ static xen_value *vct_plus_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
+/* ---------------- vct-move! ---------------- */
+
+static void vct_move_0(int *args, ptree *pt) 
+{
+  vct *v;
+  int i, j;
+  v = VCT_ARG_1;
+  for (i = INT_ARG_2, j = INT_ARG_3; (j < v->length) && (i < v->length); i++, j++) 
+    v->data[i] = v->data[j];
+  VCT_RESULT = v;
+}
+
+static char *descr_vct_move_0(int *args, ptree *pt) 
+{
+  return(mus_format("vct_move(" VCT_PT ", " INT_PT ", " INT_PT ")", args[1], DESC_VCT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
+}
+
+static xen_value *vct_move_3(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_VCT, vct_move_0, descr_vct_move_0, args, 3));
+}
+
+
+/* ---------------- vct-peak ---------------- */
+
+static char *descr_vct_peak_v(int *args, ptree *pt) 
+{
+  return(mus_format( FLT_PT " = " S_vct_peak "(" VCT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1));
+}
+
+static void vct_peak_v(int *args, ptree *pt) 
+{
+  int i;
+  Double val = 0.0;
+  vct *v;
+  v = VCT_ARG_1;
+  val = fabs(v->data[0]); 
+  for (i = 1; i < v->length; i++) 
+    {
+      Float absv;
+      absv = fabs(v->data[i]); 
+      if (absv > val) val = absv;
+    }
+  FLOAT_RESULT = val;
+}
+
+static xen_value *vct_peak_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(package(prog, R_FLOAT, vct_peak_v, descr_vct_peak_v, args, 1));
+}
+
+
+
 /* ---------------- vct->channel ---------------- */
 
 static void vct_to_channel_v(int *args, ptree *pt) 
@@ -9997,35 +10050,6 @@ static xen_value *mus_interpolate_1(ptree *prog, xen_value **args, int num_args)
   if (num_args == 3) return(package(prog, R_FLOAT, mus_interpolate_3f, descr_mus_interpolate_3f, args, 3));
   if (num_args == 4) return(package(prog, R_FLOAT, mus_interpolate_4f, descr_mus_interpolate_4f, args, 4));
   return(package(prog, R_FLOAT, mus_interpolate_5f, descr_mus_interpolate_5f, args, 5));
-}
-
-
-/* ---------------- vct-peak ---------------- */
-
-static char *descr_vct_peak_v(int *args, ptree *pt) 
-{
-  return(mus_format( FLT_PT " = " S_vct_peak "(" VCT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1));
-}
-
-static void vct_peak_v(int *args, ptree *pt) 
-{
-  int i;
-  Double val = 0.0;
-  vct *v;
-  v = VCT_ARG_1;
-  val = fabs(v->data[0]); 
-  for (i = 1; i < v->length; i++) 
-    {
-      Float absv;
-      absv = fabs(v->data[i]); 
-      if (absv > val) val = absv;
-    }
-  FLOAT_RESULT = val;
-}
-
-static xen_value *vct_peak_1(ptree *prog, xen_value **args, int num_args) 
-{
-  return(package(prog, R_FLOAT, vct_peak_v, descr_vct_peak_v, args, 1));
 }
 
 
@@ -13257,6 +13281,7 @@ static void init_walkers(void)
   INIT_WALKER(S_vct, make_walker(vct_1, NULL, NULL, 1, UNLIMITED_ARGS, R_VCT, false, 1, -R_FLOAT));
   INIT_WALKER(S_vct_p, make_walker(vct_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
   INIT_WALKER(S_vct_reverse, make_walker(vct_reverse_2, NULL, NULL, 1, 2, R_VCT, false, 2, R_VCT, R_INT));
+  INIT_WALKER(S_vct_moveB, make_walker(vct_move_3, NULL, NULL, 3, 3, R_VCT, false, 3, R_VCT, R_INT, R_INT));
   INIT_WALKER(S_vct_times, make_walker(vct_times_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_NUMBER_VCT, R_NUMBER_VCT));
   INIT_WALKER(S_vct_plus, make_walker(vct_plus_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_NUMBER_VCT, R_NUMBER_VCT));
 
