@@ -25037,6 +25037,10 @@ EDITS: 2
 		   (if (not (= (mix-position m2) 123)) (snd-display ";mix-position m2[7]: ~A" (mix-position m2)))
 		   (if (not (= (mix-position m1) 321)) (snd-display ";mix-position m1[7]: ~A" (mix-position m1))))
 		 (lambda args (snd-display ";mix-position trouble: ~A" args)))
+	  (undo)
+	  (delay-channel-mixes 200 100 ind 0)
+	  (if (not (= (mix-position m2) 123)) (snd-display ";delay-channel mixes mix-position m2: ~A" (mix-position m2)))
+	  (if (not (= (mix-position m1) 421)) (snd-display ";delay-channel-mixes mix-position m1: ~A" (mix-position m1)))
 	  (close-sound ind))
 	
 	;; check that current console is correct

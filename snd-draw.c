@@ -9,6 +9,13 @@ static point_t points1[POINT_BUFFER_SIZE];
 
 void set_grf_points(int xi, int j, int ymin, int ymax)
 {
+#if MUS_DEBUGGING
+  if (j >= POINT_BUFFER_SIZE)
+    {
+      fprintf(stderr, "point buffer overflow: %d\n", j);
+      abort();
+    }
+#endif
   points[j].x = xi;
   points1[j].x = xi;
   points[j].y = ymax;
@@ -18,6 +25,13 @@ void set_grf_points(int xi, int j, int ymin, int ymax)
 
 void set_grf_point(int xi, int j, int yi)
 {
+#if MUS_DEBUGGING
+  if (j >= POINT_BUFFER_SIZE)
+    {
+      fprintf(stderr, "point buffer overflow: %d\n", j);
+      abort();
+    }
+#endif
   points[j].x = xi;
   points[j].y = yi;
 }

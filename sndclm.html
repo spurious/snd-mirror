@@ -3,12 +3,14 @@
 <title>CLM</title>
 <style type="text/css">
 <!-- 
-	EM.red {color: red; font-style: normal}
-	EM.gen {font-weight: bold; font-style: normal}
-        EM.tab {font-style: normal; font-size: small}
-	EM.emdef {font-weight: bold; font-style: normal}
+	EM.red {color:red; font-style: normal}
+        EM.error {color:chocolate; font-style: normal}
+        EM.narg {color:chocolate; font-style: normal}
+        EM.typing {color:maroon; font-style: normal}
+        EM.listener {color:darkblue; font-style: normal}
 	H1 {text-align: center}
 	UL {list-style-type: none}
+	EM.emdef {font-weight: bold; font-style: normal}
 
 	A {text-decoration:none}
 	A:hover {text-decoration:underline}
@@ -18,11 +20,10 @@
 -->
 </style>
 </head>
+
 <body bgcolor=white>
 
-<A NAME="clmtop"></A>
-<h1>CLM</h1>
-
+<A NAME="sndclmtop"></A><h1>CLM</h1>
 
 
 <table bordercolor="gray" border=10><tr><td>
@@ -38,7 +39,7 @@ and leave the Common Lisp stuff to the CLM-3 version (clm.html).
 package in the Music V family.  This file describes CLM as implemented in Snd,
 aiming primarily at the Scheme version.  Common Lisp users should check out clm.html
 in the CLM tarball.
-As one would expect, given its ancestry, CLM is based on a set of functions known
+CLM is based on a set of functions known
 as "generators".  These can be packaged into "instruments", and instrument calls
 can be packaged into "note lists".  The main emphasis here is on the generators;
 note lists and instruments are described in sndscm.html.
@@ -66,63 +67,207 @@ note lists and instruments are described in sndscm.html.
 <br>
 
 
-<!-- STOPPED HERE -->
-
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>Contents</h2></td></tr></table>
-<ul>
-<li><a href="#introduction">Introduction</a>
-<li><a href="#instruments">Instruments</a>
-<ul>
-<li><small><a href="#generators">Generators</a></small>
-<li><small><a href="#generic-functions">Generic Functions</a></small>
-<li><small><a href="#framesandmixers">Frames, Mixers</a></small>
-<li><small><a href="#soundio">Sound file IO</a></small>
-<li><small><a href="#functions">Useful functions</a></small>
-<li><small><a href="#def-clm-struct">def-clm-struct</a></small>
-<li><small><a href="#definstrument">Definstrument</a></small>
-<li><small><a href="#guileetc">CLM in Scheme, Ruby, C, Forth</a></small>
-</ul>
-<li><a href="#note-lists">Note Lists</a>
-<ul>
-<li><small><a href="#with-sound">With-sound</a></small>
-<li><small><a href="#mix-and-with-mix">With-mix</a></small>
-<li><small><a href="#sound-let">Sound-let</a></small>
-</ul>
 <br>
+<table border=8 bordercolor="lightsteelblue" cellpadding=8 hspace=20>
+<tr><td colspan=3><center><a href="#introduction">Introduction</a></center></td></tr>
+<tr><td colspan=3><center>Generators</center></td></tr>
+<tr><td width=20 bgcolor=#f6f8ff></td><td>
+<table border=0>
+  <tr><td><a href="#all-pass">all-pass</a></td><td width=20></td><td>all-pass filter</td></tr>
+  <tr><td><a href="#asymmetric-fm">asymmetric-fm</a></td><td></td><td>asymmetric fm</td></tr>
+  <tr><td><a href="#comb">comb</a></td><td></td><td>comb filter</td></tr>
+  <tr><td><a href="#convolve">convolve</a></td><td></td><td>convolution</td></tr>
+  <tr><td><a href="#delay">delay</a></td><td></td><td>delay line</td></tr>
+  <tr><td><a href="#env">env</a></td><td></td><td>line segment envelope</td></tr>
+  <tr><td><a href="#filter">filter</a></td><td></td><td>direct form FIR/IIR filter</td></tr>
+  <tr><td><a href="#filtered-comb">filtered-comb</a></td><td></td><td>comb filter with filter on feedback</td></tr>
+  <tr><td><a href="#fir-filter">fir-filter</a></td><td></td><td>FIR filter</td></tr>
+  <tr><td><a href="#formant">formant</a></td><td></td><td>resonance</td></tr>
+  <tr><td><a href="#granulate">granulate</a></td><td></td><td>granular synthesis</td></tr>
+  <tr><td><a href="#iir-filter">iir-filter</a></td><td></td><td>IIR filter</td></tr>
+  <tr><td><a href="#in-any">in-any</a></td><td></td><td>sound file input</td></tr>
+  <tr><td><a href="#locsig">locsig</a></td><td></td><td>static sound placement</td></tr>
+  <tr><td><a href="#move-sound">move-sound</a></td><td></td><td>sound motion</td></tr>
+  <tr><td><a href="#moving-average">moving-average</a></td><td></td><td>moving window average</td></tr>
+  <tr><td><a href="#notch">notch</a></td><td></td><td>notch filter</td></tr>
+  <tr><td><a href="#one-pole">one-pole</a></td><td></td><td>one pole filter</td></tr>
+  <tr><td><a href="#one-zero">one-zero</a></td><td></td><td>one zero filter</td></tr>
+  <tr><td><a href="#oscil">oscil</a></td><td></td><td>sine wave and FM</td></tr>
+</table>
+</td>
+<td>
+<table border=0>
+  <tr><td><a href="#out-any">out-any</a></td><td width=20></td><td>sound output</td></tr>
+  <tr><td><a href="#polyshape">polyshape</a></td><td></td><td>waveshaping</td></tr>
+  <tr><td><a href="#phase-vocoder">phase-vocoder</a></td><td></td><td>vocoder analysis and resynthesis</td></tr>
+  <tr><td><a href="#pulse-train">pulse-train</a></td><td></td><td>pulse train</td></tr>
+  <tr><td><a href="#rand">rand,rand-interp</a></td><td></td><td>random numbers, noise</td></tr>
+  <tr><td><a href="#readin">readin</a></td><td></td><td>sound input</td></tr>
+  <tr><td><a href="#sawtooth-wave">sawtooth-wave</a></td><td></td><td>sawtooth</td></tr>
+  <tr><td><a href="#sine-summation">sine-summation</a></td><td></td><td>sine summation synthesis</td></tr>
+  <tr><td><a href="#square-wave">square-wave</a></td><td></td><td>square wave</td></tr>
+  <tr><td><a href="#src">src</a></td><td></td><td>sampling rate conversion</td></tr>
+  <tr><td><a href="#ssb-am">ssb-am</a></td><td></td><td>single sideband amplitude modulation</td></tr>
+  <tr><td><a href="#sum-of-cosines">sum-of-cosines</a></td><td></td><td>band-limited pulse train</td></tr>
+  <tr><td><a href="#sum-of-sines">sum-of-sines</a></td><td></td><td>sum of sines</td></tr>
+  <tr><td><a href="#table-lookup">table-lookup</a></td><td></td><td>interpolated table lookup</td></tr>
+  <tr><td><a href="#tap">tap</a></td><td></td><td>delay line tap</td></tr>
+  <tr><td><a href="#triangle-wave">triangle-wave</a></td><td></td><td>triangle wave</td></tr>
+  <tr><td><a href="#two-pole">two-pole</a></td><td></td><td>two pole filter</td></tr>
+  <tr><td><a href="#two-zero">two-zero</a></td><td></td><td>two zero filter</td></tr>
+  <tr><td><a href="#wave-train">wave-train</a></td><td></td><td>wave train</td></tr>
+  <tr><td><a href="#waveshape">waveshape</a></td><td></td><td>waveshaping</td></tr>
+</table>
+</td></td><td></tr>
+<tr><td colspan=3><center>Instruments</center></td></tr>
+<tr><td colspan=3><center>Note Lists</center></td></tr>
+</table>
+
+<br>
+
 
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A class=def NAME="introduction">Introduction</a></h2></td></tr></table>
 
-<p>CLM provides functions to experiment with sounds.
-The easiest way to make a new sound is 
-<a href="#with-sound">with-sound</a>.  Say we want to hear one second of the fm violin (in <a href="v.ins">v.ins</a>,
-named fm-violin) at 440 Hz, and a somewhat soft amplitude.  Compile and load v.ins, then call with-sound:</p>
-<pre>
-    (compile-file "v.ins")
-    (load "v")
-    (<a class=quiet href="#with-sound">with-sound</a> () (fm-violin 0 1 440 .1)) 
-</pre>
-<p>and the note should emerge from the speakers.  The compile and load sequence can be abbreviated
-in most lisps.  In ACL<code>:cl v.ins</code> or perhaps even <code>:cl v</code> will call compile-file
-if needed, then load.
-Once loaded, we don't
-need to reload v unless we change it in some way.  (In CMU-CL, load v.cmucl, not v.x86f).
-To get an arpeggio:</p>
-<pre>
-    (<a class=quiet href="#with-sound">with-sound</a> ()
-      (loop for i from 0 to 7 do
-        (fm-violin (* i .25) .5 (* 100 (1+ i)) .1))) 
-</pre>
-<p><a href="clm-example.lisp">clm-example.lisp</a> shows how to create such a note list algorithmically.
-To listen to the last computed sound again:
+<p>Start Snd, open the listener (choose "Show listener" in the View menu), and:
 </p>
+
 <pre>
-    (play)
+    <em class=listener>&gt;</em><em class=typing>(load "v.scm")</em>
+    <em class=listener>#&lt;unspecified&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>(with-sound () (fm-violin 0 1 440 .1))</em>
+    <em class=listener>"test.snd"</em>
 </pre>
-<p>or, if you have some saved sound file:
+
+<p>Snd's printout is in blue here, and your typing is in red.  The load function returns
+"#&lt;unspecified&gt;" in Guile to indicate that it is happy.
+If all went well, you should see a graph of the fm-violin's output.  Click the "play" button to
+hear it; click "f" to see its spectrum.
 </p>
+
+
+<table border=0 hspace=40><tr><td>
+
+<p>What if this happened instead?
+</p>
+
 <pre>
-    (<a class=quiet href="#dac">play</a> "a-great.snd")
+    <em class=listener>&gt;</em><em class=typing>(load "v.scm")</em>
+    <em class=listener>open-file: system-error: "No such file or directory": "v.scm" (2)</em>
 </pre>
+
+<p>Snd is telling you that "open-file" (presumably part of the load sequence) can't find v.scm.
+I guess it's on some other directory, so try:
+</p>
+
+<pre>
+    <em class=listener>&gt;</em><em class=typing>%load-path</em>
+    <em class=listener>("/usr/local/share/snd" "/usr/local/share/guile/1.9")</em>
+</pre>
+
+<p>"%load-path" is a list of directorties that the "load" function looks at.  Apparently these two directories don't have v.scm.
+So find out where v.scm is ("locate v.scm" is usually the quickest way), and add its directory to %load-path:
+</p>
+
+<pre>
+    <em class=listener>&gt;</em><em class=typing>(set! %load-path (cons "/home/bil/cl" %load-path))</em> ; I'm adding my "cl" directory to the search list
+    <em class=listener>#&lt;unspecified&gt;</em>
+    <em class=listener>&gt;<em class=typing>(load-from-path "v.scm")</em>
+    <em class=listener>#&lt;unspecified&gt;</em>
+</pre>
+</td></tr></table>
+
+
+<p>In Gauche, "load" returns #t if happy, #f if not, and Gauche's name for the directory search list is *load-path*.
+In Ruby, we'd do it this way:
+</p>
+
+<pre>
+    <em class=listener>&gt;</em><em class=typing>load "v.rb"</em>
+    <em class=listener>true</em>
+    <em class=listener>&gt;</em><em class=typing>with_sound() do fm_violin_rb(0, 1.0, 440.0, 0.1) end</em>
+    <em class=listener>#&lt;With_CLM: output: "test.snd", channels: 1, srate: 22050&gt;</em>
+</pre>
+
+<p>and in Forth:
+<pre>
+    <em class=listener>snd&gt;</em> <em class=typing>"clm-ins.fs" file-eval</em>
+    <em class=listener>0</em>
+    <em class=listener>snd&gt;</em> <em class=typing>0.0 1.0 440.0 0.1 ' fm-violin with-sound</em>
+    <em class=listener>\ filename: test.snd</em>
+</pre>
+
+<p>In most of this document, I'll stick with Scheme as implemented by Guile.  extsnd.html and sndscm.html have numerous
+Ruby and Forth examples, and I'll toss some in here as I go along.
+You can save yourself a lot of typing by using two features of the listener.  First, &lt;TAB&gt; (that is, the key marked TAB) tries to complete 
+the current name, so if you type "fm-&lt;TAB&gt;" the listener completes the name as "fm-violin".
+And second, you can back up to a previous expression, edit it, move the cursor to the closing parenthesis, and
+type &lt;RETURN&gt;, and that expression will be evaluated as if you had typed all of it in from the start. 
+</p>
+
+<p>with-sound opens an output sound file, evaluates its body, closes the file, and then opens it in Snd.
+If the sound is already open, with-sound replaces it with the new version. 
+The body of with-sound can be any size, and can include anything that you could put in a function body.
+For example, 
+to get an arpeggio:</p>
+<pre>
+    (with-sound ()
+      (do ((i 0 (1+ i)))
+          ((= i 8))
+        (fm-violin (* i .25) .5 (* 100 (1+ i)) .1)))
+</pre>
+
+<table border=0 hspace=40><tr><td>
+<p>If that seemed to take awhile, make sure you've turned on <a href="extsnd.html#optimization">optimization</a>:
+</p>
+
+<pre>
+    <em class=listener>&gt;</em><em class=typing>(set! (optimization) 6)</em>
+    <em class=listener>6</em>
+</pre>
+
+<p>The optimizer, a macro named "run", can usually speed up computations by about a factor of 10.
+</p>
+</td></tr></table>
+
+<p>with-sound, instruments, CLM itself are all optional, of course.  We could
+do everything by hand:
+</p>
+
+<pre>
+(let ((sound (<a class=quiet href="extsnd.html#newsound">new-sound</a> "test.snd" :size 22050))
+      (increment (/ (* 440.0 2.0 pi) 22050.0))
+      (current-phase 0.0))
+  (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y)
+		 (let ((val (* .1 (sin current-phase))))
+		   (set! current-phase (+ current-phase increment))
+		   val))))
+</pre>
+
+<p>This opens a sound file and fills it with a sine wave at 440 Hz.
+But keeping track of phases and what not quickly becomes a bother.
+We can simplify things here by using with-sound and an "oscil":
+</p>
+
+<pre>
+(with-sound ()
+  (let ((osc (<a class=quiet href="#make-oscil">make-oscil</a> 440.0)))
+    (do ((i 0 (1+ i)))
+	((= i 22050))
+      (<a class=quiet href="#outa">outa</a> i (* .1 (<a class=quiet href="#oscil">oscil</a> osc)) *output*))))
+</pre>
+
+<p>*output* is the file opened by with-sound, and outa is a function that adds its second
+argument (the sinusoid) into the current output at the sample given by its first argument
+("i" in this case).  oscil is our sinusoid generator, created by make-oscil.  You don't
+need to worry about freeing the oscil; we can depend on the Scheme garbaage collector to
+deal with that.
+
+</p>
+
+<!-- STOPPED HERE -->
+
+<hr>
 
 <p>Although you can use CLM simply as a bunch of canned functions, it's a lot more
 fun to make your own.  In CLM, these are called instruments, and a sequence of
@@ -130,8 +275,8 @@ instrumental calls is a note list.
 To create your own instruments, you need to write the function that expresses
 in CLM's terms the sound processing actions you want.
 In the simplest case, you can just calculate your new
-value, and add it into the current output (the examples in this file are
-mostly in Common Lisp):</p>
+value, and add it into the current output:
+</p>
 
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
@@ -331,56 +476,6 @@ and any def-clm-struct name.
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="generators">Generators</a></h3></td></tr></table>
 <br>
 
-<table border=8 bordercolor="lightsteelblue" cellpadding=8 hspace=20>
-<tr><td>
-<table border=0>
-  <tr><td><a href="#all-pass">all-pass</a></td><td width=20></td><td>all-pass filter</td></tr>
-  <tr><td><a href="#asymmetric-fm">asymmetric-fm</a></td><td></td><td>asymmetric fm</td></tr>
-  <tr><td><a href="#comb">comb</a></td><td></td><td>comb filter</td></tr>
-  <tr><td><a href="#convolve">convolve</a></td><td></td><td>convolution</td></tr>
-  <tr><td><a href="#delay">delay</a></td><td></td><td>delay line</td></tr>
-  <tr><td><a href="#env">env</a></td><td></td><td>line segment envelope</td></tr>
-  <tr><td><a href="#filter">filter</a></td><td></td><td>direct form FIR/IIR filter</td></tr>
-  <tr><td><a href="#filtered-comb">filtered-comb</a></td><td></td><td>comb filter with filter on feedback</td></tr>
-  <tr><td><a href="#fir-filter">fir-filter</a></td><td></td><td>FIR filter</td></tr>
-  <tr><td><a href="#formant">formant</a></td><td></td><td>resonance</td></tr>
-  <tr><td><a href="#granulate">granulate</a></td><td></td><td>granular synthesis</td></tr>
-  <tr><td><a href="#iir-filter">iir-filter</a></td><td></td><td>IIR filter</td></tr>
-  <tr><td><a href="#in-any">in-any</a></td><td></td><td>sound file input</td></tr>
-  <tr><td><a href="#locsig">locsig</a></td><td></td><td>static sound placement</td></tr>
-  <tr><td><a href="#move-sound">move-sound</a></td><td></td><td>sound motion</td></tr>
-  <tr><td><a href="#moving-average">moving-average</a></td><td></td><td>moving window average</td></tr>
-  <tr><td><a href="#notch">notch</a></td><td></td><td>notch filter</td></tr>
-  <tr><td><a href="#one-pole">one-pole</a></td><td></td><td>one pole filter</td></tr>
-  <tr><td><a href="#one-zero">one-zero</a></td><td></td><td>one zero filter</td></tr>
-  <tr><td><a href="#oscil">oscil</a></td><td></td><td>sine wave and FM</td></tr>
-</table>
-</td>
-<td>
-<table border=0>
-  <tr><td><a href="#out-any">out-any</a></td><td width=20></td><td>sound output</td></tr>
-  <tr><td><a href="#polyshape">polyshape</a></td><td></td><td>waveshaping</td></tr>
-  <tr><td><a href="#phase-vocoder">phase-vocoder</a></td><td></td><td>vocoder analysis and resynthesis</td></tr>
-  <tr><td><a href="#pulse-train">pulse-train</a></td><td></td><td>pulse train</td></tr>
-  <tr><td><a href="#rand">rand,rand-interp</a></td><td></td><td>random numbers, noise</td></tr>
-  <tr><td><a href="#readin">readin</a></td><td></td><td>sound input</td></tr>
-  <tr><td><a href="#sawtooth-wave">sawtooth-wave</a></td><td></td><td>sawtooth</td></tr>
-  <tr><td><a href="#sine-summation">sine-summation</a></td><td></td><td>sine summation synthesis</td></tr>
-  <tr><td><a href="#square-wave">square-wave</a></td><td></td><td>square wave</td></tr>
-  <tr><td><a href="#src">src</a></td><td></td><td>sampling rate conversion</td></tr>
-  <tr><td><a href="#ssb-am">ssb-am</a></td><td></td><td>single sideband amplitude modulation</td></tr>
-  <tr><td><a href="#sum-of-cosines">sum-of-cosines</a></td><td></td><td>band-limited pulse train</td></tr>
-  <tr><td><a href="#sum-of-sines">sum-of-sines</a></td><td></td><td>sum of sines</td></tr>
-  <tr><td><a href="#table-lookup">table-lookup</a></td><td></td><td>interpolated table lookup</td></tr>
-  <tr><td><a href="#tap">tap</a></td><td></td><td>delay line tap</td></tr>
-  <tr><td><a href="#triangle-wave">triangle-wave</a></td><td></td><td>triangle wave</td></tr>
-  <tr><td><a href="#two-pole">two-pole</a></td><td></td><td>two pole filter</td></tr>
-  <tr><td><a href="#two-zero">two-zero</a></td><td></td><td>two zero filter</td></tr>
-  <tr><td><a href="#wave-train">wave-train</a></td><td></td><td>wave train</td></tr>
-  <tr><td><a href="#waveshape">waveshape</a></td><td></td><td>waveshaping</td></tr>
-</table>
-</td></tr>
-</table>
 
 <br><br>
 

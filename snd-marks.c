@@ -1637,7 +1637,8 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
   else samples_per_pixel = (Float)((double)(samps - 1) / (Float)pixels);
 
   /* this is assuming one dragged mark per channel */
-  if ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE))
+  if ((samples_per_pixel < 5.0) && 
+      (samps < POINT_BUFFER_SIZE))
     {
       sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
       if (sf == NULL) return;

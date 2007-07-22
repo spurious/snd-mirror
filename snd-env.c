@@ -952,7 +952,8 @@ static void display_enved_spectrum(chan_info *cp, enved_fft *ef, axis_info *ap)
       hisamp = ef->size / 2;
       incr = (Float)SND_SRATE(cp->sound) / (Float)(ef->size);
       samples_per_pixel = (Float)((double)hisamp / (Float)(ap->x_axis_x1 - ap->x_axis_x0));
-      if (samples_per_pixel < 4.0)
+      if ((samples_per_pixel < 4.0) &&
+	  (hisamp < POINT_BUFFER_SIZE))
 	{
 	  for (i = 0, x = 0.0; i < hisamp; i++, x += incr)
 	    set_grf_point(grf_x(x, ap), i, grf_y(ef->data[i], ap));

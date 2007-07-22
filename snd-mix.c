@@ -1727,6 +1727,7 @@ static int prepare_mix_peak_env(mix_info *md, Float scl, int yoff, off_t newbeg,
 	  set_grf_points(lastx, j++,
 			 (int)(yoff - scl * ymin),
 			 (int)(yoff - scl * ymax));
+	  if (j >= POINT_BUFFER_SIZE) break;
 	  lastx = newx;
 	  ymin = low;
 	  ymax = high;
@@ -1772,7 +1773,8 @@ static int prepare_mix_waveform(mix_info *md, mix_state *ms, axis_info *ap, Floa
   samples_per_pixel = (Float)((double)(samps - 1) / (Float)(x_end - x_start));
 
   if ((samples_per_pixel < 1.0) ||
-      ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE)))
+      ((samples_per_pixel < 5.0) && 
+       (samps < POINT_BUFFER_SIZE)))
     {
       int j;
       if (newbeg < lo) /* mix starts before current left x0 point */

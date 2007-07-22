@@ -523,6 +523,7 @@ int peak_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sr
 	}
       xi++;
       j++;
+      if (j >= POINT_BUFFER_SIZE) break;
       ymin = ep->fmax;
       ymax = ep->fmin;
     }
@@ -571,6 +572,7 @@ int peak_env_partial_graph(chan_info *cp, axis_info *ap, off_t beg, off_t end, F
 		     local_grf_y(ymax, ap));
       xi++;
       j++;
+      if (j >= POINT_BUFFER_SIZE) break;
       ymin = ep->fmax;
       ymax = ep->fmin;
     }

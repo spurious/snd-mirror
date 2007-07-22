@@ -1363,8 +1363,11 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
       if (cp->printing) ps_fg(cp, ax);
     }
   if ((samples_per_pixel < 1.0) ||
-      ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE)) ||
-      ((cp->time_graph_style == GRAPH_FILLED) && (samples_per_pixel < 25.0) && (samps < POINT_BUFFER_SIZE)))
+      ((samples_per_pixel < 5.0) && 
+       (samps < POINT_BUFFER_SIZE)) ||
+      ((cp->time_graph_style == GRAPH_FILLED) && 
+       (samples_per_pixel < 25.0) && 
+       (samps < POINT_BUFFER_SIZE)))
     {
       int grfpts;
       /* i.e. individual samples are widely spaced, so we have to be careful about placement
@@ -2006,7 +2009,11 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
       data[losamp] = max_data;
     }
 
-  if (samples_per_pixel < 4.0)
+  if ((samples_per_pixel < 4.0) &&
+      ((hisamp - losamp) < POINT_BUFFER_SIZE)) /* point buffer size in snd-draw.c:
+						*     hisamp - losamp can be anything (huge fft), and x1 - x0 can be > 2400 (very large screen) 
+						*     so we have to check hisamp or make the buffer bigger 
+						*/
     {
       if ((!(cp->fft_log_magnitude)) && 
 	  (!(cp->fft_log_frequency)))

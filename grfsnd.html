@@ -979,8 +979,8 @@ In Gtk, the arguments are different, but the basic idea is the same:
 <br>
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithclm">Snd and CLM</a></h3></td></tr></table>
 
-<p>The files clm.c, clm.h, and clm2xen.c implement <a href="sndclm.html#clmtop">CLM</a> (a Music V implementation),
-included in Snd when it is built.
+<p>The files clm.c, clm.h, and clm2xen.c implement <a href="sndclm.html#sndclmtop">CLM</a> (a Music V implementation),
+always included in Snd.
 You can see what a generator does, or a group of generators, by running them in the
 listener, and using the graph and spectrum functions.  Say we have
 these declarations in ~/.snd:
@@ -1036,6 +1036,7 @@ we can use:</p>
 <pre>
     (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (echo .5 .75) 0 44100)
 </pre>
+
 <p>to take the current active channel and 
 return 44100 samples of echos, each echo half the amplitude
 of the previous, and spaced by .75 seconds.  map-channel's
@@ -1051,22 +1052,6 @@ producing the echo.
     (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (echo .5 .75) 0 44100)
     (<a class=quiet href="extsnd.html#reversesound">reverse-sound</a>)
 </pre>
-<p>The Common Lisp version is:</p>
-
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(<a class=quiet href="sndclm.html#definstrument">definstrument</a> echo (beg dur scaler secs file)
-  (let ((del (<a class=quiet href="sndclm.html#make-delay">make-delay</a> (round (* secs *srate*))))
-	(inf (<a class=quiet href="sndclm.html#open-input">open-input</a> file))
-	(j 0))
-    (run
-     (loop for i from beg below (+ beg dur) do
-       (let ((inval (<a class=quiet href="sndclm.html#ina">ina</a> j inf)))
-	 (<a class=quiet href="sndclm.html#outa">outa</a> i (+ inval (<a class=quiet href="sndclm.html#delay">delay</a> del (* scaler (+ (<a class=quiet href="sndclm.html#tap">tap</a> del) inval)))))
-	 (incf j))))
-    (<a class=quiet href="sndclm.html#close-input">close-input</a> inf)))
-
-;;; (<a class=quiet href="sndclm.html#with-sound">with-sound</a> () (echo 0 60000 .5 1.0 "pistol.snd"))
-</pre></td></tr></table>
 
 <p>Generators are "applicable" in most versions of Snd: the generator knows its type, so the
 explicit "oscil" function (for example) isn't needed.
@@ -1079,6 +1064,7 @@ explicit "oscil" function (for example) isn't needed.
     &gt;<em class=typing>(oscil hi)</em>
     <em class=listener>0.125050634145737</em>
 </pre>
+
 <p>
 We can make a generator that is either
 an oscil or a sawtooth-wave:
@@ -1097,14 +1083,6 @@ an oscil or a sawtooth-wave:
     &gt;<em class=typing>(osc 0.0)</em>
     <em class=listener>0.125050634145737</em>
 </pre>
-
-<p>sndclm.html has lots of information about CLM.  For historical reasons, it is oriented toward
-Common Lisp, rather than Scheme, but it should not be hard to move back and forth.
-There are a few minor differences, mostly involving global variable names.
-For example,
-in Snd, the default locsig interpolation type is handled via locsig-type, rather than CLM's global
-variable *clm-locsig-type*.
-</p>
 
 <p>Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.scm</a>.
 </p>
@@ -1222,10 +1200,6 @@ variable *clm-locsig-type*.
 
 </pre>
 <p>Geez, I haven't had this much fun in a long time!  Check out <a href="sndscm.html#exampdoc">examp.scm</a> and <a href="sndscm.html#sndtestdoc">snd-test.scm</a> for more.  
-The Snd/Scheme version of an instrument (using 'run', of course) is slightly slower than the Common Lisp version,
-but not so much as to make it unusable.
-</p>
-<p>
 You can load Rick Taube's CM into Snd as Scheme code:
 </p>
 <pre>
@@ -1239,6 +1213,7 @@ The special generator snd-&gt;sample provides a way to redirect
 the CLM input handlers (<a class=quiet href="sndclm.html#in-any">in-any</a> in particular) to a Snd sound (via its index).
 </p>
 <br>
+
 
 <!-- INDEX sndinstruments:Instruments -->
 <table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndinstruments">Instruments</a></h4></td></tr></table>
