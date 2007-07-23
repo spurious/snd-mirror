@@ -437,10 +437,9 @@ is the word "definstrument":
 <pre>
 (definstrument (simp beg dur freq amp envelope)
   (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a> freq))
-         (samps (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mus-srate">mus-srate</a>)))))
-         (<em class=red>amp-env</em> (<a class=quiet href="#make-env">make-env</a> envelope :dur samps :scaler amp))
+         (<em class=red>amp-env</em> (<a class=quiet href="#make-env">make-env</a> envelope :duration dur :scaler amp))
 	 (start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mus-srate">mus-srate</a>)))))
-	 (end (+ start samps)))
+         (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mus-srate">mus-srate</a>)))))))
     (run
       (lambda ()
         (do ((i start (1+ i))) 
@@ -514,19 +513,36 @@ To get a cosine (as opposed to sine), set the initial-phase to (/ pi 2).
 </pre>
 <br clear=left>
 
-<p>Here is an example of FM:
+<p>One slightly confusing aspect of oscil is that glissando has to be turned into a phase-increment envelope.
+This means that the envelope y values should be passed through <a href="#hz-&gt;radians">hz-&gt;radians</a>:
+</p>
+
+<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+(define (simp start end freq amp frq-env)
+  (let ((os (make-oscil freq)) 
+        (frqe (<a class=quiet href="#make-env">make-env</a> frq-env :dur (- end start) :scaler (<em class=red>hz->radians</em> freq))))
+    (do ((i start (1+ i))) 
+        ((= i end))
+      (<a class=quiet href="#outa">outa</a> i (* amp (oscil os (env <em class=red>frqe</em>))) *output*))))
+
+(with-sound () (simp 0 10000 440 .1 '(0 0 1 1))) ; sweep up an octave
+</pre>
+</td></tr></table>
+
+<p>Here is an example of FM (here the <a class=quiet href="#hz-&gtlradians">hz-&gt;radians</a> business is folded into the FM index):
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> (simple-fm beg dur freq amp mc-ratio index :optional amp-env index-env)
-  (let* ((start (inexact-&gt;exact (floor (* beg (mus-srate)))))
-	 (end (+ start (inexact-&gt;exact (floor (* dur (mus-srate))))))
+  (let* ((start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
+	 (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
 	 (cr (<em class=red>make-oscil</em> freq))                     ; carrier
          (md (<em class=red>make-oscil</em> (* freq mc-ratio)))        ; modulator
          (fm-index (<a class=quiet href="#hztoradians">hz-&gt;radians</a> (* index mc-ratio freq)))
-         (ampf (<a class=quiet href="#make-env">make-env</a> (or amp-env '(0 0 .5 1 1 0)) :scaler amp :end end))
-         (indf (<a class=quiet href="#make-env">make-env</a> (or index-env '(0 0 .5 1 1 0)) :scaler fm-index :end end)))
+         (ampf (<a class=quiet href="#make-env">make-env</a> (or amp-env '(0 0  .5 1  1 0)) :scaler amp :duration dur))
+         (indf (<a class=quiet href="#make-env">make-env</a> (or index-env '(0 0  .5 1  1 0)) :scaler fm-index :duration dur)))
     (run
       (lambda ()
         (do ((i start (1+ i)))
@@ -566,21 +582,115 @@ create the individual spectral components:
 </td></tr></table>
 
 
-<p>Related generators are <a href="#sum-of-cosines">sum-of-cosines</a>, <a href="#sum-of-sines">sum-of-sines</a>,
-<a href="#asymmetric-fm">asymmetric-fm</a>, <a href="#sine-summation">sine-summation</a>, and
-<a href="#waveshape">waveshape</a>.  Some instruments that use oscil are <a href="sndscm.html#fmviolin">fm-violin</a> (v.ins),
-<a href="sndscm.html#lbjpiano">lbj-piano</a> (clm-ins.scm), <a href="sndscm.html#vox">vox</a> (clm-ins.scm), and
-<a href="sndscm.html#fmbell">fm-bell</a> (clm-ins.scm).  Interesting extensions of oscil include the various
-summation formulas in dsp.scm (<a href="sndscm.html#sumofnsines">sum-of-n-sines</a> et al).
-For a sine-bank example, see pvoc.scm.
+<table border=2 bgcolor="#fafafa" cellpadding=8 hspace=20>
+<tr><td>
+<p>To compare the Scheme, Ruby, Forth, and C versions of a CLM instrument (not to mention the Common Lisp
+version in the CLM tarball), here are versions of the bird instrument; it produces a sinusoid with (usually
+very elaborate) amplitude and frequency envelopes.
 </p>
 
+</td></tr><tr><td>
 
-<!-- STOPPED HERE -->
+<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+(define (scheme-bird start dur frequency freqskew amplitude freq-envelope amp-envelope)
+  (let* ((gls-env (<a class=quiet href="#make-env">make-env</a> freq-envelope (<a class=quiet href="#hztoradians">hz-&gt;radians</a> freqskew) dur))
+         (os (<a class=quiet href="#make-oscil">make-oscil</a> :frequency frequency))
+         (amp-env (<a class=quiet href="#make-env">make-env</a> amp-envelope amplitude dur))
+	 (len (inexact-&gt;exact (round (* (<a class=quiet href="#mussrate">mus-srate</a>) dur))))
+	 (beg (inexact-&gt;exact (round (* (<a class=quiet href="#mussrate">mus-srate</a>) start))))
+	 (end (+ beg len)))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (<a class=quiet href="clm.html#outa">outa</a> i (* (<a class=quiet href="#env">env</a> amp-env) 
+                    (<a class=quiet href="#oscil">oscil</a> os (<a class=quiet href="#env">env</a> gls-env)))
+	       *output*))))))
+</pre>
+</td></tr></table>
 
-<hr>
+</td></tr><tr><td>
 
+<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+def ruby_bird(start, dur, freq, freqskew, amp, freq_envelope, amp_envelope)
+  gls_env = make_env(:envelope, freq_envelope, :scaler, hz2radians(freqskew), :duration, dur)
+  os = make_oscil(:frequency, freq)
+  amp_env = make_env(:envelope, amp_envelope, :scaler, amp, :duration, dur)
+  run_instrument(start, dur) do
+    env(amp_env) * oscil(os, env(gls_env))
+  end
+end
+</pre>
+</td></tr></table>
+
+</td></tr><tr><td>
+
+<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+instrument: forth-bird { f: start f: dur f: freq f: freq-skew f: amp freqenv ampenv -- }
+    :frequency freq make-oscil { os }
+    :envelope ampenv :scaler amp :duration dur make-env { ampf }
+    :envelope freqenv :scaler freq-skew hz&gt;radians :duration dur make-env { gls-env }
+    90e random :locsig-degree
+    start dur run-instrument  ampf env  gls-env env os oscil-1  f*  end-run
+    os gen-free
+    ampf gen-free
+    gls-env gen-free
+;instrument
+</pre>
+</td></tr></table>
+
+</td></tr><tr><td>
+
+<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+void c_bird(double start, double dur, double frequency, double freqskew, double amplitude, 
+	    double *freqdata, int freqpts, double *ampdata, int amppts, mus_any *output)
+{
+  off_t beg, end, i;
+  mus_any *amp_env, *freq_env, *osc;
+  beg = start * mus_srate();
+  end = start + dur * mus_srate();
+  osc = mus_make_oscil(frequency, 0.0);
+  amp_env = mus_make_env(ampdata, amppts, amplitude, 0.0, 1.0, dur, 0, NULL);
+  freq_env = mus_make_env(freqdata, freqpts, mus_hz_to_radians(freqskew), 0.0, 1.0, dur, 0, NULL);
+  for (i = beg; i &lt; end; i++)
+    mus_sample_to_file(output, i, 0, 
+		       mus_env(amp_env) * 
+		         mus_oscil(osc, mus_env(freq_env), 0.0));
+  mus_free(osc);
+  mus_free(amp_env);
+  mus_free(freq_env);
+}
+</pre>
+</td></tr></table>
+
+</td></tr></table>
+
+
+
+<p>Related generators are 
+<a href="#sum-of-cosines">sum-of-cosines</a>, 
+<a href="#sum-of-sines">sum-of-sines</a>,
+<a href="#asymmetric-fm">asymmetric-fm</a>, 
+<a href="#sine-summation">sine-summation</a>, and
+<a href="#waveshape">waveshape</a>.  
+Some instruments that use oscil are 
+<a href="sndscm.html#birdoc">bird and bigbird</a>,
+<a href="sndscm.html#fmviolin">fm-violin</a> (v.ins),
+<a href="sndscm.html#lbjpiano">lbj-piano</a> (clm-ins.scm), 
+<a href="sndscm.html#vox">vox</a> (clm-ins.scm), and
+<a href="sndscm.html#fmbell">fm-bell</a> (clm-ins.scm).  
+Interesting extensions of oscil include the various
+summation formulas in dsp.scm (<a href="sndscm.html#sumofnsines">sum-of-n-sines</a> et al).
+For a sine-bank example, see pvoc.scm.
+To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
+</p>
 <br><br>
+
+
 
 <A NAME="envdoc"></A>
 <!-- ---------------------------------------- ENV ---------------------------------------- -->
@@ -589,6 +699,7 @@ For a sine-bank example, see pvoc.scm.
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>env</h3></td></tr></table>
 <br>
+
 <pre>
   <a class=def name="make-env">make-env</a> <a class=quiet href="#optional-key">:optional-key</a> 
       envelope      ; list of x,y break-point pairs
@@ -598,12 +709,15 @@ For a sine-bank example, see pvoc.scm.
       base          ; type of connecting line between break-points
       end           ; end point in samples (similar to <i>dur</i>)
       dur           ; duration in samples (can be used instead of <i>end</i>)
+
   <a class=def name="env">env</a> e
   <a class=def name="env?">env?</a> e
+
   <a class=def name="env-interp">env-interp</a> x env :optional (base 1.0)
   <a class=def name="envelope-interp">envelope-interp</a> x envelope :optional (base 1.0)
 </pre>
 
+<table border=0 hspace=40><tr><td>
 <table border cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>env methods</center></td></tr>
 <tr><td><em class=gen>mus-location</em></td><td>call counter value (number of calls so far on <i>env</i>)</td></tr>
@@ -613,17 +727,18 @@ For a sine-bank example, see pvoc.scm.
 <tr><td><em class=gen>mus-offset</em></td><td>original offset</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>original duration in samples</td></tr>
 </table>
+</td><td width=50><td>
+<img src="pyr.png" alt="an envelope">
+</td></tr></table>
 
-<p>An envelope is a list of break point pairs:  '(0 0 100 1)  is
+<p>An envelope is a list of break point pairs:  '(0 0  100 1)  is
 a ramp from 0 to 1 over an x-axis excursion from 0 to 100.  This list is passed
-to <b>make-env</b> along with the scaler
+to make-env along with the scaler
 applied to the y axis, the offset added to every y value,
 and the time in samples or seconds that the x axis represents.  make-env
 returns an env generator which returns the next sample of the envelope each
-time it is called.  The actual envelope value, leaving aside the <i>base</i>
-is <i>offset</i> + <i>scaler</i> * envelope-value.
-The kind of interpolation used to get y-values between the break
-points is determined by the envelope's <i>base</i>.  
+time it is called.  The actual envelope value, leaving aside the base argument
+is <code>(+ offset (* scaler break-point-list-value)) </code>.
 Say we want  a ramp moving from .3 to .5 over 1 second.
 The corresponding make-env call would be</p>
 <pre>
@@ -631,13 +746,25 @@ The corresponding make-env call would be</p>
   or
   (make-env '(0 .2 1 .5) :duration 1.0)
 </pre>
-<p><i>Base</i> determines how the break-points are connected.  If it is 1.0 (the
-default), you get straight line segments.  <i>base</i> = 0.0 gives a step
+
+<p>The base argument determines how the break-points are connected.  If it is 1.0 (the
+default), you get straight line segments.  If base is 0.0, you get a step
 function (the envelope changes its value suddenly to the new one without any
 interpolation).  Any other positive value becomes the exponent of the exponential curve
-connecting the points (see env.lisp).  <i>base</i> &lt; 1.0 gives convex curves (i.e. bowed
-out), and <i>base</i> &gt; 1.0 gives concave curves (i.e. sagging).
-If you'd rather think in terms of e^-kt, set the base to (exp k).  
+connecting the points.  A base &lt; 1.0 gives convex curves (i.e. bowed
+out), and a base &gt; 1.0 gives concave curves (i.e. sagging).
+If you'd rather think in terms of e^-kt, set the base to (exp k). 
+</p>
+
+
+
+
+<!-- STOPPED HERE --><hr>
+
+
+
+
+<p>
 To get arbitrary connecting curves between the break points, treat
 the output of env as the input to the connecting function.  Here's an
 instrument that maps the line segments into sin x^3:
@@ -646,8 +773,8 @@ instrument that maps the line segments into sin x^3:
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> mapenv (beg dur frq amp en)
-  (let* ((start (floor (* beg (mus-srate))))
-	 (end (+ start (floor (* dur (mus-srate)))))
+  (let* ((start (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>))))
+	 (end (+ start (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))
 	 (osc (<a class=quiet href="#make-oscil">make-oscil</a> frq))
          (half-pi (* pi 0.5))
 	 (zv (<em class=red>make-env</em> <em class=red>en</em> 1.0 dur)))
@@ -754,7 +881,8 @@ duration), it's simplest to use make-env:
 <A NAME="table-lookupdoc"></A>
 <!-- ---------------------------------------- TABLE-LOOKUP ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>TABLE-LOOKUP</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>table-lookup</h3></td></tr></table>
+<br>
 
 <pre>
   <a class=def name="make-table-lookup">make-table-lookup</a> <a class=quiet href="#optional-key">:optional-key</a> 
@@ -829,7 +957,8 @@ several standard orchestral instruments, courtesy of James A. Moorer.
 <A NAME="waveshapedoc"></A>
 <!-- ---------------------------------------- WAVESHAPE ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>WAVESHAPE (waveshaping synthesis)</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>waveshape</h3></td></tr></table>
+<br>
 <pre>
   <a class=def name="make-waveshape">make-waveshape</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (partials '(1 1)) wave size
   <a class=def name="waveshape">waveshape</a> w :optional (index 1.0) (fm 0.0)
@@ -920,8 +1049,8 @@ See also <a href="pqw.ins">pqw.ins</a> for phase quadrature waveshaping (single-
 <A NAME="sawtoothdoc"></A>
 <!-- ---------------------------------------- SAWTOOTH ETC ---------------------------------------- -->
 
-<table width="70%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>SAWTOOTH-WAVE, TRIANGLE-WAVE, PULSE-TRAIN, SQUARE-WAVE</h3></td></tr></table>
-
+<table width="70%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>sawtooth-wave, triangle-wave, pulse-train, square-wave</h3></td></tr></table>
+<br>
 <pre>
   <a class=def name="make-triangle-wave">make-triangle-wave</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (amplitude 1.0) (initial-phase pi)
   <a class=def name="triangle-wave">triangle-wave</a> s :optional (fm 0.0)
@@ -999,13 +1128,15 @@ One popular kind of vibrato is:
 
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
-(definstrument simple-saw (beg dur amp)
+(define (simple-saw beg dur amp)
   (let* ((os (<em class=red>make-sawtooth-wave</em> 440.0))
-	 (start (floor (* beg (mus-srate))))
-	 (end (+ start (floor (* dur (mus-srate))))))
+	 (start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
+	 (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))))
     (run
-     (loop for i from start to end do
-       (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>sawtooth-wave</em> os)))))))
+     (lambda ()
+       (do ((i start (1+ i))) 
+           ((= i end))
+         (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>sawtooth-wave</em> os)) *output*))))))
 </pre>
 </td></tr></table>
 <br>
@@ -1015,7 +1146,8 @@ One popular kind of vibrato is:
 <!-- ---------------------------------------- SUM-OF-COSINES ---------------------------------------- -->
 
 <br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>SUM-OF-COSINES</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>sum-of-cosines</h3></td></tr></table>
+<br>
 <pre>
   <a class=def name="make-sum-of-cosines">make-sum-of-cosines</a> <a class=quiet href="#optional-key">:optional-key</a> (cosines 1) (frequency 440.0) (initial-phase 0.0)
   <a class=def name="sum-of-cosines">sum-of-cosines</a> cs :optional (fm 0.0)
@@ -1051,13 +1183,14 @@ based on:
 </pre><br clear=left>
 
 <table border=0 bgcolor="#fafafa" hspace=40 vspace=20><tr><td><pre>
-(definstrument simple-soc (beg dur freq amp)
+(define (simple-soc beg dur freq amp)
   (let* ((os (<em class=red>make-sum-of-cosines</em> 10 freq 0.0))
-	 (start (floor (* beg (mus-srate))))
-	 (end (+ start (floor (* dur (mus-srate))))))
+	 (start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
+	 (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))))
     (run
-     (loop for i from start to end do
-       (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>sum-of-cosines</em> os)))))))
+     (lambda ()
+       (do ((i start (1+ i))) ((= i end))
+	 (out-any i (* amp (<em class=red>sum-of-cosines</em> os)) 0 *output*))))))
 </pre></td></tr></table>
 
 <p>Almost identical is the following (Scheme) <A NAME="sinc-train">sinc-train</a> generator:
@@ -1106,7 +1239,8 @@ but perhaps a filter is a simpler approach.
 <A NAME="sum-of-sinesdoc"></A>
 <!-- ---------------------------------------- SUM-OF-SINES ---------------------------------------- -->
 <br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>SUM-OF-SINES</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>sum-of-sines</h3></td></tr></table>
+<br>
 <pre>
   <a class=def name="make-sum-of-sines">make-sum-of-sines</a> <a class=quiet href="#optional-key">:optional-key</a> 
         (sines 1) (frequency 440.0) (initial-phase 0.0)
@@ -1138,7 +1272,8 @@ based on:
 <A NAME="ssb-amdoc"></A>
 <!-- ---------------------------------------- SSB-AM ---------------------------------------- -->
 <br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>SSB-AM (pitch shifting via single-sideband AM)</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>ssb-am</h3></td></tr></table>
+<br>
 <pre>
   <a class=def name="make-ssb-am">make-ssb-am</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (order 40)
   <a class=def name="ssb-am">ssb-am</a> gen :optional (insig 0.0) (fm 0.0)
@@ -1177,8 +1312,8 @@ Here's a complicated way to get a sine wave at 550 Hz:
 <pre>
 (definstrument shift-pitch (beg dur freq amp shift)
   (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a> freq))
-	 (start (floor (* beg (mus-srate))))
-	 (end (+ start (floor (* dur (mus-srate)))))
+	 (start (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>))))
+	 (end (+ start (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))
 	 (am (<em class=red>make-ssb-am</em> shift)))
     (run
      (loop for i from start to end do
@@ -1192,7 +1327,8 @@ Here's a complicated way to get a sine wave at 550 Hz:
 <A NAME="wave-traindoc"></A>
 <!-- ---------------------------------------- WAVE-TRAIN ---------------------------------------- -->
 <br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>WAVE-TRAIN</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>wave-train</h3></td></tr></table>
+<br>
 <pre>
   <a class=def name="make-wave-train">make-wave-train</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (initial-phase 0.0) wave size type
   <a class=def name="wave-train">wave-train</a> w :optional (fm 0.0)
@@ -1204,7 +1340,7 @@ Here's a complicated way to get a sine wave at 550 Hz:
 Successive waves can overlap.  With some simple envelopes, or filters, you can
 use this for VOSIM and other related techniques.</p>
 
-<table border cellpadding=4>
+<table border cellpadding=4 hspace=40>
 <tr><td colspan=2 bgcolor="beige"><center>wave-train methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -1221,13 +1357,13 @@ use this for VOSIM and other related techniques.</p>
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> fofins (beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional ve ae)
-  (let* ((start (floor (* beg (mus-srate))))
-         (end (+ start (floor (* dur (mus-srate)))))
+  (let* ((start (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>))))
+         (end (+ start (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))
          (ampf (<a class=quiet href="#make-env">make-env</a> :envelope (or ae (list 0 0 25 1 75 1 100 0)) :scaler amp :duration dur))
          (frq0 (<a class=quiet href="#hztoradians">hz-&gt;radians</a> f0))
          (frq1 (<a class=quiet href="#hztoradians">hz-&gt;radians</a> f1))
          (frq2 (<a class=quiet href="#hztoradians">hz-&gt;radians</a> f2))
-         (foflen (if (= (mus-srate) 22050) 100 200))
+         (foflen (if (= (<a class=quiet href="#mussrate">mus-srate</a>) 22050) 100 200))
          (vibr (<a class=quiet href="#make-oscil">make-oscil</a> :frequency 6))
 	 (vibenv (<a class=quiet href="#make-env">make-env</a> :envelope (or ve (list 0 1 100 1)) :scaler vib :duration dur))
          (win-freq (/ two-pi foflen))
@@ -1263,7 +1399,8 @@ use this for VOSIM and other related techniques.</p>
 <!-- ---------------------------------------- RAND, RAND-INTERP ---------------------------------------- -->
 <br>
 <!-- INDEX randomnumbers:Random Numbers --><a name="randomnumbers"></a>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>RAND, RAND-INTERP (random numbers)</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>rand, rand-interp</h3></td></tr></table>
+<br>
 
 <pre>
   <a class=def name="make-rand">make-rand</a> <a class=quiet href="#optional-key">:optional-key</a> 
@@ -1418,7 +1555,7 @@ than the preceding:
 (defun make-1f-noise (n)
   ;; returns an array of rand's ready for the 1f-noise generator
   (let ((rans (make-array n)))
-    (dotimes (i n) (set! (aref rans i) (<em class=red>make-rand</em> :frequency (/ (mus-srate) (expt 2 i)))))
+    (dotimes (i n) (set! (aref rans i) (<em class=red>make-rand</em> :frequency (/ (<a class=quiet href="#mussrate">mus-srate</a>) (expt 2 i)))))
     rans))
 
 (defmacro 1f-noise (rans)
@@ -1436,8 +1573,8 @@ And we can't talk about noise without mentioning fractals:</p>
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> fractal (start duration m x amp)
   ;; use formula of M J Feigenbaum
-  (let* ((beg (floor (* (mus-srate) start)))
-	 (end (+ beg (floor (* (mus-srate) duration)))))
+  (let* ((beg (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) start)))
+	 (end (+ beg (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) duration)))))
     (run
      (loop for i from beg below end do
        (<a class=quiet href="#outa">outa</a> i (* amp x))
@@ -1460,8 +1597,8 @@ Another instrument based on similar ideas is:</p>
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> attract (beg dur amp c) ; c from 1 to 10 or so
   ;; by James McCartney, from CMJ vol 21 no 3 p 6
-  (let* ((st (floor (* beg (mus-srate))))
-	 (nd (+ st (floor (* dur (mus-srate)))))
+  (let* ((st (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>))))
+	 (nd (+ st (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))
 	 (a .2) (b .2) (dt .04)
 	 (scale (/ (* .5 amp) c))
 	 (x1 0.0) (x -1.0) (y 0.0) (z 0.0))
@@ -1498,7 +1635,8 @@ We can also get all the period doublings and so on from sin:
 <!-- ---------------------------------------- SIMPLE FILTERS ---------------------------------------- -->
 
 <!-- INDEX filters:Filters --><A class=def NAME="filters"></a>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>ONE-POLE, ONE-ZERO, TWO-POLE, TWO-ZERO (simple filters)</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>one-pole, one-zero, two-pole, two-zero</h3></td></tr></table>
+<br>
 
 <pre>
    <a class=def name="make-one-pole">make-one-pole</a> <a class=quiet href="#optional-key">:optional-key</a> a0 b1    ; b1 &lt; 0.0 gives lowpass, b1 &gt; 0.0 gives highpass
@@ -1518,7 +1656,7 @@ We can also get all the period doublings and so on from sin:
    <a class=def name="two-zero?">two-zero?</a> f
 </pre>
 <br>
-<table border align=left hspace=20 cellpadding=4>
+<table border align=left hspace=40 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>simple filter methods</center></td></tr>
 <tr><td><em class=gen>mus-xcoeff</em></td><td>a0, a1, a2 in equations</td></tr>
 <tr><td><em class=gen>mus-ycoeff</em></td><td>b1, b2 in equations</td></tr>
@@ -1569,7 +1707,8 @@ filter (<b>frequency</b> and <b>radius</b>).
 <A NAME="formantdoc"></A>
 <!-- ---------------------------------------- FORMANT ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>FORMANT (resonances)</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>formant</h3></td></tr></table>
+<br>
 
 <pre>
   <a class=def name="make-formant">make-formant</a> <a class=quiet href="#optional-key">:optional-key</a> radius frequency (gain 1.0)
@@ -1577,7 +1716,7 @@ filter (<b>frequency</b> and <b>radius</b>).
   <a class=def name="formant?">formant?</a> f
 </pre>
 
-<table border align=left hspace=20 cellpadding=4>
+<table border align=left hspace=40 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>formant methods</center></td></tr>
 <tr><td><em class=gen>mus-xcoeff</em></td><td>a0, a1, a2 in equations</td></tr>
 <tr><td><em class=gen>mus-ycoeff</em></td><td>b1, b2 in equations</td></tr>
@@ -1613,7 +1752,7 @@ Constant-Gain Digital Resonators" by Ken Steiglitz, CMJ vol 18 No. 4 pp.8-10
 by using a macro such as:</p>
 <pre>
   (defmacro compute-radius (bw) ; bw in Hz
-    `(exp (/ (* (- pi) ,bw) (mus-srate))))
+    `(exp (/ (* (- pi) ,bw) (<a class=quiet href="#mussrate">mus-srate</a>))))
 </pre>
 <p>The <i>gain</i> argument to make-formant is not used directly; it becomes
 <i>gain</i> * (1 - radius) or some variation thereof (see make-formant in mus.lisp).
@@ -1637,8 +1776,8 @@ for cross-synthesis with a bank of 128 formants:
       (if (not fil2)
           (<a class=quiet href="#close-input">close-input</a> fil1)
         (unwind-protect
-	  (let* ((start (floor (* beg (mus-srate))))
-	         (end (+ start (floor (* dur (mus-srate)))))
+	  (let* ((start (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>))))
+	         (end (+ start (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))
 	         (freq-inc (floor fftsize 2))
 	         (fdr (make-double-float-array fftsize))
 	         (fdi (make-double-float-array fftsize))
@@ -1647,7 +1786,7 @@ for cross-synthesis with a bank of 128 formants:
 	         (filptr 0)
 	         (ctr freq-inc)
 	         (radius (- 1.0 (/ r fftsize)))
-	         (bin (float (/ (mus-srate) fftsize)))
+	         (bin (float (/ (<a class=quiet href="#mussrate">mus-srate</a>) fftsize)))
 	         (fs (make-array freq-inc)))
 	    (if (null hi) (set! hi freq-inc))
 	    (loop for k from lo below hi do 
@@ -1689,8 +1828,8 @@ for cross-synthesis with a bank of 128 formants:
 <A NAME="iir-filterdoc"></A>
 <!-- ---------------------------------------- FILTERS ---------------------------------------- -->
 <br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>FILTER, IIR-FILTER, FIR-FILTER</h3></td></tr></table>
-
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>filter, iir-filter, fir-filter</h3></td></tr></table>
+<br>
 <pre>
    <a class=def name="make-filter">make-filter</a> <a class=quiet href="#optional-key">:optional-key</a> order xcoeffs ycoeffs
    <a class=def name="filter">filter</a> fl inp 
@@ -1711,7 +1850,7 @@ The <i>order</i> argument is one greater than the nominal filter
 order (it is the size of the arrays).
 </p>
 
-<table border align=left hspace=20 cellpadding=4>
+<table border align=left hspace=40 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>general filter methods</center></td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>filter order</td></tr>
 <tr><td><em class=gen>mus-xcoeff</em></td><td>x (input) coeff</td></tr>
@@ -1752,10 +1891,10 @@ say we want to put a spectral envelope on a noise source.</p>
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> filter-noise (beg dur amp :key xcoeffs)
-  (let* ((st (floor (* beg (mus-srate))))
-         (noi (<a class=quiet href="#make-rand">make-rand</a> :frequency (* .5 (mus-srate)) :amplitude amp))
+  (let* ((st (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>))))
+         (noi (<a class=quiet href="#make-rand">make-rand</a> :frequency (* .5 (<a class=quiet href="#mussrate">mus-srate</a>)) :amplitude amp))
          (flA (<em class=red>make-filter</em> :xcoeffs xcoeffs))
-         (nd (+ st (floor (* (mus-srate) dur)))))
+         (nd (+ st (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) dur)))))
     (run
       (loop for i from st below nd do
         (<a class=quiet href="#outa">outa</a> i (<em class=red>filter</em> flA (<a class=quiet href="#rand">rand</a> noi)))))))
@@ -1797,7 +1936,8 @@ get to the envelope.</p>
 <A NAME="delaydoc"></A>
 <!-- ---------------------------------------- DELAY ---------------------------------------- -->
 <br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>DELAY, TAP</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>delay, tap</h3></td></tr></table>
+<br>
 <pre>
   <a class=def name="make-delay">make-delay</a> <a class=quiet href="#optional-key">:optional-key</a> size initial-contents initial-element max-size type
   <a class=def name="delay">delay</a> d input :optional (pm 0.0)
@@ -1826,7 +1966,7 @@ returns its <i>input</i> argument.  This is aimed at physical modeling instrumen
 where a <b>tap</b> is doing the actual delay line read.
 </p>
 
-<table border align=left hspace=20 cellpadding=4>
+<table border align=left hspace=40 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>delay methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of delay (no set!)</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
@@ -1848,7 +1988,7 @@ where a <b>tap</b> is doing the actual delay line read.
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> echo (beg dur scaler secs file)
-  (let ((del (<em class=red>make-delay</em> (round (* secs (mus-srate)))))
+  (let ((del (<em class=red>make-delay</em> (round (* secs (<a class=quiet href="#mussrate">mus-srate</a>)))))
 	(inf (<a class=quiet href="#open-input">open-input</a> file))
 	(j 0))
     (run
@@ -1896,8 +2036,8 @@ last "size" samples).
 <A NAME="notchdoc"></A>
 <!-- ---------------------------------------- COMB, NOTCH ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>COMB, NOTCH</h3></td></tr></table>
-
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>comb, notch</h3></td></tr></table>
+<br>
 <pre>
   <a class=def name="make-comb">make-comb</a> <a class=quiet href="#optional-key">:optional-key</a> scaler size initial-contents initial-element max-size
   <a class=def name="comb">comb</a> cflt input :optional (pm 0.0)
@@ -1920,7 +2060,7 @@ Other arguments are handled as in <a href="#delay">delay</a>.
 to be a <a href="#one-zero">one-zero</a> filter, but in other languages it can be any CLM generator.
 </p>
 
-<table border align=left hspace=20 cellpadding=4>
+<table border align=left hspace=40 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>comb, filtered-comb, and notch methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of delay (no set!)</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
@@ -1939,9 +2079,9 @@ to be a <a href="#one-zero">one-zero</a> filter, but in other languages it can b
 
 <p>As a rule of thumb, the decay time of the feedback part is
 7.0 * <i>size</i> / (1.0 - <i>scaler</i>) samples, so to get a decay of dur seconds,
-<i>scaler</i> &lt;= 1.0 - 7.0 * <i>size</i> / (dur * (mus-srate)).  The peak gain is 1.0 / (1.0 - (abs
+<i>scaler</i> &lt;= 1.0 - 7.0 * <i>size</i> / (dur * (<a class=quiet href="#mussrate">mus-srate</a>)).  The peak gain is 1.0 / (1.0 - (abs
 <i>scaler</i>)).  The peaks (or valleys in notch's case) are evenly spaced
-at (mus-srate) / size. The height (or depth) thereof is determined by <i>scaler</i> --
+at (<a class=quiet href="#mussrate">mus-srate</a>) / size. The height (or depth) thereof is determined by <i>scaler</i> --
 the closer to 1.0, the more pronounced.
 See Julius Smith's "An Introduction to Digital Filter Theory" in
 Strawn "Digital Audio Signal Processing", or Smith's "Music Applications of
@@ -1997,7 +2137,8 @@ delay line as the coefficients for an FIR filter (this example is in Scheme):
 <A NAME="all-passdoc"></A>
 <!-- ---------------------------------------- ALL-PASS ---------------------------------------- -->
 <br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>ALL-PASS</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>all-pass</h3></td></tr></table>
+<br>
 <pre>
   <a class=def name="make-all-pass">make-all-pass</a> <a class=quiet href="#optional-key">:optional-key</a> feedback feedforward size initial-contents initial-element max-size
   <a class=def name="all-pass">all-pass</a> f input :optional (pm 0.0)
@@ -2007,7 +2148,7 @@ delay line as the coefficients for an FIR filter (this example is in Scheme):
 an added feedforward term.  If <i>feedback</i> = 0, we get a moving
 average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
 
-<table border align=left hspace=20 cellpadding=4>
+<table border align=left hspace=40 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>all-pass methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of delay (no set!)</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
@@ -2029,7 +2170,8 @@ average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
 <A NAME="moving-averagedoc"></A>
 <!-- ---------------------------------------- MOVING-AVERAGE ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>MOVING-AVERAGE (moving window average)</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>moving-average</h3></td></tr></table>
+<br>
 <pre>
   <a class=def name="make-moving-average">make-moving-average</a> <a class=quiet href="#optional-key">:optional-key</a> size initial-contents initial-element
   <a class=def name="moving-average">moving-average</a> f input
@@ -2040,7 +2182,7 @@ This is used both to track rms values and to generate ramps between 0 and 1 in a
 effect in new-effects.scm and in rms-envelope in env.scm (Snd).  It could also be viewed as a low-pass filter.
 </p>
 
-<table align=left border hspace=20 cellpadding=4>
+<table align=left border hspace=40 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>moving-average methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of table</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
@@ -2083,14 +2225,15 @@ moving-rms, moving-sum, and moving-length.  I might make these CLM generators so
 <!-- ---------------------------------------- SRC ---------------------------------------- -->
 <br>
 <!-- INDEX make-src:sampling-rate conversion -->
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>SRC (sampling-rate conversion)</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>src</h3></td></tr></table>
+<br>
 <pre>
   <a class=def name="make-src">make-src</a> <a class=quiet href="#optional-key">:optional-key</a> input (srate 1.0) (width 5)
   <a class=def name="src">src</a> s :optional (sr-change 0.0) input-function
   <a class=def name="src?">src?</a> s
 </pre>
 
-<table border cellpadding=4 hspace=20>
+<table border cellpadding=4 hspace=40>
 <tr><td colspan=2 bgcolor="beige"><center>src methods</center></td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>srate arg to make-src</td></tr>
 </table>
@@ -2115,8 +2258,8 @@ an instrument that provides time-varying sampling rate conversion:
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> simple-src (start-time duration amp srt srt-env filename)
   (let* ((senv (<a class=quiet href="#make-env">make-env</a> :envelope srt-env :duration duration))
-         (beg (floor (* start-time (mus-srate))))
-         (end (+ beg (floor (* duration (mus-srate)))))
+         (beg (floor (* start-time (<a class=quiet href="#mussrate">mus-srate</a>))))
+         (end (+ beg (floor (* duration (<a class=quiet href="#mussrate">mus-srate</a>)))))
          (src-gen (<em class=red>make-src</em> :input filename :srate srt)))
     (run
       (loop for i from beg below end do
@@ -2130,8 +2273,8 @@ an instrument that provides time-varying sampling rate conversion:
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> srcer (start-time duration amp srt fmamp fmfreq filename)
   (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a> :frequency fmfreq))
-         (beg (floor (* start-time (mus-srate))))
-         (end (+ beg (floor (* duration (mus-srate)))))
+         (beg (floor (* start-time (<a class=quiet href="#mussrate">mus-srate</a>))))
+         (end (+ beg (floor (* duration (<a class=quiet href="#mussrate">mus-srate</a>)))))
          (src-gen (<em class=red>make-src</em> :input filename :srate srt)))
     (run
       (loop for i from beg below end do
@@ -2167,9 +2310,9 @@ The simple-src instrument above could be written to use an input function instea
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> src-with-readin (start-time duration amp srt srt-env filename)
   (let* ((senv (<a class=quiet href="#make-env">make-env</a> :envelope srt-env :duration duration))
-         (beg (floor (* start-time (mus-srate))))
+         (beg (floor (* start-time (<a class=quiet href="#mussrate">mus-srate</a>))))
 	 (rd (<em class=red>make-readin</em> filename))
-         (end (+ beg (floor (* duration (mus-srate)))))
+         (end (+ beg (floor (* duration (<a class=quiet href="#mussrate">mus-srate</a>)))))
          (src-gen (<em class=red>make-src</em> :srate srt)))
     (run
       (loop for i from beg below end do
@@ -2190,7 +2333,8 @@ a click).
 <A NAME="convolvedoc"></A>
 <!-- ---------------------------------------- CONVOLVE ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>CONVOLVE</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>convolve</h3></td></tr></table>
+<br>
 <pre>
   <a class=def name="make-convolve">make-convolve</a> <a class=quiet href="#optional-key">:optional-key</a> input filter fft-size filter-size
    <a class=def name="convolve">convolve</a> ff :optional input-function
@@ -2198,7 +2342,7 @@ a click).
    <a class=def name="convolvefiles">convolve-files</a> file1 file2 :optional (maxamp 1.0) (output-file "tmp.snd")
 </pre>
 
-<table border cellpadding=4 hspace=20>
+<table border cellpadding=4 hspace=40>
 <tr><td colspan=2 bgcolor="beige"><center>convolve methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>fft size used in the convolution</td></tr>
 </table>
@@ -2216,8 +2360,8 @@ funcall'd whenever convolve needs input.
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> convins (beg dur filter file :optional (size 128))
-  (let* ((start (floor (* beg (mus-srate))))
-         (end (+ start (floor (* dur (mus-srate)))))
+  (let* ((start (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>))))
+         (end (+ start (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))
          (ff (<em class=red>make-convolve</em> :input file :fft-size size :filter filter)))
     (run
       (loop for i from start below end do 
@@ -2238,7 +2382,8 @@ handier.</p>
 <!-- ---------------------------------------- GRANULATE ---------------------------------------- -->
 
 <!-- INDEX grains:Granular synthesis --><A class=def NAME="grains"></a>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>GRANULATE (granular synthesis)</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>granulate</h3></td></tr></table>
+<br>
 <pre>
   <a class=def name="make-granulate">make-granulate</a> <a class=quiet href="#optional-key">:optional-key</a>   
         input
@@ -2254,7 +2399,7 @@ handier.</p>
   <a class=def name="granulate?">granulate?</a> e
 </pre>
 
-<table align=left border cellpadding=4 hspace=20>
+<table align=left border cellpadding=4 hspace=40>
 <tr><td colspan=2 bgcolor="beige"><center>granulate methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>time (seconds) between output grains (<i>hop</i>)</td></tr>
 <tr><td><em class=gen>mus-ramp</em></td><td>length (samples) of grain envelope ramp segment</td></tr>
@@ -2312,10 +2457,10 @@ close to the original speed.
   (let* ((f-srate (<a class=quiet href="#sound-srate">sound-srate</a> file))
 	 (f-start (round (* f-srate orig-beg)))
          (f (<a class=quiet href="#open-input">open-input</a> file :start f-start))
-	 (st (floor (* beg (mus-srate))))
+	 (st (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>))))
 	 (new-dur (or dur (- (<a class=quiet href="#sound-duration">sound-duration</a> file) orig-beg)))
 	 (exA (<em class=red>make-granulate</em> :input f :expansion exp-amt))
-	 (nd (+ st (floor (* (mus-srate) new-dur)))))
+	 (nd (+ st (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) new-dur)))))
     (run
      (loop for i from st below nd do
        (<a class=quiet href="#outa">outa</a> i (<em class=red>granulate</em> exA))))
@@ -2377,14 +2522,15 @@ In the following code, we use the edit function to reverse every other grain:
 <A NAME="phase-vocoderdoc"></A>
 <!-- ---------------------------------------- PHASE-VOCODER ---------------------------------------- -->
 <br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>PHASE-VOCODER</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>phase-vocoder</h3></td></tr></table>
+<br>
 <pre>
   <a class=def name="make-phase-vocoder">make-phase-vocoder</a> <a class=quiet href="#optional-key">:optional-key</a> input (fft-size 512) (overlap 4) interp (pitch 1.0) analyze edit synthesize
   <a class=def name="phase-vocoder">phase-vocoder</a> pv input-function analyze-function edit-function synthesize-function
   <a class=def name="phase-vocoder?">phase-vocoder?</a> pv
 </pre>
 
-<table border cellpadding=4 hspace=20>
+<table border cellpadding=4 hspace=40>
 <tr><td colspan=2 bgcolor="beige"><center>phase-vocoder methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>pitch shift</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>fft-size ("N")</td></tr>
@@ -2407,8 +2553,8 @@ ffts (for time stretching etc).
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (definstrument simple-pvoc (beg dur amp size file)
-  (let* ((start (floor (* beg (mus-srate))))
-	 (end (+ start (floor (* dur (mus-srate)))))
+  (let* ((start (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>))))
+	 (end (+ start (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))
 	 (sr (<em class=red>make-phase-vocoder</em> file :fft-size size)))
       (run
        (loop for i from start to end do
@@ -2427,14 +2573,15 @@ in functions that do what the phase-vocoder would have done without any function
 
 <!-- ---------------------------------------- SINE-SUMMATION ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>SINE-SUMMATION (sum of sines with different amplitudes)</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>sine-summation</h3></td></tr></table>
+<br>
 <pre>
   <a class=def name="make-sine-summation">make-sine-summation</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (initial-phase 0.0) (n 1) (a .5) (ratio 1.0)
   <a class=def name="sine-summation">sine-summation</a> s :optional (fm 0.0)
   <a class=def name="sine-summation?">sine-summation?</a> s
 </pre>
 
-<table align=left border cellpadding=4 hspace=20>
+<table align=left border cellpadding=4 hspace=40>
 <tr><td colspan=2 bgcolor="beige"><center>sine-summation methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -2469,8 +2616,8 @@ don't set <i>a</i> to 1.0!).
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> ss (beg dur freq amp :optional (N 1) (a .5) (B-ratio 1.0))
-  (let* ((st (floor (* (mus-srate) beg)))
-         (nd (+ st (floor (* (mus-srate) dur))))
+  (let* ((st (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) beg)))
+         (nd (+ st (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) dur))))
          (sgen (<em class=red>make-sine-summation</em> :n N :a a :ratio B-ratio :frequency freq)))
     (run
      (loop for i from st below nd do
@@ -2484,14 +2631,15 @@ don't set <i>a</i> to 1.0!).
 <A NAME="asymmetric-fmdoc"></A>
 <!-- ---------------------------------------- ASYMMETRIC-FM ---------------------------------------- -->
 <br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>ASYMMETRIC-FM</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>asymmetric-fm</h3></td></tr></table>
+<br>
 <pre>
   <a class=def name="make-asymmetric-fm">make-asymmetric-fm</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (initial-phase 0.0) (r 1.0) (ratio 1.0)
   <a class=def name="asymmetric-fm">asymmetric-fm</a> af index :optional (fm 0.0)
   <a class=def name="asymmetric-fm?">asymmetric-fm?</a> af
 </pre>
 
-<table align=left border cellpadding=4 hspace=20>
+<table align=left border cellpadding=4 hspace=40>
 <tr><td colspan=2 bgcolor="beige"><center>asymmetric-fm methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -2523,8 +2671,8 @@ would be tricky to get time-varying indices.
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> asy (beg dur freq amp index :optional (r 1.0) (ratio 1.0))
-  (let* ((st (floor (* beg (mus-srate))))
-         (nd (+ st (floor (* dur (mus-srate)))))
+  (let* ((st (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>))))
+         (nd (+ st (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))
          (asyf (<em class=red>make-asymmetric-fm</em> :r r :ratio ratio :frequency freq)))
     (run
      (loop for i from st below nd do
@@ -2602,8 +2750,8 @@ a CLM generator.
   ;; read file forwards and backwards until dur is used up
   ;; a slightly improved version is 'scratch' in ug1.ins
   (let* ((last-sample (<a class=quiet href="#sound-frames">sound-frames</a> file))
-         (beg (floor (* (mus-srate) onset)))
-         (end (+ beg (floor (* (mus-srate) duration))))
+         (beg (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) onset)))
+         (end (+ beg (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) duration))))
 	 (input (<a class=quiet href="#make-readin">make-readin</a> file))
          (s (<a class=quiet href="#make-src">make-src</a> :srate src-ratio))
          (cs 0))
@@ -2627,7 +2775,7 @@ a CLM generator.
 
 <!-- ---------------------------------------- FRAME, MIXER ---------------------------------------- -->
 <br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="framesandmixers">Frames, Mixers, Sound IO</a></h3></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="framesandmixers">frame, mixer</a></h3></td></tr></table>
 <br>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>Frames and Mixers</h3></td></tr></table>
 
@@ -2670,7 +2818,7 @@ data IO.
 </table>
 
 <A NAME="framemuschannels"></A>
-<table border cellpadding=4 hspace=20 vspace=20>
+<table border cellpadding=4 hspace=40 vspace=20>
 <tr><td colspan=2 bgcolor="beige"><center>frame and mixer methods</center></td></tr>
 <tr><td><em class=gen>mus-channels</em></td><td>number of channels accommodated</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>same as mus-channels</td></tr>
@@ -2754,10 +2902,13 @@ you can use <b>mus-close</b>, but it's also called automatically during garbage 
 </p>
 
 
+<!-- ---------------------------------------- IN-ANY, OUT-ANY ---------------------------------------- -->
+
 <!-- INDEX ina-outa:Input and output --><A class=def NAME="ina-outa"></a>
 <A class=def NAME="outa"></a>
 <A class=def NAME="ina"></a>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>OUT-ANY (sound file output)</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>in-any, out-any</h3></td></tr></table>
+<br>
 <pre>
   <a class=def name="out-any">out-any</a> loc data :optional (channel 0) (o-stream *output*)
 </pre>
@@ -2792,8 +2943,8 @@ Outside Common Lisp, the <i>stream</i> argument can be a vct or a sound-data obj
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (definstrument simple-ina (beg dur amp file)
-  (let* ((start (floor (* beg (mus-srate))))
-	 (end (+ start (floor (* dur (mus-srate)))))
+  (let* ((start (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>))))
+	 (end (+ start (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))
 	 (fil (<em class=red>open-input</em> file)))          ; actually make-file-&gt;sample
     (run
      (loop for i from start to end do
@@ -2806,14 +2957,15 @@ Outside Common Lisp, the <i>stream</i> argument can be a vct or a sound-data obj
 
 <!-- ---------------------------------------- READIN ---------------------------------------- -->
 <br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>READIN (sound file input)</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>readin</h3></td></tr></table>
+<br>
 <pre>
  <a class=def name="make-readin">make-readin</a> <a class=quiet href="#optional-key">:optional-key</a> file (channel 0) start (direction 1)
  <a class=def name="readin">readin</a> rd
  <a class=def name="readin?">readin?</a> rd
 </pre>
 
-<table border cellpadding=4 hspace=20>
+<table border cellpadding=4 hspace=40>
 <tr><td colspan=2 bgcolor="beige"><center>readin methods</center></td></tr>
 <tr><td><em class=gen>mus-channel</em></td><td><i>channel</i> arg to make-readin (no set!)</td></tr>
 <tr><td><em class=gen>mus-location</em></td><td>current location in file</td></tr>
@@ -2835,12 +2987,12 @@ readin and <a href="#env">env</a> (see also the fullmix instrument in fullmix.in
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> env-sound (file beg :optional (amp 1.0) (amp-env '(0 1 100 1)))
-  (let* ((st (floor (* beg (mus-srate))))
+  (let* ((st (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>))))
          (dur (<a class=quiet href="#sound-duration">sound-duration</a> file))
          (rev-amount .01)
          (rdA (<em class=red>make-readin</em> file))
          (ampf (<a class=quiet href="#make-env">make-env</a> amp-env amp dur))
-         (nd (+ st (floor (* (mus-srate) dur)))))
+         (nd (+ st (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) dur)))))
     (run
       (loop for i from st below nd do
         (let ((outval (* (<a class=quiet href="#env">env</a> ampf) (<em class=red>readin</em> rdA))))
@@ -2855,7 +3007,8 @@ readin and <a href="#env">env</a> (see also the fullmix instrument in fullmix.in
 
 <!-- INDEX make-locsig:Sound placement -->
 <br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>LOCSIG (sound placement)</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>locsig</h3></td></tr></table>
+<br>
 <pre>
  <a class=def name="make-locsig">make-locsig</a> <a class=quiet href="#optional-key">:optional-key</a> (degree 0.0) (distance 1.0) (reverb 0.0) channels output revout (type *clm-locsig-type*)
  <a class=def name="locsig">locsig</a> loc i in-sig
@@ -2868,7 +3021,7 @@ readin and <a href="#env">env</a> (see also the fullmix instrument in fullmix.in
  <a class=def name="locsig-type">locsig-type</a> ()
 </pre>
 
-<table border cellpadding=4 hspace=20>
+<table border cellpadding=4 hspace=40>
 <tr><td colspan=2 bgcolor="beige"><center>locsig methods</center></td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>output scalers (a vct)</td></tr>
 <tr><td><em class=gen>mus-xcoeff</em></td><td>reverb scaler</td></tr>
@@ -2919,8 +3072,8 @@ loop to pan between speakers (but see move-locsig below):</p>
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> space (file onset duration :key (distance-env '(0 1 100 10)) (amplitude-env '(0 1 100 1))
 		     (degree-env '(0 45 50 0 100 90)) (reverb-amount .05))
-  (let* ((beg (floor (* onset (mus-srate))))
-	 (end (+ beg (floor (* (mus-srate) duration))))
+  (let* ((beg (floor (* onset (<a class=quiet href="#mussrate">mus-srate</a>))))
+	 (end (+ beg (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) duration))))
          (loc (<em class=red>make-locsig</em> :degree 0 :distance 1 :reverb reverb-amount))
          (rdA (<a class=quiet href="#make-readin">make-readin</a> :file file))
          (dist-env (<a class=quiet href="#make-env">make-env</a> distance-env :duration duration))
@@ -2948,8 +3101,8 @@ Here is an example of move-locsig:
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> move-osc (start dur freq amp :key (degree 0) (dist 1.0) (reverb 0))
-  (let* ((beg (floor (* start (mus-srate))))
-         (end (+ beg (floor (* dur (mus-srate)))) )
+  (let* ((beg (floor (* start (<a class=quiet href="#mussrate">mus-srate</a>))))
+         (end (+ beg (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))) )
          (car (<a class=quiet href="#make-oscil">make-oscil</a> :frequency freq))
          (loc (<a class=quiet href="#make-locsig">make-locsig</a> :degree degree :distance dist :channels 2))
 	 (pan-env (<a class=quiet href="#make-env">make-env</a> '(0 0 1 90) :duration dur)))
@@ -2966,7 +3119,8 @@ Here is an example of move-locsig:
 <!-- ---------------------------------------- MOVE-SOUND ---------------------------------------- -->
 
 <br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>MOVE-SOUND (sound motion)</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>move-sound</h3></td></tr></table>
+<br>
 <pre>
  <a class=def name="make-move-sound">make-move-sound</a> dlocs-list output revout
  <a class=def name="move-sound">move-sound</a> dloc i in-sig
@@ -2996,8 +3150,8 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 <pre>
 (definstrument simple-dloc (beg dur freq amp)
   (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a> freq))
-	 (start (floor (* beg (mus-srate))))
-	 (end (+ start (floor (* dur (mus-srate)))))
+	 (start (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>))))
+	 (end (+ start (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))
 	 (loc (<em class=red>make-move-sound</em> (list start end 4 0
 				     (<a class=quiet href="#make-delay">make-delay</a> 12) 
 				     (<a class=quiet href="#make-env">make-env</a> '(0 0 10 1) :end dur)
@@ -3056,7 +3210,7 @@ converts its argument to radians/sample (for any situation where a
 frequency is used as an amplitude, glissando or FM).  It
 can be used within run. hz-&gt;radians is equivalent to 
 <pre>
-  freq-in-hz * 2 * pi / (mus-srate).  
+  freq-in-hz * 2 * pi / (<a class=quiet href="#mussrate">mus-srate</a>).  
 </pre>
 </p>
 <blockquote>
@@ -3083,12 +3237,12 @@ for some info.
   (mus-sound-srate (mus-file-name *output*))
 </pre>
 <p>for example, returns the
-current output sampling rate; this is the same as <code>(mus-srate)</code> (in CL) or <code>(mus-srate)</code> (Scheme).
+current output sampling rate; this is the same as <code>(<a class=quiet href="#mussrate">mus-srate</a>)</code> (in CL) or <code>(<a class=quiet href="#mussrate">mus-srate</a>)</code> (Scheme).
 </p>
 
 <!-- ---------------------------------------- POLYNOMIAL ---------------------------------------- -->
 <br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>POLYNOMIAL</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>polynomial</h3></td></tr></table>
 <pre>
    <a class=def name="polynomial">polynomial</a> coeffs x
 </pre>
@@ -3107,7 +3261,7 @@ See also the <a href="#brighten">brighten</a> instrument.
 
 <!-- ---------------------------------------- ARRAY-INTERP ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>ARRAY-INTERP, DOT-PRODUCT, SINE-BANK</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>array-interp, dot-product, sine-bank</h3></td></tr></table>
 <pre>
   <a class=def name="array-interp">array-interp</a> fn x :optional size
   <a class=def name="dot-product">dot-product</a> in1 in2
@@ -3163,7 +3317,7 @@ delay or wave-train. The <i>type</i> is one of the interpolation types (mus-inte
 
 <!-- ---------------------------------------- CONTRAST-ENHANCEMENT ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>CONTRAST-ENHANCEMENT</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>contrast-enhancement</h3></td></tr></table>
 <pre>
    <a class=def name="contrast-enhancement">contrast-enhancement</a> in-samp :optional (fm-index 1.0)
 </pre>
@@ -3240,7 +3394,7 @@ resulting in a steady modulation, rather than an intensification of just the pea
 
 <!-- ---------------------------------------- AMPLITUDE-MODULATE ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>RING-MODULATE, AMPLITUDE-MODULATE</h3></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>ring-modulate, amplitude-modulate</h3></td></tr></table>
 <pre>
   <a class=def name="ring-modulate">ring-modulate</a> in1 in2
   <a class=def name="amplitude-modulate">amplitude-modulate</a> am-carrier input1 input2
@@ -3345,8 +3499,8 @@ of the spectrum, a distortion that can be effective with speech sounds.</p>
   (let ((fil (<a class=quiet href="#open-input*">open-input*</a> file)))
     (when fil
       (unwind-protect
-        (let* ((start (floor (* beg (mus-srate))))
-               (end (+ start (floor (* dur (mus-srate)))))
+        (let* ((start (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>))))
+               (end (+ start (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))
                (fdr (make-double-float-array fftsize))
                (fdi (make-double-float-array fftsize))
                (wtb (make-double-float-array fftsize))
@@ -3880,7 +4034,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
 
 </table>
 
-<p>The file <a href="clm-test.lisp">clm-test.lisp</a> exercises most of these instruments. 
+<p>
 If you develop
 an interesting instrument that you're willing to share, please send it to me
 (bil@ccrma.stanford.edu). </p>
@@ -3926,115 +4080,6 @@ good reason not to write an instrument such as:</p>
 <br>
 <br>
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="guileetc">CLM in Scheme, Ruby, C, Forth</a></h3></td></tr></table>
-
-<p>Although this document is aimed at Common Lisp, CLM instruments can also be written
-in Scheme (via Guile or Gauche), Ruby, C, or Forth.  Most the standard CLM instruments are in the Snd tarball (clm-ins.scm primarily).
-To provide a quick overview, the CL bird instrument is</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
-<pre>
-(<a class=quiet href="#definstrument">definstrument</a> bird (startime dur frequency freq-skew amplitude freq-envelope amp-envelope 
-	             :optional (lpfilt 1.0) (degree 0) (reverb-amount 0))
-  (multiple-value-bind (beg end) (<a class=quiet href="#timestosamples">times-&gt;samples</a> startime dur)
-    (let* ((amp-env (<a class=quiet href="#make-env">make-env</a> amp-envelope amplitude dur))
-	   (gls-env (<a class=quiet href="#make-env">make-env</a> freq-envelope (<a class=quiet href="#hztoradians">hz-&gt;radians</a> freq-skew) dur))
-	   (loc (<a class=quiet href="#make-locsig">make-locsig</a> :degree degree :distance 1.0 :reverb reverb-amount))
-	   (fil (<a class=quiet href="#make-one-pole">make-one-pole</a> lpfilt (- 1.0 lpfilt)))
-	   (s (<a class=quiet href="#make-oscil">make-oscil</a> :frequency frequency)))
-      (run
-       (loop for i from beg to end do
-	 (<a class=quiet href="#locsig">locsig</a> loc i (<a class=quiet href="#one-pole">one-pole</a> fil (* (<a class=quiet href="#env">env</a> amp-env) (<a class=quiet href="#oscil">oscil</a> s (<a class=quiet href="#env">env</a> gls-env))))))))))
-</pre>
-</td></tr></table>
-
-<p>Its (slightly simplified) Scheme counterpart is:
-</p>
-
-<table border=0 bgcolor="#f0f0f0" hspace=40 cellpadding=8 cellspacing=3><tr><td>
-<pre>
-(define (bird start dur frequency freqskew amplitude freq-envelope amp-envelope)
-  (let* ((gls-env (<a class=quiet href="#make-env">make-env</a> freq-envelope (<a class=quiet href="#hztoradians">hz-&gt;radians</a> freqskew) dur))
-         (os (<a class=quiet href="#make-oscil">make-oscil</a> :frequency frequency))
-         (amp-env (<a class=quiet href="#make-env">make-env</a> amp-envelope amplitude dur))
-	 (len (inexact-&gt;exact (round (* (<a class=quiet href="#mussrate">mus-srate</a>) dur))))
-	 (beg (inexact-&gt;exact (round (* (<a class=quiet href="#mussrate">mus-srate</a>) start))))
-	 (end (+ beg len)))
-    (run
-     (lambda ()
-       (do ((i beg (1+ i)))
-	   ((= i end))
-	 (<a class=quiet href="clm.html#outa">outa</a> i (* (<a class=quiet href="#env">env</a> amp-env) 
-                    (<a class=quiet href="#oscil">oscil</a> os (<a class=quiet href="#env">env</a> gls-env)))
-	       *output*))))))
-</pre>
-</td></tr></table>
-
-<p>And in Ruby:
-</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
-<pre>
-def bird(start, dur, frequency, freqskew, amplitude, freq_envelope, amp_envelope)
-  gls_env = make_env(freq_envelope, hz2radians(freqskew), dur)
-  os = make_oscil(frequency)
-  amp_env = make_env(amp_envelope, amplitude, dur)
-  beg = (srate() * start).round
-  len = (srate() * dur).round
-  local_data  = make_vct len
-  vct_map!(local_data, Proc.new { || env(amp_env) * oscil(os, env(gls_env)) })
-  vct_add!($out_data, local_data, beg)
-end
-</pre>
-</td></tr></table>
-
-<p>And in Forth:
-</p>
-<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
-<pre>
-instrument: bird { f: start f: dur f: freq f: freq-skew f: amp freqenv ampenv -- }
-    :frequency freq make-oscil { os }
-    :envelope ampenv :scaler amp :duration dur make-env { ampf }
-    :envelope freqenv :scaler freq-skew hz&gt;radians :duration dur make-env { gls-env }
-    90e random :locsig-degree
-    start dur run-instrument  ampf env  gls-env env os oscil-1  f*  end-run
-    os gen-free
-    ampf gen-free
-    gls-env gen-free
-;instrument
-</pre>
-</td></tr></table>
-
-
-<p>And in C (I haven't actually tested this code, but it looks plausible):
-</p>
-<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
-<pre>
-void c_bird(double start, double dur, double frequency, double freqskew, double amplitude, 
-	    double *freqdata, int freqpts, double *ampdata, int amppts, mus_any *output)
-{
-  off_t beg, end, i;
-  mus_any *amp_env, *freq_env, *osc;
-  beg = start * mus_srate();
-  end = start + dur * mus_srate();
-  osc = mus_make_oscil(frequency, 0.0);
-  amp_env = mus_make_env(ampdata, amppts, amplitude, 0.0, 1.0, dur, 0, NULL);
-  freq_env = mus_make_env(freqdata, freqpts, mus_hz_to_radians(freqskew), 0.0, 1.0, dur, 0, NULL);
-  for (i = beg; i &lt; end; i++)
-    mus_sample_to_file(output, i, 0, 
-		       mus_env(amp_env) * 
-		         mus_oscil(osc, mus_env(freq_env), 0.0));
-  mus_free(osc);
-  mus_free(amp_env);
-  mus_free(freq_env);
-}
-</pre>
-</td></tr></table>
-
-
-<p>In Scheme, a generator is itself a function: (<a class=quiet href="#oscil">oscil</a> gen 0.0) is the same
-as (gen 0.0), if "gen" is an oscil.  This can simplify instruments that
-leave the generator type decision until run time:</p>
 
 <table border=0 bgcolor="#f0f0f0" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
@@ -4065,7 +4110,7 @@ leave the generator type decision until run time:</p>
 </pre>
 </td></tr></table>
 
-<p>The CLM test instruments in ug2.ins and ug3.ins have been translated to Scheme/Snd as the Snd file clm23.scm.
+<p>The CLM test instruments have been translated to Scheme/Snd as the Snd file clm23.scm.
 It starts with some notes of differences between the CL and Scheme instruments.
 </p>
 
@@ -4161,7 +4206,7 @@ for each section of a piece as well as the whole thing, all in one run.  Since i
                 (tmp1 (:reverb nrev)
                   (mix "oboe.snd")))
       (mix tmp1)
-      (mix tmp :amplitude .2 :output-frame (mus-srate)))
+      (mix tmp :amplitude .2 :output-frame (<a class=quiet href="#mussrate">mus-srate</a>)))
     (fm-violin .5 .1 330 .1)))
 
 (<a class=quiet href="#with-sound">with-sound</a> (:verbose t)
@@ -4172,7 +4217,7 @@ for each section of a piece as well as the whole thing, all in one run.  Since i
                               (tmp1 ()
                                 (mix "oboe.snd")))
                    (mix tmp1)
-                   (mix tmp :output-frame (mus-srate)))
+                   (mix tmp :output-frame (<a class=quiet href="#mussrate">mus-srate</a>)))
                  (fm-violin .5 .1 330 .1))))
     (mix tmp :amplitude .5)))
 
@@ -4234,7 +4279,7 @@ of the computation.  <i>scaled-to</i> tells clm to make sure the final output
 file has a maxamp of whatever the argument is to :scaled-to -- that is,</p>
 <pre>
 (<a class=quiet href="#with-sound">with-sound</a> (:scaled-to .5) 
-  (dotimes (i 32) (mix "oboe.snd" :output-frame (* i (mus-srate)))))
+  (dotimes (i 32) (mix "oboe.snd" :output-frame (* i (<a class=quiet href="#mussrate">mus-srate</a>)))))
 </pre>
 <p>will produce test.snd with a maxamp of .5, no matter how loud the intermediate
 mix actually is.
@@ -4354,11 +4399,11 @@ the play call to wait until the complete sound has been played before returning 
 </p>
 
 <p>In both Scheme and CL, the *clm-* variables (like *clm-srate*) set the default values.
-In CL the corresponding un-clm'd versions ((mus-srate)) hold the current values.  So, if
-with-sound doesn't include the :srate argument, (mus-srate) is the same as *clm-srate*;
+In CL the corresponding un-clm'd versions ((<a class=quiet href="#mussrate">mus-srate</a>)) hold the current values.  So, if
+with-sound doesn't include the :srate argument, (<a class=quiet href="#mussrate">mus-srate</a>) is the same as *clm-srate*;
 otherwise it reflects the :srate value for the duration of the with-sound call.
 The local variables (in CL) that are currently exported are:
-(mus-srate), *safety*, and *debug*.  Unexported, but available in the clm package
+(<a class=quiet href="#mussrate">mus-srate</a>), *safety*, and *debug*.  Unexported, but available in the clm package
 are *channels*, *data-format*, *header-type*, *notehook*, *clipped*, *verbose*,
 and *statistics*.  In Snd, <a class=def name="mus-srate">mus-srate</a> gives access to
 the CLM-level sampling rate.  Similarly:
@@ -4636,8 +4681,8 @@ to return such values back to Lisp.
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> p (beg dur frq amp)
   (let* ((s (<a class=quiet href="#make-oscil">make-oscil</a> frq))
-	 (start (floor (* beg (mus-srate))))
-	 (end (+ start (floor (* dur (mus-srate)))))
+	 (start (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>))))
+	 (end (+ start (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))
 	 (hi 0.0))
     (<em class=red>run*</em> (amp hi)
       (loop for i from start below end do
@@ -4656,8 +4701,8 @@ Here's another instrument that implements legato between notes by using the prev
 <pre>
 (defstruct fmins carrier modulator)
 (<a class=quiet href="#definstrument">definstrument</a> fmsimp (beg dur frq amp ind :optional previous-oscils)
-  (let* ((start (floor (* (mus-srate) beg)))
-	 (end (+ start (floor (* (mus-srate) dur))))
+  (let* ((start (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) beg)))
+	 (end (+ start (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) dur))))
 	 (carrier (if previous-oscils
 		      (fmins-carrier previous-oscils)
 		    (<a class=quiet href="#make-oscil">make-oscil</a>)))
