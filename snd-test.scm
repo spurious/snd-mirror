@@ -17710,6 +17710,40 @@ EDITS: 2
 	      (fneq (vector-ref results 9) 0.41001))
 	  (snd-display ";oscil-bank: ~A?" results)))
     
+    (let ((size 1000))
+      
+      (define (test-pm beg end freq amp mc-ratio index)
+	(let ((pm (make-oscil (* freq mc-ratio)))
+	      (carrier (make-oscil freq)))
+	  (do ((i beg (1+ i)))
+	      ((= i end))
+	    (outa i (* amp (oscil carrier 0.0 (* index (oscil pm)))) *output*))))
+      
+      (define (test-fm beg end freq amp mc-ratio index)
+	(let ((fm (make-oscil (* freq mc-ratio) :initial-phase (/ pi 2.0)))
+	      (carrier (make-oscil freq))
+	      (fm-index (* (hz->radians freq) mc-ratio index)))
+	  (do ((i beg (1+ i)))
+	      ((= i end))
+	    (outa i (* amp (oscil carrier (* fm-index (oscil fm)))) *output*))))
+      
+      ;; there's an initial-phase confusion here, so by making the srate high and freq low, we minimize uninteresting off-by-1 troubles
+      
+      (let ((v1 (with-sound (:output (make-vct size) :srate 441000) (test-pm 0 size 20 1 1 1)))
+	    (v2 (with-sound (:output (make-vct size) :srate 441000) (test-fm 0 size 20 1 1 1))))
+	(if (not (vequal v1 v2))
+	    (snd-display ";fm/pm peak diff (1 1): ~A" (vct-peak (vct-subtract! v1 v2)))))
+      
+      (do ((i 0 (1+ i)))
+	  ((= i 10))
+	(let ((ratio (1+ (random 4)))
+	      (index (random 2.0)))
+	  (let ((v1 (with-sound (:output (make-vct size) :srate 441000) (test-pm 0 size 20 1 ratio index)))
+		(v2 (with-sound (:output (make-vct size) :srate 441000) (test-fm 0 size 20 1 ratio index))))
+	    (if (not (vequal v1 v2))
+		(snd-display ";fm/pm peak diff ~A ~A: ~A" ratio index (vct-peak (vct-subtract! v1 v2))))))))
+    
+    
     (let ((gen (make-sum-of-cosines 10 440.0))
 	  (v0 (make-vct 10))
 	  (gen1 (make-sum-of-cosines 10 440.0))
@@ -50139,7 +50173,8 @@ EDITS: 1
 						 (simple-f2s 19.5 .45 1 "oboe.snd")
 						 (simple-loc 20 .2 440 .1)
 						 (simple-dloc 20.1 .2 440 .1)
-						 (simple-out 20.25 .2 440 .1)		  
+						 (simple-out 20.25 .2 440 .1)	
+						 (simple-fm 20 1 440 .1 2 1.0)
 						 (simple-dup 20.5 .2 440 .1)
 						 (simple-du1 20.75 .2 440 .1)
 						 (simple-grn-f1 21 .45 .1 2 440)

@@ -63,6 +63,20 @@
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (* amp (oscil os)) 0 *output*))))))
 
+(definstrument (simple-fm beg dur freq amp mc-ratio index :optional amp-env index-env)
+  (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
+	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
+	 (cr (make-oscil freq))                     ; our carrier
+         (md (make-oscil (* freq mc-ratio)))        ; our modulator
+         (fm-index (hz->radians (* index mc-ratio freq)))
+         (ampf (make-env (or amp-env '(0 0 .5 1 1 0)) :scaler amp :end end))
+         (indf (make-env (or index-env '(0 0 .5 1 1 0)) :scaler fm-index :end end)))
+    (run
+      (lambda ()
+        (do ((i start (1+ i)))
+            ((= i end))
+          (outa i (* (env ampf) (oscil cr (* (env indf) (oscil md)))) *output*))))))
+
 (define (simple-outn beg dur freq ampa ampb ampc ampd reva revb)
   "(simple-outn beg dur freq ampa ampb ampc ampd reva revb) test instrument for outn"
   (let* ((os (make-oscil freq))
@@ -298,6 +312,12 @@
      (lambda ()
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (* amp (waveshape w1 1.0)) 0 *output*))))))
+
+;(define w1 (make-polyshape :frequency 100.0 
+;			   :partials (let ((frqs '()))
+;				       (do ((i 1 (1+ i)))
+;					   ((= i 10) (begin (snd-display frqs) (reverse frqs)))
+;					 (set! frqs (cons (/ 1.0 (* i i)) (cons i frqs)))))))
 
 (define (simple-poly beg dur freq amp)
   "(simple-poly beg dur freq amp) test instrument for polyshape"
