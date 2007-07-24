@@ -20251,6 +20251,44 @@ EDITS: 2
       (list mus-interp-hermite (vct 0.000 0.168 0.424 0.696 0.912 1.000 0.912 0.696 0.424 0.168))))
     ;; this is different if doubles -- not sure whether it's a bug or not
     
+    (let ((size 1000)
+	  (tbl-size 1024))
+      
+      (define (test-tbl beg end freq amp mc-ratio index)
+	(let* ((sine (let ((v (make-vct tbl-size)))
+		       (do ((i 0 (1+ i))
+			    (x 0.0 (+ x (/ (* 2 pi) tbl-size))))
+			   ((= i tbl-size) v)
+			 (vct-set! v i (sin x)))))
+	       (fm (make-table-lookup (* mc-ratio freq) :wave sine))
+	       (carrier (make-table-lookup freq :wave sine)))
+	  (do ((i beg (1+ i)))
+	      ((= i end))
+	    (outa i (* amp (table-lookup carrier (* index (table-lookup fm)))) *output*))))
+      
+      (define (test-fm1 beg end freq amp mc-ratio index)
+	(let ((fm (make-oscil (* mc-ratio freq)))
+	      (carrier (make-oscil freq)))
+	  (do ((i beg (1+ i)))
+	      ((= i end))
+	    (outa i (* amp (oscil carrier (* index (oscil fm)))) *output*))))
+      
+      (let ((v1 (with-sound (:output (make-vct size) :srate 44100) (test-tbl 0 size 200 1 1 1)))
+	    (v2 (with-sound (:output (make-vct size) :srate 44100) (test-fm1 0 size 200 1 1 1))))
+	(if (and (not (vequal v1 v2))
+		 (> (vct-peak (vct-subtract! v1 v2)) .002))
+	    (snd-display ";fm/tbl peak diff (1 1): ~A" (vct-peak (vct-subtract! v1 v2)))))
+
+      (do ((i 0 (1+ i)))
+	  ((= i 10))
+	(let ((ratio (1+ (random 4)))
+	      (index (random 0.1)))
+	  (let ((v1 (with-sound (:output (make-vct size) :srate 44100) (test-tbl 0 size 20 1 ratio index)))
+		(v2 (with-sound (:output (make-vct size) :srate 44100) (test-fm1 0 size 20 1 ratio index))))
+	    (if (and (not (vequal v1 v2))
+		     (> (vct-peak (vct-subtract! v1 v2)) .002))
+		(snd-display ";fm/tbl peak diff ~A ~A: ~A" ratio index (vct-peak (vct-subtract! v1 v2))))))))
+
     
     (let ((gen0 (make-waveshape 440.0 :wave (partials->waveshape '(1 1))))
 	  (gen (make-waveshape 440.0 :size 512 :partials '(1 1)))
@@ -20493,6 +20531,44 @@ EDITS: 2
 		(snd-display ";polyshape fm: ~A: ~A ~A" i val1 val2)
 		(set! happy #f))))))
     
+    (let ((size 1000))
+      
+      (define (test-pol beg end freq amp partials)
+	(let ((pol (make-polyshape freq :partials partials)))
+	  (do ((i beg (1+ i)))
+	      ((= i end))
+	    (outa i (* amp (polyshape pol)) *output*))))
+      
+      (define (test-wav beg end freq amp partials)
+	(let ((pol (make-waveshape freq :partials partials)))
+	  (do ((i beg (1+ i)))
+	      ((= i end))
+	    (outa i (* amp (waveshape pol)) *output*))))
+            
+      (let ((v1 (with-sound (:output (make-vct size) :srate 44100) (test-pol 0 size 200 1 '(1 .5 2 .3 3 .2))))
+	    (v2 (with-sound (:output (make-vct size) :srate 44100) (test-wav 0 size 200 1 '(1 .5 2 .3 3 .2)))))
+	(if (not (vequal v1 v2))
+	    (snd-display ";pol/wav peak diff (1 1): ~A" (vct-peak (vct-subtract! v1 v2))))))
+
+    (let ((size 1000))
+      
+      (define (test-pol beg end freq amp partials)
+	(let ((pol (make-polyshape freq :coeffs (partials->polynomial partials))))
+	  (do ((i beg (1+ i)))
+	      ((= i end))
+	    (outa i (* amp (polyshape pol)) *output*))))
+      
+      (define (test-wav beg end freq amp partials)
+	(let ((pol (make-waveshape freq :wave (partials->waveshape partials))))
+	  (do ((i beg (1+ i)))
+	      ((= i end))
+	    (outa i (* amp (waveshape pol)) *output*))))
+            
+      (let ((v1 (with-sound (:output (make-vct size) :srate 44100) (test-pol 0 size 200 1 '(1 .5 2 .3 3 .2))))
+	    (v2 (with-sound (:output (make-vct size) :srate 44100) (test-wav 0 size 200 1 '(1 .5 2 .3 3 .2)))))
+	(if (not (vequal v1 v2))
+	    (snd-display ";pol/wav+coeffs peak diff (1 1): ~A" (vct-peak (vct-subtract! v1 v2))))))
+
     (let ((gen (make-wave-train 440.0 0.0 (make-vct 20)))
 	  (v0 (make-vct 10))
 	  (gen1 (make-wave-train 440.0 0.0 (make-vct 20)))
