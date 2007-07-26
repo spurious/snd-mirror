@@ -25,8 +25,9 @@ Some reasons to use eval-c:
 * Easy integration of c-code from within lisp.
   Mix C and Lisp in the same source without making it look strange. (hopefully)
 * Use lisp-macros to generate c-code. (There is a special macro function
-  called "define-c-macro" that works with eval-c). I must also add that eval-c macros
-  can be a magnitude more powerful than normal lisp macros. See various examples.
+  called "define-c-macro" that works with eval-c). eval-c macros are more powerful
+  than lisp macros since both strings and s-expressions can be manipulated to generate
+  new code. See various examples.
 * Generate/compile/link/run c-code on the fly.
 * Some people think prefix notation is nice.
 * Speed. C is faster than guile.
@@ -137,7 +138,12 @@ Usually just "", but can be "-lsnd" or something if needed.
 (provide 'snd-eval-c.scm)
 
 
-(if (not (provided? 'snd-oo.scm)) (load-from-path "oo.scm"))
+;; A bit more stack required
+(debug-set! stack 2000000)
+
+
+(if (not (provided? 'snd-oo.scm))
+    (load-from-path "oo.scm"))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

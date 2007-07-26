@@ -785,13 +785,18 @@ static void make_sonogram_axes(chan_info *cp)
 				    fp->axis);
 	}
       else 
-	fp->axis = make_axis_info(cp,
-				  ap->x0, ap->x1,
-				  min_freq, max_freq,
-				  _("time"),
-				  ap->x0, ap->x1,
-				  min_freq, max_freq,
-				  fp->axis);
+	{
+	  /* TODO: test setting the fft (and lisp) xlabels */
+	  if (fp->xlabel == NULL)
+	    fp->xlabel = copy_string(_("time"));
+	  fp->axis = make_axis_info(cp,
+				    ap->x0, ap->x1,
+				    min_freq, max_freq,
+				    fp->xlabel,
+				    ap->x0, ap->x1,
+				    min_freq, max_freq,
+				    fp->axis);
+	}
     }
 }
 

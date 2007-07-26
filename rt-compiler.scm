@@ -62,7 +62,7 @@ and run simple lisp[4] functions.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (eval-c  (string-append "-I" snd-header-files-path)
-	 "#include <config.h>"
+	 "#include <mus-config.h>"
 	 "#include <clm.h>"
 	 "#include <xen.h>"
 	 "#include <clm2xen.h>"
@@ -1245,7 +1245,8 @@ and run simple lisp[4] functions.
 	     ((not (list? term)) term)
 	     ((and (eq? 'set! (car term))
 		   (list? (cadr term)))
-	      (expand `(,(symbol-append 'setter!- (car (cadr term))) ,@(cdr (cadr term)) ,@(cddr term))))
+	      (let ((newcadr (cadr term)));;(expand (cadr term))))
+		(expand `(,(symbol-append 'setter!- (car newcadr)) ,@(cdr newcadr) ,@(cddr term)))))
 	     ((list? (car term))
 	      term)
 	     (else
@@ -1277,7 +1278,8 @@ and run simple lisp[4] functions.
 			((not (list? term)) term)
 			((and (eq? 'set! (car term))
 			      (list? (cadr term)))
-			 (expand `(,(symbol-append 'setter!- (car (cadr term))) ,@(cdr (cadr term)) ,@(cddr term))))
+			 (let ((newcadr (cadr term)));;(expand (cadr term))))
+			   (expand `(,(symbol-append 'setter!- (car newcadr)) ,@(cdr newcadr) ,@(cddr term)))))
 			((list? (car term))
 			 (map expand term))
 			((eq? 'lambda (car term))
@@ -3271,6 +3273,115 @@ and run simple lisp[4] functions.
 
 
 
+;; structs
+(define-rt-macro (setter!-=> object method . rest)
+  (if (char=? (car (string->list (symbol->string method))) #\.)
+      `(,(symbol-append 'setter!- object method) ,object ,@rest)
+      `(,(symbol-append 'setter!- method) ,object ,@rest)))
+
+(define-macro (=> object method . rest)
+  (if (char=? (car (string->list (symbol->string method))) #\.)
+      (if (not (null? rest))
+	  `(,(symbol-append 'setter!- object method) ,object ,@rest)
+	  `(,(symbol-append 'getter- object method) ,object ,@rest))
+      (if (not (null? rest))
+	  `(,(symbol-append 'setter!- method) ,object ,@rest)
+	  `(,(symbol-append 'getter- method) ,object ,@rest))))
+
+(define-rt-macro (=> object method . rest)
+  (if (char=? (car (string->list (symbol->string method))) #\.)
+      (if (not (null? rest))
+	  `(,(symbol-append 'setter!- object method) ,object ,@rest)
+	  `(,(symbol-append 'getter- object method) ,object ,@rest))
+      (if (not (null? rest))
+	  `(,(symbol-append 'setter!- method) ,object ,@rest)
+	  `(,(symbol-append 'getter- method) ,object ,@rest))))
+
+(define-macro (define-rt-vct-struct name . das-slots)
+  (define name-name (rt-gensym))
+  (define val-name (rt-gensym))
+  (define slots (map (lambda (slot)
+		       (if (pair? slot)
+			   slot
+			   (list slot 0)))
+		     das-slots))
+  (let ((slot-names (map car slots)))
+    `(begin
+       (define* (,(symbol-append 'make- name) :key ,@slots)
+	 (vct ,@slot-names))
+       ,@(let ((i -1))
+	   (map-in-order (lambda (slot)
+			   (set! i (1+ i))
+			   `(define (,(symbol-append 'getter- name '. slot) ,name-name)
+			      (vct-ref ,name-name ,i)))
+			 slot-names))
+       ,@(let ((i -1))
+	   (map-in-order (lambda (slot)
+			   (set! i (1+ i))
+			   `(define (,(symbol-append 'setter!- name '. slot) ,name-name ,val-name)
+			      (vct-set! ,name-name ,i ,val-name)))
+			 slot-names))
+       (define ,(rt-gensym)
+	 (list
+	  ,@(let ((i -1))
+	      (map-in-order (lambda (slot)
+			      (set! i (1+ i))
+			      `(define-rt (,(symbol-append 'setter!- name '. slot) ,name-name ,val-name)
+				 (declare (<float> ,val-name))
+				 (vct-set! ,name-name ,i ,val-name)))
+			    slot-names))
+	  ,@(let ((i -1))
+	      (map-in-order (lambda (slot)
+			      (set! i (1+ i))
+			      `(define-rt (,(symbol-append 'getter- name '. slot) ,name-name)
+				 (vct-ref ,name-name ,i)))
+			    slot-names)))))))
+
+
+(define-macro (define-rt-vector-struct name . das-slots)
+  (define name-name (rt-gensym))
+  (define val-name (rt-gensym))
+  (define slots (map (lambda (slot)
+		       (if (pair? slot)
+			   slot
+			   (list slot 0)))
+		     das-slots))
+  (let ((slot-names (map car slots)))
+    `(begin
+       (define* (,(symbol-append 'make- name) :key ,@slots)
+	 (vector ,@slot-names))
+       ,@(let ((i -1))
+	   (map-in-order (lambda (slot)
+			   (set! i (1+ i))
+			   `(define (,(symbol-append 'getter- name '. slot) ,name-name)
+			      (vector-ref ,name-name ,i)))
+			 slot-names))
+       ,@(let ((i -1))
+	   (map-in-order (lambda (slot)
+			   (set! i (1+ i))
+			   `(define (,(symbol-append 'setter!- name '. slot) ,name-name ,val-name)
+			      (vector-set! ,name-name ,i ,val-name)))
+			 slot-names))
+       (define ,(rt-gensym)
+	 (list
+	  ,@(let ((i -1))
+	      (map-in-order (lambda (slot)
+			      (set! i (1+ i))
+			      `(define-rt (,(symbol-append 'setter!- name '. slot) ,name-name ,val-name)
+				 (declare (<float> ,val-name))
+				 (vector-set! ,name-name ,i ,val-name)))
+			    slot-names))
+	  ,@(let ((i -1))
+	      (map-in-order (lambda (slot)
+			      (set! i (1+ i))
+			      `(define-rt (,(symbol-append 'getter- name '. slot) ,name-name)
+				 (vector-ref ,name-name ,i)))
+			    slot-names)))))))
+
+
+
+
+
 (define-c-macro (the type somethingmore)
   (let ((c-type (hashq-ref rt-types type)))
     (if c-type
@@ -4709,7 +4820,7 @@ and run simple lisp[4] functions.
 
 
 (eval-c (string-append "-I" snd-header-files-path " " (string #\`) "pkg-config --libs sndfile" (string #\`) )
-	"#include <config.h>"
+	"#include <mus-config.h>"
 	"#include <clm.h>"
 	"#include <xen.h>"
 	"#include <clm2xen.h>"
@@ -5540,7 +5651,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 
 (eval-c (<-> "-I" snd-header-files-path " ")
-	"#include <config.h>"
+	"#include <mus-config.h>"
 	"#include <ladspa.h>"
 	"#include <clm.h>"
 	"#include <xen.h>"
@@ -5978,7 +6089,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 (define *rt-rb-overlap* 10) ;; 10% overlap
 
 (eval-c (<-> "-I" snd-header-files-path " -ffast-math ")
-	"#include <config.h>"
+	"#include <mus-config.h>"
 	"#include <clm.h>"
 	"#include <xen.h>"
 	"#include <vct.h>"
@@ -7427,7 +7538,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 	  
 	  (apply eval-c-non-macro (append (list (<-> "-I" snd-header-files-path " -ffast-math ") ;; "-ffast-math") ;; " -Werror "
 						#f
-						"#include <config.h>"
+						"#include <mus-config.h>"
 						"#include <math.h>"
 						"#include <clm.h>"
 						"#include <xen.h>"

@@ -3213,6 +3213,18 @@ if 'backwards' is #t: <code>v[new--] = v[old--]</code>.  It returns 'v'.
 :<em class=typing>(vct-move! v1 0 5)</em>
 <em class=listener>#&lt;vct[len=10]: 6.000 7.000 8.000 9.000 10.000 6.000 7.000 8.000 9.000 10.000&gt;</em>
 </pre>
+
+We can use vct-move! to maintain a sliding window on a sound:
+
+<pre>
+    (<a class=quiet href="#mapchannel">map-channel</a>
+      (let* ((size 100)
+	     (samps (<a class=quiet href="#makevct">make-vct</a> size)))
+        (lambda (y)
+         (vct-move! samps 0 1)
+         (vct-set! samps (1- size) y)
+         ...)))
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

@@ -859,11 +859,8 @@ There are many more functions that operate on envelopes; see in particular <a hr
 envelope sound: <a href="extsnd.html#envchannel">env-channel</a>, <a href="extsnd.html#envsound">env-sound</a><br>
 other enveloping functions: <a href="extsnd.html#rampchannel">ramp-channel</a>, <a href="extsnd.html#xrampchannel">xramp-channel</a>, <a href="extsnd.html#smoothchannel">smooth-channel</a><br>
 Various operations on envelopes: <a href="sndscm.html#envdoc">env.scm</a><br>
-Peak env files: <a href="sndscm.html#peakenvdoc">peak-env.scm</a><br>
 The envelope editor: <a href="snd.html#editenvelope">Edit or View and Envelope</a><br>
 Panning: place-sound in examp.scm<br>
-Envelope over mix: <a href="sndscm.html#envelopedmix">enveloped-mix</a><br>
-Local envelope editor: <a href="sndscm.html#enveddoc">enved.scm</a>, xm-enved.scm<br>
 Read sound indexed through envelope: <a href="sndscm.html#envsoundinterp">env-sound-interp</a><br>
 Cosine as envelope: <a href="extsnd.html#cosinechannel">cosine-channel</a>, <a href="extsnd.html#cosinechannelviaptree">cosine-channel-via-ptree</a>, <a href="sndclm.html#bellcurve">bell-curve</a><br>
 envelope with sinusoidal connections between points: <a href="sndscm.html#sineenvchannel">sine-env-channel</a><br>
@@ -871,8 +868,6 @@ envelope with separate base for each segment: <a href="extsnd.html#powenvchannel
 envelope with x^2 connections: <a href="sndscm.html#envsquaredchannel">env-squared-channel</a><br>
 envelope with x^n connections: <a href="sndscm.html#envexptchannel">env-expt-channel</a><br>
 envelope with sum-of-cosines connections: <a href="sndscm.html#blackman4envchannel">blackman4-env-channel</a><br>
-Customizing the envelope editor: <a href="extsnd.html#envedhook">enved-hook</a><br>
-peak amp follower: <a href="sndscm.html#movingmax">moving-max</a><br>
 <br>
 </small></blockquote>
 </td></tr></table>
@@ -1896,8 +1891,8 @@ alterations to the filters:
 <p>The formant generator is described in "A Constant-gain Digital Resonator Tuned By a Single Coefficient" by Julius
 O. Smith and James B. Angell in Computer Music Journal Vol. 6 No. 4 (winter
 1982).
-The filter coefficients are set as a function of the given "radius"
-by desired bandwidth from radius=1-bw/2), "frequency", and "gain". 
+The filter coefficients are set as a function of the given "radius",
+"frequency", and "gain". 
 The bandwidth of the resonance is (* 2 (- 1.0 radius)), so as the radius approaches 1.0 (our unit circle), the
 resonance gets narrower.
 Use mus-frequency to change the center frequency, and mus-formant-radius to change the radius.
@@ -2008,8 +2003,9 @@ A biquad section can be implemented as:
 </td></tr></table>
 
 <p>
-The Hilbert transform can be implemented with an fir-filter:</p>
+The Hilbert transform can be implemented with an fir-filter:
 </p>
+
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
 (define* (make-hilbert-transform :optional (len 30))
@@ -2082,7 +2078,7 @@ see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>delay, tap</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-delay">make-delay</a> <a class=quiet href="#optional-key">:optional-key</a> size initial-contents initial-element max-size type
+  <a class=def name="make-delay">make-delay</a> <a class=quiet href="#optional-key">:optional-key</a> size initial-contents (initial-element 0.0) max-size type
   <a class=def name="delay">delay</a> d input :optional (pm 0.0)
   <a class=def name="delay?">delay?</a> d
 
@@ -2091,27 +2087,18 @@ see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts
 </pre>
 
 
-<!-- STOPPED HERE --><hr>
-
-<p><b>delay</b> is a delay line.  <i>size</i> is in samples.
-Input fed into a delay line reappears at the output <i>size</i> samples
-later.  <i>initial-element</i> defaults to 0.0. 
-<b>tap</b> returns the
-current value of the delay generator.  Its <i>offset</i> is the distance of the tap
-from the current delay line sample.  If <i>max-size</i> is specified,
-and larger than <i>size</i>, the delay line can provide fractional delays.
-It should be large enough to accommodate the largest actual
-delay requested at run-time.
-<i>pm</i> determines how far from the normal index we are; that is,
-it is difference between the nominal
-delay length (<i>size</i>) and the current actual delay length (<i>size</i>
-+ <i>pm</i>).  A positive <i>pm</i> corresponds to a longer
-delay line.  The <i>type</i> argument sets the interpolation type:
+<p>The delay generator is a delay line.  
+The make-delay "size" argument sets the delay line length (in samples).
+Input fed into a delay line reappears at the output size samples later. 
+If "max-size" is specified in make-delay,
+and it is larger than "size", the delay line can provide varying-length delays (including fractional amounts).
+The delay generator's "pm" argument determines how far from the original "size" we are; that is,
+it is difference between the length set by make-delay
+and the current actual delay length, size + pm.  So, a positive "pm" corresponds to a longer
+delay line.  See <a href="sndscm.html#zecho">zecho</a> in examp.scm for an example.
+The make-delay "type" argument sets the interpolation type in the fractional delay case:
 mus-interp-none, mus-interp-linear, mus-interp-all-pass, 
 mus-interp-lagrange, mus-interp-bezier, or mus-interp-hermite.
-<b>delay-tick</b> just puts a sample in the delay line. 'ticks' the delay forward, and
-returns its <i>input</i> argument.  This is aimed at physical modeling instruments
-where a <b>tap</b> is doing the actual delay line read.
 </p>
 
 <table border align=left hspace=40 cellpadding=4>
@@ -2124,33 +2111,39 @@ where a <b>tap</b> is doing the actual delay line read.
 </table>
 <br>
 <pre>
-(prog1
-  (<a class=quiet href="#array-interp">array-interp</a> line (- loc pm))
-  (set! (aref line loc) input)
-  (incf loc)
-  (if (&lt;= size loc) (set! loc 0)))
+(let ((result (<a class=quiet href="#array-interp">array-interp</a> line (- loc pm))))
+  (set! (vct-ref line loc) input)
+  (set! loc (1+ loc))
+  (if (&lt;= size loc) (set! loc 0))
+  result)
 </pre>
 <br clear=left>
 <br>
 
+<p>
+The tap function taps a delay line at a given offset from the output point.
+delay-tick is a function that just puts a sample in the delay line, 'ticks' the delay forward, and
+returns its "input" argument.  
+See prc95.scm for examples of both of these functions.
+</p>
+
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> echo (beg dur scaler secs file)
-  (let ((del (<em class=red>make-delay</em> (round (* secs (<a class=quiet href="#mussrate">mus-srate</a>)))))
-	(inf (<a class=quiet href="#open-input">open-input</a> file))
-	(j 0))
+(<a class=quiet href="#definstrument">definstrument</a> (echo beg dur scaler secs file)
+  (let ((del (<em class=red>make-delay</em> (inexact-&gt;exact (round (* secs (<a class=quiet href="#mussrate">mus-srate</a>))))))
+	(rd (make-sample-reader 0 file)))
     (run
-     (loop for i from beg below (+ beg dur) do
-       (let ((inval (<a class=quiet href="#ina">ina</a> j inf)))
-	 (<a class=quiet href="#outa">outa</a> i (+ inval (<em class=red>delay</em> del (* scaler (+ (<em class=red>tap</em> del) inval)))))
-	 (incf j))))
-    (<a class=quiet href="#close-input">close-input</a> inf)))
+     (lambda ()
+       (do ((i beg (1+ i)))
+           ((= i (+ beg dur)))
+         (let ((inval (rd)))
+  	   (<a class=quiet href="#outa">outa</a> i (+ inval (<em class=red>delay</em> del (* scaler (+ (<em class=red>tap</em> del) inval)))) *output*)))))))
 
-;;; (<a class=quiet href="#with-sound">with-sound</a> () (echo 0 60000 .5 1.0 "pistol.snd"))
+(<a class=quiet href="#with-sound">with-sound</a> () (echo 0 60000 .5 1.0 "pistol.snd"))
 </pre>
 </td></tr></table>
 
-<p>The <b>mus-scaler</b> field is available for simple extensions of the delay.  For example,
+<p>The mus-scaler field is available for simple extensions of the delay.  For example,
 the following "moving-max" generator uses it to track the current maximum sample value
 in the delay line (the result is an envelope that tracks the peak amplitude in the
 last "size" samples).
@@ -2165,7 +2158,7 @@ last "size" samples).
 
 (define (moving-max gen y)
   (let* ((absy (abs y))
-         (mx (<a class=quiet href="#delay">delay</a> gen absy)))
+         (mx (<em class=red>delay</em> gen absy)))
     (if (>= absy (<a class=quiet href="#mus-scaler">mus-scaler</a> gen))
 	(set! (<a class=quiet href="#mus-scaler">mus-scaler</a> gen) absy)
 	(if (>= mx (<a class=quiet href="#mus-scaler">mus-scaler</a> gen))
@@ -2174,10 +2167,15 @@ last "size" samples).
 </pre>
 </td></tr></table>
 
-
-<p>In the Scheme version of CLM, the Scheme built-in function delay is available as %delay.
+<p>The delay generator is used in some reverbs (<a href="sndscm.html#nrev">nrev</a>), many physical
+models (<a href="sndscm.html#stereoflute">stereo-flute<a>), <a href="sndscm.html#dlocsigdoc">dlocsig</a>,
+chorus effects (<a href="sndscm.html#chorus">chorus</a> in dsp.scm), and flanging (<a href="sndscm.html#neweffectsdoc">new-effects</a>),
+and is the basis for about a dozen extensions (comb and friends below).
 </p>
-<br>
+
+<br><br>
+
+
 
 
 <A NAME="combdoc"></A>
@@ -2185,30 +2183,32 @@ last "size" samples).
 <!-- ---------------------------------------- COMB, NOTCH ---------------------------------------- -->
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>comb, notch</h3></center></td></tr></table>
-<br>
+
 <pre>
-  <a class=def name="make-comb">make-comb</a> <a class=quiet href="#optional-key">:optional-key</a> scaler size initial-contents initial-element max-size
+  <a class=def name="make-comb">make-comb</a> <a class=quiet href="#optional-key">:optional-key</a> (scaler size 1.0) initial-contents (initial-element 0.0) max-size
   <a class=def name="comb">comb</a> cflt input :optional (pm 0.0)
   <a class=def name="comb?">comb?</a> cflt
 
-  <a class=def name="make-filtered-comb">make-filtered-comb</a> <a class=quiet href="#optional-key">:optional-key</a> scaler size initial-contents initial-element max-size filter
+  <a class=def name="make-filtered-comb">make-filtered-comb</a> <a class=quiet href="#optional-key">:optional-key</a> (scaler 1.0) size initial-contents (initial-element 0.0) max-size filter
   <a class=def name="filtered-comb">filtered-comb</a> cflt input :optional (pm 0.0)
   <a class=def name="filtered-comb?">filtered-comb?</a> cflt
 
-  <a class=def name="make-notch">make-notch</a> <a class=quiet href="#optional-key">:optional-key</a> scaler size initial-contents initial-element max-size
+  <a class=def name="make-notch">make-notch</a> <a class=quiet href="#optional-key">:optional-key</a> (scaler 1.0) size initial-contents (initial-element 0.0) max-size
   <a class=def name="notch">notch</a> cflt input :optional (pm 0.0)
   <a class=def name="notch?">notch?</a> cflt
 </pre>
-<p><b>comb</b> is a delay line with a scaler on the feedback term.  <b>notch</b>
-is a delay line with a scaler on the feedforward term.
-<i>size</i> is the length
-in samples of the delay line. 
-Other arguments are handled as in <a href="#delay">delay</a>.
-<b>filtered-comb</b> is a comb filter with a filter on the feedback.  In CL/CLM, this feedback filter is currently assumed
-to be a <a href="#one-zero">one-zero</a> filter, but in other languages it can be any CLM generator.
+
+<p>The comb generator is a delay line with a scaler on the feedback.  notch
+is a delay line with a scaler on the current input.
+filtered-comb is a comb filter with a filter on the feedback.  
+Although normally this is a <a href="#one-zero">one-zero</a> filter, it can be any CLM generator.
+The make-&lt;gen&gt; "size" argument sets the length
+in samples of the delay line,
+and the other arguments are also handled as in <a href="#delay">delay</a>.
 </p>
 
-<table border align=left hspace=40 cellpadding=4>
+<table border=0><tr><td>
+<table border hspace=40 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>comb, filtered-comb, and notch methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of delay (no set!)</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
@@ -2217,43 +2217,57 @@ to be a <a href="#one-zero">one-zero</a> filter, but in other languages it can b
 <tr><td><em class=gen>mus-feedforward</em></td><td>scaler (notch only)</td></tr>
 <tr><td><em class=gen>mus-interp-type</em></td><td>interpolation choice (no set!)</td></tr>
 </table>
-<br>
+</td>
+<td>
+
+
 <pre>
  comb:           y(n) = x(n - size) + scaler * y(n - size)
  notch:          y(n) = x(n) * scaler  + x(n - size)
  filtered-comb:  y(n) = x(n - size) + scaler * filter(y(n - size))
 </pre>
-<br clear=left>
 
-<p>As a rule of thumb, the decay time of the feedback part is
-7.0 * <i>size</i> / (1.0 - <i>scaler</i>) samples, so to get a decay of dur seconds,
-<i>scaler</i> &lt;= 1.0 - 7.0 * <i>size</i> / (dur * (<a class=quiet href="#mussrate">mus-srate</a>)).  The peak gain is 1.0 / (1.0 - (abs
-<i>scaler</i>)).  The peaks (or valleys in notch's case) are evenly spaced
-at (<a class=quiet href="#mussrate">mus-srate</a>) / size. The height (or depth) thereof is determined by <i>scaler</i> --
-the closer to 1.0, the more pronounced.
+<img src="comb.png" alt="sonogram of comb" vspace=10>
+
+</td></tr></table>
+
+
+<p>As a rule of thumb, the decay time of the feedback is
+7.0 * size / (1.0 - scaler) samples, so to get a decay of feedback-dur seconds,
+</p>
+<pre>
+    (make-delay :size size :scaler (- 1.0 (/ (* 7.0 size) (* feedback-dur (<a class=quiet href="#mussrate">mus-srate</a>)))))
+</pre>
+
+<p>The peak gain is 1.0 / (1.0 - (abs scaler)).  The peaks (or valleys in notch's case) are evenly spaced
+at (<a class=quiet href="#mussrate">mus-srate</a>) / size. The height (or depth) thereof is determined by scaler --
+the closer to 1.0 it is, the more pronounced the dips or peaks.
 See Julius Smith's "An Introduction to Digital Filter Theory" in
 Strawn "Digital Audio Signal Processing", or Smith's "Music Applications of
 Digital Waveguides".
-The following instrument sweeps the comb filter using the <i>pm</i> argument:
+The following instrument sweeps the comb filter using the pm argument:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(definstrument zc (time dur freq amp length1 length2 feedback)
-  (multiple-value-bind
-      (beg end) (times-&gt;samples time dur)
-    (let ((s (<a class=quiet href="#make-pulse-train">make-pulse-train</a> :frequency freq))  ; some raspy input so we can hear the effect easily
-          (d0 (<em class=red>make-comb</em> :size length1 :max-size (max length1 length2) :scaler feedback))
-          (zenv (<a class=quiet href="#make-env">make-env</a> :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
-      (run
-       (loop for i from beg to end do
-	 (<a class=quiet href="#outa">outa</a> i (<em class=red>comb</em> d0 (* amp (<a class=quiet href="#pulse-train">pulse-train</a> s)) (<a class=quiet href="#env">env</a> zenv))))))))
+(definstrument (zc time dur freq amp length1 length2 feedback)
+  (let* ((beg (inexact-&gt;exact (floor (* time (<a class=quiet href="#mussrate">mus-srate</a>)))))
+         (end (+ beg (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
+         (s (<a class=quiet href="#make-pulse-train">make-pulse-train</a> :frequency freq))  ; some raspy input so we can hear the effect easily
+         (d0 (<em class=red>make-comb</em> :size length1 :max-size (max length1 length2) :scaler feedback))
+         (aenv (<a class=quiet href="#make-env">make-env</a> '(0 0 .1 1 .9 1 1 0) :scaler amp :duration dur))
+         (zenv (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) :scaler (- length2 length1) :base 12.0 :duration dur)))
+    (run (lambda ()
+      (do ((i beg (1+ i))) ((= i end))
+        (<a class=quiet href="#outa">outa</a> i (* (env aenv) (<em class=red>comb</em> d0 (<a class=quiet href="#pulse-train">pulse-train</a> s) (<a class=quiet href="#env">env</a> zenv))) *output*))))))
 
-(with-sound () (zc 0 3 100 .1 20 100 .5) (zc 3.5 3 100 .1 90 100 .95))
+(with-sound () 
+  (zc 0 3 100 .1 20 100 .5) 
+  (zc 3.5 3 100 .1 90 100 .95))
 </pre></td></tr></table>
 
 <p>The comb filter can produce some nice effects; here's one that treats the comb filter's
-delay line as the coefficients for an FIR filter (this example is in Scheme):
+delay line as the coefficients for an FIR filter:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -2277,9 +2291,21 @@ delay line as the coefficients for an FIR filter (this example is in Scheme):
   (fir+comb 6 2 3000 .0005 1000))
 </pre></td></tr></table>
 
-<p>See also chordalize in dsp.scm (pull a chord out of a sound via harmonically related combs).
+<p>For comb filter examples,
+see also <a href="sndscm.html#chordalize">chordalize</a> in dsp.scm, 
+any of the standard reverbs (<a href="sndscm.html#nrev">nrev</a>). 
+filtered-comb is used in <a href="sndscm.html#freeverb">freeverb</a>.
+In that case, a <a href="#one-zero">one-zero</a> filter is placed
+in the feedback loop:
 </p>
-<br>
+<pre>
+    (make-filtered-comb :size len :scaler room-decay-val :filter (make-one-zero :a0 (- 1.0 dmp) :a1 dmp))
+</pre>
+
+<br><br>
+
+
+<!-- STOPPED HERE --><hr>
 
 
 <A NAME="all-passdoc"></A>
@@ -2312,22 +2338,8 @@ average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
 
 <p>all-pass filters are used extensively in reverberation; see jcrev.ins or nrev.ins for examples.
 </p>
-<br>
+<br><br>
 
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Reverbs</th><tr><td>
-<blockquote><small>
-<br>
-freeverb: <a href="sndscm.html#freeverbdoc">freeverb.scm, freeverb.rb</a><br>
-jc-reverb: <a href="sndscm.html#jcrevdoc">jcrev.scm</a><br>
-jl-reverb: <a href="sndscm.html#clminsdoc">clm-ins.scm</a><br>
-nrev: <a href="sndscm.html#clminsdoc">clm-ins.scm</a><br>
-control panel reverb: <a href="snd.html#reverb">Reverb</a>, <a href="extsnd.html#reverbdecay">control variables</a><br>
-convolution reverb: <a href="extsnd.html#convolvewith">conrev</a><br>
-plate-reverb: ladspa.scm (a LADSPA effect)<br>
-*reverb*: <a href="sndscm.html#wsdoc">with-sound</a><br>
-<br>
-</small></blockquote>
-</td></tr></table>
 
 
 
@@ -2504,7 +2516,6 @@ resample all chans: <a href="extsnd.html#srcsound">src-sound</a><br>
 resample selection: <a href="extsnd.html#srcsoundselection">src-selection</a><br>
 resample mix: speed control in <a href="snd.html#mixdialog">Mix dialog</a> (also <a href="extsnd.html#applycontrols">apply-controls</a>)<br>
 resample via drawn envelope: srate in <a href="snd.html#editenvelope">Envelope editor</a><br>
-resample via CLM gen: <a href="sndclm.html#src">src</a><br>
 resample with independent time control (ssb-am): <a href="sndscm.html#ssbbank">ssb-bank</a> in dsp.scm<br>
 resample with independent time control (granulate): expand in <a href="extsnd.html#customcontrols">control panel</a>, <a href="sndscm.html#expsrc">expsrc</a> and <a href="sndscm.html#expsnd">expsnd</a><br>
 resample with independent time control (vocoder): <a href="sndclm.html#phase-vocoder">phase-vocoder</a> (this never works)<br>
@@ -2520,6 +2531,7 @@ linear src: linear-src-channel in dsp.scm<br>
 <br>
 </blockquote></small>
 </td></tr></table>
+<br><br>
 
 
 
@@ -2568,7 +2580,8 @@ know in advance what its maxamp will be, and when the two files are more or less
 the same size, there's no real computational savings to using overlap-add (i.e.
 the generator), so a one-time giant FFT saved as a temporary sound file is much
 handier.</p>
-<br>
+<br><br>
+
 
 
 <A NAME="granulatedoc"></A>
@@ -2709,7 +2722,8 @@ In the following code, we use the edit function to reverse every other grain:
     (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) (<em class=red>granulate</em> grn (lambda (dir) (rd)))))))
 </pre>
 </td></tr></table>
-<br>
+<br><br>
+
 
 
 <A NAME="phase-vocoderdoc"></A>
@@ -2761,8 +2775,8 @@ has a variety of instruments calling the phase-vocoder generator, including pvoc
 specifies all of the functions with their default values (that is, it explicitly passes
 in functions that do what the phase-vocoder would have done without any function arguments).
 </p>
+<br><br>
 
-<br>
 
 
 <A NAME="asymmetric-fmdoc"></A>

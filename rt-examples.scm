@@ -1,4 +1,4 @@
-
+z
 
 ;; Instructions:
 ;; 1. Start the jack sound server.
@@ -703,87 +703,93 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 
 
 
-
-
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Same midisoftsynth as the one above. But now properly
 ;;; made, reading midi inside the realtime thread.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
+(define-rt-vct-struct status
+  is-playing
+  (note 1)
+  is-attacking
+  is-releasing
+  src-val
+  vol)
+
+(define-rt-vector-struct synth
+  (status (make-status))
+  read
+  sr
+  attack-env
+  release-env)
+
+
 (definstrument (midisoftsampler filename middlenote #:key (attack 1.5) (release 0.5) (src-width 5))
   (let* ((num-synths 16)
 	 (num-playing 0)
 	 (synths (apply vector (map (lambda (n)
-				      (vector (vct 0 1 0 0 0 0)
-					      (make-rt-readin filename)
-					      (make-src #:srate 0 #:width src-width)
-					      (make-env `(0 0    0.7 1.9    1.0 1.0) #:duration attack)
-					      (make-env `(0 1    1 0) #:duration release)))
+				      (make-synth :status (make-status :note 1)
+						  :read (make-rt-readin filename)
+						  :sr (make-src #:srate 0 #:width src-width)
+						  :attack-env (make-env `(0 0    0.7 1.9    1.0 1.0) #:duration attack)
+						  :release-env (make-env `(0 1    1 0) #:duration release)))
 				    (iota num-synths)))))
     (<rt-play> (lambda ()
-		 (define Y-is-playing 0)
-		 (define Y-note 1)
-		 (define Y-is-attacking 2)
-		 (define Y-is-releasing 3)
-		 (define Y-src-val 4)
-		 (define Y-vol 5)
-		 (define Y-read 1)
-		 (define Y-sr 2)
-		 (define Y-attack 3)
-		 (define Y-release 4)
 		 (receive-midi (lambda (control data1 data2)
 				 (set! control (logand #xf0 control))
 				 (if (and (< num-playing num-synths)
 					  (= control #x90)
 					  (> data2 0))
-				     (range i 0 num-synths
-					    (let* ((synth (vector-ref synths i))
-						   (vars (vector-ref synth 0)))
-					      (if (not (vct-ref vars Y-is-playing))
-						  (begin
-						    (set! (mus-location (the  <rt-readin> (vector-ref synth Y-read)) 0))
-						    (mus-reset (vector-ref synth Y-sr))
-						    (mus-reset (vector-ref synth Y-attack))
-						    (mus-reset (vector-ref synth Y-release))
-						    (vct-set! vars Y-is-playing 1)
-						    (vct-set! vars Y-note data1)
-						    (vct-set! vars Y-is-attacking 1)
-						    (vct-set! vars Y-is-releasing 0)
-						    (vct-set! vars Y-src-val (let ((middlenote (midi-to-freq middlenote))
-										  (srcval (midi-to-freq data1))) 
-									      (set! srcval (- srcval middlenote))
-									      (set! srcval (/ srcval middlenote))
-									      (1+ srcval)))
-						    (vct-set! vars Y-vol (/ data2 256))
-						    (set! num-playing (1+ num-playing))
-						    (break)))))
+				     (let loop ((i 0))
+				       (let* ((synth (vector-ref synths i))
+					      (status (=> synth .status)))
+					 (if (not (=> status .is-playing))
+					     (begin
+					       (set! (mus-location (the  <rt-readin> (=> synth .read))) 0)
+					       (mus-reset (=> synth .sr))
+					       (mus-reset (=> synth .attack-env))
+					       (mus-reset (=> synth .release-env))
+					       (set! (=> status .is-playing) #t)
+					       (set! (=> status .note) data1)
+					       (set! (=> status .is-attacking) #t)
+					       (set! (=> status .is-releasing) #f)
+					       (set! (=> status .src-val) ((lambda (middlenote srcval)
+									     (set! srcval (- srcval middlenote))
+									     (set! srcval (/ srcval middlenote))
+									     (1+ srcval))
+									   (midi-to-freq middlenote)
+									   (midi-to-freq data1)))
+					       (set! (=> status .vol) (/ data2 256))
+					       (set! num-playing (1+ num-playing)))
+					     (if (< i (1- num-synths))
+						 (loop (1+ i))))))
 				     (if (or (= control #x80)
 					     (and (= control #x90)
 						  (= data2 0)))
-					 (range i 0 num-synths
-						(let* ((synth (vector-ref synths i))
-						       (vars (vector-ref synth 0)))
-						  (if (and (= (the <int> (vct-ref vars Y-note))
-							      data1)
-							   (vct-ref vars Y-is-playing)
-							   (not (vct-ref vars Y-is-releasing)))
-						      (begin
-							(vct-set! vars Y-is-releasing 1)
-							(break)))))))))
+					 (let loop ((i 0))
+					   (let* ((synth (vector-ref synths i))
+						  (status (=> synth .status)))
+					     (if (and (= (the <int> (=> status .note))
+							 data1)
+						      (=> status .is-playing)
+						      (not (=> status .is-releasing)))
+						 (begin
+						   (set! (=> status .is-releasing) #t))
+						 (if (< i (1- num-synths))
+						     (loop (1+ i))))))))))
 		 (range i 0 num-synths
-			(let* ((synth (the <SCM> (vector-ref synths i)))
-			       (vars (vector-ref synth 0)))
-			  (if (vct-ref vars Y-is-playing)
-			      (let ((read (the <rt-readin> (vector-ref synth Y-read)))
-				    (sr (vector-ref synth Y-sr))
-				    (attack (vector-ref synth Y-attack))
-				    (release (vector-ref synth Y-release))
-				    (is-attacking (vct-ref vars Y-is-attacking))
-				    (is-releasing (vct-ref vars Y-is-releasing))
-				    (src-val (vct-ref vars Y-src-val))
-				    (vol (vct-ref vars Y-vol)))
+			(let* ((synth (vector-ref synths i))
+			       (status (=> synth .status)))
+			  (if (=> status .is-playing)
+			      (let ((read (the <rt-readin> (=> synth .read)))
+				    (sr (=> synth .sr))
+				    (attack (=> synth .attack-env))
+				    (release (=> synth .release-env))
+				    (is-attacking (=> status .is-attacking))
+				    (is-releasing (=> status .is-releasing))
+				    (src-val (=> status .src-val))
+				    (vol (=> status .vol)))
 				(if (>= (mus-location read) (mus-length read))
 				    (set! (mus-increment read) -1)
 				    (if (<= (mus-location read) 0)
@@ -795,18 +801,19 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 					 (out (* vol (env release) outval))
 					 (if (>= (mus-location release) (mus-length release))
 					     (begin
-					       (vct-set! vars Y-is-playing #f)
+					       (set! (=> status .is-playing) #f)
 					       (set! num-playing (1- num-playing)))))
 					(is-attacking
 					 (out (* vol (env attack) outval))
 					 (if (>= (mus-location attack) (mus-length attack))
-					     (vct-set! vars Y-is-attacking #f)))
+					     (set! (=> status .is-attacking) #f)))
 					(else
 					 (out (* vol outval)))))))))))))
   
 
 #!
 (define filename "/gammelhd/home/kjetil/flute2.wav")
+(define filename "/hom/kjetism/Blub_mono16.wav")
 (midisoftsampler filename 60))
 (midisoftsampler filename 68))
 (midisoftsampler filename 78))

@@ -123,7 +123,7 @@
     ;; This is the settings used at Notam/Oslo. May not suite your setup.
     (begin
       (set! (ladspa-dir) "/usr/lib/ladspa")
-      (set! %load-path (cons "/hom/kjetism/snd/snd-run" %load-path))
+      (set! %load-path (cons "/hom/kjetism/snd-run" %load-path))
       (set! (temp-dir) "/lyd/local/tmp")
       (set! (save-dir) "/lyd/local/tmp")))
 
