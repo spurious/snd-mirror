@@ -20,19 +20,9 @@
 -->
 </style>
 </head>
-
 <body bgcolor=white>
 
 <A NAME="sndclmtop"></A><h1>CLM</h1>
-
-
-<table bordercolor="gray" border=10><tr><td>
-This is work in progress -- the plan is to use Scheme/Ruby/Forth throughout this file,
-and leave the Common Lisp stuff to the CLM-3 version (clm.html).  
-</td></tr></table>
-
-
-<br><br>
 
 
 <p>CLM (originally an acronym for Common Lisp Music) is a sound synthesis
@@ -72,8 +62,11 @@ note lists and instruments are described in sndscm.html.
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>Contents</h2></td></tr></table>
 <br>
 <table border=8 bordercolor="lightsteelblue" cellpadding=8 hspace=20>
+
 <tr><td colspan=3><center><a href="#introduction">Introduction</a></center></td></tr>
+
 <tr><td colspan=3><center><a href="#generators">Generators</a></center></td></tr>
+
 <tr><td width=20 bgcolor=#f6f8ff></td><td>
 <table border=0 cellpadding=0>
   <tr><td><a href="#all-passdoc">all-pass</a></td><td width=20></td><td>all-pass filter</td></tr>
@@ -126,12 +119,32 @@ note lists and instruments are described in sndscm.html.
   <tr><td><a href="#waveshapedoc">waveshape</a></td><td></td><td>waveshaping</td></tr>
 </table>
 </td></tr>
-<tr><td colspan=3><center><a href="#generic-functions">Generic functions</a></center></td></tr>
-<tr><td colspan=3><center><a href="#functions">Other functions</a></center></td></tr>
+
+<tr><td colspan=3><center><a href="#functions">Functions</a></center></td></tr>
+
+<tr><td width=20 bgcolor=#f6f8ff></td><td>
+<table border=0 cellpadding=0>
+  <tr><td><a href="#amplitude-modulate">amplitude-modulate</a></td><td></td><td>sig1 * (ind * sig2)</td></tr>
+  <tr><td><a href="#array-interp">array-interp</a></td><td></td><td>array interpolation</td></tr>
+  <tr><td><a href="#contrast-enhancement">contrast-enhancement</a></td><td width=20></td><td>modulate signal</td></tr>
+  <tr><td><a href="#convolution">convolution</a></td><td></td><td>convolve signals</td></tr>
+  <tr><td><a href="#dot-product">dot-product</a></td><td></td><td>vct dot (scalar) product</td></tr>
+</table>
+</td>
+<td>
+<table border=0 cellpadding=0>
+  <tr><td><a href="#fft">fft</a></td><td></td><td>Fourier transform</td></tr>
+  <tr><td><a href="#make-fft-window">make-fft-window</a></td><td></td><td>various standard windows</td></tr>
+  <tr><td><a href="#polynomial">polynomial</a></td><td width=20></td><td>Horner's rule</td></tr>
+  <tr><td><a href="#ring-modulate">ring-modulate</a></td><td width=20></td><td>sig * sig</td></tr>
+  <tr><td><a href="#spectrum">spectrum</a></td><td width=20></td><td>power spectrum of signal</td></tr>
+</table>
+</td</tr>
+
 <tr><td colspan=3><center><a href="#definstrument">Instruments</a></center></td></tr>
 </table>
 
-<!-- TODO: add "other functions" table here -->
+
 <br><br>
 
 
@@ -467,8 +480,19 @@ various different situations.
     (with-sound () (simp 0 2 440 .1 '(0 0  0.1 1.0  1.0 0.0)))
 </pre>
 
-<p>Add a few more oscils and envs, and you've got the fm-violin.
+<p>Add a few more oscils and envs, and you've got the fm-violin.  You can try out a generator or a patch of generators quickly by
+plugging it into the following with-sound call:
 </p>
+
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<pre>
+(with-sound () 
+  (let ((sqr (make-square-wave 100))) ; test a square-wave generator
+    (do ((i 0 (1+ i))) 
+        ((= i 10000)) 
+      (outa i (square-wave sqr) *output*))))
+</pre>
+</td></tr></table>
 
 <br><br>
 
@@ -522,7 +546,7 @@ To get a cosine (as opposed to sine), set the initial-phase to (/ pi 2).
 <br clear=left>
 
 <p>One slightly confusing aspect of oscil is that glissando has to be turned into a phase-increment envelope.
-This means that the envelope y values should be passed through <a href="#hz-&gt;radians">hz-&gt;radians</a>:
+This means that the envelope y values should be passed through <a href="#hztoradians">hz-&gt;radians</a>:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -538,7 +562,7 @@ This means that the envelope y values should be passed through <a href="#hz-&gt;
 </pre>
 </td></tr></table>
 
-<p>Here is an example of FM (here the <a class=quiet href="#hz-&gt;radians">hz-&gt;radians</a> business is folded into the FM index):
+<p>Here is an example of FM (here the <a class=quiet href="#hztoradians">hz-&gt;radians</a> business is folded into the FM index):
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -2869,7 +2893,7 @@ sound data input and output.
 </p>
 
 <table cellspacing=0 cellpadding=0 hspace=40>
-<tr><td><a class=def name="make-frame">make-frame</a><code> chans :rest args</code></td><td></td><td>create frame and load it with args</td></tr>
+<tr><td><a class=def name="make-frame">make-frame</a><code> chans :rest args</code></td><td width=20></td><td>create frame and load it with args</td></tr>
 <tr><td><a class=def name="frame?">frame?</a><code> obj</code></td><td></td><td>is obj a frame</td></tr>
 <tr><td><a class=def name="frame-ref">frame-ref</a><code> f1 chan</code></td><td></td><td>return f1[chan]</td></tr>
 <tr><td><a class=def name="frame-set!">frame-set!</a><code> f1 chan val</code></td><td></td><td>f1[chan] = val (also set! with frame-ref)</td></tr>
@@ -3227,23 +3251,30 @@ source, see either move-locsig, or Fernando Lopez Lezcano's <a class=def href="h
 Here is an example of move-locsig:
 </p>
 
+<table border=0><tr><td>
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (move-osc start dur freq amp :key (degree 0) (dist 1.0) (reverb 0))
-  (let* ((beg (inexact-&gt;exact (floor (* start (<a class=quiet href="#mussrate">mus-srate</a>)))))
-         (end (+ beg (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
-         (car (<a class=quiet href="#make-oscil">make-oscil</a> freq))
-         (loc (<a class=quiet href="#make-locsig">make-locsig</a> :degree degree :distance dist :channels 2 :output *output*))
-	 (pan-env (<a class=quiet href="#make-env">make-env</a> '(0 0 1 90) :duration dur)))
-    (run
+(with-sound (:channels 4)
+  (let ((loc (<em class=red>make-locsig</em> :channels 4 :output *output*))
+	(osc (<a class=quiet href="#make-oscil">make-oscil</a> 440.0))
+	(j 0))
+    (run  ; 360 notes one at each degree in a circle
       (lambda ()
-        (do ((i beg (1+ i)))
-            ((= i end))
-         (let ((ut (* amp (<a class=quiet href="#oscil">oscil</a> car))))
-	   (<em class=red>move-locsig</em> loc (<a class=quiet href="#env">env</a> pan-env) dist)
-           (<a class=quiet href="#locsig">locsig</a> loc i ut)))))))
+        (do ((i 0 (1+ i)))
+            ((= i 360))
+          (do ((k 0 (1+ k)))
+              ((= k 1000))
+	    (let ((sig (* .5 (<a class=quiet href="#oscil">oscil</a> osc))))
+              (<em class=red>locsig</em> loc j sig)
+	      (set! j (1+ j))))
+	  (<em class=red>move-locsig</em> loc (exact->inexact i) 1.0))))))
 </pre>
 </td></tr></table>
+
+</td><td>
+<img src="circle.png" alt="move-locsig example" hspace=20>
+</td></tr></table>
+
 <br><br>
 
 
@@ -3252,17 +3283,16 @@ Here is an example of move-locsig:
 <A NAME="move-sounddoc"></A>
 <!-- ---------------------------------------- MOVE-SOUND ---------------------------------------- -->
 
-<br>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>move-sound</h3></center></td></tr></table>
-<br>
+
 <pre>
  <a class=def name="make-move-sound">make-move-sound</a> dlocs-list output revout
  <a class=def name="move-sound">move-sound</a> dloc i in-sig
  <a class=def name="move-sound?">move-sound?</a> dloc
 </pre>
 
-<p><b>move-sound</b> is intended as the run-time portion of dlocsig.  make-dlocsig (described in
-dlocsig.html) creates a move-sound structure, passing it to the move-sound generator inside the
+<p>move-sound is intended as the run-time portion of <a href="sndscm.html#dlocsigdoc">dlocsig</a>.  make-dlocsig
+creates a move-sound structure, passing it to the move-sound generator inside the
 dlocsig macro.  All the necessary data is packaged up in a list:
 </p>
 <pre>
@@ -3281,40 +3311,47 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 </pre>
 <p>Here's an instrument that uses this generator to pan a sound through four channels:
 </p>
+
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(definstrument simple-dloc (beg dur freq amp)
+(define (simple-dloc beg dur freq amp)
+  "(simple-dloc-4 beg dur freq amp) test instrument for dlocsig"
   (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a> freq))
 	 (start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
 	 (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
 	 (loc (<em class=red>make-move-sound</em> (list start end 4 0
-				     (<a class=quiet href="#make-delay">make-delay</a> 12) 
+	      	   		     (<a class=quiet href="#make-delay">make-delay</a> 12) 
 				     (<a class=quiet href="#make-env">make-env</a> '(0 0 10 1) :end dur)
-				     (<a class=quiet href="#make-env">make-env</a> '(0 0 1 0) :duration dur)
-				     (make-array 4 :initial-element nil)
-				     (make-array 4 :initial-contents 
-				       (list
-					(<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 2 0 3 0 4 0) :duration dur)
-					(<a class=quiet href="#make-env">make-env</a> '(0 0 1 0 2 1 3 0 4 0) :duration dur)
-					(<a class=quiet href="#make-env">make-env</a> '(0 0 1 0 2 0 3 1 4 0) :duration dur)
-					(<a class=quiet href="#make-env">make-env</a> '(0 0 1 0 2 0 3 0 4 1) :duration dur)))
-				     nil
-				     (make-integer-array 4 :initial-contents (list 0 1 2 3)))
+				     #f
+				     (make-vector 4 #f)
+				     (vector (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 2 0 3 0 4 0) :duration dur)
+					     (<a class=quiet href="#make-env">make-env</a> '(0 0 1 0 2 1 3 0 4 0) :duration dur)
+					     (<a class=quiet href="#make-env">make-env</a> '(0 0 1 0 2 0 3 1 4 0) :duration dur)
+					     (<a class=quiet href="#make-env">make-env</a> '(0 0 1 0 2 0 3 0 4 1) :duration dur))
+				     #f
+				     (vector 0 1 2 3))
 			       *output*)))
     (run
-     (loop for i from start to end do
-       (<em class=red>move-sound</em> loc i (* amp (<a class=quiet href="#oscil">oscil</a> os)))))))
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+         (<em class=red>move-sound</em> loc i (* amp (<a class=quiet href="#oscil">oscil</a> os))))))))
+
+(with-sound (:channels 4) (simple-dloc 0 2 440 .5))
 </pre>
-<br>
+</td></tr></table>
+
+<br><br>
 
 
-<br>
+
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2>Functions</h2></td></tr></table>
 
 <!-- ---------------------------------------- GENERIC FUNCTIONS ---------------------------------------- -->
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3><A class=def NAME="generic-functions">Generic Functions</a></h3></center></td></tr></table>
 
-<p>The generators respond to a set of "generic" functions: mus-frequency, for example, tries to return (or set) a generator's
-frequency, where that makes sense.
+<p>The generators respond to a set of "generic" functions.  mus-frequency, for example, tries to return (or set) a generator's
+frequency, wherever that makes sense.
 The generic functions are:
 </p>
 
@@ -3322,7 +3359,7 @@ The generic functions are:
 <tr><td bgcolor="#f6f8ff"><a class=def name="mus-channel">mus-channel</a></td><td width=30 bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">channel being read/written</td></tr>
 <tr><td><a class=def name="mus-channels">mus-channels</a></td><td></td><td>channels open</td></tr>
 <tr><td bgcolor="#f6f8ff"><a class=def name="mus-cosines">mus-cosines</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">sinusoids in output</td></tr>
-<tr><td><a class=def name="mus-data">mus-data</a></td><td></td><td>array of data</td></tr>
+<tr><td><a class=def name="mus-data">mus-data</a></td><td></td><td>vct of data</td></tr>
 <tr><td bgcolor="#f6f8ff"><a class=def name="mus-describe">mus-describe</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">description of current state</td></tr>
 <tr><td><a class=def name="mus-feedback">mus-feedback</a></td><td></td><td>feedback coefficient</td></tr>
 <tr><td bgcolor="#f6f8ff"><a class=def name="mus-feedforward">mus-feedforward</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">feedforward coefficient</td></tr>
@@ -3332,7 +3369,7 @@ The generic functions are:
 <tr><td bgcolor="#f6f8ff"><a class=def name="mus-hop">mus-hop</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">hop size for block processing</td></tr>
 <tr><td><a class=def name="mus-increment">mus-increment</a></td><td></td><td>various increments</td></tr>
 <tr><td bgcolor="#f6f8ff"><a class=def name="mus-interp-type">mus-interp-type</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">interpolation type (mus-interp-linear, etc)</td></tr>
-<tr><td><a class=def name="mus-length">mus-length</a></td><td></td><td>data array length</td></tr>
+<tr><td><a class=def name="mus-length">mus-length</a></td><td></td><td>data length</td></tr>
 <tr><td bgcolor="#f6f8ff"><a class=def name="mus-location">mus-location</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">sample location for reads/writes</td></tr>
 <tr><td><a class=def name="mus-name">mus-name</a></td><td></td><td>generator name ("oscil")</td></tr>
 <tr><td bgcolor="#f6f8ff"><a class=def name="mus-offset">mus-offset</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">envelope offset</td></tr>
@@ -3344,61 +3381,49 @@ The generic functions are:
 <tr><td bgcolor="#f6f8ff"><a class=def name="mus-scaler">mus-scaler</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">scaler, normally on an amplitude</td></tr>
 <tr><td><a class=def name="mus-width">mus-width</a></td><td></td><td>width of interpolation tables, etc</td></tr>
 <tr><td bgcolor="#f6f8ff"><a class=def name="mus-xcoeff">mus-xcoeff</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">x (input) coefficient</td></tr>
-<tr><td><a class=def name="mus-xcoeffs">mus-xcoeffs</a></td><td></td><td>array of x (input) coefficients</td></tr>
+<tr><td><a class=def name="mus-xcoeffs">mus-xcoeffs</a></td><td></td><td>vct of x (input) coefficients</td></tr>
 <tr><td bgcolor="#f6f8ff"><a class=def name="mus-ycoeff">mus-ycoeff</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">y (output, feedback) coefficient</td></tr>
-<tr><td><a class=def name="mus-ycoeffs">mus-ycoeffs</a></td><td></td><td>array of y (feedback) coefficients</td></tr>
+<tr><td><a class=def name="mus-ycoeffs">mus-ycoeffs</a></td><td></td><td>vct of y (feedback) coefficients</td></tr>
 
 </table>
 
-<pre>
-  <a class=def name="musfloatequalfudgefactor">mus-float-equal-fudge-factor</a>     how far apart values can be and still be considered equal
-  <a class=def name="musarrayprintlength">mus-array-print-length</a> ()        how many array (vct) elements to print in mus-describe
-</pre>
-
-
-
-
 <p>Many of these are settable:
 <code>(set! (mus-frequency osc1) 440.0)</code>
-sets osc1's current frequency to (<a class=quiet href="#hztoradians">hz-&gt;radians</a> 440.0). 
-In Scheme, Ruby and Forth, <a class=def name="musgeneratorp">mus-generator?</a> returns #t if its argument is
-a CLM generator.
+sets osc1's phase increment to (<a class=quiet href="#hztoradians">hz-&gt;radians</a> 440.0). 
+<a class=def name="musgeneratorp">mus-generator?</a> returns #t if its argument is
+a generator.
+<a href="sndscm.html#clminsdoc">clm-ins.scm</a> has many examples of these functions.
+</p>
+<br>
+
+<pre>
+  <a class=def name="musfloatequalfudgefactor">mus-float-equal-fudge-factor</a>
+</pre>
+
+<p>This function sets how far apart generator vct elements can be and still be considered equal in equal?, and
 </p>
 
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(definstrument backandforth (onset duration file src-ratio)
-  ;; read file forwards and backwards until dur is used up
-  ;; a slightly improved version is 'scratch' in ug1.ins
-  (let* ((last-sample (<a class=quiet href="#sound-frames">sound-frames</a> file))
-         (beg (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) onset))))
-         (end (+ beg (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) duration)))))
-	 (input (<a class=quiet href="#make-readin">make-readin</a> file))
-         (s (<a class=quiet href="#make-src">make-src</a> :srate src-ratio))
-         (cs 0))
-    (run
-     (loop for i from beg below end do
-       (declare (type :integer cs last-sample)
-		(type :float src-ratio))
-       (if (&gt;= cs last-sample) (set! (<em class=red>mus-increment</em> s) (- src-ratio)))
-       (if (&lt;= cs 0) (set! (<em class=red>mus-increment</em> s) src-ratio))
-       (<a class=quiet href="#outa">outa</a> i (<a class=quiet href="#src">src</a> s 0.0 #'(lambda (dir) 
-			      (incf cs dir)
-			      (set! (<em class=red>mus-increment</em> input) dir)
-			      (<a class=quiet href="#readin">readin</a> input))))))))
-
-;;; (with-sound () (backandforth 0 10 "pistol.snd" 2.0))
+  <a class=def name="musarrayprintlength">mus-array-print-length</a>
 </pre>
-</td></tr></table>
 
-<br>
+<p>
+determines how many vct elements are printed by mus-describe.
+</p>
+
+<br><br>
+
+
+<!-- STOPPED HERE --><hr>
+
+
 
 <!-- ---------------------------------------- FUNCTIONS ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3><A class=def NAME="functions">Useful functions</a></h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3><A class=def NAME="functions">Other functions</a></h3></center></td></tr></table>
 
-<p>There are several commonly-used functions, some of which can occur in the run macro. These include
-a few that look for all the world like generators.</p>
+<p>There are several functions closely tied to the generators and instruments.
+</p>
 
 <table cellspacing=0 cellpadding=0 hspace=40>
 <tr><td><a class=def name="hztoradians">hz-&gt;radians</a><code> freq</code></td><td width=20></td><td>convert freq to radians per sample</td></tr>
@@ -3407,36 +3432,34 @@ a few that look for all the world like generators.</p>
 <tr><td><a class=def name="lineartodb">linear-&gt;db</a><code> val</code></td><td></td><td>convert val to dB</td></tr>
 <tr><td><a class=def Name="timestosamples">times-&gt;samples</a><code> start duration</code></td><td></td><td>convert start and duration from seconds to samples (beg+dur in latter case)</td></tr>
 <tr><td><a class=def name="samplestoseconds">samples-&gt;seconds</a><code> samps</code></td><td></td><td>convert samples to seconds</td></tr>
-<tr><td><a class=def name="secondstosamples">seconds-&gt;samples</a><code> secs</code></td><td></td><td>convert secondss to samples</td></tr>
+<tr><td><a class=def name="secondstosamples">seconds-&gt;samples</a><code> secs</code></td><td></td><td>convert seconds to samples</td></tr>
 <tr><td><a class=def name="degreestoradians">degrees-&gt;radians</a><code> degs</code></td><td></td><td>convert degrees to radians</td></tr>
 <tr><td><a class=def name="radianstodegrees">radians-&gt;degrees</a><code> rads</code></td><td></td><td>convert radians to degrees</td></tr>
-<tr><td><a class=def name="clear-array">clear-array</a><code> arr</code></td><td></td><td>set all values in arr to 0.0</td></tr>
+<tr><td><a class=def name="clear-array">clear-array</a><code> arr</code></td><td></td><td>set all values in arr (a vct) to 0.0</td></tr>
 <tr><td><a class=def name="mussrate">mus-srate</a></td><td></td><td>srate in with-sound</td></tr>
 </table>
 
 <p>
 <b>hz-&gt;radians</b>
 converts its argument to radians/sample (for any situation where a
-frequency is used as an amplitude, glissando or FM).  It
-can be used within run. hz-&gt;radians is equivalent to 
+frequency is used as an amplitude -- glissando or FM).
+hz-&gt;radians is equivalent to 
 <pre>
   freq-in-hz * 2 * pi / (<a class=quiet href="#mussrate">mus-srate</a>).  
 </pre>
 </p>
 <blockquote>
 <p>
-<i>Freq-in-hz</i> * 2 * pi gives us the number of radians traversed per
+<code>freq-in-hz * 2 * pi</code> gives us the number of radians traversed per
 second; we then divide by the number of samples per second to get the
 radians per sample; in dimensional terms: (radians/sec) /
 (sample/sec) = radians/sample.  We need this conversion whenever a
-frequency-related value is actually being accessed on every sample, as
-an increment of a phase variable.  (We are also assuming
-our wave table size is 2 * pi). This conversion value was named "mag"
-in Mus10 and "in-hz" in CLM-1.  The inverse is radians-&gt;hz.
+frequency-related value is being accessed on every sample, as
+an increment of a phase variable.  
 </p></blockquote>
 
 
-<A NAME="polynomialdoc"></A>
+
 <!-- ---------------------------------------- POLYNOMIAL ---------------------------------------- -->
 <br>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>polynomial</h3></center></td></tr></table>
@@ -3456,10 +3479,9 @@ See also the <a href="#brighten">brighten</a> instrument.
 <br>
 
 
-<A NAME="arrayinterpdoc"></A>
 <!-- ---------------------------------------- ARRAY-INTERP ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>array-interp, dot-product, sine-bank</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>array-interp, dot-product</h3></center></td></tr></table>
 <pre>
   <a class=def name="array-interp">array-interp</a> fn x :optional size
   <a class=def name="dot-product">dot-product</a> in1 in2
@@ -3513,7 +3535,6 @@ delay or wave-train. The <i>type</i> is one of the interpolation types (mus-inte
 <br>
 
 
-<A NAME="contrastenhancementdoc"></A>
 <!-- ---------------------------------------- CONTRAST-ENHANCEMENT ---------------------------------------- -->
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>contrast-enhancement</h3></center></td></tr></table>
@@ -3587,7 +3608,7 @@ resulting in a steady modulation, rather than an intensification of just the pea
 <br>
 
 
-<A NAME="amplitudemodulatedoc"></A>
+
 <!-- ---------------------------------------- AMPLITUDE-MODULATE ---------------------------------------- -->
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>ring-modulate, amplitude-modulate</h3></center></td></tr></table>
@@ -3629,7 +3650,7 @@ But this is exactly what the <a href="#ssb-am">ssb-am</a> generator provides.
 <br>
 
 
-<A NAME="fftdoc"></A>
+
 <!-- ---------------------------------------- FFT ---------------------------------------- -->
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>FFT (fourier transform)</h3></center></td></tr></table>
@@ -3827,7 +3848,7 @@ Test 23 in snd-test.scm has a with-sound that includes most of these instruments
 
 <tr><td>fofins</td>
     <td>FOF synthesis</td>
-    <td><a href="#wave-train">clm.html</a></td> 
+    <td><a href="#wave-train">sndclm.html</a></td> 
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>

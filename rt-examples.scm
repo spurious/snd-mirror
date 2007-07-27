@@ -31,6 +31,7 @@ z
 (set! (-> i vol) 0.3)
 (set! (mus-frequency (-> i osc)) 200)
 (-> i stop)
+(rt-macroexpand '(oscil osc))
 !#
 
 
@@ -300,7 +301,7 @@ z
 #!
 
 (define bus (make-bus 2))
-(loopplay filename #:out-bus bus))
+(loopplay filename #:out-bus bus)
 (define p (extremely-simple-delay 1 0.5 #:in-bus bus))
 
 (set! (-> p mix) 1)
@@ -710,27 +711,26 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 
 
 (define-rt-vct-struct status
-  is-playing
-  (note 1)
-  is-attacking
-  is-releasing
-  src-val
-  vol)
+  :is-playing
+  :note 1 ;;??
+  :is-attacking
+  :is-releasing
+  :src-val
+  :vol)
 
 (define-rt-vector-struct synth
-  (status (make-status))
-  read
-  sr
-  attack-env
-  release-env)
+  :status (make-status)
+  :read
+  :sr
+  :attack-env
+  :release-env)
 
 
 (definstrument (midisoftsampler filename middlenote #:key (attack 1.5) (release 0.5) (src-width 5))
   (let* ((num-synths 16)
 	 (num-playing 0)
 	 (synths (apply vector (map (lambda (n)
-				      (make-synth :status (make-status :note 1)
-						  :read (make-rt-readin filename)
+				      (make-synth :read (make-rt-readin filename)
 						  :sr (make-src #:srate 0 #:width src-width)
 						  :attack-env (make-env `(0 0    0.7 1.9    1.0 1.0) #:duration attack)
 						  :release-env (make-env `(0 1    1 0) #:duration release)))
@@ -743,24 +743,26 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 					  (> data2 0))
 				     (let loop ((i 0))
 				       (let* ((synth (vector-ref synths i))
-					      (status (=> synth .status)))
-					 (if (not (=> status .is-playing))
+					      (status (=> synth :status)))
+					 (if (not (=> status :is-playing))
 					     (begin
-					       (set! (mus-location (the  <rt-readin> (=> synth .read))) 0)
-					       (mus-reset (=> synth .sr))
-					       (mus-reset (=> synth .attack-env))
-					       (mus-reset (=> synth .release-env))
-					       (set! (=> status .is-playing) #t)
-					       (set! (=> status .note) data1)
-					       (set! (=> status .is-attacking) #t)
-					       (set! (=> status .is-releasing) #f)
-					       (set! (=> status .src-val) ((lambda (middlenote srcval)
+					       (set! (mus-location (the  <rt-readin> (=> synth :read))) 0)
+					       (mus-reset (=> synth :sr))
+					       (mus-reset (=> synth :attack-env))
+					       (mus-reset (=> synth :release-env))
+					       (set! (=> status :is-playing) #t)
+					       (set! (=> status :is-playing) #t)
+					       (set! (=> status :is-playing) #t)
+					       (set! (=> status :note) data1)
+					       (set! (=> status :is-attacking) #t)
+					       (set! (=> status :is-releasing) #f)
+					       (set! (=> status :src-val) ((lambda (middlenote srcval)
 									     (set! srcval (- srcval middlenote))
 									     (set! srcval (/ srcval middlenote))
 									     (1+ srcval))
 									   (midi-to-freq middlenote)
 									   (midi-to-freq data1)))
-					       (set! (=> status .vol) (/ data2 256))
+					       (set! (=> status :vol) (/ data2 256))
 					       (set! num-playing (1+ num-playing)))
 					     (if (< i (1- num-synths))
 						 (loop (1+ i))))))
@@ -769,27 +771,27 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 						  (= data2 0)))
 					 (let loop ((i 0))
 					   (let* ((synth (vector-ref synths i))
-						  (status (=> synth .status)))
-					     (if (and (= (the <int> (=> status .note))
+						  (status (=> synth :status)))
+					     (if (and (= (the <int> (=> status :note))
 							 data1)
-						      (=> status .is-playing)
-						      (not (=> status .is-releasing)))
+						      (=> status :is-playing)
+						      (not (=> status :is-releasing)))
 						 (begin
-						   (set! (=> status .is-releasing) #t))
+						   (set! (=> status :is-releasing) #t))
 						 (if (< i (1- num-synths))
 						     (loop (1+ i))))))))))
 		 (range i 0 num-synths
 			(let* ((synth (vector-ref synths i))
-			       (status (=> synth .status)))
-			  (if (=> status .is-playing)
-			      (let ((read (the <rt-readin> (=> synth .read)))
-				    (sr (=> synth .sr))
-				    (attack (=> synth .attack-env))
-				    (release (=> synth .release-env))
-				    (is-attacking (=> status .is-attacking))
-				    (is-releasing (=> status .is-releasing))
-				    (src-val (=> status .src-val))
-				    (vol (=> status .vol)))
+			       (status (=> synth :status)))
+			  (if (=> status :is-playing)
+			      (let ((read (the <rt-readin> (=> synth :read)))
+				    (sr (=> synth :sr))
+				    (attack (=> synth :attack-env))
+				    (release (=> synth :release-env))
+				    (is-attacking (=> status :is-attacking))
+				    (is-releasing (=> status :is-releasing))
+				    (src-val (=> status :src-val))
+				    (vol (=> status :vol)))
 				(if (>= (mus-location read) (mus-length read))
 				    (set! (mus-increment read) -1)
 				    (if (<= (mus-location read) 0)
@@ -801,12 +803,12 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 					 (out (* vol (env release) outval))
 					 (if (>= (mus-location release) (mus-length release))
 					     (begin
-					       (set! (=> status .is-playing) #f)
+					       (set! (=> status :is-playing) #f)
 					       (set! num-playing (1- num-playing)))))
 					(is-attacking
 					 (out (* vol (env attack) outval))
 					 (if (>= (mus-location attack) (mus-length attack))
-					     (set! (=> status .is-attacking) #f)))
+					     (set! (=> status :is-attacking) #f)))
 					(else
 					 (out (* vol outval)))))))))))))
   
@@ -814,10 +816,10 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 #!
 (define filename "/gammelhd/home/kjetil/flute2.wav")
 (define filename "/hom/kjetism/Blub_mono16.wav")
-(midisoftsampler filename 60))
-(midisoftsampler filename 68))
-(midisoftsampler filename 78))
-(midisoftsampler filename 90))
+(midisoftsampler filename 60)
+(midisoftsampler filename 68)
+(midisoftsampler filename 78)
+(midisoftsampler filename 90)
 (rte-silence!)
 (rte-info)
 !#

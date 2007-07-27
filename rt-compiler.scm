@@ -347,7 +347,7 @@ and run simple lisp[4] functions.
 				 (list (make-proper-type (cadr t) (car t))
 				       (car t)))
 			       (cadr term))))
-	     (set! vardecl (cons rt-globalvardecl vardecl))
+	     (push! rt-globalvardecl vardecl)
 	     (if (eq? 'lambda (car term))
 		  `(lambda ,vardecl
 		     ,@(map2 (cddr term)))
@@ -379,7 +379,7 @@ and run simple lisp[4] functions.
   (for-each (lambda (vardecl)
 	      (if (or (= 2 (length vardecl))
 		      (not (list? (caddr vardecl))))
-		  (set! globals (cons vardecl globals))))
+		  (push! vardecl globals)))
 	    (cadr (caddr term)))
 
    (last-hacks term))
@@ -621,7 +621,7 @@ and run simple lisp[4] functions.
 
   (define (add-global var)
     (if (not (memq var globals))
-	(set! globals (cons var globals))))
+	(push! var globals)))
   
   (define (find-globals varlist term)
     (cond ((symbol? term)
@@ -643,7 +643,7 @@ and run simple lisp[4] functions.
 			 (if (and (= 3 (length vardecl))
 				  (list? (caddr vardecl)))
 			     (find-globals '() (caddr vardecl))
-			     (set! newvarlist (cons (car vardecl) newvarlist))))
+			     (push! (car vardecl) newvarlist)))
 		       (cadr term))
 	     (for-each (lambda (t)
 			 (find-globals newvarlist t))
@@ -664,9 +664,9 @@ and run simple lisp[4] functions.
 			(if (and (not dontcapsulate)
 				 (memq (car var) globals))
 			    (let ((tempname (symbol-append '_rt_local_ (car var))))
-			      (set! globsets (cons `(set! ,(car var) ,tempname) globsets))
-			      (set! globals2 (cons var globals2))
-			      (set! globvars-here (cons var globvars-here))
+			      (push! `(set! ,(car var) ,tempname) globsets)
+			      (push! var globals2)
+			      (push! var globvars-here)
 			      (list tempname (cadr var)))
 			    var))
 		      (cadr term)))
@@ -687,7 +687,7 @@ and run simple lisp[4] functions.
       (if is-first-let*?
 	  (for-each (lambda (var)
 		      (if (memq (car var) globals)
-			  (set! globvars-here (cons var globvars-here))))
+			  (push! var globvars-here)))
 		    (cadr (car body))))
 
       (set! das-func (if is-first-let*?
@@ -715,10 +715,10 @@ and run simple lisp[4] functions.
 		 (funccall `(,realfuncname ,@(map car vars)))
 		 (capspart #f))
 			     
-	    (set! globalfuncs (cons `(,name ,type (rt-lambda-decl ,(cadr term)))
-				    globalfuncs))
-	    (set! globalfuncs (cons `(,realfuncname ,type ,das-func)
-				    globalfuncs))
+	    (push! `(,name ,type (rt-lambda-decl ,(cadr term)))
+		   globalfuncs)
+	    (push! `(,realfuncname ,type ,das-func)
+		   globalfuncs)
 
 	    
 	    (set! capspart `(let* ,(if (eq? '<void> type)
@@ -740,7 +740,7 @@ and run simple lisp[4] functions.
 	 	`(lambda ,vars                ;; It should be set quite high, because of larger amount of code, and branching, in the second version.
 		   ,capspart)                 ;; On the other hand, stacking up these variables are probably usually unnecesarry (but has to be done),
 		(let ((recnum (rt-gensym)))   ;; so the program counter usually jumps into the second version. Hard to say whats best...
-		  (set! globals2 (cons (list recnum '<int> 0) globals2))
+		  (push! (list recnum '<int> 0) globals2)
 		  `(lambda ,vars
 		     (if ,recnum
 			 ,capspart
@@ -768,13 +768,12 @@ and run simple lisp[4] functions.
 			 (if (and (= 3 (length var))
 				  (list? (caddr var)))
 			     (if (eq? 'rt-lambda-decl (car (caddr var)))
-				 (set! globalfuncs (cons var
-							 globalfuncs))
-				 (set! globalfuncs (cons (list (car var) (cadr var) (apply lambdalifter var))
-							 globalfuncs)))
+				 (push! var globalfuncs)
+				 (push! (list (car var) (cadr var) (apply lambdalifter var))
+					globalfuncs))
 			     (if (memq (car var) globals)
-				 (set! globals2 (cons var globals2))
-				 (set! vardecls (cons var vardecls)))))
+				 (push! var globals2)
+				 (push! var vardecls))))
 		       (cadr term))
 	     (set! vardecls (reverse! vardecls))
 	     (if (null? vardecls)
@@ -1224,10 +1223,66 @@ and run simple lisp[4] functions.
 
 
 					    
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; S-expression transformer (for rt-macros)
+
+(define rt-transformers '())
+(define (add-rt-transformer-do ev func)
+  (push! (cons func ev) rt-transformers))
+(define (remove-rt-transformer func)
+  (set! rt-transformers (remove (lambda (transformer)
+				  (equal? func ((cdr transformer))))
+				rt-transformers)))
+
+(define-macro (add-rt-transformer func)
+  (define expr (gensym))
+  (define ev (gensym))
+  (if (pair? func)
+      `(let ((,ev ,func))
+	 (add-rt-transformer-do (lambda ()
+				  ,ev)
+				(lambda (,expr)
+				  (,ev ,expr))))
+      `(add-rt-transformer-do (lambda ()
+				,func)
+			      (lambda (,expr)
+				(,func ,expr)))))
+  
+
+(define (rt-transform expr)
+  (call-with-current-continuation
+   (lambda (return)
+     (for-each (lambda (transformer)
+		 (let ((res (transformer expr)))
+		   (if (not (equal? expr res))
+		       (return (rt-transform res))
+		       (set! expr res))))
+	       (map car rt-transformers))
+     expr)))
+
+
+
+#|		       
+(define (reverse-term term)
+  (if (and (pair? term)
+	   (number? (car term))
+	   (not (= 5 (car term)))
+	   (not (number? (last term))))
+      (reverse term)
+      term))
+
+(add-rt-transformer reverse-term)
+(rt-macroexpand '(6 23 aiai a))
+(rt-macroexpand '(5 23 aiai a))
+(remove-rt-transformer reverse-term)
+|#
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; rt-macroexpand does that. First thing to do.
+;; rt-macroexpand . First thing to do.
 ;; +setter handling
 ;; (set! (asetter 5) 2)     -> (setter!-asetter 5 2)
 ;;
@@ -1263,7 +1318,8 @@ and run simple lisp[4] functions.
 			      term))))))))
      (expand term))))
   
-(define (rt-macroexpand term)
+
+(define (rt-macroexpand-expand term)
   (let ((res (call-with-current-continuation
 	      (lambda (return)
 		
@@ -1293,18 +1349,21 @@ and run simple lisp[4] functions.
 					       `(,(car a) ,@(map expand (cdr a))))
 					     (cadr term))
 			   ,@(map expand (cddr term))))
+			((not (symbol? (car term)))
+			 term)
 			(else
 			 (if (not (symbol? (car term)))
 			     (check-failed "Illegal function call:" term ".")
 			     (begin
-			       (let* ((args (cdr term))
-				      (a (cons (symbol-append rt-macro-prefix (car term)) args))
+			       (let* ((funcname (car term))
+				      (args (cdr term))
+				      (a (cons (symbol-append rt-macro-prefix funcname) args))
 				      (b (macroexpand-1 a )))
 				 (if (not b)
 				     (return #f)
 				     (if (not (equal? a b))
 					 (expand b)
-					 (cons (car term)
+					 (cons funcname
 					       (map expand args))))))))))
 		
 		(expand term)))))
@@ -1313,6 +1372,16 @@ and run simple lisp[4] functions.
     res))
 
 
+(add-rt-transformer rt-macroexpand-expand)
+
+;; Not quite working yet. Full rewrite of the macrosystem is probably needed.
+;;(define rt-macroexpand (lambda (expr)
+;;			 (rt-transform expr)))
+
+(define rt-macroexpand rt-macroexpand-expand)
+
+
+  
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1382,7 +1451,7 @@ and run simple lisp[4] functions.
 						 
        (let ((newname (get-unique-name (legalize-c-name name))))
 	 (if is-guile-var
-	     (set! renamed-guile-vars (cons (list name newname) renamed-guile-vars)))
+	     (push! (list name newname) renamed-guile-vars))
 	 (if (and rt-verbose is-guile-var)
 	     (c-display "Variable" name "renamed as" newname))
 	 (hashq-set! all-renamed-variables newname #t)
@@ -1504,7 +1573,7 @@ and run simple lisp[4] functions.
 					(vardecls (map (lambda (vardecl)
 								  (let* ((uname (get-new-name (car vardecl)))
 									 (ret `(,uname ,(fix varlist (cadr vardecl) #t))))
-								    (set! newvarlist (cons (list (car vardecl) uname) newvarlist))
+								    (push! (list (car vardecl) uname) newvarlist)
 								    ret))
 								das-vardecls)))
 				   `(let* ,vardecls
@@ -1517,7 +1586,7 @@ and run simple lisp[4] functions.
 					(vardecls (map (lambda (vardecl)
 								  (let* ((uname (get-new-name (car vardecl)))
 									 (ret `(,uname ,(fix varlist (cadr vardecl) #t))))
-								    (set! varlist (cons (list (car vardecl) uname) varlist))
+								    (push! (list (car vardecl) uname) varlist)
 								    ret))
 								das-vardecls)))
 				   `(let* ,vardecls
@@ -1531,7 +1600,7 @@ and run simple lisp[4] functions.
 					(das-das-vardecls (map (lambda (vardecl)
 								 (let ((uname (get-new-name (car vardecl))))
 								   (add-illegal-vars uname)
-								   (set! newvarlist (cons (list (car vardecl) uname) newvarlist))
+								   (push! (list (car vardecl) uname) newvarlist)
 								   (cons uname (cdr vardecl))))
 							       das-vardecls))
 					(vardecls (map (lambda (vardecl)
@@ -1539,8 +1608,8 @@ and run simple lisp[4] functions.
 								    (if (and (list? (cadr vardecl))
 									     (eq? 'lambda (car (cadr vardecl))))
 									(begin
-									  (set! funclist (cons (list uname (cadr vardecl))
-											       funclist))
+									  (push! (list uname (cadr vardecl))
+										 funclist)
 									  `(,uname (rt-lambda-decl ,(cadr (cadr vardecl)))))
 									`(,uname ,(fix newvarlist (cadr vardecl))))))
 								
@@ -1559,12 +1628,12 @@ and run simple lisp[4] functions.
 					(vardecls (map (lambda (vardecl)
 							 ;;(c-display "vardecl" vardecl)
 							 (let* ((uname (get-new-name (car vardecl))))
-							   (set! newvarlist (cons (list (car vardecl) uname) newvarlist))
+							   (push! (list (car vardecl) uname) newvarlist)
 							   (if (and (list? (cadr vardecl))
 								    (eq? 'lambda (car (cadr vardecl))))
 							       (begin
-								 (set! funclist (cons (list uname (cadr vardecl))
-										      funclist))
+								 (push! (list uname (cadr vardecl))
+									funclist)
 								 `(,uname (rt-lambda-decl ,(cadr (cadr vardecl)))))
 							       `(,uname ,(fix newvarlist (cadr vardecl))))))
 						       das-vardecls)))
@@ -1841,11 +1910,11 @@ and run simple lisp[4] functions.
 	     (let ((rt-type (hashq-ref rt-types type)))
 	       (if (not rt-type)
 		   (check-failed "Unknown type " type ".")
-		   (set! external-vars (cons (list varname rt-type iswriting (let ((orgname (assq varname renamed-vars)))
-									       (if orgname
-										   (cadr orgname)
-										   varname)))
-					     external-vars)))
+		   (push! (list varname rt-type iswriting (let ((orgname (assq varname renamed-vars)))
+							    (if orgname
+								(cadr orgname)
+								varname)))
+			  external-vars))
 	       type))))
      
      
@@ -2115,7 +2184,7 @@ and run simple lisp[4] functions.
 											   (list (map (lambda (t)
 													(list t '<undefined>))
 												      (car (cdr (cadr var)))))))))
-								    (set! lambda_decls (cons ret lambda_decls))
+								    (push! ret lambda_decls)
 								    ret)
 
 								  ;; A lambda function
@@ -2139,7 +2208,7 @@ and run simple lisp[4] functions.
 								    (list (car var) '<jmp_buf> 0)
 								    )
 								  (list (car var) (cadr var) 0)))))
-						 (set! newvarlist (cons ret newvarlist))
+						 (push! ret newvarlist)
 						 ret))
 					     (cadr term)))
 		     (body (map (lambda (t)
@@ -2189,7 +2258,7 @@ and run simple lisp[4] functions.
 									   ". (Perhaps you need to use the \"the\" operator?)"))
 							 (list (car var) type (caddr var)))
 						       var)))
-					  (set! newvarlist (cons ret newvarlist))
+					  (push! ret newvarlist)
 					  ret))
 				      vardecls)))
 						     
@@ -2342,10 +2411,10 @@ and run simple lisp[4] functions.
 	     (returntype (get-returntype '() ret)))
 	 (for-each (lambda (extvar)
 		     (if (caddr extvar)
-			 (set! extnumbers-writing (cons extvar extnumbers-writing))
+			 (push! extvar extnumbers-writing)
 			 (if (rt-is-number? (-> (cadr extvar) rt-type))
-			     (set! extnumbers (cons extvar extnumbers))
-			     (set! extpointers (cons extvar extpointers)))))
+			     (push! extvar extnumbers)
+			     (push! extvar extpointers))))
 		   external-vars)
 	 (debug "wrting:" extnumbers-writing)
 	 (debug "renamed-vars" renamed-vars)
@@ -2769,7 +2838,7 @@ and run simple lisp[4] functions.
 
   (define compatible-types '())
   (def-method (add-compatible-type type)
-    (set! compatible-types (cons type compatible-types)))
+    (push! type compatible-types))
   
   (def-method (type-ok? type)
     ;;(c-display "type/rt-typ/compatibele-types" type rt-type compatible-types)
@@ -3142,7 +3211,7 @@ and run simple lisp[4] functions.
 	  ((eq? 'lambda (car term))
 	   (find (cddr term)))
 	  ((symbol? (car term))
-	   (set! ret (cons (car term) ret))
+	   (push! (car term) ret)
 	   (for-each find (cdr term)))
 	  (else
 	   (for-each find term))))
@@ -3267,119 +3336,102 @@ and run simple lisp[4] functions.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;; Structs ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define-macro (=> object das-method . rest)
+  (define method (keyword->symbol das-method))
+  (let ((struct-name (string->symbol (car (string-split (symbol->string object) #\:)))))
+    `(,(append-various 'access- struct-name ":" method) ,object ,@rest)))
+
+
+(define-rt-macro (setter!-=> object das-method . rest)
+  (define method (keyword->symbol das-method))
+  (let ((struct-name (string->symbol (car (string-split (symbol->string object) #\:)))))
+    `(,(append-various 'setter!- struct-name ":" method) ,object ,@rest)))
+
+(define-rt-macro (=> object das-method . rest)
+  (if (or (not (symbol? object))
+	  (not (keyword? das-method)))
+      (begin
+	(c-display "Syntax error" `(=> ,object ,das-method ,@rest))
+	(throw 'syntax-error)))
+  (let ((method (keyword->symbol das-method)))
+    (let ((struct-name (string->symbol (car (string-split (symbol->string object) #\:)))))
+      (if (not (null? rest))
+	  `(,(append-various 'setter!- struct-name ":" method) ,object ,@rest)
+	  `(,(append-various 'getter- struct-name ":" method) ,object ,@rest)))))
+
+
+(define-macro (define-rt-something-struct something name . das-slots)
+  (define name-name (rt-gensym))
+  (define val-name (rt-gensym))
+  (define slots '())
+  
+  (for-each (lambda (slot)
+	      (if (keyword? slot)
+		  (push-back! (list (append-various slot) 0) slots)
+		  (set-cdr! (last slots) (list slot))))
+	    das-slots)
+
+  (let ((slot-names (map car slots)))
+    `(begin
+
+       ;; guile
+       (define* (,(symbol-append 'make- name) :key ,@slots)
+	 (,something ,@slot-names))
+       ,@(let ((i -1))
+	   (map-in-order (lambda (slot)
+			   (set! i (1+ i))
+			   `(define ,(append-various 'access- name ":" slot)
+			      (make-procedure-with-setter
+			       (lambda (,name-name)
+				 (,(symbol-append something '-ref) ,name-name ,i))
+			       (lambda (,name-name ,val-name)
+				 (,(symbol-append something '-set!) ,name-name ,i ,val-name)))))
+			 slot-names))
+
+       ;; rt
+       (define ,(rt-gensym)
+	 (list
+	  ,@(let ((i -1))
+	      (map-in-order (lambda (slot)
+			      (set! i (1+ i))
+			      `(define-rt (,(append-various 'setter!- name ":" slot) ,name-name ,val-name)
+				 (declare (<float> ,val-name))
+				 (,(symbol-append something '-set!) ,name-name ,i ,val-name)))
+			    slot-names))
+	  ,@(let ((i -1))
+	      (map-in-order (lambda (slot)
+			      (set! i (1+ i))
+			      `(define-rt (,(append-various 'getter- name ":" slot) ,name-name)
+				 (,(symbol-append something '-ref) ,name-name ,i)))
+			    slot-names)))))))
+
+(define-macro (define-rt-vct-struct name . das-slots)
+  `(define-rt-something-struct vct ,name ,@das-slots))
+
+(define-macro (define-rt-vector-struct name . das-slots)
+  `(define-rt-something-struct vector ,name ,@das-slots))
+
+
+#!
+(define-rt-vct-struct str
+  :a 1
+  :b)
+!#
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;; Various Macros and functions ;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-
-;; structs
-(define-rt-macro (setter!-=> object method . rest)
-  (if (char=? (car (string->list (symbol->string method))) #\.)
-      `(,(symbol-append 'setter!- object method) ,object ,@rest)
-      `(,(symbol-append 'setter!- method) ,object ,@rest)))
-
-(define-macro (=> object method . rest)
-  (if (char=? (car (string->list (symbol->string method))) #\.)
-      (if (not (null? rest))
-	  `(,(symbol-append 'setter!- object method) ,object ,@rest)
-	  `(,(symbol-append 'getter- object method) ,object ,@rest))
-      (if (not (null? rest))
-	  `(,(symbol-append 'setter!- method) ,object ,@rest)
-	  `(,(symbol-append 'getter- method) ,object ,@rest))))
-
-(define-rt-macro (=> object method . rest)
-  (if (char=? (car (string->list (symbol->string method))) #\.)
-      (if (not (null? rest))
-	  `(,(symbol-append 'setter!- object method) ,object ,@rest)
-	  `(,(symbol-append 'getter- object method) ,object ,@rest))
-      (if (not (null? rest))
-	  `(,(symbol-append 'setter!- method) ,object ,@rest)
-	  `(,(symbol-append 'getter- method) ,object ,@rest))))
-
-(define-macro (define-rt-vct-struct name . das-slots)
-  (define name-name (rt-gensym))
-  (define val-name (rt-gensym))
-  (define slots (map (lambda (slot)
-		       (if (pair? slot)
-			   slot
-			   (list slot 0)))
-		     das-slots))
-  (let ((slot-names (map car slots)))
-    `(begin
-       (define* (,(symbol-append 'make- name) :key ,@slots)
-	 (vct ,@slot-names))
-       ,@(let ((i -1))
-	   (map-in-order (lambda (slot)
-			   (set! i (1+ i))
-			   `(define (,(symbol-append 'getter- name '. slot) ,name-name)
-			      (vct-ref ,name-name ,i)))
-			 slot-names))
-       ,@(let ((i -1))
-	   (map-in-order (lambda (slot)
-			   (set! i (1+ i))
-			   `(define (,(symbol-append 'setter!- name '. slot) ,name-name ,val-name)
-			      (vct-set! ,name-name ,i ,val-name)))
-			 slot-names))
-       (define ,(rt-gensym)
-	 (list
-	  ,@(let ((i -1))
-	      (map-in-order (lambda (slot)
-			      (set! i (1+ i))
-			      `(define-rt (,(symbol-append 'setter!- name '. slot) ,name-name ,val-name)
-				 (declare (<float> ,val-name))
-				 (vct-set! ,name-name ,i ,val-name)))
-			    slot-names))
-	  ,@(let ((i -1))
-	      (map-in-order (lambda (slot)
-			      (set! i (1+ i))
-			      `(define-rt (,(symbol-append 'getter- name '. slot) ,name-name)
-				 (vct-ref ,name-name ,i)))
-			    slot-names)))))))
-
-
-(define-macro (define-rt-vector-struct name . das-slots)
-  (define name-name (rt-gensym))
-  (define val-name (rt-gensym))
-  (define slots (map (lambda (slot)
-		       (if (pair? slot)
-			   slot
-			   (list slot 0)))
-		     das-slots))
-  (let ((slot-names (map car slots)))
-    `(begin
-       (define* (,(symbol-append 'make- name) :key ,@slots)
-	 (vector ,@slot-names))
-       ,@(let ((i -1))
-	   (map-in-order (lambda (slot)
-			   (set! i (1+ i))
-			   `(define (,(symbol-append 'getter- name '. slot) ,name-name)
-			      (vector-ref ,name-name ,i)))
-			 slot-names))
-       ,@(let ((i -1))
-	   (map-in-order (lambda (slot)
-			   (set! i (1+ i))
-			   `(define (,(symbol-append 'setter!- name '. slot) ,name-name ,val-name)
-			      (vector-set! ,name-name ,i ,val-name)))
-			 slot-names))
-       (define ,(rt-gensym)
-	 (list
-	  ,@(let ((i -1))
-	      (map-in-order (lambda (slot)
-			      (set! i (1+ i))
-			      `(define-rt (,(symbol-append 'setter!- name '. slot) ,name-name ,val-name)
-				 (declare (<float> ,val-name))
-				 (vector-set! ,name-name ,i ,val-name)))
-			    slot-names))
-	  ,@(let ((i -1))
-	      (map-in-order (lambda (slot)
-			      (set! i (1+ i))
-			      `(define-rt (,(symbol-append 'getter- name '. slot) ,name-name)
-				 (vector-ref ,name-name ,i)))
-			    slot-names)))))))
-
-
-
 
 
 (define-c-macro (the type somethingmore)
@@ -3474,10 +3526,10 @@ and run simple lisp[4] functions.
 				       (body #f))
 				   (for-each (lambda (var)
 					       (if (rt-immediate? var)
-						   (set! usevars (cons var usevars))
+						   (push! var usevars)
 						   (let ((newvarname (rt-gensym)))
-						     (set! newvars (cons (list newvarname var) newvars))
-						     (set! usevars (cons newvarname usevars)))))
+						     (push! (list newvarname var) newvars)
+						     (push! newvarname usevars))))
 					     rest)
 				   (set! body `(and ,@(map (lambda (first second)
 							     `(,',rt-op2 ,first ,second))
@@ -3654,12 +3706,12 @@ and run simple lisp[4] functions.
 	    (for-each (lambda (arg)
 			(if (rt-immediate? arg)
 			    (begin
-			      (set! number-args (cons arg number-args ))
-			      (set! new-args (cons arg new-args)))
+			      (push! arg number-args )
+			      (push! arg new-args))
 			    (begin
-			      (set! rest-args (cons arg rest-args))
-			      (set! varnames (cons (rt-gensym) varnames))
-			      (set! new-args (cons (car varnames) new-args)))))
+			      (push! arg rest-args)
+			      (push! (rt-gensym) varnames)
+			      (push! (car varnames) new-args))))
 		      rest)
 	    (set! number-args (reverse! number-args))
 	    (set! rest-args (reverse! rest-args))
@@ -3692,12 +3744,12 @@ and run simple lisp[4] functions.
 	    (for-each (lambda (arg)
 			(if (rt-immediate? arg)
 			    (begin
-			      (set! number-args (cons arg number-args ))
-			      (set! new-args (cons arg new-args)))
+			      (push! arg number-args )
+			      (push! arg new-args))
 			    (begin
-			      (set! rest-args (cons arg rest-args))
-			      (set! varnames (cons (rt-gensym) varnames))
-			      (set! new-args (cons (car varnames) new-args)))))
+			      (push! arg rest-args)
+			      (push! (rt-gensym) varnames)
+			      (push! (car varnames) new-args))))
 		      rest)
 	    (set! number-args (reverse! number-args))
 	    (set! rest-args (reverse! rest-args))
@@ -4013,15 +4065,14 @@ and run simple lisp[4] functions.
 	 (let ((ret (list (list (car alist))))
 	       (alist2 (list (list (last alist)))))
 	   (for-each (lambda (s)
-		       (set! alist2 (cons (cons s (car alist2))
-					  alist2)))
+		       (push! (cons s (car alist2))
+			      alist2))
 		     (cdr (reverse (cdr alist))))
 	   ;;(set! alist2 (append! alist2 (list '())))
 	   (for-each (lambda (s rest)
 		       (set! ret (append ret (permutate rest)))
 		       (for-each (lambda (r)				
-				   (set! ret (cons (cons s r)
-						   ret)))
+				   (push! (cons s r) ret))
 				 (permutate rest)))
 		     alist
 		     alist2)
@@ -4897,7 +4948,9 @@ and run simple lisp[4] functions.
 	
 	;;;;;;; Das SMOB
 	
-	(<nonstatic-scm_t_bits> rt_readin_tag)
+	(<scm_t_bits> rt_readin_tag)
+	(<nonstatic-scm_t_bits> get_rt_readin_tag (lambda ()
+						    (return rt_readin_tag)))
 	 
 	(public
 	  (<SCM> rt-readin-p (lambda ((<SCM> rt_readin_smob))
@@ -5047,7 +5100,6 @@ and run simple lisp[4] functions.
 	 (scm_set_smob_mark rt_readin_tag mark_rt_readin)
 	 (scm_set_smob_free rt_readin_tag free_rt_readin)
 	 (scm_set_smob_print rt_readin_tag print_rt_readin)))
-
 
 
 (define (make-rt-readin areadin)
@@ -5527,7 +5579,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 			 (in 50 add-it)
 			 (begin
 			   (set! midi-receivers-running #t)
-			   (set! all-midi-receivers (cons func all-midi-receivers))
+			   (push! func all-midi-receivers)
 			   (if (= 1 (length all-midi-receivers))
 			       (das-loop)))))))
     (add-it)))
@@ -5660,8 +5712,10 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 	(shared-struct <mus_rt_ladspa>)
 	
-	(<nonstatic-scm_t_bits> rt_ladspa_tag)
-	
+	(<scm_t_bits> rt_ladspa_tag)
+	(<nonstatic-scm_t_bits> get_rt_ladspa_tag (lambda ()
+						    (return rt_ladspa_tag)))
+
 	(public
 	  (<SCM> rt-ladspa-p (lambda ((<SCM> rt_ladspa_smob))
 			       (if (SCM_SMOB_PREDICATE rt_ladspa_tag rt_ladspa_smob)
@@ -6267,7 +6321,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 			      (vct-set! rb rt-rb-unread (1- (vct-ref rb rt-rb-unread))))
 		       (in interval ai))))))
     (vct-set! rb rt-rb-isrunning 1)
-    (set! rt-running-ringbuffers (cons rb rt-running-ringbuffers))
+    (push! rb rt-running-ringbuffers)
     (ai)))
 
 (define-rt (get-ringbuffer rb bufferempty)
@@ -6829,9 +6883,9 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 	       (let ((func (hashq-ref rt-functions funcname)))
 		 (if func
 		     (let ((expanded-func (rt-macroexpand func)))
-		       (set! function-names (cons funcname function-names))    ;; Add function-name to the list of included function
+		       (push! funcname function-names)    ;; Add function-name to the list of included function
 		       (for-each add-func (rt-find-all-funcs expanded-func))
-		       (set! functions (cons expanded-func functions)))))))     ;; Add function-body to be included.
+		       (push! expanded-func functions))))))     ;; Add function-body to be included.
 	 (for-each add-func (rt-find-all-funcs term))
 	 (set! term `(,(car term) ,(cadr term)
 		      ,@(reverse! functions)
@@ -7116,9 +7170,19 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 			  busnames)
 		   )
 		  
-		   (<nonstatic-extern-scm_t_bits> rt_readin_tag)
-		   (<nonstatic-extern-scm_t_bits> rt_bus_tag)
-		   (<nonstatic-extern-scm_t_bits> rt_ladspa_tag)
+		  "extern scm_t_bits get_rt_readin_tag(void)"
+		  "extern scm_t_bits get_rt_bus_tag(void)"
+		  "extern scm_t_bits get_rt_ladspa_tag(void)"
+
+		  (<scm_t_bits> rt_readin_tag)
+		  (<scm_t_bits> rt_bus_tag)
+		  (<scm_t_bits> rt_ladspa_tag)
+
+		  (run-now
+		   (set! rt_readin_tag (get_rt_readin_tag))
+		   (set! rt_bus_tag (get_rt_bus_tag))
+		   (set! rt_ladspa_tag (get_rt_ladspa_tag)))
+		   
 		   
 		   "extern float rt_readin(struct mus_rt_readin*)"
 		   "extern void rt_receive_midi(struct RT_Globals *,int,snd_seq_t*,void (*)(struct RT_Globals *, int, int, int))"
@@ -7136,9 +7200,9 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 			     (let ((func (assq funcname rt-ec-functions)))
 			       (if func
 				   (begin
-				     (set! function-names (cons funcname function-names))    ;; Add function-name to the list of included function
+				     (push! funcname function-names)    ;; Add function-name to the list of included function
 				     (for-each add-func (cadr func))                         ;; Add functions used by the function
-				     (set! functions (cons (caddr func) functions)))))))     ;; Add function-body to be included.
+				     (push! (caddr func) functions))))))     ;; Add function-body to be included.
 
 		       ;;(c-display "all-funcs:" (rt-find-all-funcs (cdr term)))
 		       (for-each add-func (cons 'rt_error (rt-find-all-funcs (cdr term))))
@@ -7676,8 +7740,8 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
     
     (define (add-rt-func code)
       (let ((name (rt-gensym2)))
-	(set! rt-funcs (cons (list name code)
-			     rt-funcs))
+	(push! (list name code)
+	       rt-funcs)
 	name))
     
     (define (find-rt term)

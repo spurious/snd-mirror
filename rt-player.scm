@@ -43,42 +43,53 @@ rt-player.scm
 	  (begin
 	    (set! rb2-buffer '())
 	    (make-vct size)))))
-	 
+
+(define-rt-vector-struct rb2
+  :buffer1
+  :buffer2
+  :read-pos
+  :size
+  :curr-ringbuffer-num  ;; Just finished with last position at the second vct.
+  :ringbuffer
+  :ringbuffer-num)  ;; 0 or 1 (buffer1 or buffer2)
+
+(define old-make-rb2 make-rb2)
+
 (define (make-rb2 ch size reader)
-  (let ((ret (vector (rb2-get-buffer size)
-		     (rb2-get-buffer size)
-		     (make-var size) ;; read-pos
-		     (make-var size) ;;size
-		     (make-var 1) ;; curr-ringbuffer-num. Just finished with last position at the second vct.
-		     (make-ringbuffer 64)
-		     (make-var 0))))
+  (let ((rb2 (old-make-rb2 :buffer1 (rb2-get-buffer size) ;0
+			   :buffer2 (rb2-get-buffer size) ;1
+			   :read-pos (make-var size)      ;2
+			   :size (make-var size)          ;3
+			   :curr-ringbuffer-num (make-var 1) ;4
+			   :ringbuffer (make-ringbuffer 64)  ;5
+			   :ringbuffer-num (make-var 0))))   ;6
     ;;(c-display "reading num 0")
-    (reader (vector-ref ret 0))
-    (ringbuffer-get (vector-ref ret 5)
+    (reader (=> rb2 :buffer1))
+    (ringbuffer-get (=> rb2 :ringbuffer)
 		    (lambda (ringbuf-num)
 		      ;;(c-display "reading num" ch ringbuf-num)
-		      (reader (vector-ref ret (c-integer ringbuf-num)))
-		      (write-var (vector-ref ret 6) ringbuf-num))
+		      (reader (vector-ref rb2 (c-integer ringbuf-num)))
+		      (write-var (=> rb2 :ringbuffer-num) ringbuf-num))
 		    500)
-    ret))
+    rb2))
 
 (define (free-rb2 rb2)
-  (ringbuffer-stop (vector-ref rb2 5))
-  (rb2-return-buffer (vector-ref rb2 0))
-  (rb2-return-buffer (vector-ref rb2 1)))
+  (ringbuffer-stop (=> rb2 :ringbuffer))
+  (rb2-return-buffer (=> rb2 :buffer1))
+  (rb2-return-buffer (=> rb2 :buffer2)))
 
 
 (define rb2-num-dropouts (make-var 0))
 
 (define-rt (read-rb2 rb2 debug-rb)
-  (let* ((read-pos-var (the <vct-*> (vector-ref rb2 2)))
+  (let* ((read-pos-var (the <vct-*> (=> rb2 :read-pos)))
 	 (read-pos (read-var read-pos-var))
-	 (size (read-var (vector-ref rb2 3)))
-	 (curr-ringbuffer-num (read-var (vector-ref rb2 4))))
+	 (size (read-var (=> rb2 :size)))
+	 (curr-ringbuffer-num (read-var (=> rb2 :curr-ringbuffer-num))))
     (declare (<int> curr-ringbuffer-num read-pos size))
     (if (= read-pos size)
-	(let ((ringbuffer (vector-ref rb2 5)))
-	  (if (= (read-var (vector-ref rb2 6)) curr-ringbuffer-num)
+	(let ((ringbuffer (=> rb2 :ringbuffer)))
+	  (if (= (read-var (=> rb2 :ringbuffer-num)) curr-ringbuffer-num)
 	      (begin
 		(put-ringbuffer debug-rb 1)
 		;;(printf "RT-PLAYER: Error, can not read from disk fast enough.\\n");; Set the variable *rt-reader-buffer-time* higher.\\n"))
@@ -98,7 +109,7 @@ rt-player.scm
 		  (write-var rb2-num-dropouts (1- (read-var rb2-num-dropouts)))))
 	  (put-ringbuffer ringbuffer curr-ringbuffer-num)
 	  (set! curr-ringbuffer-num (if (= 0 curr-ringbuffer-num) 1 0))
-	  (write-var (vector-ref rb2 4) curr-ringbuffer-num)
+	  (write-var (=> rb2 :curr-ringbuffer-num) curr-ringbuffer-num)
 	  (set! read-pos 0)))
     (let ((ret (vct-ref (vector-ref rb2 curr-ringbuffer-num) read-pos)))
       (write-var read-pos-var (1+ read-pos))
@@ -121,8 +132,8 @@ rt-player.scm
 	"#include <xen.h>"
 	"#include <vct.h>"
 	
-	"extern Float protected_next_sample_to_float(void *sf)"
-	"extern Float protected_previous_sample_to_float(void *sf)"
+	"extern Float protected_next_sample(void *sf)"
+	"extern Float protected_previous_sample(void *sf)"
 	
 	(public
 	 (<void> sample-reader->vct (lambda ((<SCM> scm_reader)
@@ -138,39 +149,42 @@ rt-player.scm
 					  (if (== 1 direction)
 					      (for-each startpos (+ startpos num_samples)
 							(lambda (i)
-							  (set! v->data[i] (protected_next_sample_to_float reader))))
+							  (set! v->data[i] (protected_next_sample reader))))
 					      (for-each startpos (+ startpos num_samples)
 							(lambda (i)
-							  (set! v->data[i] (protected_previous_sample_to_float reader))))))))))
+							  (set! v->data[i] (protected_previous_sample reader))))))))))
+
+(define-rt-vct-struct rt-controls
+  :amp
+  :speed
+  :expand
+  :contrast
+  :reverb-scale
+  :reverb-length)
 
 
-(define rt-control-amp 0)
-(define rt-control-speed 1)
-(define rt-control-expand 2)
-(define rt-control-contrast 3)
-(define rt-control-reverb-scale 4)
-(define rt-control-reverb-length 5)
+(define rt-controls (make-rt-controls))
 
-(define (rt-set-controls! v snd)
-  (vct-set! v rt-control-amp (amp-control snd))
-  (vct-set! v rt-control-speed (speed-control snd))
-  (vct-set! v rt-control-expand (expand-control snd))
-  (vct-set! v rt-control-contrast (contrast-control snd))
-  (vct-set! v rt-control-reverb-scale (reverb-control-scale snd))
-  (vct-set! v rt-control-reverb-length (reverb-control-length snd)))
+(define (rt-set-controls! snd)
+  (set! (=> rt-controls :amp) (amp-control snd))
+  (set! (=> rt-controls :speed) (speed-control snd))
+  (set! (=> rt-controls :expand) (expand-control snd))
+  (set! (=> rt-controls :contrast) (contrast-control snd))
+  (set! (=> rt-controls :reverb-scale) (reverb-control-scale snd))
+  (set! (=> rt-controls :reverb-length) (reverb-control-length snd)))
 
-(define rt-control-values (make-vct 20))
+
 
 (-> *c-control-hook* add!
     (lambda ()
       (let ((snd (c-selected-sound)))
 	(if snd
-	    (rt-set-controls! rt-control-values snd)))))
+	    (rt-set-controls! snd)))))
 
-(define (rt-set-defaults)
+ (define (rt-set-defaults)
   (let ((snd (c-selected-sound)))
     (if snd
-	(rt-set-controls! rt-control-values (c-selected-sound))
+	(rt-set-controls! (c-selected-sound))
 	(in 20 rt-set-defaults))))
 (rt-set-defaults)
 			  
@@ -216,6 +230,7 @@ rt-player.scm
 (define rt-snd-rt-safety-old (rt-safety))
 (set! (rt-safety) 0)
 
+
 (definstrument (<snd-rt-player> snd start das_end start-pos)
   ;;(c-display start das_end start-pos)
   (define num-channels #f)
@@ -241,9 +256,9 @@ rt-player.scm
 				     (range i 0 ,*rt-num-output-ports*
 					    (out i (in i)))))
 		       (diskplay (lambda ()
-				   (let* ((volume (vct-ref rt-control-values rt-control-amp))
-					  (speed (/ (abs (vct-ref rt-control-values rt-control-speed)) sound-src-ratio))
-					  (expand (vct-ref rt-control-values rt-control-expand))
+				   (let* ((volume (=> rt-controls :amp))
+					  (speed (/ (abs (=> rt-controls :speed)) sound-src-ratio))
+					  (expand (=> rt-controls :expand))
 					  (is-speeding (or (not (= 1 sound-src-ratio))
 							   (> (abs (- 1.0 speed)) 0.0000001)))
 					  (is-expanding (read-var rt-controls-on-off))
@@ -251,8 +266,8 @@ rt-player.scm
 					  (removefunc (lambda ()
 							(if fromdisk
 							    (range i 0 num-channels
-								   (let ((v (vector-ref rb2s i)))
-								     (ringbuffer-stop (vector-ref v 5)))))
+								   (let ((rb2 (vector-ref rb2s i)))
+								     (ringbuffer-stop (=> rb2 :ringbuffer)))))
 							(write-var is-running 0)
 							(set! dont-read-anymore #t)
 							(remove-me)))
@@ -330,9 +345,9 @@ rt-player.scm
   (ringbuffer-get debug-print-rb
 		  (let ((num 0))
 		    (lambda (error-type)
-		      (cond ((= 1 error-type) (c-display "RT-PLAYER: Error, can not read from disk fast enough. (" num ")") (set! num (1+ num)))
-			    ((= 2 error-type) (c-display "RT-PLAYER: Unable too read from disk fast enough. Stopping player."))
-			    ((= 3 error-type) (c-display "RT-PLAYER: Too much cpu time spent. Stopping player. (2)")))))
+		      (cond ((= 1 error-type) (c-display "RT-PLAYER: Error, can not read from disk fast enough. (" num ") (press 'l')") (set! num (1+ num)))
+			    ((= 2 error-type) (c-display "RT-PLAYER: Unable too read from disk fast enough. Stopping player. (press 'l')"))
+			    ((= 3 error-type) (c-display "RT-PLAYER: Too much cpu time spent. Stopping player. (2) (press 'l')")))))
 		  500)
 		    
   (if (not snd)
@@ -504,12 +519,12 @@ rt-player.scm
 		      (let ((newdropouts (-> *rt-engine* num_max_cpu_interrupts)))
 			(if (not (= newdropouts rt-snd-last-dropouts))
 			    (begin
-			      (c-display "RT-PLAYER: Error, the player engine used too much CPU, so some processing was skipped.")
+			      (c-display "RT-PLAYER: Error, the player engine used too much CPU, so some processing was skipped. (press 'l')")
 			      (if (< (- (read-var rt-snd-cursorupdate-inc) (read-var rt-snd-cursorupdate-dropout-num)) 4)
 				  (begin
 				    (if (> (rte-time) (+ (read-var rt-snd-cursorupdate-lasttime) 5))
 					(begin
-					  (c-display "RT-PLAYER: Too much cpu time spent. Stopping player.")
+					  (c-display "RT-PLAYER: Too much cpu time spent. Stopping player. (press 'l')")
 					  (rt-snd-stop-playing))))
 				  (write-var rt-snd-cursorupdate-lasttime (rte-time)))
 			      (write-var rt-snd-cursorupdate-dropout-num (read-var rt-snd-cursorupdate-inc))

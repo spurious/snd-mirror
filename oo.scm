@@ -118,6 +118,23 @@
 
 ;;(sublist '(0 1 2 3 4 5 6 7 8 9) 2 5)
 
+(define-macro (push! val where)
+  (let ((ret (gensym)))
+    `(let ((,ret ,val))
+       (set! ,where (cons ,ret ,where))
+       ,ret)))
+
+(define-macro (push-back! val where)
+  (let ((ret (gensym)))
+    `(let ((,ret ,val))
+       (set! ,where (append! ,where (list ,ret)))
+       ,ret)))
+
+(define-macro (inc! var how-much)
+  `(begin
+     (set! ,var (+ ,how-much ,var))
+     ,var))
+
 
 (define (c-atleast1.7?)
   (or (>= (string->number (major-version)) 2)
@@ -164,6 +181,16 @@
 			    (apply func (cons n els))
 			    (set! n (1+ n)))
 			  lists))))
+
+
+(define (append-various . rest)
+  (apply symbol-append (map (lambda (r)
+			      (cond ((keyword? r) (keyword->symbol r))
+				    ((string? r) (string->symbol r))
+				    ((not (symbol? r))
+				     'unknown)
+				    (else r)))
+			    rest)))
 
 
 ;; !!!!!!!

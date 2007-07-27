@@ -112,7 +112,9 @@ writing one period later[1]: bus[n]=v
 
 	,bus-struct
 	
-	(<nonstatic-scm_t_bits> rt_bus_tag)
+	(<scm_t_bits> rt_bus_tag)
+	(<nonstatic-scm_t_bits> get_rt_bus_tag (lambda ()
+						    (return rt_bus_tag)))
 	
 	(public
 	  (<SCM> rt-bus-p (lambda ((<SCM> rt_bus_smob))

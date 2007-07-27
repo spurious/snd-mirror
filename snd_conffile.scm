@@ -130,7 +130,7 @@
 (if (defined? 'kjetil-settings)
     ;; This is for my personal computers settings. May not suite your setup.
     (begin
-      (set! %load-path (cons "/hom/kjetil/snd-run" %load-path))
+      (set! %load-path (cons "/home/kjetil/snd-run" %load-path))
       (set! (temp-dir) "/lyd/local/tmp")
       (set! (save-dir) "/lyd/local/tmp")))
 
