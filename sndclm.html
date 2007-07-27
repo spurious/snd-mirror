@@ -60,6 +60,7 @@ note lists and instruments are described in sndscm.html.
 <td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
 <td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
 <td><small><a href="fm.html" onmouseover="return escape('introduction to frequency modulation')">fm.html</a></small></td>
+<td><small><a href="index.html" onmouseover="return escape('this is an actual index, not some introductory file')">index.html</a></small></td>
 </tr></table>
 </center>
 
@@ -67,11 +68,12 @@ note lists and instruments are described in sndscm.html.
 <br>
 
 
+
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>Contents</h2></td></tr></table>
 <br>
 <table border=8 bordercolor="lightsteelblue" cellpadding=8 hspace=20>
 <tr><td colspan=3><center><a href="#introduction">Introduction</a></center></td></tr>
-<tr><td colspan=3><center>Generators</center></td></tr>
+<tr><td colspan=3><center><a href="#generators">Generators</a></center></td></tr>
 <tr><td width=20 bgcolor=#f6f8ff></td><td>
 <table border=0 cellpadding=0>
   <tr><td><a href="#all-passdoc">all-pass</a></td><td width=20></td><td>all-pass filter</td></tr>
@@ -81,8 +83,11 @@ note lists and instruments are described in sndscm.html.
   <tr><td><a href="#delaydoc">delay</a></td><td></td><td>delay line</td></tr>
   <tr><td><a href="#envdoc">env</a></td><td></td><td>line segment envelope</td></tr>
   <tr><td><a href="#filterdoc">filter</a></td><td></td><td>direct form FIR/IIR filter</td></tr>
-  <tr><td><a href="#filtered-combdoc">filtered-comb</a></td><td></td><td>comb filter with filter on feedback</td></tr>
+  <tr><td><a href="#combdoc">filtered-comb</a></td><td></td><td>comb filter with filter on feedback</td></tr>
+  <tr><td><a href="#filetosample">file-&gt;sample</a></td><td></td><td>input sample from file</td></tr>
+  <tr><td><a href="#filetoframe">file-&gt;frame</a></td><td></td><td>input frame from file</td></tr>
   <tr><td><a href="#fir-filterdoc">fir-filter</a></td><td></td><td>FIR filter</td></tr>
+  <tr><td><a href="#frametofile">frame-&gt;file</a></td><td></td><td>output frame to file</td></tr>
   <tr><td><a href="#formantdoc">formant</a></td><td></td><td>resonance</td></tr>
   <tr><td><a href="#granulatedoc">granulate</a></td><td></td><td>granular synthesis</td></tr>
   <tr><td><a href="#iir-filterdoc">iir-filter</a></td><td></td><td>IIR filter</td></tr>
@@ -93,37 +98,40 @@ note lists and instruments are described in sndscm.html.
   <tr><td><a href="#notchdoc">notch</a></td><td></td><td>notch filter</td></tr>
   <tr><td><a href="#one-poledoc">one-pole</a></td><td></td><td>one pole filter</td></tr>
   <tr><td><a href="#one-zerodoc">one-zero</a></td><td></td><td>one zero filter</td></tr>
-  <tr><td><a href="#oscildoc">oscil</a></td><td></td><td>sine wave and FM</td></tr>
 </table>
 </td>
 <td>
 <table border=0 cellpadding=0>
+  <tr><td><a href="#oscildoc">oscil</a></td><td></td><td>sine wave and FM</td></tr>
   <tr><td><a href="#out-anydoc">out-any</a></td><td width=20></td><td>sound output</td></tr>
   <tr><td><a href="#polyshapedoc">polyshape</a></td><td></td><td>waveshaping</td></tr>
   <tr><td><a href="#phase-vocoderdoc">phase-vocoder</a></td><td></td><td>vocoder analysis and resynthesis</td></tr>
-  <tr><td><a href="#pulse-traindoc">pulse-train</a></td><td></td><td>pulse train</td></tr>
+  <tr><td><a href="#sampletofile">sample-&gt;file</a></td><td></td><td>output sample to file</td></tr>
+  <tr><td><a href="#sawtoothdoc">pulse-train</a></td><td></td><td>pulse train</td></tr>
   <tr><td><a href="#randdoc">rand,rand-interp</a></td><td></td><td>random numbers, noise</td></tr>
   <tr><td><a href="#readindoc">readin</a></td><td></td><td>sound input</td></tr>
-  <tr><td><a href="#sawtooth-wavedoc">sawtooth-wave</a></td><td></td><td>sawtooth</td></tr>
+  <tr><td><a href="#sawtoothdoc">sawtooth-wave</a></td><td></td><td>sawtooth</td></tr>
   <tr><td><a href="#sine-summationdoc">sine-summation</a></td><td></td><td>sine summation synthesis</td></tr>
-  <tr><td><a href="#square-wavedoc">square-wave</a></td><td></td><td>square wave</td></tr>
+  <tr><td><a href="#sawtoothdoc">square-wave</a></td><td></td><td>square wave</td></tr>
   <tr><td><a href="#srcdoc">src</a></td><td></td><td>sampling rate conversion</td></tr>
   <tr><td><a href="#ssb-amdoc">ssb-am</a></td><td></td><td>single sideband amplitude modulation</td></tr>
   <tr><td><a href="#sum-of-cosinesdoc">sum-of-cosines</a></td><td></td><td>band-limited pulse train</td></tr>
   <tr><td><a href="#sum-of-sinesdoc">sum-of-sines</a></td><td></td><td>sum of sines</td></tr>
   <tr><td><a href="#table-lookupdoc">table-lookup</a></td><td></td><td>interpolated table lookup</td></tr>
-  <tr><td><a href="#tapdoc">tap</a></td><td></td><td>delay line tap</td></tr>
-  <tr><td><a href="#triangle-wavedoc">triangle-wave</a></td><td></td><td>triangle wave</td></tr>
+  <tr><td><a href="#delaydoc">tap</a></td><td></td><td>delay line tap</td></tr>
+  <tr><td><a href="#sawtoothdoc">triangle-wave</a></td><td></td><td>triangle wave</td></tr>
   <tr><td><a href="#two-poledoc">two-pole</a></td><td></td><td>two pole filter</td></tr>
   <tr><td><a href="#two-zerodoc">two-zero</a></td><td></td><td>two zero filter</td></tr>
   <tr><td><a href="#wave-traindoc">wave-train</a></td><td></td><td>wave train</td></tr>
   <tr><td><a href="#waveshapedoc">waveshape</a></td><td></td><td>waveshaping</td></tr>
 </table>
 </td></tr>
-<tr><td colspan=3><center>Instruments</center></td></tr>
-<tr><td colspan=3><center>Note Lists</center></td></tr>
+<tr><td colspan=3><center><a href="#generic-functions">Generic functions</a></center></td></tr>
+<tr><td colspan=3><center><a href="#functions">Other functions</a></center></td></tr>
+<tr><td colspan=3><center><a href="#definstrument">Instruments</a></center></td></tr>
 </table>
 
+<!-- TODO: add "other functions" table here -->
 <br><br>
 
 
@@ -678,10 +686,10 @@ void c_bird(double start, double dur, double frequency, double freqskew, double 
 <a href="#sine-summation">sine-summation</a>, and
 <a href="#waveshape">waveshape</a>.  
 Some instruments that use oscil are 
-<a href="sndscm.html#birdoc">bird and bigbird</a>,
+<a href="sndscm.html#birddoc">bird and bigbird</a>,
 <a href="sndscm.html#fmviolin">fm-violin</a> (v.ins),
 <a href="sndscm.html#lbjpiano">lbj-piano</a> (clm-ins.scm), 
-<a href="sndscm.html#vox">vox</a> (clm-ins.scm), and
+<a href="sndscm.html#fmvox">vox</a> (clm-ins.scm), and
 <a href="sndscm.html#fmbell">fm-bell</a> (clm-ins.scm).  
 Interesting extensions of oscil include the various
 summation formulas in dsp.scm (<a href="sndscm.html#sumofnsines">sum-of-n-sines</a> et al).
@@ -694,8 +702,6 @@ To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
 
 <A NAME="envdoc"></A>
 <!-- ---------------------------------------- ENV ---------------------------------------- -->
-
-<!-- INDEX envelopes:Envelopes --><A class=def NAME="envelopes"></a>
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>env</h3></center></td></tr></table>
 <br>
@@ -789,7 +795,7 @@ instrument that maps the line segments into sin x^3:
              (* amp (sin (* half-pi zval zval zval)) (<a class=quiet href="#oscil">oscil</a> osc)) 
              *output*)))))))
 
-(<a class=quiet href="#with-sound">with-sound</a> () (mapenv 0 1 440 .4 '(0 0 50 1 75 0 86 .5 100 0)))
+(<a class=quiet href="sndscm.html#withsound">with-sound</a> () (mapenv 0 1 440 .4 '(0 0 50 1 75 0 86 .5 100 0)))
 </pre>
 </td></tr></table>
 </td><td>
@@ -964,6 +970,7 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 
 
 <A NAME="waveshapedoc"></A>
+<A NAME="polyshapedoc"></A>
 <!-- ---------------------------------------- WAVESHAPE ---------------------------------------- -->
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>waveshape</h3></center></td></tr></table>
@@ -1299,6 +1306,7 @@ and dsp.scm which has a <a href="sndscm.html#fejersum">collection</a> of neat su
 
 
 
+<A NAME="sine-summationdoc"></A>
 <!-- ---------------------------------------- SINE-SUMMATION ---------------------------------------- -->
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>sine-summation</h3></center></td></tr></table>
@@ -1481,9 +1489,9 @@ use this for VOSIM and other related techniques.
            ((= i end))
          (<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#env">env</a> ampf) (<em class=red>wave-train</em> wt0 (* (<a class=quiet href="#env">env</a> vibenv) (<a class=quiet href="#oscil">oscil</a> vibr)))) *output*))))))
 
-(<a class=quiet href="#with-sound">with-sound</a> () (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)) ; "Ahh"
+(<a class=quiet href="sndscm.html#withsound">with-sound</a> () (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)) ; "Ahh"
 
-(<a class=quiet href="#with-sound">with-sound</a> () ; one of JC's favorite demos
+(<a class=quiet href="sndscm.html#withsound">with-sound</a> () ; one of JC's favorite demos
   (fofins 0 4 270 .2 0.005 730 .6 1090 .3 2440 .1 '(0 0 40 0 75 .2 100 1) 
           '(0 0 .5 1 3 .5 10 .2 20 .1 50 .1 60 .2 85 1 100 0))
   (fofins 0 4 (* 6/5 540) .2 0.005 730 .6 1090 .3 2440 .1 '(0 0 40 0 75 .2 100 1) 
@@ -1500,7 +1508,6 @@ use this for VOSIM and other related techniques.
 <A NAME="randdoc"></A>
 <!-- ---------------------------------------- RAND, RAND-INTERP ---------------------------------------- -->
 
-<!-- INDEX randomnumbers:Random Numbers --><a name="randomnumbers"></a>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>rand, rand-interp</h3></center></td></tr></table>
 
 <pre>
@@ -1607,7 +1614,7 @@ do perfectly well:
 <p>
 Another way to get different distributions is the "rejection method" in which we generate random number
 pairs until we get a pair that falls within the
-desired distribution; see <a href="sndscm.html#randomany">random-any</a> in dsp.scm.
+desired distribution; see <a href="sndscm.html#anyrandom">any-random</a> in dsp.scm.
 The rand and rand-interp generators, however, use the "transformation method".
 The make-rand and make-rand-interp "envelope" arguments specify
 the desired distribution function; the generator takes the
@@ -1685,9 +1692,9 @@ And we can't talk about noise without mentioning fractals:</p>
          (set! x (- 1.0 (* m x x))))))))
 
 ;;; this quickly reaches a stable point for any m in[0,.75], so:
-(<a class=quiet href="#with-sound">with-sound</a> () (fractal 0 1 .5 0 .5)) 
+(<a class=quiet href="sndscm.html#withsound">with-sound</a> () (fractal 0 1 .5 0 .5)) 
 ;;; is just a short "ftt"
-(<a class=quiet href="#with-sound">with-sound</a> () (fractal 0 1 1.5 .20 .2))
+(<a class=quiet href="sndscm.html#withsound">with-sound</a> () (fractal 0 1 1.5 .20 .2))
 </pre>
 </td></tr></table>
 
@@ -1751,7 +1758,6 @@ and <a href="sndscm.html#greendoc">green.scm</a> (bounded Brownian noise).
 <A NAME="two-zerodoc"></A>
 <!-- ---------------------------------------- SIMPLE FILTERS ---------------------------------------- -->
 
-<!-- INDEX filters:Filters --><A class=def NAME="filters"></a>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>one-pole, one-zero, two-pole, two-zero</h3></center></td></tr></table>
 
 <pre>
@@ -2139,7 +2145,7 @@ See prc95.scm for examples of both of these functions.
          (let ((inval (rd)))
   	   (<a class=quiet href="#outa">outa</a> i (+ inval (<em class=red>delay</em> del (* scaler (+ (<em class=red>tap</em> del) inval)))) *output*)))))))
 
-(<a class=quiet href="#with-sound">with-sound</a> () (echo 0 60000 .5 1.0 "pistol.snd"))
+(<a class=quiet href="sndscm.html#withsound">with-sound</a> () (echo 0 60000 .5 1.0 "pistol.snd"))
 </pre>
 </td></tr></table>
 
@@ -2168,7 +2174,7 @@ last "size" samples).
 </td></tr></table>
 
 <p>The delay generator is used in some reverbs (<a href="sndscm.html#nrev">nrev</a>), many physical
-models (<a href="sndscm.html#stereoflute">stereo-flute<a>), <a href="sndscm.html#dlocsigdoc">dlocsig</a>,
+models (<a href="sndscm.html#stereoflute">stereo-flute</a>), <a href="sndscm.html#dlocsigdoc">dlocsig</a>,
 chorus effects (<a href="sndscm.html#chorus">chorus</a> in dsp.scm), and flanging (<a href="sndscm.html#neweffectsdoc">new-effects</a>),
 and is the basis for about a dozen extensions (comb and friends below).
 </p>
@@ -2305,22 +2311,26 @@ in the feedback loop:
 <br><br>
 
 
-<!-- STOPPED HERE --><hr>
-
 
 <A NAME="all-passdoc"></A>
 <!-- ---------------------------------------- ALL-PASS ---------------------------------------- -->
-<br>
+
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>all-pass</h3></center></td></tr></table>
-<br>
+
 <pre>
-  <a class=def name="make-all-pass">make-all-pass</a> <a class=quiet href="#optional-key">:optional-key</a> feedback feedforward size initial-contents initial-element max-size
+  <a class=def name="make-all-pass">make-all-pass</a> <a class=quiet href="#optional-key">:optional-key</a> 
+        (feedback 0.0) (feedforward 0.0)
+        size 
+        initial-contents (initial-element 0.0) 
+        max-size
   <a class=def name="all-pass">all-pass</a> f input :optional (pm 0.0)
   <a class=def name="all-pass?">all-pass?</a> f
 </pre>
-<p><b>all-pass</b> or moving average comb is just like <a href="#comb">comb</a> but with
-an added feedforward term.  If <i>feedback</i> = 0, we get a moving
-average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
+
+<p>The all-pass or moving average comb generator is just like <a href="#comb">comb</a> but with
+an added scaler on the input ("feedforward" is Julius Smith's suggested name for it).  If feedback is 0.0, we get a moving
+average comb filter.  If both scale terms are 0.0, we get a pure delay line. 
+</p>
 
 <table border align=left hspace=40 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>all-pass methods</center></td></tr>
@@ -2332,14 +2342,15 @@ average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
 <tr><td><em class=gen>mus-interp-type</em></td><td>interpolation choice (no set!)</td></tr>
 </table>
 <br>
+
 <pre>
  y(n) = feedforward * x(n) + x(n - size) + feedback * y(n - size)
 </pre><br clear=left>
 
-<p>all-pass filters are used extensively in reverberation; see jcrev.ins or nrev.ins for examples.
+<p>all-pass filters are used extensively in reverberation; 
+see <a href="sndscm.html#jcrevdoc">jcrev.ins</a> or <a href="sndscm.html#nrev">nrev.ins</a>.
 </p>
 <br><br>
-
 
 
 
@@ -2348,15 +2359,14 @@ average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
 <!-- ---------------------------------------- MOVING-AVERAGE ---------------------------------------- -->
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>moving-average</h3></center></td></tr></table>
-<br>
+
 <pre>
-  <a class=def name="make-moving-average">make-moving-average</a> <a class=quiet href="#optional-key">:optional-key</a> size initial-contents initial-element
+  <a class=def name="make-moving-average">make-moving-average</a> <a class=quiet href="#optional-key">:optional-key</a> size initial-contents (initial-element 0.0)
   <a class=def name="moving-average">moving-average</a> f input
   <a class=def name="moving-average?">moving-average?</a> f
 </pre>
-<p><b>moving-average</b> or moving window average returns the average of the last 'size' values input to it.
-This is used both to track rms values and to generate ramps between 0 and 1 in a "gate"
-effect in new-effects.scm and in rms-envelope in env.scm (Snd).  It could also be viewed as a low-pass filter.
+
+<p>The moving-average or moving window average generator returns the average of the last "size" values input to it.
 </p>
 
 <table align=left border hspace=40 cellpadding=4>
@@ -2372,9 +2382,11 @@ result = sum-of-last-n-inputs / n
 <br clear=left>
 
 <p>
-moving-average is used to segment a sound library
-in <a href="sndscm.html#soundstosegmentdata">sounds-&gt;segment-data</a> in examp.scm.
-Here is a Snd-based use of it (from new-effects.scm) that implements a "squelch" effect,
+moving-average is used both to track rms values and to generate ramps between 0 and 1 in a "gate"
+effect in new-effects.scm and in rms-envelope in env.scm.  It can also be viewed as a low-pass filter.
+And 
+in <a href="sndscm.html#soundstosegmentdata">sounds-&gt;segment-data</a> in examp.scm, it is used to segment a sound library.
+Here is an example (from new-effects.scm) that implements a "squelch" effect,
 throwing away any samples below a threshhold, and ramping between portions
 that are squelched and those that are unchanged (to avoid clicks):
 </p>
@@ -2393,20 +2405,20 @@ that are squelched and those that are unchanged (to avoid clicks):
 </pre>
 </td></tr></table>
 
-<p>moving-average is used in Snd's dsp.scm to implement several related functions:
+<p>See also dsp.scm for several related functions:
 moving-rms, moving-sum, moving-length, weighted-moving-average, and exponentially-weighted-moving-average
 (the latter being just a one-pole filter).
 </p>
-<br>
+<br><br>
+
 
 
 
 <A NAME="srcdoc"></A>
 <!-- ---------------------------------------- SRC ---------------------------------------- -->
-<br>
-<!-- INDEX make-src:sampling-rate conversion -->
+
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>src</h3></center></td></tr></table>
-<br>
+
 <pre>
   <a class=def name="make-src">make-src</a> <a class=quiet href="#optional-key">:optional-key</a> input (srate 1.0) (width 5)
   <a class=def name="src">src</a> s :optional (sr-change 0.0) input-function
@@ -2418,32 +2430,44 @@ moving-rms, moving-sum, moving-length, weighted-moving-average, and exponentiall
 <tr><td><em class=gen>mus-increment</em></td><td>srate arg to make-src</td></tr>
 </table>
 
-<p><b>src</b> performs sampling rate conversion
+<p>The src generator performs sampling rate conversion
 by convolving its input with a sinc
 function.
-<i>srate</i> is the
-ratio between the new sampling rate and the old.
-<i>width</i> is how many neighboring samples to convolve with sinc.
+make-src's "srate" argument is the
+ratio between the old sampling rate and the new;  an srate of 2 causes the sound to be half as long, transposed up an octave.
+A negative "srate" reads the sound backwards, if possible.
+</p>
+
+<p>
+The "width" argument sets how many neighboring samples to convolve with the sinc function.
 If you hear high-frequency artifacts in the conversion, try increasing this number;
 Perry Cook's default value is 40, and I've seen cases where it needs to be 100.
 It can also be set as low as 2 in some cases.
 The greater the width, the slower the src generator runs.
-The <i>sr-change</i>
-argument is the amount to add to the current <i>srate</i> on a sample by sample
-basis (if it's 0.0 and the original make-src srate argument was also 0.0, you get a constant output because the generator is not moving at all).  Here's
+</p>
+
+<p>
+The src generator's "sr-change"
+argument is the amount to add to the current srate on a sample by sample
+basis (if it's 0.0 and the original make-src srate argument was also 0.0, you get a constant output because the generator is not moving at all).  
+Here's
 an instrument that provides time-varying sampling rate conversion:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> simple-src (start-time duration amp srt srt-env filename)
+(<a class=quiet href="#definstrument">definstrument</a> (simple-src start-time duration amp srt srt-env filename)
   (let* ((senv (<a class=quiet href="#make-env">make-env</a> :envelope srt-env :duration duration))
          (beg (inexact-&gt;exact (floor (* start-time (<a class=quiet href="#mussrate">mus-srate</a>)))))
          (end (+ beg (inexact-&gt;exact (floor (* duration (<a class=quiet href="#mussrate">mus-srate</a>))))))
-         (src-gen (<em class=red>make-src</em> :input filename :srate srt)))
+         (src-gen (<em class=red>make-src</em> :input (<a class=quiet href="#make-readin">make-readin</a> filename) :srate srt)))
     (run
-      (loop for i from beg below end do
-        (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>src</em> src-gen (<a class=quiet href="#env">env</a> senv))))))))
+      (lambda ()
+        (do ((i beg (1+ i)))
+            ((= i end))
+          (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>src</em> src-gen (<a class=quiet href="#env">env</a> senv))) *output*))))))
+
+(with-sound () (simple-src 0 4 1.0 0.5 '(0 1 1 2) "oboe.snd"))
 </pre>
 </td></tr></table>
 
@@ -2451,87 +2475,47 @@ an instrument that provides time-varying sampling rate conversion:
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> srcer (start-time duration amp srt fmamp fmfreq filename)
+(<a class=quiet href="#definstrument">definstrument</a> (srcer start-time duration amp srt fmamp fmfreq filename)
   (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a> :frequency fmfreq))
          (beg (inexact-&gt;exact (floor (* start-time (<a class=quiet href="#mussrate">mus-srate</a>)))))
          (end (+ beg (inexact-&gt;exact (floor (* duration (<a class=quiet href="#mussrate">mus-srate</a>))))))
-         (src-gen (<em class=red>make-src</em> :input filename :srate srt)))
+         (src-gen (<em class=red>make-src</em> :input (<a class=quiet href="#make-readin">make-readin</a> filename) :srate srt)))
     (run
-      (loop for i from beg below end do
-        (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>src</em> src-gen (* fmamp (<a class=quiet href="#oscil">oscil</a> os)))))))))
+      (lambda ()
+        (do ((i beg (1+ i)))
+            ((= i end))
+          (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>src</em> src-gen (* fmamp (<a class=quiet href="#oscil">oscil</a> os)))) *output*))))))
 
-(<a class=quiet href="#with-sound">with-sound</a> () (srcer 0 2 1.0   1 .3 20 "fyow.snd"))   
-(<a class=quiet href="#with-sound">with-sound</a> () (srcer 0 25 10.0   .01 1 10 "fyow.snd"))
-(<a class=quiet href="#with-sound">with-sound</a> () (srcer 0 2 1.0   .9 .05 60 "oboe.snd")) 
-(<a class=quiet href="#with-sound">with-sound</a> () (srcer 0 2 1.0   1.0 .5 124 "oboe.snd"))
-(<a class=quiet href="#with-sound">with-sound</a> () (srcer 0 10 10.0   .01 .2 8 "oboe.snd"))
-(<a class=quiet href="#with-sound">with-sound</a> () (srcer 0 2 1.0   1 3 20 "oboe.snd"))    
-
-(<a class=quiet href="#definstrument">definstrument</a> hello-dentist (beg dur file frq amp)
-  (let ((rd (<em class=red>make-src</em> :input file))
-        (rn (<a class=quiet href="#make-rand-interp">make-rand-interp</a> :frequency frq :amplitude amp))
-        (end (+ beg dur)))
-    (run
-      (loop for i from beg below end do
-        (<a class=quiet href="#outa">outa</a> i (<em class=red>src</em> rd (<a class=quiet href="#rand-interp">rand-interp</a> rn)))))))
+(<a class=quiet href="sndscm.html#withsound">with-sound</a> () (srcer 0 2 1.0   1 .3 20 "fyow.snd"))   
+(<a class=quiet href="sndscm.html#withsound">with-sound</a> () (srcer 0 25 10.0   .01 1 10 "fyow.snd"))
+(<a class=quiet href="sndscm.html#withsound">with-sound</a> () (srcer 0 2 1.0   .9 .05 60 "oboe.snd")) 
+(<a class=quiet href="sndscm.html#withsound">with-sound</a> () (srcer 0 2 1.0   1.0 .5 124 "oboe.snd"))
+(<a class=quiet href="sndscm.html#withsound">with-sound</a> () (srcer 0 10 10.0   .01 .2 8 "oboe.snd"))
+(<a class=quiet href="sndscm.html#withsound">with-sound</a> () (srcer 0 2 1.0   1 3 20 "oboe.snd"))    
 </pre>
 </td></tr></table>
 
-<p>The <i>input</i> argument to make-src and the <i>input-function</i> argument
+<p>The "input" argument to make-src and the "input-function" argument
 to src provide the generator with input as it is needed. 
 The input function
-is a function of one argument (the desired read direction, if the reader can support it), that is funcall'd each time src needs another
-sample of input.  The input argument to src can also be an input file structure, as returned by
-open-input, or as here, simply the filename itself.
-The simple-src instrument above could be written to use an input function instead:
+is a function of one argument (the desired read direction, if the reader can support it), that is called each time src needs another
+sample of input. 
 </p>
 
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(<a class=quiet href="#definstrument">definstrument</a> src-with-readin (start-time duration amp srt srt-env filename)
-  (let* ((senv (<a class=quiet href="#make-env">make-env</a> :envelope srt-env :duration duration))
-         (beg (inexact-&gt;exact (floor (* start-time (<a class=quiet href="#mussrate">mus-srate</a>)))))
-	 (rd (<em class=red>make-readin</em> filename))
-         (end (+ beg (inexact-&gt;exact (floor (* duration (<a class=quiet href="#mussrate">mus-srate</a>))))))
-         (src-gen (<em class=red>make-src</em> :srate srt)))
-    (run
-      (loop for i from beg below end do
-        (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>src</em> src-gen (<a class=quiet href="#env">env</a> senv) #'(lambda (dir) (<em class=red>readin</em> rd)))))))))
-</pre>
-</td></tr></table>
 <p>
-If you jump around in the input (via <b>mus-location</b> for example), you can use the
-<b>mus-reset</b> function to clear out any lingering state before starting to read at
-the new position. (<b>src</b>, like many other generators, has an internal buffer
+If you jump around in the input (via mus-location for example), use
+<a href="#mus-reset">mus-reset</a> to clear out any lingering state before starting to read at
+the new position. (src, like many other generators, has an internal buffer
 of recently read samples, so a sudden jump to a new location will otherwise cause
 a click).
 </p>
 
-<br>
-
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Resampling</th><tr><td>
-<small><blockquote>
-resample channel: <a href="extsnd.html#srcchannel">src-channel</a><br>
-resample all chans: <a href="extsnd.html#srcsound">src-sound</a><br>
-resample selection: <a href="extsnd.html#srcsoundselection">src-selection</a><br>
-resample mix: speed control in <a href="snd.html#mixdialog">Mix dialog</a> (also <a href="extsnd.html#applycontrols">apply-controls</a>)<br>
-resample via drawn envelope: srate in <a href="snd.html#editenvelope">Envelope editor</a><br>
-resample with independent time control (ssb-am): <a href="sndscm.html#ssbbank">ssb-bank</a> in dsp.scm<br>
-resample with independent time control (granulate): expand in <a href="extsnd.html#customcontrols">control panel</a>, <a href="sndscm.html#expsrc">expsrc</a> and <a href="sndscm.html#expsnd">expsnd</a><br>
-resample with independent time control (vocoder): <a href="sndclm.html#phase-vocoder">phase-vocoder</a> (this never works)<br>
-another time stretcher (autocorrelation):<a href="sndscm.html#rubbersound">rubber-sound</a> (this takes forever and rarely works)<br>
-resampling-based sound effects: <a href="sndscm.html#hellodentist">hello-dentist</a>, <a href="sndscm.html#fp">fp</a>, flange and chorus in dsp.scm and new-effects.scm<br>
-the digital zipper: <a href="sndscm.html#zipdoc">zipper</a><br>
-resample via FFT: <a href="sndscm.html#downoct">down-oct</a><br>
-resample through env: <a href="sndscm.html#soundinterp">sound-interp</a> and <a href="sndscm.html#envsoundinterp">env-sound-interp</a><br>
-resample through list: <a href="sndscm.html#scratch">scratch</a><br>
-resample step-size through a function: <a href="extsnd.html#setsamples">step-src</a><br>
-predict duration of resampled sound: <a href="sndscm.html#srcduration">src-duration</a><br>
-linear src: linear-src-channel in dsp.scm<br>
-<br>
-</blockquote></small>
-</td></tr></table>
+<p>There are several other ways to resample a sound.  Some of the more interesting ones are in
+dsp.scm (down-oct, sound-interp, linear-src, etc).  To calculate a sound's new duration after
+a time-varying src is applied, use <a href="sndscm.html#srcduration">src-duration</a>.
+</p>
 <br><br>
+
 
 
 
@@ -2539,11 +2523,12 @@ linear src: linear-src-channel in dsp.scm<br>
 <!-- ---------------------------------------- CONVOLVE ---------------------------------------- -->
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>convolve</h3></center></td></tr></table>
-<br>
+
 <pre>
   <a class=def name="make-convolve">make-convolve</a> <a class=quiet href="#optional-key">:optional-key</a> input filter fft-size filter-size
    <a class=def name="convolve">convolve</a> ff :optional input-function
    <a class=def name="convolve?">convolve?</a> ff
+
    <a class=def name="convolvefiles">convolve-files</a> file1 file2 :optional (maxamp 1.0) (output-file "tmp.snd")
 </pre>
 
@@ -2552,35 +2537,37 @@ linear src: linear-src-channel in dsp.scm<br>
 <tr><td><em class=gen>mus-length</em></td><td>fft size used in the convolution</td></tr>
 </table>
 
-<p>
-<b>convolve</b> convolves its input with the impulse response <i>filter</i>.
-The <i>filter</i> argument 
-can be
-an array, the result of open-input, or a filename as a string.
-When not file based,
-<i>input</i> and <i>input-function</i> are functions of one argument (currently ignored) that are
-funcall'd whenever convolve needs input.
+<p>The convolve generator convolves its input with the impulse response "filter" (a vct).
+"input" and "input-function" are functions of one argument that are
+called whenever convolve needs input.
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> convins (beg dur filter file :optional (size 128))
+(<a class=quiet href="#definstrument">definstrument</a> (convins beg dur filter file :optional (size 128))
   (let* ((start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
          (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
-         (ff (<em class=red>make-convolve</em> :input file :fft-size size :filter filter)))
+         (ff (<em class=red>make-convolve</em> :input (<a class=quiet href="#make-readin">make-readin</a> file) :fft-size size :filter filter)))
     (run
-      (loop for i from start below end do 
-        (<a class=quiet href="#outa">outa</a> i (<em class=red>convolve</em> ff))))))
+      (lambda ()
+        (do ((i start (1+ i)))
+            ((= i end))
+          (<a class=quiet href="#outa">outa</a> i (<em class=red>convolve</em> ff) *output*))))))
+
+(with-sound () 
+  (convins 0 2 (vct 1.0 0.5 0.25 0.125) "oboe.snd")) ; same as fir-filter with those coeffs
 </pre>
 </td></tr></table>
 
-<p><b>convolve-files</b> handles a very common special case: you often want to convolve
-two files, normalizing the result to some maxamp.  The convolve generator does not
+<p>convolve-files handles a very common special case: convolve
+two files, then normal the result to some maxamp.  The convolve generator does not
 know in advance what its maxamp will be, and when the two files are more or less
 the same size, there's no real computational savings to using overlap-add (i.e.
 the generator), so a one-time giant FFT saved as a temporary sound file is much
-handier.</p>
+handier.
+</p>
 <br><br>
+
 
 
 
@@ -2589,7 +2576,7 @@ handier.</p>
 
 <!-- INDEX grains:Granular synthesis --><A class=def NAME="grains"></a>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>granulate</h3></center></td></tr></table>
-<br>
+
 <pre>
   <a class=def name="make-granulate">make-granulate</a> <a class=quiet href="#optional-key">:optional-key</a>   
         input
@@ -2600,7 +2587,7 @@ handier.</p>
         (ramp .4)         ; amount of slice-time spent ramping up/down
         (jitter 1.0)      ; affects spacing of successive grains
         max-size          ; internal buffer size
-        edit              ; grain editing function (Scheme/Ruby, not CL)
+        edit              ; grain editing function
   <a class=def name="granulate">granulate</a> e :optional input-function edit-function
   <a class=def name="granulate?">granulate?</a> e
 </pre>
@@ -2622,7 +2609,7 @@ result = overlap add many tiny slices from input
 </pre>
 <br clear=left>
 
-<p><b>granulate</b> "granulates" its input (normally a sound file).  It is the poor man's way
+<p>The granulate generator "granulates" its input (normally a sound file).  It is the poor man's way
 to change the speed at which things happen in a recorded sound without
 changing the pitches.  It works by slicing the input file into short
 pieces, then overlapping these slices to lengthen (or shorten) the
@@ -2631,78 +2618,85 @@ similar to the freeze function.
 </p>
 
 <p>The duration of each slice is
-<i>length</i> -- the longer the slice, the more like reverb the effect.  The
+"length" -- the longer the slice, the more the effect resembles reverb.  The
 portion of the length (on a scale from 0 to 1.0) spent on each
-ramp (up or down) is <i>ramp</i>.  This can control the smoothness of
+ramp (up or down) is set by the "ramp" argument.  It can control the smoothness of
 the result of the overlaps. 
 </p>
-<p> 
-<i>jitter</i> sets
-the accuracy with which we hop.  If you set it to 0, you can get very strong
+
+<p>The "jitter" argument sets
+the accuracy with which granulate hops.  If you set it to 0 (no randomness), you can get very strong
 comb filter effects, or tremolo.
 The more-or-less average time between
-successive segments is <i>hop</i>.  
-If <i>jitter</i> is 0.0, and <i>hop</i> is very small (say .01),
+successive segments is "hop".  
+If jitter is 0.0, and hop is very small (say .01),
 you're asking for trouble (a big comb filter).
 If you're granulating more than one channel at a time, and want the channels to remain
-in-sync, make each granulator use the same initial random number seed (via <b>mus-location</b>).
+in-sync, make each granulator use the same initial random number seed (via mus-location).
 </p>
-<p>The overall amplitude scaler on each segment is
-<i>scaler</i> -- this is used to try to to avoid overflows as we add
-all these zillions of segments together.  <i>expansion</i>
+
+<p>The overall amplitude scaler on each segment is set by the
+"scaler" argument; this is used to try to avoid overflows as we add
+all these zillions of segments together.  "expansion"
 determines the input hop in relation to the output hop; an
 expansion-amount of 2.0 should more or less double the length of the
 original, whereas an expansion-amount of 1.0 should return something
-close to the original speed.
-<i>input</i> and <i>input-function</i> are the same as in src and convolve.
+close to the original tempo.
+"input" and "input-function" are the same as in src and convolve (functions of
+one argument that return a new input sample whenever they are called by granulate).
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> granulate-sound (file beg :optional dur (orig-beg 0.0) (exp-amt 1.0))
-  (let* ((f-srate (<a class=quiet href="#sound-srate">sound-srate</a> file))
-	 (f-start (round (* f-srate orig-beg)))
-         (f (<a class=quiet href="#open-input">open-input</a> file :start f-start))
+(<a class=quiet href="#definstrument">definstrument</a> (granulate-sound file beg :optional dur (orig-beg 0.0) (exp-amt 1.0))
+  (let* ((f-srate (<a class=quiet href="extsnd.html#mussoundsrate">mus-sound-srate</a> file))
+	 (f-start (inexact-&gt;exact (round (* f-srate orig-beg))))
+         (f (<a class=quiet href="#make-readin">make-readin</a> file :start f-start))
 	 (st (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-	 (new-dur (or dur (- (<a class=quiet href="#sound-duration">sound-duration</a> file) orig-beg)))
+	 (new-dur (or dur (- (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> file) orig-beg)))
 	 (exA (<em class=red>make-granulate</em> :input f :expansion exp-amt))
 	 (nd (+ st (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) new-dur))))))
     (run
-     (loop for i from st below nd do
-       (<a class=quiet href="#outa">outa</a> i (<em class=red>granulate</em> exA))))
-    (<a class=quiet href="#close-input">close-input</a> f)))
+     (lambda ()
+       (do ((i st (1+ i)))
+           ((= i nd))
+         (<a class=quiet href="#outa">outa</a> i (<em class=red>granulate</em> exA) *output*))))))
+
+(with-sound () (granulate-sound "now.snd" 0 3.0 0 2.0))
 </pre>
 </td></tr></table>
 
-<p>See expsrc.ins.  Here's an instrument that uses the <i>input-function</i>
+<p>See <a href="sndscm.html#expsrc">clm-expsrc</a> in clm-ins.scm.  Here's an instrument that uses the input-function
 argument to granulate.  It cause the granulation to run backwards through the file:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> grev (beg dur exp-amt file file-beg)
+(<a class=quiet href="#definstrument">definstrument</a> (grev beg dur exp-amt file file-beg)
   (let* ((exA (<em class=red>make-granulate</em> :expansion exp-amt))
-	 (fil (<a class=quiet href="#open-input*">open-input*</a> file file-beg))
+	 (fil (<a class=quiet href="#make-file-&gt;sample">make-file-&gt;sample</a> file))
 	 (ctr file-beg))
     (run
-     (loop for i from beg to (+ beg dur) do
-       (<a class=quiet href="#outa">outa</a> i (<em class=red>granulate</em> exA
-			  #'(lambda (dir)
-			      (let ((inval (<a class=quiet href="#ina">ina</a> ctr fil)))
-				(if (&gt; ctr 0) (set! ctr (1- ctr)))
-				inval))))))
-    (<a class=quiet href="#close-input">close-input</a> fil)))
+      (lambda ()
+       (do ((i beg (1+ i)))
+           ((= i (+ beg dur)))
+         (<a class=quiet href="#outa">outa</a> i (<em class=red>granulate</em> exA
+		   (lambda (dir)
+		     (let ((inval (<a class=quiet href="#filetosample">file-&gt;sample</a> fil ctr 0)))
+		       (if (&gt; ctr 0) (set! ctr (1- ctr)))
+		       inval)))
+	        *output*))))))
 
-(<a class=quiet href="#with-sound">with-sound</a> () (grev 0 100000 2.0 "pistol.snd" 40000))
+(<a class=quiet href="sndscm.html#withsound">with-sound</a> () (grev 0 100000 2.0 "pistol.snd" 40000))
 </pre>
 </td></tr></table>
 
 <p>
-The <i>edit</i> argument can
+The "edit" argument can
 be a function of one argument, the current granulate generator.  It is called just before
 a grain is added into the output buffer. The current grain is accessible via mus-data.
 The edit function, if any, should return the length in samples of the grain, or 0.
-In the following code, we use the edit function to reverse every other grain:
+In the following example, we use the edit function to reverse every other grain:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -2726,11 +2720,12 @@ In the following code, we use the edit function to reverse every other grain:
 
 
 
+
 <A NAME="phase-vocoderdoc"></A>
 <!-- ---------------------------------------- PHASE-VOCODER ---------------------------------------- -->
-<br>
+
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>phase-vocoder</h3></center></td></tr></table>
-<br>
+
 <pre>
   <a class=def name="make-phase-vocoder">make-phase-vocoder</a> <a class=quiet href="#optional-key">:optional-key</a> 
         input (fft-size 512) (overlap 4) interp (pitch 1.0) analyze edit synthesize
@@ -2741,21 +2736,21 @@ In the following code, we use the edit function to reverse every other grain:
 <table border cellpadding=4 hspace=40>
 <tr><td colspan=2 bgcolor="beige"><center>phase-vocoder methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>pitch shift</td></tr>
-<tr><td><em class=gen>mus-length</em></td><td>fft-size ("N")</td></tr>
+<tr><td><em class=gen>mus-length</em></td><td>fft-size</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>interp</td></tr>
-<tr><td><em class=gen>mus-hop</em></td><td>fft-size / overlap ("D")</td></tr>
+<tr><td><em class=gen>mus-hop</em></td><td>fft-size / overlap</td></tr>
 </table>
 
-<p>phase-vocoder provides a generator to perform phase-vocoder analysis and resynthesis.  The process is
+<p>The phase-vocoder generator performs phase-vocoder analysis and resynthesis.  The process is
 split into three pieces, the analysis stage, editing of the amplitudes and phases, then the resynthesis.
-Each stage has a default that is invoked if the <i>analyze</i>, <i>edit</i>, or <i>synthesize</i>
+Each stage has a default that is invoked if the "analyze", "edit", or "synthesize"
 arguments are omitted from make-phase-vocoder or the phase-vocoder generator.  The edit and synthesize arguments are functions of one argument, the
 phase-vocoder generator.  The analyze argument is a function of two arguments, the generator and
 the input function. The default is to read the current input,
 take an fft, get the new amplitudes and phases (as the edit
 function default), then resynthesize using sine-bank (the synthesize function default); so, the
-default case simply returns a resynthesis of the original input.  <i>interp</i> sets the time between
-ffts (for time stretching etc). 
+default case simply returns a resynthesis of the original input.  The "interp" argument sets the time between
+ffts (for time stretching, etc). 
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -2763,27 +2758,34 @@ ffts (for time stretching etc).
 (definstrument (simple-pvoc beg dur amp size file)
   (let* ((start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
 	 (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
-	 (sr (<em class=red>make-phase-vocoder</em> file :fft-size size)))
-    (do ((i start (1+ i)))
-        ((= i end))
-      (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>phase-vocoder</em> sr)) *output*))))
+	 (sr (<em class=red>make-phase-vocoder</em> (<a class=quiet href="#make-readin">make-readin</a> file) :fft-size size)))
+    (run
+      (lambda ()
+        (do ((i start (1+ i)))
+            ((= i end))
+          (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>phase-vocoder</em> sr)) *output*))))))
+
+(with-sound () (simple-pvoc 0 2.0 1.0 512 "oboe.snd"))
 </pre>
 </td></tr></table>
 
-<p>See ug3.ins for instruments that use the various function arguments.  In Snd, clm23.scm
+<p>clm23.scm
 has a variety of instruments calling the phase-vocoder generator, including pvoc-e that
 specifies all of the functions with their default values (that is, it explicitly passes
 in functions that do what the phase-vocoder would have done without any function arguments).
+pvoc.scm implements the phase-vocoder directly in Scheme (rather than going through the CLM
+generator).
 </p>
 <br><br>
 
 
 
+
 <A NAME="asymmetric-fmdoc"></A>
 <!-- ---------------------------------------- ASYMMETRIC-FM ---------------------------------------- -->
-<br>
+
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>asymmetric-fm</h3></center></td></tr></table>
-<br>
+
 <pre>
   <a class=def name="make-asymmetric-fm">make-asymmetric-fm</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (initial-phase 0.0) (r 1.0) (ratio 1.0)
   <a class=def name="asymmetric-fm">asymmetric-fm</a> af index :optional (fm 0.0)
@@ -2800,23 +2802,30 @@ in functions that do what the phase-vocoder would have done without any function
 </table>
 <br>
 <pre>
-(* (exp (* index (* 0.5 (- r (/ 1.0 r)))
+(* (exp (* index 
+           (* 0.5 (- r (/ 1.0 r)))
 	   (cos (* ratio phase))))
-   (sin (+ phase (* index (* 0.5 (+ r (/ 1.0 r)))
-		    (sin (* ratio phase))))))
+   (sin (+ phase 
+           (* index 
+              (* 0.5 (+ r (/ 1.0 r)))
+	      (sin (* ratio phase))))))
 </pre>
 <br clear=left>
 
-<p><b>asymmetric-fm</b> provides a way around the symmetric spectra normally produced by FM.
+<p>The asymmetric-fm generator provides a way around the symmetric spectra normally produced by FM.
 See  Palamin and Palamin, "A Method of Generating and Controlling Asymmetrical
 Spectra" JAES vol 36, no 9, Sept 88, p671-685:  this is another extension of
 the <a href="#sine-summation">sine-summation</a> and <a href="#sum-of-cosines">sum-of-cosines</a> approach.
-The generator's output amplitude is not always easy to predict.  <i>r</i> is the ratio between successive 
+</p>
+
+<p><i>r</i> is the ratio between successive 
 sideband amplitudes, <i>r</i> &gt; 1.0 pushes energy above the carrier, <i>r</i> &lt; 1.0 pushes it below. (<i>r</i> = 1.0
-gives normal FM). <i>ratio</i>
+gives normal FM). 
+<i>ratio</i>
 is the ratio between the carrier and modulator (i.e. sideband spacing). It's somewhat inconsistent
 that asymmetric-fm takes <i>index</i> (the fm-index) as its second argument, but otherwise it
 would be tricky to get time-varying indices.
+The generator's output amplitude is not always easy to predict.  
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -2833,104 +2842,20 @@ would be tricky to get time-varying indices.
 
 <p>For the other kind of asymmetric-fm, and for asymmetric spectra via "single sideband FM", see dsp.scm.
 </p>
-<br>
-
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>Other Generators</h3></center></td></tr></table>
-<p>There are a number of other generators in the CLM distribution that aren't
-loaded by default.  Among these are:</p>
-<pre>
-  <a href="balance.html#rms">rms</a>         ; trace the rms of signal
-  <a href="balance.html#gain">gain</a>        ; modify signal to match rms power
-  <a href="balance.html#balance">balance</a>     ; combination of rms and gain
-</pre>
-<p>
-green.cl defines several special purpose noise generators.
-butterworth.cl has several Butterworth filters.  
-(See analog-filter.scm in the Snd package for functions to design all the usual analog filters;
-the output is compatible with CLM's filter generator).
-</p>
-<br>
-
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3><A class=def NAME="generic-functions">Generic Functions</a></h3></center></td></tr></table>
-
-<p>The generators have internal fields that are sometimes of interest at run-time.  To get or
-set these fields, use these functions (they are described in conjunction with the associated generators):</p>
-
-<table cellspacing=0 cellpadding=0 hspace=40>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-channel">mus-channel</a></td><td width=30 bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">channel being read/written</td></tr>
-<tr><td><a class=def name="mus-channels">mus-channels</a></td><td></td><td>channels open</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-cosines">mus-cosines</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">sinusoids in output</td></tr>
-<tr><td><a class=def name="mus-data">mus-data</a></td><td></td><td>array of data</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-describe">mus-describe</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">description of current state</td></tr>
-<tr><td><a class=def name="mus-feedback">mus-feedback</a></td><td></td><td>feedback coefficient</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-feedforward">mus-feedforward</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">feedforward coefficient</td></tr>
-<tr><td><a class=def name="mus-file-name">mus-file-name</a></td><td></td><td>file being read/written</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-formant-radius">mus-formant-radius</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">width of formant</td></tr>
-<tr><td><a class=def name="mus-frequency">mus-frequency</a></td><td></td><td>frequency (Hz)</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-hop">mus-hop</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">hop size for block processing</td></tr>
-<tr><td><a class=def name="mus-increment">mus-increment</a></td><td></td><td>various increments</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-interp-type">mus-interp-type</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">interpolation type (mus-interp-linear, etc)</td></tr>
-<tr><td><a class=def name="mus-length">mus-length</a></td><td></td><td>data array length</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-location">mus-location</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">sample location for reads/writes</td></tr>
-<tr><td><a class=def name="mus-name">mus-name</a></td><td></td><td>generator name ("oscil")</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-offset">mus-offset</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">envelope offset</td></tr>
-<tr><td><a class=def name="mus-order">mus-order</a></td><td></td><td>filter order</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-phase">mus-phase</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">phase (radians)</td></tr>
-<tr><td><a class=def name="mus-ramp">mus-ramp</a></td><td></td><td>granulate grain envelope ramp setting</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-reset">mus-reset</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">set gen to default starting state</td></tr>
-<tr><td><a class=def name="mus-run">mus-run</a></td><td></td><td>run any generator</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-scaler">mus-scaler</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">scaler, normally on an amplitude</td></tr>
-<tr><td><a class=def name="mus-width">mus-width</a></td><td></td><td>width of interpolation tables, etc</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-xcoeff">mus-xcoeff</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">x (input) coefficient</td></tr>
-<tr><td><a class=def name="mus-xcoeffs">mus-xcoeffs</a></td><td></td><td>array of x (input) coefficients</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-ycoeff">mus-ycoeff</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">y (output, feedback) coefficient</td></tr>
-<tr><td><a class=def name="mus-ycoeffs">mus-ycoeffs</a></td><td></td><td>array of y (feedback) coefficients</td></tr>
-
-</table>
-
-<p>Many of these are settable:
-<code>(set! (mus-frequency osc1) 440.0)</code>
-sets osc1's current frequency to (<a class=quiet href="#hztoradians">hz-&gt;radians</a> 440.0). 
-In Scheme, Ruby and Forth, <a class=def name="musgeneratorp">mus-generator?</a> returns #t if its argument is
-a CLM generator.
-</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(definstrument backandforth (onset duration file src-ratio)
-  ;; read file forwards and backwards until dur is used up
-  ;; a slightly improved version is 'scratch' in ug1.ins
-  (let* ((last-sample (<a class=quiet href="#sound-frames">sound-frames</a> file))
-         (beg (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) onset))))
-         (end (+ beg (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) duration)))))
-	 (input (<a class=quiet href="#make-readin">make-readin</a> file))
-         (s (<a class=quiet href="#make-src">make-src</a> :srate src-ratio))
-         (cs 0))
-    (run
-     (loop for i from beg below end do
-       (declare (type :integer cs last-sample)
-		(type :float src-ratio))
-       (if (&gt;= cs last-sample) (set! (<em class=red>mus-increment</em> s) (- src-ratio)))
-       (if (&lt;= cs 0) (set! (<em class=red>mus-increment</em> s) src-ratio))
-       (<a class=quiet href="#outa">outa</a> i (<a class=quiet href="#src">src</a> s 0.0 #'(lambda (dir) 
-			      (incf cs dir)
-			      (set! (<em class=red>mus-increment</em> input) dir)
-			      (<a class=quiet href="#readin">readin</a> input))))))))
-
-;;; (with-sound () (backandforth 0 10 "pistol.snd" 2.0))
-</pre>
-</td></tr></table>
-
-<br>
+<br><br>
 
 
+
+<!-- INDEX framedoc:frames -->
+<!-- INDEX framedoc:mixers -->
+
+<A NAME="framedoc"></A>
 <!-- ---------------------------------------- FRAME, MIXER ---------------------------------------- -->
-<br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><center><h3><A class=def NAME="framesandmixers">frame, mixer</a></h3></center></td></tr></table>
-<br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>Frames and Mixers</h3></center></td></tr></table>
 
-<p>There are two special data types in CLM: frames and mixers.
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>frames and mixers</h3></center></td></tr></table>
+
+<p>
+There are two special data types in CLM: frames and mixers.
 A frame is an array that represents
 a multichannel sample (that is, in a stereo file, at time 0.0, there
 are two samples, one for each channel, and the frame that represents it has 2 samples).  A mixer is a array of arrays
@@ -2939,28 +2864,25 @@ current state of a mixing console's volume controls.  A frame (a multichannel
 input) can be mixed into a new frame (a multichannel output) by passing
 it through a mixer (a matrix, the operation being a (left) matrix multiply).
 These are combined with the notion of a sample (one datum of sampled music), and
-input/output ports (files, audio ports, etc) to handle all the underlying
-data IO.
+input/output ports (files, audio ports, etc) to handle all the 
+sound data input and output.
 </p>
 
 <table cellspacing=0 cellpadding=0 hspace=40>
-<tr><td><em class=emdef>make-empty-frame</em><code> chans</code></td><td width=10></td><td>create frame of 0's</td></tr>
 <tr><td><a class=def name="make-frame">make-frame</a><code> chans :rest args</code></td><td></td><td>create frame and load it with args</td></tr>
 <tr><td><a class=def name="frame?">frame?</a><code> obj</code></td><td></td><td>is obj a frame</td></tr>
-<tr><td><a class=def name="frame+">frame+</a><code> f1 f2 :optional outf</code></td><td></td><td>add f1 and f2 element-wise, return new frame (or outf)</td></tr>
-<tr><td><a class=def name="frame*">frame*</a><code> f1 f2 :optional outf</code></td><td></td><td>multiply f1 and f2 element-size, return new frame (or outf)</td></tr>
 <tr><td><a class=def name="frame-ref">frame-ref</a><code> f1 chan</code></td><td></td><td>return f1[chan]</td></tr>
 <tr><td><a class=def name="frame-set!">frame-set!</a><code> f1 chan val</code></td><td></td><td>f1[chan] = val (also set! with frame-ref)</td></tr>
+<tr><td><a class=def name="frame+">frame+</a><code> f1 f2 :optional outf</code></td><td></td><td>add f1 and f2 element-wise, return new frame (or outf)</td></tr>
+<tr><td><a class=def name="frame*">frame*</a><code> f1 f2 :optional outf</code></td><td></td><td>multiply f1 and f2 element-size, return new frame (or outf)</td></tr>
 <tr><td><br></td><td></td><td></td></tr>
-<tr><td><em class=emdef>make-empty-mixer</em><code> chans</code></td><td></td><td>create a mixer of 0's</td></tr>
-<tr><td><a class=def name="make-identity-mixer">make-identity-mixer</a><code> chans</code></td><td></td><td>create a mixer of 1's on the diagonal</td></tr>
-<tr><td><a class=def name="make-scalar-mixer">make-scalar-mixer</a><code> chans scl</code></td><td></td><td>create a mixer with scl on the diagonal</td></tr>
 <tr><td><a class=def name="make-mixer">make-mixer</a><code> chans :rest args</code></td><td></td><td>create a mixer and load it with args</td></tr>
+<tr><td><a class=def name="make-scalar-mixer">make-scalar-mixer</a><code> chans scl</code></td><td></td><td>create a mixer with scl on the diagonal</td></tr>
 <tr><td><a class=def name="mixer?">mixer?</a><code> obj</code></td><td></td><td>is obj a mixer</td></tr>
-<tr><td><a class=def name="mixermultiply">mixer*</a><code> m1 m2 :optional outm</code></td><td></td><td>matrix multiply of m1 and m2, return new mixer (or outm)</td></tr>
-<tr><td><a class=def name="mixeradd">mixer+</a><code> m1 m2 :optional outm</code></td><td></td><td>matrix add of m1 and m2, return new mixer (or outm)</td></tr>
 <tr><td><a class=def name="mixer-ref">mixer-ref</a><code> m1 in out</code></td><td></td><td>m1[in,out] (use set! to change)</td></tr>
 <tr><td><a class=def name="mixer-set!">mixer-set!</a><code> m1 in out val</code></td><td></td><td>m1[in,out] = val (also set! with mixer-ref)</td></tr>
+<tr><td><a class=def name="mixermultiply">mixer*</a><code> m1 m2 :optional outm</code></td><td></td><td>matrix multiply of m1 and m2, return new mixer (or outm)</td></tr>
+<tr><td><a class=def name="mixeradd">mixer+</a><code> m1 m2 :optional outm</code></td><td></td><td>matrix add of m1 and m2, return new mixer (or outm)</td></tr>
 <tr><td></td><td><br></td><td></td></tr>
 <tr><td><a class=def name="frametoframe">frame-&gt;frame</a><code> mf mf :optional outf</code></td><td></td><td>pass frame through mixer, return new frame (or outf)</td></tr>
 <tr><td><a class=def name="frametolist">frame-&gt;list</a><code> frame</code></td><td></td><td>return list of frame's contents</td></tr>
@@ -2973,202 +2895,261 @@ data IO.
 <tr><td colspan=2 bgcolor="beige"><center>frame and mixer methods</center></td></tr>
 <tr><td><em class=gen>mus-channels</em></td><td>number of channels accommodated</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>same as mus-channels</td></tr>
-<tr><td><em class=gen>mus-data</em></td><td>the matrix data (float array)</td></tr>
+<tr><td><em class=gen>mus-data</em></td><td>frame data (vct)</td></tr>
 </table>
 
-<p>In Ruby, frame* is frame_multiply, frame+ is frame_add, and mixer* is mixer_multiply.
+<p>
 The arguments to frame*, frame+, mixer*, and mixer+ can be floats as well as mixers and
 frames. In that case, the mixer or frame is either scaled by the float, or the float is
-added to each element.
-</p>
-
-<p>fullmix.ins uses these functions to provide a mixer able to handle any number
-of channels of data in and out with optional scalers and envelopes on any in-&gt;out path.
-The heart of the instrument is:</p>
-<pre>
-       (<em class=red>frame-&gt;file</em> *output* i 
-         (<em class=red>frame-&gt;frame</em>  
-           (<em class=red>file-&gt;frame</em> file inloc inframe) 
-           mx outframe))
-</pre>
-<p>Here the input file is read by <b>file-&gt;frame</b> producing a frame of data.  That
-is then passed through the mixer <b>frame-&gt;frame</b>, and the resultant frame is written to
-the with-sound output file <b>*output*</b> by <b>frame-&gt;file</b>.  Within <b>run</b>, the
-output frames of the various frame producing functions must be provided (I'm trying to avoid
-run-time memory management).
+added to each element.  
 In matrix terminology, a mixer is a square matrix, a frame is a column (or row) vector, mixer* is a 
 matrix multiply, and so on. 
 The form <code>(frame-&gt;frame frame mixer frame)</code> multiplies a row vector (the first frame)
 by a matrix (the mixer), whereas <code>(frame-&gt;frame mixer frame frame)</code> multiplies
 a matrix by a column vector.
-<a href="sndscm.html#mixerdoc">mixer.scm</a> and snd-test.scm have a number of matrix/vector
-functions that are sometimes useful: mixer-solve, mixer-determinant, frame-reverse, and so on.
-</p>
-<br>
-
-
-<!-- ---------------------------------------- IN-ANY/OUT-ANY ---------------------------------------- -->
-<br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3><a class=def NAME="soundio">Sound IO</a></h3></center></td></tr></table>
-
-<p>Sound file IO is supported by a variety of functions.  To read and write sound files into an
-array, use <b>array-&gt;file</b> and <b>file-&gt;array</b>.  (In the CL version of CLM, these
-are the only portable ways to read and write sound files outside with-sound; other versions
-of CLM aren't restricted in this regard).  Within the run-loop, <b>out-any</b>, <b>in-any</b>, and <b>readin</b>
-are the simplest; <b>locsig</b> provides a sort of sound placement; <b>dlocsig</b> provides
-moving sound placement.  When you use with-sound, the variable <b>*output*</b> is bound to a <b>sample-&gt;file</b>
-object, so output by default goes to with-sound's output file. You can open (for reading or
-writing) any sound files via <b>make-file-&gt;sample</b> (or -&gt;frame), and <b>make-sample-&gt;file</b>
-(or frame-&gt;).  These return an IO object which you subsequently pass to <b>file-&gt;sample</b>
-(for input) and <b>sample-&gt;file</b> (for output).  To close the connection to the file system,
-you can use <b>mus-close</b>, but it's also called automatically during garbage collection, if needed.
+See <a href="sndscm.html#framedoc">frame.scm</a> for many more
+frame-related functions, and <a href="sndscm.html#mixerdoc">mixer.scm</a> for mixer functions.
+In Ruby, frame* is frame_multiply, frame+ is frame_add, and mixer* is mixer_multiply.
 </p>
 
-<table cellspacing=0 cellpadding=0 hspace=40>
-<tr><td><a class=def name="mus-input?">mus-input?</a><code> obj</code></td><td width=20></td><td>t if obj performs sound input</td></tr>
-<tr><td><a class=def name="mus-output?">mus-output?</a><code> obj</code></td><td></td><td>t if obj performs sound output</td></tr>
-<tr><td><a class=def name="filetosample?">file-&gt;sample?</a><code> obj</code></td><td></td><td>t if obj reads a sound file returning a sample</td></tr>
-<tr><td><a class=def name="sampletofile?">sample-&gt;file?</a><code> obj</code></td><td></td><td>t if obj writes a sample to a sound file</td></tr>
-<tr><td><a class=def name="frametofile?">frame-&gt;file?</a><code> obj</code></td><td></td><td>t if obj writes a frame to a sound file</td></tr>
-<tr><td><a class=def name="filetoframe?">file-&gt;frame?</a><code> obj</code></td><td></td><td>t if obj reads a sound file returning a frame</td></tr>
-<tr><td><br></td><td></td><td></td></tr>
-<tr><td><a class=def name="make-filetosample">make-file-&gt;sample</a><code> name buffer-size</code></td><td></td><td>return gen that reads samples from sound file name</td></tr>
-<tr><td><a class=def name="make-sampletofile">make-sample-&gt;file</a><code> name :optional chans format type comment</code></td><td></td><td>return gen that writes samples to sound file name</td></tr>
-<tr><td><a class=def name="make-filetoframe">make-file-&gt;frame</a><code> name buffer-size</code></td><td></td><td>return gen that reads frames from sound file name</td></tr>
-<tr><td><a class=def name="make-frametofile">make-frame-&gt;file</a><code> name :optional chans format type comment</code></td><td></td><td>return gen that writes frames to sound file name</td></tr>
-<tr><td><a class=def name="filetosample">file-&gt;sample</a><code> obj samp :optional chan</code></td><td></td><td>return sample at samp in channel chan</td></tr>
-<tr><td><a class=def name="sampletofile">sample-&gt;file</a><code> obj samp chan val</code></td><td></td><td>write (add) sample val at samp in channel chan</td></tr>
-<tr><td><a class=def name="filetoframe">file-&gt;frame</a><code> obj samp :optional outf</code></td><td></td><td>return frame at samp</td></tr>
-<tr><td><a class=def name="frametofile">frame-&gt;file</a><code> obj samp val</code></td><td></td><td>write (add) frame val at samp</td></tr>
-<tr><td><br></td><td></td><td></td></tr>
-<tr><td><a class=def name="filetoarray">file-&gt;array</a><code> file channel beg dur array</code></td><td></td><td>read samples from file into array</td></tr>
-<tr><td><a class=def name="arraytofile">array-&gt;file</a><code> file data len srate channels </code></td><td></td><td>write samples in array to file</td></tr>
-<tr><td><br></td><td></td><td></td></tr>
-<tr><td><a class=def name="continue-frametofile">continue-frame-&gt;file</a><code> file</code></td><td></td><td>reopen file for more output</td></tr>
-<tr><td><a class=def name="continue-sampletofile">continue-sample-&gt;file</a><code> file</code></td><td></td><td>reopen file for more output</td></tr>
-<tr><td><a class=def name="mus-close">mus-close</a><code> obj</code></td><td></td><td>close the output file associated with obj</td></tr>
-</table>
-
-<p>In the Scheme version of CLM, the Guile built-in (but unused) function frame? is available as %frame?.
-</p>
-
-
-<!-- ---------------------------------------- IN-ANY, OUT-ANY ---------------------------------------- -->
-
-<!-- INDEX ina-outa:Input and output --><A class=def NAME="ina-outa"></a>
-<A class=def NAME="outa"></a>
-<A class=def NAME="ina"></a>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>in-any, out-any</h3></center></td></tr></table>
-<br>
 <pre>
-  <a class=def name="out-any">out-any</a> loc data :optional (channel 0) (o-stream *output*)
+    <em class=listener>&gt;</em><em class=typing>(define f1 (make-frame 3 1.0 0.5 0.1))</em>
+    <em class=listener>#&lt;unspecified&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>f1</em>
+    <em class=listener>#&lt;frame[3]: [1.000 0.500 0.100]&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>(frame-ref f1 2)</em>
+    <em class=listener>0.100000001490116</em>
+    <em class=listener>&gt;</em><em class=typing>(frame* f1 2.0)</em>
+    <em class=listener>#&lt;frame[3]: [2.000 1.000 0.200]&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>(define f2 (make-frame 3 0.0 1.0 0.0))</em>
+    <em class=listener>#&lt;unspecified&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>(frame+ f1 f2)</em>
+    <em class=listener>#&lt;frame[3]: [1.000 1.500 0.100]&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>(frame-&gt;sample f1 f2)</em> ; dot-product in this case
+    <em class=listener>0.5</em>
+    <em class=listener>&gt;</em><em class=typing>(define m1 (make-mixer 3 1 0 0  0 1 0  0 0 2))</em>
+    <em class=listener>#&lt;unspecified&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>m1</em>
+    <em class=listener>#&lt;mixer: chans: 3, [
+     1.000 0.000 0.000
+     0.000 1.000 0.000
+     0.000 0.000 2.000
+    ]&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>(mixer-ref m1 2 2)</em>
+    <em class=listener>2.0</em>
+    <em class=listener>&gt;</em><em class=typing>(frame-&gt;frame m1 f1)</em>
+    <em class=listener>#&lt;frame[3]: [1.000 0.500 0.200]&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>(mus-length m1)</em>
+    <em class=listener>3</em>
+    <em class=listener>&gt;</em><em class=typing>(mus-data f1)</em>
+    <em class=listener>#&lt;vct[len=3]: 1.000 0.500 0.100&gt;</em>
 </pre>
-<p><b>out-any</b> adds <i>data</i> into <i>o-stream</i> at sample
-position <i>loc</i>.  <i>O-stream</i> defaults to the current output
-file (it is a frame-&gt;file instance, not a file name).  The reverb stream, if any,
-is named *reverb*; the direct output is *output*.
-You can output anywhere at any time, but because of the way data is buffered internally, your
-instrument will run much faster if it does sequential output.
-<a href="#locsig">Locsig</a> is another output function.</p>
+<br><br>
 
-<p>Many of the CLM examples and instruments use <b>outa</b> and <b>outb</b>.
-These are macros equivalent to <code>(out-any loc data 0 *output*)</code> etc.
-Outside Common Lisp, the <i>stream</i> argument can be a vct or a sound-data object, as well as a frame-&gt;file generator.
+
+
+
+<A NAME="filetosampledoc"></A>
+<!-- ---------------------------------------- FILE->SAMPLE ---------------------------------------- -->
+
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3><a class=def NAME="soundio">sound IO</a></h3></center></td></tr></table>
+
+<p>Sound file IO is based on a set of file readers and writers that deal either in samples, frames, or vcts.
+The six functions are file-&gt;sample, sample-&gt;file, file-&gt;frame, frame-&gt;file, array-&gt;file, and file-&gt;array.
+The name "array" is used here, rather than "vct" for historical reasons (the CL version of CLM predates
+Snd by many years).
+These functions are then packaged up in more convenient forms as in-any, out-any, locsig, readin, etc.
+Within with-sound, the variable *output* is bound to the with-sound output file via a sample-&gt;file
+object.
 </p>
-<br>
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>ina, inb, in-any</h3></center></td></tr></table>
+
 <pre>
-  <a class=def name="in-any">in-any</a> <i>loc channel i-stream</i>
-</pre>
-<p><b>in-any</b> returns the sample at position <i>loc</i> in
-<i>i-stream</i> as a float.  The data is normally between -1.0 and 1.0.
-See the digital zipper instrument <a href="zipper.ins">zipper.ins</a>.
-</p>
+  <a class=def name="make-filetosample">make-file-&gt;sample</a> name :optional (buffer-size 8192)
+  <a class=def name="make-sampletofile">make-sample-&gt;file</a> name :optional (chans 1) (format mus-lfloat) (type mus-next) comment
+  <a class=def name="filetosample?">file-&gt;sample?</a> obj
+  <a class=def name="sampletofile?">sample-&gt;file?</a> obj
+  <a class=def name="filetosample">file-&gt;sample</a> obj samp :optional chan
+  <a class=def name="sampletofile">sample-&gt;file</a> obj samp chan val
+  <a class=def name="continue-sampletofile">continue-sample-&gt;file</a> file
 
-<p>Many of the CLM examples and instruments use <b>ina</b> and <b>inb</b>.
-These are macros equivalent to <code>(in-any loc 0 stream)</code>.
-Outside Common Lisp, the <i>stream</i> argument can be a vct or a sound-data object, as well as a file-&gt;frame generator.
+  <a class=def name="make-filetoframe">make-file-&gt;frame</a> name :optional (buffer-size 8192)
+  <a class=def name="make-frametofile">make-frame-&gt;file</a> name :optional (chans 1) (format mus-lfloat) (type mus-next) comment
+  <a class=def name="frametofile?">frame-&gt;file?</a> obj
+  <a class=def name="filetoframe?">file-&gt;frame?</a> obj
+  <a class=def name="filetoframe">file-&gt;frame</a> obj samp :optional outf
+  <a class=def name="frametofile">frame-&gt;file</a> obj samp val
+  <a class=def name="continue-frametofile">continue-frame-&gt;file</a> file
+
+  <a class=def name="filetoarray">file-&gt;array</a> file channel beg dur array
+  <a class=def name="arraytofile">array-&gt;file</a> file data len srate channels
+
+  <a class=def name="mus-input?">mus-input?</a> obj
+  <a class=def name="mus-output?">mus-output?</a> obj
+  <a class=def name="mus-close">mus-close</a> obj
+  <a class=def name="*output*">*output*</a>
+  <a class=def name="*reverb*">*reverb*</a>
+  <a class=def name="musfilebuffersize">mus-file-buffer-size</a>
+</pre>
+
+<p>file-&gt;sample writes a sample to a file, frame-&gt;file writes a frame, file-&gt;sample reads a sample
+from a file, and file-&gt;frame reads a frame.
+continue-frame-&gt;file and continue-sample-&gt;file reopen an existing file to continue adding sound data to it.
+mus-output? returns #t is its argument is some sort of file writing generator, and mus-input? returns #t if its 
+argument is a file reader.  file-&gt;frame returns a new frame unless you pass it an "outf" argument (a frame).
+In make-file-&gt;sample and make-file-&gt;frame, the buffer-size defaults to <a href="#musfilebuffersize">mus-file-buffer-size</a>.
+There are many examples of these functions in snd-test.scm, clm-ins.scm, and clm23.scm.
+Here is one that uses file-&gt;sample to mix in a sound file (there are a zillion other ways to do this):
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(definstrument simple-ina (beg dur amp file)
+(define (simple-f2s beg dur amp file)
   (let* ((start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
 	 (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
-	 (fil (<em class=red>open-input</em> file)))          ; actually make-file-&gt;sample
+	 (fil (<em class=red>make-file-&gt;sample</em> file))
+	 (ctr 0))
     (run
-     (loop for i from start to end do
-       (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>in-any</em> i 0 fil))))) ; actually file-&gt;sample
-    (close-input fil)))
+     (lambda ()
+       (do ((i start (1+ i))) ((= i end))
+	 (out-any i (* amp (<em class=red>file-&gt;sample</em> fil ctr 0)) 0 *output*)
+	 (set! ctr (1+ ctr)))))))
 </pre>
 </td></tr></table>
-<br>
+
+<p>If you forget to call mus-close, the GC will eventually do it for you.
+</p>
+<br><br>
 
 
-<!-- ---------------------------------------- READIN ---------------------------------------- -->
-<br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>readin</h3></center></td></tr></table>
-<br>
+
+
+<A NAME="in-anydoc"></A>
+<A NAME="out-anydoc"></A>
+<!-- ---------------------------------------- IN-ANY, OUT-ANY ---------------------------------------- -->
+
+<A class=def NAME="ina-outa"></a>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>in-any, out-any</h3></center></td></tr></table>
+
 <pre>
- <a class=def name="make-readin">make-readin</a> <a class=quiet href="#optional-key">:optional-key</a> file (channel 0) start (direction 1)
+  <a class=def name="out-any">out-any</a> loc data channel output
+  <a class=def name="outa">outa</a> loc data output
+  <a class=def NAME="outb">outb</a> loc data output
+  <a class=def NAME="outc">outc</a> loc data output
+  <a class=def NAME="outd">outd</a> loc data output
+
+  <a class=def name="in-any">in-any</a> loc channel input
+  <a class=def name="ina">ina</a> loc input
+  <a class=def name="inb">inb</a> loc input
+</pre>
+
+<p>out-any adds its "data" argument (a sound sample) into the "output" object at sample
+position "loc".  
+In with-sound, the current output is *output* and the reverb output is *reverb*.
+outa is the same as out-any with a channel of 0.
+The "output" argument can be a vct or a sound-data object, as well as the more usual frame-&gt;file object.
+</p>
+
+<p>in-any returns the sample at position "loc" in
+"input".  ina is the same as in-any with a channel of 0.
+</p>
+
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<pre>
+(definstrument (simple-ina beg dur amp file)
+  (let* ((start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
+	 (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
+	 (fil (<em class=red>make-file-&gt;sample</em> file)))
+    (run
+      (lambda ()
+        (do ((i start (1+ i)))
+            ((= i end))
+          (<a class=quiet href="#outa">outa</a> i 
+             (* amp (<em class=red>in-any</em> i 0 fil)) ; same as (<em class=red>ina</em> i fil)
+             *output*))))))
+
+(with-sound () (simple-ina 0 1 .5 "oboe.snd"))
+</pre>
+</td></tr></table>
+<br><br>
+
+
+
+
+<A NAME="readindoc"></A>
+<!-- ---------------------------------------- READIN ---------------------------------------- -->
+
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>readin</h3></center></td></tr></table>
+
+<pre>
+ <a class=def name="make-readin">make-readin</a> <a class=quiet href="#optional-key">:optional-key</a> file (channel 0) (start 0) (direction 1) size
  <a class=def name="readin">readin</a> rd
  <a class=def name="readin?">readin?</a> rd
 </pre>
 
 <table border cellpadding=4 hspace=40>
 <tr><td colspan=2 bgcolor="beige"><center>readin methods</center></td></tr>
-<tr><td><em class=gen>mus-channel</em></td><td><i>channel</i> arg to make-readin (no set!)</td></tr>
+<tr><td><em class=gen>mus-channel</em></td><td>channel arg to make-readin (no set!)</td></tr>
 <tr><td><em class=gen>mus-location</em></td><td>current location in file</td></tr>
-<tr><td><em class=gen>mus-increment</em></td><td>sample increment (<i>direction</i> arg to make-readin)</td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>sample increment (direction arg to make-readin)</td></tr>
 <tr><td><em class=gen>mus-file-name</em></td><td>name of file associated with gen</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>number of frames in file associated with gen</td></tr>
 </table>
 
-<p><b>readin</b> returns successive samples (as floats) from <i>file</i>.
-<i>file</i> should be either an IO instance, as returned by <a href="#open-input">open-input</a>, 
-or a filename.
-<i>start</i> is the frame at which to start reading <i>file</i>. 
-<i>channel</i> is which channel to read (0-based).
-<i>size</i> is the read buffer size in samples.  It defaults to <b>*clm-file-buffer-size*</b>.
+<p>readin returns successive samples from a file.
+Its "file" argument is the input file's name.
+"start" is the frame at which to start reading the input file. 
+"channel" is which channel to read (0-based).
+"size" is the read buffer size in samples.  It defaults to <a href="#musfilebuffersize">mus-file-buffer-size</a>.
 Here is an instrument that applies an envelope to a sound file using
-readin and <a href="#env">env</a> (see also the fullmix instrument in fullmix.ins):
+readin and <a href="#env">env</a>:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> env-sound (file beg :optional (amp 1.0) (amp-env '(0 1 100 1)))
+(<a class=quiet href="#definstrument">definstrument</a> (env-sound file beg :optional (amp 1.0) (amp-env '(0 1 100 1)))
   (let* ((st (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-         (dur (<a class=quiet href="#sound-duration">sound-duration</a> file))
+         (dur (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> file))
          (rev-amount .01)
          (rdA (<em class=red>make-readin</em> file))
          (ampf (<a class=quiet href="#make-env">make-env</a> amp-env amp dur))
          (nd (+ st (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) dur))))))
     (run
-      (loop for i from st below nd do
-        (let ((outval (* (<a class=quiet href="#env">env</a> ampf) (<em class=red>readin</em> rdA))))
-  	  (<a class=quiet href="#outa">outa</a> i outval)
-	  (if *reverb* (<a class=quiet href="#outa">outa</a> i (* outval rev-amount) *reverb*)))))))
+      (lambda ()
+        (do ((i st (1+ i)))
+	    ((= i nd))
+          (let ((outval (* (<a class=quiet href="#env">env</a> ampf) (<em class=red>readin</em> rdA))))
+  	    (<a class=quiet href="#outa">outa</a> i outval *output*)
+	    (if *reverb* 
+              (<a class=quiet href="#outa">outa</a> i (* outval rev-amount) *reverb*))))))))
+
+(with-sound () (env-sound "oboe.snd" 0 1.0 '(0 0 1 1 2 1 3 0)))
 </pre>
 </td></tr></table>
-<br>
+<br><br>
 
 
+
+
+<A NAME="locsigdoc"></A>
 <!-- ---------------------------------------- LOCSIG ---------------------------------------- -->
 
 <!-- INDEX make-locsig:Sound placement -->
-<br>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>locsig</h3></center></td></tr></table>
-<br>
+
 <pre>
  <a class=def name="make-locsig">make-locsig</a> <a class=quiet href="#optional-key">:optional-key</a> 
-       (degree 0.0) (distance 1.0) (reverb 0.0) channels output revout (type *clm-locsig-type*)
+        (degree 0.0) (distance 1.0) (reverb 0.0) 
+        (channels 1) output revout 
+        (type mus-interp-linear)
  <a class=def name="locsig">locsig</a> loc i in-sig
  <a class=def name="locsig?">locsig?</a> loc
+
  <a class=def name="locsig-ref">locsig-ref</a> loc chan
  <a class=def name="locsig-set!">locsig-set!</a> loc chan val
  <a class=def name="locsig-reverb-ref">locsig-reverb-ref</a> loc chan
  <a class=def name="locsig-reverb-set!">locsig-reverb-set!</a> loc chan val
+
  <a class=def name="move-locsig">move-locsig</a> loc degree distance
  <a class=def name="locsig-type">locsig-type</a> ()
 </pre>
@@ -3182,66 +3163,62 @@ readin and <a href="#env">env</a> (see also the fullmix instrument in fullmix.in
 <tr><td><em class=gen>mus-length</em></td><td>output channels</td></tr>
 </table>
 
-<p><b>locsig</b> normally takes the place of <a href="#outa">out-any</a> in an
-instrument.  It tries to place a signal between channels 0 and 1 (or 4 channels placed in a circle) in
-an extremely dumb manner: it just scales the respective amplitudes
-("that old trick <i>never</i> works").  <i>reverb</i> determines how much of
-the direct signal gets sent to the reverberator.  <i>distance</i> tries to
+<p>locsig normally takes the place of <a href="#outa">out-any</a> in an
+instrument.  It tries to place a signal in a N-channel circle
+by scaling the respective amplitudes
+("that old trick <i>never</i> works").  "reverb" determines how much of
+the direct signal gets sent to the reverberator.  "distance" tries to
 imitate a distance cue by fooling with the relative amounts of direct and
-reverberated signal (independent of <i>reverb</i>).  <i>distance</i> should
+reverberated signal (independent of the "reverb" argument).  The distance should
 be greater than or equal to 1.0.  
-<i>type</i> (returned by the function <b>locsig-type</b>) can be <b>mus-interp-linear</b> (the default) or <b>mus-interp-sinusoidal</b>.
-This parameter can be set globally via <b>*clm-locsig-type*</b>.  The mus-interp-sinusoidal
+"type" (returned by the function locsig-type) can be <code>mus-interp-linear</code> (the default) or <code>mus-interp-sinusoidal</code>.
+The mus-interp-sinusoidal
 case uses sin and cos to set the respective channel amplitudes (this is reported to
 help with the "hole-in-the-middle" problem).
-Outside Common Lisp, the <i>output</i> argument can be a vct or a sound-data object, as well as a frame-&gt;file generator.
-</p>
-<p>Locsig is a
-kludge, but then so is any pretence of placement when you're piping the signal
-out a loudspeaker.  It is my current belief that locsig does the right
-thing for all the wrong reasons; a good concert hall provides auditory
-spaciousness by interfering with the ear's attempt to localize a sound.
-A diffuse sound source is the ideal!  By sending an arbitrary mix of
-signal and reverberation to various speakers, locsig gives you a very
-diffuse source; it does the opposite of what it claims to do, and by
-some perversity of Mother Nature, that is what you want.  (See "Binaural
-Phenomena" by J Blauert).
+The <i>output</i> argument can be a vct or a sound-data object, as well as a frame-&gt;file generator.
 </p>
 
 <p>Locsig can send output to any number of channels.
 If channels &gt; 2, the speakers are assumed to be evenly spaced in
 a circle.
-You can use <b>locsig-set!</b> and <b>locsig-ref</b> to override the placement decisions.
+You can use locsig-set! and locsig-ref to override the placement decisions.
 To have full output to both channels,</p>
 <pre>
 (set! (locsig-ref loc 0) 1.0) ; or (<a class=quiet href="#locsig-set!">locsig-set!</a> loc 0 1.0)
 (set! (locsig-ref loc 1) 1.0)
 </pre>
-<p>These locations can be set via envelopes and so on within the run
-loop to pan between speakers (but see move-locsig below):</p>
+
+<p>Here is an instrument that has envelopes on the distance and degrees, and optionally reverberates a file:
+</p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> space (file onset duration :key (distance-env '(0 1 100 10)) (amplitude-env '(0 1 100 1))
+(<a class=quiet href="#definstrument">definstrument</a> (space file onset duration :key (distance-env '(0 1 100 10)) (amplitude-env '(0 1 100 1))
 		     (degree-env '(0 45 50 0 100 90)) (reverb-amount .05))
   (let* ((beg (inexact-&gt;exact (floor (* onset (<a class=quiet href="#mussrate">mus-srate</a>)))))
 	 (end (+ beg (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) duration)))))
-         (loc (<em class=red>make-locsig</em> :degree 0 :distance 1 :reverb reverb-amount))
+         (loc (<em class=red>make-locsig</em> :degree 0 :distance 1 :reverb reverb-amount :output *output* :revout *reverb*))
          (rdA (<a class=quiet href="#make-readin">make-readin</a> :file file))
          (dist-env (<a class=quiet href="#make-env">make-env</a> distance-env :duration duration))
          (amp-env (<a class=quiet href="#make-env">make-env</a> amplitude-env :duration duration))
-         (deg-env (<a class=quiet href="#make-env">make-env</a> (scale-envelope degree-env (/ 1.0 90.0)) :duration duration))
+         (deg-env (<a class=quiet href="#make-env">make-env</a> degree-env :scaler (/ 1.0 90.0) :duration duration))
          (dist-scaler 0.0))
     (run
-      (loop for i from beg below end do
-        (let ((rdval (* (<a class=quiet href="#readin">readin</a> rdA) (<a class=quiet href="#env">env</a> amp-env)))
-	      (degval (<a class=quiet href="#env">env</a> deg-env))
-	      (distval (<a class=quiet href="#env">env</a> dist-env)))
-          (set! dist-scaler (/ 1.0 distval))
-          (set! (<em class=red>locsig-ref</em> loc 0) (* (- 1.0 degval) dist-scaler))
-          (if (&gt; (<a class=quiet href="#mus-channels">mus-channels</a> *output*) 1) (set! (<em class=red>locsig-ref</em> loc 1) (* degval dist-scaler)))
-          (when *reverb* (set! (<em class=red>locsig-reverb-ref</em> loc 0) (* reverb-amount (sqrt dist-scaler))))
-          (<em class=red>locsig</em> loc i rdval))))))
+      (lambda ()
+        (do ((i beg (1+ i)))
+            ((= i end))
+          (let ((rdval (* (<a class=quiet href="#readin">readin</a> rdA) (<a class=quiet href="#env">env</a> amp-env)))
+	        (degval (<a class=quiet href="#env">env</a> deg-env))
+	        (distval (<a class=quiet href="#env">env</a> dist-env)))
+            (set! dist-scaler (/ 1.0 distval))
+            (set! (<em class=red>locsig-ref</em> loc 0) (* (- 1.0 degval) dist-scaler))
+            (if (&gt; (<a class=quiet href="#mus-channels">mus-channels</a> *output*) 1)
+                (set! (<em class=red>locsig-ref</em> loc 1) (* degval dist-scaler)))
+            (if *reverb* 
+                (set! (<em class=red>locsig-reverb-ref</em> loc 0) (* reverb-amount (sqrt dist-scaler))))
+            (<em class=red>locsig</em> loc i rdval)))))))
+
+(with-sound (:reverb jc-reverb :channels 2) (space "pistol.snd" 0 3 :distance-env '(0 1 1 2) :degree-env '(0 0 1 90)))
 </pre>
 </td></tr></table>
 
@@ -3252,22 +3229,27 @@ Here is an example of move-locsig:
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> move-osc (start dur freq amp :key (degree 0) (dist 1.0) (reverb 0))
+(<a class=quiet href="#definstrument">definstrument</a> (move-osc start dur freq amp :key (degree 0) (dist 1.0) (reverb 0))
   (let* ((beg (inexact-&gt;exact (floor (* start (<a class=quiet href="#mussrate">mus-srate</a>)))))
          (end (+ beg (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
-         (car (<a class=quiet href="#make-oscil">make-oscil</a> :frequency freq))
-         (loc (<a class=quiet href="#make-locsig">make-locsig</a> :degree degree :distance dist :channels 2))
+         (car (<a class=quiet href="#make-oscil">make-oscil</a> freq))
+         (loc (<a class=quiet href="#make-locsig">make-locsig</a> :degree degree :distance dist :channels 2 :output *output*))
 	 (pan-env (<a class=quiet href="#make-env">make-env</a> '(0 0 1 90) :duration dur)))
     (run
-     (loop for i from beg to end do
-       (let ((ut (* amp (<a class=quiet href="#oscil">oscil</a> car))))
-	 (<em class=red>move-locsig</em> loc (<a class=quiet href="#env">env</a> pan-env) dist)
-         (<a class=quiet href="#locsig">locsig</a> loc i ut))))))
+      (lambda ()
+        (do ((i beg (1+ i)))
+            ((= i end))
+         (let ((ut (* amp (<a class=quiet href="#oscil">oscil</a> car))))
+	   (<em class=red>move-locsig</em> loc (<a class=quiet href="#env">env</a> pan-env) dist)
+           (<a class=quiet href="#locsig">locsig</a> loc i ut)))))))
 </pre>
 </td></tr></table>
-<br>
+<br><br>
 
 
+
+
+<A NAME="move-sounddoc"></A>
 <!-- ---------------------------------------- MOVE-SOUND ---------------------------------------- -->
 
 <br>
@@ -3326,7 +3308,94 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 
 
 <br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><center><h3><A class=def NAME="functions">Useful functions</a></h3></center></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2>Functions</h2></td></tr></table>
+
+<!-- ---------------------------------------- GENERIC FUNCTIONS ---------------------------------------- -->
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3><A class=def NAME="generic-functions">Generic Functions</a></h3></center></td></tr></table>
+
+<p>The generators respond to a set of "generic" functions: mus-frequency, for example, tries to return (or set) a generator's
+frequency, where that makes sense.
+The generic functions are:
+</p>
+
+<table cellspacing=0 cellpadding=0 hspace=40>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-channel">mus-channel</a></td><td width=30 bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">channel being read/written</td></tr>
+<tr><td><a class=def name="mus-channels">mus-channels</a></td><td></td><td>channels open</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-cosines">mus-cosines</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">sinusoids in output</td></tr>
+<tr><td><a class=def name="mus-data">mus-data</a></td><td></td><td>array of data</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-describe">mus-describe</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">description of current state</td></tr>
+<tr><td><a class=def name="mus-feedback">mus-feedback</a></td><td></td><td>feedback coefficient</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-feedforward">mus-feedforward</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">feedforward coefficient</td></tr>
+<tr><td><a class=def name="mus-file-name">mus-file-name</a></td><td></td><td>file being read/written</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-formant-radius">mus-formant-radius</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">width of formant</td></tr>
+<tr><td><a class=def name="mus-frequency">mus-frequency</a></td><td></td><td>frequency (Hz)</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-hop">mus-hop</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">hop size for block processing</td></tr>
+<tr><td><a class=def name="mus-increment">mus-increment</a></td><td></td><td>various increments</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-interp-type">mus-interp-type</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">interpolation type (mus-interp-linear, etc)</td></tr>
+<tr><td><a class=def name="mus-length">mus-length</a></td><td></td><td>data array length</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-location">mus-location</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">sample location for reads/writes</td></tr>
+<tr><td><a class=def name="mus-name">mus-name</a></td><td></td><td>generator name ("oscil")</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-offset">mus-offset</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">envelope offset</td></tr>
+<tr><td><a class=def name="mus-order">mus-order</a></td><td></td><td>filter order</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-phase">mus-phase</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">phase (radians)</td></tr>
+<tr><td><a class=def name="mus-ramp">mus-ramp</a></td><td></td><td>granulate grain envelope ramp setting</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-reset">mus-reset</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">set gen to default starting state</td></tr>
+<tr><td><a class=def name="mus-run">mus-run</a></td><td></td><td>run any generator</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-scaler">mus-scaler</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">scaler, normally on an amplitude</td></tr>
+<tr><td><a class=def name="mus-width">mus-width</a></td><td></td><td>width of interpolation tables, etc</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-xcoeff">mus-xcoeff</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">x (input) coefficient</td></tr>
+<tr><td><a class=def name="mus-xcoeffs">mus-xcoeffs</a></td><td></td><td>array of x (input) coefficients</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-ycoeff">mus-ycoeff</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">y (output, feedback) coefficient</td></tr>
+<tr><td><a class=def name="mus-ycoeffs">mus-ycoeffs</a></td><td></td><td>array of y (feedback) coefficients</td></tr>
+
+</table>
+
+<pre>
+  <a class=def name="musfloatequalfudgefactor">mus-float-equal-fudge-factor</a>     how far apart values can be and still be considered equal
+  <a class=def name="musarrayprintlength">mus-array-print-length</a> ()        how many array (vct) elements to print in mus-describe
+</pre>
+
+
+
+
+<p>Many of these are settable:
+<code>(set! (mus-frequency osc1) 440.0)</code>
+sets osc1's current frequency to (<a class=quiet href="#hztoradians">hz-&gt;radians</a> 440.0). 
+In Scheme, Ruby and Forth, <a class=def name="musgeneratorp">mus-generator?</a> returns #t if its argument is
+a CLM generator.
+</p>
+
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<pre>
+(definstrument backandforth (onset duration file src-ratio)
+  ;; read file forwards and backwards until dur is used up
+  ;; a slightly improved version is 'scratch' in ug1.ins
+  (let* ((last-sample (<a class=quiet href="#sound-frames">sound-frames</a> file))
+         (beg (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) onset))))
+         (end (+ beg (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) duration)))))
+	 (input (<a class=quiet href="#make-readin">make-readin</a> file))
+         (s (<a class=quiet href="#make-src">make-src</a> :srate src-ratio))
+         (cs 0))
+    (run
+     (loop for i from beg below end do
+       (declare (type :integer cs last-sample)
+		(type :float src-ratio))
+       (if (&gt;= cs last-sample) (set! (<em class=red>mus-increment</em> s) (- src-ratio)))
+       (if (&lt;= cs 0) (set! (<em class=red>mus-increment</em> s) src-ratio))
+       (<a class=quiet href="#outa">outa</a> i (<a class=quiet href="#src">src</a> s 0.0 #'(lambda (dir) 
+			      (incf cs dir)
+			      (set! (<em class=red>mus-increment</em> input) dir)
+			      (<a class=quiet href="#readin">readin</a> input))))))))
+
+;;; (with-sound () (backandforth 0 10 "pistol.snd" 2.0))
+</pre>
+</td></tr></table>
+
+<br>
+
+<!-- ---------------------------------------- FUNCTIONS ---------------------------------------- -->
+
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3><A class=def NAME="functions">Useful functions</a></h3></center></td></tr></table>
 
 <p>There are several commonly-used functions, some of which can occur in the run macro. These include
 a few that look for all the world like generators.</p>
@@ -3342,18 +3411,7 @@ a few that look for all the world like generators.</p>
 <tr><td><a class=def name="degreestoradians">degrees-&gt;radians</a><code> degs</code></td><td></td><td>convert degrees to radians</td></tr>
 <tr><td><a class=def name="radianstodegrees">radians-&gt;degrees</a><code> rads</code></td><td></td><td>convert radians to degrees</td></tr>
 <tr><td><a class=def name="clear-array">clear-array</a><code> arr</code></td><td></td><td>set all values in arr to 0.0</td></tr>
-<tr><td><a class=def Name="sound-samples">sound-samples</a><code> filename</code></td><td></td><td>samples of sound according to header (can be incorrect)</td></tr>
-<tr><td><a class=def Name="sound-frames">sound-frames</a><code> filename</code></td><td></td><td>samples per channel</td></tr>
-<tr><td><a class=def Name="sound-datum-size">sound-datum-size</a><code> filename</code></td><td></td><td>bytes per sample</td></tr>
-<tr><td><a class=def Name="sound-data-location">sound-data-location</a><code> filename</code></td><td></td><td>location of first sample (bytes)</td></tr>
-<tr><td><a class=def Name="sound-chans">sound-chans</a><code> filename</code></td><td></td><td>number of channels (samples are interleaved)</td></tr>
-<tr><td><a class=def Name="sound-srate">sound-srate</a><code> filename</code></td><td></td><td>sampling rate</td></tr>
-<tr><td><a class=def Name="sound-header-type">sound-header-type</a><code> filename</code></td><td></td><td>header type (aiff etc)</td></tr>
-<tr><td><a class=def Name="sound-data-format">sound-data-format</a><code> filename</code></td><td></td><td>data format (alaw etc)</td></tr>
-<tr><td><a class=def Name="sound-length">sound-length</a><code> filename</code></td><td></td><td>true file length (for error checks)</td></tr>
-<tr><td><a class=def Name="sound-duration">sound-duration</a><code> filename</code></td><td></td><td>file length in seconds</td></tr>
-<tr><td><a class=def Name="sound-maxamp">sound-maxamp</a><code> name vals</code></td><td></td><td>get max amp vals and times of file name</td></tr>
-<tr><td><a class=def Name="sound-loop-info">sound-loop-info</a><code> name vals</code></td><td></td><td>get loop info of file name in vals (make-integer-array 6)</td></tr>
+<tr><td><a class=def name="mussrate">mus-srate</a></td><td></td><td>srate in with-sound</td></tr>
 </table>
 
 <p>
@@ -3377,21 +3435,8 @@ our wave table size is 2 * pi). This conversion value was named "mag"
 in Mus10 and "in-hz" in CLM-1.  The inverse is radians-&gt;hz.
 </p></blockquote>
 
-<p>These names are different from the underlying sndlib names mostly due
-to confusion and inattention. Nearly all the sndlib constants and functions
-are imported into clm under names that are the same as the C name except
-"_" is replaced by "-". So <b>mus-sound-duration</b> exists,
-and is the same as <b>sound-duration</b> mentioned above.  See <a href="sndlib.html">sndlib.html</a>
-for some info.
-</p>
 
-<pre>
-  (mus-sound-srate (mus-file-name *output*))
-</pre>
-<p>for example, returns the
-current output sampling rate; this is the same as <code>(<a class=quiet href="#mussrate">mus-srate</a>)</code> (in CL) or <code>(<a class=quiet href="#mussrate">mus-srate</a>)</code> (Scheme).
-</p>
-
+<A NAME="polynomialdoc"></A>
 <!-- ---------------------------------------- POLYNOMIAL ---------------------------------------- -->
 <br>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>polynomial</h3></center></td></tr></table>
@@ -3411,6 +3456,7 @@ See also the <a href="#brighten">brighten</a> instrument.
 <br>
 
 
+<A NAME="arrayinterpdoc"></A>
 <!-- ---------------------------------------- ARRAY-INTERP ---------------------------------------- -->
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>array-interp, dot-product, sine-bank</h3></center></td></tr></table>
@@ -3467,6 +3513,7 @@ delay or wave-train. The <i>type</i> is one of the interpolation types (mus-inte
 <br>
 
 
+<A NAME="contrastenhancementdoc"></A>
 <!-- ---------------------------------------- CONTRAST-ENHANCEMENT ---------------------------------------- -->
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>contrast-enhancement</h3></center></td></tr></table>
@@ -3485,16 +3532,12 @@ Waveshaping can provide a similar effect:</p>
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> <A class=def NAME="brighten">brighten</a> (start duration file file-maxamp partials)
   (multiple-value-bind (beg end) (<a class=quiet href="#timestosamples">times-&gt;samples</a> start duration)
-    (let ((fil (<a class=quiet href="#open-input*">open-input*</a> file)))
-      (when fil
-        (unwind-protect
-	  (let ((coeffs (<a class=quiet href="#partialstopolynomial">partials-&gt;polynomial</a> (normalize-partials partials)))
-		(rd (<a class=quiet href="#make-readin">make-readin</a> fil)))
+  (let ((coeffs (<a class=quiet href="#partialstopolynomial">partials-&gt;polynomial</a> (normalize-partials partials)))
+        (rd (<a class=quiet href="#make-readin">make-readin</a> file)))
 	    (run (loop for i from beg below end do
-		   (<a class=quiet href="#outa">outa</a> i (* file-maxamp (<a class=quiet href="#polynomial">polynomial</a> coeffs (/ (<a class=quiet href="#readin">readin</a> rd) file-maxamp)))))))
-	  (<a class=quiet href="#close-input">close-input</a> fil))))))
+		   (<a class=quiet href="#outa">outa</a> i (* file-maxamp (<a class=quiet href="#polynomial">polynomial</a> coeffs (/ (<a class=quiet href="#readin">readin</a> rd) file-maxamp)))))))))
 
-(<a class=quiet href="#with-sound">with-sound</a> () (brighten 0 3 "oboe" .15 '(1 1 3 .5 7 .1)))
+(<a class=quiet href="sndscm.html#withsound">with-sound</a> () (brighten 0 3 "oboe" .15 '(1 1 3 .5 7 .1)))
 </pre>
 </td></tr></table>
 
@@ -3544,6 +3587,7 @@ resulting in a steady modulation, rather than an intensification of just the pea
 <br>
 
 
+<A NAME="amplitudemodulatedoc"></A>
 <!-- ---------------------------------------- AMPLITUDE-MODULATE ---------------------------------------- -->
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>ring-modulate, amplitude-modulate</h3></center></td></tr></table>
@@ -3585,10 +3629,10 @@ But this is exactly what the <a href="#ssb-am">ssb-am</a> generator provides.
 <br>
 
 
+<A NAME="fftdoc"></A>
 <!-- ---------------------------------------- FFT ---------------------------------------- -->
 
-<!-- INDEX fft:Fourier transforms  -->
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><center><h3>FFT (Fourier Transform)</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>FFT (fourier transform)</h3></center></td></tr></table>
 <pre>
   <a class=def Name="fft">fft</a> rdat idat fftsize :optional sign
   <a class=def name="make-fft-window">make-fft-window</a> <a class=quiet href="#optional-key">:optional-key</a> type size (beta 0.0) (alpha 0.0)
@@ -3619,82 +3663,9 @@ with <b>multiply-arrays</b>.  <b>spectrum</b> calls the fft, translates to polar
 then returns the results (in the lower half of "rdat") in dB (<i>norm-type</i> = 0), or linear normalized to 1.0 (<i>norm-type</i> = 1),
 or linear unnormalized (<i>norm-type</i> not 0 or 1). 
 </p>
-<p>The following instrument implements fft overlap-add, but instead
-of scaling the various spectral components to filter a sound, it reverses a portion
-of the spectrum, a distortion that can be effective with speech sounds.</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(<a class=quiet href="#definstrument">definstrument</a> inside-out (beg dur file amp lo hi :optional (fftsize 1024))
-  ;; fft overlap-add (and buffer), but the fft bins between lo and hi are reversed
-  (let ((fil (<a class=quiet href="#open-input*">open-input*</a> file)))
-    (when fil
-      (unwind-protect
-        (let* ((start (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>))))
-               (end (+ start (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))
-               (fdr (make-double-float-array fftsize))
-               (fdi (make-double-float-array fftsize))
-               (wtb (make-double-float-array fftsize))
-               (filptr 0)
-               (fft2 (floor fftsize 2))
-               (fft4 (floor fftsize 4))
-               (ctr fft2)
-               (fftn (/ 1.0 fftsize))
-               (first-time 1)
-               (mid (* .5 (+ hi lo))))
-	  (when (zerop lo) (set! lo 1))
-          (run
-           (loop for i from start below end do
-             (when (= ctr fft2)
-               (<em class=red>clear-array</em> fdr)
-               (<em class=red>clear-array</em> fdi)
-               (dotimes (k fft2)
-                 (set! (aref fdr (+ k fft4)) (* (<a class=quiet href="#ina">ina</a> filptr fil) fftn))
-                 (incf filptr))
-               (<em class=red>fft</em> fdr fdi fftsize 1)
-               (let ((j1 hi) ; now reverse bins between lo and hi
-                     (k0 (- fftsize lo))
-                     (k1 (- fftsize hi)))
-                 (loop for j0 from lo to mid do
-                   (let ((tmprj (aref fdr j0))
-                         (tmprk (aref fdr k0))
-                         (tmpij (aref fdi j0))
-                         (tmpik (aref fdi k0)))
-                     (set! (aref fdr j0) (aref fdr j1))
-                     (set! (aref fdr j1) tmprj)
-                     (set! (aref fdr k0) (aref fdr k1))
-                     (set! (aref fdr k1) tmprk)
-                     (set! (aref fdi j0) (aref fdi j1))
-                     (set! (aref fdi j1) tmpij)
-                     (set! (aref fdi k0) (aref fdi k1))
-                     (set! (aref fdi k1) tmpik)
-                     (incf k1)
-                     (decf k0)
-                     (decf j1))))
-               (<em class=red>fft</em> fdr fdi fftsize -1)
-               (dotimes (k fft2)
-                 (set! (aref wtb k) (aref wtb (+ k fft2)))
-                 (set! (aref wtb (+ k fft2)) 0.0))
-               (if (= first-time 1)
-                   (progn
-                     (dotimes (k fftsize) (set! (aref wtb k) (aref fdr k)))
-                     (set! first-time 0)
-		     (set! ctr fft4))
-                 (progn
-                   (dotimes (k fft2) (incf (aref wtb k) (aref fdr k)))
-                   (dotimes (k fft2) (set! (aref wtb (+ k fft2)) (aref fdr (+ k fft2))))
-		   (set! ctr 0))))
-             (<a class=quiet href="#outa">outa</a> i (* amp (aref wtb ctr)))
-             (incf ctr))))
-        (<a class=quiet href="#close-input">close-input</a> fil)))))
-
-(<a class=quiet href="#with-sound">with-sound</a> () (inside-out 0 1.0 "fyow" 1.0 3 8))
-
-</pre>
-</td></tr></table>
 
 <p>There are many other examples of run-time FFTs: 
-the <a href="#cross-synthesis">cross-synthesis</a> instrument above, 
+the <a href="sndscm.html#crosssynthesis">cross-synthesis</a> instrument above, 
 <a href="san.ins">san.ins</a>,
 and <a href="anoi.ins">anoi.ins</a>.
 </p>
@@ -3710,17 +3681,16 @@ Elsewhere, use <code>:type clm</code> for any such fields (see snd-test.scm for 
 <br>
 
 
+<!-- INDEX definstrument:Instruments -->
+
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a class=def name="definstrument">Definstrument</a></h3></td></tr></table>
 
-<!-- INDEX ins-files:Instruments --><A class=def NAME="ins-files"></a>
-<p><b>definstrument</b> defines an instrument in CLM.
-Its syntax is almost the same as defun; it has a few bizarre options (for miserable
-historical reasons), but they should be resolutely ignored.
-There are a bazillion example instruments included in CLM and Snd.
-The following instruments live in *.ins files in the CLM
-directory (see also the file <a href="ins">ins</a>), and in various
-*.scm, *.rb, and *.fs files in the Snd tarball.
+<p>It's hard to decide what's an "instrument" in this context, but I think I'll treat
+it as something that can be called as a note in a notelist (say in with-sound) and
+generate its own sound.
+Test 23 in snd-test.scm has a with-sound that includes most of these instruments.
 </p>
+
 
 <table border=8 bordercolor="lightgreen" cellpadding=2>
 <tr><th width=120 bgcolor="beige">instrument</th><th bgcolor="beige">function</th><th bgcolor="beige">CL</th><th bgcolor="beige">Scheme</th><th bgcolor="beige">Ruby</th><th bgcolor="beige">Forth</th></tr>
@@ -4241,507 +4211,6 @@ good reason not to write an instrument such as:</p>
 </pre>
 </td></tr></table>
 
-<p>The CLM test instruments have been translated to Scheme/Snd as the Snd file clm23.scm.
-It starts with some notes of differences between the CL and Scheme instruments.
-</p>
-
-<p>If you'd like to mimic the "optional-key" mechanism of the CLM make functions, use <a name="def-optkey-fun">def-optkey-fun</a>.
-(In Scheme, there's also <a href="sndscm.html#defoptkeyinstrument">def-optkey-instrument</a> which provides an optional-key
-form of definstrument).  def-optkey-fun is a macro that can replace defun (or define) -- see mus.lisp for examples.
-</p>
-
-<br>
-<br>
-
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A class=def NAME="note-lists">Note Lists</a></h2></td></tr></table>
-<!-- INDEX note-lists:Note lists  -->
-
-<p>A note list in CLM is any lisp expression that opens an output sound file and calls an instrument.  The simplest way to
-do this is with with-sound or clm-load.
-</p>
-<br>
-
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3>With-sound and clm-load</h3></td></tr></table>
-<pre>
- <a class=def name="with-sound">with-sound</a> :key 
-   ;; "With-sound: check it out!" -- Duane Kuiper, Giants broadcaster after Strawberry homer
-   (output <a href="#*clm-file-name*">*clm-file-name*</a>)        ; name of output sound file ("test.snd" normally)
-   (channels <a href="#*clm-channels*">*clm-channels*</a>)       ; can be any number (defaults to 1, see defaults.lisp)
-   (srate <a href="#*clm-srate*">*clm-srate*</a>)             ; also 'sampling-rate' for backwards compatibility
-   continue-old-file               ; open and continue old output file
-   reverb                          ; name of the reverberator, if any.  The reverb
-                                   ;   is a normal clm instrument (see <a href="nrev.ins">nrev.ins</a>)
-   reverb-data                     ; arguments passed to the reverberator; an unquoted list
-   (reverb-channels *clm-reverb-channels*) ; chans in temp reverb stream (input to reverb)
-   revfile                         ; reverb file name
-   (play *clm-play*)               ; play new sound automatically?
-   (notehook *clm-notehook*)       ; function evaluated on each instrument call
-   (statistics *clm-statistics*)   ; print out various fascinating numbers
-   (decay-time 1.0)                ; ring time of reverb after end of piece
-   comment                         ; comment placed in header (in CL set to :none to squelch comment)
-   info                            ; non-comment header string
-   (header-type <a href="#*clm-header-type*">*clm-header-type*</a>) ; output file type (see also <a href="#header-types">header types</a>)
-   (data-format <a href="#*clm-data-format*">*clm-data-format*</a>) ; output data format (see <a href="#header-types">header types</a>)
-   save-body                       ; if t, copy the body (as a string) into the header
-   scaled-to                       ; if a number, scale results to have that max amp
-   scaled-by                       ; scale output by some number
-   (clipped *clm-clipped*)         ; if t, clip output rather than allowing data to wrap-around
-   (verbose <em class=emdef>*clm-verbose*</em>)         ; some instruments use this to display info during computation
-   (force-recomputation nil)       ; if t, force with-mix calls to recompute
-</pre>
-<p><b>with-sound</b> is a macro that performs all the various services needed to
-produce and play a sound file; it also wraps an unwind-protect around its body to
-make sure that everything is cleaned up properly if you happen to interrupt
-computation; at the end it returns the output file name.  with-sound opens an
-output sound file, evaluates its body (normally a bunch of instrument calls),
-applies reverb, if any, as a second pass, and plays the sound, if desired.
-The sound file's name defaults to "test.snd" or something similar; use the
-<b>output</b> argument to write some other file: 
-</p>
-<pre>
-  (with-sound (:<em class=red>output</em> "new.wave") (fm-violin 0 1 440 .1))
-</pre>
-<p>
-The <b>channels</b>, <b>srate</b>, <b>data-format</b>, and <b>header-type</b> arguments
-set the sound characteristics.  (The default values for these are set in defaults.lisp).
-Reverberation is handled as a second pass through a reverb instrument (nrev.ins for
-example).  The <b>reverb</b> argument sets the choice of reverberator.
-</p>
-<pre>
-  (<a class=quiet href="#with-sound">with-sound</a> (:output "new.snd") (simp 0 1 440 .1))
-  (<a class=quiet href="#with-sound">with-sound</a> (:srate 44100 :channels 2) ...)
-  (<a class=quiet href="#with-sound">with-sound</a> (:reverb jc-reverb) ...)
-  (<a class=quiet href="#with-sound">with-sound</a> (:reverb nrev :reverb-data (:reverb-factor 1.2 :lp-coeff .95))...)
-</pre>
-<p>With-sound can be called within itself, so you can make an output sound file
-for each section of a piece as well as the whole thing, all in one run.  Since it is the basis of <a href="#mix-and-with-mix">with-mix</a> and
-<a href="#sound-let">sound-let</a>, all of these can be nested indefinitely:</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(<a class=quiet href="#with-sound">with-sound</a> () 
-  (mix (<a class=quiet href="#with-sound">with-sound</a> (:output "hiho.snd") 
-            (fm-violin 0 1 440 .1))
-          :amplitude .5))
-
-(<a class=quiet href="#with-sound">with-sound</a> ()
-  (<a class=quiet href="#with-mix">with-mix</a> () "s1" 0
-    (<a class=quiet href="#sound-let">sound-let</a> ((tmp ()
-                  (fm-violin 0 1 440 .1)))
-      (mix tmp))))
-
-(<a class=quiet href="#with-sound">with-sound</a> (:verbose t)
-  (<a class=quiet href="#with-mix">with-mix</a> () "s6" 0
-    (<a class=quiet href="#sound-let">sound-let</a> ((tmp ()
-                  (fm-violin 0 1 440 .1))
-                (tmp1 (:reverb nrev)
-                  (mix "oboe.snd")))
-      (mix tmp1)
-      (mix tmp :amplitude .2 :output-frame (<a class=quiet href="#mussrate">mus-srate</a>)))
-    (fm-violin .5 .1 330 .1)))
-
-(<a class=quiet href="#with-sound">with-sound</a> (:verbose t)
-  (<a class=quiet href="#sound-let">sound-let</a> ((tmp ()
-                (<a class=quiet href="#with-mix">with-mix</a> () "s7" 0
-                  (<a class=quiet href="#sound-let">sound-let</a> ((tmp ()
-                                (fm-violin 0 1 440 .1))
-                              (tmp1 ()
-                                (mix "oboe.snd")))
-                   (mix tmp1)
-                   (mix tmp :output-frame (<a class=quiet href="#mussrate">mus-srate</a>)))
-                 (fm-violin .5 .1 330 .1))))
-    (mix tmp :amplitude .5)))
-
-</pre>
-</td></tr></table>
-
-<p>You can call with-sound within an instrument:</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(<a class=quiet href="#definstrument">definstrument</a> msnd (beg dur freq amp)
-  (let ((os (<a class=quiet href="#make-oscil">make-oscil</a> freq)))
-    (run
-     (loop for i from beg below (+ beg dur) do
-       (<a class=quiet href="#outa">outa</a> i (* amp (<a class=quiet href="#oscil">oscil</a> os)))))))
-
-(<a class=quiet href="#definstrument">definstrument</a> call-msnd (beg dur sr amp)
-  (let* ((temp-file (<a class=quiet href="#with-sound">with-sound</a> (:output "temp.snd") (msnd 0 dur 440.0 .1)))
-	 (tfile (<a class=quiet href="#open-input">open-input</a> temp-file))
-	 (reader (<a class=quiet href="#make-src">make-src</a> :input tfile :srate sr))
-	 (new-dur (/ dur sr)))
-    (run
-     (loop for i from beg below (+ beg new-dur) do
-       (<a class=quiet href="#outa">outa</a> i (* amp (<a class=quiet href="#src">src</a> reader)))))
-    (<a class=quiet href="#close-input">close-input</a> tfile)
-    (delete-file temp-file)))
-</pre>
-</td></tr></table>
-
-<p>In Scheme, with-sound can write its output to a vct or sound-data object:
-</p>
-<pre>
-    (with-sound (:output (make-vct 22050)) (fm-violin 0 1 440 .1))
-</pre>
-<p>
-and there's no real limitation on what sorts of functions can be used to generate the
-with-sound output:
-</p>
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(with-sound () 
-  (let ((incr 0.0) 
-        (ang 0.0))
-    (do ((i 0 (1+ i)))
-        ((= i 44100))
-      (let ((val (* .3 (sin ang))))
-        (set! ang (+ ang incr))
-        (set! incr (+ incr .0003))
-        (outa i val *output*)))))
-</pre>
-</td></tr></table>
-
-<p>
-Besides :channels, :reverb, and :srate, the most useful options are :scaled-to and
-:statistics.
-<i>statistics</i>, if t, causes clm
-to keep track of a variety of interesting things and print them out at the end
-of the computation.  <i>scaled-to</i> tells clm to make sure the final output
-file has a maxamp of whatever the argument is to :scaled-to -- that is,</p>
-<pre>
-(<a class=quiet href="#with-sound">with-sound</a> (:scaled-to .5) 
-  (dotimes (i 32) (mix "oboe.snd" :output-frame (* i (<a class=quiet href="#mussrate">mus-srate</a>)))))
-</pre>
-<p>will produce test.snd with a maxamp of .5, no matter how loud the intermediate
-mix actually is.
-Similarly, the <i>scaled-by</i> argument causes all the output to
-be scaled (in amplitude) by its value.</p>
-<pre>
-(<a class=quiet href="#with-sound">with-sound</a> (:scaled-by 2.0) (fm-violin 0 1 440 .1)) 
-</pre>
-<p>produces a note that is .2 in amplitude.
-</p>
-
-<p>If <i>revfile</i> is specfied, but not <i>reverb</i>, the reverb stream is
-written to revfile, but not mixed with the direct signal in any way. 
-Normally the reverb output is not deleted by with-sound; you can set
-<b>*clm-delete-reverb*</b> to t to have it deleted automatically.
-</p>
-<p>
-The macro <b>scaled-by</b> scales its body by
-its first argument (much like <a href="#with-offset">with-offset</a>):</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(<a class=quiet href="#with-sound">with-sound</a> () 
-  (fm-violin 0 1 440 .1)
-  (scaled-by 2.0
-    (fm-violin 0 .25 660 .1)) ; actual amp is .2
-  (fm-violin .5 440 .1))
-</pre>
-</td></tr></table>
-
-<p>There is also the parallel macro <b>scaled-to</b>.
-These are built on the macro <em class=emdef>with-current-sound</em>
-which sets up an embedded with-sound call with all the current with-sound arguments in place
-except output, comment, scaled-to, and scaled-by.</p>
-
-<p>Other with-sound options that might need explanation are :notehook and :continue-old-file.</p>
-
-<p><a Name="notehook">Notehook</a> declares a function that is evaluated each time any instrument is called.
-The arguments passed to the notehook function are the current instrument name (a string) and all its
-arguments.  The following prints out the instrument arguments for any
-calls on simp that are encountered:</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(<a class=quiet href="#with-sound">with-sound</a> (<em class=red>:notehook</em>
-              #'(lambda (name :rest args) 
-		  (when (string-equal name "simp")
-	            (print (format nil "(simp ~{~A ~})" args))
-                    (force-output))))
-  (simp 0 1 440 .1)
-  (toot .5 .5 660 .2))
-</pre>
-</td></tr></table>
-
-<p>If the notehook function returns :done, the instrument exits immediately.
-</p>
-
-<p><i>Continue-old-file</i>, if t, re-opens a previously existing file
-for further processing.  Normally with-sound clobbers any existing file
-of the same name as the output file (see <i>output</i> above).  By using
-<i>continue-old-file</i>, you can both add new stuff to an existing file, or
-(by subtracting) delete old stuff to any degree of selectivity.  When you erase
-a previous note, remember that the subtraction has to be exact; you have
-to create exactly the same note again, then subtract it.  By the same token,
-you can make a selected portion louder or softer by adding or subtracting a
-scaled version of the original.  
-The option <i>data-format</i> underlies :scaled-to.
-CLM can read and write sound data in all the currently popular formats,
-leaving aside proprietary compression schemes.  The names used in
-:data-format can be found in <a href="initmus.lisp">initmus.lisp</a>,
-along with the headers CLM knows about.</p>
-
-<p>You can make your own specialized versions of with-sound:
-</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(defmacro with-my-sound ((:rest args) body)
-  `(let ((filename (<a class=quiet href="#with-sound">with-sound</a> ,args ,.body)))
-     ;; any post-processing you like here
-     filename))
-</pre>
-</td></tr></table>
- 
-<p><a class=def Name="clm-load">clm-load</a> is the same as with-sound, but its first argument is the name
-of a file containing clm instrument calls (i.e. the body of
-with-sound), the reverb argument is the name of the reverb function,
-and the reverb-data argument is the list; that is, clm-load's arguments
-look like normal lisp, whereas with-sound's are unquoted in these two cases.</p>
-<pre>
-  (<a class=quiet href="#with-sound">with-sound</a> (:reverb jc-reverb :reverb-data (:volume .3)) ...)
-  (<a class=quiet href="#clm-load">clm-load</a> "test.clm" :reverb 'jc-reverb :reverb-data '(<a class=quiet href="#volume">volume</a> .3))
-</pre>
-
-<p>The with-sound output is normally sent to the speakers via the <b>play</b> function.
-There are several associated functions:</p>
-<pre>
-  <em class=emdef>play</em> :optional file start end wait
-  <a class=def Name="dac">dac</a> :optional file start end wait
-  <a class=def Name="sldac">sl-dac</a> file :optional (output-device mus-audio-default)
-  <em class=emdef>stop-playing</em>
-  <a class=def Name="stop-dac">stop-dac</a>
-  <a class=def Name="volume">volume</a> :optional (device mus-audio-default) channel
-</pre>
-<p><b>play</b> (or <b>dac</b>) starts playing <i>file</i> (or the last file played, if no
-argument is given); in some cases (MCL and ACL) it then returns to the lisp listener;
-to interrupt the dac in those cases, use <b>stop-playing</b> (or <b>stop-dac</b>).  To set the speaker volume
-(set! (<em class=red>volume</em>) 1.0).  Similarly (<em class=red>volume</em>)
-returns the current volume settings.
-Currently, <b>play</b> calls the sndplay program if possible; <b>sl-dac</b> is
-the same thing, but calls the sl_dac function.  The latter gives you control over the
-output device (sndplay will also someday).  In some cases, sndplay's default buffer
-size is not ideal; you can use <a href="#*clm-player*">*clm-player*</a> and sndplay's bufsize argument to
-set it to the correct value for your audio system. play's <i>start</i> and <i>end</i> arguments are in seconds,
-and default to playing the entire sound.  The <i>wait</i> argument in some cases causes
-the play call to wait until the complete sound has been played before returning to the listener.
-</p>
-
-<p>In both Scheme and CL, the *clm-* variables (like *clm-srate*) set the default values.
-In CL the corresponding un-clm'd versions ((<a class=quiet href="#mussrate">mus-srate</a>)) hold the current values.  So, if
-with-sound doesn't include the :srate argument, (<a class=quiet href="#mussrate">mus-srate</a>) is the same as *clm-srate*;
-otherwise it reflects the :srate value for the duration of the with-sound call.
-The local variables (in CL) that are currently exported are:
-(<a class=quiet href="#mussrate">mus-srate</a>), *safety*, and *debug*.  Unexported, but available in the clm package
-are *channels*, *data-format*, *header-type*, *notehook*, *clipped*, *verbose*,
-and *statistics*.  
-
-</p>
-<pre>
-  <a class=def name="formantbank">formant-bank</a> (scls gens inval)
-  <a class=def name="musfloatequalfudgefactor">mus-float-equal-fudge-factor</a>     how far apart values can be and still be considered equal
-  <a class=def name="musarrayprintlength">mus-array-print-length</a> ()        how many array (vct) elements to print in mus-describe
-  <a class=def name="musfilebuffersize">mus-file-buffer-size</a> ()          size of input/ouput buffers (default 8192)
-  <a class=def name="makefircoeffs">make-fir-coeffs</a> (order spectr)
-  <a class=def name="mussrate">mus-srate</a> ()                     current sampling rate
-</pre>
-<br>
-
-
-<!-- INDEX mix-and-with-mix:Checkpoints -->
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="mix-and-with-mix">With-mix</a></h3></td></tr></table>
-<pre>
-  <a class=def name="with-mix">with-mix</a> options file begin &amp;body body
-</pre>
-<p><i>With-mix</i> is a macro, callable within <a href="#with-sound">with-sound</a> or <a href="#clm-load">clm-load</a>,
-which saves the computation in its body in a separate file named <i>file</i>
-(without the .snd extension), and can tell when that file's data is up to date
-and does not need to be recomputed.
-</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(<a class=quiet href="#with-sound">with-sound</a> () 
-  (fm-violin 0 .1 440 .1)
-  (<em class=red>with-mix</em> () "sec1" .5 
-    (fm-violin 0 .1 550 .1)
-    (fm-violin .1 .1 660 .1))
-  (<em class=red>with-mix</em> (:reverb jc-reverb) "sec2" 1.0
-    (fm-violin 0 .1 880 .1 :reverb-amount .2)
-    (fm-violin .1 .1 1320 .1 :reverb-amount .2))
-  (fm-violin 2 .1 220 .1)
-  (<em class=red>mix</em> "/zap/slow.snd"))
-</pre>
-</td></tr></table>
-
-<p>Now, if we change just the first note in the with-mix call, the
-second with-mix section will not be recomputed, but will be mixed in from the
-saved file "sec2.snd".  By surrounding stable sections of a piece with calls on
-mix or with-mix, you can save a huge amount of time that would
-otherwise be spent waiting for these notes to be recomputed.  This check-point
-or makefile capability is built on <a href="#open-input">open-input</a>.</p>
-
-<blockquote>
-<small>
-With-mix performs a string comparison of its body to decide whether
-it needs to recompute its note calls.  It then loads that body from
-a separate saved file.  This can be confusing if global variables
-are present.
-<pre>
-  &gt; USER(2): (let ((rstr .1)) (<a class=quiet href="#with-sound">with-sound</a> () (<a class=quiet href="#with-mix">with-mix</a> () "sec" 0 (fm-violin 0 1 440 rstr))))
-  &gt; ; Loading /zap/sec.clm
-  &gt; Error: Attempt to take the value of the unbound variable `RSTR'.
-</pre>
-Here the code evaluated is basically
-<code>
-(let ((rstr .1)) (load "/zap/sec.clm"))
-</code>
-where rstr has lexical scope.  To make rstr visible within the load,
-<pre>
-  (let ((rstr1 .1)) 
-    (declare (special rstr1))
-    (<a class=quiet href="#with-sound">with-sound</a> () (<a class=quiet href="#with-mix">with-mix</a> () "sec" 0 (fm-violin 0 1 440 rstr1))))
-</pre>
-but if you then evaluate the same form again, changing rstr1 to (say) .5,
-with-mix does not notice that rstr1's value has changed, so
-it does not recompute its body, leaving the resultant amplitude at .1.
-</small>
-</blockquote>
-
-<p>The fastest way to mix sound files is with <b>mix</b>:</p>
-<pre>
-  <a class=def Name="mix">mix</a> :optional-key filename (input-frame 0) (output-frame 0) frames output
-</pre>
-
-<p>In Snd, use mus-mix:
-</p>
-<pre>
-  <a class=def name="musmix">mus-mix</a> (outfile infile (outloc 0) frames (inloc 0) mixer envs)
-</pre>
-<p>
-<b>mus-mix</b> mixes <i>infile</i> into <i>outfile</i> starting at <i>outloc</i> in <i>outfile</i> and <i>inloc</i> in <i>infile</i>
-mixing <i>frames</i> frames of <i>infile</i>.  <i>frames</i> defaults to the length of <i>infile</i>. If <i>mixer</i>,
-use it to scale the various channels; if <i>envs</i> (an array of envelope generators), use
-it in conjunction with <i>mixer</i>to scale/envelope all the various ins and outs.
-<i>outfile</i> can be a frame-&gt;file generator, and <i>infile</i> can be a file-&gt;frame generator.
-</p>
-
-
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a name="sound-let">Sound-let</a></h3></td></tr></table>
-
-<p><b>sound-let</b> is a form of <i>let*</i> that creates temporary sound streams
-within with-sound.  Its syntax is like that of <i>let</i> and
-with-sound:</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(<em class=red>sound-let</em> ((temp-1 () (fm-violin 0 1 440 .1))
-            (temp-2 () (fm-violin 0 2 660 .1)
-                       (fm-violin .125 .5 880 .1)))
-  (granulate-sound temp-1 0 2 0 2);temp-1's value is the name of the temp file
-  (granulate-sound temp-2 1 1 0 2))
-</pre>
-</td></tr></table>
-
-<p>This creates two temporary files and passes them along to the subsequent calls
-on granulate-sound.  The first list after the sound file identifier (i.e. after
-"temp-1" in the example) is the list of <a href="#with-sound">with-sound</a> options to be passed
-along when creating this temporary file.  These default to :output
-with a unique name generated internally, and all other variables are taken from
-the overall (enclosing) output file.  The rest of the list is the body of the
-associated <a href="#with-sound">with-sound</a>, which can contain embedded sound-lets.
-The difference between sound-let and a simple embedded with-sound is primarily that
-sound-let names and later deletes the temporary files it creates, whereas with-sound leaves
-its explicitly named output intact.
-</p>
-<br>
-
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>CLM Defaults</h3></td></tr></table>
-<p>These are set in defaults.lisp. Generally, the default value is *clm-&lt;var&gt;, and the
-current dynamic value of that variable is *&lt;var&gt;*.
-</p>
-
-<table border=0 cellpadding=0 cellspacing=0 hspace=40>
-<tr><td width=200><a class=def Name="*clm-array-print-length*">*clm-array-print-length*</a></td><td>number of IO data buffer elements printed</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def Name="*clm-channels*">*clm-channels*</a></td><td bgcolor="#f6f8ff">default output channels (1)</td></tr>
-<tr><td><a class=def Name="*clm-clipped*">*clm-clipped*</a></td><td>default for clipped arg in with-sound</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def Name="*clm-dac-wait-default*">*clm-dac-wait-default*</a></td><td bgcolor="#f6f8ff">default choice of whether play function should wait for completion</td></tr>
-<tr><td><a class=def Name="*clm-data-format*">*clm-data-format*</a></td><td>default output sound file data format</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def Name="*clm-date*">*clm-date*</a></td><td bgcolor="#f6f8ff">creation date of the current version</td></tr>
-<tr><td><a class=def Name="*clm-delete-reverb*">*clm-delete-reverb*</a></td><td>should with-sound delete the temporary reverb output (default nil)</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def Name="*clm-file-buffer-size*">*clm-file-buffer-size*</a></td><td bgcolor="#f6f8ff">IO buffer sizes (in samples)</td></tr>
-<tr><td><a class=def Name="*clm-file-name*">*clm-file-name*</a></td><td>default sound file name</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def Name="*clm-header-type*">*clm-header-type*</a></td><td bgcolor="#f6f8ff">default output sound file header type</td></tr>
-<tr><td><a class=def Name="*clm-init*">*clm-init*</a></td><td>name of site-specific initializations (see <a href="#clm-init.lisp">clm-init.lisp</a>)</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def Name="*clm-instruments*">*clm-instruments*</a></td><td bgcolor="#f6f8ff">list of the currently loaded clm instruments</td></tr>
-<tr><td><a class=def Name="*clm-locsig-type*">*clm-locsig-type*</a></td><td>locsig interpolation choice (<b>mus-interp-linear</b> or <b>mus-interp-sinusoidal</b>)</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def Name="*clm-news*">*clm-news*</a></td><td bgcolor="#f6f8ff">brief list of recent changes (HISTORY.clm)</td></tr>
-<tr><td><a class=def Name="*clm-notehook*">*clm-notehook*</a></td><td>default for notehook arg in with-sound</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def Name="*clm-play*">*clm-play*</a></td><td bgcolor="#f6f8ff">default for play arg in with-sound</td></tr>
-<tr><td><a class=def Name="*clm-player*">*clm-player*</a></td><td>user-supplied DAC function</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def Name="*clm-reverb-channels*">*clm-reverb-channels*</a></td><td bgcolor="#f6f8ff">reverb stream chans in with-sound</td></tr>
-<tr><td><a class=def Name="*clm-safety*">*clm-safety*</a></td><td>default safety setting (run loop debugging choices)</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def Name="*clm-search-list*">*clm-search-list*</a></td><td bgcolor="#f6f8ff">pathname list for file searches (open-input*)</td></tr>
-<tr><td><a class=def Name="*clm-srate*">*clm-srate*</a></td><td>default sampling rate (22050)</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def Name="*clm-statistics*">*clm-statistics*</a></td><td bgcolor="#f6f8ff">default statistics arg in with-sound</td></tr>
-<tr><td><a class=def Name="*clm-table-size*">*clm-table-size*</a></td><td>default table-lookup table size (in Scheme, the associated function is <b>clm-table-size</b>)</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def Name="*clm-tempfile-data-format*">*clm-tempfile-data-format*</a></td><td bgcolor="#f6f8ff">intermediate with-sound file data format</td></tr>
-<tr><td><a class=def Name="*clm-tempfile-header-type*">*clm-tempfile-header-type*</a></td><td>intermediate with-sound file header type</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def Name="*clm-version*">*clm-version*</a></td><td bgcolor="#f6f8ff">version identifier (a number -- also *clm-revision*)</td></tr>
-<tr><td><a class=def Name="*output*">*output*</a></td><td>current output stream (for outa and friends)</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def Name="*reverb*">*reverb*</a></td><td bgcolor="#f6f8ff">current reverb stream</td></tr>
-</table>
-
-<p><b>*clm-player*</b> can be used to override CLM's normal play routine (which
-calls sndplay in most cases); say we want to send the sound
-to an ADAT output:</p>
-<pre>
-(set! *clm-player* (lambda (name) (<a class=quiet href="#sldac">sl-dac</a> name mus-audio-adat-out)))
-</pre>
-or change the sndplay buffer size:
-<pre>
-(set! *clm-player* (lambda (name) (clm::run-in-shell "sndplay" (format nil "~A -bufsize 1024" name))))
-</pre>
-
-<p>On machines with plenty of memory and slow disks, you can speed up CLM
-computations by setting <b>*clm-file-buffer-size*</b> to some number larger
-than its default (65536).  On ccrma's PC's running Linux
-with IDE drives and 64MBytes of RAM, CLM runs as much as 50% faster
-if you use:</p>
-<pre>
-  (let ((*clm-file-buffer-size* (* 1024 1024))) (<a class=quiet href="#with-sound">with-sound</a> ...) <!-- ) -->
-</pre>
-
-<p>The macro <a class=def Name="with-offset">with-offset</a> can be used to set local
-begin time offsets.  Its argument is in seconds:</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(<a class=quiet href="#with-sound">with-sound</a> () 
-  (fm-violin 0 1 440 .1)
-  (<em class=red>with-offset</em> 1.0
-    (fm-violin 0 .25 660 .1)) ; actually starts at 1.0
-  (fm-violin .5 440 .1))
-</pre>
-</td></tr></table>
-<br>
-<br>
-
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3>CLM examples and whatnot</h3></td></tr></table>
-<p>The file <a href="files">files</a> describes briefly each of the files in the clm
-directory;  <a href="clm-example.lisp">clm-example.lisp</a> shows one way to write notelists;  
-<a href="cm-clm.lisp">cm-clm.lisp</a> is
-a brief example of using Rick Taube's Common Music to drive CLM.  There are several
-*.clm files included in the clm distribution.  clm-test.lisp runs my standard
-set of regression tests, exercising many of the instruments. <a href="pitches.cl">pitches.cl</a>
-provides the standard pitch names as lisp variables (a4 = 440.0 and so on).
-</p>
-<br>
-
-
-
 
 
 <br><br>
@@ -4755,6 +4224,7 @@ provides the standard pitch names as lisp variables (a4 = 440.0 and so on).
 <td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
 <td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
 <td><small><a href="fm.html" onmouseover="return escape('introduction to frequency modulation')">fm.html</a></small></td>
+<td><small><a href="index.html" onmouseover="return escape('this is an actual index, not some introductory file')">index.html</a></small></td>
 </tr></table>
 </center>
 

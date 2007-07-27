@@ -150,7 +150,7 @@ copy transform data: <a href="extsnd.html#transformtovct">transform-&gt;vct</a><
 copy sound-data: <a href="extsnd.html#sounddatatovct">sound-data-&gt;vct</a><br>
 copy a frame: <a href="sndscm.html#framecopy">frame-copy</a>, <a href="sndscm.html#frametovct">frame-&gt;vct</a><br>
 copy vector: <a href="extsnd.html#vectortovct">vector-&gt;vct</a><br>
-copy random state: Guile: copy-random-state, or use <a href="sndclm.html#mus-set-rand-seed">mus-rand-seed</a><br>
+copy random state: Guile: copy-random-state, or use <a href="sndclm.html#mus-rand-seed">mus-rand-seed</a><br>
 <br>
 </small></blockquote>
 </td></tr></table>
@@ -264,7 +264,7 @@ apply function to spectrum, inverse fft: <a href="sndscm.html#filterfft">filter-
 <blockquote><small>
 <br>
 filter a sound: <a href="extsnd.html#filtersound">filter-sound</a>, <a href="extsnd.html#filterchannel">filter-channel</a>, and <a href="extsnd.html#clmchannel">clm-channel</a><br>
-CLM filter generators: <a href="sndclm.html#filters">filter, one-pole, formant, comb, notch, all-pass, etc</a><br>
+CLM filter generators: <a href="sndclm.html#filterdoc">filter, one-pole, formant, comb, notch, all-pass, etc</a><br>
 lowpass filter: make-lowpass in dsp.scm<br>
 highpass filter: make-highpass in dsp.scm<br>
 bandpass filter: make-bandpass in dsp.scm<br>
@@ -350,7 +350,6 @@ Region maxamp: <a href="extsnd.html#regionmaxamp">region-maxamp</a><br>
 Selection maxamp: <a href="extsnd.html#selectionmaxamp">selection-maxamp</a><br>
 Sound data object maxamp: <a href="extsnd.html#sounddatamaxamp">sound-data-maxamp</a><br>
 Vct maxamp: <a href="extsnd.html#vctpeak">vct-peak</a><br>
-CLM's sound maxamp: <a href="sndclm.html#sound-maxamp">sound-maxamp</a> (same as mus-sound-maxamp)<br>
 To set the y axis bounds to reflect the channel's maxamp: <a href="extsnd.html#ybounds">y-bounds</a><br>
 Mix maxamp: <a href="sndscm.html#mixmaxamp">mix-maxamp</a><br>
 maxamp locations: <a href="extsnd.html#maxampposition">maxamp-position</a>, <a href="extsnd.html#regionmaxampposition">region-maxamp-position</a>, <a href="extsnd.html#selectionmaxampposition">selection-maxamp-position</a>
@@ -422,7 +421,7 @@ play an external file: (play "file")<br>
 <table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Random numbers</th><tr><td>
 <blockquote><small>
 <br>
-generators, arbitrary distributions, fractals, 1/f: <a href="sndclm.html#randomnumbers">rand and rand-interp</a><br>
+generators, arbitrary distributions, fractals, 1/f: <a href="sndclm.html#randdoc">rand and rand-interp</a><br>
 dithering: <a href="sndscm.html#ditherchannel">dither-channel</a>, <a href="sndscm.html#dithersound">dither-sound</a><br>
 noise-making instrument: <a href="sndscm.html#noisedoc">noise.scm, noise.rb</a><br>
 physical modeling of noisy instruments: <a href="sndscm.html#maracadoc">maraca.scm</a><br>
@@ -430,12 +429,8 @@ arbitrary distribution via rejection method: <a href="sndscm.html#anyrandom">any
 CL: random, *random-state*, make-random-state*: random number between 0 and arg, arg can't be 0!<br>
 Guile: random, *random-state*, seed-&gt;random-state: random number between 0 and arg, arg can't be 0!<br>
 Ruby: kernel_rand (alias for Ruby's rand), srand: random integer between 0 and arg, or float between 0 and 1<br>
-CLM (all versions): <a href="sndclm.html#mus-random">mus-random, mus_random</a>: random float between -arg and arg<br>
-CLM (CL): <a href="sndclm.html#clm-random">clm-random</a>: random float between 0.0 and arg<br>
-CLM (C): mus_irandom: random int between 0 and arg<br>
-CLM (C): mus_frandom: random float between 0.0 and arg<br>
-CLM (CL): <a href="sndclm.html#mus-set-rand-seed">mus-set-rand-seed</a><br>
-CLM (Scheme): mus-rand-seed (settable)<br>
+<a href="sndclm.html#mus-random">mus-random, mus_random</a>: random float between -arg and arg<br>
+mus-rand-seed (settable)<br>
 bounded brownian noise: <a href="sndscm.html#greendoc">green.scm</a><br>
 <br>
 </small></blockquote>

@@ -1212,74 +1212,8 @@ you're reading and writing a temp file, calling the instruments within with-soun
 The special generator snd-&gt;sample provides a way to redirect
 the CLM input handlers (<a class=quiet href="sndclm.html#in-any">in-any</a> in particular) to a Snd sound (via its index).
 </p>
-<br>
-
-
-<!-- INDEX sndinstruments:Instruments -->
-<table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndinstruments">Instruments</a></h4></td></tr></table>
-
-<p>It's hard to decide what's an "instrument" in this context, but I think I'll treat
-it as something that can be called as a note in a notelist (say in with-sound) and
-generate its own sound.
-Test 23 in snd-test.scm has a with-sound that includes most of these instruments.
-</p>
-<TABLE border=0 cellpadding=6 hspace=20><tr><td>
-<table border=0 cellpadding=0 cellspacing=4>
-<tr><th bgcolor="beige">Instrument</th><th bgcolor="beige">Sources</th><th bgcolor="beige">Description</th></tr>
-<tr><td>anoi</td><td>clm-ins.scm, clm-ins.rb</td><td>noise reduction based on P Cook's Scrubber.m</td></tr>
-<tr><td bgcolor="#f6f8ff">attract</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">James McCarthy's chaotic brass</td></tr>
-<tr><td>bes-fm</td><td>clm-ins.scm</td><td>FM analog using Bessel j1 rather than sin</td></tr>
-<tr><td bgcolor="#f6f8ff">bigbird</td><td bgcolor="#f6f8ff">bird.scm, bird.rb</td><td bgcolor="#f6f8ff">more bird songs</td></tr>
-<tr><td>bird</td><td>bird.scm, bird.rb</td><td>bird songs</td></tr>
-<tr><td bgcolor="#f6f8ff">bow</td><td bgcolor="#f6f8ff">strad.scm, strad.rb</td><td bgcolor="#f6f8ff">bowed string physical model (Juan Reyes, Michael Scholz)</td></tr>
-<tr><td>bowstr</td><td>prc95.scm, prc95.rb</td><td>bowed string physical model</td></tr>
-<tr><td bgcolor="#f6f8ff">brass</td><td bgcolor="#f6f8ff">prc95.scm</td><td bgcolor="#f6f8ff">brass physical model</td></tr>
-<tr><td>cellon</td><td>clm-ins.scm, clm-ins.rb</td><td>S Krupowicz's feedback FM</td></tr>
-<tr><td bgcolor="#f6f8ff">chain-dsps</td><td bgcolor="#f6f8ff">examp.scm</td><td bgcolor="#f6f8ff">instrument gets gen patch from its args</td></tr>
-<tr><td>clarinet</td><td>prc95.scm</td><td>clarinet physical model</td></tr>
-<tr><td bgcolor="#f6f8ff">drone, canter</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">Peter Common's bagpipe</td></tr>
-<tr><td>exp-snd</td><td>clm-ins.scm, clm-ins.rb</td><td>granulate to the max</td></tr>
-<tr><td bgcolor="#f6f8ff">expfil</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">granular synthesis interleaving two files</td></tr>
-<tr><td>flute</td><td>prc95.scm, clm-ins.rb</td><td>flute physical model</td></tr>
-<tr><td bgcolor="#f6f8ff">fm-bell</td><td bgcolor="#f6f8ff">clm-ins.scm, examp.rb</td><td bgcolor="#f6f8ff">Mike McNabb's FM bell</td></tr>
-<tr><td>fm-drum</td><td>clm-ins.scm, clm-ins.rb</td><td>Jan Mattox's FM dum</td></tr>
-<tr><td bgcolor="#f6f8ff">fm-insect</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">FM insect (katydid)</td></tr>
-<tr><td>fm-noise</td><td>noise.scm, noise.rb</td><td>noise maker</td></tr>
-<tr><td bgcolor="#f6f8ff">fm-trumpet</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">Dexter Morrill's FM trumpet</td></tr>
-<tr><td>fm-violin</td><td>v.scm, v.rb, fmv.scm, sndscm.html</td><td>violin-like sounds via FM</td></tr>
-<tr><td bgcolor="#f6f8ff">fofins</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">FOF synthesis</td></tr>
-<tr><td>fullmix</td><td>clm-ins.scm</td><td>complicated mixer</td></tr>
-<tr><td bgcolor="#f6f8ff">freeverb</td><td bgcolor="#f6f8ff">freeverb.scm, freeverb.rb</td><td bgcolor="#f6f8ff">a reverberator</td></tr>
-<tr><td>gong</td><td>clm-ins.scm, clm-ins.rb</td><td>Paul Weineke's FM gong</td></tr>
-<tr><td bgcolor="#f6f8ff">gran-synth</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">simple granular synthesis</td></tr>
-<tr><td>graphEq</td><td>clm-ins.scm, clm-ins.rb</td><td>Marco Trevisani's semi-graphical equalizer</td></tr>
-<tr><td bgcolor="#f6f8ff">jc-reverb</td><td bgcolor="#f6f8ff">jcrev.scm, examp.rb</td><td bgcolor="#f6f8ff">Chowning's old reverb</td></tr>
-<tr><td>jl-reverb</td><td>clm-ins.scm, clm-ins.rb</td><td>cavernous version of jc-reverb</td></tr>
-<tr><td bgcolor="#f6f8ff">lbj-piano</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">additive synthesis piano (Doug Fulton)</td></tr>
-<tr><td>maraca, big-maraca</td><td>maraca.scm, maraca.rb</td><td>Perry Cook's maraca physical model</td></tr>
-<tr><td bgcolor="#f6f8ff">metal</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">more FM by Perry</td></tr>
-<tr><td>nrev</td><td>clm-ins.scm, clm-ins.rb</td><td>Mike McNabb's reverb</td></tr>
-<tr><td bgcolor="#f6f8ff">p</td><td bgcolor="#f6f8ff">piano.scm, piano.rb</td><td bgcolor="#f6f8ff">Scott van Duyne's piano physical model</td></tr>
-<tr><td>pins</td><td>clm-ins.scm, clm-ins.rb</td><td>Xavier Serra SMS-style spectral modeling</td></tr>
-<tr><td bgcolor="#f6f8ff">pluck</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">David Jaffe's Karplus-Strong (physical model) plucked string</td></tr>
-<tr><td>plucky</td><td>prc95.scm</td><td>plucked string physical model</td></tr>
-<tr><td bgcolor="#f6f8ff">pqw-vox</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">vocal sounds from phase-quadrature waveshaping</td></tr>
-<tr><td>pqw</td><td>clm-ins.scm, clm-ins.rb</td><td>phase-quadrature waveshaping</td></tr>
-<tr><td bgcolor="#f6f8ff">resflt</td><td bgcolor="#f6f8ff">clm-ins.scm</td><td bgcolor="#f6f8ff">two-poles for resonances (Xavier Serra)</td></tr>
-<tr><td>reson</td><td>clm-ins.scm, clm-ins.rb</td><td>parallel FM creating resonances</td></tr>
-<tr><td bgcolor="#f6f8ff">rhodey, wurley, hammondoid</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">FM stuff from Perry Cook</td></tr>
-<tr><td>scratch</td><td>clm-ins.scm, clm-ins.rb</td><td>move around in sound via list of turn points and src</td></tr>
-<tr><td bgcolor="#f6f8ff">singer</td><td bgcolor="#f6f8ff">singer.scm, singer.rb</td><td bgcolor="#f6f8ff">Perry Cook's vocal tract physical model</td></tr>
-<tr><td>spectra</td><td>clm-ins.scm, clm-ins.rb</td><td>simple additive synthesis</td></tr>
-<tr><td bgcolor="#f6f8ff">stereo-flute</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">Nicky Hind's flute physical model</td></tr>
-<tr><td>touch-tone</td><td>clm-ins.scm, clm-ins.rb</td><td>touch-tone telephone</td></tr>
-<tr><td bgcolor="#f6f8ff">tubebell</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">Perry Cook's FM tubular bell</td></tr>
-<tr><td>two-tab</td><td>clm-ins.scm, clm-ins.rb</td><td>interpolate between two spectra</td></tr>
-<tr><td bgcolor="#f6f8ff">vox</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">voice using "leapfrog" FM-generated formants</td></tr>
-<tr><td>zc, zn, za</td><td>clm-ins.scm, clm-ins.rb</td><td>interpolating delay effects</td></tr>
-</TABLE>
-</td></tr></table>
 <br><br>
+
 
 
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithcm">Snd and Common Music</a></h3></td></tr></table>

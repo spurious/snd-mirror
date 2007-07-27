@@ -370,8 +370,7 @@
 			  (if (not epos) 
 			      (warn "<!-- INDEX but no --> for ~A" dline)
 			    (when (or (not no-bold)
-				      (and with-scm
-					   (not (string= "sndclm.html" file))))
+				      with-scm)
 			      (setf current-general g)
 			      (setf (aref generals g) (my-subseq dline (+ compos 11) epos))
 			      (setf (aref gfiles g) file)
@@ -382,8 +381,7 @@
 			    (if (not epos) 
 				(warn "<!-- main-index but no --> for ~A" dline)
 			      (when (or (not no-bold)
-					(and with-scm
-					     (not (string= "sndclm.html" file))))
+					with-scm)
 				(setf (aref names n) (my-subseq dline (+ indpos 16) epos))
 				(setf (aref files n) file)
 				(incf n))))

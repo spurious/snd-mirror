@@ -4437,21 +4437,21 @@ static XEN g_in_any_1(const char *caller, XEN frame, XEN chan, XEN inp)
 
 static XEN g_in_any(XEN frame, XEN chan, XEN inp) 
 {
-  #define H_in_any "(" S_in_any " frame chan :optional stream): input stream sample at frame in channel chan"
+  #define H_in_any "(" S_in_any " frame chan stream): input stream sample at frame in channel chan"
   return(g_in_any_1(S_in_any, frame, chan, inp));
 }
 
 
 static XEN g_ina(XEN frame, XEN inp) 
 {
-  #define H_ina "(" S_ina " frame :optional stream): input stream sample in channel 0 at frame"
+  #define H_ina "(" S_ina " frame stream): input stream sample in channel 0 at frame"
   return(g_in_any_1(S_ina, frame, C_TO_XEN_INT(0), inp));
 }
 
 
 static XEN g_inb(XEN frame, XEN inp) 
 {
-  #define H_inb "(" S_inb " frame :optional stream): input stream sample in channel 1 at frame"
+  #define H_inb "(" S_inb " frame stream): input stream sample in channel 1 at frame"
   return(g_in_any_1(S_inb, frame, C_TO_XEN_INT(1), inp));
 }
 
@@ -4507,35 +4507,35 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
 
 static XEN g_out_any(XEN frame, XEN val, XEN chan, XEN outp)
 {
-  #define H_out_any "(" S_out_any " frame val chan :optional stream): add val to output stream at frame in channel chan"
+  #define H_out_any "(" S_out_any " frame val chan stream): add val to output stream at frame in channel chan"
   return(g_out_any_1(S_out_any, frame, chan, val, outp));
 }
 
 
 static XEN g_outa(XEN frame, XEN val, XEN outp)
 {
-  #define H_outa "(" S_outa " frame val :optional stream): add val to output stream at frame in channel 0"
+  #define H_outa "(" S_outa " frame val stream): add val to output stream at frame in channel 0"
   return(g_out_any_1(S_outa, frame, C_TO_XEN_INT(0), val, outp));
 }
 
 
 static XEN g_outb(XEN frame, XEN val, XEN outp)
 {
-  #define H_outb "(" S_outb " frame val :optional stream): add val to output stream at frame in channel 1"
+  #define H_outb "(" S_outb " frame val stream): add val to output stream at frame in channel 1"
   return(g_out_any_1(S_outb, frame, C_TO_XEN_INT(1), val, outp));
 }
 
 
 static XEN g_outc(XEN frame, XEN val, XEN outp)
 {
-  #define H_outc "(" S_outc " frame val :optional stream): add val to output stream at frame in channel 2"
+  #define H_outc "(" S_outc " frame val stream): add val to output stream at frame in channel 2"
   return(g_out_any_1(S_outc, frame, C_TO_XEN_INT(2), val, outp));
 }
 
 
 static XEN g_outd(XEN frame, XEN val, XEN outp)
 {
-  #define H_outd "(" S_outd " frame val :optional stream): add val to output stream at frame in channel 3"
+  #define H_outd "(" S_outd " frame val stream): add val to output stream at frame in channel 3"
   return(g_out_any_1(S_outd, frame, C_TO_XEN_INT(3), val, outp));
 }
 
