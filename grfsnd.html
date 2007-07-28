@@ -1230,8 +1230,8 @@ but in the following example, I'll start -noinit, and load it explicitly.
 <em class=listener>#&lt;unspecified&gt;</em>
 &gt; <em class=typing>(definstrument (simp beg dur freq amp)
    (let* ((o (make-oscil freq))
-          (st (inexact-&gt;exact (* beg (mus-srate))))
-          (nd (+ st (inexact-&gt;exact (* dur (mus-srate))))))
+          (st (seconds-&gt;samples beg))
+          (nd (+ st (seconds-&gt;samples dur))))
      (run
        (lambda ()
          (do ((i st (1+ i)))

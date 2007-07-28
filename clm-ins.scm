@@ -55,8 +55,8 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	   (c (cadr vals))
 	   (dlen (caddr vals))
 					;(amp amp-1)
-	   (beg (inexact->exact (floor (* start (mus-srate)))))
-	   (end (+ beg (inexact->exact (floor (* dur (mus-srate))))))
+	   (beg (seconds->samples start))
+	   (end (+ beg (seconds->samples dur)))
 	   (lf (if (= lossfact 0.0) 1.0 (min 1.0 lossfact)))
 	   (wt (if (= wt0 0.0) 0.5 (min 1.0 wt0)))
 	   (tab (make-vct dlen))
@@ -119,8 +119,8 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	  (set! f1 (cons (list-ref (find-phoneme (list-ref phons (+ i 1)) formants) which) f1)))
 	(reverse f1)))
 
-  (let* ((start (inexact->exact (floor (* (mus-srate) beg))))
-	 (end (+ start (inexact->exact (floor (* (mus-srate) dur)))))
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
 	 (car-os (make-oscil :frequency 0))
 	 (fs (length formant-amps))
 	 (evens (make-vector fs))
@@ -192,8 +192,8 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
   "(fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional (ampenv '(0 0 25 1 75 1 100 0)) vibenv) produces FOF 
 synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
     (let* ((two-pi (* 2 pi))
-	   (start (inexact->exact (floor (* beg (mus-srate)))))
-	   (len (inexact->exact (floor (* dur (mus-srate)))))
+	   (start (seconds->samples beg))
+	   (len (seconds->samples dur))
 	   (end (+ start len))
 	   (ampf (make-env :envelope ae :scaler amp :duration dur))
 	   (vibf (make-env :envelope (or ve (list 0 1 100 1)) :scaler vib :duration dur))
@@ -257,8 +257,8 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 			   (degree 0.0)
 			   (distance 1.0)
 			   (reverb-amount 0.005))
-  (let* ((beg (inexact->exact (floor (* startime (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* dur (mus-srate))))))
+  (let* ((beg (seconds->samples startime))
+	 (end (+ beg (seconds->samples dur)))
 	 (loc (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
 	 (per-vib-f (make-env :envelope (stretch-envelope '(0 1  25 .1  75 0  100 0)
 							  25 (min (* 100 (/ vibatt dur)) 45)
@@ -355,8 +355,8 @@ vocal sounds using phase quadrature waveshaping"
 	  ((>= i len) partials)
 	(list-set! partials i (/ (list-ref partials i) sum)))))
 
-  (let* ((start (inexact->exact (floor (* (mus-srate) beg))))
-	 (samps (inexact->exact (floor (* (mus-srate) dur))))
+  (let* ((start (seconds->samples beg))
+	 (samps (seconds->samples dur))
 	 (end (+ start samps))
 	 (car-sin (make-oscil :frequency 0))
 	 (car-cos (make-oscil :frequency 0 :initial-phase (/ pi 2.0)))
@@ -471,8 +471,8 @@ is a physical model of a flute:
 	 (previous-dc-blocked-b 0.0) 
 	 (delay-sig 0.0)
 	 (emb-sig 0.0)
-	 (beg (inexact->exact (floor (* start (mus-srate)))))
-	 (len (inexact->exact (floor (* dur (mus-srate)))))
+	 (beg (seconds->samples start))
+	 (len (seconds->samples dur))
 	 (end (+ beg len))
 	 (chns (mus-channels *output*))
 	 (flowf (make-env :envelope flow-envelope 
@@ -520,8 +520,8 @@ is a physical model of a flute:
 ;;; -------- FM-BELL
 (definstrument (fm-bell startime dur frequency amplitude :optional amp-env index-env index)
   "(fm-bell startime dur frequency amplitude :optional amp-env index-env index) mixes in one fm bell note"
-  (let* ((beg (inexact->exact (floor (* startime (mus-srate)))))
-	 (len (inexact->exact (floor (* dur (mus-srate)))))
+  (let* ((beg (seconds->samples startime))
+	 (len (seconds->samples dur))
 	 (end (+ beg len))
 	 (fmInd1 (hz->radians (* 32.0 frequency)))
 	 (fmInd2 (hz->radians (* 4.0 (- 8.0 (/ frequency 50.0)))))
@@ -569,8 +569,8 @@ is a physical model of a flute:
 			  :key (degree 0.0)
 		     	       (distance 1.0)
 		               (reverb-amount 0.005))
-  (let* ((beg (inexact->exact (floor (* startime (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* dur (mus-srate))))))
+  (let* ((beg (seconds->samples startime))
+	 (end (+ beg (seconds->samples dur)))
 	 (loc (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
 	 (carrier (make-oscil :frequency frequency))
 	 (fm1-osc (make-oscil :frequency mod-freq))
@@ -611,8 +611,8 @@ is a physical model of a flute:
 
 (definstrument (fm-drum start-time duration frequency amplitude index 
 			:optional (high #f) (degree 0.0) (distance 1.0) (reverb-amount 0.01))
-  (let* ((beg (inexact->exact (floor (* start-time (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* duration (mus-srate))))))
+  (let* ((beg (seconds->samples start-time))
+	 (end (+ beg (seconds->samples duration)))
 	 ;; many of the following variables were originally passed as arguments
 	 (casrat (if high 8.525 3.515))
 	 (fmrat (if high 3.414 1.414))
@@ -700,8 +700,8 @@ is a physical model of a flute:
 	 (mod1 (make-oscil :frequency mfq1))
 	 (mod2 (make-oscil :frequency mfq2))
 	 (mod3 (make-oscil :frequency mfq3))
-	 (beg (inexact->exact (floor (* start-time (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* duration (mus-srate)))))))
+	 (beg (seconds->samples start-time))
+	 (end (+ beg (seconds->samples duration))))
     (ws-interrupt?)
     (run
      (lambda ()
@@ -717,8 +717,8 @@ is a physical model of a flute:
 
 (definstrument (attract beg dur amp c-1) ;c from 1 to 10 or so
   ;; by James McCartney, from CMJ vol 21 no 3 p 6
-  (let* ((st (inexact->exact (floor (* beg (mus-srate)))))
-	 (nd (+ st (inexact->exact (floor (* dur (mus-srate))))))
+  (let* ((st (seconds->samples beg))
+	 (nd (+ st (seconds->samples dur)))
 	 (c c-1) (a .2) (b .2) (dt .04)
 	 (scale (/ (* .5 amp) c))
 	 (x -1.0) (y 0.0) (z 0.0))
@@ -763,8 +763,8 @@ is a physical model of a flute:
 	 (r (/ carrier-freq spacing-freq))
 	 (tr (make-triangle-wave :frequency 5 :amplitude (hz->radians (* .005 spacing-freq))))
 	 (rn (make-rand-interp :frequency 12 :amplitude (hz->radians (* .005 spacing-freq))))
-	 (beg (inexact->exact (floor (* start (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* dur (mus-srate)))))))
+	 (beg (seconds->samples start))
+	 (end (+ beg (seconds->samples dur))))
     (ws-interrupt?)
     (run
      (lambda ()
@@ -799,8 +799,8 @@ is a physical model of a flute:
 	 (g1 .203)
 	 (g2 (* .5 amp 1.0))
 	 (g3 .144)
-	 (st (inexact->exact (floor (* beg (mus-srate)))))
-	 (nd (+ st (inexact->exact (floor (* dur (mus-srate)))))))
+	 (st (seconds->samples beg))
+	 (nd (+ st (seconds->samples dur))))
     (ws-interrupt?)
     (run
      (lambda ()
@@ -825,8 +825,8 @@ is a physical model of a flute:
 	 (ampenv (make-env '(0 0 1 1 9 1 10 0) :duration dur))
 	 (indenv (make-env (list 0 0 .001 1 .15 0 (max dur .16) 0) :duration dur))
 	 (resenv (make-env (list 0 0 .001 1 .25 0 (max dur .26) 0) :duration dur))
-	 (st (inexact->exact (floor (* beg (mus-srate)))))
-	 (nd (+ st (inexact->exact (floor (* dur (mus-srate)))))))
+	 (st (seconds->samples beg))
+	 (nd (+ st (seconds->samples dur))))
     (ws-interrupt?)
     (run
      (lambda ()
@@ -851,8 +851,8 @@ is a physical model of a flute:
 	 (g1 .535)
 	 (g2 (* .5 amp))
 	 (g3 .109)
-	 (st (inexact->exact (floor (* beg (mus-srate)))))
-	 (nd (+ st (inexact->exact (floor (* dur (mus-srate)))))))
+	 (st (seconds->samples beg))
+	 (nd (+ st (seconds->samples dur))))
     (ws-interrupt?)
     (run
      (lambda ()
@@ -875,8 +875,8 @@ is a physical model of a flute:
 	 (g1 (* .25 .75 amp))
 	 (g2 (* .5 amp))
 	 (g3 (* .5 .75 amp))
-	 (st (inexact->exact (floor (* beg (mus-srate)))))
-	 (nd (+ st (inexact->exact (floor (* dur (mus-srate)))))))
+	 (st (seconds->samples beg))
+	 (nd (+ st (seconds->samples dur))))
     (ws-interrupt?)
     (run
      (lambda ()
@@ -903,8 +903,8 @@ is a physical model of a flute:
 	 (g1 .202)
 	 (g2 .574)
 	 (g3 .116)
-	 (st (inexact->exact (floor (* beg (mus-srate)))))
-	 (nd (+ st (inexact->exact (floor (* dur (mus-srate)))))))
+	 (st (seconds->samples beg))
+	 (nd (+ st (seconds->samples dur))))
     (ws-interrupt?)
     (run
      (lambda ()
@@ -922,8 +922,8 @@ is a physical model of a flute:
 
 
 (definstrument (drone startime dur frequency amp-1 ampfun synth ampat ampdc amtrev deg dis rvibamt rvibfreq)
-  (let* ((beg (inexact->exact (floor (* startime (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* dur (mus-srate))))))
+  (let* ((beg (seconds->samples startime))
+	 (end (+ beg (seconds->samples dur)))
 	 (waveform (partials->wave synth))
 	 (amplitude (* amp-1 .25))
 	 (freq (hz->radians frequency))
@@ -946,8 +946,8 @@ is a physical model of a flute:
 		       ampfun2 indfun2 fmtfun2
 		       ampfun3 indfun3 fmtfun3
 		       ampfun4 indfun4 fmtfun4)
-  (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
-	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
 	 (amp (* amp-1 .25))		;pvc's amplitudes in bag.clm are very high (overflows)
 	 (rangetop 910.0)
 	 (rangebot 400.0)
@@ -1073,8 +1073,8 @@ is a physical model of a flute:
 (definstrument (reson startime dur pitch amp numformants indxfun skewfun pcskew skewat skewdc
 		      vibfreq vibpc ranvibfreq ranvibpc degree distance reverb-amount data)
   ;; data is a list of lists of form '(ampf resonfrq resonamp ampat ampdc dev0 dev1 indxat indxdc)
-  (let* ((beg (inexact->exact (floor (* startime (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* dur (mus-srate))))))
+  (let* ((beg (seconds->samples startime))
+	 (end (+ beg (seconds->samples dur)))
 	 (carriers (make-vector numformants))
 	 (modulator (make-oscil :frequency pitch))
 	 (ampfs (make-vector numformants))
@@ -1142,8 +1142,8 @@ is a physical model of a flute:
 		       pitch1 glissfun glissat glissdc
 		       pvibfreq pvibpc pvibfun pvibat pvibdc
 		       rvibfreq rvibpc rvibfun)
-  (let* ((st (inexact->exact (floor (* beg (mus-srate)))))
-	 (nd (+ st (inexact->exact (floor (* dur (mus-srate))))))
+  (let* ((st (seconds->samples beg))
+	 (nd (+ st (seconds->samples dur)))
 	 (pit1 (if (zero? pitch1) pitch0 pitch1))
 	 (loc (make-locsig deg dis pcrev *output* *reverb* (mus-channels *output*)))
 	 (car (make-oscil :frequency pitch0))
@@ -1190,8 +1190,8 @@ is a physical model of a flute:
 	 (comb3 (make-comb 0.715 10799))
 	 (comb4 (make-comb 0.697 11597))
 	 (chns (mus-channels *output*))
-	 (outdel1 (make-delay (inexact->exact (round (* .013 (mus-srate))))))
-	 (outdel2 (if (> chns 1) (make-delay (inexact->exact (round (* .011 (mus-srate))))) #f))
+	 (outdel1 (make-delay (seconds->samples .013)))
+	 (outdel2 (if (> chns 1) (make-delay (seconds->samples .011))))
 	 (comb-sum 0.0)
 	 (comb-sum-1 0.0)
 	 (comb-sum-2 0.0)
@@ -1215,8 +1215,8 @@ is a physical model of a flute:
 	   (if (> chns 1) (outb i (delay outdel2 comb-sum) *output*))))))))
 
 (definstrument (gran-synth start-time duration audio-freq grain-dur grain-interval amp)
-  (let* ((beg (inexact->exact (floor (* start-time (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* duration (mus-srate))))))
+  (let* ((beg (seconds->samples start-time))
+	 (end (+ beg (seconds->samples duration)))
 	 (grain-env (make-env :envelope '(0 0 25 1 75 1 100 0) :duration grain-dur))
 	 (carrier (make-oscil :frequency audio-freq))
 	 (grain-size (inexact->exact (ceiling (* (max grain-dur grain-interval) (mus-srate)))))
@@ -1270,8 +1270,8 @@ is a physical model of a flute:
 			           (degree 0.0)
 			           (distance 1.0)
 			           (reverb-amount 0.005))
-  (let* ((beg (inexact->exact (floor (* start-time (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* duration (mus-srate))))))
+  (let* ((beg (seconds->samples start-time))
+	 (end (+ beg (seconds->samples duration)))
 	 (waveform (partials->wave partials))
 	 (freq (hz->radians frequency))
 	 (s (make-table-lookup :frequency frequency :wave waveform))
@@ -1308,8 +1308,8 @@ is a physical model of a flute:
 			          (degree 0.0)
 			          (distance 1.0)
 			          (reverb-amount 0.005))
-  (let* ((beg (inexact->exact (floor (* start-time (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* duration (mus-srate))))))
+  (let* ((beg (seconds->samples start-time))
+	 (end (+ beg (seconds->samples duration)))
 	 (waveform-1 (partials->wave partial-1))
 	 (waveform-2 (partials->wave partial-2))
 	 (freq (hz->radians frequency))
@@ -1781,11 +1781,11 @@ is a physical model of a flute:
     ;; I can get those high notes to sparkle after all).
 
     (let* ((partials (normalize-partials (get-piano-partials pfreq)))
-	   (beg (inexact->exact (floor (* begin-time (mus-srate)))))
+	   (beg (seconds->samples begin-time))
 	   (newdur (+ duration *piano-attack-duration* *piano-release-duration*))
-	   (end (+ beg (inexact->exact (floor (* newdur (mus-srate))))))
+	   (end (+ beg (seconds->samples newdur)))
 	   (env1dur (- newdur *piano-release-duration*))
-	   (env1samples (inexact->exact (floor (* env1dur (mus-srate)))))
+	   (env1samples (seconds->samples env1dur))
 	   (siz (inexact->exact (floor (/ (length partials) 2))))
 	   (oscils (make-vector siz))
 	   (alist (make-vct siz))
@@ -1848,8 +1848,8 @@ is a physical model of a flute:
   ;; with pole-radius r1, r2, and r3 respectively, and
   ;; with gains of g1, g2, and g3.
 
-  (let* ((beg (inexact->exact (floor (* start (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* dur (mus-srate))))))
+  (let* ((beg (seconds->samples start))
+	 (end (+ beg (seconds->samples dur)))
 	 (f1 (make-two-pole :radius r1 :frequency frq1))
 	 (f2 (make-two-pole :radius r2 :frequency frq2))
 	 (f3 (make-two-pole :radius r3 :frequency frq3))
@@ -1888,7 +1888,7 @@ is a physical model of a flute:
 
 (definstrument (scratch start file src-ratio turnaroundlist)
   (let* ((f (make-file->sample file))
-         (beg (inexact->exact (round (* (mus-srate) start))))
+         (beg (seconds->samples start))
 	 (turntable (list->vct turnaroundlist))
 	 (turn-i 1)
 	 (turns (length turnaroundlist))
@@ -1953,8 +1953,8 @@ is a physical model of a flute:
 	 (fftsize-1 fftsize)
 	 (highest-bin-1 highest-bin)
 	 (amp amp-1)
-	 (start (inexact->exact (floor (* beg (mus-srate)))))
-	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
+	 (start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
 	 (fil (make-file->sample file))
 	 (file-duration (mus-sound-duration file))
 	 (fdr (make-vct fftsize-1))
@@ -2163,8 +2163,8 @@ is a physical model of a flute:
 
 
 (definstrument (zc time dur freq amp-1 length1 length2 feedback)
-  (let* ((beg (inexact->exact (floor (* (mus-srate) time))))
-	 (end (+ beg (inexact->exact (floor (* (mus-srate) dur)))))
+  (let* ((beg (seconds->samples time))
+	 (end (+ beg (seconds->samples dur)))
 	 (amp amp-1)
 	 (s (make-pulse-train :frequency freq))
 	 (d0 (make-comb :size length1 :max-size (1+ (max length1 length2)) :scaler feedback))
@@ -2183,8 +2183,8 @@ is a physical model of a flute:
   ;; notches are spaced at srate/len, feedforward sets depth thereof
   ;; so sweep of len from 20 to 100 sweeps the notches down from 1000 Hz to ca 200 Hz 
   ;; so we hear our downward glissando beneath the pulses.
-  (let* ((beg (inexact->exact (floor (* (mus-srate) time))))
-	 (end (+ beg (inexact->exact (floor (* (mus-srate) dur)))))
+  (let* ((beg (seconds->samples time))
+	 (end (+ beg (seconds->samples dur)))
 	 (amp amp-1)
 	 (s (make-pulse-train :frequency freq))
 	 (d0 (make-notch :size length1 :max-size (1+ (max length1 length2)) :scaler feedforward))
@@ -2200,8 +2200,8 @@ is a physical model of a flute:
 
 
 (definstrument (za time dur freq amp-1 length1 length2 feedback feedforward)
-  (let* ((beg (inexact->exact (floor (* (mus-srate) time))))
-	 (end (+ beg (inexact->exact (floor (* (mus-srate) dur)))))
+  (let* ((beg (seconds->samples time))
+	 (end (+ beg (seconds->samples dur)))
 	 (amp amp-1)
 	 (s (make-pulse-train :frequency freq))
 	 (d0 (make-all-pass feedback feedforward :size length1 :max-size (1+ (max length1 length2))))
@@ -2217,7 +2217,7 @@ is a physical model of a flute:
 
 
 (define* (clm-expsrc beg dur input-file exp-ratio src-ratio amp-1 :optional rev start-in-file)
-  (let* ((st (inexact->exact (floor (* beg (mus-srate)))))
+  (let* ((st (seconds->samples beg))
 	 (stf (inexact->exact (floor (* (or start-in-file 0) (mus-sound-srate input-file)))))
 	 (fdA (make-readin input-file :channel 0 :start stf))
 	 (exA (make-granulate :expansion exp-ratio))
@@ -2229,7 +2229,7 @@ is a physical model of a flute:
 	 (revit (and *reverb* rev))
 	 (rev-amp (if revit (if two-chans (* rev .5) rev) 0.0))
 	 (amp amp-1)
-	 (nd (+ st (inexact->exact (floor (* (mus-srate) dur))))))
+	 (nd (+ st (seconds->samples dur))))
     (run
      (lambda ()
        (do ((i st (1+ i))) ((= i nd))
@@ -2243,8 +2243,8 @@ is a physical model of a flute:
 (definstrument (exp-snd file beg dur amp :optional (exp-amt 1.0) (ramp .4) (seglen .15) (sr 1.0) (hop .05) ampenv)
   ;; granulate with envelopes on the expansion amount, segment envelope shape,
   ;; segment length, hop length, and input file resampling rate
-  (let* ((st (inexact->exact (floor (* beg (mus-srate)))))
-	 (nd (+ st (inexact->exact (floor (* dur (mus-srate))))))
+  (let* ((st (seconds->samples beg))
+	 (nd (+ st (seconds->samples dur)))
 	 (f0 (make-readin file 0))
 	 (expenv (make-env :envelope (if (list? exp-amt) 
 					 (or exp-amt (list 0 1 1 1)) 
@@ -2340,13 +2340,13 @@ is a physical model of a flute:
 (definstrument (expfil start duration hopsecs rampsecs steadysecs file1 file2)
   (let* ((fil1 (make-file->sample file1))
 	 (fil2 (make-file->sample file2))
-	 (hop (inexact->exact (floor (* hopsecs (mus-srate)))))
-	 (ramplen (inexact->exact (floor (* rampsecs (mus-srate)))))
-	 (steadylen (inexact->exact (floor (* steadysecs (mus-srate)))))
+	 (hop (seconds->samples hopsecs))
+	 (ramplen (seconds->samples rampsecs))
+	 (steadylen (seconds->samples steadysecs))
 	 (grn1 (make-grn :rampval 0.0 :rampinc (/ 1.0 ramplen) :loc 0 :segctr 0 :whichseg 0 :ramplen ramplen :steadylen steadylen :trigger 0))
 	 (grn2 (make-grn :rampval 0.0 :rampinc (/ 1.0 ramplen) :loc 0 :segctr 0 :whichseg 0 :ramplen ramplen :steadylen steadylen :trigger 0))
-	 (beg (inexact->exact (floor (* start (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* duration (mus-srate))))))
+	 (beg (seconds->samples start))
+	 (end (+ beg (seconds->samples duration)))
 	 (out1 beg)
 	 (out2 (+ hop beg)))
     (ws-interrupt?)
@@ -2472,9 +2472,9 @@ nil doesnt print anything, which will speed up a bit the process.
 	(a1 .99)
 	(stats #t))                      
   (let* (
-	 (st (inexact->exact (floor (* beg (mus-srate)))))
+	 (st (seconds->samples beg))
 	 (durata (if (= 0 dur) (mus-sound-duration file) dur))
-	 (nd (+ st (inexact->exact (floor (* (mus-srate) durata)))))
+	 (nd (+ st (seconds->samples durata)))
 	 (or-start (inexact->exact (round (* or-beg (mus-sound-srate file)))))
 	 (RdA (make-readin :file file :start or-start))
 	 (half-list (/ (length gain-freq-list) 2))
@@ -2547,8 +2547,8 @@ nil doesnt print anything, which will speed up a bit the process.
 	 (k 0)
 	 (amp 0.0)
 	 (incr (/ (* amp-scaler 4) (mus-srate)))
-	 (beg (inexact->exact (floor (* start (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* dur (mus-srate))))))
+	 (beg (seconds->samples start))
+	 (end (+ beg (seconds->samples dur)))
 	 (file (make-file->sample infile))
 	 (radius (- 1.0 (/ r fftsize)))
 	 (bin (/ (mus-srate) fftsize))
@@ -2619,11 +2619,11 @@ mjkoskin@sci.fi
   ;; "matrix" can be a simple amplitude or a list of lists
   ;;     each inner list represents one input channel's amps into one output channel
   ;;     each element of the list can be a number, a list (turned into an env) or an env
-  (let* ((st (inexact->exact (floor (* (mus-srate) (or beg 0.0)))))
+  (let* ((st (seconds->samples (or beg 0.0)))
 	 (dur (or outdur
 		  (/ (- (mus-sound-duration in-file) (or inbeg 0.0))
 		     (or (and srate (abs srate)) 1.0))))
-	 (samps (inexact->exact (floor (* (mus-srate) dur))))
+	 (samps (seconds->samples dur))
 	 (nd (+ st samps))
 	 (in-chans (mus-sound-chans in-file))
 	 (inloc (inexact->exact (floor (* (or inbeg 0.0) (mus-sound-srate in-file)))))
@@ -2728,8 +2728,8 @@ mjkoskin@sci.fi
 
 (define (bes-fm beg dur freq amp ratio index)
   "(bes-fm beg dur freq amp ratio index) produces J1(J1) imitating FM"
-  (let* ((st (inexact->exact (floor (* beg (mus-srate)))))
-	 (nd (+ st (inexact->exact (floor (* dur (mus-srate))))))
+  (let* ((st (seconds->samples beg))
+	 (nd (+ st (seconds->samples dur)))
 	 (car-ph 0.0)
 	 (mod-ph 0.0)
 	 (car-incr (hz->radians freq))

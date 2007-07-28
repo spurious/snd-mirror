@@ -95,8 +95,8 @@
   (let* ((grn (make-green-noise-interp :frequency noise-freq :amplitude noise-max-step :high (* 0.5 noise-width) :low (* -0.5 noise-width)))
 	 (osc (make-oscil freq))
 	 (e (make-env amp-env :scaler amp :duration dur))
-	 (beg (inexact->exact (floor (* start (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* dur (mus-srate)))))))
+	 (beg (seconds->samples start))
+	 (end (+ beg (seconds->samples dur))))
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -114,8 +114,8 @@
   (let* ((grn (make-green-noise-interp :frequency noise-freq :amplitude noise-max-step :high (* 0.5 noise-width) :low (* -0.5 noise-width)))
 	 (osc (make-oscil freq))
 	 (e (make-env freq-env :scaler gliss :duration dur))
-	 (beg (inexact->exact (floor (* start (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* dur (mus-srate)))))))
+	 (beg (seconds->samples start))
+	 (end (+ beg (seconds->samples dur))))
     (run
      (lambda ()
        (do ((i beg (1+ i)))

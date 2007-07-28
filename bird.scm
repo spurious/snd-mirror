@@ -29,8 +29,8 @@
   (let* ((gls-env (make-env freq-envelope (hz->radians freqskew) dur))
 	 (os (make-polyshape frequency :coeffs (partials->polynomial (normalize-partials partials))))
 	 (amp-env (make-env amp-envelope amplitude dur))
-	 (beg (inexact->exact (round (* (mus-srate) start))))
-	 (len (inexact->exact (round (* (mus-srate) dur))))
+	 (beg (seconds->samples start))
+	 (len (seconds->samples dur))
 	 (end (+ beg len)))
     (ws-interrupt?)
     (run
@@ -46,8 +46,8 @@
   (let* ((gls-env (make-env freq-envelope (hz->radians freqskew) dur))
 	 (os (make-oscil :frequency frequency))
 	 (amp-env (make-env amp-envelope amplitude dur))
-	 (len (inexact->exact (round (* (mus-srate) dur))))
-	 (beg (inexact->exact (round (* (mus-srate) start))))
+	 (len (seconds->samples dur))
+	 (beg (seconds->samples start))
 	 (end (+ beg len)))
     (ws-interrupt?)
     (run

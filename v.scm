@@ -50,8 +50,8 @@
 This version of the fm-violin assumes it is running within with-sound (where *output* and *reverb* are defined).
   (with-sound () (fm-violin 0 1 440 .1))"
 
-    (let* ((beg (inexact->exact (floor (* startime (mus-srate)))))
-	   (len (inexact->exact (floor (* dur (mus-srate)))))
+    (let* ((beg (seconds->samples startime))
+	   (len (seconds->samples dur))
 	   (end (+ beg len))
 	   (frq-scl (hz->radians frequency))
 	   (modulate (not (zero? fm-index)))

@@ -2,7 +2,7 @@
 
 ;; Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Last: Wed Apr 02 02:47:21 CEST 2003
-;; Version: $Revision: 1.2 $
+;; Version: $Revision: 1.9 $
 
 ;;; Comments not otherwise noted are taken from noise.ins!
 
@@ -45,8 +45,8 @@
   ;; whistle, very broad more of a whoosh.  this is basically "simple
   ;; fm", but the modulating signal is white noise.
   
-  (let* ((beg (inexact->exact (floor (* startime (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* dur (mus-srate))))))
+  (let* ((beg (seconds->samples startime))
+	 (end (+ beg (seconds->samples dur)))
 	 (carrier (make-oscil :frequency freq0))
 	 (modulator (make-rand :frequency rfreq0 :amplitude 1.0))
 	 (loc (make-locsig :degree degree :distance distance :channels (mus-channels *output*)

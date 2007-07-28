@@ -77,7 +77,7 @@ note lists and instruments are described in sndscm.html.
   <tr><td><a href="#envdoc">env</a></td><td></td><td>line segment envelope</td></tr>
   <tr><td><a href="#filterdoc">filter</a></td><td></td><td>direct form FIR/IIR filter</td></tr>
   <tr><td><a href="#combdoc">filtered-comb</a></td><td></td><td>comb filter with filter on feedback</td></tr>
-  <tr><td><a href="#filetosample">file-&gt;sample</a></td><td></td><td>input sample from file</td></tr>
+  <tr><td><a href="#filetosampledoc">file-&gt;sample</a></td><td></td><td>input sample from file</td></tr>
   <tr><td><a href="#filetoframe">file-&gt;frame</a></td><td></td><td>input frame from file</td></tr>
   <tr><td><a href="#fir-filterdoc">fir-filter</a></td><td></td><td>FIR filter</td></tr>
   <tr><td><a href="#frametofile">frame-&gt;file</a></td><td></td><td>output frame to file</td></tr>
@@ -139,9 +139,9 @@ note lists and instruments are described in sndscm.html.
   <tr><td><a href="#ring-modulate">ring-modulate</a></td><td width=20></td><td>sig * sig</td></tr>
   <tr><td><a href="#spectrum">spectrum</a></td><td width=20></td><td>power spectrum of signal</td></tr>
 </table>
-</td</tr>
+</td></tr>
 
-<tr><td colspan=3><center><a href="#definstrument">Instruments</a></center></td></tr>
+<tr><td colspan=3><center><a href="sndscm.html#definstrument">Instruments</a></center></td></tr>
 </table>
 
 
@@ -381,8 +381,8 @@ are dependent on the overall sampling rate changes.  Our first enhancement is to
 <pre>
 (define (simp beg dur freq amp)
   (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a> freq))
-	 (<em class=red>start</em> (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-	 (<em class=red>end</em> (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))))
+	 (<em class=red>start</em> (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+	 (<em class=red>end</em> (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
     (do ((i start (1+ i))) 
         ((= i end))
       (<a class=quiet href="#outa">outa</a> i (* amp (<a class=quiet href="#oscil">oscil</a> os)) *output*))))
@@ -402,8 +402,8 @@ are dependent on the overall sampling rate changes.  Our first enhancement is to
 <pre>
 (define (simp beg dur freq amp)
   (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a> freq))
-	 (start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-	 (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))))
+	 (start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
     (<em class=red>run</em>
       (lambda ()
         (do ((i start (1+ i))) 
@@ -421,8 +421,8 @@ is the word "definstrument":
 <pre>
 (<em class=red>definstrument</em> (simp beg dur freq amp)
   (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a> freq))
-	 (start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-	 (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))))
+	 (start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
     (<em class=red>run</em>
       (lambda ()
         (do ((i start (1+ i))) 
@@ -459,8 +459,8 @@ is the word "definstrument":
 (definstrument (simp beg dur freq amp envelope)
   (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a> freq))
          (<em class=red>amp-env</em> (<a class=quiet href="#make-env">make-env</a> envelope :duration dur :scaler amp))
-	 (start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-         (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))))
+	 (start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+         (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
     (run
       (lambda ()
         (do ((i start (1+ i))) 
@@ -567,9 +567,9 @@ This means that the envelope y values should be passed through <a href="#hztorad
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (simple-fm beg dur freq amp mc-ratio index :optional amp-env index-env)
-  (let* ((start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-	 (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (simple-fm beg dur freq amp mc-ratio index :optional amp-env index-env)
+  (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (cr (<em class=red>make-oscil</em> freq))                     ; carrier
          (md (<em class=red>make-oscil</em> (* freq mc-ratio)))        ; modulator
          (fm-index (<a class=quiet href="#hztoradians">hz-&gt;radians</a> (* index mc-ratio freq)))
@@ -593,8 +593,8 @@ create the individual spectral components:
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
 (define (simple-add beg dur freq amp)
-  (let* ((start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-	 (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
+  (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (arr (make-vector 20)))     ; we'll create a tone with 20 equal amplitude harmonics
     (do ((i 0 (1+ i)))               ;   use the 'f' button to check out the spectrum
 	((= i 20))
@@ -629,8 +629,8 @@ very elaborate) amplitude and frequency envelopes.
   (let* ((gls-env (<a class=quiet href="#make-env">make-env</a> freq-envelope (<a class=quiet href="#hztoradians">hz-&gt;radians</a> freqskew) dur))
          (os (<a class=quiet href="#make-oscil">make-oscil</a> :frequency frequency))
          (amp-env (<a class=quiet href="#make-env">make-env</a> amp-envelope amplitude dur))
-	 (len (inexact-&gt;exact (round (* (<a class=quiet href="#mussrate">mus-srate</a>) dur))))
-	 (beg (inexact-&gt;exact (round (* (<a class=quiet href="#mussrate">mus-srate</a>) start))))
+	 (len (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))
+	 (beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start))
 	 (end (+ beg len)))
     (run
      (lambda ()
@@ -803,9 +803,9 @@ instrument that maps the line segments into sin x^3:
 <table border=0><tr><td>
 <table border=0 bgcolor="#fafafa" hspace=20><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (mapenv beg dur frq amp en)
-  (let* ((start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-	 (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (mapenv beg dur frq amp en)
+  (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (osc (<a class=quiet href="#make-oscil">make-oscil</a> frq))
          (half-pi (* pi 0.5))
 	 (zv (<em class=red>make-env</em> <em class=red>en</em> 1.0 dur)))
@@ -975,7 +975,7 @@ If "wave-vct" is not passed, these functions return a new vct.
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (simple-table dur)
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (simple-table dur)
   (let ((tab (<em class=red>make-table-lookup</em> :wave (<em class=red>partials-&gt;wave</em> '(1 .5  2 .5)))))
     (do ((i 0 (1+ i))) ((= i dur))
       (<a class=quiet href="#outa">outa</a> i (* .3 (<em class=red>table-lookup</em> tab)) *output*))))
@@ -1050,7 +1050,7 @@ is used internally:  mus-chebyshev-first-kind or mus-chebyshev-second-kind.
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (simp)
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (simp)
   (let ((wav (<em class=red>make-waveshape</em> :frequency 440 :partials '(1 .5 2 .3 3 .2))))
     (do ((i 0 (1+ i))) ((= i 1000))
       (<a class=quiet href="#outa">outa</a> i (<em class=red>waveshape</em> wav) *output*))))
@@ -1064,9 +1064,9 @@ bigbird is an example:
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (bigbird start duration frequency freqskew amplitude freq-env amp-env partials)
-  (let* ((beg (inexact-&gt;exact (floor (* start (<a class=quiet href="#mussrate">mus-srate</a>)))))
-         (end (+ beg (inexact-&gt;exact (floor (* duration (<a class=quiet href="#mussrate">mus-srate</a>))))))
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (bigbird start duration frequency freqskew amplitude freq-env amp-env partials)
+  (let* ((beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start))
+         (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> duration)))
          (gls-env (<a class=quiet href="#make-env">make-env</a> freq-env (<a class=quiet href="#hztoradians">hz-&gt;radians</a> freqskew) duration))
          (polyos (<em class=red>make-polyshape</em> frequency :coeffs (<em class=red>partials-&gt;polynomial</em> partials)))
          (fil (<a class=quiet href="#make-one-pole">make-one-pole</a> .1 .9))
@@ -1181,8 +1181,8 @@ Even more amusing is this algorithm:
 <pre>
 (define (simple-saw beg dur amp)
   (let* ((os (<em class=red>make-sawtooth-wave</em> 440.0))
-	 (start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-	 (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))))
+	 (start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
     (run
      (lambda ()
        (do ((i start (1+ i))) 
@@ -1237,8 +1237,8 @@ based on:
 <table border=0 bgcolor="#fafafa" hspace=40 vspace=20><tr><td><pre>
 (define (simple-soc beg dur freq amp)
   (let* ((os (<em class=red>make-sum-of-cosines</em> 10 freq 0.0))
-	 (start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-	 (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>)))))))
+	 (start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
     (run
      (lambda ()
        (do ((i start (1+ i))) ((= i end))
@@ -1248,7 +1248,7 @@ based on:
 <img src="cosines.png" alt="sum of cosines example" hspace=40>
 
 
-<p>Almost identical is the following (Scheme) <A NAME="sinc-train">sinc-train</a> generator:
+<p>Almost identical is the following <A NAME="sinc-train">sinc-train</a> generator:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -1378,9 +1378,9 @@ don't set "a" to 1.0!).
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (ss beg dur freq amp :optional (N 1) (a .5) (B-ratio 1.0))
-  (let* ((st (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) beg))))
-         (nd (+ st (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) dur)))))
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (ss beg dur freq amp :optional (N 1) (a .5) (B-ratio 1.0))
+  (let* ((st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+         (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
          (sgen (<em class=red>make-sine-summation</em> :n N :a a :ratio B-ratio :frequency freq)))
     (do ((i st (1+ i))) ((= i nd))
       (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>sine-summation</em> sgen)) *output*))))
@@ -1487,9 +1487,9 @@ use this for VOSIM and other related techniques.
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional ve ae)
-  (let* ((start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-         (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional ve ae)
+  (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+         (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
          (ampf (<a class=quiet href="#make-env">make-env</a> :envelope (or ae (list 0 0 25 1 75 1 100 0)) :scaler amp :duration dur))
          (frq0 (<a class=quiet href="#hztoradians">hz-&gt;radians</a> f0))
          (frq1 (<a class=quiet href="#hztoradians">hz-&gt;radians</a> f1))
@@ -1704,10 +1704,10 @@ And we can't talk about noise without mentioning fractals:</p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (fractal start duration m x amp)
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (fractal start duration m x amp)
   ;; use formula of M J Feigenbaum
-  (let* ((beg (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) start))))
-	 (end (+ beg (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) duration))))))
+  (let* ((beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start))
+	 (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> duration))))
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -1730,10 +1730,10 @@ Another instrument based on similar ideas is:</p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (attract beg dur amp c) ; c from 1 to 10 or so
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (attract beg dur amp c) ; c from 1 to 10 or so
   ;; by James McCartney, from CMJ vol 21 no 3 p 6
-  (let* ((st (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-	 (nd (+ st (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
+  (let* ((st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+	 (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (a .2) (b .2) (dt .04)
 	 (scale (/ (* .5 amp) c))
 	 (x1 0.0) (x -1.0) (y 0.0) (z 0.0))
@@ -1988,7 +1988,7 @@ Here's a simpler example that processes a sound by moving a formant around in it
    <a class=def name="iir-filter">iir-filter</a> fl inp 
    <a class=def name="iir-filter?">iir-filter?</a> fl
 
-   <a class=def Name="envelopetocoeffs">envelope-&gt;coeffs</a> :key order envelope dc
+   <em class=emdef>envelope-&gt;coeffs</em> :key order envelope dc
 </pre>
 
 <p>These are the general FIR/IIR filters of arbitrary order.
@@ -2159,8 +2159,8 @@ See prc95.scm for examples of both of these functions.
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (echo beg dur scaler secs file)
-  (let ((del (<em class=red>make-delay</em> (inexact-&gt;exact (round (* secs (<a class=quiet href="#mussrate">mus-srate</a>))))))
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (echo beg dur scaler secs file)
+  (let ((del (<em class=red>make-delay</em> (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> secs)))
 	(rd (make-sample-reader 0 file)))
     (run
      (lambda ()
@@ -2281,8 +2281,8 @@ The following instrument sweeps the comb filter using the pm argument:
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
 (definstrument (zc time dur freq amp length1 length2 feedback)
-  (let* ((beg (inexact-&gt;exact (floor (* time (<a class=quiet href="#mussrate">mus-srate</a>)))))
-         (end (+ beg (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
+  (let* ((beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> time))
+         (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
          (s (<a class=quiet href="#make-pulse-train">make-pulse-train</a> :frequency freq))  ; some raspy input so we can hear the effect easily
          (d0 (<em class=red>make-comb</em> :size length1 :max-size (max length1 length2) :scaler feedback))
          (aenv (<a class=quiet href="#make-env">make-env</a> '(0 0 .1 1 .9 1 1 0) :scaler amp :duration dur))
@@ -2303,8 +2303,8 @@ delay line as the coefficients for an FIR filter:
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
 (define (fir+comb beg dur freq amp size)
-  (let* ((start (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) beg)))) 
-	 (end (+ start (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) dur)))))
+  (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (dly (<em class=red>make-comb</em> :scaler .9 :size size)) 
 	 (flt (<a class=quiet href="#make-fir-filter">make-fir-filter</a> :order size :xcoeffs (<em class=red>mus-data</em> dly))) ; use comb delay line as FIR coefficients
 	 (r (<a class=quiet href="#make-rand">make-rand</a> freq)))                                       ; feed comb with white noise
@@ -2480,10 +2480,10 @@ an instrument that provides time-varying sampling rate conversion:
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (simple-src start-time duration amp srt srt-env filename)
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (simple-src start-time duration amp srt srt-env filename)
   (let* ((senv (<a class=quiet href="#make-env">make-env</a> :envelope srt-env :duration duration))
-         (beg (inexact-&gt;exact (floor (* start-time (<a class=quiet href="#mussrate">mus-srate</a>)))))
-         (end (+ beg (inexact-&gt;exact (floor (* duration (<a class=quiet href="#mussrate">mus-srate</a>))))))
+         (beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start-time))
+         (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> duration)))
          (src-gen (<em class=red>make-src</em> :input (<a class=quiet href="#make-readin">make-readin</a> filename) :srate srt)))
     (run
       (lambda ()
@@ -2499,10 +2499,10 @@ an instrument that provides time-varying sampling rate conversion:
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (srcer start-time duration amp srt fmamp fmfreq filename)
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (srcer start-time duration amp srt fmamp fmfreq filename)
   (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a> :frequency fmfreq))
-         (beg (inexact-&gt;exact (floor (* start-time (<a class=quiet href="#mussrate">mus-srate</a>)))))
-         (end (+ beg (inexact-&gt;exact (floor (* duration (<a class=quiet href="#mussrate">mus-srate</a>))))))
+         (beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start-time))
+         (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> duration)))
          (src-gen (<em class=red>make-src</em> :input (<a class=quiet href="#make-readin">make-readin</a> filename) :srate srt)))
     (run
       (lambda ()
@@ -2568,9 +2568,9 @@ called whenever convolve needs input.
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (convins beg dur filter file :optional (size 128))
-  (let* ((start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-         (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (convins beg dur filter file :optional (size 128))
+  (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+         (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
          (ff (<em class=red>make-convolve</em> :input (<a class=quiet href="#make-readin">make-readin</a> file) :fft-size size :filter filter)))
     (run
       (lambda ()
@@ -2672,14 +2672,14 @@ one argument that return a new input sample whenever they are called by granulat
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (granulate-sound file beg :optional dur (orig-beg 0.0) (exp-amt 1.0))
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (granulate-sound file beg :optional dur (orig-beg 0.0) (exp-amt 1.0))
   (let* ((f-srate (<a class=quiet href="extsnd.html#mussoundsrate">mus-sound-srate</a> file))
 	 (f-start (inexact-&gt;exact (round (* f-srate orig-beg))))
          (f (<a class=quiet href="#make-readin">make-readin</a> file :start f-start))
-	 (st (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
+	 (st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
 	 (new-dur (or dur (- (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> file) orig-beg)))
 	 (exA (<em class=red>make-granulate</em> :input f :expansion exp-amt))
-	 (nd (+ st (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) new-dur))))))
+	 (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> new-dur))))
     (run
      (lambda ()
        (do ((i st (1+ i)))
@@ -2696,9 +2696,9 @@ argument to granulate.  It cause the granulation to run backwards through the fi
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (grev beg dur exp-amt file file-beg)
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (grev beg dur exp-amt file file-beg)
   (let* ((exA (<em class=red>make-granulate</em> :expansion exp-amt))
-	 (fil (<a class=quiet href="#make-file-&gt;sample">make-file-&gt;sample</a> file))
+	 (fil (<a class=quiet href="#make-filetosample">make-file-&gt;sample</a> file))
 	 (ctr file-beg))
     (run
       (lambda ()
@@ -2780,8 +2780,8 @@ ffts (for time stretching, etc).
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
 (definstrument (simple-pvoc beg dur amp size file)
-  (let* ((start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-	 (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
+  (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (sr (<em class=red>make-phase-vocoder</em> (<a class=quiet href="#make-readin">make-readin</a> file) :fft-size size)))
     (run
       (lambda ()
@@ -2854,9 +2854,9 @@ The generator's output amplitude is not always easy to predict.
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (asy beg dur freq amp index :optional (r 1.0) (ratio 1.0))
-  (let* ((st (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-         (nd (+ st (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (asy beg dur freq amp index :optional (r 1.0) (ratio 1.0))
+  (let* ((st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+         (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
          (asyf (<em class=red>make-asymmetric-fm</em> :r r :ratio ratio :frequency freq)))
     (do ((i st (1+ i))) 
         ((= i nd))
@@ -2967,6 +2967,18 @@ In Ruby, frame* is frame_multiply, frame+ is frame_add, and mixer* is mixer_mult
     <em class=listener>3</em>
     <em class=listener>&gt;</em><em class=typing>(mus-data f1)</em>
     <em class=listener>#&lt;vct[len=3]: 1.000 0.500 0.100&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>(frame-set! f1 1 -.5)</em> ; same as (set! (frame-ref f1 1) -.5)
+    <em class=listener>-0.5</em>
+    <em class=listener>&gt;</em><em class=typing>f1</em>
+    <em class=listener>#&lt;frame[3]: [1.000 -0.500 0.100]&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>(mixer-set! m1 0 1 0.5)</em> ; same as (set! (mixer-ref m1 0 1) 0.5)
+    <em class=listener>0.5</em>
+    <em class=listener>&gt;</em><em class=typing>m1</em>
+    <em class=listener>#&lt;mixer: chans: 3, [
+     1.000 0.500 0.000
+     0.000 1.000 0.000
+     0.000 0.000 2.000
+    ]&gt;</em>
 </pre>
 <br><br>
 
@@ -2976,7 +2988,7 @@ In Ruby, frame* is frame_multiply, frame+ is frame_add, and mixer* is mixer_mult
 <A NAME="filetosampledoc"></A>
 <!-- ---------------------------------------- FILE->SAMPLE ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3><a class=def NAME="soundio">sound IO</a></h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>sound IO</h3></center></td></tr></table>
 
 <p>Sound file IO is based on a set of file readers and writers that deal either in samples, frames, or vcts.
 The six functions are file-&gt;sample, sample-&gt;file, file-&gt;frame, frame-&gt;file, array-&gt;file, and file-&gt;array.
@@ -3029,8 +3041,8 @@ Here is one that uses file-&gt;sample to mix in a sound file (there are a zillio
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
 (define (simple-f2s beg dur amp file)
-  (let* ((start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-	 (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
+  (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (fil (<em class=red>make-file-&gt;sample</em> file))
 	 (ctr 0))
     (run
@@ -3052,15 +3064,14 @@ Here is one that uses file-&gt;sample to mix in a sound file (there are a zillio
 <A NAME="out-anydoc"></A>
 <!-- ---------------------------------------- IN-ANY, OUT-ANY ---------------------------------------- -->
 
-<A class=def NAME="ina-outa"></a>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>in-any, out-any</h3></center></td></tr></table>
 
 <pre>
   <a class=def name="out-any">out-any</a> loc data channel output
   <a class=def name="outa">outa</a> loc data output
-  <a class=def NAME="outb">outb</a> loc data output
-  <a class=def NAME="outc">outc</a> loc data output
-  <a class=def NAME="outd">outd</a> loc data output
+  <em class=emdef>outb</em> loc data output
+  <em class=emdef>outc</em> loc data output
+  <em class=emdef>outd</em> loc data output
 
   <a class=def name="in-any">in-any</a> loc channel input
   <a class=def name="ina">ina</a> loc input
@@ -3081,8 +3092,8 @@ The "output" argument can be a vct or a sound-data object, as well as the more u
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
 (definstrument (simple-ina beg dur amp file)
-  (let* ((start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-	 (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
+  (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (fil (<em class=red>make-file-&gt;sample</em> file)))
     (run
       (lambda ()
@@ -3131,13 +3142,13 @@ readin and <a href="#env">env</a>:
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (env-sound file beg :optional (amp 1.0) (amp-env '(0 1 100 1)))
-  (let* ((st (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (env-sound file beg :optional (amp 1.0) (amp-env '(0 1 100 1)))
+  (let* ((st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
          (dur (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> file))
          (rev-amount .01)
          (rdA (<em class=red>make-readin</em> file))
          (ampf (<a class=quiet href="#make-env">make-env</a> amp-env amp dur))
-         (nd (+ st (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) dur))))))
+         (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
     (run
       (lambda ()
         (do ((i st (1+ i)))
@@ -3217,10 +3228,10 @@ To have full output to both channels,</p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> (space file onset duration :key (distance-env '(0 1 100 10)) (amplitude-env '(0 1 100 1))
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (space file onset duration :key (distance-env '(0 1 100 10)) (amplitude-env '(0 1 100 1))
 		     (degree-env '(0 45 50 0 100 90)) (reverb-amount .05))
-  (let* ((beg (inexact-&gt;exact (floor (* onset (<a class=quiet href="#mussrate">mus-srate</a>)))))
-	 (end (+ beg (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) duration)))))
+  (let* ((beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> onset))
+	 (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> duration)))
          (loc (<em class=red>make-locsig</em> :degree 0 :distance 1 :reverb reverb-amount :output *output* :revout *reverb*))
          (rdA (<a class=quiet href="#make-readin">make-readin</a> :file file))
          (dist-env (<a class=quiet href="#make-env">make-env</a> distance-env :duration duration))
@@ -3317,8 +3328,8 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 (define (simple-dloc beg dur freq amp)
   "(simple-dloc-4 beg dur freq amp) test instrument for dlocsig"
   (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a> freq))
-	 (start (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))))
-	 (end (+ start (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
+	 (start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (loc (<em class=red>make-move-sound</em> (list start end 4 0
 	      	   		     (<a class=quiet href="#make-delay">make-delay</a> 12) 
 				     (<a class=quiet href="#make-env">make-env</a> '(0 0 10 1) :end dur)
@@ -3348,7 +3359,7 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2>Functions</h2></td></tr></table>
 
 <!-- ---------------------------------------- GENERIC FUNCTIONS ---------------------------------------- -->
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3><A class=def NAME="generic-functions">Generic Functions</a></h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>Generic Functions</h3></center></td></tr></table>
 
 <p>The generators respond to a set of "generic" functions.  mus-frequency, for example, tries to return (or set) a generator's
 frequency, wherever that makes sense.
@@ -3410,11 +3421,8 @@ a generator.
 <p>
 determines how many vct elements are printed by mus-describe.
 </p>
-
 <br><br>
 
-
-<!-- STOPPED HERE --><hr>
 
 
 
@@ -3426,13 +3434,13 @@ determines how many vct elements are printed by mus-describe.
 </p>
 
 <table cellspacing=0 cellpadding=0 hspace=40>
-<tr><td><a class=def name="hztoradians">hz-&gt;radians</a><code> freq</code></td><td width=20></td><td>convert freq to radians per sample</td></tr>
-<tr><td><a class=def name="radianstohz">radians-&gt;hz</a><code> rads</code></td><td></td><td>convert rads to Hz</td></tr>
+<tr><td><a class=def name="hztoradians">hz-&gt;radians</a><code> freq</code></td><td width=20></td><td>convert freq to radians per sample (using mus-srate)</td></tr>
+<tr><td><a class=def name="radianstohz">radians-&gt;hz</a><code> rads</code></td><td></td><td>convert rads to Hz (using mus-srate)</td></tr>
 <tr><td><a class=def name="dbtolinear">db-&gt;linear</a><code> dB</code></td><td></td><td>convert dB to linear value</td></tr>
 <tr><td><a class=def name="lineartodb">linear-&gt;db</a><code> val</code></td><td></td><td>convert val to dB</td></tr>
 <tr><td><a class=def Name="timestosamples">times-&gt;samples</a><code> start duration</code></td><td></td><td>convert start and duration from seconds to samples (beg+dur in latter case)</td></tr>
-<tr><td><a class=def name="samplestoseconds">samples-&gt;seconds</a><code> samps</code></td><td></td><td>convert samples to seconds</td></tr>
-<tr><td><a class=def name="secondstosamples">seconds-&gt;samples</a><code> secs</code></td><td></td><td>convert seconds to samples</td></tr>
+<tr><td><a class=def name="samplestoseconds">samples-&gt;seconds</a><code> samps</code></td><td></td><td>convert samples to seconds (using mus-srate)</td></tr>
+<tr><td><a class=def name="secondstosamples">seconds-&gt;samples</a><code> secs</code></td><td></td><td>convert seconds to samples (using mus-srate)</td></tr>
 <tr><td><a class=def name="degreestoradians">degrees-&gt;radians</a><code> degs</code></td><td></td><td>convert degrees to radians</td></tr>
 <tr><td><a class=def name="radianstodegrees">radians-&gt;degrees</a><code> rads</code></td><td></td><td>convert radians to degrees</td></tr>
 <tr><td><a class=def name="clear-array">clear-array</a><code> arr</code></td><td></td><td>set all values in arr (a vct) to 0.0</td></tr>
@@ -3445,7 +3453,7 @@ converts its argument to radians/sample (for any situation where a
 frequency is used as an amplitude -- glissando or FM).
 hz-&gt;radians is equivalent to 
 <pre>
-  freq-in-hz * 2 * pi / (<a class=quiet href="#mussrate">mus-srate</a>).  
+  freq-in-hz * 2 * pi / (<a class=quiet href="#mussrate">mus-srate</a>)
 </pre>
 </p>
 <blockquote>
@@ -3457,56 +3465,72 @@ radians per sample; in dimensional terms: (radians/sec) /
 frequency-related value is being accessed on every sample, as
 an increment of a phase variable.  
 </p></blockquote>
+<br><br>
 
 
 
 <!-- ---------------------------------------- POLYNOMIAL ---------------------------------------- -->
-<br>
+
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>polynomial</h3></center></td></tr></table>
+
 <pre>
    <a class=def name="polynomial">polynomial</a> coeffs x
 </pre>
-<p><b>polynomial</b> evaluates a polynomial, defined by giving its coefficients,
-at a particular point (x).
-<i>coeffs</i> is an array of coefficients where
-coeffs[0] is the constant term, and so on.  For
-waveshaping, use the function <a href="#partialstopolynomial">partials-&gt;polynomial</a>.
-poly.scm has a variety of polynomial-related functions.
+
+<p>The polynomial function evaluates a polynomial, defined by giving its coefficients,
+at the point "x".
+"coeffs" is a vct of coefficients where
+coeffs[0] is the constant term, and so on. 
+</p>
+
+<pre>
+    <em class=listener>&gt;</em><em class=typing>(polynomial (vct 0.0 1.0) 2.0)</em> ; x
+    <em class=listener>2.0</em>
+    <em class=listener>&gt;</em><em class=typing>(polynomial (vct 1.0 2.0 3.0) 2.0)</em> ; 3x*x + 2x + 1
+    <em class=listener>17.0</em>
+</pre>
+
+<p>
+<a href="sndscm.html#polydoc">poly.scm</a> has a variety of polynomial-related functions.
 Abramowitz and Stegun, "A Handbook of Mathematical Functions" is a
 treasure-trove of interesting polynomials.
-See also the <a href="#brighten">brighten</a> instrument.
+For waveshaping, use the function <a href="#partialstopolynomial">partials-&gt;polynomial</a>.
 </p>
-<br>
+<br><br>
+
 
 
 <!-- ---------------------------------------- ARRAY-INTERP ---------------------------------------- -->
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>array-interp, dot-product</h3></center></td></tr></table>
+
 <pre>
   <a class=def name="array-interp">array-interp</a> fn x :optional size
   <a class=def name="dot-product">dot-product</a> in1 in2
-  <a class=def name="edot-product">edot-product</a> freq data [Scheme/C versions]
+  <a class=def name="edot-product">edot-product</a> freq data
   <a class=def name="mus-interpolate">mus-interpolate</a> type x v size y1
 </pre>
-<p>These functions underlie some of the generators, and can be
-called within run.  See <a href="mus.lisp">mus.lisp</a> for
-details. <b>array-interp</b> can be used for companding and similar functions --
-load the array (call it "compander" below) with the positive half 
-of the companding function, then:
+
+<p>array-interp interpolates in the array "fn" at the point "x".  It underlies the <a href="#table-lookup">table-lookup</a>
+generator, among others.  Here's array-interp as a "compander":
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-  (let ((in-val (<a class=quiet href="#readin">readin</a> rd))            ; in-coming signal
-        (func-len (length compander)))  ; size of array
-    (* (signum in-val) 
-       (<em class=red>array-interp</em> compander (abs (* in-val (1- func-len))) func-len)))
+(define compand-table (vct -1.0 -0.96 -0.90 -0.82 -0.72 -0.60 -0.45 -0.25 
+                            0.0 0.25 0.45 0.60 0.72 0.82 0.90 0.96 1.0))
+
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a>
+  (lambda (inval)
+    (let ((index (+ 8.0 (* 8.0 inval))))
+      (<em class=red>array-interp</em> compand-table index 17))))
 </pre>
 </td></tr></table>
 
+
 <p>
-<b>dot-product</b> is the usual "inner product" or "scalar product".
- We could define our own FIR filter using dot-product:
+dot-product is the usual "inner product" or "scalar product" (the latter name should be banned from polite society).
+We could define our own FIR filter using dot-product:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -3524,74 +3548,47 @@ of the companding function, then:
 </pre>
 </td></tr></table>
 
+
 <p>
-<b>edot-product</b> returns a dot product, the sum of e^(freq*i) with data[i], i going from 0 to (1 less than) data's size.
-<i>freq</i> and <i>data</i> can be complex, as can the return value.  (This is intended for DFT applications).
+edot-product returns the complex dot-product of the "data" argument (a vct or a vector) with <code>(exp (* freq i))</code>.
+Here, "i" goes from 0 to data's size - 1.
+"freq" and the elements of "data" can be complex, as can the return value.  See <a href="sndscm.html#stretchsoundviadft">stretch-sound-via-dft</a>
+for an example.
 </p>
+
+
 <p>
 <b>mus-interpolate</b> is the function used whenever table lookup interpolation is requested, as in
-delay or wave-train. The <i>type</i> is one of the interpolation types (mus-interp-linear, for example).
+<a href="#delay">delay</a> or <a href="#wave-train">wave-train</a>. 
+The "type" argument is one of the interpolation types (<code>mus-interp-linear</code>, for example).
 </p>
-<br>
+<br><br>
+
+
 
 
 <!-- ---------------------------------------- CONTRAST-ENHANCEMENT ---------------------------------------- -->
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>contrast-enhancement</h3></center></td></tr></table>
+
 <pre>
    <a class=def name="contrast-enhancement">contrast-enhancement</a> in-samp :optional (fm-index 1.0)
 </pre>
-<p><b>contrast-enhancement</b> phase-modulates a sound file.  It's like audio MSG.
-The actual algorithm is sin(<i>in-samp</i>*pi/2 +
-(<i>fm-index</i>*sin(<i>in-samp</i>*2*pi))).  The result is to brighten the
-sound, helping it cut through a huge mix.</p>
+
+<p>contrast-enhancement phase-modulates a sound file.  It's like audio MSG.
+The actual algorithm is:
+</p>
+<pre>
+    (sin (+ (* input pi 0.5)
+            (* index (sin (* input pi 2)))))
+</pre>
 
 <p>
-Waveshaping can provide a similar effect:</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(<a class=quiet href="#definstrument">definstrument</a> <A class=def NAME="brighten">brighten</a> (start duration file file-maxamp partials)
-  (multiple-value-bind (beg end) (<a class=quiet href="#timestosamples">times-&gt;samples</a> start duration)
-  (let ((coeffs (<a class=quiet href="#partialstopolynomial">partials-&gt;polynomial</a> (normalize-partials partials)))
-        (rd (<a class=quiet href="#make-readin">make-readin</a> file)))
-	    (run (loop for i from beg below end do
-		   (<a class=quiet href="#outa">outa</a> i (* file-maxamp (<a class=quiet href="#polynomial">polynomial</a> coeffs (/ (<a class=quiet href="#readin">readin</a> rd) file-maxamp)))))))))
-
-(<a class=quiet href="sndscm.html#withsound">with-sound</a> () (brighten 0 3 "oboe" .15 '(1 1 3 .5 7 .1)))
-</pre>
-</td></tr></table>
-
-<p>In this case, it is important to scale the file input to the waveshaper to go from
--1.0 to 1.0 to get the full effect of the Chebyshev polynomials.  Unfortunately,
-if you don't add an overall amplitude envelope to bring the output to 0, you'll
-get clicks if you include even numbered partials.  These partials create a non-zero
-constant term in the polynomial, so when the sound decays to 0, the polynomial
-output decays to some (possibly large) non-zero value.  In the example above,
-I've used only odd partials for this reason.  Another thing to note here is that
-the process is not linear; that is the sinusoids that make up the input are not
-independently expanded into the output spectrum, but instead you get sum and difference
-tones, (not to mention phase cancellations) much as in FM with a complex wave.  
-One way to play with this is to use
-a simple instrument such as:</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(define (waver spectr driver)
-  (let ((v0 (make-vct 8192))
-	(poly (<a class=quiet href="#partialstopolynomial">partials-&gt;polynomial</a> spectr)))
-    (<a class=quiet href="extsnd.html#mixvct">mix-vct</a> (<a class=quiet href="extsnd.html#vctmap">vct-map!</a> v0 (lambda () (<a class=quiet href="#polynomial">polynomial</a> poly (driver)))) 0 0 0 #f)))
-
-(waver '(1 .6 2 .4) 
-       (let ((g0 (<a class=quiet href="#make-oscil">make-oscil</a> 100)) 
-             (g1 (<a class=quiet href="#make-oscil">make-oscil</a> 1000)))
-         (lambda ()
-	   (* .5 (+ (g0) (g1))))))
-</pre>
-</td></tr></table>
-
-<p>A similar (slightly simpler) effect (in Snd/Scheme) is:
+contrast-enhancement brightens the
+sound, helping it cut through a huge mix.
+A similar (slightly simpler) effect is:
 </p>
+
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
 (let ((mx (maxamp))) 
@@ -3600,54 +3597,44 @@ a simple instrument such as:</p>
       (* mx (sin (/ (* pi y) mx))))))
 </pre>
 </td></tr></table>
+
 <p>This modulates the sound but keeps the output maxamp the same as the input.
 There is a similar function in sndscm.html that does this kind of scaling throughout the sound,
 resulting in a steady modulation, rather than an intensification of just the peaks -- see
 <a href="sndscm.html#movingmax">moving-max</a>.
 </p>
-<br>
+<br><br>
 
 
 
 <!-- ---------------------------------------- AMPLITUDE-MODULATE ---------------------------------------- -->
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>ring-modulate, amplitude-modulate</h3></center></td></tr></table>
+
 <pre>
-  <a class=def name="ring-modulate">ring-modulate</a> in1 in2
-  <a class=def name="amplitude-modulate">amplitude-modulate</a> am-carrier input1 input2
+  <a class=def name="ring-modulate">ring-modulate</a> in1 in2                  ; returns <code>(* in1 in2)</code>
+  <a class=def name="amplitude-modulate">amplitude-modulate</a> am-carrier in1 in2  ; returns <code>(* in1 (+ am-carrier in2))</code>
 </pre>
-<b>ring-modulate</b> returns (* <i>in1</i> <i>in2</i>).
-<b>amplitude-modulate</b> returns (* <i>input1</i> (+ <i>am-carrier</i> <i>input2</i>))
 
 <p>ring-modulation is sometimes called "double-sideband-suppressed-carrier" modulation --
 that is, amplitude modulation with the carrier subtracted out (set to 0.0 above).
 The nomenclature here is a bit confusing -- I can't remember now why I used
-these names; think of "carrier" as "carrier amplitude" and "input1" as "carrier". Normal amplitude modulation using this function would be:
+these names; think of "carrier" as "carrier amplitude" and "in1" as "carrier". Normal amplitude modulation using this function would be:
 </p>
 <pre>
-  (defvar carrier (<a class=quiet href="#make-oscil">make-oscil</a> carrier-freq (* .5 pi)))
+  (define carrier (<a class=quiet href="#make-oscil">make-oscil</a> carrier-freq (* .5 pi)))
   ...
   (amplitude-modulate 1.0 (<a class=quiet href="#oscil">oscil</a> carrier) signal)
 </pre>
 
-<p>
-Since neither needs any state information, there are no associated make
-functions.</p>
-
-<p>Both of these take advantage of the "Modulation Theorem"; since
+<p>Both of these functions take advantage of the "Modulation Theorem"; since
 multiplying a signal by a phasor (e ^ (j w t)) translates its spectrum by w /
 two pi Hz, multiplying by a sinusoid splits its spectrum into two equal parts
 translated up and down by w/(two pi) Hz.  The simplest case is: </p>
 <pre>
    cos f1 * cos f2 = (cos (f1 + f2) + cos (f1 - f2)) / 2.
 </pre>
-<p>We can use these to shift all the components of a signal by the same
-amount up or down ("single-sideband modulation").  
-But this is exactly what the <a href="#ssb-am">ssb-am</a> generator provides.
-</p>
-
-
-<br>
+<br><br>
 
 
 
@@ -3663,51 +3650,40 @@ But this is exactly what the <a href="#ssb-am">ssb-am</a> generator provides.
   <a class=def name="spectrum">spectrum</a> rdat idat window norm-type
   <a class=def name="convolution">convolution</a> rdat idat size
 </pre>
-<p>These provide run-time access to the standard fft routines and their habitual companions.
-<b>make-fft-window</b> can return many of the standard windows including:</p>
+
+<p>fft, spectrum, and convolution are the standard functions used everywhere.
+fft is the Fourier transform, convolution convolves its arguments, and spectrum
+returns (rectangular-&gt;polar (fft)).  The results are in dB (if "norm-type" is 0),
+or linear and normalized to 1.0 ("norm-type" = 1), or linear unnormalized.
+</p>
+
+<p>make-fft-window can return many of the standard windows including:
+</p>
+
 <pre>
-  rectangular-window   ; no change in data
-  bartlett-window      ; triangle
-  parzen-window        ; raised triangle
-  welch-window         ; parzen squared
-  hann-window          ; cosine (sometimes known as "hanning-window" -- a sort of in-joke)
-  hamming-window       ; raised cosine
-  blackman2-window     ; Blackman-Harris windows of various orders
-  blackman3-window
-  blackman4-window
-  exponential-window
-  kaiser-window        ; beta argument used here
+  bartlett-hann-window     bartlett-window        blackman2-window       blackman3-window
+  blackman4-window         bohman-window          cauchy-window          connes-window       
+  dolph-chebyshev-window   exponential-window     flat-top-window        gaussian-window     
+  hamming-window           hann-poisson-window    hann-window            kaiser-window
+  parzen-window            poisson-window         rectangular-window     riemann-window      
+  samaraki-window          tukey-window           ultraspherical-window  welch-window        
 </pre>
-<p>The
-magnitude of the spectrum is returned by <b>rectangular-&gt;polar</b>.  The data can be windowed
-with <b>multiply-arrays</b>.  <b>spectrum</b> calls the fft, translates to polar coordinates,
-then returns the results (in the lower half of "rdat") in dB (<i>norm-type</i> = 0), or linear normalized to 1.0 (<i>norm-type</i> = 1),
-or linear unnormalized (<i>norm-type</i> not 0 or 1). 
+
+
+<p>rectangular-&gt;polar and polar-&gt;rectangular change how we view the FFT data: in polar or rectangular coordinates.
+multiply-arrays does an element-wise multiply of two vcts.
 </p>
 
-<p>There are many other examples of run-time FFTs: 
-the <a href="sndscm.html#crosssynthesis">cross-synthesis</a> instrument above, 
-<a href="san.ins">san.ins</a>,
-and <a href="anoi.ins">anoi.ins</a>.
-</p>
-<br>
-
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3><a class=def name="def-clm-struct">def-clm-struct</a></h3></center></td></tr></table>
-
-<p><b>def-clm-struct</b> is syntactically like def-struct, but sets up
-the struct field names for the run macro.  There are several examples in prc-toolkit95.lisp, and other instruments.
-In CL, the fields can only be of a numerical type (no generators, for example).
-Elsewhere, use <code>:type clm</code> for any such fields (see snd-test.scm for examples).
-</p>
-<br>
+<br><br>
 
 
-<!-- INDEX definstrument:Instruments -->
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a class=def name="definstrument">Definstrument</a></h3></td></tr></table>
+<!-- INDEX instruments:Instruments -->
+
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a class=def name="instruments">Instruments</a></h3></td></tr></table>
 
 <p>It's hard to decide what's an "instrument" in this context, but I think I'll treat
-it as something that can be called as a note in a notelist (say in with-sound) and
+it as something that can be called as a note in a notelist (in with-sound) and
 generate its own sound.
 Test 23 in snd-test.scm has a with-sound that includes most of these instruments.
 </p>
@@ -4159,79 +4135,14 @@ Test 23 in snd-test.scm has a with-sound that includes most of these instruments
 <p>
 If you develop
 an interesting instrument that you're willing to share, please send it to me
-(bil@ccrma.stanford.edu). </p>
+(bil@ccrma.stanford.edu). 
+</p>
 
-<p>Although all the examples in this document use run followed by a loop,
-you can use other constructs instead:</p>
+<p>The individual instruments and with-sound are documented primarily in sndscm.html.
+</p>
 
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(<a class=quiet href="#definstrument">definstrument</a> no-loop-1 (beg dur)
-  (let ((o (<a class=quiet href="#make-oscil">make-oscil</a> 660)))
-    (run 
-     (let ((j beg)) 
-       (loop for i from 0 below dur do
-	 (<a class=quiet href="#outa">outa</a> (+ i j) (* .1 (<a class=quiet href="#oscil">oscil</a> o))))))))
-
-(<a class=quiet href="#definstrument">definstrument</a> no-loop-2 (beg dur)
-  (let ((o (<a class=quiet href="#make-oscil">make-oscil</a> 440)))
-    (run
-     (dotimes (k dur)
-       (<a class=quiet href="#outa">outa</a> (+ k beg) (* .1 (<a class=quiet href="#oscil">oscil</a> o)))))))
-</pre>
-</td></tr></table>
-
-<p>And, of course, <a href="#out-any">out-any</a> and <a href="#locsig">locsig</a> can be called any number of times
-(including zero) per sample and at any output location.  Except in
-extreme cases (spraying samples to random locations several seconds
-apart), there is almost no speed penalty associated with such output,
-so don't feel constrained to write an instrument as a sample-at-a-time loop.
-That form was necessary in the old days, so nearly all current instruments
-still use it (they are translations of older instruments), but there's no
-good reason not to write an instrument such as:</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(<a class=quiet href="#definstrument">definstrument</a> noisey (beg dur)
-  (run
-   (dotimes (i dur)
-     (dotimes (k (random 10))
-       (<a class=quiet href="#outa">outa</a> (+ beg (floor (random dur))) (centered-random .01))))))
-</pre>
-</td></tr></table>
-<br>
-<br>
-
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(define* (chain-dsps beg dur #:rest dsps)
-  (let* ((dsp-chain (apply vector (reverse (map (lambda (gen)
-						 (if (list? gen)
-						     (<a class=quiet href="#make-env">make-env</a> gen :duration dur)
-						     gen))
-					       dsps))))
-	 (output (<a class=quiet href="extsnd.html#makevct">make-vct</a> (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
-	 (len (vector-length dsp-chain)))
-    (<a class=quiet href="extsnd.html#vctmap">vct-map!</a> output (lambda ()
-		       (let ((val 0.0))
-			 ;; using do and vector here for the run macro's benefit
-			 (do ((i 0 (1+ i)))
-			     ((= i len))
-			   (let ((gen (vector-ref dsp-chain i)))
-			     (if (<a class=quiet href="#env?">env?</a> gen)
-				 (set! val (* (gen) val))
-				 (if (<a class=quiet href="#readin?">readin?</a> gen)
-				     (set! val (+ val (gen)))
-				     (set! val (gen val))))))
-			 val)))
-    (<a class=quiet href="extsnd.html#mixvct">mix-vct</a> output (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))) #f #f #f)))
-
-;(chain-dsps 0 1.0 '(0 0 1 1 2 0) (<a class=quiet href="#make-oscil">make-oscil</a> 440))
-;(chain-dsps 0 1.0 '(0 0 1 1 2 0) (<a class=quiet href="#make-one-zero">make-one-zero</a> .5) (<a class=quiet href="#make-readin">make-readin</a> "oboe.snd"))
-</pre>
-</td></tr></table>
-
+<!-- TODO: def-clm-struct, definstrument, sound-let, with-sound in sndscm.html [with-mix, mus-mix?, run? snd-memo? def-optkey-fun?]
+-->
 
 
 <br><br>

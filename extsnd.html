@@ -4714,7 +4714,7 @@ We can use <a href="sndscm.html#dlocsigdoc">dlocsig</a> in conjunction with mix 
   "mix file at start-time in the currently selected sound following the given dlocsig path"
   (let* ((duration (<a class=quiet href="#mussoundduration">mus-sound-duration</a> file))
 	 (rd (<a class=quiet href="#makesamplereader">make-sample-reader</a> 0 file))
-	 (start (inexact-&gt;exact (round (* (<a class=quiet href="sndclm.html#mussrate">mus-srate</a>) start-time))))
+	 (start (<a class=quiet href="sndclm.html#secondstosamples">seconds-&gt;samples</a> start-time))
          (tmp-sound (<a class=quiet href="sndclm.html#sound-let">with-temp-sound</a> (:channels (<a class=quiet href="#channels">channels</a>) :srate (<a class=quiet href="#mussoundsrate">mus-sound-srate</a> file))
 
          ;; We use with-temp-sound here rather than sound-let because mix normally expects its input file to

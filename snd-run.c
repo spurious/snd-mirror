@@ -5235,7 +5235,6 @@ static char *descr_atan2_f(int *args, ptree *pt)
   return(mus_format( FLT_PT " = atan2(" FLT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2));
 }
 
-
 static xen_value *atan2_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_value *temp;
@@ -5265,7 +5264,6 @@ static char *descr_jn_f(int *args, ptree *pt)
   return(mus_format( FLT_PT " = jn(" INT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2));
 }
 
-
 static xen_value *jn_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_value *temp;
@@ -5287,6 +5285,7 @@ static char *descr_yn_f(int *args, ptree *pt)
 {
   return(mus_format( FLT_PT " = yn(" INT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2));
 }
+
 static xen_value *yn_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_value *temp;
@@ -5301,6 +5300,29 @@ static xen_value *yn_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, yn_f, descr_yn_f, args, 2));
 }
 #endif
+
+
+
+static void seconds_to_samples_f(int *args, ptree *pt) {INT_RESULT = mus_seconds_to_samples(FLOAT_ARG_1);}
+
+static char *descr_seconds_to_samples_f(int *args, ptree *pt) 
+{
+  return(mus_format( INT_PT " = seconds->samples(" FLT_PT ")", args[0], INT_RESULT, args[1], FLOAT_ARG_1));
+}
+
+static xen_value *seconds_to_samples_1(ptree *prog, xen_value **args, int num_args)
+{
+  xen_value *temp;
+  if (args[1]->type == R_INT)
+    {
+      temp = args[1];
+      args[1] = convert_int_to_dbl(prog, args[1]);
+      FREE(temp);
+    }
+  return(package(prog, R_INT, seconds_to_samples_f, descr_seconds_to_samples_f, args, 1));
+}
+
+
 
 
 /* ---------------- round ---------------- */
@@ -13197,6 +13219,7 @@ static void init_walkers(void)
   INIT_WALKER(S_radians_to_degrees, make_walker(mus_radians_to_degrees_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER(S_db_to_linear, make_walker(mus_db_to_linear_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER(S_linear_to_db, make_walker(mus_linear_to_db_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER(S_seconds_to_samples, make_walker(seconds_to_samples_1, NULL, NULL, 1, 1, R_INT, false, 1, R_NUMBER));
   INIT_WALKER(S_mus_random, make_walker(mus_random_r, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
 
   INIT_WALKER(S_make_all_pass, make_walker(make_all_pass_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));

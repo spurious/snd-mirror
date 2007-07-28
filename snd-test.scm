@@ -46042,6 +46042,8 @@ EDITS: 1
 	(ftst '(ring-modulate .4 .5) .2)
 	(ftst '(amplitude-modulate 1.0 .5 .4) .7)
 	(ftst '(contrast-enhancement 0.1 0.75) (sin (+ (* 0.1 (/ pi 2)) (* .75 (sin (* 0.1 2.0 pi))))))
+	(itst '(seconds->samples 1.0) 22050)
+	(itst '(seconds->samples 1) 22050)
 	
 	(etst '(mus-sound-samples 1))
 	(etst '(mus-sound-length 3.14))
