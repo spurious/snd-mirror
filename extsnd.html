@@ -2255,7 +2255,7 @@ If the function returns #t, the usual highly informative minibuffer babbling is 
 <tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="newsoundhook">new-sound-hook</a> (filename)</code>
 </td></tr><tr><td></td><td colspan=2>
-This hook is called whenever a new sound file is being created.  <a href="sndclm.html#sound-let">sound-let</a> in ws.scm uses
+This hook is called whenever a new sound file is being created.  <a href="sndscm.html#sound-let">sound-let</a> in ws.scm uses
 this hook to keep track of newly created temporary sounds so that it can delete them once they are no longer needed.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
@@ -4715,7 +4715,7 @@ We can use <a href="sndscm.html#dlocsigdoc">dlocsig</a> in conjunction with mix 
   (let* ((duration (<a class=quiet href="#mussoundduration">mus-sound-duration</a> file))
 	 (rd (<a class=quiet href="#makesamplereader">make-sample-reader</a> 0 file))
 	 (start (<a class=quiet href="sndclm.html#secondstosamples">seconds-&gt;samples</a> start-time))
-         (tmp-sound (<a class=quiet href="sndclm.html#sound-let">with-temp-sound</a> (:channels (<a class=quiet href="#channels">channels</a>) :srate (<a class=quiet href="#mussoundsrate">mus-sound-srate</a> file))
+         (tmp-sound (<a class=quiet href="sndscm.html#sound-let">with-temp-sound</a> (:channels (<a class=quiet href="#channels">channels</a>) :srate (<a class=quiet href="#mussoundsrate">mus-sound-srate</a> file))
 
          ;; We use with-temp-sound here rather than sound-let because mix normally expects its input file to
          ;; be around until it decides it doesn't need it anymore, but sound-let deletes all its temp files.
@@ -8571,7 +8571,7 @@ it's probably simpler to use <a href="sndscm.html#withsound">with-sound</a> (see
 	 (s (<a class=quiet href="sndclm.html#make-src">make-src</a> :srate 0.0))
 	 (incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil">oscil</a> o)))	  
 	 (tempfile (<em class=red>with-sound</em> (:output (<a class=quiet href="#sndtempnam">snd-tempnam</a>) :srate (<a class=quiet href="#srate">srate</a>) :to-snd #f)
-		     (<a class=quiet href="sndclm.html#run">run</a> (lambda ()
+		     (<a class=quiet href="sndscm.html#run">run</a> (lambda ()
 			    (do ((samp 0 (1+ samp)))
 				((or (c-g?) (<a class=quiet href="#samplereaderatendQ">sample-reader-at-end?</a> rd)))
 			      (<a class=quiet href="sndclm.html#out-any">out-any</a> samp (<a class=quiet href="sndclm.html#src">src</a> s incr (lambda (dir) (<a class=quiet href="#readsample">read-sample</a> rd))) 0 *output*)
@@ -12125,7 +12125,7 @@ In Forth, this variable is named *loaded-files*; in Ruby I think it is $". <!-- 
 When a sound file is opened, Snd looks for a file with the same 
 name but with an appended ".scm" extension.  If such a file is found, 
 it is loaded automatically.  The variable *snd-opened-sound* is set to 
-the newly opened sound's index.  This supports the <a href="sndclm.html#snd-memo">snd-memo</a> feature 
+the newly opened sound's index.  This supports the <a href="sndscm.html#snd-memo">snd-memo</a> feature 
 in CLM, but can be used independently of CLM to store marks, selections,
 or whatever that you want associated with a particular sound. Confusingly
 enough, this is a variable, unlike all the others -- that is, you

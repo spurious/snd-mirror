@@ -494,7 +494,7 @@ be turned into sonograms and transcribed as envelopes.
 <p>In CLM, the bird is:</p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(<a class=quiet href="sndclm.html#definstrument">definstrument</a> bird (startime dur frequency freq-skew amplitude freq-envelope amp-envelope 
+(<a class=quiet href="#definstrument">definstrument</a> bird (startime dur frequency freq-skew amplitude freq-envelope amp-envelope 
 	             &amp;optional (lpfilt 1.0) (degree 0) (reverb-amount 0))
   (multiple-value-bind (beg end) (<a class=quiet href="sndclm.html#timestosamples">times-&gt;samples</a> startime dur)
     (let* ((amp-env (<a class=quiet href="sndclm.html#make-env">make-env</a> amp-envelope amplitude dur))
@@ -3538,7 +3538,6 @@ then scales by 'amp'. It returns the new maximum amplitude.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- INDEX cross-synthesis:cross synthesis -->
 <!-- cross-synthesis -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="crosssynthesis">cross-synthesis</a> <code>cross-snd amp fftsize radius</code>
@@ -3662,7 +3661,7 @@ This function could use at least a start time parameter.
 <br>
 Panning or Sound Placement<br>
 Place sound: <a href="#placesound">place-sound</a> above.<br>
-Place mix: <a href="sndclm.html#musmix">mus-mix</a><br>
+Place mix: <a href="#musmix">mus-mix</a><br>
 Play sound with panning: <a href="#playpanned">play-panned</a><br>
 CLM placement generator: <a href="sndclm.html#locsig">locsig</a><br>
 CLM moving sound generator: <a href="#dlocsigdoc">dlocsig</a><br>
@@ -5388,7 +5387,7 @@ Here's an instrument that fuzzes up its amplitude envelope a bit using green noi
 </p>
 
 <table border=0 cellpadding=5 hspace=20 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(<a class=quiet href="sndclm.html#definstrument">definstrument</a> (green3 start dur freq amp amp-env noise-freq noise-width noise-max-step)
+(<a class=quiet href="#definstrument">definstrument</a> (green3 start dur freq amp amp-env noise-freq noise-width noise-max-step)
   (let* ((grn (<em class=red>make-green-noise-interp</em> :frequency noise-freq 
                                        :amplitude noise-max-step 
                                        :high (* 0.5 noise-width) :low (* -0.5 noise-width)))
@@ -6667,7 +6666,7 @@ transpose-mixes sets the speed of mix in 'mix-list' to cause a transposition by 
 <br>
 
 <table bgcolor="aliceblue" border=0><tr><td>
-<pre>see also: <a href="extsnd.html#sndmixes">Mixes</a> <a href="snd.html#mixingfiles">View:Mix</a> <a href="#mixchannel">mix-channel</a> <a href="#fadedoc">dissolve-fade</a> <a href="sndclm.html#musmix">mus-mix</a> <a href="sndclm.html#with-mix">with-mix</a>
+<pre>see also: <a href="extsnd.html#sndmixes">Mixes</a> <a href="snd.html#mixingfiles">View:Mix</a> <a href="#mixchannel">mix-channel</a> <a href="#fadedoc">dissolve-fade</a> <a href="#musmix">mus-mix</a> <a href="#with-mix">with-mix</a>
 </pre></td>
 </tr></table>
 
@@ -8277,7 +8276,7 @@ putting it in a text display:
 (define wid1 (make-variable-display "simp" "beg" 'text))
 (define wid2 (make-variable-display "simp" "oscil" 'text))
 (define wid3 (make-variable-display "simp" "outa" 'graph))
-(<a class=quiet href="sndclm.html#definstrument">definstrument</a> (simp)
+(<a class=quiet href="#definstrument">definstrument</a> (simp)
   (let* ((beg 0)
 	 (dur 1000)
 	 (end (+ beg dur))
@@ -9002,7 +9001,7 @@ taken from SAMBOX.BIL, November 1984):
 <p><small>The CLM version of this is:</small></p>
 
 <table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre><small>
-(<a class=quiet href="sndclm.html#definstrument">definstrument</a> simp (start-time duration frequency amplitude
+(<a class=quiet href="#definstrument">definstrument</a> simp (start-time duration frequency amplitude
                      &amp;optional (amp-env '(0 0 50 1 100 0)))
   (multiple-value-bind (beg end) (<a class=quiet href="sndclm.html#timestosamples">times-&gt;samples</a> start-time duration)
     (let ((s (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a> frequency))
@@ -9017,7 +9016,7 @@ In CLM, the fm-violin became (fm.html, 1989):
 </small></p>
 
 <table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre><small>
-(<a class=quiet href="sndclm.html#definstrument">definstrument</a> violin (beg end frequency amplitude fm-index)
+(<a class=quiet href="#definstrument">definstrument</a> violin (beg end frequency amplitude fm-index)
   (let* ((frq-scl (hz-&gt;radians frequency))
          (maxdev (* frq-scl fm-index))
          (index1 (* maxdev (/ 5.0 (log frequency))))
@@ -9069,7 +9068,7 @@ In CLM, the fm-violin became (fm.html, 1989):
     (push val result)
     (nreverse result)))
 
-(<a class=quiet href="sndclm.html#definstrument">definstrument</a> fm-violin 
+(<a class=quiet href="#definstrument">definstrument</a> fm-violin 
   (startime dur frequency amplitude &amp;key
 	    (fm-index 1.0)
 	    (amp-env '(0 0  25 1  75 1  100 0))
@@ -9438,7 +9437,7 @@ end
 
 <!-- ---------------------------------------- FILE: ws ---------------------------------------- -->
 
-<A NAME="wsdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>ws</h2></td></tr></table>
+<A NAME="wsdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>ws (under construction...)</h2></td></tr></table>
 
 <p>
 with-sound provides a simple way to package up a bunch of instrument calls into a new
@@ -9508,8 +9507,9 @@ we want to hear an arpeggio from the fm-violin:
 </pre>
 
 <p>
-See the <a href="#clminsdoc">clm instrument</a> documentation for more examples.
+<!-- TODO: ws examples -->
 </p>
+
 <pre>
   <a class=def name="withsound">with-sound</a>
      :key (srate *clm-srate*)                    ; output sampling rate (22050)
@@ -9530,7 +9530,7 @@ See the <a href="#clminsdoc">clm instrument</a> documentation for more examples.
 	  (play *clm-play*)                      ; if #t, play the sound automatically
 	  (to-snd *to-snd*)                      ; if #t, open the output file in Snd
 </pre>
-<p>As far as possible, this parallels CLM's <a href="#wsdoc">with-sound</a>.</p>
+
 <pre>
     :<em class=typing>(<a class=quiet href="#wsdoc">with-sound</a> (:statistics #t :channels 2 :reverb jc-reverb)
        (fm-violin 0 .1 440 .1 :reverb-amount .1 :degree 0)
@@ -9592,16 +9592,9 @@ opened (corresponding to CLM's *reverb*).  So the cooperating instrument code is
           (<a class=quiet href="sndclm.html#outa">outa</a> i ... *output*))))))
 </pre></td></tr></table>
 
-<p>which parallels the Common Lisp CLM (change the loop statement to a do statement,
-add the lambda wrapper, needed by the run macro unfortunately,
-and you're ready to go).  If the run macro can handle the instrument code (and
-it can handle anything the CL version can handle, I think), then the Snd with-sound
-should run within a factor of four of the fastest CL-based CLM, even though the
-latter is going through the C intermediate file and the (very good) C compiler!  
-</p>
 
-<p>In scheme, you can also use <a name="defoptkeyinstrument">def-optkey-instrument</a>
-which is a combination of definstrument and <a href="sndclm.html#def-optkey-fun">def-optkey-fun</a>:
+<p>You can also use <a name="defoptkeyinstrument">def-optkey-instrument</a>
+which is a combination of definstrument and <a href="#def-optkey-fun">def-optkey-fun</a>:
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
@@ -9641,7 +9634,7 @@ mus-mix with *output*:
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (<a class=quiet href="#wsdoc">with-sound</a> () 
   (fm-violin 0 .1 440 .1) 
-  (<a class=quiet href="sndclm.html#musmix">mus-mix</a> *output* "oboe.snd") 
+  (<a class=quiet href="#musmix">mus-mix</a> *output* "oboe.snd") 
   (fm-violin .1 .1 660 .1))
 </pre></td></tr></table>
 
@@ -9691,10 +9684,52 @@ handles, init-with-sound and finish-with-sound.
 
 <!-- TODO: move sound-let etc doc to sndscm -->
 
+<a name="definstrument"></a>
+<a name="musmix"></a>
+<a name="def-clm-struct"></a>
+<a name="run"></a>
+<a name="snd-memo"></a>
+<a name="with-mix"></a>
+<a name="def-optkey-fun"></a>
+
+<!-- also the variables:
+
+(define *clm-srate* (default-output-srate))
+(define *clm-file-name* "test.snd")
+(define *clm-channels* (default-output-chans))
+(define *clm-data-format* (default-output-data-format))
+(define *clm-header-type* (default-output-header-type))
+(define *clm-verbose* #f)
+(define *clm-play* #f)
+(define *clm-statistics* #f)
+(define *clm-reverb* #f)
+(define *clm-reverb-channels* 1)
+(define *clm-reverb-data* '())
+(define *clm-table-size* 512)
+(define *clm-file-buffer-size* 65536)
+(define *clm-locsig-type* mus-interp-linear)
+(define *clm-clipped* #t)
+(define *clm-array-print-length* (print-length))
+(define *clm-player* #f) ; default is play-and-wait (takes index of newly created sound, not the sound's file name)
+(define *clm-notehook* #f)
+(define *clm-with-sound-depth* 0) ; for CM, not otherwise used
+
+(define *to-snd* #t)
+
+(define *reverb* #f) ; these are sample->file (outa) gens, vcts, or sound-data objects
+(define *output* #f)
+(define *clm-delete-reverb* #f) ; should with-sound clean up reverb stream
+
+-->
+
+<!-- TODO: def-clm-struct, definstrument, sound-let, with-sound in sndscm.html [with-mix, mus-mix?, run? snd-memo? def-optkey-fun?]
+-->
+
+
 
 <p>
-<b>with-temp-sound</b> and <b>sound-let</b> set up temporary bindings for embedded with-sounds.
-Sound-let is documented in <a href="sndclm.html#sound-let">sndclm.html</a>; briefly it is a combination
+<a name="withtempsound">with-temp-sound</a> and <a name="sound-let">sound-let</a> set up temporary bindings for embedded with-sounds.
+sound-let is a combination
 of "let" and with-sound:
 </p>
 <pre>
@@ -9704,7 +9739,7 @@ of "let" and with-sound:
     (fm-violin 1 1 550 .1))                             ; add another fm-violin note
 </pre>
 
-<p>Similarly, <a name="withtempsound">with-temp-sound</a> creates a temporary sound file (using <a href="extsnd.html#sndtempnam">snd-tempnam</a>),
+<p>Similarly, with-temp-sound creates a temporary sound file (using <a href="extsnd.html#sndtempnam">snd-tempnam</a>),
 and it does not open the result in Snd (it assumes its output is some intermediate file); here is an example that
 parallels the sound-let example above:
 </p>
@@ -9760,9 +9795,10 @@ split with-sound into two pieces, primarily for Common Music's benefit.
       (fm-violin 0 1 440 .1))
 </pre>
 
-<p><b>with-mix</b> is a "checkpointing" with-sound; it takes extended explication: see <a href="sndclm.html#mix-and-with-mix">sndclm.html</a>
-for details.
+<p><b>with-mix</b> is a "checkpointing" with-sound; it takes extended explication.
 </p>
+
+<!-- TODO: with-mix doc -->
 
 <br>
 <A NAME="wsdebug"></a><table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>debugging help in with-sound</h4></td></tr></table>
@@ -9801,7 +9837,7 @@ The <b>ws-go</b> 'returned-value' is the value to return from the original call 
 
 <p>
 <b>definstrument</b> and <b>def-clm-struct</b> make sound-producing functions compatible with with-sound.
-See sndclm.html for documentation. 
+
 </p>
 
 <p>Toward the end of ws.scm is an example, <A NAME="withmarkedsound">with-marked-sound</A>, that is just
@@ -9811,7 +9847,7 @@ to contain any info you might find amusing.  You then click the mark to see
 that info.
 </p>
 
-<p>Also defined in ws.scm are the CLM functions <b>seconds-&gt;samples</b> and <b>time-&gt;samples</b>.
+<p>
 The *clm-* variables are saved in the save-state
 file by <A NAME="wssavestate">ws-save-state</A>, which may not be a good idea -- feedback welcome!
 Two more convenience functions are <b>-&gt;frequency</b> and <b>-&gt;sample</b>.

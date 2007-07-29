@@ -786,7 +786,6 @@ static void make_sonogram_axes(chan_info *cp)
 	}
       else 
 	{
-	  /* TODO: test setting the fft (and lisp) xlabels */
 	  if (fp->xlabel == NULL)
 	    fp->xlabel = copy_string(_("time"));
 	  fp->axis = make_axis_info(cp,

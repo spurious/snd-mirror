@@ -8940,6 +8940,14 @@ EDITS: 5
 	(if (not (string=? (x-axis-label) "time")) (snd-display ";def time x-axis-label: ~A" (x-axis-label)))
 	(set! (x-axis-label index 0 time-graph) "no time")
 	(if (not (string=? (x-axis-label) "no time")) (snd-display ";time x-axis-label: ~A" (x-axis-label index 0 time-graph)))
+
+	(update-transform-graph)
+	(if (not (string=? (x-axis-label index 0 transform-graph) "frequency")) (snd-display ";get fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
+	(set! (x-axis-label index 0 transform-graph) "hiho")
+	(update-transform-graph)
+	(if (not (string=? (x-axis-label index 0 transform-graph) "hiho")) (snd-display ";set set fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
+	(set! (x-axis-label index 0 transform-graph) "frequency") ; for later test
+
 	(graph '(0 0 1 1 2 0) "lisp")
 	(update-lisp-graph)
 	(if (not (string=? (x-axis-label index 0 lisp-graph) "lisp")) (snd-display ";def lisp x-axis-label: ~A" (x-axis-label index 0 lisp-graph)))
