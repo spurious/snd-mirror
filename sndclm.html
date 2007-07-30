@@ -423,7 +423,7 @@ is the word "definstrument":
   (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a> freq))
 	 (start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
 	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
-    (<em class=red>run</em>
+    (run
       (lambda ()
         (do ((i start (1+ i))) 
             ((= i end))
@@ -515,17 +515,17 @@ plugging it into the following with-sound call:
   <a class=def name="sine-bank">sine-bank</a> amps phases
 </pre>
 
-<p><b>oscil</b> produces a sine wave (using sin) with optional frequency change (FM).
-Its first argument is an oscil created by <b>make-oscil</b>.
+<p>oscil produces a sine wave (using sin) with optional frequency change (FM).
+Its first argument is an oscil created by make-oscil.
 Oscil's second argument is the 
 frequency change (frequency modulation), and the third argument is the
 phase change (phase modulation).
 The initial-phase argument to make-oscil is in radians. You can
-use <b>degrees-&gt;radians</b> to convert from degrees to radians.
+use <a href="#degreestoradians">degrees-&gt;radians</a> to convert from degrees to radians.
 To get a cosine (as opposed to sine), set the initial-phase to (/ pi 2).
 </p>
 
-<p><b>sine-bank</b> simply loops through its arrays of amps and phases, summing
+<p>sine-bank simply loops through its arrays of amps and phases, summing
 (* amp (sin phase)) -- it is mostly a convenience function for additive synthesis
 (the phase-vocoder in particular).
 </p>
@@ -877,7 +877,7 @@ duration), it's simplest to use make-env:
 
 
 
-<p><b>env-interp</b> and <b>envelope-interp</b> return the value of the envelope at some point
+<p>env-interp and envelope-interp return the value of the envelope at some point
 on the x axis; env-interp operates on an env (the output of make-env), whereas
 envelope-interp operates on an envelope (a list of breakpoints).
 There are many more functions that operate on envelopes; see in particular <a href="sndscm.html#envdoc">env.scm</a>.
@@ -923,7 +923,7 @@ envelope with sum-of-cosines connections: <a href="sndscm.html#blackman4envchann
   <a class=def name="table-lookup?">table-lookup?</a> tl
 </pre>
 
-<p><b>table-lookup</b> performs interpolating table lookup with a lookup index that moves
+<p>table-lookup performs interpolating table lookup with a lookup index that moves
 through the table at a speed set by make-table-lookup's "frequency" argument and table-lookup's "fm-input" argument.
 That is, the waveform in the table is produced repeatedly, the repetition rate set by the frequency arguments.
 Table-lookup scales its
@@ -1205,7 +1205,7 @@ Even more amusing is this algorithm:
   <a class=def name="sum-of-cosines">sum-of-cosines</a> cs :optional (fm 0.0)
   <a class=def name="sum-of-cosines?">sum-of-cosines?</a> cs
 </pre>
-<p><b>sum-of-cosines</b> produces a band-limited pulse train containing
+<p>sum-of-cosines produces a band-limited pulse train containing
 <i>cosines</i> cosines.  I think this was originally viewed as a way to get a speech-oriented
 pulse train that would then be passed through formant filters (see pulse-voice in examp.scm).  There are many similar formulas:
 see <a href="sndscm.html#fejersum">fejer-sum</a> and friends in dsp.scm. "Trigonometric Delights" by Eli Maor has
@@ -1302,7 +1302,7 @@ but perhaps a filter is a simpler approach.
   <a class=def name="sum-of-sines">sum-of-sines</a> cs :optional (fm 0.0)
   <a class=def name="sum-of-sines?">sum-of-sines?</a> cs
 </pre>
-<p><b>sum-of-sines</b> produces a sum of sines.  It is very similar (good and bad) to <a href="#sum-of-cosines">sum-of-cosines</a>.
+<p>sum-of-sines produces a sum of sines.  It is very similar (good and bad) to <a href="#sum-of-cosines">sum-of-cosines</a>.
 </p>
 <table border align=left hspace=40 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>sum-of-sines methods</center></td></tr>
@@ -1361,7 +1361,7 @@ and dsp.scm which has a <a href="sndscm.html#fejersum">collection</a> of neat su
 </pre>
 <br clear=left>
 
-<p><b>sine-summation</b> produces a kind of additive synthesis.
+<p>sine-summation produces a kind of additive synthesis.
 See J.A.Moorer, "Signal Processing Aspects of Computer Music" and "The
 Synthesis of Complex Audio Spectra by means of Discrete Summation Formulae"
 (Stan-M-5).  "n" is the number of sidebands, "a" is the amplitude
@@ -1404,7 +1404,7 @@ don't set "a" to 1.0!).
   <a class=def name="ssb-am">ssb-am</a> gen :optional (insig 0.0) (fm 0.0)
   <a class=def name="ssb-am?">ssb-am?</a> gen
 </pre>
-<p><b>ssb-am</b> provides single sideband suppressed carrier amplitude modulation, normally used for frequency shifting.
+<p>ssb-am provides single sideband suppressed carrier amplitude modulation, normally used for frequency shifting.
 The basic notion is to shift a spectrum up or down while cancelling either the upper or lower half of the spectrum.
 See <a href="sndscm.html#ssbbank">dsp.scm</a> for a number of curious possibilities (time stretch without pitch shift for example).
 When this works, which it does more often than I expected, it is much better than the equivalent
@@ -1464,7 +1464,7 @@ phase-vocoder or granular synthesis kludges.
   <a class=def name="wave-train?">wave-train?</a> w
 </pre>
 
-<p><b>wave-train</b> produces a wave train (an extension of pulse-train and table-lookup).
+<p>wave-train produces a wave train (an extension of pulse-train and table-lookup).
 <i>Frequency</i> is the rate at which full copies of the wave-train's wave are added into the output.
 Unlike in <a href="#table-lookup">table-lookup</a>, successive copies of the wave can overlap.  With some simple envelopes or filters, you can
 use this for VOSIM and other related techniques.
@@ -1562,7 +1562,7 @@ random numbers.
 rand-interp could be defined as (<a class=quiet href="#moving-average">moving-average</a> agen (rand rgen)) where the
 averager has the same period (length) as the rand.  
 In both cases, the "envelope" argument or the "distribution" argument determines the random number distribution.
-<b>mus-random</b> returns a random number between -amplitude and amplitude.
+mus-random returns a random number between -amplitude and amplitude.
 <i>mus-rand-seed</i> provides access to the seed for mus-random's random number generator.
 </p>
 
@@ -3448,7 +3448,7 @@ determines how many vct elements are printed by mus-describe.
 </table>
 
 <p>
-<b>hz-&gt;radians</b>
+hz-&gt;radians
 converts its argument to radians/sample (for any situation where a
 frequency is used as an amplitude -- glissando or FM).
 hz-&gt;radians is equivalent to 
@@ -3558,7 +3558,7 @@ for an example.
 
 
 <p>
-<b>mus-interpolate</b> is the function used whenever table lookup interpolation is requested, as in
+mus-interpolate is the function used whenever table lookup interpolation is requested, as in
 <a href="#delay">delay</a> or <a href="#wave-train">wave-train</a>. 
 The "type" argument is one of the interpolation types (<code>mus-interp-linear</code>, for example).
 </p>

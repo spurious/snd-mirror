@@ -9437,7 +9437,7 @@ end
 
 <!-- ---------------------------------------- FILE: ws ---------------------------------------- -->
 
-<A NAME="wsdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>ws (under construction...)</h2></td></tr></table>
+<A NAME="wsdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>ws</h2></td></tr></table>
 
 <p>
 with-sound provides a simple way to package up a bunch of instrument calls into a new
@@ -9507,7 +9507,16 @@ we want to hear an arpeggio from the fm-violin:
 </pre>
 
 <p>
-<!-- TODO: ws examples -->
+with-sound opens an output object, either a sound file, a vct, or a sound-data object: (*output*), and
+optionally a reverb output object: *reverb*.  Each instrument uses out-any to add its sounds to the
+*output* results.  with-sound next sets up a variety of variables describing the current
+output, and establishes an environment where various problems can be handled nicely (in Scheme,
+a dynamic-wind with various debugging hooks).  Then the with-sound body is evaluated, presumably
+producing sound.  Once evaluated, the outputs are closed, and if reverb is requested, the reverberator
+is run.  Once complete, with-sound print out statistics (if :statistics is #t), scales the result (if :scale-to),
+and plays it (if :play is #t).  Then, if the output is a sound file, with-sound opens it in Snd, first closing any previous sound with
+the same name (this makes it easier to call with-sound over and over while trying out some patch).
+with-sound returns its :output argument.
 </p>
 
 <pre>
@@ -9531,18 +9540,47 @@ we want to hear an arpeggio from the fm-violin:
 	  (to-snd *to-snd*)                      ; if #t, open the output file in Snd
 </pre>
 
-<pre>
-    :<em class=typing>(<a class=quiet href="#wsdoc">with-sound</a> (:statistics #t :channels 2 :reverb jc-reverb)
-       (fm-violin 0 .1 440 .1 :reverb-amount .1 :degree 0)
-       (fm-violin 1 .1 660 .2 :degree 90))</em>
-    <em class=listener>test.snd:
-      maxamp: 0.1000 0.2032
-      rev max: 0.0100
-      compute time: 0.050
-    "test.snd"</em>               ; with-sound returns the new file name
-</pre>
-<p>or in Ruby:
+<p>The with-sound syntax may look sightly odd; we include the arguments in the first list, then
+everything after that is evaluated as a note list.
 </p>
+<pre>
+    (with-sound (:srate 44100 :channels 2 :output "test.snd")
+      (fm-violin 0 1 440 .1)
+      (fm-violin 1 1 660 .1))
+</pre>
+
+<p>produces a sound file with two fm-violin notes; the sound file is named "test.snd", is stero, and has a sampling rate of 44100.
+</p>
+
+<pre>
+    (with-sound (:reverb jc-reverb :statistics #t :play #t) 
+      (fm-violin 0 1 440 .1 :reverb-amount .3))
+</pre>
+
+<p>produces one fm-violin note, heavily reverberated, and plays it, printing this info:
+<p>
+
+<pre>
+    <em class-listener>&gt;</em><em class=typing>(with-sound (:reverb jc-reverb :statistics #t :play #t) 
+        (fm-violin 0 1 440 .1 :reverb-amount .3))</em>
+    <em class=listener>test.snd:
+    maxamp: 0.3038
+    rev max: 0.0300
+    compute time: 0.030</em>
+</pre>
+
+<p>It's often hard to predict how loud a set of notes is going to be, so we can use
+"scaled-to" to set its final amplitude:
+</p>
+
+<pre>
+    (with-sound (:scale-to .5) 
+      (do ((i 0 (1+ i))) ((= i 10)) (fm-violin 0 i (random) 440.0)))
+</pre>
+
+<p>Here are examples in Ruby and Forth:
+</p>
+
 <pre>
     :<em class=typing>with_sound(:channels, 2, :play, false, :statistics, true) do 
       fm_violin(0, 1, 440, 0.1); 
@@ -9573,18 +9611,110 @@ we want to hear an arpeggio from the fm-violin:
     \  comment: Written on Fri Jul 14 07:41:47 PDT 2006 by bil at cat using clm (fth) of 30-Jun-06</em>
 </pre>
 
+<p>The default values listed above (*clm-srate* and friends) are set in ws.scm:
+</p>
+
+<pre>
+    (define *clm-file-name*          "test.snd")
+    (define *clm-srate*              (default-output-srate))       ; 22050
+    (define *clm-channels*           (default-output-chans))       ; 1
+    (define *clm-data-format*        (default-output-data-format)) ; mus-lfloat
+    (define *clm-header-type*        (default-output-header-type)) ; mus-next
+    (define *clm-verbose*            #f)
+    (define *clm-play*               #f)
+    (define *clm-statistics*         #f)
+    (define *clm-reverb*             #f)
+    (define *clm-reverb-channels*    1)
+    (define *clm-reverb-data*        '())
+    (define *clm-table-size*         512)
+    (define *clm-file-buffer-size*   65536)
+    (define *clm-locsig-type*        mus-interp-linear)
+    (define *clm-clipped*            #t)
+    (define *clm-array-print-length* (print-length))  ; 12
+    (define *clm-player*             #f)
+    (define *clm-notehook*           #f)
+    (define *to-snd*                 #t)
+    (define *reverb*                 #f)
+    (define *output*                 #f)
+    (define *clm-delete-reverb*      #f)
+</pre>
+
+<p>You can set any of these to permanently change with-sound's defaults
+</p>
+
+<pre>
+    <em class=listener>&gt;</em><em class=typing>(set! *clm-file-name* "test.aif")</em>
+    <em class=listener>#&lt;unspecified&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>(set! *clm-srate* 44100)</em>
+    <em class=listener>#&lt;unspecified&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>(set! *clm-channels* 2)</em>
+    <em class=listener>#&lt;unspecified&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>(set! *clm-header-type* mus-aifc)</em>
+    <em class=listener>#&lt;unspecified&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>(set! *clm-data-format* mus-bfloat)</em>
+    <em class=listener>#&lt;unspecified&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>(with-sound ()  (fm-violin 0 1 440 .1))test.aif:</em>
+    <em class=listener>"test.aif"</em>
+    <em class=listener>&gt;</em><em class=typing>(mus-sound-srate "test.aif")</em>
+    <em class=listener>44100</em>
+    <em class=listener>&gt;</em><em class=typing>(mus-sound-chans "test.aif")</em>
+    <em class=listener>2</em>
+</pre>
+
 <p>
-<b>with-sound</b> opens its output file ('output' above)
-via make-sample-&gt;file, setting the global variable *output*.  This
-is equivalent to CLM's *output* variable, and can be used the same
-way in <a class=quiet href="sndclm.html#outa">outa</a> or <a class=quiet href="sndclm.html#locsig">locsig</a>.  If 'reverb' is specified, *reverb* is also
-opened (corresponding to CLM's *reverb*).  So the cooperating instrument code is:
+To display the entire sound automatically (independent of <a href="extsnd.html#afteropenhook">after-open-hook</a>),
+use with-full-sound:
+</p>
+
+<pre>
+    (defmacro with-full-sound (args . body)
+      `(let ((snd (with-sound-helper (lambda () ,@body) ,@args)))
+         (set! (<a class=quiet href="extsnd.html#xbounds">x-bounds</a> *snd-opened-sound*) (list 0.0 (/ (<a class=quiet href="extsnd.html#frames">frames</a> *snd-opened-sound*) (<a class=quiet href="extsnd.html#srate">srate</a> *snd-opened-sound*))))
+         snd))
+</pre>
+
+<p>Since with-sound returns the new sound's file name, we save that, get the new sound's index (<a href="extsnd.html#sndopenedsound">*snd-opened-sound*</a>),
+and set the <a href="extsnd.html#xbounds">x-bounds</a> to display the full sound, then return the file name.  You could obviously customize this any way
+you like.
+To continue adding notes to an existing file, set 'continue-old-file':
+</p>
+
+<pre>
+    (<a class=quiet href="#wsdoc">with-sound</a> (:continue-old-file #t) (fm-violin 0 1 440 .1))
+</pre>
+
+<p>The "notehook" argument is a function called each time an instrument is called:
+</p>
+
+<pre>
+    <em class=listener>&gt;</em><em class=typing>(with-sound (:notehook (lambda (name . args) 
+                              (snd-print (format #f "~%;~A: ~A" name (caddr args)))))
+       (fm-violin 0 1 440 .1) 
+       (fm-violin 1 1 660 .1))</em>
+    <em class=listener>;fm-violin: 440
+    ;fm-violin: 660
+    "test.snd"</em>
+</pre>
+
+<p>
+The arguments passed to the notehook function are the current instrument name (a string) and all its
+arguments.  <a name="definstrument">definstrument</a> implements the notehook feature.  
+</p>
+
+
+<br>
+<table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>definstrument</h4></td></tr></table>
+
+<p>
+definstrument
+is very much like define, but with added code to support notehook and (for Common Music) *definstrument-hook*.
+So, an instrument that wants to cooperate fully with with-sound and Common Music has the form:
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (definstrument (ins args)
   (let ...
-    (ws-interrupt?) ; see below
+    (ws-interrupt?) ; see <a href="#wsinterrupt">below</a>
     (run                             ; run is optional, but speeds up computation
       (lambda ()
         (do ((i start (1+ i)))
@@ -9592,9 +9722,7 @@ opened (corresponding to CLM's *reverb*).  So the cooperating instrument code is
           (<a class=quiet href="sndclm.html#outa">outa</a> i ... *output*))))))
 </pre></td></tr></table>
 
-
-<p>You can also use <a name="defoptkeyinstrument">def-optkey-instrument</a>
-which is a combination of definstrument and <a href="#def-optkey-fun">def-optkey-fun</a>:
+<p>The optional-key feature can be used with definstrument via def-optkey-instrument:
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
@@ -9610,43 +9738,10 @@ which is a combination of definstrument and <a href="#def-optkey-fun">def-optkey
   (simp 20000 10000 :amplitude 0.2))
 </pre></td></tr></table>
 
-<p>with-sound returns the output file name. If a previous file of the same name
-is currently open in Snd, it is closed before the new version is opened.
-To display the entire sound automatically (independent of <a href="extsnd.html#afteropenhook">after-open-hook</a>),
-use <b>with-full-sound</b>.  It is:
-</p>
-<pre>
-    (defmacro with-full-sound (args . body)
-      `(let ((snd (with-sound-helper (lambda () ,@body) ,@args)))
-         (set! (<a class=quiet href="extsnd.html#xbounds">x-bounds</a> *snd-opened-sound*) (list 0.0 (/ (<a class=quiet href="extsnd.html#frames">frames</a> *snd-opened-sound*) (<a class=quiet href="extsnd.html#srate">srate</a> *snd-opened-sound*))))
-         snd))
-</pre>
-<p>Since with-sound returns the new sound's file name, we save that, get the new sound's index (<a href="extsnd.html#sndopenedsound">*snd-opened-sound*</a>),
-and set the <a href="extsnd.html#xbounds">x-bounds</a> to display the full sound, then return the file name.  You could obviously customize this any way
-you like.
-</p>
-
-<p>
-The easiest way to mix an existing file into the with-sound output is to use
-mus-mix with *output*:
-</p>
-
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(<a class=quiet href="#wsdoc">with-sound</a> () 
-  (fm-violin 0 .1 440 .1) 
-  (<a class=quiet href="#musmix">mus-mix</a> *output* "oboe.snd") 
-  (fm-violin .1 .1 660 .1))
-</pre></td></tr></table>
-
-<p>To continue adding notes to an existing file, set 'continue-old-file':
-</p>
-<pre>
-    (<a class=quiet href="#wsdoc">with-sound</a> (:continue-old-file #t) (fm-violin 0 1 440 .1))
-</pre>
-
 <p>You don't have to use definstrument; in the next example we make a Shepard tone
 by calling the oscils and whatnot directly in the with-sound body:
 </p>
+
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (define (<a name="shepardtone">shepard-tone</a>)
   (let* ((x 0.0)
@@ -9674,80 +9769,67 @@ by calling the oscils and whatnot directly in the with-sound body:
 </pre></td></tr></table>
 <img src="shepard.png" alt="shepard tone spectrum" vspace=10 hspace=40>
 
+<p>In all these cases, the "run time" portion of the sound computation is wrapped up
+in <code>(run (lambda () ... ))</code>.  <a name="run">run</a> (the name predates me!),
+tries to optimize its argument using a sort of byte compiler.  When successful, it
+can speed up computation by about a factor of 10.  When unsuccessful, it falls back
+on Scheme, so you always get a sound.  The body of the lambda can be anything; in this
+document, primarily for historical reasons, all the bodies seem to be do loops, but
+just about any other choice is ok.  See snd-run.c for a list of what's optimizable:
+avoid lists, if possible, and fancy stuff like map or apply, and you should be fine.
+</p>
 
-<br><br>
-<table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>other forms of with-sound</h4></td></tr></table>
+
+<br>
+<table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>sound-let</h4></td></tr></table>
 
 <p>There are several other versions of with-sound: with-temp-sound, sound-let, clm-load, with-mix, and the Common Music
 handles, init-with-sound and finish-with-sound.
-</p>
-
-<!-- TODO: move sound-let etc doc to sndscm -->
-
-<a name="definstrument"></a>
-<a name="musmix"></a>
-<a name="def-clm-struct"></a>
-<a name="run"></a>
-<a name="snd-memo"></a>
-<a name="with-mix"></a>
-<a name="def-optkey-fun"></a>
-
-<!-- also the variables:
-
-(define *clm-srate* (default-output-srate))
-(define *clm-file-name* "test.snd")
-(define *clm-channels* (default-output-chans))
-(define *clm-data-format* (default-output-data-format))
-(define *clm-header-type* (default-output-header-type))
-(define *clm-verbose* #f)
-(define *clm-play* #f)
-(define *clm-statistics* #f)
-(define *clm-reverb* #f)
-(define *clm-reverb-channels* 1)
-(define *clm-reverb-data* '())
-(define *clm-table-size* 512)
-(define *clm-file-buffer-size* 65536)
-(define *clm-locsig-type* mus-interp-linear)
-(define *clm-clipped* #t)
-(define *clm-array-print-length* (print-length))
-(define *clm-player* #f) ; default is play-and-wait (takes index of newly created sound, not the sound's file name)
-(define *clm-notehook* #f)
-(define *clm-with-sound-depth* 0) ; for CM, not otherwise used
-
-(define *to-snd* #t)
-
-(define *reverb* #f) ; these are sample->file (outa) gens, vcts, or sound-data objects
-(define *output* #f)
-(define *clm-delete-reverb* #f) ; should with-sound clean up reverb stream
-
--->
-
-<!-- TODO: def-clm-struct, definstrument, sound-let, with-sound in sndscm.html [with-mix, mus-mix?, run? snd-memo? def-optkey-fun?]
--->
-
-
-
-<p>
 <a name="withtempsound">with-temp-sound</a> and <a name="sound-let">sound-let</a> set up temporary bindings for embedded with-sounds.
-sound-let is a combination
-of "let" and with-sound:
 </p>
+
+<p>sound-let is a form of let* that creates temporary sound files
+within with-sound.  Its syntax is a combination of let* and with-sound:
+with-sound:</p>
+
+<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+(<em class=red>sound-let</em> ((temp-1 () (fm-violin 0 1 440 .1))
+            (temp-2 () (fm-violin 0 2 660 .1)
+                       (fm-violin .125 .5 880 .1)))
+  (granulate-sound temp-1 0 2 0 2)     ;temp-1's value is the name of the temporary file
+  (granulate-sound temp-2 1 1 0 2))
+</pre>
+</td></tr></table>
+
+<p>This creates two temporary files and passes them along to the subsequent calls
+on granulate-sound.  The first list after the sound file identifier (i.e. after
+"temp-1" in the example) is the list of <a href="#with-sound">with-sound</a> options to be passed
+along when creating this temporary file.  These default to :output
+with a unique name generated internally, and all other variables are taken from
+the overall (enclosing) with-sound.  The rest of the list is the body of the
+associated <a href="#with-sound">with-sound</a>.
+The difference between sound-let and a simple embedded with-sound is primarily that
+sound-let names and later deletes the temporary files it creates, whereas with-sound leaves
+its explicitly named output intact (and tries to open it in Snd, which can be confusing in this context).
+Here's another example:
+</p>
+
 <pre>
   (<a class=quiet href="#wsdoc">with-sound</a> ()
-    (sound-let ((temp-sound () (fm-violin 0 1 440 .1))) ; create temp-sound with an fm-violin note (v.scm)
+    (<em class=red>sound-let</em> ((temp-sound () (fm-violin 0 1 440 .1))) ; create temp-sound with an fm-violin note
        (pins 0.0 2.0 temp-sound 1.0 :time-scaler 2.0))  ; stretch it with the pins instrument (clm-ins.scm)
     (fm-violin 1 1 550 .1))                             ; add another fm-violin note
 </pre>
 
-<p>Similarly, with-temp-sound creates a temporary sound file (using <a href="extsnd.html#sndtempnam">snd-tempnam</a>),
-and it does not open the result in Snd (it assumes its output is some intermediate file); here is an example that
-parallels the sound-let example above:
+<p>with-temp-sound is like sound-let, but does not delete its output file:
 </p>
 <pre>
   (<a class=quiet href="#wsdoc">with-sound</a> ()
-    (let ((temp-sound (with-temp-sound () (fm-violin 0 1 440 .1))))
+    (let ((temp-sound (<em class=red>with-temp-sound</em> () (fm-violin 0 1 440 .1))))
       (clm-expsrc 0 2 temp-sound 2.0 1.0 1.0)))
 </pre>
+
 <p>Here are Ruby examples:
 </p>
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
@@ -9766,8 +9848,7 @@ with_sound() do
 end
 </pre></td></tr></table>
 
-
-<p>Another variant of with-sound is <b><a name="clmload">clm-load</a></b>.  Its first argument is a filename, assumed to
+<p>Another variant of with-sound is <a name="clmload">clm-load</a>.  Its first argument is a filename, assumed to
 be a text file containing the body of with-sound, followed by the usual with-sound arguments, if any.
 For example, if we have a file named clm-load-test.clm with these contents:
 </p>
@@ -9795,10 +9876,63 @@ split with-sound into two pieces, primarily for Common Music's benefit.
       (fm-violin 0 1 440 .1))
 </pre>
 
-<p><b>with-mix</b> is a "checkpointing" with-sound; it takes extended explication.
+
+<br>
+<table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>with-mix</h4></td></tr></table>
+
+<p><a name="with-mix">with-mix</a> is a "checkpointing" version of with-sound, more useful in the bad old days when computers
+were incredibly slow, but lingering on...
+It is a macro, callable within <a href="#with-sound">with-sound</a> or <a href="#clm-load">clm-load</a>,
+which saves the computation in its body in a separate file, and
+then upon a subsequent recomputation, tries to tell (via a string comparison) when that file's data is up to date
+and does not need to be recomputed.
 </p>
 
-<!-- TODO: with-mix doc -->
+<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+(<a class=quiet href="#with-sound">with-sound</a> () 
+  (fm-violin 0 .1 440 .1)
+  (<em class=red>with-mix</em> () "sec1" .5 
+    (fm-violin 0 .1 550 .1)
+    (fm-violin .1 .1 660 .1))
+  (<em class=red>with-mix</em> (:reverb jc-reverb) "sec2" 1.0
+    (fm-violin 0 .1 880 .1 :reverb-amount .2)
+    (fm-violin .1 .1 1320 .1 :reverb-amount .2))
+  (fm-violin 2 .1 220 .1)
+  (<em class=red>mix</em> "/zap/slow.snd"))
+</pre>
+</td></tr></table>
+
+<p>Now, if we change just the first note in the with-mix call, the
+second with-mix section will not be recomputed, but will be mixed in from the
+saved file "sec2.snd".
+In the old days, when notes took hours to compute, this was a big deal,
+but not anymore.
+</p>
+
+<p>There's also a quick sound file mixer named mus-mix:
+</p>
+
+<pre>
+  <a class=def name="musmix">mus-mix</a> outfile infile :optional (outloc 0) (frames) (inloc 0) mixer envs)
+</pre>
+
+<p>This function
+mixes "infile" into "outfile" starting at "outloc" in "outfile" and "inloc" in "infile",
+mixing "frames" frames into "outfile".  "frames" defaults to the length of "infile". If "mixer",
+use it to scale the various channels; if envs (an array of envelope generators), use \
+it in conjunction with mixer to scale and envelope all the various ins and outs.
+"outfile" can also be a <a href="sndclm.html#frametofile">frame-&gt;file</a> generator, and "infile" can be a 
+<a href="sndclm.html#filetoframe">file-&gt;frame</a> generator.
+</p>
+
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+(<a class=quiet href="#wsdoc">with-sound</a> () 
+  (fm-violin 0 .1 440 .1) 
+  (<a class=quiet href="#musmix">mus-mix</a> *output* "oboe.snd") 
+  (fm-violin .1 .1 660 .1))
+</pre></td></tr></table>
+
 
 <br>
 <A NAME="wsdebug"></a><table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>debugging help in with-sound</h4></td></tr></table>
@@ -9806,7 +9940,7 @@ split with-sound into two pieces, primarily for Common Music's benefit.
 <!-- INDEX wsdebug:Debugging (notelists) -->
 
 <p>with-sound establishes a catch for debugging: 'with-sound-interrupt.  If you
-place the macro <b>ws-interrupt?</b> in your instrument, C-g will be caught at
+place the macro <a name="wsinterrupt">ws-interrupt?</a> in your instrument, C-g will be caught at
 each such point, and control transferred to the with-sound debugging context.
 Currently, ws-interrupt? is not supported by the run macro, but each of the
 clm-ins.scm instruments includes it just before the run loop.  
@@ -9833,11 +9967,10 @@ The <b>ws-go</b> 'returned-value' is the value to return from the original call 
 </p>
 
 <br>
-<table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>functions associated with with-sound</h4></td></tr></table>
+<table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>other stuff associated with with-sound</h4></td></tr></table>
 
-<p>
-<b>definstrument</b> and <b>def-clm-struct</b> make sound-producing functions compatible with with-sound.
-
+<p><a name="def-clm-struct">def-clm-struct</a> is syntactically like defstruct, but sets up
+the struct field names for the run macro.  There are several examples in clm-ins.scm and prc95.scm.
 </p>
 
 <p>Toward the end of ws.scm is an example, <A NAME="withmarkedsound">with-marked-sound</A>, that is just
