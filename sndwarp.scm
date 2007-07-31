@@ -198,7 +198,7 @@
 	     (let* ((winlen (if (and (= overlap 0) (= section 0)) ; first section of first overlap isn't randomized
 				wsize
 				(+ wsize (random randw))))
-		    (winsamps (inexact->exact (floor (* (mus-srate) winlen))))
+		    (winsamps (seconds->samples winlen))
 		    (srate-val (env sratef))
 		    (time-val (env timef)))
 	       ;; Even for the 1st section's truncated envelopes, the frequency of the envelope must be as if the envelope were full duration.

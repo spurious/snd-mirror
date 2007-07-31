@@ -124,7 +124,7 @@ note lists and instruments are described in sndscm.html.
 
 <tr><td width=20 bgcolor=#f6f8ff></td><td>
 <table border=0 cellpadding=0>
-  <tr><td><a href="#amplitude-modulate">amplitude-modulate</a></td><td></td><td>sig1 * (ind * sig2)</td></tr>
+  <tr><td><a href="#amplitude-modulate">amplitude-modulate</a></td><td></td><td>sig1 * (car + sig2)</td></tr>
   <tr><td><a href="#array-interp">array-interp</a></td><td></td><td>array interpolation</td></tr>
   <tr><td><a href="#contrast-enhancement">contrast-enhancement</a></td><td width=20></td><td>modulate signal</td></tr>
   <tr><td><a href="#convolution">convolution</a></td><td></td><td>convolve signals</td></tr>
@@ -370,7 +370,7 @@ could be rewritten:
 
 <p>Now to hear our sine wave:</p>
 <pre>
-    (with-sound () (simp 0 22050 330 .1))
+    (with-sound (:play #t) (simp 0 22050 330 .1))
 </pre>
 
 <p>This version of "simp" forces you to think in terms of sample numbers ("start" and "end") which
@@ -3673,7 +3673,6 @@ or linear and normalized to 1.0 ("norm-type" = 1), or linear unnormalized.
 <p>rectangular-&gt;polar and polar-&gt;rectangular change how we view the FFT data: in polar or rectangular coordinates.
 multiply-arrays does an element-wise multiply of two vcts.
 </p>
-
 <br><br>
 
 

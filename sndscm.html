@@ -9701,6 +9701,16 @@ The arguments passed to the notehook function are the current instrument name (a
 arguments.  <a name="definstrument">definstrument</a> implements the notehook feature.  
 </p>
 
+<p>The "output" argument can be a vct or a sound-data object, as well as a filename:
+</p>
+<pre>
+    (with-sound (:output (make-vct 22050)) (fm-violin 0 1 440 .1))
+</pre>
+
+<p>See <a href="#fadedoc">fade.scm</a>, snd-test.scm,
+<a href="#insertsounddata">insert-sound-data</a>, <a href="#mixsounddata">mix-sound-data</a> for more examples.
+</p>
+
 
 <br>
 <table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>definstrument</h4></td></tr></table>

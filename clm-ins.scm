@@ -477,7 +477,7 @@ is a physical model of a flute:
 	 (chns (mus-channels *output*))
 	 (flowf (make-env :envelope flow-envelope 
 			  :scaler flow 
-			  :end (+ beg (inexact->exact (floor (* (- dur decay) (mus-srate)))))))
+			  :end (+ beg (seconds->samples (- dur decay)))))
 	 (periodic-vibrato (make-oscil :frequency vib-rate))
 	 (random-vibrato (make-rand-interp :frequency ran-rate))
 	 (breath (make-rand :frequency (/ (mus-srate) 2) :amplitude 1))
@@ -1240,8 +1240,8 @@ is a physical model of a flute:
     (do ((i 0 (1+ i)))
 	((= i (length telephone-number)))
       (let* ((k (list-ref telephone-number i))
-	     (beg (inexact->exact (floor (* (+ start (* i .4)) (mus-srate)))))
-	     (end (inexact->exact (floor (+ beg (* .3 (mus-srate))))))
+	     (beg (seconds->samples (+ start (* i .4))))
+	     (end (+ beg (seconds->samples .3)))
 	     (i (if (number? k)
 		    (if (not (= 0 k))
 			k 
@@ -1892,8 +1892,8 @@ is a physical model of a flute:
 	 (turntable (list->vct turnaroundlist))
 	 (turn-i 1)
 	 (turns (length turnaroundlist))
-	 (cur-sample (inexact->exact (floor (* (mus-srate) (vct-ref turntable 0)))))
-         (turn-sample (inexact->exact (floor (* (mus-srate) (vct-ref turntable turn-i)))))
+	 (cur-sample (seconds->samples (vct-ref turntable 0)))
+         (turn-sample (seconds->samples (vct-ref turntable turn-i)))
 	 (turning 0)
 	 (last-val 0.0)
 	 (last-val2 0.0)
@@ -1923,7 +1923,7 @@ is a physical model of a flute:
 		     (set! turn-i (1+ turn-i))
 		     (if (< turn-i turns)
 			 (begin
-			   (set! turn-sample (inexact->exact (floor (* (mus-srate) (vct-ref turntable turn-i)))))
+			   (set! turn-sample (seconds->samples (vct-ref turntable turn-i)))
 			   (set! forwards (not forwards))
 			   (set! (mus-increment rd) (- (mus-increment rd)))))
 		     (set! turning 0))))
@@ -2275,7 +2275,7 @@ is a physical model of a flute:
 	 (min-exp-amt (if exp-amt (if (list? exp-amt) (min-envelope exp-amt) exp-amt) 1.0))
 	 (initial-exp-amt (if exp-amt (if (list? exp-amt) (cadr exp-amt) exp-amt) 1.0))
 	 (max-in-hop (/ max-out-hop min-exp-amt))
-	 (max-len (inexact->exact (ceiling (* (mus-srate) (+ (max max-out-hop max-in-hop) max-seg-len)))))
+	 (max-len (seconds->samples (+ (max max-out-hop max-in-hop) max-seg-len)))
 	 (ampe (make-env :envelope (or ampenv (list 0 0 .5 1 1 0)) :scaler amp :duration dur))
 	 (exA (make-granulate :expansion initial-exp-amt
 			      :max-size max-len
@@ -2303,7 +2303,7 @@ is a physical model of a flute:
 		    (rmpl (env rampenv)) ;current ramp length (0 to .5)
 		    (hp (env hopenv)) ;current hop size
 		    ;; now we set the granulate generator internal state to reflect all these envelopes
-		    (sl (inexact->exact (floor (* segl (mus-srate)))))
+		    (sl (seconds->samples segl))
 		    (rl (inexact->exact (floor (* rmpl sl)))))
 	       (set! vol (env ampe))
 	       (set! (mus-length exA) sl)

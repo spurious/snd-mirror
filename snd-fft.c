@@ -272,6 +272,12 @@ static void walsh_transform(Float *data, int n)
 
 /* -------------------------------- AUTOCORRELATION -------------------------------- */
 
+/* this might better be in clm.c, but perhaps return rl? */
+/*    it should be accessible from CL after all, along with correlate */
+
+/* PERHAPS: mus_autocorrelate and mus_correlate (clm.c -> CL etc) [or even wavelet_transform et al] (in any case, correlate for snd-run)
+ */
+
 void autocorrelation(Float *data, int n)
 {
   Float *rl, *im;

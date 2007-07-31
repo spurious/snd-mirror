@@ -22,8 +22,8 @@
 		    (inharm 0.1) ;; inharmonicity: 0.0 harmonic; 1.0 not harmonico
 		    (ampenv '(0 1 15 1 95 1 100 0))
 		    (degree 45) (dist 0.0025) (reverb 0))
-  (let* ((beg (inexact->exact (floor (* beg (mus-srate)))))
-	 (len (inexact->exact (floor (* dur (mus-srate)))))
+  (let* ((beg (seconds->samples beg))
+	 (len (seconds->samples dur))
 	 (end (+ beg len))
 	 (ampf (make-env :envelope ampenv :scaler amplitude :end end))
 	 (loc (make-locsig degree dist reverb  *output* *reverb* (mus-channels *output*)))

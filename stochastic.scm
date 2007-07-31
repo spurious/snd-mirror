@@ -30,8 +30,8 @@
   (let* ((y 0.0) (dx 0) (prev-dx 0) (dy 0.0)
 	 (j 0.0) (m 0) (dt 0) (output 0.0) 
 	 (oldy 0.0) (xdev 0) (ydev 0)
-	 (beg (inexact->exact (floor (* start (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* dur (mus-srate))))))
+	 (beg (seconds->samples start))
+	 (end (+ beg (seconds->samples dur)))
 	 (d-click (make-env (list 0 1 (- end 100) 1 end 0) :duration dur))
 	 (b (expt 2 (- bits 1))); because we use signed ints - see (- b) below
 	 ;;make vct to hold x,y breakpoints

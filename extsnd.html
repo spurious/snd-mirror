@@ -1308,7 +1308,7 @@ some of these sequences.
 You can find out what's on a given hook with the following (which is mostly adding carriage returns to the
 printout from hook-&gt;list):
 </p>
-<table border=0 cellpadding=5><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (define (describe-hook hook)
   (for-each 
     (lambda (n) 
@@ -1319,28 +1319,28 @@ printout from hook-&gt;list):
 <p>Here's the Ruby version of some of the hook-related functions:
 </p>
 <pre>
-$var_hook.remove_hook!("proc_name")
-$var_hook.reset_hook!
-$var_hook.run_hook do |prc| prc.call(1, 2, 3) end
-$var_hook.call(1, 2, 3)   # calls all procedures
-
-require 'hooks'
-$var_hook.show            # prints the code of the procedure(s)
-$va_hook.to_a
+    $var_hook.remove_hook!("proc_name")
+    $var_hook.reset_hook!
+    $var_hook.run_hook do |prc| prc.call(1, 2, 3) end
+    $var_hook.call(1, 2, 3)   # calls all procedures
+    
+    require 'hooks'
+    $var_hook.show            # prints the code of the procedure(s)
+    $va_hook.to_a
 </pre>
 
 <p>And some Forth examples, taken from Mike Scholz's documentation:
 </p>
 <pre>
-open-hook ' open-buffer 1 make-proc add-hook!
-open-hook "open-buffer" remove-hook!
-open-hook reset-hook!
-open-hook hook-&gt;list
-
-2 "A simple hook." create-hook my-new-hook
-my-new-hook ' + 2 make-proc add-hook!
-my-new-hook '( 2 3 ) run-hook
-help my-new-hook             
+    open-hook ' open-buffer 1 make-proc add-hook!
+    open-hook "open-buffer" remove-hook!
+    open-hook reset-hook!
+    open-hook hook-&gt;list
+    
+    2 "A simple hook." create-hook my-new-hook
+    my-new-hook ' + 2 make-proc add-hook!
+    my-new-hook '( 2 3 ) run-hook
+    help my-new-hook             
 </pre>
 
 
@@ -3222,7 +3222,7 @@ We can use vct-move! to maintain a sliding window on a sound:
       (let* ((size 100)
 	     (samps (<a class=quiet href="#makevct">make-vct</a> size)))
         (lambda (y)
-         (vct-move! samps 0 1)
+         (<em class=red>vct-move!</em> samps 0 1)
          (vct-set! samps (1- size) y)
          ...)))
 </pre>

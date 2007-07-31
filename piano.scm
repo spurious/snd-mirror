@@ -221,8 +221,8 @@
 		   wT)))
       (apfloor len wT)))
   
-  (let*	((beg (inexact->exact (floor (* start (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* (+ duration release-time-margin) (mus-srate))))))
+  (let*	((beg (seconds->samples start))
+	 (end (+ beg (seconds->samples (+ duration release-time-margin))))
 	 (dur (inexact->exact (floor (* duration (mus-srate)))))
 	 (freq (* 440.0 (expt 2.0 (/ (- keyNum 69.0) 12.0))))
 	 (wT (/ (* two-pi freq) (mus-srate)))
