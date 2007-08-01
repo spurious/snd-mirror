@@ -14507,6 +14507,7 @@ EDITS: 2
 (if (not (provided? 'snd-analog-filter.scm)) (if (defined? 'gsl-roots) (load "analog-filter.scm")))
 (if (not (provided? 'snd-bird.scm)) (load "bird.scm"))
 (if (not (provided? 'snd-v.scm)) (load "v.scm"))
+(if (not (provided? 'snd-numerics.scm)) (load "numerics.scm"))
 
 (def-clm-struct sa1 (freq 0.0 :type float) (coscar #f :type clm) (sincar #f :type clm) (dly #f :type clm) (hlb #f :type clm))
 
@@ -14561,6 +14562,8 @@ EDITS: 2
 
 
 (define (snd_test_8)
+
+  ;; ----------------
   (define (bumpy)
     (let* ((x 0.0) 
 	   (xi (/ 1.0 (frames)))
@@ -14576,6 +14579,7 @@ EDITS: 2
 		       (set! x (+ x xi))
 		       (* scl val))))))
   
+  ;; ----------------
   (define test-scanned-synthesis
     ;; check out scanned-synthesis
     (lambda (amp dur mass xspring damp)
@@ -14610,6 +14614,7 @@ EDITS: 2
   
   ;; (test-scanned-synthesis .1 10000 1.0 0.1 0.0)
   
+  ;; ----------------
   (define* (array-interp-sound-diff :optional snd chn)
 
     (define (envelope->vct e len)
@@ -14634,6 +14639,7 @@ EDITS: 2
 		      0 #f snd chn)
 	mx)))
 
+  ;; ----------------
   (define (test-lpc)
     (define (make-sine n) 
       (let ((data (make-vct n 0.0))) 
@@ -14683,6 +14689,7 @@ EDITS: 2
       (if (not (vequal vals (vct 0.000 0.195 0.379 0.545 0.684 0.795 0.875 0.927)))
 	  (snd-display ";predict sines 3: ~A" vals))))
   
+  ;; ----------------
   (define (test-unclip-channel)
     (let ((ind (new-sound "test.snd" mus-next mus-lfloat 22050 2 "unclip-channel test" 1)))
       (set! (sync ind) 1)
@@ -14935,6 +14942,7 @@ EDITS: 2
       
       (close-sound ind)))
   
+  ;; ----------------
   (define (analog-filter-tests)
     
     (define (sweep->bins flt bins)
@@ -15545,6 +15553,7 @@ EDITS: 2
 		  (snd-display ";elliptic bs 8 .1 .2 spect: ~A" (cadr vals))))
 	    ))))
   
+  ;; ----------------
   (define (poly-roots-tests)
     (letrec ((ceql (lambda (a b)
 		     (if (null? a)
@@ -15726,6 +15735,7 @@ EDITS: 2
 	    (snd-display ";cube in 2: ~A" vals)))
       ))
   
+  ;; ----------------
   (define (fltit)
     "(fltit) returns a time-varying filter: (map-chan (fltit))"
     (let* ((coeffs (list .1 .2 .3 .4 .4 .3 .2 .1))
@@ -15743,6 +15753,7 @@ EDITS: 2
 	    (vct-set! xcof i (env (vector-ref es i))))
 	  val))))
   
+  ;; ----------------
   (define (freq-sweep dur)
     (let ((phase 0.0)
 	  (freq 0.0)
@@ -15754,6 +15765,7 @@ EDITS: 2
 	   (set! freq (+ freq incr))
 	   (* .5 val))))))
   
+  ;; ----------------
   (define* (make-ssb-am-1 freq :optional (order 40))
     (if (even? order) (set! order (1+ order)))
     (make-sa1 :freq (abs freq)
@@ -15762,6 +15774,7 @@ EDITS: 2
 	      :dly (make-delay order)
 	      :hlb (make-hilbert-transform order)))
   
+  ;; ----------------
   (define* (ssb-am-1 gen y :optional (fm-1 0.0))
     (let* ((fm fm-1)
 	   (ccos (oscil (sa1-coscar gen) fm))
@@ -15774,6 +15787,7 @@ EDITS: 2
 	  (+ (* ccos yd) ; shift down
 	     (* csin yh)))))
   
+  ;; ----------------
   (define (rough-spectrum ind)
     (let ((r (make-sample-reader 0 ind 0))
 	  (spect (make-vct 10))
@@ -15789,6 +15803,7 @@ EDITS: 2
 	  (vct-set! spect i sum)))
       (vct-scale! spect (/ 1.0 mx))))
   
+  ;; ----------------
   (define* (print-and-check gen name desc :optional (desc1 "") (desc2 ""))
     (gc)
     (if (not (string=? (mus-name gen) name))
@@ -15801,6 +15816,7 @@ EDITS: 2
       (if (not (equal? egen gen))
 	  (snd-display ";equal? ~A: ~A?" gen egen))))
   
+  ;; ----------------
   (define (test-gen-equal g0 g1 g2)
     ;; g0 = g1 at start != g2
     (gc)
@@ -15828,6 +15844,7 @@ EDITS: 2
       (if (equal? g0 g2)
 	  (snd-display ";run ~A not equal? ~A ~A" (mus-name g0) g0 g2))))
   
+  ;; ----------------
   (define (fm-test gen)
     (if (not (mus-generator? gen)) (snd-display ";~A not a gen?" gen))
     (set! (mus-frequency gen) 0.0)
@@ -15860,6 +15877,7 @@ EDITS: 2
 	     (fneq (mus-phase gen) (- (* 2 pi) 2.0)))
 	(snd-display ";phase: ~A freq: ~A" (mus-phase gen))))
   
+  ;; ----------------
   ;; from mixer.scm (commented out)
   (define (frame-cross m1 m2)
     (if (or (not (= (mus-length m1) 3))
@@ -15873,12 +15891,14 @@ EDITS: 2
 		    (- (* (frame-ref m1 0) (frame-ref m2 1)) 
 		       (* (frame-ref m1 1) (frame-ref m2 0))))))
   
+  ;; ----------------
   (define (frame-normalize f)
     (let ((mag (sqrt (dot-product (mus-data f) (mus-data f)))))
       (if (> mag 0.0)
 	  (frame* f (/ 1.0 mag))
 	  f)))
   
+  ;; ----------------
   (define* (agc :optional (ramp-speed .001) (window-size 512))
     (let ((maxer (make-moving-max window-size))
 	  (mult 1.0))
@@ -15890,13 +15910,235 @@ EDITS: 2
 	   (set! mult (+ mult this-incr))
 	   (* y mult))))))
   
-  
+  ;; ----------------
+  (define (numerical-reality-checks)
+    ;; a few reality checks from John Burkardt test_values.C
+
+    (let ((vals (vector 1.6709637479564564156 1.5707963267948966192 1.4706289056333368229 1.3694384060045658278 1.2661036727794991113 
+			1.1592794807274085998 1.0471975511965977462 0.92729521800161223243 0.79539883018414355549 0.64350110879328438680 
+			0.45102681179626243254 0.00000000000000000000))
+	  (args (vector -0.1 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0))
+	  (max-bad 0.0))
+      (do ((i 0 (1+ i)))
+	  ((= i 12))
+	(let* ((nval (acos (vector-ref args i)))
+	       (diff (abs (- nval (vector-ref vals i)))))
+	  (if (> diff max-bad) (set! max-bad diff))))
+      (if (> max-bad 1.0e-15)
+	  (snd-display ";acos: ~A" max-bad)))
+    
+    (let ((vals (vector 0.0000000000000000000 0.14130376948564857735 0.44356825438511518913 0.62236250371477866781 0.75643291085695958624 
+			0.86701472649056510395 0.96242365011920689500 1.3169578969248167086 1.7627471740390860505 1.8115262724608531070 
+			2.0634370688955605467 2.2924316695611776878 2.9932228461263808979 5.2982923656104845907 7.6009022095419886114))
+	  (args (vector 1.0 1.01 1.1 1.2 1.3 1.4 1.5 2.0 3.0 3.1415926535897932385 4.0 5.0 10.0 100.0 1000.0))
+	  (max-bad 0.0))
+      (do ((i 0 (1+ i)))
+	  ((= i 15))
+	(let* ((nval (acosh (vector-ref args i)))
+	       (diff (abs (- nval (vector-ref vals i)))))
+	  (if (> diff max-bad) (set! max-bad diff))))
+      (if (> max-bad 1.0e-15)
+	  (snd-display ";acosh: ~A" max-bad)))
+    
+    (let ((vals (vector -0.10016742116155979635 0.00000000000000000000 0.10016742116155979635 0.20135792079033079146 0.30469265401539750797 
+			0.41151684606748801938 0.52359877559829887308 0.64350110879328438680 0.77539749661075306374 0.92729521800161223243 
+			1.1197695149986341867 1.5707963267948966192))
+	  (args (vector -0.1 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0))
+	  (max-bad 0.0))
+      (do ((i 0 (1+ i)))
+	  ((= i 12))
+	(let* ((nval (asin (vector-ref args i)))
+	       (diff (abs (- nval (vector-ref vals i)))))
+	  (if (> diff max-bad) (set! max-bad diff))))
+      (if (> max-bad 1.0e-15)
+	  (snd-display ";asin: ~A" max-bad)))
+    
+    (let ((vals (vector -2.3124383412727526203 -0.88137358701954302523 0.00000000000000000000 0.099834078899207563327 0.19869011034924140647 
+			0.29567304756342243910 0.39003531977071527608 0.48121182505960344750 0.56882489873224753010 0.65266656608235578681 
+			0.73266825604541086415 0.80886693565278246251 0.88137358701954302523 1.4436354751788103425 1.8184464592320668235 
+			2.0947125472611012942 2.3124383412727526203 2.9982229502979697388 5.2983423656105887574 7.6009027095419886115))
+	  (args (vector -5.0 -1.0 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 2.0 3.0 4.0 5.0 10.0 100.0 1000.0))
+	  (max-bad 0.0))
+      (do ((i 0 (1+ i)))
+	  ((= i 20))
+	(let* ((nval (asinh (vector-ref args i)))
+	       (diff (abs (- nval (vector-ref vals i)))))
+	  (if (> diff max-bad) (set! max-bad diff))))
+      (if (> max-bad 1.0e-15)
+	  (snd-display ";asinh: ~A" max-bad)))
+    
+    (let ((vals (vector 0.00000000000000000000 0.24497866312686415417 0.32175055439664219340 0.46364760900080611621 0.78539816339744830962 
+			1.1071487177940905030 1.2490457723982544258 1.3258176636680324651 1.3734007669450158609 1.4711276743037345919 1.5208379310729538578))
+	  (args (vector 0.00000000000000000000 0.25000000000000000000 0.33333333333333333333 0.50000000000000000000 1.0000000000000000000 
+			2.0000000000000000000 3.0000000000000000000 4.0000000000000000000 5.0000000000000000000 10.000000000000000000 20.000000000000000000))
+	  (max-bad 0.0))
+      (do ((i 0 (1+ i)))
+	  ((= i 11))
+	(let* ((nval (atan (vector-ref args i)))
+	       (diff (abs (- nval (vector-ref vals i)))))
+	  (if (> diff max-bad) (set! max-bad diff))))
+      (if (> max-bad 1.0e-15)
+	  (snd-display ";atan: ~A" max-bad)))
+    
+    (let ((vals (vector -0.54930614433405484570 0.00000000000000000000 0.0010000003333335333335 0.10033534773107558064 0.20273255405408219099 
+			0.30951960420311171547 0.42364893019360180686 0.54930614433405484570 0.69314718055994530942 0.86730052769405319443 
+			1.0986122886681096914 1.4722194895832202300 2.6466524123622461977 3.8002011672502000318 7.2543286192620472067))
+	  (args (vector -0.5 0.0 0.001 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 0.99 0.999 0.999999))
+	  (max-bad 0.0))
+      (do ((i 0 (1+ i)))
+	  ((= i 15))
+	(let* ((nval (atanh (vector-ref args i)))
+	       (diff (abs (- nval (vector-ref vals i)))))
+	  (if (> diff max-bad) 
+	      (set! max-bad diff))
+	  (if (> diff 1.0e-10) ; one is > e-11
+	      (snd-display ";atanh(~A): ~A ~A -> ~A" (vector-ref args i) (vector-ref vals i) nval diff)))))
+    
+    (let ((vals (vector 0.1000000000000000E+01 0.1010025027795146E+01 0.1040401782229341E+01 0.1092045364317340E+01 0.1166514922869803E+01 
+			0.1266065877752008E+01 0.1393725584134064E+01 0.1553395099731217E+01 0.1749980639738909E+01 0.1989559356618051E+01 
+			0.2279585302336067E+01 0.3289839144050123E+01 0.4880792585865024E+01 0.7378203432225480E+01 0.1130192195213633E+02 
+			0.1748117185560928E+02 0.2723987182360445E+02 0.6723440697647798E+02 0.4275641157218048E+03 0.2815716628466254E+04))
+	  (args (vector 0.00E+00 0.20E+00 0.40E+00 0.60E+00 0.80E+00 0.10E+01 0.12E+01 0.14E+01 0.16E+01 0.18E+01 0.20E+01 0.25E+01 0.30E+01 
+			0.35E+01 0.40E+01 0.45E+01 0.50E+01 0.60E+01 0.80E+01 
+			0.10E+02))
+	  (max-bad 0.0))
+      (do ((i 0 (1+ i)))
+	  ((= i 20))
+	(let* ((nval (bes-i0 (vector-ref args i)))
+	       (diff (abs (- nval (vector-ref vals i)))))
+	  (if (> diff max-bad) 
+	      (set! max-bad diff))
+	  (if (> diff 1.0e-7)
+	      (snd-display ";bes-i0(~A): ~A ~A -> ~A" (vector-ref args i) (vector-ref vals i) nval diff)))))
+    
+    (let ((vals (vector -0.1775967713143383E+00 -0.3971498098638474E+00 -0.2600519549019334E+00 0.2238907791412357E+00 0.7651976865579666E+00 
+			0.1000000000000000E+01 0.7651976865579666E+00 0.2238907791412357E+00 -0.2600519549019334E+00 -0.3971498098638474E+00 
+			-0.1775967713143383E+00 0.1506452572509969E+00 0.3000792705195556E+00 0.1716508071375539E+00 -0.9033361118287613E-01 
+			-0.2459357644513483E+00 -0.1711903004071961E+00 0.4768931079683354E-01 0.2069261023770678E+00 0.1710734761104587E+00 -0.1422447282678077E-01))
+	  (args (vector -5.0E+00 -4.0E+00 -3.0E+00 -2.0E+00 -1.0E+00 0.0E+00 1.0E+00 2.0E+00 3.0E+00 4.0E+00 5.0E+00 6.0E+00 7.0E+00 8.0E+00 
+			9.0E+00 10.0E+00 11.0E+00 12.0E+00 13.0E+00 14.0E+00 15.0E+00))
+	  (max-bad 0.0))
+      (do ((i 0 (1+ i)))
+	  ((= i 21))
+	(let* ((nval (bes-j0 (vector-ref args i)))
+	       (diff (abs (- nval (vector-ref vals i)))))
+	  (if (> diff max-bad) 
+	      (set! max-bad diff))
+	  (if (> diff 1.0e-15)
+	      (snd-display ";bes-j0(~A): ~A ~A -> ~A" (vector-ref args i) (vector-ref vals i) nval diff)))))
+    
+    (let ((vals (vector 0.3275791375914652E+00 0.6604332802354914E-01 -0.3390589585259365E+00 -0.5767248077568734E+00 -0.4400505857449335E+00 
+			0.0000000000000000E+00 0.4400505857449335E+00 0.5767248077568734E+00 0.3390589585259365E+00 -0.6604332802354914E-01 
+			-0.3275791375914652E+00 -0.2766838581275656E+00 -0.4682823482345833E-02 0.2346363468539146E+00 0.2453117865733253E+00 
+			0.4347274616886144E-01 -0.1767852989567215E+00 -0.2234471044906276E+00 -0.7031805212177837E-01 0.1333751546987933E+00 0.2051040386135228E+00))
+	  (args (vector -5.0E+00 -4.0E+00 -3.0E+00 -2.0E+00 -1.0E+00 0.0E+00 1.0E+00 2.0E+00 3.0E+00 4.0E+00 5.0E+00 6.0E+00 7.0E+00 8.0E+00 
+			9.0E+00 10.0E+00 11.0E+00 12.0E+00 13.0E+00 14.0E+00 15.0E+00))
+	  (max-bad 0.0))
+      (do ((i 0 (1+ i)))
+	  ((= i 21))
+	(let* ((nval (bes-j1 (vector-ref args i)))
+	       (diff (abs (- nval (vector-ref vals i)))))
+	  (if (> diff max-bad) 
+	      (set! max-bad diff))
+	  (if (> diff 1.0e-15)
+	      (snd-display ";bes-j1(~A): ~A ~A -> ~A" (vector-ref args i) (vector-ref vals i) nval diff)))))
+    
+    (let ((vals (vector 0.1149034849319005E+00 0.3528340286156377E+00 0.4656511627775222E-01 0.2546303136851206E+00 -0.5971280079425882E-01 
+			0.2497577302112344E-03 0.7039629755871685E-02 0.2611405461201701E+00 -0.2340615281867936E+00 -0.8140024769656964E-01 
+			0.2630615123687453E-09 0.2515386282716737E-06 0.1467802647310474E-02 0.2074861066333589E+00 -0.1138478491494694E+00 
+			0.3873503008524658E-24 0.3918972805090754E-18 0.2770330052128942E-10 0.1151336924781340E-04 -0.1167043527595797E+00))
+	  (ns (vector 2 2 2 2 2 5 5 5 5 5 10 10 10 10 10 20 20 20 20 20)) 
+	  (args (vector 1.0E+00 2.0E+00 5.0E+00 10.0E+00 50.0E+00 1.0E+00 2.0E+00 5.0E+00 10.0E+00 50.0E+00 1.0E+00 2.0E+00 5.0E+00 10.0E+00 
+			50.0E+00 1.0E+00 2.0E+00 5.0E+00 10.0E+00 50.0E+00))
+	  (max-bad 0.0))
+      (do ((i 0 (1+ i)))
+	  ((= i 20))
+	(let* ((nval (bes-jn (vector-ref ns i) (vector-ref args i)))
+	       (diff (abs (- nval (vector-ref vals i)))))
+	  (if (> diff max-bad) 
+	      (set! max-bad diff))
+	  (if (> diff 1.0e-15)
+	      (snd-display ";bes-jn(~A ~A): ~A ~A -> ~A" (vector-ref ns i) (vector-ref args i) (vector-ref vals i) nval diff)))))
+    
+    (let ((vals (vector -0.1534238651350367E+01 0.8825696421567696E-01 0.5103756726497451E+00 0.3768500100127904E+00 -0.1694073932506499E-01 
+			-0.3085176252490338E+00 -0.2881946839815792E+00 -0.2594974396720926E-01 0.2235214893875662E+00 0.2499366982850247E+00 
+			0.5567116728359939E-01 -0.1688473238920795E+00 -0.2252373126343614E+00 -0.7820786452787591E-01 0.1271925685821837E+00 0.2054642960389183E+00))
+	  (args (vector 0.1E+00 1.0E+00 2.0E+00 3.0E+00 4.0E+00 5.0E+00 6.0E+00 7.0E+00 8.0E+00 9.0E+00 10.0E+00 11.0E+00 12.0E+00 13.0E+00 14.0E+00 15.0E+00))
+	  (max-bad 0.0))
+      (do ((i 0 (1+ i)))
+	  ((= i 16))
+	(let* ((nval (bes-y0 (vector-ref args i)))
+	       (diff (abs (- nval (vector-ref vals i)))))
+	  (if (> diff max-bad) 
+	      (set! max-bad diff))
+	  (if (> diff 1.0e-15)
+	      (snd-display ";bes-y0(~A): ~A ~A -> ~A" (vector-ref args i) (vector-ref vals i) nval diff)))))
+    
+    (let ((vals (vector -0.6458951094702027E+01 -0.7812128213002887E+00 -0.1070324315409375E+00 0.3246744247918000E+00 0.3979257105571000E+00 
+			0.1478631433912268E+00 -0.1750103443003983E+00 -0.3026672370241849E+00 -0.1580604617312475E+00 0.1043145751967159E+00 
+			0.2490154242069539E+00 0.1637055374149429E+00 -0.5709921826089652E-01 -0.2100814084206935E+00 -0.1666448418561723E+00 0.2107362803687351E-01))
+	  (args (vector 0.1E+00 1.0E+00 2.0E+00 3.0E+00 4.0E+00 5.0E+00 6.0E+00 7.0E+00 8.0E+00 9.0E+00 10.0E+00 11.0E+00 12.0E+00 13.0E+00 14.0E+00 15.0E+00))
+	  (max-bad 0.0))
+      (do ((i 0 (1+ i)))
+	  ((= i 16))
+	(let* ((nval (bes-y1 (vector-ref args i)))
+	       (diff (abs (- nval (vector-ref vals i)))))
+	  (if (> diff max-bad) 
+	      (set! max-bad diff))
+	  (if (> diff 1.0e-15)
+	      (snd-display ";bes-y1(~A): ~A ~A -> ~A" (vector-ref args i) (vector-ref vals i) nval diff)))))
+    
+    (let ((vals (vector -0.1650682606816254E+01 -0.6174081041906827E+00 0.3676628826055245E+00 -0.5868082442208615E-02 0.9579316872759649E-01 
+			-0.2604058666258122E+03 -0.9935989128481975E+01 -0.4536948224911019E+00 0.1354030476893623E+00 -0.7854841391308165E-01 
+			-0.1216180142786892E+09 -0.1291845422080393E+06 -0.2512911009561010E+02 -0.3598141521834027E+00 0.5723897182053514E-02 
+			-0.4081651388998367E+17 -0.5933965296914321E+09 -0.1597483848269626E+04 0.1644263394811578E-01))
+	  (ns (vector 2 2 2 2 2 5 5 5 5 5 10 10 10 10 10 20 20 20 20))
+	  (args (vector 1.0E+00 2.0E+00 5.0E+00 10.0E+00 50.0E+00 1.0E+00 2.0E+00 5.0E+00 10.0E+00 50.0E+00 1.0E+00 2.0E+00 5.0E+00 10.0E+00 
+			50.0E+00 2.0E+00 5.0E+00 10.0E+00 50.0E+00))
+	  (max-bad 0.0))
+      (do ((i 0 (1+ i)))
+	  ((= i 19))
+	(let* ((nval (bes-yn (vector-ref ns i) (vector-ref args i)))
+	       (diff (abs (- nval (vector-ref vals i)))))
+	  (if (> diff max-bad) 
+	      (set! max-bad diff))
+	  (if (> diff 1.0e-6)
+	      (snd-display ";bes-yn(~A ~A): ~A ~A -> ~A" (vector-ref ns i) (vector-ref args i) (vector-ref vals i) nval diff)))))
+    ;; one (20 1.0) is off by a lot but the val is 1e22 
+    
+    
+    (let ((ns (vector 1 6 6 6 15 15 15 15 15 15 15 25 25 25 25 25 25 25 25 25))
+	  (ks (vector 0 1 3 5 1 3 5 7 9 11 13 1 3 5 7 9 11 13 15 17))
+	  (vals (vector 1 6 20 6 15 455 3003 6435 5005 1365 105 25 2300 53130 480700 2042975 4457400 5200300 3268760 1081575)))
+      (do ((i 0 (1+ i)))
+	  ((= i 20))
+	(let* ((nval (binomial-direct (vector-ref ns i) (vector-ref ks i)))
+	       (mval (n-choose-k (vector-ref ns i) (vector-ref ks i))))
+	  (if (or (not (= nval (vector-ref vals i)))
+		  (not (= mval (vector-ref vals i))))
+	      (snd-display ";binomial(~A ~A): ~A ~A ~A" (vector-ref ns i) (vector-ref ks i) nval mval (vector-ref vals i))))))
+
+    (let ((ls (vector 1 1 1 1 1 2 2 2 3 3 3 3 4 5 6 7 8 9 10))
+	  (ms (vector 0 0 0 0 1 0 1 2 0 1 2 3 2 2 3 3 4 4 5))
+	  (vals (vector 0.000000 0.500000 0.707107 1.000000 -0.866025 -0.125000 -1.29904  2.25000 -0.437500 -0.324759 5.62500 -9.74278 
+			4.21875 -4.92187  12.7874  116.685 -1050.67 -2078.49  30086.2))
+	  (xs (vector 0.0 0.5 0.7071067 1.0  0.5 0.5 0.5 0.5  0.5 0.5 0.5 0.5  0.5 0.5 0.5 0.5  0.5 0.5 0.5)))
+      (do ((i 0 (1+ i)))
+	  ((= i 19))
+	(let ((val (plgndr (vector-ref ls i) (vector-ref ms i) (vector-ref xs i))))
+	  (if (> (abs (- val (vector-ref vals i))) 0.1)
+	      (snd-display ";plgndr(~A ~A ~A) = ~A (~A)" (vector-ref ls i) (vector-ref ms i) (vector-ref xs i) val (vector-ref vals i))))))
+    )
+
+  ;; ----------------
+  ;; start of test
   
   
   (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests))
     
     (log-mem clmtest)
     (if (odd? clmtest) (set! (run-safety) 1) (set! (run-safety) 0))
+    (numerical-reality-checks)
     (set! (mus-srate) 22050)
     (let ((samps (seconds->samples 1.0))
 	  (secs (samples->seconds 22050)))

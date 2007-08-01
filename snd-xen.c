@@ -38,7 +38,10 @@
  *                       Sigh... I'll have to learn C++ to go very far with this.
  * pike:        (C)      not an extension language
  * python:      ()       looks like ruby to me -- why duplicate? (I have about 1/4 of xen.h for this)
+ *                         as with scheme48, this requires explicit local var ref incrs! ruby-style func defs
  * rscheme:     (Scheme) serious name-space problems
+ * scheme48:    (Scheme) this looks doable -- need to get the initialization straight, and find eval-c-string (how do you exit this damned thing?)
+ * SCM:         (Scheme) looks tricky -- name space troubles, no bignums
  * s-lang:      (C)      probably doable -- would need to wrap everything in my own struct, and 7 args max is too few.
  * squirrel:    ()       c++, like lua in call sequence
  * stklos:      (Scheme) doesn't build libstklos yet, and has many non-unique names in its headers (checked 0.96)

@@ -12,7 +12,7 @@
 
 #define XEN_MAJOR_VERSION 2
 #define XEN_MINOR_VERSION 9
-#define XEN_VERSION "2.8"
+#define XEN_VERSION "2.9"
 
 /* HISTORY:
  *

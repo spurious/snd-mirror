@@ -35,4 +35,8 @@ Should the Scheme/Ruby files be gettext-ized?  Here's a Guile example:
 
 Key bindings to mimic other editors (along the lines of snd_frg.scm)
 
+lua, octave, python, scheme48, ecl support!
 
+an "auto-freeze" function -- find loop points automatically
+
+Perry Cook's reverb (nrev+initial echos)

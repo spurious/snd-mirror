@@ -1127,16 +1127,66 @@ Float mus_sum_of_cosines(mus_any *ptr, Float fm)
   Float val, den;
   cosp *gen = (cosp *)ptr;
   den = sin(gen->phase * 0.5);
-  if (den == 0.0)
+  if (fabs(den) < 1.0e-14)       /* see note -- this was den == 0.0 1-Aug-07 */
+                                 /* perhaps use DBL_EPSILON (1.0e-9 I think) */
     val = 1.0;
   else 
     {
       val = (gen->scaler * (((sin(gen->phase * gen->cos5)) / (2.0 * den)) - 0.5));
-      if (val > 1.0) val = 1.0;
+      if (val > 1.0) val = 1.0; 
+      /* I think this can't happen now that we check den above, but just in case... */
+      /*   this check is actually incomplete, since we can be much below the correct value also, but the den check should fix those cases too */
     }
   gen->phase += (gen->freq + fm);
   return(val);
 }
+
+#if 0
+/* if the current phase is close to 0.0, there are numerical troubles here:
+    :(/ (cos (* 1.5 pi 1.0000000000000007)) (cos (* 0.5 pi 1.0000000000000007)))
+    -3.21167411694788
+    :(/ (cos (* 1.5 pi 1.0000000000000004)) (cos (* 0.5 pi 1.0000000000000004)))
+    -2.63292557243357
+    :(/ (cos (* 1.5 pi 1.0000000000000002)) (cos (* 0.5 pi 1.0000000000000002)))
+    -1.84007079646018
+    :(/ (cos (* 1.5 pi 1.0000000000000001)) (cos (* 0.5 pi 1.0000000000000001)))
+    -3.0
+    :(/ (cos (* 1.5 pi 1.0000000000000008)) (cos (* 0.5 pi 1.0000000000000008)))
+    -3.34939116712516
+    ;; 16 bits in is probably too much for doubles
+    ;; these numbers can be hit in normal cases:
+
+ (define (sum-of-cosines n x)
+   ;; Andrews Askey Roy 261 
+   (let* ((num (cos (* x (+ 0.5 n))))
+          (den (cos (* x 0.5)))
+          (val (/ num den)))  ; Chebyshev polynomial of the 4th kind!
+     (/ (- (if (even? n) val (- val))
+           0.5)
+        (+ 1 (* n 2)))))
+
+ (with-sound (:scaled-to 1.0)
+   (do ((i 0 (1+ i))
+         (x 0.0 (+ x .01)))
+       ((= i 200)) ; glitch at 100 (= 1)
+     (outa i (sum-of-cosines-with-inversions 1 (* pi x)) *output*)))
+
+ ;; a fixed(?) version:
+ (define (sum-of-cosines-safe n x)
+   (let* ((num (cos (* x (+ 0.5 n))))
+          (den (cos (* x 0.5)))
+          (val (if (< (abs den) 1.0e-14)  ; numerical trouble when both very near 0.0
+                 (if (>= (* num den) 0.0) ; same sign I hope
+                     (+ 1 (* n 2))
+                     (- (+ 1 (* n 2))))
+                 (/ num den))))
+     (/ (- (if (even? n)
+           val
+           (- val))
+        0.5)
+      (+ 1 (* n 2)))))
+*/
+#endif
 
 
 bool mus_sum_of_cosines_p(mus_any *ptr) 
@@ -8380,9 +8430,9 @@ Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
 
 
 
-/* ---------------- convolve ---------------- */
+/* ---------------- Fourier transform ---------------- */
 
-/* fft and convolution of Float data in zero-based arrays
+/* fft of Float data in zero-based arrays
  */
 
 #if HAVE_FFTW3
@@ -9085,6 +9135,9 @@ Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, mus_spectrum
   return(rdat);
 }
 
+
+
+/* ---------------- convolve ---------------- */
 
 Float *mus_convolution(Float* rl1, Float* rl2, int n)
 {

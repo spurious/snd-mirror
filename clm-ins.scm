@@ -1191,7 +1191,7 @@ is a physical model of a flute:
 	 (comb4 (make-comb 0.697 11597))
 	 (chns (mus-channels *output*))
 	 (outdel1 (make-delay (seconds->samples .013)))
-	 (outdel2 (if (> chns 1) (make-delay (seconds->samples .011))))
+	 (outdel2 (if (> chns 1) (make-delay (seconds->samples .011)) #f))
 	 (comb-sum 0.0)
 	 (comb-sum-1 0.0)
 	 (comb-sum-2 0.0)
