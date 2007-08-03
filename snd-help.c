@@ -516,6 +516,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+3-Aug:   added blackman5..10 and rv2..4 fft windows.\n\
+         rt-clm-ins.scm thanks to Kjetil.\n\
 1-Aug:   numerics.scm.\n\
 19-Jul:  sndclm.html (Snd-specific version of clm.html).\n\
 12-Jul:  Snd 9.2.\n\
@@ -923,7 +925,7 @@ void fft_help(void)
     #define transform_types "fourier-transform wavelet-transform  haar-transform\n      autocorrelation   walsh-transform    cepstrum"
     #define transform_graph_types "graph-once  graph-as-sonogram  graph-as-spectrogram"
     #define transform_normalizations "dont-normalize normalize-by-channel normalize-by-sound normalize-globally"
-    #define fft_windows "      bartlett-window blackman2-window blackman3-window blackman4-window\n      cauchy-window connes-window dolph-chebyshev-window exponential-window\n      gaussian-window hamming-window hann-poisson-window hann-window\n      kaiser-window parzen-window poisson-window rectangular-window\n      riemann-window samaraki-window tukey-window ultraspherical-window\n      welch-window bartlett-hann-window bohman-window flat-top-window"
+    #define fft_windows "      bartlett-window blackman2-window blackman3-window blackman4-window\n      cauchy-window connes-window dolph-chebyshev-window exponential-window\n      gaussian-window hamming-window hann-poisson-window hann-window\n      kaiser-window parzen-window poisson-window rectangular-window\n      riemann-window samaraki-window tukey-window ultraspherical-window\n      welch-window bartlett-hann-window bohman-window flat-top-window  blackman5..10-window"
   #endif
   #if HAVE_RUBY
     #define transform_normalization_example "set_transform_normalization(Dont_normalize)"
@@ -936,7 +938,7 @@ void fft_help(void)
     #define transform_types "Fourier_transform Wavelet_transform  Haar_transform\n      Autocorrelation   Walsh_transform    Cepstrum"
     #define transform_graph_types "graph_once  graph_as_sonogram  graph_as_spectrogram"
     #define transform_normalizations "Dont_normalize Normalize_by_channel Normalize_by_sound Normalize_globally"
-    #define fft_windows "      Bartlett_window Blackman2_window Blackman3_window Blackman4_window\n      Cauchy_window Connes_window Dolph_chebyshev_window Exponential_window\n      Gaussian_window Hamming_window Hann_poisson_window Hann_window\n      Kaiser_window Parzen_window Poisson_window Rectangular_window\n      Riemann_window Samaraki_window Tukey_window Ultraspherical_window\n      Welch_window Bartlett_hann_window Bohman_window Flat_top_window"
+    #define fft_windows "      Bartlett_window Blackman2_window Blackman3_window Blackman4_window\n      Cauchy_window Connes_window Dolph_chebyshev_window Exponential_window\n      Gaussian_window Hamming_window Hann_poisson_window Hann_window\n      Kaiser_window Parzen_window Poisson_window Rectangular_window\n      Riemann_window Samaraki_window Tukey_window Ultraspherical_window\n      Welch_window Bartlett_hann_window Bohman_window Flat_top_window Blackman5..10_window"
   #endif
   #if HAVE_FORTH
     #define transform_normalization_example "dont-normalize set-transform-normalization"
@@ -949,7 +951,7 @@ void fft_help(void)
     #define transform_types "fourier-transform wavelet-transform  haar-transform\n      autocorrelation   walsh-transform    cepstrum"
     #define transform_graph_types "graph-once  graph-as-sonogram  graph-as-spectrogram"
     #define transform_normalizations "dont-normalize normalize-by-channel normalize-by-sound normalize-globally"
-    #define fft_windows "      bartlett-window blackman2-window blackman3-window blackman4-window\n      cauchy-window connes-window dolph-chebyshev-window exponential-window\n      gaussian-window hamming-window hann-poisson-window hann-window\n      kaiser-window parzen-window poisson-window rectangular-window\n      riemann-window samaraki-window tukey-window ultraspherical-window\n      welch-window bartlett-hann-window bohman-window flat-top-window"
+    #define fft_windows "      bartlett-window blackman2-window blackman3-window blackman4-window\n      cauchy-window connes-window dolph-chebyshev-window exponential-window\n      gaussian-window hamming-window hann-poisson-window hann-window\n      kaiser-window parzen-window poisson-window rectangular-window\n      riemann-window samaraki-window tukey-window ultraspherical-window\n      welch-window bartlett-hann-window bohman-window flat-top-window blackman5..10-window"
   #endif
 
   snd_help_with_xrefs("FFT",

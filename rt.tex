@@ -513,7 +513,7 @@ The \scheme|<realtime>| class provides the following methods:
 \item{No boolean type or symbols: \scheme|#f|=0, \scheme|#t|=1}
 \item{Not possible to call Guile functions.}
 \item{Not possible to set Guile variables. (There are ways around this though)}
-\item{Tail-recursiveness is not guaranteed.}
+\item{No tail-recursiveness.}
 \item{The function to determine types is wrongly designed, so you sometimes
  have to manually set the types for variables by using \scheme|declare| or \scheme|the|.
  (its a bug that should be fixed, but theres other more important tasks
@@ -1268,9 +1268,7 @@ To delay playing until data is available:
   
   Works as in scheme, except:
   \begin{itemize}
-    \item Functions might not be tail-recursive if possible. Its not very
-      difficult to guarantee a function to be tail-recursive for single functions, but I think gcc already supports
-      tail-recursive functions, so I hope its not necessary to add it explicitly. But I might be wrong!
+    \item Functions are not tail-recursive. (Be careful using named lets in non-realtime mode!)
     \item Rest argument is not supported: \scheme|(lambda (a . rest) ...)| (error)
       (You can work around this to a certain degree by using macros with keywords or optional arguments)
   \end{itemize}
@@ -1417,7 +1415,7 @@ Works as in scheme, except that setting Guile variables will not affect the Guil
 \begin{description}
 \item[\scheme|(while <test> <body>)|] \hspace{\stretch{1}} Macro \newline
   
-  Works as in Guile.(Expands to a recursive function.)
+  Works as in Guile.(Does not expands to a recursive function.)
   
 
 %\item[\scheme|(break)|] \hspace{\stretch{1}} Special form \newline
@@ -1716,8 +1714,10 @@ For now, you can order the execution by using the fact that instances are always
 \newpage
 \section{History}
 
-03.06.2006: Redefined \scheme|while| to be a recursive funcion. Using c's while never really worked properly.
-            Removed \scheme|break| and \scheme|continue|. They never really worked either.
+03.08.2006: Added rt-vct-struct and rt-vector-struct syntactic sugar stuff. See rt-examples.scm.
+            Various smaller fixes.
+
+03.06.2006: Removed \scheme|break| and \scheme|continue|. They never really worked very well.
 	    Removed \scheme|call-with-current-continuation| which certainly never really worked very well.
 
 08.07.2005-02.06.2006: Various changes

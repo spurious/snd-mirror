@@ -372,7 +372,9 @@ static char *fft_window_xen_names[MUS_NUM_FFT_WINDOWS] =
      S_exponential_window, S_riemann_window, S_kaiser_window, S_cauchy_window,
      S_poisson_window, S_gaussian_window, S_tukey_window, S_dolph_chebyshev_window,
      S_hann_poisson_window, S_connes_window, S_samaraki_window, S_ultraspherical_window,
-     S_bartlett_hann_window, S_bohman_window, S_flat_top_window
+     S_bartlett_hann_window, S_bohman_window, S_flat_top_window,
+     S_blackman5_window, S_blackman6_window, S_blackman7_window, S_blackman8_window, S_blackman9_window, S_blackman10_window,
+     S_rv2_window, S_rv3_window, S_rv4_window,
 };
 
 
@@ -7130,6 +7132,12 @@ void mus_xen_init(void)
   #define H_blackman2_window       "2nd order cosine window"
   #define H_blackman3_window       "3rd order cosine window"
   #define H_blackman4_window       "4th order cosine window"
+  #define H_blackman5_window       "5th order cosine window"
+  #define H_blackman6_window       "6th order cosine window"
+  #define H_blackman7_window       "7th order cosine window"
+  #define H_blackman8_window       "8th order cosine window"
+  #define H_blackman9_window       "9th order cosine window"
+  #define H_blackman10_window      "10th order cosine window"
   #define H_exponential_window     "An inverted triangle from exp"
   #define H_riemann_window         "sinc-based window"
   #define H_kaiser_window          "Bessel I0 based window"
@@ -7142,6 +7150,9 @@ void mus_xen_init(void)
   #define H_hann_poisson_window    "poisson window * hann window"
   #define H_samaraki_window        "window from inverse fft (using Chebyshev Un)"
   #define H_ultraspherical_window  "window from inverse fft (using Ultraspherical Cn)"
+  #define H_rv2_window             "Rife-Vincent 2nd order window (Hann extension)"
+  #define H_rv3_window             "Rife-Vincent 3rd order window (Hann extension)"
+  #define H_rv4_window             "Rife-Vincent 4th order window (Hann extension)"
 
   XEN_DEFINE_CONSTANT(S_rectangular_window,     MUS_RECTANGULAR_WINDOW,     H_rectangular_window);
   XEN_DEFINE_CONSTANT(S_hann_window,            MUS_HANN_WINDOW,            H_hann_window);
@@ -7155,6 +7166,12 @@ void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_blackman2_window,       MUS_BLACKMAN2_WINDOW,       H_blackman2_window);
   XEN_DEFINE_CONSTANT(S_blackman3_window,       MUS_BLACKMAN3_WINDOW,       H_blackman3_window);
   XEN_DEFINE_CONSTANT(S_blackman4_window,       MUS_BLACKMAN4_WINDOW,       H_blackman4_window);
+  XEN_DEFINE_CONSTANT(S_blackman5_window,       MUS_BLACKMAN5_WINDOW,       H_blackman5_window);
+  XEN_DEFINE_CONSTANT(S_blackman6_window,       MUS_BLACKMAN6_WINDOW,       H_blackman6_window);
+  XEN_DEFINE_CONSTANT(S_blackman7_window,       MUS_BLACKMAN7_WINDOW,       H_blackman7_window);
+  XEN_DEFINE_CONSTANT(S_blackman8_window,       MUS_BLACKMAN8_WINDOW,       H_blackman8_window);
+  XEN_DEFINE_CONSTANT(S_blackman9_window,       MUS_BLACKMAN9_WINDOW,       H_blackman9_window);
+  XEN_DEFINE_CONSTANT(S_blackman10_window,      MUS_BLACKMAN10_WINDOW,      H_blackman10_window);
   XEN_DEFINE_CONSTANT(S_exponential_window,     MUS_EXPONENTIAL_WINDOW,     H_exponential_window);
   XEN_DEFINE_CONSTANT(S_riemann_window,         MUS_RIEMANN_WINDOW,         H_riemann_window);
   XEN_DEFINE_CONSTANT(S_kaiser_window,          MUS_KAISER_WINDOW,          H_kaiser_window);
@@ -7167,6 +7184,9 @@ void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_hann_poisson_window,    MUS_HANN_POISSON_WINDOW,    H_hann_poisson_window);
   XEN_DEFINE_CONSTANT(S_samaraki_window,        MUS_SAMARAKI_WINDOW,        H_samaraki_window);
   XEN_DEFINE_CONSTANT(S_ultraspherical_window,  MUS_ULTRASPHERICAL_WINDOW,  H_ultraspherical_window);
+  XEN_DEFINE_CONSTANT(S_rv2_window,             MUS_RV2_WINDOW,             H_rv2_window);
+  XEN_DEFINE_CONSTANT(S_rv3_window,             MUS_RV3_WINDOW,             H_rv3_window);
+  XEN_DEFINE_CONSTANT(S_rv4_window,             MUS_RV4_WINDOW,             H_rv4_window);
 
   XEN_DEFINE_CONSTANT(S_mus_interp_linear,      MUS_INTERP_LINEAR,          "locsig/delay linear interpolation");
   XEN_DEFINE_CONSTANT(S_mus_interp_sinusoidal,  MUS_INTERP_SINUSOIDAL,      "locsig sinusoidal interpolation");
@@ -7514,6 +7534,12 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_blackman2_window,
 	       S_blackman3_window,
 	       S_blackman4_window,
+	       S_blackman5_window,
+	       S_blackman6_window,
+	       S_blackman7_window,
+	       S_blackman8_window,
+	       S_blackman9_window,
+	       S_blackman10_window,
 	       S_cauchy_window,
 	       S_clear_array,
 	       S_clear_sincs,
@@ -7689,6 +7715,9 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_mus_random,
 	       S_mus_reset,
 	       S_mus_run,
+	       S_rv2_window,
+	       S_rv3_window,
+	       S_rv4_window,
 	       S_mus_scaler,
 	       S_mus_set_formant_radius_and_frequency,
 	       S_mus_srate,

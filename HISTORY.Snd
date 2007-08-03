@@ -1,5 +1,7 @@
 Snd change log
 
+ 3-Aug:      added blackman5..10 and rv2..4 fft windows.
+             rt-clm-ins.scm thanks to Kjetil.
  1-Aug:      numerics.scm.
  19-Jul:     sndclm.html (Snd-specific version of clm.html).
  12-Jul:     Snd 9.2.

@@ -802,6 +802,8 @@ static const int mulaw[256] = {
 /* ---------------- read ---------------- */
 
 #define BUFLIM (64 * 1024)
+#define UBYTE_ZERO 128
+#define USHORT_ZERO 32768
 
 #if SNDLIB_USE_FLOATS
   #define MUS_SAMPLE_UNSCALED(n) ((n) / 32768.0)
@@ -975,7 +977,7 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
 		      break;
 		    case MUS_UBYTE:     	      
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = MUS_BYTE_TO_SAMPLE((int)(*jchar) - 128);
+			buffer[loc] = MUS_BYTE_TO_SAMPLE((int)(*jchar) - UBYTE_ZERO);
 		      break;
 		    case MUS_BFLOAT:
 		      if (prescaling == 1.0)
@@ -1027,11 +1029,11 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
 		      break;
 		    case MUS_UBSHORT:   
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = MUS_SHORT_TO_SAMPLE((int)(big_endian_unsigned_short(jchar)) - 32768);
+			buffer[loc] = MUS_SHORT_TO_SAMPLE((int)(big_endian_unsigned_short(jchar)) - USHORT_ZERO);
 		      break;
 		    case MUS_ULSHORT:   
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = MUS_SHORT_TO_SAMPLE((int)(little_endian_unsigned_short(jchar)) - 32768);
+			buffer[loc] = MUS_SHORT_TO_SAMPLE((int)(little_endian_unsigned_short(jchar)) - USHORT_ZERO);
 		      break;
 		    case MUS_B24INT:
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
@@ -1279,7 +1281,7 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
 	      break;
 	    case MUS_UBYTE:  
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		(*jchar) = MUS_SAMPLE_TO_BYTE(buffer[loc]) + 128;
+		(*jchar) = MUS_SAMPLE_TO_BYTE(buffer[loc]) + UBYTE_ZERO;
 	      break;
 	    case MUS_BFLOAT:    
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
@@ -1315,11 +1317,11 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
 	      break;
 	    case MUS_UBSHORT: 
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		set_big_endian_unsigned_short(jchar, (unsigned short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + 32768));
+		set_big_endian_unsigned_short(jchar, (unsigned short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + USHORT_ZERO));
 	      break;
 	    case MUS_ULSHORT: 
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		set_little_endian_unsigned_short(jchar, (unsigned short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + 32768));
+		set_little_endian_unsigned_short(jchar, (unsigned short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + USHORT_ZERO));
 	      break;
 	    case MUS_B24INT:   
 	      bk = (k * 3);

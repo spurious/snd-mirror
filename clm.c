@@ -1119,6 +1119,7 @@ typedef struct {
   double phase, freq;
 } cosp;
 
+#define DIVISER_NEAR_ZERO(Den) (fabs(Den) < 1.0e-14)
 
 Float mus_sum_of_cosines(mus_any *ptr, Float fm)
 {
@@ -1127,7 +1128,7 @@ Float mus_sum_of_cosines(mus_any *ptr, Float fm)
   Float val, den;
   cosp *gen = (cosp *)ptr;
   den = sin(gen->phase * 0.5);
-  if (fabs(den) < 1.0e-14)       /* see note -- this was den == 0.0 1-Aug-07 */
+  if (DIVISER_NEAR_ZERO(den))    /* see note -- this was den == 0.0 1-Aug-07 */
                                  /* perhaps use DBL_EPSILON (1.0e-9 I think) */
     val = 1.0;
   else 
@@ -1160,7 +1161,7 @@ Float mus_sum_of_cosines(mus_any *ptr, Float fm)
    ;; Andrews Askey Roy 261 
    (let* ((num (cos (* x (+ 0.5 n))))
           (den (cos (* x 0.5)))
-          (val (/ num den)))  ; Chebyshev polynomial of the 4th kind!
+          (val (/ num den)))  ; Chebyshev polynomial of the 3rd kind! (4th uses sin = our current formula)
      (/ (- (if (even? n) val (- val))
            0.5)
         (+ 1 (* n 2)))))
@@ -1170,21 +1171,6 @@ Float mus_sum_of_cosines(mus_any *ptr, Float fm)
          (x 0.0 (+ x .01)))
        ((= i 200)) ; glitch at 100 (= 1)
      (outa i (sum-of-cosines-with-inversions 1 (* pi x)) *output*)))
-
- ;; a fixed(?) version:
- (define (sum-of-cosines-safe n x)
-   (let* ((num (cos (* x (+ 0.5 n))))
-          (den (cos (* x 0.5)))
-          (val (if (< (abs den) 1.0e-14)  ; numerical trouble when both very near 0.0
-                 (if (>= (* num den) 0.0) ; same sign I hope
-                     (+ 1 (* n 2))
-                     (- (+ 1 (* n 2))))
-                 (/ num den))))
-     (/ (- (if (even? n)
-           val
-           (- val))
-        0.5)
-      (+ 1 (* n 2)))))
 */
 #endif
 
@@ -1364,7 +1350,7 @@ Float mus_sum_of_sines(mus_any *ptr, Float fm)
   cosp *gen = (cosp *)ptr;
   a2 = gen->phase * 0.5;
   den = sin(a2);
-  if (den == 0.0)
+  if (DIVISER_NEAR_ZERO(den)) /* see note under sum-of-cosines */
     val = 0.0;
   else val = gen->scaler * sin(gen->cosines * a2) * sin(a2 * gen->cos5) / den;
   gen->phase += (gen->freq + fm);
@@ -1658,7 +1644,7 @@ Float mus_sine_summation(mus_any *ptr, Float fm)
   B = gen->b * gen->phase;
   thB = gen->phase - B;
   divisor = (gen->a2 - (2 * gen->a * cos(B)));
-  if (divisor == 0.0) 
+  if (DIVISER_NEAR_ZERO(divisor))           /* was (diviser == 0.0) -- see note under sum-of-cosines */
     result = 0.0;
   /* if a=1.0, the formula given by Moorer is extremely unstable anywhere near phase=0.0 
    *   (map-channel (let ((gen (make-sine-summation 100.0 0.0 1 1 1.0))) (lambda (y) (sine-summation gen))))
@@ -8702,9 +8688,8 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
    *    Albert H. Nuttall, "Some Windows with Very Good Sidelobe Behaviour", 
    *    IEEE Transactions of Acoustics, Speech, and Signal Processing, Vol. ASSP-29,
    *    No. 1, February 1981, pp 84-91
-   *
-   * JOS had slightly different numbers for the Blackman-Harris windows.
    */
+
   int i, j, midn, midp1;
   double freq, rate, angle = 0.0, cx;
   if (window == NULL) return(NULL);
@@ -8719,14 +8704,6 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
     case MUS_RECTANGULAR_WINDOW:
       for (i = 0; i < size; i++) 
 	window[i] = 1.0;
-      break; 
-
-    case MUS_HANN_WINDOW:
-      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
-	{
-	  window[i] = 0.5 - 0.5 * cos(angle); 
-	  window[j] = window[i];
-	}
       break; 
 
     case MUS_WELCH_WINDOW:
@@ -8777,15 +8754,6 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
       }
       break; 
 
-    case MUS_FLAT_TOP_WINDOW:
-      /* this definition taken from mathworks docs -- see above */
-      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq)
-	{
-	  window[i] = 0.2156 - 0.4160 * cos(angle) + 0.2781 * cos(2 * angle) - 0.0836 * cos(3 * angle) + 0.0069 * cos(4 * angle);
-	  window[j] = window[i];
-	}
-      break; 
-
     case MUS_BOHMAN_WINDOW:
       {
 	Float ramp;
@@ -8798,6 +8766,48 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
       }
       break; 
 
+      /* the following are all sum-of-cosine based */
+    case MUS_HANN_WINDOW:
+      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
+	{
+	  window[i] = 0.5 - 0.5 * cos(angle); 
+	  window[j] = window[i];
+	}
+      break; 
+
+      /* Rife-Vincent windows are an elaboration of this (Hann = RV1) */
+
+    case MUS_RV2_WINDOW:
+      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
+	{
+	  window[i] = .375 - 0.5 * cos(angle) + .125 * cos(2 * angle);
+	  window[j] = window[i];
+	}
+      break; 
+
+    case MUS_RV3_WINDOW:
+      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
+	{
+	  window[i] = (10.0 / 32.0) -
+	              (15.0 / 32.0) * cos(angle) + 
+                       (6.0 / 32.0) * cos(2 * angle) - 
+                       (1.0 / 32.0) * cos(3 * angle);
+	  window[j] = window[i];
+	}
+      break; 
+
+    case MUS_RV4_WINDOW:
+      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
+	{
+	  window[i] = (35.0 / 128.0) - 
+	              (56.0 / 128.0) * cos(angle) + 
+	              (28.0 / 128.0) * cos(2 * angle) - 
+	               (8.0 / 128.0) * cos(3 * angle) + 
+	               (1.0 / 128.0) * cos(4 * angle);
+	  window[j] = window[i];
+	}
+      break; 
+
     case MUS_HAMMING_WINDOW:
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
 	{
@@ -8806,9 +8816,12 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	}
       break; 
 
+      /* Blackman 1 is the same as Hamming */
+
     case MUS_BLACKMAN2_WINDOW: /* using Chebyshev polynomial equivalents here (this is also given as .42 .5 .08) */
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
 	{              /* (+ 0.42323 (* -0.49755 (cos a)) (* 0.07922 (cos (* a 2)))) */
+	               /* "A Family...": .42438 .49341 .078279 */
 	  cx = cos(angle);
 	  window[i] = .34401 + (cx * (-.49755 + (cx * .15844)));
 	  window[j] = window[i];
@@ -8819,6 +8832,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
 	{              /* (+ 0.35875 (* -0.48829 (cos a)) (* 0.14128 (cos (* a 2))) (* -0.01168 (cos (* a 3)))) */
 	               /* (+ 0.36336 (*  0.48918 (cos a)) (* 0.13660 (cos (* a 2))) (*  0.01064 (cos (* a 3)))) is "Nuttall" window? */
+	               /* "A Family...": .36358 .489177 .136599 .0106411 */
 
 	  cx = cos(angle);
 	  window[i] = .21747 + (cx * (-.45325 + (cx * (.28256 - (cx * .04672)))));
@@ -8829,8 +8843,150 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
     case MUS_BLACKMAN4_WINDOW:
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
 	{             /* (+ 0.287333 (* -0.44716 (cos a)) (* 0.20844 (cos (* a 2))) (* -0.05190 (cos (* a 3))) (* 0.005149 (cos (* a 4)))) */
+	              /* "A Family...": .32321 .471492 .175534 .0284969 .001261357 */
 	  cx = cos(angle);
 	  window[i] = .084037 + (cx * (-.29145 + (cx * (.375696 + (cx * (-.20762 + (cx * .041194)))))));
+	  window[j] = window[i];
+	}
+      break; 
+
+      /* "A Family of Cosine-Sum Windows..." Albrecht */
+      /* blackman5:  .293557 .451935 .201416 .047926 .00502619 .00013755 */
+      /* blackman6:  .271220 .433444 .218004 .065785 .01076186 .000770012 .0000136808 */
+      /* blackman7:  .253317 .416327 .228839 .081575 .01773592 .002096702 .0001067741 .0000012807 */
+      /* blackman8:  .238433 .400554 .235824 .095279 .02537395 .00415243  .0003685604 .0000138435 .000000116180 */
+      /* blackman9:  .225734 .386012 .240129 .107054 .03325916 .00687337  .0008751673 .0000600859 .000001710716 .00000001027272 */
+      /* blackman10: .215153 .373135 .242424 .116690 .04077422 .001000904 .0016398069 .0001651660 .000008884663 .000000193817 .000000000848248 */
+
+    case MUS_BLACKMAN5_WINDOW:
+      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
+	{ 
+	  /* .293557 -.451935 .201416 -.047926 .00502619 -.000137555 */
+	  /*   partials->polynomial -> -0.196389809 -0.308844775 0.3626224697 -0.188952908 0.0402095206 -0.002200880, then fixup constant */
+	  cx = cos(angle);
+	  window[i] = 0.097167 + 
+	    (cx * (-.3088448 + 
+		   (cx * (.3626224 + 
+			  (cx * (-.1889530 + 
+				 (cx * (.04020952 + 
+					(cx * -.0022008)))))))));
+	  window[j] = window[i];
+	}
+      break; 
+
+    case MUS_BLACKMAN6_WINDOW:
+      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
+	{ 
+	  /* .2712203 -.4334446 .2180041 -.0657853 .010761867 -.0007700127 .00001368088 */
+	  /*   partials->polynomial -> -0.207255900 -0.239938736 0.3501594961 
+	   *                           -0.247740954 0.0854382589 -0.012320203 0.0004377882  
+	   */
+	  cx = cos(angle);
+	  window[i] = 0.063964353 +
+	    (cx * (-0.239938736 + 
+		   (cx * (0.3501594961 + 
+			  (cx * (-0.247740954 + 
+				 (cx * (0.0854382589 + 
+					(cx * (-0.012320203 + 
+					       (cx * 0.0004377882)))))))))));
+	  window[j] = window[i];
+	}
+      break; 
+
+    case MUS_BLACKMAN7_WINDOW:
+      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
+	{ 
+	  /* .2533176 -.4163269 .2288396 -.08157508 .017735924 -.0020967027 .00010677413 -.0000012807 */
+	  /*   partials->polynomial -> -0.211210445 -0.182076216 0.3177137375 -0.284437984 
+	   *                           0.1367622316 -0.033403806 0.0034167722 -0.000081965 
+	   */
+	  cx = cos(angle);
+	  window[i] = 0.04210723 +
+	    (cx * (-0.18207621 + 
+		   (cx * (0.3177137375 + 
+			  (cx * (-0.284437984 + 
+				 (cx * (0.1367622316 + 
+					(cx * (-0.033403806 + 
+						(cx * (0.0034167722 + 
+						       (cx * -0.000081965)))))))))))));
+	  window[j] = window[i];
+	}
+      break; 
+
+    case MUS_BLACKMAN8_WINDOW:
+      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
+	{ 
+	  /* .2384331 -.4005545 .2358242 -.09527918 .025373955 -.0041524329  .00036856041 -.00001384355 .0000001161808 */
+	  /*   partials->polynomial -> -0.210818693 -0.135382235 0.2752871215 -0.298843294 0.1853193194 
+	   *                           -0.064888448 0.0117641902 -0.000885987 0.0000148711 
+	   */
+	  cx = cos(angle);
+	  window[i] = 0.027614462 + 
+	    (cx * (-0.135382235 + 
+		   (cx * (0.2752871215 + 
+			  (cx * (-0.298843294 + 
+				 (cx * (0.1853193194 + 
+					(cx * (-0.064888448 + 
+						(cx * (0.0117641902 + 
+						       (cx * (-0.000885987 +
+							      (cx * 0.0000148711)))))))))))))));
+	  window[j] = window[i];
+	}
+      break; 
+
+    case MUS_BLACKMAN9_WINDOW:
+      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
+	{ 
+	  /* .2257345 -.3860122 .2401294 -.1070542 .03325916 -.00687337  .0008751673 -.0000600859 .000001710716 -.00000001027272 */
+	  /*   partials->polynomial -> -0.207743675 -0.098795950 0.2298837751 -0.294112951 0.2243389785 
+	   *                           -0.103248745 0.0275674108 -0.003839580 0.0002189716 -0.000002630 
+	   */
+	  cx = cos(angle);
+	  window[i] = 0.01799071953 + 
+	    (cx * (-0.098795950 + 
+		   (cx * (0.2298837751 + 
+			  (cx * (-0.294112951 + 
+				 (cx * (0.2243389785 + 
+					(cx * (-0.103248745 + 
+						(cx * (0.0275674108 + 
+						       (cx * (-0.003839580 +
+							       (cx * (0.0002189716 +
+								      (cx * -0.000002630)))))))))))))))));
+	  window[j] = window[i];
+	}
+      break; 
+
+    case MUS_BLACKMAN10_WINDOW:
+      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
+	{ 
+	  /* .2151527 -.3731348 .2424243 -.1166907 .04077422 -.01000904 .0016398069 -.0001651660 .000008884663 -.000000193817 .00000000084824 */
+	  /*   partials->polynomial -> -0.203281015 -0.071953468 0.1878870875 -0.275808066 
+	   *                            0.2489042133 -0.141729787 0.0502002984 -0.010458985 0.0011361511 -0.000049617 0.0000004343  
+	   */
+	  cx = cos(angle);
+	  window[i] = 0.0118717384 + 
+	    (cx * (-0.071953468 + 
+		   (cx * (0.1878870875 + 
+			  (cx * (-0.275808066 + 
+				 (cx * (0.2489042133 + 
+					(cx * (-0.141729787 + 
+						(cx * (0.0502002984 + 
+						       (cx * (-0.010458985 +
+							       (cx * (0.0011361511 +
+								       (cx * (-0.000049617 +
+									      (cx * 0.0000004343)))))))))))))))))));
+	  window[j] = window[i];
+	}
+      break; 
+
+
+      /* Hodie: 0.6164032131405 0.98537119272586 0.49603771622007 0.14992232793243 0.02458719103474 0.0017660465148687 0.000031581188567106 */
+
+    case MUS_FLAT_TOP_WINDOW:
+      /* this definition taken from mathworks docs -- see above */
+      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq)
+	{
+	  window[i] = 0.2156 - 0.4160 * cos(angle) + 0.2781 * cos(2 * angle) - 0.0836 * cos(3 * angle) + 0.0069 * cos(4 * angle);
 	  window[j] = window[i];
 	}
       break; 
@@ -9073,7 +9229,10 @@ Float *mus_make_fft_window(mus_fft_window_t type, int size, Float beta)
 static const char *fft_window_names[MUS_NUM_FFT_WINDOWS] = 
   {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
    "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes",
-   "Samaraki", "Ultraspherical", "Bartlett-Hann", "Bohman", "Flat-top"};
+   "Samaraki", "Ultraspherical", "Bartlett-Hann", "Bohman", "Flat-top",
+   "Blackman5", "Blackman6", "Blackman7", "Blackman8", "Blackman9", "Blackman10",
+   "Rife-Vincent2", "Rife-Vincent3", "Rife-Vincent4"
+};
 
 
 const char *mus_fft_window_name(mus_fft_window_t win)

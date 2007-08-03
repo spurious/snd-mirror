@@ -33,8 +33,8 @@
       (read-enable 'positions)
       (debug-enable 'debug)
       (debug-enable 'backtrace)
-      (debug-set! frames 8)
-      (debug-set! depth 50)))
+      (debug-set! frames 28)
+      (debug-set! depth 250)))
 
 
 (define c-initializing
@@ -132,7 +132,11 @@
     (begin
       (set! %load-path (cons "/home/kjetil/snd-run" %load-path))
       (set! (temp-dir) "/lyd/local/tmp")
-      (set! (save-dir) "/lyd/local/tmp")))
+      (set! (save-dir) "/lyd/local/tmp")
+      (primitive-eval '(define *eval-c-compiler* "gcc-4.1.2"))
+      (primitive-eval '(define *eval-c-CFLAGS* "-march=athlon-xp"))
+      ))
+    
 
 
 
@@ -2371,8 +2375,9 @@ Does not work.
        (gtk_main_iteration))
 
 
-(focus-widget (c-editor-widget (c-selected-sound)))
+(let ((selected-sound (c-selected-sound)))
+  (if selected-sound
+      (focus-widget (c-editor-widget selected-sound))))
 
 
 
- 

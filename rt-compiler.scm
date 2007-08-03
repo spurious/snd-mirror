@@ -3005,7 +3005,7 @@ and run simple lisp[4] functions.
   ;; Functions defined directly. (Note that most functions are defined indirectly using the rt-renamefunc macro.)
   
   ;; Basic
-  (<rt-func> '+ '<float> '(<float>) #:min-arguments 2)
+  (<rt-func> '+ '<float> '(<float>) #:min-arguments 1)
   (<rt-func> 'rt--/- '<float> '(<float>) #:min-arguments 2)
   (<rt-func> 'rt--/minusoneargument '<float> '(<float>))
   (<rt-func> '* '<float> '(<float>) #:min-arguments 2)
@@ -3352,17 +3352,15 @@ and run simple lisp[4] functions.
   (let ((struct-name (string->symbol (car (string-split (symbol->string object) #\:)))))
     `(,(append-various 'setter!- struct-name ":" method) ,object ,@rest)))
 
-(define-rt-macro (=> object das-method . rest)
+(define-rt-macro (=> object das-method)
   (if (or (not (symbol? object))
 	  (not (keyword? das-method)))
       (begin
-	(c-display "Syntax error" `(=> ,object ,das-method ,@rest))
+	(c-display "Syntax error" `(=> ,object ,das-method))
 	(throw 'syntax-error)))
   (let ((method (keyword->symbol das-method)))
     (let ((struct-name (string->symbol (car (string-split (symbol->string object) #\:)))))
-      (if (not (null? rest))
-	  `(,(append-various 'setter!- struct-name ":" method) ,object ,@rest)
-	  `(,(append-various 'getter- struct-name ":" method) ,object ,@rest)))))
+      `(,(append-various 'getter- struct-name ":" method) ,object))))
 
 
 (define-macro (define-rt-something-struct something name . das-slots)
@@ -3606,8 +3604,14 @@ and run simple lisp[4] functions.
   `(rt-/// (the <int> ,a) (the <int> ,b)))
 (define-rt-macro (/% a b)
   `(quotient ,a ,b))
-(define-rt-macro (/ a b)
-  `(rt-/// (the <float> ,a) (the <float> ,b)))
+(define-rt-macro (/ a . b)
+  (if (null? b)
+      `(rt-/// 1.0 (the <float> ,a))
+      (if (not (null? (cdr b)))
+	  `(/ (rt-/// (the <float> ,a) (the <float> ,(car b))) ,@(cdr b))
+	  `(rt-/// (the <float> ,a) (the <float> ,(car b))))))
+
+
 
 (define-rt-macro (odd? n)
   `(remainder ,n 2))
@@ -3679,7 +3683,7 @@ and run simple lisp[4] functions.
 (define-c-macro (rt-ash/>> a b)
   `(>> ,a ,b))
 
-
+(rt-renamefunc mus-random mus_random <float> (<float>))
 (rt-renamefunc random mus_frandom <float> (<float>))
 (rt-renamefunc random mus_irandom <float> (<float>))
 (define-rt-macro (random expand/val)
@@ -3889,7 +3893,7 @@ and run simple lisp[4] functions.
   `(lambda ,rest decl))
 
 
-
+#|
 (define-rt-macro (while test . body)
   (let ((whilefunc (rt-gensym))
 	(dasfunc (rt-gensym)))
@@ -3902,6 +3906,41 @@ and run simple lisp[4] functions.
 			   (if (< (rt-setjmp/setjmp _rt_breakcontsig) 2)
 			       (,dasfunc))))))
        (,whilefunc))))
+
+
+(define-rt-macro (while test . body)
+  `(let loop ()
+     (if ,test
+	 (begin
+	   ,@body
+	   (loop)))))
+;;  `(rt-while ,test ,@body))
+
+(define-rt-macro (while test . body)
+  `(let ((bodyfunc (lambda ()
+		     ,@body)))
+     (rt-while ,test
+	       (bodyfunc))))
+
+	       (begin
+		 ,@body))))
+
+|#
+
+
+(define-rt-macro (while test . body)
+  (let ((whilefunc (rt-gensym)))
+    `(let ((,whilefunc (lambda ()
+			 (rt-while ,test
+				   (begin
+				     ,@body)))))
+       (,whilefunc))))
+
+
+
+
+
+
 
 #|
 (define-rt-macro (while test . body)
@@ -3968,7 +4007,8 @@ and run simple lisp[4] functions.
 
 (define-rt-macro (range varname start end . body)
   (let ((das-end (rt-gensym))
-    	(das-add (rt-gensym)))
+    	(das-add (rt-gensym))
+	(whilefunc (rt-gensym)))
     (if (list? varname)
 	(begin
 	  (set! das-add (cadr varname))
@@ -3976,15 +4016,15 @@ and run simple lisp[4] functions.
     (if (or (number? das-add)
 	    (and (number? start)
 		 (number? end)))
-	(let ((das-end end)
-	      (das-add (if (number? das-add)
+	(let ((das-add (if (number? das-add)
 			   das-add
 			   (if (> end start) 1 -1))))
-	  `(let* ((,varname ,start))
-	     (declare (<int> ,varname))
-	     (while (not (= ,varname ,das-end))
-		    ,@body
-		    (rt-add-int! ,varname ,das-add))))
+	  `(let* ((,whilefunc (lambda (,varname ,das-end)
+				(declare (<int> ,varname ,das-end))
+				(rt-while (not (= ,varname ,das-end))
+					  ,@body
+					  (rt-add-int! ,varname ,das-add)))))
+	     (,whilefunc ,start ,end)))
 	`(let* ((,das-end ,end)
 		(,varname ,start))
 	   (declare (<int> ,das-end ,varname))
@@ -4584,8 +4624,8 @@ and run simple lisp[4] functions.
 				 (symbol-append rt-name '/ c-name)
 				 (symbol-append 'rt- rt-name '/ c-name))))
 	      (<rt-func> funcname returntype args)
-	      (if (or (eq? name 'set_closure)
-		      (eq? name 'closure))
+	      (if (or (eq? name 'set_xcoeff)
+		      (eq? name 'xcoeff))
 		  (begin
 		    (rt-print "c-name" c-name)
 		    (rt-print "funcname" funcname)
@@ -4618,7 +4658,7 @@ and run simple lisp[4] functions.
 	    (<float> width ())
 	    (<float> set_width (<float>) #t)
 	    (<float> xcoeff (<int>))
-	    (<float> set_xcoeff (<int> <float>))
+	    (<float> set_xcoeff (<int> <float>) #t)
 	    (<int> hop ())
 	    (<int> set_hop (<int>) #t)
 	    (<int> ramp ())
@@ -4668,12 +4708,27 @@ and run simple lisp[4] functions.
 (define-c-macro (rt-polynomial/mus_polynomial v x)
   (<-> "mus_polynomial(" (eval-c-parse v) "->data," (eval-c-parse x) "," (eval-c-parse v) "->length)"))
 
-;; mus-fft
+;; fft
 (<rt-func> 'rt-mus-fft/mus_fft '<void> '(<vct-*> <vct-*> <int> <int>))
-(define-rt-macro (mus-fft v1 v2 i1 i2)
+(define-rt-macro (fft v1 v2 i1 i2)
   `(rt-mus-fft/mus_fft ,v1 ,v2 ,i1 ,i2))
 (define-c-macro (rt-mus-fft/mus_fft v1 v2 i1 i2)
   (<-> "mus_fft(" (eval-c-parse v1) "->data," (eval-c-parse v2) "->data," (eval-c-parse i1) "," (eval-c-parse i2) ")"))
+
+;; spectrum
+(<rt-func> 'rt-spectrum/mus_spectrum '<void> '(<vct-*> <vct-*> <vct-*> <int> <int>))
+(define-rt (spectrum v1 v2 v3 i1)
+  (let ((n (max (vct-length v1)
+		(vct-length v2)
+		(vct-length v3))))
+    (if (not (= 0 (logand (1- n) n)))
+	(let* ((nf (/ (log n) 2.0))
+	       (np (the <int> nf)))
+	  (set! n (the <int> (expt 2.0 np)))))
+    (rt-spectrum/mus_spectrum v1 v2 v3 i1 n)))
+
+(define-c-macro (rt-spectrum/mus_spectrum v1 v2 v3 i1 i2)
+  (<-> "mus_spectrum(" (eval-c-parse v1) "->data," (eval-c-parse v2) "->data," (eval-c-parse v3) "->data," (eval-c-parse i1) "," (eval-c-parse i2) ")"))
 
 
 ;; hz->radians
@@ -6293,12 +6348,13 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 ;; rt -> snd
 
+(define-rt-vct-struct rt-rb
+  :read
+  :write
+  :unread
+  :isrunning)
 
-(define rt-rb-read 0)
-(define rt-rb-write 1)
-(define rt-rb-unread 2)
-(define rt-rb-isrunning 3)
-(define rt-rb-header-size 4)
+(define rt-rb-header-size (vct-length (make-rt-rb)))
 
 (define rt-running-ringbuffers '())
 
@@ -6306,72 +6362,72 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
   (let ((ret (make-vct (+ rt-rb-header-size size))))
     ret))
 
-(define* (ringbuffer-get rb func #:optional (interval 2))
+(define* (ringbuffer-get rt-rb func #:optional (interval 2))
   (letrec ((ai (lambda ()
-		 (if (= 0 (vct-ref rb rt-rb-isrunning))
+		 (if (= 0 (=> rt-rb :isrunning))
 		     (begin
-		       (set! rt-running-ringbuffers (remove (lambda (x) (eq? x rb)) rt-running-ringbuffers)))
+		       (set! rt-running-ringbuffers (remove (lambda (x) (eq? x rt-rb)) rt-running-ringbuffers)))
 		     (begin
-		       (while (> (c-integer (vct-ref rb rt-rb-unread)) 0)
-			      (let ((read-pos (c-integer (vct-ref rb rt-rb-read))))
-				(func (vct-ref rb (+ rt-rb-header-size read-pos)))
-				(vct-set! rb rt-rb-read (if (>= read-pos (- (vct-length rb) rt-rb-header-size 1))
-							    0
-							    (1+ read-pos))))
-			      (vct-set! rb rt-rb-unread (1- (vct-ref rb rt-rb-unread))))
+		       (while (> (c-integer (=> rt-rb :unread)) 0)
+			      (let ((read-pos (c-integer (=> rt-rb :read))))
+				(func (vct-ref rt-rb (+ rt-rb-header-size read-pos)))
+				(set! (=> rt-rb :read) (if (>= read-pos (- (vct-length rt-rb) rt-rb-header-size 1))
+							   0
+							   (1+ read-pos))))
+			      (set! (=> rt-rb :unread) (1- (=> rt-rb :unread))))
 		       (in interval ai))))))
-    (vct-set! rb rt-rb-isrunning 1)
-    (push! rb rt-running-ringbuffers)
+    (set! (=> rt-rb :isrunning) 1)
+    (push! rt-rb rt-running-ringbuffers)
     (ai)))
 
-(define-rt (get-ringbuffer rb bufferempty)
+(define-rt (get-ringbuffer rt-rb bufferempty)
   ;;(vct-set! rb ,rt-rb-isrunning 1)
-  (let ((unread (the <int> (vct-ref rb ,rt-rb-unread))))
+  (let ((unread (the <int> (=> rt-rb :unread))))
     (if (> unread 0)
-	(let* ((read-pos (the <int> (vct-ref rb ,rt-rb-read)))
-	       (ret (vct-ref rb (+ ,rt-rb-header-size read-pos))))
-	  (vct-set! rb ,rt-rb-read (if (>= read-pos (- (vct-length rb) ,rt-rb-header-size 1))
+	(let* ((read-pos (the <int> (=> rt-rb :read)))
+	       (ret (vct-ref rt-rb (+ ,rt-rb-header-size read-pos))))
+	  (set! (=> rt-rb :read) (if (>= read-pos (- (vct-length rt-rb) ,rt-rb-header-size 1))
 				       0
 				       (1+ read-pos)))
-	  (vct-set! rb ,rt-rb-unread (1- unread))
+	  (set! (=> rt-rb :unread) (1- unread))
 	  ret)
 	bufferempty)))
 
-(define (ringbuffer-stop rb)
-  (vct-set! rb rt-rb-isrunning 0))
-(define-rt (ringbuffer-stop rb)
-  (vct-set! rb ,rt-rb-isrunning 0))
+(define (ringbuffer-stop rt-rb)
+  (set! (=> rt-rb :isrunning) 0))
+(define-rt (ringbuffer-stop rt-rb)
+  (set! (=> rt-rb :isrunning) 0))
 (define (ringbuffer-stop-all)
   (for-each ringbuffer-stop rt-running-ringbuffers))
 
-(define-rt (put-ringbuffer rb val)
+(define-rt (put-ringbuffer rt-rb val)
   ;;  (if (= 0 (vct-ref rb ,rt-rb-isrunning))
   ;;    #t
-  (let ((write-pos (vct-ref rb ,rt-rb-write))
-	(unread (vct-ref rb ,rt-rb-unread)))
+  (let ((write-pos (=> rt-rb :write))
+	(unread (=> rt-rb :unread)))
     (declare (<int> write-pos unread))
-    (if (>= unread (- (vct-length rb) ,rt-rb-header-size))
+    (if (>= unread (- (vct-length rt-rb) ,rt-rb-header-size))
 	(begin
 	  (printf "Ringbuffer full\\n")
 	  #f)
 	(begin
-	  (vct-set! rb (+ write-pos ,rt-rb-header-size) val)
-	  (vct-set! rb ,rt-rb-write (if (>= write-pos (- (vct-length rb) ,rt-rb-header-size 1))
-					0
-					(1+ write-pos)))
-	  (vct-set! rb ,rt-rb-unread (1+ unread))
+	  (vct-set! rt-rb (+ write-pos ,rt-rb-header-size) val)
+	  (set! (=> rt-rb :write) (if (>= write-pos (- (vct-length rt-rb) ,rt-rb-header-size 1))
+				      0
+				      (1+ write-pos)))
+	  (set! (=> rt-rb :unread) (1+ unread))
 	  #t))))
   
   
-(define-rt (clear-ringbuffer rb)
-  (vct-set! rb ,rt-rb-unread 0)
-  (vct-set! rb ,rt-rb-read 0)
-  (vct-set! rb ,rt-rb-write 0))
+(define-rt (clear-ringbuffer rt-rb)
+  (set! (=> rt-rb :unread) 0)
+  (set! (=> rt-rb :read) 0)
+  (set! (=> rt-rb :write) 0))
 
 
 #!
 (define rb (make-ringbuffer 2000))
-(<rt-play> 0 10
+(<rt-play> 0 1
 	   (lambda ()
 	     (put-ringbuffer rb (in 0))))
 (ringbuffer-get rb
@@ -6715,7 +6771,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 (define-rt-macro (vct-map! vct thunk)
   (let ((das-vct (rt-gensym))
 	(i (rt-gensym)))
-    `(let ((,das-vct ,vct))
+    `(let ((,das-vct (the <vct-*> ,vct)))
        (rt-range2 ,i 0 (vct-length ,das-vct) 1
 		  (rt-vct-set!/vct-set! ,das-vct ,i (begin
 						      ,@(cddr thunk)))))))
@@ -7600,7 +7656,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 				       
 				       ret)))))))
 	  
-	  (apply eval-c-non-macro (append (list (<-> "-I" snd-header-files-path " -ffast-math ") ;; "-ffast-math") ;; " -Werror "
+	  (apply eval-c-non-macro (append (list (<-> "-I" snd-header-files-path " -fargument-noalias-global -ffast-math ") ;; "-ffast-math") ;; " -Werror "
 						#f
 						"#include <mus-config.h>"
 						"#include <math.h>"
@@ -7667,9 +7723,9 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 	 (cached (hash-ref rt-cached-funcs key)))
     (if cached
 	cached
-	(let ((new (rt-2 term)))
-	  (hash-set! rt-cached-funcs key new)
-	  new))))
+	(let ((new-rt (rt-2 term)))
+	  (hash-set! rt-cached-funcs key new-rt)
+	  new-rt))))
 (define (rt-clear-cache!)
   (set! rt-cached-funcs (make-hash-table 997)))
 

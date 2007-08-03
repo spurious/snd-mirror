@@ -1020,7 +1020,8 @@ a sinusoid, creating a sort of cross between additive synthesis and FM; see
 "Digital Waveshaping Synthesis" by Marc Le Brun in JAES 1979 April, vol 27, no 4, p250. 
 waveshape uses an internal <a href="#table-lookup">table-lookup</a> generator, whereas polyshape uses
 the <a href="#polynomial">polynomial</a> function.  The "kind" argument determines which kind of Chebyshev polynomial
-is used internally:  mus-chebyshev-first-kind or mus-chebyshev-second-kind.
+is used internally:  mus-chebyshev-first-kind or mus-chebyshev-second-kind. (The sum-of-cosines generator produces
+Chebyshev polynomials of the fourth kind).
 </p>
 
 <table border align=left hspace=40 cellpadding=4>
@@ -3667,6 +3668,8 @@ or linear and normalized to 1.0 ("norm-type" = 1), or linear unnormalized.
   hamming-window           hann-poisson-window    hann-window            kaiser-window
   parzen-window            poisson-window         rectangular-window     riemann-window      
   samaraki-window          tukey-window           ultraspherical-window  welch-window        
+  blackman5-window         blackman6-window       blackman7-window       blackman8-window       
+  blackman9-window         blackman10-window       
 </pre>
 
 

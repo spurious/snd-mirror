@@ -1,4 +1,4 @@
-z
+
 
 ;; Instructions:
 ;; 1. Start the jack sound server.
@@ -625,7 +625,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Another midi sofsynth, using samples. This one is a bit more advanced. Actually, it
-;; sounds very nice. However, it use Guile for reading midi, and Guile is not allways
+;; sounds very nice. However, it uses Guile for reading midi, and Guile is not allways
 ;; able to keep up (turning off the garbage collector might help, but that is dangerous!),
 ;; sometimes making the sounds lag.
 

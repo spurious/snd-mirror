@@ -561,6 +561,12 @@
       'blackman2-window blackman2-window 6 
       'blackman3-window blackman3-window 7 
       'blackman4-window blackman4-window 8
+      'blackman5-window blackman5-window 24
+      'blackman6-window blackman6-window 25
+      'blackman7-window blackman7-window 26
+      'blackman8-window blackman8-window 27
+      'blackman9-window blackman9-window 28
+      'blackman10-window blackman10-window 29
       'bohman-window bohman-window 22
       'cauchy-window cauchy-window 12 
       'channels-combined channels-combined 1 
@@ -597,6 +603,9 @@
       'poisson-window poisson-window 13
       'rectangular-window rectangular-window 0 
       'riemann-window riemann-window 10 
+      'rv2-window rv2-window 30
+      'rv3-window rv3-window 31
+      'rv4-window rv4-window 32
       'samaraki-window samaraki-window 19
       'ultraspherical-window ultraspherical-window 20
       'graph-as-sonogram graph-as-sonogram 1
@@ -2011,8 +2020,9 @@
 		       'moving-average 'moving-average? 'axis-info 'axis-label-font 'axis-numbers-font
 		       'bad-header-hook 'bartlett-window 'bartlett-hann-window 'basic-color 'beats-per-measure 'beats-per-minute
 		       'before-close-hook 'before-exit-hook 'before-save-as-hook 'before-save-state-hook 'before-transform-hook
-		       'bind-key 'blackman2-window 'blackman3-window 'blackman4-window 'bohman-window 'bold-peaks-font
-		       'bomb 'c-g! 'c-g? 'cauchy-window
+		       'bind-key 'blackman2-window 'blackman3-window 'blackman4-window 
+		       'blackman5-window 'blackman6-window 'blackman7-window 'blackman8-window 'blackman9-window 'blackman10-window 
+		       'bohman-window 'bold-peaks-font 'bomb 'c-g! 'c-g? 'cauchy-window
 		       'cepstrum 'change-samples-with-origin 'channel->vct 'channel-amp-envs 'channel-data
 		       'channel-properties 'channel-style 'channel-widgets 'channels 'channels-combined
 		       'channels-separate 'channels-superimposed 'chans 'clear-array 'clear-listener
@@ -2175,7 +2185,8 @@
 		       'reverb-control-decay 'reverb-control-feedback 'reverb-control-length 'reverb-control-length-bounds 'reverb-control-lowpass
 		       'reverb-control-scale 'reverb-control-scale-bounds 'reverb-control? 'reverse-channel 'reverse-selection
 		       'reverse-sound 'revert-sound 'riemann-window 'right-sample 'ring-modulate
-		       'run 'run-safety 'samaraki-window 'sample 'sample->file
+		       'run 'run-safety 'rv2-window 'rv3-window 'rv4-window 
+		       'samaraki-window 'sample 'sample->file
 		       'sample->file? 'sample->frame 'sample-reader-at-end? 'sample-reader-home 'sample-reader-position
 		       'sample-reader? 'samples 'samples->seconds 'sash-color
 		       'save-controls 'save-dir 'save-edit-history 'save-envelopes 'save-hook
