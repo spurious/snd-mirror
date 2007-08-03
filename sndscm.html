@@ -2108,6 +2108,17 @@ also lose more of the original signal.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- savitzky-golay-filter -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>make-savitzky-golay-filter</em> <code>size :optional (order 2)</code><br>
+<a class=def name="sgfilter">savitzky-golay-filter</a> <code>f in</code>
+</td></tr><tr><td></td><td>
+This the Savitzky-Golay filter, assuming symmetrical positioning.  It is an FIR smoothing filter.
+For more info, See "Numerical Recipes in C".
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+
 <!-- spectrum->coeffs and fltit -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="spectrumtocoeffs">spectrum-&gt;coeffs</a> <code>order spectrum</code><br>
@@ -9558,7 +9569,7 @@ everything after that is evaluated as a note list.
 </pre>
 
 <p>produces one fm-violin note, heavily reverberated, and plays it, printing this info:
-<p>
+</p>
 
 <pre>
     <em class-listener>&gt;</em><em class=typing>(with-sound (:reverb jc-reverb :statistics #t :play #t) 
@@ -9814,11 +9825,11 @@ with-sound:</p>
 
 <p>This creates two temporary files and passes them along to the subsequent calls
 on granulate-sound.  The first list after the sound file identifier (i.e. after
-"temp-1" in the example) is the list of <a href="#with-sound">with-sound</a> options to be passed
+"temp-1" in the example) is the list of <a href="#wsdoc">with-sound</a> options to be passed
 along when creating this temporary file.  These default to :output
 with a unique name generated internally, and all other variables are taken from
 the overall (enclosing) with-sound.  The rest of the list is the body of the
-associated <a href="#with-sound">with-sound</a>.
+associated <a href="#wsdoc">with-sound</a>.
 The difference between sound-let and a simple embedded with-sound is primarily that
 sound-let names and later deletes the temporary files it creates, whereas with-sound leaves
 its explicitly named output intact (and tries to open it in Snd, which can be confusing in this context).
@@ -9892,7 +9903,7 @@ split with-sound into two pieces, primarily for Common Music's benefit.
 
 <p><a name="with-mix">with-mix</a> is a "checkpointing" version of with-sound, more useful in the bad old days when computers
 were incredibly slow, but lingering on...
-It is a macro, callable within <a href="#with-sound">with-sound</a> or <a href="#clm-load">clm-load</a>,
+It is a macro, callable within <a href="#wsdoc">with-sound</a> or <a href="#clmload">clm-load</a>,
 which saves the computation in its body in a separate file, and
 then upon a subsequent recomputation, tries to tell (via a string comparison) when that file's data is up to date
 and does not need to be recomputed.
@@ -9900,7 +9911,7 @@ and does not need to be recomputed.
 
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
-(<a class=quiet href="#with-sound">with-sound</a> () 
+(<a class=quiet href="#wsdoc">with-sound</a> () 
   (fm-violin 0 .1 440 .1)
   (<em class=red>with-mix</em> () "sec1" .5 
     (fm-violin 0 .1 550 .1)
@@ -9924,7 +9935,7 @@ but not anymore.
 </p>
 
 <pre>
-  <a class=def name="musmix">mus-mix</a> outfile infile :optional (outloc 0) (frames) (inloc 0) mixer envs)
+  <a class=def name="musmix">mus-mix</a> outfile infile :optional (outloc 0) (frames) (inloc 0) mixer envs
 </pre>
 
 <p>This function

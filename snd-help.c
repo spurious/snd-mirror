@@ -518,6 +518,7 @@ void about_snd_help(void)
 \n\
 3-Aug:   added blackman5..10 and rv2..4 fft windows.\n\
          rt-clm-ins.scm thanks to Kjetil.\n\
+         Savitzky-Golay filter (dsp.scm).\n\
 1-Aug:   numerics.scm.\n\
 19-Jul:  sndclm.html (Snd-specific version of clm.html).\n\
 12-Jul:  Snd 9.2.\n\
