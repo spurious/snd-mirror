@@ -995,7 +995,7 @@ gong is an FM instrument developed by Paul Weineke.
 </td></tr><tr><td></td><td>
 gran-synth sets up a <a href="sndclm.html#wave-train">wave-train</a> playing an enveloped
 sinusoid (the "grain" in this case).  'grain-dur' sets the grain's length (in seconds),
-'grain-hop' sets the frequency of the wave-train generator (how quickly the grain is
+'grain-hop' sets the frequency of the <a href="sndclm.html#wave-train">wave-train</a> generator (how quickly the grain is
 repeated), and 'freq' sets the grain sinusoid's frequency.
 <pre>
     (<a class=quiet href="#wsdoc">with-sound</a> () (gran-synth 0 1 300 .0189 .03 .4)) ; grain freq 300Hz, repetition rate 33Hz
@@ -1220,7 +1220,7 @@ To see the asymmetric spectrum most clearly, set the index function above to '(0
 <em class=emdef>resflt</em> <code>(beg dur driver ...)</code>
 </td></tr><tr><td></td><td>
 resflt, developed by Richard Karpen and Xavier Serra, sets up three resonators (two-pole filters), 
-then drives them with either white noise or a sum-of-cosines pulse train.
+then drives them with either white noise or a <a href="sndclm.html#sum-of-cosines">sum-of-cosines</a> pulse train.
 Both can be used for vocal effects:
 <pre>
     (<a class=quiet href="#wsdoc">with-sound</a> () 
@@ -1570,7 +1570,7 @@ Perry Cook's Wurlitzer (I assume).
 <em class=emdef>zn</em> <code>time dur freq amp length1 length2 feedforward</code>
 </td></tr><tr><td></td><td>
 The "z" instruments demonstrate "zdelay" effects -- interpolating
-comb, notch, and all-pass filters.
+<a href="sndclm.html#comb">comb</a>, <a href="sndclm.html#notch">notch</a>, and <a href="sndclm.html#all-pass">all-pass</a> filters.
 <pre>
     (<a class=quiet href="#wsdoc">with-sound</a> () (zn 0 1   100 .1 20 100 .995) 
 		   (zn 1.5 1 100 .1 100 20 .995)
@@ -2047,7 +2047,7 @@ One example of its use is sound-&gt;amp-env (from R Lyons).  Another is the <a h
 
 <!-- invert-filter -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>invert-filter</em> <code>coeffs</code>
+<A class=def NAME="invertfilter">invert-filter</A> <code>coeffs</code>
 </td></tr><tr><td></td><td>
 invert-filter inverts an FIR filter.
 Say we previously filtered a sound via 
@@ -2061,7 +2061,7 @@ we could type <code>(undo)</code>.  Nothing daunted, we use:
 </pre>
 There are a million gotchas here.  The primary one is that the inverse filter
 can "explode" -- the coefficients can grow without bound.  For example, any
-filter returned by spectrum-&gt;coeffs will be problematic.
+filter returned by <a href="#spectrumtocoeffs">spectrum-&gt;coeffs</a> will be problematic.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -2069,7 +2069,7 @@ filter returned by spectrum-&gt;coeffs will be problematic.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>make-spencer-filter</em>
 </td></tr><tr><td></td><td>
-This returns a CLM fir-filter generator with the standard "Spencer Filter" coefficients.
+This returns a CLM <a href="sndclm.html#fir-filter">fir-filter</a> generator with the standard "Spencer Filter" coefficients.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -2183,6 +2183,7 @@ This is an experimental function aimed at noise reduction using a Kalman filter.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<A NAME="makebutter"></A>
 <!-- make-butter* -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>make-butter-high-pass</em> <code>fq</code>, <em class=emdef>make-butter-hp</em> <code>M fc</code><br>
@@ -2203,6 +2204,7 @@ See also the notch filter in new-effects.scm, and of course <a href="#analogfilt
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<A NAME="IIRfilters"></A>
 <!-- IIR filters -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>make-iir-high-pass-2</em> <code>fc :optional din</code><br>
@@ -2234,7 +2236,7 @@ Use the functions in <a href="#analogfilterdoc">analog-filter.scm</a>, rather th
 <em class=emdef>make-mfilter</em> <code>:key (frequency 1000) (decay .99)</code><br>
 <a class=def NAME="mfilter">mfilter</a> <code>gen :optional x-input y-input</code>
 </td></tr><tr><td></td><td>
-These implement a high Q two-pole <a href="http://ccrma.stanford.edu/~jos/smac03maxjos/">filter</a>
+These implement a high Q two pole <a href="http://ccrma.stanford.edu/~jos/smac03maxjos/">filter</a>
 developed by Max Mathews and Julius Smith.  It is very  
 similar to CLM's <a href="sndclm.html#formant">formant</a>.
 A slightly different view of the same filter is provided
@@ -2373,7 +2375,7 @@ the moving formant idea mentioned in the original article ('r' should be greater
 </td></tr><tr><td></td><td>
 The 
 ssb-bank functions provide single-sideband amplitude modulation, and pitch/time changes
-based on the ssb-am generator.  
+based on the <a href="sndclm.html#ssb-am">ssb-am</a> generator.  
 If you run ssb-am on some input signal, the signal is shifted in pitch by
 the 'freq' amount.  The higher the 'order', the better the sideband cancellation
 (amplitude modulation creates symmetrical sidebands, one of which is cancelled by the ssb-am
@@ -2502,7 +2504,7 @@ It is controlled by the following variables:
 <pre>
     chorus-size (5)        ; number of flangers
     chorus-time (.05)      ; scales delay line length (flanger)
-    chorus-amount (20.0)   ; amp of rand-interp (flanger)
+    chorus-amount (20.0)   ; amp of <a href="sndclm.html#rand-interp">rand-interp</a> (flanger)
     chorus-speed (10.0)    ; freq of rand-interp (flanger)
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -2702,7 +2704,7 @@ The other "moving" generators are specializations of the <a href="sndclm.html#mo
 generator.  moving-sum keeps the ongoing sum of absolute values, moving-length the square root of the sum
 of squares, and moving-rms the square root of the sum of squares divided by the size.
 moving-rms is used in <a href="#overlayrmsenv">overlay-rms-env</a> in draw.scm.
-smoothing-filter is a version of moving-average with rounded edges.  weighted-moving-average weights the
+smoothing-filter is a version of <a href="sndclm.html#moving-average">moving-average</a> with rounded edges.  weighted-moving-average weights the
 table entries by 1/n.  Similarly exponentially-weighted-moving-average applies exponential weights (it is
 actually just a one-pole filter -- this generator wins the "longest-name-for-simplest-effect" award).
 </td></tr><tr><td colspan=2 height=32></td></tr>
@@ -2830,7 +2832,7 @@ envelope-exp interpolates segments into envelope to approximate exponential curv
 
 <!-- envelope-interp -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="envelopeinterp">envelope-interp</A> <code>x env (base 1.0)</code>
+<A class=def name="envelopeinterp">envelope-interp</a> <code>x env (base 1.0)</code>
 </td></tr><tr><td></td><td>
 <code>(envelope-interp x env base)</code> returns value of 'env' at 'x'.
 If 'base' is 0, 'env' is treated as a step function; if 'base' is 1.0 (the
@@ -3689,7 +3691,7 @@ Cross fade in frequency domain: <a href="#fadedoc">fade.scm</a><br>
 <em class=emdef>pulse-voice</em> <code>cosines :optional (freq 440.0) (amp 1.0) (fftsize 256) (r 2.0) snd chn</code>
 </td></tr><tr><td></td><td>
 This function is a form of cross-synthesis which drives the resynthesis with a <a href="sndclm.html#sum-of-cosines">sum-of-cosines</a> pulse train.
-'freq' is the sum-of-cosines frequency; 'amp' is an overall amplitude scaler;
+'freq' is the <a href="sndclm.html#sum-of-cosines">sum-of-cosines</a> frequency; 'amp' is an overall amplitude scaler;
 'cosines' is the number of cosines in the pulse (the more the spikier);
 'fftsize' and 'r' (radius) control the <a href="sndclm.html#formant">formant</a> bank
 used to get the current spectrum.
@@ -4441,7 +4443,7 @@ this is largely equivalent to the control panel Contrast slider.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="contrastsound">contrast-sound</a> <code>index :optional (beg 0) dur snd</code>
 </td></tr><tr><td width=60></td><td>
-contrast-sound applies contrast-enhancement to every channel of the sound 'snd'.
+contrast-sound applies <a href="sndclm.html#contrast-enhancement">contrast-enhancement</a> to every channel of the sound 'snd'.
 It is the multichannel version of <a href="#contrastchannel">contrast-channel</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5336,7 +5338,7 @@ or something.
       (grain-envelope '(0 0 0.3 1 0.7 1 1 0)) ; env for each individual grain
       (grain-envelope-end #f)                 ; if not #f, a 2nd grain env
       (grain-envelope-transition '(0 0 1 1))  ; interp 0: use grain-envelope, 1: use grain-envelope-end
-      (grain-envelope-array-size 512)         ; make-table-lookup table size
+      (grain-envelope-array-size 512)         ; <a href="sndclm.html#make-table-lookup">make-table-lookup</a> table size
       (grain-duration 0.1)                    ; number or envelope setting grain duration (in seconds)
       (grain-duration-spread 0.0)             ; random spread around 'grain-duration'
       (grain-duration-limit 0.002)            ; minimum grain duration (in seconds)
@@ -9519,7 +9521,7 @@ we want to hear an arpeggio from the fm-violin:
 
 <p>
 with-sound opens an output object, either a sound file, a vct, or a sound-data object: (*output*), and
-optionally a reverb output object: *reverb*.  Each instrument uses out-any to add its sounds to the
+optionally a reverb output object: *reverb*.  Each instrument uses <a href="sndclm.html#out-any">out-any</a> to add its sounds to the
 *output* results.  with-sound next sets up a variety of variables describing the current
 output, and establishes an environment where various problems can be handled nicely (in Scheme,
 a dynamic-wind with various debugging hooks).  Then the with-sound body is evaluated, presumably
@@ -9743,7 +9745,7 @@ So, an instrument that wants to cooperate fully with with-sound and Common Music
           (<a class=quiet href="sndclm.html#outa">outa</a> i ... *output*))))))
 </pre></td></tr></table>
 
-<p>The optional-key feature can be used with definstrument via def-optkey-instrument:
+<p>The <a href="sndclm.html#optional-key">optional-key</a> feature can be used with definstrument via def-optkey-instrument:
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
@@ -10084,8 +10086,8 @@ an upward ramp and a downward ramp, then zips them together:
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="extsndasneededexpl">A Note on "As-Needed" input functions</a></h2></td></tr></table>
 
 <p>Several CLM generators work internally on buffers of data; only the code internal
-to the generator knows when it needs input, and how much it needs.  So, src, granulate,
-convolve, and phase-vocoder are passed a function either at run-time or when the
+to the generator knows when it needs input, and how much it needs.  So, <a href="sndclm.html#src">src</a>, <a href="sndclm.html#granulate">granulate</a>,
+<a href="sndclm.html#convolve">convolve</a>, and <a href="sndclm.html#phase-vocoder">phase-vocoder</a> are passed a function either at run-time or when the
 generator is allocated that they can call whenever a new value is needed.
 A simple C case is:
 </p>

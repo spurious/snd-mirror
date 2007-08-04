@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
 ;;;  test 0: constants                          [538]
-;;;  test 1: defaults                           [1093]
-;;;  test 2: headers                            [1293]
-;;;  test 3: variables                          [1609]
-;;;  test 4: sndlib                             [2254]
-;;;  test 5: simple overall checks              [4780]
-;;;  test 6: vcts                               [13725]
-;;;  test 7: colors                             [14003]
-;;;  test 8: clm                                [14493]
-;;;  test 9: mix                                [24464]
-;;;  test 10: marks                             [26681]
-;;;  test 11: dialogs                           [27642]
-;;;  test 12: extensions                        [27887]
-;;;  test 13: menus, edit lists, hooks, etc     [28158]
-;;;  test 14: all together now                  [29864]
-;;;  test 15: chan-local vars                   [30897]
-;;;  test 16: regularized funcs                 [32509]
-;;;  test 17: dialogs and graphics              [37500]
-;;;  test 18: enved                             [37590]
-;;;  test 19: save and restore                  [37609]
-;;;  test 20: transforms                        [39394]
-;;;  test 21: new stuff                         [41292]
-;;;  test 22: run                               [43283]
-;;;  test 23: with-sound                        [48984]
-;;;  test 24: user-interface                    [51466]
-;;;  test 25: X/Xt/Xm                           [54872]
-;;;  test 26: Gtk                               [59468]
-;;;  test 27: GL                                [63320]
-;;;  test 28: errors                            [63444]
-;;;  test all done                              [65729]
-;;;  test the end                               [65965]
+;;;  test 1: defaults                           [1102]
+;;;  test 2: headers                            [1302]
+;;;  test 3: variables                          [1618]
+;;;  test 4: sndlib                             [2265]
+;;;  test 5: simple overall checks              [4791]
+;;;  test 6: vcts                               [13744]
+;;;  test 7: colors                             [14022]
+;;;  test 8: clm                                [14512]
+;;;  test 9: mix                                [24893]
+;;;  test 10: marks                             [27110]
+;;;  test 11: dialogs                           [28071]
+;;;  test 12: extensions                        [28316]
+;;;  test 13: menus, edit lists, hooks, etc     [28587]
+;;;  test 14: all together now                  [30293]
+;;;  test 15: chan-local vars                   [31326]
+;;;  test 16: regularized funcs                 [32938]
+;;;  test 17: dialogs and graphics              [37929]
+;;;  test 18: enved                             [38019]
+;;;  test 19: save and restore                  [38038]
+;;;  test 20: transforms                        [39823]
+;;;  test 21: new stuff                         [41721]
+;;;  test 22: run                               [43712]
+;;;  test 23: with-sound                        [49415]
+;;;  test 24: user-interface                    [51897]
+;;;  test 25: X/Xt/Xm                           [55303]
+;;;  test 26: Gtk                               [59899]
+;;;  test 27: GL                                [63751]
+;;;  test 28: errors                            [63875]
+;;;  test all done                              [66160]
+;;;  test the end                               [66396]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -18517,6 +18517,21 @@ EDITS: 2
 	    (if (not (vequal (mus-xcoeffs gen) (vct -0.009 -0.019 -0.016 0.009 0.066 0.144 0.209 0.231 0.209 0.144 0.066 0.009 -0.016 -0.019 -0.009)))
 		(snd-display ";make-spencer-filter coeffs: ~A" (mus-xcoeffs gen))))))
     
+    (let ((flt (make-savitzky-golay-filter 5 2)))
+      (if (not (vequal (mus-xcoeffs flt) (vct -0.086 0.343 0.486 0.343 -0.086)))
+	  (snd-display ";sg 5 2: ~A" (mus-xcoeffs flt))))
+    (let ((flt (make-savitzky-golay-filter 11 2)))
+      (if (not (vequal (mus-xcoeffs flt) (vct -0.084 0.021 0.103 0.161 0.196 0.207 0.196 0.161 0.103 0.021 -0.084)))
+	  (snd-display ";sg 11 2: ~A" (mus-xcoeffs flt))))
+    (let ((flt (make-savitzky-golay-filter 11 4)))
+      (if (not (vequal (mus-xcoeffs flt) (vct 0.042 -0.105 -0.023 0.140 0.280 0.333 0.280 0.140 -0.023 -0.105 0.042)))
+	  (snd-display ";sg 11 4: ~A" (mus-xcoeffs flt))))
+    (let ((flt (make-savitzky-golay-filter 25 2)))
+      (if (not (vequal (mus-xcoeffs flt) (vct -0.049 -0.027 -0.006 0.012 0.028 0.043 0.055 0.066 0.075 0.082 0.086 
+					      0.089 0.090 0.089 0.086 0.082 0.075 0.066 0.055 0.043 
+					      0.028 0.012 -0.006 -0.027 -0.049)))
+	  (snd-display ";sg 25 2: ~A" (mus-xcoeffs flt))))
+    
     (let ((gen (make-iir-filter 3 (list->vct '(.5 .25 .125))))
 	  (v0 (make-vct 10))
 	  (gen1 (make-iir-filter 3 (list->vct '(.5 .25 .125))))
@@ -19919,6 +19934,35 @@ EDITS: 2
     (let ((gen (make-fft-window blackman4-window 16)))
       (if (not (vequal gen (vct 0.002 0.002 0.003 0.017 0.084 0.263 0.562 1.000 1.000 0.562 0.263 0.084 0.017 0.003 0.002 0.002)))
 	  (snd-display ";blackman4 window: ~A" gen)))
+
+    (let ((gen (make-fft-window blackman5-window 16)))
+      (if (not (vequal gen (vct 0.000 0.000 0.003 0.022 0.097 0.280 0.574 1.000 1.000 0.574 0.280 0.097 0.022 0.003 0.000 0.000)))
+	  (snd-display ";blackman5 window: ~A" gen)))
+    (let ((gen (make-fft-window blackman6-window 16)))
+      (if (not (vequal gen (vct 0.000 0.000 0.001 0.011 0.064 0.223 0.520 1.000 1.000 0.520 0.223 0.064 0.011 0.001 0.000 0.000)))
+	  (snd-display ";blackman6 window: ~A" gen)))
+    (let ((gen (make-fft-window blackman7-window 16)))
+      (if (not (vequal gen (vct 0.000 0.000 0.000 0.006 0.042 0.177 0.471 1.000 1.000 0.471 0.177 0.042 0.006 0.000 0.000 0.000)))
+	  (snd-display ";blackman7 window: ~A" gen)))
+    (let ((gen (make-fft-window blackman8-window 16)))
+      (if (not (vequal gen (vct 0.000 0.000 0.000 0.003 0.028 0.141 0.426 1.000 1.000 0.426 0.141 0.028 0.003 0.000 0.000 0.000)))
+	  (snd-display ";blackman8 window: ~A" gen)))
+    (let ((gen (make-fft-window blackman9-window 16)))
+      (if (not (vequal gen (vct 0.000 0.000 0.000 0.001 0.018 0.112 0.385 1.000 1.000 0.385 0.112 0.018 0.001 0.000 0.000 -0.000)))
+	  (snd-display ";blackman9 window: ~A" gen)))
+    (let ((gen (make-fft-window blackman10-window 16)))
+      (if (not (vequal gen (vct 0.000 0.000 0.000 0.001 0.012 0.089 0.349 1.000 1.000 0.349 0.089 0.012 0.001 0.000 0.000 -0.000)))
+	  (snd-display ";blackman10 window: ~A" gen)))
+    (let ((gen (make-fft-window rv2-window 16)))
+      (if (not (vequal gen (vct 0.000 0.001 0.021 0.095 0.250 0.478 0.729 1.000 1.000 0.729 0.478 0.250 0.095 0.021 0.001 0.000)))
+	  (snd-display ";rv2 window: ~A" gen)))
+    (let ((gen (make-fft-window rv3-window 16)))
+      (if (not (vequal gen (vct 0.000 0.000 0.003 0.029 0.125 0.330 0.622 1.000 1.000 0.622 0.330 0.125 0.029 0.003 0.000 0.000)))
+	  (snd-display ";rv3 window: ~A" gen)))
+    (let ((gen (make-fft-window rv4-window 16)))
+      (if (not (vequal gen (vct 0.000 0.000 0.000 0.009 0.062 0.228 0.531 1.000 1.000 0.531 0.228 0.062 0.009 0.000 0.000 0.000)))
+	  (snd-display ";rv4 window: ~A" gen)))
+
     (let ((gen (make-fft-window exponential-window 16)))
       (if (not (vequal gen (vct 0.000 0.087 0.181 0.283 0.394 0.515 0.646 0.944 0.944 0.646 0.515 0.394 0.283 0.181 0.087 0.000)))
 	  (snd-display ";exponential window: ~A" gen)))
@@ -19946,33 +19990,157 @@ EDITS: 2
     (let ((gen (make-fft-window bohman-window 16)))
       (if (not (vequal gen (vct 0.000 0.006 0.048 0.151 0.318 0.533 0.755 1.000 1.000 0.755 0.533 0.318 0.151 0.048 0.006 0.000)))
 	  (snd-display ";bohman window: ~A" gen)))
-    (let ((win (make-fft-window bartlett-hann-window 32))
-	  (unhappy #f))
-      (do ((i 0 (1+ i))) 
-	  ((or unhappy (= i 32)))
-	(let ((val (+ 0.62 (* -0.48 (abs (- (/ i 31) 0.5))) (* 0.38 (cos (* 2 pi (- (/ i 31) 0.5)))))))
-	  (if (> (abs (- val (vct-ref win i))) .03)
-	      (begin
-		(set! unhappy #t)
-		(snd-display ";bartlett-hann at ~D: ~A ~A" i val (vct-ref win i)))))))
-    (let ((win (make-fft-window flat-top-window 32))
-	  (unhappy #f))
-      (do ((i 0 (1+ i))) 
-	  ((or unhappy (= i 32)))
-	(let ((val (+ 0.2156 
-		      (* -0.4160 (cos (/ (* 2 pi i) 31))) 
-		      (* 0.2781 (cos (/ (* 4 pi i) 31))) 
-		      (* -0.0836 (cos (/ (* 6 pi i) 31))) 
-		      (* 0.0069 (cos (/ (* 8 pi i) 31))))))
-	  (if (> (abs (- val (vct-ref win i))) .1) ; error is much less, of course, in a bigger window
-	      (begin
-		(set! unhappy #t)
-		(snd-display ";flat-top at ~D: ~A ~A" i val (vct-ref win i)))))))
-    (catch #t
-	   (lambda ()
-	     (let ((gen (make-fft-window samaraki-window 16)))
-	       (if (not (vequal gen (vct 1.000 0.531 0.559 0.583 0.604 0.620 0.631 0.638 0.640 0.638 0.631 0.620 0.604 0.583 0.559 0.531)))
-		   (snd-display ";samaraki window: ~A" gen)))
+    (for-each
+     (lambda (window-data)
+       (let ((window (car window-data))
+	     (func (caddr window-data))
+	     (name (cadr window-data)))
+	 (let ((v1 (make-fft-window window 16))
+	       (v2 (make-vct 16)))
+	   (do ((i 0 (1+ i))
+		(j 15 (1- j))
+		(ang 0.0 (+ ang (/ (* 2 pi) 16.0))))
+	       ((> i 8)) ; yikes -- even size + smallness = questionable code...
+	     (let ((val (func ang)))
+	       (vct-set! v2 i val)
+	       (vct-set! v2 j val)))
+	   (if (not (vequal v1 v2)) 
+	       (snd-display ";~A by hand:~%;  mus: ~A~%;  loc: ~A" name v1 v2)))))
+     
+     (list 
+      (list hann-window "hann" (lambda (ang) 
+				 (- 0.5 
+				    (* 0.5 (cos ang)))))
+      
+      (list rv2-window "rv2" (lambda (ang) 
+			       (+ .375 
+				  (* -0.5 (cos ang)) 
+				  (* .125 (cos (* 2 ang))))))
+      
+      (list rv3-window "rv3" (lambda (ang) 
+			       (+ (/ 10.0 32.0) 
+				  (* (/ -15.0 32.0) (cos ang)) 
+				  (* (/ 6.0 32.0) (cos (* 2 ang))) 
+				  (* (/ -1.0 32.0) (cos (* 3 ang))))))
+      
+      (list rv4-window "rv4" (lambda (ang) 
+			       (+ (/ 35.0 128.0)
+				  (* (/ -56.0 128.0) (cos ang)) 
+				  (* (/ 28.0 128.0) (cos (* 2 ang))) 
+				  (* (/ -8.0 128.0) (cos (* 3 ang)))
+				  (* (/ 1.0 128.0) (cos (* 4 ang))))))
+      
+      (list hamming-window "hamming" (lambda (ang)
+				       (- 0.54
+					  (* 0.46 (cos ang)))))
+      
+      (list blackman2-window "blackman2" (lambda (ang)
+					   (+ 0.42323 
+					      (* -0.49755 (cos ang)) 
+					      (* 0.07922 (cos (* 2 ang))))))
+      
+      (list blackman3-window "blackman3" (lambda (ang)
+					   (+ 0.35875 
+					      (* -0.48829 (cos ang)) 
+					      (* 0.14128 (cos (* 2 ang))) 
+					      (* -0.01168 (cos (* 3 ang))))))
+      
+      (list blackman4-window "blackman4" (lambda (ang)
+					   (+ 0.287333 
+					      (* -0.44716 (cos ang))
+					      (* 0.20844 (cos (* 2 ang)))
+					      (* -0.05190 (cos (* 3 ang)))
+					      (* 0.005149 (cos (* 4 ang))))))
+      
+      (list blackman5-window "blackman5" (lambda (ang)
+					   (+ .293557 
+					      (* -.451935 (cos ang))
+					      (* .201416 (cos (* 2 ang)))
+					      (* -.047926 (cos (* 3 ang)))
+					      (* .00502619 (cos (* 4 ang)))
+					      (* -.000137555 (cos (* 5 ang))))))
+      
+      (list blackman6-window "blackman6" (lambda (ang)
+					   (+ .271220 
+					      (* -.433444 (cos ang))
+					      (* .218004 (cos (* 2 ang)))
+					      (* -.065785 (cos (* 3 ang)))
+					      (* .01076186 (cos (* 4 ang)))
+					      (* -.000770012 (cos (* 5 ang)))
+					      (* .0000136808 (cos (* 6 ang)))))) 
+      
+      (list blackman7-window "blackman7" (lambda (ang)
+					   (+ .253317 
+					      (* -.416327 (cos ang))
+					      (* .228839 (cos (* 2 ang)))
+					      (* -.081575 (cos (* 3 ang)))
+					      (* .01773592 (cos (* 4 ang)))
+					      (* -.002096702 (cos (* 5 ang)))
+					      (* .0001067741 (cos (* 6 ang)))
+					      (* -.0000012807(cos (* 7 ang))))))
+      
+      (list blackman8-window "blackman8" (lambda (ang)
+					   (+ .238433 
+					      (* -.400554 (cos ang))
+					      (* .235824 (cos (* 2 ang)))
+					      (* -.095279 (cos (* 3 ang)))
+					      (* .02537395 (cos (* 4 ang)))
+					      (* -.00415243  (cos (* 5 ang)))
+					      (* .0003685604 (cos (* 6 ang)))
+					      (* -.0000138435 (cos (* 7 ang)))
+					      (* .000000116180(cos (* 8 ang))))))
+      
+      (list blackman9-window "blackman9" (lambda (ang)
+					   (+ .225734 
+					      (* -.386012 (cos ang))
+					      (* .240129 (cos (* 2 ang)))
+					      (* -.107054 (cos (* 3 ang)))
+					      (* .03325916 (cos (* 4 ang)))
+					      (* -.00687337  (cos (* 5 ang)))
+					      (* .0008751673 (cos (* 6 ang)))
+					      (* -.0000600859 (cos (* 7 ang)))
+					      (* .000001710716 (cos (* 8 ang)))
+					      (* -.00000001027272(cos (* 9 ang))))))
+      
+      (list blackman10-window "blackman10" (lambda (ang)
+					     (+ .215153 
+						(* -.373135 (cos ang))
+						(* .242424 (cos (* 2 ang)))
+						(* -.1166907 (cos (* 3 ang)))
+						(* .04077422 (cos (* 4 ang)))
+						(* -.01000904 (cos (* 5 ang)))
+						(* .0016398069 (cos (* 6 ang)))
+						(* -.0001651660 (cos (* 7 ang)))
+						(* .000008884663 (cos (* 8 ang)))
+						(* -.000000193817 (cos (* 9 ang)))
+						(* .000000000848248(cos (* 10 ang))))))))
+      (let ((win (make-fft-window bartlett-hann-window 32))
+	    (unhappy #f))
+	(do ((i 0 (1+ i))) 
+	    ((or unhappy (= i 32)))
+	  (let ((val (+ 0.62 (* -0.48 (abs (- (/ i 31) 0.5))) (* 0.38 (cos (* 2 pi (- (/ i 31) 0.5)))))))
+	    (if (> (abs (- val (vct-ref win i))) .03)
+		(begin
+		  (set! unhappy #t)
+		  (snd-display ";bartlett-hann at ~D: ~A ~A" i val (vct-ref win i)))))))
+      (let ((win (make-fft-window flat-top-window 32))
+	    (unhappy #f))
+	(do ((i 0 (1+ i))) 
+	    ((or unhappy (= i 32)))
+	  (let ((val (+ 0.2156 
+			(* -0.4160 (cos (/ (* 2 pi i) 31))) 
+			(* 0.2781 (cos (/ (* 4 pi i) 31))) 
+			(* -0.0836 (cos (/ (* 6 pi i) 31))) 
+			(* 0.0069 (cos (/ (* 8 pi i) 31))))))
+	    (if (> (abs (- val (vct-ref win i))) .1) ; error is much less, of course, in a bigger window
+		(begin
+		  (set! unhappy #t)
+		  (snd-display ";flat-top at ~D: ~A ~A" i val (vct-ref win i)))))))
+      (catch #t
+	     (lambda ()
+	       (let ((gen (make-fft-window samaraki-window 16)))
+		 (if (not (vequal gen (vct 1.000 0.531 0.559 0.583 0.604 0.620 0.631 0.638 0.640 0.638 0.631 0.620 0.604 0.583 0.559 0.531)))
+		     (snd-display ";samaraki window: ~A" gen)))
 	     (let ((gen (make-fft-window ultraspherical-window 16)))
 	       (if (not (vequal gen (vct 1.000 0.033 0.034 0.035 0.036 0.036 0.037 0.037 0.037 0.037 0.037 0.036 0.036 0.035 0.034 0.033)))
 		   (snd-display ";ultraspherical window: ~A" gen)))

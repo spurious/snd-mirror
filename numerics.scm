@@ -158,4 +158,4 @@
 ;;; PERHAPS: cheb 4th as part of waveshaper?
 ;;; PERHAPS: sum-of-cosines-bank?
 ;;; TODO: add the div close to 0 check to dsp.scm sum-of-sines stuff
-;;; PERHAPS: Mertz window?
+;;; PERHAPS: use correlate + lisp grf to show correlation from cursor and 0 

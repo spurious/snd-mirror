@@ -2784,7 +2784,8 @@ is assumed to be outside -1.0 to 1.0."
 
 ;;; -------- Savitzky-Golay filter coefficients (FIR filter -- returns vct of coeffs centered at vct midpoint)
 ;;;
-;;; needs mixer--solve in mixer.scm
+;;; from Numerical Recipes in C p 652
+;;; needs mixer-solve in mixer.scm
 
 (define* (make-savitzky-golay-filter size :optional (order 2)) ;assuming symmetric filter (left = right)
   (if (even? size) 
@@ -2825,11 +2826,11 @@ is assumed to be outside -1.0 to 1.0."
 ;; NRinC examples (p651)
 :(make-savitzky-golay-filter 5 2)
 #<fir-filter: order: 5, xs: [-0.086 0.343 0.486 0.343 -0.086]>
-:(savitzky-golay 11 2)
-#<vct[len=11]: -0.084 0.021 0.103 0.161 0.196 0.207 0.196 0.161 0.103 0.021 -0.084>
-:(savitzky-golay 11 4)
-#<vct[len=11]: 0.042 -0.105 -0.023 0.140 0.280 0.333 0.280 0.140 -0.023 -0.105 0.042>
-;; a bigger one:
-:(savitzky-golay 25 2)
-#<vct[len=25]: -0.049 -0.027 -0.006 0.012 0.028 0.043 0.055 0.066 0.075 0.082 0.086 0.089 0.090 0.089 0.086 0.082 0.075 0.066 0.055 0.043 0.028 0.012 -0.006 -0.027 -0.049>
+:(make-savitzky-golay-filter 11 2)
+#<fir-filter: order: 11, xs: [-0.084 0.021 0.103 0.161 0.196 0.207 0.196 0.161...(0: -0.084, 5: 0.207)]>
+:(make-savitzky-golay-filter 11 4)
+#<fir-filter: order: 11, xs: [0.042 -0.105 -0.023 0.140 0.280 0.333 0.280 0.140...(1: -0.105, 5: 0.333)]>
+:(make-savitzky-golay-filter 25 2)
+#<fir-filter: order: 25, xs: [-0.049 -0.027 -0.006 0.012 0.028 0.043 0.055 0.066...(0: -0.049, 12: 0.090)]>
 |#
+

@@ -137,7 +137,8 @@
 	"mus-audio-line" "mus-audio-synth" "mus-audio-bass" "mus-audio-treble" "rectangular-window" "hann-window" "welch-window"
 	"parzen-window" "bartlett-window" "hamming-window" "blackman2-window" "blackman3-window" "blackman4-window" "exponential-window"
 	"riemann-window" "kaiser-window" "cauchy-window" "poisson-window" "gaussian-window" "tukey-window" "dolph-chebyshev-window"
-	"samaraki-window" "ultraspherical-window" "blackman5-window" "blackman6-window" "blackman7-window" "blackman8-window" "blackman9-window" "blackman10-window"
+	"samaraki-window" "ultraspherical-window" "blackman5-window" "blackman6-window" "blackman7-window" "blackman8-window" 
+	"blackman9-window" "blackman10-window" "rv2-window" "rv3-window" "rv4-window"
 	"zoom-focus-left" "zoom-focus-right" "zoom-focus-active" "zoom-focus-middle" "graph-once"
 	"graph-as-wavogram" "graph-as-sonogram" "graph-as-spectrogram" "cursor-cross" "cursor-line" "graph-lines" "graph-dots"
 	"graph-filled" "graph-dots-and-lines" "graph-lollipops" "x-axis-in-seconds" "x-axis-in-samples" "x-axis-in-beats" "x-axis-in-measures"
@@ -576,15 +577,15 @@
 
 ;;; (html-check '("sndlib.html" "snd.html" "sndclm.html" "extsnd.html" "grfsnd.html" "sndscm.html" "fm.html" "balance.html" "snd-contents.html"))
 
-(defun html-check (files)
+(defun html-check (files &optional (check-unhref nil))
   (let ((name 0)
 	(href 0)
 	(names (make-array array-size :initial-element nil))
+	(id-names (and check-unhref (make-array array-size :initial-element nil)))
 	(hrefs (make-array array-size :initial-element nil))
 	(refs (make-array array-size :initial-element nil))
 	(lines (make-array array-size :initial-element nil))
 	(commands nil)
-	;(tds (make-array 128 :initial-element 0))
 	)
     (loop for file in files do
       (with-open-file (f file :if-does-not-exist nil)
@@ -605,8 +606,6 @@
 	      (when (and line (plusp len))
 
 		;; open/close html entities
-		;(let ((c (count "td" commands :test #'string-equal)))
-		;  (setf (aref tds (1+ c)) linectr))
 		(loop for i from 0 below len do
 		  (let ((c (elt line i)))
 		    (if (char= c #\<)
@@ -790,6 +789,8 @@
 			(progn
 			  (setf epos (search ">" dline))
 			  (setf (aref names name) (concatenate 'string file "#" (my-subseq dline 0 (- epos 1))))
+			  (if id-names
+			      (setf (aref id-names name) (my-subseq dline 0 (- epos 1))))
 			  (loop for i from 0 below name do
 			    (if (string= (aref names i) (aref names name))
 				(format t "ambiguous name: ~A (~A[~D])~%" (aref names i) file linectr)))
@@ -843,8 +844,6 @@
 	(setf commands nil)
 	))
     
-    ;(format t "tds: ~A" tds)
-    
     (format t "found ~D names and ~D references~%" name href)
     (loop for h from 0 below href do
       (if (and (not (find (aref hrefs h) names :test #'string=))
@@ -853,7 +852,57 @@
     (loop for h from 0 below name do
       (if (not (find (aref names h) hrefs :test #'string=))
 	  (format t "unref'd: ~A~%" (aref names h))))
-    (list names hrefs)))
+
+    (when check-unhref
+      (loop for file in files do
+	(with-open-file (f file :if-does-not-exist nil)
+  	  (let ((line t)
+		(linectr 0)
+		(p-parens 0))
+	    (loop while line do
+  	      (setf line (read-line f nil nil)) ;nil upon EOF with no error msg
+	      (let ((len (length line))
+		    (in-name nil)
+		    (in-name-after-space nil)
+		    (got-dash nil)
+		    (last-c #\space)
+		    (start 0))
+		(when (and line (plusp len))
+		  (loop for i from 0 below len do
+  		    (let ((c (elt line i)))
+
+		      (if (not in-name) (setf start i))
+
+		      (setf in-name (or (alphanumericp c)
+					(char= c #\?)
+					(char= c #\!)
+					(char= c #\-)))
+		      (if (char= c #\-) (setf got-dash t))
+		      (if (and in-name 
+			       (not in-name-after-space)
+			       (char= last-c #\space))
+			  (setf in-name-after-space t))
+		      
+		      (when (not in-name)
+			(if (char= c #\() (incf p-parens)
+			  (if (char= c #\)) (decf p-parens)
+			    (if (and (or (char= c #\space) (char= c #\newline))
+				     in-name-after-space
+				     (= p-parens 0)
+				     got-dash)
+				(let ((this-name (subseq line start i)))
+				  ;; check for href possibility
+				  (loop for i from 0 below name do
+					(if (string= (aref id-names i) this-name)
+					    (format t "unhrefd: ~A (~A[~D]): ~A~%" this-name file linectr (concatenate 'string "<a href=\"" (aref names i) "\">"))))))))
+			(setf got-dash nil)
+			(setf in-name-after-space nil)
+			(setf in-name nil))
+		      (setf last-c c)))))
+	      (incf linectr))))))
+    
+    nil ;(list names hrefs)
+    ))
 
 (defun check-all ()
   (html-check '("sndlib.html" "snd.html" "clm.html" "extsnd.html" "grfsnd.html" "sndclm.html"
@@ -866,3 +915,7 @@
 	 "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t))
 
 
+(defun check-names ()  
+  (html-check (list "sndlib.html" "snd.html" "extsnd.html" "grfsnd.html" "sndclm.html"
+		    "sndscm.html" "quick.html" "xen.html" "libxm.html" "index.html")
+	      t))

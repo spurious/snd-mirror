@@ -8851,12 +8851,6 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
       break; 
 
       /* "A Family of Cosine-Sum Windows..." Albrecht */
-      /* blackman5:  .293557 .451935 .201416 .047926 .00502619 .00013755 */
-      /* blackman6:  .271220 .433444 .218004 .065785 .01076186 .000770012 .0000136808 */
-      /* blackman7:  .253317 .416327 .228839 .081575 .01773592 .002096702 .0001067741 .0000012807 */
-      /* blackman8:  .238433 .400554 .235824 .095279 .02537395 .00415243  .0003685604 .0000138435 .000000116180 */
-      /* blackman9:  .225734 .386012 .240129 .107054 .03325916 .00687337  .0008751673 .0000600859 .000001710716 .00000001027272 */
-      /* blackman10: .215153 .373135 .242424 .116690 .04077422 .001000904 .0016398069 .0001651660 .000008884663 .000000193817 .000000000848248 */
 
     case MUS_BLACKMAN5_WINDOW:
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
@@ -8978,9 +8972,6 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	  window[j] = window[i];
 	}
       break; 
-
-
-      /* Hodie: 0.6164032131405 0.98537119272586 0.49603771622007 0.14992232793243 0.02458719103474 0.0017660465148687 0.000031581188567106 */
 
     case MUS_FLAT_TOP_WINDOW:
       /* this definition taken from mathworks docs -- see above */

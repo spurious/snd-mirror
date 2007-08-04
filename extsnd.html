@@ -6352,7 +6352,7 @@ envelope with sinusoidal connections between points: <a href="sndscm.html#sineen
 envelope with separate base for each segment: <a href="#powenvchannel">powenv-channel</a><br>
 envelope with x^2 connections: <a href="sndscm.html#envsquaredchannel">env-squared-channel</a><br>
 envelope with x^n connections: <a href="sndscm.html#envexptchannel">env-expt-channel</a><br>
-envelope with sum-of-cosines connections: <a href="sndscm.html#blackman4envchannel">blackman4-env-channel</a><br>
+envelope with <a href="sndclm.html#sum-of-cosines">sum-of-cosines</a> connections: <a href="sndscm.html#blackman4envchannel">blackman4-env-channel</a><br>
 Customizing the envelope editor: <a href="#envedhook">enved-hook</a><br>
 peak amp follower: <a href="sndscm.html#movingmax">moving-max</a><br>
 <br>
@@ -6546,23 +6546,23 @@ some other form, see cascade-&gt;canonical in dsp.scm, and the examples that fol
 <A NAME="filtersinsnd">Filters</a> in Snd:<br>
 filter a sound: <a href="#filtersound">filter-sound</a>, <a href="#filterchannel">filter-channel</a>, and <a href="#clmchannel">clm-channel</a><br>
 CLM filter generators: <a href="sndclm.html#filterdoc">filter, one-pole, formant, comb, notch, all-pass, etc</a><br>
-lowpass filter: make-lowpass in dsp.scm<br>
-highpass filter: make-highpass in dsp.scm<br>
-bandpass filter: make-bandpass in dsp.scm<br>
-bandstop filter: make-bandstop in dsp.scm<br>
-the usual analog filters (Butterworth, Chebyshev, Bessel, Elliptic): analog-filter.scm<br>
-Butterworth filters: make-butter-high-pass, make-butter-low etc in dsp.scm, used in new-effects.scm<br>
-IIR filters of various orders/kinds: dsp.scm<br>
-Hilbert transform: make-hilbert-transform in dsp.scm<br>
-differentiator: make-differentiator in dsp.scm<br>
+lowpass filter: <a href="sndscm.html#makelowpass">make-lowpass</a> in dsp.scm<br>
+highpass filter: <a href="sndscm.html#makehighpass">make-highpass</a> in dsp.scm<br>
+bandpass filter: <a href="sndscm.html#makebandpass">make-bandpass</a> in dsp.scm<br>
+bandstop filter: <a href="sndscm.html#makebandstop">make-bandstop</a> in dsp.scm<br>
+the usual analog filters (Butterworth, Chebyshev, Bessel, Elliptic): <a href="sndscm.html#analogfilterdoc">analog-filter.scm</a><br>
+Butterworth filters: <a href="sndscm.html#makebutter">make-butter-high-pass</a>, make-butter-low etc in dsp.scm, used in new-effects.scm<br>
+IIR filters of various orders/kinds: <a href="sndscm.html#IIRfilters">dsp.scm</a><br>
+Hilbert transform: <a href="sndscm.html#makehilberttransform">make-hilbert-transform</a> in dsp.scm<br>
+differentiator: <a href="sndscm.html#makedifferentiator">make-differentiator</a> in dsp.scm<br>
 block DC: see example above, dc-block in prc95.scm, clean-channel in clean.scm, or stereo-flute in clm-ins.scm<br>
-hum elimination: see eliminate-hum and notch-channel in dsp.scm<br>
+hum elimination: see <a href="sndscm.html#IIRfilters">eliminate-hum</a> and <a href="sndscm.html#notchchannel">notch-channel</a> in dsp.scm<br>
 hiss elimination: <a href="sndscm.html#notchoutrumbleandhiss">notch-out-rumble-and-hiss</a><br>
 smoothing filters: <a href="sndscm.html#smoothingfilter">smoothing-filter</a>, weighted-moving-average, exponentially-weighted-moving-average<br>
 notch-filters: <a href="sndscm.html#notchchannel">notch-channel</a> and <a href="sndscm.html#notchselection">notch-selection</a><br>
-arbitrary spectrum via FIR filter: spectrum-&gt;coeffs in dsp.scm<br>
-invert an FIR filter: invert-filter in dsp.scm<br>
-filtered echo sound effect: flecho in examp.scm<br>
+arbitrary spectrum via FIR filter: <a href="sndscm.html#spectrumtocoeffs">spectrum-&gt;coeffs</a> in dsp.scm<br>
+invert an FIR filter: <a href="sndscm.html#invertfilter">invert-filter</a> in dsp.scm<br>
+filtered echo sound effect: <a href="sndscm.html#zecho">flecho</a> in examp.scm<br>
 time varying filter: fltit in examp.scm<br>
 draw frequency response: use <a href="snd.html#editenvelope">envelope editor</a> or <a href="snd.html#filtercontrol">filter control</a> in control panel<br>
 Moog filter: <a href="sndscm.html#moogdoc">moog.scm</a><br>
@@ -7879,7 +7879,7 @@ the kinds of vector or list elements it can decipher, you're pretty tightly
 constricted in this context.
 The read direction argument can be ignored if you know you're not going to read backwards.
 The only hidden reverse read is in the src generator where a negative increment can be
-generated in a variety of ways (for example, src driven by oscil).  A one-zero filter
+generated in a variety of ways (for example, src driven by oscil).  A one zero filter
 could in this case be:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
@@ -8391,7 +8391,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 </td></tr>
 
 <!-- a similar table of ways to make a sine wave?
-     sin oscil table-lookup polyshape ifft(spike) mfilter(r=1.0), ssb-am+? formulas?
+     sin oscil Table-lookup polyshape ifft(spike) mfilter(r=1.0), ssb-am+? formulas?
 -->
 
 <tr><td colspan=2 height=18></td></tr>
@@ -9742,7 +9742,7 @@ an edit of channel 'chn'. The 'settings' argument is a list where each entry can
 <code><a class=def name="contrastcontrol">contrast-control</a> (:optional <em class=narg>snd</em>)</code>
 </td></tr><tr><td></td><td>
 The <a class=quiet href="snd.html#contrast">contrast</a> amount.
-The contrast-enhancement algorithm treats this variable as a kind of modulation index (the higher, the brighter),
+The <a href="sndclm.html#contrast-enhancement">contrast-enhancement</a> algorithm treats this variable as a kind of modulation index (the higher, the brighter),
 whereas contrast-control-amp below prescales the in-coming signal to be closer to -1.0 to 1.0
 (the brightening effect works best if it has a full amplitude signal to work with).
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -12776,8 +12776,9 @@ of FractInt's royal colormap):
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="backgroundgradient">background-gradient</a> ()</code>
 </td></tr><tr><td></td><td>
-In Gtk+Cairo versions of Snd, this is the amount of background color gradient in the channel graphs (0.0, the default, means
+<p>In Gtk+Cairo versions of Snd, this is the amount of background color gradient in the channel graphs (0.0, the default, means
 no gradient).
+</p>
 <img src="bggrad.png" alt="graph with background gradient" vspace=10>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
