@@ -96,46 +96,14 @@
 	    (set! s h))
 	  (+ sum (* r (vector-ref a n)))))))
 
+(define (legendre n x)
+  (legendre-polynomial (let ((v (make-vector (1+ n) 0.0)))
+			 (vector-set! v n 1.0)
+			 v)
+		       x))
+
+
 #|
-;; (legendre-polynomial (vector ... 1.0[at i] ...) x) = (plgndr i 0 x)
-(do ((i 0 (1+ i))) 
-    ((= i 10))
-   (let ((lv (legendre-polynomial (let ((v (make-vector 10 0.0))) 
-				    (vector-set! v i 1.0) 
-				    v) 
-				  0.5))
-	 (pv (plgndr i 0 0.5)))
-     (if (fneq lv pv)
-	 (snd-display ";lv: ~A, pv: ~A (~A)" lv pv i))))
-
-(define (pow-x pow x)
-  ;; A&S p798
-  (if (= pow 0)
-      (legendre-polynomial (vector 1) x)
-      (if (= pow 1)
-	  (legendre-polynomial (vector 0 1) x)
-	  (if (= pow 2)
-	      (* (/ 1.0 3.0) (legendre-polynomial (vector 1 0 2) x))
-	      (if (= pow 3)
-		  (* (/ 1.0 5.0) (legendre-polynomial (vector 0 3 0 2) x))
-		  (if (= pow 4)
-		      (* (/ 1.0 35.0) (legendre-polynomial (vector 7 0 20 0 8) x))
-		      (if (= pow 5)
-			  (* (/ 1.0 63.0) (legendre-polynomial (vector 0 27 0 28 0 8) x))
-			  (if (= pow 6) 
-			      (* (/ 1.0 231.0) (legendre-polynomial (vector 33 0 110 0 72 0 16) x))
-			      'oops))))))))
-(for-each
- (lambda (x)
-   (for-each
-    (lambda (pow)
-      (let ((lv (pow-x pow x))
-	    (sv (expt x pow)))
-	(if (fneq lv sv)
-	    (snd-display ";~A ^ ~A = ~A ~A?" x pow lv sv))))
-    (list 0 1 2 3 4 5 6)))
- (list 2.0 0.5 0.1 -0.5 3.0 0.8))
-
 ;; if l odd, there seems to be sign confusion:
 (with-sound (:channels 2 :scaled-to 1.0)
   (do ((i 0 (1+ i))
@@ -155,7 +123,97 @@
       (outb i (* 0.5 x (- (* 5 x x) 3)) *output*))))
 |#
 
+
 ;;; PERHAPS: cheb 4th as part of waveshaper?
 ;;; PERHAPS: sum-of-cosines-bank?
 ;;; TODO: add the div close to 0 check to dsp.scm sum-of-sines stuff
 ;;; PERHAPS: use correlate + lisp grf to show correlation from cursor and 0 
+
+
+;;; TODO: break this into gegen-poly case+straight 
+
+(define* (gegenbauer n x :optional (alpha 0.0))
+  (if (< alpha -0.5) (set! alpha -0.5))
+  (if (= n 0)
+      1.0
+      (if (= alpha 0.0) ; maxima and A&S 22.3.14 (gsl has bogus values here)
+	  (* (/ 2.0 n) 
+	     (cos (* n x)))
+	  (if (= n 1)   ; gsl splits out special cases 
+	      (* 2 alpha x)                             ; G&R 8.93(2)
+	      (if (= n 2)
+		  (- (* 2 alpha (+ alpha 1) x x) alpha) ; G&R 8.93(3)
+		  (let ((fn1 (* 2 x alpha))
+			(fn 0.0)
+			(fn2 1.0))
+		    (if (= n 1)
+			fn1
+			(do ((k 2 (1+ k))
+			     (k0 2.0 (+ k0 1.0)))
+			    ((> k n) fn)
+			  (set! fn (/ (- (* 2 x fn1 (+ k alpha -1.0))
+					 (* fn2 (+ k (* 2 alpha) -2.0)))
+				      k0))
+			  (set! fn2 fn1)
+			  (set! fn1 fn)))))))))
+
+(define* (chebyshev-polynomial a x :optional (kind 1))
+  (let ((n (1- (vector-length a))))
+    (if (= n 0) 
+	(vector-ref a 0)
+	(let* ((r (* kind x))
+	       (s 1.0)
+	       (h 0.0)
+	       (sum (vector-ref a 0)))
+	  (do ((k 1 (1+ k)))
+	      ((= k n))
+	    (set! h r)
+	    (set! sum (+ sum (* r (vector-ref a k))))
+	    (set! r (- (* 2 r x) s))
+	    (set! s h))
+	  (+ sum (* r (vector-ref a n)))))))
+
+(define* (chebyshev n x :optional (kind 1))
+  (let ((a (make-vector (1+ n) 0.0)))
+    (vector-set! a n 1.0)
+    (chebyshev-polynomial a x kind)))
+
+
+(define (hermite-polynomial a x)
+  (let ((n (1- (vector-length a))))
+    (if (= n 0) 
+	(vector-ref a 0)
+	(let* ((r (* 2 x))
+	       (s 1.0)
+	       (h 0.0)
+	       (sum (vector-ref a 0)))
+	  (do ((k 1 (1+ k))
+	       (k2 2 (+ k2 2)))
+	      ((= k n))
+	    (set! h r)
+	    (set! sum (+ sum (* r (vector-ref a k))))
+	    (set! r (- (* 2 r x) (* k2 s)))
+	    (set! s h))
+	  (+ sum (* r (vector-ref a n)))))))
+
+;;; TODO: hermite and laguerre straight cases (and tests)
+
+
+(define* (laguerre-polynomial a x :optional (alpha 0.0))
+  (let ((n (1- (vector-length a))))
+    (if (= n 0) 
+	(vector-ref a 0)
+	(let* ((r (- (+ alpha 1.0) x))
+	       (s 1.0)
+	       (h 0.0)
+	       (sum (vector-ref a 0)))
+	  (do ((k 1 (1+ k)))
+	      ((= k n))
+	    (set! h r)
+	    (set! sum (+ sum (* r (vector-ref a k))))
+	    (set! r (/ (- (* r (- (+ (* 2 k) 1 alpha) x)) 
+			  (* s (+ k alpha)))
+		       (+ k 1)))
+	    (set! s h))
+	  (+ sum (* r (vector-ref a n)))))))
+

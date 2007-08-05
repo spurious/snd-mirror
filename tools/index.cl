@@ -752,6 +752,18 @@
 							     (not (member opener (list "ul" "tr" "td" "table" "small" "sub" "blockquote") :test #'string-equal)))
 							(warn "nested ~A? ~A from ~A[~D]: ~A" opener line file linectr commands)
 						      (progn
+							(if (and (string-equal opener "td")
+								 (not (member "tr" commands :test #'string-equal)))
+							    (format t "td without tr ~A ~A~%" file linectr))
+							(if (and (string-equal opener "tr")
+								 (not (member "table" commands :test #'string-equal)))
+							    (format t "tr without table ~A ~A~%" file linectr))
+							(if (and (member opener (list "pre" "br" "table" "hr" "img" "ul")  :test #'string-equal)
+								 (member "p" commands  :test #'string-equal))
+							    (format t "~A within <p>? ~A ~A~%" opener file linectr))
+							(if (and (string-equal opener "li")
+								 (not (member "ul" commands :test #'string-equal)))
+							    (format t "li without ul ~A ~A~%" file linectr))
 							(if (not warned)
 							    (progn
 							      (if (and (string-equal opener "tr")

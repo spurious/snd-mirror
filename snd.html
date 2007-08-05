@@ -312,11 +312,15 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 <br>
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="gettingstarted">Getting Started</a></h2></td></tr></table>
 
-<p>Once compiled and loaded (see README.Snd for instructions), start Snd:</p>
+<p>Once compiled and loaded (see README.Snd for instructions), start Snd:
+</p>
+
 <img src="intro2.png" alt="basic snd display" align=right>
+
 <pre>
   snd some.snd
 </pre>
+
 <p>where "some.snd" is any available sound file.  You should
 get a window with the first .1 seconds of the sound displayed as a time
 domain waveform. Click the file name at the lower left to get 
@@ -330,9 +334,13 @@ moves the y axis up and down.
 Click the "w" button (unset it) and
 the time domain waveform goes away.  Click "play" to
 play the file.  "sync" is more complicated -- it is used
-to group sounds together for simultaneous editing.</p>
+to group sounds together for simultaneous editing.
+</p>
+
 <br>
+
 <img src="intro1.png" alt="basic snd display" align=right>
+
 <p>Now return to the time domain form (click "w" and "f"),
 and click in the graph itself.  A red cursor (a big "+")
 appears at that point.  The cursor is just like an
@@ -347,6 +355,7 @@ some way.  When you release the mouse button, the
 highlighted portion becomes a
 'selection' that you can play, delete, or mix elsewhere.
 </p>
+
 <p>You'll
 notice if you make some change to the data that
 the file name gets an asterisk, as in Emacs, and
@@ -399,6 +408,7 @@ wrote a set of files that implement dozens of the effects and
 editing operations built into other editors.  Just load the
 files that look interesting, and start clicking widgets.
 </p>
+
 <img src="intro3.png" alt="basic snd display" align=right>
 
 <p>Manipulating sounds in a programming environment
@@ -478,20 +488,25 @@ you put all the sources in /home/bil/cl, add this line to your
         <!-- I(change format):M(File: Save as)(savefileas) --><!-- I(change format):O(Edit: Edit header)(editheader) -->
 
 <p>When invoked, Snd scans
-its arguments for file names, and opens any it finds.</p>
+its arguments for file names, and opens any it finds.
+</p>
 <pre>
   snd oboe.snd fyow.snd
 </pre>
+
 <p>If there are no arguments, Snd comes up as a bare menu bar.
 If a name is preceded by "-p" or "-preload", it is treated as a directory
 name and all sound files found in that directory are added
 to the <a href="#viewfiles">View:Files</a> list.  To
 load arbitrary Snd customizations (your own code, or a <a href="#savedstate">saved state</a> file),
-precede the file name with <A class=def NAME="minusl">"-l"</a> or "-load" (or use the load function). </p>
+precede the file name with <A class=def NAME="minusl">"-l"</a> or "-load" (or use the load function). 
+</p>
 <pre>
   snd oboe.snd -l examp.scm
 </pre>
-<p>opens the sound file oboe.snd and loads the Scheme code in <a href="sndscm.html#exampdoc">examp.scm</a>.</p>
+
+<p>opens the sound file oboe.snd and loads the Scheme code in <a href="sndscm.html#exampdoc">examp.scm</a>.
+</p>
 
         <!-- I(continue session):O(-l switch to Snd)(minusl) -->
 
@@ -512,17 +527,22 @@ explicit setting:
 <pre>
     ./snd -xrm "*fontList: 9x15" oboe.snd
 </pre>
+
 <p>or place the equivalent line in your .Xdefaults file:
 </p>
 <pre>
     snd*fontList:           9x15
 </pre>
+
 <p>For more on resources and defaults, see <a href="grfsnd.html#startup">Snd Startup</a>.
 </p>
+
 <!-- I(horizontal panes):O(-h switch to Snd)(verticalpane) --><!-- I(horizontal panes):A(verticalpane) -->
 
 <A NAME="openfile"></a>
+
 <img src="open-dialog.png" alt="Open File dialog" align=right hspace=20>
+
 <p>A file can be opened from the File menu via Open
 or View.  <A class=def NAME="viewfile">View</a> opens the file read-only, whereas Open
 <!-- I(open file read-only):A(viewfile) -->

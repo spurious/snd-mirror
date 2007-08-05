@@ -2183,9 +2183,9 @@ This is an experimental function aimed at noise reduction using a Kalman filter.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<A NAME="makebutter"></A>
 <!-- make-butter* -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
+<A NAME="makebutter"></A>
 <em class=emdef>make-butter-high-pass</em> <code>fq</code>, <em class=emdef>make-butter-hp</em> <code>M fc</code><br>
 <em class=emdef>make-butter-low-pass</em> <code>fq</code>, <em class=emdef>make-butter-lp</em> <code>M fc</code><br>
 <em class=emdef>make-butter-band-pass</em> <code>fq bw</code>, <em class=emdef>make-butter-bp</em> <code>M f1 f2</code><br>
@@ -9574,7 +9574,7 @@ everything after that is evaluated as a note list.
 </p>
 
 <pre>
-    <em class-listener>&gt;</em><em class=typing>(with-sound (:reverb jc-reverb :statistics #t :play #t) 
+    <em class=listener>&gt;</em><em class=typing>(with-sound (:reverb jc-reverb :statistics #t :play #t) 
         (fm-violin 0 1 440 .1 :reverb-amount .3))</em>
     <em class=listener>test.snd:
     maxamp: 0.3038
@@ -10752,7 +10752,7 @@ packaged all these functions: <a href="#cleandoc">clean-channel</a>).
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
-noise reduction: <a rhef="#cleandoc">clean-channel</a><br>
+noise reduction: <a href="#cleandoc">clean-channel</a><br>
 clicks: <a href="extsnd.html#smoothchannel">smooth-channel</a>, <a href="#removeclicks">remove-clicks</a>, <a href="sndscm.html#fftsmoother">fft-smoother</a><br>
 rumble, hiss: <a href="#notchoutrumbleandhiss">notch-out-rumble-and-hiss</a>, <a href="#fftsquelch">fft-squelch</a>, <a href="#fftcancel">fft-cancel</a><br>
 hum: <a href="#notchchannel">notch-channel</a><br>

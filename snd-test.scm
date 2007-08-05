@@ -16117,7 +16117,7 @@ EDITS: 2
 	      (snd-display ";bes-yn(~A ~A): ~A ~A -> ~A" (vector-ref ns i) (vector-ref args i) (vector-ref vals i) nval diff)))))
     ;; one (20 1.0) is off by a lot but the val is 1e22 
     
-    
+    ;; numerics stuff
     (let ((ns (vector 1 6 6 6 15 15 15 15 15 15 15 25 25 25 25 25 25 25 25 25))
 	  (ks (vector 0 1 3 5 1 3 5 7 9 11 13 1 3 5 7 9 11 13 15 17))
 	  (vals (vector 1 6 20 6 15 455 3003 6435 5005 1365 105 25 2300 53130 480700 2042975 4457400 5200300 3268760 1081575)))
@@ -16139,6 +16139,119 @@ EDITS: 2
 	(let ((val (plgndr (vector-ref ls i) (vector-ref ms i) (vector-ref xs i))))
 	  (if (> (abs (- val (vector-ref vals i))) 0.1)
 	      (snd-display ";plgndr(~A ~A ~A) = ~A (~A)" (vector-ref ls i) (vector-ref ms i) (vector-ref xs i) val (vector-ref vals i))))))
+
+    (let ((vals (vector  1.0000000000  0.8000000000  0.2800000000  -0.3520000000 -0.8432000000 -0.9971200000 
+			 -0.7521920000 -0.2063872000  0.4219724800  0.8815431680  0.9884965888  0.7000513741  0.1315856097))
+	  (ns (vector  0  1  2   3  4  5   6  7  8   9 10 11 	   12))
+	  (xs (vector    0.8  0.8  0.8     0.8  0.8  0.8     0.8  0.8  0.8     0.8  0.8  0.8     0.8)))
+      
+      (do ((i 0 (1+ i)))
+	  ((= i 13))
+	(let ((val (chebyshev (vector-ref ns i) (vector-ref xs i))))
+	  (if (fneq val (vector-ref vals i))
+	      (snd-display ";chebyshev ~A ~A -> ~A ~A" (vector-ref ns i) (vector-ref xs i) val (vector-ref vals i)))))
+
+      (do ((i 0 (1+ i)))
+	  ((= i 10))
+	(let* ((x (random 10.0))
+	       (order (random 10))
+	       (val1 (gegenbauer order x 1.0))
+	       (val2 (chebyshev order x 2)))
+	  (if (fneq val1 val2)
+	      (snd-display ";gegenbauer/chebyshev (alpha=1) ~A ~A: ~A ~A" order x val1 val2)))))
+
+    (let ((as (vector      0.5  0.5  0.5      0.5  0.5  0.5      0.5  0.5  0.5      0.5  0.5  0.0      1.0  2.0  3.0 
+			   4.0  5.0  6.0      7.0  8.0  9.0     10.0  3.0  3.0      3.0  3.0  3.0      3.0  3.0  3.0      3.0  3.0  3.0 
+			   3.0  3.0  3.0      3.0  3.0))
+	  (vals (vector    1.0000000000   0.2000000000  -0.4400000000    -0.2800000000   0.2320000000   0.3075200000 
+			   -0.0805760000  -0.2935168000  -0.0395648000     0.2459712000   0.1290720256   0.696706 ; was 0 but explicit formula says 2/n cos(nx)
+			   -0.3600000000  -0.0800000000   0.8400000000     2.4000000000   4.6000000000   7.4400000000    10.9200000000  15.0400000000  19.8000000000 
+			   25.2000000000  9.0000000000  -0.1612800000 ; was -9 but that is wrong (see G&R explicit formula)
+			   -6.6729600000  -8.3750400000  -5.5267200000     0.0000000000   5.5267200000   8.3750400000     6.6729600000   0.1612800000  -9.0000000000  
+			   -15.4252800000  -9.6969600000  22.4409600000   100.8892800000 252.0000000000))
+	  (ns (vector     0  1  2      3  4  5      6  7  8      9 10  2      2  2  2      2  2  2      2  2  2      2  5  5      5  5  5 
+			  5  5  5      5  5  5      5  5  5      5  5))
+	  (xs (vector    0.20  0.20  0.20     0.20  0.20  0.20     0.20  0.20  0.20     0.20  0.20  0.40     0.40  0.40  0.40 
+			 0.40  0.40  0.40     0.40  0.40  0.40     0.40 -0.50 -0.40    -0.30 -0.20 -0.10     0.00  0.10  0.20 
+			 0.30  0.40  0.50     0.60  0.70  0.80     0.90  1.00)))
+
+      (define (g3 x alpha)
+	(- (* 1/3 alpha x x x (+ (* 4 alpha alpha) (* 12 alpha) 8))
+	   (* 2 alpha x (+ alpha 1))))
+
+      (define (g5 x alpha)
+	(+ (* 1/15 alpha x x x x x (+ (* 4 alpha alpha alpha alpha) 
+				      (* 40 alpha alpha alpha)
+				      (* 140 alpha alpha)
+				      (* 200 alpha)
+				      96))
+	   (* -1/3 alpha x x x (+ (* 4 alpha alpha alpha)
+				  (* 24 alpha alpha)
+				  (* 44 alpha)
+				  24))
+	   (* alpha x (+ (* alpha alpha) (* 3 alpha) 2))))
+
+      (do ((i 0 (1+ i)))
+	  ((= i 38))
+	(let ((val (gegenbauer (vector-ref ns i) (vector-ref xs i) (vector-ref as i))))
+	  (if (fneq val (vector-ref vals i))
+	      (snd-display ";gegenbauer ~A ~A ~A -> ~A ~A" (vector-ref ns i) (vector-ref xs i) (vector-ref as i) val (vector-ref vals i)))))
+
+      (do ((i 0 (1+ i)))
+	  ((= i 10))
+	(let* ((x (random 10.0))
+	       (alpha (random 3.0))
+	       (val1 (gegenbauer 3 x alpha))
+	       (val2 (g3 x alpha)))
+	  (if (fneq val1 val2)
+	      (snd-display ";gegenbauer 3 ~A ~A: ~A ~A" x alpha val1 val2))))
+
+      (do ((i 0 (1+ i)))
+	  ((= i 10))
+	(let* ((x (random 10.0))
+	       (alpha (random 3.0))
+	       (val1 (gegenbauer 5 x alpha))
+	       (val2 (g5 x alpha)))
+	  (if (fneq val1 val2)
+	      (snd-display ";gegenbauer 5 ~A ~A: ~A ~A" x alpha val1 val2))))
+      )
+
+    (do ((i 0 (1+ i))) 
+	((= i 10))
+      (let ((lv (legendre-polynomial (let ((v (make-vector 10 0.0))) 
+				       (vector-set! v i 1.0) 
+				       v) 
+				     0.5))
+	    (pv (plgndr i 0 0.5)))
+	(if (fneq lv pv)
+	    (snd-display ";lv: ~A, pv: ~A (~A)" lv pv i))))
+    (let ((pow-x (lambda (pow x)
+		   ;; A&S p798
+		   (if (= pow 0)
+		       (legendre-polynomial (vector 1) x)
+		       (if (= pow 1)
+			   (legendre-polynomial (vector 0 1) x)
+			   (if (= pow 2)
+			       (* (/ 1.0 3.0) (legendre-polynomial (vector 1 0 2) x))
+			       (if (= pow 3)
+				   (* (/ 1.0 5.0) (legendre-polynomial (vector 0 3 0 2) x))
+				   (if (= pow 4)
+				       (* (/ 1.0 35.0) (legendre-polynomial (vector 7 0 20 0 8) x))
+				       (if (= pow 5)
+					   (* (/ 1.0 63.0) (legendre-polynomial (vector 0 27 0 28 0 8) x))
+					   (if (= pow 6) 
+					       (* (/ 1.0 231.0) (legendre-polynomial (vector 33 0 110 0 72 0 16) x))
+					       'oops))))))))))
+      (for-each
+       (lambda (x)
+	 (for-each
+	  (lambda (pow)
+	    (let ((lv (pow-x pow x))
+		  (sv (expt x pow)))
+	      (if (fneq lv sv)
+		  (snd-display ";~A ^ ~A = ~A ~A?" x pow lv sv))))
+	  (list 0 1 2 3 4 5 6)))
+       (list 2.0 0.5 0.1 -0.5 3.0 0.8)))
     )
 
   ;; ----------------
@@ -20113,34 +20226,101 @@ EDITS: 2
 						(* -.0001651660 (cos (* 7 ang)))
 						(* .000008884663 (cos (* 8 ang)))
 						(* -.000000193817 (cos (* 9 ang)))
-						(* .000000000848248(cos (* 10 ang))))))))
-      (let ((win (make-fft-window bartlett-hann-window 32))
-	    (unhappy #f))
-	(do ((i 0 (1+ i))) 
-	    ((or unhappy (= i 32)))
-	  (let ((val (+ 0.62 (* -0.48 (abs (- (/ i 31) 0.5))) (* 0.38 (cos (* 2 pi (- (/ i 31) 0.5)))))))
-	    (if (> (abs (- val (vct-ref win i))) .03)
-		(begin
-		  (set! unhappy #t)
-		  (snd-display ";bartlett-hann at ~D: ~A ~A" i val (vct-ref win i)))))))
-      (let ((win (make-fft-window flat-top-window 32))
-	    (unhappy #f))
-	(do ((i 0 (1+ i))) 
-	    ((or unhappy (= i 32)))
-	  (let ((val (+ 0.2156 
-			(* -0.4160 (cos (/ (* 2 pi i) 31))) 
-			(* 0.2781 (cos (/ (* 4 pi i) 31))) 
-			(* -0.0836 (cos (/ (* 6 pi i) 31))) 
-			(* 0.0069 (cos (/ (* 8 pi i) 31))))))
-	    (if (> (abs (- val (vct-ref win i))) .1) ; error is much less, of course, in a bigger window
-		(begin
-		  (set! unhappy #t)
-		  (snd-display ";flat-top at ~D: ~A ~A" i val (vct-ref win i)))))))
-      (catch #t
-	     (lambda ()
-	       (let ((gen (make-fft-window samaraki-window 16)))
-		 (if (not (vequal gen (vct 1.000 0.531 0.559 0.583 0.604 0.620 0.631 0.638 0.640 0.638 0.631 0.620 0.604 0.583 0.559 0.531)))
-		     (snd-display ";samaraki window: ~A" gen)))
+						(* .000000000848248(cos (* 10 ang))))))
+      
+      (list rectangular-window "rectangular" (lambda (ang) 1.0))
+      
+      (list bartlett-window "bartlett" (let ((val 0.0)) 
+					 (lambda (ang)
+					   (let ((result val))
+					     (set! val (+ val (/ 1.0 8)))
+					     result))))
+      
+      (list parzen-window "parzen" (let ((i 0))
+				     (lambda (ang)
+				       (let ((result (- 1.0 (abs (/ (- i 8) 8.0)))))
+					 (set! i (+ i 1))
+					 result))))
+      
+      (list welch-window "welch" (let ((i 0)
+				       (sqr (lambda (x) (* x x))))
+				   (lambda (ang)
+				     (let ((result (- 1.0 (sqr (/ (- i 8) 8.0)))))
+				       (set! i (+ i 1))
+				       result))))
+      
+      (list flat-top-window "flat-top" (lambda (ang)
+					 (+ 0.2156 
+					    (* -0.4160 (cos ang))
+					    (* 0.2781 (cos (* 2 ang)))
+					    (* -0.0836 (cos (* 3 ang)))
+					    (* 0.0069 (cos (* 4 ang))))))
+      
+      (list bohman-window "bohman" (let ((i 0))
+				     (lambda (ang)
+				       (let* ((r (/ (- 8 i) 8))
+					      (result (+ (* (- 1.0 r) (cos (* pi r)))
+							 (* (/ 1.0 pi) (sin (* pi r))))))
+					 (set! i (+ i 1))
+					 result))))
+      
+      (list bartlett-hann-window "bartlett-hann" (let ((i 0))
+						   (lambda (ang)
+						     (let ((result (+ 0.62 
+								      (* -0.48 (abs (- (/ i 16.0) 0.5))) 
+								      (* 0.38 (cos (* 2 pi (- (/ i 16.0) 0.5)))))))
+						       (set! i (+ i 1))
+						       result))))
+      
+      (list connes-window "connes" (let ((i 0)
+					 (sqr (lambda (x) (* x x))))
+				     (lambda (ang)
+				       (let ((result (sqr (- 1.0 (sqr (/ (- i 8) 8.0))))))
+					 (set! i (+ i 1))
+					 result))))
+      
+      (list riemann-window "riemann" (let ((i 0))
+				       (lambda (ang)
+					 (let ((result (if (= 8 i) 
+							   1.0
+							   (/ (sin (* (/ (* 2 pi) 16.) (- 8 i))) (* (/ (* 2 pi) 16.0) (- 8 i))))))
+					   (set! i (+ i 1))
+					   result))))
+      
+      (list exponential-window "exponential" (let ((expsum 1.0))
+					       (lambda (ang)
+						 (let ((result (- expsum 1.0))) 
+						   (set! expsum (* expsum (+ 1.0 (/ (log 2) 8.0))))
+						   result))))
+      ))
+
+    (let ((win (make-fft-window bartlett-hann-window 32))
+	  (unhappy #f))
+      (do ((i 0 (1+ i))) 
+	  ((or unhappy (= i 32)))
+	(let ((val (+ 0.62 (* -0.48 (abs (- (/ i 31) 0.5))) (* 0.38 (cos (* 2 pi (- (/ i 31) 0.5)))))))
+	  (if (> (abs (- val (vct-ref win i))) .03)
+	      (begin
+		(set! unhappy #t)
+		(snd-display ";bartlett-hann at ~D: ~A ~A" i val (vct-ref win i)))))))
+    (let ((win (make-fft-window flat-top-window 32))
+	  (unhappy #f))
+      (do ((i 0 (1+ i))) 
+	  ((or unhappy (= i 32)))
+	(let ((val (+ 0.2156 
+		      (* -0.4160 (cos (/ (* 2 pi i) 31))) 
+		      (* 0.2781 (cos (/ (* 4 pi i) 31))) 
+		      (* -0.0836 (cos (/ (* 6 pi i) 31))) 
+		      (* 0.0069 (cos (/ (* 8 pi i) 31))))))
+	  (if (> (abs (- val (vct-ref win i))) .1) ; error is much less, of course, in a bigger window
+	      (begin
+		(set! unhappy #t)
+		(snd-display ";flat-top at ~D: ~A ~A" i val (vct-ref win i)))))))
+    (catch #t
+	   (lambda ()
+	     (let ((gen (make-fft-window samaraki-window 16)))
+	       (if (not (vequal gen (vct 1.000 0.531 0.559 0.583 0.604 0.620 0.631 0.638 0.640 0.638 0.631 0.620 0.604 0.583 0.559 0.531)))
+		   (snd-display ";samaraki window: ~A" gen)))
 	     (let ((gen (make-fft-window ultraspherical-window 16)))
 	       (if (not (vequal gen (vct 1.000 0.033 0.034 0.035 0.036 0.036 0.037 0.037 0.037 0.037 0.037 0.036 0.036 0.035 0.034 0.033)))
 		   (snd-display ";ultraspherical window: ~A" gen)))
