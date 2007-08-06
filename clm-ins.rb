@@ -1,14 +1,14 @@
 # clm-ins.rb -- CLM instruments translated to Snd/Ruby -*- snd-ruby -*-
 
-# Translator: Michael Scholz <scholz-micha@gmx.de>
+# Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Sep 16 01:27:09 CEST 2003
-# Changed: Fri Jul 06 01:04:39 CEST 2007
+# Changed: Sun Jul 15 22:45:21 CEST 2007
 
 # Instruments work with
 #   with_sound (CLM (sample2file gens) and Snd)
 #   with_dac   (dac output, except at least for fullmix)
 #
-# Tested with Snd 7.10, and Ruby 1.6.6, 1.6.8, and 1.9.0.
+# Tested with Snd 9.3, and Ruby 1.6.6, 1.6.8, and 1.8.6.
 
 # pluck                  reson
 # vox                    cellon

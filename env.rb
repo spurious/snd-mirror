@@ -1,8 +1,8 @@
 # env.rb -- snd/env.scm
 
-# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+# Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Sep 20 23:24:17 CEST 2003
-# Changed: Fri Jun 01 11:50:24 CEST 2007
+# Changed: Sun Jul 15 22:59:00 CEST 2007
 
 # Commentary:
 #
@@ -619,7 +619,7 @@ REFLECTED causes every other repetition to be in reverse.")
   end
 
   def make_db_env(env, *args)
-    scaler, offset, base, duration, len, start, cutoff, error = nil
+    scaler, offset, base, duration, len, cutoff, error = nil
     optkey(args, binding,
            [:scaler, 1.0],
            [:offset, 0.0],
@@ -638,7 +638,7 @@ REFLECTED causes every other repetition to be in reverse.")
   end
 
   def make_semitones_env(env, *args)
-    around, scaler, offset, base, dur, len, start, error = nil
+    around, scaler, offset, base, dur, len, error = nil
     optkey(args, binding,
            [:around, 1.0],
            [:scaler, 1.0],
@@ -656,7 +656,7 @@ REFLECTED causes every other repetition to be in reverse.")
   end
 
   def make_octaves_env(env, *args)
-    around, scaler, offset, base, dur, len, start, error = nil
+    around, scaler, offset, base, dur, len, error = nil
     optkey(args, binding,
            [:around, 1.0],
            [:scaler, 1.0],

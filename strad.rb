@@ -6,9 +6,9 @@
 #
 # CLM version by Juan Reyes
 #
-# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+# Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sun Mar 16 02:46:52 CET 2003
-# Changed: Sat Oct 14 02:31:40 CEST 2006
+# Changed: Sun Jul 15 23:00:58 CEST 2007
 
 require "examp"
 require "ws"

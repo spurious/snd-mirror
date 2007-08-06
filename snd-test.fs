@@ -2,13 +2,13 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Wed May 02 00:28:48 CEST 2007
+\ Changed: Sun Jul 15 23:06:20 CEST 2007
 
 \ Commentary:
 \
 \ The init file name has changed: .sndtest-forth-rc becomes
 \ .sndtest.fs.  If the old name exists in the current directory, it
-\ will be still read for backward compatibility.
+\ will be still read for backwards compatibility.
 \
 \ snd-forth -noinit -load snd-test.fs        \ all tests
 \ snd-forth -noinit -load snd-test.fs 3 7 20 \ test 3 7 20
@@ -1599,7 +1599,11 @@ include bird.fsm
   :verbose    *snd-test-verbose*
   :channels 2 with-sound drop
   <'> test23-balance :channels 3 with-sound ( ws ) :output hash-ref 0 find-sound { ind }
-  ind sound? if ind close-sound drop else $" with-sound balance: %s?" '( ind ) snd-display then
+  ind sound? if
+    ind close-sound drop
+  else
+    $" with-sound balance: %s?" '( ind ) snd-display
+  then
   100.0 make-oscil { mg }
   1000 make-ssb-fm { gen }
   "tmp.snd" mus-next mus-bfloat 22050 1 new-sound to ind
@@ -1884,7 +1888,7 @@ include bird.fsm
      <'> make-fir-coeffs <'> make-identity-mixer <'> mus-interp-type <'> mus-run
      <'> phase-vocoder <'> player-home <'> redo-edit <'> undo-edit
      <'> widget-position <'> widget-size <'> focus-widget 
-     [defined] window-property [if] <'> window-property [then] ) constant procs
+     [ifdef] window-property <'> window-property [then] ) constant procs
 
   #( <'> amp-control <'> ask-before-overwrite <'> audio-input-device <'> audio-output-device
      <'> auto-update <'> axis-label-font <'> axis-numbers-font <'> channel-style
@@ -1964,7 +1968,7 @@ include bird.fsm
      <'> mixer-ref <'> frame-ref <'> locsig-ref <'> locsig-reverb-ref
      <'> mus-file-prescaler <'> mus-prescaler <'> mus-clipping <'> mus-file-clipping
      <'> mus-header-raw-defaults
-     [defined] window-property [if] <'> window-property [then] ) constant set-procs
+     [ifdef] window-property <'> window-property [then] ) constant set-procs
   
   #( <'> make-all-pass <'> make-asymmetric-fm <'> make-snd->sample <'> make-moving-average
      <'> make-comb <'> make-filtered-comb <'> make-convolve <'> make-delay
@@ -2044,20 +2048,16 @@ include bird.fsm
   : sc-1-cb { mx -- prc; x self -- f }
     1 proc-create mx , ( prc )
    does> { x self -- f }
-    self @ { mx }
-    x fabs mx car fmax  mx swap set-car! drop
+    x fabs self @ @ ( mx ) fmax self @ !
     #f
   ;
-  : mc-1-cb { -- prc; y self -- val }
-    1 proc-create 1.0 ( scl ) , ( prc )
+  : mc-1-cb { scl -- prc; y self -- val }
+    1 proc-create scl , 0.0 ( mx ) , ( prc )
    does> { y self -- val }
     y 0.4 f> if
-      '( 0.0 ) { mx }			\ The list pointer saves the day while
-					\ a single number doesn't work.
-					\ Why?
-					\ FIXME
-      mx sc-1-cb scan-channel drop
-      mx car 1/f self ! ( scl = 1/mx )
+      0.0 self cell+ !
+      self cell+ ( addr-of-mx ) sc-1-cb scan-channel drop
+      self cell+ @ 1/f self ! ( scl = 1/mx )
     then
     self @ ( scl ) y f*
   ;
@@ -2691,7 +2691,7 @@ include bird.fsm
     <'> noop 1 make-proc       <'> set-zoom-focus-style   'bad-arity        check-error-tag
     1 1.0 make-mixer { mx }
     "oboe.snd" "pistol.snd" 0 12 0 mx $" a string" <'> mus-mix 'wrong-type-arg check-error-tag
-    "test.snd" new-sound to ind
+    :file "test.snd" new-sound to ind
     "test.snd" sf-dir "bad_chans.aifc" $+ <'> mus-mix     'bad-header       check-error-tag
     "test.snd" sf-dir "bad_length.aifc" $+ <'> mus-mix    'mus-error        check-error-tag
     ind close-sound drop
@@ -3026,7 +3026,6 @@ include bird.fsm
        '() vector-0 12345678901234567890 log0 nan ) { vals }
     nil nil nil { arg3 arg4 tm }
     "keyargs-2-args" '() clm-message
-    gc-run
     keyargs each to arg1
       vals each to arg2
 	make-procs each to prc
@@ -3036,7 +3035,6 @@ include bird.fsm
     end-each
     all-args if
       "keyargs-3-args" '() clm-message
-      gc-run
       make-timer to tm
       vals each to arg1
 	keyargs each to arg2
@@ -3051,7 +3049,6 @@ include bird.fsm
       "%s" '( tm ) clm-message
       FIXME-FIXED? if
 	"keyargs-4-args" '() clm-message
-	gc-run
 	tm start-timer
 	keyargs each to arg1
 	  vals each to arg2
@@ -3070,7 +3067,6 @@ include bird.fsm
     then
     \ 0 args
     "0-args" '() clm-message
-    gc-run
     procs00 each to prc
       prc #t nil fth-catch to tag
       stack-reset
@@ -3081,84 +3077,80 @@ include bird.fsm
       then
     end-each
     dismiss-all-dialogs
-    #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95  #( 0 1 ) 3/4 'mus-error -1.0 csqrt delay-32
-       <'> noop 0 make-proc vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t <char> c 0.0 1.0 -1.0 
-       '() '3 2 8 64 -64 vector-0 2.0 21.5 f** 2.0 -18.0 f** car-main cadr-main 
-       12345678901234567890 log0 nan <'> noop 1 make-proc ) { main-args }
-    #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95 #( 0 1 ) 3/4 -1.0
-       -1.0 csqrt delay-32 :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890
-       log0 nan ) { few-args }
-    #( "/hiho" 1234 vct-3 -1.0 -1.0 csqrt delay-32
-       -1 0 1 #f #t '() 12345678901234567890 log0 ) { fewer-args }
-    all-args if main-args else few-args then { less-args }
-    \ 1 arg
-    "1-arg" '() clm-message
-    gc-run
-    nil { arg }
-    main-args each to arg
-      procs01 each to prc
-	arg prc #t nil fth-catch to tag
-	stack-reset
-	tag list? if
-	  tag car 'wrong-number-of-args symbol= if
-	    $" procs01 wna: (%s) %s %s" '( arg prc tag ) snd-display
-	  then
-	then
-      end-each
-    end-each
-    \ 2 args
-    "2-args" '() clm-message
-    gc-run
-    main-args each to arg1
-      main-args each to arg2
-	procs02 each to prc
-	  arg1 arg2 prc #t nil fth-catch to tag
+    all-args if
+      #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95  #( 0 1 ) 3/4 'mus-error -1.0 csqrt delay-32
+	 <'> noop 0 make-proc vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t <char> c 0.0 1.0 -1.0 
+	 '() '3 2 8 64 -64 vector-0 2.0 21.5 f** 2.0 -18.0 f** car-main cadr-main 
+	 12345678901234567890 log0 nan <'> noop 1 make-proc ) { main-args }
+      #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95 #( 0 1 ) 3/4 -1.0
+	 -1.0 csqrt delay-32 :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890
+	 log0 nan ) { few-args }
+      #( "/hiho" 1234 vct-3 -1.0 -1.0 csqrt delay-32
+	 -1 0 1 #f #t '() 12345678901234567890 log0 ) { fewer-args }
+      all-args if main-args else few-args then { less-args }
+      \ 1 arg
+      "1-arg" '() clm-message
+      nil { arg }
+      main-args each to arg
+	procs01 each to prc
+	  arg prc #t nil fth-catch to tag
 	  stack-reset
 	  tag list? if
 	    tag car 'wrong-number-of-args symbol= if
-	      $" procs02: (%s %s) %s %s" '( arg1 arg2 prc tag ) snd-display
+	      $" procs01 wna: (%s) %s %s" '( arg prc tag ) snd-display
 	    then
 	  then
 	end-each
       end-each
-    end-each
-    \ set! no args
-    "set-no-args" '() clm-message
-    gc-run
-    main-args each to arg
-      set-procs00 each to prc
-	arg prc set-xt #t nil fth-catch to tag
-	stack-reset
-	tag list? if
-	  tag car 'wrong-number-of-args symbol= if
-	    $" set-procs00: (%s) %s %s" '( arg prc tag ) snd-display
-	  then
-	then
-      end-each
-    end-each
-    dismiss-all-dialogs
-    \ set! 1 arg
-    "set-1-arg" '() clm-message
-    gc-run
-    main-args each to arg1
-      main-args each to arg2
-	set-procs01 each to prc
-	  prc proc-name "widget-size" string= unless
-	    arg1 arg2 prc set-xt #t nil fth-catch to tag
+      \ 2 args
+      "2-args" '() clm-message
+      main-args each to arg1
+	main-args each to arg2
+	  procs02 each to prc
+	    arg1 arg2 prc #t nil fth-catch to tag
 	    stack-reset
 	    tag list? if
 	      tag car 'wrong-number-of-args symbol= if
-		$" set-procs01: (%s %s) %s %s" '( arg1 arg2 prc tag ) snd-display
+		$" procs02: (%s %s) %s %s" '( arg1 arg2 prc tag ) snd-display
 	      then
+	    then
+	  end-each
+	end-each
+      end-each
+      \ set! no args
+      "set-no-args" '() clm-message
+      main-args each to arg
+	set-procs00 each to prc
+	  arg prc set-xt #t nil fth-catch to tag
+	  stack-reset
+	  tag list? if
+	    tag car 'wrong-number-of-args symbol= if
+	      $" set-procs00: (%s) %s %s" '( arg prc tag ) snd-display
 	    then
 	  then
 	end-each
       end-each
-    end-each
-    all-args if
+      dismiss-all-dialogs
+      \ set! 1 arg
+      "set-1-arg" '() clm-message
+      main-args each to arg1
+	main-args each to arg2
+	  set-procs01 each to prc
+	    prc proc-name "widget-size" string= unless
+	      arg1 arg2 prc set-xt #t nil fth-catch to tag
+	      stack-reset
+	      tag list? if
+		tag car 'wrong-number-of-args symbol= if
+		  $" set-procs01: (%s %s) %s %s" '( arg1 arg2 prc tag ) snd-display
+		then
+	      then
+	    then
+	  end-each
+	end-each
+      end-each
+      \ FIXME all-args if
       \ set! 2 args
       "set-2-args" '() clm-message
-      gc-run
       less-args each to arg1
 	less-args each to arg2
 	  less-args each to arg3
@@ -3177,7 +3169,6 @@ include bird.fsm
       nil nil nil nil nil nil { arg5 arg6 arg7 arg8 arg9 arg0 }
       \ 3 args
       "3-args" '() clm-message
-      gc-run
       make-timer to tm
       less-args each to arg1
 	less-args each to arg2
@@ -3198,7 +3189,6 @@ include bird.fsm
       "%s" '( tm ) clm-message
       \ set! 3 args
       "set!-3-args" '() clm-message
-      gc-run
       tm start-timer
       less-args each to arg1
 	less-args each to arg2
@@ -3222,7 +3212,6 @@ include bird.fsm
       "%s" '( tm ) clm-message
       \ 4 args
       "4-args" '() clm-message
-      gc-run
       tm start-timer
       few-args each to arg1
 	few-args each to arg2
@@ -3245,7 +3234,6 @@ include bird.fsm
       "%s" '( tm ) clm-message
       \ set! 4 args
       "set!-4-args" '() clm-message
-      gc-run
       tm start-timer
       few-args each to arg1
 	few-args each to arg2
@@ -3273,7 +3261,6 @@ include bird.fsm
       "%s" '( tm ) clm-message
       \ 5 args
       "5-args" '() clm-message
-      gc-run
       tm start-timer
       fewer-args each to arg1
 	fewer-args each to arg2
@@ -3300,7 +3287,6 @@ include bird.fsm
       "%s" '( tm ) clm-message
       \ 6 args
       "6-args" '() clm-message
-      gc-run
       tm start-timer
       #( 1.5 "/hiho" -1234 #f #t vct-5 ) each to arg1
 	#( 1.5 -1234 vct-3 vct-5 -1 0 #f #t ) each to arg2
@@ -3328,7 +3314,6 @@ include bird.fsm
       "%s" '( tm ) clm-message
       \ 8 args
       "8-args" '() clm-message
-      gc-run
       tm start-timer
       #( 1.5 -1 1234 #f '() log0 ) each to arg1
 	#( "/hiho" -1 1234 '() vct-5 ) each to arg2
@@ -3360,7 +3345,6 @@ include bird.fsm
       "%s" '( tm ) clm-message
       \ 10 args
       "10-args" '() clm-message
-      gc-run
       tm start-timer
       #( 1.5 -1 #f 1234 ) each to arg1
 	#( "/hiho" -1 1234 ) each to arg2
@@ -3502,7 +3486,9 @@ include bird.fsm
     10 0 do rd read-sample drop loop
     rd sample-reader-home { home }
     home list?
-    home car sound? && if $" reader-home of closed sound: %s %s?" '( home sounds ) snd-display then
+    home car sound? && if
+      $" reader-home of closed sound: %s %s?" '( home sounds ) snd-display
+    then
     rd sample-reader-position { loc }
     loc 0<> if $" closed reader position: %s?" '( loc ) snd-display then
     rd sample-reader-at-end? { at-end }
@@ -3523,8 +3509,9 @@ include bird.fsm
     10 0 do rd read-sample drop loop
     \
     "oboe.snd" open-sound to ind
+    1.0 { scl }
     100 0.5 ind 0 set-sample drop
-    mc-1-cb map-channel drop
+    scl mc-1-cb map-channel drop
     100 ind 0 sample { s100 }
     s100 1.0 fneq if $" scan + map 100: %s" '( s100 ) snd-display then
     ind revert-sound drop
@@ -3546,8 +3533,8 @@ include bird.fsm
     \ take and need them.  So we have 'no-such-channel as first
     \ exception.
     \ frames ( snd chn edpos -- frms )
-    \ set-frames ( frms snd chn edpos -- val )
-    1 ind 0 1 <'> set-frames #t nil fth-catch to tag
+    \ set-frames ( frms snd chn -- val )
+    1 ind 0 <'> set-frames #t nil fth-catch to tag
     stack-reset
     tag list? if
       tag car 'wrong-number-of-args symbol= unless
@@ -3603,7 +3590,7 @@ include bird.fsm
 	$" edpos clobbers channel: %s" '( tag ) snd-display
       then
     then
-    ind sound? unless $" edpos proc clobbers chan??: %s" '( ind ) snd-display then
+    ind sound? if $" edpos proc clobbers chan??: %s" '( ind ) snd-display then
   ;
   : 30-test
     #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95  #( 0 1 ) 3/4 'mus-error -1.0 csqrt delay-32
@@ -3619,68 +3606,29 @@ include bird.fsm
     nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil
     { ind prc tag arg arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg0 tm }
     make-timer to tm
-    \ \ set! no args
-    \ "set-no-args" '() clm-message
-    \ tm start-timer
-    \ main-args each to arg
-    \   set-procs00 each to prc
-    \ 	\ $" %s %s" '( arg prc ) clm-message
-    \ 	arg prc set-xt #t nil fth-catch to tag
-    \ 	stack-reset
-    \ 	tag list? if
-    \ 	  tag car 'wrong-number-of-args symbol= if
-    \ 	    $" set-procs00: (%s) %s %s" '( arg prc tag ) snd-display
-    \ 	  then
-    \ 	then
-    \   end-each
-    \ end-each
-    \ dismiss-all-dialogs
-    \ tm stop-timer
-    \ "%s" '( tm ) clm-message
-    \ \ set! 1 arg
-    \ "set-1-arg" '() clm-message
-    \ tm start-timer
-    \ main-args each to arg1
-    \   few-args each to arg2
-    \ 	set-procs01 each to prc
-    \ 	  \ $" %s %s %s" '( arg1 arg2 prc ) clm-message
-    \ 	  arg1 arg2 prc set-xt #t nil fth-catch to tag
-    \ 	  stack-reset
-    \ 	  tag list? if
-    \ 	    tag car 'wrong-number-of-args symbol= if
-    \ 	      $" set-procs01: (%s %s) %s %s" '( arg1 arg2 prc tag ) snd-display
-    \ 	    then
-    \ 	  then
-    \ 	end-each
-    \   end-each
-    \ end-each
-    \ tm stop-timer
-    \ "%s" '( tm ) clm-message
-    \ set! 2 args
-    "set-2-args" '() clm-message
     tm start-timer
-    less-args each to arg1
-      less-args each to arg2
-	$" %s %s" '( arg1 arg2 ) clm-message
-	less-args each to arg3
-	  set-procs02 each to prc
-	    arg1 arg2 arg3 prc set-xt #t nil fth-catch to tag
+    main-args each to arg1
+      main-args each to arg2
+	set-procs01 each to prc
+	  $" %s %s %s" '( arg1 arg2 prc ) clm-message
+	  prc proc-name "widget-size" string= unless
+	    arg1 arg2 prc set-xt #t nil fth-catch to tag
 	    stack-reset
 	    tag list? if
 	      tag car 'wrong-number-of-args symbol= if
-		$" set-procs02: (%s %s %s) %s %s" '( arg1 arg2 arg3 prc tag ) snd-display
+		$" set-procs01: (%s %s) %s %s" '( arg1 arg2 prc tag ) snd-display
 	      then
 	    then
-	  end-each
+	  then
 	end-each
       end-each
     end-each
     tm stop-timer
     "%s" '( tm ) clm-message
   ;
-[else]
-  <'> noop alias 28-errors
 [then]
+[ifundef] 28-errors <'> noop alias 28-errors [then]
+[ifundef] 30-test   <'> noop alias 30-test   [then]
 
 SIGINT lambda: ( sig -- )
   stack-reset
@@ -3690,8 +3638,6 @@ SIGINT lambda: ( sig -- )
   finish-snd-test
   2 snd-exit drop
 ; signal value original-sig-handler
-
-[ifundef] 30-test <'> noop alias 30-test [then]
 
 let: ( -- )
   #() { numbs }

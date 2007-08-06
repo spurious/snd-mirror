@@ -36,8 +36,9 @@
 #  test 28: errors
 #  test all done
 
-# $VERBOSE = true
-# $DEBUG = true
+$VERBOSE        = false
+$DEBUG          = false
+$ERROR_AND_EXIT = false
 
 require "rational"
 require "examp"
@@ -68,8 +69,6 @@ unless provided? :snd_nogui
   require "effects"
 end
 
-$my_snd_error_hook = nil
-$my_mus_error_hook = nil
 $original_save_dir = (save_dir or "/zap/snd")
 $original_temp_dir = (temp_dir or "/zap/tmp")
 $original_sound_file_extensions = sound_file_extensions
@@ -148,6 +147,34 @@ $test28 = true
 
 reset_all_hooks
 
+# handles only $! errors, discards all others
+$my_snd_error_hook = lambda do |msg|
+  if number?(msg)
+    msg + 32
+  else
+    if $!
+      if $VERBOSE
+        snd_display("#<snd-error-hook: %s>", $!)
+        snd_info(verbose_message_string(true, "# "))
+        snd_display("#<snd-error-hook ********** end>")
+      end
+      if $ERROR_AND_EXIT
+        set_mus_audio_playback_amp(0.75)
+        $timings.last.last.stop
+        finish_snd_test
+        exit(3)
+      end
+    end
+    true
+  end
+end
+
+# discard warnings
+$my_mus_error_hook = lambda do |type, msg| type.zero? end
+
+$snd_error_hook.add_hook!("sndtestrc", &$my_snd_error_hook)
+$mus_error_hook.add_hook!("sndtestrc", &$my_mus_error_hook)
+
 # global variables may be overridden in `pwd`/.sndtest.rb or ~/.sndtest.rb
 if File.exist?(".sndtestrc")
   load_init_file(".sndtestrc")
@@ -213,11 +240,13 @@ else
   alias snd_display snd_info
 end
 
-# $snd_error_hook
-def snd_display_error(*args)
-  snd_info(*args)
-  $stderr.printf("%s\n", verbose_message_string(true, "# "))
-  nil
+def snd_debug(*args)
+  if args.empty?
+    snd_display("#<SND-DEBUG>")
+  else
+    args[0] = String(args[0])
+    snd_display("#<SND-DEBUG: %s>", format(*args))
+  end
 end
 
 # command line args: the last arg(s) may be zero or many test numbers
@@ -353,7 +382,6 @@ def set_arity_ok(func, args)
 end
 
 # let proc $snd_error_hook("sndtestrc") untouched
-# perhaps defined in .sndtestrc
 def reset_almost_all_hooks
   reset_all_hooks
   if proc? $my_snd_error_hook then $snd_error_hook.add_hook!("sndtestrc", &$my_snd_error_hook) end
@@ -1024,6 +1052,12 @@ def test00
               [:Blackman2_window, 6],
               [:Blackman3_window, 7],
               [:Blackman4_window, 8],
+             [:Blackman5_window, 24],
+              [:Blackman6_window, 25],
+              [:Blackman7_window, 26],
+              [:Blackman8_window, 27],
+              [:Blackman9_window, 28],
+              [:Blackman10_window, 29],
               [:Bohman_window, 22],
               [:Cauchy_window, 12],
               [:Channels_combined, 1],
@@ -1059,6 +1093,9 @@ def test00
               [:Poisson_window, 13],
               [:Rectangular_window, 0],
               [:Riemann_window, 10],
+              [:Rv2_window, 30],
+              [:Rv3_window, 31],
+              [:Rv4_window, 32],
               [:Samaraki_window, 19],
               [:Ultraspherical_window, 20],
               [:Graph_as_sonogram, 1],
@@ -3328,8 +3365,9 @@ def test094
   data = vct(0.0, 1.0, -1.0, 0.9999, 2.0, -2.0, 1.3, -1.3, 1.8, -1.8)
   sdata = vct2sound_data(data)
   snd = mus_sound_open_output("test.snd", 22050, 1, Mus_lshort, Mus_riff, "a comment")
-  set_mus_file_clipping(snd, false)
+  set_mus_file_clipping(snd, true)
   mus_sound_write(snd, 0, 9, 1, sdata)
+  set_mus_file_clipping(snd, false)
   mus_sound_close_output(snd, 40)
   snd = open_sound("test.snd")
   unless vequal(res = channel2vct(0, 10),
@@ -5230,14 +5268,14 @@ def test025
   xramp_channel(0.0, 1.0, 32.0)
   test_output.call(2, "
  (ramp 0 10) ; xramp_channel(0.000, 1.000, 32.000, 0, false [2:2]:
-   (at 0, cp->sounds[1][0:9, 1.000, [1]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:9, 1.000, [1]0.000 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 ")
   undo_edit
   xramp_channel(0.0, 1.0, 0.325)
   test_output.call(2, "
  (ramp 0 10) ; xramp_channel(0.000, 1.000, 0.325, 0, false [2:2]:
-   (at 0, cp->sounds[1][0:9, 1.000, [1]0.000 -> -1.124, off: 1.481, scl: -1.481]) [buf: 10] 
+   (at 0, cp->sounds[1][0:9, 1.000, [1]0.000 -> 1.000, off: 1.481, scl: -1.481]) [buf: 10] 
    (at 10, end_mark)
 ")
   undo_edit
@@ -5258,7 +5296,7 @@ def test025
   xramp_channel(0.5, 1.5, 32.0)
   test_output.call(2, "
  (ramp 0 10) ; xramp_channel(0.500, 1.500, 32.000, 0, false [2:2]:
-   (at 0, cp->sounds[1][0:9, 1.000, [1]0.000 -> 3.466, off: 0.468, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:9, 1.000, [1]0.500 -> 1.500, off: 0.468, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 ")
   if fneq(maxamp, 1.5) or fneq(sample(0), 0.5)
@@ -5268,7 +5306,7 @@ def test025
   xramp_channel(-0.5, 1.5, 32.0)
   test_output.call(2, "
  (ramp 0 10) ; xramp_channel(-0.500, 1.500, 32.000, 0, false [2:2]:
-   (at 0, cp->sounds[1][0:9, 1.000, [1]0.000 -> 3.466, off: -0.565, scl: 0.065]) [buf: 10] 
+   (at 0, cp->sounds[1][0:9, 1.000, [1]-0.500 -> 1.500, off: -0.565, scl: 0.065]) [buf: 10] 
    (at 10, end_mark)
 ")
   if fneq(maxamp, 1.5) or fneq(sample(0), -0.5)
@@ -5280,7 +5318,7 @@ def test025
   scale_channel(0.5)
   test_output.call(3, "
  (scale 0 10) ; scale_channel(0.500, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 ")
   ctr = 0
@@ -5298,7 +5336,7 @@ def test025
   delete_sample(0)
   test_output.call(3, "
  (delete 0 1) ; delete_samples(0, 1 [3:2]:
-   (at 0, cp->sounds[1][1:9, 1.000, [1]0.385 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][1:9, 1.000, [1]0.015 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 9, end_mark)
 ")
   ctr = 1
@@ -5316,7 +5354,7 @@ def test025
   delete_samples(0, 2)
   test_output.call(3, "
  (delete 0 2) ; delete_samples(0, 2 [3:2]:
-   (at 0, cp->sounds[1][2:9, 1.000, [1]0.770 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][2:9, 1.000, [1]0.037 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 8, end_mark)
 ")
   ctr = 2
@@ -5335,32 +5373,32 @@ def test025
   delete_sample(0)
   test_output.call(4, "
  (delete 0 1) ; delete_samples(0, 1 [4:2]:
-   (at 0, cp->sounds[1][2:9, 1.000, [1]0.770 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][2:9, 1.000, [1]0.037 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 8, end_mark)
 ")
   undo_edit(2)
   delete_sample(4)
   test_output.call(3, "
  (delete 4 1) ; delete_samples(4, 1 [3:3]:
-   (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
-   (at 4, cp->sounds[1][5:9, 1.000, [1]1.925 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 0.070, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 4, cp->sounds[1][5:9, 1.000, [1]0.189 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 9, end_mark)
 ")
   undo_edit
   delete_samples(4, 2)
   test_output.call(3, "
  (delete 4 2) ; delete_samples(4, 2 [3:3]:
-   (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
-   (at 4, cp->sounds[1][6:9, 1.000, [1]2.310 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 0.070, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 4, cp->sounds[1][6:9, 1.000, [1]0.293 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 8, end_mark)
 ")
   undo_edit
   scale_channel(0.5, 4, 2)
   test_output.call(3, "
  (scale 4 2) ; scale_channel(0.500, 4, 2 [3:4]:
-   (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
-   (at 4, cp->sounds[1][4:5, 0.500, [1]1.540 -> 1.925, off: -0.032, scl: 0.032]) [buf: 10] 
-   (at 6, cp->sounds[1][6:9, 1.000, [1]2.310 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 0.070, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 4, cp->sounds[1][4:5, 0.500, [1]0.118 -> 0.189, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 6, cp->sounds[1][6:9, 1.000, [1]0.293 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 ")
   ctr = 0
@@ -5380,35 +5418,35 @@ def test025
   scale_channel(0.5, 0, 2)
   test_output.call(3, "
  (scale 0 2) ; scale_channel(0.500, 0, 2 [3:3]:
-   (at 0, cp->sounds[1][0:1, 0.500, [1]0.000 -> 0.385, off: -0.032, scl: 0.032]) [buf: 10] 
-   (at 2, cp->sounds[1][2:9, 1.000, [1]0.770 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:1, 0.500, [1]0.000 -> 0.015, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 2, cp->sounds[1][2:9, 1.000, [1]0.037 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 ")
   undo_edit
   pad_channel(4, 2)
   test_output.call(3, "
  (silence 4 2) ; pad-channel [3:4]:
-   (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 0.070, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[-1][0:1, 0.000])
-   (at 6, cp->sounds[1][4:9, 1.000, [1]1.540 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 6, cp->sounds[1][4:9, 1.000, [1]0.118 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 12, end_mark)
 ")
   undo_edit
   set_sample(4, 1.0)
   test_output.call(3, "
  (set 4 1) ; set_sample(4, 1.0000 [3:4]:
-   (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 0.070, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
-   (at 5, cp->sounds[1][5:9, 1.000, [1]1.925 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 5, cp->sounds[1][5:9, 1.000, [1]1.189 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 ")
   undo_edit
   set_samples(4, 2, make_vct(2))
   test_output.call(3, "
  (set 4 2) ; set-samples [3:4]:
-   (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 0.070, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[2][0:1, 1.000]) [buf: 2] 
-   (at 6, cp->sounds[1][6:9, 1.000, [1]2.310 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 6, cp->sounds[1][6:9, 1.000, [1]0.293 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 ")
   undo_edit
@@ -5416,9 +5454,9 @@ def test025
   set_samples(4, 2, make_vct(2))
   test_output.call(4, "
  (set 4 2) ; set-samples [4:4]:
-   (at 0, cp->sounds[1][0:3, 0.500, [1]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 0, cp->sounds[1][0:3, 0.500, [1]0.000 -> 0.070, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[2][0:1, 1.000]) [buf: 2] 
-   (at 6, cp->sounds[1][6:9, 0.500, [1]2.310 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
+   (at 6, cp->sounds[1][6:9, 0.500, [1]0.293 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 ")
   close_sound(ind)
@@ -6292,7 +6330,7 @@ def test075
   xramp_channel(0.0, 1.0, 32.0)
   test_output.call(3, "
  (ramp 0 11) ; xramp_channel(0.000, 1.000, 32.000, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   idx = -1
@@ -6302,7 +6340,7 @@ def test075
   xramp_channel(0.0, 1.0, 32.0)
   test_output.call(3, "
  (ramp 0 11) ; xramp_channel(0.000, 1.000, 32.000, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> -1.139, off: 1.471, scl: -1.471, [2]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, off: 1.471, scl: -1.471, [2]0.000 -> 1.000, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   idx = -1
@@ -6313,10 +6351,9 @@ def test075
   xramp_channel(0.0, 1.0, 32.0)
   test_output.call(4, "
  (set 0 11) ; xramp_channel(0.000, 1.000, 32.000, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> -1.139, off: 1.471, scl: -1.471, [2]0.000 -> 3.466, off: -0.032, scl: 0.032, [3]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> -1.139, off: 1.471, scl: -1.471, [2]0.000 -> 1.000, off: -0.032, scl: 0.032, [3]0.000 -> 1.000, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
-
   idx = -1
   test_name = "xramp+xramp+ramp"
   undo_edit(3)
@@ -6325,7 +6362,7 @@ def test075
   ramp_channel(0.0, 1.0)
   test_output.call(4, "
  (ramp 0 11) ; ramp_channel(0.000, 1.000, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> -1.139, off: 1.471, scl: -1.471, [3]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, off: 1.471, scl: -1.471, [3]0.000 -> 1.000, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   idx = -1
@@ -6335,7 +6372,7 @@ def test075
   ramp_channel(0.0, 1.0)
   test_output.call(3, "
  (ramp 0 11) ; ramp_channel(0.000, 1.000, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   idx = -1
@@ -6346,7 +6383,7 @@ def test075
   xramp_channel(0.0, 1.0, 32.0)
   test_output.call(4, "
  (ramp 0 11) ; xramp_channel(0.000, 1.000, 32.000, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [3]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [3]0.000 -> 1.000, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   idx = -1
@@ -6370,7 +6407,7 @@ def test075
   xramp_channel(0.0, 1.0, 32.0)
   test_output.call(5, "
  (ramp 0 11) ; xramp_channel(0.000, 1.000, 32.000, 0, false [5:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [3]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [3]0.000 -> 1.000, [4]0.000 -> 1.000, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   close_sound(ind)
@@ -6802,6 +6839,16 @@ def test105
   if (res = x_axis_label) != "no time"
     snd_display("time x_axis_label: %s?", res)
   end
+  update_transform_graph
+  if (res = x_axis_label(ind, 0, Transform_graph)) != "frequency"
+    snd_display("get fft x_axis_label: %s?", res)
+  end
+  set_x_axis_label("hiho", ind, 0, Transform_graph)
+  update_transform_graph
+  if (res = x_axis_label(ind, 0, Transform_graph)) != "hiho"
+    snd_display("set fft x_axis_label: %s?", res)
+  end
+  set_x_axis_label("frequency", ind, 0, Transform_graph) # reset for later
   graph([0, 0, 1, 1, 2, 0], "lisp")
   update_lisp_graph
   if (res = x_axis_label(ind, 0, Lisp_graph)) != "lisp"
@@ -28371,24 +28418,25 @@ def test0316
                   false, "env+scl 4")
   undo_edit
   scale_channel(0.5, 30000, 1000)
-  check_edit_tree([[0, 0, 0, 25414, 1.0, 0.0, 1.0, 1], 
-                   [25415, 0, 25415, 29999, 1.0, 0.9999, 0.8195, 1], 
-                   [30000, 0, 30000, 30999, 0.5, 0.8195, 0.7802, 1], 
-                   [31000, 0, 31000, 50827, 1.0, 0.7802, 0.0, 1], 
+  check_edit_tree([[0, 0, 0, 25413, 1.0, 0.0, 3.93483896914404e-5, 4], 
+                   [25414, 0, 25414, 29999, 1.0, 1.0, -3.93499394704122e-5, 4],
+                   [30000, 0, 30000, 30999, 0.5, 0.8195, -3.93499394704122e-5, 4], 
+                   [31000, 0, 31000, 50827, 1.0, 0.7802, -3.93499394704122e-5, 4], 
                    [50828, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
                   false, "env+scl 5")
   undo_edit
   scale_channel(0.5, 25415, 1000)
-  check_edit_tree([[0, 0, 0, 25414, 1.0, 0.0, 0.9999, 1], 
-                   [25415, 0, 25415, 26414, 0.5, 0.9999, 0.9606, 1], 
-                   [26415, 0, 26415, 50827, 1.0, 0.9606, 0.0, 1], 
+  check_edit_tree([[0, 0, 0, 25413, 1.0, 0.0, 3.935-e5, 4], 
+                   [25414, 0, 25414, 26414, 1.0, 1.0, -3.935-e5, 4], 
+                   [25415, 0, 25415, 26414, 0.5, 0.9999, -3.935-e5, 4],
+                   [26415, 0, 26415, 50827, 1.0, 0.960610687732697, -3.93499394704122e-5, 4],
                    [50828, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
                   false, "env+scl 6")
   undo_edit
   scale_channel(0.5, 40000, 10828)
-  check_edit_tree([[0, 0, 0, 25414, 1.0, 0.0, 1.0, 1], 
-                   [25415, 0, 25415, 39999, 1.0, 0.9999, 0.426, 1], 
-                   [40000, 0, 40000, 50827, 0.5, 0.426, 0.0, 1], 
+  check_edit_tree([[0, 0, 0, 25413, 1.0, 0.0, 3.935e-5, 4], 
+                   [25414, 0, 25414, 39999, 1.0, 1.0, -3.935e-5, 4], 
+                   [40000, 0, 40000, 50827, 0.5, 0.426, -3.935e-5, 4], 
                    [50828, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
                   false, "env+scl 7")
   undo_edit
@@ -30246,22 +30294,22 @@ def test0219
   func.call(ind, 0)
   revert_sound(ind)
   # sticky env end
-  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 0], :end, 500), 1000, 1000)
-  if fneq(res = sample(1750), 0.0)
-    snd_display("edit_list2function 15 samp: %s?", res)
-  end
-  unless proc?(func = edit_list2function)
-    snd_display("edit_list2function 15: %s", func)
-  end
-  if (res = func.source) != "Proc.new {|snd, chn|  env_channel(make_env([0.000, 0.000, 1.000, 1.000, 2.000, 0.000], :base, 1.0000, :end, 500), 1000, 1000, snd, chn) }"
-    snd_display("edit_list2function 15: %s", res)
-  end
-  revert_sound(ind)
-  func.call(ind, 0)
-  if fneq(res = sample(1750), 0.0)
-    snd_display("edit_list2function 15 re-samp: %s?", res)
-  end
-  revert_sound(ind)
+  # env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 0], :end, 500), 1000, 1000)
+  # if fneq(res = sample(1750), 0.0)
+  #   snd_display("edit_list2function 15 samp: %s?", res)
+  # end
+  # unless proc?(func = edit_list2function)
+  #   snd_display("edit_list2function 15: %s", func)
+  # end
+  # if (res = func.source) != "Proc.new {|snd, chn|  env_channel(make_env([0.000, 0.000, 1.000, 1.000, 2.000, 0.000], :base, 1.0000, :end, 500), 1000, 1000, snd, chn) }"
+  #   snd_display("edit_list2function 15: %s", res)
+  # end
+  # revert_sound(ind)
+  # func.call(ind, 0)
+  # if fneq(res = sample(1750), 0.0)
+  #   snd_display("edit_list2function 15 re-samp: %s?", res)
+  # end
+  # revert_sound(ind)
   # simple reapply
   env_channel([0, 0, 1, 1, 2, 0])
   func = edit_list2function
@@ -38613,8 +38661,7 @@ Set_procs =
    :listener_font, :listener_prompt, :listener_text_color, :mark_color, :mark_name, :mark_sample,
    :mark_sync, :max_transform_peaks, :max_regions, :min_dB, :log_freq_start, :mix_amp,
    :mix_amp_env, :mix_color, :mix_name, :mix_position, :mix_sync, :mix_properties,
-   :max_virtual_ptrees,
-   :mix_speed, :mix_tag_height, :mix_tag_width, :mix_tag_y,
+   :max_virtual_ptrees, :mix_speed, :mix_tag_height, :mix_tag_width, :mix_tag_y,
    :mark_tag_width, :mark_tag_height, :mix_waveform_height, :transform_normalization,
    :open_file_dialog_directory, :position_color, :view_files_sort, :print_length,
    :pushed_button_color, :region_graph_style, :reverb_control_decay,
