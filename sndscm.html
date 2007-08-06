@@ -3151,13 +3151,13 @@ appended new stuff as it came to mind.  In this documentation, I'll divide the f
 <!-- -------------------------------- examp FFTS -------------------------------- -->
 <tr><td colspan=2 bgcolor="lightgreen"><center><A NAME="ssffts">FFTs</A></center></td><td></td></tr>
 
-<!-- correlate -->
+<!-- display-correlation -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="correlate">correlate</a> <code>snd chn y0 y1</code>
+<A class=def NAME="displaycorrelation">display-correlation</a> <code>snd chn y0 y1</code>
 </td></tr><tr><td width=60></td><td>
-correlate graphs the correlation of the 2 channels of the sound 'snd'.
+display-correlation graphs the correlation of the 2 channels of the sound 'snd'.
 To make this happen automatically as you move the time domain position
-slider: <code>(add-hook! <a class=quiet href="extsnd.html#graphhook">graph-hook</a> correlate)</code>.
+slider: <code>(add-hook! <a class=quiet href="extsnd.html#graphhook">graph-hook</a> display-correlation)</code>.
 The last three parameters are unused; they are just for compatibility with graph-hook.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 

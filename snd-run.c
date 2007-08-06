@@ -7168,7 +7168,7 @@ static char *descr_autocorrelate_0(int *args, ptree *pt)
 
 static void autocorrelate_0(int *args, ptree *pt) 
 {
-  autocorrelation(VCT_ARG_1->data, VCT_ARG_1->length);
+  mus_autocorrelate(VCT_ARG_1->data, VCT_ARG_1->length);
   VCT_RESULT = VCT_ARG_1;
 }
 
@@ -7177,6 +7177,36 @@ static xen_value *autocorrelate_1(ptree *prog, xen_value **args, int num_args)
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
   return(package(prog, R_VCT, autocorrelate_0, descr_autocorrelate_0, args, 1));
 }
+
+
+
+/* ---------------- correlate ---------------- */
+
+static char *descr_correlate_0(int *args, ptree *pt) 
+{
+  return(mus_format("correlate(" VCT_PT ", " VCT_PT ")", args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2));
+}
+
+static void correlate_0(int *args, ptree *pt) 
+{
+  int size;
+  if (VCT_ARG_1->length < VCT_ARG_2->length)
+    size = VCT_ARG_1->length;
+  else size = VCT_ARG_2->length;
+  mus_correlate(VCT_ARG_1->data, VCT_ARG_2->data, size);
+  VCT_RESULT = VCT_ARG_1;
+}
+
+static xen_value *correlate_1(ptree *prog, xen_value **args, int num_args) 
+{
+  if (run_safety == RUN_SAFE) 
+    {
+      temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
+      temp_package(prog, R_BOOL, vct_check_2, descr_vct_check_2, args, 2);
+    }
+  return(package(prog, R_VCT, correlate_0, descr_correlate_0, args, 2));
+}
+
 
 
 /* ---------------- frames ---------------- */
@@ -13352,6 +13382,7 @@ static void init_walkers(void)
   INIT_WALKER(S_channels, make_walker(channels_1, NULL, NULL, 0, 1, R_INT, false, 0));
   INIT_WALKER(S_c_g, make_walker(c_g_p_1, NULL, NULL, 0, 0, R_BOOL, false, 0));
   INIT_WALKER(S_autocorrelate, make_walker(autocorrelate_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
+  INIT_WALKER(S_correlate, make_walker(correlate_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_vct_to_channel, make_walker(vct_to_channel_1, NULL, NULL, 3, 5, R_BOOL, false, 3, R_VCT, R_INT, R_INT));
 
   INIT_WALKER(S_snd_print, make_walker(snd_print_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));

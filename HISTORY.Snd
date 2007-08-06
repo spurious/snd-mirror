@@ -1,6 +1,7 @@
 Snd change log
 
- 3-Aug:      added blackman5..10 and rv2..4 fft windows.
+ 7-Aug:      renamed "correlate" in examp.scm to "display-correlation".
+ 3-Aug:      blackman5..10 and rv2..4 fft windows.
              rt-clm-ins.scm thanks to Kjetil.
              Savitzky-Golay filter (dsp.scm).
  1-Aug:      numerics.scm.

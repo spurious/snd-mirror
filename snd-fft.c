@@ -272,31 +272,7 @@ static void walsh_transform(Float *data, int n)
 
 /* -------------------------------- AUTOCORRELATION -------------------------------- */
 
-/* this might better be in clm.c, but perhaps return rl? */
-/*    it should be accessible from CL after all, along with correlate */
-
-/* PERHAPS: mus_autocorrelate and mus_correlate (clm.c -> CL etc) [or even wavelet_transform et al] (in any case, correlate for snd-run)
- */
-
-void autocorrelation(Float *data, int n)
-{
-  Float *rl, *im;
-  Float fscl;
-  int i, n2;
-  n2 = n / 2;
-  rl = (Float *)MALLOC(n * sizeof(Float));
-  memcpy((void *)rl, (void *)data, n * sizeof(Float));
-  fscl = 1.0 / (Float)n;
-  im = (Float *)CALLOC(n, sizeof(Float));
-  mus_fft(rl, im, n, 1);
-  for (i = 0; i < n; i++)
-    rl[i] = rl[i] * rl[i] + im[i] * im[i];
-  memset((void *)im, 0, n * sizeof(Float));
-  mus_fft(rl, im, n, -1);
-  FREE(im);
-  for (i = 0; i <= n2; i++) data[i] = fscl * rl[i];
-  FREE(rl);
-}
+/* moved to clm.c */
 
 
 
@@ -950,7 +926,7 @@ static void apply_fft(fft_state *fs)
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample(sf);
       if (data_len < fs->size) 
 	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
-      autocorrelation(fft_data, fs->size);
+      mus_autocorrelate(fft_data, fs->size);
       break;
 
     default:
@@ -1890,18 +1866,6 @@ void c_convolve(const char *fname, Float amp, int filec, off_t filehdr, int filt
 }
 
 
-static XEN g_autocorrelate(XEN reals)
-{
-  #define H_autocorrelate "(" S_autocorrelate " data): in place autocorrelation of data (a vct)"
-  /* assumes length is power of 2 */
-  vct *v1 = NULL;
-  XEN_ASSERT_TYPE(MUS_VCT_P(reals), reals, XEN_ONLY_ARG, S_autocorrelate, "a vct");
-  v1 = (vct *)XEN_OBJECT_REF(reals);
-  autocorrelation(v1->data, v1->length);
-  return(reals);
-}
-
-
 static XEN g_add_transform(XEN name, XEN xlabel, XEN lo, XEN hi, XEN proc)
 {
   #define H_add_transform "(" S_add_transform " name x-label low high func): add the transform func \
@@ -2128,7 +2092,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
       walsh_transform(v->data, v->length);
       break;
     case AUTOCORRELATION:
-      autocorrelation(v->data, v->length);
+      mus_autocorrelate(v->data, v->length);
       break;
     }
   return(data);
@@ -2234,7 +2198,6 @@ static XEN g_set_show_selection_transform(XEN val)
 XEN_ARGIFY_2(g_transform_frames_w, g_transform_frames)
 XEN_ARGIFY_4(g_transform_sample_w, g_transform_sample)
 XEN_ARGIFY_3(g_transform_to_vct_w, g_transform_to_vct)
-XEN_NARGIFY_1(g_autocorrelate_w, g_autocorrelate)
 XEN_NARGIFY_5(g_add_transform_w, g_add_transform)
 XEN_ARGIFY_3(g_snd_transform_w, g_snd_transform)
 XEN_NARGIFY_1(g_transform_p_w, g_transform_p)
@@ -2247,7 +2210,6 @@ XEN_NARGIFY_1(g_set_show_selection_transform_w, g_set_show_selection_transform)
 #define g_transform_frames_w g_transform_frames
 #define g_transform_sample_w g_transform_sample
 #define g_transform_to_vct_w g_transform_to_vct
-#define g_autocorrelate_w g_autocorrelate
 #define g_add_transform_w g_add_transform
 #define g_snd_transform_w g_snd_transform
 #define g_transform_p_w g_transform_p
@@ -2319,7 +2281,6 @@ of a moving mark:\n\
   XEN_DEFINE_PROCEDURE(S_transform_frames,     g_transform_frames_w, 0, 2, 0, H_transform_frames);
   XEN_DEFINE_PROCEDURE(S_transform_sample,     g_transform_sample_w, 0, 4, 0, H_transform_sample);
   XEN_DEFINE_PROCEDURE(S_transform_to_vct,     g_transform_to_vct_w, 0, 3, 0, H_transform_to_vct);
-  XEN_DEFINE_PROCEDURE(S_autocorrelate,        g_autocorrelate_w,    1, 0, 0, H_autocorrelate);
   XEN_DEFINE_PROCEDURE(S_add_transform,        g_add_transform_w,    5, 0, 0, H_add_transform);
   XEN_DEFINE_PROCEDURE(S_transform_p,          g_transform_p_w,      1, 0, 0, H_transform_p);
   XEN_DEFINE_PROCEDURE(S_delete_transform,     g_delete_transform_w, 1, 0, 0, H_delete_transform);

@@ -312,7 +312,7 @@
 #  window_rms
 #  fft_peak(snd, chn, scale)
 #  finfo(file)
-#  correlate(snd, chn, y0, y1)
+#  display_correlation(snd, chn, y0, y1)
 #
 #  zoom_spectrum(snd, chn, y0, y1)
 #  zoom_fft(snd, chn, y0, y1)
@@ -3168,14 +3168,14 @@ end")
   #
   # correlation of channels in a stereo sound
 
-  add_help(:correlate,
-           "correlate(snd, chn, y0, y1) \
+  add_help(:display_correlation,
+           "display_correlation(snd, chn, y0, y1) \
 returns the correlation of snd's 2 channels (intended for use with $graph_hook)
-$graph_hook.add_hook!(\"correlate\") do |snd, chn, y0, y1|
-  correlate(snd, chn, y0, y1)
+$graph_hook.add_hook!(\"display_correlation\") do |snd, chn, y0, y1|
+  display_correlation(snd, chn, y0, y1)
 end")
 
-  def correlate(snd, chn, y0, y1)
+  def display_correlation(snd, chn, y0, y1)
     if channels(snd) == 2 and frames(snd, 0) > 1 and frames(snd, 1) > 1
       ls = left_sample(snd, 0)
       rs = right_sample(snd, 0)
@@ -3204,7 +3204,7 @@ end")
       vct_scale!(data3, fftscale)
       graph(data3, "lag time", 0, fftlen2)
     else
-      report_in_minibuffer("correlate wants stereo input")
+      report_in_minibuffer("display-correlation wants stereo input")
     end
   end
 

@@ -9,24 +9,9 @@
 	 (pow2 (inexact->exact (ceiling (/ (log ilen) (log 2)))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
 	 (fftlen2 (/ fftlen 2))
-	 (fftscale (/ 1.0 fftlen))
-	 (rl1 (channel->vct 0 fftlen snd1 chn1))
-	 (rl2 (channel->vct 0 fftlen snd0 chn0))
-	 (im1 (make-vct fftlen))
-	 (im2 (make-vct fftlen)))
-    (fft rl1 im1 1)
-    (fft rl2 im2 1)
-    (let* ((tmprl (vct-copy rl1))
-	   (tmpim (vct-copy im1))
-	   (data3 (make-vct fftlen)))
-      (vct-multiply! tmprl rl2)     ; (* tempr1 tempr2)
-      (vct-multiply! tmpim im2)     ; (* tempi1 tempi2)
-      (vct-multiply! im2 rl1)       ; (* tempr1 tempi2)
-      (vct-multiply! rl2 im1)       ; (* tempr2 tempi1)
-      (vct-add! tmprl tmpim)        ; add the first two
-      (vct-subtract! im2 rl2)       ; subtract the 4th from the 3rd
-      (vct-scale! (fft tmprl im2 -1) fftscale))))
-
+	 (fftscale (/ 1.0 fftlen)))
+    (correlate (channel->vct 0 fftlen snd1 chn1) 
+	       (channel->vct 0 fftlen snd0 chn0))))
 
 (define (lag? snd0 chn0 snd1 chn1)
   ;; returns the probable lagtime between the two sounds (negative means second sound is delayed)

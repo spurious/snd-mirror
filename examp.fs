@@ -29,7 +29,7 @@
 \ window-rms                ( -- val )
 \ fft-peak            	    ( snd chn scaler -- pk )
 \ finfo                     ( file -- str )
-\ correlate                 ( snd chn y0 y1 -- val )
+\ display-correlation       ( snd chn y0 y1 -- val )
 \ zoom-spectrum             ( snd chn y0 y1 -- val )
 \ superimpose-ffts          ( snd chn y0 y1 -- val )
 \ locate-zero               ( limit -- samp )
@@ -369,7 +369,7 @@ previous
 \ ;;;
 \ ;;; correlation of channels in a stereo sound
 
-: correlate <{ snd chn y0 y1 -- val }>
+: display-correlation <{ snd chn y0 y1 -- val }>
   doc" Returns the correlation of SND's 2 channels (intended for use with graph-hook).  \
 y0 and y1 are ignored."
   snd channels 2 = if
@@ -406,7 +406,7 @@ y0 and y1 are ignored."
     $" %s wants stereo input" '( get-func-name ) string-format snd #f report-in-minibuffer
   then
 ;
-\ graph-hook ' correlate add-hook!
+\ graph-hook ' display-correlation add-hook!
 
 \ ;;; -------- set transform-size based on current time domain window size
 \ ;;;

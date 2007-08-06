@@ -9,28 +9,28 @@
 ;;;  test 6: vcts                               [13744]
 ;;;  test 7: colors                             [14022]
 ;;;  test 8: clm                                [14512]
-;;;  test 9: mix                                [24893]
-;;;  test 10: marks                             [27110]
-;;;  test 11: dialogs                           [28071]
-;;;  test 12: extensions                        [28316]
-;;;  test 13: menus, edit lists, hooks, etc     [28587]
-;;;  test 14: all together now                  [30293]
-;;;  test 15: chan-local vars                   [31326]
-;;;  test 16: regularized funcs                 [32938]
-;;;  test 17: dialogs and graphics              [37929]
-;;;  test 18: enved                             [38019]
-;;;  test 19: save and restore                  [38038]
-;;;  test 20: transforms                        [39823]
-;;;  test 21: new stuff                         [41721]
-;;;  test 22: run                               [43712]
-;;;  test 23: with-sound                        [49415]
-;;;  test 24: user-interface                    [51897]
-;;;  test 25: X/Xt/Xm                           [55303]
-;;;  test 26: Gtk                               [59899]
-;;;  test 27: GL                                [63751]
-;;;  test 28: errors                            [63875]
-;;;  test all done                              [66160]
-;;;  test the end                               [66396]
+;;;  test 9: mix                                [25156]
+;;;  test 10: marks                             [27373]
+;;;  test 11: dialogs                           [28334]
+;;;  test 12: extensions                        [28579]
+;;;  test 13: menus, edit lists, hooks, etc     [28850]
+;;;  test 14: all together now                  [30556]
+;;;  test 15: chan-local vars                   [31589]
+;;;  test 16: regularized funcs                 [33201]
+;;;  test 17: dialogs and graphics              [38192]
+;;;  test 18: enved                             [38282]
+;;;  test 19: save and restore                  [38301]
+;;;  test 20: transforms                        [40086]
+;;;  test 21: new stuff                         [41984]
+;;;  test 22: run                               [43975]
+;;;  test 23: with-sound                        [49678]
+;;;  test 24: user-interface                    [52160]
+;;;  test 25: X/Xt/Xm                           [55566]
+;;;  test 26: Gtk                               [60162]
+;;;  test 27: GL                                [64014]
+;;;  test 28: errors                            [64138]
+;;;  test all done                              [66423]
+;;;  test the end                               [66659]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -16216,6 +16216,30 @@ EDITS: 2
 	      (snd-display ";gegenbauer 5 ~A ~A: ~A ~A" x alpha val1 val2))))
       )
 
+    (let ((vals (vector     1.0000000000  0.0000000000 -0.5000000000     -0.6666666667 -0.6250000000 -0.4666666667 
+			    -0.2569444444 -0.0404761905  0.1539930556      0.3097442681  0.4189459325  0.4801341791 
+			    0.4962122235 -0.4455729167  0.8500000000     -3.1666666667 34.3333333333))
+	  (ns (vector     0  1  2      3  4  5      6  7  8      9 10 11     12  5  5      5  5))
+	  (xs (vector    1.0  1.0  1.0     1.0  1.0  1.0     1.0  1.0  1.0     1.0  1.0  1.0     1.0  0.5  3.0     5.0 10.0)))
+      (do ((i 0 (1+ i)))
+	  ((= i 17))
+	(let ((val (laguerre (vector-ref ns i) (vector-ref xs i))))
+	  (if (fneq val (vector-ref vals i))
+	      (snd-display ";laguerre ~A ~A -> ~A ~A" (vector-ref ns i) (vector-ref xs i) val (vector-ref vals i)))))
+      )
+
+    (let ((vals (vector     1.0            10.0           98.0      940.0          8812.0         80600.0 
+			    717880.0       6211600.0      52065680.0 ; was off by factor of 10?
+			    421271200      3275529760.0   24329873600.0      171237081280.0 41.0          -8.0      3816.0         3041200.0))
+	  (ns (vector     0  1  2      3  4  5      6  7  8      9 10 11     12  5  5      5  5))
+	  (xs (vector    5.0  5.0  5.0     5.0  5.0  5.0     5.0  5.0  5.0     5.0  5.0  5.0     5.0  0.5  1.0     3.0 10.0)))
+      (do ((i 0 (1+ i)))
+	  ((= i 13))
+	(let ((val (hermite (vector-ref ns i) (vector-ref xs i))))
+	  (if (fneq val (vector-ref vals i))
+	      (snd-display ";hermite ~A ~A -> ~A ~A" (vector-ref ns i) (vector-ref xs i) val (vector-ref vals i)))))
+      )
+
     (do ((i 0 (1+ i))) 
 	((= i 10))
       (let ((lv (legendre-polynomial (let ((v (make-vector 10 0.0))) 
@@ -16225,6 +16249,7 @@ EDITS: 2
 	    (pv (plgndr i 0 0.5)))
 	(if (fneq lv pv)
 	    (snd-display ";lv: ~A, pv: ~A (~A)" lv pv i))))
+
     (let ((pow-x (lambda (pow x)
 		   ;; A&S p798
 		   (if (= pow 0)
@@ -16252,6 +16277,64 @@ EDITS: 2
 		  (snd-display ";~A ^ ~A = ~A ~A?" x pow lv sv))))
 	  (list 0 1 2 3 4 5 6)))
        (list 2.0 0.5 0.1 -0.5 3.0 0.8)))
+
+    (let ((h0 (lambda (x) 1.0))
+	  (h1 (lambda (x) (* 2 x)))
+	  (h2 (lambda (x) (- (* 4 x x) 2)))
+	  (h3 (lambda (x) (- (* 8 x x x) (* 12 x))))
+	  (h4 (lambda (x) (+ (* 16 x x x x) (* -48 x x) 12)))
+	  (h5 (lambda (x) (+ (* 32 x x x x x) (* -160 x x x) (* 120 x))))
+	  (h6 (lambda (x) (+ (* 64 x x x x x x) (* -480 x x x x) (* 720 x x) -120))))
+      
+      (do ((i 0 (1+ i)))
+	  ((= i 20))
+	(let ((x (random 10.0)))
+	  (let ((v1 (h1 x))
+		(v11 (hermite 1 x))
+		(v2 (h2 x))
+		(v22 (hermite 2 x))
+		(v3 (h3 x))
+		(v33 (hermite 3 x))
+		(v4 (h4 x))
+		(v44 (hermite 4 x))
+		(v5 (h5 x))
+		(v55 (hermite 5 x))
+		(v6 (h6 x))
+		(v66 (hermite 6 x)))
+	    (if (fneq v1 v11) (snd-display ";hermite 1 ~A: ~A ~A" x v1 v11)
+		(if (fneq v2 v22) (snd-display ";hermite 2 ~A: ~A ~A" x v2 v22)
+		    (if (fneq v3 v33) (snd-display ";hermite 3 ~A: ~A ~A" x v3 v33)
+			(if (fneq v4 v44) (snd-display ";hermite 4 ~A: ~A ~A" x v4 v44)
+			    (if (fneq v5 v55) (snd-display ";hermite 5 ~A: ~A ~A" x v5 v55)
+				(if (fneq v6 v66) (snd-display ";hermite 6 ~A: ~A ~A" x v6 v66)))))))))))
+
+    (let ((lg1 (lambda (x) (- 1 x)))
+	  (lg2 (lambda (x) (+ 1 (* 0.5 x x) (* -2 x))))
+	  (lag1 (lambda (x a) (+ 1 a (- x))))
+	  (lag2 (lambda (x a) (* 0.5 (+ (* x x) 
+					(* -2 x (+ a 2))
+					(* (+ a 1) (+ a 2))))))
+	  (lag3 (lambda (x a) (* (/ -1.0 6.0) (+ (* x x x)
+						 (* -3 x x (+ a 3))
+						 (* 3 x (+ a 2) (+ a 3))
+						 (* -1 (+ a 1) (+ a 2) (+ a 3)))))))
+      (let ((x (random 10.0))
+	    (a (random 1.0)))
+	(let ((v1 (laguerre 1 x))
+	      (v11 (lg1 x))
+	      (v2 (laguerre 2 x))
+	      (v22 (lg2 x))
+	      (va1 (lag1 x a))
+	      (va11 (laguerre 1 x a))
+	      (va2 (lag2 x a))
+	      (va22 (laguerre 2 x a))
+	      (va3 (lag3 x a))
+	      (va33 (laguerre 3 x a)))
+	  (if (fneq v1 v11) (snd-display ";laguerre 1 ~A: ~A ~A" x v1 v11)
+	      (if (fneq v2 v22) (snd-display ";laguerre 2 ~A: ~A ~A" x v2 v22)
+		  (if (fneq va1 va11) (snd-display ";laguerre 1a ~A ~A: ~A ~A" x alpha va1 va11)
+		      (if (fneq va2 va22) (snd-display ";laguerre 2a ~A ~A: ~A ~A" x alpha va2 va22)
+			  (if (fneq va3 va33) (snd-display ";laguerre 3a ~A ~A: ~A ~A" x alpha va3 va33)))))))))
     )
 
   ;; ----------------
@@ -31256,10 +31339,10 @@ EDITS: 2
 	  (add-hook! lisp-graph-hook display-energy)
 	  (shell "df")
 	  (reset-hook! graph-hook)
-	  (add-hook! graph-hook correlate)
+	  (add-hook! graph-hook display-correlation)
 	  (set! (x-bounds) '(.1 .12))
 	  (set! (x-bounds) '(.1 .2))
-	  (remove-hook! graph-hook correlate)
+	  (remove-hook! graph-hook display-correlation)
 	  (set! (lisp-graph?) #f)
 	  (map-chan 
 	   (let ((sum-of-squares 0.0)
@@ -39538,7 +39621,7 @@ EDITS: 1
 	      (snd-display ";rms-envelope: ~A" vals)))
 	
 	(let ((ind (open-sound "2a.snd")))
-	  (add-hook! graph-hook correlate)
+	  (add-hook! graph-hook display-correlation)
 	  (update-time-graph)
 	  (reset-hook! graph-hook)
 	  (stereo->mono ind "hi1.snd" "hi2.snd")
@@ -41129,7 +41212,7 @@ EDITS: 1
 	  (let ((nr (vct-subseq (corr rl rl 16 16) 0 15)))
 	    (autocorrelate rl1)
 	    (if (not (vequal rl1 nr))
-		(snd-display ";autocorrelate/corr (ramp): ~A ~A" rl1 nr))))
+		(snd-display ";autocorrelate/corr (ramp):~%;  ~A~%;  ~A" rl1 nr))))
 	
 	(let ((rl (make-vct 16))
 	      (rl1 (make-vct 16)))
@@ -41140,7 +41223,7 @@ EDITS: 1
 	  (let ((nr (vct-subseq (corr rl rl 16 16) 0 15)))
 	    (autocorrelate rl1)
 	    (if (not (vequal rl1 nr))
-		(snd-display ";autocorrelate/corr: ~A ~A" rl1 nr))))
+		(snd-display ";autocorrelate/corr:~%;  ~A~%;  ~A" rl1 nr))))
 	
 	(let ((ind0 (new-sound "test.snd" :size 16))
 	      (ind1 (new-sound "fmv.snd" :size 16)))
@@ -41159,6 +41242,47 @@ EDITS: 1
 	  (close-sound ind0)
 	  (close-sound ind1))
 
+	(let ((v1 (make-vct 16))
+	      (v2 (make-vct 16))
+	      (v3 (make-vct 16))
+	      (v4 (make-vct 16)))
+	  (vct-set! v1 0 1.0)  
+	  (vct-set! v2 3 1.0)  
+	  (vct-set! v3 0 1.0)  
+	  (vct-set! v4 3 1.0)
+	  (set! v1 (cross-correlate-2 v1 v2 16))
+	  (set! v3 (correlate v3 v4))
+	  (if (not (vequal v1 v3))
+	      (snd-display ";correlate 16:~%;  ~A~%;  ~A" v1 v3)))
+	
+	(let ((v1 (make-vct 128))
+	      (v2 (make-vct 128))
+	      (v3 (make-vct 128))
+	      (v4 (make-vct 128)))
+	  (vct-set! v1 0 1.0)  
+	  (vct-set! v2 32 1.0)  
+	  (vct-set! v3 0 1.0)  
+	  (vct-set! v4 32 1.0)
+	  (set! v1 (cross-correlate-2 v1 v2 128))
+	  (set! v3 (correlate v3 v4))
+	  (if (not (vequal v1 v3))
+	      (snd-display ";correlate 128:~%;  ~A~%;  ~A" v1 v3)))
+	
+	(let ((v1 (make-vct 128))
+	      (v2 (make-vct 128))
+	      (v3 #f)
+	      (v4 #f))
+	  (do ((i 0 (1+ i)))
+	      ((= i 128))
+	    (vct-set! v1 i (- 5.0 (random 10.0)))
+	    (vct-set! v2 i (- 0.5 (random 1.0))))
+	  (set! v3 (vct-copy v1))
+	  (set! v4 (vct-copy v2))
+	  (set! v1 (cross-correlate-2 v1 v2 128))
+	  (set! v3 (correlate v3 v4))
+	  (if (not (vequal v1 v3))
+	      (snd-display ";correlate 128 at random:~%;  ~A~%;  ~A" v1 v3)))
+	
 	(for-each
 	 (lambda (len)
 	   (let ((rl (make-vct len))
@@ -41197,6 +41321,9 @@ EDITS: 1
 		       (set! happy #f)))))
 	     (vct-set! rl 0 0.0)
 	     (vct-set! rl 4 0.0)
+	     (do ((i (/ len 2) (1+ i)))
+		 ((= i len))
+	       (vct-set! rl i 0.0))
 	     (if (> (vct-peak rl) .001) (snd-display ";autocorrelate peak: ~A" (vct-peak rl)))))
 	 (list 16 64 256 512))
 	

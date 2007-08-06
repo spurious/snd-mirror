@@ -219,8 +219,8 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;;
 ;;; correlation of channels in a stereo sound
 
-(define (correlate snd chn y0 y1)
-  "(correlate snd chn y0 y1) returns the correlation of snd's 2 channels (intended for use with graph-hook).  y0 and y1 are ignored."
+(define (display-correlation snd chn y0 y1)
+  "(display-correlation snd chn y0 y1) returns the correlation of snd's 2 channels (intended for use with graph-hook).  y0 and y1 are ignored."
   (if (and (= (channels snd) 2)
 	   (> (frames snd 0) 1)
 	   (> (frames snd 1) 1))
@@ -249,9 +249,9 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	  (vct-add! data3 tmprl)        ; copy into data3
 	  (vct-scale! data3 fftscale)   ; scale by fftscale
 	  (graph data3 "lag time" 0 fftlen)))
-      (report-in-minibuffer "vct-correlate wants stereo input")))
+      (report-in-minibuffer "display-correlation wants stereo input")))
 
-;(add-hook! graph-hook correlate)
+;(add-hook! graph-hook display-correlation)
 
 ;;; The inner let body could also be:
 ;;;

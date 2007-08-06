@@ -9286,6 +9286,69 @@ Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, mus_spectrum
 }
 
 
+/* TODO: autocorrelate and correlate -- tie into Common Lisp */
+
+Float *mus_autocorrelate(Float *data, int n)
+{
+  Float *im;
+  Float fscl;
+  int i, n2;
+
+  n2 = n / 2;
+  fscl = 1.0 / (Float)n;
+  im = (Float *)clm_calloc(n, sizeof(Float), "mus_autocorrelate imaginary data");
+
+  mus_fft(data, im, n, 1);
+  for (i = 0; i < n; i++)
+    data[i] = data[i] * data[i] + im[i] * im[i];
+  memset((void *)im, 0, n * sizeof(Float));
+
+  mus_fft(data, im, n, -1);
+  for (i = 0; i <= n2; i++) 
+    data[i] *= fscl;
+  for (i = n2 + 1; i < n; i++)
+    data[i] = 0.0;
+
+  FREE(im);
+  return(data);
+}
+
+
+Float *mus_correlate(Float *data1, Float *data2, int n)
+{
+  Float *im1, *im2;
+  int i;
+  Float fscl;
+
+  im1 = (Float *)clm_calloc(n, sizeof(Float), "mus_correlate imaginary data");
+  im2 = (Float *)clm_calloc(n, sizeof(Float), "mus_correlate imaginary data");
+  
+  mus_fft(data1, im1, n, 1);
+  mus_fft(data2, im2, n, 1);
+
+  for (i = 0; i < n; i++)
+    {
+      Float tmp1, tmp2, tmp3, tmp4;
+      tmp1 = data1[i] * data2[i];
+      tmp2 = im1[i] * im2[i];
+      tmp3 = data1[i] * im2[i];
+      tmp4 = data2[i] * im1[i];
+      data1[i] = tmp1 + tmp2;
+      im1[i] = tmp3 - tmp4;
+    }
+  
+  mus_fft(data1, im1, n, -1);
+  fscl = 1.0 / (Float)n;
+  for (i = 0; i < n; i++)
+    data1[i] *= fscl;
+
+  FREE(im1);
+  FREE(im2);
+
+  return(data1);
+}
+
+
 
 /* ---------------- convolve ---------------- */
 

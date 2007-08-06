@@ -157,6 +157,9 @@
 			  (set! fn2 fn1)
 			  (set! fn1 fn)))))))))
 
+
+
+
 (define* (chebyshev-polynomial a x :optional (kind 1))
   (let ((n (1- (vector-length a))))
     (if (= n 0) 
@@ -196,7 +199,10 @@
 	    (set! s h))
 	  (+ sum (* r (vector-ref a n)))))))
 
-;;; TODO: hermite and laguerre straight cases (and tests)
+(define* (hermite n x)
+  (let ((a (make-vector (1+ n) 0.0)))
+    (vector-set! a n 1.0)
+    (hermite-polynomial a x)))
 
 
 (define* (laguerre-polynomial a x :optional (alpha 0.0))
@@ -217,3 +223,7 @@
 	    (set! s h))
 	  (+ sum (* r (vector-ref a n)))))))
 
+(define* (laguerre n x :optional (alpha 0.0))
+  (let ((a (make-vector (1+ n) 0.0)))
+    (vector-set! a n 1.0)
+    (laguerre-polynomial a x alpha)))

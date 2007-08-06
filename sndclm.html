@@ -124,15 +124,17 @@ note lists and instruments are described in sndscm.html.
 
 <tr><td width=20 bgcolor="#f6f8ff"></td><td>
 <table border=0 cellpadding=0>
+  <tr><td><a href="#autocorrelate">autocorrelate</a></td><td></td><td>autocorrelation</td></tr>
   <tr><td><a href="#amplitude-modulate">amplitude-modulate</a></td><td></td><td>sig1 * (car + sig2)</td></tr>
   <tr><td><a href="#array-interp">array-interp</a></td><td></td><td>array interpolation</td></tr>
   <tr><td><a href="#contrast-enhancement">contrast-enhancement</a></td><td width=20></td><td>modulate signal</td></tr>
   <tr><td><a href="#convolution">convolution</a></td><td></td><td>convolve signals</td></tr>
-  <tr><td><a href="#dot-product">dot-product</a></td><td></td><td>vct dot (scalar) product</td></tr>
+  <tr><td><a href="#correlate">correlate</a></td><td></td><td>cross correlation</td></tr>
 </table>
 </td>
 <td>
 <table border=0 cellpadding=0>
+  <tr><td><a href="#dot-product">dot-product</a></td><td></td><td>vct dot (scalar) product</td></tr>
   <tr><td><a href="#fft">fft</a></td><td></td><td>Fourier transform</td></tr>
   <tr><td><a href="#make-fft-window">make-fft-window</a></td><td></td><td>various standard windows</td></tr>
   <tr><td><a href="#polynomial">polynomial</a></td><td width=20></td><td>Horner's rule</td></tr>
@@ -3649,6 +3651,8 @@ translated up and down by w/(two pi) Hz.  The simplest case is: </p>
   <a class=def name="polartorectangular">polar-&gt;rectangular</a> rdat idat
   <a class=def name="spectrum">spectrum</a> rdat idat window norm-type
   <a class=def name="convolution">convolution</a> rdat idat size
+  <a class=def name="autocorrelate">autocorrelate</a> data
+  <a class=def name="correlate">correlate</a> data1 data2
 </pre>
 
 <p>fft, spectrum, and convolution are the standard functions used everywhere.
@@ -3674,7 +3678,13 @@ or linear and normalized to 1.0 ("norm-type" = 1), or linear unnormalized.
 
 <p>rectangular-&gt;polar and polar-&gt;rectangular change how we view the FFT data: in polar or rectangular coordinates.
 multiply-arrays does an element-wise multiply of two vcts.
-</p>
+autocorrelate performs an (in place) autocorrelation of 'data' (a vct).  See <a href="sndscm.html#spotfreq">spot-freq</a> in dsp.scm, 
+or <a href="sndscm.html#rubberdoc">rubber.scm</a>.
+correlate performs an in-place cross-correlation of data1 and data2.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+
 <br><br>
 
 

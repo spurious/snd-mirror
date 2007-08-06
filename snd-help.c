@@ -516,7 +516,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
-3-Aug:   added blackman5..10 and rv2..4 fft windows.\n\
+7-Aug:   renamed \"correlate\" in examp.scm to \"display-correlation\"\n\
+3-Aug:   blackman5..10 and rv2..4 fft windows.\n\
          rt-clm-ins.scm thanks to Kjetil.\n\
          Savitzky-Golay filter (dsp.scm).\n\
 1-Aug:   numerics.scm.\n\

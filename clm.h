@@ -2,11 +2,12 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 39
-#define MUS_DATE "3-Aug-07"
+#define MUS_REVISION 40
+#define MUS_DATE "8-Aug-07"
 
 /*
- * 3-Aug:      added blackman5..10 and Rife-Vincent (RV2..4 fft) windows.
+ * 6-Aug:      mus_autocorrelate, mus_correlate.
+ * 3-Aug:      blackman5..10 and Rife-Vincent (RV2..4 fft) windows.
  * 16-July:    removed start arg from mus_make_env (see mus_make_env_with_start).
  * 5-July:     changed some Floats to doubles in env funcs.
  *               exp envs now use repeated multiplies rather than direct exp call.
@@ -644,6 +645,8 @@ Float *mus_make_fft_window(mus_fft_window_t type, int size, Float beta);
 Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float beta, Float mu, Float *window);
 const char *mus_fft_window_name(mus_fft_window_t win);
 const char **mus_fft_window_names(void);
+Float *mus_autocorrelate(Float *data, int n);
+Float *mus_correlate(Float *data1, Float *data2, int n);
 Float *mus_convolution(Float* rl1, Float* rl2, int n);
 void mus_convolve_files(const char *file1, const char *file2, Float maxamp, const char *output_file);
 

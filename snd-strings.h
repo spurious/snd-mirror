@@ -33,7 +33,6 @@
 #define S_auto_resize                   "auto-resize"
 #define S_auto_update                   "auto-update"
 #define S_auto_update_interval          "auto-update-interval"
-#define S_autocorrelate                 "autocorrelate"
 #define S_autocorrelation               "autocorrelation"
 #define S_axis_info                     "axis-info"
 #define S_axis_label_font               "axis-label-font"

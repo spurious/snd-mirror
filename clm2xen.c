@@ -806,6 +806,38 @@ and type determines how the spectral data is scaled:\n\
 }
 
 
+static XEN g_autocorrelate(XEN reals)
+{
+  #define H_autocorrelate "(" S_autocorrelate " data): in place autocorrelation of data (a vct)"
+  /* assumes length is power of 2 */
+  vct *v1 = NULL;
+  XEN_ASSERT_TYPE(MUS_VCT_P(reals), reals, XEN_ONLY_ARG, S_autocorrelate, "a vct");
+  v1 = (vct *)XEN_OBJECT_REF(reals);
+  mus_autocorrelate(v1->data, v1->length);
+  return(reals);
+}
+
+
+static XEN g_correlate(XEN data1, XEN data2)
+{
+  #define H_correlate "(" S_correlate " data1 data2): in place cross-correlation of data1 and data2 (both vcts)"
+  int size;
+  vct *v1 = NULL, *v2 = NULL;
+
+  XEN_ASSERT_TYPE(MUS_VCT_P(data1), data1, XEN_ARG_1, S_correlate, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(data2), data2, XEN_ARG_2, S_correlate, "a vct");
+
+  v1 = (vct *)XEN_OBJECT_REF(data1);
+  v2 = (vct *)XEN_OBJECT_REF(data2);
+  if (v1->length < v2->length)
+    size = v1->length;
+  else size = v2->length;
+
+  mus_correlate(v1->data, v2->data, size);
+  return(data1);
+}
+
+
 static XEN g_convolution(XEN url1, XEN url2, XEN un)
 {
   #define H_mus_convolution "(" S_convolution " v1 v2 :optional len): convolution \
@@ -6483,6 +6515,8 @@ XEN_ARGIFY_3(g_multiply_arrays_w, g_multiply_arrays)
 XEN_ARGIFY_4(g_make_fft_window_w, g_make_fft_window)
 XEN_ARGIFY_4(g_mus_fft_w, g_mus_fft)
 XEN_ARGIFY_4(g_spectrum_w, g_spectrum)
+XEN_NARGIFY_1(g_autocorrelate_w, g_autocorrelate)
+XEN_NARGIFY_2(g_correlate_w, g_correlate)
 XEN_ARGIFY_3(g_convolution_w, g_convolution)
 XEN_NARGIFY_2(g_rectangular_to_polar_w, g_rectangular_to_polar)
 XEN_NARGIFY_2(g_polar_to_rectangular_w, g_polar_to_rectangular)
@@ -6751,6 +6785,8 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_make_fft_window_w g_make_fft_window
 #define g_mus_fft_w g_mus_fft
 #define g_spectrum_w g_spectrum
+#define g_autocorrelate_w g_autocorrelate
+#define g_correlate_w g_correlate
 #define g_convolution_w g_convolution
 #define g_rectangular_to_polar_w g_rectangular_to_polar
 #define g_polar_to_rectangular_w g_polar_to_rectangular
@@ -7111,6 +7147,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_fft_window,      g_make_fft_window_w,      2, 2, 0, H_make_fft_window);
   XEN_DEFINE_PROCEDURE(S_mus_fft,              g_mus_fft_w,              2, 2, 0, H_mus_fft);
   XEN_DEFINE_PROCEDURE(S_spectrum,             g_spectrum_w,             3, 1, 0, H_mus_spectrum); 
+  XEN_DEFINE_PROCEDURE(S_autocorrelate,        g_autocorrelate_w,        1, 0, 0, H_autocorrelate);
+  XEN_DEFINE_PROCEDURE(S_correlate,            g_correlate_w,            2, 0, 0, H_correlate);
   XEN_DEFINE_PROCEDURE(S_convolution,          g_convolution_w,          2, 1, 0, H_mus_convolution);
   XEN_DEFINE_PROCEDURE(S_rectangular_to_polar, g_rectangular_to_polar_w, 2, 0, 0, H_rectangular_to_polar);
   XEN_DEFINE_PROCEDURE(S_polar_to_rectangular, g_polar_to_rectangular_w, 2, 0, 0, H_polar_to_rectangular);
