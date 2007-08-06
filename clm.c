@@ -9286,8 +9286,6 @@ Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, mus_spectrum
 }
 
 
-/* TODO: autocorrelate and correlate -- tie into Common Lisp */
-
 Float *mus_autocorrelate(Float *data, int n)
 {
   Float *im;

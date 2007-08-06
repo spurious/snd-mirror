@@ -21,16 +21,16 @@
 ;;;  test 18: enved                             [38282]
 ;;;  test 19: save and restore                  [38301]
 ;;;  test 20: transforms                        [40086]
-;;;  test 21: new stuff                         [41984]
-;;;  test 22: run                               [43975]
-;;;  test 23: with-sound                        [49678]
-;;;  test 24: user-interface                    [52160]
-;;;  test 25: X/Xt/Xm                           [55566]
-;;;  test 26: Gtk                               [60162]
-;;;  test 27: GL                                [64014]
-;;;  test 28: errors                            [64138]
-;;;  test all done                              [66423]
-;;;  test the end                               [66659]
+;;;  test 21: new stuff                         [42055]
+;;;  test 22: run                               [44046]
+;;;  test 23: with-sound                        [49749]
+;;;  test 24: user-interface                    [52231]
+;;;  test 25: X/Xt/Xm                           [55637]
+;;;  test 26: Gtk                               [60233]
+;;;  test 27: GL                                [64085]
+;;;  test 28: errors                            [64209]
+;;;  test all done                              [66494]
+;;;  test the end                               [66730]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -40724,6 +40724,24 @@ EDITS: 1
 	(vct-add! tmprl tmpim)        ; add the first two
 	(vct-subtract! im2 rl2)       ; subtract the 4th from the 3rd
 	(vct-scale! (fft tmprl im2 -1) fftscale))))
+
+  (define (cross-correlate-3 rl1 rl2 fftlen)
+    (let* ((fftlen2 (/ fftlen 2))
+	   (fftscale (/ 1.0 fftlen))
+	   (im1 (make-vct fftlen))
+	   (im2 (make-vct fftlen)))
+      (fft rl1 im1 1)
+      (fft rl2 im2 1)
+      (let* ((tmprl (vct-copy rl1))
+	     (tmpim (vct-copy im1))
+	     (data3 (make-vct fftlen)))
+	(vct-multiply! tmprl rl2)     ; (* tempr1 tempr2)
+	(vct-multiply! tmpim im2)     ; (* tempi1 tempi2)
+	(vct-multiply! im2 rl1)       ; (* tempr1 tempi2)
+	(vct-multiply! rl2 im1)       ; (* tempr2 tempi1)
+	(vct-add! tmprl tmpim)        ; add the first two
+	(vct-subtract! im2 rl2)       ; subtract the 4th from the 3rd
+	(vct-scale! (fft tmprl im2 -1) fftscale))))
   
   (define* (automorph a b c d :optional snd chn)
     (let* ((len (frames snd chn))
@@ -41250,7 +41268,7 @@ EDITS: 1
 	  (vct-set! v2 3 1.0)  
 	  (vct-set! v3 0 1.0)  
 	  (vct-set! v4 3 1.0)
-	  (set! v1 (cross-correlate-2 v1 v2 16))
+	  (set! v1 (cross-correlate-3 v1 v2 16))
 	  (set! v3 (correlate v3 v4))
 	  (if (not (vequal v1 v3))
 	      (snd-display ";correlate 16:~%;  ~A~%;  ~A" v1 v3)))
@@ -41263,7 +41281,7 @@ EDITS: 1
 	  (vct-set! v2 32 1.0)  
 	  (vct-set! v3 0 1.0)  
 	  (vct-set! v4 32 1.0)
-	  (set! v1 (cross-correlate-2 v1 v2 128))
+	  (set! v1 (cross-correlate-3 v1 v2 128))
 	  (set! v3 (correlate v3 v4))
 	  (if (not (vequal v1 v3))
 	      (snd-display ";correlate 128:~%;  ~A~%;  ~A" v1 v3)))
@@ -41278,11 +41296,20 @@ EDITS: 1
 	    (vct-set! v2 i (- 0.5 (random 1.0))))
 	  (set! v3 (vct-copy v1))
 	  (set! v4 (vct-copy v2))
-	  (set! v1 (cross-correlate-2 v1 v2 128))
+	  (set! v1 (cross-correlate-3 v1 v2 128))
 	  (set! v3 (correlate v3 v4))
 	  (if (not (vequal v1 v3))
 	      (snd-display ";correlate 128 at random:~%;  ~A~%;  ~A" v1 v3)))
 	
+	(let ((v1 (make-vct 16))
+	      (v2 (make-vct 16)))
+	  (vct-set! v1 3 1.0)  
+	  (vct-set! v2 3 1.0)  
+	  (set! v1 (correlate v1 (vct-copy v1)))
+	  (set! v2 (autocorrelate v2))
+	  (if (not (vequal v1 v2))
+	      (snd-display ";auto/correlate 16:~%;  ~A~%;  ~A" v1 v2)))
+
 	(for-each
 	 (lambda (len)
 	   (let ((rl (make-vct len))
