@@ -20,7 +20,7 @@
 ;;; length sometimes vector-length, vct-length etc
 ;;; make-filter in scm requires coeffs arrays
 ;;; &optional -> :optional, &key too (using define*)
-;;; two-pi -> (* 2 pi) and need pi definition
+;;; two-pi -> (* 2 pi)
 ;;; make-empty-frame is make-frame essentially
 ;;; open-input and close-input -> make-readin or use name directly (in make-readin)
 ;;; make-locsig needs :output *output* and similarly for *reverb* if it's active
@@ -31,6 +31,8 @@
 ;;; various array info procs like array-dimension
 ;;; no length arg to sine-bank
 ;;; #'(lambda ...) to just (lambda...)
+;;; nth -> list-ref
+;;; loop -> do
 
 (define* (make-double-array len :key initial-contents initial-element)
   "(make-double-array len :key initial-contents initial-element) is for CL/Scheme compatibility; it makes a vct"
