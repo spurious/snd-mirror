@@ -70,40 +70,38 @@ do make a difference, as we'll see below.
 phase modulation, the other performing frequency modulation.  I have tried to make the innards 
 explicit at each step, and match the indices so that the instruments produce identical results given 
 identical parameters.  Also, to lay a different controversy to rest, it should be obvious from these two 
-functions that there is no difference in run-time computational expense between PM and FM.
+functions that there is no difference in run-time computational expense (or computational accuracy) between PM and FM.
 </p>
 
+<!-- CLM CASE
 <pre>
 (definstrument pm (beg end freq amp mc-ratio index)
   (let ((carrier-phase 0.0)
-        (carrier-phase-incr (* freq (/ two-pi *srate*)))
+        (carrier-phase-incr (hz-&gt;radians freq))
         (modulator-phase 0.0)
-        (modulator-phase-incr (* freq mc-ratio (/ two-pi *srate*)))
+        (modulator-phase-incr (hz-&gt;radians (* freq mc-ratio)))
         (modulation 0.0)
         (val 0.0))
    (run
      (loop for i from beg to end do
        (setf modulation (* index (sin modulator-phase)))
-       (setf val (* amp (sin (+ carrier-phase modulation))))
-       ;; no integration in phase modulation
+       (setf val (* amp (sin (+ carrier-phase modulation)))) ; no integration in phase modulation
        (incf carrier-phase carrier-phase-incr)
        (incf modulator-phase modulator-phase-incr)
        (outa i val)))))
 
 (definstrument fm (beg end freq amp mc-ratio index)
   (let ((carrier-phase 0.0)
-        (carrier-phase-incr (* freq (/ two-pi *srate*)))
+        (carrier-phase-incr (hz-&gt;radians freq))
         (modulator-phase (* .5 pi))
-        (modulator-phase-incr (* freq mc-ratio (/ two-pi *srate*)))
-        (fm-index (* freq mc-ratio index (/ two-pi *srate*)))
-         ;; ^ fix up fm index to take integration into account
+        (modulator-phase-incr (hz-&gt;radians (* freq mc-ratio)))
+        (fm-index (hz-&gt;radians (* freq mc-ratio index)))  ; fix up fm index to take integration into account
         (val 0.0)
         (modulation 0.0))
-  (run
+   (run
      (loop for i from beg to end do
        (setf modulation (* fm-index (sin modulator-phase)))
-       (incf carrier-phase modulation)
-       ;; here is the fm integration ^
+       (incf carrier-phase modulation)      ; here is the fm integration
        (setf val (* amp (sin carrier-phase)))
        (incf carrier-phase carrier-phase-incr)
        (incf modulator-phase modulator-phase-incr)
@@ -112,14 +110,47 @@ functions that there is no difference in run-time computational expense between 
 (with-sound () (pm 0 10000 1000 .25 0.1 4))
 (with-sound () (fm 0 10000 1000 .25 0.1 4))
 </pre>
+-->
 
-<p>or (to use Chowning's example):
-</p>
-
+<!-- SND CASE -->
 <pre>
-(with-sound () (fm 0 10000 100 .25 1.0 4.0))
-(with-sound () (pm 0 10000 100 .25 1.0 4.0))
+(define (pm beg end freq amp mc-ratio index)
+  (let ((carrier-phase 0.0)
+        (carrier-phase-incr (hz-&gt;radians freq))
+        (modulator-phase 0.0)
+        (modulator-phase-incr (hz-&gt;radians (* freq mc-ratio))))
+   (run
+    (lambda ()
+      (do ((i beg (1+ i)))
+	  ((= i end))
+	(let* ((modulation (* index (sin modulator-phase)))
+	       (pm-val (* amp (sin (+ carrier-phase modulation))))) ; no integration in phase modulation
+	  (set! carrier-phase (+ carrier-phase carrier-phase-incr))
+	  (set! modulator-phase (+ modulator-phase modulator-phase-incr))
+	  (outa i pm-val *output*)))))))
+
+(define (fm beg end freq amp mc-ratio index)
+  (let ((carrier-phase 0.0)
+        (carrier-phase-incr (hz-&gt;radians freq))
+        (modulator-phase (* .5 pi))
+        (modulator-phase-incr (hz-&gt;radians (* freq mc-ratio)))
+        (fm-index (hz-&gt;radians (* freq mc-ratio index)))) ; fix up fm index to take integration into account
+  (run
+   (lambda ()
+     (do ((i beg (1+ i)))
+	 ((= i end))
+       (let ((modulation (* fm-index (sin modulator-phase))))
+	 (set! carrier-phase (+ carrier-phase modulation)) ; here is the fm integration
+	 (let ((fm-val (* amp (sin carrier-phase))))
+	   (set! carrier-phase (+ carrier-phase carrier-phase-incr))
+	   (set! modulator-phase (+ modulator-phase modulator-phase-incr))
+	   (outb i fm-val *output*))))))))
+
+(with-sound (:channels 2) 
+  (pm 0 10000 1000 .25 0.5 4)
+  (fm 0 10000 1000 .25 0.5 4))
 </pre>
+<!-- -->
 </small>
 </td></tr></table>
 
@@ -139,15 +170,26 @@ syntax this is:
   (oscil carrier (* B (oscil modulator)))
 </pre>
 
-<p>where oscil is:
+<p>where oscil is (essentially):
 </p>
 
+<!-- CLM CASE 
 <pre>
 (defun oscil (oscillator fm-input &amp;optional (pm-input 0))
   (prog1 
-    (sin (+ (osc-phase oscillator) pm-input))
-    (incf (osc-phase oscillator) (+ (osc-freq oscillator) fm-input))))
+    (sin (+ (mus-phase oscillator) pm-input))
+    (incf (mus-phase oscillator) (+ (mus-frequency oscillator) fm-input))))
 </pre>
+-->
+
+<!-- SND CASE -->
+<pre>
+(define* (oscil oscillator fm-input :optional (pm-input 0))
+  (let ((result (sin (+ oscillator-phase pm-input))))
+    (set! oscillator-phase (+ oscillator-phase (+ oscillator-phase-increment fm-input)))
+    result))
+</pre>
+<!-- -->
 
 <p>Since it is generally believed that the ear performs some sort of projection of the time domain 
 waveform into the frequency domain (a Fourier Transform), and that timbre is at least partly a matter 
@@ -253,6 +295,52 @@ become jejune.  The only important thing to get from these functions is that the
 more dispersed the spectral energy -- normally a "brighter" sound.
 </p>
 
+<table border=1 hspace=6 cellpadding=3><tr>
+<td><img src="fm10.png" alt="fm 1.0"></td>
+<td><img src="fm20.png" alt="fm 2.0"></td>
+<td><img src="fm30.png" alt="fm 3.0"></td>
+</tr>
+<tr><td>
+<center>carrier=1000, mod=100, index=1.0</center>
+<pre>
+  J0(1.0) = 1.0 (see note *!)
+  J1(1.0) = 0.575
+  J2(1.0) = 0.150 
+  J3(1.0) = 0.025 
+  J4(1.0) = 0.003
+
+(* Jn values normalized to match 
+the fft peak values given above)
+</pre>
+</td>
+<td>
+<center>carrier=1000, mod=100, index=2.0</center>
+<pre>
+  J0(2.0) = 0.388
+  J1(2.0) = 1.0 (*)
+  J2(2.0) = 0.611
+  J3(2.0) = 0.223
+  J4(2.0) = 0.058
+  J5(2.0) = 0.012
+  J6(2.0) = 0.002
+</pre>
+</td>
+<td>
+<center>carrier=1000, mod=100, index=3.0</center>
+<pre>
+  J0(3.0) = -0.534
+  J1(3.0) = 0.697
+  J2(3.0) = 1.0 (*)
+  J3(3.0) = 0.635
+  J4(3.0) = 0.271
+  J5(3.0) = 0.088
+  J6(3.0) = 0.023
+</pre>
+</td>
+</tr>
+</table>
+
+
 <p>There is a rule of thumb, Mr Carson's rule, about the overall bandwidth of the resultant spectrum (it 
 follows from our description of the Bessel functions): Roughly speaking, there are fm-index+1 
 significant sidebands on each side of the carrier, so our total bandwidth is on the order of
@@ -291,17 +379,44 @@ For the view from celestial mechanics today, see Vallado, "Fundamentals of Astro
 <p>Here's a simple FM instrument:
 </p>
 
+<!-- CLM CASE 
 <pre>
-(definstrument fm (beg end freq amp mc-ratio index &amp;optional (index-env '(0 1 100 1)))
-  (let* ((cr (make-oscil :frequency freq))
-         (md (make-oscil :frequency (* freq mc-ratio)))
+(definstrument fm (beg dur freq amp mc-ratio index &amp;optional (index-env '(0 1 100 1)))
+  (let* ((start (seconds-&gt;samples beg))
+         (end (+ start (seconds-&gt;samples dur)))
+         (cr (make-oscil freq))
+         (md (make-oscil (* freq mc-ratio)))
          (fm-index (hz-&gt;radians (* index mc-ratio freq)))
-         (ampf (make-env :envelope index-env :scaler amp)) 
-         (indf (make-env :envelope index-env :scaler fm-index))) 
+         (ampf (make-env index-env :scaler amp :duration dur)) 
+         (indf (make-env index-env :scaler fm-index :duration dur))) 
     (run
-      (loop for i from beg to end do
-        (outa i (* (env ampf) (oscil cr (* (env indf) (oscil md)))))))))
+      (loop for i from start to end do
+        (outa i (* (env ampf) 
+                   (oscil cr (* (env indf) 
+                                (oscil md)))))))))
 </pre>
+-->
+
+<!-- SND CASE -->
+<pre>
+(define* (fm beg dur freq amp mc-ratio index :optional (index-env '(0 1 100 1)))
+  (let* ((start (seconds-&gt;samples beg))
+         (end (+ start (seconds-&gt;samples dur)))
+         (cr (make-oscil freq))
+         (md (make-oscil (* freq mc-ratio)))
+         (fm-index (hz-&gt;radians (* index mc-ratio freq)))
+         (ampf (make-env index-env :scaler amp :duration dur)) 
+         (indf (make-env index-env :scaler fm-index :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (outa i (* (env ampf)                  ; amplitude env
+                    (oscil cr (* (env indf)     ; carrier + modulation env
+                                 (oscil md))))  ; modulation
+               *output*))))))
+</pre>
+<!-- -->
 
 <p>I put an envelope on the fm-index so that we can try out the "dynamic spectra" ("dynamic" means 
 "changing" here).  For now, don't worry too much about the actual side band amplitudes -- these 
@@ -309,7 +424,7 @@ will not always match Chowning's description -- we'll get around to an explanati
 </p>
 
 <pre>
-    (with-sound () (fm 0 10000 100 .5 1.0 4.0))
+    (with-sound () (fm 0 1.0 100 .5 1.0 4.0))
 </pre>
 
 <p>is Chowning's first example.  Sure enough, it's a complex spectrum (that is, it has lots of 
@@ -319,14 +434,14 @@ carrier. If we use an mc-ratio of .25 and a carrier of 400:
 </p>
 
 <pre>
-    (with-sound () (fm 0 10000 400 .5 0.25 4.0))
+    (with-sound () (fm 0 1.0 400 .5 0.25 4.0))
 </pre>
 
 <p>we end up with the same perceived pitch because the sidebands are still at multiples of 100 Hz.
 </p>
 
 <pre>
-    (with-sound () (fm 0 10000 400 .5 1.1414 4.0))
+    (with-sound () (fm 0 1.0 400 .5 1.1414 4.0))
 </pre>
 
 <p>has inharmonic sidebands.  Most real sounds seem to change over the course of a note, and it was at one time thought that most 
@@ -335,31 +450,38 @@ index:
 </p>
 
 <pre>
-    (with-sound () (fm 0 10000 400 .5 1.0 5.0 '(0 0 20 1 40 .6 90 .5 100 0)))
+    (with-sound () (fm 0 0.5 400 .5 1.0 5.0 '(0 0 20 1 40 .6 90 .5 100 0)))
 </pre>
 
 <p>making a "brass-like" sound.  Similarly, Chowning suggests that
 </p>
 
 <pre>
-    (with-sound () (fm 0 10000 900 .5 1/3 2.0 '(0 0 6 .5 10 1 90 1 100 0)))
+    (with-sound () (fm 0 1.0 900 .5 1/3 2.0 '(0 0 6 .5 10 1 90 1 100 0)))
 </pre>
 
 <p>is a woodwind-like tone,
 </p>
 
 <pre>
-    (with-sound () (fm 0 10000 500 .5 .2 1.5 '(0 0 6 .5 10 1 90 1 100 0)))
+    (with-sound () (fm 0 1.0 500 .5 .2 1.5 '(0 0 6 .5 10 1 90 1 100 0)))
 </pre>
 
 <p>is bassoon-like, and finally
 </p>
 
 <pre>
-    (with-sound () (fm 0 10000 900 .5 2/3 2 '(0 0 25 1 75 1 100 0)))
+    (with-sound () (fm 0 1.0 900 .5 2/3 2 '(0 0 25 1 75 1 100 0)))
 </pre>
 
-<p>is clarinet-like.  Many simple extensions can be made to the fm instrument given above and 
+<p>is clarinet-like.  Now start at 2000 Hz, set the mc-ratio to .1, and
+sweep the FM index from 0 to 10, and the spectrogram looks like this:
+</p>
+
+<img src="fmsweep.png" alt="sweep index" hspace=40>
+
+<p>
+Many simple extensions can be made to the fm instrument given above and 
 something good can often be coaxed from it.  But, to clear up one source of confusion -- if you 
 looked at the spectrum of our first example, and compared it to the spectrum Chowning works out, 
 you may wonder what's gone awry.  We have to return to our initial set of formulas.  If we consider 
@@ -421,6 +543,7 @@ pattern of cancellations depending on the initial phases of the carrier and modu
 instrument:
 </p>
 
+<!-- CLM CASE
 <pre>
 (definstrument fm (beg end freq amp mc-ratio index carrier-phase mod-phase)
   (let ((cr (make-oscil :frequency freq :initial-phase carrier-phase))
@@ -433,8 +556,28 @@ instrument:
 (with-sound () (fm 0 10000 100 .25 1.0 4 0 (* .5 pi)))
 (with-sound () (fm 0 10000 100 .25 1.0 4.0 (* .5 pi) (* .5 pi)))
 </pre>
+-->
 
-<p>There is a noticeable difference!  The first case is that given by Chowning in his fig 1.4a, the second 
+<!-- SND CASE -->
+<pre>
+(define (fm beg dur freq amp mc-ratio index carrier-phase mod-phase)
+  (let* ((start (seconds-&gt;samples beg))
+	 (end (+ start (seconds-&gt;samples dur)))
+	 (cr (make-oscil freq carrier-phase))
+	 (md (make-oscil (* freq mc-ratio) mod-phase))
+	 (fm-index (hz-&gt;radians (* index mc-ratio freq))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (outa i (* amp (oscil cr (* fm-index (oscil md)))) *output*))))))
+
+(with-sound () (fm 0 1.0 100 .25 1.0 4 0 (* .5 pi)))
+(with-sound () (fm 0 1.0 100 .25 1.0 4.0 (* .5 pi) (* .5 pi)))
+</pre>
+<!-- -->
+
+<p>There is a difference!  The first case is that given by Chowning in his fig 1.4a, the second 
 is Bate's fig 3 ("The Effects of Modulator Phase on Timbres in FM Synthesis").  (At least I think it 
 is -- Bate says he is changing the modulator's initial phase, but I can't reproduce his graph unless I 
 change the carrier initial phase -- the important point is that these phases matter).  Also, remember 
@@ -465,11 +608,12 @@ independently of the carrier), we get a changing spectrum because of these cance
 clm instrument that shows this effect:
 </p>
 
+<!-- CLM CASE 
 <pre>
 (definstrument fm (beg end freq amp mc-ratio index car-phase mod-phase skew-func skew)
-  (let ((cr (make-oscil :frequency freq :initial-phase car-phase))
-        (md (make-oscil :frequency (* freq mc-ratio) :initial-phase mod-phase))
-        (skewf (make-env :envelope skew-func :scaler (hz-&gt;radians (* skew mc-ratio freq))))
+  (let ((cr (make-oscil freq car-phase))
+        (md (make-oscil (* freq mc-ratio) mod-phase))
+        (skewf (make-env skew-func :scaler (hz-&gt;radians (* skew mc-ratio freq)) :end end))
         (fm-index (hz-&gt;radians (* index mc-ratio freq))))
     (run
       (loop for i from beg to end do
@@ -477,6 +621,26 @@ clm instrument that shows this effect:
 
 (with-sound () (fm 0 40000 100 .25 1.0 4.0 0 0 '(0 0 50 1 100 0) .02))
 </pre>
+-->
+
+<!-- SND CASE -->
+<pre>
+(define (fm beg dur freq amp mc-ratio index car-phase mod-phase skew-func skew)
+  (let* ((start (seconds-&gt;samples beg))
+	 (end (+ start (seconds-&gt;samples dur)))
+	 (cr (make-oscil freq car-phase))
+	 (md (make-oscil (* freq mc-ratio) mod-phase))
+	 (skewf (make-env skew-func :scaler (hz-&gt;radians (* skew mc-ratio freq)) :duration dur))
+	 (fm-index (hz-&gt;radians (* index mc-ratio freq))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+        (outa i (* amp (oscil cr (* fm-index (oscil md (env skewf))))) *output*))))))
+
+(with-sound () (fm 0 2.0 100 .25 1.0 4.0 0 0 '(0 0 50 1 100 0) .02))
+</pre>
+<!-- -->
 
 <p>One subtle pitfall here involves the constant offset caused by the integration.  If we 
 integrate f(x) we get some F(x) + F(a) where a is the starting point of the integration.  In the case of sin(B*sin), a is 0, 
@@ -502,14 +666,15 @@ sin A (or cos A) then add the two resulting spectra, and the (A + B) parts cance
 example:
 </p>
 
+<!-- CLM CASE
 <pre>
 (definstrument fm (beg end freq amp mc-ratio index cr0p cr1p md0p md1p)
-  (let ((cr0 (make-oscil :frequency 0 :initial-phase cr0p))
-        (cr1 (make-oscil :frequency 0 :initial-phase cr1p))
-        (md0 (make-oscil :frequency (* freq mc-ratio) :initial-phase md0p))
-        (md1 (make-oscil :frequency (* freq mc-ratio) :initial-phase md1p))
-        (am0 (make-oscil :frequency freq :initial-phase 0))
-        (am1 (make-oscil :frequency freq :initial-phase (* .5 pi)))
+  (let ((cr0 (make-oscil 0 cr0p))
+        (cr1 (make-oscil 0 cr1p))
+        (md0 (make-oscil (* freq mc-ratio) md0p))
+        (md1 (make-oscil (* freq mc-ratio) md1p))
+        (am0 (make-oscil freq 0))
+        (am1 (make-oscil freq (* .5 pi)))
         (fm-index (hz-&gt;radians (* index mc-ratio freq))))
     (run
       (loop for i from beg to end do
@@ -518,6 +683,31 @@ example:
 
 (with-sound () (fm 0 10000 1000 .25 .1 1.0 0 (* .5 pi) (* .5 pi) 0))
 </pre>
+-->
+
+<!-- SND CASE -->
+<pre>
+(define (fm beg dur freq amp mc-ratio index cr0p cr1p md0p md1p)
+  (let* ((start (seconds-&gt;samples beg))
+	 (end (+ start (seconds-&gt;samples dur)))
+	 (cr0 (make-oscil 0 cr0p))
+	 (cr1 (make-oscil 0 cr1p))
+	 (md0 (make-oscil (* freq mc-ratio) md0p))
+	 (md1 (make-oscil (* freq mc-ratio) md1p))
+	 (am0 (make-oscil freq 0))
+	 (am1 (make-oscil freq (* .5 pi)))
+	 (fm-index (hz-&gt;radians (* index mc-ratio freq))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (outa i (* amp (+ (* (oscil am0) (oscil cr0 (* fm-index (oscil md0))))
+			   (* (oscil am1) (oscil cr1 (* fm-index (oscil md1))))))
+	       *output*))))))
+
+(with-sound () (fm 0 1.0 1000 .25 .1 1.0 0 (* .5 pi) (* .5 pi) 0))
+</pre>
+<!-- -->
 
 <p>Palamin et al in "A Method of Generating and Controlling Musical Asymmetrical Spectra" started at 
 the same point (the expansion of simple FM), added a factor rn to each sideband, and then worked 
@@ -592,16 +782,17 @@ spectrum somewhat. In general:
 <p>A clm instrument to produce something like this might be:
 </p>
 
+<!-- CLM CASE
 <pre>
 (definstrument fm (beg end freq amp mc-ratios indexes carrier-phase mod-phases)
-  (let* ((cr (make-oscil :frequency freq :initial-phase carrier-phase))
+  (let* ((cr (make-oscil freq carrier-phase))
          (n (length mc-ratios))
          (md-arr (make-array n :element-type 'osc))
          (fm-index-arr (make-array n :element-type 'short-float)))
     (loop for i from 0 below n do
       (setf (aref md-arr i)
-        (make-oscil :frequency (* freq (aref mc-ratios i)) 
-                    :initial-phase (aref mod-phases i)))
+        (make-oscil (* freq (aref mc-ratios i)) 
+                    (aref mod-phases i)))
       (setf (aref fm-ind-arr i) (hz-&gt;radians (* (aref indexes i) (aref mc-ratios i) freq))))
     (run
       (loop for i from beg to end do
@@ -610,12 +801,40 @@ spectrum somewhat. In general:
             (incf sum (* (aref fm-ind-arr k) (oscil (aref md-arr k)))))
           (outa i (* amp (oscil cr sum))))))))
 </pre>
+-->
+
+<!-- SND CASE -->
+<pre>
+(define (fm beg dur freq amp mc-ratios indexes carrier-phase mod-phases)
+  (let* ((start (seconds-&gt;samples beg))
+	 (end (+ start (seconds-&gt;samples dur)))
+	 (cr (make-oscil freq carrier-phase))
+         (n (length mc-ratios))
+         (modulators (make-vector n))
+         (fm-indices (make-vct n)))
+    (do ((i 0 (1+ i)))
+	((= i n))
+      (vector-set! modulators i (make-oscil (* freq (list-ref mc-ratios i)) (list-ref mod-phases i)))
+      (vct-set! fm-indices i (hz-&gt;radians (* freq (list-ref indexes i) (list-ref mc-ratios i)))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (let ((sum 0.0))
+	   (do ((k 0 (1+ k)))
+	       ((= k n))
+	     (set! sum (+ sum (* (vct-ref fm-indices k) (oscil (vector-ref modulators k))))))
+	   (outa i (* amp (oscil cr sum)) *output*)))))))
+
+(with-sound () (fm 0 2.0 440 .3 '(1 3 4) '(1.0 0.5 0.1) 0.0 '(0.0 0.0 0.0)))
+</pre>
+<!-- -->
 
 <p>But this is silly -- I don't think all these modulators are buying us anything.  I say three is enough.  
 My favorite computer instrument, the FM violin, uses three sinusoidal components in the 
-modulating wave -- see v.ins in the clm area -- and for more complex spectra these violins are then 
+modulating wave; for more complex spectra these violins are then 
 ganged together (see fmviolin.clm for many examples).  By using a few sines in the modulator, you 
-get away from the "simple FM sweep" that has become anathema, and the broader, flatter spectrum 
+get away from the "simple FM sweep" that has become tiresome, and the broader, flatter spectrum 
 is somewhat closer to that of a real violin.
 </p>
 
@@ -634,6 +853,7 @@ merely a simple and obvious bandage.
 <p>A pared down version of the fm-violin is:
 </p>
 
+<!-- CLM CASE 
 <pre>
 (definstrument violin (beg end frequency amplitude fm-index)
   (let* ((frq-scl (hz-&gt;radians frequency))
@@ -641,20 +861,20 @@ merely a simple and obvious bandage.
          (index1 (* maxdev (/ 5.0 (log frequency))))
          (index2 (* maxdev 3.0 (/ (- 8.5 (log frequency)) (+ 3.0 (/ frequency 1000)))))
          (index3 (* maxdev (/ 4.0 (sqrt frequency))))
-         (carrier (make-oscil :frequency frequency))
-         (fmosc1 (make-oscil :frequency frequency))
-         (fmosc2 (make-oscil :frequency (* 3 frequency)))
-         (fmosc3 (make-oscil :frequency (* 4 frequency)))
-         (ampf  (make-env :envelope '(0 0 25 1 75 1 100 0) :scaler amplitude))
-         (indf1 (make-env :envelope '(0 1 25 .4 75 .6 100 0) :scaler index1))
-         (indf2 (make-env :envelope '(0 1 25 .4 75 .6 100 0) :scaler index2))
-         (indf3 (make-env :envelope '(0 1 25 .4 75 .6 100 0) :scaler index3))
-         (pervib (make-triangle-wave :frequency 5 :amplitude (* .0025 frq-scl)))
-         (ranvib (make-randi :frequency 16 :amplitude (* .005 frq-scl)))
+         (carrier (make-oscil frequency))
+         (fmosc1 (make-oscil frequency))
+         (fmosc2 (make-oscil (* 3 frequency)))
+         (fmosc3 (make-oscil (* 4 frequency)))
+         (ampf  (make-env '(0 0 25 1 75 1 100 0) :scaler amplitude))
+         (indf1 (make-env '(0 1 25 .4 75 .6 100 0) :scaler index1))
+         (indf2 (make-env '(0 1 25 .4 75 .6 100 0) :scaler index2))
+         (indf3 (make-env '(0 1 25 .4 75 .6 100 0) :scaler index3))
+         (pervib (make-triangle-wave 5 :amplitude (* .0025 frq-scl)))
+         (ranvib (make-rand-interp 16 :amplitude (* .005 frq-scl)))
          (vib 0.0))
     (run
      (loop for i from beg to end do
-       (setf vib (+ (triangle-wave pervib) (randi ranvib)))
+       (setf vib (+ (triangle-wave pervib) (rand-interp ranvib)))
        (outa i (* (env ampf)
                   (oscil carrier
                          (+ vib 
@@ -664,6 +884,44 @@ merely a simple and obvious bandage.
 
 (with-sound () (violin 0 10000 440 .1 2.5))
 </pre>
+-->
+
+<!-- SND CASE -->
+<pre>
+(define (violin beg dur frequency amplitude fm-index)
+  (let* ((start (seconds-&gt;samples beg))
+	 (end (+ start (seconds-&gt;samples dur)))
+	 (frq-scl (hz-&gt;radians frequency))
+         (maxdev (* frq-scl fm-index))
+         (index1 (* maxdev (/ 5.0 (log frequency))))
+         (index2 (* maxdev 3.0 (/ (- 8.5 (log frequency)) (+ 3.0 (/ frequency 1000)))))
+         (index3 (* maxdev (/ 4.0 (sqrt frequency))))
+         (carrier (make-oscil frequency))
+         (fmosc1 (make-oscil frequency))
+         (fmosc2 (make-oscil (* 3 frequency)))
+         (fmosc3 (make-oscil (* 4 frequency)))
+         (ampf  (make-env '(0 0 25 1 75 1 100 0) :scaler amplitude :duration dur))
+         (indf1 (make-env '(0 1 25 .4 75 .6 100 0) :scaler index1 :duration dur))
+         (indf2 (make-env '(0 1 25 .4 75 .6 100 0) :scaler index2 :duration dur))
+         (indf3 (make-env '(0 1 25 .4 75 .6 100 0) :scaler index3 :duration dur))
+         (pervib (make-triangle-wave 5 :amplitude (* .0025 frq-scl)))
+         (ranvib (make-rand-interp 16 :amplitude (* .005 frq-scl))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (let ((vib (+ (triangle-wave pervib) (rand-interp ranvib))))
+	   (outa i (* (env ampf)
+		      (oscil carrier
+			     (+ vib 
+				(* (env indf1) (oscil fmosc1 vib))
+				(* (env indf2) (oscil fmosc2 (* 3.0 vib)))
+				(* (env indf3) (oscil fmosc3 (* 4.0 vib))))))
+		 *output*)))))))
+
+(with-sound () (violin 0 1.0 440 .1 2.5))
+</pre>
+<!-- -->
 
 
 <table border=1 hspace=50 cellpadding=10><tr><td>
@@ -737,11 +995,12 @@ timbral change in the output, so cascade FM is almost impossible to keep under c
 to show how strong this effect is:
 </p>
 
+<!-- CLM CASE
 <pre>
 (definstrument cascade (beg end freq amp modrat modind casrat casind caspha)
-  (let ((cr (make-oscil :frequency freq))
-        (md (make-oscil :frequency (* freq modrat)))
-        (ca (make-oscil :frequency (* freq casrat) :initial-phase caspha))
+  (let ((cr (make-oscil freq))
+        (md (make-oscil (* freq modrat)))
+        (ca (make-oscil (* freq casrat) caspha))
         (fm-ind0 (hz-&gt;radians (* modind modrat freq)))
         (fm-ind1 (hz-&gt;radians (* casind (/ casrat modrat) freq))))
     (run
@@ -751,21 +1010,58 @@ to show how strong this effect is:
 (with-sound () (cascade 0 10000 400 .25 1.0 1.0 1.0 1.0 0))
 (with-sound () (cascade 0 10000 400 .25 1.0 1.0 1.0 1.0 (* .5 pi)))
 </pre>
+-->
+
+<!-- SND CASE -->
+<pre>
+(define (cascade beg dur freq amp modrat modind casrat casind caspha)
+  (let* ((start (seconds-&gt;samples beg))
+	 (end (+ start (seconds-&gt;samples dur)))
+	 (cr (make-oscil freq))
+	 (md (make-oscil (* freq modrat)))
+	 (ca (make-oscil (* freq casrat) caspha))
+	 (fm-ind0 (hz-&gt;radians (* modind modrat freq)))
+	 (fm-ind1 (hz-&gt;radians (* casind (/ casrat modrat) freq))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (outa i (* amp (oscil cr (* fm-ind0 (oscil md (* fm-ind1 (oscil ca)))))) *output*))))))
+
+(with-sound () 
+  (cascade 0 1.0 400 .25 1.0 1.0 1.0 1.0 0)
+  (cascade 1.5 1.0 400 .25 1.0 1.0 1.0 1.0 (* .5 pi)))
+</pre>
+<!-- -->
+
+
+
 </small>
 </tr></td></table>
 
 
 <p>A similar trick comes up in "feedback FM" used in some synthesizers. Here the output of the carrier 
-is low-pass filtered, then fed back into its fm-input location.  Cellon.ins, written by Stanislaw 
+is low-pass filtered, then fed back into its fm-input location.  Cellon, written by Stanislaw 
 Krupowicz, is an example -- the feedback FM occurs in the lines (edited here for clarity):
 </p>
 
+<!-- CLM CASE
 <pre>
     (setf fm (one-zero low (* B (oscil fmosc fm))))
     (outa i (* amp (oscil carrier fm)))
 or
     sin(y &lt;= w<sub>c</sub>t + B sin y) 
 </pre>
+-->
+
+<!-- SND CASE -->
+<pre>
+    (set! fm (one-zero low (* B (oscil fmosc fm))))
+    (outa i (* amp (oscil carrier fm)) *output*)
+or
+    sin(y &lt;= w<sub>c</sub>t + B sin y) 
+</pre>
+<!-- -->
 
 <p>(ignoring the low pass filter for the moment).  This is expanded by Tomisawa as:
 </p>
@@ -837,14 +1133,14 @@ portion is:
 </p>
 
 <pre>
-    (oscil carrier (* fm-index (randh modulator)))
+    (oscil carrier (* fm-index (rand modulator)))
 </pre>
 
-<p>where randh is producing white noise.  You can produce a sequence of different noises, moving 
-toward gaussian noise, simply by adding randh's together (this is known as the "central-limit 
-theorem")  The probability density of a sum of n independent random variables (randh's in clm) 
+<p>where rand is producing white noise.  You can produce a sequence of different noises, moving 
+toward gaussian noise, simply by adding rand's together (this is known as the "central-limit 
+theorem")  The probability density of a sum of n independent random variables (rand's in clm) 
 tends to approach a gaussian density as n increases.  We start with "white" noise which has an equal 
-probability of any value. Add another randh, thereby convolving the two flat "white" densities, and 
+probability of any value. Add another rand, thereby convolving the two flat "white" densities, and 
 you get a /\ shape.  The more you add the closer you get to the bell shaped curve of gaussian noise.  
 When frequency modulation gets noise, the power spectral density of the output has the same form 
 as the density function of the modulating wave, but now centered around the carrier.  For either kind 
@@ -862,7 +1158,7 @@ smeared out by a copy of the noise band.
 </p>
 
 <pre>
-    (oscil carrier (* fm-index (oscil fm (* noise-index (randh noise)))))
+    (oscil carrier (* fm-index (oscil fm (* noise-index (rand noise)))))
 </pre>
 
 <p>In the realm of "anything" as the modulating signal, consider 
@@ -887,30 +1183,31 @@ versions of the fm-violin used a sawtooth wave as the carrier.  One of the more 
 and used in "Colony" and other pieces. In a simplified form it is:
 </p>
 
+<!-- CLM CASE
 <pre>
 (definstrument vox (beg end freq amp 
                     &amp;optional (indexes '(.005 .01 .02)) (formant-amps '(.86 .13 .01)))
-  (let* ((car-os (make-oscil :frequency 0))
+  (let* ((car-os (make-oscil 0))
          (evens (make-array 3))
          (odds (make-array 3))
          (amps (make-array 3 :element-type 'short-float :initial-contents formant-amps))
-         (ampf (make-env :envelope '(0 0 25 1 75 1 100 0) :scaler amp))
+         (ampf (make-env '(0 0 25 1 75 1 100 0) :scaler amp))
          (frmfs (make-array 3))
          (indices (make-array 3 :element-type 'short-float :initial-contents indexes))
          (frq 0.0) (car 0.0) (frm 0.0) (frm-int 0) (frm0 0.0) 
          (even-amp 0.0) (odd-amp 0.0) (even-freq 0.0) 
          (odd-freq 0.0) (sum 0.0)
-         (per-vib (make-triangle-wave :frequency 6 :amplitude (* freq .03)))
-         (ran-vib (make-randi :frequency 20 :amplitude (* freq .5 .02))))
+         (per-vib (make-triangle-wave 6 :amplitude (* freq .03)))
+         (ran-vib (make-rand-interp 20 :amplitude (* freq .5 .02))))
     (dotimes (i 3)
-      (setf (aref evens i) (make-oscil :frequency 0))
-      (setf (aref odds i) (make-oscil :frequency 0)))
-    (setf (aref frmfs 0) (make-env :envelope '(0 520 100 490))) 
-    (setf (aref frmfs 1) (make-env :envelope '(0 1190 100 1350))) 
-    (setf (aref frmfs 2) (make-env :envelope '(0 2390 100 1690))) 
+      (setf (aref evens i) (make-oscil 0))
+      (setf (aref odds i) (make-oscil 0)))
+    (setf (aref frmfs 0) (make-env '(0 520 100 490))) 
+    (setf (aref frmfs 1) (make-env '(0 1190 100 1350))) 
+    (setf (aref frmfs 2) (make-env '(0 2390 100 1690))) 
     (run
      (loop for i from beg to end do
-       (setf frq (+ freq (triangle-wave per-vib) (randi ran-vib)))
+       (setf frq (+ freq (triangle-wave per-vib) (rand-interp ran-vib)))
        (setf car (oscil car-os (hz-&gt;radians frq)))
        (setf sum 0.0)
        (dotimes (k 3)
@@ -939,9 +1236,75 @@ and used in "Colony" and other pieces. In a simplified form it is:
 
 (with-sound () (vox 0 10000 110 .5 '(0.02 0.01 0.02) '(.9 .09 .01)))
 </pre>
+-->
+
+<!-- SND CASE -->
+<pre>
+(define* (vox beg dur freq1 amp :optional (indexes '(.005 .01 .02)) (formant-amps '(.86 .13 .01)))
+  (let* ((start (seconds-&gt;samples beg))
+	 (end (+ start (seconds-&gt;samples dur)))
+	 (freq freq1)
+	 (car-os (make-oscil 0))
+         (evens (make-vector 3))
+         (odds (make-vector 3))
+         (amps (apply vct formant-amps))
+         (ampf (make-env '(0 0 25 1 75 1 100 0) :scaler amp :duration dur))
+         (frmfs (make-vector 3))
+         (indices (apply vct indexes))
+         (per-vib (make-triangle-wave 6 :amplitude (* freq .03)))
+         (ran-vib (make-rand-interp 20 :amplitude (* freq .5 .02))))
+    (do ((i 0 (1+ i)))
+	((= i 3))
+      (vector-set! evens i (make-oscil 0))
+      (vector-set! odds i (make-oscil 0)))
+
+    (vector-set! frmfs 0 (make-env '(0 520 100 490) :duration dur)) 
+    (vector-set! frmfs 1 (make-env '(0 1190 100 1350) :duration dur)) 
+    (vector-set! frmfs 2 (make-env '(0 2390 100 1690) :duration dur))
+
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (let* ((frq (+ freq (triangle-wave per-vib) (rand-interp ran-vib)))
+		(car (oscil car-os (hz-&gt;radians frq)))
+		(sum 0.0))
+	   (do ((k 0 (1+ k)))
+	       ((= k 3))
+	     (let* ((frm (env (vector-ref frmfs k)))
+		    (frm0 (/ frm frq))
+		    (frm-int (inexact-&gt;exact (floor frm0)))
+		    (even-amp 0.0) (odd-amp 0.0) 
+		    (even-freq 0.0) (odd-freq 0.0))
+	       (if (even? frm-int)
+		   (begin
+		     (set! even-freq (hz-&gt;radians (* frm-int frq)))
+		     (set! odd-freq (hz-&gt;radians (* (+ frm-int 1) frq)))
+		     (set! odd-amp (- frm0 frm-int))
+		     (set! even-amp (- 1.0 odd-amp)))
+		   (begin
+		     (set! odd-freq (hz-&gt;radians (* frm-int frq)))
+		     (set! even-freq (hz-&gt;radians (* (+ frm-int 1) frq)))
+		     (set! even-amp (- frm0 frm-int))
+		     (set! odd-amp (- 1.0 even-amp))))
+	       (set! sum (+ sum (+ (* (vct-ref amps k) 
+				      (+ (* even-amp 
+					    (oscil (vector-ref evens k) 
+						   (+ even-freq (* (vct-ref indices k) car))))
+					 (* odd-amp 
+					    (oscil (vector-ref odds k) 
+						   (+ odd-freq (* (vct-ref indices k) car)))))))))))
+	   (outa i (* (env ampf) sum) *output*)))))))
+
+(with-sound () 
+  (vox 0 1.0 220.0 0.5)
+  (vox 1.5 1.0 110 .5 '(0.02 0.01 0.02) '(.9 .09 .01)))
+</pre>
+<!-- -->
+
+
 <hr>
 <h2>References</h2>
-
 <pre>
 <small>
 Abramowitz and Stegun, "Handbook of Mathematical Functions", Dover 1965.
@@ -964,9 +1327,11 @@ Le Brun, "A Derivation of the Spectrum of FM with a Complex Modulating Wave", CM
 
 Moorer, "Signal Processing Aspects of Computer Music: A Survey" Proc IEEE  vol 65 1977.
 
-Palamin, Palamin, Ronveaux "A Method of Generating and Controlling Asymmetrical Spectra", JAES vol 36, no 9, Sept 88, p671-685.
+Palamin, Palamin, Ronveaux "A Method of Generating and Controlling Asymmetrical Spectra", JAES vol 36, 
+     no 9, Sept 88, p671-685.
 
-Schottstaedt,  "The Simulation of Natural Instrument Tones Using Frequency Modulation with a Complex Modulating Wave", CMJ vol 1 no 4 1977 p46-50
+Schottstaedt,  "The Simulation of Natural Instrument Tones Using Frequency Modulation with a Complex Modulating Wave", 
+     CMJ vol 1 no 4 1977 p46-50
 
 Taub and Schilling, "Principles of Communications Systems", McGraw-Hill, 1986.
 
@@ -985,7 +1350,7 @@ Watson, "A Treatise on the Theory of Bessel Functions", Cambridge, 1922.
 <!-- TODO: LaTex all the math
      TODO: 98  33 26 50 52 A&S: 9.1.18(360)  G&R 900 925 sort of
      TODO: perhaps use Snd/Scheme in place of CL
-     TODO: show some grfs wave+spectr
+     TODO: line ffts of complex FM, feedback, formant FM, noise bands, asy?
 -->
 
 </body>
