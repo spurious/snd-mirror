@@ -1,20 +1,28 @@
 <html>
 <head>
-
 <title>An Introduction to FM</title>
 </head>
-
 <body bgcolor=white>
 
+
 <center><h1>An Introduction To FM</h1></center>
+
 <center>Bill Schottstaedt</center>
+
 <br><br>
 
-<p><small>This file badly needs HTML support for reasonable-looking equations.  As it is, anything
-more complicated than 2+2 looks ridiculous. 
-</small>
-</p>
-<br>
+
+<!-- the latex stuff is always embedded in:
+
+\documentclass{amsart}
+\begin{document}
+\thispagestyle{empty}
+\Large
+...
+\end{document}
+
+-->
+
 
 <!-- INDEX fmintro:Frequency Modulation -->
 <A NAME="fmintro"></A>
@@ -26,9 +34,15 @@ stumbled on FM when he sped up vibrato to the point that it was creating audible
 can express this (the vibrato, not the neat story) as:
 </p>
 
+<!-- LATEX \[\cos \, (\omega_{c}t+f(t))\] -->
+
+<img src="fmeq1.png" alt="cos(wt + f)" hspace=20>
+
+<!-- HTML
 <pre>
   cos(w<sub>c</sub>t + f(t))
 </pre>
+-->
 
 <p>where the c subscript stands for "carrier" and f(t) means "some arbitrary function added to the 
 carrier".  Since cos takes an angle as its argument, f(t) "modulates" (that is, changes) the angle 
@@ -37,9 +51,16 @@ synonyms, hence the name "phase modulation".  Since we can always translate from
 radial frequency
 </p>
 
+<!-- LATEX \[\omega_{c}t+f(t)\] -->
+
+<img src="fmeq2.png" alt="wt + f" hspace=20>
+
+<!-- HTML
 <pre>
   w<sub>c</sub>t + f(t) 
 </pre>
+-->
+
 
 <p>evaluated at a particular time to the corresponding frequency (differentiate and divide by 2 pi), this 
 same fomula can viewed as "frequency modulation".  Textbooks usually mutter "strictly speaking 
@@ -47,9 +68,16 @@ we can only take the cosine of an angle", and they put an explicit integral in w
 frequency modulation:
 </p>
 
+
+<!-- LATEX \[  \cos \, (\omega_{c}t+B\!\int_{0}^{t}\! f(t) \, \mathrm{d} t)  \]  -->
+
+<img src="fmeq3.png" alt="cos + integral" hspace=20>
+
+<!-- HTML
 <pre>
   cos(w<sub>c</sub>t + B<img alt="Integral" align=middle src="integ.png"><sub>0</sub><sup>t</sup> f(t) dt)
 </pre>
+-->
 
 <p>The terms "angle modulation", "phase modulation", and "frequency modulation" (not to mention 
 "exponential modulation" and "angular modulation") are used almost interchangeably in the radio 
@@ -158,11 +186,17 @@ functions that there is no difference in run-time computational expense (or comp
 <p>Given our formula for FM, let's assume, for starters, that f(t) is a sinusoid:
 </p>
 
+<!-- LATEX \[  \cos \, (\omega_{c}t+B\sin \omega_{m}t)  \] -->
+
+<img src="fmeq4.png" alt="cos(sin)" hspace=20>
+
+<!-- HTML
 <pre>
   cos(w<sub>c</sub>t + B sin w<sub>m</sub>t)
 </pre>
+-->
 
-<p>where the "m" stands for "modulator" and the B is usually called the "modulation index".  In clm 
+<p>where the "m" stands for "modulator" and the "B" factor is usually called the modulation index.  In clm 
 syntax this is:
 </p>
 
@@ -175,19 +209,19 @@ syntax this is:
 
 <!-- CLM CASE 
 <pre>
-(defun oscil (oscillator fm-input &amp;optional (pm-input 0))
-  (prog1 
-    (sin (+ (mus-phase oscillator) pm-input))
-    (incf (mus-phase oscillator) (+ (mus-frequency oscillator) fm-input))))
+    (defun oscil (oscillator fm-input &amp;optional (pm-input 0))
+      (prog1 
+        (sin (+ (mus-phase oscillator) pm-input))
+        (incf (mus-phase oscillator) (+ (mus-frequency oscillator) fm-input))))
 </pre>
 -->
 
 <!-- SND CASE -->
 <pre>
-(define* (oscil oscillator fm-input :optional (pm-input 0))
-  (let ((result (sin (+ oscillator-phase pm-input))))
-    (set! oscillator-phase (+ oscillator-phase (+ oscillator-phase-increment fm-input)))
-    result))
+    (define* (oscil oscillator fm-input :optional (pm-input 0))
+      (let ((result (sin (+ oscillator-phase pm-input))))
+        (set! oscillator-phase (+ oscillator-phase (+ oscillator-phase-increment fm-input)))
+        result))
 </pre>
 <!-- -->
 
@@ -198,37 +232,96 @@ spectrum it produces.  To determine that spectrum, we have to endure some tediou
 By the trigonometric identity:
 </p>
 
+<!-- LATEX \[  \cos (a+b)=\cos a\cos b - \sin a \sin b  \] -->
+
+<img src="fmeq5.png" alt="cos a+b" hspace=20>
+
+<!-- HTML
 <pre>
   cos(a + b) = cos a cos b - sin a sin b
 </pre>
+-->
 
+<!-- HTML
 <p>we can substitute w<sub>c</sub>t for "a" and B sin w<sub>m</sub>t for "b" and get:
 </p>
+-->
 
+<!-- LATEX \[B\sin \omega_{m}t  \] -->
+
+<p>we can substitute <img src="fmeq23.png" alt="wct" align=absmiddle> for "a" and
+<img src="fmeq9.png" alt="bsin" align=absmiddle>
+for "b" and get:
+</p>
+
+<!-- LATEX \[  \cos (\omega_{c}t+B\sin \omega_{m}t)=\cos \omega_{c}t \, \cos (B \sin \omega_{m}t) - \sin \omega_{c}t \, \sin (B\sin \omega_{m}t)  \] -->
+
+<img src="fmeq6.png" alt="cos (sin) expanded" hspace=20>
+
+<!-- HTML
 <pre>
   cos(w<sub>c</sub>t + B sin w<sub>m</sub>t) = cos w<sub>c</sub>t cos(B sin w<sub>m</sub>t) - sin w<sub>c</sub>t sin(B sin w<sub>m</sub>t)
 </pre>
+-->
 
 <p>If we can get a Fourier transform of the two inner portions:
 </p>
 
+<!-- LATEX \[  \cos (B \sin \omega_{m}t) \textrm{ and } \sin (B\sin \omega_{m}t)  \] -->
+
+<img src="fmeq7.png" alt="cos and sin" hspace=20>
+
+<!-- HTML
 <pre>
   cos(B sin w<sub>m</sub>t)  and   sin(B sin w<sub>m</sub>t)
 </pre>
+-->
 
 <p>we can use:
 </p>
 
+<!-- LATEX 
+\Large
+\begin{eqnarray*}
+\cos a \, \cos b = \frac{1}{2}(\cos (a-b) + \cos(a+b)) \\
+\sin a \, \sin b = \frac{1}{2}(\cos (a-b) - \cos(a+b)) \\
+\end{eqnarray*}
+-->
+
+<img src="fmeq8.png" alt="coscos and sinsin" hspace=20>
+
+<!-- HTML
 <pre>
   cos A cos B = 1/2 (cos (A - B) + cos (A + B))
   sin A sin B = 1/2 (cos (A - B) - cos (A + B))
 </pre>
+-->
 
-<p>to get the final results.  "A" here is w<sub>c</sub>t in the earlier formulas,  and "B" is either  
+
+<!-- LATEX \omega_{c}t -->
+<p>to get the final results.  "A" here is
+<img src="fmeq23.png" alt="wct" align=absmiddle>
+in the earlier formulas,  and "B" is either  
 cos(B sin w<sub>m</sub>t) or sin(B sin w<sub>m</sub>t).  You can slog through the Fourier series expansion by hand, or look it up in Abramowitz and Stegun, 
 "Handbook of Mathematical Functions" (formulas 9.1.42 and 9.1.43), or take my word for it that:
 </p>
 
+
+<!-- HTML
+<p>to get the final results.  "A" here is w<sub>c</sub>t in the earlier formulas,  and "B" is either  
+cos(B sin w<sub>m</sub>t) or sin(B sin w<sub>m</sub>t).  You can slog through the Fourier series expansion by hand, or look it up in Abramowitz and Stegun, 
+"Handbook of Mathematical Functions" (formulas 9.1.42 and 9.1.43), or take my word for it that:
+</p>
+-->
+
+<!-- LATEX \cos(B\sin\omega_{m}t)=J_{0}(B)+2J_{2}(B)\cos 2\omega_{m}t + \,\cdots\, + 2J_{2n}(B)\cos 2n\omega_{m}t + \,\cdots -->
+
+<img src="fmeq10.png" alt="cos B sin t" hspace=20 vspace=3>
+
+<!-- LATEX \sin(B\sin\omega_{m}t)=2J_{1}(B)\sin\omega_{m}t+2J_{3}(B)\sin 3\omega_{m}t + \,\cdots\, + 2J_{2n-1}(B)\sin (2n-1)\omega_{m}t + \,\cdots -->
+<img src="fmeq11.png" alt="sin B sin t" hspace=20 vspace=6>
+
+<!-- HTML
 <pre>
   cos(B sin w<sub>m</sub>t) = 
       J<sub>0</sub>(B) + 2J<sub>2</sub>(B)cos 2w<sub>m</sub>t + ... 
@@ -238,12 +331,38 @@ cos(B sin w<sub>m</sub>t) or sin(B sin w<sub>m</sub>t).  You can slog through th
        2J<sub>1</sub>(B)sin w<sub>m</sub>t + 2J<sub>3</sub>(B)sin 3w<sub>m</sub>t + ... 
         + 2J<sub>2n-1</sub>(B)sin(2n-1)w<sub>m</sub>t ...
 </pre>
+-->
 
+<!-- LATEX -->
+<p>Here the J's refer to the Bessel functions which we will return to later. First, let's finish this 
+expansion -- we take these two sums and 
+<img src="fmeq23.png" alt="wct" salign=absmiddle>
+and plug them into our first expansion of the FM 
+formula, and out pops:
+</p>
+
+
+<!-- HTML
 <p>Here the J's refer to the Bessel functions which we will return to later. First, let's finish this 
 expansion -- we take these two sums and w<sub>c</sub>t and plug them into our first expansion of the FM 
 formula, and out pops:
 </p>
+-->
 
+<!-- LATEX
+\Large
+\begin{eqnarray*}
+\lefteqn{ \cos(\omega_{c}t + B\sin\omega_{m}t) } \\
+&& {} =J_{0}(B)\cos \omega_{c}t \\
+&& {} -J_{1}(B)(\cos(\omega_{c} - \omega_{m})t - \cos(\omega_{c} + \omega_{m})t) \\
+&& {} +J_{2}(B)(\cos(\omega_{c} - 2\omega_{m})t + \cos(\omega_{c} + 2\omega_{m})t) \\
+&& {} -J_{3}(B)(\cos(\omega_{c} - 3\omega_{m})t - \cos(\omega_{c} + 3\omega_{m})t) + \cdots
+\end{eqnarray*}
+-->
+
+<img src="fmeq12.png" alt="cos w+sin" hspace=20>
+
+<!-- HTML
 <pre>
   cos(w<sub>c</sub>t + B sin w<sub>m</sub>t) =
      J<sub>0</sub>(B) cos w<sub>c</sub>t  
@@ -251,31 +370,57 @@ formula, and out pops:
         + J<sub>2</sub>(B)[cos(w<sub>c</sub> - 2w<sub>m</sub>)t + cos(w<sub>c</sub> + 2w<sub>m</sub>)t]
         - J<sub>3</sub>(B)[cos(w<sub>c</sub> - 3w<sub>m</sub>)t - cos(w<sub>c</sub> + 3w<sub>m</sub>)t] + ...
 </pre>
+-->
+
 
 <p>or in a slightly more compact form:
 </p>
 
+<!-- LATEX \sum_{n=-\infty}^{\infty} \! \! J_{n}(B)\cos(\omega_{c} + n\omega_{m})t -->
+
+<img src="fmeq13.png" alt="sum J cos" hspace=20>
+
+<!-- HTML
 <pre>
     <img alt="inf" src="inf.png">
    <img alt="Sum" align=middle src="sum.png"> [J<sub>n</sub>(B)cos(w<sub>c</sub> + nw<sub>m</sub>)t]
   n=-<img alt="inf" src="inf.png">	
 </pre>
+-->
 
+<!-- LATEX J_{-n}(x) = (-1)^{n}J_{n}(x) -->
+
+<p>Here we are using the fact that
+<img src="fmeq14.png" alt="J - J" align=absmiddle>
+.</p>
+
+<!-- HTML
 <p>Here we are using the fact that
 </p>
 
 <pre>
   J<sub>-n</sub>(x) = (-1)<sup>n</sup> J<sub>n</sub>(x)
 </pre>
+-->
 
 <p>We can change our point of view on the first part of the expansion given above, and ask for the 
 amplitude of a given sideband before it is translated up to the carrier (by multiplication):
 </p>
 
+<!-- LATEX J_{n}(B) = \frac{2}{\pi} \int_{0}^{\frac{\pi}{2}} \sin(B\sin\omega) \sin n\omega \: \mathrm{d}\omega \qquad \textrm{(n odd)} -->
+
+<img src="fmeq15.png" alt="J sin int" hspace=20><br>
+
+<!-- LATEX J_{n}(B) = \frac{2}{\pi} \int_{0}^{\frac{\pi}{2}} \cos(B\sin\omega) \cos n\omega \: \mathrm{d}\omega \qquad \textrm{(n even)} -->
+
+<img src="fmeq16.png" alt="J cos int" hspace=20 vspace=6>
+
+<!-- HTML
 <pre>
   J<sub>n</sub>(B) = 2/pi<img alt="Integral" align=middle src="integ.png"><sub>0</sub><sup>pi/2</sup> sin(B sin w)sin nw dw   (n odd)
   J<sub>n</sub>(B) = 2/pi<img alt="Integral" align=middle src="integ.png"><sub>0</sub><sup>pi/2</sup> cos(B sin w)cos nw dw   (n even)
 </pre>
+-->
 
 <p>So we end up with a spectrum made up of a "carrier" at w<sub>c</sub> and   symmetrically placed sidebands 
 separated by w<sub>m</sub>.  The amplitudes  follow the Bessel functions.  I put carrier in quotes because in 
@@ -361,9 +506,16 @@ the simple FM equation. Looking at cos(sin) as the real part of
 e<sup>(jB sin w<sub>m</sub>t)</sup>, our expansion is evaluating
 </p>
 
+
+<!-- LATEX c_{n} = \frac{1}{\omega_{m}}\int_{-\pi}^{\pi}e^{j(B\sin \omega_{m}t - n\omega_{m}t)} \, \mathrm{d}t -->
+
+<img src="fmeq17.png" alt="e to j sin" hspace=20>
+
+<!-- HTML
 <pre>
     c<sub>n</sub> = 1/w<sub>m</sub><img alt="Integral" align=middle src="integ.png"><sub>-pi</sub><sup>pi</sup> e<sup>j(B sin w<sub>m</sub>t - nw<sub>m</sub>t)</sup> dt
 </pre>
+-->
 
 <p>which is one way of defining the Bessel functions (see also the earlier formulas for J<sub>n</sub>(B)). If we view FM as one 
 case of concatenated vectors (i.e. a whirling vector attached to another
@@ -488,24 +640,54 @@ you may wonder what's gone awry.  We have to return to our initial set of formul
 that:
 </p>
 
+<!-- LATEX \sin(a+b)=\sin a \cos b + \cos a \sin b -->
+
+<img src="fmeq18.png" alt="sin split" hspace=20><br>
+
+<!-- LATEX \sin(\omega_{c}t+B\sin \omega_{m}t) = \sin \omega_{c}t \cos(B \sin \omega_{m}t) + \cos \omega_{c}t \sin(B \sin \omega_{m}t) -->
+
+<img src="fmeq19.png" alt="sin split" hspace=20 vspace=8>
+
+<!-- HTML
 <pre>
   sin(a + b) = sin a cos b + cos a sin b
 
   sin(w<sub>c</sub>t + B sin w<sub>m</sub>t) = sin w<sub>c</sub>t cos(B sin w<sub>m</sub>t) + cos w<sub>c</sub>t sin(B sin w<sub>m</sub>t)
 </pre>
+-->
+
 
 <p>and using our previous formulas for the expansion of the cos(sin) and sin(sin) terms, with the 
 identity:
 </p>
 
+<!-- LATEX \sin a \cos b = \frac{1}{2} (\sin (a-b) + \sin (a+b)) -->
+
+<img src="fmeq20.png" alt="sin cos again" hspace=20 vspace=8>
+
+<!-- HTML
 <pre>
   sin a cos b = 1/2 (sin(a - b) + sin(a + b))
 </pre>
+-->
 
 <p>we see that we still have a spectrum symmetric around the carrier, and the amplitude and frequencies 
 are just as they were before, but the initial phases of the side bands have changed. Our result is now 
 </p>
 
+<!-- LATEX
+\begin{eqnarray*}
+\lefteqn{ \sin(\omega_{c}t + B\sin\omega_{m}t) } \\
+&& {} =J_{0}(B)\sin \omega_{c}t \\
+&& {} +J_{1}(B)(\sin(\omega_{c} + \omega_{m})t - \sin(\omega_{c} - \omega_{m})t) \\
+&& {} +J_{2}(B)(\sin(\omega_{c} + 2\omega_{m})t + \sin(\omega_{c} - 2\omega_{m})t) \\
+&& {} +J_{3}(B)(\sin(\omega_{c} + 3\omega_{m})t - \sin(\omega_{c} - 3\omega_{m})t) + \cdots
+\end{eqnarray*}
+-->
+
+<img src="fmeq21.png" alt="sin sin case" hspace=20>
+
+<!-- HTML
 <pre>
   sin(w<sub>c</sub>t + B sin w<sub>m</sub>t) =
      J<sub>0</sub>(B)sin w<sub>c</sub>t
@@ -514,26 +696,39 @@ are just as they were before, but the initial phases of the side bands have chan
         + J<sub>3</sub>(B)[sin(w<sub>c</sub> + 3w<sub>m</sub>)t - sin(w<sub>c</sub> - 3w<sub>m</sub>)t]
         + ...
 </pre>
+-->
 
 <p>This is Chowning's version of the expansion.  Here we are also using sin(-x) = -sin x
 (i.e sin(w<sub>m</sub>t - w<sub>c</sub>t) = -sin(w<sub>c</sub>t - w<sub>m</sub>t)).  In general:
 </p>
 
+<!-- LATEX \cos(\omega_{c}t+B\sin(\omega_{m}t + \theta_{m}) + \phi) = \sum_{k=-\infty}^{\infty}J_{k}(B)\cos((\omega_{c}+k\omega_{m})t + k\theta_{m} + \phi) -->
+
+<img src="fmeq22.png" alt="big formula" hspace=20>
+
+<!-- HTML
 <pre>
   cos(w<sub>c</sub>t + B sin(w<sub>m</sub>t + <img alt="theta" src="theta.png"><sub>m</sub>) + <img alt="phi" src="phi.png">) =
      <img alt="inf" src="inf.png">
      <img alt="Sum" align=middle src="sum.png"> J<sub>k</sub>(B)cos((w<sub>c</sub> + kw<sub>m</sub>)t + k <img alt="theta" src="theta.png"><sub>m</sub> + <img alt="phi" src="phi.png">)
     k=-<img alt="inf" src="inf.png">	
 </pre>
+-->
 
 <p>Our first reaction is, "so what if one's a sine and another's a cosine, or whatever -- they'll sound the 
 same", but we are being hasty.  What if (for example), the modulator has the same frequency as the 
 carrier, and its index (B) is high enough that some significant energy appears at
 </p>
 
+<!-- LATEX \omega_{c}-2\omega_{m} = -\omega_{c} \textrm{?} -->
+
+<img src="fmeq24.png" alt="w-m=-w" hspace=20>
+
+<!-- HTML
 <pre>
     w<sub>c</sub> - 2w<sub>m</sub> = - w<sub>c</sub>?
 </pre>
+-->
 
 <p>Where does energy at a negative frequency go?  We once again fall back on elementary 
 trigonometry: sin(-x) = -sin x, but cos(-x) = cos x, 
@@ -584,24 +779,42 @@ change the carrier initial phase -- the important point is that these phases mat
 that we are thinking in terms of the pre-integration phase here (hence the (* .5 pi)) --
 </p>
 
+<!-- LATEX \sin(x+\frac{\pi}{2}) = cos x -->
+
+<img src="fmeq25.png" alt="sin=cos" hspace=20>
+
+<!-- HTML
 <pre>
     sin(x + pi/2) = cos x
 </pre>
+-->
 
-<p>and:
+<p>and
 </p>
 
+<!-- LATEX \int \! \cos x \: \mathrm{d}x = \sin x -->
+
+<img src="fmeq26.png" alt="cos int sin" hspace=20>
+
+<!-- HTML
 <pre>
     <img alt="Integral" align=middle src="integ.png">cos x dx = sin x
 </pre>
+-->
 
 <p>so by starting with a cosine in the modulator, after the integration in oscil (and ignoring the constant 
 for the moment) we have
 </p>
 
+<!-- LATEX \sin(\omega_{c}t+B\sin \omega_{m}t) -->
+
+<img src="fmeq27.png" alt="sin B sin again" hspace=20>
+
+<!-- HTML
 <pre>
     sin(w<sub>c</sub>t + B sin w<sub>m</sub>t)
 </pre>
+-->
 
 <p>As Bate points out, by varying the relative phase (by very slowly changing the modulator frequency 
 independently of the carrier), we get a changing spectrum because of these cancellations.  Here is a 
@@ -656,10 +869,17 @@ produce, and edge toward phase quadrature waveshaping.  And as far as I can tell
 "yes, but..."  We can get good results with low indices if we take advantage of the fact that:
 </p>
 
+
+<!-- LATEX see above -->
+
+<img src="fmeq8.png" alt="coscos and sinsin" hspace=20>
+
+<!-- HTML
 <pre>
     cos A cos B = 1/2 (cos(A - B) + cos(A + B))
     sin A sin B = 1/2 (cos(A - B) - cos(A + B))
 </pre>
+-->
 
 <p>If we have a spectrum B made up entirely of sines (or entirely cosines), we can then multiply it by 
 sin A (or cos A) then add the two resulting spectra, and the (A + B) parts cancel.  Here's an 
@@ -714,10 +934,16 @@ the same point (the expansion of simple FM), added a factor rn to each sideband,
 backwards to get the exponential modulation that would produce that spectrum:
 </p>
 
+<!-- LATEX e^{(\frac{B}{2}(r-\frac{1}{r})\cos \omega_{m}t)}\sin(\omega_{c}t+\frac{B}{2}(r+\frac{1}{r})\sin \omega_{m}t=\sum r^{n}J_{n}(B)\sin(\omega_{c}t+n\omega_{m}t) -->
+
+<img src="fmeq29.png" alt="e sin" hspace=20>
+
+<!-- HTML
 <pre>
     e<sup>(B/2(r-1/r)cos w<sub>m</sub>t)</sup> sin(w<sub>c</sub>t + B/2(r+1/r)sin w<sub>m</sub>t)
          = <img alt="Sum" align=middle src="sum.png"> r<sup>n</sup>J<sub>n</sub>(B)sin(w<sub>c</sub>t + nw<sub>m</sub>t)
 </pre>
+-->
 
 <p>This idea was mentioned by Moorer in "Signal Processing Aspects of Computer Music: A Survey", 
 but he didn't go into much detail.  It does give very pretty asymmetric spectra, but I believe 
@@ -738,20 +964,32 @@ It's also probably simpler to add two FM oscil pairs:
 signal?  Here again elementary trigonometry can be used to expand
 </p>
 
+<!-- LATEX \sin(\omega_{c}t + B_{1}\sin \omega_{m1}t + B_{2}\sin \omega_{m2}t) -->
+
+<img src="fmeq30.png" alt="multiple sins" hspace=20>
+
+<!-- HTML
 <pre>
     sin(w<sub>c</sub>t + B<sub>1</sub>sin w<sub>m1</sub>t + B<sub>2</sub>sin w<sub>m2</sub>t)
 </pre>
+-->
 
 <p>The modulating signal is now made up of two sinusoids (don't despair; this is a terminating 
 sequence).  Since sine is not linear, this is not the same thing as
 </p>
 
+<!-- LATEX \sin(\omega_{c}t + B_{1}\sin \omega_{m1}t) + \sin(B_{2}\sin \omega_{m2}t) -->
+
+<img src="fmeq31.png" alt="bad sins" hspace=20>
+
+<!-- HTML
 <pre>
     sin(w<sub>c</sub>t + B<sub>1</sub>sin w<sub>m1</sub>t) + sin B<sub>2</sub>sin w<sub>m2</sub>t
 </pre>
+-->
 
 <p>In the second case we just get the superposition of the two simple FM spectra, but in the first case 
-we get a more complex mixture involving all the sums and differences of w<sub>m1</sub> and 2<sub>m2</sub>.  If the indices 
+we get a more complex mixture involving all the sums and differences of w<sub>m1</sub> and w<sub>m2</sub>.  If the indices 
 are small (the B<sub>i</sub>'s are much less than 1), then there isn't much difference between the two versions.  
 Once again, the expansion is tedious, but it really involves nothing more than putting the sum of the 
 sines in place of the single sine in the previous case, then turning the algebraic crank.  See Le Brun 
@@ -759,10 +997,16 @@ sines in place of the single sine in the previous case, then turning the algebra
 expressed:
 </p>
 
+<!-- LATEX \sum_{i}\sum_{k}J_{i}(B_{1})J_{k}(B_{2})\sin(\omega_{c}t + i\omega_{m1}t + k\omega_{m2}t) -->
+
+<img src="fmeq32.png" alt="2 sums" hspace=20>
+
+<!-- HTML
 <pre>
-        <img alt="Sum" align=middle src="sum.png"> <img alt="Sum" align=middle src="sum.png">  J<sub>i</sub>(B<sub>1</sub>) J<sub>k</sub>(B<sub>2</sub>) sin(w<sub>c</sub>t + iw<sub>m1</sub>t + k2<sub>m2</sub>t)
+        <img alt="Sum" align=middle src="sum.png"> <img alt="Sum" align=middle src="sum.png">  J<sub>i</sub>(B<sub>1</sub>) J<sub>k</sub>(B<sub>2</sub>) sin(w<sub>c</sub>t + iw<sub>m1</sub>t + kw<sub>m2</sub>t)
           i   k
 </pre>
+-->
 
 <p>You can chew up any amount of free time calculating the resulting side band amplitudes -- see 
 Schottstaedt "The Simulation of Natural Instrument Tones Using Frequency Modulation with a 
@@ -770,6 +1014,11 @@ Complex Modulating Wave".  These extra modulating components flatten and spread 
 spectrum somewhat. In general:
 </p>
 
+<!-- LATEX \cos(\omega_{c}t+\Big(\sum_{i=1}^{k}B_{i}\sin(\omega_{i}t + \theta_{i})\Big) + \phi) = \sum_{k_{k}} \cdots \sum_{k_{1}}\Big(\prod_{i=1}^{k}J_{k_{i}}(B_{i})\Big)\cos(\omega_{c}t+\Big(\sum_{i=1}^{k}k_{i}(\omega_{i}t+\theta_{i})\Big)+\phi) -->
+
+<img src="fmeq33.png" alt="silly formula" hspace=20>
+
+<!-- HTML
 <pre>
                k
     cos(w<sub>c</sub>t + <img alt="Sum" align=middle src="sum.png"> B<sub>i</sub>sin(w<sub>i</sub>t + <img alt="theta" src="theta.png"><sub>i</sub>) + <img alt="phi" src="phi.png">) =
@@ -778,6 +1027,7 @@ spectrum somewhat. In general:
          <img alt="Sum" align=middle src="sum.png">...<img alt="Sum" align=middle src="sum.png"> (<img alt="Product" align=middle src="prod.png"> J<sub>k<sub>i</sub></sub>(B<sub>i</sub>)) cos(w<sub>c</sub>t + <img alt="Sum" align=middle src="sum.png"> k<sub>i</sub>(w<sub>i</sub>t + <img alt="theta" src="theta.png"><sub>i</sub>) + <img alt="phi" src="phi.png">)
            k<sub>k</sub>    k<sub>1</sub>   i=1                    i=1
 </pre>
+-->
 
 <p>A clm instrument to produce something like this might be:
 </p>
@@ -932,11 +1182,17 @@ says "take the highest w<sub>m</sub> and use its index"  The fancier version red
 be
 </p>
 
+<!-- LATEX B = \frac{\sqrt{\frac{1}{k}\sum_{i=1}^{k}\frac{B_{i}^{2}}{2}}}{\omega_{k}} -->
+
+<img src="fmeq34.png" alt="carson squared" hspace=20>
+
+<!-- HTML
 <pre>
                   K
     B = sqrt(1/K <img alt="Sum" align=middle src="sum.png"> B<sub>i</sub><sup>2</sup>/2) / w<sub>K</sub>
                   i=1
 </pre>
+-->
 
 <p>where B<sub>i</sub> is the index of the i-th component and w<sub>k</sub> is the highest modulating frequency and K is the 
 number of components present.  When the modulating signal gets very complex, you might use:
@@ -956,9 +1212,15 @@ number of components present.  When the modulating signal gets very complex, you
 sometimes called "cascade FM":
 </p>
 
+<!-- LATEX \sin(\omega_{c}t + B_{1}\sin(\omega_{m1}t + B_{2}\sin(\omega_{m2}t))) -->
+
+<img src="fmeq35.png" alt="cascade fm" hspace=20>
+
+<!-- HTML
 <pre>
-    sin(w<sub>c</sub>t + B<sub>1</sub>sin(w<sub>m1</sub>t + B<sub>2</sub>sin 2<sub>m2</sub>t))
+    sin(w<sub>c</sub>t + B<sub>1</sub>sin(w<sub>m1</sub>t + B<sub>2</sub>sin w<sub>m2</sub>t))
 </pre>
+-->
 
 <p>In clm nomenclature:
 </p>
@@ -973,9 +1235,15 @@ lower of the two FM pairs. So your carrier no longer has any obvious relation to
 can expand our cascade formula into:
 </p>
 
+<!-- LATEX \sin(\omega_{c}t + \sum J_{n}(B)\cos(\omega_{c}t + n\omega_{m_{n}}t)) -->
+
+<img src="fmeq36.png" alt="more sins" hspace=20>
+
+<!-- HTML
 <pre>
     sin(w<sub>c</sub>t + <img alt="Sum" align=middle src="sum.png"> [J<sub>n</sub>(B)cos(w<sub>c</sub> + nw<sub>m<sub>n</sub></sub>)t])
 </pre>
+-->
 
 <p>but now wherever w<sub>c</sub>= -nw<sub>m<sub>n</sub></sub> we get J<sub>n</sub>(B) cos 0 = J<sub>n</sub>(B).  This could be a disaster, because 
 in most cases where we care about the perceived fundamental, we are trying to create harmonic 
@@ -1066,11 +1334,17 @@ or
 <p>(ignoring the low pass filter for the moment).  This is expanded by Tomisawa as:
 </p>
 
+<!-- LATEX \sum_{n=1}^{\infty}\frac{2}{nB}J_{n}(nB)\sin n\omega_{c}t -->
+
+<img src="fmeq37.png" alt="feedback fm" hspace=20>
+
+<!-- HTML
 <pre>
    <img alt="inf" src="inf.png">
    <img alt="Sum" align=middle src="sum.png"> (2/(nB))J<sub>n</sub>(nB) sin nw<sub>c</sub>t
     n=1
 </pre>
+-->
 
 <p>As Tomisawa points out this is very close to the formulas we've been looking at already, except that 
 the argument to the Bessel function depends on the order, we have only multiples of the frequency 
@@ -1082,12 +1356,26 @@ nearly the same time as the lower order functions.  The new function J<sub>n</su
 For example if the index (B) is 1:
 </p>
 
+<!-- LATEX
+\begin{eqnarray*}
+J_{1}(1) = .440 \\
+J_{2}(2) = .353 \\
+J_{3}(3) = .309 \\
+J_{200}(200) = .076 \\
+J_{2000}(2000) = .035
+\end{eqnarray*}
+-->
+
+<img src="fmeq28.png" alt="Jn vals" hspace=20>
+
+<!-- HTML
 <pre>
     J<sub>1</sub>(1) = .440 
     J<sub>2</sub>(2) = .353 
     J<sub>3</sub>(3) = .309
     J<sub>200</sub>(200) = .076
 </pre>
+-->
 
 <p>and so on. Since the other part of the equation goes down as 1/n, we get essentially a sawtooth wave 
 out of this equation (its harmonics go down as 1/n).  Tomisawa suggests that B should be between 0 
@@ -1095,18 +1383,30 @@ and 1.5. Since we are dividing by B in the equation, we might worry that as B he
 hell breaks loose, but luckily:
 </p>
 
+<!-- LATEX \lim_{B \to 0}\frac{2}{B}J_{1}(B) = 1 -->
+
+<img src="fmeq38.png" alt="lim1 case" hspace=20>
+
+<!-- HTML
 <pre>
     lim 2/B (J<sub>1</sub>(B)) = 1
     B=&gt;0 
 </pre>
+-->
 
 <p>and for all the other components
 </p>
 
+<!-- LATEX \lim_{B \to 0}\frac{2}{nB}J_{n}(nB) = 0 -->
+
+<img src="fmeq39.png" alt="all cases" hspace=20>
+
+<!-- HTML
 <pre>
     lim 2/nB J<sub>n</sub>(nB) = 0
     B=&gt;0 
 </pre>
+-->
 
 <p>so, just as in normal FM, if the index is 0, we get a pure sine wave. This also seems natural from 
 </p>
