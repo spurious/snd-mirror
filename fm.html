@@ -93,13 +93,15 @@ do make a difference, as we'll see below.
 </p>
 
 <table border=1 hspace=50 cellpadding=14><tr><td>
-<small>
+
 <p>Just to beat this dead horse very thoroughly, here are two clm instruments, one performing textbook 
 phase modulation, the other performing frequency modulation.  I have tried to make the innards 
 explicit at each step, and match the indices so that the instruments produce identical results given 
 identical parameters.  Also, to lay a different controversy to rest, it should be obvious from these two 
-functions that there is no difference in run-time computational expense (or computational accuracy) between PM and FM.
+functions that there is no difference in run-time computational expense (or accuracy) between PM and FM.
 </p>
+
+</td></tr><tr><td bgcolor="#f6f8ff">
 
 <!-- CLM CASE
 <pre>
@@ -113,7 +115,8 @@ functions that there is no difference in run-time computational expense (or comp
    (run
      (loop for i from beg to end do
        (setf modulation (* index (sin modulator-phase)))
-       (setf val (* amp (sin (+ carrier-phase modulation)))) ; no integration in phase modulation
+       (setf val (* amp (sin (+ carrier-phase modulation)))) 
+       ; no integration in phase modulation
        (incf carrier-phase carrier-phase-incr)
        (incf modulator-phase modulator-phase-incr)
        (outa i val)))))
@@ -123,13 +126,15 @@ functions that there is no difference in run-time computational expense (or comp
         (carrier-phase-incr (hz-&gt;radians freq))
         (modulator-phase (* .5 pi))
         (modulator-phase-incr (hz-&gt;radians (* freq mc-ratio)))
-        (fm-index (hz-&gt;radians (* freq mc-ratio index)))  ; fix up fm index to take integration into account
+        (fm-index (hz-&gt;radians (* freq mc-ratio index)))  
+	; fix up fm index to take integration into account
         (val 0.0)
         (modulation 0.0))
    (run
      (loop for i from beg to end do
        (setf modulation (* fm-index (sin modulator-phase)))
-       (incf carrier-phase modulation)      ; here is the fm integration
+       (incf carrier-phase modulation)      
+       ; here is the fm integration
        (setf val (* amp (sin carrier-phase)))
        (incf carrier-phase carrier-phase-incr)
        (incf modulator-phase modulator-phase-incr)
@@ -152,7 +157,8 @@ functions that there is no difference in run-time computational expense (or comp
       (do ((i beg (1+ i)))
 	  ((= i end))
 	(let* ((modulation (* index (sin modulator-phase)))
-	       (pm-val (* amp (sin (+ carrier-phase modulation))))) ; no integration in phase modulation
+	       (pm-val (* amp (sin (+ carrier-phase modulation))))) 
+	       ; no integration in phase modulation
 	  (set! carrier-phase (+ carrier-phase carrier-phase-incr))
 	  (set! modulator-phase (+ modulator-phase modulator-phase-incr))
 	  (outa i pm-val *output*)))))))
@@ -162,13 +168,15 @@ functions that there is no difference in run-time computational expense (or comp
         (carrier-phase-incr (hz-&gt;radians freq))
         (modulator-phase (* .5 pi))
         (modulator-phase-incr (hz-&gt;radians (* freq mc-ratio)))
-        (fm-index (hz-&gt;radians (* freq mc-ratio index)))) ; fix up fm index to take integration into account
+        (fm-index (hz-&gt;radians (* freq mc-ratio index)))) 
+	; fix up fm index to take integration into account
   (run
    (lambda ()
      (do ((i beg (1+ i)))
 	 ((= i end))
        (let ((modulation (* fm-index (sin modulator-phase))))
-	 (set! carrier-phase (+ carrier-phase modulation)) ; here is the fm integration
+	 (set! carrier-phase (+ carrier-phase modulation)) 
+	 ; here is the fm integration
 	 (let ((fm-val (* amp (sin carrier-phase))))
 	   (set! carrier-phase (+ carrier-phase carrier-phase-incr))
 	   (set! modulator-phase (+ modulator-phase modulator-phase-incr))
@@ -179,7 +187,7 @@ functions that there is no difference in run-time computational expense (or comp
   (fm 0 10000 1000 .25 0.5 4))
 </pre>
 <!-- -->
-</small>
+
 </td></tr></table>
 
 
@@ -196,8 +204,8 @@ functions that there is no difference in run-time computational expense (or comp
 </pre>
 -->
 
-<p>where the "m" stands for "modulator" and the "B" factor is usually called the modulation index.  In clm 
-syntax this is:
+<p>where the "m" stands for "modulator" and the "B" factor is usually called the modulation index.
+The corresponding CLM code is:
 </p>
 
 <pre>
@@ -242,10 +250,6 @@ By the trigonometric identity:
 </pre>
 -->
 
-<!-- HTML
-<p>we can substitute w<sub>c</sub>t for "a" and B sin w<sub>m</sub>t for "b" and get:
-</p>
--->
 
 <!-- LATEX \[B\sin \omega_{m}t  \] -->
 
@@ -253,6 +257,7 @@ By the trigonometric identity:
 <img src="fmeq9.png" alt="bsin" align=absmiddle>
 for "b" and get:
 </p>
+
 
 <!-- LATEX \[  \cos (\omega_{c}t+B\sin \omega_{m}t)=\cos \omega_{c}t \, \cos (B \sin \omega_{m}t) - \sin \omega_{c}t \, \sin (B\sin \omega_{m}t)  \] -->
 
@@ -264,21 +269,17 @@ for "b" and get:
 </pre>
 -->
 
-<p>If we can get a Fourier transform of the two inner portions:
+<p>If we can get a Fourier transform of the two inner portions: 
+<img src="fmeq41.png" alt="cos sin" align=absmiddle> and
+<img src="fmeq40.png" alt="sin sin" align=absmiddle>, we can use:
 </p>
 
-<!-- LATEX \[  \cos (B \sin \omega_{m}t) \textrm{ and } \sin (B\sin \omega_{m}t)  \] -->
+<!-- LATEX \[  \cos (B \sin \omega_{m}t) \textrm{ and } \sin (B\sin \omega_{m}t)  \]: fmeq7 -->
+<!-- LATEX \sin (B\sin \omega_{m}t): fmeq40 -->
+<!-- LATEX \cos (B \sin \omega_{m}t): fmeq41 -->
 
-<img src="fmeq7.png" alt="cos and sin" hspace=20>
+<!-- <img src="fmeq7.png" alt="cos and sin" hspace=20> -->
 
-<!-- HTML
-<pre>
-  cos(B sin w<sub>m</sub>t)  and   sin(B sin w<sub>m</sub>t)
-</pre>
--->
-
-<p>we can use:
-</p>
 
 <!-- LATEX 
 \Large
@@ -301,18 +302,13 @@ for "b" and get:
 <!-- LATEX \omega_{c}t -->
 <p>to get the final results.  "A" here is
 <img src="fmeq23.png" alt="wct" align=absmiddle>
-in the earlier formulas,  and "B" is either  
-cos(B sin w<sub>m</sub>t) or sin(B sin w<sub>m</sub>t).  You can slog through the Fourier series expansion by hand, or look it up in Abramowitz and Stegun, 
+in the earlier formulas,  and "B" is either
+<img src="fmeq41.png" alt="cos sin" align=absmiddle> or
+<img src="fmeq40.png" alt="sin sin" align=absmiddle>.
+You can slog through the Fourier series expansion by hand, or look it up in Abramowitz and Stegun, 
 "Handbook of Mathematical Functions" (formulas 9.1.42 and 9.1.43), or take my word for it that:
 </p>
 
-
-<!-- HTML
-<p>to get the final results.  "A" here is w<sub>c</sub>t in the earlier formulas,  and "B" is either  
-cos(B sin w<sub>m</sub>t) or sin(B sin w<sub>m</sub>t).  You can slog through the Fourier series expansion by hand, or look it up in Abramowitz and Stegun, 
-"Handbook of Mathematical Functions" (formulas 9.1.42 and 9.1.43), or take my word for it that:
-</p>
--->
 
 <!-- LATEX \cos(B\sin\omega_{m}t)=J_{0}(B)+2J_{2}(B)\cos 2\omega_{m}t + \,\cdots\, + 2J_{2n}(B)\cos 2n\omega_{m}t + \,\cdots -->
 
@@ -333,7 +329,7 @@ cos(B sin w<sub>m</sub>t) or sin(B sin w<sub>m</sub>t).  You can slog through th
 </pre>
 -->
 
-<!-- LATEX -->
+
 <p>Here the J's refer to the Bessel functions which we will return to later. First, let's finish this 
 expansion -- we take these two sums and 
 <img src="fmeq23.png" alt="wct" salign=absmiddle>
@@ -341,13 +337,6 @@ and plug them into our first expansion of the FM
 formula, and out pops:
 </p>
 
-
-<!-- HTML
-<p>Here the J's refer to the Bessel functions which we will return to later. First, let's finish this 
-expansion -- we take these two sums and w<sub>c</sub>t and plug them into our first expansion of the FM 
-formula, and out pops:
-</p>
--->
 
 <!-- LATEX
 \Large
@@ -391,19 +380,8 @@ formula, and out pops:
 <!-- LATEX J_{-n}(x) = (-1)^{n}J_{n}(x) -->
 
 <p>Here we are using the fact that
-<img src="fmeq14.png" alt="J - J" align=absmiddle>
-.</p>
-
-<!-- HTML
-<p>Here we are using the fact that
-</p>
-
-<pre>
-  J<sub>-n</sub>(x) = (-1)<sup>n</sup> J<sub>n</sub>(x)
-</pre>
--->
-
-<p>We can change our point of view on the first part of the expansion given above, and ask for the 
+<img src="fmeq14.png" alt="J - J" align=absmiddle>.
+We can change our point of view on the first part of the expansion given above, and ask for the 
 amplitude of a given sideband before it is translated up to the carrier (by multiplication):
 </p>
 
@@ -422,8 +400,15 @@ amplitude of a given sideband before it is translated up to the carrier (by mult
 </pre>
 -->
 
-<p>So we end up with a spectrum made up of a "carrier" at w<sub>c</sub> and   symmetrically placed sidebands 
-separated by w<sub>m</sub>.  The amplitudes  follow the Bessel functions.  I put carrier in quotes because in 
+<!-- LATEX \omega_{m} : fmeq42 -->
+<!-- LATEX \omega_{c} : fmeq43 -->
+
+<p>So we end up with a spectrum made up of a "carrier" at 
+<img src="fmeq43.png" alt="wc" align=absmiddle>
+and symmetrically placed sidebands 
+separated by
+<img src="fmeq42.png" alt="wm" align=absmiddle>.  
+The amplitudes  follow the Bessel functions.  I put carrier in quotes because in 
 computer music we listen to the result of the modulation (this was Chowning's idea -- see "The 
 Synthesis of Complex Audio Spectra by Means of Frequency Modulation").  The Bessel functions 
 are nearly 0 until the index (B) equals the order (n).  Thereupon they have a bump and then tail off in 
@@ -517,7 +502,7 @@ e<sup>(jB sin w<sub>m</sub>t)</sup>, our expansion is evaluating
 </pre>
 -->
 
-<p>which is one way of defining the Bessel functions (see also the earlier formulas for J<sub>n</sub>(B)). If we view FM as one 
+<p>which is one way of defining the Bessel functions (see also the earlier formulas for Jn(B)). If we view FM as one 
 case of concatenated vectors (i.e. a whirling vector attached to another
 such vector), the ubiquity of Bessel functions in mathematical physics
 may seem less mysterious.  (This was the context in which F W Bessel used these functions; they had
@@ -531,6 +516,7 @@ For the view from celestial mechanics today, see Vallado, "Fundamentals of Astro
 <p>Here's a simple FM instrument:
 </p>
 
+<table border=0 bgcolor="#f6f8ff" hspace=20><tr><td>
 <!-- CLM CASE 
 <pre>
 (definstrument fm (beg dur freq amp mc-ratio index &amp;optional (index-env '(0 1 100 1)))
@@ -569,8 +555,9 @@ For the view from celestial mechanics today, see Vallado, "Fundamentals of Astro
                *output*))))))
 </pre>
 <!-- -->
+</td></tr></table>
 
-<p>I put an envelope on the fm-index so that we can try out the "dynamic spectra" ("dynamic" means 
+<p>I put an envelope on the fm-index ("indf" above) so that we can try out the "dynamic spectra" ("dynamic" means 
 "changing" here).  For now, don't worry too much about the actual side band amplitudes -- these 
 will not always match Chowning's description -- we'll get around to an explanation eventually.
 </p>
@@ -597,8 +584,7 @@ carrier. If we use an mc-ratio of .25 and a carrier of 400:
 </pre>
 
 <p>has inharmonic sidebands.  Most real sounds seem to change over the course of a note, and it was at one time thought that most 
-of this change was spectral.  To get a changing spectrum, we need only put an envelope on the fm-
-index:
+of this change was spectral.  To get a changing spectrum, we need only put an envelope on the fm-index:
 </p>
 
 <pre>
@@ -698,8 +684,10 @@ are just as they were before, but the initial phases of the side bands have chan
 </pre>
 -->
 
-<p>This is Chowning's version of the expansion.  Here we are also using sin(-x) = -sin x
-(i.e sin(w<sub>m</sub>t - w<sub>c</sub>t) = -sin(w<sub>c</sub>t - w<sub>m</sub>t)).  In general:
+<!-- LATEX \sin(-x)=-\sin(x)\textrm{, that is }\sin(\omega_{c}t - \omega_{m}t) = -\sin(\omega_{m}t - \omega_{c}t) -->
+
+<p>This is Chowning's version of the expansion.  Here we are also using
+<img src="fmeq44.png" alt="sin-sin" align=absmiddle>.  In general:
 </p>
 
 <!-- LATEX \cos(\omega_{c}t+B\sin(\omega_{m}t + \theta_{m}) + \phi) = \sum_{k=-\infty}^{\infty}J_{k}(B)\cos((\omega_{c}+k\omega_{m})t + k\theta_{m} + \phi) -->
@@ -730,14 +718,18 @@ carrier, and its index (B) is high enough that some significant energy appears a
 </pre>
 -->
 
+<!-- LATEX \sin(-x)=-\sin(x)\textrm{, but }\cos(-x)=cos(x) -->
+
 <p>Where does energy at a negative frequency go?  We once again fall back on elementary 
-trigonometry: sin(-x) = -sin x, but cos(-x) = cos x, 
+trigonometry: 
+<img src="fmeq45.png" alt="sin-sin and cos" align=absmiddle>,
 so the negative frequency component adds to the positive frequency component if it's a cosine, but 
 subtracts if it's a sine.  The upshot of all this is that the results will be different -- we get a different 
-pattern of cancellations depending on the initial phases of the carrier and modulator.  Take the clm 
+pattern of cancellations depending on the initial phases of the carrier and modulator.  Take the CLM
 instrument:
 </p>
 
+<table border=0 bgcolor="#f6f8ff" hspace=20><tr><td>
 <!-- CLM CASE
 <pre>
 (definstrument fm (beg end freq amp mc-ratio index carrier-phase mod-phase)
@@ -771,6 +763,7 @@ instrument:
 (with-sound () (fm 0 1.0 100 .25 1.0 4.0 (* .5 pi) (* .5 pi)))
 </pre>
 <!-- -->
+</td></tr></table>
 
 <p>There is a difference!  The first case is that given by Chowning in his fig 1.4a, the second 
 is Bate's fig 3 ("The Effects of Modulator Phase on Timbres in FM Synthesis").  (At least I think it 
@@ -816,11 +809,12 @@ for the moment) we have
 </pre>
 -->
 
-<p>As Bate points out, by varying the relative phase (by very slowly changing the modulator frequency 
+<p>By varying the relative phases (by very slowly changing the modulator frequency 
 independently of the carrier), we get a changing spectrum because of these cancellations.  Here is a 
-clm instrument that shows this effect:
+CLM instrument that shows this effect:
 </p>
 
+<table border=0 bgcolor="#f6f8ff" hspace=20><tr><td>
 <!-- CLM CASE 
 <pre>
 (definstrument fm (beg end freq amp mc-ratio index car-phase mod-phase skew-func skew)
@@ -854,6 +848,7 @@ clm instrument that shows this effect:
 (with-sound () (fm 0 2.0 100 .25 1.0 4.0 0 0 '(0 0 50 1 100 0) .02))
 </pre>
 <!-- -->
+</td></tr></table>
 
 <p>One subtle pitfall here involves the constant offset caused by the integration.  If we 
 integrate f(x) we get some F(x) + F(a) where a is the starting point of the integration.  In the case of sin(B*sin), a is 0, 
@@ -886,6 +881,7 @@ sin A (or cos A) then add the two resulting spectra, and the (A + B) parts cance
 example:
 </p>
 
+<table border=0 bgcolor="#f6f8ff" hspace=20><tr><td>
 <!-- CLM CASE
 <pre>
 (definstrument fm (beg end freq amp mc-ratio index cr0p cr1p md0p md1p)
@@ -928,9 +924,10 @@ example:
 (with-sound () (fm 0 1.0 1000 .25 .1 1.0 0 (* .5 pi) (* .5 pi) 0))
 </pre>
 <!-- -->
+</td></tr></table>
 
 <p>Palamin et al in "A Method of Generating and Controlling Musical Asymmetrical Spectra" started at 
-the same point (the expansion of simple FM), added a factor rn to each sideband, and then worked 
+the same point (the expansion of simple FM), added a factor r^n to each sideband, and then worked 
 backwards to get the exponential modulation that would produce that spectrum:
 </p>
 
@@ -946,9 +943,8 @@ backwards to get the exponential modulation that would produce that spectrum:
 -->
 
 <p>This idea was mentioned by Moorer in "Signal Processing Aspects of Computer Music: A Survey", 
-but he didn't go into much detail.  It does give very pretty asymmetric spectra, but I believe 
-waveshaping does as well for less computation, is more versatile, and is easier to set up and control.
-It's also probably simpler to add two FM oscil pairs:
+but he didn't go into much detail.  
+It's probably simpler to add two FM oscil pairs:
 </p>
 
 <pre>
@@ -957,10 +953,7 @@ It's also probably simpler to add two FM oscil pairs:
 </pre>
 
 <p>where all the oscils have the same frequency and initial phase (0) except gen3 (and optionally gen2) which starts at pi/2.
-</p>
-
-
-<p>So far we've been using just a sinusoid for the modulator -- what if we make it a more complicated 
+So far we have been using just a sinusoid for the modulator -- what if we make it a more complicated 
 signal?  Here again elementary trigonometry can be used to expand
 </p>
 
@@ -989,8 +982,8 @@ sequence).  Since sine is not linear, this is not the same thing as
 -->
 
 <p>In the second case we just get the superposition of the two simple FM spectra, but in the first case 
-we get a more complex mixture involving all the sums and differences of w<sub>m1</sub> and w<sub>m2</sub>.  If the indices 
-are small (the B<sub>i</sub>'s are much less than 1), then there isn't much difference between the two versions.  
+we get a more complex mixture involving all the sums and differences of the modulating frequencies.  If the indices 
+are small (the B's are much less than 1), then there isn't much difference between the two versions.  
 Once again, the expansion is tedious, but it really involves nothing more than putting the sum of the 
 sines in place of the single sine in the previous case, then turning the algebraic crank.  See Le Brun 
 "A Derivation of the Spectrum of FM with a Complex Modulating Wave".  The result can be 
@@ -1029,9 +1022,10 @@ spectrum somewhat. In general:
 </pre>
 -->
 
-<p>A clm instrument to produce something like this might be:
+<p>A CLM instrument to produce something like this might be:
 </p>
 
+<table border=0 bgcolor="#f6f8ff" hspace=20><tr><td>
 <!-- CLM CASE
 <pre>
 (definstrument fm (beg end freq amp mc-ratios indexes carrier-phase mod-phases)
@@ -1079,6 +1073,7 @@ spectrum somewhat. In general:
 (with-sound () (fm 0 2.0 440 .3 '(1 3 4) '(1.0 0.5 0.1) 0.0 '(0.0 0.0 0.0)))
 </pre>
 <!-- -->
+</td></tr></table>
 
 <p>But this is silly -- I don't think all these modulators are buying us anything.  I say three is enough.  
 My favorite computer instrument, the FM violin, uses three sinusoidal components in the 
@@ -1088,12 +1083,11 @@ get away from the "simple FM sweep" that has become tiresome, and the broader, f
 is somewhat closer to that of a real violin.
 </p>
 
-<table border=1 hspace=50 cellpadding=10><tr><td>
+<table border=1 hspace=50 cellpadding=4><tr><td>
 <small>
-<p>The lumpy nature of the simple FM spectrum can be seen in Chowning's figure 1.8, but I find it easier to read the graph 
-of J<sub>n</sub>(10) as a function of n in Abramowitz and Stegun fig 9.3 -- think of the n axis as frequency, and remember that we 
-only  "see" n when it is an integer -- otherwise the negative part of the graph might give us pause.  The main lump is 
-near n=B for all B, a most unfortunate fact if we are trying to mimic the spectra of normal musical instruments.  Long 
+<p>The lumpy nature of the simple FM spectrum can be seen in figures given earlier.
+The main lump is 
+near n=B, a most unfortunate fact if we are trying to mimic the spectra of normal musical instruments.  Long 
 time FM'ers have tied themselves in elaborate knots trying to palliate this sore thumb of a bump; parallel modulators are 
 merely a simple and obvious bandage.
 </p>
@@ -1103,6 +1097,7 @@ merely a simple and obvious bandage.
 <p>A pared down version of the fm-violin is:
 </p>
 
+<table border=0 bgcolor="#f6f8ff" hspace=20><tr><td>
 <!-- CLM CASE 
 <pre>
 (definstrument violin (beg end frequency amplitude fm-index)
@@ -1172,9 +1167,10 @@ merely a simple and obvious bandage.
 (with-sound () (violin 0 1.0 440 .1 2.5))
 </pre>
 <!-- -->
+</td></tr></table>
 
 
-<table border=1 hspace=50 cellpadding=10><tr><td>
+<table border=1 hspace=50 cellpadding=4 vspace=10><tr><td>
 <small>
 
 <p>There is an extension of Carson's rule to the case of complex modulation. The quick-and-dirty form 
@@ -1194,15 +1190,9 @@ be
 </pre>
 -->
 
-<p>where B<sub>i</sub> is the index of the i-th component and w<sub>k</sub> is the highest modulating frequency and K is the 
-number of components present.  When the modulating signal gets very complex, you might use:
-</p>
-
-<pre>
-    B = peak-deviation * sqrt(power-of-modulating-signal)/ highest-modulating-frequency
-</pre>
-
-<p>but our rule of thumb is rapidly getting out of hand, as it were.
+<p>where B<sub>i</sub> is the index of the i-th component, w<sub>k</sub> is the highest modulating frequency, and k is the 
+number of components present.  
+But our rule of thumb has gotten out of hand.
 </p>
 </small>
 </tr></td></table>
@@ -1222,7 +1212,7 @@ sometimes called "cascade FM":
 </pre>
 -->
 
-<p>In clm nomenclature:
+<p>In CLM:
 </p>
 
 <pre>
@@ -1230,8 +1220,10 @@ sometimes called "cascade FM":
 </pre>
 
 <p>and we can get an extremely complex spectrum in no time.  Unfortunately, FM can produce energy 
-at 0Hz (when w<sub>c</sub> = nw<sub>m</sub> for example), and that DC component becomes a constant offset in the 
-lower of the two FM pairs. So your carrier no longer has any obvious relation to w<sub>c</sub>!  That is, we 
+at 0Hz (when, for example, the carrier frequency equals the modulating frequency), and that 0Hz ("DC") component becomes a constant offset in the 
+lower of the two FM pairs. So your carrier no longer has any obvious relation to
+<img src="fmeq43.png" alt="wc" align=absmiddle>!
+That is, we 
 can expand our cascade formula into:
 </p>
 
@@ -1245,10 +1237,14 @@ can expand our cascade formula into:
 </pre>
 -->
 
-<p>but now wherever w<sub>c</sub>= -nw<sub>m<sub>n</sub></sub> we get J<sub>n</sub>(B) cos 0 = J<sub>n</sub>(B).  This could be a disaster, because 
+<!-- LATEX \omega_{c} = -n\omega_{m}\textrm{, we get }J_{n}(B)\cos(0) = J_{n}(B) -->
+
+<p>but now wherever 
+<img src="fmeq46.png" alt="wc" align=absmiddle>.
+This could be a disaster, because 
 in most cases where we care about the perceived fundamental, we are trying to create harmonic 
 spectra, and that is pretty hard if we can't predict what our modulator-carrier ratios will be.  Jan 
-Mattox's fm-drum (fmex.ins) can ignore such niceties.  If you are using low indices and the top pair's 
+Mattox's fm-drum can ignore such niceties.  If you are using low indices and the top pair's 
 mc-ratios are below 1.0 (in vibrato, for example), you have a good chance of getting usable results.  
 If you want cascade FM to work in other situations, make sure the top oscil has an initial phase of 
 pi/2 -- the middle FM spectrum will then have only sines (not cosines), so the DC amplitude will 
@@ -1257,11 +1253,13 @@ timbral change in the output, so cascade FM is almost impossible to keep under c
 </p>
 
 
-<table border=1 hspace=50 cellpadding=10><tr><td>
-<small>
+<table border=1 hspace=50 cellpadding=4><tr><td>
+
 <p>The irascible reader may be grumbling about angels and pins, so here's an example of cascade FM 
 to show how strong this effect is:
 </p>
+
+</td></tr><tr><td bgcolor="#f6f8ff">
 
 <!-- CLM CASE
 <pre>
@@ -1302,15 +1300,12 @@ to show how strong this effect is:
 </pre>
 <!-- -->
 
-
-
-</small>
 </tr></td></table>
 
 
 <p>A similar trick comes up in "feedback FM" used in some synthesizers. Here the output of the carrier 
 is low-pass filtered, then fed back into its fm-input location.  Cellon, written by Stanislaw 
-Krupowicz, is an example -- the feedback FM occurs in the lines (edited here for clarity):
+Krupowicz, is an example; the feedback FM occurs in the lines (edited here for clarity):
 </p>
 
 <!-- CLM CASE
@@ -1327,7 +1322,7 @@ or
     (set! fm (one-zero low (* B (oscil fmosc fm))))
     (outa i (* amp (oscil carrier fm)) *output*)
 or
-    sin(y &lt;= w<sub>c</sub>t + B sin y) 
+    sin(y &lt;= w + B sin y) 
 </pre>
 <!-- -->
 
@@ -1346,13 +1341,13 @@ or
 </pre>
 -->
 
-<p>As Tomisawa points out this is very close to the formulas we've been looking at already, except that 
-the argument to the Bessel function depends on the order, we have only multiples of the frequency 
-wc in the expansion, and the elements of the sequence are multiplied by 2/nB.  The result is a much 
+<p>As Tomisawa points out this is very close to the formulas we have been looking at already, except that 
+the argument to the Bessel function depends on the order, we have only multiples of the carrier frequency 
+in the expansion, and the elements of the sequence are multiplied by 2/nB.  The result is a much 
 broader, flatter spectrum than one normally gets from FM.  If you just push the index up in normal 
 FM, the energy is pushed outward in a lumpy sort of fashion, not evenly spread across the spectrum.  
 In effect we've turned the axis of the Bessel functions so that the higher order functions start at 
-nearly the same time as the lower order functions.  The new function J<sub>n</sub>(nB) decreases gradually.  
+nearly the same time as the lower order functions.  The new function Jn(nB) decreases (very!) gradually.  
 For example if the index (B) is 1:
 </p>
 
@@ -1408,27 +1403,18 @@ hell breaks loose, but luckily:
 </pre>
 -->
 
-<p>so, just as in normal FM, if the index is 0, we get a pure sine wave. This also seems natural from 
-</p>
-
-<pre>
-    sin(y &gt;= w<sub>c</sub>t + B sin y) 
-</pre>
-
-<p>with B=0 (but computer arithmetic doesn't care what "seems natural"). Apparently, if B&gt;1.0, this formula becomes 
+<p>so, just as in normal FM, if the index is 0, we get a pure sine wave. This also seems natural from <code>sin(y &lt;= w + B sin y)</code>
+with B=0 (but computer arithmetic doesn't care what "seems natural"). Apparently, if B&gt;1.0, this formula becomes 
 numerically unstable; the result is a burst of noise.
 Tomisawa says the problem "is considered to be caused by an error in the digital computation".  We 
-may be rubbing against the behavior of J<sub>n</sub>(nB) for  large n and B&gt;1.0 -- see Watson, "Theory of 
-Bessel Functions", chapter 8.  J<sub>n</sub>(nB) might not be a decreasing function of n, so there may be 
+may be rubbing against the behavior of Jn(nB) for  large n and B&gt;1.0 -- see Watson, "Theory of 
+Bessel Functions", chapter 8.  Jn(nB) might not be a decreasing function of n, so there may be 
 hundreds of noticeable side bands, most of them aliasing.  One of the standard ways to make noise 
 (deliberately) with FM is to increase the index until massive aliasing is taking place.  However, this 
 doesn't explain the odd blippy nature of the noise burst.  Whatever the problem really is, the low 
 pass filter is cutting off the sum before it becomes unmanageable.
-</p>
-
-
-<p>Speaking of noise, let's put that into our FM equations and see if anything useful pops out.  The fm-
-noise instrument in noise.ins performs one form of modulation with noise.  The actual modulation 
+Speaking of noise, let's put that into our FM equations and see if anything useful pops out.  The fm-noise 
+instrument performs one form of modulation with noise.  The actual modulation 
 portion is:
 </p>
 
@@ -1438,7 +1424,7 @@ portion is:
 
 <p>where rand is producing white noise.  You can produce a sequence of different noises, moving 
 toward gaussian noise, simply by adding rand's together (this is known as the "central-limit 
-theorem")  The probability density of a sum of n independent random variables (rand's in clm) 
+theorem").  The probability density of a sum of n independent random variables (rand's in clm) 
 tends to approach a gaussian density as n increases.  We start with "white" noise which has an equal 
 probability of any value. Add another rand, thereby convolving the two flat "white" densities, and 
 you get a /\ shape.  The more you add the closer you get to the bell shaped curve of gaussian noise.  
@@ -1454,7 +1440,7 @@ smeared out by a copy of the noise band.
 </p>
 
 
-<p>In clm, the basic idea is:
+<p>In CLM, the basic idea is:
 </p>
 
 <pre>
@@ -1468,8 +1454,8 @@ smeared out by a copy of the noise band.
     (sin (+ sound-file (* index (sin (* 2 pi sound-file)))))
 </pre>
 
-<p>where "sound file" is any recorded sound.  I call this "contrast-enhancement" in the clm package.  It 
-makes a sound "crisper" -- "Wait for Me!" uses it whenever a sound needs to cut through a huge 
+<p>where "sound file" is any recorded sound.  I call this "contrast-enhancement" in the CLM package.  It 
+makes a sound "crisper"; "Wait for Me!" uses it whenever a sound needs to cut through a huge 
 mix of sounds.
 </p>
 
@@ -1478,11 +1464,13 @@ mix of sounds.
 modulators, and depend upon vibrato and "spectral fusion" to make the result sound like one voice.  
 In this cross between additive synthesis (the multiple carriers) and FM (the "formant" centered on 
 each carrier), we get around many of the limitations of the Bessel functions.  There are numerous 
-examples in fmviolin.clm.  Chowning's version is reson.ins and jcvoi.ins. One of the raspier 
-versions of the fm-violin used a sawtooth wave as the carrier.  One of the more elaborate multi-carrier FM instruments is the voice instrument written by Le Brun 
+examples in fmviolin.clm.  One of the raspier 
+versions of the fm-violin used a sawtooth wave as the carrier.  
+One of the more elaborate multi-carrier FM instruments is the voice instrument written by Marc Le Brun,
 and used in "Colony" and other pieces. In a simplified form it is:
 </p>
 
+<table border=0 bgcolor="#f6f8ff" hspace=20><tr><td>
 <!-- CLM CASE
 <pre>
 (definstrument vox (beg end freq amp 
@@ -1601,12 +1589,17 @@ and used in "Colony" and other pieces. In a simplified form it is:
   (vox 1.5 1.0 110 .5 '(0.02 0.01 0.02) '(.9 .09 .01)))
 </pre>
 <!-- -->
+</td></tr></table>
+
+<p>which produces this spectrogram:
+</p>
+
+<img src="voxspectrum.png" alt="voice spectrum" hspace=20>
 
 
 <hr>
 <h2>References</h2>
 <pre>
-<small>
 Abramowitz and Stegun, "Handbook of Mathematical Functions", Dover 1965.
 
 Bate, "The Effect of Modulator Phase on Timbres in FM Synthesis", CMJ vol 14, no3 1990, p38-45.
@@ -1638,7 +1631,6 @@ Taub and Schilling, "Principles of Communications Systems", McGraw-Hill, 1986.
 Tomisawa, "Tone Production Method for an Electronic Musical Instrument" US Patent 4,249,447, 1981.
 
 Watson, "A Treatise on the Theory of Bessel Functions", Cambridge, 1922.
-</small>
 </pre>
 
 <table border=1 hspace=40><tr><td>
@@ -1647,10 +1639,8 @@ Watson, "A Treatise on the Theory of Bessel Functions", Cambridge, 1922.
 <center>FM (and AM) radio ca 1933</center>
 </td></tr></table>
 
-<!-- TODO: LaTex all the math
-     TODO: 98  33 26 50 52 A&S: 9.1.18(360)  G&R 900 925 sort of
-     TODO: perhaps use Snd/Scheme in place of CL
-     TODO: line ffts of complex FM, feedback, formant FM, noise bands, asy?
+<!-- TODO: check that 2nd Carson formula -- it looks suspicious
+     TODO: feedback ins + direct example -- tmp295 -- something is confused in the feedback fm portion
 -->
 
 </body>
