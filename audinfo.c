@@ -1,5 +1,7 @@
 /* audinfo decribes the current audio hardware state */
 
+#include <mus-config.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>

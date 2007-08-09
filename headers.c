@@ -65,11 +65,9 @@
 #include "_sndlib.h"
 #include "sndlib-strings.h"
 
-#include <limits.h>
-
-
-#define BIGGEST_4_BYTE_SIGNED_INT   LONG_MAX
-#define BIGGEST_4_BYTE_UNSIGNED_INT ULONG_MAX
+/* can't use LONG_MAX here because we want a 4-byte max even on 64-bit machines */
+#define BIGGEST_4_BYTE_SIGNED_INT  2147483647L
+#define BIGGEST_4_BYTE_UNSIGNED_INT 4294967295UL
 
 
 static const unsigned char I_DSND[4] = {'.','s','n','d'};  /* NeXT/Sun/Dec/SGI/AFsp first word */

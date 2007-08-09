@@ -1,5 +1,7 @@
 /* sndinfo describes sounds */
 
+#include <mus-config.h>
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -433,11 +433,11 @@ more dispersed the spectral energy -- normally a "brighter" sound.
 <tr><td>
 <center>carrier=1000, mod=100, index=1.0</center>
 <pre>
-  J0(1.0) = 0.765 -> 1.0 (*)
-  J1(1.0) = 0.440 -> 0.575
-  J2(1.0) = 0.115 -> 0.150 
-  J3(1.0) = 0.019 -> 0.025 
-  J4(1.0) = 0.002 -> 0.003
+  J0(1.0) = 0.765 -&gt; 1.0 (*)
+  J1(1.0) = 0.440 -&gt; 0.575
+  J2(1.0) = 0.115 -&gt; 0.150 
+  J3(1.0) = 0.019 -&gt; 0.025 
+  J4(1.0) = 0.002 -&gt; 0.003
 
 (* Jn values normalized to match 
 the fft peak values given above)
@@ -446,25 +446,25 @@ the fft peak values given above)
 <td>
 <center>carrier=1000, mod=100, index=2.0</center>
 <pre>
-  J0(2.0) = 0.224 -> 0.388 (*)
-  J1(2.0) = 0.577 -> 1.0
-  J2(2.0) = 0.353 -> 0.611
-  J3(2.0) = 0.129 -> 0.223
-  J4(2.0) = 0.034 -> 0.058
-  J5(2.0) = 0.007 -> 0.012
-  J6(2.0) = 0.001 -> 0.002
+  J0(2.0) = 0.224 -&gt; 0.388 (*)
+  J1(2.0) = 0.577 -&gt; 1.0
+  J2(2.0) = 0.353 -&gt; 0.611
+  J3(2.0) = 0.129 -&gt; 0.223
+  J4(2.0) = 0.034 -&gt; 0.058
+  J5(2.0) = 0.007 -&gt; 0.012
+  J6(2.0) = 0.001 -&gt; 0.002
 </pre>
 </td>
 <td>
 <center>carrier=1000, mod=100, index=3.0</center>
 <pre>
-  J0(3.0) = -0.260 -> -0.534 (*)
-  J1(3.0) = 0.339 ->  0.697
-  J2(3.0) = 0.486 ->  1.0
-  J3(3.0) = 0.309 ->  0.635
-  J4(3.0) = 0.132 ->  0.271
-  J5(3.0) = 0.043 ->  0.088
-  J6(3.0) = 0.011 ->  0.023
+  J0(3.0) = -0.260 -&gt; -0.534 (*)
+  J1(3.0) = 0.339 -&gt;  0.697
+  J2(3.0) = 0.486 -&gt;  1.0
+  J3(3.0) = 0.309 -&gt;  0.635
+  J4(3.0) = 0.132 -&gt;  0.271
+  J5(3.0) = 0.043 -&gt;  0.088
+  J6(3.0) = 0.011 -&gt;  0.023
 </pre>
 </td>
 </tr>
@@ -931,7 +931,7 @@ the same point (the expansion of simple FM), added a factor r^n to each sideband
 backwards to get the exponential modulation that would produce that spectrum:
 </p>
 
-<!-- LATEX e^{(\frac{B}{2}(r-\frac{1}{r})\cos \omega_{m}t)}\sin(\omega_{c}t+\frac{B}{2}(r+\frac{1}{r})\sin \omega_{m}t=\sum r^{n}J_{n}(B)\sin(\omega_{c}t+n\omega_{m}t) -->
+<!-- LATEX e^{(\frac{B}{2}(r-\frac{1}{r})\cos \omega_{m}t)}\sin(\omega_{c}t+\frac{B}{2}(r+\frac{1}{r})\sin \omega_{m}t)=\sum r^{n}J_{n}(B)\sin(\omega_{c}t+n\omega_{m}t) -->
 
 <img src="fmeq29.png" alt="e sin" hspace=20>
 
@@ -1092,7 +1092,7 @@ time FM'ers have tied themselves in elaborate knots trying to palliate this sore
 merely a simple and obvious bandage.
 </p>
 </small>
-</tr></td></table>
+</td></tr></table>
 
 <p>A pared down version of the fm-violin is:
 </p>
@@ -1168,34 +1168,6 @@ merely a simple and obvious bandage.
 </pre>
 <!-- -->
 </td></tr></table>
-
-
-<table border=1 hspace=50 cellpadding=4 vspace=10><tr><td>
-<small>
-
-<p>There is an extension of Carson's rule to the case of complex modulation. The quick-and-dirty form 
-says "take the highest w<sub>m</sub> and use its index"  The fancier version redefines the modulation index to 
-be
-</p>
-
-<!-- LATEX B = \frac{\sqrt{\frac{1}{k}\sum_{i=1}^{k}\frac{B_{i}^{2}}{2}}}{\omega_{k}} -->
-
-<img src="fmeq34.png" alt="carson squared" hspace=20>
-
-<!-- HTML
-<pre>
-                  K
-    B = sqrt(1/K <img alt="Sum" align=middle src="sum.png"> B<sub>i</sub><sup>2</sup>/2) / w<sub>K</sub>
-                  i=1
-</pre>
--->
-
-<p>where B<sub>i</sub> is the index of the i-th component, w<sub>k</sub> is the highest modulating frequency, and k is the 
-number of components present.  
-But our rule of thumb has gotten out of hand.
-</p>
-</small>
-</tr></td></table>
 
 
 <p>We can, of course, use FM (or anything) to produce the modulating signal.  When FM is used, it is 
@@ -1300,7 +1272,7 @@ to show how strong this effect is:
 </pre>
 <!-- -->
 
-</tr></td></table>
+</td></tr></table>
 
 
 <p>A similar trick comes up in "feedback FM" used in some synthesizers. Here the output of the carrier 
@@ -1404,7 +1376,51 @@ hell breaks loose, but luckily:
 -->
 
 <p>so, just as in normal FM, if the index is 0, we get a pure sine wave. This also seems natural from <code>sin(y &lt;= w + B sin y)</code>
-with B=0 (but computer arithmetic doesn't care what "seems natural"). Apparently, if B&gt;1.0, this formula becomes 
+with B=0 (but computer arithmetic doesn't care what "seems natural"). Here's a simple example:
+</p>
+
+<table border=1 hspace=20 cellpadding=3>
+<tr><td bgcolor="#f6f8ff">
+<pre>
+(define (feedbk beg dur freq amp index)
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (y 0.0)
+	 (x-incr (hz->radians freq)))
+    (run 
+     (lambda ()
+       (do ((i start (1+ i))
+	    (x 0.0 (+ x x-incr)))
+	   ((= i end))
+	 (set! y (+ x (* index (sin y))))
+	 (outa i (* amp (sin y)) *output*))))))
+
+(with-sound () (feedbk 0 1 100.0 1.0 1.0))
+</pre>
+</td>
+
+<td>
+<table border=0>
+<tr><td>
+<img src="fdbk.png" alt="feedback fm">
+</td></tr>
+<tr>
+<td>
+<pre>
+
+  2/1 J1(1) = 0.880 -&gt; 1.000 (normalized to match fft)
+  2/2 J2(2) = 0.353 -&gt; 0.401
+  2/3 J3(3) = 0.206 -&gt; 0.234
+  2/4 J4(4) = 0.141 -&gt; 0.159
+  2/5 J5(5) = 0.104 -&gt; 0.118
+  2/6 J6(6) = 0.082 -&gt; 0.093
+  2/7 J7(7) = 0.066 -&gt; 0.076
+</pre>
+</td></tr></table>
+</td></tr></table>
+
+<p>
+Apparently, if B&gt;1.0, this formula becomes 
 numerically unstable; the result is a burst of noise.
 Tomisawa says the problem "is considered to be caused by an error in the digital computation".  We 
 may be rubbing against the behavior of Jn(nB) for  large n and B&gt;1.0 -- see Watson, "Theory of 
@@ -1431,13 +1447,28 @@ you get a /\ shape.  The more you add the closer you get to the bell shaped curv
 When frequency modulation gets noise, the power spectral density of the output has the same form 
 as the density function of the modulating wave, but now centered around the carrier.  For either kind 
 of noise (white or gaussian), the bandwidth of the result is about 4 times the peak deviation (the 
-random number frequency times its amplitude).  The real value of noise, however, is not in making hiss.  One of the great improvements to the world 
+random number frequency times its amplitude).  The real value of noise, however, is not in making hiss.  
+One of the great improvements to the world 
 of computer music came about when Heinrich Taube fed noise (as a sort of cascade FM) into the 
 parallel modulators of an fm-flute, but not into the carrier.  The modulating signal becomes a sum of 
 two or three narrow band noises (narrow because normally the amplitude of the noise is low), and 
 these modulate the carrier.  It is my belief that you get the normal spectrum with each component 
-smeared out by a copy of the noise band. 
+smeared out by a copy of the noise band:
 </p>
+
+<table border=1 hspace=20>
+<tr>
+<td colspan=3 bgcolor="#f6f8ff"><center>(with-sound () (fm-violin 0 1 400.0 .5 :fm-index 3.0 :noise-amount 0.007))</center></td></tr>
+<tr>
+<td><img src="fmvnoise0.png" alt="fmv no noise"></td>
+<td><img src="fmvnoise2.png" alt="fmv noise .002"></td>
+<td><img src="fmvnoise7.png" alt="fmv noise .007"></td>
+</tr>
+<tr>
+<td><center>noise-amount: 0.0</center></td>
+<td><center>noise-amount: 0.002</center></td>
+<td><center>noise-amount: 0.007</center></td>
+</tr></table>
 
 
 <p>In CLM, the basic idea is:
@@ -1638,10 +1669,6 @@ Watson, "A Treatise on the Theory of Bessel Functions", Cambridge, 1922.
 </td></tr><tr><td>
 <center>FM (and AM) radio ca 1933</center>
 </td></tr></table>
-
-<!-- TODO: check that 2nd Carson formula -- it looks suspicious
-     TODO: feedback ins + direct example -- tmp295 -- something is confused in the feedback fm portion
--->
 
 </body>
 </html>
