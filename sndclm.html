@@ -587,7 +587,7 @@ This means that the envelope y values should be passed through <a href="#hztorad
 </td></tr></table>
 
 <p>See <a href="fm.html">fm.html</a> for a
-discussion of FM (using the Common Lisp version of CLM).  The standard additive synthesis instruments use an array of oscillators to
+discussion of FM.  The standard additive synthesis instruments use an array of oscillators to
 create the individual spectral components:
 </p>
 
@@ -1047,14 +1047,21 @@ Chebyshev polynomials of the fourth kind).
 <p>In its simplest use, waveshaping is additive synthesis:
 </p>
 
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<table border=0 hspace=40><tr>
+<td bgcolor="#fafafa">
 <pre>
 (<a class=quiet href="sndscm.html#definstrument">definstrument</a> (simp)
-  (let ((wav (<em class=red>make-waveshape</em> :frequency 440 :partials '(1 .5 2 .3 3 .2))))
-    (do ((i 0 (1+ i))) ((= i 1000))
+  (let ((wav (<em class=red>make-waveshape</em> 
+               :frequency 440 
+               :partials '(1 .5  2 .3  3 .2))))
+    (do ((i 0 (1+ i))) ((= i 10000))
       (<a class=quiet href="#outa">outa</a> i (<em class=red>waveshape</em> wav) *output*))))
 </pre>
-</td></tr></table>
+</td>
+<td>
+<img src="waveshape.png" alt="waveshaping">
+</td>
+</tr></table>
 
 <p>we can also use
 partials-&gt;polynomial with polyshape;
@@ -1090,9 +1097,42 @@ bigbird is an example:
 
 <p>
 partials-&gt;waveshape with waveshape produces the same output as partials-&gt;polynomial with polyshape.
-See also the <a href="sndscm.html#pqw">pqw</a> instrument for phase quadrature waveshaping (single-sideband tricks).
 The <a href="sndscm.html#fmviolin">fm-violin</a> uses polyshape for the multiple FM section in some cases.
+We can get single side-band spectra by using Chebyshev polynomials of the second kind.  
+The <a href="sndscm.html#pqw">pqw</a> nad <a href="sndscm.html#pqwvox">pqwvox</a> instruments use this
+technique.  Here is a simplified example:
 </p>
+
+<table border=1 cellpadding=3>
+<tr><td bgcolor="#f6f8ff">
+<pre>
+(definstrument (pqw start dur spacing carrier partials)
+  (let* ((spacing-cos (<a class=quiet href="#make-oscil">make-oscil</a> spacing (/ pi 2.0)))
+	 (spacing-sin (<a class=quiet href="#make-oscil">make-oscil</a> spacing))
+	 (carrier-cos (<a class=quiet href="#make-oscil">make-oscil</a> carrier (/ pi 2.0)))
+	 (carrier-sin (<a class=quiet href="#make-oscil">make-oscil</a> carrier))
+	 (sin-coeffs (<em class=red>partials-&gt;polynomial</em>
+                       partials mus-chebyshev-second-kind))
+	 (cos-coeffs (<em class=red>partials-&gt;polynomial</em>
+                       partials mus-chebyshev-first-kind))
+	 (beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start))
+	 (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
+    (run (lambda ()
+     (do ((i beg (1+ i))) ((= i end))
+       (let ((ax (<a class=quiet href="#oscil">oscil</a> spacing-cos)))
+	 (<a class=quiet href="#outa">outa</a> i (- (* (<a class=quiet href="#oscil">oscil</a> carrier-sin) 
+                       (<a class=quiet href="#oscil">oscil</a> spacing-sin) 
+		       (<em class=red>polynomial</em> sin-coeffs ax))
+		    (* (<a class=quiet href="#oscil">oscil</a> carrier-cos) 
+		       (<em class=red>polynomial</em> cos-coeffs ax)))
+	       *output*)))))))
+
+(with-sound ()  (pqw 0 1 200.0 1000.0 '(2 .2  3 .3  6 .5)))
+</pre>
+</td><td>
+<img src="pqw.png" alt="pqw example">
+</td></tr></table>
+
 <br><br>
 
 
@@ -1148,7 +1188,32 @@ These do not produce band-limited output; if the frequency is too high, you can 
 but as far as I
 know, no-one uses these as audio frequency tone generators -- who would want to
 listen to a square wave?  A more reasonable square-wave can be generated via
-<code>(tanh (* n (sin theta)))</code>, where "n" (a float) sets how squared-off it is.
+<code>(tanh (* n (sin theta)))</code>, where "n" (a float) sets how squared-off it is:
+</p>
+
+<table border=1 hspace=20 vspace=10>
+<tr>
+<td bgcolor="#f6f8ff"><center>n: 1.0</center></td>
+<td width=20></td>
+<td bgcolor="#f6f8ff"><center>n: 3.0</center></td>
+<td width=20></td>
+<td bgcolor="#f6f8ff"><center>n: 100.0</center></td>
+</tr>
+<tr>
+<td>
+<img src="tanh1.png" alt="tanh 1">
+</td>
+<td width=20></td>
+<td>
+<img src="tanh3.png" alt="tanh 1">
+</td>
+<td width=20></td>
+<td>
+<img src="tanh100.png" alt="tanh 1">
+</td></tr></table>
+
+
+<p>
 Even more amusing is this algorithm:
 </p>
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -1173,7 +1238,7 @@ Even more amusing is this algorithm:
 </pre>
 </td></tr></table>
 
-<p>Just for completeness, here's an example:
+<p>Just for completeness, here's a sawtooth example:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
@@ -1196,7 +1261,6 @@ Even more amusing is this algorithm:
 <A NAME="sum-of-cosinesdoc"></A>
 <!-- ---------------------------------------- SUM-OF-COSINES ---------------------------------------- -->
 
-<br>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>sum-of-cosines</h3></center></td></tr></table>
 <br>
 <pre>
@@ -1233,7 +1297,11 @@ based on:
   see also cosine-summation, fejer-sum, etc in dsp.scm
 </pre><br clear=left>
 
-<table border=0 bgcolor="#fafafa" hspace=40 vspace=20><tr><td><pre>
+<br>
+<table border=0 hspace=40>
+<tr>
+<td bgcolor="#fafafa">
+<pre>
 (define (simple-soc beg dur freq amp)
   (let* ((os (<em class=red>make-sum-of-cosines</em> 10 freq 0.0))
 	 (start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
@@ -1241,11 +1309,14 @@ based on:
     (run
      (lambda ()
        (do ((i start (1+ i))) ((= i end))
-	 (out-any i (* amp (<em class=red>sum-of-cosines</em> os)) 0 *output*))))))
-</pre></td></tr></table>
+	 (outa i (* amp (<em class=red>sum-of-cosines</em> os)) 
+               *output*))))))
 
-<img src="cosines.png" alt="sum of cosines example" hspace=40>
-
+(with-sound () (simple-soc 0 1 100 1.0))
+</pre></td>
+<td>
+<img src="cosines.png" alt="sum of cosines example" hspace=10>
+</td></tr></table>
 
 <p>Almost identical is the following <A NAME="sinc-train">sinc-train</a> generator:
 </p>
@@ -1285,15 +1356,66 @@ matter what.  It is possible to vary the spectrum smoothly:
 		       (expt (abs val) (env pow)))))))
 </pre></td></tr></table>
 <p>This trick works on all the <a href="sndscm.html#fejersum">pulse-train</a> functions in dsp.scm (or an oscil for that matter!), 
-but perhaps a filter is a simpler approach.
+but perhaps a filter is a simpler approach.  There are a lot more of these "kernels";  see dsp.scm for:
 </p>
-<br>
+
+<table border=1 hspace=20 cellspacing=4>
+<tr>
+<td bgcolor="#f6f8ff"><center>fejer (n=10)</center></td>
+<td bgcolor="#f6f8ff"><center>poussin (n=5)</center></td>
+<td bgcolor="#f6f8ff"><center>jackson (n=10)</center></td>
+</tr><tr>
+<td><img src="fejer.png" alt="fejer sum"></td>
+<td><img src="poussin.png" alt="poussin sum"></td>
+<td><img src="jackson.png" alt="jackson sum"></td>
+</tr><tr><td height=8 colspan=3></td>
+</tr><tr>
+<td bgcolor="#f6f8ff"><center>legendre (n=5)</center></td>
+<td bgcolor="#f6f8ff"><center>kosine (n=5, r=0.5)</center></td>
+<td bgcolor="#f6f8ff"><center>kosine (n=5, r=0.95)</center></td>
+</tr><tr>
+<td><img src="legendre.png" alt="legendre sum"></td>
+<td><img src="kosine.png" alt="kosine sum"></td>
+<td><img src="kosine95.png" alt="kosine95 sum"></td>
+</tr></table>
+
+<!--
+fejer-sum: fejer.png (10)
+poussin (5)
+legendre (5)
+jackson (10)
+
+
+(with-sound ()
+  (let ((freq (hz->radians 100.0)))
+    (do ((i 0 (1+ i))
+	 (angle 0.0 (+ angle freq)))
+	((= i 22050))
+      (outa i (fejer-sum angle 10) *output*))))
+
+(with-sound ()
+(let ((gen (make-kosine-summation 100.0))) 
+    (do ((i 0 (1+ i)))
+	((= i 22050))
+      (outa i (kosine-summation gen 0.5 5.0) *output*))))
+
+
+kosine95
+(with-sound ()
+(let ((gen (make-kosine-summation 100.0))) 
+    (do ((i 0 (1+ i)))
+	((= i 22050))
+      (outa i (kosine-summation gen 0.95 1.0) *output*))))
+-->
+
+
+<br><br>
 
 
 
 <A NAME="sum-of-sinesdoc"></A>
 <!-- ---------------------------------------- SUM-OF-SINES ---------------------------------------- -->
-<br>
+
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>sum-of-sines</h3></center></td></tr></table>
 <br>
 <pre>
@@ -1322,7 +1444,9 @@ based on:
 </pre><br clear=left>
 
 <p>See also the <a href="#sine-summation">sine-summation</a> generator, 
-and dsp.scm which has a <a href="sndscm.html#fejersum">collection</a> of neat sum-of-sinusoids formulas.
+and dsp.scm which has
+<a href="sndscm.html#sumofnsines">sum-of-n-odd-sines</a> and
+<a href="sndscm.html#sumofnsines">sum-of-n-odd-cosines</a>.
 </p>
 
 <br><br>
@@ -2306,7 +2430,7 @@ delay line as the coefficients for an FIR filter:
   (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
 	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (dly (<em class=red>make-comb</em> :scaler .9 :size size)) 
-	 (flt (<a class=quiet href="#make-fir-filter">make-fir-filter</a> :order size :xcoeffs (<em class=red>mus-data</em> dly))) ; use comb delay line as FIR coefficients
+	 (flt (<a class=quiet href="#make-fir-filter">make-fir-filter</a> :order size :xcoeffs (<em class=red>mus-data</em> dly))) ; comb delay line as FIR coeffs
 	 (r (<a class=quiet href="#make-rand">make-rand</a> freq)))                                       ; feed comb with white noise
     (run 
      (lambda () 
@@ -3253,7 +3377,8 @@ To have full output to both channels,</p>
                 (set! (<em class=red>locsig-reverb-ref</em> loc 0) (* reverb-amount (sqrt dist-scaler))))
             (<em class=red>locsig</em> loc i rdval)))))))
 
-(with-sound (:reverb jc-reverb :channels 2) (space "pistol.snd" 0 3 :distance-env '(0 1 1 2) :degree-env '(0 0 1 90)))
+(with-sound (:reverb jc-reverb :channels 2) 
+  (space "pistol.snd" 0 3 :distance-env '(0 1 1 2) :degree-env '(0 0 1 90)))
 </pre>
 </td></tr></table>
 

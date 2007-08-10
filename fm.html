@@ -1373,10 +1373,10 @@ with B=0 (but computer arithmetic doesn't care what "seems natural"). Here's a s
 <tr><td bgcolor="#f6f8ff">
 <pre>
 (define (feedbk beg dur freq amp index)
-  (let* ((start (seconds->samples beg))
-	 (end (+ start (seconds->samples dur)))
+  (let* ((start (seconds-&gt;samples beg))
+	 (end (+ start (seconds-&gt;samples dur)))
 	 (y 0.0)
-	 (x-incr (hz->radians freq)))
+	 (x-incr (hz-&gt;radians freq)))
     (run 
      (lambda ()
        (do ((i start (1+ i))
@@ -1418,7 +1418,7 @@ Perhaps we have wandered into the realm of chaos:
 can behave chaotically.
 </p>
 
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>FM and noise: sin(rand)</center></h5></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>FM and noise: sin(sin(rand))</center></h5></td></tr></table>
 
 <p>
 One of the standard ways to make noise 
