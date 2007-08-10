@@ -223,9 +223,9 @@ output-comment-hook lambda: <{ str1 -- str2 }>
     then
   ; #t $" eval over selection" $" eval over selection" bind-key drop
 
-  \ graph-hook <'> correlate        add-hook!
-  \ graph-hook <'> zoom-spectrum    add-hook!
-  \ graph-hook <'> superimpose-ffts add-hook!
+  \ graph-hook <'> display-correlate add-hook!
+  \ graph-hook <'> zoom-spectrum     add-hook!
+  \ graph-hook <'> superimpose-ffts  add-hook!
   graph-hook lambda: <{ snd chn y0 y1 -- }>
     $" freq: %.3f" '( snd chn left-sample  snd chn spot-freq ) string-format
     snd #f report-in-minibuffer drop

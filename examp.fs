@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Tue May 01 18:03:26 CEST 2007
+\ Changed: Mon Aug 06 23:51:39 CEST 2007
 
 \ Commentary:
 \
@@ -29,7 +29,7 @@
 \ window-rms                ( -- val )
 \ fft-peak            	    ( snd chn scaler -- pk )
 \ finfo                     ( file -- str )
-\ display-correlation       ( snd chn y0 y1 -- val )
+\ display-correlate         ( snd chn y0 y1 -- val )
 \ zoom-spectrum             ( snd chn y0 y1 -- val )
 \ superimpose-ffts          ( snd chn y0 y1 -- val )
 \ locate-zero               ( limit -- samp )
@@ -369,7 +369,7 @@ previous
 \ ;;;
 \ ;;; correlation of channels in a stereo sound
 
-: display-correlation <{ snd chn y0 y1 -- val }>
+: display-correlate <{ snd chn y0 y1 -- val }>
   doc" Returns the correlation of SND's 2 channels (intended for use with graph-hook).  \
 y0 and y1 are ignored."
   snd channels 2 = if
@@ -406,7 +406,7 @@ y0 and y1 are ignored."
     $" %s wants stereo input" '( get-func-name ) string-format snd #f report-in-minibuffer
   then
 ;
-\ graph-hook ' display-correlation add-hook!
+\ graph-hook ' display-correlate add-hook!
 
 \ ;;; -------- set transform-size based on current time domain window size
 \ ;;;

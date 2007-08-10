@@ -79,6 +79,9 @@ frequency modulation:
 </pre>
 -->
 
+<br>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>FM and phase modulation</center></h5></td></tr></table>
+
 <p>The terms "angle modulation", "phase modulation", and "frequency modulation" (not to mention 
 "exponential modulation" and "angular modulation") are used almost interchangeably in the radio 
 literature, but the textbooks on the subject normally distinguish between PM and FM as follows: if 
@@ -190,6 +193,8 @@ functions that there is no difference in run-time computational expense (or accu
 
 </td></tr></table>
 
+
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>simple FM: sin(sin)</center></h5></td></tr></table>
 
 <p>Given our formula for FM, let's assume, for starters, that f(t) is a sinusoid:
 </p>
@@ -513,6 +518,8 @@ For the view from celestial mechanics today, see Vallado, "Fundamentals of Astro
 </p></small>
 </td></tr></table>
 
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>simple FM examples</center></h5></td></tr></table>
+
 <p>Here's a simple FM instrument:
 </p>
 
@@ -618,6 +625,7 @@ sweep the FM index from 0 to 10, and the spectrogram looks like this:
 
 <img src="fmsweep.png" alt="sweep index" hspace=40>
 
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>phase quibbles: cos(sin)</center></h5></td></tr></table>
 <p>
 Many simple extensions can be made to the fm instrument given above and 
 something good can often be coaxed from it.  But, to clear up one source of confusion -- if you 
@@ -769,31 +777,18 @@ instrument:
 is Bate's fig 3 ("The Effects of Modulator Phase on Timbres in FM Synthesis").  (At least I think it 
 is -- Bate says he is changing the modulator's initial phase, but I can't reproduce his graph unless I 
 change the carrier initial phase -- the important point is that these phases matter).  Also, remember 
-that we are thinking in terms of the pre-integration phase here (hence the (* .5 pi)) --
+that we are thinking in terms of the pre-integration phase here (hence the (* .5 pi)):
 </p>
 
+<table border=0><tr><td>
 <!-- LATEX \sin(x+\frac{\pi}{2}) = cos x -->
-
 <img src="fmeq25.png" alt="sin=cos" hspace=20>
-
-<!-- HTML
-<pre>
-    sin(x + pi/2) = cos x
-</pre>
--->
-
-<p>and
-</p>
-
+</td><td>
+and
+</td><td>
 <!-- LATEX \int \! \cos x \: \mathrm{d}x = \sin x -->
-
 <img src="fmeq26.png" alt="cos int sin" hspace=20>
-
-<!-- HTML
-<pre>
-    <img alt="Integral" align=middle src="integ.png">cos x dx = sin x
-</pre>
--->
+</td></tr></table>
 
 <p>so by starting with a cosine in the modulator, after the integration in oscil (and ignoring the constant 
 for the moment) we have
@@ -857,6 +852,7 @@ equal (in this case) to the modulation index!   So the true carrier initial phas
 specify and the modulation index times the initial value of the integrated wave.
 </p>
 
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>asymmetric spectra</center></h5></td></tr></table>
 
 <p>The next question is "if we can get cancellations, can we twiddle the phases and get 
 single sideband FM?".  We could then get away from the symmetric spectra FM always tries to 
@@ -942,17 +938,9 @@ backwards to get the exponential modulation that would produce that spectrum:
 </pre>
 -->
 
-<p>This idea was mentioned by Moorer in "Signal Processing Aspects of Computer Music: A Survey", 
-but he didn't go into much detail.  
-It's probably simpler to add two FM oscil pairs:
-</p>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>complex FM: sin(sin+sin)</center></h5></td></tr></table>
 
-<pre>
-  (+ (oscil gen0 (* index (oscil gen1)))
-     (oscil gen2 (* index (oscil gen3))))
-</pre>
-
-<p>where all the oscils have the same frequency and initial phase (0) except gen3 (and optionally gen2) which starts at pi/2.
+<p>
 So far we have been using just a sinusoid for the modulator -- what if we make it a more complicated 
 signal?  Here again elementary trigonometry can be used to expand
 </p>
@@ -1169,6 +1157,7 @@ merely a simple and obvious bandage.
 <!-- -->
 </td></tr></table>
 
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>cascade FM: sin(sin(sin))</center></h5></td></tr></table>
 
 <p>We can, of course, use FM (or anything) to produce the modulating signal.  When FM is used, it is 
 sometimes called "cascade FM":
@@ -1274,6 +1263,7 @@ to show how strong this effect is:
 
 </td></tr></table>
 
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>feedback FM: sin(x=sin(x))</center></h5></td></tr></table>
 
 <p>A similar trick comes up in "feedback FM" used in some synthesizers. Here the output of the carrier 
 is low-pass filtered, then fed back into its fm-input location.  Cellon, written by Stanislaw 
@@ -1422,14 +1412,19 @@ with B=0 (but computer arithmetic doesn't care what "seems natural"). Here's a s
 <p>
 Apparently, if B&gt;1.0, this formula becomes 
 numerically unstable; the result is a burst of noise.
-Tomisawa says the problem "is considered to be caused by an error in the digital computation".  We 
-may be rubbing against the behavior of Jn(nB) for  large n and B&gt;1.0 -- see Watson, "Theory of 
-Bessel Functions", chapter 8.  Jn(nB) might not be a decreasing function of n, so there may be 
-hundreds of noticeable side bands, most of them aliasing.  One of the standard ways to make noise 
-(deliberately) with FM is to increase the index until massive aliasing is taking place.  However, this 
-doesn't explain the odd blippy nature of the noise burst.  Whatever the problem really is, the low 
-pass filter is cutting off the sum before it becomes unmanageable.
-Speaking of noise, let's put that into our FM equations and see if anything useful pops out.  The fm-noise 
+Tomisawa says the problem "is considered to be caused by an error in the digital computation". 
+Perhaps we have wandered into the realm of chaos:
+<code>(set! x (* 4 (sin (* pi x))))</code>
+can behave chaotically.
+</p>
+
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>FM and noise: sin(rand)</center></h5></td></tr></table>
+
+<p>
+One of the standard ways to make noise 
+(deliberately) with FM is to increase the index until massive aliasing is taking place. 
+In another, more controllable, method,
+we inject noise into our FM equations and see if anything useful pops out.  The fm-noise 
 instrument performs one form of modulation with noise.  The actual modulation 
 portion is:
 </p>
@@ -1478,6 +1473,7 @@ smeared out by a copy of the noise band:
     (oscil carrier (* fm-index (oscil fm (* noise-index (rand noise)))))
 </pre>
 
+
 <p>In the realm of "anything" as the modulating signal, consider 
 </p>
 
@@ -1490,6 +1486,8 @@ makes a sound "crisper"; "Wait for Me!" uses it whenever a sound needs to cut th
 mix of sounds.
 </p>
 
+
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>FM voice</center></h5></td></tr></table>
 
 <p>We can use more than one sinusoidal component in our carrier, or multiple banks of carriers and 
 modulators, and depend upon vibrato and "spectral fusion" to make the result sound like one voice.  
