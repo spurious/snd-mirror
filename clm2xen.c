@@ -374,7 +374,7 @@ static char *fft_window_xen_names[MUS_NUM_FFT_WINDOWS] =
      S_hann_poisson_window, S_connes_window, S_samaraki_window, S_ultraspherical_window,
      S_bartlett_hann_window, S_bohman_window, S_flat_top_window,
      S_blackman5_window, S_blackman6_window, S_blackman7_window, S_blackman8_window, S_blackman9_window, S_blackman10_window,
-     S_rv2_window, S_rv3_window, S_rv4_window,
+     S_rv2_window, S_rv3_window, S_rv4_window, S_mlt_sine_window
 };
 
 
@@ -7191,6 +7191,7 @@ void mus_xen_init(void)
   #define H_rv2_window             "Rife-Vincent 2nd order window (Hann extension)"
   #define H_rv3_window             "Rife-Vincent 3rd order window (Hann extension)"
   #define H_rv4_window             "Rife-Vincent 4th order window (Hann extension)"
+  #define H_mlt_sine_window        "modulated lapped transform sine window"
 
   XEN_DEFINE_CONSTANT(S_rectangular_window,     MUS_RECTANGULAR_WINDOW,     H_rectangular_window);
   XEN_DEFINE_CONSTANT(S_hann_window,            MUS_HANN_WINDOW,            H_hann_window);
@@ -7225,6 +7226,7 @@ void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_rv2_window,             MUS_RV2_WINDOW,             H_rv2_window);
   XEN_DEFINE_CONSTANT(S_rv3_window,             MUS_RV3_WINDOW,             H_rv3_window);
   XEN_DEFINE_CONSTANT(S_rv4_window,             MUS_RV4_WINDOW,             H_rv4_window);
+  XEN_DEFINE_CONSTANT(S_mlt_sine_window,        MUS_MLT_SINE_WINDOW,        H_mlt_sine_window);
 
   XEN_DEFINE_CONSTANT(S_mus_interp_linear,      MUS_INTERP_LINEAR,          "locsig/delay linear interpolation");
   XEN_DEFINE_CONSTANT(S_mus_interp_sinusoidal,  MUS_INTERP_SINUSOIDAL,      "locsig sinusoidal interpolation");
@@ -7705,6 +7707,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_mixer_p,
 	       S_mixer_ref,
 	       S_mixer_set,
+	       S_mlt_sine_window,
 	       S_move_locsig,
 	       S_move_sound,
 	       S_move_sound_p,

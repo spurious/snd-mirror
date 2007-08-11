@@ -9072,6 +9072,20 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	}
       break;
 
+    case MUS_MLT_SINE_WINDOW:
+      {
+	Float scl;
+	scl = M_PI / (Float)size;
+	for (i = 0, j = size - 1; i <= midn; i++, j--)
+	  {
+	    window[i] = sin((i + 0.5) * scl);
+	    window[j] = window[i];
+	  }
+      }
+      break;
+
+      /* PERHAPS: Slepian (dpss) window */
+
     case MUS_ULTRASPHERICAL_WINDOW:
     case MUS_SAMARAKI_WINDOW:
     case MUS_DOLPH_CHEBYSHEV_WINDOW:
@@ -9222,7 +9236,7 @@ static const char *fft_window_names[MUS_NUM_FFT_WINDOWS] =
    "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes",
    "Samaraki", "Ultraspherical", "Bartlett-Hann", "Bohman", "Flat-top",
    "Blackman5", "Blackman6", "Blackman7", "Blackman8", "Blackman9", "Blackman10",
-   "Rife-Vincent2", "Rife-Vincent3", "Rife-Vincent4"
+   "Rife-Vincent2", "Rife-Vincent3", "Rife-Vincent4", "MLT Sine"
 };
 
 

@@ -19,6 +19,7 @@ fgrep "if DEBUGGING" *.c
 fgrep "(DEBUGGING)" *.c
 fgrep udpate *.html
 fgrep udpate *.scm
+fgrep " border " *.html
 fgrep ";;" *.[ch]
 va.scm
 tools/check-gtk.scm

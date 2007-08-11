@@ -156,6 +156,7 @@
 #define S_mixer_p                    "mixer?"
 #define S_mixer_ref                  "mixer-ref"
 #define S_mixer_set                  "mixer-set!"
+#define S_mlt_sine_window            "mlt-sine-window"
 #define S_move_locsig                "move-locsig"
 #define S_move_sound                 "move-sound"
 #define S_move_sound_p               "move-sound?"

@@ -38,6 +38,7 @@
 <td><small><a href="grfsnd.html" onmouseover="return escape('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
 <td><small><a href="sndscm.html" onmouseover="return escape('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
 <td><small><a href="sndclm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">sndclm.html</a></small></td>
+<td><small><a href="fm.html" onmouseover="return escape('introduction to frequency modulation')">fm.html</a></small></td>
 <td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
 <td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd\'s extension language')">libxm.html</a></small></td>
 <td><small><a href="index.html" onmouseover="return escape('this is an actual index, not some introductory file')">index.html</a></small></td>
@@ -4166,6 +4167,7 @@ up to 4 points, the first two (start, end = 24981 144332 above) refer to the sus
 and the second two (0 0 above) refer to the release.  
 The 5th and 6th list entries are the base note and detune values (60 0 above).
 For historical reasons, the 7th and 8th entries are the sustain and release modes (1 0 above).
+The <a href="sndclm.html#tablelookup">looper</a> instrument uses this function to implement a sort of "freeze" function.
 See also <a href="#soundloopinfo">sound-loop-info</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -6451,7 +6453,7 @@ This sets the choice of fft data window (default: <code>blackman2-window</code>)
   samaraki-window          tukey-window           ultraspherical-window  welch-window        
   blackman5-window         blackman6-window       blackman7-window       blackman8-window       
   blackman9-window         blackman10-window      rv2-window             rv3-window
-  rv4-window
+  rv4-window               mlt-sine-window
 </pre>
 <p>The Hann window is sometimes called Hanning in the DSP literature, apparently
 as an in-joke.  For an extensive discussion of these windows, see
@@ -12271,7 +12273,7 @@ to put the date and time in the Snd title bar.
   ultraspherical-window  bartlett-hann-window  bohman-window        flat-top-window
   blackman5-window       blackman6-window      blackman7-window     blackman8-window       
   blackman9-window       blackman10-window     rv2-window           rv3-window
-  rv4-window
+  rv4-window             mlt-sine-window
 </pre>
 
 <p><b>Zoom Focus</b> style (<a href="#zoomfocusstyle">zoom-focus-style</a>):</p>
@@ -13429,6 +13431,7 @@ You can find out at run-time whether GL is loaded via <code>(provided? 'gl)</cod
 <td><small><a href="grfsnd.html" onmouseover="return escape('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
 <td><small><a href="sndscm.html" onmouseover="return escape('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
 <td><small><a href="sndclm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">sndclm.html</a></small></td>
+<td><small><a href="fm.html" onmouseover="return escape('introduction to frequency modulation')">fm.html</a></small></td>
 <td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
 <td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd\'s extension language')">libxm.html</a></small></td>
 <td><small><a href="index.html" onmouseover="return escape('an actual index, not some introductory file')">index.html</a></small></td>

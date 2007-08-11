@@ -569,6 +569,7 @@
       'blackman10-window blackman10-window 29
       'bohman-window bohman-window 22
       'cauchy-window cauchy-window 12 
+      'mlt-sine-window mlt-sine-window 33
       'channels-combined channels-combined 1 
       'channels-separate channels-separate 0 
       'channels-superimposed channels-superimposed 2
@@ -2022,7 +2023,7 @@
 		       'before-close-hook 'before-exit-hook 'before-save-as-hook 'before-save-state-hook 'before-transform-hook
 		       'bind-key 'blackman2-window 'blackman3-window 'blackman4-window 
 		       'blackman5-window 'blackman6-window 'blackman7-window 'blackman8-window 'blackman9-window 'blackman10-window 
-		       'bohman-window 'bold-peaks-font 'bomb 'c-g! 'c-g? 'cauchy-window
+		       'bohman-window 'bold-peaks-font 'bomb 'c-g! 'c-g? 'cauchy-window 'mlt-sine-window
 		       'cepstrum 'change-samples-with-origin 'channel->vct 'channel-amp-envs 'channel-data
 		       'channel-properties 'channel-style 'channel-widgets 'channels 'channels-combined
 		       'channels-separate 'channels-superimposed 'chans 'clear-array 'clear-listener

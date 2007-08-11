@@ -7,7 +7,7 @@
 
 /*
  * 6-Aug:      mus_autocorrelate, mus_correlate.
- * 3-Aug:      blackman5..10 and Rife-Vincent (RV2..4 fft) windows.
+ * 3-Aug:      blackman5..10 and Rife-Vincent (RV2..4 fft), mlt-sine windows.
  * 16-July:    removed start arg from mus_make_env (see mus_make_env_with_start).
  * 5-July:     changed some Floats to doubles in env funcs.
  *               exp envs now use repeated multiplies rather than direct exp call.
@@ -269,7 +269,7 @@ typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PAR
 	      MUS_CONNES_WINDOW, MUS_SAMARAKI_WINDOW, MUS_ULTRASPHERICAL_WINDOW, 
 	      MUS_BARTLETT_HANN_WINDOW, MUS_BOHMAN_WINDOW, MUS_FLAT_TOP_WINDOW,
 	      MUS_BLACKMAN5_WINDOW, MUS_BLACKMAN6_WINDOW, MUS_BLACKMAN7_WINDOW, MUS_BLACKMAN8_WINDOW, MUS_BLACKMAN9_WINDOW, MUS_BLACKMAN10_WINDOW,
-	      MUS_RV2_WINDOW, MUS_RV3_WINDOW, MUS_RV4_WINDOW, 
+	      MUS_RV2_WINDOW, MUS_RV3_WINDOW, MUS_RV4_WINDOW, MUS_MLT_SINE_WINDOW,
 	      MUS_NUM_FFT_WINDOWS} mus_fft_window_t;
 
 #define MUS_FFT_WINDOW_OK(Window) ((Window) < MUS_NUM_FFT_WINDOWS)
