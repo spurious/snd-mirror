@@ -4014,6 +4014,8 @@ return a new sine summation synthesis generator."
 	XEN_OUT_OF_RANGE_ERROR(S_make_sine_summation, orig_arg[2], keys[2], "n (sidebands): ~A?");
 
       a = mus_optkey_to_float(keys[3], S_make_sine_summation, orig_arg[3], a);
+      if (a == 1.0)
+	XEN_OUT_OF_RANGE_ERROR(S_make_sine_summation, orig_arg[3], keys[3], "a (sideband amp ratio): ~A?");
 
       ratio = mus_optkey_to_float(keys[4], S_make_sine_summation, orig_arg[4], ratio);
     }

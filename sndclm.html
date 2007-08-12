@@ -543,7 +543,9 @@ To get a cosine (as opposed to sine), set the initial-phase to (/ pi 2).
   (let ((result (sin (+ phase pm-input))))
     (set! phase (+ phase (<a class=quiet href="#hztoradians">hz-&gt;radians</a> frequency) fm-input))
     result)
+  <img src="sceq9.png" alt="fnm equation" hspace=10 vspace=10>
 </pre>
+<!-- LATEX: \cos \, (\omega_{c}t+B\sin \omega_{m}t)\:=\!\!\sum_{n=-\infty}^{\infty} \! \! J_{n}(B)\cos(\omega_{c} + n\omega_{m})t -->
 <br clear=left>
 
 <p>One slightly confusing aspect of oscil is that glissando has to be turned into a phase-increment envelope.
@@ -887,6 +889,15 @@ on the x axis.
 envelope sound: <a href="extsnd.html#envchannel">env-channel</a>, <a href="extsnd.html#envsound">env-sound</a><br>
 other enveloping functions: <a href="extsnd.html#rampchannel">ramp-channel</a>, <a href="extsnd.html#xrampchannel">xramp-channel</a>, <a href="extsnd.html#smoothchannel">smooth-channel</a><br>
 Various operations on envelopes: <a href="sndscm.html#envdoc">env.scm</a><br>
+<table border=0 hspace=30><tr><td>
+   <small>
+   add-envelopes, concatenate-envelopes, envelope-exp, envelope-interp, envelope-last-x,<br>
+   intergrate-envelope, make-power-env, map-envelopes, max-envelope, multiply-envelopes,<br>
+   normalize-envelope, repeat-envelope, reverse-envelope, rms-envelope, scale-envelope,<br>
+   stretch-envelope (also known as "adsr" in some systems, and previously "divenv" in CLM),<br>
+   window-envelope.
+   </small>
+</tr></td></table>
 The envelope editor: <a href="snd.html#editenvelope">Edit or View and Envelope</a><br>
 Panning: place-sound in examp.scm<br>
 Read sound indexed through envelope: <a href="sndscm.html#envsoundinterp">env-sound-interp</a><br>
@@ -1162,12 +1173,26 @@ technique.  Here is a simplified example:
 		       (<em class=red>polynomial</em> cos-coeffs ax)))
 	       *output*)))))))
 
-(with-sound ()  (pqw 0 1 200.0 1000.0 '(2 .2  3 .3  6 .5)))
+(with-sound () (pqw 0 1 200.0 1000.0 '(2 .2  3 .3  6 .5)))
 </pre>
 </td><td>
 <img src="pqw.png" alt="pqw example">
 </td></tr></table>
 
+<p>We can use waveshaping to make a band-limited triangle-wave:
+</p>
+<pre>
+(def-optkey-fun (make-band-limited-triangle-wave (frequency 440.0) (order 1))
+  (let ((freqs '()))
+    (do ((i 1 (1+ i))
+	 (j 1 (+ j 2)))
+	((> i order))
+      (set! freqs (cons (/ 1.0 (* j j)) (cons j freqs))))
+    (<em class=red>make-waveshape</em> frequency :wave (<em class=red>partials->waveshape</em> (reverse freqs)))))
+
+(define* (band-limited-triangle-wave gen :optional (fm 0.0))
+  (<em class=red>waveshape</em> gen 1.0 fm))
+</pre>
 <br><br>
 
 
@@ -1296,7 +1321,8 @@ Even more amusing is this algorithm:
 
 <p>I think just about every combination of oscil/triangle-wave/sawtooth-wave/square-wave has been
 used.  Even triangle-wave(square-wave) can give amusing results. Along these lines, there's
-a <a href="sndscm.html#bandlimitedsawtooth">band-limited-sawtooth</a> generator in dsp.scm.
+a <a href="sndscm.html#bandlimitedsawtooth">band-limited-sawtooth</a> generator in dsp.scm, 
+band-limited-triangle-wave above (waveshaping), and band-limited pulse-train via sum-of-cosines.
 </p>
 
 <br><br>
@@ -1336,11 +1362,14 @@ cancel except the last.
 <pre>
 <br>
 based on:
+<!-- LATEX: \sum_{k=0}^{n}\cos kx = \frac{1}{2}\Bigg(1+\frac{\sin(n+\frac{1}{2})x}{\sin \frac{x}{2}}\Bigg) -->
+<img src="sceq2.png" alt="sum of cosines" hspace=40>
+<!--
   cos(x) + cos(2x) + ... cos(nx) = 
     (sin((n + .5)x) / (2 * sin(x / 2))) - 1/2
-
-  known as the Dirichlet kernel
-  see also cosine-summation, fejer-sum, etc in dsp.scm
+-->
+known as the Dirichlet kernel
+see also cosine-summation, fejer-sum, etc in dsp.scm
 </pre><br clear=left>
 
 <br>
@@ -1459,6 +1488,72 @@ kosine95
 
 
 
+<A NAME="sine-summationdoc"></A>
+<!-- ---------------------------------------- SINE-SUMMATION ---------------------------------------- -->
+
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>sine-summation</h3></center></td></tr></table>
+<br>
+<pre>
+  <a class=def name="make-sine-summation">make-sine-summation</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (initial-phase 0.0) (n 1) (a .5) (ratio 1.0)
+  <a class=def name="sine-summation">sine-summation</a> s :optional (fm 0.0)
+  <a class=def name="sine-summation?">sine-summation?</a> s
+</pre>
+
+<table align=left border=1 cellpadding=4 hspace=20>
+<tr><td colspan=2 bgcolor="beige"><center>sine-summation methods</center></td></tr>
+<tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
+<tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
+<tr><td><em class=gen>mus-scaler</em></td><td>"a" parameter; sideband scaler</td></tr>
+<tr><td><em class=gen>mus-cosines</em></td><td>"n" parameter</td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
+<tr><td><em class=gen>mus-offset</em></td><td>"ratio" parameter</td></tr>
+</table>
+<br>
+<pre>
+based on:
+<img src="sceq8.png" alt="sine summation formula" hspace=10 vspace=10>
+</pre>
+<br clear=left>
+
+<p>sine-summation produces a kind of additive synthesis.
+See J.A.Moorer, "Signal Processing Aspects of Computer Music" and "The
+Synthesis of Complex Audio Spectra by means of Discrete Summation Formulae"
+(Stan-M-5).  "n" is the number of sidebands (0 gives a sine wave), "a" is the amplitude
+ratio between successive sidebands (don't set it to 1.0), and "ratio" is the ratio between the
+carrier frequency and the spacing between successive sidebands.
+A "ratio" of 2 would give odd-numbered harmonics for a (vaguely) clarinet-like sound.
+The basic idea is very similar to that used in the
+<a href="#sum-of-cosines">sum-of-cosines</a> generator, but you have control of the
+fall-off of the spectrum and the spacing of the partials.
+</p>
+
+<p>The peak amplitude of this generator is very hard to predict, and Moorer's suggested normalization
+is not helpful.  See the code (clm.c) for a long comment.  The output will never go over 1.0, but
+it also will almost never reach that peak either.
+</p>
+
+<!-- TODO: add JAM's 3 other formulas to dsp.scm */
+<!-- TODO: show index change etc (also check for a=1 case and do something reasonable) -->
+<!-- TODO: use math above -- much clearer than scheme! -->
+
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<pre>
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (ss beg dur freq amp :optional (N 1) (a .5) (B-ratio 1.0))
+  (let* ((st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+         (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
+         (sgen (<em class=red>make-sine-summation</em> :n N :a a :ratio B-ratio :frequency freq)))
+    (do ((i st (1+ i))) ((= i nd))
+      (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>sine-summation</em> sgen)) *output*))))
+</pre>
+</td></tr></table>
+
+<p>There are some surprising sounds lurking in this generator; a sonata for moped, anyone?
+</p>
+
+<br><br>
+
+
+
 <A NAME="sum-of-sinesdoc"></A>
 <!-- ---------------------------------------- SUM-OF-SINES ---------------------------------------- -->
 
@@ -1483,10 +1578,13 @@ kosine95
 <pre>
 <br>
 based on:
+<!-- LATEX: \sum_{k=1}^{n}\sin kx = \frac{\sin\frac{n+1}{2}x \: \sin\frac{nx}{2}}{\sin\frac{x}{2}} -->
+<img src="sceq1.png" alt="sum of sines" hspace=40>
+<!--
   sin(x) + sin(2x) + ... sin(nx) = 
     sin(n * x / 2) * (sin((n + .5)x) / sin(x / 2))
-
-  known as the conjugate Dirichlet kernel
+-->
+known as the conjugate Dirichlet kernel
 </pre><br clear=left>
 
 <p>See also the <a href="#sine-summation">sine-summation</a> generator, 
@@ -1495,69 +1593,20 @@ and dsp.scm which has
 <a href="sndscm.html#sumofnsines">sum-of-n-odd-cosines</a>.
 </p>
 
-<br><br>
 
-
-
-<A NAME="sine-summationdoc"></A>
-<!-- ---------------------------------------- SINE-SUMMATION ---------------------------------------- -->
-
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>sine-summation</h3></center></td></tr></table>
-<br>
-<pre>
-  <a class=def name="make-sine-summation">make-sine-summation</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (initial-phase 0.0) (n 1) (a .5) (ratio 1.0)
-  <a class=def name="sine-summation">sine-summation</a> s :optional (fm 0.0)
-  <a class=def name="sine-summation?">sine-summation?</a> s
-</pre>
-
-<table align=left border=1 cellpadding=4 hspace=20>
-<tr><td colspan=2 bgcolor="beige"><center>sine-summation methods</center></td></tr>
-<tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
-<tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
-<tr><td><em class=gen>mus-scaler</em></td><td>"a" parameter; sideband scaler</td></tr>
-<tr><td><em class=gen>mus-cosines</em></td><td>"n" parameter</td></tr>
-<tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
-<tr><td><em class=gen>mus-offset</em></td><td>"ratio" parameter</td></tr>
-</table>
-<br>
-<pre>
-(/ (- (sin phase) 
-      (* a (sin (- phase (* ratio phase))))
-      (* (expt a (1+ n))
-         (- (sin (+ phase (* (+ N 1) (* ratio phase))))
-            (* a (sin (+ phase (* N (* ratio phase))))))))
-   (- (+ 1 (* a a)) (* 2 a (cos (* ratio phase)))))
-</pre>
-<br clear=left>
-
-<p>sine-summation produces a kind of additive synthesis.
-See J.A.Moorer, "Signal Processing Aspects of Computer Music" and "The
-Synthesis of Complex Audio Spectra by means of Discrete Summation Formulae"
-(Stan-M-5).  "n" is the number of sidebands, "a" is the amplitude
-ratio between successive sidebands, and "ratio" is the ratio between the
-carrier frequency and the spacing between successive sidebands.
-A "ratio" of 2 would give odd-numbered harmonics for a (vaguely) clarinet-like sound.
-The basic idea is very similar to that used in the
-<a href="#sum-of-cosines">sum-of-cosines</a> generator, but you have control of the
-fall-off of the spectrum and the spacing of the partials.
-The output amplitude of this generator is hard to predict; 
-see Moorer's paper for some normalization functions (and it is numerically a disaster --
-don't set "a" to 1.0!).
-</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (ss beg dur freq amp :optional (N 1) (a .5) (B-ratio 1.0))
-  (let* ((st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
-         (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
-         (sgen (<em class=red>make-sine-summation</em> :n N :a a :ratio B-ratio :frequency freq)))
-    (do ((i st (1+ i))) ((= i nd))
-      (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>sine-summation</em> sgen)) *output*))))
-</pre>
-</td></tr></table>
-
-<p>There are some surprising sounds lurking in this generator; a sonata for moped, anyone?
-</p>
+<!-- TODO: add a choice arg, and make this guy run *any* sum-of-sines formula! -->
+<!--
+sum-of-cosines: sceq2.png
+sum-of-sines choice 0: sceq1.png
+sine-summation formula 1: sceq8 \sum_{k=0}^{n} a^{k}\sin(x+ky)=\frac{\sin(x)-a\sin(x-y)-a^{n+1}\Big(\sin(x+(n+1)y)-a\sin(x+ny)\Big)}{1+a^{2}-2a\cos(y)}
+fejer-sum: \frac{1}{n+1}\Bigg(\frac{\sin(\frac{n+1}{2})t}{\sin\frac{t}{2}}\Bigg)^{2} sceq3.png
+jackson-sum: fejer^2
+poussin-sum: 2*fejer(x, 2n+1) - fejer(x, n)
+legendre-sum: sceq4.png almost the same as fejer! \Bigg(\frac{\sin(n+\frac{1}{2})t}{\sin\frac{t}{2}}\Bigg)^{2}
+sum-of-n-sines: sceq5.png \sum_{k=1}^{n} \sin(2k-1)x = \frac{\sin^{2}nx}{\sin x}
+sum-of-n-odd-cosines: sceq6.png \sum_{k=1}^{n} \cos(2k-1)x = \frac{\sin 2nx}{2\sin x}
+kosine-summation: sceq7.png (1 - 2r\cos\theta+r^{2})^{-k}=\frac{1}{2}a_{0}+\sum_{n=1}^{\infty}a_{n}\cos n\theta
+-->
 
 <br><br>
 
@@ -3001,13 +3050,9 @@ generator).
 </table>
 <br>
 <pre>
-(* (exp (* index 
-           (* 0.5 (- r (/ 1.0 r)))
-	   (cos (* ratio phase))))
-   (sin (+ phase 
-           (* index 
-              (* 0.5 (+ r (/ 1.0 r)))
-	      (sin (* ratio phase))))))
+based on:
+<!-- LATEX: e^{(\frac{B}{2}(r-\frac{1}{r})\cos \omega_{m}t)}\sin(\omega_{c}t+\frac{B}{2}(r+\frac{1}{r})\sin \omega_{m}t)=\sum r^{n}J_{n}(B)\sin(\omega_{c}t+n\omega_{m}t) -->
+<img src="sceq10.png" alt="e sin">
 </pre>
 <br clear=left>
 
@@ -3873,7 +3918,11 @@ correlate performs an in-place cross-correlation of data1 and data2.
 <p>It's hard to decide what's an "instrument" in this context, but I think I'll treat
 it as something that can be called as a note in a notelist (in with-sound) and
 generate its own sound.
-Test 23 in snd-test.scm has a with-sound that includes most of these instruments.
+There are hundreds of instruments scattered around the documentation, and most of the
+<a href="extsnd.html#mapchannel">map-channel</a> functions can be recast as instruments.
+There are also several that represent "classic" computer music instruments; these
+are listed here, documented in sndscm.html, and tested (via sample runs) in
+test 23 in snd-test.
 </p>
 
 

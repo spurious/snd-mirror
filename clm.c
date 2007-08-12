@@ -1571,7 +1571,7 @@ mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio) /
 typedef struct {
   mus_any_class *core;
   double freq, phase;
-  Float a, b, an, a2;
+  Float a, b, an, a2, normalization;
   int n;
 } sss;
 
@@ -1643,19 +1643,31 @@ Float mus_sine_summation(mus_any *ptr, Float fm)
   Float B, thB, result, divisor;
   B = gen->b * gen->phase;
   thB = gen->phase - B;
-  divisor = (gen->a2 - (2 * gen->a * cos(B)));
+  divisor = gen->normalization * (gen->a2 - (2 * gen->a * cos(B)));
   if (DIVISER_NEAR_ZERO(divisor))           /* was (diviser == 0.0) -- see note under sum-of-cosines */
     result = 0.0;
-  /* if a=1.0, the formula given by Moorer is extremely unstable anywhere near phase=0.0 
+  /* 
+   * if a=1.0, the formula given by Moorer is extremely unstable anywhere near phase=0.0 
    *   (map-channel (let ((gen (make-sine-summation 100.0 0.0 1 1 1.0))) (lambda (y) (sine-summation gen))))
    * or even worse:
    *   (map-channel (let ((gen (make-sine-summation 100.0 0.0 0 1 1.0))) (lambda (y) (sine-summation gen))))
    * which should be a sine wave! 
-   * I wonder if that formula is incorrect...
+   *
+   * also, his amplitude normalization formula is wrong: we're trying to set the peak amp to 1.0,
+   *   but he's calculating RMS amps.  If we assume (incorrectly, but following Moorer) that all
+   *   the components peak together somewhere in the waveform, the sum of the amps is 
+   *   (/ (- (expt a n) 1) (- a 1)), but this is always too high -- as far as I can tell,
+   *   the components never line up.  We can't just pre-run the durned generator because
+   *   weird b-ratio values can create a very low frequency drift -- the actual maxamp can
+   *   be anywhere.  Sigh. We could (theoretically!) differentiate this formula, find all
+   *   the 0's (? -- can this actually be done?), then look at all the max/mins, but that's
+   *   as much work as running a simulation.  In "normal" cases, it's sufficient to run
+   *   the generator through 64 points.  For now, I'll use the geometric progression.
+   *   
    */
   else result = (sin(gen->phase) - (gen->a * sin(thB)) - 
 		 (gen->an * (sin(gen->phase + (B * (gen->n + 1))) - 
-			     (gen->a * sin(gen->phase + (B * gen->n)))))) / divisor;
+			     (gen->a * sin(gen->phase + (B * gen->n)))))) / divisor; /* Moorer's formula (1) */
   gen->phase += (gen->freq + fm);
   return(result);
 }
@@ -1704,6 +1716,7 @@ mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, F
   gen->a = a;
   gen->n = n;
   gen->b = b_ratio;
+  gen->normalization = (pow(a, n) - 1.0) / (a - 1.0); /* see note above! */
   return((mus_any *)gen);
 }
 
