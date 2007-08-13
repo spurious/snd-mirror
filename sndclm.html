@@ -4,6 +4,7 @@
 <style type="text/css">
 <!-- 
 	EM.red {color:red; font-style: normal}
+	EM.gen {font-weight: bold; font-style: normal}
         EM.error {color:chocolate; font-style: normal}
         EM.narg {color:chocolate; font-style: normal}
         EM.typing {color:maroon; font-style: normal}
@@ -192,7 +193,7 @@ So find out where v.scm is ("locate v.scm" is usually the quickest way), and add
 </p>
 
 <pre>
-    <em class=listener>&gt;</em><em class=typing>(set! %load-path (cons "/home/bil/cl" %load-path))</em> ; I'm adding my "cl" directory to the search list
+    <em class=listener>&gt;</em><em class=typing>(set! %load-path (cons "/home/bil/cl" %load-path))</em> ; add the "cl" directory to the search list
     <em class=listener>#&lt;unspecified&gt;</em>
     <em class=listener>&gt;</em><em class=typing>(load-from-path "v.scm")</em>
     <em class=listener>#&lt;unspecified&gt;</em>
@@ -626,7 +627,7 @@ very elaborate) amplitude and frequency envelopes.
 
 </td></tr><tr><td>
 
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<table border=0 bgcolor="#fafafa" hspace=20 vspace=20><tr><td>
 <pre>
 (define (scheme-bird start dur frequency freqskew amplitude freq-envelope amp-envelope)
   (let* ((gls-env (<a class=quiet href="#make-env">make-env</a> freq-envelope (<a class=quiet href="#hztoradians">hz-&gt;radians</a> freqskew) dur))
@@ -647,7 +648,7 @@ very elaborate) amplitude and frequency envelopes.
 
 </td></tr><tr><td>
 
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<table border=0 bgcolor="#fafafa" hspace=20><tr><td>
 <pre>
 def ruby_bird(start, dur, freq, freqskew, amp, freq_envelope, amp_envelope)
   gls_env = make_env(:envelope, freq_envelope, :scaler, hz2radians(freqskew), :duration, dur)
@@ -662,7 +663,7 @@ end
 
 </td></tr><tr><td>
 
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<table border=0 bgcolor="#fafafa" hspace=20><tr><td>
 <pre>
 instrument: forth-bird { f: start f: dur f: freq f: freq-skew f: amp freqenv ampenv -- }
     :frequency freq make-oscil { os }
@@ -679,7 +680,7 @@ instrument: forth-bird { f: start f: dur f: freq f: freq-skew f: amp freqenv amp
 
 </td></tr><tr><td>
 
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<table border=0 bgcolor="#fafafa" hspace=20><tr><td>
 <pre>
 void c_bird(double start, double dur, double frequency, double freqskew, double amplitude, 
 	    double *freqdata, int freqpts, double *ampdata, int amppts, mus_any *output)
@@ -809,16 +810,16 @@ instrument that maps the line segments into sin x^3:
   (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
 	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (osc (<a class=quiet href="#make-oscil">make-oscil</a> frq))
-         (half-pi (* pi 0.5))
 	 (zv (<em class=red>make-env</em> <em class=red>en</em> 1.0 dur)))
     (run
      (lambda ()
        (do ((i start (1+ i)))
            ((= i end))
          (let ((zval (<em class=red>env</em> zv))) 
-           ;; zval^3 is [0.0..1.0], as is sin between 0 and half-pi.
 	   (<a class=quiet href="#outa">outa</a> i 
-             (* amp (sin (* half-pi zval zval zval)) (<a class=quiet href="#oscil">oscil</a> osc)) 
+             (* amp 
+                (sin (* 0.5 pi zval zval zval)) 
+                (<a class=quiet href="#oscil">oscil</a> osc)) 
              *output*)))))))
 
 (<a class=quiet href="sndscm.html#withsound">with-sound</a> () (mapenv 0 1 440 .4 '(0 0 50 1 75 0 86 .5 100 0)))
@@ -1195,7 +1196,7 @@ technique.  Here is a simplified example:
 </pre>
 </td></tr></table>
 
-<p>Band-limited square or sawtooth waves need sines (as opposed to cosines), so, if
+<p>Band-limited square or sawtooth waves need sines (as opposed to cosines), so if
 we absolutely insist on using waveshaping, we could do it this way:
 </p>
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -1282,20 +1283,20 @@ A more reasonable square-wave can be generated via
 <table border=1 hspace=20 vspace=10>
 <tr>
 <td bgcolor="#f6f8ff"><center>n: 1.0</center></td>
-<td width=20></td>
+<td width=16></td>
 <td bgcolor="#f6f8ff"><center>n: 3.0</center></td>
-<td width=20></td>
+<td width=16></td>
 <td bgcolor="#f6f8ff"><center>n: 100.0</center></td>
 </tr>
 <tr>
 <td>
 <img src="tanh1.png" alt="tanh 1">
 </td>
-<td width=20></td>
+<td width=16></td>
 <td>
 <img src="tanh3.png" alt="tanh 1">
 </td>
-<td width=20></td>
+<td width=16></td>
 <td>
 <img src="tanh100.png" alt="tanh 1">
 </td></tr></table>
@@ -1319,7 +1320,13 @@ which is promising since a square wave is made up of odd harmonics with amplitud
 As the "n" in tanh(n sin(x)) increases, this series doesn't apply, but we can check the
 formula for tanh, and see that the e^-x term will vanish (in the positive x case), giving 1.0.
 So we do get a square wave, but it's not band limited.  If a complex signal replaces the sin(x),
-we get "intermodulation products" (sum and difference tones).
+we get "intermodulation products" (sum and difference tones).  
+</p>
+<p>
+(It is reassuring after all that
+arithmetic that 13319/241920 / 140069/172800 is 0.068 -- we got
+.070 in the fft above, and 1973/483840 / 140069/172800 is 0.005 --
+we got .006).
 </p>
 </td></tr></table>
 </center>
@@ -1587,6 +1594,7 @@ fall-off of the spectrum and the spacing of the partials.
 <p>The peak amplitude of this generator is very hard to predict, and Moorer's suggested normalization
 is not helpful.  See the code (clm.c) for a long comment.  If "a" &lt; 1.0, the output will never go over 1.0, but
 it also will almost never reach that peak either.  
+Besides the usual FM input, you can also vary the "a" parameter (via mus-scaler) to get changing spectra:
 </p>
 
 <!-- TODO: add JAM's 3 other formulas to dsp.scm */ -->
@@ -1595,16 +1603,24 @@ it also will almost never reach that peak either.
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (ss beg dur freq amp :optional (N 1) (a .5) (B-ratio 1.0))
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (ss beg dur freq amp :optional (N 1) (a .5) (B-ratio 1.0) (a-env #f))
   (let* ((st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
          (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
          (sgen (<em class=red>make-sine-summation</em> :n N :a a :ratio B-ratio :frequency freq)))
-    (do ((i st (1+ i))) ((= i nd))
-      (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>sine-summation</em> sgen)) *output*))))
+	 (spectr-env (if a-env (<a class=quiet href="#make-env">make-env</a> a-env :scaler a :duration dur) #f))
+	 (amp-env (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 2 1 3 0) :scaler amp :duration dur)))
+    (do ((i st (1+ i))) 
+	((= i nd))
+      (if spectr-env
+	  (set! (<em class=red>mus-scaler</em> sgen) (<a class=quiet href="#env">env</a> spectr-env)))
+      (<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#env">env</a> amp-env) (<em class=red>sine-summation</em> sgen)) *output*))))
+
+(with-sound () (ss 0 1 400.0 0.95 5 0.9 1.0 '(0 0 1 1)))
 </pre>
 </td></tr></table>
 
-<p>There are some surprising sounds lurking in this generator; a sonata for moped, anyone?
+<p>
+There are some surprising sounds lurking in this generator; a sonata for moped, anyone?
 </p>
 
 <br><br>
@@ -1648,6 +1664,8 @@ known as the conjugate Dirichlet kernel
 and dsp.scm which has
 <a href="sndscm.html#sumofnsines">sum-of-n-odd-sines</a> and
 <a href="sndscm.html#sumofnsines">sum-of-n-odd-cosines</a>.
+I am toying with a "choice" argument to make-sum-of-sines that would select
+the algorithm -- there are a couple dozen I'd like to embed in a generator.
 </p>
 
 <br><br>
@@ -1709,7 +1727,23 @@ phase-vocoder or granular synthesis kludges.
 </pre>
 <br clear=left>
 
-<br><br><br>
+<table border=0 bgcolor="#fafafa" hspace=40 vspace=20><tr><td>
+<pre>
+(definstrument (shift-pitch beg dur file freq :optional (order 40))
+  (let* ((st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+         (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
+	 (gen (<em class=red>make-ssb-am</em> freq order))
+	 (rd (<a class=quiet href="#make-readin">make-readin</a> file)))
+    (run
+     (lambda ()
+       (do ((i st (1+ i))) 
+	   ((= i nd))
+	 (<a class=quiet href="#outa">outa</a> i (<em class=red>ssb-am</em> gen (<a class=quiet href="#readin">readin</a> rd)) *output*))))))
+
+(with-sound () (shift-pitch 0 3 "oboe.snd" 1108.0))
+</pre>
+</td></tr></table>
+<br><br>
 
 
 
@@ -1717,7 +1751,7 @@ phase-vocoder or granular synthesis kludges.
 <!-- ---------------------------------------- WAVE-TRAIN ---------------------------------------- -->
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>wave-train</h3></center></td></tr></table>
-<br>
+
 <pre>
   <a class=def name="make-wave-train">make-wave-train</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (initial-phase 0.0) wave size type
   <a class=def name="wave-train">wave-train</a> w :optional (fm 0.0)
@@ -2177,7 +2211,7 @@ alterations to the filters:
 
 </td><td>
 
-<img src="formant.png" alt="various formant cases" hspace=20>
+<img src="formant.png" alt="various formant cases">
 
 </td></tr></table>
 
@@ -3758,7 +3792,8 @@ coeffs[0] is the constant term, and so on.
 <a href="sndscm.html#polydoc">poly.scm</a> has a variety of polynomial-related functions.
 Abramowitz and Stegun, "A Handbook of Mathematical Functions" is a
 treasure-trove of interesting polynomials.
-For waveshaping, use the function <a href="#partialstopolynomial">partials-&gt;polynomial</a>.
+For waveshaping, use the function <a href="#partialstopolynomial">partials-&gt;polynomial</a> to
+generate the coefficients, than drive polynomial with a cosine.
 </p>
 <br><br>
 
@@ -3894,13 +3929,11 @@ these names; think of "carrier" as "carrier amplitude" and "in1" as "carrier". N
 <p>Both of these functions take advantage of the "Modulation Theorem"; since
 multiplying a signal by a phasor (e ^ (j w t)) translates its spectrum by w /
 two pi Hz, multiplying by a sinusoid splits its spectrum into two equal parts
-translated up and down by w/(two pi) Hz.  The simplest case is: </p>
-<pre>
-   cos f1 * cos f2 = (cos (f1 + f2) + cos (f1 - f2)) / 2.
-</pre>
-<br><br>
+translated up and down by w/(two pi) Hz:
+<br>
+<img src="fmeq8.png" alt="coscos and sinsin" hspace=20 vspace=10>
 
-<!-- PERHAPS: latex am? -->
+<br><br>
 
 
 

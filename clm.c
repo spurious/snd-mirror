@@ -1589,16 +1589,17 @@ static Float sss_phase(mus_any *ptr) {return(fmod(((sss *)ptr)->phase, TWO_PI));
 static Float set_sss_phase(mus_any *ptr, Float val) {((sss *)ptr)->phase = val; return(val);}
 
 static off_t sss_n(mus_any *ptr) {return((off_t)(((sss *)ptr)->n));}
-static Float sss_b(mus_any *ptr) {return(((sss *)ptr)->b);}
 
-/* TODO: set_b needed */
+static Float sss_b(mus_any *ptr) {return(((sss *)ptr)->b);}
+static Float sss_set_b(mus_any *ptr, Float val) {((sss *)ptr)->b = val; return(val);}
 
 static Float sss_a(mus_any *ptr) {return(((sss *)ptr)->a);}
 
 static Float set_sss_a(mus_any *ptr, Float val) 
 {
-  /* TODO: fixup normalization too */
   sss *gen = (sss *)ptr;
+  if (gen->n > 0)
+    gen->normalization = (pow(val, gen->n) - 1.0) / (val - 1.0); 
   gen->a = val;
   gen->a2 = 1.0 + val * val;
   gen->an = pow(val, gen->n + 1);
@@ -1697,8 +1698,8 @@ static mus_any_class SINE_SUMMATION_CLASS = {
   &run_sine_summation,
   MUS_NOT_SPECIAL, 
   NULL, 0,
-  &sss_b, 
-  0, 0, 0, 0, 0, 
+  &sss_b, &sss_set_b,
+  0, 0, 0, 0, 
   &sss_n, /* mus-cosines */
   0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
@@ -1720,7 +1721,9 @@ mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, F
   gen->a = a;
   gen->n = n;
   gen->b = b_ratio;
-  gen->normalization = (pow(a, n) - 1.0) / (a - 1.0); /* see note above! */
+  if (n == 0)
+    gen->normalization = 1.0;
+  else gen->normalization = (pow(a, n) - 1.0) / (a - 1.0); /* see note above! */
   return((mus_any *)gen);
 }
 

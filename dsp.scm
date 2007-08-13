@@ -533,7 +533,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 ;;; -------- kosine-summation
 ;;;
-;;; from Askey "Ramanujan and Hypergeometric Series" in Berndt and Rankin "Ramanujan: Essays and Surveys"
+;;; from Askey "Ramanujan and Hypergeometric Series" in Berndt and Rankin "Ramanujan: Essays and Surveys" p283
 ;;;
 ;;; this gives a sum of cosines of decreasing amp where the "k" parameter determines
 ;;;   the "index" (in FM nomenclature) -- higher k = more cosines; the actual amount
@@ -560,7 +560,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
   ;; from "Trigonometric Series" Zygmund p88 with changes suggested by Katznelson "Introduction to Harmonic Analysis" p12, and
   ;;   scaling by an extra factor of 1/n+1 to make sure we always peak at 1.0 (I assume callers in this context are interested 
   ;;   in the pulse-train aspect and want easily predictable peak amp).  Harmonics go as (n-i)/n+1.
-  (if (= angle 0.0)
+  (if (< (abs angle) 1.0e-9)
       1.0
       (let ((val (/ (sin (* 0.5 (+ n 1) angle)) 
 		    (* (+ n 1) 
@@ -568,7 +568,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	(* val val))))
 
 ;;; here's Zygmund's version:
-;;  (if (= angle 0.0)
+;;  (if (< (abs angle) 1.0e-9)
 ;;      1.0
 ;;      (let ((val (/ (sin (* 0.5 (+ n 1) angle)) (* 2 (sin (* 0.5 angle))))))
 ;;	(* 2 (/ (* val val) (+ n 1))))))
@@ -589,7 +589,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define (legendre-sum angle n)
   "(legendre-sum angle n) produces a band-limited pulse train"
   ;; from Andrews, Askey, Roy "Special Functions" p 314 with my amplitude scaling
-  (if (= angle 0.0)
+  (if (< (abs angle) 1.0e-9)
       1.0
       (let* ((val (/ (sin (* angle (+ n 0.5))) 
 		     (* (sin (* 0.5 angle))
@@ -613,14 +613,14 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
   "(sum-of-n-sines angle n) produces the sum of 'n' sines"
   (let* ((a2 (* angle 0.5))
 	 (den (sin a2)))
-    (if (= den 0.0)
+    (if (< (abs den) 1.0e-9)
 	0.0
 	(/ (* (sin (* n a2)) (sin (* (1+ n) a2))) den))))
 
 ;;; identical to this is the "conjugate Dirichlet kernel" from "Trigonometric Series" Zygmund p49
 ;;;  (let* ((a2 (* 0.5 angle))
 ;;;	    (den (* 2 (sin a2))))
-;;;    (if (= den 0.0)
+;;;    (if (< (abs den) 1.0e-9)
 ;;;	  0.0
 ;;;	  (/ (- (cos a2) (cos (* (+ n 0.5) angle))) den))))
 
@@ -631,14 +631,14 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
   "(sum-of-n-odd-sines angle n) produces the sum of 'n' odd-numbered sines"
   (let ((den (sin angle))
 	(na (sin (* n angle))))
-    (if (= den 0.0)
+    (if (< (abs den) 1.0e-9)
 	0.0
 	(/ (* na na) den))))
 
 (define (sum-of-n-odd-cosines angle n)
   "(sum-of-n-odd-cosines angle n) produces the sum of 'n' odd-numbered cosines"
   (let ((den (* 2 (sin angle))))
-    (if (= den 0.0)
+    (if (< (abs den) 1.0e-9)
 	(exact->inexact n) ; just guessing -- floatification is for the run macro
 	(/ (sin (* 2 n angle)) den))))
 
@@ -658,7 +658,7 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
   ;;   Alexander Kritov suggests time-varying "a" is good (this is a translation of his code)
   ;;   from Stilson/Smith apparently -- was named "Discrete Summation Formula" which doesn't convey anything to me
   (let ((s4 (+ 1.0 (* -2.0 a (cos x)) (* a a))))
-    (if (= s4 0.0)
+    (if (< (abs s4) 1.0e-9)
 	0.0
 	(let* ((s1 (* (expt a (- N 1.0)) (sin (+ (* (- N 1.0) x) fi))))
 	       (s2 (* (expt a N) (sin (+ (* N x) fi))))
@@ -753,7 +753,8 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
       (let* ((k (+ i len))
 	     (denom (* pi i))
 	     (num (- 1.0 (cos (* pi i)))))
-	(if (or (= num 0.0) (= i 0))
+	(if (or (= num 0.0) 
+		(= i 0))
 	    (vct-set! arr k 0.0)
 	    ;; this is the "ideal" -- rectangular window -- version:
 	    ;; (vct-set! arr k (/ num denom))
