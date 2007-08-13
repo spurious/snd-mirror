@@ -897,7 +897,7 @@ Various operations on envelopes: <a href="sndscm.html#envdoc">env.scm</a><br>
    stretch-envelope (also known as "adsr" in some systems, and previously "divenv" in CLM),<br>
    window-envelope.
    </small>
-</tr></td></table>
+</td></tr></table>
 The envelope editor: <a href="snd.html#editenvelope">Edit or View and Envelope</a><br>
 Panning: place-sound in examp.scm<br>
 Read sound indexed through envelope: <a href="sndscm.html#envsoundinterp">env-sound-interp</a><br>
@@ -1002,7 +1002,7 @@ based on some previously chosen loop positions:
 	 (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (loop-data (<a class=quiet href="extsnd.html#mussoundloopinfo">mus-sound-loop-info</a> sound)))
     (if (or (null? loop-data)
-	    (<= (cadr loop-data) (car loop-data)))
+	    (&lt;= (cadr loop-data) (car loop-data)))
 	(throw 'no-loop-positions)
 	(let* ((loop-start (car loop-data))
 	       (loop-end (cadr loop-data))
@@ -1149,8 +1149,7 @@ The <a href="sndscm.html#pqw">pqw</a> nad <a href="sndscm.html#pqwvox">pqwvox</a
 technique.  Here is a simplified example:
 </p>
 
-<table border=1 cellpadding=3>
-<tr><td bgcolor="#f6f8ff">
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
 (definstrument (pqw start dur spacing carrier partials)
   (let* ((spacing-cos (<a class=quiet href="#make-oscil">make-oscil</a> spacing (/ pi 2.0)))
@@ -1181,18 +1180,49 @@ technique.  Here is a simplified example:
 
 <p>We can use waveshaping to make a band-limited triangle-wave:
 </p>
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
 (def-optkey-fun (make-band-limited-triangle-wave (frequency 440.0) (order 1))
   (let ((freqs '()))
     (do ((i 1 (1+ i))
 	 (j 1 (+ j 2)))
-	((> i order))
+	((&gt; i order))
       (set! freqs (cons (/ 1.0 (* j j)) (cons j freqs))))
-    (<em class=red>make-waveshape</em> frequency :wave (<em class=red>partials->waveshape</em> (reverse freqs)))))
+    (<em class=red>make-waveshape</em> frequency :wave (<em class=red>partials-&gt;waveshape</em> (reverse freqs)))))
 
 (define* (band-limited-triangle-wave gen :optional (fm 0.0))
   (<em class=red>waveshape</em> gen 1.0 fm))
 </pre>
+</td></tr></table>
+
+<p>Band-limited square or sawtooth waves need sines (as opposed to cosines), so, if
+we absolutely insist on using waveshaping, we could do it this way:
+</p>
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<pre>
+(definstrument (bl-saw start dur frequency order)
+  (let ((freqs (list 1 1))
+	(norm 1.0))
+    (do ((i 2 (1+ i))
+	 (sign -1 (* -1 sign)))
+	((= i order))
+      (let ((val (* sign (/ 1.0 i))))
+	(set! norm (+ norm (abs val))) ; is there are formula for this?
+	(set! freqs (cons val (cons i freqs)))))
+    (let* ((ccos (<a class=quiet href="#make-oscil">make-oscil</a> frequency (/ pi 2.0)))
+	   (csin (<a class=quiet href="#make-oscil">make-oscil</a> frequency))
+	   (coeffs (<em class=red>partials-&gt;polynomial</em> 
+                     (<a class=quiet href="sndscm.html#scaleenvelope">scale-envelope</a> (reverse freqs) (/ 1.0 norm)) 
+                     mus-chebyshev-second-kind))
+	   (beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start))
+	   (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
+      (run 
+       (lambda ()
+	 (do ((i beg (1+ i))) 
+	     ((= i end))
+	   (<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#oscil">oscil</a> csin) (<em class=red>polynomial</em> coeffs (<a class=quiet href="#outa">oscil</a> ccos))) *output*)))))))
+</pre></td></tr></table>
+
 <br><br>
 
 
@@ -1270,9 +1300,36 @@ A more reasonable square-wave can be generated via
 <img src="tanh100.png" alt="tanh 1">
 </td></tr></table>
 
+<!-- LATEX: \tanh(x) = x-\frac{x^{3}}{3}+\frac{2x^{5}}{15}-\frac{17x^{7}}{315}+\frac{62x^{9}}{2835}-\frac{1382x^{11}}{155925}\cdots -->
+<!-- LATEX: 
+\tanh(\sin(x)) = 140069/172800 \sin(x) + 13319/241920 \sin(3x) + 1973/483840 \sin(5x) + 799/1451520 \sin(7x) - 71/7257600 \sin(9x) + 691/79833600 \sin(11x) + \cdots -->
+
+<center>
+<table hspace=50 border=1 vspace=10 cellpadding=8 width="70%">
+<tr><td>
+<p>The spectrum of tanh(sin) can be obtained by expanding tanh as a power series:
+</p>
+<img src="sceq11.png" alt="tanh power series" hspace=20>
+<p>
+plugging in "sin" for "x", expanding the sine powers, and collecting terms (very tedious!):
+</p>
+<img src="sceq12.png" alt="tanh sin power series" hspace=20>
+<p>
+which is promising since a square wave is made up of odd harmonics with amplitude 1/n.
+As the "n" in tanh(n sin(x)) increases, this series doesn't apply, but we can check the
+formula for tanh, and see that the e^-x term will vanish (in the positive x case), giving 1.0.
+So we do get a square wave, but it's not band limited.  If a complex signal replaces the sin(x),
+we get "intermodulation products" (sum and difference tones).
+</p>
+</td></tr></table>
+</center>
 
 <p>
 Even more amusing is this algorithm:
+<img src="sceq13.png" alt="square" align=absmiddle hspace=10>
+<!-- CMJ 37 4 sept 2006 p326 -->
+<!-- LATEX: \frac{(c+1)^{\cos t}-(c-1)^{\cos t}}{(c+1)^{\cos t}+(c-1)^{\cos t}} -->
+
 </p>
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
@@ -1528,11 +1585,11 @@ fall-off of the spectrum and the spacing of the partials.
 </p>
 
 <p>The peak amplitude of this generator is very hard to predict, and Moorer's suggested normalization
-is not helpful.  See the code (clm.c) for a long comment.  The output will never go over 1.0, but
-it also will almost never reach that peak either.
+is not helpful.  See the code (clm.c) for a long comment.  If "a" &lt; 1.0, the output will never go over 1.0, but
+it also will almost never reach that peak either.  
 </p>
 
-<!-- TODO: add JAM's 3 other formulas to dsp.scm */
+<!-- TODO: add JAM's 3 other formulas to dsp.scm */ -->
 <!-- TODO: show index change etc (also check for a=1 case and do something reasonable) -->
 <!-- TODO: use math above -- much clearer than scheme! -->
 
@@ -1592,21 +1649,6 @@ and dsp.scm which has
 <a href="sndscm.html#sumofnsines">sum-of-n-odd-sines</a> and
 <a href="sndscm.html#sumofnsines">sum-of-n-odd-cosines</a>.
 </p>
-
-
-<!-- TODO: add a choice arg, and make this guy run *any* sum-of-sines formula! -->
-<!--
-sum-of-cosines: sceq2.png
-sum-of-sines choice 0: sceq1.png
-sine-summation formula 1: sceq8 \sum_{k=0}^{n} a^{k}\sin(x+ky)=\frac{\sin(x)-a\sin(x-y)-a^{n+1}\Big(\sin(x+(n+1)y)-a\sin(x+ny)\Big)}{1+a^{2}-2a\cos(y)}
-fejer-sum: \frac{1}{n+1}\Bigg(\frac{\sin(\frac{n+1}{2})t}{\sin\frac{t}{2}}\Bigg)^{2} sceq3.png
-jackson-sum: fejer^2
-poussin-sum: 2*fejer(x, 2n+1) - fejer(x, n)
-legendre-sum: sceq4.png almost the same as fejer! \Bigg(\frac{\sin(n+\frac{1}{2})t}{\sin\frac{t}{2}}\Bigg)^{2}
-sum-of-n-sines: sceq5.png \sum_{k=1}^{n} \sin(2k-1)x = \frac{\sin^{2}nx}{\sin x}
-sum-of-n-odd-cosines: sceq6.png \sum_{k=1}^{n} \cos(2k-1)x = \frac{\sin 2nx}{2\sin x}
-kosine-summation: sceq7.png (1 - 2r\cos\theta+r^{2})^{-k}=\frac{1}{2}a_{0}+\sum_{n=1}^{\infty}a_{n}\cos n\theta
--->
 
 <br><br>
 

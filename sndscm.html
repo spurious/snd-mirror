@@ -2288,6 +2288,8 @@ suitably renamed (make-cosine-summation, etc).
 <pre>
     (let ((gen (make-kosine-summation 100.0))) 
       (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) (* .2 (kosine-summation gen 0.5 5.0)))))
+
+    kosine-summation: <img src="sceq7.png" alt="kosines" align=absmiddle hspace=10>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -2312,6 +2314,14 @@ fejer-sum harmonics are scaled by (/ (- n i) (+ n 1)); decreasing evenly.
 poussin-sum harmonic amplitudes start at 0, go up to a peak at n, then decrease to 0.
 (This section of dsp.scm also has an implementation of signum -- perhaps I should
 make it a built-in function?).
+<pre>
+fejer-sum: <img src="sceq3.png" alt="fejer" align=absmiddle hspace=10 vspace=5>
+jackson-sum: fejer^2
+
+poussin-sum: 2*fejer(x, 2n+1) - fejer(x, n)
+
+legendre-sum: <img src="sceq4.png" alt="legendre" align=absmiddle hspace=10>
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -2328,6 +2338,10 @@ These three functions produce various spectra, similar to the cosine-summation f
                      (let ((val (sum-of-n-sines angle 3))) 
                        (set! angle (+ angle .1)) 
                        (* .1 val)))))
+
+sum-of-n-sines: <img src="sceq1.png" alt="sum of sines" align=middle hspace=20 vspace=5>
+sum-of-n-odd-sines: <img src="sceq5.png" alt="sum of odd sines" align=middle hspace=10 vspace=5>
+sum-of-n-odd-cosines: <img src="sceq6.png" alt="sum of odd cosines" align=middle hspace=10 vspace=5>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 

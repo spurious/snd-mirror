@@ -1119,7 +1119,7 @@ typedef struct {
   double phase, freq;
 } cosp;
 
-#define DIVISER_NEAR_ZERO(Den) (fabs(Den) < 1.0e-14)
+#define DIVISOR_NEAR_ZERO(Den) (fabs(Den) < 1.0e-14)
 
 Float mus_sum_of_cosines(mus_any *ptr, Float fm)
 {
@@ -1128,7 +1128,7 @@ Float mus_sum_of_cosines(mus_any *ptr, Float fm)
   Float val, den;
   cosp *gen = (cosp *)ptr;
   den = sin(gen->phase * 0.5);
-  if (DIVISER_NEAR_ZERO(den))    /* see note -- this was den == 0.0 1-Aug-07 */
+  if (DIVISOR_NEAR_ZERO(den))    /* see note -- this was den == 0.0 1-Aug-07 */
                                  /* perhaps use DBL_EPSILON (1.0e-9 I think) */
     val = 1.0;
   else 
@@ -1350,7 +1350,7 @@ Float mus_sum_of_sines(mus_any *ptr, Float fm)
   cosp *gen = (cosp *)ptr;
   a2 = gen->phase * 0.5;
   den = sin(a2);
-  if (DIVISER_NEAR_ZERO(den)) /* see note under sum-of-cosines */
+  if (DIVISOR_NEAR_ZERO(den)) /* see note under sum-of-cosines */
     val = 0.0;
   else val = gen->scaler * sin(gen->cosines * a2) * sin(a2 * gen->cos5) / den;
   gen->phase += (gen->freq + fm);
@@ -1591,10 +1591,13 @@ static Float set_sss_phase(mus_any *ptr, Float val) {((sss *)ptr)->phase = val; 
 static off_t sss_n(mus_any *ptr) {return((off_t)(((sss *)ptr)->n));}
 static Float sss_b(mus_any *ptr) {return(((sss *)ptr)->b);}
 
+/* TODO: set_b needed */
+
 static Float sss_a(mus_any *ptr) {return(((sss *)ptr)->a);}
 
 static Float set_sss_a(mus_any *ptr, Float val) 
 {
+  /* TODO: fixup normalization too */
   sss *gen = (sss *)ptr;
   gen->a = val;
   gen->a2 = 1.0 + val * val;
@@ -1636,6 +1639,7 @@ static char *describe_sss(mus_any *ptr)
   return(describe_buffer);
 }
 
+/* PERHAPS: if a=1.0, switch to sum-of-sines? */
 
 Float mus_sine_summation(mus_any *ptr, Float fm)
 {
@@ -1644,7 +1648,7 @@ Float mus_sine_summation(mus_any *ptr, Float fm)
   B = gen->b * gen->phase;
   thB = gen->phase - B;
   divisor = gen->normalization * (gen->a2 - (2 * gen->a * cos(B)));
-  if (DIVISER_NEAR_ZERO(divisor))           /* was (diviser == 0.0) -- see note under sum-of-cosines */
+  if (DIVISOR_NEAR_ZERO(divisor))           /* was (divisor == 0.0) -- see note under sum-of-cosines */
     result = 0.0;
   /* 
    * if a=1.0, the formula given by Moorer is extremely unstable anywhere near phase=0.0 
