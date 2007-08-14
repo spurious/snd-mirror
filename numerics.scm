@@ -102,6 +102,7 @@
 			 v)
 		       x))
 
+;;; (with-sound (:scaled-to 0.5) (do ((i 0 (1+ i)) (x 0.0 (+ x .1))) ((= i 10000)) (outa i (legendre 20 (cos x)) *output*)))
 
 #|
 ;; if l odd, there seems to be sign confusion:
@@ -124,7 +125,6 @@
 |#
 
 
-;;; TODO: add the div close to 0 check to dsp.scm sum-of-sines stuff
 ;;; TODO: break this into gegen-poly case+straight 
 
 (define* (gegenbauer n x :optional (alpha 0.0))
@@ -153,7 +153,7 @@
 			  (set! fn1 fn)))))))))
 
 
-
+;;; (with-sound (:scaled-to 0.5) (do ((i 0 (1+ i)) (x 0.0 (+ x .1))) ((= i 10000)) (outa i (gegenbauer 15 (cos x) 1.0) *output*)))
 
 (define* (chebyshev-polynomial a x :optional (kind 1))
   (let ((n (1- (vector-length a))))

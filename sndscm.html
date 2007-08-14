@@ -489,53 +489,9 @@ additive synthesis).  <b>partials-&gt;polynomial</b> calculates the Chebyshev
 polynomial coefficients given the desired spectrum; the spectrum then
 results from driving that polynomial with an oscillator.  Besides the
 bird guides, there are now numerous recordings of birds that can
-be turned into sonograms and transcribed as envelopes.
+be turned into sonograms and transcribed as envelopes. <a href="sndclm.html#oscil">sndclm.html</a> has the
+code for the bird instrument in several languages.
 </p>
-<p>In CLM, the bird is:</p>
-
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(<a class=quiet href="#definstrument">definstrument</a> bird (startime dur frequency freq-skew amplitude freq-envelope amp-envelope 
-	             &amp;optional (lpfilt 1.0) (degree 0) (reverb-amount 0))
-  (multiple-value-bind (beg end) (<a class=quiet href="sndclm.html#timestosamples">times-&gt;samples</a> startime dur)
-    (let* ((amp-env (<a class=quiet href="sndclm.html#make-env">make-env</a> amp-envelope amplitude dur))
-	   (gls-env (<a class=quiet href="sndclm.html#make-env">make-env</a> freq-envelope (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> freq-skew) dur))
-	   (loc (<a class=quiet href="sndclm.html#make-locsig">make-locsig</a> :degree degree :distance 1.0 :reverb reverb-amount))
-	   (fil (<a class=quiet href="sndclm.html#make-one-pole">make-one-pole</a> lpfilt (- 1.0 lpfilt)))
-	   (s (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a> :frequency frequency)))
-      (run
-       (loop for i from beg to end do
-	 (<a class=quiet href="sndclm.html#locsig">locsig</a> loc i (<a class=quiet href="sndclm.html#one-pole">one-pole</a> fil (* (<a class=quiet href="sndclm.html#env">env</a> amp-env) (<a class=quiet href="sndclm.html#oscil">oscil</a> s (<a class=quiet href="sndclm.html#env">env</a> gls-env))))))))))
-</pre></td></tr></table>
-
-<p>The bird.scm version could easily include the one-pole filter and so on.
-The Ruby version of this file is bird.rb.  Just for comparison, the bird instrument
-in Ruby is:</p>
-
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-def bird(start, dur, frequency, freqskew, amplitude, freq_envelope, amp_envelope)
-  gls_env = make_env(freq_envelope, hz2radians(freqskew), dur)
-  os = make_oscil(frequency)
-  amp_env = make_env(amp_envelope, amplitude, dur)
-  beg = (srate() * start).round
-  len = (srate() * dur).round
-  local_data  = make_vct len
-  vct_map!(local_data, Proc.new { || env(amp_env) * oscil(os, env(gls_env)) })
-  vct_add!($out_data, local_data, beg)
-end
-</pre></td></tr></table>
-
-<p>The Forth version (written by Michael Scholz) is:
-</p>
-
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-instrument: bird { f: start f: dur f: freq f: freq-skew f: amp freq-env amp-envel }
-    freq make-oscil-1 { os }
-    amp-envel amp dur make-env { amp-env }
-    freq-env freq-skew hz&gt;radians dur make-env { gls-env }
-    90e random 1e make-locsig { loc }
-    start dur run  amp-env env  gls-env env os oscil-1  f*  i loc locsig  loop
-;instrument
-</pre></td></tr></table>
 <br>
 <br>
 
@@ -2315,13 +2271,26 @@ poussin-sum harmonic amplitudes start at 0, go up to a peak at n, then decrease 
 (This section of dsp.scm also has an implementation of signum -- perhaps I should
 make it a built-in function?).
 <pre>
-fejer-sum: <img src="sceq3.png" alt="fejer" align=absmiddle hspace=10 vspace=5>
+fejer-sum: <img src="sceq3.png" alt="fejer" align=absmiddle hspace=10 vspace=8>
 jackson-sum: fejer^2
 
 poussin-sum: 2*fejer(x, 2n+1) - fejer(x, n)
 
 legendre-sum: <img src="sceq4.png" alt="legendre" align=absmiddle hspace=10>
 </pre>
+
+<p>It's easy to turn any of these into a generator:
+</p>
+<pre>
+(define (make-fejer frequency n)
+  (vct 0.0 (hz-&gt;radians frequency) (exact-&gt;inexact n)))
+
+(define (fejer gen fm)
+  (let ((result (fejer-sum (vct-ref gen 0) (inexact-&gt;exact (vct-ref gen 2)))))
+    (vct-set! gen 0 (+ (vct-ref gen 0) (vct-ref gen 1) fm))
+    result))
+</pre>
+
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

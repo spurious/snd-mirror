@@ -17,6 +17,13 @@ foreach file (*.h *.c *.cl *.el *.clm *.fs *.js *.html makefile.* make.* *.gtkrc
   endif
 end
 
+foreach file (*.png)
+  if (-e $curdir/$file) then
+    find $curdir/$file -newer $snddir/$file -exec echo ' updating ' $file \;
+    find $curdir/$file -newer $snddir/$file -exec cp $curdir/$file $snddir \;
+  endif
+end
+
 chdir curtools
 foreach file (*)
   if (-e $curdir/$file) then

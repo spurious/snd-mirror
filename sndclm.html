@@ -301,7 +301,7 @@ Current generator state is accessible via various generic functions such as mus-
 <pre>
     (set! oscillator (<a class=quiet href="#make-oscil">make-oscil</a> :frequency 330))
 </pre>
-<p>prepares <i>oscillator</i> to produce a sine wave
+<p>prepares "oscillator" to produce a sine wave
 when set in motion via</p>
 <pre>
     (<a class=quiet href="#oscil">oscil</a> oscillator)
@@ -496,6 +496,36 @@ plugging it into the following with-sound call:
 </pre>
 </td></tr></table>
 
+<p>By the way, there's nothing special about a generator in CLM: it is a function.  If it happens to use
+only other functions that the "run" macro can handle (and this includes most of Scheme), then it will run
+nearly as fast as any built-in function.  If it needs to keep variables around, it is simplest to use a vct
+as the generator object:
+<p>
+
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<pre>
+(define (make-my-oscil frequency)       ; we want our own oscil!
+  (vct 0.0 (hz-&gt;radians frequency)))    ; current phase and frequency-based phase increment
+
+(define (my-oscil gen fm)               ; the corresponding generator
+  (let ((result (sin (vct-ref gen 0)))) ; return sin(current-phase)
+    (vct-set! gen 0 (+ (vct-ref gen 0)  ; increment current phase
+                       (vct-ref gen 1)  ;    by frequency
+                       fm))             ;    and FM
+    result))                            ; return sine wave
+
+(with-sound () 
+  (run 
+   (lambda () 
+     (let ((osc (make-my-oscil 440.0)))
+       (do ((i 0 (1+ i))) 
+	   ((= i 22050))
+	 (outa i (my-oscil osc 0.0) *output*))))))
+</pre>
+</td></tr></table>
+
+<p>There are many more such generators scattered around the Snd package.
+</p>
 <br><br>
 
 
@@ -618,7 +648,7 @@ create the individual spectral components:
 </td></tr></table>
 
 
-<table border=2 bgcolor="#fafafa" cellpadding=8 hspace=20>
+<table border=2 bgcolor="#fafafa" cellpadding=6 hspace=20 vspace=20>
 <tr><td>
 <p>To compare the Scheme, Ruby, Forth, and C versions of a CLM instrument (not to mention the Common Lisp
 version in the CLM tarball), here are versions of the bird instrument; it produces a sinusoid with (usually
@@ -627,7 +657,7 @@ very elaborate) amplitude and frequency envelopes.
 
 </td></tr><tr><td>
 
-<table border=0 bgcolor="#fafafa" hspace=20 vspace=20><tr><td>
+<table border=0 bgcolor="#fafafa" hspace=20><tr><td>
 <pre>
 (define (scheme-bird start dur frequency freqskew amplitude freq-envelope amp-envelope)
   (let* ((gls-env (<a class=quiet href="#make-env">make-env</a> freq-envelope (<a class=quiet href="#hztoradians">hz-&gt;radians</a> freqskew) dur))
@@ -741,8 +771,8 @@ To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
       duration      ; seconds
       (offset 0.0)  ; value added to every y value
       base          ; type of connecting line between break-points
-      end           ; end point in samples (similar to <i>dur</i>)
-      dur           ; duration in samples (can be used instead of <i>end</i>)
+      end           ; end point in samples (similar to dur)
+      dur           ; duration in samples (can be used instead of end)
 
   <a class=def name="env">env</a> e
   <a class=def name="env?">env?</a> e
@@ -822,11 +852,12 @@ instrument that maps the line segments into sin x^3:
                 (<a class=quiet href="#oscil">oscil</a> osc)) 
              *output*)))))))
 
-(<a class=quiet href="sndscm.html#withsound">with-sound</a> () (mapenv 0 1 440 .4 '(0 0 50 1 75 0 86 .5 100 0)))
+(<a class=quiet href="sndscm.html#withsound">with-sound</a> () 
+  (mapenv 0 1 440 .4 '(0 0 50 1 75 0 86 .5 100 0)))
 </pre>
 </td></tr></table>
 </td><td>
-<img src="sincube.png" alt="sin cubed envelope">
+<img src="sincube.png" alt="sin cubed envelope" hspace=10>
 </td></tr></table>
 
 <p>Or write a function that traces out the curve you want.
@@ -1384,7 +1415,7 @@ Even more amusing is this algorithm:
 </td></tr></table>
 
 <p>I think just about every combination of oscil/triangle-wave/sawtooth-wave/square-wave has been
-used.  Even triangle-wave(square-wave) can give amusing results. Along these lines, there's
+used.  Even triangle-wave(square-wave) can make funny noises. Along these lines, there's
 a <a href="sndscm.html#bandlimitedsawtooth">band-limited-sawtooth</a> generator in dsp.scm, 
 band-limited-triangle-wave above (waveshaping), and band-limited pulse-train via sum-of-cosines.
 </p>
@@ -1404,7 +1435,7 @@ band-limited-triangle-wave above (waveshaping), and band-limited pulse-train via
   <a class=def name="sum-of-cosines?">sum-of-cosines?</a> cs
 </pre>
 <p>sum-of-cosines produces a band-limited pulse train containing
-<i>cosines</i> cosines.  I think this was originally viewed as a way to get a speech-oriented
+"cosines" cosines.  I think this was originally viewed as a way to get a speech-oriented
 pulse train that would then be passed through formant filters (see pulse-voice in examp.scm).  There are many similar formulas:
 see <a href="sndscm.html#fejersum">fejer-sum</a> and friends in dsp.scm. "Trigonometric Delights" by Eli Maor has
 a derivation of a sum-of-sines formula and a neat
@@ -1495,7 +1526,8 @@ matter what.  It is possible to vary the spectrum smoothly:
 		       (expt (abs val) (env pow)))))))
 </pre></td></tr></table>
 <p>This trick works on all the <a href="sndscm.html#fejersum">pulse-train</a> functions in dsp.scm (or an oscil for that matter!), 
-but perhaps a filter is a simpler approach.  There are a lot more of these "kernels";  see dsp.scm for:
+but perhaps a filter is a simpler approach.  There are a lot more of these "kernels" in dsp.scm, and it's easy to turn them into generators
+(see <a href=?sndscm.html#fejersum">sndscm.html</a> for an example):
 </p>
 
 <table border=1 hspace=20 cellspacing=4>
@@ -1594,28 +1626,33 @@ fall-off of the spectrum and the spacing of the partials.
 <p>The peak amplitude of this generator is very hard to predict, and Moorer's suggested normalization
 is not helpful.  See the code (clm.c) for a long comment.  If "a" &lt; 1.0, the output will never go over 1.0, but
 it also will almost never reach that peak either.  
-Besides the usual FM input, you can also vary the "a" parameter (via mus-scaler) to get changing spectra:
+Besides the usual FM input, you can also vary the "a" parameter (via mus-scaler) to get changing spectra.  In the
+next example, we add a glissando envelope, and use the same envelope to vary "a" so that as the frequency
+goes up, "a" goes down (to avoid foldover, or whatever).
 </p>
 
 <!-- TODO: add JAM's 3 other formulas to dsp.scm */ -->
-<!-- TODO: show index change etc (also check for a=1 case and do something reasonable) -->
-<!-- TODO: use math above -- much clearer than scheme! -->
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (ss beg dur freq amp :optional (N 1) (a .5) (B-ratio 1.0) (a-env #f))
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (ss beg dur freq amp :optional (N 1) (a .5) (B-ratio 1.0) (frqf #f))
   (let* ((st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
          (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
-         (sgen (<em class=red>make-sine-summation</em> :n N :a a :ratio B-ratio :frequency freq)))
-	 (spectr-env (if a-env (<a class=quiet href="#make-env">make-env</a> a-env :scaler a :duration dur) #f))
+         (sgen (<em class=red>make-sine-summation</em> :n N :a a :ratio B-ratio :frequency freq))
+	 (frq-env (if frqf (<a class=quiet href="#make-env">make-env</a> frqf :scaler (<a class=quiet href="#hztoradians">hz-&gt;radians</a> freq) :duration dur) #f))
+	 (spectr-env (if frqf (<a class=quiet href="#make-env">make-env</a> frqf :duration dur) #f))
 	 (amp-env (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 2 1 3 0) :scaler amp :duration dur)))
-    (do ((i st (1+ i))) 
-	((= i nd))
-      (if spectr-env
-	  (set! (<em class=red>mus-scaler</em> sgen) (<a class=quiet href="#env">env</a> spectr-env)))
-      (<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#env">env</a> amp-env) (<em class=red>sine-summation</em> sgen)) *output*))))
+    (run
+     (lambda ()
+       (do ((i st (1+ i))) 
+	   ((= i nd))
+	 (if spectr-env
+	     (set! (<em class=red>mus-scaler</em> sgen) (* a (exp (- (<a class=quiet href="#env">env</a> spectr-env))))))
+         (<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#env">env</a> amp-env)
+		    (<em class=red>sine-summation</em> sgen (if frq-env (<a class=quiet href="#env">env</a> frq-env) 0.0)))
+	       *output*))))))
 
-(with-sound () (ss 0 1 400.0 0.95 5 0.9 1.0 '(0 0 1 1)))
+(with-sound () (ss 0 1 400.0 1.0 5 0.5 1.0 '(0 0 1 2)))
 </pre>
 </td></tr></table>
 
@@ -1664,9 +1701,36 @@ known as the conjugate Dirichlet kernel
 and dsp.scm which has
 <a href="sndscm.html#sumofnsines">sum-of-n-odd-sines</a> and
 <a href="sndscm.html#sumofnsines">sum-of-n-odd-cosines</a>.
-I am toying with a "choice" argument to make-sum-of-sines that would select
-the algorithm -- there are a couple dozen I'd like to embed in a generator.
+The original motivation for this generator was the restriction in sine-summation that the ratio can't be 1.0.
+In Snd, it's so easy to define a generator, that I'm sort of sorry I made sum-of-sines a built-in case.
+For example, here is a generator based on the <a href="sndscm.html#sumofsines">sum-of-n-odd-sines</a> formula in dsp.scm:
 </p>
+
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<pre>
+(define (make-sum-of-odd-sines frequency n)
+  (vct 0.0 (<a class=quiet href="#hztoradians">hz-&gt;radians</a> frequency) (exact-&inexact n)))
+
+(define (sum-of-odd-sines gen fm)
+  (let* ((angle (<a class=quiet href="extsnd.html#vctref">vct-ref</a> gen 0))
+	 (a2 (* angle 0.5))
+	 (n (<a class=quiet href="extsnd.html#vctref">vct-ref</a> gen 2))
+	 (den (* n (sin a2)))
+	 (result (if (< (abs den) 1.0e-9)
+		     0.0
+		     (/ (* (sin (* n a2)) 
+			   (sin (* (1+ n) a2)))
+			den))))
+    (<a class=quiet href="extsnd.html#vctset">vct-set!</a> gen 0 (+ (<a class=quiet href="extsnd.html#vctref">vct-ref</a> gen 0) (<a class=quiet href="extsnd.html#vctref">vct-ref</a> gen 1) fm))
+    result))
+</pre>
+</td></tr></table>
+
+<pre>
+<img src="sceq1.png" alt="sum of sines" align=middle hspace=10 vspace=5>
+<img src="sceq5.png" alt="sum of odd sines" align=middle hspace=10 vspace=5>
+<img src="sceq6.png" alt="sum of odd cosines" align=middle hspace=10 vspace=5>
+</pre>
 
 <br><br>
 
@@ -1759,7 +1823,7 @@ phase-vocoder or granular synthesis kludges.
 </pre>
 
 <p>wave-train produces a wave train (an extension of pulse-train and table-lookup).
-<i>Frequency</i> is the rate at which full copies of the wave-train's wave are added into the output.
+"frequency" is the rate at which full copies of the wave-train's wave are added into the output.
 Unlike in <a href="#table-lookup">table-lookup</a>, successive copies of the wave can overlap.  With some simple envelopes or filters, you can
 use this for VOSIM and other related techniques.
 </p>
@@ -1857,7 +1921,7 @@ rand-interp could be defined as (<a class=quiet href="#moving-average">moving-av
 averager has the same period (length) as the rand.  
 In both cases, the "envelope" argument or the "distribution" argument determines the random number distribution.
 mus-random returns a random number between -amplitude and amplitude.
-<i>mus-rand-seed</i> provides access to the seed for mus-random's random number generator.
+mus-rand-seed provides access to the seed for mus-random's random number generator.
 </p>
 
 <table border=1 align=left hspace=40 cellpadding=4>
@@ -2721,7 +2785,7 @@ that are squelched and those that are unchanged (to avoid clicks):
     (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) 
                    (* y (<em class=red>moving-average</em> ramp                           ; ramp between 0 and 1
                           (if (&lt; (<em class=red>moving-average</em> gate (* y y)) amount) ; local (r)ms value
-                              0.0                               ; below <i>amount</i> so squelch
+                              0.0                               ; below "amount" so squelch
                             1.0))))
                  0 #f snd chn)))
 </pre>
@@ -2918,11 +2982,11 @@ handier.
 
 <table align=left border=1 cellpadding=4 hspace=40>
 <tr><td colspan=2 bgcolor="beige"><center>granulate methods</center></td></tr>
-<tr><td><em class=gen>mus-frequency</em></td><td>time (seconds) between output grains (<i>hop</i>)</td></tr>
+<tr><td><em class=gen>mus-frequency</em></td><td>time (seconds) between output grains (hop)</td></tr>
 <tr><td><em class=gen>mus-ramp</em></td><td>length (samples) of grain envelope ramp segment</td></tr>
-<tr><td><em class=gen>mus-hop</em></td><td>time (samples)  between output grains (<i>hop</i>)</td></tr>
-<tr><td><em class=gen>mus-scaler</em></td><td>grain amp (<i>scaler</i>)</td></tr>
-<tr><td><em class=gen>mus-increment</em></td><td><i>expansion</i></td></tr>
+<tr><td><em class=gen>mus-hop</em></td><td>time (samples)  between output grains (hop)</td></tr>
+<tr><td><em class=gen>mus-scaler</em></td><td>grain amp (scaler)</td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>expansion</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>grain length (samples)</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>grain samples (a vct)</td></tr>
 <tr><td><em class=gen>mus-location</em></td><td>granulate's local random number seed</td></tr>
@@ -3138,12 +3202,11 @@ Spectra" JAES vol 36, no 9, Sept 88, p671-685:  this is another extension of
 the <a href="#sine-summation">sine-summation</a> and <a href="#sum-of-cosines">sum-of-cosines</a> approach.
 </p>
 
-<p><i>r</i> is the ratio between successive 
-sideband amplitudes, <i>r</i> &gt; 1.0 pushes energy above the carrier, <i>r</i> &lt; 1.0 pushes it below. (<i>r</i> = 1.0
+<p>"r" is the ratio between successive 
+sideband amplitudes, r &gt; 1.0 pushes energy above the carrier, r &lt; 1.0 pushes it below. (r = 1.0
 gives normal FM). 
-<i>ratio</i>
-is the ratio between the carrier and modulator (i.e. sideband spacing). It's somewhat inconsistent
-that asymmetric-fm takes <i>index</i> (the fm-index) as its second argument, but otherwise it
+"ratio" is the ratio between the carrier and modulator (i.e. sideband spacing). It's somewhat inconsistent
+that asymmetric-fm takes "index" (the fm-index) as its second argument, but otherwise it
 would be tricky to get time-varying indices.
 The generator's output amplitude is not always easy to predict.  
 </p>
@@ -3506,7 +3569,7 @@ be greater than or equal to 1.0.
 The mus-interp-sinusoidal
 case uses sin and cos to set the respective channel amplitudes (this is reported to
 help with the "hole-in-the-middle" problem).
-The <i>output</i> argument can be a vct or a sound-data object, as well as a frame-&gt;file generator.
+The "output" argument can be a vct or a sound-data object, as well as a frame-&gt;file generator.
 </p>
 
 <p>Locsig can send output to any number of channels.
@@ -3874,8 +3937,7 @@ The "type" argument is one of the interpolation types (<code>mus-interp-linear</
    <a class=def name="contrast-enhancement">contrast-enhancement</a> in-samp :optional (fm-index 1.0)
 </pre>
 
-<p>contrast-enhancement phase-modulates a sound file.  It's like audio MSG.
-The actual algorithm is:
+<p>contrast-enhancement phase-modulates a sound file:
 </p>
 <pre>
     (sin (+ (* input pi 0.5)
@@ -3883,7 +3945,7 @@ The actual algorithm is:
 </pre>
 
 <p>
-contrast-enhancement brightens the
+This brightens the
 sound, helping it cut through a huge mix.
 A similar (slightly simpler) effect is:
 </p>
@@ -3930,8 +3992,9 @@ these names; think of "carrier" as "carrier amplitude" and "in1" as "carrier". N
 multiplying a signal by a phasor (e ^ (j w t)) translates its spectrum by w /
 two pi Hz, multiplying by a sinusoid splits its spectrum into two equal parts
 translated up and down by w/(two pi) Hz:
-<br>
-<img src="fmeq8.png" alt="coscos and sinsin" hspace=20 vspace=10>
+</p>
+
+<img src="fmeq8.png" alt="coscos and sinsin" hspace=20>
 
 <br><br>
 

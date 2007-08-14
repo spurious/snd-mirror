@@ -516,7 +516,7 @@ and the three body problem.  There are brief historical snippits at
 <a href="http://www.aam314.vzz.net/EB/Bessel.html">Encyclopedia Britannica</a> and <a href="http://www-groups.dcs.st-and.ac.uk/~history/Biographies/Bessel.html">Bios</a>.
 For the view from celestial mechanics today, see Vallado, "Fundamentals of Astrodynamics and Applications".  For
 an explanation of the connection between planetary motion and FM, and a lot of other interesting stuff,
-see Benson, "Music: A Mathematical Offering".)
+see Benson, "Music: A Mathematical Offering").
 </p></small>
 </td></tr></table>
 
@@ -1255,7 +1255,11 @@ to show how strong this effect is:
      (lambda ()
        (do ((i start (1+ i)))
 	   ((= i end))
-	 (outa i (* amp (oscil cr (* fm-ind0 (oscil md (* fm-ind1 (oscil ca)))))) *output*))))))
+	 (outa i (* amp 
+                    (oscil cr (* fm-ind0 
+                                 (oscil md (* fm-ind1 
+                                              (oscil ca)))))) 
+               *output*))))))
 
 (with-sound () 
   (cascade 0 1.0 400 .25 1.0 1.0 1.0 1.0 0)
