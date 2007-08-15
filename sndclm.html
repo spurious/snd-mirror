@@ -500,7 +500,7 @@ plugging it into the following with-sound call:
 only other functions that the "run" macro can handle (and this includes most of Scheme), then it will run
 nearly as fast as any built-in function.  If it needs to keep variables around, it is simplest to use a vct
 as the generator object:
-<p>
+</p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
@@ -1039,14 +1039,10 @@ based on some previously chosen loop positions:
 	(let* ((loop-start (car loop-data))
 	       (loop-end (cadr loop-data))
 	       (loop-length (1+ (- loop-end loop-start)))
-	       (sound-section (<a class=quiet href="extsnd.html#makevct">make-vct</a> loop-length))
-	       (tbl (<em class=red>make-table-lookup</em> :frequency freq :wave sound-section))
+	       (sound-section (<a class=quiet href="#filetoarray">file-&gt;array</a> sound 0 loop-start loop-length (make-vct loop-length)))
+	       (original-loop-duration (/ loop-length (<a class=quiet href="extsnd.html#mussoundsrate">mus-sound-srate</a> sound)))
+	       (tbl (<em class=red>make-table-lookup</em> :frequency (/ freq original-loop-duration) :wave sound-section)))
 	       ;; "freq" here is how fast we read (transpose) the sound -- 1.0 returns the original
-	       (reader (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> loop-start sound)))
-	  (do ((i 0 (1+ i)))  ; load the sound data into the table-lookup generator
-	      ((= i loop-length))
-	    (<a class=quiet href="extsnd.html#vctset">vct-set!</a> sound-section i (reader)))
-	  (<a class=quiet href="extsnd.html#freesamplereader">free-sample-reader</a> reader)
 	  (run
 	   (lambda ()
 	     (do ((i beg (1+ i)))
@@ -1056,7 +1052,37 @@ based on some previously chosen loop positions:
 (with-sound (:srate 44100) (looper 0 10 "/home/bil/sf1/forest.aiff" 1.0 0.5))
 </pre>
 </td></tr></table>
-	 
+
+<p>And for total confusion, here's a table-lookup that modulates a sound where we specify the
+modulation deviation in samples:
+</p>
+
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<pre>
+(definstrument (fm-table file start dur amp read-speed modulator-freq index-in-samples)
+  (let* ((beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start))
+	 (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
+	 (table-length (<a class=quiet href="extsnd.html#mussoundframes">mus-sound-frames</a> file))
+	 (tab (<em class=red>make-table-lookup</em> :frequency (/ read-speed (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> file)) 
+				 :wave (<a class=quiet href="#filetoarray">file-&gt;array</a> file 0 0 table-length (<a class=quiet href="extsnd.html#makevct">make-vct</a> table-length))))
+	 (osc (<a class=quiet href="#make-oscil">make-oscil</a> modulator-freq))
+	 (index (/ (* (<a class=quiet href="#hztoradians">hz-&gt;radians</a> modulator-freq) 2 pi index-in-samples) table-length)))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>table-lookup</em> tab (* index (<a class=quiet href="#oscil">oscil</a> osc))))
+	       *output*))))))
+</pre>
+</td></tr></table>
+
+<p>Lessee.. there's a factor of table-length/(2*pi) in table-lookup, so that a table with a sinusoid
+behaves the same as an oscil even with FM (this is how oscil worked in bygone times); hz-&gt;radians
+adds a factor of (2*pi)/srate; so we've cancelled the internal 2*pi and table-length, and we have
+an actual deviation of mfreq*2*pi*index/srate, which looks like FM; hmmm.
+</p>
+
+
 
 <p><a href="spectr.clm">spectr.clm</a> has a steady state spectra of
 several standard orchestral instruments, courtesy of James A. Moorer.
@@ -1233,26 +1259,26 @@ we absolutely insist on using waveshaping, we could do it this way:
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
 (definstrument (bl-saw start dur frequency order)
-  (let ((freqs (list 1 1))
-	(norm 1.0))
-    (do ((i 2 (1+ i))
-	 (sign -1 (* -1 sign)))
-	((= i order))
-      (let ((val (* sign (/ 1.0 i))))
-	(set! norm (+ norm (abs val))) ; is there are formula for this?
-	(set! freqs (cons val (cons i freqs)))))
+  (let* ((norm (if (= order 1) 1.0     ; these peak amps were determined empirically
+                 (if (= order 2) 1.3   ;   actual limit is supposed to be pi/2 (G&R 1.441)
+                   (if (< order 9) 1.7 ;   but Gibbs phenomenon pushes it to 1.851
+                     1.9))))           ;   if order>27, numerical troubles -- use table-lookup
+         (freqs '()))
+    (do ((i 1 (1+ i)))
+	((&gt; i order))
+      (set! freqs (cons (/ 1.0 (* norm i)) (cons i freqs))))
     (let* ((ccos (<a class=quiet href="#make-oscil">make-oscil</a> frequency (/ pi 2.0)))
 	   (csin (<a class=quiet href="#make-oscil">make-oscil</a> frequency))
-	   (coeffs (<em class=red>partials-&gt;polynomial</em> 
-                     (<a class=quiet href="sndscm.html#scaleenvelope">scale-envelope</a> (reverse freqs) (/ 1.0 norm)) 
-                     mus-chebyshev-second-kind))
+	   (coeffs (<em class=red>partials-&gt;polynomial</em> (reverse freqs) mus-chebyshev-second-kind))
 	   (beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start))
 	   (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
       (run 
        (lambda ()
 	 (do ((i beg (1+ i))) 
 	     ((= i end))
-	   (<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#oscil">oscil</a> csin) (<em class=red>polynomial</em> coeffs (<a class=quiet href="#outa">oscil</a> ccos))) *output*)))))))
+	   (<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#oscil">oscil</a> csin) 
+                      (<em class=red>polynomial</em> coeffs (<a class=quiet href="#outa">oscil</a> ccos))) 
+                 *output*)))))))
 </pre></td></tr></table>
 
 <br><br>
@@ -1527,7 +1553,7 @@ matter what.  It is possible to vary the spectrum smoothly:
 </pre></td></tr></table>
 <p>This trick works on all the <a href="sndscm.html#fejersum">pulse-train</a> functions in dsp.scm (or an oscil for that matter!), 
 but perhaps a filter is a simpler approach.  There are a lot more of these "kernels" in dsp.scm, and it's easy to turn them into generators
-(see <a href=?sndscm.html#fejersum">sndscm.html</a> for an example):
+(see <a href="sndscm.html#fejersum">sndscm.html</a> for an example):
 </p>
 
 <table border=1 hspace=20 cellspacing=4>
@@ -1703,20 +1729,20 @@ and dsp.scm which has
 <a href="sndscm.html#sumofnsines">sum-of-n-odd-cosines</a>.
 The original motivation for this generator was the restriction in sine-summation that the ratio can't be 1.0.
 In Snd, it's so easy to define a generator, that I'm sort of sorry I made sum-of-sines a built-in case.
-For example, here is a generator based on the <a href="sndscm.html#sumofsines">sum-of-n-odd-sines</a> formula in dsp.scm:
+For example, here is a generator based on the <a href="sndscm.html#sumofnsines">sum-of-n-odd-sines</a> formula in dsp.scm:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
 (define (make-sum-of-odd-sines frequency n)
-  (vct 0.0 (<a class=quiet href="#hztoradians">hz-&gt;radians</a> frequency) (exact-&inexact n)))
+  (vct 0.0 (<a class=quiet href="#hztoradians">hz-&gt;radians</a> frequency) (exact-&gt;inexact n)))
 
 (define (sum-of-odd-sines gen fm)
   (let* ((angle (<a class=quiet href="extsnd.html#vctref">vct-ref</a> gen 0))
 	 (a2 (* angle 0.5))
 	 (n (<a class=quiet href="extsnd.html#vctref">vct-ref</a> gen 2))
 	 (den (* n (sin a2)))
-	 (result (if (< (abs den) 1.0e-9)
+	 (result (if (&lt; (abs den) 1.0e-9)
 		     0.0
 		     (/ (* (sin (* n a2)) 
 			   (sin (* (1+ n) a2)))
@@ -1726,12 +1752,57 @@ For example, here is a generator based on the <a href="sndscm.html#sumofsines">s
 </pre>
 </td></tr></table>
 
-<pre>
-<img src="sceq1.png" alt="sum of sines" align=middle hspace=10 vspace=5>
-<img src="sceq5.png" alt="sum of odd sines" align=middle hspace=10 vspace=5>
-<img src="sceq6.png" alt="sum of odd cosines" align=middle hspace=10 vspace=5>
-</pre>
+<!-- LATEX:
+\small
+\begin{align*}
+&\sum_{k=0}^{n}\sin(x+ky)=\frac{\sin\Big(x+\frac{n-1}{2}y\Big)\sin\frac{ny}{2}}{\sin\frac{y}{2}} \\
+&\sum_{k=0}^{n}\cos(x+ky)=\frac{\cos\Big(x+\frac{n-1}{2}y\Big)\sin\frac{ny}{2}}{\sin\frac{y}{2}} \\
+&\sum_{k=0}^{2n-1}(-1)^{k}\cos(x+ky)=\frac{\sin\Big(x+\frac{2n-1}{2}y\Big)\sin ny}{\cos\frac{y}{2}} \\
+&\sum_{k=0}^{2n-1}(-1)^{k}\sin(x+ky)=\frac{\sin\Big(x+\frac{n-1}{2}(y+\pi)\Big)\sin\frac{n(y+\pi)}{2}}{\cos\frac{y}{2}} \\
+&\sum_{k=1}^{n}\sin(2k-1)x=\frac{\sin^{2}nx}{\sin x} \\
+&\sum_{k=1}^{n}\cos(2k-1)x=\frac{1}{2}\frac{\sin 2nx}{\sin x} \\
+&\sum_{k=1}^{n}(-1)^{k}\cos kx=-\frac{1}{2}+\frac{(-1)^{n}\cos(\frac{2n+1}{2}x)}{2\cos\frac{x}{2}} \\
+&\sum_{k=1}^{n}(-1)^{k+1}\sin(2k-1)x = (-1)^{n+1}\frac{\sin 2nx}{2\cos x} \\
+&\sum_{k=1}^{n-1}k\sin kx=\frac{\sin nx}{4 \sin^{2}\frac{x}{2}} - \frac{n \cos \frac{2n-1}{2}x}{2\sin\frac{x}{2}} \\
+&\sum_{k=1}^{n-1}k\cos kx=\frac{n\sin\frac{2n-1}{2}x}{2\sin\frac{x}{2}} - \frac{1-\cos nx}{4\sin^{2}\frac{x}{2}} \\
+&\sum_{k=1}^{n-1}p^{k}\sin kx=\frac{p\sin x - p^{n}\sin nx + p^{n+1}\sin(n-1)x}{1-2p\cos x+p^{2}} \\
+&\sum_{k=0}^{n-1}p^{k}\cos kx=\frac{1-p\cos x - p^{n}\cos nx + p^{n+1}\cos(n-1)x}{1-2p\cos x + p^{2}} \\
+&\sum_{k=1}^{\infty}p^{k}\sin kx=\frac{p\sin x}{1-2p\cos x + p^{2}} \\
+&\sum_{k=1}^{\infty}p^{k}\cos kx=\frac{1-p\cos x}{1-2p\cos x + p^{2}} \\
+&\sum_{k=1}^{\infty}\frac{p^{k}\sin kx}{k} = \arctan \frac{p\sin x}{1-p\cos x} \\
+&\sum_{k=0}^{\infty}\frac{p^{k}\cos kx}{k} = \ln \frac{1}{\sqrt{1-2p\cos x + p^{2}}} \\
+&\sum_{k=1}^{\infty}\frac{p^{2k-1}\sin(2k-1)x}{2k-1} = \frac{1}{2}\arctan \frac{2p\sin x}{1-p^{2}} \\
+&\sum_{k=1}^{\infty}\frac{p^{2k-1}\cos(2k-1)x}{2k-1} = \frac{1}{4}\ln \frac{1+2p\cos x + p^{2}}{1-2p\cos x + p^{2}} \\
+&\sum_{k=1}^{\infty}\frac{p^{k}\sin kx}{k!} = e^{p\cos x}\sin(p\sin x) \\
+&\sum_{k=1}^{\infty}\frac{p^{k}\cos kx}{k!} = e^{p\cos x}\cos(p\sin x) \\
+&\sum_{k=1}^{\infty}e^{-kt}\sin kx = \frac{1}{2}\frac{\sin x}{\cosh t - \cos x} \\
+&1 + 2\sum_{k=1}^{\infty}e^{-kt}\cos kx = \frac{\sinh t}{\cosh t - \cos x} \\
+\end{align*}
+-->
 
+<table border=0 hspace=40 vspace=10>
+<tr><td colspan=3 bgcolor="#f6f8ff"><center><h4>various sums</h4></center></td></tr>
+<tr>
+<td><img src="sceq14.png" alt="many sums">
+</td>
+<td width=40></td>
+<td><img src="sceq15.png" alt="many more sums">
+</td>
+</tr>
+<tr>
+<td colspan=3>from Gradshteyn and Ryzhik, "Table of Integrals...", 1.341.., 1.352.., 1.447.., 1.461.
+</td>
+</tr></table>
+
+<!-- TODO: add
+kosine-summation: <img src="sceq7.png" alt="kosines" align=absmiddle hspace=10>
+band-limited saw? (dsp)
+cosine-sum (dsp)
+check G&R 8.911 974 and 8.937 982
+-->
+
+<p>A few of these exist as generators, but, as far as I know, most have never been explored.
+</p>
 <br><br>
 
 
@@ -3856,7 +3927,7 @@ coeffs[0] is the constant term, and so on.
 Abramowitz and Stegun, "A Handbook of Mathematical Functions" is a
 treasure-trove of interesting polynomials.
 For waveshaping, use the function <a href="#partialstopolynomial">partials-&gt;polynomial</a> to
-generate the coefficients, than drive polynomial with a cosine.
+generate the coefficients, then drive polynomial with a cosine.
 </p>
 <br><br>
 
@@ -4058,7 +4129,7 @@ it as something that can be called as a note in a notelist (in with-sound) and
 generate its own sound.
 There are hundreds of instruments scattered around the documentation, and most of the
 <a href="extsnd.html#mapchannel">map-channel</a> functions can be recast as instruments.
-There are also several that represent "classic" computer music instruments; these
+There are also several that represent "classic" computer music instruments; they
 are listed here, documented in sndscm.html, and tested (via sample runs) in
 test 23 in snd-test.
 </p>

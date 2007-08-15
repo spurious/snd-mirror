@@ -1640,7 +1640,6 @@ static char *describe_sss(mus_any *ptr)
   return(describe_buffer);
 }
 
-/* PERHAPS: if a=1.0, switch to sum-of-sines? */
 
 Float mus_sine_summation(mus_any *ptr, Float fm)
 {
