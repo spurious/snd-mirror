@@ -706,7 +706,7 @@ static char *spectro_xlabel(chan_info *cp)
       break;
     case WAVELET:         return(wavelet_names_1[cp->wavelet_type]);          break;
     case HAAR:            return(_("Haar spectrum"));                         break;
-    case CEPSTRUM:        return("cepstrum");                                 break;
+    case CEPSTRUM:        return("cepstrum");                                 break; /* "quefrency" is the jokey name */
     case WALSH:           return("Sequency");                                 break;
     case AUTOCORRELATION: return(_("Lag time"));                              break;
     default:              return(added_transform_xlabel(cp->transform_type)); break;

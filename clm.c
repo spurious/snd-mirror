@@ -744,14 +744,14 @@ complex double mus_edot_product(complex double freq, complex double *data, int s
 
 Float mus_polynomial(Float *coeffs, Float x, int ncoeffs)
 {
-  Float sum;
+  double sum;
   int i;
   if (ncoeffs <= 0) return(x);
   sum = coeffs[ncoeffs - 1];
   if (ncoeffs == 1) return(sum * x);
   for (i = ncoeffs - 2; i >= 0; i--) 
     sum = (sum * x) + coeffs[i];
-  return(sum);
+  return((Float)sum);
 }
 
 
@@ -2156,12 +2156,12 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial
 {
   /* coeffs returned in partials */
   int i;
-  int *T0, *T1, *Tn;
-  Float *Cc1;
-  T0 = (int *)clm_calloc(npartials + 1, sizeof(int), "partials_to_polynomial t0");
-  T1 = (int *)clm_calloc(npartials + 1, sizeof(int), "partials_to_polynomial t1");
-  Tn = (int *)clm_calloc(npartials + 1, sizeof(int), "partials_to_polynomial tn");
-  Cc1 = (Float *)clm_calloc(npartials + 1, sizeof(Float), "partials_to_polynomial cc1");
+  off_t *T0, *T1, *Tn;
+  double *Cc1;
+  T0 = (off_t *)clm_calloc(npartials + 1, sizeof(off_t), "partials_to_polynomial t0");
+  T1 = (off_t *)clm_calloc(npartials + 1, sizeof(off_t), "partials_to_polynomial t1");
+  Tn = (off_t *)clm_calloc(npartials + 1, sizeof(off_t), "partials_to_polynomial tn");
+  Cc1 = (double *)clm_calloc(npartials + 1, sizeof(double), "partials_to_polynomial cc1");
   if (kind == MUS_CHEBYSHEV_FIRST_KIND)
     T0[0] = 1;
   else T0[0] = 0;
@@ -2170,7 +2170,7 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial
   for (i = 1; i < npartials; i++)
     {
       int k;
-      Float amp;
+      double amp;
       amp = partials[i];
       if (amp != 0.0)
 	{

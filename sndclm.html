@@ -1334,9 +1334,9 @@ we are expecting a bunch of huge numbers
 to add up to something in the vicinity of 0.0 or 1.0.  
 If we're using 32-bit floats, the first sign of trouble comes when the order is around 26.
 If you look at some of the coefficients, you'll see numbers like -129026688.000 (in the 32 bit case), which
-should be -129026680.721 --  we've run out of bits in the matissa!
+should be -129026680.721 --  we've run out of bits in the mantissa!
 Even if we build Snd --with-doubles, 
-we can only push this up to about an order of 46. 
+we can only push the order up to around 46. 
 </p>
 
 <br><br>
@@ -1942,16 +1942,104 @@ phase-vocoder or granular synthesis kludges.
 </pre>
 </td></tr></table>
 
-<!--
-<p>Bare pitch shifting is not interesting, and it's not actually the reason this generator exists.
-The original idea, as developed in ssb-bank in dsp.scm, was that a bank of formant filters gives
-you a sample-at-a-time spectrum; you can take each formant filter output and separately shift it
-with ssb-am (squelching the unwanted symmetric side-band); if the shift is made proportional to
-the formant resonance placement, you can shift a harmonic sound up or down without losing that
-harmonicity; the result is that you can split apart the duration and the pitch of a sound, doing
-any operation you like on either.  The phase-vocoder does essentially the same thing, but with FFTs.
+
+<p>
+Normal amplitude modulation, cos(x) * (amp + Y(t)), where Y is some signal, 
+produces the carrier (cos(x)), and symmetric sidebands at x+/-frq where frq is each spectral
+component of Y.  This is just an elaboration of 
 </p>
--->
+<pre>
+    cos(x) * (amp + cos(y)) = amp * cos(x) + 1/2(cos(x - y) + cos(x + y))
+</pre>
+<p>
+So, the Y spectrum (the first picture below) is shifted up by cos(x) and mirrored on either side of it (the second picture below; the spectral components
+on the left side are folding under 0).  In single side-band
+AM, we create both the Y spectrum, and, via the hilbert transform, a version of Y in which the phases are shifted too.
+Then we can add these two copies, using the phase differences to cancel one side of the symmetric
+spectrum (this is the third picture below; the new spectral components are not harmonically related however).  
+Once we can shift a pitch without creating its symmetric twin, we can split a spectrum
+into many bands, shift each band separately, and thereby retain its original harmonic spacing (the fourth picture).
+We have decoupled the pitch from the duration, much as in a phase vocoder (which uses an FFT
+rather than a filter bank, and an inverse FFT of the moved spectrum, rather than ssb-am).
+</p>
+
+<table border=1 hspace=20><tr><td>
+<table border=0 hspace=20 vspace=10>
+<tr>
+<td><img src="orig-oboe.png" alt="unaltered oboe"></td>
+<td><img src="am.png" alt="am oboe"></td>
+<td><img src="ssbam.png" alt="ssbam oboe"></td>
+<td><img src="ssbambank.png" alt="ssbambank oboe"></td>
+</tr>
+<tr>
+<td><center>original</center></td>
+<td><center>amplitude modulation</center></td>
+<td><center>ssb-am</center></td>
+<td><center>ssb-am bank</center></td>
+</tr>
+</table>
+</td></tr></table>
+
+<p>The second picture was created from oboe.snd (the original) via:
+</p>
+<pre>
+    (let ((osc (<a class=quiet href="#make-oscil">make-oscil</a> 1000.0))) 
+      (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> 
+        (lambda (y) 
+          (* .5 (<a class=quiet href="#amplitude-modulate">amplitude-modulate</a> .01 (<a class=quiet href="#oscil">oscil</a> osc) y)))))
+</pre>
+
+<p>The third picture was created by:
+</p>
+<pre>
+    (let ((am (<em class=red>make-ssb-am</em> 1000 40))) 
+      (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> 
+        (lambda (y) 
+          (<em class=red>ssb-am</em> am y))))
+</pre>
+
+<p>
+And the fourth used the ssb-am-bank function in dsp.scm rewritten here for with-sound:
+</p>
+
+<table border=0 bgcolor="#fafafa" hspace=40 vspace=10><tr><td>
+<pre>
+(definstrument (repitch beg dur sound old-freq new-freq 
+	         :optional (amp 1.0) (bands 10) (order 40) (bw 50.0))
+  (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
+	 (pairs bands)
+	 (ssbs (make-vector pairs))
+	 (bands (make-vector pairs))
+	 (factor (/ (- new-freq old-freq) old-freq))
+	 (rd (<a class=quiet href="#make-readin">make-readin</a> sound)))
+    (do ((i 1 (1+ i)))
+	((> i pairs))
+      (let* ((aff (* i old-freq))
+	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
+	(vector-set! ssbs (1- i) (<em class=red>make-ssb-am</em> (* i factor old-freq)))
+	(vector-set! bands (1- i) (<a class=quiet href="sndscm.html#makebandpass">make-bandpass</a> (<a class=quiet href="#hztoradians">hz-&gt;radians</a> (- aff bwf)) 
+						 (<a class=quiet href="#hztoradians">hz-&gt;radians</a> (+ aff bwf)) 
+						 order))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))) 
+           ((= i end))
+	 (let ((sum 0.0)
+	       (y (<a class=quiet href="#readin">readin</a> rd)))
+	   (do ((band 0 (1+ band)))
+	       ((= band pairs))
+	     (set! sum (+ sum (<em class=red>ssb-am</em> (vector-ref ssbs band) 
+				      (<a class=quiet href="sndscm.html#makebandpass">bandpass</a> (vector-ref bands band) y)))))
+	   (<a class=quiet href="#outa">outa</a> i (* amp sum) *output*)))))))
+
+ (let* ((sound "oboe.snd")
+        (mx (cadr (<a class=quiet href="extsnd.html#mussoundmaxamp">mus-sound-maxamp</a> sound)))
+	(dur (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> sound)))
+    (with-sound (:scaled-to mx) 
+      (repitch 0 dur sound 554 1000)))
+</pre>
+</td></tr></table>
 
 <br><br>
 
