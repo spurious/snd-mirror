@@ -496,9 +496,9 @@ plugging it into the following with-sound call:
 </pre>
 </td></tr></table>
 
-<p>By the way, there's nothing special about a generator in CLM: it is a function.  If it happens to use
-only other functions that the "run" macro can handle (and this includes most of Scheme), then it will run
-nearly as fast as any built-in function.  If it needs to keep variables around, it is simplest to use a vct
+<p>By the way, there's nothing special about a generator in CLM: it is a function, or perhaps more accurately, a closure.  If it happens to restrict itself
+to functions that the "run" macro can handle (and this includes most of Scheme), then it will run
+nearly as fast as any built-in function.  If it needs to keep on-going state around, it is simplest to use a vct
 as the generator object:
 </p>
 
@@ -524,7 +524,7 @@ as the generator object:
 </pre>
 </td></tr></table>
 
-<p>There are many more such generators scattered around the Snd package.
+<p>There are many more such generators scattered around the Snd package. 
 </p>
 <br><br>
 
@@ -1079,10 +1079,9 @@ modulation deviation in samples:
 <p>Lessee.. there's a factor of table-length/(2*pi) in table-lookup, so that a table with a sinusoid
 behaves the same as an oscil even with FM (this is how oscil worked in bygone times); hz-&gt;radians
 adds a factor of (2*pi)/srate; so we've cancelled the internal 2*pi and table-length, and we have
-an actual deviation of mfreq*2*pi*index/srate, which looks like FM; hmmm.
+an actual deviation of mfreq*2*pi*index/srate, which looks like FM; hmmm.  See <a href="#srcer">srcer</a>
+below for an <a href="#src">src</a>-based way to do the same thing.
 </p>
-
-
 
 <p><a href="spectr.clm">spectr.clm</a> has a steady state spectra of
 several standard orchestral instruments, courtesy of James A. Moorer.
@@ -1117,12 +1116,31 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
   <a class=def name="partialstopolynomial">partials-&gt;polynomial</a> partials :optional (kind mus-chebyshev-first-kind)
 </pre>
 
+<!-- LATEX: sceq16
+\begin{align*}
+&T_{n}(\cos \theta)=\cos n\theta \\
+&U_{n}(\cos \theta)=\frac{\sin(n+1) \theta}{\sin \theta}
+\end{align*}
+
+A&S 22.3.15
+-->
+
 <p>waveshape and polyshape perform waveshaping; waveshaping drives a sum of Chebyshev polynomials with
 a sinusoid, creating a sort of cross between additive synthesis and FM; see
-"Digital Waveshaping Synthesis" by Marc Le Brun in JAES 1979 April, vol 27, no 4, p250. 
+"Digital Waveshaping Synthesis" by Marc Le Brun in JAES 1979 April, vol 27, no 4, p250.
+The basic idea is:
+</p>
+<img src="sceq16.png" alt="Cheby eqs" hspace=40>
+<p>
+So, we can add scaled polynomials to get the spectrum we want;
+in the simplest use, an inexpensive additive synthesis.  We can vary the peak amplitude of the
+cos x to get effects similar to those of FM.  
+</p>
+
+<p>
 waveshape uses an internal <a href="#table-lookup">table-lookup</a> generator, whereas polyshape uses
 the <a href="#polynomial">polynomial</a> function.  The "kind" argument determines which kind of Chebyshev polynomial
-is used internally:  mus-chebyshev-first-kind or mus-chebyshev-second-kind. (The sum-of-cosines generator produces
+is used internally:  mus-chebyshev-first-kind or mus-chebyshev-second-kind. (The <a href="#sum-of-cosines">sum-of-cosines</a> generator produces
 Chebyshev polynomials of the fourth kind).
 </p>
 
@@ -1203,7 +1221,7 @@ bigbird is an example:
 partials-&gt;waveshape with waveshape produces the same output as partials-&gt;polynomial with polyshape.
 The <a href="sndscm.html#fmviolin">fm-violin</a> uses polyshape for the multiple FM section in some cases.
 We can get single side-band spectra by using Chebyshev polynomials of the second kind.  
-The <a href="sndscm.html#pqw">pqw</a> nad <a href="sndscm.html#pqwvox">pqwvox</a> instruments use this
+The <a href="sndscm.html#pqw">pqw</a> and <a href="sndscm.html#pqwvox">pqwvox</a> instruments use this
 technique.  Here is a simplified example:
 </p>
 
@@ -1260,9 +1278,9 @@ we absolutely insist on using waveshaping, we could do it this way:
 <pre>
 (definstrument (bl-saw start dur frequency order)
   (let* ((norm (if (= order 1) 1.0     ; these peak amps were determined empirically
-                 (if (= order 2) 1.3   ;   actual limit is supposed to be pi/2 (G&R 1.441)
-                   (if (< order 9) 1.7 ;   but Gibbs phenomenon pushes it to 1.851
-                     1.9))))           ;   if order>27, numerical troubles -- use table-lookup
+                 (if (= order 2) 1.3   ;   actual limit is supposed to be pi/2 (G&amp;R 1.441)
+                   (if (&lt; order 9) 1.7 ;   but Gibbs phenomenon pushes it to 1.851
+                     1.9))))           ;   if order>25, numerical troubles -- use table-lookup
          (freqs '()))
     (do ((i 1 (1+ i)))
 	((&gt; i order))
@@ -1281,7 +1299,48 @@ we absolutely insist on using waveshaping, we could do it this way:
                  *output*)))))))
 </pre></td></tr></table>
 
+<p>Why does the high order give numerical problems?  The polynomials are related to each other
+via the recursion: <img src="sceq17.png" alt="Cheby recurse" align=absmiddle>, so the first
+few polynomials are:
+</p>
+
+<!-- LATEX:
+\begin{align*}
+&T_{0}(x)=1 \\
+&T_{1}(x)=x \\
+&T_{2}(x)=2x^{2}-1\\
+&T_{3}(x)=4x^{3}-3x \\
+&T_{4}(x)=8x^{4}-8x^{2}+1
+\end{align*}
+
+\begin{align*}
+&U_{0}(x)=1 \\
+&U_{1}(x)=2x \\
+&U_{2}(x)=4x^{2}-1 \\
+&U_{3}(x)=8x^{3}-4x \\
+&U_{4}(x)=16x^{4}-12x^{2}+1
+\end{align*}
+
+-->
+
+<table border=0 hspace=40><tr>
+<td><img src="sceq18.png" alt="some Chebys"></td>
+<td width=20></td>
+<td><img src="sceq19.png" alt="more Chebys"></td>
+</tr></table>
+
+<p>The first coefficient is 2^n or 2^(n-1).  This is bad news if "n" is large because
+we are expecting a bunch of huge numbers 
+to add up to something in the vicinity of 0.0 or 1.0.  
+If we're using 32-bit floats, the first sign of trouble comes when the order is around 26.
+If you look at some of the coefficients, you'll see numbers like -129026688.000 (in the 32 bit case), which
+should be -129026680.721 --  we've run out of bits in the matissa!
+Even if we build Snd --with-doubles, 
+we can only push this up to about an order of 46. 
+</p>
+
 <br><br>
+
 
 
 
@@ -1443,7 +1502,7 @@ Even more amusing is this algorithm:
 <p>I think just about every combination of oscil/triangle-wave/sawtooth-wave/square-wave has been
 used.  Even triangle-wave(square-wave) can make funny noises. Along these lines, there's
 a <a href="sndscm.html#bandlimitedsawtooth">band-limited-sawtooth</a> generator in dsp.scm, 
-band-limited-triangle-wave above (waveshaping), and band-limited pulse-train via sum-of-cosines.
+band-limited-triangle-wave above (waveshaping), and band-limited pulse-train via <a href="#sum-of-cosines">sum-of-cosines</a>.
 </p>
 
 <br><br>
@@ -1727,8 +1786,8 @@ known as the conjugate Dirichlet kernel
 and dsp.scm which has
 <a href="sndscm.html#sumofnsines">sum-of-n-odd-sines</a> and
 <a href="sndscm.html#sumofnsines">sum-of-n-odd-cosines</a>.
-The original motivation for this generator was the restriction in sine-summation that the ratio can't be 1.0.
-In Snd, it's so easy to define a generator, that I'm sort of sorry I made sum-of-sines a built-in case.
+The original motivation for this generator was the restriction that the sine-summation generator's ratio ("a") can't be 1.0.
+But it's so easy to define a generator, that I'm sorry I made sum-of-sines a built-in case.
 For example, here is a generator based on the <a href="sndscm.html#sumofnsines">sum-of-n-odd-sines</a> formula in dsp.scm:
 </p>
 
@@ -1780,8 +1839,11 @@ For example, here is a generator based on the <a href="sndscm.html#sumofnsines">
 \end{align*}
 -->
 
+<table border=1 hspace=20><tr><td>
 <table border=0 hspace=40 vspace=10>
 <tr><td colspan=3 bgcolor="#f6f8ff"><center><h4>various sums</h4></center></td></tr>
+<tr><td colspan=3><hr></td></tr>
+
 <tr>
 <td><img src="sceq14.png" alt="many sums">
 </td>
@@ -1789,19 +1851,19 @@ For example, here is a generator based on the <a href="sndscm.html#sumofnsines">
 <td><img src="sceq15.png" alt="many more sums">
 </td>
 </tr>
-<tr>
-<td colspan=3>from Gradshteyn and Ryzhik, "Table of Integrals...", 1.341.., 1.352.., 1.447.., 1.461.
-</td>
-</tr></table>
 
-<!-- TODO: add
-kosine-summation: <img src="sceq7.png" alt="kosines" align=absmiddle hspace=10>
-band-limited saw? (dsp)
-cosine-sum (dsp)
-check G&R 8.911 974 and 8.937 982
--->
+<tr><td colspan=3><center>from Gradshteyn and Ryzhik, "Table of Integrals...", 1.341.., 1.352.., 1.447.., 1.461.</center></td></tr>
+<tr><td colspan=3><hr></td></tr>
 
-<p>A few of these exist as generators, but, as far as I know, most have never been explored.
+<tr><td colspan=3><img src="sceq7.png" alt="kosines" align=absmiddle hspace=10></td></tr>
+<tr><td colspan=3><center>from Askey, "Ramanujan and Hypergeometric Series"</center></td></tr>
+
+</table>
+
+</td></tr></table>
+
+<p>
+A few of these exist as generators, but, as far as I know, most have never been explored.
 </p>
 <br><br>
 
@@ -1861,8 +1923,9 @@ phase-vocoder or granular synthesis kludges.
 	         (* csin yh))))))))
 </pre>
 <br clear=left>
+<br>
 
-<table border=0 bgcolor="#fafafa" hspace=40 vspace=20><tr><td>
+<table border=0 bgcolor="#fafafa" hspace=40 vspace=10><tr><td>
 <pre>
 (definstrument (shift-pitch beg dur file freq :optional (order 40))
   (let* ((st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
@@ -1878,6 +1941,18 @@ phase-vocoder or granular synthesis kludges.
 (with-sound () (shift-pitch 0 3 "oboe.snd" 1108.0))
 </pre>
 </td></tr></table>
+
+<!--
+<p>Bare pitch shifting is not interesting, and it's not actually the reason this generator exists.
+The original idea, as developed in ssb-bank in dsp.scm, was that a bank of formant filters gives
+you a sample-at-a-time spectrum; you can take each formant filter output and separately shift it
+with ssb-am (squelching the unwanted symmetric side-band); if the shift is made proportional to
+the formant resonance placement, you can shift a harmonic sound up or down without losing that
+harmonicity; the result is that you can split apart the duration and the pitch of a sound, doing
+any operation you like on either.  The phase-vocoder does essentially the same thing, but with FFTs.
+</p>
+-->
+
 <br><br>
 
 
@@ -2934,7 +3009,7 @@ an instrument that provides time-varying sampling rate conversion:
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (srcer start-time duration amp srt fmamp fmfreq filename)
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (<A NAME="srcer">srcer</A> start-time duration amp srt fmamp fmfreq filename)
   (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a> :frequency fmfreq))
          (beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start-time))
          (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> duration)))

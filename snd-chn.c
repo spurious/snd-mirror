@@ -1431,8 +1431,8 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 	  x = ap->x0;
 	  xi = local_grf_x(x, ap);
 	  xf = 0.0;     /* samples per pixel counter */
-	  ymin = 1.0;
-	  ymax = -1.0;
+	  ymin = MIN_INIT;
+	  ymax = MAX_INIT;
 	  if (cp->printing) pinc = samples_per_pixel / cur_srate;
 	  ap->changed = false;
 	  ss->stopped_explicitly = false;
@@ -1456,8 +1456,8 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 		  xi++;
 		  j++;
 		  xf -= samples_per_pixel;
-		  ymin = 1.0;
-		  ymax = -1.0;
+		  ymin = MIN_INIT;
+		  ymax = MAX_INIT;
 		  if (samps > 10000000)
 		    {
 		      check_for_event();
@@ -1596,8 +1596,8 @@ void make_partial_graph(chan_info *cp, off_t beg, off_t end)
 	  x = beg_in_seconds;
 	  xi = local_grf_x(x, ap);
 	  xf = 0.0;     /* samples per pixel counter */
-	  ymin = 1.0;
-	  ymax = -1.0;
+	  ymin = MIN_INIT;
+	  ymax = MAX_INIT;
 	  ap->changed = false;
 	  for (ioff = beg, xf = 0.0; ioff <= end; ioff++)
 	    {
@@ -1612,8 +1612,8 @@ void make_partial_graph(chan_info *cp, off_t beg, off_t end)
 		  xi++;
 		  j++;
 		  xf -= samples_per_pixel;
-		  ymin = 1.0;
-		  ymax = -1.0;
+		  ymin = MIN_INIT;
+		  ymax = MAX_INIT;
 		}
 	    }
 	}
@@ -2078,7 +2078,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 	x = 0.0; 
       else x = fap->x0;
       xf = 0.0;     /* samples per pixel counter */
-      ymax = -1.0;
+      ymax = MAX_INIT;
       if ((!(cp->fft_log_magnitude)) && 
 	  (!(cp->fft_log_frequency)))
 	{
@@ -2096,7 +2096,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 		    ps_set_grf_point(x, j, ymax * scale);
 		  j++;
 		  xf -= samples_per_pixel;
-		  ymax = -1.0;
+		  ymax = MAX_INIT;
 		}
 	    }
 	}
@@ -2133,7 +2133,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 		  x += (incr * samples_per_pixel);
 		  j++;
 		  xf -= samples_per_pixel;
-		  ymax = -1.0;
+		  ymax = MAX_INIT;
 		}
 	    }
 	}

@@ -1748,8 +1748,8 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
 	  x = ap->x0;
 	  xi = grf_x(x, ap);
 	  xf = 0.0;     /* samples per pixel counter */
-	  ymin = 1.0;
-	  ymax = -1.0;
+	  ymin = MIN_INIT;
+	  ymax = MAX_INIT;
 	  if (current_sample < initial_sample) 
 	    {
 	      for (i = ap->losamp, xf = 0.0; i <= ap->hisamp; i++)
@@ -1769,8 +1769,8 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
 		      xi++;
 		      j++;
 		      xf -= samples_per_pixel;
-		      ymin = 1.0;
-		      ymax = -1.0;
+		      ymin = MIN_INIT;
+		      ymax = MAX_INIT;
 		    }
 		}
 	    }
@@ -1792,8 +1792,8 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
 		      xi++;
 		      j++;
 		      xf -= samples_per_pixel;
-		      ymin = 1.0;
-		      ymax = -1.0;
+		      ymin = MIN_INIT;
+		      ymax = MAX_INIT;
 		    }
 		}
 	    }

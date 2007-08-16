@@ -1604,8 +1604,8 @@ static peak_env_info *make_mix_input_peak_env(mix_info *md)
       ep->samps_per_bin = (int)(ceil((double)(ms->len) / (double)(ep->peak_env_size)));
       ep->data_max = (Float *)CALLOC(ep->peak_env_size, sizeof(Float));
       ep->data_min = (Float *)CALLOC(ep->peak_env_size, sizeof(Float));
-      ep->fmin = 1.0;
-      ep->fmax = -1.0;
+      ep->fmin = MIN_INIT;
+      ep->fmax = MAX_INIT;
 
       sf = make_virtual_mix_reader(md->cp, 0, ms->len, ms->index, 1.0, READ_FORWARD);
 

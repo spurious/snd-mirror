@@ -136,6 +136,8 @@ void free_peak_env_state(chan_info *cp)
     }
 }
 
+#define MIN_INIT 1000000.0
+#define MAX_INIT -1000000.0
 
 static env_state *make_env_state(chan_info *cp, off_t samples)
 {
@@ -181,9 +183,6 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 		  int start_bin, end_bin, old_end_bin;
 		  start = edit_changes_begin_at(cp, cp->edit_ctr);
 		  end = edit_changes_end_at(cp, cp->edit_ctr);
-		  /*
-		  fprintf(stderr,"repeak " OFF_TD " to " OFF_TD "\n", start, end);
-		  */
 		  if (snd_abs_off_t(end - start) < (samples / 2))
 		    {
 		      int i, j;
@@ -194,11 +193,8 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 		      ep->data_max = (Float *)CALLOC(ep->peak_env_size, sizeof(Float));
 		      ep->data_min = (Float *)CALLOC(ep->peak_env_size, sizeof(Float));
 		      start_bin = (int)(start / ep->samps_per_bin);
-		      ep->fmin = 1.0;
-		      ep->fmax = -1.0;
-		      /*
-		      fprintf(stderr,"copy from 0 to %d\n", start_bin);
-		      */
+		      ep->fmin = old_ep->data_min[0];
+		      ep->fmax = old_ep->data_max[0];
 		      for (i = 0; i < start_bin; i++) 
 			{
 			  ep->data_min[i] = old_ep->data_min[i];
@@ -217,9 +213,7 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 			      old_end_bin += (1 - end_bin);
 			      end_bin = 1;
 			    }
-			  /*
-			  fprintf(stderr,"follow from (new) %d and (old) %d\n", end_bin, old_end_bin);
-			  */
+
 			  for (i = end_bin, j = old_end_bin; (i < ep->peak_env_size) && (j < old_ep->peak_env_size); i++, j++)
 			    {
 			      ep->data_min[i] = old_ep->data_min[j];
@@ -248,8 +242,8 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 	  ep->data_min = (Float *)CALLOC(ep->peak_env_size, sizeof(Float));
 	  ep->bin = 0;
 	  ep->top_bin = 0;
-	  ep->fmin = 1.0;
-	  ep->fmax = -1.0;
+	  ep->fmin = 10000000.0;
+	  ep->fmax = -10000000.0;
 	  /* preset as much as possible of the envelope */
 	}
       cp->edits[pos]->peak_env = ep;
@@ -632,11 +626,14 @@ void pick_one_bin(peak_env_info *ep, int bin, off_t cursamp, chan_info *cp, int 
 {
   snd_fd *sf;
   int n;
-  Float val, ymin = 1.0, ymax = -1.0;
+  Float val, ymin, ymax;
   /* here we have to read the current bin using the current fragments */
   sf = init_sample_read_any(cursamp, cp, READ_FORWARD, edpos);
   if (sf == NULL) return;
-  for (n = 0; n < ep->samps_per_bin; n++)
+  val = read_sample(sf); 
+  ymin = val;
+  ymax = val;
+  for (n = 1; n < ep->samps_per_bin; n++)
     {
       val = read_sample(sf); 
       if (ymin > val) ymin = val; 
@@ -654,7 +651,7 @@ void peak_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num,
   old_ep = cp->edits[pos]->peak_env;
   if ((old_ep) && (old_ep->completed))
     {
-      Float fmax = -1.0, fmin = 1.0;
+      Float fmax = MAX_INIT, fmin = MIN_INIT;
       off_t cursamp, start, end;
       int i;
       peak_env_info *new_ep;
@@ -714,7 +711,7 @@ peak_env_info *peak_env_section(chan_info *cp, off_t beg, off_t num, int edpos)
 {
   /* used in snd-region.c to create the region peak amp env */
   peak_env_info *old_ep, *new_ep = NULL;
-  Float fmax = -1.0, fmin = 1.0;
+  Float fmax = MAX_INIT, fmin = MIN_INIT;
   int i, j;
   off_t cursamp, start, end;
   old_ep = cp->edits[edpos]->peak_env;
@@ -817,8 +814,8 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Fl
       if (base == 1.0)
 	e = mus_make_env(brkpts, npts, scaler, offset, base, 0.0, new_ep->peak_env_size - 1, brkpts);
       else e = mus_make_env(brkpts, npts, 1.0, 0.0, base, 0.0, new_ep->peak_env_size - 1, brkpts);
-      fmin = 1.0;
-      fmax = -1.0;
+      fmin = MIN_INIT;
+      fmax = MAX_INIT;
       for (i = 0; i < new_ep->peak_env_size; i++) 
 	{
 	  val = mus_env(e);
@@ -854,7 +851,7 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
     {
       Float xmax = 1.0;
       Float *data;
-      Float fmax = -1.0, fmin = 1.0;
+      Float fmax = MAX_INIT, fmin = MIN_INIT;
       int i;
       off_t cursamp, start, end;
       peak_env_info *new_ep;
@@ -937,8 +934,8 @@ void peak_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func)
 	}
       new_ep->peak_env_size = old_ep->peak_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
-      fmin = 1.0;
-      fmax = -1.0;
+      fmin = MIN_INIT;
+      fmax = MAX_INIT;
       if (XEN_PROCEDURE_P(init_func))
 	{
 	  /* probably faster to copy locally than protect from GC */
@@ -992,7 +989,7 @@ void peak_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t 
   if ((old_ep) && (old_ep->completed))
     {
       peak_env_info *new_ep;
-      Float fmax = -1.0, fmin = 1.0, dmin, dmax;
+      Float fmax = MAX_INIT, fmin = MIN_INIT, dmin, dmax;
       int i;
       bool closure = false, inited = false;
       vct *vlo = NULL, *vhi = NULL;
