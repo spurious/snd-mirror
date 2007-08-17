@@ -1946,3 +1946,966 @@
 		 (clm-print ";or4 3~%"))
 	     (clm-print ";or4 4~%")))))))
 
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; instruments and note lists from the documentation
+
+
+(if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))
+(if (not (provided? 'snd-jcrev.scm)) (load "jcrev.scm"))
+
+;;; ins in docs + note lists
+
+;;; fm.html
+
+(define (fmdoc-pm beg end freq amp mc-ratio index)
+  (let ((carrier-phase 0.0)
+        (carrier-phase-incr (hz->radians freq))
+        (modulator-phase 0.0)
+        (modulator-phase-incr (hz->radians (* freq mc-ratio))))
+   (run
+    (lambda ()
+      (do ((i beg (1+ i)))
+	  ((= i end))
+	(let* ((modulation (* index (sin modulator-phase)))
+	       (pm-val (* amp (sin (+ carrier-phase modulation))))) 
+	       ; no integration in phase modulation
+	  (set! carrier-phase (+ carrier-phase carrier-phase-incr))
+	  (set! modulator-phase (+ modulator-phase modulator-phase-incr))
+	  (outa i pm-val *output*)))))))
+
+(define (fmdoc-fm beg end freq amp mc-ratio index)
+  (let ((carrier-phase 0.0)
+        (carrier-phase-incr (hz->radians freq))
+        (modulator-phase (* .5 pi))
+        (modulator-phase-incr (hz->radians (* freq mc-ratio)))
+        (fm-index (hz->radians (* freq mc-ratio index)))) 
+	; fix up fm index to take integration into account
+  (run
+   (lambda ()
+     (do ((i beg (1+ i)))
+	 ((= i end))
+       (let ((modulation (* fm-index (sin modulator-phase))))
+	 (set! carrier-phase (+ carrier-phase modulation)) 
+	 ; here is the fm integration
+	 (let ((fm-val (* amp (sin carrier-phase))))
+	   (set! carrier-phase (+ carrier-phase carrier-phase-incr))
+	   (set! modulator-phase (+ modulator-phase modulator-phase-incr))
+	   (outb i fm-val *output*))))))))
+
+(define* (fmdoc-fm-1 beg dur freq amp mc-ratio index :optional (index-env '(0 1 100 1)))
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+         (cr (make-oscil freq))
+         (md (make-oscil (* freq mc-ratio)))
+         (fm-index (hz->radians (* index mc-ratio freq)))
+         (ampf (make-env index-env :scaler amp :duration dur)) 
+         (indf (make-env index-env :scaler fm-index :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (outa i (* (env ampf)                  ; amplitude env
+                    (oscil cr (* (env indf)     ; carrier + modulation env
+                                 (oscil md))))  ; modulation
+               *output*))))))
+
+(define (fmdoc-fm-2 beg dur freq amp mc-ratio index carrier-phase mod-phase)
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (cr (make-oscil freq carrier-phase))
+	 (md (make-oscil (* freq mc-ratio) mod-phase))
+	 (fm-index (hz->radians (* index mc-ratio freq))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (outa i (* amp (oscil cr (* fm-index (oscil md)))) *output*))))))
+
+(define (fmdoc-fm-3 beg dur freq amp mc-ratio index car-phase mod-phase skew-func skew)
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (cr (make-oscil freq car-phase))
+	 (md (make-oscil (* freq mc-ratio) mod-phase))
+	 (skewf (make-env skew-func :scaler (hz->radians (* skew mc-ratio freq)) :duration dur))
+	 (fm-index (hz->radians (* index mc-ratio freq))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+        (outa i (* amp (oscil cr (* fm-index (oscil md (env skewf))))) *output*))))))
+
+(define (fmdoc-fm-4 beg dur freq amp mc-ratio index cr0p cr1p md0p md1p)
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (cr0 (make-oscil 0 cr0p))
+	 (cr1 (make-oscil 0 cr1p))
+	 (md0 (make-oscil (* freq mc-ratio) md0p))
+	 (md1 (make-oscil (* freq mc-ratio) md1p))
+	 (am0 (make-oscil freq 0))
+	 (am1 (make-oscil freq (* .5 pi)))
+	 (fm-index (hz->radians (* index mc-ratio freq))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (outa i (* amp (+ (* (oscil am0) (oscil cr0 (* fm-index (oscil md0))))
+			   (* (oscil am1) (oscil cr1 (* fm-index (oscil md1))))))
+	       *output*))))))
+
+(define (fmdoc-fm-5 beg dur freq amp mc-ratios indexes carrier-phase mod-phases)
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (cr (make-oscil freq carrier-phase))
+         (n (length mc-ratios))
+         (modulators (make-vector n))
+         (fm-indices (make-vct n)))
+    (do ((i 0 (1+ i)))
+	((= i n))
+      (vector-set! modulators i (make-oscil (* freq (list-ref mc-ratios i)) (list-ref mod-phases i)))
+      (vct-set! fm-indices i (hz->radians (* freq (list-ref indexes i) (list-ref mc-ratios i)))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (let ((sum 0.0))
+	   (do ((k 0 (1+ k)))
+	       ((= k n))
+	     (set! sum (+ sum (* (vct-ref fm-indices k) (oscil (vector-ref modulators k))))))
+	   (outa i (* amp (oscil cr sum)) *output*)))))))
+
+(define (fmdoc-violin beg dur frequency amplitude fm-index)
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (frq-scl (hz->radians frequency))
+         (maxdev (* frq-scl fm-index))
+         (index1 (* maxdev (/ 5.0 (log frequency))))
+         (index2 (* maxdev 3.0 (/ (- 8.5 (log frequency)) (+ 3.0 (/ frequency 1000)))))
+         (index3 (* maxdev (/ 4.0 (sqrt frequency))))
+         (carrier (make-oscil frequency))
+         (fmosc1 (make-oscil frequency))
+         (fmosc2 (make-oscil (* 3 frequency)))
+         (fmosc3 (make-oscil (* 4 frequency)))
+         (ampf  (make-env '(0 0 25 1 75 1 100 0) :scaler amplitude :duration dur))
+         (indf1 (make-env '(0 1 25 .4 75 .6 100 0) :scaler index1 :duration dur))
+         (indf2 (make-env '(0 1 25 .4 75 .6 100 0) :scaler index2 :duration dur))
+         (indf3 (make-env '(0 1 25 .4 75 .6 100 0) :scaler index3 :duration dur))
+         (pervib (make-triangle-wave 5 :amplitude (* .0025 frq-scl)))
+         (ranvib (make-rand-interp 16 :amplitude (* .005 frq-scl))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (let ((vib (+ (triangle-wave pervib) (rand-interp ranvib))))
+	   (outa i (* (env ampf)
+		      (oscil carrier
+			     (+ vib 
+				(* (env indf1) (oscil fmosc1 vib))
+				(* (env indf2) (oscil fmosc2 (* 3.0 vib)))
+				(* (env indf3) (oscil fmosc3 (* 4.0 vib))))))
+		 *output*)))))))
+
+(define (fmdoc-cascade beg dur freq amp modrat modind casrat casind caspha)
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (cr (make-oscil freq))
+	 (md (make-oscil (* freq modrat)))
+	 (ca (make-oscil (* freq casrat) caspha))
+	 (fm-ind0 (hz->radians (* modind modrat freq)))
+	 (fm-ind1 (hz->radians (* casind (/ casrat modrat) freq))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (outa i (* amp 
+                    (oscil cr (* fm-ind0 
+                                 (oscil md (* fm-ind1 
+                                              (oscil ca)))))) 
+               *output*))))))
+
+(define (fmdoc-feedbk beg dur freq amp index)
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (y 0.0)
+	 (x-incr (hz->radians freq)))
+    (run 
+     (lambda ()
+       (do ((i start (1+ i))
+	    (x 0.0 (+ x x-incr)))
+	   ((= i end))
+	 (set! y (+ x (* index (sin y))))
+	 (outa i (* amp (sin y)) *output*))))))
+
+(define* (fmdoc-vox beg dur freq1 amp :optional (indexes '(.005 .01 .02)) (formant-amps '(.86 .13 .01)))
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (freq freq1)
+	 (car-os (make-oscil 0))
+         (evens (make-vector 3))
+         (odds (make-vector 3))
+         (amps (apply vct formant-amps))
+         (ampf (make-env '(0 0 25 1 75 1 100 0) :scaler amp :duration dur))
+         (frmfs (make-vector 3))
+         (indices (apply vct indexes))
+         (per-vib (make-triangle-wave 6 :amplitude (* freq .03)))
+         (ran-vib (make-rand-interp 20 :amplitude (* freq .5 .02))))
+    (do ((i 0 (1+ i)))
+	((= i 3))
+      (vector-set! evens i (make-oscil 0))
+      (vector-set! odds i (make-oscil 0)))
+
+    (vector-set! frmfs 0 (make-env '(0 520 100 490) :duration dur)) 
+    (vector-set! frmfs 1 (make-env '(0 1190 100 1350) :duration dur)) 
+    (vector-set! frmfs 2 (make-env '(0 2390 100 1690) :duration dur))
+
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (let* ((frq (+ freq (triangle-wave per-vib) (rand-interp ran-vib)))
+		(car (oscil car-os (hz->radians frq)))
+		(sum 0.0))
+	   (do ((k 0 (1+ k)))
+	       ((= k 3))
+	     (let* ((frm (env (vector-ref frmfs k)))
+		    (frm0 (/ frm frq))
+		    (frm-int (inexact->exact (floor frm0)))
+		    (even-amp 0.0) (odd-amp 0.0) 
+		    (even-freq 0.0) (odd-freq 0.0))
+	       (if (even? frm-int)
+		   (begin
+		     (set! even-freq (hz->radians (* frm-int frq)))
+		     (set! odd-freq (hz->radians (* (+ frm-int 1) frq)))
+		     (set! odd-amp (- frm0 frm-int))
+		     (set! even-amp (- 1.0 odd-amp)))
+		   (begin
+		     (set! odd-freq (hz->radians (* frm-int frq)))
+		     (set! even-freq (hz->radians (* (+ frm-int 1) frq)))
+		     (set! even-amp (- frm0 frm-int))
+		     (set! odd-amp (- 1.0 even-amp))))
+	       (set! sum (+ sum (+ (* (vct-ref amps k) 
+				      (+ (* even-amp 
+					    (oscil (vector-ref evens k) 
+						   (+ even-freq (* (vct-ref indices k) car))))
+					 (* odd-amp 
+					    (oscil (vector-ref odds k) 
+						   (+ odd-freq (* (vct-ref indices k) car)))))))))))
+	   (outa i (* (env ampf) sum) *output*)))))))
+
+;;; --------------------------------------------------------------------------------
+
+;;; sndclm.html
+
+
+(define (sndclmdoc-simp start end freq amp)
+  (let ((os (make-oscil freq)))
+    (do ((i start (1+ i))) 
+        ((= i end))
+      (outa i (* amp (oscil os)) *output*))))
+
+(define (sndclmdoc-simp-1 beg dur freq amp)
+  (let* ((os (make-oscil freq))
+	 (start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur))))
+    (do ((i start (1+ i))) 
+        ((= i end))
+      (outa i (* amp (oscil os)) *output*))))
+
+(define (sndclmdoc-simp-2 beg dur freq amp)
+  (let* ((os (make-oscil freq))
+	 (start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur))))
+    (run
+      (lambda ()
+        (do ((i start (1+ i))) 
+            ((= i end))
+          (outa i (* amp (oscil os)) *output*))))))
+
+(definstrument (sndclmdoc-simp-3 beg dur freq amp)
+  (let* ((os (make-oscil freq))
+	 (start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur))))
+    (run
+      (lambda ()
+        (do ((i start (1+ i))) 
+            ((= i end))
+          (outa i (* amp (oscil os)) *output*))))))
+
+(define (sndclmdoc-telephone start telephone-number)
+  (let ((touch-tab-1 '(0 697 697 697 770 770 770 852 852 852 941 941 941))
+	(touch-tab-2 '(0 1209 1336 1477 1209 1336 1477 1209 1336 1477 1209 1336 1477)))
+    (do ((i 0 (1+ i)))
+	((= i (length telephone-number)))
+      (let* ((num (list-ref telephone-number i))
+	     (frq1 (list-ref touch-tab-1 num))
+	     (frq2 (list-ref touch-tab-2 num)))
+        (sndclmdoc-simp-3 (+ start (* i .4)) .3 frq1 .1)
+        (sndclmdoc-simp-3 (+ start (* i .4)) .3 frq2 .1)))))
+
+(definstrument (sndclmdoc-simp-4 beg dur freq amp envelope)
+  (let* ((os (make-oscil freq))
+         (amp-env (make-env envelope :duration dur :scaler amp))
+	 (start (seconds->samples beg))
+         (end (+ start (seconds->samples dur))))
+    (run
+      (lambda ()
+        (do ((i start (1+ i))) 
+            ((= i end))
+          (outa i (* (env amp-env) (oscil os)) *output*))))))
+
+(define (make-my-oscil frequency)       ; we want our own oscil!
+  (vct 0.0 (hz->radians frequency)))    ; current phase and frequency-based phase increment
+
+(define (my-oscil gen fm)               ; the corresponding generator
+  (let ((result (sin (vct-ref gen 0)))) ; return sin(current-phase)
+    (vct-set! gen 0 (+ (vct-ref gen 0)  ; increment current phase
+                       (vct-ref gen 1)  ;    by frequency
+                       fm))             ;    and FM
+    result))                            ; return sine wave
+
+(define (sndclmdoc-simp-5 start end freq amp frq-env)
+  (let ((os (make-oscil freq)) 
+        (frqe (make-env frq-env :dur (- end start) :scaler (hz->radians freq))))
+    (do ((i start (1+ i))) 
+        ((= i end))
+      (outa i (* amp (oscil os (env frqe))) *output*))))
+
+(definstrument (sndclmdoc-simple-fm beg dur freq amp mc-ratio index :optional amp-env index-env)
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (cr (make-oscil freq))                     ; carrier
+         (md (make-oscil (* freq mc-ratio)))        ; modulator
+         (fm-index (hz->radians (* index mc-ratio freq)))
+         (ampf (make-env (or amp-env '(0 0  .5 1  1 0)) :scaler amp :duration dur))
+         (indf (make-env (or index-env '(0 0  .5 1  1 0)) :scaler fm-index :duration dur)))
+    (run
+      (lambda ()
+        (do ((i start (1+ i)))
+            ((= i end))
+          (outa i (* (env ampf) (oscil cr (* (env indf) (oscil md)))) *output*))))))
+
+(define (sndclmdoc-simple-add beg dur freq amp)
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (arr (make-vector 20)))     ; we'll create a tone with 20 equal amplitude harmonics
+    (do ((i 0 (1+ i)))               ;   use the 'f' button to check out the spectrum
+	((= i 20))
+      (vector-set! arr i (make-oscil (* (1+ i) freq))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))) 
+           ((= i end))
+	 (let ((sum 0.0))
+	   (do ((k 0 (1+ k)))
+	       ((= k 20))
+	     (set! sum (+ sum (oscil (vector-ref arr k)))))
+	   (out-any i (* amp .05 sum) 0 *output*)))))))
+
+(definstrument (sndclmdoc-mapenv beg dur frq amp en)
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (osc (make-oscil frq))
+	 (zv (make-env en 1.0 dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+           ((= i end))
+         (let ((zval (env zv))) 
+	   (outa i 
+             (* amp 
+                (sin (* 0.5 pi zval zval zval)) 
+                (oscil osc)) 
+             *output*)))))))
+
+(definstrument (sndclmdoc-simple-table dur)
+  (let ((tab (make-table-lookup :wave (partials->wave '(1 .5  2 .5)))))
+    (do ((i 0 (1+ i))) ((= i dur))
+      (outa i (* .3 (table-lookup tab)) *output*))))
+
+(define (sndclmdoc-looper start dur sound freq amp)
+  (let* ((beg (seconds->samples start))
+	 (end (+ beg (seconds->samples dur)))
+	 (loop-data (mus-sound-loop-info sound)))
+    (if (or (null? loop-data)
+	    (<= (cadr loop-data) (car loop-data)))
+	(throw 'no-loop-positions)
+	(let* ((loop-start (car loop-data))
+	       (loop-end (cadr loop-data))
+	       (loop-length (1+ (- loop-end loop-start)))
+	       (sound-section (file->array sound 0 loop-start loop-length (make-vct loop-length)))
+	       (original-loop-duration (/ loop-length (mus-sound-srate sound)))
+	       (tbl (make-table-lookup :frequency (/ freq original-loop-duration) :wave sound-section)))
+	       ;; "freq" here is how fast we read (transpose) the sound -- 1.0 returns the original
+	  (run
+	   (lambda ()
+	     (do ((i beg (1+ i)))
+		 ((= i end))
+	       (outa i (* amp (table-lookup tbl)) *output*))))))))
+
+(definstrument (sndclmdoc-fm-table file start dur amp read-speed modulator-freq index-in-samples)
+  (let* ((beg (seconds->samples start))
+	 (end (+ beg (seconds->samples dur)))
+	 (table-length (mus-sound-frames file))
+	 (tab (make-table-lookup :frequency (/ read-speed (mus-sound-duration file)) 
+				 :wave (file->array file 0 0 table-length (make-vct table-length))))
+	 (osc (make-oscil modulator-freq))
+	 (index (/ (* (hz->radians modulator-freq) 2 pi index-in-samples) table-length)))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (outa i (* amp (table-lookup tab (* index (oscil osc))))
+	       *output*))))))
+
+(definstrument (sndclmdoc-simp-6)
+  (let ((wav (make-waveshape 
+               :frequency 440 
+               :partials '(1 .5  2 .3  3 .2))))
+    (do ((i 0 (1+ i))) ((= i 10000))
+      (outa i (waveshape wav) *output*))))
+
+(definstrument (sndclmdoc-bigbird start duration frequency freqskew amplitude freq-env amp-env partials)
+  (let* ((beg (seconds->samples start))
+         (end (+ beg (seconds->samples duration)))
+         (gls-env (make-env freq-env (hz->radians freqskew) duration))
+         (polyos (make-polyshape frequency :coeffs (partials->polynomial partials)))
+         (fil (make-one-pole .1 .9))
+         (amp-env (make-env amp-env amplitude duration)))
+    (run
+      (lambda ()
+        (do ((i beg (1+ i)))
+            ((= i end))
+          (outa i 
+            (one-pole fil   ; for distance effects
+              (* (env amp-env) 
+                 (polyshape polyos 1.0 (env gls-env))))
+            *output*))))))
+
+(definstrument (sndclmdoc-pqw start dur spacing carrier partials)
+  (let* ((spacing-cos (make-oscil spacing (/ pi 2.0)))
+	 (spacing-sin (make-oscil spacing))
+	 (carrier-cos (make-oscil carrier (/ pi 2.0)))
+	 (carrier-sin (make-oscil carrier))
+	 (sin-coeffs (partials->polynomial
+                       partials mus-chebyshev-second-kind))
+	 (cos-coeffs (partials->polynomial
+                       partials mus-chebyshev-first-kind))
+	 (beg (seconds->samples start))
+	 (end (+ beg (seconds->samples dur))))
+    (run (lambda ()
+     (do ((i beg (1+ i))) ((= i end))
+       (let ((ax (oscil spacing-cos)))
+	 (outa i (- (* (oscil carrier-sin) 
+                       (oscil spacing-sin) 
+		       (polynomial sin-coeffs ax))
+		    (* (oscil carrier-cos) 
+		       (polynomial cos-coeffs ax)))
+	       *output*)))))))
+
+(def-optkey-fun (sndclmdoc-make-band-limited-triangle-wave (frequency 440.0) (order 1))
+  (let ((freqs '()))
+    (do ((i 1 (1+ i))
+	 (j 1 (+ j 2)))
+	((> i order))
+      (set! freqs (cons (/ 1.0 (* j j)) (cons j freqs))))
+    (make-waveshape frequency :wave (partials->waveshape (reverse freqs)))))
+
+(define* (sndclmdoc-band-limited-triangle-wave gen :optional (fm 0.0))
+  (waveshape gen 1.0 fm))
+
+(definstrument (sndclmdoc-bl-saw start dur frequency order)
+  (let* ((norm (if (= order 1) 1.0     ; these peak amps were determined empirically
+                 (if (= order 2) 1.3   ;   actual limit is supposed to be pi/2 (G&R 1.441)
+                   (if (< order 9) 1.7 ;   but Gibbs phenomenon pushes it to 1.851
+                     1.9))))           ;   if order>25, numerical troubles -- use table-lookup
+         (freqs '()))
+    (do ((i 1 (1+ i)))
+	((> i order))
+      (set! freqs (cons (/ 1.0 (* norm i)) (cons i freqs))))
+    (let* ((ccos (make-oscil frequency (/ pi 2.0)))
+	   (csin (make-oscil frequency))
+	   (coeffs (partials->polynomial (reverse freqs) mus-chebyshev-second-kind))
+	   (beg (seconds->samples start))
+	   (end (+ beg (seconds->samples dur))))
+      (run 
+       (lambda ()
+	 (do ((i beg (1+ i))) 
+	     ((= i end))
+	   (outa i (* (oscil csin) 
+                      (polynomial coeffs (oscil ccos))) 
+                 *output*)))))))
+
+(define (sndclmdoc-tritri start dur freq amp index mcr)
+  (let* ((beg (seconds->samples start))
+	 (end (+ beg (seconds->samples dur)))
+	 (carrier (make-triangle-wave freq))
+	 (modulator (make-triangle-wave (* mcr freq))))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (outa i (* amp (triangle-wave carrier 
+                          (* index (triangle-wave modulator)))) 
+               *output*))))))
+
+(define (sndclmdoc-simple-soc beg dur freq amp)
+  (let* ((os (make-sum-of-cosines 10 freq 0.0))
+	 (start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))) ((= i end))
+	 (outa i (* amp (sum-of-cosines os)) 
+               *output*))))))
+
+(define* (sndclmdoc-make-sinc-train #:optional (frequency 440.0) (width #f))
+  (let ((range (or width (* pi (- (* 2 (inexact->exact (floor (/ (mus-srate) (* 2.2 frequency))))) 1)))))
+    ;; 2.2 leaves a bit of space before srate/2, (* 3 pi) is the minimum width, normally
+    (list (- (* range 0.5))
+	  range
+	  (/ (* range frequency) (mus-srate)))))
+	
+(define* (sndclmdoc-sinc-train gen #:optional (fm 0.0))
+  (let* ((ang (car gen))
+	 (range (cadr gen))
+	 (top (* 0.5 range))
+	 (frq (caddr gen))
+	 (val (if (= ang 0.0) 1.0 (/ (sin ang) ang)))
+	 (new-ang (+ ang frq fm)))
+    (if (> new-ang top)
+	(list-set! gen 0 (- new-ang range))
+	(list-set! gen 0 new-ang))
+    val))
+
+(definstrument (sndclmdoc-ss beg dur freq amp :optional (N 1) (a .5) (B-ratio 1.0) (frqf #f))
+  (let* ((st (seconds->samples beg))
+         (nd (+ st (seconds->samples dur)))
+         (sgen (make-sine-summation :n N :a a :ratio B-ratio :frequency freq))
+	 (frq-env (if frqf (make-env frqf :scaler (hz->radians freq) :duration dur) #f))
+	 (spectr-env (if frqf (make-env frqf :duration dur) #f))
+	 (amp-env (make-env '(0 0 1 1 2 1 3 0) :scaler amp :duration dur)))
+    (run
+     (lambda ()
+       (do ((i st (1+ i))) 
+	   ((= i nd))
+	 (if spectr-env
+	     (set! (mus-scaler sgen) (* a (exp (- (env spectr-env))))))
+         (outa i (* (env amp-env)
+		    (sine-summation sgen (if frq-env (env frq-env) 0.0)))
+	       *output*))))))
+
+(define (sndclmdoc-make-sum-of-odd-sines frequency n)
+  (vct 0.0 (hz->radians frequency) (exact->inexact n)))
+
+(define (sndclmdoc-sum-of-odd-sines gen fm)
+  (let* ((angle (vct-ref gen 0))
+	 (a2 (* angle 0.5))
+	 (n (vct-ref gen 2))
+	 (den (* n (sin a2)))
+	 (result (if (< (abs den) 1.0e-9)
+		     0.0
+		     (/ (* (sin (* n a2)) 
+			   (sin (* (1+ n) a2)))
+			den))))
+    (vct-set! gen 0 (+ (vct-ref gen 0) (vct-ref gen 1) fm))
+    result))
+
+(definstrument (sndclmdoc-shift-pitch beg dur file freq :optional (order 40))
+  (let* ((st (seconds->samples beg))
+         (nd (+ st (seconds->samples dur)))
+	 (gen (make-ssb-am freq order))
+	 (rd (make-readin file)))
+    (run
+     (lambda ()
+       (do ((i st (1+ i))) 
+	   ((= i nd))
+	 (outa i (ssb-am gen (readin rd)) *output*))))))
+
+(definstrument (sndclmdoc-repitch beg dur sound old-freq new-freq 
+	         :optional (amp 1.0) (bands 10) (order 40) (bw 50.0))
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (pairs bands)
+	 (ssbs (make-vector pairs))
+	 (bands (make-vector pairs))
+	 (factor (/ (- new-freq old-freq) old-freq))
+	 (rd (make-readin sound)))
+    (do ((i 1 (1+ i)))
+	((> i pairs))
+      (let* ((aff (* i old-freq))
+	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
+	(vector-set! ssbs (1- i) (make-ssb-am (* i factor old-freq)))
+	(vector-set! bands (1- i) (make-bandpass (hz->radians (- aff bwf)) 
+						 (hz->radians (+ aff bwf)) 
+						 order))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))) 
+           ((= i end))
+	 (let ((sum 0.0)
+	       (y (readin rd)))
+	   (do ((band 0 (1+ band)))
+	       ((= band pairs))
+	     (set! sum (+ sum (ssb-am (vector-ref ssbs band) 
+				      (bandpass (vector-ref bands band) y)))))
+	   (outa i (* amp sum) *output*)))))))
+
+(definstrument (sndclmdoc-fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional ve ae)
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+         (ampf (make-env :envelope (or ae (list 0 0 25 1 75 1 100 0)) :scaler amp :duration dur))
+         (frq0 (hz->radians f0))
+         (frq1 (hz->radians f1))
+         (frq2 (hz->radians f2))
+         (foflen (if (= (mus-srate) 22050) 100 200))
+         (vibr (make-oscil :frequency 6))
+	 (vibenv (make-env :envelope (or ve (list 0 1 100 1)) :scaler vib :duration dur))
+         (win-freq (/ (* 2 pi) foflen))
+         (foftab (make-vct foflen))
+         (wt0 (make-wave-train :wave foftab :frequency frq)))
+    (do ((i 0 (1+ i)))
+        ((= i foflen))
+      (set! (vct-ref foftab i) ;; this is not the pulse shape used by B&R
+            (* (+ (* a0 (sin (* i frq0))) 
+                  (* a1 (sin (* i frq1))) 
+                  (* a2 (sin (* i frq2)))) 
+               .5 (- 1.0 (cos (* i win-freq))))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+           ((= i end))
+         (outa i (* (env ampf) (wave-train wt0 (* (env vibenv) (oscil vibr)))) *output*))))))
+
+(definstrument (sndclmdoc-echo beg dur scaler secs file)
+  (let ((del (make-delay (seconds->samples secs)))
+	(rd (make-sample-reader 0 file)))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+           ((= i (+ beg dur)))
+         (let ((inval (rd)))
+  	   (outa i (+ inval (delay del (* scaler (+ (tap del) inval)))) *output*)))))))
+
+(define* (sndclmdoc-make-moving-max #:optional (size 128))
+  (let ((gen (make-delay size)))
+    (set! (mus-scaler gen) 0.0)
+    gen))
+
+(define (sndclmdoc-moving-max gen y)
+  (let* ((absy (abs y))
+         (mx (delay gen absy)))
+    (if (>= absy (mus-scaler gen))
+	(set! (mus-scaler gen) absy)
+	(if (>= mx (mus-scaler gen))
+	    (set! (mus-scaler gen) (vct-peak (mus-data gen)))))
+    (mus-scaler gen)))
+
+(definstrument (sndclmdoc-zc time dur freq amp length1 length2 feedback)
+  (let* ((beg (seconds->samples time))
+         (end (+ beg (seconds->samples dur)))
+         (s (make-pulse-train :frequency freq))  ; some raspy input so we can hear the effect easily
+         (d0 (make-comb :size length1 :max-size (max length1 length2) :scaler feedback))
+         (aenv (make-env '(0 0 .1 1 .9 1 1 0) :scaler amp :duration dur))
+         (zenv (make-env '(0 0 1 1) :scaler (- length2 length1) :base 12.0 :duration dur)))
+    (run (lambda ()
+      (do ((i beg (1+ i))) ((= i end))
+        (outa i (* (env aenv) (comb d0 (pulse-train s) (env zenv))) *output*))))))
+
+(define (sndclmdoc-fir+comb beg dur freq amp size)
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (dly (make-comb :scaler .9 :size size)) 
+	 (flt (make-fir-filter :order size :xcoeffs (mus-data dly))) ; comb delay line as FIR coeffs
+	 (r (make-rand freq)))                                       ; feed comb with white noise
+    (run 
+     (lambda () 
+       (do ((i start (1+ i))) 
+	   ((= i end)) 
+	 (outa i (* amp (fir-filter flt (comb dly (rand r)))) *output*))))))
+
+(definstrument (sndclmdoc-simple-src start-time duration amp srt srt-env filename)
+  (let* ((senv (make-env :envelope srt-env :duration duration))
+         (beg (seconds->samples start-time))
+         (end (+ beg (seconds->samples duration)))
+         (src-gen (make-src :input (make-readin filename) :srate srt)))
+    (run
+      (lambda ()
+        (do ((i beg (1+ i)))
+            ((= i end))
+          (outa i (* amp (src src-gen (env senv))) *output*))))))
+
+(definstrument (sndclmdoc-srcer start-time duration amp srt fmamp fmfreq filename)
+  (let* ((os (make-oscil :frequency fmfreq))
+         (beg (seconds->samples start-time))
+         (end (+ beg (seconds->samples duration)))
+         (src-gen (make-src :input (make-readin filename) :srate srt)))
+    (run
+      (lambda ()
+        (do ((i beg (1+ i)))
+            ((= i end))
+          (outa i (* amp (src src-gen (* fmamp (oscil os)))) *output*))))))
+
+(definstrument (sndclmdoc-convins beg dur filter file :optional (size 128))
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+         (ff (make-convolve :input (make-readin file) :fft-size size :filter filter)))
+    (run
+      (lambda ()
+        (do ((i start (1+ i)))
+            ((= i end))
+          (outa i (convolve ff) *output*))))))
+
+(definstrument (sndclmdoc-granulate-sound file beg :optional dur (orig-beg 0.0) (exp-amt 1.0))
+  (let* ((f-srate (mus-sound-srate file))
+	 (f-start (inexact->exact (round (* f-srate orig-beg))))
+         (f (make-readin file :start f-start))
+	 (st (seconds->samples beg))
+	 (new-dur (or dur (- (mus-sound-duration file) orig-beg)))
+	 (exA (make-granulate :input f :expansion exp-amt))
+	 (nd (+ st (seconds->samples new-dur))))
+    (run
+     (lambda ()
+       (do ((i st (1+ i)))
+           ((= i nd))
+         (outa i (granulate exA) *output*))))))
+
+(definstrument (sndclmdoc-grev beg dur exp-amt file file-beg)
+  (let* ((exA (make-granulate :expansion exp-amt))
+	 (fil (make-file->sample file))
+	 (ctr file-beg))
+    (run
+      (lambda ()
+       (do ((i beg (1+ i)))
+           ((= i (+ beg dur)))
+         (outa i (granulate exA
+		   (lambda (dir)
+		     (let ((inval (file->sample fil ctr 0)))
+		       (if (> ctr 0) (set! ctr (1- ctr)))
+		       inval)))
+	        *output*))))))
+
+(definstrument (sndclmdoc-simple-pvoc beg dur amp size file)
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (sr (make-phase-vocoder (make-readin file) :fft-size size)))
+    (run
+      (lambda ()
+        (do ((i start (1+ i)))
+            ((= i end))
+          (outa i (* amp (phase-vocoder sr)) *output*))))))
+
+(definstrument (sndclmdoc-asy beg dur freq amp index :optional (r 1.0) (ratio 1.0))
+  (let* ((st (seconds->samples beg))
+         (nd (+ st (seconds->samples dur)))
+         (asyf (make-asymmetric-fm :r r :ratio ratio :frequency freq)))
+    (do ((i st (1+ i))) 
+        ((= i nd))
+      (outa i (* amp (asymmetric-fm asyf index 0.0)) *output*))))
+
+(define (sndclmdoc-simple-f2s beg dur amp file)
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (fil (make-file->sample file))
+	 (ctr 0))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))) ((= i end))
+	 (out-any i (* amp (file->sample fil ctr 0)) 0 *output*)
+	 (set! ctr (1+ ctr)))))))
+
+(definstrument (sndclmdoc-simple-ina beg dur amp file)
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (fil (make-file->sample file)))
+    (run
+      (lambda ()
+        (do ((i start (1+ i)))
+            ((= i end))
+          (outa i 
+             (* amp (in-any i 0 fil)) ; same as (ina i fil)
+             *output*))))))
+
+(definstrument (sndclmdoc-env-sound file beg :optional (amp 1.0) (amp-env '(0 1 100 1)))
+  (let* ((st (seconds->samples beg))
+         (dur (mus-sound-duration file))
+         (rev-amount .01)
+         (rdA (make-readin file))
+         (ampf (make-env amp-env amp dur))
+         (nd (+ st (seconds->samples dur))))
+    (run
+      (lambda ()
+        (do ((i st (1+ i)))
+	    ((= i nd))
+          (let ((outval (* (env ampf) (readin rdA))))
+  	    (outa i outval *output*)
+	    (if *reverb* 
+              (outa i (* outval rev-amount) *reverb*))))))))
+
+(definstrument (sndclmdoc-space file onset duration :key (distance-env '(0 1 100 10)) (amplitude-env '(0 1 100 1))
+		     (degree-env '(0 45 50 0 100 90)) (reverb-amount .05))
+  (let* ((beg (seconds->samples onset))
+	 (end (+ beg (seconds->samples duration)))
+         (loc (make-locsig :degree 0 :distance 1 :reverb reverb-amount :output *output* :revout *reverb*))
+         (rdA (make-readin :file file))
+         (dist-env (make-env distance-env :duration duration))
+         (amp-env (make-env amplitude-env :duration duration))
+         (deg-env (make-env degree-env :scaler (/ 1.0 90.0) :duration duration))
+         (dist-scaler 0.0))
+    (run
+      (lambda ()
+        (do ((i beg (1+ i)))
+            ((= i end))
+          (let ((rdval (* (readin rdA) (env amp-env)))
+	        (degval (env deg-env))
+	        (distval (env dist-env)))
+            (set! dist-scaler (/ 1.0 distval))
+            (set! (locsig-ref loc 0) (* (- 1.0 degval) dist-scaler))
+            (if (> (mus-channels *output*) 1)
+                (set! (locsig-ref loc 1) (* degval dist-scaler)))
+            (if *reverb* 
+                (set! (locsig-reverb-ref loc 0) (* reverb-amount (sqrt dist-scaler))))
+            (locsig loc i rdval)))))))
+
+(define (sndclmdoc-simple-dloc beg dur freq amp)
+  "(simple-dloc-4 beg dur freq amp) test instrument for dlocsig"
+  (let* ((os (make-oscil freq))
+	 (start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (loc (make-move-sound (list start end 4 0
+	      	   		     (make-delay 12) 
+				     (make-env '(0 0 10 1) :end dur)
+				     #f
+				     (make-vector 4 #f)
+				     (vector (make-env '(0 0 1 1 2 0 3 0 4 0) :duration dur)
+					     (make-env '(0 0 1 0 2 1 3 0 4 0) :duration dur)
+					     (make-env '(0 0 1 0 2 0 3 1 4 0) :duration dur)
+					     (make-env '(0 0 1 0 2 0 3 0 4 1) :duration dur))
+				     #f
+				     (vector 0 1 2 3))
+			       *output*)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+         (move-sound loc i (* amp (oscil os))))))))
+
+;;; --------------------------------------------------------------------------------
+
+
+(define (test-documentation-instruments)
+
+  (with-sound (:channels 2) 
+	      (fmdoc-pm 0 10000 1000 .25 0.5 4)
+	      (fmdoc-fm 0 10000 1000 .25 0.5 4))
+  (with-sound () (fmdoc-fm-1 0 1.0 100 .5 1.0 4.0))
+  (with-sound () (fmdoc-fm-1 0 1.0 400 .5 0.25 4.0))
+  (with-sound () (fmdoc-fm-1 0 1.0 400 .5 1.1414 4.0))
+  (with-sound () (fmdoc-fm-1 0 0.5 400 .5 1.0 5.0 '(0 0 20 1 40 .6 90 .5 100 0)))
+  (with-sound () (fmdoc-fm-1 0 1.0 900 .5 1/3 2.0 '(0 0 6 .5 10 1 90 1 100 0)))
+  (with-sound () (fmdoc-fm-1 0 1.0 500 .5 .2 1.5 '(0 0 6 .5 10 1 90 1 100 0)))
+  (with-sound () (fmdoc-fm-1 0 1.0 900 .5 2/3 2 '(0 0 25 1 75 1 100 0)))
+  (with-sound () (fmdoc-fm-2 0 1.0 100 .25 1.0 4 0 (* .5 pi)))
+  (with-sound () (fmdoc-fm-2 0 1.0 100 .25 1.0 4.0 (* .5 pi) (* .5 pi)))
+  (with-sound () (fmdoc-fm-3 0 2.0 100 .25 1.0 4.0 0 0 '(0 0 50 1 100 0) .02))
+  (with-sound () (fmdoc-fm-4 0 1.0 1000 .25 .1 1.0 0 (* .5 pi) (* .5 pi) 0))
+  (with-sound () (fmdoc-fm-5 0 2.0 440 .3 '(1 3 4) '(1.0 0.5 0.1) 0.0 '(0.0 0.0 0.0)))
+  (with-sound () (fmdoc-violin 0 1.0 440 .1 2.5))
+  (with-sound () 
+	      (fmdoc-cascade 0 1.0 400 .25 1.0 1.0 1.0 1.0 0)
+	      (fmdoc-cascade 1.5 1.0 400 .25 1.0 1.0 1.0 1.0 (* .5 pi)))
+  (with-sound () (fmdoc-feedbk 0 1 100.0 1.0 1.0))
+  (with-sound () 
+	      (fmdoc-vox 0 1.0 220.0 0.5)
+	      (fmdoc-vox 1.5 1.0 110 .5 '(0.02 0.01 0.02) '(.9 .09 .01)))
+  (with-sound (:play #t) (sndclmdoc-simp 0 22050 330 .1))
+  (with-sound (:srate 44100) (sndclmdoc-simp-1 0 1.0 440.0 0.1))
+  (with-sound () (sndclmdoc-telephone 0.0 '(7 2 3 4 9 7 1)))
+  (with-sound () (sndclmdoc-simp-4 0 2 440 .1 '(0 0  0.1 1.0  1.0 0.0)))
+  (with-sound () 
+	      (let ((sqr (make-square-wave 100))) ; test a square-wave generator
+		(do ((i 0 (1+ i))) 
+		    ((= i 10000)) 
+		  (outa i (square-wave sqr) *output*))))
+  (with-sound () 
+	      (run 
+	       (lambda () 
+		 (let ((osc (make-my-oscil 440.0)))
+		   (do ((i 0 (1+ i))) 
+		       ((= i 22050))
+		     (outa i (my-oscil osc 0.0) *output*))))))
+  (with-sound () (sndclmdoc-simp-5 0 10000 440 .1 '(0 0 1 1))) ; sweep up an octave
+  (with-sound () (sndclmdoc-simple-fm 0 1 440 .1 2 1.0))
+  (with-sound () (sndclmdoc-simple-add 0 1 220 .3))
+  (with-sound () 
+	      (sndclmdoc-mapenv 0 1 440 .4 '(0 0 50 1 75 0 86 .5 100 0)))
+  (with-sound (:srate 44100) (sndclmdoc-looper 0 10 "/home/bil/sf1/forest.aiff" 1.0 0.5))
+  (with-sound ()
+	      (sndclmdoc-bigbird 0 .05 1800 1800 .2
+				 '(.00 .00 .40 1.00 .60 1.00 1.00 .0)         ; freq env
+				 '(.00 .00 .25 1.00 .60 .70 .75 1.00 1.00 .0) ; amp env
+				 '(1 .5 2 1 3 .5 4 .1 5 .01)))                ; bird song spectrum
+  (with-sound () (sndclmdoc-pqw 0 1 200.0 1000.0 '(2 .2  3 .3  6 .5)))
+  (with-sound (:srate 44100) (sndclmdoc-tritri 0 1 1000.0 0.5 0.1 0.01)) ; sci-fi laser gun
+  (with-sound (:srate 44100) (sndclmdoc-tritri 0 1 4000.0 0.7 0.1 0.01)) ; a sparrow?
+  (with-sound () (sndclmdoc-simple-soc 0 1 100 1.0))
+  (with-sound () (sndclmdoc-ss 0 1 400.0 1.0 5 0.5 1.0 '(0 0 1 2)))
+  (with-sound () (sndclmdoc-shift-pitch 0 3 "oboe.snd" 1108.0))
+  (let* ((sound "oboe.snd")
+	 (mx (cadr (mus-sound-maxamp sound)))
+	 (dur (mus-sound-duration sound)))
+    (with-sound (:scaled-to mx) 
+		(sndclmdoc-repitch 0 dur sound 554 1000)))
+  (with-sound () (sndclmdoc-fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)) ; "Ahh"
+  (with-sound () ; one of JC's favorite demos
+	      (sndclmdoc-fofins 0 4 270 .2 0.005 730 .6 1090 .3 2440 .1 '(0 0 40 0 75 .2 100 1) 
+				'(0 0 .5 1 3 .5 10 .2 20 .1 50 .1 60 .2 85 1 100 0))
+	      (sndclmdoc-fofins 0 4 (* 6/5 540) .2 0.005 730 .6 1090 .3 2440 .1 '(0 0 40 0 75 .2 100 1) 
+				'(0 0 .5 .5 3 .25 6 .1 10 .1 50 .1 60 .2 85 1 100 0))
+	      (sndclmdoc-fofins 0 4 135 .2 0.005 730 .6 1090 .3 2440 .1 '(0 0 40 0 75 .2 100 1) 
+				'(0 0 1 3 3 1 6 .2 10 .1 50 .1 60 .2 85 1 100 0)))
+  (with-sound () (sndclmdoc-echo 0 60000 .5 1.0 "pistol.snd"))
+  (with-sound () 
+	      (sndclmdoc-zc 0 3 100 .1 20 100 .5) 
+	      (sndclmdoc-zc 3.5 3 100 .1 90 100 .95))
+  (with-sound () 
+	      (sndclmdoc-fir+comb 0 2 10000 .001 200)
+	      (sndclmdoc-fir+comb 2 2 1000 .0005 400)
+	      (sndclmdoc-fir+comb 4 2 3000 .001 300)
+	      (sndclmdoc-fir+comb 6 2 3000 .0005 1000))
+  (with-sound () (sndclmdoc-simple-src 0 4 1.0 0.5 '(0 1 1 2) "oboe.snd"))
+  (with-sound () (sndclmdoc-srcer 0 2 1.0   1 .3 20 "fyow.snd"))   
+  (with-sound () (sndclmdoc-srcer 0 25 10.0   .01 1 10 "fyow.snd"))
+  (with-sound () (sndclmdoc-srcer 0 2 1.0   .9 .05 60 "oboe.snd")) 
+  (with-sound () (sndclmdoc-srcer 0 2 1.0   1.0 .5 124 "oboe.snd"))
+  (with-sound () (sndclmdoc-srcer 0 10 10.0   .01 .2 8 "oboe.snd"))
+  (with-sound () (sndclmdoc-srcer 0 2 1.0   1 3 20 "oboe.snd"))    
+  (with-sound () 
+	      (sndclmdoc-convins 0 2 (vct 1.0 0.5 0.25 0.125) "oboe.snd")) ; same as fir-filter with those coeffs
+  (with-sound () (sndclmdoc-granulate-sound "now.snd" 0 3.0 0 2.0))
+  (with-sound () (sndclmdoc-grev 0 100000 2.0 "pistol.snd" 40000))
+  (with-sound () (sndclmdoc-simple-pvoc 0 2.0 1.0 512 "oboe.snd"))
+  (with-sound () (sndclmdoc-simple-ina 0 1 .5 "oboe.snd"))
+  (with-sound () (sndclmdoc-env-sound "oboe.snd" 0 1.0 '(0 0 1 1 2 1 3 0)))
+  (with-sound (:reverb jc-reverb :channels 2) 
+	      (sndclmdoc-space "pistol.snd" 0 3 :distance-env '(0 1 1 2) :degree-env '(0 0 1 90)))
+  (with-sound (:channels 4)
+	      (let ((loc (make-locsig :channels 4 :output *output*))
+		    (osc (make-oscil 440.0))
+		    (j 0))
+		(run  ; 360 notes one at each degree in a circle
+		 (lambda ()
+		   (do ((i 0 (1+ i)))
+		       ((= i 360))
+		     (do ((k 0 (1+ k)))
+			 ((= k 1000))
+		       (let ((sig (* .5 (oscil osc))))
+			 (locsig loc j sig)
+			 (set! j (1+ j))))
+		     (move-locsig loc (exact->inexact i) 1.0))))))
+  (with-sound (:channels 4) (sndclmdoc-simple-dloc 0 2 440 .5))
+  (for-each close-sound (sounds))
+  )
+
+;;; TODO: check snd/extsnd/sndscm and include rest of sndclm...
+

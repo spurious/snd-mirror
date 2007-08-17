@@ -52253,6 +52253,9 @@ EDITS: 1
 	
 	(if (not (null? (sounds))) (for-each close-sound (sounds)))
 	(set! (optimization) old-opt-23)
+
+
+	(test-documentation-instruments) ; clm23.scm
 	
 	)))
 
