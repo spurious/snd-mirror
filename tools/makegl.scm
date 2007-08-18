@@ -11,6 +11,7 @@
 (debug-enable 'debug)
 (debug-enable 'backtrace)
 (read-enable 'positions)
+(read-set! keywords 'prefix)
 
 (define gl-file (open-output-file "gl.c"))
 
@@ -187,7 +188,7 @@
 		 (char=? (string-ref name i) #\*))
 	     (return (substring name 0 i))))))))
 
-(define* (parse-args args #:optional x)
+(define* (parse-args args :optional x)
   (let ((data '())
 	(sp -1)
 	(type #f)
@@ -358,7 +359,7 @@
 		(hey "XL_TYPE_1(Display, Display*)~%")
 		(hey "XL_TYPE(XVisualInfo, XVisualInfo*)~%"))))))
 
-(define* (CFNC data #:optional spec spec-name)
+(define* (CFNC data :optional spec spec-name)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -372,14 +373,14 @@
 		(set! funcs (cons (list name type strs args) funcs)))
 	    (set! names (cons (cons name 'fnc) names)))))))
 
-(define* (CINT name #:optional type)
+(define* (CINT name :optional type)
   (if (assoc name names)
       (display (format #f "~A CINT~%" name))
       (begin
 	(set! ints (cons name ints))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CFNC-X data #:optional spec spec-name)
+(define* (CFNC-X data :optional spec spec-name)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -393,14 +394,14 @@
 		(set! x-funcs (cons (list name type strs args) x-funcs)))
 	    (set! names (cons (cons name 'fnc) names)))))))
 
-(define* (CINT-X name #:optional type)
+(define* (CINT-X name :optional type)
   (if (assoc name names)
       (display (format #f "~A CINT-X~%" name))
       (begin
 	(set! x-ints (cons name x-ints))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CFNC-G data #:optional spec spec-name)
+(define* (CFNC-G data :optional spec spec-name)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -414,7 +415,7 @@
 		(set! g-funcs (cons (list name type strs args) g-funcs)))
 	    (set! names (cons (cons name 'fnc) names)))))))
 
-(define* (CFNC-G5 data #:optional spec spec-name)
+(define* (CFNC-G5 data :optional spec spec-name)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -428,14 +429,14 @@
 		(set! g5-funcs (cons (list name type strs args) g5-funcs)))
 	    (set! names (cons (cons name 'fnc) names)))))))
 
-(define* (CINT-G name #:optional type)
+(define* (CINT-G name :optional type)
   (if (assoc name names)
       (display (format #f "~A CINT-G~%" name))
       (begin
 	(set! g-ints (cons name g-ints))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-G5 name #:optional type)
+(define* (CINT-G5 name :optional type)
   (if (assoc name names)
       (display (format #f "~A CINT-G5~%" name))
       (begin

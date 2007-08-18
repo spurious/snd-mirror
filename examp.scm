@@ -1078,8 +1078,8 @@ in a hurry use: (clm-channel (make-comb .8 32)) instead"
 (define (comb-chord scaler size amp)
   "(comb-chord scaler size amp) returns a set of harmonically-related comb filters: (map-channel (comb-chord .95 100 .3))"
   (let ((c1 (make-comb scaler (inexact->exact size)))
-	(c2 (make-comb scaler (inexact->exact (* size .75))))
-	(c3 (make-comb scaler (inexact->exact (* size 1.2)))))
+	(c2 (make-comb scaler (inexact->exact (floor (* size .75)))))
+	(c3 (make-comb scaler (inexact->exact (floor (* size 1.2))))))
     (lambda (x) 
       (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x))))))
 

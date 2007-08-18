@@ -2059,7 +2059,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 <p><a name="ladspachannel"></a>The "regularized" version of apply-ladspa could be defined:
 </p>
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define* (ladspa-channel ladspa-data #:optional (beg 0) ndur snd chn (edpos -1))
+(define* (ladspa-channel ladspa-data :optional (beg 0) ndur snd chn (edpos -1))
   (let* ((dur (or ndur (- (<a class=quiet href="extsnd.html#frames">frames</a> snd chn) beg)))
 	 (reader (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> beg snd chn 1 edpos)))
     (let ((result (<em class=red>apply-ladspa</em> reader ladspa-data dur "apply-ladspa" snd chn)))
@@ -2135,7 +2135,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 data directly to the DAC:
 </p>
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define* (ladspa-it library label #:rest plugin-parameters)
+(define* (ladspa-it library label :rest plugin-parameters)
   ;; (ladspa-it "cmt" "delay_5s" .3 .5)
   (init-ladspa)
   (let* ((descriptor (ladspa-descriptor library label))

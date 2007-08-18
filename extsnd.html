@@ -2936,7 +2936,7 @@ read-mix-sample returns the next sample read by the mix-sample-reader 'obj'.
 read-region-sample returns the next sample read by the region-sample-reader 'obj'.
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define* (region-&gt;vct reg #:optional (chn 0))
+(define* (region-&gt;vct reg :optional (chn 0))
   (if (<a class=quiet href="#regionok">region?</a> reg)
       (if (&lt; chn (<a class=quiet href="#regionchans">region-chans</a> reg))
 	  (let* ((reader (<em class=red>make-region-sample-reader</em> 0 reg chn))
@@ -3429,7 +3429,7 @@ channel:
       (<em class=red>vct-offset!</em> (<em class=red>vct-multiply!</em> new-v v) (<em class=red>vct-ref</em> coeffs i)))
     new-v))
 
-(define* (channel-polynomial coeffs #:optional snd chn)
+(define* (channel-polynomial coeffs :optional snd chn)
   (let ((len (<a class=quiet href="#frames">frames</a> snd chn)))
     (<em class=red>vct-&gt;channel</em> (vct-polynomial (<em class=red>channel-&gt;vct</em> 0 len snd chn) coeffs) 0 len snd chn)))
 
@@ -5135,7 +5135,7 @@ insert-region inserts region 'reg' at sample 'beg' in the given channel.  The fo
 function uses insert-region (and other region functions) to rotate the samples in a channel:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define* (<a name="rotatechannel">rotate-channel</a> #:optional (samps 1) snd chn)
+(define* (<a name="rotatechannel">rotate-channel</a> :optional (samps 1) snd chn)
   (let* ((ind (or snd (<a class=quiet href="#selectedsound">selected-sound</a>) (car (<a class=quiet href="#sounds">sounds</a>))))
 	 (chan (or chn (<a class=quiet href="#selectedchannel">selected-channel</a>) 0)))
     (let ((reg (<em class=red>make-region</em> 0 (1- samps) ind chan)))
@@ -5723,7 +5723,7 @@ The following substitutions can be made:
 <p><small>Another case that might deserve "regularization" is <a class=quiet href="#makesamplereader">make-sample-reader</a> which confusingly interpolates
 the direction argument between the channel and edit-position:
 </small></p>
-<pre><small>   (define* (read-channel #:optional (beg 0) snd chn edpos (direction 1))
+<pre><small>   (define* (read-channel :optional (beg 0) snd chn edpos (direction 1))
      (<a class=quiet href="#makesamplereader">make-sample-reader</a> beg snd chn direction edpos))
 </small>
 </pre>
@@ -5762,7 +5762,7 @@ the channel number of the player's channel in the containing sound (that is, the
 send channel 1 data to channel 1 of the DAC, and so on).
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define* (play-mono-as-stereo #:optional snd)
+(define* (play-mono-as-stereo :optional snd)
   "(play-mono-as-stereo snd) sends the channel 0 data in 'snd' to all available DAC channels."
   (let ((vals (<a class=quiet href="#makevct">make-vct</a> 3))
 	(end (<a class=quiet href="#frames">frames</a> snd)))
@@ -5942,7 +5942,7 @@ so the function call is:
 </pre>
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-<A NAME="selection2vct"></a>(define* (selection-&gt;vct #:optional snd chn)
+<A NAME="selection2vct"></a>(define* (selection-&gt;vct :optional snd chn)
   (if (<a class=quiet href="#selectionmember">selection-member?</a> snd chn)
       (<em class=red>channel-&gt;vct</em> (<a class=quiet href="#selectionposition">selection-position</a> snd chn)
 		    (<a class=quiet href="#selectionframes">selection-frames</a> snd chn)
@@ -5987,7 +5987,7 @@ at sample 'beg' for 'dur' samples, and 'overlap' samples of 'ring time'.
 This is used by some of the <a class=quiet href="#regularizedargs">regularized</a> functions, but it can also be used directly:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define* (convolve-channel kernel #:optional nbeg ndur nsnd nchn nedpos)
+(define* (convolve-channel kernel :optional nbeg ndur nsnd nchn nedpos)
   (let* ((beg (or nbeg 0)) 
 	 (snd (or nsnd (<a class=quiet href="#selectedsound">selected-sound</a>) (car (<a class=quiet href="#sounds">sounds</a>))))
 	 (chn (or nchn (<a class=quiet href="#selectedchannel">selected-channel</a>)))
@@ -6847,7 +6847,7 @@ This inserts 'samps' samples of 'data' (normally a vct) starting at sample 'samp
 'data' can be a filename.
 The regularized version of this might be:<br>
 <pre>
-    (define* (<a class=quiet href="sndscm.html#insertchannel">insert-channel</a> data #:optional beg dur snd chn edpos)
+    (define* (<a class=quiet href="sndscm.html#insertchannel">insert-channel</a> data :optional beg dur snd chn edpos)
       (insert-samples beg dur data snd chn edpos))
 </pre>
 To insert a block of samples of a given value: <code>(insert-samples beg dur (<a class=quiet href="#makevct">make-vct</a> dur val))</code>
@@ -6874,7 +6874,7 @@ This inserts channel 'in-chan' of 'file' at sample 'beg' in the given channel.
 'beg' defaults to the cursor position; if 'in-chan' is not given, all 
 channels are inserted. To append one sound to another, padding at the end with some silence:
 <pre>
-    (define* (<a name="appendsound">append-sound</a> file #:optional (silence 1.0))
+    (define* (<a name="appendsound">append-sound</a> file :optional (silence 1.0))
       (<em class=red>insert-sound</em> file (<a class=quiet href="#frames">frames</a>))
       (<em class=red>insert-silence</em> (<a class=quiet href="#frames">frames</a>) (inexact-&gt;exact (round (* (<a class=quiet href="#srate">srate</a>) silence)))))
 </pre>
@@ -7137,7 +7137,7 @@ temp-dir setting.  The env-sound-interp function in <a href="sndscm.html#envsoun
 is an example of this. 
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define* (map-sound-chans proc #:optional (beg 0) dur snd edpos origin)
+(define* (map-sound-chans proc :optional (beg 0) dur snd edpos origin)
   (do ((i 0 (1+ i)))
       ((= i (<a class=quiet href="#chans">chans</a> snd)))
     (<em class=red>map-channel</em> proc beg dur snd i edpos origin)))
@@ -7321,7 +7321,7 @@ version of <a href="#insertsilence">insert-silence</a>.  To set a block of sampl
 To insert a block of arbitrary-valued samples:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define* (<A NAME="blockchannel">block-channel</a> value #:optional beg dur snd chn edpos)
+(define* (<A NAME="blockchannel">block-channel</a> value :optional beg dur snd chn edpos)
   (let ((val value)) ; this for the run macro's benefit
     (<em class=red>pad-channel</em> beg dur snd chn edpos)
     (<a class=quiet href="#ptreechannel">ptree-channel</a> (lambda (y) val) beg dur snd chn)))
@@ -7629,7 +7629,7 @@ For example, the following fragment asks for
 a yes-or-no response, then takes some action:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-  (define* (yes-or-no question action-if-yes action-if-no #:optional snd)
+  (define* (yes-or-no question action-if-yes action-if-no :optional snd)
     (<em class=red>prompt-in-minibuffer</em> question
 		 	  (lambda (response)
 			    (<a class=quiet href="#clearminibuffer">clear-minibuffer</a>)
@@ -7723,7 +7723,7 @@ it can take awhile for the ptree-channel results to be displayed.
 Here is a simple example that adds a constant to each sample in a file. It needs the
 inner "let" because the define* arguments are hidden from the optimizer.
 <pre>
-    (define* (offset-channel amount #:optional (beg 0) dur snd chn edpos)
+    (define* (offset-channel amount :optional (beg 0) dur snd chn edpos)
       (let ((dc amount))
         (<em class=red>ptree-channel</em> (lambda (y) (+ y dc)) beg dur snd chn edpos <em class=red>#t</em>)))
 </pre>
@@ -7839,7 +7839,7 @@ higher.  But, the notion of an accessor that returns a different thing each time
 is accessed is not foolish:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define* (dither-channel #:optional (amount .00006) beg dur snd chn edpos)
+(define* (dither-channel :optional (amount .00006) beg dur snd chn edpos)
   (let ((dither (* .5 amount)))
     (<em class=red>ptree-channel</em> 
       (lambda (y) 
@@ -7962,7 +7962,7 @@ calls.  It also uses <a href="#asoneedit">as-one-edit</a> to make the
 result appear to be one operation in the edit history list.
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-<A NAME="powenvchannel"></a>(define* (powenv-channel envelope #:optional (beg 0) dur snd chn edpos)
+<A NAME="powenvchannel"></a>(define* (powenv-channel envelope :optional (beg 0) dur snd chn edpos)
   ;; envelope with a separate base for each segment: 
   ;;    (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))
   (let* ((curbeg beg)
@@ -8050,7 +8050,7 @@ Redo follows the <a class=quiet href="#sync">sync</a> field if it
 is not 0.  The following might be a more reasonable redo function:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define* (<a name="redochannel">redo-channel</a> #:optional (<a class=quiet href="#edits">edits</a> 1) snd chn)
+(define* (<a name="redochannel">redo-channel</a> :optional (<a class=quiet href="#edits">edits</a> 1) snd chn)
   (if (and snd (not (= (<a class=quiet href="#sync">sync</a> snd) 0)) chn)
       (set! (<a class=quiet href="#editposition">edit-position</a> snd chn) (+ (<a class=quiet href="#editposition">edit-position</a> snd chn) edits))
       (<em class=red>redo</em> edits snd)))
@@ -8116,7 +8116,7 @@ reversed reverb.  As a hack, you can reverse a sound (modulo a one sample rotati
 (DSP-ers call this a "flip"):
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define* (<A NAME="sillyreverse">silly-reverse</a> #:optional snd)
+(define* (<A NAME="sillyreverse">silly-reverse</a> :optional snd)
   (let* ((len (<a class=quiet href="#frames">frames</a> snd 0))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2)))))
 	 (rl (<a class=quiet href="#channeltovct">channel-&gt;vct</a> 0 fsize snd 0))
@@ -9087,7 +9087,7 @@ In simple cases, this is a virtual operation.  swap-channels can be used to chan
 For example, the following function reverses the channel order:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define* (<a name="reversechannels">reverse-channels</a> #:optional snd)
+(define* (<a name="reversechannels">reverse-channels</a> :optional snd)
   (let* ((ind (or snd (<a class=quiet href="#selectedsound">selected-sound</a>) (car (<a class=quiet href="#sounds">sounds</a>))))
 	 (chns (<a class=quiet href="#channels">chans</a> ind)))
     (let ((swaps (inexact-&gt;exact (floor (/ chns 2)))))
@@ -9278,7 +9278,7 @@ Undo follows the <a class=quiet href="#sync">sync</a> field if it
 is not 0.  The following might be a more reasonable undo function:
 <br>
 <pre>
-(define* (<a name="undochannel">undo-channel</a> #:optional (<a class=quiet href="#edits">edits</a> 1) snd chn)
+(define* (<a name="undochannel">undo-channel</a> :optional (<a class=quiet href="#edits">edits</a> 1) snd chn)
   (if (and snd (not (= (<a class=quiet href="#sync">sync</a> snd) 0)) chn)
       (set! (<a class=quiet href="#editposition">edit-position</a> snd chn) 
          (max 0 (- (<a class=quiet href="#editposition">edit-position</a> snd chn) edits)))
@@ -10323,7 +10323,7 @@ edit sequences can be compared.
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define sfile 0)
 
-(define* (<a name="clonesoundas">clone-sound-as</a> new-name #:optional snd)
+(define* (<a name="clonesoundas">clone-sound-as</a> new-name :optional snd)
   (let* ((tmpf (<a class=quiet href="#sndtempnam">snd-tempnam</a>))
 	 (scm (string-append (substring tmpf 0 (- (string-length tmpf) 3)) "scm"))
 	 (oldsnd (or snd (<a class=quiet href="#selectedsound">selected-sound</a>))))
@@ -12974,7 +12974,7 @@ of sample-oriented comments, displaying a given comment if its associated sample
 currently in the time-domain graph:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define* (<a name="addcomment">add-comment</a> sample comment #:optional snd1 chn1)
+(define* (<a name="addcomment">add-comment</a> sample comment :optional snd1 chn1)
   (let* ((snd (or snd1 (<a class=quiet href="#selectedsound">selected-sound</a>)))
 	 (chn (or chn1 (<a class=quiet href="#selectedchannel">selected-channel</a>)))
 	 (old-comments (or (<a class=quiet href="sndscm.html#channelproperty">channel-property</a> 'comments snd chn) '())))

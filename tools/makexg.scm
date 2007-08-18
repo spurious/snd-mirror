@@ -11,6 +11,7 @@
 (debug-enable 'debug)
 (debug-enable 'backtrace)
 (read-enable 'positions)
+(read-set! keywords 'prefix)
 
 (define xg-file (open-output-file "xg.c"))
 
@@ -987,7 +988,7 @@
 (define (no-way str arg)
   (display (format #f str arg)))
 
-(define* (CFNC data #:optional spec spec-data) ; 'const -> const for arg cast, 'etc for ... args, 'free -> must free C val before return
+(define* (CFNC data :optional spec spec-data) ; 'const -> const for arg cast, 'etc for ... args, 'free -> must free C val before return
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -1006,7 +1007,7 @@
   (let ((step (length types)))
     (CFNC data 'etc (list min-len max-len types))))
 
-(define* (CFNC-21 data #:optional spec)
+(define* (CFNC-21 data :optional spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -1022,7 +1023,7 @@
 		(set! funcs-21 (cons (list name type strs args) funcs-21)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-23 data #:optional spec spec-data)
+(define* (CFNC-23 data :optional spec spec-data)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -1056,7 +1057,7 @@
 	    (set! funcs-236 (cons (list name type strs args) funcs-236))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-250 data #:optional spec)
+(define* (CFNC-250 data :optional spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -1072,7 +1073,7 @@
 		(set! funcs-250 (cons (list name type strs args) funcs-250)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-256 data #:optional spec)
+(define* (CFNC-256 data :optional spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -1088,7 +1089,7 @@
 		(set! funcs-256 (cons (list name type strs args) funcs-256)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-260 data #:optional spec)
+(define* (CFNC-260 data :optional spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -1104,7 +1105,7 @@
 		(set! funcs-260 (cons (list name type strs args) funcs-260)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-270 data #:optional spec)
+(define* (CFNC-270 data :optional spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -1120,7 +1121,7 @@
 		(set! funcs-270 (cons (list name type strs args) funcs-270)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-273 data #:optional spec)
+(define* (CFNC-273 data :optional spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -1148,7 +1149,7 @@
 	    (set! funcs-22 (cons (list name type strs args) funcs-22))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-290 data #:optional spec)
+(define* (CFNC-290 data :optional spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -1164,7 +1165,7 @@
 		(set! funcs-290 (cons (list name type strs args) funcs-290)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-210 data #:optional spec)
+(define* (CFNC-210 data :optional spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -1180,7 +1181,7 @@
 		(set! funcs-210 (cons (list name type strs args) funcs-210)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-211 data #:optional spec)
+(define* (CFNC-211 data :optional spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -1196,7 +1197,7 @@
 		(set! funcs-211 (cons (list name type strs args) funcs-211)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CAIRO-FUNC data #:optional spec)
+(define* (CAIRO-FUNC data :optional spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -1212,7 +1213,7 @@
 		(set! cairo-funcs (cons (list name type strs args) cairo-funcs)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CAIRO-PNG-FUNC data #:optional spec)
+(define* (CAIRO-PNG-FUNC data :optional spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -1228,7 +1229,7 @@
 		(set! cairo-png-funcs (cons (list name type strs args) cairo-png-funcs)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CAIRO-FUNC-140 data #:optional spec)
+(define* (CAIRO-FUNC-140 data :optional spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -1345,7 +1346,7 @@
 	   (not (member type declared-types)))
       (set! declared-types (cons type declared-types))))
 
-(define* (CLNG name #:optional type spec-name)
+(define* (CLNG name :optional type spec-name)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CLNG~%" name)
@@ -1353,7 +1354,7 @@
 	(set! ulongs (cons (list name type spec-name) ulongs))
 	(set! names (cons (cons name 'ulong) names)))))
 
-(define* (CLNG-21 name #:optional type spec-name)
+(define* (CLNG-21 name :optional type spec-name)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CLNG-21~%" name)
@@ -1361,7 +1362,7 @@
 	(set! ulongs-21 (cons (list name type spec-name) ulongs-21))
 	(set! names (cons (cons name 'ulong) names)))))
 
-(define* (CLNG-23 name #:optional type spec-name)
+(define* (CLNG-23 name :optional type spec-name)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CLNG-23~%" name)
@@ -1369,7 +1370,7 @@
 	(set! ulongs-23 (cons (list name type spec-name) ulongs-23))
 	(set! names (cons (cons name 'ulong) names)))))
 
-(define* (CLNG-250 name #:optional type spec-name)
+(define* (CLNG-250 name :optional type spec-name)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CLNG-250~%" name)
@@ -1377,7 +1378,7 @@
 	(set! ulongs-250 (cons (list name type spec-name) ulongs-250))
 	(set! names (cons (cons name 'ulong) names)))))
 
-(define* (CLNG-256 name #:optional type spec-name)
+(define* (CLNG-256 name :optional type spec-name)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CLNG-256~%" name)
@@ -1385,7 +1386,7 @@
 	(set! ulongs-256 (cons (list name type spec-name) ulongs-256))
 	(set! names (cons (cons name 'ulong) names)))))
 
-(define* (CLNG-290 name #:optional type spec-name)
+(define* (CLNG-290 name :optional type spec-name)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CLNG-290~%" name)
@@ -1393,7 +1394,7 @@
 	(set! ulongs-290 (cons (list name type spec-name) ulongs-290))
 	(set! names (cons (cons name 'ulong) names)))))
 
-(define* (CLNG-211 name #:optional type spec-name)
+(define* (CLNG-211 name :optional type spec-name)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CLNG-211~%" name)
@@ -1401,7 +1402,7 @@
 	(set! ulongs-211 (cons (list name type spec-name) ulongs-211))
 	(set! names (cons (cons name 'ulong) names)))))
 
-(define* (CINT name #:optional type)
+(define* (CINT name :optional type)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CINT~%" name)
@@ -1409,7 +1410,7 @@
 	(set! ints (cons name ints))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-22 name #:optional type)
+(define* (CINT-22 name :optional type)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CINT-22~%" name)
@@ -1417,7 +1418,7 @@
 	(set! ints-22 (cons name ints-22))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-23 name #:optional type)
+(define* (CINT-23 name :optional type)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CINT-23~%" name)
@@ -1425,7 +1426,7 @@
 	(set! ints-23 (cons name ints-23))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-236 name #:optional type)
+(define* (CINT-236 name :optional type)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CINT-236~%" name)
@@ -1433,7 +1434,7 @@
 	(set! ints-236 (cons name ints-236))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-250 name #:optional type)
+(define* (CINT-250 name :optional type)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CINT-250~%" name)
@@ -1441,7 +1442,7 @@
 	(set! ints-250 (cons name ints-250))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-256 name #:optional type)
+(define* (CINT-256 name :optional type)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CINT-256~%" name)
@@ -1449,7 +1450,7 @@
 	(set! ints-256 (cons name ints-256))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-260 name #:optional type)
+(define* (CINT-260 name :optional type)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CINT-260~%" name)
@@ -1457,7 +1458,7 @@
 	(set! ints-260 (cons name ints-260))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-270 name #:optional type)
+(define* (CINT-270 name :optional type)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CINT-270~%" name)
@@ -1465,7 +1466,7 @@
 	(set! ints-270 (cons name ints-270))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-273 name #:optional type)
+(define* (CINT-273 name :optional type)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CINT-273~%" name)
@@ -1473,7 +1474,7 @@
 	(set! ints-273 (cons name ints-273))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-290 name #:optional type)
+(define* (CINT-290 name :optional type)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CINT-290~%" name)
@@ -1481,7 +1482,7 @@
 	(set! ints-290 (cons name ints-290))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-210 name #:optional type)
+(define* (CINT-210 name :optional type)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CINT-210~%" name)
@@ -1489,7 +1490,7 @@
 	(set! ints-210 (cons name ints-210))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-211 name #:optional type)
+(define* (CINT-211 name :optional type)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CINT-211~%" name)
@@ -1497,7 +1498,7 @@
 	(set! ints-211 (cons name ints-211))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CAIRO-INT name #:optional type)
+(define* (CAIRO-INT name :optional type)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CAIRO-INT~%" name)
@@ -1505,7 +1506,7 @@
 	(set! cairo-ints (cons name cairo-ints))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CAIRO-INT-140 name #:optional type)
+(define* (CAIRO-INT-140 name :optional type)
   (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CAIRO-INT-140~%" name)
@@ -1860,7 +1861,7 @@
  (lambda (name)
    (let ((args (cadr (find-struct name))))
      (if (> (length args) 0)
-	 (hey " *    (~A #:optional" name)
+	 (hey " *    (~A :optional" name)
 	 (hey " *    (~A" name))
      (for-each
       (lambda (str)
@@ -1874,7 +1875,7 @@
      (lambda (name)
        (let ((args (cadr (find-struct name))))
 	 (if (> (length args) 0)
-	     (hey " *    (~A #:optional" name)
+	     (hey " *    (~A :optional" name)
 	     (hey " *    (~A" name))
 	 (for-each
 	  (lambda (str)

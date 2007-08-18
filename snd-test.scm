@@ -15977,7 +15977,7 @@ EDITS: 2
 	       (diff (abs (- nval (vector-ref vals i)))))
 	  (if (> diff max-bad) (set! max-bad diff))))
       (if (> max-bad 1.0e-15)
-	  (snd-display ";asinh: ~A" max-bad)))
+	  (snd-display ";asinh(~A): ~A ~A -> ~A" (vector-ref args i) nval (vector-ref vals i) max-bad)))
     
     (let ((vals (vector 0.00000000000000000000 0.24497866312686415417 0.32175055439664219340 0.46364760900080611621 0.78539816339744830962 
 			1.1071487177940905030 1.2490457723982544258 1.3258176636680324651 1.3734007669450158609 1.4711276743037345919 1.5208379310729538578))
@@ -52254,8 +52254,8 @@ EDITS: 1
 	(if (not (null? (sounds))) (for-each close-sound (sounds)))
 	(set! (optimization) old-opt-23)
 
-
-	(test-documentation-instruments) ; clm23.scm
+	(if (provided? 'snd-guile)
+	    (test-documentation-instruments)) ; clm23.scm
 	
 	)))
 

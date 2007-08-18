@@ -881,7 +881,7 @@ J.C.Risset's bell curve could be:</p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(define <A class=def NAME="bellcurve">(bell-curve</a> x)
+(define <A NAME="bellcurve">(bell-curve</a> x)
   ;; x from 0.0 to 1.0 creates bell curve between .64e-4 and nearly 1.0
   ;; if x goes on from there, you get more bell curves; x can be
   ;; an envelope (a ramp from 0 to 1 if you want just a bell curve)
@@ -1595,14 +1595,14 @@ see also cosine-summation, fejer-sum, etc in dsp.scm
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>(define* (make-sinc-train #:optional (frequency 440.0) (width #f))
+<pre>(define* (make-sinc-train :optional (frequency 440.0) (width #f))
   (let ((range (or width (* pi (- (* 2 (inexact-&gt;exact (floor (/ (<a class=quiet href="#mussrate">mus-srate</a>) (* 2.2 frequency))))) 1)))))
     ;; 2.2 leaves a bit of space before srate/2, (* 3 pi) is the minimum width, normally
     (list (- (* range 0.5))
 	  range
 	  (/ (* range frequency) (<a class=quiet href="#mussrate">mus-srate</a>)))))
 	
-(define* (sinc-train gen #:optional (fm 0.0))
+(define* (sinc-train gen :optional (fm 0.0))
   (let* ((ang (car gen))
 	 (range (cadr gen))
 	 (top (* 0.5 range))
@@ -1923,7 +1923,7 @@ phase-vocoder or granular synthesis kludges.
 <br>
 
 <pre>
-(define* (ssb-am freq #:optional (order 40)) 
+(define* (ssb-am freq :optional (order 40)) 
   ;; higher order = better cancellation
   (let* ((car-freq (abs freq))
 	 (cos-car (<a class=quiet href="#make-oscil">make-oscil</a> car-freq (* .5 pi)))
@@ -2084,7 +2084,7 @@ And the fourth used the ssb-am-bank function in dsp.scm rewritten here for with-
 <p>wave-train adds a copy its "wave" (a "grain" in more modern parlance) into its output at "frequency" times per second.
 These copies can overlap or have long intervals of silence in between, so
 wave train can be viewed either as an extension of pulse-train and table-lookup,
-or as a form of granular synthesis.
+or as a primitive form of granular synthesis.
 </p>
 
 <table border=1 cellpadding=4 hspace=40>
@@ -2144,16 +2144,49 @@ Here is a FOF instrument based loosely on fof.c of Perry Cook and the article
 </pre>
 </td></tr></table>
 
-<!--
-<p>The "wave" is simply a vct that you can change at any time.  The "fm" argument affects the frequency of
-repetition.  Here is a wave-train instrument that gradually low-passes its grain while following a frequency envelope.
+
+<p>The "wave" is a vct accessible via mus-data.  The "fm" argument affects the frequency of
+repetition.  Here is a wave-train instrument that increasingly filters its grain (the word "now", for example) 
+while increasing the repetition rate.  We're also using a pulse train as a sort of internal click track,
+using the same frequency envelope as the wave-train, so we have some idea when to refilter the grain.
 </p>
--->
 
-<!-- TODO: wave-train example (and doc diff with granulate = edit func) -->
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<pre>
+(definstrument (when? start-time duration start-freq end-freq grain-file)
+  (let* ((beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start-time))
+	 (len (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> duration))
+	 (end (+ beg len))
+	 (grain-dur (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> grain-file))
+	 (frqf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) :scaler (<a class=quiet href="hztoradians">hz-&gt;radians</a> (- end-freq start-freq)) :duration duration))
+	 (click-track (<em class=red>make-pulse-train</em> start-freq))
+	 (grain-size (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> grain-dur))
+	 (grains (<em class=red>make-wave-train</em> :size grain-size :frequency start-freq))
+	 (ampf (<a class=quiet href="#make-env">make-env</a> '(0 1 1 0) :scaler .7 :offset .3 :duration duration :base 3.0))
+	 (grain (<em class=red>mus-data</em> grains)))
+    (<a class=quiet href="#filetoarray">file-&gt;array</a> grain-file 0 0 grain-size grain)
+    (let ((original-grain (<a class=quiet href="extsnd.html#vctcopy">vct-copy</a> grain)))
+      (run
+       (lambda ()
+	 (do ((i beg (1+ i)))
+	     ((= i end))
+	   (let* ((gliss (<a class=quiet href="#env">env</a> frqf)))
+	     (outa i (* (<a class=quiet href="#env">env</a> ampf) (<em class=red>wave-train</em> grains gliss)) *output*)
+	     (let ((click (<em class=red>pulse-train</em> click-track gliss)))
+	       (if (&gt; click 0.0)
+		   (let* ((scaler (max 0.1 (exact-&gt;inexact (/ (- i beg) len))))
+			  (comb-len 32)
+			  (c1 (<a class=quiet href="#make-comb">make-comb</a> scaler comb-len))
+			  (c2 (<a class=quiet href="#make-comb">make-comb</a> scaler (inexact-&gt;exact (floor (* comb-len .75)))))
+			  (c3 (<a class=quiet href="#make-comb">make-comb</a> scaler (inexact-&gt;exact (floor (* comb-len 1.25))))))
+		     (do ((k 0 (1+ k)))
+			 ((= k grain-size))
+		       (let ((x (<a class=quiet href="extsnd.html#vctref">vct-ref</a> original-grain k)))
+			 (<a class=quiet href="extsnd.html#vctset">vct-set!</a> grain k (+ (<a class=quiet href="#comb">comb</a> c1 x) (<a class=quiet href="#comb">comb</a> c2 x) (<a class=quiet href="#comb">comb</a> c3 x)))))))))))))))
 
-
-<!-- tmp999 pic? -->
+(with-sound () (when? 0 4 2.0 8.0 "right-now.snd"))
+</pre>
+</td></tr></table>
 
 <br><br>
 
@@ -2402,6 +2435,7 @@ and <a href="sndscm.html#greendoc">green.scm</a> (bounded Brownian noise).
 </p>
 
 <!-- TODO: show distributions, green grfs -->
+<!-- PERHAPS: autocomp ex, pitch clouds -->
 
 <br><br>
 
@@ -2435,7 +2469,8 @@ and <a href="sndscm.html#greendoc">green.scm</a> (bounded Brownian noise).
 
 <!-- PERHAPS: show some filter grfs -->
 
-<p>These are the simplest of filters.
+<p>These are the simplest of filters. 
+For everything you want to know about filters, see Julius Smith's <A HREF="http://ccrma.stanford.edu/~jos">home page</a>.
 </p>
 
 <table border=1 align=left hspace=40 cellpadding=4>
@@ -2817,7 +2852,7 @@ last "size" samples).
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(define* (make-moving-max #:optional (size 128))
+(define* (make-moving-max :optional (size 128))
   (let ((gen (<em class=red>make-delay</em> size)))
     (set! (<a class=quiet href="#mus-scaler">mus-scaler</a> gen) 0.0)
     gen))
@@ -2893,7 +2928,7 @@ and the other arguments are also handled as in <a href="#delay">delay</a>.
  filtered-comb:  y(n) = x(n - size) + scaler * filter(y(n - size))
 </pre>
 
-<img src="comb.png" alt="sonogram of comb" vspace=10>
+<img src="comb1.png" alt="sonogram of comb" vspace=10>
 
 </td></tr></table>
 

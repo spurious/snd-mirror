@@ -2459,14 +2459,14 @@
 	 (outa i (* amp (sum-of-cosines os)) 
                *output*))))))
 
-(define* (sndclmdoc-make-sinc-train #:optional (frequency 440.0) (width #f))
+(define* (sndclmdoc-make-sinc-train :optional (frequency 440.0) (width #f))
   (let ((range (or width (* pi (- (* 2 (inexact->exact (floor (/ (mus-srate) (* 2.2 frequency))))) 1)))))
     ;; 2.2 leaves a bit of space before srate/2, (* 3 pi) is the minimum width, normally
     (list (- (* range 0.5))
 	  range
 	  (/ (* range frequency) (mus-srate)))))
 	
-(define* (sndclmdoc-sinc-train gen #:optional (fm 0.0))
+(define* (sndclmdoc-sinc-train gen :optional (fm 0.0))
   (let* ((ang (car gen))
 	 (range (cadr gen))
 	 (top (* 0.5 range))
@@ -2587,7 +2587,7 @@
          (let ((inval (rd)))
   	   (outa i (+ inval (delay del (* scaler (+ (tap del) inval)))) *output*)))))))
 
-(define* (sndclmdoc-make-moving-max #:optional (size 128))
+(define* (sndclmdoc-make-moving-max :optional (size 128))
   (let ((gen (make-delay size)))
     (set! (mus-scaler gen) 0.0)
     gen))
@@ -2790,6 +2790,41 @@
 	   ((= i end))
          (move-sound loc i (* amp (oscil os))))))))
 
+(definstrument (when? start-time duration start-freq end-freq grain-file)
+  (let* ((beg (seconds->samples start-time))
+	 (len (seconds->samples duration))
+	 (end (+ beg len))
+	 (grain-dur (mus-sound-duration grain-file))
+	 (frqf (make-env '(0 0 1 1) :scaler (hz->radians (- end-freq start-freq)) :duration duration))
+	 (click-track (make-pulse-train start-freq))
+	 (grain-size (seconds->samples grain-dur))
+	 (grains (make-wave-train :size grain-size :frequency start-freq))
+	 (ampf (make-env '(0 1 1 0) :scaler .7 :offset .3 :duration duration :base 3.0))
+	 (grain (mus-data grains)))
+    (file->array grain-file 0 0 grain-size grain)
+    (let ((original-grain (vct-copy grain)))
+      (run
+       (lambda ()
+	 (do ((i beg (1+ i)))
+	     ((= i end))
+	   (let* ((gliss (env frqf)))
+	     (outa i (* (env ampf) (wave-train grains gliss)) *output*)
+	     (let ((click (pulse-train click-track gliss)))
+	       (if (> click 0.0)
+		   (let* ((scaler (max 0.1 (exact->inexact (/ (- i beg) len))))
+			  (comb-len 32)
+			  (c1 (make-comb scaler comb-len))
+			  (c2 (make-comb scaler (inexact->exact (floor (* comb-len .75)))))
+			  (c3 (make-comb scaler (inexact->exact (floor (* comb-len 1.25))))))
+		     (do ((k 0 (1+ k)))
+			 ((= k grain-size))
+		       (let ((x (vct-ref original-grain k)))
+			 (vct-set! grain k (+ (comb c1 x) (comb c2 x) (comb c3 x)))))))))))))))
+
+	 
+
+
+
 ;;; --------------------------------------------------------------------------------
 
 
@@ -2904,6 +2939,8 @@
 			 (set! j (1+ j))))
 		     (move-locsig loc (exact->inexact i) 1.0))))))
   (with-sound (:channels 4) (sndclmdoc-simple-dloc 0 2 440 .5))
+  (with-sound () (when? 0 4 2.0 8.0 "1a.snd"))
+
   (for-each close-sound (sounds))
   )
 

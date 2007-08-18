@@ -267,6 +267,9 @@ XEN mus_optkey_to_procedure(XEN key, const char *caller, int n, XEN def, int req
 {
   if ((!(XEN_KEYWORD_P(key))) && (!(XEN_FALSE_P(key))))
     {
+      /* in Gauche, applicable objects (CLM generators like make-readin in this context) are not considered to be "procedures".
+       *   see xen.h ca line 1704 for a long complaint.
+       */
       XEN_ASSERT_TYPE(XEN_PROCEDURE_P(key), key, n, caller, "a procedure");
       if (!(local_arity_ok(key, required_args)))
 	XEN_BAD_ARITY_ERROR(caller, n, key, err);

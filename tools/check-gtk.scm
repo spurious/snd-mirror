@@ -13,6 +13,7 @@
 (debug-enable 'debug)
 (debug-enable 'backtrace)
 (read-enable 'positions)
+(read-set! keywords 'prefix)
 
 (define ignore (list "gdk_pixmap_new" "gdk_pixmap_create_from_xpm" "gdk_pixmap_create_from_xpm_d"
 		     "gtk_notebook_append_page" 
@@ -68,16 +69,16 @@
 	     (return (substring data 0 i))))))))
 
 
-(define* (CFNC data #:optional spec spec-data) ; 'const -> const for arg cast, 'etc for ... args, 'free -> must free C val before return
+(define* (CFNC data :optional spec spec-data) ; 'const -> const for arg cast, 'etc for ... args, 'free -> must free C val before return
   #f)
 
 (define (CFNC-PA data min-len max-len types)
   #f)
 
-(define* (CFNC-21 data #:optional spec)
+(define* (CFNC-21 data :optional spec)
   (fgrep (cadr-str data) 21))
 
-(define* (CFNC-23 data #:optional spec spec-data)
+(define* (CFNC-23 data :optional spec spec-data)
   (fgrep (cadr-str data) 23))
 
 (define (CFNC-23-PA data min-len max-len types)
@@ -86,40 +87,40 @@
 (define* (CFNC-236 data)
   (fgrep (cadr-str data) 236))
 
-(define* (CFNC-250 data #:optional spec)
+(define* (CFNC-250 data :optional spec)
   (fgrep (cadr-str data) 250))
 
-(define* (CFNC-256 data #:optional spec)
+(define* (CFNC-256 data :optional spec)
   (fgrep (cadr-str data) 256))
 
-(define* (CFNC-260 data #:optional spec)
+(define* (CFNC-260 data :optional spec)
   (fgrep (cadr-str data) 260))
 
-(define* (CFNC-270 data #:optional spec)
+(define* (CFNC-270 data :optional spec)
   (fgrep (cadr-str data) 270))
 
-(define* (CFNC-273 data #:optional spec)
+(define* (CFNC-273 data :optional spec)
   (fgrep (cadr-str data) 273))
 
-(define* (CFNC-290 data #:optional spec)
+(define* (CFNC-290 data :optional spec)
   (fgrep (cadr-str data) 290))
 
 (define* (CFNC-22 data)
   (fgrep (cadr-str data) 22))
 
-(define* (CFNC-210 data #:optional spec)
+(define* (CFNC-210 data :optional spec)
   (fgrep (cadr-str data) 210))
 
-(define* (CFNC-211 data #:optional spec)
+(define* (CFNC-211 data :optional spec)
   (fgrep (cadr-str data) 211))
 
-(define* (CAIRO-FUNC data #:optional spec)
+(define* (CAIRO-FUNC data :optional spec)
   (fgrep (cadr-str data) 210))
 
-(define* (CAIRO-PNG-FUNC data #:optional spec)
+(define* (CAIRO-PNG-FUNC data :optional spec)
   (fgrep (cadr-str data) 210))
 
-(define* (CAIRO-FUNC-140 data #:optional spec)
+(define* (CAIRO-FUNC-140 data :optional spec)
   (fgrep (cadr-str data) 140))
 
 (define (CATOM name)
@@ -152,67 +153,70 @@
 (define (CDBL name)
   #f)
 
-(define* (CLNG name #:optional type spec-name)
+(define* (CLNG name :optional type spec-name)
   #f)
 
-(define* (CLNG-21 name #:optional type spec-name)
+(define* (CLNG-21 name :optional type spec-name)
   (fgrep name 21))
 
-(define* (CLNG-23 name #:optional type spec-name)
+(define* (CLNG-23 name :optional type spec-name)
   (fgrep name 23))
 
-(define* (CLNG-250 name #:optional type spec-name)
+(define* (CLNG-250 name :optional type spec-name)
   (fgrep name 250))
 
-(define* (CLNG-256 name #:optional type spec-name)
+(define* (CLNG-256 name :optional type spec-name)
   (fgrep name 256))
 
-(define* (CLNG-290 name #:optional type spec-name)
+(define* (CLNG-290 name :optional type spec-name)
   (fgrep name 290))
 
-(define* (CINT name #:optional type)
-  #f)
-
-(define* (CINT-22 name #:optional type)
-  (fgrep name 22))
-
-(define* (CINT-23 name #:optional type)
-  (fgrep name 23))
-
-(define* (CINT-236 name #:optional type)
-  (fgrep name 236))
-
-(define* (CINT-250 name #:optional type)
-  (fgrep name 250))
-
-(define* (CINT-256 name #:optional type)
-  (fgrep name 256))
-
-(define* (CINT-260 name #:optional type)
-  (fgrep name 260))
-
-(define* (CINT-270 name #:optional type)
-  (fgrep name 270))
-
-(define* (CINT-273 name #:optional type)
-  (fgrep name 273))
-
-(define* (CINT-290 name #:optional type)
-  (fgrep name 290))
-
-(define* (CINT-29x name #:optional type)
-  (fgrep name 291))
-
-(define* (CINT-210 name #:optional type)
-  (fgrep name 210))
-
-(define* (CINT-211 name #:optional type)
+(define* (CLNG-211 name :optional type spec-name)
   (fgrep name 211))
 
-(define* (CAIRO-INT name #:optional type)
+(define* (CINT name :optional type)
+  #f)
+
+(define* (CINT-22 name :optional type)
+  (fgrep name 22))
+
+(define* (CINT-23 name :optional type)
+  (fgrep name 23))
+
+(define* (CINT-236 name :optional type)
+  (fgrep name 236))
+
+(define* (CINT-250 name :optional type)
+  (fgrep name 250))
+
+(define* (CINT-256 name :optional type)
+  (fgrep name 256))
+
+(define* (CINT-260 name :optional type)
+  (fgrep name 260))
+
+(define* (CINT-270 name :optional type)
+  (fgrep name 270))
+
+(define* (CINT-273 name :optional type)
+  (fgrep name 273))
+
+(define* (CINT-290 name :optional type)
+  (fgrep name 290))
+
+(define* (CINT-29x name :optional type)
+  (fgrep name 291))
+
+(define* (CINT-210 name :optional type)
   (fgrep name 210))
 
-(define* (CAIRO-INT-140 name #:optional type)
+(define* (CINT-211 name :optional type)
+  (fgrep name 211))
+
+(define* (CAIRO-INT name :optional type)
+  (fgrep name 210))
+
+(define* (CAIRO-INT-140 name :optional type)
   (fgrep name 140))
 
 (define (CCAST name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))

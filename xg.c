@@ -29,14 +29,14 @@
  *    (c-array->list arr len) derefs each member of arr, returning lisp list, len=#f: null terminated array
  *    (list->c-array lst ctype) packages each member of list as c-type "type" returning (wrapped) c array
  *    (make-target-entry lst) returns a GtkTargetEntry table, each member of 'lst' should be (list target flags info)
- *    (GdkColor #:optional pixel red green blue): GdkColor struct
- *    (GdkCursor #:optional type ref_count): GdkCursor struct
- *    (GdkPoint #:optional x y): GdkPoint struct
- *    (GdkRectangle #:optional x y width height): GdkRectangle struct
+ *    (GdkColor :optional pixel red green blue): GdkColor struct
+ *    (GdkCursor :optional type ref_count): GdkCursor struct
+ *    (GdkPoint :optional x y): GdkPoint struct
+ *    (GdkRectangle :optional x y width height): GdkRectangle struct
  *    (GtkStockItem): GtkStockItem struct
  *    (GtkTextIter): GtkTextIter struct
  *    (GtkTreeIter): GtkTreeIter struct
- *    (GtkRequisition #:optional width height): GtkRequisition struct
+ *    (GtkRequisition :optional width height): GtkRequisition struct
  *    (PangoColor): PangoColor struct
  *    (PangoRectangle): PangoRectangle struct
  *    (PangoLogAttr): PangoLogAttr struct
@@ -47807,7 +47807,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-Jul-07"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("18-Aug-07"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
