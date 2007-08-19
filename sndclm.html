@@ -770,6 +770,14 @@ summation formulas in dsp.scm (<a href="sndscm.html#sumofnsines">sum-of-n-sines<
 For a sine-bank example, see pvoc.scm.
 To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
 </p>
+
+<p>Many of the generators share the notion of a current phase, a saved phase increment (frequency), and
+on-going optional modulation.  In the most logical of all worlds, we'd split that out as a separate
+"generator", then inherit it in oscil and elsewhere.  This generator would also simplify many
+user-defined generators (such as the various sums under <a href="#sum-of-sines">sum-of-sines</a>).
+Should it be called "phaser"?  
+<p>
+
 <br><br>
 
 
@@ -2316,7 +2324,7 @@ each number having the same chance of being chosen".
 An envelope of <code>'(0 1 1 0)</code> outputs values between 0 and 1, denser toward 0.
 If you already have the distribution table (a vct, the result of <code>(inverse-integrate envelope)</code> for example),
 you can pass it through the "distribution" argument.  Here is gaussian noise
-using the "distribution" argument:
+using the "envelope" argument:
 </p>
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
@@ -2335,10 +2343,23 @@ using the "distribution" argument:
 </pre>
 </td></tr></table>
 
-<p>
+<p>If you want a particular set of values, it's simplest to fill a vct with those values,
+then use random as the index into the array.  Say we want 0.0, 0.5, and 1.0 at random,
+but 0.5 should happen three times as often as either of the others:
+</p>
+
+<pre>
+    (let ((vals (vct 0.0 0.5 0.5 0.5 1.0)))
+      (do ((i 0 (1+ i)))
+          ((= i 10))
+        (snd-display ";~A " (vct-ref vals (inexact->exact (floor (random 5.0)))))))
+</pre>
+
+<p>These "distributions" refer to the values returned by the random number
+generator, but all of them produce white noise (all frequencies are equally
+likely).  
 You can, of course, filter the output of rand to get a different
-frequency distribution (as opposed to the "value distribution"
-above, all of which are forms of white noise).
+frequency distribution.
 Orfanidis also mentions a clever way to get reasonably good 1/f noise:
 sum together n rand's, where each rand is running an octave slower
 than the preceding:
@@ -2362,8 +2383,37 @@ than the preceding:
 </pre>
 </td></tr></table>
 
-<p>See also <a href="sndscm.html#greendoc">green.scm</a> (bounded brownian noise that can mimic 1/f noise in some cases).
-And we can't talk about noise without mentioning fractals:</p>
+<p>See also <a href="sndscm.html#greendoc">green.scm</a> -- bounded brownian noise that can mimic 1/f noise in some cases.
+(The brownian graph below has a different dB range).
+</p>
+
+<table border=1 hspace=20 cellpadding=5>
+<tr><td>
+<table border=0>
+<tr>
+<td bgcolor="#f6f8ff"><center>random</center></td>
+<td bgcolor="#f6f8ff"><center>rand</center></td>
+<td bgcolor="#f6f8ff"><center>rand-interp</center></td>
+</tr><tr>
+<td><img src="random.png" alt="random spectrum"></td>
+<td><img src="rand.png" alt="rand spectrum"></td>
+<td><img src="randi.png" alt="rand-interp spectrum"></td>
+</tr></table>
+</td></tr><tr><td>
+<table border=0>
+<tr>
+<td bgcolor="#f6f8ff"><center>1/f</center></td>
+<td bgcolor="#f6f8ff"><center>brownian</center></td>
+<td bgcolor="#f6f8ff"><center>green</center></td>
+</tr><tr>
+<td><img src="1f.png" alt="1/f spectrum"></td>
+<td><img src="brownian.png" alt="brownian spectrum"></td>
+<td><img src="green.png" alt="green spectrum"></td>
+</tr></table>
+</td></tr></table>
+
+
+<p>And we can't talk about noise without mentioning fractals:</p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
@@ -2532,6 +2582,30 @@ alterations to the filters:
     <em class=listener>&gt;</em><em class=typing>p</em>
     <em class=listener>#&lt;two-pole: a0: 1.000, b1: -1.516, b2: 0.810, y1: 0.000, y2: 0.000&gt;</em>
 </pre>
+
+<p>A quick way to see the frequency response of a filter is to drive it with a sine wave sweeping from
+0 Hz to half the sampling rate; if the sound length is 0.5 seconds, you can read off the time axis
+as the response at that frequency (in terms of a sampling rate of 1.0):
+</p>
+
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<pre>
+(define (test-filter flt)
+  (let* ((osc (<a class=quiet href="#make-oscil">make-oscil</a> 0.0))
+	 (samps (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> 0.5))
+	 (ramp (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) :scaler (<a class=quiet href="#hztoradians">hz-&gt;radians</a> samps) :end samps)))
+    (with-sound ()
+      (do ((i 0 (1+ i)))
+	  ((= i samps))
+        (<a class=quiet href="#outa">outa</a> i (flt (<a class=quiet href="#oscil">oscil</a> osc (<a class=quiet href="#env">env</a> ramp))) *output*)))))
+		
+(test-filter (make-one-zero 0.5 0.5))
+(test-filter (make-one-pole 0.1 -0.9))
+(test-filter (make-two-pole 0.1 0.1 0.9))
+(test-filter (make-two-zero 0.5 0.2 0.3))
+</pre>
+</td></tr></table>
+
 
 <br><br>
 
@@ -2928,7 +3002,7 @@ and the other arguments are also handled as in <a href="#delay">delay</a>.
  filtered-comb:  y(n) = x(n - size) + scaler * filter(y(n - size))
 </pre>
 
-<img src="comb1.png" alt="sonogram of comb" vspace=10>
+<img src="comb.png" alt="sonogram of comb" vspace=10>
 
 </td></tr></table>
 
@@ -4106,29 +4180,24 @@ determines how many vct elements are printed by mus-describe.
 </p>
 
 <table cellspacing=0 cellpadding=0 hspace=40>
-<tr><td><a class=def name="hztoradians">hz-&gt;radians</a><code> freq</code></td><td width=20></td><td>convert freq to radians per sample (using mus-srate)</td></tr>
-<tr><td><a class=def name="radianstohz">radians-&gt;hz</a><code> rads</code></td><td></td><td>convert rads to Hz (using mus-srate)</td></tr>
-<tr><td><a class=def name="dbtolinear">db-&gt;linear</a><code> dB</code></td><td></td><td>convert dB to linear value</td></tr>
-<tr><td><a class=def name="lineartodb">linear-&gt;db</a><code> val</code></td><td></td><td>convert val to dB</td></tr>
+<tr><td><a class=def name="hztoradians">hz-&gt;radians</a><code> freq</code></td><td width=20></td><td>convert freq to radians per sample (using mus-srate): (freq * 2 * pi) / srate</td></tr>
+<tr><td><a class=def name="radianstohz">radians-&gt;hz</a><code> rads</code></td><td></td><td>convert rads to Hz (using mus-srate): (rads * srate) / (2 * pi)</td></tr>
+<tr><td><a class=def name="dbtolinear">db-&gt;linear</a><code> dB</code></td><td></td><td>convert dB to linear value: 10^(dB/20)</td></tr>
+<tr><td><a class=def name="lineartodb">linear-&gt;db</a><code> val</code></td><td></td><td>convert val to dB: 20 * log(x) / log(10)</td></tr>
 <tr><td><a class=def Name="timestosamples">times-&gt;samples</a><code> start duration</code></td><td></td><td>convert start and duration from seconds to samples (beg+dur in latter case)</td></tr>
-<tr><td><a class=def name="samplestoseconds">samples-&gt;seconds</a><code> samps</code></td><td></td><td>convert samples to seconds (using mus-srate)</td></tr>
-<tr><td><a class=def name="secondstosamples">seconds-&gt;samples</a><code> secs</code></td><td></td><td>convert seconds to samples (using mus-srate)</td></tr>
-<tr><td><a class=def name="degreestoradians">degrees-&gt;radians</a><code> degs</code></td><td></td><td>convert degrees to radians</td></tr>
-<tr><td><a class=def name="radianstodegrees">radians-&gt;degrees</a><code> rads</code></td><td></td><td>convert radians to degrees</td></tr>
+<tr><td><a class=def name="samplestoseconds">samples-&gt;seconds</a><code> samps</code></td><td></td><td>convert samples to seconds (using mus-srate): samps / srate</td></tr>
+<tr><td><a class=def name="secondstosamples">seconds-&gt;samples</a><code> secs</code></td><td></td><td>convert seconds to samples (using mus-srate): secs * srate</td></tr>
+<tr><td><a class=def name="degreestoradians">degrees-&gt;radians</a><code> degs</code></td><td></td><td>convert degrees to radians: (degs * 2 * pi) / 360</td></tr>
+<tr><td><a class=def name="radianstodegrees">radians-&gt;degrees</a><code> rads</code></td><td></td><td>convert radians to degrees: (rads * 360) / (2 * pi)</td></tr>
 <tr><td><a class=def name="clear-array">clear-array</a><code> arr</code></td><td></td><td>set all values in arr (a vct) to 0.0</td></tr>
-<tr><td><a class=def name="mussrate">mus-srate</a></td><td></td><td>srate in with-sound</td></tr>
+<tr><td><a class=def name="mussrate">mus-srate</a></td><td></td><td>sampling rate in with-sound</td></tr>
 </table>
 
 <p>
 hz-&gt;radians
 converts its argument to radians/sample (for any situation where a
 frequency is used as an amplitude -- glissando or FM).
-hz-&gt;radians is equivalent to 
 </p>
-<pre>
-  freq-in-hz * 2 * pi / (<a class=quiet href="#mussrate">mus-srate</a>)
-</pre>
-
 <blockquote>
 <p>
 <code>freq-in-hz * 2 * pi</code> gives us the number of radians traversed per
@@ -4203,7 +4272,7 @@ generator, among others.  Here's array-interp as a "compander":
 
 
 <p>
-dot-product is the usual "inner product" or "scalar product" (the latter name should be banned from polite society).
+dot-product is the usual "inner product" or "scalar product" (a name that should be banned from polite society).
 We could define our own FIR filter using dot-product:
 </p>
 
@@ -4308,7 +4377,7 @@ translated up and down by w/(two pi) Hz:
 
 <img src="fmeq8.png" alt="coscos and sinsin" hspace=20>
 
-<br><br>
+<br><br><br>
 
 
 
