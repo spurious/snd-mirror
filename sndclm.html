@@ -677,7 +677,7 @@ very elaborate) amplitude and frequency envelopes.
 <pre>
 (define (scheme-bird start dur frequency freqskew amplitude freq-envelope amp-envelope)
   (let* ((gls-env (<a class=quiet href="#make-env">make-env</a> freq-envelope (<a class=quiet href="#hztoradians">hz-&gt;radians</a> freqskew) dur))
-         (os (<a class=quiet href="#make-oscil">make-oscil</a> :frequency frequency))
+         (os (<a class=quiet href="#make-oscil">make-oscil</a> frequency))
          (amp-env (<a class=quiet href="#make-env">make-env</a> amp-envelope amplitude dur))
 	 (len (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))
 	 (beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start))
@@ -776,7 +776,7 @@ on-going optional modulation.  In the most logical of all worlds, we'd split tha
 "generator", then inherit it in oscil and elsewhere.  This generator would also simplify many
 user-defined generators (such as the various sums under <a href="#sum-of-sines">sum-of-sines</a>).
 Should it be called "phaser"?  
-<p>
+</p>
 
 <br><br>
 
@@ -2117,13 +2117,13 @@ Here is a FOF instrument based loosely on fof.c of Perry Cook and the article
 (<a class=quiet href="sndscm.html#definstrument">definstrument</a> (fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional ve ae)
   (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
          (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
-         (ampf (<a class=quiet href="#make-env">make-env</a> :envelope (or ae (list 0 0 25 1 75 1 100 0)) :scaler amp :duration dur))
+         (ampf (<a class=quiet href="#make-env">make-env</a> (or ae (list 0 0 25 1 75 1 100 0)) :scaler amp :duration dur))
          (frq0 (<a class=quiet href="#hztoradians">hz-&gt;radians</a> f0))
          (frq1 (<a class=quiet href="#hztoradians">hz-&gt;radians</a> f1))
          (frq2 (<a class=quiet href="#hztoradians">hz-&gt;radians</a> f2))
          (foflen (if (= (<a class=quiet href="#mussrate">mus-srate</a>) 22050) 100 200))
-         (vibr (<a class=quiet href="#make-oscil">make-oscil</a> :frequency 6))
-	 (vibenv (<a class=quiet href="#make-env">make-env</a> :envelope (or ve (list 0 1 100 1)) :scaler vib :duration dur))
+         (vibr (<a class=quiet href="#make-oscil">make-oscil</a> 6))
+	 (vibenv (<a class=quiet href="#make-env">make-env</a> (or ve (list 0 1 100 1)) :scaler vib :duration dur))
          (win-freq (/ (* 2 pi) foflen))
          (foftab (make-vct foflen))
          (wt0 (<em class=red>make-wave-train</em> :wave foftab :frequency frq)))
@@ -2166,7 +2166,7 @@ using the same frequency envelope as the wave-train, so we have some idea when t
 	 (len (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> duration))
 	 (end (+ beg len))
 	 (grain-dur (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> grain-file))
-	 (frqf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) :scaler (<a class=quiet href="hztoradians">hz-&gt;radians</a> (- end-freq start-freq)) :duration duration))
+	 (frqf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) :scaler (<a class=quiet href="#hztoradians">hz-&gt;radians</a> (- end-freq start-freq)) :duration duration))
 	 (click-track (<em class=red>make-pulse-train</em> start-freq))
 	 (grain-size (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> grain-dur))
 	 (grains (<em class=red>make-wave-train</em> :size grain-size :frequency start-freq))
@@ -2617,23 +2617,18 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>formant</h3></center></td></tr></table>
 
-<table border=0><tr><td>
-
-<table border=0 vspace=10>
-<tr><td>
-
 <pre>
   <a class=def name="make-formant">make-formant</a> <a class=quiet href="#optional-key">:optional-key</a> radius frequency (gain 1.0)
   <a class=def name="formant">formant</a> f input
   <a class=def name="formant?">formant?</a> f
 </pre>
 
-</td></tr><tr><td>
-
 <p>formant is a resonator (a two-pole, two-zero bandpass filter) centered at "frequency", with its bandwidth set by "radius".
 </p>
-</td></tr><tr><td>
 
+<table border=0><tr><td>
+<table border=0>
+<tr><td>
 <table border=1 hspace=40 vspace=16 cellpadding=4 align=left>
 <tr><td colspan=2 bgcolor="beige"><center>formant methods</center></td></tr>
 <tr><td><em class=gen>mus-xcoeff</em></td><td>a0, a1, a2 in equations</td></tr>
@@ -2651,35 +2646,34 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
            2 * r * cos(frq-in-rads) * y(n-1) - 
            r * r * y(n-2)
 </pre>
-
 </td></tr></table>
 
 </td><td>
 
-<img src="formant.png" alt="various formant cases">
+<img src="formant.png" alt="various formant cases" hspace=20>
 
 </td></tr></table>
 
 <p>The formant generator is described in "A Constant-gain Digital Resonator Tuned By a Single Coefficient" by Julius
 O. Smith and James B. Angell in Computer Music Journal Vol. 6 No. 4 (winter
 1982).
-The filter coefficients are set as a function of the given "radius",
+The filter coefficients are set as a function of the "radius",
 "frequency", and "gain". 
-The bandwidth of the resonance is (* 2 (- 1.0 radius)), so as the radius approaches 1.0 (our unit circle), the
+The bandwidth of the resonance is (* 2 (- 1.0 radius)), so as the radius approaches 1.0 (the unit circle), the
 resonance gets narrower.
 Use <a href="sndclm.html#mus-frequency">mus-frequency</a> to change the center frequency, and <a href="sndclm.html#mus-formant-radius">mus-formant-radius</a> to change the radius.
 In the paper mentioned above,
-radius ~= e^(-pi*Bw*T) where Bw is the bandwidth in Hz and T is
-the sampling period (1/sampling-rate); see also "A note on
-Constant-Gain Digital Resonators" by Ken Steiglitz, CMJ vol 18 No. 4 pp.8-10
-(winter 1994).  The bandwidth can be specified in Hz:
+radius can be set in terms of desired bandwidth in Hz, via:
 </p>
 <pre>
-    (define (compute-radius bw) ; bw in Hz
-      (exp (/ (* (- pi) bw) (<a class=quiet href="#mussrate">mus-srate</a>))))
+    (exp (* -0.5 (hz-&gt;radians bandwidth)))
 </pre>
 
-<p>The "gain" argument to make-formant is not used directly; it becomes
+<p>
+See also "A note on
+Constant-Gain Digital Resonators" by Ken Steiglitz, CMJ vol 18 No. 4 pp.8-10
+(winter 1994).
+The "gain" argument to make-formant is not used directly; it becomes
 <code>gain * (1 - radius)</code> or some variant thereof (see mus_make_formant in clm.c).
 When you set mus-formant-radius, the gain is also adjusted.
 </p>
@@ -2689,24 +2683,47 @@ An example is <a href="sndscm.html#fadedoc">fade.scm</a> which has various funct
 See also 
 <a href="sndscm.html#grapheq">grapheq</a> (a non-graphic equalizer), and
 <a href="sndscm.html#crosssynthesis">cross-synthesis</a>.
-Here's a simpler example that processes a sound by moving a formant around in it:
+Here's a simpler example that moves a set of harmonically related formants through a sound.
+If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more of an FM index envelope effect.
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(define (moving-formant radius move)
-  (let ((frm (<em class=red>make-formant</em> radius (cadr move)))
-	(menv (<a class=quiet href="#make-env">make-env</a> move :end (frames))))  ; frequency envelope
-    (lambda (x)
-      (let ((val (<em class=red>formant</em> frm x)))             ; apply the formant filter
-	(set! (<em class=red>mus-frequency</em> frm) (<a class=quiet href="#env">env</a> menv))  ; move its center frequency
-	val))))
+(definstrument (move-formants start file amp radius move-env num-formants)
+  (let* ((frms (make-vector num-formants))
+	 (beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start))
+	 (dur (<a class=quiet href="extsnd.html#mussoundframes">mus-sound-frames</a> file))
+	 (end (+ beg dur))
+	 (rd (<a class=quiet href="#make-readin">make-readin</a> file))
+	 (menv (<a class=quiet href="#make-env">make-env</a> move-env :end dur)))
+    (let ((start-frq (<a class=quiet href="#env">env</a> menv)))
+      (do ((i 0 (1+ i)))
+	  ((= i num-formants))
+	(vector-set! frms i (<em class=red>make-formant</em> radius (* (+ i 1) start-frq)))))
+    (run
+     (lambda ()
+       (do ((k beg (1+ k)))
+	   ((= k end))
+	 (let ((sum 0.0)
+	       (x (<a class=quiet href="#readin">readin</a> rd))
+	       (frq (<a class=quiet href="#env">env</a> menv)))
+	   (do ((i 0 (1+ i)))
+	       ((= i num-formants))
+	     (set! sum (+ sum (<em class=red>formant</em> (vector-ref frms i) x)))
+	     (let ((curfrq (* (+ i 1) frq)))
+	       (if (&lt; (* 2 curfrq) (<a class=quiet href="#mussrate">mus-srate</a>))
+		   (set! (<em class=red>mus-frequency</em> (vector-ref frms i)) curfrq))))
+	   (<a class=quiet href="#outa">outa</a> k (* amp sum) *output*)))))))
 
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (moving-formant .99 '(0 1200 1 2400)))
+(with-sound () 
+  (move-formants 0 "oboe.snd" 2.0 0.99 '(0 1200 1.6 2400 2 1400) 4))
 </pre>
 </td></tr></table>
 
 <!-- PERHAPS: formant bank strobe -->
+
+<p>The Mathews/Smith <a href="sndscm.html#mfilter">filter</a> in dsp.scm is very similar to the formant generator.
+</p>
 
 <br><br>
 
@@ -2735,7 +2752,7 @@ Here's a simpler example that processes a sound by moving a formant around in it
    <em class=emdef>envelope-&gt;coeffs</em> :key order envelope dc
 </pre>
 
-<p>These are the general FIR/IIR filters of arbitrary order.
+<p>These are general FIR/IIR filters of arbitrary order.
 The "order" argument is one greater than the nominal filter
 order (it is the size of the coefficient arrays).
 </p>
@@ -2753,12 +2770,21 @@ order (it is the size of the coefficient arrays).
 <br>
 <pre>
   (let ((xout 0.0))
-    (set! (aref state 0) input)
-    (loop for j from order downto 1 do
-      (incf xout (* (aref state j) (aref xcoeffs j)))
-      (decf (aref state 0) (* (aref ycoeffs j) (aref state j)))
-      (set! (aref state j) (aref state (1- j))))
-    (+ xout (* (aref state 0) (aref xcoeffs 0))))
+    (vct-set! state 0 input)
+
+    (do ((j (1- order) (1- j)))
+        ((= j 0))
+      (set! xout (+ xout 
+                    (* (vct-ref xcoeffs j)
+                       (vct-ref state j))))
+      (vct-set! state 0 (- (vct-ref state 0) 
+                           (* (vct-ref ycoeffs j) 
+                              (vct-ref state j))))
+      (vct-set! state j (vct-ref state (1- j))))
+
+    (+ xout 
+       (* (vct-ref state 0) 
+          (vct-ref xcoeffs 0))))
 </pre><br clear=left>
 
 <p>dsp.scm has a number of filter design functions,
@@ -3231,7 +3257,7 @@ an instrument that provides time-varying sampling rate conversion:
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
 (<a class=quiet href="sndscm.html#definstrument">definstrument</a> (simple-src start-time duration amp srt srt-env filename)
-  (let* ((senv (<a class=quiet href="#make-env">make-env</a> :envelope srt-env :duration duration))
+  (let* ((senv (<a class=quiet href="#make-env">make-env</a> srt-env :duration duration))
          (beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start-time))
          (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> duration)))
          (src-gen (<em class=red>make-src</em> :input (<a class=quiet href="#make-readin">make-readin</a> filename) :srate srt)))
@@ -3250,7 +3276,7 @@ an instrument that provides time-varying sampling rate conversion:
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
 (<a class=quiet href="sndscm.html#definstrument">definstrument</a> (<A NAME="srcer">srcer</A> start-time duration amp srt fmamp fmfreq filename)
-  (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a> :frequency fmfreq))
+  (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a> fmfreq))
          (beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start-time))
          (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> duration)))
          (src-gen (<em class=red>make-src</em> :input (<a class=quiet href="#make-readin">make-readin</a> filename) :srate srt)))

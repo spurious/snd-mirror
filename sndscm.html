@@ -1654,8 +1654,8 @@ A simple instrument that uses dlocsig is:
 	 (dloc (car vals))
 	 (beg (cadr vals))
 	 (end (caddr vals)))
-    (let* ((osc (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a> :frequency freq))
-	   (aenv (<a class=quiet href="sndclm.html#make-env">make-env</a> :envelope amp-env :scaler amp :duration duration)))
+    (let* ((osc (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a> freq))
+	   (aenv (<a class=quiet href="sndclm.html#make-env">make-env</a> amp-env :scaler amp :duration duration)))
       (run
        (lambda ()
 	 (do ((i beg (1+ i)))
@@ -8733,7 +8733,7 @@ in fmv.scm, the simpler one being:
   (lambda (beg dur freq amp amp-env)
     (let ((v (<em class=red>make-fm-violin</em>
 	      freq amp 
-	      :amp-env (let ((e (<a class=quiet href="sndclm.html#make-env">make-env</a> :envelope (or amp-env '(0 0 1 1 2 0)) 
+	      :amp-env (let ((e (<a class=quiet href="sndclm.html#make-env">make-env</a> (or amp-env '(0 0 1 1 2 0)) 
 					  :scaler amp 
 					  :end dur)))
 			 (lambda () (<a class=quiet href="sndclm.html#env">env</a> e)))))
