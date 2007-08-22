@@ -8949,32 +8949,36 @@ EDITS: 5
 	(let ((pk (fft-peak index 0 1.0)))
 	  (if (not pk) (snd-display ";fft-peak? ")))
 	(set! (time-graph?) #t)
-	(if (not (string=? (x-axis-label) "time")) (snd-display ";def time x-axis-label: ~A" (x-axis-label)))
-	(set! (x-axis-label index 0 time-graph) "no time")
-	(if (not (string=? (x-axis-label) "no time")) (snd-display ";time x-axis-label: ~A" (x-axis-label index 0 time-graph)))
 
-	(update-transform-graph)
-	(if (not (string=? (x-axis-label index 0 transform-graph) "frequency")) (snd-display ";get fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
-	(set! (x-axis-label index 0 transform-graph) "hiho")
-	(update-transform-graph)
-	(if (not (string=? (x-axis-label index 0 transform-graph) "hiho")) (snd-display ";set set fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
-	(set! (x-axis-label index 0 transform-graph) "frequency") ; for later test
-
-	(graph '(0 0 1 1 2 0) "lisp")
-	(update-lisp-graph)
-	(if (not (string=? (x-axis-label index 0 lisp-graph) "lisp")) (snd-display ";def lisp x-axis-label: ~A" (x-axis-label index 0 lisp-graph)))
-	(set! (x-axis-label index 0 lisp-graph) "no lisp")
-	(if (not (string=? (x-axis-label index 0 lisp-graph) "no lisp")) (snd-display ";lisp x-axis-label: ~A" (x-axis-label index 0 lisp-graph)))
-	
-	(set! (y-axis-label index 0 time-graph) "no amp")
-	(if (not (string=? (y-axis-label) "no amp")) (snd-display ";time y-axis-label: ~A" (y-axis-label index 0 time-graph)))
-	(set! (y-axis-label index 0 lisp-graph) "no lamp")
-	(if (not (string=? (y-axis-label index 0 lisp-graph) "no lamp")) (snd-display ";lisp y-axis-label: ~A" (y-axis-label index 0 lisp-graph)))
-	(set! (y-axis-label) #f)
-	(set! (y-axis-label index 0) "no amp")
-	(if (not (string=? (y-axis-label) "no amp")) (snd-display ";time y-axis-label (time): ~A" (y-axis-label index 0 time-graph)))
-	(set! (y-axis-label index) #f)
-	
+	(catch #t
+	       (lambda ()
+		 (if (not (string=? (x-axis-label) "time")) (snd-display ";def time x-axis-label: ~A" (x-axis-label)))
+		 (set! (x-axis-label index 0 time-graph) "no time")
+		 (if (not (string=? (x-axis-label) "no time")) (snd-display ";time x-axis-label: ~A" (x-axis-label index 0 time-graph)))
+		 
+		 (update-transform-graph)
+		 (if (not (string=? (x-axis-label index 0 transform-graph) "frequency")) (snd-display ";get fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
+		 (set! (x-axis-label index 0 transform-graph) "hiho")
+		 (update-transform-graph)
+		 (if (not (string=? (x-axis-label index 0 transform-graph) "hiho")) (snd-display ";set set fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
+		 (set! (x-axis-label index 0 transform-graph) "frequency") ; for later test
+		 
+		 (graph '(0 0 1 1 2 0) "lisp")
+		 (update-lisp-graph)
+		 (if (not (string=? (x-axis-label index 0 lisp-graph) "lisp")) (snd-display ";def lisp x-axis-label: ~A" (x-axis-label index 0 lisp-graph)))
+		 (set! (x-axis-label index 0 lisp-graph) "no lisp")
+		 (if (not (string=? (x-axis-label index 0 lisp-graph) "no lisp")) (snd-display ";lisp x-axis-label: ~A" (x-axis-label index 0 lisp-graph)))
+		 
+		 (set! (y-axis-label index 0 time-graph) "no amp")
+		 (if (not (string=? (y-axis-label) "no amp")) (snd-display ";time y-axis-label: ~A" (y-axis-label index 0 time-graph)))
+		 (set! (y-axis-label index 0 lisp-graph) "no lamp")
+		 (if (not (string=? (y-axis-label index 0 lisp-graph) "no lamp")) (snd-display ";lisp y-axis-label: ~A" (y-axis-label index 0 lisp-graph)))
+		 (set! (y-axis-label) #f)
+		 (set! (y-axis-label index 0) "no amp")
+		 (if (not (string=? (y-axis-label) "no amp")) (snd-display ";time y-axis-label (time): ~A" (y-axis-label index 0 time-graph)))
+		 (set! (y-axis-label index) #f))
+	       (lambda args (snd-display ";axis label error: ~A" args)))
+		 
 	(graph-data (make-vct 4))
 	(update-lisp-graph)
 	(graph (vct 0 0 1 1 2 0))
@@ -15975,9 +15979,9 @@ EDITS: 2
 	  ((= i 20))
 	(let* ((nval (asinh (vector-ref args i)))
 	       (diff (abs (- nval (vector-ref vals i)))))
-	  (if (> diff max-bad) (set! max-bad diff))))
-      (if (> max-bad 1.0e-15)
-	  (snd-display ";asinh(~A): ~A ~A -> ~A" (vector-ref args i) nval (vector-ref vals i) max-bad)))
+	  (if (> diff max-bad) (set! max-bad diff))
+	  (if (> max-bad 1.0e-15)
+	      (snd-display ";asinh(~A): ~A ~A -> ~A" (vector-ref args i) nval (vector-ref vals i) max-bad)))))
     
     (let ((vals (vector 0.00000000000000000000 0.24497866312686415417 0.32175055439664219340 0.46364760900080611621 0.78539816339744830962 
 			1.1071487177940905030 1.2490457723982544258 1.3258176636680324651 1.3734007669450158609 1.4711276743037345919 1.5208379310729538578))

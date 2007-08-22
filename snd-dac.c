@@ -1504,7 +1504,7 @@ static int fill_dac_buffers(int write_ok)
 		case NO_CHANGE:
 		  /* simplest case -- no changes at all */
 		  for (j = 0; j < frames; j++)
-		    buf[j] += (*(dp->dac_sample))(dp);
+		    buf[j] += (mus_sample_t)((*(dp->dac_sample))(dp));
 		  break;
 
 		case JUST_AMP:

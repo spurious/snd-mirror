@@ -42,7 +42,7 @@ static void draw_page(GtkPrintOperation *operation, GtkPrintContext *context, gi
   pango_font_description_free(desc);
 
   pango_layout_set_text(layout, "nope", -1);
-  pango_layout_set_width(layout, width);
+  pango_layout_set_width(layout, (int)width);
   pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
 			      
   pango_layout_get_size(layout, NULL, &layout_height);
@@ -89,7 +89,7 @@ void file_print_callback(GtkWidget *w, gpointer info)
     {
       if (settings != NULL)
         g_object_unref(settings);
-      settings = g_object_ref(gtk_print_operation_get_print_settings(operation));
+      settings = (GtkPrintSettings *)g_object_ref(gtk_print_operation_get_print_settings(operation));
     }
   g_object_unref(operation);
 

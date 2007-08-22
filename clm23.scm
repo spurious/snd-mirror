@@ -2821,7 +2821,77 @@
 		       (let ((x (vct-ref original-grain k)))
 			 (vct-set! grain k (+ (comb c1 x) (comb c2 x) (comb c3 x)))))))))))))))
 
-	 
+(definstrument (move-formants start file amp radius move-env num-formants)
+  (let* ((frms (make-vector num-formants))
+	 (beg (seconds->samples start))
+	 (dur (mus-sound-frames file))
+	 (end (+ beg dur))
+	 (rd (make-readin file))
+	 (menv (make-env move-env :end dur)))
+    (let ((start-frq (env menv)))
+      (do ((i 0 (1+ i)))
+	  ((= i num-formants))
+	(vector-set! frms i (make-formant radius (* (+ i 1) start-frq)))))
+    (run
+     (lambda ()
+       (do ((k beg (1+ k)))
+	   ((= k end))
+	 (let ((sum 0.0)
+	       (x (readin rd))
+	       (frq (env menv)))
+	   (do ((i 0 (1+ i)))
+	       ((= i num-formants))
+	     (set! sum (+ sum (formant (vector-ref frms i) x)))
+	     (let ((curfrq (* (+ i 1) frq)))
+	       (if (< (* 2 curfrq) (mus-srate))
+		   (set! (mus-frequency (vector-ref frms i)) curfrq))))
+	   (outa k (* amp sum) *output*)))))))
+
+(define (test-filter flt)
+  (let* ((osc (make-oscil 0.0))
+	 (samps (seconds->samples 0.5))
+	 (ramp (make-env '(0 0 1 1) :scaler (hz->radians samps) :end samps)))
+    (with-sound ()
+      (do ((i 0 (1+ i)))
+	  ((= i samps))
+        (outa i (flt (oscil osc (env ramp))) *output*)))))
+
+(definstrument (flux start-time file frequency combs0 combs1 :optional (scaler 0.99) (comb-len 32))
+  (let* ((beg (seconds->samples start-time))
+	 (len (mus-sound-frames file))
+	 (end (+ beg len))
+	 (num-combs0 (length combs0))
+	 (num-combs1 (length combs1))
+	 (cmbs0 (make-vector num-combs0))
+	 (cmbs1 (make-vector num-combs1))
+	 (osc (make-oscil frequency))
+	 (rd (make-readin file)))
+    (do ((k 0 (1+ k)))
+	((= k num-combs0))
+      (vector-set! cmbs0 k 
+		   (make-comb scaler 
+			      (inexact->exact (floor (* comb-len (list-ref combs0 k)))))))
+    (do ((k 0 (1+ k)))
+	((= k num-combs1))
+      (vector-set! cmbs1 k 
+		   (make-comb scaler 
+			      (inexact->exact (floor (* comb-len (list-ref combs1 k)))))))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (let* ((interp (oscil osc))
+		(sum0 0.0)
+		(sum1 0.0)
+		(x (readin rd)))
+	   (do ((k 0 (1+ k)))
+	       ((= k num-combs0))
+	     (set! sum0 (+ sum0 (comb (vector-ref cmbs0 k) x))))
+	   (do ((k 0 (1+ k)))
+	       ((= k num-combs1))
+	     (set! sum1 (+ sum1 (comb (vector-ref cmbs1 k) x))))
+	   (outa i (+ (* interp sum0) (* (- 1.0 interp) sum1)) *output*)))))))
+
 
 
 
@@ -2940,9 +3010,23 @@
 		     (move-locsig loc (exact->inexact i) 1.0))))))
   (with-sound (:channels 4) (sndclmdoc-simple-dloc 0 2 440 .5))
   (with-sound () (when? 0 4 2.0 8.0 "1a.snd"))
+  (with-sound () 
+	      (move-formants 0 "oboe.snd" 2.0 0.99 '(0 1200 1.6 2400 2 1400) 4))
+  (test-filter (make-one-zero 0.5 0.5))
+  (test-filter (make-one-pole 0.1 -0.9))
+  (test-filter (make-two-pole 0.1 0.1 0.9))
+  (test-filter (make-two-zero 0.5 0.2 0.3))
+
+  (with-sound (:scaled-to .5) 
+	      (flux 0 "oboe.snd" 10.0 '(1.0 1.25 1.5) '(1.0 1.333 1.6))
+	      (flux 2 "now.snd" 4.0 '(1.0 1.25 1.5) '(1.0 1.333 1.6 2.0 3.0))
+	      (flux 4 "now.snd" 1.0 '(1.0 1.25 1.5) '(1.0 1.333 1.6 2.0 3.0) 0.995 20)
+	      (flux 6 "now.snd" 10.0 '(1.0 1.25 1.5) '(1.0 1.333 1.6 2.0 3.0) 0.99 10)
+	      (flux 8 "now.snd" 10.0 '(2.0) '(1.0 1.333 1.6 2.0 3.0) 0.99 120)
+	      (flux 10 "fyow.snd" .50 '(1.0 2.0 1.5) '(1.0 1.333 1.6 2.0 3.0) 0.99 120))
 
   (for-each close-sound (sounds))
   )
 
-;;; TODO: check snd/extsnd/sndscm and include rest of sndclm...
+
 

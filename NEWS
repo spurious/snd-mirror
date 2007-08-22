@@ -1,19 +1,41 @@
-Snd 9.2
+Snd 9.3
 
-many Forth/Ruby improvements thanks to Mike.
+rt improvements from Kjetil (new file: rt-clm-ins.scm).
 
-RIFF bugfix and minGW configure info thanks to Steve Beet.
+*.rb and *.fs improvements from Mike.
 
-snddiff.scm
-virtual-filter-channel (examp.scm)
-max-virtual-ptrees (and a greatly expanded virtual editor)
-added optional snd chn args to apply-ladspa and with-tag to mix-channel
-power spectral density as transform (green.scm)
+clm.html split:
+  clm in CL (CLM tarball) is clm.html, 
+  clm in other languages (Snd tarball) is sndclm.html
 
-clm: mus-increment on gens with a notion of frequency (phase increment); 
-       to make room for this, asymmetric-fm ratio and sine-summation b moved to mus-offset.
-     exp envs optimized
+fm.html split in two:
+  cl-fm.html in CL (all examples are in CL)
+  fm.html in Snd (all examples are in Scheme)
+  all the math is now done in LaTex, and I added several pictures
+  (most of my work in this version went into fm.html and sndclm.html)
 
-Thanks!: Mike Scholz, Plutek, Etienne Deleflie, Steve Beet, Kjetil Matheussen, unknown_error
+moved autocorrelate to clm
+  renamed the graph-hook function "correlate" in examp.scm|fs|rb to "display-correlation"
+  added correlate to clm
 
-Checked: gtk 2.11.2|3|4|5, cairo 1.4.8|10, Fedora 7, sbcl 1.0.6|7
+added a stab at amplitude normalization to sine-summation
+
+dsp.scm: smoothing-filter, weighted-moving-average, exponentially-weighted-moving-average
+         Savitzky-Golay filter
+
+numerics.scm (various numerical functions)
+
+mix.scm: delay-channel-mixes
+
+clm: shepard.ins thanks to Juan Reyes
+
+added blackman5 to blackman10 (6 to 11-term sum-of-cosines windows in the Blackman-Harris/Hamming family)
+      rv2-window to rv4-window (2nd to 4th order Rife-Vincent windows in the Hann(ing) family)
+      mlt-sine-window
+
+removed useless :start arg from make-env
+  this means all (CL-CLM) instruments that use make-env need to be recompiled.
+
+checked:  Guile 1.8.2, gtk 2.11.6, gamin 0.1.9, Gauche 0.8.11, pango 1.18.0
+
+Thanks!: Juan Reyes, Kjetil Matheussen, Mike Scholz, Jim Hauser
