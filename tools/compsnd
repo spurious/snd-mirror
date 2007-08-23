@@ -19,7 +19,6 @@ fgrep "if DEBUGGING" *.c
 fgrep "(DEBUGGING)" *.c
 fgrep udpate *.html
 fgrep udpate *.scm
-fgrep " border " *.html
 fgrep ";;" *.[ch]
 va.scm
 tools/check-gtk.scm
@@ -287,39 +286,6 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-forth                                           ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-forth
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-forth 'snd-motif"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-forth --enable-snd-debug --with-static-xm --with-editres --with-gl ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-forth --enable-snd-debug --with-static-xm --with-editres --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-midi
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-forth 'xm 'gl"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-forth --with-gtk --with-static-xg --with-gl      --- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-forth --with-gtk --with-static-xg --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-gtk --with-cairo --with-static-xg                --- '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet --with-gtk --with-static-xg --with-cairo LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
@@ -331,12 +297,12 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-forth --with-no-gui                              --- '
+echo ' -----                --with-gtk --with-cairo --with-static-xg g++ doubles/threads --- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-forth --with-no-gui LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+./configure --quiet --with-gtk --with-static-xg CC=g++ --with-cairo --with-doubles --with-threads LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
 make
 ./snd --version
-./snd -noinit --features "'clm 'snd-forth 'snd-nogui"
+./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"
 make allclean
 
 echo ' '
@@ -345,28 +311,6 @@ echo ' -------------------------------------------------------------------------
 echo ' ----                 --with-gauche                                          ---- '
 echo ' -------------------------------------------------------------------------------- '
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-gauche
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-gauche 'snd-motif"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --with-gauche  API 0_8*                                ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include -DGAUCHE_API_0_8_8 -DGAUCHE_API_0_8_10" --quiet --with-gauche
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-gauche 'snd-motif"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --with-gauche  API 0_9                                 ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include -DGAUCHE_API_0_9" --quiet --with-gauche
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-gauche 'snd-motif"
@@ -1094,17 +1038,6 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 -DSCM_DEBUG_TYPING_STRICTNESS=2 GUILE_CONFIG_path=/home/bil/test/bin '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/include -I/usr/X11R6/include -DSCM_DEBUG_TYPING_STRICTNESS=2" LDFLAGS="-L/home/bil/test/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/bin
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-guile"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
 echo ' ----                --with-gtk --with-static-xg --with-jack GUILE_CONFIG_path=/home/bil/test/bin '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet --with-gtk --with-static-xg --with-jack CFLAGS="-I/home/bil/test/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/bin
@@ -1293,6 +1226,7 @@ make
 ./snd -noinit --features "'clm 'snd-guile"
 make allclean
 
+
 cp ~/sndlib/* .
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                sndlib tests                                           ---- '
@@ -1304,9 +1238,6 @@ make clean
 make
 make clean
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-gauche
-make
-make clean
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-forth
 make
 make clean
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-guile --without-ruby --without-gauche --without-forth
@@ -1329,9 +1260,6 @@ make clean
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-gauche
 make
 make clean
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-forth
-make
-make clean
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-guile --without-ruby --without-gauche --without-forth
 make
 make clean
@@ -1345,9 +1273,6 @@ make clean
 make
 make clean
 ./configure --quiet --with-gauche --with-gtk
-make
-make clean
-./configure --quiet --with-forth --with-gtk
 make
 make clean
 ./configure --quiet --without-guile --without-ruby --without-gauche --without-forth --with-gtk
