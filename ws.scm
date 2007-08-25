@@ -499,60 +499,6 @@ returning you to the true top-level."
   (apply with-sound-helper (lambda () (load file)) args))
 
 
-;;; -------- def-clm-struct --------
-
-(if (not (defined? 'add-clm-type)) (define (add-clm-type . args) #f)) ; these are in snd-run
-(if (not (defined? 'add-clm-field)) (define (add-clm-field . args) #f))
-
-(defmacro def-clm-struct (name . fields)
-  ;; (def-clm-struct fd loc (chan 1))
-  ;; (def-clm-struct hiho i x (s "hiho") (ii 3 :type int) (xx 0.0 :type float))
-  ;; we need the :type indication if Snd's run macro is to have any hope of handling these structs as function args
-  (let* ((sname (if (string? name) name (symbol->string name)))
-	 (field-names (map (lambda (n)
-			     (symbol->string (if (list? n) (car n) n)))
-			   fields))
-	 (field-types (map (lambda (n)
-			     (if (and (list? n) (cadr n) (eq? (cadr n) :type)) 
-				 (snd-error (format #f ":type indication for def-clm-struct (~A) field (~A) should be after the default value" name n)))
-			     (if (and (list? n)
-				      (= (length n) 4)
-				      (eq? (list-ref n 2) :type))
-				 (list-ref n 3)
-				 #f))
-			   fields)))
-    `(begin
-       (define ,(string->symbol (string-append sname "?"))
-	 (lambda (obj)
-	   "clm struct type check"
-	   (and (list? obj)
-		(eq? (car obj) ',(string->symbol sname)))))
-       (define* (,(string->symbol (string-append "make-" sname)) 
-		 :key ,@(map (lambda (n)
-				(if (and (list? n)
-					 (> (length n) 2))
-				    (list (car n) (cadr n))
-				    n))
-			      fields))
-	 "clm struct make function"
-	 (list ',(string->symbol sname)
-	       ,@(map string->symbol field-names)))
-       (add-clm-type ,sname)
-       ,@(map (let ((ctr 1))
-		(lambda (n type)
-		  (let ((val `(define ,(string->symbol (string-append sname "-" n))
-				(make-procedure-with-setter
-				 (lambda (arg)
-				   "clm struct field accessor"
-				   (list-ref arg ,ctr))
-				 (lambda (arg val)
-				   (list-set! arg ,ctr val))))))
-		    (add-clm-field (string-append sname "-" n) ctr type)
-		    (set! ctr (1+ ctr))
-		    val)))
-	      field-names field-types))))
-
-
 ;;; -------- sound-let --------
 ;;;
 ;;; (with-sound () (sound-let ((a () (fm-violin 0 .1 440 .1))) (mus-mix "test.snd" a)))
@@ -1011,3 +957,66 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 (define (->sample beg)
   "(->sample time-in-seconds) -> time-in-samples"
   (inexact->exact (round (* (if (not (null? (sounds))) (srate) (mus-srate)) beg))))
+
+
+
+;;; -------- def-clm-struct --------
+
+(if (not (defined? 'add-clm-type)) (define (add-clm-type . args) #f)) ; these are in snd-run
+(if (not (defined? 'add-clm-field)) (define (add-clm-field . args) #f))
+
+(defmacro def-clm-struct (name . fields)
+  (let* ((sname (if (string? name) name (symbol->string name)))
+	 (field-names (map (lambda (n)
+			     (symbol->string (if (list? n) (car n) n)))
+			   fields))
+	 (field-types (map (lambda (n)
+			     (if (and (list? n) (cadr n) (eq? (cadr n) :type)) 
+				 (snd-error (format #f ":type indication for def-clm-struct (~A) field (~A) should be after the default value" name n)))
+			     (if (and (list? n)
+				      (= (length n) 4)
+				      (eq? (list-ref n 2) :type))
+				 (list-ref n 3)
+				 (if (and (list? n)
+					  (= (length n) 2))
+				     (if (number? (cadr n))
+					 (if (exact? (cadr n))
+					     'int
+					     'float)
+					 (if (string? (cadr n))
+					     'string
+					     'float))
+				     'float)))
+			   fields)))
+    `(begin
+       (define ,(string->symbol (string-append sname "?"))
+	 (lambda (obj)
+	   "clm struct type check"
+	   (and (list? obj)
+		(eq? (car obj) ',(string->symbol sname)))))
+       (def-optkey-fun (,(string->symbol (string-append "make-" sname)) 
+		        ,@(map (lambda (n)
+				(if (and (list? n)
+					 (>= (length n) 2))
+				    (list (car n) (cadr n))
+				    (list n 0.0)))
+			      fields))
+	 "clm struct make function"
+	 (list ',(string->symbol sname)
+	       ,@(map string->symbol field-names)))
+       (add-clm-type ,sname)
+       ,@(map (let ((ctr 1))
+		(lambda (n type)
+		  (let ((val `(define ,(string->symbol (string-append sname "-" n))
+				(make-procedure-with-setter
+				 (lambda (arg)
+				   "clm struct field accessor"
+				   (list-ref arg ,ctr))
+				 (lambda (arg val)
+				   (list-set! arg ,ctr val))))))
+		    (add-clm-field (string-append sname "-" n) ctr type)
+		    (set! ctr (1+ ctr))
+		    val)))
+	      field-names field-types))))
+
+

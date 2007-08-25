@@ -837,11 +837,10 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; -------- offset-channel 
 
-(define* (offset-channel amount :optional (beg 0) dur snd chn edpos)
+(define* (offset-channel dc :optional (beg 0) dur snd chn edpos)
   "(offset-channel amount :optional (beg 0) dur snd chn edpos) adds amount to each sample"
-  (let ((dc amount))
-    (ptree-channel (lambda (y) (+ y dc)) beg dur snd chn edpos #t #f
-		   (format #f "offset-channel ~A ~A ~A" amount beg dur))))
+  (ptree-channel (lambda (y) (+ y dc)) beg dur snd chn edpos #t #f
+		 (format #f "offset-channel ~A ~A ~A" dc beg dur)))
 
 
 (define* (offset-sound off :optional (beg 0) dur snd)
@@ -895,12 +894,11 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 (define* (contrast-channel index :optional (beg 0) dur snd chn edpos)
   "(contrast-channel index :optional (beg 0) dur snd chn edpos) applies contrast enhancement to the sound"
-  (let ((ind index))
-    (ptree-channel
-     (lambda (y)
-       (sin (+ (* y 0.5 pi) (* ind (sin (* y 2.0 pi))))))
-     beg dur snd chn edpos #f #f
-     (format #f "contrast-channel ~A ~A ~A" index beg dur))))
+  (ptree-channel
+   (lambda (y)
+     (sin (+ (* y 0.5 pi) (* index (sin (* y 2.0 pi))))))
+   beg dur snd chn edpos #f #f
+   (format #f "contrast-channel ~A ~A ~A" index beg dur)))
 
 
 (define* (contrast-sound index :optional (beg 0) dur snd)
@@ -949,10 +947,9 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;;
 ;;; this is ok going forward (I think), but not in reverse
 
-(define* (delay-channel amount :optional (beg 0) dur snd chn edpos)
+(define* (delay-channel dly :optional (beg 0) dur snd chn edpos)
   "(delay-channel amount :optional (beg 0) dur snd chn edpos) implements a delay using virtual edits"
-  (let ((dly amount)
-	(cur-edpos (if (or (not edpos)
+  (let ((cur-edpos (if (or (not edpos)
 			   (= edpos current-edit-position))
 		       (edit-position snd chn)
 		       edpos)))
@@ -998,11 +995,10 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 		   (s2 (if first-longer snd2 snd1))
 		   (c1 (if first-longer chn1 chn2))
 		   (c2 (if first-longer chn2 chn1))
-		   (read2 (make-sample-reader 0 s2 c2))
-		   (diff allowable-difference))
+		   (read2 (make-sample-reader 0 s2 c2)))
 	      (not (scan-channel (lambda (y)
 				   (let ((val (read-sample read2)))
-				     (> (abs (- val y)) diff)))
+				     (> (abs (- val y)) allowable-difference)))
 				 0 len s1 c1)))))))
 
 

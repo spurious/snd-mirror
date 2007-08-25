@@ -7720,12 +7720,10 @@ If 'env-too' is #f, a background process is launched reading all the sound data 
 it can take awhile for the ptree-channel results to be displayed.
 <br><br>
 
-Here is a simple example that adds a constant to each sample in a file. It needs the
-inner "let" because the define* arguments are hidden from the optimizer.
+Here is a simple example that adds a constant to each sample in a file. 
 <pre>
-    (define* (offset-channel amount :optional (beg 0) dur snd chn edpos)
-      (let ((dc amount))
-        (<em class=red>ptree-channel</em> (lambda (y) (+ y dc)) beg dur snd chn edpos <em class=red>#t</em>)))
+    (define* (offset-channel dc :optional (beg 0) dur snd chn edpos)
+      (<em class=red>ptree-channel</em> (lambda (y) (+ y dc)) beg dur snd chn edpos <em class=red>#t</em>))
 </pre>
 The actual edit that takes place is <code>(+ y dc)</code>; that is, 'dc' is added to
 every sample.  As subsequent editing takes place, the entries representing the 'offset-channel'
@@ -7904,11 +7902,10 @@ Here are several more examples:
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define* (ptree-scale scl :optional (beg 0) dur snd chn edpos)
   "ptree-channel version of scale-channel"
-  (let ((local-scl scl)) ; needed by the run macro -- it can't find define* args
-    (<em class=red>ptree-channel</em>
-      (lambda (y) 
-        (* local-scl y)) 
-      beg dur snd chn edpos #t)))
+  (<em class=red>ptree-channel</em>
+    (lambda (y) 
+      (* scl y)) 
+    beg dur snd chn edpos #t))
 
 (define* (ptree-xramp r0 r1 ubase :optional (beg 0) dur snd chn edpos)
   "exponential version of ramp-channel"

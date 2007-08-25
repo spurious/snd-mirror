@@ -174,14 +174,13 @@
 
 ;;; AMPLITUDE EFFECTS
 
-(define* (effects-squelch-channel amount gate-size :optional snd chn)
+(define* (effects-squelch-channel amp gate-size :optional snd chn)
   "(effects-squelch-channel amount gate-size :optional snd chn) is used by the effects dialog to tie into edit-list->function"
   (let ((f0 (make-moving-average gate-size))
-	(f1 (make-moving-average gate-size :initial-element 1.0))
-	(amp amount))
+	(f1 (make-moving-average gate-size :initial-element 1.0)))
     (map-channel (lambda (y) (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0))))
 		 0 #f snd chn #f
-		 (format #f "effects-squelch-channel ~A ~A" amount gate-size))))
+		 (format #f "effects-squelch-channel ~A ~A" amp gate-size))))
 
 
 (let* ((amp-menu-list '())
@@ -439,13 +438,12 @@
   "(effects-echo input-samps-1 delay-time echo-amount :optional beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
   (let ((del (make-delay (inexact->exact (round (* delay-time (srate snd))))))
 	(samp 0)
-	(input-samps (or input-samps-1 dur (frames snd chn)))
-	(amp echo-amount))
+	(input-samps (or input-samps-1 dur (frames snd chn))))
     (map-channel (lambda (inval)
 		   (set! samp (1+ samp))
 		   (+ inval
 		      (delay del
-			     (* amp (+ (tap del) (if (<= samp input-samps) inval 0.0))))))
+			     (* echo-amount (+ (tap del) (if (<= samp input-samps) inval 0.0))))))
 		 beg dur snd chn #f
 		 (format #f "effects-echo ~A ~A ~A ~A ~A" input-samps-1 delay-time echo-amount beg dur))))
 
@@ -454,30 +452,27 @@
   (let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
 	 (del (make-delay  (inexact->exact (round (* secs (srate snd))))))
 	 (samp 0)
-	 (input-samps (or input-samps-1 dur (frames snd chn)))
-	 (amp scaler))
+	 (input-samps (or input-samps-1 dur (frames snd chn))))
     (map-channel (lambda (inval)
 		   (set! samp (1+ samp))
 		   (+ inval 
 		      (delay del 
-			     (fir-filter flt (* amp (+ (tap del) (if (<= samp input-samps) inval 0.0)))))))
+			     (fir-filter flt (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))))))
 		 beg dur snd chn #f
 		 (format #f "effects-flecho-1 ~A ~A ~A ~A ~A" scaler secs input-samps-1 beg dur))))
 
-(define* (effects-zecho-1 scaler secs frq amp-1 input-samps-1 :optional beg dur snd chn)
-  "(effects-zecho-1 scaler secs frq amp-1 input-samps-1 :optional beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
+(define* (effects-zecho-1 scaler secs frq amp input-samps-1 :optional beg dur snd chn)
+  "(effects-zecho-1 scaler secs frq amp input-samps-1 :optional beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
   (let* ((os (make-oscil frq))
-	 (amp amp-1)
 	 (len (round (inexact->exact (* secs (srate snd)))))
 	 (del (make-delay len :max-size (+ len amp 1)))
 	 (samp 0)
-	 (input-samps (or input-samps-1 dur (frames snd chn)))
-	 (scl scaler))
+	 (input-samps (or input-samps-1 dur (frames snd chn))))
     (map-channel (lambda (inval)
 		   (set! samp (1+ samp))
 		   (+ inval 
 		      (delay del 
-			     (* scl (+ (tap del) (if (<= samp input-samps) inval 0.0)))
+			     (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))
 			     (* amp (oscil os)))))
 		 beg dur snd chn #f
     		 (format #f "effects-zecho-1 ~A ~A ~A ~A ~A ~A ~A" scaler secs frq amp input-samps-1 beg dur))))
@@ -767,27 +762,22 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 ;;; FILTERS
 ;;;
 
-(define* (effects-comb-filter scaler-1 size-1 :optional beg dur snd chn)
-  "(effects-comb-filter scaler-1 size-1 :optional beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
-  (let ((delay-line (make-vct size-1 0.0))
-	(delay-loc 0)
-	(size size-1)
-	(scaler scaler-1))
-    (map-channel (lambda (x)
-		   (let ((result (vct-ref delay-line delay-loc)))
-		     (vct-set! delay-line delay-loc (+ x (* scaler result)))
-		     (set! delay-loc (1+ delay-loc))
-		     (if (= delay-loc size) (set! delay-loc 0))
-		     result))
-		 beg dur snd chn #f
-		 (format #f "effects-comb-filter ~A ~A ~A ~A" scaler size beg dur))))
+(define* (effects-comb-filter scaler size :optional beg dur snd chn)
+  "(effects-comb-filter scaler-1 size :optional beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
+  (let ((delay-line (make-vct size 0.0))
+	(delay-loc 0))
+    (lambda (x)
+      (let ((result (vct-ref delay-line delay-loc)))
+	(vct-set! delay-line delay-loc (+ x (* scaler result)))
+	(set! delay-loc (1+ delay-loc))
+	(if (= delay-loc size) (set! delay-loc 0))
+	result))))
 
-(define* (effects-comb-chord scaler size amp-1 interval-one interval-two :optional beg dur snd chn)
-  "(effects-comb-chord scaler size amp-1 interval-one interval-two :optional beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
+(define* (effects-comb-chord scaler size amp interval-one interval-two :optional beg dur snd chn)
+  "(effects-comb-chord scaler size amp interval-one interval-two :optional beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
   (let ((c1 (make-comb scaler size))
 	(c2 (make-comb scaler (* size interval-one)))
-	(c3 (make-comb scaler (* size interval-two)))
-	(amp amp-1))
+	(c3 (make-comb scaler (* size interval-two))))
     (map-channel (lambda (x)
 		   (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x))))
 		 beg dur snd chn #f
@@ -1132,7 +1122,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		   (lambda (w context info) 
 		     (map-chan-over-target-with-sync
 		      (lambda (ignored) 
-			(comb-filter comb-scaler comb-size)) 
+			(effects-comb-filter comb-scaler comb-size)) 
 		      comb-target 
 		      (lambda (target samps)
 			(format #f "effects-comb-filter ~A ~A" comb-scaler comb-size))
@@ -2304,11 +2294,10 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	 (sr (make-src :srate srf))
 	 (sf (make-sample-reader beg))
 	 (len (or dur (frames snd chn)))
-	 (out-data (make-vct len))
-	 (amp osamp))
+	 (out-data (make-vct len)))
     (vct-map! out-data
 	      (lambda ()
-		(src sr (* amp (oscil os))
+		(src sr (* osamp (oscil os))
 		     (lambda (dir)
 		       (if (> dir 0)
 			   (next-sample sf)
@@ -2317,11 +2306,10 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
     (vct->channel out-data beg len snd chn #f
 		  (format #f "effects-fp ~A ~A ~A ~A ~A" srf osamp osfrq beg (if (= len (frames snd chn)) #f len)))))
 
-(define* (effects-position-sound mono-snd pos-1 :optional snd chn)
+(define* (effects-position-sound mono-snd pos :optional snd chn)
   "(effects-position-sound mono-snd pos-1 :optional snd chn) is used by the effects dialog to tie into edit-list->function"
   (let ((len (frames mono-snd))
-	(reader1 (make-sample-reader 0 mono-snd))
-	(pos pos-1))
+	(reader1 (make-sample-reader 0 mono-snd)))
     (if (number? pos)
 	(map-channel (lambda (y)
 		       (+ y (* pos (read-sample reader1))))

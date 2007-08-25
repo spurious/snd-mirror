@@ -9,6 +9,7 @@
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 (if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))
 
+
 ;;; -------- pluck
 ;;;
 ;;; The Karplus-Strong algorithm as extended by David Jaffe and Julius Smith -- see 
@@ -16,72 +17,69 @@
 ;;;  CMJ vol 7 no 2 Summer 1983, reprinted in "The Music Machine".
 ;;;  translated from CLM's pluck.ins
 
-(definstrument+ (pluck start dur freq amp-1 :optional (weighting .5) (lossfact .9))
+(definstrument+ (pluck start dur freq amp :optional (weighting .5) (lossfact .9))
   "(pluck start dur freq amp weighting lossfact) implements the Jaffe-Smith plucked string physical model. 
 'weighting' is the ratio of the once-delayed to the twice-delayed samples.  It defaults to .5=shortest decay. 
 Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. 
 'lossfact' can be used to shorten decays.  Most useful values are between .8 and 1.0. (pluck 0 1 330 .3 .95 .95)"
 
-  (let ((amp amp-1)) ; make new Guile happy
-
-    (define (getOptimumC S o p)
-      (let* ((pa (* (/ 1.0 o) (atan (* S (sin o)) (+ (- 1.0 S) (* S (cos o))))))
-	     (tmpInt (inexact->exact (floor (- p pa))))
-	     (pc (- p pa tmpInt)))
-	(if (< pc .1)
-	    (do ()
-		((>= pc .1))
-	      (set! tmpInt (- tmpInt 1))
-	      (set! pc (+ pc 1.0))))
-	(list tmpInt (/ (- (sin o) (sin (* o pc))) (sin (+ o (* o pc)))))))
+  (define (getOptimumC S o p)
+    (let* ((pa (* (/ 1.0 o) (atan (* S (sin o)) (+ (- 1.0 S) (* S (cos o))))))
+	   (tmpInt (inexact->exact (floor (- p pa))))
+	   (pc (- p pa tmpInt)))
+      (if (< pc .1)
+	  (do ()
+	      ((>= pc .1))
+	    (set! tmpInt (- tmpInt 1))
+	    (set! pc (+ pc 1.0))))
+      (list tmpInt (/ (- (sin o) (sin (* o pc))) (sin (+ o (* o pc)))))))
     
-    (define (tuneIt f s1)
-      (let* ((p (/ (mus-srate) f))	;period as float
-	     (s (if (= s1 0.0) 0.5 s1))
-	     (o (hz->radians f))
-	     (vals (getOptimumC s o p))
-	     (T1 (car vals))
-	     (C1 (cadr vals))
-	     (vals1 (getOptimumC (- 1.0 s) o p))
-	     (T2 (car vals1))
-	     (C2 (cadr vals1)))
-	(if (and (not (= s .5))
-		 (< (abs C1) (abs C2)))
-	    (list (- 1.0 s) C1 T1)
-	    (list s C2 T2))))
+  (define (tuneIt f s1)
+    (let* ((p (/ (mus-srate) f))	;period as float
+	   (s (if (= s1 0.0) 0.5 s1))
+	   (o (hz->radians f))
+	   (vals (getOptimumC s o p))
+	   (T1 (car vals))
+	   (C1 (cadr vals))
+	   (vals1 (getOptimumC (- 1.0 s) o p))
+	   (T2 (car vals1))
+	   (C2 (cadr vals1)))
+      (if (and (not (= s .5))
+	       (< (abs C1) (abs C2)))
+	  (list (- 1.0 s) C1 T1)
+	  (list s C2 T2))))
     
-    (let* ((vals (tuneIt freq weighting))
-	   (wt0 (car vals))
-	   (c (cadr vals))
-	   (dlen (caddr vals))
-					;(amp amp-1)
-	   (beg (seconds->samples start))
-	   (end (+ beg (seconds->samples dur)))
-	   (lf (if (= lossfact 0.0) 1.0 (min 1.0 lossfact)))
-	   (wt (if (= wt0 0.0) 0.5 (min 1.0 wt0)))
-	   (tab (make-vct dlen))
-	   ;; get initial waveform in "tab" -- here we can introduce 0's to simulate different pick
-	   ;; positions, and so on -- see the CMJ article for numerous extensions.  The normal case
-	   ;; is to load it with white noise (between -1 and 1).
-	   (allp (make-one-zero (* lf (- 1.0 wt)) (* lf wt)))
-	   (feedb (make-one-zero c 1.0)) ;or (feedb (make-one-zero 1.0 c))
-	   (ctr 0))
+  (let* ((vals (tuneIt freq weighting))
+	 (wt0 (car vals))
+	 (c (cadr vals))
+	 (dlen (caddr vals))
+	 (beg (seconds->samples start))
+	 (end (+ beg (seconds->samples dur)))
+	 (lf (if (= lossfact 0.0) 1.0 (min 1.0 lossfact)))
+	 (wt (if (= wt0 0.0) 0.5 (min 1.0 wt0)))
+	 (tab (make-vct dlen))
+	 ;; get initial waveform in "tab" -- here we can introduce 0's to simulate different pick
+	 ;; positions, and so on -- see the CMJ article for numerous extensions.  The normal case
+	 ;; is to load it with white noise (between -1 and 1).
+	 (allp (make-one-zero (* lf (- 1.0 wt)) (* lf wt)))
+	 (feedb (make-one-zero c 1.0)) ;or (feedb (make-one-zero 1.0 c))
+	 (ctr 0))
       
-      (do ((i 0 (1+ i)))
-	  ((= i dlen))
-	(vct-set! tab i (- 1.0 (random 2.0))))
-      (ws-interrupt?)
-      (run 
-       (lambda ()
-	 (do ((i beg (1+ i)))
-	     ((= i end))
-	   (let ((val (vct-ref tab ctr)))	;current output value
-	     (vct-set! tab ctr (* (- 1.0 c) 
-				  (one-zero feedb 
-					    (one-zero allp val))))
-	     (set! ctr (+ ctr 1))
-	     (if (>= ctr dlen) (set! ctr 0))
-	     (outa i (* amp val) *output*))))))))
+    (do ((i 0 (1+ i)))
+	((= i dlen))
+      (vct-set! tab i (- 1.0 (random 2.0))))
+    (ws-interrupt?)
+    (run 
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (let ((val (vct-ref tab ctr)))	;current output value
+	   (vct-set! tab ctr (* (- 1.0 c) 
+				(one-zero feedb 
+					  (one-zero allp val))))
+	   (set! ctr (+ ctr 1))
+	   (if (>= ctr dlen) (set! ctr 0))
+	   (outa i (* amp val) *output*)))))))
 
 
 ;;; -------- mlbvoi
@@ -562,6 +560,7 @@ is a physical model of a flute:
 ;(define abell '(0 0 .1000 1 10 .6000 25 .3000 50 .1500 90 .1000 100 0 ))
 ;(fm-bell 0.0 1.0 220.0 .5 abell fbell 1.0)
 
+
 ;;; -------- FM_INSECT
 (definstrument (fm-insect startime dur frequency amplitude amp-env 
 			  mod-freq mod-skew mod-freq-env mod-index mod-index-env 
@@ -811,6 +810,7 @@ is a physical model of a flute:
 		       (* g2 (env ampenv2) (oscil osc2 (* g3 (oscil osc3))))))
 	       *output*))))))
 
+
 (definstrument (wurley beg dur freq amp)
   ;; from Perry Cook's Wurley.cpp
   (let* ((osc0 (make-oscil freq))
@@ -837,6 +837,7 @@ is a physical model of a flute:
 		    (+ (* g0 (oscil osc0 (* g1 (oscil osc1))))
 		       (* (env resenv) g2 (oscil osc2 (* g3 (env indenv) (oscil osc3))))))
 	       *output*))))))
+
 
 (definstrument (rhodey beg dur freq amp :optional (base .5))
   ;; from Perry Cook's Rhodey.cpp
@@ -889,6 +890,7 @@ is a physical model of a flute:
 		    (* (env ampenv2) g3 (oscil osc3)))
 	       *output*))))))
 
+
 (definstrument (metal beg dur freq amp)
   ;; from Perry Cook's HeavyMtl.cpp
   (let* ((osc0 (make-oscil freq))
@@ -921,11 +923,11 @@ is a physical model of a flute:
 	       *output*))))))
 
 
-(definstrument (drone startime dur frequency amp-1 ampfun synth ampat ampdc amtrev deg dis rvibamt rvibfreq)
+(definstrument (drone startime dur frequency amp ampfun synth ampat ampdc amtrev deg dis rvibamt rvibfreq)
   (let* ((beg (seconds->samples startime))
 	 (end (+ beg (seconds->samples dur)))
 	 (waveform (partials->wave synth))
-	 (amplitude (* amp-1 .25))
+	 (amplitude (* amp .25))
 	 (freq (hz->radians frequency))
 	 (s (make-table-lookup :frequency frequency :wave waveform))
 	 (amp-env (make-env :envelope (stretch-envelope ampfun 25 (* 100 (/ ampat dur)) 75 (- 100 (* 100 (/ ampdc dur))))
@@ -940,6 +942,7 @@ is a physical model of a flute:
 	   ((= i end))
 	 (locsig loc i (* (env amp-env) (table-lookup s (+ (rand ran-vib))))))))))
 
+
 (definstrument (canter beg dur pitch amp-1 deg dis pcrev ampfun ranfun skewfun
 		       skewpc ranpc ranfreq indexfun atdr dcdr
 		       ampfun1 indfun1 fmtfun1
@@ -952,27 +955,26 @@ is a physical model of a flute:
 	 (rangetop 910.0)
 	 (rangebot 400.0)
 	 (k (inexact->exact (floor (* 100 (/ (log (/ pitch rangebot)) (log (/ rangetop rangebot)))))))
-	 (mfq pitch)
 	 (atpt (* 100 (/ atdr dur)))
 	 (dcpt (- 100 (* 100 (/ dcdr dur))))
 	 (lfmt1 (envelope-interp k fmtfun1))
 	 (harm1 (inexact->exact (floor (+ .5 (/ lfmt1 pitch)))))
-	 (dev11 (hz->radians (* (envelope-interp k indfun1) mfq)))
+	 (dev11 (hz->radians (* (envelope-interp k indfun1) pitch)))
 	 (dev01 (* dev11 .5))
 	 (lamp1 (* (envelope-interp k ampfun1) amp (- 1 (abs (- harm1 (/ lfmt1 pitch))))))
 	 (lfmt2 (envelope-interp k fmtfun2))
 	 (harm2 (inexact->exact (floor (+ .5 (/ lfmt2 pitch)))))
-	 (dev12 (hz->radians (* (envelope-interp k indfun2) mfq)))
+	 (dev12 (hz->radians (* (envelope-interp k indfun2) pitch)))
 	 (dev02 (* dev12 .5))
 	 (lamp2 (* (envelope-interp k ampfun2) amp (- 1 (abs (- harm2 (/ lfmt2 pitch))))))
 	 (lfmt3 (envelope-interp k fmtfun3))
 	 (harm3 (inexact->exact (floor (+ .5 (/ lfmt3 pitch)))))
-	 (dev13 (hz->radians (* (envelope-interp k indfun3) mfq)))
+	 (dev13 (hz->radians (* (envelope-interp k indfun3) pitch)))
 	 (dev03 (* dev13 .5))
 	 (lamp3 (* (envelope-interp k ampfun3) amp (- 1 (abs (- harm3 (/ lfmt3 pitch))))))
 	 (lfmt4 (envelope-interp k fmtfun4))
 	 (harm4 (inexact->exact (floor (+ .5 (/ lfmt4 pitch)))))
-	 (dev14 (hz->radians (* (envelope-interp k indfun4) mfq)))
+	 (dev14 (hz->radians (* (envelope-interp k indfun4) pitch)))
 	 (dev04 (* dev14 .5))
 	 (lamp4 (* (envelope-interp k ampfun4) amp (- 1 (abs (- harm4 (/ lfmt4 pitch))))))
 	 (tampfun (make-env :envelope (stretch-envelope ampfun 25 atpt 75 dcpt) :duration dur))
@@ -1001,9 +1003,10 @@ is a physical model of a flute:
 		      (* lamp3 ampval (oscil gen3 (* (+ (* (+ dev03 (* indval dev13)) modval) frqval) harm3)))
 		      (* lamp4 ampval (oscil gen4 (* (+ (* (+ dev04 (* indval dev14)) modval) frqval) harm4)))))))))))
 
+
 ;;; NREV (the most popular Samson box reverb)
 
-(definstrument (nrev :key (reverb-factor 1.09) (lp-coeff 0.7) (volume-1 1.0))
+(definstrument (nrev :key (reverb-factor 1.09) (lp-coeff 0.7) (volume 1.0))
   ;; reverb-factor controls the length of the decay -- it should not exceed (/ 1.0 .823)
   ;; lp-coeff controls the strength of the low pass filter inserted in the feedback loop
   ;; output-scale can be used to boost the reverb output
@@ -1028,8 +1031,7 @@ is a physical model of a flute:
 	(if (even? val) (set! val (1+ val)))
 	(list-set! dly-len i (next-prime val))))
 
-    (let* ((volume volume-1)
-	   (len (+ (mus-srate) (mus-length *reverb*)))
+    (let* ((len (+ (mus-srate) (mus-length *reverb*)))
 	   (comb1 (make-comb (* .822 reverb-factor) (list-ref dly-len 0)))
 	   (comb2 (make-comb (* .802 reverb-factor) (list-ref dly-len 1)))
 	   (comb3 (make-comb (* .773 reverb-factor) (list-ref dly-len 2)))
@@ -1181,6 +1183,7 @@ is a physical model of a flute:
 	   (locsig loc i (* (env amplenv) 
 			    (oscil car (+ fm vib))))))))))
 
+
 (definstrument (jl-reverb :optional (decay 3.0))
   (let* ((allpass1 (make-all-pass -0.700 0.700 2111))
 	 (allpass2 (make-all-pass -0.700 0.700  673))
@@ -1214,6 +1217,7 @@ is a physical model of a flute:
 	   (outa i (delay outdel1 comb-sum) *output*)
 	   (if (> chns 1) (outb i (delay outdel2 comb-sum) *output*))))))))
 
+
 (definstrument (gran-synth start-time duration audio-freq grain-dur grain-interval amp)
   (let* ((beg (seconds->samples start-time))
 	 (end (+ beg (seconds->samples duration)))
@@ -1233,6 +1237,7 @@ is a physical model of a flute:
 	 (outa i (* amp (wave-train grains)) *output*))))))
 	 
 ;;; (with-sound () (gran-synth 0 2 100 .0189 .02 .4))
+
 
 (definstrument (touch-tone start telephone-number)
   (let ((touch-tab-1 '(0 697 697 697 770 770 770 852 852 852 941 941 941))
@@ -1261,6 +1266,7 @@ is a physical model of a flute:
 ;;; (with-sound () (touch-tone 0.0 '(7 2 3 4 9 7 1))
 ;;; I think the dial tone is 350 + 440
 ;;; http://www.hackfaq.org/telephony/telephone-tone-frequencies.shtml
+
 
 (definstrument (spectra start-time duration frequency amplitude
 		         :optional (partials '(1 1 2 0.5))
@@ -1824,11 +1830,10 @@ is a physical model of a flute:
 				 (env ampenv1)))))))))))
 
 
-
 (definstrument (resflt start dur driver 
 	       ranfreq noiamp noifun cosamp cosfreq1 cosfreq0 cosnum
 	       ampcosfun freqcosfun 
-	       frq1 r1 g1-1 frq2 r2 g2-1 frq3 r3 g3-1
+	       frq1 r1 g1 frq2 r2 g2 frq3 r3 g3
 	       :key (degree 0.0)
 		    (distance 1.0)
 		    (reverb-amount 0.005))
@@ -1853,7 +1858,6 @@ is a physical model of a flute:
 	 (f1 (make-two-pole :radius r1 :frequency frq1))
 	 (f2 (make-two-pole :radius r2 :frequency frq2))
 	 (f3 (make-two-pole :radius r3 :frequency frq3))
-	 (g1 g1-1) (g2 g2-1) (g3 g3-1)
 	 (with-noise (= driver 1))
 	 (loc (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
 	 (frqf (if (not with-noise)
@@ -1936,7 +1940,7 @@ is a physical model of a flute:
 
 ;;; spectral modeling (SMS)
 
-(definstrument (pins beg dur file amp-1
+(definstrument (pins beg dur file amp
 		     :key (transposition 1.0) ; this can be used to transpose the sound
 			  (time-scaler 1.0)    ; this can make things happen faster (< 1.0)/slower (> 1.0) in the output
 			  (fftsize 256)        ; should be a power of 2
@@ -1952,7 +1956,6 @@ is a physical model of a flute:
   (let* ((max-peaks-1 max-peaks)
 	 (fftsize-1 fftsize)
 	 (highest-bin-1 highest-bin)
-	 (amp amp-1)
 	 (start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur)))
 	 (fil (make-file->sample file))
@@ -2162,10 +2165,9 @@ is a physical model of a flute:
 	       (outa i (* amp sum) *output*))))))))
 
 
-(definstrument (zc time dur freq amp-1 length1 length2 feedback)
+(definstrument (zc time dur freq amp length1 length2 feedback)
   (let* ((beg (seconds->samples time))
 	 (end (+ beg (seconds->samples dur)))
-	 (amp amp-1)
 	 (s (make-pulse-train :frequency freq))
 	 (d0 (make-comb :size length1 :max-size (1+ (max length1 length2)) :scaler feedback))
 	 (zenv (make-env :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
@@ -2179,13 +2181,12 @@ is a physical model of a flute:
 ;;(with-sound () (zc 0 3 100 .1 20 100 .95) (zc 3.5 3 100 .1 100 20 .95))
 
 
-(definstrument (zn time dur freq amp-1 length1 length2 feedforward)
+(definstrument (zn time dur freq amp length1 length2 feedforward)
   ;; notches are spaced at srate/len, feedforward sets depth thereof
   ;; so sweep of len from 20 to 100 sweeps the notches down from 1000 Hz to ca 200 Hz 
   ;; so we hear our downward glissando beneath the pulses.
   (let* ((beg (seconds->samples time))
 	 (end (+ beg (seconds->samples dur)))
-	 (amp amp-1)
 	 (s (make-pulse-train :frequency freq))
 	 (d0 (make-notch :size length1 :max-size (1+ (max length1 length2)) :scaler feedforward))
 	 (zenv (make-env :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
@@ -2199,10 +2200,9 @@ is a physical model of a flute:
 ;;(with-sound () (zn 0 1 100 .1 20 100 .995) (zn 1.5 1 100 .1 100 20 .995))
 
 
-(definstrument (za time dur freq amp-1 length1 length2 feedback feedforward)
+(definstrument (za time dur freq amp length1 length2 feedback feedforward)
   (let* ((beg (seconds->samples time))
 	 (end (+ beg (seconds->samples dur)))
-	 (amp amp-1)
 	 (s (make-pulse-train :frequency freq))
 	 (d0 (make-all-pass feedback feedforward :size length1 :max-size (1+ (max length1 length2))))
 	 (zenv (make-env :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
@@ -2216,7 +2216,7 @@ is a physical model of a flute:
 ;;(with-sound () (za 0 1 100 .1 20 100 .95 .95) (za 1.5 1 100 .1 100 20 .95 .95))
 
 
-(define* (clm-expsrc beg dur input-file exp-ratio src-ratio amp-1 :optional rev start-in-file)
+(define* (clm-expsrc beg dur input-file exp-ratio src-ratio amp :optional rev start-in-file)
   (let* ((st (seconds->samples beg))
 	 (stf (inexact->exact (floor (* (or start-in-file 0) (mus-sound-srate input-file)))))
 	 (fdA (make-readin input-file :channel 0 :start stf))
@@ -2228,7 +2228,6 @@ is a physical model of a flute:
 	 (srcB (and two-chans (make-src :srate src-ratio)))
 	 (revit (and *reverb* rev))
 	 (rev-amp (if revit (if two-chans (* rev .5) rev) 0.0))
-	 (amp amp-1)
 	 (nd (+ st (seconds->samples dur))))
     (run
      (lambda ()

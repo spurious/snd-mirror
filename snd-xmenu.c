@@ -2,6 +2,8 @@
 #include "snd-menu.h"
 #include <X11/cursorfont.h>
 
+/* PERHAPS: open recent, revert|save|undo|redo all (update??)
+ */
 
 void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, label);}
 

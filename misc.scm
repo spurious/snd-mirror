@@ -138,7 +138,7 @@
 	;; open dialog to get new name, save-as that name, open
 	(if (not rename-dialog)
 	    ;; make a standard dialog
-	    (let* ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+	    (let* ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
 		   (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
 		   (xok (XmStringCreate "DoIt" XmFONTLIST_DEFAULT_TAG))
 		   (titlestr (XmStringCreate "Rename" XmFONTLIST_DEFAULT_TAG))

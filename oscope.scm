@@ -123,7 +123,7 @@
 (if (provided? 'snd-motif)
     ;; -------- motif case --------
     (define (make-oscope)
-      (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+      (let ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
 	    (titlestr (XmStringCreate "Oscilloscope" XmFONTLIST_DEFAULT_TAG)))
 	(set! oscope-dialog (XmCreateTemplateDialog (cadr (main-widgets)) "oscilloscope"
 						    (list XmNokLabelString       xdismiss
@@ -203,7 +203,7 @@
 
     ;; -------- gtk case --------
     (define (make-oscope)
-      (let ((dismiss-button (gtk_button_new_with_label "Dismiss")))
+      (let ((dismiss-button (gtk_button_new_with_label "Go Away")))
 	(gtk_widget_set_name dismiss-button "quit_button")
 	(set! oscope-dialog (gtk_dialog_new))
 	(gtk_window_set_title (GTK_WINDOW oscope-dialog) "Oscilloscope")

@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
 ;;;  test 0: constants                          [538]
-;;;  test 1: defaults                           [1102]
-;;;  test 2: headers                            [1302]
-;;;  test 3: variables                          [1618]
-;;;  test 4: sndlib                             [2265]
-;;;  test 5: simple overall checks              [4791]
-;;;  test 6: vcts                               [13744]
-;;;  test 7: colors                             [14022]
-;;;  test 8: clm                                [14512]
-;;;  test 9: mix                                [25156]
-;;;  test 10: marks                             [27373]
-;;;  test 11: dialogs                           [28334]
-;;;  test 12: extensions                        [28579]
-;;;  test 13: menus, edit lists, hooks, etc     [28850]
-;;;  test 14: all together now                  [30556]
-;;;  test 15: chan-local vars                   [31589]
-;;;  test 16: regularized funcs                 [33201]
-;;;  test 17: dialogs and graphics              [38192]
-;;;  test 18: enved                             [38282]
-;;;  test 19: save and restore                  [38301]
-;;;  test 20: transforms                        [40086]
-;;;  test 21: new stuff                         [42055]
-;;;  test 22: run                               [44046]
-;;;  test 23: with-sound                        [49749]
-;;;  test 24: user-interface                    [52231]
-;;;  test 25: X/Xt/Xm                           [55637]
-;;;  test 26: Gtk                               [60233]
-;;;  test 27: GL                                [64085]
-;;;  test 28: errors                            [64209]
-;;;  test all done                              [66494]
-;;;  test the end                               [66730]
+;;;  test 1: defaults                           [1103]
+;;;  test 2: headers                            [1303]
+;;;  test 3: variables                          [1619]
+;;;  test 4: sndlib                             [2266]
+;;;  test 5: simple overall checks              [4792]
+;;;  test 6: vcts                               [13749]
+;;;  test 7: colors                             [14027]
+;;;  test 8: clm                                [14517]
+;;;  test 9: mix                                [25191]
+;;;  test 10: marks                             [27408]
+;;;  test 11: dialogs                           [28369]
+;;;  test 12: extensions                        [28614]
+;;;  test 13: menus, edit lists, hooks, etc     [28885]
+;;;  test 14: all together now                  [30591]
+;;;  test 15: chan-local vars                   [31624]
+;;;  test 16: regularized funcs                 [33236]
+;;;  test 17: dialogs and graphics              [38227]
+;;;  test 18: enved                             [38317]
+;;;  test 19: save and restore                  [38336]
+;;;  test 20: transforms                        [40121]
+;;;  test 21: new stuff                         [42090]
+;;;  test 22: run                               [44081]
+;;;  test 23: with-sound                        [49784]
+;;;  test 24: user-interface                    [52269]
+;;;  test 25: X/Xt/Xm                           [55675]
+;;;  test 26: Gtk                               [60271]
+;;;  test 27: GL                                [64123]
+;;;  test 28: errors                            [64247]
+;;;  test all done                              [66532]
+;;;  test the end                               [66768]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -4962,9 +4962,8 @@
     (region->vct 0 len r c))
   
   ;; extensions.scm (commented out)
-  (define* (delay-channel amount :optional (beg 0) dur snd chn edpos)
-    (let ((dly amount)
-	  (cur-edpos (if (or (not edpos)
+  (define* (delay-channel dly :optional (beg 0) dur snd chn edpos)
+    (let ((cur-edpos (if (or (not edpos)
 			     (= edpos current-edit-position))
 			 (edit-position snd chn)
 			 edpos)))
@@ -25468,6 +25467,7 @@ EDITS: 2
 	(do ((test-ctr 0 (1+ test-ctr)))
 	    ((= test-ctr tests))
 
+	  (if (odd? test-ctr) (set! (run-safety) 1) (set! (run-safety) 0))
 
 	  (let ((ind (new-sound "test.snd" :size 10)))
 	    (let ((v (vct .1 .2 .3)))
@@ -30728,6 +30728,7 @@ EDITS: 2
 	       (sounds))))
       (clear-sincs)      
       (log-mem test-ctr)
+      (if (odd? test-ctr) (set! (run-safety) 1) (set! (run-safety) 0))
       
       (if (and (> test-ctr 0) (< test-ctr 10)) ; this creates too many leftover save-state sound files
 	  (let ((files (length (sounds))))
@@ -44122,7 +44123,7 @@ EDITS: 1
       ho)))
 
 (def-clm-struct st3 one two)
-(define svar (make-st3 :one 1 :two 2))
+(define svar (make-st3 :one 1.0 :two 2.0))
 (define svar1 #f)
 (define bst3 #f)
 (def-clm-struct st4 (one 1) (two 2.0))
@@ -44370,7 +44371,7 @@ EDITS: 1
 	(set! l0111 (list 0 1 1 1))
 	(set! v-var (make-vct 8))
 	(set! ivect (make-vector 3 1))
-	(set! svar (make-st3 :one 1 :two 2))
+	(set! svar (make-st3 :one 1.0 :two 2.0))
 	(set! svar1 #f)
 	(set! bst3 #f)
 	(set! bst4 #f)
@@ -46642,25 +46643,11 @@ EDITS: 1
 		     0.0))
 	      0.4)
 	
-	(let ((tst 0))
+	(let ((tst 0.0))
 	  (run (lambda () (set! tst (st3-one svar))))
 	  (if (not (= tst 1)) (snd-display ";run st3-one: ~A ~A" tst (st3-one svar)))
-	  (itst '(st3-two svar) 2)
 	  (run (lambda () (set! bst3 (st3? svar))))
 	  (if (not bst3) (snd-display ";st3? ~A" (st3? svar))))
-	
-	(set! svar (make-st3 :one 1.5 :two "hi"))
-	(let ((tst 0.0))
-	  (run (lambda () (set! tst (st3-one svar))))
-	  (if (fneq tst 1.5) (snd-display ";run st3-one (1.5): ~A ~A" tst (st3-one svar)))
-	  (stst '(st3-two svar) "hi"))
-	
-	(set! svar (make-st3 :one (make-vct 3 1.0) :two (make-vector 3 2.0)))
-	(let ((tst 0.0))
-	  (run (lambda () (set! tst (vct-ref (st3-one svar) 1))))
-	  (if (fneq tst 1.0) (snd-display ";run st3-one (1.0 vct): ~A ~A" tst (st3-one svar)))
-	  (run (lambda () (set! tst (vector-ref (st3-two svar) 1)))) ; not optimized
-	  (if (fneq tst 2.0) (snd-display ";run st3-one (2.0 vector): ~A ~A" tst (st3-two svar))))
 	
 	(set! svar (make-st4))
 	(let ((tst 0))
@@ -46670,74 +46657,29 @@ EDITS: 1
 	  (run (lambda () (set! bst4 (st4? svar))))
 	  (if (not bst4) (snd-display ";st4? ~A ~A" svar (st4? svar))))
 	
-	(set! svar (make-st4 :one 1.5))
-	(let ((tst 0.0))
-	  (run (lambda () (set! tst (st4-one svar))))
-	  (if (fneq tst 1.5) (snd-display ";run st4-one (1.5): ~A ~A" tst (st4-one svar)))
-	  (ftst '(st4-two svar) 2.0))
-	
-	(set! svar (make-st3 :one 1 :two 2))
-	(set! svar1 (make-st3 :one 2 :two 3))
-	(let ((tst 0)
-	      (tst1 0)
-	      (tst2 0)
-	      (tst3 0))
+	(set! svar (make-st3 :one 1.0 :two 2.0))
+	(set! svar1 (make-st3 :one 2.0 :two 3.0))
+	(let ((tst 0.0)
+	      (tst1 0.0)
+	      (tst2 0.0)
+	      (tst3 0.0))
 	  (run (lambda () 
 		 (if (not (c-g?)) (set! tst (st3-two svar))) ;2
 		 (set! tst1 (st3-two svar1)) ;3
 		 (set! (st3-two svar) (st3-two svar1))
 		 (set! tst2 (st3-two svar)) ;3
-		 (set! (st3-one svar1) 123)
+		 (set! (st3-one svar1) 123.0)
 		 (set! tst3 (st3-one svar1)))) ;123
-	  (if (not (= tst 2)) (snd-display ";run st3-two (2): ~A ~A" tst (st3-two svar)))
-	  (if (not (= tst1 3)) (snd-display ";run st3-two (3): ~A ~A" tst (st3-two svar1)))
-	  (if (not (= tst2 3)) (snd-display ";run st3-two (2->3): ~A ~A" tst (st3-two svar)))
-	  (if (not (= tst3 123)) (snd-display ";run st3-one (123): ~A ~A" tst (st3-one svar1))))
+	  (if (fneq tst 2) (snd-display ";run st3-two (2): ~A ~A" tst (st3-two svar)))
+	  (if (fneq tst1 3) (snd-display ";run st3-two (3): ~A ~A" tst (st3-two svar1)))
+	  (if (fneq tst2 3) (snd-display ";run st3-two (2->3): ~A ~A" tst (st3-two svar)))
+	  (if (fneq tst3 123) (snd-display ";run st3-one (123): ~A ~A" tst (st3-one svar1))))
 	
 	;; restore tests
-	(if (not (= (st3-one svar) 1)) (snd-display ";restore st3-one (1): ~A" (st3-one svar)))
-	(if (not (= (st3-one svar1) 123)) (snd-display ";restore st3-one (123): ~A" (st3-one svar1)))
-	(if (not (= (st3-two svar) 3)) (snd-display ";restore st3-two (2->3): ~A" (st3-two svar)))
-	(if (not (= (st3-two svar1) 3)) (snd-display ";restore st3-two (3): ~A" (st3-two svar1)))
-	
-	(set! svar (make-st3 :one 1.5 :two "hi"))
-	(set! svar1 (make-st3 :one 2 :two 3))
-	(let ((tst 0.0)
-	      (tst1 0)
-	      (tst2 "asdf")
-	      (tst3 0))
-	  (run (lambda () 
-		 (set! tst (st3-one svar)) ;1.5
-		 (set! tst1 (st3-two svar1)) ;3
-		 (set! (st3-two svar) (number->string (st3-two svar1))) ;"3"
-		 (set! tst2 (st3-two svar)) ;"3"
-		 (set! (st3-one svar1) 123)
-		 (set! tst3 (st3-one svar1)))) ;123
-	  (if (fneq tst 1.5) (snd-display ";run st3-one (1.5): ~A ~A" tst (st3-two svar)))
-	  (if (not (= tst1 3)) (snd-display ";run st3-two (3, a): ~A ~A" tst (st3-two svar1)))
-	  (if (not (string=? tst2 "3")) (snd-display ";run st3-two (\"3\"): ~A ~A" tst (st3-two svar)))
-	  (if (not (= tst3 123)) (snd-display ";run st3-one (123): ~A ~A" tst (st3-one svar1))))
-	
-	;; restore tests
-	(if (fneq (st3-one svar) 1.5) (snd-display ";restore st3-one (1.5): ~A" (st3-one svar)))
-	(if (not (= (st3-one svar1) 123)) (snd-display ";restore st3-one (123): ~A" (st3-one svar1)))
-	(if (not (string=? (st3-two svar) "3")) (snd-display ";restore st3-two (\"3\"): ~A" (st3-two svar)))
-	(if (not (= (st3-two svar1) 3)) (snd-display ";restore st3-two (3): ~A" (st3-two svar1)))
-	
-	(set! svar (make-st3 :one #\c :two #f))
-	(let ((tst #f)
-	      (tst1 #\z))
-	  (run (lambda () 
-		 (set! tst1 (st3-one svar)) ;#\c
-		 (set! tst (not (st3-two svar))) ;#t
-		 (set! (st3-one svar) #\f)
-		 (set! (st3-two svar) #t)))
-	  (if (not (char=? tst1 #\c)) (snd-display ";run st3-one (#c): ~A ~A" tst1 (st3-one svar)))
-	  (if (not tst) (snd-display ";run st3-two (#t): ~A ~A" tst (st3-two svar))))
-	
-	;; restore tests
-	(if (not (char=? (st3-one svar) #\f)) (snd-display ";restore st3-one (#\f): ~A" (st3-one svar))) 
-	(if (not (st3-two svar)) (snd-display ";restore st3-two (#t): ~A" (st3-two svar))) 
+	(if (fneq (st3-one svar) 1.0) (snd-display ";restore st3-one (1): ~A" (st3-one svar)))
+	(if (fneq (st3-one svar1) 123.0) (snd-display ";restore st3-one (123): ~A" (st3-one svar1)))
+	(if (fneq (st3-two svar) 3.0) (snd-display ";restore st3-two (2->3): ~A" (st3-two svar)))
+	(if (fneq (st3-two svar1) 3.0) (snd-display ";restore st3-two (3): ~A" (st3-two svar1)))
 	
 	(let ((val (run-eval '(lambda (y) (declare (y hiho1)) (hiho1-ii y)) hi1)))
 	  (if (not (= val 3)) (snd-display ";typed hiho1-ii: ~A" val)))
@@ -50087,13 +50029,13 @@ EDITS: 1
   (if (provided? 'run)
       (begin
 	
-	
 	(set! (optimization) max-optimization)
 	(dismiss-all-dialogs)
 	
 	(do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) 
 	  (log-mem clmtest)
 	  
+	  (if (odd? clmtest) (set! (run-safety) 1) (set! (run-safety) 0))
 	  (set! (mus-srate) 22050)
 	  (set! (default-output-srate) 22050)
 	  
@@ -50301,10 +50243,10 @@ EDITS: 1
 	    (if (not (= (st1-one var) 321)) (snd-display ";st1-one (321): ~A" (st1-one var)))
 	    (if (not (string=? (st1-two var) "hiho")) (snd-display ";st1-two (hiho): ~A" (st1-two var)))
 	    (set! var (make-st1))
-	    (if (not (eq? (st1-one var) #f)) (snd-display ";st1-one #f: ~A" (st1-one var)))
-	    (if (st1-two var) (snd-display ";st1-two #f: ~A" (st1-two var)))
+	    (if (fneq (st1-one var) 0.0) (snd-display ";st1-one #f: ~A" (st1-one var)))
+	    (if (fneq (st1-two var) 0.0) (snd-display ";st1-two #f: ~A" (st1-two var)))
 	    (set! var (make-st1 :two 3))
-	    (if (not (eq? (st1-one var) #f)) (snd-display ";st1-one #f (def): ~A" (st1-one var)))  
+	    (if (fneq (st1-one var) 0.0) (snd-display ";st1-one #f (def): ~A" (st1-one var)))  
 	    (if (not (= (st1-two var) 3)) (snd-display ";st1-two (3): ~A" (st1-two var))))
 	  
 	  (let ((var (make-st2 :one 1 :two 2)))

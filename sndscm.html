@@ -9941,6 +9941,95 @@ it in conjunction with mixer to scale and envelope all the various ins and outs.
 
 
 <br>
+<table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>def-clm-struct</h4></td></tr></table>
+
+<p><a name="def-clm-struct">def-clm-struct</a> is modelled after Common Lisp's defstruct. It sets up
+a structure, an object with named slots that you can get and set, and ties it into the
+optimizer so that you can use the structures without any speed penalty.  It also defines a "make"
+function to create an instance of the structure, and a predicate for it.  The original impetus for
+this came from user-defined generators in CLM.  We want to package together all the disparate
+variables that make up a generator, just as in function groups such as 
+<a href="sndclm.html#make-oscil">make-oscil</a>, <a href="sndclm.html#oscil">oscil</a>, and <a href="sndclm.html#oscil?">oscil?</a>.
+So, as a first example, here is a way to define your own oscil using def-clm-struct (oscil is so simple that
+you could also use a vct -- see <a href="sndclm.html#make-my-oscil">make-my-oscil</a> in sndclm.html).
+</p>
+
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+(<em class=red>def-clm-struct</em> osc freq phase)
+
+;;; this defines a struct named "osc" with the (float) fields freq and phase.
+;;;   make-osc creates an osc, and osc? returns #t if passed an osc.
+;;;   the fields are accessed via osc-freq and osc-phase.
+
+(define (osc gen fm)                ; our new generator
+  (let ((result (sin (<em class=red>osc-phase</em> gen))))
+    (set! (<em class=red>osc-phase</em> gen) (+ (<em class=red>osc-phase</em> gen) (<em class=red>osc-freq</em> gen) fm))
+    result))
+
+;;; now we can use the osc generator in an instrument:
+
+(<a class=quiet href="#definstrument">definstrument</a> (osc-fm beg dur freq amp mc-ratio fm-index)
+  (let* ((start (<a class=quiet href="sndclm.html#secondstosamples">seconds-&gt;samples</a> beg))
+	 (end (+ start (<a class=quiet href="sndclm.html#secondstosamples">seconds-&gt;samples</a> dur)))
+	 (carrier (<em class=red>make-osc</em> (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> freq)))
+	 (modulator (<em class=red>make-osc</em> (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> (* mc-ratio freq))))
+	 (index (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> (* freq mc-ratio fm-index))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (<a class=quiet href="sndclm.html#outa">outa</a> i (* amp (<em class=red>osc</em> carrier (* index (<em class=red>osc</em> modulator 0.0)))) *output*))))))
+
+(with-sound () (osc-fm 0 1 440 .1 1 1))
+</pre></td></tr></table>
+
+<p>
+The first argument to def-clm-struct is the new struct's name, and the rest are the fields of that struct.
+Each field has a name, a type, and an optional initial value. The type defaults to float, and
+the initial value to 0.0, so our declaration above is the same as any of these:
+</p>
+
+<pre>
+    (def-clm-struct osc freq (phase 0.0))
+    (def-clm-struct osc (freq 0.0) (phase 0.0))
+    (def-clm-struct osc (freq 0.0 :type float) (phase 0.0 :type float))
+</pre>
+
+<p>and so on. The "make" function (make-osc in our example) is a <a href="sndclm.html#optional-key">def-optkey-fun</a> with
+the field names and types as the optional keys.  So make-osc above is declared (by the
+def-clm-struct macro) as:
+</p>
+
+<pre>
+    (def-optkey-fun (make-osc (freq 0.0) (phase 0.0)) ...)
+</pre>
+
+<p>which we can invoke in various ways, e.g.:
+</p>
+
+<pre>
+    (make-osc 440)
+    (make-osc :phase (/ pi 2) :freq 440)
+    (make-osc 440 :phase 0.0)
+</pre>
+
+<p>
+The currently implemented field types are:
+</p>
+
+<pre>
+    int float boolean char string list pair symbol keyword vct sample-reader mix-sample-reader 
+    sound-data clm float-vector int-vector vct-vector clm-struct-vector clm-vector 
+</pre>
+
+
+
+
+<p>
+There are several examples in clm-ins.scm, dsp.scm, moog.scm, prc95.scm, and various other files.
+</p>
+
+<br>
 <A NAME="wsdebug"></a><table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>debugging help in with-sound</h4></td></tr></table>
 
 <!-- INDEX wsdebug:Debugging (notelists) -->
@@ -9974,10 +10063,6 @@ The <b>ws-go</b> 'returned-value' is the value to return from the original call 
 
 <br>
 <table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>other stuff associated with with-sound</h4></td></tr></table>
-
-<p><a name="def-clm-struct">def-clm-struct</a> is syntactically like defstruct, but sets up
-the struct field names for the run macro.  There are several examples in clm-ins.scm and prc95.scm.
-</p>
 
 <p>Toward the end of ws.scm is an example, <A NAME="withmarkedsound">with-marked-sound</A>, that is just
 like with-sound except that it adds a mark at the start of each note in the output

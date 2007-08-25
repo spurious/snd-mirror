@@ -644,7 +644,7 @@ Reverb-feedback sets the scaler on the feedback.
      hidden-controls))
 
   (if (not hidden-controls-dialog)
-      (let ((dismiss-button (gtk_button_new_with_label "Dismiss"))
+      (let ((dismiss-button (gtk_button_new_with_label "Go Away"))
 	    (help-button (gtk_button_new_with_label "Help"))
 	    (reset-button (gtk_button_new_with_label "Reset")))
 	(gtk_widget_set_name dismiss-button "quit_button")
@@ -1189,7 +1189,7 @@ Reverb-feedback sets the scaler on the feedback.
 (define variables-pages '())
 
 (define (make-variables-dialog)
-  (let ((dismiss-button (gtk_button_new_with_label "Dismiss")))
+  (let ((dismiss-button (gtk_button_new_with_label "Go Away")))
     (gtk_widget_set_name dismiss-button "quit_button")
     (set! variables-dialog (gtk_dialog_new))
     (gtk_window_set_title (GTK_WINDOW variables-dialog) "Variables")
@@ -1323,7 +1323,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 (define (make-font-selector-dialog)
   (if (not font-selector-dialog)
-      (let ((dismiss-button (gtk_button_new_with_label "Dismiss"))
+      (let ((dismiss-button (gtk_button_new_with_label "Go Away"))
 	    (help-button (gtk_button_new_with_label "Help")))
 	(gtk_widget_set_name dismiss-button "quit_button")
 	(gtk_widget_set_name help-button "help_button")
@@ -1402,7 +1402,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 (define (make-color-selector-dialog)
   (if (not color-selector-dialog)
-      (let ((dismiss-button (gtk_button_new_with_label "Dismiss"))
+      (let ((dismiss-button (gtk_button_new_with_label "Go Away"))
 	    (help-button (gtk_button_new_with_label "Help")))
 	(gtk_widget_set_name dismiss-button "quit_button")
 	(gtk_widget_set_name help-button "help_button")

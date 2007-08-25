@@ -19,12 +19,11 @@
 (provide 'snd-singer.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
-(definstrument (singer beg amp-1 data)
+(definstrument (singer beg amp data)
   ;; data is a list of lists very similar to the sequence of synthesize calls in Perry's original implementation.
   ;;    Each imbedded list has the form: dur shape glot pitch glotamp noiseamps vibramt.
   ;;    See below for examples.
   (let* ((setup (car data))
-	 (amp amp-1)
 	 (durs (map car data))
 	 (dur (apply + durs))
 	 (begs (let ((bg beg))

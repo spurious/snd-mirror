@@ -652,7 +652,7 @@ using the granulate generator to fix up the selection duration (this still is no
       
       (define (create-loop-dialog)
 	(if (not (Widget? loop-dialog))
-	    (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+	    (let ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
 		  (xsave (XmStringCreate "Save" XmFONTLIST_DEFAULT_TAG))
 		  (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
 		  (titlestr (XmStringCreate "Loop Points" XmFONTLIST_DEFAULT_TAG)))

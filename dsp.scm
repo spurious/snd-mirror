@@ -219,10 +219,9 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 ;;; -------- "frequency division" -- an effect from sed_sed@my-dejanews.com
 
-(define* (freqdiv n1 :optional snd chn)
+(define* (freqdiv n :optional snd chn)
   "(freqdiv n) repeats each nth sample n times (clobbering the intermediate samples): (freqdiv 8)"
   (let ((div 0)
-	(n n1) ; for run
 	(curval 0.0))
     (map-channel (lambda (val)
 		   (if (= div 0)
@@ -239,12 +238,11 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 ;;; a more extreme effect is "saturation":
 ;;;   (map-channel (lambda (val) (if (< (abs val) .1) val (if (>= val 0.0) 0.25 -0.25))))
 
-(define* (adsat usize :optional beg dur snd chn)
+(define* (adsat size :optional beg dur snd chn)
   "(adsat size) is an 'adaptive saturation' sound effect"
   (let* ((mn 0.0)
 	 (mx 0.0)
 	 (n 0)
-	 (size usize) ; for run
 	 (vals (make-vct size)))
     (map-channel (lambda (val)
 		   (if (= n size)
@@ -1543,10 +1541,9 @@ the era when computers were human beings"
   "(channel-norm :optional snd chn) returns the norm of the samples in the given channel: sqrt(<f,f>)"
   (sqrt (channel-total-energy snd chn)))
 
-(define* (channel-lp u-p :optional snd chn)
+(define* (channel-lp p :optional snd chn)
   "(channel-lp p :optional snd chn) returns the Lp norm of the samples in the given channel"
   (let ((sum 0.0)
-	(p u-p) ; for the optimizer's benefit -- it can't find define* args
 	(N (frames snd chn)))
     (scan-channel (lambda (y) (set! sum (+ sum (expt (abs y) p))) #f) 0 N snd chn)
     (expt sum (/ 1.0 p))))
@@ -1641,9 +1638,8 @@ shift the given channel in pitch without changing its length.  The higher 'order
   "(hz->2pi freq) is like hz->radians but uses the current sound's srate, not mus-srate"
   (/ (* 2 pi freq) (srate))) 
 
-(define* (ssb-bank old-freq new-freq pairs-1 :optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
-  (let* ((pairs pairs-1) ; for run's benefit
-	 (ssbs (make-vector pairs))
+(define* (ssb-bank old-freq new-freq pairs :optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
+  (let* ((ssbs (make-vector pairs))
 	 (bands (make-vector pairs))
 	 (factor (/ (- new-freq old-freq) old-freq))
 	 (mx (maxamp)))
@@ -1670,13 +1666,12 @@ shift the given channel in pitch without changing its length.  The higher 'order
 	      sum))
 	  beg dur snd chn edpos)
 	 (scale-channel (/ mx nmx) beg dur snd chn))) ; not edpos here -- we're scaling the new stuff
-     (format #f "ssb-bank ~A ~A ~A ~A ~A ~A ~A" old-freq new-freq pairs-1 order bw beg dur))))
+     (format #f "ssb-bank ~A ~A ~A ~A ~A ~A ~A" old-freq new-freq pairs order bw beg dur))))
 
-(define* (ssb-bank-env old-freq new-freq freq-env pairs-1 :optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
+(define* (ssb-bank-env old-freq new-freq freq-env pairs :optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
   ;; this version adds a frequency envelope
   ;; (ssb-bank-env 557 880 '(0 0 1 100.0) 7)
-  (let* ((pairs pairs-1) ; for run's benefit
-	 (ssbs (make-vector pairs))
+  (let* ((ssbs (make-vector pairs))
 	 (bands (make-vector pairs))
 	 (factor (/ (- new-freq old-freq) old-freq))
 	 (frenvs (make-vector pairs))
@@ -1708,7 +1703,7 @@ shift the given channel in pitch without changing its length.  The higher 'order
 	      sum))
 	  beg dur snd chn edpos)
 	 (scale-channel (/ mx nmx) beg dur snd chn)))
-     (format #f "ssb-bank-env ~A ~A '~A ~A ~A ~A ~A ~A" old-freq new-freq freq-env pairs-1 order bw beg dur))))
+     (format #f "ssb-bank-env ~A ~A '~A ~A ~A ~A ~A ~A" old-freq new-freq freq-env pairs order bw beg dur))))
 
 #|
 (define* (repitch-sound old-freq new-freq)
@@ -2120,11 +2115,10 @@ a running window of the last 'size' inputs, returning the euclidean length of th
 ;;; harmonicizer (each harmonic is split into a set of harmonics via Chebyshev polynomials)
 ;;;   obviously very similar to ssb-bank above, but splits harmonics individually, rather than pitch-shifting them
 
-(define* (harmonicizer freq coeffs pairs-1 :optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
+(define* (harmonicizer freq coeffs pairs :optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
   "(harmonicizer freq coeffs pairs (order 40) (bw 50.0) (beg 0) dur snd chn edpos) splits out each harmonic \
 and replaces it with the spectrum given in coeffs"
-  (let* ((pairs pairs-1) ; for run's benefit
-	 (bands (make-vector pairs))
+  (let* ((bands (make-vector pairs))
 	 (pcoeffs (partials->polynomial coeffs))
 	 (avgs (make-vector pairs))
 	 (peaks (make-vector pairs))
@@ -2169,13 +2163,12 @@ and replaces it with the spectrum given in coeffs"
 ;;;
 ;;; linear sampling rate conversion
 
-(define* (linear-src-channel srinc :optional snd chn)
+(define* (linear-src-channel sr :optional snd chn)
   "(linear-src-channel sr snd chn performs sampling rate conversion using linear interpolation."
   (let* ((rd (make-sample-reader 0 snd chn))
 	 (last (rd))
 	 (next (rd))
 	 (intrp 0.0)
-	 (sr srinc)
 	 (tempfile 
 	  (with-sound (:output (snd-tempnam) :srate (srate snd) :to-snd #f)
 	    (run (lambda ()

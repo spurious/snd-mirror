@@ -729,7 +729,7 @@ snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr)
   /*   when the cursor is on the final sample, this causes cross-fragment ambiguity as to the length of a trailing insertion */
   /*   C > (make-region 1000 2000) (insert-region (cursor)) C-v hits this empty slot and gets confused about the previously final sample value */
   memcpy((void *)(sf->buffered_data), (void *)data, len * sizeof(mus_sample_t));
-  sf->buffered_data[len] = 0.0;
+  sf->buffered_data[len] = MUS_SAMPLE_0;
   sf->edit_ctr = ctr;
   sf->copy = false;
   sf->inuse = false;

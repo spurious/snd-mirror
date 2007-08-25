@@ -2137,10 +2137,9 @@
 	 (set! y (+ x (* index (sin y))))
 	 (outa i (* amp (sin y)) *output*))))))
 
-(define* (fmdoc-vox beg dur freq1 amp :optional (indexes '(.005 .01 .02)) (formant-amps '(.86 .13 .01)))
+(define* (fmdoc-vox beg dur freq amp :optional (indexes '(.005 .01 .02)) (formant-amps '(.86 .13 .01)))
   (let* ((start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur)))
-	 (freq freq1)
 	 (car-os (make-oscil 0))
          (evens (make-vector 3))
          (odds (make-vector 3))
@@ -2523,10 +2522,9 @@
 	 (outa i (ssb-am gen (readin rd)) *output*))))))
 
 (definstrument (sndclmdoc-repitch beg dur sound old-freq new-freq 
-	         :optional (amp 1.0) (bands 10) (order 40) (bw 50.0))
+	         :optional (amp 1.0) (pairs 10) (order 40) (bw 50.0))
   (let* ((start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur)))
-	 (pairs bands)
 	 (ssbs (make-vector pairs))
 	 (bands (make-vector pairs))
 	 (factor (/ (- new-freq old-freq) old-freq))

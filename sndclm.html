@@ -458,7 +458,7 @@ is the word "definstrument":
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(definstrument (simp beg dur freq amp envelope)
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (simp beg dur freq amp envelope)
   (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a> freq))
          (<em class=red>amp-env</em> (<a class=quiet href="#make-env">make-env</a> envelope :duration dur :scaler amp))
 	 (start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
@@ -504,7 +504,7 @@ as the generator object:
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(define (make-my-oscil frequency)       ; we want our own oscil!
+(define (<A NAME="make-my-oscil">make-my-oscil</A> frequency)       ; we want our own oscil!
   (vct 0.0 (hz-&gt;radians frequency)))    ; current phase and frequency-based phase increment
 
 (define (my-oscil gen fm)               ; the corresponding generator
@@ -524,7 +524,8 @@ as the generator object:
 </pre>
 </td></tr></table>
 
-<p>There are many more such generators scattered around the Snd package. 
+<p>There are many more such generators scattered around the Snd package. For more sophisticated situations,
+you can use <a href="sndscm.html#def-clm-struct">def-clm-struct</a>.
 </p>
 <br><br>
 
@@ -771,12 +772,14 @@ For a sine-bank example, see pvoc.scm.
 To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
 </p>
 
+<!--
 <p>Many of the generators share the notion of a current phase, a saved phase increment (frequency), and
 on-going optional modulation.  In the most logical of all worlds, we'd split that out as a separate
 "generator", then inherit it in oscil and elsewhere.  This generator would also simplify many
 user-defined generators (such as the various sums under <a href="#sum-of-sines">sum-of-sines</a>).
 Should it be called "phaser"?  
 </p>
+-->
 
 <br><br>
 
@@ -1083,7 +1086,7 @@ modulation deviation in samples:
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(definstrument (fm-table file start dur amp read-speed modulator-freq index-in-samples)
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (fm-table file start dur amp read-speed modulator-freq index-in-samples)
   (let* ((beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start))
 	 (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (table-length (<a class=quiet href="extsnd.html#mussoundframes">mus-sound-frames</a> file))
@@ -1253,7 +1256,7 @@ technique.  Here is a simplified example:
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(definstrument (pqw start dur spacing carrier partials)
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (pqw start dur spacing carrier partials)
   (let* ((spacing-cos (<a class=quiet href="#make-oscil">make-oscil</a> spacing (/ pi 2.0)))
 	 (spacing-sin (<a class=quiet href="#make-oscil">make-oscil</a> spacing))
 	 (carrier-cos (<a class=quiet href="#make-oscil">make-oscil</a> carrier (/ pi 2.0)))
@@ -1302,7 +1305,7 @@ we absolutely insist on using waveshaping, we could do it this way:
 </p>
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(definstrument (bl-saw start dur frequency order)
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (bl-saw start dur frequency order)
   (let* ((norm (if (= order 1) 1.0     ; these peak amps were determined empirically
                  (if (= order 2) 1.3   ;   actual limit is supposed to be pi/2 (G&amp;R 1.441)
                    (if (&lt; order 9) 1.7 ;   but Gibbs phenomenon pushes it to 1.851
@@ -1953,7 +1956,7 @@ phase-vocoder or granular synthesis kludges.
 
 <table border=0 bgcolor="#fafafa" hspace=40 vspace=10><tr><td>
 <pre>
-(definstrument (shift-pitch beg dur file freq :optional (order 40))
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (shift-pitch beg dur file freq :optional (order 40))
   (let* ((st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
          (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (gen (<em class=red>make-ssb-am</em> freq order))
@@ -2032,11 +2035,10 @@ And the fourth used the ssb-am-bank function in dsp.scm rewritten here for with-
 
 <table border=0 bgcolor="#fafafa" hspace=40 vspace=10><tr><td>
 <pre>
-(definstrument (repitch beg dur sound old-freq new-freq 
-	         :optional (amp 1.0) (bands 10) (order 40) (bw 50.0))
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (repitch beg dur sound old-freq new-freq 
+	         :optional (amp 1.0) (pairs 10) (order 40) (bw 50.0))
   (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
 	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
-	 (pairs bands)
 	 (ssbs (make-vector pairs))
 	 (bands (make-vector pairs))
 	 (factor (/ (- new-freq old-freq) old-freq))
@@ -2159,7 +2161,7 @@ using the same frequency envelope as the wave-train, so we have some idea when t
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(definstrument (when? start-time duration start-freq end-freq grain-file)
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (when? start-time duration start-freq end-freq grain-file)
   (let* ((beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start-time))
 	 (len (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> duration))
 	 (end (+ beg len))
@@ -2729,7 +2731,7 @@ If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(definstrument (move-formants start file amp radius move-env num-formants)
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (move-formants start file amp radius move-env num-formants)
   (let* ((frms (make-vector num-formants))
 	 (beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start))
 	 (dur (<a class=quiet href="extsnd.html#mussoundframes">mus-sound-frames</a> file))
@@ -2762,8 +2764,6 @@ If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more
 
 <p>The Mathews/Smith <a href="sndscm.html#mfilter">filter</a> in dsp.scm is very similar to the formant generator.
 </p>
-
-<!-- PERHAPS: mfilter might make a good def-clm-struct example -->
 
 <br><br>
 
@@ -3094,7 +3094,7 @@ The following instrument sweeps the comb filter using the pm argument:
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(definstrument (zc time dur freq amp length1 length2 feedback)
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (zc time dur freq amp length1 length2 feedback)
   (let* ((beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> time))
          (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
          (s (<a class=quiet href="#make-pulse-train">make-pulse-train</a> :frequency freq))  ; some raspy input so we can hear the effect easily
@@ -3140,7 +3140,7 @@ delay line as the coefficients for an FIR filter:
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(definstrument (flux start-time file frequency combs0 combs1 :optional (scaler 0.99) (comb-len 32))
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (flux start-time file frequency combs0 combs1 :optional (scaler 0.99) (comb-len 32))
   (let* ((beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start-time))
 	 (len (<a class=quiet href="extsnd.html#mussoundframes">mus-sound-frames</a> file))
 	 (end (+ beg len))
@@ -3653,7 +3653,7 @@ ffts (for time stretching, etc).
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(definstrument (simple-pvoc beg dur amp size file)
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (simple-pvoc beg dur amp size file)
   (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
 	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (sr (<em class=red>make-phase-vocoder</em> (<a class=quiet href="#make-readin">make-readin</a> file) :fft-size size)))
@@ -3960,7 +3960,7 @@ The "output" argument can be a vct or a sound-data object, as well as the more u
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(definstrument (simple-ina beg dur amp file)
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (simple-ina beg dur amp file)
   (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
 	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (fil (<em class=red>make-file-&gt;sample</em> file)))

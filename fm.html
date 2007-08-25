@@ -1568,10 +1568,9 @@ and used in "Colony" and other pieces. In a simplified form it is:
 
 <!-- SND CASE -->
 <pre>
-(define* (vox beg dur freq1 amp :optional (indexes '(.005 .01 .02)) (formant-amps '(.86 .13 .01)))
+(define* (vox beg dur freq amp :optional (indexes '(.005 .01 .02)) (formant-amps '(.86 .13 .01)))
   (let* ((start (seconds-&gt;samples beg))
 	 (end (+ start (seconds-&gt;samples dur)))
-	 (freq freq1)
 	 (car-os (make-oscil 0))
          (evens (make-vector 3))
          (odds (make-vector 3))

@@ -239,6 +239,7 @@ static void xen_symbol_name_set_value(const char *a, XEN b)
     XEN_VARIABLE_SET(var, b);
 }
 
+#define PRINT_JUNK 0
 
 static XEN symbol_to_value(XEN code, XEN sym, bool *local)
 {
@@ -249,7 +250,9 @@ static XEN symbol_to_value(XEN code, XEN sym, bool *local)
       XEN code_env = XEN_FALSE;
       /* scrounge around in the "eval" environment looking for local version of sym */
       code_env = XEN_ENV(code);
-      /* fprintf(stderr, "look for %s in %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(code_env)); */
+#if PRINT_JUNK
+      fprintf(stderr, "\nlook for %s in %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(code_env)); 
+#endif
       if (XEN_LIST_P(code_env))
 	{
 	  (*local) = true;
@@ -257,17 +260,42 @@ static XEN symbol_to_value(XEN code, XEN sym, bool *local)
 	    {
 	      XEN pair = XEN_FALSE;
 	      pair = XEN_CAR(code_env);
+#if PRINT_JUNK
+	      fprintf(stderr,"    found: %s %d %d\n", XEN_AS_STRING(pair), XEN_LIST_P(pair), XEN_LIST_P(XEN_CAR(pair)));
+#endif
 	      if ((XEN_LIST_P(pair)) && 
-		  (XEN_LIST_P(XEN_CAR(pair))))
+		  (XEN_PAIR_P(XEN_CAR(pair))))
 		{
 		  XEN names, values;
-		  int i, len;
-		  names = XEN_CAR(pair);
-		  values = XEN_CDR(pair);
-		  len = XEN_LIST_LENGTH(names);
-		  for (i = 0; i < len; i++)
-		    if (XEN_EQ_P(XEN_LIST_REF(names, i), sym))
-		      return(XEN_LIST_REF(values, i));
+		  names = XEN_CAR(pair);  /* dotted list! */
+		  values = XEN_CDR(pair); /* can have trailing key pairs, so can be any length */
+
+#if PRINT_JUNK
+		  fprintf(stderr, "names: %s, values: %s\n", XEN_AS_STRING(names), XEN_AS_STRING(values));
+#endif
+		  for (; XEN_PAIR_P(names) && XEN_LIST_P(values);)
+		    {
+#if PRINT_JUNK
+		      fprintf(stderr,"        found: %s = %s\n", XEN_AS_STRING(XEN_CAR(names)), XEN_AS_STRING(XEN_CAR(values)));
+#endif
+		      /*
+			guile> (list? '(1 2 . 3))
+			#f
+			guile> (list-ref '(1 2 . 3) 0)
+			1
+			guile> (list-tail '(0 1 . 2) 1)
+			(1 . 2)
+			guile> (length '(0 1 . 2))
+			standard input:6:1: In procedure length in expression (length (quote #)):
+			standard input:6:1: Wrong type argument in position 1: (0 1 . 2)
+			ABORT: (wrong-type-arg)
+		      */
+
+		      if (XEN_EQ_P(XEN_CAR(names), sym))
+			return(XEN_CAR(values));
+		      names = XEN_CDR(names);
+		      values = XEN_CDR(values);
+		    }
 		}
 	      else
 		{
@@ -2823,7 +2851,7 @@ static char *sequential_binds(ptree *prog, XEN old_lets, const char *name)
 }
 
 
-static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool separate, xen_value **cur_args, int num_args)
+static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool separate, xen_value **cur_args, int num_args, XEN local_proc)
 {
   XEN arg, args, declarations = XEN_FALSE, declaration;
   xen_value *v = NULL;
@@ -2832,7 +2860,47 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
   if (separate)
     args = XEN_CADR(form);
   else args = XEN_CDADR(form);
-  if (!(XEN_LIST_P(args))) return(mus_format("can't handle non-explicit lambda args: %s", XEN_AS_STRING(args)));
+  if (!(XEN_LIST_P(args))) 
+    {
+#if HAVE_GUILE && 0
+      /* the problem with define* trailing args is that the arglist is implicit in the function:
+
+        :(define* (hiho :optional (a 1)) a)
+        #<unspecified>
+        :(procedure-source hiho)
+        (lambda lambda*:G151 
+          (let-optional* lambda*:G151 ((a 1)) 
+            (let-keywords* lambda*:G151 #f () 
+              (if (not (null? lambda*:G151)) 
+                  (error "Too many arguments.")) 
+              (let () 
+                a)))) ; actual function body is (list-ref (list-ref (caddr source) 3) 5) or 6?
+
+       but...
+
+        :(procedure-properties hiho)
+        ((arity 0 0 #t) (name . hiho) (arglist () ((a 1)) () #f #f))
+
+       so we should be able to use local_proc (which can be #f if we were passed a lambda*) to find its arglist,
+         but then we need to append the trailing args to the current actual arglist?
+         and even then, the procedure source we are passed is a mess (see above).
+         If the initial junk is always the same, we could search for the last form -- apparently a let or a let*?
+      */
+
+      if ((!(XEN_FALSE_P(local_proc))) && (XEN_PROCEDURE_P(local_proc)))
+	{
+	  XEN arglist;
+	  arglist = scm_procedure_property(local_proc, scm_string_to_symbol(C_TO_XEN_STRING("arglist")));
+
+	  fprintf(stderr,"found %s arglist: %s\n", 
+		  XEN_PROCEDURE_NAME(local_proc),
+		  XEN_AS_STRING(arglist));
+	}
+#endif
+
+    return(mus_format("can't handle these optional args: %s", XEN_AS_STRING(args)));
+    }
+
   if (num_args > XEN_LIST_LENGTH(args))
     return(mus_format("too many args: %s", XEN_AS_STRING(args)));
   if (num_args == 0)
@@ -2934,7 +3002,7 @@ static xen_value *lambda_form(ptree *prog, XEN form, bool separate, xen_value **
       new_tree = attach_to_ptree(prog);
       new_tree->code = local_proc;
       outer_locals = prog->var_ctr;
-      err = declare_args(new_tree, form, R_INT, separate, args, num_args);
+      err = declare_args(new_tree, form, R_INT, separate, args, num_args, local_proc);
       if (err)
 	{
 	  unattach_ptree(new_tree, prog); 
@@ -2965,7 +3033,7 @@ static xen_value *lambda_form(ptree *prog, XEN form, bool separate, xen_value **
     }
   got_lambda = true;
   locals_loc = prog->var_ctr;
-  err = declare_args(prog, form, R_FLOAT, separate, args, num_args);
+  err = declare_args(prog, form, R_FLOAT, separate, args, num_args, local_proc);
   if (err) return(run_warn_with_free(err));
   return(walk_then_undefine(prog, XEN_CDDR(form), NEED_ANY_RESULT, "lambda", locals_loc));
 }
@@ -8657,7 +8725,7 @@ static char *descr_gen(int *args, ptree *pt, const char *which, int num_args)
     if (!mus_ ## Name ## _p(CLM_ARG_1)) mus_error(MUS_NO_GEN, #Name ": bad arg: %s", (CLM_ARG_1) ? mus_name(CLM_ARG_1) : "null");} \
   static char *descr_ ## Name ## _check(int *args, ptree *pt) {return(mus_format("if (!" #Name "?(" CLM_PT ")) mus-error", args[1], DESC_CLM_ARG_1));}
 
-
+/* GEN_P but no check procs for run-safety */
 #define GEN_P_1(Name) \
   static char *descr_ ## Name ## _0p(int *args, ptree *pt) { \
     return(mus_format(BOOL_PT " = " #Name "?(" CLM_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_CLM_ARG_1));} \
@@ -8869,9 +8937,21 @@ static char *descr_tap_1f(int *args, ptree *pt) {return(descr_gen(args, pt, S_ta
 
 static void tap_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_tap(CLM_ARG_1, FLOAT_ARG_2);}
 
+static void tap_delay_line_check(int *args, ptree *pt)
+{
+  if (!mus_delay_line_p(CLM_ARG_1)) 
+    mus_error(MUS_NO_GEN, "tap: gen arg: %s is not a delay line", (CLM_ARG_1) ? mus_name(CLM_ARG_1) : "null");
+}
+
+static char *descr_delay_line_check(int *args, ptree *pt) 
+{
+  return(mus_format("if (!delay_line?(" CLM_PT ")) mus-error", args[1], DESC_CLM_ARG_1));
+}
+
 static xen_value *tap_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, delay_check, descr_delay_check, args, 1);
+  if (run_safety == RUN_SAFE) 
+    safe_package(prog, R_BOOL, tap_delay_line_check, descr_delay_line_check, args, 1);
   if (num_args == 1)
     return(package(prog, R_FLOAT, tap_0f, descr_tap_0f, args, 1));
   if (args[2]->type == R_INT) single_to_float(prog, args, 2);
@@ -8879,13 +8959,19 @@ static xen_value *tap_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
+static void tick_delay_line_check(int *args, ptree *pt)
+{
+  if (!mus_delay_line_p(CLM_ARG_1)) 
+    mus_error(MUS_NO_GEN, "delay-tick: gen arg: %s is not a delay line", (CLM_ARG_1) ? mus_name(CLM_ARG_1) : "null");
+}
+
 static char *descr_delay_tick_1f(int *args, ptree *pt) {return(descr_gen(args, pt, S_delay_tick, 1));}
 
 static void delay_tick_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_delay_tick(CLM_ARG_1, FLOAT_ARG_2);}
 
 static xen_value *delay_tick_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, delay_check, descr_delay_check, args, 1);
+  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, tick_delay_line_check, descr_delay_line_check, args, 1);
   if (args[2]->type == R_INT) single_to_float(prog, args, 2);
   return(package(prog, R_FLOAT, delay_tick_1f, descr_delay_tick_1f, args, 2));
 }
@@ -8913,8 +8999,8 @@ GEN_P(frame)
 GEN_P(mixer)
 GEN_P(file_to_sample)
 GEN_P(sample_to_file)
-GEN_P(file_to_frame)
-GEN_P(frame_to_file)
+GEN_P_1(file_to_frame)
+GEN_P_1(frame_to_file)
 GEN_P_1(input)
 GEN_P_1(output)
 GEN_P(locsig)
@@ -9654,9 +9740,20 @@ static void frame_to_file_3(int *args, ptree *pt)
   CLM_RESULT = mus_frame_to_file(CLM_ARG_1, INT_ARG_2, CLM_ARG_3);
 }
 
+static void frame_file_check(int *args, ptree *pt)
+{
+  if (!mus_output_p(CLM_ARG_1)) 
+    mus_error(MUS_NO_GEN, "frame->file: gen arg: %s is not an output generator", (CLM_ARG_1) ? mus_name(CLM_ARG_1) : "null");
+}
+
+static char *descr_frame_file_check(int *args, ptree *pt) 
+{
+  return(mus_format("if (!mus-output?(" CLM_PT ")) mus-error", args[1], DESC_CLM_ARG_1));
+}
+
 static xen_value *frame_to_file_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, frame_to_file_check, descr_frame_to_file_check, args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, frame_file_check, descr_frame_file_check, args, 1);
   return(package(prog, R_CLM, frame_to_file_3, descr_frame_to_file_3, args, 3));
 }
 
@@ -9686,9 +9783,20 @@ static void file_to_frame_2(int *args, ptree *pt)
   CLM_RESULT = mus_file_to_frame(CLM_ARG_1, INT_ARG_2, NULL);
 }
 
+static void file_frame_check(int *args, ptree *pt)
+{
+  if (!mus_input_p(CLM_ARG_1)) 
+    mus_error(MUS_NO_GEN, "file->frame: gen arg: %s is not an input generator", (CLM_ARG_1) ? mus_name(CLM_ARG_1) : "null");
+}
+
+static char *descr_file_frame_check(int *args, ptree *pt) 
+{
+  return(mus_format("if (!mus-input?(" CLM_PT ")) mus-error", args[1], DESC_CLM_ARG_1));
+}
+
 static xen_value *file_to_frame_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, file_to_frame_check, descr_file_to_frame_check, args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, file_frame_check, descr_file_frame_check, args, 1);
   if (num_args == 2)
     return(package(prog, R_CLM, file_to_frame_2, descr_file_to_frame_2, args, 2));
   return(package(prog, R_CLM, file_to_frame_3, descr_file_to_frame_3, args, 3));
@@ -11786,6 +11894,11 @@ static XEN g_add_clm_field(XEN name, XEN offset, XEN type) /* type=field type (a
   #define H_add_clm_field "def-clm-struct tie-in to run optimizer"
   char *field_name;
   int loc = -1;
+
+  /*
+  fprintf(stderr,"add clm field %s %d %s\n", XEN_TO_C_STRING(name), XEN_TO_C_INT(offset), XEN_AS_STRING(type));
+  */
+
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_clm_field, "string");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(offset), offset, XEN_ARG_2, S_add_clm_field, "int");
   /* if def-clm-struct is called twice on the same struct, we need to recognize
@@ -11828,8 +11941,17 @@ static XEN g_add_clm_field(XEN name, XEN offset, XEN type) /* type=field type (a
     }
   clm_struct_offsets[loc] = XEN_TO_C_INT(offset);
   clm_struct_types[loc] = R_UNSPECIFIED;
+
   if (XEN_SYMBOL_P(type))
-    clm_struct_types[loc] = name_to_type(XEN_SYMBOL_TO_C_STRING(type));
+    {
+      clm_struct_types[loc] = name_to_type(XEN_SYMBOL_TO_C_STRING(type));
+
+      /*
+      fprintf(stderr,"type: %d %s\n", clm_struct_types[loc], type_name(clm_struct_types[loc]));
+      */
+
+    }
+
   clm_struct_names[loc] = field_name;
   return(name);
 }
@@ -11845,6 +11967,10 @@ static XEN g_add_clm_type(XEN name)
 {
   #define H_add_clm_type "def-clm-struct tie-in to run optimizer"
   int loc;
+  /*
+  fprintf(stderr,"add clm type %s\n", XEN_TO_C_STRING(name));
+  */
+
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_add_clm_type, "string");
   if (clm_types_size == 0)
     {

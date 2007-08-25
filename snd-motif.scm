@@ -509,7 +509,7 @@ Reverb-feedback sets the scaler on the feedback.
      hidden-controls))
 
   (if (not (Widget? hidden-controls-dialog))
-      (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+      (let ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
 	    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
 	    (titlestr (XmStringCreate "More Controls" XmFONTLIST_DEFAULT_TAG))
 	    (xreset (XmStringCreate "Reset" XmFONTLIST_DEFAULT_TAG)))
@@ -604,7 +604,7 @@ Reverb-feedback sets the scaler on the feedback.
 (define (create-fmv-dialog)
   "(create-fmv-dialog) makes a dialog that runs the fm-violin instrument with various controls"
   (if (not (Widget? fmv-dialog))
-      (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+      (let ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
 	    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
 	    (titlestr (XmStringCreate "FM Violin" XmFONTLIST_DEFAULT_TAG))
 	    (running #f))
@@ -2215,7 +2215,7 @@ Reverb-feedback sets the scaler on the feedback.
 	;; open dialog to get new name, save-as that name, open
 	(if (not rename-dialog)
 	    ;; make a standard dialog
-	    (let* ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+	    (let* ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
 		   (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
 		   (xok (XmStringCreate "DoIt" XmFONTLIST_DEFAULT_TAG))
 		   (titlestr (XmStringCreate "Rename" XmFONTLIST_DEFAULT_TAG))
@@ -2515,7 +2515,7 @@ Reverb-feedback sets the scaler on the feedback.
 
       (define (start-dialog)
 	(if (not dialog)
-	    (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+	    (let ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
 		  (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
 		  (xfind (XmStringCreate "Find" XmFONTLIST_DEFAULT_TAG)))
 	      (set! dialog (XmCreateMessageDialog shell
@@ -2641,7 +2641,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 (define (make-variables-dialog)
   "(make-variables-dialog) makes a variable-display dialog"
-  (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+  (let ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
 	(titlestr (XmStringCreate "Variables" XmFONTLIST_DEFAULT_TAG)))
     (set! variables-dialog 
 	  (XmCreateTemplateDialog (cadr (main-widgets)) "variables-dialog"
@@ -2898,7 +2898,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 (define (create-ssb-dialog)
   "(create-ssb-dialog) creates a dialog for testing the ssb-am stuff"
   (if (not (Widget? ssb-dialog))
-      (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+      (let ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
 	    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
 	    (titlestr (XmStringCreate "SSB-Expand" XmFONTLIST_DEFAULT_TAG))
 	    (running #f))
@@ -3067,7 +3067,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 (define (create-audit-dialog)
   "(create-audit-dialog) creates a slightly dangerous hearing test dialog (don't push the amps way up if you can't hear anything)"
   (if (not (Widget? audit-dialog))
-      (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+      (let ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
 	    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
 	    (titlestr (XmStringCreate "Hear Anything Yet?" XmFONTLIST_DEFAULT_TAG))
 	    (running #f))
