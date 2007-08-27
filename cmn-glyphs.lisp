@@ -1,5 +1,3 @@
-;;; -*- syntax: common-lisp; package: cmn; base: 10; mode: lisp -*-
-;;;
 ;;; music symbols
 ;;;
 ;;; created from MusicTex font starting point as translated to PostScript by Matti Koskinen

@@ -2880,4 +2880,3 @@ is assumed to be outside -1.0 to 1.0."
 #<fir-filter: order: 25, xs: [-0.049 -0.027 -0.006 0.012 0.028 0.043 0.055 0.066...(0: -0.049, 12: 0.090)]>
 |#
 
-;;; TODO: check sg-filter in noise reduction

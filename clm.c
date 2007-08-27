@@ -6,6 +6,13 @@
  *   a factor of 2.
  */
 
+/* PERHAPS: change double to Double (and elsewhere) -- long double as a possibility,
+ *           with cosl et al on the same switch.  Main cases, other than this file,
+ *           are the headers clm.h, (complex double in clm2xen.c), snd-sig.c.
+ *           clm.c: sin, cos, atan2, pow etc -- /usr/include/tgmath.h? (425)
+ *           see man tgmath.h
+ */
+
 #include <mus-config.h>
 
 #if USE_SND
@@ -55,6 +62,7 @@
 
 
 #if (!HAVE_MEMMOVE)
+#if 1
 /* from libit */
 static void *memmove (char *dest, const char *source, unsigned int length)
 {
@@ -72,6 +80,26 @@ static void *memmove (char *dest, const char *source, unsigned int length)
       }
   return (void *) d0;
 }
+#else
+/* gnulib */
+void *
+memmove (void *dest0, void const *source0, size_t length)
+{
+  char *dest = dest0;
+  char const *source = source0;
+  if (source < dest)
+    /* Moving from low mem to hi mem; start at end.  */
+    for (source += length, dest += length; length; --length)
+      *--dest = *--source;
+  else if (source != dest)
+    {
+      /* Moving from hi mem to low mem; start at beginning.  */
+      for (; length; --length)
+	*dest++ = *source++;
+    }
+  return dest0;
+}
+#endif
 #endif
 
 

@@ -39790,7 +39790,7 @@ EDITS: 1
 		       (let ((func (edit-list->function)))
 					;(display (format #f "~A: ~A~%" ctr (procedure-source func)))
 			 (if (not (string=? (object->string (procedure-source func)) descr))
-			     (snd-display ";edit-list->function 20[~D]: ~A" ctr (object->string (procedure-source func))))
+			     (snd-display ";edit-list->function 20[~D]:~%;  [~A]~%;  [~A]" ctr descr (object->string (procedure-source func))))
 			 (revert-sound ind)
 			 (func ind 0))
 		       (set! ctr (1+ ctr))

@@ -2069,8 +2069,18 @@ also lose more of the original signal.
 <em class=emdef>make-savitzky-golay-filter</em> <code>size :optional (order 2)</code><br>
 <a class=def name="sgfilter">savitzky-golay-filter</a> <code>f in</code>
 </td></tr><tr><td></td><td>
-This the Savitzky-Golay filter, assuming symmetrical positioning.  It is an FIR smoothing filter.
-For more info, See "Numerical Recipes in C".
+This the Savitzky-Golay filter, assuming symmetrical positioning.  It is an FIR smoothing filter; 
+perhaps it could be useful in noise reduction.
+
+<pre>
+  (define (unnoise order)
+    (let ((flt (make-savitzky-golay-filter order 2)))
+      (map-channel (lambda (y) (savitzky-golay-filter flt y)))))
+</pre>
+
+This filter uses <a href="#mixer-solve">mixer-solve</a> from mixer.scm, so you need
+to load that file as well as dsp.scm.
+For more info on this filter, See "Numerical Recipes in C".
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -10069,8 +10079,8 @@ in CLM, add the desired methods as an association list at the end of the new str
 			      
 			      (list 'mus-describe 
 				    (lambda (g) (format #f "osc2 freq: ~A, phase: ~A" 
-							(mus-frequency g) 
-							(mus-phase g)))))))))
+						  (mus-frequency g) 
+						  (mus-phase g)))))))))
   freq phase)
 </pre></td></tr></table>
 

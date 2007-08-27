@@ -1392,7 +1392,8 @@ void mus_reset_io_c(void)
 
 
 #if (!HAVE_STRDUP)
-/* this taken from libit-0.7 */
+#if 1
+/* libit-0.7 */
 char *strdup (const char *str)
 {
   char *newstr;
@@ -1400,6 +1401,16 @@ char *strdup (const char *str)
   if (newstr) strcpy(newstr, str);
   return(newstr);
 }
+#else
+/* gnulib (edited) */
+char *strdup (const char *s)
+{
+  size_t len = strlen(s) + 1;
+  void *new = malloc(len);
+  if (new == NULL) return(NULL);
+  return((char *)memcpy(new, s, len));
+}
+#endif
 #endif
 
 

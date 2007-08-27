@@ -536,22 +536,6 @@ you can use <a href="sndscm.html#def-clm-struct">def-clm-struct</a>.
 <br><br>
 
 
-<!-- PERHAPS: a hierarchy of gens? 
-oscil asymmetric-fm waveshape(+table) polyshape
-      sum-of-cosines sum-of-sines sine-summation (kernels etc)
-      pulse-train triangle-wave sawtooth-wave square-wave
-      ssb-am(+filter)
-env
-rand rand-interp
-table-lookup wave-train granulate
-filter one|two-pole|zero all-pass tap|delay(+table) comb notch formant fir-filter iir-filter filtered-comb moving-average(etc)
-input  file->sample file->frame ina|b|in-any readin (file->array)
-output sample->file frame->file outa|b|c|d|out-any locsig move-sound
-fft phase-vocoder
-convolve src
--->
-
-
 <A NAME="oscildoc"></A>
 <!-- ---------------------------------------- OSCIL ---------------------------------------- -->
 
@@ -752,7 +736,6 @@ void c_bird(double start, double dur, double frequency, double freqskew, double 
 
 </td></tr></table>
 
-<!-- PERHAPS: sine-bank example -->
 
 <p>Related generators are 
 <a href="#sum-of-cosines">sum-of-cosines</a>, 
@@ -771,15 +754,6 @@ summation formulas in dsp.scm (<a href="sndscm.html#sumofnsines">sum-of-n-sines<
 For a sine-bank example, see pvoc.scm.
 To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
 </p>
-
-<!--
-<p>Many of the generators share the notion of a current phase, a saved phase increment (frequency), and
-on-going optional modulation.  In the most logical of all worlds, we'd split that out as a separate
-"generator", then inherit it in oscil and elsewhere.  This generator would also simplify many
-user-defined generators (such as the various sums under <a href="#sum-of-sines">sum-of-sines</a>).
-Should it be called "phaser"?  
-</p>
--->
 
 <br><br>
 
@@ -1933,6 +1907,18 @@ It is not hard to play around with formulas like these.  Take the last one in th
 	(<a class=quiet href="#outa">outa</a> i (expcs gen 0.0) *output*)))))
 </pre>
 </td></tr></table>
+
+<p>By the way, the amplitude normalization factor for this generator is:
+</p>
+
+<pre>
+    (/ (- 1.0 (exp (- (expcs-et gen)))) 
+       (exp (- (expcs-et gen))))
+</pre>
+
+<p>which can be folded into the original at no run-time cost.
+</p>
+
 
 <br><br>
 
@@ -3772,9 +3758,6 @@ The generator's output amplitude is not always easy to predict.
       (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>asymmetric-fm</em> asyf index 0.0)) *output*))))
 </pre>
 </td></tr></table>
-
-
-<!-- PERHAPS: def-clm-struct gen example from dsp? -->
 
 <p>For the other kind of asymmetric-fm, and for asymmetric spectra via "single sideband FM", see dsp.scm.
 </p>
