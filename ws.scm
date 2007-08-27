@@ -965,8 +965,22 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 (if (not (defined? 'add-clm-type)) (define (add-clm-type . args) #f)) ; these are in snd-run
 (if (not (defined? 'add-clm-field)) (define (add-clm-field . args) #f))
 
-(defmacro def-clm-struct (name . fields)
-  (let* ((sname (if (string? name) name (symbol->string name)))
+
+;;;  :(def-clm-struct (osc :make-wrapper (lambda (gen) (set! (osc-freq gen) (hz->radians (osc-freq gen))) gen)) freq phase)
+;;;  #<unspecified>
+;;;  :(define hi (make-osc 440.0 0.0))
+;;;  #<unspecified>
+;;;  :hi
+;;;  (osc 0.125378749798983 0.0)
+
+
+(defmacro def-clm-struct (struct-name . fields)
+  (let* ((name (if (list? struct-name) (car struct-name) struct-name))
+	 (wrapper (or (and (list? struct-name)
+			   (equal? (cadr struct-name) :make-wrapper)
+			   (caddr struct-name))
+		      (lambda (gen) gen)))
+	 (sname (if (string? name) name (symbol->string name)))
 	 (field-names (map (lambda (n)
 			     (symbol->string (if (list? n) (car n) n)))
 			   fields))
@@ -985,7 +999,12 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 					     'float)
 					 (if (string? (cadr n))
 					     'string
-					     'float))
+					     (if (char? (cadr n))
+						 'char
+						 (if (or (equal? (cadr n) #t)
+							 (equal? (cadr n) #f))
+						     'boolean
+						     'float))))
 				     'float)))
 			   fields)))
     `(begin
@@ -1002,8 +1021,8 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				    (list n 0.0)))
 			      fields))
 	 "clm struct make function"
-	 (list ',(string->symbol sname)
-	       ,@(map string->symbol field-names)))
+	 (,wrapper (list ',(string->symbol sname)
+			 ,@(map string->symbol field-names))))
        (add-clm-type ,sname)
        ,@(map (let ((ctr 1))
 		(lambda (n type)
@@ -1018,5 +1037,3 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		    (set! ctr (1+ ctr))
 		    val)))
 	      field-names field-types))))
-
-

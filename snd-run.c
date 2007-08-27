@@ -239,8 +239,6 @@ static void xen_symbol_name_set_value(const char *a, XEN b)
     XEN_VARIABLE_SET(var, b);
 }
 
-#define PRINT_JUNK 0
-
 static XEN symbol_to_value(XEN code, XEN sym, bool *local)
 {
   XEN new_val = XEN_UNDEFINED;
@@ -250,9 +248,6 @@ static XEN symbol_to_value(XEN code, XEN sym, bool *local)
       XEN code_env = XEN_FALSE;
       /* scrounge around in the "eval" environment looking for local version of sym */
       code_env = XEN_ENV(code);
-#if PRINT_JUNK
-      fprintf(stderr, "\nlook for %s in %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(code_env)); 
-#endif
       if (XEN_LIST_P(code_env))
 	{
 	  (*local) = true;
@@ -260,24 +255,14 @@ static XEN symbol_to_value(XEN code, XEN sym, bool *local)
 	    {
 	      XEN pair = XEN_FALSE;
 	      pair = XEN_CAR(code_env);
-#if PRINT_JUNK
-	      fprintf(stderr,"    found: %s %d %d\n", XEN_AS_STRING(pair), XEN_LIST_P(pair), XEN_LIST_P(XEN_CAR(pair)));
-#endif
 	      if ((XEN_LIST_P(pair)) && 
 		  (XEN_PAIR_P(XEN_CAR(pair))))
 		{
 		  XEN names, values;
 		  names = XEN_CAR(pair);  /* dotted list! */
 		  values = XEN_CDR(pair); /* can have trailing key pairs, so can be any length */
-
-#if PRINT_JUNK
-		  fprintf(stderr, "names: %s, values: %s\n", XEN_AS_STRING(names), XEN_AS_STRING(values));
-#endif
 		  for (; XEN_PAIR_P(names) && XEN_LIST_P(values);)
 		    {
-#if PRINT_JUNK
-		      fprintf(stderr,"        found: %s = %s\n", XEN_AS_STRING(XEN_CAR(names)), XEN_AS_STRING(XEN_CAR(values)));
-#endif
 		      /*
 			guile> (list? '(1 2 . 3))
 			#f
@@ -2851,7 +2836,7 @@ static char *sequential_binds(ptree *prog, XEN old_lets, const char *name)
 }
 
 
-static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool separate, xen_value **cur_args, int num_args, XEN local_proc)
+static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool separate, xen_value **cur_args, int num_args)
 {
   XEN arg, args, declarations = XEN_FALSE, declaration;
   xen_value *v = NULL;
@@ -2862,7 +2847,7 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
   else args = XEN_CDADR(form);
   if (!(XEN_LIST_P(args))) 
     {
-#if HAVE_GUILE && 0
+#if 0
       /* the problem with define* trailing args is that the arglist is implicit in the function:
 
         :(define* (hiho :optional (a 1)) a)
@@ -2874,28 +2859,69 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
               (if (not (null? lambda*:G151)) 
                   (error "Too many arguments.")) 
               (let () 
-                a)))) ; actual function body is (list-ref (list-ref (caddr source) 3) 5) or 6?
+                a)))) ; actual function body is (list-ref (cadddr (caddr source)) 5) or 6? -- 5 to get a complete form
+		      ;   or (cddadr (cddddr (cadddr (caddr (procedure-source hiho))))) !!  I ought to use this just for its hack value.
 
        but...
 
         :(procedure-properties hiho)
         ((arity 0 0 #t) (name . hiho) (arglist () ((a 1)) () #f #f))
 
+        :(define* (hiho a :optional (b 2) (c "hiho")) (+ a b))
+        :(procedure-property hiho 'arglist)
+        ((a) ((b 2) (c "hiho")) () #f #f)
+        :(procedure-property hiho 'arity)
+        (1 0 #t)
+        :(list-ref (cadddr (caddr (procedure-source hiho))) 5)
+        (let () (+ a b))
+        :(define* (hiho a :optional (b 2) (c "hiho")) (snd-print c) (+ a b))
+        :(list-ref (cadddr (caddr (procedure-source hiho))) 5)
+        (let () (snd-print c) (+ a b))
+
+        :(define* (hiho a :optional (b 2) (c "hiho")) (declare (a float)) (snd-print c) (+ a b))
+        :(list-ref (cadddr (caddr (procedure-source hiho))) 5)
+        (let () (declare (a float)) (snd-print c) (+ a b)) ; the "declare" is still caddr!
+
        so we should be able to use local_proc (which can be #f if we were passed a lambda*) to find its arglist,
          but then we need to append the trailing args to the current actual arglist?
          and even then, the procedure source we are passed is a mess (see above).
          If the initial junk is always the same, we could search for the last form -- apparently a let or a let*?
-      */
 
-      if ((!(XEN_FALSE_P(local_proc))) && (XEN_PROCEDURE_P(local_proc)))
+	 but even with all that (and using LIST_TAIL for the let form), we still have arg number confusion if
+	   the define* calls itself in its arg list -- finally decided this was too tricky and too dependent
+	   on Guile internals.
+
+      */
+      /* local_proc was trailing arg */
+
+      if ((!(XEN_FALSE_P(local_proc))) && 
+	  (XEN_PROCEDURE_P(local_proc)) &&
+	  (XEN_LIST_LENGTH(form) == 3) &&                           /* lambda lambda*:Gxxx (let-optional*...) */
+	  (XEN_LIST_P(XEN_CADDR(form))) &&
+	  (XEN_LIST_LENGTH(XEN_CADDR(form)) == 4) &&                /* let-optional* lambda*:Gxxx (args) (let-keywords*...) */
+	  (XEN_LIST_P(XEN_CADDDR(XEN_CADDR(form)))) &&
+	  (XEN_SYMBOL_P(XEN_CAR(XEN_CADDDR(XEN_CADDR(form))))) &&
+	  (strcmp(XEN_SYMBOL_TO_C_STRING(XEN_CAR(XEN_CADDDR(XEN_CADDR(form)))), "let-keywords*") == 0))
 	{
 	  XEN arglist;
-	  arglist = scm_procedure_property(local_proc, scm_string_to_symbol(C_TO_XEN_STRING("arglist")));
+	  arglist = scm_procedure_property(local_proc, scm_string_to_symbol(C_TO_XEN_STRING("arglist"))); /* do I need to gc protect this? */
 
-	  fprintf(stderr,"found %s arglist: %s\n", 
-		  XEN_PROCEDURE_NAME(local_proc),
-		  XEN_AS_STRING(arglist));
+	  (*walk_cddr_ref) = false;
+	  walk_cddr = false; /* by ref syntax is so ugly in C that I'll use a separate variable */
+
+	  form = XEN_LIST_REF(XEN_CADDDR(XEN_CADDR(form)), 5);     /* let-keywords* lambda*:Gxxx #f () (if...) (let...) -- get the let form */
+	  if (XEN_NOT_NULL_P(XEN_CAR(arglist)))                    /* ((a) ((b 2) (c "hiho")) () #f #f) */
+	    args = XEN_APPEND(XEN_CAR(arglist), XEN_CADR(arglist));
+	  else args = XEN_CADR(arglist);                           /* (() ((a 1)) () #f #f) */
+
+	  fprintf(stderr,"found %s arglist: %s -> %s, args: %s, form: %s\n", 
+		  XEN_AS_STRING(XEN_PROCEDURE_NAME(local_proc)),
+		  XEN_AS_STRING(arglist),
+		  XEN_AS_STRING(XEN_LIST_REF(XEN_CADDDR(XEN_CADDR(XEN_PROCEDURE_SOURCE(local_proc))), 5)),
+		  XEN_AS_STRING(args),
+		  XEN_AS_STRING(form));
 	}
+      else
 #endif
 
     return(mus_format("can't handle these optional args: %s", XEN_AS_STRING(args)));
@@ -3002,7 +3028,7 @@ static xen_value *lambda_form(ptree *prog, XEN form, bool separate, xen_value **
       new_tree = attach_to_ptree(prog);
       new_tree->code = local_proc;
       outer_locals = prog->var_ctr;
-      err = declare_args(new_tree, form, R_INT, separate, args, num_args, local_proc);
+      err = declare_args(new_tree, form, R_INT, separate, args, num_args);
       if (err)
 	{
 	  unattach_ptree(new_tree, prog); 
@@ -3033,7 +3059,7 @@ static xen_value *lambda_form(ptree *prog, XEN form, bool separate, xen_value **
     }
   got_lambda = true;
   locals_loc = prog->var_ctr;
-  err = declare_args(prog, form, R_FLOAT, separate, args, num_args, local_proc);
+  err = declare_args(prog, form, R_FLOAT, separate, args, num_args);
   if (err) return(run_warn_with_free(err));
   return(walk_then_undefine(prog, XEN_CDDR(form), NEED_ANY_RESULT, "lambda", locals_loc));
 }

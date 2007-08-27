@@ -1893,7 +1893,47 @@ For example, here is a generator based on the <a href="sndscm.html#sumofnsines">
 
 <p>
 A few of these exist as generators, but, as far as I know, most have never been explored.
+It is not hard to play around with formulas like these.  Take the last one in the G&amp;R section:
 </p>
+
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<pre>
+(<a class=quiet href="sndscm.html#def-clm-struct">def-clm-struct</a> (expcs 
+		 :make-wrapper (lambda (g)
+				 (if (&lt;= (expcs-et g) 0.0) (set! (expcs-et g) 0.00001))
+				 (set! (expcs-frequency g) (<a class=quiet href="#hztoradians">hz-&gt;radians</a> (expcs-frequency g)))
+				 (set! (expcs-sinht g) (* 0.5 (sinh (expcs-et g))))
+				 (set! (expcs-cosht g) (cosh (expcs-et g)))
+				 g))
+  frequency phase et sinht cosht)
+
+(define (expcs gen fm)
+  (let ((result (- (/ (expcs-sinht gen) 
+		      (- (expcs-cosht gen) (cos (expcs-phase gen))))
+		   0.5)))
+    (set! (expcs-phase gen) (+ (expcs-phase gen) (expcs-frequency gen) fm))
+    result))
+
+;; see if it generates cosines at amplitudes (exp (- (* k t)))
+(with-sound ()
+  (let ((gen (make-expcs :frequency 100 :et 1.0)))
+    (do ((i 0 (1+ i)))
+	((= i 10000))
+      (<a class=quiet href="#outa">outa</a> i (expcs gen 0.0) *output*))))
+
+;; change "t" during note -- smoothly changing sum-of-cosines spectra
+(with-sound ()  
+  (let ((gen (make-expcs :frequency 100 :et 0.1))
+	(t-env (<a class=quiet href="#make-env">make-env</a> '(0 .1 1 2) :end 10000)))
+    (do ((i 0 (1+ i)))
+	((= i 10000))
+      (let ((et (<a class=quiet href="#env">env</a> t-env)))
+	(set! (expcs-sinht gen) (* 0.5 (sinh et)))
+	(set! (expcs-cosht gen) (cosh et))
+	(<a class=quiet href="#outa">outa</a> i (expcs gen 0.0) *output*)))))
+</pre>
+</td></tr></table>
+
 <br><br>
 
 
@@ -2529,7 +2569,7 @@ and <a href="sndscm.html#greendoc">green.scm</a> (bounded Brownian noise).
 </p>
 
 
-<!-- PERHAPS: autocomp ex, pitch clouds -->
+<!-- PERHAPS: autocomp ex (agn), pitch clouds -->
 
 <br><br>
 
@@ -3733,6 +3773,9 @@ The generator's output amplitude is not always easy to predict.
 </pre>
 </td></tr></table>
 
+
+<!-- PERHAPS: def-clm-struct gen example from dsp? -->
+
 <p>For the other kind of asymmetric-fm, and for asymmetric spectra via "single sideband FM", see dsp.scm.
 </p>
 <br><br>
@@ -4227,6 +4270,7 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 
 
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2>Functions</h2></td></tr></table>
+<A NAME="genericfunctions"></A>
 
 <!-- ---------------------------------------- GENERIC FUNCTIONS ---------------------------------------- -->
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>Generic Functions</h3></center></td></tr></table>
@@ -4274,6 +4318,10 @@ sets osc1's phase increment to (<a class=quiet href="#hztoradians">hz-&gt;radian
 <a class=def name="musgeneratorp">mus-generator?</a> returns #t if its argument is
 a generator.
 <a href="sndscm.html#clminsdoc">clm-ins.scm</a> has many examples of these functions.
+A generator defined via <a href="sndscm.html#def-clm-struct">def-clm-struct</a> can take part in these methods.
+If the last element of the list (returned by def-clm-struct) is an association list, the generic functions
+will search that list for their name, and use the functions that follow to implement their method.
+These added methods are not currently optimizable via the run macro.
 </p>
 <br>
 
@@ -4549,6 +4597,8 @@ or <a href="sndscm.html#rubberdoc">rubber.scm</a>.
 correlate performs an in-place cross-correlation of data1 and data2.
 </p>
 
+
+<!-- TODO: add examples for fft etc -->
 
 <br><br>
 

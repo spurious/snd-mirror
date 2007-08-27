@@ -487,6 +487,24 @@ echo ' '
 ./snd --version
 ./snd -noinit --features "'clm"
 
+echo ' '
+echo ' '
+make allclean
+rm -f snd
+rm -f config.cache
+rm -f makefile
+rm -f mus-config.h
+rm -f sndinfo
+echo ' -------------------------------------------------------------------------------- '
+echo ' -----                 --without-float-samples --with-sample-width=24 g++    ---- '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"  --without-float-samples --with-sample-width=24
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -noinit --features "'clm"
+
 make allclean
 rm -f snd
 rm -f config.cache
@@ -649,6 +667,15 @@ echo ' '
 echo ' '
 ./snd --version
 ./snd -noinit --features ":clm, :snd_gtk, :snd_ruby"
+make allclean
+
+echo ' -------------------------------------------------------------------------------- '
+echo ' ----                 g++ --with-ruby sample-width=24                        ---- '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby --without-float-samples --with-sample-width=24
+make
+./snd --version
+./snd -noinit --features ":clm, :snd_ruby"
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '

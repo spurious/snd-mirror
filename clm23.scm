@@ -2893,6 +2893,155 @@
 
 
 
+
+;;; ---------------- sndscm-osc ----------------
+
+(def-clm-struct sndscm-osc freq phase) ;same as (def-clm-struct sndscm-osc (freq 0.0 :type float) (phase 0.0 :type float))
+
+(define (sndscm-osc gen fm)
+  (let ((result (sin (sndscm-osc-phase gen))))
+    (set! (sndscm-osc-phase gen) (+ (sndscm-osc-phase gen) (sndscm-osc-freq gen) fm))
+    result))
+
+(definstrument (sndscm-osc-fm beg dur freq amp mc-ratio fm-index)
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (carrier (make-sndscm-osc (hz->radians freq)))
+	 (modulator (make-sndscm-osc (hz->radians (* mc-ratio freq))))
+	 (index (hz->radians (* freq mc-ratio fm-index))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (outa i (* amp (sndscm-osc carrier (* index (sndscm-osc modulator 0.0)))) *output*))))))
+
+
+
+
+;;; ---------------- sndscm-osc1 ----------------
+
+(def-clm-struct 
+  (sndscm-osc1 :make-wrapper (lambda (gen)
+			(set! (sndscm-osc1-freq gen) (hz->radians (sndscm-osc1-freq gen)))
+			gen))
+  (freq 0.0) (phase 0.0 :type float))
+
+(define* (sndscm-osc1 gen fm)
+  (let ((result (sin (sndscm-osc1-phase gen))))
+    (set! (sndscm-osc1-phase gen) (+ (sndscm-osc1-phase gen) (sndscm-osc1-freq gen) fm))
+    result))
+
+(def-optkey-instrument (sndscm-osc1-fm beg dur freq amp mc-ratio (fm-index 1.0))
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (carrier (make-sndscm-osc1 freq))
+	 (modulator (make-sndscm-osc1 (* mc-ratio freq)))
+	 (index (hz->radians (* freq mc-ratio fm-index))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (outa i (* amp (sndscm-osc1 carrier (* index (sndscm-osc1 modulator 0.0)))) *output*))))))
+
+
+
+
+;;; ---------------- sndscm-osc2 ----------------
+
+(def-clm-struct (sndscm-osc2 :make-wrapper 
+		  (lambda (gen)
+		    (set! (sndscm-osc2-freq gen) (hz->radians (sndscm-osc2-freq gen)))
+		    (append gen 
+			    (list 
+			     (list
+			      (list 'mus-frequency 
+				    (lambda (g) (radians->hz (sndscm-osc2-freq g)))
+				    (lambda (g val) (set! (sndscm-osc2-freq g) (hz->radians val))))
+			      
+			      (list 'mus-phase 
+				    (lambda (g) (sndscm-osc2-phase g))
+				    (lambda (g val) (set! (sndscm-osc2-phase g) val)))
+			      
+			      (list 'mus-describe 
+				    (lambda (g) (format #f "sndscm-osc2 freq: ~A, phase: ~A" 
+							(mus-frequency g) 
+							(mus-phase g)))))))))
+  freq phase)
+
+(define* (sndscm-osc2 gen fm)
+  (let ((result (sin (sndscm-osc2-phase gen))))
+    (set! (sndscm-osc2-phase gen) (+ (sndscm-osc2-phase gen) (sndscm-osc2-freq gen) fm))
+    result))
+
+(def-optkey-instrument (sndscm-osc2-fm beg dur freq amp mc-ratio (fm-index 1.0))
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (carrier (make-sndscm-osc2 freq))
+	 (modulator (make-sndscm-osc2 (* mc-ratio freq)))
+	 (index (hz->radians (* freq mc-ratio fm-index))))
+    (if (fneq (mus-frequency carrier) freq)
+	(snd-display ";mus-frequency ~A: ~A ~A" (mus-describe carrier) (mus-frequency carrier) freq))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (outa i (* amp (sndscm-osc2 carrier (* index (sndscm-osc2 modulator 0.0)))) *output*))))))
+
+
+;;; -------- asymmetric FM (bes-i0 case)
+
+(def-clm-struct (dsp-asyfm :make-wrapper (lambda (gen)
+				       (set! (dsp-asyfm-freq gen) (hz->radians (dsp-asyfm-freq gen)))
+				       gen))
+  freq (phase 0.0) (ratio 1.0) (r 1.0) (index 1.0))
+
+(define (dsp-asyfm-J gen input)
+  "(dsp-asyfm-J gen input) is the same as the CLM asymmetric-fm generator, set r != 1.0 to get the asymmetric spectra"
+  (let* ((phase (dsp-asyfm-phase gen))
+	 (r (dsp-asyfm-r gen))
+	 (r1 (/ 1.0 r))
+	 (index (dsp-asyfm-index gen))
+	 (modphase (* (dsp-asyfm-ratio gen) phase))
+	 (result (* (exp (* 0.5 index (- r r1) (cos modphase)))
+		    (sin (+ phase (* 0.5 index (+ r r1) (sin modphase)))))))
+    (set! (dsp-asyfm-phase gen) (+ phase input (dsp-asyfm-freq gen)))
+    result))
+
+(define (dsp-asyfm-I gen input)
+  "(dsp-asyfm-I gen input) is the I0 case of the asymmetric-fm generator (dsp.scm)"
+  (let* ((phase (dsp-asyfm-phase gen))
+	 (r (dsp-asyfm-r gen))
+	 (r1 (/ 1.0 r))
+	 (index (dsp-asyfm-index gen))
+	 (modphase (* (dsp-asyfm-ratio gen) phase))
+	 (result (* (exp (- (* 0.5 index (+ r r1) (cos modphase))
+			    (* 0.5 (log (bes-i0 (* index (+ r r1)))))))
+		    (sin (+ phase (* 0.5 index (- r r1) (sin modphase)))))))
+    (set! (dsp-asyfm-phase gen) (+ phase input (dsp-asyfm-freq gen)))
+    result))
+
+;;; sum-of-cosines example
+
+(def-clm-struct (sndclm-expcs 
+		 :make-wrapper (lambda (g)
+				 (if (<= (sndclm-expcs-et g) 0.0) (set! (sndclm-expcs-et g) 0.00001))
+				 (set! (sndclm-expcs-frequency g) (hz->radians (sndclm-expcs-frequency g)))
+				 (set! (sndclm-expcs-sinht g) (* 0.5 (sinh (sndclm-expcs-et g))))
+				 (set! (sndclm-expcs-cosht g) (cosh (sndclm-expcs-et g)))
+				 g))
+  frequency phase et sinht cosht)
+
+(define (sndclm-expcs gen fm)
+  (let ((result (- (/ (sndclm-expcs-sinht gen) 
+		      (- (sndclm-expcs-cosht gen) (cos (sndclm-expcs-phase gen))))
+		   0.5)))
+    (set! (sndclm-expcs-phase gen) (+ (sndclm-expcs-phase gen) (sndclm-expcs-frequency gen) fm))
+    result))
+
+
+
+
+
 ;;; --------------------------------------------------------------------------------
 
 
@@ -3022,6 +3171,45 @@
 	      (flux 6 "now.snd" 10.0 '(1.0 1.25 1.5) '(1.0 1.333 1.6 2.0 3.0) 0.99 10)
 	      (flux 8 "now.snd" 10.0 '(2.0) '(1.0 1.333 1.6 2.0 3.0) 0.99 120)
 	      (flux 10 "fyow.snd" .50 '(1.0 2.0 1.5) '(1.0 1.333 1.6 2.0 3.0) 0.99 120))
+
+  (with-sound () (sndscm-osc-fm 0 1 440 .1 1 1))
+  (with-sound () (sndscm-osc1-fm 0 1 440 .1 1))
+  (with-sound () (sndscm-osc2-fm 0 1 440.0 .1 1))
+
+  (with-sound () 
+	      (let ((gen (make-dsp-asyfm :freq 2000 :ratio .1))) 
+		(run 
+		 (lambda () 
+		   (do ((i 0 (1+ i)))
+		       ((= i 1000))
+		     (outa i (dsp-asyfm-J gen 0.0) *output*))))))
+  
+  (with-sound () 
+	      (let ((gen (make-dsp-asyfm :freq 2000 :ratio .1))) 
+		(run 
+		 (lambda () 
+		   (do ((i 0 (1+ i)))
+		       ((= i 1000))
+		     (outa i (dsp-asyfm-I gen 0.0) *output*))))))
+
+  (with-sound ()
+	      (let ((gen (make-sndclm-expcs :frequency 100 :et 1.0)))
+		(run
+		 (lambda ()
+		   (do ((i 0 (1+ i)))
+		       ((= i 10000))
+		     (outa i (sndclm-expcs gen 0.0) *output*))))))
+
+  (with-sound ()
+	      ;; TODO: list-set in run appears to not affect readers?
+	      (let ((gen (make-sndclm-expcs :frequency 100 :et 0.1))
+		    (t-env (make-env '(0 .1 1 2) :end 10000)))
+		(do ((i 0 (1+ i)))
+		    ((= i 10000))
+		  (let ((et (env t-env)))
+		    (set! (sndclm-expcs-sinht gen) (* 0.5 (sinh et)))
+		    (set! (sndclm-expcs-cosht gen) (cosh et))
+		    (outa i (sndclm-expcs gen 0.0) *output*)))))
 
   (for-each close-sound (sounds))
   )

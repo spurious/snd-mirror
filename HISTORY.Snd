@@ -1,5 +1,6 @@
 Snd change log
 
+ 24-Aug:     Snd 9.3.
  7-Aug:      renamed "correlate" in examp.scm to "display-correlation".
  3-Aug:      blackman5..10 and rv2..4 fft windows.
              rt-clm-ins.scm thanks to Kjetil.

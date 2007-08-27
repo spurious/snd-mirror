@@ -10022,11 +10022,61 @@ The currently implemented field types are:
     sound-data clm float-vector int-vector vct-vector clm-struct-vector clm-vector 
 </pre>
 
+<p>The struct name can be a list; in this case the first element is the actual struct name, and the
+next two elements are <code>:make-wrapper</code> followed by a function of one argument
+(the default struct normally returned by def-clm-struct).  The make wrapper function can 
+make any changes it pleases, then return the fixed-up generator.  For example, in our
+"osc" generator, we had to remember to change frequency in Hz to radians; we can use the
+wrapper to handle that:
+</p>
 
+<pre>
+    (def-clm-struct 
+      (osc <em class=red>:make-wrapper</em> (lambda (gen)
+			   (set! (osc1-freq gen) (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> (osc1-freq gen)))
+			   gen))
+      (freq 0.0) (phase 0.0))
+</pre>
 
+<p>and now the make process in the instrument can be simplified to:
+</p>
 
-<p>
-There are several examples in clm-ins.scm, dsp.scm, moog.scm, prc95.scm, and various other files.
+<pre>
+    ...
+    (carrier (make-osc freq))
+    (modulator (make-osc (* mc-ratio freq)))
+    ...
+</pre>
+
+<p>If you want the struct to take part in the <a href="sndclm.html#genericfunctions">generic function</a> facility
+in CLM, add the desired methods as an association list at the end of the new struct:
+</p>
+
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+(def-clm-struct (osc <em class=red>:make-wrapper</em>
+		  (lambda (gen)
+		    (set! (osc2-freq gen) (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> (osc2-freq gen)))
+		    (append gen 
+			    (list 
+			     (list
+			      (list 'mus-frequency 
+				    (lambda (g) (<a class=quiet href="sndclm.html#hztoradians">radians-&gt;hz</a> (osc2-freq g)))
+				    (lambda (g val) (set! (osc2-freq g) (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> val))))
+			      
+			      (list 'mus-phase 
+				    (lambda (g) (osc2-phase g))
+				    (lambda (g val) (set! (osc2-phase g) val)))
+			      
+			      (list 'mus-describe 
+				    (lambda (g) (format #f "osc2 freq: ~A, phase: ~A" 
+							(mus-frequency g) 
+							(mus-phase g)))))))))
+  freq phase)
+</pre></td></tr></table>
+
+<p>The first function is the "getter" and the (optional) second function is the "setter".
+You can also use Guile's make-procedure-with-setter.
+There are several other examples of def-clm-struct in clm-ins.scm, dsp.scm, moog.scm, prc95.scm, and various other files.
 </p>
 
 <br>
@@ -10209,7 +10259,8 @@ function is a Scheme function passed in as Scheme code.
 <!-- ---------------------------------------- user-defined generators ---------------------------------------- -->
 
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="extsndcgens">A Note on User-defined Generators in C-CLM</a></h2></td></tr></table>
-<p>To define a new generator type in Scheme is not difficult.  For example, here is a comb filter with
+<p>To define a new generator type in Scheme is not difficult.  
+For example, here is a comb filter with
 a low-pass filter on the feedback (this is now built into CLM as <a href="sndclm.html#filtered-comb">filtered-comb</a>):
 </p>
 
@@ -10224,7 +10275,8 @@ a low-pass filter on the feedback (this is now built into CLM as <a href="sndclm
       (dly (+ input (* (flt (<a class=quiet href="sndclm.html#tap">tap</a> dly)) feedback))))))
 </pre></td></tr></table>
 
-<p>We could use Guile's object system to conjure up fcomb
+<p>See <a href="#def-clm-struct">def-clm-struct</a> for more such examples.
+We could use Guile's object system to conjure up fcomb
 classes and methods in Scheme:
 </p>
 
