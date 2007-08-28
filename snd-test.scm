@@ -39854,7 +39854,7 @@ EDITS: 1
 		      (lambda () (effects-echo #f 0.5 0.1 0 #f))
 		      (lambda () (effects-flecho-1 0.5 0.1 #f 0 #f))
 		      (lambda () (effects-zecho-1 0.75 0.75 6.0 10.0 #f 0 #f))
-		      (lambda () (effects-comb-filter 0.1 50 0 #f))
+;;		      (lambda () (effects-comb-filter 0.1 50 0 #f))
 		      (lambda () (effects-moog 10000 0.5 0 #f))
 		      (lambda () (effects-remove-dc))
 		      (lambda () (effects-compand))
@@ -39925,7 +39925,7 @@ EDITS: 1
 		      "(lambda (snd chn) (effects-echo #f 0.5 0.1 0 #f snd chn))"
 		      "(lambda (snd chn) (effects-flecho-1 0.5 0.1 #f 0 #f snd chn))"
 		      "(lambda (snd chn) (effects-zecho-1 0.75 0.75 6.0 10.0 #f 0 #f snd chn))"
-		      "(lambda (snd chn) (effects-comb-filter 0.1 50 0 #f snd chn))"
+;;		      "(lambda (snd chn) (effects-comb-filter 0.1 50 0 #f snd chn))"
 		      "(lambda (snd chn) (effects-moog 10000 0.5 0 #f snd chn))"
 		      "(lambda (snd chn) (effects-remove-dc snd chn))"
 		      "(lambda (snd chn) (effects-compand snd chn))"

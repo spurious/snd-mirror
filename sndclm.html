@@ -2554,9 +2554,6 @@ We can also get all the period doublings and so on from sin:
 and <a href="sndscm.html#greendoc">green.scm</a> (bounded Brownian noise).
 </p>
 
-
-<!-- PERHAPS: autocomp ex (agn), pitch clouds -->
-
 <br><br>
 
 
@@ -4540,7 +4537,7 @@ translated up and down by w/(two pi) Hz:
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>FFT (fourier transform)</h3></center></td></tr></table>
 <pre>
-  <a class=def Name="fft">fft</a> rdat idat fftsize :optional sign
+  <a class=def Name="fft">mus-fft</a> rdat idat fftsize :optional sign
   <a class=def name="make-fft-window">make-fft-window</a> <a class=quiet href="#optional-key">:optional-key</a> type size (beta 0.0) (alpha 0.0)
   <a class=def name="multiply-arrays">multiply-arrays</a> rdat window
   <a class=def name="rectangulartopolar">rectangular-&gt;polar</a> rdat idat
@@ -4551,10 +4548,13 @@ translated up and down by w/(two pi) Hz:
   <a class=def name="correlate">correlate</a> data1 data2
 </pre>
 
-<p>fft, spectrum, and convolution are the standard functions used everywhere.
+<p>mus-fft, spectrum, and convolution are the standard functions used everywhere.
 fft is the Fourier transform, convolution convolves its arguments, and spectrum
-returns (rectangular-&gt;polar (fft)).  The results are in dB (if "norm-type" is 0),
+returns (magnitude (rectangular-&gt;polar (fft))).  The results are in dB (if "norm-type" is 0),
 or linear and normalized to 1.0 ("norm-type" = 1), or linear unnormalized.
+The name "mus-fft" is used to distuinguish clm's fft routine from Snd's; the
+only difference is that mus-fft includes the fft length as an argument, whereas
+<a href="extsnd.html#fft">fft</a> does not.
 </p>
 
 <p>make-fft-window can return many of the standard windows including:
