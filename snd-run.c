@@ -92,10 +92,8 @@
  *            also each function needs a check in configure (see fth)
  *
  * SOMEDAY: completion of support for vector of def-clm-structs
- *            see comment about lists below ca line 10931
- *
  * TODO: struct field like vector not freed
- * SOMEDAY: make-env list arg
+ * SOMEDAY: make-env list arg (it would be nice to have less kludgey list support)
  * SOMEDAY: fix def-clm-struct refs to go through the gen offset at run time (func arg problem)
  */
 
@@ -112,19 +110,9 @@ static XEN optimization_hook;
 enum {RUN_UNSAFE, RUN_SAFE};
 static int run_safety = RUN_UNSAFE;
 
-#define DESCRIBE_PTREE 1
-
-
 #if WITH_RUN
 
 #define Int off_t
-#if (SIZEOF_OFF_T == SIZEOF_LONG)
-  #define INT_PT  "i%d(%ld)"
-  #define INT_STR "%ld"
-#else
-  #define INT_PT  "i%d(%lld)"
-  #define INT_STR "%lld"
-#endif
 #define R_C_TO_XEN_INT C_TO_XEN_OFF_T
 #define R_XEN_TO_C_INT XEN_TO_C_OFF_T
 #define Double double
@@ -201,24 +189,6 @@ static XEN gauche_set_walker(XEN func, XEN walker)
 }
 #endif
 
-
-#define FLT_PT  "d%d(%.4f)"
-#define PTR_PT  "i%d(%p)"
-#define STR_PT  "s%d(\"%s\")"
-#define CHR_PT  "chr%d(#\\%c)"
-#define XEN_PT  "xen%d(%p)"
-#define LST_PT  "lst%d(%p)"
-#define KEY_PT  "key%d(%p)"
-#define RD_PT   "rd%d(%p)"
-#define MIX_SAMPLE_READER_PT   "mf%d(%p)"
-#define CLM_PT  "clm%d(%p)"
-#define FNC_PT  "fnc%d(%p)"
-#define VCT_PT  "vct%d(%p)"
-#define SD_PT   "sd%d(%p)"
-#define GO_PT   "cont%d(continuation)"
-#define BOOL_PT "b%d(%s)"
-#define VECT_PT "vect%d(%p)"
-#define B2S(Arg) ((Arg) ? "#t" : "#f")
 
 #define UNLIMITED_ARGS -1
 
@@ -551,9 +521,10 @@ typedef struct ptree {
 
 typedef struct triple {
   void (*function)(int *arg_addrs, ptree *pt);
-  int *args;
+  int *args, *types;
   bool no_opt;
   const char *op_name;
+  int num_args;
 } triple;
 
 
@@ -582,15 +553,10 @@ static triple *free_triple(triple *trp)
 {
   if (trp->args) FREE(trp->args);
   trp->args = NULL;
+  if (trp->types) FREE(trp->types);
+  trp->types = NULL;
   FREE(trp);
   return(NULL);
-}
-
-
-static char *describe_triple(triple *trp, ptree *pt)
-{
-  return(mus_format("%s", trp->op_name));
-  /* it should be possible to use describe_xen_value on the arg list (trp->args is how many there are) */
 }
 
 
@@ -737,6 +703,54 @@ XEN ptree_code(struct ptree *pt)
 }
 
 
+#if (SIZEOF_OFF_T == SIZEOF_LONG)
+  #define INT_PT  "i%d(%ld)"
+  #define INT_STR "%ld"
+#else
+  #define INT_PT  "i%d(%lld)"
+  #define INT_STR "%lld"
+#endif
+#define B2S(Arg) ((Arg) ? "#t" : "#f")
+#define GO_PT   "cont%d(continuation)"
+
+static char *describe_xen_value_1(int type, int addr, ptree *pt);
+
+
+static char *describe_triple(triple *trp, ptree *pt)
+{
+  char *str = NULL;
+  if ((trp) &&
+      (trp->args))
+    {
+      int i, size = 0;
+      char **descrs;
+      descrs = (char **)CALLOC(trp->num_args, sizeof(char *));
+      for (i = 0; i < trp->num_args; i++)
+	{
+	  descrs[i] = describe_xen_value_1(trp->types[i], trp->args[i], pt);
+	  size += (snd_strlen(descrs[i]) + 2);
+	}
+      str = (char *)CALLOC(size + snd_strlen(trp->op_name) + 8, sizeof(char));
+      str = strcat(str, descrs[0]);
+      str = strcat(str, " = ");
+      str = strcat(str, trp->op_name);
+      str = strcat(str, "(");
+      for (i = 1; i < (trp->num_args - 1); i++)
+	{
+	  str = strcat(str, descrs[i]);
+	  str = strcat(str, ", ");
+	}
+      if (trp->num_args > 1)
+	str = strcat(str, descrs[trp->num_args - 1]);
+      str= strcat(str, ")");
+      for (i = 0; i < trp->num_args; i++)
+	FREE(descrs[i]);
+      FREE(descrs);
+    }
+  return(str);
+}
+
+
 static char *describe_ptree(ptree *pt)
 {
   int i, size;
@@ -863,19 +877,19 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
 {
   switch (type)
     {
-    case R_BOOL:    return(mus_format(BOOL_PT, addr, B2S(pt->ints[addr])));             break;
+    case R_BOOL:    return(mus_format("b%d(%s)", addr, B2S(pt->ints[addr])));           break;
     case R_INT:     return(mus_format(INT_PT , addr, pt->ints[addr]));                  break;
-    case R_CHAR:    return(mus_format(CHR_PT , addr, (char)(pt->ints[addr])));          break;
-    case R_STRING:  return(mus_format(STR_PT , addr, pt->strs[addr]));                  break;
-    case R_FLOAT:   return(mus_format(FLT_PT , addr, pt->dbls[addr]));                  break;
+    case R_CHAR:    return(mus_format("c%d(\\%c)", addr, (char)(pt->ints[addr])));      break;
+    case R_STRING:  return(mus_format("s%d(\"%s\")", addr, pt->strs[addr]));            break;
+    case R_FLOAT:   return(mus_format("f%d(%.4f)", addr, pt->dbls[addr]));              break;
     case R_GOTO:    return(mus_format("continuation: " INT_PT , addr, pt->ints[addr])); break;
     case R_LIST:
     case R_PAIR:
     case R_SYMBOL:
     case R_KEYWORD: 
       if ((pt->xens) && (XEN_BOUND_P(pt->xens[addr])))
-	return(mus_format("key%d(%s)", addr, XEN_AS_STRING(pt->xens[addr]))); 
-      else return(mus_format("key(%d)=0", addr));
+	return(mus_format("xen%d(%s)", addr, XEN_AS_STRING(pt->xens[addr]))); 
+      else return(mus_format("xen(%d)=0", addr));
       break;
     case R_FLOAT_VECTOR:
     case R_VCT:
@@ -883,7 +897,7 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
 	{
 	  char *buf = NULL, *vstr = NULL;
 	  vstr = mus_vct_to_string(pt->vcts[addr]);
-	  buf = mus_format(VCT_PT, addr, vstr);
+	  buf = mus_format("vct%d(%p)", addr, vstr);
 	  if (vstr) FREE(vstr);
 	  return(buf);
 	}
@@ -894,7 +908,7 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
 	{
 	  char *buf = NULL, *vstr = NULL;
 	  vstr = sound_data_to_string(pt->sds[addr]);
-	  buf = mus_format(SD_PT, addr, vstr);
+	  buf = mus_format("sd%d(%p)", addr, vstr);
 	  if (vstr) FREE(vstr);
 	  return(buf);
 	}
@@ -936,7 +950,7 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
     case R_INT_VECTOR:  
     case R_VCT_VECTOR:
     case R_CLM_STRUCT_VECTOR:
-    case R_CLM_VECTOR:  return(mus_format("vect " PTR_PT , addr, pt->vects[addr])); break;
+    case R_CLM_VECTOR:  return(mus_format("vect%d(%p)", addr, pt->vects[addr])); break;
     case R_UNSPECIFIED: return(copy_string("#<unspecified>")); break;
     default:
       if (CLM_STRUCT_P(type))
@@ -2210,29 +2224,12 @@ static void eval_ptree(ptree *pt)
   /* evaluates program, result in prog->result, 
    *   assumes args already passed in addrs given by prog->addrs
    */
-  triple *curfunc;
   ALL_DONE = (Int)false;
-  /* evaluate the parse tree */
   while (!ALL_DONE)
     {
-#if 0
-      {
-	char *buf;
-	buf = describe_ptree(pt);
-	fprintf(stderr, buf);
-	FREE(buf);
-      }
-#endif
+      triple *curfunc;
       curfunc = ((triple **)(pt->program))[PC++];
       (*(curfunc->function))(curfunc->args, pt);
-#if 0
-      {
-	char *buf;
-	buf = (*(curfunc->descr))(curfunc->args, pt);
-	fprintf(stderr, OFF_TD ": %s\n", PC, buf);
-	FREE(buf);
-      }
-#endif
     }
   PC = pt->initial_pc; /* don't reset closure junk after initial evaluation */
 }
@@ -2282,17 +2279,23 @@ static triple *make_triple(void (*function)(int *arg_addrs, ptree *pt),
 			   xen_value **typed_args, int args)
 {
   triple *trp;
-  int *addrs = NULL;
+  int *addrs = NULL, *types = NULL;
   if (args > 0)
     {
       int i;
       addrs = (int *)CALLOC(args, sizeof(int));
+      types = (int *)CALLOC(args, sizeof(int));
       for (i = 0; i < args; i++) 
-	addrs[i] = typed_args[i]->addr;
+	{
+	  addrs[i] = typed_args[i]->addr;
+	  types[i] = typed_args[i]->type;
+	}
     }
   trp = (triple *)CALLOC(1, sizeof(triple));
   trp->function = function;
   trp->args = addrs;
+  trp->types = types;
+  trp->num_args = args;
   trp->op_name = op_name;
   return(trp);
 }
@@ -2303,24 +2306,31 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 			      int args, ...)
 {
   triple *trp;
-  int *addrs = NULL;
+  int *addrs = NULL, *types = NULL;
   if (args > 0)
     {
       va_list ap;
       int i;
       va_start(ap, args);
       addrs = (int *)CALLOC(args, sizeof(int));
+      types = (int *)CALLOC(args, sizeof(int));
       for (i = 0; i < args; i++) 
 	{
 	  xen_value *v;
 	  v = va_arg(ap, xen_value *);
-	  if (v) addrs[i] = v->addr;
+	  if (v) 
+	    {
+	      addrs[i] = v->addr;
+	      types[i] = v->type;
+	    }
 	}
       va_end(ap);
     }
   trp = (triple *)CALLOC(1, sizeof(triple));
   trp->function = function;
   trp->args = addrs;
+  trp->types = types;
+  trp->num_args = args;
   trp->op_name = op_name;
   return(trp);
 }
@@ -2344,26 +2354,16 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define FLOAT_ARG_5 pt->dbls[args[5]]
 
 #define VCT_RESULT pt->vcts[args[0]]
-#define DESC_VCT_RESULT ((args[0] < pt->vct_ctr) ? pt->vcts[args[0]] : NULL)
 #define VCT_ARG_1 pt->vcts[args[1]]
 #define VCT_ARG_2 pt->vcts[args[2]]
 #define VCT_ARG_3 pt->vcts[args[3]]
 #define VCT_ARG_4 pt->vcts[args[4]]
-#define DESC_VCT_ARG_1 ((args[1] < pt->vct_ctr) ? pt->vcts[args[1]] : NULL)
-#define DESC_VCT_ARG_2 ((args[2] < pt->vct_ctr) ? pt->vcts[args[2]] : NULL)
-#define DESC_VCT_ARG_3 ((args[3] < pt->vct_ctr) ? pt->vcts[args[3]] : NULL)
-#define DESC_VCT_ARG_4 ((args[4] < pt->vct_ctr) ? pt->vcts[args[4]] : NULL)
 
 #define SOUND_DATA_RESULT pt->sds[args[0]]
-#define DESC_SOUND_DATA_RESULT ((args[0] < pt->sd_ctr) ? pt->sds[args[0]] : NULL)
 #define SOUND_DATA_ARG_1 pt->sds[args[1]]
 #define SOUND_DATA_ARG_2 pt->sds[args[2]]
 #define SOUND_DATA_ARG_3 pt->sds[args[3]]
 #define SOUND_DATA_ARG_4 pt->sds[args[4]]
-#define DESC_SOUND_DATA_ARG_1 ((args[1] < pt->sd_ctr) ? pt->sds[args[1]] : NULL)
-#define DESC_SOUND_DATA_ARG_2 ((args[2] < pt->sd_ctr) ? pt->sds[args[2]] : NULL)
-#define DESC_SOUND_DATA_ARG_3 ((args[3] < pt->sd_ctr) ? pt->sds[args[3]] : NULL)
-#define DESC_SOUND_DATA_ARG_4 ((args[4] < pt->sd_ctr) ? pt->sds[args[4]] : NULL)
 
 #define STRING_RESULT pt->strs[args[0]]
 #define STRING_ARG_1 pt->strs[args[1]]
@@ -2373,30 +2373,19 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define CHAR_ARG_2 ((char)(pt->ints[args[2]]))
 
 #define CLM_RESULT pt->clms[args[0]]
-#define DESC_CLM_RESULT ((args[0] < pt->clm_ctr) ? pt->clms[args[0]] : NULL)
 #define CLM_LOC pt->clm_locs[args[0]]
 #define CLM_ARG_1 pt->clms[args[1]]
 #define CLM_ARG_2 pt->clms[args[2]]
 #define CLM_ARG_3 pt->clms[args[3]]
 #define CLM_ARG_4 pt->clms[args[4]]
-#define DESC_CLM_ARG_1 ((args[1] < pt->clm_ctr) ? pt->clms[args[1]] : NULL)
-#define DESC_CLM_ARG_2 ((args[2] < pt->clm_ctr) ? pt->clms[args[2]] : NULL)
-#define DESC_CLM_ARG_3 ((args[3] < pt->clm_ctr) ? pt->clms[args[3]] : NULL)
-#define DESC_CLM_ARG_4 ((args[4] < pt->clm_ctr) ? pt->clms[args[4]] : NULL)
 
 #define READER_RESULT pt->readers[args[0]]
-#define DESC_READER_RESULT ((args[0] < pt->reader_ctr) ? pt->readers[args[0]] : NULL)
 #define READER_ARG_1 pt->readers[args[1]]
 #define READER_ARG_2 pt->readers[args[2]]
-#define DESC_READER_ARG_1 ((args[1] < pt->reader_ctr) ? pt->readers[args[1]] : NULL)
-#define DESC_READER_ARG_2 ((args[2] < pt->reader_ctr) ? pt->readers[args[2]] : NULL)
 
 #define MIX_READER_RESULT pt->mix_readers[args[0]]
-#define DESC_MIX_READER_RESULT ((args[0] < pt->mix_reader_ctr) ? pt->mix_readers[args[0]] : NULL)
 #define MIX_READER_ARG_1 pt->mix_readers[args[1]]
 #define MIX_READER_ARG_2 pt->mix_readers[args[2]]
-#define DESC_MIX_READER_ARG_1 ((args[1] < pt->mix_reader_ctr) ? pt->mix_readers[args[1]] : NULL)
-#define DESC_MIX_READER_ARG_2 ((args[2] < pt->mix_reader_ctr) ? pt->mix_readers[args[2]] : NULL)
 
 #define FNC_RESULT ((ptree **)(pt->fncs))[args[0]]
 #define FNC_ARG_1 ((ptree **)(pt->fncs))[args[1]]
@@ -2405,38 +2394,22 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define FNC_ARG_4 ((ptree **)(pt->fncs))[args[4]]
 #define FNC_ARG_5 ((ptree **)(pt->fncs))[args[5]]
 #define FNC_ARG_6 ((ptree **)(pt->fncs))[args[6]]
-#define DESC_FNC_ARG_1 ((args[1] < pt->fnc_ctr) ? pt->fncs[args[1]] : NULL)
-#define DESC_FNC_ARG_2 ((args[2] < pt->fnc_ctr) ? pt->fncs[args[2]] : NULL)
-#define DESC_FNC_ARG_3 ((args[3] < pt->fnc_ctr) ? pt->fncs[args[3]] : NULL)
-#define DESC_FNC_ARG_4 ((args[4] < pt->fnc_ctr) ? pt->fncs[args[4]] : NULL)
-#define DESC_FNC_ARG_5 ((args[5] < pt->fnc_ctr) ? pt->fncs[args[5]] : NULL)
-#define DESC_FNC_ARG_6 ((args[6] < pt->fnc_ctr) ? pt->fncs[args[6]] : NULL)
 
 #if (SCM_DEBUG_TYPING_STRICTNESS != 2)
 #define XEN_RESULT pt->xens[args[0]]
-#define DESC_XEN_RESULT ((args[0] < pt->xen_ctr) ? pt->xens[args[0]] : NULL)
 #define RXEN_ARG_1 pt->xens[args[1]]
 #define RXEN_ARG_2 pt->xens[args[2]]
 #define RXEN_ARG_3 pt->xens[args[3]]
-#define DESC_RXEN_ARG_1 ((args[1] < pt->xen_ctr) ? pt->xens[args[1]] : NULL)
-#define DESC_RXEN_ARG_2 ((args[2] < pt->xen_ctr) ? pt->xens[args[2]] : NULL)
-#define DESC_RXEN_ARG_3 ((args[3] < pt->xen_ctr) ? pt->xens[args[3]] : NULL)
 #else
 #define XEN_RESULT pt->xens[args[0]]
-#define DESC_XEN_RESULT NULL
 #define RXEN_ARG_1 pt->xens[args[1]]
 #define RXEN_ARG_2 pt->xens[args[2]]
 #define RXEN_ARG_3 pt->xens[args[3]]
-#define DESC_RXEN_ARG_1 NULL
-#define DESC_RXEN_ARG_2 NULL
-#define DESC_RXEN_ARG_3 NULL
 #endif
 
 #define VECT_RESULT pt->vects[args[0]]
 #define VECT_ARG_1 pt->vects[args[1]]
 #define VECT_ARG_2 pt->vects[args[2]]
-#define DESC_VECT_ARG_1 ((args[1] < pt->vect_ctr) ? pt->vects[args[1]] : NULL)
-#define DESC_VECT_ARG_2 ((args[2] < pt->vect_ctr) ? pt->vects[args[2]] : NULL)
 
 
 static void quit(int *args, ptree *pt) {ALL_DONE = (Int)true;}
@@ -4568,13 +4541,13 @@ static xen_value * SName(ptree *prog, bool float_result, xen_value **args, int n
   if (float_result) \
     { \
       float_rel_args(prog, num_args, args); \
-      if (num_args == 2) return(package(prog, R_BOOL, CName ## _f2, " ## CName ## _f2", args, num_args)); \
-      return(package_n(prog, R_BOOL, CName ## _fn, " ## CName ## _fn", args, num_args)); \
+      if (num_args == 2) return(package(prog, R_BOOL, CName ## _f2, #CName "_f2", args, num_args)); \
+      return(package_n(prog, R_BOOL, CName ## _fn, #CName "_fn", args, num_args)); \
     } \
   else \
     { \
-      if (num_args == 2) return(package(prog, R_BOOL, CName ## _i2, " ## CName ## _i2", args, num_args)); \
-      return(package_n(prog, R_BOOL, CName ## _in, " ## CName ## _in", args, num_args)); \
+      if (num_args == 2) return(package(prog, R_BOOL, CName ## _i2, #CName "_i2", args, num_args)); \
+      return(package_n(prog, R_BOOL, CName ## _in, #CName "_in", args, num_args)); \
     } \
   return(run_warn(#COp " trouble")); \
 }
@@ -4897,8 +4870,8 @@ static xen_value *CName ## _p(ptree *prog, xen_value **args, int num_args) \
       } \
     } \
   if (args[1]->type == R_FLOAT) \
-    return(package(prog, R_BOOL, CName ## _f, " ## CName ## _f", args, 1)); \
-  return(package(prog, R_BOOL, CName ## _i, " ## CName ## _i", args, 1)); \
+    return(package(prog, R_BOOL, CName ## _f, #CName "_f", args, 1)); \
+  return(package(prog, R_BOOL, CName ## _i, #CName "_i", args, 1)); \
 }
 
 INT_POS_P(zero, zero?, ==)
@@ -4929,7 +4902,7 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
       else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, CName(prog->dbls[args[1]->addr])), R_CONSTANT)); \
     } \
   if (args[1]->type == R_INT) single_to_float(prog, args, 1); \
-  return(package(prog, R_FLOAT, CName ## _f, " ##CName ## _f", args, 1)); \
+  return(package(prog, R_FLOAT, CName ## _f, #CName "_f", args, 1)); \
 }
 
 /* only collapsible funcs here -- if constant arg, constant val (not random!) */
@@ -5558,7 +5531,7 @@ static xen_value * SName(ptree *pt, xen_value **args, int num_args) \
 { \
   if (pt->constants == 1) \
     return(make_xen_value(R_BOOL, add_int_to_ptree(pt, CName((int)(pt->ints[args[1]->addr]))), R_CONSTANT)); \
-  return(package(pt, R_BOOL, char_## CName ## _c, " ## CName ## _c", args, 1)); \
+  return(package(pt, R_BOOL, char_## CName ## _c, #CName "_c", args, 1)); \
 }
 
 CHARP(char_alphabetic_p, isalpha)
@@ -5573,7 +5546,7 @@ static xen_value * SName(ptree *pt, xen_value **args, int num_args) \
 { \
   if (pt->constants == 1) \
     return(make_xen_value(R_CHAR, add_int_to_ptree(pt, CName((char)(pt->ints[args[1]->addr]))), R_CONSTANT)); \
-  return(package(pt, R_CHAR, char_## CName ## _c, " ## CName ## _c", args, 1)); \
+  return(package(pt, R_CHAR, char_## CName ## _c, #CName "_c", args, 1)); \
 }
 
 CHARC(char_upcase, toupper)
@@ -6316,28 +6289,28 @@ static xen_value *goto_0(ptree *prog, xen_value **args, xen_value *sf)
 
 #define INT_INT_OP(CName) \
 static void CName ## _i(int *args, ptree *pt) {INT_RESULT = CName(INT_ARG_1);} \
-static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, CName ## _i, " ##CName ## _i", args, 1));}
+static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, CName ## _i, #CName "_i", args, 1));}
 
 
 #define FLOAT_INT_OP(CName) \
 static void CName ## _i(int *args, ptree *pt) {FLOAT_RESULT = CName(INT_ARG_1);} \
-static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, CName ## _i, " ##CName ## _i", args, 1));}
+static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, CName ## _i, #CName "_i", args, 1));}
 
 
 #define BOOL_INT_OP(CName) \
 static void CName ## _i(int *args, ptree *pt) {BOOL_RESULT = CName(INT_ARG_1);} \
-static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_BOOL, CName ## _i, " ##CName ## _i", args, 1));}
+static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_BOOL, CName ## _i, #CName "_i", args, 1));}
 
 
 #define INT_VOID_OP(CName) \
 static void CName ## _i(int *args, ptree *pt) {INT_RESULT = CName();} \
-static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, CName ## _i, " ##CName ## _i", args, 0));}
+static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, CName ## _i, #CName "_i", args, 0));}
 
 
 /* must copy string here because free_ptree will free all temp strings */
 #define STR_VOID_OP(CName) \
 static void CName ## _i(int *args, ptree *pt) {if (STRING_RESULT) FREE(STRING_RESULT); STRING_RESULT = copy_string(CName());} \
-static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_STRING, CName ## _i, " ##CName ## _i", args, 0));}
+static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_STRING, CName ## _i, #CName "_i", args, 0));}
 
 
 INT_INT_OP(mus_bytes_per_sample)
@@ -7772,7 +7745,7 @@ static xen_value *vct_to_sound_data_1(ptree *prog, xen_value **args, int num_arg
 #define GEN_P(Name) \
   static void Name ## _0p(int *args, ptree *pt) {BOOL_RESULT = (Int)mus_ ## Name ## _p(CLM_ARG_1);} \
   static xen_value * Name ## _p(ptree *prog, xen_value **args, int num_args) { \
-    return(package(prog, R_BOOL, Name ## _0p, " ## Name ## _0p", args, 1));} \
+    return(package(prog, R_BOOL, Name ## _0p, #Name "_0p", args, 1));} \
   static void Name ## _check(int *args, ptree *pt) { \
     if (!mus_ ## Name ## _p(CLM_ARG_1)) mus_error(MUS_NO_GEN, #Name ": bad arg: %s", (CLM_ARG_1) ? mus_name(CLM_ARG_1) : "null");}
 
@@ -7780,7 +7753,7 @@ static xen_value *vct_to_sound_data_1(ptree *prog, xen_value **args, int num_arg
 #define GEN_P_1(Name) \
   static void Name ## _0p(int *args, ptree *pt) {BOOL_RESULT = (Int)mus_ ## Name ## _p(CLM_ARG_1);} \
   static xen_value * Name ## _p(ptree *prog, xen_value **args, int num_args) { \
-    return(package(prog, R_BOOL, Name ## _0p, " ## Name ## _0p", args, 1));}
+    return(package(prog, R_BOOL, Name ## _0p, #Name "_0p", args, 1));}
 
 
 #define GEN2_0(Name) \
@@ -7803,12 +7776,12 @@ static xen_value *vct_to_sound_data_1(ptree *prog, xen_value **args, int num_arg
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, " ## Name ## _check", args, num_args); \
+    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, num_args); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
     if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3); \
-    if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, " ## Name ## _0f", args, 1)); \
-    if (num_args == 2) return(package(prog, R_FLOAT, Name ## _1f, " ## Name ## _1f", args, 2)); \
-    return(package(prog, R_FLOAT, Name ## _2f, " ## Name ## _2f", args, 3)); \
+    if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, #Name "_0f", args, 1)); \
+    if (num_args == 2) return(package(prog, R_FLOAT, Name ## _1f, #Name "_1f", args, 2)); \
+    return(package(prog, R_FLOAT, Name ## _2f, #Name "_2f", args, 3)); \
   }
 
 
@@ -7839,10 +7812,10 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, " ## Name ## _check", args, 1); \
+    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, 1); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
-    if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, " ## Name ## _0f", args, 1)); \
-    return(package(prog, R_FLOAT, Name ## _1f, " ## Name ## _1f", args, 2)); \
+    if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, #Name "_0f", args, 1)); \
+    return(package(prog, R_FLOAT, Name ## _1f, #Name "_1f", args, 2)); \
   }
 
 #define GEN2_OPT(Name) \
@@ -7851,10 +7824,10 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, " ## Name ## _check", args, 1); \
+    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, 1); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
-    if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, " ## Name ## _0f", args, 1)); \
-    return(package(prog, R_FLOAT, Name ## _1f, " ## Name ## _1f", args, 2)); \
+    if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, #Name "_0f", args, 1)); \
+    return(package(prog, R_FLOAT, Name ## _1f, #Name "_1f", args, 2)); \
   }
 
 #define GEN1(Name) \
@@ -7862,15 +7835,15 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, " ## Name ## _check", args, 1); \
-    return(package(prog, R_FLOAT, Name ## _0f, " ## Name ## _0f", args, 1)); \
+    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, 1); \
+    return(package(prog, R_FLOAT, Name ## _0f, #Name "_0f", args, 1)); \
   }
 
 #define GEN0(Name) \
   GEN1_0(Name) \
   static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args, int num_args) \
   { \
-    return(package(prog, R_FLOAT, Name ## _0f, " ## Name ## _0f", args, 1)); \
+    return(package(prog, R_FLOAT, Name ## _0f, #Name "_0f", args, 1)); \
   }
 
 
@@ -7878,7 +7851,7 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
   static void Name ## _0i(int *args, ptree *pt) {INT_RESULT = mus_ ## Name (CLM_ARG_1);} \
   static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args, int num_args) \
   { \
-    return(package(prog, R_INT, Name ## _0i, " ## Name ## _0i", args, 1)); \
+    return(package(prog, R_INT, Name ## _0i, #Name "_0i", args, 1)); \
   }
 
 #define mus_delay_0(Gen) mus_delay_1(Gen, 0.0)
@@ -8111,7 +8084,7 @@ static xen_value *move_locsig_1(ptree *prog, xen_value **args, int num_args)
     } \
   static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args, int num_args) \
   { \
-    return(package(prog, R_STRING, Name ## _0s, " ## Name ## _0s", args, 1)); \
+    return(package(prog, R_STRING, Name ## _0s, #Name "_0s", args, 1)); \
   }
 
 STR_GEN0(name)
@@ -8124,8 +8097,8 @@ STR_GEN0(file_name)
   static void Name ## _0r(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, INT_ARG_2);} \
   static xen_value * Name ## _0(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, SName ## _check, " ## SName ## _check", args, 1); \
-    return(package(prog, R_FLOAT, Name ## _0r, " ## Name ## _0r", args, 2)); \
+    if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, SName ## _check, #SName "_check", args, 1); \
+    return(package(prog, R_FLOAT, Name ## _0r, #Name "_0r", args, 2)); \
   }
 
 REF_GEN0(frame_ref, frame)
@@ -8138,14 +8111,14 @@ REF_GEN0(locsig_reverb_ref, locsig)
   static void Name ## _ir(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, (Float)(INT_ARG_3));} \
   static xen_value * Name ## _2(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, SName ## _check, " ## SName ## _check", args, 1); \
+    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, SName ## _check, #SName "_check", args, 1); \
     if (args[3]->type == R_FLOAT) \
-      return(package(prog, R_FLOAT, Name ## _0r, " ## Name ## _0r", args, 3)); \
-    return(package(prog, R_FLOAT, Name ## _ir, " ## Name ## _ir", args, 3)); \
+      return(package(prog, R_FLOAT, Name ## _0r, #Name "_0r", args, 3)); \
+    return(package(prog, R_FLOAT, Name ## _ir, #Name "_ir", args, 3)); \
   } \
   static void Name ## _1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v) \
   { \
-    add_triple_to_ptree(prog, va_make_triple( Name ## _0r, " ## Name ## _0r", 4, NULL, in_v, in_v1, v)); \
+    add_triple_to_ptree(prog, va_make_triple( Name ## _0r, #Name "_0r", 4, NULL, in_v, in_v1, v)); \
   }
 
 SET_GEN0(frame_set, frame)
@@ -8444,18 +8417,18 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
     { \
       if (args[2]->type == R_FLOAT) return(run_warn("no mixer or frame passed to " #SName)); \
       if (num_args == 2) \
-	return(package(prog, R_CLM, CName ## _2fc, " ## CName ## _2fc", args, 2)); \
-      return(package(prog, R_CLM, CName ## _3fc, " ## CName ## _3fc", args, 3)); \
+	return(package(prog, R_CLM, CName ## _2fc, #CName "_2fc", args, 2)); \
+      return(package(prog, R_CLM, CName ## _3fc, #CName "_3fc", args, 3)); \
     } \
   if (args[2]->type == R_FLOAT) \
     { \
       if (num_args == 2) \
-	return(package(prog, R_CLM, CName ## _2cf, " ## CName ## _2cf", args, 2)); \
-      return(package(prog, R_CLM, CName ## _3cf, " ## CName ## _3cf", args, 3)); \
+	return(package(prog, R_CLM, CName ## _2cf, #CName "_2cf", args, 2)); \
+      return(package(prog, R_CLM, CName ## _3cf, #CName "_3cf", args, 3)); \
     } \
   if (num_args == 2) \
-    return(package(prog, R_CLM, CName ## _2cc, " ## CName ## _2cc", args, 2)); \
-  return(package(prog, R_CLM, CName ## _3cc, " ## CName ## _3cc", args, 3)); \
+    return(package(prog, R_CLM, CName ## _2cc, #CName "_2cc", args, 2)); \
+  return(package(prog, R_CLM, CName ## _3cc, #CName "_3cc", args, 3)); \
 }
 
 FRAME_OP(mus_frame_add, frame+, mus_frame_offset)
@@ -8840,8 +8813,8 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args)  \
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1); \
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_2, "vct_check_2", args, 2); \
   if (num_args == 2) \
-    return(package(prog, R_VCT, CName ## _2f, " ## CName ## _2f", args, 2)); \
-  else return(package(prog, R_VCT, CName ## _3f, " ## CName ## _3f", args, 3)); \
+    return(package(prog, R_VCT, CName ## _2f, #CName "_2f", args, 2)); \
+  else return(package(prog, R_VCT, CName ## _3f, #CName "_3f", args, 3)); \
 }
 
 VCT_2_I(rectangular_to_polar, rectangular->polar)
@@ -8864,8 +8837,8 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args)  \
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1); \
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_2, "vct_check_2", args, 2); \
   if (num_args == 2) \
-    return(package(prog, R_FLOAT, CName ## _2f, " ## CName ## _2f", args, 2)); \
-  else return(package(prog, R_FLOAT, CName ## _3f, " ## CName ## _3f", args, 3)); \
+    return(package(prog, R_FLOAT, CName ## _2f, #CName "_2f", args, 2)); \
+  else return(package(prog, R_FLOAT, CName ## _3f, #CName "_3f", args, 3)); \
 }
 
 VCT_2_F(sine_bank, sine-bank)
@@ -8909,6 +8882,13 @@ static xen_value *clm_n(ptree *prog, xen_value **args, int num_args, xen_value *
 
 /* ---------------- spectrum ---------------- */
 
+static void mus_spectrum_3v_f(int *args, ptree *pt) 
+{
+  mus_spectrum(VCT_ARG_1->data, VCT_ARG_2->data, NULL, VCT_ARG_1->length, MUS_SPECTRUM_NORMALIZED);
+  VCT_RESULT = VCT_ARG_1;
+}
+
+
 static void mus_spectrum_3v(int *args, ptree *pt) 
 {
   mus_spectrum(VCT_ARG_1->data, VCT_ARG_2->data, (VCT_ARG_3) ? (VCT_ARG_3->data) : NULL, VCT_ARG_1->length, MUS_SPECTRUM_NORMALIZED);
@@ -8918,13 +8898,17 @@ static void mus_spectrum_3v(int *args, ptree *pt)
 
 static void mus_spectrum_4v(int *args, ptree *pt) 
 {
-  mus_spectrum(VCT_ARG_1->data, 
-	       VCT_ARG_2->data, 
-	       (VCT_ARG_3) ? (VCT_ARG_3->data) : NULL,
-	       VCT_ARG_1->length,
-	       (mus_spectrum_t)INT_ARG_4);
+  mus_spectrum(VCT_ARG_1->data, VCT_ARG_2->data, (VCT_ARG_3) ? (VCT_ARG_3->data) : NULL, VCT_ARG_1->length, (mus_spectrum_t)INT_ARG_4);
   VCT_RESULT = VCT_ARG_1;
 }
+
+
+static void mus_spectrum_4v_f(int *args, ptree *pt) 
+{
+  mus_spectrum(VCT_ARG_1->data, VCT_ARG_2->data, NULL, VCT_ARG_1->length, (mus_spectrum_t)INT_ARG_4);
+  VCT_RESULT = VCT_ARG_1;
+}
+
 
 static xen_value *mus_spectrum_1(ptree *prog, xen_value **args, int num_args) 
 {
@@ -8933,8 +8917,15 @@ static xen_value *mus_spectrum_1(ptree *prog, xen_value **args, int num_args)
       temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
       temp_package(prog, R_BOOL, vct_check_2, "vct_check_2", args, 2);
     }
-  if (num_args == 3) return(package(prog, R_VCT, mus_spectrum_3v, "mus_spectrum_3v", args, 3));
-  return(package(prog, R_VCT, mus_spectrum_4v, "mus_spectrum_4v", args, 4));
+  if (num_args == 3) 
+    {
+      if (args[3]->type == R_VCT)
+	return(package(prog, R_VCT, mus_spectrum_3v, "mus_spectrum_3v", args, 3));
+      return(package(prog, R_VCT, mus_spectrum_3v_f, "mus_spectrum_3v_f", args, 3));
+    }
+  if (args[3]->type == R_VCT)
+    return(package(prog, R_VCT, mus_spectrum_4v, "mus_spectrum_4v", args, 4));
+  return(package(prog, R_VCT, mus_spectrum_4v_f, "mus_spectrum_4v_f", args, 4));
 }
 
 
@@ -9339,7 +9330,7 @@ static xen_value *amplitude_modulate_1(ptree *prog, xen_value **args, int num_ar
 static void CName ## _f(int *args, ptree *pt) {INT_RESULT = (Int)CName(STRING_ARG_1);} \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
-  return(package(prog, R_INT, CName ## _f, " ##CName ## _f", args, 1)); \
+  return(package(prog, R_INT, CName ## _f, #CName "_f", args, 1)); \
 }
 
 SND_STR_OP(mus_sound_samples)
@@ -9484,7 +9475,7 @@ static void Name ## _1(int *args, ptree *pt) \
 static xen_value *mus_ ## Name ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
   if (args[1]->type == R_CLM) \
-    return(package(prog, R_VCT, Name ## _1, " ## Name ## _1", args, 1)); \
+    return(package(prog, R_VCT, Name ## _1, #Name "_1", args, 1)); \
   return(run_warn("wrong type arg (%s) to mus-" #Name , type_name(args[1]->type))); \
 }
 
@@ -9846,8 +9837,9 @@ static triple *make_xen_arg_triple(ptree *pt,
 				   xen_value **typed_args, int args)
 {
   triple *trp;
-  int *addrs = NULL;
+  int *addrs = NULL, *types = NULL;
   addrs = (int *)CALLOC((args > 3) ? args : 3, sizeof(int));
+  types = (int *)CALLOC((args > 3) ? args : 3, sizeof(int));
   if (args > 0)
     {
       xen_value **xaddrs = NULL;
@@ -9857,13 +9849,22 @@ static triple *make_xen_arg_triple(ptree *pt,
       addrs[0] = typed_args[0]->addr; /* string result */
       addrs[1] = typed_args[1]->addr; /* num args */
       addrs[2] = xloc;                /* addr of indirect arg list */
+
+      types[0] = typed_args[0]->type;
+      types[1] = typed_args[1]->type;
+
       for (i = 2; i < args; i++) 
-	xaddrs[i] = typed_args[i];
+	{
+	  xaddrs[i] = typed_args[i];
+	  types[i] = typed_args[i]->type;
+	}
     }
   else addrs[2] = -1;
   trp = (triple *)CALLOC(1, sizeof(triple));
   trp->function = function;
   trp->args = addrs;
+  trp->types = types;
+  trp->num_args = args;
   trp->op_name = op_name;
   return(trp);
 }
@@ -11086,8 +11087,7 @@ static XEN g_show_ptree(XEN on)
 {
   #define S_show_ptree "show-ptree"
   #define H_show_ptree "(show-ptree arg): if arg is not 0, the optimizer's parse tree is displayed. \
-arg = 1 sends it to stderr, 2 to the listener, 3 is for gcat's use.  To get output, compile snd-run.c \
-with the DESCRIBE_PTREE flag set."
+arg = 1 sends it to stderr, 2 to the listener, 3 is for gcat's use. "
 
   ptree_on = (ptree_display_t)XEN_TO_C_INT(on);
   return(on);
@@ -11124,7 +11124,7 @@ static struct ptree *form_to_ptree(XEN code)
     {
       add_triple_to_ptree(prog, make_triple(quit, "quit", NULL, 0));
       /* now check that we were able to nail down all global variable types */
-#ifdef DESCRIBE_PTREE
+
       if (ptree_on != NO_PTREE_DISPLAY)
 	{
 	  char *msg;
@@ -11133,7 +11133,7 @@ static struct ptree *form_to_ptree(XEN code)
 	  else if (ptree_on == LISTENER_PTREE_DISPLAY) listener_append(msg);
 	  FREE(msg);
 	}
-#endif
+
       prog->form = form;
       prog->form_loc = snd_protect(prog->form);
       return(prog);
@@ -11912,7 +11912,7 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
   if (pt->result)
     {
       add_triple_to_ptree(pt, make_triple(quit, "quit", NULL, 0));
-#ifdef DESCRIBE_PTREE
+
       if (ptree_on != NO_PTREE_DISPLAY)
 	{
 	  char *msg;
@@ -11921,7 +11921,7 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
 	  else if (ptree_on == LISTENER_PTREE_DISPLAY) listener_append(msg);
 	  FREE(msg);
 	}
-#endif
+
       if (pt->args)
 	{
 	  bool arity_err = false;

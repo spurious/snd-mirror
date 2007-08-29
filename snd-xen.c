@@ -29,6 +29,7 @@
  * elk:         (Scheme) looks dead (no change since 1996) and has very severe name-space problems
  * Gambit:      (Scheme) not an extension language, complicated connection to C
  * GameMonkey:  ()       c++, windows oriented (no linux I think)
+ * haskell               This looks do-able -- it has an FFI to C and can be embedded -- see GHC.
  * librep:      (CL)     looks dead, was very hard to debug a long time ago, but I still have the macros (xen.h)
  * lua:         (C)      do-able, very primitive -- push-pop-stack etc. (I'm told it is freeware, just a funny license)
  * lush:        (CL)     compilation problem, serious name-space problems (not really an extension language)

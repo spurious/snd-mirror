@@ -463,7 +463,7 @@ int main(int argc, char **argv)
 	fprintf(stderr, "can't find %s\n", files[i]);
       else
 	{
-	  int curly_ctr = 0,cancel_define = 0;
+	  int curly_ctr = 0, paren_ctr = 0, cancel_define = 0;
 	  in_define = 0;
 
 	  if ((strcmp(files[i], "sndlib2clm.lisp") == 0) ||
@@ -493,20 +493,12 @@ int main(int argc, char **argv)
 			    {
 			      if ((input[j] == '#') && (input[j + 1] == 'd'))
 				{
-				  /*
-				  int m;
-				  fprintf(stderr,"def...");
-				  for (m = j; (m < j + 16) && (m < chars); m++) fprintf(stderr,"%c", input[m]);
-				  */
 				  in_define = 1;
 				}
 			      else
 				{
 				  if ((in_define == 1) && (input[j] == '\n') && (j > 0) && (input[j - 1] != '\\'))
 				    {
-				      /*
-				      fprintf(stderr,"!\n");
-				      */
 				      cancel_define = 1;
 				    }
 				}
@@ -524,7 +516,7 @@ int main(int argc, char **argv)
 				curname[k] = 0;
 			      else fprintf(stderr, "3: curname overflow: %s[%d]: %s\n", files[i], j, curname);
 			      if ((k < ID_SIZE) && 
-				  ((curly_ctr > 0) || (in_define == 1)))
+				  ((curly_ctr > 0) || (in_define == 1) || (paren_ctr > 0)))
 				{
 				  int loc;
 				  loc = add_count(curname, i);
@@ -557,6 +549,8 @@ int main(int argc, char **argv)
 			      in_define = 0;
 			    }
 			}
+		      if (input[j] == '(') paren_ctr++;
+		      else if (input[j] == ')') paren_ctr--;
 		    }
 		  else
 		    {
