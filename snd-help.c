@@ -2937,7 +2937,7 @@ out any clicks.  See also 'Filter'",
 static void maxamp_help(void)
 {
   snd_help_with_xrefs("Maxamp",
-"Maxamp refers to the maximium amplitude in a sound",
+"Maxamp refers to the maximum amplitude in a sound",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Maxamp"),
 		      snd_xref_urls("Maxamp"));

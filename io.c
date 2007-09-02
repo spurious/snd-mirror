@@ -1585,16 +1585,18 @@ char *mus_expand_filename(const char *filename)
 }
 
 
-void mus_snprintf(char *buffer, int buffer_len, const char *format, ...)
+int mus_snprintf(char *buffer, int buffer_len, const char *format, ...)
 {
+  int bytes_needed = 0;
   va_list ap;
   va_start(ap, format);
 #if HAVE_VSNPRINTF
-  vsnprintf(buffer, buffer_len, format, ap);
+  bytes_needed = vsnprintf(buffer, buffer_len, format, ap);
 #else
-  vsprintf(buffer, format, ap);
+  bytes_needed = vsprintf(buffer, format, ap);
 #endif
   va_end(ap);
+  return(bytes_needed);
 }
 
 
@@ -1604,15 +1606,28 @@ char *mus_format(const char *format, ...)
 {
   /* caller should free result */
   char *buf = NULL, *rtn = NULL;
+  int needed_bytes = 0;
   va_list ap;
   buf = (char *)CALLOC(MUS_FORMAT_STRING_MAX, sizeof(char));
   va_start(ap, format);
 #if HAVE_VSNPRINTF
-  vsnprintf(buf, MUS_FORMAT_STRING_MAX, format, ap);
+  needed_bytes = vsnprintf(buf, MUS_FORMAT_STRING_MAX, format, ap);
 #else
-  vsprintf(buf, format, ap);
+  needed_bytes = vsprintf(buf, format, ap);
 #endif
   va_end(ap);
+  if (needed_bytes > MUS_FORMAT_STRING_MAX)
+    {
+      FREE(buf);
+      buf = (char *)CALLOC(needed_bytes + 1, sizeof(char));
+      va_start(ap, format);
+#if HAVE_VSNPRINTF
+      vsnprintf(buf, needed_bytes + 1, format, ap);
+#else
+      vsprintf(buf, format, ap); /* argh -- we already clobbered memory, I presume */
+#endif
+      va_end(ap);
+    }
 #if MUS_DEBUGGING
   rtn = copy_string(buf);
 #else

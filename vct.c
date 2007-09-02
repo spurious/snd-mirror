@@ -49,9 +49,6 @@
 
 #if USE_SND
   #include "snd.h"
-#else
-  #define PRINT_BUFFER_SIZE 512
-  #define LABEL_BUFFER_SIZE 64
 #endif
 
 #include <math.h>
@@ -81,7 +78,6 @@
     #define PROC_TRUE  "#t"
   #endif
 #endif
-
 
 #if USE_SND
   #define VCT_PRINT_LENGTH DEFAULT_PRINT_LENGTH

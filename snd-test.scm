@@ -6,31 +6,31 @@
 ;;;  test 3: variables                          [1619]
 ;;;  test 4: sndlib                             [2266]
 ;;;  test 5: simple overall checks              [4792]
-;;;  test 6: vcts                               [13749]
-;;;  test 7: colors                             [14027]
-;;;  test 8: clm                                [14517]
-;;;  test 9: mix                                [25191]
+;;;  test 6: vcts                               [13748]
+;;;  test 7: colors                             [14026]
+;;;  test 8: clm                                [14516]
+;;;  test 9: mix                                [25190]
 ;;;  test 10: marks                             [27408]
 ;;;  test 11: dialogs                           [28369]
 ;;;  test 12: extensions                        [28614]
 ;;;  test 13: menus, edit lists, hooks, etc     [28885]
 ;;;  test 14: all together now                  [30591]
-;;;  test 15: chan-local vars                   [31624]
-;;;  test 16: regularized funcs                 [33236]
-;;;  test 17: dialogs and graphics              [38227]
-;;;  test 18: enved                             [38317]
-;;;  test 19: save and restore                  [38336]
-;;;  test 20: transforms                        [40121]
-;;;  test 21: new stuff                         [42090]
-;;;  test 22: run                               [44081]
-;;;  test 23: with-sound                        [49784]
-;;;  test 24: user-interface                    [52269]
-;;;  test 25: X/Xt/Xm                           [55675]
-;;;  test 26: Gtk                               [60271]
-;;;  test 27: GL                                [64123]
-;;;  test 28: errors                            [64247]
-;;;  test all done                              [66532]
-;;;  test the end                               [66768]
+;;;  test 15: chan-local vars                   [31625]
+;;;  test 16: regularized funcs                 [33237]
+;;;  test 17: dialogs and graphics              [38228]
+;;;  test 18: enved                             [38318]
+;;;  test 19: save and restore                  [38337]
+;;;  test 20: transforms                        [40122]
+;;;  test 21: new stuff                         [42091]
+;;;  test 22: run                               [44082]
+;;;  test 23: with-sound                        [49937]
+;;;  test 24: user-interface                    [52466]
+;;;  test 25: X/Xt/Xm                           [55872]
+;;;  test 26: Gtk                               [60468]
+;;;  test 27: GL                                [64320]
+;;;  test 28: errors                            [64444]
+;;;  test all done                              [66729]
+;;;  test the end                               [66965]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -44111,7 +44111,6 @@ EDITS: 1
 (define global-v (make-vct 3 1.0))
 (define global-v1 (make-vct 3 1.0))
 (define c-var #\a)
-(define pair-var (cons 2 3))
 (define list-var (list 2 3 4 5))
 (define l0111 (list 0 1 1 1))
 (define v-var (make-vct 8))
@@ -44148,6 +44147,16 @@ EDITS: 1
 (define (efunc-6 arg) (oscil arg))
 (define efunc-gen (make-oscil 440.0))
 (define (efunc-7 arg) arg)
+
+(def-clm-struct hi308 freq phase)
+
+(define (call-hi308 hi308-gen)
+  (declare (hi308-gen hi308))
+  (hi308-freq hi308-gen))
+
+(define (set-hi308 hi308-gen)
+  (declare (hi308-gen hi308))
+  (set! (hi308-freq hi308-gen) (* 3.5 (hi308-freq hi308-gen))))
 
 (define (snd_test_22)
   
@@ -44366,7 +44375,6 @@ EDITS: 1
 	(set! global-v (make-vct 3 1.0))
 	(set! global-v1 (make-vct 3 1.0))
 	(set! c-var #\a)
-	(set! pair-var (cons 2 3))
 	(set! list-var (list 2 3 4 5))
 	(set! l0111 (list 0 1 1 1))
 	(set! v-var (make-vct 8))
@@ -46232,7 +46240,6 @@ EDITS: 1
 	(stst '(format #f "~,4F ~,3F" 3.14 (sqrt 3.0)) "3.1400 1.732")
 	(stst '(format #f "~A: ~A" "hiho" '(3 4)) "hiho: (3 4)")
 	(stst '(format #f "~A: ~C ~A" (> 2 3) #\c (make-vct 2 .1)) "#f: c #<vct[len=2]: 0.100 0.100>")
-	(stst '(format #f "~A: ~X" '(a . b) 23) "(a . b): 17")
 	(stst '(format #f "~,3E" pi) "3.142E+0")
 	(stst '(format #f "hi~16Tho") "hi              ho")
 	(stst '(format #f "~{~D ~}" '(1 2 3)) "1 2 3 ")
@@ -46389,19 +46396,10 @@ EDITS: 1
 	(ststa '(lambda (y) (cond ((> y 0.0) "hi") ((< y 0.0) "ho") (else "ha"))) 0.0 "ha")
 	(ststa '(lambda (y) (cond ((> y 0.0) "hi") ((< y 0.0) "ho") (else "ha"))) -1.0 "ho")
 	
-	(btst (list 'pair? pair-var) #t)
-	(btst (list 'list? pair-var) #f)
-	(btst (list 'pair? int-var) #f)
-	(itst (list 'car pair-var) 2)
-	(itst (list 'cdr pair-var) 3)
-	(itsta '(lambda (y) (car pair-var)) 0.0 2)
-	(itsta '(lambda (y) (cdr pair-var)) 0.0 3)
 	(let ((pv (cons 123 321))) (run (lambda () (set! int-var (car pv)))))
 	(if (not (= int-var 123)) (snd-display ";car local pv: ~A" int-var))
 	(let ((pv (cons 123 321))) (run (lambda () (set! int-var (cdr pv)))))
 	(if (not (= int-var 321)) (snd-display ";cdr local pv: ~A" int-var))
-	(let ((pv (cons 123 321))) (run (lambda () (set! int-var (if (pair? pv) 1 0)))))
-	(if (not (= int-var 1)) (snd-display ";pair? local pv: ~A" int-var))
 	
 	(btst '(list? list-var) #t)
 	(btst '(list? int-var) #f)
@@ -46418,24 +46416,6 @@ EDITS: 1
 	(itst '(caddr list-var) 4)
 	(itst '(cadddr list-var) 5)
 	(itst '(list-ref list-var 1) 3)
-	(set! list-var (list (list 2 3 6) (list 4 5)))
-	(itst '(caar list-var) 2)
-	(itst '(cadar list-var) 3)
-	(itst '(caddar list-var) 6)
-	(itst '(caadr list-var) 4)
-	(itst '(cadadr list-var) 5)
-	(itsta '(lambda (y) (caar list-var)) 0.0 2)
-	(itsta '(lambda (y) (cadar list-var)) 0.0 3)
-	(itsta '(lambda (y) (caddar list-var)) 0.0 6)
-	(itsta '(lambda (y) (caadr list-var)) 0.0 4)
-	(itsta '(lambda (y) (cadadr list-var)) 0.0 5)
-	(set! list-var (list (list (list 2 3 6 7)) (list (list 4 5))))
-	(itst '(caaar list-var) 2)
-	(itst '(cadaar list-var) 3)
-	(itst '(caaadr list-var) 4)
-	(itsta '(lambda (y) (caaar list-var)) 0.0 2)
-	(itsta '(lambda (y) (cadaar list-var)) 0.0 3)
-	(itsta '(lambda (y) (caaadr list-var)) 0.0 4)
 	(let ((lv (list 321 123))) (run (lambda () (set! int-var (car lv)))))
 	(if (not (= int-var 321)) (snd-display ";car run local lst: ~A" int-var))
 	(let ((lv (list 321 123))) (run (lambda () (set! int-var (cadr lv)))))
@@ -46445,27 +46425,10 @@ EDITS: 1
 	(btst '(null? list-var) #f)
 	(let ((lv '())) (run (lambda () (set! int-var (if (null? lv) 1 0)))))
 	(if (not (= int-var 1)) (snd-display ";null? run local lst: ~A" int-var))
-	(itst '(length list-var) 2)
+	(itst '(length list-var) 4)
 	(let ((lv (list 321 123))) (run (lambda () (set! int-var (length lv)))))
 	(if (not (= int-var 2)) (snd-display ";length run local lst: ~A" int-var))
-	(set! list-var (list 2.5 3 "hiho" #t))
-	(run (lambda () (set! int-var (cadr list-var))))
-	(if (not (= int-var 3)) (snd-display ";cadr run lst: ~A" int-var))
-	(ftsta '(lambda (y) (car list-var)) 0.0 2.5)
-	(itsta '(lambda (y) (cadr list-var)) 0.0 3)
-	(ststa '(lambda (y) (caddr list-var)) 0.0 "hiho")
-	(btsta '(lambda (y) (cadddr list-var)) 0.0 #t)
 	
-	(set! list-var (list (list (list (list 2 3 6 7)) (list 4 5)) 17 (list 12 (list (list 14 15)))))
-	(itst '(caaaar list-var) 2)
-	(itst '(caadar list-var) 4)
-	(itst '(caaddr list-var) 12)
-	(itsta '(lambda (y) (caaaar list-var)) 0.0 2)
-	(itsta '(lambda (y) (caadar list-var)) 0.0 4)
-	(itsta '(lambda (y) (caaddr list-var)) 0.0 12)
-	
-	(itst '(car '(1 . 2)) 1)
-	(itst '(cdr '(1 . 2)) 2)
 	(itst '(cadr '(3 4)) 4)
 	(btst '(null? '()) #t)
 	(btst '(null? '(1)) #f)
@@ -46486,6 +46449,7 @@ EDITS: 1
 	  (if (fneq val 440.0) (snd-display ";clm gen as arg to run: ~A" val)))
 	(let ((val (run-eval '(lambda (v) (declare (v vct)) (vct-ref v 0)) (make-vct 3 1.5))))
 	  (if (fneq val 1.5) (snd-display ";vct as arg to run: ~A" val)))
+
 	(let ((val (run-eval '(lambda (y) (let ((ge (make-env '(0 1 1 1) :end 10))) (env ge))) 0.0)))
 	  (if (fneq val 1.0) (snd-display ";make-env in run: ~A" val)))
 	
@@ -48371,7 +48335,7 @@ EDITS: 1
 		       (snd-print "snd-print test...")
 		       (snd-warning "snd-warning test...")
 		       (report-in-minibuffer "report-in-minibuffer test..." ind)
-		       (display hi) (display '(1 2)) (display '(1 . 2)) (display :hiho) (display 'asdf)
+		       (display hi) (display '(1 2)) (display :hiho) (display 'asdf)
 		       (call/cc (lambda (hiho) (if #f (hiho) (display hiho))))
 		       (call-with-current-continuation (lambda (hiho) (if #f (hiho) (display hiho))))
 		       (display svar)
@@ -48694,26 +48658,12 @@ EDITS: 1
 	      
 	      (run (lambda () (oscil unique-generator))) ; needed below
 	      
-	      (let ((tag (catch #t 
-				(lambda () 
-				  (run-eval '(lambda (a) (declare (pair a)) (car a))  ; apparently deliberate
-					    '(1 . 2))) 
-				(lambda args (car args)))))
-		(if (not (eq? tag 'cannot-parse)) (snd-display ";run declare backwards pair: ~A" tag)))
-	      (let ((tag (catch #t 
-				(lambda () 
-				  (run-eval '(lambda (a) (declare (a pairasd)) a)
-					    '(1 . 2))) 
-				(lambda args (car args)))))
-		(if (not (eq? tag 'cannot-parse)) (snd-display ";run declare backwards pairasd: ~A" tag)))
 	      (let ((tag (catch #t (lambda () 
 				     (run-eval '(lambda (a) (declare (sound-data a)) (sound-data-ref a 0 0)) 
 					       (make-sound-data 1 1))) 
 				(lambda args (car args)))))
 		(if (not (eq? tag 'cannot-parse)) (snd-display ";run declare backwards sound-data: ~A" tag)))
 	      
-	      (let ((val (run-eval '(lambda (a) (declare (a pair)) a) '(1 . 2))))
-		(if (not (equal? val '(1 . 2))) (snd-display ";run declare pair arg: ~A" val)))
 	      
 	      (let ((val (run-eval '(format #f "~A ~A" (+ 1 2) (* 3 4)))))
 		(if (not (string=? val "3 12")) (snd-display ";run format 3 12: ~A" val)))
@@ -49131,8 +49081,6 @@ EDITS: 1
 		(if (not (equal? val #\a)) (snd-display ";run b21 ~A:" val)))
 	      (let ((val (run-eval '(let ((a #\a)) (if (number? a) a)))))
 		(if (not (equal? val #f)) (snd-display ";run b22 ~A:" val)))
-	      (let ((val (run-eval '(let ((a #\a)) (if (char? a) '(1 . 2))))))
-		(if (not (equal? val '(1 . 2))) (snd-display ";run b23 ~A:" val)))
 	      (let ((val (run-eval '(let ((a #\a)) (if (char? a) '(1 2))))))
 		(if (not (equal? val '(1 2))) (snd-display ";run b24 ~A:" val)))
 	      
@@ -49716,12 +49664,275 @@ EDITS: 1
 	     (sound-data->vct sd 1 v1)))
 	  (if (not (equal? v0 (make-vct 10 .1))) (snd-display ";vct<->sound-data 0: ~A" v0))
 	  (if (not (equal? v1 (make-vct 10 .2))) (snd-display ";vct<->sound-data 1: ~A" v1)))
+
+	(let ((val (list 1 2 3))) 
+	  (if (not (= (run (lambda () (list-ref val 1))) 2))
+	      (snd-display ";list-ref 2: ~A" (run (lambda () (list-ref val 1))))))
 	
+	(let ((val (list 1.0 2.0 3.0))) 
+	  (if (fneq (run (lambda () (list-ref val 1))) 2.0)
+	      (snd-display ";list-ref 2.0: ~A" (run (lambda () (list-ref val 1))))))
+	
+	(let ((val (list 1 2 3))) 
+	  (if (not (run (lambda () (list? val))))
+	      (snd-display ";list? -> ~A" (run (lambda () (list? val))))))
+	
+	(let ((val (list 1 2 3 4))) 
+	  (if (not (= (run (lambda () (car val))) 1))
+	      (snd-display ";car 1: ~A" (run (lambda () (car val))))))
+	
+	(let ((val (list 1 2 3 4))) 
+	  (if (not (= (run (lambda () (cadr val))) 2))
+	      (snd-display ";cadr 2: ~A" (run (lambda () (cadr val))))))
+	
+	(let ((val (list 1 2 3 4))) 
+	  (if (not (= (run (lambda () (caddr val))) 3))
+	      (snd-display ";caddr 3: ~A" (run (lambda () (caddr val))))))
+	
+	(let ((val (list 1 2 3 4))) 
+	  (if (not (= (run (lambda () (cadddr val))) 4))
+	      (snd-display ";cadddr 4: ~A" (run (lambda () (cadddr val))))))
+	
+	(let ((val (list 1 2 3 4))) 
+	  (if (not (= (run (lambda () (+ (car val) (cadddr val)))) 5))
+	      (snd-display ";car + cadddr 5: ~A" (run (lambda () (+ (car val) (cadddr val)))))))
+	
+	(let ((val (list 1 2 3))) 
+	  (run (lambda () (list-set! val 1 123)))
+	  (if (not (= (list-ref val 1) 123))
+	      (snd-display ";list-set 123: ~A" val)))
+	
+	(let ((val (list 1 2 3))) 
+	  (run (lambda () (set-car! val 123)))
+	  (if (not (= (car val) 123))
+	      (snd-display ";set-car 123: ~A" val)))
+	
+	(let ((val (list 1.0 2.0 3.0 4.0))) 
+	  (if (fneq (run (lambda () (car val))) 1.0)
+	      (snd-display ";car 1.0: ~A" (run (lambda () (car val))))))
+	
+	(let ((val (list 1.0 2.0 3.0))) 
+	  (run (lambda () (list-set! val 1 123.0)))
+	  (if (fneq (list-ref val 1) 123.0)
+	      (snd-display ";list-set 123.0: ~A" val)))
+	
+	(let ((val (list 1.0 2.0 3.0))) 
+	  (run (lambda () (set-car! val 123.0)))
+	  (if (fneq (car val) 123.0)
+	      (snd-display ";set-car 123.0: ~A" val)))
+	
+	(let* ((val (list 1.0 2.0 3.0))
+	       (locs (list 1 2 3))
+	       (lv (run (lambda () (list-ref val (list-ref locs 1))))))
+	  (if (fneq lv 3.0)
+	      (snd-display ";list-ref(list-ref) 3.0: ~A" lv)))
+	
+	(let* ((val (list 1.0 2.0 3.0))
+	       (locs (list 1 2 3))
+	       (lv (run (lambda () (list-ref val (list-ref locs (car locs)))))))
+	  (if (fneq lv 3.0)
+	      (snd-display ";list-ref(list-ref(car)) 3.0: ~A" lv)))
+	
+	(let ((val (list "hi" "ho" "ha")))
+	  (if (not (string=? (run (lambda () (list-ref val 1))) "ho"))
+	      (snd-display ";list-ref strings: ~A" (run (lambda () (list-ref val 1))))))
+	
+	(let ((val (list "hi" "ho" "ha")))
+	  (run (lambda () (list-set! val 1 "hiho")))
+	  (if (not (string=? (list-ref val 1) "hiho"))
+	      (snd-display ";list-set string: ~A" val)))
+	
+	(let ((val (list (make-oscil 100) (make-oscil 200) (make-oscil 300))))
+	  (let ((clm (run (lambda () (list-ref val 1)))))
+	    (if (or (not (oscil? clm))
+		    (fneq (mus-frequency clm) 200))
+		(snd-display ";list-ref clm: ~A" clm))))
+	
+	(let ((val (list (make-vct 10) (make-vct 20) (make-vct 30))))
+	  (let ((v (run (lambda () (list-ref val 2)))))
+	    (if (or (not (vct? v))
+		    (not (= (vct-length v) 30)))
+		(snd-display ";list-ref vct: ~A" v))))
+	
+	(let ((val (list 1 2 3))) 
+	  (if (not (= (run (lambda () (length val))) 3))
+	      (snd-display ";length 3: ~A" (run (lambda () (length val))))))
+	
+	(let ((val '()))
+	  (if (not (= (run (lambda () (length val))) 0))
+	      (snd-display ";length 0: ~A" (run (lambda () (length val))))))
+	
+	(let ((val (list 1 2 3))) 
+	  (if (run (lambda () (null? val)))
+	      (snd-display ";null? : ~A" (run (lambda () (null? val))))))
+	
+	(let ((val '()))
+	  (if (run (lambda () (not (null? val))))
+	      (snd-display ";not null? : ~A" (run (lambda () (not (null? val)))))))
+	
+	(let ((val (list #f #t #t)))
+	  (if (run (lambda () (not (list-ref val 1))))
+	      (snd-display ";list-ref bools (not #t): ~A" (run (lambda () (not (list-ref val 1)))))))
+	
+	(let ((val (list #f #t #t)))
+	  (run (lambda () (list-set! val 1 #f)))
+	  (if (list-ref val 1)
+	      (snd-display ";list-set bools (not #t): ~A" val)))
+	
+	(let ((val (list #\f #\t #\c)))
+	  (if (not (char=? (run (lambda () (list-ref val 1))) #\t))
+	      (snd-display ";list-ref chars #\t): ~A" (run (lambda () (list-ref val 1))))))
+	
+	(let ((val (list #\f #\t #\c)))
+	  (run (lambda () (list-set! val 2 #\d)))
+	  (if (not (char=? (list-ref val 2) #\d))
+	      (snd-display ";list-set char: ~A" val)))
+	
+	(let ((val (list (vector .1 .2 .3) (vector 1.0 2.0 3.0))))
+	  (let ((x (run (lambda () (vector-ref (list-ref val 1) 1)))))
+	    (if (fneq x 2.0) (snd-display ";list-ref -> float vector: ~A" x))))
+	
+	(let ((val (list (vector 1 2 3) (vector 3 4 5))))
+	  (let ((x (run (lambda () (vector-ref (list-ref val 1) 1)))))
+	    (if (not (= x 4)) (snd-display ";list-ref -> int vector: ~A" x))))
+	
+	(let ((val (list (vector (make-oscil 100) (make-oscil 200)) (vector (make-oscil 300) (make-oscil 400)))))
+	  (let ((x (run (lambda () (vector-ref (list-ref val 1) 1)))))
+	    (if (or (not (oscil? x))
+		    (fneq (mus-frequency x) 400.0))
+		(snd-display ";list-ref clm-vector: ~A" x))))
+	
+	(let ((val (list (vector (make-vct 1) (make-vct 2)) (vector (make-vct 3) (make-vct 4)))))
+	  (let ((x (run (lambda () (vector-ref (list-ref val 0) 1)))))
+	    (if (or (not (vct? x))
+		    (not (= (vct-length x) 2)))
+		(snd-display ";list-ref vct-vector: ~A" x))))
+	
+	(let ((val (list (make-sound-data 1 1) (make-sound-data 2 2))))
+	  (let ((x (run (lambda () (list-ref val 1)))))
+	    (if (or (not (sound-data? x))
+		    (not (= (sound-data-chans x) 2)))
+		(snd-display ";list-ref sound-data: ~A" x))))
+	
+	(let ((val (list 'a 'b 'c)))
+	  (let ((sym (run (lambda () (list-ref val 0)))))
+	    (if (or (not (symbol? sym))
+		    (not (eq? sym 'a)))
+		(snd-display ";list-ref sym: ~A" x))))
+	
+	(let ((val (list 'a 'b 'c)))
+	  (run (lambda () (list-set! val 1 'd)))
+	  (if (not (eq? (list-ref val 1) 'd))
+	      (snd-display ";list-set sym: ~A" val)))
+	
+	(let ((val (list :a :b :c)))
+	  (let ((sym (run (lambda () (list-ref val 0)))))
+	    (if (or (not (keyword? sym))
+		    (not (eq? sym :a)))
+		(snd-display ";list-ref key: ~A" x))))
+	
+	(let ((val (list :a :b :c)))
+	  (run (lambda () (list-set! val 1 :d)))
+	  (if (not (eq? (list-ref val 1) :d))
+	      (snd-display ";list-set key: ~A" val)))
+	
+	(let ((val (list (make-sample-reader 0 "oboe.snd"))))
+	  (let ((x (run (lambda () (read-sample (list-ref val 0))))))
+	    (if (fneq x 0.0)
+		(snd-display ";list-ref sample-reader: ~A" x))
+	    (free-sample-reader (list-ref val 0))))
+	
+	
+	
+	(let ((val (run (lambda () (+ '3 '4)))))
+	  (if (not (= val 7)) (snd-display ";quote '3+'4: ~A" val)))
+	
+	(let ((val (run (lambda () (+ '3.5 '4.5)))))
+	  (if (fneq val 8.0) (snd-display ";quote '3.5+'4.5: ~A" val)))
+	
+	(let ((val (run (lambda () (list-ref '(1 2 3) 1)))))
+	  (if (not (= val 2)) (snd-display ";quote: '(1 2 3): ~A" val)))
+	
+	(let ((val (run (lambda () (list? '(0 1 2))))))
+	  (if (not val) (snd-display ";(list? '()) #f?")))
+	
+	
+	
+	(let ((ho (make-hi308 1.0 2.0))) 
+	  (if (not (run (lambda () (hi308? ho))))
+	      (snd-display ";hi308? ho: ~A" (run (lambda () (hi308? ho))))))
+	
+	(let ((ho (make-hi308 1.0 2.0))) 
+	  (if (fneq (run (lambda () (hi308-freq ho))) 1.0)
+	      (snd-display ";hi308-freq 1.0: ~A" (run (lambda () (hi308-freq ho))) 1.0)))
+	
+	(let ((ho (make-hi308 1.0 2.0))) 
+	  (run (lambda () (set! (hi308-phase ho) 123.0)))
+	  (if (fneq (hi308-phase ho) 123.0)
+	      (snd-display ";set hi308-phase 123.0: ~A" ho)))
+	
+	(let ((ho (make-hi308 1.0 2.0))) 
+	  (if (fneq (run (lambda () (set! (hi308-phase ho) 123.0) (hi308-phase ho))) 123.0)
+	      (snd-display ";set hi308-phase and rtn 123.0: ~A ~A" ho (run (lambda () (set! (hi308-phase ho) 123.0) (hi308-phase ho))) 123.0)))
+	
+	(let ((ho (make-hi308 :freq 1.0 :phase 2.0)))
+	  (if (fneq (run (lambda () (call-hi308 ho))) 1.0)
+	      (snd-display ";funcall gen 1.0: ~A" (run (lambda () (call-hi308 ho))))))
+	
+	(let ((ho (make-hi308 :freq 1.0 :phase 2.0)))
+	  (run (lambda () (set-hi308 ho)))
+	  (if (fneq (hi308-freq ho) 3.5) (snd-display ";set in outer func: ~A" ho)))
+	
+	(let ((ho (make-hi308 1.0 2.0)))
+	  (let ((ha (run (lambda () ho))))
+	    (if (not (hi308? ha))
+		(snd-display ";run hi308: ~A" ha))))
+	
+	(let* ((ho (make-hi308 3.0 2.0))
+	       (val (run-eval '(lambda (y) (declare (y hi308)) y) ho)))
+	  (if (not (hi308? val))
+	      (snd-display ";run clm-struct prog arg: ~A" val)))
+	
+	(let ((val (run-eval '(lambda (y) (declare (y hi308)) y) (make-hi308 3.0 2.0)))) 
+	  (if (or (not (hi308? val))
+		  (fneq (hi308-freq val) 3.0))
+	      (snd-display ";run clm-struct prog arg with make: ~A" val)))
+	
+	(let ((val (run-eval '(lambda (y) (declare (y list)) y) (list 1.0 2.0 3.0))))
+	  (if (or (not (list? val))
+		  (fneq (list-ref val 1) 2.0))
+	      (snd-display ";run list as arg: ~A" val)))
+	
+	
+	
+	(let ((val (run (lambda () (make-oscil 200)))))
+	  (if (or (not (oscil? val))
+		  (fneq (mus-frequency val) 200))
+	      (snd-display ";run make-oscil: ~A" val)))
+	
+	(let ((val (run (lambda () (make-oscil :frequency 200)))))
+	  (if (or (not (oscil? val))
+		  (fneq (mus-frequency val) 200))
+	      (snd-display ";run make-oscil: ~A" val)))
+	
+	(let ((val (run (lambda () (let ((gen (make-oscil 200))) (mus-frequency gen))))))
+	  (if (fneq val 200.0) (snd-display ";run make-oscil freq: ~A" val)))
+	
+	(let ((ex (list 0.0 0.0 1.0 1.0)))
+	  (let ((val (run (lambda () (make-env ex :end 100)))))
+	    (if (not (env? val)) (snd-display ";make-env run: ~A" val))))
+	
+	
+	(let ((val (vector (make-hi308 1.0 2.0) (make-hi308 3.0 4.0))))
+	  (let ((x (run (lambda () (vector-ref val 1)))))
+	    (if (or (not (hi308? x))
+		    (fneq (hi308-phase x) 4.0))
+		(snd-display ";run pass list vector as arg: ~A" x))))
 	
 	))))
 
 
-; (set! *clm-notehook* (lambda args (display (format #f "~A~%" args))))
+;; (set! *clm-notehook* (lambda args (display (format #f "~A~%" args))))
 
 ;;; ---------------- test 23: with-sound ----------------
 
@@ -49761,7 +49972,6 @@ EDITS: 1
   (str "hi" :type string)
   (str1 "hi1")
   (lst '() :type list)
-  (pr '(1 . 2) :type pair)
   (sym 'hi :type symbol)
   (v #f :type vct)
   (rd #f :type sample-reader)

@@ -973,6 +973,10 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 ;;;  :hi
 ;;;  (osc 0.125378749798983 0.0)
 
+;;; besides setting up the list accessors, the make function, and the type predicate, this
+;;;   calls add-clm-type to make sure run knows about the struct and, on each field,
+;;;   add-clm-field to tell run the type of each list element (only actually needed if
+;;;   there are different types in use)
 
 (defmacro def-clm-struct (struct-name . fields)
   (let* ((name (if (list? struct-name) (car struct-name) struct-name))
@@ -1013,7 +1017,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	   "clm struct type check"
 	   (and (list? obj)
 		(eq? (car obj) ',(string->symbol sname)))))
-       (def-optkey-fun (,(string->symbol (string-append "make-" sname)) 
+       (def-optkey-fun (,(string->symbol (string-append "make-" sname))
 		        ,@(map (lambda (n)
 				(if (and (list? n)
 					 (>= (length n) 2))
@@ -1023,7 +1027,6 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	 "clm struct make function"
 	 (,wrapper (list ',(string->symbol sname)
 			 ,@(map string->symbol field-names))))
-       (add-clm-type ,sname)
        ,@(map (let ((ctr 1))
 		(lambda (n type)
 		  (let ((val `(define ,(string->symbol (string-append sname "-" n))
@@ -1033,7 +1036,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				   (list-ref arg ,ctr))
 				 (lambda (arg val)
 				   (list-set! arg ,ctr val))))))
-		    (add-clm-field (string-append sname "-" n) ctr type)
+		    (add-clm-field sname (string-append sname "-" n) ctr type)
 		    (set! ctr (1+ ctr))
 		    val)))
 	      field-names field-types))))

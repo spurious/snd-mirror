@@ -1195,7 +1195,6 @@ static void xm_unprotect_at(int ind)
 
 /* ---------------------------------------- callback handlers ---------------------------------------- */
 
-#define gxg_static static
 static gboolean gxg_child_func(GdkWindow* window, gpointer func_data)
 {
   if (!XEN_LIST_P((XEN)func_data)) return((gboolean)0);
@@ -47807,7 +47806,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("18-Aug-07"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("30-Aug-07"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

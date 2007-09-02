@@ -2254,8 +2254,6 @@
 
 (hey "~%~%/* ---------------------------------------- callback handlers ---------------------------------------- */~%~%")
 
-(hey "#define gxg_static static~%")
-
 (let ((funcs-done '()))
   (let ((xc (lambda (func)
      (let* ((name (callback-func func))

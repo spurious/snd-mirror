@@ -167,21 +167,35 @@ static void snd_warning_1(const char *msg)
 }
 
 
-#define SND_ERROR_BUFFER_SIZE 1024
+static int snd_error_buffer_size = 1024;
 static char *snd_error_buffer = NULL;
 
 void snd_warning(char *format, ...)
 {
+  int bytes_needed = 0;
   va_list ap;
   if (snd_error_buffer == NULL) 
-    snd_error_buffer = (char *)CALLOC(SND_ERROR_BUFFER_SIZE, sizeof(char));
+    snd_error_buffer = (char *)CALLOC(snd_error_buffer_size, sizeof(char));
   va_start(ap, format);
 #if HAVE_VSNPRINTF
-  vsnprintf(snd_error_buffer, SND_ERROR_BUFFER_SIZE, format, ap);
+  bytes_needed = vsnprintf(snd_error_buffer, snd_error_buffer_size, format, ap);
 #else
-  vsprintf(snd_error_buffer, format, ap);
+  bytes_needed = vsprintf(snd_error_buffer, format, ap);
 #endif
   va_end(ap);
+  if (bytes_needed > snd_error_buffer_size)
+    {
+      snd_error_buffer_size = bytes_needed * 2;
+      FREE(snd_error_buffer);
+      snd_error_buffer = (char *)CALLOC(snd_error_buffer_size, sizeof(char));
+      va_start(ap, format);
+#if HAVE_VSNPRINTF
+      vsnprintf(snd_error_buffer, snd_error_buffer_size, format, ap);
+#else
+      vsprintf(snd_error_buffer, format, ap);
+#endif
+      va_end(ap);
+    }
   snd_warning_1(snd_error_buffer);
 }
 
@@ -194,16 +208,30 @@ void snd_warning_without_format(const char *msg)
 
 void snd_error(char *format, ...)
 {
+  int bytes_needed = 0;
   va_list ap;
   if (snd_error_buffer == NULL) 
-    snd_error_buffer = (char *)CALLOC(SND_ERROR_BUFFER_SIZE, sizeof(char));
+    snd_error_buffer = (char *)CALLOC(snd_error_buffer_size, sizeof(char));
   va_start(ap, format);
 #if HAVE_VSNPRINTF
-  vsnprintf(snd_error_buffer, SND_ERROR_BUFFER_SIZE, format, ap);
+  bytes_needed = vsnprintf(snd_error_buffer, snd_error_buffer_size, format, ap);
 #else
-  vsprintf(snd_error_buffer, format, ap);
+  bytes_needed = vsprintf(snd_error_buffer, format, ap);
 #endif
   va_end(ap);
+  if (bytes_needed > snd_error_buffer_size)
+    {
+      snd_error_buffer_size = bytes_needed * 2;
+      FREE(snd_error_buffer);
+      snd_error_buffer = (char *)CALLOC(snd_error_buffer_size, sizeof(char));
+      va_start(ap, format);
+#if HAVE_VSNPRINTF
+      vsnprintf(snd_error_buffer, snd_error_buffer_size, format, ap);
+#else
+      vsprintf(snd_error_buffer, format, ap);
+#endif
+      va_end(ap);
+    }
   snd_error_1(snd_error_buffer, true);
 }
 

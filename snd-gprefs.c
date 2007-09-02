@@ -60,7 +60,7 @@ static void post_prefs_error(const char *msg, prefs_info *data);
   static void va_post_prefs_error(const char *msg, prefs_info *data, ...);
 #endif
 
-
+/* used in snd-prefs.c */
 #define GET_TOGGLE(Toggle)        gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(Toggle))
 #define SET_TOGGLE(Toggle, Value) set_toggle_button(Toggle, Value, false, (void *)prf)
 #define GET_TEXT(Text)            get_text(Text)

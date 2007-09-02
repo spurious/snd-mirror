@@ -5,8 +5,6 @@
 #if USE_SND
   #include "snd.h"
 #else
-  #define PRINT_BUFFER_SIZE 512
-  #define LABEL_BUFFER_SIZE 64
   #if HAVE_RUBY
     #define PROC_FALSE "false"
     #define PROC_TRUE "true"

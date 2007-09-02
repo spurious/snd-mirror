@@ -450,125 +450,199 @@ int main(int argc, char **argv)
 	}
     }
 
-  fprintf(stderr, "%d names ", names_ctr);
-  k = 0;
-  in_comment = 0;
-  in_white = 0;
-  in_define = 0;
-  for (i = 0; i < files_ctr; i++)
-    {
-      k = 0;
-      fd = open(files[i], O_RDONLY, 0);
-      if (fd == -1)
-	fprintf(stderr, "can't find %s\n", files[i]);
-      else
-	{
-	  int curly_ctr = 0, paren_ctr = 0, cancel_define = 0;
-	  in_define = 0;
-
-	  if ((strcmp(files[i], "sndlib2clm.lisp") == 0) ||
-	      (strcmp(files[i], "ffi.lisp") == 0))
-	    curly_ctr = 1;
-
-	  do 
-	    {
-	      chars = read(fd, input, MAX_CHARS);
-	      /* fprintf(stderr,"%s %d\n", files[i], chars); */
-
-	      for (j = 0; j < chars; j++)
-		{
-		  if (in_comment == 0)
-		    {
-		      if ((isalpha(input[j])) || (isdigit(input[j])) || (input[j] == '_'))
-			{
-			  if (k < ID_SIZE)
-			    curname[k++] = input[j];
-			  else fprintf(stderr, "2: curname overflow: %s[%d]: %s\n", files[i], j, curname);
-			}
-		      else
-			{
-			  if ((input[j] == '/') && (input[j + 1] == '*'))
-			    in_comment = 1;
-			  else
-			    {
-			      if ((input[j] == '#') && (input[j + 1] == 'd'))
-				{
-				  in_define = 1;
-				}
-			      else
-				{
-				  if ((in_define == 1) && (input[j] == '\n') && (j > 0) && (input[j - 1] != '\\'))
-				    {
-				      cancel_define = 1;
-				    }
-				}
-			      if ((in_define == 0) && 
-				  (j < (chars - 1)) && 
-				  ((input[j - 1] != '\'') || (input[j + 1] != '\'')))
-				{
-				  if (input[j] == '{') curly_ctr++;
-				  else if (input[j] == '}') curly_ctr--;
-				}
-			    }
-			  if (k > 0)
-			    {
-			      if (k < ID_SIZE)
-				curname[k] = 0;
-			      else fprintf(stderr, "3: curname overflow: %s[%d]: %s\n", files[i], j, curname);
-			      if ((k < ID_SIZE) && 
-				  ((curly_ctr > 0) || (in_define == 1) || (paren_ctr > 0)))
-				{
-				  int loc;
-				  loc = add_count(curname, i);
-				  if (loc >= 0)
-				    {
-				      if (procs[loc])
-					results[loc] += get_result(input, j, k);
-				      if (lines[loc] == NULL)
-					{
-					  lines[loc] = (char **)calloc(MAX_LINES, sizeof(char *));
-					  lines[loc][0] = get_call(input, j, k, curname, chars, files[i]);
-					}
-				      else
-					{
-					  int m;
-					  for (m = 0; m < MAX_LINES; m++)
-					    if (lines[loc][m] == NULL)
-					      {
-						lines[loc][m] = get_call(input, j, k, curname, chars, files[i]);
-						break;
-					      }
-					}
-				    }
-				}
-			      k = 0;
-			    }
-			  if (cancel_define == 1)
-			    {
-			      cancel_define = 0;
-			      in_define = 0;
-			    }
-			}
-		      if (input[j] == '(') paren_ctr++;
-		      else if (input[j] == ')') paren_ctr--;
-		    }
-		  else
-		    {
-		      if ((input[j] == '*') && (input[j + 1] == '/'))
-			in_comment = 0;
-		    }
-		}
-	    }
-	  while (chars == MAX_CHARS);
-	  close(fd);
-	}
-    }
-
   FD = fopen("xref.data","w");
   if (!FD)
     fprintf(stderr, "can't write xref.data?");
   else
     {
+      fprintf(stderr, "%d names ", names_ctr);
+
+      k = 0;
+      in_comment = 0;
+      in_white = 0;
+      in_define = 0;
+      for (i = 0; i < files_ctr; i++)
+	{
+	  char **all_names = NULL;
+	  int all_names_size = 0, all_names_top = 0;
+	  int *all_names_counts = NULL;
+	  
+	  k = 0;
+	  fd = open(files[i], O_RDONLY, 0);
+	  if (fd == -1)
+	    fprintf(stderr, "can't find %s\n", files[i]);
+	  else
+	    {
+	      int curly_ctr = 0, paren_ctr = 0, cancel_define = 0;
+	      bool got_macro = false;
+	      in_define = 0;
+	      
+	      if ((strcmp(files[i], "sndlib2clm.lisp") == 0) ||
+		  (strcmp(files[i], "ffi.lisp") == 0))
+		curly_ctr = 1;
+	      
+	      do 
+		{
+		  chars = read(fd, input, MAX_CHARS);
+		  /* fprintf(stderr,"%s %d\n", files[i], chars); */
+		  
+		  for (j = 0; j < chars; j++)
+		    {
+		      if (in_comment == 0)
+			{
+			  if ((isalpha(input[j])) || (isdigit(input[j])) || (input[j] == '_'))
+			    {
+			      if (k < ID_SIZE)
+				curname[k++] = input[j];
+			      else fprintf(stderr, "2: curname overflow: %s[%d]: %s\n", files[i], j, curname);
+			    }
+			  else
+			    {
+			      if ((input[j] == '/') && (input[j + 1] == '*'))
+				in_comment = 1;
+			      else
+				{
+				  if ((input[j] == '#') && (input[j + 1] == 'd'))
+				    {
+				      in_define = 1;
+				      got_macro = false;
+				    }
+				  else
+				    {
+				      if ((in_define == 1) && (input[j] == '\n') && (j > 0) && (input[j - 1] != '\\'))
+					{
+					  cancel_define = 1;
+					}
+				    }
+				  if ((in_define == 0) && 
+				      (j < (chars - 1)) && 
+				      ((input[j - 1] != '\'') || (input[j + 1] != '\'')))
+				    {
+				      if (input[j] == '{') curly_ctr++;
+				      else if (input[j] == '}') curly_ctr--;
+				    }
+				}
+			      
+			      if (k > 0)
+				{
+				  if (k < ID_SIZE)
+				    curname[k] = 0;
+				  else fprintf(stderr, "3: curname overflow: %s[%d]: %s\n", files[i], j, curname);
+				  
+				  if (true)
+				    {
+				      bool happy = false;
+				      int m;
+				      if (all_names == NULL)
+					{
+					  all_names_size = 1024;
+					  all_names_top = 0;
+					  all_names = (char **)calloc(all_names_size, sizeof(char *));
+					  all_names_counts = (int *)calloc(all_names_size, sizeof(int));
+					}
+				      
+				      for (m = 0; m < all_names_top; m++)
+					if (strcmp(curname, all_names[m]) == 0)
+					  {
+					    happy = true;
+					    all_names_counts[m]++;
+					  }
+				      
+				      if ((!got_macro) && (in_define == 1) && (strcmp(curname, "define") != 0))
+					{
+					  got_macro = true;
+					  if (!happy)
+					    {
+					      all_names[all_names_top++] = strdup(curname);
+					      got_macro = true;
+					      if (all_names_top == all_names_size)
+						{
+						  all_names_size *= 2;
+						  all_names = (char **)realloc(all_names, all_names_size * sizeof(char *));
+						  all_names_counts = (int *)realloc(all_names_counts, all_names_size * sizeof(int));
+						  for (m = all_names_top; m < all_names_size; m++)
+						    {
+						      all_names[m] = NULL;
+						      all_names_counts[m] = 0;
+						    }
+						}
+					    }
+					}
+				    }
+				  
+				  if ((k < ID_SIZE) && 
+				      ((curly_ctr > 0) || (in_define == 1) || (paren_ctr > 0)))
+				    {
+				      int loc;
+				      loc = add_count(curname, i);
+				      if (loc >= 0)
+					{
+					  if (procs[loc])
+					    results[loc] += get_result(input, j, k);
+					  if (lines[loc] == NULL)
+					    {
+					      lines[loc] = (char **)calloc(MAX_LINES, sizeof(char *));
+					      lines[loc][0] = get_call(input, j, k, curname, chars, files[i]);
+					    }
+					  else
+					    {
+					      int m;
+					      for (m = 0; m < MAX_LINES; m++)
+						if (lines[loc][m] == NULL)
+						  {
+						    lines[loc][m] = get_call(input, j, k, curname, chars, files[i]);
+						    break;
+						  }
+					    }
+					}
+				    }
+				  k = 0;
+				}
+			      if (cancel_define == 1)
+				{
+				  cancel_define = 0;
+				  in_define = 0;
+				}
+			    }
+			  if (input[j] == '(') paren_ctr++;
+			  else if (input[j] == ')') paren_ctr--;
+			}
+		      else
+			{
+			  if ((input[j] == '*') && (input[j + 1] == '/'))
+			    in_comment = 0;
+			}
+		    }
+		}
+	      while (chars == MAX_CHARS);
+	      close(fd);
+	      
+	      {
+		int m;
+		bool name_printed = false;
+		for (m = 0; m < all_names_top; m++)
+		  if (all_names_counts[m] == 0)
+		    {
+		      if (!name_printed)
+			{
+			  fprintf(FD, "\n%s: ", files[i]);
+			  name_printed = true;
+			}
+		      fprintf(FD, "%s ", all_names[m]);
+		    }
+		for (m = 0; m < all_names_top; m++)
+		  if (all_names[m]) free(all_names[m]);
+		if (all_names) free(all_names);
+		if (all_names_counts) free(all_names_counts);
+		all_names = NULL;
+		all_names_counts = NULL;
+		all_names_size = 0;
+		all_names_top = 0;
+	      }
+	      
+	    }
+	}
+      
       for (i = 0; i < names_ctr; i++)
 	{
 	  maxc[i] = 0;
@@ -638,7 +712,7 @@ int main(int argc, char **argv)
 	      menu_count  = 0;
 	      file_count = 0;
 	      rec_count = 0;
-
+	      
 	      nonogui_case = in_nogui_h(qs[i]->name);
 	      if ((nonogui_case) && (counts[qs[i]->i]))
 		{
@@ -656,7 +730,7 @@ int main(int argc, char **argv)
 		      }
 		  /* if (nonogui_case) fprintf(stderr, "!\n"); */
 		}
-
+	      
 	      for (j = 0; j < files_ctr; j++)
 		{
 		  if ((counts[qs[i]->i]) && (counts[qs[i]->i][j] > 0))

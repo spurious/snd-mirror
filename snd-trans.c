@@ -1446,13 +1446,6 @@ static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, 
 #define NeXT_G723 25
 #define NeXT_G723_5 26
 
-#if 0
-#define RIFF_G721 0x40
-#define RIFF_Gsm610 0x31
-#define RIFF_MPEG 0x50
-#define NeXT_G722 24
-#endif
-
 static int MUS_CANT_TRANSLATE = 0;
 
 static const char *any_format_name(const char *name)

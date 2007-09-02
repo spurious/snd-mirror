@@ -126,7 +126,7 @@ char *snd_strcat(char *errmsg, const char *str, int *size)
     {
       if ((err_size * 2) > new_len)
 	err_size = err_size * 2;
-      else err_size = new_len;
+      else err_size = new_len * 2;
       errmsg = (char *)REALLOC(errmsg, err_size * sizeof(char));
       size[0] = err_size;
     }

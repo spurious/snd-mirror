@@ -27822,6 +27822,7 @@ static void define_strings(void)
   #endif
   DEFINE_RESOURCE(XmNblueSliderLabel, XM_XMSTRING);
   DEFINE_RESOURCE(XmNcolorListTogLabel, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNcolorMode, XM_STRING);
   DEFINE_RESOURCE(XmNcolorName, XM_STRING);
   DEFINE_RESOURCE(XmNfileReadError, XM_XMSTRING);
   DEFINE_RESOURCE(XmNgreenSliderLabel, XM_XMSTRING);

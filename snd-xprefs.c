@@ -82,7 +82,7 @@ static void post_prefs_error(const char *msg, prefs_info *data);
   static void va_post_prefs_error(const char *msg, prefs_info *data, ...);
 #endif
 
-
+/* used in snd-prefs */
 #define GET_TOGGLE(Toggle)        (XmToggleButtonGetState(Toggle) == XmSET)
 #define SET_TOGGLE(Toggle, Value) XmToggleButtonSetState(Toggle, Value, false)
 #define GET_TEXT(Text)            XmTextFieldGetString(Text)

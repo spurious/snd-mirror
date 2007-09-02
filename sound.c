@@ -40,22 +40,36 @@ mus_error_handler_t *mus_error_set_handler(mus_error_handler_t *new_error_handle
 }
 
 
-#define MUS_ERROR_BUFFER_SIZE 1024
 static char *mus_error_buffer = NULL;
+static int mus_error_buffer_size = 1024;
 
 int mus_error(int error, const char *format, ...)
 {
+  int bytes_needed = 0;
   va_list ap;
   if (format == NULL) return(MUS_ERROR); /* else bus error in Mac OSX */
   if (mus_error_buffer == NULL)
-    mus_error_buffer = (char *)CALLOC(MUS_ERROR_BUFFER_SIZE, sizeof(char));
+    mus_error_buffer = (char *)CALLOC(mus_error_buffer_size, sizeof(char));
   va_start(ap, format);
 #if HAVE_VSNPRINTF
-  vsnprintf(mus_error_buffer, MUS_ERROR_BUFFER_SIZE, format, ap);
+  bytes_needed = vsnprintf(mus_error_buffer, mus_error_buffer_size, format, ap);
 #else
-  vsprintf(mus_error_buffer, format, ap);
+  bytes_needed = vsprintf(mus_error_buffer, format, ap);
 #endif
   va_end(ap);
+  if (bytes_needed > mus_error_buffer_size)
+    {
+      mus_error_buffer_size = bytes_needed * 2;
+      FREE(mus_error_buffer);
+      mus_error_buffer = (char *)CALLOC(mus_error_buffer_size, sizeof(char));
+      va_start(ap, format);
+#if HAVE_VSNPRINTF
+      vsnprintf(mus_error_buffer, mus_error_buffer_size, format, ap);
+#else
+      vsprintf(mus_error_buffer, format, ap);
+#endif
+      va_end(ap);
+    }
   if (mus_error_handler)
     (*mus_error_handler)(error, mus_error_buffer);
   else 
@@ -80,18 +94,32 @@ mus_print_handler_t *mus_print_set_handler(mus_print_handler_t *new_print_handle
 
 void mus_print(const char *format, ...)
 {
+  int bytes_needed = 0;
   va_list ap;
   if (mus_error_buffer == NULL)
-    mus_error_buffer = (char *)CALLOC(MUS_ERROR_BUFFER_SIZE, sizeof(char));
+    mus_error_buffer = (char *)CALLOC(mus_error_buffer_size, sizeof(char));
   if (mus_print_handler)
     {
       va_start(ap, format);
 #if HAVE_VSNPRINTF
-      vsnprintf(mus_error_buffer, MUS_ERROR_BUFFER_SIZE, format, ap);
+      bytes_needed = vsnprintf(mus_error_buffer, mus_error_buffer_size, format, ap);
 #else
-      vsprintf(mus_error_buffer, format, ap);
+      bytes_needed = vsprintf(mus_error_buffer, format, ap);
 #endif
       va_end(ap);
+      if (bytes_needed > mus_error_buffer_size)
+	{
+	  mus_error_buffer_size = bytes_needed * 2;
+	  FREE(mus_error_buffer);
+	  mus_error_buffer = (char *)CALLOC(mus_error_buffer_size, sizeof(char));
+	  va_start(ap, format);
+#if HAVE_VSNPRINTF
+	  vsnprintf(mus_error_buffer, mus_error_buffer_size, format, ap);
+#else
+	  vsprintf(mus_error_buffer, format, ap);
+#endif
+	  va_end(ap);
+	}
       (*mus_print_handler)(mus_error_buffer);
     }
   else

@@ -2607,7 +2607,14 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(print-enable 'source)");
 
   XEN_EVAL_C_STRING("(define (clm-print . args) (snd-print (apply format #f args)))");
-  XEN_EVAL_C_STRING("(defmacro declare args #f)");     /* for optimizer */
+  XEN_EVAL_C_STRING("(defmacro declare args `(snd-declare ',args))");
+
+  /* declare has to be a macro, else it evaluates its arguments in the fallback-on-scheme case
+   *   however, we want it to still be findable on an external function (when using procedure-source to splice in the body)
+   *   so in the optimizer case, it sees the original "declare" form, but in the scheme case, the snd-declare (a no-op),
+   *   and in the optimizer-splicing-source case, the snd-declare, I hope.
+   */
+
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
   XEN_EVAL_C_STRING("(define undo-edit undo)");
   XEN_EVAL_C_STRING("(define define+ define)");        /* Gauche can't handle documentation strings */
