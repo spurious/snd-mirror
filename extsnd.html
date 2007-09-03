@@ -7756,7 +7756,7 @@ Here is an example that mixes a sine wave into the current channel:
 (define* (sine-channel freq amp :optional (beg 0) dur snd chn edpos)
   (<em class=red>ptree-channel</em>
    (lambda (y data forward)
-     (declare (y real) (data vct) (forward boolean))
+     (<a class=quiet href="#declare">declare</a> (y real) (data vct) (forward boolean))
      (let* ((angle (<a class=quiet href="#vctref">vct-ref</a> data 0))
 	    (incr (<a class=quiet href="#vctref">vct-ref</a> data 1))
 	    (val (+ y (* (<a class=quiet href="#vctref">vct-ref</a> data 2) (sin angle)))))
@@ -7799,7 +7799,7 @@ version of cosine-channel given under
   ;; vct: angle increment
   (<em class=red>ptree-channel</em>
    (lambda (y data forward)
-     (declare (y real) (data vct) (forward boolean))
+     (<a class=quiet href="#declare">declare</a> (y real) (data vct) (forward boolean))
      (let* ((angle (<a class=quiet href="#vctref">vct-ref</a> data 0))
 	    (incr (<a class=quiet href="#vctref">vct-ref</a> data 1))
 	    (val (* y (cos angle))))
@@ -7856,7 +7856,7 @@ currently doesn't know how to save the enclosing environment along with the init
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
   (let ((outer 0.5))
     (<em class=red>ptree-channel</em> (lambda (y data forward)
-		     (declare (y real) (data float) (forward boolean))
+		     (<a class=quiet href="#declare">declare</a> (y real) (data float) (forward boolean))
 		     (* y data))
 		   0 #f ind 0 #f #f
 		   (lambda (pos dur)
@@ -7884,7 +7884,7 @@ could in this case be:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
   (<em class=red>ptree-channel</em> (lambda (y data forward)
-		   (declare (y real) (data vct) (forward boolean))
+		   (<a class=quiet href="#declare">declare</a> (y real) (data vct) (forward boolean))
 		   (let ((val (* 0.5 (+ y (<a class=quiet href="#vctref">vct-ref</a> data 0)))))
 		     (<a class=quiet href="#vctset">vct-set!</a> data 0 y)
 		     val))
@@ -7914,7 +7914,7 @@ Here are several more examples:
   (let* ((base (if (&gt; r0 r1) (/ 1.0 ubase) ubase)))
     (<em class=red>ptree-channel</em>
      (lambda (y data forward)
-       (declare (y real) (data vct) (forward boolean))
+       (<a class=quiet href="#declare">declare</a> (y real) (data vct) (forward boolean))
        (let* ((lr0 (<a class=quiet href="#vctref">vct-ref</a> data 0))
 	      (lbase (<a class=quiet href="#vctref">vct-ref</a> data 1))
 	      (incr (<a class=quiet href="#vctref">vct-ref</a> data 2))
@@ -7938,7 +7938,7 @@ Here are several more examples:
   (let ((len (<a class=quiet href="#mussoundframes">mus-sound-frames</a> file)))
     (<em class=red>ptree-channel</em>
      (lambda (y state forward)
-       (declare (y real) (state sample-reader) (forward boolean))
+       (<a class=quiet href="#declare">declare</a> (y real) (state sample-reader) (forward boolean))
        (+ y (if forward (<a class=quiet href="#nextsample">next-sample</a> state) (<a class=quiet href="#previoussample">previous-sample</a> state))))
      beg len snd chn -1 #f
      (lambda (frag-beg frag-dur)
@@ -8166,8 +8166,9 @@ of the speed of CL+run+C in CLM.  Currently, only Guile and Gauche support this 
 	 (<a class=quiet href="sndclm.html#outa">outa</a> i (<a class=quiet href="sndclm.html#oscil">oscil</a> o) *output*))))))
 </pre></td></tr></table>
 
-Functions embedded within run (leaving aside the "thunk" argument itself) need to declare the type of their arguments (the type defaults to integer, and
-run assumes each variable has one type throughout its life).  So, the following code
+<A NAME="declare"></A>
+Functions embedded within run need to declare the type of their arguments; run assumes each variable has one type (integer by default) throughout its life.
+So, the following code
 displays "0", rather than "3.14":
 
 <pre>
@@ -8181,6 +8182,13 @@ causes nothing but confusion.  To get this code to work right:
   (run (lambda () (let ((x 3.14)) (define (a b) (<em class=red>declare</em> (b real)) (display b)) (a x))))
 </pre>
 
+The current declarable types include any <a href="sndscm.html#def-clm-struct">def-clm-struct</a> type and:
+</p>
+<pre>
+    int float boolean char string list symbol keyword vct sample-reader mix-sample-reader 
+    sound-data clm float-vector int-vector vct-vector list-vector clm-vector 
+</pre>
+<p>
 declare is modelled after Common Lisp's declare; it is specific to run.
 For more examples see <a href="#ptreechannel">Virtual Edits</a> and, in
 particular, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>.

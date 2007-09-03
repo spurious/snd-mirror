@@ -84,6 +84,8 @@
  * (add-hook! optimization-hook (lambda (n) (snd-display "opt: ~A~%" n)))
  */
 
+
+
 /* complex number support for run -- can't see any good reason for this but...
  *            3+4i real-part imag-part make-rectangular make-polar angle magnitude complex? real? declare case
  *            complex.h: ccos csin ctan cacos casin catan ccosh csinh ctanh cacosh casinh catanh cexp clog cabs cpow csqrt
@@ -94,9 +96,14 @@
  * TODO: completion of support for vector of def-clm-structs
  * TODO: struct field like vector not freed
  * TODO: eq? of list? make-osc?
- * TODO: update docs to reflect clm23 changes etc, add tmp308 to snd-test
- * TODO: check memlog (xen_values) and other snd-test troubles
  */
+#if 0
+snd-run.c[568]:make_xen_value:  8064 (504)
+snd-run.c[1224]:xen_to_list_with_type:  1252 (60)
+snd-run.c[1217]:xen_to_list_with_type:  720 (60)
+#endif
+
+
 
 #include "snd.h"
 #include "sndlib2xen.h"
@@ -205,6 +212,7 @@ static XEN symbol_to_value(XEN code, XEN sym, bool *local)
 {
   XEN new_val = XEN_UNDEFINED;
   XEN val;
+
   if (XEN_PROCEDURE_P(code))
     {
       XEN code_env = XEN_FALSE;
@@ -254,6 +262,7 @@ static XEN symbol_to_value(XEN code, XEN sym, bool *local)
 	    }
 	}
     }
+
   val = XEN_SYMBOL_TO_VARIABLE(sym);
   if (!(XEN_FALSE_P(val))) 
     {
@@ -261,6 +270,7 @@ static XEN symbol_to_value(XEN code, XEN sym, bool *local)
       if (XEN_BOUND_P(new_val))
 	(*local) = false;
     }
+
   return(new_val);
 }
 
@@ -269,6 +279,7 @@ static void symbol_set_value(XEN code, XEN sym, XEN new_val)
 {
   XEN var = XEN_FALSE;
   /* fprintf(stderr, "set %s to %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val)); */
+
   if (XEN_PROCEDURE_P(code))
     {
       XEN code_env = XEN_FALSE;
@@ -302,6 +313,7 @@ static void symbol_set_value(XEN code, XEN sym, XEN new_val)
 	    }
 	}
     }
+
   var = XEN_SYMBOL_TO_VARIABLE(sym);
   if (!(XEN_FALSE_P(var)))
     XEN_VARIABLE_SET(var, new_val);
@@ -368,8 +380,6 @@ enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST,
       R_NUMBER_SOUND_DATA, R_ANY}; /* last 8 for walker arg checks */
 
 #define BUILT_IN_TYPES 29
-
-/* TODO: LIST_VECTOR */
 
 static int last_type = R_ANY;
 static int type_names_size = BUILT_IN_TYPES;
@@ -566,6 +576,9 @@ static xen_value *make_xen_value(int typ, int address, xen_value_constant_t cons
 {
   xen_value *v;
   v = (xen_value *)CALLOC(1, sizeof(xen_value));
+#if MUS_DEBUGGING
+  set_printable(PRINT_XEN_VALUE);
+#endif
   v->type = typ;
   v->addr = address;
   v->constant = constant;
@@ -621,6 +634,19 @@ static xen_value *copy_xen_value(xen_value *v)
 
 
 static char *describe_xen_value(xen_value *v, ptree *pt);
+
+#if MUS_DEBUGGING
+void describe_xen_value_for_memlog(FILE *Fp, void *ptr);
+void describe_xen_value_for_memlog(FILE *Fp, void *ptr)
+{
+  xen_value *v = (xen_value *)ptr;
+  fprintf(Fp, "[%p: type: %d (%s), addr: %d, %s %s]\n    ", 
+	  v, v->type, type_name(v->type), v->addr,
+	  (v->constant == R_CONSTANT) ? "constant" : "variable",
+	  (v->gc) ? "gc" : "no gc");
+}
+#endif
+
 
 static char *describe_xen_var(xen_var *var, ptree *pt)
 {
@@ -1386,44 +1412,50 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 		if (XEN_VECTOR_P(val))
 		  int_vect_into_vector(prog->vects[var->v->addr], val);
 		break;
+
+		/* TODO: read-back list, clm-struct, list-vector */
 	      }
 	  else
-	    switch (var->v->type)
-	      {
-	      case R_FLOAT:  symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_DOUBLE(prog->dbls[var->v->addr]));       break;
-	      case R_INT:    symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), R_C_TO_XEN_INT(prog->ints[var->v->addr]));        break;
-	      case R_BOOL:   symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_BOOLEAN(prog->ints[var->v->addr]));      break;
-	      case R_STRING: symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_STRING(prog->strs[var->v->addr]));       break;
-	      case R_CHAR:   symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_CHAR((char)(prog->ints[var->v->addr]))); break;
+	    {
+	      switch (var->v->type)
+		{
+		case R_FLOAT:  symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_DOUBLE(prog->dbls[var->v->addr]));       break;
+		case R_INT:    symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), R_C_TO_XEN_INT(prog->ints[var->v->addr]));        break;
+		case R_BOOL:   symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_BOOLEAN(prog->ints[var->v->addr]));      break;
+		case R_STRING: symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_STRING(prog->strs[var->v->addr]));       break;
+		case R_CHAR:   symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_CHAR((char)(prog->ints[var->v->addr]))); break;
+		  
+		case R_FLOAT_VECTOR:
+		  val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
+		  if (XEN_VECTOR_P(val))
+		    vct_into_vector(prog->vcts[var->v->addr], val);
+		  break;
+		  
+		case R_INT_VECTOR:
+		  val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
+		  if (XEN_VECTOR_P(val))
+		    int_vect_into_vector(prog->vects[var->v->addr], val);
+		  break;
+		  
+		  /* TODO: read-back list-vector */
+		  
+		default:
+		  if ((var->v->type == R_LIST) ||
+		      (CLM_STRUCT_P(var->v->type)))
+		    {
+		      val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
+		      
+		      /* fprintf(stderr,"%s set %s\n", var->name, XEN_AS_STRING(val)); */
+		      
+		      if (XEN_LIST_P(val))
+			list_into_list(prog, prog->lists[var->v->addr], val);
+		    }
+		  break;
+		  
+		  /* TODO: clm vector? list vector? */
 
-	      case R_FLOAT_VECTOR:
-		val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
-		if (XEN_VECTOR_P(val))
-		  vct_into_vector(prog->vcts[var->v->addr], val);
-		break;
-
-	      case R_INT_VECTOR:
-		val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
-		if (XEN_VECTOR_P(val))
-		  int_vect_into_vector(prog->vects[var->v->addr], val);
-		break;
-
-	      default:
-		if ((var->v->type == R_LIST) ||
-		    (CLM_STRUCT_P(var->v->type)))
-		  {
-		    val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
-		    
-		    /* fprintf(stderr,"%s set %s\n", var->name, XEN_AS_STRING(val)); */
-
-		    if (XEN_LIST_P(val))
-		      list_into_list(prog, prog->lists[var->v->addr], val);
-		  }
-		break;
-
-		/* TODO: clm vector? list vector? */
-
-	      }
+		}
+	    }
 	}
       if (var->name) FREE(var->name);
       if (var->v) FREE(var->v);
@@ -1499,6 +1531,7 @@ void free_ptree(struct ptree *pt)
 			      pt->vcts[v->addr] = mus_vct_free(pt->vcts[v->addr]); 
 			    }
 			  break;
+
 			case R_SOUND_DATA: 
 			  if (pt->sds[v->addr])
 			    {
@@ -1510,6 +1543,7 @@ void free_ptree(struct ptree *pt)
 			      pt->sds[v->addr] = NULL;   
 			    }
 			  break;
+
 			case R_READER: 
 			  if (pt->readers[v->addr])
 			    {
@@ -1520,6 +1554,7 @@ void free_ptree(struct ptree *pt)
 			      pt->readers[v->addr] = free_snd_fd(pt->readers[v->addr]); 
 			    }
 			  break;
+
 			case R_MIX_READER: 
 			  if (pt->mix_readers[v->addr])
 			    {
@@ -1531,6 +1566,7 @@ void free_ptree(struct ptree *pt)
 			      pt->mix_readers[v->addr] = NULL;   
 			    }
 			  break;
+
 			case R_FUNCTION:     
 			  if (pt->fncs[v->addr])
 			    {
@@ -1542,6 +1578,7 @@ void free_ptree(struct ptree *pt)
 			      pt->fncs[v->addr] = NULL;   
 			    }
 			  break;
+
 			case R_CLM:
 			  /* this currently can't happen -- all locally created gens are handled via xen */
 #if 0
@@ -1556,6 +1593,7 @@ void free_ptree(struct ptree *pt)
 			    }
 #endif
 			  break;
+
 			case R_LIST:
 			  if (pt->lists[v->addr]) 
 			    {
@@ -1599,6 +1637,7 @@ void free_ptree(struct ptree *pt)
 			      pt->vects[v->addr] = NULL;   
 			    }
 			  break;
+
 			case R_STRING:
 			  /* I don' think this currently can happen */
 			  if (pt->strs[v->addr]) 
@@ -6466,46 +6505,58 @@ static void funcall_nf(int *args, ptree *pt)
       case R_INT:
 	pt->ints[func->args[i]] = pt->ints[args[i + 2]]; 
 	break;
+
       case R_FLOAT: 
 	pt->dbls[func->args[i]] = pt->dbls[args[i + 2]]; 
 	break;
+
       case R_STRING: 
 	if (pt->strs[func->args[i]]) FREE(pt->strs[func->args[i]]);
 	pt->strs[func->args[i]] = copy_string(pt->strs[args[i + 2]]); 
 	break;
+
       case R_FLOAT_VECTOR:
       case R_VCT: 
  	pt->vcts[func->args[i]] = pt->vcts[args[i + 2]]; 
  	break;
+
       case R_SOUND_DATA: 
  	pt->sds[func->args[i]] = pt->sds[args[i + 2]]; 
  	break;
+
       case R_CLM: 
  	pt->clms[func->args[i]] = pt->clms[args[i + 2]]; 
  	break;
+
       case R_LIST_VECTOR:
       case R_CLM_VECTOR: 
       case R_INT_VECTOR: 
       case R_VCT_VECTOR: 
  	pt->vects[func->args[i]] = pt->vects[args[i + 2]]; 
  	break;
+
       case R_LIST:
 	/* fprintf(stderr,"got list %d as arg %d\n", args[i + 2], i); */
  	pt->lists[func->args[i]] = pt->lists[args[i + 2]]; 
  	break;
+
       case R_FUNCTION: 
  	pt->fncs[func->args[i]] = pt->fncs[args[i + 2]]; 
  	break;
+
       case R_SYMBOL: 
       case R_KEYWORD:
  	pt->xens[func->args[i]] = pt->xens[args[i + 2]]; 
  	break;
+
       case R_READER: 
  	pt->readers[func->args[i]] = pt->readers[args[i + 2]]; 
  	break;
+
       case R_MIX_READER: 
  	pt->mix_readers[func->args[i]] = pt->mix_readers[args[i + 2]]; 
  	break;
+
       default:
 	if (CLM_STRUCT_P(func->arg_types[i]))
 	  {
@@ -6529,46 +6580,58 @@ static void funcall_nf(int *args, ptree *pt)
     case R_INT:   
       INT_RESULT = pt->ints[fres->addr];   
       break;
+
     case R_FLOAT: 
       FLOAT_RESULT = pt->dbls[fres->addr]; 
       break;
+
     case R_STRING: 
       if (STRING_RESULT) FREE(STRING_RESULT);
       STRING_RESULT = pt->strs[fres->addr];
       pt->strs[fres->addr] = NULL;
       break; 
+
     case R_FLOAT_VECTOR:
     case R_VCT:   
       VCT_RESULT = pt->vcts[fres->addr];   
       break;
+
     case R_SOUND_DATA:   
       SOUND_DATA_RESULT = pt->sds[fres->addr];   
       break;
+
     case R_CLM:   
       CLM_RESULT = pt->clms[fres->addr];   
       break;
+
     case R_LIST:
       LIST_RESULT = pt->lists[fres->addr];   
       break;
+
     case R_LIST_VECTOR:   
     case R_CLM_VECTOR:   
     case R_INT_VECTOR:   
     case R_VCT_VECTOR:   
       VECT_RESULT = pt->vects[fres->addr];   
       break;
+
     case R_SYMBOL: 
     case R_KEYWORD:
       XEN_RESULT = pt->xens[fres->addr];
       break;
+
     case R_FUNCTION:   
       FNC_RESULT = ((ptree **)(pt->fncs))[fres->addr];   
       break;
+
     case R_READER:   
       READER_RESULT = pt->readers[fres->addr];   
       break;
+
     case R_MIX_READER:   
       MIX_READER_RESULT = pt->mix_readers[fres->addr];   
       break;
+
     default:
       if (CLM_STRUCT_P(fres->type))
 	LIST_RESULT = pt->lists[fres->addr];
@@ -7198,45 +7261,57 @@ static void list_ref(int *args, ptree *pt)
     case R_INT:   
       INT_RESULT = pt->ints[v->addr];   
       break;
+
     case R_BOOL:   
       BOOL_RESULT = pt->ints[v->addr];   
       break;
+
     case R_CHAR:   
       CHAR_RESULT = (char)(pt->ints[v->addr]);   
       break;
+
     case R_FLOAT: 
       FLOAT_RESULT = pt->dbls[v->addr]; 
       break;
+
     case R_STRING:
       /* TODO: should we free if str_res? */
       STRING_RESULT = copy_string(pt->strs[v->addr]);
       break; 
+
     case R_FLOAT_VECTOR:
     case R_VCT:   
       VCT_RESULT = pt->vcts[v->addr];   
       break;
+
     case R_SOUND_DATA:   
       SOUND_DATA_RESULT = pt->sds[v->addr];   
       break;
+
     case R_CLM:   
       CLM_RESULT = pt->clms[v->addr];   
       break;
+
     case R_LIST_VECTOR:   
     case R_CLM_VECTOR:   
     case R_INT_VECTOR:   
     case R_VCT_VECTOR:   
       VECT_RESULT = pt->vects[v->addr];   
       break;
+
     case R_SYMBOL: 
     case R_KEYWORD:
       XEN_RESULT = pt->xens[v->addr];
       break;
+
     case R_FUNCTION:   
       FNC_RESULT = ((ptree **)(pt->fncs))[v->addr];   
       break;
+
     case R_READER:   
       READER_RESULT = pt->readers[v->addr];   
       break;
+
     case R_MIX_READER:   
       MIX_READER_RESULT = pt->mix_readers[v->addr];   
       break;
@@ -7295,21 +7370,11 @@ static void list_set(int *args, ptree *pt)
 
   switch (v->type)
     {
-    case R_INT:   
-      pt->ints[v->addr] = INT_ARG_3;
-      break;
-    case R_BOOL:   
-      pt->ints[v->addr] = BOOL_ARG_3;
-      break;
-    case R_CHAR:   
-      pt->ints[v->addr] = (Int)(CHAR_ARG_3);
-      break;
-    case R_FLOAT: 
-      pt->dbls[v->addr] = FLOAT_ARG_3;
-      break;
-    case R_CLM:   
-      pt->clms[v->addr] = CLM_ARG_3;
-      break;
+    case R_INT:   pt->ints[v->addr] = INT_ARG_3;          break;
+    case R_BOOL:  pt->ints[v->addr] = BOOL_ARG_3;         break;
+    case R_CHAR:  pt->ints[v->addr] = (Int)(CHAR_ARG_3);  break;
+    case R_FLOAT: pt->dbls[v->addr] = FLOAT_ARG_3;        break;
+    case R_CLM:   pt->clms[v->addr] = CLM_ARG_3;          break;
     case R_STRING:
       /* TODO: free? */
       pt->strs[v->addr] = copy_string(STRING_ARG_3);
@@ -7493,14 +7558,17 @@ static xen_value *vector_set_1(ptree *prog, xen_value **args, int num_args)
       if (args[3]->type != R_FLOAT) return(run_warn("wrong new val type for float vector set"));
       return(package(prog, R_FLOAT, vector_set_f, "vector_set_f", args, 3)); 
       break;
+
     case R_INT_VECTOR: 
       if (args[3]->type != R_INT) return(run_warn("wrong new val type for int vector set"));
       return(package(prog, R_INT, vector_set_i, "vector_set_i", args, 3)); 
       break;
+
     case R_VCT_VECTOR: 
       if (args[3]->type != R_VCT) return(run_warn("wrong new val type for vct vector set"));
       return(package(prog, R_VCT, vector_set_v, "vector_set_v", args, 3)); 
       break;
+
     case R_CLM_VECTOR: 
       if (args[3]->type != R_CLM) return(run_warn("wrong new val type for clm vector set"));
       return(package(prog, R_CLM, vector_set_c, "vector_set_c", args, 3)); 
@@ -7542,14 +7610,17 @@ static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
       if (args[2]->type != R_FLOAT) return(run_warn("wrong new val type for float vector fill"));
       return(package(prog, R_BOOL, vector_fill_f, "vector_fill_f", args, 2)); 
       break;
+
     case R_INT_VECTOR: 
       if (args[2]->type != R_INT) return(run_warn("wrong new val type for int vector fill"));
       return(package(prog, R_BOOL, vector_fill_i, "vector_fill_i", args, 2)); 
       break;
+
     case R_VCT_VECTOR:
       if (args[2]->type != R_VCT) return(run_warn("wrong new val type for vct vector fill"));
       return(package(prog, R_BOOL, vector_fill_v, "vector_fill_v", args, 2)); 
       break;
+
     case R_CLM_VECTOR: 
       if (args[2]->type != R_CLM) return(run_warn("wrong new val type for clm vector fill"));
       return(package(prog, R_BOOL, vector_fill_c, "vector_fill_c", args, 2)); 

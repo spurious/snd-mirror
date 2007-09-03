@@ -517,6 +517,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 (define (asyfm-J gen input)
   "(asyfm-J gen input) is the same as the CLM asymmetric-fm generator, set r != 1.0 to get the asymmetric spectra"
+  (declare (gen asyfm) (input float))
   (let* ((phase (asyfm-phase gen))
 	 (r (asyfm-r gen))
 	 (r1 (/ 1.0 r))
@@ -536,7 +537,8 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	 (outa i (asyfm-J gen 0.0) *output*))))))
 
 (define (asyfm-I gen input)
-  "(asyfm-I gen input) is the I0 case of the asymmetric-fm generator (dsp.scm)"
+  "(dsp-asyfm-I gen input) is the I0 case of the asymmetric-fm generator (dsp.scm)"
+  (declare (gen asyfm) (input float))
   (let* ((phase (asyfm-phase gen))
 	 (r (asyfm-r gen))
 	 (r1 (/ 1.0 r))

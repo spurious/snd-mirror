@@ -9972,6 +9972,7 @@ you could also use a vct -- see <a href="sndclm.html#make-my-oscil">make-my-osci
 ;;;   the fields are accessed via osc-freq and osc-phase.
 
 (define (osc gen fm)                ; our new generator
+  (<a class=quiet href="#declare">declare</a> (gen osc) (fm float))
   (let ((result (sin (<em class=red>osc-phase</em> gen))))
     (set! (<em class=red>osc-phase</em> gen) (+ (<em class=red>osc-phase</em> gen) (<em class=red>osc-freq</em> gen) fm))
     result))

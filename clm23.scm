@@ -2899,6 +2899,7 @@
 (def-clm-struct sndscm-osc freq phase) ;same as (def-clm-struct sndscm-osc (freq 0.0 :type float) (phase 0.0 :type float))
 
 (define (sndscm-osc gen fm)
+  (declare (gen sndscm-osc) (fm float))
   (let ((result (sin (sndscm-osc-phase gen))))
     (set! (sndscm-osc-phase gen) (+ (sndscm-osc-phase gen) (sndscm-osc-freq gen) fm))
     result))
@@ -2927,6 +2928,7 @@
   (freq 0.0) (phase 0.0 :type float))
 
 (define* (sndscm-osc1 gen fm)
+  (declare (gen sndscm-osc1) (fm float))
   (let ((result (sin (sndscm-osc1-phase gen))))
     (set! (sndscm-osc1-phase gen) (+ (sndscm-osc1-phase gen) (sndscm-osc1-freq gen) fm))
     result))
@@ -2969,6 +2971,7 @@
   freq phase)
 
 (define* (sndscm-osc2 gen fm)
+  (declare (gen sndscm-osc2) (fm float))
   (let ((result (sin (sndscm-osc2-phase gen))))
     (set! (sndscm-osc2-phase gen) (+ (sndscm-osc2-phase gen) (sndscm-osc2-freq gen) fm))
     result))
@@ -2997,6 +3000,7 @@
 
 (define (dsp-asyfm-J gen input)
   "(dsp-asyfm-J gen input) is the same as the CLM asymmetric-fm generator, set r != 1.0 to get the asymmetric spectra"
+  (declare (gen dsp-asyfm) (input float))
   (let* ((phase (dsp-asyfm-phase gen))
 	 (r (dsp-asyfm-r gen))
 	 (r1 (/ 1.0 r))
@@ -3009,6 +3013,7 @@
 
 (define (dsp-asyfm-I gen input)
   "(dsp-asyfm-I gen input) is the I0 case of the asymmetric-fm generator (dsp.scm)"
+  (declare (gen dsp-asyfm) (input float))
   (let* ((phase (dsp-asyfm-phase gen))
 	 (r (dsp-asyfm-r gen))
 	 (r1 (/ 1.0 r))
@@ -3032,6 +3037,7 @@
   frequency phase et sinht cosht)
 
 (define (sndclm-expcs gen fm)
+  (declare (gen sndclm-expcs) (fm float))
   (let ((result (- (/ (sndclm-expcs-sinht gen) 
 		      (- (sndclm-expcs-cosht gen) (cos (sndclm-expcs-phase gen))))
 		   0.5)))
@@ -3201,15 +3207,15 @@
 		     (outa i (sndclm-expcs gen 0.0) *output*))))))
 
   (with-sound ()
-	      ;; TODO: list-set in run appears to not affect readers?
 	      (let ((gen (make-sndclm-expcs :frequency 100 :et 0.1))
 		    (t-env (make-env '(0 .1 1 2) :end 10000)))
+		(run (lambda ()
 		(do ((i 0 (1+ i)))
 		    ((= i 10000))
 		  (let ((et (env t-env)))
 		    (set! (sndclm-expcs-sinht gen) (* 0.5 (sinh et)))
 		    (set! (sndclm-expcs-cosht gen) (cosh et))
-		    (outa i (sndclm-expcs gen 0.0) *output*)))))
+		    (outa i (sndclm-expcs gen 0.0) *output*)))))))
 
   (for-each close-sound (sounds))
   )
