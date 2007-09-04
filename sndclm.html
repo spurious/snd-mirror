@@ -1841,7 +1841,7 @@ For example, here is a generator based on the <a href="sndscm.html#sumofnsines">
 
 \begin{align*}
 &\sum_{k=1}^{\infty} \frac{\sin kx}{2^{k-1}} = \frac{4\sin x}{5 - 4\cos x} \\
-&\sum_{k=1}^{\infty} \frac{e^{(2k-1)a}\cos(2k-1)x}{2k-1} = -\frac{1}{2}\arctan(\frac{\cos x}{\sinh a}) \\
+&\sum_{k=1}^{\infty} \frac{e^{(2k-1)a}\cos(2k-1)x}{2k-1} = -\frac{1}{2}\arctan \bigg(\frac{\cos x}{\sinh a}\bigg) \\
 &\cos x + \frac{1}{2}\frac{\cos 3x}{3} + \frac{1 \cdot 3}{2 \cdot 4}\frac{\cos 5x}{5}\cdots = \frac{1}{2}\arccos(1 - 2\sin x) \\
 \end{align*}
 
@@ -1936,9 +1936,11 @@ of the possibilities).  Take the last one in the G&amp;R section:
        (exp (- (expcs-et gen))))
 </pre>
 
-<p>which can be folded into the original at no run-time cost.
+<p>which can be folded into the original at no run-time cost.  See generators.scm for
+some of these in an undigested state.
 </p>
 
+<!-- TODO: doc/test (and finish...) generators.scm -->
 
 <br><br>
 

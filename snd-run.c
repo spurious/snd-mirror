@@ -1430,7 +1430,7 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 		    int_vect_into_vector(prog->vects[var->v->addr], val);
 		  break;
 		  
-		  /* TODO: read-back list-vector */
+		  /* TODO: read-back list|clm|vct?-vector */
 		  
 		default:
 		  if ((var->v->type == R_LIST) ||
@@ -1445,8 +1445,6 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 		    }
 		  break;
 		  
-		  /* TODO: clm vector? list vector? */
-
 		}
 	    }
 	}
@@ -2379,7 +2377,7 @@ int xen_to_run_type(XEN val)
 				      return(R_VCT_VECTOR); 
 				    else
 				      {
-					if ((mus_xen_p(val0)) || (XEN_FALSE_P(val0))) /* PERHAPS: boolean vector? */
+					if ((mus_xen_p(val0)) || (XEN_FALSE_P(val0)))
 					  return(R_CLM_VECTOR); 
 					else
 					  {
@@ -6249,24 +6247,23 @@ static char *list_vect_to_string(vect *v) {return(vect_to_string(v, R_LIST_VECTO
 
 static char *vct_vect_to_string(vect *v) {return(vect_to_string(v, R_VCT_VECTOR));}
 
-/* PERHAPS: stdout here, not stderr */
 
-static void display_str(int *args, ptree *pt) {fprintf(stderr, "%s", STRING_ARG_1);}
-
-
-static void display_int(int *args, ptree *pt) {fprintf(stderr, INT_STR, INT_ARG_1);}
+static void display_str(int *args, ptree *pt) {fprintf(stdout, "%s", STRING_ARG_1);}
 
 
-static void display_flt(int *args, ptree *pt) {fprintf(stderr, "%.6f", FLOAT_ARG_1);}
+static void display_int(int *args, ptree *pt) {fprintf(stdout, INT_STR, INT_ARG_1);}
 
 
-static void display_symbol(int *args, ptree *pt) {fprintf(stderr, "%s", XEN_AS_STRING(RXEN_ARG_1));}
+static void display_flt(int *args, ptree *pt) {fprintf(stdout, "%.6f", FLOAT_ARG_1);}
 
 
-static void display_key(int *args, ptree *pt) {fprintf(stderr, "%s", XEN_AS_STRING(RXEN_ARG_1));}
+static void display_symbol(int *args, ptree *pt) {fprintf(stdout, "%s", XEN_AS_STRING(RXEN_ARG_1));}
 
 
-static void display_clm(int *args, ptree *pt) {fprintf(stderr, "%s", mus_describe(CLM_ARG_1));}
+static void display_key(int *args, ptree *pt) {fprintf(stdout, "%s", XEN_AS_STRING(RXEN_ARG_1));}
+
+
+static void display_clm(int *args, ptree *pt) {fprintf(stdout, "%s", mus_describe(CLM_ARG_1));}
 
 
 static void display_vct(int *args, ptree *pt) 
@@ -6275,7 +6272,7 @@ static void display_vct(int *args, ptree *pt)
   v = mus_vct_to_string(VCT_ARG_1);
   if (v)
     {
-      fprintf(stderr, "%s", v);
+      fprintf(stdout, "%s", v);
       FREE(v);
     }
 }
@@ -6286,7 +6283,7 @@ static void display_int_vect(int *args, ptree *pt)
 {
   char *buf = NULL;
   buf = int_vect_to_string(VECT_ARG_1);
-  if (buf) {fprintf(stderr, "%s", buf); FREE(buf); }
+  if (buf) {fprintf(stdout, "%s", buf); FREE(buf); }
 }
 
 
@@ -6295,7 +6292,7 @@ static void display_clm_vect(int *args, ptree *pt)
 {
   char *buf = NULL;
   buf = clm_vect_to_string(VECT_ARG_1);
-  if (buf) {fprintf(stderr, "%s", buf); FREE(buf); }
+  if (buf) {fprintf(stdout, "%s", buf); FREE(buf); }
 }
 
 
@@ -6303,7 +6300,7 @@ static void display_list_vect(int *args, ptree *pt)
 {
   char *buf = NULL;
   buf = list_vect_to_string(VECT_ARG_1);
-  if (buf) {fprintf(stderr, "%s", buf); FREE(buf); }
+  if (buf) {fprintf(stdout, "%s", buf); FREE(buf); }
 }
 
 
@@ -6311,26 +6308,26 @@ static void display_vct_vect(int *args, ptree *pt)
 {
   char *buf = NULL;
   buf = vct_vect_to_string(VECT_ARG_1);
-  if (buf) {fprintf(stderr, "%s", buf); FREE(buf); }
+  if (buf) {fprintf(stdout, "%s", buf); FREE(buf); }
 }
 
 
-static void display_rd(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = sample_reader_to_string(READER_ARG_1)); FREE(buf);}
+static void display_rd(int *args, ptree *pt) {char *buf = NULL; fprintf(stdout, "%s", buf = sample_reader_to_string(READER_ARG_1)); FREE(buf);}
 
 
-static void display_mf(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = run_mix_sample_reader_to_string(MIX_READER_ARG_1)); FREE(buf);}
+static void display_mf(int *args, ptree *pt) {char *buf = NULL; fprintf(stdout, "%s", buf = run_mix_sample_reader_to_string(MIX_READER_ARG_1)); FREE(buf);}
 
 
-static void display_sd(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = sound_data_to_string(SOUND_DATA_ARG_1)); FREE(buf);}
+static void display_sd(int *args, ptree *pt) {char *buf = NULL; fprintf(stdout, "%s", buf = sound_data_to_string(SOUND_DATA_ARG_1)); FREE(buf);}
 
 
-static void display_chr(int *args, ptree *pt) {fprintf(stderr, "%c", (char)(INT_ARG_1));}
+static void display_chr(int *args, ptree *pt) {fprintf(stdout, "%c", (char)(INT_ARG_1));}
 
 
-static void display_bool(int *args, ptree *pt) {fprintf(stderr, "%s", B2S(INT_ARG_1));}
+static void display_bool(int *args, ptree *pt) {fprintf(stdout, "%s", B2S(INT_ARG_1));}
 
 
-static void display_con(int *args, ptree *pt) {fprintf(stderr, GO_PT, args[1]);}
+static void display_con(int *args, ptree *pt) {fprintf(stdout, GO_PT, args[1]);}
 
 
 static void display_func(int *args, ptree *pt) 
@@ -6339,7 +6336,7 @@ static void display_func(int *args, ptree *pt)
   p = describe_ptree(FNC_ARG_1, "");
   if (p)
     {
-      fprintf(stderr, "%s", p);
+      fprintf(stdout, "%s", p);
       FREE(p);
     }
 }
@@ -6724,8 +6721,6 @@ static void funcall_nf(int *args, ptree *pt)
       }
 
   eval_embedded_ptree(func, pt);
-
-  /* TODO: if need result... */
 
   switch (fres->type)
     {
@@ -7402,13 +7397,6 @@ static void list_ref(int *args, ptree *pt)
 {
   xen_value *v;
 
-  if ((pt->lists == NULL) || (!(LIST_ARG_1)))
-    {
-      /* TODO: fix null list-ref */
-      fprintf(stderr,"list arg to list ref is null!");
-      return;
-    }
-
   v = LIST_ARG_1->vals[INT_ARG_2];
   switch (v->type)
     {
@@ -7429,7 +7417,8 @@ static void list_ref(int *args, ptree *pt)
       break;
 
     case R_STRING:
-      /* TODO: should we free if str_res? */
+      if (STRING_RESULT) FREE(STRING_RESULT);
+      /* (let ((val (list "l1" "l2" "l3"))) (run (lambda () (let ((str (list-ref val 1))) (do ((i 0 (1+ i))) ((= i 2)) (set! str (list-ref val i))))))) */
       STRING_RESULT = copy_string(pt->strs[v->addr]);
       break; 
 
@@ -7473,6 +7462,9 @@ static void list_ref(int *args, ptree *pt)
 }
 
 
+static void list_check_1(int *args, ptree *pt) {if (!(LIST_ARG_1)) mus_error(MUS_NO_DATA, "arg 1 (list) is null");}
+
+
 static xen_value *list_ref_1(ptree *prog, xen_value **args, int num_args)
 {
   list *xl;
@@ -7480,6 +7472,9 @@ static xen_value *list_ref_1(ptree *prog, xen_value **args, int num_args)
 
   /* fprintf(stderr,"args[1]: %d %d\n", args[1]->type, args[1]->addr); */
   /* fprintf(stderr,"args[1]: %s\n", describe_xen_value(args[1], prog)); */
+
+  if (run_safety == RUN_SAFE) 
+    temp_package(prog, R_BOOL, list_check_1, "list_check_1", args, 1);
 
   if (CLM_STRUCT_P(args[1]->type))
     return(package(prog, def_clm_struct_field_type(args[1]->type, prog->ints[args[2]->addr]), list_ref, "list_ref", args, 2)); 
@@ -7595,6 +7590,9 @@ static void length_0(int *args, ptree *pt)
 
 static xen_value *length_1(ptree *prog, xen_value **args, int num_args)
 {
+  if (run_safety == RUN_SAFE) 
+    temp_package(prog, R_BOOL, list_check_1, "list_check_1", args, 1);
+
   return(package(prog, R_INT, length_0, "length", args, 1));
 }
 
@@ -7624,12 +7622,6 @@ static void clm_struct_field_set_1(ptree *prog, xen_value *in_v, xen_value *in_v
   new_v = make_xen_value(R_INT, add_int_to_ptree(prog, in_v2->addr), R_CONSTANT);
   add_triple_to_ptree(prog, va_make_triple(list_set, "clm_struct_set", 4, NULL, in_v, new_v, v));
   FREE(new_v);
-
-  /*
-    (def-clm-struct hi rfq)
-    (define val (make-hi))
-    (run (lambda () (set! (hi-rfq val) 123.0)))
-  */
 }
 
 
