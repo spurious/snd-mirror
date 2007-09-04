@@ -38,7 +38,7 @@
  *
  * currently handled, at least partially:
  *
- *   types: float int char string boolean symbol keyword vct snd_fd mus_any vector function [and list constants]
+ *   types: float int char string boolean symbol keyword vct snd_fd mus_any vector function list
  *
  *   lambda (use 'declare' to set arg types)
  *   call-with-current-continuation call/cc
@@ -65,7 +65,6 @@
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
  *      some variables (imported from outside our context) cannot be set, in some cases they can't even be found (args to define* for example)
  *      no recursion (could be added with some pain)
- *      no [variable] lists or pairs
  *      no macro expansion (not sure how to handle this in Guile)
  *      no complex, ratio, bignum (but we use 64-bit ints)
  *      no pointer aliasing (i.e. vct var set to alias another vct var etc -- GC confusion otherwise)
@@ -95,14 +94,10 @@
  *
  * TODO: completion of support for vector of def-clm-structs
  * TODO: struct field like vector not freed
- * TODO: eq? of list? make-osc?
+ * TODO: equal? of non-int/float lists and all vectors (etc)
+ *
+ * SOMEDAY: would it simply variable handling to store everything as xen_value?
  */
-#if 0
-snd-run.c[568]:make_xen_value:  8064 (504)
-snd-run.c[1224]:xen_to_list_with_type:  1252 (60)
-snd-run.c[1217]:xen_to_list_with_type:  720 (60)
-#endif
-
 
 
 #include "snd.h"
@@ -570,7 +565,6 @@ static triple *free_triple(triple *trp)
   FREE(trp);
   return(NULL);
 }
-
 
 static xen_value *make_xen_value(int typ, int address, xen_value_constant_t constant)
 {
@@ -1194,11 +1188,9 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   inner->xen_vars_size = 0;
 }
 
-
-
+static xen_value *add_empty_var_to_ptree(ptree *prog, int type);
 static XEN xen_value_to_xen(ptree *pt, xen_value *v);
 static int def_clm_struct_field_type(int def_clm_struct_type, int field);
-static xen_value *add_empty_var_to_ptree(ptree *prog, int type);
 static xen_value *add_value_to_ptree(ptree *prog, XEN val, int type);
 
 
@@ -1232,7 +1224,6 @@ static void free_list(list *xl)
   xl->len = 0;
   FREE(xl);
 }
-
 
 static list *xen_to_list_with_type(ptree *pt, XEN lst, int type) /* list element type or clm-struct */
 {
@@ -1384,37 +1375,39 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
   bool local_var;
   if (var)
     {
-      /* fprintf(stderr, "free var %s %s (global: %d, unclean: %d, opt: %d)\n", 
-	      var->name, type_name(var->v->type), var->global, var->unclean, current_optimization);
-      */
+      /* fprintf(stderr, "free var %s %s (global: %d, unclean: %d, opt: %d)\n", var->name, type_name(var->v->type), var->global, var->unclean, current_optimization); */
 
       /* if var->global, reflect new value into outer level version of the variable upon quit */
       if ((var->global) &&
 	  (var->unclean))
 	{
 	  if (current_optimization < GLOBAL_SET_OK)
-	    switch (var->v->type)
-	      {
-	      case R_FLOAT:  xen_symbol_name_set_value(var->name, C_TO_XEN_DOUBLE(prog->dbls[var->v->addr]));       break;
-	      case R_INT:    xen_symbol_name_set_value(var->name, R_C_TO_XEN_INT(prog->ints[var->v->addr]));        break;
-	      case R_BOOL:   xen_symbol_name_set_value(var->name, C_TO_XEN_BOOLEAN(prog->ints[var->v->addr]));      break;
-	      case R_STRING: xen_symbol_name_set_value(var->name, C_TO_XEN_STRING(prog->strs[var->v->addr]));       break;
-	      case R_CHAR:   xen_symbol_name_set_value(var->name, C_TO_XEN_CHAR((char)(prog->ints[var->v->addr]))); break;
-
-	      case R_FLOAT_VECTOR:
-		val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
-		if (XEN_VECTOR_P(val))
-		  vct_into_vector(prog->vcts[var->v->addr], val);
-		break;
-
-	      case R_INT_VECTOR:
-		val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
-		if (XEN_VECTOR_P(val))
-		  int_vect_into_vector(prog->vects[var->v->addr], val);
-		break;
-
-		/* TODO: read-back list, clm-struct, list-vector */
+	    {
+	      switch (var->v->type)
+		{
+		case R_FLOAT:  xen_symbol_name_set_value(var->name, C_TO_XEN_DOUBLE(prog->dbls[var->v->addr]));       break;
+		case R_INT:    xen_symbol_name_set_value(var->name, R_C_TO_XEN_INT(prog->ints[var->v->addr]));        break;
+		case R_BOOL:   xen_symbol_name_set_value(var->name, C_TO_XEN_BOOLEAN(prog->ints[var->v->addr]));      break;
+		case R_STRING: xen_symbol_name_set_value(var->name, C_TO_XEN_STRING(prog->strs[var->v->addr]));       break;
+		case R_CHAR:   xen_symbol_name_set_value(var->name, C_TO_XEN_CHAR((char)(prog->ints[var->v->addr]))); break;
+		  
+		case R_FLOAT_VECTOR:
+		  val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
+		  if (XEN_VECTOR_P(val))
+		    vct_into_vector(prog->vcts[var->v->addr], val);
+		  break;
+		  
+		case R_INT_VECTOR:
+		  val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
+		  if (XEN_VECTOR_P(val))
+		    int_vect_into_vector(prog->vects[var->v->addr], val);
+		  break;
+		  
+		default:
+		  /* if no global set, surely we shouldn't do anything? */
+		  break;
 	      }
+	    }
 	  else
 	    {
 	      switch (var->v->type)
@@ -1445,7 +1438,7 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 		    {
 		      val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
 		      
-		      /* fprintf(stderr,"%s set %s\n", var->name, XEN_AS_STRING(val)); */
+		      /* fprintf(stderr,"%s set %s\n", var->name, XEN_AS_STRING(val));  */
 		      
 		      if (XEN_LIST_P(val))
 			list_into_list(prog, prog->lists[var->v->addr], val);
@@ -1646,6 +1639,22 @@ void free_ptree(struct ptree *pt)
 			      pt->strs[v->addr] = NULL;
 			    }
 			  break;
+			  
+			default:
+			  if (CLM_STRUCT_P(v->type))
+			    {
+			      if (pt->lists[v->addr]) 
+				{
+				  int k;
+				  for (k = 0; k < pt->list_ctr; k++)
+				    if ((k != v->addr) && (pt->lists[k] == pt->lists[v->addr]))
+				      pt->lists[k] = NULL;
+				  free_list(pt->lists[v->addr]); 
+				  pt->lists[v->addr] = NULL;   
+				}
+			    }
+			  break;
+
 			}
 		      v->gc = false;
 		    }
@@ -2077,7 +2086,6 @@ static int add_string_to_ptree(ptree *pt, char *str)
   pt->strs[cur] = str;
   return(cur);
 }
-
 
 static xen_value *add_empty_var_to_ptree(ptree *prog, int type)
 {
@@ -2729,10 +2737,12 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define READER_RESULT pt->readers[args[0]]
 #define READER_ARG_1 pt->readers[args[1]]
 #define READER_ARG_2 pt->readers[args[2]]
+#define READER_ARG_3 pt->readers[args[3]]
 
 #define MIX_READER_RESULT pt->mix_readers[args[0]]
 #define MIX_READER_ARG_1 pt->mix_readers[args[1]]
 #define MIX_READER_ARG_2 pt->mix_readers[args[2]]
+#define MIX_READER_ARG_3 pt->mix_readers[args[3]]
 
 #define FNC_RESULT ((ptree **)(pt->fncs))[args[0]]
 #define FNC_ARG_1 ((ptree **)(pt->fncs))[args[1]]
@@ -2751,9 +2761,12 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define VECT_RESULT pt->vects[args[0]]
 #define VECT_ARG_1 pt->vects[args[1]]
 #define VECT_ARG_2 pt->vects[args[2]]
+#define VECT_ARG_3 pt->vects[args[3]]
 
 #define LIST_RESULT pt->lists[args[0]]
 #define LIST_ARG_1 pt->lists[args[1]]
+#define LIST_ARG_2 pt->lists[args[2]]
+#define LIST_ARG_3 pt->lists[args[3]]
 
 
 static void quit(int *args, ptree *pt) {ALL_DONE = (Int)true;}
@@ -3019,6 +3032,7 @@ static char *parallel_binds(ptree *prog, XEN old_lets, const char *name)
 {
   XEN lets;
   int vars;
+
   lets = old_lets;
   vars = XEN_LIST_LENGTH(lets);
   if (vars > 0)
@@ -3027,8 +3041,10 @@ static char *parallel_binds(ptree *prog, XEN old_lets, const char *name)
       xen_value *v = NULL;
       xen_value **vs, **old_vs;
       int i;
+
       vs = (xen_value **)CALLOC(vars, sizeof(xen_value *));
       old_vs = (xen_value **)CALLOC(vars, sizeof(xen_value *));
+
       for (i = 0; i < vars; i++, lets = XEN_CDR(lets))
 	{
 	  var = XEN_CAR(lets);
@@ -3048,6 +3064,7 @@ static char *parallel_binds(ptree *prog, XEN old_lets, const char *name)
 	  old_vs[i] = v;
 	  vs[i] = transfer_value(prog, v);
 	}
+
       lets = old_lets;
       for (i = 0; i < vars; i++, lets = XEN_CDR(lets))
 	{
@@ -3069,6 +3086,7 @@ static char *sequential_binds(ptree *prog, XEN old_lets, const char *name)
 {
   XEN lets;
   int vars;
+
   lets = old_lets;
   vars = XEN_LIST_LENGTH(lets);
   if (vars > 0)
@@ -3297,6 +3315,7 @@ static xen_value *lambda_form(ptree *prog, XEN form, bool separate, xen_value **
   /* as args are declared as vars, put addrs in prog->args list */
   char *err = NULL;
   int locals_loc;
+
   if (got_lambda)
     {
       /* start a new ptree, walk body, return ptree as R_FUNCTION variable */
@@ -3394,6 +3413,7 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
   xen_value *jump_to_end = NULL, *jump_to_false, *if_value;
   int current_pc, false_pc = 0;
   bool has_false;
+
   has_false = (XEN_LIST_LENGTH(form) == 4);
   if_value = walk(prog, XEN_CADR(form), NEED_ANY_RESULT);                                      /* walk selector */
   if (if_value == NULL) return(run_warn("if: bad selector? %s", XEN_AS_STRING(XEN_CADR(form))));
@@ -3414,10 +3434,12 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
 	}
       return(if_value);
     }
+
   current_pc = prog->triple_ctr;
   jump_to_false = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(jump_if_not, "jump_if_not", 2, jump_to_false, if_value));
   FREE(if_value);
+
   true_result = walk(prog, XEN_CADDR(form), need_result);                           /* walk true branch */
   if (true_result == NULL) 
     {
@@ -3437,6 +3459,7 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
     }
   prog->ints[jump_to_false->addr] = prog->triple_ctr - current_pc - 1;              /* fixup jump-to-false addr */
   FREE(jump_to_false);
+
   if (has_false)
     {
       false_result = walk(prog, XEN_CADDDR(form), need_result);                     /* walk false branch */
@@ -3503,10 +3526,12 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
   xen_value **fixups = NULL;
   int current_pc = 0, len, clause_ctr, i = 0, local_len;
   XEN clauses, clause, local_clauses;
+
   clauses = XEN_CDR(form);
   len = XEN_LIST_LENGTH(clauses);
   if (len == 0) return(run_warn("empty cond?"));
   fixups = (xen_value **)CALLOC(len, sizeof(xen_value *));
+
   for (clause_ctr = 0; clause_ctr < len; clause_ctr++, clauses = XEN_CDR(clauses))
     {
       clause = XEN_CAR(clauses);
@@ -3579,6 +3604,7 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
       FREE(test_value);
       test_value = NULL;
     }
+
   /* all the fixups are absolute jumps */
   for (i = 0; i < len; i++)
     if (fixups[i])
@@ -3603,6 +3629,7 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
   xen_value *selval = NULL, *jump_to_selection = NULL, *v = NULL, *result = NULL, *keyval = NULL, *locval = NULL, *elseval = NULL;
   int *locations = NULL;
   xen_value **fixups = NULL;
+
   selector = XEN_CADR(form);
   selval = walk(prog, selector, NEED_ANY_RESULT);
   if (selval == NULL) return(run_warn("can't handle case selector: %s", XEN_AS_STRING(selector)));
@@ -3613,6 +3640,7 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
   body_len = XEN_LIST_LENGTH(body);
   fixups = (xen_value **)CALLOC(body_len, sizeof(xen_value *));
   locations = (int *)CALLOC(body_len, sizeof(int));
+
   for (i = 0; i < body_len; i++, body = XEN_CDR(body))
     {
       /* ignore keys for now */
@@ -3636,6 +3664,7 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
       fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
       add_triple_to_ptree(prog, va_make_triple(jump_abs, "jump_abs", 1, fixups[i])); 
     }
+
   /* fixup jump from selector to table of keys (here) */
   prog->ints[jump_to_selection->addr] = prog->triple_ctr;
   FREE(jump_to_selection); jump_to_selection = NULL;
@@ -3675,6 +3704,7 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
 	    }
 	}
     }
+
   /* now check for else clause */
   if (elseval)
     {
@@ -3770,6 +3800,7 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
   xen_var *vr;
   int i, locals_loc, test_loc, varlen, jump_loc;
   char *trouble;
+
   vars = XEN_CADR(form);
   done = XEN_CADDR(form);
   if (XEN_NULL_P(done)) return(run_warn("do: null test")); /* invalid in Scheme */
@@ -3795,11 +3826,13 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
       FREE(test);
       return(run_warn("do test must be boolean: %s", XEN_AS_STRING(test_form)));
     }
+
   /* if test true, jump to result section */
   jump_loc = prog->triple_ctr;
   jump_to_result = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(jump_if, "jump_if", 2, jump_to_result, test));
   FREE(test);
+
   /* now walk the do body */
   expr = walk_sequence(prog, body, DONT_NEED_RESULT, "do");
   if (expr == NULL)
@@ -3809,6 +3842,7 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
     }
   FREE(expr);
   expr = NULL;
+
   /* now increment the vars (if step-val exists) -- increments are done first (the norm in Scheme) */
   varlen = XEN_LIST_LENGTH(vars);
   if (varlen > 0)
@@ -3936,14 +3970,17 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 	  FREE(exprs);
 	}
     }
+
   /* jump back to test */
   jump_to_test = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(jump_abs, "jump_abs", 1, jump_to_test));
   prog->ints[jump_to_test->addr] = test_loc;
   FREE(jump_to_test);
+
   /* fixup jump from true test above */
   prog->ints[jump_to_result->addr] = prog->triple_ctr - jump_loc - 1;
   FREE(jump_to_result);
+
   /* now the result block */
   if (XEN_NOT_NULL_P(results))
     result = walk_sequence(prog, results, NEED_ANY_RESULT, "do");
@@ -3958,11 +3995,14 @@ static xen_value *callcc_form(ptree *prog, XEN form, walk_result_t need_result)
   XEN func_form, continuation_name;
   continuation *c;
   xen_value *v = NULL;
+
   func_form = XEN_CADR(form);
   continuation_name = XEN_CAR(XEN_CADR(func_form));
   c = add_goto_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(continuation_name));
+
   v = walk_sequence(prog, XEN_CDDR(func_form), need_result, "call/cc");
   if (v == NULL) return(NULL);
+
   if (c->result)
     {
       if (v->type != c->result->type)
@@ -3974,6 +4014,7 @@ static xen_value *callcc_form(ptree *prog, XEN form, walk_result_t need_result)
 	set_var(prog, c->result, v);
     }
   if (v) FREE(v);
+
   /* fixup the continuation jump, etc */
   prog->ints[c->jump->addr] = prog->triple_ctr;
   if (c->result)
@@ -3991,11 +4032,13 @@ static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
   xen_value *v = NULL, *result = NULL, *jump_to_end;
   xen_value **fixups;
   int i, j, body_forms;
+
   body = XEN_CDR(form);
   body_forms = XEN_LIST_LENGTH(body);
   if (body_forms == 0)                  /* (or) -> #f */
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, 0), R_CONSTANT));
   fixups = (xen_value **)CALLOC(body_forms, sizeof(xen_value *));
+
   for (i = 0; i < body_forms; i++, body = XEN_CDR(body))
     {
       v = walk(prog, XEN_CAR(body), NEED_ANY_RESULT);
@@ -4006,6 +4049,7 @@ static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
 	  FREE(fixups);
 	  return(run_warn("or: can't handle %s", XEN_AS_STRING(XEN_CAR(body))));
 	}
+
       if ((i == 0) &&
 	  (v->constant == R_CONSTANT) &&
 	  ((v->type != R_BOOL) || (prog->ints[v->addr] != 0)))
@@ -4013,23 +4057,27 @@ static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
 	  FREE(fixups);
 	  return(v);
 	}
+
       if (v->type != R_BOOL)
 	v = coerce_to_boolean(prog, v);
       fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), R_VARIABLE);
       add_triple_to_ptree(prog, va_make_triple(jump_if, "jump_if", 2, fixups[i], v));
       FREE(v);
     }
+
   /* if we fall through, return #f */
   result = make_xen_value(R_BOOL, add_int_to_ptree(prog, 0), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(store_false, "store_false", 1, result));
   jump_to_end = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(jump, "jump", 1, jump_to_end));
+
   /* now fixup all the jumps to end up here */
   for (i = 0; i < body_forms; i++)
     {
       prog->ints[fixups[i]->addr] = prog->triple_ctr - prog->ints[fixups[i]->addr] - 1;
       FREE(fixups[i]);
     }
+
   add_triple_to_ptree(prog, va_make_triple(store_true, "store_true", 1, result));
   prog->ints[jump_to_end->addr] = prog->triple_ctr - prog->ints[jump_to_end->addr] - 1;
   FREE(jump_to_end);
@@ -4045,11 +4093,13 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
   xen_value *v = NULL, *result = NULL, *jump_to_end;
   xen_value **fixups;
   int i, j, body_forms;
+
   body = XEN_CDR(form);
   body_forms = XEN_LIST_LENGTH(body);
   if (body_forms == 0)                  /* (and) -> #t */
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, 1), R_CONSTANT));
   fixups = (xen_value **)CALLOC(body_forms, sizeof(xen_value *));
+
   for (i = 0; i < body_forms; i++, body = XEN_CDR(body))
     {
       v = walk(prog, XEN_CAR(body), NEED_ANY_RESULT);
@@ -4060,6 +4110,7 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
 	  FREE(fixups);
 	  return(run_warn("and: can't handle %s", XEN_AS_STRING(XEN_CAR(body))));
 	}
+
       if ((i == 0) &&
 	  (v->constant == R_CONSTANT) &&
 	  (v->type == R_BOOL) && 
@@ -4068,23 +4119,27 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
 	  FREE(fixups);
 	  return(v);
 	}
+
       if (v->type != R_BOOL)
 	v = coerce_to_boolean(prog, v);
       fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), R_VARIABLE);
       add_triple_to_ptree(prog, va_make_triple(jump_if_not, "jump_if_not", 2, fixups[i], v));
       FREE(v);
     }
+
   /* if we fall through, return #t */
   result = make_xen_value(R_BOOL, add_int_to_ptree(prog, 1), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(store_true, "store_true", 1, result));
   jump_to_end = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(jump, "jump", 1, jump_to_end));
+
   /* now fixup all the jumps to end up here */
   for (i = 0; i < body_forms; i++)
     {
       prog->ints[fixups[i]->addr] = prog->triple_ctr - prog->ints[fixups[i]->addr] - 1;
       FREE(fixups[i]);
     }
+
   add_triple_to_ptree(prog, va_make_triple(store_false, "store_false", 1, result));
   prog->ints[jump_to_end->addr] = prog->triple_ctr - prog->ints[jump_to_end->addr] - 1;
   FREE(jump_to_end);
@@ -4101,13 +4156,18 @@ static xen_value *generalized_set_form(ptree *prog, XEN form)
   XEN settee, setval;
   XEN in_settee;
   xen_value *in_v0 = NULL, *in_v1 = NULL, *in_v2 = NULL, *v = NULL;
+
   settee = XEN_CADR(form);
   setval = XEN_CADDR(form);
-  if ((XEN_LIST_P(settee)) && (XEN_SYMBOL_P(XEN_CAR(settee))) && (XEN_LIST_LENGTH(settee) <= 4))
+
+  if ((XEN_LIST_P(settee)) &&
+      (XEN_SYMBOL_P(XEN_CAR(settee))) &&
+      (XEN_LIST_LENGTH(settee) <= 4))
     {
       v = walk(prog, setval, NEED_ANY_RESULT);
       if (v == NULL)
 	return(run_warn("set!: can't handle: %s", XEN_AS_STRING(setval)));
+
       in_settee = XEN_CAR(settee);
       if (XEN_NOT_NULL_P(XEN_CDR(settee)))
 	{
@@ -4136,11 +4196,13 @@ static xen_value *generalized_set_form(ptree *prog, XEN form)
 	    }
 	}
       else return(lookup_generalized_set(prog, in_settee, NULL, NULL, NULL, v));
+
       if (v) FREE(v);
       if (in_v0) FREE(in_v0);
       if (in_v1) FREE(in_v1);
       if (in_v2) FREE(in_v2);
     }
+
   return(run_warn("generalized set! for %s not implemented yet", XEN_AS_STRING(settee)));
 }
 
@@ -4151,8 +4213,10 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
   xen_var *var;
   xen_value *v;
   XEN settee, setval, rtnval;
+
   settee = XEN_CADR(form);
   setval = XEN_CADDR(form);
+
   if (!(XEN_SYMBOL_P(settee)))
     return(generalized_set_form(prog, form));
   varname = XEN_SYMBOL_TO_C_STRING(settee);
@@ -4167,6 +4231,7 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
 	  v = NULL;
 	}
     }
+
   if ((var) && (!(var->unsettable)))
     {
       int val_type, var_type;
@@ -4203,6 +4268,7 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
 	      var->unclean = true;
 	      return(v);
 	    }
+
 	  /* variables have only one type in this context */
 	  run_warn("set! can't change var's type (%s (%s) = %s (%s)): %s", 
 		   var->name, 
@@ -4215,6 +4281,7 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
 	  return(NULL);
 	  /* this limitation could be removed, but is it worth the bother? */
 	}
+
       /* optimize out redundant sets (can be cancelled via trp->no_opt) */
       if (((v->type == R_FLOAT) || (v->type == R_INT)) &&
 	  (XEN_LIST_P(setval)) && /* this by itself assumes that any list represents an expression (i.e. a temp in effect)
@@ -4241,6 +4308,7 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
       var->unclean = true;
       return(v);
     }
+
   if ((var) && (var->unsettable))
     return(run_warn("set!: can't set: %s", XEN_AS_STRING(settee)));
   return(run_warn("set! variable problem: %s", XEN_AS_STRING(form)));
@@ -4418,11 +4486,13 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 {
   if (num_args == 0) return(make_xen_value(R_INT, add_int_to_ptree(prog, 1), R_CONSTANT));
   if (num_args == 1) return(copy_xen_value(args[1]));
+
   if (prog->constants > 0)
     {
       int i, cons_loc = 0;
       Int iscl = 1;
       Double fscl = 1.0;
+
       for (i = 1; i <= num_args; i++)
 	if (args[i]->constant == R_CONSTANT)
 	  {
@@ -4433,6 +4503,7 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 	    FREE(args[i]);
 	    args[i] = NULL;
 	  }
+
       if ((iscl != 1) || (fscl != 1.0))
 	{
 	  if (prog->float_result)
@@ -4441,6 +4512,7 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 	  if ((iscl == 0) || (fscl == 0.0))
 	    return(copy_xen_value(args[cons_loc]));
 	}
+
       if (prog->constants == num_args) 
 	{
 	  if (args[cons_loc])
@@ -4448,8 +4520,10 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 	  else return(make_xen_value(R_INT, add_int_to_ptree(prog, 1), R_CONSTANT));
 	}
     }
+
   num_args = float_all_args(prog, num_args, args, prog->float_result);
   if (num_args == 1) return(copy_xen_value(args[1]));
+
   if (prog->float_result)
     {
       if (num_args == 2) return(package(prog, R_FLOAT, multiply_f2, "multiply_f2", args, num_args));
@@ -4457,6 +4531,7 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
       if (num_args == 4) return(package(prog, R_FLOAT, multiply_f4, "multiply_f4", args, num_args));
       return(package_n(prog, R_FLOAT, multiply_fn, "multiply_fn", args, num_args));
     }
+
   if (num_args == 2) return(package(prog, R_INT, multiply_i2, "multiply_i2", args, num_args)); 
   if (num_args == 3) return(package(prog, R_INT, multiply_i3, "multiply_i3", args, num_args));
   if (num_args == 4) return(package(prog, R_INT, multiply_i4, "multiply_i4", args, num_args));
@@ -4509,11 +4584,13 @@ static xen_value *add(ptree *prog, xen_value **args, int num_args)
 {
   if (num_args == 0) return(make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT));
   if (num_args == 1) return(copy_xen_value(args[1]));
+
   if (prog->constants > 0)
     {
       Int iscl = 0;
       Double fscl = 0.0;
       int i, cons_loc = 0;
+
       for (i = 1; i <= num_args; i++)
 	if (args[i]->constant == R_CONSTANT)
 	  {
@@ -4524,12 +4601,14 @@ static xen_value *add(ptree *prog, xen_value **args, int num_args)
 	    FREE(args[i]);
 	    args[i] = NULL;
 	  }
+
       if ((iscl != 0) || (fscl != 0.0))
 	{
 	  if (prog->float_result)
 	    args[cons_loc] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, fscl + iscl), R_CONSTANT);
 	  else args[cons_loc] = make_xen_value(R_INT, add_int_to_ptree(prog, iscl), R_CONSTANT);
 	}
+
       if (prog->constants == num_args) 
 	{
 	  if (args[cons_loc])
@@ -4537,8 +4616,10 @@ static xen_value *add(ptree *prog, xen_value **args, int num_args)
 	  else return(make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT));
 	}
     }
+
   num_args = float_all_args(prog, num_args, args, prog->float_result);
   if (num_args == 1) return(copy_xen_value(args[1]));
+
   if (prog->float_result)
     {
       if (num_args == 2) return(package(prog, R_FLOAT, add_f2, "add_f2", args, num_args));
@@ -4547,6 +4628,7 @@ static xen_value *add(ptree *prog, xen_value **args, int num_args)
       if (num_args == 5) return(package(prog, R_FLOAT, add_f5, "add_f5", args, num_args));
       return(package_n(prog, R_FLOAT, add_fn, "add_fn", args, num_args));
     }
+
   if (num_args == 2) return(package(prog, R_INT, add_i2, "add_i2", args, num_args));
   if (num_args == 3) return(package(prog, R_INT, add_i3, "add_i3", args, num_args));
   if (num_args == 4) return(package(prog, R_INT, add_i4, "add_i4", args, num_args));
@@ -4600,11 +4682,13 @@ static xen_value *subtract(ptree *prog, xen_value **args, int num_args)
 	return(make_xen_value(R_INT, add_int_to_ptree(prog, -(prog->ints[args[1]->addr])), R_CONSTANT));
       else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, -(prog->dbls[args[1]->addr])), R_CONSTANT));
     }
+
   if (prog->constants > 0)
     {
       Int iscl = 0;
       Double fscl = 0.0;
       int i, cons_loc = 0;
+
       for (i = 2; i <= num_args; i++)
 	if (args[i]->constant == R_CONSTANT)
 	  {
@@ -4615,6 +4699,7 @@ static xen_value *subtract(ptree *prog, xen_value **args, int num_args)
 	    FREE(args[i]);
 	    args[i] = NULL;
 	  }
+
       if ((iscl != 0) || (fscl != 0.0))
 	{
 	  if (prog->float_result)
@@ -4626,6 +4711,7 @@ static xen_value *subtract(ptree *prog, xen_value **args, int num_args)
 	  if ((num_args == 2) && (args[1]->constant == R_VARIABLE))
 	    return(copy_xen_value(args[1]));
 	}
+
       if (prog->constants == num_args) 
 	{
 	  if (prog->float_result)
@@ -4637,6 +4723,7 @@ static xen_value *subtract(ptree *prog, xen_value **args, int num_args)
 	  else return(make_xen_value(R_INT, add_int_to_ptree(prog, prog->ints[args[1]->addr] - iscl), R_CONSTANT));
 	}
     }
+
   num_args = float_all_args(prog, num_args, args, prog->float_result);
   if (prog->float_result)
     {
@@ -4645,6 +4732,7 @@ static xen_value *subtract(ptree *prog, xen_value **args, int num_args)
       if (num_args == 3) return(package(prog, R_FLOAT, subtract_f3, "subtract_f3", args, num_args));
       return(package_n(prog, R_FLOAT, subtract_fn, "subtract_fn", args, num_args));
     }
+
   if (num_args == 1) return(package(prog, R_INT, subtract_i1, "subtract_i1", args, num_args));
   if (num_args == 2) return(package(prog, R_INT, subtract_i2, "subtract_i2", args, num_args));
   if (num_args == 3) return(package(prog, R_INT, subtract_i3, "subtract_i3", args, num_args));
@@ -4738,6 +4826,7 @@ static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 	  else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, (1.0 / (prog->dbls[args[1]->addr]))), R_CONSTANT));
 	}
     }
+
   if (prog->constants > 0)
     {
       int cons_loc = 0;
@@ -4753,6 +4842,7 @@ static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 	    FREE(args[i]);
 	    args[i] = NULL;
 	  }
+
       if (fscl != 1.0)
 	args[cons_loc] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, fscl), R_CONSTANT);
       if (prog->constants == num_args) 
@@ -4770,6 +4860,7 @@ static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 	      else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, prog->dbls[args[1]->addr] / fscl), R_CONSTANT));
 	    }
 	}
+
       if ((prog->constants == (num_args - 1)) && (args[1]->constant != R_CONSTANT))
 	{
 	  /* divisor is a constant */
@@ -4785,6 +4876,7 @@ static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 	    }
 	}
     }
+
   num_args = float_all_args(prog, num_args, args, true);
   if (num_args == 1) 
     {
@@ -4792,12 +4884,14 @@ static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 	return(package(prog, R_INT, divide_if1, "divide_if1", args, num_args));
       else return(package(prog, R_FLOAT, divide_f1, "divide_f1", args, num_args));
     }
+
   if (num_args == 2) 
     {
       if (prog->walk_result == NEED_INT_RESULT)
 	return(package(prog, R_INT, divide_if2, "divide_if2", args, num_args));
       else return(package(prog, R_FLOAT, divide_f2, "divide_f2", args, num_args));
     }
+
   if (num_args == 3) return(package(prog, R_FLOAT, divide_f3, "divide_f3", args, num_args));
   return(package_n(prog, R_FLOAT, divide_fn, "divide_fn", args, num_args));
 }
@@ -5068,6 +5162,8 @@ static void eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(INT_ARG_1 == INT_ARG
 
 static void vct_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(VCT_ARG_1 == VCT_ARG_2);} 
 
+static void list_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(LIST_ARG_1 == LIST_ARG_2);} 
+
 static void sd_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(SOUND_DATA_ARG_1 == SOUND_DATA_ARG_2);} 
 
 static void xen_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)XEN_EQ_P(RXEN_ARG_1, RXEN_ARG_2);}
@@ -5095,14 +5191,20 @@ static xen_value *eq_p(ptree *prog, xen_value **args, int num_args)
     }
   switch (args[1]->type)
     {
-    case R_VCT:          return(package(prog, R_BOOL, vct_eq_b, "vct_eq_b", args, 2));
-    case R_SOUND_DATA:   return(package(prog, R_BOOL, sd_eq_b, "sd_eq_b", args, 2));
-    case R_CLM:          return(package(prog, R_BOOL, clm_eq_b, "clm_eq_b", args, 2));
-    case R_READER:       return(package(prog, R_BOOL, reader_eq_b, "reader_eq_b", args, 2));
-    case R_MIX_READER:   return(package(prog, R_BOOL, mix_reader_eq_b, "mix_reader_eq_b", args, 2));
+    case R_VCT:          return(package(prog, R_BOOL, vct_eq_b, "vct_eq_b", args, 2));                break;
+    case R_SOUND_DATA:   return(package(prog, R_BOOL, sd_eq_b, "sd_eq_b", args, 2));                  break;
+    case R_CLM:          return(package(prog, R_BOOL, clm_eq_b, "clm_eq_b", args, 2));                break;
+    case R_READER:       return(package(prog, R_BOOL, reader_eq_b, "reader_eq_b", args, 2));          break;
+    case R_MIX_READER:   return(package(prog, R_BOOL, mix_reader_eq_b, "mix_reader_eq_b", args, 2));  break;
     case R_KEYWORD:
-    case R_SYMBOL:       return(package(prog, R_BOOL, xen_eq_b, "xen_eq_b", args, 2));
+    case R_SYMBOL:       return(package(prog, R_BOOL, xen_eq_b, "xen_eq_b", args, 2));                break;
       /* R_FLOAT and R_FUNCTION -> false above */
+      
+    default:
+      if ((args[1]->type == R_LIST) ||
+	  (CLM_STRUCT_P(args[1]->type)))
+	return(package(prog, R_BOOL, list_eq_b, "list_eq_b", args, 2));
+      break;
     }
   return(package(prog, R_BOOL, eq_b, "eq_b", args, 2));
 }
@@ -5135,14 +5237,19 @@ static xen_value *eqv_p(ptree *prog, xen_value **args, int num_args)
     }
   switch (args[1]->type)
     {
-    case R_FLOAT:        return(package(prog, R_BOOL, eqv_fb, "eqv_fb", args, 2)); 
-    case R_CLM:          return(package(prog, R_BOOL, eqv_clm, "eqv_clm", args, 2)); 
-    case R_READER:       return(package(prog, R_BOOL, reader_eq_b, "reader_eq_b", args, 2));
-    case R_MIX_READER:   return(package(prog, R_BOOL, mix_reader_eq_b, "mix_reader_eq_b", args, 2));
-    case R_VCT:          return(package(prog, R_BOOL, vct_eqv_b, "vct_eqv_b", args, 2));
-    case R_SOUND_DATA:   return(package(prog, R_BOOL, sd_eqv_b, "sd_eqv_b", args, 2));
+    case R_FLOAT:        return(package(prog, R_BOOL, eqv_fb, "eqv_fb", args, 2));                   break;
+    case R_CLM:          return(package(prog, R_BOOL, eqv_clm, "eqv_clm", args, 2));                 break;
+    case R_READER:       return(package(prog, R_BOOL, reader_eq_b, "reader_eq_b", args, 2));         break;
+    case R_MIX_READER:   return(package(prog, R_BOOL, mix_reader_eq_b, "mix_reader_eq_b", args, 2)); break;
+    case R_VCT:          return(package(prog, R_BOOL, vct_eqv_b, "vct_eqv_b", args, 2));             break;
+    case R_SOUND_DATA:   return(package(prog, R_BOOL, sd_eqv_b, "sd_eqv_b", args, 2));               break;
     case R_KEYWORD:
-    case R_SYMBOL:       return(package(prog, R_BOOL, xen_eqv_b, "xen_eqv_b", args, 2));
+    case R_SYMBOL:       return(package(prog, R_BOOL, xen_eqv_b, "xen_eqv_b", args, 2));             break;
+    default:
+      if ((args[1]->type == R_LIST) ||
+	  (CLM_STRUCT_P(args[1]->type)))
+	return(package(prog, R_BOOL, list_eq_b, "list_eqv_b", args, 2));
+      break;
     }
   return(package(prog, R_BOOL, eq_b, "eq_b", args, 2));
 }
@@ -5151,13 +5258,60 @@ static xen_value *eqv_p(ptree *prog, xen_value **args, int num_args)
 static void xen_equal_b(int *args, ptree *pt) {BOOL_RESULT = (Int)XEN_EQUAL_P(RXEN_ARG_1, RXEN_ARG_2);}
 
 
+static void list_equal_p(int *args, ptree *pt) 
+{
+  BOOL_RESULT = false;
+
+  if ((LIST_ARG_1->len == LIST_ARG_2->len) &&
+      (LIST_ARG_1->type == LIST_ARG_2->type))
+    {
+      int i;
+      if (LIST_ARG_1->len == 0)
+	BOOL_RESULT = true;
+      else
+	{
+	  for (i = 0; i < LIST_ARG_1->len; i++)
+	    {
+	      switch (LIST_ARG_1->type)
+		{
+		case R_INT:
+		case R_CHAR:
+		case R_BOOL:
+		  if (pt->ints[LIST_ARG_1->vals[i]->addr] != pt->ints[LIST_ARG_2->vals[i]->addr])
+		    return;
+		  break;
+
+		case R_FLOAT:
+		  if (pt->dbls[LIST_ARG_1->vals[i]->addr] != pt->dbls[LIST_ARG_2->vals[i]->addr])
+		    return;
+		  break;
+
+		default:
+		  return;
+		  break;
+		}
+	    }
+	  BOOL_RESULT = true;
+	}
+    }
+}
+
+
 static xen_value *equal_p(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == args[2]->type)
     switch (args[1]->type)
       {
       case R_KEYWORD:
-      case R_SYMBOL: return(package(prog, R_BOOL, xen_equal_b, "xen_equal_b", args, 2));
+      case R_SYMBOL: 
+	return(package(prog, R_BOOL, xen_equal_b, "xen_equal_b", args, 2));
+	break;
+
+      case R_LIST:
+	/* eqv? == eq? here, but equal? is different, apparently -- this part of Scheme is really ugly! */
+	return(package(prog, R_BOOL, list_equal_p, "list_equal?", args, 2));
+	break;
+	
       }
   return(eqv_p(prog, args, num_args));
 }
@@ -7345,12 +7499,13 @@ static xen_value *list_ref_1(ptree *prog, xen_value **args, int num_args)
 
 static xen_value *cxr_1(ptree *prog, xen_value **args, int num_args, int loc)
 {
-  xen_value *true_args[2];
+  xen_value *true_args[3];
   xen_value *rtn;
   true_args[0] = args[0];
   true_args[1] = args[1];
   true_args[2] = make_xen_value(R_INT, add_int_to_ptree(prog, loc), R_CONSTANT);
   rtn = list_ref_1(prog, true_args, 2);
+  FREE(true_args[2]);
   return(rtn);
 }
 
@@ -7368,21 +7523,28 @@ static void list_set(int *args, ptree *pt)
   xen_value *v;
   v = LIST_ARG_1->vals[INT_ARG_2];
 
+  /* fprintf(stderr,"list set %s (%d %f)\n", describe_xen_value(v, pt), (int)(INT_ARG_2), FLOAT_ARG_3); */
+
   switch (v->type)
     {
-    case R_INT:   pt->ints[v->addr] = INT_ARG_3;          break;
-    case R_BOOL:  pt->ints[v->addr] = BOOL_ARG_3;         break;
-    case R_CHAR:  pt->ints[v->addr] = (Int)(CHAR_ARG_3);  break;
-    case R_FLOAT: pt->dbls[v->addr] = FLOAT_ARG_3;        break;
-    case R_CLM:   pt->clms[v->addr] = CLM_ARG_3;          break;
-    case R_STRING:
-      /* TODO: free? */
-      pt->strs[v->addr] = copy_string(STRING_ARG_3);
-      break;
+    case R_INT:          pt->ints[v->addr] = INT_ARG_3;                 break;
+    case R_BOOL:         pt->ints[v->addr] = BOOL_ARG_3;                break;
+    case R_CHAR:         pt->ints[v->addr] = (Int)(CHAR_ARG_3);         break;
+    case R_FLOAT:        pt->dbls[v->addr] = FLOAT_ARG_3;               break;
+    case R_CLM:          pt->clms[v->addr] = CLM_ARG_3;                 break;
+    case R_STRING:       pt->strs[v->addr] = copy_string(STRING_ARG_3); break;
     case R_KEYWORD:
-    case R_SYMBOL:
-      pt->xens[v->addr] = RXEN_ARG_3;
-      break;
+    case R_SYMBOL:       pt->xens[v->addr] = RXEN_ARG_3;                break;
+    case R_FLOAT_VECTOR:
+    case R_VCT:          pt->vcts[v->addr] = VCT_ARG_3;                 break;
+    case R_SOUND_DATA:   pt->sds[v->addr] = SOUND_DATA_ARG_3;           break;
+    case R_READER:       pt->readers[v->addr] = READER_ARG_3;           break;
+    case R_MIX_READER:   pt->mix_readers[v->addr] = MIX_READER_ARG_3;   break;
+    case R_LIST:         pt->lists[v->addr] = LIST_ARG_3;               break;
+    case R_LIST_VECTOR:
+    case R_INT_VECTOR: 
+    case R_VCT_VECTOR:
+    case R_CLM_VECTOR:   pt->vects[v->addr] = VECT_ARG_3;               break;
     }
 }
 
@@ -7391,30 +7553,23 @@ static xen_value *list_set_1(ptree *prog, xen_value **args, int num_args)
 {
   list *xl;
   xen_var *var;
-
-  /* TODO: this doesn't work in expanded func? */
-
-  /* fprintf(stderr,"set: %s\n", describe_xen_value(args[3], prog)); */
-
   var = find_var_in_ptree_via_addr(prog, args[1]->type, args[1]->addr);
-  if (var) var->unclean = true;
-
-  /* fprintf(stderr,"list-set-1 var: %p\n", var); */
+  if (var) 
+    var->unclean = true;
 
   if (CLM_STRUCT_P(args[1]->type))
-    return(package(prog, def_clm_struct_field_type(args[1]->type, prog->ints[args[2]->addr]), list_set, "list_set", args, 3));
+    return(package(prog, def_clm_struct_field_type(args[1]->type, prog->ints[args[2]->addr]), list_set, "list_set", args, num_args));
 
   xl = prog->lists[args[1]->addr];
-
   if (xl)
     {
       if (CLM_STRUCT_P(xl->type))
-	return(package(prog, def_clm_struct_field_type(xl->type, prog->ints[args[2]->addr]), list_set, "list_set", args, 3)); /* INT_ARG_2 is a constant in this case */
-      return(package(prog, xl->type, list_set, "list_set", args, 3));
+	return(package(prog, def_clm_struct_field_type(xl->type, prog->ints[args[2]->addr]), list_set, "list_set", args, num_args)); /* INT_ARG_2 is a constant in this case */
+      return(package(prog, xl->type, list_set, "list_set", args, num_args));
     }
   /* assume float */
 
-  return(package(prog, R_FLOAT, list_set, "list_set", args, 3));
+  return(package(prog, R_FLOAT, list_set, "list_set", args, num_args));
 }
 
 
@@ -7427,6 +7582,7 @@ static xen_value *set_car_1(ptree *prog, xen_value **args, int num_args)
   true_args[2] = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT);
   true_args[3] = args[2];
   rtn = list_set_1(prog, true_args, 3);
+  FREE(true_args[2]);
   return(rtn);
 }
 
@@ -7456,18 +7612,24 @@ static xen_value *null_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
-
-
 static void clm_struct_field_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
 {
   /* in_v is list, v is val, w->data has addr -> in_v2->addr */
 
-  xen_value *true_args[4];
-  true_args[0] = NULL;
-  true_args[1] = in_v;
-  true_args[2] = make_xen_value(R_INT, add_int_to_ptree(prog, in_v2->addr), R_CONSTANT);
-  true_args[3] = v;
-  list_set_1(prog, true_args, 3);
+  xen_var *var;
+  xen_value *new_v;
+  var = find_var_in_ptree_via_addr(prog, in_v->type, in_v->addr);
+  if (var) var->unclean = true;
+
+  new_v = make_xen_value(R_INT, add_int_to_ptree(prog, in_v2->addr), R_CONSTANT);
+  add_triple_to_ptree(prog, va_make_triple(list_set, "clm_struct_set", 4, NULL, in_v, new_v, v));
+  FREE(new_v);
+
+  /*
+    (def-clm-struct hi rfq)
+    (define val (make-hi))
+    (run (lambda () (set! (hi-rfq val) 123.0)))
+  */
 }
 
 
@@ -9677,6 +9839,7 @@ static void granulate_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_granulate(CLM
 static xen_value *granulate_1(ptree *prog, xen_value **args, int num_args)
 {
   bool got_input = false;
+
   if (num_args >= 2)
     {
       if (num_args == 3)
@@ -9689,6 +9852,7 @@ static xen_value *granulate_1(ptree *prog, xen_value **args, int num_args)
 	    }
 	  else num_args = 2;
 	}
+
       if (args[2]->type == R_FUNCTION)
 	{
 	  ptree *pt;
@@ -9702,11 +9866,16 @@ static xen_value *granulate_1(ptree *prog, xen_value **args, int num_args)
 	    num_args = 1;
 	}
     }
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, granulate_check, "granulate_check", args, 1);
+
+  if (run_safety == RUN_SAFE) 
+    temp_package(prog, R_BOOL, granulate_check, "granulate_check", args, 1);
+
   if (num_args == 1)
     return(package(prog, R_FLOAT, granulate_0f, "granulate_0f", args, 1));
+
   if (num_args == 2)
     return(package(prog, R_FLOAT, granulate_1f, "granulate_1f", args, 2));
+
   if (got_input)
     return(package(prog, R_FLOAT, granulate_2f, "granulate_2f", args, 3));
   return(package(prog, R_FLOAT, granulate_2f_split, "granulate_2f_split", args, 3));
@@ -9769,6 +9938,7 @@ static void phase_vocoder_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_phase_voc
 static xen_value *phase_vocoder_1(ptree *prog, xen_value **args, int num_args)
 {
   bool got_input = false, got_edit = false, got_analyze = false, got_synthesize = false;
+
   if (num_args == 5)
     {
       if (args[5]->type == R_FUNCTION)
@@ -9780,6 +9950,7 @@ static xen_value *phase_vocoder_1(ptree *prog, xen_value **args, int num_args)
 	}
       else num_args = 4;
     }
+
   if (num_args >= 4)
     {
       if (args[4]->type == R_FUNCTION)
@@ -9795,6 +9966,7 @@ static xen_value *phase_vocoder_1(ptree *prog, xen_value **args, int num_args)
 	    num_args = 3;
 	}
     }
+
   if (num_args >= 3)
     {
       if (args[3]->type == R_FUNCTION)
@@ -9810,6 +9982,7 @@ static xen_value *phase_vocoder_1(ptree *prog, xen_value **args, int num_args)
 	    num_args = 2;
 	}
     }
+
   if (num_args >= 2)
     {
       if (args[2]->type == R_FUNCTION)
@@ -9825,11 +9998,16 @@ static xen_value *phase_vocoder_1(ptree *prog, xen_value **args, int num_args)
 	    num_args = 1;
 	}
     }
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, phase_vocoder_check, "phase_vocoder_check", args, 1);
+
+  if (run_safety == RUN_SAFE) 
+    temp_package(prog, R_BOOL, phase_vocoder_check, "phase_vocoder_check", args, 1);
+
   if (num_args == 1)
     return(package(prog, R_FLOAT, phase_vocoder_0f, "phase_vocoder_0f", args, 1));
+
   if (num_args == 2)
     return(package(prog, R_FLOAT, phase_vocoder_1f, "phase_vocoder_1f", args, 2));
+
   /* rather than make 16 different callers, I'll pass along which args are functions in an inserted arg1 */
   {
     int i;
@@ -9873,7 +10051,8 @@ static xen_value *phase_vocoder_ ## Name ## _1(ptree *prog, xen_value **args, in
   return(run_warn("wrong type arg (%s) to mus_phase_vocoder_ " #Name , type_name(args[1]->type))); \
 }
 
-/* add_vct_to_ptree here (or in xcoeffs below) causes segfault?? (snd-test 23, embedded ptree eval) */
+
+/* TODO: add_vct_to_ptree here (or in xcoeffs below) causes segfault?? (snd-test 23, embedded ptree eval) */
 
 PV_VCT_1(amps)
 PV_VCT_1(amp_increments)
@@ -10101,125 +10280,185 @@ static xen_value *boolean_p_1(ptree *prog, xen_value **args, int num_args)
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_BOOL), R_CONSTANT));
 }
 
+
 static xen_value *number_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (args[1]->type == R_INT) || (args[1]->type == R_FLOAT)), R_CONSTANT));
 }
+
 
 static xen_value *integer_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_INT), R_CONSTANT));
 }
 
+
 static xen_value *inexact_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_FLOAT), R_CONSTANT));
 }
+
 
 static xen_value *exact_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_INT), R_CONSTANT));
 }
 
+
 static xen_value *real_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (args[1]->type == R_INT) || (args[1]->type == R_FLOAT)), R_CONSTANT));
 }
+
 
 static xen_value *char_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_CHAR), R_CONSTANT));
 }
 
+
 static xen_value *string_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_STRING), R_CONSTANT));
 }
+
 
 static xen_value *sample_reader_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_READER), R_CONSTANT));
 }
 
+
 static xen_value *mix_sample_reader_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_MIX_READER), R_CONSTANT));
 }
+
 
 static xen_value *keyword_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_KEYWORD), R_CONSTANT));
 }
 
+
 static xen_value *symbol_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_SYMBOL), R_CONSTANT));
 }
+
 
 static xen_value *vct_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_VCT), R_CONSTANT));
 }
 
+
 static xen_value *sound_data_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_SOUND_DATA), R_CONSTANT));
 }
+
 
 static xen_value *vector_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, VECTOR_P(args[1]->type)), R_CONSTANT));
 }
 
+
 static xen_value *list_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_LIST), R_CONSTANT));
 }
 
-static xen_value *char_ge_1(ptree *prog, xen_value **args, int num_args) {return(greater_than_or_equal(prog, false, args, num_args));}
 
-static xen_value *char_gt_1(ptree *prog, xen_value **args, int num_args) {return(greater_than(prog, false, args, num_args));}
+static xen_value *char_ge_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(greater_than_or_equal(prog, false, args, num_args));
+}
 
-static xen_value *char_le_1(ptree *prog, xen_value **args, int num_args) {return(less_than_or_equal(prog, false, args, num_args));}
 
-static xen_value *char_lt_1(ptree *prog, xen_value **args, int num_args) {return(less_than(prog, false, args, num_args));}
+static xen_value *char_gt_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(greater_than(prog, false, args, num_args));
+}
 
-static xen_value *char_eq_1(ptree *prog, xen_value **args, int num_args) {return(numbers_equal(prog, false, args, num_args));}
+
+static xen_value *char_le_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(less_than_or_equal(prog, false, args, num_args));
+}
+
+
+static xen_value *char_lt_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(less_than(prog, false, args, num_args));
+}
+
+
+static xen_value *char_eq_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(numbers_equal(prog, false, args, num_args));
+}
+
 
 static xen_value *char_ci_ge_1(ptree *prog, xen_value **args, int num_args) 
 {
   return(greater_than_or_equal(prog, false, upcase_args(prog, args, num_args), num_args));
 }
 
+
 static xen_value *char_ci_gt_1(ptree *prog, xen_value **args, int num_args) 
 {
   return(greater_than(prog, false, upcase_args(prog, args, num_args), num_args));
 }
+
 
 static xen_value *char_ci_le_1(ptree *prog, xen_value **args, int num_args) 
 {
   return(less_than_or_equal(prog, false, upcase_args(prog, args, num_args), num_args));
 }
 
+
 static xen_value *char_ci_lt_1(ptree *prog, xen_value **args, int num_args) 
 {
   return(less_than(prog, false, upcase_args(prog, args, num_args), num_args));
 }
+
 
 static xen_value *char_ci_eq_1(ptree *prog, xen_value **args, int num_args) 
 {
   return(numbers_equal(prog, false, upcase_args(prog, args, num_args), num_args));
 }
 
-static xen_value *ge_1(ptree *prog, xen_value **args, int num_args) {return(greater_than_or_equal(prog, prog->float_result, args, num_args));}
 
-static xen_value *gt_1(ptree *prog, xen_value **args, int num_args) {return(greater_than(prog, prog->float_result, args, num_args));}
+static xen_value *ge_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(greater_than_or_equal(prog, prog->float_result, args, num_args));
+}
 
-static xen_value *le_1(ptree *prog, xen_value **args, int num_args) {return(less_than_or_equal(prog, prog->float_result, args, num_args));}
 
-static xen_value *lt_1(ptree *prog, xen_value **args, int num_args) {return(less_than(prog, prog->float_result, args, num_args));}
+static xen_value *gt_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(greater_than(prog, prog->float_result, args, num_args));
+}
 
-static xen_value *eq_1(ptree *prog, xen_value **args, int num_args) {return(numbers_equal(prog, prog->float_result, args, num_args));}
+
+static xen_value *le_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(less_than_or_equal(prog, prog->float_result, args, num_args));
+}
+
+
+static xen_value *lt_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(less_than(prog, prog->float_result, args, num_args));
+}
+
+
+static xen_value *eq_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(numbers_equal(prog, prog->float_result, args, num_args));
+}
 
 
 static xen_value *atanx_1(ptree *prog, xen_value **args, int num_args) 
@@ -10292,41 +10531,62 @@ static XEN wrap_generator(ptree *pt, int addr)
 
 static XEN xen_value_to_xen(ptree *pt, xen_value *v)
 {
-  XEN val = XEN_UNDEFINED;
+  XEN val = XEN_FALSE;
 
   /* fprintf(stderr, "xen_value_to_xen: %s %s\n", type_name(v->type), describe_xen_value(v, pt)); */
 
   switch (v->type)
     {
-    case R_FLOAT:   val = C_TO_XEN_DOUBLE(pt->dbls[v->addr]);       break;
-    case R_INT:     val = R_C_TO_XEN_INT(pt->ints[v->addr]);        break;
-    case R_CHAR:    val = C_TO_XEN_CHAR((char)(pt->ints[v->addr])); break;
-    case R_STRING:  val = C_TO_XEN_STRING(pt->strs[v->addr]);       break;
-    case R_BOOL:    return(C_TO_XEN_BOOLEAN(pt->ints[v->addr]));    break;
+    case R_FLOAT:   return(C_TO_XEN_DOUBLE(pt->dbls[v->addr]));       break;
+    case R_INT:     return(R_C_TO_XEN_INT(pt->ints[v->addr]));        break;
+    case R_CHAR:    return(C_TO_XEN_CHAR((char)(pt->ints[v->addr]))); break;
+    case R_STRING:  return(C_TO_XEN_STRING(pt->strs[v->addr]));       break;
+    case R_BOOL:    return(C_TO_XEN_BOOLEAN(pt->ints[v->addr]));      break;
+
     case R_SYMBOL:
-    case R_KEYWORD: val = pt->xens[v->addr]; break;
+    case R_KEYWORD: return(pt->xens[v->addr]);                        break;
+
     case R_FLOAT_VECTOR:
     case R_VCT:
-      {
-	vct *vc;
-	vc = pt->vcts[v->addr];
-	val = xen_make_vct_wrapper(vc->length, vc->data);
-      }
+      if ((pt->vcts) && (pt->vcts[v->addr]))
+	{
+	  vct *vtemp;
+	  /* it is necessary to copy the data here to protect it from free_ptree:
+	   *
+	   * (def-clm-struct hiho2 (v #f :type vct))
+	   * (define val (make-hiho2))
+	   * (run (lambda () (set! (hiho2-v val) (make-vct 32 .1))))
+	   */
+	  vtemp = mus_vct_copy(pt->vcts[v->addr]);
+	  val = xen_make_vct(vtemp->length, vtemp->data);
+	  FREE(vtemp);
+	}
       break;
+
+      /* PERHAPS: xen_value_to_xen for R_INT|CLM|VCT|LIST_VECTOR READER MIX_READER */
+
     case R_SOUND_DATA:
-      {
-	sound_data *sd;
-	sd = pt->sds[v->addr];
-	val = wrap_sound_data(sd->chans, sd->length, sd->data);
-      }
+      if ((pt->sds) && (pt->sds[v->addr]))
+	{
+	  sound_data *sd;
+	  sd = sound_data_copy(pt->sds[v->addr]);
+	  val = wrap_sound_data(sd->chans, sd->length, sd->data);
+	  FREE(sd);
+	  sd = (sound_data *)XEN_OBJECT_REF(val);
+	  sd->wrapped = false;
+	}
       break;
+
     case R_CLM:
-      val = wrap_generator(pt, v->addr);
+      if ((pt->clms) && (pt->clms[v->addr]))
+	return(wrap_generator(pt, v->addr)); /* here a mus_copy might be safer */
       break;
+
     default:
       if ((pt->lists) &&
 	  ((v->type == R_LIST) || 
-	   (CLM_STRUCT_P(v->type))))
+	   (CLM_STRUCT_P(v->type))) &&
+	  (pt->lists[v->addr]))
 	{
 	  list *xl;
 	  int i, loc;
@@ -10339,9 +10599,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
 	  snd_unprotect_at(loc);
 	}
     }
-  if (XEN_BOUND_P(val))
-    return(val);
-  return(XEN_FALSE);
+  return(val);
 }
 
 
@@ -11327,6 +11585,7 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
   int happy = 0;
   XEN walker;
   walk_info *w = NULL;
+
   walker = XEN_WALKER(acc_form);
   if (XEN_ULONG_P(walker))
     {
@@ -11359,12 +11618,14 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
 	    }
 	}
     }
+
   if (in_v) FREE(in_v);
   if (in_v1) FREE(in_v1);
   if (in_v2) FREE(in_v2);
   if (happy == 1) return(v);
   if (v) FREE(v);
   if (happy == 0) run_warn("can't set %s", XEN_SYMBOL_TO_C_STRING(acc_form));
+
   return(NULL);
 }
 
@@ -11393,10 +11654,13 @@ static struct ptree *form_to_ptree(XEN code)
   ptree *prog;
   XEN form;
   run_warned = false;
+
   current_optimization = optimization(ss);
   if (current_optimization == DONT_OPTIMIZE) return(NULL);
+
   form = XEN_CAR(code);
   prog = make_ptree(8);
+
 #if HAVE_GUILE
   if ((XEN_PROCEDURE_P(XEN_CADR(code))) && 
       (!(XEN_APPLICABLE_SMOB_P(XEN_CADR(code))))) /* applicable smobs cause confusion here */
@@ -11413,6 +11677,7 @@ static struct ptree *form_to_ptree(XEN code)
       free_ptree(prog);
       return(NULL);
     }
+
   prog->result = walk(prog, form, NEED_ANY_RESULT);
   if (prog->result)
     {
@@ -11432,9 +11697,11 @@ static struct ptree *form_to_ptree(XEN code)
       prog->form_loc = snd_protect(prog->form);
       return(prog);
     }
+
   free_ptree(prog);
   if (!run_warned)
     run_warn("can't optimize: %s\n", XEN_AS_STRING(form));
+
   return(NULL);
 }
 
@@ -11598,6 +11865,7 @@ static XEN eval_ptree_to_xen(ptree *pt)
   XEN result = XEN_FALSE;
 
   eval_ptree(pt);
+
   /* there is a minor memory leak here: if ptree eval calls mus_error, a throw occurs without
    *   any free_ptree on the current tree.  But to catch this one case, while not screwing up
    *   other cases (explicit throw, etc) is way too complicated -- basically I'd need a local
@@ -11605,45 +11873,7 @@ static XEN eval_ptree_to_xen(ptree *pt)
    *   fully unwind the stack, and the latter because the only leak case is through mus_error.
    */
 
-  switch (pt->result->type)
-    {
-      /* these two cases are copying the result, whereas xen_value_to_xen just wraps it */
-    case R_VCT:
-      {
-	vct *v, *urv;
-	urv = pt->vcts[pt->result->addr];
-	/* this can be null: (let ((v1 (make-vct 32 1.0))) (run (lambda () (if (> (vct-ref v1 0) 2.0) (vct-scale! v1 0.5))))) */
-	if (urv)
-	  {
-	    v = mus_vct_copy(urv);
-	    result = xen_make_vct(v->length, v->data);
-	    FREE(v);
-	  }
-	/* else result is XEN_FALSE as initialized */
-      }
-      break;
-
-    case R_SOUND_DATA:
-      {
-	sound_data *sd, *ursd;
-	ursd = pt->sds[pt->result->addr]; /* this can be null */
-	if (ursd)
-	  {
-	    sd = sound_data_copy(ursd);
-	    result = wrap_sound_data(sd->chans, sd->length, sd->data);
-	    FREE(sd);
-	    sd = (sound_data *)XEN_OBJECT_REF(result);
-	    sd->wrapped = false;
-	  }
-      }
-      break;
-
-    default:
-      result = xen_value_to_xen(pt, pt->result);
-      break;
-
-    }
-
+  result = xen_value_to_xen(pt, pt->result);
   free_ptree(pt);
   return(result);
 }

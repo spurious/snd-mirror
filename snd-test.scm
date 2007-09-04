@@ -23,14 +23,14 @@
 ;;;  test 20: transforms                        [40122]
 ;;;  test 21: new stuff                         [42091]
 ;;;  test 22: run                               [44082]
-;;;  test 23: with-sound                        [49937]
-;;;  test 24: user-interface                    [52466]
-;;;  test 25: X/Xt/Xm                           [55872]
-;;;  test 26: Gtk                               [60468]
-;;;  test 27: GL                                [64320]
-;;;  test 28: errors                            [64444]
-;;;  test all done                              [66729]
-;;;  test the end                               [66965]
+;;;  test 23: with-sound                        [50028]
+;;;  test 24: user-interface                    [52557]
+;;;  test 25: X/Xt/Xm                           [55963]
+;;;  test 26: Gtk                               [60559]
+;;;  test 27: GL                                [64411]
+;;;  test 28: errors                            [64535]
+;;;  test all done                              [66820]
+;;;  test the end                               [67056]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -25599,7 +25599,7 @@ EDITS: 2
 		(if (not (= (mix-position id) 20)) (snd-display ";after pad mix pos: ~A" (mix-position id)))
 		(set! (mix-sync id) 2)
 		(if (not (= (mix-sync id) 2)) (snd-display ";set mix sync 2: ~A" (mix-sync id)))
-		(if (< (mix-sync-max) 2) (snd-display ";mix-sync-max: ~A" (mix-sync-max)))
+		(if (and full-test (< (mix-sync-max) 2)) (snd-display ";mix-sync-max: ~A" (mix-sync-max)))
 		(pad-channel 50 10)
 		(if (or (not (mix? id)) (not (number? (mix? id)))) (snd-display ";padded 50 mix not active?"))
 		(if (not (= (mix-position id) 20)) (snd-display ";after pad 50 mix pos: ~A" (mix-position id)))
@@ -44158,6 +44158,13 @@ EDITS: 1
   (declare (hi308-gen hi308))
   (set! (hi308-freq hi308-gen) (* 3.5 (hi308-freq hi308-gen))))
 
+(def-clm-struct hiho309 (i 0 :type int) (x 0.0 :type float) (v #f :type vct))
+	
+(def-clm-struct hiho310 (v #f :type string))
+	
+(def-clm-struct hiho311 (v #f :type sound-data))
+	
+
 (define (snd_test_22)
   
   (define (test-run-protection-release)
@@ -46676,15 +46683,11 @@ EDITS: 1
 	(let ((val (run-eval '(lambda (y) (declare (y hiho2)) (hiho2-i y)) hi2)))
 	  (if (not (= val 0)) (snd-display ";typed hiho2-i: ~A" val))
 	  (set! val (run-eval '(lambda (y) (declare (y hiho2)) (set! (hiho2-i y) 2) (hiho2-i y)) hi2))
-	  (if (not (= val 2)) (snd-display ";inner set hiho2-i: ~A" val))
-	  (if (not (= (hiho2-i hi2) 2))
-	      (snd-display ";set hiho2-i: ~A" (hiho2-i hi2))))
+	  (if (not (= val 2)) (snd-display ";inner set hiho2-i: ~A" val)))
 	(let ((val (run-eval '(lambda (y) (declare (y hiho2)) (hiho2-x y)) hi2)))
 	  (if (fneq val 0.0) (snd-display ";hiho2-x: ~A" val))
 	  (set! val (run-eval '(lambda (y) (declare (y hiho2)) (set! (hiho2-x y) 3.14) (hiho2-x y)) hi2))
-	  (if (fneq val 3.14) (snd-display ";inner set hiho2-x: ~A" val))
-	  (if (fneq (hiho2-x hi2) 3.14)
-	      (snd-display ";set hiho2-x: ~A" (hiho2-x hi2))))
+	  (if (fneq val 3.14) (snd-display ";inner set hiho2-x: ~A" val)))
 	
 	(let ((lst (list 1 2 (vct-fill! (make-vct 4) 3.14) 3))
 	      (k 123.0))
@@ -46901,7 +46904,7 @@ EDITS: 1
 	    (if (fneq ok 1.0) (snd-display ";run mix-amp?")))
 	  (let ((ok 0))
 	    (run (lambda () (set! ok (mix-sync-max))))
-	    (if (= ok 0) (snd-display ";run mix-sync-max 0?")))
+	    (if (and full-test (= ok 0)) (snd-display ";run mix-sync-max 0?")))
 	  
 	  (let ((ok 0))
 	    (run (lambda () (set! ok (region-chans reg))))
@@ -48713,9 +48716,6 @@ EDITS: 1
 				(lambda args (car args)))))
 		(if (not (eq? tag 'cannot-parse)) (snd-display ";run case key ~A" tag)))
 	      
-	      (let ((tag (catch #t (lambda () (run-eval '(cadr unique-list))) (lambda args (car args)))))
-		(if (not (eq? tag 'cannot-parse)) (snd-display ";run non-simple ~A" tag)))
-	      
 	      (let ((val (run (lambda () (let ((val (if (> 3 2) 123 "hi"))) val)))))
 		(if (not (= val 123)) (snd-display ";run opt-if 123: ~A" val)))
 	      (let ((val (run-eval '(if (< 3 2) 123 "hi"))))
@@ -49928,6 +49928,84 @@ EDITS: 1
 	    (if (or (not (hi308? x))
 		    (fneq (hi308-phase x) 4.0))
 		(snd-display ";run pass list vector as arg: ~A" x))))
+
+	;; 309
+	(let ((val (list 1 2 3)) (val1 (list 1 2 3))) 
+	  (let ((x (run (lambda () (eq? val val1)))))
+	    (if x (snd-display ";run list eq 1: ~A" x))))
+	
+	(let ((val (list 1 2 3)) (val1 (list 1 2 3))) 
+	  (let ((x (run (lambda () (eq? val val)))))
+	    (if (not x) (snd-display ";run list eq 2: ~A" x))))
+	
+	(let ((val (list 1 2 3)) (val1 (list 1 2 3))) 
+	  (let ((x (run (lambda () (equal? val val)))))
+	    (if (not x) (snd-display ";run list equal 3: ~A" x))))
+	
+	(let ((val (list 1 2 3)) (val1 (list 1 2 3))) 
+	  (let ((x (run (lambda () (equal? val1 val))))) ; this one doesn't work in run
+	    (if (not x) (snd-display ";run list equal 4: ~A" x))))
+	
+	(let ((val (list 1 2 3)) (val1 (list 1.0 2.0 3.0))) 
+	  (let ((x (run (lambda () (equal? val1 val)))))
+	    (if x (snd-display ";run list equal 5: ~A" x))))
+	
+	
+	(let ((val (vector (make-hi308 1.0 2.0) (make-hi308 3.0 4.0))))
+	  (let ((x (run (lambda () (vector-ref val 1)))))
+	    (if (or (not (hi308? x))
+		    (fneq (hi308-phase x) 4.0))
+		(snd-display ";run pass list vector as arg: ~A" x))))
+	
+	
+	(let ((val (vector (make-hi308 1.0 2.0) (make-hi308 3.0 4.0))))
+	  (let ((x (run (lambda () (call-hi308 (vector-ref val 1))))))
+	    (if (fneq x 3.0) (snd-display ";run list-vector call-hi: ~A" x))))
+	
+	(let ((val (vector (make-hi308 1.0 2.0) (make-hi308 3.0 4.0))))
+	  (run (lambda () (set-hi308 (vector-ref val 1))))
+	  (if (fneq (call-hi308 (vector-ref val 1)) (* 3.5 3.0)) (snd-display ";run list-vector set-hi: ~A" val)))
+	
+	(let ((val (vector (make-hi308 1.0 2.0) (make-hi308 3.0 4.0))))
+	  (let ((x (run (lambda () (set-hi308 (vector-ref val 1)) (call-hi308 (vector-ref val 1))))))
+	    (if (fneq x (* 3.5 3.0)) (snd-display ";run list-vector set-hi+call-hi: ~A" val))))
+	
+	
+	(let ((val (make-hiho309)))
+	  (run (lambda () (set! (hiho309-i val) 321)))
+	  (if (not (= (hiho309-i val) 321)) (snd-display ";set hiho309-i: ~A" val)))
+	
+	(let ((val (make-hiho309)))
+	  (let ((x (run (lambda () (set! (hiho309-v val) (make-vct 32 .1)) (vct-ref (hiho309-v val) 2)))))
+	    (if (or (fneq x .1)
+		    (not (vct? (hiho309-v val)))
+		    (fneq (vct-ref (hiho309-v val) 2) .1))
+		(snd-display ";set hiho309 vct: ~A" val))))
+	
+	
+	(let ((val (make-hiho310)))
+	  (let ((x (run (lambda () (set! (hiho310-v val) "hiho") (hiho310-v val)))))
+	    (if (or (not (string? (hiho310-v val)))
+		    (not (string=? (hiho310-v val) "hiho")))
+		(snd-display ";set hiho310 string: ~A" val))
+	    (if (or (not (string? x))
+		    (not (string=? x "hiho")))
+		(snd-display ";set hiho310 string and return: ~A ~A" x val))))
+	
+	
+	(let ((val (make-hiho311)))
+	  (run (lambda () (set! (hiho311-v val) (make-sound-data 2 3))))
+	  (if (or (not (sound-data? (hiho311-v val)))
+		  (not (= (sound-data-chans (hiho311-v val)) 2)))
+	      (snd-display "set hiho311 sound-data: ~A" val)))
+	
+	(let ((val (make-hiho311)))
+	  (run (lambda () (set! (hiho311-v val) (make-sound-data 2 3)) (sound-data-set! (hiho311-v val) 1 1 1.0)))
+	  (if (or (not (sound-data? (hiho311-v val)))
+		  (not (= (sound-data-chans (hiho311-v val)) 2))
+		  (fneq (sound-data-ref (hiho311-v val) 1 1) 1.0)
+		  (fneq (sound-data-ref (hiho311-v val) 0 0) 0.0))
+	      (snd-display "set hiho311 sound-data and return: ~A" val)))
 	
 	))))
 

@@ -1105,6 +1105,9 @@ void io_fds_in_use(int *open, int *closed, int *top);
 void describe_region(FILE *fd, void *ur);
 void describe_sync(FILE *fp, void *ptr);
 void describe_ed_fragment(FILE *Fp, void *ptr);
+#if WITH_RUN
+  void describe_xen_value_for_memlog(FILE *Fp, void *ptr);
+#endif
 
 typedef struct {int ptrs, loc, refsize; size_t sum; int *refs;} sumloc;
 
@@ -1198,19 +1201,24 @@ void mem_report(void)
 		      orig_i = slocs[i].refs[j];
 		      switch (printable[loc])
 			{
+
 			case PRINT_CHAR:
 			  fprintf(Fp, "[%s] ", (char *)(pointers[orig_i]));
 			  break;
+
 			case PRINT_CLM:
 			  /* don't call mus_describe here!  It can call either free or calloc, and thereby screw up everything else */
 			  fprintf(Fp, "[%p: %s]\n   ", pointers[orig_i], mus_name((mus_any *)(pointers[orig_i])));
 			  break;
+
 			case PRINT_REGION:
 			  fprintf(Fp, "[%p: ", pointers[orig_i]); describe_region(Fp, pointers[orig_i]); fprintf(Fp, "]\n        ");
 			  break;
+
 			case PRINT_SYNC:
 			  fprintf(Fp, "[%p: ", pointers[orig_i]); describe_sync(Fp, pointers[orig_i]); fprintf(Fp, "]\n        ");
 			  break;
+
 			case PRINT_SND_FD:
 			  {
 			    snd_fd *sf = (snd_fd *)(pointers[orig_i]);
@@ -1218,18 +1226,21 @@ void mem_report(void)
 				    reader_type_to_string(sf->type), sf, sf->initial_samp, (int)(sf->at_eof), sf->local_sp);
 			  }
 			  break;
+
 			case PRINT_FAM_INFO:
 			  {
 			    fam_info *fp = (fam_info *)(pointers[orig_i]);
 			    fprintf(Fp, "[%p, %s, rp: %p, data: %p]\n        ", fp, fp->filename, fp->rp, fp->data);
 			  }
 			  break;
+
 			case PRINT_SOUND_DATA:
 			  {
 			    sound_data *sd = (sound_data *)(pointers[orig_i]);
 			    fprintf(Fp, "[%p: %d %d]\n        ", sd, sd->chans, sd->length);
 			  }
 			  break;
+
 			case PRINT_SND_DATA:
 			  {
 			    snd_data *sd = (snd_data *)(pointers[orig_i]);
@@ -1243,6 +1254,7 @@ void mem_report(void)
 			      else fprintf(Fp, "[%p, (no data)]\n        ", sd);
 			  }
 			  break;
+
 			case PRINT_ED_LIST:
 			  {
 			    ed_list *ed = (ed_list *)(pointers[orig_i]);
@@ -1251,9 +1263,15 @@ void mem_report(void)
 				    ed->beg, ed->len, ed_list_edit_type_to_string(ed->edit_type), ed->edit_type, ed->allocated_size);
 			  }
 			  break;
+
 			case PRINT_ED_FRAGMENT:
 			  describe_ed_fragment(Fp, pointers[orig_i]);
 			  break;
+#if WITH_RUN
+			case PRINT_XEN_VALUE:
+			  describe_xen_value_for_memlog(Fp, pointers[orig_i]);
+			  break;
+#endif
 			}
 		      /* other printable cases that would be nice: snd_info chn_info io_fd env_state ladspa sound_data mix */
 		    }
