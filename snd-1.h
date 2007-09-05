@@ -1469,6 +1469,7 @@ char *copy_string(const char *str);
 #endif
 
 int snd_strlen(const char *str);
+bool snd_strcmp(const char *str1, const char *str2);
 char *snd_strcat(char *errmsg, const char *str, int *err_size);
 char *snd_local_time(void);
 char *snd_io_strerror(void);

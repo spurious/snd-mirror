@@ -4,14 +4,15 @@
 ;;; sndclm.html G&R 2nd col last row (with normalization)
 
 (def-clm-struct (expcs
-		 :make-wrapper (lambda (g)
-				 (set! (expcs-osc g) (make-oscil (expcs-frequency g) (expcs-initial-phase g)))
-				 (if (<= (expcs-t g) 0.0) (set! (expcs-t g) 0.00001))
-				 (set! (expcs-cosh-t g) (cosh (expcs-t g)))
-				 (let ((exp-t (exp (- (expcs-t g)))))
-				   (set! (expcs-offset g) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
-				   (set! (expcs-scaler g) (* (sinh (expcs-t g)) (expcs-offset g))))
-				 g))
+		 :make-wrapper 
+		 (lambda (g)
+		   (set! (expcs-osc g) (make-oscil (expcs-frequency g) (expcs-initial-phase g)))
+		   (if (<= (expcs-t g) 0.0) (set! (expcs-t g) 0.00001))
+		   (set! (expcs-cosh-t g) (cosh (expcs-t g)))
+		   (let ((exp-t (exp (- (expcs-t g)))))
+		     (set! (expcs-offset g) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
+		     (set! (expcs-scaler g) (* (sinh (expcs-t g)) (expcs-offset g))))
+		   g))
   (osc #f :type clm) scaler offset t cosh-t 
   (frequency 440.0) (initial-phase 0.0)) ; last 2 for make-oscil
 
@@ -45,24 +46,33 @@
 	  (set! (expcs-scaler gen) (* (sinh (expcs-t gen)) (expcs-offset gen))))
 	(outa i (expcs gen 0.0) *output*))))))
 |#
-;;; --------------------------------------------------------------------------------
 
+
+;;; --------------------------------------------------------------------------------
 
 ;;; sndclm.html (G&R) 1st col 5th row (sum of odd sines)
 
 (def-clm-struct (oddsin 
-		 :make-wrapper (lambda (g)
-				 (set! (oddsin-osc g) (make-oscil (oddsin-frequency g) (oddsin-initial-phase g)))
-				 (set! (oddsin-nosc g) (make-oscil (* (oddsin-n g) (oddsin-frequency g)) (* (oddsin-n g) (oddsin-initial-phase g))))
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (oddsin-osc g) (make-oscil 
+					 (oddsin-frequency g) 
+					 (oddsin-initial-phase g)))
+		   (set! (oddsin-nosc g) (make-oscil 
+					  (* (oddsin-n g) (oddsin-frequency g)) 
+					  (* (oddsin-n g) (oddsin-initial-phase g))))
 				 g))
   (osc #f :type clm) (nosc #f :type clm) (n 0 :type int)
   (frequency 440.0) (initial-phase 0.0))
 
 (define (oddsin gen fm)
   (declare (gen oddsin) (fm float))
-  (let ((o1 (oscil (oddsin-nosc gen) (* (oddsin-n gen) fm))))
-    (/ (* o1 o1)
-       (oscil (oddsin-osc gen) fm))))
+  (let ((o1 (oscil (oddsin-nosc gen) (* (oddsin-n gen) fm)))
+	(o2 (oscil (oddsin-osc gen) fm))) 
+    (if (< (abs o2) 1.0e-9)
+	0.0
+	(/ (* o1 o1) o2))))
+	   
 
 ;;; amplitude normalization is approximately (/ 1.4 n)
 
@@ -74,7 +84,6 @@
 	  ((= i 10000))
 	(outa i (oddsin gen 0.0) *output*))))))
 |#
-
 
 ;;; --------------------------------------------------------------------------------
 

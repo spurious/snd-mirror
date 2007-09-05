@@ -583,8 +583,7 @@ void remember_temp(const char *filename, int chans)
     {
       for (i = 0; i < tempfiles_size; i++)
 	if ((tempfiles[i]) &&
-	    (tempfiles[i]->name) &&
-	    (strcmp(filename, tempfiles[i]->name) == 0))
+	    (snd_strcmp(filename, tempfiles[i]->name)))
 	  return;
       for (i = 0; i < tempfiles_size; i++)
 	if (tempfiles[i] == NULL)
@@ -613,7 +612,8 @@ void forget_temp(const char *filename, int chan)
     {
       tempfile_ctr *tmp;
       tmp = tempfiles[i];
-      if ((tmp) && (strcmp(filename, tmp->name) == 0))
+      if ((tmp) && 
+	  (snd_strcmp(filename, tmp->name)))
 	{
 	  tmp->ticks[chan]--;
 	  for (j = 0; j < tmp->chans; j++)
@@ -640,7 +640,8 @@ static void tick_temp(const char *filename, int chan)
     {
       tempfile_ctr *tmp;
       tmp = tempfiles[i];
-      if ((tmp) && (strcmp(filename, tmp->name) == 0))
+      if ((tmp) && 
+	  (snd_strcmp(filename, tmp->name)))
 	{
 	  tmp->ticks[chan]++;
 	  return;

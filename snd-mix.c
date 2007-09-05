@@ -717,8 +717,7 @@ int mix_name_to_id(const char *name)
   selected_cp = selected_channel();
   for (i = 0; i < mix_infos_size; i++)
     if ((mix_infos[i]) &&
-	(mix_infos[i]->name) &&
-	(strcmp(mix_infos[i]->name, name) == 0))
+	(snd_strcmp(mix_infos[i]->name, name)))
       {
 	if ((!selected_cp) ||
 	    (mix_infos[i]->cp == selected_cp))  /* try to find mix in the currently selected channel (possible name collisions) */

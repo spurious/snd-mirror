@@ -526,7 +526,7 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
       matches = get_completion_matches();
       XmTextSetString(w, new_text);
       XmTextSetCursorPosition(w, XmTextGetLastPosition(w));
-      if ((strcmp(old_text, new_text) == 0) && 
+      if ((snd_strcmp(old_text, new_text)) && 
 	  (matches != -1))
 	{
 	  Pixel old_color;
@@ -680,7 +680,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 	  FREE(old_text);
 	  return;
 	}
-      if (strcmp(old_text, new_text) == 0) 
+      if (snd_strcmp(old_text, new_text))
 	matches = get_completion_matches();
       XmTextReplace(w, beg, end, new_text);
       XmTextSetCursorPosition(w, XmTextGetLastPosition(w));

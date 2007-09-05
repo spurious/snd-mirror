@@ -180,7 +180,7 @@ static void file_text_popup_callback(Widget w, XtPointer context, XtPointer info
       for (i = 0; i < FILENAME_LIST_SIZE; i++)
 	if ((fd->file_text_names[i]) &&
 	    (mus_file_probe(fd->file_text_names[i])) &&
-	    ((current_filename == NULL) || (strcmp(fd->file_text_names[i], current_filename) != 0)))
+	    (!(snd_strcmp(fd->file_text_names[i], current_filename))))
 	  {
 	    set_label(fd->file_text_items[filenames_to_display], fd->file_text_names[i]);
 	    XtManageChild(fd->file_text_items[filenames_to_display]);
@@ -260,7 +260,7 @@ static void file_filter_popup_callback(Widget w, XtPointer context, XtPointer in
 
       for (i = 0; i < FILENAME_LIST_SIZE; i++)
 	if ((fd->file_filter_names[i]) &&
-	    ((current_filtername == NULL) || (strcmp(fd->file_filter_names[i], current_filtername) != 0)))
+	    (!(snd_strcmp(fd->file_filter_names[i], current_filtername))))
 	  {
 	    set_label(fd->file_filter_items[filternames_to_display], fd->file_filter_names[i]);
 	    XtManageChild(fd->file_filter_items[filternames_to_display]);
@@ -746,8 +746,7 @@ static void sort_files_and_redisplay(file_pattern_info *fp)
 	{
 	  names[i] = XmStringCreateLocalized(cur_dir->files[i]->full_filename);
 	  if ((new_selected_position == -1) &&
-	      (selected_filename) &&
-	      (strcmp(selected_filename, cur_dir->files[i]->full_filename) == 0))
+	      (snd_strcmp(selected_filename, cur_dir->files[i]->full_filename)))
 	    new_selected_position = i;
 	}
 
@@ -1426,8 +1425,7 @@ static void unpost_unsound_error(struct fam_info *fp, FAMEvent *fe)
       fd = (file_dialog_info *)(fp->data);
       if ((fd) &&
 	  (fe->filename) &&
-	  (fd->unsound_filename) &&
-	  (strcmp(fe->filename, fd->unsound_filename) == 0))
+	  (snd_strcmp(fe->filename, fd->unsound_filename)))
 	unpost_open_modify_error(fd);
       break;
     default:
@@ -2878,7 +2876,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 
   file_exists = mus_file_probe(fullname);
   if ((sd->type == SOUND_SAVE_AS) &&
-      (strcmp(fullname, sp->filename) == 0))
+      (snd_strcmp(fullname, sp->filename)))
     {
       /* save-as here is the same as save */
       if ((sp->user_read_only) || 
@@ -4165,8 +4163,7 @@ Widget edit_header(snd_info *sp)
 	    ((edhead_infos[i]->sp == sp) ||
 	     ((edhead_infos[i]->sp) && /* maybe same sound open twice -- only one edit header dialog for it */
 	      (edhead_infos[i]->sp->inuse == SOUND_NORMAL) &&
-	      (edhead_infos[i]->sp->filename) &&
-	      (strcmp(sp->filename, edhead_infos[i]->sp->filename) == 0))))
+	      (snd_strcmp(sp->filename, edhead_infos[i]->sp->filename)))))
 	  {
 	    ep = edhead_infos[i];
 	    break;

@@ -1249,8 +1249,7 @@ static int remove_option(int which_menu, const char *label)
   int i;
   for (i = 0; i < added_options_pos; i++)
     if ((added_options_menus[i] == which_menu) && 
-	(added_options_names[i]) &&
-	(strcmp(label, added_options_names[i]) == 0) && 
+	(snd_strcmp(label, added_options_names[i])) && 
 	(added_options[i]))
       {
 	unprotect_callback(added_options_callb[i]);
@@ -1262,19 +1261,19 @@ static int remove_option(int which_menu, const char *label)
 	return(0);
       }
   for (i = 0; i < NUM_MENU_WIDGETS; i++)
-    if (ml[i])
-      if (strcmp(label, ml[i]) == 0)
-	{
-	  gtk_widget_hide(ss->sgx->mw[i]);
-	  return(0);
-	}
+    if ((ml[i]) &&
+	(strcmp(label, ml[i]) == 0))
+      {
+	gtk_widget_hide(ss->sgx->mw[i]);
+	return(0);
+      }
   for (i = 0; i < NUM_POPUP_WIDGETS; i++)
-    if (pl[i])
-      if (strcmp(label, pl[i]) == 0)
-	{
-	  gtk_widget_hide(ss->sgx->pw[i]);
-	  return(0);
-	}
+    if ((pl[i]) &&
+	(strcmp(label, pl[i]) == 0))
+      {
+	gtk_widget_hide(ss->sgx->pw[i]);
+	return(0);
+      }
   return(INVALID_MENU);
 }
 

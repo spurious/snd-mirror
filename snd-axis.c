@@ -1417,7 +1417,7 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, 
   ap->ymin = ymin;
   ap->ymax = ymax;
   if ((xlabel) && 
-      ((!(ap->xlabel)) || (strcmp(xlabel, ap->xlabel) != 0)))
+      (!(snd_strcmp(xlabel, ap->xlabel))))
     {
       /* this apparently should leave the default_xlabel and ylabels alone */
       if (ap->xlabel) FREE(ap->xlabel);

@@ -376,7 +376,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   bool need_comma = false;
 
   if (XEN_SYMBOL_P(tag)) tag_name = XEN_SYMBOL_TO_C_STRING(tag);
-  if ((tag_name) && (strcmp(tag_name, "snd-top-level") == 0))
+  if (snd_strcmp(tag_name, "snd-top-level"))
     return(throw_args); /* not an error -- just a way to exit the current context */
 
   port = scm_mkstrport(XEN_ZERO, 
@@ -2143,7 +2143,7 @@ static void add_source_file_extension(const char *ext)
 {
   int i;
   for (i = 0; i < source_file_extensions_end; i++)
-    if (strcmp(ext, source_file_extensions[i]) == 0)
+    if (snd_strcmp(ext, source_file_extensions[i]))
       return;
   if (source_file_extensions_end == source_file_extensions_size)
     {
@@ -2174,7 +2174,7 @@ bool source_file_p(const char *name)
 	  const char *ext;
 	  ext = (const char *)(name + dot_loc + 1);
 	  for (i = 0; i < source_file_extensions_end; i++)
-	    if (strcmp(ext, source_file_extensions[i]) == 0)
+	    if (snd_strcmp(ext, source_file_extensions[i]))
 	      return(true);
 	}
     }

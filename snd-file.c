@@ -233,7 +233,8 @@ void dirpos_update(dirpos_list *dl, const char *dir, position_t pos)
   if (!dl) return;
   for (i = 0; i < dl->top; i++)
     {
-      if ((dl->dirs[i]) && (strcmp(dir, dl->dirs[i]->directory_name) == 0))
+      if ((dl->dirs[i]) && 
+	  (strcmp(dir, dl->dirs[i]->directory_name) == 0))
 	{
 	  dirpos_info *dp;
 	  dp = dl->dirs[i];
@@ -258,7 +259,8 @@ position_t dirpos_list_top(dirpos_list *dl, const char *dirname)
   int i;
   if (dl)
     for (i = 0; i < dl->top; i++)
-      if ((dl->dirs[i]) && (strcmp(dirname, dl->dirs[i]->directory_name) == 0))
+      if ((dl->dirs[i]) && 
+	  (strcmp(dirname, dl->dirs[i]->directory_name) == 0))
 	return(dl->dirs[i]->list_top);
   return(POSITION_UNKNOWN);
 }
@@ -2544,7 +2546,7 @@ static bool check_for_same_name(snd_info *sp1, same_name_info *info)
 {
   if ((sp1) && 
       (sp1 != info->current_sp) &&
-      (strcmp(sp1->filename, info->filename) == 0))
+      (snd_strcmp(sp1->filename, info->filename)))
     {
       if (has_unsaved_edits(sp1))
 	{
@@ -2649,9 +2651,7 @@ bool edit_header_callback(snd_info *sp, file_data *edit_header_data,
   if ((type == MUS_NEXT) &&
       (hdr->data_location != loc))
     mus_header_change_location(sp->filename, MUS_NEXT, loc);
-  if (((comment) && (original_comment) && (strcmp(comment, original_comment) != 0)) ||
-      ((comment) && (original_comment == NULL)) ||
-      ((comment == NULL) && (original_comment)))
+  if (!(snd_strcmp(comment, original_comment)))
     mus_header_change_comment(sp->filename, type, comment);
   if (comment) FREE(comment);
   if (original_comment) FREE(original_comment);
@@ -3540,7 +3540,7 @@ static void view_files_monitor_directory(view_files_info *vdat, const char *dirn
       for (i = 0; i < vdat->dirs_size; i++)
 	if (vdat->dirs[i])
 	  {
-	    if (strcmp(vdat->dir_names[i], dirname))
+	    if (snd_strcmp(vdat->dir_names[i], dirname)) /* this was reversed?? */
 	      return;
 	  }
 	else

@@ -92,11 +92,7 @@
  *            all arithmetic needs extra complex checks etc
  *            also each function needs a check in configure (see fth)
  *
- * TODO: completion of support for vector of def-clm-structs
- * TODO: struct field like vector not freed
- * TODO: equal? of non-int/float lists and all vectors (etc)
- *
- * SOMEDAY: would it simply variable handling to store everything as xen_value?
+ * would it simplify variable handling to store everything as xen_value?
  */
 
 
@@ -423,7 +419,7 @@ static int name_to_type(const char *name)
   int i;
   /* fprintf(stderr,"name -> type: %s\n", name); */
   for (i = 0; i <= last_type; i++)
-    if (strcmp(name, type_names[i]) == 0)
+    if (snd_strcmp(name, type_names[i]))
       return(i);
   return(R_UNSPECIFIED);
 }
@@ -683,11 +679,11 @@ static xen_var *find_var_in_ptree(ptree *pt, const char *name)
   int i;
   for (i = pt->var_ctr - 1; i >= 0; i--)
     if ((pt->vars[i]) &&
-	(strcmp(pt->vars[i]->name, name) == 0))
+	(snd_strcmp(pt->vars[i]->name, name)))
       return(pt->vars[i]);
   for (i = 0; i < pt->global_var_ctr; i++)
     if ((pt->global_vars[i]) &&
-	(strcmp(pt->global_vars[i]->name, name) == 0))
+	(snd_strcmp(pt->global_vars[i]->name, name)))
       return(pt->global_vars[i]);
   return(NULL);
 }
@@ -1390,6 +1386,9 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 		case R_BOOL:   xen_symbol_name_set_value(var->name, C_TO_XEN_BOOLEAN(prog->ints[var->v->addr]));      break;
 		case R_STRING: xen_symbol_name_set_value(var->name, C_TO_XEN_STRING(prog->strs[var->v->addr]));       break;
 		case R_CHAR:   xen_symbol_name_set_value(var->name, C_TO_XEN_CHAR((char)(prog->ints[var->v->addr]))); break;
+
+		case R_KEYWORD:
+		case R_SYMBOL: xen_symbol_name_set_value(var->name, prog->xens[var->v->addr]);                        break;
 		  
 		case R_FLOAT_VECTOR:
 		  val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
@@ -1417,6 +1416,9 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 		case R_BOOL:   symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_BOOLEAN(prog->ints[var->v->addr]));      break;
 		case R_STRING: symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_STRING(prog->strs[var->v->addr]));       break;
 		case R_CHAR:   symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_CHAR((char)(prog->ints[var->v->addr]))); break;
+
+		case R_KEYWORD:
+		case R_SYMBOL: symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), prog->xens[var->v->addr]);                        break;
 		  
 		case R_FLOAT_VECTOR:
 		  val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
@@ -1429,8 +1431,6 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 		  if (XEN_VECTOR_P(val))
 		    int_vect_into_vector(prog->vects[var->v->addr], val);
 		  break;
-		  
-		  /* TODO: read-back list|clm|vct?-vector */
 		  
 		default:
 		  if ((var->v->type == R_LIST) ||
@@ -2555,7 +2555,8 @@ static void erase_goto(ptree *prog, const char *name)
     {
       continuation *c = NULL;
       c = prog->gotos[i];
-      if ((c) && (strcmp(c->name, name) == 0))
+      if ((c) && 
+	  (snd_strcmp(c->name, name)))
 	{
 	  FREE(c->name);
 	  c->name = NULL;
@@ -2870,12 +2871,15 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
     case R_FLOAT:
       return(add_triple_to_ptree(pt, va_make_triple(store_f, "store_f", 2, var, init_val)));
       break;
+
     case R_STRING:
       return(add_triple_to_ptree(pt, va_make_triple(store_s, "store_s", 2, var, init_val)));
       break;
+
     case R_INT:
       return(add_triple_to_ptree(pt, va_make_triple(store_i, "store_i", 2, var, init_val)));
       break;
+
     case R_BOOL:
       {
 	/* null pointers can only come as explicitly type-declared args in run/run-eval */
@@ -2902,9 +2906,11 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
 	  }
       }
       break;
+
     case R_CHAR:
       return(add_triple_to_ptree(pt, va_make_triple(store_c, "set_chr", 2, var, init_val)));
       break;
+
     case R_SYMBOL: case R_KEYWORD:
       return(add_triple_to_ptree(pt, va_make_triple(store_x, "set_xen", 2, var, init_val)));
       break;
@@ -5258,9 +5264,10 @@ static void xen_equal_b(int *args, ptree *pt) {BOOL_RESULT = (Int)XEN_EQUAL_P(RX
 
 static void list_equal_p(int *args, ptree *pt) 
 {
-  BOOL_RESULT = false;
+  BOOL_RESULT = (Int)(LIST_ARG_1 == LIST_ARG_2);
 
-  if ((LIST_ARG_1->len == LIST_ARG_2->len) &&
+  if ((!(BOOL_RESULT)) &&
+      (LIST_ARG_1->len == LIST_ARG_2->len) &&
       (LIST_ARG_1->type == LIST_ARG_2->type))
     {
       int i;
@@ -5270,17 +5277,32 @@ static void list_equal_p(int *args, ptree *pt)
 	{
 	  for (i = 0; i < LIST_ARG_1->len; i++)
 	    {
+	      int addr1, addr2;
+	      addr1 = LIST_ARG_1->vals[i]->addr;
+	      addr2 = LIST_ARG_2->vals[i]->addr;
+
 	      switch (LIST_ARG_1->type)
 		{
 		case R_INT:
 		case R_CHAR:
 		case R_BOOL:
-		  if (pt->ints[LIST_ARG_1->vals[i]->addr] != pt->ints[LIST_ARG_2->vals[i]->addr])
+		  if (pt->ints[addr1] != pt->ints[addr2])
 		    return;
 		  break;
 
 		case R_FLOAT:
-		  if (pt->dbls[LIST_ARG_1->vals[i]->addr] != pt->dbls[LIST_ARG_2->vals[i]->addr])
+		  if (pt->dbls[addr1] != pt->dbls[addr2])
+		    return;
+		  break;
+
+		case R_STRING:
+		  if (!(snd_strcmp(pt->strs[addr1], pt->strs[addr2])))
+		    return;
+		  break;
+
+		case R_SYMBOL:
+		case R_KEYWORD:
+		  if (!(XEN_EQUAL_P(pt->xens[addr1], pt->xens[addr2])))
 		    return;
 		  break;
 
@@ -5720,11 +5742,13 @@ static xen_value *gcd_1(ptree *prog, xen_value **args, int num_args)
   int i;
   if (num_args == 0)
     return(make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT)); /* (gcd) -> 0 */
+
   for (i = 1; i <= num_args; i++)
     {
       args[i] = convert_to_int(prog, args[i]);
       if (args[i] == NULL) return(run_warn("gcd can't convert to int"));
     }
+
   if (num_args == 1)
     {
       if (args[1]->constant == R_CONSTANT)
@@ -5736,6 +5760,7 @@ static xen_value *gcd_1(ptree *prog, xen_value **args, int num_args)
 	  return(args[0]);
 	}
     }
+
   if (prog->constants == num_args)
     {
       Int mx;
@@ -5747,6 +5772,7 @@ static xen_value *gcd_1(ptree *prog, xen_value **args, int num_args)
 	}
       return(make_xen_value(R_INT, add_int_to_ptree(prog, mx), R_CONSTANT));
     }
+
   if (num_args == 2)
     return(package(prog, R_INT, gcd_i, "gcd_i", args, 2));
   return(package_n(prog, R_INT, gcd_in, "gcd_in", args, num_args));
@@ -5778,11 +5804,13 @@ static xen_value *lcm_1(ptree *prog, xen_value **args, int num_args)
   Int mx;
   if (num_args == 0)
     return(make_xen_value(R_INT, add_int_to_ptree(prog, 1), R_CONSTANT)); /* (lcm) -> 1 */
+
   for (i = 1; i <= num_args; i++)
     {
       args[i] = convert_to_int(prog, args[i]);
       if (args[i] == NULL) return(run_warn("lcm can't convert to int"));
     }
+
   if (num_args == 1)
     {
       if (args[1]->constant == R_CONSTANT)
@@ -5794,6 +5822,7 @@ static xen_value *lcm_1(ptree *prog, xen_value **args, int num_args)
 	  return(args[0]);
 	}
     }
+
   if (prog->constants == num_args)
     {
       mx = c_lcm(prog->ints[args[1]->addr], prog->ints[args[2]->addr]);
@@ -5804,6 +5833,7 @@ static xen_value *lcm_1(ptree *prog, xen_value **args, int num_args)
 	}
       return(make_xen_value(R_INT, add_int_to_ptree(prog, mx), R_CONSTANT));
     }
+
   if (num_args == 2)
     return(package(prog, R_INT, lcm_i, "lcm_i", args, 2));
   return(package_n(prog, R_INT, lcm_in, "lcm_in", args, num_args));
@@ -10044,8 +10074,6 @@ static xen_value *phase_vocoder_ ## Name ## _1(ptree *prog, xen_value **args, in
 }
 
 
-/* TODO: add_vct_to_ptree here (or in xcoeffs below) causes segfault?? (snd-test 23, embedded ptree eval) */
-
 PV_VCT_1(amps)
 PV_VCT_1(amp_increments)
 PV_VCT_1(freqs)
@@ -11363,8 +11391,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 		{
 		  c = prog->gotos[i];
 		  if ((c) && 
-		      (c->name) &&
-		      (strcmp(c->name, funcname) == 0))
+		      (snd_strcmp(c->name, funcname)))
 		    {
 		      if (num_args > 0)
 			{
@@ -11502,9 +11529,9 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	    }
 	}
 
-      if (strcmp(funcname, "format") == 0)
+      if (snd_strcmp(funcname, "format"))
 	return(clean_up(set_up_format(prog, args, num_args, true), args, num_args));
-      if (strcmp(funcname, S_clm_print) == 0)
+      if (snd_strcmp(funcname, S_clm_print))
 	return(clean_up(set_up_format(prog, args, num_args, false), args, num_args));
 
       /* check for function defined elsewhere, get source, splice in if possible */

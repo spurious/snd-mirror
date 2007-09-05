@@ -2891,7 +2891,7 @@ io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, in
   if (pos == AT_CURRENT_EDIT_POSITION)
     pos = cp->edit_ctr;
 
-  if ((strcmp(new_name, sp->filename) == 0) &&      /* overwriting current file with one of its channels */
+  if ((snd_strcmp(new_name, sp->filename)) &&      /* overwriting current file with one of its channels */
       ((sp->user_read_only) || (sp->file_read_only)))
     {
       snd_error(_("can't save channel %d as %s (%s is write-protected)"), cp->chan, new_name, sp->short_filename);
@@ -3081,6 +3081,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		  nfile = edit_list_data_to_temp_file(cp, ed, DONT_DELETE_ME, with_save_state_hook);
 		  fprintf(fd, " \"%s\" sfile %d", nfile, cp->chan);
 		  break;
+
 		case DELETION_EDIT:
 		  /* samp samps snd chn */
 		  forth_func = S_delete_samples;
@@ -3089,6 +3090,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 			  ed->len,
 			  cp->chan);
 		  break;
+
 		case CHANGE_EDIT:
 		  forth_func = S_change_samples_with_origin;
 		  fprintf(fd, OFF_TD " " OFF_TD " ",
@@ -3100,9 +3102,11 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		  nfile = edit_list_data_to_temp_file(cp, ed, DONT_DELETE_ME, with_save_state_hook);
 		  fprintf(fd, " \"%s\" sfile %d", nfile, cp->chan);
 		  break;
+
 		case EXTEND_EDIT:
 		  /* not currently savable (this is a dummy edit fragment for zero-mix-drag position change) */
 		  break;
+
 		case ZERO_EDIT:
 		  forth_func = S_pad_channel;
 		  fprintf(fd, OFF_TD " " OFF_TD " sfile %d",
@@ -3110,6 +3114,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 			  ed->len,
 			  cp->chan);
 		  break;
+
 		case SCALED_EDIT:
 		case RAMP_EDIT:
 		  {
@@ -3122,9 +3127,11 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		    else fprintf(fd, "sfile %d", cp->chan);
 		  }
 		  break;
+
 		case PTREE_EDIT:
 		  forth_func = S_ptree_channel;
-		  if ((ed->origin) && (strcmp(ed->origin, S_ptree_channel) != 0))
+		  if ((ed->origin) && 
+		      (strcmp(ed->origin, S_ptree_channel) != 0))
 		    {
 		      char *func;
 		      if ((func = split_origin(ed->origin, &forth_func)))
@@ -3176,6 +3183,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		  nfile = edit_list_data_to_temp_file(cp, ed, DONT_DELETE_ME, with_save_state_hook);
 		  fprintf(fd, "\"%s\"" PROC_SEP "sfile" PROC_SEP "%d", nfile, cp->chan);
 		  break;
+
 		case DELETION_EDIT:
 		  /* samp samps snd chn */
 		  fprintf(fd, "%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD PROC_SEP "sfile" PROC_SEP "%d",
@@ -3184,6 +3192,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 			  ed->len,
 			  cp->chan);
 		  break;
+
 		case CHANGE_EDIT:
 		  fprintf(fd, "%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD PROC_SEP,
 			  TO_PROC_NAME(S_change_samples_with_origin),
@@ -3196,14 +3205,17 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		  nfile = edit_list_data_to_temp_file(cp, ed, DONT_DELETE_ME, with_save_state_hook);
 		  fprintf(fd, "\"%s\"" PROC_SEP "sfile" PROC_SEP "%d", nfile, cp->chan);
 		  break;
+
 		case EXTEND_EDIT:
 		  /* not currently savable (this is a dummy edit fragment for zero-mix-drag position change) */
 		  break;
+
 		case SCALED_EDIT: 
 		  fprintf(fd, "%s" PROC_SEP "sfile" PROC_SEP "%d",
 			  ed->origin, /* imports scaler */
 			  cp->chan);
 		  break;
+
 		case ZERO_EDIT:
 		  fprintf(fd, "%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD PROC_SEP "sfile" PROC_SEP "%d",
 			  TO_PROC_NAME(S_pad_channel),
@@ -3211,13 +3223,16 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 			  ed->len,
 			  cp->chan);
 		  break;
+
 		case RAMP_EDIT:
 		  fprintf(fd, "%s" PROC_SEP "sfile" PROC_SEP "%d",
 			  ed->origin,
 			  cp->chan);
 		  break;
+
 		case PTREE_EDIT:
-		  if ((ed->origin) && (strcmp(ed->origin, S_ptree_channel) != 0))
+		  if ((ed->origin) && 
+		      (strcmp(ed->origin, S_ptree_channel) != 0))
 		    fprintf(fd, "%s" PROC_SEP "sfile" PROC_SEP "%d",
 			    ed->origin,
 			    cp->chan);
@@ -3232,6 +3247,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		case MIX_EDIT:
 		  fprintf(fd, "%s" PROC_SEP "sfile" PROC_SEP "%d", ed->origin, cp->chan);
 		  break;
+
 		case CHANGE_MIX_EDIT:
 		  fprintf(fd, "%s", ed->origin);
 		  break;
@@ -3372,7 +3388,8 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		   *   so "the right thing" is not reachable.  Here, perhaps the strcmp should
 		   *   check for "set! -mix" or "set! (". 
 		   */
-		  if ((!(ed->origin)) || (strcmp(ed->origin, S_insert_samples) == 0))
+		  if ((!(ed->origin)) || 
+		      (strcmp(ed->origin, S_insert_samples) == 0))
 		    {
 		      /* save data in temp file, use insert-samples with file name */
 		      char *ofile;
@@ -3382,8 +3399,10 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		    }
 		  else function = mus_format("%s (%s snd chn)", function, ed->origin);
 		  break;
+
 		case CHANGE_EDIT:
-		  if ((!(ed->origin)) || (strcmp(ed->origin, "set-samples") == 0))
+		  if ((!(ed->origin)) || 
+		      (strcmp(ed->origin, "set-samples") == 0))
 		    {
 		      /* save data in temp file, use set-samples with file name */
 		      char *ofile;
@@ -3398,17 +3417,22 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		      else function = mus_format("%s (%s snd chn)", function, ed->origin);
 		    }
 		  break;
+
 		case DELETION_EDIT:
 		  function = mus_format("%s (%s " OFF_TD " " OFF_TD " snd chn)", function, S_delete_samples, ed->beg, ed->len);
 		  break;
+
 		case SCALED_EDIT: 
 		  function = mus_format("%s (%s snd chn)", function, ed->origin);
 		  break;
+
 		case EXTEND_EDIT:
 		  /* mix drag case */
 		  break;
+
 		case PTREE_EDIT:
-		  if ((ed->origin) && (strcmp(ed->origin, S_ptree_channel) != 0))
+		  if ((ed->origin) &&
+		      (strcmp(ed->origin, S_ptree_channel) != 0))
 		    function = mus_format("%s (%s snd chn)", function, ed->origin);
 		  else 
 		    {
@@ -3423,9 +3447,11 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		      FREE(durstr);
 		    }
 		  break;
+
 		case RAMP_EDIT:
 		  function = mus_format("%s (%s snd chn)", function, ed->origin);
 		  break;
+
 		case ZERO_EDIT:
 		  /* origin here is useless (see extend_with_zeros cases) */
 		  function = mus_format("%s (%s " OFF_TD " " OFF_TD " snd chn)", function, S_pad_channel, ed->beg, ed->len);
@@ -3502,7 +3528,8 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 	      switch (ed->edit_type)
 		{
 		case INSERTION_EDIT: 
- 		  if ((!(ed->origin)) || (strcmp(ed->origin, TO_PROC_NAME(S_insert_samples)) == 0))
+ 		  if ((!(ed->origin)) || 
+		      (strcmp(ed->origin, TO_PROC_NAME(S_insert_samples)) == 0))
  		    {
  		      /* from HAVE_SCHEME above */
  		      /* save data in temp file, use insert-samples with file name */
@@ -3514,8 +3541,10 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
  		    }
  		  else function = mus_format("%s%s %s, snd, chn)", function, (first) ? "" : ";", ed->origin);
   		  break;
+
   		case CHANGE_EDIT:
- 		  if ((!(ed->origin)) || (strcmp(ed->origin, "set-samples") == 0))
+ 		  if ((!(ed->origin)) || 
+		      (strcmp(ed->origin, "set-samples") == 0))
  		    {
  		      /* from HAVE_SCHEME above */
  		      /* save data in temp file, use set-samples with file name */
@@ -3534,19 +3563,24 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
  					     ed->origin,
  					     (ed->origin[snd_strlen(ed->origin) - 1] == '(') ? "" : ", ");
 		  break;
+
 		case DELETION_EDIT:
 		  function = mus_format("%s%s %s(" OFF_TD ", " OFF_TD ", snd, chn)", 
 					function, (first) ? "" : ";", TO_PROC_NAME(S_delete_samples), ed->beg, ed->len);
 		  break;
+
 		case SCALED_EDIT: 
 		  function = mus_format("%s%s %s, snd, chn)", function, (first) ? "" : ";", ed->origin);
 		  break;
+
 		case EXTEND_EDIT:
 		  /* mix drag case */
 		  break;
+
 		case RAMP_EDIT:
 		  function = mus_format("%s%s %s, snd, chn)", function, (first) ? "" : ";", ed->origin);
 		  break;
+
 		case ZERO_EDIT:
 		  /* origin here is useless (see extend_with_zeros cases) */
 		  function = mus_format("%s%s %s(" OFF_TD ", " OFF_TD ", snd, chn)", 
@@ -6683,7 +6717,7 @@ io_error_t save_channel_edits(chan_info *cp, const char *ofile, int pos)
   sp = cp->sound;
   if (pos == AT_CURRENT_EDIT_POSITION) 
     pos = cp->edit_ctr;
-  if (strcmp(ofile, sp->filename) == 0)       /* overwriting current file with one of its channels */
+  if (snd_strcmp(ofile, sp->filename))        /* overwriting current file with one of its channels */
     {
       char *nfile = NULL;
       if ((sp->user_read_only) || (sp->file_read_only))

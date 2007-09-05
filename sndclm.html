@@ -593,7 +593,7 @@ This means that the frequency envelope y values should be passed through <a href
         ((= i end))
       (<a class=quiet href="#outa">outa</a> i (* amp (oscil os (env <em class=red>frqe</em>))) *output*))))
 
-(with-sound () (simp 0 10000 440 .1 '(0 0 1 1))) ; sweep up an octave
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (simp 0 10000 440 .1 '(0 0 1 1))) ; sweep up an octave
 </pre>
 </td></tr></table>
 
@@ -616,7 +616,7 @@ This means that the frequency envelope y values should be passed through <a href
             ((= i end))
           (<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#env">env</a> ampf) (<em class=red>oscil</em> cr (* (<a class=quiet href="#env">env</a> indf) (<em class=red>oscil</em> md)))) *output*))))))
 
-;;; (with-sound () (simple-fm 0 1 440 .1 2 1.0))
+;;; (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (simple-fm 0 1 440 .1 2 1.0))
 </pre>
 </td></tr></table>
 
@@ -644,7 +644,7 @@ create the individual spectral components:
 	     (set! sum (+ sum (<em class=red>oscil</em> (vector-ref arr k)))))
 	   (<a class=quiet href="#out-any">out-any</a> i (* amp .05 sum) 0 *output*)))))))
 
-;;; (with-sound () (simple-add 0 1 220 .3))
+;;; (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (simple-add 0 1 220 .3))
 </pre>
 </td></tr></table>
 
@@ -1050,7 +1050,7 @@ based on some previously chosen loop positions:
 		 ((= i end))
 	       (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>table-lookup</em> tbl)) *output*))))))))
 
-(with-sound (:srate 44100) (looper 0 10 "/home/bil/sf1/forest.aiff" 1.0 0.5))
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:srate 44100) (looper 0 10 "/home/bil/sf1/forest.aiff" 1.0 0.5))
 </pre>
 </td></tr></table>
 
@@ -1212,7 +1212,7 @@ bigbird is an example:
                  (<em class=red>polyshape</em> polyos 1.0 (<a class=quiet href="#env">env</a> gls-env))))
             *output*))))))
 
-(with-sound ()
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
   (bigbird 0 .05 1800 1800 .2
            '(.00 .00 .40 1.00 .60 1.00 1.00 .0)         ; freq env
            '(.00 .00 .25 1.00 .60 .70 .75 1.00 1.00 .0) ; amp env
@@ -1251,7 +1251,7 @@ technique.  Here is a simplified example:
 		       (<em class=red>polynomial</em> cos-coeffs ax)))
 	       *output*)))))))
 
-(with-sound () (pqw 0 1 200.0 1000.0 '(2 .2  3 .3  6 .5)))
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (pqw 0 1 200.0 1000.0 '(2 .2  3 .3  6 .5)))
 </pre>
 </td><td>
 <img src="pqw.png" alt="pqw example">
@@ -1497,8 +1497,8 @@ Even more amusing is this algorithm:
                           (* index (<em class=red>triangle-wave</em> modulator)))) 
                *output*))))))
 
-(with-sound (:srate 44100) (tritri 0 1 1000.0 0.5 0.1 0.01)) ; sci-fi laser gun
-(with-sound (:srate 44100) (tritri 0 1 4000.0 0.7 0.1 0.01)) ; a sparrow?
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:srate 44100) (tritri 0 1 1000.0 0.5 0.1 0.01)) ; sci-fi laser gun
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:srate 44100) (tritri 0 1 4000.0 0.7 0.1 0.01)) ; a sparrow?
 </pre>
 </td></tr></table>
 
@@ -1570,7 +1570,7 @@ see also cosine-summation, fejer-sum, etc in dsp.scm
 	 (outa i (* amp (<em class=red>sum-of-cosines</em> os)) 
                *output*))))))
 
-(with-sound () (simple-soc 0 1 100 1.0))
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (simple-soc 0 1 100 1.0))
 </pre></td>
 <td>
 <img src="cosines.png" alt="sum of cosines example" hspace=10>
@@ -1645,14 +1645,14 @@ legendre (5)
 jackson (10)
 
 
-(with-sound ()
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
   (let ((freq (hz->radians 100.0)))
     (do ((i 0 (1+ i))
 	 (angle 0.0 (+ angle freq)))
 	((= i 22050))
       (outa i (fejer-sum angle 10) *output*))))
 
-(with-sound ()
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
 (let ((gen (make-kosine-summation 100.0))) 
     (do ((i 0 (1+ i)))
 	((= i 22050))
@@ -1660,7 +1660,7 @@ jackson (10)
 
 
 kosine95
-(with-sound ()
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
 (let ((gen (make-kosine-summation 100.0))) 
     (do ((i 0 (1+ i)))
 	((= i 22050))
@@ -1738,7 +1738,7 @@ goes up, "a" goes down (to avoid foldover, or whatever).
 		    (<em class=red>sine-summation</em> sgen (if frq-env (<a class=quiet href="#env">env</a> frq-env) 0.0)))
 	       *output*))))))
 
-(with-sound () (ss 0 1 400.0 1.0 5 0.5 1.0 '(0 0 1 2)))
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (ss 0 1 400.0 1.0 5 0.5 1.0 '(0 0 1 2)))
 </pre>
 </td></tr></table>
 
@@ -1908,14 +1908,14 @@ of the possibilities).  Take the last one in the G&amp;R section:
     result))
 
 ;; see if it generates cosines at amplitudes (exp (- (* k t)))
-(with-sound ()
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
   (let ((gen (make-expcs :frequency 100 :et 1.0)))
     (do ((i 0 (1+ i)))
 	((= i 10000))
       (<a class=quiet href="#outa">outa</a> i (expcs gen 0.0) *output*))))
 
 ;; change "t" during note -- smoothly changing sum-of-cosines spectra
-(with-sound ()  
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()  
   (let ((gen (make-expcs :frequency 100 :et 0.1))
 	(t-env (<a class=quiet href="#make-env">make-env</a> '(0 .1 1 2) :end 10000)))
     (run (lambda ()
@@ -2015,7 +2015,7 @@ phase-vocoder or granular synthesis kludges.
 	   ((= i nd))
 	 (<a class=quiet href="#outa">outa</a> i (<em class=red>ssb-am</em> gen (<a class=quiet href="#readin">readin</a> rd)) *output*))))))
 
-(with-sound () (shift-pitch 0 3 "oboe.snd" 1108.0))
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (shift-pitch 0 3 "oboe.snd" 1108.0))
 </pre>
 </td></tr></table>
 
@@ -2114,7 +2114,7 @@ And the fourth used the ssb-am-bank function in dsp.scm rewritten here for with-
  (let* ((sound "oboe.snd")
         (mx (cadr (<a class=quiet href="extsnd.html#mussoundmaxamp">mus-sound-maxamp</a> sound)))
 	(dur (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> sound)))
-    (with-sound (:scaled-to mx) 
+    (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:scaled-to mx) 
       (repitch 0 dur sound 554 1000)))
 </pre>
 </td></tr></table>
@@ -2240,7 +2240,7 @@ using the same frequency envelope as the wave-train, so we have some idea when t
 		       (let ((x (<a class=quiet href="extsnd.html#vctref">vct-ref</a> original-grain k)))
 			 (<a class=quiet href="extsnd.html#vctset">vct-set!</a> grain k (+ (<a class=quiet href="#comb">comb</a> c1 x) (<a class=quiet href="#comb">comb</a> c2 x) (<a class=quiet href="#comb">comb</a> c3 x)))))))))))))))
 
-(with-sound () (when? 0 4 2.0 8.0 "right-now.snd"))
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (when? 0 4 2.0 8.0 "right-now.snd"))
 </pre>
 </td></tr></table>
 
@@ -2462,34 +2462,34 @@ than the preceding:
 
 <!-- CLM:
 ;; 1f.png
-(with-sound ()
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
   (let ((noise (make-1f-noise 12)))
     (do ((i 0 (1+ i)))
 	((= i 10000))
       (outa i (1f-noise noise) *output*))))
 
 ;; rand.png
-(with-sound ()
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
   (let ((noise (make-rand 10000.0)))
     (do ((i 0 (1+ i)))
 	((= i 10000))
       (outa i (rand noise) *output*))))
 
 ;; randi.png
-(with-sound ()
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
   (let ((noise (make-rand-interp 10000.0)))
     (do ((i 0 (1+ i)))
 	((= i 10000))
       (outa i (rand-interp noise) *output*))))
 
 ;; random.png
-(with-sound (:clipped #f)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:clipped #f)
   (do ((i 0 (1+ i)))
       ((= i 10000))
     (outa i (- 0.5 (random 1.0)) *output*)))
 
 ;; brownian.png
-(with-sound (:clipped #f)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:clipped #f)
   (let ((val 0.0))
     (do ((i 0 (1+ i)))
 	((= i 10000))
@@ -2497,7 +2497,7 @@ than the preceding:
       (outa i val *output*))))
 
 ;; green.png
-(with-sound ()
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
   (let ((noise (make-green-noise 10000.0 1)))
     (do ((i 0 (1+ i)))
 	((= i 10000))
@@ -2681,7 +2681,7 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
   (let* ((osc (<a class=quiet href="#make-oscil">make-oscil</a> 0.0))
 	 (samps (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> 0.5))
 	 (ramp (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) :scaler (<a class=quiet href="#hztoradians">hz-&gt;radians</a> samps) :end samps)))
-    (with-sound ()
+    (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
       (do ((i 0 (1+ i)))
 	  ((= i samps))
         (<a class=quiet href="#outa">outa</a> i (flt (<a class=quiet href="#oscil">oscil</a> osc (<a class=quiet href="#env">env</a> ramp))) *output*)))))
@@ -2802,7 +2802,7 @@ If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more
 		   (set! (<em class=red>mus-frequency</em> (vector-ref frms i)) curfrq))))
 	   (<a class=quiet href="#outa">outa</a> k (* amp sum) *output*)))))))
 
-(with-sound () 
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () 
   (move-formants 0 "oboe.snd" 2.0 0.99 '(0 1200 1.6 2400 2 1400) 4))
 </pre>
 </td></tr></table>
@@ -3150,7 +3150,7 @@ The following instrument sweeps the comb filter using the pm argument:
       (do ((i beg (1+ i))) ((= i end))
         (<a class=quiet href="#outa">outa</a> i (* (env aenv) (<em class=red>comb</em> d0 (<a class=quiet href="#pulse-train">pulse-train</a> s) (<a class=quiet href="#env">env</a> zenv))) *output*))))))
 
-(with-sound () 
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () 
   (zc 0 3 100 .1 20 100 .5) 
   (zc 3.5 3 100 .1 90 100 .95))
 </pre></td></tr></table>
@@ -3173,7 +3173,7 @@ delay line as the coefficients for an FIR filter:
 	   ((= i end)) 
 	 (<a class=quiet href="#outa">outa</a> i (* amp (<a class=quiet href="#fir-filter">fir-filter</a> flt (<em class=red>comb</em> dly (<a class=quiet href="#rand">rand</a> r)))) *output*))))))
 
-(with-sound () 
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () 
   (fir+comb 0 2 10000 .001 200)
   (fir+comb 2 2 1000 .0005 400)
   (fir+comb 4 2 3000 .001 300)
@@ -3221,7 +3221,7 @@ delay line as the coefficients for an FIR filter:
 	     (set! sum1 (+ sum1 (<em class=red>comb</em> (vector-ref cmbs1 k) x))))
 	   (<a class=quiet href="#outa">outa</a> i (+ (* interp sum0) (* (- 1.0 interp) sum1)) *output*)))))))
 
-(with-sound (:scaled-to .5) 
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:scaled-to .5) 
   (flux 0 "oboe.snd" 10.0 '(1.0 1.25 1.5) '(1.0 1.333 1.6)) ; bowed oboe?
   (flux 2 "now.snd" 4.0 '(1.0 1.25 1.5) '(1.0 1.333 1.6 2.0 3.0))
   (flux 4 "now.snd" 1.0 '(1.0 1.25 1.5) '(1.0 1.333 1.6 2.0 3.0) 0.995 20)
@@ -3404,7 +3404,7 @@ an instrument that provides time-varying sampling rate conversion:
             ((= i end))
           (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>src</em> src-gen (<a class=quiet href="#env">env</a> senv))) *output*))))))
 
-(with-sound () (simple-src 0 4 1.0 0.5 '(0 1 1 2) "oboe.snd"))
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (simple-src 0 4 1.0 0.5 '(0 1 1 2) "oboe.snd"))
 </pre>
 </td></tr></table>
 
@@ -3491,7 +3491,7 @@ called whenever convolve needs input.
             ((= i end))
           (<a class=quiet href="#outa">outa</a> i (<em class=red>convolve</em> ff) *output*))))))
 
-(with-sound () 
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () 
   (convins 0 2 (vct 1.0 0.5 0.25 0.125) "oboe.snd")) ; same as fir-filter with those coeffs
 </pre>
 </td></tr></table>
@@ -3605,7 +3605,7 @@ one argument that return a new input sample whenever they are called by granulat
            ((= i nd))
          (<a class=quiet href="#outa">outa</a> i (<em class=red>granulate</em> exA) *output*))))))
 
-(with-sound () (granulate-sound "now.snd" 0 3.0 0 2.0))
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (granulate-sound "now.snd" 0 3.0 0 2.0))
 </pre>
 </td></tr></table>
 
@@ -3708,7 +3708,7 @@ ffts (for time stretching, etc).
             ((= i end))
           (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>phase-vocoder</em> sr)) *output*))))))
 
-(with-sound () (simple-pvoc 0 2.0 1.0 512 "oboe.snd"))
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (simple-pvoc 0 2.0 1.0 512 "oboe.snd"))
 </pre>
 </td></tr></table>
 
@@ -4017,7 +4017,7 @@ The "output" argument can be a vct or a sound-data object, as well as the more u
              (* amp (<em class=red>in-any</em> i 0 fil)) ; same as (<em class=red>ina</em> i fil)
              *output*))))))
 
-(with-sound () (simple-ina 0 1 .5 "oboe.snd"))
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (simple-ina 0 1 .5 "oboe.snd"))
 </pre>
 </td></tr></table>
 <br><br>
@@ -4072,7 +4072,7 @@ readin and <a href="#env">env</a>:
 	    (if *reverb* 
               (<a class=quiet href="#outa">outa</a> i (* outval rev-amount) *reverb*))))))))
 
-(with-sound () (env-sound "oboe.snd" 0 1.0 '(0 0 1 1 2 1 3 0)))
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (env-sound "oboe.snd" 0 1.0 '(0 0 1 1 2 1 3 0)))
 </pre>
 </td></tr></table>
 <br><br>
@@ -4167,7 +4167,7 @@ To have full output to both channels,</p>
                 (set! (<em class=red>locsig-reverb-ref</em> loc 0) (* reverb-amount (sqrt dist-scaler))))
             (<em class=red>locsig</em> loc i rdval)))))))
 
-(with-sound (:reverb jc-reverb :channels 2) 
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:reverb jc-reverb :channels 2) 
   (space "pistol.snd" 0 3 :distance-env '(0 1 1 2) :degree-env '(0 0 1 90)))
 </pre>
 </td></tr></table>
@@ -4180,7 +4180,7 @@ Here is an example of move-locsig:
 <table border=0><tr><td>
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(with-sound (:channels 4)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:channels 4)
   (let ((loc (<em class=red>make-locsig</em> :channels 4 :output *output*))
 	(osc (<a class=quiet href="#make-oscil">make-oscil</a> 440.0))
 	(j 0))
@@ -4263,7 +4263,7 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 	   ((= i end))
          (<em class=red>move-sound</em> loc i (* amp (<a class=quiet href="#oscil">oscil</a> os))))))))
 
-(with-sound (:channels 4) (simple-dloc 0 2 440 .5))
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:channels 4) (simple-dloc 0 2 440 .5))
 </pre>
 </td></tr></table>
 
@@ -5073,7 +5073,7 @@ an interesting instrument that you're willing to share, please send it to me
 (bil@ccrma.stanford.edu). 
 </p>
 
-<p>The individual instruments and with-sound are documented primarily in sndscm.html.
+<p>The individual instruments and <a href="sndscm.html#wsdoc">with-sound</a> are documented primarily in sndscm.html.
 </p>
 
 

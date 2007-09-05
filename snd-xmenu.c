@@ -892,8 +892,7 @@ static bool clobber_menu(Widget w, const char *name)
   char *wname;
   wname = XtName(w);
   if ((wname) && 
-      (name) && 
-      (strcmp(name, wname) == 0) && 
+      (snd_strcmp(name, wname)) &&
       (XtIsManaged(w)))
     {
       int slot;
@@ -969,7 +968,7 @@ Widget g_add_to_menu(int which_menu, const char *label, int callb, int position)
 	  m = cw->composite.children[i];
 	  if ((m) && (!(XtIsManaged(m))))
 	    {
-	      if (strcmp(XtName(m), label) != 0)
+	      if (!(snd_strcmp(XtName(m), label)))
 		{
 		  set_widget_name(m, label);
 		  set_button_label(m, label);

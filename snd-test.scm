@@ -49950,6 +49950,68 @@ EDITS: 1
 	  (let ((x (run (lambda () (equal? val1 val)))))
 	    (if x (snd-display ";run list equal 5: ~A" x))))
 	
+	(let ((val1 (list "hi" "hi"))
+	      (val2 (list "hi" "hi")))
+	  (let ((x (run (lambda () (equal? val1 val2)))))
+	    (if (not x) (snd-display ";run list equal? strs: ~A" x))))
+	
+	(let ((val1 (list "hi" "hi"))
+	      (val2 (list "hi" "hi" "hi")))
+	  (let ((x (run (lambda () (equal? val1 val2)))))
+	    (if x (snd-display ";run list equal? strs 1: ~A" x))))
+	
+	(let ((val1 (list "hi" "hi"))
+	      (val2 (list "hi" "ho")))
+	  (let ((x (run (lambda () (equal? val1 val2)))))
+	    (if x (snd-display ";run list equal? strs 2: ~A" x))))
+	
+	
+	(let ((val1 (list 'hi 'hi))
+	      (val2 (list 'hi 'hi)))
+	  (let ((x (run (lambda () (equal? val1 val2)))))
+	    (if (not x) (snd-display ";run list equal? syms: ~A" x))))
+	
+	(let ((val1 (list 'hi 'hi))
+	      (val2 (list 'hi 'hi 'hi)))
+	  (let ((x (run (lambda () (equal? val1 val2)))))
+	    (if x (snd-display ";run list equal? syms 1: ~A" x))))
+	
+	(let ((val1 (list 'hi 'hi))
+	      (val2 (list 'hi 'ho)))
+	  (let ((x (run (lambda () (equal? val1 val2)))))
+	    (if x (snd-display ";run list equal? syms 2: ~A" x))))
+	
+	
+	(let ((val1 (list :hi :hi))
+	      (val2 (list :hi :hi)))
+	  (let ((x (run (lambda () (equal? val1 val2)))))
+	    (if (not x) (snd-display ";run list equal? keys: ~A" x))))
+	
+	(let ((val1 (list :hi :hi))
+	      (val2 (list :hi :hi :hi)))
+	  (let ((x (run (lambda () (equal? val1 val2)))))
+	    (if x (snd-display ";run list equal? keys 1: ~A" x))))
+	
+	(let ((val1 (list :hi :hi))
+	      (val2 (list :hi :ho)))
+	  (let ((x (run (lambda () (equal? val1 val2)))))
+	    (if x (snd-display ";run list equal? keys 2: ~A" x))))
+
+	(let ((val1 (list 1))
+	      (val2 (list)))
+	  (let ((x (run (lambda () (equal? val1 val2)))))
+	    (if x (snd-display ";run list equal? nil 2: ~A" x))))
+	
+	(let ((val1 (list)) ; (equal? (list) (list)) -> #t in Scheme
+	      (val2 (list)))
+	  (let ((x (run (lambda () (equal? val1 val2)))))
+	    (if (not x) (snd-display ";run list equal? nil both: ~A" x))))
+	
+	(let ((val1 (list 1))
+	      (val2 (list 1.0)))
+	  (let ((x (run (lambda () (equal? val1 val2)))))
+	    (if x (snd-display ";run list equal? int/dbl 2: ~A" x))))
+	
 	
 	(let ((val (vector (make-hi308 1.0 2.0) (make-hi308 3.0 4.0))))
 	  (let ((x (run (lambda () (vector-ref val 1)))))

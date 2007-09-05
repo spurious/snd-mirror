@@ -168,7 +168,7 @@ static void listener_completion(int end)
 	  g_free(old_text);
 	  return;
 	}
-      if (strcmp(old_text, new_text) == 0) 
+      if (snd_strcmp(old_text, new_text))
 	matches = get_completion_matches();
       sg_text_delete(listener_text, beg, end);
       append_listener_text(0, new_text);
@@ -576,7 +576,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 		    {
 		      fstr = sg_get_text(listener_text, current_position - 2, current_position);
 		      if ((current_position != (printout_end - 2)) && 
-			  (strcmp(fstr, listener_prompt_with_cr()) != 0))
+			  (!(snd_strcmp(fstr, listener_prompt_with_cr()))))
 			{
 			  g_free(fstr);
 			  return(false);

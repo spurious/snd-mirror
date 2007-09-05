@@ -179,7 +179,7 @@ off_t mark_id_to_sample(int id)
 static mark *find_named_mark_1(chan_info *cp, mark *mp, void *uname)
 {
   char *name = (char *)uname;
-  if ((mp->name) && (name) && (strcmp(mp->name, name) == 0)) return(mp);
+  if ((mp->name) && (snd_strcmp(mp->name, name))) return(mp);
   else return(NULL);
 }
 
@@ -2050,8 +2050,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
 	{
 	  for (i = 0; i <= cp->edits[pos]->mark_ctr; i++) 
 	    if ((mps[i]) && 
-		(mps[i]->name) && 
-		(strcmp(name, mps[i]->name) == 0))
+		(snd_strcmp(name, mps[i]->name)))
 	      return(C_TO_XEN_INT(mps[i]->id));
 	}
       else

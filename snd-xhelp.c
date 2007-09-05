@@ -100,7 +100,7 @@ static char *find_highlighted_text(XmString xs)
       switch (type)
 	{
 	case XmSTRING_COMPONENT_RENDITION_BEGIN: 
-	  if (text) in_red_text = (strcmp((char *)text, "url_text") == 0);
+	  in_red_text = snd_strcmp((char *)text, "url_text");
 	  break;
 	case XmSTRING_COMPONENT_RENDITION_END:
 	  in_red_text = false;

@@ -172,8 +172,7 @@ static bool execute_named_macro_1(chan_info *cp, const char *name, off_t count)
   int k;
   for (k = 0; k < named_macro_ctr; k++)
     {
-      if ((named_macros[k]->name) && 
-	  (strcmp(name, named_macros[k]->name) == 0))
+      if (snd_strcmp(name, named_macros[k]->name))
 	{
 	  int i;
 	  off_t j;
@@ -392,13 +391,11 @@ key_info *find_prefs_key_binding(const char *prefs_name)
   key_info *ki;
   for (i = 0; i < keymap_top; i++)
     if ((XEN_BOUND_P(user_keymap[i].func)) &&
-	(user_keymap[i].prefs_info) &&
-	(strcmp(user_keymap[i].prefs_info, prefs_name) == 0))
+	(snd_strcmp(user_keymap[i].prefs_info, prefs_name)))
       return(make_key_info(user_keymap[i]));
 
   for (i = 0; i < NUM_BUILT_IN_KEY_BINDINGS; i++)
-    if ((built_in_key_bindings[i].prefs_info) &&
-	(strcmp(built_in_key_bindings[i].prefs_info, prefs_name) == 0))
+    if (snd_strcmp(built_in_key_bindings[i].prefs_info, prefs_name))
       return(make_key_info(built_in_key_bindings[i]));
 
   ki = (key_info *)CALLOC(1, sizeof(key_info));

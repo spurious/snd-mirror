@@ -1255,7 +1255,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
     {
       int i, k;
       snd_info *sp;
-      if (strcmp(call_data->params[0], "Start") == 0)
+      if (snd_strcmp(call_data->params[0], "Start"))
 	{
 	  int outer_ctr = 0;
 	  for (i = 0; i < ss->max_sounds; i++)
@@ -1297,7 +1297,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
       else
 	{
 	  if ((outer_panes > 0) && 
-	      (strcmp(call_data->params[0], "Commit") == 0))
+	      (snd_strcmp(call_data->params[0], "Commit")))
 	    {
 	      int outer_ctr = 0;
 	      Dimension cur_outer_size = 0;
@@ -2772,7 +2772,7 @@ void snd_info_cleanup(snd_info *sp)
 
 void set_sound_pane_file_label(snd_info *sp, char *str)
 {
-  if ((sp->name_string == NULL) || (strcmp(sp->name_string, str) != 0))
+  if (!(snd_strcmp(sp->name_string, str)))
     {
       if (sp->name_string) FREE(sp->name_string);
       sp->name_string = copy_string(str);

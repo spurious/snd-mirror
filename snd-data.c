@@ -998,9 +998,9 @@ snd_info *find_sound(const char *name, int nth)
       snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
-	if ((strcmp(name, sp->short_filename) == 0) || 
-	    (strcmp(name, sp->filename) == 0) ||
-	    ((sname != NULL) && (strcmp(sname, sp->short_filename) == 0)))
+	if ((snd_strcmp(name, sp->short_filename)) || 
+	    (snd_strcmp(name, sp->filename)) ||
+	    (snd_strcmp(sname, sp->short_filename)))
 	  {
 	    if (which == nth) return(sp);
 	    which++;

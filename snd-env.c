@@ -790,10 +790,10 @@ void revert_env_edit(void)
 static int find_env(const char *name)
 { /* -1 upon failure */
   int i;
-  if ((all_envs) && (name))
+  if ((all_envs) && 
+      (name))
     for (i = 0; i < all_envs_top; i++)
-      if ((all_names[i]) &&
-	  (strcmp(name, all_names[i]) == 0)) 
+      if (snd_strcmp(name, all_names[i]))
 	return(i);
   return(-1);
 }

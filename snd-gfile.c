@@ -553,8 +553,7 @@ static void force_directory_reread(fsb *fs)
   if (selected)
     {
       for (i = 0; i < fs->current_files->len; i++)
-	if ((fs->current_files->files[i]->filename) &&
-	    (strcmp(selected, fs->current_files->files[i]->filename) == 0))
+	if (snd_strcmp(selected, fs->current_files->files[i]->filename))
 	  {
 	    slist_select(fs->file_list, i); /* doesn't call select callback */
 	    break;
@@ -577,7 +576,8 @@ static void file_text_item_activate_callback(GtkWidget *w, gpointer context)
   current_filename = copy_string((char *)(fs->file_text_names[get_user_int_data(G_OBJECT(w))]));
   current_directory = just_directory(current_filename);
 
-  if ((!(fs->directory_name)) || (strcmp(current_directory, fs->directory_name) != 0))
+  if ((!(fs->directory_name)) || 
+      (strcmp(current_directory, fs->directory_name) != 0))
     {
       if (fs->directory_name) FREE(fs->directory_name);
       fs->directory_name = current_directory;
@@ -586,8 +586,7 @@ static void file_text_item_activate_callback(GtkWidget *w, gpointer context)
     }
 
   for (i = 0; i < fs->current_files->len; i++)
-    if ((fs->current_files->files[i]->full_filename) &&
-	(strcmp(current_filename, fs->current_files->files[i]->full_filename) == 0))
+    if (snd_strcmp(current_filename, fs->current_files->files[i]->full_filename))
       {
 	slist_select(fs->file_list, i);        /* doesn't call select callback, but I think we want it in this case */
 	if (fs->file_list->select_callback)
@@ -622,7 +621,8 @@ static void reflect_file_in_popup(fsb *fs)
   for (i = 0; i < FILENAME_LIST_SIZE; i++)
     if ((fs->file_text_names[i]) &&
 	(mus_file_probe(fs->file_text_names[i])) &&
-	((current_filename == NULL) || (strcmp(fs->file_text_names[i], current_filename) != 0)))
+	((current_filename == NULL) || 
+	 (strcmp(fs->file_text_names[i], current_filename) != 0)))
       {
 	gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(fs->file_text_items[filenames_to_display]))), 
 			   fs->file_text_names[i]);
@@ -674,7 +674,7 @@ static void reflect_filter_in_popup(fsb *fs)
 
   for (i = 0; i < FILENAME_LIST_SIZE; i++)
     if ((fs->file_filter_names[i]) &&
-	((current_filtername == NULL) || (strcmp(fs->file_filter_names[i], current_filtername) != 0)))
+	(!(snd_strcmp(fs->file_filter_names[i], current_filtername))))
       {
 	gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(fs->file_filter_items[filternames_to_display]))), 
 			   fs->file_filter_names[i]);
@@ -940,8 +940,7 @@ static void sort_files_and_redisplay(fsb *fs)
     {
       int i;
       for (i = 0; i < cur_dir->len; i++)
-	if ((cur_dir->files[i]->filename) &&
-	    (strcmp(selected, cur_dir->files[i]->filename) == 0))
+	if (snd_strcmp(selected, cur_dir->files[i]->filename))
 	  {
 	    slist_select(fs->file_list, i); /* doesn't call select callback */
 	    scroller_position = i * 16;
@@ -1442,8 +1441,7 @@ static void unpost_unsound_error(struct fam_info *fp, FAMEvent *fe)
       fd = (file_dialog_info *)(fp->data);
       if ((fd) &&
 	  (fe->filename) &&
-	  (fd->unsound_filename) &&
-	  (strcmp(fe->filename, fd->unsound_filename) == 0))
+	  (snd_strcmp(fe->filename, fd->unsound_filename)))
 	clear_file_error_label(fd);
       break;
     default:
@@ -2613,7 +2611,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 
   file_exists = mus_file_probe(fullname);
   if ((sd->type == SOUND_SAVE_AS) &&
-      (strcmp(fullname, sp->filename) == 0))
+      (snd_strcmp(fullname, sp->filename)))
     {
       /* save-as here is the same as save */
       if ((sp->user_read_only) || 
@@ -3929,8 +3927,7 @@ GtkWidget *edit_header(snd_info *sp)
 	    ((edhead_infos[i]->sp == sp) ||
 	     ((edhead_infos[i]->sp) && /* maybe same sound open twice -- only one edit header dialog for it */
 	      (edhead_infos[i]->sp->inuse == SOUND_NORMAL) &&
-	      (edhead_infos[i]->sp->filename) &&
-	      (strcmp(sp->filename, edhead_infos[i]->sp->filename) == 0))))
+	      (snd_strcmp(sp->filename, edhead_infos[i]->sp->filename)))))
 	  {
 	    ep = edhead_infos[i];
 	    break;

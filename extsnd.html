@@ -3996,7 +3996,7 @@ This function doesn't set the header choices for output of recording; it simply 
 </pre>
 The default sound output header choice is <a href="#defaultoutputheadertype">default-output-header-type</a>,
 a sound file's
-header type is <a href="#mussoundheadertype">mus-sound-header-type</a>, the CLM (with-sound) header default
+header type is <a href="#mussoundheadertype">mus-sound-header-type</a>, the CLM (<a href="sndscm.html#wsdoc">with-sound</a>) header default
 is *clm-header-type*, and an opened sound's header type is <a href="#headertype">header-type</a>. 
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -8183,12 +8183,12 @@ causes nothing but confusion.  To get this code to work right:
 </pre>
 
 The current declarable types include any <a href="sndscm.html#def-clm-struct">def-clm-struct</a> type and:
-</p>
+
 <pre>
     int float boolean char string list symbol keyword vct sample-reader mix-sample-reader 
     sound-data clm float-vector int-vector vct-vector list-vector clm-vector 
 </pre>
-<p>
+
 declare is modelled after Common Lisp's declare; it is specific to run.
 For more examples see <a href="#ptreechannel">Virtual Edits</a> and, in
 particular, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>.

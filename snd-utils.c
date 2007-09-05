@@ -117,6 +117,14 @@ int snd_strlen(const char *str)
 }
 
 
+bool snd_strcmp(const char *str1, const char *str2)
+{
+  return((str1 == str2) ||
+	 ((str1) && (str2) &&
+	  (strcmp(str1, str2) == 0)));
+}
+
+
 char *snd_strcat(char *errmsg, const char *str, int *size)
 {
   int new_len, err_size;

@@ -79,8 +79,8 @@ static const LADSPA_Descriptor *findLADSPADescriptor(const char *pcPackedFilenam
   LADSPAPluginInfo *psInfo;
   for (lIndex = 0; lIndex < g_lLADSPARepositoryCount; lIndex++) {
     psInfo = g_psLADSPARepository[lIndex];
-    if (strcmp(pcLabel, psInfo->m_pcLabel) == 0
-	&& strcmp(pcPackedFilename, psInfo->m_pcPackedFilename) == 0)
+    if ((snd_strcmp(pcLabel, psInfo->m_pcLabel)) &&
+	(snd_strcmp(pcPackedFilename, psInfo->m_pcPackedFilename)))
       return psInfo->m_psDescriptor;
   }
 

@@ -193,8 +193,7 @@ static bool string_member_p(char *val, char **lst, int len)
   int i;
   if ((len == 0) || (!lst) || (!val)) return(false);
   for (i = 0; i < len; i++)
-    if ((lst[i]) &&
-	(strcmp(val, lst[i]) == 0))
+    if (snd_strcmp(val, lst[i]))
       return(true);
   return(false);
 }
@@ -285,8 +284,8 @@ static void save_prefs(const char *filename)
 	  unchecked_load_path = GET_TEXT(load_path_text_widget);
 	  if ((unchecked_load_path) &&                                                          /* text widget has an entry */
 	      (local_access(unchecked_load_path)) &&                                            /* it's a legit path */
-	      (!(string_member_p(unchecked_load_path, current_dirs, current_dirs_len))) &&        /* it's not in LOAD_PATH */
-	      ((!include_load_path) || (strcmp(unchecked_load_path, include_load_path) != 0)))  /* it's not already included above */
+	      (!(string_member_p(unchecked_load_path, current_dirs, current_dirs_len))) &&      /* it's not in LOAD_PATH */
+	      (!(snd_strcmp(unchecked_load_path, include_load_path))))                          /* it's not already included above */
 	    add_local_load_path(fd, unchecked_load_path);
 	  if (unchecked_load_path) {FREE_TEXT(unchecked_load_path);} /* a no-op in gtk */
 	}
@@ -3911,7 +3910,7 @@ static void show_axes_from_menu(prefs_info *prf, char *value)
 {
   int i;
   for (i = 0; i < NUM_SHOW_AXES; i++)
-    if (strcmp(value, show_axes_choices[i]) == 0)
+    if (snd_strcmp(value, show_axes_choices[i]))
       {
 	in_set_show_axes((show_axes_t)i);
 	SET_TEXT(prf->text, value);
@@ -3965,7 +3964,7 @@ static void x_axis_style_from_menu(prefs_info *prf, char *value)
 {
   int i;
   for (i = 0; i < NUM_X_AXIS_STYLES; i++)
-    if (strcmp(value, x_axis_styles[i]) == 0)
+    if (snd_strcmp(value, x_axis_styles[i]))
       {
 	in_set_x_axis_style((x_axis_style_t)i);
 	SET_TEXT(prf->text, value);
@@ -4039,7 +4038,7 @@ static void transform_type_from_menu(prefs_info *prf, char *value)
 {
   int i;
   for (i = 0; i < NUM_BUILTIN_TRANSFORM_TYPES; i++)
-    if (strcmp(value, transform_types[i]) == 0)
+    if (snd_strcmp(value, transform_types[i]))
       {
 	in_set_transform_type(i);
 	SET_TEXT(prf->text, value);
@@ -4107,7 +4106,7 @@ static void fft_window_from_menu(prefs_info *prf, char *value)
 {
   int i;
   for (i = 0; i < MUS_NUM_FFT_WINDOWS; i++)
-    if (strcmp(value, mus_fft_window_name((mus_fft_window_t)i)) == 0)
+    if (snd_strcmp(value, mus_fft_window_name((mus_fft_window_t)i)))
       {
 	in_set_fft_window((mus_fft_window_t)i);
 	SET_TEXT(prf->text, value);
@@ -4217,8 +4216,7 @@ static void colormap_from_menu(prefs_info *prf, char *value)
   int i, len;
   len = num_colormaps();
   for (i = 0; i < len; i++)
-    if ((colormap_name(i)) &&
-	(strcmp(value, colormap_name(i)) == 0))
+    if (snd_strcmp(value, colormap_name(i)))
       {
 	in_set_color_map(i);
 	SET_TEXT(prf->text, value);
