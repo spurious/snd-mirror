@@ -49190,6 +49190,7 @@ EDITS: 1
 		(if (fneq val 1.0) (snd-display ";mus-data -> vct opt: ~A" val)))
 	      
 	      (set! (run-safety) 1)
+	      ;; currently all of these result in dangling ptrees
 	      (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((os (make-oscil))) (oscil #f))))) (lambda args (car args)))))
 		(if (not (equal? val 'mus-error)) (snd-display ";run-safety #f osc: ~A" val)))
 	      (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((os (make-oscil)) (ts (make-table-lookup))) (oscil ts))))) (lambda args (car args)))))
@@ -49204,41 +49205,43 @@ EDITS: 1
 		(if (not (equal? val 'mus-error)) (snd-display ";run-safety sound-data index i: ~A" val)))
 	      (set! (run-safety) 0)
 	      
-	      (run (lambda ()
-		     (let ((x 1.0))
-		       (let ((val1 (bes-j0 x))
-			     (val2 (if (< (abs x) 8.0)			;direct rational function fit
-				       (let* ((y (* x x))
-					      (ans1 (+ 57568490574.0
-						       (* y (+ -13362590354.0 
-							       (* y  (+ 651619640.7
-									(* y (+ -11214424.18 
-										(* y (+ 77392.33017
-											(* y -184.9052456)))))))))))
-					      (ans2 (+ 57568490411.0 
-						       (* y (+ 1029532985.0 
-							       (* y (+ 9494680.718
-								       (* y (+ 59272.64853
-									       (* y (+ 267.8532712 y)))))))))))
-					 (/ ans1 ans2))
-				       (let* ((ax (abs x))
-					      (z (/ 8.0 ax))
-					      (y (* z z))
-					      (xx (- ax 0.785398164))
-					      (ans1 (+ 1.0 
-						       (* y (+ -0.1098628627e-2 
-							       (* y (+ 0.2734510407e-4
-								       (* y (+ -0.2073370639e-5
-									       (* y 0.2093887211e-6)))))))))
-					      (ans2 (+ -0.1562499995e-1
-						       (* y (+ 0.1430488765e-3
-							       (* y (+ -0.6911147651e-5
-								       (* y (+ 0.7621095161e-6
-									       (* y -0.934945152e-7))))))))))
-					 (* (sqrt (/ 0.636619772 ax))
-					    (- (* (cos xx) ans1)
-					       (* z (sin xx) ans2)))))))
-			 (if (> (abs (- val1 val2)) .001) (snd-print (format #f ";opt exploded j0 ~A ~A?" val1 val2)))))))
+	      (let ((diff 
+		     (run (lambda ()
+			    (let ((x 1.0))
+			      (let ((val1 (bes-j0 x))
+				    (val2 (if (< (abs x) 8.0)			;direct rational function fit
+					      (let* ((y (* x x))
+						     (ans1 (+ 57568490574.0
+							      (* y (+ -13362590354.0 
+								      (* y  (+ 651619640.7
+									       (* y (+ -11214424.18 
+										       (* y (+ 77392.33017
+											       (* y -184.9052456)))))))))))
+						     (ans2 (+ 57568490411.0 
+							      (* y (+ 1029532985.0 
+								      (* y (+ 9494680.718
+									      (* y (+ 59272.64853
+										      (* y (+ 267.8532712 y)))))))))))
+						(/ ans1 ans2))
+					      (let* ((ax (abs x))
+						     (z (/ 8.0 ax))
+						     (y (* z z))
+						     (xx (- ax 0.785398164))
+						     (ans1 (+ 1.0 
+							      (* y (+ -0.1098628627e-2 
+								      (* y (+ 0.2734510407e-4
+									      (* y (+ -0.2073370639e-5
+										      (* y 0.2093887211e-6)))))))))
+						     (ans2 (+ -0.1562499995e-1
+							      (* y (+ 0.1430488765e-3
+								      (* y (+ -0.6911147651e-5
+									      (* y (+ 0.7621095161e-6
+										      (* y -0.934945152e-7))))))))))
+						(* (sqrt (/ 0.636619772 ax))
+						   (- (* (cos xx) ans1)
+						      (* z (sin xx) ans2)))))))
+				(abs (- val1 val2))))))))
+		(if (> diff .001) (snd-print (format #f ";opt exploded j0 ~A ~A?" val1 val2))))
 	      (ftst '(bes-j0 1.0) 0.7651976865)
 	      (ftst '(bes-j1 1.0) 0.4400505857)
 	      (ftst '(bes-jn 2 1.0) 0.11490348)

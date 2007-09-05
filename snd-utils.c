@@ -1115,6 +1115,7 @@ void describe_sync(FILE *fp, void *ptr);
 void describe_ed_fragment(FILE *Fp, void *ptr);
 #if WITH_RUN
   void describe_xen_value_for_memlog(FILE *Fp, void *ptr);
+  void describe_ptree_for_memlog(FILE *Fp, void *ptr);			  
 #endif
 
 typedef struct {int ptrs, loc, refsize; size_t sum; int *refs;} sumloc;
@@ -1278,6 +1279,10 @@ void mem_report(void)
 #if WITH_RUN
 			case PRINT_XEN_VALUE:
 			  describe_xen_value_for_memlog(Fp, pointers[orig_i]);
+			  break;
+			  
+			case PRINT_PTREE:
+			  describe_ptree_for_memlog(Fp, pointers[orig_i]);
 			  break;
 #endif
 			}

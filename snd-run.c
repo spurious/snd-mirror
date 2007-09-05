@@ -777,6 +777,7 @@ static char *describe_triple(triple *trp, ptree *pt)
 
 static char *describe_ptree(ptree *pt, const char *space)
 {
+  #define INT_STR_SIZE 32
   int i, size;
   char *temp = NULL;
   char *buf;
@@ -846,12 +847,12 @@ static char *describe_ptree(ptree *pt, const char *space)
     {
       for (i = 0; i < pt->int_ctr - 1; i++)
 	{
-	  temp = (char *)CALLOC(16, sizeof(char));
-	  mus_snprintf(temp, 16, INT_STR ", ", pt->ints[i]);
+	  temp = (char *)CALLOC(INT_STR_SIZE, sizeof(char));
+	  mus_snprintf(temp, INT_STR_SIZE, INT_STR ", ", pt->ints[i]);
 	  buf = str_append(buf, &size, temp);
 	}
-      temp = (char *)CALLOC(16, sizeof(char));
-      mus_snprintf(temp, 16, INT_STR "]%s", 
+      temp = (char *)CALLOC(INT_STR_SIZE, sizeof(char));
+      mus_snprintf(temp, INT_STR_SIZE, INT_STR "]%s", 
 		   pt->ints[pt->int_ctr - 1],
 		   (pt->dbl_ctr > 0) ? ", [" : "\n");
       buf = str_append(buf, &size, temp);
@@ -861,12 +862,12 @@ static char *describe_ptree(ptree *pt, const char *space)
     {
       for (i = 0; i < pt->dbl_ctr - 1; i++)
 	{
-	  temp = (char *)CALLOC(16, sizeof(char));
-	  mus_snprintf(temp, 16, "%.4f, ", pt->dbls[i]);
+	  temp = (char *)CALLOC(INT_STR_SIZE, sizeof(char));
+	  mus_snprintf(temp, INT_STR_SIZE, "%.4f, ", pt->dbls[i]);
 	  buf = str_append(buf, &size, temp);
 	}
-      temp = (char *)CALLOC(16, sizeof(char));
-      mus_snprintf(temp, 16, "%.4f]\n", pt->dbls[pt->dbl_ctr - 1]);
+      temp = (char *)CALLOC(INT_STR_SIZE, sizeof(char));
+      mus_snprintf(temp, INT_STR_SIZE, "%.4f]\n", pt->dbls[pt->dbl_ctr - 1]);
       buf = str_append(buf, &size, temp);
     }
 
@@ -1025,6 +1026,17 @@ static char *describe_xen_value(xen_value *v, ptree *pt)
 }
 
 
+#if MUS_DEBUGGING
+void describe_ptree_for_memlog(FILE *Fp, void *ptr);
+void describe_ptree_for_memlog(FILE *Fp, void *ptr)
+{
+  ptree *pt = (ptree *)ptr;
+  /* fprintf(Fp, "[%p: %s]\n    ", pt, describe_ptree(pt,"        ")); */
+  fprintf(Fp, "[%p]\n    ", pt);
+}
+#endif
+
+
 static bool got_lambda = false; /* a temporary kludge?? */
 
 static ptree *make_ptree(int initial_data_size)
@@ -1032,6 +1044,9 @@ static ptree *make_ptree(int initial_data_size)
   ptree *pt;
   got_lambda = false;
   pt = (ptree *)CALLOC(1, sizeof(ptree));
+#if MUS_DEBUGGING
+  set_printable(PRINT_PTREE);
+#endif
   if (initial_data_size > 0)
     {
       pt->ints = (Int *)CALLOC(initial_data_size, sizeof(Int));
@@ -1052,6 +1067,9 @@ static ptree *attach_to_ptree(ptree *pt)
   /* share all environment tables -- memcpy? */
   ptree *new_tree;
   new_tree = (ptree *)CALLOC(1, sizeof(ptree));
+#if MUS_DEBUGGING
+  set_printable(PRINT_PTREE);
+#endif
   memcpy((void *)new_tree, (void *)pt, sizeof(ptree));
   new_tree->program_size = 0;
   new_tree->triple_ctr = 0;
@@ -6207,10 +6225,9 @@ static xen_value *string_ref_1(ptree *pt, xen_value **args, int num_args)
 }
 
 
-#define VECT_STRING_SIZE 16
-
 static char *vect_to_string(vect *v, int type)
 {
+  #define VECT_STRING_SIZE 32
   int len, slen;
   char *buf;
 
@@ -6252,7 +6269,6 @@ static char *vect_to_string(vect *v, int type)
 		mus_snprintf(flt, VECT_STRING_SIZE, " #<list[len=%d]>", v->data.lists[i]->len);
 	      else mus_snprintf(flt, VECT_STRING_SIZE, " '()");
 	      break;
-	      
 	    }
 	  buf = snd_strcat(buf, flt, &slen);
 	}
@@ -10723,6 +10739,7 @@ static xen_value *format_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
+static int saw_mus_error = 0;
 
 static void throw_s_1(int *args, ptree *pt) 
 {
@@ -10730,6 +10747,7 @@ static void throw_s_1(int *args, ptree *pt)
   res = pt->xens[args[1]];
   free_ptree(pt);
   /* free_ptree handles cleanup/global resets -- can we safely call it here? (i.e. no possible catch within run itself) */
+  saw_mus_error = 0;
   pt = NULL;
   XEN_THROW(res, XEN_FALSE);
 }
@@ -11879,21 +11897,36 @@ Float evaluate_ptreec(struct ptree *pt, Float arg, XEN object, bool dir, int typ
 }
 
 
+static ptree *last_ptree = NULL, *last_error_ptree = NULL;
+
+static void watch_for_mus_error_in_run(ss_watcher_reason_t reason, void *ignore)
+{
+  /* called from snd.c if mus_error called, saw_mus_error set to 0 if throw (see above) */
+  if (saw_mus_error == 1) 
+    {
+      saw_mus_error = 2;
+      last_error_ptree = last_ptree;
+    }
+}
+
+
 static XEN eval_ptree_to_xen(ptree *pt)
 {
   XEN result = XEN_FALSE;
 
+  if ((saw_mus_error == 2) && (last_ptree) && (last_ptree == last_error_ptree))
+    free_ptree(last_ptree);
+  last_ptree = pt;
+  last_error_ptree = NULL;
+  saw_mus_error = 1;
+
   eval_ptree(pt);
-
-  /* there is a minor memory leak here: if ptree eval calls mus_error, a throw occurs without
-   *   any free_ptree on the current tree.  But to catch this one case, while not screwing up
-   *   other cases (explicit throw, etc) is way too complicated -- basically I'd need a local
-   *   mus_error and a dynamic_wind -- the former isn't enough by itself because it doesn't
-   *   fully unwind the stack, and the latter because the only leak case is through mus_error.
-   */
-
   result = xen_value_to_xen(pt, pt->result);
   free_ptree(pt);
+
+  last_ptree = NULL;
+  saw_mus_error = 0;
+
   return(result);
 }
 
@@ -12653,5 +12686,6 @@ You can often slightly rewrite the form to make run happy."
 #if WITH_RUN 
   init_walkers();
   init_type_names();
+  add_ss_watcher(SS_MUS_ERROR_WATCHER, watch_for_mus_error_in_run, NULL);
 #endif
 }

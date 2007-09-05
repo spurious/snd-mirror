@@ -8152,7 +8152,7 @@ This returns the position (in samples) of right edge of time domain waveform.  S
 <code><a class=def name="run">run</a> (thunk)</code>
 </td></tr><tr><td></td><td>
 run is the Snd equivalent of the CL/CLM run macro.  You can wrap it around any numerically-intensive
-block of code, and the result will usually run 10 to 20 times faster.  In the context of with-sound, run is used
+block of code, and the result will usually run 10 to 20 times faster.  In the context of <a href="sndscm.html#wsdoc">with-sound</a>, run is used
 to speed up instrument bodies.  My timing tests indicate that Snd+Run instruments are within a factor of two to four
 of the speed of CL+run+C in CLM.  Currently, only Guile and Gauche support this optimization.
 

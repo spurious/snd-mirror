@@ -463,7 +463,7 @@ is the word "definstrument":
          (<em class=red>amp-env</em> (<a class=quiet href="#make-env">make-env</a> envelope :duration dur :scaler amp))
 	 (start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
          (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
       (lambda ()
         (do ((i start (1+ i))) 
             ((= i end))
@@ -515,7 +515,7 @@ as the generator object:
     result))                            ; return sine wave
 
 (with-sound () 
-  (run 
+  (<a class=quiet href="extsnd.html#run">run</a> 
    (lambda () 
      (let ((osc (make-my-oscil 440.0)))
        (do ((i 0 (1+ i))) 
@@ -610,7 +610,7 @@ This means that the frequency envelope y values should be passed through <a href
          (fm-index (<a class=quiet href="#hztoradians">hz-&gt;radians</a> (* index mc-ratio freq)))
          (ampf (<a class=quiet href="#make-env">make-env</a> (or amp-env '(0 0  .5 1  1 0)) :scaler amp :duration dur))
          (indf (<a class=quiet href="#make-env">make-env</a> (or index-env '(0 0  .5 1  1 0)) :scaler fm-index :duration dur)))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
       (lambda ()
         (do ((i start (1+ i)))
             ((= i end))
@@ -634,7 +634,7 @@ create the individual spectral components:
     (do ((i 0 (1+ i)))               ;   use the 'f' button to check out the spectrum
 	((= i 20))
       (vector-set! arr i (<em class=red>make-oscil</em> (* (1+ i) freq))))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((i start (1+ i))) 
            ((= i end))
@@ -667,7 +667,7 @@ very elaborate) amplitude and frequency envelopes.
 	 (len (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))
 	 (beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start))
 	 (end (+ beg len)))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((i beg (1+ i)))
 	   ((= i end))
@@ -842,7 +842,7 @@ instrument that maps the line segments into sin x^3:
 	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (osc (<a class=quiet href="#make-oscil">make-oscil</a> frq))
 	 (zv (<em class=red>make-env</em> <em class=red>en</em> 1.0 dur)))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((i start (1+ i)))
            ((= i end))
@@ -1044,7 +1044,7 @@ based on some previously chosen loop positions:
 	       (original-loop-duration (/ loop-length (<a class=quiet href="extsnd.html#mussoundsrate">mus-sound-srate</a> sound)))
 	       (tbl (<em class=red>make-table-lookup</em> :frequency (/ freq original-loop-duration) :wave sound-section)))
 	       ;; "freq" here is how fast we read (transpose) the sound -- 1.0 returns the original
-	  (run
+	  (<a class=quiet href="extsnd.html#run">run</a>
 	   (lambda ()
 	     (do ((i beg (1+ i)))
 		 ((= i end))
@@ -1068,7 +1068,7 @@ modulation deviation in samples:
 				 :wave (<a class=quiet href="#filetoarray">file-&gt;array</a> file 0 0 table-length (<a class=quiet href="extsnd.html#makevct">make-vct</a> table-length))))
 	 (osc (<a class=quiet href="#make-oscil">make-oscil</a> modulator-freq))
 	 (index (/ (* (<a class=quiet href="#hztoradians">hz-&gt;radians</a> modulator-freq) 2 pi index-in-samples) table-length)))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((i beg (1+ i)))
 	   ((= i end))
@@ -1202,7 +1202,7 @@ bigbird is an example:
          (polyos (<em class=red>make-polyshape</em> frequency :coeffs (<em class=red>partials-&gt;polynomial</em> partials)))
          (fil (<a class=quiet href="#make-one-pole">make-one-pole</a> .1 .9))
          (amp-env (<a class=quiet href="#make-env">make-env</a> amp-env amplitude duration)))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
       (lambda ()
         (do ((i beg (1+ i)))
             ((= i end))
@@ -1241,7 +1241,7 @@ technique.  Here is a simplified example:
                        partials mus-chebyshev-first-kind))
 	 (beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start))
 	 (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
-    (run (lambda ()
+    (<a class=quiet href="extsnd.html#run">run</a> (lambda ()
      (do ((i beg (1+ i))) ((= i end))
        (let ((ax (<a class=quiet href="#oscil">oscil</a> spacing-cos)))
 	 (<a class=quiet href="#outa">outa</a> i (- (* (<a class=quiet href="#oscil">oscil</a> carrier-sin) 
@@ -1293,7 +1293,7 @@ we absolutely insist on using waveshaping, we could do it this way:
 	   (coeffs (<em class=red>partials-&gt;polynomial</em> (reverse freqs) mus-chebyshev-second-kind))
 	   (beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start))
 	   (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
-      (run 
+      (<a class=quiet href="extsnd.html#run">run</a> 
        (lambda ()
 	 (do ((i beg (1+ i))) 
 	     ((= i end))
@@ -1489,7 +1489,7 @@ Even more amusing is this algorithm:
 	 (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (carrier (<em class=red>make-triangle-wave</em> freq))
 	 (modulator (<em class=red>make-triangle-wave</em> (* mcr freq))))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((i beg (1+ i)))
 	   ((= i end))
@@ -1564,7 +1564,7 @@ see also cosine-summation, fejer-sum, etc in dsp.scm
   (let* ((os (<em class=red>make-sum-of-cosines</em> 10 freq 0.0))
 	 (start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
 	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((i start (1+ i))) ((= i end))
 	 (outa i (* amp (<em class=red>sum-of-cosines</em> os)) 
@@ -1728,7 +1728,7 @@ goes up, "a" goes down (to avoid foldover, or whatever).
 	 (frq-env (if frqf (<a class=quiet href="#make-env">make-env</a> frqf :scaler (<a class=quiet href="#hztoradians">hz-&gt;radians</a> freq) :duration dur) #f))
 	 (spectr-env (if frqf (<a class=quiet href="#make-env">make-env</a> frqf :duration dur) #f))
 	 (amp-env (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 2 1 3 0) :scaler amp :duration dur)))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((i st (1+ i))) 
 	   ((= i nd))
@@ -1918,7 +1918,7 @@ of the possibilities).  Take the last one in the G&amp;R section:
 (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()  
   (let ((gen (make-expcs :frequency 100 :et 0.1))
 	(t-env (<a class=quiet href="#make-env">make-env</a> '(0 .1 1 2) :end 10000)))
-    (run (lambda ()
+    (<a class=quiet href="extsnd.html#run">run</a> (lambda ()
       (do ((i 0 (1+ i)))
 	  ((= i 10000))
         (let ((et (<a class=quiet href="#env">env</a> t-env)))
@@ -2009,7 +2009,7 @@ phase-vocoder or granular synthesis kludges.
          (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (gen (<em class=red>make-ssb-am</em> freq order))
 	 (rd (<a class=quiet href="#make-readin">make-readin</a> file)))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((i st (1+ i))) 
 	   ((= i nd))
@@ -2099,7 +2099,7 @@ And the fourth used the ssb-am-bank function in dsp.scm rewritten here for with-
 	(vector-set! bands (1- i) (<a class=quiet href="sndscm.html#makebandpass">make-bandpass</a> (<a class=quiet href="#hztoradians">hz-&gt;radians</a> (- aff bwf)) 
 						 (<a class=quiet href="#hztoradians">hz-&gt;radians</a> (+ aff bwf)) 
 						 order))))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((i start (1+ i))) 
            ((= i end))
@@ -2182,7 +2182,7 @@ Here is a FOF instrument based loosely on fof.c of Perry Cook and the article
                   (* a1 (sin (* i frq1))) 
                   (* a2 (sin (* i frq2)))) 
                .5 (- 1.0 (cos (* i win-freq))))))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((i start (1+ i)))
            ((= i end))
@@ -2222,7 +2222,7 @@ using the same frequency envelope as the wave-train, so we have some idea when t
 	 (grain (<em class=red>mus-data</em> grains)))
     (<a class=quiet href="#filetoarray">file-&gt;array</a> grain-file 0 0 grain-size grain)
     (let ((original-grain (<a class=quiet href="extsnd.html#vctcopy">vct-copy</a> grain)))
-      (run
+      (<a class=quiet href="extsnd.html#run">run</a>
        (lambda ()
 	 (do ((i beg (1+ i)))
 	     ((= i end))
@@ -2513,7 +2513,7 @@ than the preceding:
   ;; use formula of M J Feigenbaum
   (let* ((beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start))
 	 (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> duration))))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((i beg (1+ i)))
            ((= i end))
@@ -2542,7 +2542,7 @@ Another instrument based on similar ideas is:</p>
 	 (a .2) (b .2) (dt .04)
 	 (scale (/ (* .5 amp) c))
 	 (x1 0.0) (x -1.0) (y 0.0) (z 0.0))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
       (do ((i st (1+ i)))
           ((= i nd))
@@ -2787,7 +2787,7 @@ If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more
       (do ((i 0 (1+ i)))
 	  ((= i num-formants))
 	(vector-set! frms i (<em class=red>make-formant</em> radius (* (+ i 1) start-frq)))))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((k beg (1+ k)))
 	   ((= k end))
@@ -3021,7 +3021,7 @@ See prc95.scm for examples of both of these functions.
 (<a class=quiet href="sndscm.html#definstrument">definstrument</a> (echo beg dur scaler secs file)
   (let ((del (<em class=red>make-delay</em> (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> secs)))
 	(rd (make-sample-reader 0 file)))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((i beg (1+ i)))
            ((= i (+ beg dur)))
@@ -3146,7 +3146,7 @@ The following instrument sweeps the comb filter using the pm argument:
          (d0 (<em class=red>make-comb</em> :size length1 :max-size (max length1 length2) :scaler feedback))
          (aenv (<a class=quiet href="#make-env">make-env</a> '(0 0 .1 1 .9 1 1 0) :scaler amp :duration dur))
          (zenv (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) :scaler (- length2 length1) :base 12.0 :duration dur)))
-    (run (lambda ()
+    (<a class=quiet href="extsnd.html#run">run</a> (lambda ()
       (do ((i beg (1+ i))) ((= i end))
         (<a class=quiet href="#outa">outa</a> i (* (env aenv) (<em class=red>comb</em> d0 (<a class=quiet href="#pulse-train">pulse-train</a> s) (<a class=quiet href="#env">env</a> zenv))) *output*))))))
 
@@ -3167,7 +3167,7 @@ delay line as the coefficients for an FIR filter:
 	 (dly (<em class=red>make-comb</em> :scaler .9 :size size)) 
 	 (flt (<a class=quiet href="#make-fir-filter">make-fir-filter</a> :order size :xcoeffs (<em class=red>mus-data</em> dly))) ; comb delay line as FIR coeffs
 	 (r (<a class=quiet href="#make-rand">make-rand</a> freq)))                                       ; feed comb with white noise
-    (run 
+    (<a class=quiet href="extsnd.html#run">run</a> 
      (lambda () 
        (do ((i start (1+ i))) 
 	   ((= i end)) 
@@ -3205,7 +3205,7 @@ delay line as the coefficients for an FIR filter:
       (vector-set! cmbs1 k 
 		   (<em class=red>make-comb</em> scaler 
 			      (inexact->exact (floor (* comb-len (list-ref combs1 k)))))))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((i beg (1+ i)))
 	   ((= i end))
@@ -3398,7 +3398,7 @@ an instrument that provides time-varying sampling rate conversion:
          (beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start-time))
          (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> duration)))
          (src-gen (<em class=red>make-src</em> :input (<a class=quiet href="#make-readin">make-readin</a> filename) :srate srt)))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
       (lambda ()
         (do ((i beg (1+ i)))
             ((= i end))
@@ -3417,7 +3417,7 @@ an instrument that provides time-varying sampling rate conversion:
          (beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start-time))
          (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> duration)))
          (src-gen (<em class=red>make-src</em> :input (<a class=quiet href="#make-readin">make-readin</a> filename) :srate srt)))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
       (lambda ()
         (do ((i beg (1+ i)))
             ((= i end))
@@ -3485,7 +3485,7 @@ called whenever convolve needs input.
   (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
          (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
          (ff (<em class=red>make-convolve</em> :input (<a class=quiet href="#make-readin">make-readin</a> file) :fft-size size :filter filter)))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
       (lambda ()
         (do ((i start (1+ i)))
             ((= i end))
@@ -3599,7 +3599,7 @@ one argument that return a new input sample whenever they are called by granulat
 	 (new-dur (or dur (- (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> file) orig-beg)))
 	 (exA (<em class=red>make-granulate</em> :input f :expansion exp-amt))
 	 (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> new-dur))))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((i st (1+ i)))
            ((= i nd))
@@ -3619,7 +3619,7 @@ argument to granulate.  It cause the granulation to run backwards through the fi
   (let* ((exA (<em class=red>make-granulate</em> :expansion exp-amt))
 	 (fil (<a class=quiet href="#make-filetosample">make-file-&gt;sample</a> file))
 	 (ctr file-beg))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
       (lambda ()
        (do ((i beg (1+ i)))
            ((= i (+ beg dur)))
@@ -3702,7 +3702,7 @@ ffts (for time stretching, etc).
   (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
 	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (sr (<em class=red>make-phase-vocoder</em> (<a class=quiet href="#make-readin">make-readin</a> file) :fft-size size)))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
       (lambda ()
         (do ((i start (1+ i)))
             ((= i end))
@@ -3959,7 +3959,7 @@ Here is one that uses file-&gt;sample to mix in a sound file (there are a zillio
 	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (fil (<em class=red>make-file-&gt;sample</em> file))
 	 (ctr 0))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (* amp (<em class=red>file-&gt;sample</em> fil ctr 0)) 0 *output*)
@@ -4009,7 +4009,7 @@ The "output" argument can be a vct or a sound-data object, as well as the more u
   (let* ((start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
 	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (fil (<em class=red>make-file-&gt;sample</em> file)))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
       (lambda ()
         (do ((i start (1+ i)))
             ((= i end))
@@ -4063,7 +4063,7 @@ readin and <a href="#env">env</a>:
          (rdA (<em class=red>make-readin</em> file))
          (ampf (<a class=quiet href="#make-env">make-env</a> amp-env amp dur))
          (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
       (lambda ()
         (do ((i st (1+ i)))
 	    ((= i nd))
@@ -4152,7 +4152,7 @@ To have full output to both channels,</p>
          (amp-env (<a class=quiet href="#make-env">make-env</a> amplitude-env :duration duration))
          (deg-env (<a class=quiet href="#make-env">make-env</a> degree-env :scaler (/ 1.0 90.0) :duration duration))
          (dist-scaler 0.0))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
       (lambda ()
         (do ((i beg (1+ i)))
             ((= i end))
@@ -4184,7 +4184,7 @@ Here is an example of move-locsig:
   (let ((loc (<em class=red>make-locsig</em> :channels 4 :output *output*))
 	(osc (<a class=quiet href="#make-oscil">make-oscil</a> 440.0))
 	(j 0))
-    (run  ; 360 notes one at each degree in a circle
+    (<a class=quiet href="extsnd.html#run">run</a>  ; 360 notes one at each degree in a circle
       (lambda ()
         (do ((i 0 (1+ i)))
             ((= i 360))
@@ -4257,7 +4257,7 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 				     #f
 				     (vector 0 1 2 3))
 			       *output*)))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((i start (1+ i)))
 	   ((= i end))

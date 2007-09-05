@@ -35,6 +35,7 @@ void mus_error_to_snd(int type, char *msg)
       fprintf(stderr, msg);
       return;
     }
+  call_ss_watchers(SS_MUS_ERROR_WATCHER, SS_MUS_ERROR);
   if (!(ignore_mus_error(type, msg)))
     {
       if (ss->catch_exists)
