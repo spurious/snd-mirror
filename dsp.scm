@@ -428,6 +428,8 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 ;;; -------- asymmetric FM (bes-i0 case)
 
+;;; see generator.scm for a better version
+
 (define* (make-asyfm :key
 		     (frequency 440.0) (initial-phase 0.0)
 		     (ratio 1.0) (r 1.0)
@@ -506,58 +508,6 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
     (set! (asyfm-phase gen) (+ phase input freq))
     result))
 
-
-#|
-;;; we could also use def-clm-struct:
-
-(def-clm-struct (asyfm :make-wrapper (lambda (gen)
-				       (set! (asyfm-freq gen) (hz->radians (asyfm-freq gen)))
-				       gen))
-  freq (phase 0.0) (ratio 1.0) (r 1.0) (index 1.0))
-
-(define (asyfm-J gen input)
-  "(asyfm-J gen input) is the same as the CLM asymmetric-fm generator, set r != 1.0 to get the asymmetric spectra"
-  (declare (gen asyfm) (input float))
-  (let* ((phase (asyfm-phase gen))
-	 (r (asyfm-r gen))
-	 (r1 (/ 1.0 r))
-	 (index (asyfm-index gen))
-	 (modphase (* (asyfm-ratio gen) phase))
-	 (result (* (exp (* 0.5 index (- r r1) (cos modphase)))
-		    (sin (+ phase (* 0.5 index (+ r r1) (sin modphase)))))))
-    (set! (asyfm-phase gen) (+ phase input (asyfm-freq gen)))
-    result))
-
-(with-sound () 
-  (let ((gen (make-asyfm :freq 2000 :ratio .1))) 
-    (run 
-     (lambda () 
-       (do ((i 0 (1+ i)))
-	   ((= i 1000))
-	 (outa i (asyfm-J gen 0.0) *output*))))))
-
-(define (asyfm-I gen input)
-  "(dsp-asyfm-I gen input) is the I0 case of the asymmetric-fm generator (dsp.scm)"
-  (declare (gen asyfm) (input float))
-  (let* ((phase (asyfm-phase gen))
-	 (r (asyfm-r gen))
-	 (r1 (/ 1.0 r))
-	 (index (asyfm-index gen))
-	 (modphase (* (asyfm-ratio gen) phase))
-	 (result (* (exp (- (* 0.5 index (+ r r1) (cos modphase))
-			    (* 0.5 (log (bes-i0 (* index (+ r r1)))))))
-		    (sin (+ phase (* 0.5 index (- r r1) (sin modphase)))))))
-    (set! (asyfm-phase gen) (+ phase input (asyfm-freq gen)))
-    result))
-
-(with-sound () 
-  (let ((gen (make-asyfm :freq 2000 :ratio .1))) 
-    (run 
-     (lambda () 
-       (do ((i 0 (1+ i)))
-	   ((= i 1000))
-	 (outa i (asyfm-I gen 0.0) *output*))))))
-|#
 
 
 

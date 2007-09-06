@@ -1,4 +1,6 @@
-(load "t.scm")
+(provide 'snd-generators.scm)
+(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
+
 
 ;;; these try to mimic existing gens (mainly oscil), so "frequency" and "initial-phase" are placed first
 ;;;   so the make function places those two args first
@@ -149,6 +151,16 @@
        (do ((i 0 (1+ i)))
 	   ((= i 1000))
 	 (outa i (asyfm-J gen 0.0) *output*))))))
+
+(with-sound (:clipped #f :statistics #t) 
+  (let ((gen (make-asyfm 2000.0 :ratio .1 :index 1))
+	(r-env (make-env '(0 -4 1 -1) :end 20000)))
+    (run 
+     (lambda () 
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (set! (asyfm-r gen) (env r-env))
+	 (outa i (asyfm-J gen 0.0) *output*))))))
 |#
 
 (define (asyfm-I gen input)
@@ -159,7 +171,7 @@
 	 (r1 (/ 1.0 r))
 	 (index (asyfm-index gen))
 	 (modphase (* (asyfm-ratio gen) phase))
-	 (result (* (exp (* 0.5 index (+ r r1) (cos modphase)))
+	 (result (* (exp (* 0.5 index (+ r r1) (- (cos modphase) 1.0)))
 		    (cos (+ phase (* 0.5 index (- r r1) (sin modphase)))))))
     (set! (asyfm-phase gen) (+ phase input (asyfm-freq gen)))
     result))
@@ -174,5 +186,4 @@
 	 (outa i (asyfm-I gen 0.0) *output*))))))
 |#
 
-;;; P&P amp norm isn't right for the -I case
 ;;; --------------------------------------------------------------------------------

@@ -3785,27 +3785,30 @@ based on:
 
 <p>The asymmetric-fm generator provides a way around the symmetric spectra normally produced by FM.
 See  Palamin and Palamin, "A Method of Generating and Controlling Asymmetrical
-Spectra" JAES vol 36, no 9, Sept 88, p671-685.  P&P use sin(sin), but I'm using cos(sin) so
+Spectra" JAES vol 36, no 9, Sept 88, p671-685.  P&amp;P use sin(sin), but I'm using cos(sin) so
 that we get a sum of cosines, and can therefore easily normalize the peak amplitude to -1.0..1.0.
 </p>
 
 <p>"r" is the ratio between successive 
-sideband amplitudes, r &gt; 1.0 pushes energy above the carrier, r &lt; 1.0 pushes it below. (r = 1.0
-gives normal FM). 
+sideband amplitudes, r &lt; 0.0 pushes energy above the carrier, whereas r between 0.0 and 1.0 pushes it below. (r = 1.0
+gives normal FM; r can be &gt; 1.0, but the peak amps are no longer normalized).  The mirror image of r (around a given
+carrier), is produced by -1/r.
 "ratio" is the ratio between the carrier and modulator (i.e. sideband spacing). It's somewhat inconsistent
 that asymmetric-fm takes "index" (the fm-index) as its second argument, but otherwise it
-would be tricky to get time-varying indices.
+would be tricky to get time-varying indices.  In this instrument we sweep "r" with an envelope:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (asy beg dur freq amp index :optional (r 1.0) (ratio 1.0))
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (asy beg dur freq amp index :optional (ratio 1.0))
   (let* ((st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
          (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
-         (asyf (<em class=red>make-asymmetric-fm</em> :r r :ratio ratio :frequency freq)))
+         (r-env (<a class=quiet href="#make-env">make-env</a> '(0 -1 1 -20) :duration dur))
+         (asyf (<em class=red>make-asymmetric-fm</em> :ratio ratio :frequency freq)))
     (do ((i st (1+ i))) 
         ((= i nd))
-      (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>asymmetric-fm</em> asyf index 0.0)) *output*))))
+      (set! (<a class=quiet href="#mus-scaler">mus-scaler</a> asyf) (<a class=quiet href="#env">env</a> r-env)) ; this sets "r"
+      (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>asymmetric-fm</em> asyf index)) *output*))))
 </pre>
 </td></tr></table>
 

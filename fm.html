@@ -925,7 +925,7 @@ example:
 
 <p>Palamin et al in "A Method of Generating and Controlling Musical Asymmetrical Spectra" started at 
 the same point (the expansion of simple FM), added a factor r^n to each sideband, and then worked 
-backwards to get the exponential modulation that would produce that spectrum:
+backwards to get:
 </p>
 
 <!-- LATEX e^{(\frac{B}{2}(r-\frac{1}{r})\cos \omega_{m}t)}\sin(\omega_{c}t+\frac{B}{2}(r+\frac{1}{r})\sin \omega_{m}t)=\sum r^{n}J_{n}(B)\sin(\omega_{c}t+n\omega_{m}t) -->
@@ -938,6 +938,81 @@ backwards to get the exponential modulation that would produce that spectrum:
          = <img alt="Sum" align=middle src="sum.png"> r<sup>n</sup>J<sub>n</sub>(B)sin(w<sub>c</sub>t + nw<sub>m</sub>t)
 </pre>
 -->
+
+<p>But the peak amplitude of this formula is hard to predict; we'd rather have a sum of cosines:
+</p>
+
+<!--LATEX: e^{(\frac{B}{2}(r-\frac{1}{r})\cos \omega_{m}t)}\cos(\omega_{c}t+\frac{B}{2}(r+\frac{1}{r})\sin \omega_{m}t)=\sum_{n=-\infty}^{\infty} r^{n}J_{n}(B)\cos(\omega_{c}t+n\omega_{m}t) -->
+
+<img src="fmeq47.png" alt="better asy" hspace=20>
+
+<!-- LATEX: e^{\frac{B}{2}\big(r-\frac{1}{r}\big)}=\sum_{n=-\infty}^{\infty} r^{n}J_{n}(B) -->
+
+<p>so we can use</p>
+
+<img src="fmeq48.png" "sum of Js" hspace=20>
+
+<p>to normalize the output to -1.0 to 1.0.
+The spectrum produced for a given "r" is mirrored by -1/r (remembering that 
+<img src="fmeq14.png" alt="J - J" align=absmiddle>).  
+</p>
+
+<!-- LATEX:
+\documentclass{amsart}
+\begin{document}
+\thispagestyle{empty}
+\begin{align*}
+& 0.5^{-5}J_{-5}(2.0) = -0.225 \Rightarrow -0.160 \quad \textrm{(normalized to match fft)} \\
+& 0.5^{-4}J_{-4}(2.0) = 0.544 \Rightarrow 0.385 \\
+& 0.5^{-3}J_{-3}(2.0) = -1.031 \Rightarrow -0.730 \\
+& 0.5^{-2}J_{-4}(2.0) = 1.411 \Rightarrow 1.0 \\
+& 0.5^{-1}J_{-4}(2.0) = -1.153 \Rightarrow -0.817 \\
+& 0.5^{0}J_{0}(2.0) = 0.224 \Rightarrow 0.159 \\
+& 0.5^{1}J_{1}(2.0) = 0.288 \Rightarrow 0.204 \\
+& 0.5^{2}J_{2}(2.0) = 0.088 \Rightarrow 0.062 \\
+\end{align*}
+\end{document}
+-->
+
+<table border=1 hspace=20 cellpadding=3>
+<tr><td bgcolor="#f6f8ff">
+<pre>
+Asymmetric FM with index=2.0, r=0.5:
+
+(using the asymmetric-fm generator in CLM)
+
+
+(with-sound ()
+  (let ((gen (make-asymmetric-fm 2000.0 
+                       :ratio .2 :r 0.5)))
+    (run 
+      (lambda ()
+        (do ((i 0 (1+ i)))
+	    ((= i 20000))
+          (outa i (asymmetric-fm gen 2.0) 
+                *output*))))))
+</pre>
+</td>
+
+<td>
+<table border=0>
+<tr><td>
+<img src="asyfm1.png" alt="asy fm">
+</td></tr>
+<tr>
+<td>
+<img src="asyfm2.png" alt="peaks" hspace=10 vspace=10>
+</td></tr></table>
+</td></tr></table>
+
+
+<p>We can put an envelope on either the index or "r"; the index
+affects how broad the spectrum is, and "r" affects its placement relative to the carrier (giving the effect of
+a moving formant).  Here we sweep "r" from -1.0 to -20.0, with an index of 3, m/c ratio of .2, and carrier at 1000 Hz:
+</p>
+
+<img src="asyfm.png" alt="asy spectra">
+
 
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>complex FM: sin(sin+sin)</center></h5></td></tr></table>
 
