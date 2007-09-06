@@ -1441,6 +1441,7 @@ typedef struct {
   Float ratio;
   Float cosr;
   Float sinr;
+  Float one;
 } asyfm;
 
 
@@ -1468,6 +1469,10 @@ static Float set_asyfm_r(mus_any *ptr, Float val)
       gen->r = val; 
       gen->cosr = 0.5 * (val - (1.0 / val));
       gen->sinr = 0.5 * (val + (1.0 / val));
+      if ((val > 1.0) ||
+	  ((val < 0.0) && (val > -1.0)))
+	gen->one = -1.0; 
+      else gen->one = 1.0;
     }
   return(val);
 }
@@ -1519,8 +1524,8 @@ Float mus_asymmetric_fm(mus_any *ptr, Float index, Float fm)
   }
 #endif
 
-  result = exp(index * gen->cosr * (1.0 + cos(mth))) * cos(gen->phase + index * gen->sinr * sin(mth));
-  /* second index factor added 4-Mar-02 and 1.0 + cos to normalize amps 6-Sep-07 */
+  result = exp(index * gen->cosr * (gen->one + cos(mth))) * cos(gen->phase + index * gen->sinr * sin(mth));
+  /* second index factor added 4-Mar-02 and (+/-)1.0 + cos to normalize amps 6-Sep-07 */
   gen->phase += (gen->freq + fm);
   return(result);
 }
@@ -1531,7 +1536,7 @@ Float mus_asymmetric_fm_1(mus_any *ptr, Float index)
   asyfm *gen = (asyfm *)ptr;
   Float result, mth;
   mth = gen->ratio * gen->phase;
-  result = exp(index * gen->cosr * (1.0 + cos(mth))) * cos(gen->phase + index * gen->sinr * sin(mth));
+  result = exp(index * gen->cosr * (gen->one + cos(mth))) * cos(gen->phase + index * gen->sinr * sin(mth));
   /* second index factor added 4-Mar-02 */
   gen->phase += gen->freq;
   return(result);
@@ -1590,6 +1595,10 @@ mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio) /
      gen->ratio = ratio;
      gen->cosr = 0.5 * (r - (1.0 / r)); /* 0.5 factor for I/2 */
      gen->sinr = 0.5 * (r + (1.0 / r));
+     if ((r > 1.0) ||
+	 ((r < 0.0) && (r > -1.0)))
+       gen->one = -1.0; 
+     else gen->one = 1.0;
    }
  return((mus_any *)gen);
 }

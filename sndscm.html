@@ -2339,27 +2339,6 @@ phase increment, 'x' the current phase.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- asymfm -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>make-asyfm</em> <code>:key (frequency 440.0) (initial-phase 0.0) (ratio 1.0) (r 1.0) (index 1.0)</code><br>
-<em class=emdef>asyfm-J</em> <code>gen input</code><br>
-<em class=emdef>asyfn-I</em> <code>gen input</code>
-</td></tr><tr><td></td><td>
-These functions are    
-versions of the CLM <a href="sndclm.html#asymmetric-fm">asymmetric-fm</a> generator.
-asyfm-I is the Modifier Bessel version of this generator.  In both
-cases, the 'r' parameter is accessible, so it's easy to experiment with 
-the moving formant idea mentioned in the original article ('r' should be greater than 0.0).
-<pre>
-     (let ((gen (make-asyfm :frequency 2000 :ratio .1))
-           (e (<a class=quiet href="sndclm.html#make-env">make-env</a> '(0 0.5 1 1.5) :end (frames))))
-       (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (n)
-                      (set! (asyfm-r gen) (<a class=quiet href="sndclm.html#env">env</a> e))
-                      (asyfm-J gen 0.0))))
-</pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- ssb-bank -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="ssbbank">ssb-bank</a> <code>old-freq new-freq pairs-1 :optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos</code><br>

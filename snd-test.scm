@@ -14523,6 +14523,7 @@ EDITS: 2
 (if (not (provided? 'snd-bird.scm)) (load "bird.scm"))
 (if (not (provided? 'snd-v.scm)) (load "v.scm"))
 (if (not (provided? 'snd-numerics.scm)) (load "numerics.scm"))
+(if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
 
 (def-clm-struct sa1 (freq 0.0 :type float) (coscar #f :type clm) (sincar #f :type clm) (dly #f :type clm) (hlb #f :type clm))
 
@@ -18522,7 +18523,7 @@ EDITS: 2
       (if (fneq (mus-frequency gen) 440.0) (snd-display ";asymmetric-fm frequency: ~F?" (mus-frequency gen)))
       (set! (mus-frequency gen) 100.0)
       (if (fneq (mus-frequency gen) 100.0) (snd-display ";set! asymmetric-fm frequency: ~F?" (mus-frequency gen)))
-      (if (or (fneq (vct-ref v0 2) 0.248) (fneq (vct-ref v0 8) .843)) (snd-display ";asymmetric-fm output: ~A" v0))
+      (if (or (fneq (vct-ref v0 2) 0.969) (fneq (vct-ref v0 8) .538)) (snd-display ";asymmetric-fm output: ~A" v0))
       (if (fneq (mus-scaler gen) 1.0) (snd-display ";mus-scaler (r) asymmetric-fm: ~A" (mus-scaler gen)))
       (set! (mus-scaler gen) 0.5)
       (if (fneq (mus-scaler gen) 0.5) (snd-display ";mus-scaler (set r) asymmetric-fm: ~A" (mus-scaler gen)))
@@ -18533,7 +18534,7 @@ EDITS: 2
     (test-gen-equal (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0 0.0 3))
     
     (let ((gen1 (make-asymmetric-fm 1000 0 1.0 0.1))
-	  (gen2 (make-oscil 1000))
+	  (gen2 (make-oscil 1000 :initial-phase (* 0.5 pi)))
 	  (happy #t))
       (do ((i 0 (1+ i)))
 	  ((or (not happy) (= i 100)))
@@ -18544,10 +18545,26 @@ EDITS: 2
 		(snd-display ";asymmetric-fm 1: ~A: os: ~A ss: ~A" i os ss)
 		(set! happy #f))))))
     
+    (for-each
+     (lambda (index)
+       (for-each
+	(lambda (r)
+	  (let ((peak (vct-peak (with-sound (:clipped #f :output (make-vct 1000))
+					    (let ((gen (make-asymmetric-fm 2000.0 :ratio .1 :r r)))
+					      (run 
+					       (lambda () 
+						 (do ((i 0 (1+ i)))
+						     ((= i 1000))
+						   (outa i (asymmetric-fm gen index) *output*)))))))))
+	    (if (> (abs (- peak 1.0)) .1)
+		(snd-display ";asymmetric-fm peak: ~A, index: ~A, r: ~A" peak index r))))
+	(list -10.0 -1.5 -0.5 0.5 1.0 1.5 10.0)))
+     (list 1.0 3.0 10.0))
+
     (let ((vct0 (make-vct 2048))
 	  (vct1 (make-vct 2048))
 	  (gen3 (make-asymmetric-fm 1000 0 1.0 0.2))
-	  (gen4 (make-oscil 1000))
+	  (gen4 (make-oscil 1000 (* 0.5 pi)))
 	  (gen5 (make-oscil 200))
 	  (fm1 (hz->radians (* 1.0 .2 1000)))) ; make notions of "index" match
       (do ((i 0 (1+ i)))
@@ -18560,9 +18577,9 @@ EDITS: 2
 	(do ((i 1 (1+ i)))
 	    ((or (not happy)
 		 (= i 512)))
-	  (if (ffneq (vct-ref spectr1 i) (vct-ref spectr2 i))
+	  (if (> (abs (- (vct-ref spectr1 i) (vct-ref spectr2 i))) .02)
 	      (begin
-		(snd-display ";asymmetric-fm 2: ~A: ~A ~A" (* i (/ 22050 2048)) (vct-ref spectr1 i) (vct-ref spectr2 i))
+		(snd-display ";asymmetric-fm 2: ~A: ~A ~A" i (vct-ref spectr1 i) (vct-ref spectr2 i))
 		(set! happy #f))))))
     
     (let ((gen (make-asymmetric-fm 40.0 0.0 1.0 0.1))
@@ -18581,11 +18598,11 @@ EDITS: 2
 	       (sr (* 0.5 (+ r (/ 1.0 r))))
 	       (th a)
 	       (mth (* ratio th))
-	       (val2 (* (exp (* index cr (cos mth)))
-			(sin (+ th (* index sr (sin mth)))))))
+	       (val2 (* (exp (* index cr (+ 1.0 (cos mth))))
+			(cos (+ th (* index sr (sin mth)))))))
 	  (if (or (fneq val1 val2)
 		  (fneq val1 val3))
-	      (snd-display ";asyfm by hand: ~A: ~A ~A" i val1 val2 val3)))))
+	      (snd-display ";asyfm by hand: ~A: ~A ~A ~A" i val1 val2 val3)))))
     
     (let ((vct0 (make-vct 2048))
 	  (vct1 (make-vct 2048))

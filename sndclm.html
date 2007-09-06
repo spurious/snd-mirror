@@ -3790,8 +3790,8 @@ that we get a sum of cosines, and can therefore easily normalize the peak amplit
 </p>
 
 <p>"r" is the ratio between successive 
-sideband amplitudes, r &lt; 0.0 pushes energy above the carrier, whereas r between 0.0 and 1.0 pushes it below. (r = 1.0
-gives normal FM; r can be &gt; 1.0, but the peak amps are no longer normalized).  The mirror image of r (around a given
+sideband amplitudes, r &lt; 0.0 or r &gt; 1.0 pushes energy above the carrier, whereas r between 0.0 and 1.0 pushes it below. (r = 1.0
+gives normal FM).  The mirror image of r (around a given
 carrier), is produced by -1/r.
 "ratio" is the ratio between the carrier and modulator (i.e. sideband spacing). It's somewhat inconsistent
 that asymmetric-fm takes "index" (the fm-index) as its second argument, but otherwise it
@@ -3812,7 +3812,7 @@ would be tricky to get time-varying indices.  In this instrument we sweep "r" wi
 </pre>
 </td></tr></table>
 
-<p>For the other kind of asymmetric-fm, and for asymmetric spectra via "single sideband FM", see dsp.scm.
+<p>For the other kind of asymmetric-fm see generators.scm, and for asymmetric spectra via "single sideband FM" see dsp.scm.
 </p>
 <br><br>
 

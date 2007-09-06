@@ -118,6 +118,7 @@
 
 
 ;;; what happens here if "n" changes?
+
 ;;; --------------------------------------------------------------------------------
 
 ;;; asymmetric fm gens
@@ -137,8 +138,12 @@
 	 (r (asyfm-r gen))
 	 (r1 (/ 1.0 r))
 	 (index (asyfm-index gen))
+	 (one (if (or (> r 1.0) 
+		      (and (< r 0.0)
+			   (> r -1.0)))
+		  -1.0 1.0))
 	 (modphase (* (asyfm-ratio gen) phase))
-	 (result (* (exp (* 0.5 index (- r r1) (+ 1.0 (cos modphase)))) ; 1.0 added for peak amp normalization
+	 (result (* (exp (* 0.5 index (- r r1) (+ one (cos modphase))))
 		    (cos (+ phase (* 0.5 index (+ r r1) (sin modphase))))))) ; use cos, not sin, to get predictable amp
     (set! (asyfm-phase gen) (+ phase input (asyfm-freq gen)))
     result))
@@ -161,6 +166,30 @@
 	   ((= i 20000))
 	 (set! (asyfm-r gen) (env r-env))
 	 (outa i (asyfm-J gen 0.0) *output*))))))
+
+(define (val index r)
+  (let ((sum 0.0))
+    (do ((i -20 (1+ i)))
+	((= i 21))
+      (set! sum (+ sum (* (expt r i) (bes-jn i index)))))
+    (let ((norm (exp (* 0.5 index (- r (/ 1.0 r))))))
+      (list sum norm))))
+
+(for-each
+ (lambda (index)
+   (for-each
+    (lambda (r)
+      (let ((peak (vct-peak (with-sound (:clipped #f :output (make-vct 1000))
+					(let ((gen (make-asymmetric-fm 2000.0 :ratio .1 :r r)))
+					  (run 
+					   (lambda () 
+					     (do ((i 0 (1+ i)))
+						 ((= i 1000))
+					       (outa i (asymmetric-fm gen index) *output*)))))))))
+	(if (> (abs (- peak 1.0)) .1)
+	    (snd-display ";asymmetric-fm peak: ~A, index: ~A, r: ~A" peak index r))))
+    (list -10.0 -1.5 -0.5 0.5 1.0 1.5 10.0)))
+ (list 1.0 3.0 10.0))
 |#
 
 (define (asyfm-I gen input)
