@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 40
-#define MUS_DATE "8-Aug-07"
+#define MUS_REVISION 41
+#define MUS_DATE "6-Sep-07"
 
 /*
+ * 6-Sep:      changed asymmetric-fm to use cos(sin) and added amplitude normalization.
  * 6-Aug:      mus_autocorrelate, mus_correlate.
  * 3-Aug:      blackman5..10 and Rife-Vincent (RV2..4 fft), mlt-sine windows.
  * 16-July:    removed start arg from mus_make_env (see mus_make_env_with_start).

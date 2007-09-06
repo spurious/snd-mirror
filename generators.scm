@@ -118,4 +118,61 @@
 ;;; what happens here if "n" changes?
 ;;; --------------------------------------------------------------------------------
 
+;;; asymmetric fm gens
 
+(def-clm-struct (asyfm :make-wrapper (lambda (gen)
+				       (set! (asyfm-freq gen) (hz->radians (asyfm-frequency gen)))
+				       (set! (asyfm-phase gen) (asyfm-initial-phase gen))
+				       gen))
+  (frequency 0.0) (initial-phase 0.0) 
+  (ratio 1.0) (r 1.0) (index 1.0)
+  (freq 0.0) (phase 0.0))
+
+(define (asyfm-J gen input)
+  "(asyfm-J gen input) is the same as the CLM asymmetric-fm generator (index=1.0), set r != 1.0 to get the asymmetric spectra"
+  (declare (gen asyfm) (input float))
+  (let* ((phase (asyfm-phase gen))
+	 (r (asyfm-r gen))
+	 (r1 (/ 1.0 r))
+	 (index (asyfm-index gen))
+	 (modphase (* (asyfm-ratio gen) phase))
+	 (result (* (exp (* 0.5 index (- r r1) (+ 1.0 (cos modphase)))) ; 1.0 added for peak amp normalization
+		    (cos (+ phase (* 0.5 index (+ r r1) (sin modphase))))))) ; use cos, not sin, to get predictable amp
+    (set! (asyfm-phase gen) (+ phase input (asyfm-freq gen)))
+    result))
+
+#|
+(with-sound (:clipped #f :statistics #t) 
+  (let ((gen (make-asyfm 2000.0 :ratio .1))) 
+    (run 
+     (lambda () 
+       (do ((i 0 (1+ i)))
+	   ((= i 1000))
+	 (outa i (asyfm-J gen 0.0) *output*))))))
+|#
+
+(define (asyfm-I gen input)
+  "(dsp-asyfm-I gen input) is the I0 case of the asymmetric-fm generator (dsp.scm)"
+  (declare (gen asyfm) (input float))
+  (let* ((phase (asyfm-phase gen))
+	 (r (asyfm-r gen))
+	 (r1 (/ 1.0 r))
+	 (index (asyfm-index gen))
+	 (modphase (* (asyfm-ratio gen) phase))
+	 (result (* (exp (* 0.5 index (+ r r1) (cos modphase)))
+		    (cos (+ phase (* 0.5 index (- r r1) (sin modphase)))))))
+    (set! (asyfm-phase gen) (+ phase input (asyfm-freq gen)))
+    result))
+
+#|
+(with-sound (:clipped #f :statistics #t) 
+  (let ((gen (make-asyfm 2000.0 :ratio .1))) 
+    (run 
+     (lambda () 
+       (do ((i 0 (1+ i)))
+	   ((= i 1000))
+	 (outa i (asyfm-I gen 0.0) *output*))))))
+|#
+
+;;; P&P amp norm isn't right for the -I case
+;;; --------------------------------------------------------------------------------

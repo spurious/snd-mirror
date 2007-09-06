@@ -1772,11 +1772,13 @@ static bool apply_controls(apply_state *ap)
 	      if (apply_dur == 0)
 		apply_dur = CURRENT_SAMPLES(sp->chans[curchan]) - apply_beg;
 	      break;
+
 	    case APPLY_TO_SOUND:     
 	      ap->hdr->chans = sp->nchans; 
 	      if (apply_dur == 0)
 		apply_dur = CURRENT_SAMPLES(sp->chans[0]) - apply_beg;
 	      break;
+
 	    case APPLY_TO_SELECTION: 
 	      ap->hdr->chans = selection_chans();
 	      if (ap->hdr->chans <= 0) return(false);
@@ -1945,6 +1947,7 @@ static bool apply_controls(apply_state *ap)
 			}
 		    }
 		  break;
+
 		case APPLY_TO_CHANNEL: 
 		  if (sp->selected_channel != NO_SELECTION) 
 		    curchan = sp->selected_channel;
@@ -1955,6 +1958,7 @@ static bool apply_controls(apply_state *ap)
 					     DELETE_ME, ap->origin);
 		  update_graph(sp->chans[curchan]);
 		  break;
+
 		case APPLY_TO_SELECTION:
 		  if (selection_chans() > 1) 
 		    remember_temp(ap->ofile, selection_chans());

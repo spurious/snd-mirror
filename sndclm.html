@@ -19,6 +19,21 @@
 	A.quiet:hover {text-decoration:underline}
 	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black}
 -->
+
+<!-- the latex stuff is always embedded in:
+
+\documentclass{amsart}
+\begin{document}
+\thispagestyle{empty}
+\small
+\begin{displaymath}
+...
+\end{displaymath}
+\end{document}
+
+where the "displaymath" lines change to fit the situation
+-->
+
 </style>
 </head>
 <body bgcolor=white>
@@ -3744,17 +3759,34 @@ generator).
 <tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
 </table>
 <br>
+
+<!-- LATEX: 
+original:
+e^{(\frac{B}{2}(r-\frac{1}{r})\cos \omega_{m}t)}\sin(\omega_{c}t+\frac{B}{2}(r+\frac{1}{r})\sin \omega_{m}t)=\sum_{n=-\infty}^{\infty} r^{n}J_{n}(B)\sin(\omega_{c}t+n\omega_{m}t)
+my version (for predicatable peak amp):
+e^{(\frac{B}{2}(r-\frac{1}{r})\cos \omega_{m}t)}\cos(\omega_{c}t+\frac{B}{2}(r+\frac{1}{r})\sin \omega_{m}t)=\sum_{n=-\infty}^{\infty} r^{n}J_{n}(B)\cos(\omega_{c}t+n\omega_{m}t)
+
+original:
+e^{(\frac{B}{2}(r+\frac{1}{r})\cos \omega_{m}t)}\sin(\omega_{c}t+\frac{B}{2}(r-\frac{1}{r})\sin \omega_{m}t)=\sum_{n=-\infty}^{\infty} r^{n}I_{n}(B)\sin(\omega_{c}t+n\omega_{m}t)
+my version:
+e^{(\frac{B}{2}(r+\frac{1}{r})\cos \omega_{m}t)}\cos(\omega_{c}t+\frac{B}{2}(r-\frac{1}{r})\sin \omega_{m}t)=\sum_{n=-\infty}^{\infty} r^{n}I_{n}(B)\cos(\omega_{c}t+n\omega_{m}t)
+
+here's the complicated case:
+e^{\big( \big(\frac{B}{2}\big(r+\frac{1}{r}\big)\cos \omega_{m}t\big) - \frac{1}{2} \ln \big(I_{0}\big(B\big(r+\frac{1}{r}\big)\big)\big) \big)} \sin\big(\omega_{c}t+\frac{B}{2}\big(r-\frac{1}{r}\big)\sin \omega_{m}t\big)=\frac{1}{\sqrt{I_{0}(B(r+\frac{1}{r}))}} \sum r^{n}I_{n}(B)\sin(\omega_{c}t+n\omega_{m}t)
+ -->
+
 <pre>
 based on:
-<!-- LATEX: e^{(\frac{B}{2}(r-\frac{1}{r})\cos \omega_{m}t)}\sin(\omega_{c}t+\frac{B}{2}(r+\frac{1}{r})\sin \omega_{m}t)=\sum r^{n}J_{n}(B)\sin(\omega_{c}t+n\omega_{m}t) -->
-<img src="sceq10.png" alt="e sin">
+
+<img src="sceq10.png" alt="e sin"><br>
+<img src="sceq22.png" alt="I form">
 </pre>
 <br clear=left>
 
 <p>The asymmetric-fm generator provides a way around the symmetric spectra normally produced by FM.
 See  Palamin and Palamin, "A Method of Generating and Controlling Asymmetrical
-Spectra" JAES vol 36, no 9, Sept 88, p671-685:  this is another extension of
-the <a href="#sine-summation">sine-summation</a> and <a href="#sum-of-cosines">sum-of-cosines</a> approach.
+Spectra" JAES vol 36, no 9, Sept 88, p671-685.  P&P use sin(sin), but I'm using cos(sin) so
+that we get a sum of cosines, and can therefore easily normalize the peak amplitude to -1.0..1.0.
 </p>
 
 <p>"r" is the ratio between successive 
@@ -3763,7 +3795,6 @@ gives normal FM).
 "ratio" is the ratio between the carrier and modulator (i.e. sideband spacing). It's somewhat inconsistent
 that asymmetric-fm takes "index" (the fm-index) as its second argument, but otherwise it
 would be tricky to get time-varying indices.
-The generator's output amplitude is not always easy to predict.  
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>

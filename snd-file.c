@@ -367,29 +367,35 @@ void snd_sort(int sorter, sort_info **data, int len)
     case SORT_A_TO_Z: 
       qsort((void *)data, len, sizeof(sort_info *), sort_a_to_z);
       break;
+
     case SORT_Z_TO_A: 
       qsort((void *)data, len, sizeof(sort_info *), sort_z_to_a);
       break;
+
     case SORT_NEW_TO_OLD:
       for (i = 0; i < len; i++) 
 	data[i]->time = file_write_date(data[i]->full_filename);
       qsort((void *)data, len, sizeof(sort_info *), sort_new_to_old);
       break;
+
     case SORT_OLD_TO_NEW:
       for (i = 0; i < len; i++) 
 	data[i]->time = file_write_date(data[i]->full_filename);
       qsort((void *)data, len, sizeof(sort_info *), sort_old_to_new);
       break;
+
     case SORT_SMALL_TO_BIG:
       for (i = 0; i < len; i++)
 	data[i]->samps = file_bytes(data[i]->full_filename);
       qsort((void *)data, len, sizeof(sort_info *), sort_small_to_big);
       break;
+
     case SORT_BIG_TO_SMALL:
       for (i = 0; i < len; i++)
 	data[i]->samps = file_bytes(data[i]->full_filename);
       qsort((void *)data, len, sizeof(sort_info *), sort_big_to_small);
       break;
+
     default:
     case SORT_XEN:
       /* sorter is SORT_XEN + index into file_sorters list */
@@ -1607,6 +1613,7 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
   int i, fd;
   off_t len;
   /* we've already checked that filename exists */
+
   hdr = make_file_info_1(filename);
   sp = make_basic_snd_info(hdr->chans);
   sp->nchans = hdr->chans;
@@ -1618,6 +1625,7 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
   sp->index = TEMP_SOUND_INDEX;
   sp->sgx = NULL;
   len = (hdr->samples) / (hdr->chans);
+
   for (i = 0; i < sp->nchans; i++)
     {
       cp = make_chan_info(NULL, i, sp);
@@ -2433,26 +2441,31 @@ void snd_encode(int type, const char *input_filename, const char *output_filenam
       command = mus_format("%s %s -o %s", PATH_OGGENC, input_filename, output_filename);
       break;
 #endif
+
 #if HAVE_FLAC
     case MUS_FLAC: 
       command = mus_format("%s %s -o %s", PATH_FLAC, input_filename, output_filename);
       break;
 #endif
+
 #if HAVE_SPEEX
     case MUS_SPEEX:
       command = mus_format("%s %s %s", PATH_SPEEXENC, input_filename, output_filename);
       break;
 #endif
+
 #if HAVE_TTA
     case MUS_TTA:
       command = mus_format("%s -e %s -o %s", PATH_TTA, input_filename, output_filename);
       break;
 #endif
+
 #if HAVE_WAVPACK
     case MUS_WAVPACK:
       command = mus_format("%s %s -o %s", PATH_WAVPACK, input_filename, output_filename);
       break;
 #endif
+
     default: 
       break;
     }

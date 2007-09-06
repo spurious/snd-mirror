@@ -1432,6 +1432,8 @@ mus_any *mus_make_sum_of_sines(int sines, Float freq, Float phase)
 
 /* ---------------- asymmetric-fm ---------------- */
 
+/* changed from sin(sin) to cos(sin) and added amplitude normalization 6-Sep-07 */
+
 typedef struct {
   mus_any_class *core;
   Float r;
@@ -1517,8 +1519,8 @@ Float mus_asymmetric_fm(mus_any *ptr, Float index, Float fm)
   }
 #endif
 
-  result = exp(index * gen->cosr * cos(mth)) * sin(gen->phase + index * gen->sinr * sin(mth));
-  /* second index factor added 4-Mar-02 */
+  result = exp(index * gen->cosr * (1.0 + cos(mth))) * cos(gen->phase + index * gen->sinr * sin(mth));
+  /* second index factor added 4-Mar-02 and 1.0 + cos to normalize amps 6-Sep-07 */
   gen->phase += (gen->freq + fm);
   return(result);
 }
@@ -1529,7 +1531,7 @@ Float mus_asymmetric_fm_1(mus_any *ptr, Float index)
   asyfm *gen = (asyfm *)ptr;
   Float result, mth;
   mth = gen->ratio * gen->phase;
-  result = exp(index * gen->cosr * cos(mth)) * sin(gen->phase + index * gen->sinr * sin(mth));
+  result = exp(index * gen->cosr * (1.0 + cos(mth))) * cos(gen->phase + index * gen->sinr * sin(mth));
   /* second index factor added 4-Mar-02 */
   gen->phase += gen->freq;
   return(result);
