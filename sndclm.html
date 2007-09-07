@@ -80,7 +80,7 @@ note lists and instruments are described in sndscm.html.
 
 <tr><td colspan=3><center><a href="#introduction">Introduction</a></center></td></tr>
 
-<tr><td colspan=3><center><a href="#generators">Generators</a></center></td></tr>
+<tr><td colspan=3><center><a href="#generators">Built-in Generators</a></center></td></tr>
 
 <tr><td width=20 bgcolor="#f6f8ff"></td><td>
 <table border=0 cellpadding=0>
@@ -134,6 +134,8 @@ note lists and instruments are described in sndscm.html.
   <tr><td><a href="#waveshapedoc">waveshape</a></td><td></td><td>waveshaping</td></tr>
 </table>
 </td></tr>
+
+<tr><td colspan=3><center><a href="#othergenerators">Other Generators</a></center></td></tr>
 
 <tr><td colspan=3><center><a href="#functions">Functions</a></center></td></tr>
 
@@ -1840,6 +1842,8 @@ For example, here is a generator based on the <a href="sndscm.html#sumofnsines">
 &\sum_{k=1}^{n}(-1)^{k+1}\sin(2k-1)x = (-1)^{n+1}\frac{\sin 2nx}{2\cos x} \\
 &\sum_{k=1}^{n-1}k\sin kx=\frac{\sin nx}{4 \sin^{2}\frac{x}{2}} - \frac{n \cos \frac{2n-1}{2}x}{2\sin\frac{x}{2}} \\
 &\sum_{k=1}^{n-1}k\cos kx=\frac{n\sin\frac{2n-1}{2}x}{2\sin\frac{x}{2}} - \frac{1-\cos nx}{4\sin^{2}\frac{x}{2}} \\
+&\sum_{k=1}^{\infty} \frac{\sin^{2k} x}{k} = -2 \ln \cos x
+
 &\sum_{k=1}^{n-1}p^{k}\sin kx=\frac{p\sin x - p^{n}\sin nx + p^{n+1}\sin(n-1)x}{1-2p\cos x+p^{2}} \\
 &\sum_{k=0}^{n-1}p^{k}\cos kx=\frac{1-p\cos x - p^{n}\cos nx + p^{n+1}\cos(n-1)x}{1-2p\cos x + p^{2}} \\
 &\sum_{k=1}^{\infty}p^{k}\sin kx=\frac{p\sin x}{1-2p\cos x + p^{2}} \\
@@ -1865,6 +1869,12 @@ For example, here is a generator based on the <a href="sndscm.html#sumofnsines">
 &\sum_{k=1}^{\infty} \frac{a^{2k}\sin 2kx}{(2k)!} = \sinh(a \cos x) \sin (a \sin x) & (a^{2}<1) \\
 &\frac{1}{a} + 2a \sum_{k=1}^{\infty} \frac{\cos kx}{a^{2}+k^{2}} = \pi \frac{\cosh a(\pi-x)}{\sinh a\pi} & (0 \leq x \leq 2\pi)\\
 \end{align*}
+
+sceq23:
+& \ln (1 - 2xt + t^{2})^{-1} = 2 \sum_{n=1}^{\infty} \frac{t^{n}}{n} T_{n}(x) \\
+& (1 - 2xt + t^{2})^{-1} = \frac{1}{\sqrt{1 - x^{2}}} \sum_{n=0}^{\infty} t^{n} U_{n+1}(x) \\
+& e^{z cos x}J_{\nu-\frac{1}{2}}(z \sin x) = \frac{\Gamma(\nu)}{\Gamma(\frac{1}{2})}(2 \sin x)^{\nu-\frac{1}{2}} \sum_{k=0}^{\infty}\frac{z^{\nu+k-\frac{1}{2}}}{\Gamma(2\nu + k)} \mathrm{C}^{\nu}_{k}(\cos x)
+
 -->
 
 <table border=1 hspace=20 vspace=10><tr><td>
@@ -1880,7 +1890,7 @@ For example, here is a generator based on the <a href="sndscm.html#sumofnsines">
 </td>
 </tr>
 
-<tr><td colspan=3 bgcolor="#eefdee"><center>from Gradshteyn and Ryzhik, "Table of Integrals...", 1.341.., 1.352.., 1.447.., 1.461.</center></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>from Gradshteyn and Ryzhik, "Table of Integrals, Series, and Products", 1.341.., 1.352.., 1.447.., 1.461, 1.518.</center></td></tr>
 <tr><td colspan=3 height=20></td></tr>
 
 <tr><td colspan=3><img src="sceq7.png" alt="kosines" align=absmiddle hspace=10></td></tr>
@@ -1890,17 +1900,22 @@ For example, here is a generator based on the <a href="sndscm.html#sumofnsines">
 <tr><td><img src="sceq20.png" alt="more sums"></td><td></td>
 <td><img src="sceq21.png" alt="more sums"></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>from Jolley, "Summation of Series", 521 587 620 635 638 728</center></td></tr>
+<tr><td colspan=3 height=20></td></tr>
+
+<tr><td colspan=2><img src="sceq23.png" alt="more sums"></td><td></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>from Wong and Guo, "Special Functions"</center></td></tr>
 
 </table>
 
 </td></tr></table>
 
-<!-- PERHAPS: Bateman -->
+<!-- PERHAPS: Bateman, Askey&Roy, Watson -->
 
 <p>
 A few of these exist as generators, but, as far as I know, most have never been explored.
-It is not hard to play around with formulas like these (and these are just a fraction
-of the possibilities).  Take the last one in the G&amp;R section:
+Don't shy away from the sums to infinity just because you've heard shouting about "band-limited waveforms" -- FM is also such a sum.
+It is not hard to goof around with formulas like these;
+take the last one in the G&amp;R section:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -1952,10 +1967,14 @@ of the possibilities).  Take the last one in the G&amp;R section:
 </pre>
 
 <p>which can be folded into the original at no run-time cost.  See generators.scm for
-some of these in an undigested state.
+some of these in an undigested state.  As J. A. Moorer and Marc Le Brun pointed out
+eons ago, there are many more such formulas "buried in reference works".  Well, they've
+done nobody any good being buried for a generation, so I say: dig them up!  If
+you know of any curious formula, anything that might trigger an interesting train of
+reflection, send it to me, and I'll add it to this collection.  I think there are at
+least a dozen people in the world (I can count three anyway) who are interested,
+and at least one of them is allergic to book dust.  You too can save the world.
 </p>
-
-<!-- TODO: doc/test (and finish...) generators.scm -->
 
 <br><br>
 
@@ -3792,7 +3811,7 @@ that we get a sum of cosines, and can therefore easily normalize the peak amplit
 <p>"r" is the ratio between successive 
 sideband amplitudes, r &lt; 0.0 or r &gt; 1.0 pushes energy above the carrier, whereas r between 0.0 and 1.0 pushes it below. (r = 1.0
 gives normal FM).  The mirror image of r (around a given
-carrier), is produced by -1/r.
+carrier) is produced by -1/r.
 "ratio" is the ratio between the carrier and modulator (i.e. sideband spacing). It's somewhat inconsistent
 that asymmetric-fm takes "index" (the fm-index) as its second argument, but otherwise it
 would be tricky to get time-varying indices.  In this instrument we sweep "r" with an envelope:
@@ -4305,6 +4324,19 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 
 
 
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2>Other Generators</h2></td></tr></table>
+<A NAME="othergenerators"></A>
+
+<!-- ---------------------------------------- OTHER GENERATORS ---------------------------------------- -->
+
+<p>not yet written... (generators.scm, etc)
+</p>
+
+<!-- TODO: other generators doc -->
+
+
+<br><br>
+
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2>Functions</h2></td></tr></table>
 <A NAME="genericfunctions"></A>
 
@@ -4382,7 +4414,7 @@ determines how many vct elements are printed by mus-describe.
 
 <!-- ---------------------------------------- FUNCTIONS ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3><A class=def NAME="functions">Other functions</a></h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3><A class=def NAME="functions">Other Functions</a></h3></center></td></tr></table>
 
 <p>There are several functions closely tied to the generators and instruments.
 </p>

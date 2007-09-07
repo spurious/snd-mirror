@@ -117,7 +117,7 @@
 |#
 
 
-;;; what happens here if "n" changes?
+;;; TODO: what happens here if "n" changes?
 
 ;;; --------------------------------------------------------------------------------
 
@@ -214,5 +214,8 @@
 	   ((= i 1000))
 	 (outa i (asyfm-I gen 0.0) *output*))))))
 |#
+
+;;; TODO: what about cos(cos) or sin(cos) here? (can norm be simplified?)
+;;; TODO: need to check asyfm-I amp norm
 
 ;;; --------------------------------------------------------------------------------
