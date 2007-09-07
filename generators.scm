@@ -7,6 +7,7 @@
 
 
 ;;; --------------------------------------------------------------------------------
+
 ;;; sndclm.html G&R 2nd col last row (with normalization)
 
 ;;; expcs: sum of cosines with exponentially decaying amps
@@ -60,6 +61,7 @@
 
 
 ;;; --------------------------------------------------------------------------------
+
 ;;; sndclm.html (G&R) 1st col 5th row (sum of odd sines)
 
 ;;; sum of n odd sines
@@ -215,7 +217,153 @@
 	 (outa i (asyfm-I gen 0.0) *output*))))))
 |#
 
-;;; TODO: what about cos(cos) or sin(cos) here? (can norm be simplified?)
 ;;; TODO: need to check asyfm-I amp norm
 
+
 ;;; --------------------------------------------------------------------------------
+
+;;; various kernels (see sum-of-cosines and dsp.scm)
+
+(def-clm-struct (fejer
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (fejer-n1 g) (+ 1 (fejer-n g)))
+		   (set! (fejer-incr g) (hz->radians (fejer-frequency g)))
+		   (set! (fejer-angle g) (fejer-initial-phase g))
+		   g))
+  (frequency 0.0) (initial-phase 0.0) (n 1 :type int) 
+  (n1 1 :type int)
+  (angle 0.0) (incr 0.0))
+
+(define (fejer gen fm)
+  "(fejer-pulse gen fm) produces a band-limited pulse train"
+  (declare (gen fejer) (fm float))
+
+  ;; from "Trigonometric Series" Zygmund p88 with changes suggested by Katznelson "Introduction to Harmonic Analysis" p12, and
+  ;;   scaling by an extra factor of 1/n+1 to make sure we always peak at 1.0 (I assume callers in this context are interested 
+  ;;   in the pulse-train aspect and want easily predictable peak amp).  Harmonics go as (n-i)/n+1.
+
+  (let* ((angle (fejer-angle gen))
+	 (n1 (fejer-n1 gen))
+	 (result (if (< (abs angle) 1.0e-9)
+		     1.0
+		     (let ((val (/ (sin (* 0.5 n1 angle)) 
+				   (* n1
+				      (sin (* 0.5 angle))))))
+		       (* val val)))))
+    (set! (fejer-angle gen) (+ (fejer-angle gen) fm (fejer-incr gen)))
+    result))
+
+;;; can't use two oscils here because the angles have to line up perfectly
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-fejer 100.0 :n 10)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (outa i (fejer gen 0.0) *output*))))))
+|#
+
+
+(define make-jackson make-fejer)
+
+(define (jackson gen fm)
+  "(poussin-sum angle n) produces a pulse train."
+  ;; Katznelson p16
+
+  (declare (gen fejer) (fm float))
+  (let ((val (fejer gen fm)))
+    (* val val))) ; we already normalized this to 1.0
+
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-jackson 100.0 :n 10)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (outa i (jackson gen 0.0) *output*))))))
+|#
+
+
+(def-clm-struct (poussin
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (poussin-incr g) (hz->radians (poussin-frequency g)))
+		   (set! (poussin-angle g) (poussin-initial-phase g))
+		   g))
+  (frequency 0.0) (initial-phase 0.0) (n 1 :type int)
+  (angle 0.0) (incr 0.0))
+
+
+(define (poussin gen)
+  (declare (gen poussin))
+  (let* ((angle (poussin-angle gen))
+	 (result (if (< (abs angle) 1.0e-9)
+		     1.0
+		     (let* ((n1 (+ (poussin-n gen) 1))
+			    (result1 
+			     (let ((val (/ (sin (* 0.5 n1 angle)) 
+					   (* n1
+					      (sin (* 0.5 angle))))))
+			       (* val val)))
+			    (p2n2 (+ (* 2 (poussin-n gen)) 2))
+			    (result2 
+			     (let ((val (/ (sin (* 0.5 p2n2 angle)) 
+					   (* p2n2
+					      (sin (* 0.5 angle))))))
+			       (* val val))))
+		       (- (* 2 result2) result1)))))
+    (set! (poussin-angle gen) (+ (poussin-angle gen) (poussin-incr gen)))
+    result))
+    
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-poussin 100.0 :n 10)))
+    (run (lambda () (do ((i 0 (1+ i)))
+	((= i 20000))
+      (outa i (poussin gen) *output*))))))
+|#
+
+
+(def-clm-struct (legendre
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (legendre-n1 g) (+ 1 (* 2 (legendre-n g))))
+		   (set! (legendre-incr g) (hz->radians (legendre-frequency g)))
+		   (set! (legendre-angle g) (legendre-initial-phase g))
+		   g))
+  (frequency 0.0) (initial-phase 0.0) (n 1 :type int) 
+  (n1 1 :type int)
+  (angle 0.0) (incr 0.0))
+		   
+(define (legendre gen)
+  "(legendre-sum angle n) produces a band-limited pulse train"
+  ;; from Andrews, Askey, Roy "Special Functions" p 314 with my amplitude scaling
+  (declare (gen legendre))
+  (let* ((angle (legendre-angle gen))
+	 (result (if (< (abs angle) 1.0e-9)
+		     1.0
+		     (let* ((n (legendre-n gen))
+			    (n1 (legendre-n1 gen))
+			    (val (/ (sin (* angle (+ n 0.5)))
+				   (* (sin (* 0.5 angle)) n1))))
+		       (* val val)))))
+    (set! (legendre-angle gen) (+ (legendre-angle gen) (legendre-incr gen)))
+    result))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-legendre 100.0 :n 10)))
+    (run (lambda () (do ((i 0 (1+ i)))
+	((= i 20000))
+      (outa i (legendre gen) *output*))))))
+|#
+
+
+;;; --------------------------------------------------------------------------------
+

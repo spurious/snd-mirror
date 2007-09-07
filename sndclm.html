@@ -1870,17 +1870,22 @@ For example, here is a generator based on the <a href="sndscm.html#sumofnsines">
 &\frac{1}{a} + 2a \sum_{k=1}^{\infty} \frac{\cos kx}{a^{2}+k^{2}} = \pi \frac{\cosh a(\pi-x)}{\sinh a\pi} & (0 \leq x \leq 2\pi)\\
 \end{align*}
 
-sceq23:
+sceq23 (old):
 & \ln (1 - 2xt + t^{2})^{-1} = 2 \sum_{n=1}^{\infty} \frac{t^{n}}{n} T_{n}(x) \\
 & (1 - 2xt + t^{2})^{-1} = \frac{1}{\sqrt{1 - x^{2}}} \sum_{n=0}^{\infty} t^{n} U_{n+1}(x) \\
 & e^{z cos x}J_{\nu-\frac{1}{2}}(z \sin x) = \frac{\Gamma(\nu)}{\Gamma(\frac{1}{2})}(2 \sin x)^{\nu-\frac{1}{2}} \sum_{k=0}^{\infty}\frac{z^{\nu+k-\frac{1}{2}}}{\Gamma(2\nu + k)} \mathrm{C}^{\nu}_{k}(\cos x)
 
+sceq25:
+\sum_{n=0}^{\infty} r^{n} \sum_{k=0}^{\infty} \sin (k+1/2)\theta = \frac{(1+r)\sin(\theta / 2)}{(1-r)(1-2r\cos\theta + r^{2})}
+
+sceq26:
+\sum_{n=0}^{\infty} r^{n} \sum_{k=0}^{\infty} (n+1-k)\sin (k+1)\theta = \frac{\sin\theta}{(1-r)^{2}(1-2r\cos\theta + r^{2})}
 -->
 
 <table border=1 hspace=20 vspace=10><tr><td>
 <table border=0 hspace=40 vspace=10>
 <tr><td colspan=3 bgcolor="#f6f8ff"><center><h4>various sums</h4></center></td></tr>
-<tr><td colspan=3><hr></td></tr>
+
 
 <tr>
 <td><img src="sceq14.png" alt="many sums">
@@ -1891,19 +1896,32 @@ sceq23:
 </tr>
 
 <tr><td colspan=3 bgcolor="#eefdee"><center>from Gradshteyn and Ryzhik, "Table of Integrals, Series, and Products", 1.341.., 1.352.., 1.447.., 1.461, 1.518.</center></td></tr>
-<tr><td colspan=3 height=20></td></tr>
+<tr><td colspan=3 height=25></td></tr>
 
+
+<!-- too complicated!
 <tr><td colspan=3><img src="sceq7.png" alt="kosines" align=absmiddle hspace=10></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>from Askey, "Ramanujan and Hypergeometric Series"</center></td></tr>
-<tr><td colspan=3 height=20></td></tr>
+<tr><td colspan=3 height=25></td></tr>
+-->
+
 
 <tr><td><img src="sceq20.png" alt="more sums"></td><td></td>
 <td><img src="sceq21.png" alt="more sums"></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>from Jolley, "Summation of Series", 521 587 620 635 638 728</center></td></tr>
-<tr><td colspan=3 height=20></td></tr>
+<tr><td colspan=3 height=25></td></tr>
 
-<tr><td colspan=2><img src="sceq23.png" alt="more sums"></td><td></td></tr>
+
+<tr><td><img src="sceq25.png" alt="more sums"></td><td></td>
+<td><img src="sceq26.png" alt="more sums"></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>from Andrews, Askey, Roy, "Special Functions" p396</center></td></tr>
+<tr><td colspan=3 height=25></td></tr>
+
+
+<tr><td><img src="sceq23.png" alt="more sums"></td><td></td>
+<td><img src="sceq24.png" alt="more sums"></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>from Wong and Guo, "Special Functions"</center></td></tr>
+
 
 </table>
 
