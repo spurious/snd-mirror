@@ -365,5 +365,166 @@
 |#
 
 
+;;; "kosine-summation" kernel is just a form of oscil, as is cosine-summation (both in dsp.scm)
+;;; cosine-summation is a variant of the G&R 2nd col 4th row
+
+;;; SOMEDAY: move cosine-summation and kosine-summation to this file
+
+;;; TODO: from dsp: sum-of-whatever, bl-saw, bl-sq
+
+;;; TODO: make a list of the gens in dsp.scm etc that use filter or some other built-in
+
 ;;; --------------------------------------------------------------------------------
+
+;;; Jolley 2nd col 2nd row (1st row is cos tweak of this)
+
+(def-clm-struct (sinhfm
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (sinhfm-cosx g) (make-oscil (sinhfm-frequency g) (sinhfm-initial-phase g)))
+		   (set! (sinhfm-sinx g) (make-oscil (sinhfm-frequency g) (sinhfm-initial-phase g)))
+		   (if (>= (* (sinhfm-a g) (sinhfm-a g)) 1.0)
+		       (set! (sinhfm-a g) 0.9999999))
+		   g))
+  (frequency 0.0) (initial-phase 0.0) (a 0.0)
+  (cosx #f :type clm) (sinx #f :type clm))
+
+(define (sinhfm gen fm)
+  (declare (gen sinhfm))
+  (* (sinh (* (sinhfm-a gen)
+	      (oscil (sinhfm-cosx gen) fm)))
+     (cos (* (sinhfm-a gen)
+	     (oscil (sinhfm-sinx gen) fm)))))
+
+#|
+;;; odd harmonics, but we can't push the upper partials past the (2k)! range, so not very flexible
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-sinhfm 100.0 :a 0.5)))
+    (run (lambda () (do ((i 0 (1+ i)))
+	((= i 20000))
+      (outa i (sinhfm gen 0.0) *output*))))))
+|#
+
+;;; TODO: use with the cos version to make ssb version
+
+
+;;; --------------------------------------------------------------------------------
+
+;;; bess (returns bes-jn, like oscil returns sin)
+;;;   frequency here is the frequency in Hz of the damped sinusoid part of the bessel function
+
+(def-clm-struct (bess
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (bess-incr g) (hz->radians (bess-frequency g)))
+		   (set! (bess-arg g) (bess-initial-phase g))
+		   g))
+  (frequency 0.0) (initial-phase 0.0) (n 0 :type int)
+  (arg 0.0) (incr 0.0))
+
+(define (bess gen fm)
+  (declare (gen bess) (fm float))
+  (let ((result (bes-jn (bess-n gen) (bess-arg gen))))
+    (set! (bess-arg gen) (+ (bess-arg gen) (bess-incr gen) fm))
+    result))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-bess 100.0 :n 0)))
+    (run (lambda () (do ((i 0 (1+ i)))
+	((= i 1000))
+      (outa i (bess gen 0.0) *output*))))))
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen1 (make-bess 400.0 :n 1))
+	(gen2 (make-bess 400.0 :n 1))
+	(vol (make-env '(0 0 1 1 9 1 10 0) :scaler 2.0 :end 20000)))
+    (run (lambda () (do ((i 0 (1+ i)))
+	((= i 20000))
+      (outa i (bess gen1 (* (env vol) (bess gen2 0.0))) *output*))))))
+|#
+
+;;; PERHAPS: peak amp here depends on n -- should (can) we fix that?
+;;; --------------------------------------------------------------------------------
+
+;;; Jolley 1st col 2nd row
+;;;   heads toward a square wave as "a" -> 0.0 (odd harmonics, 1/k amp)
+
+(def-clm-struct (ecos 
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (ecos-osc g) (make-oscil (ecos-frequency g) (ecos-initial-phase g)))
+		   g))
+  (frequency 0.0) (initial-phase (* 0.5 pi)) (a 1.0)
+  (osc #f :type clm))
+
+(define (ecos gen fm)
+  (declare (gen ecos) (fm float))
+  (* -0.5 (atan (/ (oscil (ecos-osc gen) fm) (sinh (ecos-a gen))))))
+
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-ecos 400.0 :a 1.0)))
+    (run (lambda () (do ((i 0 (1+ i)))
+	((= i 10000))
+      (outa i (ecos gen 0.0) *output*))))))
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-ecos 400.0 :a 0.0))
+	(a-env (make-env '(0 0 1 1) :end 10000)))
+    (run (lambda () 
+	   (do ((i 0 (1+ i)))
+	       ((= i 10000))
+	     (set! (ecos-a gen) (env a-env))
+	     (outa i (ecos gen 0.0) *output*))))))
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen1 (make-ecos 400.0 :a 0.0))
+	(gen2 (make-oscil 400.0))
+	(a-env (make-env '(0 0 1 1) :end 10000)))
+    (run (lambda () 
+	   (do ((i 0 (1+ i)))
+	       ((= i 10000))
+	     (set! (ecos-a gen1) (env a-env))
+	     (outa i (ecos gen1 (* .1 (oscil gen2))) *output*))))))
+|#
+
+;;; TODO: amp depends on a -- fixup
+
+;;; G&R 2nd col 7th row is sine form of this -- perhaps that form is simpler to normalize?
+
+;;; --------------------------------------------------------------------------------
+
+;;; Jolley 1st col 3rd row -- using def-clm-struct to simplify make-*
+
+(def-clm-struct (acosum
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (acosum-osc g) (make-oscil (acosum-frequency g) (acosum-initial-phase g)))
+		   g))
+  (frequency 0.0) (initial-phase 0.0)
+  (osc #f :type clm))
+
+(define (acosum gen fm)
+  (declare (gen acosum) (fm float))
+  (let ((arg (* 2.0 (oscil (acosum-osc gen) fm))))
+    (if (>= arg 0.0)
+	(* 0.5 (acos (- 1.0 arg)))
+	(* -0.5 (acos (+ 1.0 arg))))))
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-acosum 400.0)))
+    (run (lambda ()
+	   (do ((i 0 (1+ i)))
+	       ((= i 10000))
+	     (outa i (* .3 (acosum gen 0.0)) *output*))))))
+
+
+;;; as printed in J, this is not usable -- 1-2sin can be 3 so acos will be complex -- looks like we're missing: x < pi
+;;; needs normalization and it's not right anyway -- we get odd harmonics but wrong amps
+
+;;; --------------------------------------------------------------------------------
+
 

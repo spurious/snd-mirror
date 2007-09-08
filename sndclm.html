@@ -1467,7 +1467,7 @@ we got .006).
 </td></tr></table>
 </center>
 
-<p>
+<p>Another choice is ecos in generators.scm, based on atan; as its "a" parameter approaches 0.0, you get closer to a square wave.
 Even more amusing is this algorithm:
 <img src="sceq13.png" alt="square" align=absmiddle hspace=10>
 <!-- CMJ 37 4 sept 2006 p326 -->
@@ -1842,7 +1842,7 @@ For example, here is a generator based on the <a href="sndscm.html#sumofnsines">
 &\sum_{k=1}^{n}(-1)^{k+1}\sin(2k-1)x = (-1)^{n+1}\frac{\sin 2nx}{2\cos x} \\
 &\sum_{k=1}^{n-1}k\sin kx=\frac{\sin nx}{4 \sin^{2}\frac{x}{2}} - \frac{n \cos \frac{2n-1}{2}x}{2\sin\frac{x}{2}} \\
 &\sum_{k=1}^{n-1}k\cos kx=\frac{n\sin\frac{2n-1}{2}x}{2\sin\frac{x}{2}} - \frac{1-\cos nx}{4\sin^{2}\frac{x}{2}} \\
-&\sum_{k=1}^{\infty} \frac{\sin^{2k} x}{k} = -2 \ln \cos x
+&\sum_{k=1}^{\infty} \frac{\sin^{2k} x}{k} = -2 \ln \cos x & (x^{2} < \frac{pi^{2}}{4}) \\
 
 &\sum_{k=1}^{n-1}p^{k}\sin kx=\frac{p\sin x - p^{n}\sin nx + p^{n+1}\sin(n-1)x}{1-2p\cos x+p^{2}} \\
 &\sum_{k=0}^{n-1}p^{k}\cos kx=\frac{1-p\cos x - p^{n}\cos nx + p^{n+1}\cos(n-1)x}{1-2p\cos x + p^{2}} \\
@@ -1895,7 +1895,7 @@ sceq26:
 </td>
 </tr>
 
-<tr><td colspan=3 bgcolor="#eefdee"><center>from Gradshteyn and Ryzhik, "Table of Integrals, Series, and Products", 1.341.., 1.352.., 1.447.., 1.461, 1.518.</center></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>from Gradshteyn and Ryzhik, "Table of Integrals, Series, and Products", 1.341.., 1.352.., 1.447.., 1.461, 1.518</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
@@ -1989,9 +1989,7 @@ some of these in an undigested state.  As J. A. Moorer and Marc Le Brun pointed 
 eons ago, there are many more such formulas "buried in reference works".  Well, they've
 done nobody any good being buried for a generation, so I say: dig them up!  If
 you know of any curious formula, anything that might trigger an interesting train of
-reflection, send it to me, and I'll add it to this collection.  I think there are at
-least a dozen people in the world (I can count three anyway) who are interested,
-and at least one of them is allergic to book dust.  You too can save the world.
+reflection, send it to me, and I'll add it to this collection.
 </p>
 
 <br><br>

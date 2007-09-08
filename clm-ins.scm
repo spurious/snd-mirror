@@ -2739,7 +2739,7 @@ mjkoskin@sci.fi
        (do ((i st (1+ i)))
 	   ((= i nd))
 	 (outa i (* (env ampenv) (bes-j1 car-ph)) *output*)
-	 (set! car-ph (+ car-ph (+ car-incr (* index (bes-j1 mod-ph)))))
+	 (set! car-ph (+ car-ph car-incr (* index (bes-j1 mod-ph))))
 	 (set! mod-ph (+ mod-ph mod-incr)))))))
 
 ;;; (with-sound (:statistics #t) (bes-fm 0 1 440 10.0 1.0 4.0))
