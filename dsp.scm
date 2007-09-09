@@ -441,8 +441,8 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	     (- rr+1
 		(* r2 (oscil gen))))
 	  1.0)
-       (/ rr-1 ; amplitude normalization (not vital)
-	  (* r2 rr+1)))))
+       (/ (- 1.0 r) ; amplitude normalization (not vital)
+	  r2))))
 
 (define make-cosine-summation make-oscil)
 

@@ -32,6 +32,8 @@
 \end{document}
 
 where the "displaymath" lines change to fit the situation
+
+currently unused: sceq7
 -->
 
 </style>
@@ -1849,11 +1851,11 @@ For example, here is a generator based on the <a href="sndscm.html#sumofnsines">
 &\sum_{k=1}^{\infty}p^{k}\sin kx=\frac{p\sin x}{1-2p\cos x + p^{2}} \\
 &\sum_{k=1}^{\infty}p^{k}\cos kx=\frac{1-p\cos x}{1-2p\cos x + p^{2}} \\
 &\sum_{k=1}^{\infty}\frac{p^{k}\sin kx}{k} = \arctan \frac{p\sin x}{1-p\cos x} \\
-&\sum_{k=0}^{\infty}\frac{p^{k}\cos kx}{k} = \ln \frac{1}{\sqrt{1-2p\cos x + p^{2}}} \\
+&\sum_{k=1}^{\infty}\frac{p^{k}\cos kx}{k} = \ln \frac{1}{\sqrt{1-2p\cos x + p^{2}}} \\
 &\sum_{k=1}^{\infty}\frac{p^{2k-1}\sin(2k-1)x}{2k-1} = \frac{1}{2}\arctan \frac{2p\sin x}{1-p^{2}} \\
 &\sum_{k=1}^{\infty}\frac{p^{2k-1}\cos(2k-1)x}{2k-1} = \frac{1}{4}\ln \frac{1+2p\cos x + p^{2}}{1-2p\cos x + p^{2}} \\
 &\sum_{k=1}^{\infty}\frac{p^{k}\sin kx}{k!} = e^{p\cos x}\sin(p\sin x) \\
-&\sum_{k=1}^{\infty}\frac{p^{k}\cos kx}{k!} = e^{p\cos x}\cos(p\sin x) \\
+&\sum_{k=0}^{\infty}\frac{p^{k}\cos kx}{k!} = e^{p\cos x}\cos(p\sin x) \\
 &\sum_{k=1}^{\infty}e^{-kt}\sin kx = \frac{1}{2}\frac{\sin x}{\cosh t - \cos x} \\
 &1 + 2\sum_{k=1}^{\infty}e^{-kt}\cos kx = \frac{\sinh t}{\cosh t - \cos x} \\
 \end{align*}
@@ -1861,7 +1863,7 @@ For example, here is a generator based on the <a href="sndscm.html#sumofnsines">
 \begin{align*}
 &\sum_{k=1}^{\infty} \frac{\sin kx}{2^{k-1}} = \frac{4\sin x}{5 - 4\cos x} \\
 &\sum_{k=1}^{\infty} \frac{e^{(2k-1)a}\cos(2k-1)x}{2k-1} = -\frac{1}{2}\arctan \bigg(\frac{\cos x}{\sinh a}\bigg) \\
-&\cos x + \frac{1}{2}\frac{\cos 3x}{3} + \frac{1 \cdot 3}{2 \cdot 4}\frac{\cos 5x}{5}\cdots = \frac{1}{2}\arccos(1 - 2\sin x) \\
+&\cos x + \frac{1}{2}\frac{\cos 3x}{3} + \frac{1 \cdot 3}{2 \cdot 4}\frac{\cos 5x}{5}\cdots = \frac{1}{2}\arccos(1 - 2\sin x) & (0\leq x \leq \pi?) \\
 \end{align*}
 
 \begin{align*}
