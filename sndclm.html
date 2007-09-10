@@ -32,8 +32,6 @@
 \end{document}
 
 where the "displaymath" lines change to fit the situation
-
-currently unused: sceq7
 -->
 
 </style>
@@ -1650,7 +1648,7 @@ but perhaps a filter is a simpler approach.  There are a lot more of these "kern
 </tr><tr>
 <td bgcolor="#f6f8ff"><center>legendre (n=5)</center></td>
 <td bgcolor="#f6f8ff"><center>kosine (n=5, r=0.5)</center></td>
-<td bgcolor="#f6f8ff"><center>kosine (n=5, r=0.95)</center></td>
+<td bgcolor="#f6f8ff"><center>kosine (n=1, r=0.95)</center></td>
 </tr><tr>
 <td><img src="legendre.png" alt="legendre sum"></td>
 <td><img src="kosine.png" alt="kosine sum"></td>
@@ -1882,6 +1880,13 @@ sceq25:
 
 sceq26:
 \sum_{n=0}^{\infty} r^{n} \sum_{k=0}^{\infty} (n+1-k)\sin (k+1)\theta = \frac{\sin\theta}{(1-r)^{2}(1-2r\cos\theta + r^{2})}
+
+sceq7:
+&\sum_{k=1}^{\infty} \frac{\cos kx}{k} = -\ln \big(2 \sin \frac{x}{2}\big)  & (0\leq x \leq \pi) \\
+
+sceq27:
+1 + 2 &\sum_{n=1}^{\infty} \frac{(-a + \sqrt{a^{2} - b^{2}})^{n} \cos nx}{b^{n}} = \frac{\sqrt{a^{2} - b^{2}}}{a + b \cos x} & (0\leq x \leq \pi) \\
+
 -->
 
 <table border=1 hspace=20 vspace=10><tr><td>
@@ -1923,13 +1928,19 @@ sceq26:
 <tr><td><img src="sceq23.png" alt="more sums"></td><td></td>
 <td><img src="sceq24.png" alt="more sums"></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>from Wong and Guo, "Special Functions"</center></td></tr>
+<tr><td colspan=3 height=25></td></tr>
+
+
+<tr><td><img src="sceq7.png" alt="more sums"></td><td></td>
+<td><img src="sceq27.png" alt="more sums"></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>from Sansone, "Orthogonal Functions"</center></td></tr>
 
 
 </table>
 
 </td></tr></table>
 
-<!-- PERHAPS: Bateman, Askey&Roy, Watson -->
+<!-- PERHAPS: Bateman -->
 
 <p>
 A few of these exist as generators, but, as far as I know, most have never been explored.

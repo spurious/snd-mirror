@@ -408,51 +408,6 @@
 |#
 
 
-;;; SOMEDAY: move kosine-summation to this file and bl-saw
-
-#|
-;;; -------- kosine-summation
-;;;
-;;; from Askey "Ramanujan and Hypergeometric Series" in Berndt and Rankin "Ramanujan: Essays and Surveys" p283
-;;;
-;;; this gives a sum of cosines of decreasing amp where the "k" parameter determines
-;;;   the "index" (in FM nomenclature) -- higher k = more cosines; the actual amount
-;;;   of the nth cos involves hypergeometric series (looks like r^n/n! (~=e^n?) with a million other terms).
-
-(define (kosine-summation gen r k)
-  "(kosine-summation gen r k) is a variant of sum-of-cosines; 'r' controls successive sinusoid amplitude; 'k' controls how many sinusoids are produced"
-  (* (expt (- (+ 1.0 (* r r))
-	      (* 2 r (oscil gen)))
-	   (- k))
-     (expt (- (+ 1.0 (* r r)) (* 2 r)) k))) ; amplitude normalization
-
-(define make-kosine-summation make-oscil)
-
-;;; (let ((gen (make-kosine-summation 100.0))) (map-channel (lambda (y) (* .2 (kosine-summation gen 0.5 5.0)))))
-;;;
-;;; there is still noticable DC offset if r != 0.5 -- could precompute it and subtract
-|#
-
-
-
-
-#|
-(define (band-limited-sawtooth x a N fi)
-  "(band-limited-sawtooth x a N fi) produces a band-limited sawtooth; 'x' is the current phase, 'a' is \
-the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase increment"
-  ;;   Alexander Kritov suggests time-varying "a" is good (this is a translation of his code)
-  ;;   from Stilson/Smith apparently -- was named "Discrete Summation Formula" which doesn't convey anything to me
-  (let ((s4 (+ 1.0 (* -2.0 a (cos x)) (* a a))))
-    (if (< (abs s4) 1.0e-9)
-	0.0
-	(let* ((s1 (* (expt a (- N 1.0)) (sin (+ (* (- N 1.0) x) fi))))
-	       (s2 (* (expt a N) (sin (+ (* N x) fi))))
-	       (s3 (* a (sin (+ x fi)))))
-	  (/ (+ (sin fi) (- s3) (- s2) s1) s4)))))
-|#
-
-;;; TODO: make a list of the gens in dsp.scm etc that use filter or some other built-in
-
 ;;; --------------------------------------------------------------------------------
 
 ;;; Jolley 2nd col 2nd row (1st row is cos tweak of this)
@@ -738,6 +693,7 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 
 ;;; --------------------------------------------------------------------------------
 
+;;; G&R 2nd col 6th row
 ;;; r^k/k -- this sums to ln(1/(1-x)) if x<1 (J 118)
 
 (def-clm-struct (krcos 
@@ -768,6 +724,8 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 ;;; --------------------------------------------------------------------------------
 
 
+;;; G&R 2nd col 3rd from last
+
 (def-clm-struct (k!rcos
 		 :make-wrapper
 		 (lambda (g)
@@ -795,5 +753,177 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 	   ((= i 10000))
 	 (outa i (k!rcos gen) *output*))))))
 |#
+
+;;; --------------------------------------------------------------------------------
+
+;;; from Askey "Ramanujan and Hypergeometric Series" in Berndt and Rankin "Ramanujan: Essays and Surveys" p283
+;;;
+;;; this gives a sum of cosines of decreasing amp where the "k" parameter determines
+;;;   the "index" (in FM nomenclature) -- higher k = more cosines; the actual amount
+;;;   of the nth cos involves hypergeometric series (looks like r^n/n! (~=e^n?) with a million other terms).
+
+;;; TODO: sceq7 is latex?
+
+(def-clm-struct (kosine
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (kosine-osc g) (make-oscil (kosine-frequency g) (kosine-initial-phase g)))
+		   g))
+  (frequency 0.0) (initial-phase 0.0) (r 0.0) (k 0.0)
+  (osc #f :type clm))
+
+(define (kosine gen fm)
+  "kosine is a variant of sum-of-cosines; 'r' controls successive sinusoid amplitude; 'k' controls how many sinusoids are produced"
+  (declare (gen kosine) (fm float))
+  (let* ((r (kosine-r gen))
+	 (k (kosine-k gen))
+	 (rr1 (+ 1.0 (* r r)))
+	 (r2 (* 2 r)))
+    (* (expt (- rr1
+		(* r2 (oscil (kosine-osc gen) fm)))
+	     (- k))
+       (expt (- rr1 r2) k)))) ; amplitude normalization
+
+;;; there is still noticable DC offset if r != 0.5 -- could precompute it and subtract (and there's lots of DC anyway)
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-kosine 440.0 :r 0.5 :k 3.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (kosine gen 0.0) *output*))))))
+|#
+
+
+;;; --------------------------------------------------------------------------------
+
+;;;  from Stilson/Smith apparently -- was named "Discrete Summation Formula" which doesn't convey anything to me
+;;;    Alexander Kritov suggests time-varying "a" is good (this is a translation of his code)
+
+(def-clm-struct (blsaw
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (blsaw-incr g) (hz->radians (blsaw-frequency g)))
+		   g))
+  (frequency 0.0) (a 0.0) (n 1 :type int)
+  (angle 0.0) (incr 0.0))
+
+(define (blsaw gen)
+  "blsaw produces a band-limited sawtooth"
+  (declare (gen blsaw))
+  (let* ((a (blsaw-a gen))
+	 (N (blsaw-n gen))
+	 (x (blsaw-angle gen))
+	 (incr (blsaw-incr gen))
+	 (den (+ 1.0 (* -2.0 a (cos x)) (* a a))))
+    (set! (blsaw-angle gen) (+ x incr))
+    (if (< (abs den) 1.0e-9)
+	0.0
+	(let* ((s1 (* (expt a (- N 1.0)) (sin (+ (* (- N 1.0) x) incr))))
+	       (s2 (* (expt a N) (sin (+ (* N x) incr))))
+	       (s3 (* a (sin (+ x incr)))))
+	  (/ (+ (sin incr) 
+		(- s3) 
+		(- s2) 
+		s1) 
+	     den)))))
+
+;;; kinda nuts if you ask me...
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-blsaw 440.0 :a 0.5 :n 3)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (blsaw gen) *output*))))))
+|#
+
+;;; needs normalization
+
+;;; --------------------------------------------------------------------------------
+
+;;; Jolley 1st col 1st row
+
+;;; named "mehler" because the general form 1/(a + bcos x) is assoicated with "Mehler's formula"
+;;;   in Sansone, "Orthogonal Functions" p182
+
+(def-clm-struct (mehler
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (mehler-angle g) (mehler-initial-phase g))
+		   (set! (mehler-incr g) (hz->radians (mehler-frequency g)))
+		   g))
+  (frequency 0.0) (initial-phase 0.0)
+  (angle 0.0) (incr 0.0))
+
+(define (mehler gen fm)
+  (declare (gen mehler) (fm float))
+  (let ((x (mehler-angle gen)))
+    (set! (mehler-angle gen) (+ x (mehler-incr gen)))
+    (/ (* 3.0 (sin x)) ; 3 rather than 4 for normalization
+       (- 5.0 (* 4.0 (cos x))))))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-mehler 440.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (mehler gen 0.0) *output*))))))
+|#
+
+;;; --------------------------------------------------------------------------------
+
+;;; DSP.SCM:
+;;; fir-filter: hilbert-transform, highpass, lowpass, bandpass, bandstop, differentiator
+;;;             make-spencer-filter, savitzky-golay-filter
+;;;
+;;; filter: butter-high-pass, butter-low-pass, butter-band-pass, butter-band-reject, biquad,
+;;;         iir-low-pass, iir-high-pass, iir-band-pass, iir-band-stop, peaking
+;;;         butter-lp, butter-hp, butter-bp, butter-bs
+;;;
+;;; delay: moving-max
+;;; average:  moving-sum, moving-rms, moving-length, weighted-moving-average
+;;; one-pole: exponentially-weighted-moving-average 
+;;; mfilter, volterra-filter
+
+;;; ANALOG-FILTER.SCM:
+;;; filter: butterworth-lowpass|highpass|bandpass|bandstop, chebyshev-lowpass|highpass|bandpass|bandstop, 
+;;;         inverse-chebyshev-lowpass|highpass|bandpass|bandstop, elliptic-lowpass|highpass|bandpass|bandstop,
+;;;         bessel-lowpass|highpass|bandpass|bandstop
+
+;;; ENV.SCM:
+;;; power-env (and many env makers/modifiers)
+
+;;; EXAMP.SCM:
+;;; ramp, sound-interp
+;;; [filtered-env?]
+
+;;; GREEN.SCM:
+;;; rand and rand-interp: green-noise, brownian-noise
+
+;;; MOOG.SCM:
+;;; moog-filter
+
+;;; PRC95.SCM:
+;;; reed, bowtable, jettable, onep, lip, dc-block, delaya, delayl
+
+;;; SNDCLM.HTML:
+;;; band-limited-triangle-wave, sinc-train, sum-of-odd-sines, 1f-noise
+
+
+;;; --------------------------------------------------------------------------------
+
+;;; TODO: in docs, dsp->gen or snd9
+;;; TODO: in docs: add a ref to each gen from the formula (may need to split into bazillions of cases)
+
+
+;;; PERHAPS: a generators table for quick.html?
+
+;;; TODO: gegen+cos as gen (and legendre(cos) bessel(cos)?) -- find expansions of these if only for doc
 
 ;;; --------------------------------------------------------------------------------
