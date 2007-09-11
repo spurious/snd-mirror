@@ -6,6 +6,29 @@
 ;;;   so the make function places those two args first
 
 
+#|
+;;; do we need fmod 2*pi for the angles? (it is not used in clm.c)
+
+:(let ((ph 0.0)) (do ((i 0 (1+ i))) ((= i 22050)) (set! ph (+ ph (hz->radians 100.0)))) ph)
+628.31850751536
+
+:(let ((ph (* 2 pi 1000000))) (do ((i 0 (1+ i))) ((= i 22050)) (set! ph (+ ph (hz->radians 100.0)))) (- ph (* 2 pi 1000000)))
+628.318502381444
+
+:(let ((ph (* 2 pi 1000000000))) (do ((i 0 (1+ i))) ((= i 22050)) (set! ph (+ ph (hz->radians 100.0)))) (- ph (* 2 pi 1000000000)))
+628.311109542847
+
+:(let ((ph (* 2 pi 1000000000000))) (do ((i 0 (1+ i))) ((= i 22050)) (set! ph (+ ph (hz->radians 100.0)))) (- ph (* 2 pi 1000000000000)))
+624.462890625
+
+;; similar results from running oscil with 0.0 initial-phase, and 2*pi*1000000000, or running one
+;;   oscil for 3 hours at 6000 Hz -- the sinusoid is clean even around an angle of a billion -- worst 
+;;   case increment is pi, so we get (say) a billion samples before we may notice a sag => ca. 8 hours.  
+;;   I think that's a long enough tone...  (In clm.c and here, the phase and increment are both doubles;
+;;   53 bits of mantissa, billion=30, so we still have about 23 bits, which actually matches results above).
+|#
+
+
 ;;; --------------------------------------------------------------------------------
 
 ;;; sndclm.html G&R 2nd col last row (with normalization)
@@ -61,6 +84,7 @@
 
 
 ;;; --------------------------------------------------------------------------------
+
 
 ;;; sndclm.html (G&R) 1st col 5th row (sum of odd sines)
 
@@ -121,15 +145,68 @@
 
 ;;; TODO: what happens here if "n" changes?
 
-#|
-(define (sum-of-n-odd-cosines angle n)
-  "(sum-of-n-odd-cosines angle n) produces the sum of 'n' odd-numbered cosines"
-  (let ((den (* 2 (sin angle))))
+(def-clm-struct (oddcos
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (oddcos-incr g) (hz->radians (oddcos-frequency g)))
+		   g))
+  (frequency 0.0) (initial-phase 0.0) (n 1 :type int)
+  (angle 0.0) (incr 0.0))
+
+(define (oddcos gen fm)
+  (declare (gen oddcos) (fm float))
+  (let* ((angle (oddcos-angle gen))
+	 (n (oddcos-n gen))
+	 (den (* 2 n (sin angle)))) ; "n" here is normalization
+    (set! (oddcos-angle gen) (+ angle (oddcos-incr gen) fm))
     (if (< (abs den) 1.0e-9)
 	(exact->inexact n) ; just guessing -- floatification is for the run macro
 	(/ (sin (* 2 n angle)) den))))
 
 ;;; (Gradshteyn and Ryzhik 1.342)
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-oddcos 100 :n 10)))
+    (run (lambda ()
+      (do ((i 0 (1+ i)))
+	  ((= i 10000))
+	(outa i (oddcos gen 0.0) *output*))))))
+|#
+
+(def-clm-struct (ssboddsum
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (ssboddsum-carincr g) (hz->radians (- (ssboddsum-carfreq g) (ssboddsum-modfreq g))))
+		   (set! (ssboddsum-modincr g) (hz->radians (ssboddsum-modfreq g)))
+		   g))
+  (carfreq 0.0) (modfreq 0.0) (n 1 :type int)
+  (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
+
+(define (ssboddsum gen fm)
+  (declare (gen ssboddsum) (fm float))
+  (let* ((cx (ssboddsum-carangle gen))
+	 (mx (ssboddsum-modangle gen))
+	 (n (ssboddsum-n gen))
+	 (sinnx (sin (* n mx)))
+	 (den (* n (sin mx)))) ; "n" is normalization
+    (set! (ssboddsum-carangle gen) (+ cx (ssboddsum-carincr gen) fm))
+    (set! (ssboddsum-modangle gen) (+ mx (ssboddsum-modincr gen)))
+    (if (< (abs den) 1.0e-9)
+	0.0
+	(- (* (sin cx)
+	      (/ (* sinnx sinnx) den))
+	   (* (cos cx)
+	      (/ (sin (* 2 n mx))
+		 (* 2 den)))))))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-ssboddsum 1000.0 100.0 5)))
+    (run (lambda ()
+      (do ((i 0 (1+ i)))
+	  ((= i 10000))
+	(outa i (ssboddsum gen 0.0) *output*))))))
 |#
 
 
@@ -440,7 +517,45 @@
       (outa i (sinhfm gen 0.0) *output*))))))
 |#
 
-;;; TODO: use with the cos version to make ssb version
+
+(def-clm-struct (ssbh
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (ssbh-carincr g) (hz->radians (ssbh-carfreq g)))
+		   (set! (ssbh-modincr g) (hz->radians (ssbh-modfreq g)))
+		   g))
+  (carfreq 0.0) (modfreq 0.0) (a 1.0)
+  (carangle 0.0) (carincr 0.0)
+  (modangle 0.0) (modincr 0.0))
+
+(define (ssbh gen)
+  (declare (gen ssbh))
+  (let* ((mx (ssbh-modangle gen))
+	 (cx (ssbh-carangle gen))
+	 (a (ssbh-a gen))
+	 (asinx (* a (sin mx)))
+	 (acosx (* a (cos mx))))
+
+    (set! (ssbh-carangle gen) (+ (ssbh-carangle gen) (ssbh-carincr gen)))
+    (set! (ssbh-modangle gen) (+ (ssbh-modangle gen) (ssbh-modincr gen)))
+
+    (/ (- (* (cos cx)
+	     (cosh acosx)
+	     (cos asinx))
+	  (* (sin cx)
+	     (sinh acosx)
+	     (sin asinx)))
+       (cosh a)))) ; normalization
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-ssbh 1000.0 100.0 0.5)))
+    (run 
+     (lambda () 
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (outa i (ssbh gen) *output*))))))
+|#
 
 
 ;;; --------------------------------------------------------------------------------
@@ -552,6 +667,7 @@
 
 ;;; --------------------------------------------------------------------------------
 
+
 ;;; Jolley 1st col 3rd row 
 
 (define make-acosum make-oscil)
@@ -576,6 +692,7 @@
 ;;; needs normalization and it's not right anyway -- we get odd harmonics but wrong amps
 
 ;;; --------------------------------------------------------------------------------
+
 
 ;;; this has poor side-band cancellation (0.093)
 
@@ -651,6 +768,7 @@
 
 ;;; --------------------------------------------------------------------------------
 
+
 ;;; ssb r^n case
 
 (def-clm-struct (ssbr 
@@ -692,6 +810,7 @@
 
 
 ;;; --------------------------------------------------------------------------------
+
 
 ;;; G&R 2nd col 6th row
 ;;; r^k/k -- this sums to ln(1/(1-x)) if x<1 (J 118)
@@ -754,15 +873,15 @@
 	 (outa i (k!rcos gen) *output*))))))
 |#
 
+
 ;;; --------------------------------------------------------------------------------
+
 
 ;;; from Askey "Ramanujan and Hypergeometric Series" in Berndt and Rankin "Ramanujan: Essays and Surveys" p283
 ;;;
 ;;; this gives a sum of cosines of decreasing amp where the "k" parameter determines
 ;;;   the "index" (in FM nomenclature) -- higher k = more cosines; the actual amount
 ;;;   of the nth cos involves hypergeometric series (looks like r^n/n! (~=e^n?) with a million other terms).
-
-;;; TODO: sceq7 is latex?
 
 (def-clm-struct (kosine
 		 :make-wrapper
@@ -799,6 +918,7 @@
 
 ;;; --------------------------------------------------------------------------------
 
+
 ;;;  from Stilson/Smith apparently -- was named "Discrete Summation Formula" which doesn't convey anything to me
 ;;;    Alexander Kritov suggests time-varying "a" is good (this is a translation of his code)
 
@@ -830,7 +950,6 @@
 		s1) 
 	     den)))))
 
-;;; kinda nuts if you ask me...
 #|
 (with-sound (:clipped #f :statistics #t)
   (let ((gen (make-blsaw 440.0 :a 0.5 :n 3)))
@@ -843,7 +962,9 @@
 
 ;;; needs normalization
 
+
 ;;; --------------------------------------------------------------------------------
+
 
 ;;; Jolley 1st col 1st row
 
@@ -875,6 +996,241 @@
 	   ((= i 10000))
 	 (outa i (mehler gen 0.0) *output*))))))
 |#
+
+;;; --------------------------------------------------------------------------------
+
+
+;;; G&R 2nd col 1st and 2nd rows
+
+(def-clm-struct (ssbrksum
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (ssbrksum-carincr g) (hz->radians (ssbrksum-carfreq g)))
+		   (set! (ssbrksum-modincr g) (hz->radians (ssbrksum-modfreq g)))
+		   g))
+  (carfreq 0.0) (modfreq 0.0) (n 1 :type int) (r 0.0)
+  (carangle 0.0) (modangle 0.0) (carincr 0.0) (modincr 0.0))
+
+(define (ssbrksum gen)
+  (declare (gen ssbrksum))
+  (let* ((cx (ssbrksum-carangle gen))
+	 (mx (ssbrksum-modangle gen))
+	 (ci (ssbrksum-carincr gen))
+	 (mi (ssbrksum-modincr gen))
+	 (r (ssbrksum-r gen))
+	 (n (ssbrksum-n gen))
+	 (rn (- (expt r n)))
+	 (rn1 (expt r (+ n 1)))
+	 (nmx (* n mx))
+	 (n1mx (* (- n 1) mx))
+	 (norm (/ (- (expt r n) 1) (- r 1))) ; this could use rn
+	 (den (* norm (+ 1.0 (* -2.0 r (cos mx)) (* r r)))))
+    (set! (ssbrksum-carangle gen) (+ cx ci))
+    (set! (ssbrksum-modangle gen) (+ mx mi))
+    (/ (- (* (sin cx)
+	     (+ (* r (sin mx))
+		(* rn (sin nmx))
+		(* rn1 (sin n1mx))))
+	  (* (cos cx)
+	     (+ 1.0
+		(* -1.0 r (cos mx))
+		(* rn (cos nmx))
+		(* rn1 (cos n1mx)))))
+       den)))
+
+	  
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-ssbrksum 1000 100 5 0.5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (ssbrksum gen) *output*))))))
+|#
+
+
+;;; --------------------------------------------------------------------------------
+
+
+;;; this was inspired by Andrews, Askey, Roy "Special Functions" p396, but there's an error somewhere...
+;;;   it produces sum r^k sin(k+1/2)x
+;;;   (not normalized)
+
+(def-clm-struct (dblsum
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (dblsum-incr g) (hz->radians (* 2 (dblsum-frequency g))))
+		   g))
+  (frequency 0.0) (r 0.0)
+  (angle 0.0) (incr 0.0))
+
+(define (dblsum gen)
+  (declare (gen dblsum))
+  (let* ((x (dblsum-angle gen))
+	 (r (dblsum-r gen)))
+    (set! (dblsum-angle gen) (+ (dblsum-angle gen) (dblsum-incr gen)))
+    (/ (* (+ 1 r) (sin (* 0.5 x)))
+       (* (- 1 r) (+ 1.0 (* -2.0 r (cos x)) (* r r))))))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-dblsum 100 0.5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (dblsum gen) *output*))))))
+|#
+
+
+;;; --------------------------------------------------------------------------------
+
+;;; G&R 1st col ksinkx cases
+
+(def-clm-struct (ssbk
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (ssbk-carincr g) (hz->radians (- (ssbk-carfreq g) (ssbk-modfreq g))))
+		   (set! (ssbk-modincr g) (hz->radians (ssbk-modfreq g)))
+		   (set! (ssbk-n g) (+ 1 (ssbk-n g))) ; sum goes 1 to n-1
+		   g))
+  (carfreq 0.0) (modfreq 0.0) (n 1 :type int)
+  (carangle 0.0) (carincr 0.0)
+  (modangle 0.0) (modincr 0.0))
+
+
+(define (ssbk gen fm)
+  (declare (gen ssbk))
+  (let* ((n (ssbk-n gen))
+	 (x (ssbk-modangle gen))
+	 (sx2 (sin (* 0.5 x)))
+	 (sx22 (* 2 sx2))
+	 (sxsx (* 4 sx2 sx2))
+	 (nx (* n x))
+	 (nx2 (* 0.5 (- (* 2 n) 1) x))
+	 (cx (ssbk-carangle gen))
+	 (cfm (* fm (/ (ssbk-carincr gen) (ssbk-modincr gen)))))
+
+    (set! (ssbk-carangle gen) (+ cfm (ssbk-carangle gen) (ssbk-carincr gen)))
+    (set! (ssbk-modangle gen) (+ fm (ssbk-modangle gen) (ssbk-modincr gen)))
+
+    (if (< (abs sx2) 1.0e-9)
+	0.0
+	(let* ((s1 (- (/ (sin nx) sxsx)
+		      (/ (* n (cos nx2)) sx22)))
+	       (c1 (- (/ (* n (sin nx2)) sx22)
+		      (/ (- 1.0 (cos nx)) sxsx))))
+	  (/ (- (* (sin cx) s1)
+		(* (cos cx) c1))
+	     (* 0.5 n (- n 1))))))) ; normalization, nominal n is off by 1
+	       
+(define (ssbk-interp gen fm interp)
+  (declare (gen ssbk))
+  (let* ((n (ssbk-n gen))
+	 (x (ssbk-modangle gen))
+	 (sx2 (sin (* 0.5 x)))
+	 (sx22 (* 2 sx2))
+	 (sxsx (* 4 sx2 sx2))
+	 (nx (* n x))
+	 (nx2 (* 0.5 (- (* 2 n) 1) x))
+	 (cx (ssbk-carangle gen))
+	 (cfm (* fm (/ (ssbk-carincr gen) (ssbk-modincr gen)))))
+
+    (set! (ssbk-carangle gen) (+ cfm (ssbk-carangle gen) (ssbk-carincr gen)))
+    (set! (ssbk-modangle gen) (+ fm (ssbk-modangle gen) (ssbk-modincr gen)))
+
+    (if (< (abs sx2) 1.0e-9)
+	0.0
+	(let* ((s1 (- (/ (sin nx) sxsx)
+		      (/ (* n (cos nx2)) sx22)))
+	       (c1 (- (/ (* n (sin nx2)) sx22)
+		      (/ (- 1.0 (cos nx)) sxsx))))
+	  (/ (- (* (cos cx) c1)
+		(* interp (* (sin cx) s1)))
+	     (* 0.5 n (- n 1))))))) ; normalization, nominal n is off by 1, peak seems to be solid right through the interpolation
+
+	       
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-ssbk 1000.0 100.0 5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (ssbk gen 0.0) *output*))))))
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-ssbk 1000.0 100.0 5))
+	(vib (make-oscil 5.0))
+	(vibamp (hz->radians 5.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000))
+	 (outa i (ssbk gen (* vibamp (oscil vib))) *output*))))))
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-ssbk 1000.0 100.0 5))
+	(move (make-env '(0 1 1 -1) :end 30000))
+	(vib (make-oscil 5.0))
+	(vibamp (hz->radians 5.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000))
+	 (outa i (* 0.5 (ssbk-interp gen (* vibamp (oscil vib)) (env move))) *output*))))))
+
+|#
+
+
+;;; --------------------------------------------------------------------------------
+
+
+;;;  G&R 2nd col rows 7&8 (odd r^k/k) 
+
+(def-clm-struct (ssbor
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (ssbor-carincr g) (hz->radians (- (ssbor-carfreq g) (ssbor-modfreq g))))
+		   (set! (ssbor-modincr g) (hz->radians (ssbor-modfreq g)))
+		   g))
+  (carfreq 0.0) (modfreq 0.0) (r 0.0)
+  (carangle 0.0) (carincr 0.0)
+  (modangle 0.0) (modincr 0.0))
+
+(define (ssbor gen fm)
+  (declare (gen ssbor))
+  (let* ((r (ssbor-r gen))
+	 (mx (ssbor-modangle gen))
+	 (cx (ssbor-carangle gen))
+	 (cfm (* fm (/ (ssbor-carincr gen) (ssbor-modincr gen)))))
+
+    (set! (ssbor-carangle gen) (+ cfm (ssbor-carangle gen) (ssbor-carincr gen)))
+    (set! (ssbor-modangle gen) (+ fm (ssbor-modangle gen) (ssbor-modincr gen)))
+
+    (/ (- (* (cos cx)
+	     0.5
+	     (log (/ (+ 1.0 (* 2.0 r (cos mx)) (* r r))
+		     (+ 1.0 (* -2.0 r (cos mx)) (* r r)))))
+	  (* (sin cx)
+	     (atan (/ (* 2.0 r (sin mx))
+		      (- 1.0 (* r r))))))
+
+       (- (log (+ 1 r))    ; normalization (r^k/k for odd k)
+	  (log (- 1 r))))))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-ssbor 1000.0 100.0 0.5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (ssbor gen 0.0) *output*))))))
+|#
+
+
 
 ;;; --------------------------------------------------------------------------------
 
@@ -927,3 +1283,5 @@
 ;;; TODO: gegen+cos as gen (and legendre(cos) bessel(cos)?) -- find expansions of these if only for doc
 
 ;;; --------------------------------------------------------------------------------
+
+

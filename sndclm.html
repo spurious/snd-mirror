@@ -1875,10 +1875,10 @@ sceq23 (old):
 & (1 - 2xt + t^{2})^{-1} = \frac{1}{\sqrt{1 - x^{2}}} \sum_{n=0}^{\infty} t^{n} U_{n+1}(x) \\
 & e^{z cos x}J_{\nu-\frac{1}{2}}(z \sin x) = \frac{\Gamma(\nu)}{\Gamma(\frac{1}{2})}(2 \sin x)^{\nu-\frac{1}{2}} \sum_{k=0}^{\infty}\frac{z^{\nu+k-\frac{1}{2}}}{\Gamma(2\nu + k)} \mathrm{C}^{\nu}_{k}(\cos x)
 
-sceq25:
+sceq25 old:
 \sum_{n=0}^{\infty} r^{n} \sum_{k=0}^{\infty} \sin (k+1/2)\theta = \frac{(1+r)\sin(\theta / 2)}{(1-r)(1-2r\cos\theta + r^{2})}
 
-sceq26:
+sceq26 old:
 \sum_{n=0}^{\infty} r^{n} \sum_{k=0}^{\infty} (n+1-k)\sin (k+1)\theta = \frac{\sin\theta}{(1-r)^{2}(1-2r\cos\theta + r^{2})}
 
 sceq7:
@@ -1886,6 +1886,13 @@ sceq7:
 
 sceq27:
 1 + 2 &\sum_{n=1}^{\infty} \frac{(-a + \sqrt{a^{2} - b^{2}})^{n} \cos nx}{b^{n}} = \frac{\sqrt{a^{2} - b^{2}}}{a + b \cos x} & (0\leq x \leq \pi) \\
+
+sceq25:
+&\sum_{k=1}^{\infty} k r^{k} \sin kx = \frac{r(1-r^{2})\sin x}{(1 - 2r\cos x + r^{2})^{2}}
+Z 352
+
+sceq26:
+& \frac{8}{\pi} \sum_{k=1}^{\infty} \frac{\sin^{2}kx}{4k^{2}-1} = |\sin x|
 
 -->
 
@@ -1912,17 +1919,29 @@ sceq27:
 <tr><td colspan=3 height=25></td></tr>
 -->
 
-
 <tr><td><img src="sceq20.png" alt="more sums"></td><td></td>
 <td><img src="sceq21.png" alt="more sums"></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>from Jolley, "Summation of Series", 521 587 620 635 638 728</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
+
+<tr><td><img src="sceq25.png" alt="more sums"></td><td></td>
+<td><img src="sceq26.png" alt="more sums"></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>from Zygmund, "Trigonometric Series" p34, 352</center></td></tr>
+<tr><td colspan=3 height=25></td></tr>
+
+
+<!--  argh! there's a mistake in the formula -- I think they meant one sum not two
 <tr><td><img src="sceq25.png" alt="more sums"></td><td></td>
 <td><img src="sceq26.png" alt="more sums"></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>from Andrews, Askey, Roy, "Special Functions" p396</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
+-->
+
+<!-- now sceq25 and 26 are unused -->
+
+
 
 
 <tr><td><img src="sceq23.png" alt="more sums"></td><td></td>
