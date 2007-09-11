@@ -1231,6 +1231,121 @@
 |#
 
 
+;;; --------------------------------------------------------------------------------
+
+
+;;; Zygmund 1st
+;;;   this looks interesting, but how to normalize?  sum of sines is bad enough, but kr^k?
+
+(def-clm-struct (krksin
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (krksin-incr g) (hz->radians (krksin-frequency g)))
+		   g))
+  (frequency 0.0) (r 0.0)
+  (angle 0.0) (incr 0.0))
+
+(define (krksin gen fm)
+  (declare (gen krksin) (fm float))
+  (let* ((x (krksin-angle gen))
+	 (r (krksin-r gen))
+	 (r2 (* r r))
+	 (den (+ 1.0 (* -2.0 r (cos x)) r2)))
+    (set! (krksin-angle gen) (+ fm (krksin-angle gen) (krksin-incr gen)))
+    (/ (* r (- 1 r2) (sin x))
+       (* den den))))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-krksin 440.0 0.5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (krksin gen 0.0) *output*))))))
+
+(do ((i 0 (1+ i)))
+    ((= i 10))
+  (let ((mx (vct-peak (with-sound (:clipped #f :output (make-vct 10000))
+				  (let ((gen (make-krksin 20.0 (* i 0.1))))
+				    (run 
+				     (lambda ()
+				       (do ((i 0 (1+ i)))
+					   ((= i 10000))
+					 (outa i (krksin gen 0.0) *output*)))))))))
+    (snd-display ";~A: ~A" (* 0.1 i) mx)))
+
+
+|#
+
+;;; --------------------------------------------------------------------------------
+
+;;; Zygmund 2nd -- not actually very useful, but shows sin 2nx of abs
+
+(def-clm-struct (abssin
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (abssin-osc g) (make-oscil (abssin-frequency g) (abssin-initial-phase g)))
+		   g))
+  (frequency 0.0) (initial-phase 0.0)
+  (osc #f :type clm))
+
+(define (abssin gen fm)
+  (declare (gen abssin) (fm float))
+  (abs (oscil (abssin-osc gen) fm)))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-abssin 440.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (abssin gen 0.0) *output*))))))
+|#
+
+
+;;; --------------------------------------------------------------------------------
+
+
+;;; from Sansone, p182, assumptions: a not 0, b not 0, b/a real, abs(b/a)<1 (b less than a)
+
+(def-clm-struct (abcos
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (abcos-incr g) (hz->radians (abcos-frequency g)))
+		   g))
+  (frequency 0.0) (a 0.0) (b 0.0)
+  (angle 0.0) (incr 0.0))
+
+(define (abcos gen)
+  (declare (gen abcos))
+  (let* ((x (abcos-angle gen))
+	 (a (abcos-a gen))
+	 (b (abcos-b gen))
+	 (norm (/ 0.5 (- (/ 1.0 
+			    (- 1.0 (/ (abs (- (sqrt (- (* a a) (* b b))) 
+					      a)) 
+				      b))) 
+			 1.0)))) ;; i.e. 1/(1-r) -1 because we start at k=1, r=the complicated a/b business
+
+    (set! (abcos-angle gen) (+ (abcos-angle gen) (abcos-incr gen)))
+
+    (* norm (- (/ (sqrt (- (* a a) (* b b)))
+		  (+ a (* b (cos x))))
+	       1.0))))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-abcos 100.0 0.5 0.25)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (abcos gen) *output*))))))
+|#
+
+
 
 ;;; --------------------------------------------------------------------------------
 
