@@ -613,6 +613,15 @@
 	    (set! mx (abs val)))))
     (snd-display ";~A" (+ mx .001))))
 
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen1 (make-bess 400.0 :n 1))
+	(gen2 (make-oscil 400.0))
+	(vol (make-env '(0 1 1 0) :scaler 1.0 :end 20000)))
+    (run (lambda () (do ((i 0 (1+ i)))
+	((= i 20000))
+      (outa i (bess gen1 (* (env vol) (oscil gen2 0.0))) *output*))))))
+
+;;; also gen2 800, env scl 0.2
 |#
 
 ;;; --------------------------------------------------------------------------------
@@ -1419,7 +1428,7 @@
 	 (outa i (wgln gen 0.0) *output*))))))
 |#
 
-;;; is this actually much different from ln sqrt case: -1/2 as opposed to -? no...
+;;; this is not actually different from ln sqrt case (krcos above)
 
 ;;; --------------------------------------------------------------------------------
 
@@ -1431,8 +1440,6 @@
 ;;; TODO: in docs, dsp->gen or snd9
 ;;; TODO: in docs: add a ref to each gen from the formula (may need to split into bazillions of cases)
 ;;; PERHAPS: a generator table for quick.html?
-
-;;; TODO: gegen+cos as gen (and legendre(cos) bessel(cos)?) -- find expansions of these if only for doc
 
 ;;; --------------------------------------------------------------------------------
 

@@ -2029,7 +2029,7 @@ filter returned by <a href="#spectrumtocoeffs">spectrum-&gt;coeffs</a> will be p
 
 <!-- make-spencer-filter -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>make-spencer-filter</em>
+<A class=def NAME="makespencerfilter">make-spencer-filter</A>
 </td></tr><tr><td></td><td>
 This returns a CLM <a href="sndclm.html#fir-filter">fir-filter</a> generator with the standard "Spencer Filter" coefficients.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -2243,112 +2243,6 @@ Most of this section has been moved to generators.scm.
 </td></tr>
 <tr><td colspan=2 height=32></td></tr>
 
-
-
-<!-- cosine-summation -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="cosinesummation">cosine-summation</a> <code>gen r</code><br>
-<em class=emdef>kosine-summation</em> <code>gen r k</code>
-</td></tr><tr><td></td><td>
-cosine-summation 
-is a variation on Moorer's <a href="sndclm.html#sine-summation">sine-summation</a>;
-the generating formula is much simpler, but the result is the same.  This
-can also be viewed as a version of the <a href="sndclm.html#sum-of-cosines">sum-of-cosines</a> generator, giving control
-over the ratio between successive cosines in the sum (i.e. the "r" parameter in
-sine-summation, applied within the sum-of-cosines output).  
-<br><br>
-kosine-summation
-is a variation on cosine-summation; it includes
-a sort of "FM index" parameter ('k', hence the generator name) to vary the harmonic content at run-time.
-There is also a <a href="sndclm.html#sinc-train">sinc-train</a> generator in sndclm.html. 
-In both cases, the associated "make" function is actually just <a href="sndclm.html#make-oscil">make-oscil</a>
-suitably renamed (make-cosine-summation, etc).
-<pre>
-    (let ((gen (make-kosine-summation 100.0))) 
-      (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) (* .2 (kosine-summation gen 0.5 5.0)))))
-
-    kosine-summation: <img src="sceq7.png" alt="kosines" align=absmiddle hspace=10>
-</pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- legendre-sum -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>legendre-sum</em> <code>angle n</code><br>
-<A class=def NAME="fejersum">fejer-sum</A> <code>angle n</code><br>
-<em class=emdef>poussin-sum</em> <code>angle n</code><br>
-<em class=emdef>jackson-sum</em> <code>angle n</code>
-</td></tr><tr><td></td><td>
-These functions
-produce a band-limited pulse-train.
-<pre>
-    (let ((angle 0.0)) 
-      (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) 
-                     (let ((val (fejer-sum angle 3))) 
-                       (set! angle (+ angle .1)) 
-                       (* .1 val)))))
-</pre>
-fejer-sum harmonics are scaled by (/ (- n i) (+ n 1)); decreasing evenly.
-poussin-sum harmonic amplitudes start at 0, go up to a peak at n, then decrease to 0.
-(This section of dsp.scm also has an implementation of signum -- perhaps I should
-make it a built-in function?).
-<pre>
-fejer-sum: <img src="sceq3.png" alt="fejer" align=absmiddle hspace=10 vspace=8>
-jackson-sum: fejer^2
-
-poussin-sum: 2*fejer(x, 2n+1) - fejer(x, n)
-
-legendre-sum: <img src="sceq4.png" alt="legendre" align=absmiddle hspace=10>
-</pre>
-
-<p>It's easy to turn any of these into a generator:
-</p>
-<pre>
-(define (make-fejer frequency n)
-  (vct 0.0 (hz-&gt;radians frequency) (exact-&gt;inexact n)))
-
-(define (fejer gen fm)
-  (let ((result (fejer-sum (vct-ref gen 0) (inexact-&gt;exact (vct-ref gen 2)))))
-    (vct-set! gen 0 (+ (vct-ref gen 0) (vct-ref gen 1) fm))
-    result))
-</pre>
-
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- sum-of-n-sines -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="sumofnsines">sum-of-n-sines</a> <code>angle n</code><br>
-<em class=emdef>sum-of-n-odd-sines</em> <code>angle n</code><br>
-<em class=emdef>sum-of-n-odd-cosines</em> <code>angle n</code>
-</td></tr><tr><td></td><td>
-These three functions produce various spectra, similar to the cosine-summation function above.
-<pre>
-    (let ((angle 0.0)) 
-      (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) 
-                     (let ((val (sum-of-n-sines angle 3))) 
-                       (set! angle (+ angle .1)) 
-                       (* .1 val)))))
-
-sum-of-n-sines: <img src="sceq1.png" alt="sum of sines" align=middle hspace=20 vspace=5>
-sum-of-n-odd-sines: <img src="sceq5.png" alt="sum of odd sines" align=middle hspace=10 vspace=5>
-sum-of-n-odd-cosines: <img src="sceq6.png" alt="sum of odd cosines" align=middle hspace=10 vspace=5>
-</pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- band-limited-sawtooth -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="bandlimitedsawtooth">band-limited-sawtooth</a> <code>x a N fi</code><br>
-<a class=def name="bandlimitedsquarewave">band-limited-square-wave</a> <code>theta n</code>
-</td></tr><tr><td></td><td>
-band-limited-square-wave uses the formula tanh(n * sin(theta)) ('n' here is a float).
-As 'n' increases, you get closer to a square-wave.
-band-limited-sawtooth is apparently originally from Tim Stilson and Julius Smith (I got it via Alexander Kritov);
-it had the name "discrete summation formula" which conveys nothing to me.  The parameter
-'a' is more or less the amplitude, 'N' should be between 1 and 10, 'fi' is the
-phase increment, 'x' the current phase.
-</td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- ssb-bank -->
@@ -3692,7 +3586,7 @@ See also voice-&gt;unvoiced below.
 <!-- ramp -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>ramp</em> <code>gen up</code><br>
-<em class=emdef>make-ramp</em> <code>:optional (size 128)</code>
+<A class=def NAME="makeramp">make-ramp</A> <code>:optional (size 128)</code>
 </td></tr><tr><td></td><td>
 ramp is a generator that produces a ramp of a given length, then sticks at 0.0 or 1.0 until the 'up' argument changes.
 The idea here is that we want to ramp in or out a portion of a sound based on some

@@ -767,7 +767,7 @@ Some instruments that use oscil are
 <a href="sndscm.html#fmvox">vox</a> (clm-ins.scm), and
 <a href="sndscm.html#fmbell">fm-bell</a> (clm-ins.scm).  
 Interesting extensions of oscil include the various
-summation formulas in dsp.scm (<a href="sndscm.html#sumofnsines">sum-of-n-sines</a> et al).
+summation formulas in generators.scm (<a href="#rcos">rcos</a> et al).
 For a sine-bank example, see pvoc.scm.
 To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
 </p>
@@ -1521,7 +1521,7 @@ Even more amusing is this algorithm:
 
 <p>I think just about every combination of oscil/triangle-wave/sawtooth-wave/square-wave has been
 used.  Even triangle-wave(square-wave) can make funny noises. Along these lines, there's
-a <a href="sndscm.html#bandlimitedsawtooth">band-limited-sawtooth</a> generator in dsp.scm, 
+a <a href="sndscm.html#blsaw">band-limited sawtooth</a> generator in generators.scm, 
 band-limited-triangle-wave above (waveshaping), and band-limited pulse-train via <a href="#sum-of-cosines">sum-of-cosines</a>.
 </p>
 
@@ -1542,7 +1542,7 @@ band-limited-triangle-wave above (waveshaping), and band-limited pulse-train via
 <p>sum-of-cosines produces a band-limited pulse train containing
 "cosines" cosines.  I think this was originally viewed as a way to get a speech-oriented
 pulse train that would then be passed through formant filters (see pulse-voice in examp.scm).  There are many similar formulas:
-see <a href="sndscm.html#fejersum">fejer-sum</a> and friends in dsp.scm. "Trigonometric Delights" by Eli Maor has
+see <a href="#fejer">fejer</a> and friends in generators.scm. "Trigonometric Delights" by Eli Maor has
 a derivation of a sum-of-sines formula and a neat
 geometric explanation.  For a derivation of the sum-of-cosines formula, see "Fourier
 Analysis" by Stein and Shakarchi, or (in the formula given below) multiply the left side (the cosines) by sin(x/2), use the trig
@@ -1630,9 +1630,8 @@ matter what.  It is possible to vary the spectrum smoothly:
 		    (* (signum val) 
 		       (expt (abs val) (env pow)))))))
 </pre></td></tr></table>
-<p>This trick works on all the <a href="sndscm.html#fejersum">pulse-train</a> functions in dsp.scm (or an oscil for that matter!), 
-but perhaps a filter is a simpler approach.  There are a lot more of these "kernels" in dsp.scm, and it's easy to turn them into generators
-(see <a href="sndscm.html#fejersum">sndscm.html</a> for an example):
+<p>This trick works on all the <a href="#fejer">pulse-train</a> functions in generators.scm (or an oscil for that matter!), 
+but perhaps a filter is a simpler approach.  There are a lot more of these "kernels" in generators.scm.
 </p>
 
 <table border=1 hspace=20 cellspacing=4>
@@ -1801,14 +1800,13 @@ known as the conjugate Dirichlet kernel
 </pre><br clear=left>
 
 <p>See also the <a href="#sine-summation">sine-summation</a> generator, 
-and dsp.scm which has
-<a href="sndscm.html#sumofnsines">sum-of-n-odd-sines</a> and
-<a href="sndscm.html#sumofnsines">sum-of-n-odd-cosines</a>.
+and generators.scm.
 The original motivation for this generator was the restriction that the sine-summation generator's ratio ("a") can't be 1.0.
 But it's so easy to define a generator, that I'm sorry I made sum-of-sines a built-in case.
-For example, here is a generator based on the <a href="sndscm.html#sumofnsines">sum-of-n-odd-sines</a> formula in dsp.scm:
+For example, here is a generator based on a formula giving a sum of n odd sines:
 </p>
 
+<A NAME="sumofoddsines"></A>
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
 (define (make-sum-of-odd-sines frequency n)
@@ -1947,7 +1945,7 @@ sceq26:
 -->
 
 
-<!-- 23 and 24 are unused -->
+<!-- 23 and 24 are unused (and 28/29 if they exist) -->
 
 
 <tr><td><img src="sceq7.png" alt="more sums"></td><td></td>
@@ -4412,48 +4410,57 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 
 
 <pre>
-;;; DSP.SCM:
-;;; fir-filter: hilbert-transform, highpass, lowpass, bandpass, bandstop, differentiator
-;;;             make-spencer-filter, savitzky-golay-filter
-;;;
-;;; filter: butter-high-pass, butter-low-pass, butter-band-pass, butter-band-reject, biquad,
-;;;         iir-low-pass, iir-high-pass, iir-band-pass, iir-band-stop, peaking
-;;;         butter-lp, butter-hp, butter-bp, butter-bs
-;;;
-;;; delay: moving-max
-;;; average:  moving-sum, moving-rms, moving-length, weighted-moving-average
-;;; one-pole: exponentially-weighted-moving-average 
-;;; mfilter, volterra-filter
+dsp.scm:
+    fir-filter: <a class=quiet href="sndscm.html#hilberttransform">hilbert-transform</a>, 
+                <a class=quiet href="sndscm.html#makehighpass">highpass, lowpass, bandpass, bandstop</a>, 
+                <a class=quiet href="sndscm.html#makedifferentiator">differentiator</a>,
+                <a class=quiet href="sndscm.html#makespencerfilter">make-spencer-filter</a>, 
+                <a class=quiet href="sndscm.html#sgfilter">savitzky-golay-filter</a>
+   
+    filter: <a class=quiet href="sndscm.html#makebutter">butter-high-pass, butter-low-pass, butter-band-pass, butter-band-reject</a>, 
+            <a class=quiet href="sndscm.html#makebiquad">biquad</a>,
+            <a class=quiet href="sndscm.html#IIRfilters">iir-low-pass, iir-high-pass, iir-band-pass, iir-band-stop, peaking</a>,
+            <a class=quiet href="sndscm.html#makebutter">butter-lp, butter-hp, butter-bp, butter-bs</a>
+   
+    delay: <a class=quiet href="sndscm.html#movingmax">moving-max</a>
+    average:  <a class=quiet href="sndscm.html#movingsum">moving-sum, moving-rms, moving-length, weighted-moving-average</a>
+    one-pole: <a class=quiet href="sndscm.html#exponentiallyweightedmovingaverage">exponentially-weighted-moving-average </a>
+    <a class=quiet href="sndscm.html#mfilter">mfilter</a> 
+    <a class=quiet href="sndscm.html#volterrafilter">volterra-filter</a>
 
-;;; ANALOG-FILTER.SCM:
-;;; filter: butterworth-lowpass|highpass|bandpass|bandstop, chebyshev-lowpass|highpass|bandpass|bandstop, 
-;;;         inverse-chebyshev-lowpass|highpass|bandpass|bandstop, elliptic-lowpass|highpass|bandpass|bandstop,
-;;;         bessel-lowpass|highpass|bandpass|bandstop
+analog-filter.scm:
+    filter: <a class=quiet href="sndscm.html#analogfilterdoc">butterworth-lowpass|highpass|bandpass|bandstop</a>, 
+            <a class=quiet href="sndscm.html#analogfilterdoc">chebyshev-lowpass|highpass|bandpass|bandstop</a>, 
+            <a class=quiet href="sndscm.html#analogfilterdoc">inverse-chebyshev-lowpass|highpass|bandpass|bandstop</a>, 
+            <a class=quiet href="sndscm.html#analogfilterdoc">elliptic-lowpass|highpass|bandpass|bandstop</a>,
+            <a class=quiet href="sndscm.html#analogfilterdoc">bessel-lowpass|highpass|bandpass|bandstop</a>
 
-;;; ENV.SCM:
-;;; power-env (and many env makers/modifiers)
+env.scm:
+    <a class=quiet href="sndscm.html#powerenv">power-env</a> (and many env makers/modifiers)
 
-;;; EXAMP.SCM:
-;;; ramp, sound-interp
-;;; [filtered-env?]
+examp.scm:
+    <a class=quiet href="sndscm.html#makeramp">ramp</a>, 
+    <a class=quiet href="sndscm.html#soundinterp">sound-interp</a>
 
-;;; GREEN.SCM:
-;;; rand and rand-interp: green-noise, brownian-noise
+green.scm:
+    rand and rand-interp: <a class=quiet href="sndscm.html#greendoc">green-noise</a>, <a class=quiet href="sndscm.html#greendoc">brownian-noise</a>
 
-;;; MOOG.SCM:
-;;; moog-filter
+moog.scm:
+    <a class=quiet href="sndscm.html#moogfilter">moog-filter</a>
 
-;;; PRC95.SCM:
-;;; reed, bowtable, jettable, onep, lip, dc-block, delaya, delayl
+prc95.scm:
+    <a class=quiet href="sndscm.html#prc95doc">reed, bowtable, jettable, onep, lip, dc-block, delaya, delayl</a>
 
-;;; SNDCLM.HTML:
-;;; band-limited-triangle-wave, sinc-train, sum-of-odd-sines, 1f-noise
+sndclm.html:
+    <a class=quiet href="sndclm.html#sinc-train">sinc-train</a>, 
+    <a class=quiet href="sndclm.html#sumofoddsines">sum-of-odd-sines</a>, 
+    <a class=quiet href="sndclm.html#make-rand">1f-noise</a>
 
-;;; CLM-INS.SCM:
-;;; rm gain balance
+clm-ins.scm:
+    <a class=quiet href="sndscm.html#rmsgain">rms gain balance</a>
 
-;;; ZIP.SCM:
-;;; zipper
+zip.scm:
+    <a class=quiet href="sndscm.html#zipper">zipper</a>
 </pre>
 
 <p>In this section, we concentrate on the generators defined in generators.scm.
@@ -4461,6 +4468,79 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 </p>
 
 <!-- TODO: other generators doc -->
+
+
+
+<table border=0 cellspacing=0 hspace=20>
+
+<!-- rcos -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="make-rcos">rcos</A> <code>(frequency 0.0) (initial-phase 0.0) (r 1.0)</code><br>
+<em class=emdef>rcos</em> <code>gen fm</code>
+</td></tr><tr><td width=60></td><td>
+rcos 
+produces a sum of cosines with control
+over the ratio between successive cosines (the "r" parameter).
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- kosine -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="make-kosine">kosine</A> <code>(frequency 0.0) (initial-phase 0.0) (r 1.0) (k 0.0)</code><br>
+<em class=emdef>kosine</em> <code>gen fm</code>
+</td></tr><tr><td></td><td>
+kosine is another sum of cosines generator, with both a scaler on successive harmonic amplitudes ("r"), and
+a control on how many harmonics there are ("k").
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- legendre -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="fejer">fejer</A> <code>gen fm</code>, <em class=emdef>make-fejer</em> <code>(frequency 0.0) (initial-phase 0.0) (n 1)</code><br>
+<em class=emdef>legendre</em> <code>gen</code>, <em class=emdef>make-legendre</em> <code>(frequency 0.0) (initial-phase 0.0) (n 1)</code><br>
+<em class=emdef>jackson</em> <code>gen fm</code>, <em class=emdef>make-jackson</em> <code>(frequency 0.0) (initial-phase 0.0) (n 1)</code><br>
+<em class=emdef>poussin</em> <code>gen</code>, <em class=emdef>make-poussin</em> <code>(frequency 0.0) (initial-phase 0.0) (n 1)</code>
+</td></tr><tr><td></td><td>
+These functions
+produce various sums of cosines.
+fejer's harmonics are scaled by (/ (- n i) (+ n 1)); decreasing evenly.
+poussin's harmonic amplitudes start at 0, go up to a peak at n, then decrease to 0.
+
+<pre>
+fejer: <img src="sceq3.png" alt="fejer" align=absmiddle hspace=10 vspace=8>
+jackson: fejer^2
+
+poussin: 2*fejer(x, 2n+1) - fejer(x, n)
+
+legendre: <img src="sceq4.png" alt="legendre" align=absmiddle hspace=10>
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- sum-of-n-sines -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>oddsin</em> <code>gen fm</code>, <em class=emdef>make-oddsin</em> <code>(frequency 0.0) (initial-phase 0.0) (n 1)</code><br>
+<em class=emdef>oddcos</em> <code>gen fm</code>, <em class=emdef>make-oddcos</em> <code>(frequency 0.0) (initial-phase 0.0) (n 1)</code>
+</td></tr><tr><td></td><td>
+<pre>
+oddsin: <img src="sceq5.png" alt="sum of odd sines" align=middle hspace=10 vspace=5>
+oddcos: <img src="sceq6.png" alt="sum of odd cosines" align=middle hspace=10 vspace=5>
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- blsaw -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="blsaw">blsaw</a> <code>gen</code>, <em class=emdef>make-blsaw</em> <code>(frequency 0.0) (a 0.0) (n 1)</code>
+</td></tr><tr><td></td><td>
+blsaw is apparently originally from Tim Stilson and Julius Smith (I got it via Alexander Kritov);
+it had the name "discrete summation formula" which conveys nothing to me.  The parameter
+"a" is more or less the amplitude.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+</table>
+
 
 
 <br><br>

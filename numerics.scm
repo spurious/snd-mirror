@@ -155,6 +155,16 @@
 
 ;;; (with-sound (:scaled-to 0.5) (do ((i 0 (1+ i)) (x 0.0 (+ x .1))) ((= i 10000)) (outa i (gegenbauer 15 (cos x) 1.0) *output*)))
 
+#|
+(with-sound (:scaled-to 0.5)
+  (do ((i 0 (1+ i))
+       (theta 0.0 (+ theta 0.05)))
+      ((= i 10000))
+    (let ((x (cos theta)))
+      (outa i (gegenbauer 20 x) *output*))))
+|#
+
+
 (define* (chebyshev-polynomial a x :optional (kind 1))
   (let ((n (1- (vector-length a))))
     (if (= n 0) 
