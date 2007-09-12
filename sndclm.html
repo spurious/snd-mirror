@@ -1933,21 +1933,21 @@ sceq26:
 
 
 <!--  argh! there's a mistake in the formula -- I think they meant one sum not two
-<tr><td><img src="sceq25.png" alt="more sums"></td><td></td>
-<td><img src="sceq26.png" alt="more sums"></td></tr>
+<tr><td><img src="sceq2n.png" alt="more sums"></td><td></td>
+<td><img src="sceq2n.png" alt="more sums"></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>from Andrews, Askey, Roy, "Special Functions" p396</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 -->
 
-<!-- now sceq25 and 26 are unused -->
-
-
-
-
+<!-- these are basically the same as p^k/k cases using ln in G&R
 <tr><td><img src="sceq23.png" alt="more sums"></td><td></td>
 <td><img src="sceq24.png" alt="more sums"></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>from Wong and Guo, "Special Functions"</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
+-->
+
+
+<!-- 23 and 24 are unused -->
 
 
 <tr><td><img src="sceq7.png" alt="more sums"></td><td></td>
@@ -1963,7 +1963,34 @@ sceq26:
 
 <p>
 A few of these exist as generators, but, as far as I know, most have never been explored.
-Don't shy away from the sums to infinity just because you've heard shouting about "band-limited waveforms" -- FM is also such a sum.
+Don't shy away from the sums to infinity just because you've heard shouting about "band-limited waveforms" -- FM is also such a sum:
+</p>
+
+
+<!-- LATEX:
+\small
+\begin{align*}
+& \cos(B \sin x) = J_{0}(B) + 2 \sum_{k=1}^{\infty} J_{2k}(B) \cos 2kx \\
+& \cos(B \cos x) = J_{0}(B) + 2 \sum_{k=1}^{\infty} (-1)^{k} J_{2k}(B) \cos 2kx \\
+& \sin(B \sin x) = 2 \sum_{k=0}^{\infty} J_{2k+1}(B) \sin (2k+1)x \\
+& \sin(B \cos x) = 2 \sum_{k=0}^{\infty} (-1)^{k} J_{2k+1}(B) \cos (2k+1)x \\
+\end{align*}
+-->
+
+
+<table border=1 hspace=40 vspace=20><tr><td>
+<table border=0 hspace=20>
+<tr><td>
+<img src="fmeq49.png" alt="cos cos cases">
+</td><td width=20></td>
+<td>
+<img src="fmeq50.png" alt="cos cos cases">
+</td>
+</tr></table>
+</td></tr></table>
+
+
+<p>
 It is not hard to goof around with formulas like these;
 take the last one in the G&amp;R section:
 </p>
@@ -4377,7 +4404,60 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 
 <!-- ---------------------------------------- OTHER GENERATORS ---------------------------------------- -->
 
-<p>not yet written... (generators.scm, etc)
+<p>in progress... (generators.scm, etc)
+</p>
+
+<p>There are dozens of generators scattered around the *.scm files that come with Snd.  Some that come to mind:
+</p>
+
+
+<pre>
+;;; DSP.SCM:
+;;; fir-filter: hilbert-transform, highpass, lowpass, bandpass, bandstop, differentiator
+;;;             make-spencer-filter, savitzky-golay-filter
+;;;
+;;; filter: butter-high-pass, butter-low-pass, butter-band-pass, butter-band-reject, biquad,
+;;;         iir-low-pass, iir-high-pass, iir-band-pass, iir-band-stop, peaking
+;;;         butter-lp, butter-hp, butter-bp, butter-bs
+;;;
+;;; delay: moving-max
+;;; average:  moving-sum, moving-rms, moving-length, weighted-moving-average
+;;; one-pole: exponentially-weighted-moving-average 
+;;; mfilter, volterra-filter
+
+;;; ANALOG-FILTER.SCM:
+;;; filter: butterworth-lowpass|highpass|bandpass|bandstop, chebyshev-lowpass|highpass|bandpass|bandstop, 
+;;;         inverse-chebyshev-lowpass|highpass|bandpass|bandstop, elliptic-lowpass|highpass|bandpass|bandstop,
+;;;         bessel-lowpass|highpass|bandpass|bandstop
+
+;;; ENV.SCM:
+;;; power-env (and many env makers/modifiers)
+
+;;; EXAMP.SCM:
+;;; ramp, sound-interp
+;;; [filtered-env?]
+
+;;; GREEN.SCM:
+;;; rand and rand-interp: green-noise, brownian-noise
+
+;;; MOOG.SCM:
+;;; moog-filter
+
+;;; PRC95.SCM:
+;;; reed, bowtable, jettable, onep, lip, dc-block, delaya, delayl
+
+;;; SNDCLM.HTML:
+;;; band-limited-triangle-wave, sinc-train, sum-of-odd-sines, 1f-noise
+
+;;; CLM-INS.SCM:
+;;; rm gain balance
+
+;;; ZIP.SCM:
+;;; zipper
+</pre>
+
+<p>In this section, we concentrate on the generators defined in generators.scm.
+
 </p>
 
 <!-- TODO: other generators doc -->

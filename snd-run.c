@@ -410,6 +410,7 @@ static int add_new_type(const char *new_type)
     }
   last_type++;
   type_names[last_type] = copy_string(new_type);
+
   return(last_type);
 }
 
@@ -5504,6 +5505,32 @@ static xen_value *atan2_1(ptree *prog, xen_value **args, int num_args)
     return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, atan2(prog->dbls[args[1]->addr], prog->dbls[args[2]->addr])), R_CONSTANT));
   return(package(prog, R_FLOAT, atan2_f, "atan2_f", args, 2));
 }
+
+
+#if (!HAVE_GAUCHE)
+static void fmod_f(int *args, ptree *pt) {FLOAT_RESULT = fmod(FLOAT_ARG_1, FLOAT_ARG_2);}
+
+
+static xen_value *fmod_1(ptree *prog, xen_value **args, int num_args)
+{
+  xen_value *temp;
+  if (args[1]->type == R_INT)
+    {
+      temp = args[1];
+      args[1] = convert_int_to_dbl(prog, args[1]);
+      FREE(temp);
+    }
+  if (args[2]->type == R_INT)
+    {
+      temp = args[2];
+      args[2] = convert_int_to_dbl(prog, args[2]);
+      FREE(temp);
+    }
+  if (prog->constants == 2)
+    return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, fmod(prog->dbls[args[1]->addr], prog->dbls[args[2]->addr])), R_CONSTANT));
+  return(package(prog, R_FLOAT, fmod_f, "fmod_f", args, 2));
+}
+#endif
 
 
 #if HAVE_SPECIAL_FUNCTIONS
@@ -12026,6 +12053,9 @@ static void init_walkers(void)
   INIT_WALKER("asinh", make_walker(asinh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER("atanh", make_walker(atanh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER("bes-i0", make_walker(mus_bessi0_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+#if (!HAVE_GAUCHE)
+  INIT_WALKER("fmod", make_walker(fmod_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_NUMBER));
+#endif
 #if HAVE_SPECIAL_FUNCTIONS
   INIT_WALKER("bes-j0", make_walker(j0_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER("bes-j1", make_walker(j1_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));

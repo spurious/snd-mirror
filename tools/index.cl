@@ -697,12 +697,7 @@
 									      "em" "head" "h4" "sup" "font" "map" "smaller" "th")
 									:test #'string-equal)
 								(progn
-								  
-					;							  (if (string-equal closer "table")
-					;							      (format t "~A -> ~A: ~A ~A?~%" closer commands file linectr))
-								  
-								  (if (not (string-equal (car commands)
-											 closer))
+								  (if (not (string-equal (car commands) closer))
 								      (format t "~A -> ~A: ~A ~A?~%" closer commands file linectr))
 								  
 								  (if (or (string-equal closer "p")
@@ -729,6 +724,7 @@
 								  (setf commands (remove closer commands :test #'string-equal :count 1))
 								  (if (not warned)
 								      (progn
+									
 									(if (and (string-equal closer "table")
 										 (not (member "table" commands :test #'string-equal)))
 									    (progn
@@ -757,6 +753,17 @@
 								(if (and (string-equal opener "td")
 									 (not (member "tr" commands :test #'string-equal)))
 								    (format t "td without tr ~A ~A~%" file linectr))
+
+								(if (and (string-equal opener "td")
+									 (not (string-equal "tr" (car commands))))
+								    (format t "td without tr ~A ~A?~%" file linectr))
+								(if (and (string-equal opener "tr")
+									 (not (string-equal "table" (car commands))))
+								    (format t "tr without table ~A ~A?~%" file linectr))
+								(if (and (string-equal opener "p")
+									 (string-equal "table" (car commands)))
+								    (format t "unclosed table ~A ~A?~%" file linectr))
+
 								(if (and (string-equal opener "tr")
 									 (not (member "table" commands :test #'string-equal)))
 								    (format t "tr without table ~A ~A~%" file linectr))
@@ -931,6 +938,6 @@
 
 
 (defun check-names ()  
-  (html-check (list "sndlib.html" "snd.html" "extsnd.html" "grfsnd.html" "sndclm.html"
+  (html-check (list "sndlib.html" "snd.html" "extsnd.html" "grfsnd.html" "sndclm.html" "fm.html"
 		    "sndscm.html" "quick.html" "xen.html" "libxm.html" "index.html")
 	      t))

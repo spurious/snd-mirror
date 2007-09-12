@@ -143,8 +143,6 @@
 |#
 
 
-;;; TODO: what happens here if "n" changes?
-
 (def-clm-struct (oddcos
 		 :make-wrapper
 		 (lambda (g)
@@ -584,7 +582,8 @@
 
 (define (bess gen fm)
   (declare (gen bess) (fm float))
-  (let ((result (/ (bes-jn (bess-n gen) (bess-arg gen)) (bess-norm gen))))
+  (let ((result (/ (bes-jn (bess-n gen) (bess-arg gen)) 
+		   (bess-norm gen))))
     (set! (bess-arg gen) (+ (bess-arg gen) (bess-incr gen) fm))
     result))
 
@@ -1345,55 +1344,93 @@
 	 (outa i (abcos gen) *output*))))))
 |#
 
+;;; --------------------------------------------------------------------------------
+
+;;; J 2nd col 3rd row
+
+(def-clm-struct (a2k2
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (a2k2-incr g) (hz->radians (a2k2-frequency g)))
+		   g))
+  (frequency 0.0) (a 1.0)
+  (angle 0.0) (incr 0.0))
+
+(define (a2k2-norm a)
+  ;; J 124
+  (- (* (/ pi (* 2 a))
+	(/ (+ (exp (* pi a)) (exp (* pi (- a))))
+	   (- (exp (* pi a)) (exp (* pi (- a))))))
+     (/ 1.0
+	(* 2 a a))))
+
+(define (a2k2 gen)
+  (declare (gen a2k2))
+  (let* ((x (a2k2-angle gen))
+	 (a (a2k2-a gen)))
+    (if (> x (* 2 pi))
+	(set! x (fmod x (* 2 pi))))
+
+    (set! (a2k2-angle gen) (+ x (a2k2-incr gen)))
+
+    (/ (- (* pi (/ (cosh (* a (- pi x)))
+		   (sinh (* a pi))))
+	  (/ 1.0 a))
+       (* 2 a (a2k2-norm a)))))
+
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-a2k2 100.0 1.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (a2k2 gen) *output*))))))
+|#
 
 
 ;;; --------------------------------------------------------------------------------
 
-;;; DSP.SCM:
-;;; fir-filter: hilbert-transform, highpass, lowpass, bandpass, bandstop, differentiator
-;;;             make-spencer-filter, savitzky-golay-filter
-;;;
-;;; filter: butter-high-pass, butter-low-pass, butter-band-pass, butter-band-reject, biquad,
-;;;         iir-low-pass, iir-high-pass, iir-band-pass, iir-band-stop, peaking
-;;;         butter-lp, butter-hp, butter-bp, butter-bs
-;;;
-;;; delay: moving-max
-;;; average:  moving-sum, moving-rms, moving-length, weighted-moving-average
-;;; one-pole: exponentially-weighted-moving-average 
-;;; mfilter, volterra-filter
+;;; W&G 1st
 
-;;; ANALOG-FILTER.SCM:
-;;; filter: butterworth-lowpass|highpass|bandpass|bandstop, chebyshev-lowpass|highpass|bandpass|bandstop, 
-;;;         inverse-chebyshev-lowpass|highpass|bandpass|bandstop, elliptic-lowpass|highpass|bandpass|bandstop,
-;;;         bessel-lowpass|highpass|bandpass|bandstop
+(def-clm-struct (wgln
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (wgln-incr g) (hz->radians (wgln-frequency g)))
+		   g))
+  (frequency 0.0) (r 1.0)
+  (angle 0.0) (incr 0.0))
 
-;;; ENV.SCM:
-;;; power-env (and many env makers/modifiers)
+(define (wgln gen fm)
+  (declare (gen wgln) (fm float))
+  (let* ((x (wgln-angle gen))
+	 (r (wgln-r gen)))
+    (set! (wgln-angle gen) (+ fm (wgln-angle gen) (wgln-incr gen)))
+    (- (log (+ 1.0 (* -2.0 r (cos x)) (* r r))))))
 
-;;; EXAMP.SCM:
-;;; ramp, sound-interp
-;;; [filtered-env?]
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-wgln 100.0 1.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (wgln gen 0.0) *output*))))))
+|#
 
-;;; GREEN.SCM:
-;;; rand and rand-interp: green-noise, brownian-noise
+;;; is this actually much different from ln sqrt case: -1/2 as opposed to -? no...
 
-;;; MOOG.SCM:
-;;; moog-filter
+;;; --------------------------------------------------------------------------------
 
-;;; PRC95.SCM:
-;;; reed, bowtable, jettable, onep, lip, dc-block, delaya, delayl
 
-;;; SNDCLM.HTML:
-;;; band-limited-triangle-wave, sinc-train, sum-of-odd-sines, 1f-noise
 
 
 ;;; --------------------------------------------------------------------------------
 
 ;;; TODO: in docs, dsp->gen or snd9
 ;;; TODO: in docs: add a ref to each gen from the formula (may need to split into bazillions of cases)
-
-
-;;; PERHAPS: a generators table for quick.html?
+;;; PERHAPS: a generator table for quick.html?
 
 ;;; TODO: gegen+cos as gen (and legendre(cos) bessel(cos)?) -- find expansions of these if only for doc
 
