@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [538]
-;;;  test 1: defaults                           [1103]
-;;;  test 2: headers                            [1303]
-;;;  test 3: variables                          [1619]
-;;;  test 4: sndlib                             [2266]
-;;;  test 5: simple overall checks              [4792]
-;;;  test 6: vcts                               [13748]
-;;;  test 7: colors                             [14026]
-;;;  test 8: clm                                [14516]
-;;;  test 9: mix                                [25190]
-;;;  test 10: marks                             [27408]
-;;;  test 11: dialogs                           [28369]
-;;;  test 12: extensions                        [28614]
-;;;  test 13: menus, edit lists, hooks, etc     [28885]
-;;;  test 14: all together now                  [30591]
-;;;  test 15: chan-local vars                   [31625]
-;;;  test 16: regularized funcs                 [33237]
-;;;  test 17: dialogs and graphics              [38228]
-;;;  test 18: enved                             [38318]
-;;;  test 19: save and restore                  [38337]
-;;;  test 20: transforms                        [40122]
-;;;  test 21: new stuff                         [42091]
-;;;  test 22: run                               [44082]
-;;;  test 23: with-sound                        [50028]
-;;;  test 24: user-interface                    [52557]
-;;;  test 25: X/Xt/Xm                           [55963]
-;;;  test 26: Gtk                               [60559]
-;;;  test 27: GL                                [64411]
-;;;  test 28: errors                            [64535]
-;;;  test all done                              [66820]
-;;;  test the end                               [67056]
+;;;  test 0: constants                          [539]
+;;;  test 1: defaults                           [1104]
+;;;  test 2: headers                            [1304]
+;;;  test 3: variables                          [1620]
+;;;  test 4: sndlib                             [2267]
+;;;  test 5: simple overall checks              [4793]
+;;;  test 6: vcts                               [13749]
+;;;  test 7: colors                             [14027]
+;;;  test 8: clm                                [14517]
+;;;  test 9: mix                                [25208]
+;;;  test 10: marks                             [27426]
+;;;  test 11: dialogs                           [28387]
+;;;  test 12: extensions                        [28632]
+;;;  test 13: menus, edit lists, hooks, etc     [28903]
+;;;  test 14: all together now                  [30609]
+;;;  test 15: chan-local vars                   [31643]
+;;;  test 16: regularized funcs                 [33255]
+;;;  test 17: dialogs and graphics              [38246]
+;;;  test 18: enved                             [38336]
+;;;  test 19: save and restore                  [38355]
+;;;  test 20: transforms                        [40140]
+;;;  test 21: new stuff                         [42109]
+;;;  test 22: run                               [44100]
+;;;  test 23: with-sound                        [50098]
+;;;  test 24: user-interface                    [52947]
+;;;  test 25: X/Xt/Xm                           [56353]
+;;;  test 26: Gtk                               [60949]
+;;;  test 27: GL                                [64801]
+;;;  test 28: errors                            [64925]
+;;;  test all done                              [67210]
+;;;  test the end                               [67446]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -52611,11 +52611,331 @@ EDITS: 1
 		(if (not (vequal (channel->vct 1000 10) (vct -0.071 0.022 0.095 0.143 0.174 0.199 0.227 0.251 0.257 0.239)))
 		    (snd-display ";mixed with-sound via sound-let: ~A" (channel->vct 1000 10)))
 		(close-sound ind))))
+
+	;; generators.scm
+
+	(with-sound (:clipped #f)
+		    (let ((gen (make-ekrcos 100 :r 1.0)))
+		      (run (lambda ()
+			     (do ((i 0 (1+ i)))
+				 ((= i 10000))
+			       (outa i (ekrcos gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)  
+		    (let ((gen (make-ekrcos 100 :r 0.1))
+			  (t-env (make-env '(0 .1 1 2) :end 20000)))
+		      (run (lambda ()
+			     (do ((i 0 (1+ i)))
+				 ((= i 20000))
+			       (set! (ekrcos-r gen) (env t-env))
+			       (set! (ekrcos-cosh-t gen) (cosh (ekrcos-r gen)))
+			       (let ((exp-t (exp (- (ekrcos-r gen)))))
+				 (set! (ekrcos-offset gen) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
+				 (set! (ekrcos-scaler gen) (* (sinh (ekrcos-r gen)) (ekrcos-offset gen))))
+			       (outa i (ekrcos gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-ssbekt 1000.0 100.0 1.0)))
+		      (run (lambda ()
+			     (do ((i 0 (1+ i)))
+				 ((= i 20000))
+			       (outa i (ssbekt gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-oddsin 100 :n 10)))
+		      (run (lambda ()
+			     (do ((i 0 (1+ i)))
+				 ((= i 10000))
+			       (outa i (oddsin gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-oddcos 100 :n 10)))
+		      (run (lambda ()
+			     (do ((i 0 (1+ i)))
+				 ((= i 10000))
+			       (outa i (oddcos gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-ssbodd 1000.0 100.0 5)))
+		      (run (lambda ()
+			     (do ((i 0 (1+ i)))
+				 ((= i 10000))
+			       (outa i (ssbodd gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f) 
+		    (let ((gen (make-asyfm 2000.0 :ratio .1))) 
+		      (run 
+		       (lambda () 
+			 (do ((i 0 (1+ i)))
+			     ((= i 1000))
+			   (outa i (asyfm-J gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f) 
+		    (let ((gen (make-asyfm 2000.0 :ratio .1 :index 1))
+			  (r-env (make-env '(0 -4 1 -1) :end 20000)))
+		      (run 
+		       (lambda () 
+			 (do ((i 0 (1+ i)))
+			     ((= i 20000))
+			   (set! (asyfm-r gen) (env r-env))
+			   (outa i (asyfm-J gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f) 
+		    (let ((gen (make-asyfm 2000.0 :ratio .1))) 
+		      (run 
+		       (lambda () 
+			 (do ((i 0 (1+ i)))
+			     ((= i 1000))
+			   (outa i (asyfm-I gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-fejer 100.0 :n 10)))
+		      (run
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 20000))
+			   (outa i (fejer gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-fejer2 100.0 :n 10)))
+		      (run
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 20000))
+			   (outa i (fejer2 gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-poussin 100.0 :n 10)))
+		      (run (lambda () (do ((i 0 (1+ i)))
+					  ((= i 20000))
+					(outa i (poussin gen) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-soc2 100.0 :n 10)))
+		      (run (lambda () (do ((i 0 (1+ i)))
+					  ((= i 20000))
+					(outa i (soc2 gen) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-rkcos 100.0 :r 0.5)))
+		      (run (lambda () 
+			     (do ((i 0 (1+ i)))
+				 ((= i 20000))
+			       (outa i (rkcos gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-r2ksin 100.0 :r 0.5)))
+		      (run (lambda () (do ((i 0 (1+ i)))
+					  ((= i 20000))
+					(outa i (r2ksin gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-ssbr2k 1000.0 100.0 0.5)))
+		      (run 
+		       (lambda () 
+			 (do ((i 0 (1+ i)))
+			     ((= i 20000))
+			   (outa i (ssbr2k gen) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-bess 100.0 :n 0)))
+		      (run (lambda () (do ((i 0 (1+ i)))
+					  ((= i 1000))
+					(outa i (bess gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen1 (make-bess 400.0 :n 1))
+			  (gen2 (make-bess 400.0 :n 1))
+			  (vol (make-env '(0 0 1 1 9 1 10 0) :scaler 2.0 :end 20000)))
+		      (run (lambda () (do ((i 0 (1+ i)))
+					  ((= i 20000))
+					(outa i (bess gen1 (* (env vol) (bess gen2 0.0))) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen1 (make-bess 400.0 :n 1))
+			  (gen2 (make-oscil 400.0))
+			  (vol (make-env '(0 1 1 0) :scaler 1.0 :end 20000)))
+		      (run (lambda () (do ((i 0 (1+ i)))
+					  ((= i 20000))
+					(outa i (bess gen1 (* (env vol) (oscil gen2 0.0))) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-ekoddcos 400.0 :r 1.0)))
+		      (run (lambda () (do ((i 0 (1+ i)))
+					  ((= i 10000))
+					(outa i (ekoddcos gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-ekoddcos 400.0 :r 0.0))
+			  (a-env (make-env '(0 0 1 1) :end 10000)))
+		      (run (lambda () 
+			     (do ((i 0 (1+ i)))
+				 ((= i 10000))
+			       (set! (ekoddcos-r gen) (env a-env))
+			       (outa i (ekoddcos gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen1 (make-ekoddcos 400.0 :r 0.0))
+			  (gen2 (make-oscil 400.0))
+			  (a-env (make-env '(0 0 1 1) :end 10000)))
+		      (run (lambda () 
+			     (do ((i 0 (1+ i)))
+				 ((= i 10000))
+			       (set! (ekoddcos-r gen1) (env a-env))
+			       (outa i (ekoddcos gen1 (* .1 (oscil gen2))) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-oddacos 400.0)))
+		      (run (lambda ()
+			     (do ((i 0 (1+ i)))
+				 ((= i 10000))
+			       (outa i (* .3 (oddacos gen 0.0)) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-ssbn 2000.0 100.0 3)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (* .3 (ssbn gen 0.0)) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-ssbr 2000.0 103.0 3 0.5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (ssbr gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-krcos 440.0 :r 0.5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (krcos gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-k!rcos 440.0 :r 0.5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (k!rcos gen) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-kosine 440.0 :r 0.5 :k 3.0)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (kosine gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-blsaw 440.0 :r 0.5 :n 3)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (blsaw gen) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-k2sin 440.0)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (k2sin gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-ssbrk 1000 100 5 0.5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (ssbrk gen) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-dblsum 100 0.5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (dblsum gen) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-ssbk 1000.0 100.0 5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (ssbk gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-ssbk 1000.0 100.0 5))
+			  (vib (make-oscil 5.0))
+			  (vibamp (hz->radians 5.0)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 30000))
+			   (outa i (ssbk gen (* vibamp (oscil vib))) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-ssbk 1000.0 100.0 5))
+			  (move (make-env '(0 1 1 -1) :end 30000))
+			  (vib (make-oscil 5.0))
+			  (vibamp (hz->radians 5.0)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 30000))
+			   (outa i (* 0.5 (ssbk-interp gen (* vibamp (oscil vib)) (env move))) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-ssboddrk 1000.0 100.0 0.5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (ssboddrk gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-krksin 440.0 0.5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (krksin gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-abssin 440.0)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (abssin gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-abcos 100.0 0.5 0.25)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (abcos gen) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-r2k2 100.0 1.0)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (r2k2 gen) *output*))))))
 	
 	
 	(if (not (null? (sounds))) (for-each close-sound (sounds)))
 	(set! (optimization) old-opt-23)
-
+	
 	(if (provided? 'snd-guile)
 	    (test-documentation-instruments)) ; clm23.scm
 	

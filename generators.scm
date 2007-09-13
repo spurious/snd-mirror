@@ -3,7 +3,9 @@
 
 
 ;;; these try to mimic existing gens (mainly oscil), so "frequency" and "initial-phase" are placed first
-;;;   so the make function places those two args first
+;;;   so the make function places those two args first; where a factor is involved, I'll try to use "r".
+;;;   ssb cases are prefixed "ssb" and use "carfreq" and "modfreq".  Where the limit of the sum is settable,
+;;;   I'll use "n".
 
 
 #|
@@ -35,51 +37,84 @@
 
 ;;; expcs: sum of cosines with exponentially decaying amps
 
-(def-clm-struct (expcs
+(def-clm-struct (ekrcos
 		 :make-wrapper 
 		 (lambda (g)
-		   (set! (expcs-osc g) (make-oscil (expcs-frequency g) (expcs-initial-phase g)))
-		   (if (<= (expcs-t g) 0.0) (set! (expcs-t g) 0.00001))
-		   (set! (expcs-cosh-t g) (cosh (expcs-t g)))
-		   (let ((exp-t (exp (- (expcs-t g)))))
-		     (set! (expcs-offset g) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
-		     (set! (expcs-scaler g) (* (sinh (expcs-t g)) (expcs-offset g))))
+		   (set! (ekrcos-osc g) (make-oscil (ekrcos-frequency g) (ekrcos-initial-phase g)))
+		   (if (<= (ekrcos-r g) 0.0) (set! (ekrcos-r g) 0.00001))
+		   (set! (ekrcos-cosh-t g) (cosh (ekrcos-r g)))
+		   (let ((exp-t (exp (- (ekrcos-r g)))))
+		     (set! (ekrcos-offset g) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
+		     (set! (ekrcos-scaler g) (* (sinh (ekrcos-r g)) (ekrcos-offset g))))
 		   g))
-  (frequency 440.0) 
-  (initial-phase 0.0)
-  (t 1.0 :type float)
+  (frequency 440.0) (initial-phase 0.0) (r 1.0 :type float)
   (osc #f :type clm) scaler offset cosh-t)
 
 
-(define (expcs gen fm)
-  (declare (gen expcs) (fm float))
-  (- (/ (expcs-scaler gen) 
-	(- (expcs-cosh-t gen) (oscil (expcs-osc gen) fm)))
-     (expcs-offset gen)))
+(define (ekrcos gen fm)
+  (declare (gen ekrcos) (fm float))
+  (- (/ (ekrcos-scaler gen) 
+	(- (ekrcos-cosh-t gen) (oscil (ekrcos-osc gen) fm)))
+     (ekrcos-offset gen)))
 
 
 #|
 (with-sound (:clipped #f)
-  (let ((gen (make-expcs 100 :t 1.0)))
+  (let ((gen (make-ekrcos 100 :r 1.0)))
     (run (lambda ()
       (do ((i 0 (1+ i)))
 	  ((= i 10000))
-	(outa i (expcs gen 0.0) *output*))))))
-
+	(outa i (ekrcos gen 0.0) *output*))))))
 
 ;; change "t" during note -- smoothly changing sum-of-cosines spectra (damped "lute-stop" effect)
 (with-sound (:clipped #f)  
-  (let ((gen (make-expcs 100 :t 0.1))
+  (let ((gen (make-ekrcos 100 :r 0.1))
 	(t-env (make-env '(0 .1 1 2) :end 20000)))
     (run (lambda ()
       (do ((i 0 (1+ i)))
 	  ((= i 20000))
-	(set! (expcs-t gen) (env t-env))
-	(set! (expcs-cosh-t gen) (cosh (expcs-t gen)))
-	(let ((exp-t (exp (- (expcs-t gen)))))
-	  (set! (expcs-offset gen) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
-	  (set! (expcs-scaler gen) (* (sinh (expcs-t gen)) (expcs-offset gen))))
-	(outa i (expcs gen 0.0) *output*))))))
+	(set! (ekrcos-r gen) (env t-env))
+	(set! (ekrcos-cosh-t gen) (cosh (ekrcos-r gen)))
+	(let ((exp-t (exp (- (ekrcos-r gen)))))
+	  (set! (ekrcos-offset gen) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
+	  (set! (ekrcos-scaler gen) (* (sinh (ekrcos-r gen)) (ekrcos-offset gen))))
+	(outa i (ekrcos gen 0.0) *output*))))))
+|#
+
+
+(def-clm-struct (ssbekt
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (ssbekt-carincr g) (hz->radians (- (ssbekt-carfreq g) (ssbekt-modfreq g))))
+		   (set! (ssbekt-modincr g) (hz->radians (ssbekt-modfreq g)))
+		   g))
+  (carfreq 0.0) (modfreq 0.0) (r 0.0)
+  (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
+
+(define (ssbekt gen fm)
+  (declare (gen ssbekt) (fm float))
+  (let* ((cx (ssbekt-carangle gen))
+	 (mx (ssbekt-modangle gen))
+	 (r (ssbekt-r gen))
+	 (ccmx (- (cosh r) (cos mx))))
+
+    (set! (ssbekt-carangle gen) (+ (* (/ (ssbekt-modincr gen) (ssbekt-carincr gen)) fm) cx (ssbekt-carincr gen)))
+    (set! (ssbekt-modangle gen) (+ fm mx (ssbekt-modincr gen)))
+
+    (/ (- (* (cos cx)
+	     (- (/ (sinh r) ccmx)
+		1.0))
+	  (* (sin cx)
+	     (/ (sin mx) ccmx)))
+       (* 2.0 (- (/ 1.0 (- 1.0 (exp (- r)))) 1.0))))) ; normalization
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-ssbekt 1000.0 100.0 1.0)))
+    (run (lambda ()
+      (do ((i 0 (1+ i)))
+	  ((= i 20000))
+	(outa i (ssbekt gen 0.0) *output*))))))
 |#
 
 
@@ -108,9 +143,7 @@
 								1.379))))
 						(oddsin-n g))))
 		   g))
-  (frequency 440.0) 
-  (initial-phase 0.0)
-  (n 1 :type int)
+  (frequency 440.0) (initial-phase 0.0) (n 1 :type int)
   (osc #f :type clm) (nosc #f :type clm) (norm 0.0 :type float))
 
 (define (oddsin gen fm)
@@ -126,11 +159,21 @@
 (do ((i 1 (1+ i))) 
     ((= i 30))
   (let ((v (with-sound (:output (make-vct 1000) :clipped #f)
-		       (let ((gen (make-oddsin 40.0 :n i)))
+		       (let ((gen (make-oddsin (radians->hz .002) :n i)))
 			 (do ((k 0 (1+ k)))
 			     ((= k 1000))
 			   (outa k (oddsin gen 0.0) *output*))))))
-    (snd-display "~A: ~A ~A" i (vct-peak v) (/ i (vct-peak v)))))
+    (let ((pos 0)
+	  (pk (vct-peak v)))
+      (do ((k 0 (1+ k)))
+	  ((or (= k 1000)
+	       (> pos 0)))
+	(if (>= (abs (vct-ref v k)) pk)
+	    (set! pos k)))
+      (snd-display "~A: ~A ~A, ~A ~A ~A" i pk (/ i pk) pos (/ (* pos 0.002) (* 2 pi)) (inexact->exact (round (/ 1.0 (/ (* pos 0.002) (* 2 pi)))))))))
+
+;;; so max is about at 2pi/(5n+4)
+;;; for sum-of-sines it's about half that 2pi/(2.5n+4) -- zero cross at 2pi/4n min at pi/n 
 |#
 
 #|
@@ -172,24 +215,24 @@
 	(outa i (oddcos gen 0.0) *output*))))))
 |#
 
-(def-clm-struct (ssboddsum
+(def-clm-struct (ssbodd
 		 :make-wrapper
 		 (lambda (g)
-		   (set! (ssboddsum-carincr g) (hz->radians (- (ssboddsum-carfreq g) (ssboddsum-modfreq g))))
-		   (set! (ssboddsum-modincr g) (hz->radians (ssboddsum-modfreq g)))
+		   (set! (ssbodd-carincr g) (hz->radians (- (ssbodd-carfreq g) (ssbodd-modfreq g))))
+		   (set! (ssbodd-modincr g) (hz->radians (ssbodd-modfreq g)))
 		   g))
   (carfreq 0.0) (modfreq 0.0) (n 1 :type int)
   (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
 
-(define (ssboddsum gen fm)
-  (declare (gen ssboddsum) (fm float))
-  (let* ((cx (ssboddsum-carangle gen))
-	 (mx (ssboddsum-modangle gen))
-	 (n (ssboddsum-n gen))
+(define (ssbodd gen fm)
+  (declare (gen ssbodd) (fm float))
+  (let* ((cx (ssbodd-carangle gen))
+	 (mx (ssbodd-modangle gen))
+	 (n (ssbodd-n gen))
 	 (sinnx (sin (* n mx)))
 	 (den (* n (sin mx)))) ; "n" is normalization
-    (set! (ssboddsum-carangle gen) (+ cx (ssboddsum-carincr gen) fm))
-    (set! (ssboddsum-modangle gen) (+ mx (ssboddsum-modincr gen)))
+    (set! (ssbodd-carangle gen) (+ cx (ssbodd-carincr gen) fm))
+    (set! (ssbodd-modangle gen) (+ mx (ssbodd-modincr gen)))
     (if (< (abs den) 1.0e-9)
 	0.0
 	(- (* (sin cx)
@@ -200,11 +243,11 @@
 
 #|
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-ssboddsum 1000.0 100.0 5)))
+  (let ((gen (make-ssbodd 1000.0 100.0 5)))
     (run (lambda ()
       (do ((i 0 (1+ i)))
 	  ((= i 10000))
-	(outa i (ssboddsum gen 0.0) *output*))))))
+	(outa i (ssbodd gen 0.0) *output*))))))
 |#
 
 
@@ -216,8 +259,7 @@
 				       (set! (asyfm-freq gen) (hz->radians (asyfm-frequency gen)))
 				       (set! (asyfm-phase gen) (asyfm-initial-phase gen))
 				       gen))
-  (frequency 0.0) (initial-phase 0.0) 
-  (ratio 1.0) (r 1.0) (index 1.0)
+  (frequency 0.0) (initial-phase 0.0) (ratio 1.0) (r 1.0) (index 1.0)
   (freq 0.0) (phase 0.0))
 
 (define (asyfm-J gen input)
@@ -304,8 +346,6 @@
 	 (outa i (asyfm-I gen 0.0) *output*))))))
 |#
 
-;;; TODO: need to check asyfm-I amp norm
-
 
 ;;; --------------------------------------------------------------------------------
 
@@ -354,12 +394,10 @@
 |#
 
 
-(define make-jackson make-fejer)
+(define make-fejer2 make-fejer)
 
-(define (jackson gen fm)
-  "(poussin-sum angle n) produces a pulse train."
+(define (fejer2 gen fm)
   ;; Katznelson p16
-
   (declare (gen fejer) (fm float))
   (let ((val (fejer gen fm)))
     (* val val))) ; we already normalized this to 1.0
@@ -367,12 +405,12 @@
 
 #|
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-jackson 100.0 :n 10)))
+  (let ((gen (make-fejer2 100.0 :n 10)))
     (run
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
-	 (outa i (jackson gen 0.0) *output*))))))
+	 (outa i (fejer2 gen 0.0) *output*))))))
 |#
 
 
@@ -384,7 +422,6 @@
 		   g))
   (frequency 0.0) (initial-phase 0.0) (n 1 :type int)
   (angle 0.0) (incr 0.0))
-
 
 (define (poussin gen)
   (declare (gen poussin))
@@ -417,69 +454,68 @@
 |#
 
 
-(def-clm-struct (legendre
+(def-clm-struct (soc2
 		 :make-wrapper
 		 (lambda (g)
-		   (set! (legendre-n1 g) (+ 1 (* 2 (legendre-n g))))
-		   (set! (legendre-incr g) (hz->radians (legendre-frequency g)))
-		   (set! (legendre-angle g) (legendre-initial-phase g))
+		   (set! (soc2-n1 g) (+ 1 (* 2 (soc2-n g))))
+		   (set! (soc2-incr g) (hz->radians (soc2-frequency g)))
+		   (set! (soc2-angle g) (soc2-initial-phase g))
 		   g))
   (frequency 0.0) (initial-phase 0.0) (n 1 :type int) 
   (n1 1 :type int)
   (angle 0.0) (incr 0.0))
 		   
-(define (legendre gen)
-  "(legendre-sum angle n) produces a band-limited pulse train"
+(define (soc2 gen)
+  "(soc2-sum angle n) produces a band-limited pulse train"
   ;; from Andrews, Askey, Roy "Special Functions" p 314 with my amplitude scaling
-  (declare (gen legendre))
-  (let* ((angle (legendre-angle gen))
+  (declare (gen soc2))
+  (let* ((angle (soc2-angle gen))
 	 (result (if (< (abs angle) 1.0e-9)
 		     1.0
-		     (let* ((n (legendre-n gen))
-			    (n1 (legendre-n1 gen))
+		     (let* ((n (soc2-n gen))
+			    (n1 (soc2-n1 gen))
 			    (val (/ (sin (* angle (+ n 0.5)))
 				   (* (sin (* 0.5 angle)) n1))))
 		       (* val val)))))
-    (set! (legendre-angle gen) (+ (legendre-angle gen) (legendre-incr gen)))
+    (set! (soc2-angle gen) (+ (soc2-angle gen) (soc2-incr gen)))
     result))
 
 #|
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-legendre 100.0 :n 10)))
+  (let ((gen (make-soc2 100.0 :n 10)))
     (run (lambda () (do ((i 0 (1+ i)))
 	((= i 20000))
-      (outa i (legendre gen) *output*))))))
+      (outa i (soc2 gen) *output*))))))
 |#
 
 
-
-(def-clm-struct (rcos
+(def-clm-struct (rkcos
 		 :make-wrapper
 		 (lambda (g)
-		   (set! (rcos-osc g) (make-oscil (rcos-frequency g) (rcos-initial-phase g)))
+		   (set! (rkcos-osc g) (make-oscil (rkcos-frequency g) (rkcos-initial-phase g)))
 		   g))
   (frequency 0.0) (initial-phase (* 0.5 pi)) (r 1.0) ; 'r' controls successive sinusoid amplitudes
   (osc #f :type clm))
 
-(define (rcos gen fm)
-  ;; from Andrews, Askey, Roy "Special Functions" 5.1.16
+(define (rkcos gen fm)
+  ;; from Andrews, Askey, Roy "Special Functions" 5.1.16, p243. r^k cos sum
   ;; a variant of the G&R 2nd col 4th row
-  (declare (gen rcos) (fm float))
-  (let* ((r (rcos-r gen))
+  (declare (gen rkcos) (fm float))
+  (let* ((r (rkcos-r gen))
 	 (rr (* r r)))
     (* (- (/ (- 1.0 rr)
 	     (- (+ 1.0 rr)
-		(* 2.0 r (oscil (rcos-osc gen)))))
+		(* 2.0 r (oscil (rkcos-osc gen)))))
 	  1.0)
        (/ (- 1.0 r) (* 2.0 r))))) ; normalization
 
 #|
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-rcos 100.0 :r 0.5)))
+  (let ((gen (make-rkcos 100.0 :r 0.5)))
     (run (lambda () 
 	   (do ((i 0 (1+ i)))
 	       ((= i 20000))
-	     (outa i (rcos gen 0.0) *output*))))))
+	     (outa i (rkcos gen 0.0) *output*))))))
 |#
 
 
@@ -487,55 +523,56 @@
 
 ;;; Jolley 2nd col 2nd row (1st row is cos tweak of this)
 
-(def-clm-struct (sinhfm
+(def-clm-struct (r2ksin
 		 :make-wrapper
 		 (lambda (g)
-		   (set! (sinhfm-cosx g) (make-oscil (sinhfm-frequency g) (sinhfm-initial-phase g)))
-		   (set! (sinhfm-sinx g) (make-oscil (sinhfm-frequency g) (sinhfm-initial-phase g)))
-		   (if (>= (* (sinhfm-a g) (sinhfm-a g)) 1.0)
-		       (set! (sinhfm-a g) 0.9999999))
+		   (set! (r2ksin-cosx g) (make-oscil (r2ksin-frequency g) (r2ksin-initial-phase g)))
+		   (set! (r2ksin-sinx g) (make-oscil (r2ksin-frequency g) (r2ksin-initial-phase g)))
+		   (if (>= (* (r2ksin-r g) (r2ksin-r g)) 1.0)
+		       (set! (r2ksin-r g) 0.9999999))
 		   g))
-  (frequency 0.0) (initial-phase 0.0) (a 0.0)
+  (frequency 0.0) (initial-phase 0.0) (r 0.0)
   (cosx #f :type clm) (sinx #f :type clm))
 
-(define (sinhfm gen fm)
-  (declare (gen sinhfm))
-  (* (sinh (* (sinhfm-a gen)
-	      (oscil (sinhfm-cosx gen) fm)))
-     (cos (* (sinhfm-a gen)
-	     (oscil (sinhfm-sinx gen) fm)))))
+(define (r2ksin gen fm)
+  (declare (gen r2ksin))
+  (* (sinh (* (r2ksin-r gen)
+	      (oscil (r2ksin-cosx gen) fm)))
+     (cos (* (r2ksin-r gen)
+	     (oscil (r2ksin-sinx gen) fm)))))
 
 #|
 ;;; odd harmonics, but we can't push the upper partials past the (2k)! range, so not very flexible
 
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-sinhfm 100.0 :a 0.5)))
+  (let ((gen (make-r2ksin 100.0 :r 0.5)))
     (run (lambda () (do ((i 0 (1+ i)))
 	((= i 20000))
-      (outa i (sinhfm gen 0.0) *output*))))))
+      (outa i (r2ksin gen 0.0) *output*))))))
 |#
 
 
-(def-clm-struct (ssbh
+(def-clm-struct (ssbr2k
 		 :make-wrapper
 		 (lambda (g)
-		   (set! (ssbh-carincr g) (hz->radians (ssbh-carfreq g)))
-		   (set! (ssbh-modincr g) (hz->radians (ssbh-modfreq g)))
+		   (set! (ssbr2k-carincr g) (hz->radians (ssbr2k-carfreq g)))
+		   (set! (ssbr2k-modincr g) (hz->radians (ssbr2k-modfreq g)))
 		   g))
-  (carfreq 0.0) (modfreq 0.0) (a 1.0)
+  (carfreq 0.0) (modfreq 0.0) (r 1.0)
   (carangle 0.0) (carincr 0.0)
   (modangle 0.0) (modincr 0.0))
 
-(define (ssbh gen)
-  (declare (gen ssbh))
-  (let* ((mx (ssbh-modangle gen))
-	 (cx (ssbh-carangle gen))
-	 (a (ssbh-a gen))
+;;; TODO: fm arg here
+(define (ssbr2k gen)
+  (declare (gen ssbr2k))
+  (let* ((mx (ssbr2k-modangle gen))
+	 (cx (ssbr2k-carangle gen))
+	 (a (ssbr2k-r gen))
 	 (asinx (* a (sin mx)))
 	 (acosx (* a (cos mx))))
 
-    (set! (ssbh-carangle gen) (+ (ssbh-carangle gen) (ssbh-carincr gen)))
-    (set! (ssbh-modangle gen) (+ (ssbh-modangle gen) (ssbh-modincr gen)))
+    (set! (ssbr2k-carangle gen) (+ (ssbr2k-carangle gen) (ssbr2k-carincr gen)))
+    (set! (ssbr2k-modangle gen) (+ (ssbr2k-modangle gen) (ssbr2k-modincr gen)))
 
     (/ (- (* (cos cx)
 	     (cosh acosx)
@@ -547,18 +584,18 @@
 
 #|
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-ssbh 1000.0 100.0 0.5)))
+  (let ((gen (make-ssbr2k 1000.0 100.0 0.5)))
     (run 
      (lambda () 
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
-	 (outa i (ssbh gen) *output*))))))
+	 (outa i (ssbr2k gen) *output*))))))
 |#
 
 
 ;;; --------------------------------------------------------------------------------
 
-;;; bess (returns bes-jn, like oscil returns sin)
+;;; bess (returns bes-jn, like oscil returns sin) normalized to peak at 1.0
 ;;;   frequency here is the frequency in Hz of the damped sinusoid part of the bessel function
 
 (define bessel-peaks (vct 1.000 0.582 0.487 0.435 0.400 0.375 0.355 0.338 0.325 0.313 0.303 0.294 0.286 0.279 0.273 0.267 0.262 0.257 0.252 0.248
@@ -627,60 +664,60 @@
 ;;; --------------------------------------------------------------------------------
 
 ;;; Jolley 1st col 2nd row
-;;;   heads toward a square wave as "a" -> 0.0 (odd harmonics, 1/k amp)
+;;;   heads toward a square wave as "r" -> 0.0 (odd harmonics, 1/k amp)
 
-(def-clm-struct (ecos 
+(def-clm-struct (ekoddcos 
 		 :make-wrapper
 		 (lambda (g)
-		   (set! (ecos-osc g) (make-oscil (ecos-frequency g) (ecos-initial-phase g)))
+		   (set! (ekoddcos-osc g) (make-oscil (ekoddcos-frequency g) (ekoddcos-initial-phase g)))
 		   g))
-  (frequency 0.0) (initial-phase (* 0.5 pi)) (a 1.0)
+  (frequency 0.0) (initial-phase (* 0.5 pi)) (r 1.0)
   (osc #f :type clm))
 
-(define (ecos gen fm)
-  (declare (gen ecos) (fm float))
-  (* -0.5 (atan (/ (oscil (ecos-osc gen) fm) (sinh (ecos-a gen))))))
-
+(define (ekoddcos gen fm)
+  (declare (gen ekoddcos) (fm float))
+  (let* ((a (ekoddcos-r gen))
+	 (sinha (sinh a)))
+    (/ (atan (/ (oscil (ekoddcos-osc gen) fm) sinha))
+       (atan (/ 1.0 sinha))))) ; normalization
 
 #|
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-ecos 400.0 :a 1.0)))
+  (let ((gen (make-ekoddcos 400.0 :r 1.0)))
     (run (lambda () (do ((i 0 (1+ i)))
 	((= i 10000))
-      (outa i (ecos gen 0.0) *output*))))))
+      (outa i (ekoddcos gen 0.0) *output*))))))
 
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-ecos 400.0 :a 0.0))
+  (let ((gen (make-ekoddcos 400.0 :r 0.0))
 	(a-env (make-env '(0 0 1 1) :end 10000)))
     (run (lambda () 
 	   (do ((i 0 (1+ i)))
 	       ((= i 10000))
-	     (set! (ecos-a gen) (env a-env))
-	     (outa i (ecos gen 0.0) *output*))))))
+	     (set! (ekoddcos-r gen) (env a-env))
+	     (outa i (ekoddcos gen 0.0) *output*))))))
 
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen1 (make-ecos 400.0 :a 0.0))
+  (let ((gen1 (make-ekoddcos 400.0 :r 0.0))
 	(gen2 (make-oscil 400.0))
 	(a-env (make-env '(0 0 1 1) :end 10000)))
     (run (lambda () 
 	   (do ((i 0 (1+ i)))
 	       ((= i 10000))
-	     (set! (ecos-a gen1) (env a-env))
-	     (outa i (ecos gen1 (* .1 (oscil gen2))) *output*))))))
+	     (set! (ekoddcos-r gen1) (env a-env))
+	     (outa i (ekoddcos gen1 (* .1 (oscil gen2))) *output*))))))
 |#
 
-;;; TODO: amp depends on a -- fixup
-
-;;; G&R 2nd col 7th row is sine form of this -- perhaps that form is simpler to normalize?
+;;; TODO: ssb case for e^odd k
 
 ;;; --------------------------------------------------------------------------------
 
 
 ;;; Jolley 1st col 3rd row 
 
-(define make-acosum make-oscil)
+(define make-oddacos make-oscil)
 
-(define (acosum gen fm)
+(define (oddacos gen fm)
   (declare (gen clm) (fm float))
   (let ((arg (* 2.0 (oscil gen fm))))
     (if (>= arg 0.0)
@@ -689,11 +726,11 @@
 
 #|
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-acosum 400.0)))
+  (let ((gen (make-oddacos 400.0)))
     (run (lambda ()
 	   (do ((i 0 (1+ i)))
 	       ((= i 10000))
-	     (outa i (* .3 (acosum gen 0.0)) *output*))))))
+	     (outa i (* .3 (oddacos gen 0.0)) *output*))))))
 |#
 
 ;;; as printed in J, this is not usable -- 1-2sin can be 3 so acos will be complex -- looks like we're missing: x < pi
@@ -701,55 +738,22 @@
 
 ;;; --------------------------------------------------------------------------------
 
+;;; straight sums as ssb
 
-;;; this has poor side-band cancellation (0.093)
-
-(def-clm-struct (ssbsum
+(def-clm-struct (ssbn 
 		 :make-wrapper
 		 (lambda (g)
-		   (set! (ssbsum-carsin g) (make-oscil (ssbsum-carrier-frequency g) 0.0))
-		   (set! (ssbsum-carcos g) (make-oscil (ssbsum-carrier-frequency g) (* 0.5 pi)))
-		   (set! (ssbsum-sinsum g) (make-sum-of-sines (ssbsum-n g) (ssbsum-sum-frequency g) (ssbsum-initial-phase g)))		  
-		   (set! (ssbsum-cossum g) (make-sum-of-cosines (ssbsum-n g) (ssbsum-sum-frequency g) (ssbsum-initial-phase g)))   	  
+		   (set! (ssbn-incr1 g) (hz->radians (ssbn-carfreq g)))
+		   (set! (ssbn-incr2 g) (hz->radians (ssbn-modfreq g)))
 		   g))
-  (n 1 :type int) (carrier-frequency 440.0) (initial-phase 0.0) ; this order mimics make-sum-of-(co)sines
-  (sum-frequency 440.0) (carsin #f :type clm) (carcos #f :type clm) (sinsum #f :type clm) (cossum #f :type clm))
-
-(define (ssbsum gen fm)
-  (declare (gen ssbsum) (fm float))
-  (* (- (* (oscil (ssbsum-carsin gen))
-	   (sum-of-sines (ssbsum-sinsum gen) fm))
-	(* (oscil (ssbsum-carcos gen))
-	   (sum-of-cosines (ssbsum-cossum gen) fm) 1.0))
-     0.5))
-
-#|
-(with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-ssbsum 3 400.0 0.0 100.0)))
-    (run 
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i 10000))
-	 (outa i (* .3 (ssbsum gen 0.0)) *output*))))))
-|#
-
-
-;;; much better cancellation:
-
-(def-clm-struct (ssbsum1 
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (ssbsum1-incr1 g) (hz->radians (ssbsum1-carfreq g)))
-		   (set! (ssbsum1-incr2 g) (hz->radians (ssbsum1-modfreq g)))
-		   g))
-  (n 0 :type int) (carfreq 0.0) (modfreq 0.0) 
+  (carfreq 0.0) (modfreq 0.0) (n 1 :type int)
   (angle1 0.0) (angle2 0.0) (incr1 0.0) (incr2 0.0))
 
-(define (ssbsum1 gen fm)
-  (declare (gen ssbsum1) (fm float))
-  (let* ((n (ssbsum1-n gen))
-	 (angle1 (ssbsum1-angle1 gen))
-	 (angle2 (ssbsum1-angle2 gen))
+(define (ssbn gen fm)
+  (declare (gen ssbn) (fm float))
+  (let* ((n (ssbn-n gen))
+	 (angle1 (ssbn-angle1 gen))
+	 (angle2 (ssbn-angle2 gen))
 	 (carsin (sin angle1))
 	 (carcos (cos angle1))
 	 (den (sin (* 0.5 angle2)))
@@ -759,18 +763,18 @@
 	 (result (/ (- (* carsin sumsin)
 		       (* carcos sumcos))
 		    (* 2 den))))
-    (set! (ssbsum1-angle1 gen) (+ (ssbsum1-angle1 gen) (ssbsum1-incr1 gen)))
-    (set! (ssbsum1-angle2 gen) (+ (ssbsum1-angle2 gen) (ssbsum1-incr2 gen)))
+    (set! (ssbn-angle1 gen) (+ (ssbn-angle1 gen) (ssbn-incr1 gen)))
+    (set! (ssbn-angle2 gen) (+ (ssbn-angle2 gen) (ssbn-incr2 gen)))
     result))
 
 #|
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-ssbsum1 3 2000.0 100.0)))
+  (let ((gen (make-ssbn 2000.0 100.0 3)))
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (* .3 (ssbsum1 gen 0.0)) *output*))))))
+	 (outa i (* .3 (ssbn gen 0.0)) *output*))))))
 |#
 
 
@@ -785,7 +789,7 @@
 		   (set! (ssbr-incr1 g) (hz->radians (ssbr-carfreq g)))
 		   (set! (ssbr-incr2 g) (hz->radians (ssbr-modfreq g)))
 		   g))
-  (n 0 :type int) (carfreq 0.0) (modfreq 0.0) (r 0.0)
+  (carfreq 0.0) (modfreq 0.0) (n 1 :type int) (r 0.0)
   (angle1 0.0) (angle2 0.0) (incr1 0.0) (incr2 0.0))
 
 (define (ssbr gen fm)
@@ -808,7 +812,7 @@
 
 #|
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-ssbr 3 2000.0 103.0 0.5)))
+  (let ((gen (make-ssbr 2000.0 103.0 3 0.5)))
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
@@ -860,6 +864,8 @@
 		   g))
   (frequency 0.0) (r 0.0)
   (angle 0.0) (incr 0.0))
+
+;;; TODO: fm ?
 
 (define (k!rcos gen)
   (declare (gen k!rcos))
@@ -935,13 +941,13 @@
 		 (lambda (g)
 		   (set! (blsaw-incr g) (hz->radians (blsaw-frequency g)))
 		   g))
-  (frequency 0.0) (a 0.0) (n 1 :type int)
+  (frequency 0.0) (n 1 :type int) (r 0.0)
   (angle 0.0) (incr 0.0))
 
 (define (blsaw gen)
   "blsaw produces a band-limited sawtooth"
   (declare (gen blsaw))
-  (let* ((a (blsaw-a gen))
+  (let* ((a (blsaw-r gen))
 	 (N (blsaw-n gen))
 	 (x (blsaw-angle gen))
 	 (incr (blsaw-incr gen))
@@ -960,7 +966,7 @@
 
 #|
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-blsaw 440.0 :a 0.5 :n 3)))
+  (let ((gen (make-blsaw 440.0 :r 0.5 :n 3)))
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
@@ -976,33 +982,30 @@
 
 ;;; Jolley 1st col 1st row
 
-;;; named "mehler" because the general form 1/(a + bcos x) is assoicated with "Mehler's formula"
-;;;   in Sansone, "Orthogonal Functions" p182
-
-(def-clm-struct (mehler
+(def-clm-struct (k2sin
 		 :make-wrapper
 		 (lambda (g)
-		   (set! (mehler-angle g) (mehler-initial-phase g))
-		   (set! (mehler-incr g) (hz->radians (mehler-frequency g)))
+		   (set! (k2sin-angle g) (k2sin-initial-phase g))
+		   (set! (k2sin-incr g) (hz->radians (k2sin-frequency g)))
 		   g))
   (frequency 0.0) (initial-phase 0.0)
   (angle 0.0) (incr 0.0))
 
-(define (mehler gen fm)
-  (declare (gen mehler) (fm float))
-  (let ((x (mehler-angle gen)))
-    (set! (mehler-angle gen) (+ x (mehler-incr gen)))
+(define (k2sin gen fm)
+  (declare (gen k2sin) (fm float))
+  (let ((x (k2sin-angle gen)))
+    (set! (k2sin-angle gen) (+ x (k2sin-incr gen)))
     (/ (* 3.0 (sin x)) ; 3 rather than 4 for normalization
        (- 5.0 (* 4.0 (cos x))))))
 
 #|
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-mehler 440.0)))
+  (let ((gen (make-k2sin 440.0)))
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (mehler gen 0.0) *output*))))))
+	 (outa i (k2sin gen 0.0) *output*))))))
 |#
 
 ;;; --------------------------------------------------------------------------------
@@ -1010,31 +1013,31 @@
 
 ;;; G&R 2nd col 1st and 2nd rows
 
-(def-clm-struct (ssbrksum
+(def-clm-struct (ssbrk
 		 :make-wrapper
 		 (lambda (g)
-		   (set! (ssbrksum-carincr g) (hz->radians (ssbrksum-carfreq g)))
-		   (set! (ssbrksum-modincr g) (hz->radians (ssbrksum-modfreq g)))
+		   (set! (ssbrk-carincr g) (hz->radians (ssbrk-carfreq g)))
+		   (set! (ssbrk-modincr g) (hz->radians (ssbrk-modfreq g)))
 		   g))
   (carfreq 0.0) (modfreq 0.0) (n 1 :type int) (r 0.0)
   (carangle 0.0) (modangle 0.0) (carincr 0.0) (modincr 0.0))
 
-(define (ssbrksum gen)
-  (declare (gen ssbrksum))
-  (let* ((cx (ssbrksum-carangle gen))
-	 (mx (ssbrksum-modangle gen))
-	 (ci (ssbrksum-carincr gen))
-	 (mi (ssbrksum-modincr gen))
-	 (r (ssbrksum-r gen))
-	 (n (ssbrksum-n gen))
+(define (ssbrk gen)
+  (declare (gen ssbrk))
+  (let* ((cx (ssbrk-carangle gen))
+	 (mx (ssbrk-modangle gen))
+	 (ci (ssbrk-carincr gen))
+	 (mi (ssbrk-modincr gen))
+	 (r (ssbrk-r gen))
+	 (n (ssbrk-n gen))
 	 (rn (- (expt r n)))
 	 (rn1 (expt r (+ n 1)))
 	 (nmx (* n mx))
 	 (n1mx (* (- n 1) mx))
 	 (norm (/ (- (expt r n) 1) (- r 1))) ; this could use rn
 	 (den (* norm (+ 1.0 (* -2.0 r (cos mx)) (* r r)))))
-    (set! (ssbrksum-carangle gen) (+ cx ci))
-    (set! (ssbrksum-modangle gen) (+ mx mi))
+    (set! (ssbrk-carangle gen) (+ cx ci))
+    (set! (ssbrk-modangle gen) (+ mx mi))
     (/ (- (* (sin cx)
 	     (+ (* r (sin mx))
 		(* rn (sin nmx))
@@ -1049,12 +1052,12 @@
 	  
 #|
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-ssbrksum 1000 100 5 0.5)))
+  (let ((gen (make-ssbrk 1000 100 5 0.5)))
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (ssbrksum gen) *output*))))))
+	 (outa i (ssbrk gen) *output*))))))
 |#
 
 
@@ -1197,25 +1200,25 @@
 
 ;;;  G&R 2nd col rows 7&8 (odd r^k/k) 
 
-(def-clm-struct (ssbor
+(def-clm-struct (ssboddrk
 		 :make-wrapper
 		 (lambda (g)
-		   (set! (ssbor-carincr g) (hz->radians (- (ssbor-carfreq g) (ssbor-modfreq g))))
-		   (set! (ssbor-modincr g) (hz->radians (ssbor-modfreq g)))
+		   (set! (ssboddrk-carincr g) (hz->radians (- (ssboddrk-carfreq g) (ssboddrk-modfreq g))))
+		   (set! (ssboddrk-modincr g) (hz->radians (ssboddrk-modfreq g)))
 		   g))
   (carfreq 0.0) (modfreq 0.0) (r 0.0)
   (carangle 0.0) (carincr 0.0)
   (modangle 0.0) (modincr 0.0))
 
-(define (ssbor gen fm)
-  (declare (gen ssbor))
-  (let* ((r (ssbor-r gen))
-	 (mx (ssbor-modangle gen))
-	 (cx (ssbor-carangle gen))
-	 (cfm (* fm (/ (ssbor-carincr gen) (ssbor-modincr gen)))))
+(define (ssboddrk gen fm)
+  (declare (gen ssboddrk))
+  (let* ((r (ssboddrk-r gen))
+	 (mx (ssboddrk-modangle gen))
+	 (cx (ssboddrk-carangle gen))
+	 (cfm (* fm (/ (ssboddrk-carincr gen) (ssboddrk-modincr gen)))))
 
-    (set! (ssbor-carangle gen) (+ cfm (ssbor-carangle gen) (ssbor-carincr gen)))
-    (set! (ssbor-modangle gen) (+ fm (ssbor-modangle gen) (ssbor-modincr gen)))
+    (set! (ssboddrk-carangle gen) (+ cfm (ssboddrk-carangle gen) (ssboddrk-carincr gen)))
+    (set! (ssboddrk-modangle gen) (+ fm (ssboddrk-modangle gen) (ssboddrk-modincr gen)))
 
     (/ (- (* (cos cx)
 	     0.5
@@ -1230,12 +1233,12 @@
 
 #|
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-ssbor 1000.0 100.0 0.5)))
+  (let ((gen (make-ssboddrk 1000.0 100.0 0.5)))
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (ssbor gen 0.0) *output*))))))
+	 (outa i (ssboddrk gen 0.0) *output*))))))
 |#
 
 
@@ -1243,7 +1246,7 @@
 
 
 ;;; Zygmund 1st
-;;;   this looks interesting, but how to normalize?  sum of sines is bad enough, but kr^k?
+;;;   this looks interesting, but how to normalize?  sum of sines is bad enough, kr^k -> 1/(1-x)^2 if x^2<1 (G&R 113)
 
 (def-clm-struct (krksin
 		 :make-wrapper
@@ -1326,6 +1329,8 @@
   (frequency 0.0) (a 0.0) (b 0.0)
   (angle 0.0) (incr 0.0))
 
+;;; TODO: fm?
+
 (define (abcos gen)
   (declare (gen abcos))
   (let* ((x (abcos-angle gen))
@@ -1357,15 +1362,15 @@
 
 ;;; J 2nd col 3rd row
 
-(def-clm-struct (a2k2
+(def-clm-struct (r2k2
 		 :make-wrapper
 		 (lambda (g)
-		   (set! (a2k2-incr g) (hz->radians (a2k2-frequency g)))
+		   (set! (r2k2-incr g) (hz->radians (r2k2-frequency g)))
 		   g))
-  (frequency 0.0) (a 1.0)
+  (frequency 0.0) (r 1.0)
   (angle 0.0) (incr 0.0))
 
-(define (a2k2-norm a)
+(define (r2k2-norm a)
   ;; J 124
   (- (* (/ pi (* 2 a))
 	(/ (+ (exp (* pi a)) (exp (* pi (- a))))
@@ -1373,71 +1378,42 @@
      (/ 1.0
 	(* 2 a a))))
 
-(define (a2k2 gen)
-  (declare (gen a2k2))
-  (let* ((x (a2k2-angle gen))
-	 (a (a2k2-a gen)))
+;;; TODO: fm?
+
+(define (r2k2 gen)
+  (declare (gen r2k2))
+  (let* ((x (r2k2-angle gen))
+	 (a (r2k2-r gen)))
     (if (> x (* 2 pi))
 	(set! x (fmod x (* 2 pi))))
 
-    (set! (a2k2-angle gen) (+ x (a2k2-incr gen)))
+    (set! (r2k2-angle gen) (+ x (r2k2-incr gen)))
 
     (/ (- (* pi (/ (cosh (* a (- pi x)))
 		   (sinh (* a pi))))
 	  (/ 1.0 a))
-       (* 2 a (a2k2-norm a)))))
+       (* 2 a (r2k2-norm a)))))
 
 
 #|
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-a2k2 100.0 1.0)))
+  (let ((gen (make-r2k2 100.0 1.0)))
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (a2k2 gen) *output*))))))
+	 (outa i (r2k2 gen) *output*))))))
 |#
 
 
 ;;; --------------------------------------------------------------------------------
 
-;;; W&G 1st
-
-(def-clm-struct (wgln
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (wgln-incr g) (hz->radians (wgln-frequency g)))
-		   g))
-  (frequency 0.0) (r 1.0)
-  (angle 0.0) (incr 0.0))
-
-(define (wgln gen fm)
-  (declare (gen wgln) (fm float))
-  (let* ((x (wgln-angle gen))
-	 (r (wgln-r gen)))
-    (set! (wgln-angle gen) (+ fm (wgln-angle gen) (wgln-incr gen)))
-    (- (log (+ 1.0 (* -2.0 r (cos x)) (* r r))))))
-
-#|
-(with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-wgln 100.0 1.0)))
-    (run 
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i 10000))
-	 (outa i (wgln gen 0.0) *output*))))))
-|#
-
-;;; this is not actually different from ln sqrt case (krcos above)
-
-;;; --------------------------------------------------------------------------------
 
 
 
 
 ;;; --------------------------------------------------------------------------------
 
-;;; TODO: in docs, dsp->gen or snd9
 ;;; TODO: in docs: add a ref to each gen from the formula (may need to split into bazillions of cases)
 ;;; PERHAPS: a generator table for quick.html?
 
