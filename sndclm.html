@@ -767,7 +767,7 @@ Some instruments that use oscil are
 <a href="sndscm.html#fmvox">vox</a> (clm-ins.scm), and
 <a href="sndscm.html#fmbell">fm-bell</a> (clm-ins.scm).  
 Interesting extensions of oscil include the various
-summation formulas in generators.scm (<a href="#rcos">rcos</a> et al).
+summation formulas in <a href="#othergenerators">generators.scm</a>.
 For a sine-bank example, see pvoc.scm.
 To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
 </p>
@@ -1467,7 +1467,7 @@ we got .006).
 </td></tr></table>
 </center>
 
-<p>Another choice is ecos in generators.scm, based on atan; as its "a" parameter approaches 0.0, you get closer to a square wave.
+<p>Another choice is <a href="#eoddcos">eoddcos</a> in <a href="#othergenerators">generators.scm</a>, based on atan; as its "a" parameter approaches 0.0, you get closer to a square wave.
 Even more amusing is this algorithm:
 <img src="sceq13.png" alt="square" align=absmiddle hspace=10>
 <!-- CMJ 37 4 sept 2006 p326 -->
@@ -1521,7 +1521,7 @@ Even more amusing is this algorithm:
 
 <p>I think just about every combination of oscil/triangle-wave/sawtooth-wave/square-wave has been
 used.  Even triangle-wave(square-wave) can make funny noises. Along these lines, there's
-a <a href="sndscm.html#blsaw">band-limited sawtooth</a> generator in generators.scm, 
+a <a href="#blsaw">band-limited sawtooth</a> generator in generators.scm, 
 band-limited-triangle-wave above (waveshaping), and band-limited pulse-train via <a href="#sum-of-cosines">sum-of-cosines</a>.
 </p>
 
@@ -1542,7 +1542,7 @@ band-limited-triangle-wave above (waveshaping), and band-limited pulse-train via
 <p>sum-of-cosines produces a band-limited pulse train containing
 "cosines" cosines.  I think this was originally viewed as a way to get a speech-oriented
 pulse train that would then be passed through formant filters (see pulse-voice in examp.scm).  There are many similar formulas:
-see <a href="#fejer">fejer</a> and friends in generators.scm. "Trigonometric Delights" by Eli Maor has
+see <a href="#ncos2">ncos2</a> and friends in <a href="#othergenerators">generators.scm</a>. "Trigonometric Delights" by Eli Maor has
 a derivation of a sum-of-sines formula and a neat
 geometric explanation.  For a derivation of the sum-of-cosines formula, see "Fourier
 Analysis" by Stein and Shakarchi, or (in the formula given below) multiply the left side (the cosines) by sin(x/2), use the trig
@@ -1630,28 +1630,20 @@ matter what.  It is possible to vary the spectrum smoothly:
 		    (* (signum val) 
 		       (expt (abs val) (env pow)))))))
 </pre></td></tr></table>
-<p>This trick works on all the <a href="#fejer">pulse-train</a> functions in generators.scm (or an oscil for that matter!), 
-but perhaps a filter is a simpler approach.  There are a lot more of these "kernels" in generators.scm.
+<p>This trick works on all the <a href="#ncos2">pulse-train</a> functions in generators.scm (or an oscil for that matter!), 
+but perhaps a filter is a simpler approach.  There are a lot more of these "kernels" in <a href="#othergenerators">generators.scm</a>.
 </p>
 
 <table border=1 hspace=20 cellspacing=4>
 <tr>
-<td bgcolor="#f6f8ff"><center>fejer (n=10)</center></td>
-<td bgcolor="#f6f8ff"><center>poussin (n=5)</center></td>
-<td bgcolor="#f6f8ff"><center>fejer2 (n=10)</center></td>
+<td bgcolor="#f6f8ff"><center>ncos2 (n=10)</center></td>
+<td bgcolor="#f6f8ff"><center>nrcos (n=5)</center></td>
+<td bgcolor="#f6f8ff"><center>ncos4 (n=10)</center></td>
 </tr><tr>
 <td><img src="fejer.png" alt="fejer sum"></td>
 <td><img src="poussin.png" alt="poussin sum"></td>
 <td><img src="jackson.png" alt="jackson sum"></td>
 </tr><tr><td height=8 colspan=3></td>
-</tr><tr>
-<td bgcolor="#f6f8ff"><center>soc2 (n=5)</center></td>
-<td bgcolor="#f6f8ff"><center>kosine (n=5, r=0.5)</center></td>
-<td bgcolor="#f6f8ff"><center>kosine (n=1, r=0.95)</center></td>
-</tr><tr>
-<td><img src="legendre.png" alt="legendre sum"></td>
-<td><img src="kosine.png" alt="kosine sum"></td>
-<td><img src="kosine95.png" alt="kosine95 sum"></td>
 </tr></table>
 
 <!--
@@ -1783,8 +1775,12 @@ goes up, "a" goes down (to avoid foldover, or whatever).
 </pre>
 </td></tr></table>
 
-<p>ssbrksum in generators.scm implements the single side-band version of sine-summation.
-There are some surprising sounds lurking in this generator; a sonata for moped, anyone?
+<p><a href="#ssbnr">ssbnr</a> in generators.scm implements the single side-band version of sine-summation.
+In the best of all worlds, I'd use a name like "rksin" here, rather than the borderline vacuous "sine-summation",
+but we also have "sum-of-cosines", a name that dates back the the Samson box, and "sum-of-sines" which was
+trying to imitate "sum-of-cosines".  These names are not perfect, but neither is "oscil", I suppose.
+Perhaps I should use "ncos", "nsin", "nrksin".
+There are some surprising sounds lurking in sine-summation; a sonata for moped, anyone?
 </p>
 
 <br><br>
@@ -1827,7 +1823,7 @@ known as the conjugate Dirichlet kernel
 </pre><br clear=left>
 
 <p>See also the <a href="#sine-summation">sine-summation</a> generator, 
-and generators.scm.
+and <a href="#othergenerators">generators.scm</a>.
 The original motivation for this generator was the restriction that the sine-summation generator's ratio ("a") can't be 1.0.
 But it's so easy to define a generator, that I'm sorry I made sum-of-sines a built-in case.
 For example, here is a generator based on a formula giving a sum of n odd sines:
@@ -2073,7 +2069,7 @@ take the last one in the G&amp;R section:
 </pre>
 
 <p>which can be folded into the original at no run-time cost.
-See generators.scm for
+See <a href="#othergenerators">generators.scm</a> for
 some of these in an undigested state.  As J. A. Moorer and Marc Le Brun pointed out
 eons ago, there are many more such formulas "buried in reference works".  Well, they've
 done nobody any good being buried for a generation, so I say: dig them up!  If
@@ -4499,72 +4495,9 @@ zip.scm:
 
 </p>
 
+
+
 <!-- TODO: other generators doc -->
-
-
-
-<!--
-<pre>
-  <A class=def NAME="make-oscil">make-oscil</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0)
-  <A class=def NAME="oscil">oscil</A> gen (fm 0.0)
-  <A class=def NAME="oscil?">oscil?</A> gen
-</pre>
-
-erkcos ssbekt
-oddsin oddcos ssbodd
-asyfm-J asyfm-I
-fejer fejer2 poussin soc2
-rkcos
-r2ksin ssbr2k
-bess
-ekoddcos
-oddacos
-ssbn
-ssbr
-krcos
-k!rcos
-kosine
-blsaw
-k2sin
-ssbrk
-ssbk
-ssboddrk
-krksin
-abssin
-abcos
-r2k2
--->
-
-
-<pre>
-  <A class=def NAME="make-erkcos">make-erkcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
-  <A class=def NAME="erkcos">erkcos</A> gen fm
-  <A class=def NAME="erkcos?">erkcos?</A> gen
-</pre>
-
-<pre>
-  <A class=def NAME="make-ssbekt">make-ssbekt</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (r 0.0)
-  <A class=def NAME="ssbekt">ssbekt</A> gen fm
-  <A class=def NAME="ssbekt?">ssbekt?</A> gen
-</pre>
-
-<pre>
-  <A class=def NAME="make-oddsin">make-oddsin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
-  <A class=def NAME="oddsin">oddsin</A> gen fm
-  <A class=def NAME="oddsin?">oddsin?</A> gen
-</pre>
-
-<pre>
-  <A class=def NAME="make-oddcos">make-oddcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
-  <A class=def NAME="oddcos">oddcos</A> gen fm
-  <A class=def NAME="oddcos?">oddcos?</A> gen
-</pre>
-
-<pre>
-  <A class=def NAME="make-ssbodd">make-ssbodd</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1)
-  <A class=def NAME="ssbodd">ssbodd</A> gen fm
-  <A class=def NAME="ssbodd?">ssbodd?</A> gen
-</pre>
 
 <pre>
   <A class=def NAME="make-asyfm">make-asyfm</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (ratio 1.0) (r 1.0) (index 1.0)
@@ -4574,63 +4507,32 @@ r2k2
 </pre>
 
 <pre>
-  <A class=def NAME="make-fejer">make-fejer</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
-  <A class=def NAME="fejer">fejer</A> gen fm
-  <A class=def NAME="fejer?">fejer?</A> gen
-</pre>
-
-<pre>
-  <A class=def NAME="make-fejer2">make-fejer2</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
-  <A class=def NAME="fejer2">fejer2</A> gen fm
-  <A class=def NAME="fejer2?">fejer2?</A> gen
-</pre>
-
-<pre>
-  <A class=def NAME="make-poussin">make-poussin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
-  <A class=def NAME="poussin">poussin</A> gen
-  <A class=def NAME="poussin?">poussin?</A> gen
-</pre>
-
-<pre>
-  <A class=def NAME="make-soc2">make-soc2</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
-  <A class=def NAME="soc2">soc2</A> gen
-  <A class=def NAME="soc2?">soc2?</A> gen
-</pre>
-
-<pre>
-  <A class=def NAME="make-rkcos">make-rkcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
-  <A class=def NAME="rkcos">rkcos</A> gen fm
-  <A class=def NAME="rkcos?">rkcos?</A> gen
-</pre>
-
-<pre>
-  <A class=def NAME="make-r2ksin">make-r2ksin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
-  <A class=def NAME="r2ksin">r2ksin</A> gen fm
-  <A class=def NAME="r2ksin?">r2ksin?</A> gen
-</pre>
-
-<pre>
-  <A class=def NAME="make-ssbr2k">make-ssbr2k</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (r 0.0)
-  <A class=def NAME="ssbr2k">ssbr2k</A> gen
-  <A class=def NAME="ssbr2k?">ssbr2k?</A> gen
-</pre>
-
-<pre>
   <A class=def NAME="make-bess">make-bess</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
   <A class=def NAME="bess">bess</A> gen fm
   <A class=def NAME="bess?">bess?</A> gen
 </pre>
 
 <pre>
-  <A class=def NAME="make-ekoddcos">make-ekoddcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
-  <A class=def NAME="ekoddcos">ekoddcos</A> gen fm
-  <A class=def NAME="ekoddcos?">ekoddcos?</A> gen
+  <A class=def NAME="make-blsaw">make-blsaw</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1) (r 0.0)
+  <A class=def NAME="blsaw">blsaw</A> gen
+  <A class=def NAME="blsaw?">blsaw?</A> gen
+</pre>
+
+
+
+
+<!-- finite sums -->
+
+<pre>
+  <A class=def NAME="make-ncos">make-ncos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
+  <A class=def NAME="ncos">ncos</A> gen fm
+  <A class=def NAME="ncos?">ncos?</A> gen
 </pre>
 
 <pre>
-  <A class=def NAME="make-oddacos">make-oddacos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0)
-  <A class=def NAME="oddacos">oddacos</A> gen fm
-  <A class=def NAME="oddacos?">oddacos?</A> gen
+  <A class=def NAME="make-nsin">make-nsin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
+  <A class=def NAME="nsin">nsin</A> gen fm
+  <A class=def NAME="nsin?">nsin?</A> gen
 </pre>
 
 <pre>
@@ -4640,52 +4542,132 @@ r2k2
 </pre>
 
 <pre>
-  <A class=def NAME="make-ssbr">make-ssbr</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1) (r 0.0)
-  <A class=def NAME="ssbr">ssbr</A> gen fm
-  <A class=def NAME="ssbr?">ssbr?</A> gen
+  <A class=def NAME="make-ssbnr1">make-ssbnr1</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1) (r 0.0)
+  <A class=def NAME="ssbnr1">ssbnr1</A> gen
+  <A class=def NAME="ssbnr1?">ssbnr1?</A> gen
+</pre>
+
+
+
+<pre>
+  <A class=def NAME="make-ncos2">make-ncos2</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
+  <A class=def NAME="ncos2">ncos2</A> gen fm
+  <A class=def NAME="ncos2?">ncos2?</A> gen
 </pre>
 
 <pre>
-  <A class=def NAME="make-krcos">make-krcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
-  <A class=def NAME="krcos">krcos</A> gen fm
-  <A class=def NAME="krcos?">krcos?</A> gen
+  <A class=def NAME="make-ncos4">make-ncos4</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
+  <A class=def NAME="ncos4">ncos4</A> gen fm
+  <A class=def NAME="ncos4?">ncos4?</A> gen
+</pre>
+
+
+<pre>
+  <A class=def NAME="make-nrcos">make-nrcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
+  <A class=def NAME="nrcos">nrcos</A> gen
+  <A class=def NAME="nrcos?">nrcos?</A> gen
 </pre>
 
 <pre>
-  <A class=def NAME="make-k!rcos">make-k!rcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
-  <A class=def NAME="k!rcos">k!rcos</A> gen
-  <A class=def NAME="k!rcos?">k!rcos?</A> gen
+  <A class=def NAME="make-ssbnr">make-ssbnr</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1) (r 0.0)
+  <A class=def NAME="ssbnr">ssbnr</A> gen fm
+  <A class=def NAME="ssbnr?">ssbnr?</A> gen
+</pre>
+
+
+<pre>
+  <A class=def NAME="make-noddsin">make-noddsin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
+  <A class=def NAME="noddsin">noddsin</A> gen fm
+  <A class=def NAME="noddsin?">noddsin?</A> gen
 </pre>
 
 <pre>
-  <A class=def NAME="make-kosine">make-kosine</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0) (k 0.0)
-  <A class=def NAME="kosine">kosine</A> gen fm
-  <A class=def NAME="kosine?">kosine?</A> gen
+  <A class=def NAME="make-noddcos">make-noddcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
+  <A class=def NAME="noddcos">noddcos</A> gen fm
+  <A class=def NAME="noddcos?">noddcos?</A> gen
 </pre>
 
 <pre>
-  <A class=def NAME="make-blsaw">make-blsaw</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1) (r 0.0)
-  <A class=def NAME="blsaw">blsaw</A> gen
-  <A class=def NAME="blsaw?">blsaw?</A> gen
+  <A class=def NAME="make-ssbnodd">make-ssbnodd</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1)
+  <A class=def NAME="ssbnodd">ssbnodd</A> gen fm
+  <A class=def NAME="ssbnodd?">ssbnodd?</A> gen
+</pre>
+
+<pre>
+  <A class=def NAME="make-ssbnk">make-ssbnk</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1)
+  <A class=def NAME="ssbnk">ssbnk</A> gen fm
+  <A class=def NAME="ssbnk">ssbnk-interp</A> gen fm interp
+  <A class=def NAME="ssbnk?">ssbnk?</A> gen
+</pre>
+
+
+
+<!-- infinite sums -->
+
+<pre>
+  <A class=def NAME="make-ercos">make-ercos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
+  <A class=def NAME="ercos">ercos</A> gen fm
+  <A class=def NAME="ercos?">ercos?</A> gen
+</pre>
+
+<pre>
+  <A class=def NAME="make-ssber">make-ssber</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (r 0.0)
+  <A class=def NAME="ssber">ssber</A> gen fm
+  <A class=def NAME="ssber?">ssber?</A> gen
+</pre>
+
+<pre>
+  <A class=def NAME="make-rcos">make-rcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
+  <A class=def NAME="rcos">rcos</A> gen fm
+  <A class=def NAME="rcos?">rcos?</A> gen
+</pre>
+
+<pre>
+  <A class=def NAME="make-r2sin">make-r2sin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
+  <A class=def NAME="r2sin">r2sin</A> gen fm
+  <A class=def NAME="r2sin?">r2sin?</A> gen
+</pre>
+
+<pre>
+  <A class=def NAME="make-ssbr2">make-ssbr2</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (r 0.0)
+  <A class=def NAME="ssbr2">ssbr2</A> gen
+  <A class=def NAME="ssbr2?">ssbr2?</A> gen
+</pre>
+
+<pre>
+  <A class=def NAME="make-eoddcos">make-eoddcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
+  <A class=def NAME="eoddcos">eoddcos</A> gen fm
+  <A class=def NAME="eoddcos?">eoddcos?</A> gen
+</pre>
+
+<pre>
+  <A class=def NAME="make-koddcos">make-koddcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0)
+  <A class=def NAME="koddcos">koddcos</A> gen fm
+  <A class=def NAME="koddcos?">koddcos?</A> gen
+</pre>
+
+<pre>
+  <A class=def NAME="make-rkcos">make-rkcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
+  <A class=def NAME="rkcos">rkcos</A> gen fm
+  <A class=def NAME="rkcos?">rkcos?</A> gen
+</pre>
+
+<pre>
+  <A class=def NAME="make-rk!cos">make-rk!cos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
+  <A class=def NAME="rk!cos">rk!cos</A> gen
+  <A class=def NAME="rk!cos?">rk!cos?</A> gen
+</pre>
+
+<pre>
+  <A class=def NAME="make-r2k!cos">make-r2k!cos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0) (k 0.0)
+  <A class=def NAME="r2k!cos">r2k!cos</A> gen fm
+  <A class=def NAME="r2k!cos?">r2k!cos?</A> gen
 </pre>
 
 <pre>
   <A class=def NAME="make-k2sin">make-k2sin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0)
   <A class=def NAME="k2sin">k2sin</A> gen fm
   <A class=def NAME="k2sin?">k2sin?</A> gen
-</pre>
-
-<pre>
-  <A class=def NAME="make-ssbrk">make-ssbrk</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1) (r 0.0)
-  <A class=def NAME="ssbrk">ssbrk</A> gen
-  <A class=def NAME="ssbrk?">ssbrk?</A> gen
-</pre>
-
-<pre>
-  <A class=def NAME="make-ssbk">make-ssbk</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1)
-  <A class=def NAME="ssbk">ssbk</A> gen fm
-  <A class=def NAME="ssbk">ssbk-interp</A> gen fm interp
-  <A class=def NAME="ssbk?">ssbk?</A> gen
 </pre>
 
 <pre>
@@ -4713,9 +4695,9 @@ r2k2
 </pre>
 
 <pre>
-  <A class=def NAME="make-r2k2">make-r2k2</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0)
-  <A class=def NAME="r2k2">r2k2</A> gen
-  <A class=def NAME="r2k2?">r2k2?</A> gen
+  <A class=def NAME="make-r2k2cos">make-r2k2cos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0)
+  <A class=def NAME="r2k2cos">r2k2cos</A> gen
+  <A class=def NAME="r2k2cos?">r2k2cos?</A> gen
 </pre>
 
 
