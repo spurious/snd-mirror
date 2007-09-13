@@ -17,6 +17,7 @@
 	A:hover {text-decoration:underline}
 	A.quiet {color:black; text-decoration:none}
 	A.quiet:hover {text-decoration:underline}
+	A.invisible {color:white; text-decoration:none}
 	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black}
 -->
 
@@ -1949,32 +1950,14 @@ sceq26:
 
 
 
-<tr><td><img src="sceq25.png" alt="more sums"></td><td></td>
-<td><img src="sceq26.png" alt="more sums"></td></tr>
+<tr><td><a class=invisible href="#krkcos"><img src="sceq25.png" alt="more sums"></a></td><td></td>
+<td><a class=invisible href="#abssin"><img src="sceq26.png" alt="more sums"></a></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>from Zygmund, "Trigonometric Series" p34, 352</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
-<!--  argh! there's a mistake in the formula -- I think they meant one sum not two
-<tr><td><img src="sceq2n.png" alt="more sums"></td><td></td>
-<td><img src="sceq2n.png" alt="more sums"></td></tr>
-<tr><td colspan=3 bgcolor="#eefdee"><center>from Andrews, Askey, Roy, "Special Functions" p396</center></td></tr>
-<tr><td colspan=3 height=25></td></tr>
--->
-
-<!-- these are basically the same as p^k/k cases using ln in G&R
-<tr><td><img src="sceq23.png" alt="more sums"></td><td></td>
-<td><img src="sceq24.png" alt="more sums"></td></tr>
-<tr><td colspan=3 bgcolor="#eefdee"><center>from Wong and Guo, "Special Functions"</center></td></tr>
-<tr><td colspan=3 height=25></td></tr>
--->
-
-
-<!-- 23 and 24 are unused (and 28/29 if they exist) -->
-
-
 <tr><td><img src="sceq7.png" alt="more sums"></td><td></td>
-<td><img src="sceq27.png" alt="more sums"></td></tr>
+<td><a class=invisible href="#abcos"><img src="sceq27.png" alt="more sums"></a></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>from Sansone, "Orthogonal Functions"</center></td></tr>
 
 
@@ -4517,6 +4500,7 @@ zip.scm:
   <A class=def NAME="blsaw">blsaw</A> gen
   <A class=def NAME="blsaw?">blsaw?</A> gen
 </pre>
+<br><br>
 
 
 
@@ -4529,11 +4513,21 @@ zip.scm:
   <A class=def NAME="ncos?">ncos?</A> gen
 </pre>
 
+<p>sum-of-cosines</p>
+
+<img src="sceq2.png" alt="sum of cosines" hspace=40>
+<br>
+
 <pre>
   <A class=def NAME="make-nsin">make-nsin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
   <A class=def NAME="nsin">nsin</A> gen fm
   <A class=def NAME="nsin?">nsin?</A> gen
 </pre>
+
+<p>sum-of-sines</p>
+
+<img src="sceq1.png" alt="sum of cosines" hspace=40>
+<br>
 
 <pre>
   <A class=def NAME="make-ssbn">make-ssbn</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1)
@@ -4541,13 +4535,8 @@ zip.scm:
   <A class=def NAME="ssbn?">ssbn?</A> gen
 </pre>
 
-<pre>
-  <A class=def NAME="make-ssbnr1">make-ssbnr1</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1) (r 0.0)
-  <A class=def NAME="ssbnr1">ssbnr1</A> gen
-  <A class=def NAME="ssbnr1?">ssbnr1?</A> gen
-</pre>
-
-
+<p>ssb version of ncos + nsin.
+</p>
 
 <pre>
   <A class=def NAME="make-ncos2">make-ncos2</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
@@ -4555,24 +4544,46 @@ zip.scm:
   <A class=def NAME="ncos2?">ncos2?</A> gen
 </pre>
 
+<p>Fejer kernel<p>
+
+<!-- LATEX: &\Bigg(\frac{\sin(n+\frac{1}{2})x}{\sin \frac{x}{2}}\Bigg)^{2} -->
+
+<img src="sceq23.png" alt="sum of cosines" hspace=40>
+<br>
+
+
 <pre>
   <A class=def NAME="make-ncos4">make-ncos4</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
   <A class=def NAME="ncos4">ncos4</A> gen fm
   <A class=def NAME="ncos4?">ncos4?</A> gen
 </pre>
 
+<p>Jackson kernel</p>
+
+<!-- LATEX: &\Bigg(\frac{\sin(n+\frac{1}{2})x}{\sin \frac{x}{2}}\Bigg)^{4} -->
+
+<img src="sceq24.png" alt="sum of cosines" hspace=40>
+<br>
 
 <pre>
-  <A class=def NAME="make-nrcos">make-nrcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
-  <A class=def NAME="nrcos">nrcos</A> gen
-  <A class=def NAME="nrcos?">nrcos?</A> gen
+  <A class=def NAME="make-npcos">make-npcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
+  <A class=def NAME="npcos">npcos</A> gen
+  <A class=def NAME="npcos?">npcos?</A> gen
 </pre>
 
+<p>Poisson kernel, (- (* 2 (ncos2 (1+ (* 2 n)))) (ncos2 n))</p>
+
+
 <pre>
-  <A class=def NAME="make-ssbnr">make-ssbnr</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1) (r 0.0)
-  <A class=def NAME="ssbnr">ssbnr</A> gen fm
-  <A class=def NAME="ssbnr?">ssbnr?</A> gen
+  <A class=def NAME="make-noddcos">make-noddcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
+  <A class=def NAME="noddcos">noddcos</A> gen fm
+  <A class=def NAME="noddcos?">noddcos?</A> gen
 </pre>
+
+<!-- LATEX: &\sum_{k=1}^{n}\cos(2k-1)x=\frac{1}{2}\frac{\sin 2nx}{\sin x} \\ -->
+
+<img src="sceq29.png" alt="sum of cosines" hspace=40>
+<br>
 
 
 <pre>
@@ -4581,17 +4592,34 @@ zip.scm:
   <A class=def NAME="noddsin?">noddsin?</A> gen
 </pre>
 
-<pre>
-  <A class=def NAME="make-noddcos">make-noddcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
-  <A class=def NAME="noddcos">noddcos</A> gen fm
-  <A class=def NAME="noddcos?">noddcos?</A> gen
-</pre>
+<!-- LATEX: &\sum_{k=1}^{n}\sin(2k-1)x=\frac{\sin^{2}nx}{\sin x} \\ -->
+
+<img src="sceq28.png" alt="sum of sines" hspace=40>
+<br>
 
 <pre>
   <A class=def NAME="make-ssbnodd">make-ssbnodd</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1)
   <A class=def NAME="ssbnodd">ssbnodd</A> gen fm
   <A class=def NAME="ssbnodd?">ssbnodd?</A> gen
 </pre>
+
+<p>ssb version of noddcos and noddsin.</p>
+
+
+<br><br>
+
+<pre>
+  <A class=def NAME="make-ssbnr">make-ssbnr</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1) (r 0.0)
+  <A class=def NAME="ssbnr">ssbnr</A> gen
+  <A class=def NAME="ssbnr?">ssbnr?</A> gen
+</pre>
+
+<pre>
+  <A class=def NAME="make-ssbnr1">make-ssbnr1</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1) (r 0.0)
+  <A class=def NAME="ssbnr1">ssbnr1</A> gen
+  <A class=def NAME="ssbnr1?">ssbnr1?</A> gen
+</pre>
+
 
 <pre>
   <A class=def NAME="make-ssbnk">make-ssbnk</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1)
@@ -4664,6 +4692,12 @@ zip.scm:
   <A class=def NAME="r2k!cos?">r2k!cos?</A> gen
 </pre>
 
+<!-- LATEX: &(1-2r\cos \theta + r^{2})^{-k} \\ -->
+
+<img src="sceq30.png" alt="sum of sines" hspace=40>
+<br>
+
+
 <pre>
   <A class=def NAME="make-k2sin">make-k2sin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0)
   <A class=def NAME="k2sin">k2sin</A> gen fm
@@ -4682,17 +4716,29 @@ zip.scm:
   <A class=def NAME="krksin?">krksin?</A> gen
 </pre>
 
+<img src="sceq25.png" alt="sum of sines" hspace=40>
+<br>
+
+
 <pre>
   <A class=def NAME="make-abssin">make-abssin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0)
   <A class=def NAME="abssin">abssin</A> gen fm
   <A class=def NAME="abssin?">abssin?</A> gen
 </pre>
 
+<img src="sceq26.png" alt="sum of sines" hspace=40>
+<br>
+
+
 <pre>
   <A class=def NAME="make-abcos">make-abcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (a 0.0) (b 0.0)
   <A class=def NAME="abcos">abcos</A> gen fm
   <A class=def NAME="abcos?">abcos?</A> gen
 </pre>
+
+<img src="sceq27.png" alt="sum of sines" hspace=40>
+<br>
+
 
 <pre>
   <A class=def NAME="make-r2k2cos">make-r2k2cos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0)

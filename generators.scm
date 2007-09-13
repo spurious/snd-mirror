@@ -414,43 +414,43 @@
 |#
 
 
-(def-clm-struct (nrcos
+(def-clm-struct (npcos
 		 :make-wrapper
 		 (lambda (g)
-		   (set! (nrcos-incr g) (hz->radians (nrcos-frequency g)))
-		   (set! (nrcos-angle g) (nrcos-initial-phase g))
+		   (set! (npcos-incr g) (hz->radians (npcos-frequency g)))
+		   (set! (npcos-angle g) (npcos-initial-phase g))
 		   g))
   (frequency 0.0) (initial-phase 0.0) (n 1 :type int)
   (angle 0.0) (incr 0.0))
 
-(define (nrcos gen)
-  (declare (gen nrcos))
-  (let* ((angle (nrcos-angle gen))
+(define (npcos gen)
+  (declare (gen npcos))
+  (let* ((angle (npcos-angle gen))
 	 (result (if (< (abs angle) 1.0e-9)
 		     1.0
-		     (let* ((n1 (+ (nrcos-n gen) 1))
+		     (let* ((n1 (+ (npcos-n gen) 1))
 			    (result1 
 			     (let ((val (/ (sin (* 0.5 n1 angle)) 
 					   (* n1
 					      (sin (* 0.5 angle))))))
 			       (* val val)))
-			    (p2n2 (+ (* 2 (nrcos-n gen)) 2))
+			    (p2n2 (+ (* 2 (npcos-n gen)) 2))
 			    (result2 
 			     (let ((val (/ (sin (* 0.5 p2n2 angle)) 
 					   (* p2n2
 					      (sin (* 0.5 angle))))))
 			       (* val val))))
 		       (- (* 2 result2) result1)))))
-    (set! (nrcos-angle gen) (+ (nrcos-angle gen) (nrcos-incr gen)))
+    (set! (npcos-angle gen) (+ (npcos-angle gen) (npcos-incr gen)))
     result))
     
 
 #|
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-nrcos 100.0 :n 10)))
+  (let ((gen (make-npcos 100.0 :n 10)))
     (run (lambda () (do ((i 0 (1+ i)))
 	((= i 20000))
-      (outa i (nrcos gen) *output*))))))
+      (outa i (npcos gen) *output*))))))
 |#
 
 
@@ -631,6 +631,8 @@
 ;;; Jolley 1st col 2nd row
 ;;;   heads toward a square wave as "r" -> 0.0 (odd harmonics, 1/k amp)
 
+;;; this is the cos side of ssbodddrk with r=e^-a
+
 (def-clm-struct (eoddcos 
 		 :make-wrapper
 		 (lambda (g)
@@ -673,7 +675,6 @@
 	     (outa i (eoddcos gen1 (* .1 (oscil gen2))) *output*))))))
 |#
 
-;;; TODO: ssb case for e^odd k
 
 ;;; --------------------------------------------------------------------------------
 
@@ -745,7 +746,6 @@
 
 ;;; --------------------------------------------------------------------------------
 
-
 ;;; ssb r^n case
 
 (def-clm-struct (ssbnr 
@@ -783,6 +783,56 @@
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
 	 (outa i (ssbnr gen 0.0) *output*))))))
+|#
+
+
+;;; G&R 2nd col 1st and 2nd rows
+
+(def-clm-struct (ssbnr1
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (ssbnr1-carincr g) (hz->radians (ssbnr1-carfreq g)))
+		   (set! (ssbnr1-modincr g) (hz->radians (ssbnr1-modfreq g)))
+		   g))
+  (carfreq 0.0) (modfreq 0.0) (n 1 :type int) (r 0.0)
+  (carangle 0.0) (modangle 0.0) (carincr 0.0) (modincr 0.0))
+
+(define (ssbnr1 gen)
+  (declare (gen ssbnr1))
+  (let* ((cx (ssbnr1-carangle gen))
+	 (mx (ssbnr1-modangle gen))
+	 (ci (ssbnr1-carincr gen))
+	 (mi (ssbnr1-modincr gen))
+	 (r (ssbnr1-r gen))
+	 (n (ssbnr1-n gen))
+	 (rn (- (expt r n)))
+	 (rn1 (expt r (+ n 1)))
+	 (nmx (* n mx))
+	 (n1mx (* (- n 1) mx))
+	 (norm (/ (- (expt r n) 1) (- r 1))) ; this could use rn
+	 (den (* norm (+ 1.0 (* -2.0 r (cos mx)) (* r r)))))
+    (set! (ssbnr1-carangle gen) (+ cx ci))
+    (set! (ssbnr1-modangle gen) (+ mx mi))
+    (/ (- (* (sin cx)
+	     (+ (* r (sin mx))
+		(* rn (sin nmx))
+		(* rn1 (sin n1mx))))
+	  (* (cos cx)
+	     (+ 1.0
+		(* -1.0 r (cos mx))
+		(* rn (cos nmx))
+		(* rn1 (cos n1mx)))))
+       den)))
+
+	  
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-ssbnr1 1000 100 5 0.5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (ssbnr1 gen) *output*))))))
 |#
 
 
@@ -972,59 +1022,6 @@
 	   ((= i 10000))
 	 (outa i (k2sin gen 0.0) *output*))))))
 |#
-
-;;; --------------------------------------------------------------------------------
-
-
-;;; G&R 2nd col 1st and 2nd rows
-
-(def-clm-struct (ssbnr1
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (ssbnr1-carincr g) (hz->radians (ssbnr1-carfreq g)))
-		   (set! (ssbnr1-modincr g) (hz->radians (ssbnr1-modfreq g)))
-		   g))
-  (carfreq 0.0) (modfreq 0.0) (n 1 :type int) (r 0.0)
-  (carangle 0.0) (modangle 0.0) (carincr 0.0) (modincr 0.0))
-
-(define (ssbnr1 gen)
-  (declare (gen ssbnr1))
-  (let* ((cx (ssbnr1-carangle gen))
-	 (mx (ssbnr1-modangle gen))
-	 (ci (ssbnr1-carincr gen))
-	 (mi (ssbnr1-modincr gen))
-	 (r (ssbnr1-r gen))
-	 (n (ssbnr1-n gen))
-	 (rn (- (expt r n)))
-	 (rn1 (expt r (+ n 1)))
-	 (nmx (* n mx))
-	 (n1mx (* (- n 1) mx))
-	 (norm (/ (- (expt r n) 1) (- r 1))) ; this could use rn
-	 (den (* norm (+ 1.0 (* -2.0 r (cos mx)) (* r r)))))
-    (set! (ssbnr1-carangle gen) (+ cx ci))
-    (set! (ssbnr1-modangle gen) (+ mx mi))
-    (/ (- (* (sin cx)
-	     (+ (* r (sin mx))
-		(* rn (sin nmx))
-		(* rn1 (sin n1mx))))
-	  (* (cos cx)
-	     (+ 1.0
-		(* -1.0 r (cos mx))
-		(* rn (cos nmx))
-		(* rn1 (cos n1mx)))))
-       den)))
-
-	  
-#|
-(with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-ssbnr1 1000 100 5 0.5)))
-    (run 
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i 10000))
-	 (outa i (ssbnr1 gen) *output*))))))
-|#
-
 
 ;;; --------------------------------------------------------------------------------
 

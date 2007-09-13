@@ -52705,10 +52705,10 @@ EDITS: 1
 			   (outa i (ncos4 gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
-		    (let ((gen (make-nrcos 100.0 :n 10)))
+		    (let ((gen (make-npcos 100.0 :n 10)))
 		      (run (lambda () (do ((i 0 (1+ i)))
 					  ((= i 20000))
-					(outa i (nrcos gen) *output*))))))
+					(outa i (npcos gen) *output*))))))
 	
 	(with-sound (:clipped #f)
 		    (let ((gen (make-rcos 100.0 :r 0.5)))
