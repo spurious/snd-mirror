@@ -52635,11 +52635,11 @@ EDITS: 1
 			       (outa i (ercos gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
-		    (let ((gen (make-ssber 1000.0 100.0 1.0)))
+		    (let ((gen (make-erssb 1000.0 100.0 1.0)))
 		      (run (lambda ()
 			     (do ((i 0 (1+ i)))
 				 ((= i 20000))
-			       (outa i (ssber gen 0.0) *output*))))))
+			       (outa i (erssb gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
 		    (let ((gen (make-noddsin 100 :n 10)))
@@ -52656,11 +52656,11 @@ EDITS: 1
 			       (outa i (noddcos gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
-		    (let ((gen (make-ssbnodd 1000.0 100.0 5)))
+		    (let ((gen (make-noddssb 1000.0 100.0 5)))
 		      (run (lambda ()
 			     (do ((i 0 (1+ i)))
 				 ((= i 10000))
-			       (outa i (ssbnodd gen 0.0) *output*))))))
+			       (outa i (noddssb gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f) 
 		    (let ((gen (make-asyfm 2000.0 :ratio .1))) 
@@ -52688,6 +52688,14 @@ EDITS: 1
 			     ((= i 1000))
 			   (outa i (asyfm-I gen 0.0) *output*))))))
 	
+	(with-sound (:clipped #f :statistics #t)
+		    (let ((gen (make-nrcos 400.0 :n 5 :r 0.5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (nrcos gen 0.0) *output*))))))
+
 	(with-sound (:clipped #f)
 		    (let ((gen (make-ncos2 100.0 :n 10)))
 		      (run
@@ -52724,12 +52732,12 @@ EDITS: 1
 					(outa i (r2sin gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
-		    (let ((gen (make-ssbr2 1000.0 100.0 0.5)))
+		    (let ((gen (make-r2ssb 1000.0 100.0 0.5)))
 		      (run 
 		       (lambda () 
 			 (do ((i 0 (1+ i)))
 			     ((= i 20000))
-			   (outa i (ssbr2 gen) *output*))))))
+			   (outa i (r2ssb gen) *output*))))))
 	
 	(with-sound (:clipped #f)
 		    (let ((gen (make-bess 100.0 :n 0)))
@@ -52786,20 +52794,20 @@ EDITS: 1
 			       (outa i (* .3 (koddcos gen 0.0)) *output*))))))
 	
 	(with-sound (:clipped #f)
-		    (let ((gen (make-ssbn 2000.0 100.0 3)))
+		    (let ((gen (make-nssb 2000.0 100.0 3)))
 		      (run 
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 10000))
-			   (outa i (* .3 (ssbn gen 0.0)) *output*))))))
+			   (outa i (* .3 (nssb gen 0.0)) *output*))))))
 	
 	(with-sound (:clipped #f)
-		    (let ((gen (make-ssbnr 2000.0 103.0 3 0.5)))
+		    (let ((gen (make-nrssb 2000.0 103.0 3 0.5)))
 		      (run 
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 10000))
-			   (outa i (ssbnr gen 0.0) *output*))))))
+			   (outa i (nrssb gen) *output*))))))
 	
 	(with-sound (:clipped #f)
 		    (let ((gen (make-rkcos 440.0 :r 0.5)))
@@ -52842,12 +52850,12 @@ EDITS: 1
 			   (outa i (k2sin gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
-		    (let ((gen (make-ssbnr1 1000 100 5 0.5)))
+		    (let ((gen (make-rssb 1000 100 0.5)))
 		      (run 
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 10000))
-			   (outa i (ssbnr1 gen) *output*))))))
+			   (outa i (rssb gen) *output*))))))
 	
 	(with-sound (:clipped #f)
 		    (let ((gen (make-dblsum 100 0.5)))
@@ -52858,25 +52866,25 @@ EDITS: 1
 			   (outa i (dblsum gen) *output*))))))
 	
 	(with-sound (:clipped #f)
-		    (let ((gen (make-ssbnk 1000.0 100.0 5)))
+		    (let ((gen (make-nkssb 1000.0 100.0 5)))
 		      (run 
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 10000))
-			   (outa i (ssbnk gen 0.0) *output*))))))
+			   (outa i (nkssb gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
-		    (let ((gen (make-ssbnk 1000.0 100.0 5))
+		    (let ((gen (make-nkssb 1000.0 100.0 5))
 			  (vib (make-oscil 5.0))
 			  (vibamp (hz->radians 5.0)))
 		      (run 
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 30000))
-			   (outa i (ssbnk gen (* vibamp (oscil vib))) *output*))))))
+			   (outa i (nkssb gen (* vibamp (oscil vib))) *output*))))))
 	
 	(with-sound (:clipped #f)
-		    (let ((gen (make-ssbnk 1000.0 100.0 5))
+		    (let ((gen (make-nkssb 1000.0 100.0 5))
 			  (move (make-env '(0 1 1 -1) :end 30000))
 			  (vib (make-oscil 5.0))
 			  (vibamp (hz->radians 5.0)))
@@ -52884,15 +52892,15 @@ EDITS: 1
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 30000))
-			   (outa i (* 0.5 (ssbnk-interp gen (* vibamp (oscil vib)) (env move))) *output*))))))
+			   (outa i (* 0.5 (nkssb-interp gen (* vibamp (oscil vib)) (env move))) *output*))))))
 	
 	(with-sound (:clipped #f)
-		    (let ((gen (make-ssboddrk 1000.0 100.0 0.5)))
+		    (let ((gen (make-rkoddssb 1000.0 100.0 0.5)))
 		      (run 
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 10000))
-			   (outa i (ssboddrk gen 0.0) *output*))))))
+			   (outa i (rkoddssb gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
 		    (let ((gen (make-krksin 440.0 0.5)))
