@@ -214,21 +214,20 @@
 
 ;;; TODO: check initial-phases actually active
 
+;;; TODO: W p366 try 9 15
 
 
 ;;; --------------------------------------------------------------------------------
 
-;;; various kernels: ncos2 = ncos squared, ncos4 = ncos2 squared, npcos = another kernel
+;;; various kernels: ncos2 = ncos squared (Fejer), ncos4 = ncos2 squared (Jackson), npcos = Poussin kernel
 
 (def-clm-struct (ncos2
 		 :make-wrapper
 		 (lambda (g)
-		   (set! (ncos2-n1 g) (+ 1 (ncos2-n g)))
 		   (set! (ncos2-incr g) (hz->radians (ncos2-frequency g)))
 		   (set! (ncos2-angle g) (ncos2-initial-phase g))
 		   g))
   (frequency 0.0) (initial-phase 0.0) (n 1 :type int) 
-  (n1 1 :type int)
   (angle 0.0) (incr 0.0))
 
 (define (ncos2 gen fm)
@@ -240,15 +239,16 @@
   ;;   in the pulse-train aspect and want easily predictable peak amp).  Harmonics go as (n-i)/n+1.
 
   (let* ((angle (ncos2-angle gen))
-	 (n1 (ncos2-n1 gen))
-	 (result (if (< (abs angle) 1.0e-9)
-		     1.0
-		     (let ((val (/ (sin (* 0.5 n1 angle)) 
-				   (* n1
-				      (sin (* 0.5 angle))))))
-		       (* val val)))))
+	 (n1 (+ 1 (ncos2-n gen))))
+
     (set! (ncos2-angle gen) (+ (ncos2-angle gen) fm (ncos2-incr gen)))
-    result))
+
+    (if (< (abs angle) 1.0e-9)
+	1.0
+	(let ((val (/ (sin (* 0.5 n1 angle)) 
+		      (* 1.0
+			 (sin (* 0.5 angle))))))
+	  (* val val)))))
 
 ;;; can't use two oscils here because the angles have to line up perfectly
 
@@ -1448,11 +1448,47 @@
 
 ;;; --------------------------------------------------------------------------------
 
+;;; Watson "Bessel Functions" p358 127 128 (J0(k sqrt(r^2+a^2- 2ar cos x)) = sum em Jm(ka)Jm(kr) cos mx
+;;;   em here is "Neumann's factor" (p22) = 1 if m=0, 2 otherwise
+
+(def-clm-struct (jsqsin
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (jsqsin-incr g) (hz->radians (jsqsin-frequency g)))
+		   g))
+  (frequency 0.0) (initial-phase 0.0) (r 0.0) (a 0.0) (k 1 :type int)
+  (angle 0.0) (incr 0.0))
+
+(define (jsqsin gen fm)
+  (declare (gen jsqsin) (fm float))
+  (let* ((x (jsqsin-angle gen))
+	 (a (jsqsin-a gen))
+	 (r (jsqsin-r gen))
+	 (k (jsqsin-k gen))
+	 (dc (* (bes-j0 (* k a)) (bes-j0 (* k r)))))
+
+    (set! (jsqsin-angle gen) (+ x fm (jsqsin-incr gen)))
+
+    (- (bes-j0 (* k (sqrt (+ (* r r) 
+			     (* a a)
+			     (* a r -2.0 (cos x))))))
+       dc)))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-jsqsin 100.0 :a 1.0 :r 1.0 :k 1)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (jsqsin gen 0.0) *output*))))))
+|#
+
+
+;;; --------------------------------------------------------------------------------
 
 ;;; TODO: in docs: add a ref to each gen from the formula (may need to split into bazillions of cases)
 ;;; PERHAPS: a generator table for quick.html?
-
-;;; TODO: even case by subtracting odd from full
 
 ;;; --------------------------------------------------------------------------------
 

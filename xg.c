@@ -27403,23 +27403,6 @@ static XEN gxg_gtk_recent_chooser_get_show_tips(XEN chooser)
   return(C_TO_XEN_gboolean(gtk_recent_chooser_get_show_tips(XEN_TO_C_GtkRecentChooser_(chooser))));
 }
 
-static XEN gxg_gtk_recent_chooser_set_show_numbers(XEN chooser, XEN show_numbers)
-{
-  #define H_gtk_recent_chooser_set_show_numbers "void gtk_recent_chooser_set_show_numbers(GtkRecentChooser* chooser, \
-gboolean show_numbers)"
-  XEN_ASSERT_TYPE(XEN_GtkRecentChooser__P(chooser), chooser, 1, "gtk_recent_chooser_set_show_numbers", "GtkRecentChooser*");
-  XEN_ASSERT_TYPE(XEN_gboolean_P(show_numbers), show_numbers, 2, "gtk_recent_chooser_set_show_numbers", "gboolean");
-  gtk_recent_chooser_set_show_numbers(XEN_TO_C_GtkRecentChooser_(chooser), XEN_TO_C_gboolean(show_numbers));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_recent_chooser_get_show_numbers(XEN chooser)
-{
-  #define H_gtk_recent_chooser_get_show_numbers "gboolean gtk_recent_chooser_get_show_numbers(GtkRecentChooser* chooser)"
-  XEN_ASSERT_TYPE(XEN_GtkRecentChooser__P(chooser), chooser, 1, "gtk_recent_chooser_get_show_numbers", "GtkRecentChooser*");
-  return(C_TO_XEN_gboolean(gtk_recent_chooser_get_show_numbers(XEN_TO_C_GtkRecentChooser_(chooser))));
-}
-
 static XEN gxg_gtk_recent_chooser_set_show_icons(XEN chooser, XEN show_icons)
 {
   #define H_gtk_recent_chooser_set_show_icons "void gtk_recent_chooser_set_show_icons(GtkRecentChooser* chooser, \
@@ -37109,8 +37092,6 @@ XEN_NARGIFY_2(gxg_gtk_recent_chooser_set_local_only_w, gxg_gtk_recent_chooser_se
 XEN_NARGIFY_1(gxg_gtk_recent_chooser_get_local_only_w, gxg_gtk_recent_chooser_get_local_only)
 XEN_NARGIFY_2(gxg_gtk_recent_chooser_set_show_tips_w, gxg_gtk_recent_chooser_set_show_tips)
 XEN_NARGIFY_1(gxg_gtk_recent_chooser_get_show_tips_w, gxg_gtk_recent_chooser_get_show_tips)
-XEN_NARGIFY_2(gxg_gtk_recent_chooser_set_show_numbers_w, gxg_gtk_recent_chooser_set_show_numbers)
-XEN_NARGIFY_1(gxg_gtk_recent_chooser_get_show_numbers_w, gxg_gtk_recent_chooser_get_show_numbers)
 XEN_NARGIFY_2(gxg_gtk_recent_chooser_set_show_icons_w, gxg_gtk_recent_chooser_set_show_icons)
 XEN_NARGIFY_1(gxg_gtk_recent_chooser_get_show_icons_w, gxg_gtk_recent_chooser_get_show_icons)
 XEN_NARGIFY_2(gxg_gtk_recent_chooser_set_sort_type_w, gxg_gtk_recent_chooser_set_sort_type)
@@ -40987,8 +40968,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_recent_chooser_get_local_only_w gxg_gtk_recent_chooser_get_local_only
 #define gxg_gtk_recent_chooser_set_show_tips_w gxg_gtk_recent_chooser_set_show_tips
 #define gxg_gtk_recent_chooser_get_show_tips_w gxg_gtk_recent_chooser_get_show_tips
-#define gxg_gtk_recent_chooser_set_show_numbers_w gxg_gtk_recent_chooser_set_show_numbers
-#define gxg_gtk_recent_chooser_get_show_numbers_w gxg_gtk_recent_chooser_get_show_numbers
 #define gxg_gtk_recent_chooser_set_show_icons_w gxg_gtk_recent_chooser_set_show_icons
 #define gxg_gtk_recent_chooser_get_show_icons_w gxg_gtk_recent_chooser_get_show_icons
 #define gxg_gtk_recent_chooser_set_sort_type_w gxg_gtk_recent_chooser_set_sort_type
@@ -44872,8 +44851,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_recent_chooser_get_local_only, gxg_gtk_recent_chooser_get_local_only_w, 1, 0, 0, H_gtk_recent_chooser_get_local_only);
   XG_DEFINE_PROCEDURE(gtk_recent_chooser_set_show_tips, gxg_gtk_recent_chooser_set_show_tips_w, 2, 0, 0, H_gtk_recent_chooser_set_show_tips);
   XG_DEFINE_PROCEDURE(gtk_recent_chooser_get_show_tips, gxg_gtk_recent_chooser_get_show_tips_w, 1, 0, 0, H_gtk_recent_chooser_get_show_tips);
-  XG_DEFINE_PROCEDURE(gtk_recent_chooser_set_show_numbers, gxg_gtk_recent_chooser_set_show_numbers_w, 2, 0, 0, H_gtk_recent_chooser_set_show_numbers);
-  XG_DEFINE_PROCEDURE(gtk_recent_chooser_get_show_numbers, gxg_gtk_recent_chooser_get_show_numbers_w, 1, 0, 0, H_gtk_recent_chooser_get_show_numbers);
   XG_DEFINE_PROCEDURE(gtk_recent_chooser_set_show_icons, gxg_gtk_recent_chooser_set_show_icons_w, 2, 0, 0, H_gtk_recent_chooser_set_show_icons);
   XG_DEFINE_PROCEDURE(gtk_recent_chooser_get_show_icons, gxg_gtk_recent_chooser_get_show_icons_w, 1, 0, 0, H_gtk_recent_chooser_get_show_icons);
   XG_DEFINE_PROCEDURE(gtk_recent_chooser_set_sort_type, gxg_gtk_recent_chooser_set_sort_type_w, 2, 0, 0, H_gtk_recent_chooser_set_sort_type);
@@ -47806,7 +47783,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("30-Aug-07"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("14-Sep-07"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

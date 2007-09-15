@@ -1917,6 +1917,18 @@ Z 352
 sceq26:
 & \frac{8}{\pi} \sum_{k=1}^{\infty} \frac{\sin^{2}kx}{4k^{2}-1} = |\sin x|
 
+sceq31:
+J_{m}(ka)J_{m}(kr) + \sum_{m=1}^{\infty} J_{m}(kr)J_{m}(ka) \cos m\theta = J_{0}\Big(k \sqrt{r^{2}+a^{2}-2ar\cos \theta}\Big)
+
+sceq32:
+1 + 2 \sum_{n=1}^{\infty} J_{n}(nz)\cos n(x-z\sin x) = \frac{1}{1-z\cos x}
+
+sceq33:
+\sum_{m=0}^{\infty}(m+\frac{1}{2})\frac{J_{m+\frac{1}{2}}(ka)}{\sqrt{a}} \frac{J_{m+\frac{1}{2}}(kr)}{\sqrt{r}} P_{m}(\cos \theta) = \frac{\sin\Big(k \sqrt{r^{2}+a^{2}-2ar\cos \theta}\Big)}{\pi \sqrt{r^{2}+a^{2}-2ar\cos \theta}}
+
+sceq34:
+\sum_{m=0}^{\infty} (n+m)\Big(\frac{J_{n+m}(z)}{z^{n}}\Big)^{2} C_{m}^{n}(\cos \theta) = \frac{J_{n}(2z \sin \frac{\theta}{2})}{2^{n}\Gamma(n)(2z\sin \frac{\theta}{2})}
+
 -->
 
 <table border=1 hspace=20 vspace=10><tr><td>
@@ -1958,6 +1970,14 @@ sceq26:
 <tr><td><img src="sceq7.png" alt="more sums"></td><td></td>
 <td><a class=invisible href="#abcos"><img src="sceq27.png" alt="more sums"></a></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>from Sansone, "Orthogonal Functions"</center></td></tr>
+<tr><td colspan=3 height=25></td></tr>
+
+
+<tr><td><img src="sceq31.png" alt="more sums"></td><td></td>
+<td><img src="sceq32.png" alt="more sums"></td></tr>
+<tr><td><img src="sceq33.png" alt="more sums"></td><td></td>
+<td><img src="sceq34.png" alt="more sums"></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>from Watson, "A Treatise on the Theory of Bessel Functions": 4.82, 11.41, 17.31</center></td></tr>
 
 
 </table>
@@ -4498,8 +4518,16 @@ asyfm-I is the modified Bessel function version.
   <A class=def NAME="bess?">bess?</A> gen
 </pre>
 
+<!-- LATEX: & J_{n}(x) = \frac{a}{\sqrt{x}}\sin(x+\delta) + \frac{r_{n}(x)}{x^{\frac{3}{2}}} \\ -->
+
 <p>bess produces the "n"th Bessel function.  The "frequency" argument actually makes sense here because the Bessel functions
-are close to damped sinusoids after their initial hesitation.  The output is normalized to a maxamp of 1.0, like most
+are close to damped sinusoids after their initial hesitation:
+</p>
+<img src="sceq24.png" alt="Jn" hspace=40>
+<p>
+where the variables other than x remain bounded as x increases.  This explains, in a sketchy way, why Jn(cos) and Jn(Jn)
+behave like FM.
+The output is normalized to a maxamp of 1.0, like most
 other generators.
 </p>
 
@@ -4541,10 +4569,10 @@ is <a href="#sum-of-sines">sum-of-sines</a>, and nssb is the single side-band ve
   <A class=def NAME="ncos2?">ncos2?</A> gen
 </pre>
 
-<p>This is the Fejer kernel, the square of ncos.
+<p>This is the Fejer kernel.
 </p>
 
-<!-- LATEX: &\Bigg(\frac{\sin(n+\frac{1}{2})x}{\sin \frac{x}{2}}\Bigg)^{2} -->
+<!-- LATEX: &\frac{\sin^{2} \frac{1}{2}nx}{\sin^{2} \frac{1}{2}x} = \frac{n}{2} + \sum_{k=1}^{n-1} (n-k)\cos kx -->
 
 <img src="sceq23.png" alt="sum of cosines" hspace=40><br>
 <br>
@@ -4822,7 +4850,7 @@ There are several thousand variations on this formula, none of which look differ
   <A class=def NAME="r2ssb?">r2ssb?</A> gen
 </pre>
 
-<p>These produce a sum of even numbered sinusoids (er, think of it as up an octave or something) 
+<p>These produce a sum of even numbered sinusoids (er, think of it as down an octave or something) 
 with each component scaled by (r^(2k))/(2k)!.
 </p>
 <br>
