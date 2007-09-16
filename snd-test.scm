@@ -52933,6 +52933,39 @@ EDITS: 1
 			 (do ((i 0 (1+ i)))
 			     ((= i 10000))
 			   (outa i (r2k2cos gen) *output*))))))
+
+	(with-sound (:clipped #f)
+		    (let ((gen (make-jjcos 100.0 :a 1.0 :r 1.0 :k 1)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (jjcos gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f :statistics #t)
+		    (let ((gen (make-j0evencos 100.0 1.0)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (j0evencos gen 0.0) *output*))))))
+
+	(with-sound (:clipped #f :statistics #t)
+		    (let ((gen (make-rksin 100.0 :r 0.5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (rksin gen 0.0) *output*))))))
+
+	(with-sound (:clipped #f :statistics #t)
+		    (let ((gen (make-rkssb 1000.0 100.0 :r 0.5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (rkssb gen 0.0) *output*))))))
+
 	
 	
 	(if (not (null? (sounds))) (for-each close-sound (sounds)))

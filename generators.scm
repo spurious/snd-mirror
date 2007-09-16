@@ -31,6 +31,8 @@
 |#
 
 
+;;; TODO: clean up the ssb fm handling
+
 ;;; --------------------------------------------------------------------------------
 
 ;;; n sinusoids, equal amps: ncos, nsin, nssb
@@ -213,8 +215,6 @@
 |#
 
 ;;; TODO: check initial-phases actually active
-
-;;; TODO: W p366 try 9 15
 
 
 ;;; --------------------------------------------------------------------------------
@@ -864,7 +864,75 @@
 |#
 
 
-;;; TODO: rksin? rkssb?
+(def-clm-struct (rksin
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (rksin-incr g) (hz->radians (rksin-frequency g)))
+		   g))
+  (frequency 0.0) (initial-phase 0.0) (r 1.0)
+  (angle 0.0) (incr 0.0))
+
+(define (rksin gen fm)
+  (declare (gen rksin) (fm float))
+  (let* ((x (rksin-angle gen))
+	 (r (rksin-r gen)))
+
+    (set! (rksin-angle gen) (+ fm x (rksin-incr gen)))
+
+    (atan (/ (* r (sin x))
+	     (- 1.0 (* r (cos x)))))))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-rksin 100.0 :r 0.5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (rksin gen 0.0) *output*))))))
+|#
+
+;;; TODO: norm rksin?
+
+
+(def-clm-struct (rkssb
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (rkssb-carincr g) (hz->radians (rkssb-carfreq g)))
+		   (set! (rkssb-modincr g) (hz->radians (rkssb-modfreq g)))
+		   g))
+  (carfreq 0.0) (modfreq 0.0) (r 1.0)
+  (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
+
+(define (rkssb gen fm)
+  (declare (gen rkssb) (fm float))
+  (let* ((mx (rkssb-modangle gen))
+	 (cx (rkssb-carangle gen))
+	 (r (rkssb-r gen))
+	 (rcosmx (* r (cos mx)))
+    	 (cfm (* fm (/ (rkssb-carincr gen) (rkssb-modincr gen)))))
+
+    (set! (rkssb-carangle gen) (+ cfm (rkssb-carangle gen) (rkssb-carincr gen)))
+    (set! (rkssb-modangle gen) (+ fm (rkssb-modangle gen) (rkssb-modincr gen)))
+
+    (/ (- (* (cos cx)
+	     (log (/ 1.0
+		     (sqrt (+ 1.0 (* -2.0 rcosmx) (* r r))))))
+	  (* (sin cx)
+	     (atan (/ (* r (sin mx))
+		      (- 1.0 rcosmx)))))
+       (log (/ 1.0 (- 1.0 r)))))) ; normalization
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-rkssb 1000.0 100.0 :r 0.5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (rkssb gen 0.0) *output*))))))
+|#
+
 
 
 
@@ -1237,6 +1305,53 @@
 
 ;;; --------------------------------------------------------------------------------
 
+;;;  from Stilson/Smith apparently -- was named "Discrete Summation Formula" which doesn't convey anything to me
+;;;    Alexander Kritov suggests time-varying "a" is good (this is a translation of his code)
+
+(def-clm-struct (blsaw
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (blsaw-incr g) (hz->radians (blsaw-frequency g)))
+		   g))
+  (frequency 0.0) (n 1 :type int) (r 0.0)
+  (angle 0.0) (incr 0.0))
+
+(define (blsaw gen)
+  "blsaw produces a band-limited sawtooth"
+  (declare (gen blsaw))
+  (let* ((a (blsaw-r gen))
+	 (N (blsaw-n gen))
+	 (x (blsaw-angle gen))
+	 (incr (blsaw-incr gen))
+	 (den (+ 1.0 (* -2.0 a (cos x)) (* a a))))
+    (set! (blsaw-angle gen) (+ x incr))
+    (if (< (abs den) 1.0e-9)
+	0.0
+	(let* ((s1 (* (expt a (- N 1.0)) (sin (+ (* (- N 1.0) x) incr))))
+	       (s2 (* (expt a N) (sin (+ (* N x) incr))))
+	       (s3 (* a (sin (+ x incr)))))
+	  (/ (+ (sin incr) 
+		(- s3) 
+		(- s2) 
+		s1) 
+	     den)))))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-blsaw 440.0 :r 0.5 :n 3)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (blsaw gen) *output*))))))
+|#
+
+;;; needs normalization
+
+
+
+;;; --------------------------------------------------------------------------------
+
 ;;; asymmetric fm gens
 
 (def-clm-struct (asyfm :make-wrapper (lambda (gen)
@@ -1402,93 +1517,206 @@
 
 ;;; --------------------------------------------------------------------------------
 
-;;;  from Stilson/Smith apparently -- was named "Discrete Summation Formula" which doesn't convey anything to me
-;;;    Alexander Kritov suggests time-varying "a" is good (this is a translation of his code)
-
-(def-clm-struct (blsaw
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (blsaw-incr g) (hz->radians (blsaw-frequency g)))
-		   g))
-  (frequency 0.0) (n 1 :type int) (r 0.0)
-  (angle 0.0) (incr 0.0))
-
-(define (blsaw gen)
-  "blsaw produces a band-limited sawtooth"
-  (declare (gen blsaw))
-  (let* ((a (blsaw-r gen))
-	 (N (blsaw-n gen))
-	 (x (blsaw-angle gen))
-	 (incr (blsaw-incr gen))
-	 (den (+ 1.0 (* -2.0 a (cos x)) (* a a))))
-    (set! (blsaw-angle gen) (+ x incr))
-    (if (< (abs den) 1.0e-9)
-	0.0
-	(let* ((s1 (* (expt a (- N 1.0)) (sin (+ (* (- N 1.0) x) incr))))
-	       (s2 (* (expt a N) (sin (+ (* N x) incr))))
-	       (s3 (* a (sin (+ x incr)))))
-	  (/ (+ (sin incr) 
-		(- s3) 
-		(- s2) 
-		s1) 
-	     den)))))
-
-#|
-(with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-blsaw 440.0 :r 0.5 :n 3)))
-    (run 
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i 10000))
-	 (outa i (blsaw gen) *output*))))))
-|#
-
-;;; needs normalization
-
-
-;;; --------------------------------------------------------------------------------
-
 ;;; Watson "Bessel Functions" p358 127 128 (J0(k sqrt(r^2+a^2- 2ar cos x)) = sum em Jm(ka)Jm(kr) cos mx
 ;;;   em here is "Neumann's factor" (p22) = 1 if m=0, 2 otherwise
 
-(def-clm-struct (jsqsin
+(def-clm-struct (jjcos
 		 :make-wrapper
 		 (lambda (g)
-		   (set! (jsqsin-incr g) (hz->radians (jsqsin-frequency g)))
+		   (set! (jjcos-incr g) (hz->radians (jjcos-frequency g)))
 		   g))
   (frequency 0.0) (initial-phase 0.0) (r 0.0) (a 0.0) (k 1 :type int)
   (angle 0.0) (incr 0.0))
 
-(define (jsqsin gen fm)
-  (declare (gen jsqsin) (fm float))
-  (let* ((x (jsqsin-angle gen))
-	 (a (jsqsin-a gen))
-	 (r (jsqsin-r gen))
-	 (k (jsqsin-k gen))
-	 (dc (* (bes-j0 (* k a)) (bes-j0 (* k r)))))
+(define (jjcos gen fm)
+  (declare (gen jjcos) (fm float))
+  (let* ((x (jjcos-angle gen))
+	 (a (jjcos-a gen))
+	 (r (jjcos-r gen))
+	 (k (jjcos-k gen))
+	 (dc (* (bes-j0 (* k a)) (bes-j0 (* k r))))
+	 (norm (- (bes-j0 (* k (sqrt (+ (* a a) (* r r) (* -2 a r))))) dc)))
+    ;; this norm only works if the a/r/k values all small enough that the initial J0 bump dominates
+    ;;   if they're large (k=10 for example), later maxes come into play.
+    ;; we need a formula for a sum of JJ's
+    ;;
+    ;; the resultant spectra are similar to FM (we can get sharper bumps, or low-passed bumps, etc)
 
-    (set! (jsqsin-angle gen) (+ x fm (jsqsin-incr gen)))
+    (set! (jjcos-angle gen) (+ x fm (jjcos-incr gen)))
 
-    (- (bes-j0 (* k (sqrt (+ (* r r) 
-			     (* a a)
-			     (* a r -2.0 (cos x))))))
-       dc)))
+    (/ (- (bes-j0 (* k (sqrt (+ (* r r) 
+				(* a a)
+				(* a r -2.0 (cos x))))))
+	  dc)             ; get rid of DC component
+       norm)))
 
 #|
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-jsqsin 100.0 :a 1.0 :r 1.0 :k 1)))
+  (let ((gen (make-jjcos 100.0 :a 1.0 :r 1.0 :k 1)))
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (jsqsin gen 0.0) *output*))))))
+	 (outa i (jjcos gen 0.0) *output*))))))
+
+;;; example:
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-jjcos 100.0 :a 2.0 :r 1.0 :k 1)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (outa i (jjcos gen 0.0) *output*))))))
+
+:(* (bes-jn 1 1) (bes-jn 1 2))
+0.253788089467046
+:(* (bes-jn 2 1) (bes-jn 2 2))
+0.0405418594904987
+:(* (bes-jn 3 1) (bes-jn 3 2))
+0.00252256243314325
+:(* (bes-jn 4 1) (bes-jn 4 2))
+8.41951242883886e-5
+which matches perfectly
+
+set k=10
+:(* (bes-jn 1 10) (bes-jn 1 20))
+0.00290541944296873
+:(* (bes-jn 2 10) (bes-jn 2 20))
+-0.0408277687368493
+:(* (bes-jn 3 10) (bes-jn 3 20))
+-0.00577380202685643
+:(* (bes-jn 4 10) (bes-jn 4 20))
+-0.0286956880041051
+:(* (bes-jn 5 10) (bes-jn 5 20))
+-0.0353830269096024
+:(* (bes-jn 6 10) (bes-jn 6 20))
+7.96480491715688e-4
+:(* (bes-jn 7 10) (bes-jn 7 20))
+-0.0399227881572529
+:(* (bes-jn 8 10) (bes-jn 8 20))
+-0.0234795438775677
+:(* (bes-jn 9 10) (bes-jn 9 20))
+0.0365188087949483
+:(* (bes-jn 10 10) (bes-jn 10 20))
+0.0386925399194178
+:(* (bes-jn 11 10) (bes-jn 11 20))
+0.00755397504265978
+:(* (bes-jn 12 10) (bes-jn 12 20))
+-0.00754046620160803
+:(* (bes-jn 13 10) (bes-jn 13 20))
+-0.00591450759566936
+:(* (bes-jn 14 10) (bes-jn 14 20))
+-0.00175050411436045
+:(* (bes-jn 15 10) (bes-jn 15 20))
+-3.66078549147997e-6
+
+which again matches
+
+
 |#
 
 
 ;;; --------------------------------------------------------------------------------
 
-;;; TODO: in docs: add a ref to each gen from the formula (may need to split into bazillions of cases)
+;;; check J0(zsinx) formula 
+;;; main difference from FM: index is divided by 2, J value is squared, else just like cos(sin)
+
+(def-clm-struct (j0evencos
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (j0evencos-incr g) (hz->radians (j0evencos-frequency g)))
+		   g))
+  (frequency 0.0) (index 1.0)
+  (angle 0.0) (incr 0.0))
+
+(define (j0evencos gen fm)
+  (declare (gen j0evencos) (fm float))
+  (let* ((x (j0evencos-angle gen))
+	 (z (j0evencos-index gen))
+	 (j0 (bes-j0 (* 0.5 z)))
+	 (dc (* j0 j0)))
+    (set! (j0evencos-angle gen) (+ x fm (j0evencos-incr gen)))
+    (/ (- (bes-j0 (* z (sin x)))
+	  dc)        ; get rid of DC component
+       (- 1.0 dc)))) ; normalize
+
+
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-j0evencos 100.0 1.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (j0evencos gen 0.0) *output*))))))
+
+index 10 (so 10/2 is the bes-jn arg):
+
+(let ((base (* (bes-jn 4 5.0) (bes-jn 4 5.0)))) ; max (fft norms -> 1.0)
+  (do ((i 1 (1+ i)))
+      ((= i 11))
+    (snd-display ";~A: ~A ~A" i (* (bes-jn i 5.0) (bes-jn i 5.0)) (/ (* (bes-jn i 5.0) (bes-jn i 5.0)) base))))
+;1: 0.107308091385168 0.701072497819036
+;2: 0.00216831005396058 0.0141661502497507
+;3: 0.133101826831083 0.86958987897572
+;4: 0.153062759870046 1.0
+;5: 0.0681943848279407 0.445532178342005
+;6: 0.0171737701015899 0.112200839160164
+;7: 0.00284904116112987 0.0186135488707298
+;8: 3.38752000110201e-4 0.00221315753353599
+;9: 3.04735259399795e-5 1.99091705688911e-4
+;10: 2.15444461145164e-6 1.4075563600714e-5
+
+which is very close to a match
+
+|#
+
+
+;;; --------------------------------------------------------------------------------
+
+#|
+;;; we can add the sin(cos) and sin(sin) cases, using -index in the latter to get 
+;;;   asymmetric fm since Jn(-B) = (-1)^n Jn(B) -- every other side band cancels
+
+(def-clm-struct (fmtest
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (fmtest-carincr g) (hz->radians (fmtest-carfreq g)))
+		   (set! (fmtest-modincr g) (hz->radians (fmtest-modfreq g)))
+		   g))
+  (carfreq 0.0) (modfreq 0.0) (index 1.0)
+  (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
+
+(define (fmtest gen fm)
+  (declare (gen fmtest) (fm float))
+  (let* ((mx (fmtest-modangle gen))
+	 (cx (fmtest-carangle gen))
+	 (B (fmtest-index gen))
+    	 (cfm (* fm (/ (fmtest-carincr gen) (fmtest-modincr gen)))))
+
+    (set! (fmtest-carangle gen) (+ cfm (fmtest-carangle gen) (fmtest-carincr gen)))
+    (set! (fmtest-modangle gen) (+ fm (fmtest-modangle gen) (fmtest-modincr gen)))
+
+    (- (* (cos cx)
+	  (sin (* B (cos mx))))
+       (* (sin cx)
+	  (* (sin (* (- B) (sin mx))))))))
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-fmtest 1000.0 100.0 :index 0.5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (fmtest gen 0.0) *output*))))))
+|#
+
+
+;;; --------------------------------------------------------------------------------
+
 ;;; PERHAPS: a generator table for quick.html?
+;;; TODO: other 3 W cases
 
 ;;; --------------------------------------------------------------------------------
 

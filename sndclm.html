@@ -1851,6 +1851,7 @@ For example, here is a generator based on a formula giving a sum of n odd sines:
 </td></tr></table>
 
 <!-- LATEX:
+sceq14:
 \small
 \begin{align*}
 &\sum_{k=0}^{n}\sin(x+ky)=\frac{\sin\Big(x+\frac{n-1}{2}y\Big)\sin\frac{ny}{2}}{\sin\frac{y}{2}} \\
@@ -1864,7 +1865,9 @@ For example, here is a generator based on a formula giving a sum of n odd sines:
 &\sum_{k=1}^{n-1}k\sin kx=\frac{\sin nx}{4 \sin^{2}\frac{x}{2}} - \frac{n \cos \frac{2n-1}{2}x}{2\sin\frac{x}{2}} \\
 &\sum_{k=1}^{n-1}k\cos kx=\frac{n\sin\frac{2n-1}{2}x}{2\sin\frac{x}{2}} - \frac{1-\cos nx}{4\sin^{2}\frac{x}{2}} \\
 &\sum_{k=1}^{\infty} \frac{\sin^{2k} x}{k} = -2 \ln \cos x & (x^{2} < \frac{pi^{2}}{4}) \\
+&J_{0}^{2}\Big(\frac{z}{2}\Big)+2\sum_{k=1}^{\infty} J_{k}^{2}\Big(\frac{z}{2}\Big)\cos2k\theta = J_{0}(z \sin \theta) \\
 
+sceq15:
 &\sum_{k=1}^{n-1}p^{k}\sin kx=\frac{p\sin x - p^{n}\sin nx + p^{n+1}\sin(n-1)x}{1-2p\cos x+p^{2}} \\
 &\sum_{k=0}^{n-1}p^{k}\cos kx=\frac{1-p\cos x - p^{n}\cos nx + p^{n+1}\cos(n-1)x}{1-2p\cos x + p^{2}} \\
 &\sum_{k=1}^{\infty}p^{k}\sin kx=\frac{p\sin x}{1-2p\cos x + p^{2}} \\
@@ -1878,6 +1881,10 @@ For example, here is a generator based on a formula giving a sum of n odd sines:
 &\sum_{k=1}^{\infty}e^{-kt}\sin kx = \frac{1}{2}\frac{\sin x}{\cosh t - \cos x} \\
 &1 + 2\sum_{k=1}^{\infty}e^{-kt}\cos kx = \frac{\sinh t}{\cosh t - \cos x} \\
 \end{align*}
+
+original last of 1st col:
+&\sum_{k=1}^{\infty} \frac{\sin^{2k} x}{k} = -2 \ln \cos x & (x^{2} < \frac{pi^{2}}{4}) \\
+
 
 sceq20:
 \begin{align*}
@@ -1944,7 +1951,7 @@ sceq34:
 </td>
 </tr>
 
-<tr><td colspan=3 bgcolor="#eefdee"><center>from Gradshteyn and Ryzhik, "Table of Integrals, Series, and Products", 1.341.., 1.352.., 1.447.., 1.461, 1.518</center></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>from Gradshteyn and Ryzhik, "Table of Integrals, Series, and Products", 1.341.., 1.352.., 1.447.., 1.461, 1.518, 8.531</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
@@ -1973,10 +1980,10 @@ sceq34:
 <tr><td colspan=3 height=25></td></tr>
 
 
-<tr><td><img src="sceq31.png" alt="more sums"></td><td></td>
-<td><img src="sceq32.png" alt="more sums"></td></tr>
-<tr><td><img src="sceq33.png" alt="more sums"></td><td></td>
-<td><img src="sceq34.png" alt="more sums"></td></tr>
+<tr><td><img src="sceq32.png" alt="more sums"></td><td></td>
+<td><img src="sceq31.png" alt="more sums"></td></tr>
+<tr><td><img src="sceq34.png" alt="more sums"></td><td></td>
+<td><img src="sceq33.png" alt="more sums"></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>from Watson, "A Treatise on the Theory of Bessel Functions": 4.82, 11.41, 17.31</center></td></tr>
 
 
@@ -4509,13 +4516,19 @@ zip.scm:
 </pre>
 
 <p>These two generators produce the two flavors of asymmetric-fm.  asyfm-J is the same as the built-in asymmetric generator;
-asyfm-I is the modified Bessel function version.
+asyfm-I is the modified Bessel function version (the second formula in the the <a href="#asymmetric-fm">asymmetric-fm</a> section).
 </p>
+<br>
+
 
 <pre>
   <A class=def NAME="make-bess">make-bess</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 0)
   <A class=def NAME="bess">bess</A> gen fm
   <A class=def NAME="bess?">bess?</A> gen
+
+  <A class=def NAME="make-j0evencos">make-j0evencos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (index 1.0)
+  <A class=def NAME="j0evencos">j0evencos</A> gen fm
+  <A class=def NAME="j0evencos?">j0evencos?</A> gen
 </pre>
 
 <!-- LATEX: & J_{n}(x) = \frac{a}{\sqrt{x}}\sin(x+\delta) + \frac{r_{n}(x)}{x^{\frac{3}{2}}} \\ -->
@@ -4526,10 +4539,35 @@ are close to damped sinusoids after their initial hesitation:
 <img src="sceq24.png" alt="Jn" hspace=40>
 <p>
 where the variables other than x remain bounded as x increases.  This explains, in a sketchy way, why Jn(cos) and Jn(Jn)
-behave like FM.
-The output is normalized to a maxamp of 1.0, like most
-other generators.
+behave like FM.  To see how close these are to FM, compare the expansion of J0(sin) against to FM's cos(sin):
 </p>
+
+<!-- LATEX:
+sceq35:
+& J_{0}(B \sin x) = J_{0}^{2}\Big(\frac{B}{2}\Big)+2\sum_{k=1}^{\infty} J_{k}^{2}\Big(\frac{B}{2}\Big)\cos2kx \\
+& \cos(B \sin x) = J_{0}(B) + 2 \sum_{k=1}^{\infty} J_{2k}(B) \cos 2kx \\
+-->
+
+<img src="sceq35.png" alt="J(sin) and cos(sin)" hspace=40>
+
+<p>The J0(sin) case is produced by the j0evencos generator.
+The output of both generators is normalized to a maxamp of 1.0 (and in j0evencos, the DC component is subtracted out),
+so bess's output is not the same as the raw bessel function value returned by jn.
+</p>
+<br>
+
+<pre>
+  <A class=def NAME="make-jjcos">make-jjcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0) (a 1.0) (k 1)
+  <A class=def NAME="jjcos">jjcos</A> gen fm
+  <A class=def NAME="jjcos?">jjcos?</A> gen
+</pre>
+
+<p>This produces a sum of cosines scaled by a product of Bessel functions; in a sense, there are two, or maybe three "indices".
+<p>
+
+<img src="sceq31.png" alt="jjcos" hspace=40>
+<br>
+
 
 <br><br>
 
@@ -4742,9 +4780,17 @@ There are several thousand variations on this formula, none of which look differ
   <A class=def NAME="make-rkcos">make-rkcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
   <A class=def NAME="rkcos">rkcos</A> gen fm
   <A class=def NAME="rkcos?">rkcos?</A> gen
+
+  <A class=def NAME="make-rksin">make-rksin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0)
+  <A class=def NAME="rksin">rksin</A> gen fm
+  <A class=def NAME="rksin?">rksin?</A> gen
+
+  <A class=def NAME="make-rkssb">make-rkssb</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (r 0.0)
+  <A class=def NAME="rkssb">rkssb</A> gen
+  <A class=def NAME="rkssb?">rkssb?</A> gen
 </pre>
 
-<p>This produces a sum of sinusoids scaled by (r^k)/k.
+<p>These produce a sum of sinusoids scaled by (r^k)/k.  The rksin output is not normalized.
 </p>
 <br>
 
