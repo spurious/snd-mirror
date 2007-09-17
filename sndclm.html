@@ -4533,12 +4533,9 @@ sceq35:
 
 <p>The J0(sin) case is produced by the j0evencos generator.
 The output of both generators is normalized to a maxamp of 1.0 (and in j0evencos, the DC component is subtracted out),
-so bess's output is not the same as the raw bessel function value returned by bes-jn.
+so bess's output is not the same as the raw bessel function value returned by <a href="extsnd.html#besj0">bes-jn</a>.
 </p>
 <br>
-
-<!-- TODO: bes-jn not documented? [bes-yn erf erfc lgamma gsl-ellip* gsl-dht gsl-gegenbauer bes-i0
--->
 
 <pre>
   <A class=def NAME="make-jjcos">make-jjcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0) (a 1.0) (k 1)
@@ -4877,6 +4874,10 @@ under the name "discrete summation formula".
   <A class=def NAME="make-r2sin">make-r2sin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0)
   <A class=def NAME="r2sin">r2sin</A> gen fm
   <A class=def NAME="r2sin?">r2sin?</A> gen
+
+  <A class=def NAME="make-r2cos">make-r2cos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0)
+  <A class=def NAME="r2cos">r2cos</A> gen fm
+  <A class=def NAME="r2cos?">r2cos?</A> gen
 
   <A class=def NAME="make-r2ssb">make-r2ssb</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (r 0.0)
   <A class=def NAME="r2ssb">r2ssb</A> gen

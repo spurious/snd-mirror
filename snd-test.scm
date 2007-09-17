@@ -52716,7 +52716,7 @@ EDITS: 1
 		    (let ((gen (make-npcos 100.0 :n 10)))
 		      (run (lambda () (do ((i 0 (1+ i)))
 					  ((= i 20000))
-					(outa i (npcos gen) *output*))))))
+					(outa i (npcos gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
 		    (let ((gen (make-rcos 100.0 :r 0.5)))
@@ -52737,7 +52737,7 @@ EDITS: 1
 		       (lambda () 
 			 (do ((i 0 (1+ i)))
 			     ((= i 20000))
-			   (outa i (r2ssb gen) *output*))))))
+			   (outa i (r2ssb gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
 		    (let ((gen (make-bess 100.0 :n 0)))
@@ -52807,7 +52807,7 @@ EDITS: 1
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 10000))
-			   (outa i (nrssb gen) *output*))))))
+			   (outa i (nrssb gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
 		    (let ((gen (make-rkcos 440.0 :r 0.5)))
@@ -52823,7 +52823,7 @@ EDITS: 1
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 10000))
-			   (outa i (rk!cos gen) *output*))))))
+			   (outa i (rk!cos gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
 		    (let ((gen (make-r2k!cos 440.0 :r 0.5 :k 3.0)))
@@ -52839,7 +52839,7 @@ EDITS: 1
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 10000))
-			   (outa i (blsaw gen) *output*))))))
+			   (outa i (blsaw gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
 		    (let ((gen (make-k2sin 440.0)))
@@ -52855,7 +52855,7 @@ EDITS: 1
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 10000))
-			   (outa i (rssb gen) *output*))))))
+			   (outa i (rssb gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
 		    (let ((gen (make-dblsum 100 0.5)))
@@ -52863,7 +52863,7 @@ EDITS: 1
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 10000))
-			   (outa i (dblsum gen) *output*))))))
+			   (outa i (dblsum gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
 		    (let ((gen (make-nkssb 1000.0 100.0 5)))
@@ -52924,7 +52924,7 @@ EDITS: 1
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 10000))
-			   (outa i (abcos gen) *output*))))))
+			   (outa i (abcos gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
 		    (let ((gen (make-r2k2cos 100.0 1.0)))
@@ -52932,7 +52932,7 @@ EDITS: 1
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 10000))
-			   (outa i (r2k2cos gen) *output*))))))
+			   (outa i (r2k2cos gen 0.0) *output*))))))
 
 	(with-sound (:clipped #f)
 		    (let ((gen (make-jjcos 100.0 :a 1.0 :r 1.0 :k 1)))
