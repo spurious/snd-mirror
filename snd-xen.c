@@ -1768,6 +1768,7 @@ static XEN g_continuation_p(XEN obj)
 
 
 #if (!HAVE_GAUCHE)
+/* Gauche already implements fmod */
 static XEN g_fmod(XEN a, XEN b)
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(a), a, XEN_ARG_1, "fmod", " a number");

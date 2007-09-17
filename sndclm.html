@@ -1995,7 +1995,7 @@ sceq34:
 
 
 <p>
-A few of these exist as generators, but, as far as I know, most have never been explored.
+As far as I know, most of these formulas have never been explored.
 Don't shy away from the sums to infinity just because you've heard shouting about "band-limited waveforms" -- FM is also such a sum:
 </p>
 
@@ -2024,66 +2024,44 @@ Don't shy away from the sums to infinity just because you've heard shouting abou
 
 
 <p>
-It is not hard to goof around with formulas like these;
-take the last one in the G&amp;R section:
+<a class=quiet href="sndscm.html#def-clm-struct">def-clm-struct</a> makes it easy to try out 
+new ideas;
+take the first one in the Jolley section:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="sndscm.html#def-clm-struct">def-clm-struct</a> (expcs 
-		 :make-wrapper (lambda (g)
-				 (if (&lt;= (expcs-et g) 0.0) (set! (expcs-et g) 0.00001))
-				 (set! (expcs-frequency g) (<a class=quiet href="#hztoradians">hz-&gt;radians</a> (expcs-frequency g)))
-				 (set! (expcs-sinht g) (* 0.5 (sinh (expcs-et g))))
-				 (set! (expcs-cosht g) (cosh (expcs-et g)))
-				 g))
-  frequency phase et sinht cosht)
+(<a class=quiet href="sndscm.html#def-clm-struct">def-clm-struct</a> (k2sin :make-wrapper 
+                  (lambda (g)
+		   (set! (k2sin-incr g) (hz-&gt;radians (k2sin-frequency g)))
+		   g))
+  (frequency 0.0) (angle 0.0) (incr 0.0))
 
-(define (expcs gen fm)
-  (<a class=quiet href="extsnd.html#declare">declare</a> (gen expcs) (fm float))
-  (let ((result (- (/ (expcs-sinht gen) 
-		      (- (expcs-cosht gen) (cos (expcs-phase gen))))
-		   0.5)))
-    (set! (expcs-phase gen) (+ (expcs-phase gen) (expcs-frequency gen) fm))
-    result))
+(define (k2sin gen fm)
+  (<a class=quiet href="extsnd.html#declare">declare</a> (gen k2sin) (fm float))
+  (let ((x (k2sin-angle gen)))
+    (set! (k2sin-angle gen) (+ x fm (k2sin-incr gen)))
+    (/ (* 3.0 (sin x))             ; 3 rather than 4 for normalization
+       (- 5.0 (* 4.0 (cos x))))))
 
-;; see if it generates cosines at amplitudes (exp (- (* k t)))
 (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
-  (let ((gen (make-expcs :frequency 100 :et 1.0)))
-    (do ((i 0 (1+ i)))
-	((= i 10000))
-      (<a class=quiet href="#outa">outa</a> i (expcs gen 0.0) *output*))))
-
-;; change "t" during note -- smoothly changing sum-of-cosines spectra
-(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()  
-  (let ((gen (make-expcs :frequency 100 :et 0.1))
-	(t-env (<a class=quiet href="#make-env">make-env</a> '(0 .1 1 2) :end 10000)))
-    (<a class=quiet href="extsnd.html#run">run</a> (lambda ()
-      (do ((i 0 (1+ i)))
-	  ((= i 10000))
-        (let ((et (<a class=quiet href="#env">env</a> t-env)))
-	  (set! (expcs-sinht gen) (* 0.5 (sinh et)))
-	  (set! (expcs-cosht gen) (cosh et))
-	  (<a class=quiet href="#outa">outa</a> i (expcs gen 0.0) *output*)))))))
+  (let ((gen (make-k2sin 440.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (<a class=quiet href="#outa">outa</a> i (k2sin gen 0.0) *output*))))))
 </pre>
 </td></tr></table>
 
-
-<p>By the way, the amplitude normalization factor for this generator is:
-</p>
-
-<pre>
-    (/ (- 1.0 (exp (- (expcs-et gen)))) 
-       (exp (- (expcs-et gen))))
-</pre>
-
-<p>which can be folded into the original at no run-time cost.
-See <a href="#othergenerators">generators.scm</a> for
-some of these in an undigested state.  As J. A. Moorer and Marc Le Brun pointed out
-eons ago, there are many more such formulas "buried in reference works".  Well, they've
+<p>
+Most of the formulas are implemented as generators in <a href="#othergenerators">generators.scm</a>,
+along with the single side-band case, where possible.
+As J. A. Moorer and Marc Le Brun pointed out
+long ago, there are many more such formulas "buried in reference works".  Well, they've
 done nobody any good being buried for a generation, so I say: dig them up!  If
 you know of any curious formula, anything that might trigger an interesting train of
-reflection, send it to me, and I'll add it to this collection.
+reflection, please send it to me, and I'll add it to this collection.
 </p>
 
 <br><br>
@@ -4509,7 +4487,7 @@ zip.scm:
 <!-- TODO: other generators doc -->
 
 <pre>
-  <A class=def NAME="make-asyfm">make-asyfm</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (ratio 1.0) (r 1.0) (index 1.0)
+  <A class=def NAME="make-asyfm">make-asyfm</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 1.0) (index 1.0)
   <A class=def NAME="asyfm">asyfm-J</A> gen fm
   <A class=def NAME="asyfm">asyfm-I</A> gen fm
   <A class=def NAME="asyfm?">asyfm?</A> gen
@@ -4521,8 +4499,11 @@ asyfm-I is the modified Bessel function version (the second formula in the the <
 <br>
 
 
+<!-- bessel functions -->
+<table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>Bessel functions</center></h5></td></tr></table>
+
 <pre>
-  <A class=def NAME="make-bess">make-bess</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 0)
+  <A class=def NAME="make-bess">make-bess</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (n 0)
   <A class=def NAME="bess">bess</A> gen fm
   <A class=def NAME="bess?">bess?</A> gen
 
@@ -4552,9 +4533,12 @@ sceq35:
 
 <p>The J0(sin) case is produced by the j0evencos generator.
 The output of both generators is normalized to a maxamp of 1.0 (and in j0evencos, the DC component is subtracted out),
-so bess's output is not the same as the raw bessel function value returned by jn.
+so bess's output is not the same as the raw bessel function value returned by bes-jn.
 </p>
 <br>
+
+<!-- TODO: bes-jn not documented? [bes-yn erf erfc lgamma gsl-ellip* gsl-dht gsl-gegenbauer bes-i0
+-->
 
 <pre>
   <A class=def NAME="make-jjcos">make-jjcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0) (a 1.0) (k 1)
@@ -4579,11 +4563,11 @@ so bess's output is not the same as the raw bessel function value returned by jn
 
 
 <pre>
-  <A class=def NAME="make-ncos">make-ncos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
+  <A class=def NAME="make-ncos">make-ncos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (n 1)
   <A class=def NAME="ncos">ncos</A> gen fm
   <A class=def NAME="ncos?">ncos?</A> gen
 
-  <A class=def NAME="make-nsin">make-nsin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
+  <A class=def NAME="make-nsin">make-nsin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (n 1)
   <A class=def NAME="nsin">nsin</A> gen fm
   <A class=def NAME="nsin?">nsin?</A> gen
 
@@ -4602,7 +4586,7 @@ is <a href="#sum-of-sines">sum-of-sines</a>, and nssb is the single side-band ve
 <br>
 
 <pre>
-  <A class=def NAME="make-ncos2">make-ncos2</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
+  <A class=def NAME="make-ncos2">make-ncos2</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (n 1)
   <A class=def NAME="ncos2">ncos2</A> gen fm
   <A class=def NAME="ncos2?">ncos2?</A> gen
 </pre>
@@ -4616,7 +4600,7 @@ is <a href="#sum-of-sines">sum-of-sines</a>, and nssb is the single side-band ve
 <br>
 
 <pre>
-  <A class=def NAME="make-ncos4">make-ncos4</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
+  <A class=def NAME="make-ncos4">make-ncos4</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (n 1)
   <A class=def NAME="ncos4">ncos4</A> gen fm
   <A class=def NAME="ncos4?">ncos4?</A> gen
 </pre>
@@ -4632,7 +4616,7 @@ is <a href="#sum-of-sines">sum-of-sines</a>, and nssb is the single side-band ve
 
 
 <pre>
-  <A class=def NAME="make-npcos">make-npcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
+  <A class=def NAME="make-npcos">make-npcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (n 1)
   <A class=def NAME="npcos">npcos</A> gen
   <A class=def NAME="npcos?">npcos?</A> gen
 </pre>
@@ -4643,11 +4627,11 @@ is <a href="#sum-of-sines">sum-of-sines</a>, and nssb is the single side-band ve
 
 
 <pre>
-  <A class=def NAME="make-noddcos">make-noddcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
+  <A class=def NAME="make-noddcos">make-noddcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (n 1)
   <A class=def NAME="noddcos">noddcos</A> gen fm
   <A class=def NAME="noddcos?">noddcos?</A> gen
 
-  <A class=def NAME="make-noddsin">make-noddsin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1)
+  <A class=def NAME="make-noddsin">make-noddsin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (n 1)
   <A class=def NAME="noddsin">noddsin</A> gen fm
   <A class=def NAME="noddsin?">noddsin?</A> gen
 
@@ -4707,14 +4691,14 @@ In the nkssb-interp generator, the "interp" argument interpolates between the up
 
 
 <pre>
-  <A class=def NAME="make-blsaw">make-blsaw</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (n 1) (r 0.0)
+  <A class=def NAME="make-blsaw">make-blsaw</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (n 1) (r 0.0)
   <A class=def NAME="blsaw">blsaw</A> gen
   <A class=def NAME="blsaw?">blsaw?</A> gen
 </pre>
 
 <p>
-blsaw (band-limited sawtooth) is apparently originally from Tim Stilson and Julius Smith;
-it had the name "discrete summation formula" which conveys nothing to me.  The parameter
+blsaw (band-limited sawtooth) is apparently originally from Tim Stilson and Julius Smith,
+under the name "discrete summation formula".
 'r' is more or less the amplitude.
 </p>
 <br><br>
@@ -4724,7 +4708,7 @@ it had the name "discrete summation formula" which conveys nothing to me.  The p
 <table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>infinite sums</center></h5></td></tr></table>
 
 <pre>
-  <A class=def NAME="make-rcos">make-rcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
+  <A class=def NAME="make-rcos">make-rcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0)
   <A class=def NAME="rcos">rcos</A> gen fm
   <A class=def NAME="rcos?">rcos?</A> gen
 
@@ -4739,7 +4723,7 @@ it had the name "discrete summation formula" which conveys nothing to me.  The p
 
 
 <pre>
-  <A class=def NAME="make-ercos">make-ercos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
+  <A class=def NAME="make-ercos">make-ercos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0)
   <A class=def NAME="ercos">ercos</A> gen fm
   <A class=def NAME="ercos?">ercos?</A> gen
 
@@ -4754,7 +4738,7 @@ it had the name "discrete summation formula" which conveys nothing to me.  The p
 
 
 <pre>
-  <A class=def NAME="make-eoddcos">make-eoddcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
+  <A class=def NAME="make-eoddcos">make-eoddcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0)
   <A class=def NAME="eoddcos">eoddcos</A> gen fm
   <A class=def NAME="eoddcos?">eoddcos?</A> gen
 </pre>
@@ -4765,19 +4749,18 @@ it had the name "discrete summation formula" which conveys nothing to me.  The p
 
 
 <pre>
-  <A class=def NAME="make-koddcos">make-koddcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0)
+  <A class=def NAME="make-koddcos">make-koddcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0)
   <A class=def NAME="koddcos">koddcos</A> gen fm
   <A class=def NAME="koddcos?">koddcos?</A> gen
 </pre>
 
 <p>This produces a sum of odd harmonics with a complicated scaling -- it is the 3rd Jolley case, 1st column, in the sum-of-sines table.
-There are several thousand variations on this formula, none of which look different enough to be interesting.
 </p>
 <br>
 
 
 <pre>
-  <A class=def NAME="make-rkcos">make-rkcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
+  <A class=def NAME="make-rkcos">make-rkcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0)
   <A class=def NAME="rkcos">rkcos</A> gen fm
   <A class=def NAME="rkcos?">rkcos?</A> gen
 
@@ -4796,9 +4779,13 @@ There are several thousand variations on this formula, none of which look differ
 
 
 <pre>
-  <A class=def NAME="make-rk!cos">make-rk!cos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
+  <A class=def NAME="make-rk!cos">make-rk!cos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0)
   <A class=def NAME="rk!cos">rk!cos</A> gen
   <A class=def NAME="rk!cos?">rk!cos?</A> gen
+
+  <A class=def NAME="make-rk!ssb">make-rk!ssb</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (r 0.0)
+  <A class=def NAME="rk!ssb">rk!ssb</A> gen
+  <A class=def NAME="rk!ssb?">rk!ssb?</A> gen
 </pre>
 
 <p>This produces a sum of sinusoids scaled by (r^k)/k!.
@@ -4807,7 +4794,7 @@ There are several thousand variations on this formula, none of which look differ
 
 
 <pre>
-  <A class=def NAME="make-r2k!cos">make-r2k!cos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0) (k 0.0)
+  <A class=def NAME="make-r2k!cos">make-r2k!cos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0) (k 0.0)
   <A class=def NAME="r2k!cos">r2k!cos</A> gen fm
   <A class=def NAME="r2k!cos?">r2k!cos?</A> gen
 </pre>
@@ -4823,7 +4810,7 @@ There are several thousand variations on this formula, none of which look differ
 
 
 <pre>
-  <A class=def NAME="make-k2sin">make-k2sin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0)
+  <A class=def NAME="make-k2sin">make-k2sin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0)
   <A class=def NAME="k2sin">k2sin</A> gen fm
   <A class=def NAME="k2sin?">k2sin?</A> gen
 </pre>
@@ -4859,7 +4846,7 @@ There are several thousand variations on this formula, none of which look differ
 
 
 <pre>
-  <A class=def NAME="make-abssin">make-abssin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0)
+  <A class=def NAME="make-abssin">make-abssin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0)
   <A class=def NAME="abssin">abssin</A> gen fm
   <A class=def NAME="abssin?">abssin?</A> gen
 </pre>
@@ -4887,7 +4874,7 @@ There are several thousand variations on this formula, none of which look differ
 
 
 <pre>
-  <A class=def NAME="make-r2sin">make-r2sin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (initial-phase 0.0) (r 0.0)
+  <A class=def NAME="make-r2sin">make-r2sin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0)
   <A class=def NAME="r2sin">r2sin</A> gen fm
   <A class=def NAME="r2sin?">r2sin?</A> gen
 

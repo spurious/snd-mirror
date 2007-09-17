@@ -882,10 +882,9 @@ specify and the modulation index times the initial value of the integrated wave.
 
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>asymmetric spectra</center></h5></td></tr></table>
 
-<p>The next question is "if we can get cancellations, can we twiddle the phases and get 
-single sideband FM?".  We could then get away from the symmetric spectra FM always tries to 
-produce, and edge toward phase quadrature waveshaping.  And as far as I can tell, the answer is, 
-"yes, but..."  We can get good results with low indices if we take advantage of the fact that:
+<p>The next question is "if we can get cancellations, can we fiddle with the phases and get 
+asymmetric FM spectra?".  There are several approaches; an obvious one uses the
+fact that:
 </p>
 
 
@@ -950,7 +949,9 @@ example:
 <!-- -->
 </td></tr></table>
 
-<p>Palamin et al in "A Method of Generating and Controlling Musical Asymmetrical Spectra" started at 
+<p>Unfortunately, there some pesky -1's floating around, so we get asymmetric or "gapped" spectra,
+but not anything we'd claim was single side-band.
+Palamin et al in "A Method of Generating and Controlling Musical Asymmetrical Spectra" started at 
 the same point (the expansion of simple FM), added a factor r^n to each sideband, and then worked 
 backwards to get:
 </p>
