@@ -24,13 +24,13 @@
 ;;;  test 21: new stuff                         [42109]
 ;;;  test 22: run                               [44100]
 ;;;  test 23: with-sound                        [50098]
-;;;  test 24: user-interface                    [52947]
-;;;  test 25: X/Xt/Xm                           [56353]
-;;;  test 26: Gtk                               [60949]
-;;;  test 27: GL                                [64801]
-;;;  test 28: errors                            [64925]
-;;;  test all done                              [67210]
-;;;  test the end                               [67446]
+;;;  test 24: user-interface                    [53020]
+;;;  test 25: X/Xt/Xm                           [56426]
+;;;  test 26: Gtk                               [61022]
+;;;  test 27: GL                                [64874]
+;;;  test 28: errors                            [64998]
+;;;  test all done                              [67283]
+;;;  test the end                               [67519]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -52974,6 +52974,38 @@ EDITS: 1
 			     ((= i 10000))
 			   (outa i (rk!ssb gen 0.0) *output*))))))
 	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-jpcos 100.0 :a 1.0 :r 1.0 :k 1)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 210000))
+			   (outa i (jpcos gen 0.0) *output*))))))
+
+	(with-sound (:clipped #f)
+		    (let ((gen (make-j2cos 100.0 :r 1.0 :n 0)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (j2cos gen 0.0) *output*))))))
+
+	(with-sound (:clipped #f)
+		    (let ((gen (make-nxysin 300 100 3)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 20000))
+			   (outa i (nxysin gen 0.0) *output*))))))
+
+	(with-sound (:clipped #f)
+		    (let ((gen (make-nxycos 300 100 3)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 20000))
+			   (outa i (nxycos gen 0.0) *output*))))))
+
 	(if (not (null? (sounds))) (for-each close-sound (sounds)))
 	(set! (optimization) old-opt-23)
 	

@@ -1779,7 +1779,7 @@ goes up, "a" goes down (to avoid foldover, or whatever).
 <p>
 "sine-summation" is a borderline vacuous name; generators.scm defines the alternate name "nrsin", as well
 as "ncos" for "sum-of-cosines", and "nsin" for "sum-of-sines".
-It also provides <a href="#ssbnr">ssbnr</a>, the single side-band version of sine-summation.
+It also provides <a href="#nrssb">nrssb</a>, the single side-band version of sine-summation.
 There are some surprising sounds lurking in sine-summation; a sonata for moped, anyone?
 </p>
 
@@ -1911,10 +1911,10 @@ sceq25 old:
 sceq26 old:
 \sum_{n=0}^{\infty} r^{n} \sum_{k=0}^{\infty} (n+1-k)\sin (k+1)\theta = \frac{\sin\theta}{(1-r)^{2}(1-2r\cos\theta + r^{2})}
 
-sceq7:
+sceq7: (p73)
 &\sum_{k=1}^{\infty} \frac{\cos kx}{k} = -\ln \big(2 \sin \frac{x}{2}\big)  & (0\leq x \leq \pi) \\
 
-sceq27:
+sceq27: (p183)
 1 + 2 &\sum_{n=1}^{\infty} \frac{(-a + \sqrt{a^{2} - b^{2}})^{n} \cos nx}{b^{n}} = \frac{\sqrt{a^{2} - b^{2}}}{a + b \cos x} & (b < a, a \neq 0) \\
 
 sceq25:
@@ -4482,10 +4482,6 @@ zip.scm:
 
 </p>
 
-
-
-<!-- TODO: other generators doc -->
-
 <pre>
   <A class=def NAME="make-asyfm">make-asyfm</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 1.0) (index 1.0)
   <A class=def NAME="asyfm">asyfm-J</A> gen fm
@@ -4520,7 +4516,7 @@ are close to damped sinusoids after their initial hesitation:
 <img src="sceq24.png" alt="Jn" hspace=40>
 <p>
 where the variables other than x remain bounded as x increases.  This explains, in a sketchy way, why Jn(cos) and Jn(Jn)
-behave like FM.  To see how close these are to FM, compare the expansion of J0(sin) against to FM's cos(sin):
+behave like FM.  To see how close these are to FM, compare the expansion of J0(sin) with FM's cos(sin):
 </p>
 
 <!-- LATEX:
@@ -4609,7 +4605,7 @@ is <a href="#sum-of-sines">sum-of-sines</a>, and nssb is the single side-band ve
 <!-- pointless...
 <img src="sceq24.png" alt="sum of cosines" hspace=40>
 -->
-<br>
+
 
 
 <pre>
@@ -4622,6 +4618,21 @@ is <a href="#sum-of-sines">sum-of-sines</a>, and nssb is the single side-band ve
 </p>
 <br>
 
+
+<pre>
+  <A class=def NAME="make-nxycos">make-nxycos</A> <a class=quiet href="#optional-key">:optional-key</a> (xfrequency 0.0) (yfrequency 0.0) (n 1) (x 0.0)
+  <A class=def NAME="nxycos">nxycos</A> gen fm
+  <A class=def NAME="nxycos?">nxycos?</A> gen
+
+  <A class=def NAME="make-nxysin">make-nxysin</A> <a class=quiet href="#optional-key">:optional-key</a> (xfrequency 0.0) (yfrequency 0.0) (n 1) (x 0.0)
+  <A class=def NAME="nxysin">nxysin</A> gen fm
+  <A class=def NAME="nxysin?">nxysin?</A> gen
+</pre>
+<p>These two produce a sum of "n" sinsoids starting at "x", spaced by "y".  Since "x" can be treated
+as the carrier, there's no point in an ssb version.
+</p>
+
+<br>
 
 <pre>
   <A class=def NAME="make-noddcos">make-noddcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (n 1)
@@ -4884,7 +4895,7 @@ under the name "discrete summation formula".
   <A class=def NAME="r2ssb?">r2ssb?</A> gen
 </pre>
 
-<p>These produce a sum of even numbered sinusoids (er, think of it as down an octave or something) 
+<p>These produce a sum of even numbered sinusoids (er, think of it as up an octave or something) 
 with each component scaled by (r^(2k))/(2k)!.
 </p>
 <br>
@@ -4896,7 +4907,7 @@ with each component scaled by (r^(2k))/(2k)!.
   <A class=def NAME="r2k2cos?">r2k2cos?</A> gen
 </pre>
 
-<p>This produces a sum of coines, each scaled by 1/(a^2+k^2).
+<p>This produces a sum of coines, each scaled by 1/(r^2+k^2).
 <br>
 
 

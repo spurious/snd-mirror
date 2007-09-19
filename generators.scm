@@ -692,7 +692,7 @@
 
 ;;; --------------------------------------------------------------------------------
 
-;;; inf sinusoids scaled by r^2: r2sin, r2ssb
+;;; inf sinusoids scaled by r^2: r2cos, r2sin, r2ssb
 
 ;;; Jolley 2nd col 2nd row (1st row is cos tweak of this)
 
@@ -717,7 +717,7 @@
        (sin (* r (sin x))))))
 
 #|
-;;; odd harmonics, but we can't push the upper partials past the (2k)! range, so not very flexible
+;;; even harmonics, but we can't push the upper partials past the (2k)! range, so not very flexible
 
 (with-sound (:clipped #f :statistics #t)
   (let ((gen (make-r2sin 100.0 :r 0.5)))
@@ -892,7 +892,7 @@
 
 ;;; --------------------------------------------------------------------------------
 
-;;; inf cosines scaled by r^k/k: rkcos
+;;; inf cosines scaled by r^k/k: rkcos, rksin, rkssb
 
 ;;; G&R 2nd col 6th row
 ;;; r^k/k -- this sums to ln(1/(1-x)) if x<1 (J 118)
@@ -931,6 +931,9 @@
   (frequency 0.0) (r 1.0)
   (angle 0.0) (incr 0.0))
 
+;;; normalization based on 0 of derivative of atan arg (for max) at cos x = r,
+;;;   so we get a maxamp here of (atan (/ (* r (sin (acos r))) (- 1.0 (* r r))))
+
 (define (rksin gen fm)
   (declare (gen rksin) (fm float))
   (let* ((x (rksin-angle gen))
@@ -938,8 +941,10 @@
 
     (set! (rksin-angle gen) (+ fm x (rksin-incr gen)))
 
-    (atan (/ (* r (sin x))
-	     (- 1.0 (* r (cos x)))))))
+    (/ (atan (/ (* r (sin x))
+		(- 1.0 (* r (cos x)))))
+       (atan (/ (* r (sin (acos r)))   ; normalization
+		(- 1.0 (* r r)))))))       
 
 #|
 (with-sound (:clipped #f :statistics #t)
@@ -950,9 +955,6 @@
 	   ((= i 10000))
 	 (outa i (rksin gen 0.0) *output*))))))
 |#
-
-;;; TODO: norm rksin?
-
 
 (def-clm-struct (rkssb
 		 :make-wrapper
@@ -997,7 +999,7 @@
 
 ;;; --------------------------------------------------------------------------------
 
-;;; inf cosines scaled by r^k/k!: rk!cos
+;;; inf cosines scaled by r^k/k!: rk!cos, rk!ssb
 
 ;;; G&R 2nd col 3rd from last
 
@@ -1008,8 +1010,6 @@
 		   g))
   (frequency 0.0) (r 0.0)
   (angle 0.0) (incr 0.0))
-
-;;; TODO: check DC handling throughout
 
 (define (rk!cos gen fm)
   (declare (gen rk!cos) (fm float))
@@ -1395,6 +1395,13 @@
 
 
 
+;;; --------------------------------------------------------------------------------
+
+;;; coskx/k = -ln(2sin(x/2)) or 1/2ln(1/(2-2cosx))
+;;; sinkx/k = (pi-x)/2 both 0..2pi
+;;; similarly -1^k : x/2 and ln(2cos(x/2)) (p44..46)
+;;; 2k-1: pi/x and 1/2ln cot (x/2) 0..2pi and 0..pi
+;;; but all of these are unbounded, and discontinuous
 
 ;;; --------------------------------------------------------------------------------
 
@@ -1802,6 +1809,46 @@ which is very close to a match
 |#
 
 
+;;; --------------------------------------------------------------------------------
+
+(def-clm-struct (jpcos
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (jpcos-incr g) (hz->radians (jpcos-frequency g)))
+		   g))
+  (frequency 0.0) (r 0.0) (a 0.0) (k 1 :type int)
+  (angle 0.0) (incr 0.0))
+
+(define (jpcos gen fm)
+  (declare (gen jpcos) (fm float))
+  (let* ((x (jpcos-angle gen))
+	 (a (jpcos-a gen))
+	 (r (jpcos-r gen))
+	 (k (jpcos-k gen))
+	 (dc (/ (* (sin (* k a)) (sin (* k r))) (* k a r)))
+	 (norm 1.0)
+	 (arg (sqrt (+ (* r r) 
+		       (* a a)
+		       (* a r -2.0 (cos x))))))
+
+    (set! (jpcos-angle gen) (+ x fm (jpcos-incr gen)))
+
+    (/ (- (/ (sin (* k arg))
+	     arg)
+	  dc) 
+       norm)))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-jpcos 100.0 :a 1.0 :r 1.0 :k 1)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 210000))
+	 (outa i (jpcos gen 0.0) *output*))))))
+|#
+
+;;; dc is not right if a!=r, no norm
 
 ;;; --------------------------------------------------------------------------------
 
@@ -1847,7 +1894,85 @@ which is very close to a match
 
 ;;; --------------------------------------------------------------------------------
 
+;;; G&R 1st col rows 1&2
+
+(def-clm-struct (nxysin
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (nxysin-xincr g) (hz->radians (nxysin-xfrequency g))) ; can be 0 if just x=pi/2 for example
+		   (set! (nxysin-yincr g) (hz->radians (nxysin-yfrequency g)))
+		   (set! (nxysin-xangle g) (nxysin-x g))
+		   g))
+  (xfrequency 0.0) (yfrequency 0.0) (n 1 :type int) (x 0.0)
+  (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
+
+(define (nxysin gen fm)
+  (declare (gen nxysin) (fm float))
+  (let* ((x (nxysin-xangle gen))
+	 (y (nxysin-yangle gen))
+	 (n (nxysin-n gen))
+	 (den (sin (* y 0.5))))
+    (set! (nxysin-xangle gen) (+ x (nxysin-xincr gen) (* fm (/ (nxysin-xincr gen) (nxysin-yincr gen)))))
+    (set! (nxysin-yangle gen) (+ y (nxysin-yincr gen) fm))
+    (if (< (abs den) 1.0e-9)
+	0.0
+	(/ (* (sin (+ x (* 0.5 (- n 1) y)))
+	      (sin (* 0.5 n y)))
+	   den))))
+
+;;; normalization here is hard (depends on x and y)
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-nxysin 300 100 3)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (outa i (nxysin gen 0.0) *output*))))))
+|#
+
+(def-clm-struct (nxycos
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (nxycos-xincr g) (hz->radians (nxycos-xfrequency g))) ; can be 0 if just x=pi/2 for example
+		   (set! (nxycos-yincr g) (hz->radians (nxycos-yfrequency g)))
+		   (set! (nxycos-xangle g) (nxycos-x g))
+		   g))
+  (xfrequency 0.0) (yfrequency 0.0) (n 1 :type int) (x 0.0)
+  (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
+
+(define (nxycos gen fm)
+  (declare (gen nxycos) (fm float))
+  (let* ((x (nxycos-xangle gen))
+	 (y (nxycos-yangle gen))
+	 (n (nxycos-n gen))
+	 (den (sin (* y 0.5))))
+    (set! (nxycos-xangle gen) (+ x (nxycos-xincr gen) (* fm (/ (nxycos-xincr gen) (nxycos-yincr gen)))))
+    (set! (nxycos-yangle gen) (+ y (nxycos-yincr gen) fm))
+    (if (< (abs den) 1.0e-9)
+	0.0
+	(/ (* (cos (+ x (* 0.5 (- n 1) y)))
+	      (sin (* 0.5 n y)))
+	   (* n den))))) ; n=normalization
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-nxycos 300 100 3)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (outa i (nxycos gen 0.0) *output*))))))
+|#
+
+;;; does ssb make any sense here?  x=carrier effectively
+;;; is there any need for the (-1)^k case?  
+
+
+;;; --------------------------------------------------------------------------------
+
 ;;; PERHAPS: a generator table for quick.html?
+;;; fm2.html: j0sin
 
 ;;; --------------------------------------------------------------------------------
 
