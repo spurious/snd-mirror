@@ -4540,6 +4540,7 @@ so bess's output is not the same as the raw bessel function value returned by <a
 </pre>
 
 <p>This produces a sum of cosines scaled by a product of Bessel functions; in a sense, there are two, or maybe three "indices".
+Normalization is not handled correctly in all cases.
 <p>
 
 <img src="sceq31.png" alt="jjcos" hspace=40>
@@ -4629,7 +4630,7 @@ is <a href="#sum-of-sines">sum-of-sines</a>, and nssb is the single side-band ve
   <A class=def NAME="nxysin?">nxysin?</A> gen
 </pre>
 <p>These two produce a sum of "n" sinsoids starting at "x", spaced by "y".  Since "x" can be treated
-as the carrier, there's no point in an ssb version.
+as the carrier, there's no point in an ssb version.  nxysin output is not normalized.
 </p>
 
 <br>
@@ -4763,6 +4764,7 @@ under the name "discrete summation formula".
 </pre>
 
 <p>This produces a sum of odd harmonics with a complicated scaling -- it is the 3rd Jolley case, 1st column, in the sum-of-sines table.
+This generator's output is not normalized, and looks incorrect...
 </p>
 <br>
 
@@ -4848,7 +4850,7 @@ under the name "discrete summation formula".
 <img src="sceq25.png" alt="sum of sines" hspace=40>
 <br>
 
-<p>This produces a sum of sinusoids scaled by kr^k.
+<p>This produces a sum of sinusoids scaled by kr^k.  Its output is not normalized.
 </p>
 <br>
 
@@ -4896,7 +4898,7 @@ under the name "discrete summation formula".
 </pre>
 
 <p>These produce a sum of even numbered sinusoids (er, think of it as up an octave or something) 
-with each component scaled by (r^(2k))/(2k)!.
+with each component scaled by (r^(2k))/(2k)!.  r2sin output is not normalized.
 </p>
 <br>
 
