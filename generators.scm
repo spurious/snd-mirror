@@ -1950,7 +1950,7 @@ which is very close to a match
     (set! (nxycos-xangle gen) (+ x (nxycos-xincr gen) (* fm (/ (nxycos-xincr gen) (nxycos-yincr gen)))))
     (set! (nxycos-yangle gen) (+ y (nxycos-yincr gen) fm))
     (if (< (abs den) 1.0e-9)
-	0.0
+	1.0
 	(/ (* (cos (+ x (* 0.5 (- n 1) y)))
 	      (sin (* 0.5 n y)))
 	   (* n den))))) ; n=normalization

@@ -7695,6 +7695,11 @@ the closer the radius is to 1.0, the narrower the resonance."
 
   XEN_YES_WE_HAVE("clm");
 
+  /* is this a good idea?  I think it means these names are automatically imported into
+   *   subsequently defined modules, which seems like a bad idea.  Perhaps we should
+   *   have a separate scheme file with these names in an export statement, if there
+   *   is such a thing.
+   */
 #if WITH_MODULES
   scm_c_export(
 	       S_all_pass,

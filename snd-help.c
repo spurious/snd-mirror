@@ -516,6 +516,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+20-Sep:  export-all.scm.\n\
 4-Sep:   generators.scm.\n\
 24-Aug:  Snd 9.3.\n\
 7-Aug:   renamed \"correlate\" in examp.scm to \"display-correlation\"\n\
