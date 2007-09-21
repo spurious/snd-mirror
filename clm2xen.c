@@ -3194,7 +3194,7 @@ generator) gen's radius and frequency"
 
 /* ---------------- frame ---------------- */
 
-#define MUS_MAX_CHANS 512
+#define MUS_MAX_CHANS (64*1024)
 
 static XEN g_make_frame(XEN arglist)
 {

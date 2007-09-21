@@ -24,13 +24,13 @@
 ;;;  test 21: new stuff                         [42109]
 ;;;  test 22: run                               [44100]
 ;;;  test 23: with-sound                        [50098]
-;;;  test 24: user-interface                    [53020]
-;;;  test 25: X/Xt/Xm                           [56426]
-;;;  test 26: Gtk                               [61022]
-;;;  test 27: GL                                [64874]
-;;;  test 28: errors                            [64998]
-;;;  test all done                              [67283]
-;;;  test the end                               [67519]
+;;;  test 24: user-interface                    [53086]
+;;;  test 25: X/Xt/Xm                           [56492]
+;;;  test 26: Gtk                               [61088]
+;;;  test 27: GL                                [64940]
+;;;  test 28: errors                            [65064]
+;;;  test all done                              [67349]
+;;;  test the end                               [67585]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -18367,7 +18367,7 @@ EDITS: 2
       (let ((gen (make-cosine-summation 100.0)))
 	(map-channel (lambda (y) (* .2 (cosine-summation gen 0.5))))
 	(let ((vals (channel->vct 280 10)))
-	  (if (not (vequal vals (vct 0.229 0.224 0.218 0.211 0.203 0.195 0.187 0.178 0.169 0.160)))
+	  (if (not (vequal vals (vct 0.191 0.187 0.181 0.176 0.169 0.163 0.156 0.148 0.141 0.133)))
 	      (snd-display ";cosine-summation: ~A" vals)))
 	(undo))
       
@@ -46539,7 +46539,7 @@ EDITS: 1
 	(ftst '(let ((gen (make-moving-average))) (moving-average gen)) 0.0)
 	(ftst '(let ((gen (make-moving-average))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
 	(ftst '(let ((gen (make-moving-average))) (gen 0) (gen 0 0) (gen 0.0 0) (gen 0 0.0)) 0.0)
-	(ftst '(let ((gen (make-asymmetric-fm))) (asymmetric-fm gen)) 1.0)
+	(ftst '(let ((gen (make-asymmetric-fm))) (asymmetric-fm gen 1.0)) 1.0)
 	(ftst '(let ((gen (make-asymmetric-fm))) (gen)) 1.0)
 	(ftst '(let ((gen (make-comb))) (comb gen)) 0.0)
 	(ftst '(let ((gen (make-comb))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
@@ -53005,6 +53005,72 @@ EDITS: 1
 			 (do ((i 0 (1+ i)))
 			     ((= i 20000))
 			   (outa i (nxycos gen 0.0) *output*))))))
+	
+	(let ((test-zero-stability 
+	       (lambda (make-func run-func angle-func zero)
+		 (let ((gen (make-func)))
+		   (angle-func gen zero)
+		   (let ((zero-val (run-func gen zero)))
+		     (for-each
+		      (lambda (val)
+			(set! gen (make-func)) ; remake else carrier drifts away in ssb cases
+			(angle-func gen (+ zero val))
+			(let ((new-val (run-func gen 0.0)))
+			  (if (> (abs (- new-val zero-val)) .01)
+			      (snd-display ";~A:~%;   zero check at (+ ~A ~A): ~A ~A~%" gen zero val zero-val new-val))))
+		      (list 1.0e-11 1.0e-10 1.0e-9 1.0e-8 1.0e-7 1.0e-6
+			    -1.0e-11 -1.0e-10 -1.0e-9 -1.0e-8 -1.0e-7 -1.0e-6)))))))
+	  
+	  (for-each
+	   (lambda (zero)
+	     (test-zero-stability (lambda () (make-oscil 0.0)) oscil (lambda (gen val) (set! (mus-phase gen) val)) zero)
+	     
+	     (for-each
+	      (lambda (n)
+		(test-zero-stability (lambda () (make-sum-of-sines n 0.0)) sum-of-sines (lambda (gen val) (set! (mus-phase gen) val)) zero)
+		(test-zero-stability (lambda () (make-sum-of-cosines n 0.0)) sum-of-cosines (lambda (gen val) (set! (mus-phase gen) val)) zero)
+		(test-zero-stability (lambda () (make-sine-summation 0.0 :n n)) sine-summation (lambda (gen val) (set! (mus-phase gen) val)) zero)
+		
+		(test-zero-stability (lambda () (make-nssb 0.0 1.0 n)) nssb (lambda (gen val) (set! (nssb-modangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-noddssb 0.0 1.0 n)) noddssb (lambda (gen val) (set! (noddssb-modangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-nrssb 0.0 1.0 n)) nrssb (lambda (gen val) (set! (nrssb-modangle gen) val)) zero)
+					;(test-zero-stability (lambda () (make-nkssb 0.0 1.0 n)) nkssb (lambda (gen val) (set! (nkssb-modangle gen) val)) zero)
+		
+		(test-zero-stability (lambda () (make-nxycos :n n)) nxycos (lambda (gen val) (set! (nxycos-yangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-noddsin :n n)) noddsin (lambda (gen val) (set! (noddsin-angle gen) val)) zero)
+		(test-zero-stability (lambda () (make-noddcos :n n)) noddcos (lambda (gen val) (set! (noddcos-angle gen) val)) zero)
+		(test-zero-stability (lambda () (make-ncos2 :n n)) ncos2 (lambda (gen val) (set! (ncos2-angle gen) val)) zero)
+		(test-zero-stability (lambda () (make-npcos :n n)) npcos (lambda (gen val) (set! (npcos-angle gen) val)) zero)
+		(test-zero-stability (lambda () (make-nrcos :n n)) nrcos (lambda (gen val) (set! (nrcos-angle gen) val)) zero)
+		(test-zero-stability (lambda () (make-nxysin :n n)) nxysin (lambda (gen val) (set! (nxysin-yangle gen) val)) zero))
+	      (list 1 10 3 30))
+	     
+	     (test-zero-stability (lambda () (make-krksin :r 0.1)) krksin (lambda (gen val) (set! (krksin-angle gen) val)) zero)
+	     (test-zero-stability (lambda () (make-k2sin)) k2sin (lambda (gen val) (set! (k2sin-angle gen) val)) zero)
+	     (test-zero-stability (lambda () (make-abcos :a 1.0 :b 0.5)) abcos (lambda (gen val) (set! (abcos-angle gen) val)) zero)
+	     
+	     (for-each
+	      (lambda (r)
+		(test-zero-stability (lambda () (make-rcos :r r)) rcos (lambda (gen val) (set! (mus-phase (rcos-osc gen)) val)) zero)
+		(test-zero-stability (lambda () (make-ercos :r r)) ercos (lambda (gen val) (set! (mus-phase (ercos-osc gen)) val)) zero)
+		(test-zero-stability (lambda () (make-r2sin :r r)) r2sin (lambda (gen val) (set! (r2sin-angle gen) val)) zero)
+		(test-zero-stability (lambda () (make-r2cos :r r)) r2cos (lambda (gen val) (set! (r2cos-angle gen) val)) zero)
+		(test-zero-stability (lambda () (make-eoddcos  :r r)) eoddcos  (lambda (gen val) (set! (mus-phase (eoddcos-osc gen)) val)) zero)
+		(test-zero-stability (lambda () (make-rkcos  :r r)) rkcos  (lambda (gen val) (set! (mus-phase (rkcos-osc gen)) val)) zero)
+		(test-zero-stability (lambda () (make-rksin :r r)) rksin (lambda (gen val) (set! (rksin-angle gen) val)) zero)
+		(test-zero-stability (lambda () (make-rk!cos :r r)) rk!cos (lambda (gen val) (set! (rk!cos-angle gen) val)) zero)
+		(test-zero-stability (lambda () (make-r2k!cos :r r)) r2k!cos (lambda (gen val) (set! (mus-phase (r2k!cos-osc gen)) val)) zero)
+		(test-zero-stability (lambda () (make-r2k2cos :r r)) r2k2cos (lambda (gen val) (set! (r2k2cos-angle gen) val)) zero)
+		
+		(test-zero-stability (lambda () (make-rssb 0.0 1.0 :r r)) rssb (lambda (gen val) (set! (rssb-angle2 gen) val)) zero)
+		(test-zero-stability (lambda () (make-erssb 0.0 1.0 :r r)) erssb (lambda (gen val) (set! (erssb-modangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-rkssb 0.0 1.0 :r r)) rkssb (lambda (gen val) (set! (rkssb-modangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-rk!ssb 0.0 1.0 :r r)) rk!ssb (lambda (gen val) (set! (rk!ssb-modangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-rkoddssb 0.0 1.0 :r r)) rkoddssb (lambda (gen val) (set! (rkoddssb-modangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-r2ssb 0.0 1.0 :r r)) r2ssb (lambda (gen val) (set! (r2ssb-modangle gen) val)) zero)
+		)
+	      (list 0.1 0.5 .99)))
+	   (list 0.0 (* 0.5 pi) pi (* 2.0 pi) (* -0.5 pi) (- pi) (* -2.0 pi))))
 
 	(if (not (null? (sounds))) (for-each close-sound (sounds)))
 	(set! (optimization) old-opt-23)
