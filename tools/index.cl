@@ -871,9 +871,9 @@
 	  (if (and (not (find (aref hrefs h) names :test #'string=))
 		   (search "#" (aref hrefs h)))
 	      (format t "undef'd: ~A (~A: ~A)~%" (aref hrefs h) (aref refs h) (aref lines h))))
-    (loop for h from 0 below name do
-      (if (not (find (aref names h) hrefs :test #'string=))
-	  (format t "unref'd: ~A~%" (aref names h))))
+;    (loop for h from 0 below name do
+;      (if (not (find (aref names h) hrefs :test #'string=))
+;	  (format t "unref'd: ~A~%" (aref names h))))
 
     (when check-unhref
       (loop for file in files do

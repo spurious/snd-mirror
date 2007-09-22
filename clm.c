@@ -8818,7 +8818,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	/* definition from diracdelta docs and "DSP Handbook" -- used in bispectrum ("minimum bispectrum bias supremum") */
 	for (i = 0, j = size - 1, angle = M_PI, ramp = 0.0; i <= midn; i++, j--, angle -= freq, ramp += rate)
 	  {
-	    window[i] = ramp * cos(angle) + (1.0 / M_PI) * sin(angle);
+	    window[i] = ramp * cos(angle) + (sin(angle) / M_PI);
 	    window[j] = window[i];
 	  }
       }
@@ -9174,7 +9174,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 
 (define (dpss n w)
   ;; from Verma, Bilbao, Meng, "The Digital Prolate Spheroidal Window"
-  ;; output checked using Julius Smith's dpssw.m, although my "w" is multiplied by 2pi 
+  ;; output checked using Julius Smith's dpssw.m, although my "w" is different
   (let* ((mat (make-mixer n))
 	 (cw (cos (* 2 pi w))))
     (do ((i 0 (1+ i)))
@@ -9190,6 +9190,23 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 ;;; power method takes forever on large windows
 ;;; also can get caught in a loop of largest values -- no longer converging
 ;;; use gsl instead?
+#endif
+
+      /* papoulis window: looks very similar to the Bohman window, and makes similar claims 
+       * (and there is disagreement about the window definition) 
+       */
+#if 0
+(define (papoulis n)
+  (let ((v (make-vct n)))
+    (do ((i 0 (1+ i)))
+	((= i (/ n 2)) v)
+      (let* ((y (/ (* 2 i) n))
+	     (val (- (* (+ 1.0 y) ; upside-down? unnormalized?
+			(cos (* pi y)))
+		     (/ (sin (* pi y))
+			pi))))
+	(vct-set! v i val)
+	(vct-set! v (- n i 1) val)))))
 #endif
 
     case MUS_ULTRASPHERICAL_WINDOW:

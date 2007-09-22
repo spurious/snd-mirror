@@ -2057,3 +2057,28 @@ which is very close to a match
       (list 0.1 0.5 .99)))
    (list 0.0 (* 0.5 pi) pi (* 2.0 pi) (* -0.5 pi) (- pi) (* -2.0 pi))))
 |#
+
+;;; --------------------------------------------------------------------------------
+
+
+(def-clm-struct (blackman4 
+		 :make-wrapper (lambda (g)
+				 (set! (blackman4-incr g) (hz->radians (blackman4-frequency g)))
+				 (set! (blackman4-coeffs g) (vct .084037 -.29145 .375696 -.20762 .041194))
+				 g))
+    (frequency 0.0) (initial-phase 0.0) (coeffs #f :type vct) (angle 0.0) (incr 0.0))
+
+(define (blackman4 gen fm)
+  (declare (gen blackman4) (fm float))
+  (let ((x (blackman4-angle gen)))
+    (set! (blackman4-angle gen) (+ x fm (blackman4-incr gen)))
+    (polynomial (blackman4-coeffs gen) (cos x))))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((black4 (make-blackman4 440.0)))
+    (run (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (outa i (blackman4 black4 0.0) *output*))))))
+|#

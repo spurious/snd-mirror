@@ -4469,7 +4469,8 @@ prc95.scm:
 sndclm.html:
     <a class=quiet href="sndclm.html#sinc-train">sinc-train</a>, 
     <a class=quiet href="sndclm.html#sumofoddsines">sum-of-odd-sines</a>, 
-    <a class=quiet href="sndclm.html#make-rand">1f-noise</a>
+    <a class=quiet href="sndclm.html#make-rand">1f-noise</a>,
+    <a class=quiet href="sndclm.html#polynomial">blackman4</a>
 
 clm-ins.scm:
     <a class=quiet href="sndscm.html#rmsgain">rms gain balance</a>
@@ -4484,8 +4485,8 @@ zip.scm:
 
 <pre>
   <A class=def NAME="make-asyfm">make-asyfm</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 1.0) (index 1.0)
-  <A class=def NAME="asyfm">asyfm-J</A> gen fm
-  <A class=def NAME="asyfm">asyfm-I</A> gen fm
+  <A class=def NAME="asyfmJ">asyfm-J</A> gen fm
+  <A class=def NAME="asyfmI">asyfm-I</A> gen fm
   <A class=def NAME="asyfm?">asyfm?</A> gen
 </pre>
 
@@ -4541,7 +4542,7 @@ so bess's output is not the same as the raw bessel function value returned by <a
 
 <p>This produces a sum of cosines scaled by a product of Bessel functions; in a sense, there are two, or maybe three "indices".
 Normalization is not handled correctly in all cases.
-<p>
+</p>
 
 <img src="sceq31.png" alt="jjcos" hspace=40>
 <br>
@@ -4689,7 +4690,7 @@ nrsin is the same as <a href="#sine-summation">sine-summation</a>.
 <pre>
   <A class=def NAME="make-nkssb">make-nkssb</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1)
   <A class=def NAME="nkssb">nkssb</A> gen fm
-  <A class=def NAME="nkssb">nkssb-interp</A> gen fm interp
+  <A class=def NAME="nkssbinterp">nkssb-interp</A> gen fm interp
   <A class=def NAME="nkssb?">nkssb?</A> gen
 </pre>
 
@@ -4727,7 +4728,7 @@ under the name "discrete summation formula".
 </pre>
 
 <p>These generators produce an infinite sum of sinusoids, each successive component scaled by "r" (so the nth component has amplitude r^n).
-<p>
+</p>
 <br>
 
 
@@ -4837,7 +4838,7 @@ This generator's output is not normalized, and looks incorrect...
 </pre>
 
 <p>This produces a sum of odd-numbered harmonics scaled by (r^(2k-1))/(2k-1).
-<p>
+</p>
 <br>
 
 
@@ -4910,6 +4911,7 @@ with each component scaled by (r^(2k))/(2k)!.  r2sin output is not normalized.
 </pre>
 
 <p>This produces a sum of coines, each scaled by 1/(r^2+k^2).
+</p>
 <br>
 
 
@@ -5057,8 +5059,36 @@ coeffs[0] is the constant term, and so on.
 Abramowitz and Stegun, "A Handbook of Mathematical Functions" is a
 treasure-trove of interesting polynomials.
 For waveshaping, use the function <a href="#partialstopolynomial">partials-&gt;polynomial</a> to
-generate the coefficients, then drive polynomial with a cosine.
+generate the coefficients, then drive polynomial with a cosine; this is what the <a href="#polyshape">polyshape</a>
+generator does for you (see the <a href="sndscm.html#birddoc">bigbird</a> and <a href="sndscm.html#vdoc">fm-violin</a>
+instruments).  Here's a generator that uses polynomial to produces a Blackman4 waveform:
 </p>
+
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<pre>
+(<a class=quiet href="sndscm.html#def-clm-struct">def-clm-struct</a> (blackman4 :make-wrapper 
+		  (lambda (g)
+	 	    (set! (blackman4-incr g) (<a class=quiet href="#hztoradians">hz-&gt;radians</a> (blackman4-frequency g)))
+		    (set! (blackman4-coeffs g) (<a class=quiet href="extsnd.html#vct">vct</a> .084037 -.29145 .375696 -.20762 .041194))
+		    g))
+    (frequency 0.0) (initial-phase 0.0) (coeffs #f :type vct) (angle 0.0) (incr 0.0))
+
+(define (blackman4 gen fm)
+  (<a class=quiet href="extsnd.html#declare">declare</a> (gen blackman4) (fm float))
+  (let ((x (blackman4-angle gen)))
+    (set! (blackman4-angle gen) (+ x fm (blackman4-incr gen)))
+    (<em class=red>polynomial</em> (blackman4-coeffs gen) (cos x))))
+
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
+  (let ((black4 (make-blackman4 440.0)))
+    (<a class=quiet href="extsnd.html#run">run</a> (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (<a class=quiet href="#outa">outa</a> i (blackman4 black4 0.0) *output*))))))
+</pre>
+</td></tr></table>
+
+
 <br><br>
 
 
@@ -5245,12 +5275,8 @@ only difference is that mus-fft includes the fft length as an argument, whereas
 multiply-arrays does an element-wise multiply of two vcts.
 autocorrelate performs an (in place) autocorrelation of 'data' (a vct).  See <a href="sndscm.html#spotfreq">spot-freq</a> in dsp.scm, 
 or <a href="sndscm.html#rubberdoc">rubber.scm</a>.
-correlate performs an in-place cross-correlation of data1 and data2.
+correlate performs an in-place cross-correlation of data1 and data2 (see, for example, <a href="sndscm.html#snddiffdoc">snddiff</a>).
 </p>
-
-
-<!-- TODO: add examples for fft etc -->
-
 <br><br>
 
 

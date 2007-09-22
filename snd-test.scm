@@ -53006,6 +53006,13 @@ EDITS: 1
 			     ((= i 20000))
 			   (outa i (nxycos gen 0.0) *output*))))))
 	
+	(with-sound (:clipped #f)
+		    (let ((black4 (make-blackman4 440.0)))
+		      (run (lambda ()
+			     (do ((i 0 (1+ i)))
+				 ((= i 20000))
+			       (outa i (blackman4 black4 0.0) *output*))))))
+
 	(let ((test-zero-stability 
 	       (lambda (make-func run-func angle-func zero)
 		 (let ((gen (make-func)))
