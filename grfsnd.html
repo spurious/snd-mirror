@@ -72,6 +72,7 @@
   <li><a href="#sndandalsa" onmouseover="return escape('This is the new Linux audio library')">Snd and ALSA</a>
   <li><a href="grfsnd.html#sndandx" onmouseover="return escape('other programs can control Snd through window properties')">Driving Snd remotely</a>
   <li><a href="#sndandgl" onmouseover="return escape('OpenGL (Mesa) extensions via gl.c')">Snd and OpenGL</a>
+  <li><a href="#sndandgsl" onmouseover="return escape('tie-ins to libgsl')">Snd and GSL</a>
   </ul>
 </ul>
 </td><td width="40%">
@@ -2329,16 +2330,70 @@ program:
 		  (XtWindow (car (<a class=quiet href="extsnd.html#channelwidgets">channel-widgets</a>))))
   (glFlush))
 </pre></td></tr></table>
-<br>
+
 <p>See snd-gl.scm.  To turn these graphs into Postscript files, include the --with-gl2ps switch
 at configuration time, and use the <a href="extsnd.html#glgraphtops">gl-graph-&gt;ps</a> function.
 </p>
-<br>
-<table border=1 hspace=20>
-<tr><td colspan=2><center>GL spectrogram</center></td></tr>
-<tr><td colspan=2>
-<img src="gl1.png" alt="now.snd GL spectrogram">
-</td></tr></table>
+<br><br>
+
+
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandgsl">Snd and GSL</a></h3></td></tr></table>
+
+<p>If the GSL library is available, the following functions are imported into Snd:
+</p>
+
+<table border=0 cellspacing=0 hspace=20>
+
+<!-- gsl-dht -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>gsl-dht</em> <code>(size data nu xmax)</code>
+</td></tr><tr><td width=60></td><td>
+gsl-dht performs the Hankel transform of "data", a vct.  See <a href="extsnd.html#addtransform">add-transform</a>
+for an example.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- gsl-eigenvectors -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>gsl-eigenvectors</em> <code>(matrix)</code>
+</td></tr><tr><td width=60></td><td>
+gsl-eigenvectors returns the eigenvalues and corresponding eigenvectors of "matrix", a mixer.
+
+<pre>
+&gt;<em class=typing>(gsl-eigenvectors (make-mixer 4  -1.0 1.0 -1.0 1.0
+                               -8.0 4.0 -2.0 1.0
+                               27.0 9.0 3.0 1.0
+                               64.0 16.0 4.0 1.0))</em>
+<em class=listener>(#(-6.41391102627093 5.54555349890946 5.54555349890946 2.32280402845201) 
+#(#(-0.0998821746683654 -0.111251309674367 0.292500673281302 0.94450518972065) 
+  #(-0.0434869537653505 0.0642376994169207 -0.515252756143484 -0.840592191366022) 
+  #(-0.0434869537653505 0.0642376994169207 -0.515252756143484 -0.840592191366022) 
+  #(-0.144932944248023 0.356601443087312 0.91936884368837 0.0811836295983152)))</em>
+</pre>
+
+The value returned is a list of two elements.  The first is a vector containing
+the eigenvalues, the second is a vector containing the corresponding eigenvectors (as vectors).
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- gsl-elliptk -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>gsl-ellipk</em> <code>(k)</code><br>
+<em class=emdef>gsl-ellipj</em> <code>(j u m)</code>
+</td></tr><tr><td width=60></td><td>
+These are calls on the functions gsl_sf_ellint_Kcomp and gsl_sf_elljac_e.  See the elliptic filter code in
+analog-filter.scm for an example.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- gsl-roots -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>gsl-roots</em> <code>(poly)</code>
+</td></tr><tr><td width=60></td><td>
+This returns the roots of the polynomial "poly" via gsl_poly_complex_solve.  See analog-filter.scm for an example.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+</table>
+
 <br><br>
 
 

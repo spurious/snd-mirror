@@ -115,6 +115,7 @@
   <li><a href="grfsnd.html#sndandalsa" onmouseover="return escape('This is the new Linux audio library')">Snd and ALSA</a>
   <li><a href="grfsnd.html#sndandx" onmouseover="return escape('other programs can control Snd through window properties')">Driving Snd remotely</a>
   <li><a href="grfsnd.html#sndandgl" onmouseover="return escape('OpenGL (Mesa) extensions via gl.c')">Snd and OpenGL</a>
+  <li><a href="grfsnd.html#sndandgsl" onmouseover="return escape('tie-ins to libgsl')">Snd and GSL</a>
   </ul>
 <li><a href="index.html">Index</a>
 </ul>
@@ -10466,7 +10467,7 @@ This code ties the Hilbert transform in dsp.scm into the user-interface:
 	 (<a class=quiet href="sndclm.html#fir-filter">fir-filter</a> flt (<a class=quiet href="#readsample">read-sample</a> fd)))))))
 </pre></td></tr></table>
 
-If GSL is included in Snd (via the --wth-gsl configuration switch), the following code ties in the (slow) Hankel transform:
+If GSL is included in Snd, the following code ties in the (slow) Hankel transform:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (<em class=red>add-transform</em> "Hankel" "Hankel" 0.0 1.0

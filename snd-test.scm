@@ -41718,6 +41718,20 @@ EDITS: 1
 		(gsl-dht n v 1.0 1.0))
 	      (let ((tag (catch #t (lambda () (gsl-dht -1 (make-vct 3) 1.0 1.0)) (lambda args args))))
 		(if (not (eq? (car tag) 'out-of-range)) (snd-display ";gsl-dht bad size: ~A" tag)))))
+
+	(if (defined? 'gsl-eigenvectors)
+	    (let ((vals (gsl-eigenvectors (make-mixer 4  -1.0 1.0 -1.0 1.0
+						      -8.0 4.0 -2.0 1.0
+						      27.0 9.0 3.0 1.0
+						      64.0 16.0 4.0 1.0))))
+	      (if (not (vequal (vector->vct (car vals)) (vct -6.41391102627093 5.54555349890946 5.54555349890946 2.32280402845201)))
+		  (snd-display ";gsl-eigenvalues: ~A" (car vals)))
+	      (if (or (not (= (vector-length (cadr vals)) 4))
+		      (not (vequal (vector->vct (vector-ref (cadr vals) 0)) (vct -0.0998821746683654 -0.111251309674367 0.292500673281302 0.94450518972065)))
+		      (not (vequal (vector->vct (vector-ref (cadr vals) 1)) (vct -0.0434869537653505 0.0642376994169207 -0.515252756143484 -0.840592191366022)))
+		      (not (vequal (vector->vct (vector-ref (cadr vals) 2)) (vct -0.0434869537653505 0.0642376994169207 -0.515252756143484 -0.840592191366022)))
+		      (not (vequal (vector->vct (vector-ref (cadr vals) 3)) (vct -0.144932944248023 0.356601443087312 0.91936884368837 0.0811836295983152))))
+		  (snd-display ";gsl eigenvectors: ~A" (cadr vals)))))
 	
 	(let ((ind1 (open-sound "oboe.snd")))
 	  (set! (time-graph-style ind1 0) graph-lollipops)
