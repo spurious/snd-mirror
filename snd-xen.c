@@ -1947,6 +1947,90 @@ static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
 }
 
 
+/* eignevector/values, from gsl/doc/examples/eigen_nonsymm.c */
+
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_eigen.h>
+
+static XEN g_gsl_eigenvectors(XEN matrix)
+{
+  double *data;
+  mus_any *u1;
+  Float *vals;
+  int i, j, len;
+  XEN values = XEN_FALSE, vectors = XEN_FALSE;
+
+  u1 = XEN_TO_MUS_ANY(matrix);
+  if (!mus_mixer_p(u1)) return(XEN_FALSE);
+  vals = mus_data(u1);
+  len = mus_length(u1);
+  data = (double *)CALLOC(len * len, sizeof(double));
+  for (i = 0; i < len; i++)
+    for (j = 0; j < len; j++)
+      data[i * len + j] = mus_mixer_ref(u1, i, j);
+
+  {
+    gsl_matrix_view m = gsl_matrix_view_array(data, len, len);
+    gsl_vector_complex *eval = gsl_vector_complex_alloc(len);
+    gsl_matrix_complex *evec = gsl_matrix_complex_alloc(len, len);
+    gsl_eigen_nonsymmv_workspace *w = gsl_eigen_nonsymmv_alloc(len);
+    gsl_eigen_nonsymmv(&m.matrix, eval, evec, w);
+    gsl_eigen_nonsymmv_free(w);
+    gsl_eigen_nonsymmv_sort(eval, evec, GSL_EIGEN_SORT_ABS_DESC);
+  
+    {
+      int values_loc, vectors_loc;
+
+      values = XEN_MAKE_VECTOR(len, XEN_ZERO);
+      values_loc = snd_protect(values);
+      vectors = XEN_MAKE_VECTOR(len, XEN_FALSE);
+      vectors_loc = snd_protect(vectors);
+
+      for (i = 0; i < len; i++)
+	{
+	  XEN vect;
+	  gsl_complex eval_i = gsl_vector_complex_get(eval, i);
+	  gsl_vector_complex_view evec_i = gsl_matrix_complex_column(evec, i);
+	  XEN_VECTOR_SET(values, i, C_TO_XEN_DOUBLE(GSL_REAL(eval_i)));
+	
+	  vect = XEN_MAKE_VECTOR(len, XEN_ZERO);
+	  XEN_VECTOR_SET(vectors, i, vect);
+
+	  for (j = 0; j < len; j++)
+	    {
+	      gsl_complex z = gsl_vector_complex_get(&evec_i.vector, j);
+	      XEN_VECTOR_SET(vect, j, C_TO_XEN_DOUBLE(GSL_REAL(z)));
+	    }
+	}
+      snd_unprotect_at(values_loc);
+      snd_unprotect_at(vectors_loc);
+    }
+
+    gsl_vector_complex_free(eval);
+    gsl_matrix_complex_free(evec);
+  }
+
+  return(XEN_LIST_2(values, vectors));
+}
+
+/*
+(define hi (make-mixer 4  -1.0 1.0 -1.0 1.0
+                    -8.0 4.0 -2.0 1.0
+                    27.0 9.0 3.0 1.0
+                    64.0 16.0 4.0 1.0))
+:(gsl-eigenvectors hi)
+(
+#(-6.41391102627093 5.54555349890946 5.54555349890946 2.32280402845201) 
+#(
+  #(-0.0998821746683654 -0.111251309674367 0.292500673281302 0.94450518972065) 
+  #(-0.0434869537653505 0.0642376994169207 -0.515252756143484 -0.840592191366022) 
+  #(-0.0434869537653505 0.0642376994169207 -0.515252756143484 -0.840592191366022) 
+  #(-0.144932944248023 0.356601443087312 0.91936884368837 0.0811836295983152)))
+
+  TODO: test/doc gsl-eigenvectors
+*/
+
+
 #if HAVE_COMPLEX_TRIG && (!HAVE_RUBY) && HAVE_SCM_MAKE_COMPLEX
 #include <gsl/gsl_poly.h>
 #include <complex.h>
@@ -2275,6 +2359,7 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
   XEN_NARGIFY_1(g_gsl_ellipk_w, g_gsl_ellipk)
   XEN_NARGIFY_2(g_gsl_ellipj_w, g_gsl_ellipj)
   XEN_NARGIFY_4(g_gsl_dht_w, g_gsl_dht)
+  XEN_NARGIFY_1(g_gsl_eigenvectors, g_gsl_eigenvectors_w)
 
   #if HAVE_COMPLEX_TRIG && (!HAVE_RUBY) && HAVE_SCM_MAKE_COMPLEX
     XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
@@ -2330,6 +2415,7 @@ XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
   #define g_gsl_ellipk_w g_gsl_ellipk
   #define g_gsl_ellipj_w g_gsl_ellipj
   #define g_gsl_dht_w g_gsl_dht
+  #define g_gsl_eigenvectors_w g_gsl_eigenvectors
   #if HAVE_COMPLEX_TRIG && (!HAVE_RUBY) && HAVE_SCM_MAKE_COMPLEX
     #define g_gsl_roots_w g_gsl_roots
   #endif
@@ -2469,6 +2555,7 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk);
   XEN_DEFINE_PROCEDURE("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj);
   XEN_DEFINE_PROCEDURE("gsl-dht",    g_gsl_dht_w,    4, 0, 0, H_gsl_dht);
+  XEN_DEFINE_PROCEDURE("gsl-eigenvectors", g_gsl_eigenvectors_w, 1, 0, 0, "returns eigenvalues and eigenvectors");
 
 #if MUS_DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("gsl-gegenbauer",  g_gsl_gegenbauer,  3, 0, 0, "internal test func");

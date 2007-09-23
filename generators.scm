@@ -7,29 +7,6 @@
 ;;;   Where the limit of the sum is settable, I'll use "n".
 
 
-#|
-;;; do we need fmod 2*pi for the angles? (it is not used in clm.c)
-
-:(let ((ph 0.0)) (do ((i 0 (1+ i))) ((= i 22050)) (set! ph (+ ph (hz->radians 100.0)))) ph)
-628.31850751536
-
-:(let ((ph (* 2 pi 1000000))) (do ((i 0 (1+ i))) ((= i 22050)) (set! ph (+ ph (hz->radians 100.0)))) (- ph (* 2 pi 1000000)))
-628.318502381444
-
-:(let ((ph (* 2 pi 1000000000))) (do ((i 0 (1+ i))) ((= i 22050)) (set! ph (+ ph (hz->radians 100.0)))) (- ph (* 2 pi 1000000000)))
-628.311109542847
-
-:(let ((ph (* 2 pi 1000000000000))) (do ((i 0 (1+ i))) ((= i 22050)) (set! ph (+ ph (hz->radians 100.0)))) (- ph (* 2 pi 1000000000000)))
-624.462890625
-
-;; similar results from running oscil with 0.0 initial-phase, and 2*pi*1000000000, or running one
-;;   oscil for 3 hours at 6000 Hz -- the sinusoid is clean even around an angle of a billion -- worst 
-;;   case increment is pi, so we get (say) a billion samples before we may notice a sag => ca. 8 hours.  
-;;   I think that's a long enough tone...  (In clm.c and here, the phase and increment are both doubles;
-;;   53 bits of mantissa, billion=30, so we still have about 23 bits, which actually matches results above).
-|#
-
-
 ;;; --------------------------------------------------------------------------------
 
 ;;; n sinusoids, equal amps: ncos, nsin, nssb
@@ -1986,7 +1963,7 @@ which is very close to a match
 
 ;;; --------------------------------------------------------------------------------
 
-;;; fm2.html: j0sin
+;;; fm2.html: j0sin, perhaps control of asyfm formant placement
 
 ;;; --------------------------------------------------------------------------------
 
@@ -2058,8 +2035,32 @@ which is very close to a match
    (list 0.0 (* 0.5 pi) pi (* 2.0 pi) (* -0.5 pi) (- pi) (* -2.0 pi))))
 |#
 
+#|
+;;; do we need fmod 2*pi for the angles? (it is not used in clm.c)
+
+:(let ((ph 0.0)) (do ((i 0 (1+ i))) ((= i 22050)) (set! ph (+ ph (hz->radians 100.0)))) ph)
+628.31850751536
+
+:(let ((ph (* 2 pi 1000000))) (do ((i 0 (1+ i))) ((= i 22050)) (set! ph (+ ph (hz->radians 100.0)))) (- ph (* 2 pi 1000000)))
+628.318502381444
+
+:(let ((ph (* 2 pi 1000000000))) (do ((i 0 (1+ i))) ((= i 22050)) (set! ph (+ ph (hz->radians 100.0)))) (- ph (* 2 pi 1000000000)))
+628.311109542847
+
+:(let ((ph (* 2 pi 1000000000000))) (do ((i 0 (1+ i))) ((= i 22050)) (set! ph (+ ph (hz->radians 100.0)))) (- ph (* 2 pi 1000000000000)))
+624.462890625
+
+;; similar results from running oscil with 0.0 initial-phase, and 2*pi*1000000000, or running one
+;;   oscil for 3 hours at 6000 Hz -- the sinusoid is clean even around an angle of a billion -- worst 
+;;   case increment is pi, so we get (say) a billion samples before we may notice a sag => ca. 8 hours.  
+;;   I think that's a long enough tone...  (In clm.c and here, the phase and increment are both doubles;
+;;   53 bits of mantissa, billion=30, so we still have about 23 bits, which actually matches results above).
+|#
+
 ;;; --------------------------------------------------------------------------------
 
+;;; blackman4 as a waveform -- all the other fft windows could be implemented, but I doubt
+;;;   they are all that different, or useful as audio sources.
 
 (def-clm-struct (blackman4 
 		 :make-wrapper (lambda (g)

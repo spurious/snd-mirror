@@ -9190,6 +9190,10 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 ;;; power method takes forever on large windows
 ;;; also can get caught in a loop of largest values -- no longer converging
 ;;; use gsl instead?
+;;; 
+;;; (graph (vector->vct (vector-ref (cadr (gsl-eigenvectors (dpss 512 0.1))) 0)))
+;;; which is still very slow, and slightly different from the power-method output
+
 #endif
 
       /* papoulis window: looks very similar to the Bohman window, and makes similar claims 
