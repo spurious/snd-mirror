@@ -125,8 +125,6 @@
 |#
 
 
-;;; TODO: break this into gegen-poly case+straight 
-
 (define* (gegenbauer n x :optional (alpha 0.0))
   (if (< alpha -0.5) (set! alpha -0.5))
   (if (= n 0)

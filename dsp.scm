@@ -2535,7 +2535,7 @@ is assumed to be outside -1.0 to 1.0."
 
 ;;; -------- Savitzky-Golay filter coefficients (FIR filter -- returns vct of coeffs centered at vct midpoint)
 ;;;
-;;; from Numerical Recipes in C p 652
+;;; based on Numerical Recipes in C p 652
 ;;; needs mixer-solve in mixer.scm
 
 (define* (make-savitzky-golay-filter size :optional (order 2)) ;assuming symmetric filter (left = right)
@@ -2574,7 +2574,7 @@ is assumed to be outside -1.0 to 1.0."
 (define savitzky-golay-filter fir-filter)
 
 #|
-;; NRinC examples (p651)
+;; NRinC examples (2nd ed, p651)
 :(make-savitzky-golay-filter 5 2)
 #<fir-filter: order: 5, xs: [-0.086 0.343 0.486 0.343 -0.086]>
 :(make-savitzky-golay-filter 11 2)
@@ -2585,3 +2585,28 @@ is assumed to be outside -1.0 to 1.0."
 #<fir-filter: order: 25, xs: [-0.049 -0.027 -0.006 0.012 0.028 0.043 0.055 0.066...(0: -0.049, 12: 0.090)]>
 |#
 
+
+;;; -------- make-dpss-window
+
+(define (make-dpss-window n w)
+  ;; from Verma, Bilbao, Meng, "The Digital Prolate Spheroidal Window"
+  ;; output checked using Julius Smith's dpssw.m, although my "w" is different
+  (let* ((mat (make-mixer n))
+	 (cw (cos (* 2 pi w))))
+    (do ((i 0 (1+ i)))
+	((= i n))
+      (let ((n2 (- (* 0.5 (- n 1)) i))) 
+	(mixer-set! mat i i (* cw n2 n2))
+	(if (< i (1- n))
+	    (mixer-set! mat i (+ i 1) (* 0.5 (+ i 1) (- n 1 i))))
+	(if (> i 0)
+	    (mixer-set! mat i (- i 1) (* 0.5 i (- n i))))))
+    (let ((v (vector->vct (vector-ref (cadr (gsl-eigenvectors mat)) 0)))
+	  (pk 0.0))
+      ;; sign of eigenvalue is arbitrary, and eigenvector is scaled to sum to 1.0
+      ;;   but we want peak of 1.0 to serve as fft window
+      (do ((i 0 (1+ i)))
+	  ((= i n))
+	(if (> (abs (vct-ref v i)) (abs pk))
+	    (set! pk (vct-ref v i)))) 
+      (vct-scale! v (/ 1.0 pk)))))

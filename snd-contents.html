@@ -68,10 +68,10 @@ var olData = {childNodes:
  			 {item:new outlineInnerItem("Delete, insert, mix", "snd.html#deleteinsert")},
  			 {item:new outlineInnerItem("Multichannel operationss", "snd.html#multichannel")},
  			 {item:new outlineInnerItem("Amplitude envelopes", "snd.html#ampenvs")},
- 			 {item:new outlineInnerItem("Find", "snd.html#find")},
+ 			 {item:new outlineInnerItem("Find", "snd.html#menufind")},
  			 {item:new outlineInnerItem("Change samples", "snd.html#changesamples")},
  			 {item:new outlineInnerItem("Undo, redo, revert", "snd.html#undoredo")},
- 			 {item:new outlineInnerItem("Play", "snd.html#play")},
+ 			 {item:new outlineInnerItem("Play", "snd.html#menuplay")},
  			 {item:new outlineInnerItem("Mix Files", "snd.html#mixingfiles")},
  			 {item:new outlineInnerItem("Keyboard macros", "snd.html#kbdmacros")},
  			 {item:new outlineInnerItem("Change file format", "snd.html#changeformat")},
@@ -155,27 +155,15 @@ var olData = {childNodes:
  		 {item:new outlineInnerItem("Extension Languages", "sndlib.html#sndlibguile")}]},
  	{item:new outlineItem("CLM", "sndclm.html#introduction"),
  	    childNodes:
- 		[{item:new outlineInnerItem("Instruments", "sndclm.html#instruments")},
- 		 {item:new outlineInnerItem("Generators", "sndclm.html#generators")},
- 		 {item:new outlineInnerItem("Generic Functions", "sndclm.html#generic-functions")},
- 		 {item:new outlineInnerItem("Frames, Mixers, Sound IO", "sndclm.html#sound IO")},
- 		 {item:new outlineInnerItem("Useful functions", "sndclm.html#functions")},
- 		 {item:new outlineInnerItem("def-clm-struct", "sndclm.html#def-clm-struct")},
- 		 {item:new outlineInnerItem("Definstrument", "sndclm.html#definstrument")},
- 		 {item:new outlineInnerItem("CLM in Guile, Ruby, C, Forth", "sndclm.html#guileetc")},
- 		 {item:new outlineInnerItem("Note Lists", "sndclm.html#note-lists")},
- 		 {item:new outlineInnerItem("With-sound", "sndclm.html#with-sound")},
- 		 {item:new outlineInnerItem("With-mix", "sndclm.html#mix-and-with-mix")},
- 		 {item:new outlineInnerItem("Instrument-let and Sound-let", "sndclm.html#instrument-let")},
- 		 {item:new outlineInnerItem("Debugging", "sndclm.html#debugging-aids")},
- 		 {item:new outlineInnerItem("Appendices", "sndclm.html#appendices")},
- 		 {item:new outlineInnerItem("CLM Index", "sndclm.html#clmindex")}]},
+ 		[{item:new outlineInnerItem("Built-in Generators", "sndclm.html#generators")},
+                 {item:new outlineInnerItem("Other Generators", "sndclm.html#othergenerators")},
+ 		 {item:new outlineInnerItem("Functions", "sndclm.html#functions")},
+ 		 {item:new outlineInnerItem("Instruments", "sndclm.html#instruments")}]},
  	{item:new outlineItem("Scheme, Ruby, and Forth files", "sndscm.html#introduction"),
  	    childNodes:
  		[{item:new outlineInnerItem("analog-filter: standard analog filters", "sndscm.html#analogfilterdoc")},
 		 {item:new outlineInnerItem("autosave: auto-save (edit backup) support", "sndscm.html#autosavedoc")},
- 		 {item:new outlineInnerItem("bess: FM demo", "sndscm.html#bessdoc")},
- 		 {item:new outlineInnerItem("bess1: FM violin demo", "sndscm.html#bess1doc")},
+ 		 {item:new outlineInnerItem("bess and bess1: FM demo", "sndscm.html#bessdoc")},
  		 {item:new outlineInnerItem("bird: North-American birds", "sndscm.html#birddoc")},
  		 {item:new outlineInnerItem("clean: noise reduction", "sndscm.html#cleandoc")},
  		 {item:new outlineInnerItem("clm-ins: more CLM instruments", "sndscm.html#clminsdoc")},
@@ -226,7 +214,7 @@ var olData = {childNodes:
  		 {item:new outlineInnerItem("rubber: rubber-sound", "sndscm.html#rubberdoc")},
  		 {item:new outlineInnerItem("singer: Perry Cook's vocal-tract physical model", "sndscm.html#singerdoc")},
  		 {item:new outlineInnerItem("sndwarp: Bret Battey's sndwarp instrument", "sndscm.html#sndwarpdoc")},
- 		 {item:new outlineInnerItem("snd4|5|6|7|8: backwards compatibility", "sndscm.html#snd4doc")},
+ 		 {item:new outlineInnerItem("snd4..9: backwards compatibility", "sndscm.html#snd4doc")},
  		 {item:new outlineInnerItem("snddiff: sound difference detection", "sndscm.html#snddiffdoc")},
  		 {item:new outlineInnerItem("snd-gl: OpenGL examples (gl.c)", "sndscm.html#sndgldoc")},
  		 {item:new outlineInnerItem("snd-motif, snd-gtk, snd-xm: Motif/Gtk module (xm.c, xg.c)", "sndscm.html#sndmotifdoc")},
@@ -241,7 +229,7 @@ var olData = {childNodes:
  		 {item:new outlineInnerItem("Noise Reduction", "sndscm.html#noisystory")}]},
         {item:new outlineItem("FM Introduction", "fm.html#fmintro")},
  	{item:new outlineItem("Libxm", "libxm.html#xm")},
- 	{item:new outlineItem("Index", "index.html#extsndindex"),
+ 	{item:new outlineItem("Index", "index.html"),
 	    childNodes:
 	    [{item:new outlineInnerItem("Snd Index", "snd.html#index")},
 	     {item:new outlineInnerItem("CLM Index", "sndclm.html#clmindex")}]}]};
@@ -369,10 +357,10 @@ function initExpMenu() {
     <small><a href="snd.html#deleteinsert" target="snd1">Delete, insert, mix</a></small>
     <small><a href="snd.html#multichannel" target="snd1">Multichannel operations</a></small>
     <small><a href="snd.html#ampenvs" target="snd1">Amplitude envelopes and scaling</a></small>
-    <small><a href="snd.html#find" target="snd1">Find</a></small>
+    <small><a href="snd.html#menufind" target="snd1">Find</a></small>
     <small><a href="snd.html#changesamples" target="snd1">Change samples</a></small>
     <small><a href="snd.html#undoredo" target="snd1">Undo, redo, revert</a></small>
-    <small><a href="snd.html#play" target="snd1">Play</a></small>
+    <small><a href="snd.html#menuplay" target="snd1">Play</a></small>
     <small><a href="snd.html#mixingfiles" target="snd1">Mix Files</a></small>
     <small><a href="snd.html#kbdmacros" target="snd1">Keyboard macros</a></small>
     <small><a href="snd.html#changeformat" target="snd1">Change file format</a></small>
@@ -435,7 +423,7 @@ function initExpMenu() {
     <small><a href="grfsnd.html#sndandx" target="snd1">Driving Snd remotely</a></small>
     <small><a href="grfsnd.html#sndandgl" target="snd1">Snd and OpenGL</a></small>
     <small><a href="grfsnd.html#sndandgsl" target="snd1">Snd and GSL</a></small>
-  <small><a href="index.html#extsndindex" target="snd1">Index</a></small>
+  <small><a href="index.html" target="snd1">Index</a></small>
 <a href="snd.html#index" target="snd1">Snd Index</a>
 <a href="sndlib.html#introduction" target="snd1">Sndlib</a>
   <small><a href="sndlib.html#headers" target="snd1">Headers</a></small>
@@ -453,26 +441,15 @@ function initExpMenu() {
   <small><a href="sndlib.html#currentstatus" target="snd1">Current Status</a></small>
   <small><a href="sndlib.html#sndlibguile" target="snd1">Extension Languages</a></small>
 <a href="sndclm.html#introduction" target="snd1">CLM</a>
-  <small><a href="sndclm.html#instruments" target="snd1">Instruments</a></small>
-    <small><a href="sndclm.html#generators" target="snd1">Generators</a></small>
-    <small><a href="sndclm.html#generic-functions" target="snd1">Generic Functions</a></small>
-    <small><a href="sndclm.html#sound IO" target="snd1">Frames, Mixers, Sound IO</a></small>
-    <small><a href="sndclm.html#functions" target="snd1">Useful functions</a></small>
-    <small><a href="sndclm.html#def-clm-struct" target="snd1">def-clm-struct</a></small>
-    <small><a href="sndclm.html#definstrument" target="snd1">Definstrument</a></small>
-    <small><a href="sndclm.html#guileetc" target="snd1">CLM in Guile, Ruby, C, Forth</a></small>
-  <small><a href="sndclm.html#note-lists" target="snd1">Note Lists</a></small>
-    <small><a href="sndclm.html#with-sound" target="snd1">With-sound</a></small>
-    <small><a href="sndclm.html#mix-and-with-mix" target="snd1">With-mix</a></small>
-    <small><a href="sndclm.html#instrument-let" target="snd1">Instrument-let and Sound-let</a></small>
-  <small><a href="sndclm.html#debugging-aids" target="snd1">Debugging</a></small>
-  <small><a href="sndclm.html#appendices" target="snd1">Appendices</a></small>
+  <small><a href="sndclm.html#generators" target="snd1">Built-in Generators</a></small>
+  <small><a href="sndclm.html#othergenerators" target="snd1">Other Generators</a></small>
+  <small><a href="sndclm.html#functions" target="snd1">Functions</a></small>
+  <small><a href="sndclm.html#definstrument" target="snd1">Instruments</a></small>
 <a href="sndclm.html#clmindex" target="snd1">CLM Index</a>
 <a href="sndscm.html#introduction" target="snd1">Snd Scheme, Ruby, and Forth files</a>
   <small><a href="sndscm.html#analogfilterdoc" target="snd1">analog-filter: standard analog filters</a></small>
   <small><a href="sndscm.html#autosavedoc" target="snd1">autosave: auto-save (edit backup) support</a></small>
-  <small><a href="sndscm.html#bessdoc" target="snd1">bess: FM demo</a></small>
-  <small><a href="sndscm.html#bess1doc" target="snd1">bess1: FM violin demo</a></small>
+  <small><a href="sndscm.html#bessdoc" target="snd1">bess and bess1: FM demo</a></small>
   <small><a href="sndscm.html#birddoc" target="snd1">bird: North-American birds</a></small>
   <small><a href="sndscm.html#cleandoc" target="snd1">clean: noise reduction</a></small>
   <small><a href="sndscm.html#clminsdoc" target="snd1">clm-ins: more CLM instruments</a></small>
@@ -523,7 +500,7 @@ function initExpMenu() {
   <small><a href="sndscm.html#rubberdoc" target="snd1">rubber: rubber-sound</a></small>
   <small><a href="sndscm.html#singerdoc" target="snd1">singer: Perry Cook's vocal-tract physical model</a></small>
   <small><a href="sndscm.html#sndwarpdoc" target="snd1">sndwarp: Bret Battey's sndwarp instrument</a></small>
-  <small><a href="sndscm.html#snd4doc" target="snd1">snd4|5|6|7|8: backwards compatibility</a></small>
+  <small><a href="sndscm.html#snd4doc" target="snd1">snd4..9: backwards compatibility</a></small>
   <small><a href="sndscm.html#snddiffdoc" target="snd1">snddiff: sound difference detection</a></small>
   <small><a href="sndscm.html#sndgldoc" target="snd1">snd-gl: OpenGL examples (gl.c)</a></small>
   <small><a href="sndscm.html#sndmotifdoc" target="snd1">snd-motif, snd-gtk, snd-xm: Motif/Gtk module (xm.c, xg.c)</a></small>

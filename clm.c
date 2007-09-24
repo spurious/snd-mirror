@@ -6,13 +6,6 @@
  *   a factor of 2.
  */
 
-/* PERHAPS: change double to Double (and elsewhere) -- long double as a possibility,
- *           with cosl et al on the same switch.  Main cases, other than this file,
- *           are the headers clm.h, (complex double in clm2xen.c), snd-sig.c.
- *           clm.c: sin, cos, atan2, pow etc -- /usr/include/tgmath.h? (425)
- *           see man tgmath.h
- */
-
 #include <mus-config.h>
 
 #if USE_SND
@@ -9141,77 +9134,6 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	  }
       }
       break;
-
-      /* PERHAPS: Slepian (dpss) window */
-#if 0
-;;; here it is in Scheme, but I don't like it
-(define (power-method mat)
-  (let* ((n (mus-length mat))
-	 (v (make-frame n))
-	 (last-largest 0.0)
-	 (diff 1.0)
-	 (tries 0)
-	 (max-tries 10000)
-	 (target (* .0001 n)))
-    (do ((i 0 (1+ i)))
-	((= i n))
-      (frame-set! v i 1.0))
-    (do ((i 0 (1+ i)))
-	((or (c-g?)
-	     (< diff target)
-	     (> i max-tries)))
-      (set! v (frame->frame mat v))
-      (let ((largest 0.0))
-	(do ((k 0 (1+ k)))
-	    ((= k n))
-	  (set! largest (max largest (abs (frame-ref v k)))))
-	(set! diff (abs (- last-largest largest)))
-	(graph (frame->vct (frame* v (/ 1.0 largest) v)) (format #f "~A" diff))
-	(set! last-largest (abs largest))
-	(set! tries i)))
-    (snd-display ";~A iterations" tries)
-    v))
-
-(define (dpss n w)
-  ;; from Verma, Bilbao, Meng, "The Digital Prolate Spheroidal Window"
-  ;; output checked using Julius Smith's dpssw.m, although my "w" is different
-  (let* ((mat (make-mixer n))
-	 (cw (cos (* 2 pi w))))
-    (do ((i 0 (1+ i)))
-	((= i n))
-      (let ((n2 (- (* 0.5 (- n 1)) i))) 
-	(mixer-set! mat i i (* cw n2 n2))
-	(if (< i (1- n))
-	    (mixer-set! mat i (+ i 1) (* 0.5 (+ i 1) (- n 1 i))))
-	(if (> i 0)
-	    (mixer-set! mat i (- i 1) (* 0.5 i (- n i))))))
-    (power-method mat)))
-
-;;; power method takes forever on large windows
-;;; also can get caught in a loop of largest values -- no longer converging
-;;; use gsl instead?
-;;; 
-;;; (graph (vector->vct (vector-ref (cadr (gsl-eigenvectors (dpss 512 0.1))) 0)))
-;;; which is still very slow, and slightly different from the power-method output
-
-#endif
-
-      /* papoulis window: looks very similar to the Bohman window, and makes similar claims 
-       * (and there is disagreement about the window definition) 
-       */
-#if 0
-(define (papoulis n)
-  (let ((v (make-vct n)))
-    (do ((i 0 (1+ i)))
-	((= i (/ n 2)) v)
-      (let* ((y (/ (* 2 i) n))
-	     (val (- (* (+ 1.0 y) ; upside-down? unnormalized?
-			(cos (* pi y)))
-		     (/ (sin (* pi y))
-			pi))))
-	(vct-set! v i val)
-	(vct-set! v (- n i 1) val)))))
-#endif
 
     case MUS_ULTRASPHERICAL_WINDOW:
     case MUS_SAMARAKI_WINDOW:

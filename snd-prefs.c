@@ -3829,7 +3829,6 @@ static void save_smpte(prefs_info *prf, FILE *fd)
 #if HAVE_FORTH
   fprintf(fd, "require snd-xm\n");
   fprintf(fd, "\\ #t show-smpte-label drop\n"); 
-  /* SOMEDAY: fs show-smpte-label sometimes hangs */
 #endif
     }
 }
