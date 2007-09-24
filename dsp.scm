@@ -2610,3 +2610,18 @@ is assumed to be outside -1.0 to 1.0."
 	(if (> (abs (vct-ref v i)) (abs pk))
 	    (set! pk (vct-ref v i)))) 
       (vct-scale! v (/ 1.0 pk)))))
+
+
+;;; -------- make-papoulis-window
+
+(define (make-papoulis-window n)
+  (let ((v (make-vct n))
+	(n2 (/ n 2)))
+    (do ((i (- n2) (1+ i)))
+	((= i n2))
+      (let* ((ratio (/ i n))
+	     (pratio (* 2 pi ratio)))
+	(vct-set! v (+ i n2) (+ (/ (abs (sin pratio)) pi)
+				(* (- 1.0 (* 2 (abs ratio)))
+				   (cos pratio))))))
+    v))

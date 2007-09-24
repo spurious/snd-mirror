@@ -1738,7 +1738,7 @@ which again matches
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
-	   ((= i 10000))
+	   ((= i 30000))
 	 (outa i (j0evencos gen 0.0) *output*))))))
 
 index 10 (so 10/2 is the bes-jn arg):
@@ -1757,9 +1757,6 @@ index 10 (so 10/2 is the bes-jn arg):
 ;8: 3.38752000110201e-4 0.00221315753353599
 ;9: 3.04735259399795e-5 1.99091705688911e-4
 ;10: 2.15444461145164e-6 1.4075563600714e-5
-
-which is very close to a match
-
 |#
 
 

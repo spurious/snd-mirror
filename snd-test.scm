@@ -20498,16 +20498,24 @@ EDITS: 2
 		     ))))
 	   (lambda args (snd-display ";new windows: ~A" args)))
 
-    (let ((win (make-dpss-window 16 .01)))
-      (if (not (vequal win (vct 0.964 0.973 0.981 0.987 0.992 0.996 0.999 1.000 1.000 0.999 0.996 0.992 0.987 0.981 0.973 0.964)))
-	  (snd-display ";make-dpss-window 16 .01: ~A" win)))
-    (let ((win (make-dpss-window 16 .1)))
-      (if (not (vequal win (vct 0.090 0.193 0.332 0.494 0.664 0.818 0.936 1.000 1.000 0.936 0.818 0.664 0.494 0.332 0.193 0.090)))
-	  (snd-display ";make-dpss-window 16 .1: ~A" win)))
-    (let ((win (make-dpss-window 32 .09)))
-      (if (not (vequal win (vct 0.004 0.011 0.025 0.050 0.086 0.138 0.206 0.290 0.388 0.496 0.610 0.722 0.823 0.908 0.968 1.000 
-				1.000 0.968 0.908 0.823 0.722 0.610 0.496 0.388 0.290 0.206 0.138 0.086 0.050 0.025 0.011 0.004)))
-	  (snd-display ";make-dpss-window 32 .09: ~A" win)))
+    (if (defined? 'gsl-eigenvectors)
+	(begin
+	  (let ((win (make-dpss-window 16 .01)))
+	    (if (not (vequal win (vct 0.964 0.973 0.981 0.987 0.992 0.996 0.999 1.000 1.000 0.999 0.996 0.992 0.987 0.981 0.973 0.964)))
+		(snd-display ";make-dpss-window 16 .01: ~A" win)))
+	  (let ((win (make-dpss-window 16 .1)))
+	    (if (not (vequal win (vct 0.090 0.193 0.332 0.494 0.664 0.818 0.936 1.000 1.000 0.936 0.818 0.664 0.494 0.332 0.193 0.090)))
+		(snd-display ";make-dpss-window 16 .1: ~A" win)))
+	  (let ((win (make-dpss-window 32 .09)))
+	    (if (not (vequal win (vct 0.004 0.011 0.025 0.050 0.086 0.138 0.206 0.290 0.388 0.496 0.610 0.722 0.823 0.908 0.968 1.000 
+				      1.000 0.968 0.908 0.823 0.722 0.610 0.496 0.388 0.290 0.206 0.138 0.086 0.050 0.025 0.011 0.004)))
+		(snd-display ";make-dpss-window 32 .09: ~A" win)))))
+
+    (let ((win (make-papoulis-window 32)))
+      (if (not (vequal win (vct 0.000 0.001 0.006 0.021 0.048 0.091 0.151 0.227 0.318 0.422 0.533 0.647 0.755 0.852 0.930 0.982 
+				1.000 0.982 0.930 0.852 0.755 0.647 0.533 0.422 0.318 0.227 0.151 0.091 0.048 0.021 0.006 0.001)))
+	  (snd-display ";make-papoulis-window 32: ~A" win)))
+
     
     (let ((v0 (make-vct 10))
 	  (gen (make-env '(0 0 1 1 2 0) :scaler 0.5 :end 10))

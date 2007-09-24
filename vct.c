@@ -138,25 +138,25 @@ static void vct_free(vct *v)
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(vct, free_vct, vct_free)
 
-#define PRINT_BUFFER_SIZE 64
+#define VCT_PRINT_BUFFER_SIZE 64
 
 char *mus_vct_to_string(vct *v)
 {
   int len;
   char *buf;
-  char flt[PRINT_BUFFER_SIZE];
+  char flt[VCT_PRINT_BUFFER_SIZE];
 
   if (v == NULL) return(NULL);
   len = vct_print_length;
   if (len > v->length) len = v->length;
-  buf = (char *)CALLOC((len + 1) * PRINT_BUFFER_SIZE, sizeof(char));
+  buf = (char *)CALLOC((len + 1) * VCT_PRINT_BUFFER_SIZE, sizeof(char));
   sprintf(buf, "#<vct[len=%d]:", v->length);
   if (len > 0)
     {
       int i;
       for (i = 0; i < len; i++)
 	{
-	  mus_snprintf(flt, PRINT_BUFFER_SIZE, " %.3f", v->data[i]);
+	  mus_snprintf(flt, VCT_PRINT_BUFFER_SIZE, " %.3f", v->data[i]);
 	  strcat(buf, flt);
 	}
       if (v->length > vct_print_length)
@@ -171,10 +171,10 @@ char *mus_vct_to_readable_string(vct *v)
 {
   int i, len;
   char *buf;
-  char flt[PRINT_BUFFER_SIZE];
+  char flt[VCT_PRINT_BUFFER_SIZE];
   if (v == NULL) return(NULL);
   len = v->length;
-  buf = (char *)CALLOC((len + 1) * PRINT_BUFFER_SIZE, sizeof(char));
+  buf = (char *)CALLOC((len + 1) * VCT_PRINT_BUFFER_SIZE, sizeof(char));
 #if HAVE_SCHEME
   sprintf(buf, "(vct");
 #endif
@@ -184,10 +184,10 @@ char *mus_vct_to_readable_string(vct *v)
   for (i = 0; i < len; i++)
     {
 #if HAVE_SCHEME || HAVE_FORTH
-      mus_snprintf(flt, PRINT_BUFFER_SIZE, " %.3f", v->data[i]);
+      mus_snprintf(flt, VCT_PRINT_BUFFER_SIZE, " %.3f", v->data[i]);
 #endif
 #if HAVE_RUBY
-      mus_snprintf(flt, PRINT_BUFFER_SIZE, "%.3f%s", v->data[i], i + 1 < len ? ", " : "");
+      mus_snprintf(flt, VCT_PRINT_BUFFER_SIZE, "%.3f%s", v->data[i], i + 1 < len ? ", " : "");
 #endif
       strcat(buf, flt);
     }

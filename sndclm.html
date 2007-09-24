@@ -1925,7 +1925,7 @@ sceq26:
 & \frac{8}{\pi} \sum_{k=1}^{\infty} \frac{\sin^{2}kx}{4k^{2}-1} = |\sin x|
 
 sceq31:
-J_{m}(ka)J_{m}(kr) + \sum_{m=1}^{\infty} J_{m}(kr)J_{m}(ka) \cos m\theta = J_{0}\Big(k \sqrt{r^{2}+a^{2}-2ar\cos \theta}\Big)
+J_{0}(ka)J_{0}(kr) + 2 \sum_{m=1}^{\infty} J_{m}(kr)J_{m}(ka) \cos m\theta = J_{0}\Big(k \sqrt{r^{2}+a^{2}-2ar\cos \theta}\Big)
 
 sceq32:
 1 + 2 \sum_{n=1}^{\infty} J_{n}(nz)\cos n(x-z\sin x) = \frac{1}{1-z\cos x}
@@ -3567,7 +3567,8 @@ a click).
 </p>
 
 <p>There are several other ways to resample a sound.  Some of the more interesting ones are in
-dsp.scm (down-oct, sound-interp, linear-src, etc).  To calculate a sound's new duration after
+dsp.scm (<a href="sndscm.html#downoct">down-oct</a>, <a href="sndscm.html#soundinterp">sound-interp</a>, 
+<a href="sndscm.html#linearsrcchannel">linear-src</a>, etc).  To calculate a sound's new duration after
 a time-varying src is applied, use <a href="sndscm.html#srcduration">src-duration</a>.
 </p>
 <br><br>
@@ -5267,7 +5268,8 @@ only difference is that mus-fft includes the fft length as an argument, whereas
   rv4-window               mlt-sine-window
 </pre>
 
-<p>See also <a href="makedpsswindow">make-dpss-window</a> in dsp.scm.
+<p>See also <a href="sndscm.html#makedpsswindow">make-dpss-window</a> and
+<a href="sndscm.html#makepapouliswindow">make-papoulis-window</a> in dsp.scm.
 </p>
 
 <p>rectangular-&gt;polar and polar-&gt;rectangular change how we view the FFT data: in polar or rectangular coordinates.

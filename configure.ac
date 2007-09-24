@@ -467,6 +467,22 @@ else
     fi
     AC_DEFINE(HAVE_GSL)
     AC_DEFINE_UNQUOTED(MUS_GSL_VERSION,"${gsl_version}")
+
+    SAVELIBS=$LIBS
+    LIBS="$LIBS $GSL_LIBS"
+    AC_MSG_CHECKING(for gsl_eigen_nonsymmv_workspace)
+    AC_LINK_IFELSE(
+      [AC_LANG_PROGRAM(
+         [#include <gsl/gsl_math.h>
+          #include <gsl/gsl_eigen.h>],
+	 [     gsl_eigen_nonsymmv_workspace *w = gsl_eigen_nonsymmv_alloc(4)
+         ])],
+      [
+       AC_DEFINE(HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE)
+       AC_MSG_RESULT(yes)
+      ],
+      [AC_MSG_RESULT(no)])
+    LIBS=$SAVELIBS
   fi
 
 fi

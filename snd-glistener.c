@@ -1,5 +1,6 @@
 #include "snd.h"
 
+/* TODO: there is sometimes an extra "("? */
 
 static GtkWidget *completion_dialog = NULL;
 static GtkWidget *listener_text = NULL;

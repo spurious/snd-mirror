@@ -1947,6 +1947,8 @@ static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
 }
 
 
+#if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
+
 /* eignevector/values, from gsl/doc/examples/eigen_nonsymm.c */
 
 #include <gsl/gsl_math.h>
@@ -2012,7 +2014,7 @@ static XEN g_gsl_eigenvectors(XEN matrix)
 
   return(XEN_LIST_2(values, vectors));
 }
-
+#endif
 
 
 #if HAVE_COMPLEX_TRIG && (!HAVE_RUBY) && HAVE_SCM_MAKE_COMPLEX
@@ -2343,7 +2345,9 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
   XEN_NARGIFY_1(g_gsl_ellipk_w, g_gsl_ellipk)
   XEN_NARGIFY_2(g_gsl_ellipj_w, g_gsl_ellipj)
   XEN_NARGIFY_4(g_gsl_dht_w, g_gsl_dht)
+#if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
   XEN_NARGIFY_1(g_gsl_eigenvectors, g_gsl_eigenvectors_w)
+#endif
 
   #if HAVE_COMPLEX_TRIG && (!HAVE_RUBY) && HAVE_SCM_MAKE_COMPLEX
     XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
@@ -2399,7 +2403,9 @@ XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
   #define g_gsl_ellipk_w g_gsl_ellipk
   #define g_gsl_ellipj_w g_gsl_ellipj
   #define g_gsl_dht_w g_gsl_dht
-  #define g_gsl_eigenvectors_w g_gsl_eigenvectors
+  #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
+    #define g_gsl_eigenvectors_w g_gsl_eigenvectors
+  #endif
   #if HAVE_COMPLEX_TRIG && (!HAVE_RUBY) && HAVE_SCM_MAKE_COMPLEX
     #define g_gsl_roots_w g_gsl_roots
   #endif
@@ -2539,7 +2545,9 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk);
   XEN_DEFINE_PROCEDURE("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj);
   XEN_DEFINE_PROCEDURE("gsl-dht",    g_gsl_dht_w,    4, 0, 0, H_gsl_dht);
+#if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
   XEN_DEFINE_PROCEDURE("gsl-eigenvectors", g_gsl_eigenvectors_w, 1, 0, 0, "returns eigenvalues and eigenvectors");
+#endif
 
 #if MUS_DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("gsl-gegenbauer",  g_gsl_gegenbauer,  3, 0, 0, "internal test func");
