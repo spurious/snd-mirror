@@ -7,8 +7,10 @@
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 
+
 #define SND_VERSION "SND_VERSION"
 #define SND_COMMAND "SND_COMMAND"
+
 
 static Window compare_window(Display *display, Window window, char *id)
 {
@@ -26,6 +28,7 @@ static Window compare_window(Display *display, Window window, char *id)
   return(found);
 }
 
+
 static Window find_window(Display *display, Window starting_window, char *name, Window (*compare_func)())
 {
   Window rootwindow, window_parent;
@@ -41,6 +44,7 @@ static Window find_window(Display *display, Window starting_window, char *name, 
   return(window);
 }
 
+
 static void send_snd(Display *dpy, char *command)
 {
   Window window;
@@ -50,6 +54,7 @@ static void send_snd(Display *dpy, char *command)
       XFlush(dpy);
     }
 }
+
 
 static void send_snd_char(Display *dpy, Window window, int keycode, int state)
 {
@@ -78,12 +83,14 @@ static void send_snd_char(Display *dpy, Window window, int keycode, int state)
     }
 }
 
+
 int main(int argc, char **argv)
 {
     Display *dpy;
     dpy = XOpenDisplay(NULL);
     send_snd(dpy, "(snd-print \"hiho\")");
 }
+
 
 /* cc sndctrl.c -g -o sndctrl -L/usr/X11R6/lib -lX11 */
 

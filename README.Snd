@@ -693,15 +693,15 @@ http://www.blastwave.org/howto.html
 
 ---- Mac OSX: ---- 
 
-Gtk is being ported to the Mac as a native (non-X11) library, so
-as soon as that is available to developers, I'll try to build Snd.
-Until then, you can use either Motif or Gtk running under X11.
+You can use either Motif or Gtk running under X11; to start Snd from an
+ordinary shell, use the open-x11 command:
 
+  open-x11 snd
 
-First, install the X11SDK and X11User packages.  The first is in one
-of the Installer directories, the second (in 10.4) is on the first
-install disk under System/Installation/Packages/X11User.pkg or some 
-such name.  These give you the X11 server and its header files.
+To install X11, first, install the X11SDK and X11User packages.  
+The first is in one of the Installer directories, the second (in 10.4) 
+is on the first install disk under System/Installation/Packages/X11User.pkg 
+or some such name.  These give you the X11 server and its header files.
 
 There are several ways to go from here; the simplest is probably
 to use Darwin Ports as outlined by Hans Fugal:

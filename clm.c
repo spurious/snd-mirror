@@ -1164,7 +1164,7 @@ Float mus_sum_of_cosines(mus_any *ptr, Float fm)
 }
 
 #if 0
-/* if the current phase is close to 0.0, there are numerical troubles here:
+/* if the current phase is close to 0.0, there were numerical troubles here:
     :(/ (cos (* 1.5 pi 1.0000000000000007)) (cos (* 0.5 pi 1.0000000000000007)))
     -3.21167411694788
     :(/ (cos (* 1.5 pi 1.0000000000000004)) (cos (* 0.5 pi 1.0000000000000004)))
@@ -1178,7 +1178,7 @@ Float mus_sum_of_cosines(mus_any *ptr, Float fm)
     ;; 16 bits in is probably too much for doubles
     ;; these numbers can be hit in normal cases:
 
- (define (sum-of-cosines n x)
+ (define (sum-of-cosines-with-inversions n x)
    ;; Andrews Askey Roy 261 
    (let* ((num (cos (* x (+ 0.5 n))))
           (den (cos (* x 0.5)))

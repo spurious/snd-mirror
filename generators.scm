@@ -5,6 +5,12 @@
 ;;; these try to mimic existing gens (mainly oscil), so "frequency" is placed first.
 ;;;   Where a factor is involved, I'll try to use "r".
 ;;;   Where the limit of the sum is settable, I'll use "n".
+;;;
+;;; someday I need to make run smart enough to find local methods, then
+;;;   norms and dc offsets can be precalculated.
+
+
+(define nearly-zero 1.0e-12) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)
 
 
 ;;; --------------------------------------------------------------------------------
@@ -39,7 +45,7 @@
     (set! (nssb-carangle gen) (+ cfm cx (nssb-carincr gen)))
     (set! (nssb-modangle gen) (+ fm mx (nssb-modincr gen)))
 
-    (if (< (abs den) 1.0e-9)
+    (if (< (abs den) nearly-zero)
 	-1.0
 	(/ (- (* (sin cx) 
 		 (sin (* mx (/ (+ n 1) 2)))
@@ -98,7 +104,7 @@
 	 (snx (sin (* n x)))
 	 (den (sin x)))
     (set! (noddsin-angle gen) (+ x fm (noddsin-incr gen)))
-    (if (< (abs den) 1.0e-9)
+    (if (< (abs den) nearly-zero)
 	0.0
 	(/ (* norm snx snx) den))))
 	   
@@ -148,7 +154,7 @@
 	 (n (noddcos-n gen))
 	 (den (* 2 n (sin angle)))) ; "n" here is normalization
     (set! (noddcos-angle gen) (+ angle fm (noddcos-incr gen)))
-    (if (< (abs den) 1.0e-9)
+    (if (< (abs den) nearly-zero)
 	(let ((fang (fmod (abs angle) (* 2 pi))))
 	  ;; hopefully this almost never happens...
 	  (if (or (< fang 0.001)
@@ -187,7 +193,7 @@
 	 (den (* n (sin mx)))) ; "n" is normalization
     (set! (noddssb-carangle gen) (+ cx cfm (noddssb-carincr gen) fm))
     (set! (noddssb-modangle gen) (+ mx fm (noddssb-modincr gen)))
-    (if (< (abs den) 1.0e-9)
+    (if (< (abs den) nearly-zero)
 	(let ((fang (fmod (abs mx) (* 2 pi))))
 	  ;; hopefully this almost never happens...
 	  (if (or (< fang 0.001)
@@ -245,7 +251,7 @@
 
     (set! (ncos2-angle gen) (+ x fm (ncos2-incr gen)))
 
-    (if (< (abs den) 1.0e-9)
+    (if (< (abs den) nearly-zero)
 	1.0
 	(let ((val (/ (sin (* 0.5 (+ n 1) x)) 
 		      (* (+ n 1) den))))
@@ -297,7 +303,7 @@
   (let* ((angle (npcos-angle gen))
 	 (den (sin (* 0.5 angle)))
 	 (n (npcos-n gen))
-	 (result (if (< (abs den) 1.0e-9)
+	 (result (if (< (abs den) nearly-zero)
 		     1.0
 		     (let* ((n1 (+ n 1))
 			    (result1 
@@ -452,7 +458,7 @@
     (set! (nkssb-carangle gen) (+ cfm (nkssb-carangle gen) (nkssb-carincr gen)))
     (set! (nkssb-modangle gen) (+ fm (nkssb-modangle gen) (nkssb-modincr gen)))
 
-    (if (< (abs sx2) 1.0e-9)
+    (if (< (abs sx2) nearly-zero)
 	-1.0
 	(let* ((s1 (- (/ (sin nx) sxsx)
 		      (/ (* n (cos nx2)) sx22)))
@@ -477,7 +483,7 @@
     (set! (nkssb-carangle gen) (+ cfm (nkssb-carangle gen) (nkssb-carincr gen)))
     (set! (nkssb-modangle gen) (+ fm (nkssb-modangle gen) (nkssb-modincr gen)))
 
-    (if (< (abs sx2) 1.0e-9)
+    (if (< (abs sx2) nearly-zero)
 	-1.0
 	(let* ((s1 (- (/ (sin nx) sxsx)
 		      (/ (* n (cos nx2)) sx22)))
@@ -661,7 +667,7 @@
     (set! (erssb-carangle gen) (+ (* (/ (erssb-modincr gen) (erssb-carincr gen)) fm) cx (erssb-carincr gen)))
     (set! (erssb-modangle gen) (+ fm mx (erssb-modincr gen)))
 
-    (if (< (abs ccmx) 1.0e-9)
+    (if (< (abs ccmx) nearly-zero)
 	1.0
 	(/ (- (* (cos cx)
 		 (- (/ (sinh r) ccmx)
@@ -1262,9 +1268,8 @@
 					   ((= i 10000))
 					 (outa i (krksin gen 0.0) *output*)))))))))
     (snd-display ";~A: ~A" (* 0.1 i) mx)))
-
-
 |#
+
 
 ;;; --------------------------------------------------------------------------------
 
@@ -1415,7 +1420,7 @@
 	 (incr (blsaw-incr gen))
 	 (den (+ 1.0 (* -2.0 a (cos x)) (* a a))))
     (set! (blsaw-angle gen) (+ x fm incr))
-    (if (< (abs den) 1.0e-9)
+    (if (< (abs den) nearly-zero)
 	0.0
 	(let* ((s1 (* (expt a (- N 1.0)) (sin (+ (* (- N 1.0) x) incr))))
 	       (s2 (* (expt a N) (sin (+ (* N x) incr))))
@@ -1701,8 +1706,6 @@ set k=10
 -3.66078549147997e-6
 
 which again matches
-
-
 |#
 
 
@@ -1779,7 +1782,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
     (set! (j2cos-angle gen) (+ x fm (j2cos-incr gen)))
 
-    (if (< (abs rsinx2) 1.0e-9)
+    (if (< (abs rsinx2) nearly-zero)
 	1.0
 	(/ (bes-jn n (* 2.0 rsinx2))
 	   rsinx2))))
@@ -1838,6 +1841,7 @@ index 10 (so 10/2 is the bes-jn arg):
 |#
 
 ;;; dc is not right if a!=r, no norm
+
 
 ;;; --------------------------------------------------------------------------------
 
@@ -1903,7 +1907,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (den (sin (* y 0.5))))
     (set! (nxysin-xangle gen) (+ x (nxysin-xincr gen) (* fm (/ (nxysin-xincr gen) (nxysin-yincr gen)))))
     (set! (nxysin-yangle gen) (+ y (nxysin-yincr gen) fm))
-    (if (< (abs den) 1.0e-9)
+    (if (< (abs den) nearly-zero)
 	0.0
 	(/ (* (sin (+ x (* 0.5 (- n 1) y)))
 	      (sin (* 0.5 n y)))
@@ -1938,7 +1942,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (den (sin (* y 0.5))))
     (set! (nxycos-xangle gen) (+ x (nxycos-xincr gen) (* fm (/ (nxycos-xincr gen) (nxycos-yincr gen)))))
     (set! (nxycos-yangle gen) (+ y (nxycos-yincr gen) fm))
-    (if (< (abs den) 1.0e-9)
+    (if (< (abs den) nearly-zero)
 	1.0
 	(/ (* (cos (+ x (* 0.5 (- n 1) y)))
 	      (sin (* 0.5 n y)))
@@ -2054,6 +2058,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   53 bits of mantissa, billion=30, so we still have about 23 bits, which actually matches results above).
 |#
 
+
 ;;; --------------------------------------------------------------------------------
 
 ;;; blackman4 as a waveform -- all the other fft windows could be implemented, but I doubt
@@ -2064,7 +2069,8 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (set! (blackman4-incr g) (hz->radians (blackman4-frequency g)))
 				 (set! (blackman4-coeffs g) (vct .084037 -.29145 .375696 -.20762 .041194))
 				 g))
-    (frequency 0.0) (initial-phase 0.0) (coeffs #f :type vct) (angle 0.0) (incr 0.0))
+    (frequency 0.0) (initial-phase 0.0) (coeffs #f :type vct) 
+    (angle 0.0) (incr 0.0))
 
 (define (blackman4 gen fm)
   (declare (gen blackman4) (fm float))
