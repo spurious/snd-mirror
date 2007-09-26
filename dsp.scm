@@ -2625,3 +2625,13 @@ is assumed to be outside -1.0 to 1.0."
 				(* (- 1.0 (* 2 (abs ratio)))
 				   (cos pratio))))))
     v))
+
+
+;;; -------- hard and soft clipping
+;;; from Julius Smith's http://ccrma.stanford.edu/~jos/pasp/Cubic_Soft_Clipper.html
+
+(define (hard-clipped x)
+  (max -1.0 (min 1.0 x)))
+
+(define (soft-clipped x)
+  (max -0.6667 (min 0.6667 (- x (* 0.3333 x x x)))))

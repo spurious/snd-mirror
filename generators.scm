@@ -370,6 +370,52 @@
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
 	 (outa i (nrcos gen 0.0) *output*))))))
+
+(with-sound (:srate 44100 :clipped #f :statistics #t)
+  (let ((gen (make-nrcos 2000.0 :n 3 :r 0.5))
+	(mod (make-oscil 400.0)) ; multi-carrier fm
+	(index 0.02))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000))
+	 (outa i (nrcos gen (* index (oscil mod))) *output*))))))
+
+(with-sound (:srate 44100 :clipped #f :statistics #t :play #t)
+  (let ((gen (make-nrcos 2000.0 :n 3 :r 0.5))
+	(mod (make-oscil 400.0))
+	(index (make-env '(0 0 1 .1) :end 30000))) ; or '(0 .4 1 0)
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000))
+	 (outa i (nrcos gen (* (env index) (oscil mod))) *output*))))))
+
+(definstrument (nrcoser beg dur freq amp)
+  (let* ((gen (make-nrcos (* freq 5) :n 3 :r 0.5))
+	 (mod (make-oscil freq))
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (index (make-env (list 0 .4 1 .1 (max dur 2.0) 0.0) :duration dur))
+	 (amplitude (make-env (list 0 0  .01 1  .2 1  .5 .5  1 .25  (max dur 2.0) 0.0) :duration dur :scaler amp)))
+    (run 
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((ind (env index)))
+	   (set! (nrcos-r gen) ind)
+	   (outa i (* (env amplitude)
+		      (nrcos gen (* ind (oscil mod))))
+		 *output*)))))))
+
+(with-sound (:srate 44100 :clipped #f :statistics #t :play #t)
+  (nrcoser 0 1 440 .1))
+
+(with-sound (:srate 44100 :clipped #f :statistics #t :play #t)
+  (do ((i 0 (1+ i)))
+      ((= i 10))
+    (nrcoser (* i .1) 2 (* 100 (1+ i)) .05)))
+
 |#
 
 ;;; G&R 2nd col 1st and 2nd rows

@@ -2053,7 +2053,7 @@ take the first one in the Jolley section:
 
 <p>
 Most of the formulas are implemented as generators in <a href="#othergenerators">generators.scm</a>,
-along with the single side-band case, where possible.
+along with the single side-band cases, where possible.
 As J. A. Moorer and Marc Le Brun pointed out
 long ago, there are many more such formulas "buried in reference works".  Well, they've
 done nobody any good being buried for a generation, so I say: dig them up!  If
@@ -5218,7 +5218,7 @@ these names; think of "carrier" as "carrier amplitude" and "in1" as "carrier". N
 </pre>
 
 <p>Both of these functions take advantage of the "Modulation Theorem"; since
-multiplying a signal by a phasor (e ^ (j w t)) translates its spectrum by w /
+multiplying a signal by e^(iwt) translates its spectrum by w /
 two pi Hz, multiplying by a sinusoid splits its spectrum into two equal parts
 translated up and down by w/(two pi) Hz:
 </p>
@@ -5746,7 +5746,7 @@ an interesting instrument that you're willing to share, please send it to me
 (bil@ccrma.stanford.edu). 
 </p>
 
-<p>The individual instruments and <a href="sndscm.html#wsdoc">with-sound</a> are documented primarily in sndscm.html.
+<p><a href="sndscm.html#definstrument">definstrument</a>, the individual instruments, and <a href="sndscm.html#wsdoc">with-sound</a> are documented in sndscm.html.
 </p>
 
 
