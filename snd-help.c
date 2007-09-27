@@ -3206,15 +3206,10 @@ static char *snd_finder(const char *name, bool got_help)
   int a_def = 0, dir_len = 0, i;
   XEN dirs = XEN_EMPTY_LIST;
 
-#if HAVE_GUILE || (!HAVE_EXTENSION_LANGUAGE)
-  #define NUM_DEFINES 6
+#if HAVE_SCHEME || (!HAVE_EXTENSION_LANGUAGE)
+  #define NUM_DEFINES 7
   #define TRAILER " "
-  const char *defines[NUM_DEFINES] = {"(define (", "(define* (", "(define ", "(defmacro ", "(defmacro* ", "(definstrument ("};
-#endif
-#if HAVE_GAUCHE
-  #define NUM_DEFINES 6
-  #define TRAILER " "
-  const char *defines[NUM_DEFINES] = {"(define (", "(define* (", "(define ", "(defmacro ", "(defmacro* ", "(definstrument ("};
+  const char *defines[NUM_DEFINES] = {"(define (", "(define* (", "(define ", "(define+ (", "(defmacro ", "(defmacro* ", "(definstrument ("};
 #endif
 #if HAVE_RUBY
   #define NUM_DEFINES 2

@@ -2695,32 +2695,35 @@ off_t edit_changes_end_at(chan_info *cp, int edpos)
 
 /* ---------------- edit list display, save, etc ---------------- */
 
-static char edbuf[PRINT_BUFFER_SIZE];
-
 char *edit_to_string(chan_info *cp, int edit)
 {
   ed_list *ed;
   ed = cp->edits[edit];
-  /* only for edit list in snd-xchn.c */
+  /* only for edit list in snd-g|xchn.c */
+
 #if HAVE_FORTH
-  mus_snprintf(edbuf, PRINT_BUFFER_SIZE, 
-	       "%s : " OFF_TD " " OFF_TD " %s", 
-	       ed->origin, 
-	       ed->beg, ed->len,
-	       edit_names[(int)(ed->edit_type)]);
-#else
-  mus_snprintf(edbuf, PRINT_BUFFER_SIZE, 
+  return(mus_format("%s : " OFF_TD " " OFF_TD " %s", 
+		    ed->origin, 
+		    ed->beg, ed->len,
+		    edit_names[(int)(ed->edit_type)]));
+#endif
+ 
 #if HAVE_RUBY
-	       "%s : %s(" OFF_TD ", " OFF_TD ")", 
+  return(mus_format("%s : %s(" OFF_TD ", " OFF_TD ")", 
+		    ed->origin, 
+		    edit_names[(int)(ed->edit_type)], 
+		    ed->beg, ed->len));
+
 #endif
+
 #if HAVE_SCHEME
-	       "%s : (%s " OFF_TD " " OFF_TD ")", 
+  return(mus_format("%s : (%s " OFF_TD " " OFF_TD ")", 
+		    ed->origin, 
+		    edit_names[(int)(ed->edit_type)], 
+		    ed->beg, ed->len));
 #endif
-	       ed->origin, 
-	       edit_names[(int)(ed->edit_type)], 
-	       ed->beg, ed->len);
-#endif
-  return(edbuf);
+
+  return(NULL);
 }
 
 

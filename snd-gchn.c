@@ -425,7 +425,6 @@ static void remake_edit_history(chan_info *cp)
 {
   snd_info *sp;
   int i, eds;
-  char *str;
   slist *lst;
   if ((!cp) || (!(cp->cgx)) || (!(cp->active))) return;
   if (cp->squelch_update) return;
@@ -454,8 +453,13 @@ static void remake_edit_history(chan_info *cp)
 	      slist_append(lst, title);
 	      eds = ncp->edit_ctr;
 	      while ((eds < (ncp->edit_size - 1)) && (ncp->edits[eds + 1])) eds++;
-	      for (i = 1; i <= eds; i++, ed++) 
-		slist_append(lst, str = edit_to_string(ncp, i));
+	      for (i = 1; i <= eds; i++, ed++)
+		{
+		  char *str;
+		  str = edit_to_string(ncp, i);
+		  slist_append(lst, str);
+		  FREE(str);
+		}
 	      if (k < sp->nchans - 1)
 		{
 		  slist_append(lst, "______________________________"); 
@@ -474,10 +478,14 @@ static void remake_edit_history(chan_info *cp)
       while ((eds < (cp->edit_size - 1)) && (cp->edits[eds + 1])) eds++;
       if (eds >= 0)
 	{
-	  str = sp->filename;
-	  slist_append(lst, str);
+	  slist_append(lst, sp->filename);
 	  for (i = 1; i <= eds; i++) 
-	    slist_append(lst, str = edit_to_string(cp, i));
+	    {
+	      char *str;
+	      str = edit_to_string(cp, i);
+	      slist_append(lst, str);
+	      FREE(str);
+	    }
 	}
       slist_select(lst, cp->edit_ctr);
     }

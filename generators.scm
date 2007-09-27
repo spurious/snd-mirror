@@ -416,6 +416,9 @@
       ((= i 10))
     (nrcoser (* i .1) 2 (* 100 (1+ i)) .05)))
 
+;;; oboe has formants around 1K and 3K, with what sounds like air in the tube noise at around 1.4k
+;;;  by k down, but up seems less
+
 |#
 
 ;;; G&R 2nd col 1st and 2nd rows

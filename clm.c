@@ -3662,6 +3662,8 @@ typedef struct {
 
 /* rand taken from the ANSI C standard (essentially the same as the Cmix form used earlier) */
 
+/* SOMEDAY: rand needs improvement -- see sndclm graphs! */
+
 static unsigned long randx = 1;
 #define INVERSE_MAX_RAND  0.0000610351563
 #define INVERSE_MAX_RAND2 0.000030517579

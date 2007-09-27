@@ -3947,6 +3947,7 @@ sound data input and output.
 
 <table cellspacing=0 cellpadding=0 hspace=40>
 <tr><td><a class=def name="make-frame">make-frame</a><code> chans :rest args</code></td><td width=20></td><td>create frame and load it with args</td></tr>
+<tr><td><a class=def name="make-frame!">make-frame!</a><code> chans :rest args</code></td><td width=20></td><td>create frame of any size and load it with args</td></tr>
 <tr><td><a class=def name="frame?">frame?</a><code> obj</code></td><td></td><td>is obj a frame</td></tr>
 <tr><td><a class=def name="frame-ref">frame-ref</a><code> f1 chan</code></td><td></td><td>return f1[chan]</td></tr>
 <tr><td><a class=def name="frame-set!">frame-set!</a><code> f1 chan val</code></td><td></td><td>f1[chan] = val (also set! with frame-ref)</td></tr>
@@ -3954,6 +3955,7 @@ sound data input and output.
 <tr><td><a class=def name="frame*">frame*</a><code> f1 f2 :optional outf</code></td><td></td><td>multiply f1 and f2 element-size, return new frame (or outf)</td></tr>
 <tr><td><br></td><td></td><td></td></tr>
 <tr><td><a class=def name="make-mixer">make-mixer</a><code> chans :rest args</code></td><td></td><td>create a mixer and load it with args</td></tr>
+<tr><td><a class=def name="make-mixer!">make-mixer!</a><code> chans :rest args</code></td><td></td><td>create a mixer of any size and load it with args</td></tr>
 <tr><td><a class=def name="make-scalar-mixer">make-scalar-mixer</a><code> chans scl</code></td><td></td><td>create a mixer with scl on the diagonal</td></tr>
 <tr><td><a class=def name="mixer?">mixer?</a><code> obj</code></td><td></td><td>is obj a mixer</td></tr>
 <tr><td><a class=def name="mixer-ref">mixer-ref</a><code> m1 in out</code></td><td></td><td>m1[in,out] (use set! to change)</td></tr>

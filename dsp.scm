@@ -2591,7 +2591,7 @@ is assumed to be outside -1.0 to 1.0."
 (define (make-dpss-window n w)
   ;; from Verma, Bilbao, Meng, "The Digital Prolate Spheroidal Window"
   ;; output checked using Julius Smith's dpssw.m, although my "w" is different
-  (let* ((mat (make-mixer n))
+  (let* ((mat (make-mixer! n))
 	 (cw (cos (* 2 pi w))))
     (do ((i 0 (1+ i)))
 	((= i n))

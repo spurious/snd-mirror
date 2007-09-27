@@ -39,9 +39,9 @@ echo ' '
 echo ' '
 ./snd --version
 ./snd -noinit --features "'clm 'snd-guile 'snd-motif 'sndlib"
-echo '(let ((hxm (dlopen (string-append (getcwd) "/xm.so")))) (dlinit hxm "Init_libxm") (display XmARROWS_END) (exit))' > tmp.scm
-./snd tmp.scm
-rm tmp.scm
+# echo '(let ((hxm (dlopen (string-append (getcwd) "/xm.so")))) (dlinit hxm "Init_libxm") (display XmARROWS_END) (exit))' > tmp.scm
+# ./snd tmp.scm
+# rm tmp.scm
 
 echo ' -------------------------------- no strftime -------------------------------- '
 
@@ -102,9 +102,9 @@ make
 make xm
 ./snd --version
 ./snd -noinit --features "'clm 'sndlib 'snd 'snd-guile 'snd-motif"
-echo '(let ((hxm (dlopen (string-append (getcwd) "/xm.so")))) (dlinit hxm "Init_libxm") (display XmARROWS_END) (exit))' > tmp.scm
-./snd tmp.scm
-rm tmp.scm
+# echo '(let ((hxm (dlopen (string-append (getcwd) "/xm.so")))) (dlinit hxm "Init_libxm") (display XmARROWS_END) (exit))' > tmp.scm
+# ./snd tmp.scm
+# rm tmp.scm
 make allclean
 
 echo ' '

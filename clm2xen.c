@@ -3194,9 +3194,12 @@ generator) gen's radius and frequency"
 
 /* ---------------- frame ---------------- */
 
-#define MUS_MAX_CHANS (64*1024)
+#define MUS_MAX_CHANS 128
 
-static XEN g_make_frame(XEN arglist)
+/* this needs to be a reasonably small number -- user can override the size check using "!" as in make-mixer!
+ */
+
+static XEN g_make_frame_1(XEN arglist, bool check_size)
 {
   #if HAVE_SCHEME
     #define make_frame_example "(" S_make_frame " 2 .1 .2)"
@@ -3227,7 +3230,8 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
 	XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, cararg, "chans ~A <= 0?");
       if (len > (size + 1)) 
 	clm_error(S_make_frame, "extra trailing args?", arglist);
-      if (size > MUS_MAX_CHANS) 
+      if ((check_size) && 
+	  (size > MUS_MAX_CHANS))
 	XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, C_TO_XEN_INT(size), "size ~A too big");
     }
   ge = (mus_any *)mus_make_empty_frame(size);
@@ -3249,6 +3253,16 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
       return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct_wrapper(mus_length(ge), mus_data(ge)))));
     }
   return(xen_return_first(XEN_FALSE, arglist));
+}
+
+static XEN g_make_frame(XEN arglist)
+{
+  return(g_make_frame_1(arglist, true));
+}
+
+static XEN g_make_frame_unchecked(XEN arglist)
+{
+  return(g_make_frame_1(arglist, false));
 }
 
 
@@ -3564,7 +3578,7 @@ with 'chans' channels, and 'val' along the diagonal"
 }
 
 
-static XEN g_make_mixer(XEN arglist)
+static XEN g_make_mixer_1(XEN arglist, bool check_size)
 {
   #if HAVE_SCHEME
     #define make_mixer_example "(" S_make_mixer " 2 .5 .25 .125 1.0))"
@@ -3593,7 +3607,9 @@ with chans inputs and outputs, initializing the scalars from the rest of the arg
     XEN_WRONG_TYPE_ARG_ERROR(S_make_mixer, 1, cararg, "an integer = number of chans");
   size = XEN_TO_C_INT_OR_ELSE(cararg, 0);
   if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans ~A <= 0?");
-  if (size > MUS_MAX_CHANS) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans ~A too big");
+  if ((check_size) &&
+      (size > MUS_MAX_CHANS))
+    XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans ~A too big");
   if (len > (size * size + 1)) 
     clm_error(S_make_mixer, "extra trailing args?", arglist);
 
@@ -3629,6 +3645,16 @@ with chans inputs and outputs, initializing the scalars from the rest of the arg
       return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
     }
   return(xen_return_first(XEN_FALSE, arglist));
+}
+
+static XEN g_make_mixer(XEN arglist)
+{
+  return(g_make_mixer_1(arglist, true));
+}
+
+static XEN g_make_mixer_unchecked(XEN arglist)
+{
+  return(g_make_mixer_1(arglist, false));
 }
 
 
@@ -4670,6 +4696,20 @@ static XEN g_out_any(XEN frame, XEN val, XEN chan, XEN outp)
   return(g_out_any_1(S_out_any, frame, chan, val, outp));
 }
 
+/* PERHAPS: make outa a macro in clm2xen fixing up *output*? 
+ *          or register-output|reverb in with-sound and pick it up here?
+ *          or find it as a symbol? -- does this work in nested with-sounds? -- perhaps way too slow (symbol table lookup on every call)
+ *
+ *  XEN_EVAL_C_STRING("(defmacro* " S_outa " (loc val :optional output) `(outa-internal ,loc ,val ,(or output *output*)))");
+ *  XEN_DEFINE_PROCEDURE(S_outa "-internal",                    g_outa_w,                    3, 0, 0, H_outa);
+ *
+ * gauche-optargs.scm defines defmacro*, so presumably this would work both places if we could load it before the init proc runs
+ * or alternatively, add these macros to ws.scm, and document them -- out0..4? outn? in0..4, in-n?  to-reverb? revout0..1? etc
+ *   (defmacro* (out0 loc val :optional output) `(outa ,loc ,val ,(or output *output*)))
+ * -- would this work correctly in run?  we can't use:
+ *   (define* (out0 loc val :optional (output *output*)) (outa loc val output))
+ * because run currently wouldn't handle the optional fallback arg correctly, I think
+ */
 
 static XEN g_outa(XEN frame, XEN val, XEN outp)
 {
@@ -6755,12 +6795,14 @@ XEN_ARGIFY_6(g_make_formant_w, g_make_formant)
 XEN_ARGIFY_2(g_formant_w, g_formant)
 XEN_NARGIFY_3(g_set_formant_radius_and_frequency_w, g_set_formant_radius_and_frequency)
 XEN_VARGIFY(g_make_frame_w, g_make_frame)
+XEN_VARGIFY(g_make_frame_unchecked_w, g_make_frame_unchecked)
 XEN_NARGIFY_1(g_frame_p_w, g_frame_p)
 XEN_ARGIFY_3(g_frame_add_w, g_frame_add)
 XEN_ARGIFY_3(g_frame_multiply_w, g_frame_multiply)
 XEN_NARGIFY_2(g_frame_ref_w, g_frame_ref)
 XEN_NARGIFY_3(g_frame_set_w, g_frame_set)
 XEN_VARGIFY(g_make_mixer_w, g_make_mixer)
+XEN_VARGIFY(g_make_mixer_unchecked_w, g_make_mixer_unchecked)
 XEN_NARGIFY_1(g_mixer_p_w, g_mixer_p)
 XEN_ARGIFY_3(g_mixer_multiply_w, g_mixer_multiply)
 XEN_ARGIFY_3(g_mixer_add_w, g_mixer_add)
@@ -7025,12 +7067,14 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_formant_w g_formant
 #define g_set_formant_radius_and_frequency_w g_set_formant_radius_and_frequency
 #define g_make_frame_w g_make_frame
+#define g_make_frame_unchecked_w g_make_frame_unchecked
 #define g_frame_p_w g_frame_p
 #define g_frame_add_w g_frame_add
 #define g_frame_multiply_w g_frame_multiply
 #define g_frame_ref_w g_frame_ref
 #define g_frame_set_w g_frame_set
 #define g_make_mixer_w g_make_mixer
+#define g_make_mixer_unchecked_w g_make_mixer_unchecked
 #define g_mixer_p_w g_mixer_p
 #define g_mixer_multiply_w g_mixer_multiply
 #define g_mixer_add_w g_mixer_add
@@ -7497,7 +7541,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_wave_train,      g_wave_train_w,      1, 1, 0, H_wave_train);
   XEN_DEFINE_PROCEDURE(S_wave_train_p,    g_wave_train_p_w,    1, 0, 0, H_wave_train_p);
 
-  XEN_DEFINE_PROCEDURE(S_make_frame,     g_make_frame_w,     0, 0, 1, H_make_frame);
+  XEN_DEFINE_PROCEDURE(S_make_frame,     g_make_frame_w,          0, 0, 1, H_make_frame);
+  XEN_DEFINE_PROCEDURE(S_make_frame "!", g_make_frame_unchecked_w,0, 0, 1, H_make_frame);
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(define %frame? frame?)"); /* protect the original meaning */
   /* frame? is defined in guile stacks.c scm_frame_p, but doesn't appear to be used in ice-9 */
@@ -7514,11 +7559,12 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_frame_set,      g_frame_set_w,  3, 0, 0, H_frame_set);
 
 
-  XEN_DEFINE_PROCEDURE(S_make_mixer,        g_make_mixer_w,        0, 0, 1, H_make_mixer);
-  XEN_DEFINE_PROCEDURE(S_mixer_p,           g_mixer_p_w,           1, 0, 0, H_mixer_p);
-  XEN_DEFINE_PROCEDURE(S_mixer_multiply,    g_mixer_multiply_w,    2, 1, 0, H_mixer_multiply);
-  XEN_DEFINE_PROCEDURE(S_mixer_add,         g_mixer_add_w,         2, 1, 0, H_mixer_add);
-  XEN_DEFINE_PROCEDURE(S_make_scalar_mixer, g_make_scalar_mixer_w, 2, 0, 0, H_make_scalar_mixer);
+  XEN_DEFINE_PROCEDURE(S_make_mixer,        g_make_mixer_w,           0, 0, 1, H_make_mixer);
+  XEN_DEFINE_PROCEDURE(S_make_mixer "!",    g_make_mixer_unchecked_w, 0, 0, 1, H_make_mixer);
+  XEN_DEFINE_PROCEDURE(S_mixer_p,           g_mixer_p_w,              1, 0, 0, H_mixer_p);
+  XEN_DEFINE_PROCEDURE(S_mixer_multiply,    g_mixer_multiply_w,       2, 1, 0, H_mixer_multiply);
+  XEN_DEFINE_PROCEDURE(S_mixer_add,         g_mixer_add_w,            2, 1, 0, H_mixer_add);
+  XEN_DEFINE_PROCEDURE(S_make_scalar_mixer, g_make_scalar_mixer_w,    2, 0, 0, H_make_scalar_mixer);
 #if HAVE_SCHEME || HAVE_FORTH
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mixer_ref, g_mixer_ref_w, H_mixer_ref, S_setB S_mixer_ref, g_mixer_set_w,  3, 0, 4, 0);
 #endif
