@@ -507,15 +507,13 @@ e<sup>(jB sin w<sub>m</sub>t)</sup>, our expansion is evaluating
 </pre>
 -->
 
-<p>which is one way of defining the Bessel functions (see also the earlier formulas for Jn(B)). If we view FM as one 
-case of concatenated vectors (i.e. a whirling vector attached to another
-such vector), the ubiquity of Bessel functions in mathematical physics
-may seem less mysterious.  (This was the context in which F W Bessel used these functions; they had
-been studied earlier by the Bernoullis and others, but Bessel, an astronomer, was interested in Kepler's equation
-and the three body problem.  There are brief historical snippits at 
+<p>which is one way of defining the Bessel functions (see also the earlier formulas for Jn(B)).
+This was the context in which F W Bessel used these functions; they had
+been studied earlier by Euler and Daniel Bernoulli (the vibrations of a heavy chain), and
+Fourier (the motion of heat in a cylinder), but Bessel, an astronomer, was interested in Kepler's equation.
+There are brief historical snippits at 
 <a href="http://www.aam314.vzz.net/EB/Bessel.html">Encyclopedia Britannica</a> and <a href="http://www-groups.dcs.st-and.ac.uk/~history/Biographies/Bessel.html">Bios</a>.
-For the view from celestial mechanics today, see Vallado, "Fundamentals of Astrodynamics and Applications".  For
-an explanation of the connection between planetary motion and FM, see Benson, "Music: A Mathematical Offering").
+For an explanation of the connection between planetary motion and FM, see Benson, "Music: A Mathematical Offering").
 </p></small>
 </td></tr></table>
 
@@ -1167,6 +1165,8 @@ spectrum somewhat. In general:
 <!-- -->
 </td></tr></table>
 
+<!-- TODO: translate fmviolin.clm to scheme -->
+
 <p>But this is silly -- I don't think all these modulators are buying us anything.  I say three is enough.  
 My favorite computer instrument, the FM violin, uses three sinusoidal components in the 
 modulating wave; for more complex spectra these violins are then 
@@ -1313,7 +1313,7 @@ Mattox's fm-drum can ignore such niceties.  If you are using low indices and the
 mc-ratios are below 1.0 (in vibrato, for example), you have a good chance of getting usable results.  
 If you want cascade FM to work in other situations, make sure the top oscil has an initial phase of 
 pi/2 -- the middle FM spectrum will then have only sines (not cosines), so the DC amplitude will 
-(sometimes) be 0  Even the tiniest error in the top oscil's phase becomes a beat, inharmonicity, or a 
+(sometimes) be 0.  Even the tiniest error in the top oscil's phase becomes a beat, inharmonicity, or a 
 timbral change in the output, so cascade FM is almost impossible to keep under control.
 </p>
 
@@ -1549,10 +1549,7 @@ portion is:
 
 <p>where rand is producing white noise.  You can produce a sequence of different noises, moving 
 toward gaussian noise, simply by adding rand's together (this is known as the "central-limit 
-theorem").  The probability density of a sum of n independent random variables (rand's in clm) 
-tends to approach a gaussian density as n increases.  We start with "white" noise which has an equal 
-probability of any value. Add another rand, thereby convolving the two flat "white" densities, and 
-you get a /\ shape.  The more you add the closer you get to the bell shaped curve of gaussian noise.  
+theorem"). 
 When frequency modulation gets noise, the power spectral density of the output has the same form 
 as the density function of the modulating wave, but now centered around the carrier.  For either kind 
 of noise (white or gaussian), the bandwidth of the result is about 4 times the peak deviation (the 

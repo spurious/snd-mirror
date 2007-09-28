@@ -2135,3 +2135,95 @@ index 10 (so 10/2 is the bes-jn arg):
 	   ((= i 20000))
 	 (outa i (blackman4 black4 0.0) *output*))))))
 |#
+
+
+;;; --------------------------------------------------------------------------------
+
+;;; use J0(cos)+J1(cos) to get full spectrum
+
+(def-clm-struct (j0j1cos
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (j0j1cos-incr g) (hz->radians (j0j1cos-frequency g)))
+		   g))
+  (frequency 0.0) (index 1.0)
+  (angle 0.0) (incr 0.0))
+
+(define (j0j1cos gen fm)
+  (declare (gen j0j1cos) (fm float))
+  (let* ((x (j0j1cos-angle gen))
+	 (z (j0j1cos-index gen))
+	 (j0 (bes-j0 (* 0.5 z)))
+	 (dc (* j0 j0))
+	 (arg (* z (cos x))))
+    (set! (j0j1cos-angle gen) (+ x fm (j0j1cos-incr gen)))
+    (/ (- (+ (bes-j0 arg)
+	     (bes-j1 arg))
+	  dc)        ; get rid of DC component
+       1.215)))      ; not the best...
+
+; TODO: normalize j0j1cos -- min depends on index, so peak depends on max and min and dc
+;       (max (- 1.2154 dc)
+;	    (- -0.5530 dc)
+
+;;; TODO: doc/test
+;;;
+;;; SOMEDAY: check dht against j expansion of cos etc [cos z = J0(z) + 2 sum 1^inf (-1)^k J2k(z)] 8.514 p 924
+;;; TODO: the Y0 case from G&M is encapsulated by 8.532 p 930
+
+#|
+(let ((mx 0.0) (x 0.0) (saved-x 0.0))
+  (do ((i 0 (1+ i)))
+      ((= i 1000))
+    (let ((val (+ (bes-j0 x) (bes-j1 x))))
+      (if (> (abs val) mx)
+	  (begin
+	    (set! mx (abs val))
+	    (set! saved-x x)))
+      (set! x (+ x .001))))
+  (list mx saved-x))
+(1.21533317877749 0.825000000000001)
+(1.21533318495717 0.824863000002882)
+(1.21533318495718 0.824863061409846)
+
+(-0.552933995255066 4.57000000000269)
+(-0.552933995483144 4.56997100028488)
+
+(do ((i 0 (1+ i)))
+    ((= i 10))
+  (let ((pk (vct-peak 
+	     (with-sound (:output (make-vct 10000))
+  	       (let ((gen (make-j0j1cos 100.0 i)))
+		 (run 
+		  (lambda ()
+		    (do ((i 0 (1+ i)))
+			((= i 10000))
+		      (outa i (j0j1cos gen 0.0) *output*)))))))))
+    (snd-display ";~A: ~A" i pk)))
+;0: 0.0
+;1: 0.555559098720551
+;2: 0.938335597515106
+;3: 0.953315675258636
+;4: 1.16509592533112
+;5: 1.21275520324707
+;6: 1.14727067947388
+;7: 1.07083106040955
+;8: 1.05760526657104
+;9: 1.11238932609558
+;10: 1.1824289560318
+;11: 1.21528387069702
+;12: 1.19094204902649
+;13: 1.14720714092255
+;14: 1.12512302398682
+				  
+|#
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-j0j1cos 100.0 1.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000))
+	 (outa i (j0j1cos gen 0.0) *output*))))))
+|#

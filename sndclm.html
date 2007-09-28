@@ -1936,6 +1936,16 @@ sceq33:
 sceq34:
 \sum_{m=0}^{\infty} (n+m)\Big(\frac{J_{n+m}(z)}{z^{n}}\Big)^{2} C_{m}^{n}(\cos \theta) = \frac{J_{n}(2z \sin \frac{\theta}{2})}{2^{n}\Gamma(n)(2z\sin \frac{\theta}{2})}
 
+
+from Gray and Mathews, "A Treatise on Bessel Functions and Their Applications to Physics" p 28, 29, 92, 240
+sceq36:
+& J_{0}^{2}\Big(\frac{z}{2}\Big)+2\sum_{k=1}^{\infty} (-1)^{k} J_{k}^{2}\Big(\frac{z}{2}\Big)\cos2kx = J_{0}(z \cos x) \\
+& 2\sum_{k=0}^{\infty} (-1)^{k} J_{k}\Big(\frac{z}{2}\Big)J_{k+1}\Big(\frac{z}{2}\Big)\cos (2k+1)x = J_{1}(z \cos x) \\
+
+sceq37:
+& Y_{0}(b)J_{0}(c) + 2 \sum_{m=1}^{\infty} Y_{m}(b)J_{m}(c) \cos m\theta = Y_{0}\Big(\sqrt{b^{2}+c^{2}-2bc\cos \theta}\Big) \\
+& \sum_{n=0}^{\infty} \frac{r^{n}}{n!}P_{n}(\cos \theta) = e^{r \cos \theta}J_{0}(r \sin \theta) \\
+
 -->
 
 <table border=1 hspace=20 vspace=10><tr><td>
@@ -1985,11 +1995,20 @@ sceq34:
 <tr><td><img src="sceq34.png" alt="more sums"></td><td></td>
 <td><img src="sceq33.png" alt="more sums"></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>from Watson, "A Treatise on the Theory of Bessel Functions": 4.82, 11.41, 17.31</center></td></tr>
+<tr><td colspan=3 height=25></td></tr>
+
+
+<tr><td><img src="sceq36.png" alt="more sums"></td><td></td>
+<td><img src="sceq37.png" alt="more sums"></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>from Gray and Mathews, "A Treatise on Bessel Functions and Their Applications to Physics" p 28, 29, 92, 240</center></td></tr>
 
 
 </table>
 
 </td></tr></table>
+
+<!-- TODO: include the general case from G&R 8.532 (p930)
+-->
 
 <p>
 As far as I know, most of these formulas have never been explored.
@@ -4491,7 +4510,7 @@ zip.scm:
 </pre>
 
 <p>These two generators produce the two flavors of asymmetric-fm.  asyfm-J is the same as the built-in asymmetric generator;
-asyfm-I is the modified Bessel function version (the second formula in the the <a href="#asymmetric-fm">asymmetric-fm</a> section).
+asyfm-I is the modified Bessel function version (the second formula in the <a href="#asymmetric-fm">asymmetric-fm</a> section).
 </p>
 <br>
 
