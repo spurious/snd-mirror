@@ -4998,6 +4998,14 @@
     (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) 
       (log-mem clmtest)
 
+      (let ((ind (open-sound "oboe.snd")))
+	(set! (transform-graph? ind 0) #t)
+	(set! (transform-graph-type ind 0) graph-as-sonogram)
+	(set! (y-axis-label ind 0 1) "hiho")
+	(set! (fft-log-frequency ind 0) #t) ; segfault here originally
+	(update-transform-graph ind 0)
+	(close-sound ind))
+
       (let ((ind (new-sound "test.snd" :size 10)))
 	(vct->channel (make-vct 10 1.0))
 	(env-channel '(0 0 1 1 2 0))
@@ -44115,8 +44123,9 @@ EDITS: 1
 	(filter-channel (vct 1.0 0.5 0.25) 3 0 #f ind1 0)
 	(let* ((diff (snddiff ind0 0 ind1 0))
 	       (info (and (cadr diff) (= (length (cadr diff)) 3) (cadr diff))))
-	  (if (or (not (eq? (car diff) 'filter))
-		  (not diff)
+	  (if (or (not (list? info))
+		  (not (list? diff))
+		  (not (eq? (car diff) 'filter))
 		  (fneq (car (car info)) 1.0)
 		  (fneq (car (cadr info)) 0.5)
 		  (fneq (car (caddr info)) 0.25)

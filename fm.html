@@ -45,25 +45,11 @@ can express this (the vibrato, not the neat story) as:
 -->
 
 <p>where the c subscript stands for "carrier" and f(t) means "some arbitrary function added to the 
-carrier".  Since cos takes an angle as its argument, f(t) "modulates" (that is, changes) the angle 
-passed to the cosine.  Hence the generic name "angle modulation".  Phase and angle seem like 
-synonyms, hence the name "phase modulation".  Since we can always translate from instantaneous 
-radial frequency
-</p>
-
-<!-- LATEX \[\omega_{c}t+f(t)\] -->
-
-<img src="fmeq2.png" alt="wt + f" hspace=20>
-
-<!-- HTML
-<pre>
-  w<sub>c</sub>t + f(t) 
-</pre>
--->
-
-
-<p>evaluated at a particular time to the corresponding frequency (differentiate and divide by 2 pi), this 
-same fomula can viewed as "frequency modulation".  Textbooks usually mutter "strictly speaking 
+carrier".  Since cos takes an angle as its argument, f(t) modulates (that is, changes) the angle 
+passed to the cosine, hence the generic name "angle modulation".  We can add the change either at
+the cos function call
+("phase modulation"), or accumulate it in the current phase, then call cos ("frequency modulation"), so
+this same fomula can viewed as either kind.  Textbooks usually mutter "strictly speaking 
 we can only take the cosine of an angle", and they put an explicit integral in when they mean 
 frequency modulation:
 </p>
@@ -82,13 +68,12 @@ frequency modulation:
 <br>
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>FM and phase modulation</center></h5></td></tr></table>
 
-<p>The terms "angle modulation", "phase modulation", and "frequency modulation" (not to mention 
-"exponential modulation" and "angular modulation") are used almost interchangeably in the radio 
-literature, but the textbooks on the subject normally distinguish between PM and FM as follows: if 
+<p>But we can go ahead and integrate, and the only difference is in the scale factor on the modulating signal.
+Radio textbooks distinguish between PM and FM as follows: if 
 f(t) is directly proportional to the modulating signal then it's PM; if f(t) is directly proportional 
 to the derivative of the modulating signal, then it's FM.  Of course, you can't tell which is in use 
-either from the waveform or the mathematical expression of the waveform -- you have to know 
-what the modulating signal was.  That is a roundabout way of saying that in computer music 
+either from the output waveform or the mathematical expression of it -- you have to know 
+what the modulating signal was.  All this verbiage is a roundabout way of saying that in computer music 
 applications there is no essential difference between frequency and phase modulation.  However, the 
 fact that phase and frequency modulation are just two ways of interpreting the same thing should not 
 mislead us into thinking "phase doesn't matter" -- the initial phases of the parts of the FM formula 
@@ -222,7 +207,7 @@ The corresponding CLM code is:
 
 <!-- CLM CASE 
 <pre>
-    (defun oscil (oscillator fm-input &amp;optional (pm-input 0))
+    (defun oscil (oscillator &amp;optional (fm-input 0.0) (pm-input 0.0))
       (prog1 
         (sin (+ (mus-phase oscillator) pm-input))
         (incf (mus-phase oscillator) (+ (mus-frequency oscillator) fm-input))))
@@ -231,7 +216,7 @@ The corresponding CLM code is:
 
 <!-- SND CASE -->
 <pre>
-    (define* (oscil oscillator fm-input :optional (pm-input 0))
+    (define* (oscil oscillator :optional (fm-input 0.0) (pm-input 0.0))
       (let ((result (sin (+ oscillator-phase pm-input))))
         (set! oscillator-phase (+ oscillator-phase (+ oscillator-phase-increment fm-input)))
         result))
@@ -513,7 +498,7 @@ been studied earlier by Euler and Daniel Bernoulli (the vibrations of a heavy ch
 Fourier (the motion of heat in a cylinder), but Bessel, an astronomer, was interested in Kepler's equation.
 There are brief historical snippits at 
 <a href="http://www.aam314.vzz.net/EB/Bessel.html">Encyclopedia Britannica</a> and <a href="http://www-groups.dcs.st-and.ac.uk/~history/Biographies/Bessel.html">Bios</a>.
-For an explanation of the connection between planetary motion and FM, see Benson, "Music: A Mathematical Offering").
+For an explanation of the connection between planetary motion and FM, see Benson, "Music: A Mathematical Offering".
 </p></small>
 </td></tr></table>
 
@@ -563,7 +548,7 @@ For an explanation of the connection between planetary motion and FM, see Benson
 <!-- -->
 </td></tr></table>
 
-<p>I put an envelope on the fm-index ("indf" above) so that we can try out the "dynamic spectra" ("dynamic" means 
+<p>I put an envelope on the fm-index ("indf" above) so that we can try out dynamic spectra ("dynamic" means 
 "changing" here).  For now, don't worry too much about the actual side band amplitudes -- these 
 will not always match Chowning's description -- we'll get around to an explanation eventually.
 </p>
@@ -871,12 +856,16 @@ CLM instrument that shows this effect:
 <!-- -->
 </td></tr></table>
 
+<table border=1 hspace=50 vspace=20 cellpadding=5><tr><td>
+<small> 
 <p>One subtle pitfall here involves the constant offset caused by the integration.  If we 
 integrate f(x) we get some F(x) + F(a) where a is the starting point of the integration.  In the case of sin(B*sin), a is 0, 
 and F(x) is -cos(x), so the constant term is B (i.e. -B*(-cos(0))).  That is, we get a phase offset in the outer sin calculation 
 equal (in this case) to the modulation index!   So the true carrier initial phase is a combination of the initial phase we 
 specify and the modulation index times the initial value of the integrated wave.
 </p>
+</p></small>
+</td></tr></table>
 
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>asymmetric spectra</center></h5></td></tr></table>
 
@@ -1164,8 +1153,6 @@ spectrum somewhat. In general:
 </pre>
 <!-- -->
 </td></tr></table>
-
-<!-- TODO: translate fmviolin.clm to scheme -->
 
 <p>But this is silly -- I don't think all these modulators are buying us anything.  I say three is enough.  
 My favorite computer instrument, the FM violin, uses three sinusoidal components in the 
@@ -1547,15 +1534,14 @@ portion is:
     (oscil carrier (* fm-index (rand modulator)))
 </pre>
 
-<p>where rand is producing white noise.  You can produce a sequence of different noises, moving 
-toward gaussian noise, simply by adding rand's together (this is known as the "central-limit 
-theorem"). 
+<p>where rand is producing white noise.
 When frequency modulation gets noise, the power spectral density of the output has the same form 
-as the density function of the modulating wave, but now centered around the carrier.  For either kind 
-of noise (white or gaussian), the bandwidth of the result is about 4 times the peak deviation (the 
-random number frequency times its amplitude).  The real value of noise, however, is not in making hiss.  
-One of the great improvements to the world 
-of computer music came about when Heinrich Taube fed noise (as a sort of cascade FM) into the 
+as the density function of the modulating wave, but now centered around the carrier. 
+The bandwidth of the result is about 4 times the peak deviation (the 
+random number frequency times its amplitude).  Simple FM with noise gives various whooshing sounds,
+useful for Oceanic Music, but it can overstay its welcome.
+Heinrich Taube had the inspired idea
+of feeding the noise (as a sort of cascade FM) into the 
 parallel modulators of an fm-flute, but not into the carrier.  The modulating signal becomes a sum of 
 two or three narrow band noises (narrow because normally the amplitude of the noise is low), and 
 these modulate the carrier.  It is my belief that you get the normal spectrum with each component 
@@ -1602,7 +1588,7 @@ mix of sounds.
 
 <p>We can use more than one sinusoidal component in our carrier, or multiple banks of carriers and 
 modulators, and depend upon vibrato and "spectral fusion" to make the result sound like one voice.  
-In this cross between additive synthesis (the multiple carriers) and FM (the "formant" centered on 
+In this cross between additive synthesis (the multiple carriers) and FM (the formant centered on 
 each carrier), we get around many of the limitations of the Bessel functions.  There are numerous 
 examples in fmviolin.clm.  One of the raspier 
 versions of the fm-violin used a sawtooth wave as the carrier.  
