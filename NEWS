@@ -1,41 +1,26 @@
-Snd 9.3
+Snd 9.4:
 
-rt improvements from Kjetil (new file: rt-clm-ins.scm).
+added export-all.scm.
 
-*.rb and *.fs improvements from Mike.
+the run macro can now find define* args (from within the define*)
 
-clm.html split:
-  clm in CL (CLM tarball) is clm.html, 
-  clm in other languages (Snd tarball) is sndclm.html
+def-clm-struct uses def-optkey-fun for its make func,
+  and takes an optional :make-wrapper function to specialize the make function.
+  Also run is better at handling lists and def-clm-struct.
+  def-clm-struct can include a list of lists of (name func) pairs to implement generic funcs.
 
-fm.html split in two:
-  cl-fm.html in CL (all examples are in CL)
-  fm.html in Snd (all examples are in Scheme)
-  all the math is now done in LaTex, and I added several pictures
-  (most of my work in this version went into fm.html and sndclm.html)
+added generators.scm with 42 new generators (and a couple instruments under construction)
+  several of these generators used to be in dsp.scm (under slightly different names) --
+  the old forms are in snd9.scm.
 
-moved autocorrelate to clm
-  renamed the graph-hook function "correlate" in examp.scm|fs|rb to "display-correlation"
-  added correlate to clm
+clm: changed asymmetric-fm to use cos(sin) and added amplitude normalization.
 
-added a stab at amplitude normalization to sine-summation
+make-dpss-window and make-papoulis-window in dsp.scm
+  gsl-eigenvectors
 
-dsp.scm: smoothing-filter, weighted-moving-average, exponentially-weighted-moving-average
-         Savitzky-Golay filter
+added make-mixer! and make-frame! to bypass the size checks (for matrices and vectors)
 
-numerics.scm (various numerical functions)
+checked: sbcl 1.0.9|10, pango 1.18.1, gtk 2.12.0
 
-mix.scm: delay-channel-mixes
+Thanks!: Steven Jones, Todd Ingalls, Achim Bornhoeft
 
-clm: shepard.ins thanks to Juan Reyes
-
-added blackman5 to blackman10 (6 to 11-term sum-of-cosines windows in the Blackman-Harris/Hamming family)
-      rv2-window to rv4-window (2nd to 4th order Rife-Vincent windows in the Hann(ing) family)
-      mlt-sine-window
-
-removed useless :start arg from make-env
-  this means all (CL-CLM) instruments that use make-env need to be recompiled.
-
-checked:  Guile 1.8.2, gtk 2.11.6, gamin 0.1.9, Gauche 0.8.11, pango 1.18.0
-
-Thanks!: Juan Reyes, Kjetil Matheussen, Mike Scholz, Jim Hauser

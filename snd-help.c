@@ -516,13 +516,9 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+29-Sep:  Snd 9.4.\n\
 20-Sep:  export-all.scm.\n\
 4-Sep:   generators.scm.\n\
-24-Aug:  Snd 9.3.\n\
-7-Aug:   renamed \"correlate\" in examp.scm to \"display-correlation\"\n\
-3-Aug:   blackman5..10 and rv2..4 fft windows.\n\
-         rt-clm-ins.scm thanks to Kjetil.\n\
-         Savitzky-Golay filter (dsp.scm).\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",
