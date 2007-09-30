@@ -46,16 +46,20 @@ can express this (the vibrato, not the neat story) as:
 
 <p>where the c subscript stands for "carrier" and f(t) means "some arbitrary function added to the 
 carrier".  Since cos takes an angle as its argument, f(t) modulates (that is, changes) the angle 
-passed to the cosine, hence the generic name "angle modulation".  We can add the change either at
+passed to the cosine, hence the generic name "angle modulation".  We can add that change either in
 the cos function call
-("phase modulation"), or accumulate it in the current phase, then call cos ("frequency modulation"), so
-this same fomula can viewed as either kind.  Textbooks usually mutter "strictly speaking 
+("phase modulation", cos(angle + change)), or accumulate it into the current phase, then take cos of that 
+("frequency modulation", cos(angle += change)), so
+our fomula can viewed either way.  Textbooks usually mutter "strictly speaking 
 we can only take the cosine of an angle", and they put an explicit integral in when they mean 
 frequency modulation:
 </p>
 
 
-<!-- LATEX \[  \cos \, (\omega_{c}t+B\!\int_{0}^{t}\! f(t) \, \mathrm{d} t)  \]  -->
+<!-- LATEX
+fmeq3:
+\cos \, (\omega_{c}t + \!\int_{0}^{t}\! f(t) \, \mathrm{d} t)
+-->
 
 <img src="fmeq3.png" alt="cos + integral" hspace=20>
 
@@ -69,20 +73,18 @@ frequency modulation:
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>FM and phase modulation</center></h5></td></tr></table>
 
 <p>
-Radio textbooks distinguish between PM and FM as follows: if 
+Radio engineers distinguish between PM and FM as follows: if 
 f(t) is directly proportional to the modulating signal then it's PM; if f(t) is directly proportional 
 to the derivative of the modulating signal, then it's FM.  Of course, you can't tell which is in use 
-either from the output waveform or the mathematical expression of it -- you have to know 
-what the modulating signal was.  All this verbiage is a roundabout way of saying that in computer music 
-applications there is no essential difference between frequency and phase modulation.  However, the 
-fact that phase and frequency modulation are just two ways of interpreting the same thing should not 
-mislead us into thinking "phase doesn't matter" -- the initial phases of the parts of the FM formula 
-do make a difference, as we'll see below.
+from the output waveform; you have to know 
+what the modulating signal is.  All this verbiage is a roundabout way of saying that in computer music 
+applications, where we can do what we want with the modulating signal,
+there is no essential difference between frequency and phase modulation. 
 </p>
 
 <table border=1 hspace=50 cellpadding=14><tr><td>
 
-<p>Just to beat this dead horse very thoroughly, here are two clm instruments, one performing textbook 
+<p>Just to beat this dead horse very thoroughly, here are two clm instruments, one performing 
 phase modulation, the other performing frequency modulation.  I have tried to make the innards 
 explicit at each step, and match the indices so that the instruments produce identical results given 
 identical parameters.  Also, to lay a different controversy to rest, it should be obvious from these two 
@@ -140,16 +142,14 @@ functions that there is no difference in run-time computational expense (or accu
         (carrier-phase-incr (hz-&gt;radians freq))
         (modulator-phase 0.0)
         (modulator-phase-incr (hz-&gt;radians (* freq mc-ratio))))
-   (run
-    (lambda ()
-      (do ((i beg (1+ i)))
-	  ((= i end))
-	(let* ((modulation (* index (sin modulator-phase)))
-	       (pm-val (* amp (sin (+ carrier-phase modulation))))) 
-	       ; no integration in phase modulation (it's a phase change)
-	  (set! carrier-phase (+ carrier-phase carrier-phase-incr))
-	  (set! modulator-phase (+ modulator-phase modulator-phase-incr))
-	  (outa i pm-val *output*)))))))
+    (do ((i beg (1+ i)))
+	((= i end))
+      (let* ((modulation (* index (sin modulator-phase)))
+	     (pm-val (* amp (sin (+ carrier-phase modulation))))) 
+	     ;; no integration in phase modulation (it's a phase change)
+	(set! carrier-phase (+ carrier-phase carrier-phase-incr))
+	(set! modulator-phase (+ modulator-phase modulator-phase-incr))
+	(outa i pm-val *output*)))))
 
 (define (fm beg end freq amp mc-ratio index)
   (let ((carrier-phase 0.0)
@@ -157,18 +157,16 @@ functions that there is no difference in run-time computational expense (or accu
         (modulator-phase (* .5 pi))
         (modulator-phase-incr (hz-&gt;radians (* freq mc-ratio)))
         (fm-index (hz-&gt;radians (* freq mc-ratio index)))) 
-	; fix up fm index to take integration into account (it's a frequency change)
-  (run
-   (lambda ()
-     (do ((i beg (1+ i)))
-	 ((= i end))
-       (let ((modulation (* fm-index (sin modulator-phase))))
-	 (set! carrier-phase (+ carrier-phase modulation)) 
-	 ; here is the fm integration
-	 (let ((fm-val (* amp (sin carrier-phase))))
-	   (set! carrier-phase (+ carrier-phase carrier-phase-incr))
-	   (set! modulator-phase (+ modulator-phase modulator-phase-incr))
-	   (outb i fm-val *output*))))))))
+	;; fix up fm index to take integration into account (it's a frequency change)
+    (do ((i beg (1+ i)))
+	((= i end))
+      (let ((modulation (* fm-index (sin modulator-phase))))
+	(set! carrier-phase (+ carrier-phase modulation)) 
+	;; here is the fm integration
+	(let ((fm-val (* amp (sin carrier-phase))))
+	  (set! carrier-phase (+ carrier-phase carrier-phase-incr))
+	  (set! modulator-phase (+ modulator-phase modulator-phase-incr))
+	  (outb i fm-val *output*))))))
 
 (with-sound (:channels 2) 
   (pm 0 10000 1000 .25 0.5 4)
@@ -321,7 +319,7 @@ You can slog through the Fourier series expansion by hand, or look it up in Abra
 
 
 <p>Here the J's refer to the Bessel functions which we will return to later. First, let's finish this 
-expansion -- we take these two sums and 
+expansion; we take these two sums and 
 <img src="fmeq23.png" alt="wct" salign=absmiddle>
 and plug them into our first expansion of the FM 
 formula, and out pops:
@@ -372,7 +370,7 @@ formula, and out pops:
 <p>Here we are using the fact that
 <img src="fmeq14.png" alt="J - J" align=absmiddle>.
 We can change our point of view on the first part of the expansion given above, and ask for the 
-amplitude of a given sideband before it is translated up to the carrier (by multiplication):
+amplitude of a given sideband:
 </p>
 
 <!-- LATEX J_{n}(B) = \frac{2}{\pi} \int_{0}^{\frac{\pi}{2}} \sin(B\sin\omega) \sin n\omega \: \mathrm{d}\omega \qquad \textrm{(n odd)} -->
@@ -401,18 +399,18 @@ separated by
 The amplitudes  follow the Bessel functions.  I put carrier in quotes because in 
 computer music we listen to the result of the modulation (this was Chowning's idea -- see "The 
 Synthesis of Complex Audio Spectra by Means of Frequency Modulation").  The Bessel functions 
-are nearly 0 until the index (B) equals the order (n).  Thereupon they have a bump and then tail off in 
-a sort of damped sinusoidal way:
+are nearly 0 until the index (B) equals the order (n).  Thereupon they have a bump and then tail off as
+a sort of damped sinusoid:
 </p>
 
 <img src="bessel.png" alt="bessel functions" hspace=20>
 
 <p>
 So as the index sweeps 
-upward, energy is swept gradually outward into higher order side bands -- this is the originally 
-exciting, now extremely annoying "FM sweep".  It is worrisome that the simple case has so quickly 
-become jejune.  The only important thing to get from these functions is that the higher the index, the 
-more dispersed the spectral energy -- normally a "brighter" sound.
+upward, energy is swept gradually outward into higher order side bands; this is the originally 
+exciting, now extremely annoying "FM sweep".
+The important thing to get from these Bessel functions is that the higher the index, the 
+more dispersed the spectral energy -- normally a brighter sound.
 </p>
 
 <table border=1 hspace=6 cellpadding=3><tr>
@@ -549,8 +547,8 @@ For an explanation of the connection between planetary motion and FM, see Benson
 </td></tr></table>
 
 <p>I put an envelope on the fm-index ("indf" above) so that we can try out dynamic spectra ("dynamic" means 
-"changing" here).  For now, don't worry too much about the actual side band amplitudes -- these 
-will not always match Chowning's description -- we'll get around to an explanation eventually.
+"changing" here).  For now, don't worry too much about the actual side band amplitudes.  They
+will not always match Chowning's description, but we'll get around to an explanation eventually.
 </p>
 
 <pre>
@@ -558,7 +556,7 @@ will not always match Chowning's description -- we'll get around to an explanati
 </pre>
 
 <p>is Chowning's first example.  Sure enough, it's a complex spectrum (that is, it has lots of 
-components -- try an index of 0 to hear a sine wave, if you're suspicious).  Since our modulating 
+components; try an index of 0 to hear a sine wave, if you're suspicious).  Since our modulating 
 frequency to carrier frequency ratio (mc-ratio above) is 1.0, we get sidebands at harmonics of the 
 carrier. If we use an mc-ratio of .25 and a carrier of 400:
 </p>
@@ -582,7 +580,7 @@ of this change was spectral.  To get a changing spectrum, we need only put an en
     (with-sound () (fm 0 0.5 400 .5 1.0 5.0 '(0 0 20 1 40 .6 90 .5 100 0)))
 </pre>
 
-<p>making a "brass-like" sound.  Similarly, Chowning suggests that
+<p>making a brass-like sound.  Similarly, Chowning suggests that
 </p>
 
 <pre>
@@ -612,7 +610,7 @@ sweep the FM index from 0 to 10, and the spectrogram looks like this:
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>phase quibbles: cos(sin)</center></h5></td></tr></table>
 <p>
 Many simple extensions can be made to the fm instrument given above and 
-something good can often be coaxed from it.  But, to clear up one source of confusion -- if you 
+something good can often be coaxed from it.  But, to clear up one source of confusion, if you 
 looked at the spectrum of our first example, and compared it to the spectrum Chowning works out, 
 you may wonder what's gone awry.  We have to return to our initial set of formulas.  If we consider 
 that:
@@ -743,7 +741,7 @@ carrier, and its index (B) is high enough that some significant energy appears a
 trigonometry: 
 <img src="fmeq45.png" alt="sin-sin and cos" align=absmiddle>,
 so the negative frequency component adds to the positive frequency component if it's a cosine, but 
-subtracts if it's a sine.  The upshot of all this is that the results will be different -- we get a different 
+subtracts if it's a sine.  The upshot of all this is that the results will be different.  We get a different 
 pattern of cancellations depending on the initial phases of the carrier and modulator.  Take the CLM
 instrument:
 </p>
@@ -1032,7 +1030,7 @@ a moving formant).  Here we sweep "r" from -1.0 to -20.0, with an index of 3, m/
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>complex FM: sin(sin+sin)</center></h5></td></tr></table>
 
 <p>
-So far we have been using just a sinusoid for the modulator -- what if we make it a more complicated 
+So far we have been using just a sinusoid for the modulator; what if we make it a more complicated 
 signal?  Here again elementary trigonometry can be used to expand
 </p>
 
@@ -1158,7 +1156,7 @@ spectrum somewhat. In general:
 My favorite computer instrument, the FM violin, uses three sinusoidal components in the 
 modulating wave; for more complex spectra these violins are then 
 ganged together (see fmviolin.clm for many examples).  By using a few sines in the modulator, you 
-get away from the "simple FM sweep" that has become tiresome, and the broader, flatter spectrum 
+get away from the simple FM index sweep that has become tiresome, and the broader, flatter spectrum 
 is somewhat closer to that of a real violin.
 </p>
 
@@ -1273,7 +1271,7 @@ sometimes called "cascade FM":
 
 <p>and we can get an extremely complex spectrum in no time.  Unfortunately, FM can produce energy 
 at 0Hz (when, for example, the carrier frequency equals the modulating frequency), and that 0Hz ("DC") component becomes a constant offset in the 
-lower of the two FM pairs. So your carrier no longer has any obvious relation to
+lower of the two FM pairs. So our fundamental frequency no longer has any obvious relation to
 <img src="fmeq43.png" alt="wc" align=absmiddle>!
 That is, we 
 can expand our cascade formula into:
@@ -1295,11 +1293,11 @@ can expand our cascade formula into:
 <img src="fmeq46.png" alt="wc" align=absmiddle>.
 This could be a disaster, because 
 in most cases where we care about the perceived fundamental, we are trying to create harmonic 
-spectra, and that is pretty hard if we can't predict what our modulator-carrier ratios will be.  Jan 
+spectra, and that is pretty hard if we can't predict what our modulator/carrier ratios will be.  Jan 
 Mattox's fm-drum can ignore such niceties.  If you are using low indices and the top pair's 
 mc-ratios are below 1.0 (in vibrato, for example), you have a good chance of getting usable results.  
 If you want cascade FM to work in other situations, make sure the top oscil has an initial phase of 
-pi/2 -- the middle FM spectrum will then have only sines (not cosines), so the DC amplitude will 
+pi/2.  The middle FM spectrum will then have only sines (not cosines), so the DC amplitude will 
 (sometimes) be 0.  Even the tiniest error in the top oscil's phase becomes a beat, inharmonicity, or a 
 timbral change in the output, so cascade FM is almost impossible to keep under control.
 </p>
@@ -1360,7 +1358,7 @@ to show how strong this effect is:
 
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>feedback FM: sin(x=sin(x))</center></h5></td></tr></table>
 
-<p>A similar trick comes up in "feedback FM" used in some synthesizers. Here the output of the modulator
+<p>A similar trick comes up in feedback FM used in some synthesizers. Here the output of the modulator
 is low-pass filtered, then fed back into its fm-input location.  Cellon, written by Stanislaw 
 Krupowicz, is an example; the feedback FM occurs in the lines (edited here for clarity):
 </p>
@@ -1466,8 +1464,7 @@ hell breaks loose, but luckily:
 </pre>
 -->
 
-<p>so, just as in normal FM, if the index is 0, we get a pure sine wave. This also seems natural from <code>sin(y &lt;= w + B sin y)</code>
-with B=0 (but computer arithmetic doesn't care what "seems natural"). Here's a simple example:
+<p>so, just as in normal FM, if the index is 0, we get a pure sine wave.
 </p>
 
 <table border=1 hspace=20 cellpadding=3>
@@ -1579,8 +1576,8 @@ smeared out by a copy of the noise band:
 </pre>
 
 <p>where "sound file" is any recorded sound.  I call this "contrast-enhancement" in the CLM package.  It 
-makes a sound "crisper"; "Wait for Me!" uses it whenever a sound needs to cut through a huge 
-mix of sounds.
+makes a sound crisper; "Wait for Me!" uses it whenever a sound needs to cut through a huge 
+mix.
 </p>
 
 
