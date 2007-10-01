@@ -2166,7 +2166,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;       (max (- 1.2154 dc)
 ;	    (- -0.5530 dc)
 
-;;; TODO: doc/test
+;;; TODO: test
 ;;;
 ;;; SOMEDAY: check dht against j expansion of cos etc [cos z = J0(z) + 2 sum 1^inf (-1)^k J2k(z)] 8.514 p 924
 ;;; TODO: the Y0 case from G&M is encapsulated by 8.532 p 930

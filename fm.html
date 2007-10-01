@@ -46,9 +46,9 @@ can express this (the vibrato, not the neat story) as:
 
 <p>where the c subscript stands for "carrier" and f(t) means "some arbitrary function added to the 
 carrier".  Since cos takes an angle as its argument, f(t) modulates (that is, changes) the angle 
-passed to the cosine, hence the generic name "angle modulation".  We can add that change either in
-the cos function call
-("phase modulation", cos(angle + change)), or accumulate it into the current phase, then take cos of that 
+passed to the cosine, hence the generic name "angle modulation".  We can add that change either to
+the argument to cos
+("phase modulation", cos(angle + change)), or add it to the current phase, then take cos of that 
 ("frequency modulation", cos(angle += change)), so
 our fomula can viewed either way.  Textbooks usually mutter "strictly speaking 
 we can only take the cosine of an angle", and they put an explicit integral in when they mean 
@@ -609,8 +609,8 @@ sweep the FM index from 0 to 10, and the spectrogram looks like this:
 
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>phase quibbles: cos(sin)</center></h5></td></tr></table>
 <p>
-Many simple extensions can be made to the fm instrument given above and 
-something good can often be coaxed from it.  But, to clear up one source of confusion, if you 
+There is a lot of music in simple FM.
+But, to clear up one source of confusion, if you 
 looked at the spectrum of our first example, and compared it to the spectrum Chowning works out, 
 you may wonder what's gone awry.  We have to return to our initial set of formulas.  If we consider 
 that:
@@ -862,7 +862,7 @@ and F(x) is -cos(x), so the constant term is B (i.e. -B*(-cos(0))).  That is, we
 equal (in this case) to the modulation index!   So the true carrier initial phase is a combination of the initial phase we 
 specify and the modulation index times the initial value of the integrated wave.
 </p>
-</p></small>
+</small>
 </td></tr></table>
 
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>asymmetric spectra</center></h5></td></tr></table>

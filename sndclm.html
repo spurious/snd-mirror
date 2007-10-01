@@ -2014,7 +2014,7 @@ sceq38:
 
 <p>
 As far as I know, most of these formulas have never been explored.
-A couple are special cases of the "Bessel function summation theorem", G&R 8.530:
+A couple are special cases of the "Bessel function summation theorem", G&amp;R 8.530:
 <img src="sceq38.png" alt="summation formula" align=absmiddle>,
 where Z stands for any of the various Bessel functions (J, Y, etc),
 and R stands for the Poisson-like business in the square root.
@@ -4528,15 +4528,13 @@ asyfm-I is the modified Bessel function version (the second formula in the <a hr
   <A class=def NAME="make-bess">make-bess</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (n 0)
   <A class=def NAME="bess">bess</A> gen fm
   <A class=def NAME="bess?">bess?</A> gen
-
-  <A class=def NAME="make-j0evencos">make-j0evencos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (index 1.0)
-  <A class=def NAME="j0evencos">j0evencos</A> gen fm
-  <A class=def NAME="j0evencos?">j0evencos?</A> gen
 </pre>
 
 <!-- LATEX: & J_{n}(x) = \frac{a}{\sqrt{x}}\sin(x+\delta) + \frac{r_{n}(x)}{x^{\frac{3}{2}}} \\ -->
 
-<p>bess produces the "n"th Bessel function.  The "frequency" argument actually makes sense here because the Bessel functions
+<p>bess produces the "n"th Bessel function.  The generator output is scaled to have a maximum of 1.0,
+so bess's output is not the same as the raw bessel function value returned by <a href="extsnd.html#besj0">bes-jn</a>.
+The "frequency" argument actually makes sense here because the Bessel functions
 are close to damped sinusoids after their initial hesitation:
 </p>
 <img src="sceq24.png" alt="Jn" hspace=40>
@@ -4553,10 +4551,18 @@ sceq35:
 
 <img src="sceq35.png" alt="J(sin) and cos(sin)" hspace=40>
 
-<p>The J0(sin) case is produced by the j0evencos generator.
-The output of both generators is normalized to a maxamp of 1.0 (and in j0evencos, the DC component is subtracted out),
-so bess's output is not the same as the raw bessel function value returned by <a href="extsnd.html#besj0">bes-jn</a>.
+<br>
+<br>
+
+<pre>
+  <A class=def NAME="make-j0evencos">make-j0evencos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (index 1.0)
+  <A class=def NAME="j0evencos">j0evencos</A> gen fm
+  <A class=def NAME="j0evencos?">j0evencos?</A> gen
+</pre>
+
+<p>j0evencos produces the J0(sin) case mentioned above (with the DC component is subtracted out).
 </p>
+
 <br>
 
 <pre>
@@ -4571,6 +4577,18 @@ Normalization is not handled correctly in all cases.
 
 <img src="sceq31.png" alt="jjcos" hspace=40>
 <br>
+<br>
+
+<pre>
+  <A class=def NAME="make-j0j1cos">make-j0j1cos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (index 0.0)
+  <A class=def NAME="j0j1cos">j0j1cos</A> gen fm
+  <A class=def NAME="j0j1cos?">j0j1cos?</A> gen
+</pre>
+
+<p>
+This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosines.  It is not yet normalized correctly.
+</p>
+
 
 
 <br><br>
@@ -4935,7 +4953,7 @@ with each component scaled by (r^(2k))/(2k)!.  r2sin output is not normalized.
   <A class=def NAME="r2k2cos?">r2k2cos?</A> gen
 </pre>
 
-<p>This produces a sum of coines, each scaled by 1/(r^2+k^2).
+<p>This produces a sum of cosines, each scaled by 1/(r^2+k^2).
 </p>
 <br>
 
