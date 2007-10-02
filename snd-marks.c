@@ -2065,7 +2065,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
 }
 
 
-static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync) 
+static XEN g_add_mark_1(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync, bool check_sample) 
 {
   #define H_add_mark "(" S_add_mark " samp :optional snd chn name (sync 0)): add a mark at sample samp returning the mark id."
   mark *m = NULL;
@@ -2083,7 +2083,13 @@ static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync)
   if (!cp) return(XEN_FALSE);
 
   loc = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);
-  if ((loc < 0) || (loc >= CURRENT_SAMPLES(cp)))
+
+  if ((!check_sample) &&
+      (loc >= CURRENT_SAMPLES(cp)))
+    return(XEN_FALSE);
+
+  if ((loc < 0) || 
+      (loc >= CURRENT_SAMPLES(cp)))
     XEN_ERROR(NO_SUCH_SAMPLE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_add_mark),
 			 samp_n));
@@ -2099,6 +2105,16 @@ static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync)
       return(C_TO_XEN_INT(m->id));
     }
   return(XEN_FALSE);
+}
+
+static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync)
+{
+  return(g_add_mark_1(samp_n, snd_n, chn_n, name, sync, true));
+}
+
+static XEN g_add_mark_unchecked(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync)
+{
+  return(g_add_mark_1(samp_n, snd_n, chn_n, name, sync, false));
 }
 
 
@@ -2386,22 +2402,28 @@ static mark *save_mark(chan_info *cp, mark *m, void *info)
   fprintf(sv->fd, "      ");
   for (i = 0; i < sv->size; i++) fprintf(sv->fd, "  "); /* lets */
 
+  /* here we need to use the "!" form of add-mark to ignore bad sample numbers -- these can come about during
+   *   the save-state process when redoable edits causing extensions are undone before marks are added,
+   *   possibly to the extended portion -- we'll simply drop those marks, rather than wrecking the restore
+   *   process with an error.
+   */
+
 #if HAVE_SCHEME
   if (m->name)
-    fprintf(sv->fd, "(add-mark " OFF_TD " sfile %d \"%s\" %s)\n", m->samp, cp->chan, m->name, mapped_sync);
-  else fprintf(sv->fd, "(add-mark " OFF_TD " sfile %d #f %s)\n", m->samp, cp->chan, mapped_sync);
+    fprintf(sv->fd, "(add-mark! " OFF_TD " sfile %d \"%s\" %s)\n", m->samp, cp->chan, m->name, mapped_sync);
+  else fprintf(sv->fd, "(add-mark! " OFF_TD " sfile %d #f %s)\n", m->samp, cp->chan, mapped_sync);
 #endif
 
 #if HAVE_RUBY
   if (m->name)
-    fprintf(sv->fd, "add_mark(" OFF_TD ", sfile, %d, \"%s\", %s)\n", m->samp, cp->chan, m->name, mapped_sync);
-  else fprintf(sv->fd, "add_mark(" OFF_TD ", sfile, %d, false, %s)\n", m->samp, cp->chan, mapped_sync);
+    fprintf(sv->fd, "add_mark!(" OFF_TD ", sfile, %d, \"%s\", %s)\n", m->samp, cp->chan, m->name, mapped_sync);
+  else fprintf(sv->fd, "add_mark!(" OFF_TD ", sfile, %d, false, %s)\n", m->samp, cp->chan, mapped_sync);
 #endif
 
 #if HAVE_FORTH
   if (m->name)
-    fprintf(sv->fd, OFF_TD " sfile %d \"%s\" %s add-mark drop\n", m->samp, cp->chan, m->name, mapped_sync);
-  else fprintf(sv->fd, OFF_TD " sfile %d #f %s add-mark drop\n", m->samp, cp->chan, mapped_sync);
+    fprintf(sv->fd, OFF_TD " sfile %d \"%s\" %s add-mark! drop\n", m->samp, cp->chan, m->name, mapped_sync);
+  else fprintf(sv->fd, OFF_TD " sfile %d #f %s add-mark! drop\n", m->samp, cp->chan, mapped_sync);
 #endif
 
   FREE(mapped_sync);
@@ -2533,6 +2555,7 @@ XEN_NARGIFY_0(g_mark_sync_max_w, g_mark_sync_max)
 XEN_ARGIFY_1(g_mark_home_w, g_mark_home)
 XEN_ARGIFY_3(g_marks_w, g_marks)
 XEN_ARGIFY_5(g_add_mark_w, g_add_mark)
+XEN_ARGIFY_5(g_add_mark_unchecked_w, g_add_mark_unchecked)
 XEN_NARGIFY_1(g_delete_mark_w, g_delete_mark)
 XEN_ARGIFY_2(g_delete_marks_w, g_delete_marks)
 XEN_NARGIFY_1(g_syncd_marks_w, g_syncd_marks)
@@ -2558,6 +2581,7 @@ XEN_NARGIFY_1(g_mark_p_w, g_mark_p)
 #define g_mark_home_w g_mark_home
 #define g_marks_w g_marks
 #define g_add_mark_w g_add_mark
+#define g_add_mark_unchecked_w g_add_mark_unchecked
 #define g_delete_mark_w g_delete_mark
 #define g_delete_marks_w g_delete_marks
 #define g_syncd_marks_w g_syncd_marks
@@ -2595,6 +2619,7 @@ void g_init_marks(void)
   XEN_DEFINE_PROCEDURE(S_mark_home,     g_mark_home_w,     0, 1, 0, H_mark_home);
   XEN_DEFINE_PROCEDURE(S_marks,         g_marks_w,         0, 3, 0, H_marks);
   XEN_DEFINE_PROCEDURE(S_add_mark,      g_add_mark_w,      0, 5, 0, H_add_mark);
+  XEN_DEFINE_PROCEDURE(S_add_mark "!",  g_add_mark_unchecked_w, 0, 5, 0, H_add_mark);
   XEN_DEFINE_PROCEDURE(S_delete_mark,   g_delete_mark_w,   1, 0, 0, H_delete_mark);
   XEN_DEFINE_PROCEDURE(S_delete_marks,  g_delete_marks_w,  0, 2, 0, H_delete_marks);
   XEN_DEFINE_PROCEDURE(S_syncd_marks,   g_syncd_marks_w,   1, 0, 0, H_syncd_marks);

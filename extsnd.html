@@ -4389,6 +4389,8 @@ The identifier is used to specify the mark in all the mark-related functions suc
 </pre>
 The mark-name can be set via 'name', and the mark-sync field via 'sync'.
 If 'sample' is beyond the end of the data, add-mark throws 'no-such-sample.
+There is also the form add-mark! which returns #f if the sample number is beyond the current last sample,
+rather than throwing the 'no-such-sample error.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

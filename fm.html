@@ -48,8 +48,8 @@ can express this (the vibrato, not the neat story) as:
 carrier".  Since cos takes an angle as its argument, f(t) modulates (that is, changes) the angle 
 passed to the cosine, hence the generic name "angle modulation".  We can add that change either to
 the argument to cos
-("phase modulation", cos(angle + change)), or add it to the current phase, then take cos of that 
-("frequency modulation", cos(angle += change)), so
+("phase modulation", <code>cos(angle + change)</code>), or add it to the current phase, then take cos of that 
+("frequency modulation", <code>cos(angle += change)</code>), so
 our fomula can viewed either way.  Textbooks usually mutter "strictly speaking 
 we can only take the cosine of an angle", and they put an explicit integral in when they mean 
 frequency modulation:
@@ -413,7 +413,7 @@ The important thing to get from these Bessel functions is that the higher the in
 more dispersed the spectral energy -- normally a brighter sound.
 </p>
 
-<table border=1 hspace=6 cellpadding=3><tr>
+<table border=1 cellpadding=3><tr>
 <td><img src="fm10.png" alt="fm 1.0"></td>
 <td><img src="fm20.png" alt="fm 2.0"></td>
 <td><img src="fm30.png" alt="fm 3.0"></td>
@@ -465,7 +465,7 @@ significant sidebands on each side of the carrier, so our total bandwidth is on 
 </p>
 
 <pre>
-   2 * mc-ratio * carrier * (fm-index + 1)
+   2 * modulator-frequency * (fm-index + 1)
 </pre>
 
 <p>This is a good approximation -- 99% of the signal power is within its limits.
@@ -476,13 +476,14 @@ significant sidebands on each side of the carrier, so our total bandwidth is on 
 <p>Then there's the perennial question "why Bessel functions?".  Consider our earlier
 expansion of cos(sin) in terms of sinusoids as a sort of Fourier transform of
 the simple FM equation. Looking at cos(sin) as the real part of
-e<sup>(jB sin w<sub>m</sub>t)</sup>, our expansion is evaluating
-</p>
+e<sup>(iB sin w<sub>m</sub>t)</sup>, our expansion is evaluating
 
+<!-- LATEX 
+fmeq17:
+\int_{-\pi}^{\pi}e^{i(B\sin \omega_{m}t - n\omega_{m}t)} \, \mathrm{d}t
+-->
 
-<!-- LATEX c_{n} = \frac{1}{\omega_{m}}\int_{-\pi}^{\pi}e^{j(B\sin \omega_{m}t - n\omega_{m}t)} \, \mathrm{d}t -->
-
-<img src="fmeq17.png" alt="e to j sin" hspace=20>
+<img src="fmeq17.png" alt="e to j sin" align=absmiddle>
 
 <!-- HTML
 <pre>
@@ -490,10 +491,10 @@ e<sup>(jB sin w<sub>m</sub>t)</sup>, our expansion is evaluating
 </pre>
 -->
 
-<p>which is one way of defining the Bessel functions (see also the earlier formulas for Jn(B)).
-This was the context in which F W Bessel used these functions; they had
-been studied earlier by Euler and Daniel Bernoulli (the vibrations of a heavy chain), and
-Fourier (the motion of heat in a cylinder), but Bessel, an astronomer, was interested in Kepler's equation.
+which is one way of defining the Bessel functions (see also the earlier formulas for Jn(B)).
+These functions had
+been studied before Bessel by Euler and Daniel Bernoulli (the vibrations of a heavy chain), and
+Fourier (the motion of heat in a cylinder); Bessel, an astronomer, encountered them in his work on Kepler's equation.
 There are brief historical snippits at 
 <a href="http://www.aam314.vzz.net/EB/Bessel.html">Encyclopedia Britannica</a> and <a href="http://www-groups.dcs.st-and.ac.uk/~history/Biographies/Bessel.html">Bios</a>.
 For an explanation of the connection between planetary motion and FM, see Benson, "Music: A Mathematical Offering".
@@ -1152,7 +1153,7 @@ spectrum somewhat. In general:
 <!-- -->
 </td></tr></table>
 
-<p>But this is silly -- I don't think all these modulators are buying us anything.  I say three is enough.  
+<p>
 My favorite computer instrument, the FM violin, uses three sinusoidal components in the 
 modulating wave; for more complex spectra these violins are then 
 ganged together (see fmviolin.clm for many examples).  By using a few sines in the modulator, you 

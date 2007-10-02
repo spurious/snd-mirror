@@ -392,11 +392,13 @@
 	 (outa i (nrcos gen (* (env index) (oscil mod))) *output*))))))
 
 (definstrument (nrcoser beg dur freq amp)
-  (let* ((gen (make-nrcos (* freq 5) :n 3 :r 0.5))
+  (let* ((res1 (max 1 (inexact->exact (round (/ 1000.0 (max 1.0 (min 1000.0 freq)))))))
+	 (gen (make-nrcos (* freq res1) :n (max 1 (- res1 2))))
 	 (mod (make-oscil freq))
 	 (start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur)))
-	 (index (make-env (list 0 .4 1 .1 (max dur 2.0) 0.0) :duration dur))
+	 (maxind (max .01 (min .3 (/ (- (log freq) 3.5) 8.0))))
+	 (index (make-env (list 0 maxind 1 (* maxind .25) (max dur 2.0) 0.0) :duration dur))
 	 (amplitude (make-env (list 0 0  .01 1  .2 1  .5 .5  1 .25  (max dur 2.0) 0.0) :duration dur :scaler amp)))
     (run 
      (lambda ()
@@ -415,10 +417,6 @@
   (do ((i 0 (1+ i)))
       ((= i 10))
     (nrcoser (* i .1) 2 (* 100 (1+ i)) .05)))
-
-;;; oboe has formants around 1K and 3K, with what sounds like air in the tube noise at around 1.4k
-;;;  by k down, but up seems less
-
 |#
 
 ;;; G&R 2nd col 1st and 2nd rows
@@ -462,6 +460,37 @@
 		(* rn1 (cos n1mx)))))
        den)))
 
+(define (nrssb-interp gen fm interp)
+  (declare (gen nrssb) (fm float))
+  (let* ((cx (nrssb-carangle gen))
+	 (mx (nrssb-modangle gen))
+	 (ci (nrssb-carincr gen))
+	 (mi (nrssb-modincr gen))
+	 (r (nrssb-r gen))
+	 (n (nrssb-n gen))
+	 (rn (- (expt r n)))
+	 (rn1 (expt r (+ n 1)))
+	 (nmx (* n mx))
+	 (n1mx (* (- n 1) mx))
+	 (norm (/ (- (expt r n) 1) (- r 1))) ; this could use rn
+	 (den (* norm (+ 1.0 (* -2.0 r (cos mx)) (* r r))))
+	 (cfm (* fm (/ (nrssb-carincr gen) (nrssb-modincr gen)))))
+
+    (set! (nrssb-carangle gen) (+ cx cfm ci))
+    (set! (nrssb-modangle gen) (+ mx fm mi))
+
+    (/ (- (* interp 
+	     (sin cx)
+	     (+ (* r (sin mx))
+		(* rn (sin nmx))
+		(* rn1 (sin n1mx))))
+	  (* (cos cx)
+	     (+ 1.0
+		(* -1.0 r (cos mx))
+		(* rn (cos nmx))
+		(* rn1 (cos n1mx)))))
+       den)))
+
 	  
 #|
 (with-sound (:clipped #f :statistics #t)
@@ -471,6 +500,44 @@
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
 	 (outa i (nrssb gen 0.0) *output*))))))
+
+(definstrument (nrcoser1 beg dur freq amp aenv)
+  (let* ((res1 (max 1 (inexact->exact (round (/ 1400.0 (max 1.0 (min 1400.0 freq)))))))
+	 (gen (make-nrssb (* freq res1) freq :n res1 :r 0.75))
+	 (mod (make-oscil 5.0))
+	 (res2 (max 1 (inexact->exact (round (/ 2400.0 (max 1.0 (min 2400.0 freq)))))))
+	 (gen2 (make-oscil (* freq res2)))
+	 (gen3 (make-oscil freq))
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (amplitude (make-env aenv :duration dur :base 4 :scaler amp)))
+    (run 
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let* ((vol (env amplitude))
+		(vib (* (hz->radians (* vol freq 0.1)) 
+			(oscil mod)))
+		(vola (* 0.05 (/ vol amp))))
+	   (outa i (* vol
+		      (+ (* (- .95 vola) (nrssb-interp gen vib -1.0))
+			 (* (+ .05 vola) (oscil gen2 (+ (* vib res2)
+							(* (hz->radians freq)
+							   (oscil gen3 vib)))))))
+	       *output*)))))))
+
+(with-sound (:clipped #f :statistics #t :play #t)
+  (nrcoser1 0 1 300 .1 '(0 0 1 1 2 0)))
+
+(with-sound (:clipped #f :statistics #t :play #t)
+  (do ((i 0 (1+ i)))
+      ((= i 10))
+    (nrcoser1 (* i .3) .4 (+ 100 (* 50 i)) .05 '(0 0 1 1 2 1 3 0))))
+
+
+;; TODO: try noise ds, frq skw? 3rd f? broader 2nd? = cos*nrcos perhaps
+
+;;; .85 .15 (* 2 freq) 300, 2400 + 0.5*vib
 |#
 
 
@@ -2227,3 +2294,77 @@ index 10 (so 10/2 is the bes-jn arg):
 	   ((= i 30000))
 	 (outa i (j0j1cos gen 0.0) *output*))))))
 |#
+
+;;; --------------------------------------------------------------------------------
+
+
+(def-clm-struct (jycos
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (jycos-incr g) (hz->radians (jycos-frequency g)))
+		   (let ((a (jycos-a g))
+			 (r (jycos-r g)))
+		     (if (<= (+ (* a a) (* r r)) (* 2 a r))
+			 (format #t ";jycos a: ~A, r: ~A will cause bes-y0 to return -inf!" a r)))
+		   g))
+  (frequency 0.0) (r 1.0) (a 0.5) ; "b" and "c" in the docs
+  (angle 0.0) (incr 0.0))
+
+(define (jycos gen fm)
+  (declare (gen jycos) (fm float))
+  (let* ((x (jycos-angle gen))
+	 (b (jycos-r gen))
+	 (c (jycos-a gen))
+	 (dc (* (bes-y0 b) (bes-j0 c)))
+	 )
+    (set! (jycos-angle gen) (+ x fm (jycos-incr gen)))
+    (- (bes-y0 (sqrt (+ (* b b) (* c c) (* -2.0 b c (cos x)))))
+       dc)))
+
+;;; TODO: jycos dc and norm
+
+;;; oops -- bes-y0(0) is -inf!
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-jycos 100.0 1.0 1.5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000))
+	 (outa i (jycos gen 0.0) *output*))))))
+|#
+
+;;; --------------------------------------------------------------------------------
+
+#|
+(def-clm-struct (jcos
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (jcos-incr g) (hz->radians (jcos-frequency g)))
+		   g))
+  (frequency 0.0) (n 0 :type int) (r 1.0) (a 0.5) ; "b" and "c" in the docs
+  (angle 0.0) (incr 0.0))
+
+(define (jcos gen fm)
+  (declare (gen jcos) (fm float))
+  (let* ((x (jcos-angle gen))
+	 (b (jcos-r gen))
+	 (c (jcos-a gen))
+	 (n (jcos-n gen))
+	 (dc (* (bes-j0 b) (bes-j0 c)))
+	 )
+    (set! (jcos-angle gen) (+ x fm (jcos-incr gen)))
+    (- (bes-jn n (* (+ n 1) (sqrt (+ (* b b) (* c c) (* -2.0 b c (cos x))))))
+       dc)))
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-jcos 100.0 0 1.0 1.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000))
+	 (outa i (jcos gen 0.0) *output*))))))
+|#
+
+;;; --------------------------------------------------------------------------------

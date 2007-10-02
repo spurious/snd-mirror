@@ -4589,6 +4589,16 @@ Normalization is not handled correctly in all cases.
 This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosines.  It is not yet normalized correctly.
 </p>
 
+<br>
+
+<pre>
+  <A class=def NAME="make-jycos">make-jycos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 1.0) (a 1.0)
+  <A class=def NAME="jycos">jycos</A> gen fm
+  <A class=def NAME="jycos?">jycos?</A> gen
+</pre>
+
+<p>This uses bes-y0 to produce components scaled by Yn(r)*Jn(a).  bes-y0(0) is -inf, so a^2 + r^2 should be greater than 2ar.
+</p>
 
 
 <br><br>
@@ -4721,11 +4731,13 @@ as the carrier, there's no point in an ssb version.  nxysin output is not normal
 
   <A class=def NAME="make-nrssb">make-nrssb</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1) (r 0.0)
   <A class=def NAME="nrssb">nrssb</A> gen
+  <A class=def NAME="nrssbinterp">nrssb-interp</A> gen fm interp
   <A class=def NAME="nrssb?">nrssb?</A> gen
 </pre>
 
 <p>These produce the sum of "n" sinusoids, with successive sinusoids scaled by "r".  (The nth component has amplitude r^n).
 nrsin is the same as <a href="#sine-summation">sine-summation</a>.
+In the nrssb-interp generator, the "interp" argument interpolates between the upper (interp=1.0) and lower (interp=-1.0) side bands.
 </p>
 <br>
 
