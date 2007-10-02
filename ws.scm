@@ -402,7 +402,7 @@ returning you to the true top-level."
 		    (if to-snd 
 			snd-print 
 			display))
-		(format #f "~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
+		(format #f "~%;~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
 			      (if output-to-file
 				  output-1
 				  (if (vct? output-1) "vct" 
