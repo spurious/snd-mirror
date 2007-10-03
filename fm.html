@@ -1228,6 +1228,96 @@ spectrum somewhat. In general:
 <!-- -->
 </td></tr></table>
 
+<table border=1 hspace=40 vspace=20 cellpadding=5>
+<tr><td>
+<img src="multifm.png" alt="multi fm picture">
+</td>
+<td>
+<pre>
+  200Hz is -0.106 (i = -1, k = -1)
+           -0.106 (i = -1, k = 1) 
+           -0.213 -> 0.306 normalized
+
+  2000Hz:  -0.023 (i = -2, k = 0)
+            0.718 (i = 0, k = 0)
+            0.695 -> 1.0 normalized
+
+  1800Hz:  -0.013 (i = -2, k = 1)
+           -0.413 (i = 0, k = -1)
+           -0.426 -> 0.614 normalized
+</pre>
+<small>(i is the 2000 Hz part, k the 200 Hz, and this is a really simple case!)</small>
+</tr>
+<tr><td colspan=2 bgcolor="#f6f8ff"><center>(with-sound () (fm 0 2.0 2000 .5 '(1 .1) '(0.5 1.0) 0.0 '(1.855 1.599)))</center></td></tr>
+</table>
+
+<!--
+here's the code to get that info:
+
+(with-sound () 
+  (fm 0 2.0 2000 .5 '(1 .1) '(0.5 1.0) 0.0 (list (* 0.5 (+ pi (hz->radians 2000))) (* 0.5 (+ pi (hz->radians 200))))))
+
+(define (calcit wc wm1 wm2 b1 b2)
+  (let ((sums (make-vector 400 0.0))
+	(freqs (make-vector 400 0.0))
+	(curfreqs 0))
+    (do ((i -10 (1+ i)))
+	((= i 10))
+      (do ((j -10 (1+ j)))
+	  ((= j 10))
+	(let* ((freq (+ wc (* i wm1) (* j wm2)))
+	       (curfreq (abs freq))
+	       (amount (* (bes-jn i b1) (bes-jn j b2))) ; can be negative
+	       (curamount (if (< freq 0.0) (- amount) amount))
+	       (happy #f))
+	  (if (> (abs amount) 1.0e-6)
+	      (begin
+		(do ((k 0 (1+ k)))
+		    ((or happy 
+			 (>= k curfreqs)))
+		  (if (< (abs (- curfreq (vector-ref freqs k))) 0.1)
+		      (begin
+			(set! happy #t)
+
+			(snd-display ";~A ~A" curfreq curamount)
+			(if (< (abs (- 2000 curfreq)) 0.1)
+			    (snd-display ";2000 add ~A from i:~A at ~A and j:~A at ~A" curamount i (bes-jn i b1) j (bes-jn j b2)))
+			(if (< (abs (- 1800 curfreq)) 0.1)
+			    (snd-display ";1800 add ~A from i:~A at ~A and j:~A at ~A" curamount i (bes-jn i b1) j (bes-jn j b2)))
+			(if (< (abs (- 200 curfreq)) 0.1)
+			    (snd-display ";200 add ~A from i:~A at ~A and j:~A at ~A" curamount i (bes-jn i b1) j (bes-jn j b2)))
+
+			(vector-set! sums k (+ (vector-ref sums k) curamount)))))
+		(if (not happy)
+		    (begin
+		      (snd-display ";start ~A: ~A" curfreq curamount)
+			(if (< (abs (- 2000 curfreq)) 0.1)
+			    (snd-display ";2000 add ~A from i:~A at ~A and j:~A at ~A" curamount i (bes-jn i b1) j (bes-jn j b2)))
+			(if (< (abs (- 1800 curfreq)) 0.1)
+			    (snd-display ";1800 add ~A from i:~A at ~A and j:~A at ~A" curamount i (bes-jn i b1) j (bes-jn j b2)))
+			(if (< (abs (- 200 curfreq)) 0.1)
+			    (snd-display ";200 add ~A from i:~A at ~A and j:~A at ~A" curamount i (bes-jn i b1) j (bes-jn j b2)))
+
+		      (vector-set! freqs curfreqs curfreq)
+		      (vector-set! sums curfreqs curamount)
+		      (set! curfreqs (1+ curfreqs)))))))))
+
+    (let ((base 0.0))
+      (do ((i 0 (1+ i)))
+	  ((= i curfreqs))
+	(if (< (abs (- 2000 (vector-ref freqs i))) 0.1)
+	    (set! base (vector-ref sums i))))
+      (if (= base 0.0)
+	  (snd-display "can't find 2000 case?")
+	  (begin
+	    (snd-display ";base: ~A" base)
+	    (do ((i 0 (1+ i)))
+		((= i curfreqs))
+	      (snd-display ";~A: ~A -> ~A" (vector-ref freqs i) (vector-ref sums i) (/ (vector-ref sums i) base))))))))
+
+(calcit 2000 2000 200 0.5 1.0)
+-->
+
 <p>
 My favorite computer instrument, the FM violin, uses three sinusoidal components in the 
 modulating wave; for more complex spectra these violins are then 
@@ -1345,7 +1435,19 @@ sometimes called "cascade FM":
     (* A (oscil carrier (* B (oscil modulator (* C (oscil cascade))))))
 </pre>
 
-<p>and we can get an extremely complex spectrum in no time.  Unfortunately, FM can produce energy 
+<p>and we can get an extremely complex spectrum in no time.  Each component of the
+lower pair of oscillators is surrounded by the spectrum produced by the upper pair,
+sort of like a set of formant regions.
+</p>
+
+<table border=1 hspace=40><tr><td>
+<img src="cascade.png" alt="cascade fm picture">
+</td></tr>
+<tr><td bgcolor="#f6f8ff"><center>osc A: 2000 Hz, osc B: 500 Hz, index 1.5, osc C: 50 Hz, index 1.0</center></td></tr>
+</table>
+
+
+<p>Unfortunately, FM can produce energy 
 at 0Hz (when, for example, the carrier frequency equals the modulating frequency), and that 0Hz ("DC") component becomes a constant offset in the 
 lower of the two FM pairs. So our fundamental frequency no longer has any obvious relation to
 <img src="fmeq43.png" alt="wc" align=absmiddle>!
@@ -1427,6 +1529,10 @@ to show how strong this effect is:
 (with-sound () 
   (cascade 0 1.0 400 .25 1.0 1.0 1.0 1.0 0)
   (cascade 1.5 1.0 400 .25 1.0 1.0 1.0 1.0 (* .5 pi)))
+
+;;; clean it up by using the no-DC initial phase:
+(with-sound () 
+  (cascade 0 1.0 400 .25 1 1.0 1 1.0 (* 0.5 (+ pi (hz->radians 400)))))
 </pre>
 <!-- -->
 

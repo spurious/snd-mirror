@@ -1116,6 +1116,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	(vector-set! res w sum)))
     res))
 
+;;; TODO: try fft display with phase->color
+
 ;;; -------- slow Hartley transform 
 
 (define (dht data) 
