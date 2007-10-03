@@ -1960,39 +1960,37 @@
 ;;; fm.html
 
 (define (fmdoc-pm beg end freq amp mc-ratio index)
-  (let ((carrier-phase 0.0)
+  (let ((carrier-phase 0.0) ; set to pi/2 if someone tells you PM can't produce energy at 0Hz
         (carrier-phase-incr (hz->radians freq))
         (modulator-phase 0.0)
-        (modulator-phase-incr (hz->radians (* freq mc-ratio))))
-   (run
-    (lambda ()
-      (do ((i beg (1+ i)))
-	  ((= i end))
-	(let* ((modulation (* index (sin modulator-phase)))
-	       (pm-val (* amp (sin (+ carrier-phase modulation))))) 
-	       ; no integration in phase modulation
-	  (set! carrier-phase (+ carrier-phase carrier-phase-incr))
-	  (set! modulator-phase (+ modulator-phase modulator-phase-incr))
-	  (outa i pm-val *output*)))))))
+        (modulator-phase-incr (hz->radians (* mc-ratio freq))))
+    (run (lambda ()
+    (do ((i beg (1+ i)))
+	((= i end))
+      (let* ((modulation (* index (sin modulator-phase)))
+	     (pm-val (* amp (sin (+ carrier-phase modulation))))) 
+	     ;; no integration in phase modulation (it's a phase change)
+	(set! carrier-phase (+ carrier-phase carrier-phase-incr))
+	(set! modulator-phase (+ modulator-phase modulator-phase-incr))
+	(outa i pm-val *output*)))))))
 
 (define (fmdoc-fm beg end freq amp mc-ratio index)
-  (let ((carrier-phase 0.0)
-        (carrier-phase-incr (hz->radians freq))
-        (modulator-phase (* .5 pi))
-        (modulator-phase-incr (hz->radians (* freq mc-ratio)))
-        (fm-index (hz->radians (* freq mc-ratio index)))) 
-	; fix up fm index to take integration into account
-  (run
-   (lambda ()
-     (do ((i beg (1+ i)))
-	 ((= i end))
-       (let ((modulation (* fm-index (sin modulator-phase))))
-	 (set! carrier-phase (+ carrier-phase modulation)) 
-	 ; here is the fm integration
-	 (let ((fm-val (* amp (sin carrier-phase))))
-	   (set! carrier-phase (+ carrier-phase carrier-phase-incr))
-	   (set! modulator-phase (+ modulator-phase modulator-phase-incr))
-	   (outb i fm-val *output*))))))))
+  (let* ((carrier-phase 0.0)
+	 (carrier-phase-incr (hz->radians freq))
+	 (modulator-phase-incr (hz->radians (* mc-ratio freq)))
+	 (modulator-phase (* 0.5 (+ pi modulator-phase-incr)))
+	 ;; (pi+incr)/2 to get (centered) sin after integration, to match pm case above
+	 ;;   I believe this is what causes most of the confusion
+	 (fm-index (hz->radians (* mc-ratio freq index))))
+	;; fix up fm index (it's a frequency change)
+    (run (lambda ()
+    (do ((i beg (1+ i)))
+	((= i end))
+      (let ((modulation (* fm-index (sin modulator-phase)))
+	    (fm-val (* amp (sin carrier-phase))))
+	(set! carrier-phase (+ carrier-phase modulation carrier-phase-incr))
+	(set! modulator-phase (+ modulator-phase modulator-phase-incr))
+	(outb i fm-val *output*)))))))
 
 (define* (fmdoc-fm-1 beg dur freq amp mc-ratio index :optional (index-env '(0 1 100 1)))
   (let* ((start (seconds->samples beg))

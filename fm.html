@@ -52,7 +52,7 @@ passed to the cosine, hence the generic name "angle modulation".  We can add tha
 the argument to cos
 ("phase modulation", <code>cos(angle + change)</code>), or add it to the current phase, then take cos of that 
 ("frequency modulation", <code>cos(angle += change)</code>), so
-our fomula can viewed either way.  Since the "angle" is being incremented by the carrier frequency in
+our fomula can viewed either way.  Since the angle is being incremented by the carrier frequency in
 either case, the difference is between:
 </p>
 <pre>
@@ -92,11 +92,11 @@ there is no essential difference between frequency and phase modulation.
 <table border=1 hspace=50 cellpadding=14><tr><td>
 
 <p>I would call this issue a dead horse, but it is still causing confusion, even 40 years
-down the road (see, for example, the Wikipedia entry for FM synthesis). So,
+down the road. So,
 here are two CLM instruments, one performing 
 phase modulation, the other performing frequency modulation.  I have tried to make the innards 
-explicit at each step, and match the indices so that the instruments produce identical results given 
-identical parameters.  Also, to lay a different controversy to rest, it should be obvious from these two 
+explicit at each step, and match the indices so that the instruments produce the same results given 
+the same parameters.  Also, to lay a different controversy to rest, it should be obvious from these two 
 functions that there is no difference in run-time computational expense or accuracy between PM and FM.
 </p>
 
@@ -115,7 +115,7 @@ functions that there is no difference in run-time computational expense or accur
      (loop for i from beg to end do
        (setf modulation (* index (sin modulator-phase)))
        (setf val (* amp (sin (+ carrier-phase modulation)))) 
-       ; no integration in phase modulation (it's a phase change)
+       ;; no integration in phase modulation
        (incf carrier-phase carrier-phase-incr)
        (incf modulator-phase modulator-phase-incr)
        (outa i val)))))
@@ -125,17 +125,16 @@ functions that there is no difference in run-time computational expense or accur
          (carrier-phase-incr (hz-&gt;radians freq))
          (modulator-phase-incr (hz-&gt;radians (* freq mc-ratio)))
          (modulator-phase (* 0.5 (+ pi modulator-phase-incr)))
-	 ;; pi/2 to get sin after integration, and account for the constant of integration
-	 ;;   I believe this is what causes most of the confusion
+	 ;; (pi+incr)/2 to get (centered) sin after integration, to match pm case above
          (fm-index (hz-&gt;radians (* freq mc-ratio index)))  
-	 ; fix up fm index to take integration into account (it's a frequency change)
+	 ;; fix up fm index (it's a frequency change)
          (val 0.0)
          (modulation 0.0))
    (run
      (loop for i from beg to end do
        (setf modulation (* fm-index (sin modulator-phase)))
        (incf carrier-phase modulation)      
-       ; here is the fm integration
+       ;; here is the fm integration
        (setf val (* amp (sin carrier-phase)))
        (incf carrier-phase carrier-phase-incr)
        (incf modulator-phase modulator-phase-incr)
@@ -157,7 +156,7 @@ functions that there is no difference in run-time computational expense or accur
 	((= i end))
       (let* ((modulation (* index (sin modulator-phase)))
 	     (pm-val (* amp (sin (+ carrier-phase modulation))))) 
-	     ;; no integration in phase modulation (it's a phase change)
+	     ;; no integration in phase modulation
 	(set! carrier-phase (+ carrier-phase carrier-phase-incr))
 	(set! modulator-phase (+ modulator-phase modulator-phase-incr))
 	(outa i pm-val *output*)))))
@@ -167,8 +166,7 @@ functions that there is no difference in run-time computational expense or accur
 	 (carrier-phase-incr (hz-&gt;radians freq))
 	 (modulator-phase-incr (hz-&gt;radians (* mc-ratio freq)))
 	 (modulator-phase (* 0.5 (+ pi modulator-phase-incr)))
-	 ;; pi/2 to get sin after integration, and account for the constant of integration
-	 ;;   I believe this is what causes most of the confusion
+	 ;; (pi+incr)/2 to get (centered) sin after integration, to match pm case above
 	 (fm-index (hz-&gt;radians (* mc-ratio freq index))))
 	;; fix up fm index (it's a frequency change)
     (do ((i beg (1+ i)))
@@ -190,6 +188,78 @@ functions that there is no difference in run-time computational expense or accur
 <!-- -->
 
 </td></tr></table>
+
+
+<!-- a check of these instruments:
+
+(define (channel-distance-max s1 c1 s2 c2)
+  (let* ((r1 (make-sample-reader 0 s1 c1))
+	 (r2 (make-sample-reader 0 s2 c2))
+	 (sum 0.0)
+	 (mx 0.0)
+	 (mxloc 0)
+	 (N (min (frames s1 c1) (frames s2 c2))))
+    (do ((i 0 (1+ i)))
+	((= i N))
+      (let ((diff (- (r1) (r2))))
+	(if (> (abs diff) mx)
+	    (begin
+	      (set! mx (abs diff))
+	      (set! mxloc i)))
+	(set! sum (+ sum (* diff diff)))))
+    (list (sqrt sum) mx mxloc)))
+
+
+(with-sound (:channels 2 :srate 44100)
+	    (pm 0 100000 1000 .25 0.5 4)
+	    (fm 0 100000 1000 .25 0.5 4))
+
+(channel-distance-max 0 0 0 1)
+(0.0295699815499316 2.01372429728508e-4 54261)
+
+
+(with-sound (:channels 2 :srate 44100)
+	    (pm 0 100000 1000 .25 0.5 10)
+	    (fm 0 100000 1000 .25 0.5 10))
+
+(channel-distance-max 0 0 0 1)
+(0.0930102199004151 5.19216060638428e-4 97657)
+
+
+(with-sound (:channels 2 :srate 44100)
+	    (pm 0 100000 4000 .5 .25 10)
+	    (fm 0 100000 4000 .5 .25 10))
+
+(channel-distance-max 0 0 0 1)
+(0.619834957208772 0.00419910810887814 99588)
+
+
+(with-sound (:channels 2 :srate 441000)
+	    (pm 0 100000 4000 .5 .25 10)
+	    (fm 0 100000 4000 .5 .25 10))
+
+(channel-distance-max 0 0 0 1)
+(0.00620158844593978 4.19728457927704e-5 339)
+
+
+(with-sound (:channels 2 :srate 22050)
+	    (fmdoc-pm 0 100000 4000 .5 .25 10)
+	    (fmdoc-fm 0 100000 4000 .5 .25 10))
+
+(channel-distance-max 0 0 0 1)
+(2.47456807755109 0.0168174412101507 99627)
+
+;;; the difference is proportional to the inverse square of the sampling rate,
+;;;   which I interpret as caused by the "centering" -- it is hard to say what
+;;;   the "true" or effective FM modulator initial-phase is, so a naive comparison
+;;;   with the bessel functions makes FM look "inaccurate".  We can turn the
+;;;   tables by using cos, and a PM modulator initial phase of
+;;;       (+ pi (* 0.5 (+ pi (hz->radians mfreq))))
+;;;   (to match outputs), then complain that PM is inaccurate. Just to add to 
+;;;   the confusion, in the latter case, the difference seems to be directly 
+;;;   proportional to srate(?) -- enough...
+
+-->
 
 
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>simple FM: sin(sin)</center></h5></td></tr></table>
