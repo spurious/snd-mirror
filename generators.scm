@@ -1849,8 +1849,6 @@ which again matches
 	  dc)        ; get rid of DC component
        (- 1.0 dc)))) ; normalize
 
-
-
 #|
 (with-sound (:clipped #f :statistics #t)
   (let ((gen (make-j0evencos 100.0 1.0)))
@@ -1876,6 +1874,69 @@ index 10 (so 10/2 is the bes-jn arg):
 ;8: 3.38752000110201e-4 0.00221315753353599
 ;9: 3.04735259399795e-5 1.99091705688911e-4
 ;10: 2.15444461145164e-6 1.4075563600714e-5
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-j0evencos 100.0 0.0)) 
+	(indf (make-env '(0 0 1 20) :end 30000)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000)) 
+	 (set! (j0evencos-index gen) (env indf))
+	 (outa i (* 0.5 (j0evencos gen 0.0)) *output*))))))
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-j0evencos 100.0 0.0)) 
+	(indf (make-env '(0 0 1 20) :end 30000))
+	(carrier (make-oscil 2000.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000)) 
+	 (set! (j0evencos-index gen) (env indf))
+	 (outa i (* 0.5 (oscil carrier) (j0evencos gen 0.0)) *output*))))))
+
+;;; why no "carrier"?  I subtracted DC out above -- to make this look right, I need to use the bes(sin) without any fixup.
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-j0evencos 100.0 0.0)) 
+	(indf (make-env '(0 20 1 0) :end 30000))
+	(carrier (make-oscil 2000.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000)) 
+	 (set! (j0evencos-index gen) (env indf))
+	 (outa i (* 0.5 (j0evencos gen (oscil carrier))) *output*))))))
+
+(with-sound (:clipped #f :statistics #t :play #t :srate 44100)
+  (let ((gen (make-j0evencos 100.0 0.0)) 
+	(indf (make-env '(0 10 1 0) :end 30000))
+	(carrier (make-oscil 2000.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000)) 
+	 (set! (j0evencos-index gen) (env indf))
+	 (outa i (* 0.5 (j0evencos gen (* .1 (oscil carrier)))) *output*))))))
+
+(define (j0even beg dur freq amp mc-ratio index)
+  (let* ((gen (make-j0evencos (* mc-ratio freq) 0.0)) 
+	 (indf (make-env '(0 10 1 0) :duration dur))
+	 (carrier (make-oscil freq))
+	 (start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur))))
+    (run 
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (set! (j0evencos-index gen) (env indf))
+	 (outa i (* 0.5 (j0evencos gen (* index (oscil carrier)))) *output*))))))
+
+(with-sound (:clipped #f :statistics #t :play #t :srate 44100)
+	    (do ((i 0 (1+ i)))
+		((= i 10))
+	      (j0even i 1.0 2000.0 0.5 (+ .1 (* .05 i)) 0.1)))
 |#
 
 
