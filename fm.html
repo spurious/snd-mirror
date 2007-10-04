@@ -1103,6 +1103,9 @@ a moving formant).  Here we sweep "r" from -1.0 to -20.0, with an index of 3, m/
 <img src="asyfm.png" alt="asy spectra">
 
 
+<!-- PERHAPS: e^pcos and ssb stuff here? -->
+<!-- PERHAPS: j(zsin)? -->
+
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>complex FM: sin(sin+sin)</center></h5></td></tr></table>
 
 <p>
@@ -1175,6 +1178,8 @@ spectrum somewhat. In general:
 </pre>
 -->
 
+<!-- PERHAPS: colors to show contributions using fm-violin and different fm envs -->
+
 <p>A CLM instrument to produce something like this might be:
 </p>
 
@@ -1236,22 +1241,23 @@ spectrum somewhat. In general:
 <pre>
   200Hz is -0.106 (i = -1, k = -1)
            -0.106 (i = -1, k = 1) 
-           -0.213 -> 0.306 normalized
+           -0.213 -&gt; 0.306 normalized
 
   2000Hz:  -0.023 (i = -2, k = 0)
             0.718 (i = 0, k = 0)
-            0.695 -> 1.0 normalized
+            0.695 -&gt; 1.0 normalized
 
   1800Hz:  -0.013 (i = -2, k = 1)
            -0.413 (i = 0, k = -1)
-           -0.426 -> 0.614 normalized
+           -0.426 -&gt; 0.614 normalized
 </pre>
 <small>(i is the 2000 Hz part, k the 200 Hz, and this is a really simple case!)</small>
-</tr>
+</td></tr>
 <tr><td colspan=2 bgcolor="#f6f8ff"><center>(with-sound () (fm 0 2.0 2000 .5 '(1 .1) '(0.5 1.0) 0.0 '(1.855 1.599)))</center></td></tr>
 </table>
 
 <!--
+TODO: fixup calcit for any number of mods and put in dsp.scm? (mention it here?)
 here's the code to get that info:
 
 (with-sound () 
@@ -1316,6 +1322,32 @@ here's the code to get that info:
 	      (snd-display ";~A: ~A -> ~A" (vector-ref freqs i) (vector-ref sums i) (/ (vector-ref sums i) base))))))))
 
 (calcit 2000 2000 200 0.5 1.0)
+
+here's another version:
+
+;(multifm-component 200 2000.0 (list 2000.0 200.0) (list 0.5 1.0) '() '() #t)
+
+(define (multifm-component freq-we-want wc wms inds ns bs using-sine)
+  (if (not (null? wms))
+      (let* ((sum 0.0)
+	     (index (car inds))
+	     (mx (inexact->exact (ceiling (* 5 index))))
+	     (wm (car wms)))
+	(do ((k (- mx) (1+ k)))
+	    ((>= k mx) sum)
+	  (set! sum (+ sum (multifm-component freq-we-want (+ wc (* k wm)) (cdr wms) (cdr inds) 
+					      (append ns (list k)) (append bs (list index)) 
+					      using-sine)))))
+      (if (< (abs (- freq-we-want (abs wc))) .1)
+	  (let ((bmult 1.0))
+	    (for-each
+	     (lambda (n index)
+	       (set! bmult (* bmult (bes-jn n index))))
+	     ns bs)
+	    (if (and using-sine (< wc 0.0)) (set! bmult (- bmult)))
+	    (snd-display ";add ~A from ~A ~A" bmult ns bs)
+	    bmult)
+	  0.0)))
 -->
 
 <p>
@@ -1324,20 +1356,7 @@ modulating wave; for more complex spectra these violins are then
 ganged together (see fmviolin.clm for many examples).  By using a few sines in the modulator, you 
 get away from the simple FM index sweep that has become tiresome, and the broader, flatter spectrum 
 is somewhat closer to that of a real violin.
-</p>
-
-<table border=1 hspace=50 cellpadding=4><tr><td>
-<small>
-<p>The lumpy nature of the simple FM spectrum can be seen in figures given earlier.
-The main lump is 
-near n=B, a most unfortunate fact if we are trying to mimic the spectra of normal musical instruments.  Long 
-time FM'ers have tied themselves in elaborate knots trying to palliate this sore thumb of a bump; parallel modulators are 
-merely a simple and obvious bandage.
-</p>
-</small>
-</td></tr></table>
-
-<p>A pared down version of the fm-violin is:
+A pared down version of the fm-violin is:
 </p>
 
 <table border=0 bgcolor="#f6f8ff" hspace=20><tr><td>
@@ -1446,6 +1465,31 @@ sort of like a set of formant regions.
 <tr><td bgcolor="#f6f8ff"><center>osc A: 2000 Hz, osc B: 500 Hz, index 1.5, osc C: 50 Hz, index 1.0</center></td></tr>
 </table>
 
+<!--
+cascade.png:
+
+(define (cascade1 beg dur freq amp modfreq modind modpha casfreq casind caspha)
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (cr (make-oscil freq))
+	 (md (make-oscil modfreq modpha))
+	 (ca (make-oscil casfreq caspha))
+	 (fm-ind0 (hz->radians (* modind modfreq)))
+	 (fm-ind1 (hz->radians (* casind casfreq))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (outa i (* amp 
+                    (oscil cr (* fm-ind0 
+                                 (oscil md (* fm-ind1 
+                                              (oscil ca))))))
+                 *output*))))))	
+
+(with-sound () 
+  (cascade1 0 1.0 2000 .25  500 1.5 (* 0.5 (+ pi (hz->radians 500)))  50 1.0 (+ pi (* 0.5 (hz->radians 550)))))
+				      
+-->
 
 <p>Unfortunately, FM can produce energy 
 at 0Hz (when, for example, the carrier frequency equals the modulating frequency), and that 0Hz ("DC") component becomes a constant offset in the 
@@ -1475,9 +1519,8 @@ spectra, and that is pretty hard if we can't predict what our modulator/carrier 
 Mattox's fm-drum can ignore such niceties.  If you are using low indices and the top pair's 
 mc-ratios are below 1.0 (in vibrato, for example), you have a good chance of getting usable results.  
 If you want cascade FM to work in other situations, make sure the top oscil has an initial phase of 
-(pi + mod-incr)/2.  The middle FM spectrum will then have only sines (not cosines), so the DC amplitude will 
-(sometimes) be 0.  Even the tiniest error in the top oscil's phase becomes a beat, inharmonicity, or a 
-timbral change in the output, so cascade FM is almost impossible to keep under control.
+(pi + mod-incr)/2.  The middle FM spectrum will then have only sines (not cosines), so the DC component
+will be thouroughly discouraged.  (The not-so-well-hidden-message: Use PM with sine here).
 </p>
 
 
@@ -1532,11 +1575,49 @@ to show how strong this effect is:
 
 ;;; clean it up by using the no-DC initial phase:
 (with-sound () 
-  (cascade 0 1.0 400 .25 1 1.0 1 1.0 (* 0.5 (+ pi (hz->radians 400)))))
+  (cascade 0 1.0 400 .25 1 1.0 1 1.0 (* 0.5 (+ pi (hz-&gt;radians 400)))))
 </pre>
 <!-- -->
-
 </td></tr></table>
+
+<p>Why stop at three sins?  Here's an experiment that calls sin(sin(sin...)) k times;
+it seems to be approaching a square wave as k heads into the stratosphere:
+</p>
+
+<!--
+(with-sound () 
+  (let ((angle 0.0)
+	(incr (hz-&gt;radians 100.0)))
+    (do ((i 0 (1+ i)))
+	((= i 20000))
+      (let* ((result (sin angle)))
+	(do ((k 0 (1+ k)))
+	    ((= k 2))
+	  (set! result (sin result)))
+	(set! angle (+ angle incr))
+	(outa i result *output*)))))
+-->
+
+<table border=1 hspace=40>
+<tr>
+<td>
+<img src="sin3.png" alt="3 sins">
+</td>
+<td>
+<img src="sin30.png" alt="30 sins">
+</td>
+<td>
+<img src="sin300.png" alt="300 sins">
+</td>
+</tr>
+<tr>
+<td bgcolor="#f6f8ff"><center>k=3</center></td>
+<td bgcolor="#f6f8ff"><center>k=30</center></td>
+<td bgcolor="#f6f8ff"><center>k=300</center></td>
+</tr></table>
+</tr></table>
+
+<br>
 
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>feedback FM: sin(x=sin(x))</center></h5></td></tr></table>
 
@@ -1759,8 +1840,12 @@ smeared out by a copy of the noise band:
 
 <p>where "sound file" is any recorded sound.  I call this "contrast-enhancement" in the CLM package.  It 
 makes a sound crisper; "Wait for Me!" uses it whenever a sound needs to cut through a huge 
-mix.
+mix. 
 </p>
+
+
+<!-- PERHAPS: forbidden planet src ins? -->
+<!-- PERHAPS: tri(tri) et al? -->
 
 
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>FM voice</center></h5></td></tr></table>
@@ -1770,7 +1855,8 @@ modulators, and depend upon vibrato and "spectral fusion" to make the result sou
 In this cross between additive synthesis (the multiple carriers) and FM (the formant centered on 
 each carrier), we get around many of the limitations of the Bessel functions.  There are numerous 
 examples in fmviolin.clm.  One of the raspier 
-versions of the fm-violin used a sawtooth wave as the carrier.  
+versions of the fm-violin used a sawtooth wave as the carrier, and some sci-fi sound effects use
+triangle waves as both carrier and modulator.
 One of the more elaborate multi-carrier FM instruments is the voice instrument written by Marc Le Brun,
 and used in "Colony" and other pieces. In a simplified form it is:
 </p>
