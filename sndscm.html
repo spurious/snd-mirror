@@ -2260,6 +2260,21 @@ Most of this section has been moved to generators.scm.
 <tr><td colspan=2 height=32></td></tr>
 
 
+<!-- multifm-component -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>multifm-component</em> <code>freq-we-want wc wms inds ns bs using-sine</code>
+</td></tr><tr><td></td><td>
+This returns the amplitude of "freq-we-want" in parallel (complex) FM, where
+"wc" is the carrier, "wms" is a list of modulator frequencies, "inds" is a list of the
+corresponding indices, "ns" and "bs" are null (used internally), and using-sine is #t if
+the modulators are set up to produce a spectrum of sines, as opposed to cosines (we
+need to know whether to add or subtract the components that foldunder 0.0).
+<pre>
+    (multifm-component 200 2000.0 (list 2000.0 200.0) (list 0.5 1.0) '() '() #t)
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 
 <!-- ssb-bank -->
 <tr><td colspan=2 bgcolor="#f6f8ff">

@@ -2637,3 +2637,34 @@ is assumed to be outside -1.0 to 1.0."
 
 (define (soft-clipped x)
   (max -0.6667 (min 0.6667 (- x (* 0.3333 x x x)))))
+
+
+
+;;; -------- parallel FM spectrum calculator
+
+;(multifm-component 200 2000.0 (list 2000.0 200.0) (list 0.5 1.0) '() '() #t)
+
+(define (multifm-component freq-we-want wc wms inds ns bs using-sine)
+  (if (not (null? wms))
+      (let* ((sum 0.0)
+	     (index (car inds))
+	     (mx (inexact->exact (ceiling (* 5 index))))
+	     (wm (car wms)))
+	(do ((k (- mx) (1+ k)))
+	    ((>= k mx) sum)
+	  (set! sum (+ sum (multifm-component freq-we-want (+ wc (* k wm)) (cdr wms) (cdr inds) 
+					      (append ns (list k)) (append bs (list index)) 
+					      using-sine)))))
+      (if (< (abs (- freq-we-want (abs wc))) .1)
+	  (let ((bmult 1.0))
+	    (for-each
+	     (lambda (n index)
+	       (set! bmult (* bmult (bes-jn n index))))
+	     ns bs)
+	    (if (and using-sine (< wc 0.0)) (set! bmult (- bmult)))
+	    (snd-display ";add ~A from ~A ~A" bmult ns bs)
+	    bmult)
+	  0.0)))
+
+
+

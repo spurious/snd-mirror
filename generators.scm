@@ -8,6 +8,7 @@
 ;;;
 ;;; someday I need to make run smart enough to find local methods, then
 ;;;   norms and dc offsets can be precalculated.
+;;;   or... make 2 forms of the gens, one of which assumes no run-time changes
 
 
 (define nearly-zero 1.0e-12) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)
@@ -72,6 +73,83 @@
 	   ((= i 10000))
 	 (outa i (nssb gen (* (hz->radians 10.0) (oscil vib))) *output*))))))
 |#
+
+
+;;; --------------------------------------------------------------------------------
+
+;;; G&R 1st col rows 1&2
+
+(def-clm-struct (nxysin
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (nxysin-xincr g) (hz->radians (nxysin-xfrequency g))) ; can be 0 if just x=pi/2 for example
+		   (set! (nxysin-yincr g) (hz->radians (nxysin-yfrequency g)))
+		   (set! (nxysin-xangle g) (nxysin-x g))
+		   g))
+  (xfrequency 0.0) (yfrequency 0.0) (n 1 :type int) (x 0.0)
+  (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
+
+(define (nxysin gen fm)
+  (declare (gen nxysin) (fm float))
+  (let* ((x (nxysin-xangle gen))
+	 (y (nxysin-yangle gen))
+	 (n (nxysin-n gen))
+	 (den (sin (* y 0.5))))
+    (set! (nxysin-xangle gen) (+ x (nxysin-xincr gen) (* fm (/ (nxysin-xincr gen) (nxysin-yincr gen)))))
+    (set! (nxysin-yangle gen) (+ y (nxysin-yincr gen) fm))
+    (if (< (abs den) nearly-zero)
+	0.0
+	(/ (* (sin (+ x (* 0.5 (- n 1) y)))
+	      (sin (* 0.5 n y)))
+	   den))))
+
+;;; normalization here is hard (depends on x and y)
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-nxysin 300 100 3)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (outa i (nxysin gen 0.0) *output*))))))
+|#
+
+(def-clm-struct (nxycos
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (nxycos-xincr g) (hz->radians (nxycos-xfrequency g))) ; can be 0 if just x=pi/2 for example
+		   (set! (nxycos-yincr g) (hz->radians (nxycos-yfrequency g)))
+		   (set! (nxycos-xangle g) (nxycos-x g))
+		   g))
+  (xfrequency 0.0) (yfrequency 0.0) (n 1 :type int) (x 0.0)
+  (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
+
+(define (nxycos gen fm)
+  (declare (gen nxycos) (fm float))
+  (let* ((x (nxycos-xangle gen))
+	 (y (nxycos-yangle gen))
+	 (n (nxycos-n gen))
+	 (den (sin (* y 0.5))))
+    (set! (nxycos-xangle gen) (+ x (nxycos-xincr gen) (* fm (/ (nxycos-xincr gen) (nxycos-yincr gen)))))
+    (set! (nxycos-yangle gen) (+ y (nxycos-yincr gen) fm))
+    (if (< (abs den) nearly-zero)
+	1.0
+	(/ (* (cos (+ x (* 0.5 (- n 1) y)))
+	      (sin (* 0.5 n y)))
+	   (* n den))))) ; n=normalization
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-nxycos 300 100 3)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (outa i (nxycos gen 0.0) *output*))))))
+|#
+
+;;; does ssb make any sense here?  x=carrier effectively
+;;; is there any need for the (-1)^k case?  
 
 
 ;;; --------------------------------------------------------------------------------
@@ -1995,6 +2073,8 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (r (jpcos-r gen))
 	 (k (jpcos-k gen))
 	 (dc (/ (* (sin (* k a)) (sin (* k r))) (* k a r)))
+	 ;; from P0(x)=1, J[1/2](x)=sqrt(2/(pi x))sin(x), omitting original 1/pi
+	 ;;   G&R 914 (8.464), 974 (8.912), but it's missing some remaining (small) component
 	 (norm 1.0)
 	 (arg (sqrt (+ (* r r) 
 		       (* a a)
@@ -2004,7 +2084,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
     (/ (- (/ (sin (* k arg))
 	     arg)
-	  dc) 
+	  dc)
        norm)))
 
 #|
@@ -2015,135 +2095,188 @@ index 10 (so 10/2 is the bes-jn arg):
        (do ((i 0 (1+ i)))
 	   ((= i 210000))
 	 (outa i (jpcos gen 0.0) *output*))))))
+
+;;; -.725, 1/.275
 |#
 
-;;; dc is not right if a!=r, no norm
+;;; TODO: dc is not right if a!=r, no norm
 
+
+;;; --------------------------------------------------------------------------------
+
+;;; use J0(cos)+J1(cos) to get full spectrum
+
+(def-clm-struct (j0j1cos
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (j0j1cos-incr g) (hz->radians (j0j1cos-frequency g)))
+		   g))
+  (frequency 0.0) (index 1.0)
+  (angle 0.0) (incr 0.0))
+
+(define (j0j1cos gen fm)
+  (declare (gen j0j1cos) (fm float))
+  (let* ((x (j0j1cos-angle gen))
+	 (z (j0j1cos-index gen))
+	 (j0 (bes-j0 (* 0.5 z)))
+	 (dc (* j0 j0))
+	 (arg (* z (cos x))))
+    (set! (j0j1cos-angle gen) (+ x fm (j0j1cos-incr gen)))
+    (/ (- (+ (bes-j0 arg)
+	     (bes-j1 arg))
+	  dc)        ; get rid of DC component
+       1.215)))      ; not the best...
+
+; TODO: normalize j0j1cos -- min depends on index, so peak depends on max and min and dc
+;       (max (- 1.2154 dc)
+;	    (- -0.5530 dc)
+
+#|
+(let ((mx 0.0) (x 0.0) (saved-x 0.0))
+  (do ((i 0 (1+ i)))
+      ((= i 1000))
+    (let ((val (+ (bes-j0 x) (bes-j1 x))))
+      (if (> (abs val) mx)
+	  (begin
+	    (set! mx (abs val))
+	    (set! saved-x x)))
+      (set! x (+ x .001))))
+  (list mx saved-x))
+(1.21533317877749 0.825000000000001)
+(1.21533318495717 0.824863000002882)
+(1.21533318495718 0.824863061409846)
+
+(-0.552933995255066 4.57000000000269)
+(-0.552933995483144 4.56997100028488)
+
+(do ((i 0 (1+ i)))
+    ((= i 10))
+  (let ((pk (vct-peak 
+	     (with-sound (:output (make-vct 10000))
+  	       (let ((gen (make-j0j1cos 100.0 i)))
+		 (run 
+		  (lambda ()
+		    (do ((i 0 (1+ i)))
+			((= i 10000))
+		      (outa i (j0j1cos gen 0.0) *output*)))))))))
+    (snd-display ";~A: ~A" i pk)))
+;0: 0.0
+;1: 0.555559098720551
+;2: 0.938335597515106
+;3: 0.953315675258636
+;4: 1.16509592533112
+;5: 1.21275520324707
+;6: 1.14727067947388
+;7: 1.07083106040955
+;8: 1.05760526657104
+;9: 1.11238932609558
+;10: 1.1824289560318
+;11: 1.21528387069702
+;12: 1.19094204902649
+;13: 1.14720714092255
+;14: 1.12512302398682
+				  
+|#
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-j0j1cos 100.0 1.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000))
+	 (outa i (j0j1cos gen 0.0) *output*))))))
+|#
+
+;;; --------------------------------------------------------------------------------
+
+
+(def-clm-struct (jycos
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (jycos-incr g) (hz->radians (jycos-frequency g)))
+		   (let ((a (jycos-a g)) ; "c"
+			 (r (jycos-r g))); "b"
+		     (if (<= r a)
+			 (format #t ";jycos a: ~A must be < r: ~A" a r))
+		     (if (<= (+ (* a a) (* r r)) (* 2 a r))
+			 (format #t ";jycos a: ~A, r: ~A will cause bes-y0 to return -inf!" a r)))
+		   g))
+  (frequency 0.0) (r 1.0) (a 0.5) ; "b" and "c" in the docs
+  (angle 0.0) (incr 0.0))
+
+(define (jycos gen fm)
+  (declare (gen jycos) (fm float))
+  (let* ((x (jycos-angle gen))
+	 (b (jycos-r gen))
+	 (c (jycos-a gen))
+	 (b2c2 (+ (* b b) (* c c)))
+	 (dc (* (bes-y0 b) (bes-j0 c)))
+	 (norm (abs (- (bes-y0 (sqrt (+ b2c2 (* -2 b c)))) dc))))
+    (set! (jycos-angle gen) (+ x fm (jycos-incr gen)))
+    (/ (- (bes-y0 (sqrt (+ b2c2 (* -2.0 b c (cos x)))))
+	  dc)
+       norm)))
+
+;;; oops -- bes-y0(0) is -inf!
+;;; norm only works for "reasonable" a and r
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-jycos 100.0 1.5 1.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000))
+	 (outa i (jycos gen 0.0) *output*))))))
+
+:(* (bes-yn 1 1.5) (bes-jn 1 1.0))
+-0.181436652807559
+:(* (bes-yn 2 1.5) (bes-jn 2 1.0))
+-0.107112311628537
+:(* (bes-yn 3 1.5) (bes-jn 3 1.0))
+-0.0405654243875417
+
+:(/ .107 .181)
+0.591160220994475  [0.600]
+:(/ .040 .181)
+0.220994475138122  [0.228]
+|#
 
 ;;; --------------------------------------------------------------------------------
 
 #|
-;;; we can add the sin(cos) and sin(sin) cases, using -index in the latter to get 
-;;;   asymmetric fm since Jn(-B) = (-1)^n Jn(B) -- every other side band cancels
-;;;
-;;; the same trick would work in the other two cases -- gapped spectra
-
-(def-clm-struct (fmtest
+(def-clm-struct (jcos
 		 :make-wrapper
 		 (lambda (g)
-		   (set! (fmtest-carincr g) (hz->radians (fmtest-carfreq g)))
-		   (set! (fmtest-modincr g) (hz->radians (fmtest-modfreq g)))
+		   (set! (jcos-incr g) (hz->radians (jcos-frequency g)))
 		   g))
-  (carfreq 0.0) (modfreq 0.0) (index 1.0)
-  (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
+  (frequency 0.0) (n 0 :type int) (r 1.0) (a 0.5) ; "b" and "c" in the docs
+  (angle 0.0) (incr 0.0))
 
-(define (fmtest gen fm)
-  (declare (gen fmtest) (fm float))
-  (let* ((mx (fmtest-modangle gen))
-	 (cx (fmtest-carangle gen))
-	 (B (fmtest-index gen))
-    	 (cfm (* fm (/ (fmtest-carincr gen) (fmtest-modincr gen)))))
-
-    (set! (fmtest-carangle gen) (+ cfm (fmtest-carangle gen) (fmtest-carincr gen)))
-    (set! (fmtest-modangle gen) (+ fm (fmtest-modangle gen) (fmtest-modincr gen)))
-
-    (- (* (cos cx)
-	  (sin (* B (cos mx))))
-       (* (sin cx)
-	  (* (sin (* (- B) (sin mx))))))))
+(define (jcos gen fm)
+  (declare (gen jcos) (fm float))
+  (let* ((x (jcos-angle gen))
+	 (b (jcos-r gen))
+	 (c (jcos-a gen))
+	 (n (jcos-n gen))
+	 (dc (* (bes-j0 b) (bes-j0 c)))
+	 )
+    (set! (jcos-angle gen) (+ x fm (jcos-incr gen)))
+    (- (bes-jn n (* (+ n 1) (sqrt (+ (* b b) (* c c) (* -2.0 b c (cos x))))))
+       dc)))
 
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-fmtest 1000.0 100.0 :index 0.5)))
+  (let ((gen (make-jcos 100.0 0 1.0 1.0)))
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
-	   ((= i 10000))
-	 (outa i (fmtest gen 0.0) *output*))))))
+	   ((= i 30000))
+	 (outa i (jcos gen 0.0) *output*))))))
 |#
-
 
 ;;; --------------------------------------------------------------------------------
 
-;;; G&R 1st col rows 1&2
-
-(def-clm-struct (nxysin
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (nxysin-xincr g) (hz->radians (nxysin-xfrequency g))) ; can be 0 if just x=pi/2 for example
-		   (set! (nxysin-yincr g) (hz->radians (nxysin-yfrequency g)))
-		   (set! (nxysin-xangle g) (nxysin-x g))
-		   g))
-  (xfrequency 0.0) (yfrequency 0.0) (n 1 :type int) (x 0.0)
-  (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
-
-(define (nxysin gen fm)
-  (declare (gen nxysin) (fm float))
-  (let* ((x (nxysin-xangle gen))
-	 (y (nxysin-yangle gen))
-	 (n (nxysin-n gen))
-	 (den (sin (* y 0.5))))
-    (set! (nxysin-xangle gen) (+ x (nxysin-xincr gen) (* fm (/ (nxysin-xincr gen) (nxysin-yincr gen)))))
-    (set! (nxysin-yangle gen) (+ y (nxysin-yincr gen) fm))
-    (if (< (abs den) nearly-zero)
-	0.0
-	(/ (* (sin (+ x (* 0.5 (- n 1) y)))
-	      (sin (* 0.5 n y)))
-	   den))))
-
-;;; normalization here is hard (depends on x and y)
-#|
-(with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-nxysin 300 100 3)))
-    (run 
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i 20000))
-	 (outa i (nxysin gen 0.0) *output*))))))
-|#
-
-(def-clm-struct (nxycos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (nxycos-xincr g) (hz->radians (nxycos-xfrequency g))) ; can be 0 if just x=pi/2 for example
-		   (set! (nxycos-yincr g) (hz->radians (nxycos-yfrequency g)))
-		   (set! (nxycos-xangle g) (nxycos-x g))
-		   g))
-  (xfrequency 0.0) (yfrequency 0.0) (n 1 :type int) (x 0.0)
-  (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
-
-(define (nxycos gen fm)
-  (declare (gen nxycos) (fm float))
-  (let* ((x (nxycos-xangle gen))
-	 (y (nxycos-yangle gen))
-	 (n (nxycos-n gen))
-	 (den (sin (* y 0.5))))
-    (set! (nxycos-xangle gen) (+ x (nxycos-xincr gen) (* fm (/ (nxycos-xincr gen) (nxycos-yincr gen)))))
-    (set! (nxycos-yangle gen) (+ y (nxycos-yincr gen) fm))
-    (if (< (abs den) nearly-zero)
-	1.0
-	(/ (* (cos (+ x (* 0.5 (- n 1) y)))
-	      (sin (* 0.5 n y)))
-	   (* n den))))) ; n=normalization
-
-#|
-(with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-nxycos 300 100 3)))
-    (run 
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i 20000))
-	 (outa i (nxycos gen 0.0) *output*))))))
-|#
-
-;;; does ssb make any sense here?  x=carrier effectively
-;;; is there any need for the (-1)^k case?  
-
-
-;;; --------------------------------------------------------------------------------
-
-;;; fm2.html: j0sin, perhaps control of asyfm formant placement
-
-;;; --------------------------------------------------------------------------------
 
 #|
 (let ((test-zero-stability 
@@ -2265,167 +2398,47 @@ index 10 (so 10/2 is the bes-jn arg):
 |#
 
 
+
 ;;; --------------------------------------------------------------------------------
 
-;;; use J0(cos)+J1(cos) to get full spectrum
-
-(def-clm-struct (j0j1cos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (j0j1cos-incr g) (hz->radians (j0j1cos-frequency g)))
-		   g))
-  (frequency 0.0) (index 1.0)
-  (angle 0.0) (incr 0.0))
-
-(define (j0j1cos gen fm)
-  (declare (gen j0j1cos) (fm float))
-  (let* ((x (j0j1cos-angle gen))
-	 (z (j0j1cos-index gen))
-	 (j0 (bes-j0 (* 0.5 z)))
-	 (dc (* j0 j0))
-	 (arg (* z (cos x))))
-    (set! (j0j1cos-angle gen) (+ x fm (j0j1cos-incr gen)))
-    (/ (- (+ (bes-j0 arg)
-	     (bes-j1 arg))
-	  dc)        ; get rid of DC component
-       1.215)))      ; not the best...
-
-; TODO: normalize j0j1cos -- min depends on index, so peak depends on max and min and dc
-;       (max (- 1.2154 dc)
-;	    (- -0.5530 dc)
-
-;;; TODO: test
+#|
+;;; we can add the sin(cos) and sin(sin) cases, using -index in the latter to get 
+;;;   asymmetric fm since Jn(-B) = (-1)^n Jn(B) -- every other side band cancels
 ;;;
-;;; SOMEDAY: check dht against j expansion of cos etc [cos z = J0(z) + 2 sum 1^inf (-1)^k J2k(z)] 8.514 p 924
-;;; TODO: the Y0 case from G&M is encapsulated by 8.532 p 930
+;;; the same trick would work in the other two cases -- gapped spectra
 
-#|
-(let ((mx 0.0) (x 0.0) (saved-x 0.0))
-  (do ((i 0 (1+ i)))
-      ((= i 1000))
-    (let ((val (+ (bes-j0 x) (bes-j1 x))))
-      (if (> (abs val) mx)
-	  (begin
-	    (set! mx (abs val))
-	    (set! saved-x x)))
-      (set! x (+ x .001))))
-  (list mx saved-x))
-(1.21533317877749 0.825000000000001)
-(1.21533318495717 0.824863000002882)
-(1.21533318495718 0.824863061409846)
-
-(-0.552933995255066 4.57000000000269)
-(-0.552933995483144 4.56997100028488)
-
-(do ((i 0 (1+ i)))
-    ((= i 10))
-  (let ((pk (vct-peak 
-	     (with-sound (:output (make-vct 10000))
-  	       (let ((gen (make-j0j1cos 100.0 i)))
-		 (run 
-		  (lambda ()
-		    (do ((i 0 (1+ i)))
-			((= i 10000))
-		      (outa i (j0j1cos gen 0.0) *output*)))))))))
-    (snd-display ";~A: ~A" i pk)))
-;0: 0.0
-;1: 0.555559098720551
-;2: 0.938335597515106
-;3: 0.953315675258636
-;4: 1.16509592533112
-;5: 1.21275520324707
-;6: 1.14727067947388
-;7: 1.07083106040955
-;8: 1.05760526657104
-;9: 1.11238932609558
-;10: 1.1824289560318
-;11: 1.21528387069702
-;12: 1.19094204902649
-;13: 1.14720714092255
-;14: 1.12512302398682
-				  
-|#
-
-#|
-(with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-j0j1cos 100.0 1.0)))
-    (run 
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i 30000))
-	 (outa i (j0j1cos gen 0.0) *output*))))))
-|#
-
-;;; --------------------------------------------------------------------------------
-
-
-(def-clm-struct (jycos
+(def-clm-struct (fmtest
 		 :make-wrapper
 		 (lambda (g)
-		   (set! (jycos-incr g) (hz->radians (jycos-frequency g)))
-		   (let ((a (jycos-a g))
-			 (r (jycos-r g)))
-		     (if (<= (+ (* a a) (* r r)) (* 2 a r))
-			 (format #t ";jycos a: ~A, r: ~A will cause bes-y0 to return -inf!" a r)))
+		   (set! (fmtest-carincr g) (hz->radians (fmtest-carfreq g)))
+		   (set! (fmtest-modincr g) (hz->radians (fmtest-modfreq g)))
 		   g))
-  (frequency 0.0) (r 1.0) (a 0.5) ; "b" and "c" in the docs
-  (angle 0.0) (incr 0.0))
+  (carfreq 0.0) (modfreq 0.0) (index 1.0)
+  (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
 
-(define (jycos gen fm)
-  (declare (gen jycos) (fm float))
-  (let* ((x (jycos-angle gen))
-	 (b (jycos-r gen))
-	 (c (jycos-a gen))
-	 (dc (* (bes-y0 b) (bes-j0 c)))
-	 )
-    (set! (jycos-angle gen) (+ x fm (jycos-incr gen)))
-    (- (bes-y0 (sqrt (+ (* b b) (* c c) (* -2.0 b c (cos x)))))
-       dc)))
+(define (fmtest gen fm)
+  (declare (gen fmtest) (fm float))
+  (let* ((mx (fmtest-modangle gen))
+	 (cx (fmtest-carangle gen))
+	 (B (fmtest-index gen))
+    	 (cfm (* fm (/ (fmtest-carincr gen) (fmtest-modincr gen)))))
 
-;;; TODO: jycos dc and norm
+    (set! (fmtest-carangle gen) (+ cfm (fmtest-carangle gen) (fmtest-carincr gen)))
+    (set! (fmtest-modangle gen) (+ fm (fmtest-modangle gen) (fmtest-modincr gen)))
 
-;;; oops -- bes-y0(0) is -inf!
+    (- (* (cos cx)
+	  (sin (* B (cos mx))))
+       (* (sin cx)
+	  (* (sin (* (- B) (sin mx))))))))
 
-#|
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-jycos 100.0 1.0 1.5)))
+  (let ((gen (make-fmtest 1000.0 100.0 :index 0.5)))
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
-	   ((= i 30000))
-	 (outa i (jycos gen 0.0) *output*))))))
+	   ((= i 10000))
+	 (outa i (fmtest gen 0.0) *output*))))))
 |#
 
-;;; --------------------------------------------------------------------------------
-
-#|
-(def-clm-struct (jcos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (jcos-incr g) (hz->radians (jcos-frequency g)))
-		   g))
-  (frequency 0.0) (n 0 :type int) (r 1.0) (a 0.5) ; "b" and "c" in the docs
-  (angle 0.0) (incr 0.0))
-
-(define (jcos gen fm)
-  (declare (gen jcos) (fm float))
-  (let* ((x (jcos-angle gen))
-	 (b (jcos-r gen))
-	 (c (jcos-a gen))
-	 (n (jcos-n gen))
-	 (dc (* (bes-j0 b) (bes-j0 c)))
-	 )
-    (set! (jcos-angle gen) (+ x fm (jcos-incr gen)))
-    (- (bes-jn n (* (+ n 1) (sqrt (+ (* b b) (* c c) (* -2.0 b c (cos x))))))
-       dc)))
-
-(with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-jcos 100.0 0 1.0 1.0)))
-    (run 
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i 30000))
-	 (outa i (jcos gen 0.0) *output*))))))
-|#
 
 ;;; --------------------------------------------------------------------------------

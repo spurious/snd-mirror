@@ -261,7 +261,7 @@ functions that there is no difference in run-time computational expense or accur
 
 -->
 
-
+<br>
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>simple FM: sin(sin)</center></h5></td></tr></table>
 
 <p>Given our formula for FM, let's assume, for starters, that f(t) is a sinusoid:
@@ -589,6 +589,7 @@ For an explanation of the connection between planetary motion and FM, see Benson
 </p></small>
 </td></tr></table>
 
+<br>
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>simple FM examples</center></h5></td></tr></table>
 
 <p>Here's a simple FM instrument:
@@ -696,6 +697,7 @@ sweep the FM index from 0 to 10, and the spectrogram looks like this:
 
 <img src="fmsweep.png" alt="sweep index" hspace=40>
 
+<br>
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>phase quibbles: cos(sin)</center></h5></td></tr></table>
 <p>
 There is a lot of music in simple FM.
@@ -941,6 +943,7 @@ CLM instrument that shows this (subtle) effect:
 <!-- -->
 </td></tr></table>
 
+<br>
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>asymmetric spectra</center></h5></td></tr></table>
 
 <p>The next question is "if we can get cancellations, can we fiddle with the phases and get 
@@ -1103,9 +1106,7 @@ a moving formant).  Here we sweep "r" from -1.0 to -20.0, with an index of 3, m/
 <img src="asyfm.png" alt="asy spectra">
 
 
-<!-- PERHAPS: e^pcos and ssb stuff here? -->
-<!-- PERHAPS: j(zsin)? -->
-
+<br>
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>complex FM: sin(sin+sin)</center></h5></td></tr></table>
 
 <p>
@@ -1178,7 +1179,6 @@ spectrum somewhat. In general:
 </pre>
 -->
 
-<!-- PERHAPS: colors to show contributions using fm-violin and different fm envs -->
 
 <p>A CLM instrument to produce something like this might be:
 </p>
@@ -1257,73 +1257,10 @@ spectrum somewhat. In general:
 </table>
 
 <!--
-TODO: fixup calcit for any number of mods and put in dsp.scm? (mention it here?)
 here's the code to get that info:
 
 (with-sound () 
   (fm 0 2.0 2000 .5 '(1 .1) '(0.5 1.0) 0.0 (list (* 0.5 (+ pi (hz->radians 2000))) (* 0.5 (+ pi (hz->radians 200))))))
-
-(define (calcit wc wm1 wm2 b1 b2)
-  (let ((sums (make-vector 400 0.0))
-	(freqs (make-vector 400 0.0))
-	(curfreqs 0))
-    (do ((i -10 (1+ i)))
-	((= i 10))
-      (do ((j -10 (1+ j)))
-	  ((= j 10))
-	(let* ((freq (+ wc (* i wm1) (* j wm2)))
-	       (curfreq (abs freq))
-	       (amount (* (bes-jn i b1) (bes-jn j b2))) ; can be negative
-	       (curamount (if (< freq 0.0) (- amount) amount))
-	       (happy #f))
-	  (if (> (abs amount) 1.0e-6)
-	      (begin
-		(do ((k 0 (1+ k)))
-		    ((or happy 
-			 (>= k curfreqs)))
-		  (if (< (abs (- curfreq (vector-ref freqs k))) 0.1)
-		      (begin
-			(set! happy #t)
-
-			(snd-display ";~A ~A" curfreq curamount)
-			(if (< (abs (- 2000 curfreq)) 0.1)
-			    (snd-display ";2000 add ~A from i:~A at ~A and j:~A at ~A" curamount i (bes-jn i b1) j (bes-jn j b2)))
-			(if (< (abs (- 1800 curfreq)) 0.1)
-			    (snd-display ";1800 add ~A from i:~A at ~A and j:~A at ~A" curamount i (bes-jn i b1) j (bes-jn j b2)))
-			(if (< (abs (- 200 curfreq)) 0.1)
-			    (snd-display ";200 add ~A from i:~A at ~A and j:~A at ~A" curamount i (bes-jn i b1) j (bes-jn j b2)))
-
-			(vector-set! sums k (+ (vector-ref sums k) curamount)))))
-		(if (not happy)
-		    (begin
-		      (snd-display ";start ~A: ~A" curfreq curamount)
-			(if (< (abs (- 2000 curfreq)) 0.1)
-			    (snd-display ";2000 add ~A from i:~A at ~A and j:~A at ~A" curamount i (bes-jn i b1) j (bes-jn j b2)))
-			(if (< (abs (- 1800 curfreq)) 0.1)
-			    (snd-display ";1800 add ~A from i:~A at ~A and j:~A at ~A" curamount i (bes-jn i b1) j (bes-jn j b2)))
-			(if (< (abs (- 200 curfreq)) 0.1)
-			    (snd-display ";200 add ~A from i:~A at ~A and j:~A at ~A" curamount i (bes-jn i b1) j (bes-jn j b2)))
-
-		      (vector-set! freqs curfreqs curfreq)
-		      (vector-set! sums curfreqs curamount)
-		      (set! curfreqs (1+ curfreqs)))))))))
-
-    (let ((base 0.0))
-      (do ((i 0 (1+ i)))
-	  ((= i curfreqs))
-	(if (< (abs (- 2000 (vector-ref freqs i))) 0.1)
-	    (set! base (vector-ref sums i))))
-      (if (= base 0.0)
-	  (snd-display "can't find 2000 case?")
-	  (begin
-	    (snd-display ";base: ~A" base)
-	    (do ((i 0 (1+ i)))
-		((= i curfreqs))
-	      (snd-display ";~A: ~A -> ~A" (vector-ref freqs i) (vector-ref sums i) (/ (vector-ref sums i) base))))))))
-
-(calcit 2000 2000 200 0.5 1.0)
-
-here's another version:
 
 ;(multifm-component 200 2000.0 (list 2000.0 200.0) (list 0.5 1.0) '() '() #t)
 
@@ -1431,6 +1368,7 @@ A pared down version of the fm-violin is:
 <!-- -->
 </td></tr></table>
 
+<br>
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>cascade FM: sin(sin(sin))</center></h5></td></tr></table>
 
 <p>We can, of course, use FM (or anything) to produce the modulating signal.  When FM is used, it is 
@@ -1520,7 +1458,7 @@ Mattox's fm-drum can ignore such niceties.  If you are using low indices and the
 mc-ratios are below 1.0 (in vibrato, for example), you have a good chance of getting usable results.  
 If you want cascade FM to work in other situations, make sure the top oscil has an initial phase of 
 (pi + mod-incr)/2.  The middle FM spectrum will then have only sines (not cosines), so the DC component
-will be thouroughly discouraged.  (The not-so-well-hidden-message: Use PM with sine here).
+will be thoroughly discouraged.  (The not-so-well-hidden-message: Use PM with sine here).
 </p>
 
 
@@ -1779,6 +1717,7 @@ Perhaps we have wandered into the realm of chaos:
 can behave chaotically.
 </p>
 
+
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>FM and noise: sin(sin(rand))</center></h5></td></tr></table>
 
 <p>
@@ -1842,10 +1781,6 @@ smeared out by a copy of the noise band:
 makes a sound crisper; "Wait for Me!" uses it whenever a sound needs to cut through a huge 
 mix. 
 </p>
-
-
-<!-- PERHAPS: forbidden planet src ins? -->
-<!-- PERHAPS: tri(tri) et al? -->
 
 
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>FM voice</center></h5></td></tr></table>
