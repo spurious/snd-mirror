@@ -521,7 +521,7 @@ instrument: vox <{ start dur freq amp ampfun freqfun freqscl voxfun index
 
 \ FOF example
 \
-\ snd/clm.html, section wave-train
+\ snd/sndclm.html, section wave-train
 instrument: fofins <{ start dur freq amp vib f0 a0 f1 a1 f2 a2
      :optional
      ae '( 0 0 25 1 75 1 100 0 )

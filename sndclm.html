@@ -1850,6 +1850,9 @@ For example, here is a generator based on a formula giving a sum of n odd sines:
 </pre>
 </td></tr></table>
 
+<!-- TODO: this table needs at least a tooltip (if not href) to give generators.scm name corresponding to each formulaa
+-->
+
 <!-- LATEX:
 sceq14:
 \small
@@ -2018,6 +2021,8 @@ A couple are special cases of the "Bessel function summation theorem", G&amp;R 8
 <img src="sceq38.png" alt="summation formula" align=absmiddle>,
 where Z stands for any of the various Bessel functions (J, Y, etc),
 and R stands for the Poisson-like business in the square root.
+Also useful are formulas like sin(x)cos(nx) = 1/2(sin(n-1)x + sin(n+1)x)
+and sin(x)sin(nx) = 1/2(cos(n-1)x - cos(n+1)x). 
 Don't shy away from the sums to infinity just because you've heard shouting about "band-limited waveforms" -- FM is also such a sum:
 </p>
 
@@ -4665,7 +4670,7 @@ is <a href="#sum-of-sines">sum-of-sines</a>, and nssb is the single side-band ve
 
 <pre>
   <A class=def NAME="make-npcos">make-npcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (n 1)
-  <A class=def NAME="npcos">npcos</A> gen
+  <A class=def NAME="npcos">npcos</A> gen fm
   <A class=def NAME="npcos?">npcos?</A> gen
 </pre>
 
@@ -4722,15 +4727,15 @@ as the carrier, there's no point in an ssb version.  nxysin output is not normal
 
 <pre>
   <A class=def NAME="make-nrcos">make-nrcos</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1) (r 0.0)
-  <A class=def NAME="nrcos">nrcos</A> gen
+  <A class=def NAME="nrcos">nrcos</A> gen fm
   <A class=def NAME="nrcos?">nrcos?</A> gen
 
   <A class=def NAME="make-nrsin">make-nrsin</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1) (r 0.0)
-  <A class=def NAME="nrsin">nrsin</A> gen
+  <A class=def NAME="nrsin">nrsin</A> gen fm
   <A class=def NAME="nrsin?">nrsin?</A> gen
 
   <A class=def NAME="make-nrssb">make-nrssb</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1) (r 0.0)
-  <A class=def NAME="nrssb">nrssb</A> gen
+  <A class=def NAME="nrssb">nrssb</A> gen fm
   <A class=def NAME="nrssbinterp">nrssb-interp</A> gen fm interp
   <A class=def NAME="nrssb?">nrssb?</A> gen
 </pre>
@@ -4778,7 +4783,7 @@ under the name "discrete summation formula".
   <A class=def NAME="rcos?">rcos?</A> gen
 
   <A class=def NAME="make-rssb">make-rssb</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1) (r 0.0)
-  <A class=def NAME="rssb">rssb</A> gen
+  <A class=def NAME="rssb">rssb</A> gen fm
   <A class=def NAME="rssb?">rssb?</A> gen
 </pre>
 
@@ -4846,11 +4851,11 @@ This generator's output is not normalized, and looks incorrect...
 
 <pre>
   <A class=def NAME="make-rk!cos">make-rk!cos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0)
-  <A class=def NAME="rk!cos">rk!cos</A> gen
+  <A class=def NAME="rk!cos">rk!cos</A> gen fm
   <A class=def NAME="rk!cos?">rk!cos?</A> gen
 
   <A class=def NAME="make-rk!ssb">make-rk!ssb</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (r 0.0)
-  <A class=def NAME="rk!ssb">rk!ssb</A> gen
+  <A class=def NAME="rk!ssb">rk!ssb</A> gen fm
   <A class=def NAME="rk!ssb?">rk!ssb?</A> gen
 </pre>
 
@@ -4879,9 +4884,17 @@ This generator's output is not normalized, and looks incorrect...
   <A class=def NAME="make-k2sin">make-k2sin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0)
   <A class=def NAME="k2sin">k2sin</A> gen fm
   <A class=def NAME="k2sin?">k2sin?</A> gen
+
+  <A class=def NAME="make-k2cos">make-k2cos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0)
+  <A class=def NAME="k2cos">k2cos</A> gen fm
+  <A class=def NAME="k2cos?">k2cos?</A> gen
+
+  <A class=def NAME="make-k2ssb">make-k2ssb</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0)
+  <A class=def NAME="k2ssb">k2ssb</A> gen fm
+  <A class=def NAME="k2ssb?">k2ssb?</A> gen
 </pre>
 
-<p>This produces a sum of sinusoids scaled by 1/(2^k).
+<p>These produce a sum of sinusoids scaled by 1/(2^k).
 </p>
 <br>
 
@@ -4929,9 +4942,13 @@ This generator's output is not normalized, and looks incorrect...
   <A class=def NAME="make-abcos">make-abcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (a 0.0) (b 0.0)
   <A class=def NAME="abcos">abcos</A> gen fm
   <A class=def NAME="abcos?">abcos?</A> gen
+
+  <A class=def NAME="make-absin">make-absin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (a 0.0) (b 0.0)
+  <A class=def NAME="absin">absin</A> gen fm
+  <A class=def NAME="absin?">absin?</A> gen
 </pre>
 
-<p>This produces a sum of cosines scaled as follows:
+<p>This produces a sum of sinusoids scaled as follows:
 </p>
 
 <img src="sceq27.png" alt="sum of sines" hspace=40>
@@ -4961,7 +4978,7 @@ with each component scaled by (r^(2k))/(2k)!.  r2sin output is not normalized.
 
 <pre>
   <A class=def NAME="make-r2k2cos">make-r2k2cos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0)
-  <A class=def NAME="r2k2cos">r2k2cos</A> gen
+  <A class=def NAME="r2k2cos">r2k2cos</A> gen fm
   <A class=def NAME="r2k2cos?">r2k2cos?</A> gen
 </pre>
 

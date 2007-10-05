@@ -6,6 +6,9 @@
  *   a factor of 2.
  */
 
+/* should I add pm args alongside the fm args, as in oscil?
+ */
+
 #include <mus-config.h>
 
 #if USE_SND
@@ -1032,6 +1035,16 @@ Float mus_oscil_1(mus_any *ptr, Float fm)
   osc *gen = (osc *)ptr;
   result = sin(gen->phase);
   gen->phase += (gen->freq + fm);
+  return(result);
+}
+
+
+Float mus_oscil_2(mus_any *ptr, Float pm)
+{
+  Float result;
+  osc *gen = (osc *)ptr;
+  result = sin(gen->phase + pm);
+  gen->phase += gen->freq;
   return(result);
 }
 

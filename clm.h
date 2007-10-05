@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 41
-#define MUS_DATE "6-Sep-07"
+#define MUS_REVISION 42
+#define MUS_DATE "5-Oct-07"
 
 /*
+ * 5-Oct:      mus_oscil_2.
  * 6-Sep:      changed asymmetric-fm to use cos(sin) and added amplitude normalization.
  * 6-Aug:      mus_autocorrelate, mus_correlate.
  * 3-Aug:      blackman5..10 and Rife-Vincent (RV2..4 fft), mlt-sine windows.
@@ -356,6 +357,7 @@ void mus_reset(mus_any *ptr);
 Float mus_oscil(mus_any *o, Float fm, Float pm);
 Float mus_oscil_0(mus_any *ptr);
 Float mus_oscil_1(mus_any *ptr, Float fm);
+Float mus_oscil_2(mus_any *ptr, Float pm);
 bool mus_oscil_p(mus_any *ptr);
 mus_any *mus_make_oscil(Float freq, Float phase);
 

@@ -52894,6 +52894,22 @@ EDITS: 1
 			   (outa i (k2sin gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
+		    (let ((gen (make-k2cos 440.0)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (k2cos gen 0.0) *output*))))))
+
+	(with-sound (:clipped #f)
+		    (let ((gen (make-k2ssb 1000.0 100.0)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (k2ssb gen 0.0) *output*))))))
+
+	(with-sound (:clipped #f)
 		    (let ((gen (make-rssb 1000 100 0.5)))
 		      (run 
 		       (lambda ()
@@ -52970,6 +52986,14 @@ EDITS: 1
 			     ((= i 10000))
 			   (outa i (abcos gen 0.0) *output*))))))
 	
+	(with-sound (:clipped #f :statistics #t)
+		    (let ((gen (make-absin 100.0 0.5 0.25)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (absin gen 0.0) *output*))))))
+
 	(with-sound (:clipped #f)
 		    (let ((gen (make-r2k2cos 100.0 1.0)))
 		      (run 
@@ -53098,7 +53122,10 @@ EDITS: 1
 	     
 	     (test-zero-stability (lambda () (make-krksin :r 0.1)) krksin (lambda (gen val) (set! (krksin-angle gen) val)) zero)
 	     (test-zero-stability (lambda () (make-k2sin)) k2sin (lambda (gen val) (set! (k2sin-angle gen) val)) zero)
+	     (test-zero-stability (lambda () (make-k2cos)) k2cos (lambda (gen val) (set! (k2cos-angle gen) val)) zero)
+	     (test-zero-stability (lambda () (make-k2ssb 0.0 1.0)) k2ssb (lambda (gen val) (set! (k2ssb-modangle gen) val)) zero)
 	     (test-zero-stability (lambda () (make-abcos :a 1.0 :b 0.5)) abcos (lambda (gen val) (set! (abcos-angle gen) val)) zero)
+	     (test-zero-stability (lambda () (make-absin :a 1.0 :b 0.5)) absin (lambda (gen val) (set! (absin-angle gen) val)) zero)
 	     
 	     (for-each
 	      (lambda (r)

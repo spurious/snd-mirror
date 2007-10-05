@@ -1335,6 +1335,76 @@
 	 (outa i (k2sin gen 0.0) *output*))))))
 |#
 
+
+;;; using the 2nd Sansone formula, we get the sum of cos case by using a=-5b/4 or 3/(4cosx-5)
+
+(def-clm-struct (k2cos
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (k2cos-incr g) (hz->radians (k2cos-frequency g)))
+		   g))
+  (frequency 0.0)
+  (angle 0.0) (incr 0.0))
+
+(define (k2cos gen fm)
+  (declare (gen k2cos) (fm float))
+  (let ((x (k2cos-angle gen)))
+
+    (set! (k2cos-angle gen) (+ x fm (k2cos-incr gen)))
+
+   (* 0.5 (- (/ 3.0
+		(- 5.0 (* 4.0 (cos x))))
+	     1.0))))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-k2cos 440.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (k2cos gen 0.0) *output*))))))
+|#
+
+
+(def-clm-struct (k2ssb
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (k2ssb-carincr g) (hz->radians (k2ssb-carfreq g)))
+		   (set! (k2ssb-modincr g) (hz->radians (k2ssb-modfreq g)))
+		   g))
+  (carfreq 0.0) (modfreq 0.0)
+  (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
+
+(define (k2ssb gen fm)
+  (declare (gen k2ssb) (fm float))
+  (let* ((mx (k2ssb-modangle gen))
+	 (cx (k2ssb-carangle gen))
+    	 (cfm (* fm (/ (k2ssb-carincr gen) (k2ssb-modincr gen)))))
+
+    (set! (k2ssb-carangle gen) (+ cfm cx (k2ssb-carincr gen)))
+    (set! (k2ssb-modangle gen) (+ fm mx (k2ssb-modincr gen)))
+
+    (* 0.333 (- (* (cos cx) 
+		   (/ 3.0
+		      (- 5.0 (* 4.0 (cos mx))))) ; leave DC for carrier
+
+		(* (sin cx) 
+		   (/ (* 4.0 (sin mx)) ; leave unnormalized to match cos case
+		      (- 5.0 (* 4.0 (cos mx)))))))))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-k2ssb 1000.0 100.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (k2ssb gen 0.0) *output*))))))
+|#
+
+
+
 ;;; --------------------------------------------------------------------------------
 
 
@@ -1534,6 +1604,79 @@
 	   ((= i 10000))
 	 (outa i (abcos gen 0.0) *output*))))))
 |#
+
+
+;;; since sin(x) cos(nx) = 1/2(sin(n-1)x + sin(n+1)x), we can multiply this formula by sin x to get the corresponding sum of sines
+;;;   TODO: can this be used in other cases? (jjcos for example, or ln(sinx/2), bes-y0, j0j1 etc)
+
+(def-clm-struct (absin
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (absin-incr g) (hz->radians (absin-frequency g)))
+		   g))
+  (frequency 0.0) (a 0.0) (b 0.0)
+  (angle 0.0) (incr 0.0))
+
+(define (absin gen fm)
+  (declare (gen absin) (fm float))
+  (let* ((x (absin-angle gen))
+	 (a (absin-a gen))
+	 (b (absin-b gen)))
+
+    (set! (absin-angle gen) (+ fm (absin-angle gen) (absin-incr gen)))
+
+    (/ (* (sin x) 
+	  (sqrt (- (* a a) (* b b))))
+       (+ a (* b (cos x))))))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-absin 100.0 0.5 0.25)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (absin gen 0.0) *output*))))))
+|#
+
+#|
+;;; this doesn't work
+(def-clm-struct (abssb
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (abssb-carincr g) (hz->radians (abssb-carfreq g)))
+		   (set! (abssb-modincr g) (hz->radians (abssb-modfreq g)))
+		   g))
+  (carfreq 0.0) (modfreq 0.0) (a 0.0) (b 0.0)
+  (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
+
+(define (abssb gen fm)
+  (declare (gen abssb) (fm float))
+  (let* ((mx (abssb-modangle gen))
+	 (cx (abssb-carangle gen))
+    	 (cfm (* fm (/ (abssb-carincr gen) (abssb-modincr gen))))
+	 (a (abssb-a gen))
+	 (b (abssb-b gen)))
+
+    (set! (abssb-carangle gen) (+ cfm cx (abssb-carincr gen)))
+    (set! (abssb-modangle gen) (+ fm mx (abssb-modincr gen)))
+
+    (/ (- (* (sin cx) (sin mx))
+	  (cos cx))
+       (+ a (* b (cos mx))))))
+|#
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-abssb 1000.0 100.0 0.5 0.25)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (abssb gen 0.0) *output*))))))
+|#
+
+
 
 ;;; --------------------------------------------------------------------------------
 
@@ -2320,7 +2463,10 @@ index 10 (so 10/2 is the bes-jn arg):
      
      (test-zero-stability (lambda () (make-krksin :r 0.1)) krksin (lambda (gen val) (set! (krksin-angle gen) val)) zero)
      (test-zero-stability (lambda () (make-k2sin)) k2sin (lambda (gen val) (set! (k2sin-angle gen) val)) zero)
+     (test-zero-stability (lambda () (make-k2cos)) k2cos (lambda (gen val) (set! (k2cos-angle gen) val)) zero)
+     (test-zero-stability (lambda () (make-k2ssb 0.0 1.0)) k2ssb (lambda (gen val) (set! (k2ssb-modangle gen) val)) zero)
      (test-zero-stability (lambda () (make-abcos :a 1.0 :b 0.5)) abcos (lambda (gen val) (set! (abcos-angle gen) val)) zero)
+     (test-zero-stability (lambda () (make-absin :a 1.0 :b 0.5)) absin (lambda (gen val) (set! (absin-angle gen) val)) zero)
      
      (for-each
       (lambda (r)
