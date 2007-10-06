@@ -2516,8 +2516,23 @@ length.
 </pre>
 which means that if the original sound was 2 seconds long, and we apply the envelope <code>'(0 1 1 2)</code>
 (via <a href="extsnd.html#srcchannel">src-channel</a>, for example) to that sound, the result will be
-.693 * 2 seconds long.
+.693 * 2 seconds long.  To scale an src envelope to return a given duration, see src-fit-envelope below.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- src-fit-envelope -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="srcfitenvelope">src-fit-envelope</a> <code>env target-dur</code>
+</td></tr><tr><td></td><td>
+src-fit-envelope returns a version of "env" scaled so that its duration as an src envelope is "target-dur".
+<pre>
+    <em class=listener>&gt;</em><em class=typing>(src-duration (src-fit-envelope '(0 1 1 2) 2.0))</em>
+    <em class=listener>2.0</em>
+</pre>
 </td></tr><tr><td colspan=2 height=32></td></tr>
+
+
+
 
 
 <!-- ---------------------------------------- dsp algebra ---------------------------------------- -->

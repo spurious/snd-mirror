@@ -1385,13 +1385,10 @@
     (set! (k2ssb-carangle gen) (+ cfm cx (k2ssb-carincr gen)))
     (set! (k2ssb-modangle gen) (+ fm mx (k2ssb-modincr gen)))
 
-    (* 0.333 (- (* (cos cx) 
-		   (/ 3.0
-		      (- 5.0 (* 4.0 (cos mx))))) ; leave DC for carrier
-
-		(* (sin cx) 
-		   (/ (* 4.0 (sin mx)) ; leave unnormalized to match cos case
-		      (- 5.0 (* 4.0 (cos mx)))))))))
+    (/ (- (* 3 (cos cx))
+	  (* (sin cx) 
+	     (* 4.0 (sin mx))))
+       (* 3.0 (- 5.0 (* 4.0 (cos mx)))))))
 
 #|
 (with-sound (:clipped #f :statistics #t)
@@ -1607,7 +1604,6 @@
 
 
 ;;; since sin(x) cos(nx) = 1/2(sin(n-1)x + sin(n+1)x), we can multiply this formula by sin x to get the corresponding sum of sines
-;;;   TODO: can this be used in other cases? (jjcos for example, or ln(sinx/2), bes-y0, j0j1 etc)
 
 (def-clm-struct (absin
 		 :make-wrapper
@@ -1661,8 +1657,8 @@
     (set! (abssb-carangle gen) (+ cfm cx (abssb-carincr gen)))
     (set! (abssb-modangle gen) (+ fm mx (abssb-modincr gen)))
 
-    (/ (- (* (sin cx) (sin mx))
-	  (cos cx))
+    (/ (- (cos cx)
+	  (* (sin cx) (sin mx)))
        (+ a (* b (cos mx))))))
 |#
 
@@ -2043,6 +2039,49 @@ set k=10
 -3.66078549147997e-6
 
 which again matches
+
+
+(define (jjsin gen fm)
+  (declare (gen jjcos) (fm float))
+  (let* ((x (jjcos-angle gen))
+	 (a (jjcos-a gen))
+	 (r (jjcos-r gen))
+	 (k (jjcos-k gen)))
+
+    (set! (jjcos-angle gen) (+ x fm (jjcos-incr gen)))
+
+    (* (sin x)
+       (bes-j0 (* k (sqrt (+ (* r r) 
+			     (* a a)
+			     (* a r -2.0 (cos x)))))))))
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-jjcos 100.0 :a 1.0 :r 1.0 :k 1)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (jjsin gen 0.0) *output*))))))
+
+(define (jjesin gen fm)
+  (declare (gen jjcos) (fm float))
+  (let* ((x (jjcos-angle gen))
+	 (r (jjcos-r gen)))
+
+    (set! (jjcos-angle gen) (+ x fm (jjcos-incr gen)))
+
+    (* (exp (* r (- (cos x) 1.0))) ; -1 for norm , but there's huge DC offset
+       (bes-j0 (* r (sin x))))))
+
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-jjcos 100.0 :a 1.0 :r 1.0 :k 1)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (jjesin gen 0.0) *output*))))))
+
 |#
 
 

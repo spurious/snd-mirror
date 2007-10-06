@@ -23,16 +23,17 @@
 	((>= i (- len 2)) dur)
       (let* ((x0 (list-ref e i))
 	     (x1 (list-ref e (+ i 2)))
-	     (xy0 (list-ref e (+ i 1))) ; 1/x x points
-	     (y0 (/ 1.0 xy0))           ; related y value
-	     (xy1 (list-ref e (+ i 3)))
-	     (y1 (/ 1.0 xy1))
-	     (area (if (< (abs (- xy0 xy1)) .0001)
-		       (* y0 (/ (- x1 x0) all-x))
+	     (y0 (list-ref e (+ i 1))) ; 1/x x points
+	     (y1 (list-ref e (+ i 3)))
+	     (area (if (< (abs (- y0 y1)) .0001)
+		       (/ (- x1 x0) (* y0 all-x))
 		       (* (/ (- (log y1) (log y0)) 
-			     (- xy0 xy1)) 
+			     (- y1 y0)) 
 			  (/ (- x1 x0) all-x)))))
 	(set! dur (+ dur (abs area)))))))
+
+(define (src-fit-envelope e target-dur)
+  (scale-envelope e (/ (src-duration e) target-dur))) ; scale-envelope is in env.scm
 
 
 ;;; -------- Dolph-Chebyshev window
@@ -1950,50 +1951,8 @@ and replaces it with the spectrum given in coeffs"
     ;; first #t=truncate to new length, #f=at current edpos, #t=auto delete temp file
     ))
 
-#|
-;;; ----------------
-;;; 
-;;; just for my amusement -- apply a linear-fractional or Mobius transformation to the fft data (treated as complex)
-;;; 
-;;; (automorph 1 0 0 1) is the identity
-;;; (automorph 2 0 0 1) scales by 2
-;;; (automorph 0.0+1.0i 0 0 1) rotates 90 degrees (so 4 times = identity)
-;;; most cases won't work right because we're assuming real output and so on
 
-(define* (automorph a b c d :optional snd chn)
-  (let* ((len (frames snd chn))
-	 (pow2 (inexact->exact (ceiling (/ (log len) (log 2)))))
-	 (fftlen (inexact->exact (expt 2 pow2)))
-	 (fftscale (/ 1.0 fftlen))
-	 (rl (channel->vct 0 fftlen snd chn))
-	 (im (make-vct fftlen)))
-    (fft rl im 1)
-    (vct-scale! rl fftscale)
-    (vct-scale! im fftscale)
-    ;; handle 0 case by itself
-    (let* ((c1 (make-rectangular (vct-ref rl 0) (vct-ref im 0)))
-	   (val (/ (+ (* a c1) b)
-		   (+ (* c c1) d)))
-	   (rval (real-part val))
-	   (ival (imag-part val)))
-      (vct-set! rl 0 rval)
-      (vct-set! im 0 ival))
-    (do ((i 1 (+ i 1))
-	 (k (1- fftlen) (1- k)))
-	((= i (/ fftlen 2)))
-      (let* ((c1 (make-rectangular (vct-ref rl i) (vct-ref im i)))
-	     (val (/ (+ (* a c1) b)      ; (az + b) / (cz + d)
-		     (+ (* c c1) d)))
-	     (rval (real-part val))
-	     (ival (imag-part val)))
-	(vct-set! rl i rval)
-	(vct-set! im i ival)
-	(vct-set! rl k rval)
-	(vct-set! im k (- ival))))
-    (fft rl im -1)
-    (vct->channel rl 0 len snd chn #f (format #f "automorph ~A ~A ~A ~A" a b c d))))
-|#
-
+;;; -------- mfilter
 
 ;;; Mathews/Smith High-Q filter as described in http://ccrma.stanford.edu/~jos/smac03maxjos/
 
@@ -2648,7 +2607,7 @@ is assumed to be outside -1.0 to 1.0."
   (if (not (null? wms))
       (let* ((sum 0.0)
 	     (index (car inds))
-	     (mx (inexact->exact (ceiling (* 5 index))))
+	     (mx (inexact->exact (ceiling (* 7 index))))
 	     (wm (car wms)))
 	(do ((k (- mx) (1+ k)))
 	    ((>= k mx) sum)
@@ -2662,7 +2621,7 @@ is assumed to be outside -1.0 to 1.0."
 	       (set! bmult (* bmult (bes-jn n index))))
 	     ns bs)
 	    (if (and using-sine (< wc 0.0)) (set! bmult (- bmult)))
-	    (snd-display ";add ~A from ~A ~A" bmult ns bs)
+	    ;(snd-display ";add ~A from ~A ~A" bmult ns bs)
 	    bmult)
 	  0.0)))
 

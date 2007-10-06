@@ -8633,7 +8633,7 @@ static void oscil_0f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_0(CLM_ARG
 
 static void oscil_1f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_1(CLM_ARG_1, FLOAT_ARG_2);}
 
-static void oscil_2f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_2(CLM_ARG_1, FLOAT_ARG_2);}
+static void oscil_2f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_2(CLM_ARG_1, FLOAT_ARG_3);}
 
 static void oscil_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
 
@@ -8649,10 +8649,9 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
   if ((num_args == 2) || ((num_args == 3) && (args[3]->constant == R_CONSTANT) && (prog->dbls[args[3]->addr] == 0.0)))
     return(package(prog, R_FLOAT, oscil_1f_1, "oscil_1f_1", args, 2));
   if ((num_args == 3) && (args[2]->constant == R_CONSTANT) && (prog->dbls[args[2]->addr] == 0.0))
-    return(package(prog, R_FLOAT, oscil_2f_1, "oscil_2f_1", args, 2));
+    return(package(prog, R_FLOAT, oscil_2f_1, "oscil_2f_1", args, 3));
   return(package(prog, R_FLOAT, oscil_2f, "oscil_2f", args, 3));
 }
-
 
 #define GEN2(Name) \
   GEN2_0(Name) \

@@ -2023,7 +2023,7 @@ where Z stands for any of the various Bessel functions (J, Y, etc),
 and R stands for the Poisson-like business in the square root.
 Also useful are formulas like sin(x)cos(nx) = 1/2(sin(n-1)x + sin(n+1)x)
 and sin(x)sin(nx) = 1/2(cos(n-1)x - cos(n+1)x). 
-Don't shy away from the sums to infinity just because you've heard shouting about "band-limited waveforms" -- FM is also such a sum:
+Don't shy away from the sums to infinity just because you've heard shouting about "band-limited waveforms" -- FM is an infinite sum:
 </p>
 
 
@@ -3599,7 +3599,8 @@ a click).
 <p>There are several other ways to resample a sound.  Some of the more interesting ones are in
 dsp.scm (<a href="sndscm.html#downoct">down-oct</a>, <a href="sndscm.html#soundinterp">sound-interp</a>, 
 <a href="sndscm.html#linearsrcchannel">linear-src</a>, etc).  To calculate a sound's new duration after
-a time-varying src is applied, use <a href="sndscm.html#srcduration">src-duration</a>.
+a time-varying src is applied, use <a href="sndscm.html#srcduration">src-duration</a>.  To scale an src
+envelope so that the result has a given duration, use <a href="sndscm.html#srcfitenvelope">scr-fit-envelope</a>.
 </p>
 <br><br>
 

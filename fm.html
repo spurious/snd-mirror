@@ -498,13 +498,22 @@ The important thing to get from these Bessel functions is that the higher the in
 more dispersed the spectral energy -- normally a brighter sound.
 </p>
 
-<table border=1 cellpadding=3><tr>
+<table border=1 cellpadding=4>
+
+<tr>
+<td bgcolor="#f6f8ff"><center>carrier=1000, mod=100, index=1.0</center></td>
+<td bgcolor="#f6f8ff"><center>carrier=1000, mod=100, index=2.0</center></td>
+<td bgcolor="#f6f8ff"><center>carrier=1000, mod=100, index=3.0</center></td>
+</tr>
+
+<tr>
 <td><img src="fm10.png" alt="fm 1.0"></td>
 <td><img src="fm20.png" alt="fm 2.0"></td>
 <td><img src="fm30.png" alt="fm 3.0"></td>
 </tr>
-<tr><td>
-<center>carrier=1000, mod=100, index=1.0</center>
+
+<tr>
+<td>
 <pre>
   J0(1.0) = 0.765 -&gt; 1.0 (*)
   J1(1.0) = 0.440 -&gt; 0.575
@@ -517,7 +526,6 @@ the fft peak values given above)
 </pre>
 </td>
 <td>
-<center>carrier=1000, mod=100, index=2.0</center>
 <pre>
   J0(2.0) = 0.224 -&gt; 0.388 (*)
   J1(2.0) = 0.577 -&gt; 1.0
@@ -527,10 +535,9 @@ the fft peak values given above)
   J5(2.0) = 0.007 -&gt; 0.012
   J6(2.0) = 0.001 -&gt; 0.002
 </pre>
-<small>(A larger FFT reduces the mismatch)</small>
+<small><center>(A larger FFT reduces the mismatch)</center></small>
 </td>
 <td>
-<center>carrier=1000, mod=100, index=3.0</center>
 <pre>
   J0(3.0) = -0.260 -&gt; -0.534 (*)
   J1(3.0) = 0.339 -&gt;  0.697
@@ -1553,7 +1560,6 @@ it seems to be approaching a square wave as k heads into the stratosphere:
 <td bgcolor="#f6f8ff"><center>k=30</center></td>
 <td bgcolor="#f6f8ff"><center>k=300</center></td>
 </tr></table>
-</tr></table>
 
 <br>
 
@@ -1756,9 +1762,9 @@ smeared out by a copy of the noise band:
 <td><img src="fmvnoise7.png" alt="fmv noise .007"></td>
 </tr>
 <tr>
-<td><center>noise-amount: 0.0</center></td>
-<td><center>noise-amount: 0.002</center></td>
-<td><center>noise-amount: 0.007</center></td>
+<td bgcolor="#f6f8ff"><center>noise-amount: 0.0</center></td>
+<td bgcolor="#f6f8ff"><center>noise-amount: 0.002</center></td>
+<td bgcolor="#f6f8ff"><center>noise-amount: 0.007</center></td>
 </tr></table>
 
 

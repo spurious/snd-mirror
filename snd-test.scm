@@ -32594,7 +32594,25 @@ EDITS: 2
 		  (snd-display ";src-duration test4 ~A" (src-duration '(0 .5 .5 3 .6 1 .7 .1 .8 1.5 1 1))))
 	      (if (fneq (src-duration '(0 1 1 2 2 1)) 0.693147180559945)
 		  (snd-display ";src-duration test5: ~A" (src-duration '(0 1 1 2 2 1))))
-	      
+	      (if (fneq (src-duration '(0 1 1 1)) 1.0)
+		  (snd-display ";src-duration test6: ~A" (src-duration '(0 1 1 1))))
+	      (if (fneq (src-duration '(0 2 1 2)) 0.5)
+		  (snd-display ";src-duration test7: ~A" (src-duration '(0 2 1 2))))
+	      (if (fneq (src-duration '(0 0.5 2 0.5)) 2.0)
+		  (snd-display ";src-duration test8: ~A" (src-duration '(0 0.5 2 0.5))))
+
+	      (if (fneq (src-duration (src-fit-envelope '(0 1 1 2) 2.0)) 2.0)
+		  (snd-display ";src-fit-envelope 2.0: ~A" (src-duration (src-fit-envelope '(0 1 1 2) 2.0))))
+	      (if (fneq (src-duration (src-fit-envelope '(0 1 1 2) 0.5)) 0.5)
+		  (snd-display ";src-fit-envelope 0.5: ~A" (src-duration (src-fit-envelope '(0 1 1 2) 0.5))))
+
+
+	      (if (fneq (multifm-component 100 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) '() '() #t) 0.69287)
+		  (snd-display ";multifm-component 100: ~A" (multifm-component 100 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) '() '() #t)))
+	      (if (fneq (multifm-component 500 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) '() '() #t) 0.17047)
+		  (snd-display ";multifm-component 500: ~A" (multifm-component 500 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) '() '() #t)))
+
+
 	      (map-channel (lambda (y) (* .5 (oscil osc))))
 	      (let ((vals (freq-peak 0 ind 8192)))
 		(if (or (f4neq (car vals) 500.0)
@@ -49193,6 +49211,12 @@ EDITS: 1
 	      (let ((gen (make-oscil 440.0)))
 		(let ((val (run (lambda () (let ((g1 gen)) (oscil g1) (oscil g1))))))
 		  (if (fneq val 0.1250) (snd-display ";let osc g1: ~A" val))))
+	      (let ((gen (make-oscil 440.0)))
+		(let ((val (run (lambda () (let ((g1 gen)) (oscil g1 1.0) (oscil g1 0.5))))))
+		  (if (fneq val 0.9024) (snd-display ";let osc g1 1: ~A" val))))
+	      (let ((gen (make-oscil 440.0)))
+		(let ((val (run (lambda () (let ((g1 gen)) (oscil g1 0.0 1.0) (oscil g1 0.0 0.5))))))
+		  (if (fneq val 0.585) (snd-display ";let osc g1 0 1: ~A" val))))
 	      
 	      (let ((val (run-eval '(let ((a 0) (hi 3)) (set! a (if (> hi 2) 2 3)) a))))
 		(if (not (= val 2)) (snd-display ";set let: ~A" val)))
@@ -52348,14 +52372,14 @@ EDITS: 1
 	(let ((stats-string ""))
 	  (let ((v1 (with-sound (:output (make-vct 2210) :statistics (lambda (str) (set! stats-string str)))
 				(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
-	    (if (and (not (string=? stats-string "vct:\n  maxamp: 0.1000\n  compute time: 0.000\n"))
-		     (not (string=? stats-string "vct:\n  maxamp: 0.1000\n  compute time: 0.010\n")))
+	    (if (and (not (string=? stats-string "\n;vct:\n  maxamp: 0.1000\n  compute time: 0.000\n"))
+		     (not (string=? stats-string "\n;vct:\n  maxamp: 0.1000\n  compute time: 0.010\n")))
 		(snd-display ";with-sound to vct stats: [~A]" stats-string)))
 	  
 	  (let ((v1 (with-sound (:output (make-sound-data 1 2210) :scaled-to .5 :statistics (lambda (str) (set! stats-string str)))
 				(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
-	    (if (and (not (string=? stats-string "sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.000\n"))
-		     (not (string=? stats-string "sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.010\n")))
+	    (if (and (not (string=? stats-string "\n;sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.000\n"))
+		     (not (string=? stats-string "\n;sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.010\n")))
 		(snd-display ";with-sound to sound-data stats: [~A]" stats-string)))
 	  
 	  (let ((v1 (with-sound (:output (make-vct 2210) :channels 4 :statistics (lambda (str) (set! stats-string str)))
