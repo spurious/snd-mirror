@@ -2346,7 +2346,7 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
   XEN_NARGIFY_2(g_gsl_ellipj_w, g_gsl_ellipj)
   XEN_NARGIFY_4(g_gsl_dht_w, g_gsl_dht)
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
-  XEN_NARGIFY_1(g_gsl_eigenvectors, g_gsl_eigenvectors_w)
+  XEN_NARGIFY_1(g_gsl_eigenvectors_w, g_gsl_eigenvectors)
 #endif
 
   #if HAVE_COMPLEX_TRIG && (!HAVE_RUBY) && HAVE_SCM_MAKE_COMPLEX
