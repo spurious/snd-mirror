@@ -1603,8 +1603,6 @@
 |#
 
 
-;;; since sin(x) cos(nx) = 1/2(sin(n-1)x + sin(n+1)x), we can multiply this formula by sin x to get the corresponding sum of sines
-
 (def-clm-struct (absin
 		 :make-wrapper
 		 (lambda (g)
@@ -1633,43 +1631,6 @@
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
 	 (outa i (absin gen 0.0) *output*))))))
-|#
-
-#|
-;;; this doesn't work
-(def-clm-struct (abssb
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (abssb-carincr g) (hz->radians (abssb-carfreq g)))
-		   (set! (abssb-modincr g) (hz->radians (abssb-modfreq g)))
-		   g))
-  (carfreq 0.0) (modfreq 0.0) (a 0.0) (b 0.0)
-  (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
-
-(define (abssb gen fm)
-  (declare (gen abssb) (fm float))
-  (let* ((mx (abssb-modangle gen))
-	 (cx (abssb-carangle gen))
-    	 (cfm (* fm (/ (abssb-carincr gen) (abssb-modincr gen))))
-	 (a (abssb-a gen))
-	 (b (abssb-b gen)))
-
-    (set! (abssb-carangle gen) (+ cfm cx (abssb-carincr gen)))
-    (set! (abssb-modangle gen) (+ fm mx (abssb-modincr gen)))
-
-    (/ (- (cos cx)
-	  (* (sin cx) (sin mx)))
-       (+ a (* b (cos mx))))))
-|#
-
-#|
-(with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-abssb 1000.0 100.0 0.5 0.25)))
-    (run 
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i 10000))
-	 (outa i (abssb gen 0.0) *output*))))))
 |#
 
 
@@ -2564,7 +2525,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (set! (blackman4-incr g) (hz->radians (blackman4-frequency g)))
 				 (set! (blackman4-coeffs g) (vct .084037 -.29145 .375696 -.20762 .041194))
 				 g))
-    (frequency 0.0) (initial-phase 0.0) (coeffs #f :type vct) 
+    (frequency 0.0) (coeffs #f :type vct)  ; angle = initial-phase
     (angle 0.0) (incr 0.0))
 
 (define (blackman4 gen fm)

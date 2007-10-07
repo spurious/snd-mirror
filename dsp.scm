@@ -2550,6 +2550,7 @@ is assumed to be outside -1.0 to 1.0."
 ;;; -------- make-dpss-window
 
 (define (make-dpss-window n w)
+  "(make-dpss-window size w) returns a prolate spheriodal (slepian) window of the given size"
   ;; from Verma, Bilbao, Meng, "The Digital Prolate Spheroidal Window"
   ;; output checked using Julius Smith's dpssw.m, although my "w" is different
   (let* ((mat (make-mixer! n))
@@ -2576,6 +2577,7 @@ is assumed to be outside -1.0 to 1.0."
 ;;; -------- make-papoulis-window
 
 (define (make-papoulis-window n)
+  "(make-papoulis-window size) returns a papoulis window os the given size"
   (let ((v (make-vct n))
 	(n2 (/ n 2)))
     (do ((i (- n2) (1+ i)))
@@ -2589,6 +2591,7 @@ is assumed to be outside -1.0 to 1.0."
 
 
 ;;; -------- hard and soft clipping
+;;;
 ;;; from Julius Smith's http://ccrma.stanford.edu/~jos/pasp/Cubic_Soft_Clipper.html
 
 (define (hard-clipped x)
@@ -2604,6 +2607,8 @@ is assumed to be outside -1.0 to 1.0."
 ;(multifm-component 200 2000.0 (list 2000.0 200.0) (list 0.5 1.0) '() '() #t)
 
 (define (multifm-component freq-we-want wc wms inds ns bs using-sine)
+  "(multifm-component freq carrier modfreqs indices '() '() with-sines) returns the amplitude of \"freq\" in \
+the multi-modulator FM case described by the list of modulator frequencies and indices"
   (if (not (null? wms))
       (let* ((sum 0.0)
 	     (index (car inds))

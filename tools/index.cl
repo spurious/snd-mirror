@@ -871,6 +871,7 @@
 	  (if (and (not (find (aref hrefs h) names :test #'string=))
 		   (search "#" (aref hrefs h)))
 	      (format t "undef'd: ~A (~A: ~A)~%" (aref hrefs h) (aref refs h) (aref lines h))))
+
 ;    (loop for h from 0 below name do
 ;      (if (not (find (aref names h) hrefs :test #'string=))
 ;	  (format t "unref'd: ~A~%" (aref names h))))
@@ -940,4 +941,4 @@
 (defun check-names ()  
   (html-check (list "sndlib.html" "snd.html" "extsnd.html" "grfsnd.html" "sndclm.html" "fm.html"
 		    "sndscm.html" "quick.html" "xen.html" "libxm.html" "index.html")
-	      t))
+	      t)) ; looks for names that appear to be missing the class=quiet href
