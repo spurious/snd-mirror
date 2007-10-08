@@ -1345,8 +1345,49 @@ bool mus_sum_of_sines_p(mus_any *ptr)
 }
 
 
+#if 0
+/* it's simplest to get these maxes by running an example and recording the maxamp, but it also
+ *   works for small "n" to use the derivative of the sum-of-sines as a Chebyshev polynomial in cos x,
+ *   find its roots, and plug acos(root) into the original, recording the max:
+ *
+(define (smax coeffs)
+  ;; to get max of sum of sines, start by getting derivative (a sum of cosines)
+  (let* ((n (vct-length coeffs))
+	 (dcos (make-vct n 1.0)))
+    (do ((i 0 (1+ i)))
+	((= i n))
+      (vct-set! dcos i (* (+ i 1) (vct-ref coeffs i))))
+    ;; now get the equivalent Chebyshev polynomial (in cos^n)
+    (let ((partials '()))
+      (do ((i 0 (1+ i)))
+	  ((= i n))
+	(set! partials (append (list (vct-ref dcos i) (+ i 1)) partials)))
+      (let ((Tn (partials->polynomial (reverse partials))))
+	;; now find roots of Tn
+	(let ((roots (poly-roots Tn)))
+	  (let ((mx (* -2 n)))
+	    (for-each
+	     (lambda (root)
+	       ;; get acos(root) and plug into original as sum of sines
+	       (let ((acr (acos root))
+		     (sum 0.0))
+		 (do ((i 0 (1+ i)))
+		     ((= i n))
+		   (set! sum (+ sum (* (vct-ref coeffs i) (sin (* (+ i 1) acr))))))
+		 (if (> (abs sum) mx)
+		     (set! mx (abs sum)))))
+	     roots)
+	    mx))))))
+  *
+  *   (smax (make-vct n 1.0)
+  *
+  * but that's too much effort for an initialization function...
+  */
+#endif
+
+
 static Float sum_of_sines_maxamps[] = {1.0, 1.0, 1.761, 2.5, 3.24, 3.97, 4.7, 5.42, 6.15, 6.88,
-				       7.6, 8.33, 9.05, 9.78, 10.51, 11.23, 11.96, 12.68, 13.41, 14.13};
+				       7.6, 8.33, 9.05, 9.78, 10.5, 11.23, 11.95, 12.68, 13.4, 14.13};
 
 static Float sum_of_sines_50 = .743;
 static Float sum_of_sines_100 = .733;

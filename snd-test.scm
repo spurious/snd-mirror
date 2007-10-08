@@ -44244,6 +44244,18 @@ EDITS: 1
 	
 (def-clm-struct hiho311 (v #f :type sound-data))
 	
+(def-clm-struct abc232 (x 0.0))
+(def-clm-struct abd232 (x 1.0))
+
+(define (abc232-func gen)
+  (declare (gen abc232))
+  (abc232-x gen))
+
+(define (abd232-func gen)
+  (declare (gen abd232))
+  (abd232-x gen))
+
+
 
 (define (snd_test_22)
   
@@ -50157,6 +50169,22 @@ EDITS: 1
 		  (fneq (sound-data-ref (hiho311-v val) 1 1) 1.0)
 		  (fneq (sound-data-ref (hiho311-v val) 0 0) 0.0))
 	      (snd-display ";set hiho311 sound-data and return: ~A" val)))
+
+	(let ((abc232g (make-abc232))
+	      (abd232g (make-abd232)))
+	  (let ((result (run
+			 (lambda ()
+			   (+ (abc232-x abc232g)
+			      (abd232-x abd232g))))))
+	    (if (fneq result 1.0) (snd-display ";two structs: ~A" result))))
+	
+	(let ((abc232g (make-abc232))
+	      (abd232g (make-abd232)))
+	  (let ((result (run
+			 (lambda ()
+			   (+ (abc232-func abc232g)
+			      (abd232-func abd232g))))))
+	    (if (fneq result 1.0) (snd-display ";two structs via func: ~A" result))))
 	
 	))))
 
@@ -53099,6 +53127,22 @@ EDITS: 1
 			   (outa i (nxycos gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
+		    (let ((gen (make-nxy1cos 300 100 3)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 20000))
+			   (outa i (nxy1cos gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f :statistics #t)
+		    (let ((gen (make-nxy1sin 300 100 3)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 20000))
+			   (outa i (nxy1sin gen 0.0) *output*))))))
+
+	(with-sound (:clipped #f)
 		    (let ((black4 (make-blackman4 440.0)))
 		      (run (lambda ()
 			     (do ((i 0 (1+ i)))
@@ -53133,15 +53177,25 @@ EDITS: 1
 		(test-zero-stability (lambda () (make-nssb 0.0 1.0 n)) nssb (lambda (gen val) (set! (nssb-modangle gen) val)) zero)
 		(test-zero-stability (lambda () (make-noddssb 0.0 1.0 n)) noddssb (lambda (gen val) (set! (noddssb-modangle gen) val)) zero)
 		(test-zero-stability (lambda () (make-nrssb 0.0 1.0 n)) nrssb (lambda (gen val) (set! (nrssb-modangle gen) val)) zero)
-					;(test-zero-stability (lambda () (make-nkssb 0.0 1.0 n)) nkssb (lambda (gen val) (set! (nkssb-modangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-nxycos 0.0 1.0 :n n)) nxycos (lambda (gen val) (set! (nxycos-yangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-nxy1cos 0.0 1.0 :n n)) nxy1cos (lambda (gen val) (set! (nxy1cos-yangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-nxysin 0.0 1.0 :n n)) nxysin (lambda (gen val) (set! (nxysin-yangle gen) val)) zero)
 		
-		(test-zero-stability (lambda () (make-nxycos :n n)) nxycos (lambda (gen val) (set! (nxycos-yangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-nssb 0.0 1.0 n)) nssb (lambda (gen val) (set! (nssb-modangle gen) val) (set! (nssb-carangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-noddssb 0.0 1.0 n)) noddssb (lambda (gen val) (set! (noddssb-modangle gen) val) (set! (noddssb-carangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-nrssb 0.0 1.0 n)) nrssb (lambda (gen val) (set! (nrssb-modangle gen) val) (set! (nrssb-carangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-nxycos 0.0 1.0 :n n)) nxycos (lambda (gen val) (set! (nxycos-yangle gen) val) (set! (nxycos-xangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-nxy1cos 0.0 1.0 :n n)) nxy1cos (lambda (gen val) (set! (nxy1cos-yangle gen) val) (set! (nxy1cos-xangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-nxysin 0.0 1.0 :n n)) nxysin (lambda (gen val) (set! (nxysin-yangle gen) val) (set! (nxysin-xangle gen) val)) zero)
+		
+		(test-zero-stability (lambda () (make-nkssb 0.0 1.0 n)) nkssb (lambda (gen val) (set! (nkssb-modangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-nkssb 0.0 1.0 n)) nkssb (lambda (gen val) (set! (nkssb-modangle gen) val) (set! (nkssb-carangle gen) val)) zero)
+		
 		(test-zero-stability (lambda () (make-noddsin :n n)) noddsin (lambda (gen val) (set! (noddsin-angle gen) val)) zero)
 		(test-zero-stability (lambda () (make-noddcos :n n)) noddcos (lambda (gen val) (set! (noddcos-angle gen) val)) zero)
 		(test-zero-stability (lambda () (make-ncos2 :n n)) ncos2 (lambda (gen val) (set! (ncos2-angle gen) val)) zero)
 		(test-zero-stability (lambda () (make-npcos :n n)) npcos (lambda (gen val) (set! (npcos-angle gen) val)) zero)
-		(test-zero-stability (lambda () (make-nrcos :n n)) nrcos (lambda (gen val) (set! (nrcos-angle gen) val)) zero)
-		(test-zero-stability (lambda () (make-nxysin :n n)) nxysin (lambda (gen val) (set! (nxysin-yangle gen) val)) zero))
+		(test-zero-stability (lambda () (make-nrcos :n n)) nrcos (lambda (gen val) (set! (nrcos-angle gen) val)) zero))
 	      (list 1 10 3 30))
 	     
 	     (test-zero-stability (lambda () (make-krksin :r 0.1)) krksin (lambda (gen val) (set! (krksin-angle gen) val)) zero)
@@ -53170,10 +53224,17 @@ EDITS: 1
 		(test-zero-stability (lambda () (make-rk!ssb 0.0 1.0 :r r)) rk!ssb (lambda (gen val) (set! (rk!ssb-modangle gen) val)) zero)
 		(test-zero-stability (lambda () (make-rkoddssb 0.0 1.0 :r r)) rkoddssb (lambda (gen val) (set! (rkoddssb-modangle gen) val)) zero)
 		(test-zero-stability (lambda () (make-r2ssb 0.0 1.0 :r r)) r2ssb (lambda (gen val) (set! (r2ssb-modangle gen) val)) zero)
+		
+		(test-zero-stability (lambda () (make-rssb 0.0 1.0 :r r)) rssb (lambda (gen val) (set! (rssb-angle2 gen) val) (set! (rssb-angle1 gen) val)) zero)
+		(test-zero-stability (lambda () (make-erssb 0.0 1.0 :r r)) erssb (lambda (gen val) (set! (erssb-modangle gen) val) (set! (erssb-carangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-rkssb 0.0 1.0 :r r)) rkssb (lambda (gen val) (set! (rkssb-modangle gen) val) (set! (rkssb-carangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-rk!ssb 0.0 1.0 :r r)) rk!ssb (lambda (gen val) (set! (rk!ssb-modangle gen) val) (set! (rk!ssb-carangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-rkoddssb 0.0 1.0 :r r)) rkoddssb (lambda (gen val) (set! (rkoddssb-modangle gen) val) (set! (rkoddssb-carangle gen) val)) zero)
+		(test-zero-stability (lambda () (make-r2ssb 0.0 1.0 :r r)) r2ssb (lambda (gen val) (set! (r2ssb-modangle gen) val) (set! (r2ssb-carangle gen) val)) zero)
 		)
 	      (list 0.1 0.5 .99)))
-	   (list 0.0 (* 0.5 pi) pi (* 2.0 pi) (* -0.5 pi) (- pi) (* -2.0 pi))))
-
+	   (list 0.0 (* 0.5 pi) pi (* 2.0 pi) (* -0.5 pi) (- pi) (* -2.0 pi) (* 1.5 pi) (* -1.5 pi))))
+	
 	(if (not (null? (sounds))) (for-each close-sound (sounds)))
 	(set! (optimization) old-opt-23)
 	
@@ -53206,7 +53267,7 @@ EDITS: 1
 	   (x (if (> ux 1.0) (/ ux 100.0) ux))
 	   (val (inexact->exact (floor (+ axis-x0 (* x (- axis-x1 axis-x0)))))))
       val))
-
+  
   (define (enved-y y) 
     (let* ((axis (enved-axis-info))
 	   (axis-y0 (list-ref axis 1))

@@ -32,7 +32,7 @@
 		   (set! (nssb-carincr g) (hz->radians (nssb-carfreq g)))
 		   (set! (nssb-modincr g) (hz->radians (nssb-modfreq g)))
 		   g))
-  (carfreq 0.0) (modfreq 0.0) (n 1 :type int)
+  (carfreq 0.0) (modfreq 1.0) (n 1 :type int)
   (carangle 0.0) (modangle 0.0) (carincr 0.0) (modincr 0.0))
 
 (define (nssb gen fm)
@@ -84,9 +84,8 @@
 		 (lambda (g)
 		   (set! (nxysin-xincr g) (hz->radians (nxysin-xfrequency g))) ; can be 0 if just x=pi/2 for example
 		   (set! (nxysin-yincr g) (hz->radians (nxysin-yfrequency g)))
-		   (set! (nxysin-xangle g) (nxysin-x g))
 		   g))
-  (xfrequency 0.0) (yfrequency 0.0) (n 1 :type int) (x 0.0)
+  (xfrequency 0.0) (yfrequency 1.0) (n 1 :type int)
   (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
 
 (define (nxysin gen fm)
@@ -119,9 +118,8 @@
 		 (lambda (g)
 		   (set! (nxycos-xincr g) (hz->radians (nxycos-xfrequency g))) ; can be 0 if just x=pi/2 for example
 		   (set! (nxycos-yincr g) (hz->radians (nxycos-yfrequency g)))
-		   (set! (nxycos-xangle g) (nxycos-x g))
 		   g))
-  (xfrequency 0.0) (yfrequency 0.0) (n 1 :type int) (x 0.0)
+  (xfrequency 0.0) (yfrequency 1.0) (n 1 :type int)
   (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
 
 (define (nxycos gen fm)
@@ -150,6 +148,92 @@
 
 ;;; does ssb make any sense here?  x=carrier effectively
 ;;; is there any need for the (-1)^k case?  
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; G&R 1st col rows 3 4
+
+(def-clm-struct (nxy1cos
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (nxy1cos-xincr g) (hz->radians (nxy1cos-xfrequency g))) ; can be 0 if just x=pi/2 for example
+		   (set! (nxy1cos-yincr g) (hz->radians (nxy1cos-yfrequency g)))
+		   g))
+  (xfrequency 0.0) (yfrequency 0.0) (n 1 :type int)
+  (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
+
+(define (nxy1cos gen fm)
+  (declare (gen nxy1cos) (fm float))
+  (let* ((x (nxy1cos-xangle gen))
+	 (y (nxy1cos-yangle gen))
+	 (n (nxy1cos-n gen))
+	 (den (cos (* y 0.5))))
+    (set! (nxy1cos-xangle gen) (+ x (nxy1cos-xincr gen) (* fm (/ (nxy1cos-xincr gen) (nxy1cos-yincr gen)))))
+    (set! (nxy1cos-yangle gen) (+ y (nxy1cos-yincr gen) fm))
+    (max -1.0
+	 (min 1.0
+	      (/ (* (sin (* n y))
+		    (sin (+ x (* (- n 0.5) y))))
+		 (* 2 n den))))))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-nxy1cos 300 100 3)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (outa i (nxy1cos gen 0.0) *output*))))))
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-nxy1cos 300 100 3))
+	(gen1 (make-nxycos 300 100 6)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (outa i (* 0.4 (+ (nxycos gen1 0.0) (nxy1cos gen 0.0))) *output*))))))
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-nxy1cos (radians->hz (* .01 pi)) (radians->hz (* .01 pi)) 3)))
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (outa i (nxy1cos gen 0.0) *output*))))
+|#
+
+
+(def-clm-struct (nxy1sin
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (nxy1sin-xincr g) (hz->radians (nxy1sin-xfrequency g))) ; can be 0 if just x=pi/2 for example
+		   (set! (nxy1sin-yincr g) (hz->radians (nxy1sin-yfrequency g)))
+		   g))
+  (xfrequency 0.0) (yfrequency 0.0) (n 1 :type int)
+  (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
+
+(define (nxy1sin gen fm)
+  (declare (gen nxy1sin) (fm float))
+  (let* ((x (nxy1sin-xangle gen))
+	 (y (nxy1sin-yangle gen))
+	 (n (nxy1sin-n gen))
+	 (den (cos (* y 0.5))))
+    (set! (nxy1sin-xangle gen) (+ x (nxy1sin-xincr gen) (* fm (/ (nxy1sin-xincr gen) (nxy1sin-yincr gen)))))
+    (set! (nxy1sin-yangle gen) (+ y (nxy1sin-yincr gen) fm))
+
+    (/ (* (sin (+ x (* 0.5 (- n 1) (+ y pi))))
+	  (sin (* 0.5 n (+ y pi))))
+       (* n den)))) ; norm not right...
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-nxy1sin 300 100 3)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (outa i (nxy1sin gen 0.0) *output*))))))
+|#
 
 
 ;;; --------------------------------------------------------------------------------
@@ -258,7 +342,7 @@
 		   (set! (noddssb-carincr g) (hz->radians (- (noddssb-carfreq g) (noddssb-modfreq g))))
 		   (set! (noddssb-modincr g) (hz->radians (noddssb-modfreq g)))
 		   g))
-  (carfreq 0.0) (modfreq 0.0) (n 1 :type int)
+  (carfreq 0.0) (modfreq 1.0) (n 1 :type int)
   (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
 
 (define (noddssb gen fm)
@@ -271,18 +355,13 @@
 	 (den (* n (sin mx)))) ; "n" is normalization
     (set! (noddssb-carangle gen) (+ cx cfm (noddssb-carincr gen) fm))
     (set! (noddssb-modangle gen) (+ mx fm (noddssb-modincr gen)))
-    (if (< (abs den) nearly-zero)
-	(let ((fang (fmod (abs mx) (* 2 pi))))
-	  ;; hopefully this almost never happens...
-	  (if (or (< fang 0.001)
-		  (< (abs (- fang (* 2 pi))) 0.001))
-	      -1.0
-	      1.0))
-	(- (* (sin cx)
-	      (/ (* sinnx sinnx) den))
-	   (* (cos cx)
-	      (/ (sin (* 2 n mx))
-		 (* 2 den)))))))
+    (max -1.0  ; -1.0 is probably the peak, trying to catch bad cases is too much trouble here
+	 (min 1.0
+	      (- (* (sin cx)
+		    (/ (* sinnx sinnx) den))
+		 (* (cos cx)
+		    (/ (sin (* 2 n mx))
+		       (* 2 den))))))))
 
 #|
 (with-sound (:clipped #f :statistics #t)
@@ -505,7 +584,7 @@
 		   (set! (nrssb-carincr g) (hz->radians (nrssb-carfreq g)))
 		   (set! (nrssb-modincr g) (hz->radians (nrssb-modfreq g)))
 		   g))
-  (carfreq 0.0) (modfreq 0.0) (n 1 :type int) (r 0.0)
+  (carfreq 0.0) (modfreq 1.0) (n 1 :type int) (r 0.0)
   (carangle 0.0) (modangle 0.0) (carincr 0.0) (modincr 0.0))
 
 (define (nrssb gen fm)
@@ -632,7 +711,7 @@
 		   (set! (nkssb-modincr g) (hz->radians (nkssb-modfreq g)))
 		   (set! (nkssb-n g) (+ 1 (nkssb-n g))) ; sum goes 1 to n-1
 		   g))
-  (carfreq 0.0) (modfreq 0.0) (n 1 :type int)
+  (carfreq 0.0) (modfreq 1.0) (n 1 :type int)
   (carangle 0.0) (carincr 0.0)
   (modangle 0.0) (modincr 0.0))
 
@@ -652,7 +731,7 @@
     (set! (nkssb-carangle gen) (+ cfm (nkssb-carangle gen) (nkssb-carincr gen)))
     (set! (nkssb-modangle gen) (+ fm (nkssb-modangle gen) (nkssb-modincr gen)))
 
-    (if (< (abs sx2) nearly-zero)
+    (if (< (abs sx2) 1.0e-8)
 	-1.0
 	(let* ((s1 (- (/ (sin nx) sxsx)
 		      (/ (* n (cos nx2)) sx22)))
@@ -760,7 +839,7 @@
 		   (set! (rssb-incr1 g) (hz->radians (rssb-carfreq g)))
 		   (set! (rssb-incr2 g) (hz->radians (rssb-modfreq g)))
 		   g))
-  (carfreq 0.0) (modfreq 0.0) (n 1 :type int) (r 0.0)
+  (carfreq 0.0) (modfreq 1.0) (n 1 :type int) (r 0.0)
   (angle1 0.0) (angle2 0.0) (incr1 0.0) (incr2 0.0))
 
 (define (rssb gen fm)
@@ -848,7 +927,7 @@
 		   (set! (erssb-carincr g) (hz->radians (- (erssb-carfreq g) (erssb-modfreq g))))
 		   (set! (erssb-modincr g) (hz->radians (erssb-modfreq g)))
 		   g))
-  (carfreq 0.0) (modfreq 0.0) (r 0.0)
+  (carfreq 0.0) (modfreq 1.0) (r 0.0)
   (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
 
 (define (erssb gen fm)
@@ -956,7 +1035,7 @@
 		   (set! (r2ssb-carincr g) (hz->radians (r2ssb-carfreq g)))
 		   (set! (r2ssb-modincr g) (hz->radians (r2ssb-modfreq g)))
 		   g))
-  (carfreq 0.0) (modfreq 0.0) (r 1.0)
+  (carfreq 0.0) (modfreq 1.0) (r 1.0)
   (carangle 0.0) (carincr 0.0)
   (modangle 0.0) (modincr 0.0))
 
@@ -1152,7 +1231,7 @@
 		   (set! (rkssb-carincr g) (hz->radians (rkssb-carfreq g)))
 		   (set! (rkssb-modincr g) (hz->radians (rkssb-modfreq g)))
 		   g))
-  (carfreq 0.0) (modfreq 0.0) (r 1.0)
+  (carfreq 0.0) (modfreq 1.0) (r 1.0)
   (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
 
 (define (rkssb gen fm)
@@ -1228,7 +1307,7 @@
 		   (set! (rk!ssb-carincr g) (hz->radians (rk!ssb-carfreq g)))
 		   (set! (rk!ssb-modincr g) (hz->radians (rk!ssb-modfreq g)))
 		   g))
-  (carfreq 0.0) (modfreq 0.0) (r 1.0)
+  (carfreq 0.0) (modfreq 1.0) (r 1.0)
   (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
 
 (define (rk!ssb gen fm)
@@ -1373,7 +1452,7 @@
 		   (set! (k2ssb-carincr g) (hz->radians (k2ssb-carfreq g)))
 		   (set! (k2ssb-modincr g) (hz->radians (k2ssb-modfreq g)))
 		   g))
-  (carfreq 0.0) (modfreq 0.0)
+  (carfreq 0.0) (modfreq 1.0)
   (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
 
 (define (k2ssb gen fm)
@@ -1448,7 +1527,7 @@
 		   (set! (rkoddssb-carincr g) (hz->radians (- (rkoddssb-carfreq g) (rkoddssb-modfreq g))))
 		   (set! (rkoddssb-modincr g) (hz->radians (rkoddssb-modfreq g)))
 		   g))
-  (carfreq 0.0) (modfreq 0.0) (r 0.0)
+  (carfreq 0.0) (modfreq 1.0) (r 0.0)
   (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
 
 (define (rkoddssb gen fm)
@@ -2450,15 +2529,27 @@ index 10 (so 10/2 is the bes-jn arg):
 	(test-zero-stability (lambda () (make-nssb 0.0 1.0 n)) nssb (lambda (gen val) (set! (nssb-modangle gen) val)) zero)
 	(test-zero-stability (lambda () (make-noddssb 0.0 1.0 n)) noddssb (lambda (gen val) (set! (noddssb-modangle gen) val)) zero)
 	(test-zero-stability (lambda () (make-nrssb 0.0 1.0 n)) nrssb (lambda (gen val) (set! (nrssb-modangle gen) val)) zero)
-					;(test-zero-stability (lambda () (make-nkssb 0.0 1.0 n)) nkssb (lambda (gen val) (set! (nkssb-modangle gen) val)) zero)
-	
-	(test-zero-stability (lambda () (make-nxycos :n n)) nxycos (lambda (gen val) (set! (nxycos-yangle gen) val)) zero)
+	(test-zero-stability (lambda () (make-nxycos 0.0 1.0 :n n)) nxycos (lambda (gen val) (set! (nxycos-yangle gen) val)) zero)
+	(test-zero-stability (lambda () (make-nxy1sin 0.0 1.0 :n n)) nxy1sin (lambda (gen val) (set! (nxy1sin-yangle gen) val)) zero)
+	(test-zero-stability (lambda () (make-nxy1cos 0.0 1.0 :n n)) nxy1cos (lambda (gen val) (set! (nxy1cos-yangle gen) val)) zero)
+	(test-zero-stability (lambda () (make-nxysin 0.0 1.0 :n n)) nxysin (lambda (gen val) (set! (nxysin-yangle gen) val)) zero)
+
+	(test-zero-stability (lambda () (make-nssb 0.0 1.0 n)) nssb (lambda (gen val) (set! (nssb-modangle gen) val) (set! (nssb-carangle gen) val)) zero)
+	(test-zero-stability (lambda () (make-noddssb 0.0 1.0 n)) noddssb (lambda (gen val) (set! (noddssb-modangle gen) val) (set! (noddssb-carangle gen) val)) zero)
+	(test-zero-stability (lambda () (make-nrssb 0.0 1.0 n)) nrssb (lambda (gen val) (set! (nrssb-modangle gen) val) (set! (nrssb-carangle gen) val)) zero)
+	(test-zero-stability (lambda () (make-nxycos 0.0 1.0 :n n)) nxycos (lambda (gen val) (set! (nxycos-yangle gen) val) (set! (nxycos-xangle gen) val)) zero)
+	(test-zero-stability (lambda () (make-nxy1sin 0.0 1.0 :n n)) nxy1sin (lambda (gen val) (set! (nxy1sin-yangle gen) val) (set! (nxy1sin-xangle gen) val)) zero)
+	(test-zero-stability (lambda () (make-nxy1cos 0.0 1.0 :n n)) nxy1cos (lambda (gen val) (set! (nxy1cos-yangle gen) val) (set! (nxy1cos-xangle gen) val)) zero)
+	(test-zero-stability (lambda () (make-nxysin 0.0 1.0 :n n)) nxysin (lambda (gen val) (set! (nxysin-yangle gen) val) (set! (nxysin-xangle gen) val)) zero)
+
+	(test-zero-stability (lambda () (make-nkssb 0.0 1.0 n)) nkssb (lambda (gen val) (set! (nkssb-modangle gen) val)) zero)
+	(test-zero-stability (lambda () (make-nkssb 0.0 1.0 n)) nkssb (lambda (gen val) (set! (nkssb-modangle gen) val) (set! (nkssb-carangle gen) val)) zero)
+
 	(test-zero-stability (lambda () (make-noddsin :n n)) noddsin (lambda (gen val) (set! (noddsin-angle gen) val)) zero)
 	(test-zero-stability (lambda () (make-noddcos :n n)) noddcos (lambda (gen val) (set! (noddcos-angle gen) val)) zero)
 	(test-zero-stability (lambda () (make-ncos2 :n n)) ncos2 (lambda (gen val) (set! (ncos2-angle gen) val)) zero)
 	(test-zero-stability (lambda () (make-npcos :n n)) npcos (lambda (gen val) (set! (npcos-angle gen) val)) zero)
-	(test-zero-stability (lambda () (make-nrcos :n n)) nrcos (lambda (gen val) (set! (nrcos-angle gen) val)) zero)
-	(test-zero-stability (lambda () (make-nxysin :n n)) nxysin (lambda (gen val) (set! (nxysin-yangle gen) val)) zero))
+	(test-zero-stability (lambda () (make-nrcos :n n)) nrcos (lambda (gen val) (set! (nrcos-angle gen) val)) zero))
       (list 1 10 3 30))
      
      (test-zero-stability (lambda () (make-krksin :r 0.1)) krksin (lambda (gen val) (set! (krksin-angle gen) val)) zero)
@@ -2487,10 +2578,18 @@ index 10 (so 10/2 is the bes-jn arg):
 	(test-zero-stability (lambda () (make-rk!ssb 0.0 1.0 :r r)) rk!ssb (lambda (gen val) (set! (rk!ssb-modangle gen) val)) zero)
 	(test-zero-stability (lambda () (make-rkoddssb 0.0 1.0 :r r)) rkoddssb (lambda (gen val) (set! (rkoddssb-modangle gen) val)) zero)
 	(test-zero-stability (lambda () (make-r2ssb 0.0 1.0 :r r)) r2ssb (lambda (gen val) (set! (r2ssb-modangle gen) val)) zero)
+
+	(test-zero-stability (lambda () (make-rssb 0.0 1.0 :r r)) rssb (lambda (gen val) (set! (rssb-angle2 gen) val) (set! (rssb-angle1 gen) val)) zero)
+	(test-zero-stability (lambda () (make-erssb 0.0 1.0 :r r)) erssb (lambda (gen val) (set! (erssb-modangle gen) val) (set! (erssb-carangle gen) val)) zero)
+	(test-zero-stability (lambda () (make-rkssb 0.0 1.0 :r r)) rkssb (lambda (gen val) (set! (rkssb-modangle gen) val) (set! (rkssb-carangle gen) val)) zero)
+	(test-zero-stability (lambda () (make-rk!ssb 0.0 1.0 :r r)) rk!ssb (lambda (gen val) (set! (rk!ssb-modangle gen) val) (set! (rk!ssb-carangle gen) val)) zero)
+	(test-zero-stability (lambda () (make-rkoddssb 0.0 1.0 :r r)) rkoddssb (lambda (gen val) (set! (rkoddssb-modangle gen) val) (set! (rkoddssb-carangle gen) val)) zero)
+	(test-zero-stability (lambda () (make-r2ssb 0.0 1.0 :r r)) r2ssb (lambda (gen val) (set! (r2ssb-modangle gen) val) (set! (r2ssb-carangle gen) val)) zero)
 	)
       (list 0.1 0.5 .99)))
-   (list 0.0 (* 0.5 pi) pi (* 2.0 pi) (* -0.5 pi) (- pi) (* -2.0 pi))))
+   (list 0.0 (* 0.5 pi) pi (* 2.0 pi) (* -0.5 pi) (- pi) (* -2.0 pi) (* 1.5 pi) (* -1.5 pi))))
 |#
+
 
 #|
 ;;; do we need fmod 2*pi for the angles? (it is not used in clm.c)
@@ -2559,7 +2658,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		   (set! (fmtest-carincr g) (hz->radians (fmtest-carfreq g)))
 		   (set! (fmtest-modincr g) (hz->radians (fmtest-modfreq g)))
 		   g))
-  (carfreq 0.0) (modfreq 0.0) (index 1.0)
+  (carfreq 0.0) (modfreq 1.0) (index 1.0)
   (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
 
 (define (fmtest gen fm)
@@ -2588,3 +2687,6 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 ;;; --------------------------------------------------------------------------------
+
+;;; TODO: sum-of-sines max via Tn poly roots acos
+

@@ -1150,6 +1150,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   outer->vct_ctr = inner->vct_ctr;
   outer->sd_ctr = inner->sd_ctr;
   outer->clm_ctr = inner->clm_ctr;
+  outer->list_ctr = inner->list_ctr;
   outer->vect_ctr = inner->vect_ctr;
   outer->fnc_ctr = inner->fnc_ctr;
   outer->xen_ctr = inner->xen_ctr;
@@ -1184,6 +1185,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   inner->vct_ctr = 0;
   inner->sd_ctr = 0;
   inner->clm_ctr = 0;
+  inner->list_ctr = 0;
   inner->vect_ctr = 0;
   inner->fnc_ctr = 0;
   inner->xen_ctr = 0;
@@ -1911,8 +1913,7 @@ static int add_clm_to_ptree(ptree *pt, mus_any *value, XEN orig)
 static int add_list_to_ptree(ptree *pt, list *value)
 {
   int cur;
-
-  /* fprintf(stderr, "add list "); */
+  /* fprintf(stderr, "add list at %d\n", pt->list_ctr + 1); */
 
   cur = pt->list_ctr++;
   if (cur >= pt->lists_size)
@@ -2126,7 +2127,7 @@ static xen_value *add_empty_var_to_ptree(ptree *prog, int type)
     case R_VCT_VECTOR:   return(make_xen_value(type, add_vect_to_ptree(prog, NULL), R_VARIABLE));           break;
     default:
       if ((type == R_LIST) ||
-	  (CLM_STRUCT_P(type)))   /* this can happen if we're declaring a function (or outer lambad) arg */
+	  (CLM_STRUCT_P(type)))   /* this can happen if we're declaring a function (or outer lambda) arg */
 	return(make_xen_value(type, add_list_to_ptree(prog, NULL), R_VARIABLE));
       break;
     }
@@ -2136,6 +2137,7 @@ static xen_value *add_empty_var_to_ptree(ptree *prog, int type)
 
 static xen_value *transfer_value(ptree *prog, xen_value *v)
 {
+  /* if ((v->type == R_LIST) || (CLM_STRUCT_P(v->type))) fprintf(stderr,"transfer %s\n", type_name(v->type)); */
   switch (v->type)
     {
     case R_FLOAT: 
@@ -2413,7 +2415,6 @@ int xen_to_run_type(XEN val)
 static xen_value *add_value_to_ptree(ptree *prog, XEN val, int type)
 {
   xen_value *v = NULL;
-
   /* fprintf(stderr, "add %s as %s\n", XEN_AS_STRING(val), type_name(type)); */
 
   switch (type)
@@ -6866,9 +6867,14 @@ static xen_value *funcall_n(ptree *prog, xen_value **args, int num_args, xen_val
   int i;
   xen_value **new_args;
   xen_value *fres;
+
   func = ((ptree **)(prog->fncs))[sf->addr];
-  if (!func) return(run_warn("inner lambda lost!"));
-  if (func->arity != num_args) return(run_warn("wrong number of args (%d) for func", num_args));
+  if (!func) 
+    return(run_warn("inner lambda lost!"));
+
+  if (func->arity != num_args) 
+    return(run_warn("wrong number of args (%d) for func", num_args));
+
   fres = func->result;
   new_args = (xen_value **)CALLOC(num_args + 2, sizeof(xen_value *));
   for (i = 1; i <= num_args; i++)
@@ -6877,6 +6883,7 @@ static xen_value *funcall_n(ptree *prog, xen_value **args, int num_args, xen_val
   new_args[0] = add_empty_var_to_ptree(prog, fres->type);
   args[0] = new_args[0];
   add_triple_to_ptree(prog, make_triple(funcall_nf, "funcall_nf", new_args, num_args + 2));
+
   FREE(new_args);
   return(args[0]);
 }
@@ -7541,8 +7548,12 @@ static xen_value *list_ref_1(ptree *prog, xen_value **args, int num_args)
   list *xl;
   /* these are list constants, we know in advance what all element types are */
 
-  /* fprintf(stderr,"args[1]: %d %d\n", args[1]->type, args[1]->addr); */
-  /* fprintf(stderr,"args[1]: %s\n", describe_xen_value(args[1], prog)); */
+  /*
+  fprintf(stderr,"args[1]: %d %d\n", args[1]->type, args[1]->addr);
+  fprintf(stderr,"args[1]: %s\n", describe_xen_value(args[1], prog));
+  fprintf(stderr,"args[2]: %d %d\n", args[2]->type, args[2]->addr);
+  fprintf(stderr,"args[2]: %s\n", describe_xen_value(args[2], prog));
+  */
 
   if (run_safety == RUN_SAFE) 
     temp_package(prog, R_BOOL, list_check_1, "list_check_1", args, 1);
@@ -11417,12 +11428,27 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	      xen_value *res = NULL;
 	      switch (v->type)
 		{
-		case R_READER:       if (num_args == 0) res = reader_0(prog, args, v);       break;
-		case R_MIX_READER:   if (num_args == 0) res = mix_reader_0(prog, args, v);   break;
-		case R_CLM:          res = clm_n(prog, args, num_args, v); break;
+		case R_READER:       
+		  if (num_args == 0) res = reader_0(prog, args, v);       
+		  break;
+
+		case R_MIX_READER:   
+		  if (num_args == 0) res = mix_reader_0(prog, args, v);   
+		  break;
+
+		case R_CLM:          
+		  res = clm_n(prog, args, num_args, v); 
+		  break;
+
 		case R_BOOL:
-		case R_GOTO:         if (num_args == 0) res = goto_0(prog, args, v);         break;
-		case R_FUNCTION:     res = funcall_n(prog, args, num_args, v);               break;
+		case R_GOTO:         
+		  if (num_args == 0) res = goto_0(prog, args, v);         
+		  break;
+
+		case R_FUNCTION:     
+		  res = funcall_n(prog, args, num_args, v);
+		  break;
+
 		  /* fall through here if unknown function encountered (will give up later) */
 		}
 	      if (var == NULL) {FREE(v); v = NULL;}

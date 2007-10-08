@@ -1959,8 +1959,8 @@ sceq37:
 <map name="GR1">
   <area shape=rect coords="0,0,300,60" href="sndclm.html#nxysin" alt="nxysin">
   <area shape=rect coords="0,61,300,100" href="sndclm.html#nxycos" alt="nxycos">
-  <area shape=rect coords="0,101,300,150">
-  <area shape=rect coords="0,151,300,200">
+  <area shape=rect coords="0,101,300,150 href="sndclm.html#nxy1cos" alt="nxy1cos">
+  <area shape=rect coords="0,151,300,200" href="sndclm.html#nxy1sin" alt="nxy1sin">
   <area shape=rect coords="0,201,300,240" href="sndclm.html#noddsin" alt="noddsin">
   <area shape=rect coords="0,241,300,280" href="sndclm.html#noddcos" alt="noddcos">
   <area shape=rect coords="0,281,300,320">
@@ -4728,16 +4728,25 @@ is <a href="#sum-of-sines">sum-of-sines</a>, and nssb is the single side-band ve
 
 
 <pre>
-  <A class=def NAME="make-nxycos">make-nxycos</A> <a class=quiet href="#optional-key">:optional-key</a> (xfrequency 0.0) (yfrequency 0.0) (n 1) (x 0.0)
+  <A class=def NAME="make-nxycos">make-nxycos</A> <a class=quiet href="#optional-key">:optional-key</a> (xfrequency 0.0) (yfrequency 0.0) (n 1)
   <A class=def NAME="nxycos">nxycos</A> gen fm
   <A class=def NAME="nxycos?">nxycos?</A> gen
 
-  <A class=def NAME="make-nxysin">make-nxysin</A> <a class=quiet href="#optional-key">:optional-key</a> (xfrequency 0.0) (yfrequency 0.0) (n 1) (x 0.0)
+  <A class=def NAME="make-nxysin">make-nxysin</A> <a class=quiet href="#optional-key">:optional-key</a> (xfrequency 0.0) (yfrequency 0.0) (n 1)
   <A class=def NAME="nxysin">nxysin</A> gen fm
   <A class=def NAME="nxysin?">nxysin?</A> gen
+
+  <A class=def NAME="make-nxy1cos">make-nxy1cos</A> <a class=quiet href="#optional-key">:optional-key</a> (xfrequency 0.0) (yfrequency 0.0) (n 1)
+  <A class=def NAME="nxy1cos">nxy1cos</A> gen fm
+  <A class=def NAME="nxy1cos?">nxy1cos?</A> gen
+
+  <A class=def NAME="make-nxy1sin">make-nxy1sin</A> <a class=quiet href="#optional-key">:optional-key</a> (xfrequency 0.0) (yfrequency 0.0) (n 1)
+  <A class=def NAME="nxy1sin">nxy1sin</A> gen fm
+  <A class=def NAME="nxy1sin?">nxy1sin?</A> gen
 </pre>
-<p>These two produce a sum of "n" sinsoids starting at "x", spaced by "y".  Since "x" can be treated
-as the carrier, there's no point in an ssb version.  nxysin output is not normalized.
+<p>These two produce a sum of "n" sinsoids starting at "xfrequency", spaced by "yfrequency".  Since "xfrequency" can be treated
+as the carrier, there's no point in an ssb version.  nxysin output is not normalized.  nxy1cos is the same as nxycos, but every other
+component is multiplied by -1, and "n" produces 2n-1 components.
 </p>
 
 <br>
