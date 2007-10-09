@@ -548,7 +548,7 @@
 	   ((= i 30000))
 	 (outa i (nrcos gen (* (env index) (oscil mod))) *output*))))))
 
-(definstrument (nrcoser beg dur freq amp)
+(definstrument (lutish beg dur freq amp)
   (let* ((res1 (max 1 (inexact->exact (round (/ 1000.0 (max 1.0 (min 1000.0 freq)))))))
 	 (gen (make-nrcos (* freq res1) :n (max 1 (- res1 2))))
 	 (mod (make-oscil freq))
@@ -568,12 +568,12 @@
 		 *output*)))))))
 
 (with-sound (:srate 44100 :clipped #f :statistics #t :play #t)
-  (nrcoser 0 1 440 .1))
+  (lutish 0 1 440 .1))
 
 (with-sound (:srate 44100 :clipped #f :statistics #t :play #t)
   (do ((i 0 (1+ i)))
       ((= i 10))
-    (nrcoser (* i .1) 2 (* 100 (1+ i)) .05)))
+    (lutish (* i .1) 2 (* 100 (1+ i)) .05)))
 |#
 
 ;;; G&R 2nd col 1st and 2nd rows
@@ -658,7 +658,7 @@
 	   ((= i 10000))
 	 (outa i (nrssb gen 0.0) *output*))))))
 
-(definstrument (nrcoser1 beg dur freq amp aenv)
+(definstrument (oboish beg dur freq amp aenv)
   (let* ((res1 (max 1 (inexact->exact (round (/ 1400.0 (max 1.0 (min 1400.0 freq)))))))
 	 (gen (make-nrssb (* freq res1) freq :n res1 :r 0.75))
 	 (mod (make-oscil 5.0))
@@ -668,15 +668,16 @@
 	 (start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur)))
 	 (amplitude (make-env aenv :duration dur :base 4 :scaler amp))
-	 (skenv (make-env (list 0.0 (mus-random 1.0) 1.0 (mus-random 1.0) 2.0 0.0 (max 3.0 (* dur 20.0)) 0.0) 
+	 (skenv (make-env (list 0.0 0.0 1 1 2.0 (mus-random 1.0) 3.0 0.0 (max 4.0 (* dur 20.0)) 0.0) 
 			  :duration dur :scaler (hz->radians (random (* freq .05)))))
 	 (relamp (+ .85 (random .1)))
-	 (noise (make-rand-interp 300 .005 '(0 1 .25 .5 .5 .125 1 0))))
+	 (avib (make-rand-interp 5 .2)))
     (run 
      (lambda ()
        (do ((i start (1+ i)))
 	   ((= i stop))
-	 (let* ((vol (env amplitude))
+	 (let* ((vol (* (+ .8 (rand-interp avib)) 
+			(env amplitude)))
 		(vib (+ (* (hz->radians (* freq 0.003)) 
 			   (oscil mod))
 			(env skenv)))
@@ -687,24 +688,24 @@
 			 (* (+ (- 1.0 relamp) vola) 
 			    (oscil gen2 (+ (* vib res2)
 					   (* (hz->radians freq)
-					      (oscil gen3 (+ vib (rand-interp noise)))))))))
+					      (oscil gen3 vib)))))))
 		 *output*)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
-  (nrcoser1 0 1 300 .1 '(0 0 1 1 2 0)))
+  (oboish 0 1 300 .1 '(0 0 1 1 2 0)))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (do ((i 0 (1+ i)))
       ((= i 10))
-    (nrcoser1 (* i .3) .4 (+ 100 (* 50 i)) .05 '(0 0 1 1 2 1 3 0))))
+    (oboish (* i .3) .4 (+ 100 (* 50 i)) .05 '(0 0 1 1 2 1 3 0))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((rats (vector 1 256/243 9/8 32/27 81/64 4/3 1024/729 3/2 128/81 27/16 16/9 243/128 2))
 	(mode (vector 0 0 2 4 11 11 5 6 7 9 2 12 0)))
     (do ((i 0 (1+ i)))
 	((= i 20))
-      (nrcoser1 (/ (random 32) 8) 
-		(/ (+ 1 (random 8)) 8)
+      (oboish (/ (random 32) 8) 
+		(/ (+ 3 (random 8)) 8)
 		(* 16.351 16 (vector-ref rats (vector-ref mode (random 12))))
 		(+ .25 (random .25))
 		(let* ((pt1 (random 1.0))
@@ -2707,5 +2708,62 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; --------------------------------------------------------------------------------
 
+(definstrument (organish beg dur freq amp fm-index amp-env)
+  ;; this has a organ-style chiff (better than fm index sweep)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (carriers (make-vector 3 #f))
+	 (fmoscs (make-vector 3 #f))
+	 (ampfs (make-vector 3 #f))
+	 (pervib (make-triangle-wave 5 (hz->radians (* freq .003))))
+	 (ranvib (make-rand-interp 6 (hz->radians (* freq .002)))))
 
-;;; TODO: oct out at att or < down (up?) to main, undertone?
+    (do ((i 0 (1+ i)))
+	((= i 3))
+      (let* ((frq (* freq (expt 2 i)))
+	     (index1 (hz->radians (* fm-index frq (/ 5.0 (log frq)))))
+	     (index2 (hz->radians (* fm-index frq 3.0 (/ (- 8.5 (log frq)) (+ 3.0 (* frq .001))))))
+	     (index3 (hz->radians (* fm-index frq (/ 4.0 (sqrt frq))))))
+	(vector-set! carriers i (make-oscil frq))
+	(vector-set! fmoscs i (make-polyshape :frequency frq
+					      :coeffs (partials->polynomial 
+						       (list 1 index1
+							     3 index2
+							     4 index3))))))
+
+    (vector-set! ampfs 0 (make-env (or amp-env '(0 0 1 1 2 1 3 0)) :scaler amp :duration dur))
+    (vector-set! ampfs 1 (make-env (list 0 0  .02 1  .05 0 dur 0) :scaler (* amp .025) :duration dur))
+    (vector-set! ampfs 2 (make-env (list 0 0  .01 1 .025 0 dur 0) :scaler (* amp .05) :duration dur))
+
+    ;; also good:
+    ;(vector-set! ampfs 1 (make-env (list 0 0  .02 1  .05 0  (- dur .1) 0  (- dur .05) 1 dur 0) :scaler (* amp .025) :duration dur))
+    ;(vector-set! ampfs 2 (make-env (list 0 0  .01 1 .025 0  (- dur .05) 0 dur 1) :scaler (* amp .05) :duration dur))
+
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let* ((vib (+ (triangle-wave pervib) (rand-interp ranvib)))
+		(sum 0.0))
+	   (do ((k 0 (1+ k))
+		(n 1 (* n 2)))
+	       ((= k 3))
+	     (set! sum (+ sum (* (env (vector-ref ampfs k))
+				 (oscil (vector-ref carriers k)
+					(+ (* n vib)
+					   (polyshape (vector-ref fmoscs k) 1.0 (* n vib))))))))
+	   (outa i sum *output*)))))))
+
+#|
+(with-sound (:clipped #f :statistics #t :play #t :srate 44100)
+  (do ((i 0 (1+ i)))
+      ((= i 10))
+    (organish (* i .3) .4 (+ 100 (* 50 i)) .5 1.0 #f)))
+
+(with-sound (:clipped #f :statistics #t :play #t :srate 44100)
+  (do ((i 0 (1+ i)))
+      ((= i 10))
+    (organish (* i .3) .4 (+ 100 (* 50 i)) .5 1.0 '(0 0 1 1 2 .5 3 .25 4 .125 10 0))))
+|#
+
+;;; TODO: undertone? initial resonance?

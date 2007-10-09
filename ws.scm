@@ -394,7 +394,7 @@ returning you to the true top-level."
 			 (set! snd-output (open-raw-sound output-1 channels srate data-format))
 			 ;; open-sound here would either ask for raw settings or use possibly irrelevant defaults
 
-			 ;; TODO: this is irritating since it resizes windows and does not scroll the listener to the bottom
+			 ;; TODO: this is irritating since it resizes windows
 
 			 (set! snd-output (open-sound output-1))))
 		 (set! (sync snd-output) #t)))
@@ -454,8 +454,9 @@ returning you to the true top-level."
 
 	   (if (and to-snd output-to-file)
 	       (begin
-		(update-time-graph snd-output)
-		(if (number? cur-sync) (set! (sync snd-output) cur-sync)))))
+		 (update-time-graph snd-output)
+		 (goto-listener-end)
+		 (if (number? cur-sync) (set! (sync snd-output) cur-sync)))))
 	 output-1))
 
      (lambda () 
