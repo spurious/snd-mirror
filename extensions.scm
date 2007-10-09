@@ -329,6 +329,8 @@ If 'check' is #f, the hooks are removed."
   (let () ; make new guile happy
 
     (define* (yes-or-no? question action-if-yes action-if-no :optional snd)
+      ;; we are replacing the caller's requested action with this prompt, so the action won't take place
+      ;;   until we get a response.
       (clear-minibuffer snd)
       (prompt-in-minibuffer question
 			    (lambda (response)
@@ -340,28 +342,28 @@ If 'check' is #f, the hooks are removed."
 			    snd #t))
 
     (define (ignore-unsaved-edits-at-close? ind exiting)
-      (letrec ((ignore-unsaved-edits-in-chan? 
-		(lambda (chan)
-		  (if (>= chan (channels ind))
-		      #t
-		      (let ((eds (edits ind chan)))
-			(if (> (car eds) 0)
-			    (begin
-			      (yes-or-no?
-			       (format #f "~A~A has unsaved edits.  Close anyway? " 
-				       (short-file-name ind) 
-				       (if (> (channels ind) 1)
-					   (format #f "[~A]" chan)
-					   ""))
-			       (lambda (snd)
-				 (revert-sound ind)
-				 (if exiting (exit)))
-			       (lambda (snd)
-				 #f)
-			       ind)
-			      #f)
-			    (ignore-unsaved-edits-in-chan? (1+ chan))))))))
-	(ignore-unsaved-edits-in-chan? 0)))
+      (let ((eds 0))
+	(do ((i 0 (1+ i)))
+	    ((= i (channels ind)))
+	  (set! eds (+ eds (car (edits ind i)))))
+	(if (> eds 0)
+	    (begin
+	      ;; there are unsaved edits; cancel requested action (return #f -> #t) and wait for response
+	      (yes-or-no?
+	       (format #f "~A has unsaved edits.  ~A anyway? " 
+		       (short-file-name ind)
+		       (if exiting "Exit" "Close"))
+	       (lambda (snd)
+		 ;;"Yes close anyway"
+		 (revert-sound ind) ; to make sure this hook doesn't activate
+		 (close-sound ind)
+		 (if exiting (exit)))
+	       (lambda (snd)
+		 ;;"no don't close"
+		 #f) ; this return value is just a placeholder to make Scheme happy
+	       ind)
+	      #f) ; (not #f) -> #t means cancel request pending response
+	    #t))) ; (not #t) -> #f means go ahead, there are no unsaved edits
     
     (define (ignore-unsaved-edits-at-exit?)
       (letrec ((ignore-unsaved-edits-at-exit-1?

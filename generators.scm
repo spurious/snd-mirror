@@ -667,21 +667,28 @@
 	 (gen3 (make-oscil freq))
 	 (start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur)))
-	 (amplitude (make-env aenv :duration dur :base 4 :scaler amp)))
+	 (amplitude (make-env aenv :duration dur :base 4 :scaler amp))
+	 (skenv (make-env (list 0.0 (mus-random 1.0) 1.0 (mus-random 1.0) 2.0 0.0 (max 3.0 (* dur 20.0)) 0.0) 
+			  :duration dur :scaler (hz->radians (random (* freq .05)))))
+	 (relamp (+ .85 (random .1)))
+	 (noise (make-rand-interp 300 .005 '(0 1 .25 .5 .5 .125 1 0))))
     (run 
      (lambda ()
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (let* ((vol (env amplitude))
-		(vib (* (hz->radians (* vol freq 0.1)) 
-			(oscil mod)))
+		(vib (+ (* (hz->radians (* freq 0.003)) 
+			   (oscil mod))
+			(env skenv)))
 		(vola (* 0.05 (/ vol amp))))
 	   (outa i (* vol
-		      (+ (* (- .95 vola) (nrssb-interp gen vib -1.0))
-			 (* (+ .05 vola) (oscil gen2 (+ (* vib res2)
-							(* (hz->radians freq)
-							   (oscil gen3 vib)))))))
-	       *output*)))))))
+		      (+ (* (- relamp vola) 
+			    (nrssb-interp gen vib -1.0))
+			 (* (+ (- 1.0 relamp) vola) 
+			    (oscil gen2 (+ (* vib res2)
+					   (* (hz->radians freq)
+					      (oscil gen3 (+ vib (rand-interp noise)))))))))
+		 *output*)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (nrcoser1 0 1 300 .1 '(0 0 1 1 2 0)))
@@ -691,8 +698,19 @@
       ((= i 10))
     (nrcoser1 (* i .3) .4 (+ 100 (* 50 i)) .05 '(0 0 1 1 2 1 3 0))))
 
-
-;; TODO: try noise ds, frq skw? 3rd f? broader 2nd? = cos*nrcos perhaps
+(with-sound (:clipped #f :statistics #t :play #t)
+  (let ((rats (vector 1 256/243 9/8 32/27 81/64 4/3 1024/729 3/2 128/81 27/16 16/9 243/128 2))
+	(mode (vector 0 0 2 4 11 11 5 6 7 9 2 12 0)))
+    (do ((i 0 (1+ i)))
+	((= i 20))
+      (nrcoser1 (/ (random 32) 8) 
+		(/ (+ 1 (random 8)) 8)
+		(* 16.351 16 (vector-ref rats (vector-ref mode (random 12))))
+		(+ .25 (random .25))
+		(let* ((pt1 (random 1.0))
+		       (pt2 (+ pt1 (random 1.0)))
+		       (pt3 (+ pt2 (random 1.0))))
+		  (list 0 0 pt1 1 pt2 .5 pt3 0))))))
 
 ;;; .85 .15 (* 2 freq) 300, 2400 + 0.5*vib
 |#
@@ -1143,8 +1161,8 @@
   (declare (gen clm) (fm float))
   (let ((arg (* 2.0 (oscil gen fm))))
     (if (>= arg 0.0)
-	(* 0.5 (acos (- 1.0 arg)))
-	(* -0.5 (acos (+ 1.0 arg))))))
+	(/ (acos (- 1.0 arg)) pi)
+	(/ (acos (+ 1.0 arg)) (- pi)))))
 
 #|
 (with-sound (:clipped #f :statistics #t)
@@ -1156,7 +1174,7 @@
 |#
 
 ;;; as printed in J, this is not usable -- 1-2sin can be 3 so acos will be complex -- looks like we're missing: x < pi
-;;; needs normalization and it's not right anyway -- we get odd harmonics but wrong amps
+;;; we get odd harmonics but wrong amps
 
 
 ;;; --------------------------------------------------------------------------------
@@ -1485,7 +1503,7 @@
 
 
 ;;; this was inspired by Andrews, Askey, Roy "Special Functions" p396, but there's an error somewhere...
-;;;   it produces sum r^k sin(k+1/2)x
+;;;   it produces sum r^k sin(2k-1)x (not exactly what they derive)
 ;;;   (not normalized)
 
 (def-clm-struct (dblsum
@@ -1568,6 +1586,7 @@
 
 ;;; Zygmund 1st
 ;;;   this looks interesting, but how to normalize?  sum of sines is bad enough, kr^k -> 1/(1-x)^2 if x^2<1 (G&R 113)
+;;;   for low n, we could use the Tn roots stuff (clm.c)
 
 (def-clm-struct (krksin
 		 :make-wrapper
@@ -1731,8 +1750,8 @@
 (define (r2k2cos-norm a)
   ;; J 124
   (- (* (/ pi (* 2 a))
-	(/ (+ (exp (* pi a)) (exp (* pi (- a))))
-	   (- (exp (* pi a)) (exp (* pi (- a))))))
+	(/ (cosh (* pi a))
+	   (sinh (* pi a))))
      (/ 1.0
 	(* 2 a a))))
 
@@ -2688,5 +2707,5 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; --------------------------------------------------------------------------------
 
-;;; TODO: sum-of-sines max via Tn poly roots acos
 
+;;; TODO: oct out at att or < down (up?) to main, undertone?

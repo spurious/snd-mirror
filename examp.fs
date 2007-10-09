@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Mon Aug 06 23:51:39 CEST 2007
+\ Changed: Sat Oct 06 21:20:04 CEST 2007
 
 \ Commentary:
 \
@@ -1228,7 +1228,7 @@ Faster is:  0.99 2400 make-formant filter-sound"
 
 \ ;;; -------- hello-dentist
 \ ;;;
-\ ;;; CLM instrument version is in clm.html
+\ ;;; CLM instrument version is in sndclm.html
 
 hide
 : hd-input-cb { in-data -- prc; dir self -- val }
@@ -1383,7 +1383,7 @@ previous
 
 \ ;;; -------- cross-synthesis
 \ ;;;
-\ ;;; CLM version is in clm.html
+\ ;;; CLM version is in sndclm.html
 
 : cross-synthesis ( cross-snd amp fftsize r -- prc; y self -- val )
   doc" Does cross-synthesis between CROSS-SND (a sound index) and the currently selected sound:\n\

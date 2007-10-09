@@ -7668,6 +7668,7 @@ more like Emacs (it prompts for confirmation first):
 (<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\k) 0 
   (lambda ()
     "close sound"
+    (<a class=quiet href="#clearminibuffer">clear-minibuffer</a>)
     (<em class=red>prompt-in-minibuffer</em>
      (format #f "close ~S (cr=yes)?" (<a class=quiet href="#shortfilename">short-file-name</a>))
      (lambda (response)

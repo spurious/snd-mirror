@@ -1346,29 +1346,25 @@ bool mus_sum_of_sines_p(mus_any *ptr)
 
 
 #if 0
-/* it's simplest to get these maxes by running an example and recording the maxamp, but it also
+/* its simplest to get these maxes by running an example and recording the maxamp, but it also
  *   works for small "n" to use the derivative of the sum-of-sines as a Chebyshev polynomial in cos x,
  *   find its roots, and plug acos(root) into the original, recording the max:
  *
 (define (smax coeffs)
-  ;; to get max of sum of sines, start by getting derivative (a sum of cosines)
   (let* ((n (vct-length coeffs))
 	 (dcos (make-vct n 1.0)))
     (do ((i 0 (1+ i)))
 	((= i n))
       (vct-set! dcos i (* (+ i 1) (vct-ref coeffs i))))
-    ;; now get the equivalent Chebyshev polynomial (in cos^n)
     (let ((partials '()))
       (do ((i 0 (1+ i)))
 	  ((= i n))
 	(set! partials (append (list (vct-ref dcos i) (+ i 1)) partials)))
       (let ((Tn (partials->polynomial (reverse partials))))
-	;; now find roots of Tn
 	(let ((roots (poly-roots Tn)))
 	  (let ((mx (* -2 n)))
 	    (for-each
 	     (lambda (root)
-	       ;; get acos(root) and plug into original as sum of sines
 	       (let ((acr (acos root))
 		     (sum 0.0))
 		 (do ((i 0 (1+ i)))
@@ -1381,7 +1377,8 @@ bool mus_sum_of_sines_p(mus_any *ptr)
   *
   *   (smax (make-vct n 1.0)
   *
-  * but that's too much effort for an initialization function...
+  * but that's too much effort for an initialization function.
+  *   A sum of (enough) sines is a spike even when the coeffs are random, the spikes being close to 0 and pi.
   */
 #endif
 
@@ -1391,6 +1388,8 @@ static Float sum_of_sines_maxamps[] = {1.0, 1.0, 1.761, 2.5, 3.24, 3.97, 4.7, 5.
 
 static Float sum_of_sines_50 = .743;
 static Float sum_of_sines_100 = .733;
+
+/* 100: 72.8 500:362.2 1000: 724.9 10000: 7196 */
 
 static Float sum_of_sines_scaler(int sines)
 {
