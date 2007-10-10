@@ -2716,7 +2716,9 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (fmoscs (make-vector 3 #f))
 	 (ampfs (make-vector 3 #f))
 	 (pervib (make-triangle-wave 5 (hz->radians (* freq .003))))
-	 (ranvib (make-rand-interp 6 (hz->radians (* freq .002)))))
+	 (ranvib (make-rand-interp 6 (hz->radians (* freq .002))))
+	 (resc (make-nrssb 340.0 340 5 .5))
+	 (resf (make-env (list 0 0 .05 1  .1 0 dur 0) :scaler (* amp .05) :duration dur)))
 
     (do ((i 0 (1+ i)))
 	((= i 3))
@@ -2732,19 +2734,20 @@ index 10 (so 10/2 is the bes-jn arg):
 							     4 index3))))))
 
     (vector-set! ampfs 0 (make-env (or amp-env '(0 0 1 1 2 1 3 0)) :scaler amp :duration dur))
-    (vector-set! ampfs 1 (make-env (list 0 0  .02 1  .05 0 dur 0) :scaler (* amp .025) :duration dur))
-    (vector-set! ampfs 2 (make-env (list 0 0  .01 1 .025 0 dur 0) :scaler (* amp .05) :duration dur))
+    (vector-set! ampfs 1 (make-env (list 0 0  .04 1  .075 0 dur 0) :scaler (* amp .0125) :duration dur))
+    (vector-set! ampfs 2 (make-env (list 0 0  .02 1  .05 0 dur 0) :scaler (* amp .025) :duration dur))
 
     ;; also good:
     ;(vector-set! ampfs 1 (make-env (list 0 0  .02 1  .05 0  (- dur .1) 0  (- dur .05) 1 dur 0) :scaler (* amp .025) :duration dur))
-    ;(vector-set! ampfs 2 (make-env (list 0 0  .01 1 .025 0  (- dur .05) 0 dur 1) :scaler (* amp .05) :duration dur))
+    ;(vector-set! ampfs 2 (make-env (list 0 0  .01 1 .025 0  (- dur .15) 0 (- dur .1) 1 dur 0) :scaler (* amp .05) :duration dur))
 
     (run
      (lambda ()
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (let* ((vib (+ (triangle-wave pervib) (rand-interp ranvib)))
-		(sum 0.0))
+		(sum (* (env resf)
+			(nrssb resc 0.0))))
 	   (do ((k 0 (1+ k))
 		(n 1 (* n 2)))
 	       ((= k 3))
@@ -2766,4 +2769,3 @@ index 10 (so 10/2 is the bes-jn arg):
     (organish (* i .3) .4 (+ 100 (* 50 i)) .5 1.0 '(0 0 1 1 2 .5 3 .25 4 .125 10 0))))
 |#
 
-;;; TODO: undertone? initial resonance?

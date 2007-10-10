@@ -44,7 +44,7 @@ can express this (the vibrato, not the neat story) as:
 </pre>
 -->
 
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>FM and phase modulation</center></h5></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>FM and phase modulation</h5></center></td></tr></table>
 
 <p>where the c subscript stands for "carrier" and f(t) means "some arbitrary function added to the 
 carrier".  Since cos takes an angle as its argument, f(t) modulates (that is, changes) the angle 
@@ -262,7 +262,7 @@ functions that there is no difference in run-time computational expense or accur
 -->
 
 <br>
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>simple FM: sin(sin)</center></h5></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>simple FM: sin(sin)</h5></center></td></tr></table>
 
 <p>Given our formula for FM, let's assume, for starters, that f(t) is a sinusoid:
 </p>
@@ -405,7 +405,7 @@ You can slog through the Fourier series expansion by hand, or look it up in Abra
 
 <p>Here the J's refer to the Bessel functions which we will return to later. First, let's finish this 
 expansion; we take these two sums and 
-<img src="fmeq23.png" alt="wct" salign=absmiddle>
+<img src="fmeq23.png" alt="wct" align=absmiddle>
 and plug them into our first expansion of the FM 
 formula, and out pops:
 </p>
@@ -566,7 +566,7 @@ significant sidebands on each side of the carrier, so our total bandwidth is on 
 
 <table border=1 hspace=50 cellpadding=10><tr><td>
 <small> 
-<p>Then there's the perennial question "why Bessel functions?".  Consider our earlier
+Then there's the perennial question "why Bessel functions?".  Consider our earlier
 expansion of cos(sin) in terms of sinusoids as a sort of Fourier transform of
 the simple FM equation. Looking at cos(sin) as the real part of
 e<sup>(iB sin w<sub>m</sub>t)</sup>, our expansion is evaluating
@@ -593,11 +593,11 @@ about them in 1824.
 There are brief historical snippits at 
 <a href="http://www.aam314.vzz.net/EB/Bessel.html">Encyclopedia Britannica</a> and <a href="http://www-groups.dcs.st-and.ac.uk/~history/Biographies/Bessel.html">Bios</a>.
 For an explanation of the connection between planetary motion and FM, see Benson, "Music: A Mathematical Offering".
-</p></small>
+</small>
 </td></tr></table>
 
 <br>
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>simple FM examples</center></h5></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>simple FM examples</h5></center></td></tr></table>
 
 <p>Here's a simple FM instrument:
 </p>
@@ -705,7 +705,7 @@ sweep the FM index from 0 to 10, and the spectrogram looks like this:
 <img src="fmsweep.png" alt="sweep index" hspace=40>
 
 <br>
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>phase quibbles: cos(sin)</center></h5></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>phase quibbles: cos(sin)</h5></center></td></tr></table>
 <p>
 There is a lot of music in simple FM.
 But, to clear up one source of confusion, if you 
@@ -951,7 +951,7 @@ CLM instrument that shows this (subtle) effect:
 </td></tr></table>
 
 <br>
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>asymmetric spectra</center></h5></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>asymmetric spectra</h5></center></td></tr></table>
 
 <p>The next question is "if we can get cancellations, can we fiddle with the phases and get 
 asymmetric FM spectra?".  There are several approaches; an obvious one uses the
@@ -1049,7 +1049,7 @@ backwards to get:
 
 <p>so we can use</p>
 
-<img src="fmeq48.png" "sum of Js" hspace=20>
+<img src="fmeq48.png" alt="sum of Js" hspace=20>
 
 <p>to normalize the output to -1.0 to 1.0.
 The spectrum produced for a given "r" is mirrored by -1/r (remembering that 
@@ -1064,8 +1064,8 @@ The spectrum produced for a given "r" is mirrored by -1/r (remembering that
 & 0.5^{-5}J_{-5}(2.0) = -0.225 \Rightarrow -0.160 \quad \textrm{(normalized to match fft)} \\
 & 0.5^{-4}J_{-4}(2.0) = 0.544 \Rightarrow 0.385 \\
 & 0.5^{-3}J_{-3}(2.0) = -1.031 \Rightarrow -0.730 \\
-& 0.5^{-2}J_{-4}(2.0) = 1.411 \Rightarrow 1.0 \\
-& 0.5^{-1}J_{-4}(2.0) = -1.153 \Rightarrow -0.817 \\
+& 0.5^{-2}J_{-2}(2.0) = 1.411 \Rightarrow 1.0 \\
+& 0.5^{-1}J_{-1}(2.0) = -1.153 \Rightarrow -0.817 \\
 & 0.5^{0}J_{0}(2.0) = 0.224 \Rightarrow 0.159 \\
 & 0.5^{1}J_{1}(2.0) = 0.288 \Rightarrow 0.204 \\
 & 0.5^{2}J_{2}(2.0) = 0.088 \Rightarrow 0.062 \\
@@ -1114,7 +1114,7 @@ a moving formant).  Here we sweep "r" from -1.0 to -20.0, with an index of 3, m/
 
 
 <br>
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>complex FM: sin(sin+sin)</center></h5></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>complex FM: sin(sin+sin)</h5></center></td></tr></table>
 
 <p>
 So far we have been using just a sinusoid for the modulator; what if we make it a more complicated 
@@ -1376,7 +1376,7 @@ A pared down version of the fm-violin is:
 </td></tr></table>
 
 <br>
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>cascade FM: sin(sin(sin))</center></h5></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>cascade FM: sin(sin(sin))</h5></center></td></tr></table>
 
 <p>We can, of course, use FM (or anything) to produce the modulating signal.  When FM is used, it is 
 sometimes called "cascade FM":
@@ -1563,7 +1563,7 @@ it seems to be approaching a square wave as k heads into the stratosphere:
 
 <br>
 
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>feedback FM: sin(x=sin(x))</center></h5></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>feedback FM: sin(x=sin(x))</h5></center></td></tr></table>
 
 <p>A similar trick comes up in feedback FM used in some synthesizers. Here the output of the modulator
 is low-pass filtered, then fed back into its fm-input location.  Cellon, written by Stanislaw 
@@ -1724,7 +1724,7 @@ can behave chaotically.
 </p>
 
 
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>FM and noise: sin(sin(rand))</center></h5></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>FM and noise: sin(sin(rand))</h5></center></td></tr></table>
 
 <p>
 One of the standard ways to make noise 
@@ -1789,7 +1789,7 @@ mix.
 </p>
 
 
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>FM voice</center></h5></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>FM voice</h5></center></td></tr></table>
 
 <p>We can use more than one sinusoidal component in our carrier, or multiple banks of carriers and 
 modulators, and depend upon vibrato and "spectral fusion" to make the result sound like one voice.  
@@ -1958,8 +1958,8 @@ Moorer, "Signal Processing Aspects of Computer Music: A Survey" Proc IEEE  vol 6
 Palamin, Palamin, Ronveaux "A Method of Generating and Controlling Asymmetrical Spectra", JAES vol 36, 
      no 9, Sept 88, p671-685.
 
-Schottstaedt, "The Simulation of Natural Instrument Tones Using Frequency Modulation with a Complex Modulating Wave", 
-     CMJ vol 1 no 4 1977 p46-50
+Schottstaedt, "The Simulation of Natural Instrument Tones Using Frequency Modulation 
+     with a Complex Modulating Wave", CMJ vol 1 no 4 1977 p46-50
 
 Taub and Schilling, "Principles of Communications Systems", McGraw-Hill, 1986.
 
