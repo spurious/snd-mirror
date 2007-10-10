@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 42
-#define MUS_DATE "5-Oct-07"
+#define MUS_REVISION 43
+#define MUS_DATE "11-Oct-07"
 
 /*
+ * 11-Oct:     changed default srate to 44100.
  * 5-Oct:      mus_oscil_2.
  * 6-Sep:      changed asymmetric-fm to use cos(sin) and added amplitude normalization.
  * 6-Aug:      mus_autocorrelate, mus_correlate.
@@ -201,7 +202,7 @@
   #define M_PI_2 (M_PI / 2.0)
 #endif
 
-#define MUS_DEFAULT_SAMPLING_RATE 22050.0
+#define MUS_DEFAULT_SAMPLING_RATE 44100.0
 #define MUS_DEFAULT_FILE_BUFFER_SIZE 8192
 #define MUS_DEFAULT_ARRAY_PRINT_LENGTH 8
 

@@ -2756,7 +2756,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 {
   char *str = NULL, *comment = NULL, *msg = NULL, *fullname = NULL, *tmpfile = NULL;
   snd_info *sp = NULL;
-  int type = MUS_NEXT, format = MUS_BSHORT, srate = 22050, output_type, chan = 0, extractable_chans = 0;
+  int type = MUS_NEXT, format = DEFAULT_OUTPUT_DATA_FORMAT, srate = DEFAULT_OUTPUT_SRATE;
+  int output_type, chan = 0, extractable_chans = 0;
   bool file_exists = false;
   io_error_t io_err = IO_NO_ERROR;
 

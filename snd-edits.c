@@ -2944,7 +2944,7 @@ static char *edit_list_data_to_temp_file(chan_info *cp, ed_list *ed, file_delete
   else ofile = shorter_tempnam(save_dir(ss), "snd_");
   sd = cp->sounds[ed->sound_location];
   if (sd->type == SND_DATA_BUFFER)
-    mus_array_to_file(ofile, sd->buffered_data, ed->len, 22050, 1);
+    mus_array_to_file(ofile, sd->buffered_data, ed->len, DEFAULT_OUTPUT_SRATE, 1);
   else 
     {
       io_error_t io_err;

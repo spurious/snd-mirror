@@ -609,7 +609,7 @@ return file descriptor (an integer)"
 static XEN g_mus_sound_open_output(XEN file, XEN srate, XEN chans, XEN data_format, XEN header_type, XEN comment)
 {
 
-  #define H_mus_sound_open_output "(" S_mus_sound_open_output " filename :optional (srate 22050) (chans 1) data-format header-type (comment \"\")): \
+  #define H_mus_sound_open_output "(" S_mus_sound_open_output " filename :optional (srate 44100) (chans 1) data-format header-type (comment \"\")): \
 open filename for (low-level) sound output with the given srate and so on; return the file descriptor (an integer). \
 The file size is normally set later via " S_mus_sound_close_output ". srate is an integer, comment is a string, \
 data-format is a sndlib format indicator such as " S_mus_bshort ", if " PROC_FALSE " if defaults to a format compatible with sndlib, \
@@ -641,7 +641,7 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
 	      char *com = NULL;
 	      if (XEN_STRING_P(comment)) com = XEN_TO_C_STRING(comment);
 	      fd = mus_sound_open_output(local_mus_expand_filename(XEN_TO_C_STRING(file)),
-					 XEN_TO_C_INT_OR_ELSE(srate, 22050),
+					 XEN_TO_C_INT_OR_ELSE(srate, DEFAULT_OUTPUT_SRATE),
 					 chns, df, ht, com);
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 3, chans, "chans ~A <= 0?");

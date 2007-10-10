@@ -803,7 +803,7 @@
 	     (not (equal? (default-output-data-format) mus-lfloat)))
 	(snd-display ";default-output-data-format set def: ~A" (default-output-data-format)))
     (set! (default-output-srate) (default-output-srate))
-    (if (not (equal? (default-output-srate)  22050 )) 
+    (if (not (equal? (default-output-srate)  44100 )) 
 	(snd-display ";default-output-srate set def: ~A" (default-output-srate)))
     (set! (default-output-header-type) (default-output-header-type))
     (if (not (equal? (default-output-header-type)  mus-next)) 
@@ -1170,7 +1170,7 @@
       'default-output-chans (default-output-chans) 1 
       'default-output-data-format (default-output-data-format) mus-lfloat
       'default-output-header-type (default-output-header-type) mus-next
-      'default-output-srate (default-output-srate) 22050 
+      'default-output-srate (default-output-srate) 44100
       'dot-size (dot-size) 1 
       'enved-base (enved-base) 1.0 
       'enved-clip? (enved-clip?) #f 
@@ -48485,9 +48485,12 @@ EDITS: 1
 	      
 	      (oscil efunc-gen)
 	      (let ((val (run-eval '(efunc-6 efunc-gen))))
-		(if (fneq val .125) (snd-display ";embedded func 17: ~A" val)))
+		(if (and (fneq val .125) (fneq val .0626))
+		    (snd-display ";embedded func 17: ~A" val)))
 	      (let ((val (run-eval '(oscil (efunc-7 efunc-gen)))))
-		(if (fneq val .248) (snd-display ";embedded func 18: ~A" val)))
+		(if (and (fneq val .248) 
+			 (fneq val .125))
+		    (snd-display ";embedded func 18: ~A" val)))
 	      (mus-reset efunc-gen)
 
 	      (if with-gui
@@ -52412,8 +52415,8 @@ EDITS: 1
 	  
 	  (let ((v1 (with-sound (:output (make-vct 2210) :channels 4 :statistics (lambda (str) (set! stats-string str)))
 				(fm-violin 0 .1 440 .1 :degree 45 :random-vibrato-amplitude 0.0))))
-	    (if (and (not (string=? stats-string "vct:\n  maxamp: 0.1000\n  compute time: 0.000\n"))
-		     (not (string=? stats-string "vct:\n  maxamp: 0.1000\n  compute time: 0.010\n")))
+	    (if (and (not (string=? stats-string ";vct:\n  maxamp: 0.1000\n  compute time: 0.000\n"))
+		     (not (string=? stats-string ";vct:\n  maxamp: 0.1000\n  compute time: 0.010\n")))
 		(snd-display ";with-sound to vct stats 4: [~A]" stats-string)))
 	  
 	  (let ((v1 (with-sound (:output (make-sound-data 4 2210) :channels 4 :statistics (lambda (str) (set! stats-string str)))
@@ -52421,9 +52424,9 @@ EDITS: 1
 				(fm-violin 0 .1 440 .2 :degree 90 :random-vibrato-amplitude 0.0)
 				(fm-violin 0 .1 440 .3 :degree 180 :random-vibrato-amplitude 0.0)
 				(fm-violin 0 .1 440 .4 :degree 270 :random-vibrato-amplitude 0.0))))
-	    (if (and (not (string=? stats-string "sound-data:\n  maxamp: 0.1000 0.2000 0.3000 0.4000\n  compute time: 0.000\n"))
-		     (not (string=? stats-string "sound-data:\n  maxamp: 0.1000 0.2000 0.3000 0.4000\n  compute time: 0.010\n"))
-		     (not (string=? stats-string "sound-data:\n  maxamp: 0.1000 0.2000 0.3000 0.4000\n  compute time: 0.020\n")))
+	    (if (and (not (string=? stats-string ";sound-data:\n  maxamp: 0.1000 0.2000 0.3000 0.4000\n  compute time: 0.000\n"))
+		     (not (string=? stats-string ";sound-data:\n  maxamp: 0.1000 0.2000 0.3000 0.4000\n  compute time: 0.010\n"))
+		     (not (string=? stats-string ";sound-data:\n  maxamp: 0.1000 0.2000 0.3000 0.4000\n  compute time: 0.020\n")))
 		(snd-display ";with-sound to sound-data stats 4: [~A]" stats-string)))
 	  )
 	

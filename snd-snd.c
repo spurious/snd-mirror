@@ -2493,7 +2493,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
     case SP_SRATE:
       if (!(IS_PLAYER(sp))) 
 	{
-	  ival = XEN_TO_C_INT_OR_ELSE(val, 22050);
+	  ival = XEN_TO_C_INT_OR_ELSE(val, 44100);
 	  if ((ival <= 0) || (ival > 100000000))
 	    XEN_OUT_OF_RANGE_ERROR(S_setB S_srate, 1, val, "~A: impossible srate");
 	  mus_sound_set_srate(sp->filename, ival);

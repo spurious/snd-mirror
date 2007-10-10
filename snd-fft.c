@@ -1762,7 +1762,7 @@ void c_convolve(const char *fname, Float amp, int filec, off_t filehdr, int filt
   int err;
 
   /* need file to hold convolution output */
-  err = mus_write_header(fname, MUS_NEXT, 22050, 1, data_size * mus_bytes_per_sample(MUS_OUT_FORMAT), MUS_OUT_FORMAT, NULL);
+  err = mus_write_header(fname, MUS_NEXT, DEFAULT_OUTPUT_SRATE, 1, data_size * mus_bytes_per_sample(MUS_OUT_FORMAT), MUS_OUT_FORMAT, NULL);
   if (err != MUS_NO_ERROR)
     snd_error(_("can't open convolution temp file %s: %s"), fname, snd_io_strerror());
   else

@@ -9490,7 +9490,7 @@ with-sound returns its :output argument.
 
 <pre>
   <a class=def name="withsound">with-sound</a>
-     :key (srate *clm-srate*)                    ; output sampling rate (22050)
+     :key (srate *clm-srate*)                    ; output sampling rate (44100)
           (output *clm-file-name*)               ; output file name ("test.snd")
 	  (channels *clm-channels*)              ; channels in output (1)
 	  (header-type *clm-header-type*)        ; output header type (mus-next or mus-aifc)
@@ -9585,7 +9585,7 @@ everything after that is evaluated as a note list.
 
 <pre>
     (define *clm-file-name*          "test.snd")
-    (define *clm-srate*              (default-output-srate))       ; 22050
+    (define *clm-srate*              (default-output-srate))       ; 44100
     (define *clm-channels*           (default-output-chans))       ; 1
     (define *clm-data-format*        (default-output-data-format)) ; mus-lfloat
     (define *clm-header-type*        (default-output-header-type)) ; mus-next
@@ -9673,7 +9673,7 @@ arguments.  <a name="definstrument">definstrument</a> implements the notehook fe
 <p>The "output" argument can be a vct or a sound-data object, as well as a filename:
 </p>
 <pre>
-    (with-sound (:output (make-vct 22050)) (fm-violin 0 1 440 .1))
+    (with-sound (:output (make-vct 44100)) (fm-violin 0 1 440 .1))
 </pre>
 
 <p>See <a href="#fadedoc">fade.scm</a>, snd-test.scm,
@@ -10112,7 +10112,7 @@ the default equal temperment.
 </p>
 <pre>
     <em class=listener>&gt;</em> <em class=typing>(-&gt;sample 1.0)</em>
-    <em class=listener>22050</em>
+    <em class=listener>44100</em>
 </pre>
 <br>
 

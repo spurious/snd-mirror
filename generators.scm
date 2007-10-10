@@ -850,7 +850,39 @@
 	   (do ((i 0 (1+ i)))
 	       ((= i 20000))
 	     (outa i (rcos gen 0.0) *output*))))))
+
+(definstrument (stringy beg dur freq amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (n (inexact->exact (floor (/ (mus-srate) (* 3 freq)))))
+	 (r (expt .001 (/ 1 n)))
+	 (carrier (make-rcos freq (* .5 r)))
+	 (clang (make-rkoddssb (* freq 2) (* freq 1.618) r))
+	 (ampf (make-env '(0 0 1 1 2 .5 4 .25 10 0) :scaler amp :duration dur))
+	 (clangf (make-env (list 0 0 .1 1 .2 .1 .3 0) :scaler (* amp .5) :duration .1))
+	 (rf (make-env (list 0 1 1 0) :scaler (* 0.5 r) :duration dur))
+	 (crf (make-env (list 0 1 1 0) :scaler r :duration .1)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (set! (rkoddssb-r clang) (env crf))
+	 (set! (rcos-r carrier) (env rf))
+	 (outa i (+ (* (env clangf)
+		       (rkoddssb clang 0.0))
+		    (* (env ampf)
+		       (rcos carrier 0.0)))
+	       *output*))))))
+
+(with-sound (:clipped #f :statistics #t :play #t)
+  (stringy 0 1 1000 .5))
+
+(with-sound (:clipped #f :statistics #t :play #t)
+  (do ((i 0 (1+ i)))
+      ((= i 10))
+    (stringy (* i .3) .3 (+ 200 (* 100 i)) .5)))
 |#
+
 
 (def-clm-struct (rssb 
 		 :make-wrapper
@@ -1320,6 +1352,24 @@
 	 (outa i (rk!cos gen 0.0) *output*))))))
 |#
 
+;;; the k! denominator dominates, so r * modfreq = formant center approximately; (n!)^(1/n) 
+;;;   so freq=100, r=30, the center of the spectrum is around 3kHz:
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-rk!cos 100.0 :r 40.0)) 
+	(r 40.0) 
+	(incr (/ -40.0 100000)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 100000)) 
+	 (set! (rk!cos-r gen) r) 
+	 (set! r (+ r incr))
+	 (outa i (rk!cos gen 0.0) *output*))))))
+|#
+
+
 (def-clm-struct (rk!ssb
 		 :make-wrapper
 		 (lambda (g)
@@ -1578,7 +1628,33 @@
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
 	 (outa i (rkoddssb gen 0.0) *output*))))))
+
+(definstrument (glassy beg dur freq amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (n (inexact->exact (floor (/ (mus-srate) (* 3 freq)))))
+	 (r (expt .001 (/ 1 n)))
+	 (clang (make-rkoddssb (* freq 2) (* freq 1.618) r))
+	 (clangf (make-env (list 0 0 .01 1 .1 1 .2 .4 (max .3 dur) 0) :scaler amp :duration dur))
+	 (crf (make-env (list 0 1 1 0) :scaler r :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (set! (rkoddssb-r clang) (env crf))
+	 (outa i (* (env clangf)
+		    (rkoddssb clang 0.0))
+	       *output*))))))
+
+(with-sound (:clipped #f :statistics #t :play #t)
+  (glassy 0 .1 1000 .5))
+
+(with-sound (:clipped #f :statistics #t :play #t)
+  (do ((i 0 (1+ i)))
+      ((= i 10))
+    (glassy (* i .3) .1 (+ 400 (* 100 i)) .5)))
 |#
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -2769,3 +2845,4 @@ index 10 (so 10/2 is the bes-jn arg):
     (organish (* i .3) .4 (+ 100 (* 50 i)) .5 1.0 '(0 0 1 1 2 .5 3 .25 4 .125 10 0))))
 |#
 
+;;; TODO: delay + sqr as handler for coupled rand-interp envs
