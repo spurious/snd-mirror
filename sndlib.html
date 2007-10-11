@@ -71,7 +71,7 @@ types, and most of the features of the audio hardware. </p>
   ./configure
   make
 </pre>
-<p>To install it, 'make install' -- I've tested this process in Linux,
+<p>To install it, 'make install' &mdash; I've tested this process in Linux,
 SGI, and Sun.  It could conceivably work elsewhere. 
 </p>
 
@@ -165,7 +165,7 @@ is printed; to customize error handling, use mus_set_error_handler and mus_set_p
 <p>Header data is cached internally, so the actual header is read
 only if it hasn't already been read, or the write date has changed.
 Loop points are also available, if there's interest.  To go below the
-"sound" level, see headers.c -- once a header has been read, all the
+"sound" level, see headers.c &mdash; once a header has been read, all the
 components that have been found can be read via functions such as
 <b>mus_header_srate</b>.
 </p>
@@ -450,7 +450,7 @@ it through a mixer (a matrix, the operation being a matrix multiply).
 </p>
 
 <ul>
-<li>oscil -- generate a sine wave.
+<li>oscil &mdash; generate a sine wave.
 <ul>
 <li>mus_any *mus_make_oscil (float freq, float phase)
 <li>float mus_oscil (mus_any *o, float fm, float pm)
@@ -467,45 +467,45 @@ it through a mixer (a matrix, the operation being a matrix multiply).
 </ul>
 <p>The other generators are:</p>
 <ul>
-<li>sum_of_cosines -- generate a pulse train made up of cosines
-<li>sum_of_sines -- generate a sum of sines
-<li>delay -- a delay line with optional interpolation
-<li>tap -- read delay line
-<li>comb -- comb filter
-<li>notch -- notch filter
-<li>all_pass -- all pass filter
-<li>table_lookup -- interpolating table lookup
+<li>sum_of_cosines: generate a pulse train made up of cosines
+<li>sum_of_sines: generate a sum of sines
+<li>delay: a delay line with optional interpolation
+<li>tap: read delay line
+<li>comb: comb filter
+<li>notch: notch filter
+<li>all_pass: all pass filter
+<li>table_lookup: interpolating table lookup
 <li>sawtooth_wave, triangle_wave, pulse_train, square_wave
-<li>rand -- white noise (a step function)
-<li>rand-interp -- interpolating noise
-<li>asymmetric_fm -- a variety of FM
-<li>one_zero, two_zero, one_pole, two_pole -- basic filters
-<li>formant -- create a formant region (two poles, two zeros)
-<li>sine_summation -- another way to create sine waves
-<li>filter, fir_filter, iir_filter -- direct form filters of any order
-<li>wave_train -- sequence of possibly overlapping waves
-<li>env -- envelopes
-<li>polyshape, waveshape -- waveshaping
-<li>readin, file_to_sample, file_to_frame, in_any -- file sample input
-<li>locsig, sample_to_file, frame_to_file, out_any -- file sample output
-<li>src -- sampling rate conversion
-<li>granulate -- granular synthesis
-<li>convolve -- convolution
-<li>phase-vocoder -- phase vocoder
-<li>moving-average -- moving window average
-<li>ssb-am -- single side-bank amplitude modulation
+<li>rand: white noise (a step function)
+<li>rand-interp: interpolating noise
+<li>asymmetric_fm: a variety of FM
+<li>one_zero, two_zero, one_pole, two_pole: basic filters
+<li>formant: create a formant region (two poles, two zeros)
+<li>sine_summation: another way to create sine waves
+<li>filter, fir_filter, iir_filter: direct form filters of any order
+<li>wave_train: sequence of possibly overlapping waves
+<li>env: envelopes
+<li>polyshape, waveshape: waveshaping
+<li>readin, file_to_sample, file_to_frame, in_any: file sample input
+<li>locsig, sample_to_file, frame_to_file, out_any: file sample output
+<li>src: sampling rate conversion
+<li>granulate: granular synthesis
+<li>convolve: convolution
+<li>phase-vocoder: phase vocoder
+<li>moving-average: moving window average
+<li>ssb-am: single side-bank amplitude modulation
 </ul>
 
 <p>Some useful functions provided by clm.c are: </p>
 <ul>
-<li>float mus_radians_to_hz(float rads) -- convert radians/sample to cycles/sec.
-<li>float mus_hz_to_radians(float hz) -- and the reverse.
-<li>float mus_degrees_to_radians(float deg) -- convert degrees to radians.
-<li>float mus_radians_to_degrees(float rads) -- and the reverse.
-<li>float mus_srate(void) -- current sampling rate
-<li>float mus_set_srate(float rate) -- set current sampling rate
-<li>float mus_ring_modulate(float sig1, float sig2) -- multiply sig1 by sig2
-<li>float mus_amplitude_modulate(float s1, float s2, float s3) -- AM
+<li>float mus_radians_to_hz(float rads): convert radians/sample to cycles/sec.
+<li>float mus_hz_to_radians(float hz): and the reverse.
+<li>float mus_degrees_to_radians(float deg): convert degrees to radians.
+<li>float mus_radians_to_degrees(float rads): and the reverse.
+<li>float mus_srate(void): current sampling rate
+<li>float mus_set_srate(float rate): set current sampling rate
+<li>float mus_ring_modulate(float sig1, float sig2): multiply sig1 by sig2
+<li>float mus_amplitude_modulate(float s1, float s2, float s3): AM
 <li>float mus_contrast_enhancement(float sig, float index)
 <li>float mus_dot_product(float *data1, float *data2, int size)
 <li>void mus_clear_array(float *arr, int size)
@@ -522,7 +522,7 @@ it through a mixer (a matrix, the operation being a matrix multiply).
 <li>float mus_samples_to_seconds(off_t samps)
 <li>off_t mus_seconds_to_samples(float secs)
 </ul>
-<p>and various others -- see clm.h.</p>
+<p>and various others: see clm.h.</p>
 
 <p>The more useful generic functions are:</p>
 <ul>
@@ -885,7 +885,7 @@ cc v.c -o vc -O3 -lm io.o headers.o audio.o sound.o clm.o -DLINUX
 <p>For generators such as src that take a function for "as-needed" input,
 you can use something like:</p>
 <pre>
-static Float input_as_needed(void *arg, int dir) {/* get input here -- arg is "sf" passed below */}
+static Float input_as_needed(void *arg, int dir) {/* get input here &mdash; arg is "sf" passed below */}
 
 static SCM call_phase-vocoder(void)
 {
@@ -1044,9 +1044,9 @@ constants and functions described above into Scheme.
   mus-audio-read (line sdata frames)       read <i>frames</i> of data into sound-data object <i>sdata</i> from port <i>line</i>
   mus-audio-close (line)                   close audio port <i>line</i>
   mus-audio-mixer-read (device field channel vals)
-                                           read current state of <i>device</i>'s <i>field</i> -- see mus_audio_mixer_read above.
+                                           read current state of <i>device</i>'s <i>field</i> &mdash; see mus_audio_mixer_read above.
   mus-audio-mixer-write (device field channel vals)
-                                           write new state for <i>device</i>'s <i>field</i> -- see mus_audio_mixer_write above.
+                                           write new state for <i>device</i>'s <i>field</i> &mdash; see mus_audio_mixer_write above.
   mus-audio-systems ()                     returns how many separate "systems" (soundcards) it can find.  To specify
                                            a particular system in the "device" parameters, add (ash system 16) to the device.
   mus-oss-set-buffers (num size)           in Linux (OSS) sets the number and size of the OSS "fragments"
@@ -1153,7 +1153,7 @@ to make it independent of Snd:
 			    (lambda args -1)))) ; -1 returned in case of error
 	    val)))
     (if (= audio-fd -1)
-	;; ask card what it wants -- ALSA with some cards, for example, insists on 10 (virtual) channels and mus-lintn data!
+	;; ask card what it wants &mdash; ALSA with some cards, for example, insists on 10 (virtual) channels and mus-lintn data!
 	(let ((vals (make-vct 32)))
 	  (mus-audio-mixer-read mus-audio-default mus-audio-format 32 vals)
 	  (let ((fmt (inexact-&gt;exact (vct-ref vals 1))))

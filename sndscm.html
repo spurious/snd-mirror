@@ -261,7 +261,7 @@ For help with Forth and Snd/CLM, see the Forth documentation section "Snd, CLM, 
  display-scanned-synthesis, load-font, with-level-meters, variable-display, smpte labels, etc')">Motif/Gtk module (xm.c, xg.c)</td></tr>
 
 <tr><td><a href="#sndtestdoc">snd-test</a></td>
-    <td onmouseover="return escape('a zillion tests -- useful as a source of examples')">Snd regression tests</td></tr>
+    <td onmouseover="return escape('a zillion tests &mdash; useful as a source of examples')">Snd regression tests</td></tr>
 
 <tr><td bgcolor="#f6f8ff"><a href="#sndwarpdoc">sndwarp</a></td>
     <td bgcolor="#f6f8ff" onmouseover="return escape('stretch a sound')">Bret Battey's sndwarp instrument</td></tr>
@@ -708,7 +708,7 @@ So to make a sound twice as long, but keep the pitch the same:
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="drone">drone</A> <code>(beg dur freq amp ampfun synth ampat ampdc amtrev deg dis rvibamt rvibfreq)</code>
 </td></tr><tr><td></td><td>
-This is the other half of Peter Common's bagpipe -- see canter above.
+This is the other half of Peter Common's bagpipe &mdash; see canter above.
 'synth' is a list of partials loaded into a table and read via <a href="sndclm.html#table-lookup">table-lookup</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -876,7 +876,7 @@ fullmix is a complicated way to mix stuff. It's built into the CL version of CLM
 of replacement in other versions of CLM. 
 fullmix provides a mixer that can handle any number
 of channels of data in and out with scalers and envelopes on any path, sampling rate conversion,
-reverb -- you name it! 
+reverb &mdash; you name it! 
 'infile' is the file to be mixed:
 <pre>
     (<a class=quiet href="#wsdoc">with-sound</a> () (fullmix "pistol.snd")) ; this places pistol.snd at time 0
@@ -1066,7 +1066,7 @@ It is much cleaner than jc-reverb.
 <pre>
     (<a class=quiet href="#wsdoc">with-sound</a> (:reverb nrev) (fm-violin 0 .1 440 .1 :reverb-amount .1))
 </pre>
-'reverb-factor' controls the length of the decay -- it should not exceed 1.21 or so.
+'reverb-factor' controls the length of the decay &mdash; it should not exceed 1.21 or so.
 'lp-coeff' controls the strength of the low pass filter inserted in the feedback loop.
 'volume-1' can be used to boost the reverb output.
 <pre>
@@ -1116,7 +1116,7 @@ which has moved to the CLAM site:
 <A class=def NAME="pluck">pluck</A> <code>(beg dur freq amp :optional (weighting .5) (lossfact .9))</code>
 </td></tr><tr><td></td><td>
 pluck is based on
-the <A HREF="http://ccrma.stanford.edu/~jos/SimpleStrings/Karplus_Strong_Algorithm.html">Karplus-Strong</A> algorithm as extended by David Jaffe and Julius Smith -- see 
+the <A HREF="http://ccrma.stanford.edu/~jos/SimpleStrings/Karplus_Strong_Algorithm.html">Karplus-Strong</A> algorithm as extended by David Jaffe and Julius Smith &mdash; see 
 Jaffe and Smith, "Extensions of the Karplus-Strong Plucked-String Algorithm"
 CMJ vol 7 no 2 Summer 1983, reprinted in "The Music Machine".
 The basic idea is to fill an array with noise, then filter the array values as it is played repeatedly,
@@ -1228,7 +1228,7 @@ Needless to say, no one has ever written out these parameters by hand, so here's
       (reson 0.0 1.0 440 .1 2 '(0 0 100 1) '(0 0 100 1) .1 .1 .1 5 .01 5 .01 0 1.0 0.01
    	     '(((0 0 100 1) 1200 .5 .1 .1 0 1.0 .1 .1) ((0 1 100 0) 2400 .5 .1 .1 0 1.0 .1 .1))))
 </pre>
-But JC got very nice vocal sounds from this -- I must have mistyped somewhere...
+But JC got very nice vocal sounds from this &mdash; I must have mistyped somewhere...
 Here's another stab at it:
 <pre>
 (<a class=quiet href="#wsdoc">with-sound</a> ()
@@ -1531,7 +1531,7 @@ Perry Cook's Wurlitzer (I assume).
 <em class=emdef>zc</em> <code>time dur freq amp length1 length2 feedback</code><br>
 <em class=emdef>zn</em> <code>time dur freq amp length1 length2 feedforward</code>
 </td></tr><tr><td></td><td>
-The "z" instruments demonstrate "zdelay" effects -- interpolating
+The "z" instruments demonstrate "zdelay" effects &mdash; interpolating
 <a href="sndclm.html#comb">comb</a>, <a href="sndclm.html#notch">notch</a>, and <a href="sndclm.html#all-pass">all-pass</a> filters.
 <pre>
     (<a class=quiet href="#wsdoc">with-sound</a> () (zn 0 1   100 .1 20 100 .995) 
@@ -1792,7 +1792,7 @@ and <a href="#dspdocscanned">scanned synthesis</a>.
 <p><small><blockquote>If you're new to DSP, I recommend Lyons' "Understanding Digital Signal Processing" and Steiglitz, "A
 Digital Signal Processing Primer"; 
 there are many good books
-on advanced calculus -- I especially liked Hildebrand, "Advanced Calculus for Applications", but it may
+on advanced calculus &mdash; I especially liked Hildebrand, "Advanced Calculus for Applications", but it may
 be out of print (this was about 25 years ago, I think); a great book on complex analysis is Needham, "Visual
 Complex Analysis"; Poole's "Linear Algebra" is a very straightforward
 introduction; also Halmos, "Linear Algebra Problem Book"; the most enjoyable
@@ -2038,7 +2038,7 @@ we could type <code>(undo)</code>.  Nothing daunted, we use:
     (<a class=quiet href="extsnd.html#filterchannel">filter-channel</a> (invert-filter (vct .5 .25 .125)))
 </pre>
 There are a million gotchas here.  The primary one is that the inverse filter
-can "explode" -- the coefficients can grow without bound.  For example, any
+can "explode" &mdash; the coefficients can grow without bound.  For example, any
 filter returned by <a href="#spectrumtocoeffs">spectrum-&gt;coeffs</a> will be problematic.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -2623,14 +2623,14 @@ upon output (to track the original sound's amplitude envelope):
 		       (let ((amp (max .1 (<a class=quiet href="sndclm.html#fir-filter">fir-filter</a> flt (moving-max mx y)))))
 		         (* amp (<a class=quiet href="sndclm.html#contrast-enhancement">contrast-enhancement</a> (/ y amp) index)))))))
 </pre>
-This can also be used for automatic gain control -- see dsp.scm for the agc function.
+This can also be used for automatic gain control &mdash; see dsp.scm for the agc function.
 The other "moving" generators are specializations of the <a href="sndclm.html#moving-average">moving-average</a>
 generator.  moving-sum keeps the ongoing sum of absolute values, moving-length the square root of the sum
 of squares, and moving-rms the square root of the sum of squares divided by the size.
 moving-rms is used in <a href="#overlayrmsenv">overlay-rms-env</a> in draw.scm.
 smoothing-filter is a version of <a href="sndclm.html#moving-average">moving-average</a> with rounded edges.  weighted-moving-average weights the
 table entries by 1/n.  Similarly exponentially-weighted-moving-average applies exponential weights (it is
-actually just a one-pole filter -- this generator wins the "longest-name-for-simplest-effect" award).
+actually just a one-pole filter &mdash; this generator wins the "longest-name-for-simplest-effect" award).
 </td></tr><tr><td colspan=2 height=32></td></tr>
 
 
@@ -3334,7 +3334,7 @@ osc-formants sets up any number of independently oscillating formants, then call
     Ruby:   osc_formants(0.99, vct(400, 800, 1200), vct(80, 80, 120), vct(4, 2, 3))
 </pre>
 'bases' are the formant center frequencies; 'freqs' are the oscillator frequencies;
-'amounts' are "deviations" -- they scale the oscillator outputs which set the runtime
+'amounts' are "deviations" &mdash; they scale the oscillator outputs which set the runtime
 formant frequencies (thereby setting the width of the warbling).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5278,7 +5278,7 @@ or something.
       (grain-density-spread 0.0)              ; random spread around 'grain-density'
       (reverb-amount 0.01)
       (reverse #f)                            ; if #t, input is read backwards
-      (where-to 0)                            ; locsig stuff -- see the full documentation
+      (where-to 0)                            ; locsig stuff &mdash; see the full documentation
       (where-bins '())
       (grain-distance 1.0)                    ; distance of sound source (<a href="sndclm.html#locsig">locsig</a>)
       (grain-distance-spread 0.0)             ; random spread around 'grain-distance'
@@ -5534,8 +5534,8 @@ snd-forth-mode-hook         nil           to customize inf-snd-forth-mode
 </pre>
 <p>
 You can start inf-snd-ruby-mode either with the prefix-key
-(C-u M-x run-snd-ruby) -- you will be asked for program name and
-optional arguments -- or directly via (M-x run-snd-ruby).  In the latter
+(C-u M-x run-snd-ruby) &mdash; you will be asked for program name and
+optional arguments &mdash; or directly via (M-x run-snd-ruby).  In the latter
 case, the variable inf-snd-ruby-program-name needs to be set correctly.
 inf-snd-scheme-mode and inf-snd-forth-mode are handled in the same way.
 Here's an example for your ~/.emacs file:
@@ -5631,7 +5631,7 @@ get the latest comint.el; I had to go to the xemacs CVS site since
 Fedora Core 5's xemacs (21.4) had an obsolete copy.  Then scrounge
 around until you find xemacs-packages/xemacs-base/comint.el.
 Don't use the comint.el in the emacs package.  It's not a tragedy
-if this variable isn't defined -- you just don't get a prompt in
+if this variable isn't defined &mdash; you just don't get a prompt in
 the Snd Emacs window, but things still work.
 If either emacs or
 xemacs complains that it can't find gforth.el, you can find that
@@ -5678,7 +5678,7 @@ So, for example, I (Bill S) have the following in my ~/.xemacs/init.el:
 <!-- main-index |jcrevdoc:jc-reverb -->
 
 jc-reverb is a reverberator developed by John Chowning a long time ago
-(I can't actually remember when -- before 1976 probably), based 
+(I can't actually remember when &mdash; before 1976 probably), based 
 on <a href="http://ccrma.stanford.edu/~jos/pasp/Schroeder_Reverberator_called_JCRev.html">ideas</a>
 of Manfred Schroeder.
 It "colors" the
@@ -5897,7 +5897,7 @@ between the leftmost marks in the currently selected channel.
     (eval-between-marks (lambda (y) (* y 2)))
 </pre>
 doubles the samples between the two chosen marks, then returns a vct with the new data (I can't
-remember why this is returned -- it doesn't seem necessary).
+remember why this is returned &mdash; it doesn't seem necessary).
 <pre>
     (<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\m 0 
       (lambda () "eval between marks"
@@ -6653,7 +6653,7 @@ of coefficients.
     ;; that is, x+y=4, 2x+y=5, so x=1, y=3
 </pre>
 <p>
-The rest should be obvious -- these are mostly
+The rest should be obvious &mdash; these are mostly
 treating mixers as square matrices, and frames as row or column
 vectors, then performing the usual tricks upon them.  There are
 more such functions in snd-test.
@@ -6800,7 +6800,7 @@ is posted along with the header info:
 <p>
 nb.scm works fine without guile-gdbm; to load
 guile-gdbm, set the variable 'use-gdbm' to #t.
-The Ruby version of nb (written by Mike Scholz) has several other features -- see nb.rb
+The Ruby version of nb (written by Mike Scholz) has several other features &mdash; see nb.rb
 for details.
 </p>
 
@@ -6887,7 +6887,7 @@ so far haven't panned out.
   <em class=emdef></em>
 </pre>
 
-<p>In this case, "the code is the documentation" -- these functions
+<p>In this case, "the code is the documentation" &mdash; these functions
 are informal, experimental, etc.
 </p>
 
@@ -7433,7 +7433,7 @@ than an integer between 0 and 255) mimics PostScript;
 as video hardware has improved over the years, there's
 less and less need for these elaborate color names, and less
 reason (except perhaps psychophysical) to limit these numbers to bytes.
-There is one gotcha in this file -- X11 defines a color named "tan"
+There is one gotcha in this file &mdash; X11 defines a color named "tan"
 which is already used by Scheme, so (at the suggestion of Dave Phillips)
 this color is named "tawny" in rgb.scm.
 </p>
@@ -7858,7 +7858,7 @@ stop-waterfall turns off the waterfall spectrum display.
 <A NAME="sndmotifdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd-motif, snd-xm</h2></td></tr></table>
 
 <p>snd-motif.scm has a variety of user-interface extensions that rely on the Motif module (xm.c).
-Some of these have been translated to Gtk and xg.c -- snd-gtk.scm.  In Ruby, see snd-xm.rb.
+Some of these have been translated to Gtk and xg.c &mdash; snd-gtk.scm.  In Ruby, see snd-xm.rb.
 </p>
 
 <table border=0 cellspacing=0 hspace=20>
@@ -8488,8 +8488,8 @@ It is similar to <a href="#expsrc">expsrc</a>.
     <a class=def name="sndwarp">sndwarp</a> beg dur file 
 	 :key (amp 1.0)
 	      (amp-env '(0 1 100 1))  ; amplitude envelope
-	      (stretch 1.0)           ; time stretch -- 2.0 -> twice as long
-	      (srate 1.0)             ; src -- 0.5 -> octave down
+	      (stretch 1.0)           ; time stretch &mdash; 2.0 -> twice as long
+	      (srate 1.0)             ; src &mdash; 0.5 -> octave down
 	      (inputbeg 0.0)          ; source file start point
 	      (wsize 0.1)             ; size of windows in seconds
 	      (randw 0.02)            ; randomness of wsize
@@ -9924,7 +9924,7 @@ this came from user-defined generators in CLM.  We want to package together all 
 variables that make up a generator, just as in function groups such as 
 <a href="sndclm.html#make-oscil">make-oscil</a>, <a href="sndclm.html#oscil">oscil</a>, and <a href="sndclm.html#oscil?">oscil?</a>.
 So, as a first example, here is a way to define your own oscil using def-clm-struct (oscil is so simple that
-you could also use a vct -- see <a href="sndclm.html#make-my-oscil">make-my-oscil</a> in sndclm.html).
+you could also use a vct &mdash; see <a href="sndclm.html#make-my-oscil">make-my-oscil</a> in sndclm.html).
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
@@ -10097,7 +10097,7 @@ that info.
 
 <p>
 The *clm-* variables are saved in the save-state
-file by <A NAME="wssavestate">ws-save-state</A>, which may not be a good idea -- feedback welcome!
+file by <A NAME="wssavestate">ws-save-state</A>, which may not be a good idea &mdash; feedback welcome!
 Two more convenience functions are <b>-&gt;frequency</b> and <b>-&gt;sample</b>.
 <A NAME="tofrequency">-&gt;frequency</A> takes either a number or a common-music pitch symbol ('c4 is middle C),
 and returns either the number or the frequency associated with that pitch:
@@ -10527,7 +10527,7 @@ those are just one sample clicks that can easily be smoothed over", so
 
 <p>
 But this returned 4768!  So, it's time to make a list of clipped
-portions (this function has at least one bug, but I plowed past it -- no
+portions (this function has at least one bug, but I plowed past it &mdash; no
 time for perfection...):
 </p>
 

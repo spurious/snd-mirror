@@ -565,7 +565,7 @@ Extensions to Snd can be found in:
  display-scanned-synthesis, load-font, with-level-meters, variable-display, smpte labels, etc')">Motif/Gtk module (xm.c, xg.c)</td></tr>
 
 <tr><td><a href="sndscm.html#sndtestdoc">snd-test</a></td>
-    <td onmouseover="return escape('a zillion tests -- useful as a source of examples')">Snd regression tests</td></tr>
+    <td onmouseover="return escape('a zillion tests &mdash; useful as a source of examples')">Snd regression tests</td></tr>
 
 <tr><td bgcolor="#f6f8ff"><a href="sndscm.html#sndwarpdoc">sndwarp</a></td>
     <td bgcolor="#f6f8ff" onmouseover="return escape('stretch a sound')">Bret Battey's sndwarp instrument</td></tr>
@@ -643,7 +643,7 @@ pressing a key (<a href="#keypresshook">key-press-hook</a>), and so on.</p>
 For example, 
 as panes (sounds) come and go, Snd's overall size may change (this is
 partly determined by the window manager, but is also
-up to Snd); many people find this distracting -- they would rather that the
+up to Snd); many people find this distracting &mdash; they would rather that the
 overall window stick to one size.  The Snd variable associated
 with this is "auto-resize"; it can be accessed as:
 </p>
@@ -1188,7 +1188,7 @@ It is intended primarily for auto-testing.
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="withfilemonitor">with-file-monitor</a></code></td>
 <td bgcolor="#f6f8ff"><code>#t</code></td></tr><tr><td></td><td colspan=2>
 If with-file-monitor is #t (the default), the file alteration monitor is active.  There are still bugs
-in this library that can cause Snd to hang -- I haven't tracked down what the problem is yet; in the meantime,
+in this library that can cause Snd to hang &mdash; I haven't tracked down what the problem is yet; in the meantime,
 set this switch to #f to disable the monitor.  (One such bug was fixed in gamin 1.8.0).
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
@@ -1263,10 +1263,10 @@ some of these sequences.
 
 <pre>
     Open filename
-        bad header?: <a class=quiet href="#badheaderhook">bad-header-hook</a> -- can cancel request
-        no header?:  <a class=quiet href="#openrawsoundhook">open-raw-sound-hook</a> -- can cancel request
+        bad header?: <a class=quiet href="#badheaderhook">bad-header-hook</a> &mdash; can cancel request
+        no header?:  <a class=quiet href="#openrawsoundhook">open-raw-sound-hook</a> &mdash; can cancel request
         file ok: 
-             <a class=quiet href="#openhook">open-hook</a> -- can change filename
+             <a class=quiet href="#openhook">open-hook</a> &mdash; can change filename
              file opened (no data read yet)
                  <a class=quiet href="#duringopenhook">during-open-hook</a> (can set prescaling etc)
              data read, no graphics yet
@@ -1275,7 +1275,7 @@ some of these sequences.
     
     
     Save current sound
-        <a class=quiet href="#beforesaveashook">before-save-as-hook</a> -- can cancel the request or set its output parameters
+        <a class=quiet href="#beforesaveashook">before-save-as-hook</a> &mdash; can cancel the request or set its output parameters
         <a class=quiet href="#savehook">save-hook</a>
             sound saved
               if any sample is clipped during save, <a class=quiet href="#cliphook">clip-hook</a>
@@ -1283,7 +1283,7 @@ some of these sequences.
 
 
     Play sound
-        when a play request occurs: <a class=quiet href="#startplayinghook">start-playing-hook</a> -- can cancel the request, also <a class=quiet href="#startplayingselectionhook">start-playing-selection-hook</a>
+        when a play request occurs: <a class=quiet href="#startplayinghook">start-playing-hook</a> &mdash; can cancel the request, also <a class=quiet href="#startplayingselectionhook">start-playing-selection-hook</a>
             (any number of sounds can be playing at once)
         as each buffer is sent to the audio device: <a class=quiet href="#playhook">play-hook</a> and <a class=quiet href="#dachook">dac-hook</a>
         as each sound ends: <a class=quiet href="#stopplayinghook">stop-playing-hook</a>, <a class=quiet href="#stopplayingselectionhook">stop-playing-selection-hook</a>
@@ -1291,13 +1291,13 @@ some of these sequences.
     
 
     Close sound
-        <a class=quiet href="#beforeclosehook">before-close-hook</a> -- can cancel close
+        <a class=quiet href="#beforeclosehook">before-close-hook</a> &mdash; can cancel close
         <a class=quiet href="#closehook">close-hook</a> (sound is still open)
         sound closed
     
     
     Save current Snd ("session") state
-        <a class=quiet href="#savestatehook">save-state-hook</a> -- can change output filename (crummy name is an historical artifact)
+        <a class=quiet href="#savestatehook">save-state-hook</a> &mdash; can change output filename (crummy name is an historical artifact)
         output save-state file opened
             <a class=quiet href="#beforesavestatehook">before-save-state-hook</a>
             Snd saves its state
@@ -1306,7 +1306,7 @@ some of these sequences.
     
     
     Exit Snd
-        <a class=quiet href="#beforeexithook">before-exit-hook</a> -- can cancel exit request
+        <a class=quiet href="#beforeexithook">before-exit-hook</a> &mdash; can cancel exit request
         <a class=quiet href="#exithook">exit-hook</a>
         Snd cleans up and exits
 </pre>
@@ -1422,7 +1422,7 @@ and filled graphs (not line segments or dots, etc):
         (begin
           (set! (<a class=quiet href="#sync" onmouseover="return escape('sync controls which sounds are handled together')">sync</a> snd) (1+ snd)) ; 0 = #f
           (set! (<a class=quiet href="#channelstyle" onmouseover="return escape('channel-style chooses between various layouts')">channel-style</a> snd) <a class=quiet href="#channelstyle" onmouseover="return escape('channels-combined means the channels are in one window')">channels-combined</a>)
-          (set! (<a class=quiet href="#graphstyle" onmouseover="return escape('graph-style chooses how data is drawn -- lines, dots, etc')">graph-style</a> snd) <a class=quiet href="#graphstyle" onmouseover="return escape('graph-filled means the data is filled in, rather than just a line')">graph-filled</a>)))))
+          (set! (<a class=quiet href="#graphstyle" onmouseover="return escape('graph-style chooses how data is drawn: lines, dots, etc')">graph-style</a> snd) <a class=quiet href="#graphstyle" onmouseover="return escape('graph-filled means the data is filled in, rather than just a line')">graph-filled</a>)))))
 </pre></td></tr></table>
 
 See also <a href="sndscm.html#xbopen">C-x b</a> support in examp.scm, 
@@ -1548,7 +1548,7 @@ so you can write preliminary stuff via this hook, then instruct Snd not to clobb
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (add-hook! <em class=red>before-save-state-hook</em>
   (lambda (name) 
-    (<span  onmouseover="return escape('io-open-write in Forth (see fs.fs); File.open in Ruby (I think -- see extensions.rb)')">with-output-to-file name</span>
+    (<span  onmouseover="return escape('io-open-write in Forth (see fs.fs); File.open in Ruby (I think &mdash; see extensions.rb)')">with-output-to-file name</span>
       (lambda ()
         (display (format #f ";this comment will be at the top of the saved state file.~%~%"))
 	#t))))
@@ -1689,16 +1689,16 @@ This provides an opportunity to set sndlib prescaling values:
 (add-hook! <em class=red>during-open-hook</em>
   (lambda (fd name reason)
     (if (= (<a class=quiet href="#mussoundheadertype">mus-sound-header-type</a> name) <a class=quiet href="#headertype" onmouseover="return escape('mus-raw means headerless')">mus-raw</a>)
-        (set! (<a href="#musfileprescaler" onmouseover="return escape('this sets a multiplier on the incoming data -- apparently the data in the sound file is saved as extremely small floats which are a pain to look at in Snd\'s graphs')">mus-file-prescaler</a> fd) 500.0))))
+        (set! (<a href="#musfileprescaler" onmouseover="return escape('this sets a multiplier on the incoming data &mdash; apparently the data in the sound file is saved as extremely small floats which are a pain to look at in Snd\'s graphs')">mus-file-prescaler</a> fd) 500.0))))
 </pre></td></tr></table>
 
 The prescaling affects only sound data made up of floats or doubles.  'reason' is an integer indicating why this file is being opened:
 <pre>
     0: reopen a file closed to conserve file channels (this is an internal re-open normally invisible to the user)
-    1: sound-open, File:open etc -- the normal path to open a sound
-    2: copy reader -- another internal case; this happens if a sound is played and edited at the same time
+    1: sound-open, File:open etc &mdash; the normal path to open a sound
+    2: copy reader &mdash; another internal case; this happens if a sound is played and edited at the same time
     3: insert sound (File:Insert etc)
-    4: re-read after an edit (file changed, etc -- an invisible editing case)
+    4: re-read after an edit (file changed, etc &mdash; an invisible editing case)
     5: open temp file after an edit (another invisible editing case)
     6: mix sound (File:Mix etc)
 </pre>
@@ -2419,7 +2419,7 @@ forgets to include it, you can end up with a comatose listener.  To get out of t
 the prompt by hand (i.e. type in the shell that Snd started in, "&gt;(reset-hook! print-hook)").
 This is intended to make it possible to
 distinguish Snd responses from user-typing, or add arbitrarily fancy prompts, but both should be handled
-in some other way -- I should rewrite this part of Snd.
+in some other way &mdash; I should rewrite this part of Snd.
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (add-hook! <em class=red>print-hook</em>
@@ -2628,9 +2628,9 @@ then get the exploding bomb icon because their underlying data has changed):
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (let ((eds #f))
   (add-hook! <em class=red>update-hook</em>
-	     (lambda (cursnd)     ; called before actual update -- save our edits
+	     (lambda (cursnd)     ; called before actual update &mdash; save our edits
 	       (set! eds (<a href="#editlisttofunction">edit-list-&gt;function</a> cursnd 0))
-	       (lambda (newsnd)   ; called after update -- reapply our edits
+	       (lambda (newsnd)   ; called after update &mdash; reapply our edits
 		 (if eds (eds newsnd 0))))))
 </pre></td></tr></table>
 
@@ -2667,7 +2667,7 @@ If its function returns #t, the command is not evaluated.  This is an internal d
 
 <table border=0><tr><td width=60><br></td><td>
 These are functions that return the hooks in question associated with the specified channel.
-The functions on these hooks are thunks -- they should take no arguments.
+The functions on these hooks are thunks &mdash; they should take no arguments.
 edit-hook is called just before any attempt to edit the channel's data; if it returns #t,
 the edit is cancelled. So,
 </td></tr></table>
@@ -3055,7 +3055,7 @@ snd-&gt;sample? returns #t if 'obj' is a snd-&gt;sample generator.
 Many of the Snd and CLM functions handle vectors (arrays) of data.
 By defining a new vector type, named vct, and providing a package
 of old-style array-processing calls upon that type, we can speed up many
-operations by a factor of 30 -- enough of a difference to warrant
+operations by a factor of 30 &mdash; enough of a difference to warrant
 the added complexity.  
 <a class=quiet href="#makevct">make-vct</a> creates a new vct object.  It is freed by the
 garbage collector when it can't be referenced any further.  To get 
@@ -3320,7 +3320,7 @@ vct+ combines <a class=quiet href="#vctadd">vct-add!</a> and <a class=quiet href
 depending on the type of its arguments.
 <code>(vct+ v 1.0)</code> or <code>(vct+ 1.0 v)</code> is the same as 
 <code>(vct-offset! v 1.0)</code>, and <code>(vct+ v1 v2)</code> is the same as <code>(vct-add! v1 v2)</code>.
-In Gauche this could be a specialization of "+" -- much nicer!
+In Gauche this could be a specialization of "+" &mdash; much nicer!
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -3898,7 +3898,7 @@ mus-clipping is the default low-level clipping choice while accessing sound data
 Its default is #f which makes clipping very obvious (it will cause wrap-around).
 If you're using the standard Snd file accessors, you probably want to use <a href="#clipping">clipping</a>, not this function.
 This function refers to <a href="#mussoundopenoutput">mus-sound-open-output</a> and friends; the file-local version
-is <a href="#musfileclipping">mus-file-clipping</a> -- surely we could make this more confusing!
+is <a href="#musfileclipping">mus-file-clipping</a> &mdash; surely we could make this more confusing!
 See also <a href="#cliphook">clip-hook</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5975,7 +5975,7 @@ This function returns the number of channels in 'snd'.  It can be set, but the r
 version of the underlying sound with the header changed to reflect the new number of channels.
 That is, no new data is created, but the existing data is reapportioned to the new channels:
 <code>(set! (channels) 2)</code>; this is not undo-able (except by calling it again with the
-original number of channels -- the data is not touched).
+original number of channels &mdash; the data is not touched).
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -6184,7 +6184,7 @@ replaces the normal "+" cursor with an "x":
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="dataformat">data-format</a> (:optional <em class=narg>snd</em>)</code>
 </td></tr><tr><td></td><td>
-This returns the sound's data format -- the encoding used for the sound samples (e.g. mus-bshort).
+This returns the sound's data format &mdash; the encoding used for the sound samples (e.g. mus-bshort).
 
 <br><br>
 The standard formats nowadays are <code>mus-bshort</code> (big-endian 16-bit integers), <code>mus-bfloat</code>
@@ -6199,7 +6199,7 @@ that).  In the old days, when disk space was at a premium, 8-bit formats
 were used a lot: <code>mus-mulaw</code> and <code>mus-alaw</code> (kludges for a kind of 8-bit float),
 <code>mus-byte</code> and <code>mus-ubyte</code> (8-bit ints, unsigned in the latter case).  A few
 DACs want a particular kind of data, but Snd handles that conversion internally.
-Anything less than 12 bits will sound bad -- Perry Cook's book "Real Sound Synthesis"
+Anything less than 12 bits will sound bad &mdash; Perry Cook's book "Real Sound Synthesis"
 has examples.  
 
 <br><br>
@@ -6263,7 +6263,7 @@ To change a sound file's data-format, use <a href="#savesoundas">save-sound-as</
 This gives the location (in bytes) of the sound samples in the file represented by 'snd'.  In a raw (headerless) file,
 this is 0, but normally the data comes after some portion of the header.  
 To get the data-location of some sound file, use <a href="#mussounddatalocation">mus-sound-data-location</a>.
-If you set this field (you don't want to do this -- it is a law of nature that you will forget the original setting!), the underlying file is immediately rewritten.
+If you set this field (you don't want to do this &mdash; it is a law of nature that you will forget the original setting!), the underlying file is immediately rewritten.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -7135,7 +7135,7 @@ It is also possible to stop, then continue map-channel:
 
 If this hits a sample &gt; 1.0, it will print 'oops and put the continuation in the variable 'go-on'.
 <code>(go-on)</code> will continue where you left off.  (I'm not sure how far this can be pushed, or
-whether it's a good idea -- you may end up with unclosed files and so on).
+whether it's a good idea &mdash; you may end up with unclosed files and so on).
 <br><br>
 If the editing action is not mapping something over the current sound, it is
 safest to write a temp file with the new data, then pass that to set-samples
@@ -7300,10 +7300,10 @@ closes a file opened by open-sound.  There are a variety of hooks that are invok
 <a class=quiet href="#initialgraphhook">initial-graph-hook</a>, <a class=quiet href="#openrawsoundhook">open-raw-sound-hook</a>.  
 The sequence of actions is:
 <pre>
-    bad header?: <a class=quiet href="#badheaderhook">bad-header-hook</a> -- can cancel request
-    no header?:  <a class=quiet href="#openrawsoundhook">open-raw-sound-hook</a> -- can cancel request
+    bad header?: <a class=quiet href="#badheaderhook">bad-header-hook</a> &mdash; can cancel request
+    no header?:  <a class=quiet href="#openrawsoundhook">open-raw-sound-hook</a> &mdash; can cancel request
     file ok: 
-         <a class=quiet href="#openhook">open-hook</a> -- can change filename
+         <a class=quiet href="#openhook">open-hook</a> &mdash; can change filename
          file opened (no data read yet)
              <a class=quiet href="#duringopenhook">during-open-hook</a> (can set prescaling etc)
          data read, no graphics yet
@@ -7522,7 +7522,7 @@ The "reasons" that might be passed to the stop-procedure are:
 
 The hooks called during a play operation are:
 <pre>
-    when a play request occurs: <a class=quiet href="#startplayinghook">start-playing-hook</a> -- can cancel the request, also <a class=quiet href="#startplayingselectionhook">start-playing-selection-hook</a>
+    when a play request occurs: <a class=quiet href="#startplayinghook">start-playing-hook</a> &mdash; can cancel the request, also <a class=quiet href="#startplayingselectionhook">start-playing-selection-hook</a>
         (any number of sounds can be playing at once)
     as each buffer is sent to the audio device: <a class=quiet href="#playhook">play-hook</a> and <a class=quiet href="#dachook">dac-hook</a>
     as each sound ends: <a class=quiet href="#stopplayinghook">stop-playing-hook</a>, <a class=quiet href="#stopplayingselectionhook">stop-playing-selection-hook</a>
@@ -7702,7 +7702,7 @@ example, does not multiply anything by 2 internally; it just chooses
 the accessor that multiplies by 2 on any read.  Since every other data access goes through this reader, from any other
 point of view, the data has been multiplied.  These accessors make it
 unnecessary to save any data in temp files or internal arrays, and editing the edit-history list is very
-fast -- we just tack a new accessor choice onto the edit-history list, so the edit operation
+fast &mdash; we just tack a new accessor choice onto the edit-history list, so the edit operation
 appears to be instantaneous and memory-less.  Lots of other operations
 are already being done this way in Snd (deletions, scaling, most
 envelopes, some channel swaps, etc).  ptree-channel extends the idea to (nearly) arbitrary
@@ -8224,7 +8224,7 @@ This function gives the value of sample 'samp' in the given channel.
   Forth:  100 0.5 set-sample
 </pre>
 If the desired sample happens to fall outside the current buffer 
-for the indicated channel, sample grinds to a halt -- if you're 
+for the indicated channel, sample grinds to a halt &mdash; if you're 
 running a loop through a bunch of samples, use the <a href="#samplereaders">sample-readers</a> 
 or <a href="#channeltovct">channel-&gt;vct</a> instead.  'samp' defaults to the current cursor location.
 </td></tr><tr><td colspan=2 height=18></td></tr>
@@ -8237,7 +8237,7 @@ or <a href="#channeltovct">channel-&gt;vct</a> instead.  'samp' defaults to the 
 This returns a vct of 'samps' samples starting at 'samp' in the given channel.
 'samp' defaults to 0.  'samps' defaults to frames - 'samp' (i.e. read to the end of the data).
 'pos' is the edit history position to read (it defaults to the current position).
-This is settable (as is <a href="#sample">sample</a>) -- see <a href="#setsamples">set-samples</a>.
+This is settable (as is <a href="#sample">sample</a>) &mdash; see <a href="#setsamples">set-samples</a>.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -8320,7 +8320,7 @@ To define an explicit channel extraction function:<br>
 </pre>
 The hooks called during a save operation are:
 <pre>
-    <a class=quiet href="#beforesaveashook">before-save-as-hook</a> -- can cancel the request or set its output parameters
+    <a class=quiet href="#beforesaveashook">before-save-as-hook</a> &mdash; can cancel the request or set its output parameters
     <a class=quiet href="#savehook">save-hook</a>
         sound saved
           if any sample is clipped during save, <a class=quiet href="#cliphook">clip-hook</a>
@@ -8390,7 +8390,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 
 (do ((i 0 (1+ i)))
     ((= i (<a class=quiet href="#frames">frames</a>)))
-  ;; don't actually do this! -- it involves a separate edit on each sample
+  ;; don't actually do this! &mdash; it involves a separate edit on each sample
   (set! (<a class=quiet href="#sample">sample</a> i) (* 2 (<a class=quiet href="#sample">sample</a> i))))
 
 (let ((make-scaler 
@@ -9142,7 +9142,7 @@ move together when you drag an x-axis slider and so on.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="syncmax">sync-max</a> ()</code>
 </td></tr><tr><td></td><td>
-This is the maximum <a href="#sync">sync</a> setting seen so far -- it provides a painless way to get a sync value that
+This is the maximum <a href="#sync">sync</a> setting seen so far &mdash; it provides a painless way to get a sync value that
 is guaranteed to be unique. To sync all currently open sounds:
 <pre>
     (let ((new-sync (1+ (<em class=red>sync-max</em>))))
@@ -9240,7 +9240,7 @@ default).
 This is the transform normalization choice (default: <code>normalize-by-channel</code>)
 If it is <code>normalize-by-channel</code> or <code>normalize-by-sound</code>, spectral data is 
 normalized to 1.0 before display. If <code>dont-normalize</code>, you get the 
-raw data values, which can reflect amplitude changes -- Snd tries to 
+raw data values, which can reflect amplitude changes &mdash; Snd tries to 
 choose a y axis limit that makes successive displays move smoothly. 
 The other choice is <code>normalize-globally</code> (i.e. across all sounds).
 </td></tr><tr><td colspan=2 height=18></td></tr>
@@ -9263,7 +9263,7 @@ This is the fft size (the default size is 512).  It should be a power of 2.
 If your version of Snd was built with FFTW, and you set transform-size
 too large (on my machine, with 2 GBytes of memory,
 <code>(expt 2 26)</code> is apparently too large), FFTW simply exits Snd!  There is currently
-no way to trap the error.  Also, FFTW assumes the fft size is a (signed) int -- 2^30 is probably
+no way to trap the error.  Also, FFTW assumes the fft size is a (signed) int &mdash; 2^30 is probably
 the transform-size limit.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
@@ -9844,7 +9844,7 @@ the more reverberated or slurred the effect.
 <code><a class=def name="expandcontrolramp">expand-control-ramp</a> (:optional <em class=narg>snd</em>)</code>
 </td></tr><tr><td></td><td>
 The <a class=quiet href="snd.html#expand">expansion</a> ramp amount (between 0 and .5).
-This affects the smoothness of the grain overlaps -- .001 gives a 
+This affects the smoothness of the grain overlaps &mdash; .001 gives a 
 rattling effect.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -10148,7 +10148,7 @@ lambda:
 
 See mix.scm for many examples. If you want to save and restore Snd's state after using as-one-edit, you need to
 set 'origin' to some string that can restore the effect of the as-one-edit; the default is
-to copy the last edit history string and use its associated bounds -- unlikely to be what you want.
+to copy the last edit history string and use its associated bounds &mdash; unlikely to be what you want.
 </td></tr><tr><td></td><td></td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -10961,7 +10961,7 @@ This creates and (if 'managed' which defaults to #t) starts the Edit:Find dialog
 <tr><td bgcolor="#f6f8ff" colspan=2>
 <code><a class=def name="focuswidget">focus-widget</a> (widget)</code>
 </td></tr><tr><td></td><td>
-This gives 'widget' "focus" -- it becomes the active widget, receiving keystrokes and so on.
+This gives 'widget' "focus" &mdash; it becomes the active widget, receiving keystrokes and so on.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -11108,7 +11108,7 @@ and click-for-listener-help (draw.scm).
 </td></tr><tr><td></td><td>
 This is the text color in the listener.  For red text on a black background:
 <pre>
-    (set! (listener-color) (make-color 0 0 0)) ; in Gtk, maybe a bad idea -- the cursor remains black...
+    (set! (listener-color) (make-color 0 0 0)) ; in Gtk, maybe a bad idea &mdash; the cursor remains black...
     (set! (listener-text-color) (make-color 1 0 0))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -11900,7 +11900,7 @@ To continue running an interrupted do?, <code>(do-go-on)</code>.
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define do-go-on-continuation #f)
 (define (do-go-on)
-  (if (continuation? do-go-on-continuation) ; a Snd function -- should be provided by Scheme!
+  (if (continuation? do-go-on-continuation) ; a Snd function &mdash; should be provided by Scheme!
       (do-go-on-continuation #f)
       ";sorry! can't continue"))
 
@@ -11910,7 +11910,7 @@ To continue running an interrupted do?, <code>(do-go-on)</code>.
 		 (begin 
 		   (set! do-go-on-continuation #f) ; clear obsolete continuation
 		   #t))
-	    (and (<em class=red>c-g?</em>)                            ; got C-g -- set continuation
+	    (and (<em class=red>c-g?</em>)                            ; got C-g &mdash; set continuation
 		 (call-with-current-continuation
 		  (lambda (go-on)
 		    (set! do-go-on-continuation go-on)))))
@@ -11955,7 +11955,7 @@ These are the erf and erfc functions from the math library.
 This exits Snd.  Scheme's exit function is renamed %exit.  In Forth, this function is snd-exit.
 The hooks associated with this function are:
 <pre>
-    <a class=quiet href="#beforeexithook">before-exit-hook</a> -- can cancel exit request
+    <a class=quiet href="#beforeexithook">before-exit-hook</a> &mdash; can cancel exit request
     <a class=quiet href="#exithook">exit-hook</a>
     Snd cleans up and exits
 </pre>
@@ -12188,7 +12188,7 @@ it is loaded automatically.  The variable *snd-opened-sound* is set to
 the newly opened sound's index.  This supports the snd-memo feature 
 in the CL version of CLM, but can be used independently of CLM to store marks, selections,
 or whatever that you want associated with a particular sound. Confusingly
-enough, this is a variable, unlike all the others -- that is, you
+enough, this is a variable, unlike all the others &mdash; that is, you
 refer to it directly, not as a procedure call.  Say we have a sound file "now.snd",
 and we want it to use the grid-graph whenever it is viewed.  We make "now.snd.scm"
 and put in it: <code>(set! (show-grid *snd-opened-sound*) #t)</code>.  When "now.snd" is

@@ -577,7 +577,7 @@ To get a cosine (as opposed to sine), set the initial-phase to (/ pi 2).
 </p>
 
 <p>sine-bank simply loops through its arrays of amps and phases, summing
-(* amp (sin phase)) -- it is mostly a convenience function for additive synthesis
+(* amp (sin phase)) &mdash; it is mostly a convenience function for additive synthesis
 (the phase-vocoder in particular).
 </p>
 
@@ -1061,7 +1061,7 @@ based on some previously chosen loop positions:
 	       (sound-section (<a class=quiet href="#filetoarray">file-&gt;array</a> sound 0 loop-start loop-length (make-vct loop-length)))
 	       (original-loop-duration (/ loop-length (<a class=quiet href="extsnd.html#mussoundsrate">mus-sound-srate</a> sound)))
 	       (tbl (<em class=red>make-table-lookup</em> :frequency (/ freq original-loop-duration) :wave sound-section)))
-	       ;; "freq" here is how fast we read (transpose) the sound -- 1.0 returns the original
+	       ;; "freq" here is how fast we read (transpose) the sound &mdash; 1.0 returns the original
 	  (<a class=quiet href="extsnd.html#run">run</a>
 	   (lambda ()
 	     (do ((i beg (1+ i)))
@@ -1301,7 +1301,7 @@ we absolutely insist on using waveshaping, we could do it this way:
   (let* ((norm (if (= order 1) 1.0     ; these peak amps were determined empirically
                  (if (= order 2) 1.3   ;   actual limit is supposed to be pi/2 (G&amp;R 1.441)
                    (if (&lt; order 9) 1.7 ;   but Gibbs phenomenon pushes it to 1.851
-                     1.9))))           ;   if order>25, numerical troubles -- use table-lookup
+                     1.9))))           ;   if order>25, numerical troubles &mdash; use table-lookup
          (freqs '()))
     (do ((i 1 (1+ i)))
 	((&gt; i order))
@@ -1355,7 +1355,7 @@ we are expecting a bunch of huge numbers
 to add up to something in the vicinity of 0.0 or 1.0.  
 If we're using 32-bit floats, the first sign of trouble comes when the order is around 26.
 If you look at some of the coefficients, you'll see numbers like -129026688.000 (in the 32 bit case), which
-should be -129026680.721 --  we have run out of bits in the mantissa!
+should be -129026680.721 &mdash;  we have run out of bits in the mantissa!
 Even if we build Snd --with-doubles, 
 we can only push the order up to around 46. 
 </p>
@@ -1461,8 +1461,8 @@ we get "intermodulation products" (sum and difference tones).
 </p>
 <p>
 (It is reassuring after all that
-arithmetic that 13319/241920 / 140069/172800 is 0.068 -- we got
-.070 in the fft above, and 1973/483840 / 140069/172800 is 0.005 --
+arithmetic that 13319/241920 / 140069/172800 is 0.068 &mdash; we got
+.070 in the fft above, and 1973/483840 / 140069/172800 is 0.005 &mdash;
 we got .006).
 </p>
 </td></tr></table>
@@ -1653,7 +1653,7 @@ poussin (5)
 soc2 (5)
 fejer2 (10)
 
-;; this is in snd9.scm now -- new form is kosine
+;; this is in snd9.scm now &mdash; new form is kosine
 (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
   (let ((freq (hz->radians 100.0)))
     (do ((i 0 (1+ i))
@@ -1959,7 +1959,7 @@ sceq37:
 <map name="GR1">
   <area shape=rect coords="0,0,300,60" href="sndclm.html#nxysin" alt="nxysin">
   <area shape=rect coords="0,61,300,100" href="sndclm.html#nxycos" alt="nxycos">
-  <area shape=rect coords="0,101,300,150 href="sndclm.html#nxy1cos" alt="nxy1cos">
+  <area shape=rect coords="0,101,300,150" href="sndclm.html#nxy1cos" alt="nxy1cos">
   <area shape=rect coords="0,151,300,200" href="sndclm.html#nxy1sin" alt="nxy1sin">
   <area shape=rect coords="0,201,300,240" href="sndclm.html#noddsin" alt="noddsin">
   <area shape=rect coords="0,241,300,280" href="sndclm.html#noddcos" alt="noddcos">
@@ -2070,7 +2070,7 @@ where Z stands for any of the various Bessel functions (J, Y, etc),
 and R stands for the Poisson-like business in the square root.
 Also useful are formulas like sin(x)cos(nx) = 1/2(sin(n-1)x + sin(n+1)x)
 and sin(x)sin(nx) = 1/2(cos(n-1)x - cos(n+1)x). 
-Don't shy away from the sums to infinity just because you've heard shouting about "band-limited waveforms" -- FM is an infinite sum:
+Don't shy away from the sums to infinity just because you've heard shouting about "band-limited waveforms" &mdash; FM is an infinite sum:
 </p>
 
 
@@ -2096,6 +2096,16 @@ Don't shy away from the sums to infinity just because you've heard shouting abou
 </tr></table>
 </td></tr></table>
 
+
+<p>You can calculate the maximum "r" factor given the current frequency and sampling rate:
+</p>
+<pre>
+    (expt .001 (/ 1.0 (floor (/ (mus-srate) (* 3 freq)))))
+</pre>
+<p>or the equivalent where there's some factor in the denominator.  The factorials
+overwhelm r^k, so you can get away with very large "r"s in those cases; the center
+of the resultant spectrum is around r * freq.
+</p>
 
 <p>
 <a class=quiet href="sndscm.html#def-clm-struct">def-clm-struct</a> makes it easy to try out 
@@ -2627,7 +2637,7 @@ than the preceding:
 </pre>
 </td></tr></table>
 
-<p>See also <a href="sndscm.html#greendoc">green.scm</a> -- bounded brownian noise that can mimic 1/f noise in some cases.
+<p>See also <a href="sndscm.html#greendoc">green.scm</a> &mdash; bounded brownian noise that can mimic 1/f noise in some cases.
 (The brownian graph below has a different dB range).
 </p>
 
@@ -3759,7 +3769,7 @@ similar to the freeze function.
 </p>
 
 <p>The duration of each slice is
-"length" -- the longer the slice, the more the effect resembles reverb.  The
+"length" &mdash; the longer the slice, the more the effect resembles reverb.  The
 portion of the length (on a scale from 0 to 1.0) spent on each
 ramp (up or down) is set by the "ramp" argument.  It can control the smoothness of
 the result of the overlaps. 
@@ -4744,7 +4754,7 @@ is <a href="#sum-of-sines">sum-of-sines</a>, and nssb is the single side-band ve
   <A class=def NAME="nxy1sin">nxy1sin</A> gen fm
   <A class=def NAME="nxy1sin?">nxy1sin?</A> gen
 </pre>
-<p>These two produce a sum of "n" sinsoids starting at "xfrequency", spaced by "yfrequency".  Since "xfrequency" can be treated
+<p>These produce a sum of "n" sinsoids starting at "xfrequency", spaced by "yfrequency".  Since "xfrequency" can be treated
 as the carrier, there's no point in an ssb version.  nxysin output is not normalized.  nxy1cos is the same as nxycos, but every other
 component is multiplied by -1, and "n" produces 2n-1 components.
 </p>
@@ -4881,7 +4891,7 @@ under the name "discrete summation formula".
   <A class=def NAME="koddcos?">koddcos?</A> gen
 </pre>
 
-<p>This produces a sum of odd harmonics with a complicated scaling -- it is the 3rd Jolley case, 1st column, in the sum-of-sines table.
+<p>This produces a sum of odd harmonics with a complicated scaling &mdash; it is the 3rd Jolley case, 1st column, in the sum-of-sines table.
 This generator's output is not normalized, and looks incorrect...
 </p>
 <br>
@@ -4990,7 +5000,7 @@ This generator's output is not normalized, and looks incorrect...
 <img src="sceq26.png" alt="sum of sines" hspace=40>
 <br>
 
-<p>This produces abs(oscil) -- not very useful, I fear.
+<p>This produces abs(oscil) &mdash; not very useful, I fear.
 </p>
 <br>
 
@@ -5147,7 +5157,7 @@ determines how many vct elements are printed by mus-describe.
 <p>
 hz-&gt;radians
 converts its argument to radians/sample (for any situation where a
-frequency is used as an amplitude -- glissando or FM).
+frequency is used as an amplitude &mdash; glissando or FM).
 </p>
 <blockquote>
 <p>
@@ -5321,7 +5331,7 @@ A similar (slightly simpler) effect is:
 
 <p>This modulates the sound but keeps the output maxamp the same as the input.
 There is a similar function in sndscm.html that does this kind of scaling throughout the sound,
-resulting in a steady modulation, rather than an intensification of just the peaks -- see
+resulting in a steady modulation, rather than an intensification of just the peaks &mdash; see
 <a href="sndscm.html#movingmax">moving-max</a>.
 </p>
 <br><br>
@@ -5339,7 +5349,7 @@ resulting in a steady modulation, rather than an intensification of just the pea
 
 <p>ring-modulation is sometimes called "double-sideband-suppressed-carrier" modulation --
 that is, amplitude modulation with the carrier subtracted out (set to 0.0 above).
-The nomenclature here is a bit confusing -- I can't remember now why I used
+The nomenclature here is a bit confusing &mdash; I can't remember now why I used
 these names; think of "carrier" as "carrier amplitude" and "in1" as "carrier". Normal amplitude modulation using this function would be:
 </p>
 <pre>
@@ -5482,7 +5492,7 @@ test 23 in snd-test.
     </tr>
 
 <tr><td>canter</td>            
-    <td>fm (<a href="bag.clm">bag.clm</a> -- bagpipes) (Peter Commons)</td>      
+    <td>fm (<a href="bag.clm">bag.clm</a> &mdash; bagpipes) (Peter Commons)</td>      
     <td><a href="canter.ins">canter.ins</a></td>
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
@@ -5828,7 +5838,7 @@ test 23 in snd-test.
     </tr>
 
 <tr><td>test ins</td>          
-    <td>CLM regression tests -- see clm-test.lisp</td>      
+    <td>CLM regression tests &mdash; see clm-test.lisp</td>      
     <td><a href="ug.ins">ug(1,2,3,4).ins</a></td>   
 	<td><a href="clm23.scm">clm23.scm</a></td>
     </tr>

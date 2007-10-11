@@ -260,8 +260,8 @@ Here's a more elaborate initialization file (~/.snd_guile):
 (set! (<a class=quiet href="extsnd.html#savedir">save-dir</a>) "/zap/snd")        ;save-state files are placed in /zap/snd
 (set! (<a class=quiet href="extsnd.html#tempdir">temp-dir</a>) "/zap/tmp")        ;temp files are placed in /zap/tmp
 (load "peak-env.scm")               ;large file peak env data is saved for faster 
-				    ;  subsequent reads -- this makes the first
-				    ;  view of a large file much snappier --
+				    ;  subsequent reads &mdash; this makes the first
+				    ;  view of a large file much snappier &mdash;
 				    ;  its default directory for the data is ~/peaks.
 
 (load "draw.scm")                   ;load some useful extensions
@@ -846,7 +846,7 @@ Depending on how Snd is configured, any of the following symbols may be "provide
 <table hspace=20 border=1>
 <tr><td>
 <table>
-<tr><td width=100>clm</td><td>clm module (always included -- once upon a time it was optional)</td></tr>
+<tr><td width=100>clm</td><td>clm module (always included &mdash; once upon a time it was optional)</td></tr>
 <tr><td bgcolor="#f6f8ff">gl</td><td bgcolor="#f6f8ff">OpenGL callable from Scheme/Ruby/Forth (--with-gl switch)</td></tr>
 <tr><td>snd-ladspa</td><td>LADSPA loaded (--with-ladspa, but also the default in Linux if ladspa.h can be found)</td></tr>
 <tr><td bgcolor="#f6f8ff">sndlib</td><td bgcolor="#f6f8ff">sndlib module (always included)</td></tr>
@@ -1525,7 +1525,7 @@ Here's the scale-dialog in xg/gtk:
 </pre></td></tr></table>
 
 <p>The only change from the C code is the addition of GTK_ADJUSTMENT in the scale value_changed
-callback -- currently the xg module assumes the first argument to the two-argument callback is
+callback &mdash; currently the xg module assumes the first argument to the two-argument callback is
 a GtkWidget, so we have to cast a GtkAdjustment back to its original type.
 </p>
 
@@ -1951,7 +1951,7 @@ For Ruby as an Emacs subjob, see inf-snd.el.
 </pre>
 <p>An example initialization file (~/.snd_forth) is given in the <a href="#sndinitfile">initialization</a> section.
 Mike Scholz (creator of the Forth library we use) has provided a bunch of Forth files along the lines of the
-Scheme and Ruby files described above -- see *.fs.  See also Mike's very fine documentation in the fth package.
+Scheme and Ruby files described above &mdash; see *.fs.  See also Mike's very fine documentation in the fth package.
 Here's an example from his fth.texi file showing how to define an instrument and use it in with-sound:
 </p>
 

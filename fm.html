@@ -27,7 +27,7 @@
 <!-- INDEX fmintro:Frequency Modulation -->
 <A NAME="fmintro"></A>
 
-<p>In frequency modulation we modulate the frequency -- "modulation" here is just a latinate word for 
+<p>In frequency modulation we modulate the frequency &mdash; "modulation" here is just a latinate word for 
 "change".  Vibrato and glissando are frequency modulation.  John Chowning tells me that he 
 stumbled on FM when he sped up vibrato to the point that it was creating audible sidebands 
 (perceived as a timbral change) rather than faster warbling (perceived as a frequency change).  We 
@@ -482,7 +482,7 @@ and symmetrically placed sidebands
 separated by
 <img src="fmeq42.png" alt="wm" align=absmiddle>.  
 The amplitudes  follow the Bessel functions.  I put carrier in quotes because in 
-computer music we listen to the result of the modulation (this was Chowning's idea -- see "The 
+computer music we listen to the result of the modulation (this was Chowning's idea &mdash; see "The 
 Synthesis of Complex Audio Spectra by Means of Frequency Modulation").  The Bessel functions 
 are nearly 0 until the index (B) equals the order (n).  Thereupon they have a bump and then tail off as
 a sort of damped sinusoid:
@@ -495,7 +495,7 @@ So as the index sweeps
 upward, energy is swept gradually outward into higher order side bands; this is the originally 
 exciting, now extremely annoying "FM sweep".
 The important thing to get from these Bessel functions is that the higher the index, the 
-more dispersed the spectral energy -- normally a brighter sound.
+more dispersed the spectral energy &mdash; normally a brighter sound.
 </p>
 
 <table border=1 cellpadding=4>
@@ -561,7 +561,7 @@ significant sidebands on each side of the carrier, so our total bandwidth is on 
    2 * modulator-frequency * (fm-index + 1)
 </pre>
 
-<p>This is a good approximation -- 99% of the signal power is within its limits.  To turn that around, we can 
+<p>This is a good approximation &mdash; 99% of the signal power is within its limits.  To turn that around, we can 
 reduce the danger of aliasing by limiting the fm index to approximately (srate/2 - carrier_frequency) / modulator_frequency;
 use srate/4 to be safer.
 </p>
@@ -820,7 +820,7 @@ Or perhaps more readable:
 </td></tr></table>
 -->
 
-<p>Our first reaction is, "so what if one's a sine and another's a cosine, or whatever -- they'll sound the 
+<p>Our first reaction is, "so what if one's a sine and another's a cosine, or whatever &mdash; they'll sound the 
 same", but we are being hasty.  What if (for example), the modulator has the same frequency as the 
 carrier, and its index (B) is high enough that some significant energy appears at
 </p>
@@ -884,8 +884,8 @@ instrument:
 
 <p>There is a slight difference!  The first case is that given by Chowning in his fig 1.4a, the second 
 is Bate's fig 3 ("The Effects of Modulator Phase on Timbres in FM Synthesis").  (At least I think it 
-is -- Bate says he is changing the modulator's initial phase, but I can't reproduce his graph unless I 
-change the carrier initial phase -- the important point is that these phases matter).  Also, remember 
+is &mdash; Bate says he is changing the modulator's initial phase, but I can't reproduce his graph unless I 
+change the carrier initial phase &mdash; the important point is that these phases matter).  Also, remember 
 that we are thinking in terms of the pre-integration phase here (hence the (* .5 pi)):
 </p>
 
@@ -1167,7 +1167,7 @@ expressed:
 </pre>
 -->
 
-<p>You can chew up any amount of free time calculating the resulting side band amplitudes -- see 
+<p>You can chew up any amount of free time calculating the resulting side band amplitudes &mdash; see 
 Schottstaedt "The Simulation of Natural Instrument Tones Using Frequency Modulation with a 
 Complex Modulating Wave".  These extra modulating components flatten and spread out the 
 spectrum somewhat. In general:
@@ -1948,7 +1948,7 @@ De Poli, "A Tutorial on Digital Sound Synthesis Techniques", CMJ vol7 no 4, 1983
 Gagliardi, "Introduction to Communications Engineering", Wiley Interscience, 1978.
 
 Klapper, "Selected Papers on Frequency Modulation", Dover 1970. (Out of print, but available
-     via used book markets such as abebooks or amazon -- usually about $25).
+     via used book markets such as abebooks or amazon &mdash; usually about $25).
      The Bessel function graph is from Corrington, "Variation of Bandwidth with Modulation Index in FM",
      The picture below of an early radio is from Armstrong, "A Method of Reducing Disturbances in Radio
      Signaling by a System of FM".

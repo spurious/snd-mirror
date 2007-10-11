@@ -2350,18 +2350,19 @@ index 10 (so 10/2 is the bes-jn arg):
   (declare (gen j2cos) (fm float))
   (let* ((x (j2cos-angle gen))
 	 (r (j2cos-r gen))
-	 (rsinx2 (* r (sin (* 0.5 x))))
+	 (rsinx2 (* 2.0 r (sin (* 0.5 x))))
 	 (n (j2cos-n gen)))
 
     (set! (j2cos-angle gen) (+ x fm (j2cos-incr gen)))
 
     (if (< (abs rsinx2) nearly-zero)
 	1.0
-	(/ (bes-jn n (* 2.0 rsinx2))
+	(/ (bes-jn n rsinx2)
 	   rsinx2))))
 
 ;;; this goes berserk if n=0, needs normalization, dc omission, doc/test
-
+;;; if n=1, sample 0 = 1, the rest are in the .5 range!
+;;; maybe j2cos isn't all that useful...
 
 #|
 (with-sound (:clipped #f :statistics #t)
@@ -2846,3 +2847,4 @@ index 10 (so 10/2 is the bes-jn arg):
 |#
 
 ;;; TODO: delay + sqr as handler for coupled rand-interp envs
+;;; TODO: try r=1..30 in the k! cases as formants

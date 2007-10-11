@@ -650,6 +650,7 @@
 				     (not (string-equal "&micro;" (my-subseq line i (+ i 7))))
 				     (not (string-equal "&quot;" (my-subseq line i (+ i 6))))
 				     (not (string-equal "&ouml;" (my-subseq line i (+ i 6))))
+				     (not (string-equal "&mdash;" (my-subseq line i (+ i 7))))
 				     (not (string-equal "&&" (my-subseq line i (+ i 2))))
 				     (not (string-equal "& " (my-subseq line i (+ i 2))))) ; following char -- should skip this
 				(warn "~A[~D]: unknown escape sequence: ~A" file linectr line))
@@ -660,8 +661,8 @@
 				  (if (and (char= c #\")
 					   (or (= i 0)
 					       (not (char= (elt line (- i 1)) #\\))))
-				      (incf p-quotes))
-			    )))))))))
+				      (incf p-quotes)
+			    ))))))))))
 
 		(if (not in-comment)
 		    (let ((start nil)

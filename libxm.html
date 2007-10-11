@@ -26,15 +26,15 @@
 <p>libxm provides Guile, Gauche, Ruby, and Forth (fth) bindings for Xlib, Xt, Xp, Xpm, and Xm (Motif);
 or alternatively (under the name libxg) Gtk, gdk, gdk-pixbuf, pango, cairo, and some of glib;
 and much of OpenGL.
-You can build it with just X, and so on -- see README.libxm for details.
-There are several example files in the libxm package -- anything with
+You can build it with just X, and so on &mdash; see README.libxm for details.
+There are several example files in the libxm package &mdash; anything with
 the extension "scm", "rb", or "fs".  libxm can be used directly with Guile, Gauche, Ruby, or Forth,
 providing a graphical user-interface for scripts.
 </p>
 <p>
 All libxm names are exactly the same as the C name except that
-a "." is prepended (in Guile) to struct field accessors -- this prefix (and the postfix) can be set via the macros
-XM_PREFIX, XM_FIELD_PREFIX and XM_POSTFIX to whatever you like --
+a "." is prepended (in Guile) to struct field accessors &mdash; this prefix (and the postfix) can be set via the macros
+XM_PREFIX, XM_FIELD_PREFIX and XM_POSTFIX to whatever you like &mdash;
 "x:" or "&lt;" and "&gt;", etc.  In Ruby, I'm prepending "R"; in Forth "F".
 I chose not to try to make these names fit into the
 "Scheme culture" (i.e. adding random dashes and uncapitalizing everything)
@@ -57,7 +57,7 @@ XtCallbackLists are passed as lists of procedure/data pairs;
 where an explicit NULL is needed as an arg, use #f (or '() for list args);
 structs are accessed by the field name and the lisp variable (which contains the struct type) --
 (.pixel color) for example, or (.foreground gcvalue);
-blank structs, where needed, can be created via (Name) -- (XColor) or (XGCValues) for example.
+blank structs, where needed, can be created via (Name) &mdash; (XColor) or (XGCValues) for example.
 </p>
 <p>
 You can use libxm directly in guile.  Here is an example script:

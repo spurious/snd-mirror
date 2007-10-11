@@ -336,7 +336,7 @@ the y axis bounds.  The inner scale
 moves the y axis up and down.
 Click the "w" button (unset it) and
 the time domain waveform goes away.  Click "play" to
-play the file.  "sync" is more complicated -- it is used
+play the file.  "sync" is more complicated &mdash; it is used
 to group sounds together for simultaneous editing.
 </p>
 
@@ -347,13 +347,13 @@ to group sounds together for simultaneous editing.
 <p>Now return to the time domain form (click "w" and "f"),
 and click in the graph itself.  A red cursor (a big "+")
 appears at that point.  The cursor is just like an
-Emacs cursor -- you can delete the sample at the cursor,
+Emacs cursor &mdash; you can delete the sample at the cursor,
 for example, by typing control D (abbreviated in this
 document C-d), or move back one sample with C-b.
 </p>
 
 <p>Click and drag the mouse through some portion of
-the graph -- the portion dragged is highlighted in
+the graph &mdash; the portion dragged is highlighted in
 some way.  When you release the mouse button, the
 highlighted portion becomes a
 'selection' that you can play, delete, or mix elsewhere.
@@ -417,7 +417,7 @@ files that look interesting, and start clicking widgets.
 <p>Manipulating sounds in a programming environment
 is most enjoyable if you can edit and retry expressions
 easily.  Old-time Lispers called this special kind of
-text widget a "listener".  There is one in Snd -- see
+text widget a "listener".  There is one in Snd &mdash; see
 the View:Open Listener menu.  The listener has a prompt ("&gt;") 
 at which you can type any expression: (+ 1 2)
 which it then evaluates, returning the result.
@@ -896,7 +896,7 @@ window size:</p>
 The fft data is scaled to fit between 0.0 and 1.0 unless
 transform normalization is off. 
 The full frequency axis is normally displayed, but the
-axis is draggable -- put the mouse on the axis and
+axis is draggable &mdash; put the mouse on the axis and
 drag it either way to change the range (this is equivalent
 to changing the variable <a href="extsnd.html#spectrocutoff">spectro-cutoff</a>).  You can also click
 on any point in the fft to get the associated fft value at that point
@@ -980,7 +980,7 @@ midpoint of the current window.</p>
 <p>The Preferences dialog tries to make it easier to set up Snd initially.  It is a GUI-based way to
 write your initialization file.  Most of the global variables are included, and a number of
 ancillary functions that seem to be popular.  It's not yet completed, but more than 100 topics
-are currently included -- a good start!
+are currently included &mdash; a good start!
 To get more help on a particular topic, scroll horizontally to the list of topic names on
 the far right, and click on the one you're
 interested in.  If you leave the help dialog active, it becomes a sort of tooltip --
@@ -1103,7 +1103,7 @@ To move by a single window, click the
 arrows on the scrollbar.  To move by smaller amounts,
 use the left and right arrow keys (or zoom with the up and
 down arrow keys);  the control, shift, and meta keys
-are multipliers on this movement -- each key adds a factor
+are multipliers on this movement &mdash; each key adds a factor
 of .5 to the multiple, so to move by .25 windows, 
 press control, meta, left (or right) arrow.  A similar
 mechanism can be used to zoom quickly onto a particular
@@ -1232,7 +1232,7 @@ commands continue the definition.</p>
 
 <A NAME="regionbrowser"></a><p>Once defined, the copied region
 is added to a list of currently
-available regions (the maximum list size is normally 16 -- see <a href="extsnd.html#maxregions">max-regions</a>).
+available regions (the maximum list size is normally 16 &mdash; see <a href="extsnd.html#maxregions">max-regions</a>).
 The currently available regions can be view from the
 View menu's Region browser:</p>
 
@@ -1364,7 +1364,7 @@ associated keyboard commands are:</p>
 <pre>
   C-d      delete sample at cursor
   C-h      delete previous sample
-  <A NAME="ck"></a>C-k      delete a 'line' -- 128 samples
+  <A NAME="ck"></a>C-k      delete a 'line' &mdash; 128 samples
   <A NAME="cw"></a>C-w      delete current selected portion
 
   <A NAME="co"></a>C-o      insert a zero sample at cursor
@@ -1871,7 +1871,7 @@ M-x (set! (<a class=quiet href="extsnd.html#ybounds">y-bounds</a>) '(-.01 .01)) 
 <p><A NAME="kgc"></a>C-g at any point aborts the current keyboard command
 sequence, as does any mouse click.  C-g can also interrupt most long
 computations (search, eval expression, and the various envelope applications).
-If you notice one that is not interruptible, send me a note -- I probably just
+If you notice one that is not interruptible, send me a note &mdash; I probably just
 forgot about it.
 </p>
 <!-- I(interrupt Snd):A(kgc) -->
@@ -2153,8 +2153,8 @@ short slices of the file are overlapped with
 the difference in size between the input and
 output hops (between successive slices) giving
 the change in tempo.  This doesn't work in all
-files -- it sometimes sounds like execrable reverb
-or is too buzzy -- but it certainly is more
+files &mdash; it sometimes sounds like execrable reverb
+or is too buzzy &mdash; but it certainly is more
 robust than the phase vocoder approach to the
 same problem. The best quality time expansion
 comes from rubber-sound in rubber.scm, but unfortunately
@@ -2196,7 +2196,7 @@ button is set.
 specified by giving the frequency response 
 envelope 
 and filter order in the text windows provided.
-The envelope X axis goes from 0 to half the sampling rate -- see <a href="extsnd.html#filtercontrolinhz">filter-control-in-hz</a>.
+The envelope X axis goes from 0 to half the sampling rate &mdash; see <a href="extsnd.html#filtercontrolinhz">filter-control-in-hz</a>.
 If you raise the control pane from its default height, 
 a graph is revealed beneath the filter text field;
 this is an envelope editor like the envelope editor dialog
