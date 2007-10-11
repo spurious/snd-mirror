@@ -972,13 +972,15 @@ fact that:
 </pre>
 -->
 
-<p>If we have a spectrum B made up entirely of sines (or entirely cosines), we can then multiply it by 
-sin A (or cos A) then add the two resulting spectra, and the (A + B) parts cancel.  Here's an 
-example:
+<p>If we have a spectrum B made up entirely of sines (or entirely cosines), we can multiply it by 
+sin A (or cos A), add the two resulting spectra, and the (A + B) parts cancel. 
+Unfortunately, in this case there are some pesky -1's floating around, so we get asymmetric or gapped spectra,
+but not anything we'd claim was single side-band.
 </p>
 
-<table border=0 bgcolor="#f6f8ff" hspace=20><tr><td>
 <!-- CLM CASE
+
+<table border=0 bgcolor="#f6f8ff" hspace=20><tr><td>
 <pre>
 (definstrument fm (beg end freq amp mc-ratio index cr0p cr1p md0p md1p)
   (let ((cr0 (make-oscil 0 cr0p))
@@ -995,35 +997,40 @@ example:
 
 (with-sound () (fm 0 10000 1000 .25 .1 1.0 0 (* .5 pi) (* .5 pi) 0))
 </pre>
+</td></tr></table>
+
 -->
 
 <!-- SND CASE -->
+
+<table border=1 hspace=10 cellpadding=6>
+<tr><td bgcolor="#f6f8ff">
 <pre>
-(define (fm beg dur freq amp mc-ratio index cr0p cr1p md0p md1p)
-  (let* ((start (seconds-&gt;samples beg))
-	 (end (+ start (seconds-&gt;samples dur)))
-	 (cr0 (make-oscil 0 cr0p))
-	 (cr1 (make-oscil 0 cr1p))
-	 (md0 (make-oscil (* freq mc-ratio) md0p))
-	 (md1 (make-oscil (* freq mc-ratio) md1p))
-	 (am0 (make-oscil freq 0))
-	 (am1 (make-oscil freq (* .5 pi)))
-	 (fm-index (hz-&gt;radians (* index mc-ratio freq))))
-    (run
-     (lambda ()
-       (do ((i start (1+ i)))
-	   ((= i end))
-	 (outa i (* amp (+ (* (oscil am0) (oscil cr0 (* fm-index (oscil md0))))
-			   (* (oscil am1) (oscil cr1 (* fm-index (oscil md1))))))
-	       *output*))))))
+(define (pm-cancellation beg dur carfreq modfreq amp index)
+  (let* ((cx 0.0)
+	 (mx 0.0)
+	 (car-incr (hz-&gt;radians carfreq))
+	 (mod-incr (hz-&gt;radians modfreq))
+	 (start (seconds-&gt;samples beg))
+	 (stop (+ start (seconds-&gt;samples dur))))
+    (do ((i start (1+ i)))
+	((= i stop))
+      (outa i (* amp (- (* (cos cx)  ; cos * sum-of-cos
+			   (sin (* index (cos mx))))
+			(* (sin cx)  ; sin * sum-of-sin
+			   (* (sin (* index (sin mx))))))) 
+	    *output*)
+      (set! cx (+ cx car-incr))
+      (set! mx (+ mx mod-incr)))))
 
-(with-sound () (fm 0 1.0 1000 .25 .1 1.0 0 (* .5 pi) (* .5 pi) 0))
+(with-sound () (pm-cancellation 0 1 1000.0 100.0 0.3 9.0))
 </pre>
+<td><img src="fmcancel.png" alt="fm cancellation">
+</td>
+</tr></table>
 <!-- -->
-</td></tr></table>
 
-<p>Unfortunately, there are some pesky -1's floating around, so we get asymmetric or gapped spectra,
-but not anything we'd claim was single side-band.
+<p>
 Palamin et al in "A Method of Generating and Controlling Musical Asymmetrical Spectra" started at 
 the same point (the expansion of simple FM), added a factor r^n to each sideband, and then worked 
 backwards to get:
