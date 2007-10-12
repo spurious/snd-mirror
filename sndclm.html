@@ -606,7 +606,7 @@ This means that the frequency envelope y values should be passed through <a href
 <pre>
 (define (simp start end freq amp frq-env)
   (let ((os (make-oscil freq)) 
-        (frqe (<a class=quiet href="#make-env">make-env</a> frq-env :dur (- end start) :scaler (<em class=red>hz->radians</em> freq))))
+        (frqe (<a class=quiet href="#make-env">make-env</a> frq-env :end (- end start) :scaler (<em class=red>hz->radians</em> freq))))
     (do ((i start (1+ i))) 
         ((= i end))
       (<a class=quiet href="#outa">outa</a> i (* amp (oscil os (env <em class=red>frqe</em>))) *output*))))
@@ -4585,7 +4585,7 @@ asyfm-I is the modified Bessel function version (the second formula in the <a hr
 
 
 <!-- bessel functions -->
-<table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>Bessel functions</center></h5></td></tr></table>
+<table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>Bessel functions</h5></center></td></tr></table>
 
 <pre>
   <A class=def NAME="make-bess">make-bess</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (n 0)
@@ -4623,7 +4623,7 @@ sceq35:
   <A class=def NAME="j0evencos?">j0evencos?</A> gen
 </pre>
 
-<p>j0evencos produces the J0(sin) case mentioned above (with the DC component is subtracted out).
+<p>j0evencos produces the J0(sin) case mentioned above (with the DC component subtracted out).
 </p>
 
 <br>
@@ -4670,7 +4670,7 @@ This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosin
 
 
 <!-- finite sums -->
-<table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>finite sums</center></h5></td></tr></table>
+<table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>finite sums</h5></center></td></tr></table>
 
 
 <pre>
@@ -4842,7 +4842,7 @@ under the name "discrete summation formula".
 
 
 <!-- infinite sums -->
-<table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><h5><center>infinite sums</center></h5></td></tr></table>
+<table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>infinite sums</h5></center></td></tr></table>
 
 <pre>
   <A class=def NAME="make-rcos">make-rcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0)

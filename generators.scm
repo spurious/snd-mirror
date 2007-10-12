@@ -1367,8 +1367,20 @@
 	 (set! (rk!cos-r gen) r) 
 	 (set! r (+ r incr))
 	 (outa i (rk!cos gen 0.0) *output*))))))
-|#
 
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-rk!cos 300.0 :r 10.0)) 
+	(ampf (make-env '(0 0 .1 1 .2 1 3 .5 5 .25 10 0) :scaler .5 :end 10000))
+	(r 10.0) 
+	(incr (/ -10.0 10000)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000)) 
+	 (set! (rk!cos-r gen) r) 
+	 (set! r (+ r incr))
+	 (outa i (* (env ampf) (rk!cos gen 0.0)) *output*))))))
+|#
 
 (def-clm-struct (rk!ssb
 		 :make-wrapper
@@ -1403,6 +1415,31 @@
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
 	 (outa i (rk!ssb gen 0.0) *output*))))))
+
+(definstrument (bouncy beg dur freq amp :optional (bounce-freq 5) (bounce-amp 20))
+  (let* ((gen (make-rk!ssb (* freq 4) freq :r 1.0)) 
+	 (gen1 (make-oscil bounce-freq)) 
+	 (bouncef (make-env '(0 1 1 0) :base 32 :scaler bounce-amp :duration 1.0))
+	 (rf (make-env (list 0 0 1 1 (max 2.0 dur) 0) :base 32 :scaler 3 :duration dur))
+	 (ampf (make-env (list 0 0 .01 1 .03 1 1 .15 (max 2 dur) 0.0) :base 32 :scaler amp :duration dur))
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur))))
+    (run 
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (set! (rk!ssb-r gen) (+ (abs (* (env bouncef) 
+					 (oscil gen1))) 
+				 (env rf)))
+	 (outa i (* (env ampf)
+		    (rk!ssb gen 0.0)) 
+	       *output*))))))
+
+(with-sound (:statistics #t :play #t :clipped #f)
+  (bouncy 0 2 300 .5 5 10))
+
+(with-sound (:statistics #t :play #t :clipped #f)
+  (bouncy 0 2 200 .5 3 2))
 |#
 			  
 
@@ -1447,6 +1484,47 @@
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
 	 (outa i (r2k!cos gen 0.0) *output*))))))
+
+(definstrument (pianoy beg dur freq amp)
+  (let* ((gen (make-r2k!cos freq :r 0.5 :k 3.0)) 
+	 (ampf (make-env (list 0 0 .01 1 .03 1 1 .15 (max 2 dur) 0.0) :base 32 :scaler amp :duration dur))
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur))))
+    (run 
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (r2k!cos gen 0.0)) 
+	       *output*))))))
+
+(with-sound (:statistics #t :play #t :clipped #f)
+  (pianoy 0 3 100 .5 5 .12))
+;;; this can be combined with bouncy-like changes to get an evolving sound
+
+(definstrument (pianoy1 beg dur freq amp :optional (bounce-freq 5) (bounce-amp 20))
+  (let* ((gen (make-r2k!cos freq :r 0.5 :k 3.0)) 
+	 (gen1 (make-oscil bounce-freq)) 
+	 (bouncef (make-env '(0 1 1 0) :base 32 :scaler bounce-amp :duration 1.0))
+	 (rf (make-env (list 0 0 1 1 (max 2.0 dur) 0) :base 32 :scaler .1 :duration dur))
+	 (ampf (make-env (list 0 0 .01 1 .03 1 1 .15 (max 2 dur) 0.0) :base 32 :scaler amp :duration dur))
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur))))
+    (run 
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (set! (r2k!cos-r gen) (+ .25 (abs (* (env bouncef) 
+					 (oscil gen1)))
+				 (env rf)))
+	 (outa i (* (env ampf)
+		    (r2k!cos gen 0.0)) 
+	       *output*))))))
+
+(with-sound (:statistics #t :play #t :clipped #f)
+  (pianoy1 0 4 200 .5 1 .1))
+
+;;; piano "knock" is apparently around 90Hz
 |#
 
 
@@ -2743,44 +2821,67 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; --------------------------------------------------------------------------------
 
-#|
+
 ;;; we can add the sin(cos) and sin(sin) cases, using -index in the latter to get 
 ;;;   asymmetric fm since Jn(-B) = (-1)^n Jn(B) -- every other side band cancels
 ;;;
 ;;; the same trick would work in the other two cases -- gapped spectra
 
-(def-clm-struct (fmtest
+(def-clm-struct (fmssb
 		 :make-wrapper
 		 (lambda (g)
-		   (set! (fmtest-carincr g) (hz->radians (fmtest-carfreq g)))
-		   (set! (fmtest-modincr g) (hz->radians (fmtest-modfreq g)))
+		   (set! (fmssb-carincr g) (hz->radians (fmssb-carfreq g)))
+		   (set! (fmssb-modincr g) (hz->radians (fmssb-modfreq g)))
 		   g))
   (carfreq 0.0) (modfreq 1.0) (index 1.0)
   (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
 
-(define (fmtest gen fm)
-  (declare (gen fmtest) (fm float))
-  (let* ((mx (fmtest-modangle gen))
-	 (cx (fmtest-carangle gen))
-	 (B (fmtest-index gen))
-    	 (cfm (* fm (/ (fmtest-carincr gen) (fmtest-modincr gen)))))
+(define (fmssb gen fm)
+  (declare (gen fmssb) (fm float))
+  (let* ((mx (fmssb-modangle gen))
+	 (cx (fmssb-carangle gen))
+	 (B (fmssb-index gen))
+    	 (cfm (* fm (/ (fmssb-carincr gen) (fmssb-modincr gen)))))
 
-    (set! (fmtest-carangle gen) (+ cfm (fmtest-carangle gen) (fmtest-carincr gen)))
-    (set! (fmtest-modangle gen) (+ fm (fmtest-modangle gen) (fmtest-modincr gen)))
+    (set! (fmssb-carangle gen) (+ cfm (fmssb-carangle gen) (fmssb-carincr gen)))
+    (set! (fmssb-modangle gen) (+ fm (fmssb-modangle gen) (fmssb-modincr gen)))
 
     (- (* (cos cx)
 	  (sin (* B (cos mx))))
        (* (sin cx)
-	  (* (sin (* (- B) (sin mx))))))))
+	  (* (sin (* B (sin mx)))))))) ; use -B for the other side
 
+#|
 (with-sound (:clipped #f :statistics #t)
-  (let ((gen (make-fmtest 1000.0 100.0 :index 0.5)))
+  (let ((gen (make-fmssb 1000.0 100.0 :index 8.0)))  ; 1 3 7 11 ... -- interesting effect
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (fmtest gen 0.0) *output*))))))
+	 (outa i (* .3 (fmssb gen 0.0)) *output*))))))
 |#
+
+
+(define (fm-cancellation beg dur carfreq modfreq amp index)
+  (let* ((cx 0.0)
+	 (mx 0.0)
+	 (car-incr (hz->radians carfreq))
+	 (mod-incr (hz->radians modfreq))
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur))))
+    (do ((i start (1+ i)))
+	((= i stop))
+      (outa i (* amp (- (* (cos cx)
+			   (sin (* index (cos mx))))
+			(* (sin cx)
+			   (* (sin (* index (sin mx))))))) 
+	                   ;; use -index for reflection
+	    *output*)
+      (set! cx (+ cx car-incr))
+      (set! mx (+ mx mod-incr)))))
+
+;(with-sound () (fm-cancellation 0 1 1000.0 100.0 0.3 9.0))
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -2847,4 +2948,4 @@ index 10 (so 10/2 is the bes-jn arg):
 |#
 
 ;;; TODO: delay + sqr as handler for coupled rand-interp envs
-;;; TODO: try r=1..30 in the k! cases as formants
+

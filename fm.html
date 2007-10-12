@@ -846,74 +846,66 @@ pattern of cancellations depending on the initial phases of the carrier and modu
 instrument:
 </p>
 
-<table border=0 bgcolor="#f6f8ff" hspace=20><tr><td>
+<table border=1 cellpadding=6 hspace=20>
+<tr>
+<td bgcolor="#f6f8ff">
+
 <!-- CLM CASE
 <pre>
-(definstrument fm (beg end freq amp mc-ratio index carrier-phase mod-phase)
-  (let ((cr (make-oscil :frequency freq :initial-phase carrier-phase))
-        (md (make-oscil :frequency (* freq mc-ratio) :initial-phase mod-phase))
-        (fm-index (hz-&gt;radians (* index mc-ratio freq))))
+(definstrument pm (beg end freq amp fm-index mod-phase)
+  (let ((cr (make-oscil freq))
+        (md (make-oscil freq mod-phase)))
     (run
       (loop for i from beg to end do
-        (outa i (* amp (oscil cr (* fm-index (oscil md)))))))))
+        (outa i (* amp (oscil cr 0.0 
+                         (* fm-index (oscil md)))))))))
 
-(with-sound () (fm 0 10000 100 .25 1.0 4 0 (* .5 pi)))
-(with-sound () (fm 0 10000 100 .25 1.0 4.0 (* .5 pi) (* .5 pi)))
+(with-sound () (fm 0 10000 100 .5 8 0))
+(with-sound () (fm 0 10000 100 .5 8 0 (* .5 pi)))
 </pre>
 -->
 
 <!-- SND CASE -->
 <pre>
-(define (fm beg dur freq amp mc-ratio index carrier-phase mod-phase)
+(define (pm beg dur freq amp fm-index mod-phase)
   (let* ((start (seconds-&gt;samples beg))
 	 (end (+ start (seconds-&gt;samples dur)))
-	 (cr (make-oscil freq carrier-phase))
-	 (md (make-oscil (* freq mc-ratio) mod-phase))
-	 (fm-index (hz-&gt;radians (* index mc-ratio freq))))
+	 (cr (make-oscil freq))
+	 (md (make-oscil freq mod-phase)))
     (run
      (lambda ()
        (do ((i start (1+ i)))
 	   ((= i end))
-	 (outa i (* amp (oscil cr (* fm-index (oscil md)))) *output*))))))
+	 (outa i (* amp (oscil cr 0.0 
+                          (* fm-index (oscil md)))) 
+               *output*))))))
 
-(with-sound () (fm 0 1.0 100 .25 1.0 4 0 (* .5 pi)))
-(with-sound () (fm 0 1.0 100 .25 1.0 4.0 (* .5 pi) (* .5 pi)))
+(with-sound () (pm 0 1.0 100 .5 8 0))
+(with-sound () (pm 0 1.0 100 .5 8 (* .5 pi)))
 </pre>
 <!-- -->
-</td></tr></table>
+</td>
+<td>
+  <table border=0><tr><td>
+  <img src="fmeq25.png" alt="mod phase 0">
+  </td></tr>
+  <tr><td><center>mod phase = 0.0</center>
+  </td></tr></table>
+</td>
+<td>
+  <table border=0><tr><td>
+  <img src="fmeq26.png" alt="mod phase pi/2">
+  </td></tr>
+  <tr><td><center>mod phase = pi/2</center>
+  </td></tr></table>
+</td>
 
-<p>There is a slight difference!  The first case is that given by Chowning in his fig 1.4a, the second 
-is Bate's fig 3 ("The Effects of Modulator Phase on Timbres in FM Synthesis").  (At least I think it 
-is &mdash; Bate says he is changing the modulator's initial phase, but I can't reproduce his graph unless I 
-change the carrier initial phase &mdash; the important point is that these phases matter).  Also, remember 
-that we are thinking in terms of the pre-integration phase here (hence the (* .5 pi)):
-</p>
+</tr></table>
 
-<table border=0><tr><td>
-<!-- LATEX \sin(x+\frac{\pi}{2}) = cos x -->
-<img src="fmeq25.png" alt="sin=cos" hspace=20>
-</td><td>
-and
-</td><td>
-<!-- LATEX \int \! \cos x \: \mathrm{d}x = \sin x -->
-<img src="fmeq26.png" alt="cos int sin" hspace=20>
-</td></tr></table>
 
-<p>so by starting with a cosine in the modulator, after the integration in oscil (and ignoring the constant 
-for the moment) we have
-</p>
-
-<!-- LATEX \sin(\omega_{c}t+B\sin \omega_{m}t) -->
-
-<img src="fmeq27.png" alt="sin B sin again" hspace=20>
-
-<!-- HTML
-<pre>
-    sin(w<sub>c</sub>t + B sin w<sub>m</sub>t)
-</pre>
--->
-
-<p>By varying the relative phases, we can get a changing spectrum from these cancellations.  Here is a 
+<p>There is a slight difference!  We're using phase-modulation for simplicity (the integration in FM
+changes the effective initial phase).
+By varying the relative phases, we can get a changing spectrum from these cancellations.  Here is a 
 CLM instrument that shows this (subtle) effect:
 </p>
 
@@ -1025,7 +1017,13 @@ but not anything we'd claim was single side-band.
 
 (with-sound () (pm-cancellation 0 1 1000.0 100.0 0.3 9.0))
 </pre>
-<td><img src="fmcancel.png" alt="fm cancellation">
+<td>
+  <table border=0>
+  <tr><td><img src="fmeq27.png" alt="uncancelled"></td></tr>
+  <tr><td><center>cos side by itself</center></td></tr>
+  <tr><td><img src="fmcancel.png" alt="fm cancellation"></td></tr>
+  <tr><td><center>both sides (showing cancellations)</center></td></tr>
+  </table>
 </td>
 </tr></table>
 <!-- -->
@@ -1174,7 +1172,7 @@ expressed:
 </pre>
 -->
 
-<p>You can chew up any amount of free time calculating the resulting side band amplitudes &mdash; see 
+<p>You can chew up any amount of free time calculating the resulting side band amplitudes &mdash; see
 Schottstaedt "The Simulation of Natural Instrument Tones Using Frequency Modulation with a 
 Complex Modulating Wave".  These extra modulating components flatten and spread out the 
 spectrum somewhat. In general:
@@ -1732,7 +1730,6 @@ Perhaps we have wandered into the realm of chaos:
 can behave chaotically.
 </p>
 
-
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>FM and noise: sin(sin(rand))</h5></center></td></tr></table>
 
 <p>
@@ -1762,7 +1759,7 @@ these modulate the carrier.  It is my belief that you get the normal spectrum wi
 smeared out by a copy of the noise band:
 </p>
 
-<table border=1 hspace=20>
+<table border=1 hspace=20 vspace=10>
 <tr>
 <td colspan=3 bgcolor="#f6f8ff"><center>(with-sound () (fm-violin 0 1 400.0 .5 :fm-index 3.0 :noise-amount 0.007))</center></td></tr>
 <tr>
@@ -1796,7 +1793,6 @@ smeared out by a copy of the noise band:
 makes a sound crisper; "Wait for Me!" uses it whenever a sound needs to cut through a huge 
 mix. 
 </p>
-
 
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>FM voice</h5></center></td></tr></table>
 
@@ -1937,12 +1933,14 @@ and used in "Colony" and other pieces. In a simplified form it is:
 <img src="voxspectrum.png" alt="voice spectrum" hspace=20>
 
 
+<!-- SOMEDAY: it would be neat to include a catalog of sounds like in JC's book 
+              all the techniques above need more and better musical examples
+-->
+
 <hr>
 <h2>References</h2>
 <pre>
 Abramowitz and Stegun, "Handbook of Mathematical Functions", Dover 1965.
-
-Bate, "The Effect of Modulator Phase on Timbres in FM Synthesis", CMJ vol 14, no3 1990, p38-45.
 
 Benson, "Music: A Mathematical Offering", Cambridge University Press, Nov 2006. Also available
      on-line: http://www.maths.abdn.ac.uk/~bensondj/html/music.pdf.  If the math side of my
