@@ -498,7 +498,7 @@ The important thing to get from these Bessel functions is that the higher the in
 more dispersed the spectral energy &mdash; normally a brighter sound.
 </p>
 
-<table border=1 cellpadding=4>
+<table border=1 cellpadding=4 vspace=10>
 
 <tr>
 <td bgcolor="#f6f8ff"><center>carrier=1000, mod=100, index=1.0</center></td>
@@ -846,7 +846,7 @@ pattern of cancellations depending on the initial phases of the carrier and modu
 instrument:
 </p>
 
-<table border=1 cellpadding=6 hspace=20>
+<table border=1 cellpadding=6 hspace=20 vspace=10>
 <tr>
 <td bgcolor="#f6f8ff">
 
@@ -1020,9 +1020,9 @@ but not anything we'd claim was single side-band.
 <td>
   <table border=0>
   <tr><td><img src="fmeq27.png" alt="uncancelled"></td></tr>
-  <tr><td><center>cos side by itself</center></td></tr>
+  <tr><td bgcolor="#f6f8ff"><center>cos side by itself</center></td></tr>
   <tr><td><img src="fmcancel.png" alt="fm cancellation"></td></tr>
-  <tr><td><center>both sides (showing cancellations)</center></td></tr>
+  <tr><td bgcolor="#f6f8ff"><center>both sides (showing cancellations)</center></td></tr>
   </table>
 </td>
 </tr></table>
@@ -1156,7 +1156,7 @@ sequence).  Since sine is not linear, this is not the same thing as
 we get a more complex mixture involving all the sums and differences of the modulating frequencies.  If the indices 
 are small (the B's are much less than 1), then there isn't much difference between the two versions.  
 Once again, the expansion is tedious, but it really involves nothing more than putting the sum of the 
-sines in place of the single sine in the previous case, then turning the algebraic crank.  See Le Brun 
+sines in place of the single sine in the previous case, then turning the algebraic crank.  See Le Brun,
 "A Derivation of the Spectrum of FM with a Complex Modulating Wave".  The result can be 
 expressed:
 </p>
@@ -1172,9 +1172,9 @@ expressed:
 </pre>
 -->
 
-<p>You can chew up any amount of free time calculating the resulting side band amplitudes &mdash; see
-Schottstaedt "The Simulation of Natural Instrument Tones Using Frequency Modulation with a 
-Complex Modulating Wave".  These extra modulating components flatten and spread out the 
+<p>You can chew up any amount of free time calculating the resulting side band amplitudes &mdash; see the immortal classic:
+Schottstaedt, "The Simulation of Natural Instrument Tones Using Frequency Modulation with a 
+Complex Modulating Wave".  (There's a function to do it for you in dsp.scm: multifm-component). These extra modulating components flatten and spread out the 
 spectrum somewhat. In general:
 </p>
 
@@ -1194,10 +1194,10 @@ spectrum somewhat. In general:
 -->
 
 
-<p>A CLM instrument to produce something like this might be:
+<p>A CLM instrument to produce this is:
 </p>
 
-<table border=0 bgcolor="#f6f8ff" hspace=20><tr><td>
+<table border=0 bgcolor="#f6f8ff" hspace=20 vspace=5><tr><td>
 <!-- CLM CASE
 <pre>
 (definstrument fm (beg end freq amp mc-ratios indexes carrier-phase mod-phases)
@@ -1310,7 +1310,7 @@ is somewhat closer to that of a real violin.
 A pared down version of the fm-violin is:
 </p>
 
-<table border=0 bgcolor="#f6f8ff" hspace=20><tr><td>
+<table border=0 bgcolor="#f6f8ff" hspace=20 vspace=10><tr><td>
 <!-- CLM CASE 
 <pre>
 (definstrument violin (beg end frequency amplitude fm-index)
@@ -1382,6 +1382,15 @@ A pared down version of the fm-violin is:
 <!-- -->
 </td></tr></table>
 
+
+<p>Complex FM is not unusual in the presence of sum and difference tones ("intermodulation products"): any
+nonlinear synthesis technique has these components.  Being non-linear, it must have something that involves
+a power of its input other than 0 or 1; if we feed in sin a + sin b, for example, that term will produce
+not just (sin a)^n and (sin b)^n, but all sorts of stuff involving sin a * sin b (in various powers),
+and this produces things like cos(a+b) and cos(a-b).
+</p>
+
+
 <br>
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>cascade FM: sin(sin(sin))</h5></center></td></tr></table>
 
@@ -1411,7 +1420,7 @@ lower pair of oscillators is surrounded by the spectrum produced by the upper pa
 sort of like a set of formant regions.
 </p>
 
-<table border=1 hspace=40><tr><td>
+<table border=1 hspace=40 vspace=10><tr><td>
 <img src="cascade.png" alt="cascade fm picture">
 </td></tr>
 <tr><td bgcolor="#f6f8ff"><center>osc A: 2000 Hz, osc B: 500 Hz, index 1.5, osc C: 50 Hz, index 1.0</center></td></tr>
@@ -1467,8 +1476,8 @@ can expand our cascade formula into:
 <img src="fmeq46.png" alt="wc" align=absmiddle>.
 This could be a disaster, because 
 in most cases where we care about the perceived fundamental, we are trying to create harmonic 
-spectra, and that is pretty hard if we can't predict what our modulator/carrier ratios will be.  Jan 
-Mattox's fm-drum can ignore such niceties.  If you are using low indices and the top pair's 
+spectra, and that is pretty hard if we can't predict what our modulator/carrier ratios will be.
+If you are using low indices and the top pair's 
 mc-ratios are below 1.0 (in vibrato, for example), you have a good chance of getting usable results.  
 If you want cascade FM to work in other situations, make sure the top oscil has an initial phase of 
 (pi + mod-incr)/2.  The middle FM spectrum will then have only sines (not cosines), so the DC component
@@ -1476,7 +1485,7 @@ will be thoroughly discouraged.  (The not-so-well-hidden-message: Use PM with si
 </p>
 
 
-<table border=1 hspace=50 cellpadding=4><tr><td>
+<table border=1 hspace=50 vspace=10 cellpadding=4><tr><td>
 
 <p>The irascible reader may be grumbling about angels and pins, so here's an example of cascade FM 
 to show how strong this effect is:
@@ -1550,7 +1559,7 @@ it seems to be approaching a square wave as k heads into the stratosphere:
 	(outa i result *output*)))))
 -->
 
-<table border=1 hspace=40>
+<table border=1 hspace=40 vspace=10>
 <tr>
 <td>
 <img src="sin3.png" alt="3 sins">
@@ -1573,15 +1582,16 @@ it seems to be approaching a square wave as k heads into the stratosphere:
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>feedback FM: sin(x=sin(x))</h5></center></td></tr></table>
 
 <p>A similar trick comes up in feedback FM used in some synthesizers. Here the output of the modulator
-is low-pass filtered, then fed back into its fm-input location.  Cellon, written by Stanislaw 
-Krupowicz, is an example; the feedback FM occurs in the lines (edited here for clarity):
+is low-pass filtered, then fed back into its fm-input location:
 </p>
 
 <!-- CLM CASE
 <pre>
     (setf fm (one-zero low (* B (oscil fmosc fm))))
     (outa i (* amp (oscil carrier fm)))
-or
+</pre>
+<p>or</p>
+<pre>
     sin(y &lt;= w<sub>c</sub>t + B sin y) 
 </pre>
 -->
@@ -1590,7 +1600,9 @@ or
 <pre>
     (set! fm (one-zero low (* B (oscil fmosc fm))))
     (outa i (* amp (oscil carrier fm)) *output*)
-or
+</pre>
+<p>or</p>
+<pre>
     sin(y &lt;= w + B sin y) 
 </pre>
 <!-- -->
@@ -1681,7 +1693,7 @@ hell breaks loose, but luckily:
 <p>so, just as in normal FM, if the index is 0, we get a pure sine wave.
 </p>
 
-<table border=1 hspace=20 cellpadding=3>
+<table border=1 hspace=20 vspace=10 cellpadding=3>
 <tr><td bgcolor="#f6f8ff">
 <pre>
 (define (feedbk beg dur freq amp index)
@@ -1802,12 +1814,13 @@ In this cross between additive synthesis (the multiple carriers) and FM (the for
 each carrier), we get around many of the limitations of the Bessel functions.  There are numerous 
 examples in fmviolin.clm.  One of the raspier 
 versions of the fm-violin used a sawtooth wave as the carrier, and some sci-fi sound effects use
-triangle waves as both carrier and modulator.
-One of the more elaborate multi-carrier FM instruments is the voice instrument written by Marc Le Brun,
-and used in "Colony" and other pieces. In a simplified form it is:
+triangle waves as both carrier and modulator.  See generators.scm for many other FM-inspired synthesis
+techniques, including J0(B sin x): "Bessel FM".
+An elaborate multi-carrier FM instrument is the voice instrument written by Marc Le Brun,
+used in "Colony" and other pieces:
 </p>
 
-<table border=0 bgcolor="#f6f8ff" hspace=20><tr><td>
+<table border=0 bgcolor="#f6f8ff" hspace=20 vspace=10><tr><td>
 <!-- CLM CASE
 <pre>
 (definstrument vox (beg end freq amp 
@@ -1930,14 +1943,14 @@ and used in "Colony" and other pieces. In a simplified form it is:
 <p>which produces this spectrogram:
 </p>
 
-<img src="voxspectrum.png" alt="voice spectrum" hspace=20>
+<img src="voxspectrum.png" alt="voice spectrum" hspace=20 vspace=10>
 
 
 <!-- SOMEDAY: it would be neat to include a catalog of sounds like in JC's book 
               all the techniques above need more and better musical examples
 -->
 
-<hr>
+
 <h2>References</h2>
 <pre>
 Abramowitz and Stegun, "Handbook of Mathematical Functions", Dover 1965.
