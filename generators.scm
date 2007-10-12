@@ -1524,7 +1524,27 @@
 (with-sound (:statistics #t :play #t :clipped #f)
   (pianoy1 0 4 200 .5 1 .1))
 
-;;; piano "knock" is apparently around 90Hz
+(definstrument (pianoy2 beg dur freq amp)
+  (let* ((gen (make-r2k!cos freq :r 0.5 :k 3.0)) 
+	 (ampf (make-env (list 0 0 .01 1 .03 1 1 .15 (max 2 dur) 0.0) :base 32 :scaler amp :duration dur))
+	 (knock (make-fmssb 10.0 20.0 :index 1.0))
+	 (kmpf (make-env '(0 0 1 1 3 1 100 0) :base 3 :scaler .05 :end 30000))
+	 (indf (make-env '(0 1 1 0) :end 30000 :base 3 :scaler 10))
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur))))
+    (run 
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (set! (fmssb-index knock) (env indf))
+	 (outa i (+ (* (env ampf)
+		       (r2k!cos gen 0.0))
+		    (* (env kmpf) 
+		       (fmssb knock 0.0)))
+	       *output*))))))
+
+(with-sound (:clipped #f :statistics #t :play #t) 
+  (pianoy2 0 1 100 .5))
 |#
 
 
@@ -2823,7 +2843,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 ;;; we can add the sin(cos) and sin(sin) cases, using -index in the latter to get 
-;;;   asymmetric fm since Jn(-B) = (-1)^n Jn(B) -- every other side band cancels
+;;;   asymmetric fm since Jn(-B) = (-1)^n Jn(B)
 ;;;
 ;;; the same trick would work in the other two cases -- gapped spectra
 
@@ -2859,6 +2879,46 @@ index 10 (so 10/2 is the bes-jn arg):
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
 	 (outa i (* .3 (fmssb gen 0.0)) *output*))))))
+
+(with-sound (:clipped #f :statistics #t :play #t)
+  (let ((gen (make-fmssb 1000.0 100.0 :index 8.0)) 
+	(ampf (make-env '(0 0 1 1 100 0) :base 32 :scaler .3 :end 30000))
+	(indf (make-env '(0 1 1 0) :end 30000 :scaler 8)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000)) (set! (fmssb-index gen) (env indf))
+	 (outa i (* (env ampf) (fmssb gen 0.0)) *output*))))))
+
+(with-sound (:clipped #f :statistics #t :play #t)
+  (let ((gen (make-fmssb 1000.0 50.0 :index 1.0)) 
+	(ampf (make-env '(0 0 1 1 100 0) :base 32 :scaler .3 :end 30000))
+	(indf (make-env '(0 1 1 0) :end 30000 :base 32 :scaler 10)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000)) (set! (fmssb-index gen) (env indf))
+	 (outa i (* (env ampf) (fmssb gen 0.0)) *output*))))))
+
+(with-sound (:clipped #f :statistics #t :play #t)
+  (let ((gen (make-fmssb 100.0 540.0 :index 1.0)) ; also 100 700
+	(ampf (make-env '(0 0 1 1 100 0) :base 32 :scaler .3 :end 30000)) ; also 0 0 1 1 3 1 100 0...
+	(indf (make-env '(0 1 1 0) :end 30000 :base 32 :scaler 10)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000)) (set! (fmssb-index gen) (env indf))
+	 (outa i (* (env ampf) (fmssb gen 0.0)) *output*))))))
+
+(with-sound (:clipped #f :statistics #t :play #t)
+  (let ((gen (make-fmssb 10.0 20.0 :index 1.0)) 
+	(ampf (make-env '(0 0 1 1 3 1 100 0) :base 32 :scaler .3 :end 30000))
+	(indf (make-env '(0 1 1 0) :end 30000 :base 32 :scaler 10)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000)) (set! (fmssb-index gen) (env indf))
+	 (outa i (* (env ampf) (fmssb gen 0.0)) *output*))))))
 |#
 
 

@@ -641,7 +641,7 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
 	      char *com = NULL;
 	      if (XEN_STRING_P(comment)) com = XEN_TO_C_STRING(comment);
 	      fd = mus_sound_open_output(local_mus_expand_filename(XEN_TO_C_STRING(file)),
-					 XEN_TO_C_INT_OR_ELSE(srate, DEFAULT_OUTPUT_SRATE),
+					 XEN_TO_C_INT_OR_ELSE(srate, 44100),  /* not DEFAULT_OUTPUT_SRATE here because that depends on Snd */
 					 chns, df, ht, com);
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 3, chans, "chans ~A <= 0?");
