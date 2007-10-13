@@ -681,15 +681,16 @@
 		(vib (+ (* (hz->radians (* freq 0.003)) 
 			   (oscil mod))
 			(env skenv)))
-		(vola (* 0.05 (/ vol amp))))
-	   (outa i (* vol
-		      (+ (* (- relamp vola) 
-			    (nrssb-interp gen vib -1.0))
-			 (* (+ (- 1.0 relamp) vola) 
-			    (oscil gen2 (+ (* vib res2)
-					   (* (hz->radians freq)
-					      (oscil gen3 vib)))))))
-		 *output*)))))))
+		(vola (* 0.05 (/ vol amp)))
+		(result (* vol
+			   (+ (* (- relamp vola) 
+				 (nrssb-interp gen vib -1.0))
+			      (* (+ (- 1.0 relamp) vola) 
+				 (oscil gen2 (+ (* vib res2)
+						(* (hz->radians freq)
+						   (oscil gen3 vib)))))))))
+	   (outa i result *output*)
+	   (if *reverb* (outa i (* .01 result) *reverb*))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (oboish 0 1 300 .1 '(0 0 1 1 2 0)))
@@ -1790,6 +1791,14 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
+	 (outa i (krksin gen 0.0) *output*))))))
+
+(with-sound (:clipped #f :statistics #t :scaled-to .5 :play #t)
+  (let ((gen (make-krksin 6.0 0.965))) ; 60 .6 also
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 100000))
 	 (outa i (krksin gen 0.0) *output*))))))
 
 (do ((i 0 (1+ i)))

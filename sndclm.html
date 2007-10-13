@@ -593,7 +593,7 @@ To get a cosine (as opposed to sine), set the initial-phase to (/ pi 2).
   (let ((result (sin (+ phase pm-input))))
     (set! phase (+ phase (<a class=quiet href="#hztoradians">hz-&gt;radians</a> frequency) fm-input))
     result)
-  <img src="sceq9.png" alt="fnm equation" hspace=10 vspace=10>
+<!--  <img src="sceq9.png" alt="fnm equation" hspace=10 vspace=10> -->
 </pre>
 <!-- LATEX: \cos \, (\omega_{c}t+B\sin \omega_{m}t)\:=\!\!\sum_{n=-\infty}^{\infty} \! \! J_{n}(B)\cos(\omega_{c} + n\omega_{m})t -->
 <br clear=left>
@@ -1569,7 +1569,7 @@ based on:
   cos(x) + cos(2x) + ... cos(nx) = 
     (sin((n + .5)x) / (2 * sin(x / 2))) - 1/2
 -->
-known as the Dirichlet kernel
+the Dirichlet kernel
 see also <a href="#othergenerators">generators.scm</a>
 </pre><br clear=left>
 
@@ -1797,8 +1797,10 @@ There are some surprising sounds lurking in sine-summation; a sonata for moped, 
   <a class=def name="sum-of-sines">sum-of-sines</a> cs :optional (fm 0.0)
   <a class=def name="sum-of-sines?">sum-of-sines?</a> cs
 </pre>
+
 <p>sum-of-sines produces a sum of sines.  It is very similar (good and bad) to <a href="#sum-of-cosines">sum-of-cosines</a>.
 </p>
+
 <table border=1 align=left hspace=40 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>sum-of-sines methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
@@ -1811,16 +1813,17 @@ There are some surprising sounds lurking in sine-summation; a sonata for moped, 
 
 <!-- LATEX: \sum_{k=1}^{n}\sin kx = \frac{\sin\frac{n+1}{2}x \: \sin\frac{nx}{2}}{\sin\frac{x}{2}} -->
 
-<pre>
-<br>
-
+<table border=0 cellspacing=20>
+<tr><td>
 <img src="sceq1.png" alt="sum of sines" hspace=40>
-<!--
-  sin(x) + sin(2x) + ... sin(nx) = 
-    sin(n * x / 2) * (sin((n + .5)x) / sin(x / 2))
--->
-known as the conjugate Dirichlet kernel
-</pre><br clear=left>
+<pre>
+the conjugate Dirichlet kernel
+</pre>
+</td></tr>
+<tr><td>
+<img src="sos.png" alt="sum of sines graphs">
+</td></tr></table>
+
 
 <p>See also the <a href="#sine-summation">sine-summation</a> generator, 
 and <a href="#othergenerators">generators.scm</a>.
@@ -2349,7 +2352,7 @@ wave train can be viewed either as an extension of pulse-train and table-lookup,
 or as a primitive form of granular synthesis.
 </p>
 
-<table border=1 cellpadding=4 hspace=40>
+<table border=1 cellpadding=4 hspace=40 align=left>
 <tr><td colspan=2 bgcolor="beige"><center>wave-train methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -2357,6 +2360,25 @@ or as a primitive form of granular synthesis.
 <tr><td><em class=gen>mus-length</em></td><td>length of wave array (no set!)</td></tr>
 <tr><td><em class=gen>mus-interp-type</em></td><td>interpolation choice (no set!)</td></tr>
 </table>
+
+<img src="wt.png" alt="wave-train example" vspace=20>
+<br clear=left>
+
+
+<!--
+(with-sound (:clipped #f :statistics #t :scaled-to .5 :play #t)
+  (let ((gen (make-wave-train 300.0 :wave (let ((v (make-vct 64)) 
+                                                (g (make-sum-of-cosines 10 400 (* -0.5 pi)))) 
+                                            (do ((i 0 (1+ i))) 
+                                                ((= i 64)) 
+                                              (vct-set! v i (sum-of-cosines g))) 
+                                            v))))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 1000))
+	 (outa i (wave-train gen) *output*))))))
+-->
 
 <p>
 With some simple envelopes or filters, you can
