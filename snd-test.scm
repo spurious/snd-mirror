@@ -10207,7 +10207,9 @@ EDITS: 5
 	    (delete-file "fmv3.snd")
 	    (delete-file "fmv5.snd"))
 	  (convolve-files "2.snd" "oboe.snd" 0.5 "fmv5.snd")
-	  (if (fneq (cadr (mus-sound-maxamp "fmv5.snd")) 0.5) (snd-display ";convolve-files stereo: ~A" (mus-sound-maxamp "fmv5.snd")))
+	  (if (or (fneq (cadr (mus-sound-maxamp "fmv5.snd")) 0.25)
+		  (fneq (cadddr (mus-sound-maxamp "fmv5.snd")) 0.5))
+	      (snd-display ";convolve-files stereo: ~A" (mus-sound-maxamp "fmv5.snd")))
 	  (delete-file "fmv5.snd")
 	  (scale-to .25 ind1)
 	  (set! (y-bounds ind1) '())
@@ -52406,7 +52408,6 @@ EDITS: 1
 	    (if (and (not (string=? stats-string "\n;vct:\n  maxamp: 0.1000\n  compute time: 0.000\n"))
 		     (not (string=? stats-string "\n;vct:\n  maxamp: 0.1000\n  compute time: 0.010\n")))
 		(snd-display ";with-sound to vct stats: [~A]" stats-string)))
-	  
 	  (let ((v1 (with-sound (:output (make-sound-data 1 2210) :scaled-to .5 :statistics (lambda (str) (set! stats-string str)))
 				(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
 	    (if (and (not (string=? stats-string "\n;sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.000\n"))

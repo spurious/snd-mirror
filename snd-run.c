@@ -8642,9 +8642,9 @@ static xen_value *vct_to_sound_data_1(ptree *prog, xen_value **args, int num_arg
 
 static void oscil_0f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_0(CLM_ARG_1);}
 
-static void oscil_1f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_1(CLM_ARG_1, FLOAT_ARG_2);}
+static void oscil_1f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2);}
 
-static void oscil_2f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_2(CLM_ARG_1, FLOAT_ARG_3);}
+static void oscil_2f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_pm(CLM_ARG_1, FLOAT_ARG_3);}
 
 static void oscil_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
 

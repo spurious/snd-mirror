@@ -7,6 +7,7 @@
  */
 
 /* should I add pm args alongside the fm args, as in oscil?
+ * SOMEDAY: fix the other _0... names as with oscil -- oscil_unmodulated? waveshape_no_index?
  */
 
 #include <mus-config.h>
@@ -1029,7 +1030,7 @@ Float mus_oscil_0(mus_any *ptr)
 }
 
 
-Float mus_oscil_1(mus_any *ptr, Float fm)
+Float mus_oscil_fm(mus_any *ptr, Float fm)
 {
   Float result;
   osc *gen = (osc *)ptr;
@@ -1039,7 +1040,7 @@ Float mus_oscil_1(mus_any *ptr, Float fm)
 }
 
 
-Float mus_oscil_2(mus_any *ptr, Float pm)
+Float mus_oscil_pm(mus_any *ptr, Float pm)
 {
   Float result;
   osc *gen = (osc *)ptr;
@@ -2171,7 +2172,7 @@ Float mus_waveshape(mus_any *ptr, Float index, Float fm)
 {
   ws *gen = (ws *)ptr;
   Float table_index;
-  table_index = gen->offset * (1.0 + (mus_oscil_1(gen->o, fm) * index));
+  table_index = gen->offset * (1.0 + (mus_oscil_fm(gen->o, fm) * index));
   return(mus_array_interp(gen->table, table_index, gen->table_size));
 }
 
@@ -2180,7 +2181,7 @@ Float mus_waveshape_2(mus_any *ptr, Float fm)
 {
   ws *gen = (ws *)ptr;
   Float table_index;
-  table_index = gen->offset * (1.0 + mus_oscil_1(gen->o, fm));
+  table_index = gen->offset * (1.0 + mus_oscil_fm(gen->o, fm));
   return(mus_array_interp(gen->table, table_index, gen->table_size));
 }
 
@@ -2315,7 +2316,7 @@ Float mus_polyshape(mus_any *ptr, Float index, Float fm)
 {
   ws *gen = (ws *)ptr;
   return(mus_polynomial(gen->table,
-			index * mus_oscil_1(gen->o, fm), 
+			index * mus_oscil_fm(gen->o, fm), 
 			gen->table_size));
 }
 
@@ -2324,7 +2325,7 @@ Float mus_polyshape_2(mus_any *ptr, Float fm)
 {
   ws *gen = (ws *)ptr;
   return(mus_polynomial(gen->table,
-			mus_oscil_1(gen->o, fm), 
+			mus_oscil_fm(gen->o, fm), 
 			gen->table_size));
 }
 
@@ -9663,7 +9664,6 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
   off_t file1_len, file2_len, outlen, totallen;
   int fftlen, file1_chans, file2_chans, output_chans;
   Float *data1, *data2;
-  mus_sample_t *samps;
   char *errmsg = NULL;
   Float maxval = 0.0;
   int i;
@@ -9688,57 +9688,77 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
 
   if (output_chans == 1)
     {
+      mus_sample_t *samps;
       samps = (mus_sample_t *)clm_calloc(fftlen, sizeof(mus_sample_t), "convolve_files data");
+
       mus_file_to_array(file1, 0, 0, file1_len, samps); 
       for (i = 0; i < file1_len; i++) data1[i] = MUS_SAMPLE_TO_DOUBLE(samps[i]);
       mus_file_to_array(file2, 0, 0, file2_len, samps);
       for (i = 0; i < file2_len; i++) data2[i] = MUS_SAMPLE_TO_DOUBLE(samps[i]);
+
       mus_convolution(data1, data2, fftlen);
+
       for (i = 0; i < outlen; i++) 
 	if (maxval < fabs(data1[i])) 
 	  maxval = fabs(data1[i]);
+
       if (maxval > 0.0)
 	{
 	  maxval = maxamp / maxval;
 	  for (i = 0; i < outlen; i++) data1[i] *= maxval;
 	}
+
       for (i = 0; i < outlen; i++) samps[i] = MUS_DOUBLE_TO_SAMPLE(data1[i]);
       errmsg = mus_array_to_file_with_error(output_file, samps, outlen, mus_sound_srate(file1), 1);
+
       FREE(samps);
     }
   else
     {
-      Float *outdat;
-      int c1, c2;
+      mus_sample_t *samps;
+      Float *outdat = NULL;
+      int c1 = 0, c2 = 0, chan;
+
       samps = (mus_sample_t *)clm_calloc(totallen, sizeof(mus_sample_t), "convolve_files data");
       outdat = (Float *)clm_calloc(totallen, sizeof(Float), "convolve_files data");
-      c1 = 0; 
-      c2 = 0;
-      for (i = 0; i < output_chans; i++)
+
+      /* TODO: test the multichannel case */
+      /* SOMEDAY: check for nested loops using the same counter (va.scm?) */
+
+      for (chan = 0; chan < output_chans; chan++)
 	{
 	  int j, k;
+
 	  mus_file_to_array(file1, c1, 0, file1_len, samps);
-	  for (i = 0; i < file1_len; i++) data1[i] = MUS_SAMPLE_TO_DOUBLE(samps[i]);
+	  for (k = 0; k < file1_len; k++) data1[k] = MUS_SAMPLE_TO_DOUBLE(samps[k]);
 	  mus_file_to_array(file2, c2, 0, file2_len, samps);
-	  for (i = 0; i < file2_len; i++) data2[i] = MUS_SAMPLE_TO_DOUBLE(samps[i]);
+	  for (k = 0; k < file2_len; k++) data2[k] = MUS_SAMPLE_TO_DOUBLE(samps[k]);
+
 	  mus_convolution(data1, data2, fftlen);
-	  for (j = i, k = 0; j < totallen; j += output_chans, k++) outdat[j] = data1[k];
+
+	  for (j = chan, k = 0; j < totallen; j += output_chans, k++) outdat[j] = data1[k];
 	  c1++; 
 	  if (c1 >= file1_chans) c1 = 0;
 	  c2++; 
 	  if (c2 >= file2_chans) c2 = 0;
+
 	  mus_clear_array(data1, fftlen);
 	  mus_clear_array(data2, fftlen);
 	}
+
       for (i = 0; i < totallen; i++) 
 	if (maxval < fabs(outdat[i])) 
 	  maxval = fabs(outdat[i]);
+
       if (maxval > 0.0)
 	{
 	  maxval = maxamp / maxval;
 	  for (i = 0; i < totallen; i++) outdat[i] *= maxval;
 	}
-      for (i = 0; i < totallen; i++) samps[i] = MUS_DOUBLE_TO_SAMPLE(outdat[i]);
+
+      for (i = 0; i < totallen; i++) 
+	samps[i] = MUS_DOUBLE_TO_SAMPLE(outdat[i]);
+
       errmsg = mus_array_to_file_with_error(output_file, samps, totallen, mus_sound_srate(file1), output_chans);
       FREE(samps);
       FREE(outdat);
@@ -10069,8 +10089,8 @@ Float mus_ssb_am_1(mus_any *ptr, Float insig)
 Float mus_ssb_am(mus_any *ptr, Float insig, Float fm)
 {
   ssbam *gen = (ssbam *)ptr;
-  return((mus_oscil_1(gen->cos_osc, fm) * mus_delay_1(gen->dly, insig)) +
-	 (mus_oscil_1(gen->sin_osc, fm) * run_hilbert((flt *)(gen->hilbert), insig)));
+  return((mus_oscil_fm(gen->cos_osc, fm) * mus_delay_1(gen->dly, insig)) +
+	 (mus_oscil_fm(gen->sin_osc, fm) * run_hilbert((flt *)(gen->hilbert), insig)));
 }
 
 

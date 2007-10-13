@@ -321,6 +321,8 @@ char **stop_sign_bits(void) {return(stop_sign_xpm);}
 
 /* -------------------------------- PROGRAM ICON -------------------------------- */
 
+/* TODO: make a better program icon */
+
 static char *snd_icon_xpm[] = {
 "48 48 9 1",
 ". c white m white",

@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 43
-#define MUS_DATE "11-Oct-07"
+#define MUS_REVISION 44
+#define MUS_DATE "15-Oct-07"
 
 /*
+ * 15-Oct:     mus_oscil_1 -> _fm, _2->_pm.
  * 11-Oct:     changed default srate to 44100.
  * 5-Oct:      mus_oscil_2.
  * 6-Sep:      changed asymmetric-fm to use cos(sin) and added amplitude normalization.
@@ -357,8 +358,10 @@ void mus_reset(mus_any *ptr);
 
 Float mus_oscil(mus_any *o, Float fm, Float pm);
 Float mus_oscil_0(mus_any *ptr);
-Float mus_oscil_1(mus_any *ptr, Float fm);
-Float mus_oscil_2(mus_any *ptr, Float pm);
+Float mus_oscil_fm(mus_any *ptr, Float fm);
+Float mus_oscil_pm(mus_any *ptr, Float pm);
+#define mus_oscil_1(Ptr, Fm) mus_oscil_fm(Ptr, Fm)
+#define mus_oscil_2(Ptr, Pm) mus_oscil_pm(Ptr, Pm)
 bool mus_oscil_p(mus_any *ptr);
 mus_any *mus_make_oscil(Float freq, Float phase);
 
