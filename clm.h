@@ -7,6 +7,7 @@
 
 /*
  * 15-Oct:     mus_oscil_1 -> _fm, _2->_pm.
+ *             mus_phase_vocoder_outctr accessors changed to use mus_location.
  * 11-Oct:     changed default srate to 44100.
  * 5-Oct:      mus_oscil_2.
  * 6-Sep:      changed asymmetric-fm to use cos(sin) and added amplitude normalization.
@@ -699,8 +700,11 @@ Float *mus_phase_vocoder_amps(mus_any *ptr);
 Float *mus_phase_vocoder_freqs(mus_any *ptr);
 Float *mus_phase_vocoder_phases(mus_any *ptr);
 Float *mus_phase_vocoder_phase_increments(mus_any *ptr);
-int mus_phase_vocoder_outctr(mus_any *ptr);
-int mus_phase_vocoder_set_outctr(mus_any *ptr, int val);
+
+  /* backwards compatibility -- these moved to mus_location 15-Oct-07 */
+#define mus_phase_vocoder_outctr(Ptr) (int)mus_location(Ptr)
+#define mus_phase_vocoder_set_outctr(Ptr, Val) (int)mus_set_location(Ptr, (off_t)Val)
+
 
 mus_any *mus_make_ssb_am(Float freq, int order);
 bool mus_ssb_am_p(mus_any *ptr);

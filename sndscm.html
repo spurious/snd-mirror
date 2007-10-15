@@ -10029,20 +10029,20 @@ in CLM, add the desired methods as an association list at the end of the new str
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (def-clm-struct (osc <em class=red>:make-wrapper</em>
 		  (lambda (gen)
-		    (set! (osc2-freq gen) (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> (osc2-freq gen)))
+		    (set! (osc-freq gen) (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> (osc-freq gen)))
 		    (append gen 
 			    (list 
 			     (list
 			      (list 'mus-frequency 
-				    (lambda (g) (<a class=quiet href="sndclm.html#hztoradians">radians-&gt;hz</a> (osc2-freq g)))
-				    (lambda (g val) (set! (osc2-freq g) (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> val))))
+				    (lambda (g) (<a class=quiet href="sndclm.html#hztoradians">radians-&gt;hz</a> (osc-freq g)))
+				    (lambda (g val) (set! (osc-freq g) (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> val))))
 			      
 			      (list 'mus-phase 
-				    (lambda (g) (osc2-phase g))
-				    (lambda (g val) (set! (osc2-phase g) val)))
+				    (lambda (g) (osc-phase g))
+				    (lambda (g val) (set! (osc-phase g) val)))
 			      
 			      (list 'mus-describe 
-				    (lambda (g) (format #f "osc2 freq: ~A, phase: ~A" 
+				    (lambda (g) (format #f "osc freq: ~A, phase: ~A" 
 						  (mus-frequency g) 
 						  (mus-phase g)))))))))
   freq phase)

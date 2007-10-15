@@ -909,8 +909,8 @@
 		       (* canrcos sumcos))
 		    (* 2 den)))
 	 (cfm (* fm (/ (rssb-incr1 gen) (rssb-incr2 gen)))))
-    (set! (rssb-angle1 gen) (+ cfm (rssb-angle1 gen) (rssb-incr1 gen)))
-    (set! (rssb-angle2 gen) (+ fm (rssb-angle2 gen) (rssb-incr2 gen)))
+    (set! (rssb-angle1 gen) (+ cfm angle1 (rssb-incr1 gen)))
+    (set! (rssb-angle2 gen) (+ fm angle2 (rssb-incr2 gen)))
     result))
 
 #|

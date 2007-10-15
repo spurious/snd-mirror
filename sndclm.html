@@ -3912,6 +3912,7 @@ In the following example, we use the edit function to reverse every other grain:
 <tr><td><em class=gen>mus-length</em></td><td>fft-size</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>interp</td></tr>
 <tr><td><em class=gen>mus-hop</em></td><td>fft-size / overlap</td></tr>
+<tr><td><em class=gen>mus-location</em></td><td>outctr (counter to next fft)</td></tr>
 </table>
 
 <p>The phase-vocoder generator performs phase-vocoder analysis and resynthesis.  The process is
@@ -3949,6 +3950,9 @@ in functions that do what the phase-vocoder would have done without any function
 pvoc.scm implements the phase-vocoder directly in Scheme (rather than going through the CLM
 generator).
 </p>
+
+<!-- SOMEDAY: doc pv-* -->
+
 <br><br>
 
 

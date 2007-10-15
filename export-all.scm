@@ -230,7 +230,6 @@ pulse-train?
 phase-vocoder-amp-increments
 phase-vocoder-amps
 phase-vocoder-freqs
-phase-vocoder-outctr
 phase-vocoder-phase-increments
 phase-vocoder-phases
 radians->degrees

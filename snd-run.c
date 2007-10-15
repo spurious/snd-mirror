@@ -368,9 +368,9 @@ enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST,
       R_READER, R_MIX_READER, R_SOUND_DATA, R_CLM, 
       R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_LIST_VECTOR, R_CLM_VECTOR,
       R_NUMBER, R_VECTOR, R_XEN, R_NUMBER_CLM, R_NUMBER_VCT, 
-      R_NUMBER_SOUND_DATA, R_ANY}; /* last 8 for walker arg checks */
+      R_NUMBER_SOUND_DATA, R_GENERATOR, R_ANY}; /* last 9 for walker arg checks, generator=built-in or def-clm-struct */
 
-#define BUILT_IN_TYPES 29
+#define BUILT_IN_TYPES 30
 
 static int last_type = R_ANY;
 static int type_names_size = BUILT_IN_TYPES;
@@ -380,7 +380,7 @@ static char *basic_type_names[BUILT_IN_TYPES] = {"unspecified", "int", "float", 
 						 "sample-reader", "mix-sample-reader", "sound-data", "clm", 
 						 "float-vector", "int-vector", "vct-vector", "list-vector", "clm-vector",
 						 "number", "vector", "xen", "number or clm", "number or vct", 
-						 "number or sound-data", "any"};
+						 "number or sound-data", "generator", "any"};
 
 static void init_type_names(void)
 {
@@ -8697,20 +8697,6 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
     return(package(prog, R_FLOAT, Name ## _0f, #Name "_0f", args, 1)); \
   }
 
-#define GEN0(Name) \
-  GEN1_0(Name) \
-  static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args, int num_args) \
-  { \
-    return(package(prog, R_FLOAT, Name ## _0f, #Name "_0f", args, 1)); \
-  }
-
-
-#define INT_GEN0(Name) \
-  static void Name ## _0i(int *args, ptree *pt) {INT_RESULT = mus_ ## Name (CLM_ARG_1);} \
-  static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args, int num_args) \
-  { \
-    return(package(prog, R_INT, Name ## _0i, #Name "_0i", args, 1)); \
-  }
 
 #define mus_delay_0(Gen) mus_delay_1(Gen, 0.0)
 #define mus_notch_0(Gen) mus_notch_1(Gen, 0.0)
@@ -8752,6 +8738,18 @@ GEN2_OPT(wave_train)
 GEN2_OPT(table_lookup)
 
 
+GEN_P(frame)
+GEN_P(mixer)
+GEN_P(file_to_sample)
+GEN_P(sample_to_file)
+GEN_P_1(file_to_frame)
+GEN_P_1(frame_to_file)
+GEN_P_1(input)
+GEN_P_1(output)
+GEN_P(locsig)
+GEN_P(move_sound)
+
+
 static void polyshape_no_index_no_fm(int *args, ptree *pt) {FLOAT_RESULT = mus_polyshape_0(CLM_ARG_1);}
 
 
@@ -8788,7 +8786,6 @@ static xen_value *polyshape_1(ptree *prog, xen_value **args, int num_args)
     }
   return(package(prog, R_FLOAT, polyshape_index_fm, "polyshape_two_args", args, 3));
 }
-
 
 
 static void tap_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_tap_1(CLM_ARG_1);}  
@@ -8830,100 +8827,6 @@ static xen_value *delay_tick_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, delay_tick_1f, "delay_tick_1f", args, 2));
 }
 
-
-GEN0(increment)
-GEN0(frequency)
-GEN0(phase)
-GEN0(scaler)
-GEN0(width)
-GEN0(offset)
-GEN0(formant_radius)
-GEN0(feedforward)
-GEN0(feedback)
-
-INT_GEN0(hop)
-INT_GEN0(location)
-INT_GEN0(ramp)
-INT_GEN0(order)
-INT_GEN0(length)
-INT_GEN0(cosines)
-INT_GEN0(channel)
-
-GEN_P(frame)
-GEN_P(mixer)
-GEN_P(file_to_sample)
-GEN_P(sample_to_file)
-GEN_P_1(file_to_frame)
-GEN_P_1(frame_to_file)
-GEN_P_1(input)
-GEN_P_1(output)
-GEN_P(locsig)
-GEN_P(move_sound)
-
-
-
-/* -------- mus-channels --------
- *
- * this is special because *output* can be a vct or sound-data object 
- */
-
-static void mus_channels_i(int *args, ptree *pt) {INT_RESULT = mus_channels(CLM_ARG_1);}
-
-static void mus_channels_v(int *args, ptree *pt) {INT_RESULT = 1;}
-
-static void mus_channels_f(int *args, ptree *pt) {INT_RESULT = 0;}
-
-static void mus_channels_s(int *args, ptree *pt) {INT_RESULT = SOUND_DATA_ARG_1->chans;}
-
-
-static xen_value *mus_channels_0(ptree *prog, xen_value **args, int num_args)
-{
-  if (args[1]->type == R_CLM)
-    return(package(prog, R_INT, mus_channels_i, "mus_channels", args, 1));
-  if (args[1]->type == R_VCT)
-    return(package(prog, R_INT, mus_channels_v, "mus_channels_vct", args, 1));
-  if (args[1]->type == R_SOUND_DATA)
-    return(package(prog, R_INT, mus_channels_s, "mus_channels_sound_data", args, 1));
-  return(package(prog, R_INT, mus_channels_f, "mus_channels_f", args, 1));
-}
-
-
-
-static void close_0(int *args, ptree *pt) {INT_RESULT = mus_close_file(CLM_ARG_1);}
-
-static void close_0_noop(int *args, ptree *pt) {INT_RESULT = 0;}
-
-static xen_value *mus_close_0(ptree *prog, xen_value **args, int num_args)
-{
-  if (args[1]->type == R_CLM)
-    return(package(prog, R_INT, close_0, "close_0", args, 1));
-  return(package(prog, R_INT, close_0_noop, "close_0_noop", args, 1));
-}
-
-
-static void reset_0(int *args, ptree *pt) {mus_reset(CLM_ARG_1);}
-
-static xen_value *mus_reset_0(ptree *prog, xen_value **args, int num_args)
-{
-  return(package(prog, R_CLM, reset_0, "reset_0", args, 1));
-}
-
-
-static void set_formant_radius_and_frequency_2f(int *args, ptree *pt) 
-{
-  mus_set_formant_radius_and_frequency(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);
-}  
-
-static xen_value *set_formant_radius_and_frequency_1(ptree *prog, xen_value **args, int num_args)
-{
-  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, formant_check, "formant_check", args, 1);
-  if (args[2]->type == R_INT) single_to_float(prog, args, 2);
-  if (args[3]->type == R_INT) single_to_float(prog, args, 3);
-  return(package(prog, R_BOOL, set_formant_radius_and_frequency_2f, "set_formant_radius_and_frequency_2f", args, 3));
-}
-
-
-
 static void move_locsig_2f(int *args, ptree *pt) {mus_move_locsig(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);} 
  
 static xen_value *move_locsig_1(ptree *prog, xen_value **args, int num_args)
@@ -8931,57 +8834,6 @@ static xen_value *move_locsig_1(ptree *prog, xen_value **args, int num_args)
   if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, locsig_check, "locsig_check", args, 1);
   return(package(prog, R_BOOL, move_locsig_2f, "move_locsig_2f", args, 3));
 }
-
-
-
-#define STR_GEN0(Name) \
-  static void Name ## _0s(int *args, ptree *pt) \
-    { \
-      if (STRING_RESULT) FREE(STRING_RESULT); \
-      STRING_RESULT = copy_string(mus_ ## Name (CLM_ARG_1)); \
-    } \
-  static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args, int num_args) \
-  { \
-    return(package(prog, R_STRING, Name ## _0s, #Name "_0s", args, 1)); \
-  }
-
-STR_GEN0(name)
-STR_GEN0(describe)
-STR_GEN0(file_name)
-
-
-
-#define REF_GEN0(Name, SName) \
-  static void Name ## _0r(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, INT_ARG_2);} \
-  static xen_value * Name ## _0(ptree *prog, xen_value **args, int num_args) \
-  { \
-    if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, SName ## _check, #SName "_check", args, 1); \
-    return(package(prog, R_FLOAT, Name ## _0r, #Name "_0r", args, 2)); \
-  }
-
-REF_GEN0(frame_ref, frame)
-REF_GEN0(locsig_ref, locsig)
-REF_GEN0(locsig_reverb_ref, locsig)
-
-
-#define SET_GEN0(Name, SName) \
-  static void Name ## _0r(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);} \
-  static void Name ## _ir(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, (Float)(INT_ARG_3));} \
-  static xen_value * Name ## _2(ptree *prog, xen_value **args, int num_args) \
-  { \
-    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, SName ## _check, #SName "_check", args, 1); \
-    if (args[3]->type == R_FLOAT) \
-      return(package(prog, R_FLOAT, Name ## _0r, #Name "_0r", args, 3)); \
-    return(package(prog, R_FLOAT, Name ## _ir, #Name "_ir", args, 3)); \
-  } \
-  static void Name ## _1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v) \
-  { \
-    add_triple_to_ptree(prog, va_make_triple( Name ## _0r, #Name "_0r", 4, NULL, in_v, in_v1, v)); \
-  }
-
-SET_GEN0(frame_set, frame)
-SET_GEN0(locsig_set, locsig)
-SET_GEN0(locsig_reverb_set, locsig)
 
 
 static void mixer_ref_0(int *args, ptree *pt) {FLOAT_RESULT = mus_mixer_ref(CLM_ARG_1, INT_ARG_2, INT_ARG_3);}
@@ -9019,36 +8871,53 @@ static void mixer_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_valu
   add_triple_to_ptree(prog, va_make_triple(mixer_set_0, "mixer_set_0", 5, NULL, in_v, in_v1, in_v2, v));
 }
 
+#define REF_GEN0(Name, SName) \
+  static void Name ## _0r(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, INT_ARG_2);} \
+  static xen_value * Name ## _0(ptree *prog, xen_value **args, int num_args) \
+  { \
+    if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, SName ## _check, #SName "_check", args, 1); \
+    return(package(prog, R_FLOAT, Name ## _0r, #Name "_0r", args, 2)); \
+  }
 
-/* ---------------- xcoeff/ycoeff ---------------- */
-
-
-static void xcoeff_0(int *args, ptree *pt) {FLOAT_RESULT = mus_xcoeff(CLM_ARG_1, INT_ARG_2);}
-
-static xen_value *mus_xcoeff_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, xcoeff_0, "xcoeff_0", args, 2));}
-
-
-static void set_xcoeff_0(int *args, ptree *pt) {mus_set_xcoeff(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
-
-static void mus_set_xcoeff_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
-{
-  add_triple_to_ptree(prog, va_make_triple(set_xcoeff_0, "set_xcoeff_0", 4, NULL, in_v, in_v1, v));
-}
+REF_GEN0(frame_ref, frame)
+REF_GEN0(locsig_ref, locsig)
+REF_GEN0(locsig_reverb_ref, locsig)
 
 
+/* ---------------------------------------- generic funcs ---------------------------------------- */
 
-static void ycoeff_0(int *args, ptree *pt) {FLOAT_RESULT = mus_ycoeff(CLM_ARG_1, INT_ARG_2);}
+#define GEN0(Name) \
+  GEN1_0(Name) \
+  static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args, int num_args) \
+  { \
+    return(package(prog, R_FLOAT, Name ## _0f, #Name "_0f", args, 1)); \
+  }
 
-static xen_value *mus_ycoeff_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, ycoeff_0, "ycoeff_0", args, 2));}
+#define INT_GEN0(Name) \
+  static void Name ## _0i(int *args, ptree *pt) {INT_RESULT = mus_ ## Name (CLM_ARG_1);} \
+  static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args, int num_args) \
+  { \
+    return(package(prog, R_INT, Name ## _0i, #Name "_0i", args, 1)); \
+  }
 
 
-static void set_ycoeff_0(int *args, ptree *pt) {mus_set_ycoeff(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
+GEN0(increment)
+GEN0(frequency)
+GEN0(phase)
+GEN0(scaler)
+GEN0(width)
+GEN0(offset)
+GEN0(formant_radius)
+GEN0(feedforward)
+GEN0(feedback)
 
-static void mus_set_ycoeff_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
-{
-  add_triple_to_ptree(prog, va_make_triple(set_ycoeff_0, "set_ycoeff_0", 4, NULL, in_v, in_v1, v));
-}
-
+INT_GEN0(hop)
+INT_GEN0(location)
+INT_GEN0(ramp)
+INT_GEN0(order)
+INT_GEN0(length)
+INT_GEN0(cosines)
+INT_GEN0(channel)
 
 
 #define SET_INT_GEN0(Name) \
@@ -9081,6 +8950,133 @@ SET_DBL_GEN0(feedforward)
 SET_DBL_GEN0(phase)
 SET_DBL_GEN0(frequency)
 SET_DBL_GEN0(formant_radius)
+
+
+#define STR_GEN0(Name) \
+  static void Name ## _0s(int *args, ptree *pt) \
+    { \
+      if (STRING_RESULT) FREE(STRING_RESULT); \
+      STRING_RESULT = copy_string(mus_ ## Name (CLM_ARG_1)); \
+    } \
+  static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args, int num_args) \
+  { \
+    return(package(prog, R_STRING, Name ## _0s, #Name "_0s", args, 1)); \
+  }
+
+STR_GEN0(name)
+STR_GEN0(describe)
+STR_GEN0(file_name)
+
+
+#define SET_GEN0(Name, SName) \
+  static void Name ## _0r(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);} \
+  static void Name ## _ir(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, (Float)(INT_ARG_3));} \
+  static xen_value * Name ## _2(ptree *prog, xen_value **args, int num_args) \
+  { \
+    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, SName ## _check, #SName "_check", args, 1); \
+    if (args[3]->type == R_FLOAT) \
+      return(package(prog, R_FLOAT, Name ## _0r, #Name "_0r", args, 3)); \
+    return(package(prog, R_FLOAT, Name ## _ir, #Name "_ir", args, 3)); \
+  } \
+  static void Name ## _1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v) \
+  { \
+    add_triple_to_ptree(prog, va_make_triple( Name ## _0r, #Name "_0r", 4, NULL, in_v, in_v1, v)); \
+  }
+
+SET_GEN0(frame_set, frame)
+SET_GEN0(locsig_set, locsig)
+SET_GEN0(locsig_reverb_set, locsig)
+
+
+
+/* -------- mus-channels --------
+ *
+ * this is special because *output* can be a vct or sound-data object 
+ */
+
+static void mus_channels_i(int *args, ptree *pt) {INT_RESULT = mus_channels(CLM_ARG_1);}
+
+static void mus_channels_v(int *args, ptree *pt) {INT_RESULT = 1;}
+
+static void mus_channels_f(int *args, ptree *pt) {INT_RESULT = 0;}
+
+static void mus_channels_s(int *args, ptree *pt) {INT_RESULT = SOUND_DATA_ARG_1->chans;}
+
+
+static xen_value *mus_channels_0(ptree *prog, xen_value **args, int num_args)
+{
+  if (args[1]->type == R_CLM)
+    return(package(prog, R_INT, mus_channels_i, "mus_channels", args, 1));
+  if (args[1]->type == R_VCT)
+    return(package(prog, R_INT, mus_channels_v, "mus_channels_vct", args, 1));
+  if (args[1]->type == R_SOUND_DATA)
+    return(package(prog, R_INT, mus_channels_s, "mus_channels_sound_data", args, 1));
+  return(package(prog, R_INT, mus_channels_f, "mus_channels_f", args, 1));
+}
+
+
+static void close_0(int *args, ptree *pt) {INT_RESULT = mus_close_file(CLM_ARG_1);}
+
+static void close_0_noop(int *args, ptree *pt) {INT_RESULT = 0;}
+
+static xen_value *mus_close_0(ptree *prog, xen_value **args, int num_args)
+{
+  if (args[1]->type == R_CLM)
+    return(package(prog, R_INT, close_0, "close_0", args, 1));
+  return(package(prog, R_INT, close_0_noop, "close_0_noop", args, 1));
+}
+
+
+static void reset_0(int *args, ptree *pt) {mus_reset(CLM_ARG_1);}
+
+static xen_value *mus_reset_0(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_CLM, reset_0, "reset_0", args, 1));
+}
+
+
+static void set_formant_radius_and_frequency_2f(int *args, ptree *pt) 
+{
+  mus_set_formant_radius_and_frequency(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);
+}  
+
+static xen_value *set_formant_radius_and_frequency_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, formant_check, "formant_check", args, 1);
+  if (args[2]->type == R_INT) single_to_float(prog, args, 2);
+  if (args[3]->type == R_INT) single_to_float(prog, args, 3);
+  return(package(prog, R_BOOL, set_formant_radius_and_frequency_2f, "set_formant_radius_and_frequency_2f", args, 3));
+}
+
+
+/* ---------------- xcoeff/ycoeff ---------------- */
+
+
+static void xcoeff_0(int *args, ptree *pt) {FLOAT_RESULT = mus_xcoeff(CLM_ARG_1, INT_ARG_2);}
+
+static xen_value *mus_xcoeff_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, xcoeff_0, "xcoeff_0", args, 2));}
+
+
+static void set_xcoeff_0(int *args, ptree *pt) {mus_set_xcoeff(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
+
+static void mus_set_xcoeff_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
+{
+  add_triple_to_ptree(prog, va_make_triple(set_xcoeff_0, "set_xcoeff_0", 4, NULL, in_v, in_v1, v));
+}
+
+
+static void ycoeff_0(int *args, ptree *pt) {FLOAT_RESULT = mus_ycoeff(CLM_ARG_1, INT_ARG_2);}
+
+static xen_value *mus_ycoeff_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, ycoeff_0, "ycoeff_0", args, 2));}
+
+
+static void set_ycoeff_0(int *args, ptree *pt) {mus_set_ycoeff(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
+
+static void mus_set_ycoeff_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
+{
+  add_triple_to_ptree(prog, va_make_triple(set_ycoeff_0, "set_ycoeff_0", 4, NULL, in_v, in_v1, v));
+}
+
 
 
 /* ---------------- polynomial ---------------- */
@@ -10136,20 +10132,6 @@ PV_VCT_1(phases)
 PV_VCT_1(phase_increments)
 
 
-INT_GEN0(phase_vocoder_outctr)
-
-
-#if 0
-  /* this code needs to be folded into generalized set! */
-
-static void pv_set_outctr(int *args, ptree *pt) {mus_phase_vocoder_set_outctr(CLM_RESULT, INT_ARG_1);}
-
-static xen_value *mus_phase_vocoder_set_outctr_1(ptree *prog, xen_value **args, int num_args)
-{
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, phase_vocoder_check, "phase_vocoder_check", args, 1);
-  return(package(prog, R_INT, pv_set_outctr, "pv_set_outctr", args, 2));
-}
-#endif
 
 
 /* ---------------- contrast_enhancement ---------------- */
@@ -11576,7 +11558,16 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 						    return(clean_up(arg_warn(prog, funcname, i + 1, args, "list"), args, num_args));
 						}
 					      else
-						return(clean_up(arg_warn(prog, funcname, i + 1, args, type_name(w->arg_types[i])), args, num_args));
+						{
+						  if (w->arg_types[i] == R_GENERATOR)
+						    {
+						      if ((args[i + 1]->type != R_CLM) &&
+							  (!(CLM_STRUCT_P(args[i + 1]->type))))
+							return(clean_up(arg_warn(prog, funcname, i + 1, args, "generator"), args, num_args));
+						    }
+						  else 
+						    return(clean_up(arg_warn(prog, funcname, i + 1, args, type_name(w->arg_types[i])), args, num_args));
+						}
 					    }
 					}
 				    }
@@ -12170,80 +12161,83 @@ static void init_walkers(void)
   INIT_WALKER("quote", make_walker(NULL, quote_form, NULL, 1, 1, R_ANY, false, 0));
 
   /* -------- clm funcs */
-  INIT_WALKER(S_oscil_p, make_walker(oscil_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_env_p, make_walker(env_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_notch_p, make_walker(notch_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_comb_p, make_walker(comb_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_filtered_comb_p, make_walker(filtered_comb_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_delay_p, make_walker(delay_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_all_pass_p, make_walker(all_pass_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_moving_average_p, make_walker(moving_average_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_rand_p, make_walker(rand_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_rand_interp_p, make_walker(rand_interp_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_sum_of_cosines_p, make_walker(sum_of_cosines_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_ssb_am_p, make_walker(ssb_am_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_sum_of_sines_p, make_walker(sum_of_sines_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_table_lookup_p, make_walker(table_lookup_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_sawtooth_wave_p, make_walker(sawtooth_wave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_pulse_train_p, make_walker(pulse_train_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_square_wave_p, make_walker(square_wave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_triangle_wave_p, make_walker(triangle_wave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_asymmetric_fm_p, make_walker(asymmetric_fm_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_sine_summation_p, make_walker(sine_summation_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_one_zero_p, make_walker(one_zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_one_pole_p, make_walker(one_pole_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_two_zero_p, make_walker(two_zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_two_pole_p, make_walker(two_pole_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_formant_p, make_walker(formant_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_wave_train_p, make_walker(wave_train_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_waveshape_p, make_walker(waveshape_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_polyshape_p, make_walker(polyshape_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_filter_p, make_walker(filter_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_fir_filter_p, make_walker(fir_filter_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_iir_filter_p, make_walker(iir_filter_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_readin_p, make_walker(readin_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_src_p, make_walker(src_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_granulate_p, make_walker(granulate_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_phase_vocoder_p, make_walker(phase_vocoder_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_convolve_p, make_walker(convolve_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_frame_p, make_walker(frame_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_mixer_p, make_walker(mixer_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_file_to_sample_p, make_walker(file_to_sample_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_sample_to_file_p, make_walker(sample_to_file_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_file_to_frame_p, make_walker(file_to_frame_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_frame_to_file_p, make_walker(frame_to_file_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_locsig_p, make_walker(locsig_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_move_sound_p, make_walker(move_sound_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_mus_input_p, make_walker(input_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_mus_output_p, make_walker(output_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_snd_to_sample_p, make_walker(snd_to_sample_1p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_oscil_p, make_walker(oscil_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_env_p, make_walker(env_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_notch_p, make_walker(notch_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_comb_p, make_walker(comb_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_filtered_comb_p, make_walker(filtered_comb_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_delay_p, make_walker(delay_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_all_pass_p, make_walker(all_pass_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_moving_average_p, make_walker(moving_average_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_rand_p, make_walker(rand_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_rand_interp_p, make_walker(rand_interp_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_sum_of_cosines_p, make_walker(sum_of_cosines_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_ssb_am_p, make_walker(ssb_am_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_sum_of_sines_p, make_walker(sum_of_sines_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_table_lookup_p, make_walker(table_lookup_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_sawtooth_wave_p, make_walker(sawtooth_wave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_pulse_train_p, make_walker(pulse_train_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_square_wave_p, make_walker(square_wave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_triangle_wave_p, make_walker(triangle_wave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_asymmetric_fm_p, make_walker(asymmetric_fm_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_sine_summation_p, make_walker(sine_summation_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_one_zero_p, make_walker(one_zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_one_pole_p, make_walker(one_pole_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_two_zero_p, make_walker(two_zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_two_pole_p, make_walker(two_pole_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_formant_p, make_walker(formant_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_wave_train_p, make_walker(wave_train_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_waveshape_p, make_walker(waveshape_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_polyshape_p, make_walker(polyshape_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_filter_p, make_walker(filter_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_fir_filter_p, make_walker(fir_filter_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_iir_filter_p, make_walker(iir_filter_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_readin_p, make_walker(readin_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_src_p, make_walker(src_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_granulate_p, make_walker(granulate_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_phase_vocoder_p, make_walker(phase_vocoder_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_convolve_p, make_walker(convolve_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_frame_p, make_walker(frame_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mixer_p, make_walker(mixer_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_file_to_sample_p, make_walker(file_to_sample_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_sample_to_file_p, make_walker(sample_to_file_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_file_to_frame_p, make_walker(file_to_frame_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_frame_to_file_p, make_walker(frame_to_file_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_locsig_p, make_walker(locsig_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_move_sound_p, make_walker(move_sound_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_input_p, make_walker(input_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_output_p, make_walker(output_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
+  INIT_WALKER(S_snd_to_sample_p, make_walker(snd_to_sample_1p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_GENERATOR));
 
-  INIT_WALKER(S_mus_increment, make_walker(mus_increment_0, NULL, mus_set_increment_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_frequency, make_walker(mus_frequency_0, NULL, mus_set_frequency_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_phase, make_walker(mus_phase_0, NULL, mus_set_phase_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_width, make_walker(mus_width_0, NULL, mus_set_width_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_scaler, make_walker(mus_scaler_0, NULL, mus_set_scaler_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_reset, make_walker(mus_reset_0, NULL, NULL, 1, 1, R_CLM, false, 1, R_CLM));
-  INIT_WALKER(S_mus_offset, make_walker(mus_offset_0, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_formant_radius, make_walker(mus_formant_radius_0, NULL, mus_set_formant_radius_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_data, make_walker(mus_data_1, NULL, NULL, 1, 1, R_VCT, false, 0));
-  INIT_WALKER(S_mus_xcoeffs, make_walker(mus_xcoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 0));
-  INIT_WALKER(S_mus_ycoeffs, make_walker(mus_ycoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 0));
-  INIT_WALKER(S_mus_xcoeff, make_walker(mus_xcoeff_1, NULL, mus_set_xcoeff_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
-  INIT_WALKER(S_mus_ycoeff, make_walker(mus_ycoeff_1, NULL, mus_set_ycoeff_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
-  INIT_WALKER(S_mus_feedforward, make_walker(mus_feedforward_0, NULL, mus_set_feedforward_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_feedback, make_walker(mus_feedback_0, NULL, mus_set_feedback_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_hop, make_walker(mus_hop_0, NULL, mus_set_hop_1, 1, 1, R_INT, false, 1, R_CLM));
+  /* TODO: all the *_p and generic funcs need to accept def_clm_structs (add tests for this) */
+  /* TODO: def-clm-struct generics found at ptree time and spliced in */
+
+  INIT_WALKER(S_mus_increment, make_walker(mus_increment_0, NULL, mus_set_increment_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_frequency, make_walker(mus_frequency_0, NULL, mus_set_frequency_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_phase, make_walker(mus_phase_0, NULL, mus_set_phase_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_width, make_walker(mus_width_0, NULL, mus_set_width_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_scaler, make_walker(mus_scaler_0, NULL, mus_set_scaler_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_reset, make_walker(mus_reset_0, NULL, NULL, 1, 1, R_CLM, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_offset, make_walker(mus_offset_0, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_formant_radius, make_walker(mus_formant_radius_0, NULL, mus_set_formant_radius_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_data, make_walker(mus_data_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_xcoeffs, make_walker(mus_xcoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_GENERATOR)); 
+  INIT_WALKER(S_mus_ycoeffs, make_walker(mus_ycoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_xcoeff, make_walker(mus_xcoeff_1, NULL, mus_set_xcoeff_1, 2, 2, R_FLOAT, false, 2, R_GENERATOR, R_INT));
+  INIT_WALKER(S_mus_ycoeff, make_walker(mus_ycoeff_1, NULL, mus_set_ycoeff_1, 2, 2, R_FLOAT, false, 2, R_GENERATOR, R_INT));
+  INIT_WALKER(S_mus_feedforward, make_walker(mus_feedforward_0, NULL, mus_set_feedforward_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_feedback, make_walker(mus_feedback_0, NULL, mus_set_feedback_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_hop, make_walker(mus_hop_0, NULL, mus_set_hop_1, 1, 1, R_INT, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_channels, make_walker(mus_channels_0, NULL, NULL, 1, 1, R_INT, false, 1, R_ANY));
-  INIT_WALKER(S_mus_channel, make_walker(mus_channel_0, NULL, NULL, 1, 1, R_INT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_location, make_walker(mus_location_0, NULL, mus_set_location_1, 1, 1, R_INT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_ramp, make_walker(mus_ramp_0, NULL, mus_set_ramp_1, 1, 1, R_INT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_order, make_walker(mus_order_0, NULL, NULL, 1, 1, R_INT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_length, make_walker(mus_length_0, NULL, mus_set_length_1, 1, 1, R_INT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_cosines, make_walker(mus_cosines_0, NULL, mus_set_cosines_1, 1, 1, R_INT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_name, make_walker(mus_name_0, NULL, NULL, 1, 1, R_INT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_file_name, make_walker(mus_file_name_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_CLM));
-  INIT_WALKER(S_mus_describe, make_walker(mus_describe_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_CLM));
+  INIT_WALKER(S_mus_channel, make_walker(mus_channel_0, NULL, NULL, 1, 1, R_INT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_location, make_walker(mus_location_0, NULL, mus_set_location_1, 1, 1, R_INT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_ramp, make_walker(mus_ramp_0, NULL, mus_set_ramp_1, 1, 1, R_INT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_order, make_walker(mus_order_0, NULL, NULL, 1, 1, R_INT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_length, make_walker(mus_length_0, NULL, mus_set_length_1, 1, 1, R_INT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_cosines, make_walker(mus_cosines_0, NULL, mus_set_cosines_1, 1, 1, R_INT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_name, make_walker(mus_name_0, NULL, NULL, 1, 1, R_INT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_file_name, make_walker(mus_file_name_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_describe, make_walker(mus_describe_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_close, make_walker(mus_close_0, NULL, NULL, 1, 1, R_INT, false, 1, R_ANY));
 
   INIT_WALKER(S_oscil, make_walker(oscil_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
@@ -12284,13 +12278,11 @@ static void init_walkers(void)
   INIT_WALKER(S_pulse_train, make_walker(pulse_train_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_phase_vocoder, make_walker(phase_vocoder_1, NULL, NULL, 1, 5, R_FLOAT, false, 5, R_CLM, R_FUNCTION, R_FUNCTION, R_FUNCTION, R_FUNCTION));
 
-  INIT_WALKER(S_phase_vocoder_amps, make_walker(phase_vocoder_amps_1, NULL, NULL, 1, 1, R_VCT, false, 0));
-  INIT_WALKER(S_phase_vocoder_amp_increments, make_walker(phase_vocoder_amp_increments_1, NULL, NULL, 1, 1, R_VCT, false, 0));
-  INIT_WALKER(S_phase_vocoder_freqs, make_walker(phase_vocoder_freqs_1, NULL, NULL, 1, 1, R_VCT, false, 0));
-  INIT_WALKER(S_phase_vocoder_phases, make_walker(phase_vocoder_phases_1, NULL, NULL, 1, 1, R_VCT, false, 0));
-  INIT_WALKER(S_phase_vocoder_phase_increments, make_walker(phase_vocoder_phase_increments_1, NULL, NULL, 1, 1, R_VCT, false, 0));
-  INIT_WALKER(S_phase_vocoder_outctr, make_walker(mus_phase_vocoder_outctr_0, NULL, NULL, 1, 1, R_INT, false, 1, R_CLM));
-  /* the set side for outctr needs to be handled as a generalized set! */
+  INIT_WALKER(S_phase_vocoder_amps, make_walker(phase_vocoder_amps_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM)); 
+  INIT_WALKER(S_phase_vocoder_amp_increments, make_walker(phase_vocoder_amp_increments_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM));
+  INIT_WALKER(S_phase_vocoder_freqs, make_walker(phase_vocoder_freqs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM));
+  INIT_WALKER(S_phase_vocoder_phases, make_walker(phase_vocoder_phases_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM));
+  INIT_WALKER(S_phase_vocoder_phase_increments, make_walker(phase_vocoder_phase_increments_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM));
 
   INIT_WALKER(S_formant, make_walker(formant_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_filter, make_walker(filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));

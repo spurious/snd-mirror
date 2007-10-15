@@ -1070,8 +1070,8 @@
 					   #f
 					   (lambda (closure)
 					       (declare (closure clm))
-					       (if (not (= (phase-vocoder-outctr sr) 0))
-						   (clm-print "outctr: ~A" (phase-vocoder-outctr sr)))
+					       (if (not (= (mus-location sr) 0))
+						   (clm-print "outctr: ~A" (mus-location sr)))
 					       #t)
 					   #f)) 
 		  0 *output*))))))

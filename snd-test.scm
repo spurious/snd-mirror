@@ -2168,7 +2168,7 @@
 		       'override-samples-with-origin 'pad-channel 'partials->polynomial 'partials->wave 'partials->waveshape
 		       'parzen-window 'pausing 'peak-env-hook 'peak-env-info 'peaks 'peaks-font
 		       'phase-partials->wave 'phase-vocoder 'phase-vocoder-amp-increments 'phase-vocoder-amps 'phase-vocoder-freqs
-		       'phase-vocoder-outctr 'phase-vocoder-phase-increments 'phase-vocoder-phases 'phase-vocoder? 'play
+		       'phase-vocoder-phase-increments 'phase-vocoder-phases 'phase-vocoder? 'play
 		       'play-and-wait 'play-channel 'play-hook 'play-mix 'play-region
 		       'play-selection 'player-home 'player? 'players
 		       'playing 'poisson-window 'polar->rectangular 'polynomial 'polyshape
@@ -24431,7 +24431,7 @@ EDITS: 2
       (print-and-check pv 
 		       "phase-vocoder"
 		       "phase-vocoder: outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil")
-      (let ((val (let ((pv (make-phase-vocoder))) (set! (phase-vocoder-outctr pv) 120) (phase-vocoder-outctr pv))))
+      (let ((val (let ((pv (make-phase-vocoder))) (set! (mus-location pv) 120) (mus-location pv))))
 	(if (not (= val 120)) (snd-display ";pv set outctr: ~A" val)))
       
       (select-sound ind)
@@ -24525,7 +24525,7 @@ EDITS: 2
 	(if (or (= incalls 0)
 		(= outcalls 0))
 	    (snd-display ";phase-vocoder incalls: ~A, outcalls: ~A" incalls outcalls))
-	(set! (phase-vocoder-outctr pv) (phase-vocoder-outctr pv))
+	(set! (mus-location pv) (mus-location pv))
 	(let ((tag (catch #t (lambda () (phase-vocoder pv (lambda (a b) a))) (lambda args (car args)))))
 	  (if (not (eq? tag 'bad-arity)) 
 	      (snd-display ";phase-vocoder bad func: ~A" tag))))
@@ -65477,7 +65477,7 @@ EDITS: 1
 		     locsig-type make-phase-vocoder mus-audio-mixer-read
 		     mus-describe mus-error-type->string mus-file-buffer-size mus-name mus-offset mus-out-format mus-reset
 		     mus-rand-seed mus-width phase-vocoder?
-		     polar->rectangular phase-vocoder-amp-increments phase-vocoder-amps phase-vocoder-freqs phase-vocoder-outctr 
+		     polar->rectangular phase-vocoder-amp-increments phase-vocoder-amps phase-vocoder-freqs
 		     phase-vocoder-phase-increments phase-vocoder-phases mus-generator?
 		     
 		     read-sample reset-listener-cursor goto-listener-end sample-reader-home selection-chans selection-srate snd-gcs snd-font snd-color
@@ -65537,7 +65537,7 @@ EDITS: 1
 			 filter-control-coeffs locsig-type mus-file-buffer-size 
 			 mus-rand-seed mus-width clm-table-size run-safety mus-offset mus-reset
 			 phase-vocoder-amp-increments phase-vocoder-amps 
-			 phase-vocoder-freqs phase-vocoder-outctr phase-vocoder-phase-increments phase-vocoder-phases 
+			 phase-vocoder-freqs phase-vocoder-phase-increments phase-vocoder-phases 
 			 quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 			 html-dir html-program mus-interp-type widget-position widget-size 
 			 mixer-ref frame-ref locsig-ref locsig-reverb-ref

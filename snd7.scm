@@ -222,7 +222,7 @@
 (define pv-amp-increments phase-vocoder-amp-increments)
 (define pv-amps phase-vocoder-amps)
 (define pv-freqs phase-vocoder-freqs)
-(define pv-outctr phase-vocoder-outctr)
+(define pv-outctr mus-location)
 (define pv-phase-increments phase-vocoder-phase-increments)
 (define pv-phases phase-vocoder-phases)
 

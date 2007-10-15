@@ -245,7 +245,6 @@
 #define S_phase_vocoder_amp_increments   "phase-vocoder-amp-increments"
 #define S_phase_vocoder_amps         "phase-vocoder-amps"
 #define S_phase_vocoder_freqs        "phase-vocoder-freqs"
-#define S_phase_vocoder_outctr       "phase-vocoder-outctr"
 #define S_phase_vocoder_phase_increments "phase-vocoder-phase-increments"
 #define S_phase_vocoder_phases       "phase-vocoder-phases"
 #define S_radians_to_degrees         "radians->degrees"

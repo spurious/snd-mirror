@@ -19710,8 +19710,8 @@ def test218
                   "phase-vocoder",
                   "phase-vocoder: outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil")
   pv = make_phase_vocoder
-  set_phase_vocoder_outctr(pv, 120)
-  if (res = phase_vocoder_outctr(pv)) != 120
+  set_mus_location(pv, 120)
+  if (res = mus_location(pv)) != 120
     snd_display("pv set outctr: %d?", res)
   end
   select_sound(ind)
@@ -19796,7 +19796,7 @@ def test218
   if incalls.zero? or outcalls.zero?
     snd_display("phase_vocoder incalls: %d, outcalls: %d?", incalls, outcalls)
   end
-  set_phase_vocoder_outctr(pv, phase_vocoder_outctr(pv))
+  set_mus_location(pv, mus_location(pv))
   if (res = Snd.catch do phase_vocoder(pv, lambda do |a, b| a end) end).first != :bad_arity
     snd_display("phase_vocoder bad input func: %s", res.inspect)
   end
@@ -38624,7 +38624,7 @@ Procs =
    :mus_describe, :mus_error_type2string, :mus_file_buffer_size, :mus_name, :mus_offset,
    :mus_reset, :mus_rand_seed, :mus_width, :phase_vocoder?,
    :polar2rectangular, :phase_vocoder_amp_increments,
-   :phase_vocoder_amps, :phase_vocoder_freqs, :phase_vocoder_outctr,
+   :phase_vocoder_amps, :phase_vocoder_freqs,
    :phase_vocoder_phase_increments, :phase_vocoder_phases, :mus_generator?, :read_sample,
    :reset_listener_cursor, :goto_listener_end, :sample_reader_home, :selection_chans,
    :selection_srate, :snd_gcs, :snd_font, :snd_color, :snd_warning, :sine_bank,
@@ -38692,7 +38692,7 @@ Set_procs =
    :locsig_type, :mus_file_buffer_size, :mus_rand_seed, :mus_width, :clm_table_size, :run_safety,
    :mus_offset, :quit_button_color,
    :phase_vocoder_amp_increments,
-   :phase_vocoder_amps, :phase_vocoder_freqs, :phase_vocoder_outctr,
+   :phase_vocoder_amps, :phase_vocoder_freqs,
    :phase_vocoder_phase_increments, :phase_vocoder_phases, :mus_generator?, :read_sample,
    :help_button_color, :reset_button_color, :doit_button_color, :doit_again_button_color,
    :html_dir, :html_program, :widget_position, :widget_size,

@@ -1874,7 +1874,7 @@ include bird.fsm
      <'> mus-out-format <'> mus-reset <'> mus-rand-seed <'> mus-width
      <'> phase-vocoder? <'> polar->rectangular <'> phase-vocoder-amp-increments
      <'> phase-vocoder-amps
-     <'> phase-vocoder-freqs <'> phase-vocoder-outctr <'> phase-vocoder-phase-increments
+     <'> phase-vocoder-freqs <'> phase-vocoder-phase-increments
      <'> phase-vocoder-phases
      <'> mus-generator? <'> read-sample <'> reset-listener-cursor <'> goto-listener-end
      <'> sample-reader-home <'> selection-chans <'> selection-srate <'> snd-gcs
@@ -1960,7 +1960,6 @@ include bird.fsm
      <'> locsig-type <'> mus-file-buffer-size <'> mus-rand-seed <'> mus-width
      <'> clm-table-size <'> run-safety <'> mus-offset <'> mus-reset
      <'> phase-vocoder-amp-increments <'> phase-vocoder-amps <'> phase-vocoder-freqs
-     <'> phase-vocoder-outctr
      <'> phase-vocoder-phase-increments <'> phase-vocoder-phases <'> quit-button-color
      <'> help-button-color
      <'> reset-button-color <'> doit-button-color <'> doit-again-button-color <'> html-dir

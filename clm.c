@@ -9847,8 +9847,8 @@ Float *mus_phase_vocoder_freqs(mus_any *ptr) {return(((pv_info *)ptr)->freqs);}
 Float *mus_phase_vocoder_phases(mus_any *ptr) {return(((pv_info *)ptr)->phases);}
 Float *mus_phase_vocoder_phase_increments(mus_any *ptr) {return(((pv_info *)ptr)->phaseinc);}
 
-int mus_phase_vocoder_outctr(mus_any *ptr) {return(((pv_info *)ptr)->outctr);}
-int mus_phase_vocoder_set_outctr(mus_any *ptr, int val) {((pv_info *)ptr)->outctr = val; return(val);}
+static off_t pv_outctr(mus_any *ptr) {return((off_t)(((pv_info *)ptr)->outctr));} /* mus_location wrapper */
+static off_t pv_set_outctr(mus_any *ptr, off_t val) {((pv_info *)ptr)->outctr = (int)val; return(val);}
 
 static Float run_phase_vocoder(mus_any *ptr, Float unused1, Float unused2) {return(mus_phase_vocoder(ptr, NULL));}
 
@@ -9893,8 +9893,9 @@ static mus_any_class PHASE_VOCODER_CLASS = {
   0, 0, 0, 0, 0, 0, 
   &pv_hop, &pv_set_hop, 
   0, 0,
-  0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0,
+  0, 0, 0, 0, 
+  &pv_outctr, &pv_set_outctr,
+  0, 0, 0, 0, 0, 0,
   &pv_reset,
   &pv_set_closure
 };

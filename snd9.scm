@@ -166,3 +166,11 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 
 
 
+
+(define mus-phase-vocoder-outctr
+  (make-procedure-with-setter
+   (lambda (gen) 
+     (mus-location gen))
+   (lambda (gen val) 
+     (set! (mus-location gen) val))))
+
