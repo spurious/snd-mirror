@@ -1952,10 +1952,11 @@ sceq37:
 
 from Abramowitz and Stegun, "Handbook of Mathematical Functions"
 9.6.34 (p376)  (9.1.42 is the FM formula)
-[sceq39:]
+sceq39:
 I_{0}(z) + 2 \sum_{k=1}^{\infty} I_{k}(z) \cos k\theta = e^{z \cos \theta}
-<!-- TODO: get another formula from A&S and add it to the table -->
 
+sceq40: 27.8.6 (p1005)
+&\sum_{n=1}^{\infty} \frac{\sin n\theta}{n^{3}} = \frac{\pi^{2}\theta}{6} - \frac{\pi \theta^{2}}{4} + \frac{\theta^{3}}{12} & (0 \leq \theta \leq 2\pi)
 -->
 
 <table border=1 hspace=20 vspace=10><tr><td>
@@ -2025,6 +2026,11 @@ I_{0}(z) + 2 \sum_{k=1}^{\infty} I_{k}(z) \cos k\theta = e^{z \cos \theta}
 <tr><td colspan=3 bgcolor="#eefdee"><center>from Jolley, "Summation of Series", 521 587 620 635 638 728</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
+
+<tr><td><img src="sceq39.png" alt="I(k) sum"></td><td></td>
+<td><a class=invisible href="#k3sin"><img src="sceq40.png" alt="n3 case"></a></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>from Abramowitz and Stegun, "Handbook of Mathematical Functions", 9.6.34, 27.8.6</center></td></tr>
+<tr><td colspan=3 height=25></td></tr>
 
 
 <tr><td><a class=invisible href="#krksin"><img src="sceq25.png" alt="more sums"></a></td><td></td>
@@ -5005,6 +5011,17 @@ This generator's output is not normalized, and looks incorrect...
 </pre>
 
 <p>This produces a sum of odd-numbered harmonics scaled by (r^(2k-1))/(2k-1).
+</p>
+<br>
+
+
+<pre>
+  <A class=def NAME="make-k3sin">make-k3sin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0)
+  <A class=def NAME="k3sin">k3sin</A> gen fm
+  <A class=def NAME="k3sin?">k3sin?</A> gen
+</pre>
+
+<p>This produces a sum of sines scaled by k^3.
 </p>
 <br>
 

@@ -2952,6 +2952,42 @@ index 10 (so 10/2 is the bes-jn arg):
 ;(with-sound () (fm-cancellation 0 1 1000.0 100.0 0.3 9.0))
 
 
+;;; --------------------------------------------------------------------------------
+
+;;; k3sin
+
+;;; mostly useful as a test of a vct field 
+
+(def-clm-struct (k3sin
+		 :make-wrapper
+		 (lambda (g)
+		   (set! (k3sin-incr g) (hz->radians (k3sin-frequency g)))
+		   (set! (k3sin-coeffs g) (vct 0.0
+					       (/ (* pi pi) 6.0)
+					       (/ pi -4.0)
+					       (/ 1.0 12.0)))
+		   g))
+  (frequency 0.0)
+  (angle 0.0) (incr 0.0) 
+  (coeffs #f :type vct))
+		   
+(define (k3sin gen fm)
+  (declare (gen k3sin) (fm float))
+  (let ((x (k3sin-angle gen)))
+    (set! (k3sin-angle gen) (fmod (+ x fm (k3sin-incr gen)) (* 2 pi)))
+    (polynomial (k3sin-coeffs gen) x)))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-k3sin 100.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000))
+	 (outa i (k3sin gen 0.0) *output*))))))
+|#
+    
+
 
 ;;; --------------------------------------------------------------------------------
 
@@ -3018,3 +3054,4 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; TODO: delay + sqr as handler for coupled rand-interp envs
 ;;; TODO: check the double top env, and talking drum effect
+
