@@ -50245,6 +50245,48 @@ EDITS: 1
   (vvect #f :type vct-vector)
   (cvect #f :type clm-vector))
 
+(def-clm-struct (osc329 :make-wrapper (lambda (gen)
+				     (set! (osc329-freq gen) (hz->radians (osc329-freq gen)))
+				     gen)
+		     :methods (list
+			       (list 'mus-frequency 
+				     (lambda (g) (radians->hz (osc329-freq g)))
+				     (lambda (g val) (set! (osc329-freq g) (hz->radians val))))
+		      
+			       (list 'mus-phase 
+				     (lambda (g) (osc329-phase g))
+				     (lambda (g val) (set! (osc329-phase g) val)))
+
+			       (list 'mus-increment 
+				     (make-procedure-with-setter
+				      (lambda (g) (osc329-incr g))
+				      (lambda (g val) (set! (osc329-incr g) val))))
+
+			       (list 'mus-name
+				     (lambda (g) "osc329"))
+
+			       (list 'mus-cosines
+				     (lambda (g) (osc329-n g))
+				      (lambda (g val) (set! (osc329-n g) val)))
+			      
+			       (list 'mus-hop
+				     (make-procedure-with-setter
+				      (lambda (g) (osc329-n g))
+				      (lambda (g val) (set! (osc329-n g) val))))
+			      
+			       (list 'mus-describe 
+				     (lambda (g) (format #f "osc329 freq: ~A, phase: ~A" 
+							 (mus-frequency g) 
+							 (mus-phase g))))))
+  freq phase (n 1 :type int)
+  (incr 1.0))
+
+(define (osc329 gen fm)
+  (declare (gen osc329) (fm float))
+  (let ((result (sin (osc329-phase gen))))
+    (set! (osc329-phase gen) (+ (osc329-phase gen) (osc329-freq gen) fm))
+    result))
+
 
 (define (snd_test_23)
   
@@ -53152,6 +53194,60 @@ EDITS: 1
 			     (do ((i 0 (1+ i)))
 				 ((= i 20000))
 			       (outa i (blackman4 black4 0.0) *output*))))))
+
+	(let ((g (make-osc329 440.0)) (f 10.0)) 
+	  (run (lambda () (set! f (osc329 g 0.0)))) 
+	  (if (fneq f 0.0) (snd-display ";run osc329: ~A" f)))
+	(let ((g (make-osc329 440.0)) (f #t)) 
+	  (run (lambda () (set! f (oscil? g)))) 
+	  (if f (snd-display ";oscil? osc329: ~A" f)))
+	(let ((g (+ 3 2)) (f #t)) 
+	  (run (lambda () (set! f (oscil? g)))) 
+	  (if f (snd-display ";oscil? 5: ~A" f)))
+	(let ((g (make-osc329 440.0)) (f #t))  
+	  (run (lambda () (set! f (osc329? g)))) 
+	  (if (not f) (snd-display ";osc329? osc329: ~A" f)))
+	(let ((g (make-osc329 440.0)) (f 0.0)) 
+	  (run (lambda () (set! f (mus-frequency g)))) 
+	  (if (fneq f 440.0) (snd-display ";mus-frequency osc329: ~A" f)))
+	(let ((g123 (make-osc329 440.0)) (f 0.0)) 
+	  (run (lambda () (set! f (mus-frequency g123)))) 
+	  (if (fneq f 440.0) (snd-display ";(name) mus-frequency osc329: ~A" f)))
+	(let ((g (make-osc329 440.0)) (f 32)) (set! f (mus-cosines g)) 
+	     (if (not (= f 1)) (snd-display ";osc329 (no run) mus-cosines: ~A" f)))
+	(let ((g (make-osc329 440.0)) (f 32)) 
+	  (run (lambda () (set! f (mus-cosines g)))) 
+	  (if (not (= f 1)) (snd-display ";osc329 mus-cosines: ~A" f)))
+	(let ((g (make-osc329 440.0)) (f "hiho")) 
+	  (run (lambda () (set! f (mus-name g)))) 
+	  (if (not (string=? f "osc329")) (snd-display ";osc329 mus-name: ~A" f)))
+	(let ((g (make-osc329 440.0)) (f 1.0)) 
+	  (run (lambda () (set! f (mus-phase g)))) 
+	  (if (fneq f 0.0) (snd-display ";mus-phase osc329: ~A" f)))
+	(let ((g (make-osc329 440.0)) (f 1.0)) 
+	  (run (lambda () (set! (mus-phase g) f))) 
+	  (if (fneq (mus-phase g) 1.0) (snd-display ";set mus-phase osc329: ~A" (mus-phase g))))
+	(let ((g (make-osc329 440.0)) (f "hiho")) 
+	  (run (lambda () (set! f (mus-describe g)))) 
+	  (if (not (string? f)) (snd-display ";osc329 mus-describe: ~A" f)))
+	(let ((g (make-osc329 440.0)) (f 0.0)) 
+	  (run (lambda () (set! f (mus-increment g)))) 
+	  (if (fneq f 1.0) (snd-display ";mus-increment osc329: ~A" f)))
+	(let ((g (make-osc329 440.0)) (f 32))
+	  (run (lambda () (set! (mus-cosines g) f)))
+	  (if (not (= (mus-cosines g) 32)) (snd-display ";osc329 set mus-cosines: ~A" (mus-cosines g))))
+	(let ((g (make-osc329 440.0)) (f 440.0))
+	  (run (lambda () (set! (mus-frequency g) 100.0) (set! f (mus-frequency g))))
+	  (if (fneq f 100.0) (snd-display ";osc329 set mus-frequency: ~A" (mus-frequency g))))
+	(let ((g (make-osc329 440.0)) (f 440.0))
+	  (run (lambda () (set! (mus-increment g) 100.0) (set! f (mus-increment g))))
+	  (if (fneq f 100.0) (snd-display ";osc329 set mus-increment: ~A" (mus-increment g))))
+	(let ((g (make-osc329 440.0)) (f 32)) 
+	  (run (lambda () (set! f (mus-hop g)))) 
+	  (if (not (= f 1)) (snd-display ";osc329 mus-hop: ~A" f)))
+	(let ((g (make-osc329 440.0)) (f 32))
+	  (run (lambda () (set! (mus-hop g) f)))
+	  (if (not (= (mus-hop g) 32)) (snd-display ";osc329 set mus-hop: ~A" (mus-hop g))))
 
 	(let ((test-zero-stability 
 	       (lambda (make-func run-func angle-func zero)

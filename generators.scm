@@ -3017,4 +3017,4 @@ index 10 (so 10/2 is the bes-jn arg):
 |#
 
 ;;; TODO: delay + sqr as handler for coupled rand-interp envs
-
+;;; TODO: check the double top env, and talking drum effect

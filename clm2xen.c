@@ -1288,6 +1288,26 @@ static XEN g_mus_set_phase(XEN gen, XEN val)
 }
 
 
+static XEN g_mus_formant_radius(XEN gen) 
+{
+  #define H_mus_formant_radius  "(" S_mus_formant_radius  " gen): (" S_formant " generator) gen's pole radius; \
+the closer the radius is to 1.0, the narrower the resonance."
+
+  if (XEN_LIST_P(gen)) return(call_get_method(gen, S_mus_formant_radius));
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_formant_radius, "a generator");
+  return(C_TO_XEN_DOUBLE(mus_formant_radius(XEN_TO_MUS_ANY(gen))));
+}
+
+
+static XEN g_mus_set_formant_radius(XEN gen, XEN val) 
+{
+  if (XEN_LIST_P(gen)) return(call_set_method(gen, val, S_mus_formant_radius));
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_formant_radius, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_formant_radius, "a number");
+  return(C_TO_XEN_DOUBLE(mus_set_formant_radius(XEN_TO_MUS_ANY(gen), XEN_TO_C_DOUBLE(val))));
+}
+
+
 static XEN g_mus_scaler(XEN gen) 
 {
   #define H_mus_scaler "(" S_mus_scaler " gen): gen's scaler, if any.  This is often an amplitude adjustment of some sort."
@@ -1303,6 +1323,24 @@ static XEN g_mus_set_scaler(XEN gen, XEN val)
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_scaler, "a generator");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_scaler, "a number");
   return(C_TO_XEN_DOUBLE(mus_set_scaler(XEN_TO_MUS_ANY(gen), XEN_TO_C_DOUBLE(val))));
+}
+
+
+static XEN g_mus_feedforward(XEN gen) 
+{
+  #define H_mus_feedforward "(" S_mus_feedforward " gen): gen's feedforward field"
+  if (XEN_LIST_P(gen)) return(call_get_method(gen, S_mus_feedforward));
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_feedforward, "a generator");
+  return(C_TO_XEN_DOUBLE(mus_feedforward(XEN_TO_MUS_ANY(gen))));
+}
+
+
+static XEN g_mus_set_feedforward(XEN gen, XEN val) 
+{
+  if (XEN_LIST_P(gen)) return(call_set_method(gen, val, S_mus_feedforward));
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_feedforward, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_feedforward, "a number");
+  return(C_TO_XEN_DOUBLE(mus_set_feedforward(XEN_TO_MUS_ANY(gen), XEN_TO_C_DOUBLE(val))));
 }
 
 
@@ -1416,6 +1454,15 @@ static XEN g_mus_set_length(XEN gen, XEN val)
 	}
     }
   return(C_TO_XEN_OFF_T(mus_set_length(ptr, len)));
+}
+
+
+static XEN g_mus_order(XEN gen) 
+{
+  #define H_mus_order "(" S_mus_order " gen): gen's order, if any"
+  if (XEN_LIST_P(gen)) return(call_get_method(gen, S_mus_order));
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_order, "a generator");
+  return(C_TO_XEN_OFF_T(mus_order(XEN_TO_MUS_ANY(gen))));
 }
 
 
@@ -5100,6 +5147,24 @@ static XEN g_mus_set_increment(XEN obj, XEN val)
 }
 
 
+static XEN g_mus_feedback(XEN obj)
+{
+  #define H_mus_feedback "(" S_mus_feedback " gen): gen's " S_mus_feedback " field"
+  if (XEN_LIST_P(obj)) return(call_get_method(obj, S_mus_feedback));
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_feedback, "a generator");
+  return(C_TO_XEN_DOUBLE(mus_feedback(XEN_TO_MUS_ANY(obj))));
+}
+
+
+static XEN g_mus_set_feedback(XEN obj, XEN val)
+{
+  if (XEN_LIST_P(obj)) return(call_set_method(obj, val, S_mus_feedback));
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_feedback, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_feedback, "a number");
+  return(C_TO_XEN_DOUBLE(mus_set_feedback(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(val))));
+}
+
+
 static XEN g_mus_location(XEN obj)
 {
   #define H_mus_location "(" S_mus_location " gen): gen's " S_mus_location " field, if any"
@@ -6385,6 +6450,25 @@ static XEN g_mus_set_hop(XEN obj, XEN val)
 
 
 
+static XEN g_mus_cosines(XEN obj)
+{
+  #define H_mus_cosines "(" S_mus_cosines " gen): number of sinusoids produced by gen"
+  if (XEN_LIST_P(obj)) return(call_get_method(obj, S_mus_cosines));
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_cosines, "a generator");
+  return(C_TO_XEN_OFF_T(mus_cosines(XEN_TO_MUS_ANY(obj))));
+}
+
+
+static XEN g_mus_set_cosines(XEN obj, XEN val)
+{
+  if (XEN_LIST_P(obj)) return(call_set_method(obj, val, S_mus_cosines));
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_cosines, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_cosines, "a number");
+  return(C_TO_XEN_OFF_T(mus_set_cosines(XEN_TO_MUS_ANY(obj), XEN_TO_C_OFF_T_OR_ELSE(val, 0))));
+}
+
+
+
 /* ---------------- mix ---------------- */
 
 static XEN g_mus_mix(XEN out, XEN in, XEN ost, XEN olen, XEN ist, XEN mx, XEN envs)
@@ -6688,10 +6772,14 @@ XEN_NARGIFY_1(g_mus_name_w, g_mus_name)
 XEN_ARGIFY_3(g_mus_run_w, g_mus_run)
 XEN_NARGIFY_1(g_mus_phase_w, g_mus_phase)
 XEN_NARGIFY_2(g_mus_set_phase_w, g_mus_set_phase)
+XEN_NARGIFY_1(g_mus_formant_radius_w, g_mus_formant_radius)
+XEN_NARGIFY_2(g_mus_set_formant_radius_w, g_mus_set_formant_radius)
 XEN_NARGIFY_1(g_mus_width_w, g_mus_width)
 XEN_NARGIFY_2(g_mus_set_width_w, g_mus_set_width)
 XEN_NARGIFY_1(g_mus_scaler_w, g_mus_scaler)
 XEN_NARGIFY_2(g_mus_set_scaler_w, g_mus_set_scaler)
+XEN_NARGIFY_1(g_mus_feedforward_w, g_mus_feedforward)
+XEN_NARGIFY_2(g_mus_set_feedforward_w, g_mus_set_feedforward)
 XEN_NARGIFY_1(g_mus_reset_w, g_mus_reset)
 XEN_NARGIFY_1(g_mus_offset_w, g_mus_offset)
 XEN_NARGIFY_2(g_mus_set_offset_w, g_mus_set_offset)
@@ -6700,6 +6788,7 @@ XEN_NARGIFY_2(g_mus_set_frequency_w, g_mus_set_frequency)
 XEN_NARGIFY_1(g_mus_length_w, g_mus_length)
 XEN_NARGIFY_1(g_mus_file_name_w, g_mus_file_name)
 XEN_NARGIFY_2(g_mus_set_length_w, g_mus_set_length)
+XEN_NARGIFY_1(g_mus_order_w, g_mus_order)
 XEN_NARGIFY_1(g_mus_data_w, g_mus_data)
 XEN_NARGIFY_2(g_mus_set_data_w, g_mus_set_data)
 XEN_NARGIFY_1(g_oscil_p_w, g_oscil_p)
@@ -6867,6 +6956,8 @@ XEN_NARGIFY_1(g_mus_location_w, g_mus_location)
 XEN_NARGIFY_2(g_mus_set_location_w, g_mus_set_location)
 XEN_NARGIFY_1(g_mus_increment_w, g_mus_increment)
 XEN_NARGIFY_2(g_mus_set_increment_w, g_mus_set_increment)
+XEN_NARGIFY_1(g_mus_feedback_w, g_mus_feedback)
+XEN_NARGIFY_2(g_mus_set_feedback_w, g_mus_set_feedback)
 XEN_NARGIFY_1(g_locsig_p_w, g_locsig_p)
 XEN_NARGIFY_3(g_locsig_w, g_locsig)
 XEN_VARGIFY(g_make_locsig_w, g_make_locsig)
@@ -6904,6 +6995,8 @@ XEN_NARGIFY_1(g_phase_vocoder_phases_w, g_phase_vocoder_phases)
 XEN_NARGIFY_1(g_phase_vocoder_phase_increments_w, g_phase_vocoder_phase_increments)
 XEN_NARGIFY_1(g_mus_hop_w, g_mus_hop)
 XEN_NARGIFY_2(g_mus_set_hop_w, g_mus_set_hop)
+XEN_NARGIFY_1(g_mus_cosines_w, g_mus_cosines)
+XEN_NARGIFY_2(g_mus_set_cosines_w, g_mus_set_cosines)
 XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 XEN_ARGIFY_4(g_make_ssb_am_w, g_make_ssb_am)
 XEN_ARGIFY_3(g_ssb_am_w, g_ssb_am)
@@ -6958,8 +7051,12 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_mus_run_w g_mus_run
 #define g_mus_phase_w g_mus_phase
 #define g_mus_set_phase_w g_mus_set_phase
+#define g_mus_formant_radius_w g_mus_formant_radius
+#define g_mus_set_formant_radius_w g_mus_set_formant_radius
 #define g_mus_scaler_w g_mus_scaler
 #define g_mus_set_scaler_w g_mus_set_scaler
+#define g_mus_feedforward_w g_mus_feedforward
+#define g_mus_set_feedforward_w g_mus_set_feedforward
 #define g_mus_width_w g_mus_width
 #define g_mus_set_width_w g_mus_set_width
 #define g_mus_reset_w g_mus_reset
@@ -6968,6 +7065,7 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_mus_frequency_w g_mus_frequency
 #define g_mus_set_frequency_w g_mus_set_frequency
 #define g_mus_length_w g_mus_length
+#define g_mus_order_w g_mus_order
 #define g_mus_file_name_w g_mus_file_name
 #define g_mus_set_length_w g_mus_set_length
 #define g_mus_data_w g_mus_data
@@ -7137,6 +7235,8 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_mus_set_location_w g_mus_set_location
 #define g_mus_increment_w g_mus_increment
 #define g_mus_set_increment_w g_mus_set_increment
+#define g_mus_feedback_w g_mus_feedback
+#define g_mus_set_feedback_w g_mus_set_feedback
 #define g_locsig_p_w g_locsig_p
 #define g_locsig_w g_locsig
 #define g_make_locsig_w g_make_locsig
@@ -7174,6 +7274,8 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_phase_vocoder_phase_increments_w g_phase_vocoder_phase_increments
 #define g_mus_hop_w g_mus_hop
 #define g_mus_set_hop_w g_mus_set_hop
+#define g_mus_cosines_w g_mus_cosines
+#define g_mus_set_cosines_w g_mus_set_cosines
 #define g_mus_mix_w g_mus_mix
 #define g_make_ssb_am_w g_make_ssb_am
 #define g_ssb_am_w g_ssb_am
@@ -7242,13 +7344,13 @@ void mus_xen_init(void)
   rb_define_method(mus_xen_tag, "length=", XEN_PROCEDURE_CAST g_mus_set_length, 1);
   rb_define_method(mus_xen_tag, "data", XEN_PROCEDURE_CAST g_mus_data, 0);
   rb_define_method(mus_xen_tag, "data=", XEN_PROCEDURE_CAST g_mus_set_data, 1);
-  rb_define_method(mus_xen_tag, "feedforward", XEN_PROCEDURE_CAST g_mus_scaler, 0);
-  rb_define_method(mus_xen_tag, "feedforward=", XEN_PROCEDURE_CAST g_mus_set_scaler, 1);
-  rb_define_method(mus_xen_tag, "feedback", XEN_PROCEDURE_CAST g_mus_increment, 0);
+  rb_define_method(mus_xen_tag, "feedforward", XEN_PROCEDURE_CAST g_mus_feedforward, 0);
+  rb_define_method(mus_xen_tag, "feedforward=", XEN_PROCEDURE_CAST g_mus_set_feedforward, 1);
+  rb_define_method(mus_xen_tag, "feedback", XEN_PROCEDURE_CAST g_mus_feedback, 0);
   rb_define_method(mus_xen_tag, "feedback=", XEN_PROCEDURE_CAST g_mus_set_increment, 1);
-  rb_define_method(mus_xen_tag, "cosines", XEN_PROCEDURE_CAST g_mus_hop, 0);
-  rb_define_method(mus_xen_tag, "cosines=", XEN_PROCEDURE_CAST g_mus_set_hop, 1);
-  rb_define_method(mus_xen_tag, "order", XEN_PROCEDURE_CAST g_mus_length, 0);
+  rb_define_method(mus_xen_tag, "cosines", XEN_PROCEDURE_CAST g_mus_cosines, 0);
+  rb_define_method(mus_xen_tag, "cosines=", XEN_PROCEDURE_CAST g_mus_set_cosines, 1);
+  rb_define_method(mus_xen_tag, "order", XEN_PROCEDURE_CAST g_mus_order, 0);
   rb_define_method(mus_xen_tag, "order=", XEN_PROCEDURE_CAST g_mus_set_length, 1);
   rb_define_method(mus_xen_tag, "call", XEN_PROCEDURE_CAST mus_xen_apply, 2);
   rb_define_method(mus_xen_tag, "location", XEN_PROCEDURE_CAST g_mus_location, 0);
@@ -7450,10 +7552,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_all_pass_p,      g_all_pass_p_w,      1, 0, 0, H_all_pass_p);
   XEN_DEFINE_PROCEDURE(S_moving_average_p,       g_moving_average_p_w,       1, 0, 0, H_moving_average_p);
 
-  #define H_mus_feedback "(" S_mus_feedback " gen): feedback value of gen"
-  #define H_mus_feedforward "(" S_mus_feedforward " gen): feedforward term of gen"
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedback, g_mus_increment_w, H_mus_feedback, S_setB S_mus_feedback, g_mus_set_increment_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedforward, g_mus_scaler_w, H_mus_feedforward, S_setB S_mus_feedforward, g_mus_set_scaler_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedback, g_mus_feedback_w, H_mus_feedback, S_setB S_mus_feedback, g_mus_set_feedback_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedforward, g_mus_feedforward_w, H_mus_feedforward, S_setB S_mus_feedforward, g_mus_set_feedforward_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_make_rand,        g_make_rand_w,        0, 0, 1, H_make_rand);
   XEN_DEFINE_PROCEDURE(S_make_rand_interp, g_make_rand_interp_w, 0, 0, 1, H_make_rand_interp);
@@ -7472,8 +7572,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_sum_of_cosines, g_make_sum_of_cosines_w, 0, 6, 0, H_make_sum_of_cosines); 
   XEN_DEFINE_PROCEDURE(S_sum_of_cosines,      g_sum_of_cosines_w,      1, 1, 0, H_sum_of_cosines);
   XEN_DEFINE_PROCEDURE(S_sum_of_cosines_p,    g_sum_of_cosines_p_w,    1, 0, 0, H_sum_of_cosines_p);
-  #define H_mus_cosines "(" S_mus_cosines " gen): number of cosines produced by gen"
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_cosines, g_mus_hop_w, H_mus_cosines, S_setB S_mus_cosines, g_mus_set_hop_w, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_cosines, g_mus_cosines_w, H_mus_cosines, S_setB S_mus_cosines, g_mus_set_cosines_w, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(S_make_sum_of_sines,   g_make_sum_of_sines_w,   0, 6, 0, H_make_sum_of_sines); 
   XEN_DEFINE_PROCEDURE(S_sum_of_sines,        g_sum_of_sines_w,        1, 1, 0, H_sum_of_sines);
   XEN_DEFINE_PROCEDURE(S_sum_of_sines_p,      g_sum_of_sines_p_w,      1, 0, 0, H_sum_of_sines_p);
@@ -7563,11 +7662,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_formant, g_make_formant_w, 0, 6, 0, H_make_formant);
   XEN_DEFINE_PROCEDURE(S_formant,      g_formant_w,      1, 1, 0, H_formant);
 
-  #define H_mus_formant_radius  "(" S_mus_formant_radius  " gen): (" S_formant " generator) gen's pole radius; \
-the closer the radius is to 1.0, the narrower the resonance."
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_formant_radius, g_mus_phase_w, H_mus_formant_radius,
-				   S_setB S_mus_formant_radius, g_mus_set_phase_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_formant_radius, g_mus_formant_radius_w, H_mus_formant_radius,
+				   S_setB S_mus_formant_radius, g_mus_set_formant_radius_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_mus_set_formant_radius_and_frequency, g_set_formant_radius_and_frequency_w, 3, 0, 0, H_mus_set_formant_radius_and_frequency);
 
@@ -7603,8 +7699,7 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_make_iir_filter, g_make_iir_filter_w, 0, 4, 0, H_make_iir_filter);
   XEN_DEFINE_PROCEDURE(S_iir_filter,      g_iir_filter_w,      2, 0, 0, H_iir_filter);
   XEN_DEFINE_PROCEDURE(S_iir_filter_p,    g_iir_filter_p_w,    1, 0, 0, H_iir_filter_p);
-  #define H_mus_order "(" S_mus_order " gen): gen's filter order"
-  XEN_DEFINE_PROCEDURE(S_mus_order,       g_mus_length_w,      1, 0, 0, H_mus_order);
+  XEN_DEFINE_PROCEDURE(S_mus_order,       g_mus_order_w,       1, 0, 0, H_mus_order);
 
 
   XEN_DEFINE_PROCEDURE(S_env_p,       g_env_p_w,       1, 0, 0, H_env_p);

@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 44
-#define MUS_DATE "15-Oct-07"
+#define MUS_REVISION 45
+#define MUS_DATE "17-Oct-07"
 
 /*
+ * 17-Oct:     replace some method macros with functions (def-clm-struct local methods need true names).
  * 15-Oct:     mus_oscil_1 -> _fm, _2->_pm.
  *             mus_phase_vocoder_outctr accessors changed to use mus_location.
  * 11-Oct:     changed default srate to 44100.
@@ -334,6 +335,8 @@ Float mus_array_interp(Float *wave, Float phase, int size);
 double mus_bessi0(Float x);
 Float mus_interpolate(mus_interp_t type, Float x, Float *table, int table_size, Float y);
 
+
+/* generic functions */
 int mus_free(mus_any *ptr);
 char *mus_describe(mus_any *gen);
 bool mus_equalp(mus_any *g1, mus_any *g2);
@@ -344,6 +347,7 @@ Float mus_frequency(mus_any *gen);
 Float mus_run(mus_any *gen, Float arg1, Float arg2);
 off_t mus_length(mus_any *gen);
 off_t mus_set_length(mus_any *gen, off_t len);
+off_t mus_order(mus_any *gen);
 Float *mus_data(mus_any *gen);
 Float *mus_set_data(mus_any *gen, Float *data);
 char *mus_name(mus_any *ptr);
@@ -354,23 +358,45 @@ Float mus_set_offset(mus_any *gen, Float val);
 Float mus_width(mus_any *gen);
 Float mus_set_width(mus_any *gen, Float val);
 char *mus_file_name(mus_any *ptr);
-#define mus_interp_type(Gen) mus_channels(Gen)
 void mus_reset(mus_any *ptr);
+Float *mus_xcoeffs(mus_any *ptr);
+Float *mus_ycoeffs(mus_any *ptr);
+Float mus_xcoeff(mus_any *ptr, int index);
+Float mus_set_xcoeff(mus_any *ptr, int index, Float val);
+Float mus_ycoeff(mus_any *ptr, int index);
+Float mus_set_ycoeff(mus_any *ptr, int index, Float val);
+Float mus_increment(mus_any *rd);
+Float mus_set_increment(mus_any *rd, Float dir);
+off_t mus_location(mus_any *rd);
+off_t mus_set_location(mus_any *rd, off_t loc);
+int mus_channel(mus_any *rd);
+int mus_channels(mus_any *ptr);
+int mus_position(mus_any *ptr); /* only C, envs (snd-env.c) */
+int mus_interp_type(mus_any *ptr);
+off_t mus_ramp(mus_any *ptr);
+off_t mus_set_ramp(mus_any *ptr, off_t val);
+off_t mus_hop(mus_any *ptr);
+off_t mus_set_hop(mus_any *ptr, off_t val);
+off_t mus_cosines(mus_any *ptr);
+off_t mus_set_cosines(mus_any *ptr, off_t val);
+Float mus_feedforward(mus_any *gen);
+Float mus_set_feedforward(mus_any *gen, Float val);
+Float mus_feedback(mus_any *rd);
+Float mus_set_feedback(mus_any *rd, Float dir);
+Float mus_formant_radius(mus_any *gen);
+Float mus_set_formant_radius(mus_any *gen, Float val);
+
 
 Float mus_oscil(mus_any *o, Float fm, Float pm);
 Float mus_oscil_0(mus_any *ptr);
 Float mus_oscil_fm(mus_any *ptr, Float fm);
 Float mus_oscil_pm(mus_any *ptr, Float pm);
-#define mus_oscil_1(Ptr, Fm) mus_oscil_fm(Ptr, Fm)
-#define mus_oscil_2(Ptr, Pm) mus_oscil_pm(Ptr, Pm)
 bool mus_oscil_p(mus_any *ptr);
 mus_any *mus_make_oscil(Float freq, Float phase);
 
 Float mus_sum_of_cosines(mus_any *gen, Float fm);
 bool mus_sum_of_cosines_p(mus_any *ptr);
 mus_any *mus_make_sum_of_cosines(int cosines, Float freq, Float phase);
-#define mus_cosines(Gen) mus_hop(Gen)
-#define mus_set_cosines(Gen, Val) mus_set_hop(Gen, Val)
 Float mus_sum_of_sines(mus_any *ptr, Float fm);
 mus_any *mus_make_sum_of_sines(int sines, Float freq, Float phase);
 bool mus_sum_of_sines_p(mus_any *ptr);
@@ -402,11 +428,6 @@ bool mus_all_pass_p(mus_any *ptr);
 mus_any *mus_make_moving_average(int size, Float *line);
 bool mus_moving_average_p(mus_any *ptr);
 Float mus_moving_average(mus_any *ptr, Float input);
-
-#define mus_feedforward(Gen) mus_scaler(Gen)
-#define mus_set_feedforward(Gen, Val) mus_set_scaler(Gen, Val)
-#define mus_feedback(Gen) mus_increment(Gen)
-#define mus_set_feedback(Gen, Val) mus_set_increment(Gen, Val)
 
 Float mus_table_lookup(mus_any *gen, Float fm);
 Float mus_table_lookup_1(mus_any *gen);
@@ -477,8 +498,6 @@ Float mus_formant(mus_any *ptr, Float input);
 Float mus_formant_bank(Float *amps, mus_any **formants, Float inval, int size);
 mus_any *mus_make_formant(Float radius, Float frequency, Float gain);
 bool mus_formant_p(mus_any *ptr);
-#define mus_formant_radius(Gen) mus_phase(Gen)
-#define mus_set_formant_radius(Gen, Val) mus_set_phase(Gen, Val)
 void mus_set_formant_radius_and_frequency(mus_any *ptr, Float radius, Float frequency);
 
 Float mus_sine_summation(mus_any *ptr, Float fm);
@@ -498,16 +517,9 @@ mus_any *mus_make_iir_filter(int order, Float *ycoeffs, Float *state);
 bool mus_iir_filter_p(mus_any *ptr);
 Float *mus_make_fir_coeffs(int order, Float *env, Float *aa);
 
-Float *mus_xcoeffs(mus_any *ptr);
-Float *mus_ycoeffs(mus_any *ptr);
-Float mus_xcoeff(mus_any *ptr, int index);
-Float mus_set_xcoeff(mus_any *ptr, int index, Float val);
-Float mus_ycoeff(mus_any *ptr, int index);
-Float mus_set_ycoeff(mus_any *ptr, int index, Float val);
 Float *mus_filter_set_xcoeffs(mus_any *ptr, Float *new_data);
 Float *mus_filter_set_ycoeffs(mus_any *ptr, Float *new_data);
 int mus_filter_set_order(mus_any *ptr, int order);
-#define mus_order(Gen) mus_length(Gen)
 
 Float mus_filtered_comb(mus_any *ptr, Float input, Float pm);
 Float mus_filtered_comb_1(mus_any *ptr, Float input);
@@ -545,7 +557,6 @@ double mus_env_offset(mus_any *gen);        /* for Snd */
 double mus_env_scaler(mus_any *gen);        /* for Snd */
 double mus_env_initial_power(mus_any *gen); /* for Snd */
 int mus_env_breakpoints(mus_any *gen);      /* for Snd */
-#define mus_position(Gen) mus_channels(Gen)
 
 bool mus_frame_p(mus_any *ptr);
 mus_any *mus_make_empty_frame(int chans);
@@ -581,11 +592,6 @@ Float mus_readin(mus_any *rd);
 mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, off_t start, int direction, int buffer_size);
 #define mus_make_readin(Filename, Chan, Start, Direction) mus_make_readin_with_buffer_size(Filename, Chan, Start, Direction, mus_file_buffer_size())
 bool mus_readin_p(mus_any *ptr);
-Float mus_increment(mus_any *rd);
-Float mus_set_increment(mus_any *rd, Float dir);
-off_t mus_location(mus_any *rd);
-off_t mus_set_location(mus_any *rd, off_t loc);
-int mus_channel(mus_any *rd);
 
 bool mus_output_p(mus_any *ptr);
 bool mus_input_p(mus_any *ptr);
@@ -613,7 +619,6 @@ mus_any *mus_continue_frame_to_file(const char *filename);
 Float mus_locsig(mus_any *ptr, off_t loc, Float val);
 mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, mus_any *output, int rev_chans, mus_any *revput, mus_interp_t type);
 bool mus_locsig_p(mus_any *ptr);
-int mus_channels(mus_any *ptr);
 Float mus_locsig_ref(mus_any *ptr, int chan);
 Float mus_locsig_set(mus_any *ptr, int chan, Float val);
 Float mus_locsig_reverb_ref(mus_any *ptr, int chan);
@@ -668,10 +673,6 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
 			    void *closure);
 int mus_granulate_grain_max_length(mus_any *ptr);
 void mus_granulate_set_edit_function(mus_any *ptr, int (*edit)(void *closure));
-off_t mus_ramp(mus_any *ptr);
-off_t mus_set_ramp(mus_any *ptr, off_t val);
-off_t mus_hop(mus_any *ptr);
-off_t mus_set_hop(mus_any *ptr, off_t val);
 
 int mus_set_file_buffer_size(int size);
 int mus_file_buffer_size(void);
@@ -701,10 +702,6 @@ Float *mus_phase_vocoder_freqs(mus_any *ptr);
 Float *mus_phase_vocoder_phases(mus_any *ptr);
 Float *mus_phase_vocoder_phase_increments(mus_any *ptr);
 
-  /* backwards compatibility -- these moved to mus_location 15-Oct-07 */
-#define mus_phase_vocoder_outctr(Ptr) (int)mus_location(Ptr)
-#define mus_phase_vocoder_set_outctr(Ptr, Val) (int)mus_set_location(Ptr, (off_t)Val)
-
 
 mus_any *mus_make_ssb_am(Float freq, int order);
 bool mus_ssb_am_p(mus_any *ptr);
@@ -719,6 +716,17 @@ void *mus_set_environ(mus_any *gen, void *e);
 /* used only in run.lisp */
 mus_any *mus_make_frame_with_data(int chans, Float *data);
 mus_any *mus_make_mixer_with_data(int chans, Float *data);
+
+
+#ifndef CLM_DISABLE_DEPRECATED
+  #define mus_oscil_1(Ptr, Fm) mus_oscil_fm(Ptr, Fm)
+  #define mus_oscil_2(Ptr, Pm) mus_oscil_pm(Ptr, Pm)
+
+  /* backwards compatibility -- these moved to mus_location 15-Oct-07 */
+  #define mus_phase_vocoder_outctr(Ptr) (int)mus_location(Ptr)
+  #define mus_phase_vocoder_set_outctr(Ptr, Val) (int)mus_set_location(Ptr, (off_t)Val)
+#endif
+
 
 #ifdef __cplusplus
 }

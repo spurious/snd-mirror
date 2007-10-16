@@ -425,6 +425,24 @@ Float mus_set_phase(mus_any *gen, Float val)
 }
 
 
+Float mus_formant_radius(mus_any *gen) /* shares "phase" */
+{
+  if ((check_gen(gen, S_mus_formant_radius)) &&
+      (gen->core->phase))
+    return((*(gen->core->phase))(gen));
+  return((Float)mus_error(MUS_NO_PHASE, "can't get %s's formant_radius", mus_name(gen)));
+}
+
+
+Float mus_set_formant_radius(mus_any *gen, Float val)
+{
+  if ((check_gen(gen, S_setB S_mus_formant_radius)) &&
+      (gen->core->set_phase))
+    return((*(gen->core->set_phase))(gen, val));
+  return((Float)mus_error(MUS_NO_PHASE, "can't set %s's formant_radius", mus_name(gen)));
+}
+
+
 Float mus_scaler(mus_any *gen)
 {
   if ((check_gen(gen, S_mus_scaler)) &&
@@ -440,6 +458,24 @@ Float mus_set_scaler(mus_any *gen, Float val)
       (gen->core->set_scaler))
     return((*(gen->core->set_scaler))(gen, val));
   return((Float)mus_error(MUS_NO_SCALER, "can't set %s's scaler", mus_name(gen)));
+}
+
+
+Float mus_feedforward(mus_any *gen) /* shares "scaler" */
+{
+  if ((check_gen(gen, S_mus_feedforward)) &&
+      (gen->core->scaler))
+    return((*(gen->core->scaler))(gen));
+  return((Float)mus_error(MUS_NO_SCALER, "can't get %s's feedforward", mus_name(gen)));
+}
+
+
+Float mus_set_feedforward(mus_any *gen, Float val)
+{
+  if ((check_gen(gen, S_setB S_mus_feedforward)) &&
+      (gen->core->set_scaler))
+    return((*(gen->core->set_scaler))(gen, val));
+  return((Float)mus_error(MUS_NO_SCALER, "can't set %s's feedforward", mus_name(gen)));
 }
 
 
@@ -497,6 +533,24 @@ Float mus_set_increment(mus_any *gen, Float val)
 }
 
 
+Float mus_feedback(mus_any *gen) /* shares "increment" */
+{
+  if ((check_gen(gen, S_mus_feedback)) &&
+      (gen->core->increment))
+    return((*(gen->core->increment))(gen));
+  return((Float)mus_error(MUS_NO_INCREMENT, "can't get %s's feedback", mus_name(gen)));
+}
+
+
+Float mus_set_feedback(mus_any *gen, Float val)
+{
+  if ((check_gen(gen, S_setB S_mus_feedback)) &&
+      (gen->core->set_increment))
+    return((*(gen->core->set_increment))(gen, val));
+  return((Float)mus_error(MUS_NO_INCREMENT, "can't set %s's feedback", mus_name(gen)));
+}
+
+
 void *mus_environ(mus_any *gen)
 {
   if (check_gen(gen, "mus-environ"))
@@ -540,12 +594,39 @@ off_t mus_set_length(mus_any *gen, off_t len)
 }
 
 
+off_t mus_order(mus_any *gen) /* shares "length", no set */
+{
+  if ((check_gen(gen, S_mus_order)) &&
+      (gen->core->length))
+    return((*(gen->core->length))(gen));
+  return(mus_error(MUS_NO_LENGTH, "can't get %s's order", mus_name(gen)));
+}
+
+
 int mus_channels(mus_any *gen)
 {
   if ((check_gen(gen, S_mus_channels)) &&
       (gen->core->channels))
     return((*(gen->core->channels))(gen));
   return(mus_error(MUS_NO_CHANNELS, "can't get %s's channels", mus_name(gen)));
+}
+
+
+int mus_interp_type(mus_any *gen) /* shares "channels", no set */
+{
+  if ((check_gen(gen, S_mus_interp_type)) &&
+      (gen->core->channels))
+    return((*(gen->core->channels))(gen));
+  return(mus_error(MUS_NO_CHANNELS, "can't get %s's interp type", mus_name(gen)));
+}
+
+
+int mus_position(mus_any *gen) /* shares "channels", no set, only used in C (snd-env.c) */
+{
+  if ((check_gen(gen, "mus-position")) &&
+      (gen->core->channels))
+    return((*(gen->core->channels))(gen));
+  return(mus_error(MUS_NO_CHANNELS, "can't get %s's position", mus_name(gen)));
 }
 
 
@@ -573,6 +654,24 @@ off_t mus_set_hop(mus_any *gen, off_t len)
       (gen->core->set_hop))
     return((*(gen->core->set_hop))(gen, len));
   return(mus_error(MUS_NO_HOP, "can't set %s's hop value", mus_name(gen)));
+}
+
+
+off_t mus_cosines(mus_any *gen) /* shares "hop" */
+{
+  if ((check_gen(gen, S_mus_cosines)) &&
+      (gen->core->hop))
+    return((*(gen->core->hop))(gen));
+  return(mus_error(MUS_NO_HOP, "can't get %s's cosines value", mus_name(gen)));
+}
+
+
+off_t mus_set_cosines(mus_any *gen, off_t len)
+{
+  if ((check_gen(gen, S_setB S_mus_cosines)) &&
+      (gen->core->set_hop))
+    return((*(gen->core->set_hop))(gen, len));
+  return(mus_error(MUS_NO_HOP, "can't set %s's cosines value", mus_name(gen)));
 }
 
 

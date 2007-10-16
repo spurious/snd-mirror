@@ -9996,9 +9996,10 @@ The currently implemented field types are:
     sound-data clm float-vector int-vector vct-vector list-vector clm-vector 
 </pre>
 
-<p>The struct name can be a list; in this case the first element is the actual struct name, and the
-next two elements are <code>:make-wrapper</code> followed by a function of one argument
-(the default struct normally returned by def-clm-struct).  The make wrapper function can 
+<p>The struct name can be a list; in this case the first element is the actual struct name.  The
+next elements are optionally <code>:make-wrapper</code> followed by a function of one argument
+(the default struct normally returned by def-clm-struct), and optionally <code>:methods</code>, followed
+by a list of the methods the generator responds to.  The make wrapper function can 
 make any changes it pleases, then return the fixed-up generator.  For example, in our
 "osc" generator, we had to remember to change frequency in Hz to radians; we can use the
 wrapper to handle that:
@@ -10023,28 +10024,28 @@ wrapper to handle that:
 </pre>
 
 <p>If you want the struct to take part in the <a href="sndclm.html#genericfunctions">generic function</a> facility
-in CLM, add the desired methods as an association list at the end of the new struct:
+in CLM, add the desired methods as an association list with the name :methods:
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(def-clm-struct (osc <em class=red>:make-wrapper</em>
-		  (lambda (gen)
-		    (set! (osc-freq gen) (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> (osc-freq gen)))
-		    (append gen 
-			    (list 
-			     (list
-			      (list 'mus-frequency 
-				    (lambda (g) (<a class=quiet href="sndclm.html#hztoradians">radians-&gt;hz</a> (osc-freq g)))
-				    (lambda (g val) (set! (osc-freq g) (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> val))))
-			      
-			      (list 'mus-phase 
-				    (lambda (g) (osc-phase g))
-				    (lambda (g val) (set! (osc-phase g) val)))
-			      
-			      (list 'mus-describe 
-				    (lambda (g) (format #f "osc freq: ~A, phase: ~A" 
-						  (mus-frequency g) 
-						  (mus-phase g)))))))))
+(def-clm-struct (osc :make-wrapper
+		     (lambda (gen)
+		       (set! (osc-freq gen) (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> (osc-freq gen)))
+		       gen)
+		     <em class=red>:methods</em>
+		     (list
+		      (list 'mus-frequency 
+			    (lambda (g) (<a class=quiet href="sndclm.html#hztoradians">radians-&gt;hz</a> (osc-freq g)))
+			    (lambda (g val) (set! (osc-freq g) (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> val))))
+		      
+		      (list 'mus-phase 
+			    (lambda (g) (osc-phase g))
+			    (lambda (g val) (set! (osc-phase g) val)))
+		      
+		      (list 'mus-describe 
+			    (lambda (g) (format #f "osc freq: ~A, phase: ~A" 
+					  (mus-frequency g) 
+					  (mus-phase g))))))
   freq phase)
 </pre></td></tr></table>
 

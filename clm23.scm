@@ -2948,24 +2948,22 @@
 
 ;;; ---------------- sndscm-osc2 ----------------
 
-(def-clm-struct (sndscm-osc2 :make-wrapper 
-		  (lambda (gen)
-		    (set! (sndscm-osc2-freq gen) (hz->radians (sndscm-osc2-freq gen)))
-		    (append gen 
-			    (list 
-			     (list
-			      (list 'mus-frequency 
-				    (lambda (g) (radians->hz (sndscm-osc2-freq g)))
-				    (lambda (g val) (set! (sndscm-osc2-freq g) (hz->radians val))))
+(def-clm-struct (sndscm-osc2 :make-wrapper (lambda (gen)
+			       (set! (sndscm-osc2-freq gen) (hz->radians (sndscm-osc2-freq gen)))
+			       gen)
+			     :methods (list
+				       (list 'mus-frequency 
+					     (lambda (g) (radians->hz (sndscm-osc2-freq g)))
+					     (lambda (g val) (set! (sndscm-osc2-freq g) (hz->radians val))))
+				       
+				       (list 'mus-phase 
+					     (lambda (g) (sndscm-osc2-phase g))
+					     (lambda (g val) (set! (sndscm-osc2-phase g) val)))
 			      
-			      (list 'mus-phase 
-				    (lambda (g) (sndscm-osc2-phase g))
-				    (lambda (g val) (set! (sndscm-osc2-phase g) val)))
-			      
-			      (list 'mus-describe 
-				    (lambda (g) (format #f "sndscm-osc2 freq: ~A, phase: ~A" 
-							(mus-frequency g) 
-							(mus-phase g)))))))))
+				       (list 'mus-describe 
+					     (lambda (g) (format #f "sndscm-osc2 freq: ~A, phase: ~A" 
+								 (mus-frequency g) 
+								 (mus-phase g))))))
   freq phase)
 
 (define* (sndscm-osc2 gen fm)
