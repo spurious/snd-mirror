@@ -5,10 +5,6 @@
 ;;; these try to mimic existing gens (mainly oscil), so "frequency" is placed first.
 ;;;   Where a factor is involved, I'll try to use "r".
 ;;;   Where the limit of the sum is settable, I'll use "n".
-;;;
-;;; someday I need to make run smart enough to find local methods, then
-;;;   norms and dc offsets can be precalculated.
-;;;   or... make 2 forms of the gens, one of which assumes no run-time changes
 
 
 (define nearly-zero 1.0e-12) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)
@@ -27,11 +23,10 @@
 (define nsin? sum-of-sines?)
 
 (def-clm-struct (nssb 
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (nssb-carincr g) (hz->radians (nssb-carfreq g)))
-		   (set! (nssb-modincr g) (hz->radians (nssb-modfreq g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (nssb-carincr g) (hz->radians (nssb-carfreq g)))
+				 (set! (nssb-modincr g) (hz->radians (nssb-modfreq g)))
+				 g))
   (carfreq 0.0) (modfreq 1.0) (n 1 :type int)
   (carangle 0.0) (modangle 0.0) (carincr 0.0) (modincr 0.0))
 
@@ -80,11 +75,10 @@
 ;;; G&R 1st col rows 1&2
 
 (def-clm-struct (nxysin
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (nxysin-xincr g) (hz->radians (nxysin-xfrequency g))) ; can be 0 if just x=pi/2 for example
-		   (set! (nxysin-yincr g) (hz->radians (nxysin-yfrequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (nxysin-xincr g) (hz->radians (nxysin-xfrequency g))) ; can be 0 if just x=pi/2 for example
+				 (set! (nxysin-yincr g) (hz->radians (nxysin-yfrequency g)))
+				 g))
   (xfrequency 0.0) (yfrequency 1.0) (n 1 :type int)
   (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
 
@@ -114,11 +108,10 @@
 |#
 
 (def-clm-struct (nxycos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (nxycos-xincr g) (hz->radians (nxycos-xfrequency g))) ; can be 0 if just x=pi/2 for example
-		   (set! (nxycos-yincr g) (hz->radians (nxycos-yfrequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (nxycos-xincr g) (hz->radians (nxycos-xfrequency g))) ; can be 0 if just x=pi/2 for example
+				 (set! (nxycos-yincr g) (hz->radians (nxycos-yfrequency g)))
+				 g))
   (xfrequency 0.0) (yfrequency 1.0) (n 1 :type int)
   (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
 
@@ -155,11 +148,10 @@
 ;;; G&R 1st col rows 3 4
 
 (def-clm-struct (nxy1cos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (nxy1cos-xincr g) (hz->radians (nxy1cos-xfrequency g))) ; can be 0 if just x=pi/2 for example
-		   (set! (nxy1cos-yincr g) (hz->radians (nxy1cos-yfrequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (nxy1cos-xincr g) (hz->radians (nxy1cos-xfrequency g))) ; can be 0 if just x=pi/2 for example
+				 (set! (nxy1cos-yincr g) (hz->radians (nxy1cos-yfrequency g)))
+				 g))
   (xfrequency 0.0) (yfrequency 0.0) (n 1 :type int)
   (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
 
@@ -204,11 +196,10 @@
 
 
 (def-clm-struct (nxy1sin
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (nxy1sin-xincr g) (hz->radians (nxy1sin-xfrequency g))) ; can be 0 if just x=pi/2 for example
-		   (set! (nxy1sin-yincr g) (hz->radians (nxy1sin-yfrequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (nxy1sin-xincr g) (hz->radians (nxy1sin-xfrequency g))) ; can be 0 if just x=pi/2 for example
+				 (set! (nxy1sin-yincr g) (hz->radians (nxy1sin-yfrequency g)))
+				 g))
   (xfrequency 0.0) (yfrequency 0.0) (n 1 :type int)
   (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
 
@@ -243,18 +234,17 @@
 ;;; sndclm.html (G&R) 1st col 5th row (sum of odd sines)
 
 (def-clm-struct (noddsin 
-		 :make-wrapper
-		 (lambda (g)
-		   (if (< (noddsin-n g) 1) (set! (noddsin-n g) 1))
-		   (set! (noddsin-incr g) (hz->radians (noddsin-frequency g)))
-		   (set! (noddsin-norm g) (if (= (noddsin-n g) 1) 1.0
-					     (/ (if (= (noddsin-n g) 2) 1.29
-						    (if (= (noddsin-n g) 3) 1.34
-							(if (< (noddsin-n g) 6) 1.36
-							    (if (< (noddsin-n g) 18) 1.37
-								1.379))))
-						(noddsin-n g))))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (if (< (noddsin-n g) 1) (set! (noddsin-n g) 1))
+				 (set! (noddsin-incr g) (hz->radians (noddsin-frequency g)))
+				 (set! (noddsin-norm g) (if (= (noddsin-n g) 1) 1.0
+							    (/ (if (= (noddsin-n g) 2) 1.29
+								   (if (= (noddsin-n g) 3) 1.34
+								       (if (< (noddsin-n g) 6) 1.36
+									   (if (< (noddsin-n g) 18) 1.37
+									       1.379))))
+							       (noddsin-n g))))
+				 g))
   (frequency 440.0) (n 1 :type int)
   (angle 0.0) (incr 0.0) (norm 1.0))
 
@@ -303,10 +293,9 @@
 
 
 (def-clm-struct (noddcos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (noddcos-incr g) (hz->radians (noddcos-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (noddcos-incr g) (hz->radians (noddcos-frequency g)))
+				 g))
   (frequency 0.0) (n 1 :type int)
   (angle 0.0) (incr 0.0))
 
@@ -337,11 +326,10 @@
 |#
 
 (def-clm-struct (noddssb
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (noddssb-carincr g) (hz->radians (- (noddssb-carfreq g) (noddssb-modfreq g))))
-		   (set! (noddssb-modincr g) (hz->radians (noddssb-modfreq g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (noddssb-carincr g) (hz->radians (- (noddssb-carfreq g) (noddssb-modfreq g))))
+				 (set! (noddssb-modincr g) (hz->radians (noddssb-modfreq g)))
+				 g))
   (carfreq 0.0) (modfreq 1.0) (n 1 :type int)
   (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
 
@@ -387,10 +375,9 @@
 ;;; various kernels: ncos2 = ncos squared (Fejer), ncos4 = ncos2 squared (Jackson), npcos = Poussin kernel
 
 (def-clm-struct (ncos2
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (ncos2-incr g) (hz->radians (ncos2-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (ncos2-incr g) (hz->radians (ncos2-frequency g)))
+				 g))
   (frequency 0.0) (n 1 :type int) 
   (angle 0.0) (incr 0.0))
 
@@ -448,10 +435,9 @@
 
 
 (def-clm-struct (npcos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (npcos-incr g) (hz->radians (npcos-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (npcos-incr g) (hz->radians (npcos-frequency g)))
+				 g))
   (frequency 0.0) (n 1 :type int)
   (angle 0.0) (incr 0.0))
 
@@ -496,11 +482,10 @@
 (define nrsin? sine-summation?)
 
 (def-clm-struct (nrcos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (nrcos-incr g) (hz->radians (nrcos-frequency g)))
-		   (set! (nrcos-n g) (+ 1 (nrcos-n g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (nrcos-incr g) (hz->radians (nrcos-frequency g)))
+				 (set! (nrcos-n g) (+ 1 (nrcos-n g)))
+				 g))
   (frequency 0.0) (n 1 :type int) (r 0.0)
   (angle 0.0) (incr 0.0))
 
@@ -579,11 +564,10 @@
 ;;; G&R 2nd col 1st and 2nd rows
 
 (def-clm-struct (nrssb
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (nrssb-carincr g) (hz->radians (nrssb-carfreq g)))
-		   (set! (nrssb-modincr g) (hz->radians (nrssb-modfreq g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (nrssb-carincr g) (hz->radians (nrssb-carfreq g)))
+				 (set! (nrssb-modincr g) (hz->radians (nrssb-modfreq g)))
+				 g))
   (carfreq 0.0) (modfreq 1.0) (n 1 :type int) (r 0.0)
   (carangle 0.0) (modangle 0.0) (carincr 0.0) (modincr 0.0))
 
@@ -725,12 +709,11 @@
 ;;; G&R 1st col ksinkx cases
 
 (def-clm-struct (nkssb
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (nkssb-carincr g) (hz->radians (- (nkssb-carfreq g) (nkssb-modfreq g))))
-		   (set! (nkssb-modincr g) (hz->radians (nkssb-modfreq g)))
-		   (set! (nkssb-n g) (+ 1 (nkssb-n g))) ; sum goes 1 to n-1
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (nkssb-carincr g) (hz->radians (- (nkssb-carfreq g) (nkssb-modfreq g))))
+				 (set! (nkssb-modincr g) (hz->radians (nkssb-modfreq g)))
+				 (set! (nkssb-n g) (+ 1 (nkssb-n g))) ; sum goes 1 to n-1
+				 g))
   (carfreq 0.0) (modfreq 1.0) (n 1 :type int)
   (carangle 0.0) (carincr 0.0)
   (modangle 0.0) (modincr 0.0))
@@ -825,10 +808,9 @@
 ;;; inf sinusoids scaled by r: rcos, rssb
 
 (def-clm-struct (rcos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (rcos-osc g) (make-oscil (rcos-frequency g) (* 0.5 pi)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (rcos-osc g) (make-oscil (rcos-frequency g) (* 0.5 pi)))
+				 g))
   (frequency 0.0) (r 1.0)
   (osc #f :type clm))
 
@@ -886,11 +868,10 @@
 
 
 (def-clm-struct (rssb 
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (rssb-incr1 g) (hz->radians (rssb-carfreq g)))
-		   (set! (rssb-incr2 g) (hz->radians (rssb-modfreq g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (rssb-incr1 g) (hz->radians (rssb-carfreq g)))
+				 (set! (rssb-incr2 g) (hz->radians (rssb-modfreq g)))
+				 g))
   (carfreq 0.0) (modfreq 1.0) (n 1 :type int) (r 0.0)
   (angle1 0.0) (angle2 0.0) (incr1 0.0) (incr2 0.0))
 
@@ -931,15 +912,14 @@
 ;;; sndclm.html G&R 2nd col last row (with normalization)
 
 (def-clm-struct (ercos
-		 :make-wrapper 
-		 (lambda (g)
-		   (set! (ercos-osc g) (make-oscil (ercos-frequency g)))
-		   (if (<= (ercos-r g) 0.0) (set! (ercos-r g) 0.00001))
-		   (set! (ercos-cosh-t g) (cosh (ercos-r g)))
-		   (let ((exp-t (exp (- (ercos-r g)))))
-		     (set! (ercos-offset g) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
-		     (set! (ercos-scaler g) (* (sinh (ercos-r g)) (ercos-offset g))))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (ercos-osc g) (make-oscil (ercos-frequency g)))
+				 (if (<= (ercos-r g) 0.0) (set! (ercos-r g) 0.00001))
+				 (set! (ercos-cosh-t g) (cosh (ercos-r g)))
+				 (let ((exp-t (exp (- (ercos-r g)))))
+				   (set! (ercos-offset g) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
+				   (set! (ercos-scaler g) (* (sinh (ercos-r g)) (ercos-offset g))))
+				 g))
   (frequency 440.0) (r 1.0 :type float)
   (osc #f :type clm) scaler offset cosh-t)
 
@@ -974,11 +954,10 @@
 
 
 (def-clm-struct (erssb
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (erssb-carincr g) (hz->radians (- (erssb-carfreq g) (erssb-modfreq g))))
-		   (set! (erssb-modincr g) (hz->radians (erssb-modfreq g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (erssb-carincr g) (hz->radians (- (erssb-carfreq g) (erssb-modfreq g))))
+				 (set! (erssb-modincr g) (hz->radians (erssb-modfreq g)))
+				 g))
   (carfreq 0.0) (modfreq 1.0) (r 0.0)
   (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
 
@@ -1018,12 +997,11 @@
 ;;; Jolley 2nd col 2nd row (1st row is cos tweak of this)
 
 (def-clm-struct (r2sin
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (r2sin-incr g) (hz->radians (r2sin-frequency g)))
-		   (if (>= (* (r2sin-r g) (r2sin-r g)) 1.0)
-		       (set! (r2sin-r g) 0.9999999))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (r2sin-incr g) (hz->radians (r2sin-frequency g)))
+				 (if (>= (* (r2sin-r g) (r2sin-r g)) 1.0)
+				     (set! (r2sin-r g) 0.9999999))
+				 g))
   (frequency 0.0) (r 0.0)
   (angle 0.0) (incr 0.0))
 
@@ -1049,12 +1027,11 @@
 
 
 (def-clm-struct (r2cos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (r2cos-incr g) (hz->radians (r2cos-frequency g)))
-		   (if (>= (* (r2cos-r g) (r2sin-r g)) 1.0)
-		       (set! (r2cos-r g) 0.9999999))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (r2cos-incr g) (hz->radians (r2cos-frequency g)))
+				 (if (>= (* (r2cos-r g) (r2sin-r g)) 1.0)
+				     (set! (r2cos-r g) 0.9999999))
+				 g))
   (frequency 0.0) (r 0.0)
   (angle 0.0) (incr 0.0))
 
@@ -1082,11 +1059,10 @@
 
 
 (def-clm-struct (r2ssb
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (r2ssb-carincr g) (hz->radians (r2ssb-carfreq g)))
-		   (set! (r2ssb-modincr g) (hz->radians (r2ssb-modfreq g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (r2ssb-carincr g) (hz->radians (r2ssb-carfreq g)))
+				 (set! (r2ssb-modincr g) (hz->radians (r2ssb-modfreq g)))
+				 g))
   (carfreq 0.0) (modfreq 1.0) (r 1.0)
   (carangle 0.0) (carincr 0.0)
   (modangle 0.0) (modincr 0.0))
@@ -1141,10 +1117,9 @@
 ;;; this is the cos side of rkoddssb with r=e^-a
 
 (def-clm-struct (eoddcos 
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (eoddcos-osc g) (make-oscil (eoddcos-frequency g) (* 0.5 pi)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (eoddcos-osc g) (make-oscil (eoddcos-frequency g) (* 0.5 pi)))
+				 g))
   (frequency 0.0) (r 1.0)
   (osc #f :type clm))
 
@@ -1219,10 +1194,9 @@
 ;;; r^k/k -- this sums to ln(1/(1-x)) if x<1 (J 118)
 
 (def-clm-struct (rkcos 
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (rkcos-osc g) (make-oscil (rkcos-frequency g) (* 0.5 pi)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (rkcos-osc g) (make-oscil (rkcos-frequency g) (* 0.5 pi)))
+				 g))
   (frequency 0.0) (r 0.0)
   (osc #f :type clm))
 
@@ -1245,10 +1219,9 @@
 
 
 (def-clm-struct (rksin
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (rksin-incr g) (hz->radians (rksin-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (rksin-incr g) (hz->radians (rksin-frequency g)))
+				 g))
   (frequency 0.0) (r 1.0)
   (angle 0.0) (incr 0.0))
 
@@ -1278,11 +1251,10 @@
 |#
 
 (def-clm-struct (rkssb
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (rkssb-carincr g) (hz->radians (rkssb-carfreq g)))
-		   (set! (rkssb-modincr g) (hz->radians (rkssb-modfreq g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (rkssb-carincr g) (hz->radians (rkssb-carfreq g)))
+				 (set! (rkssb-modincr g) (hz->radians (rkssb-modfreq g)))
+				 g))
   (carfreq 0.0) (modfreq 1.0) (r 1.0)
   (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
 
@@ -1325,10 +1297,9 @@
 ;;; G&R 2nd col 3rd from last
 
 (def-clm-struct (rk!cos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (rk!cos-incr g) (hz->radians (rk!cos-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (rk!cos-incr g) (hz->radians (rk!cos-frequency g)))
+				 g))
   (frequency 0.0) (r 0.0)
   (angle 0.0) (incr 0.0))
 
@@ -1384,11 +1355,10 @@
 |#
 
 (def-clm-struct (rk!ssb
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (rk!ssb-carincr g) (hz->radians (rk!ssb-carfreq g)))
-		   (set! (rk!ssb-modincr g) (hz->radians (rk!ssb-modfreq g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (rk!ssb-carincr g) (hz->radians (rk!ssb-carfreq g)))
+				 (set! (rk!ssb-modincr g) (hz->radians (rk!ssb-modfreq g)))
+				 g))
   (carfreq 0.0) (modfreq 1.0) (r 1.0)
   (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
 
@@ -1456,10 +1426,9 @@
 ;;;   of the nth cos involves hypergeometric series (looks like r^n/n! (~=e^n?) with a million other terms).
 
 (def-clm-struct (r2k!cos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (r2k!cos-osc g) (make-oscil (r2k!cos-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (r2k!cos-osc g) (make-oscil (r2k!cos-frequency g)))
+				 g))
   (frequency 0.0) (r 0.0) (k 0.0)
   (osc #f :type clm))
 
@@ -1556,10 +1525,9 @@
 ;;; Jolley 1st col 1st row
 
 (def-clm-struct (k2sin
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (k2sin-incr g) (hz->radians (k2sin-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (k2sin-incr g) (hz->radians (k2sin-frequency g)))
+				 g))
   (frequency 0.0)
   (angle 0.0) (incr 0.0))
 
@@ -1586,10 +1554,9 @@
 ;;; using the 2nd Sansone formula, we get the sum of cos case by using a=-5b/4 or 3/(4cosx-5)
 
 (def-clm-struct (k2cos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (k2cos-incr g) (hz->radians (k2cos-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (k2cos-incr g) (hz->radians (k2cos-frequency g)))
+				 g))
   (frequency 0.0)
   (angle 0.0) (incr 0.0))
 
@@ -1615,11 +1582,10 @@
 
 
 (def-clm-struct (k2ssb
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (k2ssb-carincr g) (hz->radians (k2ssb-carfreq g)))
-		   (set! (k2ssb-modincr g) (hz->radians (k2ssb-modfreq g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (k2ssb-carincr g) (hz->radians (k2ssb-carfreq g)))
+				 (set! (k2ssb-modincr g) (hz->radians (k2ssb-modfreq g)))
+				 g))
   (carfreq 0.0) (modfreq 1.0)
   (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
 
@@ -1657,10 +1623,9 @@
 ;;;   (not normalized)
 
 (def-clm-struct (dblsum
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (dblsum-incr g) (hz->radians (* 2 (dblsum-frequency g))))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (dblsum-incr g) (hz->radians (* 2 (dblsum-frequency g))))
+				 g))
   (frequency 0.0) (r 0.0)
   (angle 0.0) (incr 0.0))
 
@@ -1690,11 +1655,10 @@
 ;;;  G&R 2nd col rows 7&8 (odd r^k/k) 
 
 (def-clm-struct (rkoddssb
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (rkoddssb-carincr g) (hz->radians (- (rkoddssb-carfreq g) (rkoddssb-modfreq g))))
-		   (set! (rkoddssb-modincr g) (hz->radians (rkoddssb-modfreq g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (rkoddssb-carincr g) (hz->radians (- (rkoddssb-carfreq g) (rkoddssb-modfreq g))))
+				 (set! (rkoddssb-modincr g) (hz->radians (rkoddssb-modfreq g)))
+				 g))
   (carfreq 0.0) (modfreq 1.0) (r 0.0)
   (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
 
@@ -1765,10 +1729,9 @@
 ;;;   for low n, we could use the Tn roots stuff (clm.c)
 
 (def-clm-struct (krksin
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (krksin-incr g) (hz->radians (krksin-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (krksin-incr g) (hz->radians (krksin-frequency g)))
+				 g))
   (frequency 0.0) (r 0.0)
   (angle 0.0) (incr 0.0))
 
@@ -1821,10 +1784,9 @@
 ;;; Zygmund 2nd -- not actually very useful, but shows sin 2nx of abs
 
 (def-clm-struct (abssin
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (abssin-osc g) (make-oscil (abssin-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (abssin-osc g) (make-oscil (abssin-frequency g)))
+				 g))
   (frequency 0.0)
   (osc #f :type clm))
 
@@ -1850,10 +1812,9 @@
 ;;; from Sansone, p182, assumptions: a not 0, b not 0, b/a real, abs(b/a)<1 (b less than a)
 
 (def-clm-struct (abcos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (abcos-incr g) (hz->radians (abcos-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (abcos-incr g) (hz->radians (abcos-frequency g)))
+				 g))
   (frequency 0.0) (a 0.0) (b 0.0)
   (angle 0.0) (incr 0.0))
 
@@ -1886,10 +1847,9 @@
 
 
 (def-clm-struct (absin
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (absin-incr g) (hz->radians (absin-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (absin-incr g) (hz->radians (absin-frequency g)))
+				 g))
   (frequency 0.0) (a 0.0) (b 0.0)
   (angle 0.0) (incr 0.0))
 
@@ -1924,10 +1884,9 @@
 ;;; J 2nd col 3rd row
 
 (def-clm-struct (r2k2cos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (r2k2cos-incr g) (hz->radians (r2k2cos-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (r2k2cos-incr g) (hz->radians (r2k2cos-frequency g)))
+				 g))
   (frequency 0.0) (r 1.0)
   (angle 0.0) (incr 0.0))
 
@@ -1980,10 +1939,9 @@
 ;;;    Alexander Kritov suggests time-varying "a" is good (this is a translation of his code)
 
 (def-clm-struct (blsaw
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (blsaw-incr g) (hz->radians (blsaw-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (blsaw-incr g) (hz->radians (blsaw-frequency g)))
+				 g))
   (frequency 0.0) (n 1 :type int) (r 0.0)
   (angle 0.0) (incr 0.0))
 
@@ -2026,10 +1984,9 @@
 ;;; asymmetric fm gens
 
 (def-clm-struct (asyfm
-		 :make-wrapper 
-		 (lambda (gen)
-		   (set! (asyfm-freq gen) (hz->radians (asyfm-frequency gen)))
-		   gen))
+		 :make-wrapper (lambda (gen)
+				 (set! (asyfm-freq gen) (hz->radians (asyfm-frequency gen)))
+				 gen))
   (frequency 0.0) (ratio 1.0) (r 1.0) (index 1.0)
   (freq 0.0) (phase 0.0))
 
@@ -2131,13 +2088,12 @@
 ;;; is there a formula for the max?
 
 (def-clm-struct (bess
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (bess-incr g) (hz->radians (bess-frequency g)))
-		   (if (>= (bess-n g) (vct-length bessel-peaks)) 
-		       (set! (bess-norm g) 0.145) 
-		       (set! (bess-norm g) (vct-ref bessel-peaks (bess-n g))))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (bess-incr g) (hz->radians (bess-frequency g)))
+				 (if (>= (bess-n g) (vct-length bessel-peaks)) 
+				     (set! (bess-norm g) 0.145) 
+				     (set! (bess-norm g) (vct-ref bessel-peaks (bess-n g))))
+				 g))
   (frequency 0.0) (n 0 :type int)
   (arg 0.0) (incr 0.0) (norm 1.0))
 
@@ -2192,10 +2148,9 @@
 ;;;   em here is "Neumann's factor" (p22) = 1 if m=0, 2 otherwise
 
 (def-clm-struct (jjcos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (jjcos-incr g) (hz->radians (jjcos-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (jjcos-incr g) (hz->radians (jjcos-frequency g)))
+				 g))
   (frequency 0.0) (r 0.0) (a 0.0) (k 1 :type int)
   (angle 0.0) (incr 0.0))
 
@@ -2334,10 +2289,9 @@ which again matches
 ;;; main difference from FM: index is divided by 2, J value is squared, else just like cos(sin)
 
 (def-clm-struct (j0evencos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (j0evencos-incr g) (hz->radians (j0evencos-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (j0evencos-incr g) (hz->radians (j0evencos-frequency g)))
+				 g))
   (frequency 0.0) (index 1.0)
   (angle 0.0) (incr 0.0))
 
@@ -2446,10 +2400,9 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; --------------------------------------------------------------------------------
 
 (def-clm-struct (j2cos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (j2cos-incr g) (hz->radians (j2cos-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (j2cos-incr g) (hz->radians (j2cos-frequency g)))
+				 g))
   (frequency 0.0) (r 0.0) (n 1 :type int)
   (angle 0.0) (incr 0.0))
 
@@ -2485,10 +2438,9 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; --------------------------------------------------------------------------------
 
 (def-clm-struct (jpcos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (jpcos-incr g) (hz->radians (jpcos-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (jpcos-incr g) (hz->radians (jpcos-frequency g)))
+				 g))
   (frequency 0.0) (r 0.0) (a 0.0) (k 1 :type int)
   (angle 0.0) (incr 0.0))
 
@@ -2533,10 +2485,9 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; use J0(cos)+J1(cos) to get full spectrum
 
 (def-clm-struct (j0j1cos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (j0j1cos-incr g) (hz->radians (j0j1cos-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (j0j1cos-incr g) (hz->radians (j0j1cos-frequency g)))
+				 g))
   (frequency 0.0) (index 1.0)
   (angle 0.0) (incr 0.0))
 
@@ -2618,16 +2569,15 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 (def-clm-struct (jycos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (jycos-incr g) (hz->radians (jycos-frequency g)))
-		   (let ((a (jycos-a g)) ; "c"
-			 (r (jycos-r g))); "b"
-		     (if (<= r a)
-			 (format #t ";jycos a: ~A must be < r: ~A" a r))
-		     (if (<= (+ (* a a) (* r r)) (* 2 a r))
-			 (format #t ";jycos a: ~A, r: ~A will cause bes-y0 to return -inf!" a r)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (jycos-incr g) (hz->radians (jycos-frequency g)))
+				 (let ((a (jycos-a g)) ; "c"
+				       (r (jycos-r g))); "b"
+				   (if (<= r a)
+				       (format #t ";jycos a: ~A must be < r: ~A" a r))
+				   (if (<= (+ (* a a) (* r r)) (* 2 a r))
+				       (format #t ";jycos a: ~A, r: ~A will cause bes-y0 to return -inf!" a r)))
+				 g))
   (frequency 0.0) (r 1.0) (a 0.5) ; "b" and "c" in the docs
   (angle 0.0) (incr 0.0))
 
@@ -2673,10 +2623,9 @@ index 10 (so 10/2 is the bes-jn arg):
 
 #|
 (def-clm-struct (jcos
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (jcos-incr g) (hz->radians (jcos-frequency g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (jcos-incr g) (hz->radians (jcos-frequency g)))
+				 g))
   (frequency 0.0) (n 0 :type int) (r 1.0) (a 0.5) ; "b" and "c" in the docs
   (angle 0.0) (incr 0.0))
 
@@ -2857,11 +2806,10 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; the same trick would work in the other two cases -- gapped spectra
 
 (def-clm-struct (fmssb
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (fmssb-carincr g) (hz->radians (fmssb-carfreq g)))
-		   (set! (fmssb-modincr g) (hz->radians (fmssb-modfreq g)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (fmssb-carincr g) (hz->radians (fmssb-carfreq g)))
+				 (set! (fmssb-modincr g) (hz->radians (fmssb-modfreq g)))
+				 g))
   (carfreq 0.0) (modfreq 1.0) (index 1.0)
   (carangle 0.0) (carincr 0.0) (modangle 0.0) (modincr 0.0))
 
@@ -2896,7 +2844,8 @@ index 10 (so 10/2 is the bes-jn arg):
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
-	   ((= i 30000)) (set! (fmssb-index gen) (env indf))
+	   ((= i 30000)) 
+	 (set! (fmssb-index gen) (env indf))
 	 (outa i (* (env ampf) (fmssb gen 0.0)) *output*))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -2906,17 +2855,22 @@ index 10 (so 10/2 is the bes-jn arg):
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
-	   ((= i 30000)) (set! (fmssb-index gen) (env indf))
+	   ((= i 30000)) 
+	 (set! (fmssb-index gen) (env indf))
 	 (outa i (* (env ampf) (fmssb gen 0.0)) *output*))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-fmssb 100.0 540.0 :index 1.0)) ; also 100 700
 	(ampf (make-env '(0 0 1 1 100 0) :base 32 :scaler .3 :end 30000)) ; also 0 0 1 1 3 1 100 0...
+	;; '(0 0 1 .75 2 1 3 .95 4 .5 10 0) -> bowed effect, '(0 0 1 .75 2 1 3 .125 4 .25 5 1 6 .8 20 0)
+	;; '(0 0 1 .75 2 1 3 .1 4 .7 5 1 6 .8 100 0) -> clickier attack (300 too)
 	(indf (make-env '(0 1 1 0) :end 30000 :base 32 :scaler 10)))
+        ;; '(0 0 1 1 3 0)
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
-	   ((= i 30000)) (set! (fmssb-index gen) (env indf))
+	   ((= i 30000)) 
+	 (set! (fmssb-index gen) (env indf))
 	 (outa i (* (env ampf) (fmssb gen 0.0)) *output*))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -2926,8 +2880,60 @@ index 10 (so 10/2 is the bes-jn arg):
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
-	   ((= i 30000)) (set! (fmssb-index gen) (env indf))
+	   ((= i 30000)) 
+	 (set! (fmssb-index gen) (env indf))
 	 (outa i (* (env ampf) (fmssb gen 0.0)) *output*))))))
+
+;;; machines
+(definstrument (machine1 beg dur cfreq mfreq amp index gliss)
+  (let* ((gen (make-fmssb cfreq mfreq :index 1.0))
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 1 .75 2 1 3 .1 4 .7 5 1 6 .8 100 0) :base 32 :scaler amp :duration dur))
+	 (indf (make-env '(0 0 1 1 3 0) :duration dur :base 32 :scaler index))
+	 (frqf (make-env (if (> gliss 0.0) '(0 0 1 1) '(0 1 1 0)) :duration dur :scaler (hz->radians (abs gliss)))))
+    (run 
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop)) 
+	 (set! (fmssb-index gen) (env indf))
+	 (outa i (* (env ampf) (fmssb gen (env frqf))) *output*))))))
+
+(with-sound (:statistics #t :play #t)
+  (do ((i 0.0 (+ i .5)))
+      ((>= i 2.0))
+    (machine1 i .3 100 540 0.5 3.0 0.0)
+    (machine1 i .1 100 1200 .5 10.0 200.0)
+    (machine1 i .3 100 50 .75 10.0 0.0)
+    (machine1 (+ i .1) .1 100 1200 .5 20.0 1200.0)
+    (machine1 (+ i .3) .1 100 1200 .5 20.0 1200.0)
+    (machine1 (+ i .3) .1 100 200 .5 10.0 200.0)
+    (machine1 (+ i .36) .1 100 200 .5 10.0 200.0)
+    (machine1 (+ i .4) .1 400 300 .5 10.0 -900.0)
+    (machine1 (+ i .4) .21 100 50 .75 10.0 1000.0)
+    ))
+
+(with-sound (:statistics #t :play #t)
+  (do ((i 0.0 (+ i .2)))
+      ((>= i 2.0))
+    (machine1 i .3 100 540 0.5 4.0 0.0)
+    (machine1 (+ i .1) .3 200 540 0.5 3.0 0.0))
+  (do ((i 0.0 (+ i .6)))
+      ((>= i 2.0))
+    (machine1 i .3 1000 540 0.5 6.0 0.0)
+    (machine1 (+ i .1) .1 2000 540 0.5 1.0 0.0)
+    ))
+
+(with-sound (:statistics #t :play #t)
+  (do ((i 0.0 (+ i .2)))
+      ((>= i 2.0))
+    (machine1 i .3 1200 540 0.5 40.0 0.0)
+    (machine1 (+ i .1) .3 2400 540 0.5 3.0 0.0))
+  (do ((i 0.0 (+ i .6)))
+      ((>= i 2.0))
+    (machine1 i .3 1000 540 0.5 6.0 0.0)
+    (machine1 (+ i .1) .1 2000 540 0.5 10.0 100.0)
+    ))
 |#
 
 
@@ -2959,14 +2965,13 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; mostly useful as a test of a vct field 
 
 (def-clm-struct (k3sin
-		 :make-wrapper
-		 (lambda (g)
-		   (set! (k3sin-incr g) (hz->radians (k3sin-frequency g)))
-		   (set! (k3sin-coeffs g) (vct 0.0
-					       (/ (* pi pi) 6.0)
-					       (/ pi -4.0)
-					       (/ 1.0 12.0)))
-		   g))
+		 :make-wrapper (lambda (g)
+				 (set! (k3sin-incr g) (hz->radians (k3sin-frequency g)))
+				 (set! (k3sin-coeffs g) (vct 0.0
+							     (/ (* pi pi) 6.0)
+							     (/ pi -4.0)
+							     (/ 1.0 12.0)))
+				 g))
   (frequency 0.0)
   (angle 0.0) (incr 0.0) 
   (coeffs #f :type vct))
@@ -2986,7 +2991,81 @@ index 10 (so 10/2 is the bes-jn arg):
 	   ((= i 30000))
 	 (outa i (k3sin gen 0.0) *output*))))))
 |#
-    
+
+
+;;; --------------------------------------------------------------------------------
+
+;;; I(z) case A&S
+
+(def-clm-struct (izcos
+		 :make-wrapper (lambda (g)
+				 (set! (izcos-incr g) (hz->radians (izcos-frequency g)))
+				 (set! (izcos-dc g) (bes-i0 (izcos-r g)))
+				 (set! (izcos-norm g) (- (exp (izcos-r g)) (izcos-dc g)))
+				 g)
+		 :methods (list
+			   (list 'mus-scaler
+				 (lambda (g) 
+				   (izcos-r g))
+				 (lambda (g val)
+				   (set! (izcos-r g) val)
+				   (set! (izcos-dc g) (bes-i0 val))
+				   (set! (izcos-norm g) (- (exp val) (izcos-dc g)))))
+
+			   (list 'mus-offset
+				 (lambda (g)
+				   (izcos-dc g)))
+
+			   (list 'mus-describe
+				 (lambda (g)
+				   (format #f ";izcos freq: ~A, r: ~A" (mus-frequency g) (mus-scaler g))))
+
+			   ;; these could be automatically included in a specialization of def-clm-struct
+			   (list 'mus-increment
+				 (lambda (g)
+				   (izcos-incr g))
+				 (lambda (g val)
+				   (set! (izcos-incr g) val)))
+
+			   (list 'mus-phase
+				 (lambda (g)
+				   (izcos-angle g))
+				 (lambda (g val)
+				   (set! (izcos-angle g) val)))
+
+			   (list 'mus-name
+				 (lambda (g) "izcos"))
+
+			   (list 'mus-frequency
+				 (lambda (g) 
+				   (radians->hz (izcos-incr g)))
+				 (lambda (g val) 
+				   (set! (izcos-incr g) (hz->radians val))))))
+  (frequency 0.0) (r 1.0)
+  (angle 0.0) (incr 0.0)
+  (dc 0.0) (norm 1.0))
+
+(define (izcos gen fm)
+  (declare (gen izcos) (fm float))
+  (let* ((x (izcos-angle gen))
+	 (z (izcos-r gen))
+	 (dc (izcos-dc gen))
+	 (norm (izcos-norm gen)))
+    (set! (izcos-angle gen) (+ x fm (izcos-incr gen)))
+    (/ (- (exp (* z (cos x)))
+	  dc)
+       norm)))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-izcos 100.0 1.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000))
+	 (outa i (izcos gen 0.0) *output*))))))
+|#
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -3054,4 +3133,4 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; TODO: delay + sqr as handler for coupled rand-interp envs
 ;;; TODO: check the double top env, and talking drum effect
-
+;;; TODO: interleaved?

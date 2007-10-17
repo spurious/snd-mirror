@@ -1034,6 +1034,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		(eq? (car obj) ',(string->symbol sname)))))
        (define ,(string->symbol (string-append sname "-methods"))
 	 (lambda ()
+	   "clm struct local method list accessor"
 	   ,methods))
        (def-optkey-fun (,(string->symbol (string-append "make-" sname))
 		        ,@(map (lambda (n)

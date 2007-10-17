@@ -53161,7 +53161,7 @@ EDITS: 1
 		      (run 
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
-			     ((= i 20000))
+			     ((= i 10000))
 			   (outa i (nxysin gen 0.0) *output*))))))
 
 	(with-sound (:clipped #f)
@@ -53169,7 +53169,7 @@ EDITS: 1
 		      (run 
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
-			     ((= i 20000))
+			     ((= i 10000))
 			   (outa i (nxycos gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f)
@@ -53177,7 +53177,7 @@ EDITS: 1
 		      (run 
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
-			     ((= i 20000))
+			     ((= i 10000))
 			   (outa i (nxy1cos gen 0.0) *output*))))))
 	
 	(with-sound (:clipped #f :statistics #t)
@@ -53185,15 +53185,31 @@ EDITS: 1
 		      (run 
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
-			     ((= i 20000))
+			     ((= i 10000))
 			   (outa i (nxy1sin gen 0.0) *output*))))))
 
 	(with-sound (:clipped #f)
 		    (let ((black4 (make-blackman4 440.0)))
 		      (run (lambda ()
 			     (do ((i 0 (1+ i)))
-				 ((= i 20000))
+				 ((= i 10000))
 			       (outa i (blackman4 black4 0.0) *output*))))))
+
+	(with-sound (:clipped #f)
+		    (let ((gen (make-k3sin 100.0)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (k3sin gen 0.0) *output*))))))
+
+	(with-sound (:clipped #f :statistics #t)
+		    (let ((gen (make-izcos 100.0 1.0)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 30000))
+			   (outa i (izcos gen 0.0) *output*))))))
 
 	(let ((g (make-osc329 440.0)) (f 10.0)) 
 	  (run (lambda () (set! f (osc329 g 0.0)))) 

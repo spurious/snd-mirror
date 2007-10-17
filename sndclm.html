@@ -1644,7 +1644,6 @@ but perhaps a filter is a simpler approach.  There are a lot more of these "kern
 <td><img src="fejer.png" alt="fejer sum"></td>
 <td><img src="poussin.png" alt="poussin sum"></td>
 <td><img src="jackson.png" alt="jackson sum"></td>
-</tr><tr><td height=8 colspan=3></td>
 </tr></table>
 
 <!--
@@ -1653,7 +1652,7 @@ poussin (5)
 soc2 (5)
 fejer2 (10)
 
-;; this is in snd9.scm now &mdash; new form is kosine
+;; this is in snd9.scm now -- new form is kosine
 (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
   (let ((freq (hz->radians 100.0)))
     (do ((i 0 (1+ i))
@@ -2027,7 +2026,7 @@ sceq40: 27.8.6 (p1005)
 <tr><td colspan=3 height=25></td></tr>
 
 
-<tr><td><img src="sceq39.png" alt="I(k) sum"></td><td></td>
+<tr><td><a class=invisible href="#izcos"><img src="sceq39.png" alt="I(k) sum"></a></td><td></td>
 <td><a class=invisible href="#k3sin"><img src="sceq40.png" alt="n3 case"></a></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>from Abramowitz and Stegun, "Handbook of Mathematical Functions", 9.6.34, 27.8.6</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
@@ -4699,6 +4698,16 @@ This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosin
 </pre>
 
 <p>This uses bes-y0 to produce components scaled by Yn(r)*Jn(a).  bes-y0(0) is -inf, so a^2 + r^2 should be greater than 2ar.
+</p>
+
+
+<pre>
+  <A class=def NAME="make-izcos">make-izcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 1.0)
+  <A class=def NAME="izcos">izcos</A> gen fm
+  <A class=def NAME="izcos?">izcos?</A> gen
+</pre>
+
+<p>This produces a sum of cosines scaled by In(r).
 </p>
 
 

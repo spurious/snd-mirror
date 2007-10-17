@@ -3,7 +3,7 @@
 (provide 'snd-numerics.scm)
 
 ;;; random stuff I needed at one time or another while goofing around...
-
+;;;   there are a lot more in snd-test.scm
 
 (define factorial
   (let* ((num-factorials 128)
@@ -277,3 +277,56 @@
 |#
 
 
+(define (bes-i1 x)				;I1(x)
+  (if (< (abs x) 3.75)
+      (let* ((y (expt (/ x 3.75) 2)))
+	(* x (+ 0.5
+		(* y (+ 0.87890594
+			(* y (+ 0.51498869
+				(* y (+ 0.15084934
+					(* y (+ 0.2658733e-1
+						(* y (+ 0.301532e-2
+							(* y 0.32411e-3))))))))))))))
+      (let* ((ax (abs x))
+	     (y (/ 3.75 ax))
+	     (ans1 (+ 0.2282967e-1
+		      (* y (+ -0.2895312e-1
+			      (* y (+ 0.1787654e-1 
+				      (* y -0.420059e-2)))))))
+	     (ans2 (+ 0.39894228
+		      (* y (+ -0.3988024e-1
+			      (* y (+ -0.362018e-2
+				      (* y (+ 0.163801e-2
+					      (* y (+ -0.1031555e-1 (* y ans1)))))))))))
+	     (sign (if (< x 0.0) -1.0 1.0)))
+	(* (/ (exp ax) (sqrt ax)) ans2 sign))))
+
+(define (bes-in n x)			;return In(x) for any integer n, real x
+  (if (= n 0) 
+      (bes-i0 x)
+      (if (= n 1) 
+	  (bes-i1 x)
+	  (if (= x 0.0) 
+	      0.0
+	      (let* ((iacc 40)
+		     (bigno 1.0e10)
+		     (bigni 1.0e-10)
+		     (ans 0.0)
+		     (tox (/ 2.0 (abs x)))
+		     (bip 0.0)
+		     (bi 1.0)
+		     (m (* 2 (+ n (inexact->exact (truncate (sqrt (* iacc n)))))))
+		     (bim 0.0))
+		(do ((j m (1- j)))
+		    ((= j 0))
+		  (set! bim (+ bip (* j tox bi)))
+		  (set! bip bi)
+		  (set! bi bim)
+		  (if (> (abs bi) bigno)
+		      (begin
+			(set! ans (* ans bigni))
+			(set! bi (* bi bigni))
+			(set! bip (* bip bigni))))
+		  (if (= j n) (set! ans bip)))
+		(if (and (< x 0.0) (odd? n)) (set! ans (- ans)))
+		(* ans (/ (bes-i0 x) bi)))))))
