@@ -1469,7 +1469,7 @@
 	       *output*))))))
 
 (with-sound (:statistics #t :play #t :clipped #f)
-  (pianoy 0 3 100 .5 5 .12))
+  (pianoy 0 3 100 .5))
 ;;; this can be combined with bouncy-like changes to get an evolving sound
 
 (definstrument (pianoy1 beg dur freq amp :optional (bounce-freq 5) (bounce-amp 20))
@@ -1716,6 +1716,16 @@
   (do ((i 0 (1+ i)))
       ((= i 10))
     (glassy (* i .3) .1 (+ 400 (* 100 i)) .5)))
+
+(with-sound (:statistics #t :play #t :scaled-to .5)
+  (let ((gen (make-rkoddssb 5000.0 500.0 0.95))
+	(ampf (make-env '(0 0 9 1 10 0) :base 32 :end 10000))
+	(noi (make-rand 10000 .01)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (* (env ampf) (sin (rkoddssb gen (rand noi)))) *output*))))))
 |#
 
 
@@ -2884,7 +2894,8 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (set! (fmssb-index gen) (env indf))
 	 (outa i (* (env ampf) (fmssb gen 0.0)) *output*))))))
 
-;;; machines
+;;; imaginary machines (also imaginary beasts)
+
 (definstrument (machine1 beg dur cfreq mfreq amp index gliss)
   (let* ((gen (make-fmssb cfreq mfreq :index 1.0))
 	 (start (seconds->samples beg))
@@ -2922,6 +2933,30 @@ index 10 (so 10/2 is the bes-jn arg):
       ((>= i 2.0))
     (machine1 i .3 1000 540 0.5 6.0 0.0)
     (machine1 (+ i .1) .1 2000 540 0.5 1.0 0.0)
+    ))
+
+(with-sound (:statistics #t :play #t :scaled-to .5)
+  (let ((gen (make-rkoddssb 1000.0 2000.0 0.875)) 
+	(noi (make-rand 15000 .04))
+	(gen1 (make-rkoddssb 100.0 10.0 0.9))
+	(ampf (make-env '(0 0 1 1 11 1 12 0) :duration 11.0 :scaler .5))
+	(frqf (make-env '(0 0 1 1 2 0 10 0 11 1 12 0 20 0) :duration 11.0 :scaler (hz->radians 1.0))))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i (* 12 44100)))
+	 (outa i (* (env ampf) 
+		    (+ (rkoddssb gen1 (env frqf))
+		       (* .2 (sin (rkoddssb gen (rand noi))))))
+	       *output*)))))
+  (do ((i 0.0 (+ i 2)))
+      ((>= i 10.0))
+    (machine1 i 3 100 700 0.5 4.0 0.0)
+    (machine1 (+ i 1) 3 200 700 0.5 3.0 0.0))
+  (do ((i 0.0 (+ i 6)))
+      ((>= i 10.0))
+    (machine1 i 3 1000 540 0.5 6.0 0.0)
+    (machine1 (+ i 1) 1 2000 540 0.5 1.0 0.0)
     ))
 
 (with-sound (:statistics #t :play #t)
@@ -3133,4 +3168,3 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; TODO: delay + sqr as handler for coupled rand-interp envs
 ;;; TODO: check the double top env, and talking drum effect
-;;; TODO: interleaved?

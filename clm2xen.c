@@ -6701,7 +6701,7 @@ static XEN g_ssb_am(XEN obj, XEN insig, XEN fm)
       XEN_ASSERT_TYPE(XEN_NUMBER_P(fm), fm, XEN_ARG_3, S_ssb_am, "a number");
       return(C_TO_XEN_DOUBLE(mus_ssb_am(XEN_TO_MUS_ANY(obj), insig1, XEN_TO_C_DOUBLE(fm))));
     }
-  return(C_TO_XEN_DOUBLE(mus_ssb_am_1(XEN_TO_MUS_ANY(obj), insig1)));
+  return(C_TO_XEN_DOUBLE(mus_ssb_am_unmodulated(XEN_TO_MUS_ANY(obj), insig1)));
 }
 
 
@@ -6717,8 +6717,8 @@ static XEN g_ssb_bank(XEN ssbs, XEN filters, XEN inval, XEN size)
   len = XEN_TO_C_INT(size);
   val = XEN_TO_C_DOUBLE(inval);
   for (i = 0; i < len; i++)
-    sum += mus_ssb_am_1(XEN_TO_MUS_ANY(XEN_VECTOR_REF(ssbs, i)),
-			mus_fir_filter(XEN_TO_MUS_ANY(XEN_VECTOR_REF(filters, i)), val));
+    sum += mus_ssb_am_unmodulated(XEN_TO_MUS_ANY(XEN_VECTOR_REF(ssbs, i)),
+				  mus_fir_filter(XEN_TO_MUS_ANY(XEN_VECTOR_REF(filters, i)), val));
   return(C_TO_XEN_DOUBLE(sum));
 }
 

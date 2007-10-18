@@ -388,7 +388,7 @@ Float mus_set_formant_radius(mus_any *gen, Float val);
 
 
 Float mus_oscil(mus_any *o, Float fm, Float pm);
-Float mus_oscil_0(mus_any *ptr);
+Float mus_oscil_unmodulated(mus_any *ptr);
 Float mus_oscil_fm(mus_any *ptr, Float fm);
 Float mus_oscil_pm(mus_any *ptr, Float pm);
 bool mus_oscil_p(mus_any *ptr);
@@ -402,26 +402,26 @@ mus_any *mus_make_sum_of_sines(int sines, Float freq, Float phase);
 bool mus_sum_of_sines_p(mus_any *ptr);
 
 Float mus_delay(mus_any *gen, Float input, Float pm);
-Float mus_delay_1(mus_any *ptr, Float input);
+Float mus_delay_unmodulated(mus_any *ptr, Float input);
 Float mus_tap(mus_any *gen, Float loc);
-Float mus_tap_1(mus_any *gen);
+Float mus_tap_unmodulated(mus_any *gen);
 mus_any *mus_make_delay(int size, Float *line, int line_size, mus_interp_t type);
 bool mus_delay_p(mus_any *ptr);
 bool mus_delay_line_p(mus_any *gen); /* added 2-Mar-03 for tap error checks */
 Float mus_delay_tick(mus_any *ptr, Float input);
 
 Float mus_comb(mus_any *gen, Float input, Float pm);
-Float mus_comb_1(mus_any *gen, Float input);
+Float mus_comb_unmodulated(mus_any *gen, Float input);
 mus_any *mus_make_comb(Float scaler, int size, Float *line, int line_size, mus_interp_t type);
 bool mus_comb_p(mus_any *ptr);
 
 Float mus_notch(mus_any *gen, Float input, Float pm);
-Float mus_notch_1(mus_any *gen, Float input);
+Float mus_notch_unmodulated(mus_any *gen, Float input);
 mus_any *mus_make_notch(Float scaler, int size, Float *line, int line_size, mus_interp_t type);
 bool mus_notch_p(mus_any *ptr);
 
 Float mus_all_pass(mus_any *gen, Float input, Float pm);
-Float mus_all_pass_1(mus_any *gen, Float input);
+Float mus_all_pass_unmodulated(mus_any *gen, Float input);
 mus_any *mus_make_all_pass(Float backward, Float forward, int size, Float *line, int line_size, mus_interp_t type);
 bool mus_all_pass_p(mus_any *ptr);
 
@@ -430,7 +430,7 @@ bool mus_moving_average_p(mus_any *ptr);
 Float mus_moving_average(mus_any *ptr, Float input);
 
 Float mus_table_lookup(mus_any *gen, Float fm);
-Float mus_table_lookup_1(mus_any *gen);
+Float mus_table_lookup_unmodulated(mus_any *gen);
 mus_any *mus_make_table_lookup(Float freq, Float phase, Float *wave, int wave_size, mus_interp_t type);
 bool mus_table_lookup_p(mus_any *ptr);
 Float *mus_partials_to_wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize);
@@ -456,8 +456,8 @@ void mus_set_rand_seed(unsigned long seed);
 unsigned long mus_rand_seed(void);
 Float mus_random(Float amp);
 Float mus_frandom(Float amp);
-Float mus_random_1(void);
-Float mus_frandom_1(void);
+Float mus_random_no_input(void);
+Float mus_frandom_no_input(void);
 int mus_irandom(int amp);
 
 Float mus_rand(mus_any *gen, Float fm);
@@ -471,8 +471,8 @@ bool mus_rand_interp_p(mus_any *ptr);
 mus_any *mus_make_rand_interp_with_distribution(Float freq, Float base, Float *distribution, int distribution_size);
 
 Float mus_asymmetric_fm(mus_any *gen, Float index, Float fm);
-Float mus_asymmetric_fm_1(mus_any *gen, Float index);
-Float mus_asymmetric_fm_0(mus_any *gen);
+Float mus_asymmetric_fm_unmodulated(mus_any *gen, Float index);
+Float mus_asymmetric_fm_no_input(mus_any *gen);
 mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio);
 bool mus_asymmetric_fm_p(mus_any *ptr);
 
@@ -522,28 +522,28 @@ Float *mus_filter_set_ycoeffs(mus_any *ptr, Float *new_data);
 int mus_filter_set_order(mus_any *ptr, int order);
 
 Float mus_filtered_comb(mus_any *ptr, Float input, Float pm);
-Float mus_filtered_comb_1(mus_any *ptr, Float input);
+Float mus_filtered_comb_unmodulated(mus_any *ptr, Float input);
 bool mus_filtered_comb_p(mus_any *ptr);
 mus_any *mus_make_filtered_comb(Float scaler, int size, Float *line, int line_size, mus_interp_t type, mus_any *filt);
 
 Float mus_wave_train(mus_any *gen, Float fm);
-Float mus_wave_train_1(mus_any *gen);
+Float mus_wave_train_unmodulated(mus_any *gen);
 mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wsize, mus_interp_t type);
 bool mus_wave_train_p(mus_any *gen);
 
 mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size);
 Float mus_waveshape(mus_any *ptr, Float index, Float fm);
-Float mus_waveshape_2(mus_any *ptr, Float fm);
-Float mus_waveshape_1(mus_any *ptr, Float index);
-Float mus_waveshape_0(mus_any *ptr);
+Float mus_waveshape_fm(mus_any *ptr, Float fm);
+Float mus_waveshape_unmodulated(mus_any *ptr, Float index);
+Float mus_waveshape_no_input(mus_any *ptr);
 bool mus_waveshape_p(mus_any *ptr);
 Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float *table);
 Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial_t kind);
 mus_any *mus_make_polyshape(Float frequency, Float phase, Float *coeffs, int size);
 Float mus_polyshape(mus_any *ptr, Float index, Float fm);
-Float mus_polyshape_2(mus_any *ptr, Float fm);
-Float mus_polyshape_1(mus_any *ptr, Float index);
-Float mus_polyshape_0(mus_any *ptr);
+Float mus_polyshape_fm(mus_any *ptr, Float fm);
+Float mus_polyshape_unmodulated(mus_any *ptr, Float index);
+Float mus_polyshape_no_input(mus_any *ptr);
 bool mus_polyshape_p(mus_any *ptr);
 
 Float mus_env(mus_any *ptr);
@@ -705,7 +705,7 @@ Float *mus_phase_vocoder_phase_increments(mus_any *ptr);
 
 mus_any *mus_make_ssb_am(Float freq, int order);
 bool mus_ssb_am_p(mus_any *ptr);
-Float mus_ssb_am_1(mus_any *ptr, Float insig);
+Float mus_ssb_am_unmodulated(mus_any *ptr, Float insig);
 Float mus_ssb_am(mus_any *ptr, Float insig, Float fm);
 
 void mus_clear_sinc_tables(void);
@@ -721,6 +721,26 @@ mus_any *mus_make_mixer_with_data(int chans, Float *data);
 #ifndef CLM_DISABLE_DEPRECATED
   #define mus_oscil_1(Ptr, Fm) mus_oscil_fm(Ptr, Fm)
   #define mus_oscil_2(Ptr, Pm) mus_oscil_pm(Ptr, Pm)
+  #define mus_polyshape_2(Ptr, Fm) mus_polyshape_fm(Ptr, Fm)
+  #define mus_waveshape_2(Ptr, Fm) mus_waveshape_fm(Ptr, Fm)
+
+  #define mus_oscil_0(Ptr) mus_oscil_unmodulated(Ptr)  
+  #define mus_waveshape_1(Ptr, Index) mus_waveshape_unmodulated(Ptr, Index)  
+  #define mus_polyshape_1(Ptr, Index) mus_polyshape_unmodulated(Ptr, Index)  
+  #define mus_ssb_am_1(Ptr, Insig) mus_ssb_am_unmodulated(Ptr, Insig)
+  #define mus_asymmetric_fm_1(Ptr, Index) mus_asymmetric_unmodulated(Ptr, Index)
+  #define mus_comb_1(Ptr, Insig) mus_comb_unmodulated(Ptr, Insig)
+  #define mus_notch_1(Ptr, Insig) mus_notch_unmodulated(Ptr, Insig)
+  #define mus_delay_1(Ptr, Insig) mus_delay_unmodulated(Ptr, Insig)
+  #define mus_filtered_comb_1(Ptr, Insig) mus_filtered_comb_unmodulated(Ptr, Insig)
+  #define mus_all_pass_1(Ptr, Insig) mus_all_pass_unmodulated(Ptr, Insig)
+
+  #define mus_asymmetric_fm_0(Ptr) mus_asymmetric_fm_no_input(Ptr)
+  #define mus_waveshape_0(Ptr) mus_waveshape_no_input(Ptr)  
+  #define mus_polyshape_0(Ptr) mus_polyshape_no_input(Ptr)  
+
+  #define mus_random_1() mus_random_no_input()
+  #define mus_frandom_1() mus_frandom_no_input()
 
   /* backwards compatibility -- these moved to mus_location 15-Oct-07 */
   #define mus_phase_vocoder_outctr(Ptr) (int)mus_location(Ptr)

@@ -6064,13 +6064,13 @@ static xen_value *abs_1(ptree *prog, xen_value **args, int num_args)
 static void random_f(int *args, ptree *pt) {FLOAT_RESULT = mus_frandom(FLOAT_ARG_1);}
 
 
-static void random_f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_frandom_1();}
+static void random_f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_frandom_no_input();}
 
 
 static void random_mf(int *args, ptree *pt) {FLOAT_RESULT = mus_random(FLOAT_ARG_1);}
 
 
-static void random_mf_1(int *args, ptree *pt) {FLOAT_RESULT = mus_random_1();}
+static void random_mf_1(int *args, ptree *pt) {FLOAT_RESULT = mus_random_no_input();}
 
 
 static void random_i(int *args, ptree *pt) {INT_RESULT = mus_irandom(INT_ARG_1);}
@@ -8592,11 +8592,7 @@ static xen_value *vct_to_sound_data_1(ptree *prog, xen_value **args, int num_arg
 
 
 
-
-
 /* ---------------- CLM stuff ---------------- */
-
-/* TODO: test gen? in run */
 
 #define GEN_P(Name) \
   static void Name ## _0p(int *args, ptree *pt) {BOOL_RESULT = (Int)mus_ ## Name ## _p(CLM_ARG_1);} \
@@ -8623,19 +8619,22 @@ static xen_value *vct_to_sound_data_1(ptree *prog, xen_value **args, int num_arg
 #define GEN2_0(Name) \
   static void Name ## _0f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, 0.0);}  
 
-#define GEN2_0_OPT(Name) \
-  static void Name ## _0f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name ## _1 (CLM_ARG_1);}  
-
 #define GEN1_0(Name) \
   static void Name ## _0f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1);}  
 
 #define GEN2_1(Name) \
   static void Name ## _1f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, FLOAT_ARG_2);}
 
+#define mus_delay_no_input(Ptr) mus_delay_unmodulated(Ptr, 0.0)
+#define mus_comb_no_input(Ptr) mus_comb_unmodulated(Ptr, 0.0)
+#define mus_filtered_comb_no_input(Ptr) mus_filtered_comb_unmodulated(Ptr, 0.0)
+#define mus_notch_no_input(Ptr) mus_notch_unmodulated(Ptr, 0.0)
+#define mus_all_pass_no_input(Ptr) mus_all_pass_unmodulated(Ptr, 0.0)
+#define mus_ssb_am_no_input(Ptr) mus_ssb_am_unmodulated(Ptr, 0.0)
 
 #define GEN3(Name) \
-  static void Name ## _0f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name ## _0(CLM_ARG_1);} \
-  static void Name ## _1f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name ## _1(CLM_ARG_1, FLOAT_ARG_2);} \
+  static void Name ## _0f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name ## _no_input(CLM_ARG_1);} \
+  static void Name ## _1f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name ## _unmodulated(CLM_ARG_1, FLOAT_ARG_2);} \
   static void Name ## _2f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);} \
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
@@ -8649,7 +8648,7 @@ static xen_value *vct_to_sound_data_1(ptree *prog, xen_value **args, int num_arg
   }
 
 
-static void oscil_0f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_0(CLM_ARG_1);}
+static void oscil_0f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_unmodulated(CLM_ARG_1);}
 
 static void oscil_1f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2);}
 
@@ -8686,7 +8685,7 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
   }
 
 #define GEN2_OPT(Name) \
-  GEN2_0_OPT(Name) \
+  static void Name ## _0f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name ## _unmodulated (CLM_ARG_1);} \
   GEN2_1(Name) \
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
@@ -8707,42 +8706,40 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
   }
 
 
-#define mus_delay_0(Gen) mus_delay_1(Gen, 0.0)
-#define mus_notch_0(Gen) mus_notch_1(Gen, 0.0)
-#define mus_comb_0(Gen) mus_comb_1(Gen, 0.0)
-#define mus_filtered_comb_0(Gen) mus_filtered_comb_1(Gen, 0.0)
-#define mus_all_pass_0(Gen) mus_all_pass_1(Gen, 0.0)
-#define mus_ssb_am_0(Gen) mus_ssb_am_1(Gen, 0.0)
-
 GEN1(env)
+GEN1(readin)
+
 GEN3(notch)
 GEN3(comb)
 GEN3(filtered_comb)
 GEN3(delay)
 GEN3(all_pass)
+
+GEN3(ssb_am)
+GEN3(asymmetric_fm)
+GEN3(waveshape)
+  /* this is ok, but looks wrong -- the index arg precedes the fm arg, so the 2 arg case is index here */
+GEN3(polyshape)
+
 GEN2(moving_average)
 GEN2(rand)
 GEN2(rand_interp)
 GEN2(sum_of_cosines)
 GEN2(sum_of_sines)
-GEN3(ssb_am)
 GEN2(sawtooth_wave)
 GEN2(pulse_train)
 GEN2(square_wave)
 GEN2(triangle_wave)
-GEN3(asymmetric_fm)
 GEN2(sine_summation)
 GEN2(one_zero)
 GEN2(one_pole)
 GEN2(two_zero)
 GEN2(two_pole)
 GEN2(formant)
-GEN3(waveshape)
-  /* this is ok, but looks wrong -- the index arg precedes the fm arg, so the 2 arg case is index here */
 GEN2(filter)
 GEN2(fir_filter)
 GEN2(iir_filter)
-GEN1(readin)
+
 GEN2_OPT(wave_train)
 GEN2_OPT(table_lookup)
 
@@ -8759,46 +8756,8 @@ GEN_P(locsig)
 GEN_P(move_sound)
 
 
-static void polyshape_no_index_no_fm(int *args, ptree *pt) {FLOAT_RESULT = mus_polyshape_0(CLM_ARG_1);}
 
-
-static void polyshape_index_no_fm(int *args, ptree *pt) {FLOAT_RESULT = mus_polyshape_1(CLM_ARG_1, FLOAT_ARG_2);}
-
-
-static void polyshape_index_fm(int *args, ptree *pt) {FLOAT_RESULT = mus_polyshape(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
-
-static void polyshape_no_index_fm(int *args, ptree *pt) {FLOAT_RESULT = mus_polyshape_2(CLM_ARG_1, FLOAT_ARG_3);}
-
-GEN_P(polyshape)
-
-static xen_value *polyshape_1(ptree *prog, xen_value **args, int num_args)
-{
-  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, polyshape_check, "polyshape_check", args, num_args);
-  if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2);
-  if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3);
-  if (num_args == 1) 
-    return(package(prog, R_FLOAT, polyshape_no_index_no_fm, "polyshape_no_args", args, 1));
-  if (num_args == 2) 
-    {
-      if ((prog->constants == 1) &&
-	  (prog->dbls[args[2]->addr] == 1.0))
-	return(package(prog, R_FLOAT, polyshape_no_index_no_fm, "polyshape_no_args", args, 1));
-      return(package(prog, R_FLOAT, polyshape_index_no_fm, "polyshape_one_arg", args, 2));
-    }
-  if ((prog->constants >= 1) &&
-      (prog->dbls[args[2]->addr] == 1.0))
-    {
-      if ((prog->constants > 1) &&
-	  (prog->dbls[args[3]->addr] == 0.0))
-	return(package(prog, R_FLOAT, polyshape_no_index_no_fm, "polyshape_no_args", args, 1));
-      return(package(prog, R_FLOAT, polyshape_no_index_fm, "polyshape_two_args", args, 3));
-    }
-  return(package(prog, R_FLOAT, polyshape_index_fm, "polyshape_two_args", args, 3));
-}
-
-
-static void tap_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_tap_1(CLM_ARG_1);}  
-
+static void tap_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_tap_unmodulated(CLM_ARG_1);}  
 
 static void tap_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_tap(CLM_ARG_1, FLOAT_ARG_2);}
 
@@ -9243,6 +9202,7 @@ MUS_VCT_1(data, 0)
 MUS_VCT_1(xcoeffs, 1)
 MUS_VCT_1(ycoeffs, 2)
 
+/* TODO: local case for data x|ycoeffs, set x|ycoeff */
 
 
 
@@ -9254,7 +9214,11 @@ static void polynomial_1f(int *args, ptree *pt)
   FLOAT_RESULT = mus_polynomial(VCT_ARG_1->data, FLOAT_ARG_2, VCT_ARG_1->length);
 }
 
-static xen_value *polynomial_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, polynomial_1f, "polynomial_1f", args, 2));}
+static xen_value *polynomial_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(package(prog, R_FLOAT, polynomial_1f, "polynomial_1f", args, 2));
+}
+
 
 
 /* ---------------- mus-fft ---------------- */
@@ -12334,9 +12298,6 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_input_p, make_walker(input_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_mus_output_p, make_walker(output_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_snd_to_sample_p, make_walker(snd_to_sample_1p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-
-  /* TODO: all the generic funcs need to accept def_clm_structs (add tests for this) */
-  /* TODO: def-clm-struct generics found at ptree time and spliced in */
 
   INIT_WALKER(S_mus_increment, make_walker(mus_increment_0, NULL, mus_set_increment_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_frequency, make_walker(mus_frequency_0, NULL, mus_set_frequency_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));

@@ -1,13 +1,7 @@
 /* CLM (Music V) implementation */
 
-/* many of the generators have *_0 to *_2 versions; oscil_0 for example, alongside oscil.
- *   these represent various (minor) optimizations that are used by the run macros in
- *   snd-run.c and run.lisp.  In some cases (reverb), the overall speed-up can be around
- *   a factor of 2.
- */
 
 /* should I add pm args alongside the fm args, as in oscil?
- * SOMEDAY: fix the other _0... names as with oscil -- oscil_unmodulated? waveshape_no_index?
  */
 
 #include <mus-config.h>
@@ -1119,7 +1113,7 @@ Float mus_oscil(mus_any *ptr, Float fm, Float pm)
 }
 
 
-Float mus_oscil_0(mus_any *ptr)
+Float mus_oscil_unmodulated(mus_any *ptr)
 {
   Float result;
   osc *gen = (osc *)ptr;
@@ -1677,7 +1671,7 @@ Float mus_asymmetric_fm(mus_any *ptr, Float index, Float fm)
 }
 
 
-Float mus_asymmetric_fm_1(mus_any *ptr, Float index)
+Float mus_asymmetric_fm_unmodulated(mus_any *ptr, Float index)
 {
   asyfm *gen = (asyfm *)ptr;
   Float result, mth;
@@ -1689,7 +1683,7 @@ Float mus_asymmetric_fm_1(mus_any *ptr, Float index)
 }
 
 
-Float mus_asymmetric_fm_0(mus_any *ptr)
+Float mus_asymmetric_fm_no_input(mus_any *ptr)
 {
   asyfm *gen = (asyfm *)ptr;
   Float result;
@@ -1988,7 +1982,7 @@ Float mus_table_lookup(mus_any *ptr, Float fm)
 }
 
 
-Float mus_table_lookup_1(mus_any *ptr)
+Float mus_table_lookup_unmodulated(mus_any *ptr)
 {
   tbl *gen = (tbl *)ptr;
   gen->yn1 = mus_interpolate(gen->type, gen->phase, gen->table, gen->table_size, gen->yn1);
@@ -2276,7 +2270,7 @@ Float mus_waveshape(mus_any *ptr, Float index, Float fm)
 }
 
 
-Float mus_waveshape_2(mus_any *ptr, Float fm)
+Float mus_waveshape_fm(mus_any *ptr, Float fm)
 {
   ws *gen = (ws *)ptr;
   Float table_index;
@@ -2285,20 +2279,20 @@ Float mus_waveshape_2(mus_any *ptr, Float fm)
 }
 
 
-Float mus_waveshape_1(mus_any *ptr, Float index)
+Float mus_waveshape_unmodulated(mus_any *ptr, Float index)
 {
   ws *gen = (ws *)ptr;
   Float table_index;
-  table_index = gen->offset * (1.0 + (mus_oscil_0(gen->o) * index));
+  table_index = gen->offset * (1.0 + (mus_oscil_unmodulated(gen->o) * index));
   return(mus_array_interp(gen->table, table_index, gen->table_size));
 }
 
 
-Float mus_waveshape_0(mus_any *ptr) /* default index is 1.0 */
+Float mus_waveshape_no_input(mus_any *ptr) /* default index is 1.0 */
 {
   ws *gen = (ws *)ptr;
   Float table_index;
-  table_index = gen->offset * (1.0 + mus_oscil_0(gen->o));
+  table_index = gen->offset * (1.0 + mus_oscil_unmodulated(gen->o));
   return(mus_array_interp(gen->table, table_index, gen->table_size));
 }
 
@@ -2420,7 +2414,7 @@ Float mus_polyshape(mus_any *ptr, Float index, Float fm)
 }
 
 
-Float mus_polyshape_2(mus_any *ptr, Float fm)
+Float mus_polyshape_fm(mus_any *ptr, Float fm)
 {
   ws *gen = (ws *)ptr;
   return(mus_polynomial(gen->table,
@@ -2429,20 +2423,20 @@ Float mus_polyshape_2(mus_any *ptr, Float fm)
 }
 
 
-Float mus_polyshape_1(mus_any *ptr, Float index)
+Float mus_polyshape_unmodulated(mus_any *ptr, Float index)
 {
   ws *gen = (ws *)ptr;
   return(mus_polynomial(gen->table,
-			index * mus_oscil_0(gen->o), 
+			index * mus_oscil_unmodulated(gen->o), 
 			gen->table_size));
 }
 
 
-Float mus_polyshape_0(mus_any *ptr)
+Float mus_polyshape_no_input(mus_any *ptr)
 {
   ws *gen = (ws *)ptr;
   return(mus_polynomial(gen->table,
-			mus_oscil_0(gen->o), 
+			mus_oscil_unmodulated(gen->o), 
 			gen->table_size));
 }
 
@@ -2602,7 +2596,7 @@ static Float mus_wave_train_any(mus_any *ptr, Float fm)
 
 Float mus_wave_train(mus_any *ptr, Float fm) {return(mus_wave_train_any(ptr, fm / w_rate));}
 
-Float mus_wave_train_1(mus_any *ptr) {return(mus_wave_train(ptr, 0.0));}
+Float mus_wave_train_unmodulated(mus_any *ptr) {return(mus_wave_train(ptr, 0.0));}
 
 
 static Float run_wave_train(mus_any *ptr, Float fm, Float unused) {return(mus_wave_train_any(ptr, fm / w_rate));}
@@ -2737,7 +2731,7 @@ Float mus_delay(mus_any *ptr, Float input, Float pm)
 }
 
 
-Float mus_delay_1(mus_any *ptr, Float input)
+Float mus_delay_unmodulated(mus_any *ptr, Float input)
 {
   dly *gen = (dly *)ptr;
   Float result;
@@ -2772,7 +2766,7 @@ Float mus_tap(mus_any *ptr, Float loc)
 }
 
 
-Float mus_tap_1(mus_any *ptr)
+Float mus_tap_unmodulated(mus_any *ptr)
 {
   dly *gen = (dly *)ptr;
   return(gen->line[gen->loc]);
@@ -2971,10 +2965,10 @@ Float mus_comb(mus_any *ptr, Float input, Float pm)
 }
 
 
-Float mus_comb_1(mus_any *ptr, Float input) 
+Float mus_comb_unmodulated(mus_any *ptr, Float input) 
 {
   dly *gen = (dly *)ptr;
-  return(mus_delay_1(ptr, input + (gen->line[gen->loc] * gen->yscl)));
+  return(mus_delay_unmodulated(ptr, input + (gen->line[gen->loc] * gen->yscl)));
 }
 
 
@@ -3099,9 +3093,9 @@ Float mus_notch(mus_any *ptr, Float input, Float pm)
 }
 
 
-Float mus_notch_1(mus_any *ptr, Float input) 
+Float mus_notch_unmodulated(mus_any *ptr, Float input) 
 {
-  return((input * ((dly *)ptr)->xscl) + mus_delay_1(ptr, input));
+  return((input * ((dly *)ptr)->xscl) + mus_delay_unmodulated(ptr, input));
 }
 
 
@@ -3137,12 +3131,12 @@ Float mus_all_pass(mus_any *ptr, Float input, Float pm)
 }
 
 
-Float mus_all_pass_1(mus_any *ptr, Float input)
+Float mus_all_pass_unmodulated(mus_any *ptr, Float input)
 {
   Float din;
   dly *gen = (dly *)ptr;
   din = input + (gen->yscl * gen->line[gen->loc]);
-  return(mus_delay_1(ptr, din) + (gen->xscl * din));
+  return(mus_delay_unmodulated(ptr, din) + (gen->xscl * din));
 }
 
 
@@ -3226,7 +3220,7 @@ Float mus_moving_average(mus_any *ptr, Float input)
 {
   dly *gen = (dly *)ptr;
   Float output;
-  output = mus_delay_1(ptr, input);
+  output = mus_delay_unmodulated(ptr, input);
   gen->xscl += (input - output);
   return(gen->xscl * gen->yscl); /* xscl=sum, yscl=1/n */
 }
@@ -3364,14 +3358,14 @@ Float mus_filtered_comb(mus_any *ptr, Float input, Float pm)
 }
 
 
-Float mus_filtered_comb_1(mus_any *ptr, Float input)
+Float mus_filtered_comb_unmodulated(mus_any *ptr, Float input)
 {
   dly *fc = (dly *)ptr;
-  return(mus_delay_1(ptr,
-		     input + (fc->yscl * 
-			      mus_run(fc->filt, 
-				      fc->line[fc->loc], 
-				      0.0))));
+  return(mus_delay_unmodulated(ptr,
+			       input + (fc->yscl * 
+					mus_run(fc->filt, 
+						fc->line[fc->loc], 
+						0.0))));
 }
 
 
@@ -3840,7 +3834,7 @@ Float mus_random(Float amp) /* -amp to amp as Float */
 }
 
 
-Float mus_random_1(void) /* -1.0 to 1.0 as Float */
+Float mus_random_no_input(void) /* -1.0 to 1.0 as Float */
 {
   return(next_random() * INVERSE_MAX_RAND - 1.0);
 }
@@ -3852,7 +3846,7 @@ Float mus_frandom(Float amp) /* 0.0 to amp as Float */
 }
 
 
-Float mus_frandom_1(void) /* 0.0 to 1.0 as Float */
+Float mus_frandom_no_input(void) /* 0.0 to 1.0 as Float */
 {
   return(next_random() * INVERSE_MAX_RAND2);
 }
@@ -7716,7 +7710,7 @@ Float mus_move_sound(mus_any *ptr, off_t loc, Float uval)
   /* initial silence */
   if (loc < gen->start)
     {
-      mus_delay_1(gen->doppler_delay, val);
+      mus_delay_unmodulated(gen->doppler_delay, val);
       /* original calls out_any here with 0.0 -- a no-op */
       return(val);
     }
@@ -7731,7 +7725,7 @@ Float mus_move_sound(mus_any *ptr, off_t loc, Float uval)
       Float sample;
       sample = val * mus_env(gen->out_envs[chan]);
       if (gen->out_delays[chan])
-	sample = mus_delay_1(gen->out_delays[chan], sample);
+	sample = mus_delay_unmodulated(gen->out_delays[chan], sample);
       gen->outf->vals[gen->out_map[chan]] = sample;
     }
 
@@ -9821,7 +9815,6 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
       samps = (mus_sample_t *)clm_calloc(totallen, sizeof(mus_sample_t), "convolve_files data");
       outdat = (Float *)clm_calloc(totallen, sizeof(Float), "convolve_files data");
 
-      /* TODO: test the multichannel case */
       /* SOMEDAY: check for nested loops using the same counter (va.scm?) */
 
       for (chan = 0; chan < output_chans; chan++)
@@ -10178,18 +10171,18 @@ static Float run_hilbert(flt *g, Float insig)
 }
 
 
-Float mus_ssb_am_1(mus_any *ptr, Float insig)
+Float mus_ssb_am_unmodulated(mus_any *ptr, Float insig)
 {
   ssbam *gen = (ssbam *)ptr;
-  return((mus_oscil_0(gen->cos_osc) * mus_delay_1(gen->dly, insig)) +
-	 (mus_oscil_0(gen->sin_osc) * run_hilbert((flt *)(gen->hilbert), insig)));
+  return((mus_oscil_unmodulated(gen->cos_osc) * mus_delay_unmodulated(gen->dly, insig)) +
+	 (mus_oscil_unmodulated(gen->sin_osc) * run_hilbert((flt *)(gen->hilbert), insig)));
 }
 
 
 Float mus_ssb_am(mus_any *ptr, Float insig, Float fm)
 {
   ssbam *gen = (ssbam *)ptr;
-  return((mus_oscil_fm(gen->cos_osc, fm) * mus_delay_1(gen->dly, insig)) +
+  return((mus_oscil_fm(gen->cos_osc, fm) * mus_delay_unmodulated(gen->dly, insig)) +
 	 (mus_oscil_fm(gen->sin_osc, fm) * run_hilbert((flt *)(gen->hilbert), insig)));
 }
 
