@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 45
-#define MUS_DATE "17-Oct-07"
+#define MUS_REVISION 46
+#define MUS_DATE "19-Oct-07"
 
 /*
+ * 19-Oct:     all *_0 *_1 *_2 names now use _fm|_pm|_unmodulated|_no_input.
  * 17-Oct:     replace some method macros with functions (def-clm-struct local methods need true names).
  * 15-Oct:     mus_oscil_1 -> _fm, _2->_pm.
  *             mus_phase_vocoder_outctr accessors changed to use mus_location.
@@ -728,17 +729,19 @@ mus_any *mus_make_mixer_with_data(int chans, Float *data);
   #define mus_waveshape_1(Ptr, Index) mus_waveshape_unmodulated(Ptr, Index)  
   #define mus_polyshape_1(Ptr, Index) mus_polyshape_unmodulated(Ptr, Index)  
   #define mus_ssb_am_1(Ptr, Insig) mus_ssb_am_unmodulated(Ptr, Insig)
-  #define mus_asymmetric_fm_1(Ptr, Index) mus_asymmetric_unmodulated(Ptr, Index)
+  #define mus_asymmetric_fm_1(Ptr, Index) mus_asymmetric_fm_unmodulated(Ptr, Index)
   #define mus_comb_1(Ptr, Insig) mus_comb_unmodulated(Ptr, Insig)
   #define mus_notch_1(Ptr, Insig) mus_notch_unmodulated(Ptr, Insig)
   #define mus_delay_1(Ptr, Insig) mus_delay_unmodulated(Ptr, Insig)
+  #define mus_tap_1(Ptr) mus_tap_unmodulated(Ptr)
   #define mus_filtered_comb_1(Ptr, Insig) mus_filtered_comb_unmodulated(Ptr, Insig)
   #define mus_all_pass_1(Ptr, Insig) mus_all_pass_unmodulated(Ptr, Insig)
+  #define mus_table_lookup_1(Ptr) mus_table_lookup_unmodulated(Ptr)
+  #define mus_wave_train_1(Ptr) mus_wave_train_unmodulated(Ptr)
 
   #define mus_asymmetric_fm_0(Ptr) mus_asymmetric_fm_no_input(Ptr)
   #define mus_waveshape_0(Ptr) mus_waveshape_no_input(Ptr)  
   #define mus_polyshape_0(Ptr) mus_polyshape_no_input(Ptr)  
-
   #define mus_random_1() mus_random_no_input()
   #define mus_frandom_1() mus_frandom_no_input()
 
