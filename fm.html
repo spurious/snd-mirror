@@ -728,7 +728,7 @@ carrier, and its index (B) is high enough that some significant energy appears a
 
 <!-- LATEX \sin(-x)=-\sin(x)\textrm{, but }\cos(-x)=cos(x) -->
 
-<p>Where does energy at a negative frequency go?  We once again fall back on elementary 
+<p>Where does energy at a negative frequency go?  We once again fall back on
 trigonometry: 
 <img src="fmeq45.png" alt="sin-sin and cos" align=absmiddle>,
 so the negative frequency component adds to the positive frequency component if it's a cosine, but 
@@ -1063,7 +1063,7 @@ a moving formant).  Here we sweep "r" from -1.0 to -20.0, with an index of 3, m/
 
 <p>
 So far we have been using just a sinusoid for the modulator; what if we make it a more complicated 
-signal?  Here again elementary trigonometry can be used to expand
+signal?  Here again trigonometry can be used to expand
 </p>
 
 <!-- LATEX \sin(\omega_{c}t + B_{1}\sin \omega_{m1}t + B_{2}\sin \omega_{m2}t) -->
@@ -1081,10 +1081,9 @@ sequence).  Since sine is not linear, this is not the same thing as
 
 
 <p>In the second case we just get the superposition of the two simple FM spectra, but in the first case 
-we get a more complex mixture involving all the sums and differences of the modulating frequencies.  If the indices 
-are small (the B's are much less than 1), then there isn't much difference between the two versions.  
-Complex FM's production of sum and difference tones ("intermodulation products") is not an exception: any
-nonlinear synthesis technique has these components.  Being non-linear, it must have something that involves
+we get a more complex mixture involving all the sums and differences of the modulating frequencies. 
+These sum and difference tones ("intermodulation products") are not limited to FM.  Any
+nonlinear synthesis technique produces them;  being non-linear, it must have something that involves
 a power of its input other than 0 or 1; if we feed in sin a + sin b, for example, that term will produce
 not just (sin a)^n and (sin b)^n, but all sorts of stuff involving sin a * sin b (in various powers),
 and this produces things like cos(a+b) and cos(a-b).
@@ -1228,8 +1227,10 @@ A pared down version of the fm-violin is:
 <table border=0 bgcolor="#f6f8ff" hspace=20 vspace=10><tr><td>
 <!-- CLM CASE 
 <pre>
-(definstrument violin (beg end frequency amplitude fm-index)
-  (let* ((frq-scl (hz-&gt;radians frequency))
+(definstrument violin (beg dur frequency amplitude fm-index)
+  (let* ((start (seconds-&gt;samples beg))
+         (stop (+ beg (seconds-&gt;samples dur)))
+         (frq-scl (hz-&gt;radians frequency))
          (maxdev (* frq-scl fm-index))
          (index1 (* maxdev (/ 5.0 (log frequency))))
          (index2 (* maxdev 3.0 (/ (- 8.5 (log frequency)) (+ 3.0 (/ frequency 1000)))))
@@ -1238,7 +1239,7 @@ A pared down version of the fm-violin is:
          (fmosc1 (make-oscil frequency))
          (fmosc2 (make-oscil (* 3 frequency)))
          (fmosc3 (make-oscil (* 4 frequency)))
-         (ampf  (make-env '(0 0 25 1 75 1 100 0) :scaler amplitude))
+         (ampf  (make-env '(0 0 25 1 75 1 100 0) :scaler amplitude :duration dur))
          (indf1 (make-env '(0 1 25 .4 75 .6 100 0) :scaler index1))
          (indf2 (make-env '(0 1 25 .4 75 .6 100 0) :scaler index2))
          (indf3 (make-env '(0 1 25 .4 75 .6 100 0) :scaler index3))
@@ -1246,7 +1247,7 @@ A pared down version of the fm-violin is:
          (ranvib (make-rand-interp 16 :amplitude (* .005 frq-scl)))
          (vib 0.0))
     (run
-     (loop for i from beg to end do
+     (loop for i from start to stop do
        (setf vib (+ (triangle-wave pervib) (rand-interp ranvib)))
        (outa i (* (env ampf)
                   (oscil carrier
@@ -1255,7 +1256,7 @@ A pared down version of the fm-violin is:
                             (* (env indf2) (oscil fmosc2 (* 3.0 vib)))
                             (* (env indf3) (oscil fmosc3 (* 4.0 vib)))))))))))
 
-(with-sound () (violin 0 10000 440 .1 1.0))
+(with-sound () (violin 0 1 440 .1 1.0))
 </pre>
 -->
 
@@ -1292,7 +1293,7 @@ A pared down version of the fm-violin is:
 				(* (env indf3) (oscil fmosc3 (* 4.0 vib))))))
 		 *output*)))))))
 
-(with-sound () (violin 0 1.0 440 .1 2.5))
+(with-sound () (violin 0 1.0 440 .1 1.0))
 </pre>
 <!-- -->
 </td></tr></table>
@@ -1820,10 +1821,6 @@ used in "Colony" and other pieces:
 
 <img src="voxspectrum.png" alt="voice spectrum" hspace=20 vspace=10>
 
-
-<!-- SOMEDAY: it would be neat to include a catalog of sounds like in JC's book 
-              all the techniques above need more and better musical examples
--->
 
 
 <h2>References</h2>

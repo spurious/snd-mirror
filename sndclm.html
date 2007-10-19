@@ -3954,15 +3954,25 @@ ffts (for time stretching, etc).
 </pre>
 </td></tr></table>
 
-<p>clm23.scm
-has a variety of instruments calling the phase-vocoder generator, including pvoc-e that
+<p>There are several functions giving access to the phase-vocoder data:
+</p>
+
+<pre>
+  <em class=emdef>phase-vocoder-amps</em> gen
+  <em class=emdef>phase-vocoder-freqs</em> gen
+  <em class=emdef>phase-vocoder-phases</em> gen
+  <em class=emdef>phase-vocoder-amp-increments</em> gen
+  <em class=emdef>phase-vocoder-phase-increments</em> gen
+</pre>
+
+<p>These are arrays (vcts) containing the spectral data the phase-vocoder uses to
+reconstruct the sound.  See clm23.scm for examples,
+in particular pvoc-e that
 specifies all of the functions with their default values (that is, it explicitly passes
 in functions that do what the phase-vocoder would have done without any function arguments).
 pvoc.scm implements the phase-vocoder directly in Scheme (rather than going through the CLM
 generator).
 </p>
-
-<!-- SOMEDAY: doc pv-* -->
 
 <br><br>
 

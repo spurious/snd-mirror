@@ -52456,21 +52456,11 @@ EDITS: 1
 		     (not (string=? stats-string "\n;sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.010\n")))
 		(snd-display ";with-sound to sound-data stats: [~A]" stats-string)))
 	  
-	  (let ((v1 (with-sound (:output (make-vct 2210) :channels 4 :statistics (lambda (str) (set! stats-string str)))
-				(fm-violin 0 .1 440 .1 :degree 45 :random-vibrato-amplitude 0.0))))
-	    (if (and (not (string=? stats-string ";vct:\n  maxamp: 0.1000\n  compute time: 0.000\n"))
-		     (not (string=? stats-string ";vct:\n  maxamp: 0.1000\n  compute time: 0.010\n")))
-		(snd-display ";with-sound to vct stats 4: [~A]" stats-string)))
-	  
-	  (let ((v1 (with-sound (:output (make-sound-data 4 2210) :channels 4 :statistics (lambda (str) (set! stats-string str)))
+	  (with-sound (:output (make-sound-data 4 2210) :channels 4 :statistics (lambda (str) (set! stats-string str)))
 				(fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0)
 				(fm-violin 0 .1 440 .2 :degree 90 :random-vibrato-amplitude 0.0)
 				(fm-violin 0 .1 440 .3 :degree 180 :random-vibrato-amplitude 0.0)
-				(fm-violin 0 .1 440 .4 :degree 270 :random-vibrato-amplitude 0.0))))
-	    (if (and (not (string=? stats-string ";sound-data:\n  maxamp: 0.1000 0.2000 0.3000 0.4000\n  compute time: 0.000\n"))
-		     (not (string=? stats-string ";sound-data:\n  maxamp: 0.1000 0.2000 0.3000 0.4000\n  compute time: 0.010\n"))
-		     (not (string=? stats-string ";sound-data:\n  maxamp: 0.1000 0.2000 0.3000 0.4000\n  compute time: 0.020\n")))
-		(snd-display ";with-sound to sound-data stats 4: [~A]" stats-string)))
+				(fm-violin 0 .1 440 .4 :degree 270 :random-vibrato-amplitude 0.0))
 	  )
 	
 	(for-each
