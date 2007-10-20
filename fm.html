@@ -498,29 +498,35 @@ reduce the danger of aliasing by limiting the fm index to approximately (srate/2
 use srate/4 to be safer.
 </p>
 
-<table border=1 hspace=50 cellpadding=10><tr><td>
-<small> 
-Then there's the perennial question "why Bessel functions?".  Consider our earlier
-expansion of cos(sin) in terms of sinusoids as a sort of Fourier transform of
-the simple FM equation. Looking at cos(sin) as the real part of
-e<sup>(iB sin w<sub>m</sub>t)</sup>, our expansion is evaluating
+
+<!-- LATEX sceq42: \frac{e^{ix} - e^{-ix}}{2i} -->
 
 <!-- LATEX 
-fmeq17:
+fmeq17: 
+OLD:
 \int_{-\pi}^{\pi}e^{i(B\sin \omega_{m}t - n\omega_{m}t)} \, \mathrm{d}t
+NEW:
+fmeq17: e^{\frac{1}{2}(t - \frac{1}{t})}
 -->
 
-<img src="fmeq17.png" alt="e to j sin" align=absmiddle>
-
-
-which is one way of defining the Bessel functions (see also the earlier formulas for Jn(B)).
-These functions had
-been studied by Daniel Bernoulli (the vibrations of a heavy chain, 1738), 
+<table border=1 hspace=50 cellpadding=10><tr><td>
+<small> 
+Then there's the perennial question "why Bessel functions?". 
+Most "explanations" start with the Anger-Jacobi formula (the math equivalent of pulling a rabbit out of a hat),
+fiddle with it in a half-hearted way, and eventually stumble into the cos(sin) expansion that we stole from Abramowitz and Stegun, a classic
+case of <i>obscurum per obscurius</i>.  
+A different tack might be to start with <img src="sceq42.png" alt="sin in terms of e" align=absmiddle>, a definition of sine,
+and call the "e^(ix)" terms "t", 
+then cos(sin) involves terms like <img src="fmeq17.png" alt="cos(sin) in e" align=absmiddle>,
+which is one (convoluted) way to define Bessel functions. 
+Or perhaps most forthright, say "we want cos(sin) expanded as a sum of cosines, and we
+simply define Jn to be the nth coefficient in that sum, ignoring annoying factors of 2 of course", as in our earlier formula
+for Jn(B).  Not very satisfying, for some reason.  Perhaps history can help?
+These functions were
+studied by Daniel Bernoulli (the vibrations of a heavy chain, 1738), 
 Euler (the vibrations of a membrane, 1764), Lagrange (planetary motion, 1770),
 and Fourier (the motion of heat in a cylinder, 1822); Bessel studied them in the context of Kepler's equation, and wrote a monograph
 about them in 1824.
-There are brief historical snippits at 
-<a href="http://www.aam314.vzz.net/EB/Bessel.html">Encyclopedia Britannica</a> and <a href="http://www-groups.dcs.st-and.ac.uk/~history/Biographies/Bessel.html">Bios</a>.
 For an explanation of the connection between planetary motion and FM, see Benson, "Music: A Mathematical Offering".
 </small>
 </td></tr></table>
@@ -716,19 +722,14 @@ Or perhaps more readable:
 </td></tr></table>
 -->
 
+<!-- LATEX fmeq24: \omega_{c}-2\omega_{m} = -\omega_{c} -->
+<!-- LATEX \sin(-x)=-\sin(x)\textrm{, but }\cos(-x)=cos(x) -->
+
 <p>Our first reaction is, "so what if one's a sine and another's a cosine, or whatever &mdash; they'll sound the 
 same", but we are being hasty.  What if (for example), the modulator has the same frequency as the 
 carrier, and its index (B) is high enough that some significant energy appears at
-</p>
-
-<!-- LATEX \omega_{c}-2\omega_{m} = -\omega_{c} \textrm{?} -->
-
-<img src="fmeq24.png" alt="w-m=-w" hspace=20>
-
-
-<!-- LATEX \sin(-x)=-\sin(x)\textrm{, but }\cos(-x)=cos(x) -->
-
-<p>Where does energy at a negative frequency go?  We once again fall back on
+<img src="fmeq24.png" alt="w-m=-w" align=absmiddle>?
+Where does energy at a negative frequency go?  We once again fall back on
 trigonometry: 
 <img src="fmeq45.png" alt="sin-sin and cos" align=absmiddle>,
 so the negative frequency component adds to the positive frequency component if it's a cosine, but 
@@ -1071,8 +1072,10 @@ signal?  Here again trigonometry can be used to expand
 <img src="fmeq30.png" alt="multiple sins" hspace=20>
 
 
+<!-- LATEX sceq41.png: x - \frac{x^{3}}{3!} + \frac{x^{5}}{5!} - \cdots -->
+
 <p>The modulating signal is now made up of two sinusoids (don't despair; this is a terminating 
-sequence).  Since sine is not linear, this is not the same thing as
+sequence).  Since sine is not linear (it is <img src="sceq41.png" alt="x-x^3/3!+x^5/5!..." align=absmiddle>), this is not the same thing as
 </p>
 
 <!-- LATEX \sin(\omega_{c}t + B_{1}\sin \omega_{m1}t) + \sin(B_{2}\sin \omega_{m2}t) -->
@@ -1297,11 +1300,6 @@ A pared down version of the fm-violin is:
 </pre>
 <!-- -->
 </td></tr></table>
-
-
-<p>I used to say I could get any sound at all from the fm-violin; I used it a lot in about
-two dozen pieces, and I still think it is the best computer instrument I've ever heard.
-</p>
 
 
 

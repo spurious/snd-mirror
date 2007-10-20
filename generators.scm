@@ -802,8 +802,77 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 30000))
-	 (outa i (* 0.5 (nkssb-interp gen (* vibamp (oscil vib)) (env move))) *output*))))))
+	 (outa i (* 0.5 (nkssb-interp gen 
+				      (* vibamp (oscil vib))
+				      (env move))) ; interp env
+	       *output*))))))
 
+(with-sound (:clipped #f :statistics #t :play #t)
+  (let ((gen (make-nkssb 600.0 100.0 4))
+	(vib (make-oscil 1.0))
+	(vibamp (hz->radians 5.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 100000)) 
+	 (let ((intrp (oscil vib)))
+	   (outa i (* 0.5 (nkssb-interp gen 
+					(* vibamp intrp)
+					intrp))
+		 *output*)))))))
+
+(with-sound (:clipped #f :statistics #t :play #t)
+  (let ((gen (make-nkssb 1000.0 540.0 3))
+	(vib (make-oscil 3.0)) ; 0.3  or 125 + 0.25 and 2 -> circling sound
+	(vibamp (hz->radians 5.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 100000)) (let ((intrp (oscil vib)))
+	 (outa i (* 0.5 (nkssb-interp gen 
+				      (* vibamp intrp)
+				      intrp))
+	       *output*)))))))
+
+(with-sound (:clipped #f :statistics #t :play #t)
+  (let ((gen (make-nkssb 300.0 120.0 2))
+	(vib (make-oscil 0.25))
+	(vibamp (hz->radians 5.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 300000)) (let ((intrp (oscil vib)))
+	 (outa i (* 0.5 (nkssb-interp gen 
+				      (* vibamp intrp)
+				      intrp))
+	       *output*)))))))
+
+(with-sound (:clipped #f :statistics #t :play #t)
+  (let ((gen (make-nkssb 30.0 4.0 40))
+	(vib (make-oscil 0.5))
+	(vibamp (hz->radians 5.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 300000)) (let ((intrp (oscil vib)))
+	 (outa i (* 0.5 (nkssb-interp gen 
+				      (* vibamp intrp)
+				      intrp))
+	       *output*)))))))
+
+(with-sound (:clipped #f :statistics #t :play #t)
+  (let ((gen (make-nkssb 20.0 6.0 80)) ; 120 8 80 (100), 6 400
+	
+	(vib (make-oscil 0.5))
+	(vibamp (hz->radians 5.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 300000)) (let ((intrp (oscil vib)))
+	 (outa i (* 0.5 (nkssb-interp gen 
+				      (* vibamp intrp)
+				      intrp))
+	       *output*)))))))
 |#
 
 
@@ -1929,7 +1998,7 @@
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
-  (let ((gen (make-r2k2cos 100.0 1.0)))
+  (let ((gen (make-r2k2cos 100.0 1.0))) ; 400 .25 -- this isn't very flexible
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
@@ -2381,7 +2450,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (outa i (* 0.5 (j0evencos gen (oscil carrier))) *output*))))))
 
 (with-sound (:clipped #f :statistics #t :play #t :srate 44100)
-  (let ((gen (make-j0evencos 100.0 0.0)) 
+  (let ((gen (make-j0evencos 100.0 0.0))                 ; also 20 800, 20 200 (less index mvt), or 200 50 
 	(indf (make-env '(0 10 1 0) :end 30000))
 	(carrier (make-oscil 2000.0)))
     (run 
@@ -2898,6 +2967,24 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (set! (fmssb-index gen) (env indf))
 	 (outa i (* (env ampf) (fmssb gen 0.0)) *output*))))))
 
+(with-sound (:statistics #t :scaled-to .5 :play #t)
+  (let ((gen1 (make-fmssb 500 500))
+	(gen2 (make-fmssb 1000 200))
+	(ampf (make-env '(0 0 1 1 100 0) :base 32 :end 30000))
+	(indf (make-env '(0 1 1 1 10 0) :scaler 5.0 :base 32 :end 30000)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000))
+	 (let ((ind (env indf)))
+	   (set! (fmssb-index gen1) ind)
+	   (set! (fmssb-index gen2) ind)
+	   (outa i (* (env ampf)
+		      (+ (fmssb gen1 0.0)
+			 (fmssb gen2 0.0)))
+		 *output*)))))))
+
+
 ;;; imaginary machines (also imaginary beasts)
 
 (definstrument (machine1 beg dur cfreq mfreq amp index gliss)
@@ -2973,6 +3060,7 @@ index 10 (so 10/2 is the bes-jn arg):
     (machine1 i .3 1000 540 0.5 6.0 0.0)
     (machine1 (+ i .1) .1 2000 540 0.5 10.0 100.0)
     ))
+;; this is good up an octave (and sped up)
 |#
 
 
