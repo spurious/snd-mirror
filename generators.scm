@@ -1269,16 +1269,19 @@
 (def-clm-struct (rkcos 
 		 :make-wrapper (lambda (g)
 				 (set! (rkcos-osc g) (make-oscil (rkcos-frequency g) (* 0.5 pi)))
+				 (set! (rkcos-r g) (max -0.9999999 (min 0.9999999 (rkcos-r g)))) ; or clip at 0.0?
 				 g))
   (frequency 0.0) (r 0.0)
   (osc #f :type clm))
+
+;;; not very flexible, and very similar to others in the r^k mold
 
 (define (rkcos gen fm)
   (declare (gen rkcos) (fm float))
   (let ((cs (oscil (rkcos-osc gen) fm))
 	(r (rkcos-r gen)))
     (/ (log (/ 1.0 (sqrt (+ 1.0 (* -2.0 r cs) (* r r)))))
-       (log (/ 1.0 (- 1.0 r)))))) ; normalization
+       (log (/ 1.0 (- 1.0 r)))))) ; normalization (assuming 0.0<=r<1.0)
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -1351,13 +1354,16 @@
        (log (/ 1.0 (- 1.0 r)))))) ; normalization
 
 #|
-(with-sound (:clipped #f :statistics #t :play #t)
-  (let ((gen (make-rkssb 1000.0 100.0 :r 0.5)))
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+  (let ((gen (make-rkssb 1000.0 500.0 :r 0.75)) ; (make-rkssb 300.0 900.0 :r 0.5)
+	(ampf (make-env '(0 0 1 1 2 1 3 0) :end 20000)))
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
-	   ((= i 10000))
-	 (outa i (rkssb gen 0.0) *output*))))))
+	   ((= i 20000))
+	 (outa i (* (env ampf) 
+		    (rkssb gen 0.0))
+	       *output*))))))
 |#
 
 
@@ -1452,13 +1458,19 @@
        (exp r)))) ; normalization (keeping DC term here to get "carrier")
 	  
 #|
-(with-sound (:clipped #f :statistics #t :play #t)
-  (let ((gen (make-rk!ssb 1000.0 100.0 :r 0.5)))
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+  (let ((gen (make-rk!ssb 1000.0 100.0 :r 0.5)) ; (make-rk!ssb 200.0 600.0 :r 2)
+	(ampf (make-env '(0 0 1 1 2 1 3 0) :end 20000)))
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
-	   ((= i 10000))
-	 (outa i (rk!ssb gen 0.0) *output*))))))
+	   ((= i 20000))
+	 (outa i (* (env ampf) (rk!ssb gen 0.0)) *output*))))))
+
+; (make-rk!ssb 0.0 120.0 :r 15) gives a widely separated wave-train of pulses
+;   so (make-rk!ssb 0.0 40.0 :r 70) is insecty (:r 100)
+;      (make-rk!ssb 0.0 10.0 :r 100) -- some bird? (make-rk!ssb 0.0 15.0 :r 300)
+;      (make-rk!ssb 1000.0 25.0 :r 10) (make-rk!ssb 3000.0 25.0 :r 100) -- another bird (5000)
 
 (definstrument (bouncy beg dur freq amp :optional (bounce-freq 5) (bounce-amp 20))
   (let* ((gen (make-rk!ssb (* freq 4) freq :r 1.0)) 
@@ -1692,7 +1704,7 @@
 
 
 ;;; this was inspired by Andrews, Askey, Roy "Special Functions" p396, but there's an error somewhere...
-;;;   it produces sum r^k sin(2k-1)x (not exactly what they derive)
+;;;   it produces sum r^k sin(2k-1)x
 ;;;   (not normalized)
 
 (def-clm-struct (dblsum
