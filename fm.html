@@ -423,7 +423,7 @@ a sort of damped sinusoid:
 <img src="bessel.png" alt="bessel functions" hspace=20>
 
 <p>
-So as the index sweeps 
+As the index sweeps 
 upward, energy is swept gradually outward into higher order side bands; this is the originally 
 exciting, now extremely annoying "FM sweep".
 The important thing to get from these Bessel functions is that the higher the index, the 
@@ -512,16 +512,14 @@ fmeq17: e^{\frac{1}{2}(t - \frac{1}{t})}
 <table border=1 hspace=50 cellpadding=10><tr><td>
 <small> 
 Then there's the perennial question "why Bessel functions?". 
-Most "explanations" start with the Jacobi-Anger formula (the math equivalent of pulling a rabbit out of a hat),
-fiddle with it in a half-hearted way, and eventually stumble into the cos(sin) expansion that we stole from Abramowitz and Stegun, a classic
-case of <i>obscurum per obscurius</i>.  
+Most explanations start with the Jacobi-Anger formula: <i>obscurum per obscurius</i>!  
 A different tack might be to start with <img src="sceq42.png" alt="sin in terms of e" align=absmiddle>, a definition of sine,
 and call the "e^(ix)" terms "t", 
 then cos(sin) involves terms like <img src="fmeq17.png" alt="cos(sin) in e" align=absmiddle>,
 which is one (convoluted) way to define Bessel functions. 
-Or perhaps most forthright, say "we want cos(sin) expanded as a sum of cosines, and we
-simply define Jn to be the nth coefficient in that sum, ignoring annoying factors of 2 and pi of course", as in our earlier formula
-for Jn(B).  Not very satisfying, for some reason.  Perhaps history can help?
+Or perhaps most forthright, start with the formula for Jn(B) given above (the integral), and say "we want cos(sin) expanded as a sum of cosines, and we
+simply define Jn to be the nth coefficient in that sum, ignoring annoying factors of 2 and pi of course".
+Not very satisfying, for some reason.  Perhaps history can help?
 These functions were
 studied by Daniel Bernoulli (the vibrations of a heavy chain, 1738), 
 Euler (the vibrations of a membrane, 1764), Lagrange (planetary motion, 1770),
