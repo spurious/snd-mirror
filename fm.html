@@ -1358,29 +1358,41 @@ cascade.png:
 
 <p>Unfortunately, FM can produce energy 
 at 0Hz (when, for example, the carrier frequency equals the modulating frequency), and that 0Hz ("DC") component becomes a constant offset in the 
-lower of the two FM pairs. So our fundamental frequency no longer has any obvious relation to
+phase increment (the "instantaneous frequency") of the outer or lowermost
+carrier. 
+So our fundamental frequency no longer has any obvious relation to
 <img src="fmeq43.png" alt="wc" align=absmiddle>!
 That is, we 
 can expand our cascade formula into:
 </p>
 
-<!-- LATEX \sin(\omega_{c}t + \sum J_{n}(B)\cos(\omega_{c}t + n\omega_{m_{n}}t)) -->
+<!-- LATEX old version: \sin(\omega_{c}t + \sum J_{n}(B)\cos(\omega_{c}t + n\omega_{m_{n}}t)) -->
+<!-- LATEX fmeq36.png: \sin(\omega_{c}t + \int_{0}^{t} \! \sum J_{n}(B)\cos(\omega_{c}t + n\omega_{m_{n}}t) \, \mathrm{d} t) -->
 
 <img src="fmeq36.png" alt="more sins" hspace=20>
 
 
-<!-- LATEX \omega_{c} = -n\omega_{m}\textrm{, we get }J_{n}(B)\cos(0) = J_{n}(B) -->
+<!-- LATEX old version (fmeq46.png): \omega_{c} = -n\omega_{m}\textrm{, we get }J_{n}(B)\cos(0) = J_{n}(B) -->
+<!-- LATEX fmeq46.png: \omega_{c} = -n\omega_{m} -->
+<!-- LATEX fmeq51.png: J_{n}(B)\cos(0) = J_{n}(B) -->
 
-<p>but now wherever 
-<img src="fmeq46.png" alt="wc" align=absmiddle>.
-This could be a disaster, because 
+<p>but now whenever 
+<img src="fmeq46.png" alt="wc" align=absmiddle>, we get
+<img src="fmeq51.png" alt="j0 case" align=absmiddle>,
+and the carrier is offset by <code>(radians-&gt;hz (bes-jn B))</code>, that is, (Jn(B) * srate / (2 * pi)).
+For example, if we have <code>(oscil gen 0.05)</code>, where we've omitted everything except
+the constant (DC) term (0.05 in this case), this oscil produces a sine wave at its nominal frequency + (radians-&gt;hz 0.05),
+an offset of about 351 Hz at a 44100 Hz sampling rate.
+This extra offset could be a disaster, because 
 in most cases where we care about the perceived fundamental, we are trying to create harmonic 
-spectra, and that is pretty hard if we can't predict what our modulator/carrier ratios will be.
+spectra, and that is harder if our modulator/carrier ratio depends on the current FM index.
 If you are using low indices and the top pair's 
 mc-ratios are below 1.0 (in vibrato, for example), you have a good chance of getting usable results.  
 If you want cascade FM to work in other situations, make sure the top oscil has an initial phase of 
 (pi + mod-incr)/2.  The middle FM spectrum will then have only sines (not cosines), so the DC component
-will be thoroughly discouraged.  (The not-so-well-hidden-message: Use PM with sine here).
+will be thoroughly discouraged.  Or use phase modulation instead; in that case, we
+have effectively <code>(oscil gen 0.0 0.05)</code>, which has no effect on the pitch, but offsets the
+phase by a constant (0.05), usually not a big deal.
 </p>
 
 
@@ -1606,7 +1618,7 @@ hell breaks loose, but luckily:
 </td></tr></table>
 
 <p>
-Apparently, if B&gt;1.0, this formula becomes 
+Apparently, if B&gt;1.5, this formula becomes 
 numerically unstable; the result is a burst of noise.
 Tomisawa says the problem "is considered to be caused by an error in the digital computation". 
 Perhaps we have wandered into the realm of chaos:

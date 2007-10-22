@@ -536,6 +536,7 @@
        (do ((i 0 (1+ i)))
 	   ((= i 30000))
 	 (outa i (nrcos gen (* (env index) (oscil mod))) *output*))))))
+|#
 
 (definstrument (lutish beg dur freq amp)
   (let* ((res1 (max 1 (inexact->exact (round (/ 1000.0 (max 1.0 (min 1000.0 freq)))))))
@@ -556,6 +557,7 @@
 		      (nrcos gen (* ind (oscil mod))))
 		 *output*)))))))
 
+#|
 (with-sound (:srate 44100 :clipped #f :statistics #t :play #t)
   (lutish 0 1 440 .1))
 
@@ -645,6 +647,7 @@
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
 	 (outa i (nrssb gen 0.0) *output*))))))
+|#
 
 (definstrument (oboish beg dur freq amp aenv)
   (let* ((res1 (max 1 (inexact->exact (round (/ 1400.0 (max 1.0 (min 1400.0 freq)))))))
@@ -680,6 +683,7 @@
 	   (outa i result *output*)
 	   (if *reverb* (outa i (* .01 result) *reverb*))))))))
 
+#|
 (with-sound (:clipped #f :statistics #t :play #t)
   (oboish 0 1 300 .1 '(0 0 1 1 2 0)))
 
@@ -906,6 +910,7 @@
 	   (do ((i 0 (1+ i)))
 	       ((= i 20000))
 	     (outa i (rcos gen 0.0) *output*))))))
+|#
 
 (definstrument (stringy beg dur freq amp)
   (let* ((start (seconds->samples beg))
@@ -930,6 +935,7 @@
 		       (rcos carrier 0.0)))
 	       *output*))))))
 
+#|
 (with-sound (:clipped #f :statistics #t :play #t)
   (stringy 0 1 1000 .5))
 
@@ -1471,6 +1477,7 @@
 ;   so (make-rk!ssb 0.0 40.0 :r 70) is insecty (:r 100)
 ;      (make-rk!ssb 0.0 10.0 :r 100) -- some bird? (make-rk!ssb 0.0 15.0 :r 300)
 ;      (make-rk!ssb 1000.0 25.0 :r 10) (make-rk!ssb 3000.0 25.0 :r 100) -- another bird (5000)
+|#
 
 (definstrument (bouncy beg dur freq amp :optional (bounce-freq 5) (bounce-amp 20))
   (let* ((gen (make-rk!ssb (* freq 4) freq :r 1.0)) 
@@ -1491,6 +1498,7 @@
 		    (rk!ssb gen 0.0)) 
 	       *output*))))))
 
+#|
 (with-sound (:statistics #t :play #t :clipped #f)
   (bouncy 0 2 300 .5 5 10))
 
@@ -1539,6 +1547,7 @@
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
 	 (outa i (r2k!cos gen 0.0) *output*))))))
+|#
 
 (definstrument (pianoy beg dur freq amp)
   (let* ((gen (make-r2k!cos freq :r 0.5 :k 3.0)) 
@@ -1553,9 +1562,11 @@
 		    (r2k!cos gen 0.0)) 
 	       *output*))))))
 
+#|
 (with-sound (:statistics #t :play #t :clipped #f)
   (pianoy 0 3 100 .5))
 ;;; this can be combined with bouncy-like changes to get an evolving sound
+|#
 
 (definstrument (pianoy1 beg dur freq amp :optional (bounce-freq 5) (bounce-amp 20))
   (let* ((gen (make-r2k!cos freq :r 0.5 :k 3.0)) 
@@ -1576,8 +1587,10 @@
 		    (r2k!cos gen 0.0)) 
 	       *output*))))))
 
+#|
 (with-sound (:statistics #t :play #t :clipped #f)
   (pianoy1 0 4 200 .5 1 .1))
+|#
 
 (definstrument (pianoy2 beg dur freq amp)
   (let* ((gen (make-r2k!cos freq :r 0.5 :k 3.0)) 
@@ -1598,6 +1611,7 @@
 		       (fmssb knock 0.0)))
 	       *output*))))))
 
+#|
 (with-sound (:clipped #f :statistics #t :play #t) 
   (pianoy2 0 1 100 .5))
 |#
@@ -1608,6 +1622,8 @@
 ;;; inf sines scaled by 1/2^k: k2sin
 
 ;;; Jolley 1st col 1st row
+
+;;; not flexible -- very similar to several others
 
 (def-clm-struct (k2sin
 		 :make-wrapper (lambda (g)
@@ -1656,7 +1672,7 @@
 	     1.0))))
 
 #|
-(with-sound (:clipped #f :statistics #t :play #t)
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-k2cos 440.0)))
     (run 
      (lambda ()
@@ -1776,6 +1792,7 @@
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
 	 (outa i (rkoddssb gen 0.0) *output*))))))
+|#
 
 (definstrument (glassy beg dur freq amp)
   (let* ((start (seconds->samples beg))
@@ -1794,6 +1811,7 @@
 		    (rkoddssb clang 0.0))
 	       *output*))))))
 
+#|
 (with-sound (:clipped #f :statistics #t :play #t)
   (glassy 0 .1 1000 .5))
 
@@ -1897,6 +1915,20 @@
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
 	 (outa i (abssin gen 0.0) *output*))))))
+
+(with-sound (:clipped #f :statistics #t :play #t)
+  (let ((vib (make-abssin 100.0)) ; spacing will be 200, if FM you get index-proportional amount as constant offset
+	(gen (make-oscil 1000.0))
+	(ampf (make-env '(0 0 1 1 2 1 3 0) :scaler .5 :end 20000)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i 
+	       (* (env ampf)
+		  (oscil gen 0.0 (* 3 (abssin vib 0.0))))
+	       *output*))))))
+
 |#
 
 
@@ -2998,6 +3030,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 ;;; imaginary machines (also imaginary beasts)
+|#
 
 (definstrument (machine1 beg dur cfreq mfreq amp index gliss)
   (let* ((gen (make-fmssb cfreq mfreq :index 1.0))
@@ -3012,6 +3045,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	   ((= i stop)) 
 	 (set! (fmssb-index gen) (env indf))
 	 (outa i (* (env ampf) (fmssb gen (env frqf))) *output*))))))
+#|
 
 (with-sound (:statistics #t :play #t)
   (do ((i 0.0 (+ i .5)))
@@ -3072,7 +3106,18 @@ index 10 (so 10/2 is the bes-jn arg):
     (machine1 i .3 1000 540 0.5 6.0 0.0)
     (machine1 (+ i .1) .1 2000 540 0.5 10.0 100.0)
     ))
-;; this is good up an octave (and sped up)
+
+;;; same as above but up octave
+(with-sound (:statistics #t :play #t)
+  (do ((i 0.0 (+ i .1)))
+      ((>= i 2.0))
+    (machine1 i .15 2400 1080 0.25 40.0 0.0)
+    (machine1 (+ i .05) .2 4800 1080 0.5 3.0 0.0))
+  (do ((i 0.0 (+ i .3)))
+      ((>= i 2.0))
+    (machine1 i .15 2000 1080 0.5 6.0 0.0)
+    (machine1 (+ i .05) .1 4000 1080 0.5 10.0 100.0)
+    ))
 |#
 
 
