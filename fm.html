@@ -23,7 +23,6 @@
 
 -->
 
-
 <!-- INDEX fmintro:Frequency Modulation -->
 <A NAME="fmintro"></A>
 
@@ -509,10 +508,12 @@ NEW:
 fmeq17: e^{\frac{1}{2}(t - \frac{1}{t})}
 -->
 
+<!-- LATEX fmeq45.png: e^{iz \cos \theta} = \sum_{n=-\infty}^{\infty} \!\! i^{n} J_{n}(z) \, e^{i n \theta} -->
+
 <table border=1 hspace=50 cellpadding=10><tr><td>
 <small> 
 Then there's the perennial question "why Bessel functions?". 
-Most explanations start with the Jacobi-Anger formula: <i>obscurum per obscurius</i>!  
+Most explanations start with the Jacobi-Anger formula, <img src="fmeq45.png" alt="jacobi formula" align=absmiddle>: <i>obscurum per obscurius</i>!  
 A different tack might be to start with <img src="sceq42.png" alt="sin in terms of e" align=absmiddle>, a definition of sine,
 and call the "e^(ix)" terms "t", 
 then cos(sin) involves terms like <img src="fmeq17.png" alt="cos(sin) in e" align=absmiddle>,
@@ -721,17 +722,15 @@ Or perhaps more readable:
 -->
 
 <!-- LATEX fmeq24: \omega_{c}-2\omega_{m} = -\omega_{c} -->
-<!-- LATEX \sin(-x)=-\sin(x)\textrm{, but }\cos(-x)=cos(x) -->
 
 <p>Our first reaction is, "so what if one's a sine and another's a cosine, or whatever &mdash; they'll sound the 
 same", but we are being hasty.  What if (for example), the modulator has the same frequency as the 
 carrier, and its index (B) is high enough that some significant energy appears at
 <img src="fmeq24.png" alt="w-m=-w" align=absmiddle>?
 Where does energy at a negative frequency go?  We once again fall back on
-trigonometry: 
-<img src="fmeq45.png" alt="sin-sin and cos" align=absmiddle>,
+trigonometry: sin(-x) = -sin(x), but cos(-x) = cos(x),
 so the negative frequency component adds to the positive frequency component if it's a cosine, but 
-subtracts if it's a sine.  The upshot of all this is that the results will be different.  We get a different 
+subtracts if it's a sine.  We get a different 
 pattern of cancellations depending on the initial phases of the carrier and modulator.  Take the CLM
 instrument:
 </p>
