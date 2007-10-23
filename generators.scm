@@ -951,13 +951,12 @@
 				 (set! (rssb-incr1 g) (hz->radians (rssb-carfreq g)))
 				 (set! (rssb-incr2 g) (hz->radians (rssb-modfreq g)))
 				 g))
-  (carfreq 0.0) (modfreq 1.0) (n 1 :type int) (r 0.0)
+  (carfreq 0.0) (modfreq 1.0) (r 0.0)
   (angle1 0.0) (angle2 0.0) (incr1 0.0) (incr2 0.0))
 
 (define (rssb gen fm)
   (declare (gen rssb) (fm float))
-  (let* ((n (rssb-n gen))
-	 (angle1 (rssb-angle1 gen))
+  (let* ((angle1 (rssb-angle1 gen))
 	 (angle2 (rssb-angle2 gen))
 	 (carsin (sin angle1))
 	 (canrcos (cos angle1))
@@ -973,9 +972,119 @@
     (set! (rssb-angle2 gen) (+ fm angle2 (rssb-incr2 gen)))
     result))
 
+(define (rssb-interp gen fm interp)
+  (declare (gen rssb) (fm float))
+  (let* ((angle1 (rssb-angle1 gen))
+	 (angle2 (rssb-angle2 gen))
+	 (carsin (sin angle1))
+	 (canrcos (cos angle1))
+	 (r (rssb-r gen))
+	 (den (+ 1.0 (* r r) (* -2.0 r (cos angle2))))
+	 (sumsin (* r (sin angle2)))
+	 (sumcos (- 1.0 (* r (cos angle2))))
+	 (result (/ (- (* carsin sumsin)
+		       (* interp canrcos sumcos))
+		    (* 2 den)))
+	 (cfm (* fm (/ (rssb-incr1 gen) (rssb-incr2 gen)))))
+    (set! (rssb-angle1 gen) (+ cfm angle1 (rssb-incr1 gen)))
+    (set! (rssb-angle2 gen) (+ fm angle2 (rssb-incr2 gen)))
+    result))
+
 #|
+(with-sound (:clipped #f :statistics #t :play #t) 
+  (do ((k 0 (1+ k))) 
+      ((= k 10))
+    (let* ((freq (* 16.3 (expt 2.0 (+ 3 (/ k 12))))) ; if oct=5 (and env end at 100), sort of hammered string effect
+	   (f0 520) ; "uh"
+	   (f1 1190)
+	   (f2 2390)
+	   ;; "ah" is good: 730 1090 2440
+	   ;; it might be smoother to scale the formant freqs by (sqrt (/ freq 120)) or even (expt (/ freq 120) 0.3)
+	   (res0 (inexact->exact (round (/ f0 freq))))
+	   (res1 (inexact->exact (round (/ f1 freq))))
+	   (res2 (inexact->exact (round (/ f2 freq))))
+	   (gen1 (make-rssb (* res0 freq) freq .4))
+	   (gen2 (make-rssb (* res1 freq) freq .5))
+	   (gen3 (make-rssb (* res2 freq) freq .6))
+	   (ampf (make-env '(0 0 .1 1 2 .5 3 .1 4 1 5 .4 6 .1 80 0) :scaler .5 :base 32 :end 60000)) ; or 50 at end
+	   ;;           or '(0 0 .1 1 2 .5 3 .1 4 .3 5 .1 40 0)
+	   (pervib (make-triangle-wave 5.0 (hz->radians 3.0)))
+	   (ranvib (make-rand-interp 12.0 (hz->radians 2.0))))
+      (run 
+       (lambda ()
+	 (do ((i 0 (1+ i)))
+	     ((= i 60000))
+	   (let ((vib (+ (rand-interp ranvib)
+			 (triangle-wave pervib))))
+	     (outa (+ i (* k 30000)) (* (env ampf)
+					(+ (* .85 (rssb-interp gen1 vib -1))
+					   (* .1 (rssb-interp gen2 vib 0))
+					   (* .05 (rssb-interp gen3 vib 1))))
+		   *output*))))))))
+
+(with-sound (:clipped #f :statistics #t :play #t) 
+  (do ((k 0 (1+ k))) 
+      ((= k 10))
+    (let* ((freq (* 16.3 (expt 2.0 (+ 3 (/ k 12))))) ; froggy if oct=1 or 2 and "ah" (env end at 10 = cycling) ("er" is good too at oct=2)
+	   (scl (sqrt (/ freq 120)))
+	   (f0 (* scl 520)) ; "uh"
+	   (f1 (* scl 1190))
+	   (f2 (* scl 2390))
+	   ;; "ah" is good: 730 1090 2440
+	   (res0 (inexact->exact (floor (/ f0 freq))))
+	   (res1 (inexact->exact (floor (/ f1 freq))))
+	   (res2 (inexact->exact (floor (/ f2 freq))))
+	   (gen1 (make-rk!ssb (* res0 freq) freq 2.4))
+	   (gen2 (make-rssb (* res1 freq) freq .5))
+	   (gen3 (make-rssb (* res2 freq) freq .6))
+	   (ampf (make-env '(0 0 .1 1 2 .5 3 .1 4 .3 5 .4 6 .1 40 0) :scaler .5 :base 32 :end 60000)) ; or 50 at end
+	   ;;           or '(0 0 .1 1 2 .5 3 .1 4 .3 5 .1 40 0)
+	   (pervib (make-triangle-wave 5.0 (hz->radians 3.0)))
+	   (ranvib (make-rand-interp 12.0 (hz->radians 2.0))))
+      (run 
+       (lambda ()
+	 (do ((i 0 (1+ i)))
+	     ((= i 60000))
+	   (let ((vib (+ (rand-interp ranvib)
+			 (triangle-wave pervib))))
+	     (outa (+ i (* k 30000)) (* (env ampf)
+					(+ (* .85 (rk!ssb gen1 vib))
+					   (* .1 (rssb-interp gen2 vib 0))
+					   (* .05 (rssb-interp gen3 vib 1))))
+		   *output*))))))))
+
+(with-sound (:clipped #f :statistics #t :play #t) 
+  (do ((k 0 (1+ k))) 
+      ((= k 10))
+    (let* ((freq (* 16.3 (expt 2.0 (+ 3 (/ k 12)))))
+	   (scl (sqrt (/ freq 120)))
+	   (f0 (* scl 490)) ; "uh"
+	   (f1 (* scl 1350))
+	   (f2 (* scl 2440))
+	   ;; "ah" is good: 730 1090 2440
+	   (res0 (inexact->exact (floor (/ f0 freq))))
+	   (res1 (inexact->exact (floor (/ f1 freq))))
+	   (res2 (inexact->exact (floor (/ f2 freq))))
+	   (gen1 (make-rk!ssb (* res0 freq) freq 2))
+	   (gen2 (make-rk!ssb (* res1 freq) freq 3))
+	   (gen3 (make-rk!ssb (* res2 freq) freq 3))
+	   (ampf (make-env '(0 0 .1 1 2 .5 3 .1 4 .3 5 .4 6 .1 40 0) :scaler .5 :base 32 :end 30000))
+	   (pervib (make-triangle-wave 5.0 (hz->radians 3.0)))
+	   (ranvib (make-rand-interp 12.0 (hz->radians 2.0))))
+      (run 
+       (lambda ()
+	 (do ((i 0 (1+ i)))
+	     ((= i 30000))
+	   (let ((vib (+ (rand-interp ranvib)
+			 (triangle-wave pervib))))
+	     (outa (+ i (* k 30000)) (* (env ampf)
+					(+ (* .85 (rk!ssb gen1 vib))
+					   (* .1 (rk!ssb gen2 vib))
+					   (* .05 (rk!ssb gen3 vib))))
+		   *output*))))))))
+
 (with-sound (:clipped #f :statistics #t :play #t)
-  (let ((gen (make-rssb 2000.0 103.0 3 0.5)))
+  (let ((gen (make-rssb 2000.0 103.0 0.5)))
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
@@ -1906,6 +2015,16 @@
 (define (abssin gen fm)
   (declare (gen abssin) (fm float))
   (abs (oscil (abssin-osc gen) fm)))
+
+;; huge DC offset here -- subtract (/ 2.0 pi) to get rid of it [sin^2 x = 1/2 - cos 2x, 
+;;   so every term in the sum adds 1/(2(4k^2-1)) -> 1/4
+;;   so DC is 2/pi = 0.6366 (J 397 or 373)]
+
+(define (abssin-no-dc gen fm)
+  (declare (gen abssin) (fm float))
+  (/ (- (abs (oscil (abssin-osc gen) fm))
+	(/ 2.0 pi))
+     (/ 2.0 pi)))  ; original went from 0 to 1.0, subtract 2/pi, and we get peak at -2/pi
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -3316,4 +3435,4 @@ index 10 (so 10/2 is the bes-jn arg):
 |#
 
 ;;; TODO: delay + sqr as handler for coupled rand-interp envs
-;;; TODO: check the double top env, and talking drum effect
+;;; TODO: check talking drum effect

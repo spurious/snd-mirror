@@ -1925,7 +1925,8 @@ sceq25:
 Z 352
 
 sceq26:
-& \frac{8}{\pi} \sum_{k=1}^{\infty} \frac{\sin^{2}kx}{4k^{2}-1} = |\sin x|
+original: & \frac{8}{\pi} \sum_{k=1}^{\infty} \frac{\sin^{2}kx}{4k^{2}-1} = |\sin x|
+& \frac{8}{\pi} \sum_{k=1}^{\infty} \frac{\sin^{2}kx}{4k^{2}-1} = | \sin x \, | = \frac{2}{\pi} - \frac{8}{\pi} \sum_{k=1}^{\infty} \frac{\cos 2kx}{4k^{2} - 1}
 
 sceq31:
 J_{0}(ka)J_{0}(kr) + 2 \sum_{m=1}^{\infty} J_{m}(kr)J_{m}(ka) \cos m\theta = J_{0}\Big(k \sqrt{r^{2}+a^{2}-2ar\cos \theta}\Big)
@@ -4906,8 +4907,9 @@ under the name "discrete summation formula".
   <A class=def NAME="rcos">rcos</A> gen fm
   <A class=def NAME="rcos?">rcos?</A> gen
 
-  <A class=def NAME="make-rssb">make-rssb</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1) (r 0.0)
+  <A class=def NAME="make-rssb">make-rssb</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (r 0.0)
   <A class=def NAME="rssb">rssb</A> gen fm
+  <A class=def NAME="rssbinterp">rssb-interp</A> gen fm interp
   <A class=def NAME="rssb?">rssb?</A> gen
 </pre>
 

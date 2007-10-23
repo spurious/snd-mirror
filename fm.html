@@ -508,19 +508,19 @@ NEW:
 fmeq17: e^{\frac{1}{2}(t - \frac{1}{t})}
 -->
 
-<!-- LATEX fmeq45.png: e^{iz \cos \theta} = \sum_{n=-\infty}^{\infty} \!\! i^{n} J_{n}(z) \, e^{i n \theta} -->
+<!-- LATEX fmeq45.png: e^{iz \cos \theta} \! = \!\!\!\! \sum_{n=-\infty}^{\infty} \!\!\! i^{n} J_{n}(z) \, e^{i n \theta} -->
 
 <table border=1 hspace=50 cellpadding=10><tr><td>
 <small> 
 Then there's the perennial question "why Bessel functions?". 
-Most explanations start with the Jacobi-Anger formula, <img src="fmeq45.png" alt="jacobi formula" align=absmiddle>: <i>obscurum per obscurius</i>!  
+Most explanations start with <img src="fmeq45.png" alt="jacobi formula" align=absmiddle>: <i>obscurum per obscurius</i>!  
 A different tack might be to start with <img src="sceq42.png" alt="sin in terms of e" align=absmiddle>, a definition of sine,
 and call the "e^(ix)" terms "t", 
 then cos(sin) involves terms like <img src="fmeq17.png" alt="cos(sin) in e" align=absmiddle>,
 which is one (convoluted) way to define Bessel functions. 
 Or perhaps most forthright, start with the formula for Jn(B) given above (the integral), and say "we want cos(sin) expanded as a sum of cosines, and we
-simply define Jn to be the nth coefficient in that sum, ignoring annoying factors of 2 and pi of course".
-Not very satisfying, for some reason.  Perhaps history can help?
+simply define Jn to be the nth coefficient in that sum".
+This was the approach of Bessel and other 19th century mathematicians, but it is not very satisfying for some reason.  Perhaps history can help?
 These functions were
 studied by Daniel Bernoulli (the vibrations of a heavy chain, 1738), 
 Euler (the vibrations of a membrane, 1764), Lagrange (planetary motion, 1770),
@@ -684,9 +684,10 @@ are just as they were before, but the initial phases of the side bands have chan
 <img src="fmeq21.png" alt="sin sin case" hspace=20>
 
 
-<!-- LATEX \sin(-x)=-\sin(x)\textrm{, that is }\sin(\omega_{c}t - \omega_{m}t) = -\sin(\omega_{m}t - \omega_{c}t) -->
+<!-- LATEX fmeq44: \sin(\omega_{c}t - \omega_{m}t) = -\sin(\omega_{m}t - \omega_{c}t) -->
 
 <p>This is Chowning's version of the expansion.  Here we are also using
+<img src="fmeq52.png" alt="sin(-x)=-sin(x)" align=absmiddle>, that is
 <img src="fmeq44.png" alt="sin-sin" align=absmiddle>.  In general:
 </p>
 
@@ -722,13 +723,16 @@ Or perhaps more readable:
 -->
 
 <!-- LATEX fmeq24: \omega_{c}-2\omega_{m} = -\omega_{c} -->
+<!-- LATEX fmeq52: \sin(-x) = - \sin(x) -->
+<!-- LATEX fmeq53: \cos(-x) = \cos(x) -->
 
 <p>Our first reaction is, "so what if one's a sine and another's a cosine, or whatever &mdash; they'll sound the 
 same", but we are being hasty.  What if (for example), the modulator has the same frequency as the 
 carrier, and its index (B) is high enough that some significant energy appears at
 <img src="fmeq24.png" alt="w-m=-w" align=absmiddle>?
 Where does energy at a negative frequency go?  We once again fall back on
-trigonometry: sin(-x) = -sin(x), but cos(-x) = cos(x),
+trigonometry: <img src="fmeq52.png" alt="sin(-x)=-sin(x)" align=absmiddle>,
+but <img src="fmeq53.png" alt="cos(-x)=cos(x)" align=absmiddle>,
 so the negative frequency component adds to the positive frequency component if it's a cosine, but 
 subtracts if it's a sine.  We get a different 
 pattern of cancellations depending on the initial phases of the carrier and modulator.  Take the CLM
