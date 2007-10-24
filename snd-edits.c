@@ -481,9 +481,6 @@ typedef struct {
 #define FRAGMENT_PTREES(Ed, Pos)             ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees
 #define FRAGMENT_PTREE_LIST_SIZE(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->size
 #define FRAGMENT_PTREE_LIST(Ed, Pos)         ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_list
-#define FRAGMENT_PSPLIT(Ed, Pos)             ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->psplit
-#define FRAGMENT_RSPLIT(Ed, Pos)             ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->rsplit
-#define FRAGMENT_XSPLIT(Ed, Pos)             ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->xsplit
 
 #define FRAGMENT_MIXES(Ed, Pos)              ((ed_fragment **)((Ed)->fragments))[Pos]->mixes
 #define FRAGMENT_MIX_LIST_SIZE(Ed, Pos)      ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->size

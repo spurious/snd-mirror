@@ -8,6 +8,10 @@
  *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
  */
 
+/* TODO: if just spectrum (any type), place pos slider with timewave, untime, move pos slider, click zoom slider, pos slider goes to previous pos!
+ * TODO: it's possible to have unselected graph in selected color?
+ * TODO: re-exposure is over-optimized -- have to click zoom to get graphs
+ */
 
 chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
 {

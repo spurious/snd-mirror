@@ -1522,7 +1522,7 @@
 ;;;   so freq=100, r=30, the center of the spectrum is around 3kHz:
 
 #|
-(with-sound (:clipped #f :statistics #t :play #t)
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-rk!cos 100.0 :r 40.0)) 
 	(r 40.0) 
 	(incr (/ -40.0 100000)))
@@ -1546,6 +1546,57 @@
 	 (set! (rk!cos-r gen) r) 
 	 (set! r (+ r incr))
 	 (outa i (* (env ampf) (rk!cos gen 0.0)) *output*))))))
+
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+  (let ((gen (make-rk!cos 1000.0 :r 8.0)) 
+	(frqf (make-env '(0 1 1 0) :base 32 :scaler (hz->radians 1000) :end 10000)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000)) 
+	 (outa i (rk!cos gen (env frqf)) *output*))))))
+
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+  (let ((gen (make-rk!cos 3000.0 :r 1.0)) (ampf (make-env '(0 0 1 1 10 1 11 0) :end 10000))
+	(frqf (make-env '(0 1 1 0 2 .25 3 0) :base 3 :scaler (hz->radians 2000) :end 10000)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000)) 
+	 (outa i (* (env ampf) (rk!cos gen (env frqf))) *output*))))))
+
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+  (do ((k 0 (1+ k)))
+      ((= k 6))
+    (let ((gen (make-rk!cos 3000.0 :r 0.6)) (ampf (make-env '(0 0 1 1 2 1 3 0) :end 3000))
+	  (frqf (make-env '(0 0 1 1) :base .1 :scaler (hz->radians 2000) :end 3000))) ; '(0 .5  1 1 2 0 3 0) '(0 1 1 0 2 1 6 -1)
+      (run 
+       (lambda ()
+	 (do ((i 0 (1+ i)))
+	     ((= i 3000)) 
+	   (outa (+ i (* k 4000)) (* (env ampf) (rk!cos gen (env frqf))) *output*)))))))
+
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+  (do ((k 0 (1+ k)))
+      ((= k 6))
+    (let ((gen (make-rk!cos 1000.0 :r 1.0)) (ampf (make-env '(0 0 1 1 2 1 3 0) :end 3000))
+	  (frqf (make-env '(0 .9 1 1 2 -1) :base .1 :scaler (hz->radians 500) :end 3000)))
+      (run 
+       (lambda ()
+	 (do ((i 0 (1+ i)))
+	     ((= i 3000)) 
+	   (outa (+ i (* k 10000)) (* (env ampf) (rk!cos gen (env frqf))) *output*)))))))
+
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+  (do ((k 0 (1+ k)))
+      ((= k 6))
+    (let ((gen (make-rk!cos 500.0 :r 1.5)) (ampf (make-env '(0 0 1 1 2 1 3 0) :end 3000))
+	  (frqf (make-env '(0 1 1 1 2 -1) :base .5 :scaler (hz->radians 400) :end 3000)))
+      (run 
+       (lambda ()
+	 (do ((i 0 (1+ i)))
+	     ((= i 3000)) 
+	   (outa (+ i (* k 10000)) (* (env ampf) (rk!cos gen (env frqf))) *output*)))))))
 |#
 
 (def-clm-struct (rk!ssb
@@ -2003,7 +2054,7 @@
 
 ;;; absolute value of oscil: abssin
 
-;;; Zygmund 2nd -- not actually very useful, but shows sin 2nx of abs
+;;; Zygmund 2nd -- not actually very useful, but shows cos 2nx of abs
 
 (def-clm-struct (abssin
 		 :make-wrapper (lambda (g)
@@ -2014,17 +2065,13 @@
 
 (define (abssin gen fm)
   (declare (gen abssin) (fm float))
-  (abs (oscil (abssin-osc gen) fm)))
-
-;; huge DC offset here -- subtract (/ 2.0 pi) to get rid of it [sin^2 x = 1/2 - cos 2x, 
-;;   so every term in the sum adds 1/(2(4k^2-1)) -> 1/4
-;;   so DC is 2/pi = 0.6366 (J 397 or 373)]
-
-(define (abssin-no-dc gen fm)
-  (declare (gen abssin) (fm float))
   (/ (- (abs (oscil (abssin-osc gen) fm))
 	(/ 2.0 pi))
      (/ 2.0 pi)))  ; original went from 0 to 1.0, subtract 2/pi, and we get peak at -2/pi
+
+;; DC: sin^2 x = 1/2 - cos 2x, 
+;;   so every term in the sum adds 1/(2(4k^2-1)) -> 1/4 (J 397 or 373)
+;;   so DC is 2/pi = 0.6366
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -2048,6 +2095,8 @@
 		  (oscil gen 0.0 (* 3 (abssin vib 0.0))))
 	       *output*))))))
 
+;;; pitch is 2*freq, 200 1, 400 .203, 600 .087, 800 .049, 1000 .031, 1200 .021
+;;;                      1      .2        .086      .048       .030       .021 -- (/ 3.0 (- (* 4 (* 6 6)) 1))
 |#
 
 
@@ -2330,14 +2379,23 @@
 			  0.244 0.240 0.237 0.233 0.230 0.227 0.224 0.221 0.219 0.216 0.214 0.212 0.210 0.208 0.206 0.204 0.202 0.200 0.198 0.197
 			  0.195 0.194 0.192 0.191 0.189 0.188 0.187 0.185 0.184 0.183 0.182 0.180 0.179 0.178 0.177 0.176 0.175 0.174 0.173 0.172
 			  0.171 0.170 0.169 0.168 0.168 0.167 0.166 0.165 0.164 0.163 0.163 0.162 0.161 0.161 0.160 0.159 0.158 0.158 0.157 0.156
-			  0.156 0.155 0.155 0.154 0.153 0.153 0.152 0.152 0.151 0.150 0.150 0.149 0.149 0.148 0.148 0.147 0.147 0.146 0.146 0.145))
+			  0.156 0.155 0.155 0.154 0.153 0.153 0.152 0.152 0.151 0.150 0.150 0.149 0.149 0.148 0.148 0.147 0.147 0.146 0.146 0.145
+			  0.145 0.144 0.144 0.143 0.143 0.143 0.142 0.142 0.141 0.141 0.140 0.140 0.140 0.139 0.139 0.138 0.138 0.138 0.137 0.137
+			  0.136 0.136 0.136 0.135 0.135 0.135 0.134 0.134 0.134 0.133 0.133 0.133 0.132 0.132 0.132 0.131 0.131 0.131 0.130 0.130
+			  0.130 0.129 0.129 0.129 0.129 0.128 0.128 0.128 0.127 0.127 0.127 0.127 0.126 0.126 0.126 0.125 0.125 0.125 0.125 0.124
+			  0.124 0.124 0.124 0.123 0.123 0.123 0.123 0.122 0.122 0.122 0.122 0.121 0.121 0.121 0.121 0.121 0.120 0.120 0.120 0.120
+			  0.119 0.119 0.119 0.119 0.119 0.118 0.118 0.118 0.118 0.118 0.117 0.117 0.117 0.117 0.117 0.116 0.116 0.116 0.116 0.116
+			  0.115 0.115 0.115 0.115 0.115 0.114 0.114 0.114 0.114 0.114 0.114 0.113 0.113 0.113 0.113 0.113 0.112 0.112 0.112 0.112
+			  0.112 0.112 0.111 0.111 0.111 0.111 0.111 0.111 0.110 0.110 0.110 0.110 0.110 0.110 0.110 0.109 0.109 0.109 0.109 0.109
+			  0.109 0.108 0.108 0.108 0.108 0.108 0.108 0.108 0.107 0.107 0.107 0.107 0.107 0.107 0.107 0.107 0.106 0.106 0.106 0.106
+			  0.106 0.106 0.106))
 ;;; is there a formula for the max?
 
 (def-clm-struct (bess
 		 :make-wrapper (lambda (g)
 				 (set! (bess-incr g) (hz->radians (bess-frequency g)))
 				 (if (>= (bess-n g) (vct-length bessel-peaks)) 
-				     (set! (bess-norm g) 0.145) 
+				     (set! (bess-norm g) 0.105) 
 				     (set! (bess-norm g) (vct-ref bessel-peaks (bess-n g))))
 				 g))
   (frequency 0.0) (n 0 :type int)
@@ -2367,7 +2425,7 @@
 
 ;;; max amps:
 (do ((i 1 (1+ i)))
-    ((= i 100))
+    ((or (c-g?) (= i 100)))
   (let ((mx 0.0))
     (do ((k 0.0 (+ k .001)))
 	((> k 200))
@@ -3434,5 +3492,68 @@ index 10 (so 10/2 is the bes-jn arg):
     (organish (* i .3) .4 (+ 100 (* 50 i)) .5 1.0 '(0 0 1 1 2 .5 3 .25 4 .125 10 0))))
 |#
 
+#|
+(definstrument (mosquito beg dur freq amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (carrier (make-oscil freq))
+	 (modulator1 (make-oscil (* freq 2))) ; or 1 (but leave lower mult at 2??)
+	 (modulator3 (make-oscil (* freq 3)))
+	 (modulator2 (make-oscil (* freq 8))) ; or 9
+	 (ampf (make-env '(0 0 .2 .5 1 .5 2 .5 3 1 4 .5 5 .5) :scaler amp :duration dur :base 32))
+	 (frqf (make-env '(0 0  1 0  1.01 0.1  1.03 -0.1  1.05 0.0  3 0 3.02 .05 3.03 -0.1 3.1 0 5 0.0) :duration dur :scaler (hz->radians freq)))
+	 ;; TODO: make freq env flicks at call time (is there a comb-filter effect as it gets near?)
+	 (vib (make-rand-interp 10.0 (hz->radians 10)))
+	 (indf (make-rand-interp 1 .5))
+	 (index2 (hz->radians (* freq 1.0)))
+	 (index3 (hz->radians (* freq 0.5))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let* ((amp (env ampf))
+		(frq (+ (env frqf) (rand-interp vib)))
+		(pitch (oscil carrier frq))
+		(index1 (hz->radians (* freq (+ 1.0 (rand-interp indf))))))
+	   (outa i (* amp
+		      (+ (* 0.6 (oscil modulator1 (+ (* 2 frq) (* index1 pitch))))
+			 (* 0.3 (oscil modulator3 (+ (* 3 frq) (* index3 pitch))))
+			 (* 0.1 (oscil modulator2 (+ (* 8 frq) (* index2 pitch))))))
+		 *output*)))))))
+
+(with-sound (:play #t)
+  (mosquito 0 5 560 .2)
+  (mosquito 1 3 880 .05))
+
+(definstrument (knudsens-frog beg amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples .25)))
+	 (base (make-oscil 480))
+	 (modm (make-oscil 40))
+	 (frqf (make-env '(0 0 .5 .2 .8 1 1 1) :duration .25 :base 32 :scaler (hz->radians 50)))
+	 (ampm (make-env '(0 .1  .5 .4  .6 .75  1 .9  1.5 1  2 .9 2.3 .1) :duration (/ .25 7)))
+	 (ampp (make-pulse-train (/ 7 .25)))
+	 (ampf (make-env '(0 0 1 1 3 1 4 0) :duration .25 :scaler amp)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (if (> (pulse-train ampp) 0.1)
+	     (mus-reset ampm))
+	 (outa i (* (env ampf)
+		    (oscil base (+ (env frqf) (* .01 (oscil modm))))
+		    (env ampm))
+	       *output*))))))
+
+(with-sound (:play #t :statistics #t) 
+  (knudsens-frog 0 .5))
+
+|#
+
 ;;; TODO: delay + sqr as handler for coupled rand-interp envs
 ;;; TODO: check talking drum effect
+
+;;; TODO: 8bat, indri?, insect trill in rail is at 8.5KHz? rail, midship (start), capuchin, allig
+;;; TODO: check wt for crickets et al
+;;; TODO: lookup machine/industrial recordings
+
