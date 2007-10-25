@@ -1632,23 +1632,47 @@ can behave chaotically.
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>FM and noise: sin(sin(rand))</h5></center></td></tr></table>
 
 <p>
-One of the standard ways to make noise 
+One way to make noise 
 (deliberately) with FM is to increase the index until massive aliasing is taking place. 
-In another, more controllable, method,
-we inject noise into our FM equations and see if anything useful pops out.  The fm-noise 
-instrument performs one form of modulation with noise.  The actual modulation 
-portion is:
+A more controllable approach is to use a random number generator as our modulator.
+In this case, the power spectral density of the output has the same form 
+as the value distribution function of the modulating noise, centered around the carrier. 
+The bandwidth of the result is about 4 times the peak deviation (the 
+random number frequency times its index):
 </p>
 
-<pre>
-    (oscil carrier (* fm-index (rand modulator)))
-</pre>
 
-<p>where rand is producing white noise.
-When frequency modulation gets noise, the power spectral density of the output has the same form 
-as the density function of the modulating wave, but now centered around the carrier. 
-The bandwidth of the result is about 4 times the peak deviation (the 
-random number frequency times its amplitude).  Simple FM with noise gives various whooshing sounds,
+<table border=1 hspace=40 vspace=10 cellpadding=5>
+<tr><td bgcolor="f6f8ff" colspan=3>
+<pre>
+(with-sound ()
+  (let ((gen (make-oscil 5000))
+	(noise (make-rand 1000 :envelope '(-1 1 0 0 1 1))) ; "eared"
+	(index (hz-&gt;radians 1000))) ; index=1.0 so bandwith=4 Khz (2 Khz on each side)
+    (do ((i 0 (1+ i)))
+	((= i 50000))
+      (outa i (oscil gen (* index (rand noise))) *output*))))
+</pre>
+<tr>
+<td>
+<img src="white-noise.png" alt="white-noise">
+</td>
+<td>
+<img src="gaussian-noise.png" alt="gaussian-noise">
+</td>
+<td>
+<img src="split-noise.png" alt="split-noise">
+</td>
+</tr>
+<tr>
+<td bgcolor="#f6f8ff"><center>flat</center></td>
+<td bgcolor="#f6f8ff"><center>gaussian (bell curve)</center></td>
+<td bgcolor="#f6f8ff"><center>eared</center></td>
+</tr></table>
+
+
+<p>
+Simple FM with noise gives various whooshing sounds,
 useful for Oceanic Music, but it can overstay its welcome.
 Heinrich Taube had the inspired idea
 of feeding the noise (as a sort of cascade FM) into the 
@@ -1679,6 +1703,11 @@ smeared out by a copy of the noise band:
 <pre>
     (oscil carrier (* fm-index (oscil fm (* noise-index (rand noise)))))
 </pre>
+
+<p>You may notice that this is one case where phase modulation is different from FM.  Previously,
+we could fix up each modulating sinusoid (both in amplitude and initial phase), but here we have no such
+handles on the components of the incoming signal.  We can integrate it by hand, of course.
+</p>
 
 
 <p>In the realm of "anything" as the modulating signal, consider 

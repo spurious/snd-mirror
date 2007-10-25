@@ -529,8 +529,8 @@ void env_editor_button_motion(env_editor *edp, int evx, int evy, oclock_t motion
   if (edp->env_pos < (e->pts - 1))
     x1 = e->data[edp->env_pos * 2 + 2]; /* looking for next point on right to avoid crossing it */
   else x1 = e->data[e->pts * 2 - 2];
-  if (x < x0) x = x0;
-  if (x > x1) x = x1;
+  if (x <= x0) x = x0 + .0001;
+  if (x >= x1) x = x1 - .0001;
   if (edp->env_pos == 0) x = e->data[0];
   if (edp->env_pos == (e->pts - 1)) x = e->data[(e->pts - 1) * 2];
   y = ungrf_y(ap, evy);

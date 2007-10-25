@@ -14,13 +14,40 @@
 
 ;;; n sinusoids, equal amps: ncos, nsin, nssb
 
-(define ncos sum-of-cosines)
-(define make-ncos make-sum-of-cosines)
-(define ncos? sum-of-cosines?)
+;;; can't use these because they use "cosines" rather than "n"
+;;; (define ncos sum-of-cosines)
+;;; (define make-ncos make-sum-of-cosines)
+;;; (define ncos? sum-of-cosines?)
+;;; 
+;;; (define nsin sum-of-sines)
+;;; (define make-nsin make-sum-of-sines)
+;;; (define nsin? sum-of-sines?)
 
-(define nsin sum-of-sines)
-(define make-nsin make-sum-of-sines)
-(define nsin? sum-of-sines?)
+(def-clm-struct (ncos
+		 :make-wrapper (lambda (g)
+				 (set! (ncos-gen g) (make-sum-of-cosines (ncos-n g) (ncos-frequency g)))
+				 g))
+  (frequency 0.0) (n 1 :type int)
+  (gen #f :type clm))
+
+(define (ncos gen fm)
+  (declare (gen ncos) (fm float))
+  (sum-of-cosines (ncos-gen gen) fm))
+
+
+(def-clm-struct (nsin
+		 :make-wrapper (lambda (g)
+				 (set! (nsin-gen g) (make-sum-of-sines (nsin-n g) (nsin-frequency g)))
+				 g))
+  (frequency 0.0) (n 1 :type int)
+  (gen #f :type clm))
+
+(define (nsin gen fm)
+  (declare (gen nsin) (fm float))
+  (sum-of-sines (nsin-gen gen) fm))
+
+
+
 
 (def-clm-struct (nssb 
 		 :make-wrapper (lambda (g)
@@ -3552,8 +3579,8 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (def-clm-struct plsenv (pulse #f :type clm) (ampf #f :type clm))
 
-(def-optkey-fun (make-pulsed-env envelope duration)
-  (make-plsenv (make-pulse-train (/ 1.0 duration))
+(def-optkey-fun (make-pulsed-env envelope duration frequency)
+  (make-plsenv (make-pulse-train frequency)
 	       (make-env envelope :duration duration)))
 
 (define (pulsed-env gen fm)
@@ -3564,13 +3591,14 @@ index 10 (so 10/2 is the bes-jn arg):
 (define pulsed-env? plsenv?)
 
 
+
 (definstrument (a-frog beg dur freq amp amp-env gliss gliss-env pulse-dur pulse-env fm-index fm-freq)
   (let* ((start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur)))
 	 (base (make-oscil freq))
 	 (modm (if (and fm-index (> fm-index 0.0)) (make-oscil fm-freq) #f))
 	 (frqf (if gliss-env (make-env gliss-env :duration dur :base 32 :scaler (hz->radians gliss)) #f))
-	 (pulse (make-pulsed-env pulse-env pulse-dur))
+	 (pulse (make-pulsed-env pulse-env pulse-dur (/ 1.0 pulse-dur)))
 	 (ampf (make-env amp-env :duration dur :scaler amp))
 	 (index (hz->radians (* fm-freq fm-index))))
     (run
@@ -3611,13 +3639,33 @@ index 10 (so 10/2 is the bes-jn arg):
                         0.0 10))
 |#
 
+(definstrument (a-cricket beg dur freq freq1 amp amp-env pulse-dur pulse-env)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (base (make-oscil freq))
+	 (base1 (make-oscil freq1))
+	 (pulse (make-pulsed-env pulse-env pulse-dur (/ 1.0 pulse-dur)))
+	 (ampf (make-env amp-env :duration dur :scaler amp)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (pulsed-env pulse 0.0)
+		    (+ (* .8 (oscil base 0.0))
+		       (* .2 (oscil base1 0.0))))
+	       *output*))))))
+
+#|
+(with-sound (:play #t) 
+    (a-cricket 0 .12 4500 5400 .5 '(0 0 1 1 3 1 4 0)
+                        (/ .11 3) '(0 0 1 .8 5 1 6 0 15 0)))
+|#
+
 ;;; TODO: delay + sqr as handler for coupled rand-interp envs
 ;;; TODO: check talking drum effect
 
 ;;; TODO: 8bat, indri?, insect trill in rail is at 8.5KHz? rail, midship (start), capuchin, allig
-;;; TODO: check wt for crickets et al
-;;; TODO: lookup machine/industrial recordings
 
-;;; PERHAPS: doc nature sounds (birds etc)?
 
 

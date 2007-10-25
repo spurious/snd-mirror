@@ -4633,14 +4633,14 @@ asyfm-I is the modified Bessel function version (the second formula in the <a hr
 
 
 <pre>
-  <A class=def NAME="make-pulsed-env">make-pulsed-env</A> <a class=quiet href="#optional-key">:optional-key</a> envelope duration
+  <A class=def NAME="make-pulsed-env">make-pulsed-env</A> <a class=quiet href="#optional-key">:optional-key</a> envelope duration frequency
   <A class=def NAME="pulsedenv">pulsed-env</A> gen fm
   <A class=def NAME="pulsedenv?">pulsed-env?</A> gen
 </pre>
 
 <p>
 This produces a repeating envelope.  <a href="#env">env</a> sticks at its last value, but pulsed-env repeats it over and over.
-"duration" is the repetition rate which can be changed at run-time via the "fm" argument to the pulsed-env generator.
+"duration" is the envelope duration, and "frequency" is the repeitition rate, changeable via the "fm" argument to the pulsed-env generator.
 </p>
 <br>
 
