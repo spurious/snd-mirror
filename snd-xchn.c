@@ -107,6 +107,7 @@ static void zy_changed(int value, chan_info *cp)
 static void zx_changed(int value, chan_info *cp)
 { /* scrollbar change */
   axis_info *ap;
+  double old_zx = 0.0;
   ap = cp->axis;
   if (ap->xmax == 0.0) return;
   if (ap->xmax <= ap->xmin) 
@@ -115,12 +116,16 @@ static void zx_changed(int value, chan_info *cp)
       ap->x_ambit = .001;
     }
   if (value < 1) value = 1;
+  old_zx = ap->zx;
   if (ap->x_ambit < X_RANGE_CHANGEOVER)
     ap->zx = sqr(get_scrollbar(channel_zx(cp), value, SCROLLBAR_MAX));
   else ap->zx = cube(get_scrollbar(channel_zx(cp), value, SCROLLBAR_MAX));
-  /* if cursor visible, focus on that, else selection, else mark, else left side */
-  focus_x_axis_change(ap, cp, zoom_focus_style(ss));
-  resize_sx(cp);
+  if (fabs(old_zx - ap->zx) > .00001) /* click on zoom is moving the window */
+    {
+      /* if cursor visible, focus on that, else selection, else mark, else left side */
+      focus_x_axis_change(ap, cp, zoom_focus_style(ss));
+      resize_sx(cp);
+    }
 }
 
 
@@ -439,9 +444,13 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsDrawingArea(w), w);
   if ((cp == NULL) || (!(cp->active)) || (cp->sound == NULL)) return;
   ev = (XExposeEvent *)(cb->event);
+  /*
+  fprintf(stderr,"expose count: %d, width: %d, times: %d %d, cps: %p %p\n",
+	  ev->count, ev->width, (int)last_expose_event_time, (int)XtLastTimestampProcessed(MAIN_DISPLAY(ss)), cp, last_cp);
+  */
   if (ev->count > 0) return;
   curtime = XtLastTimestampProcessed(MAIN_DISPLAY(ss));
-  if ((ev->width < 15) && (last_expose_event_time == curtime) && (cp == last_cp)) return;
+  if ((ev->width < 10) && (last_expose_event_time == curtime) && (cp == last_cp)) return;
   last_cp = cp;
   last_expose_event_time = curtime;
   sp = cp->sound;

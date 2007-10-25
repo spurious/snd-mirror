@@ -8,7 +8,7 @@
  *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
  */
 
-/* TODO: if just spectrum (any type), place pos slider with timewave, untime, move pos slider, click zoom slider, pos slider goes to previous pos!
+/* 
  * TODO: it's possible to have unselected graph in selected color?
  * TODO: re-exposure is over-optimized -- have to click zoom to get graphs
  */
@@ -954,7 +954,7 @@ void apply_x_axis_change(axis_info *ap, chan_info *cp)
   else 
     {
       if (sp->channel_style != CHANNELS_SEPARATE)
-	for (i = 1; i < sp->nchans; i++)
+	for (i = 0; i < sp->nchans; i++)  /* not 1 (25-Oct-07: 1 might be selected chan, but 0 needs to reflect changes as well */
 	  update_xs(sp->chans[i], ap);
     }
 }
@@ -3556,7 +3556,8 @@ static void display_channel_data_with_size(chan_info *cp,
     {
       if (with_time)
 	{
-	  if ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) 
+	  if ((cp->chan == 0) || 
+	      (sp->channel_style != CHANNELS_SUPERIMPOSED)) 
 	    {
 #if (!USE_CAIRO)
 	      display_selection(cp);
@@ -3585,7 +3586,8 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
       (!(sp->active)) ||
       (!(channel_graph_is_visible(cp))))
     return;
-  if ((sp->channel_style == CHANNELS_SEPARATE) || (sp->nchans == 1))
+  if ((sp->channel_style == CHANNELS_SEPARATE) || 
+      (sp->nchans == 1))
     {
       width = widget_width(channel_graph(cp));
       height = widget_height(channel_graph(cp));
@@ -3935,6 +3937,24 @@ void cursor_moveto_with_window(chan_info *cp, off_t samp, off_t left_samp, off_t
   if (ap->x_ambit != 0.0)
     reset_x_display(cp, (gx - ap->xmin) / ap->x_ambit, ap->zx);
 }
+
+
+void sync_cursors(chan_info *cp, off_t samp)
+{
+  snd_info *sp;
+  sp = cp->sound;
+  if ((sp) && (sp->sync != 0))
+    {
+      int i;
+      sync_info *si;
+      si = snd_sync(sp->sync);
+      for (i = 0; i < si->chans; i++)
+	CURSOR(si->cps[i]) = samp;
+      si = free_sync_info(si);
+    }
+  else CURSOR(cp) = samp;
+}
+
 
 
 void show_cursor_info(chan_info *cp)
@@ -4680,37 +4700,56 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 	      dragged = true;
 	      break;
 	    case CLICK_FFT_AXIS:
-	      /* change spectro_cutoff(ss) and redisplay fft */
-	      old_cutoff = cp->spectro_cutoff;
-	      if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
-		{
+	      {
+		/* change spectro_cutoff(ss) and redisplay fft */
+		/*   changed 25-Oct-07 -- follow sync and separate chan */
+		Float new_cutoff;
+		old_cutoff = cp->spectro_cutoff;
+		if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
+		  {
 #if HAVE_GL
-		  if ((with_gl(ss)) && (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM))
-		    {
-		      Float ny;
-		      ny = unproject_to_y(x, y);
-		      set_spectro_cutoff(cp->spectro_cutoff + (fft_faxis_start - ny));
-		      fft_faxis_start = ny;
-		    }
-		  else
+		    if ((with_gl(ss)) && 
+			(cp->transform_graph_type == GRAPH_AS_SPECTROGRAM))
+		      {
+			Float ny;
+			ny = unproject_to_y(x, y);
+			new_cutoff = cp->spectro_cutoff + (fft_faxis_start - ny);
+			fft_faxis_start = ny;
+		      }
+		    else
 #endif 
-		    set_spectro_cutoff(cp->spectro_cutoff + ((Float)(fft_axis_start - x) / fft_axis_extent(cp)));
-		  fft_axis_start = x;
-		}
-	      else 
-		{
-		  set_spectro_cutoff(cp->spectro_cutoff + ((Float)(y - fft_axis_start) / fft_axis_extent(cp)));
-		  fft_axis_start = y;
-		}
-	      if (spectro_cutoff(ss) > 1.0) set_spectro_cutoff(1.0);
-	      if (spectro_cutoff(ss) < 0.001) set_spectro_cutoff(0.001);
-	      if (old_cutoff != spectro_cutoff(ss)) 
-		{
-		  reflect_spectro();
-		  if (cp->transform_graph_type != GRAPH_ONCE)
-		    for_each_chan(sono_update);
-		  else for_each_chan(update_graph);
-		}
+		      new_cutoff = cp->spectro_cutoff + ((Float)(fft_axis_start - x) / fft_axis_extent(cp));
+		    fft_axis_start = x;
+		  }
+		else 
+		  {
+		    new_cutoff = cp->spectro_cutoff + ((Float)(y - fft_axis_start) / fft_axis_extent(cp));
+		    fft_axis_start = y;
+		  }
+		if (new_cutoff > 1.0) new_cutoff = 1.0;
+		if (new_cutoff < 0.001) new_cutoff = 0.001;
+		if (sp->sync != 0)
+		  {
+		    int i;
+		    sync_info *si;
+		    si = snd_sync(sp->sync);
+		    for (i = 0; i < si->chans; i++) 
+		      {
+			si->cps[i]->spectro_cutoff = new_cutoff;
+			if (cp->transform_graph_type != GRAPH_ONCE)
+			  sono_update(si->cps[i]);
+			else update_graph(si->cps[i]);
+		      }
+		    si = free_sync_info(si);
+		  }
+		else
+		  {
+		    cp->spectro_cutoff = new_cutoff;
+		    if (cp->transform_graph_type != GRAPH_ONCE)
+		      sono_update(cp);
+		    else update_graph(cp);
+		  }
+	      }
 	      break;
 	    case CLICK_LISP:
 	      if (XEN_HOOKED(mouse_drag_hook))

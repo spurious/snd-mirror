@@ -13,7 +13,7 @@
 */
 
 /* TODO: if view files dialog is expanded, some titles seem to be truncated? (is there a size limit?)
- * TODO: if file deleted, it remains in the view files list?
+ * TODO: if file deleted, it remains in the view files list? added files not listed -- need at least update button
  * TODO: if (selected) file closes, return to preclose line in view files list
  */
 

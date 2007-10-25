@@ -1236,6 +1236,7 @@ void set_x_axis_x0x1(chan_info *cp, double x0, double x1);
 void cursor_move(chan_info *cp, off_t samps);
 void cursor_moveto_without_verbosity(chan_info *cp, off_t samp);
 void cursor_moveto_with_window(chan_info *cp, off_t samp, off_t left_samp, off_t window_size);
+void sync_cursors(chan_info *cp, off_t samp);
 void set_wavo_trace(int uval);
 void set_dot_size(int val);
 chan_info *virtual_selected_channel(chan_info *cp);

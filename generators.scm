@@ -3547,7 +3547,68 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (with-sound (:play #t :statistics #t) 
   (knudsens-frog 0 .5))
+|#
 
+
+(def-clm-struct plsenv (pulse #f :type clm) (ampf #f :type clm))
+
+(def-optkey-fun (make-pulsed-env envelope duration)
+  (make-plsenv (make-pulse-train (/ 1.0 duration))
+	       (make-env envelope :duration duration)))
+
+(define (pulsed-env gen fm)
+  (if (> (pulse-train (plsenv-pulse gen) fm) 0.1)
+      (mus-reset (plsenv-ampf gen)))
+  (env (plsenv-ampf gen)))
+
+(define pulsed-env? plsenv?)
+
+
+(definstrument (a-frog beg dur freq amp amp-env gliss gliss-env pulse-dur pulse-env fm-index fm-freq)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (base (make-oscil freq))
+	 (modm (if (and fm-index (> fm-index 0.0)) (make-oscil fm-freq) #f))
+	 (frqf (if gliss-env (make-env gliss-env :duration dur :base 32 :scaler (hz->radians gliss)) #f))
+	 (pulse (make-pulsed-env pulse-env pulse-dur))
+	 (ampf (make-env amp-env :duration dur :scaler amp))
+	 (index (hz->radians (* fm-freq fm-index))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (pulsed-env pulse 0.0)
+		    (oscil base (+ (if frqf (env frqf) 0.0) 
+				   (if modm (* index (oscil modm)) 0.0))))
+	       *output*))))))
+
+(define (knudsens-frog beg amp)
+  (a-frog beg .25 480 amp '(0 0 1 1 3 1 4 0) 
+	  50 '(0 0 .5 .2 .8 1 1 1) 
+	  (/ .25 7) '(0 .1  .5 .4  .6 .75  1 .9  1.5 1  2 .9 2.3 .1) 
+	  1.75 40))  ; 0.01 here is about 1.75 as an fm index: (/ (radians->hz .01) 40)
+
+#|
+;;; cricket-like:
+(with-sound (:play #t) 
+    (a-frog 0 .25 2000 .5 '(0 0 1 1 3 1 4 0) ; or 3000 6000 etc
+                        50 '(0 0 .5 .2 .8 1 1 1) 
+                        (/ .25 5) '(0 0 1 0 5 1 8 0 20 0) 
+                        0.01 40))
+
+(with-sound (:play #t) 
+    (a-frog 0 .25 4000 .5 '(0 0 1 1 3 1 4 0) 
+                        0 #f
+                        (/ .25 10) '(0 0 1 1 2 1 4 0 10 0) 
+                        0.0 10))
+
+;;; frog-like
+(with-sound (:play #t) 
+    (a-frog 0 .25 2000 .5 '(0 0 1 1 3 1 4 0) 
+                        50 '(0 0 .5 .2 .8 1 1 1) 
+                        (/ .25 10) '(0 0 1 1 2 1 3 0 4 0 5 1 7 1 8 0 20 0) 
+                        0.0 10))
 |#
 
 ;;; TODO: delay + sqr as handler for coupled rand-interp envs
@@ -3556,4 +3617,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; TODO: 8bat, indri?, insect trill in rail is at 8.5KHz? rail, midship (start), capuchin, allig
 ;;; TODO: check wt for crickets et al
 ;;; TODO: lookup machine/industrial recordings
+
+;;; PERHAPS: doc nature sounds (birds etc)?
+
 

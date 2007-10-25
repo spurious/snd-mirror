@@ -110,6 +110,7 @@ static void zy_changed(float value, chan_info *cp)
 static void zx_changed(float value, chan_info *cp)
 { 
   axis_info *ap;
+  double old_zx = 0.0;
   ap = cp->axis;
   if (ap->xmax == 0.0) return;
   if (ap->xmax <= ap->xmin) 
@@ -118,12 +119,16 @@ static void zx_changed(float value, chan_info *cp)
       ap->x_ambit = .001;
     }
   if (value < .01) value = .01;
+  old_zx = ap->zx;
   if (ap->x_ambit < X_RANGE_CHANGEOVER)
     ap->zx = sqr(value);
   else ap->zx = cube(value);
-  /* if cursor visible, focus on that, else selection, else mark, else left side */
-  focus_x_axis_change(ap, cp, zoom_focus_style(ss));
-  resize_sx(cp);
+  if (fabs(old_zx - ap->zx) > .00001) /* click on zoom is moving the window */
+    {
+      /* if cursor visible, focus on that, else selection, else mark, else left side */
+      focus_x_axis_change(ap, cp, zoom_focus_style(ss));
+      resize_sx(cp);
+    }
 }
 
 
