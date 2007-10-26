@@ -2543,6 +2543,53 @@ rand:
 </pre>
 <br clear=left>
 
+<p>Since rand is producing a sequence of square-waves, and rand-interp a sequence of triangle-waves,
+both reflect that in their spectra (spectrum y axis is in dB):
+</p>
+
+<!--
+(with-sound ()
+  (let ((gen (make-rand 2000)))
+    (do ((i 0 (1+ i)))
+	((= i 50000))
+      (outa i (* .5 (rand gen)) *output*))))
+
+(with-sound ()
+  (let ((gen (make-rand-interp 2000)))
+    (do ((i 0 (1+ i)))
+	((= i 50000))
+      (outa i (* .5 (rand-interp gen)) *output*))))
+
+(with-sound ()
+  (let ((gen (make-square-wave 1000)))
+    (do ((i 0 (1+ i)))
+	((= i 50000))
+      (outa i (* .5 (square-wave gen)) *output*))))
+
+(with-sound ()
+  (let ((gen (make-triangle-wave 1000)))
+    (do ((i 0 (1+ i)))
+	((= i 50000))
+      (outa i (* .5 (triangle-wave gen)) *output*))))
+-->
+
+<table border=1 hspace=20 vspace=10>
+<tr>
+<td><img src="sqsq.png" alt="sqwave spectrum"></td><td width=20></td><td><img src="tritri.png" alt="triwave spectrum"></td>
+</tr>
+<tr>
+<td bgcolor="#f6f8ff"><center>square-wave (freq=1000)</center></td><td></td><td bgcolor="#f6f8ff"><center>triangle-wave (freq=1000)</center></td>
+</tr>
+
+<tr>
+<td><img src="randsq.png" alt="rand spectrum"></td><td></td><td><img src="randtri.png" alt="rand-interp spectrum"></td>
+</tr>
+<tr>
+<td bgcolor="#f6f8ff"><center>rand (freq=2000)</center></td><td></td><td bgcolor="#f6f8ff"><center>rand-interp (freq=2000)</center></td>
+</tr>
+</table>
+
+
 <p>There are a variety of ways to get a non-uniform random number distribution:
 <code>(random (random 1.0))</code> or <code>(sin (mus-random pi))</code> are simple examples. Exponential distribution could be:
 </p>

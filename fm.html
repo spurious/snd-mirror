@@ -1087,7 +1087,7 @@ sequence).  Since sine is not linear (it is <img src="sceq41.png" alt="x-x^3/3!+
 <p>In the second case we just get the superposition of the two simple FM spectra, but in the first case 
 we get a more complex mixture involving all the sums and differences of the modulating frequencies. 
 These sum and difference tones ("intermodulation products") are not limited to FM.  Any
-nonlinear synthesis technique produces them;  being non-linear, it must have something that involves
+nonlinear synthesis technique produces them.  Being non-linear, it must have something that involves
 a power of its input other than 0 or 1; if we feed in sin a + sin b, for example, that term will produce
 not just (sin a)^n and (sin b)^n, but all sorts of stuff involving sin a * sin b (in various powers),
 and this produces things like cos(a+b) and cos(a-b).
@@ -1653,6 +1653,7 @@ random number frequency times its index):
 	((= i 50000))
       (outa i (oscil gen (* index (rand noise))) *output*))))
 </pre>
+</td></tr>
 <tr>
 <td>
 <img src="white-noise.png" alt="white-noise">
@@ -1672,8 +1673,8 @@ random number frequency times its index):
 
 
 <p>
-Simple FM with noise gives various whooshing sounds,
-useful for Oceanic Music, but it can overstay its welcome.
+Simple FM with noise gives both whooshing sounds (high index) and hissing sounds (low index),
+useful for Oceanic Music, but more subtle kinds of noise can be hard to reach.
 Heinrich Taube had the inspired idea
 of feeding the noise (as a sort of cascade FM) into the 
 parallel modulators of an fm-flute, but not into the carrier.  The modulating signal becomes a sum of 
@@ -1709,6 +1710,60 @@ we could fix up each modulating sinusoid (both in amplitude and initial phase), 
 handles on the components of the incoming signal.  We can integrate it by hand, of course.
 </p>
 
+
+<!--
+this shows the effect even with sinusoids:
+
+(with-sound ()
+  (let ((oscs (make-vector 200))
+	(carrier (make-oscil 5000)))
+    (do ((i 0 (1+ i)))
+	((= i 200))
+      (vector-set! oscs i (make-oscil (* 10 (1+ i)) (random (* 2 pi)))))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 50000))
+	 (let ((sum 0.0))
+	   (do ((k 0 (1+ k)))
+	       ((= k 200))
+	     (set! sum (+ sum (oscil (vector-ref oscs k)))))
+	   (outa i (* .5 (oscil carrier (* .01 sum))) *output*)))))))
+
+(/ 1 (sqrt 200)) ~= .07 (actual maxamp 16.9) so why is .03 way off? -- 2000Hz as top mod?
+Is there a good way to explain this difference?
+
+Is it fortuitous that Carson's rule gives the same bandwidth?  where is this noise bandwidth derived?
+Why is PM so different? -- we're seeing the original spectrum in PM, not in FM
+
+check fm(rect tri pulse)
+are there any collapsing cases?
+is random better (flatter) than rand here? yes but unlimited bandwidth
+if fm(rect)=pm(tri)?
+is fm(brownian green filtered) interesting?
+if fm(brownian)=pm(white)?
+why is the result so dependent on index? and cycles?
+what is sin(random) or sin(wc+random)? cos?
+spectr of sq(sq) tri(tri) etc -- surely the JnJm can be collapsed in some cases
+does integrated random actually make pm match fm?  
+what would fm contrast-enhancement case sound like?
+
+what happens in fm(sum-of-(co)sines+random phase) vs pm? (is it like noise case?)
+
+(with-sound (:scaled-to .1)
+  (let ((gen (make-oscil 5000))
+	(noise (make-green-noise 1000))
+	(index (hz->radians 1000))) ; index=1.0 so bandwith=4 Khz (2 Khz on each side)
+    (do ((i 0 (1+ i)))
+	((= i 50000))
+      (outa i (oscil gen (* index (green-noise noise 0.0))) *output*)))) ; (brownian-noise noise)=very broad, use 40, not 1000 in index, but why is 50 at DC?
+
+(with-sound (:scaled-to .1)
+  (let ((gen (make-oscil 5000)))
+    (do ((i 0 (1+ i)))
+	((= i 50000))
+      (outa i (oscil gen (- 1.0 (random 2.0))) *output*))))
+-->
 
 <p>In the realm of "anything" as the modulating signal, consider 
 </p>
