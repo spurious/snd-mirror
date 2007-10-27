@@ -1673,7 +1673,7 @@ random number frequency times its index):
 
 
 <p>
-Simple FM with noise gives both whooshing sounds (high index) and hissing sounds (low index),
+Simple FM with noise gives both whooshing sounds (high index) and hissing or whistling sounds (low index),
 useful for Oceanic Music, but more subtle kinds of noise can be hard to reach.
 Heinrich Taube had the inspired idea
 of feeding the noise (as a sort of cascade FM) into the 
@@ -1705,67 +1705,11 @@ smeared out by a copy of the noise band:
     (oscil carrier (* fm-index (oscil fm (* noise-index (rand noise)))))
 </pre>
 
-<p>You may notice that this is one case where phase modulation is different from FM.  Previously,
+<p>You may have noticed that this is one case where phase modulation is different from FM.  Previously,
 we could fix up each modulating sinusoid (both in amplitude and initial phase), but here we have no such
-handles on the components of the incoming signal.  We can integrate it by hand, of course.
-</p>
-
-
-<!--
-this shows the effect even with sinusoids:
-
-(with-sound ()
-  (let ((oscs (make-vector 200))
-	(carrier (make-oscil 5000)))
-    (do ((i 0 (1+ i)))
-	((= i 200))
-      (vector-set! oscs i (make-oscil (* 10 (1+ i)) (random (* 2 pi)))))
-    (run
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i 50000))
-	 (let ((sum 0.0))
-	   (do ((k 0 (1+ k)))
-	       ((= k 200))
-	     (set! sum (+ sum (oscil (vector-ref oscs k)))))
-	   (outa i (* .5 (oscil carrier (* .01 sum))) *output*)))))))
-
-(/ 1 (sqrt 200)) ~= .07 (actual maxamp 16.9) so why is .03 way off? -- 2000Hz as top mod?
-Is there a good way to explain this difference?
-
-Is it fortuitous that Carson's rule gives the same bandwidth?  where is this noise bandwidth derived?
-Why is PM so different? -- we're seeing the original spectrum in PM, not in FM
-
-check fm(rect tri pulse)
-are there any collapsing cases?
-is random better (flatter) than rand here? yes but unlimited bandwidth
-if fm(rect)=pm(tri)?
-is fm(brownian green filtered) interesting?
-if fm(brownian)=pm(white)?
-why is the result so dependent on index? and cycles?
-what is sin(random) or sin(wc+random)? cos?
-spectr of sq(sq) tri(tri) etc -- surely the JnJm can be collapsed in some cases
-does integrated random actually make pm match fm?  
-what would fm contrast-enhancement case sound like?
-
-what happens in fm(sum-of-(co)sines+random phase) vs pm? (is it like noise case?)
-
-(with-sound (:scaled-to .1)
-  (let ((gen (make-oscil 5000))
-	(noise (make-green-noise 1000))
-	(index (hz->radians 1000))) ; index=1.0 so bandwith=4 Khz (2 Khz on each side)
-    (do ((i 0 (1+ i)))
-	((= i 50000))
-      (outa i (oscil gen (* index (green-noise noise 0.0))) *output*)))) ; (brownian-noise noise)=very broad, use 40, not 1000 in index, but why is 50 at DC?
-
-(with-sound (:scaled-to .1)
-  (let ((gen (make-oscil 5000)))
-    (do ((i 0 (1+ i)))
-	((= i 50000))
-      (outa i (oscil gen (- 1.0 (random 2.0))) *output*))))
--->
-
-<p>In the realm of "anything" as the modulating signal, consider 
+handles on the components of the incoming signal.  If someone insists, we can still match outputs by
+integrating the modulating signal ourselves.
+In the realm of "anything" as the modulating signal, consider 
 </p>
 
 <pre>

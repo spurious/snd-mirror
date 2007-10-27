@@ -107,7 +107,12 @@ static void zy_changed(int value, chan_info *cp)
 static void zx_changed(int value, chan_info *cp)
 { /* scrollbar change */
   axis_info *ap;
-  double old_zx = 0.0;
+  static int old_zx_value = -1;
+
+  if (value < 1) value = 1;
+  if (old_zx_value == value) return; /* try to keep click on slider from moving the window! */
+  old_zx_value = value;
+
   ap = cp->axis;
   if (ap->xmax == 0.0) return;
   if (ap->xmax <= ap->xmin) 
@@ -115,17 +120,12 @@ static void zx_changed(int value, chan_info *cp)
       ap->xmax = ap->xmin + .001;
       ap->x_ambit = .001;
     }
-  if (value < 1) value = 1;
-  old_zx = ap->zx;
   if (ap->x_ambit < X_RANGE_CHANGEOVER)
     ap->zx = sqr(get_scrollbar(channel_zx(cp), value, SCROLLBAR_MAX));
   else ap->zx = cube(get_scrollbar(channel_zx(cp), value, SCROLLBAR_MAX));
-  if (fabs(old_zx - ap->zx) > .00001) /* click on zoom is moving the window */
-    {
-      /* if cursor visible, focus on that, else selection, else mark, else left side */
-      focus_x_axis_change(ap, cp, zoom_focus_style(ss));
-      resize_sx(cp);
-    }
+  /* if cursor visible, focus on that, else selection, else mark, else left side */
+  focus_x_axis_change(ap, cp, zoom_focus_style(ss));
+  resize_sx(cp);
 }
 
 
@@ -240,24 +240,6 @@ void resize_sx(chan_info *cp)
 }
 
 
-void resize_zx(chan_info *cp)
-{
-  axis_info *ap;
-  ap = cp->axis;
-  if (ap->x_ambit < X_RANGE_CHANGEOVER)
-    set_scrollbar(channel_zx(cp), sqrt(ap->zx) * .9, .1, SCROLLBAR_MAX);
-  else set_scrollbar(channel_zx(cp), pow(ap->zx * .9, 1.0 / 3.0), .1, SCROLLBAR_MAX);
-}
-
-
-void resize_zy(chan_info *cp)
-{
-  axis_info *ap;
-  ap = cp->axis;
-  set_scrollbar(channel_zy(cp), sqrt(ap->zy) * .9, .1, SCROLLBAR_MAX);
-}
-
-
 void channel_open_pane(chan_info *cp)
 {
   XtManageChild(channel_main_pane(cp));
@@ -365,13 +347,11 @@ static void zx_drag_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static void zx_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  chan_info *cp = (chan_info *)(context);
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (cp->active)
-    zx_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
-}
+/* can't use value changed callback in scrollbars because they are called upon mouse release
+ *   even when nothing changed, and the value passed appears to be the right edge of the
+ *   slider -- this is too unpredictable, and the result is the window moves when the user
+ *   did not want it to.  But this means we have to keep the slider value and ignore Motif!
+ */
 
 
 static void gzy_drag_callback(Widget w, XtPointer context, XtPointer info) 
@@ -895,7 +875,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 
   if (make_widgets)
     {
-      XtCallbackList n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14;
+      XtCallbackList n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15;
       int n;
       Arg args[32];
 
@@ -1086,7 +1066,13 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
       XtSetArg(args[n], XmNincrement, 1); n++;
       XtSetArg(args[n], XmNdragCallback, n9 = make_callback_list(zx_drag_callback, (XtPointer)cp)); n++;
-      XtSetArg(args[n], XmNvalueChangedCallback, n10 = make_callback_list(zx_valuechanged_callback, (XtPointer)cp)); n++;
+      XtSetArg(args[n], XmNincrementCallback, n10 = make_callback_list(zx_drag_callback, (XtPointer)cp)); n++;
+      XtSetArg(args[n], XmNdecrementCallback, n11 = make_callback_list(zx_drag_callback, (XtPointer)cp)); n++;
+      XtSetArg(args[n], XmNpageIncrementCallback, n12 = make_callback_list(zx_drag_callback, (XtPointer)cp)); n++;
+      XtSetArg(args[n], XmNpageDecrementCallback, n13 = make_callback_list(zx_drag_callback, (XtPointer)cp)); n++;
+      XtSetArg(args[n], XmNtoTopCallback, n14 = make_callback_list(zx_drag_callback, (XtPointer)cp)); n++;
+      XtSetArg(args[n], XmNtoBottomCallback, n15 = make_callback_list(zx_drag_callback, (XtPointer)cp)); n++;
+
       cw[W_zx] = XtCreateManagedWidget("chn-zx", xmScrollBarWidgetClass, cw[W_bottom_scrollers], args, n);
       XtAddEventHandler(cw[W_zx], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
@@ -1142,6 +1128,11 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       FREE(n8);
       FREE(n9);
       FREE(n10);
+      FREE(n11);
+      FREE(n12);
+      FREE(n13);
+      FREE(n14);
+      FREE(n15);
 
       if (need_extra_scrollbars)
 	{

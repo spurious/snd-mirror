@@ -3520,6 +3520,8 @@ index 10 (so 10/2 is the bes-jn arg):
 |#
 
 #|
+;;; this mosquito taken from Richard Mankin, Reference Library of Digitized Insect Sounds, http://www.ars.usda.gov/sp2UserFiles/person/3559/soundlibrary.html
+
 (definstrument (mosquito beg dur freq amp)
   (let* ((start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur)))
@@ -3551,6 +3553,8 @@ index 10 (so 10/2 is the bes-jn arg):
 (with-sound (:play #t)
   (mosquito 0 5 560 .2)
   (mosquito 1 3 880 .05))
+
+;;; "The Diversity of Animal Sounds", Cornell Lab of Ornithology
 
 (definstrument (knudsens-frog beg amp)
   (let* ((start (seconds->samples beg))
@@ -3589,7 +3593,6 @@ index 10 (so 10/2 is the bes-jn arg):
   (env (plsenv-ampf gen)))
 
 (define pulsed-env? plsenv?)
-
 
 
 (definstrument (a-frog beg dur freq amp amp-env gliss gliss-env pulse-dur pulse-env fm-index fm-freq)
@@ -3663,9 +3666,55 @@ index 10 (so 10/2 is the bes-jn arg):
 |#
 
 ;;; TODO: delay + sqr as handler for coupled rand-interp envs
-;;; TODO: check talking drum effect
-
 ;;; TODO: 8bat, indri?, insect trill in rail is at 8.5KHz? rail, midship (start), capuchin, allig
 
 
 
+#|
+;;; Oak Toad (L Elliott "The Calls of Frogs and Toads" #38)
+;;;   might be slightly too much noise (the peep I worked on turned out to be a raspy one)
+;;;
+;;; L Elliott and W Herschberger "The Songs of the Insects"
+;;; L Elliott "Music of the Birds"
+
+(with-sound (:play #t :clipped #f :statistics #t)
+  (let* ((dur .43)
+	 (stop (seconds->samples dur))
+	 (ampf (make-env '(0 0 10 1 15 0 43 0) :base .3 :duration dur :scaler .25))
+	 (gen1 (make-polyshape 2150 :partials (list 1 .01  2 1.0  3 .001 4 .005  6 .02)))
+	 (frqf (make-env '(0 -.5 1 1 5 -1) :duration .15 :scaler (hz->radians 70)))
+	 (noise (make-rand-interp 1000)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (+ (env frqf)
+					   (* .014 (rand-interp noise)))))
+	       *output*))))))
+
+(with-sound (:play #t :clipped #f :statistics #t)
+  (let ((last-beg 0.0))
+    (do ((k 0 (1+ k)))
+	((= k 12))
+      (let* ((beg (+ last-beg .37 (random .08)))
+	     (start (seconds->samples beg))
+	     (dur .43)
+	     (stop (+ start (seconds->samples dur)))
+	     (ampf (make-env '(0 0 10 1 15 0 43 0) :base .3 :duration dur :scaler .25))
+	     (gen1 (make-polyshape 2150 :partials (list 1 .01  2 1.0  3 .001 4 .005  6 .02)))
+	     (frqf (make-env '(0 -.5 1 1 5 -1) :duration .15 :scaler (hz->radians (+ 50 (random 40)))))
+	     (noise (make-rand-interp 1000))
+	     (noise-amount (+ .01 (random .005))))
+	(set! last-beg beg)
+	(run
+	 (lambda ()
+	   (do ((i start (1+ i)))
+	       ((= i stop))
+	     (outa i (* (env ampf)
+			(polyshape gen1 1.0 (+ (env frqf)
+					       (* noise-amount (rand-interp noise)))))
+		   *output*))))))))
+
+;;; TODO: frogs/crickets if ins dur>base song, repeat at correct interval
+|#

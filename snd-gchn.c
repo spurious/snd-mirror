@@ -228,24 +228,6 @@ void resize_sx(chan_info *cp)
 }
 
 
-void resize_zx(chan_info *cp)
-{
-  axis_info *ap;
-  ap = cp->axis;
-  if (ap->x_ambit < X_RANGE_CHANGEOVER)
-    set_scrollbar(zx_adj(cp), sqrt(ap->zx), .1);
-  else set_scrollbar(zx_adj(cp), pow(ap->zx, 1.0 / 3.0), .1);
-}
-
-
-void resize_zy(chan_info *cp)
-{
-  axis_info *ap;
-  ap = cp->axis;
-  set_scrollbar(zy_adj(cp), 1.0 - sqrt(ap->zy), .1);
-}
-
-
 static void sy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   /* see note above -- context may be garbage!! -- this is a huge bug in gtk */

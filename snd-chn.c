@@ -861,7 +861,6 @@ void set_x_axis_x0x1(chan_info *cp, double x0, double x1)
       ap->sx = (x0 - ap->xmin) / ap->x_ambit;
     }
   resize_sx(cp);
-  resize_zx(cp);
   apply_x_axis_change(ap, cp); /* this checks sync */
   ap->changed = true;
 }
@@ -912,7 +911,6 @@ void reset_x_display(chan_info *cp, double sx, double zx)
   ap->zx = zx;
   set_x_bounds(ap);
   resize_sx(cp);
-  resize_zx(cp);
   update_graph_or_warn(cp);
 }
 
@@ -1107,7 +1105,6 @@ void zx_incremented(chan_info *cp, double amount)
       focus_x_axis_change(ap, cp, zoom_focus_style(ss));
       /* apply_x_axis_change(ap, cp); */
       resize_sx(cp);
-      resize_zx(cp);
     }
 }
 
@@ -1149,7 +1146,6 @@ void set_axes(chan_info *cp, double x0, double x1, Float y0, Float y1)
       ap->sx = (x0 - ap->xmin) / ap->x_ambit;
     }
   resize_sx(cp);
-  resize_zx(cp);
   ap->y0 = y0;
   ap->y1 = y1;
   if (ap->y_ambit != 0.0)
@@ -1158,7 +1154,6 @@ void set_axes(chan_info *cp, double x0, double x1, Float y0, Float y1)
       ap->sy = (y0 - ap->ymin) / ap->y_ambit;
     }
   resize_sy(cp);
-  resize_zy(cp);
 }
 
 
@@ -5107,7 +5102,6 @@ static void reset_y_display(chan_info *cp, double sy, double zy)
   ap->sy = sy;
   ap->zy = zy;
   resize_sy(cp);
-  resize_zy(cp);
   apply_y_axis_change(ap, cp);
 }
 
@@ -7497,7 +7491,6 @@ static XEN g_set_y_bounds(XEN bounds, XEN snd_n, XEN chn_n)
       ap->zy = 1.0;
       ap->sy = 0.0;
       resize_sy(cp);
-      resize_zy(cp);
       apply_y_axis_change(ap, cp);
     }
   else XEN_OUT_OF_RANGE_ERROR(S_setB S_y_bounds, 1, bounds, "~A: y1 < y0?");

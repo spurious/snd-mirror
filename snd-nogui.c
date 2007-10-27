@@ -124,9 +124,7 @@ Float gsy_value(chan_info *cp) {return(0.0);}
 Float gsy_size(chan_info *cp) {return(0.0);}
 void initialize_scrollbars(chan_info *cp) {}
 void resize_sx(chan_info *cp) {}
-void resize_zx(chan_info *cp) {}
 void resize_sy(chan_info *cp) {}
-void resize_zy(chan_info *cp) {}
 void channel_open_pane(chan_info *cp) {}
 void reflect_edit_history_change(chan_info *cp) {}
 void reflect_edit_counter_change(chan_info *cp) {}

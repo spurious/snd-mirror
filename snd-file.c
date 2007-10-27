@@ -3109,6 +3109,12 @@ static void view_files_unselect_file(view_files_info *vdat, vf_row *r)
   vdat->currently_selected_files--;
   if (vdat->currently_selected_files < 0) 
     vdat->currently_selected_files = 0;
+  if (vdat->currently_selected_files == 0)
+    {
+      vf_mix_insert_buttons_set_sensitive(vdat, false);
+      vf_open_remove_buttons_set_sensitive(vdat, false);
+      vf_unpost_info(vdat);
+    }
 }
 
 
@@ -3499,10 +3505,20 @@ static void vf_add_file_if_absent(view_files_info *vdat, char *filename)
 
 static void vf_remove_file_if_present(view_files_info *vdat, char *filename)
 {
-  int row;
+  int i, row;
   row = view_files_find_row(vdat, filename);
   if (row != -1)
-    vdat->need_update = true;
+    {
+      vdat->need_update = true;
+
+      /* if deleted file is selected, unselect */
+      for (i = 0; i < vdat->currently_selected_files; i++)
+	if (vdat->selected_files[i] == row)
+	  {
+	    view_files_unselect_file(vdat, vdat->file_list_entries[row]);
+	    break;
+	  }
+    }
 }
 
 
