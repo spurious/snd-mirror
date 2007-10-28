@@ -219,6 +219,7 @@ void set_zx_scrollbar_value(chan_info *cp, Float value);
 void resize_sx(chan_info *cp);
 void resize_sy(chan_info *cp);
 void initialize_scrollbars(chan_info *cp);
+void set_z_scrollbars(chan_info *cp, axis_info *ap);
 Float gsy_value(chan_info *cp);
 Float gsy_size(chan_info *cp);
 bool fixup_cp_cgx_ax_wn(chan_info *cp);

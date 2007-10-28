@@ -177,6 +177,15 @@ Float gsy_size(chan_info *cp)
 }
 
 
+void set_z_scrollbars(chan_info *cp, axis_info *ap)
+{
+  if (ap->x_ambit < X_RANGE_CHANGEOVER)
+    set_scrollbar(zx_adj(cp), sqrt(ap->zx), .1);  /* assume size is 10% of scrollbar length */
+  else set_scrollbar(zx_adj(cp), pow(ap->zx, .333), .1);
+  set_scrollbar(zy_adj(cp), 1.0 - sqrt(ap->zy), .1);
+}
+
+
 void initialize_scrollbars(chan_info *cp)
 {
   axis_info *ap;
@@ -185,10 +194,7 @@ void initialize_scrollbars(chan_info *cp)
   sp = cp->sound;
   set_scrollbar(sx_adj(cp), ap->sx, ap->zx);
   set_scrollbar(sy_adj(cp), 1.0 - ap->sy, ap->zy);
-  if (ap->x_ambit < X_RANGE_CHANGEOVER)
-    set_scrollbar(zx_adj(cp), sqrt(ap->zx), .1);  /* assume size is 10% of scrollbar length */
-  else set_scrollbar(zx_adj(cp), pow(ap->zx, .333), .1);
-  set_scrollbar(zy_adj(cp), 1.0 - sqrt(ap->zy), .1);
+  set_z_scrollbars(cp, ap);
   if ((sp->nchans > 1) && (cp->chan == 0) && (gsy_adj(cp)))
     {
       set_scrollbar(gsy_adj(cp), 1.0 - cp->gsy, cp->gzy);

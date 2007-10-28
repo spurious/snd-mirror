@@ -1106,9 +1106,8 @@ expressed:
 Schottstaedt, "The Simulation of Natural Instrument Tones Using Frequency Modulation with a 
 Complex Modulating Wave".  (There's a function to do it for you in dsp.scm: multifm-component). 
 Usually, these extra modulating components flatten and spread out the 
-spectrum somewhat.  (As a counterexample, let the two modulators above have the same frequency; then, we hope!, 
-sin(B1 sin a + B2 sin a) equals sin((B1 + B2)sin a), so all those Ji(B1)Jk(B2) factors collapse into Jn(B1+B2).
-An even more intriguing counterexample is sin(triangle-wave-as-fm) which has a narrower bandwidth than sin(sin-as-fm), despite
+spectrum somewhat.  
+(An intriguing counterexample is sin(triangle-wave-as-fm) which has a narrower bandwidth than sin(sin-as-fm), despite
 having (theoretically) an infinite number of components in the modulator.  The worst case is sin(pulse-train-as-fm) which
 has almost no sidebands!).
 In general:
@@ -1643,7 +1642,7 @@ One way to make noise
 (deliberately) with FM is to increase the index until massive aliasing is taking place. 
 A more controllable approach is to use a random number generator as our modulator.
 In this case, the power spectral density of the output has the same form 
-as the value distribution function of the modulating noise, centered around the carrier. 
+as the value distribution function (amplitude distribution as opposed to frequency) of the modulating noise, centered around the carrier. 
 The bandwidth of the result is about 4 times the peak deviation (the 
 random number frequency times its index):
 </p>
@@ -1917,7 +1916,7 @@ Watson, "A Treatise on the Theory of Bessel Functions", Cambridge, 1922.
 <!-- fm2.html? --------------------------------------------------------------------------------
 
 
-   PERHAPS: it would be nice to include Jn(1.0) and others in the first set of FM spectra 
+   PERHAPS: it would be nice to include Jn(1.0) and others in the first set of FM spectra -- too cluttered
 
 
 sundry fm notes and curiousities
@@ -2063,6 +2062,7 @@ a single pulse is swallowed up by the mod 2 pi:
 	       *output*))))))
 
 ;(with-sound (:clipped #f :statistics #t) (fmpulse 0 1 1000 .5 .1 1))
+;  but as index goes up, I think it's pushed over by about index/5?
 
 similarly
 
@@ -2113,12 +2113,33 @@ case in Klapper p103 (except there x=1/4)
 
 ;(with-sound (:clipped #f :statistics #t) (fmsin 0 1 4000 .5 .025 5))
 
+(define* (sqsq beg dur freq amp :optional (mc-ratio 1) (index 1.0) (phase 0.0))
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+	 (carrier (make-square-wave freq))
+	 (modulator (make-square-wave (* freq mc-ratio)))
+	 (fm-index (hz->radians (* index freq mc-ratio)))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (outa i (* (env ampf)
+		    (- (square-wave carrier (* fm-index (* 2 (- (square-wave modulator) 0.5)))) 0.5))
+	       *output*))))))
+
+;(with-sound (:clipped #f :statistics #t :srate 4410000) (sqsq 0 1 4000 .5 .01 5))
+;  huge srate because aliasing is a real problem -- does replicate
+;  but the apparent index is going up (each higher)
+
 -------------------------
 
           bessel fm cases
-          more on noise -- find an understandable derivation!
 
-   it would be nice to have a bess-like applet behind the various graphs
+          more on noise -- find an understandable derivation!
+            can we treat the "ears" as a limiting process? -- sort of...
+
+          it would be nice to have a bess-like applet behind the various graphs
 
 
 -->

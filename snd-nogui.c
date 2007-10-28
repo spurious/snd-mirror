@@ -123,6 +123,7 @@ void set_zx_scrollbar_value(chan_info *cp, Float value) {}
 Float gsy_value(chan_info *cp) {return(0.0);}
 Float gsy_size(chan_info *cp) {return(0.0);}
 void initialize_scrollbars(chan_info *cp) {}
+void set_z_scrollbars(chan_info *cp, axis_info *ap) {}
 void resize_sx(chan_info *cp) {}
 void resize_sy(chan_info *cp) {}
 void channel_open_pane(chan_info *cp) {}

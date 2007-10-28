@@ -1690,7 +1690,8 @@ void *free_axes_data(void *usa)
 }
 
 
-enum {SA_X0, SA_X1, SA_Y0, SA_Y1, SA_XMIN, SA_XMAX, SA_YMIN, SA_YMAX};
+enum {SA_X0, SA_X1, SA_Y0, SA_Y1, SA_XMIN, SA_XMAX, SA_YMIN, SA_YMAX, SA_ZX, SA_ZY, SA_SX, SA_SY};
+#define SA_FIELDS 12
 
 void *make_axes_data(snd_info *sp)
 {
@@ -1698,7 +1699,7 @@ void *make_axes_data(snd_info *sp)
   int i;
   sa = (axes_data *)CALLOC(1, sizeof(axes_data));
   sa->chans = sp->nchans;
-  sa->fields = 8;
+  sa->fields = SA_FIELDS;
   sa->axis_data = (double *)CALLOC(sa->fields * sa->chans, sizeof(double));
   sa->fftp = (bool *)CALLOC(sa->chans, sizeof(bool));
   sa->wavep = (bool *)CALLOC(sa->chans, sizeof(bool));
@@ -1718,6 +1719,10 @@ void *make_axes_data(snd_info *sp)
       sa->axis_data[loc + SA_XMAX] = ap->xmax;
       sa->axis_data[loc + SA_YMIN] = ap->ymin;
       sa->axis_data[loc + SA_YMAX] = ap->ymax;
+      sa->axis_data[loc + SA_ZX] = ap->zx;
+      sa->axis_data[loc + SA_SX] = ap->sx;
+      sa->axis_data[loc + SA_ZY] = ap->zy;
+      sa->axis_data[loc + SA_SY] = ap->sy;
       sa->wavep[i] = cp->graph_time_p;
       sa->fftp[i] = cp->graph_transform_p;
     }
@@ -1750,6 +1755,10 @@ void restore_axes_data(snd_info *sp, void *usa, Float new_duration, bool need_ed
       ap->xmax = sa->axis_data[loc + SA_XMAX];
       ap->ymin = sa->axis_data[loc + SA_YMIN];
       ap->ymax = sa->axis_data[loc + SA_YMAX];
+      ap->zx = sa->axis_data[loc + SA_ZX];
+      ap->sx = sa->axis_data[loc + SA_SX];
+      ap->zy = sa->axis_data[loc + SA_ZY];
+      ap->sy = sa->axis_data[loc + SA_SY];
       ap->y_ambit = ap->ymax - ap->ymin;
       ap->x_ambit = ap->xmax - ap->xmin;
       set_axes(cp,
@@ -1757,6 +1766,8 @@ void restore_axes_data(snd_info *sp, void *usa, Float new_duration, bool need_ed
 	       sa->axis_data[loc + SA_X1], 
 	       sa->axis_data[loc + SA_Y0], 
 	       sa->axis_data[loc + SA_Y1]);
+
+      set_z_scrollbars(cp, ap);
       update_graph(cp); /* get normalized state before messing with it */
       if (sa->fftp[j]) 
 	fftb(cp, true); 

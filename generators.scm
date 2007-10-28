@@ -3752,4 +3752,29 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 ;;; TODO: frogs/crickets if ins dur>base song, repeat at correct interval
+
+;;; southern cricket frog
+
+(with-sound (:play #t :clipped #f :statistics #t)
+  (let* ((dur1 .03)
+	 (stop (seconds->samples dur1))
+	 (ampf (make-env '(0 0 .75 1 5 1 10 0) :scaler .5 :duration dur1))
+	 (gen1 (make-oscil 3500))
+	 (gen2 (make-oscil 6400))
+	 (pulse (make-pulsed-env '(0 .1 1 .6 2 .8 3 1 6 .1 8 .1) (/ dur1 8) (/ 8 dur1)))
+	 (index (hz->radians (* 150 2)))
+	 (f1 (make-env '(0 .9 9 .9 10 0) :duration dur1))
+	 (f2 (make-env '(0 .05 8 .1 10 .8 .1) :duration dur1))
+	 (fm (make-oscil 150)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i stop))
+	 (let ((fm (* index (oscil fm))))
+	   (outa i (* (env ampf)
+		      (pulsed-env pulse 0.0)
+		      (+ (* (env f1) (oscil gen1 fm))
+			 (* (env f2) (oscil gen2 (* 2 fm)))))
+	       *output*)))))))
+
 |#
