@@ -11,6 +11,7 @@
 /* 
  * TODO: it's possible to have unselected graph in selected color?
  * TODO: re-exposure is over-optimized -- have to click zoom to get graphs
+ * TODO: update-sound needs to make sure zy is correctly positioned (not always 1) zx is also confused (resize_z* used to handle this)
  */
 
 chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)

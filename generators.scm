@@ -3702,7 +3702,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	     (dur .43)
 	     (stop (+ start (seconds->samples dur)))
 	     (ampf (make-env '(0 0 10 1 15 0 43 0) :base .3 :duration dur :scaler .25))
-	     (gen1 (make-polyshape 2150 :partials (list 1 .01  2 1.0  3 .001 4 .005  6 .02)))
+	     (gen1 (make-polyshape 2150 :partials (list 1 .01  2 1.0  3 .001 4 .005  6 .02))) ; this is at or past the limit of my hearing, sad to say
 	     (frqf (make-env '(0 -.5 1 1 5 -1) :duration .15 :scaler (hz->radians (+ 50 (random 40)))))
 	     (noise (make-rand-interp 1000))
 	     (noise-amount (+ .01 (random .005))))
@@ -3715,6 +3715,41 @@ index 10 (so 10/2 is the bes-jn arg):
 			(polyshape gen1 1.0 (+ (env frqf)
 					       (* noise-amount (rand-interp noise)))))
 		   *output*))))))))
+
+(definstrument (broad-winged-tree-cricket beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (freq 1700)
+	 (base (make-oscil freq))
+	 (base1 (make-oscil (* 2 freq)))
+	 (base2 (make-oscil (* 3 freq)))
+	 (base3 (make-oscil (* 4 freq)))
+	 (base4 (make-oscil (* 5 freq)))
+	 (ampmod (make-triangle-wave 155))
+	 (pulse (make-pulsed-env '(0 0 1 .1 6 .2 7 0 8 .3 10 1 18 .9 21 .1 23 .3 28 .1 30 0) .06 (/ 1.0 .06))) ; base of about .1 would be better here
+	 (ampf (make-env '(0 0 8 1 20 1 21 0) :duration dur :scaler amp))
+	 (frqf (make-pulsed-env '(0 1 1 -1 2 -1) .06 (/ 1.0 .06))) ; base of about 10 here -- TODO: need base arg to pulsed-env (or pass env itself)
+	 (indf (make-pulsed-env '(0 0 10 0 18 1 23 1 26 0 30 0) .06 (/ 1.0 .06))) ; TODO: all of these pulses need to march together
+	 (noise (make-rand-interp 1000)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((buzz (+ (* (hz->radians 40) (pulsed-env frqf 0.0))
+			(* .005 (rand-interp noise)))))
+	   (outa i (* (env ampf)
+		      (pulsed-env pulse 0.0)
+		      (+ .93 (* .07 (triangle-wave ampmod)))
+		      (+ (* .7 (oscil base buzz))
+			 (* .05 (oscil base1 (* 2 buzz)))
+			 (* .04 (oscil base2 (* 3 buzz)))
+			 (* (pulsed-env indf 0.0)
+			    (+ 	(* .02 (oscil base3 (* 4 buzz)))
+				(* .02 (oscil base4 (* 5 buzz)))))))
+	       *output*)))))))
+
+;(with-sound (:play #t) (broad-winged-tree-cricket 0 1.0 0.3))
+
 
 ;;; TODO: frogs/crickets if ins dur>base song, repeat at correct interval
 |#

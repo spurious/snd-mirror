@@ -1096,15 +1096,22 @@ For a less impressionistic derivation of the spectrum, see Le Brun,
 expressed:
 </p>
 
-<!-- LATEX \sum_{i}\sum_{k}J_{i}(B_{1})J_{k}(B_{2})\sin(\omega_{c}t + i\omega_{m1}t + k\omega_{m2}t) -->
-
+<!-- LATEX fmeq32:
+     \sum_{i=-\infty}^{\infty} \sum_{k=-\infty}^{\infty} J_{i}(B_{1})J_{k}(B_{2})\sin(\omega_{c}t + i\omega_{m1}t + k\omega_{m2}t)
+-->
 <img src="fmeq32.png" alt="2 sums" hspace=20>
 
 
 <p>You can chew up any amount of free time calculating the resulting side band amplitudes &mdash; see the immortal classic:
 Schottstaedt, "The Simulation of Natural Instrument Tones Using Frequency Modulation with a 
-Complex Modulating Wave".  (There's a function to do it for you in dsp.scm: multifm-component). These extra modulating components flatten and spread out the 
-spectrum somewhat. In general:
+Complex Modulating Wave".  (There's a function to do it for you in dsp.scm: multifm-component). 
+Usually, these extra modulating components flatten and spread out the 
+spectrum somewhat.  (As a counterexample, let the two modulators above have the same frequency; then, we hope!, 
+sin(B1 sin a + B2 sin a) equals sin((B1 + B2)sin a), so all those Ji(B1)Jk(B2) factors collapse into Jn(B1+B2).
+An even more intriguing counterexample is sin(triangle-wave-as-fm) which has a narrower bandwidth than sin(sin-as-fm), despite
+having (theoretically) an infinite number of components in the modulator.  The worst case is sin(pulse-train-as-fm) which
+has almost no sidebands!).
+In general:
 </p>
 
 <!-- LATEX \cos(\omega_{c}t+\Big(\sum_{i=1}^{k}B_{i}\sin(\omega_{i}t + \theta_{i})\Big) + \phi) = \sum_{k_{k}} \cdots \sum_{k_{1}}\Big(\prod_{i=1}^{k}J_{k_{i}}(B_{i})\Big)\cos(\omega_{c}t+\Big(\sum_{i=1}^{k}k_{i}(\omega_{i}t+\theta_{i})\Big)+\phi) -->
@@ -1904,6 +1911,219 @@ Watson, "A Treatise on the Theory of Bessel Functions", Cambridge, 1922.
 </td></tr><tr><td>
 <center>FM (and AM) radio ca 1933</center>
 </td></tr></table>
+
+
+
+<!-- fm2.html? --------------------------------------------------------------------------------
+
+
+   PERHAPS: it would be nice to include Jn(1.0) and others in the first set of FM spectra 
+
+
+sundry fm notes and curiousities
+
+
+-------------------------
+fm with a complex index:
+
+In our various expansions of FM (single modulator, double, and complex), if the
+phase is set to 0, we turn cos(sin + sin +...) into cos(0) == 1, so all the
+various Jn sums are 1, no matter what the index (even if it is complex).
+This also falls out of the sum mentioned under asymmetric-fm (e^... with t=1).
+Even complex FM's giant Jn sum/product
+is 1.  This can also perhaps be seen from Jn(x+y)=sum Ji(x)Jm-i(y).
+So, our output amplitude is not affected by all that modulation as long as
+we stick to real phases.  There's no law against a complex index, however,
+and here is a CLM instrument to try it out:
+
+(define* (fm beg dur freq amp mc-ratio index)
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+         (cr 0.0)
+	 (cr-incr (hz->radians freq))
+         (md 0.0)
+	 (md-incr (hz->radians (* freq mc-ratio)))
+         (fm-index (/ (* 2 pi index mc-ratio freq) (mus-srate)))) ; hz->radians with complex arg and result
+    (do ((i start (1+ i)))
+	((= i end))
+      (outa i (* amp (real-part (sin cr))) *output*) ; or magnitude in place of real-part
+      (set! cr (+ cr cr-incr (* fm-index (sin md))))
+      (set! md (+ md md-incr)))))
+
+; (with-sound (:clipped #f :statistics #t) (fm 0 1 1000.0 1.0 0.1 1.0+1.i))
+
+cos(complex arg) is not bounded, so the output can peak at anything, but
+the Jn's are still distributed symmetrically, so we get symmetrical spectra
+that are very similar to the real case. 
+
+cos(B sin a) B complex = cos(x sin a + iy sin a) = 
+  cos(x sin a)cos(iy sin a) - sin(x sin a)sin(iy sin a)
+
+but cos(ix) = cosh(x) and sin(ix) = sinh(x) so we get
+
+  cos(x sin a)cosh(y sin a) - sin(x sin a)sinh(y sin a)
+
+and now the first factor in each case is normal FM, and
+the second factor is normal FM with an added r^k factor
+(see expansion in sndclm.html sum-of-sines), so we've
+got FM * FM * overall amplitude scaler.
+
+The end result is, I think, that going to complex args doesn't
+buy us much in terms of spectra, and adds normalization troubles.
+But... We can use "magnitude" rather than "real-part" and
+new things start to happen.
+
+(with-sound (:clipped #f :statistics #t) (fm 0 1 1000.0 0.015 0.2 1.0+0.1i))
+
+is this a consequence of the sqrt?
+
+(define* (fmroot beg dur freq amp :optional (mc-ratio 1) (index 1.0) (n 10) (phase 0.0))
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+	 (carrier (make-oscil freq phase))
+	 (modulator (make-oscil (* freq mc-ratio)))
+	 (fm-index (hz->radians (* index freq mc-ratio)))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (let ((g1 (oscil carrier))
+	       (g2 (oscil modulator)))
+	   (outa i (* (env ampf)
+		      (abs (sqrt (+ (* g1 g1) (* g2 g2)))))
+	       *output*)))))))
+
+(with-sound (:clipped #f :statistics #t) (fmroot 0 1 1000 .5 .1 .1))
+
+yes, I think...
+
+sqrt is 1 + (x-1)/2 - (x-1)^2/8 + (x-1)^3/16 - 5(x-1)^4/128 ...
+
+-------------------------
+
+special cases:
+
+(define* (fmtri beg dur freq amp :optional (mc-ratio 1) (index 1.0) (phase 0.0))
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+	 (carrier (make-oscil freq phase))
+	 (modulator (make-triangle-wave (* freq mc-ratio)))
+	 (fm-index (hz->radians (* index freq mc-ratio)))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (outa i (* (env ampf)
+		    (oscil carrier (* fm-index (triangle-wave modulator))))
+	       *output*))))))
+
+;(with-sound (:clipped #f :statistics #t) (fmtri 0 1 1000 .5 .1 1))
+
+;;; which is less bandwidth than the sine case even though it's an infinite sum of sines
+;;; what is the sideband amp here?
+
+(define* (fmsq beg dur freq amp :optional (mc-ratio 1) (index 1.0) (phase 0.0))
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+	 (carrier (make-oscil freq phase))
+	 (modulator (make-square-wave (* freq mc-ratio)))
+	 (fm-index (hz->radians (* index freq mc-ratio)))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (outa i (* (env ampf)
+		    (oscil carrier (* fm-index (* 2 (- (square-wave modulator) 0.5)))))
+	       *output*))))))
+
+;(with-sound (:clipped #f :statistics #t) (fmsq 0 1 1000 .5 .1 1))
+
+;;; is broader than corresponding sine case -- can we check the amps?
+;;;   can we derive them in some perspicuous manner?
+
+
+a single pulse is swallowed up by the mod 2 pi:
+
+(define* (fmpulse beg dur freq amp :optional (mc-ratio 1) (index 1.0) (phase 0.0))
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+	 (carrier (make-oscil freq phase))
+	 (modulator (make-pulse-train (* freq mc-ratio)))
+	 (fm-index (hz->radians (* index freq mc-ratio)))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (outa i (* (env ampf)
+		    (oscil carrier (* fm-index (pulse-train modulator))))
+	       *output*))))))
+
+;(with-sound (:clipped #f :statistics #t) (fmpulse 0 1 1000 .5 .1 1))
+
+similarly
+
+(define* (fmsum beg dur freq amp :optional (mc-ratio 1) (index 1.0) (n 10) (phase 0.0))
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+	 (carrier (make-oscil freq phase))
+	 (modulator (make-sum-of-cosines n (* freq mc-ratio)))
+	 (fm-index (hz->radians (* index freq mc-ratio)))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (outa i (* (env ampf)
+		    (oscil carrier (* fm-index (sum-of-cosines modulator))))
+	       *output*))))))
+
+;(with-sound (:clipped #f :statistics #t) (fmsum 0 1 1000 .5 .1 1))
+
+as n goes up, the thing approaches the pulse case (effectively no sidebands)
+but how to derive this from the prodigal formula?
+
+perhaps spectra of sin(sin) vs sin(sq) sin(tri) sin(pulse)
+   or sin(two sines at same freq) and sin(2 * sin)
+also sin(sin a + sin a) = sin (2 sin a) so in the m=n case, the JnJm's collapse to Jn(2..)
+
+
+(with-sound (:clipped #f :statistics #t) (fmsq 0 1 4000 .5 .025 5)) matches the
+case in Klapper p103 (except there x=1/4)
+
+; (/ (* 2 5 (sin (* 5 pi 0.5))) (* pi (- (* 5 5) (* 2 2)))) these match, and the n=index(5) case is 1.0 on both sides
+
+(define* (fmsin beg dur freq amp mc-ratio index)
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+	 (carrier (make-oscil freq))
+	 (modulator (make-oscil (* freq mc-ratio)))
+	 (fm-index (hz->radians (* index freq mc-ratio)))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (outa i (* (env ampf)
+		    (oscil carrier (* fm-index (oscil modulator))))
+	       *output*))))))
+
+;(with-sound (:clipped #f :statistics #t) (fmsin 0 1 4000 .5 .025 5))
+
+-------------------------
+
+          bessel fm cases
+          more on noise -- find an understandable derivation!
+
+   it would be nice to have a bess-like applet behind the various graphs
+
+
+-->
+
+
 
 </body>
 </html>
