@@ -12,8 +12,6 @@
    View:Files
 */
 
-/* TODO: if view files dialog is expanded, some titles seem to be truncated? (is there a size limit?)
- */
 
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
 #define MSG_BOX(Dialog, Child) XmMessageBoxGetChild(Dialog, Child)
@@ -4887,7 +4885,7 @@ static vf_row *make_vf_row(view_files_info *vdat,
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
   XtSetArg(args[n], XmNfillOnArm, false); n++;
   XtSetArg(args[n], XmNrecomputeSize, false); n++;
-  XtSetArg(args[n], XmNwidth, 300); n++;
+  XtSetArg(args[n], XmNwidth, 500); n++;                /* this sets the max name length indirectly -- was 300 which truncates some long file names (29-Oct-07) */
   XtSetArg(args[n], XmNactivateCallback, n3 = make_callback_list(name_callback, (XtPointer)r)); n++;
   r->nm = XtCreateManagedWidget("nm", xmPushButtonWidgetClass, r->rw, args, n);
   XmStringFree(s1);

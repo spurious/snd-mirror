@@ -508,9 +508,20 @@
 
 ;;; n sinusoids scaled by r: nrsin, nrcos, nrssb
 
+;;; (define nrsin sine-summation)
+;;; (define make-nrsin make-sine-summation)
+;;; (define nrsin? sine-summation?)
+;;; make-sine-summation args in wrong order etc
+
+(def-clm-struct (nrsin
+		 :make-wrapper (lambda (g)
+				 (set! (nrsin-gen g) (make-sine-summation (nrsin-frequency g) 0.0 (nrsin-n g) (nrsin-r g) 1.0))
+				 g))
+  (frequency 0.0) (n 1 :type int) (r 0.0)
+  (gen #f :type clm))
+
 (define nrsin sine-summation)
-(define make-nrsin make-sine-summation)
-(define nrsin? sine-summation?)
+
 
 (def-clm-struct (nrcos
 		 :make-wrapper (lambda (g)
@@ -3777,4 +3788,38 @@ index 10 (so 10/2 is the bes-jn arg):
 			 (* (env f2) (oscil gen2 (* 2 fm)))))
 	       *output*)))))))
 
+;;; long-spurred meadow katydid -- I can barely hear this at its true pitch, so the match was
+;;;    done down one or two octaves -- I think the recording has cut off high info (above 20Khz) --
+;;;    need much higher srate to see what this guy is really doing.  This is not very good...
+
+(with-sound (:clipped #f :statistics #t)
+  (let* ((beg 0.0)
+	 (dur 10.1) ; overall duration
+	 (slow-start 2.2) ; buzz at start
+	 (soft-end (+ slow-start 4.0)) ; softer section, rest is full vol
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 ;; looks like the same basic pulse throughout, almost same speed at start but every other one is squelched
+	 ;; slow startup pulse starts much faster (.06 mid-pulse duration, .0013 base pulse)
+	 (carrier (make-sine-summation 13200 0 4 .7 (/ 800 13200))) 
+	 (modulator (make-oscil 1500 (* 0.5 pi)))
+	 (noise (make-rand-interp 5000))
+	 (peep (make-pulsed-env '(0 0 1 0 2 .2 3 0 5 .75 8 1 10 0 11 0) .06 (/ 1.0 .06)))
+	 (amp .4)
+	 (ampf (make-env (list 0 0 .5 .5 slow-start .4 soft-end .4 (+ soft-end .5) 1 (- dur 1) 1 dur 0.0) :duration dur :scaler amp))
+	 (pulsef (make-env (list 0 -1 slow-start -1 (+ slow-start .03) 0 dur 0) :duration dur :scaler (hz->radians 8)))
+	 )
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let* ((frq (env pulsef))
+		(md (oscil modulator)))
+	   (outa i (* .2 (env ampf)
+		      (pulsed-env peep frq)
+		      md md
+		      (sine-summation carrier (+ (* frq (/ 13200 16))
+					       (* .1 (rand-interp noise))
+					       (* .1 md))))
+		 *output*)))))))
 |#
