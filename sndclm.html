@@ -1360,6 +1360,87 @@ Even if we build Snd --with-doubles,
 we can only push the order up to around 46. 
 </p>
 
+
+<table border=0>
+<tr><td>
+The "fm" argument to these two generators is intended mainly for vibrato and frequency envelopes. 
+If you use it for frequency modulation, you'll notice that the result is not the necessarily same as applying that
+modulation to the equivalent bank of oscillators, but it is the same as (for example) applying it to a sum-of-cosines
+generator, or most of the other generators (table-lookup, sum-of-sines, etc).  The effective index at
+each component is lacking the "mc-ratio" fixup you'd normally apply in a multi-carrier FM instrument,
+so each partial's actual index is multiplied by the partial number (the harmonic).  This is what you want
+if all the components should move together (as in vibrato).  If you need better control of the FM spectrum,
+use a bank of oscils where you can set each index independently.  Here we used '(1 1 2 1 3 1) and polyshape
+with sinusoidal FM with an index of 1.
+</td><td width=20></td><td>
+<img src="polyfm.png" alt="polyshape fm">
+</td></tr>
+</table>
+
+<!--
+(define* (fmsin beg dur freq amp mc-ratio index type)
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+	 (carrier (if (= type 0)
+		      (let ((oscs (make-vector 3 #f)))
+			(do ((i 0 (1+ i)))
+			    ((= i 3))
+			  (vector-set! oscs i (make-oscil (* freq (1+ i)))))
+			oscs)
+		      (if (= type 1)
+			  (make-sum-of-cosines 3 freq)
+			  (if (= type 2)
+			      (make-polyshape freq :coeffs (partials->polynomial '(1 1 2 1 3 1)))
+			      (if (= type 3)
+				  (make-table-lookup freq :wave (partials->wave '(1 1 2 1 3 1)))
+				  (if (= type 4)
+				      (make-waveshape freq :partials '(1 1 2 1 3 1))
+				      (if (= type 5)
+					  (make-sum-of-sines 3 freq)
+					  (if (= type 6)
+					      (make-ncos2 freq 3)
+					      (if (= type 7)
+						  (make-ncos4 freq 3)
+						  (if (= type 8)
+						  (make-nrcos freq 3 .99)
+						  (if (= type 9)
+						      (make-nkssb freq freq 3)
+						      )))))))))))
+	 (modulator (make-oscil (* freq mc-ratio)))
+	 (fm-index (hz->radians (* index freq mc-ratio)))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur)))
+    (do ((i start (1+ i)))
+	((= i end))
+      (let ((md (* fm-index (oscil modulator))))
+	(outa i (* (env ampf)
+		   (if (= type 0)
+		       (let ((sum 0.0))
+			 (do ((k 0 (1+ k)))
+			     ((= k 3))
+			   (set! sum (+ sum (oscil (vector-ref carrier k) (* (1+ k) md))))) ; or leave unscaled
+			 (/ sum 3))
+		       (if (= type 1)
+			   (sum-of-cosines carrier md)
+			   (if (= type 2)
+			       (/ (polyshape carrier 1.0 md) 3)
+			       (if (= type 3)
+				   (/ (table-lookup carrier md) 3)
+				   (if (= type 4)
+				       (waveshape carrier 1.0 md)
+				       (if (= type 5)
+					   (sum-of-sines carrier md)
+					   (if (= type 6)
+					       (ncos2 carrier md)
+					       (if (= type 7)
+						   (ncos4 carrier md)
+						   (if (= type 8)
+						       (nrcos carrier md)
+						       (if (= type 9)
+							   (nkssb carrier md)
+							   0.0)))))))))))
+	      *output*)))))
+-->
+
 <br><br>
 
 

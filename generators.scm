@@ -513,6 +513,8 @@
 ;;; (define nrsin? sine-summation?)
 ;;; make-sine-summation args in wrong order etc
 
+;;; actually, isn't sine-summation equivalent to nrssb? (ratio => modfreq)
+
 (def-clm-struct (nrsin
 		 :make-wrapper (lambda (g)
 				 (set! (nrsin-gen g) (make-sine-summation (nrsin-frequency g) 0.0 (nrsin-n g) (nrsin-r g) 1.0))
@@ -3764,6 +3766,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; TODO: frogs/crickets if ins dur>base song, repeat at correct interval
 
+
 ;;; southern cricket frog
 
 (with-sound (:play #t :clipped #f :statistics #t)
@@ -3787,6 +3790,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		      (+ (* (env f1) (oscil gen1 fm))
 			 (* (env f2) (oscil gen2 (* 2 fm)))))
 	       *output*)))))))
+
 
 ;;; long-spurred meadow katydid -- I can barely hear this at its true pitch, so the match was
 ;;;    done down one or two octaves -- I think the recording has cut off high info (above 20Khz) --

@@ -356,20 +356,11 @@ static void zx_drag_callback(Widget w, XtPointer context, XtPointer info)
 /* can't use value changed callback in scrollbars because they are called upon mouse release
  *   even when nothing changed, and the value passed appears to be the right edge of the
  *   slider -- this is too unpredictable, and the result is the window moves when the user
- *   did not want it to.  But this means we have to keep the slider value and ignore Motif!
+ *   did not want it to.
  */
 
 
 static void gzy_drag_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  chan_info *cp = (chan_info *)(context);
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (cp->active)
-    gzy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
-}
-
-
-static void gzy_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
@@ -417,6 +408,14 @@ static void w_toggle_callback(Widget w, XtPointer context, XtPointer info)
   w_button_callback((chan_info *)context, cb->set, (ev->state & snd_ControlMask));
 }
 
+#if MUS_DEBUGGING
+static bool expose_debugging = false;
+static XEN g_expose_debugging(void)
+{
+  expose_debugging = true;
+  return(XEN_TRUE);
+}
+#endif
 
 static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -427,13 +426,18 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
   XmDrawingAreaCallbackStruct *cb = (XmDrawingAreaCallbackStruct *)info;
   XExposeEvent *ev;
   oclock_t curtime;
+
   ASSERT_WIDGET_TYPE(XmIsDrawingArea(w), w);
   if ((cp == NULL) || (!(cp->active)) || (cp->sound == NULL)) return;
+
   ev = (XExposeEvent *)(cb->event);
-  /*
-  fprintf(stderr,"expose count: %d, width: %d, times: %d %d, cps: %p %p\n",
-	  ev->count, ev->width, (int)last_expose_event_time, (int)XtLastTimestampProcessed(MAIN_DISPLAY(ss)), cp, last_cp);
-  */
+
+#if MUS_DEBUGGING
+  if (expose_debugging)
+    fprintf(stderr,"%d: expose count: %d, width: %d, times: %d %d, cps: %p %p\n",
+	    cp->chan, ev->count, ev->width, (int)last_expose_event_time, (int)XtLastTimestampProcessed(MAIN_DISPLAY(ss)), cp, last_cp);
+#endif
+
   if (ev->count > 0) return;
   curtime = XtLastTimestampProcessed(MAIN_DISPLAY(ss));
   if ((ev->width < 10) && (last_expose_event_time == curtime) && (cp == last_cp)) return;
@@ -442,6 +446,10 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
+#if MUS_DEBUGGING
+      fprintf(stderr, "exposing...");
+#endif
+
       if ((cp->chan == 0) && (ev->width > 10) && (ev->height > 10))
 	for_each_sound_chan(sp, update_graph_or_warn);
     }
@@ -1156,10 +1164,18 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	  XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++; 
 	  XtSetArg(args[n], XmNincrement, 1); n++;
 	  XtSetArg(args[n], XmNprocessingDirection, XmMAX_ON_TOP); n++;
-	  XtSetArg(args[n], XmNdragCallback, n11 = make_callback_list(gzy_drag_callback, (XtPointer)cp)); n++;
-	  XtSetArg(args[n], XmNvalueChangedCallback, n12 = make_callback_list(gzy_valuechanged_callback, (XtPointer)cp)); n++;
+
+	  XtSetArg(args[n], XmNincrementCallback, n1 = make_callback_list(gzy_drag_callback, (XtPointer)cp)); n++;
+	  XtSetArg(args[n], XmNdecrementCallback, n2 = make_callback_list(gzy_drag_callback, (XtPointer)cp)); n++;
+	  XtSetArg(args[n], XmNpageIncrementCallback, n3 = make_callback_list(gzy_drag_callback, (XtPointer)cp)); n++;
+	  XtSetArg(args[n], XmNpageDecrementCallback, n4 = make_callback_list(gzy_drag_callback, (XtPointer)cp)); n++;
+	  XtSetArg(args[n], XmNtoTopCallback, n5 = make_callback_list(gzy_drag_callback, (XtPointer)cp)); n++;
+	  XtSetArg(args[n], XmNtoBottomCallback, n6 = make_callback_list(gzy_drag_callback, (XtPointer)cp)); n++;
+	  XtSetArg(args[n], XmNdragCallback, n7 = make_callback_list(gzy_drag_callback, (XtPointer)cp)); n++;
+
 	  cw[W_gzy] = XtCreateManagedWidget("chn-gzy", xmScrollBarWidgetClass, cw[W_main_window], args, n);
 	  XtAddEventHandler(cw[W_gzy], KeyPressMask, false, graph_key_press, (XtPointer)sp);
+
 
 	  n = 0;
 	  XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;
@@ -1174,15 +1190,21 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	  XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
 	  XtSetArg(args[n], XmNincrement, 1); n++;
 	  XtSetArg(args[n], XmNprocessingDirection, XmMAX_ON_TOP); n++;
-	  XtSetArg(args[n], XmNdragCallback, n13 = make_callback_list(gsy_drag_callback, (XtPointer)cp)); n++;
-	  XtSetArg(args[n], XmNvalueChangedCallback, n14 = make_callback_list(gsy_valuechanged_callback, (XtPointer)cp)); n++;
+	  XtSetArg(args[n], XmNdragCallback, n8 = make_callback_list(gsy_drag_callback, (XtPointer)cp)); n++;
+	  XtSetArg(args[n], XmNvalueChangedCallback, n9 = make_callback_list(gsy_valuechanged_callback, (XtPointer)cp)); n++;
 	  cw[W_gsy] = XtCreateManagedWidget("chn-gsy", xmScrollBarWidgetClass, cw[W_main_window], args, n);
 	  XtAddEventHandler(cw[W_gsy], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 	  
-	  FREE(n11);
-	  FREE(n12);
-	  FREE(n13);
-	  FREE(n14);
+	  FREE(n1);
+	  FREE(n2);
+	  FREE(n3);
+	  FREE(n4);
+	  FREE(n5);
+	  FREE(n6);
+	  FREE(n7);
+
+	  FREE(n8);
+	  FREE(n9);
 	}
       else
 	{
@@ -1535,4 +1557,8 @@ leaves the drawing area (graph pane) of the given channel."
 
   mouse_enter_graph_hook = XEN_DEFINE_HOOK(S_mouse_enter_graph_hook, 2, H_mouse_enter_graph_hook);    /* args = snd chn */
   mouse_leave_graph_hook = XEN_DEFINE_HOOK(S_mouse_leave_graph_hook, 2, H_mouse_leave_graph_hook);    /* args = snd chn */
+
+#if MUS_DEBUGGING
+  XEN_DEFINE_PROCEDURE("expose-debugging", g_expose_debugging, 0, 0, 0, "this is ridiculous...");
+#endif
 }

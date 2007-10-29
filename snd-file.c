@@ -1690,8 +1690,6 @@ void *free_axes_data(void *usa)
 }
 
 
-/* TODO: check gsy gzy update */
-
 enum {SA_X0, SA_X1, SA_Y0, SA_Y1, SA_XMIN, SA_XMAX, SA_YMIN, SA_YMAX, SA_ZX, SA_ZY, SA_SX, SA_SY};
 #define SA_FIELDS 12
 
