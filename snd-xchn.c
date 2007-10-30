@@ -409,6 +409,7 @@ static void w_toggle_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 #if MUS_DEBUGGING
+/* TODO: check gchn expose case also */
 static bool expose_debugging = false;
 static XEN g_expose_debugging(void)
 {
@@ -432,28 +433,35 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
 
   ev = (XExposeEvent *)(cb->event);
 
+  /* if multiple channels/sounds displayed, each gets an expose event, but the earlier ones
+   *   have count>0, and the last can get more than 1, causing our notion of last_cp to
+   *   be useless, and we'll drop the earlier ones anyway, so if cp != last_cp, expose
+   *   last_cp if last_count>0 or times equal (not sure which is safest).
+   */
+
 #if MUS_DEBUGGING
   if (expose_debugging)
     fprintf(stderr,"%d: expose count: %d, width: %d, times: %d %d, cps: %p %p\n",
 	    cp->chan, ev->count, ev->width, (int)last_expose_event_time, (int)XtLastTimestampProcessed(MAIN_DISPLAY(ss)), cp, last_cp);
 #endif
 
-  if (ev->count > 0) return;
   curtime = XtLastTimestampProcessed(MAIN_DISPLAY(ss));
-  if ((ev->width < 10) && (last_expose_event_time == curtime) && (cp == last_cp)) return;
+
+  if ((ev->count == 0) ||
+      (last_expose_event_time != curtime) ||
+      (cp != last_cp))
+    {
+      sp = cp->sound;
+      if (sp->channel_style != CHANNELS_SEPARATE)
+	{
+	  if ((cp->chan == 0) && (ev->width > 10) && (ev->height > 10))
+	    for_each_sound_chan(sp, update_graph_or_warn);
+	}
+      else update_graph_or_warn(cp);
+    }
+
   last_cp = cp;
   last_expose_event_time = curtime;
-  sp = cp->sound;
-  if (sp->channel_style != CHANNELS_SEPARATE)
-    {
-#if MUS_DEBUGGING
-      fprintf(stderr, "exposing...");
-#endif
-
-      if ((cp->chan == 0) && (ev->width > 10) && (ev->height > 10))
-	for_each_sound_chan(sp, update_graph_or_warn);
-    }
-  else update_graph_or_warn(cp);
 }
 
 
@@ -505,7 +513,8 @@ static void graph_button_press(Widget w, XtPointer context, XEvent *event, Boole
 static void graph_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XButtonEvent *ev = (XButtonEvent *)event;
-  graph_button_release_callback((chan_info *)context, ev->x, ev->y, ev->state, ev->button);
+  if (context)
+    graph_button_release_callback((chan_info *)context, ev->x, ev->y, ev->state, ev->button);
 }
 
 

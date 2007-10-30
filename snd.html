@@ -19,6 +19,7 @@
 <body bgcolor=white>
 <center>
 
+
 <img src="s.png" alt="S"><img src="n.png" alt="n"><img src="d.png" alt="d">
 
 </center>
@@ -1991,7 +1992,7 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-m</td><td>place (or remove) mark at cursor location</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#addmark">add-mark</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>)))</small></code></td></tr>
 <tr><td>C-n</td><td>move cursor ahead one 'line'</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#cursor">cursor</a>) (+ (<a class=quiet href="extsnd.html#cursor">cursor</a>) (* 128 arg))))</small></code></td></tr>
 <tr><td>M-n</td><td colspan=2>move ahead one form in history</td></tr>
-<tr><td>C-o</td><td>insert one zero sample at cursor</td><td onmouseover="return escape('use a vct in case the numeric argument is not 1')"><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#insertsamples">insert-samples</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg (<a class=quiet href="extsnd.html#makevct">make-vct</a> arg))) ;see <a href="extsnd.html#newcp">go-to-zero</a></small></code></td></tr>
+<tr><td>C-o</td><td>insert one zero sample at cursor</td><td onmouseover="return escape('use a vct in case the numeric argument is not 1')"><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#insertsamples">insert-samples</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg (<a class=quiet href="extsnd.html#makevct">make-vct</a> arg)))</small></code></td></tr>
 <tr><td>C-p</td><td>move cursor back one 'line'</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#cursor">cursor</a>) (- (<a class=quiet href="extsnd.html#cursor">cursor</a>) (* 128 arg))))</small></code></td></tr>
 <tr><td>M-p</td><td colspan=2>move back one form in history</td></tr>
 <tr><td>C-q</td><td>play current channel(s) starting at cursor</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#play">play</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) (<a class=quiet href="extsnd.html#selectedsound">selected-sound</a>) (<a class=quiet href="extsnd.html#selectedchannel">selected-channel</a>)))</small></code></td></tr>
@@ -2030,7 +2031,8 @@ all the samples between the cursor and the next mark.</p>
 <td><pre><small>
 (lambda ()
   (let* ((range (- (cadr (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>)) (car (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>))))
-	 (mid-point (/ (+ (<a class=quiet href="extsnd.html#selectionposition">selection-position</a>) (* 0.5 (<a class=quiet href="extsnd.html#selectionframes">selection-frames</a>))) (<a class=quiet href="extsnd.html#srate">srate</a>)))
+	 (mid-point (/ (+ (<a class=quiet href="extsnd.html#selectionposition">selection-position</a>) 
+                          (* 0.5 (<a class=quiet href="extsnd.html#selectionframes">selection-frames</a>))) (<a class=quiet href="extsnd.html#srate">srate</a>)))
 	 (minx (max 0.0 (- mid-point (* 0.5 range)))))
     (set! (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>) (list minx (+ minx range)))))
 </small></pre></td></tr>
@@ -2082,7 +2084,8 @@ all the samples between the cursor and the next mark.</p>
   (let* ((minx (max 0.0 (* 0.5 (- (apply + (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>)) arg)))))
     (set! (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>) (list minx (+ minx arg)))))
 </small></pre></td></tr>
-<tr><td>C-x C-q</td><td>mix in file</td><td><code><small>(lambda (arg) (prompt "mix file:" (lambda (val) (<a class=quiet href="sndscm.html#mixsound">mix-sound</a> val (<a class=quiet href="extsnd.html#cursor">cursor</a>)))))</small></code></td></tr>
+<tr><td>C-x C-q</td><td>mix in file</td><td><pre><small>(lambda (arg) (prompt "mix file:" 
+                (lambda (val) (<a class=quiet href="sndscm.html#mixsound">mix-sound</a> val (<a class=quiet href="extsnd.html#cursor">cursor</a>)))))</small></pre></td></tr>
 <tr><td>C-x C-r</td><td>redo last undone edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#redo">redo</a> arg))</small></code></td></tr>
 <tr><td>C-x C-s</td><td>save file</td><td><code><small>save-sound</small></code></td></tr>
 <tr><td>C-x C-u</td><td>undo last edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#undo">undo</a> arg))</small></code></td></tr>
@@ -2097,7 +2100,8 @@ all the samples between the cursor and the next mark.</p>
 <td><pre><small>
 (lambda (arg) (prompt "file:"
                 (lambda (val)
-                  (<a class=quiet href="extsnd.html#savesound">save-sound</a> val (<a class=quiet href="extsnd.html#selectedsound">selected-sound</a>) (<a class=quiet href="extsnd.html#selectedchannel">selected-channel</a>)))))
+                  (<a class=quiet href="extsnd.html#savesound">save-sound</a> val (<a class=quiet href="extsnd.html#selectedsound">selected-sound</a>) 
+                    (<a class=quiet href="extsnd.html#selectedchannel">selected-channel</a>)))))
 </small></pre></td></tr>
 <tr><td>C-x C-z</td><td>smooth using cosine</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#smoothsound">smooth-sound</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg))</small></code></td></tr>
 </table>

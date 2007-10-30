@@ -6,6 +6,8 @@
   #include <dirent.h>
 #endif
 
+/* need a Open Recent entry in File, and load recent in files viewer */
+
 
 /* -------------------------------- basic file attributes -------------------------------- */
 

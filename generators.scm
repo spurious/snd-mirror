@@ -3472,7 +3472,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; --------------------------------------------------------------------------------
 
 (definstrument (organish beg dur freq amp fm-index amp-env)
-  ;; this has a organ-style chiff (better than fm index sweep)
+  ;; this has an organ-style chiff (better than fm index sweep)
   (let* ((start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur)))
 	 (carriers (make-vector 3 #f))
@@ -3826,4 +3826,54 @@ index 10 (so 10/2 is the bes-jn arg):
 					       (* .1 (rand-interp noise))
 					       (* .1 md))))
 		 *output*)))))))
+
+
+;;; northern leopard frog (1)
+
+;;; this is slightly low-passed, and I don't quite have the vowel right at the end
+
+(with-sound (:statistics #t :clipped #f :play #t :scaled-to .5)
+  (let* ((beg 0.0)
+	 (dur 4.2)
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (gen1 (make-oscil 440))
+	 (gen2 (make-oscil 1030)) ; there's also a 1500 formant that follows the 1000 case
+	 (gen3 (make-oscil 2600))
+	 (pulse (make-pulse-train (/ 1.0 0.09)))
+	 (pulsef1 (make-env '(0 0 .1 1 10 0) :duration .013 :base 32.0))
+	 (pulsef2 (make-env '(0 0 4 1 10 0) :duration .013 :base 3.0))
+	 (interpf (make-env '(0 0 6 1 8 1 10 .5) :duration dur))
+	 (amp .5)
+	 (ampf (make-env '(0 0 3 1 9.5 1 10 0) :base .2 :duration dur :scaler amp))
+	 (gen1f (make-env '(0 1 8 1 10 0) :duration dur :scaler .65 :base 3))
+	 (gen2f (make-env '(0 0 8 0 10 1) :duration dur :scaler (hz->radians 90)))
+	 (gen3f (make-env '(0 1 6 1 10 0) :duration dur :offset (hz->radians 2200) :scaler (hz->radians 400)))
+	 (gen4f (make-env '(0 0 8 0 10 .02) :duration dur))
+	 (gen5f (make-env '(0 0 5 0 10 -1) :duration dur :scaler (hz->radians 200)))
+	 (pulf (make-env '(0 1 2 0 10 0) :scaler (hz->radians 3) :duration dur))
+	 (gen6 (make-oscil 170)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (if (> (pulse-train pulse (env pulf)) 0.1)
+	     (begin
+	       (mus-reset pulsef1)
+	       (mus-reset pulsef2)
+	       (mus-reset gen1)
+	       (mus-reset gen2)))
+	 (let* ((intrp (env interpf))
+		(gentrp (env gen1f))
+		(gen4trp (env gen4f))
+		(result (* (env ampf)
+			   (+ (* intrp (env pulsef1))
+			      (* (- 1.0 intrp) (env pulsef2)))
+			   (+ (* gentrp (oscil gen2 (env gen5f)))
+			      (* (- 1.0 gentrp) (+ (* (- 1.0 gen4trp) (oscil gen1 (env gen2f)))
+						   (* gen4trp (oscil gen3 (+ (env gen3f)
+									     (* .075 (oscil gen6)))))))))))
+	   (outa i result *output*)))))))
+
+
 |#

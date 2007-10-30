@@ -1377,6 +1377,12 @@ with sinusoidal FM with an index of 1.
 </td></tr>
 </table>
 
+<p>The same thing happens if you use polyshape or sum-of-cosines (or whatever) as the (complex) modulating signal to an oscil
+(the reverse of the situation above).
+The effective index of each partial is divided by the partial number (and in sum-of-cosines, for example, the output
+is scaled to be -1..1, so that adds another layer of confusion). 
+</p>
+
 <!--
 (define* (fmsin beg dur freq amp mc-ratio index type)
   (let* ((start (seconds->samples beg))
@@ -2040,6 +2046,12 @@ I_{0}(z) + 2 \sum_{k=1}^{\infty} I_{k}(z) \cos k\theta = e^{z \cos \theta}
 
 sceq40: 27.8.6 (p1005)
 &\sum_{n=1}^{\infty} \frac{\sin n\theta}{n^{3}} = \frac{\pi^{2}\theta}{6} - \frac{\pi \theta^{2}}{4} + \frac{\theta^{3}}{12} & (0 \leq \theta \leq 2\pi)
+
+
+from CGJ Jacobi, "Gesammelte Werke", I.197
+& \sum_{k=1}^{\infty} p^{k} \frac{ \cos kx}{k} = \frac{-1}{2} \log(1 - 2p\cos x + p^{2})
+J calls it "evolutio nota" so probably from Euler == G&R 1.514 == one of the formulas already in the G&R section
+
 -->
 
 <table border=1 hspace=20 vspace=10><tr><td>
@@ -2243,7 +2255,7 @@ As J. A. Moorer and Marc Le Brun pointed out
 long ago, there are many more such formulas "buried in reference works".  Well, they've
 done nobody any good being buried for a generation, so I say: dig them up!  If
 you know of any curious formula, anything that might trigger an interesting train of
-reflection, please send it to me, and I'll add it to this collection.
+reflection, please send it to me, and I'll add it to this collection. 
 </p>
 
 <br><br>
