@@ -6,7 +6,13 @@
   #include <dirent.h>
 #endif
 
-/* need a Open Recent entry in File, and load recent in files viewer */
+/* SOMEDAY: need a Open Recent entry in File */
+/* TODO: the previous files list in the open dialog omits files included in the invocation line. 
+ *       at startup, the open dialog file list doesn't exist, and we don't add current files upon creation,
+ *       or save invocation files and whatnot for an eventual open dialog call; but if we want Open Recent,
+ *       every close should be added to a (limited-length) list, and we could use that when the previous
+ *       files list is created (and remember_filename upon close?)
+ */
 
 
 /* -------------------------------- basic file attributes -------------------------------- */

@@ -409,7 +409,6 @@ static void w_toggle_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 #if MUS_DEBUGGING
-/* TODO: check gchn expose case also */
 static bool expose_debugging = false;
 static XEN g_expose_debugging(void)
 {
@@ -513,7 +512,7 @@ static void graph_button_press(Widget w, XtPointer context, XEvent *event, Boole
 static void graph_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XButtonEvent *ev = (XButtonEvent *)event;
-  if (context)
+  if (context) /* how could this ever be null?  there must be some other bug that manifested itself as a null context */
     graph_button_release_callback((chan_info *)context, ev->x, ev->y, ev->state, ev->button);
 }
 

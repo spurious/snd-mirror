@@ -3838,7 +3838,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur)))
 	 (gen1 (make-oscil 440))
-	 (gen2 (make-oscil 1030)) ; there's also a 1500 formant that follows the 1000 case
+	 (gen2 (make-oscil 1030)) ; there's also a 1500 formant that follows the 1000 case -- looks a lot like FM index 1 ca 600Hz
 	 (gen3 (make-oscil 2600))
 	 (pulse (make-pulse-train (/ 1.0 0.09)))
 	 (pulsef1 (make-env '(0 0 .1 1 10 0) :duration .013 :base 32.0))
