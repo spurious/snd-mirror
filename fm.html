@@ -638,12 +638,69 @@ sweep the FM index from 0 to 10, and the spectrogram looks like this:
 
 <img src="fmsweep.png" alt="sweep index" hspace=40>
 
-<br>
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>phase quibbles: cos(sin)</h5></center></td></tr></table>
 <p>
 There is a lot of music in simple FM.  You get a full spectrum at little computational expense, and
 the index gives you a simple and intuitive way to change that spectrum.
-But, to clear up one source of confusion, if you 
+Since the output peak amplitude
+is not affected by the modulating signal (cos(x) is between -1 and 1 no matter what x is, as long as it is real),
+we can wrench the index around with wild abandon.
+And since the number of significant components in the spectrum is directly proportional to the index
+(Carson's rule), we can usually predict more or less what index we want for a given spectral result.
+</p>
+
+<table border=1 hspace=50 cellpadding=10><tr><td>
+<small> 
+A slightly bizarre sidelight: there's no law against a modulating signal made up of complex numbers.
+In this case, cos is no longer bounded, so the output can peak at anything, but
+the Jn's are still distributed symmetrically, so we get FM-like spectra.
+cos((a + ib) sin x) is
+cos(a sin x)cosh(b sin x) - i sin(a sin x)sinh(b sin x).
+Taking the real part, we get something very similar to
+normal FM
+but with normalization headaches.
+</small>
+</tr></td></table>
+
+<!-- here's an instrument to test complex indices:
+
+(define* (fm beg dur freq amp mc-ratio index)
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+         (cr 0.0)
+	 (cr-incr (hz->radians freq))
+         (md 0.0)
+	 (md-incr (hz->radians (* freq mc-ratio)))
+         (fm-index (/ (* 2 pi index mc-ratio freq) (mus-srate)))) ; hz->radians with complex arg and result
+    (do ((i start (1+ i)))
+	((= i end))
+      (outa i (* amp (real-part (sin cr))) *output*) ; or magnitude in place of real-part
+      (set! cr (+ cr cr-incr (* fm-index (sin md))))
+      (set! md (+ md md-incr)))))
+
+(define* (fm beg dur freq amp mc-ratio index)
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+         (cr 0.0)
+	 (cr-incr (hz->radians freq))
+	 (md-incr (hz->radians (* freq mc-ratio)))
+	 (md (* 0.5 (+ pi md-incr)))
+         (fm-index (/ (* 2 pi index mc-ratio freq) (mus-srate)))) ; hz->radians with complex arg and result
+    (do ((i start (1+ i)))
+	((= i end))
+      (outa i (* amp (real-part (sin cr))) *output*) ; or magnitude in place of real-part
+      (set! cr (+ cr cr-incr (* fm-index (sin md))))
+      (set! md (+ md md-incr)))))
+
+; (with-sound (:clipped #f :statistics #t) (fm 0 1 1000.0 1.0 0.1 1.0+1.i))
+
+-->
+
+<br>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>phase quibbles: cos(sin)</h5></center></td></tr></table>
+
+<p>
+I am getting carried away &mdash; 
+we need to back up a bit and clear up one source of confusion.  If you 
 looked at the spectrum of our first example, and compared it to the spectrum Chowning works out, 
 you may wonder what's gone awry.  We have to return to our initial set of formulas.  If we consider 
 that:
@@ -726,7 +783,7 @@ Or perhaps more readable:
 <!-- LATEX fmeq52: \sin(-x) = - \sin(x) -->
 <!-- LATEX fmeq53: \cos(-x) = \cos(x) -->
 
-<p>Our first reaction is, "so what if one's a sine and another's a cosine, or whatever &mdash; they'll sound the 
+<p>Our first reaction is, "well so what if one's a sine and the other's a cosine &mdash; they'll sound the 
 same", but we are being hasty.  What if (for example), the modulator has the same frequency as the 
 carrier, and its index (B) is high enough that some significant energy appears at
 <img src="fmeq24.png" alt="w-m=-w" align=absmiddle>?
@@ -1931,73 +1988,8 @@ various Jn sums are 1, no matter what the index (even if it is complex).
 This also falls out of the sum mentioned under asymmetric-fm (e^... with t=1).
 Even complex FM's giant Jn sum/product
 is 1.  This can also perhaps be seen from Jn(x+y)=sum Ji(x)Jm-i(y).
-So, our output amplitude is not affected by all that modulation as long as
-we stick to real phases.  There's no law against a complex index, however,
-and here is a CLM instrument to try it out:
 
-(define* (fm beg dur freq amp mc-ratio index)
-  (let* ((start (seconds->samples beg))
-         (end (+ start (seconds->samples dur)))
-         (cr 0.0)
-	 (cr-incr (hz->radians freq))
-         (md 0.0)
-	 (md-incr (hz->radians (* freq mc-ratio)))
-         (fm-index (/ (* 2 pi index mc-ratio freq) (mus-srate)))) ; hz->radians with complex arg and result
-    (do ((i start (1+ i)))
-	((= i end))
-      (outa i (* amp (real-part (sin cr))) *output*) ; or magnitude in place of real-part
-      (set! cr (+ cr cr-incr (* fm-index (sin md))))
-      (set! md (+ md md-incr)))))
-
-; (with-sound (:clipped #f :statistics #t) (fm 0 1 1000.0 1.0 0.1 1.0+1.i))
-
-cos(complex arg) is not bounded, so the output can peak at anything, but
-the Jn's are still distributed symmetrically, so we get symmetrical spectra
-that are very similar to the real case. 
-
-cos(B sin a) B complex = cos(x sin a + iy sin a) = 
-  cos(x sin a)cos(iy sin a) - sin(x sin a)sin(iy sin a)
-
-but cos(ix) = cosh(x) and sin(ix) = sinh(x) so we get
-
-  cos(x sin a)cosh(y sin a) - sin(x sin a)sinh(y sin a)
-
-and now the first factor in each case is normal FM, and
-the second factor is normal FM with an added r^k factor
-(see expansion in sndclm.html sum-of-sines), so we've
-got FM * FM * overall amplitude scaler.
-
-The end result is, I think, that going to complex args doesn't
-buy us much in terms of spectra, and adds normalization troubles.
-But... We can use "magnitude" rather than "real-part" and
-new things start to happen.
-
-(with-sound (:clipped #f :statistics #t) (fm 0 1 1000.0 0.015 0.2 1.0+0.1i))
-
-is this a consequence of the sqrt?
-
-(define* (fmroot beg dur freq amp :optional (mc-ratio 1) (index 1.0) (n 10) (phase 0.0))
-  (let* ((start (seconds->samples beg))
-         (end (+ start (seconds->samples dur)))
-	 (carrier (make-oscil freq phase))
-	 (modulator (make-oscil (* freq mc-ratio)))
-	 (fm-index (hz->radians (* index freq mc-ratio)))
-	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur)))
-    (run
-     (lambda ()
-       (do ((i start (1+ i)))
-	   ((= i end))
-	 (let ((g1 (oscil carrier))
-	       (g2 (oscil modulator)))
-	   (outa i (* (env ampf)
-		      (abs (sqrt (+ (* g1 g1) (* g2 g2)))))
-	       *output*)))))))
-
-(with-sound (:clipped #f :statistics #t) (fmroot 0 1 1000 .5 .1 .1))
-
-yes, I think...
-
-sqrt is 1 + (x-1)/2 - (x-1)^2/8 + (x-1)^3/16 - 5(x-1)^4/128 ...
+magnitude: sqrt is 1 + (x-1)/2 - (x-1)^2/8 + (x-1)^3/16 - 5(x-1)^4/128 ...
 
 -------------------------
 
