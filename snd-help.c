@@ -516,6 +516,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+2-Nov:   animals.scm.\n\
 11-Oct:  changed default srate to 44100.\n\
 29-Sep:  Snd 9.4.\n\
 20-Sep:  export-all.scm.\n\
