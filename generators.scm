@@ -3875,5 +3875,64 @@ index 10 (so 10/2 is the bes-jn arg):
 									     (* .075 (oscil gen6)))))))))))
 	   (outa i result *output*)))))))
 
+;;; southern mole cricket
+
+(with-sound (:play #t :clipped #f :statistics #t)
+  (let* ((dur 3.0) ; goes on indefinitely
+	 (stop (seconds->samples dur))
+	 (ampf (make-env '(0 0 1 1 20 1 21 0) :scaler .25 :duration dur))
+	 (gen1 (make-oscil 2700))
+	 (gen2 (make-oscil (* 2700 2.4)))
+	 (gen3 (make-oscil 60))
+	 (gen5 (make-oscil 360))
+	 (gen4 (make-oscil (* 2700 3.2)))
+	 (gargle (make-rand-interp 360 (hz->radians (* .25 360)))))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i stop))
+	 (let* ((pval (oscil gen3))
+		(noise (rand-interp gargle))
+		(aval (+ .7 (* .3 (oscil gen5))))
+		)
+	   (outa i (* (env ampf)
+		      (+ (* (max pval 0.0)
+			    (+ (* .95 (oscil gen1 noise))
+			       (* .05 (oscil gen4 noise))))
+			 (* (max (- 1.0 pval) 0.0)
+			    (* .05 aval (oscil gen2 (* 2.4 noise))))))
+		 *output*)))))))
+
+
+;;; green treefrog but needs formant movement, speedup at start, slow down at end, other main section to the call
+
+(with-sound (:play #t :clipped #f :statistics #t)
+  (let* ((dur 0.2)
+	 (stop (seconds->samples dur))
+	 (ampf (make-env '(0 0 1 1 8 1 12 0) :scaler .25 :duration dur))
+	 (pitch 277)
+	 (gen2770 (make-oscil (* 10 pitch)))
+	 (mod277 (make-oscil pitch))
+	 (gen7479 (make-oscil (* pitch 27)))
+	 (poly (make-polyshape pitch :coeffs (partials->polynomial (list 3 .3  8 .2  9 .2  10 .9  11 1.0  12 .5))))
+	 (poly2 (make-polyshape 860 :coeffs (partials->polynomial (list  1 .4  2 .1  3 .03  4 .3  5 .03))))
+	 (index (hz->radians 277))
+	 (frqf (make-env '(0 -.3  1 .3  2 0  5 0  6 -1) :duration dur :scaler (hz->radians 70)))
+	 (pulsef (make-pulsed-env '(0 .2 1 1 3 .7 5 .2) (/ 1.0 pitch) pitch))
+	 )
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i stop))
+	 (let* ((md (* index (oscil mod277)))
+		(frq (env frqf)))
+	   (outa i (* (env ampf)
+		      (pulsed-env pulsef frq)
+		      (+ (* .78 (polyshape poly 1.0 frq))
+			 (* .2 (oscil gen2770 (* 10 (+ frq md))))
+			 (* .02 (oscil gen7479 (* 27 (+ frq md))))
+			 (* .25 (polyshape poly2 1.0 (* 3 frq)))
+			 ))
+		 *output*)))))))
 
 |#

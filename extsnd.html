@@ -1815,14 +1815,15 @@ entire sound to be displayed initially:
 </pre>
 To get other the data limits (rather than the default y axis limits of -1.0 to 1.0), you can use <a href="#mussoundmaxamp">mus-sound-maxamp</a>,
 but if that sound's maxamp isn't already known, it can require a long process of reading the file. The following hook procedure
-uses the maxamp data only if it is already available:
+uses the maxamp data if it is already available or the file is short:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (add-hook! <em class=red>initial-graph-hook</em>
   (lambda (snd chn dur)
-    (if (<a class=quiet href="#mussoundmaxampexists" onmouseover="return escape('this is #t if we know the maxamp already')">mus-sound-maxamp-exists?</a> (<a class=quiet href="#filename">file-name</a> snd))
+    (if (or (<a class=quiet href="#mussoundmaxampexists" onmouseover="return escape('this is #t if we know the maxamp already')">mus-sound-maxamp-exists?</a> (<a class=quiet href="#filename">file-name</a> snd))
+            (&lt; (<a class=quiet href="#frames">frames</a> snd chn) 10000000))
 	(let* ((amp-vals (<a class=quiet href="#mussoundmaxamp">mus-sound-maxamp</a> (<a class=quiet href="#filename">file-name</a> snd)))
-	       (max-val (list-ref amp-vals (+ (* chn 2) 1)))) 
+	       (max-val (max 1.0 (list-ref amp-vals (+ (* chn 2) 1)))))
                ;; max amp data is list: (sample value sample value ...)
 	  (list 0.0 dur (- max-val) max-val)) ; these are the new y-axis limits
 	(list 0.0 dur -1.0 1.0))))            ; max amp unknown, so use defaults

@@ -248,7 +248,7 @@
   (comment score (format nil "~D trill sections" count))
   (do ((i 0 (1+ i))
        (x0 0.0 (+ x0 0.385)))
-      ((= i count))
+      ((>= i count)) ; count might be negative
     ;;(loop for i from 0 below count and x0 from 0.0 by 0.385 do
     (moveto score (+ x0 -0.045) 0.053)
     (lineto score (+ x0 -0.045) 0.075)
@@ -287,7 +287,7 @@
   (comment score (format nil "~D arpeggios" count))
   (do ((i 0 (1+ i))
        (y0 0.0 (+ y0 0.52)))
-      ((= i count))
+      ((>= i count))
     ;; (loop for i from 0 below count and y0 from 0.0 by 0.52 do
     (moveto score 0.005 (+ y0 0.147))
     (curveto score -0.004 (+ y0 0.115) 0.042 (+ y0 0.046) 0.047 (+ y0 0.039))

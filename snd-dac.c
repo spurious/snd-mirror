@@ -1336,12 +1336,7 @@ static dac_info *play_selection_1(play_process_t background, XEN stop_proc)
 	    {
 	      snd_info *sp;
 	      sp = si->cps[i]->sound;
-	      if ((sp) && 
-		  (!(snd_feq(sp->speed_control, 1.0))) && 
-		  (sp->speed_control > 0.0))
-		ends[i] = si->begs[i] + (off_t)(((double)selection_len() / (Float)(sp->speed_control)));
-	      /* user might move speed control while playing selection, so ideally we'd watch dp->chn_fd here */
-	      else ends[i] = si->begs[i] + selection_len();
+	      ends[i] = si->begs[i] + selection_len();
 	    }
 	  dp = play_channels_1(si->cps, si->chans, si->begs, ends, background, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), true, stop_proc, NULL, 0);
 	  si = free_sync_info(si); /* does not free sample readers */

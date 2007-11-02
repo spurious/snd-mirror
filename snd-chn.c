@@ -11,6 +11,7 @@
 /* 
  * TODO: it's possible to have unselected graph in selected color?
  * TODO: re-exposure is over-optimized -- have to click zoom to get graphs
+ * TODO: if maxamp>1 automatically reflect that in y axis, so user doesn't need the initial-graph-hook kludge, or provide maxamp-hook
  */
 
 chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
@@ -679,8 +680,27 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
   if (dur == 0.0) gdur = .001; else gdur = dur;
   xmax = gdur;
   if (x1 == 0.0) x1 = gdur;
-  if (!ymax_set) {if (y1 > 1.0) ymax = y1; else ymax = 1.0;}
-  if (!ymin_set) {if (y0 < -1.0) ymin = y0; else ymin = -1.0;}
+  
+  if ((!ymax_set) && (!ymin_set) &&
+      (peak_env_maxamp_ok(cp, 0))) /* peak-env.scm uses initial-graph-hook to read in this data, so it's not entirely hopeless */
+    {
+      ymax = peak_env_maxamp(cp, 0);
+      ymin = -ymax;
+    }
+  else
+    {
+      if (!ymax_set) 
+	{
+	  if (y1 > 1.0) 
+	    ymax = y1; 
+	  else ymax = 1.0;
+	}
+      if (!ymin_set) 
+	{if (y0 < -1.0) 
+	    ymin = y0; 
+	  else ymin = -1.0;
+	}
+    }
   if (dur <= 0.0)
     {
       /* empty sound */

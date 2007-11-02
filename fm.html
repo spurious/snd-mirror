@@ -492,7 +492,7 @@ significant sidebands on each side of the carrier, so our total bandwidth is on 
    2 * modulator-frequency * (fm-index + 1)
 </pre>
 
-<p>This is a good approximation &mdash; 99% of the signal power is within its limits.  To turn that around, we can 
+<p>This is a good approximation &mdash; 98% of the signal power is within its limits.  To turn that around, we can 
 reduce the danger of aliasing by limiting the fm index to approximately (srate/2 - carrier_frequency) / modulator_frequency;
 use srate/4 to be safer.
 </p>
@@ -510,7 +510,7 @@ fmeq17: e^{\frac{1}{2}(t - \frac{1}{t})}
 
 <!-- LATEX fmeq45.png: e^{iz \cos \theta} \! = \!\!\!\! \sum_{n=-\infty}^{\infty} \!\!\! i^{n} J_{n}(z) \, e^{i n \theta} -->
 
-<table border=1 hspace=50 cellpadding=10><tr><td>
+<table border=1 hspace=50 cellpadding=10 vspace=10><tr><td>
 <small> 
 Then there's the perennial question "why Bessel functions?". 
 Most explanations start with <img src="fmeq45.png" alt="jacobi formula" align=absmiddle>: <i>obscurum per obscurius</i>!  
@@ -644,7 +644,7 @@ the index gives you a simple and intuitive way to change that spectrum.
 Since the output peak amplitude
 is not affected by the modulating signal (cos(x) is between -1 and 1 no matter what x is, as long as it is real),
 we can wrench the index around with wild abandon.
-And since the number of significant components in the spectrum is directly proportional to the index
+And since the number of significant components in the spectrum is nearly proportional to the index
 (Carson's rule), we can usually predict more or less what index we want for a given spectral result.
 </p>
 
@@ -659,7 +659,7 @@ Taking the real part, we get something very similar to
 normal FM
 but with normalization headaches.
 </small>
-</tr></td></table>
+</td></tr></table>
 
 <!-- here's an instrument to test complex indices:
 
@@ -692,6 +692,9 @@ but with normalization headaches.
       (set! md (+ md md-incr)))))
 
 ; (with-sound (:clipped #f :statistics #t) (fm 0 1 1000.0 1.0 0.1 1.0+1.i))
+
+to finish this I need an expansion of sin(a sin x)cosh(b sin x) or cos(a sin x)cosh(b sin x)
+why does this remind me of asymmetric-fm?
 
 -->
 
