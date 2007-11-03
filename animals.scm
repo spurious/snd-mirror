@@ -289,7 +289,7 @@
 
 ;;; northern leopard frog (1)
 
-;;; this is slightly low-passed, and I don't quite have the vowel right at the end
+;;; TODO: this is slightly low-passed, and I don't quite have the vowel right at the end
 
 (with-sound (:statistics #t :clipped #f :play #t :scaled-to .5)
   (let* ((beg 0.0)
@@ -363,7 +363,7 @@
 		 *output*)))))))
 
 
-;;; green treefrog but needs formant movement, speedup at start, slow down at end, other main section to the call
+;;; TODO: green treefrog but needs formant movement, speedup at start, slow down at end, other main section to the call
 
 (with-sound (:play #t :clipped #f :statistics #t)
   (let* ((dur 0.2)

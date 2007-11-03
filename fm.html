@@ -648,28 +648,34 @@ And since the number of significant components in the spectrum is nearly proport
 (Carson's rule), we can usually predict more or less what index we want for a given spectral result.
 </p>
 
+<!-- LATEX fmeq54: & J_{n}(ix) = i^{n} I_{n}(x) -->
+<!-- LATEX fmeq55: & \sum i^{n} I_{n}(b)\cos(\omega_{c} + n\omega_{m})t -->
+<!-- LATEX fmeq56: & \sum_{n} \sum_{k} i^{k} J_{n}(a) I_{k}(b)\sin(\omega_{c} + (n + k)\omega_{m})t -->
+
 <table border=1 hspace=50 cellpadding=10><tr><td>
 <small> 
 A slightly bizarre sidelight: there's no law against a modulating signal made up of complex numbers.
 In this case, cos is no longer bounded, so the output can peak at anything, but
-the Jn's are still distributed symmetrically, so we get FM-like spectra.
-cos((a + ib) sin x) is
-cos(a sin x)cosh(b sin x) - i sin(a sin x)sinh(b sin x).
-Taking the real part, we get something very similar to
-normal FM
-but with normalization headaches.
+we still get FM-like spectra.  <img src="fmeq54.png" alt="J=I" align=absmiddle>, where "I" is
+the modified Bessel function,
+so
+if our index B = bi (B is purely imaginary), we can expand cos(bi sin x) as
+<img src="fmeq55.png" alt="i case" align=absmiddle>.  And if B = a + bi, we get
+<img src="fmeq56.png" alt="a=bi case" align=absmiddle>.  This looks similar to normal FM,
+but with normalization headaches.  Perhaps we can take advantage of the split betweeen the
+real and imaginary parts &mdash; unexplored territory!
 </small>
 </td></tr></table>
 
 <!-- here's an instrument to test complex indices:
 
-(define* (fm beg dur freq amp mc-ratio index)
+(define* (fmc beg dur freq amp mc-ratio index)
   (let* ((start (seconds->samples beg))
          (end (+ start (seconds->samples dur)))
          (cr 0.0)
 	 (cr-incr (hz->radians freq))
-         (md 0.0)
 	 (md-incr (hz->radians (* freq mc-ratio)))
+	 (md 0.0) ; (* 0.5 (+ pi md-incr)))
          (fm-index (/ (* 2 pi index mc-ratio freq) (mus-srate)))) ; hz->radians with complex arg and result
     (do ((i start (1+ i)))
 	((= i end))
@@ -677,25 +683,22 @@ but with normalization headaches.
       (set! cr (+ cr cr-incr (* fm-index (sin md))))
       (set! md (+ md md-incr)))))
 
-(define* (fm beg dur freq amp mc-ratio index)
+; (with-sound (:clipped #f :statistics #t) (fmc 0 1 1000.0 1.0 0.1 0.5+1.0i))
+
+(define* (pmc beg dur freq amp mc-ratio fm-index)
   (let* ((start (seconds->samples beg))
          (end (+ start (seconds->samples dur)))
          (cr 0.0)
 	 (cr-incr (hz->radians freq))
 	 (md-incr (hz->radians (* freq mc-ratio)))
-	 (md (* 0.5 (+ pi md-incr)))
-         (fm-index (/ (* 2 pi index mc-ratio freq) (mus-srate)))) ; hz->radians with complex arg and result
+	 (md 0.0))
     (do ((i start (1+ i)))
 	((= i end))
-      (outa i (* amp (real-part (sin cr))) *output*) ; or magnitude in place of real-part
-      (set! cr (+ cr cr-incr (* fm-index (sin md))))
+      (outa i (* amp (real-part (sin (+ cr (* fm-index (sin md)))))) *output*)
+      (set! cr (+ cr cr-incr))
       (set! md (+ md md-incr)))))
 
-; (with-sound (:clipped #f :statistics #t) (fm 0 1 1000.0 1.0 0.1 1.0+1.i))
-
-to finish this I need an expansion of sin(a sin x)cosh(b sin x) or cos(a sin x)cosh(b sin x)
-why does this remind me of asymmetric-fm?
-
+; (with-sound (:clipped #f :statistics #t) (pmc 0 1 1000.0 1.0 0.1 0.5+1.0i))
 -->
 
 <br>
