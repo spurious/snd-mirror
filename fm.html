@@ -498,7 +498,7 @@ use srate/4 to be safer.
 </p>
 
 
-<!-- LATEX sceq42: \frac{e^{ix} - e^{-ix}}{2i} -->
+<!-- LATEX sceq42: \frac{1}{2i}(e^{ix} - e^{-ix}) -->
 
 <!-- LATEX 
 fmeq17: 
@@ -508,7 +508,7 @@ NEW:
 fmeq17: e^{\frac{1}{2}(t - \frac{1}{t})}
 -->
 
-<!-- LATEX fmeq45.png: e^{iz \cos \theta} \! = \!\!\!\! \sum_{n=-\infty}^{\infty} \!\!\! i^{n} J_{n}(z) \, e^{i n \theta} -->
+<!-- LATEX fmeq45.png: e^{iz \cos \theta} \! = \sum i^{n} J_{n}(z) \, e^{i n \theta} -->
 
 <table border=1 hspace=50 cellpadding=10 vspace=10><tr><td>
 <small> 
@@ -648,24 +648,33 @@ And since the number of significant components in the spectrum is nearly proport
 (Carson's rule), we can usually predict more or less what index we want for a given spectral result.
 </p>
 
-<!-- LATEX fmeq54: & J_{n}(ix) = i^{n} I_{n}(x) -->
+<!-- LATEX fmeq54: & J_{n}(ix) = i^{n} I_{n}(x) G&R 8.406 -->
 <!-- LATEX fmeq55: & \sum i^{n} I_{n}(b)\cos(\omega_{c} + n\omega_{m})t -->
-<!-- LATEX fmeq56: & \sum_{n} \sum_{k} i^{k} J_{n}(a) I_{k}(b)\sin(\omega_{c} + (n + k)\omega_{m})t -->
+<!-- LATEX fmeq56: & \sum_{n} \sum_{k} i^{k} J_{n}(a) I_{k}(b)\cos(\omega_{c} + (n + k)\omega_{m})t -->
 
-<table border=1 hspace=50 cellpadding=10><tr><td>
+<table border=1 hspace=50><tr><td>
+<table border=0 cellspacing=10><tr><td>
 <small> 
 A slightly bizarre sidelight: there's no law against a modulating signal made up of complex numbers.
 In this case, cos is no longer bounded, so the output can peak at anything, but
 we still get FM-like spectra.  <img src="fmeq54.png" alt="J=I" align=absmiddle>, where "I" is
 the modified Bessel function,
-so
-if our index B = bi (B is purely imaginary), we can expand cos(bi sin x) as
-<img src="fmeq55.png" alt="i case" align=absmiddle>.  And if B = a + bi, we get
+so if our index is purely imaginary, we can expand cos(bi sin x) as
+<img src="fmeq55.png" alt="i case" align=absmiddle>.  If our index is a + bi, we get
 <img src="fmeq56.png" alt="a=bi case" align=absmiddle>.  This looks similar to normal FM,
 but with normalization headaches.  Perhaps we can take advantage of the split betweeen the
 real and imaginary parts &mdash; unexplored territory!
 </small>
-</td></tr></table>
+</td></tr></table></td>
+
+<td>
+<table border=0>
+<tr><td>
+<img src="fmc63.png" alt="complex index fm 6.0+3.0i 0.5 interp">
+</td></tr>
+<tr><td bgcolor="#f6f8ff"><small><center>index: 6+3i</center></small></td></tr></table>
+</tr>
+</table>
 
 <!-- here's an instrument to test complex indices:
 
@@ -699,6 +708,127 @@ real and imaginary parts &mdash; unexplored territory!
       (set! md (+ md md-incr)))))
 
 ; (with-sound (:clipped #f :statistics #t) (pmc 0 1 1000.0 1.0 0.1 0.5+1.0i))
+
+(define* (fpmc beg dur freq amp mc-ratio fm-index interp)
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+         (cr 0.0)
+	 (cr-incr (hz->radians freq))
+	 (md-incr (hz->radians (* freq mc-ratio)))
+	 (md 0.0))
+    (do ((i start (1+ i)))
+	((= i end))
+      (let ((val (sin (+ cr (* fm-index (sin md))))))
+        (outa i (* amp (+ (* (- 1.0 interp) (real-part val))
+                          (* interp (imag-part val))))
+              *output*)
+        (set! cr (+ cr cr-incr))
+        (set! md (+ md md-incr))))))
+
+;(with-sound (:clipped #f :statistics #t) (fpmc 0 1 1000.0 1.0 0.1 0.5+0.5i 0.5))
+;(with-sound (:clipped #f :statistics #t) (fpmc 0 1 1000.0 1.0 0.1 3.0+1.0i 0.5))
+
+;(with-sound (:clipped #f :statistics #t) (fpmc 0 2 1000.0 1.0 0.1 0.0+3.0i 0.5)) use 65536 as fft size, mark the imag part? (maxamp 7.03)
+(bes-in 0 3)
+4.88079258586502 [1.0]
+(/ (bes-in 1 3) (bes-in 0 3))
+0.809985293903298 [.816]
+(/ (bes-in 2 3) (bes-in 0 3))
+0.460009804028997 [.463]
+(/ (bes-in 3 3) (bes-in 0 3))
+0.196638888584509 [.198]
+(/ (bes-in 4 3) (bes-in 0 3))
+0.0667320268599799 [.067]
+(/ (bes-in 5 3) (bes-in 0 3))
+0.0186868169578955 [.018]
+
+;(with-sound (:clipped #f :statistics #t) (fpmc 0 2 1000.0 1.0 0.1 6.0+3.0i 0.5)) -- shows same cancellation as earlier 3+1 case
+;(with-sound (:clipped #f :statistics #t :srate (* 4 16384)) (fpmc 0 2 1000.0 1.0 0.1 6.0+3.0i 0.5)) -- need srate change to get freqs rounded correctly
+
+(fm-a+bi 1000 1000 100 6.0 3.0 0.5 #f)
+;add -0.00533062568641282 from J-6(6.0) = 0.245836863364327 and I6(3.0) = 0.0216835897328909
+;add -0.0-0.0330246867072196i from J-5(6.0) = -0.362087074887172 and I5(3.0) = 0.0912064776615134
+;add 0.116485720696706 from J-4(6.0) = 0.357641594780961 and I4(3.0) = 0.325705181937936
+;add 0.0+0.110149373883134i from J-3(6.0) = -0.114768384820775 and I3(3.0) = 0.959753629496008
+;add 0.5453019525712 from J-2(6.0) = -0.242873209960185 and I2(3.0) = 2.24521244092995
+;add 0.0+1.09383372428571i from J-1(6.0) = 0.276683858127566 and I1(3.0) = 3.95337021714292
+;add 0.735268254686395 from J0(6.0) = 0.150645257250997 and I0(3.0) = 4.88079258586502
+;add -0.0+1.09383372428571i from J1(6.0) = -0.276683858127566 and I-1(3.0) = 3.95337021714292
+;add 0.5453019525712 from J2(6.0) = -0.242873209960185 and I-2(3.0) = 2.24521244092995
+;add -0.0+0.110149373883134i from J3(6.0) = 0.114768384820775 and I-3(3.0) = 0.959753629496008
+;add 0.116485720696706 from J4(6.0) = 0.357641594780961 and I-4(3.0) = 0.325705181937936
+;add 0.0-0.0330246867072196i from J5(6.0) = 0.362087074887172 and I-5(3.0) = 0.0912064776615134
+;add -0.00533062568641282 from J6(6.0) = 0.245836863364327 and I-6(3.0) = 0.0216835897328909
+(2.04827407952567+2.34307028395662i 2.19567218174114)
+
+(fm-a+bi 1100 1000 100 6.0 3.0 0.5 #f)
+;add -0.0-0.00109941164116366i from J-6(6.0) = 0.245836863364327 and I7(3.0) = 0.00447211872994957
+;add 0.00785134757943601 from J-5(6.0) = -0.362087074887172 and I6(3.0) = 0.0216835897328909
+;add 0.0+0.0326192301252177i from J-4(6.0) = 0.357641594780961 and I5(3.0) = 0.0912064776615134
+;add -0.0373806576587736 from J-3(6.0) = -0.114768384820775 and I4(3.0) = 0.325705181937936
+;add 0.0+0.233098444766634i from J-2(6.0) = -0.242873209960185 and I3(3.0) = 0.959753629496008
+;add -0.621214040472508 from J-1(6.0) = 0.276683858127566 and I2(3.0) = 2.24521244092995
+;add 0.0+0.595556473369924i from J0(6.0) = 0.150645257250997 and I1(3.0) = 3.95337021714292
+;add -1.35043652337755 from J1(6.0) = -0.276683858127566 and I0(3.0) = 4.88079258586502
+;add -0.0+0.960167714798496i from J2(6.0) = -0.242873209960185 and I-1(3.0) = 3.95337021714292
+;add -0.257679405425041 from J3(6.0) = 0.114768384820775 and I-2(3.0) = 2.24521244092995
+;add -0.0+0.343247818649768i from J4(6.0) = 0.357641594780961 and I-3(3.0) = 0.959753629496008
+;add 0.117933636603501 from J5(6.0) = 0.362087074887172 and I-4(3.0) = 0.325705181937936
+;add 0.0-0.022421914386815i from J6(6.0) = 0.245836863364327 and I-5(3.0) = 0.0912064776615134
+;add -0.00280990379338964 from J7(6.0) = 0.129586651841481 and I-6(3.0) = 0.0216835897328909
+(-2.14382339773855+2.14142771818658i -0.00119783977598686) [0]
+
+(fm-a+bi 1200 1000 100 6.0 3.0 0.5 #f)
+;add 0.0+0.00161929638947558i from J-5(6.0) = -0.362087074887172 and I7(3.0) = 0.00447211872994957
+;add -0.00775495361264718 from J-4(6.0) = 0.357641594780961 and I6(3.0) = 0.0216835897328909
+;add -0.0-0.010467620126404i from J-3(6.0) = -0.114768384820775 and I5(3.0) = 0.0912064776615134
+;add -0.0791050630379326 from J-2(6.0) = -0.242873209960185 and I4(3.0) = 0.325705181937936
+;add -0.0-0.26554833706089i from J-1(6.0) = 0.276683858127566 and I3(3.0) = 0.959753629496008
+;add -0.338230605747031 from J0(6.0) = 0.150645257250997 and I2(3.0) = 2.24521244092995
+;add -0.0-1.09383372428571i from J1(6.0) = -0.276683858127566 and I1(3.0) = 3.95337021714292
+;add -1.18541376247891 from J2(6.0) = -0.242873209960185 and I0(3.0) = 4.88079258586502
+;add 0.0-0.45372191442005i from J3(6.0) = 0.114768384820775 and I-1(3.0) = 3.95337021714292
+;add -0.802981357996241 from J4(6.0) = 0.357641594780961 and I-2(3.0) = 2.24521244092995
+;add -0.0+0.347514384316557i from J5(6.0) = 0.362087074887172 and I-3(3.0) = 0.959753629496008
+;add 0.0800703403091294 from J6(6.0) = 0.245836863364327 and I-4(3.0) = 0.325705181937936
+;add 0.0-0.0118191420664103i from J7(6.0) = 0.129586651841481 and I-5(3.0) = 0.0912064776615134
+;add -0.00122581649816301 from J8(6.0) = 0.0565319909324618 and I-6(3.0) = 0.0216835897328909
+(-2.33443662315078-1.48617977275652i -1.91030819795365) [(/ 1.91 2.19) = .872 -- .874]
+
+(fm-a+bi 1300 1000 100 6.0 3.0 0.5 #f)
+;add -0.0-0.00159941567462897i from J-4(6.0) = 0.357641594780961 and I7(3.0) = 0.00447211872994957
+;add 0.00248859057076024 from J-3(6.0) = -0.114768384820775 and I6(3.0) = 0.0216835897328909
+;add -0.0-0.0221516099988137i from J-2(6.0) = -0.242873209960185 and I5(3.0) = 0.0912064776615134
+;add 0.0901173663507287 from J-1(6.0) = 0.276683858127566 and I4(3.0) = 0.325705181937936
+;add -0.0-0.144582332413004i from J0(6.0) = 0.150645257250997 and I3(3.0) = 0.959753629496008
+;add 0.621214040472508 from J1(6.0) = -0.276683858127566 and I2(3.0) = 2.24521244092995
+;add -0.0-0.960167714798496i from J2(6.0) = -0.242873209960185 and I1(3.0) = 3.95337021714292
+;add 0.560160681724944 from J3(6.0) = 0.114768384820775 and I0(3.0) = 4.88079258586502
+;add 0.0-1.41388962921855i from J4(6.0) = 0.357641594780961 and I-1(3.0) = 3.95337021714292
+;add -0.812962405236614 from J5(6.0) = 0.362087074887172 and I-2(3.0) = 2.24521244092995
+;add -0.0+0.235942821877827i from J6(6.0) = 0.245836863364327 and I-3(3.0) = 0.959753629496008
+;add 0.0422070440147574 from J7(6.0) = 0.129586651841481 and I-4(3.0) = 0.325705181937936
+;add 0.0-0.00515608376814245i from J8(6.0) = 0.0565319909324618 and I-5(3.0) = 0.0912064776615134
+(0.502475925962626-2.31154049748365i -0.90453228576051) [(/ (/ 0.90 2.19) = 0.411 -- .413]
+
+(fm-a+bi 1400 1000 100 6.0 3.0 0.5 #f)
+;add 0.00526636304188694 from J-2(6.0) = -0.242873209960185 and I6(3.0) = 0.0216835897328909
+;add 0.0+0.0252353601256131i from J-1(6.0) = 0.276683858127566 and I5(3.0) = 0.0912064776615134
+;add 0.0490659409210231 from J0(6.0) = 0.150645257250997 and I4(3.0) = 0.325705181937936
+;add 0.0+0.26554833706089i from J1(6.0) = -0.276683858127566 and I3(3.0) = 0.959753629496008
+;add 0.5453019525712 from J2(6.0) = -0.242873209960185 and I2(3.0) = 2.24521244092995
+;add 0.0+0.45372191442005i from J3(6.0) = 0.114768384820775 and I1(3.0) = 3.95337021714292
+;add 1.74557444420386 from J4(6.0) = 0.357641594780961 and I0(3.0) = 4.88079258586502
+;add 0.0-1.43146425787134i from J5(6.0) = 0.362087074887172 and I-1(3.0) = 3.95337021714292
+;add -0.551955984064783 from J6(6.0) = 0.245836863364327 and I-2(3.0) = 2.24521244092995
+;add -0.0+0.124371259439097i from J7(6.0) = 0.129586651841481 and I-3(3.0) = 0.959753629496008
+;add 0.0184127623919712 from J8(6.0) = 0.0565319909324618 and I-4(3.0) = 0.325705181937936
+;add 0.0-0.00193041464863622i from J9(6.0) = 0.0211653239784174 and I-5(3.0) = 0.0912064776615134
+(1.81180116486504-0.564042995574322i 0.623879084645359) [(/ 0.623 2.19) = 0.284 -- .287]
+
+1500: [(/ 0.936 2.19) = 0.427 -- .428]
+1600: [(/ 0.496 2.19) = 0.226 -- .228]
+1700: [(/ 0.102 2.19) = 0.047 -- .047]
 -->
 
 <br>
@@ -1147,7 +1277,7 @@ sequence).  Since sine is not linear (it is <img src="sceq41.png" alt="x-x^3/3!+
 <img src="fmeq31.png" alt="bad sins" hspace=20>
 
 
-<p>In the second case we just get the superposition of the two simple FM spectra, but in the first case 
+<p>In the second case we just add together the two simple FM spectra, but in the first case 
 we get a more complex mixture involving all the sums and differences of the modulating frequencies. 
 These sum and difference tones ("intermodulation products") are not limited to FM.  Any
 nonlinear synthesis technique produces them.  Being non-linear, it must have something that involves
@@ -1164,6 +1294,7 @@ expressed:
 -->
 <img src="fmeq32.png" alt="2 sums" hspace=20>
 
+<!-- TODO: reword the triangle-as-fm paragraph -- it's a mess -->
 
 <p>You can chew up any amount of free time calculating the resulting side band amplitudes &mdash; see the immortal classic:
 Schottstaedt, "The Simulation of Natural Instrument Tones Using Frequency Modulation with a 
@@ -1601,6 +1732,8 @@ is low-pass filtered, then fed back into its fm-input location:
 <img src="fmeq37.png" alt="feedback fm" hspace=20>
 
 
+<!-- SOMEDAY: why is there DC in feedback? -->
+
 <p>As Tomisawa points out this is very close to the formulas we have been looking at already, except that 
 the argument to the Bessel function depends on the order, we have only multiples of the carrier frequency 
 in the expansion, and the elements of the sequence are multiplied by 2/nB.  The result is a much 
@@ -1988,13 +2121,6 @@ sundry fm notes and curiousities
 -------------------------
 fm with a complex index:
 
-In our various expansions of FM (single modulator, double, and complex), if the
-phase is set to 0, we turn cos(sin + sin +...) into cos(0) == 1, so all the
-various Jn sums are 1, no matter what the index (even if it is complex).
-This also falls out of the sum mentioned under asymmetric-fm (e^... with t=1).
-Even complex FM's giant Jn sum/product
-is 1.  This can also perhaps be seen from Jn(x+y)=sum Ji(x)Jm-i(y).
-
 magnitude: sqrt is 1 + (x-1)/2 - (x-1)^2/8 + (x-1)^3/16 - 5(x-1)^4/128 ...
 
 -------------------------
@@ -2138,6 +2264,8 @@ case in Klapper p103 (except there x=1/4)
             can we treat the "ears" as a limiting process? -- sort of...
 
           it would be nice to have a bess-like applet behind the various graphs
+
+	  more on the JJ->1 stuff and perhaps the JJ->J match
 -->
 
 

@@ -2630,5 +2630,30 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 	    bmult)
 	  0.0)))
 
+;;; this returns the component in FM with complex index (using-sine ignored for now)
+
+(define (fm-a+bi freq-we-want wc wm a b interp using-sine)
+  (let* ((sum 0.0)
+	 (mxa (inexact->exact (ceiling (* 7 a))))
+	 (mxb (inexact->exact (ceiling (* 7 b)))))
+    (do ((k (- mxa) (1+ k)))
+	((>= k mxa))
+      (do ((j (- mxb) (1+ j)))
+	  ((>= j mxb))
+	(if (< (abs (- freq-we-want (+ wc (* k wm) (* j wm)))) 0.1)
+	    (let ((curJI (* (bes-jn k a)
+			    (bes-in (abs j) b)
+			    (expt 0.0+1.0i j))))
+	      (set! sum (+ sum curJI))
+	      (if (> (magnitude curJI) 0.001)
+		  (snd-display ";add ~A from J~D(~A) = ~A and I~D(~A) = ~A"
+			       curJI 
+			       k a (bes-jn k a)
+			       j b (bes-in (abs j) b)))))))
+    (list sum
+	  (+ (* (- 1.0 interp) (real-part sum))
+	     (* interp (imag-part sum))))))
+
+;(fm-a+bi 1200 1000 100 1.0 3.0 0.0 #f)
 
 

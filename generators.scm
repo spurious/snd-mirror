@@ -3172,6 +3172,24 @@ index 10 (so 10/2 is the bes-jn arg):
        (* (sin cx)
 	  (* (sin (* B (sin mx)))))))) ; use -B for the other side
 
+;;; FM with complex index
+(define* (fpmc beg dur freq amp mc-ratio fm-index interp)
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+         (cr 0.0)
+	 (cr-incr (hz->radians freq))
+	 (md-incr (hz->radians (* freq mc-ratio)))
+	 (md 0.0))
+    (do ((i start (1+ i)))
+	((= i end))
+      (let ((val (sin (+ cr (* fm-index (sin md))))))
+        (outa i (* amp (+ (* (- 1.0 interp) (real-part val))
+                          (* interp (imag-part val))))
+              *output*)
+        (set! cr (+ cr cr-incr))
+        (set! md (+ md md-incr))))))
+
+
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-fmssb 1000.0 100.0 :index 8.0)))  ; 1 3 7 11 ... -- interesting effect

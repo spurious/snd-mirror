@@ -1842,6 +1842,8 @@ static char ampstr[LABEL_BUFFER_SIZE];
 #define AMP_ROOM 35
 #define AMP_ROOM_CUTOFF 3.0
 
+/* TODO: this leaves 15 pixels height no matter what font is in use */
+
 static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler, off_t samps, Float samps_per_pixel, bool fft_data, Float fft_scale)
 {
   int num_peaks, row, col, tens, i, acol, acols;
