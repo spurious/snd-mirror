@@ -1253,6 +1253,12 @@ a moving formant).  Here we sweep "r" from -1.0 to -20.0, with an index of 3, m/
 <img src="asyfm.png" alt="asy spectra">
 
 
+
+<!-- PERHAPS: another tweak from Benson: (amplitude modulation of FM)
+2 \sin \theta \cos(\phi + B \sin \theta) = \sum_{n=-\infty}^{\infty} (J_{n-1}(B) - J_{n+1}(B)) \sin(\phi + n\theta)
+-->
+
+
 <br>
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>complex FM: sin(sin+sin)</h5></center></td></tr></table>
 
@@ -1290,7 +1296,7 @@ expressed:
 </p>
 
 <!-- LATEX fmeq32:
-     \sum_{i=-\infty}^{\infty} \sum_{k=-\infty}^{\infty} J_{i}(B_{1})J_{k}(B_{2})\sin(\omega_{c}t + i\omega_{m1}t + k\omega_{m2}t)
+     \sin(\omega_{c}t + B_{1}\sin \omega_{m1}t + B_{2}\sin \omega_{m2}t) = \sum_{i=-\infty}^{\infty} \sum_{k=-\infty}^{\infty} J_{i}(B_{1})J_{k}(B_{2})\sin(\omega_{c} + i\omega_{m1} + k\omega_{m2})t \\
 -->
 <img src="fmeq32.png" alt="2 sums" hspace=20>
 
@@ -1562,7 +1568,18 @@ cascade.png:
 				      
 -->
 
-<p>Unfortunately, FM can produce energy 
+<p>Benson expands this as:<p>
+
+<!-- LATEX fmeq57: 
+    & \sin(\omega_{c}t + B_{1}\sin(\omega_{m1}t + B_{2}\sin(\omega_{m2}t))) = \sum_{n=-\infty}^{\infty} \sum_{k=-\infty}^{\infty} J_{n}(B_{1}) J_{k}(n B_{2}) \sin(\omega_{c} + n \omega_{m1} + k \omega_{m2})t \\
+-->
+
+<!-- PERHAPS: add a worked example, or tack a couple cases onto the preceding case -->
+
+<img src="fmeq57.png" alt="cascade FM" hspace=20>
+
+<p>
+Unfortunately, FM can produce energy 
 at 0Hz (when, for example, the carrier frequency equals the modulating frequency), and that 0Hz ("DC") component becomes a constant offset in the 
 phase increment (the "instantaneous frequency") of the outer or lowermost
 carrier. 
@@ -1733,6 +1750,8 @@ is low-pass filtered, then fed back into its fm-input location:
 
 
 <!-- SOMEDAY: why is there DC in feedback? -->
+<!-- PERHAPS: benson expresses this as f(t_{n}) = \sin(\omega_{c}t_{n} + B f(t_{n-1}))
+-->
 
 <p>As Tomisawa points out this is very close to the formulas we have been looking at already, except that 
 the argument to the Bessel function depends on the order, we have only multiples of the carrier frequency 
@@ -1825,13 +1844,31 @@ hell breaks loose, but luckily:
 </td></tr></table>
 </td></tr></table>
 
-<p>
-Apparently, if B&gt;1.5, this formula becomes 
-numerically unstable; the result is a burst of noise.
-Tomisawa says the problem "is considered to be caused by an error in the digital computation". 
-Perhaps we have wandered into the realm of chaos:
-<code>(set! x (* 4 (sin (* pi x))))</code>
-can behave chaotically.
+
+<p>My first thought was "why does our FFT show a 0 Hz component?".  If we goof around with it,
+we find that the DC component is independent of the length of the FFT, but
+if we increase the sampling rate by a factor of 10,
+the DC component is reduced by almost the same amount, while the other components are essentially unaffected.
+If we increase the carrier frequency by a factor of 10, the DC component is also increased by about the same factor.
+So it seems to be an artifact of aliasing.  
+If you look at the dB version of the FFT, you can see energy clear out
+to the end, down about 110 dB if the carrier is 100 Hz.  Reducing the index helps less than you'd expect because
+its inverse multiplies each component, the opposite of what we want! 
+</p>
+
+<p>My second thought was "why does an index over 1.0 create bursts of noise?".
+If you look at the signals in the algorithm, the
+actual problem happens as the carrier phase goes through an odd multiple of pi (where sine is going negative as the phase increases). If the
+index (B) is high enough, B * sin(y) will be greater in magnitude than the carrier phase increment.
+So just after we cross pi, sin(y) is negative, and B * sin(y) is bigger (in magnitude) than the phase-increment,
+so the phase which gets added to B * sin(y) + phase-increment is slightly less than it was on the previous sample, crossing back into the
+positive part of the curve: our next y value is positive!  But now B * sin(y) adds in to the phase,
+we cross pi again, and y is negative!  We get a pitch at srate/2.  Because the index is larger than the
+phase increment, this signal grows inexorably until finally the carrier phase inches far enough away from pi to
+bring the bouncing to a stop.  How far it grows depends on the phase increment and the index.
+The low-pass filter
+mentioned earlier has almost no effect on this problem; the noise is not "chaos" or an error in the sine computation.
+The take-home-message is: "keep the index below 1.0!".
 </p>
 
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>FM and noise: sin(sin(rand))</h5></center></td></tr></table>
@@ -1843,7 +1880,7 @@ A more controllable approach is to use a random number generator as our modulato
 In this case, the power spectral density of the output has the same form 
 as the value distribution function (amplitude distribution as opposed to frequency) of the modulating noise, centered around the carrier. 
 The bandwidth of the result is about 4 times the peak deviation (the 
-random number frequency times its index):
+random number frequency times its index -- is this just Mr Carson again?):
 </p>
 
 
@@ -2266,6 +2303,18 @@ case in Klapper p103 (except there x=1/4)
           it would be nice to have a bess-like applet behind the various graphs
 
 	  more on the JJ->1 stuff and perhaps the JJ->J match
+
+	  other forms of feedback FM (including the 2nd Tomisawa formula)
+	    y = x + m (y = B sin y)
+	    y = B2 sin (B1 sin y)
+	    others:
+	      y = B1 sin y + B2 sin my
+	      y = B1 sin^2 y (etc)
+	      y = B1 sin my
+
+  	  TODO: cascade-fm-component (rename multifm->parallel-fm-, and imaginary-fm-
+
+	  PERHAPS: include sin cos(x + b sin y) 62 in table? -- try mult by sin in parallel case
 -->
 
 
