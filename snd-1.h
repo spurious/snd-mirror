@@ -1469,6 +1469,7 @@ char *copy_string_1(const char *str, const char *func, const char *file, int lin
 char *copy_string(const char *str);
 #endif
 
+int snd_mkdir(const char *filename);
 int snd_strlen(const char *str);
 bool snd_strcmp(const char *str1, const char *str2);
 char *snd_strcat(char *errmsg, const char *str, int *err_size);

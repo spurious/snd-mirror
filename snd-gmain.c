@@ -426,6 +426,7 @@ static idle_func_t startup_funcs(gpointer context)
 			  GDK_PROP_MODE_REPLACE, 
 			  (guchar *)(SND_DATE), 
 			  strlen(SND_DATE) + 1);
+
 #if HAVE_EXTENSION_LANGUAGE
       gtk_widget_add_events(MAIN_SHELL(ss), GDK_PROPERTY_CHANGE_MASK);
       SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "property_notify_event", who_called, NULL);
@@ -435,15 +436,18 @@ static idle_func_t startup_funcs(gpointer context)
       /* when iconified, we need to hide any dialogs as well */
       SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "window_state_event", window_iconify, NULL);
 #endif
+
       ss->sgx->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
       ss->sgx->wait_cursor = gdk_cursor_new(GDK_WATCH);
       ss->sgx->arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);
       break;
+
     case 1: 
 #if HAVE_EXTENSION_LANGUAGE
       snd_load_init_file(noglob, noinit);
 #endif
-#if HAVE_SIGNAL && HAVE_EXTENSION_LANGUAGE
+
+#if HAVE_SIGNAL && HAVE_EXTENSION_LANGUAGE && !__MINGW32__
       if (!nostdin)
 	{
 	  GIOChannel *channel;
@@ -462,6 +466,7 @@ static idle_func_t startup_funcs(gpointer context)
 	}
 #endif
       break;
+
     case 2: 
       if (auto_open_files > 0)
 	{
@@ -469,6 +474,7 @@ static idle_func_t startup_funcs(gpointer context)
 	  if (auto_open_ctr < auto_open_files) return(BACKGROUND_CONTINUE); /* i.e. come back to this branch */
 	}
       break;
+
     case 3:
 #ifndef SND_AS_WIDGET
       if ((ss->init_window_width > 0) && (ss->init_window_height > 0))
@@ -481,6 +487,7 @@ static idle_func_t startup_funcs(gpointer context)
 	g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, NULL, NULL);
 #endif
       break;
+
     case 4: 
 #if MUS_TRAP_SEGFAULT
       if (trap_segfault(ss)) signal(SIGSEGV, segv);

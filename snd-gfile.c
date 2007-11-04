@@ -1544,7 +1544,7 @@ static void file_open_dialog_mkdir(GtkWidget *w, gpointer context)
   fs = fd->fs;
 
   filename = fsb_file_text(fs);
-  if (mkdir(filename, 0777) < 0)
+  if (snd_mkdir(filename) < 0)
     {
       /* could not make the directory */
       char *str;
@@ -2796,7 +2796,7 @@ static void save_as_mkdir_callback(GtkWidget *w, gpointer context)
   fsb *fs;
   fs = sd->fs;
   filename = fsb_file_text(fs);
-  if (mkdir(filename, 0777) < 0)
+  if (snd_mkdir(filename) < 0)
     {
       /* could not make the directory */
       str = mus_format(_("can't make %s: %s"), filename, strerror(errno));

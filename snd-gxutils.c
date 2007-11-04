@@ -192,5 +192,9 @@ bool send_mozilla(const char *html_viewer, const char *url) {return(false);}
 void g_init_gxutils(void) {}
 #endif
 
+#else
+/* not X */
+bool send_mozilla(const char *html_viewer, const char *url) {return(false);}
+void g_init_gxutils(void) {}
 #endif
 

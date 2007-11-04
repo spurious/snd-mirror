@@ -210,6 +210,14 @@ AC_ARG_WITH(snd-as-pd-external,
 
 	fi])
 
+# if mingw add -mwindows to the load flags
+case "$host" in
+  *-*-mingw*)
+    LDFLAGS="$LDFLAGS -mwindows"
+    ;;
+esac
+
+
 
 #--------------------------------------------------------------------------------
 # standard libraries, header files, functions, OSS special cases

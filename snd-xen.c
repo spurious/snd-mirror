@@ -2465,6 +2465,26 @@ XEN_NARGIFY_1(g_ftell_w, g_ftell)
 #endif
 
 
+static char* legalize_path(const char *in_str)
+{ 
+  int inlen;
+  char *out_str;
+  int inpos, outpos = 0; 
+
+  inlen = snd_strlen(in_str); 
+  out_str = (char *)CALLOC(inlen * 2, sizeof(char)); 
+
+  for (inpos = 0; inpos < inlen; inpos++)
+    { 
+      if (in_str[inpos] == '\\')
+	out_str[outpos++] = '\\';
+      out_str[outpos++] = in_str[inpos]; 
+    } 
+
+  return(out_str); 
+} 
+
+
 void g_xen_initialize(void)
 {
   add_source_file_extension(XEN_FILE_EXTENSION);
@@ -2660,12 +2680,14 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_ADD_TO_LOAD_PATH(SCRIPTS_DIR);
 #endif
 
-  {
-    char *pwd;
-    pwd = mus_getcwd();
-    XEN_ADD_TO_LOAD_PATH(pwd);
-    FREE(pwd);
-  }
+  { 
+    char *pwd, *legal_pwd; 
+    pwd = mus_getcwd(); 
+    legal_pwd = legalize_path(pwd);
+    XEN_ADD_TO_LOAD_PATH(legal_pwd); 
+    FREE(pwd); 
+    FREE(legal_pwd); 
+  } 
 
 #if HAVE_GUILE || HAVE_GAUCHE
   #if(!defined(M_PI))

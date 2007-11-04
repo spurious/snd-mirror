@@ -688,17 +688,21 @@ void snd_doit(int argc, char **argv)
 		check_features_list(argv[i + 1]);
     }
   snd_load_init_file(noglob, noinit);
-#if HAVE_SIGNAL
+
+#if HAVE_SIGNAL && !__MINGW32__ 
   signal(SIGTTIN, SIG_IGN);
   signal(SIGTTOU, SIG_IGN);
 #endif
+
   auto_open_files = argc - 1;
   if (argc > 1) auto_open_file_names = (char **)(argv + 1);
   while (auto_open_ctr < auto_open_files)
     auto_open_ctr = handle_next_startup_arg(auto_open_ctr, auto_open_file_names, false, auto_open_files);
+
 #if MUS_TRAP_SEGFAULT
   if (trap_segfault(ss)) signal(SIGSEGV, segv);
 #endif
+
   if ((ss->sounds) && (ss->sounds[0]) && ((ss->sounds[0])->inuse == SOUND_NORMAL))
     select_channel(ss->sounds[0], 0);
 

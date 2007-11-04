@@ -1,5 +1,6 @@
 Snd change log
 
+ 4-Nov:      mingw changes thanks to Kjetil.
  2-Nov:      animals.scm.
  11-Oct:     changed default srate to 44100.
  29-Sep:     Snd 9.4.

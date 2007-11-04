@@ -425,11 +425,12 @@ static idle_func_t startup_funcs(XtPointer context)
       ss->sgx->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
       ss->sgx->wait_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_watch);
       break;
+
     case 1:
 #if HAVE_EXTENSION_LANGUAGE
       snd_load_init_file(noglob, noinit);
 #endif
-#if HAVE_SIGNAL && HAVE_EXTENSION_LANGUAGE
+#if HAVE_SIGNAL && HAVE_EXTENSION_LANGUAGE && !__MINGW32__
       if (!nostdin)
 	{
 	  signal(SIGTTIN, SIG_IGN);
@@ -446,6 +447,7 @@ static idle_func_t startup_funcs(XtPointer context)
 	}
 #endif
       break;
+
     case 2: 
       if (auto_open_files > 0)
 	{
@@ -454,6 +456,7 @@ static idle_func_t startup_funcs(XtPointer context)
 	    return(BACKGROUND_CONTINUE); /* i.e. come back to this branch */
 	}
       break;
+
     case 3:
       if (ss->init_window_width > 0) set_widget_width(MAIN_SHELL(ss), ss->init_window_width);
       if (ss->init_window_height > 0) set_widget_height(MAIN_SHELL(ss), ss->init_window_height);

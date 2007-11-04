@@ -1515,7 +1515,7 @@ static void file_mkdir_callback(Widget w, XtPointer context, XtPointer info)
   file_dialog_info *fd = (file_dialog_info *)context;
   char *filename = NULL;
   filename = XmTextGetString(FSB_BOX(fd->dialog, XmDIALOG_TEXT));
-  if (mkdir(filename, 0777) < 0)
+  if (snd_mkdir(filename) < 0)
     {
       /* could not make the directory */
       char *str;
@@ -3110,7 +3110,7 @@ static void save_as_mkdir_callback(Widget w, XtPointer context, XtPointer info)
   save_as_dialog_info *sd = (save_as_dialog_info *)context;
   char *filename = NULL;
   filename = XmTextGetString(FSB_BOX(sd->dialog, XmDIALOG_TEXT));
-  if (mkdir(filename, 0777) < 0)
+  if (snd_mkdir(filename) < 0)
     {
       /* could not make the directory */
       char *str;

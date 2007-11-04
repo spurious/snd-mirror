@@ -74,6 +74,9 @@ off_t disk_kspace(const char *filename)
 
 bool link_p(const char *filename)
 {
+#if __MINGW32__ 
+  return(false);
+#else 
   struct stat statbuf;
 #if HAVE_LSTAT
   return((lstat(filename, &statbuf) >= 0) &&
@@ -81,6 +84,7 @@ bool link_p(const char *filename)
 #else
   return((stat(filename, &statbuf) == 0) && 
 	 (S_ISLNK(statbuf.st_mode)));
+#endif
 #endif
 }
 
