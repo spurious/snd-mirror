@@ -2604,10 +2604,10 @@ is assumed to be outside -1.0 to 1.0."
 
 ;;; -------- parallel FM spectrum calculator
 
-;(multifm-component 200 2000.0 (list 2000.0 200.0) (list 0.5 1.0) '() '() #t)
+;(fm-parallel-component 200 2000.0 (list 2000.0 200.0) (list 0.5 1.0) '() '() #t)
 
-(define (multifm-component freq-we-want wc wms inds ns bs using-sine)
-  "(multifm-component freq carrier modfreqs indices '() '() with-sines) returns the amplitude of \"freq\" in \
+(define (fm-parallel-component freq-we-want wc wms inds ns bs using-sine)
+  "(fm-parallel-component freq carrier modfreqs indices '() '() with-sines) returns the amplitude of \"freq\" in \
 the multi-modulator FM case described by the list of modulator frequencies and indices"
   (if (not (null? wms))
       (let* ((sum 0.0)
@@ -2616,7 +2616,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 	     (wm (car wms)))
 	(do ((k (- mx) (1+ k)))
 	    ((>= k mx) sum)
-	  (set! sum (+ sum (multifm-component freq-we-want (+ wc (* k wm)) (cdr wms) (cdr inds) 
+	  (set! sum (+ sum (fm-parallel-component freq-we-want (+ wc (* k wm)) (cdr wms) (cdr inds) 
 					      (append ns (list k)) (append bs (list index)) 
 					      using-sine)))))
       (if (< (abs (- freq-we-want (abs wc))) .1)
@@ -2630,9 +2630,10 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 	    bmult)
 	  0.0)))
 
+
 ;;; this returns the component in FM with complex index (using-sine ignored for now)
 
-(define (fm-a+bi freq-we-want wc wm a b interp using-sine)
+(define (fm-complex-component freq-we-want wc wm a b interp using-sine)
   (let* ((sum 0.0)
 	 (mxa (inexact->exact (ceiling (* 7 a))))
 	 (mxb (inexact->exact (ceiling (* 7 b)))))
@@ -2654,6 +2655,6 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 	  (+ (* (- 1.0 interp) (real-part sum))
 	     (* interp (imag-part sum))))))
 
-;(fm-a+bi 1200 1000 100 1.0 3.0 0.0 #f)
+;(fm-complex-component 1200 1000 100 1.0 3.0 0.0 #f)
 
 

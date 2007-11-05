@@ -32609,10 +32609,10 @@ EDITS: 2
 		  (snd-display ";src-fit-envelope 0.5: ~A" (src-duration (src-fit-envelope '(0 1 1 2) 0.5))))
 
 
-	      (if (fneq (multifm-component 100 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) '() '() #t) 0.69287)
-		  (snd-display ";multifm-component 100: ~A" (multifm-component 100 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) '() '() #t)))
-	      (if (fneq (multifm-component 500 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) '() '() #t) 0.17047)
-		  (snd-display ";multifm-component 500: ~A" (multifm-component 500 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) '() '() #t)))
+	      (if (fneq (fm-parallel-component 100 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) '() '() #t) 0.69287)
+		  (snd-display ";fm-parallel-component 100: ~A" (fm-parallel-component 100 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) '() '() #t)))
+	      (if (fneq (fm-parallel-component 500 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) '() '() #t) 0.17047)
+		  (snd-display ";fm-parallel-component 500: ~A" (fm-parallel-component 500 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) '() '() #t)))
 
 
 	      (map-channel (lambda (y) (* .5 (oscil osc))))

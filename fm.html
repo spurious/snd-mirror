@@ -5,6 +5,9 @@
 <body bgcolor=white>
 
 
+<!-- currently unused fmeq52.png and fmeq44.png -->
+
+
 <center><h1>An Introduction To FM</h1></center>
 
 <center>Bill Schottstaedt</center>
@@ -850,7 +853,6 @@ that:
 
 <img src="fmeq19.png" alt="sin split" hspace=20 vspace=8>
 
-
 <p>and using our previous formulas for the expansion of the cos(sin) and sin(sin) terms, with the 
 identity:
 </p>
@@ -864,24 +866,12 @@ identity:
 are just as they were before, but the initial phases of the side bands have changed. Our result is now 
 </p>
 
-<!-- LATEX
-\begin{eqnarray*}
-\lefteqn{ \sin(\omega_{c}t + B\sin\omega_{m}t) } \\
-&& {} =J_{0}(B)\sin \omega_{c}t \\
-&& {} +J_{1}(B)(\sin(\omega_{c} + \omega_{m})t - \sin(\omega_{c} - \omega_{m})t) \\
-&& {} +J_{2}(B)(\sin(\omega_{c} + 2\omega_{m})t + \sin(\omega_{c} - 2\omega_{m})t) \\
-&& {} +J_{3}(B)(\sin(\omega_{c} + 3\omega_{m})t - \sin(\omega_{c} - 3\omega_{m})t) + \cdots
-\end{eqnarray*}
--->
+<!-- LATEX fmeq21: \sin (\omega_{c}t+B\sin \omega_{m}t) = \! \! \sum_{n=-\infty}^{\infty} \! \! J_{n}(B)\sin(\omega_{c} + n\omega_{m})t -->
 
 <img src="fmeq21.png" alt="sin sin case" hspace=20>
 
-
-<!-- LATEX fmeq44: \sin(\omega_{c}t - \omega_{m}t) = -\sin(\omega_{m}t - \omega_{c}t) -->
-
-<p>This is Chowning's version of the expansion.  Here we are also using
-<img src="fmeq52.png" alt="sin(-x)=-sin(x)" align=absmiddle>, that is
-<img src="fmeq44.png" alt="sin-sin" align=absmiddle>.  In general:
+<p>This is Chowning's version of the expansion. 
+In general:
 </p>
 
 <!-- LATEX \cos(\omega_{c}t+B\sin(\omega_{m}t + \theta_{m}) + \phi) = \sum_{k=-\infty}^{\infty}J_{k}(B)\cos((\omega_{c}+k\omega_{m})t + k\theta_{m} + \phi) -->
@@ -1304,7 +1294,7 @@ expressed:
 
 <p>You can chew up any amount of free time calculating the resulting side band amplitudes &mdash; see the immortal classic:
 Schottstaedt, "The Simulation of Natural Instrument Tones Using Frequency Modulation with a 
-Complex Modulating Wave".  (There's a function to do it for you in dsp.scm: multifm-component). 
+Complex Modulating Wave".  (There's a function to do it for you in dsp.scm: fm-parallel-component). 
 Usually, these extra modulating components flatten and spread out the 
 spectrum somewhat.  
 (An intriguing counterexample is sin(triangle-wave-as-fm) which has a narrower bandwidth than sin(sin-as-fm), despite
@@ -1586,7 +1576,7 @@ carrier.
 So our fundamental frequency no longer has any obvious relation to
 <img src="fmeq43.png" alt="wc" align=absmiddle>!
 That is, we 
-can expand our cascade formula into:
+can expand our cascade formula (in the sin(x + cos(sin)) case) into:
 </p>
 
 <!-- LATEX old version: \sin(\omega_{c}t + \sum J_{n}(B)\cos(\omega_{c}t + n\omega_{m_{n}}t)) -->
@@ -1716,42 +1706,16 @@ it seems to be approaching a square wave as k heads into the stratosphere:
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>feedback FM: sin(x=sin(x))</h5></center></td></tr></table>
 
 <p>A similar trick comes up in feedback FM used in some synthesizers. Here the output of the modulator
-is low-pass filtered, then fed back into its fm-input location:
-</p>
+is fed back into its input:
 
-<!-- CLM CASE
-<pre>
-    (setf fm (one-zero low (* B (oscil fmosc fm))))
-    (outa i (* amp (oscil carrier fm)))
-</pre>
-<p>or</p>
-<pre>
-    sin(y &lt;= w<sub>c</sub>t + B sin y) 
-</pre>
--->
+<code>sin(y &lt;= w + B sin y)</code>.
 
-<!-- SND CASE -->
-<pre>
-    (set! fm (one-zero low (* B (oscil fmosc fm))))
-    (outa i (* amp (oscil carrier fm)) *output*)
-</pre>
-<p>or</p>
-<pre>
-    sin(y &lt;= w + B sin y) 
-</pre>
-<!-- -->
-
-<p>(ignoring the low pass filter for the moment).  This is expanded by Tomisawa as:
+This is expanded by Tomisawa as:
 </p>
 
 <!-- LATEX \sum_{n=1}^{\infty}\frac{2}{nB}J_{n}(nB)\sin n\omega_{c}t -->
 
 <img src="fmeq37.png" alt="feedback fm" hspace=20>
-
-
-<!-- SOMEDAY: why is there DC in feedback? -->
-<!-- PERHAPS: benson expresses this as f(t_{n}) = \sin(\omega_{c}t_{n} + B f(t_{n-1}))
--->
 
 <p>As Tomisawa points out this is very close to the formulas we have been looking at already, except that 
 the argument to the Bessel function depends on the order, we have only multiples of the carrier frequency 
@@ -1785,23 +1749,21 @@ J_{2000}(2000) = .035
 <p>and so on. Since the other part of the equation goes down as 1/n, we get essentially a sawtooth wave 
 out of this equation (its harmonics go down as 1/n).  Tomisawa suggests that B should be between 0 
 and 1.5. Since we are dividing by B in the equation, we might worry that as B heads toward 0, all 
-hell breaks loose, but luckily:
-</p>
+hell breaks loose, but luckily 
 
-<!-- LATEX \lim_{B \to 0}\frac{2}{B}J_{1}(B) = 1 -->
+<!-- LATEX fmeq38: \lim_{B \to 0}\frac{2}{B}J_{1}(B) = 1 -->
 
-<img src="fmeq38.png" alt="lim1 case" hspace=20>
-
-
-<p>and for all the other components
-</p>
-
-<!-- LATEX \lim_{B \to 0}\frac{2}{nB}J_{n}(nB) = 0 -->
-
-<img src="fmeq39.png" alt="all cases" hspace=20>
+<img src="fmeq38.png" alt="lim1 case" align=absmiddle>
 
 
-<p>so, just as in normal FM, if the index is 0, we get a pure sine wave.
+and for all the other components
+
+<!-- LATEX fmeq39: \lim_{B \to 0}\frac{2}{nB}J_{n}(nB) = 0 -->
+
+<img src="fmeq39.png" alt="all cases" align=absmiddle>
+
+
+so, just as in normal FM, if the index is 0, we get a pure sine wave.
 </p>
 
 <table border=1 hspace=20 vspace=10 cellpadding=3>
@@ -1845,20 +1807,19 @@ hell breaks loose, but luckily:
 </td></tr></table>
 
 
-<p>Why does the FFT show a 0 Hz component?.  If we goof around with it,
-we find that the DC component is independent of the length of the FFT, but
-if we increase the sampling rate by a factor of 10,
-the DC component is reduced by almost the same amount, while the other components are essentially unaffected.
-If we increase the carrier frequency by a factor of 10, the DC component is also increased by about the same factor.
-So it seems to be an artifact of aliasing.  
-If you look at the dB version of the FFT, you can see energy clear out
-to the end, down about 110 dB if the carrier is 100 Hz.  Reducing the index helps less than you'd expect because
-it inverse multiplies each component, the opposite of what we want! 
+<p>Why does the FFT show a 0 Hz component?
+Increasing the sampling rate, or decreasing the carrier frequency reduces this component without
+affecting the others, but low-pass filtering the output does not affect it (so it's unlikely
+to be an artifact of aliasing which is a real problem in feedback FM).  Change the sine to
+cosine in <code>(* amp (sin y))</code> and suddenly there's a ton of DC.  Fiddle with the
+initial phase in that line, and there's always some choice that reduces it to 0.0.
+Groan &mdash; it appears to be another "centering" problem, but I haven't worked out 
+what the magic formula is yet (a reasonable stab at it is: <code>phase-incr^(1-(B/3))</code>).
 </p>
 
 <p>Why does an index over 1.0 create bursts of noise?
-If you look at the signals in the algorithm, the
-actual problem happens as the modulator phase goes through an odd multiple of pi (where sine is going negative as the phase increases). If the
+The burst
+happens as the modulator phase goes through an odd multiple of pi (where sine is going negative as the phase increases). If the
 index (B) is high enough, B * sin(y) will be greater in magnitude than the phase increment.
 So just after we cross pi, sin(y) is negative, and B * sin(y) is bigger (in magnitude) than the phase-increment,
 so the phase, after the addition of B * sin(y) + phase-increment, is less than it was on the previous sample, crossing back into the
@@ -1866,9 +1827,8 @@ positive part of the sine curve: our next y value is positive!  But now B * sin(
 we cross pi again, and y is negative!  We get a pitch at srate/2.  Because the index is larger than the
 phase increment, this signal grows inexorably until finally the phase inches far enough away from pi to
 bring the bouncing to a stop.  How far it grows depends on the phase increment and the index.
-The low-pass filter
-mentioned earlier has almost no effect on this problem; the noise is not "chaos" or an error in the computation.
-The take-home-message is: "keep the index below 1.0!".
+The noise is not chaos (in the sense of period doubling), or an error in the computation.
+The take-home message is: "keep the index below 1.0!".
 </p>
 
 <!-- SOMEDAY: make a nice diagram of the noise, or show the patch steps -->
@@ -2314,7 +2274,7 @@ case in Klapper p103 (except there x=1/4)
 	      y = B1 sin^2 y (etc)
 	      y = B1 sin my
 
-  	  TODO: cascade-fm-component (rename multifm->parallel-fm-, and imaginary-fm-
+  	  TODO: fm-cascade-component
 
 	  PERHAPS: include sin cos(x + b sin y) 62 in table? -- try mult by sin in parallel case
 -->
