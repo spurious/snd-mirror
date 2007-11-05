@@ -2658,3 +2658,24 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 ;(fm-complex-component 1200 1000 100 1.0 3.0 0.0 #f)
 
 
+(define (fm-cascade-component freq-we-want wc wm1 a wm2 b)
+  (let* ((sum 0.0)
+	 (mxa (inexact->exact (ceiling (* 7 a))))
+	 (mxb (inexact->exact (ceiling (* 7 b)))))
+    (do ((k (- mxa) (1+ k)))
+	((>= k mxa))
+      (do ((j (- mxb) (1+ j)))
+	  ((>= j mxb))
+	(if (< (abs (- freq-we-want (+ wc (* k wm1) (* j wm2)))) 0.1)
+	    (let ((curJJ (* (bes-jn k a)
+			    (bes-jn j (* k b)))))
+	      (set! sum (+ sum curJJ))
+	      (if (> (magnitude curJJ) 0.001)
+		  (snd-display ";add ~A from J~D(~A) = ~A and I~D(~A) = ~A"
+			       curJJ 
+			       k a (bes-jn k a)
+			       j b (bes-jn j (* k b))))))))
+    sum))
+
+;(fm-cascade-component 2000 2000 500 1.5 50 1.0)
+

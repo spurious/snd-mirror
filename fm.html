@@ -1624,7 +1624,7 @@ to show how strong this effect is:
         (md (make-oscil (* freq modrat)))
         (ca (make-oscil (* freq casrat) caspha))
         (fm-ind0 (hz-&gt;radians (* modind modrat freq)))
-        (fm-ind1 (hz-&gt;radians (* casind (/ casrat modrat) freq))))
+        (fm-ind1 (hz-&gt;radians (* casind casrat freq))))
     (run
      (loop for i from beg to end do
        (outa i (* amp (oscil cr (* fm-ind0 (oscil md (* fm-ind1 (oscil ca)))))))))))
@@ -1643,7 +1643,7 @@ to show how strong this effect is:
 	 (md (make-oscil (* freq modrat)))
 	 (ca (make-oscil (* freq casrat) caspha))
 	 (fm-ind0 (hz-&gt;radians (* modind modrat freq)))
-	 (fm-ind1 (hz-&gt;radians (* casind (/ casrat modrat) freq))))
+	 (fm-ind1 (hz-&gt;radians (* casind casrat freq))))
     (run
      (lambda ()
        (do ((i start (1+ i)))
@@ -1814,7 +1814,7 @@ to be an artifact of aliasing which is a real problem in feedback FM).  Change t
 cosine in <code>(* amp (sin y))</code> and suddenly there's a ton of DC.  Fiddle with the
 initial phase in that line, and there's always some choice that reduces it to 0.0.
 Groan &mdash; it appears to be another "centering" problem, but I haven't worked out 
-what the magic formula is yet (a reasonable stab at it is: <code>phase-incr^(1-(B/3))</code>).
+what the magic formula is yet (a reasonable stab at it is: <code>-(phase-incr^(1-(B/3))</code>)).
 </p>
 
 <p>Why does an index over 1.0 create bursts of noise?
@@ -2265,16 +2265,6 @@ case in Klapper p103 (except there x=1/4)
           it would be nice to have a bess-like applet behind the various graphs
 
 	  more on the JJ->1 stuff and perhaps the JJ->J match
-
-	  other forms of feedback FM (including the 2nd Tomisawa formula)
-	    y = x + m (y = B sin y)
-	    y = B2 sin (B1 sin y)
-	    others:
-	      y = B1 sin y + B2 sin my
-	      y = B1 sin^2 y (etc)
-	      y = B1 sin my
-
-  	  TODO: fm-cascade-component
 
 	  PERHAPS: include sin cos(x + b sin y) 62 in table? -- try mult by sin in parallel case
 -->
