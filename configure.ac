@@ -532,7 +532,7 @@ if test "$with_motif" = yes && test "$with_gtk" = yes ; then
   AC_MSG_WARN([You asked for both Motif and Gtk -- Motif will be used])
 fi
 
-if test "$no_x" = yes || test "$with_no_gui" = yes || test "$with_snd_as_pd_external"; then
+if test "$with_no_gui" = yes || test "$with_snd_as_pd_external"; then
 
   AC_DEFINE(USE_NO_GUI)
   XLIBS=""
@@ -544,63 +544,69 @@ if test "$no_x" = yes || test "$with_no_gui" = yes || test "$with_snd_as_pd_exte
 
 else
 
-  AC_DEFINE(HAVE_X)
-  XFLAGS="$X_CFLAGS"
-  X_POST_LIBS="-lX11 $X_EXTRA_LIBS"
+  # can we have gtk without X in mingw? -- depend on fixup around line 1030, I guess
 
-  case "$host" in
-    *-apple-*)
-      X_POST_LIBS="$X_POST_LIBS -lSM -lICE"
-      ;;
-  esac
+  if test "$no_x" != yes; then
 
-# this needs to precede the Xm check
-  TEST_PRE_LIBS="$X_LIBS $X_PRE_LIBS"
-  TEST_POST_LIBS="$X_POST_LIBS"
-  TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
+    AC_DEFINE(HAVE_X)
+    XFLAGS="$X_CFLAGS"
+    X_POST_LIBS="-lX11 $X_EXTRA_LIBS"
 
-  AC_CHECK_LIB(Xext, XShapeQueryExtension, 
-    [
-     X_POST_LIBS="$X_POST_LIBS -lXext"
-     TEST_POST_LIBS="$TEST_POST_LIBS -lXext"
-     TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
-     AC_DEFINE(HAVE_XSHAPEQUERYEXTENSION)
-    ], , $TEST_LIBS)
+    case "$host" in
+      *-apple-*)
+        X_POST_LIBS="$X_POST_LIBS -lSM -lICE"
+        ;;
+    esac
 
-  if test "$with_static_motif" = yes ; then
-    if test x$motif_prefix != x ; then
-    AC_CHECK_FILE($motif_prefix/lib/libXm.a,[
-      X_PRE_LIBS="$motif_prefix/lib/libXm.a $X_LIBS $X_PRE_LIBS -lXt"
-      XFLAGS="-I$motif_prefix/include $XFLAGS"
-	],	
-	[
-      AC_MSG_WARN(can't find $motif_prefix/lib/libXm.a!)
-      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
-	])
+    # this needs to precede the Xm check
+    TEST_PRE_LIBS="$X_LIBS $X_PRE_LIBS"
+    TEST_POST_LIBS="$X_POST_LIBS"
+    TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
+
+    AC_CHECK_LIB(Xext, XShapeQueryExtension, 
+      [
+       X_POST_LIBS="$X_POST_LIBS -lXext"
+       TEST_POST_LIBS="$TEST_POST_LIBS -lXext"
+       TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
+       AC_DEFINE(HAVE_XSHAPEQUERYEXTENSION)
+      ], , $TEST_LIBS)
+
+    if test "$with_static_motif" = yes ; then
+      if test x$motif_prefix != x ; then
+      AC_CHECK_FILE($motif_prefix/lib/libXm.a,[
+        X_PRE_LIBS="$motif_prefix/lib/libXm.a $X_LIBS $X_PRE_LIBS -lXt"
+        XFLAGS="-I$motif_prefix/include $XFLAGS"
+      	  ],	
+	  [
+        AC_MSG_WARN(can't find $motif_prefix/lib/libXm.a!)
+        X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
+	  ])
+      else
+        AC_CHECK_FILE($x_libraries/libXm.a,[
+           X_PRE_LIBS="$x_libraries/libXm.a $X_LIBS $X_PRE_LIBS -lXt"
+	  ],
+ 	  [
+        AC_MSG_WARN(can't find $x_libraries/libXm.a!)
+        X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
+	  ])
+      fi
     else
-    AC_CHECK_FILE($x_libraries/libXm.a,[
-      X_PRE_LIBS="$x_libraries/libXm.a $X_LIBS $X_PRE_LIBS -lXt"
-	],
-	[
-      AC_MSG_WARN(can't find $x_libraries/libXm.a!)
-      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
-	])
+      if test x$motif_prefix != x ; then
+        X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -L$motif_prefix/lib -lXm -lXt"
+        XFLAGS="-I$motif_prefix/include $XFLAGS"
+      else
+        X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
+      fi
     fi
-  else
-    if test x$motif_prefix != x ; then
-      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -L$motif_prefix/lib -lXm -lXt"
-      XFLAGS="-I$motif_prefix/include $XFLAGS"
-    else
-      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
-    fi
+
+    TEST_PRE_LIBS="$X_LIBS $X_PRE_LIBS"
+    TEST_POST_LIBS="$X_POST_LIBS"
+    TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
+
+    GX_FILES="X_O_FILES"
+    GX_HEADERS="SND_X_HEADERS"
+
   fi
-
-  TEST_PRE_LIBS="$X_LIBS $X_PRE_LIBS"
-  TEST_POST_LIBS="$X_POST_LIBS"
-  TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
-
-  GX_FILES="X_O_FILES"
-  GX_HEADERS="SND_X_HEADERS"
 
   if test "$with_gtk" != yes && test "$with_motif" != no ; then
 
@@ -1783,6 +1789,7 @@ case "$host" in
     *-*-mingw*)
 	AC_DEFINE(MUS_WINDOZE)
 	audio_system=Windoze
+	LIBS="$LIBS -lwinmm -lwsock32"
 	;;
     *-apple-*)
 	if test "$with_jack" != yes ; then 

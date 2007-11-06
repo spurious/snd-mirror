@@ -12,6 +12,9 @@
  * TODO: it's possible to have unselected graph in selected color?
  * TODO: re-exposure is over-optimized -- have to click zoom to get graphs
  * TODO: if maxamp>1 automatically reflect that in y axis, so user doesn't need the initial-graph-hook kludge, or provide maxamp-hook
+ * TODO: either make fft peak data digits depend in min-dB, or make it settable
+ * TODO: save gzy/gsy across update and overall size! (and return listener to correct place)
+ * TODO: (sample n snd #t) -> return all chans
  */
 
 chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
@@ -1843,6 +1846,8 @@ static char ampstr[LABEL_BUFFER_SIZE];
 #define AMP_ROOM_CUTOFF 3.0
 
 /* TODO: this leaves 15 pixels height no matter what font is in use */
+
+/* TODO: verbose cursor in db graph click component gets wrong amp */
 
 static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler, off_t samps, Float samps_per_pixel, bool fft_data, Float fft_scale)
 {
