@@ -1244,7 +1244,7 @@ a moving formant).  Here we sweep "r" from -1.0 to -20.0, with an index of 3, m/
 
 
 
-<!-- PERHAPS: another tweak from Benson: (amplitude modulation of FM)
+<!-- another tweak from Benson: (amplitude modulation of FM)
 2 \sin \theta \cos(\phi + B \sin \theta) = \sum_{n=-\infty}^{\infty} (J_{n-1}(B) - J_{n+1}(B)) \sin(\phi + n\theta)
 -->
 
@@ -1290,16 +1290,15 @@ expressed:
 -->
 <img src="fmeq32.png" alt="2 sums" hspace=20>
 
-<!-- TODO: reword the triangle-as-fm paragraph -- it's a mess -->
-
 <p>You can chew up any amount of free time calculating the resulting side band amplitudes &mdash; see the immortal classic:
 Schottstaedt, "The Simulation of Natural Instrument Tones Using Frequency Modulation with a 
 Complex Modulating Wave".  (There's a function to do it for you in dsp.scm: fm-parallel-component). 
 Usually, these extra modulating components flatten and spread out the 
 spectrum somewhat.  
-(An intriguing counterexample is sin(triangle-wave-as-fm) which has a narrower bandwidth than sin(sin-as-fm), despite
-having (theoretically) an infinite number of components in the modulator.  The worst case is sin(pulse-train-as-fm) which
-has almost no sidebands!).
+(An intriguing counterexample is a triangle wave as the FM modulator;
+the result has a narrower bandwidth than simple FM despite
+the (theoretically) infinite bandwidth of the triangle wave.  The worst case must be a pulse-train as FM modulator;
+it has almost no sidebands!).
 In general:
 </p>
 
@@ -1564,8 +1563,6 @@ cascade.png:
     & \sin(\omega_{c}t + B_{1}\sin(\omega_{m1}t + B_{2}\sin(\omega_{m2}t))) = \sum_{n=-\infty}^{\infty} \sum_{k=-\infty}^{\infty} J_{n}(B_{1}) J_{k}(n B_{2}) \sin(\omega_{c} + n \omega_{m1} + k \omega_{m2})t \\
 -->
 
-<!-- PERHAPS: add a worked example, or tack a couple cases onto the preceding case -->
-
 <img src="fmeq57.png" alt="cascade FM" hspace=20>
 
 <p>
@@ -1814,19 +1811,24 @@ to be an artifact of aliasing which is a real problem in feedback FM).  Change t
 cosine in <code>(* amp (sin y))</code> and suddenly there's a ton of DC.  Fiddle with the
 initial phase in that line, and there's always some choice that reduces it to 0.0.
 Groan &mdash; it appears to be another "centering" problem, but I haven't worked out 
-what the magic formula is yet (a reasonable stab at it is: <code>-(phase-incr^(1-(B/3))</code>)).
+what the magic formula is yet (a reasonable stab at it is: <code>phase-incr^(1-(B/3))</code>).
 </p>
 
 <p>Why does an index over 1.0 create bursts of noise?
-The burst
-happens as the modulator phase goes through an odd multiple of pi (where sine is going negative as the phase increases). If the
-index (B) is high enough, B * sin(y) will be greater in magnitude than the phase increment.
-So just after we cross pi, sin(y) is negative, and B * sin(y) is bigger (in magnitude) than the phase-increment,
-so the phase, after the addition of B * sin(y) + phase-increment, is less than it was on the previous sample, crossing back into the
-positive part of the sine curve: our next y value is positive!  But now B * sin(y) adds in to the phase,
-we cross pi again, and y is negative!  We get a pitch at srate/2.  Because the index is larger than the
-phase increment, this signal grows inexorably until finally the phase inches far enough away from pi to
-bring the bouncing to a stop.  How far it grows depends on the phase increment and the index.
+Each burst happens as the modulator phase goes through an odd multiple of pi (where sine is going negative as the phase increases). Since the
+index (B) is high enough, the change between successive samples in (B * sin(y)) is eventually greater in magnitude than the phase increment.
+When that happens on the downslope of the sine curve, B * sin(y) + phase-increment (our overall phase increment) is so much more negative
+on the current sample than the previous one that the phase actually backs up.  (This is confusing to analyze because at this point in
+the curve, the feedback is already holding the phase back, so we need to reach a point where the increase in the backup overwhelms the
+increment on that sample, thereby backing up the overall phase beyond its previous held back value &mdash; gad!).
+So the modulator phase backs into the
+less negative part of the sine curve: our next y value is less negative (it can even be positive)!  
+But now B * sin(y) is also less negative, so
+the phase increment carries us forward, and y is now even more negative.
+We've started to zig-zag down the sine curve.  Depending on the index, this bouncing
+can reach any amplitude, and start anywhere after the high point of the curve.  Eventually,
+the sine slope lessens (as it reaches its bottom), the overall phase catches up, and
+the bouncing stops for that cycle.
 The noise is not chaos (in the sense of period doubling), or an error in the computation.
 The take-home message is: "keep the index below 1.0!".
 </p>
@@ -2265,8 +2267,6 @@ case in Klapper p103 (except there x=1/4)
           it would be nice to have a bess-like applet behind the various graphs
 
 	  more on the JJ->1 stuff and perhaps the JJ->J match
-
-	  PERHAPS: include sin cos(x + b sin y) 62 in table? -- try mult by sin in parallel case
 -->
 
 

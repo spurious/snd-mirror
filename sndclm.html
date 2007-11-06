@@ -2103,12 +2103,10 @@ sceq40: 27.8.6 (p1005)
 <tr><td colspan=3 height=25></td></tr>
 -->
 
-<!-- TODO: get area map names and doc/test new J cases -->
-
 <tr><td><img src="sceq20.png" alt="more sums" usemap="#J1" border=0>
 <map name="J1">
-    <area shape=rect coords="0,0,300,30" href="sndclm.html#k2sin" alt="unimplemented">
-    <area shape=rect coords="0,31,300,60" href="sndclm.html#k2sin" alt="unimplemented">
+    <area shape=rect coords="0,0,300,30" href="sndclm.html#rxycos" alt="rxycos">
+    <area shape=rect coords="0,31,300,60" href="sndclm.html#rxysin" alt="rxysin">
     <area shape=rect coords="0,61,300,100" href="sndclm.html#k2sin" alt="k2sin">
     <area shape=rect coords="0,101,300,140" href="sndclm.html#eoddcos" alt="eoddcos">
     <area shape=rect coords="0,141,300,180" href="sndclm.html#koddcos" alt="koddcos">
@@ -2116,8 +2114,8 @@ sceq40: 27.8.6 (p1005)
 </td><td></td>
 <td><img src="sceq21.png" alt="more sums" usemap="#J2" border=0>
 <map name="J2">
-    <area shape=rect coords="0,0,300,30" href="sndclm.html#r2cos" alt="unimplemented">
-    <area shape=rect coords="0,31,300,60" href="sndclm.html#r2cos" alt="unimplemented">
+    <area shape=rect coords="0,0,300,30" href="sndclm.html#rxyk!cos" alt="rxyk!cos">
+    <area shape=rect coords="0,31,300,60" href="sndclm.html#rxyk!sin" alt="rxyk!sin">
     <area shape=rect coords="0,61,300,100" href="sndclm.html#r2cos" alt="r2cos">
     <area shape=rect coords="0,101,300,140" href="sndclm.html#r2sin" alt="r2sin">
     <area shape=rect coords="0,141,300,180">
@@ -5071,6 +5069,14 @@ under the name "discrete summation formula".
   <A class=def NAME="rssb">rssb</A> gen fm
   <A class=def NAME="rssbinterp">rssb-interp</A> gen fm interp
   <A class=def NAME="rssb?">rssb?</A> gen
+
+  <A class=def NAME="make-rxycos">make-rxycos</A> <a class=quiet href="#optional-key">:optional-key</a> (xfrequency 0.0) (yfrequency 1.0) (r 0.0)
+  <A class=def NAME="rxycos">rxycos</A> gen fm
+  <A class=def NAME="rxycos?">rxycos?</A> gen
+
+  <A class=def NAME="make-rxysin">make-rxysin</A> <a class=quiet href="#optional-key">:optional-key</a> (xfrequency 0.0) (yfrequency 1.0) (r 0.0)
+  <A class=def NAME="rxysin">rxysin</A> gen fm
+  <A class=def NAME="rxysin?">rxysin?</A> gen
 </pre>
 
 <p>These generators produce an infinite sum of sinusoids, each successive component scaled by "r" (so the nth component has amplitude r^n).
@@ -5143,6 +5149,14 @@ This generator's output is not normalized, and looks incorrect...
   <A class=def NAME="make-rk!ssb">make-rk!ssb</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (r 0.0)
   <A class=def NAME="rk!ssb">rk!ssb</A> gen fm
   <A class=def NAME="rk!ssb?">rk!ssb?</A> gen
+
+  <A class=def NAME="make-rxyk!cos">make-rxyk!cos</A> <a class=quiet href="#optional-key">:optional-key</a> (xfrequency 0.0) (yfrequency 1.0) (r 0.0)
+  <A class=def NAME="rxyk!cos">rxyk!cos</A> gen fm
+  <A class=def NAME="rxyk!cos?">rxyk!cos?</A> gen
+
+  <A class=def NAME="make-rxyk!ssb">make-rxyk!ssb</A> <a class=quiet href="#optional-key">:optional-key</a> (xfrequency 0.0) (yfrequency 1.0) (r 0.0)
+  <A class=def NAME="rxyk!ssb">rxyk!ssb</A> gen fm
+  <A class=def NAME="rxyk!ssb?">rxyk!ssb?</A> gen
 </pre>
 
 <p>This produces a sum of sinusoids scaled by (r^k)/k!.

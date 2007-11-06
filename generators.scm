@@ -1,4 +1,4 @@
- (provide 'snd-generators.scm)
+(provide 'snd-generators.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
 
@@ -1131,6 +1131,144 @@
 	   ((= i 10000))
 	 (outa i (rssb gen 0.0) *output*))))))
 |#
+
+
+;;; similar to rssb: (JO 1st)
+
+(def-clm-struct (rxysin
+		 :make-wrapper (lambda (g)
+				 (set! (rxysin-xincr g) (hz->radians (rxysin-xfrequency g))) ; can be 0 if just x=pi/2 for example
+				 (set! (rxysin-yincr g) (hz->radians (rxysin-yfrequency g)))
+				 g))
+  (xfrequency 0.0) (yfrequency 1.0) (r 0.0)
+  (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
+
+(define (rxysin gen fm)
+  (declare (gen rxysin) (fm float))
+  (let* ((x (rxysin-xangle gen))
+	 (y (rxysin-yangle gen))
+	 (r (rxysin-r gen)))
+
+    (set! (rxysin-xangle gen) (+ x (rxysin-xincr gen) (* fm (/ (rxysin-xincr gen) (rxysin-yincr gen)))))
+    (set! (rxysin-yangle gen) (+ y (rxysin-yincr gen) fm))
+
+    (/ (- (sin x)
+	  (* r (sin (- x y))))
+       (+ 1.0 
+	  (* -2.0 r (cos y))
+	  (* r r)))))
+
+#|
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+  (let ((gen (make-rxysin 1000 100 0.5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (rxysin gen 0.0) *output*))))))
+|#
+
+
+(def-clm-struct (rxycos
+		 :make-wrapper (lambda (g)
+				 (set! (rxycos-xincr g) (hz->radians (rxycos-xfrequency g))) ; can be 0 if just x=pi/2 for example
+				 (set! (rxycos-yincr g) (hz->radians (rxycos-yfrequency g)))
+				 g))
+  (xfrequency 0.0) (yfrequency 1.0) (r 0.0)
+  (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
+
+(define (rxycos gen fm)
+  (declare (gen rxycos) (fm float))
+  (let* ((x (rxycos-xangle gen))
+	 (y (rxycos-yangle gen))
+	 (r (rxycos-r gen)))
+
+    (set! (rxycos-xangle gen) (+ x (rxycos-xincr gen) (* fm (/ (rxycos-xincr gen) (rxycos-yincr gen)))))
+    (set! (rxycos-yangle gen) (+ y (rxycos-yincr gen) fm))
+
+    (/ (- (cos x)
+	  (* r (cos (- x y))))
+       (+ 1.0 
+	  (* -2.0 r (cos y))
+	  (* r r)))))
+
+; TODO:       (/ (- 1.0 r) (* 2.0 r))))) ; normalization rxycos
+
+#|
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+  (let ((gen (make-rxycos 1000 100 0.5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (rxycos gen 0.0) *output*))))))
+|#
+
+
+;;; --------------------------------------------------------------------------------
+;;; rxyk!cos
+
+(def-clm-struct (rxyk!sin
+		 :make-wrapper (lambda (g)
+				 (set! (rxyk!sin-xincr g) (hz->radians (rxyk!sin-xfrequency g))) ; can be 0 if just x=pi/2 for example
+				 (set! (rxyk!sin-yincr g) (hz->radians (rxyk!sin-yfrequency g)))
+				 g))
+  (xfrequency 0.0) (yfrequency 1.0) (r 0.0)
+  (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
+
+(define (rxyk!sin gen fm)
+  (declare (gen rxyk!sin) (fm float))
+  (let* ((x (rxyk!sin-xangle gen))
+	 (y (rxyk!sin-yangle gen))
+	 (r (rxyk!sin-r gen)))
+
+    (set! (rxyk!sin-xangle gen) (+ x (rxyk!sin-xincr gen) (* fm (/ (rxyk!sin-xincr gen) (rxyk!sin-yincr gen)))))
+    (set! (rxyk!sin-yangle gen) (+ y (rxyk!sin-yincr gen) fm))
+
+    (* (exp (* r (cos y)))
+       (cos (+ x (* r (sin y)))))))
+
+#|
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+  (let ((gen (make-rxyk!sin 1000 100 0.5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (rxyk!sin gen 0.0) *output*))))))
+|#
+
+
+(def-clm-struct (rxyk!cos
+		 :make-wrapper (lambda (g)
+				 (set! (rxyk!cos-xincr g) (hz->radians (rxyk!cos-xfrequency g))) ; can be 0 if just x=pi/2 for example
+				 (set! (rxyk!cos-yincr g) (hz->radians (rxyk!cos-yfrequency g)))
+				 g))
+  (xfrequency 0.0) (yfrequency 1.0) (r 0.0)
+  (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
+
+(define (rxyk!cos gen fm)
+  (declare (gen rxyk!cos) (fm float))
+  (let* ((x (rxyk!cos-xangle gen))
+	 (y (rxyk!cos-yangle gen))
+	 (r (rxyk!cos-r gen)))
+
+    (set! (rxyk!cos-xangle gen) (+ x (rxyk!cos-xincr gen) (* fm (/ (rxyk!cos-xincr gen) (rxyk!cos-yincr gen)))))
+    (set! (rxyk!cos-yangle gen) (+ y (rxyk!cos-yincr gen) fm))
+
+    (* (exp (* r (cos y)))
+       (sin (+ x (* r (sin y)))))))
+
+#|
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+  (let ((gen (make-rxyk!cos 1000 100 0.5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (rxyk!cos gen 0.0) *output*))))))
+|#
+
 
 
 ;;; --------------------------------------------------------------------------------

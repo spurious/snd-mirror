@@ -53201,6 +53201,38 @@ EDITS: 1
 			     ((= i 30000))
 			   (outa i (izcos gen 0.0) *output*))))))
 
+	(with-sound (:clipped #f)
+		    (let ((gen (make-rxysin 1000 100 0.5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (rxysin gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-rxycos 1000 100 0.5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (rxycos gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-rxyk!sin 1000 100 0.5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (rxyk!sin gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f)
+		    (let ((gen (make-rxyk!cos 1000 100 0.5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (rxyk!cos gen 0.0) *output*))))))
+	
 	(let ((g (make-osc329 440.0)) (f 10.0)) 
 	  (run (lambda () (set! f (osc329 g 0.0)))) 
 	  (if (fneq f 0.0) (snd-display ";run osc329: ~A" f)))
