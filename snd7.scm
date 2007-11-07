@@ -359,7 +359,7 @@
 	 (if (member after-save-as-hook-replace-sound (hook->list after-save-as-hook))
 	     (remove-hook! after-save-as-hook after-save-as-hook-replace-sound))))))
 
-(define send-netscape send-mozilla)
+(if (defined? 'send-mozilla) (define send-netscape send-mozilla))
 
 (if (not (defined? 'in-hz)) (define in-hz hz->radians))
 (if (not (defined? 'restart-env)) (define restart-env mus-reset))

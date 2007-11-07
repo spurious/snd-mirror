@@ -15,6 +15,8 @@
  * TODO: either make fft peak data digits depend in min-dB, or make it settable
  * TODO: save gzy/gsy across update and overall size! (and return listener to correct place)
  * TODO: (sample n snd #t) -> return all chans
+ * TODO: in multi-chan cases, click new chan can end up with just the clicked chan displayed,
+ *          selected bg color in rest, but no graph, and multiple cursors!
  */
 
 chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)

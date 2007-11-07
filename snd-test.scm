@@ -36,7 +36,7 @@
 
 (define tests 1)
 (define keep-going #f)
-(define all-args #f)
+(define all-args #t)
 (define test-at-random 0)
 ;(show-ptree 1)
 
@@ -32092,7 +32092,7 @@ EDITS: 2
 			       (sound-interp reader (* len (+ 0.5 (* 0.5 (oscil osc)))))))
 		(if (not (vequal (channel->vct) (vct 0.000 0.020 0.079 0.172 0.291 0.427 0.569 0.706 0.825 0.919 
 						     0.979 1.000 0.981 0.923 0.831 0.712 0.576 0.434 0.298 0.177)))
-		    (snd-display ";sound-interp: ~A ~A" (channel->vct))))
+		    (snd-display ";sound-interp: ~A" (channel->vct))))
 	      (undo)
 	      
 	      (let ((osc (make-oscil :frequency 0.5 :initial-phase (+ pi (/ pi 2))))
@@ -53233,6 +53233,7 @@ EDITS: 1
 			     ((= i 10000))
 			   (outa i (rxyk!cos gen 0.0) *output*))))))
 	
+	(if (provided? 'snd-guile) (begin
 	(let ((g (make-osc329 440.0)) (f 10.0)) 
 	  (run (lambda () (set! f (osc329 g 0.0)))) 
 	  (if (fneq f 0.0) (snd-display ";run osc329: ~A" f)))
@@ -53250,7 +53251,7 @@ EDITS: 1
 	  (if (fneq f 440.0) (snd-display ";mus-frequency osc329: ~A" f)))
 	(let ((g123 (make-osc329 440.0)) (f 0.0)) 
 	  (run (lambda () (set! f (mus-frequency g123)))) 
-	  (if (fneq f 440.0) (snd-display ";(name) mus-frequency osc329: ~A" f)))
+	  (if (or (not (number? f)) (fneq f 440.0)) (snd-display ";(name) mus-frequency osc329: ~A" f)))
 	(let ((g (make-osc329 440.0)) (f 32)) (set! f (mus-cosines g)) 
 	     (if (not (= f 1)) (snd-display ";osc329 (no run) mus-cosines: ~A" f)))
 	(let ((g (make-osc329 440.0)) (f 32)) 
@@ -53372,7 +53373,7 @@ EDITS: 1
 		)
 	      (list 0.1 0.5 .99)))
 	   (list 0.0 (* 0.5 pi) pi (* 2.0 pi) (* -0.5 pi) (- pi) (* -2.0 pi) (* 1.5 pi) (* -1.5 pi))))
-	
+	));end snd-guile block
 	(if (not (null? (sounds))) (for-each close-sound (sounds)))
 	(set! (optimization) old-opt-23)
 	
@@ -66810,7 +66811,7 @@ EDITS: 1
 		(check-error-tag 'no-such-key (lambda () (key-binding -1 0)))
 		(check-error-tag 'no-such-key (lambda () (key-binding 12 17)))
 		(check-error-tag 'no-such-key (lambda () (key-binding 12 -1)))
-		(check-error-tag 'wrong-type-arg (lambda () (send-mozilla -1)))
+		(if (defined? 'send-mozilla) (check-error-tag 'wrong-type-arg (lambda () (send-mozilla -1))))
 		(check-error-tag 'bad-header (lambda () (file->array (string-append sf-dir "bad_chans.snd") 0 0 123 (make-vct 123))))
 		(check-error-tag 'bad-header (lambda () (make-readin (string-append sf-dir "bad_chans.snd"))))
 		(check-error-tag 'mus-error (lambda () (make-iir-filter 30 (make-vct 3))))

@@ -57,8 +57,8 @@ either case, the difference is between:
     FM: cos(angle += (incr + change))
 </pre>
 <p>
-Textbooks usually mutter "strictly speaking 
-we can only take the cosine of an angle", and they put an explicit integral in when they mean 
+To make the difference clear, textbooks
+put in an integral when they mean 
 frequency modulation:
 </p>
 
@@ -71,14 +71,12 @@ fmeq3:
 <img src="fmeq3.png" alt="cos + integral" hspace=20>
 
 
-<p>
-Radio engineers distinguish between PM and FM as follows: if 
-f(t) is directly proportional to the modulating signal then it's PM; if f(t) is directly proportional 
-to the derivative of the modulating signal, then it's FM.  Of course, you can't tell which is in use 
+<p>In PM we change the phase, in FM we change the phase increment, and
+to go from FM to PM, integrate the FM modulating signal.
+But you can't tell which is in use 
 from the output waveform; you have to know 
-what the modulating signal is.  All this verbiage is a roundabout way of saying that in computer music 
-applications, where we can do what we want with the modulating signal,
-there is no essential difference between frequency and phase modulation. 
+what the modulating signal is.  In our context (sound synthesis), we can do what we want with the modulating signal,
+so there is no essential difference between frequency and phase modulation. 
 </p>
 
 <table border=1 hspace=50 cellpadding=14><tr><td>
@@ -495,7 +493,7 @@ significant sidebands on each side of the carrier, so our total bandwidth is on 
    2 * modulator-frequency * (fm-index + 1)
 </pre>
 
-<p>This is a good approximation &mdash; 98% of the signal power is within its limits.  To turn that around, we can 
+<p>This is a good approximation &mdash; 99% of the signal power is within its limits.  To turn that around, we can 
 reduce the danger of aliasing by limiting the fm index to approximately (srate/2 - carrier_frequency) / modulator_frequency;
 use srate/4 to be safer.
 </p>
@@ -676,7 +674,7 @@ real and imaginary parts &mdash; unexplored territory!
 <img src="fmc63.png" alt="complex index fm 6.0+3.0i 0.5 interp">
 </td></tr>
 <tr><td bgcolor="#f6f8ff"><small><center>index: 6+3i</center></small></td></tr></table>
-</tr>
+</td></tr>
 </table>
 
 <!-- here's an instrument to test complex indices:
@@ -874,6 +872,7 @@ are just as they were before, but the initial phases of the side bands have chan
 In general:
 </p>
 
+<!-- Gagliardi 2.2.11 -->
 <!-- LATEX \cos(\omega_{c}t+B\sin(\omega_{m}t + \theta_{m}) + \phi) = \sum_{k=-\infty}^{\infty}J_{k}(B)\cos((\omega_{c}+k\omega_{m})t + k\theta_{m} + \phi) -->
 
 <img src="fmeq22.png" alt="big formula" hspace=20>
@@ -1157,6 +1156,17 @@ examples which come from a collection of "imaginary machines":
 </td></tr></table>
 
 
+<!-- AM of FM using the rk!cos or rxyk!cos gens, r2cos
+     AM of izcos is moorer's 2nd formula
+ -->
+
+<!-- TODO am of fm
+
+<p>A different approach is mentioned by Moorer, "Signal Processing Aspects of Computer Music":
+</p>
+
+-->
+
 <p>
 Palamin et al in "A Method of Generating and Controlling Musical Asymmetrical Spectra" started at 
 the same point (the expansion of simple FM), added a factor r^n to each sideband, and then worked 
@@ -1252,6 +1262,8 @@ a moving formant).  Here we sweep "r" from -1.0 to -20.0, with an index of 3, m/
 <br>
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>complex FM: sin(sin+sin)</h5></center></td></tr></table>
 
+<!-- perhaps segue as AM of FM, why not FM of FM? -->
+
 <p>
 So far we have been using just a sinusoid for the modulator; what if we make it a more complicated 
 signal?  Here again trigonometry can be used to expand
@@ -1301,6 +1313,8 @@ the (theoretically) infinite bandwidth of the triangle wave.  The worst case mus
 it has almost no sidebands!).
 In general:
 </p>
+
+<!-- Gagliardi 2.2.16 -->
 
 <!-- LATEX \cos(\omega_{c}t+\Big(\sum_{i=1}^{k}B_{i}\sin(\omega_{i}t + \theta_{i})\Big) + \phi) = \sum_{k_{k}} \cdots \sum_{k_{1}}\Big(\prod_{i=1}^{k}J_{k_{i}}(B_{i})\Big)\cos(\omega_{c}t+\Big(\sum_{i=1}^{k}k_{i}(\omega_{i}t+\theta_{i})\Big)+\phi) -->
 
@@ -1557,7 +1571,8 @@ cascade.png:
 				      
 -->
 
-<p>Benson expands this as:<p>
+<p>The resemblance of cascade FM to parallel FM is not an accident:
+</p>
 
 <!-- LATEX fmeq57: 
     & \sin(\omega_{c}t + B_{1}\sin(\omega_{m1}t + B_{2}\sin(\omega_{m2}t))) = \sum_{n=-\infty}^{\infty} \sum_{k=-\infty}^{\infty} J_{n}(B_{1}) J_{k}(n B_{2}) \sin(\omega_{c} + n \omega_{m1} + k \omega_{m2})t \\
@@ -1810,8 +1825,8 @@ affecting the others, but low-pass filtering the output does not affect it (so i
 to be an artifact of aliasing which is a real problem in feedback FM).  Change the sine to
 cosine in <code>(* amp (sin y))</code> and suddenly there's a ton of DC.  Fiddle with the
 initial phase in that line, and there's always some choice that reduces it to 0.0.
-Groan &mdash; it appears to be another "centering" problem, but I haven't worked out 
-what the magic formula is yet (a reasonable stab at it is: <code>-(phase-incr^(1-(B/3))</code>)).
+Groan &mdash; it appears to be another "centering" problem, but I haven't found
+the magic formula yet (a reasonable stab at it is: <code>-(phase-incr^(1-(B/3))</code>)).
 </p>
 
 <p>Why does an index over 1.0 create bursts of noise?
@@ -1863,9 +1878,9 @@ The take-home message is: "keep the index below 1.0!".
  is zigzagging itself, and after interspersed 0's, finally dips negative -- then the bounces start
  (at the bad spot y goes from -.57 to -.59 but the phase incr is .014 -- we back up).
 
-notice that we aren't actually implementing the equation given above:
+we can use the phase to minimize the difference with the sum:
 
-(define (feedbk beg dur freq amp index)
+(define (feedbk beg dur freq amp index iters pha1)
   (let* ((start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur)))
 	 (y 0.0)
@@ -1874,20 +1889,26 @@ notice that we aren't actually implementing the equation given above:
      (lambda ()
        (do ((i start (1+ i))
 	    (x 0.0 (+ x x-incr)))
-	   ((= i end))
+	   ((or (c-g?)
+		(= i end)))
 	 (set! y (+ x (* index (sin y))))
+
 	 (let ((result (* amp (sin y)))
 	       (sum 0.0))
+
 	   (do ((n 1 (1+ n))) 
-	       ((= n 1000)) 
+	       ((= n iters)) 
 	     (set! sum (+ sum (/ (* 2.0 
 				    (bes-jn n (* index n))
 				    (sin (* n x)))
 				 (* n index)))))
-	   (outb i (* amp sum) *output*)
-	   (outc i (- sum (sin y)) *output*)
-	   (outa i (* amp (sin y)) *output*)))))))
 
+	   (outb i (* amp sum) *output*)
+	   (outc i (- sum (sin (+ y pha1))) *output*)
+	   (outa i (* amp (sin (+ y pha1))) *output*)))))))
+
+(with-sound (:channels 3 :statistics #t :clipped #f) (feedbk 0 1 100 1.0 0.5 100 0.01265)) ; .0005 0.1 100
+the sum has DC! and the difference is a pulse train, but higher srate fixes that
 
 -->
 
@@ -1902,7 +1923,7 @@ A more controllable approach is to use a random number generator as our modulato
 In this case, the power spectral density of the output has the same form 
 as the value distribution function (amplitude distribution as opposed to frequency) of the modulating noise, centered around the carrier. 
 The bandwidth of the result is about 4 times the peak deviation (the 
-random number frequency times its index -- is this just Mr Carson again?):
+random number frequency times its index &mdash; is this just Mr Carson again?):
 </p>
 
 
@@ -2326,7 +2347,7 @@ case in Klapper p103 (except there x=1/4)
 
 	  more on the JJ->1 stuff and perhaps the JJ->J match
 
-	  can the feedback 6 chan ins explain the 0Hz bug?
+	  give fm of sq?
 -->
 
 

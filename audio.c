@@ -16,6 +16,17 @@
  *    audio describers
  */
 
+/* TODO: mac audio deprecations:
+   audio.c: In function 'mus_audio_close':
+   audio.c:7160: warning: 'AudioDeviceRemoveIOProc' is deprecated (declared at /System/Library/Frameworks/CoreAudio.framework/Headers/AudioHardware.h:2081)
+   audio.c:7167: warning: 'AudioDeviceAddIOProc' is deprecated (declared at /System/Library/Frameworks/CoreAudio.framework/Headers/AudioHardware.h:2067)
+   audio.c:7188: warning: 'AudioDeviceRemoveIOProc' is deprecated (declared at /System/Library/Frameworks/CoreAudio.framework/Headers/AudioHardware.h:2081)
+   audio.c: In function 'mus_audio_write':
+   audio.c:7454: warning: 'AudioDeviceAddIOProc' is deprecated (declared at /System/Library/Frameworks/CoreAudio.framework/Headers/AudioHardware.h:2067)
+   audio.c: In function 'mus_audio_open_input':
+   audio.c:7527: warning: 'AudioDeviceAddIOProc' is deprecated (declared at /System/Library/Frameworks/CoreAudio.framework/Headers/AudioHardware.h:2067)
+*/
+   
 /*
  * void mus_audio_describe(void) describes the audio hardware state.
  * char *mus_audio_report(void) returns the same information as a string.
