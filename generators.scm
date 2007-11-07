@@ -1256,8 +1256,9 @@
     (set! (rxyk!cos-xangle gen) (+ x (rxyk!cos-xincr gen) (* fm (/ (rxyk!cos-xincr gen) (rxyk!cos-yincr gen)))))
     (set! (rxyk!cos-yangle gen) (+ y (rxyk!cos-yincr gen) fm))
 
-    (* (exp (* r (cos y)))
-       (sin (+ x (* r (sin y)))))))
+    (/ (* (exp (* r (cos y)))
+	  (sin (+ x (* r (sin y)))))
+       (exp r))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)

@@ -4,10 +4,6 @@
 </head>
 <body bgcolor=white>
 
-
-<!-- currently unused fmeq52.png and fmeq44.png -->
-
-
 <center><h1>An Introduction To FM</h1></center>
 
 <center>Bill Schottstaedt</center>
@@ -1156,21 +1152,41 @@ examples which come from a collection of "imaginary machines":
 </td></tr></table>
 
 
-<!-- AM of FM using the rk!cos or rxyk!cos gens, r2cos
-     AM of izcos is moorer's 2nd formula
- -->
+<!-- LATEX fmeq44: &\sum_{k=0}^{\infty} \frac{a^{k}}{k!} \cos(x + ky) = e^{a \cos y} \cos (x + a \sin y) \\ -->
 
-<!-- TODO am of fm
-
-<p>A different approach is mentioned by Moorer, "Signal Processing Aspects of Computer Music":
+<table border=0><tr><td>
+<p>A different approach, also using a form of amplitude modulation, is mentioned by Moorer in "Signal Processing Aspects of Computer Music":
 </p>
 
+<img src="fmeq44.png" alt="jam case" hspace=20>
+
+<p>This is the rxyk!cos generator in generators.scm.  It produces beautiful single-sided spectra.  We might grumble
+that the sideband amplitudes don't leave us much room for maneuver, but the factorial in the denominator overwhelms
+any exponential in the numerator, so we can get many interesting effects: moving formants, for example.
+</p>
+</td>
+<td>
+<table hspace=3 border=1 cellpadding=3><tr><td>
+<img src="fmeq52.png" alt="jam pict">
+</td></tr>
+<tr>
+<td bgcolor="#f6f8ff"><center><small>a: 2, x:1000, y: 100</small></center>
+</td></tr></table>
+</td></tr></table>
+
+<!--
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+  (let ((gen (make-rxyk!cos 1000 100 2)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (rxyk!cos gen 0.0) *output*))))))
 -->
 
 <p>
-Palamin et al in "A Method of Generating and Controlling Musical Asymmetrical Spectra" started at 
-the same point (the expansion of simple FM), added a factor r^n to each sideband, and then worked 
-backwards to get:
+Palamin et al in "A Method of Generating and Controlling Musical Asymmetrical Spectra"
+came up with a slightly more complicated version:
 </p>
 
 <!-- LATEX e^{(\frac{B}{2}(r-\frac{1}{r})\cos \omega_{m}t)}\sin(\omega_{c}t+\frac{B}{2}(r+\frac{1}{r})\sin \omega_{m}t)=\sum r^{n}J_{n}(B)\sin(\omega_{c}t+n\omega_{m}t) -->
@@ -1253,16 +1269,9 @@ a moving formant).  Here we sweep "r" from -1.0 to -20.0, with an index of 3, m/
 <img src="asyfm.png" alt="asy spectra">
 
 
-
-<!-- another tweak from Benson: (amplitude modulation of FM)
-2 \sin \theta \cos(\phi + B \sin \theta) = \sum_{n=-\infty}^{\infty} (J_{n-1}(B) - J_{n+1}(B)) \sin(\phi + n\theta)
--->
-
-
 <br>
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>complex FM: sin(sin+sin)</h5></center></td></tr></table>
 
-<!-- perhaps segue as AM of FM, why not FM of FM? -->
 
 <p>
 So far we have been using just a sinusoid for the modulator; what if we make it a more complicated 
@@ -1309,8 +1318,7 @@ Usually, these extra modulating components flatten and spread out the
 spectrum somewhat.  
 (An intriguing counterexample is a triangle wave as the FM modulator;
 the result has a narrower bandwidth than simple FM despite
-the (theoretically) infinite bandwidth of the triangle wave.  The worst case must be a pulse-train as FM modulator;
-it has almost no sidebands!).
+the (theoretically) infinite bandwidth of the triangle wave).
 In general:
 </p>
 
@@ -1534,7 +1542,7 @@ sometimes called "cascade FM":
     (* A (oscil carrier (* B (oscil modulator (* C (oscil cascade))))))
 </pre>
 
-<p>and we can get an extremely complex spectrum in no time.  Each component of the
+<p>Each component of the
 lower pair of oscillators is surrounded by the spectrum produced by the upper pair,
 sort of like a set of formant regions.
 </p>
@@ -2157,8 +2165,6 @@ Benson, "Music: A Mathematical Offering", Cambridge University Press, Nov 2006. 
 
 Chowning, "The Synthesis of Complex Audio Spectra by Means of Frequency Modulation", JAES 21:526-534, 1973
 
-De Poli, "A Tutorial on Digital Sound Synthesis Techniques", CMJ vol7 no 4, 1983.
-
 Gagliardi, "Introduction to Communications Engineering", Wiley Interscience, 1978.
 
 Klapper, "Selected Papers on Frequency Modulation", Dover 1970. (Out of print, but available
@@ -2347,7 +2353,7 @@ case in Klapper p103 (except there x=1/4)
 
 	  more on the JJ->1 stuff and perhaps the JJ->J match
 
-	  give fm of sq?
+	  give fm of sq? pwm stuff? fm of tri formula?
 -->
 
 

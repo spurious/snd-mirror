@@ -34,9 +34,9 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
-(define tests 1)
+(define tests 5)
 (define keep-going #f)
-(define all-args #t)
+(define all-args #f)
 (define test-at-random 0)
 ;(show-ptree 1)
 
