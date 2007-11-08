@@ -1,26 +1,25 @@
-Snd 9.4:
+Snd 9.5
 
-added export-all.scm.
+port to mingw thanks to Kjetil.
 
-the run macro can now find define* args (from within the define*)
+changed slightly the way local methods are declared in def-clm-struct
 
-def-clm-struct uses def-optkey-fun for its make func,
-  and takes an optional :make-wrapper function to specialize the make function.
-  Also run is better at handling lists and def-clm-struct.
-  def-clm-struct can include a list of lists of (name func) pairs to implement generic funcs.
+14 more generators in generators.scm, and a couple dozen instruments in various states of disrepair
+  (including some imaginary machines)
 
-added generators.scm with 42 new generators (and a couple instruments under construction)
-  several of these generators used to be in dsp.scm (under slightly different names) --
-  the old forms are in snd9.scm.
+animals.scm
 
-clm: changed asymmetric-fm to use cos(sin) and added amplitude normalization.
+more changes to fm.html, and fm-parallel|cascade|complex-component in dsp.scm
 
-make-dpss-window and make-papoulis-window in dsp.scm
-  gsl-eigenvectors
+src-fit-envelope in dsp.scm
 
-added make-mixer! and make-frame! to bypass the size checks (for matrices and vectors)
+changed clm default srate to 44100
 
-checked: sbcl 1.0.9|10, pango 1.18.1, gtk 2.12.0
+moved mus-phase-vocoder-outctr to mus-location (old form is in snd9.scm)
 
-Thanks!: Steven Jones, Todd Ingalls, Achim Bornhoeft
+Mike Scholz and Juan Pampin found and fixed bugs in sndlib/clm
+
+checked: pango 1.18.3, guile 1.8.3, gtk 2.12.1, clisp 2.42, OSX 10.5, Gauche 0.8.12
+
+Thanks!: Mike Scholz, Juan Pampin, Bill Sack, Kjetil Matheussen
 

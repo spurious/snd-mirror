@@ -1231,6 +1231,7 @@ static void make_command_widget(int height)
       else listener_pane = XtCreateManagedWidget("frm", xmFormWidgetClass, SOUND_PANE(ss), args, n);
       /* this widget is not redundant at least in Metroworks Motif */
 
+      /* why is there a size limit here? */
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->listener_color); n++;
       XtSetArg(args[n], XmNforeground, ss->sgx->listener_text_color); n++;

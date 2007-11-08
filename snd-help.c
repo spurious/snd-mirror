@@ -516,12 +516,10 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+8-Nov:   Snd 9.5.\n\
 4-Nov:   port to mingw thanks to Kjetil.\n\
 2-Nov:   animals.scm.\n\
 11-Oct:  changed default srate to 44100.\n\
-29-Sep:  Snd 9.4.\n\
-20-Sep:  export-all.scm.\n\
-4-Sep:   generators.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",
