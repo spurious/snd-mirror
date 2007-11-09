@@ -1860,9 +1860,6 @@ index reaches about 1.4, then we start to zigzag at the zero crossing.
 The take-home message is: "keep the index below 1.0!".
 </p>
 
-<!-- the problem happens when the effective phase (y) is at an odd multiple of pi
--->
-
 <!--
 (define (feedbk beg dur freq amp index)
   (let* ((start (seconds->samples beg))
@@ -1874,18 +1871,37 @@ The take-home message is: "keep the index below 1.0!".
        (do ((i start (1+ i))
 	    (x 0.0 (+ x x-incr)))
 	   ((= i end))
-	 (out-any i y 0 *output*)
-	 (out-any i x 1 *output*)
+	 (out-any i y 0 *output*)                    ;0: previous y (effective phase)
+	 (out-any i x 1 *output*)                    ;1: x (carrier phase) = old x + x-incr
 	 (let ((md (* index (sin y))))
-	   (out-any i (- (+ x md) y) 2 *output*)
+	   (out-any i (- (+ x md) y) 2 *output*)     ;2: new y - old y
 	   (set! y (+ x md))
-	   (out-any i md 3 *output*)
-	   (out-any i y 4 *output*)))))))
+	   (out-any i md 3 *output*)                 ;3: output (* amp (sin y))
+	   (out-any i y 4 *output*)))))))            ;4: new y
 
 (with-sound (:srate 44100 :data-format mus-ldouble :channels 5 :statistics #t :clipped #f) (feedbk 0 2 100.0 1.0 1.22))
  channel 2 (outc) is our actual per-sample phase increment; notice that at the trouble spot it
  is zigzagging itself, and after interspersed 0's, finally dips negative -- then the bounces start
  (at the bad spot y goes from -.57 to -.59 but the phase incr is .014 -- we back up).
+
+:(samps 9096)
+(129.160781860352 129.596038818359 2.01292452402413e-4 -0.435052901506424 129.160980224609)
+:(samps 9097)
+(129.160980224609 129.610275268555 0.0140117099508643 -0.4352887570858 129.174987792969)
+:(samps 9098)
+(129.174987792969 129.624526977539 -0.00212752283550799 -0.451663881540298 129.172866821289) ; trouble -.45 - -.43
+:(samps 9099)
+(129.172866821289 129.638778686523 0.0167283322662115 -0.449183136224747 129.189590454102)
+:(samps 9100)
+(129.189590454102 129.653030395508 -0.00520234555006027 -0.468633055686951 129.184387207031)
+:
+:(samps 9130)
+(129.506851196289 130.080459594727 -0.233158811926842 -0.806757867336273 129.273696899414)
+:(samps 9131)
+(129.273696899414 130.094696044922 0.256685614585876 -0.564319849014282 129.530380249023)
+:(samps 9132)
+(129.530380249023 130.108947753906 -0.25042849779129 -0.828995883464813 129.27995300293)
+
 
 we can use the phase to minimize the difference with the sum:
 
@@ -2251,8 +2267,8 @@ special cases:
 
 ;(with-sound (:clipped #f :statistics #t) (fmsq 0 1 1000 .5 .1 1))
 
-;;; is broader than corresponding sine case -- can we check the amps?
-;;;   can we derive them in some perspicuous manner?
+;;; is broader than corresponding sine case 
+;;;   see formula below which does look like it fits
 
 
 a single pulse is swallowed up by the mod 2 pi:
@@ -2355,6 +2371,10 @@ case in Klapper p103 (except there x=1/4)
 	  more on the JJ->1 stuff and perhaps the JJ->J match
 
 	  give fm of sq? pwm stuff? fm of tri formula?
+
+square wave Klapper p102:
+&\sum_{n=-\infty}^{\infty} \frac{2B}{\pi(B^{2}-n^{2})} \sin(\frac{\pi}{2} (B-n)) \sin (\omega_{c}+n\omega_{m})t
+
 -->
 
 

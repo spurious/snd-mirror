@@ -166,12 +166,8 @@ int number_width(const char *num, bool use_tiny_font)
 }
 
 
-int number_height(bool use_tiny_font)
+int number_height(XFontStruct *numbers_font)
 {
-  XFontStruct *numbers_font;
-  if (use_tiny_font)
-    numbers_font = TINY_FONT(ss);
-  else numbers_font = AXIS_NUMBERS_FONT(ss);
   return(numbers_font->ascent);
 }
 

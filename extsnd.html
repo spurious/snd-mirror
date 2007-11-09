@@ -1,4 +1,4 @@
-<html>
+html>
 <head>
 <title>Snd Customization and Extension</title>
 <style type="text/css">
@@ -2625,6 +2625,19 @@ the returned procedure to make sure the mark pane is reactivated right away when
       (<a class=quiet href="#sndprint">snd-print</a> "ok!"))))
 </pre></td></tr></table>
 
+I use update-hook to make sure the y axis bounds reflect the new maxamp, if it is greater than 1.0:
+
+<table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
+(add-hook! <em class=red>update-hook</em>
+  (lambda (old-snd)
+    (lambda (snd)
+      (do ((i 0 (1+ i)))
+	  ((= i (<a class=quiet href="#chans">chans</a> snd)))
+	(let ((mx (<a class=quiet href="#maxamp">maxamp</a> snd i)))
+	  (if (> mx 1.0)
+  	      (set! (<a class=quiet href="#ybounds">y-bounds</a> snd i) (list (- mx) mx))))))))
+</pre></td></tr></table>
+
 Say we're editing a sound in several different windows, and want to save and re-apply any
 edits we may have in the other windows when we save the sound from one window (all the others
 then get the exploding bomb icon because their underlying data has changed):
@@ -2632,9 +2645,9 @@ then get the exploding bomb icon because their underlying data has changed):
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (let ((eds #f))
   (add-hook! <em class=red>update-hook</em>
-	     (lambda (cursnd)     ; called before actual update &mdash; save our edits
+	     (lambda (cursnd)     ; called before actual update -- save our edits
 	       (set! eds (<a href="#editlisttofunction">edit-list-&gt;function</a> cursnd 0))
-	       (lambda (newsnd)   ; called after update &mdash; reapply our edits
+	       (lambda (newsnd)   ; called after update -- reapply our edits
 		 (if eds (eds newsnd 0))))))
 </pre></td></tr></table>
 

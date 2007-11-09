@@ -462,6 +462,7 @@ snd_info *completely_free_snd_info(snd_info *sp)
 	      cp->properties_loc = NOT_A_GC_LOC;
 	    }
 	  FREE(cp);
+	  /* it's possible to have dangling readers (snd_fd) with pointers to this channel (see note in snd-edits.c under unlist_reader) */
 	}
     }
   FREE(sp->chans);

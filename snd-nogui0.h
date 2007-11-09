@@ -33,6 +33,10 @@
 #define DEFAULT_AXIS_NUMBERS_FONT "Monospace 10"
 #define DEFAULT_AXIS_LABEL_FONT "Serif 14"
 
+#define TINY_FONT(a) 0
+#define AXIS_NUMBERS_FONT(a) 0
+#define PEAKS_FONT(a) 0
+
 #define idle_t int
 #define idle_func_t int
 #define any_pointer_t void *

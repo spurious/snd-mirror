@@ -9,14 +9,7 @@
  */
 
 /* 
- * TODO: it's possible to have unselected graph in selected color?
- * TODO: re-exposure is over-optimized -- have to click zoom to get graphs
- * TODO: if maxamp>1 automatically reflect that in y axis, so user doesn't need the initial-graph-hook kludge, or provide maxamp-hook
- * TODO: either make fft peak data digits depend in min-dB, or make it settable
- * TODO: save gzy/gsy across update and overall size! (and return listener to correct place)
- * TODO: (sample n snd #t) -> return all chans
- * TODO: in multi-chan cases, click new chan can end up with just the clicked chan displayed,
- *          selected bg color in rest, but no graph, and multiple cursors!
+ * TODO: keep overall size and return listener to correct place
  */
 
 chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
@@ -1844,21 +1837,20 @@ static int compare_peak_amps(const void *pk1, const void *pk2)
 
 
 static char ampstr[LABEL_BUFFER_SIZE];
-#define AMP_ROOM 35
+#define AMP_ROOM 45
 #define AMP_ROOM_CUTOFF 3.0
-
-/* TODO: this leaves 15 pixels height no matter what font is in use */
 
 /* TODO: verbose cursor in db graph click component gets wrong amp */
 
 static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler, off_t samps, Float samps_per_pixel, bool fft_data, Float fft_scale)
 {
-  int num_peaks, row, col, tens, i, acol, acols;
+  int num_peaks, row, col, tens, i, acol, acols, row_height = 15;
   bool with_amps;
   Float amp0;
   axis_context *ax;
   fft_peak *peak_freqs = NULL;
   fft_peak *peak_amps = NULL;
+
   if (samps > (scaler * 10)) 
     tens = 2; 
   else 
@@ -1868,8 +1860,13 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
       if (samps > (scaler / 10)) 
 	tens = 0; 
       else tens = -1;
-  num_peaks = (fap->y_axis_y0 - fap->y_axis_y1) / 20;
+
+  row_height = (int)(1.25 * number_height(PEAKS_FONT(ss)));
+  if (row_height < 10) row_height = 10;
+
+  num_peaks = (fap->y_axis_y0 - fap->y_axis_y1) / (row_height + 5);
   if (num_peaks <= 0) return;
+
   peak_freqs = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
   peak_amps = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
   if (num_peaks > cp->max_transform_peaks) num_peaks = cp->max_transform_peaks;
@@ -1884,6 +1881,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
       FREE(peak_amps); 
       return;
     }
+
   with_amps = (fap->width > ((30 + 5 * tens + AMP_ROOM) * AMP_ROOM_CUTOFF));
   acols = 3;
   col = fap->x_axis_x1 - 30 - tens * 5; 
@@ -1893,13 +1891,15 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
     {
       col -= AMP_ROOM;
       if ((fft_data) && 
-	  (cp->transform_normalization == DONT_NORMALIZE))
+	  ((cp->transform_normalization == DONT_NORMALIZE) ||
+	   (cp->min_dB < -60)))
 	{
 	  col -= 5;
 	  acol -= 5;
 	  acols = 4;
 	}
     }
+
   ax = copy_context(cp);
   if (num_peaks > 6)
     {
@@ -1908,7 +1908,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
       if (num_peaks < 12) amp0 = peak_amps[2].amp; else amp0 = peak_amps[5].amp;
       set_bold_peak_numbers_font(cp);
       if (cp->printing) ps_set_bold_peak_numbers_font();
-      row = fap->y_axis_y1 + 15;
+      row = fap->y_axis_y1 + row_height;
       for (i = 0; i < num_peaks; i++)
 	{
 	  if (peak_freqs[i].amp >= amp0)
@@ -1931,14 +1931,14 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 		    ps_draw_string(fap, acol, row, ampstr);
 		}
 	    }
-	  row += 15;
+	  row += row_height;
 	}
     }
   else amp0 = 100.0;
   set_peak_numbers_font(cp);
   if (cp->printing) ps_set_peak_numbers_font();
   /* choose a small font for these numbers */
-  row = fap->y_axis_y1 + 15;
+  row = fap->y_axis_y1 + row_height;
   for (i = 0; i < num_peaks; i++)
     {
       if (peak_freqs[i].amp < amp0)
@@ -1961,7 +1961,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 		ps_draw_string(fap, acol, row, ampstr);
 	    }
 	}
-      row += 15;
+      row += row_height;
     }
   if (peak_freqs) FREE(peak_freqs); 
   if (peak_amps) FREE(peak_amps);
@@ -4129,7 +4129,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
   axis_info *ap;
   fft_info *fp;
   sono_info *si;
-  int ind, time;
+  int ind, time, digits = 3;
   fp = cp->fft;
   ap = fp->axis;
 
@@ -4138,6 +4138,9 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
 
   x = mus_iclamp(ap->x_axis_x0, x, ap->x_axis_x1);
   xf = ap->x0 + (ap->x1 - ap->x0) * (Float)(x - ap->x_axis_x0) / (Float)(ap->x_axis_x1 - ap->x_axis_x0);
+
+  digits = (int)ceil(fabs(cp->min_dB) / 20);
+  if (digits < 2) digits = 2;
 
   if (cp->transform_graph_type == GRAPH_ONCE)
     {
@@ -4154,11 +4157,13 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
 	}
       else ind = (int)xf;
       if (ind >= fp->current_size) ind = fp->current_size - 1;
-      return(mus_format(_("(%.1f%s, transform val: %.3f%s (raw: %.3f)"),
+      return(mus_format(_("(%.1f%s, transform val: %.*f%s (raw: %.*f)"),
 			xf,
 			((cp->transform_type == AUTOCORRELATION) ? _(" samps") : _(" Hz")),
+			digits,
 			(cp->fft_log_magnitude) ? in_dB(cp->min_dB, cp->lin_dB, (fp->data[ind] * fp->scale)) : (fp->data[ind] * fp->scale),
 			(cp->fft_log_magnitude) ? _("dB") : "",
+			digits,
 			fp->data[ind]));
     }
   else 
@@ -4184,10 +4189,12 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
 	  if (ind >= si->total_bins) ind = si->total_bins - 1;
 	  time = (int)(si->target_slices * (Float)(x - ap->x_axis_x0) / (Float)(ap->x_axis_x1 - ap->x_axis_x0));
 	  if (time >= si->total_slices) time = si->total_slices - 1;
-	  return(mus_format(_("(time: %.2f, freq: %.1f, val: %.3f%s (raw: %.3f))"),
+	  return(mus_format(_("(time: %.2f, freq: %.1f, val: %.*f%s (raw: %.*f))"),
 			    xf, yf,
+			    digits,
 			    (cp->fft_log_magnitude) ? in_dB(cp->min_dB, cp->lin_dB, si->data[time][ind] / si->scale) : (si->data[time][ind] / si->scale),
 			    (cp->fft_log_magnitude) ? _("dB") : "",
+			    digits,
 			    si->data[time][ind]));
 	}
     }
@@ -4787,8 +4794,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 			 S_mouse_drag_hook);
 	      break;
 	    case CLICK_FFT_MAIN:
-	      if ((cp->verbose_cursor) && 
-		  (within_graph(cp, x, y) == CLICK_FFT_MAIN))
+	      if (cp->verbose_cursor)
 		{
 		  char *str;
 		  str = describe_fft_point(cp, x, y);

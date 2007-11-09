@@ -157,6 +157,16 @@ static void gzy_changed(float value, chan_info *cp)
   for_each_sound_chan(cp->sound, update_graph_or_warn);
 }
 
+/* TODO: gchn if gsy not 1, gzy change is ignored */
+/* TODO: gchn update gzy not updated, and gsy size is wrong */
+
+void change_gzy(Float val, chan_info *cp)
+{
+  cp->gzy = val;
+  GTK_ADJUSTMENT(gsy_adj(cp))->page_size = val; 
+  gtk_adjustment_changed(GTK_ADJUSTMENT(gsy_adj(cp)));
+}
+
 
 static void gsy_changed(float value, chan_info *cp)
 {
@@ -197,10 +207,8 @@ void initialize_scrollbars(chan_info *cp)
   set_z_scrollbars(cp, ap);
   if ((sp->nchans > 1) && (cp->chan == 0) && (gsy_adj(cp)))
     {
-      set_scrollbar(gsy_adj(cp), 1.0 - cp->gsy, cp->gzy);
-      set_scrollbar(gzy_adj(cp), 
-		    1.0 - cp->gzy, 
-		    1.0 / (Float)(sp->nchans));
+      set_scrollbar(gsy_adj(cp), 0.0, 1.0);
+      set_scrollbar(gzy_adj(cp), 0.0, 1.0 / (Float)(sp->nchans));
     }
 }
 

@@ -1702,8 +1702,8 @@ void *free_axes_data(void *usa)
 }
 
 
-enum {SA_X0, SA_X1, SA_Y0, SA_Y1, SA_XMIN, SA_XMAX, SA_YMIN, SA_YMAX, SA_ZX, SA_ZY, SA_SX, SA_SY};
-#define SA_FIELDS 12
+enum {SA_X0, SA_X1, SA_Y0, SA_Y1, SA_XMIN, SA_XMAX, SA_YMIN, SA_YMAX, SA_ZX, SA_ZY, SA_SX, SA_SY, SA_GSY, SA_GZY};
+#define SA_FIELDS 14
 
 void *make_axes_data(snd_info *sp)
 {
@@ -1735,6 +1735,8 @@ void *make_axes_data(snd_info *sp)
       sa->axis_data[loc + SA_SX] = ap->sx;
       sa->axis_data[loc + SA_ZY] = ap->zy;
       sa->axis_data[loc + SA_SY] = ap->sy;
+      sa->axis_data[loc + SA_GSY] = cp->gsy;
+      sa->axis_data[loc + SA_GZY] = cp->gzy;
       sa->wavep[i] = cp->graph_time_p;
       sa->fftp[i] = cp->graph_transform_p;
     }
@@ -1771,6 +1773,8 @@ void restore_axes_data(snd_info *sp, void *usa, Float new_duration, bool need_ed
       ap->sx = sa->axis_data[loc + SA_SX];
       ap->zy = sa->axis_data[loc + SA_ZY];
       ap->sy = sa->axis_data[loc + SA_SY];
+      cp->gsy = sa->axis_data[loc + SA_GSY];
+      cp->gzy = sa->axis_data[loc + SA_GZY];
       ap->y_ambit = ap->ymax - ap->ymin;
       ap->x_ambit = ap->xmax - ap->xmin;
       set_axes(cp,
@@ -1780,13 +1784,21 @@ void restore_axes_data(snd_info *sp, void *usa, Float new_duration, bool need_ed
 	       sa->axis_data[loc + SA_Y1]);
 
       set_z_scrollbars(cp, ap);
+      if ((cp->chan == 0) &&
+	  (cp->gzy != 1.0))
+	change_gzy(cp->gzy, cp); /* also fixes gsy slider */
+
       update_graph(cp); /* get normalized state before messing with it */
+
       if (sa->fftp[j]) 
 	fftb(cp, true); 
+
       if (!(sa->wavep[j])) 
 	waveb(cp, false); 
+
       if (need_edit_history_update) 
 	reflect_edit_history_change(cp);
+
       if (j < (sa->chans - 1)) j++;
     }
 }
@@ -2027,9 +2039,16 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
       if (nsp->nchans == sp_chans) sound_restore_chan_info(nsp, saved_sp);
       restore_axes_data(nsp, sa, mus_sound_duration(filename), false);
       sound_restore_marks(nsp, ms);
+
+#if 0
+      /* I don't think this is needed -- marks do get redisplayed, and the rest is handled in restore_axes_data */
       for (i = 0; i < nsp->nchans; i++) 
 	update_graph(nsp->chans[i]);
-      for (i = 0; (i < nsp->nchans) && (i < sp_chans); i++) CURSOR(nsp->chans[i]) = old_cursors[i];
+#endif
+
+      for (i = 0; (i < nsp->nchans) && (i < sp_chans); i++) 
+	CURSOR(nsp->chans[i]) = old_cursors[i];
+
       if ((nsp->nchans > 1) && (old_channel_style != CHANNELS_SEPARATE))
 	set_sound_channel_style(nsp, old_channel_style);
     }

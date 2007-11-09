@@ -170,6 +170,7 @@ void set_minibuffer_string(snd_info *sp, char *str, bool update)
 {
   if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return;
   XmTextSetString(MINIBUFFER_TEXT(sp), str);
+  /* updating clears the entire graph widget and triggers an expose event -- this is evil if we're currently displaying! */
   if (update) XmUpdateDisplay(MINIBUFFER_TEXT(sp));
 }
 

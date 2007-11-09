@@ -97,7 +97,7 @@ bool set_axis_label_font(const char *font) {if (ss->Axis_Label_Font) FREE(ss->Ax
 bool set_axis_numbers_font(const char *font) {if (ss->Axis_Numbers_Font) FREE(ss->Axis_Numbers_Font); ss->Axis_Numbers_Font = copy_string(font); return(false);}
 int label_width(const char *txt, bool use_tiny_font) {return(0);}
 int number_width(const char *num, bool use_tiny_font) {return(0);}
-int number_height(bool use_tiny_font) {return(0);}
+int number_height(int fnt) {return(0);}
 int label_height(bool use_tiny_font) {return(0);}
 int mark_name_width(const char *txt) {return(0);}
 void clear_window(axis_context *ax) {}
@@ -120,6 +120,7 @@ int channel_f(chan_info *cp) {return(0);}
 int channel_graph(chan_info *cp) {return(0);}
 bool channel_graph_is_visible(chan_info *cp) {return(false);} /* maybe this should be true? */
 void set_zx_scrollbar_value(chan_info *cp, Float value) {}
+void change_gzy(Float val, chan_info *cp) {}
 Float gsy_value(chan_info *cp) {return(0.0);}
 Float gsy_size(chan_info *cp) {return(0.0);}
 void initialize_scrollbars(chan_info *cp) {}

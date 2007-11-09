@@ -845,8 +845,7 @@ static char pad[MEM_PAD_SIZE] = {'W','I','L','L','I','A','M',' ','G','A','R','D'
 static void set_padding(void *p1, void *p2, size_t len, int loc)
 {
   char *p3 = (char *)p1;
-  char *ip2;
-  ip2 = (char *)p2;
+  char *ip2 = (char *)p2;
   memcpy((void *)ip2, (void *)pad, MEM_PAD_SIZE);
   memcpy((void *)(ip2 + len + MEM_PAD_SIZE), (void *)pad, MEM_PAD_SIZE);
 

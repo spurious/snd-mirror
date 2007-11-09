@@ -682,7 +682,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   
   use_tiny_font = ((width < 250) || (height < 140));
   
-  x_number_height = number_height(use_tiny_font);
+  x_number_height = number_height((use_tiny_font) ? TINY_FONT(ss) : AXIS_NUMBERS_FONT(ss));
   x_label_height = 0;
   x_label_width = 0;
   

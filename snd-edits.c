@@ -8540,21 +8540,41 @@ static XEN g_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN pos_n)
 {
   #define H_sample "(" S_sample " samp :optional snd chn edpos): \
 return sample samp in snd's channel chn (this is a slow access -- use sample-readers for speed)"
-  chan_info *cp;
   off_t beg;
+  int pos;
+  chan_info *cp;
 
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_sample, "a number");
+
+  if (XEN_TRUE_P(chn_n)) /* a convenience! */
+    {
+      XEN lst = XEN_EMPTY_LIST;
+      int i, loc;
+      snd_info *sp;
+
+      ASSERT_SOUND(S_sample, snd_n, 1);
+      sp = get_sp(snd_n, NO_PLAYERS);
+      cp = any_selected_channel(sp);
+      pos = to_c_edit_position(cp, pos_n, S_sample, 4);
+      beg = beg_to_sample(samp_n, S_sample);
+      loc = snd_protect(lst);
+      
+      for (i = 0; i < sp->nchans; i++)
+	lst = XEN_CONS(C_TO_XEN_DOUBLE(chn_sample(beg, sp->chans[i], pos)), lst);
+
+      snd_unprotect_at(loc);
+      return(lst);
+    }
+  
   ASSERT_CHANNEL(S_sample, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_sample);
   if (!cp) return(XEN_FALSE);
+  pos = to_c_edit_position(cp, pos_n, S_sample, 4);
   if (XEN_BOUND_P(samp_n))
     beg = beg_to_sample(samp_n, S_sample);
   else beg = CURSOR(cp);
 
-  return(C_TO_XEN_DOUBLE(chn_sample(beg,
-				    cp, 
-				    to_c_edit_position(cp, pos_n, S_sample, 4))));
-
+  return(C_TO_XEN_DOUBLE(chn_sample(beg, cp, pos)));
 }
 
 

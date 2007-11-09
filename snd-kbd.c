@@ -543,7 +543,7 @@ void string_to_minibuffer(snd_info *sp, const char *buf)
   else
     {
       clear_minibuffer_prompt(sp);
-      set_minibuffer_string(sp, (char *)buf, true);
+      set_minibuffer_string(sp, (char *)buf, false); /* was true, but that causes bogus expose events of entire graph widget -- perhaps pass this as parameter? */
       sp->minibuffer_on = MINI_REPORT;
     }
 }

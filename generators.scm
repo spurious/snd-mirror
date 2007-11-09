@@ -922,6 +922,126 @@
 
 ;;; --------------------------------------------------------------------------------
 
+;;; n cos scaled by sin(k*pi/(n+1))/sin(pi/(n+1))??
+;;; American Math Monthly 
+
+(def-clm-struct (nsincos
+		 :make-wrapper (lambda (g)
+				 (set! (nsincos-incr g) (hz->radians (nsincos-frequency g)))
+				 (set! (nsincos-n2 g) (/ (+ (nsincos-n g) 1) 2)) ; presumably n is a constant through one run
+				 (set! (nsincos-cosn g) (cos (/ pi (+ (nsincos-n g) 1))))
+				 g))
+  (frequency 0.0) (n 1 :type int) 
+  (angle 0.0) (incr 0.0) (n2 1.0) (cosn 1.0))
+
+(define (nsincos gen fm)
+  (declare (gen nsincos) (fm float))
+  (let* ((x (nsincos-angle gen))
+	 (n2 (nsincos-n2 gen))
+	 (cosn (nsincos-cosn gen))
+	 (num (cos (* n2 x))))
+    (set! (nsincos-angle gen) (+ x fm (nsincos-incr gen)))
+    (/ (* num num)
+       (- (cos x) cosn))))
+
+;;; TODO: needs normalization (doc/test) -- something is also wrong with the sideband amps
+
+#|
+(with-sound (:clipped #f :statistics #t :play #t)
+  (let ((gen (make-nsincos 100.0 3)))
+    (run (lambda () 
+	   (do ((i 0 (1+ i)))
+	       ((= i 20000))
+	     (outa i (nsincos gen 0.0) *output*))))))
+|#
+
+
+
+;;; --------------------------------------------------------------------------------
+
+;;; Dimitrov and Merlo
+
+(def-clm-struct (nkn1cos
+		 :make-wrapper (lambda (g)
+				 (set! (nkn1cos-incr g) (hz->radians (nkn1cos-frequency g)))
+				 g))
+  (frequency 0.0) (n 1 :type int) 
+  (angle 0.0) (incr 0.0))
+
+(define (nkn1cos gen fm)
+  (declare (gen nkn1cos) (fm float))
+  (let* ((x (nkn1cos-angle gen))
+	 (n (nkn1cos-n gen))
+	 (num (- (* (+ n 2) (sin (/ (* n x) 2)))
+		 (* n (sin (/ (* (+ n 2) x) 2)))))
+	 (sx (sin (/ x 2)))
+	 (den (* 4 n (+ n 1) (+ n 2) sx sx sx sx)))
+
+    (set! (nkn1cos-angle gen) (+ x fm (nkn1cos-incr gen)))
+
+    (if (< (abs den) nearly-zero)
+	0.0
+
+	(/ (* 3 num num)
+	   den))))
+
+;;; needs normalization and no DC.   side amps seem close
+;;; PERHAPS: doc/test the nkn cases
+
+
+#|
+(with-sound (:clipped #f :statistics #t :play #f)
+  (let ((gen (make-nkn1cos 100.0 3)))
+    (run (lambda () 
+	   (do ((i 0 (1+ i)))
+	       ((= i 20000))
+	     (outa i (nkn1cos gen 0.0) *output*))))))
+|#
+
+
+
+;;; --------------------------------------------------------------------------------
+
+;;; Dimitrov and Merlo
+
+(def-clm-struct (nkn3cos
+		 :make-wrapper (lambda (g)
+				 (set! (nkn3cos-incr g) (hz->radians (nkn3cos-frequency g)))
+				 g))
+  (frequency 0.0) (n 1 :type int) 
+  (angle 0.0) (incr 0.0))
+
+(define (nkn3cos gen fm)
+  (declare (gen nkn3cos) (fm float))
+  (let* ((x (nkn3cos-angle gen))
+	 (n (nkn3cos-n gen))
+	 (sx (sin (/ x 2)))
+	 (den (* (+ (* 4 n) 2) sx sx)))
+
+    (set! (nkn3cos-angle gen) (+ x fm (nkn3cos-incr gen)))
+
+    (if (< (abs den) nearly-zero)
+	n
+
+	(/ (- 2 (cos (* n x)) (cos (* (+ n 1) x)))
+	   den))))
+
+;;; needs normalization and no DC, peak at den=0 not right.   side amps seem close
+
+
+#|
+(with-sound (:clipped #f :statistics #t :play #f)
+  (let ((gen (make-nkn3cos 100.0 3)))
+    (run (lambda () 
+	   (do ((i 0 (1+ i)))
+	       ((= i 20000))
+	     (outa i (nkn3cos gen 0.0) *output*))))))
+|#
+
+
+
+;;; --------------------------------------------------------------------------------
+
 ;;; inf sinusoids scaled by r: rcos, rssb
 
 (def-clm-struct (rcos

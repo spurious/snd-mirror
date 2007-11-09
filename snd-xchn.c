@@ -152,10 +152,10 @@ static void set_scrollbar(Widget w, Float position, Float range, int scrollbar_m
 }
 
 
-static void gzy_changed(int value, chan_info *cp)
+static void change_gzy_1(Float val, chan_info *cp)
 {
   Float chan_frac, new_gsy, new_size;
-  cp->gzy = get_scrollbar(channel_gzy(cp), value, SCROLLBAR_MAX);
+  cp->gzy = val;
   chan_frac = 1.0 / ((Float)(((snd_info *)(cp->sound))->nchans));
   new_size = chan_frac + ((1.0 - chan_frac) * cp->gzy);
   if ((cp->gsy + new_size) > 1.0) 
@@ -163,7 +163,20 @@ static void gzy_changed(int value, chan_info *cp)
   else new_gsy = cp->gsy;
   if (new_gsy < 0.0) new_gsy = 0.0;
   set_scrollbar(channel_gsy(cp), new_gsy, new_size, SCROLLBAR_MAX);
+}
+
+
+static void gzy_changed(int value, chan_info *cp)
+{
+  change_gzy_1(get_scrollbar(channel_gzy(cp), value, SCROLLBAR_MAX), cp);
   for_each_sound_chan(cp->sound, update_graph_or_warn);
+}
+
+
+void change_gzy(Float val, chan_info *cp)
+{
+  change_gzy_1(val, cp);
+  set_scrollbar(channel_gzy(cp), val, 1.0 / (Float)(cp->sound->nchans), SCROLLBAR_MAX);
 }
 
 
@@ -209,15 +222,20 @@ void initialize_scrollbars(chan_info *cp)
 {
   axis_info *ap;
   snd_info *sp;
+
   ap = cp->axis;
   sp = cp->sound;
+
   set_scrollbar(channel_sx(cp), ap->sx, ap->zx, SCROLLBAR_SX_MAX);
   set_scrollbar(channel_sy(cp), ap->sy, ap->zy, SCROLLBAR_MAX);
   set_z_scrollbars(cp, ap);
-  if ((sp->nchans > 1) && (cp->chan == 0) && (channel_gsy(cp)))
+
+  if ((sp->nchans > 1) && 
+      (cp->chan == 0) && 
+      (channel_gsy(cp)))
     {
-      set_scrollbar(channel_gsy(cp), cp->gsy, cp->gzy, SCROLLBAR_MAX);
-      set_scrollbar(channel_gzy(cp), cp->gzy, 1.0 / (Float)(sp->nchans), SCROLLBAR_MAX);
+      set_scrollbar(channel_gsy(cp), 1.0, 1.0, SCROLLBAR_MAX);
+      set_scrollbar(channel_gzy(cp), 1.0, 1.0 / (Float)(sp->nchans), SCROLLBAR_MAX);
     }
 }
 

@@ -211,13 +211,13 @@ static int sg_font_height(PangoFontDescription *font)
 }
 
 
-static PangoFontDescription *last_tiny_font = NULL, *last_numbers_font = NULL, *last_label_font = NULL;
-static int last_numbers_height = 14, last_tiny_height = 10, last_label_height = 14;
+static PangoFontDescription *last_tiny_font = NULL, *last_numbers_font = NULL, *last_label_font = NULL, *last_peaks_font = NULL;
+static int last_numbers_height = 14, last_tiny_height = 10, last_label_height = 14, last_peaks_height = 10;
 
-int number_height(bool use_tiny_font)
+int number_height(PangoFontDescription *font)
 {
   int hgt = 14;
-  if (use_tiny_font)
+  if (font == TINY_FONT(ss))
     {
       if (last_tiny_font == TINY_FONT(ss))
 	return(last_tiny_height);
@@ -227,11 +227,22 @@ int number_height(bool use_tiny_font)
     }
   else
     {
-      if (last_numbers_font == AXIS_NUMBERS_FONT(ss))
-	return(last_numbers_height);
-      hgt = sg_font_height(AXIS_NUMBERS_FONT(ss));
-      last_numbers_font = AXIS_NUMBERS_FONT(ss);
-      last_numbers_height = hgt;
+      if (font == AXIS_NUMBERS_FONT(ss))
+	{
+	  if (last_numbers_font == AXIS_NUMBERS_FONT(ss))
+	    return(last_numbers_height);
+	  hgt = sg_font_height(AXIS_NUMBERS_FONT(ss));
+	  last_numbers_font = AXIS_NUMBERS_FONT(ss);
+	  last_numbers_height = hgt;
+	}
+      else
+	{
+	  if (last_peaks_font == PEAKS_FONT(ss))
+	    return(last_peaks_height);
+	  hgt = sg_font_height(PEAKS_FONT(ss));
+	  last_peaks_font = PEAKS_FONT(ss);
+	  last_peaks_height = hgt;
+	}
     }
   return(hgt);
 }
