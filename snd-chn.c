@@ -1840,8 +1840,6 @@ static char ampstr[LABEL_BUFFER_SIZE];
 #define AMP_ROOM 45
 #define AMP_ROOM_CUTOFF 3.0
 
-/* TODO: verbose cursor in db graph click component gets wrong amp */
-
 static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler, off_t samps, Float samps_per_pixel, bool fft_data, Float fft_scale)
 {
   int num_peaks, row, col, tens, i, acol, acols, row_height = 15;

@@ -2057,9 +2057,11 @@ TODO: from Klapper, Selected Papers on Frequency Modulation, p 156
 &\sum_{n=-\infty}^{\infty} (-1)^{n} J_{2n}(x) J_{2n}(y(\omega + B \cos z)) = J_{0}( \sqrt{x^{2} + y^{2} (\omega + B\cos z)^{2}})
 
 from Askey "Ramanujan and Hypergeometric Series" in Berndt and Rankin "Ramanujan: Essays and Surveys" p283 (the formula was found by Gauss):
-   this is r2k!cos in generators.scm
+   this is r2k!cos in generators.scm [sceq30.png)
 &(1 - 2r \cos \theta + r^{2})^{-k} = \frac{1}{2} {}_{2}F_{1}(k, k; 1; r^{2}) + \sum_{n=1}^{\infty} \frac{(k)_{n}}{n!} r^{n} {}_{2}F_{1}(k, k+n; n+1; r^{2}) \cos n\theta
 
+Montgomery and Vorhauer:
+&\sum_{n=1}^{\infty} \frac{\sin \frac{k \pi}{n+1}}{\sin \frac{\pi}{n+1}} \cos k\theta = \frac{(\cos \frac{1}{2}(n+1)\theta)^{2}}{\cos \theta - \cos \frac{\pi}{n+1}}
 
 -->
 
@@ -5050,6 +5052,17 @@ In the nrssb-interp generator, the "interp" argument interpolates between the up
 
 <p>This generator produces the single side-band version of the sum of "n" sinusoids, where the nth component has amplitude n.
 In the nkssb-interp generator, the "interp" argument interpolates between the upper and lower side bands.
+</p>
+<br>
+
+
+<pre>
+  <A class=def NAME="make-nsincos">make-nsincos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (n 1)
+  <A class=def NAME="nsincos">nsincos</A> gen fm
+  <A class=def NAME="nsincos?">nsincos?</A> gen
+</pre>
+
+<p>This generator produces a sum of n cosines scaled by sin(k*pi/(n+1))/sin(pi/(n+1)).
 </p>
 <br>
 

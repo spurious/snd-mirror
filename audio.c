@@ -25,6 +25,8 @@
    audio.c:7454: warning: 'AudioDeviceAddIOProc' is deprecated (declared at /System/Library/Frameworks/CoreAudio.framework/Headers/AudioHardware.h:2067)
    audio.c: In function 'mus_audio_open_input':
    audio.c:7527: warning: 'AudioDeviceAddIOProc' is deprecated (declared at /System/Library/Frameworks/CoreAudio.framework/Headers/AudioHardware.h:2067)
+
+   I can't find any documentation about this, and Google just returns someone else asking the same question
 */
    
 /*

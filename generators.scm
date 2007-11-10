@@ -922,17 +922,24 @@
 
 ;;; --------------------------------------------------------------------------------
 
-;;; n cos scaled by sin(k*pi/(n+1))/sin(pi/(n+1))??
-;;; American Math Monthly 
+;;; n cos scaled by sin(k*pi/(n+1))/sin(pi/(n+1))
+;;; "Biased Trigonometric Polynomials" Montgomery and Vorhauer
+;;; American Math Monthly vol 114 no 9 NOv 2007
 
 (def-clm-struct (nsincos
 		 :make-wrapper (lambda (g)
-				 (set! (nsincos-incr g) (hz->radians (nsincos-frequency g)))
-				 (set! (nsincos-n2 g) (/ (+ (nsincos-n g) 1) 2)) ; presumably n is a constant through one run
-				 (set! (nsincos-cosn g) (cos (/ pi (+ (nsincos-n g) 1))))
-				 g))
+				 (let ((n (nsincos-n g)))
+				   (set! (nsincos-incr g) (hz->radians (nsincos-frequency g)))
+				   (set! (nsincos-n2 g) (/ (+ n 1) 2))
+				   (set! (nsincos-cosn g) (cos (/ pi (+ n 1))))
+				   (do ((k 1 (1+ k)))
+				       ((> k n))
+				     (set! (nsincos-norm g) (+ (nsincos-norm g) 
+							       (/ (sin (/ (* k pi) (+ n 1))) 
+								  (sin (/ pi (+ n 1)))))))
+				   g)))
   (frequency 0.0) (n 1 :type int) 
-  (angle 0.0) (incr 0.0) (n2 1.0) (cosn 1.0))
+  (angle 0.0) (incr 0.0) (n2 1.0) (cosn 1.0) (norm 0.0))
 
 (define (nsincos gen fm)
   (declare (gen nsincos) (fm float))
@@ -942,12 +949,13 @@
 	 (num (cos (* n2 x))))
     (set! (nsincos-angle gen) (+ x fm (nsincos-incr gen)))
     (/ (* num num)
-       (- (cos x) cosn))))
+       (* (nsincos-norm gen)
+	  (- (cos x) cosn)))))
 
-;;; TODO: needs normalization (doc/test) -- something is also wrong with the sideband amps
+;;; TODO: needs normalization (doc/test)
 
 #|
-(with-sound (:clipped #f :statistics #t :play #t)
+(with-sound (:clipped #f :statistics #t :play #f)
   (let ((gen (make-nsincos 100.0 3)))
     (run (lambda () 
 	   (do ((i 0 (1+ i)))
@@ -958,6 +966,8 @@
 
 
 ;;; --------------------------------------------------------------------------------
+
+;;; not sure the next two are interesting -- 2 more kernels
 
 ;;; Dimitrov and Merlo
 

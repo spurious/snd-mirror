@@ -34,7 +34,7 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
-(define tests 5)
+(define tests 1)
 (define keep-going #f)
 (define all-args #f)
 (define test-at-random 0)
@@ -53232,6 +53232,14 @@ EDITS: 1
 			 (do ((i 0 (1+ i)))
 			     ((= i 10000))
 			   (outa i (rxyk!cos gen 0.0) *output*))))))
+
+	(with-sound (:clipped #f :statistics #t :play #f)
+		    (let ((gen (make-nsincos 100.0 3)))
+		      (run (lambda () 
+			     (do ((i 0 (1+ i)))
+				 ((= i 20000))
+			       (outa i (nsincos gen 0.0) *output*))))))
+
 	
 	(if (provided? 'snd-guile) (begin
 	(let ((g (make-osc329 440.0)) (f 10.0)) 
