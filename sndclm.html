@@ -2055,6 +2055,12 @@ sceq40: 27.8.6 (p1005)
 
 TODO: from Klapper, Selected Papers on Frequency Modulation, p 156
 &\sum_{n=-\infty}^{\infty} (-1)^{n} J_{2n}(x) J_{2n}(y(\omega + B \cos z)) = J_{0}( \sqrt{x^{2} + y^{2} (\omega + B\cos z)^{2}})
+
+from Askey "Ramanujan and Hypergeometric Series" in Berndt and Rankin "Ramanujan: Essays and Surveys" p283 (the formula was found by Gauss):
+   this is r2k!cos in generators.scm
+&(1 - 2r \cos \theta + r^{2})^{-k} = \frac{1}{2} {}_{2}F_{1}(k, k; 1; r^{2}) + \sum_{n=1}^{\infty} \frac{(k)_{n}}{n!} r^{n} {}_{2}F_{1}(k, k+n; n+1; r^{2}) \cos n\theta
+
+
 -->
 
 
@@ -5175,10 +5181,12 @@ This generator's output is not normalized, and looks incorrect...
   <A class=def NAME="r2k!cos?">r2k!cos?</A> gen
 </pre>
 
-<p>This produces a sum of sinusoids scaled by some infinitely complicated formula.
+<p>This produces a sum of sinusoids scaled as follows:
 </p>
 
-<!-- LATEX: &(1-2r\cos \theta + r^{2})^{-k} \\ -->
+<!-- LATEX: sceq30:
+  &(1 - 2r \cos \theta + r^{2})^{-k} = \frac{1}{2} {}_{2}F_{1}(k, k; 1; r^{2}) + \sum_{n=1}^{\infty} \frac{(k)_{n}}{n!} r^{n} {}_{2}F_{1}(k, k+n; n+1; r^{2}) \cos n\theta
+-->
 
 <img src="sceq30.png" alt="sum of sines" hspace=40>
 <br>

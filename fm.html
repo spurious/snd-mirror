@@ -71,8 +71,8 @@ fmeq3:
 to go from FM to PM, integrate the FM modulating signal.
 But you can't tell which is in use 
 from the output waveform; you have to know 
-what the modulating signal is.  In our context (sound synthesis), we can do what we want with the modulating signal,
-so there is no essential difference between frequency and phase modulation. 
+what the modulating signal is.  In sound synthesis, where we can do what we want with the modulating signal,
+there is no essential difference between frequency and phase modulation. 
 </p>
 
 <table border=1 hspace=50 cellpadding=14><tr><td>
@@ -2018,7 +2018,127 @@ smeared out by a copy of the noise band:
 <p>You may have noticed that this is one case where phase modulation is different from FM.  Previously,
 we could fix up each modulating sinusoid (both in amplitude and initial phase), but here we have no such
 handles on the components of the incoming signal.  If someone insists, we can still match outputs by
-integrating the modulating signal ourselves.
+integrating the modulating signal: 
+FM(white-noise) = PM(brownian-noise).  Similarly,
+FM(square-wave) = PM(triangle-wave), 
+FM(nxy1sin) = PM(square-wave), and
+FM(e^x) = PM(e^x).  FM(square-wave) is <img src="fmeq58.png" alt="fm(noise)" align=absmiddle>.
+</p>
+
+<!-- LATEX fmeq58:  (Klapper p102)
+  &\sum_{n=-\infty}^{\infty} \frac{2B}{\pi(B^{2}-n^{2})} \sin(\frac{\pi}{2} (B-n)) \sin (\omega_{c}+n\omega_{m})t
+-->
+
+
+<!--
+;; FM(sq)=PM(tri):
+(define* (fmpmsq beg dur freq amp :optional (mc-ratio 1) (index 1.0) (phase (* 0.5 pi)))
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+	 (fm-carrier (make-oscil freq))
+	 (pm-carrier (make-oscil freq))
+	 (fm-modulator (make-square-wave (* freq mc-ratio) 2.0 phase))
+	 (pm-modulator (make-triangle-wave (* freq mc-ratio) (* 0.5 pi)))
+	 (fm-index (hz->radians (* index freq mc-ratio)))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur))
+	 (sqsum 0.0))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (let ((vol (env ampf))
+	       (sq (* fm-index (- (square-wave fm-modulator) 1.0)))
+               (tri (* index (triangle-wave pm-modulator))))
+	   (outa i (* vol (oscil fm-carrier sq)) *output*)
+	   (outb i (* vol (oscil pm-carrier 0.0 tri)) *output*)
+           (outc i sqsum *output*)
+           (outd i tri *output*)
+           (set! sqsum (+ sqsum sq))))))))
+
+(with-sound (:clipped #f :statistics #t :channels 4) (fmpmsq 0 1 1000 .5 .1 1 (+ (* 0.5 pi) .005)))
+;; almost a match -- the pi/2 triangle amp is to take into account the square wave's internal table size (2 pi)
+;;   there is a drift in sqsum that eventually turns around -- raise srate to 441000 and it goes away
+
+
+;; FM(e^x)=PM(e^x):
+(define* (fmpmex beg dur freq amp)
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+	 (fm-carrier (make-oscil freq))
+	 (pm-carrier (make-oscil freq))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur))
+	 (sumex 0.0))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))
+            (x 0.0 (+ x .0001)))
+	   ((= i end))
+	 (let ((vol (env ampf))
+               (ex (exp x)))
+	   (outa i (* vol (oscil fm-carrier (* .0001 ex))) *output*) ; sampled ex...
+	   (outb i (* vol (oscil pm-carrier 0.0 ex)) *output*)
+	   (outc i ex *output*)
+	   (outd i sumex *output*)
+	   (set! sumex (+ sumex (* .0001 ex)))))))))
+
+(with-sound (:clipped #f :statistics #t :channels 4) (fmpmex 0 1 1000 .5))
+
+
+;; FM(white)=PM(brown):
+(define* (fmpmran beg dur freq amp :optional (index 1.0))
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+	 (fm-carrier (make-oscil freq))
+	 (pm-carrier (make-oscil freq))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur))
+	 (sumex 0.0)
+	 (fm-index (hz->radians (* index freq))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))
+            (x 0.0 (+ x .0001)))
+	   ((= i end))
+	 (let ((vol (env ampf))
+               (ex (- (random 2.0) 1.0)))
+	   (outa i (* vol (oscil fm-carrier (* fm-index ex))) *output*)
+	   (outb i (* vol (oscil pm-carrier 0.0 (* index sumex))) *output*)
+	   (outc i ex *output*)
+	   (outd i sumex *output*)
+	   (set! sumex (+ sumex (* fm-index ex)))))))))
+
+(with-sound (:clipped #f :statistics #t :channels 4) (fmpmran 0 1 1000 .5 1))
+
+;; FM(odd-sines-alternating-sign) = PM(sq)
+(define* (fmpmodd beg dur freq amp :optional (mc-ratio 1) (index 1.0) (phase (* 0.5 pi)))
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+	 (fm-carrier (make-oscil freq))
+	 (pm-carrier (make-oscil freq))
+	 (fm-modulator (make-nxy1sin (* freq mc-ratio) (* 2 freq mc-ratio) 100))
+	 (pm-modulator (make-square-wave (* freq mc-ratio) 1.0 phase))
+	 (fm-index (hz->radians (* index freq mc-ratio)))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur))
+	 (sqsum 0.0))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (let ((vol (env ampf))
+	       (pulse (* index (nxy1sin fm-modulator 0.0)))
+               (sq (* index (square-wave pm-modulator))))
+	   (outa i (* vol (oscil fm-carrier pulse)) *output*)
+	   (outb i (* vol (oscil pm-carrier 0.0 sq)) *output*)
+           (outc i sqsum *output*)
+           (outd i sq *output*)
+           (set! sqsum (+ sqsum pulse))))))))
+
+(with-sound (:clipped #f :statistics #t :channels 4) (fmpmodd 0 1 1000 .5 .1 1))
+
+-->
+
+</p>
+
+<p>
 In the realm of "anything" as the modulating signal, consider 
 </p>
 
@@ -2369,12 +2489,6 @@ case in Klapper p103 (except there x=1/4)
           it would be nice to have a bess-like applet behind the various graphs
 
 	  more on the JJ->1 stuff and perhaps the JJ->J match
-
-	  give fm of sq? pwm stuff? fm of tri formula?
-
-square wave Klapper p102:
-&\sum_{n=-\infty}^{\infty} \frac{2B}{\pi(B^{2}-n^{2})} \sin(\frac{\pi}{2} (B-n)) \sin (\omega_{c}+n\omega_{m})t
-
 -->
 
 

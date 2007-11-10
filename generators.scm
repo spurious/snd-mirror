@@ -961,23 +961,23 @@
 
 ;;; Dimitrov and Merlo
 
-(def-clm-struct (nkn1cos
+(def-clm-struct (npos1cos
 		 :make-wrapper (lambda (g)
-				 (set! (nkn1cos-incr g) (hz->radians (nkn1cos-frequency g)))
+				 (set! (npos1cos-incr g) (hz->radians (npos1cos-frequency g)))
 				 g))
   (frequency 0.0) (n 1 :type int) 
   (angle 0.0) (incr 0.0))
 
-(define (nkn1cos gen fm)
-  (declare (gen nkn1cos) (fm float))
-  (let* ((x (nkn1cos-angle gen))
-	 (n (nkn1cos-n gen))
+(define (npos1cos gen fm)
+  (declare (gen npos1cos) (fm float))
+  (let* ((x (npos1cos-angle gen))
+	 (n (npos1cos-n gen))
 	 (num (- (* (+ n 2) (sin (/ (* n x) 2)))
 		 (* n (sin (/ (* (+ n 2) x) 2)))))
 	 (sx (sin (/ x 2)))
 	 (den (* 4 n (+ n 1) (+ n 2) sx sx sx sx)))
 
-    (set! (nkn1cos-angle gen) (+ x fm (nkn1cos-incr gen)))
+    (set! (npos1cos-angle gen) (+ x fm (npos1cos-incr gen)))
 
     (if (< (abs den) nearly-zero)
 	0.0
@@ -991,11 +991,11 @@
 
 #|
 (with-sound (:clipped #f :statistics #t :play #f)
-  (let ((gen (make-nkn1cos 100.0 3)))
+  (let ((gen (make-npos1cos 100.0 3)))
     (run (lambda () 
 	   (do ((i 0 (1+ i)))
 	       ((= i 20000))
-	     (outa i (nkn1cos gen 0.0) *output*))))))
+	     (outa i (npos1cos gen 0.0) *output*))))))
 |#
 
 
@@ -1004,21 +1004,21 @@
 
 ;;; Dimitrov and Merlo
 
-(def-clm-struct (nkn3cos
+(def-clm-struct (npos3cos
 		 :make-wrapper (lambda (g)
-				 (set! (nkn3cos-incr g) (hz->radians (nkn3cos-frequency g)))
+				 (set! (npos3cos-incr g) (hz->radians (npos3cos-frequency g)))
 				 g))
   (frequency 0.0) (n 1 :type int) 
   (angle 0.0) (incr 0.0))
 
-(define (nkn3cos gen fm)
-  (declare (gen nkn3cos) (fm float))
-  (let* ((x (nkn3cos-angle gen))
-	 (n (nkn3cos-n gen))
+(define (npos3cos gen fm)
+  (declare (gen npos3cos) (fm float))
+  (let* ((x (npos3cos-angle gen))
+	 (n (npos3cos-n gen))
 	 (sx (sin (/ x 2)))
 	 (den (* (+ (* 4 n) 2) sx sx)))
 
-    (set! (nkn3cos-angle gen) (+ x fm (nkn3cos-incr gen)))
+    (set! (npos3cos-angle gen) (+ x fm (npos3cos-incr gen)))
 
     (if (< (abs den) nearly-zero)
 	n
@@ -1031,11 +1031,11 @@
 
 #|
 (with-sound (:clipped #f :statistics #t :play #f)
-  (let ((gen (make-nkn3cos 100.0 3)))
+  (let ((gen (make-npos3cos 100.0 3)))
     (run (lambda () 
 	   (do ((i 0 (1+ i)))
 	       ((= i 20000))
-	     (outa i (nkn3cos gen 0.0) *output*))))))
+	     (outa i (npos3cos gen 0.0) *output*))))))
 |#
 
 

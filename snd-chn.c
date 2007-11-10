@@ -9,7 +9,7 @@
  */
 
 /* 
- * TODO: keep overall size and return listener to correct place
+ * TODO: keep overall size and return listener to correct place: especially if auto-resize #f, don't set updated graph size to 0!
  */
 
 chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
