@@ -516,6 +516,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+12-Nov:  Open recent item in File menu\n\
 8-Nov:   Snd 9.5.\n\
 4-Nov:   port to mingw thanks to Kjetil.\n\
 2-Nov:   animals.scm.\n\

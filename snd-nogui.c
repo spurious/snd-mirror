@@ -28,6 +28,8 @@ void draw_polygon(axis_context *ax, int points, ...) {}
 void draw_string(axis_context *ax, int x0, int y0, const char *str, int len) {}
 void draw_dot(axis_context *ax, int x, int y, int size) {}
 void save_colors(FILE *Fp) {}
+void lock_all_panes(void) {}
+void unlock_all_panes(void) {}
 void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width, int height) {}
 void setup_axis_context(chan_info *cp, axis_context *ax) {}
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1) {}

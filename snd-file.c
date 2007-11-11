@@ -7,12 +7,6 @@
 #endif
 
 /* SOMEDAY: need a Open Recent entry in File */
-/* TODO: the previous files list in the open dialog omits files included in the invocation line. 
- *       at startup, the open dialog file list doesn't exist, and we don't add current files upon creation,
- *       or save invocation files and whatnot for an eventual open dialog call; but if we want Open Recent,
- *       every close should be added to a (limited-length) list, and we could use that when the previous
- *       files list is created (and remember_filename upon close?)
- */
 
 
 /* -------------------------------- basic file attributes -------------------------------- */
@@ -214,6 +208,42 @@ char **make_filename_list(void)
 {
   return((char **)CALLOC(FILENAME_LIST_SIZE, sizeof(char *)));
 }
+
+
+static char *preloaded_files[FILENAME_LIST_SIZE];
+
+void preload_filenames(char **files)
+{
+  int i;
+  for (i = 0; (i < FILENAME_LIST_SIZE) && (preloaded_files[i]); i++)
+    files[i] = copy_string(preloaded_files[i]);
+}
+
+
+int recent_files_size(void)
+{
+  /* return how many files in the preloaded list are not currently open (for Open Recent menu item) */
+  int i, size = 0;
+  for (i = 0; (i < FILENAME_LIST_SIZE) && (preloaded_files[i]); i++)
+    if ((!(find_sound(preloaded_files[i], 0))) &&
+	(mus_file_probe(preloaded_files[i])))
+      size++;
+  return(size);
+}
+
+
+char **recent_files(void)
+{
+  int i, j = 0;
+  char **new_list;
+  new_list = make_filename_list();
+  for (i = 0; (i < FILENAME_LIST_SIZE) && (preloaded_files[i]); i++)
+    if ((!(find_sound(preloaded_files[i], 0))) &&
+	(mus_file_probe(preloaded_files[i])))
+      new_list[j++] = copy_string(preloaded_files[i]);
+  return(new_list);
+}
+
 
 
 /* -------------------------------- file list positioning -------------------------------- */
@@ -1547,6 +1577,8 @@ void snd_close_file(snd_info *sp)
 	     XEN_LIST_1(C_TO_XEN_INT(sp->index)),
 	     S_close_hook);
 
+  remember_filename(sp->filename, preloaded_files); /* for open dialog(s) previous files list in case dialog doesn't yet exist */
+
   check_for_event(); /* an experiment -- event queue seems to be glomming up when lots of fast open/close */
 
   sp->file_watcher = fam_unmonitor_file(sp->filename, sp->file_watcher);
@@ -2010,6 +2042,8 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   sp->watchers = NULL;       /* don't confuse watchers with a temporary close! */
   sp->watchers_size = 0;
 
+  lock_all_panes();
+
   snd_close_file(sp);
 
   /* no mus_sound_forget here because we may be simply re-interpreting the existing data (set! (data-format) ...) etc */
@@ -2021,6 +2055,9 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   ss->reloading_updated_file = (old_index + 1);
   ss->open_requestor = FROM_UPDATE;
   nsp = snd_open_file(filename, read_only);
+
+  unlock_all_panes();
+
   ss->reloading_updated_file = 0;
   if (old_raw)
     mus_header_set_raw_defaults(old_srate, old_chans, old_format);

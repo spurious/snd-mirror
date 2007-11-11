@@ -85,6 +85,8 @@ color_t get_in_between_color(color_t fg, color_t bg);
 void snd_doit(int argc, char **argv);
 void auto_update_restart(void);
 void save_colors(FILE *Fp);
+void lock_all_panes(void);
+void unlock_all_panes(void);
 
 
 /* -------- snd-xfft.c -------- */

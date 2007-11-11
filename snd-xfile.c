@@ -139,8 +139,16 @@ static void file_text_item_activate_callback(Widget w, XtPointer context, XtPoin
 {
   file_popup_info *fd = (file_popup_info *)context;
   char *filename;
+  snd_info *sp;
   filename = get_label(w);
   XmTextFieldSetString(FSB_BOX(fd->dialog, XmDIALOG_TEXT), filename);
+
+  ss->open_requestor = FROM_OPEN_DIALOG_POPUP; /* TODO: gtk side of open list */
+  ss->open_requestor_data = NULL;
+  sp = snd_open_file(filename, false);
+  if (sp) select_channel(sp, 0);
+
+  XtUnmanageChild(fd->dialog);
   if (filename) XtFree(filename);
 }
 
@@ -193,11 +201,12 @@ static void file_text_popup_callback(Widget w, XtPointer context, XtPointer info
 	    (XtIsManaged(fd->file_text_items[i])))
 	  XtUnmanageChild(fd->file_text_items[i]);
       XtFree(current_filename);
-      /*
+
+      /* why was this commented out? */
       if (filenames_to_display == 0)
 	set_label(fd->file_text_popup_label, "no " FILE_TEXT_POPUP_LABEL);
       else set_label(fd->file_text_popup_label, FILE_TEXT_POPUP_LABEL);
-      */
+
       cb->menuToPost = fd->file_text_popup;
     }
 }
@@ -1557,6 +1566,9 @@ widget_t make_open_file_dialog(bool read_only, bool managed)
       XmString cancel_label;
       odat = make_file_dialog(read_only, title, select_title, file_open_ok_callback, open_file_help_callback);
       set_dialog_widget(FILE_OPEN_DIALOG, odat->dialog);
+
+      /* now preload last n files opened before this point */
+      preload_filenames(odat->fpop->file_text_names);
 
       /* add "Mkdir" button */
       {

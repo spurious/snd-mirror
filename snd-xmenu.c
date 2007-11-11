@@ -2,11 +2,111 @@
 #include "snd-menu.h"
 #include <X11/cursorfont.h>
 
+
 void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, label);}
+
 
 /* -------------------------------- FILE MENU -------------------------------- */
 
-static void file_menu_update_1(Widget w, XtPointer info, XtPointer context) {file_menu_update();}
+static Widget *recent_file_items = NULL;
+static int recent_file_items_size = 0;
+
+static void open_recent_file_callback(Widget w, XtPointer context, XtPointer info)
+{
+  char *filename;
+  snd_info *sp;
+  filename = get_label(w);
+  ss->open_requestor = FROM_OPEN_RECENT_MENU;
+  ss->open_requestor_data = NULL;
+  sp = snd_open_file(filename, false);
+  if (sp) select_channel(sp, 0);
+}
+
+
+static void file_open_recent_callback(Widget w, XtPointer info, XtPointer context) 
+{
+  int size;
+  size = recent_files_size();
+  if (size > 0)
+    {
+      int i;
+      char **recent_file_names;
+
+      if (size > recent_file_items_size)
+	{
+	  if (recent_file_items_size == 0)
+	    recent_file_items = (Widget *)CALLOC(size, sizeof(Widget));
+	  else
+	    {
+	      recent_file_items = (Widget *)REALLOC(recent_file_items, size * sizeof(Widget));
+	      for (i = recent_file_items_size; i < size; i++)
+		recent_file_items[i] = NULL;
+	    }
+	  recent_file_items_size = size;
+	}
+
+      recent_file_names = recent_files();
+
+      for (i = 0; i < size; i++)
+	{
+	  if (recent_file_items[i] == NULL)
+	    {
+	      int n = 0;
+	      Arg args[6];
+	      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+
+	      recent_file_items[i] = XtCreateManagedWidget(recent_file_names[i], xmPushButtonWidgetClass, file_open_recent_menu, args, n);
+	      XtAddCallback(recent_file_items[i], XmNactivateCallback, open_recent_file_callback, NULL); 
+	    }
+	  else
+	    {
+	      set_label(recent_file_items[i], recent_file_names[i]);
+	      XtManageChild(recent_file_items[i]);
+	    }
+	}
+
+      for (i = size; i < recent_file_items_size; i++) /* maybe previous file was deleted */
+	if ((recent_file_items[i]) &&
+	    (XtIsManaged(recent_file_items[i])))
+	  XtUnmanageChild(recent_file_items[i]);
+    }
+}
+
+
+static void make_open_recent_menu(void)
+{
+  int n = 0;
+  Arg args[6];
+  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNpositionIndex, 1); n++;  /* just after "Open" menu */
+  
+  file_open_recent_menu = XmCreatePulldownMenu(file_menu, "open-recent", args, n);
+	  
+  XtSetArg(args[n], XmNsubMenuId, file_open_recent_menu); n++;
+
+  file_open_recent_cascade_menu = XtCreateManagedWidget(_("Open recent"), xmCascadeButtonWidgetClass, file_menu, args, n);
+  XtAddCallback(file_open_recent_cascade_menu, XmNcascadingCallback, file_open_recent_callback, NULL);
+}
+
+
+static void file_menu_update_1(Widget w, XtPointer info, XtPointer context) 
+{
+  if (recent_files_size() > 0)
+    {
+      if (file_open_recent_menu == NULL)
+	make_open_recent_menu();
+      else set_sensitive(file_open_recent_cascade_menu, true);
+    }
+  else
+    {
+      if (file_open_recent_menu)
+	set_sensitive(file_open_recent_cascade_menu, false);
+    }
+    
+  file_menu_update();
+}
+
+
 static void file_open_callback(Widget w, XtPointer info, XtPointer context) {make_open_file_dialog(false, true);}
 static void file_view_callback(Widget w, XtPointer info, XtPointer context) {make_open_file_dialog(true, true);}
 static void file_new_callback(Widget w, XtPointer info, XtPointer context) {make_new_file_dialog(true);}
@@ -962,11 +1062,14 @@ Widget g_add_to_menu(int which_menu, const char *label, int callb, int position)
   if (label)
     {
       /* look for currently unused widget first */
+      /*   but close-all and open-recent should be left alone! */
       CompositeWidget cw = (CompositeWidget)menw;
       for (i = 0; i < cw->composite.num_children; i++)
 	{
 	  m = cw->composite.children[i];
-	  if ((m) && (!(XtIsManaged(m))))
+	  if ((m) && 
+	      (!(XtIsManaged(m))) &&
+	      (m != file_close_all_menu))
 	    {
 	      if (!(snd_strcmp(XtName(m), label)))
 		{

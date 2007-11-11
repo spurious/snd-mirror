@@ -564,6 +564,7 @@ static void force_directory_reread(fsb *fs)
   gtk_adjustment_set_value(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)), scroller_position);
 }
 
+
 /* ---------------- popups ---------------- */
 
 /* file popup */
@@ -588,15 +589,19 @@ static void file_text_item_activate_callback(GtkWidget *w, gpointer context)
   for (i = 0; i < fs->current_files->len; i++)
     if (snd_strcmp(current_filename, fs->current_files->files[i]->full_filename))
       {
+	snd_info *sp;
 	slist_select(fs->file_list, i);        /* doesn't call select callback, but I think we want it in this case */
 	if (fs->file_list->select_callback)
 	  (*(fs->file_list->select_callback))((const char *)(fs->current_files->files[i]->filename),
 					      i,
 					      fs->file_list->select_callback_data);
+	sp = snd_open_file(current_filename, false);
+	if (sp) select_channel(sp, 0);
 	break;
       }
   FREE(current_filename);
 }
+
 
 static void reflect_file_in_popup(fsb *fs)
 {
@@ -1567,17 +1572,20 @@ static void file_open_dialog_mkdir(GtkWidget *w, gpointer context)
 widget_t make_open_file_dialog(bool read_only, bool managed)
 {
   if (!odat)
-    odat = make_file_dialog(read_only, 
-			    (char *)((read_only) ? _("View") : _("Open")), 
-			    (char *)((read_only) ? _("view:") : _("open:")),
-			    NULL,
-			    FILE_OPEN_DIALOG,
-			    (GtkSignalFunc)file_open_dialog_ok,	
-			    (GtkSignalFunc)file_open_dialog_mkdir,
-			    (GtkSignalFunc)file_open_dialog_delete,
-			    (GtkSignalFunc)file_open_dialog_dismiss,
-			    (GtkSignalFunc)file_open_dialog_help,
-			    GTK_STOCK_OPEN);
+    {
+      odat = make_file_dialog(read_only, 
+			      (char *)((read_only) ? _("View") : _("Open")), 
+			      (char *)((read_only) ? _("view:") : _("open:")),
+			      NULL,
+			      FILE_OPEN_DIALOG,
+			      (GtkSignalFunc)file_open_dialog_ok,	
+			      (GtkSignalFunc)file_open_dialog_mkdir,
+			      (GtkSignalFunc)file_open_dialog_delete,
+			      (GtkSignalFunc)file_open_dialog_dismiss,
+			      (GtkSignalFunc)file_open_dialog_help,
+			      GTK_STOCK_OPEN);
+      preload_filenames(odat->fs->file_text_names);
+    }
   else
     {
       if (read_only != odat->file_dialog_read_only)

@@ -10,6 +10,7 @@ void set_menu_label(GtkWidget *w, const char *label) {if (w) set_button_label(w,
 
 static void file_menu_update_1(GtkWidget *w, gpointer info) {file_menu_update();}
 static void file_open_callback(GtkWidget *w, gpointer info) {make_open_file_dialog(false, true);}
+static void file_open_recent_callback(GtkWidget *w, gpointer info) {}
 static void file_view_callback(GtkWidget *w, gpointer info) {make_open_file_dialog(true, true);}
 static void file_new_callback(GtkWidget *w, gpointer info) {make_new_file_dialog(true);}
 static void file_record_callback(GtkWidget *w, gpointer info) {record_file();}
@@ -238,6 +239,15 @@ GtkWidget *add_menu(void)
   gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_open_menu), gtk_image_new_from_stock(GTK_STOCK_OPEN, GTK_ICON_SIZE_MENU));
   gtk_widget_show(file_open_menu);
   SG_SIGNAL_CONNECT(file_open_menu, "activate", file_open_callback, NULL);
+
+
+  file_open_recent_menu = gtk_image_menu_item_new_with_label(_("Open recent"));
+  ml[f_open_recent_menu] = _("Open recent");
+  gtk_menu_shell_append(GTK_MENU_SHELL(file_cascade_menu), file_open_recent_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_open_recent_menu), gtk_image_new_from_stock(GTK_STOCK_OPEN, GTK_ICON_SIZE_MENU));
+  gtk_widget_hide(file_open_recent_menu);
+  SG_SIGNAL_CONNECT(file_open_recent_menu, "activate", file_open_recent_callback, NULL);
+  
 
   file_close_menu = gtk_image_menu_item_new_with_label(_("Close"));
   ml[f_close_menu] = _("Close");

@@ -209,5 +209,6 @@ const char *short_data_format_name(int sndlib_format, const char *filename);
 
 void remember_filename(const char *filename, char **names);
 char **make_filename_list(void);
+void preload_filenames(char **files);
 
 #endif

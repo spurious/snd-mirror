@@ -1411,6 +1411,8 @@ void restore_axes_data(snd_info *sp, void *sa, Float new_duration, bool need_edi
 off_t disk_kspace(const char *filename);
 time_t file_write_date(const char *filename);
 bool link_p(const char *filename);
+int recent_files_size(void);
+char **recent_files(void);
 bool directory_p(const char *filename);
 file_info *make_file_info(const char *fullname, bool read_only, bool selected);
 file_info *free_file_info(file_info *hdr);

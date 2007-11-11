@@ -8,10 +8,6 @@
  *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
  */
 
-/* 
- * TODO: keep overall size and return listener to correct place: especially if auto-resize #f, don't set updated graph size to 0!
- */
-
 chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
 {
   snd_info *sp;

@@ -1097,6 +1097,11 @@ class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n			\
 }
  
 
+/* TODO: gtk case of pane lock, if it makes sense */
+void lock_all_panes(void) {}
+void unlock_all_panes(void) {}
+
+
  void g_init_gxmain(void)
  {
 #if HAVE_EXTENSION_LANGUAGE
