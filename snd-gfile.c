@@ -57,10 +57,12 @@ static char *fsb_filter_text(fsb *fs)
   return((char *)gtk_entry_get_text(GTK_ENTRY(fs->filter_text)));
 }
 
+
 static void fsb_filter_set_text(fsb *fs, const char *filter)
 {
   gtk_entry_set_text(GTK_ENTRY(fs->filter_text), filter);
 }
+
 
 static void fsb_filter_set_text_with_directory(fsb *fs, const char *filter)
 {
@@ -73,10 +75,12 @@ static void fsb_filter_set_text_with_directory(fsb *fs, const char *filter)
   FREE(name);
 }
 
+
 static char *fsb_file_text(fsb *fs)
 {
   return((char *)gtk_entry_get_text(GTK_ENTRY(fs->file_text)));
 }
+
 
 static void fsb_file_set_text(fsb *fs, const char *file)
 {
@@ -84,6 +88,7 @@ static void fsb_file_set_text(fsb *fs, const char *file)
   fs->file_name = copy_string(file);
   gtk_entry_set_text(GTK_ENTRY(fs->file_text), fs->file_name);
 }
+
 
 #if HAVE_FAM
 static void force_directory_reread(fsb *fs);
@@ -216,6 +221,7 @@ static void fsb_update_lists(fsb *fs)
 #endif
 }
 
+
 static void fsb_directory_select_callback(const char *dir_name, int row, void *data)
 {
   fsb *fs = (fsb *)data;
@@ -264,6 +270,7 @@ static void fsb_directory_select_callback(const char *dir_name, int row, void *d
 
 }
 
+
 static char *fsb_fullname(fsb *fs, const char *filename)
 {
   if (filename)
@@ -279,6 +286,7 @@ static char *fsb_fullname(fsb *fs, const char *filename)
     }
   return(NULL);
 }
+
 
 static void fsb_file_select_callback(const char *file_name, int row, void *data)
 {
@@ -302,10 +310,12 @@ static void fsb_file_select_callback(const char *file_name, int row, void *data)
     }
 }
 
+
 static char *fsb_selected_file(fsb *fs)
 {
   return(fsb_fullname(fs, slist_selection(fs->file_list)));
 }
+
 
 static void fsb_filter_activate(GtkWidget *w, gpointer context) 
 {
@@ -321,6 +331,7 @@ static void fsb_filter_activate(GtkWidget *w, gpointer context)
     }
 }
 
+
 static void fsb_file_activate(GtkWidget *w, gpointer context) 
 {
   fsb *fs = (fsb *)context;
@@ -334,17 +345,22 @@ static void fsb_file_activate(GtkWidget *w, gpointer context)
     }
 }
 
+
 static void reflect_file_in_popup(fsb *fs);
+
 static void fsb_files_popup_activate_callback(GtkWidget *w, gpointer context)
 {
   reflect_file_in_popup((fsb *)context);
 }
 
+
 static void reflect_filter_in_popup(fsb *fs);
+
 static void fsb_filters_popup_activate_callback(GtkWidget *w, gpointer context)
 {
   reflect_filter_in_popup((fsb *)context);
 }
+
 
 static bool fsb_directory_button_press_callback(GdkEventButton *ev, void *data);
 static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data);
@@ -825,6 +841,7 @@ static GtkWidget *make_file_list_item(fsb *fs, int choice)
   return(w);
 }
 
+
 static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 {
   fsb *fs = (fsb *)data;
@@ -920,6 +937,7 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
   return(false);
 }
 
+
 /* ---------------- just-sounds (file-filters) ---------------- */
 
 static void sort_files_and_redisplay(fsb *fs)
@@ -956,6 +974,7 @@ static void sort_files_and_redisplay(fsb *fs)
   gtk_adjustment_set_value(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)), scroller_position);
 }
 
+
 static void just_sounds_callback(GtkWidget *w, gpointer data)
 {
   fsb *fs = (fsb *)data;
@@ -985,10 +1004,12 @@ static void file_dialog_stop_playing(dialog_play_info *dp)
     }
 }
 
+
 void clear_deleted_snd_info(struct dialog_play_info *dp)
 {
   dp->player = NULL;
 }
+
 
 static void play_selected_callback(GtkWidget *w, gpointer data)
 {
@@ -1023,6 +1044,7 @@ static bool file_is_directory(fsb *fs)
   return((!filename) || (directory_p(filename)));
 }
 
+
 static bool file_is_nonexistent_directory(fsb *fs)
 {
   char *filename = NULL;
@@ -1050,6 +1072,7 @@ static bool file_is_nonexistent_directory(fsb *fs)
   return(false);
 }
 
+
 static void post_sound_info(GtkWidget *info1, GtkWidget *info2, const char *filename, bool with_filename)
 {
   /* filename is known[strongly believed] to be a sound file, etc */
@@ -1074,6 +1097,7 @@ static void post_sound_info(GtkWidget *info1, GtkWidget *info2, const char *file
 
   FREE(buf);
 }
+
 
 /* ---------------- file dialogs ---------------- */
 
@@ -1104,6 +1128,7 @@ static void unpost_file_info(file_dialog_info *fd)
 #endif
 }
 
+
 #if HAVE_FAM
 static void repost_sound_info(file_dialog_info *fd)
 {
@@ -1112,6 +1137,7 @@ static void repost_sound_info(file_dialog_info *fd)
     post_sound_info(fd->info1, fd->info2, fd->info_filename, true);
   else unpost_file_info(fd);
 }
+
 
 static void watch_info_file(struct fam_info *fp, FAMEvent *fe)
 {
@@ -1129,6 +1155,7 @@ static void watch_info_file(struct fam_info *fp, FAMEvent *fe)
     }
 }
 #endif
+
 
 static gboolean filer_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
@@ -1180,6 +1207,7 @@ void alert_new_file(void)
     }
 }
 
+
 void reflect_just_sounds(void)
 {
   if ((odat) && (odat->fs->just_sounds_button))
@@ -1190,12 +1218,14 @@ void reflect_just_sounds(void)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(idat->fs->just_sounds_button), just_sounds(ss));
 }
 
+
 static void dialog_directory_select_callback(const char *dirname, void *context)
 {
   file_dialog_info *fd = (file_dialog_info *)context;
   set_sensitive(fd->fs->ok_button, (!(file_is_directory(fd->fs))));
   unpost_file_info(fd);
 }
+
 
 static void dialog_select_callback(const char *filename, void *context)
 {
@@ -1223,6 +1253,7 @@ static void dialog_select_callback(const char *filename, void *context)
     }
   set_sensitive(fd->fs->ok_button, (!(file_is_directory(fd->fs))));
 }
+
 
 static void open_innards(GtkWidget *vbox, void *data)
 {
@@ -1254,6 +1285,7 @@ static void open_innards(GtkWidget *vbox, void *data)
   gtk_widget_show(fd->info1);
   gtk_widget_show(fd->info2);
 }
+
 
 static gboolean reflect_text_in_open_button(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
@@ -1302,6 +1334,7 @@ static gboolean reflect_text_in_open_button(GtkWidget *w, GdkEventKey *event, gp
 
   return(false);
 }
+
 
 static file_dialog_info *make_file_dialog(int read_only, const char *title, const char *file_title, const char *ok_title,
 					  snd_dialog_t which_dialog, 
@@ -1378,6 +1411,7 @@ static file_dialog_info *make_file_dialog(int read_only, const char *title, cons
   return(fd);
 }
 
+
 static void file_open_error(const char *error_msg, file_dialog_info *fd)
 {
   info_widget_display(fd->info1, error_msg);
@@ -1388,11 +1422,13 @@ static void file_open_error(const char *error_msg, file_dialog_info *fd)
   info_widget_display(fd->info2, "");
 }
 
+
 static void redirect_file_open_error(const char *error_msg, void *ufd)
 {
   /* called from snd_error, redirecting error handling to the dialog */
   file_open_error(error_msg, (file_dialog_info *)ufd);
 }
+
 
 static void clear_file_error_label(file_dialog_info *fd)
 {
@@ -1406,6 +1442,7 @@ static void clear_file_error_label(file_dialog_info *fd)
     }
 #endif
 }
+
 
 /* key press event here, not key release -- the latter is triggered by the <return> release
  *   that triggered the error, so our error is immediately erased
@@ -1421,6 +1458,7 @@ static void clear_open_handlers(fsb *fs)
     }
 }
 
+
 static gboolean open_modify_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   file_dialog_info *fd = (file_dialog_info *)data;  
@@ -1429,11 +1467,13 @@ static gboolean open_modify_key_press(GtkWidget *w, GdkEventKey *event, gpointer
   return(false);
 }
 
+
 static void clear_error_if_open_changes(fsb *fs, file_dialog_info *fd)
 {
   if (!key_press_handler_id)
     key_press_handler_id = SG_SIGNAL_CONNECT(fs->file_text, "key_press_event", open_modify_key_press, (void *)fd);
 }
+
 
 #if HAVE_FAM
 static void unpost_unsound_error(struct fam_info *fp, FAMEvent *fe)
@@ -1455,6 +1495,7 @@ static void unpost_unsound_error(struct fam_info *fp, FAMEvent *fe)
     }
 }
 
+
 static void start_unsound_watcher(file_dialog_info *fd, const char *filename)
 {
   if (fd->unsound_directory_watcher)
@@ -1470,6 +1511,7 @@ static void start_unsound_watcher(file_dialog_info *fd, const char *filename)
 #else
 static void start_unsound_watcher(file_dialog_info *fd, const char *filename) {}
 #endif
+
 
 static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 {
@@ -1521,6 +1563,7 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
     }
 }
 
+
 static void file_open_dialog_dismiss(GtkWidget *w, gpointer context)
 {
   file_dialog_info *fd = (file_dialog_info *)context;
@@ -1528,10 +1571,12 @@ static void file_open_dialog_dismiss(GtkWidget *w, gpointer context)
   gtk_widget_hide(fd->fs->dialog);
 }
 
+
 static void file_open_dialog_help(GtkWidget *w, gpointer context)
 {
   open_file_dialog_help();
 }
+
 
 static gint file_open_dialog_delete(GtkWidget *w, GdkEvent *event, gpointer context)
 {
@@ -1540,6 +1585,7 @@ static gint file_open_dialog_delete(GtkWidget *w, GdkEvent *event, gpointer cont
   gtk_widget_hide(fd->fs->dialog);
   return(true);
 }
+
 
 static void file_open_dialog_mkdir(GtkWidget *w, gpointer context)
 {
@@ -1568,6 +1614,7 @@ static void file_open_dialog_mkdir(GtkWidget *w, gpointer context)
       set_sensitive(w, false);
     }
 }
+
 
 widget_t make_open_file_dialog(bool read_only, bool managed)
 {
@@ -1604,6 +1651,7 @@ widget_t make_open_file_dialog(bool read_only, bool managed)
   return(odat->fs->dialog);
 }
 
+
 /* -------- mix file dialog -------- */
 
 static void file_mix_cancel_callback(GtkWidget *w, gpointer context)
@@ -1612,10 +1660,12 @@ static void file_mix_cancel_callback(GtkWidget *w, gpointer context)
   gtk_widget_hide(mdat->fs->dialog);
 }
 
+
 static void file_mix_help_callback(GtkWidget *w, gpointer context)
 {
   mix_file_dialog_help();
 }
+
 
 static gint file_mix_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
@@ -1623,6 +1673,7 @@ static gint file_mix_delete_callback(GtkWidget *w, GdkEvent *event, gpointer con
   gtk_widget_hide(mdat->fs->dialog);
   return(true);
 }
+
 
 static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 {
@@ -1672,6 +1723,7 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
     }
 }
 
+
 widget_t make_mix_file_dialog(bool managed)
 {
   if (mdat == NULL)
@@ -1705,10 +1757,12 @@ static void file_insert_cancel_callback(GtkWidget *w, gpointer context)
   gtk_widget_hide(idat->fs->dialog);
 }
 
+
 static void file_insert_help_callback(GtkWidget *w, gpointer context)
 {
   insert_file_dialog_help();
 }
+
 
 static gint file_insert_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
@@ -1716,6 +1770,7 @@ static gint file_insert_delete_callback(GtkWidget *w, GdkEvent *event, gpointer 
   gtk_widget_hide(idat->fs->dialog);
   return(true);
 }
+
 
 static void file_insert_ok_callback(GtkWidget *w, gpointer context)
 {
@@ -1768,6 +1823,7 @@ static void file_insert_ok_callback(GtkWidget *w, gpointer context)
 	}
     }
 }
+
   
 widget_t make_insert_file_dialog(bool managed)
 {
@@ -1888,6 +1944,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
   return(NULL);
 }
 
+
 #define IGNORE_DATA_LOCATION -1
 #define IGNORE_SAMPLES -1
 #define IGNORE_CHANS -1
@@ -1987,6 +2044,7 @@ static void reflect_file_data_panel_change(file_data *fd, void *data, void (*cha
     }
 }
 
+
 static void unreflect_file_data_panel_change(file_data *fd, void *data, void (*change_action)(GtkWidget *w, gpointer context))
 {
   int i;
@@ -2008,6 +2066,7 @@ static void unreflect_file_data_panel_change(file_data *fd, void *data, void (*c
   for (i = 0; i < NUM_REFLECTION_IDS; i++) fd->reflection_ids[i] = 0;
 }
 
+
 /* -------- panel error handling -------- */
 
 /* if an error occurs, a callback is added to the offending text widget, and an error is
@@ -2020,16 +2079,19 @@ static void clear_dialog_error(file_data *fd)
   gtk_widget_hide(fd->error_text);
 }
 
+
 static void show_dialog_error(file_data *fd)
 {
   gtk_widget_show(fd->error_text);
 }
+
 
 static void post_file_dialog_error(const char *error_msg, file_data *fd)
 {
   gtk_entry_set_text(GTK_ENTRY(fd->error_text), (gchar *)error_msg);
   show_dialog_error(fd);
 }
+
 
 static void redirect_post_file_dialog_error(const char *error_msg, void *ufd)
 {
@@ -2051,6 +2113,7 @@ static void clear_filename_handlers(fsb *fs)
     }
 }
 
+
 static gulong chans_key_press_handler_id = 0;
 
 static gboolean chans_key_press_callback(GtkWidget *w, GdkEventKey *event, gpointer data)
@@ -2065,12 +2128,14 @@ static gboolean chans_key_press_callback(GtkWidget *w, GdkEventKey *event, gpoin
   return(false);
 }
 
+
 static void clear_error_if_chans_changes(GtkWidget *dialog, void *data)
 {
   file_data *fd = (file_data *)data;
   if (fd->chans_text) 
     chans_key_press_handler_id = SG_SIGNAL_CONNECT(fd->chans_text, "key_press_event", chans_key_press_callback, data);
 }
+
 
 static gulong panel_modify_handler_id = 0;
 
@@ -2086,6 +2151,7 @@ static gboolean panel_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer
   return(false);
 }
 
+
 static void clear_error_if_panel_changes(GtkWidget *dialog, file_data *fd)
 {
   GtkWidget *baddy;
@@ -2100,11 +2166,13 @@ static void clear_error_if_panel_changes(GtkWidget *dialog, file_data *fd)
     panel_modify_handler_id = SG_SIGNAL_CONNECT(baddy, "key_press_event", panel_modify_callback, (void *)fd);
 }
 
+
 static void post_file_panel_error(const char *error_msg, file_data *fd)
 {
   fd->error_widget = fd->scanf_widget;
   post_file_dialog_error(error_msg, fd);
 }
+
 
 static void redirect_post_file_panel_error(const char *error_msg, void *ufd)
 {
@@ -2129,11 +2197,13 @@ static void update_header_type_list(const char *name, int row, void *data)
     }
 }
 
+
 static void update_data_format_list(const char *name, int row, void *data)
 {
   file_data *fd = (file_data *)data;
   fd->current_format = position_to_format(fd->current_type, row);
 }
+
 
 static void c1_callback(GtkWidget *w, gpointer context) 
 {
@@ -2142,12 +2212,14 @@ static void c1_callback(GtkWidget *w, gpointer context)
     gtk_entry_set_text(GTK_ENTRY(fd->chans_text), "1");
 }
 
+
 static void c2_callback(GtkWidget *w, gpointer context) 
 {
   file_data *fd = (file_data *)context;
   if (fd->chans_text)
     gtk_entry_set_text(GTK_ENTRY(fd->chans_text), "2");
 }
+
 
 static void c3_callback(GtkWidget *w, gpointer context) 
 {
@@ -2156,6 +2228,7 @@ static void c3_callback(GtkWidget *w, gpointer context)
     gtk_entry_set_text(GTK_ENTRY(fd->chans_text), (fd->extracting) ? "3" : "4");
 }
 
+
 static void c4_callback(GtkWidget *w, gpointer context) 
 {
   file_data *fd = (file_data *)context;
@@ -2163,12 +2236,14 @@ static void c4_callback(GtkWidget *w, gpointer context)
     gtk_entry_set_text(GTK_ENTRY(fd->chans_text), (fd->extracting) ? "4" : "8");
 }
 
+
 static void srate_drop(GtkWidget *w, gpointer context) 
 {
   file_data *fd = (file_data *)context;
   if (fd->srate_text)
     gtk_entry_set_text(GTK_ENTRY(fd->srate_text), srate_list_to_string(get_user_int_data(G_OBJECT(w))));
 }
+
 
 static void add_srate_menu(file_data *fd, char *srate_name)
 {
@@ -2195,6 +2270,7 @@ static void add_srate_menu(file_data *fd, char *srate_name)
   fd->srates[fd->num_srates++] = sr;
 }
 
+
 static void make_srate_menu(GtkWidget *w, gpointer context) 
 {
   file_data *fd = (file_data *)context;
@@ -2207,6 +2283,7 @@ static void make_srate_menu(GtkWidget *w, gpointer context)
 	add_srate_menu(fd, cur_srates->values[i]);
     }
 }
+
 
 file_data *make_file_data_panel(GtkWidget *parent, const char *name, 
 				dialog_channels_t with_chan, 
@@ -2413,10 +2490,12 @@ static gboolean filename_modify_key_press(GtkWidget *w, GdkEventKey *event, gpoi
   return(false);
 }
 
+
 static void clear_error_if_filename_changes(fsb *fs, save_as_dialog_info *sd)
 {
   key_press_filename_handler_id = SG_SIGNAL_CONNECT(fs->file_text, "key_press_event", filename_modify_key_press, (void *)sd);
 }
+
 
 static save_as_dialog_info *new_save_as_dialog_info(save_dialog_t type)
 {
@@ -2427,6 +2506,7 @@ static save_as_dialog_info *new_save_as_dialog_info(save_dialog_t type)
   sd->filename_watcher_id = 0;
   return(sd);
 }
+
 
 static void save_as_selection_watcher(selection_watcher_reason_t reason, void *data)
 {
@@ -2440,6 +2520,7 @@ static void save_as_selection_watcher(selection_watcher_reason_t reason, void *d
     }
 }
 
+
 void reflect_region_in_save_as_dialog(void)
 {
   if ((save_region_as) &&
@@ -2448,6 +2529,7 @@ void reflect_region_in_save_as_dialog(void)
       (region_ok(region_dialog_region())))
     clear_dialog_error(save_region_as->panel_data);
 }
+
 
 static void save_as_undoit(save_as_dialog_info *sd)
 {
@@ -2461,10 +2543,12 @@ static void save_as_undoit(save_as_dialog_info *sd)
   sd->file_watcher = fam_unmonitor_file(sd->filename, sd->file_watcher);
 }
 
+
 static void save_as_filename_modify_callback(GtkWidget *w, gpointer context)
 {
   save_as_undoit((save_as_dialog_info *)context);
 }
+
 
 static void clear_error_if_save_as_filename_changes(GtkWidget *dialog, gpointer data)
 {
@@ -2472,6 +2556,7 @@ static void clear_error_if_save_as_filename_changes(GtkWidget *dialog, gpointer 
   if (sd->fs->file_text)
     sd->filename_watcher_id = SG_SIGNAL_CONNECT(sd->fs->file_text, "changed", save_as_filename_modify_callback, data);
 }
+
 
 static void watch_save_as_file(struct fam_info *fp, FAMEvent *fe)
 {
@@ -2493,6 +2578,7 @@ static void watch_save_as_file(struct fam_info *fp, FAMEvent *fe)
 #endif
 }
 
+
 static void save_as_watch_user_read_only(struct snd_info *sp, sp_watcher_reason_t reason, int loc)
 {
   save_as_dialog_info *sd;
@@ -2500,6 +2586,7 @@ static void save_as_watch_user_read_only(struct snd_info *sp, sp_watcher_reason_
   clear_dialog_error(sd->panel_data);
   remove_sp_watcher(sp, loc);
 }
+
 
 static void save_or_extract(save_as_dialog_info *sd, bool saving)
 {
@@ -2760,15 +2847,18 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   if (comment) FREE(comment);
 }
 
+
 static void save_as_ok_callback(GtkWidget *w, gpointer data)
 { 
   save_or_extract((save_as_dialog_info *)data, true);
 }
 
+
 static void save_as_extract_callback(GtkWidget *w, gpointer data)
 {
   save_or_extract((save_as_dialog_info *)data, false);
 }
+
 
 static void save_as_cancel_callback(GtkWidget *w, gpointer data)
 { 
@@ -2776,10 +2866,12 @@ static void save_as_cancel_callback(GtkWidget *w, gpointer data)
   gtk_widget_hide(sd->fs->dialog);
 } 
 
+
 static void save_as_help_callback(GtkWidget *w, gpointer data)
 {
   save_as_dialog_help();
 }
+
 
 static void save_as_dialog_select_callback(const char *filename, void *data)
 {
@@ -2790,12 +2882,14 @@ static void save_as_dialog_select_callback(const char *filename, void *data)
   if (sd->fs->extract_button) set_sensitive(sd->fs->extract_button, (!(file_is_directory(sd->fs))));
 }
 
+
 static gint save_as_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   save_as_dialog_info *sd = (save_as_dialog_info *)context;
   gtk_widget_hide(sd->fs->dialog);
   return(true);
 }
+
 
 static void save_as_mkdir_callback(GtkWidget *w, gpointer context)
 {
@@ -2823,6 +2917,7 @@ static void save_as_mkdir_callback(GtkWidget *w, gpointer context)
       gtk_label_set_text(GTK_LABEL(sd->fs->file_label), str);
     }
 }
+
 
 static void save_as_file_exists_check(GtkWidget *w, gpointer context)
 {
@@ -2853,6 +2948,7 @@ static void save_as_file_exists_check(GtkWidget *w, gpointer context)
   gtk_label_set_text(GTK_LABEL(sd->fs->file_label), msg);
 }
 
+
 static void save_innards(GtkWidget *vbox, void *data)
 {
   save_as_dialog_info *sd = (save_as_dialog_info *)data;
@@ -2866,6 +2962,7 @@ static void save_innards(GtkWidget *vbox, void *data)
 					    WITH_WRITABLE_HEADERS);
 }
 
+
 static gboolean reflect_text_in_save_button(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   fsb *fs = (fsb *)data;
@@ -2874,12 +2971,14 @@ static gboolean reflect_text_in_save_button(GtkWidget *w, GdkEventKey *event, gp
   return(false);
 }
 
+
 static gboolean reflect_text_in_extract_button(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   fsb *fs = (fsb *)data;
   set_sensitive(fs->extract_button, (!(file_is_directory(fs))));
   return(false);
 }
+
 
 static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int header_type, int format_type)
 {
@@ -2945,6 +3044,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
   FREE(file_string);
 }
 
+
 widget_t make_sound_save_as_dialog(bool managed)
 {
   snd_info *sp = NULL;
@@ -2978,6 +3078,7 @@ widget_t make_sound_save_as_dialog(bool managed)
   return(sd->fs->dialog);
 }
 
+
 widget_t make_selection_save_as_dialog(bool managed)
 {
   save_as_dialog_info *sd;
@@ -3004,6 +3105,7 @@ widget_t make_selection_save_as_dialog(bool managed)
   if (managed) gtk_widget_show(sd->fs->dialog);
   return(sd->fs->dialog);
 }
+
 
 widget_t make_region_save_as_dialog(bool managed)
 {
@@ -3034,6 +3136,7 @@ widget_t make_region_save_as_dialog(bool managed)
   if (managed) gtk_widget_show(sd->fs->dialog);
   return(sd->fs->dialog);
 }
+
 
 void save_file_dialog_state(FILE *fd)
 {
@@ -3170,6 +3273,7 @@ static raw_info *new_raw_dialog(void)
   return(raw_infos[loc]);
 }
 
+
 static void raw_data_ok_callback(GtkWidget *w, gpointer context)
 {
   raw_info *rp = (raw_info *)context;
@@ -3254,6 +3358,7 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
     }
 }
 
+
 static void raw_data_cancel_callback(GtkWidget *w, gpointer context)
 {
   raw_info *rp = (raw_info *)context;
@@ -3264,6 +3369,7 @@ static void raw_data_cancel_callback(GtkWidget *w, gpointer context)
     gtk_widget_show(rp->requestor_dialog);
 }
 
+
 static gint raw_data_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context) 
 {
   raw_info *rp = (raw_info *)context;
@@ -3273,6 +3379,7 @@ static gint raw_data_delete_callback(GtkWidget *w, GdkEvent *event, gpointer con
     gtk_widget_show(rp->requestor_dialog);
   return(true);
 }
+
 
 static void raw_data_reset_callback(GtkWidget *w, gpointer context) 
 {
@@ -3287,11 +3394,13 @@ static void raw_data_reset_callback(GtkWidget *w, gpointer context)
   gtk_widget_hide(rp->rdat->error_text);
 }
 
+
 static void raw_data_help_callback(GtkWidget *w, gpointer context) 
 {
   raw_info *rp = (raw_info *)context;
   raw_data_dialog_help(rp->help);
 }
+
 
 static void make_raw_data_dialog(raw_info *rp, const char *filename, const char *title)
 {
@@ -3356,6 +3465,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
   set_dialog_widget(RAW_DATA_DIALOG, rp->dialog);
 }
 
+
 void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected)
 {
   raw_info *rp;
@@ -3403,6 +3513,7 @@ void cleanup_new_file_watcher(void)
   new_file_watcher = fam_unmonitor_file(new_file_filename, new_file_watcher);
 }
 
+
 static gulong new_file_handler_id = 0;
 static gboolean new_filename_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer ignored);
 
@@ -3421,17 +3532,20 @@ static void new_file_undoit(void)
   new_file_watcher = fam_unmonitor_file(new_file_filename, new_file_watcher);
 }
 
+
 static gboolean new_filename_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer ignored)
 {
   new_file_undoit();
   return(false);
 }
 
+
 static void clear_error_if_new_filename_changes(GtkWidget *dialog)
 {
   if (new_file_text)
     new_file_handler_id = SG_SIGNAL_CONNECT(new_file_text, "key_press_event", new_filename_modify_callback, NULL);
 }
+
 
 static void watch_new_file(struct fam_info *fp, FAMEvent *fe)
 {
@@ -3452,6 +3566,7 @@ static void watch_new_file(struct fam_info *fp, FAMEvent *fe)
     }
 #endif
 }
+
 
 static void new_file_ok_callback(GtkWidget *w, gpointer context) 
 {
@@ -3516,6 +3631,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
     }
 }
 
+
 static char *new_file_dialog_filename(int header_type)
 {
   static int new_file_dialog_file_ctr = 1;
@@ -3533,6 +3649,7 @@ static char *new_file_dialog_filename(int header_type)
   mus_snprintf(filename, 64, _("new-%d.%s"), new_file_dialog_file_ctr++, extension);
   return(filename);
 }
+
 
 static void load_new_file_defaults(char *newname)
 {
@@ -3558,10 +3675,12 @@ static void load_new_file_defaults(char *newname)
   if (filename) FREE(filename);
 }
 
+
 static void new_file_cancel_callback(GtkWidget *w, gpointer context)
 {
   gtk_widget_hide(new_file_dialog);
 }
+
 
 static void new_file_reset_callback(GtkWidget *w, gpointer context)
 {
@@ -3572,16 +3691,19 @@ static void new_file_reset_callback(GtkWidget *w, gpointer context)
     new_file_undoit();
 }
 
+
 static gint new_file_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context) 
 {
   gtk_widget_hide(new_file_dialog);
   return(true);
 }
 
+
 static void new_file_help_callback(GtkWidget *w, gpointer context) 
 {
   new_file_dialog_help();
 }
+
 
 widget_t make_new_file_dialog(bool managed)
 {
@@ -3741,6 +3863,7 @@ static edhead_info *new_edhead_dialog(void)
   return(edhead_infos[loc]);
 }
 
+
 void cleanup_edit_header_watcher(void)
 {
   int i;
@@ -3753,6 +3876,7 @@ void cleanup_edit_header_watcher(void)
 	  ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
       }
 }
+
 
 static char *make_header_dialog_title(edhead_info *ep, snd_info *sp)
 {
@@ -3778,10 +3902,12 @@ static char *make_header_dialog_title(edhead_info *ep, snd_info *sp)
   return(str);
 }
 
+
 static void edit_header_help_callback(GtkWidget *w, gpointer context) 
 {
   edit_header_dialog_help();
 }
+
 
 static void edit_header_set_ok_sensitive(GtkWidget *w, gpointer context) 
 {
@@ -3790,6 +3916,7 @@ static void edit_header_set_ok_sensitive(GtkWidget *w, gpointer context)
     gtk_widget_set_sensitive(ep->save_button, true);
   ep->panel_changed = true;
 }
+
 
 static void edit_header_done(edhead_info *ep)
 {
@@ -3800,16 +3927,19 @@ static void edit_header_done(edhead_info *ep)
   ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
 }
 
+
 static void edit_header_cancel_callback(GtkWidget *w, gpointer context) 
 {
   edit_header_done((edhead_info *)context);
 }
+
 
 static gint edit_header_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   edit_header_done((edhead_info *)context);
   return(true);
 }
+
 
 static void edit_header_watch_user_read_only(struct snd_info *sp, sp_watcher_reason_t reason, int loc)
 {
@@ -3841,6 +3971,7 @@ static void edit_header_watch_user_read_only(struct snd_info *sp, sp_watcher_rea
 	}
     }
 }
+
 
 static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
 {
@@ -3891,6 +4022,7 @@ static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
 #endif
 }
 
+
 static void edit_header_ok_callback(GtkWidget *w, gpointer context) 
 {
   edhead_info *ep = (edhead_info *)context;
@@ -3919,6 +4051,7 @@ static void edit_header_ok_callback(GtkWidget *w, gpointer context)
       unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
     }
 }
+
 
 GtkWidget *edit_header(snd_info *sp)
 {
@@ -4019,6 +4152,7 @@ GtkWidget *edit_header(snd_info *sp)
   return(ep->dialog);
 }
 
+
 void save_edit_header_dialog_state(FILE *fd)
 {
   int i;
@@ -4061,6 +4195,7 @@ static gint delete_post_it(GtkWidget *w, GdkEvent *event, gpointer context)
   return(true);
 }
 
+
 static void create_post_it_monolog(void)
 {
   /* create scrollable but not editable text window */
@@ -4087,6 +4222,7 @@ static void create_post_it_monolog(void)
   set_dialog_widget(POST_IT_DIALOG, post_it_dialog);
 }
 
+
 widget_t post_it(const char *subject, const char *str)
 {
   if ((ss == NULL) || (ss->sgx == NULL)) return(NULL);
@@ -4096,6 +4232,7 @@ widget_t post_it(const char *subject, const char *str)
   sg_text_insert(post_it_text, (char *)str);
   return(post_it_dialog);
 }
+
 
 void save_post_it_dialog_state(FILE *fd)
 {
@@ -4130,11 +4267,13 @@ static char *vf_row_get_label(void *ur)
   return(((view_files_info *)(r->vdat))->full_names[r->pos]);
 }
 
+
 static int vf_row_get_pos(void *ur)
 {
   vf_row *r = (vf_row *)ur;
   return(r->pos);
 }
+
 
 static void mouse_enter_or_leave_label(void *r, int type, XEN hook, const char *caller)
 {
@@ -4154,15 +4293,18 @@ static void mouse_enter_or_leave_label(void *r, int type, XEN hook, const char *
     }
 }
 
+
 void mouse_leave_label(void *r, int type)
 {
   mouse_enter_or_leave_label(r, type, mouse_leave_label_hook, S_mouse_leave_label_hook);
 }
 
+
 void mouse_enter_label(void *r, int type)
 {
   mouse_enter_or_leave_label(r, type, mouse_enter_label_hook, S_mouse_enter_label_hook);
 }
+
 
 static gboolean vf_mouse_enter_label(GtkWidget *w, GdkEventCrossing *ev, gpointer gp)
 {
@@ -4170,11 +4312,13 @@ static gboolean vf_mouse_enter_label(GtkWidget *w, GdkEventCrossing *ev, gpointe
   return(false);
 }
 
+
 static gboolean vf_mouse_leave_label(GtkWidget *w, GdkEventCrossing *ev, gpointer gp)
 {
   mouse_leave_label((void *)gp, FILE_VIEWER);
   return(false);
 }
+
 
 static int vf_last_select_state = 0;
 
@@ -4183,6 +4327,7 @@ static gboolean select_event_callback(GtkWidget *w, GdkEventButton *ev, gpointer
   vf_last_select_state = ev->state;
   return(false);
 }
+
 
 static vf_row *make_vf_row(view_files_info *vdat, GtkSignalFunc play_callback, GtkSignalFunc name_callback)
 {
@@ -4226,6 +4371,7 @@ void vf_unhighlight_row(GtkWidget *nm, GtkWidget *rw)
   widget_modify_base(rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
 }
 
+
 void vf_highlight_row(GtkWidget *nm, GtkWidget *rw)
 {
   widget_modify_bg(nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
@@ -4233,6 +4379,7 @@ void vf_highlight_row(GtkWidget *nm, GtkWidget *rw)
   widget_modify_bg(rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
   widget_modify_base(rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
 }
+
 
 static gint vf_unflash_row(gpointer data)
 {
@@ -4250,12 +4397,14 @@ static gint vf_unflash_row(gpointer data)
   return(0);
 }
 
+
 void vf_flash_row(vf_row *r)
 {
   widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->sgx->light_blue);
   widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->sgx->light_blue);
   g_timeout_add_full(0, (guint32)500, vf_unflash_row, (gpointer)r, NULL);
 }
+
 
 void vf_post_info(view_files_info *vdat, int pos)
 {
@@ -4265,6 +4414,7 @@ void vf_post_info(view_files_info *vdat, int pos)
   FREE(title);
   post_sound_info(vdat->info1, vdat->info2, vdat->full_names[pos], false);
 }
+
 
 void vf_post_selected_files_list(view_files_info *vdat)
 {
@@ -4308,6 +4458,7 @@ void vf_post_selected_files_list(view_files_info *vdat)
   set_sensitive(vdat->insertB, true);
 }
 
+
 void vf_unpost_info(view_files_info *vdat)
 {
   char *title;
@@ -4325,10 +4476,12 @@ void vf_unpost_info(view_files_info *vdat)
   set_sensitive(vdat->insertB, false);
 }
 
+
 static void view_files_select_callback(GtkWidget *w, gpointer context) 
 {
   view_files_select((vf_row *)context, vf_last_select_state & snd_ShiftMask);
 }
+
 
 static void view_files_play_callback(GtkWidget *w, gpointer context) 
 {
@@ -4341,15 +4494,18 @@ static void view_files_play_callback(GtkWidget *w, gpointer context)
   else vdat->current_play_button = w;
 }
 
+
 vf_row *view_files_make_row(view_files_info *vdat, widget_t ignored)
 {
   return(make_vf_row(vdat, (GtkSignalFunc)view_files_play_callback, (GtkSignalFunc)view_files_select_callback));
 }
 
+
 static void view_files_help_callback(GtkWidget *w, gpointer context) 
 {
   view_files_dialog_help();
 }
+
 
 static gint view_files_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
@@ -4358,11 +4514,13 @@ static gint view_files_delete_callback(GtkWidget *w, GdkEvent *event, gpointer c
   return(true);
 }
 
+
 static void view_files_dismiss_callback(GtkWidget *w, gpointer context) 
 {
   view_files_info *vdat = (view_files_info *)context;
   gtk_widget_hide(vdat->dialog);
 }
+
 
 static void view_files_new_viewer_callback(GtkWidget *w, gpointer context) 
 {
@@ -4371,6 +4529,7 @@ static void view_files_new_viewer_callback(GtkWidget *w, gpointer context)
   start_view_files_dialog_1(vdat, true);
 }
 
+
 #if (!HAVE_FAM)
 static void view_files_clear_callback(GtkWidget *w, gpointer context) 
 {
@@ -4378,6 +4537,7 @@ static void view_files_clear_callback(GtkWidget *w, gpointer context)
   view_files_clear_list(vdat);
   view_files_display_list(vdat);
 }
+
 
 static void view_files_update_callback(GtkWidget *w, gpointer context) 
 {
@@ -4388,12 +4548,14 @@ static void view_files_update_callback(GtkWidget *w, gpointer context)
 }
 #endif
 
+
 static void sort_vf(view_files_info *vdat, int sort_choice)
 {
   vdat->sorter = sort_choice;
   vf_reflect_sort_choice_in_menu(vdat);
   view_files_display_list(vdat);
 }
+
 
 static void sort_view_files_a_to_z(GtkWidget *w, gpointer context)
 {
@@ -4432,6 +4594,7 @@ static void sort_view_files_xen(GtkWidget *w, gpointer context)
   sort_vf((view_files_info *)context, (int)index);
 }
 
+
 void vf_reflect_sort_choice_in_menu(view_files_info *vdat)
 {
   int i;
@@ -4446,6 +4609,7 @@ void vf_reflect_sort_choice_in_menu(view_files_info *vdat)
       set_sensitive(vdat->sort_items[i], vdat->sorter != (SORT_XEN + i));
 }
 
+
 void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or_dir)
 {
   char *filename;
@@ -4457,6 +4621,7 @@ void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or
   else add_file_to_view_files_list(vdat, file_or_dir, filename);
   FREE(filename);
 }
+
 
 static void view_files_add_files(GtkWidget *w, gpointer context) 
 {
@@ -4470,6 +4635,7 @@ static void view_files_add_files(GtkWidget *w, gpointer context)
     }
 }
 
+
 static void view_files_drop_watcher(GtkWidget *w, const char *str, int x, int y, void *context)
 {
   view_files_info *vdat = (view_files_info *)context;
@@ -4480,15 +4646,18 @@ static void view_files_drop_watcher(GtkWidget *w, const char *str, int x, int y,
   view_files_display_list(vdat);
 }
 
+
 static void view_files_open_selected_callback(GtkWidget *w, gpointer context) 
 {
   view_files_open_selected_files((view_files_info *)context);
 }
 
+
 static void view_files_remove_selected_callback(GtkWidget *w, gpointer context) 
 {
   view_files_remove_selected_files((view_files_info *)context);
 }
+
 
 off_t vf_location(view_files_info *vdat)
 {
@@ -4540,6 +4709,7 @@ off_t vf_location(view_files_info *vdat)
   return(pos);
 }
 
+
 static void vf_clear_sample(view_files_info *vdat);
 
 static void vf_sample_button_modify_callback(GtkWidget *w, gpointer context)
@@ -4547,10 +4717,12 @@ static void vf_sample_button_modify_callback(GtkWidget *w, gpointer context)
   vf_clear_sample((view_files_info *)context);
 } 
 
+
 static void vf_sample_text_modify_callback(GtkWidget *w, gpointer context)
 {
   vf_clear_sample((view_files_info *)context);
 } 
+
 
 static void vf_clear_sample(view_files_info *vdat)
 {
@@ -4564,6 +4736,7 @@ static void vf_clear_sample(view_files_info *vdat)
     }
 }
 
+
 static void vf_clear_mark(view_files_info *vdat);
 
 static void vf_mark_button_modify_callback(GtkWidget *w, gpointer context)
@@ -4571,10 +4744,12 @@ static void vf_mark_button_modify_callback(GtkWidget *w, gpointer context)
   vf_clear_mark((view_files_info *)context);
 }
 
+
 static void vf_mark_text_modify_callback(GtkWidget *w, gpointer context)
 {
   vf_clear_mark((view_files_info *)context);
 }
+
 
 static void vf_clear_mark(view_files_info *vdat)
 {
@@ -4588,6 +4763,7 @@ static void vf_clear_mark(view_files_info *vdat)
     }
 }
 
+
 void vf_post_error(const char *error_msg, view_files_info *vdat)
 {
   vdat->error_p = true;
@@ -4595,10 +4771,12 @@ void vf_post_error(const char *error_msg, view_files_info *vdat)
   info_widget_display(vdat->info2, "|");
 }
 
+
 void redirect_vf_post_error(const char *error_msg, void *vdat)
 {
   vf_post_error(error_msg, (view_files_info *)vdat);
 }
+
 
 void redirect_vf_post_location_error(const char *error_msg, void *data)
 {
@@ -4618,6 +4796,7 @@ void redirect_vf_post_location_error(const char *error_msg, void *data)
     }
 }
 
+
 static gboolean vf_add_text_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   view_files_info *vdat = (view_files_info *)data;
@@ -4630,21 +4809,25 @@ static gboolean vf_add_text_modify_callback(GtkWidget *w, GdkEventKey *event, gp
   return(false);
 }
 
+
 void vf_post_add_error(const char *error_msg, view_files_info *vdat)
 {
   vf_post_error(error_msg, vdat);
   vdat->add_text_handler_id = SG_SIGNAL_CONNECT(vdat->add_text, "key_press_event", vf_add_text_modify_callback, (gpointer)vdat);
 }
 
+
 static void view_files_mix_selected_callback(GtkWidget *w, gpointer context) 
 {
   view_files_mix_selected_files(w, (view_files_info *)context);
 }
 
+
 static void view_files_insert_selected_callback(GtkWidget *w, gpointer context) 
 {
   view_files_insert_selected_files(w, (view_files_info *)context);
 }
+
 
 static void view_files_at_cursor_callback(GtkWidget *w, gpointer context) 
 {
@@ -4658,6 +4841,7 @@ static void view_files_at_cursor_callback(GtkWidget *w, gpointer context)
   vdat->location_choice = VF_AT_CURSOR;
 }
 
+
 static void view_files_at_end_callback(GtkWidget *w, gpointer context) 
 {
   view_files_info *vdat = (view_files_info *)context;
@@ -4669,6 +4853,7 @@ static void view_files_at_end_callback(GtkWidget *w, gpointer context)
     }
   vdat->location_choice = VF_AT_END;
 }
+
 
 static void view_files_at_beginning_callback(GtkWidget *w, gpointer context) 
 {
@@ -4682,6 +4867,7 @@ static void view_files_at_beginning_callback(GtkWidget *w, gpointer context)
   vdat->location_choice = VF_AT_BEGINNING;
 }
 
+
 static void view_files_at_sample_callback(GtkWidget *w, gpointer context) 
 {
   view_files_info *vdat = (view_files_info *)context;
@@ -4690,6 +4876,7 @@ static void view_files_at_sample_callback(GtkWidget *w, gpointer context)
       vf_clear_mark(vdat);
   vdat->location_choice = VF_AT_SAMPLE;
 }
+
 
 static void view_files_at_mark_callback(GtkWidget *w, gpointer context) 
 {
@@ -4713,10 +4900,12 @@ static Float vf_speed_to_scroll(Float minval, Float val, Float maxval)
   return(0.9 * ((log(val) - log(minval)) / (log(maxval) - log(minval))));
 }
 
+
 static Float vf_scroll_to_speed(Float scroll)
 {
   return(exp((scroll * (log(speed_control_max(ss)) - log(speed_control_min(ss))) / 0.9) + log(speed_control_min(ss))));
 }
+
 
 static void vf_set_speed_label(view_files_info *vdat, Float val)
 {
@@ -4729,12 +4918,14 @@ static void vf_set_speed_label(view_files_info *vdat, Float val)
   set_label(vdat->speed_number, speed_number_buffer);
 }
 
+
 void vf_set_speed(view_files_info *vdat, Float val)
 {
   vf_set_speed_label(vdat, val);
   GTK_ADJUSTMENT(vdat->speed_adj)->value = vf_speed_to_scroll(speed_control_min(ss), vdat->speed, speed_control_max(ss));
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(vdat->speed_adj));
 }
+
 
 static gboolean vf_speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer context)
 {
@@ -4744,6 +4935,7 @@ static gboolean vf_speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpoint
   vf_set_speed(vdat, 1.0);
   return(false);
 }
+
 
 static gboolean vf_speed_label_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer context)
 {
@@ -4763,6 +4955,7 @@ static gboolean vf_speed_label_click_callback(GtkWidget *w, GdkEventButton *ev, 
   return(false);
 }
 
+
 static gboolean vf_speed_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
   view_files_info *vdat = (view_files_info *)data;
@@ -4772,6 +4965,7 @@ static gboolean vf_speed_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpoin
   return(false);
 }
 
+
 static gboolean vf_speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   view_files_info *vdat = (view_files_info *)data;
@@ -4780,6 +4974,7 @@ static gboolean vf_speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpoi
   vf_set_speed_label(vdat, vf_scroll_to_speed(GTK_ADJUSTMENT(vdat->speed_adj)->value));
   return(false);
 }
+
 
 static gboolean vf_speed_press_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -4804,10 +4999,12 @@ static Float vf_scroll_to_amp(Float val)
   else return((val * (1.0 - amp_control_min(ss)) / (0.5 * 0.9)) + amp_control_min(ss));
 }
 
+
 static Float vf_amp_to_scroll(Float amp)
 {
   return(amp_to_scroll(amp_control_min(ss), amp, amp_control_max(ss)));
 }
+
 
 void vf_set_amp(view_files_info *vdat, Float val)
 {
@@ -4819,6 +5016,7 @@ void vf_set_amp(view_files_info *vdat, Float val)
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(vdat->amp_adj));
 }
 
+
 static gboolean vf_amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer context)
 {
   amp_dragged = false;
@@ -4826,6 +5024,7 @@ static gboolean vf_amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer
   vf_set_amp((view_files_info *)context, 1.0);
   return(false);
 }
+
 
 static gboolean vf_amp_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
@@ -4844,6 +5043,7 @@ static gboolean vf_amp_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointe
   return(false);
 }
 
+
 static gboolean vf_amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   Float scrollval;
@@ -4861,6 +5061,7 @@ static gboolean vf_amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpoint
 
   return(false);
 }
+
 
 static gboolean vf_amp_press_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -4897,6 +5098,7 @@ static void vf_amp_env_resize(view_files_info *vdat, GtkWidget *w)
 #endif
 }
 
+
 void vf_set_amp_env(view_files_info *vdat, env *new_e)
 {
   if (!vdat) return;
@@ -4907,6 +5109,7 @@ void vf_set_amp_env(view_files_info *vdat, env *new_e)
     vf_amp_env_resize(vdat, vdat->env_drawer);
 }
 
+
 static gboolean vf_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   view_files_info *vdat = (view_files_info *)data;
@@ -4916,6 +5119,7 @@ static gboolean vf_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointe
   return(false);
 }
 
+
 static gboolean vf_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   view_files_info *vdat = (view_files_info *)data;
@@ -4923,6 +5127,7 @@ static gboolean vf_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpoin
   vf_amp_env_resize(vdat, w);
   return(false);
 }
+
 
 static gboolean vf_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
@@ -4945,6 +5150,7 @@ static gboolean vf_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpoint
   return(false);
 }
 
+
 static gboolean vf_amp_env_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   view_files_info *vdat = (view_files_info *)data;
@@ -4952,12 +5158,14 @@ static gboolean vf_amp_env_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpo
   return(false);
 }
 
+
 static gboolean vf_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
   view_files_info *vdat = (view_files_info *)data;
   vf_amp_env_resize(vdat, w);
   return(false);
 }
+
 
 static void view_files_reset_callback(GtkWidget *w, gpointer context) 
 {
@@ -4969,6 +5177,7 @@ static void view_files_reset_callback(GtkWidget *w, gpointer context)
   free_env(e);
   sort_vf(vdat, view_files_sort(ss));
 }
+
 
 GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 {

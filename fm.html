@@ -648,7 +648,7 @@ And since the number of significant components in the spectrum is nearly proport
 
 <!-- LATEX fmeq54: & J_{n}(ix) = i^{n} I_{n}(x) G&R 8.406 -->
 <!-- LATEX fmeq55: & \sum i^{n} I_{n}(b)\cos(\omega_{c} + n\omega_{m})t -->
-<!-- LATEX fmeq56: & \sum_{n} \sum_{k} i^{k} J_{n}(a) I_{k}(b)\cos(\omega_{c} + (n + k)\omega_{m})t -->
+<!-- LATEX fmeq56: & \sum \sum i^{k} J_{n}(a) I_{k}(b)\cos(\omega_{c} + (n + k)\omega_{m})t -->
 
 <table border=1 hspace=50><tr><td>
 <table border=0 cellspacing=10><tr><td>
@@ -658,8 +658,14 @@ In this case, cos is no longer bounded, so the output can peak at anything, but
 we still get FM-like spectra.  <img src="fmeq54.png" alt="J=I" align=absmiddle>, where "I" is
 the modified Bessel function,
 so if our index is purely imaginary, we can expand cos(bi sin x) as
-<img src="fmeq55.png" alt="i case" align=absmiddle>.  If our index is a + bi, we get
-<img src="fmeq56.png" alt="a=bi case" align=absmiddle>.  This looks similar to normal FM,
+<br>
+<img src="fmeq55.png" alt="i case" hspace=40 vspace=6>
+<br>
+If our index is a + bi, we get
+<br>
+<img src="fmeq56.png" alt="a=bi case" hspace=40 vspace=6>
+<br>
+This looks similar to normal FM,
 but with normalization headaches.  Perhaps we can take advantage of the split betweeen the
 real and imaginary parts &mdash; unexplored territory!
 </small>
@@ -1741,7 +1747,7 @@ This is expanded by Tomisawa as:
 <p>As Tomisawa points out this is very close to the formulas we have been looking at already, except that 
 the argument to the Bessel function depends on the order, we have only multiples of the carrier frequency 
 in the expansion, and the elements of the sequence are multiplied by 2/nB.  The result is a much 
-broader, flatter spectrum than one normally gets from FM.  If you just push the index up in normal 
+broader, flatter spectrum than you normally get from FM.  If you just push the index up in normal 
 FM, the energy is pushed outward in a lumpy sort of fashion, not evenly spread across the spectrum.  
 In effect we've turned the axis of the Bessel functions so that the higher order functions start at 
 nearly the same time as the lower order functions.  The new function Jn(nB) decreases (very!) gradually.  
@@ -1936,8 +1942,6 @@ we can use the phase to minimize the difference with the sum:
 the sum has DC! and the difference is a pulse train, but higher srate fixes that
 
 -->
-
-<!-- SOMEDAY: make a nice diagram of the noise, or show the patch steps -->
 
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>FM and noise: sin(sin(rand))</h5></center></td></tr></table>
 

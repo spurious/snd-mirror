@@ -6,8 +6,6 @@
   #include <dirent.h>
 #endif
 
-/* SOMEDAY: need a Open Recent entry in File */
-
 
 /* -------------------------------- basic file attributes -------------------------------- */
 

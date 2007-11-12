@@ -1069,7 +1069,9 @@ Widget g_add_to_menu(int which_menu, const char *label, int callb, int position)
 	  m = cw->composite.children[i];
 	  if ((m) && 
 	      (!(XtIsManaged(m))) &&
-	      (m != file_close_all_menu))
+	      (m != file_close_all_menu) &&
+	      (m != file_open_recent_menu) &&
+	      (m != file_open_recent_cascade_menu))
 	    {
 	      if (!(snd_strcmp(XtName(m), label)))
 		{

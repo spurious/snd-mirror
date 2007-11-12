@@ -6,11 +6,93 @@ static const char *ml[NUM_MENU_WIDGETS];
 
 void set_menu_label(GtkWidget *w, const char *label) {if (w) set_button_label(w, label);}
 
+
 /* -------------------------------- FILE MENU -------------------------------- */
 
-static void file_menu_update_1(GtkWidget *w, gpointer info) {file_menu_update();}
+static GtkWidget **recent_file_items = NULL;
+static int recent_file_items_size = 0;
+
+static char *get_item_label(GtkWidget *w)
+{
+  return((char *)gtk_label_get_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(w)))));
+}
+
+
+static void set_item_label(GtkWidget *w, const char *label)
+{
+  gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(w))), label);
+}
+
+
+static void open_recent_file_callback(GtkWidget *w, gpointer info)
+{
+  char *filename;
+  snd_info *sp;
+  filename = get_item_label(w);
+  ss->open_requestor = FROM_OPEN_RECENT_MENU;
+  ss->open_requestor_data = NULL;
+  sp = snd_open_file(filename, false);
+  if (sp) select_channel(sp, 0);
+}
+
+
+static void file_open_recent_callback(GtkWidget *w, gpointer info)
+{
+  int size;
+  size = recent_files_size();
+  if (size > 0)
+    {
+      int i;
+      char **recent_file_names;
+
+      if (size > recent_file_items_size)
+	{
+	  if (recent_file_items_size == 0)
+	    recent_file_items = (GtkWidget **)CALLOC(size, sizeof(GtkWidget *));
+	  else
+	    {
+	      recent_file_items = (GtkWidget **)REALLOC(recent_file_items, size * sizeof(GtkWidget *));
+	      for (i = recent_file_items_size; i < size; i++)
+		recent_file_items[i] = NULL;
+	    }
+	  recent_file_items_size = size;
+	}
+
+      recent_file_names = recent_files();
+
+      for (i = 0; i < size; i++)
+	{
+	  if (recent_file_items[i] == NULL)
+	    {
+	      recent_file_items[i] = gtk_menu_item_new_with_label(recent_file_names[i]);
+	      gtk_menu_shell_append(GTK_MENU_SHELL(file_open_recent_cascade_menu), recent_file_items[i]);
+	      gtk_widget_show(recent_file_items[i]);
+	      SG_SIGNAL_CONNECT(recent_file_items[i], "activate", open_recent_file_callback, NULL);
+	    }
+	  else
+	    {
+	      set_item_label(recent_file_items[i], recent_file_names[i]);
+	      gtk_widget_show(recent_file_items[i]);
+	    }
+	}
+
+      for (i = size; i < recent_file_items_size; i++) /* maybe previous file was deleted */
+	if (recent_file_items[i])
+	  gtk_widget_hide(recent_file_items[i]);
+    }
+}
+
+
+static void file_menu_update_1(GtkWidget *w, gpointer info)
+{
+  if (recent_files_size() > 0)
+    gtk_widget_show(file_open_recent_menu);
+  else gtk_widget_hide(file_open_recent_menu);
+  file_menu_update();
+}
+
+
 static void file_open_callback(GtkWidget *w, gpointer info) {make_open_file_dialog(false, true);}
-static void file_open_recent_callback(GtkWidget *w, gpointer info) {}
 static void file_view_callback(GtkWidget *w, gpointer info) {make_open_file_dialog(true, true);}
 static void file_new_callback(GtkWidget *w, gpointer info) {make_new_file_dialog(true);}
 static void file_record_callback(GtkWidget *w, gpointer info) {record_file();}
@@ -248,6 +330,10 @@ GtkWidget *add_menu(void)
   gtk_widget_hide(file_open_recent_menu);
   SG_SIGNAL_CONNECT(file_open_recent_menu, "activate", file_open_recent_callback, NULL);
   
+  file_open_recent_cascade_menu = gtk_menu_new();
+  ml[f_open_recent_cascade_menu] = NULL;
+  gtk_menu_item_set_submenu(GTK_MENU_ITEM(file_open_recent_menu), file_open_recent_cascade_menu);
+
 
   file_close_menu = gtk_image_menu_item_new_with_label(_("Close"));
   ml[f_close_menu] = _("Close");

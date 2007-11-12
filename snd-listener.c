@@ -484,6 +484,7 @@ void command_return(widget_t w, int last_prompt)
     {
       if (last_position > end_of_text)
 	{
+	  end_of_text = last_position; /* added 12-Nov-07 for first form */
 	  for (i = current_position; i < last_position; i++)
 	    if (is_prompt(full_str, i + 1))
 	      {

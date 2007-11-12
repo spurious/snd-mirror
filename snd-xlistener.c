@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: where is the listener max size set? */
+/* TODO: the completions dialog should stay out of the way */
+
 
 #define OVERRIDE_TOGGLE 1
 /* Motif 2.0 defines control-button1 to be "take focus" -- this is not a good idea!! */

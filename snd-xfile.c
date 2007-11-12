@@ -143,7 +143,7 @@ static void file_text_item_activate_callback(Widget w, XtPointer context, XtPoin
   filename = get_label(w);
   XmTextFieldSetString(FSB_BOX(fd->dialog, XmDIALOG_TEXT), filename);
 
-  ss->open_requestor = FROM_OPEN_DIALOG_POPUP; /* TODO: gtk side of open list */
+  ss->open_requestor = FROM_OPEN_DIALOG_POPUP;
   ss->open_requestor_data = NULL;
   sp = snd_open_file(filename, false);
   if (sp) select_channel(sp, 0);
