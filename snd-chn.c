@@ -79,7 +79,7 @@ static void chans_time_graph_type(chan_info *cp, int value)
       set_y_bounds(cp->axis);
       resize_sy(cp);
       set_x_bounds(cp->axis);
-      resize_sx(cp);
+      resize_sx_and_zx(cp);
     }
   update_graph(cp); 
 }
@@ -862,6 +862,7 @@ void apply_y_axis_change(axis_info *ap, chan_info *cp)
 
 void set_x_axis_x0x1(chan_info *cp, double x0, double x1) 
 {
+  /* all callers are explicit (non-gui), so it should be safe to reset the z scroller here as well */
   axis_info *ap;
   ap = cp->axis;
   if (x0 >= 0.0) ap->x0 = x0; else ap->x0 = 0.0;
@@ -873,8 +874,8 @@ void set_x_axis_x0x1(chan_info *cp, double x0, double x1)
     {
       ap->zx = (x1 - x0) / ap->x_ambit;
       ap->sx = (x0 - ap->xmin) / ap->x_ambit;
+      resize_sx_and_zx(cp);
     }
-  resize_sx(cp);
   apply_x_axis_change(ap, cp); /* this checks sync */
   ap->changed = true;
 }
@@ -4534,8 +4535,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 				      ap->xmin) / 
 			      ap->x_ambit;
 			  apply_x_axis_change(ap, cp);
-			  resize_sx(cp);
-			  set_zx_scrollbar_value(cp, sqrt(ap->zx));
+			  resize_sx_and_zx(cp);
 			}
 		    }
 		  else

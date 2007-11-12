@@ -1,4 +1,18 @@
 ;;; animals.scm
+;;;
+;;; mosquito
+;;; Knudsen's frog
+;;; Oak toad
+;;; Broad-winged tree-cricket
+;;; Southern cricket frog
+;;; Long-spurred meadow katydid
+;;; Northern leopard frog
+;;; Southern mole cricket
+;;; Green tree-frog
+;;; Spring peeper
+;;; Crawfish frog
+;;; River frog
+
 
 (use-modules (ice-9 optargs) (ice-9 format))
 (provide 'snd-animals.scm)
@@ -42,6 +56,8 @@
   (mosquito 0 5 560 .2)
   (mosquito 1 3 880 .05))
 |#
+
+
 
 ;;; "The Diversity of Animal Sounds", Cornell Lab of Ornithology
 
@@ -290,6 +306,7 @@
 		 *output*)))))))
 
 
+
 ;;; northern leopard frog (1)
 
 ;;; TODO: this is slightly low-passed, and I don't quite have the vowel right at the end
@@ -337,6 +354,8 @@
 									     (* .075 (oscil gen6)))))))))))
 	   (outa i result *output*)))))))
 
+
+
 ;;; southern mole cricket
 
 (with-sound (:play #t :clipped #f :statistics #t)
@@ -364,6 +383,7 @@
 			 (* (max (- 1.0 pval) 0.0)
 			    (* .05 aval (oscil gen2 (* 2.4 noise))))))
 		 *output*)))))))
+
 
 
 ;;; TODO: green treefrog but needs formant movement, speedup at start, slow down at end, other main section to the call
@@ -439,6 +459,8 @@
 		      (oscil gen3 (+ frq (* index (oscil gen4 (* 0.5 frq))))))
 		 *output*)))))))
 
+
+
 ;;; crawfish frog
 (with-sound (:play #t :clipped #f :statistics #t)
   (let* ((dur 0.6)
@@ -473,4 +495,45 @@
 			 (* wha (polyshape poly1 1.0 frq))
 			 (* (- 0.2 wha) (polyshape poly2 1.0 frq))))
 		 *output*)))))))
-|#
+
+
+;;; river frog
+(with-sound (:play #t :clipped #f :statistics #t)
+  (let* ((dur 1.85)
+	 (stop (seconds->samples dur))
+	 (ampf (make-env '(0 0 2 1  7 .9  10 0) :scaler .5 :duration dur :base .1))
+	 (pulse-pitch 42)
+	 (pulsef (make-pulsed-env '(0 .1 3 .1 3.1 1 4 1 6 .1 9 .1) (/ 1.0 pulse-pitch) pulse-pitch))
+	 (mid-pitch 185)
+	 (mid-pitch-change 10)
+	 (frqf (make-env '(0 .1 .2 -.02 .5 0 .65 0 1 1) :scaler (hz->radians mid-pitch-change) :duration dur))
+
+	 (vib (make-rand-interp 100 (hz->radians 10.0)))
+	 
+	 (fm (make-oscil pulse-pitch))
+	 (index (hz->radians (* 1.0 pulse-pitch)))
+
+	 (poly1 (make-polyshape mid-pitch :coeffs (partials->polynomial (normalize-partials (list 2 1.2  4 .1  7 0.75  8 .1   10 .5)))))
+	 (poly2 (make-polyshape mid-pitch :coeffs (partials->polynomial (normalize-partials (list 2 1.0        7 .5  9 .7  12 .01)))))
+
+	 (interpf (make-env '(0 0 2 0 5 1 7 1) :duration dur))
+	 )
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i stop))
+	 (let* ((frq (+ (env frqf)
+			(rand-interp vib)
+			(* index (oscil fm))))
+		(intrp (env interpf)))
+	   (outa i (* (env ampf)
+		      (pulsed-env pulsef 0.0)
+		      (+ (* (- 1.0 intrp)
+			    (polyshape poly1 1.0 frq))
+			 (* intrp 
+			    (polyshape poly2 1.0 frq)))
+		      
+		      )
+		 *output*)))))))|#
+
+

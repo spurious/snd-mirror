@@ -1,6 +1,6 @@
 #include "snd.h"
 
-/* TODO: where is the listener max size set? */
+
 /* TODO: the completions dialog should stay out of the way */
 
 
@@ -1229,12 +1229,13 @@ static void make_command_widget(int height)
 
       n = attach_all_sides(args, 0);
       XtSetArg(args[n], XmNheight, height); n++;
+      XtSetArg(args[n], XmNpaneMaximum, LOTSA_PIXELS); n++; /* Xm/Paned initializes each pane max to 1000 apparently! */
+
       if ((sound_style(ss) == SOUNDS_IN_NOTEBOOK) || (sound_style(ss) == SOUNDS_HORIZONTAL))
 	listener_pane = XtCreateManagedWidget("frm", xmFormWidgetClass, SOUND_PANE_BOX(ss), args, n);
       else listener_pane = XtCreateManagedWidget("frm", xmFormWidgetClass, SOUND_PANE(ss), args, n);
       /* this widget is not redundant at least in Metroworks Motif */
 
-      /* why is there a size limit here? */
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->listener_color); n++;
       XtSetArg(args[n], XmNforeground, ss->sgx->listener_text_color); n++;

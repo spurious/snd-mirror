@@ -132,15 +132,6 @@ static void zx_changed(float value, chan_info *cp)
 }
 
 
-void set_zx_scrollbar_value(chan_info *cp, Float value)
-{
-  GtkObject *adj;
-  adj = zx_adj(cp);
-  GTK_ADJUSTMENT(adj)->value = value;
-  gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj));
-}
-
-
 static void set_scrollbar(GtkObject *adj, Float position, Float range) /* position and range 0 to 1.0 */
 {
   GTK_ADJUSTMENT(adj)->page_size = range;
@@ -187,11 +178,17 @@ Float gsy_size(chan_info *cp)
 }
 
 
-void set_z_scrollbars(chan_info *cp, axis_info *ap)
+static set_zx(chan_info *cp, axis_info *ap)
 {
   if (ap->x_ambit < X_RANGE_CHANGEOVER)
     set_scrollbar(zx_adj(cp), sqrt(ap->zx), .1);  /* assume size is 10% of scrollbar length */
   else set_scrollbar(zx_adj(cp), pow(ap->zx, .333), .1);
+}
+
+
+void set_z_scrollbars(chan_info *cp, axis_info *ap)
+{
+  set_zx(cp, ap);
   set_scrollbar(zy_adj(cp), 1.0 - sqrt(ap->zy), .1);
 }
 
@@ -239,6 +236,13 @@ void resize_sx(chan_info *cp)
     set_scrollbar(sx_adj(cp),
 		  (ap->x0 - ap->xmin) / ap->x_ambit,
 		  (ap->x1 - ap->x0) / ap->x_ambit);
+}
+
+
+void resize_sx_and_zx(chan_info *cp)
+{
+  resize_sx(cp);
+  set_zx(cp, cp->axis);
 }
 
 

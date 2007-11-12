@@ -923,8 +923,8 @@
 ;;; --------------------------------------------------------------------------------
 
 ;;; n cos scaled by sin(k*pi/(n+1))/sin(pi/(n+1))
-;;; "Biased Trigonometric Polynomials" Montgomery and Vorhauer
-;;; American Math Monthly vol 114 no 9 NOv 2007
+;;; "Biased Trigonometric Polynomials", Montgomery and Vorhauer
+;;; American Math Monthly vol 114 no 9 Nov 2007
 
 (def-clm-struct (nsincos
 		 :make-wrapper (lambda (g)
@@ -951,8 +951,6 @@
     (/ (* num num)
        (* (nsincos-norm gen)
 	  (- (cos x) cosn)))))
-
-;;; TODO: needs normalization (doc/test)
 
 #|
 (with-sound (:clipped #f :statistics #t :play #f)
@@ -996,7 +994,7 @@
 	   den))))
 
 ;;; needs normalization and no DC.   side amps seem close
-;;; PERHAPS: doc/test the nkn cases
+;;; PERHAPS: doc/test the npos cases
 
 
 #|

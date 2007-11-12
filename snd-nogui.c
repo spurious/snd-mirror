@@ -121,7 +121,6 @@ int channel_w(chan_info *cp) {return(0);}
 int channel_f(chan_info *cp) {return(0);}
 int channel_graph(chan_info *cp) {return(0);}
 bool channel_graph_is_visible(chan_info *cp) {return(false);} /* maybe this should be true? */
-void set_zx_scrollbar_value(chan_info *cp, Float value) {}
 void change_gzy(Float val, chan_info *cp) {}
 Float gsy_value(chan_info *cp) {return(0.0);}
 Float gsy_size(chan_info *cp) {return(0.0);}
@@ -129,6 +128,7 @@ void initialize_scrollbars(chan_info *cp) {}
 void set_z_scrollbars(chan_info *cp, axis_info *ap) {}
 void resize_sx(chan_info *cp) {}
 void resize_sy(chan_info *cp) {}
+void resize_sx_and_zx(chan_info *cp) {}
 void channel_open_pane(chan_info *cp) {}
 void reflect_edit_history_change(chan_info *cp) {}
 void reflect_edit_counter_change(chan_info *cp) {}

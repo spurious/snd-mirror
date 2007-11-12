@@ -129,12 +129,6 @@ static void zx_changed(int value, chan_info *cp)
 }
 
 
-void set_zx_scrollbar_value(chan_info *cp, Float value)
-{
-  XtVaSetValues(channel_zx(cp), XmNvalue, (int)(value * SCROLLBAR_MAX), NULL);
-}
-
-
 static void set_scrollbar(Widget w, Float position, Float range, int scrollbar_max) /* position and range 0 to 1.0 */
 {
   int size, val;
@@ -209,11 +203,17 @@ Float gsy_size(chan_info *cp)
 }
 
 
-void set_z_scrollbars(chan_info *cp, axis_info *ap)
+static void set_zx_scrollbar(chan_info *cp, axis_info *ap)
 {
   if (ap->x_ambit < X_RANGE_CHANGEOVER)
     set_scrollbar(channel_zx(cp), sqrt(ap->zx), .1, SCROLLBAR_MAX);  /* assume size is 10% of scrollbar length */
   else set_scrollbar(channel_zx(cp), pow(ap->zx, .333), .1, SCROLLBAR_MAX);
+}
+
+
+void set_z_scrollbars(chan_info *cp, axis_info *ap)
+{
+  set_zx_scrollbar(cp, ap);
   set_scrollbar(channel_zy(cp), sqrt(ap->zy), .1, SCROLLBAR_MAX);
 }
 
@@ -261,6 +261,14 @@ void resize_sx(chan_info *cp)
 		  (ap->x0 - ap->xmin) / ap->x_ambit,
 		  (ap->x1 - ap->x0) / ap->x_ambit,
 		  SCROLLBAR_SX_MAX);
+}
+
+
+void resize_sx_and_zx(chan_info *cp)
+{
+  resize_sx(cp);
+  /* change zx position (not its size) */
+  set_zx_scrollbar(cp, cp->axis);
 }
 
 
@@ -527,11 +535,17 @@ static void graph_button_press(Widget w, XtPointer context, XEvent *event, Boole
 }
 
 
-static void graph_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
+static void graph_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) /* cont = "continue to dispatch" */
 {
   XButtonEvent *ev = (XButtonEvent *)event;
-  if (context) /* how could this ever be null?  there must be some other bug that manifested itself as a null context */
-    graph_button_release_callback((chan_info *)context, ev->x, ev->y, ev->state, ev->button);
+#if MUS_DEBUGGING
+  if (((int)context) <= 0) /* this is negative -2 sometimes?? */
+    {
+      fprintf(stderr, "graph_button_release, snd-xchn.c line 544 context: %p %d\n", context, (int)context);
+      abort();
+    }
+#endif
+  graph_button_release_callback((chan_info *)context, ev->x, ev->y, ev->state, ev->button);
 }
 
 
