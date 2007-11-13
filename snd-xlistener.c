@@ -1,9 +1,6 @@
 #include "snd.h"
 
 
-/* TODO: the completions dialog should stay out of the way */
-
-
 #define OVERRIDE_TOGGLE 1
 /* Motif 2.0 defines control-button1 to be "take focus" -- this is not a good idea!! */
 
@@ -189,6 +186,7 @@ void snd_completion_help(int matches, char **buffer)
     if (requestor == listener_text)
       {
 	XtVaGetValues(requestor, XmNwidth, &rw, XmNx, &rx, XmNy, &ry, NULL);
+	/* this is being ignored in Gnome -- it is considered a configuration choice */
 	XtVaSetValues(completions_dialog, 
 		      XmNx, rx + rw,
 		      XmNy, ry,

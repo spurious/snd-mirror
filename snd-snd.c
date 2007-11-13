@@ -3059,6 +3059,7 @@ static XEN g_channel_style(XEN snd)
   return(C_TO_XEN_INT((int)(sp->channel_style)));
 }
 
+
 static void update_sound(snd_info *sp)
 {
   if (sp)

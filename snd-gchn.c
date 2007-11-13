@@ -139,36 +139,25 @@ static void set_scrollbar(GtkObject *adj, Float position, Float range) /* positi
   gtk_adjustment_changed(GTK_ADJUSTMENT(adj));
 }
 
+/* TODO: after update, if ffting, graph is screwed up */
 
-static void gzy_changed(float value, chan_info *cp)
-{
-  cp->gzy = value;
-  GTK_ADJUSTMENT(gsy_adj(cp))->page_size = value; 
-  gtk_adjustment_changed(GTK_ADJUSTMENT(gsy_adj(cp)));
-  for_each_sound_chan(cp->sound, update_graph_or_warn);
-}
-
-/* TODO: gchn if gsy not 1, gzy change is ignored */
-/* TODO: gchn update gzy not updated, and gsy size is wrong */
+/* restore_axes_data (snd-file.c) assumes change_gzy also fixes gsy */
 
 void change_gzy(Float val, chan_info *cp)
 {
-  cp->gzy = val;
-  GTK_ADJUSTMENT(gsy_adj(cp))->page_size = val; 
+  /* from snd_update */
+  GTK_ADJUSTMENT(gsy_adj(cp))->page_size = 1.0 - val; 
+  GTK_ADJUSTMENT(gsy_adj(cp))->value = cp->gsy;
   gtk_adjustment_changed(GTK_ADJUSTMENT(gsy_adj(cp)));
-}
 
-
-static void gsy_changed(float value, chan_info *cp)
-{
-  cp->gsy = cp->gzy * value;
-  for_each_sound_chan(cp->sound, update_graph_or_warn);
+  GTK_ADJUSTMENT(gzy_adj(cp))->value = val;
+  gtk_adjustment_changed(GTK_ADJUSTMENT(gzy_adj(cp)));
 }
 
 
 Float gsy_value(chan_info *cp)
 {
-  return(1.0 - GTK_ADJUSTMENT(gsy_adj(cp))->value - GTK_ADJUSTMENT(gsy_adj(cp))->page_size);
+  return(1.0 - (cp->gsy + GTK_ADJUSTMENT(gsy_adj(cp))->page_size));
 }
 
 
@@ -197,6 +186,10 @@ void initialize_scrollbars(chan_info *cp)
 {
   axis_info *ap;
   snd_info *sp;
+
+  cp->gzy = 0.0;
+  cp->gsy = 0.0;
+
   ap = cp->axis;
   sp = cp->sound;
   set_scrollbar(sx_adj(cp), ap->sx, ap->zx);
@@ -287,8 +280,18 @@ static void gzy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
+  cp->gzy = adj->value;
   if (cp->active)
-    gzy_changed(1.0 - adj->value, cp);
+    {
+      GTK_ADJUSTMENT(gsy_adj(cp))->page_size = 1.0 - adj->value; 
+      if (cp->gsy > cp->gzy)
+	{
+	  cp->gsy = adj->value;
+	  GTK_ADJUSTMENT(gsy_adj(cp))->value = adj->value; 
+	}
+      gtk_adjustment_changed(GTK_ADJUSTMENT(gsy_adj(cp)));
+      for_each_sound_chan(cp->sound, update_graph_or_warn);
+    }
 }
 
 
@@ -296,8 +299,9 @@ static void gsy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
+  cp->gsy = adj->value;
   if (cp->active)
-    gsy_changed(1.0 - adj->value, cp);
+    for_each_sound_chan(cp->sound, update_graph_or_warn);
 }
 
 
@@ -1139,7 +1143,8 @@ void cleanup_cw(chan_info *cp)
 
 void change_channel_style(snd_info *sp, channel_style_t new_style)
 {
-  if ((sp) && (sp->nchans > 1))
+  if ((sp) && 
+      (sp->nchans > 1))
     {
       channel_style_t old_style;
       old_style = sp->channel_style;
@@ -1154,14 +1159,16 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	  if (old_style == CHANNELS_COMBINED)
 	    {
 	      hide_gz_scrollbars(sp);
-	      for (i = 1; i < sp->nchans; i++) channel_set_mix_tags_erased(sp->chans[i]);
+	      for (i = 1; i < sp->nchans; i++) 
+		channel_set_mix_tags_erased(sp->chans[i]);
 	    }
 	  else 
 	    {
 	      if (new_style == CHANNELS_COMBINED)
 		{
 		  show_gz_scrollbars(sp);
-		  for (i = 1; i < sp->nchans; i++) channel_set_mix_tags_erased(sp->chans[i]);
+		  for (i = 1; i < sp->nchans; i++) 
+		    channel_set_mix_tags_erased(sp->chans[i]);
 		}
 	    }
 	  if (old_style == CHANNELS_SUPERIMPOSED)

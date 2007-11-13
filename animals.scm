@@ -498,6 +498,10 @@
 
 
 ;;; river frog
+;;;
+;;; original formants were much sharper, but using rxyk!cos to sharpen ours didn't seem to help
+;;; animal seems to group these in 3's
+
 (with-sound (:play #t :clipped #f :statistics #t)
   (let* ((dur 1.85)
 	 (stop (seconds->samples dur))
@@ -534,6 +538,7 @@
 			    (polyshape poly2 1.0 frq)))
 		      
 		      )
-		 *output*)))))))|#
+		 *output*)))))))
+|#
 
 

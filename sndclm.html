@@ -2058,11 +2058,15 @@ TODO: from Klapper, Selected Papers on Frequency Modulation, p 156
 
 from Askey "Ramanujan and Hypergeometric Series" in Berndt and Rankin "Ramanujan: Essays and Surveys" p283 (the formula was found by Gauss):
    this is r2k!cos in generators.scm [sceq30.png)
-&(1 - 2r \cos \theta + r^{2})^{-k} = \frac{1}{2} {}_{2}F_{1}(k, k; 1; r^{2}) + \sum_{n=1}^{\infty} \frac{(k)_{n}}{n!} r^{n} {}_{2}F_{1}(k, k+n; n+1; r^{2}) \cos n\theta
+&(1 - 2r \cos \theta + r^{2})^{-k} = \frac{{}_{2}F_{1}(k, k; 1; r^{2})}{2} + \sum_{n=1}^{\infty} \frac{(k)_{n}}{n!} r^{n} {}_{2}F_{1}(k, k+n; n+1; r^{2}) \cos n\theta
 
 Montgomery and Vorhauer:
 &\sum_{n=1}^{\infty} \frac{\sin \frac{k \pi}{n+1}}{\sin \frac{\pi}{n+1}} \cos k\theta = \frac{(\cos \frac{1}{2}(n+1)\theta)^{2}}{\cos \theta - \cos \frac{\pi}{n+1}}
 
+
+;;; Bessel funcs as confluent hypergeometric series
+&J_{n}(x) = \frac{(\frac{x}{2})^{n}}{\Gamma(n+1)} e^{-ix} \Phi(n+\frac{1}{2}, 2n+1; 2ix) \\
+&I_{n}(x) = \frac{(\frac{x}{2})^{n}}{\Gamma(n+1)} e^{-x} \Phi(n+\frac{1}{2}, 2n+1; 2x) \\
 -->
 
 

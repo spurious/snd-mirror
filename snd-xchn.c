@@ -223,6 +223,9 @@ void initialize_scrollbars(chan_info *cp)
   axis_info *ap;
   snd_info *sp;
 
+  cp->gzy = 1.0;
+  cp->gsy = 1.0;
+
   ap = cp->axis;
   sp = cp->sound;
 

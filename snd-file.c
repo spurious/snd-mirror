@@ -1805,6 +1805,7 @@ void restore_axes_data(snd_info *sp, void *usa, Float new_duration, bool need_ed
       ap->sy = sa->axis_data[loc + SA_SY];
       cp->gsy = sa->axis_data[loc + SA_GSY];
       cp->gzy = sa->axis_data[loc + SA_GZY];
+
       ap->y_ambit = ap->ymax - ap->ymin;
       ap->x_ambit = ap->xmax - ap->xmin;
       set_axes(cp,
@@ -1814,6 +1815,7 @@ void restore_axes_data(snd_info *sp, void *usa, Float new_duration, bool need_ed
 	       sa->axis_data[loc + SA_Y1]);
 
       set_z_scrollbars(cp, ap);
+
       if ((cp->chan == 0) &&
 	  (cp->gzy != 1.0))
 	change_gzy(cp->gzy, cp); /* also fixes gsy slider */
@@ -1978,8 +1980,8 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   fam_info *old_file_watcher;
   sp_watcher **old_watchers;
   int old_watchers_size;
-
   XEN update_hook_result = XEN_FALSE;
+
   if (XEN_HOOKED(update_hook))
     {
       /* #t => return without updating (not recommended!!), proc of 1 arg will be evaluated after update is complete */
@@ -2084,7 +2086,8 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
       for (i = 0; (i < nsp->nchans) && (i < sp_chans); i++) 
 	CURSOR(nsp->chans[i]) = old_cursors[i];
 
-      if ((nsp->nchans > 1) && (old_channel_style != CHANNELS_SEPARATE))
+      if ((nsp->nchans > 1) && 
+	  (old_channel_style != CHANNELS_SEPARATE)) /* we set it to separate before the update */
 	set_sound_channel_style(nsp, old_channel_style);
     }
   FREE(old_cursors);

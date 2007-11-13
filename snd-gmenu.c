@@ -695,6 +695,7 @@ GtkWidget *add_menu(void)
 
   view_combine_menu = gtk_menu_item_new_with_label(_("Channel style"));
   ml[v_combine_menu] = _("Channel style");
+  gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_combine_menu);
   gtk_widget_show(view_combine_menu);
 
   view_combine_cascade_menu = gtk_menu_new();

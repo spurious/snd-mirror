@@ -99,8 +99,6 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->lisp_info = NULL;
   cp->amp_control = NULL;
   cp->hookable = WITH_HOOK;
-  cp->gzy = 1.0;
-  cp->gsy = 1.0;
   cp->cx = 0;
   cp->cy = 0;
   cp->fft_cx = 0;
