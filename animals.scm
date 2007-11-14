@@ -517,8 +517,8 @@
 	 (fm (make-oscil pulse-pitch))
 	 (index (hz->radians (* 1.0 pulse-pitch)))
 
-	 (poly1 (make-polyshape mid-pitch :coeffs (partials->polynomial (normalize-partials (list 2 1.2  4 .1  7 0.75  8 .1   10 .5)))))
-	 (poly2 (make-polyshape mid-pitch :coeffs (partials->polynomial (normalize-partials (list 2 1.0        7 .5  9 .7  12 .01)))))
+	 (poly1 (make-polyshape mid-pitch :coeffs (partials->polynomial (normalize-partials (list 2 1.2  4 .1  7 0.75  8 .1       10 .5)))))
+	 (poly2 (make-polyshape mid-pitch :coeffs (partials->polynomial (normalize-partials (list 2 1.0        7 .5         9 .7        12 .01)))))
 
 	 (interpf (make-env '(0 0 2 0 5 1 7 1) :duration dur))
 	 )

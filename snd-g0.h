@@ -215,11 +215,11 @@ typedef struct {
   GtkWidget **mw, **pw;
 } state_context;
 
-#define DEFAULT_TINY_FONT "Monospace 8"
-#define DEFAULT_PEAKS_FONT "Serif 8"
-#define DEFAULT_BOLD_PEAKS_FONT "Serif Bold 8"
-#define DEFAULT_AXIS_NUMBERS_FONT "Monospace 10"
-#define DEFAULT_AXIS_LABEL_FONT "Serif 12"
+#define DEFAULT_TINY_FONT "Fixed 8"
+#define DEFAULT_PEAKS_FONT "Times Medium 10"
+#define DEFAULT_BOLD_PEAKS_FONT "Times Bold 10"
+#define DEFAULT_AXIS_NUMBERS_FONT "Fixed 10"
+#define DEFAULT_AXIS_LABEL_FONT "Times Medium 14"
 
 typedef enum {CONTAINER_ADD, PANED_ADD1, BOX_PACK, TABLE_ATTACH, PANED_ADD2} widget_add_t;
 typedef enum {WITHOUT_CHANNELS_FIELD, WITH_CHANNELS_FIELD, WITH_EXTRACT_CHANNELS_FIELD} dialog_channels_t;

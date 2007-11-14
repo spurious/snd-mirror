@@ -2696,7 +2696,8 @@
 			  0.112 0.112 0.111 0.111 0.111 0.111 0.111 0.111 0.110 0.110 0.110 0.110 0.110 0.110 0.110 0.109 0.109 0.109 0.109 0.109
 			  0.109 0.108 0.108 0.108 0.108 0.108 0.108 0.108 0.107 0.107 0.107 0.107 0.107 0.107 0.107 0.107 0.106 0.106 0.106 0.106
 			  0.106 0.106 0.106))
-;;; is there a formula for the max?
+;;; is there a formula for the max? 
+;;;   Watson p488 apparently says (sqrt (/ 2.0 (* pi n))) but that's too low -- (/ 2.0 (sqrt (* pi n))) is closer
 
 (def-clm-struct (bess
 		 :make-wrapper (lambda (g)

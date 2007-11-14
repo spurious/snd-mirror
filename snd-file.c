@@ -2100,6 +2100,7 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
       if (gc_loc != NOT_A_GC_LOC) snd_unprotect_at(gc_loc);
       gc_loc = NOT_A_GC_LOC;
     }
+
   if (saved_sp)
     {
       for (i = 0; i < saved_sp->nchans; i++)

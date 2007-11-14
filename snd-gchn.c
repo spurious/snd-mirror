@@ -139,7 +139,6 @@ static void set_scrollbar(GtkObject *adj, Float position, Float range) /* positi
   gtk_adjustment_changed(GTK_ADJUSTMENT(adj));
 }
 
-/* TODO: after update, if ffting, graph is screwed up */
 
 /* restore_axes_data (snd-file.c) assumes change_gzy also fixes gsy */
 

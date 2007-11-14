@@ -1465,7 +1465,6 @@ GtkWidget *start_orientation_dialog(bool managed)
 
 void set_with_gl(bool val)
 {
-  in_set_with_gl(val);
 #if HAVE_GL
   sgl_save_currents();
 #endif

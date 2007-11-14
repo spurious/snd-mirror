@@ -1575,6 +1575,7 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
 	  return(SONO_QUIT);                             /* so skip the ffts! */
 	}
     }
+
   cp->fft_changed = FFT_CHANGED;
   start_progress_report(cp->sound, NOT_FROM_ENVED);
   sg->minibuffer_needs_to_be_cleared = true;

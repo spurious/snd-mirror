@@ -1354,7 +1354,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
     {
       ap->losamp = snd_round_off_t(ap->x0 * cur_srate); /* was ceil??? */
       if (ap->losamp < 0) ap->losamp = 0;
-      ap->hisamp = (off_t)(ap->x1 * cur_srate);
+      ap->hisamp = (off_t)((ap->x1 * cur_srate) + 0.5); /* + 0.5 for 1-sample case */
       if ((ap->losamp == 0) && (ap->hisamp == 0)) return(0);
     }
 
@@ -1855,8 +1855,11 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
       if (samps > (scaler / 10)) 
 	tens = 0; 
       else tens = -1;
-
+#if (!USE_GTK)
   row_height = (int)(1.25 * number_height(PEAKS_FONT(ss)));
+#else
+  row_height = (int)(0.75 * number_height(PEAKS_FONT(ss)));
+#endif
   if (row_height < 10) row_height = 10;
 
   num_peaks = (fap->y_axis_y0 - fap->y_axis_y1) / (row_height + 5);
@@ -1903,7 +1906,11 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
       if (num_peaks < 12) amp0 = peak_amps[2].amp; else amp0 = peak_amps[5].amp;
       set_bold_peak_numbers_font(cp);
       if (cp->printing) ps_set_bold_peak_numbers_font();
+#if (!USE_GTK)
       row = fap->y_axis_y1 + row_height;
+#else
+      row = fap->y_axis_y1;
+#endif
       for (i = 0; i < num_peaks; i++)
 	{
 	  if (peak_freqs[i].amp >= amp0)
@@ -1933,7 +1940,11 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
   set_peak_numbers_font(cp);
   if (cp->printing) ps_set_peak_numbers_font();
   /* choose a small font for these numbers */
+#if (!USE_GTK)
   row = fap->y_axis_y1 + row_height;
+#else
+  row = fap->y_axis_y1;
+#endif
   for (i = 0; i < num_peaks; i++)
     {
       if (peak_freqs[i].amp < amp0)
@@ -2406,6 +2417,7 @@ static void rotate(Float *xyz, Float *mat)
 
 void reset_spectro(void)
 {
+  /* only used in orientation dialog button and Enter key binding */
   set_spectro_cutoff(DEFAULT_SPECTRO_CUTOFF);
   set_spectro_hop(DEFAULT_SPECTRO_HOP);
   set_spectro_x_angle((with_gl(ss)) ? DEFAULT_SPECTRO_X_ANGLE : 90.0);
@@ -2464,6 +2476,7 @@ static GLdouble unproject_to_y(int x, int y)
 
 void reset_spectro(void)
 {
+  /* only used in orientation dialog button and Enter key binding */
   set_spectro_cutoff(DEFAULT_SPECTRO_CUTOFF);
   set_spectro_hop(DEFAULT_SPECTRO_HOP);
   set_spectro_x_angle(DEFAULT_SPECTRO_X_ANGLE);
@@ -2554,6 +2567,7 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool us
     }
   xincr = 1.0 / (float)(si->active_slices);
   yincr = 1.0 / (float)bins;
+
   for (x0 = -0.5, slice = 0; slice < si->active_slices - 1; slice++, x0 += xincr)
     {
       for (i = 0, y0 = -0.5; i < bins - 1; i++, y0 += yincr)
@@ -2701,8 +2715,9 @@ static bool make_gl_spectrogram(chan_info *cp)
 	       0.0);
 #endif
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  if (cp->fft_changed == FFT_CHANGED)
-    gl_spectrogram(si, cp->gl_fft_list, cp->spectro_cutoff, cp->fft_log_magnitude, cp->min_dB, br, bg, bb);
+
+  gl_spectrogram(si, cp->gl_fft_list, cp->spectro_cutoff, cp->fft_log_magnitude, cp->min_dB, br, bg, bb);
+
   glViewport(fap->graph_x0, 0, fap->width, fap->height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -3509,7 +3524,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	case GRAPH_AS_SPECTROGRAM:
 #if HAVE_GL
 	  if (make_spectrogram(cp))
-	    glDrawBuffer(GL_BACK); /* was make_spectrogram(cp, sp); */
+	    glDrawBuffer(GL_BACK);
 #else
 	  make_spectrogram(cp);
 #endif
@@ -4082,7 +4097,8 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
       ap = cp->fft->axis;
       /* look first for on-axis (axis drag) mouse */
 #if HAVE_GL
-      if ((cp->transform_graph_type == GRAPH_AS_SPECTROGRAM) && (ap->used_gl))
+      if ((cp->transform_graph_type == GRAPH_AS_SPECTROGRAM) && 
+	  (ap->used_gl))
 	{
 	  GLdouble xx;
 	  xx = unproject_to_x(x, y);
@@ -4410,7 +4426,8 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
       if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
 	{
 #if HAVE_GL
-	  if ((with_gl(ss)) && (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM))
+	  if ((cp->transform_graph_type == GRAPH_AS_SPECTROGRAM) &&
+	      (cp->fft->axis->used_gl))
 	    fft_faxis_start = unproject_to_y(x, y);
 #endif
 	  fft_axis_start = x;
@@ -4733,8 +4750,8 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 		if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
 		  {
 #if HAVE_GL
-		    if ((with_gl(ss)) && 
-			(cp->transform_graph_type == GRAPH_AS_SPECTROGRAM))
+		    if ((cp->transform_graph_type == GRAPH_AS_SPECTROGRAM) &&
+			(cp->fft->axis->used_gl))
 		      {
 			Float ny;
 			ny = unproject_to_y(x, y);
