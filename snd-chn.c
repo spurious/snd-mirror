@@ -921,11 +921,15 @@ static void set_x_axis_x1(chan_info *cp, off_t right)
 void reset_x_display(chan_info *cp, double sx, double zx)
 {
   axis_info *ap;
+  bool reset_zx = false;
   ap = cp->axis;
   ap->sx = sx;
+  reset_zx = (zx != ap->zx);
   ap->zx = zx;
   set_x_bounds(ap);
-  resize_sx(cp);
+  if (reset_zx)
+    resize_sx_and_zx(cp);
+  else resize_sx(cp);
   update_graph_or_warn(cp);
 }
 

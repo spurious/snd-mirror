@@ -919,6 +919,15 @@
 	       *output*)))))))
 |#
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; AT possibilities: G&R 1.320 (but it's just a kernel -- no index
+;;;                   log sin x (99)
+;;;                   sin mx / sin nx (237)
+;;;                   n sin nx / double fact (178)
+;;;                   sum of sines form of e^cos sin(sin) (202)
+;;;                   complex ratio (235 7 8)
+
 
 ;;; --------------------------------------------------------------------------------
 
@@ -2697,7 +2706,6 @@
 			  0.109 0.108 0.108 0.108 0.108 0.108 0.108 0.108 0.107 0.107 0.107 0.107 0.107 0.107 0.107 0.107 0.106 0.106 0.106 0.106
 			  0.106 0.106 0.106))
 ;;; is there a formula for the max? 
-;;;   Watson p488 apparently says (sqrt (/ 2.0 (* pi n))) but that's too low -- (/ 2.0 (sqrt (* pi n))) is closer
 
 (def-clm-struct (bess
 		 :make-wrapper (lambda (g)

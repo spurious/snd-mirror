@@ -1019,8 +1019,8 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 	  gray_ap->hisamp = gray_ap->losamp + samps - 1;
 	  gray_ap->x0 = (double)(gray_ap->losamp) / (double)srate;
 	  gray_ap->x1 = (double)(gray_ap->hisamp) / (double)srate;
-	  gray_ap->y0 = -1.0;
-	  gray_ap->y1 = 1.0;
+	  gray_ap->y0 = active_ap->y0;
+	  gray_ap->y1 = active_ap->y1;
 	}
       else
 	{

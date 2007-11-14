@@ -447,92 +447,92 @@
 (define callbacks (list (list 'lambda2 ; unnamed gdk_window_invalidate_maybe_recurse argument
 			      "gboolean"
 			      "child_func"
-			      (parse-args "GdkWindow* window lambda_data func_data" 'callback)
+			      (parse-args "GdkWindow* window lambda_data func_info" 'callback)
 			      'temporary)
 			(list 'lambda3 ; unnamed gtk_accel_group_find argument
 			      "gboolean"
 			      "find_func"
-			      (parse-args "GtkAccelKey* key GClosure* closure lambda_data func_data" 'callback)
+			      (parse-args "GtkAccelKey* key GClosure* closure lambda_data func_info" 'callback)
 			      'temporary) ; ??
 			(list 'GtkCallback
 			      "void"
 			      "func2"
-			      (parse-args "GtkWidget* w lambda_data func_data" 'callback)
+			      (parse-args "GtkWidget* w lambda_data func_info" 'callback)
 			      'temporary)
 			(list 'GSourceFunc
 			      "gboolean"
 			      "timer_func"
-			      (parse-args "lambda_data func_data" 'callback)
+			      (parse-args "lambda_data func_info" 'callback)
 			      'semi-permanent)
 			(list 'GtkDestroyNotify
 			      "void"
 			      "destroy_func"
-			      (parse-args "lambda_data func_data" 'callback)
+			      (parse-args "lambda_data func_info" 'callback)
 			      'permanent)
 			(list 'GdkFilterFunc
 			      "GdkFilterReturn"
 			      "filter_func"
-			      (parse-args "GdkXEvent* xevent GdkEvent* event lambda_data func_data" 'callback)
+			      (parse-args "GdkXEvent* xevent GdkEvent* event lambda_data func_info" 'callback)
 			      'permanent)
 			(list 'GdkEventFunc
 			      "void"
 			      "event_func"
-			      (parse-args "GdkEvent* event lambda_data func_data" 'callback)
+			      (parse-args "GdkEvent* event lambda_data func_info" 'callback)
 			      'permanent)
 ;			(list 'GdkSpanFunc
 ;			      "void"
 ;			      "span_func"
-;			      (parse-args "GdkSpan* span lambda_data func_data" 'callback)
+;			      (parse-args "GdkSpan* span lambda_data func_info" 'callback)
 ;			      'temporary)
 			(list 'GtkFunction
 			      "gboolean"
 			      "func1"
-			      (parse-args "lambda_data func_data" 'callback)
+			      (parse-args "lambda_data func_info" 'callback)
 			      'semi-permanent)
 			(list 'GtkKeySnoopFunc
 			      "gint"
 			      "snoop_func"
-			      (parse-args "GtkWidget* widget GdkEventKey* event lambda_data func_data" 'callback)
+			      (parse-args "GtkWidget* widget GdkEventKey* event lambda_data func_info" 'callback)
 			      'semi-permanent)
 			(list 'GtkMenuPositionFunc
 			      "void"
 			      "menu_position_func"
-			      (parse-args "GtkMenu* menu gint* x gint* y gboolean* push lambda_data func_data" 'callback)
+			      (parse-args "GtkMenu* menu gint* x gint* y gboolean* push lambda_data func_info" 'callback)
 			      'permanent)
 			(list 'GtkTextTagTableForeach
 			      "void"
 			      "text_tag_table_foreach"
-			      (parse-args "GtkTextTag* tag lambda_data func_data" 'callback)
+			      (parse-args "GtkTextTag* tag lambda_data func_info" 'callback)
 			      'temporary)
 			(list 'GtkAccelMapForeach
 			      "void"
 			      "accel_map_foreach"
-			      (parse-args "lambda_data func_data gchar* accel_path guint accel_key GdkModifierType accel_mods gboolean changed" 'callback)
+			      (parse-args "lambda_data func_info gchar* accel_path guint accel_key GdkModifierType accel_mods gboolean changed" 'callback)
 			      'temporary)
 			(list 'GtkTreeModelForeachFunc
 			      "gboolean"
 			      "model_func"
-			      (parse-args "GtkTreeModel* model GtkTreePath* path GtkTreeIter* iter lambda_data func_data" 'callback)
+			      (parse-args "GtkTreeModel* model GtkTreePath* path GtkTreeIter* iter lambda_data func_info" 'callback)
 			      'temporary)
 			(list 'GtkTreeSelectionForeachFunc
 			      "void"
 			      "tree_selection_func"
-			      (parse-args "GtkTreeModel* model GtkTreePath* path GtkTreeIter* iter lambda_data func_data" 'callback)
+			      (parse-args "GtkTreeModel* model GtkTreePath* path GtkTreeIter* iter lambda_data func_info" 'callback)
 			      'temporary)
 			(list 'GtkClipboardReceivedFunc
 			      "void"
 			      "clip_received"
-			      (parse-args "GtkClipboard* clipboard GtkSelectionData* selection_data lambda_data func_data" 'callback)
+			      (parse-args "GtkClipboard* clipboard GtkSelectionData* selection_data lambda_data func_info" 'callback)
 			      'temporary)
 			(list 'GtkClipboardTextReceivedFunc
 			      "void"
 			      "clip_text_received"
-			      (parse-args "GtkClipboard* clipboard gchar* text lambda_data func_data" 'callback)
+			      (parse-args "GtkClipboard* clipboard gchar* text lambda_data func_info" 'callback)
 			      'temporary)
 			(list 'GtkClipboardTargetsReceivedFunc
 			      "void"
 			      "clip_targets_received"
-			      (parse-args "GtkClipboard* clipboard GdkAtom* atoms gint n_atoms lambda_data func_data" 'callback)
+			      (parse-args "GtkClipboard* clipboard GdkAtom* atoms gint n_atoms lambda_data func_info" 'callback)
 			      'temporary)
 ;			(list 'GtkMenuDetachFunc
 ;			      "void"
@@ -543,47 +543,47 @@
 			(list 'GtkTextCharPredicate
 			      "gboolean"
 			      "text_char_predicate"
-			      (parse-args "gunichar ch lambda_data func_data" 'callback)
+			      (parse-args "gunichar ch lambda_data func_info" 'callback)
 			      'temporary)
 			(list 'GtkTreeViewColumnDropFunc
 			      "gboolean"
 			      "tree_column"
-			      (parse-args "GtkTreeView* tree_view GtkTreeViewColumn* column GtkTreeViewColumn* prev_column GtkTreeViewColumn* next_column lambda_data func_data" 'callback)
+			      (parse-args "GtkTreeView* tree_view GtkTreeViewColumn* column GtkTreeViewColumn* prev_column GtkTreeViewColumn* next_column lambda_data func_info" 'callback)
 			      'temporary)
 			(list 'GtkTreeViewMappingFunc
 			      "void"
 			      "tree_mapping"
-			      (parse-args "GtkTreeView* tree_view GtkTreePath* path lambda_data func_data" 'callback)
+			      (parse-args "GtkTreeView* tree_view GtkTreePath* path lambda_data func_info" 'callback)
 			      'temporary)
 			(list 'GtkTreeViewSearchEqualFunc
 			      "gboolean"
 			      "tree_search"
-			      (parse-args "GtkTreeModel* model gint column gchar* key GtkTreeIter* iter lambda_data func_data" 'callback)
+			      (parse-args "GtkTreeModel* model gint column gchar* key GtkTreeIter* iter lambda_data func_info" 'callback)
 			      'temporary)
 			(list 'GtkTreeCellDataFunc
 			      "void"
 			      "cell_data"
-			      (parse-args "GtkTreeViewColumn* tree_column GtkCellRenderer* cell GtkTreeModel* tree_model GtkTreeIter* iter lambda_data func_data" 'callback)
+			      (parse-args "GtkTreeViewColumn* tree_column GtkCellRenderer* cell GtkTreeModel* tree_model GtkTreeIter* iter lambda_data func_info" 'callback)
 			      'permanent)
 			(list 'GtkTreeIterCompareFunc
 			      "gint"
 			      "iter_compare"
-			      (parse-args "GtkTreeModel* model GtkTreeIter* a GtkTreeIter* b lambda_data func_data" 'callback)
+			      (parse-args "GtkTreeModel* model GtkTreeIter* a GtkTreeIter* b lambda_data func_info" 'callback)
 			      'permanent)
 			(list 'GtkTreeSelectionFunc
 			      "gboolean"
 			      "tree_selection"
-			      (parse-args "GtkTreeSelection* selection GtkTreeModel* model GtkTreePath* path gboolean path_currently_selected lambda_data func_data" 'callback)
+			      (parse-args "GtkTreeSelection* selection GtkTreeModel* model GtkTreePath* path gboolean path_currently_selected lambda_data func_info" 'callback)
 			      'permanent)
 			(list 'GtkClipboardGetFunc
 			      "void"
 			      "clip_get"
-			      (parse-args "GtkClipboard* clipboard GtkSelectionData* selection_data guint info lambda_data func_data" 'callback)
+			      (parse-args "GtkClipboard* clipboard GtkSelectionData* selection_data guint info lambda_data func_info" 'callback)
 			      'permanent)
 			(list 'GtkClipboardClearFunc
 			      "void"
 			      "clip_clear"
-			      (parse-args "GtkClipboard* clipboard lambda_data func_data" 'callback)
+			      (parse-args "GtkClipboard* clipboard lambda_data func_info" 'callback)
 			      'permanent)
 
 			; GCallback 'lambda can be whatever is indicated by caller (2 or more args)
@@ -593,12 +593,12 @@
 			(list 'GtkFileFilterFunc
 			      "gboolean"
 			      "file_filter"
-			      (parse-args "GtkFileFilterInfo* info lambda_data func_data" 'callback-23)
+			      (parse-args "GtkFileFilterInfo* info lambda_data func_info" 'callback-23)
 			      'permanent)
 			(list 'GtkEntryCompletionMatchFunc
 			      "gboolean"
 			      "entry_completion_match"
-			      (parse-args "GtkEntryCompletion* completion gchar* key GtkTreeIter* iter lambda_data func_data" 'callback-23)
+			      (parse-args "GtkEntryCompletion* completion gchar* key GtkTreeIter* iter lambda_data func_info" 'callback-23)
 			      'permanent)
 			))
 
@@ -606,12 +606,12 @@
 		       (list 'GtkTreeViewRowSeparatorFunc
 			     "gboolean"
 			     "row_separator"
-			     (parse-args "GtkTreeModel* model GtkTreeIter* iter lambda_data func_data" 'callback-250)
+			     (parse-args "GtkTreeModel* model GtkTreeIter* iter lambda_data func_info" 'callback-250)
 			     'permanent)
 		       (list 'GtkIconViewForeachFunc
 			     "void"
 			     "icon_view_foreach"
-			     (parse-args "GtkIconView* icon_view GtkTreePath* path lambda_data func_data" 'callback-250)
+			     (parse-args "GtkIconView* icon_view GtkTreePath* path lambda_data func_info" 'callback-250)
 			     'permanent)
 		       ))
 
@@ -619,7 +619,7 @@
 			(list 'GtkClipboardImageReceivedFunc
 			      "void"
 			      "clip_image_received"
-			      (parse-args "GtkClipboard* clipboard GdkPixbuf* pixbuf lambda_data func_data" 'callback) ; 'callback-256)
+			      (parse-args "GtkClipboard* clipboard GdkPixbuf* pixbuf lambda_data func_info" 'callback) ; 'callback-256)
 			      ;; these arg types are not new in 256, but this parse-args precedes the basic ones, so comment out the callback-256
 			      ;; the problem here (and below callback-290) is that parse-args sees a new type (new to it so far),
 			      ;;   and chooses which type list to put it on based on the "extra" arg -- since these types
@@ -629,7 +629,7 @@
 			(list 'GLogFunc
 			      "void"
 			      "g_message_log_func"
-			      (parse-args "gchar* domain GLogLevelFlags log_level gchar* message lambda_data func_data" 'callback-256)
+			      (parse-args "gchar* domain GLogLevelFlags log_level gchar* message lambda_data func_info" 'callback-256)
 			      'permanent)
 			))
 
@@ -637,35 +637,35 @@
 		       (list 'GtkClipboardRichTextReceivedFunc
 			     "void"
 			     "clip_rich_text_received"
-			     (parse-args "GtkClipboard* clipboard GdkAtom format guint8* text gsize length lambda_data func_data" 'callback); 'callback-290)
+			     (parse-args "GtkClipboard* clipboard GdkAtom format guint8* text gsize length lambda_data func_info" 'callback); 'callback-290)
 			     ;; guint8* is const
 			     'permanent-gcc)
 		       (list 'GtkRecentFilterFunc
 			     "gboolean"
 			     "recent_filter"
-			     (parse-args "GtkRecentFilterInfo* filter_info lambda_data func_data" 'callback-290)
+			     (parse-args "GtkRecentFilterInfo* filter_info lambda_data func_info" 'callback-290)
 			     ;; const filter info
 			     'permanent-gcc)
 		       (list 'GtkTreeViewSearchPositionFunc
 			     "void"
 			     "search_position"
-			     (parse-args "GtkTreeView* tree_view GtkWidget* search_dialog lambda_data func_data" 'callback-290)
+			     (parse-args "GtkTreeView* tree_view GtkWidget* search_dialog lambda_data func_info" 'callback-290)
 			     'permanent)
 		       (list 'GtkAssistantPageFunc
 			     "gint"
 			     "page_func"
-			     (parse-args "gint current_page lambda_data func_data" 'callback-290)
+			     (parse-args "gint current_page lambda_data func_info" 'callback-290)
 			     'permanent)
 		       (list 'GtkLinkButtonUriFunc
 			     "void"
 			     "link_button_uri"
-			     (parse-args "GtkLinkButton* button gchar* link lambda_data func_data" 'callback-290)
+			     (parse-args "GtkLinkButton* button gchar* link lambda_data func_info" 'callback-290)
 			     ;; const gchar *link
 			     'permanent)
 		       (list 'GtkRecentSortFunc
 			     "gint"
 			     "recent_sort"
-			     (parse-args "GtkRecentInfo* a GtkRecentInfo* b lambda_data func_data" 'callback-290)
+			     (parse-args "GtkRecentInfo* a GtkRecentInfo* b lambda_data func_info" 'callback-290)
 			     'permanent)
 		       ))
 
@@ -2299,7 +2299,7 @@
 	       (hey ")~%"))
 	     (hey "{~%  ")
 	     ;; I tried to use XEN_ERROR here but it was a no-op for some reason?? 
-	     (hey "if (!XEN_LIST_P((XEN)func_data)) return~A;~%  "
+	     (hey "if (!XEN_LIST_P((XEN)func_info)) return~A;~%  "
 		  (if void? 
 		      ""
 		      (format #f "((~A)0)" (no-stars type))))
@@ -2311,7 +2311,7 @@
 	       (if (not void?)
 		   (hey "return(XEN_TO_C_~A("
 			(no-stars type)))
-	       (hey "XEN_CALL_~D(~A((XEN)func_data),~%"
+	       (hey "XEN_CALL_~D(~A((XEN)func_info),~%"
 		    (length args)
 		    (if (eq? fname 'GtkClipboardClearFunc)
 			"XEN_CADDR"
@@ -2328,7 +2328,7 @@
 			       "(GtkFileFilterInfo *)"
 			       "")
 			   (cadr arg))
-		      (hey "XEN_CADR((XEN)func_data),~%")))
+		      (hey "XEN_CADR((XEN)func_info),~%")))
 		args)
 	       (hey (substring "                                                                      " 0 castlen))
 	       (hey "c__FUNCTION__)")
@@ -2528,7 +2528,7 @@
 	     (hey "  {~%")
 	     (if using-result (hey "    XEN result = XEN_FALSE;~%"))
 	     (if using-loc (hey "    int loc;~%"))
-	     (hey "    XEN gxg_ptr = XEN_LIST_5(~A, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);~%"
+	     (hey "    XEN gxg_ptr = XEN_LIST_5(~A, func_info, XEN_FALSE, XEN_FALSE, XEN_FALSE);~%"
 		  (call-with-current-continuation
 		   (lambda (name-it)
 		     (for-each

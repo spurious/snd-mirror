@@ -845,8 +845,8 @@ style \"default_text\" = \"default_entry\"\n		\
 style \"default_slider\" = \"default\"\n		\
 {\n							\
   bg[NORMAL] = { 0.90, 0.90, 0.85 }\n			\
-  bg[ACTIVE] = { 0.80, 0.80, 0.75 }\n			\
-  bg[PRELIGHT] = { 0.70, 0.70, 0.64 }\n			\
+  bg[ACTIVE] = { 0.70, 0.70, 0.64 }\n			\
+  bg[PRELIGHT] = { 0.90, 0.90, 0.85 }\n			\
 \n							\
   GtkRange::slider_width = 13\n				\
   GtkRange::stepper_size = 10\n				\
@@ -870,7 +870,7 @@ style \"zoom_slider\" = \"default_slider\"\n		\
 {\n							\
   bg[NORMAL] = { 0.70, 0.70, 0.64 }\n			\
   bg[ACTIVE] = { 0.54, 0.54, 0.51 }\n			\
-  bg[PRELIGHT] = { 0.44, 0.44, 0.36 }\n			\
+  bg[PRELIGHT] = { 0.70, 0.70, 0.64 }\n			\
 \n							\
   GtkRange::slider_width = 12\n				\
   GtkRange::stepper_size = 12\n				\
