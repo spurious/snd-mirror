@@ -2564,16 +2564,6 @@ To use the defaults, click the 'Reset' button.",
 }
 
 
-/* ---------------- Completion Dialog ---------------- */
-
-void completion_dialog_help(void)
-{
-  snd_help("completion",
-	   "These are the completions that Snd thinks might be likely. If you select one, it will be used to complete the current name.",
-	   WITH_WORD_WRAP);
-}
-
-
 /* ---------------- Save as Dialog ---------------- */
 
 void save_as_dialog_help(void)

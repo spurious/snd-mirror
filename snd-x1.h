@@ -62,12 +62,11 @@ void g_init_gxdraw(void);
 
 /* -------- snd-xlistener.c -------- */
 
+void add_completer_to_builtin_textfield(Widget w, int completer);
 void textfield_focus_callback(Widget w, XtPointer context, XtPointer info);
 void textfield_unfocus_callback(Widget w, XtPointer context, XtPointer info);
 void mouse_enter_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag);
 void mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag);
-void add_completer_to_textfield(Widget w, int completer);
-void snd_completion_help(int matches, char **buffer);
 void listener_delete_text(int new_end);
 void listener_append_and_prompt(const char *msg);
 int save_listener_text(FILE *fp);

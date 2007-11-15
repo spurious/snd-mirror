@@ -1,6 +1,9 @@
 #include "snd.h"
 #include "sndlib-strings.h"
 
+/* TODO: tab for completion of previous line jumps to end -- we need to ignore "printout_end" in both versions if insertion is not at end?
+ *       could keep an array of printout_ends, look at current typing position
+ */
 
 static char *current_match = NULL;
 
@@ -277,7 +280,7 @@ bool separator_char_p(char c)
 #endif
 
 
-char *command_completer(char *original_text, void *data)
+char *command_completer(widget_t w, char *original_text, void *data)
 {
   int i, len, beg, matches = 0;
   char *text;
@@ -330,14 +333,16 @@ char *command_completer(char *original_text, void *data)
 
 /* ---------------- COMMAND/FILENAME COMPLETIONS ---------------- */
 
-typedef char *(*completer_func)(char *text, void *data);
+typedef char *(*completer_func)(widget_t w, char *text, void *data);
 static completer_func *completer_funcs = NULL;
+typedef void (*multicompleter_func)(widget_t w, void *data);
+static multicompleter_func *multicompleter_funcs = NULL;
 static void **completer_data = NULL;
 static int completer_funcs_size = 0;
 static int completer_funcs_end = 0;
 
 
-int add_completer_func(char *(*func)(char *text, void *context), void *data)
+int add_completer_func(char *(*func)(widget_t w, char *text, void *context), void *data)
 {
   if (completer_funcs_size == completer_funcs_end)
     {
@@ -345,12 +350,14 @@ int add_completer_func(char *(*func)(char *text, void *context), void *data)
       if (completer_funcs == NULL)
 	{
 	  completer_funcs = (completer_func *)CALLOC(completer_funcs_size, sizeof(completer_func));
+	  multicompleter_funcs = (multicompleter_func *)CALLOC(completer_funcs_size, sizeof(multicompleter_func));
 	  completer_data = (void **)CALLOC(completer_funcs_size, sizeof(void *));
 	}
       else 
 	{
 	  int i;
 	  completer_funcs = (completer_func *)REALLOC(completer_funcs, completer_funcs_size * sizeof(completer_func));
+	  multicompleter_funcs = (multicompleter_func *)REALLOC(multicompleter_funcs, completer_funcs_size * sizeof(multicompleter_func));
 	  completer_data = (void **)REALLOC(completer_data, completer_funcs_size * sizeof(void *));
 	  for (i = completer_funcs_end; i < completer_funcs_size; i++) completer_data[i] = NULL;
 	}
@@ -359,6 +366,14 @@ int add_completer_func(char *(*func)(char *text, void *context), void *data)
   completer_data[completer_funcs_end] = data;
   completer_funcs_end++;
   return(completer_funcs_end - 1);
+}
+
+int add_completer_func_with_multicompleter(char *(*func)(widget_t w, char *text, void *context), void *data, void (*multi_func)(widget_t w, void *data))
+{
+  int row;
+  row = add_completer_func(func, data);
+  multicompleter_funcs[row] = multi_func;
+  return(row);
 }
 
 
@@ -398,21 +413,35 @@ void add_possible_completion(const char *text)
 }
 
 
-void display_completions(void)
+int get_possible_completions_size(void) 
 {
-  if (possible_completions_ctr > 0)
-    snd_completion_help(possible_completions_ctr, possible_completions);
+  return(possible_completions_ctr);
 }
 
 
-char *complete_text(char *text, int func)
+char **get_possible_completions(void) 
+{
+  return(possible_completions);
+}
+
+
+void handle_completions(widget_t w, int completer)
+{
+  if ((completer >= 0) &&
+      (completer < completer_funcs_end) &&
+      (multicompleter_funcs[completer]))
+    (*multicompleter_funcs[completer])(w, completer_data[completer]);
+}
+
+
+char *complete_text(widget_t w, char *text, int func)
 {
   /* given text, call proc table entry func, return new text (not text!) */
   completion_matches = -1; /* i.e. no completer */
   possible_completions_ctr = 0;
   if ((func >= 0) && 
       (func < completer_funcs_end))
-    return((*completer_funcs[func])(text, completer_data[func]));
+    return((*completer_funcs[func])(w, text, completer_data[func]));
   else return(copy_string(text));
 }
 
@@ -489,10 +518,10 @@ void add_srate_to_completion_list(int srate)
 }
 
 
-char *srate_completer(char *text, void * data)
+char *srate_completer(widget_t w, char *text, void * data)
 {
   init_srate_list();
-  return(list_completer(text, (void *)srate_info));
+  return(list_completer(w, text, (void *)srate_info));
 }
 
 
@@ -503,7 +532,7 @@ char *srate_completer(char *text, void * data)
 enum {ANY_FILE_TYPE, SOUND_FILE_TYPE};
 
 
-static char *filename_completer_1(char *text, int file_type)
+static char *filename_completer_1(widget_t w, char *text, int file_type)
 {
 #if HAVE_OPENDIR
   /* assume text is a partial filename */
@@ -587,15 +616,15 @@ static char *filename_completer_1(char *text, int file_type)
 }
 
 
-char *filename_completer(char *text, void *data)
+char *filename_completer(widget_t w, char *text, void *data)
 {
-  return(filename_completer_1(text, ANY_FILE_TYPE));
+  return(filename_completer_1(w, text, ANY_FILE_TYPE));
 }
 
 
-char *sound_filename_completer(char *text, void *data)
+char *sound_filename_completer(widget_t w, char *text, void *data)
 {
-  return(filename_completer_1(text, SOUND_FILE_TYPE));
+  return(filename_completer_1(w, text, SOUND_FILE_TYPE));
 }
 
 
@@ -607,7 +636,7 @@ static bool use_sound_filename_completer(sp_filing_t filing)
 }
 
 
-char *info_completer(char *text, void *data)
+char *info_completer(widget_t w, char *text, void *data)
 {
   snd_info *sp = (snd_info *)data;
   if (sp)
@@ -616,11 +645,11 @@ char *info_completer(char *text, void *data)
       if (sp->search_count != 0) return(copy_string(text));      /* C-s or C-r so as above */
       if ((sp->marking) || (sp->finding_mark)) return(copy_string(text)); /* C-x C-m etc */
       if (sp->printing) return(copy_string(text));               /* C-x C-d so anything is possible */
-      if (sp->amp_count != 0) return(env_name_completer(text, NULL));
-      if (use_sound_filename_completer(sp->filing)) return(sound_filename_completer(text, NULL));
-      if (sp->loading) return(filename_completer(text, NULL));   /* C-x C-l */
+      if (sp->amp_count != 0) return(env_name_completer(w, text, NULL));
+      if (use_sound_filename_completer(sp->filing)) return(sound_filename_completer(w, text, NULL));
+      if (sp->loading) return(filename_completer(w, text, NULL));   /* C-x C-l */
 
-      new_text = command_completer(text, NULL);
+      new_text = command_completer(w, text, NULL);
       if (get_completion_matches() == 0)
 	{
 	  int i, beg, parens, len;
@@ -638,7 +667,7 @@ char *info_completer(char *text, void *data)
 	    {
 	      char *new_file;
 	      if (new_text) FREE(new_text);
-	      new_file = filename_completer((char *)(text + beg), NULL);
+	      new_file = filename_completer(w, (char *)(text + beg), NULL);
 	      len = beg + 2 + snd_strlen(new_file);
 	      new_text = (char *)CALLOC(len, sizeof(char));
 	      strncpy(new_text, text, beg);
@@ -648,7 +677,7 @@ char *info_completer(char *text, void *data)
 	}
       return(new_text);
     }
-  return(command_completer(text, NULL));
+  return(command_completer(w, text, NULL));
 }
 
 
@@ -738,7 +767,7 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
       if (old_text[i] == '\"')
 	{
 	  file_text = copy_string((char *)(old_text + i + 1));
-	  new_file = filename_completer(file_text, NULL);
+	  new_file = filename_completer(NULL, file_text, NULL);
 	  len = snd_strlen(new_file);
 	  if (len > 0)
 	    {
@@ -752,14 +781,14 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
 	}
       if (isspace((int)(old_text[i]))) break;
     }
-  if (new_text == NULL) new_text = command_completer(old_text, NULL);
+  if (new_text == NULL) new_text = command_completer(NULL, old_text, NULL);
   (*try_completion) = true;
   (*to_file_text) = file_text;
   return(new_text);
 }
 
 
-char *list_completer(char *text, void *data)
+char *list_completer(widget_t w, char *text, void *data)
 {
   list_completer_info *info = (list_completer_info *)data;
   int i, j = 0, len, matches = 0, current_match = -1;

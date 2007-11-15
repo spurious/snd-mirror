@@ -1112,13 +1112,16 @@ static void watch_filename_change(Widget w, XtPointer context, XtPointer info)
    */
   file_dialog_info *fd = (file_dialog_info *)context;
   char *filename = NULL;
+
   filename = XmTextGetString(w);
   if ((filename) && (*filename))
     {
       XmStringTable files;
       Widget file_list;
-      int num_files = 0, i, pos = -1, l, u;
+      int num_files = 0, i, pos = -1, l, u, text_len;
       char *file_list_file = NULL;
+
+      text_len = snd_strlen(filename);
 
       file_list = FSB_BOX(fd->dialog, XmDIALOG_LIST);
       XtVaGetValues(fd->dialog,
@@ -1135,16 +1138,16 @@ static void watch_filename_change(Widget w, XtPointer context, XtPointer info)
 	  file_list_file = (char *)XmStringUnparse(files[i], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL); /* p453 */
 	  comp = strcmp(file_list_file, filename);
 	  XtFree(file_list_file);
+	  pos = i + 1;
 	  if (comp == 0)
-	    {
-	      pos = i + 1;
-	      break;
-	    }
+	    break;
 	  if (comp < 0) /* files[i] less than filename */
 	    l = i + 1;
 	  else u = i - 1;
 	}
-      ensure_list_row_visible(file_list, pos);
+      if (pos > 0)
+	ensure_list_row_visible(file_list, pos);
+
       if ((mus_file_probe(filename)) && 
 	  (!directory_p(filename)))
 	{
@@ -1216,6 +1219,12 @@ static void reflect_text_in_open_button(Widget w, XtPointer context, XtPointer i
   /* w here is the text widget, not the button */
   XtSetSensitive(FSB_BOX(fd->dialog, XmDIALOG_OK_BUTTON), (!(file_is_directory(fd->dialog))));
   if (fd->mkdirB) XtSetSensitive(fd->mkdirB, file_is_nonexistent_directory(fd->dialog));
+}
+
+
+static void multifile_completer(widget_t w, void *data)
+{
+  watch_filename_change(w, (XtPointer)data, NULL);
 }
 
 
@@ -1309,14 +1318,18 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   XtVaSetValues(fd->fp->just_sounds_button, XmNselectColor, ss->sgx->pushed_button_color, NULL);
   XtVaSetValues(fd->dp->play_button, XmNselectColor, ss->sgx->pushed_button_color, NULL);
 
+
   /* -------- completions */
+
   wtmp = FSB_BOX(fd->dialog, XmDIALOG_TEXT);
-  add_completer_to_textfield(wtmp, add_completer_func(sound_filename_completer, NULL));
+  add_completer_to_builtin_textfield(wtmp, add_completer_func_with_multicompleter(sound_filename_completer, (void *)fd, multifile_completer));
+
   XtAddCallback(wtmp, XmNfocusCallback, focus_filename_text_callback, (XtPointer)fd);
   XtAddCallback(wtmp, XmNlosingFocusCallback, unfocus_filename_text_callback, (XtPointer)fd);
 
   wtmp = FSB_BOX(fd->dialog, XmDIALOG_FILTER_TEXT);
-  add_completer_to_textfield(wtmp, add_completer_func(filename_completer, NULL));
+  add_completer_to_builtin_textfield(wtmp, add_completer_func(filename_completer, NULL));
+
   XtAddCallback(wtmp, XmNvalueChangedCallback, unpost_if_filter_changed, (XtPointer)fd);
 
   /* -------- fam/gamin */

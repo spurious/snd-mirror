@@ -921,7 +921,7 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;; AT possibilities: G&R 1.320 (but it's just a kernel -- no index
+;;; AT possibilities: G&R 1.320 (but it's just a kernel -- no index)
 ;;;                   log sin x (99)
 ;;;                   sin mx / sin nx (237)
 ;;;                   n sin nx / double fact (178)

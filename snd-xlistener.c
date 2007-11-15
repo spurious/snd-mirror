@@ -4,55 +4,79 @@
 #define OVERRIDE_TOGGLE 1
 /* Motif 2.0 defines control-button1 to be "take focus" -- this is not a good idea!! */
 
+
+/* non-listener completions */
+
+static void Tab_completion(Widget w, XEvent *event, char **str, Cardinal *num) 
+{
+  int completer = -1;
+
+  XtVaGetValues(w, XmNuserData, &completer, NULL);
+
+  /* fprintf(stderr,"tab in %s: %d\n", XtName(w), completer); */
+
+  if (completer >= 0)
+    {
+      int matches;
+      char *old_text, *new_text;
+
+      old_text = XmTextGetString(w);
+      if (snd_strlen(old_text) == 0) return; /* C-x C-f TAB in minibuffer, for example */
+
+      new_text = complete_text(w, old_text, completer);
+      if (snd_strlen(new_text) == 0) return; /* can this happen? */
+      XmTextSetString(w, new_text);
+      XmTextSetCursorPosition(w, XmTextGetLastPosition(w));
+
+      matches = get_completion_matches();
+
+      if ((snd_strcmp(old_text, new_text)) && 
+	  (matches != -1))
+	{
+	  Pixel old_color;
+	  XtVaGetValues(w, XmNforeground, &old_color, NULL);
+	  if (matches > 1)
+	    XtVaSetValues(w, XmNforeground, ss->sgx->green, NULL);
+	  else 
+	    if (matches == 0) 
+	      XtVaSetValues(w, XmNforeground, ss->sgx->red, NULL);
+	  if (matches != 1)
+	    {
+	      XmUpdateDisplay(w);
+#if HAVE_SLEEP
+	      sleep(1);
+#endif
+	      XtVaSetValues(w, XmNforeground, old_color, NULL);
+	      XmUpdateDisplay(w);
+	    }
+
+	  if (matches > 1)                          /* there are several possible completions -- let the widget decide how to handle it */
+	    handle_completions(w, completer);
+	}
+
+      if (old_text) XtFree(old_text);
+      if (new_text) FREE(new_text);
+    }
+}
+
+
+/* listener completions */
+
 static Widget listener_text = NULL;
-static Widget completions_dialog = NULL, completions_list = NULL;
+static Widget listener_pane = NULL;  /* form widget that hold the listener scrolled text widget */
 
+static Widget completions_list = NULL;
+static Widget completions_pane = NULL;
 
-static void completions_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  completion_dialog_help();
-}
-
-
-static void unpost_completion_from_modify(Widget w, XtPointer context, XtPointer info);
-static void unpost_completion_from_activate(Widget w, XtPointer context, XtPointer info);
-
-static void unpost_completion(Widget w)
-{
-  XtUnmanageChild(completions_dialog);
-  XtRemoveCallback(w, XmNmodifyVerifyCallback, unpost_completion_from_modify, NULL);
-  XtRemoveCallback(w, XmNactivateCallback, unpost_completion_from_activate, NULL);
-  ss->sgx->completion_requestor = NULL;
-  ss->sgx->completion_requestor_dialog = NULL;    
-}
-
-
-static void unpost_completion_from_activate(Widget w, XtPointer context, XtPointer info)
-{
-  unpost_completion(w);
-}
-
-
-static void unpost_completion_from_modify(Widget w, XtPointer context, XtPointer info)
-{
-  XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
-  cbs->doit = true; 
-  unpost_completion(w);
-}
-
-
-static void completions_browse_callback(Widget w, XtPointer context, XtPointer info) 
+static void listener_completions_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int i, j, old_len, new_len;
   char *text = NULL, *old_text = NULL;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
-  Widget requestor;
-  if (ss->sgx->completion_requestor == NULL) 
-    requestor = listener_text;
-  else requestor = ss->sgx->completion_requestor;
+
   /* choice = cbs->item_position - 1; */
   text = (char *)XmStringUnparse(cbs->item, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
-  old_text = XmTextGetString(requestor);
+  old_text = XmTextGetString(listener_text);
   old_len = snd_strlen(old_text);
   new_len = snd_strlen(text);
   for (i = old_len - 1, j = new_len - 1; j >= 0; j--)
@@ -66,135 +90,134 @@ static void completions_browse_callback(Widget w, XtPointer context, XtPointer i
 	}
       else i--;
     }
-  if (requestor == listener_text)
-    append_listener_text(XmTextGetLastPosition(listener_text), 
-			 (char *)(text - 1 + old_len - i));
-  else
-    {
-      /* try to append to who(m?)ever asked for completion help */
-      XmTextInsert(requestor, 
-		   XmTextGetLastPosition(requestor), 
-		   (char *)(text - 1 + old_len - i));
-    }
+
+  append_listener_text(XmTextGetLastPosition(listener_text), (char *)(text - 1 + old_len - i));
+  XtUnmanageChild(completions_pane);
+
   if (text) XtFree(text);
   if (old_text) XtFree(old_text);
-  unpost_completion(requestor);
+
 }
 
 
-static void completions_ok_callback(Widget w, XtPointer context, XtPointer info) 
+static int alphabetize(const void *a, const void *b)
 {
-  Widget requestor;
-  if (ss->sgx->completion_requestor == NULL) 
-    requestor = listener_text;
-  else requestor = ss->sgx->completion_requestor;
-  unpost_completion(requestor);
+  return(strcmp(*((const char **)a), (*(const char **)b)));
 }
 
 
-static void create_completions_dialog(char *title)
+static int printout_end = 0;
+
+static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
-  Arg args[20];
-  int n;
-  XmString titlestr;
-  titlestr = XmStringCreateLocalized(title);
+  /* used only by the listener widget -- needs to be smart about text since overall string can be enormous 
+   *   and we don't want to back up past the last prompt
+   *   also if at start of line (or all white-space to previous \n, indent
+   */
+  int beg, end, len, matches = 0;
+  char *old_text;
 
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-  XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
-  XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
-  XtSetArg(args[n], XmNnoResize, false); n++;
-  /* XtSetArg(args[n], XmNtransient, false); n++; */
-  completions_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-completion-help", args, n);
+  beg = printout_end + 1;
+  end = XmTextGetLastPosition(w);
+  if (end <= beg) return;
+  len = end - beg + 1;
+  old_text = (char *)CALLOC(len + 1, sizeof(char));
+  XmTextGetSubstring(w, beg, len, len + 1, old_text);
+  /* now old_text is the stuff typed since the last prompt */
 
-  XtUnmanageChild(XmMessageBoxGetChild(completions_dialog, XmDIALOG_CANCEL_BUTTON));
-  XtUnmanageChild(XmMessageBoxGetChild(completions_dialog, XmDIALOG_SYMBOL_LABEL));
-  XmStringFree(titlestr);
+  if (old_text)
+    {
+      char *new_text = NULL, *file_text = NULL;
+      bool try_completion = true;
+      new_text = complete_listener_text(old_text, end, &try_completion, &file_text);
+      if (!try_completion)
+	{
+	  FREE(old_text);
+	  return;
+	}
 
-  n = 0;
-  completions_list = XmCreateScrolledList(completions_dialog, "completion-help-text", args, n);
-  XtVaSetValues(completions_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
+      if (snd_strcmp(old_text, new_text))
+	matches = get_completion_matches();
 
-  XtManageChild(completions_list);
+      XmTextReplace(w, beg, end, new_text);
+      XmTextSetCursorPosition(w, XmTextGetLastPosition(w));
+      if (new_text) 
+	{
+	  FREE(new_text); 
+	  new_text = NULL;
+	}
 
-  XtAddCallback(completions_list, XmNbrowseSelectionCallback, completions_browse_callback, NULL);
-  XtAddCallback(completions_dialog, XmNhelpCallback, completions_help_callback, NULL);
-  XtAddCallback(completions_dialog, XmNokCallback, completions_ok_callback, NULL);
+      if (matches > 1)
+	{
+	  int num;
+	  char **buffer;
+	  clear_possible_completions();
+	  set_save_completions(true);
+	  if (file_text) 
+	    new_text = filename_completer(w, file_text, NULL);
+	  else new_text = command_completer(w, old_text, NULL);
+	  if (new_text) 
+	    {
+	      FREE(new_text); 
+	      new_text = NULL;
+	    }
+	  num = get_possible_completions_size();
+	  if (num > 0)
+	    {
+	      int i;
+	      XmString *match;
 
-  XtManageChild(completions_dialog);
+	      if (!completions_list)
+		{
+		  Arg args[20];
+		  int n = 0;
 
-  map_over_children(completions_dialog, set_main_color_of_widget);
-  XtVaSetValues(completions_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(completions_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(completions_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(completions_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(completions_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
+		  XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
+		  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+		  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+		  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+		  XtSetArg(args[n], XmNscrollBarPlacement, XmBOTTOM_LEFT); n++;
+		  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+		  XtSetArg(args[n], XmNforeground, ss->sgx->black); n++;
 
-  set_dialog_widget(COMPLETION_DIALOG, completions_dialog);
+		  completions_list = XmCreateScrolledList(listener_pane, "completion-help-text", args, n);
+		  completions_pane = XtParent(completions_list);
+
+		  XtAddCallback(completions_list, XmNbrowseSelectionCallback, listener_completions_browse_callback, NULL);
+		  XtManageChild(completions_list);
+		  
+		  /* TODO: why no select color or selection? */
+
+		}
+
+	      buffer = get_possible_completions();
+	      qsort((void *)buffer, num, sizeof(char *), alphabetize);
+
+	      match = (XmString *)CALLOC(num, sizeof(XmString));
+	      for (i = 0; i < num; i++) 
+		match[i] = XmStringCreateLocalized(buffer[i]);
+
+	      XtVaSetValues(completions_list, 
+			    XmNitems, match, 
+			    XmNitemCount, num, 
+			    XmNvisibleItemCount, mus_iclamp(1, num, 20), 
+			    NULL);
+
+	      if (!(XtIsManaged(completions_pane)))
+		XtManageChild(completions_pane);
+
+	      for (i = 0; i < num; i++) 
+		XmStringFree(match[i]);
+	      FREE(match);
+	    }
+	  set_save_completions(false);
+	}
+
+      if (file_text) FREE(file_text);
+      if (old_text) FREE(old_text);
+    }
 }
 
-
-static void unpost_completion_dialog(Widget w, XtPointer context, XtPointer info)
-{
-  XtRemoveCallback(w, XmNcancelCallback, unpost_completion_dialog, NULL);
-  if (ss->sgx->completion_requestor)
-    unpost_completion(ss->sgx->completion_requestor);
-}
-
-
-void snd_completion_help(int matches, char **buffer)
-{
-  int i;
-  Dimension w, h;
-  XmString *match;
-  if (completions_dialog)
-    XtManageChild(completions_dialog);
-  else create_completions_dialog(_("Completions"));
-  match = (XmString *)CALLOC(matches, sizeof(XmString));
-  for (i = 0; i < matches; i++) 
-    match[i] = XmStringCreateLocalized(buffer[i]);
-  XtVaSetValues(completions_list, 
-		XmNitems, match, 
-		XmNitemCount, matches, 
-		XmNvisibleItemCount, mus_iclamp(1, matches, 12), 
-		NULL);
-  XtVaGetValues(completions_list, 
-		XmNwidth, &w, 
-		XmNheight, &h, 
-		NULL);
-  if ((w < 100) || (h < 100)) 
-    XtVaSetValues(completions_dialog, 
-		  XmNwidth, 200,
-		  XmNheight, 200, 
-		  NULL);
-  for (i = 0; i < matches; i++) 
-    XmStringFree(match[i]);
-  FREE(match);
-
-  {
-    Widget requestor;
-    Position rx, ry;
-    Dimension rw;
-    if (ss->sgx->completion_requestor == NULL) 
-      requestor = listener_text;
-    else requestor = ss->sgx->completion_requestor;
-    XtAddCallback(requestor, XmNmodifyVerifyCallback, unpost_completion_from_modify, NULL);
-    XtAddCallback(requestor, XmNactivateCallback, unpost_completion_from_activate, NULL);
-    if (ss->sgx->completion_requestor_dialog)
-      XtAddCallback(ss->sgx->completion_requestor_dialog, XmNcancelCallback, unpost_completion_dialog, NULL);
-
-    if (requestor == listener_text)
-      {
-	XtVaGetValues(requestor, XmNwidth, &rw, XmNx, &rx, XmNy, &ry, NULL);
-	/* this is being ignored in Gnome -- it is considered a configuration choice */
-	XtVaSetValues(completions_dialog, 
-		      XmNx, rx + rw,
-		      XmNy, ry,
-		      NULL);
-      }
-    /* otherwise position is handled in name completion */
-  }
-}
 
 
 
@@ -288,8 +311,6 @@ static void Yank(Widget w, XEvent *ev, char **str, Cardinal *num)
     }
 }
 
-
-static int printout_end = 0;
 
 static void Begin_of_line(Widget w, XEvent *ev, char **ustr, Cardinal *num) 
 {
@@ -461,123 +482,6 @@ static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num)
 }
 
 
-static Widget *cmpwids = NULL;
-static int cmpwids_size = 0;
-
-static void add_completer_widget(Widget w, int row)
-{
-  if (row >= 0)
-    {
-      if (cmpwids_size <= row)
-	{
-	  int i;
-	  i = cmpwids_size;
-	  cmpwids_size = row + 8;
-	  if (cmpwids == NULL)
-	    cmpwids = (Widget *)CALLOC(cmpwids_size, sizeof(Widget));
-	  else 
-	    {
-	      cmpwids = (Widget *)REALLOC(cmpwids, cmpwids_size * sizeof(Widget));
-	      for (; i < cmpwids_size; i++) cmpwids[i] = NULL;
-	    }
-	}
-      cmpwids[row] = w;
-    }
-}
-
-
-static Widget widget_to_dialog(Widget w)
-{
-  /* find dialog parent of w, if any */
-  while (w)
-    {
-      w = XtParent(w);
-      if (w)
-	{
-	  if ((XmIsFileSelectionBox(w)) ||     /* file selection dialog */
-	      (XmIsMessageBox(w)))             /* includes template dialog */
-	    return(w);
-	  if ((XmIsDialogShell(w)) ||
-	      (XtIsApplicationShell(w)))
-	    return(NULL);
-	}
-    }
-  return(NULL);
-}
-
-
-static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num) 
-{
-  /* non-listener tab completion */
-  int data = -1, i;
-  for (i = 0; i < cmpwids_size; i++)
-    if (w == cmpwids[i])
-      {
-	data = i;
-	break;
-      }
-  if (data >= 0)
-    {
-      int matches;
-      char *old_text, *new_text;
-      old_text = XmTextGetString(w);
-      if (snd_strlen(old_text) == 0) return; /* C-x C-f TAB in minibuffer, for example */
-      new_text = complete_text(old_text, data);
-      if (snd_strlen(new_text) == 0) return; /* can this happen? */
-      matches = get_completion_matches();
-      XmTextSetString(w, new_text);
-      XmTextSetCursorPosition(w, XmTextGetLastPosition(w));
-      if ((snd_strcmp(old_text, new_text)) && 
-	  (matches != -1))
-	{
-	  Pixel old_color;
-	  XtVaGetValues(w, XmNforeground, &old_color, NULL);
-	  if (matches > 1)
-	    XtVaSetValues(w, XmNforeground, ss->sgx->green, NULL);
-	  else 
-	    if (matches == 0) 
-	      XtVaSetValues(w, XmNforeground, ss->sgx->red, NULL);
-	  XmUpdateDisplay(w);
-#if HAVE_SLEEP
-	  sleep(1);
-#endif
-	  XtVaSetValues(w, XmNforeground, old_color, NULL);
-	  XmUpdateDisplay(w);
-	  if (matches > 1) 
-	    {
-	      bool need_position = false;
-	      char *search_text;
-	      ss->sgx->completion_requestor = w;
-	      ss->sgx->completion_requestor_dialog = widget_to_dialog(w);
-	      set_save_completions(true);
-	      search_text = complete_text(old_text, data);
-	      if (search_text) FREE(search_text);
-	      if ((!completions_dialog) ||
-		  (!(XtIsManaged(completions_dialog))))
-		need_position = true;
-	      display_completions();
-	      set_save_completions(false);
-	      if (need_position)
-		{
-		  Dimension ww;
-		  int xoff, yoff; 
-		  Window wn;
-		  XtVaGetValues(completions_dialog, XmNwidth, &ww, NULL);
-		  XTranslateCoordinates(XtDisplay(w), XtWindow(w), DefaultRootWindow(XtDisplay(w)), 0, 0, &xoff, &yoff, &wn);
-		  XtVaSetValues(completions_dialog, XmNx, xoff - ww - 40, XmNy, yoff, NULL);
-		}
-	    }
-	  else
-	    {
-	      /* (if matches == 0) here we could back up the text looking for the nearest completion */
-	    }
-	}
-      if (old_text) XtFree(old_text);
-      if (new_text) FREE(new_text);
-    }
-}
-
-
 void append_listener_text(int end, const char *msg)
 {
   if (listener_text)
@@ -654,77 +558,6 @@ static void Listener_help(Widget w, XEvent *event, char **str, Cardinal *num)
 }
 
 
-static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *num) 
-{
-  /* used only by the listener widget -- needs to be smart about text since overall string can be enormous 
-   *   and we don't want to back up past the last prompt
-   *   also if at start of line (or all white-space to previous \n, indent
-   */
-  int beg, end, len, matches = 0;
-  char *old_text;
-  ss->sgx->completion_requestor = listener_text;
-  ss->sgx->completion_requestor_dialog = NULL;
-  beg = printout_end + 1;
-  end = XmTextGetLastPosition(w);
-  if (end <= beg) return;
-  len = end - beg + 1;
-  old_text = (char *)CALLOC(len + 1, sizeof(char));
-  XmTextGetSubstring(w, beg, len, len + 1, old_text);
-  /* now old_text is the stuff typed since the last prompt */
-  if (old_text)
-    {
-      char *new_text = NULL, *file_text = NULL;
-      bool try_completion = true;
-      new_text = complete_listener_text(old_text, end, &try_completion, &file_text);
-      if (!try_completion)
-	{
-	  FREE(old_text);
-	  return;
-	}
-      if (snd_strcmp(old_text, new_text))
-	matches = get_completion_matches();
-      XmTextReplace(w, beg, end, new_text);
-      XmTextSetCursorPosition(w, XmTextGetLastPosition(w));
-      if (new_text) 
-	{
-	  FREE(new_text); 
-	  new_text = NULL;
-	}
-      if (matches > 1)
-	{
-	  bool need_position;
-	  clear_possible_completions();
-	  set_save_completions(true);
-	  if (file_text) 
-	    new_text = filename_completer(file_text, NULL);
-	  else new_text = command_completer(old_text, NULL);
-	  if (new_text) 
-	    {
-	      FREE(new_text); 
-	      new_text = NULL;
-	    }
-	  need_position = (completions_dialog == NULL);
-	  display_completions();
-	  set_save_completions(false);
-	  if (need_position)
-	    {
-	      Position wx, wy;
-	      int xoff, yoff; 
-	      Window wn;
-	      /* try to position the newly popped up help window below the text field */
-	      XtVaGetValues(w, XmNx, &wx, XmNy, &wy, NULL);
-	      XTranslateCoordinates(XtDisplay(w), XtWindow(w), DefaultRootWindow(XtDisplay(w)), 0, 0, &xoff, &yoff, &wn);
-	      wx += xoff; 
-	      wy += yoff;
-	      XtVaSetValues(completions_dialog, XmNx, wx, XmNy, wy + 140, NULL);
-	    }
-	}
-      if (file_text) FREE(file_text);
-      if (old_text) FREE(old_text);
-    }
-}
-
-
 static void Listener_clear(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   clear_listener();
@@ -756,7 +589,7 @@ static XtActionsRec acts[NUM_ACTS] = {
   {"b1-release", B1_release},
   {"text-transpose", Text_transpose},
   {"word-upper", Word_upper},
-  {"name-completion", Name_completion},
+  {"tab-completion", Tab_completion},
   {"listener-completion", Listener_completion},
   {"listener-clear", Listener_clear},
   {"listener-g", Listener_g},
@@ -810,7 +643,7 @@ static char TextTrans2[] =
 	Mod1 <Key>>:	    end-of-line()\n\
 	<Key>Delete:	    delete-previous-character()\n\
 	Mod1 <Key>Delete:   delete-to-start-of-line()\n\
-	<Key>Tab:	    name-completion()\n\
+	<Key>Tab:	    tab-completion()\n\
 	<Key>Return:	    activate()\n";
 static XtTranslations transTable2 = NULL;
 
@@ -836,7 +669,7 @@ static char TextTrans6[] =
 	Mod1 <Key>>:	    end-of-line()\n\
 	<Key>Delete:	    delete-previous-character()\n\
 	Mod1 <Key>Delete:   delete-to-start-of-line()\n\
-	<Key>Tab:	    name-completion()\n\
+	<Key>Tab:	    tab-completion()\n\
 	<Key>Return:	    no-op()\n";
 static XtTranslations transTable6 = NULL;
 
@@ -938,6 +771,22 @@ static char TextTrans4[] =
 static XtTranslations transTable4 = NULL;
 
 
+void add_completer_to_builtin_textfield(Widget w, int completer)
+{
+  /* used to make file selection dialog's file and filter text widgets act like other text field widgets */
+  if (!actions_loaded) 
+    {
+      XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); 
+      actions_loaded = true;
+    }
+  if (!transTable2) 
+    transTable2 = XtParseTranslationTable(TextTrans2);
+
+  XtOverrideTranslations(w, transTable2);
+  XtVaSetValues(w, XmNuserData, completer, NULL);
+}
+
+
 
 /* -------- text related widgets -------- */
 
@@ -966,15 +815,18 @@ Widget make_textfield_widget(char *name, Widget parent, Arg *args, int n, text_c
 {
   /* white background when active, emacs translations */
   Widget df;
+
   if (!actions_loaded) 
     {
       XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); 
       actions_loaded = true;
     }
-  /* can't use XmNuserData here because it is in use elsewhere (snd-xmix.c) */
+
+  XtSetArg(args[n], XmNuserData, completer); n++;
   XtSetArg(args[n], XmNhighlightThickness, 1); n++;
   XtSetArg(args[n], XmNcursorPositionVisible, false); n++;
   df = XtCreateManagedWidget(name, xmTextFieldWidgetClass, parent, args, n);
+
   if ((activatable != NOT_ACTIVATABLE_OR_FOCUSED) &&
       (activatable != ACTIVATABLE_BUT_NOT_FOCUSED))
     {
@@ -986,6 +838,7 @@ Widget make_textfield_widget(char *name, Widget parent, Arg *args, int n, text_c
       XtAddCallback(df, XmNfocusCallback, textfield_no_color_focus_callback, NULL);
       XtAddCallback(df, XmNlosingFocusCallback, textfield_no_color_unfocus_callback, NULL);
     }
+
   XtAddEventHandler(df, EnterWindowMask, false, mouse_enter_text_callback, NULL);
   XtAddEventHandler(df, LeaveWindowMask, false, mouse_leave_text_callback, NULL);
 
@@ -1002,24 +855,10 @@ Widget make_textfield_widget(char *name, Widget parent, Arg *args, int n, text_c
 	transTable6 = XtParseTranslationTable(TextTrans6);
       XtOverrideTranslations(df, transTable6);
     }
-  add_completer_widget(df, completer);
+
   return(df);
 }
 
-
-void add_completer_to_textfield(Widget w, int completer)
-{
-  /* used to make file selection dialog act like other text field widgets */
-  if (!actions_loaded) 
-    {
-      XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); 
-      actions_loaded = true;
-    }
-  if (!transTable2) 
-    transTable2 = XtParseTranslationTable(TextTrans2);
-  XtOverrideTranslations(w, transTable2);
-  add_completer_widget(w, completer);
-}
 
 
 Widget make_text_widget(char *name, Widget parent, Arg *args, int n)
@@ -1063,8 +902,9 @@ void listener_append(const char *msg)
     }
 }
  
-
+#if 0
 static Widget listener_pane = NULL; 
+#endif
 
 void listener_append_and_prompt(const char *msg)
 {
@@ -1177,6 +1017,11 @@ static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
 static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
+
+  if ((completions_pane) &&
+      (XtIsManaged(completions_pane)))
+    XtUnmanageChild(completions_pane);
+
   if (((cbs->text)->length > 0) || (dont_check_motion))
     cbs->doit = true;
   else

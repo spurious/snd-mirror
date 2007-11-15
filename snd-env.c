@@ -1,6 +1,10 @@
 #include "snd.h"
 
 
+/* TODO: completer in env should scroll to env name (and limit completion to that list)
+ */
+
+
 #define ENVED_DOT_SIZE 10
 
 env *free_env(env *e)
@@ -1068,7 +1072,7 @@ env *enved_next_env(void)
 }
 
 
-char *env_name_completer(char *text, void *data)
+char *env_name_completer(widget_t w, char *text, void *data)
 {
   int matches = 0;
   char *current_match = NULL;

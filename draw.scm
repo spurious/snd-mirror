@@ -448,7 +448,13 @@ whenever they're in the current view."
 
   (add-hook! after-graph-hook display-current-window-location)
   (add-hook! mouse-click-hook click-current-window-location)
-  (add-hook! update-hook update-current-window-location))
+  (add-hook! update-hook update-current-window-location)
+
+  (add-to-menu 2 "Toggle Inset" 
+	       (lambda () 
+		 (set! current-window-display-is-running (not current-window-display-is-running)))
+	       2))
+
 
 (define (smart-line-cursor snd chn tracking)
   "smart-line-cursor is a cursor-style function that tries not to overwrite the thumbnail graph in the upper right corner"

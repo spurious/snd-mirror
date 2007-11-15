@@ -1161,7 +1161,7 @@ static gboolean filer_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   if (event->keyval == GDK_Tab)
     {
-      gtk_entry_set_text(GTK_ENTRY(w), sound_filename_completer((char *)gtk_entry_get_text(GTK_ENTRY(w)), NULL));
+      gtk_entry_set_text(GTK_ENTRY(w), sound_filename_completer(w, (char *)gtk_entry_get_text(GTK_ENTRY(w)), NULL));
       gtk_editable_set_position(GTK_EDITABLE(w), snd_strlen((char *)gtk_entry_get_text(GTK_ENTRY(w))));
       return(true);
     }
@@ -2012,7 +2012,7 @@ static gboolean data_panel_srate_key_press(GtkWidget *w, GdkEventKey *event, gpo
 {
   if (event->keyval == GDK_Tab)
     {
-      gtk_entry_set_text(GTK_ENTRY(w), srate_completer((char *)gtk_entry_get_text(GTK_ENTRY(w)), NULL));
+      gtk_entry_set_text(GTK_ENTRY(w), srate_completer(w, (char *)gtk_entry_get_text(GTK_ENTRY(w)), NULL));
       gtk_editable_set_position(GTK_EDITABLE(w), snd_strlen((char *)gtk_entry_get_text(GTK_ENTRY(w))));
       return(true);
     }

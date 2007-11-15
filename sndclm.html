@@ -2031,7 +2031,8 @@ sceq33:
 \sum_{m=0}^{\infty}(m+\frac{1}{2})\frac{J_{m+\frac{1}{2}}(ka)}{\sqrt{a}} \frac{J_{m+\frac{1}{2}}(kr)}{\sqrt{r}} P_{m}(\cos \theta) = \frac{\sin\Big(k \sqrt{r^{2}+a^{2}-2ar\cos \theta}\Big)}{\pi \sqrt{r^{2}+a^{2}-2ar\cos \theta}}
 
 sceq34:
-\sum_{m=0}^{\infty} (n+m)\Big(\frac{J_{n+m}(z)}{z^{n}}\Big)^{2} C_{m}^{n}(\cos \theta) = \frac{J_{n}(2z \sin \frac{\theta}{2})}{2^{n}\Gamma(n)(2z\sin \frac{\theta}{2})}
+old form: \sum_{m=0}^{\infty} (n+m)\Big(\frac{J_{n+m}(z)}{z^{n}}\Big)^{2} C_{m}^{n}(\cos \theta) = \frac{J_{n}(2z \sin \frac{\theta}{2})}{2^{n}\Gamma(n)(2z\sin \frac{\theta}{2})}
+\sum_{m=0}^{\infty} (n+m)\Big(\frac{J_{n+m}(z)}{z^{n}}\Big)^{2} \sum_{k=0}^{m} \frac{(n)_{k}(n)_{m-k}}{k!(m-k)!} \cos(m-2k)\theta = \frac{J_{n}(2z \sin \frac{\theta}{2})}{2^{n}\Gamma(n)(2z\sin \frac{\theta}{2})}
 
 
 from Gray and Mathews, "A Treatise on Bessel Functions and Their Applications to Physics" p 28, 29, 92, 240

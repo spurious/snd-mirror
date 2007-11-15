@@ -45,7 +45,6 @@ static void dismiss_completion_callback(GtkWidget *w, gpointer context)
 
 static void help_completion_callback(GtkWidget *w, gpointer context)
 {
-  completion_dialog_help();
 }
 
 
@@ -184,14 +183,15 @@ static void listener_completion(int end)
 	  clear_possible_completions();
 	  set_save_completions(true);
 	  if (file_text) 
-	    new_text = filename_completer(file_text, NULL); 
-	  else new_text = command_completer(old_text, NULL);
+	    new_text = filename_completer(NULL, file_text, NULL); 
+	  else new_text = command_completer(NULL, old_text, NULL);
 	  if (new_text) 
 	    {
 	      FREE(new_text); 
 	      new_text = NULL;
 	    }
-	  display_completions();
+	  /* TODO: fixup completions */
+	  /* display_completions(); */
 	  listener_awaiting_completion = true;
 	  set_save_completions(false);
 	}

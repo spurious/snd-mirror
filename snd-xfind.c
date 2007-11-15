@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: surely the edit find test widget should have completions */
+
 /* -------- edit find -------- */
 
 static Widget edit_find_dialog, edit_find_text, cancelB, edit_find_label, findnextB;

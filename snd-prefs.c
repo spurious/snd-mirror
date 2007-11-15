@@ -4019,7 +4019,7 @@ static void revert_transform_type(prefs_info *prf) {in_set_transform_type(rts_tr
 static void clear_transform_type(prefs_info *prf) {in_set_transform_type(DEFAULT_TRANSFORM_TYPE);}
 static void save_transform_type(prefs_info *prf, FILE *ignore) {rts_transform_type = transform_type(ss);}
 
-static char *transform_type_completer(char *text, void *data)
+static char *transform_type_completer(widget_t w, char *text, void *data)
 {
   if (!transform_type_completer_info)
     {
@@ -4029,7 +4029,7 @@ static char *transform_type_completer(char *text, void *data)
       transform_type_completer_info->num_values = NUM_BUILTIN_TRANSFORM_TYPES;
       transform_type_completer_info->values_size = NUM_BUILTIN_TRANSFORM_TYPES;
     }
-  return(list_completer(text, (void *)transform_type_completer_info));
+  return(list_completer(w, text, (void *)transform_type_completer_info));
 }
 
 #if USE_MOTIF
@@ -4087,7 +4087,7 @@ static void save_fft_window(prefs_info *prf, FILE *ignore) {rts_fft_window = fft
 
 static list_completer_info *fft_window_completer_info = NULL;
 
-static char *fft_window_completer(char *text, void *data)
+static char *fft_window_completer(widget_t w, char *text, void *data)
 {
   if (!fft_window_completer_info)
     {
@@ -4097,7 +4097,7 @@ static char *fft_window_completer(char *text, void *data)
       fft_window_completer_info->num_values = MUS_NUM_FFT_WINDOWS;
       fft_window_completer_info->values_size = MUS_NUM_FFT_WINDOWS;
     }
-  return(list_completer(text, (void *)fft_window_completer_info));
+  return(list_completer(w, text, (void *)fft_window_completer_info));
 }
 
 #if USE_MOTIF
@@ -4148,7 +4148,7 @@ static void fft_window_from_text(prefs_info *prf)
 
 static int rts_colormap = DEFAULT_COLOR_MAP;
 
-static char *colormap_completer(char *text, void *data)
+static char *colormap_completer(widget_t w, char *text, void *data)
 {
   list_completer_info *compinfo;
   char **cmaps;
@@ -4163,7 +4163,7 @@ static char *colormap_completer(char *text, void *data)
   compinfo->values = (char **)mus_fft_window_names();
   compinfo->num_values = len;
   compinfo->values_size = len;
-  result = list_completer(text, (void *)compinfo);
+  result = list_completer(w, text, (void *)compinfo);
   FREE(cmaps);
   return(result);
 }
