@@ -1,10 +1,6 @@
 #include "snd.h"
 
 
-/* TODO: completer in env should scroll to env name (and limit completion to that list)
- */
-
-
 #define ENVED_DOT_SIZE 10
 
 env *free_env(env *e)

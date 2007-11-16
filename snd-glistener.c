@@ -2,13 +2,13 @@
 
 /* TODO: there is sometimes an extra "("? */
 
-static GtkWidget *completion_dialog = NULL;
+static GtkWidget *completer = NULL;
 static GtkWidget *listener_text = NULL;
 static slist *completion_list = NULL;
 static int printout_end;
-#define LISTENER_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))
+static bool completion_list_active = false;
 
-static bool listener_awaiting_completion = false;
+#define LISTENER_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))
 
 
 static void list_completions_callback(const char *name, int row, void *data)
@@ -29,33 +29,13 @@ static void list_completions_callback(const char *name, int row, void *data)
 	}
       else i--;
     }
-  listener_awaiting_completion = false;
+  completion_list_active = false;
   append_listener_text(0, (char *)(name - 1 + old_len - i));
   if (old_text) g_free(old_text);
-  gtk_widget_hide(completion_dialog);
+  gtk_widget_hide(completer);
 }
 
-
-static void dismiss_completion_callback(GtkWidget *w, gpointer context)
-{
-  listener_awaiting_completion = false;
-  gtk_widget_hide(completion_dialog);
-}
-
-
-static void help_completion_callback(GtkWidget *w, gpointer context)
-{
-}
-
-
-static gint delete_completion_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
-{
-  listener_awaiting_completion = false;
-  gtk_widget_hide(completion_dialog);
-  return(true);
-}
-
-
+#if 0
 static void start_completion_dialog(int num_items, char **items)
 {
   if (!completion_dialog)
@@ -97,6 +77,7 @@ static void start_completion_dialog(int num_items, char **items)
     }
   gtk_widget_show(completion_dialog);
 }
+#endif
 
 
 int save_listener_text(FILE *fp)
@@ -178,6 +159,8 @@ static void listener_completion(int end)
 	  FREE(new_text); 
 	  new_text = NULL;
 	}
+#if 0
+      /* TODO: where to post the completions list? */
       if (matches > 1)
 	{
 	  clear_possible_completions();
@@ -192,20 +175,15 @@ static void listener_completion(int end)
 	    }
 	  /* TODO: fixup completions */
 	  /* display_completions(); */
-	  listener_awaiting_completion = true;
+	  completion_list_active = true;
 	  set_save_completions(false);
 	}
+#endif
       if (file_text) FREE(file_text);
       if (old_text) g_free(old_text);
     }
 }
 
-
-void snd_completion_help(int matches, char **pbuffer) 
-{
-  if (matches > 0)
-    start_completion_dialog(matches, pbuffer);
-}
 
 
 
@@ -530,12 +508,13 @@ static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer 
 
 static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
-  if ((completion_dialog) &&
-      (listener_awaiting_completion))
+  if ((completer) &&
+      (completion_list_active))
     {
-      gtk_widget_hide(completion_dialog);
-      listener_awaiting_completion = false;
+      gtk_widget_hide(completer);
+      completion_list_active = false;
     }
+
   if (ss->sgx->graph_is_active) 
     {
       chan_info *cp;
@@ -543,11 +522,13 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
       graph_key_press(channel_graph(cp), event, (gpointer)cp); 
       return(true); /* don't repeat the keystroke */
     }
+
   if (event->keyval == GDK_Tab)
     {
       listener_completion(gtk_text_buffer_get_char_count(LISTENER_BUFFER));
       return(true);
     }
+
   if (event->keyval == GDK_Return)
     command_return_callback();
   else

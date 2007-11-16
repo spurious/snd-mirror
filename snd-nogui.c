@@ -90,7 +90,6 @@ void reflect_play_region_stop(int n) {}
 bool region_dialog_is_active(void) {return(false);}
 void allocate_region_rows(int n) {}
 void reflect_region_graph_style(void) {}
-void snd_completion_help(int matches, char **buffer) {}
 bool set_tiny_font(const char *font) {if (ss->Tiny_Font) FREE(ss->Tiny_Font); ss->Tiny_Font = copy_string(font); return(false);}
 bool set_listener_font(const char *font) {if (ss->Listener_Font) FREE(ss->Listener_Font); ss->Listener_Font = copy_string(font); return(false);}
 bool set_peaks_font(const char *font) {if (ss->Peaks_Font) FREE(ss->Peaks_Font); ss->Peaks_Font = copy_string(font); return(false);}

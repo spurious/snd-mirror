@@ -1118,7 +1118,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, nameL); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      textL = make_textfield_widget("textL", mainform, args, n, ACTIVATABLE, NO_COMPLETER);
+      textL = make_textfield_widget("textL", mainform, args, n, ACTIVATABLE, add_completer_func(env_name_completer, NULL));
 
       /* -------- dB, GRAPH ('wave') AND CLIP BUTTONS -------- */
       n = 0;

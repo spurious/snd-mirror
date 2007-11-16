@@ -730,7 +730,7 @@ static XEN g_snd_completion(XEN text)
   char *str, *temp;
   XEN res;
   temp = copy_string(XEN_TO_C_STRING(text));
-  str = command_completer(NULL, temp, NULL);
+  str = command_completer(NULL_WIDGET, temp, NULL);
   res = C_TO_XEN_STRING(str);
   FREE(str);
   FREE(temp);

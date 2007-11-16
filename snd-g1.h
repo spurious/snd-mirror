@@ -67,7 +67,6 @@ void g_init_gxdraw(void);
 void color_listener(color_info *pix);
 void color_listener_text(color_info *pix);
 void handle_listener(bool new_state);
-void snd_completion_help(int matches, char **buffer);
 bool listener_exists(void);
 int listener_height(void);
 int listener_width(void);

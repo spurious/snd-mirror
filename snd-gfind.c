@@ -188,6 +188,7 @@ static void make_edit_find_dialog(bool managed)
 
       edit_find_text = snd_entry_new(rc, WITH_WHITE_BACKGROUND);
       SG_SIGNAL_CONNECT(edit_find_text, "activate", edit_find_next, NULL);
+      /* TODO: gtk find text completion? add_completer_func(command_completer, NULL) */
       
       edit_find_label = gtk_label_new(_("global search"));
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->vbox), edit_find_label, false, false, 4);

@@ -1,9 +1,7 @@
 #include "snd.h"
 #include "sndlib-strings.h"
+#include "clm-strings.h"
 
-/* TODO: tab for completion of previous line jumps to end -- we need to ignore "printout_end" in both versions if insertion is not at end?
- *       could keep an array of printout_ends, look at current typing position
- */
 
 static char *current_match = NULL;
 
@@ -329,6 +327,71 @@ char *command_completer(widget_t w, char *original_text, void *data)
     }
   return(copy_string(original_text));
 }
+
+
+
+/* -------- saved choices -------- */
+
+#define BEST_COMPLETIONS 64
+static char *best_completions[BEST_COMPLETIONS];
+
+void preload_best_completions(void)
+{
+  /* set up the array with some reasonable first choices */
+  int n = 0;
+  best_completions[n++] = copy_string(S_open_sound);
+  best_completions[n++] = copy_string(S_auto_resize);
+  best_completions[n++] = copy_string(S_channels);
+  best_completions[n++] = copy_string(S_close_sound);
+  best_completions[n++] = copy_string(S_cursor);
+  best_completions[n++] = copy_string(S_env_channel);
+  best_completions[n++] = copy_string(S_frames);
+  best_completions[n++] = copy_string(S_map_channel);
+  best_completions[n++] = copy_string(S_maxamp);
+  best_completions[n++] = copy_string(S_optimization);
+  best_completions[n++] = copy_string(S_play);
+  best_completions[n++] = copy_string(S_save_sound);
+  best_completions[n++] = copy_string(S_scale_channel);
+  best_completions[n++] = copy_string(S_srate);
+  best_completions[n++] = copy_string("with-sound");
+  best_completions[n++] = copy_string(S_outa);
+  best_completions[n++] = copy_string("*output*");
+  best_completions[n++] = copy_string("lambda");
+  best_completions[n++] = copy_string("define");
+  best_completions[n++] = copy_string(S_vct_length);
+}
+
+
+void save_completion_choice(const char *selection)
+{
+  int i;
+  char *cur = NULL, *old = NULL;
+  cur = copy_string(selection);
+  for (i = 0; i < BEST_COMPLETIONS; i++)
+    {
+      old = best_completions[i];
+      best_completions[i] = cur;
+      if ((!old) ||
+	  (snd_strcmp(old, cur)))
+	break;
+      cur = old;
+    }
+  if (old) FREE(old);
+}
+
+
+int find_best_completion(char **choices, int num_choices)
+{
+  int i, k;
+  for (i = 0; (i < BEST_COMPLETIONS) && (best_completions[i]); i++)
+    for (k = 0; k < num_choices; k++)
+      if (snd_strcmp(choices[k], best_completions[i]))
+	return(k + 1); /* row numbering is 1-based */
+  return(1);
+}
+
+
+
 
 
 /* ---------------- COMMAND/FILENAME COMPLETIONS ---------------- */
@@ -767,7 +830,7 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
       if (old_text[i] == '\"')
 	{
 	  file_text = copy_string((char *)(old_text + i + 1));
-	  new_file = filename_completer(NULL, file_text, NULL);
+	  new_file = filename_completer(NULL_WIDGET, file_text, NULL);
 	  len = snd_strlen(new_file);
 	  if (len > 0)
 	    {
@@ -781,7 +844,7 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
 	}
       if (isspace((int)(old_text[i]))) break;
     }
-  if (new_text == NULL) new_text = command_completer(NULL, old_text, NULL);
+  if (new_text == NULL) new_text = command_completer(NULL_WIDGET, old_text, NULL);
   (*try_completion) = true;
   (*to_file_text) = file_text;
   return(new_text);

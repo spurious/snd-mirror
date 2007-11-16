@@ -737,6 +737,9 @@ void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd)
 /* -------- snd-completion.c -------- */
 
 char *command_completer(widget_t w, char *text, void *data);
+void preload_best_completions(void);
+void save_completion_choice(const char *selection);
+int find_best_completion(char **choices, int num_choices);
 int add_completer_func(char *(*func)(widget_t w, char *text, void *context), void *data);
 int add_completer_func_with_multicompleter(char *(*func)(widget_t w, char *text, void *context), void *data, void (*multi_func)(widget_t w, void *data));
 int get_completion_matches(void);

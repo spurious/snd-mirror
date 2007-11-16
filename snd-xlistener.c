@@ -68,14 +68,15 @@ static Widget listener_pane = NULL;  /* form widget that hold the listener scrol
 static Widget completions_list = NULL;
 static Widget completions_pane = NULL;
 
-static void listener_completions_browse_callback(Widget w, XtPointer context, XtPointer info) 
+
+static void perform_completion(XmString selection)
 {
   int i, j, old_len, new_len;
   char *text = NULL, *old_text = NULL;
-  XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
 
-  /* choice = cbs->item_position - 1; */
-  text = (char *)XmStringUnparse(cbs->item, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+  text = (char *)XmStringUnparse(selection, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+  save_completion_choice(text);
+
   old_text = XmTextGetString(listener_text);
   old_len = snd_strlen(old_text);
   new_len = snd_strlen(text);
@@ -92,11 +93,18 @@ static void listener_completions_browse_callback(Widget w, XtPointer context, Xt
     }
 
   append_listener_text(XmTextGetLastPosition(listener_text), (char *)(text - 1 + old_len - i));
-  XtUnmanageChild(completions_pane);
-
+ 
   if (text) XtFree(text);
   if (old_text) XtFree(old_text);
+}
 
+
+static void listener_completions_browse_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
+  /* choice = cbs->item_position - 1; */
+  perform_completion(cbs->item);
+  XtUnmanageChild(completions_pane);
 }
 
 
@@ -106,30 +114,56 @@ static int alphabetize(const void *a, const void *b)
 }
 
 
-static int printout_end = 0;
-
 static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   /* used only by the listener widget -- needs to be smart about text since overall string can be enormous 
    *   and we don't want to back up past the last prompt
-   *   also if at start of line (or all white-space to previous \n, indent
+   *   also if at start of line (or all white-space to previous \n), indent
    */
-  int beg, end, len, matches = 0;
+  int beg, end, replace_end, len, matches = 0;
   char *old_text;
+  Boolean found;
+  XmTextPosition curpos, loc;
 
-  beg = printout_end + 1;
-  end = XmTextGetLastPosition(w);
-  if (end <= beg) return;
+  if ((completions_pane) &&
+      (XtIsManaged(completions_pane)))
+    {
+      XmString *strs;
+      XtVaGetValues(completions_list, 
+		    XmNselectedItems, &strs, 
+		    NULL);
+      perform_completion(strs[0]);
+      XtUnmanageChild(completions_pane);
+      return;
+    }
+
+  beg = 0;
+  end = XmTextGetInsertionPosition(w);
+  replace_end = end;
+  curpos = (XmTextPosition)end;
+
+  found = XmTextFindString(w, curpos, listener_prompt(ss), XmTEXT_BACKWARD, &loc);
+  if (!found) 
+    beg = 0;
+  else beg = (int)loc + 1;
   len = end - beg + 1;
+
   old_text = (char *)CALLOC(len + 1, sizeof(char));
   XmTextGetSubstring(w, beg, len, len + 1, old_text);
   /* now old_text is the stuff typed since the last prompt */
+
+  if (old_text[len - 1] == '\n')
+    {
+      old_text[len - 1] = 0;
+      end--;
+    }
 
   if (old_text)
     {
       char *new_text = NULL, *file_text = NULL;
       bool try_completion = true;
       new_text = complete_listener_text(old_text, end, &try_completion, &file_text);
+
       if (!try_completion)
 	{
 	  FREE(old_text);
@@ -138,9 +172,8 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 
       if (snd_strcmp(old_text, new_text))
 	matches = get_completion_matches();
+      else XmTextReplace(w, beg, replace_end, new_text);
 
-      XmTextReplace(w, beg, end, new_text);
-      XmTextSetCursorPosition(w, XmTextGetLastPosition(w));
       if (new_text) 
 	{
 	  FREE(new_text); 
@@ -179,15 +212,13 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 		  XtSetArg(args[n], XmNscrollBarPlacement, XmBOTTOM_LEFT); n++;
 		  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
 		  XtSetArg(args[n], XmNforeground, ss->sgx->black); n++;
+		  XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
 
 		  completions_list = XmCreateScrolledList(listener_pane, "completion-help-text", args, n);
 		  completions_pane = XtParent(completions_list);
 
 		  XtAddCallback(completions_list, XmNbrowseSelectionCallback, listener_completions_browse_callback, NULL);
 		  XtManageChild(completions_list);
-		  
-		  /* TODO: why no select color or selection? */
-
 		}
 
 	      buffer = get_possible_completions();
@@ -205,6 +236,16 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 
 	      if (!(XtIsManaged(completions_pane)))
 		XtManageChild(completions_pane);
+
+	      /* look at previous completions list first for a match, then
+	       *   look back from "beg" for any member of the match list previously typed
+	       */
+	      {
+		int row;
+		row = find_best_completion(buffer, num);
+		XmListSelectPos(completions_list, row, false);
+		ensure_list_row_visible(completions_list, row);
+	      }
 
 	      for (i = 0; i < num; i++) 
 		XmStringFree(match[i]);
@@ -509,6 +550,9 @@ void listener_delete_text(int new_end)
 }
 
 
+/* TODO: surely printout_end is a bug waiting to happen? */
+static int printout_end = 0;
+
 static void Listener_Meta_P(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   listener_delete_text(printout_end + 1);
@@ -576,7 +620,54 @@ static void Listener_Backup(Widget w, XEvent *event, char **str, Cardinal *num)
 }
 
 
-#define NUM_ACTS 20
+static void Listener_Arrow_Up(Widget w, XEvent *event, char **str, Cardinal *num) 
+{
+  if ((completions_pane) &&
+      (XtIsManaged(completions_pane)))
+    {
+      int *ns;
+      int n;
+      XmListGetSelectedPos(completions_list, &ns, &n);
+      if (ns[0] > 1)
+	XmListSelectPos(completions_list, ns[0] - 1, false);
+      free(ns);
+    }
+  else XtCallActionProc(w, "previous-line", event, str, *num);
+}
+
+
+static void Listener_Arrow_Down(Widget w, XEvent *event, char **str, Cardinal *num) 
+{
+  if ((completions_pane) &&
+      (XtIsManaged(completions_pane)))
+    {
+      int *ns;
+      int n;
+      XmListGetSelectedPos(completions_list, &ns, &n);
+      XmListSelectPos(completions_list, ns[0] + 1, false);
+      free(ns);
+    }
+  else XtCallActionProc(w, "next-line", event, str, *num);
+}
+
+
+static void Listener_Return(Widget w, XEvent *event, char **str, Cardinal *num) 
+{
+  if ((completions_pane) &&
+      (XtIsManaged(completions_pane)))
+    {
+      XmString *strs;
+      XtVaGetValues(completions_list, 
+		    XmNselectedItems, &strs, 
+		    NULL);
+      perform_completion(strs[0]);
+      XtUnmanageChild(completions_pane);
+    }
+  else XtCallActionProc(w, "activate", event, str, *num);
+}
+
+
+#define NUM_ACTS 23
 static XtActionsRec acts[NUM_ACTS] = {
   {"no-op", No_op},
   {"activate-keyboard", Activate_keyboard},
@@ -596,6 +687,9 @@ static XtActionsRec acts[NUM_ACTS] = {
   {"listener-help", Listener_help},
   {"listener-meta-p", Listener_Meta_P},
   {"listener-meta-n", Listener_Meta_N},
+  {"listener-next-line", Listener_Arrow_Down},
+  {"listener-previous-line", Listener_Arrow_Up},
+  {"listener-return", Listener_Return},
   {"delete-to-previous-command", Listener_Backup},
   {"complain", Complain},
 };
@@ -761,13 +855,15 @@ static char TextTrans4[] =
 	Ctrl <Key>osfRight: page-right()\n\
 	Ctrl <Key>osfDown:  next-page()\n\
 	Ctrl <Key>osfUp:    previous-page()\n\
+	<Key>osfDown:       listener-next-line()\n\
+	<Key>osfUp:         listener-previous-line()\n\
 	Ctrl <Key>space:    set-anchor()\n\
 	<Btn1Down>:	    b1-press()\n\
 	<Btn1Up>:	    b1-release()\n\
 	<Btn1Motion>:	    b1-move()\n\
 	<Key>Tab:	    listener-completion()\n\
         Ctrl <Key>?:        listener-help()\n\
-	<Key>Return:	    activate()\n";
+	<Key>Return:	    listener-return()\n";
 static XtTranslations transTable4 = NULL;
 
 
@@ -902,9 +998,6 @@ void listener_append(const char *msg)
     }
 }
  
-#if 0
-static Widget listener_pane = NULL; 
-#endif
 
 void listener_append_and_prompt(const char *msg)
 {
@@ -989,6 +1082,7 @@ static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
   int pos;
+
   cbs->doit = true; 
   if (dont_check_motion) return;
   if (last_highlight_position != -1)
@@ -996,6 +1090,7 @@ static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
       XmTextSetHighlight(w, last_highlight_position, last_highlight_position + 1, XmHIGHLIGHT_NORMAL);
       last_highlight_position = -1;
     }
+
   pos = cbs->newInsert - 1;
   if (pos > 0)
     {
@@ -1013,10 +1108,14 @@ static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+/* TODO: surely XmTextGetString could be substring?
+ */
 
 static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
+
+  /* pure motion stuff (arrow keys) does not trigger this callback */
 
   if ((completions_pane) &&
       (XtIsManaged(completions_pane)))
@@ -1026,9 +1125,8 @@ static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
     cbs->doit = true;
   else
     { 
-      char *str = NULL, *prompt;
+      char *str = NULL;
       int len;
-      prompt = listener_prompt(ss);
       str = XmTextGetString(w);
       len = XmTextGetLastPosition(w);
       if (within_prompt(str, cbs->startPos, len))
@@ -1108,7 +1206,7 @@ static void make_command_widget(int height)
       lisp_window = XtParent(listener_text);
       XtAddEventHandler(lisp_window, EnterWindowMask, false, listener_focus_callback, NULL);
       XtAddEventHandler(lisp_window, LeaveWindowMask, false, listener_unfocus_callback, NULL);
-      
+
       XmChangeColor(lisp_window, ss->sgx->basic_color);
       XtVaGetValues(lisp_window, XmNverticalScrollBar, &wv, XmNhorizontalScrollBar, &wh, NULL);
       XmChangeColor(wv, ss->sgx->basic_color);
@@ -1357,5 +1455,7 @@ $mouse_enter_text_hook.add_hook!(\"enter\") do |w|\n\
 
   #define H_listener_click_hook S_listener_click_hook " (pos): called when listener clicked; pos is text pos of click in listener"
   listener_click_hook = XEN_DEFINE_HOOK(S_listener_click_hook, 1,    H_listener_click_hook);    /* arg = pos */
+
+  preload_best_completions();
 }
 

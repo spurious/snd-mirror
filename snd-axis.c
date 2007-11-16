@@ -438,7 +438,7 @@ static void draw_x_number(const char *label, int x, int y, int hgt, axis_info *a
 #if USE_MOTIF
   y = y + hgt + 1;
 #else
-  y = y - 1;
+  y = y + 4;
 #endif
   draw_string(ax, x, y, label, snd_strlen(label));
   if (printing) 
