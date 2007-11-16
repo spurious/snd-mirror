@@ -2453,7 +2453,7 @@ file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       gtk_box_pack_start(GTK_BOX(combox), frame, true, true, 4);  
       gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
       gtk_widget_show(frame);
-      fdat->comment_text = make_scrolled_text(frame, true, NULL, false);
+      fdat->comment_text = make_scrolled_text(frame, true, 0, false);
       connect_mouse_to_text(fdat->comment_text);
     }
 
@@ -4216,7 +4216,7 @@ static void create_post_it_monolog(void)
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_post_it, NULL);
   gtk_widget_show(ok_button);
 
-  post_it_text = make_scrolled_text(GTK_DIALOG(post_it_dialog)->vbox, false, NULL, true);
+  post_it_text = make_scrolled_text(GTK_DIALOG(post_it_dialog)->vbox, false, 2, true);
   gtk_text_view_set_left_margin(GTK_TEXT_VIEW(post_it_text), 10);
   gtk_widget_show(post_it_dialog);
   set_dialog_widget(POST_IT_DIALOG, post_it_dialog);

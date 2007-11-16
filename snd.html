@@ -1906,10 +1906,10 @@ panel.</p>
 
 <p>As in Emacs or Tcsh, the Tab key in a text field invokes a context-sensitive completion function
 that tries to figure out what the rest of the text probably should be.  If it finds no matches,
-the text flashes red; if it finds multiple matches and can't extend the current text, it flashes green,
-and (eventually) a list of possible completions appears in the help window (these are mouse-sensitive
-in the Motif version).
-If there is no completion routine active, Tab is a no-op.
+the text flashes red; if it finds multiple matches and can't extend the current text, it flashes green.
+In the listener, the choices are displayed in a scrolled list; the up and down arrow keys can move
+the selection, carriage-return accepts the current selection, mouse click on any item accepts it, and
+any other character removes the list.  
 </p>
 
         <!-- I(abort command):K(C-g)(kgc) --><!-- I(abort command):O(mouse click) --><!-- I(abort command):A(kgc) -->

@@ -345,6 +345,7 @@ void preload_best_completions(void)
   best_completions[n++] = copy_string(S_close_sound);
   best_completions[n++] = copy_string(S_cursor);
   best_completions[n++] = copy_string(S_env_channel);
+  best_completions[n++] = copy_string(S_file_name);
   best_completions[n++] = copy_string(S_frames);
   best_completions[n++] = copy_string(S_map_channel);
   best_completions[n++] = copy_string(S_maxamp);

@@ -1,12 +1,17 @@
 #include "snd.h"
 
 /* TODO: there is sometimes an extra "("? */
+/* TODO: where to post the completions list? 
+ *       I'd like a drop-down scrolled list as in Motif, but I can't figure out any way to do it
+ */
 
-static GtkWidget *completer = NULL;
 static GtkWidget *listener_text = NULL;
+
+static GtkWidget *completion_pane = NULL;
 static slist *completion_list = NULL;
-static int printout_end;
 static bool completion_list_active = false;
+
+static int printout_end;
 
 #define LISTENER_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))
 
@@ -32,7 +37,7 @@ static void list_completions_callback(const char *name, int row, void *data)
   completion_list_active = false;
   append_listener_text(0, (char *)(name - 1 + old_len - i));
   if (old_text) g_free(old_text);
-  gtk_widget_hide(completer);
+  gtk_widget_hide(completion_pane);
 }
 
 #if 0
@@ -160,7 +165,6 @@ static void listener_completion(int end)
 	  new_text = NULL;
 	}
 #if 0
-      /* TODO: where to post the completions list? */
       if (matches > 1)
 	{
 	  clear_possible_completions();
@@ -173,7 +177,7 @@ static void listener_completion(int end)
 	      FREE(new_text); 
 	      new_text = NULL;
 	    }
-	  /* TODO: fixup completions */
+
 	  /* display_completions(); */
 	  completion_list_active = true;
 	  set_save_completions(false);
@@ -508,10 +512,10 @@ static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer 
 
 static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
-  if ((completer) &&
+  if ((completion_pane) &&
       (completion_list_active))
     {
-      gtk_widget_hide(completer);
+      gtk_widget_hide(completion_pane);
       completion_list_active = false;
     }
 
@@ -768,13 +772,16 @@ static void make_command_widget(int height)
   if (!listener_text)
     {
       GtkWidget *frame;
+
       frame = gtk_frame_new(NULL);
       gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
       gtk_widget_show(frame);
+
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
 	gtk_paned_pack2(GTK_PANED(SOUND_PANE(ss)), frame, false, true); /* add2 but resize=false */
       else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
-      listener_text = make_scrolled_text(frame, true, NULL, false); /* last arg ignored here */
+
+      listener_text = make_scrolled_text(frame, true, 0, false); 
       gtk_widget_set_name(listener_text, "listener_text");
 
       {
@@ -915,6 +922,9 @@ static void make_command_widget(int height)
       }
 
       gtk_widget_show(listener_text);
+
+      /* an attempt to add the completions list here as the end of an hbox failed */
+
     }
 }
 

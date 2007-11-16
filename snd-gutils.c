@@ -802,15 +802,18 @@ int sg_cursor_position(GtkWidget *w)
 }
 
 
-GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *paner, bool resize)
+GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, int add_choice, bool resize)
 {
   /* returns new text widget */
   GtkWidget *sw, *new_text;
   GtkTextBuffer *buf;
+
   sw = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+
   new_text = gtk_text_view_new();
   buf = gtk_text_buffer_new(NULL);
+
   gtk_text_view_set_buffer(GTK_TEXT_VIEW(new_text), buf);
   gtk_text_view_set_editable(GTK_TEXT_VIEW(new_text), editable);
   gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(new_text), GTK_WRAP_NONE);
@@ -819,11 +822,22 @@ GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *paner
   gtk_container_add(GTK_CONTAINER(sw), new_text);
   if (editable) gtk_widget_set_events(new_text, GDK_ALL_EVENTS_MASK);
   gtk_widget_show(new_text);
-  if (parent)
-    gtk_container_add(GTK_CONTAINER(parent), sw);
-  if (paner)
-    gtk_paned_pack2(GTK_PANED(paner), sw, resize, true);
-  if ((parent) || (paner)) gtk_widget_show(sw);
+
+  switch (add_choice)
+    {
+    case 0: 
+      gtk_container_add(GTK_CONTAINER(parent), sw);
+      break;
+    case 1:
+      gtk_paned_pack2(GTK_PANED(parent), sw, resize, true);
+      break;
+    case 2:
+    default:
+      gtk_box_pack_start(GTK_BOX(parent), sw, true, true, 0);
+      break;
+    }
+  gtk_widget_show(sw);
+
   return(new_text);
 }
 
@@ -1057,6 +1071,9 @@ slist *slist_new_with_title_and_table_data(const char *title,
       break;
     case BOX_PACK: 
       gtk_box_pack_start(GTK_BOX(parent), topw, true, true, 0); 
+      break;
+    case BOX_PACK_END: 
+      gtk_box_pack_end(GTK_BOX(parent), topw, false, false, 0); 
       break;
     case TABLE_ATTACH: 
       gtk_table_attach(GTK_TABLE(parent), topw, t1, t2, t3, t4,
