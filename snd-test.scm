@@ -876,6 +876,9 @@
     (set! (fft-log-magnitude) (fft-log-magnitude))
     (if (not (equal? (fft-log-magnitude)  #f )) 
 	(snd-display ";fft-log-magnitude set def: ~A" (fft-log-magnitude)))
+    (set! (fft-with-phases) (fft-with-phases))
+    (if (not (equal? (fft-with-phases)  #f )) 
+	(snd-display ";fft-with-phases set def: ~A" (fft-with-phases)))
     (set! (transform-size) (transform-size))
     (if (not (equal? (transform-size)  512 )) 
 	(snd-display ";transform-size set def: ~A" (transform-size)))
@@ -1195,6 +1198,7 @@
       'expand-control? (without-errors (expand-control?)) 'no-such-sound
       'fft-log-frequency (fft-log-frequency) #f 
       'fft-log-magnitude (fft-log-magnitude) #f 
+      'fft-with-phases (fft-with-phases) #f 
       'fft-window (fft-window) 6 
       'fft-window-alpha (fft-window-alpha) 0.0 
       'fft-window-beta (fft-window-beta) 0.0 
@@ -1800,6 +1804,7 @@
 	(list 'fft-window-beta fft-window-beta 0.0  0.5)
 	(list 'fft-log-frequency fft-log-frequency #f #t)
 	(list 'fft-log-magnitude fft-log-magnitude #f #t)
+	(list 'fft-with-phases fft-with-phases #f #t)
 	(list 'transform-size transform-size 512 1024)
 	(list 'transform-graph-type transform-graph-type 0 1)
 	(list 'fft-window fft-window 6 5)
@@ -2060,7 +2065,7 @@
 		       'eps-left-margin 'eps-size 'exit 'exit-hook
 		       'expand-control 'expand-control-bounds 'expand-control-hop 'expand-control-jitter 'expand-control-length
 		       'expand-control-ramp 'expand-control? 'exponential-window 'fft 'fft-log-frequency
-		       'fft-log-magnitude 'fft-window 'fft-window-alpha 'fft-window-beta 'file->array
+		       'fft-log-magnitude 'fft-window 'fft-window-alpha 'fft-window-beta 'fft-with-phases 'file->array
 		       'file->frame 'file->frame? 'file->sample 'file->sample? 'file->string
 		       'file-name 'file-write-date 'fill-polygon 'fill-rectangle 'filter
 		       'filtered-comb 'filtered-comb?
@@ -31575,6 +31580,7 @@ EDITS: 2
 	      (list 'fft-window-beta fft-window-beta #f 0.0  1.0)
 	      (list 'fft-log-frequency fft-log-frequency #f #f #t)
 	      (list 'fft-log-magnitude fft-log-magnitude #f #f #t)
+	      (list 'fft-with-phases fft-with-phases #f #f #t)
 	      (list 'transform-size transform-size #f 16 (if (<= tests 10) 4096 128))
 	      (list 'transform-graph-type transform-graph-type #f 0 2)
 	      (list 'fft-window fft-window #f 0 dolph-chebyshev-window)
@@ -31704,7 +31710,7 @@ EDITS: 2
 	  (key (char->integer (string-ref ns i)) 0 id)))))
   
   (define funcs (list time-graph-type wavo-hop wavo-trace max-transform-peaks show-transform-peaks zero-pad transform-graph-type fft-window 
-		      with-verbose-cursor fft-log-frequency fft-log-magnitude min-dB
+		      with-verbose-cursor fft-log-frequency fft-log-magnitude fft-with-phases min-dB
 		      wavelet-type transform-size fft-window-alpha fft-window-beta transform-type 
 		      transform-normalization show-mix-waveforms graph-style dot-size show-axes show-y-zero show-grid show-marks grid-density
 		      spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
@@ -31712,7 +31718,7 @@ EDITS: 2
 		      cursor-size cursor-style tracking-cursor-style show-sonogram-cursor
 		      ))
   (define func-names (list 'time-graph-type 'wavo-hop 'wavo-trace 'max-transform-peaks 'show-transform-peaks 'zero-pad 'transform-graph-type 'fft-window
-			   'with-verbose-cursor 'fft-log-frequency 'fft-log-magnitude 'min-dB
+			   'with-verbose-cursor 'fft-log-frequency 'fft-log-magnitude 'fft-with-phases 'min-dB
 			   'wavelet-type 'transform-size 'fft-window-alpha 'fft-window-beta 'transform-type
 			   'transform-normalization 'show-mix-waveforms 'graph-style 'dot-size 'show-axes 'show-y-zero 'show-grid 'show-marks 'grid-density
 			   'spectro-x-angle 'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
@@ -31720,7 +31726,7 @@ EDITS: 2
 			   'cursor-size 'cursor-style 'tracking-cursor-style 'show-sonogram-cursor
 			   ))
   (define new-values (list graph-as-wavogram 12 512 3 #t 32 graph-as-sonogram cauchy-window
-			   #t #t #t -120.0
+			   #t #t #t #t -120.0
 			   3 32 .5 .5 autocorrelation
 			   0 #t graph-lollipops 8 show-no-axes #t #t #f 1.0
 			   32.0 .5 32.0 .5 32.0 .5
@@ -65510,7 +65516,7 @@ EDITS: 1
 		     env-sound enved-envelope enved-base enved-clip? enved-in-dB enved-dialog enved-style enved-power
 		     enved-target enved-waveform-color enved-wave? eps-file eps-left-margin 
 		     eps-bottom-margin eps-size expand-control expand-control-hop expand-control-jitter expand-control-length expand-control-ramp
-		     expand-control? fft fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude transform-size disk-kspace
+		     expand-control? fft fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases transform-size disk-kspace
 		     transform-graph-type fft-window transform-graph? view-files-dialog mix-file-dialog file-name fill-polygon
 		     fill-rectangle filter-sound filter-control-in-dB filter-control-envelope enved-filter-order enved-filter
 		     filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control? find-channel
@@ -65647,7 +65653,7 @@ EDITS: 1
 			 enved-envelope enved-base enved-clip? enved-in-dB enved-style enved-power
 			 enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
 			 expand-control expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control?
-			 fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
+			 fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window
 			 transform-graph? filter-control-in-dB filter-control-envelope enved-filter-order enved-filter 
 			 filter-control-in-hz filter-control-order filter-control-waveform-color filter-control?  foreground-color
 			 graph-color graph-cursor graph-style lisp-graph? graphs-horizontal highlight-color
@@ -66144,7 +66150,7 @@ EDITS: 1
 		      (list channel-widgets count-matches cursor channel-properties
 			    with-tracking-cursor cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size
 			    draw-dots draw-lines edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency
-			    fft-log-magnitude transform-size transform-graph-type fft-window transform-graph? find-channel
+			    fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window transform-graph? find-channel
 			    graph graph-style lisp-graph? insert-region insert-sound
 			    time-graph-style lisp-graph-style transform-graph-style
 			    left-sample make-graph-data map-chan max-transform-peaks maxamp maxamp-position min-dB mix-region
@@ -66170,7 +66176,7 @@ EDITS: 1
 			  (set! ctr (+ ctr 1))))
 		      (list channel-widgets count-matches cursor channel-properties
 			    cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size draw-dots draw-lines
-			    edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude
+			    edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases
 			    transform-size transform-graph-type fft-window transform-graph? find-channel
 			    graph graph-style lisp-graph? insert-region insert-sound left-sample
 			    time-graph-style lisp-graph-style transform-graph-style
@@ -66197,7 +66203,7 @@ EDITS: 1
 			  (set! ctr (+ ctr 1))))
 		      (list channel-widgets cursor with-tracking-cursor channel-properties
 			    cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size edit-fragment
-			    edit-position edit-tree edits env-sound fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude
+			    edit-position edit-tree edits env-sound fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases
 			    transform-size transform-graph-type fft-window transform-graph? filter-sound
 			    graph-data graph-style lisp-graph? insert-region left-sample
 			    time-graph-style lisp-graph-style transform-graph-style
@@ -66254,7 +66260,7 @@ EDITS: 1
 			      (snd-display ";~D: chn procs ~A: ~A" ctr n tag))
 			  (set! ctr (+ ctr 1))))
 		      (list channel-widgets cursor cursor-position cursor-size cursor-style tracking-cursor-style display-edits
-			    dot-size edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude
+			    dot-size edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases
 			    transform-size transform-graph-type fft-window transform-graph? graph-style lisp-graph? left-sample
 			    time-graph-style lisp-graph-style transform-graph-style
 			    make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization peak-env-info
@@ -66279,7 +66285,7 @@ EDITS: 1
 			      (snd-display ";~D: set chn procs ~A: ~A" ctr n tag))
 			  (set! ctr (+ ctr 1))))
 		      (list channel-widgets cursor cursor-position display-edits dot-size edit-tree edits
-			    fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
+			    fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window
 			    transform-graph? graph-style lisp-graph? left-sample make-graph-data max-transform-peaks maxamp maxamp-position
 			    time-graph-style lisp-graph-style transform-graph-style
 			    min-dB transform-normalization peak-env-info reverse-sound right-sample show-axes  grid-density

@@ -278,7 +278,7 @@ typedef struct {
   Float alpha, beta;
   Float scale;
   axis_info *axis;
-  Float *data;
+  Float *data, *phases;
   char *xlabel;
   struct chan_info *chan;
 } fft_info;
@@ -347,7 +347,7 @@ typedef struct chan_info {
   off_t transform_size;
   mus_fft_window_t fft_window;
   graph_type_t transform_graph_type, time_graph_type;
-  bool show_transform_peaks, fft_log_frequency, fft_log_magnitude;
+  bool show_transform_peaks, fft_log_frequency, fft_log_magnitude, fft_with_phases;
   graph_style_t time_graph_style, lisp_graph_style, transform_graph_style;
   int dot_size;
   fft_normalize_t transform_normalization;
@@ -484,7 +484,7 @@ typedef struct snd_state {
   bool graph_hook_active, lisp_graph_hook_active;
   bool Show_Transform_Peaks, Show_Y_Zero, Show_Marks;
   with_grid_t Show_Grid;
-  bool Fft_Log_Frequency, Fft_Log_Magnitude;
+  bool Fft_Log_Frequency, Fft_Log_Magnitude, Fft_With_Phases;
   channel_style_t Channel_Style;
   sound_style_t Sound_Style;
   show_axes_t Show_Axes;
@@ -989,7 +989,7 @@ Float fft_beta_max(mus_fft_window_t win);
 void cp_free_fft_state(chan_info *cp);
 void autocorrelation(Float *data, int n);
 void set_fft_info_xlabel(chan_info *cp, const char *new_label);
-void fourier_spectrum(snd_fd *sf, Float *data, off_t fft_size, off_t data_len, Float *window);
+void fourier_spectrum(snd_fd *sf, Float *data, off_t fft_size, off_t data_len, Float *window, chan_info *cp);
 char *wavelet_name(int i);
 char **wavelet_names(void);
 void set_log_freq_start(Float base);

@@ -2030,6 +2030,8 @@ sceq32:
 sceq33:
 \sum_{m=0}^{\infty}(m+\frac{1}{2})\frac{J_{m+\frac{1}{2}}(ka)}{\sqrt{a}} \frac{J_{m+\frac{1}{2}}(kr)}{\sqrt{r}} P_{m}(\cos \theta) = \frac{\sin\Big(k \sqrt{r^{2}+a^{2}-2ar\cos \theta}\Big)}{\pi \sqrt{r^{2}+a^{2}-2ar\cos \theta}}
 
+Pn(cos x) is p776 A&S (P=Jacobi)
+
 sceq34:
 old form: \sum_{m=0}^{\infty} (n+m)\Big(\frac{J_{n+m}(z)}{z^{n}}\Big)^{2} C_{m}^{n}(\cos \theta) = \frac{J_{n}(2z \sin \frac{\theta}{2})}{2^{n}\Gamma(n)(2z\sin \frac{\theta}{2})}
 \sum_{m=0}^{\infty} (n+m)\Big(\frac{J_{n+m}(z)}{z^{n}}\Big)^{2} \sum_{k=0}^{m} \frac{(n)_{k}(n)_{m-k}}{k!(m-k)!} \cos(m-2k)\theta = \frac{J_{n}(2z \sin \frac{\theta}{2})}{2^{n}\Gamma(n)(2z\sin \frac{\theta}{2})}
@@ -2053,12 +2055,11 @@ sceq40: 27.8.6 (p1005)
 &\sum_{n=1}^{\infty} \frac{\sin n\theta}{n^{3}} = \frac{\pi^{2}\theta}{6} - \frac{\pi \theta^{2}}{4} + \frac{\theta^{3}}{12} & (0 \leq \theta \leq 2\pi)
 
 
-
 TODO: from Klapper, Selected Papers on Frequency Modulation, p 156
 &\sum_{n=-\infty}^{\infty} (-1)^{n} J_{2n}(x) J_{2n}(y(\omega + B \cos z)) = J_{0}( \sqrt{x^{2} + y^{2} (\omega + B\cos z)^{2}})
 
 from Askey "Ramanujan and Hypergeometric Series" in Berndt and Rankin "Ramanujan: Essays and Surveys" p283 (the formula was found by Gauss):
-   this is r2k!cos in generators.scm [sceq30.png)
+   this is r2k!cos in generators.scm [sceq30.png]
 &(1 - 2r \cos \theta + r^{2})^{-k} = \frac{{}_{2}F_{1}(k, k; 1; r^{2})}{2} + \sum_{n=1}^{\infty} \frac{(k)_{n}}{n!} r^{n} {}_{2}F_{1}(k, k+n; n+1; r^{2}) \cos n\theta
 
 Montgomery and Vorhauer:
@@ -2068,6 +2069,8 @@ Montgomery and Vorhauer:
 ;;; Bessel funcs as confluent hypergeometric series
 &J_{n}(x) = \frac{(\frac{x}{2})^{n}}{\Gamma(n+1)} e^{-ix} \Phi(n+\frac{1}{2}, 2n+1; 2ix) \\
 &I_{n}(x) = \frac{(\frac{x}{2})^{n}}{\Gamma(n+1)} e^{-x} \Phi(n+\frac{1}{2}, 2n+1; 2x) \\
+
+another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 -->
 
 

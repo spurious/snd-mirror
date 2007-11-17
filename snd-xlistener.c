@@ -114,6 +114,18 @@ static int alphabetize(const void *a, const void *b)
 }
 
 
+static int find_prompt(Widget w, XmTextPosition start)
+{
+  Boolean found_prompt;
+  XmTextPosition loc;
+
+  found_prompt = XmTextFindString(w, start, listener_prompt(ss), XmTEXT_BACKWARD, &loc);
+  if (!found_prompt) 
+    return(0);
+  else return((int)loc + snd_strlen(listener_prompt(ss)));
+}
+
+
 static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   /* used only by the listener widget -- needs to be smart about text since overall string can be enormous 
@@ -122,8 +134,6 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
    */
   int beg, end, replace_end, len, matches = 0;
   char *old_text;
-  Boolean found;
-  XmTextPosition curpos, loc;
 
   if ((completions_pane) &&
       (XtIsManaged(completions_pane)))
@@ -140,12 +150,8 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
   beg = 0;
   end = XmTextGetInsertionPosition(w);
   replace_end = end;
-  curpos = (XmTextPosition)end;
 
-  found = XmTextFindString(w, curpos, listener_prompt(ss), XmTEXT_BACKWARD, &loc);
-  if (!found) 
-    beg = 0;
-  else beg = (int)loc + 1;
+  beg = find_prompt(w, (XmTextPosition)end);
   len = end - beg + 1;
 
   old_text = (char *)CALLOC(len + 1, sizeof(char));
@@ -550,19 +556,16 @@ void listener_delete_text(int new_end)
 }
 
 
-/* TODO: surely printout_end is a bug waiting to happen? */
-static int printout_end = 0;
-
 static void Listener_Meta_P(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
-  listener_delete_text(printout_end + 1);
+  listener_delete_text(find_prompt(w, XmTextGetInsertionPosition(w)));
   restore_listener_string(true);
 }
 
 
 static void Listener_Meta_N(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
-  listener_delete_text(printout_end + 1);
+  listener_delete_text(find_prompt(w, XmTextGetInsertionPosition(w)));
   restore_listener_string(false);
 }
 
@@ -992,10 +995,7 @@ void listener_append(const char *msg)
 {
   if ((listener_print_p(msg)) && /* we need this first -- runs print-hook */
       (listener_text))
-    {
-      XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), (char *)msg);
-      printout_end = XmTextGetLastPosition(listener_text) - 1;
-    }
+    XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), (char *)msg);
 }
  
 
@@ -1010,7 +1010,6 @@ void listener_append_and_prompt(const char *msg)
       cmd_eot = XmTextGetLastPosition(listener_text);
       XmTextInsert(listener_text, cmd_eot, listener_prompt_with_cr());
       cmd_eot = XmTextGetLastPosition(listener_text);
-      printout_end = cmd_eot - 1;
       XmTextShowPosition(listener_text, cmd_eot - 1);
     }
 }
@@ -1019,7 +1018,8 @@ void listener_append_and_prompt(const char *msg)
 static void command_return_callback(Widget w, XtPointer context, XtPointer info)
 {
   if (!(ss->error_lock))
-    command_return(w, printout_end);
+    command_return(w, find_prompt(w, XmTextGetInsertionPosition(w)));
+  /* prompt loc (last prompt pos) used only by read hook */
 }
 
 
@@ -1108,8 +1108,6 @@ static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-/* TODO: surely XmTextGetString could be substring?
- */
 
 static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -1198,7 +1196,6 @@ static void make_command_widget(int height)
       if (!transTable4) 
 	transTable4 = XtParseTranslationTable(TextTrans4);
       XtOverrideTranslations(listener_text, transTable4);
-      printout_end = 0;
       XtAddCallback(listener_text, XmNactivateCallback, command_return_callback, NULL);
       XtAddCallback(listener_text, XmNmodifyVerifyCallback, command_modify_callback, NULL);
       XtAddCallback(listener_text, XmNmotionVerifyCallback, command_motion_callback, NULL);

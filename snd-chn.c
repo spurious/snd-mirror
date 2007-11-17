@@ -2658,15 +2658,7 @@ static bool make_gl_spectrogram(chan_info *cp)
   si = cp->sonogram_data;
   sp = cp->sound;
 
-  /* experiments with lighting were a bust -- does not improve things (ditto fog, translucency, grid) 
-   *     
-   *  TODO: multichannel resize: chan is messed up until expose event; can't see why:
-   *  it does not help to try to redisplay etc -- -sync (or XSync) helps, but there's still some sort
-   *  of timing problem.  Even forcing an expose event (XmRedisplayWidget) doesn't help!  Same problem
-   *  exists in gtk.
-   *  
-   *  same thing: when multichannel + multisound, 2nd chans sometimes not redisplayed
-   */
+  /* experiments with lighting were a bust -- does not improve things (ditto fog, translucency, grid) */
   
   fap = cp->fft->axis; 
   if ((cp->printing) &&
@@ -3326,7 +3318,10 @@ static void display_channel_data_with_size(chan_info *cp,
   axis_info *fap = NULL;
   axis_info *uap = NULL;
   lisp_grf *up = NULL;
+
   sp = cp->sound;
+  
+  /* -------- graph-hook -------- */
   if ((cp->hookable == WITH_HOOK) && 
       (!(ss->graph_hook_active)) &&
       (XEN_HOOKED(graph_hook)))
@@ -3343,9 +3338,11 @@ static void display_channel_data_with_size(chan_info *cp,
       ss->graph_hook_active = false;
       if (XEN_TRUE_P(res)) return;
     }
+
   ap = cp->axis;
   if (ap == NULL) return;
-  /* now check for fft/wave/user-function decisions */
+
+  /* -------- decide which graphs to draw -------- */
   ap->height = height;
   ap->window_width = width;
   ap->width = width;
@@ -3415,6 +3412,8 @@ static void display_channel_data_with_size(chan_info *cp,
       clear_window(ap->ax);
       return;
     }
+
+  /* -------- set graph positions and sizes -------- */
   if (cp->graphs_horizontal)
     {
       if (with_time) ap->width = width / displays;
@@ -3451,6 +3450,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	}
     }
 
+  /* -------- time domain graph -------- */
   if ((!just_fft) && (!just_lisp))
     {
       marks_off(cp);
@@ -3490,6 +3490,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	}
     }
 
+  /* -------- fft graph -------- */
   if ((with_fft) && 
       (!just_lisp) && (!just_time))
     {
@@ -3541,6 +3542,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	}
     }
 
+  /* -------- "lisp" (extlang) graph -------- */
   if ((with_lisp) && 
       (!just_fft) && (!just_time))
     {
@@ -3590,6 +3592,7 @@ static void display_channel_data_with_size(chan_info *cp,
 		 S_after_lisp_graph_hook);
     }
   
+  /* -------- time domain extras -------- */
   if ((!just_lisp) && (!just_fft))
     {
       if (with_time)
@@ -4937,7 +4940,7 @@ typedef enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GR
 	      CP_MIN_DB, CP_SPECTRO_X_ANGLE, CP_SPECTRO_Y_ANGLE, CP_SPECTRO_Z_ANGLE, CP_SPECTRO_X_SCALE, CP_SPECTRO_Y_SCALE, CP_SPECTRO_Z_SCALE,
 	      CP_SPECTRO_CUTOFF, CP_SPECTRO_START, CP_FFT_WINDOW_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP, CP_EDPOS_MAXAMP,
 	      CP_BEATS_PER_MINUTE, CP_EDPOS_CURSOR, CP_SHOW_GRID, CP_SHOW_SONOGRAM_CURSOR, CP_GRID_DENSITY, CP_MAXAMP_POSITION,
-	      CP_EDPOS_MAXAMP_POSITION, CP_BEATS_PER_MEASURE, CP_FFT_WINDOW_ALPHA, CP_TRACKING_CURSOR_STYLE
+	      CP_EDPOS_MAXAMP_POSITION, CP_BEATS_PER_MEASURE, CP_FFT_WINDOW_ALPHA, CP_TRACKING_CURSOR_STYLE, CP_FFT_WITH_PHASES
 } cp_field_t;
 
 
@@ -5042,6 +5045,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_VERBOSE_CURSOR:          return(C_TO_XEN_BOOLEAN(cp->verbose_cursor));                     break;
 	    case CP_FFT_LOG_FREQUENCY:       return(C_TO_XEN_BOOLEAN(cp->fft_log_frequency));                  break;
 	    case CP_FFT_LOG_MAGNITUDE:       return(C_TO_XEN_BOOLEAN(cp->fft_log_magnitude));                  break;
+	    case CP_FFT_WITH_PHASES:         return(C_TO_XEN_BOOLEAN(cp->fft_with_phases));                    break;
 	    case CP_SPECTRO_HOP:             return(C_TO_XEN_INT(cp->spectro_hop));                            break;
 	    case CP_TRANSFORM_SIZE:          return(C_TO_XEN_OFF_T(cp->transform_size));                       break;
 	    case CP_TRANSFORM_GRAPH_TYPE:    return(C_TO_XEN_INT((int)(cp->transform_graph_type)));            break;
@@ -5408,6 +5412,11 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
       cp->fft_log_magnitude = XEN_TO_C_BOOLEAN(on); 
       if (cp->graph_transform_p) calculate_fft(cp); 
       return(C_TO_XEN_BOOLEAN(cp->fft_log_magnitude));
+      break;
+    case CP_FFT_WITH_PHASES:
+      cp->fft_with_phases = XEN_TO_C_BOOLEAN(on); 
+      if (cp->graph_transform_p) calculate_fft(cp); 
+      return(C_TO_XEN_BOOLEAN(cp->fft_with_phases));
       break;
     case CP_SPECTRO_HOP:
       cp->spectro_hop = g_imin(1, on, DEFAULT_SPECTRO_HOP); 
@@ -6581,6 +6590,27 @@ static XEN g_set_fft_log_magnitude(XEN on, XEN snd, XEN chn)
 }
 
 WITH_THREE_SETTER_ARGS(g_set_fft_log_magnitude_reversed, g_set_fft_log_magnitude)
+
+
+
+static XEN g_fft_with_phases(XEN snd, XEN chn)
+{
+  #define H_fft_with_phases "(" S_fft_with_phases " :optional snd chn): " PROC_TRUE " if fft displays include phase info"
+  if (XEN_BOUND_P(snd))
+    return(channel_get(snd, chn, CP_FFT_WITH_PHASES, S_fft_with_phases));
+  return(C_TO_XEN_BOOLEAN(fft_with_phases(ss)));
+}
+
+static XEN g_set_fft_with_phases(XEN on, XEN snd, XEN chn)
+{
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_fft_with_phases, "a boolean");
+  if (XEN_BOUND_P(snd))
+    return(channel_set(snd, chn, on, CP_FFT_WITH_PHASES, S_setB S_fft_with_phases));
+  set_fft_with_phases(XEN_TO_C_BOOLEAN(on)); 
+  return(C_TO_XEN_BOOLEAN(fft_with_phases(ss)));
+}
+
+WITH_THREE_SETTER_ARGS(g_set_fft_with_phases_reversed, g_set_fft_with_phases)
 
 
 
@@ -8014,6 +8044,8 @@ XEN_ARGIFY_2(g_fft_log_frequency_w, g_fft_log_frequency)
 XEN_ARGIFY_3(g_set_fft_log_frequency_w, g_set_fft_log_frequency)
 XEN_ARGIFY_2(g_fft_log_magnitude_w, g_fft_log_magnitude)
 XEN_ARGIFY_3(g_set_fft_log_magnitude_w, g_set_fft_log_magnitude)
+XEN_ARGIFY_2(g_fft_with_phases_w, g_fft_with_phases)
+XEN_ARGIFY_3(g_set_fft_with_phases_w, g_set_fft_with_phases)
 XEN_ARGIFY_2(g_min_dB_w, g_min_dB)
 XEN_ARGIFY_3(g_set_min_dB_w, g_set_min_dB)
 XEN_ARGIFY_2(g_wavelet_type_w, g_wavelet_type)
@@ -8165,6 +8197,8 @@ XEN_NARGIFY_1(g_set_with_gl_w, g_set_with_gl)
 #define g_set_fft_log_frequency_w g_set_fft_log_frequency
 #define g_fft_log_magnitude_w g_fft_log_magnitude
 #define g_set_fft_log_magnitude_w g_set_fft_log_magnitude
+#define g_fft_with_phases_w g_fft_with_phases
+#define g_set_fft_with_phases_w g_set_fft_with_phases
 #define g_min_dB_w g_min_dB
 #define g_set_min_dB_w g_set_min_dB
 #define g_wavelet_type_w g_wavelet_type
@@ -8383,6 +8417,9 @@ void g_init_chn(void)
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_fft_log_magnitude, g_fft_log_magnitude_w, H_fft_log_magnitude,
 					    S_setB S_fft_log_magnitude, g_set_fft_log_magnitude_w, g_set_fft_log_magnitude_reversed, 0, 2, 1, 2);
+  
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_fft_with_phases, g_fft_with_phases_w, H_fft_with_phases,
+					    S_setB S_fft_with_phases, g_set_fft_with_phases_w, g_set_fft_with_phases_reversed, 0, 2, 1, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_min_dB, g_min_dB_w, H_min_dB,
 					    S_setB S_min_dB, g_set_min_dB_w, g_set_min_dB_reversed, 0, 2, 1, 2);

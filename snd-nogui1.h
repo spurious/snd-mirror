@@ -100,6 +100,7 @@ bool transform_dialog_is_active(void);
 void set_transform_type(int val);
 void set_show_transform_peaks(bool val);
 void set_fft_log_magnitude(bool val);
+void set_fft_with_phases(bool val);
 void set_fft_log_frequency(bool val);
 void set_transform_normalization(fft_normalize_t val);
 void set_show_selection_transform(bool show);

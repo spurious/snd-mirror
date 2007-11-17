@@ -833,6 +833,10 @@ enum {PRINT_NOT, PRINT_CHAR, PRINT_CLM, PRINT_REGION, PRINT_SYNC, PRINT_SND_FD, 
 #define in_set_fft_log_frequency(a) ss->Fft_Log_Frequency = a
 #define DEFAULT_FFT_LOG_FREQUENCY false
 
+#define fft_with_phases(ss) ss->Fft_With_Phases
+#define in_set_fft_with_phases(a) ss->Fft_With_Phases = a
+#define DEFAULT_FFT_WITH_PHASES false
+
 #define cursor_style(ss) ss->Cursor_Style
 #define in_set_cursor_style(a) ss->Cursor_Style = a
 #define DEFAULT_CURSOR_STYLE CURSOR_CROSS

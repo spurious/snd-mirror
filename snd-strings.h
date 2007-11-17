@@ -200,6 +200,7 @@
 #define S_fft_window                    "fft-window"
 #define S_fft_window_alpha              "fft-window-alpha"
 #define S_fft_window_beta               "fft-window-beta"
+#define S_fft_with_phases               "fft-with-phases"
 #define S_file_name                     "file-name"
 #define S_fill_polygon                  "fill-polygon"
 #define S_fill_rectangle                "fill-rectangle"

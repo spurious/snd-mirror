@@ -5,7 +5,7 @@
 
 static Widget transform_dialog = NULL; /* main dialog shell */
 static Widget type_list, size_list, wavelet_list, window_list, window_beta_scale, window_alpha_scale;
-static Widget db_button, peaks_button, logfreq_button, sono_button, spectro_button, normo_button, normalize_button, selection_button;
+static Widget db_button, peaks_button, logfreq_button, sono_button, spectro_button, normo_button, normalize_button, selection_button, phases_button;
 static Widget graph_label, graph_drawer;
 static Widget peak_txt, db_txt, freq_base_txt;
 static Widget error_frame, error_label;
@@ -349,6 +349,26 @@ static void selection_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
+static void chans_fft_with_phases(chan_info *cp, bool value)
+{
+  cp->fft_with_phases = value;
+  cp->fft_changed = FFT_CHANGE_LOCKED;
+}
+
+
+static void phases_callback(Widget w, XtPointer context, XtPointer info)
+{
+  bool val;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
+  val = cb->set;
+  in_set_fft_with_phases(val);
+  graph_redisplay();
+  for_each_chan_with_bool(chans_fft_with_phases, val);
+  for_each_chan(calculate_fft);
+}
+
+
 static void beta_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)info;
@@ -655,7 +675,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNrightPosition, 30); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNbottomPosition, 50); n++;
+      XtSetArg(args[n], XmNbottomPosition, 45); n++;
       XtSetArg(args[n], XmNborderWidth, 4); n++;
       XtSetArg(args[n], XmNborderColor, ss->sgx->basic_color); n++;
       type_frame = XtCreateManagedWidget("type-frame", xmFrameWidgetClass, mainform, args, n);
@@ -953,12 +973,29 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, normalize_button); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNlabelString, bstr); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       selection_button = make_togglebutton_widget("selection-button", display_form, args, n);
       XtAddCallback(selection_button, XmNvalueChangedCallback, selection_callback, NULL);
       XmStringFree(bstr);
+
+
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
+      bstr = XmStringCreateLocalized(_("with phases"));
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, selection_button); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNlabelString, bstr); n++;
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
+      phases_button = make_togglebutton_widget("phases-button", display_form, args, n);
+      XtAddCallback(phases_button, XmNvalueChangedCallback, phases_callback, NULL);
+      XmStringFree(bstr);
+
 
 
       
@@ -1003,7 +1040,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtVaSetValues(wavelet_list, 
 		    XmNitems, wavelets, 
 		    XmNitemCount, NUM_WAVELETS, 
-		    XmNvisibleItemCount, 5, 
+		    XmNvisibleItemCount, 8, 
 		    NULL);
       for (i = 0; i < NUM_WAVELETS; i++) 
 	XmStringFree(wavelets[i]);
@@ -1086,7 +1123,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtVaSetValues(window_list, 
 		    XmNitems, windows, 
 		    XmNitemCount, MUS_NUM_FFT_WINDOWS, 
-		    XmNvisibleItemCount, 5, 
+		    XmNvisibleItemCount, 6, 
 		    NULL);
       for (i = 0; i < MUS_NUM_FFT_WINDOWS; i++) 
 	XmStringFree(windows[i]);
@@ -1148,6 +1185,7 @@ Widget fire_up_transform_dialog(bool managed)
       XmToggleButtonSetState(logfreq_button, (Boolean)(fft_log_frequency(ss)), false);
       XmToggleButtonSetState(normalize_button, (Boolean)(transform_normalization(ss) != DONT_NORMALIZE), false);
       XmToggleButtonSetState(selection_button, (Boolean)(show_selection_transform(ss)), false);
+      XmToggleButtonSetState(phases_button, (Boolean)(fft_with_phases(ss)), false);
 
       /* select current list choices */
       /* display current windowing choice unless wavelet in force */
@@ -1352,6 +1390,15 @@ void set_fft_log_magnitude(bool val)
   for_each_chan_with_bool(chans_fft_log_magnitude, val);
   if (transform_dialog) 
     set_toggle_button(db_button, val, false, NULL);
+  if (!(ss->graph_hook_active)) 
+    for_each_chan(calculate_fft);
+}
+
+
+void set_fft_with_phases(bool val)
+{
+  in_set_fft_with_phases(val);
+  for_each_chan_with_bool(chans_fft_with_phases, val);
   if (!(ss->graph_hook_active)) 
     for_each_chan(calculate_fft);
 }

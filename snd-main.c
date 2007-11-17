@@ -518,6 +518,7 @@ static void save_options(FILE *fd)
   if (view_files_sort(ss) != DEFAULT_VIEW_FILES_SORT) pss_sd(fd, S_view_files_sort, view_files_sort(ss));
   if (fft_log_magnitude(ss) != DEFAULT_FFT_LOG_MAGNITUDE) pss_ss(fd, S_fft_log_magnitude, b2s(fft_log_magnitude(ss)));
   if (fft_log_frequency(ss) != DEFAULT_FFT_LOG_FREQUENCY) pss_ss(fd, S_fft_log_frequency, b2s(fft_log_frequency(ss)));
+  if (fft_with_phases(ss) != DEFAULT_FFT_WITH_PHASES) pss_ss(fd, S_fft_with_phases, b2s(fft_with_phases(ss)));
   if (print_length(ss) != DEFAULT_PRINT_LENGTH) pss_sd(fd, S_print_length, print_length(ss));
   if (show_mix_waveforms(ss) != DEFAULT_SHOW_MIX_WAVEFORMS) pss_ss(fd, S_show_mix_waveforms, b2s(show_mix_waveforms(ss)));
   if (mix_waveform_height(ss) != DEFAULT_MIX_WAVEFORM_HEIGHT) pss_sd(fd, S_mix_waveform_height, mix_waveform_height(ss));
@@ -1074,6 +1075,7 @@ static void save_sound_state(snd_info *sp, void *ptr)
       if (cp->show_transform_peaks != show_transform_peaks(ss)) pcp_ss(fd, S_show_transform_peaks, b2s(cp->show_transform_peaks), chan);
       if (cp->fft_log_frequency != fft_log_frequency(ss)) pcp_ss(fd, S_fft_log_frequency, b2s(cp->fft_log_frequency), chan);
       if (cp->fft_log_magnitude != fft_log_magnitude(ss)) pcp_ss(fd, S_fft_log_magnitude, b2s(cp->fft_log_magnitude), chan);
+      if (cp->fft_with_phases != fft_with_phases(ss)) pcp_ss(fd, S_fft_with_phases, b2s(cp->fft_with_phases), chan);
       if (cp->verbose_cursor != verbose_cursor(ss)) pcp_ss(fd, S_with_verbose_cursor, b2s(cp->verbose_cursor), chan);
       if (cp->zero_pad != zero_pad(ss)) pcp_sd(fd, S_zero_pad, cp->zero_pad, chan);
       if (cp->wavelet_type != wavelet_type(ss)) pcp_sd(fd, S_wavelet_type, cp->wavelet_type, chan);

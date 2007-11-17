@@ -806,7 +806,7 @@ static double hypot(double r, double i) {return(sqrt(r * r + i * i));}
 #endif
 
 
-void fourier_spectrum(snd_fd *sf, Float *fft_data, off_t fft_size_1, off_t data_len_1, Float *window)
+void fourier_spectrum(snd_fd *sf, Float *fft_data, off_t fft_size_1, off_t data_len_1, Float *window, chan_info *cp)
 {
   int i, fft_size, data_len;
   fft_size = (int)fft_size_1;
@@ -829,16 +829,39 @@ void fourier_spectrum(snd_fd *sf, Float *fft_data, off_t fft_size_1, off_t data_
     mus_fftw(fft_data, fft_size, 1);
     fft_data[0] = fabs(fft_data[0]);
     fft_data[fft_size / 2] = fabs(fft_data[fft_size / 2]);
-    for (i = 1, j = fft_size - 1; i < fft_size / 2; i++, j--) 
-      fft_data[i] = hypot(fft_data[i], fft_data[j]);
+    if ((cp) && (cp->fft_with_phases))
+      {
+	cp->fft->phases[0] = 0.0;
+	for (i = 1, j = fft_size - 1; i < fft_size / 2; i++, j--) 
+	  {
+	    cp->fft->phases[i] = -atan2(fft_data[j], fft_data[i]);
+	    fft_data[i] = hypot(fft_data[i], fft_data[j]);
+	  }
+      }
+    else
+      {
+	for (i = 1, j = fft_size - 1; i < fft_size / 2; i++, j--) 
+	  fft_data[i] = hypot(fft_data[i], fft_data[j]);
+      }
   }
 #else
   {
     Float *idata;
     idata = (Float *)CALLOC(fft_size, sizeof(Float));
     mus_fft(fft_data, idata, fft_size, 1);
-    for (i = 0; i < fft_size; i++) 
-      fft_data[i] = hypot(fft_data[i], idata[i]);
+    if ((cp) && (cp->fft_with_phases))
+      {
+	for (i = 0; i < fft_size; i++)
+	  {
+	    cp->fft->phases[i] = -atan2(idata[i], fft_data[i]);
+	    fft_data[i] = hypot(fft_data[i], idata[i]);
+	  }
+      }
+    else
+      {
+	for (i = 0; i < fft_size; i++) 
+	  fft_data[i] = hypot(fft_data[i], idata[i]);
+      }
     FREE(idata);
   }
 #endif
@@ -891,7 +914,7 @@ static void apply_fft(fft_state *fs)
   switch (cp->transform_type)
     {
     case FOURIER:
-      fourier_spectrum(sf, fft_data, fs->size, data_len, fs->window);
+      fourier_spectrum(sf, fft_data, fs->size, data_len, fs->window, cp);
       break;
 
     case WAVELET:
@@ -1262,6 +1285,7 @@ static fft_info *make_fft_info(off_t size, mus_fft_window_t window, Float alpha,
   fp->beta = beta;
   fp->xlabel = NULL;
   fp->data = (Float *)CALLOC(size + 1, sizeof(Float)); /*  + 1 for complex storage or starts at 1 or something */
+  fp->phases = NULL;
   return(fp);
 }
 
@@ -1282,6 +1306,7 @@ fft_info *free_fft_info(fft_info *fp)
 {
   fp->chan = NULL;
   if (fp->data) FREE(fp->data);
+  if (fp->phases) FREE(fp->phases);
   if (fp->axis) free_axis_info(fp->axis);
   if (fp->xlabel) FREE(fp->xlabel);
   FREE(fp);
@@ -1305,13 +1330,21 @@ static void one_fft(fft_state *fs)
 	}
       else
 	{
-	  if ((!fp->data) || (fs->size > fp->size))
+	  if ((!fp->data) || 
+	      (fs->size > fp->size))
 	    {
 	      fp->size = fs->size;
 	      if (fp->data) FREE(fp->data);
 	      fp->data = (Float *)CALLOC(fp->size + 1, sizeof(Float));
+	      if (fp->phases) FREE(fp->phases);
+	      fp->phases = NULL;
 	    }
 	}
+
+      if ((cp->fft_with_phases) &&
+	  (!(fp->phases)))
+	fp->phases = (Float *)CALLOC(fp->size + 1, sizeof(Float));
+
       fp->current_size = fs->size; /* protect against parallel size change via fft size menu */
       fs->data = fp->data;
       if (fs->window == NULL)

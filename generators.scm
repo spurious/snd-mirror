@@ -919,15 +919,6 @@
 	       *output*)))))))
 |#
 
-;;; --------------------------------------------------------------------------------
-;;;
-;;; AT possibilities: G&R 1.320 (but it's just a kernel -- no index)
-;;;                   log sin x (99)
-;;;                   sin mx / sin nx (237)
-;;;                   n sin nx / double fact (178)
-;;;                   sum of sines form of e^cos sin(sin) (202)
-;;;                   complex ratio (235 7 8)
-
 
 ;;; --------------------------------------------------------------------------------
 
@@ -1003,8 +994,6 @@
 	   den))))
 
 ;;; needs normalization and no DC.   side amps seem close
-;;; PERHAPS: doc/test the npos cases
-
 
 #|
 (with-sound (:clipped #f :statistics #t :play #f)
@@ -1015,11 +1004,6 @@
 	     (outa i (npos1cos gen 0.0) *output*))))))
 |#
 
-
-
-;;; --------------------------------------------------------------------------------
-
-;;; Dimitrov and Merlo
 
 (def-clm-struct (npos3cos
 		 :make-wrapper (lambda (g)

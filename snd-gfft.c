@@ -9,7 +9,7 @@
 
 slist *transform_list = NULL, *size_list = NULL, *window_list = NULL, *wavelet_list = NULL;
 static GtkWidget *transform_dialog = NULL; /* main dialog shell */
-static GtkWidget *outer_table, *db_button, *peaks_button, *logfreq_button, *sono_button, *spectro_button, *normal_fft_button;
+static GtkWidget *outer_table, *db_button, *peaks_button, *logfreq_button, *sono_button, *spectro_button, *normal_fft_button, *phases_button;
 static GtkWidget *normalize_button, *selection_button, *window_beta_scale, *window_alpha_scale, *graph_drawer = NULL, *graph_frame = NULL;
 static GtkObject *beta_adj, *alpha_adj;
 static gc_t *gc = NULL, *fgc = NULL;
@@ -315,6 +315,27 @@ static void selection_callback(GtkWidget *w, gpointer context)
 }
 
 
+static void chans_fft_with_phases(chan_info *cp, bool value)
+{
+  cp->fft_with_phases = value;
+  cp->fft_changed = FFT_CHANGE_LOCKED;
+}
+
+
+static void phases_callback(GtkWidget *w, gpointer context)
+{
+  bool val;
+  val = (bool)(GTK_TOGGLE_BUTTON(w)->active);
+  in_set_fft_with_phases(val);
+  graph_redisplay();
+  for_each_chan_with_bool(chans_fft_with_phases, val);
+  for_each_chan(calculate_fft);
+}
+
+
+
+
+
 static void beta_callback(GtkAdjustment *adj, gpointer context)
 {
   in_set_fft_window_beta((Float)(adj->value));
@@ -578,6 +599,12 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_box_pack_start(GTK_BOX(buttons), selection_button, false, false, 2);
 	gtk_widget_show(selection_button);
 	SG_SIGNAL_CONNECT(selection_button, "toggled", selection_callback, NULL);
+
+	phases_button = gtk_check_button_new_with_label(_("with phases"));
+	gtk_box_pack_start(GTK_BOX(buttons), phases_button, false, false, 2);
+	gtk_widget_show(phases_button);
+	SG_SIGNAL_CONNECT(phases_button, "toggled", phases_callback, NULL);
+	
 	
 	
 	vb = gtk_vbox_new(false, 0);
@@ -717,6 +744,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       set_toggle_button(logfreq_button, fft_log_frequency(ss), false, NULL);
       set_toggle_button(normalize_button, (transform_normalization(ss) != DONT_NORMALIZE), false, NULL);
       set_toggle_button(selection_button, show_selection_transform(ss), false, NULL);
+      set_toggle_button(phases_button, fft_with_phases(ss), false, NULL);
 
       need_callback = true;
       gtk_widget_show(outer_table);
@@ -892,6 +920,15 @@ void set_fft_log_magnitude(bool val)
   for_each_chan_with_bool(chans_fft_log_magnitude, val);
   if (transform_dialog) 
     set_toggle_button(db_button, val, false, NULL);
+  if (!(ss->graph_hook_active)) 
+    for_each_chan(calculate_fft);
+}
+
+
+void set_fft_with_phases(bool val)
+{
+  in_set_fft_with_phases(val);
+  for_each_chan_with_bool(chans_fft_with_phases, val);
   if (!(ss->graph_hook_active)) 
     for_each_chan(calculate_fft);
 }

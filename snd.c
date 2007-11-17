@@ -231,6 +231,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Clipping = DEFAULT_CLIPPING;
   ss->Fft_Log_Magnitude = DEFAULT_FFT_LOG_MAGNITUDE;
   ss->Fft_Log_Frequency = DEFAULT_FFT_LOG_FREQUENCY;
+  ss->Fft_With_Phases = DEFAULT_FFT_WITH_PHASES;
   ss->Channel_Style = DEFAULT_CHANNEL_STYLE;
   ss->Sound_Style = DEFAULT_SOUND_STYLE;
   ss->Audio_Input_Device = DEFAULT_AUDIO_INPUT_DEVICE;

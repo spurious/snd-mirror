@@ -2,10 +2,6 @@
 #include "sndlib-strings.h"
 #include "clm-strings.h"
 
-/* TODO: a watcher on the listener -- as something is typed, if help dialog is posted,
- *          give help or list of completions.  Or possibly use minibuffer?
- */
-
 static char **snd_xrefs(const char *topic);
 static char **snd_xref_urls(const char *topic);
 
@@ -516,6 +512,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+17-Nov:  fft-with-phases.\n\
 12-Nov:  Open recent item in File menu\n\
 8-Nov:   Snd 9.5.\n\
 4-Nov:   port to mingw thanks to Kjetil.\n\
@@ -1012,6 +1009,9 @@ The main FFT-related functions are:\
 \n\
   " S_fft_log_magnitude " and " S_fft_log_frequency "\n\
     these set whether the axes are linear or logarithmic\n\
+\n\
+  " S_fft_with_phases " (:optional snd chn)\n\
+    sets whether the single fft display includes phase information\n\
 \n\
   " S_transform_graph_p " (:optional snd chn)\n\
     if " PROC_TRUE ", the fft graph is displayed: " transform_graph_example "\n\

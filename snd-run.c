@@ -9148,7 +9148,6 @@ static xen_value *mus_xcoeff_1(ptree *prog, xen_value **args, int num_args)
   return(make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT));
 }
 
-/* TODO: local for set x|ycoeff */
 
 static void set_xcoeff_0(int *args, ptree *pt) {mus_set_xcoeff(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
 

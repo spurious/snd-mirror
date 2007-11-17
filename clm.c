@@ -9813,8 +9813,6 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
       samps = (mus_sample_t *)clm_calloc(totallen, sizeof(mus_sample_t), "convolve_files data");
       outdat = (Float *)clm_calloc(totallen, sizeof(Float), "convolve_files data");
 
-      /* SOMEDAY: check for nested loops using the same counter (va.scm?) */
-
       for (chan = 0; chan < output_chans; chan++)
 	{
 	  int j, k;

@@ -923,7 +923,7 @@ static enved_fft *make_enved_spectrum(chan_info *cp)
 	  ef->size = fsize;
 	  ef->data = (Float *)MALLOC(fsize * sizeof(Float));
 	}
-      fourier_spectrum(sf, ef->data, ef->size, data_len, NULL);
+      fourier_spectrum(sf, ef->data, ef->size, data_len, NULL, NULL);
       free_snd_fd(sf);
       for (i = 0; i < ef->size; i++) 
 	if (ef->data[i] > data_max) 

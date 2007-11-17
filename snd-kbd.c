@@ -2479,11 +2479,11 @@ XEN_NARGIFY_4(g_snd_simulate_keystroke_w, g_snd_simulate_keystroke)
 
 void g_init_kbd(void)
 {
-  #define H_cursor_in_view     "The value for a " S_bind_key " function that causes it to shift the window so that the cursor is in the view"
-  #define H_cursor_on_left     "The value for a " S_bind_key " function that causes it to shift the window so that the cursor is at the left edge"
-  #define H_cursor_on_right    "The value for a " S_bind_key " function that causes it to shift the window so that the cursor is at the right edge"
-  #define H_cursor_in_middle   "The value for a " S_bind_key " function that causes it to shift the window so that the cursor is in the middle"
-  #define H_keyboard_no_action "The value for a " S_bind_key " function that causes it do nothing upon return"
+  #define H_cursor_in_view     "The value for a " S_bind_key " function that moves the window so that the cursor is in the view"
+  #define H_cursor_on_left     "The value for a " S_bind_key " function that moves the window so that the cursor is at the left edge"
+  #define H_cursor_on_right    "The value for a " S_bind_key " function that moves the window so that the cursor is at the right edge"
+  #define H_cursor_in_middle   "The value for a " S_bind_key " function that moves the window so that the cursor is in the middle"
+  #define H_keyboard_no_action "The value for a " S_bind_key " function that does nothing upon return"
 
   XEN_DEFINE_CONSTANT(S_cursor_in_view,          CURSOR_IN_VIEW,                      H_cursor_in_view);
   XEN_DEFINE_CONSTANT(S_cursor_on_left,          CURSOR_ON_LEFT,                      H_cursor_on_left);
