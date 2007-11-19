@@ -30,6 +30,7 @@
 12 constant summer-colormap
 13 constant rainbow-colormap
 14 constant flag-colormap
+15 constant phases-colormap
 
 1.00 0.98 0.98 make-color constant snow
 0.97 0.97 1.00 make-color constant ghost-white

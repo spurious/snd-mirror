@@ -1715,6 +1715,8 @@ int xen_to_run_type(XEN val);
 
 /* -------- snd-draw.c -------- */
 
+point_t *get_grf_points(void);
+point_t *get_grf_points1(void);
 void draw_cursor(chan_info *cp);
 void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show);
 void show_mark_triangle(chan_info *cp, int x);

@@ -22,7 +22,8 @@ Spring_colormap = 11
 Summer_colormap = 12
 Rainbow_colormap = 13
 Flag_colormap = 14
-Last_colormap = 15
+Phases_colormap = 15
+Last_colormap = 16
 
 # rgb.scm
 Snow = make_color(1.00, 0.98, 0.98)

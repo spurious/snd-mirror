@@ -37,9 +37,8 @@ void set_grf_point(int xi, int j, int yi)
 }
 
 
-point_t *get_grf_points(void);
-point_t *get_grf_points1(void);
-point_t *get_grf_points(void) {return(points);} /* for snd-marks.c */
+point_t *get_grf_points(void) {return(points);} 
+
 point_t *get_grf_points1(void) {return(points1);}
 
 
@@ -2116,5 +2115,7 @@ void draw_cursor(chan_info *cp) {}
 void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show) {}
 void show_mark_triangle(chan_info *cp, int x) {}
 void erase_cursor(chan_info *cp) {}
+point_t *get_grf_points(void) {return(NULL);} 
+point_t *get_grf_points1(void) {return(NULL);}
 #endif
 

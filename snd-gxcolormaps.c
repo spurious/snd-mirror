@@ -733,9 +733,7 @@ static void rainbow_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 
 static Float **make_phases_colormap(int size, XEN ignored)
 {
-  /* 0 = blue, pi/2 = red, pi = blue, 3pi/2 = red, lighter from pi/2(0) to 3pi/2(1), greener from 0(0) to pi(1)
-   */
-  #define LEAST_AMOUNT .4
+  /* 0 and pi: blue->green, pi/2 and 3pi/2: red->black */
   Float **rgb;
   int i;
   Float x, incr;
@@ -743,41 +741,36 @@ static Float **make_phases_colormap(int size, XEN ignored)
   incr = (2.0 * M_PI) / (Float)size;
   for (i = 0, x = 0.0; i < size; i++, x += incr)
     {
-      Float px, py, amount, green;
-
-      px = cos(x);
-      py = sin(x);
-
       if (x <= 0.5 * M_PI)
 	{
-	  amount = 1.0;
-	  green = (1.0 - (fabs(x - 0.25 * M_PI) / (0.25 * M_PI)));
+	  rgb[0][i] = x / (0.5 * M_PI);
+	  rgb[1][i] = 0.0;
+	  rgb[2][i] = 1.0 - rgb[0][i];
 	}
       else
 	{
 	  if (x <= M_PI)
 	    {
-	      amount = LEAST_AMOUNT + ((M_PI - x) / (0.5 * M_PI));
-	      green = 0.0;
+	      rgb[0][i] = 1.0 - ((x - 0.5 * M_PI) / (0.5 * M_PI));
+	      rgb[1][i] = 1.0 - rgb[0][i];
+	      rgb[2][i] = 0.0;
 	    }
 	  else
 	    {
 	      if (x <= 1.5 * M_PI)
 		{
-		  amount = LEAST_AMOUNT;
-		  green = (1.0 - ((fabs(x - 1.75 * M_PI) / (0.25 * M_PI))));
+		  rgb[0][i] = 0.0;
+		  rgb[1][i] = 1.0 - ((x - M_PI) / (0.5 * M_PI));
+		  rgb[2][i] = 0.0;
 		}
 	      else 
 		{
-		  amount = LEAST_AMOUNT + ((x - 1.5 * M_PI) / (0.5 * M_PI));
-		  green = 0.0;
+		  rgb[0][i] = 0.0;
+		  rgb[1][i] = 1.0 - ((x - (1.5 * M_PI)) / (0.5 * M_PI));
+		  rgb[2][i] = 0.0;
 		}
 	    }
 	}
-	  
-      rgb[0][i] = fabs(py) * amount;
-      rgb[1][i] = green * amount;
-      rgb[2][i] = fabs(px) * amount;
     }
   return(rgb);
 }
@@ -786,6 +779,7 @@ static Float **make_phases_colormap(int size, XEN ignored)
 #if USE_CAIRO
 static void phases_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
 {
+  /* TODO: cairo phases colormap */
   (*r) = n;
   (*g) = n;
   (*b) = n;

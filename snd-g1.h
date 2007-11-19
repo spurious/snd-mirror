@@ -29,6 +29,7 @@ void draw_picture(axis_context *ax, picture_t *src, gint xsrc, gint ysrc, gint x
 void draw_string(axis_context *ax, int x0, int y0, const char *str, int len);
 void draw_rotated_axis_label(chan_info *cp, axis_context *ax, const char *text, gint x0, gint y0);
 void draw_dot(axis_context *ax, int x, int y, int size);
+void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color);
 void setup_axis_context(chan_info *cp, axis_context *ax);
 GtkWidget *start_color_dialog(bool managed);
 GtkWidget *start_orientation_dialog(bool managed);

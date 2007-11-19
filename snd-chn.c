@@ -1990,7 +1990,6 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
   if (peak_amps) FREE(peak_amps);
 }
 
-point_t *get_grf_points(void);
 
 static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with_hook_t with_hook)
 {
@@ -2262,8 +2261,8 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
       color_t default_color;
       
       if (cp == selected_channel())
-	default_color = ss->sgx->selected_graph_color;
-      else default_color = ss->sgx->graph_color;
+	default_color = ss->sgx->selected_data_color;
+      else default_color = ss->sgx->data_color;
       
       /* if value is close to 0, use [selected-]data-color, else use fft_phases[i] */
       allocate_color_map(PHASES_COLORMAP);

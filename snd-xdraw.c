@@ -355,7 +355,15 @@ void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors,
       if ((abs(y0 - axis_y0) < 5) &&
 	  (abs(y1 - axis_y0) < 5))
 	cur = -1;
-      else cur = colors[i];
+      else 
+	{
+	  /* TODO: around a peak use only that peak, not the (negative) dips */
+	  /* TODO: fixup the colormap -- seems to be too much green right now */
+	  /* TODO: other graph styles? */
+	  if (y0 > y1)
+	    cur = colors[i];
+	  else cur = colors[i - 1]; /* coords are upside down */
+	}
 
       if (cur != prev)
 	{
@@ -370,6 +378,15 @@ void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors,
   set_foreground_color(ax, old_color);
 }
 
+#if 0
+(with-sound ()
+ (let ((gen1 (make-oscil 1000 0.0))
+       (gen2 (make-oscil 2000 (* 0.5 pi)))
+       (gen3 (make-oscil 3000 (* 1.0 pi)))
+       (gen4 (make-oscil 4000 (* 1.5 pi))))
+  (do ((i 0 (1+ i))) ((= i 44100))
+    (outa i (* .1 (+ (oscil gen1) (oscil gen2) (oscil gen3) (oscil gen4))) *output*))))
+#endif
 
 
 

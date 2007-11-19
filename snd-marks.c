@@ -1353,8 +1353,6 @@ static void allocate_erase_grf_points(mark_context *ms)
     }
 }
 
-point_t *get_grf_points(void);
-point_t *get_grf_points1(void);
 
 static void backup_erase_grf_points(mark_context *ms, int nj)
 {

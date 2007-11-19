@@ -517,6 +517,11 @@ void allocate_color_map(int colormap)
     }
 }
 
+void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
+{
+  /* TODO: gtk version of fft phases */
+}
+
 #else
 
 /* cairo colormaps */
@@ -606,6 +611,11 @@ void allocate_sono_rects(int size)
 
 void allocate_color_map(int colormap)
 {
+}
+
+void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
+{
+  /* TODO: cairo version of fft phases */
 }
 
 #endif

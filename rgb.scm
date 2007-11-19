@@ -21,6 +21,7 @@
 (define summer-colormap 12)
 (define rainbow-colormap 13)
 (define flag-colormap 14)
+(define phases-colormap 15)
 
 
 (define snow (make-color 1.00 0.98 0.98))
