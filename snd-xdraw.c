@@ -191,9 +191,6 @@ void setup_axis_context(chan_info *cp, axis_context *ax)
 
 /* colormaps */
 
-#define BLACK_AND_WHITE_COLORMAP 0
-/* defined as enum member in snd-gxcolormaps.c */
-
 static int sono_bins = 0;             /* tracks total_bins -- each sono_data[i] is an array of total_bins rectangles */
 static Pixel *current_colors = NULL;
 static int current_colors_size = 0;
@@ -310,7 +307,8 @@ void allocate_color_map(int colormap)
       cmap = DefaultColormap(dpy, scr);
 
       /* 8-bit color displays can't handle all these colors, apparently, so we have to check status */
-      if (current_colormap != BLACK_AND_WHITE_COLORMAP) XFreeColors(dpy, cmap, current_colors, current_colors_size, 0);
+      if (current_colormap != BLACK_AND_WHITE_COLORMAP) 
+	XFreeColors(dpy, cmap, current_colors, current_colors_size, 0);
 
       for (i = 0; i < current_colors_size; i++)
 	{
@@ -332,6 +330,46 @@ void allocate_color_map(int colormap)
       current_colormap = colormap;
     }
 }
+
+
+void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
+{
+  int i, x0, y0, x1, y1, cur, prev;
+  color_t old_color;
+
+  old_color = get_foreground_color(ax);
+
+  x0 = points[0].x;
+  y0 = points[0].y;
+
+  if (abs(y0 - axis_y0) < 5)
+    prev = -1;
+  else prev = colors[0];
+
+  XSetForeground(ax->dp, ax->gc, (prev == -1) ? default_color : current_colors[prev]);
+
+  for (i = 1; i < num; i++)
+    {
+      x1 = points[i].x;
+      y1 = points[i].y;
+      if ((abs(y0 - axis_y0) < 5) &&
+	  (abs(y1 - axis_y0) < 5))
+	cur = -1;
+      else cur = colors[i];
+
+      if (cur != prev)
+	{
+	  XSetForeground(ax->dp, ax->gc, (cur == -1) ? default_color : current_colors[cur]);
+	  prev = cur;
+	}
+      XDrawLine(ax->dp, ax->wn, ax->gc, x0, y0, x1, y1);
+      x0 = x1;
+      y0 = y1;
+    }
+
+  set_foreground_color(ax, old_color);
+}
+
 
 
 

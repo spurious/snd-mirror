@@ -28,6 +28,7 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len);
 void gtk_style_draw_string(axis_context *ax, int x0, int y0, const char *str, int len);
 void draw_dot(axis_context *ax, int x, int y, int size);
 void setup_axis_context(chan_info *cp, axis_context *ax);
+void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color);
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1);
 void allocate_color_map(int colormap);
 void check_colormap_sizes(int size);

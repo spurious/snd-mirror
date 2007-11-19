@@ -731,6 +731,73 @@ static void rainbow_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
+static Float **make_phases_colormap(int size, XEN ignored)
+{
+  /* 0 = blue, pi/2 = red, pi = blue, 3pi/2 = red, lighter from pi/2(0) to 3pi/2(1), greener from 0(0) to pi(1)
+   */
+  #define LEAST_AMOUNT .4
+  Float **rgb;
+  int i;
+  Float x, incr;
+  rgb = make_base_rgb(size);
+  incr = (2.0 * M_PI) / (Float)size;
+  for (i = 0, x = 0.0; i < size; i++, x += incr)
+    {
+      Float px, py, amount, green;
+
+      px = cos(x);
+      py = sin(x);
+
+      if (x <= 0.5 * M_PI)
+	{
+	  amount = 1.0;
+	  green = (1.0 - (fabs(x - 0.25 * M_PI) / (0.25 * M_PI)));
+	}
+      else
+	{
+	  if (x <= M_PI)
+	    {
+	      amount = LEAST_AMOUNT + ((M_PI - x) / (0.5 * M_PI));
+	      green = 0.0;
+	    }
+	  else
+	    {
+	      if (x <= 1.5 * M_PI)
+		{
+		  amount = LEAST_AMOUNT;
+		  green = (1.0 - ((fabs(x - 1.75 * M_PI) / (0.25 * M_PI))));
+		}
+	      else 
+		{
+		  amount = LEAST_AMOUNT + ((x - 1.5 * M_PI) / (0.5 * M_PI));
+		  green = 0.0;
+		}
+	    }
+	}
+	  
+      rgb[0][i] = fabs(py) * amount;
+      rgb[1][i] = green * amount;
+      rgb[2][i] = fabs(px) * amount;
+    }
+  return(rgb);
+}
+
+
+#if USE_CAIRO
+static void phases_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
+{
+  (*r) = n;
+  (*g) = n;
+  (*b) = n;
+}
+#else
+  #define phases_rgb NULL
+#endif
+
+
+
+
+
 static XEN g_colormap_ref(XEN map, XEN pos)
 {
   int index;
@@ -875,13 +942,10 @@ XEN_NARGIFY_2(g_add_colormap_w, g_add_colormap)
 #define g_add_colormap_w g_add_colormap
 #endif
 
-enum {BLACK_AND_WHITE_COLORMAP, GRAY_COLORMAP, HOT_COLORMAP, COOL_COLORMAP, BONE_COLORMAP, COPPER_COLORMAP, PINK_COLORMAP, JET_COLORMAP, PRISM_COLORMAP,
-      AUTUMN_COLORMAP, WINTER_COLORMAP, SPRING_COLORMAP, SUMMER_COLORMAP, RAINBOW_COLORMAP, FLAG_COLORMAP};
-
 
 void g_init_gxcolormaps(void)
 {
-  cmaps_size = 16;
+  cmaps_size = BUILTIN_COLORMAPS;
   cmaps = (cmap **)CALLOC(cmaps_size, sizeof(cmap *));
   /* these are just place-holders */
   cmaps[BLACK_AND_WHITE_COLORMAP] = make_builtin_cmap(1, _("black-and-white"), make_black_and_white_colormap, black_and_white_rgb); 
@@ -899,6 +963,7 @@ void g_init_gxcolormaps(void)
   cmaps[JET_COLORMAP] =     make_builtin_cmap(1, _("jet"),     make_jet_colormap,     jet_rgb); 
   cmaps[PINK_COLORMAP] =    make_builtin_cmap(1, _("pink"),    make_pink_colormap,    pink_rgb); 
   cmaps[RAINBOW_COLORMAP] = make_builtin_cmap(1, _("rainbow"), make_rainbow_colormap, rainbow_rgb); 
+  cmaps[PHASES_COLORMAP] =  make_builtin_cmap(1, _("phases"),  make_phases_colormap,  phases_rgb); 
 
   XEN_DEFINE_PROCEDURE(S_colormap_p, g_colormap_p_w,           1, 0, 0, H_colormap_p);
   XEN_DEFINE_PROCEDURE(S_colormap_ref, g_colormap_ref_w,       2, 0, 0, H_colormap_ref);

@@ -3825,3 +3825,4 @@ index 10 (so 10/2 is the bes-jn arg):
 (define pulsed-env? plsenv?)
 
 
+;;; Spec 91, WW 383 385

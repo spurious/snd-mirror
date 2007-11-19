@@ -795,7 +795,7 @@ typedef struct fft_state {
   off_t beg, databeg, datalen;
   off_t losamp;
   int edit_ctr;
-  bool dBing, lfreq;
+  bool dBing, lfreq, with_phases;
   int pad_zero;
   Float cutoff;
 } fft_state;
@@ -1238,6 +1238,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
 	  ((!(fft_window_beta_in_use(fs->wintype))) || (fs->beta == cp->fft_window_beta)) &&
 	  (fs->dBing == cp->fft_log_magnitude) &&
 	  (fs->lfreq == cp->fft_log_frequency) &&
+	  (fs->with_phases == cp->fft_with_phases) &&
 	  (fs->pad_zero == cp->zero_pad) &&
 	  (fs->cutoff == cp->spectro_cutoff) &&
 	  (fs->graph_type == cp->transform_graph_type) &&
@@ -1257,6 +1258,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
       fs->wintype = cp->fft_window;
       fs->dBing = cp->fft_log_magnitude;
       fs->lfreq = cp->fft_log_frequency;
+      fs->with_phases = cp->fft_with_phases;
       fs->window = NULL;
       fs->losamp = ap->losamp;
       fs->edit_ctr = cp->edit_ctr;

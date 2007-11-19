@@ -391,8 +391,6 @@ void setup_axis_context(chan_info *cp, axis_context *ax)
 
 /* colormaps */
 
-#define BLACK_AND_WHITE_COLORMAP 0
-/* defined as enum member in snd-gxcolormaps.c (needed also in color dialog below) */
 
 #if (!USE_CAIRO)
 

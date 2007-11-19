@@ -1320,6 +1320,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
   axis_info *ap;
   Float samples_per_pixel, xf, pinc = 0.0;
   double x, incr;  
+
   /* in long files with small windows we can run into floating point errors that accumulate
    * in the loop (incrementing by a truncated amount each time), making the x amounts smaller
    * than they should be (so the graph appears squeezed).
@@ -1341,19 +1342,28 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
    * be tiny, so we're pushing the arithmetic into dangerous realms.  This stuff has been tested
    * on some extreme cases (hour-long 44KHz stereo), but there's always another special case...
    */
+
   int pixels;
   snd_fd *sf = NULL;
   int x_start, x_end;
   axis_context *ax = NULL;
+
   sp = cp->sound;
   ap = cp->axis;
+
   /* check for no graph */
-  if ((!ap) || (!(ap->graph_active)) || (ap->x0 == ap->x1)) return(0);
+  if ((!ap) || 
+      (!(ap->graph_active)) || 
+      (ap->x0 == ap->x1)) 
+    return(0);
+
+  /* check for wavogram */
   if (cp->time_graph_type == GRAPH_AS_WAVOGRAM) 
     {
       make_wavogram(cp); 
       return(0);
     }
+
   if (normal)
     {
       ap->losamp = snd_round_off_t(ap->x0 * cur_srate); /* was ceil??? */
@@ -1366,6 +1376,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
   x_end = ap->x_axis_x1;
   samps = ap->hisamp - ap->losamp + 1;
   if ((x_start == x_end) && (samps > 10)) return(0); /* must be too-tiny graph */
+
   pixels = x_end - x_start;
   if (pixels >= POINT_BUFFER_SIZE) pixels = POINT_BUFFER_SIZE - 1;
   if ((x_start == x_end) || (samps <= 1))
@@ -1373,6 +1384,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
   else samples_per_pixel = (Float)((double)(samps - 1) / (double)pixels);
 
   if (cp->printing) ps_allocate_grf_points();
+
   if (normal)
     {
       if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
@@ -1380,6 +1392,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
       else ax = copy_context(cp);
       if (cp->printing) ps_fg(cp, ax);
     }
+
   if ((samples_per_pixel < 1.0) ||
       ((samples_per_pixel < 5.0) && 
        (samps < POINT_BUFFER_SIZE)) ||
@@ -1977,9 +1990,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
   if (peak_amps) FREE(peak_amps);
 }
 
-
-#define BLACK_AND_WHITE_COLORMAP 0
-/* defined as enum member in snd-gxcolormaps.c */
+point_t *get_grf_points(void);
 
 static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with_hook_t with_hook)
 {
@@ -1989,12 +2000,14 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
   snd_info *sp;
   Float *data;
   Float incr, x, scale;
-  int i, j, hisamp, losamp = 0;
+  int i, j = 0, hisamp, losamp = 0, lines_to_draw = 0;
   Float samples_per_pixel, xf, ina, ymax;
   int logx, logy;
   Float pslogx, pslogy;
   Float saved_data = 0.0;
   Float minlx = 0.0, curlx = 0.0, fap_range, log_range, lscale = 1.0;
+  Float *fft_phases = NULL;
+  bool free_phases = false;
 
   sp = cp->sound;
   fp = cp->fft;
@@ -2035,6 +2048,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
       maxlx = log(fap->x1);
       log_range = (maxlx - minlx);
       lscale = fap_range / log_range;
+
       /* I think this block is getting the max of all the DC to losamp freqs to represent the 0th point of the graph?? */
       max_data = data[0];
       if ((spectro_start(ss) == 0.0) && (losamp > 0))
@@ -2053,6 +2067,28 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 						*     so we have to check hisamp or make the buffer bigger 
 						*/
     {
+      /* save phases if needed */
+      if ((cp->fft_with_phases) &&
+	  (fp->phases) &&
+	  (cp->transform_type == FOURIER))
+	{
+	  if (losamp == 0)
+	    {
+	      fft_phases = fp->phases;
+	      free_phases = false;
+	    }
+	  else
+	    {
+	      int size;
+	      size = hisamp - losamp + 1;
+	      fft_phases = (Float *)MALLOC(size * sizeof(Float));
+	      memcpy((void *)fft_phases, (void *)(&(fp->phases[losamp])), size * sizeof(Float));
+	      free_phases = true;
+	    
+	    }
+	}
+
+      /* get fft graph points */
       if ((!(cp->fft_log_magnitude)) && 
 	  (!(cp->fft_log_frequency)))
 	{
@@ -2060,22 +2096,24 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 	    {
 	      for (i = 0, x = 0.0; i < hisamp; i++, x += incr)
 		{
-		  set_grf_point(local_grf_x(x, fap), 
-				i, 
-				local_grf_y(data[i] * scale, fap));
+		  Float scaled_data;
+		  scaled_data = data[i] * scale;
+		  set_grf_point(local_grf_x(x, fap), i, local_grf_y(scaled_data, fap));
 		  if (cp->printing) 
-		    ps_set_grf_point(x, i, data[i] * scale);
+		    ps_set_grf_point(x, i, scaled_data);
 		}
 	    }
 	  else
 	    {
 	      for (i = losamp, x = fap->x0; i < hisamp; i++, x += incr)
 		{
+		  Float scaled_data;
+		  scaled_data = data[i] * scale;
 		  set_grf_point(local_grf_x(x, fap), 
 				i - losamp, 
-				local_grf_y(data[i] * scale, fap));
+				local_grf_y(scaled_data, fap));
 		  if (cp->printing) 
-		    ps_set_grf_point(x, i - losamp, data[i] * scale);
+		    ps_set_grf_point(x, i - losamp, scaled_data);
 		}
 	    }
 	}
@@ -2084,32 +2122,46 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 	  /* either log freq or log magnitude or both */
 	  for (i = losamp, x = fap->x0; i < hisamp; i++, x += incr)
 	    {
+	      Float scaled_data;
+	      scaled_data = data[i] * scale;
+
 	      if (cp->fft_log_frequency) 
 		{
 		  if (x > 1.0) curlx = log(x); else curlx = 0.0;
 		  logx = local_grf_x(fap->x0 + lscale * (curlx - minlx), fap);
 		}
 	      else logx = local_grf_x(x, fap);
+
 	      if (cp->fft_log_magnitude) 
-		logy = local_grf_y(in_dB(cp->min_dB, cp->lin_dB, data[i] * scale), fap); 
-	      else logy = local_grf_y(data[i] * scale, fap);
+		logy = local_grf_y(in_dB(cp->min_dB, cp->lin_dB, scaled_data), fap); 
+	      else logy = local_grf_y(scaled_data, fap);
+
 	      set_grf_point(logx, i - losamp, logy);
 	      if (cp->printing) 
 		{
 		  if (cp->fft_log_frequency) 
 		    pslogx = fap->x0 + lscale * (curlx - minlx);
 		  else pslogx = x;
-		  if (cp->fft_log_magnitude) pslogy = in_dB(cp->min_dB, cp->lin_dB, data[i] * scale); else pslogy = data[i] * scale;
+		  if (cp->fft_log_magnitude) 
+		    pslogy = in_dB(cp->min_dB, cp->lin_dB, scaled_data); 
+		  else pslogy = scaled_data;
 		  ps_set_grf_point(pslogx, i - losamp, pslogy);
 		}
 	    }
 	}
-      draw_grf_points(cp->dot_size, ax, i - losamp, fap, 0.0, cp->transform_graph_style);
-      if (cp->printing) 
-	ps_draw_grf_points(fap, i - losamp, 0.0, cp->transform_graph_style, cp->dot_size);
+
+      lines_to_draw = i - losamp;
     }
   else
     {
+      if ((cp->fft_with_phases) &&
+	  (fp->phases) &&
+	  (cp->transform_type == FOURIER))
+	{
+	  fft_phases = (Float *)MALLOC(POINT_BUFFER_SIZE * sizeof(Float));
+	  free_phases = true;
+	}
+
       j = 0;      /* graph point counter */
       i = losamp;
       if (losamp == 0) 
@@ -2123,15 +2175,25 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 	  while (i < hisamp)
 	    {
 	      ina = data[i];
-	      if (ina > ymax) ymax = ina;
+	      if (ina > ymax) 
+		{
+		  ymax = ina;
+		  if (fft_phases) 
+		    fft_phases[j] = fp->phases[i];
+		}
 	      xf += 1.0;
 	      i++;
 	      if (xf > samples_per_pixel)
 		{
-		  set_grf_point(local_grf_x(x, fap), j, local_grf_y(ymax * scale, fap));
+		  Float scaled_data;
+		  scaled_data = ymax * scale;
+
+		  set_grf_point(local_grf_x(x, fap), j, local_grf_y(scaled_data, fap));
 		  x += (incr * samples_per_pixel); 
+
 		  if (cp->printing) 
-		    ps_set_grf_point(x, j, ymax * scale);
+		    ps_set_grf_point(x, j, scaled_data);
+
 		  j++;
 		  xf -= samples_per_pixel;
 		  ymax = MAX_INIT;
@@ -2143,31 +2205,44 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 	  while (i < hisamp)
 	    {
 	      ina = data[i];
-	      if (ina > ymax) ymax = ina;
+	      if (ina > ymax) 
+		{
+		  ymax = ina;
+		  if (fft_phases) 
+		    fft_phases[j] = fp->phases[i];
+		}
+
 	      xf += 1.0;
 	      i++;
 	      if (xf > samples_per_pixel)
 		{
+		  Float scaled_data;
+		  scaled_data = ymax * scale;
+
 		  if (cp->fft_log_frequency) 
 		    {
 		      if (x > 1.0) curlx = log(x); else curlx = 0.0;
 		      logx = local_grf_x(fap->x0 + lscale * (curlx - minlx), fap);
 		    }
 		  else logx = local_grf_x(x, fap);
+
 		  if (cp->fft_log_magnitude) 
-		    logy = local_grf_y(in_dB(cp->min_dB, cp->lin_dB, ymax * scale), fap); 
-		  else logy = local_grf_y(ymax * scale, fap);
+		    logy = local_grf_y(in_dB(cp->min_dB, cp->lin_dB, scaled_data), fap); 
+		  else logy = local_grf_y(scaled_data, fap);
+
 		  set_grf_point(logx, j, logy);
+
 		  if (cp->printing) 
 		    {
 		      if (cp->fft_log_frequency) 
 			pslogx = fap->x0 + lscale * (curlx - minlx);
 		      else pslogx = x;
 		      if (cp->fft_log_magnitude) 
-			pslogy = in_dB(cp->min_dB, cp->lin_dB, ymax * scale); 
-		      else pslogy = ymax * scale;
+			pslogy = in_dB(cp->min_dB, cp->lin_dB, scaled_data); 
+		      else pslogy = scaled_data;
 		      ps_set_grf_point(pslogx, j, pslogy);
 		    }
+
 		  x += (incr * samples_per_pixel);
 		  j++;
 		  xf -= samples_per_pixel;
@@ -2175,10 +2250,42 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 		}
 	    }
 	}
-      draw_grf_points(cp->dot_size, ax, j, fap, 0.0, cp->transform_graph_style);
-      if (cp->printing) 
-	ps_draw_grf_points(fap, j, 0.0, cp->transform_graph_style, cp->dot_size);
+      lines_to_draw = j;
     }
+    
+  if ((cp->fft_with_phases) &&
+      (fft_phases) &&
+      (cp->transform_type == FOURIER))
+    {
+      int k;
+      int *colors;
+      color_t default_color;
+      
+      if (cp == selected_channel())
+	default_color = ss->sgx->selected_graph_color;
+      else default_color = ss->sgx->graph_color;
+      
+      /* if value is close to 0, use [selected-]data-color, else use fft_phases[i] */
+      allocate_color_map(PHASES_COLORMAP);
+      colors = (int *)MALLOC(lines_to_draw * sizeof(int));
+      
+      for (k = 0; k < lines_to_draw; k++)
+	{
+	  if (fft_phases[k] < 0.0) fft_phases[k] += 2.0 * M_PI;                    /* we want 0..2pi, not -pi..pi */
+	  colors[k] = (int)((fft_phases[k] * color_map_size(ss)) / (2.0 * M_PI));
+	}
+      
+      draw_colored_lines(ax, get_grf_points(), lines_to_draw, colors, fap->y_axis_y0, default_color);
+      
+      FREE(colors);
+      if (free_phases)
+	FREE(fft_phases);
+    }
+  else draw_grf_points(cp->dot_size, ax, lines_to_draw, fap, 0.0, cp->transform_graph_style);
+  
+  if (cp->printing) 
+    ps_draw_grf_points(fap, lines_to_draw, 0.0, cp->transform_graph_style, cp->dot_size);
+
   if (cp->fft_log_frequency)
     data[losamp] = saved_data;
 
@@ -2795,6 +2902,7 @@ static bool make_spectrogram(chan_info *cp)
   old_with_gl = with_gl(ss);
   if (old_with_gl) set_with_gl(false); /* needed to fixup spectro angles/scales etc */
   if (cp->printing) ps_allocate_grf_points();
+
   scl = si->scale;                     /* unnormalized fft doesn't make much sense here (just washes out the graph) */
   fap = cp->fft->axis;
   bins = (int)(si->target_bins * cp->spectro_cutoff);
@@ -4175,14 +4283,28 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
 	}
       else ind = (int)xf;
       if (ind >= fp->current_size) ind = fp->current_size - 1;
-      return(mus_format(_("(%.1f%s, transform val: %.*f%s (raw: %.*f)"),
-			xf,
-			((cp->transform_type == AUTOCORRELATION) ? _(" samps") : _(" Hz")),
-			digits,
-			(cp->fft_log_magnitude) ? in_dB(cp->min_dB, cp->lin_dB, (fp->data[ind] * fp->scale)) : (fp->data[ind] * fp->scale),
-			(cp->fft_log_magnitude) ? _("dB") : "",
-			digits,
-			fp->data[ind]));
+
+      if ((cp->fft_with_phases) && 
+	  (fp->phases) &&
+	  (cp->transform_type == FOURIER))
+	return(mus_format(_("(%.1f Hz: %.*f%s, %.*f radians (unscaled: %.*f)"),
+			  xf,
+			  digits,
+			  (cp->fft_log_magnitude) ? in_dB(cp->min_dB, cp->lin_dB, (fp->data[ind] * fp->scale)) : (fp->data[ind] * fp->scale),
+			  (cp->fft_log_magnitude) ? _("dB") : "",
+			  digits,
+			  fp->phases[ind],
+			  digits,
+			  fp->data[ind]));
+      else
+	return(mus_format(_("(%.1f%s: %.*f%s (unscaled: %.*f)"),
+			  xf,
+			  ((cp->transform_type == AUTOCORRELATION) ? _(" samps") : _(" Hz")),
+			  digits,
+			  (cp->fft_log_magnitude) ? in_dB(cp->min_dB, cp->lin_dB, (fp->data[ind] * fp->scale)) : (fp->data[ind] * fp->scale),
+			  (cp->fft_log_magnitude) ? _("dB") : "",
+			  digits,
+			  fp->data[ind]));
     }
   else 
     {
