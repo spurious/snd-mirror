@@ -331,10 +331,22 @@ void allocate_color_map(int colormap)
     }
 }
 
+#if 0
+  /* TODO: fft graph style if phases colormap */
+  switch (cp->transform_graph_style)
+    case GRAPH_LINES:
+      draw_lines
+    case GRAPH_DOTS:
+      draw_points(ax, points, j, dot_size);
+    case GRAPH_FILLED:
+      fill_two_sided_polygons(ax, points, points1, j);
+    case GRAPH_DOTS_AND_LINES:
+    case GRAPH_LOLLIPOPS:
+#endif
 
 void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
 {
-  int i, x0, y0, x1, y1, cur, prev;
+  int i, x0, y0, x1, y1, y2 = 0, y00 = -1, cur, prev;
   color_t old_color;
 
   old_color = get_foreground_color(ax);
@@ -352,17 +364,31 @@ void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors,
     {
       x1 = points[i].x;
       y1 = points[i].y;
+      if (i < num - 1)
+	y2 = points[i + 1].y;
+      else y2 = y1;
+
       if ((abs(y0 - axis_y0) < 5) &&
 	  (abs(y1 - axis_y0) < 5))
 	cur = -1;
       else 
 	{
-	  /* TODO: around a peak use only that peak, not the (negative) dips */
-	  /* TODO: fixup the colormap -- seems to be too much green right now */
-	  /* TODO: other graph styles? */
-	  if (y0 > y1)
-	    cur = colors[i];
-	  else cur = colors[i - 1]; /* coords are upside down */
+	  if ((y00 > y0) &&
+	      (y00 > y1) &&
+	      (i > 1))
+	    cur = colors[i - 2];
+	  else
+	    {
+	      if ((y2 > y1) &&
+		  (y2 > y0))
+		cur = colors[i + 1];
+	      else
+		{
+		  if (y0 > y1)
+		    cur = colors[i];
+		  else cur = colors[i - 1]; /* coords are upside down */
+		}
+	    }
 	}
 
       if (cur != prev)
@@ -371,6 +397,7 @@ void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors,
 	  prev = cur;
 	}
       XDrawLine(ax->dp, ax->wn, ax->gc, x0, y0, x1, y1);
+      y00 = y0;
       x0 = x1;
       y0 = y1;
     }
@@ -380,10 +407,10 @@ void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors,
 
 #if 0
 (with-sound ()
- (let ((gen1 (make-oscil 1000 0.0))
-       (gen2 (make-oscil 2000 (* 0.5 pi)))
-       (gen3 (make-oscil 3000 (* 1.0 pi)))
-       (gen4 (make-oscil 4000 (* 1.5 pi))))
+ (let ((gen1 (make-oscil 100 0.0))
+       (gen2 (make-oscil 200 (* 0.5 pi)))
+       (gen3 (make-oscil 300 (* 1.0 pi)))
+       (gen4 (make-oscil 400 (* 1.5 pi))))
   (do ((i 0 (1+ i))) ((= i 44100))
     (outa i (* .1 (+ (oscil gen1) (oscil gen2) (oscil gen3) (oscil gen4))) *output*))))
 #endif

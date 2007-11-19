@@ -52,7 +52,7 @@ passed to the cosine, hence the generic name "angle modulation".  We can add tha
 the argument to cos
 ("phase modulation", <code>cos(angle + change)</code>), or add it to the current phase, then take cos of that 
 ("frequency modulation", <code>cos(angle += change)</code>), so
-our fomula can viewed either way.  Since the angle is being incremented by the carrier frequency in
+our formula can viewed either way.  Since the angle is being incremented by the carrier frequency in
 either case, the difference is between:
 </p>
 <pre>
@@ -1614,16 +1614,16 @@ can expand our cascade formula (in the sin(x + cos(sin)) case) into:
 </p>
 
 <!-- LATEX old version: \sin(\omega_{c}t + \sum J_{n}(B)\cos(\omega_{c}t + n\omega_{m_{n}}t)) -->
-<!-- LATEX fmeq36.png: \sin(\omega_{c}t + \int_{0}^{t} \! \sum J_{n}(B)\cos(\omega_{c}t + n\omega_{m_{n}}t) \, \mathrm{d} t) -->
+<!-- LATEX fmeq36.png: \sin \big(\omega_{c}t + \int_{0}^{t} \! \sum J_{n}(B)\cos(\omega_{m1} + n\omega_{m2})t \, \mathrm{d} t\big) -->
 
 <img src="fmeq36.png" alt="more sins" hspace=20>
 
 
 <!-- LATEX old version (fmeq46.png): \omega_{c} = -n\omega_{m}\textrm{, we get }J_{n}(B)\cos(0) = J_{n}(B) -->
-<!-- LATEX fmeq46.png: \omega_{c} = -n\omega_{m} -->
+<!-- LATEX fmeq46.png: \omega_{m1} = -n\omega_{m2} -->
 <!-- LATEX fmeq51.png: J_{n}(B)\cos(0) = J_{n}(B) -->
 
-<p>but now whenever 
+<p>but now whenever the 
 <img src="fmeq46.png" alt="wc" align=absmiddle>, we get
 <img src="fmeq51.png" alt="j0 case" align=absmiddle>,
 and the carrier is offset by <code>(radians-&gt;hz (bes-jn B))</code>, that is, (Jn(B) * srate / (2 * pi)).

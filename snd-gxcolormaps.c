@@ -777,12 +777,41 @@ static Float **make_phases_colormap(int size, XEN ignored)
 
 
 #if USE_CAIRO
-static void phases_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
+void phases_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b);
+void phases_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 {
-  /* TODO: cairo phases colormap */
-  (*r) = n;
-  (*g) = n;
-  (*b) = n;
+  x *= (2.0 * M_PI); /* match code above */
+
+  if (x <= 0.5 * M_PI)
+    {
+      (*r) = x / (0.5 * M_PI);
+      (*g) = 0.0;
+      (*b) = 1.0 - (*r);
+    }
+  else
+    {
+      if (x <= M_PI)
+	{
+	  (*r) = 1.0 - ((x - 0.5 * M_PI) / (0.5 * M_PI));
+	  (*g) = 1.0 - (*r);
+	  (*b) = 0.0;
+	}
+      else
+	{
+	  if (x <= 1.5 * M_PI)
+	    {
+	      (*r) = 0.0;
+	      (*g) = 1.0 - ((x - M_PI) / (0.5 * M_PI));
+	      (*b) = 0.0;
+	    }
+	  else 
+	    {
+	      (*r) = 0.0;
+	      (*g) = 1.0 - ((x - (1.5 * M_PI)) / (0.5 * M_PI));
+	      (*b) = 0.0;
+	    }
+	}
+    }
 }
 #else
   #define phases_rgb NULL

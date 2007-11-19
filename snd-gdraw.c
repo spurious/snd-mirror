@@ -517,9 +517,50 @@ void allocate_color_map(int colormap)
     }
 }
 
+
 void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
 {
-  /* TODO: gtk version of fft phases */
+  int i, x0, y0, x1, y1, cur, prev;
+  color_t old_color;
+
+  old_color = get_foreground_color(ax);
+
+  x0 = points[0].x;
+  y0 = points[0].y;
+
+  if (abs(y0 - axis_y0) < 5)
+    prev = -1;
+  else prev = colors[0];
+
+  gdk_gc_set_foreground(ax->gc, (prev == -1) ? default_color : current_colors[prev]);
+
+  for (i = 1; i < num; i++)
+    {
+      x1 = points[i].x;
+      y1 = points[i].y;
+      if ((abs(y0 - axis_y0) < 5) &&
+	  (abs(y1 - axis_y0) < 5))
+	cur = -1;
+      else 
+	{
+	  if (y0 > y1)
+	    cur = colors[i];
+	  else cur = colors[i - 1]; /* coords are upside down */
+	}
+
+      if (cur != prev)
+	{
+	  gdk_gc_set_foreground(ax->gc, (cur == -1) ? default_color : current_colors[cur]);
+	  prev = cur;
+	}
+
+      gdk_draw_line(ax->wn, ax->gc, (gint)x0, (gint)y0, (gint)x1, (gint)y1);
+
+      x0 = x1;
+      y0 = y1;
+    }
+
+  set_foreground_color(ax, old_color);
 }
 
 #else
@@ -613,9 +654,73 @@ void allocate_color_map(int colormap)
 {
 }
 
+
+void phases_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b);
+
 void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
 {
-  /* TODO: cairo version of fft phases */
+  int i, x0, y0, x1, y1, cur, prev;
+  color_t old_color, cur_color;
+  rgb_t r, g, b;
+
+  old_color = get_foreground_color(ax);
+  cairo_save(ax->cr);
+
+  x0 = points[0].x;
+  y0 = points[0].y;
+
+  if (abs(y0 - axis_y0) < 5)
+    prev = -1;
+  else prev = colors[0];
+
+  if (prev == -1) 
+    {
+      r = default_color->red; 
+      g = default_color->green; 
+      b = default_color->blue; 
+    }
+  else phases_rgb((Float)(colors[prev]) / (Float)color_map_size(ss), &r, &g, &b);
+  cairo_set_source_rgb(ax->cr, r, g, b);
+
+  for (i = 1; i < num; i++)
+    {
+      x1 = points[i].x;
+      y1 = points[i].y;
+      if ((abs(y0 - axis_y0) < 5) &&
+	  (abs(y1 - axis_y0) < 5))
+	cur = -1;
+      else 
+	{
+	  if (y0 > y1)
+	    cur = colors[i];
+	  else cur = colors[i - 1]; /* coords are upside down */
+	}
+
+      if (cur != prev)
+	{
+	  if (cur == -1) 
+	    {
+	      r = default_color->red; 
+	      g = default_color->green; 
+	      b = default_color->blue; 
+	    }
+	  else phases_rgb((Float)(colors[cur]) / (Float)color_map_size(ss), &r, &g, &b);
+	  cairo_set_source_rgb(ax->cr, r, g, b);
+	  prev = cur;
+	}
+
+      cairo_set_line_width(ax->cr, 1.0); 
+      cairo_move_to(ax->cr, x0 + 0.5, y0 + 0.5);
+      cairo_line_to(ax->cr, x1 + 0.5, y1 + 0.5);
+      cairo_stroke(ax->cr);
+
+      x0 = x1;
+      y0 = y1;
+    }
+
+  cairo_set_source_rgb(ax->cr, old_color->red, old_color->green, old_color->blue);
+
+  cairo_restore(ax->cr);
 }
 
 #endif
