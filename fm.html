@@ -1857,7 +1857,7 @@ index (B) is high enough, the change between successive samples in (B * sin(y)) 
 When that happens on the downslope of the sine curve, B * sin(y) + phase-increment (our overall phase increment) is so much more negative
 on the current sample than the previous one that the phase actually backs up.  (This is confusing to analyze because at this point in
 the curve, the feedback is already holding the phase back, so we need to reach a point where the increase in the backup overwhelms the
-increment on that sample, thereby backing up the overall phase beyond its previous held back value &mdash; gad!).
+increment on that sample, thereby backing up the overall phase beyond its previous held back value).
 So the modulator phase backs into the
 less negative part of the sine curve: our next y value is less negative (it can even be positive)!  
 But now B * sin(y) is also less negative, so
@@ -2492,6 +2492,15 @@ case in Klapper p103 (except there x=1/4)
 -------------------------
 
           bessel fm cases
+
+Bessel FM is inspired by the observation that the Bessel functions are, in a sense,
+extensions of the sinusoids.  The hypergeometric forms of the functions make
+the kinship clear: 
+  sin x =                    x F(-;3/2;-x^2/4)
+  Jn(x) = (x/2)^n / Gamma(n+1) F(-;n+1;-x^2/4)
+
+J0(sin) but can we show that Jn(Jn) -> Jn(sin + factors)?
+what about sin(Jn)?
 
           more on noise -- find an understandable derivation!
             can we treat the "ears" as a limiting process? -- sort of...

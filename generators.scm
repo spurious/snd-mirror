@@ -3254,6 +3254,38 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (outa i (jcos gen 0.0) *output*))))))
 |#
 
+
+
+;;; --------------------------------------------------------------------------------
+
+(def-clm-struct (sin2n
+		 :make-wrapper (lambda (g)
+				 (set! (sin2n-incr g) (hz->radians (sin2n-frequency g)))
+				 g))
+  (frequency 0.0) (n 1 :type int) (r 1.0)
+  (angle 0.0) (incr 0.0))
+
+(define (sin2n gen fm)
+  (declare (gen sin2n) (fm float))
+  (let* ((x (sin2n-angle gen))
+	 (n (sin2n-n gen))
+	 (r (sin2n-r gen))
+	 )
+    ;; TODO: normalize and remove DC
+    (set! (sin2n-angle gen) (+ x fm (sin2n-incr gen)))
+    (expt (* r (sin x)) (* 2 n))))
+
+#|
+(with-sound (:clipped #f :statistics #t :play #t)
+  (let ((gen (make-sin2n 100.0 2 1.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000))
+	 (outa i (sin2n gen 0.0) *output*))))))
+|#
+
+
 ;;; --------------------------------------------------------------------------------
 
 

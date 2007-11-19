@@ -1956,8 +1956,8 @@ sceq14:
 &\sum_{k=1}^{n}(-1)^{k+1}\sin(2k-1)x = (-1)^{n+1}\frac{\sin 2nx}{2\cos x} \\
 &\sum_{k=1}^{n-1}k\sin kx=\frac{\sin nx}{4 \sin^{2}\frac{x}{2}} - \frac{n \cos \frac{2n-1}{2}x}{2\sin\frac{x}{2}} \\
 &\sum_{k=1}^{n-1}k\cos kx=\frac{n\sin\frac{2n-1}{2}x}{2\sin\frac{x}{2}} - \frac{1-\cos nx}{4\sin^{2}\frac{x}{2}} \\
-&\sum_{k=1}^{\infty} \frac{\sin^{2k} x}{k} = -2 \ln \cos x & (x^{2} < \frac{pi^{2}}{4}) \\
 &J_{0}^{2}\Big(\frac{z}{2}\Big)+2\sum_{k=1}^{\infty} J_{k}^{2}\Big(\frac{z}{2}\Big)\cos2k\theta = J_{0}(z \sin \theta) \\
+&\sum_{k=0}^{\infty} \frac{(2n+2k)(2n+k-1)!}{k!}J_{2n+2k}(2z \sin \theta) = (z \sin \theta)^{2n} \\
 
 sceq15:
 &\sum_{k=1}^{n-1}p^{k}\sin kx=\frac{p\sin x - p^{n}\sin nx + p^{n+1}\sin(n-1)x}{1-2p\cos x+p^{2}} \\
@@ -2055,9 +2055,6 @@ sceq40: 27.8.6 (p1005)
 &\sum_{n=1}^{\infty} \frac{\sin n\theta}{n^{3}} = \frac{\pi^{2}\theta}{6} - \frac{\pi \theta^{2}}{4} + \frac{\theta^{3}}{12} & (0 \leq \theta \leq 2\pi)
 
 
-TODO: from Klapper, Selected Papers on Frequency Modulation, p 156
-&\sum_{n=-\infty}^{\infty} (-1)^{n} J_{2n}(x) J_{2n}(y(\omega + B \cos z)) = J_{0}( \sqrt{x^{2} + y^{2} (\omega + B\cos z)^{2}})
-
 from Askey "Ramanujan and Hypergeometric Series" in Berndt and Rankin "Ramanujan: Essays and Surveys" p283 (the formula was found by Gauss):
    this is r2k!cos in generators.scm [sceq30.png]
 &(1 - 2r \cos \theta + r^{2})^{-k} = \frac{{}_{2}F_{1}(k, k; 1; r^{2})}{2} + \sum_{n=1}^{\infty} \frac{(k)_{n}}{n!} r^{n} {}_{2}F_{1}(k, k+n; n+1; r^{2}) \cos n\theta
@@ -2069,6 +2066,9 @@ Montgomery and Vorhauer:
 ;;; Bessel funcs as confluent hypergeometric series
 &J_{n}(x) = \frac{(\frac{x}{2})^{n}}{\Gamma(n+1)} e^{-ix} \Phi(n+\frac{1}{2}, 2n+1; 2ix) \\
 &I_{n}(x) = \frac{(\frac{x}{2})^{n}}{\Gamma(n+1)} e^{-x} \Phi(n+\frac{1}{2}, 2n+1; 2x) \\
+
+TODO: from Klapper, Selected Papers on Frequency Modulation, p 156
+&\sum_{n=-\infty}^{\infty} (-1)^{n} J_{2n}(x) J_{2n}(y(\omega + B \cos z)) = J_{0}( \sqrt{x^{2} + y^{2} (\omega + B\cos z)^{2}})
 
 another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 -->
@@ -2093,6 +2093,7 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
   <area shape=rect coords="0,361,300,410" href="sndclm.html#nkssb" alt="nkssb">
   <area shape=rect coords="0,411,300,450" href="sndclm.html#nkssb" alt="nkssb">
   <area shape=rect coords="0,451,300,500" href="sndclm.html#j0evencos" alt="j0evencos">
+  <area shape=rect coords="0,501,300,527" href="sndclm.html#sin2n" alt="sin2n">
 </map>
 </td>
 <td width=40></td>
@@ -2114,15 +2115,9 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 </td>
 </tr>
 
-<tr><td colspan=3 bgcolor="#eefdee"><center>from Gradshteyn and Ryzhik, "Table of Integrals, Series, and Products", 1.341.., 1.352.., 1.447.., 1.461, 1.518, 8.531</center></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>Gradshteyn and Ryzhik, "Table of Integrals, Series, and Products", 1.341.., 1.352.., 1.447.., 1.461, 1.518, 8.516, 8.531</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
-
-<!-- too complicated!
-<tr><td colspan=3><img src="sceq7.png" alt="kosines" align=absmiddle hspace=10></td></tr>
-<tr><td colspan=3 bgcolor="#eefdee"><center>from Askey, "Ramanujan and Hypergeometric Series"</center></td></tr>
-<tr><td colspan=3 height=25></td></tr>
--->
 
 <tr><td><img src="sceq20.png" alt="more sums" usemap="#J1" border=0>
 <map name="J1">
@@ -2142,25 +2137,25 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
     <area shape=rect coords="0,141,300,180">
 </map>
 </td></tr>
-<tr><td colspan=3 bgcolor="#eefdee"><center>from Jolley, "Summation of Series", 521 587 620 635 638 685 686 691 692 728</center></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>Jolley, "Summation of Series", 521 587 620 635 638 685 686 691 692 728</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
 <tr><td><a class=invisible href="#izcos"><img src="sceq39.png" alt="I(k) sum"></a></td><td></td>
 <td><a class=invisible href="#k3sin"><img src="sceq40.png" alt="n3 case"></a></td></tr>
-<tr><td colspan=3 bgcolor="#eefdee"><center>from Abramowitz and Stegun, "Handbook of Mathematical Functions", 9.6.34, 27.8.6</center></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>Abramowitz and Stegun, "Handbook of Mathematical Functions", 9.6.34, 27.8.6</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
 <tr><td><a class=invisible href="#krksin"><img src="sceq25.png" alt="more sums"></a></td><td></td>
 <td><a class=invisible href="#abssin"><img src="sceq26.png" alt="more sums"></a></td></tr>
-<tr><td colspan=3 bgcolor="#eefdee"><center>from Zygmund, "Trigonometric Series" p34, 352</center></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>Zygmund, "Trigonometric Series" p34, 352</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
 <tr><td><img src="sceq7.png" alt="more sums"></td><td></td>
 <td><a class=invisible href="#abcos"><img src="sceq27.png" alt="more sums"></a></td></tr>
-<tr><td colspan=3 bgcolor="#eefdee"><center>from Sansone, "Orthogonal Functions"</center></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>Sansone, "Orthogonal Functions"</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
@@ -2168,7 +2163,7 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 <td><a class=invisible href="#jjcos"><img src="sceq31.png" alt="more sums"></a></td></tr>
 <tr><td><a class=invisible href="#j2cos"><img src="sceq34.png" alt="more sums"></a></td><td></td>
 <td><a class=invisible href="#jpcos"><img src="sceq33.png" alt="more sums"></a></td></tr>
-<tr><td colspan=3 bgcolor="#eefdee"><center>from Watson, "A Treatise on the Theory of Bessel Functions": 4.82, 11.41, 17.31</center></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>Watson, "A Treatise on the Theory of Bessel Functions": 4.82, 11.41, 17.31</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
@@ -2184,7 +2179,12 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
     <area shape=rect coords="0,51,300,100" href="sndclm.html#jjesin" alt="jjesin">
 </map>
 </td></tr>
-<tr><td colspan=3 bgcolor="#eefdee"><center>from Gray and Mathews, "A Treatise on Bessel Functions and Their Applications to Physics" p 28, 29, 92, 240</center></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>Gray and Mathews, "A Treatise on Bessel Functions and Their Applications to Physics" p 28, 29, 92, 240</center></td></tr>
+<tr><td colspan=3 height=25></td></tr>
+
+
+<tr><td colspan=3><a class=invisible href="#r2k!cos"><img src="sceq30.png" alt="kosines"></a></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>Askey, "Ramanujan and Hypergeometric Series"</center></td></tr>
 
 
 </table>
@@ -2198,12 +2198,12 @@ sceq38:
 
 <p>
 As far as I know, most of these formulas have never been explored.
-A couple are special cases of the "Bessel function summation theorem", G&amp;R 8.530:
+There are many more like the first G&amp;R formulas, but
+my real interest is in more flexible cases that might show interesting spectral evolutions.
+A couple of the formulas are special cases of the "Bessel function summation theorem", G&amp;R 8.530:
 <img src="sceq38.png" alt="summation formula" align=absmiddle>,
 where Z stands for any of the various Bessel functions (J, Y, etc),
 and R stands for the Poisson-like business (or is it Legendre?) in the square root.
-Also useful are formulas like sin(x)cos(nx) = 1/2(sin(n-1)x + sin(n+1)x)
-and sin(x)sin(nx) = 1/2(cos(n-1)x - cos(n+1)x). 
 Don't shy away from the sums to infinity just because you've heard shouting about "band-limited waveforms" &mdash; FM is an infinite sum:
 </p>
 
@@ -4898,6 +4898,16 @@ This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosin
 </pre>
 
 <p>This produces a sum of cosines scaled by In(r).
+</p>
+
+
+<pre>
+  <A class=def NAME="make-sin2n">make-sin2n</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (n 1) (r 1.0)
+  <A class=def NAME="sin2n">sin2n</A> gen fm
+  <A class=def NAME="sin2n?">sin2n?</A> gen
+</pre>
+
+<p>This is hard to explain, from any point of view...  The output looks similar to the various kernel sum-of-cosines.
 </p>
 
 
