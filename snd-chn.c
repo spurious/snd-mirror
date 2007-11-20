@@ -2,7 +2,6 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
  *   but there's no way to trap the outer resizing event and
  *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
@@ -12,20 +11,25 @@ chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
 {
   snd_info *sp;
   int chn_n;
+
   sp = get_sp(x_snd_n, NO_PLAYERS);
+
   if ((sp == NULL) || (!(sp->active)) || (sp->inuse == SOUND_IDLE))
     {
       snd_no_such_sound_error(caller, x_snd_n); 
       return(NULL); /* gad -- just in case our catch has been clobbered */
     }
+
   if (XEN_INTEGER_P(x_chn_n))
     chn_n = XEN_TO_C_INT(x_chn_n);
   else
     if (sp->selected_channel != NO_SELECTION) 
       chn_n = sp->selected_channel;
     else chn_n = 0;
+
   if ((chn_n >= 0) && (chn_n < sp->nchans) && (sp->chans[chn_n]))
     return(sp->chans[chn_n]);
+
   snd_no_such_channel_error(caller, x_snd_n, x_chn_n);
   return(NULL);
 }
@@ -1033,12 +1037,15 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
 					      C_TO_XEN_DOUBLE(ap->x_ambit),
 					      S_zoom_focus_style " procedure"));
 	  break;
+
 	case ZOOM_FOCUS_RIGHT:   
 	  ap->x0 = ap->x1 - ap->zx * ap->x_ambit; 
 	  break;
+
 	case ZOOM_FOCUS_MIDDLE:  
 	  ap->x0 = 0.5 * ((ap->x1 + ap->x0) - ap->zx * ap->x_ambit); 
 	  break;
+
 	case ZOOM_FOCUS_ACTIVE:
 	  ncp = virtual_selected_channel(cp);
 	  /* axes should be the same, since all move together in this mode */
@@ -1686,6 +1693,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
   int x_start, x_end;
   Float *data = NULL, *data1 = NULL;
   int data_size = 0;
+
   ap = cp->axis;
   if (losamp == -1) losamp = ap->losamp;
   if (hisamp == -1) hisamp = ap->hisamp;
@@ -1698,6 +1706,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
   if ((x_start == x_end) || (samps <= 1))
     samples_per_pixel = 0.01;
   else samples_per_pixel = (Float)((double)(samps - 1) / (double)pixels);
+
   if ((samples_per_pixel < 1.0) ||
       ((samples_per_pixel < 5.0) && 
        (samps < POINT_BUFFER_SIZE)))
@@ -1803,6 +1812,7 @@ void draw_graph_data(chan_info *cp, off_t losamp, off_t hisamp, int data_size, F
   axis_info *ap;
   snd_info *sp;
   double x, incr;  
+
   ap = cp->axis;
   sp = cp->sound;
   if (data1 == NULL)
@@ -1880,6 +1890,8 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
   if (row_height < 10) row_height = 10;
 
   num_peaks = (fap->y_axis_y0 - fap->y_axis_y1) / (row_height + 5);
+  if (cp->sound->channel_style == CHANNELS_SUPERIMPOSED)
+    num_peaks /= cp->sound->nchans;
   if (num_peaks <= 0) return;
 
   peak_freqs = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
@@ -1915,7 +1927,10 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	}
     }
 
-  ax = copy_context(cp);
+  if (cp->sound->channel_style == CHANNELS_SUPERIMPOSED)
+    ax = combined_context(cp);
+  else ax = copy_context(cp);
+
   if (num_peaks > 6)
     {
       for (i = 0; i < num_peaks; i++) peak_amps[i] = peak_freqs[i];
@@ -1923,11 +1938,15 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
       if (num_peaks < 12) amp0 = peak_amps[2].amp; else amp0 = peak_amps[5].amp;
       set_bold_peak_numbers_font(cp);
       if (cp->printing) ps_set_bold_peak_numbers_font();
+
 #if (!USE_GTK)
       row = fap->y_axis_y1 + row_height;
 #else
       row = fap->y_axis_y1;
 #endif
+      if (cp->sound->channel_style == CHANNELS_SUPERIMPOSED)
+	row += row_height * num_peaks * cp->chan;
+
       for (i = 0; i < num_peaks; i++)
 	{
 	  if (peak_freqs[i].amp >= amp0)
@@ -1954,6 +1973,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	}
     }
   else amp0 = 100.0;
+
   set_peak_numbers_font(cp);
   if (cp->printing) ps_set_peak_numbers_font();
   /* choose a small font for these numbers */
@@ -1962,6 +1982,9 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 #else
   row = fap->y_axis_y1;
 #endif
+  if (cp->sound->channel_style == CHANNELS_SUPERIMPOSED)
+    row += row_height * num_peaks * cp->chan;
+
   for (i = 0; i < num_peaks; i++)
     {
       if (peak_freqs[i].amp < amp0)
@@ -1986,6 +2009,9 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	}
       row += row_height;
     }
+
+  /* superimposed context reset takes place in make_fft_graph */
+
   if (peak_freqs) FREE(peak_freqs); 
   if (peak_amps) FREE(peak_amps);
 }
@@ -2288,11 +2314,6 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
   if (cp->fft_log_frequency)
     data[losamp] = saved_data;
 
-  if (sp->channel_style == CHANNELS_SUPERIMPOSED)
-    {
-      copy_context(cp); /* reset for axes etc */
-      if (cp->printing) ps_reset_color();
-    }
   if (cp->show_transform_peaks) 
     {
       if (cp->transform_type == FOURIER)
@@ -2303,7 +2324,16 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 			 (int)(fp->current_size * cp->spectro_cutoff), 
 			 hisamp, samples_per_pixel, true, 0.0);
     }
-  if (cp->selection_transform_size != 0) display_selection_transform_size(cp, fap);
+
+  if (cp->selection_transform_size != 0) 
+    display_selection_transform_size(cp, fap);
+
+  if (sp->channel_style == CHANNELS_SUPERIMPOSED)
+    {
+      copy_context(cp); /* reset for axes etc */
+      if (cp->printing) ps_reset_color();
+    }
+
   if (with_hook == WITH_HOOK) after_transform(cp, scale);
 }
 
@@ -3620,6 +3650,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	  ap->losamp = (off_t)(ap->x0 * (double)SND_SRATE(sp));
 	  ap->hisamp = (off_t)(ap->x1 * (double)SND_SRATE(sp));
 	}
+
       switch (cp->transform_graph_type)
 	{
 	case GRAPH_ONCE:
@@ -3628,11 +3659,14 @@ static void display_channel_data_with_size(chan_info *cp,
 			 (sp->channel_style == CHANNELS_SUPERIMPOSED) ? combined_context(cp) : copy_context(cp),
 			 cp->hookable);
 	  break;
+
 	case GRAPH_AS_SONOGRAM:
 	  make_sonogram(cp);
 	  break;
+
 	case GRAPH_AS_WAVOGRAM:
 	  break;
+
 	case GRAPH_AS_SPECTROGRAM:
 #if HAVE_GL
 	  if (make_spectrogram(cp))
@@ -3961,12 +3995,15 @@ void handle_cursor(chan_info *cp, kbd_cursor_t redisplay)
 	    case CURSOR_ON_LEFT: 
 	      gx = (double)(CURSOR(cp)) / (double)SND_SRATE(sp); 
 	      break;
+
 	    case CURSOR_ON_RIGHT: 
 	      gx = (double)(CURSOR(cp)) / (double)SND_SRATE(sp) - ap->zx * ap->x_ambit; 
 	      break;
+
 	    case CURSOR_IN_MIDDLE: 
 	      gx = (double)(CURSOR(cp)) / (double)SND_SRATE(sp) - ap->zx * 0.5 * ap->x_ambit; 
 	      break;
+
 	    default:
 	      break;
 	    }
@@ -4721,6 +4758,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		    }
 		}
 	      break;
+
 	    case CLICK_FFT_MAIN:
 	      {
 		char *str;
@@ -4729,6 +4767,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		if (str) FREE(str);
 	      }
 	      break;
+
 	    default:
 	      break;
 	    }
@@ -4869,6 +4908,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 		}
 	      dragged = true;
 	      break;
+
 	    case CLICK_FFT_AXIS:
 	      {
 		/* change spectro_cutoff(ss) and redisplay fft */
@@ -4921,6 +4961,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 		  }
 	      }
 	      break;
+
 	    case CLICK_LISP:
 	      if (XEN_HOOKED(mouse_drag_hook))
 		run_hook(mouse_drag_hook,
@@ -4932,6 +4973,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 				    C_TO_XEN_DOUBLE(ungrf_y(cp->lisp_info->axis, y))),
 			 S_mouse_drag_hook);
 	      break;
+
 	    case CLICK_FFT_MAIN:
 	      if (cp->verbose_cursor)
 		{
@@ -4941,6 +4983,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 		  if (str) FREE(str);
 		}
 	      break;
+
 	    default:
 	      break;
 	    }
@@ -5117,6 +5160,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_AP_HISAMP:               if (cp->axis) return(C_TO_XEN_OFF_T(cp->axis->hisamp));         break;
 	    case CP_SQUELCH_UPDATE:          return(C_TO_XEN_BOOLEAN(cp->squelch_update));                     break;
 	    case CP_CURSOR_SIZE:             return(C_TO_XEN_INT(cp->cursor_size));                            break;
+
 	    case CP_CURSOR_STYLE:
 	      if (cp->cursor_style != CURSOR_PROC)
 		return(C_TO_XEN_INT((int)(cp->cursor_style)));
@@ -5124,9 +5168,11 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 		return(cp->cursor_proc);
 	      return(ss->cursor_proc);
 	      break;
+
 	    case CP_TRACKING_CURSOR_STYLE:
 	      return(C_TO_XEN_INT((int)(cp->tracking_cursor_style)));
 	      break;
+
 	    case CP_EDIT_HOOK:
 	      if (!(XEN_HOOK_P(cp->edit_hook)))
 		{
@@ -5135,6 +5181,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 		}
 	      return(cp->edit_hook);
 	      break;
+
 	    case CP_AFTER_EDIT_HOOK:
 	      if (!(XEN_HOOK_P(cp->after_edit_hook)))
 		{
@@ -5143,6 +5190,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 		}
 	      return(cp->after_edit_hook);
 	      break;
+
 	    case CP_UNDO_HOOK:               
 	      if (!(XEN_HOOK_P(cp->undo_hook)))
 		{
@@ -5151,6 +5199,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 		}
 	      return(cp->undo_hook);
 	      break;
+
 	    case CP_SHOW_Y_ZERO:             return(C_TO_XEN_BOOLEAN(cp->show_y_zero));                        break;
 	    case CP_SHOW_GRID:               return(C_TO_XEN_BOOLEAN((bool)(cp->show_grid)));                  break;
 	    case CP_GRID_DENSITY:            return(C_TO_XEN_DOUBLE(cp->grid_density));                        break;
@@ -5183,6 +5232,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_GRAPHS_HORIZONTAL:       return(C_TO_XEN_BOOLEAN(cp->graphs_horizontal));                  break;
 	    case CP_CURSOR_POSITION:         return(XEN_LIST_2(C_TO_XEN_INT(cp->cx), C_TO_XEN_INT(cp->cy)));   break;
 	    case CP_EDPOS_FRAMES:            return(C_TO_XEN_OFF_T(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
+
 	    case CP_UPDATE_TIME:
 #if USE_GTK
 	      if (!(cp->cgx->ax->wn)) fixup_cp_cgx_ax_wn(cp);
@@ -5194,9 +5244,11 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 	      cp->waiting_to_make_graph = false;
 	      display_channel_time_data(cp);
 	      break;
+
 	    case CP_UPDATE_LISP:
 	      display_channel_lisp_data(cp);
 	      break;
+
 	    case CP_UPDATE_TRANSFORM_GRAPH: 
 	      if (cp->graph_transform_p)
 		{
@@ -5215,6 +5267,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 		  ss->checking_explicitly = false;
 		}
 	      break;
+
 	    case CP_PROPERTIES:
 	      if (!(XEN_VECTOR_P(cp->properties)))
 		{
@@ -5323,6 +5376,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
   ASSERT_CHANNEL(caller, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, caller);
   if (!cp) return(XEN_FALSE);
+
   switch (fld)
     {
     case CP_EDIT_CTR:
@@ -5335,18 +5389,21 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
 	}
       return(C_TO_XEN_INT(cp->edit_ctr));
       break;
+
     case CP_GRAPH_TRANSFORM_P:
       bval = XEN_TO_C_BOOLEAN(on); 
       fftb(cp, bval);
       update_graph(cp);
       return(on);
       break;
+
     case CP_GRAPH_TIME_P:
       bval = XEN_TO_C_BOOLEAN(on);
       waveb(cp, bval);
       update_graph(cp);
       return(on);
       break;
+
     case CP_CURSOR:
 #if USE_CAIRO
       if (cp->cgx == NULL)
@@ -5376,6 +5433,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
       cursor_moveto(cp, beg_to_sample(on, caller));
       return(C_TO_XEN_OFF_T(CURSOR(cp)));
       break;
+
     case CP_EDPOS_CURSOR:
       {
 	int pos;
@@ -5391,19 +5449,23 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
 	return(C_TO_XEN_OFF_T(cpos));
       }
       break;
+
     case CP_GRAPH_LISP_P:
       cp->graph_lisp_p = XEN_TO_C_BOOLEAN(on); 
       update_graph(cp);
       return(on);
       break;
+
     case CP_AP_LOSAMP:
       set_x_axis_x0(cp, beg_to_sample(on, caller));
       return(on);
       break;
+
     case CP_AP_HISAMP:
       set_x_axis_x1(cp, beg_to_sample(on, caller));
       return(on);
       break;
+
     case CP_SQUELCH_UPDATE:
       cp->squelch_update = XEN_TO_C_BOOLEAN(on);
       if (!(cp->squelch_update))
@@ -5416,11 +5478,13 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
 	  clear_minibuffer(cp->sound);
 	}
       break;
+
     case CP_CURSOR_SIZE:
       cp->cursor_size = XEN_TO_C_INT_OR_ELSE(on, DEFAULT_CURSOR_SIZE);
       update_graph(cp); 
       return(C_TO_XEN_INT(cp->cursor_size));
       break;
+
     case CP_CURSOR_STYLE:
       if (XEN_PROCEDURE_P(on))
 	{
@@ -5457,143 +5521,172 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
       update_graph(cp); 
       return(C_TO_XEN_INT((int)(cp->cursor_style)));
       break;
+
     case CP_TRACKING_CURSOR_STYLE:
       cp->tracking_cursor_style = (cursor_style_t)XEN_TO_C_INT(on);
       return(C_TO_XEN_INT((int)(cp->tracking_cursor_style)));
       break;
+
     case CP_SHOW_Y_ZERO:
       cp->show_y_zero = XEN_TO_C_BOOLEAN(on); 
       update_graph(cp); 
       return(C_TO_XEN_BOOLEAN(cp->show_y_zero));
       break;
+
     case CP_SHOW_GRID:
       cp->show_grid = (with_grid_t)(XEN_TO_C_BOOLEAN(on)); 
       update_graph(cp); 
       return(C_TO_XEN_BOOLEAN((bool)(cp->show_grid)));
       break;
+
     case CP_GRID_DENSITY:
       cp->grid_density = XEN_TO_C_DOUBLE(on); 
       update_graph(cp); 
       return(C_TO_XEN_DOUBLE(cp->grid_density));
       break;
+
     case CP_SHOW_SONOGRAM_CURSOR:
       cp->show_sonogram_cursor = XEN_TO_C_BOOLEAN(on); 
       update_graph(cp); 
       return(C_TO_XEN_BOOLEAN(cp->show_sonogram_cursor));
       break;
+
     case CP_SHOW_MARKS:
       cp->show_marks = XEN_TO_C_BOOLEAN(on); 
       update_graph(cp); 
       return(C_TO_XEN_BOOLEAN(cp->show_marks));
       break;
+
     case CP_TIME_GRAPH_TYPE:
       cp->time_graph_type = (graph_type_t)XEN_TO_C_INT(on); /* checked already */
       update_graph(cp); 
       return(C_TO_XEN_INT((int)(cp->time_graph_type)));
       break;
+
     case CP_WAVO_HOP:
       cp->wavo_hop = g_imin(1, on, DEFAULT_WAVO_HOP); 
       update_graph(cp); 
       return(C_TO_XEN_INT(cp->wavo_hop));
       break;
+
     case CP_WAVO_TRACE:
       cp->wavo_trace = mus_iclamp(1, g_imin(1, on, DEFAULT_WAVO_TRACE), POINT_BUFFER_SIZE);
       update_graph(cp); 
       return(C_TO_XEN_INT(cp->wavo_trace));
       break;
+
     case CP_MAX_TRANSFORM_PEAKS:
       cp->max_transform_peaks = g_imin(1, on, DEFAULT_MAX_TRANSFORM_PEAKS); 
       return(C_TO_XEN_INT(cp->max_transform_peaks));
       break;
+
     case CP_ZERO_PAD:
       cp->zero_pad = mus_iclamp(0, g_imin(0, on, DEFAULT_ZERO_PAD), MAX_ZERO_PAD); 
       update_graph(cp);
       return(C_TO_XEN_INT(cp->zero_pad));
       break;
+
     case CP_WAVELET_TYPE:
       cp->wavelet_type = XEN_TO_C_INT(on); /* range checked already */
       update_graph(cp);
       return(C_TO_XEN_INT(cp->wavelet_type));
       break;
+
     case CP_SHOW_TRANSFORM_PEAKS:
       cp->show_transform_peaks = XEN_TO_C_BOOLEAN(on); 
       update_graph(cp); 
       return(C_TO_XEN_BOOLEAN(cp->show_transform_peaks));
       break;
+
     case CP_VERBOSE_CURSOR:
       cp->verbose_cursor = XEN_TO_C_BOOLEAN(on); 
       return(C_TO_XEN_BOOLEAN(cp->verbose_cursor));
       break;
+
     case CP_FFT_LOG_FREQUENCY:
       cp->fft_log_frequency = XEN_TO_C_BOOLEAN(on); 
       if (cp->graph_transform_p) calculate_fft(cp); 
       return(C_TO_XEN_BOOLEAN(cp->fft_log_frequency));
       break;
+
     case CP_FFT_LOG_MAGNITUDE:
       cp->fft_log_magnitude = XEN_TO_C_BOOLEAN(on); 
       if (cp->graph_transform_p) calculate_fft(cp); 
       return(C_TO_XEN_BOOLEAN(cp->fft_log_magnitude));
       break;
+
     case CP_FFT_WITH_PHASES:
       cp->fft_with_phases = XEN_TO_C_BOOLEAN(on); 
       if (cp->graph_transform_p) calculate_fft(cp); 
       return(C_TO_XEN_BOOLEAN(cp->fft_with_phases));
       break;
+
     case CP_SPECTRO_HOP:
       cp->spectro_hop = g_imin(1, on, DEFAULT_SPECTRO_HOP); 
       if (cp->graph_transform_p) calculate_fft(cp); 
       return(C_TO_XEN_INT(cp->spectro_hop));
       break;
+
     case CP_TRANSFORM_SIZE:
       cp->transform_size = g_omin(1, on, DEFAULT_TRANSFORM_SIZE); 
       calculate_fft(cp);
       return(C_TO_XEN_OFF_T(cp->transform_size));
       break;
+
     case CP_TRANSFORM_GRAPH_TYPE: 
       cp->transform_graph_type = (graph_type_t)XEN_TO_C_INT(on); /* checked already */
       calculate_fft(cp); 
       return(C_TO_XEN_INT((int)(cp->transform_graph_type))); 
       break;
+
     case CP_FFT_WINDOW:
       cp->fft_window = (mus_fft_window_t)XEN_TO_C_INT(on); /* checked */
       calculate_fft(cp); 
       return(C_TO_XEN_INT((int)(cp->fft_window)));
       break;
+
     case CP_TRANSFORM_TYPE:
       cp->transform_type = XEN_TO_C_INT(on); /* range already checked */
       calculate_fft(cp); 
       return(C_TO_XEN_INT(cp->transform_type));
       break;
+
     case CP_TRANSFORM_NORMALIZATION:      
       cp->transform_normalization = (fft_normalize_t)XEN_TO_C_INT(on); /* range already checked */
       calculate_fft(cp); 
       return(C_TO_XEN_INT((int)(cp->transform_normalization)));
       break;
+
     case CP_SHOW_MIX_WAVEFORMS: 
       cp->show_mix_waveforms = XEN_TO_C_BOOLEAN(on); 
       update_graph(cp); 
       return(C_TO_XEN_BOOLEAN(cp->show_mix_waveforms));
       break;
+
     case CP_TIME_GRAPH_STYLE:
       cp->time_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE(on, DEFAULT_GRAPH_STYLE);
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT((int)(cp->time_graph_style)));
       break;
+
     case CP_LISP_GRAPH_STYLE:
       cp->lisp_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE(on, DEFAULT_GRAPH_STYLE);
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT((int)(cp->lisp_graph_style)));
       break;
+
     case CP_TRANSFORM_GRAPH_STYLE:
       cp->transform_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE(on, DEFAULT_GRAPH_STYLE);
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT((int)(cp->transform_graph_style)));
       break;
+
     case CP_X_AXIS_STYLE:
       val = XEN_TO_C_INT(on); /* range already checked */
       chans_x_axis_style(cp, val);
       return(C_TO_XEN_INT((int)(cp->x_axis_style)));
       break;
+
     case CP_DOT_SIZE:
       cp->dot_size = mus_iclamp(MIN_DOT_SIZE, 
 				XEN_TO_C_INT_OR_ELSE(on, DEFAULT_DOT_SIZE), 
@@ -5601,16 +5694,19 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
       update_graph(cp);
       return(C_TO_XEN_INT(cp->dot_size));
       break;
+
     case CP_SHOW_AXES:
       cp->show_axes = (show_axes_t)XEN_TO_C_INT(on); /* range checked already */
       update_graph(cp); 
       return(C_TO_XEN_INT((int)(cp->show_axes)));
       break;
+
     case CP_GRAPHS_HORIZONTAL:
       cp->graphs_horizontal = XEN_TO_C_BOOLEAN(on); 
       update_graph(cp); 
       return(C_TO_XEN_BOOLEAN(cp->graphs_horizontal));
       break;
+
     case CP_FRAMES:
       if (cp->editable)
 	{
@@ -5635,6 +5731,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
 	    update_graph(cp);
 	}
       break;
+
     case CP_PROPERTIES:
       if (!(XEN_VECTOR_P(cp->properties)))
 	{
@@ -5648,15 +5745,19 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
     case CP_AP_SX:
       reset_x_display(cp, mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), 1.0), cp->axis->zx);
       break;
+
     case CP_AP_ZX:
       reset_x_display(cp, cp->axis->sx, mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), 1.0));
       break;
+
     case CP_AP_SY:
       reset_y_display(cp, mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), 1.0), cp->axis->zy);
       break;
+
     case CP_AP_ZY:
       reset_y_display(cp, cp->axis->sy, mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), 1.0)); 
       break;
+
     case CP_MIN_DB:
       curamp = XEN_TO_C_DOUBLE(on); 
       if (curamp < 0.0)
@@ -5667,32 +5768,38 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
 	}
       else XEN_OUT_OF_RANGE_ERROR(caller, 1, on, S_min_dB " (~A) must be < 0.0");
       break;
+
     case CP_SPECTRO_X_ANGLE: cp->spectro_x_angle = mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_ANGLE); calculate_fft(cp); break;
     case CP_SPECTRO_Y_ANGLE: cp->spectro_y_angle = mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_ANGLE); calculate_fft(cp); break;
     case CP_SPECTRO_Z_ANGLE: cp->spectro_z_angle = mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_ANGLE); calculate_fft(cp); break;
     case CP_SPECTRO_X_SCALE: cp->spectro_x_scale = mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_SCALE); calculate_fft(cp); break;
     case CP_SPECTRO_Y_SCALE: cp->spectro_y_scale = mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_SCALE); calculate_fft(cp); break;
     case CP_SPECTRO_Z_SCALE: cp->spectro_z_scale = mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_SCALE); calculate_fft(cp); break;
+
     case CP_SPECTRO_CUTOFF:  
       cp->spectro_cutoff = XEN_TO_C_DOUBLE(on); /* range checked already */
       calculate_fft(cp); 
       return(C_TO_XEN_DOUBLE(cp->spectro_cutoff)); 
       break;
+
     case CP_SPECTRO_START:   
       cp->spectro_start = XEN_TO_C_DOUBLE(on); /* range checked already */
       calculate_fft(cp); 
       return(C_TO_XEN_DOUBLE(cp->spectro_start));   
       break;
+
     case CP_FFT_WINDOW_ALPHA:        
       cp->fft_window_alpha = XEN_TO_C_DOUBLE(on);
       calculate_fft(cp); 
       return(C_TO_XEN_DOUBLE(cp->fft_window_alpha));             
       break;
+
     case CP_FFT_WINDOW_BETA:        
       cp->fft_window_beta = XEN_TO_C_DOUBLE(on); /* range checked already */
       calculate_fft(cp); 
       return(C_TO_XEN_DOUBLE(cp->fft_window_beta));             
       break;
+
     case CP_MAXAMP:
       if (cp->editable)
 	{
@@ -5705,6 +5812,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
 	    }
 	}
       break;
+
     case CP_BEATS_PER_MINUTE:
       curamp = XEN_TO_C_DOUBLE(on);
       if (curamp > 0.0)
@@ -5713,6 +5821,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
 	  update_graph(cp);
 	}
       break;
+
     case CP_BEATS_PER_MEASURE:
       cp->beats_per_measure = XEN_TO_C_INT(on);
       update_graph(cp);
@@ -7226,16 +7335,21 @@ static XEN g_set_x_axis_style(XEN style, XEN snd, XEN chn)
 {
   int in_val;
   x_axis_style_t val;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_x_axis_style, "an integer"); 
+
   in_val = XEN_TO_C_INT(style);
   if (in_val < 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_x_axis_style, 1, style, "~A, but must be >= 0");
+
   val = (x_axis_style_t)in_val;
   if (val >= NUM_X_AXIS_STYLES)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_x_axis_style, 1, style, 
 	"~A, but must be " S_x_axis_in_seconds ", " S_x_axis_in_samples ", " S_x_axis_as_percentage ", " S_x_axis_in_beats ", " S_x_axis_in_measures ", or " S_x_axis_as_clock ".");
+
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, style, CP_X_AXIS_STYLE, S_setB S_x_axis_style));
+
   set_x_axis_style(val);
   /* snd-menu.c -- maps over chans */
   return(C_TO_XEN_INT((int)x_axis_style(ss)));

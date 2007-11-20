@@ -1294,6 +1294,7 @@
 		 :make-wrapper (lambda (g)
 				 (set! (rxycos-xincr g) (hz->radians (rxycos-xfrequency g))) ; can be 0 if just x=pi/2 for example
 				 (set! (rxycos-yincr g) (hz->radians (rxycos-yfrequency g)))
+				 (if (>= (rxycos-r g) 1.0) (set! (rxycos-r g) 0.999999))
 				 g))
   (xfrequency 0.0) (yfrequency 1.0) (r 0.0)
   (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
@@ -1307,16 +1308,15 @@
     (set! (rxycos-xangle gen) (+ x (rxycos-xincr gen) (* fm (/ (rxycos-xincr gen) (rxycos-yincr gen)))))
     (set! (rxycos-yangle gen) (+ y (rxycos-yincr gen) fm))
 
-    (/ (- (cos x)
-	  (* r (cos (- x y))))
-       (+ 1.0 
-	  (* -2.0 r (cos y))
-	  (* r r)))))
-
-; TODO:       (/ (- 1.0 r) (* 2.0 r))))) ; normalization rxycos
+    (* (/ (- (cos x)
+	     (* r (cos (- x y))))
+	  (+ 1.0 
+	     (* -2.0 r (cos y))
+	     (* r r)))
+       (- 1.0 r))))
 
 #|
-(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+(with-sound (:clipped #f :statistics #t)
   (let ((gen (make-rxycos 1000 100 0.5)))
     (run 
      (lambda ()

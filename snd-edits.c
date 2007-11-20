@@ -8554,7 +8554,9 @@ return sample samp in snd's channel chn (this is a slow access -- use sample-rea
 
       ASSERT_SOUND(S_sample, snd_n, 1);
       sp = get_sp(snd_n, NO_PLAYERS);
+      if (!sp) return(XEN_FALSE);
       cp = any_selected_channel(sp);
+      if (!cp) return(XEN_FALSE);
       pos = to_c_edit_position(cp, pos_n, S_sample, 4);
       beg = beg_to_sample(samp_n, S_sample);
       loc = snd_protect(lst);

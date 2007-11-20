@@ -206,7 +206,14 @@ static char *clock_number(double loc, int tens)
 
 static char *location_to_string(double loc, int style, int bpm, int tens)
 {
-  if (tens == 0) tens = 1; /* in x axis we want the ".0" */
+  if (style == X_AXIS_IN_SAMPLES)
+    tens = 0;
+  else
+    {
+      if (tens == 0)
+	tens = 1; /* in x axis we usually want the ".0" */
+    }
+
   switch (style)
     {
     case X_AXIS_AS_CLOCK:
@@ -1022,6 +1029,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 			ap, ax, printing);
 	}
     }
+
   if ((x_axis_linear) && (include_x_tick_labels))
     {
       int lx0, lx1, tx0, tx1;
@@ -1078,6 +1086,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	    }
 	}
     }
+
   if ((y_axis_linear) && (include_y_ticks))
     {
       double fy, tens;
