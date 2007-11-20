@@ -411,7 +411,7 @@ amplitude of a given sideband:
 <!-- LATEX \omega_{m} : fmeq42 -->
 <!-- LATEX \omega_{c} : fmeq43 -->
 
-<p>So we end up with a spectrum made up of a "carrier" at 
+<p>We end up with a spectrum made up of a "carrier" at 
 <img src="fmeq43.png" alt="wc" align=absmiddle>
 and symmetrically placed sidebands 
 separated by
@@ -489,7 +489,7 @@ the fft peak values given above)
 
 <p>There is a rule of thumb, Mr Carson's rule, about the overall bandwidth of the resultant spectrum (it 
 follows from our description of the Bessel functions): Roughly speaking, there are fm-index+1 
-significant sidebands on each side of the carrier, so our total bandwidth is on the order of
+significant sidebands on each side of the carrier; our total bandwidth is on the order of
 </p>
 
 <pre>
@@ -582,7 +582,7 @@ For an explanation of the connection between planetary motion and FM, see Benson
 <!-- -->
 </td></tr></table>
 
-<p>I put an envelope on the fm-index ("indf" above) so that we can try out dynamic spectra ("dynamic" means 
+<p>I put an envelope on the fm-index ("indf" above) to try out dynamic spectra ("dynamic" means 
 "changing" here).  For now, don't worry too much about the actual side band amplitudes.  They
 will not always match Chowning's description, but we'll get around to an explanation eventually.
 </p>
@@ -1607,7 +1607,7 @@ Unfortunately, FM and PM can produce energy
 at 0Hz (when, for example, the carrier frequency equals the modulating frequency), and in FM that 0Hz component becomes a constant offset in the 
 phase increment (the "instantaneous frequency") of the outer or lowermost
 carrier. 
-So our fundamental frequency no longer has any obvious relation to
+Our fundamental frequency no longer has any obvious relation to
 <img src="fmeq43.png" alt="wc" align=absmiddle>!
 That is, we 
 can expand our cascade formula (in the sin(x + cos(sin)) case) into:
@@ -1780,7 +1780,7 @@ J_{2000}(2000) = .035
 <img src="fmeq28.png" alt="Jn vals" hspace=20>
 
 
-<p>and so on. Since the other part of the equation goes down as 1/n, we get essentially a sawtooth wave 
+<p>Since the other part of the equation goes down as 1/n, we get essentially a sawtooth wave 
 out of this equation (its harmonics go down as 1/n).  Tomisawa suggests that B should be between 0 
 and 1.5. Since we are dividing by B in the equation, we might worry that as B heads toward 0, all 
 hell breaks loose, but luckily 

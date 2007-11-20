@@ -1267,7 +1267,7 @@ static void display_selection_transform_size(chan_info *cp, axis_info *fap)
   set_tiny_numbers_font(cp);
   if (cp->printing) ps_set_tiny_numbers_font();
   y0 = fap->height + fap->y_offset + SELECTION_FFT_LABEL_OFFSET;
-  x0 = fap->x_axis_x0 + 10;
+  x0 = fap->x_axis_x0 + 20;
   mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, 
 	       _("(len: " OFF_TD "/" OFF_TD ")"), 
 	       selection_len(), 

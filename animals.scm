@@ -386,8 +386,6 @@
 
 
 
-;;; TODO: green treefrog but needs formant movement, speedup at start, slow down at end, other main section to the call
-
 (with-sound (:play #t :clipped #f :statistics #t)
   (let* ((dur 0.2)
 	 (stop (seconds->samples dur))

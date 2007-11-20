@@ -522,7 +522,22 @@
   (frequency 0.0) (n 1 :type int) (r 0.0)
   (gen #f :type clm))
 
-(define nrsin sine-summation)
+(define (nrsin gen fm)
+  (declare (gen nrsin) (fm float))
+  (sine-summation (nrsin-gen gen) fm))
+
+#|
+(with-sound (:clipped #f :statistics #t :play #t)
+  (let ((gen1 (make-nrsin 830.0 :n 5 :r 0.5))
+	(gen2 (make-sine-summation (* 8 830.0) :n 5 :a 0.5 :ratio (/ 1.0 8.0))))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (* .125 (+ (nrsin gen1 0.0)
+			    (* .3 (sine-summation gen2 0.0))))
+	       *output*))))))
+|#
 
 
 (def-clm-struct (nrcos
@@ -557,7 +572,17 @@
 	   ((= i 10000))
 	 (outa i (nrcos gen 0.0) *output*))))))
 
-(with-sound (:srate 44100 :clipped #f :statistics #t :play #t)
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .1)
+  (let ((gen (make-nrcos 1200.0 :n 3 :r 0.99))
+	(mod (make-oscil 400.0)) ; multi-carrier fm
+	(index 0.01))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000))
+	 (outa i (nrcos gen (* index (oscil mod))) *output*))))))
+
+(with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nrcos 2000.0 :n 3 :r 0.5))
 	(mod (make-oscil 400.0)) ; multi-carrier fm
 	(index 0.02))
@@ -567,7 +592,7 @@
 	   ((= i 30000))
 	 (outa i (nrcos gen (* index (oscil mod))) *output*))))))
 
-(with-sound (:srate 44100 :clipped #f :statistics #t :play #t)
+(with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nrcos 2000.0 :n 3 :r 0.5))
 	(mod (make-oscil 400.0))
 	(index (make-env '(0 0 1 .1) :end 30000))) ; or '(0 .4 1 0)
@@ -598,10 +623,10 @@
 		 *output*)))))))
 
 #|
-(with-sound (:srate 44100 :clipped #f :statistics #t :play #t)
+(with-sound (:clipped #f :statistics #t :play #t)
   (lutish 0 1 440 .1))
 
-(with-sound (:srate 44100 :clipped #f :statistics #t :play #t)
+(with-sound (:clipped #f :statistics #t :play #t)
   (do ((i 0 (1+ i)))
       ((= i 10))
     (lutish (* i .1) 2 (* 100 (1+ i)) .05)))
@@ -2970,7 +2995,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (set! (j0evencos-index gen) (env indf))
 	 (outa i (* 0.5 (j0evencos gen (oscil carrier))) *output*))))))
 
-(with-sound (:clipped #f :statistics #t :play #t :srate 44100)
+(with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-j0evencos 100.0 0.0))                 ; also 20 800, 20 200 (less index mvt), or 200 50 
 	(indf (make-env '(0 10 1 0) :end 30000))
 	(carrier (make-oscil 2000.0)))
@@ -2994,7 +3019,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (set! (j0evencos-index gen) (env indf))
 	 (outa i (* 0.5 (j0evencos gen (* index (oscil carrier)))) *output*))))))
 
-(with-sound (:clipped #f :statistics #t :play #t :srate 44100)
+(with-sound (:clipped #f :statistics #t :play #t)
 	    (do ((i 0 (1+ i)))
 		((= i 10))
 	      (j0even i 1.0 2000.0 0.5 (+ .1 (* .05 i)) 0.1)))
@@ -3831,12 +3856,12 @@ index 10 (so 10/2 is the bes-jn arg):
 	   (outa i sum *output*)))))))
 
 #|
-(with-sound (:clipped #f :statistics #t :play #t :srate 44100)
+(with-sound (:clipped #f :statistics #t :play #t)
   (do ((i 0 (1+ i)))
       ((= i 10))
     (organish (* i .3) .4 (+ 100 (* 50 i)) .5 1.0 #f)))
 
-(with-sound (:clipped #f :statistics #t :play #t :srate 44100)
+(with-sound (:clipped #f :statistics #t :play #t)
   (do ((i 0 (1+ i)))
       ((= i 10))
     (organish (* i .3) .4 (+ 100 (* 50 i)) .5 1.0 '(0 0 1 1 2 .5 3 .25 4 .125 10 0))))
