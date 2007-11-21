@@ -385,14 +385,15 @@
 		 *output*)))))))
 
 
+;;; green tree-frog
 
 (with-sound (:play #t :clipped #f :statistics #t)
   (let* ((dur 0.2)
 	 (stop (seconds->samples dur))
 	 (ampf (make-env '(0 0 1 1 8 1 12 0) :scaler .25 :duration dur))
 	 (pitch 277)
-	 (gen2770 (make-oscil (* 10 pitch)))
-	 (mod277 (make-oscil pitch))
+	 (gen2770 (make-oscil (* 10 pitch) (* 0.5 pi)))
+	 (mod277 (make-oscil pitch (* 0.5 pi)))
 	 (gen7479 (make-oscil (* pitch 27)))
 	 (poly (make-polyshape pitch :coeffs (partials->polynomial (list 3 .3  8 .2  9 .2  10 .9  11 1.0  12 .5))))
 	 (poly2 (make-polyshape 860 :coeffs (partials->polynomial (list  1 .4  2 .1  3 .03  4 .3  5 .03))))

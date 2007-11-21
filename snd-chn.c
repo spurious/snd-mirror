@@ -2,6 +2,9 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
+/* TODO: if chans combined, change zy/sy, uncombine, secondary chan sliders not set right (at least zy isn't)
+ */
+
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
  *   but there's no way to trap the outer resizing event and
  *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
@@ -683,6 +686,7 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
       (peak_env_maxamp_ok(cp, 0))) /* peak-env.scm uses initial-graph-hook to read in this data, so it's not entirely hopeless */
     {
       ymax = peak_env_maxamp(cp, 0);
+      if (ymax < 1.0) ymax = 1.0;
       ymin = -ymax;
     }
   else
@@ -715,6 +719,7 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
   if (y0 >= y1) y0 = y1 - .01;
   ap = make_axis_info(cp, 0.0, xmax, ymin, ymax, (hook_label) ? hook_label : label, x0, x1, y0, y1, NULL);
   if (hook_label) FREE(hook_label);
+
   if (dur == 0)
     {
       ap->zx = 1.0;
@@ -730,14 +735,16 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
 	}
       ap->no_data = false;
     }
+
   if (ap->y_ambit != 0.0)
     {
       ap->zy = (ap->y1 - ap->y0) / ap->y_ambit;
       ap->sy = (ap->y0 - ap->ymin) / ap->y_ambit;
     }
+
   cp->axis = ap;
-  if (graphed == WITH_GRAPH) initialize_scrollbars(cp);
-  /* our initial edit_list size will be relatively small */
+  if (graphed == WITH_GRAPH) 
+    initialize_scrollbars(cp);
 }
 
 
@@ -834,9 +841,12 @@ void set_x_bounds(axis_info *ap)
 void apply_y_axis_change(axis_info *ap, chan_info *cp)
 {
   snd_info *sp;
+  sp = cp->sound;
+
   set_y_bounds(ap);
   update_graph_or_warn(cp);
-  sp = cp->sound;
+  update_enved_background_waveform(cp);
+
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
       int i;
@@ -1162,6 +1172,7 @@ int move_axis(chan_info *cp, axis_info *ap, int x)
 
 void set_axes(chan_info *cp, double x0, double x1, Float y0, Float y1)
 {
+  /* use to change channel_style to channels_separate, and restore axes upon update */
   axis_info *ap;
   ap = cp->axis;
   ap->x0 = x0;
@@ -1179,7 +1190,7 @@ void set_axes(chan_info *cp, double x0, double x1, Float y0, Float y1)
       ap->zy = (y1 - y0) / ap->y_ambit;
       ap->sy = (y0 - ap->ymin) / ap->y_ambit;
     }
-  resize_sy(cp);
+  resize_sy_and_zy(cp);
 }
 
 

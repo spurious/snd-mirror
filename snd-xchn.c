@@ -255,6 +255,14 @@ void resize_sy(chan_info *cp)
 		  SCROLLBAR_MAX);
 }
 
+
+void resize_sy_and_zy(chan_info *cp)
+{
+  resize_sy(cp);
+  set_scrollbar(channel_zy(cp), sqrt(cp->axis->zy), .1, SCROLLBAR_MAX);  
+}
+
+
 void resize_sx(chan_info *cp)
 {
   axis_info *ap;
@@ -1452,6 +1460,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  for (i = 1; i < sp->nchans; i++) channel_set_mix_tags_erased(sp->chans[i]);
 		}
 	    }
+
 	  if (old_style == CHANNELS_SUPERIMPOSED)
 	    {
 	      syncb(sp, sp->previous_sync);
@@ -1469,6 +1478,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  for (i = 1; i < sp->nchans; i++) CURSOR(sp->chans[i]) = CURSOR(sp->chans[0]);
 		}
 	    }
+
 	  height = widget_height(w_snd_pane(sp)) - control_panel_height(sp);
 	  if (old_style == CHANNELS_SEPARATE)
 	    {
@@ -1490,10 +1500,10 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	    }
 	  else
 	    {
-	      axis_info *ap;
-	      chan_info *pcp;
 	      if (new_style == CHANNELS_SEPARATE)
 		{
+		  axis_info *ap;
+		  chan_info *pcp;
 		  /* height = total space available */
 		  height /= sp->nchans;
 		  for_each_sound_chan_with_int(sp, channel_lock_pane, height);

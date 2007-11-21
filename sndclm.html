@@ -1957,7 +1957,6 @@ sceq14:
 &\sum_{k=1}^{n-1}k\sin kx=\frac{\sin nx}{4 \sin^{2}\frac{x}{2}} - \frac{n \cos \frac{2n-1}{2}x}{2\sin\frac{x}{2}} \\
 &\sum_{k=1}^{n-1}k\cos kx=\frac{n\sin\frac{2n-1}{2}x}{2\sin\frac{x}{2}} - \frac{1-\cos nx}{4\sin^{2}\frac{x}{2}} \\
 &J_{0}^{2}\Big(\frac{z}{2}\Big)+2\sum_{k=1}^{\infty} J_{k}^{2}\Big(\frac{z}{2}\Big)\cos2k\theta = J_{0}(z \sin \theta) \\
-&\sum_{k=0}^{\infty} \frac{(2n+2k)(2n+k-1)!}{k!}J_{2n+2k}(2z \sin \theta) = (z \sin \theta)^{2n} \\
 
 sceq15:
 &\sum_{k=1}^{n-1}p^{k}\sin kx=\frac{p\sin x - p^{n}\sin nx + p^{n+1}\sin(n-1)x}{1-2p\cos x+p^{2}} \\
@@ -1968,11 +1967,17 @@ sceq15:
 &\sum_{k=1}^{\infty}\frac{p^{k}\cos kx}{k} = \ln \frac{1}{\sqrt{1-2p\cos x + p^{2}}} \\
 &\sum_{k=1}^{\infty}\frac{p^{2k-1}\sin(2k-1)x}{2k-1} = \frac{1}{2}\arctan \frac{2p\sin x}{1-p^{2}} \\
 &\sum_{k=1}^{\infty}\frac{p^{2k-1}\cos(2k-1)x}{2k-1} = \frac{1}{4}\ln \frac{1+2p\cos x + p^{2}}{1-2p\cos x + p^{2}} \\
-&\sum_{k=1}^{\infty}\frac{p^{k}\sin kx}{k!} = e^{p\cos x}\sin(p\sin x) \\
-&\sum_{k=0}^{\infty}\frac{p^{k}\cos kx}{k!} = e^{p\cos x}\cos(p\sin x) \\
 &\sum_{k=1}^{\infty}e^{-kt}\sin kx = \frac{1}{2}\frac{\sin x}{\cosh t - \cos x} \\
 &1 + 2\sum_{k=1}^{\infty}e^{-kt}\cos kx = \frac{\sinh t}{\cosh t - \cos x} \\
+&\sum_{k=0}^{\infty} \frac{(2n+2k)(2n+k-1)!}{k!}J_{2n+2k}(2z \sin \theta) = (z \sin \theta)^{2n} \\
 \end{align*}
+
+
+
+old in 2nd col (replaced by JO cases):
+&\sum_{k=1}^{\infty}\frac{p^{k}\sin kx}{k!} = e^{p\cos x}\sin(p\sin x) \\
+&\sum_{k=0}^{\infty}\frac{p^{k}\cos kx}{k!} = e^{p\cos x}\cos(p\sin x) \\
+rk!sin and cos
 
 original last of 1st col:
 &\sum_{k=1}^{\infty} \frac{\sin^{2k} x}{k} = -2 \ln \cos x & (x^{2} < \frac{pi^{2}}{4}) \\
@@ -2059,6 +2064,7 @@ from Askey "Ramanujan and Hypergeometric Series" in Berndt and Rankin "Ramanujan
    this is r2k!cos in generators.scm [sceq30.png]
 &(1 - 2r \cos \theta + r^{2})^{-k} = \frac{{}_{2}F_{1}(k, k; 1; r^{2})}{2} + \sum_{n=1}^{\infty} \frac{(k)_{n}}{n!} r^{n} {}_{2}F_{1}(k, k+n; n+1; r^{2}) \cos n\theta
 
+
 Montgomery and Vorhauer:
 &\sum_{n=1}^{\infty} \frac{\sin \frac{k \pi}{n+1}}{\sin \frac{\pi}{n+1}} \cos k\theta = \frac{(\cos \frac{1}{2}(n+1)\theta)^{2}}{\cos \theta - \cos \frac{\pi}{n+1}}
 
@@ -2067,7 +2073,7 @@ Montgomery and Vorhauer:
 &J_{n}(x) = \frac{(\frac{x}{2})^{n}}{\Gamma(n+1)} e^{-ix} \Phi(n+\frac{1}{2}, 2n+1; 2ix) \\
 &I_{n}(x) = \frac{(\frac{x}{2})^{n}}{\Gamma(n+1)} e^{-x} \Phi(n+\frac{1}{2}, 2n+1; 2x) \\
 
-TODO: from Klapper, Selected Papers on Frequency Modulation, p 156
+from Klapper, Selected Papers on Frequency Modulation, p 156
 &\sum_{n=-\infty}^{\infty} (-1)^{n} J_{2n}(x) J_{2n}(y(\omega + B \cos z)) = J_{0}( \sqrt{x^{2} + y^{2} (\omega + B\cos z)^{2}})
 
 another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
@@ -2093,7 +2099,6 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
   <area shape=rect coords="0,361,300,410" href="sndclm.html#nkssb" alt="nkssb">
   <area shape=rect coords="0,411,300,450" href="sndclm.html#nkssb" alt="nkssb">
   <area shape=rect coords="0,451,300,500" href="sndclm.html#j0evencos" alt="j0evencos">
-  <area shape=rect coords="0,501,300,527" href="sndclm.html#sin2n" alt="sin2n">
 </map>
 </td>
 <td width=40></td>
@@ -2107,10 +2112,10 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
     <area shape=rect coords="0,221,300,250" href="sndclm.html#rkcos" alt="rkcos">
     <area shape=rect coords="0,251,300,300" href="sndclm.html#rkoddssb" alt="rkoddssb">
     <area shape=rect coords="0,301,300,340" href="sndclm.html#rkoddssb" alt="rkoddssb">
-    <area shape=rect coords="0,341,300,380" href="sndclm.html#rk!sin" alt="rk!sin">
-    <area shape=rect coords="0,381,300,420" href="sndclm.html#rk!cos" alt="rk!cos">
-    <area shape=rect coords="0,421,300,460" href="sndclm.html#erssb" alt="erssb">
-    <area shape=rect coords="0,461,300,500" href="sndclm.html#ercos" alt="ercos">
+    <area shape=rect coords="0,341,300,380" href="sndclm.html#erssb" alt="erssb">
+    <area shape=rect coords="0,381,300,420" href="sndclm.html#ercos" alt="ercos">
+  <area shape=rect coords="0,421,300,500" href="sndclm.html#sin2n" alt="sin2n">
+
 </map>
 </td>
 </tr>
@@ -2198,6 +2203,8 @@ sceq38:
 
 <p>
 As far as I know, most of these formulas have never been explored.
+There are many formulas that produce exponentially decaying or bell-curve shaped spectra;
+I think these all sound about the same, so I have included only a representative sample of them.
 A couple of the formulas are special cases of the "Bessel function summation theorem", G&amp;R 8.530:
 <img src="sceq38.png" alt="summation formula" align=absmiddle>,
 where Z stands for any of the various Bessel functions (J, Y, etc),
@@ -5199,7 +5206,13 @@ This generator's output is not normalized, and looks incorrect...
   <A class=def NAME="rxyk!ssb?">rxyk!ssb?</A> gen
 </pre>
 
-<p>This produces a sum of sinusoids scaled by (r^k)/k!.
+
+<!-- LATEX: for rk!cos
+&\sum_{k=1}^{\infty}\frac{p^{k}\sin kx}{k!} = e^{p\cos x}\sin(p\sin x) \\
+&\sum_{k=0}^{\infty}\frac{p^{k}\cos kx}{k!} = e^{p\cos x}\cos(p\sin x) \\
+-->
+
+<p>These produce a sum of sinusoids scaled by (r^k)/k!.  (rk!cos is a special case of rxyk!cos).
 </p>
 <br>
 

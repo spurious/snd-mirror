@@ -129,6 +129,7 @@ void initialize_scrollbars(chan_info *cp) {}
 void set_z_scrollbars(chan_info *cp, axis_info *ap) {}
 void resize_sx(chan_info *cp) {}
 void resize_sy(chan_info *cp) {}
+void resize_sy_and_zy(chan_info *cp) {}
 void resize_sx_and_zx(chan_info *cp) {}
 void channel_open_pane(chan_info *cp) {}
 void reflect_edit_history_change(chan_info *cp) {}
@@ -199,6 +200,7 @@ void enved_reflect_peak_env_completion(snd_info *sp) {}
 void new_active_channel_alert(void) {}
 void env_redisplay(void) {}
 void env_redisplay_with_print(void) {}
+void update_enved_background_waveform(chan_info *cp) {}
 int create_envelope_editor(void) {return(0);}
 void set_enved_clip_p(bool val) {}
 void reflect_enved_style(void) {}

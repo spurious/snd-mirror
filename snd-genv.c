@@ -290,7 +290,20 @@ static void env_redisplay_1(printing_t printing)
 
 
 void env_redisplay(void) {env_redisplay_1(NOT_PRINTING);}
+
 void env_redisplay_with_print(void) {env_redisplay_1(PRINTING);}
+
+
+void update_enved_background_waveform(chan_info *cp)
+{
+  if ((enved_dialog_is_active()) &&
+      (enved_wave_p(ss)) &&
+      (enved_target(ss) == ENVED_AMPLITUDE) &&
+      (cp == active_channel) &&
+      ((!apply_to_selection) || (selection_is_active_in_channel(cp))))
+    env_redisplay();
+}
+
 
 
 static void enved_filter_order_callback(GtkWidget *w, gpointer data)

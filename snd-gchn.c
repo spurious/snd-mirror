@@ -218,6 +218,13 @@ void resize_sy(chan_info *cp)
 }
 
 
+void resize_sy_and_zy(chan_info *cp)
+{
+  resize_sy(cp);
+  set_scrollbar(zy_adj(cp), 1.0 - sqrt(cp->axis->zy), .1);
+}
+
+
 void resize_sx(chan_info *cp)
 {
   axis_info *ap;
