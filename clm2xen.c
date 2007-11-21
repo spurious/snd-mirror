@@ -568,7 +568,7 @@ static XEN g_dot_product(XEN val1, XEN val2, XEN size)
 }
 
 
-#if HAVE_COMPLEX_TRIG && (HAVE_SCM_MAKE_COMPLEX || HAVE_SCM_C_MAKE_RECTANGULAR)
+#if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
 #define S_edot_product "edot-product"
 
 static XEN g_edot_product(XEN val1, XEN val2) 
@@ -6750,7 +6750,7 @@ XEN_NARGIFY_2(g_ring_modulate_w, g_ring_modulate)
 XEN_NARGIFY_3(g_amplitude_modulate_w, g_amplitude_modulate)
 XEN_ARGIFY_2(g_contrast_enhancement_w, g_contrast_enhancement)
 XEN_ARGIFY_3(g_dot_product_w, g_dot_product)
-#if HAVE_COMPLEX_TRIG && (HAVE_SCM_MAKE_COMPLEX || HAVE_SCM_C_MAKE_RECTANGULAR)
+#if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
 XEN_NARGIFY_2(g_edot_product_w, g_edot_product)
 #endif
 XEN_NARGIFY_1(g_clear_array_w, g_clear_array)
@@ -7029,7 +7029,7 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_amplitude_modulate_w g_amplitude_modulate
 #define g_contrast_enhancement_w g_contrast_enhancement
 #define g_dot_product_w g_dot_product
-#if HAVE_COMPLEX_TRIG && (HAVE_SCM_MAKE_COMPLEX || HAVE_SCM_C_MAKE_RECTANGULAR)
+#if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
 #define g_edot_product_w g_edot_product
 #endif
 #define g_clear_array_w g_clear_array
@@ -7400,7 +7400,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_amplitude_modulate,   g_amplitude_modulate_w,   3, 0, 0, H_amplitude_modulate);
   XEN_DEFINE_PROCEDURE(S_contrast_enhancement, g_contrast_enhancement_w, 1, 1, 0, H_contrast_enhancement);
   XEN_DEFINE_PROCEDURE(S_dot_product,          g_dot_product_w,          2, 1, 0, H_dot_product);
-#if HAVE_COMPLEX_TRIG && (HAVE_SCM_MAKE_COMPLEX || HAVE_SCM_C_MAKE_RECTANGULAR)
+#if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
   XEN_DEFINE_PROCEDURE(S_edot_product,         g_edot_product_w,         2, 0, 0, H_edot_product);
 #endif
   XEN_DEFINE_PROCEDURE(S_clear_array,          g_clear_array_w,          1, 0, 0, H_clear_array);
@@ -7864,7 +7864,7 @@ void mus_xen_init(void)
 	       S_delay_tick,
 	       S_dolph_chebyshev_window,
 	       S_dot_product,
-#if HAVE_COMPLEX_TRIG && (HAVE_SCM_MAKE_COMPLEX || HAVE_SCM_C_MAKE_RECTANGULAR)
+#if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
 	       S_edot_product,
 #endif
 	       S_env,

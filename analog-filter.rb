@@ -1,8 +1,8 @@
 # analog-filter.rb -- analog-filter.scm --> analog-filter.rb -*- snd-ruby -*-
 
-# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+# Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Aug 01 22:58:31 CEST 2006
-# Changed: Thu Aug 03 22:28:19 CEST 2006
+# Changed: Tue Nov 20 00:16:45 CET 2007
 
 # Commentary:
 #
@@ -23,6 +23,11 @@
 #  make_inverse_chebyshev_highpass(n, fc, loss_dB = 60.0)
 #  make_inverse_chebyshev_bandpass(n, fl, fh, loss_dB = 60.0)
 #  make_inverse_chebyshev_bandstop(n, fl, fh, loss_dB = 60.0)
+#
+#  make_bessel_lowpass(n, fc)
+#  make_bessel_highpass(n, fc)
+#  make_bessel_bandpass(n, fl, fh)
+#  make_bessel_bandstop(n, fl, fh)
 #
 #  make_elliptic_lowpass(n, fc, ripple = 1.0, loss_dB = 60.0)
 #  make_elliptic_highpass(n, fc, ripple = 1.0, loss_dB = 60.0)
@@ -113,6 +118,10 @@ module Analog_filter
   end
 
   # n = order, fc = cutoff freq (srate = 1.0)
+  add_help(:make_butterworth_lowpass,
+           "make_butterworth_lowpass(n, fc): \
+returns a lowpass Buttterworth filter; N = order, \
+FC = cutoff freq (srate = 1.0): make_butterworth_lowpass(8, 0.1)")
   def make_butterworth_lowpass(n, fc)
     if n.odd? then n += 1 end
     proto = butterworth_prototype(n)
@@ -120,6 +129,10 @@ module Analog_filter
     make_filter(:xcoeffs, coeffs[0], :ycoeffs, coeffs[1])
   end
 
+  add_help(:make_butterworth_highpass,
+           "make_butterworth_highpass(n, fc): \
+returns a highpass Buttterworth filter; N = order, \
+FC = cutoff freq (srate = 1.0): make_butterworth_highpass(8, 0.1)")
   def make_butterworth_highpass(n, fc)
     if n.odd? then n += 1 end
     proto = butterworth_prototype(n)
@@ -128,12 +141,20 @@ module Analog_filter
     make_filter(:xcoeffs, coeffs[0], :ycoeffs, coeffs[1])
   end
 
+  add_help(:make_butterworth_bandpass,
+           "make_butterworth_bandpass(n, fl, fh): \
+returns a bandpass Buttterworth filter; N = order, \
+FL and FH are (1.0-based) edge freqs: make_butterworth_bandpass(4, 0.1, 0.2)")
   def make_butterworth_bandpass(n, fl, fh)
     lp = make_butterworth_lowpass(n, fh)
     hp = make_butterworth_highpass(n, fl)
     lambda do |y| filter(lp, filter(hp, y)) end
   end
 
+  add_help(:make_butterworth_bandstop,
+           "make_butterworth_bandstop(n, fl, fh): \
+returns a bandstop Buttterworth filter; N = order, \
+FL and FH are (1.0-based) edge freqs: make_butterworth_bandstop(4, 0.1, 0.2)")
   def make_butterworth_bandstop(n, fl, fh)
     lp = make_butterworth_lowpass(n, fl)
     hp = make_butterworth_highpass(n, fh)
@@ -146,17 +167,19 @@ module Analog_filter
 
   # ripple in dB (positive)
   def chebyshev_prototype(n, ripple = 1.0)
-    e = sqrt(10.0 ** (0.1 * ripple) - 1.0)
+    e = sqrt((10.0 ** (0.1 * ripple)) - 1.0)
     v0 = asinh(1.0 / e) / n.to_f
     len = (n * 3) / 2
     n2 = 2.0 * n
+    sinhv0 = sinh(v0)
+    coshv0 = cosh(v0)
     num = Vct.new(len)
     den = Vct.new(len)
     j = 0
-    1.0.step(n - 1, 2.0) do |l|
+    1.step(n - 1, 2) do |l|
       lpi = l * PI
-      u = -(sinh(v0) * sin(lpi / n2))
-      w = cosh(v0) * cos(lpi / n2)
+      u = -(sinhv0 * sin(lpi / n2))
+      w = coshv0 * cos(lpi / n2)
       num[j + 0] = 0.0
       num[j + 1] = 0.0
       num[j + 2] = 1.0
@@ -170,6 +193,10 @@ module Analog_filter
   end
 
   # n = order, fc = cutoff freq (srate = 1.0)
+  add_help(:make_chebyshev_lowpass,
+           "make_chebyshev_lowpass(n, fc, ripple=1.0): \
+returns a lowpass Chebyshev filter; N = order, \
+FC = cutoff freq (srate = 1.0): make_chebyshev_lowpass(8, 0.1)")
   def make_chebyshev_lowpass(n, fc, ripple = 1.0)
     if n.odd? then n += 1 end
     proto = chebyshev_prototype(n, ripple)
@@ -177,6 +204,10 @@ module Analog_filter
     make_filter(:xcoeffs, coeffs[0], :ycoeffs, coeffs[1])
   end
 
+  add_help(:make_chebyshev_highpass,
+           "make_chebyshev_highpass(n, fc, ripple=1.0): \
+returns a highpass Chebyshev filter; N = order, \
+FC = cutoff freq (srate = 1.0): make_chebyshev_highpass(8, 0.1, 0.01)")
   def make_chebyshev_highpass(n, fc, ripple = 1.0)
     if n.odd? then n += 1 end
     proto = chebyshev_prototype(n, ripple)
@@ -185,12 +216,20 @@ module Analog_filter
     make_filter(:xcoeffs, coeffs[0], :ycoeffs, coeffs[1])
   end
 
+  add_help(:make_chebyshev_bandpass,
+           "make_chebyshev_bandpass(n, fl, fh, ripple=1.0): \
+returns a bandpass Chebyshev filter; N = order, \
+FL and FH = edge freq (srate = 1.0): make_chebyshev_highpass(8, 0.1, 0.01)")
   def make_chebyshev_bandpass(n, fl, fh, ripple = 1.0)
     lp = make_chebyshev_lowpass(n, fh, ripple)
     hp = make_chebyshev_highpass(n, fl, ripple)
     lambda do |y| filter(lp, filter(hp, y)) end
   end
 
+  add_help(:make_chebyshev_bandstop,
+           "make_chebyshev_bandstop(n, fl, fh, ripple=1.0): \
+returns a bandstop Chebyshev filter; N = order, \
+FL and FH = edge freqs (srate = 1.0): make_chebyshev_bandstop(8, 0.1, 0.4, 0.01)")
   def make_chebyshev_bandstop(n, fl, fh, ripple = 1.0)
     lp = make_chebyshev_lowpass(n, fl, ripple)
     hp = make_chebyshev_highpass(n, fh, ripple)
@@ -227,6 +266,10 @@ module Analog_filter
   end
 
   # n = order, fc = cutoff freq (srate = 1.0)
+  add_help(:make_inverse_chebyshev_lowpass,
+           "make_inverse_chebyshev_lowpass(n, fc, loss_dB=60.0): \
+returns a lowpass inverse-Chebyshev filter; N = order, \
+FC = cutoff freq (srate = 1.0): make_inverse_chebyshev_lowpass(10, 0.4, 120)")
   def make_inverse_chebyshev_lowpass(n, fc, loss_dB = 60.0)
     if n.odd? then n += 1 end
     proto = inverse_chebyshev_prototype(n, loss_dB)
@@ -234,6 +277,10 @@ module Analog_filter
     make_filter(:xcoeffs, coeffs[0].scale!(proto[2]), :ycoeffs, coeffs[1])
   end
 
+  add_help(:make_inverse_chebyshev_highpass,
+           "make_inverse_chebyshev_highpass(n, fc, loss_dB=60.0): \
+returns a highpass inverse-Chebyshev filter; N = order, \
+FC = cutoff freq (srate = 1.0): make_inverse_chebyshev_highpass(10, 0.1, 120)")
   def make_inverse_chebyshev_highpass(n, fc, loss_dB = 60.0)
     if n.odd? then n += 1 end
     proto = inverse_chebyshev_prototype(n, loss_dB)
@@ -242,21 +289,106 @@ module Analog_filter
     make_filter(:xcoeffs, coeffs[0].scale!(proto[2]), :ycoeffs, coeffs[1])
   end
 
+  add_help(:make_inverse_chebyshev_bandpass,
+           "make_inverse_chebyshev_bandpass(n, fl, fh, loss_dB=60.0): \
+returns a bandpass inverse-Chebyshev filter; N = order, \
+FL and FH are edge freqs (srate = 1.0): make_inverse_chebyshev_bandpass(8, 0.1, 0.4)")
   def make_inverse_chebyshev_bandpass(n, fl, fh, loss_dB = 60.0)
     lp = make_inverse_chebyshev_lowpass(n, fh, loss_dB)
     hp = make_inverse_chebyshev_highpass(n, fl, loss_dB)
     lambda do |y| filter(lp, filter(hp, y)) end
   end
 
+  add_help(:make_inverse_chebyshev_bandstop,
+           "make_inverse_chebyshev_bandstop(n, fl, fh, loss_dB=60.0): \
+returns a bandstop inverse-Chebyshev filter; N = order, \
+FL and FH are edge freqs (srate = 1.0): make_inverse_chebyshev_bandstop(8, 0.1, 0.4, 90)")
   def make_inverse_chebyshev_bandstop(n, fl, fh, loss_dB = 60.0)
     lp = make_inverse_chebyshev_lowpass(n, fl, loss_dB)
     hp = make_inverse_chebyshev_highpass(n, fh, loss_dB)
     lambda do |y| filter(lp, y) + filter(hp, y) end
   end
 
-  if defined? gsl_ellipk
+  if provided? :gsl
     # requires with-gsl
-    
+    if defined? gsl_roots
+      # gsl_roots isn't defined for ruby in snd-xen.c
+      #
+      # === BESSEL(-Thompson) ===
+      #
+      def fact(n)
+        x = 1
+        2.upto(n) do |i| x *= i end
+        x
+      end
+
+      def bessel_i(n)
+        Vct.new(n + 1) do |i| fact(2 * n - i) / ((2 ** (n - i)) * fact(i) * fact(n - i)) end
+      end
+      
+      def bessel_prototype(n)
+        len = (n * 3) / 2
+        num = Vct.new(len)
+        den = Vct.new(len)
+        b2 = bessel_i(n)
+        p = gsl_roots(b2.to_a)
+        p.map! do |x| x / (b2[0] ** (1.0 / n)) end
+        j = 0
+        0.step(n - 1, 2) do |i|
+          num[j + 0] = 0.0
+          num[j + 0] = 0.0
+          num[j + 2] = 1.0
+          den[j + 0] = 1.0
+          den[j + 0] = -2.0 * p[i].real
+          den[j + 2] = (p[i] * p[i + 1]).real
+          j += 3
+        end
+        [num, den]
+      end
+      
+      add_help(:make_bessel_lowpass,
+               "make_bessel_lowpass(n, fc): \
+returns a lowpass Bessel filter; N = order, \
+FC = cutoff freq (srate = 1.0): make_bessel_lowpass(4, 0.1)")
+      def make_bessel_lowpass(n, fc)
+        if n.odd? then n += 1 end
+        proto = bessel_prototype(n)
+        coeffs = analog2digital(n, proto[0], proto[1], fc)
+        make_filter(:xcoeffs, coeffs[0], :ycoeffs, coeffs[1])
+      end
+
+      add_help(:make_bessel_highpass,
+               "make_bessel_highpass(n, fc): \
+returns a highpass Bessel filter; N = order, \
+FC = cutoff freq (srate = 1.0): make_bessel_highpass(8, 0.1)")
+      def make_bessel_highpass(n, fc)
+        if n.odd? then n += 1 end
+        proto = bessel_prototype(n)
+        hproto = prototype2highpass(n, proto[0], proto[1])
+        coeffs = analog2digital(n, hproto[0], hproto[1], fc)
+        make_filter(:xcoeffs, coeffs[0], :ycoeffs, coeffs[1])
+      end
+
+      add_help(:make_bessel_bandpass,
+               "make_bessel_bandpass(n, fl, fh): \
+returns a bandpass Bessel filter; N = order, \
+FL and FH are edge freqs (srate = 1.0): make_bessel_bandpass(4, 0.1, 0.2)")
+      def make_bessel_bandpass(n, fl, fh)
+        lp = make_bessel_lowpass(n, fh)
+        hp = make_bessel_highpass(n, fl)
+        lambda do |y| filter(lp, filter(hp, y)) end
+      end
+
+      add_help(:make_bessel_bandstop,
+               "make_bessel_bandstop(n, fl, fh): \
+returns a bandstop Bessel filter; N = order, \
+FL and FH are edge freqs (srate = 1.0): make_bessel_bandstop(8, 0.1, 0.2)")
+      def make_bessel_bandstop(n, fl, fh, ripple = 1.0, loss_dB = 60.0)
+        lp = make_bessel_lowpass(n, fl)
+        hp = make_bessel_highpass(n, fh)
+        lambda do |y| filter(lp, y) + filter(hp, y) end
+      end
+    end
     #
     # === ELLIPTIC ===
     #
@@ -265,7 +397,7 @@ module Analog_filter
       fx = snd_func(f, xmin, arg1, arg2)
       n = 20
       x = Vct.new(n)
-      20.times do |i|
+      n.times do |i|
         step = (xmax - xmin) / (n - 1.0)
         s = xmin
         (n - 1).times do |j|
@@ -295,8 +427,8 @@ module Analog_filter
     end
     
     def elliptic_prototype(n, ripple = 1.0, loss_dB = 60.0)
-      e = sqrt(10.0 ** (0.1 * ripple) - 1.0)
-      k1 = e / sqrt(10.0 ** (0.1 * loss_dB) - 1.0)
+      e = sqrt((10.0 ** (0.1 * ripple)) - 1.0)
+      k1 = e / sqrt((10.0 ** (0.1 * loss_dB)) - 1.0)
       k1p = sqrt(1.0 - k1 * k1)
       kr = m = k = 0.0
       len = (n * 3) / 2
@@ -319,7 +451,7 @@ module Analog_filter
         cv[j + 2] = dn
         z = Complex(0.0, -1.0) / (sqrt(m) * sn)
         pz = (z * make_rectangular(z.real, -z.image)).real
-        g = g / pz
+        g /= pz
         num[j + 0] = 1.0
         num[j + 1] = -2.0 * z.real
         num[j + 2] = pz
@@ -333,8 +465,8 @@ module Analog_filter
       sn, cn, dn = vals[0..2]
       j = 0
       0.step(n - 1, 2) do |i|
-        p = -(cv[j + 1] * cv[j + 2] * sn * cn + Complex(0.0, 1.0) * cv[j + 0] * dn) /
-          (1.0 - cv[j + 2] * sn * cv[j + 2] * sn)
+        p = -(cv[j + 1] * cv[j + 2] * sn * cn + (Complex(0.0, 1.0) * cv[j + 0] * dn)) /
+          (1.0 - (cv[j + 2] * sn * cv[j + 2] * sn))
         pp = (p * make_rectangular(p.real, -p.image)).real
         g *= pp
         den[j + 0] = 1.0
@@ -347,6 +479,10 @@ module Analog_filter
     end
     
     # n = order, fc = cutoff freq (srate = 1.0)
+    add_help(:make_elliptic_lowpass,
+             "make_elliptic_lowpass(n, fc, ripple=1.0, loss_dB=60.0): \
+returns a lowpass elliptic filter; N = order, \
+FC = cutoff freq (srate = 1.0): make_elliptic_lowpass(8, 0.25, 0.01, 90)")
     def make_elliptic_lowpass(n, fc, ripple = 1.0, loss_dB = 60.0)
       if n.odd? then n += 1 end
       proto = elliptic_prototype(n, ripple, loss_dB)
@@ -354,6 +490,10 @@ module Analog_filter
       make_filter(:xcoeffs, coeffs[0].scale!(proto[2]), :ycoeffs, coeffs[1])
     end
 
+    add_help(:make_elliptic_highpass,
+             "make_elliptic_highpass(n, fc, ripple=1.0, loss_dB=60.0): \
+returns a highpass elliptic filter; N = order, \
+FC = cutoff freq (srate = 1.0): make_elliptic_highpass(8, 0.25, 0.01, 90)")
     def make_elliptic_highpass(n, fc, ripple = 1.0, loss_dB = 60.0)
       if n.odd? then n += 1 end
       proto = elliptic_prototype(n, ripple, loss_dB)
@@ -362,17 +502,26 @@ module Analog_filter
       make_filter(:xcoeffs, coeffs[0].scale!(proto[2]), :ycoeffs, coeffs[1])
     end
 
+    add_help(:make_elliptic_bandpass,
+             "make_elliptic_bandpass(n, fl, fh, ripple=1.0, loss_dB=60.0): \
+returns a bandpass elliptic filter; N = order, \
+FL and FH are edge freqs (srate = 1.0): make_elliptic_bandpass(6, 0.1, 0.2, 0.1, 90)")
     def make_elliptic_bandpass(n, fl, fh, ripple = 1.0, loss_dB = 60.0)
       lp = make_elliptic_lowpass(n, fh, ripple, loss_dB)
       hp = make_elliptic_highpass(n, fl, ripple, loss_dB)
       lambda do |y| filter(lp, filter(hp, y)) end
     end
 
+    add_help(:make_elliptic_bandstop,
+             "make_elliptic_bandstop(n, fl, fh, ripple=1.0, loss_dB=60.0): \
+returns a bandstop elliptic filter; N = order, \
+FL and FH are edge freqs (srate = 1.0): make_elliptic_bandstop(6, 0.1, 0.2, 0.1, 90)")
     def make_elliptic_bandstop(n, fl, fh, ripple = 1.0, loss_dB = 60.0)
       lp = make_elliptic_lowpass(n, fl, ripple, loss_dB)
       hp = make_elliptic_highpass(n, fh, ripple, loss_dB)
       lambda do |y| filter(lp, y) + filter(hp, y) end
     end
+
   end
 end
 

@@ -1,8 +1,8 @@
 # effects.rb -- Guile -> Ruby translation -*- snd-ruby -*-
 
-# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+# Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Changed: Thu Oct 19 23:32:09 CEST 2006
+# Changed: Sat Nov 17 00:53:47 CET 2007
 
 # Commentary:
 #
@@ -55,7 +55,7 @@ require "hooks"
 $effects_menu = false           # for prefs
 
 unless $mark_hook.member?("mark-buttons-effects-hook")
-  mark_hook_proc = lambda do
+  mark_hook_proc = lambda do | |
     flag = marks?
     $mark_buttons.each do |w| set_sensitive(w, flag) end
   end
@@ -175,8 +175,7 @@ module Effects
   def effects_squelch_channel(amount, size, snd = false, chn = false)
     f0 = make_moving_average(size)
     f1 = make_moving_average(size, :initial_element, 1.0)
-    map_channel(lambda do
-                  |y|
+    map_channel(lambda do |y|
                   y * moving_average(f1, ((moving_average(f0, y * y) < amount) ? 0.0 : 1.0))
                 end, 0, false, snd, chn, false, format("%s(%s, %s", get_func_name, amount, size))
   end

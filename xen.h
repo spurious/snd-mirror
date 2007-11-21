@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 9
-#define XEN_VERSION "2.9"
+#define XEN_MINOR_VERSION 10
+#define XEN_VERSION "2.10"
 
 /* HISTORY:
  *
+ *  21-Nov-07: XEN_HAVE_COMPLEX_NUMBERS.
  *  18-Jul-07: Gauche error handling changes.
  *  28-Apr-07: Gauche API changes in versions 0.8.8, 0.8.10, and 0.9.
  *  14-Feb-07: XEN_PUTS and friends for fth (Mike).
@@ -236,6 +237,7 @@
     #define XEN_TO_C_COMPLEX(a)      XEN_TO_C_DOUBLE(scm_real_part(a)) + (XEN_TO_C_DOUBLE(scm_imag_part(a)) * _Complex_I)
     #define C_TO_XEN_COMPLEX(a)      scm_make_complex(creal(a), cimag(a))
   #endif
+  #define XEN_HAVE_COMPLEX_NUMBERS 1
 #endif
 
 #if HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR
@@ -1270,6 +1272,7 @@ XEN xen_rb_add_to_load_path(char *path);
 # define XEN_COMPLEX_P(Arg)             FTH_NUMBER_P(Arg) 
 # define C_TO_XEN_COMPLEX(a)            fth_make_complex(a)
 # define XEN_TO_C_COMPLEX(a)            fth_complex_ref(a)
+# define XEN_HAVE_COMPLEX_NUMBERS 1
 #else
 # define XEN_COMPLEX_P(Arg)             false
 # define C_TO_XEN_COMPLEX(a)            XEN_ZERO
@@ -1583,6 +1586,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_EXACT_P(Arg)             SCM_EXACTP(Arg)
 #define C_TO_XEN_LONG_LONG(a)        Scm_MakeBignumFromSI(a)
 #define XEN_COMPLEX_P(Arg)           SCM_COMPLEXP(Arg)
+#define XEN_HAVE_COMPLEX_NUMBERS 1
 
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define XEN_OFF_T_P(Arg)           ({ XEN _xen_ga_3_ = Arg; (SCM_INTEGERP(_xen_ga_3_) || SCM_BIGNUMP(_xen_ga_3_)); })

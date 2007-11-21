@@ -1,8 +1,8 @@
 # hooks.rb -- hook-related functions
 
-# Author: Michael Scholz <scholz-micha@gmx.de>
+# Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Changed: Sat Jun 02 00:34:56 CEST 2007
+# Changed: Fri Jul 06 01:53:44 CEST 2007
 
 # Commentary:
 #

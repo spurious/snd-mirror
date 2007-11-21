@@ -3545,22 +3545,26 @@ static char *html_directory(void)
   int i;
   if (mus_file_probe("snd.html"))
     return(mus_getcwd());
+
   if (html_dir(ss))
     {
       bool happy;
       char *hd = NULL;
       hd = (char *)CALLOC(snd_strlen(html_dir(ss)) + 16, sizeof(char));
-      sprintf(hd, html_dir(ss), "/snd.html");
+      sprintf(hd, "%s/snd.html", html_dir(ss));
       happy = mus_file_probe(hd);
       FREE(hd);
       if (happy) return(copy_string(html_dir(ss)));
     }
+
 #ifdef MUS_DEFAULT_DOC_DIR
   if (mus_file_probe(MUS_DEFAULT_DOC_DIR "/snd.html"))
-    return(copy_string(MUS_DEFAULT_DOC_DIR "/snd.html"));
+    return(copy_string(MUS_DEFAULT_DOC_DIR));
 #endif
+
   for (i = 0; i < DOC_DIRECTORIES; i++)
     if (mus_file_probe(doc_files[i])) return(copy_string(doc_directories[i]));
+
   return(NULL);
 }
 
@@ -3569,6 +3573,7 @@ void url_to_html_viewer(const char *url)
 {
   char *dir_path;
   dir_path = html_directory();
+
   if (dir_path)
     {
       char *program;

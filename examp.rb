@@ -1,8 +1,8 @@
 # examp.rb -- Guile -> Ruby translation -*- snd-ruby -*-
 
-# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+# Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Fri Jun 01 11:57:35 CEST 2007
+# Changed: Wed Nov 21 01:31:25 CET 2007
 
 # Commentary:
 #
@@ -312,7 +312,7 @@
 #  window_rms
 #  fft_peak(snd, chn, scale)
 #  finfo(file)
-#  display_correlation(snd, chn, y0, y1)
+#  display_correlate(snd, chn, y0, y1)
 #
 #  zoom_spectrum(snd, chn, y0, y1)
 #  zoom_fft(snd, chn, y0, y1)
@@ -779,7 +779,7 @@ if $DEBUG and RUBY_VERSION < "1.8.0"
   class Object
     def method_missing(id, *args)
       if id == :to_str
-        self.class.class_eval do define_method(id, lambda do self.to_s end) end
+        self.class.class_eval do define_method(id, lambda do | | self.to_s end) end
         id.id2name
       else
         Kernel.raise(NameError,
@@ -2009,8 +2009,8 @@ end
 # the current (or other) environment in the proc body:
 # 
 # os = make_oscil(:frequency, 330)
-# prc = make_proc_with_source(%(lambda do 10.times do |i| p os.run end end), binding)
-# puts prc.source   ==> lambda do 10.times do |i| p os.run end end
+# prc = make_proc_with_source(%(lambda do | | 10.times do |i| p os.run end end), binding)
+# puts prc.source   ==> lambda do | | 10.times do |i| p os.run end end
 # prc.call          ==> ..., 0.748837699712728
 # puts
 # prc.call          ==> ..., 0.97679449812022
@@ -2647,9 +2647,9 @@ end
 # nearly all are instances of StandardError
 Snd_error_tags = [# clm2xen.c
                   :mus_error,
-                  :arg_error,
+                  :no_such_method,
+                  :wrong_type_arg, # TypeError
                   # snd-0.h
-                  :no_such_track,
                   :no_such_envelope,
                   :no_such_sample,
                   :no_such_edit,
@@ -2660,6 +2660,7 @@ Snd_error_tags = [# clm2xen.c
                   # snd-dac.c
                   :bad_format,
                   :no_such_player,
+                  :arg_error,
                   # snd-draw.c
                   :no_such_widget,
                   :no_such_graphics_context,
@@ -2668,6 +2669,7 @@ Snd_error_tags = [# clm2xen.c
                   # snd-edits.c
                   :no_such_direction,
                   :no_such_region,
+                  :no_such_auto_delete_choice,
                   # snd-env.c
                   :env_error,
                   # snd-error.c
@@ -2680,17 +2682,16 @@ Snd_error_tags = [# clm2xen.c
                   # snd-ladspa.c
                   :no_such_plugin,
                   :plugin_error,
-                  # snd-main.c
-                  :memory_error,
                   # snd-marks.c
                   :no_such_mark,
                   # snd-menu.c
                   :no_such_menu,
                   # snd-mix.c
                   :no_such_mix,
-                  :io_error,
                   # snd-print.c
                   :cannot_print,
+                  # snd-region.c
+                  :io_error,
                   # snd-run.c
                   :wrong_number_of_args,
                   :cannot_parse,
@@ -2700,8 +2701,6 @@ Snd_error_tags = [# clm2xen.c
                   :cannot_apply_controls,
                   :bad_size,
                   :snd_internal_error,
-                  # snd-xdraw.c
-                  :no_current_font,
                   # snd-xen.c
                   :no_active_selection,
                   :bad_arity,
@@ -2710,16 +2709,17 @@ Snd_error_tags = [# clm2xen.c
                   # snd-xxen.c
                   :no_such_color,
                   # snd.c
+                  :snd_top_level,
                   :gsl_error,
                   # sndlib2xen.h
+                  :out_of_range,
                   :no_such_channel,
                   :no_such_file,
                   :bad_type,
                   :no_data,
                   :bad_header,
-                  # xen.h
-                  :out_of_range,
-                  :wrong_type_arg]              # TypeError
+                  # xm.c
+                  :no_such_resource]
 
 def rb_error_to_mus_tag
   # to_s and string error-names intended here
@@ -3168,14 +3168,14 @@ end")
   #
   # correlation of channels in a stereo sound
 
-  add_help(:display_correlation,
-           "display_correlation(snd, chn, y0, y1) \
+  add_help(:display_correlate,
+           "display_correlate(snd, chn, y0, y1) \
 returns the correlation of snd's 2 channels (intended for use with $graph_hook)
-$graph_hook.add_hook!(\"display_correlation\") do |snd, chn, y0, y1|
-  display_correlation(snd, chn, y0, y1)
+$graph_hook.add_hook!(\"display_correlate\") do |snd, chn, y0, y1|
+  display_correlate(snd, chn, y0, y1)
 end")
 
-  def display_correlation(snd, chn, y0, y1)
+  def display_correlate(snd, chn, y0, y1)
     if channels(snd) == 2 and frames(snd, 0) > 1 and frames(snd, 1) > 1
       ls = left_sample(snd, 0)
       rs = right_sample(snd, 0)
@@ -3204,7 +3204,7 @@ end")
       vct_scale!(data3, fftscale)
       graph(data3, "lag time", 0, fftlen2)
     else
-      report_in_minibuffer("display-correlation wants stereo input")
+      report_in_minibuffer("correlate wants stereo input")
     end
   end
 
@@ -5198,7 +5198,7 @@ turns the currently selected soundfont file into a bunch of files of the form sa
       start = fin
     end
     start = 0
-    as_one_edit(lambda do
+    as_one_edit(lambda do | |
                   scale_by(0.0)
                   len.times do
                     this = random(len)

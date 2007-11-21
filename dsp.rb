@@ -1,8 +1,8 @@
 # dsp.rb -- dsp.scm --> dsp.rb -*- snd-ruby -*-
 
-# Translator: Michael Scholz <scholz-micha@gmx.de>
+# Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Mon Jan 15 23:47:12 CET 2007
+# Changed: Mon Nov 19 18:30:48 CET 2007
 
 # Commentary:
 #
@@ -676,29 +676,31 @@ calls fft, sets all phases to 0, and un-ffts")
   class Asyfm < Musgen
     def initialize(*args)
       super()
-      frequency, initial_phase, ratio, r, index = nil
+      frequency, ratio, r, index, freq, phase = nil
       optkey(args, binding,
-             [:frequency, 440.0],
-             [:initial_phase, 0.0],
+             [:frequency, 0.0],
              [:ratio, 1.0],
              [:r, 1.0],
-             [:index, 1.0])
-      @frequency = hz2radians(frequency)
-      @phase = initial_phase.to_f
+             [:index, 1.0],
+             [:freq, 0.0],
+             [:phase, 0.0])
+      @frequency = frequency.to_f
       @ratio = ratio.to_f
       @r = r.to_f
       @index = index.to_f
+      @freq = hz2radians(@frequency)
+      @phase = phase.to_f
     end
     attr_accessor :ratio, :r, :index
 
     def inspect
-      format("%s.new(:frequency, %s, :initial_phase, %s, :ratio, %s, :r, %s, :index, %s)",
-             self.class, @frequency, @phase, @ratio, @r, @index)
+      format("%s.new(:frequency, %s, :ratio, %s, :r, %s, :index, %s, :freq, %s, :phase, %s)",
+             self.class, @frequency, @ratio, @r, @index, @freq, @phase)
     end
 
     def to_s
-      format("#<%s freq: %1.3f, phase: %1.3f, ratio: %1.3f, r: %1.3f, index: %1.3f>",
-             self.class, @frequency, @phase, @ratio, @r, @index)
+      format("#<%s freq: %1.3f, ratio: %1.3f, r: %1.3f, index: %1.3f, freq: %1.3f, phase: %1.3f>",
+             self.class, @frequency, @ratio, @r, @index, @freq, @phase)
     end
 
     def run_func(val1 = 0.0, val2 = 0.0)
@@ -708,22 +710,26 @@ calls fft, sets all phases to 0, and un-ffts")
     def asyfm_J(input)
       r1 = 1.0 / @r
       modphase = @ratio * @phase
-      result = exp(0.5 * @index * (@r - r1) * cos(modphase)) *
-        sin(@phase + 0.5 * @index * (@r + r1) * sin(modphase))
-      @phase += input + @frequency
+      one = if @r > 1.0 or
+                (@r < 0.0 and @r > -1.0)
+              -1.0
+            else
+              1.0
+            end
+      result = exp(0.5 * @index * (@r - r1) * (one + cos(modphase))) *
+        cos(@phase + 0.5 * @index * (@r + r1) * sin(modphase))
+      @phase += input + @freq
       result
     end
     
     def asyfm_I(input)
       r1 = 1.0 / @r
       modphase = @ratio * @phase
-      result = exp((0.5 * @index * (@r + r1) * cos(modphase)) -
-                     (0.5 * log(bes_i0(@index * (@r + r1))))) *
-        sin(@phase + 0.5 * @index * (@r - r1) * sin(modphase))
-      @phase += input + @frequency
+      result = exp(0.5 * @index * (@r + r1) * (cos(modphase) - 1.0)) -
+        cos(@phase + 0.5 * @index * (@r - r1) * sin(modphase))
+      @phase += input + @freq
       result
     end
-    
   end
 
   def make_asyfm(*args)
@@ -745,9 +751,15 @@ calls fft, sets all phases to 0, and un-ffts")
   # cosine-summation (a simpler version of sine-summation)
   # 
   # from Andrews, Askey, Roy "Special Functions" 5.1.16
+  add_help(:cosine_summation,
+           ":cosine_summation(gen, r): is a variant of the CLM sine-summation generator; \
+R controls successive sinusoid amplitudes.")
   def cosine_summation(gen, r)
-    r2 = r * r
-    (((1.0 - r2) / ((1.0 + r2) - 2 * r * oscil(gen))) - 1.0) * ((1.0 - r2) / (2 * r * (1.0 + r2)))
+    rr = r * r
+    rrp1 = 1.0 + rr
+    rrm1 = 1.0 - rr
+    r2 = 2.0 * r
+    ((rrm1 / (rrp1 - r2 * oscil(gen))) - 1.0) * ((1.0 - r) / r2)
   end
   alias make_cosine_summation make_oscil
 
@@ -761,6 +773,10 @@ calls fft, sets all phases to 0, and un-ffts")
   # = more cosines; the actual amount of the nth cos involves
   # hypergeometric series (looks like r^n/n! (~=e^n?) with a million
   # other terms).
+  add_help(:kosine_summation,
+           "kosine_summation(gen, r, k): is a variant of sum-of-cosines; \
+R controls successive sinusoid amplitude; \
+K controls how many sinusoids are produced.")
   def kosine_summation(gen, r, k)
     r2 = r * r
     ((1.0 + r2) - 2 * r * oscil(gen)) ** -k * ((1.0 + r2) - 2 * r) ** k

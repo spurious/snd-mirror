@@ -212,7 +212,7 @@
 # with_sound.  with_sound returns a filename which can be used in the
 # sound_let body.
 #
-# sound_let(lambda do fm_violin(0, 1, 330, 0.5) end,
+# sound_let(lambda do | | fm_violin(0, 1, 330, 0.5) end,
 #           1024) do |tmp_file, val|
 # end
 #
@@ -221,7 +221,7 @@
 # If with_sound needs args, the args and the procedure must be in an
 # array.
 #
-# sound_let([:scaled_to, 0.3, :output, "sl.snd", lambda do fm_violin(0, 1, 330, 0.5) end],
+# sound_let([:scaled_to, 0.3, :output, "sl.snd", lambda do | | fm_violin(0, 1, 330, 0.5) end],
 #           1024) do |tmp_file, val|
 # end
 # 
@@ -229,15 +229,15 @@
 # 
 # One with_sound-call and one temporary file name, arbitrary called TMP:
 # 
-# sound_let([:reverb, :jc_reverb, lambda do fm_violin(0, 1, 220, 0.2) end]) do |tmp|
+# sound_let([:reverb, :jc_reverb, lambda do | | fm_violin(0, 1, 220, 0.2) end]) do |tmp|
 #   mus_mix(@output, tmp)
 # end
 # 
 # Two with_sound-calls and two temporary file names, arbitrary
 # called TEMP_1 and TEMP_2:
 # 
-# sound_let([:reverb, :jc_reverb, lambda do fm_violin(0, 1, 220, 0.2) end],
-#           lambda do fm_violin(0.5, 1, 440, 0.3) end) do |temp_1, temp_2|
+# sound_let([:reverb, :jc_reverb, lambda do | | fm_violin(0, 1, 220, 0.2) end],
+#           lambda do | | fm_violin(0.5, 1, 440, 0.3) end) do |temp_1, temp_2|
 #   mus_mix(temp_1, temp_2)
 #   mus_mix(@output, temp_1)
 # end
@@ -347,7 +347,7 @@ end
 
 with_sound() do
   with_mix "s1", %Q{
-  sound_let(lambda do fm_violin(0, 1, 440, 0.1) end) do |tmp|
+  sound_let(lambda do | | fm_violin(0, 1, 440, 0.1) end) do |tmp|
     clm_mix(tmp)
   end
   }
@@ -355,8 +355,8 @@ end
 
 with_sound(:verbose, true) do
   with_mix "s6", %Q{
-  sound_let(lambda do fm_violin(0, 1, 440, 0.1) end,
-            [:reverb, :nrev, lambda do clm_mix("oboe.snd") end]) do |tmp, tmp1|
+  sound_let(lambda do | | fm_violin(0, 1, 440, 0.1) end,
+            [:reverb, :nrev, lambda do | | clm_mix("oboe.snd") end]) do |tmp, tmp1|
     clm_mix(tmp1)
     clm_mix(tmp, :scale, 0.2, :output_frame, seconds2samples(1))
   end
@@ -365,10 +365,10 @@ with_sound(:verbose, true) do
 end
 
 with_sound(:verbose, true) do
-  sound_let(lambda do
+  sound_let(lambda do | |
                 with_mix "s7", 0, %Q{
-                  sound_let(lambda do fm_violin(0, 1, 440, 0.1) end,
-                            lambda do clm_mix("oboe.snd") end) do |tmp, tmp1|
+                  sound_let(lambda do | | fm_violin(0, 1, 440, 0.1) end,
+                            lambda do | | clm_mix("oboe.snd") end) do |tmp, tmp1|
                     clm_mix(tmp1)
                     clm_mix(tmp, :output_frame, @srate)
                   end
@@ -409,7 +409,7 @@ __ws_verbose__ = $VERBOSE
 __ws_debug__   = $DEBUG
 # get rid of `undefined variable' messages
 with_silence do
-  $clm_version            = "ruby 4-Dec-2006"
+  $clm_version            = "ruby 17-Nov-2007"
   $output                 = nil
   $reverb                 = nil
   $clm_array_print_length ||= 8
@@ -447,7 +447,7 @@ with_silence do
     $clm_locsig_type   ||= Mus_interp_linear
     $clm_output_device ||= Mus_audio_default
     $clm_rt_bufsize    ||= 512
-    $clm_srate         ||= 22050
+    $clm_srate         ||= 44100
   end
 end
 
@@ -457,7 +457,7 @@ module WS
  
    :output             $clm_file_name        test.snd
    :channels           $clm_channels         1
-   :srate              $clm_srate            22050
+   :srate              $clm_srate            44100
    :header_type        $clm_header_type      Mus_next
    :data_format        $clm_data_format      Mus_lfloat
    :audio_format       $clm_audio_format     Mus_lshort

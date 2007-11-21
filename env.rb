@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Sep 20 23:24:17 CEST 2003
-# Changed: Sun Jul 15 22:59:00 CEST 2007
+# Changed: Sat Nov 17 00:59:17 CET 2007
 
 # Commentary:
 #
@@ -410,7 +410,7 @@ REFLECTED causes every other repetition to be in reverse.")
 
     def power_env_channel(beg, dur, snd, chn, edpos, edname)
       curbeg = beg
-      as_one_edit_rb(edname) do
+      as_one_edit_rb(edname) do | |
         @envs.each do |en|
           len = mus_length(en) + 1
           env_channel(en, curbeg, len, snd, chn, edpos)
@@ -445,7 +445,7 @@ REFLECTED causes every other repetition to be in reverse.")
     if len == 3
       scale_channel(y1, beg, dur, snd, chn, edpos)
     else
-      as_one_edit_rb(get_func_name) do
+      as_one_edit_rb(get_func_name) do | |
         3.step(len - 1, 3) do |i|
           x0, x1 = x1, envelope[i]
           y0, y1 = y1, envelope[i + 1]
@@ -682,7 +682,7 @@ def test_power_env(start, dur, en)
   (beg...len).each do |i| outa(i, power_env(pe) * oscil(os), $output) end
 end
 
-with_sound(:channels, 1, :play, 1) do
+with_sound(:channels, 1, :play, 1) do | |
   test_power_env(0, 1, [0, 0, 0.325,   1, 1, 32,   2, 0, 0])
   test_power_env(1.2, 1, [0, 0, 0.325,   1, 1, 32,   2, 0.5, 1,   3, 1, 0.1234,   4, 0, 0])
   test_power_env(2.4, 1, [0, 0, 0,   1, 1, 1,   2, 0.5, 0.123,   3, 1, 321,   4, 0, 0])
@@ -715,7 +715,7 @@ class Peak_env
               :channels, channels(snd)}
             saved = true
           end
-          Snd.catch(:no_such_envelope) do write_peak_env_info_file(snd, chn, peak_file) end
+          Snd.catch(:no_such_envelope) do | | write_peak_env_info_file(snd, chn, peak_file) end
         end
       end
     end

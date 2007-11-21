@@ -1,8 +1,8 @@
 # popup.rb -- Specialize Popup Menus converted from Guile to Ruby. -*- snd-ruby -*-
 
-# Author: Michael Scholz <scholz-micha@gmx.de>
+# Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Changed: Sat May 12 16:49:07 CEST 2007
+# Changed: Sat Nov 17 00:50:32 CET 2007
 
 # Commentary:
 #
@@ -70,7 +70,7 @@
 # make_snd_popup("Listener", ...) do
 #   ...
 #   cascade("Close") do
-#     children(lambda do Snd.sounds end) do |snd|
+#     children(lambda do | | Snd.sounds end) do |snd|
 #       close_sound_extend(snd)
 #     end
 #   end
@@ -1058,7 +1058,7 @@ $edhist_save_hook.add_hook!(\"edhist save\") do |prc| Snd.display(prc.source) en
       (val = funcs.assoc([snd, chn])) and proc?(prc = val.cadr) and prc.call(snd, chn)
     end
     cascade("Apply") do
-      children(lambda do funcs.map do |vals| vals.car end end, true) do |snd, chn, index|
+      children(lambda do | | funcs.map do |vals| vals.car end end, true) do |snd, chn, index|
         index.between?(0, funcs.length - 1) and funcs[index].cadr.call(snd, chn)
       end
     end
@@ -1106,13 +1106,13 @@ all saved edit lists.",
                               set_show_listener(false)
                               main_widgets[Listener_pane]
                             end) do
-      identity = lambda do Snd.sounds end
-      edited = lambda do
+      identity = lambda do | | Snd.sounds end
+      edited = lambda do | |
         Snd.sounds.delete_if do |snd|
           (0...channels(snd)).detect do |chn| edits(snd, chn).first.zero? end
         end
       end
-      focused = lambda do (snds = Snd.sounds).length > 1 ? snds : [] end
+      focused = lambda do | | (snds = Snd.sounds).length > 1 ? snds : [] end
       cascade("Play") do
         children(identity) do |snd| play(0, snd) end
       end

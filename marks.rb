@@ -1,8 +1,8 @@
 # marks.rb -- marks.scm --> marks.rb -*- snd-ruby -*-
 
-# Translator: Michael Scholz <scholz-micha@gmx.de>
+# Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Mar 23 02:08:47 CET 2005
-# Changed: Tue Oct 17 21:40:44 CEST 2006
+# Changed: Tue Nov 20 02:32:31 CET 2007
 
 # Commentary:
 #
@@ -570,7 +570,7 @@ is a $mark_click_hook function that describes a mark and its properties")
         str += format("m = add_mark(%s, false, %d, %s, %d)\n",
                       mark_sample(m),
                       chn,
-                      mark_name(m).null? ? false : mark_name(m),
+                      mark_name(m).null? ? false : mark_name(m).inspect,
                       mark_sync(m))
         if props = mark_properties(m)
           str += format("set_mark_properties(m, %s)\n", props.inspect)

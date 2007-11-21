@@ -1,8 +1,8 @@
 # snd-xm.rb -- snd-motif and snd-gtk classes and functions -*- snd-ruby -*-
 
-# Author: Michael Scholz <scholz-micha@gmx.de>
+# Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Mon Jan 02 20:59:16 CET 2006
+# Changed: Sat Nov 17 01:06:09 CET 2007
 
 # Commentary:
 #
@@ -818,7 +818,7 @@ module Snd_Gtk
         end
       end
       if defined? Rg_idle_add
-        $stop_dac_hook.add_hook!(get_func_name) do
+        $stop_dac_hook.add_hook!(get_func_name) do | |
           Rg_idle_add(let(0) do |ctr|
                         lambda do |ignored|
                           meter_list.each do |meter|
@@ -2504,7 +2504,8 @@ class Snd_main_menu < Menu
                        lambda do |w, c, i| update_label(@children) end)
       else
         cascade = Rgtk_menu_item_new_with_label(@label)
-        Rgtk_menu_shell_append(RGTK_MENU_SHELL(Rgtk_menu_item_get_submenu(RGTK_MENU_ITEM(parent))), cascade)
+        Rgtk_menu_shell_append(RGTK_MENU_SHELL(Rgtk_menu_item_get_submenu(RGTK_MENU_ITEM(parent))),
+                               cascade)
         Rgtk_widget_show(cascade)
         @menu = Rgtk_menu_new()
         Rgtk_menu_item_set_submenu(RGTK_MENU_ITEM(cascade), @menu)
@@ -2530,7 +2531,7 @@ class Snd_main_menu < Menu
               menu.post_dialog
             end
           end
-          @children.push(lambda do change_label(child, menu.inspect) end)
+          @children.push(lambda do | | change_label(child, menu.inspect) end)
         else
           Snd.raise(:snd_x_error, arg.class, "class does not respond to `post_dialog'")
         end
@@ -2579,7 +2580,8 @@ class Main_menu < Menu
       RXtVaSetValues(parent, [RXmNmenuHelpWidget, wid]) if name =~ /help/
     else
       wid = Rgtk_menu_item_new_with_label(@label)
-      Rgtk_menu_shell_append(RGTK_MENU_SHELL(Rgtk_menu_item_get_submenu(GTK_MENU_ITEM(parent))), wid)
+      Rgtk_menu_shell_append(RGTK_MENU_SHELL(Rgtk_menu_item_get_submenu(RGTK_MENU_ITEM(parent))),
+                             wid)
       Rgtk_widget_show(wid) 
       @menu = Rgtk_menu_new()
       Rgtk_menu_item_set_submenu(RGTK_MENU_ITEM(wid), @menu)

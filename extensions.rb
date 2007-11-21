@@ -1,8 +1,8 @@
 # extensions.rb -- various generally useful Snd extensions (see extensions.scm) -*- snd-ruby -*-
 
-# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+# Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Mon Dec 11 05:00:27 CET 2006
+# Changed: Tue Nov 20 21:59:04 CET 2007
 
 # Commentary:
 # 
@@ -540,15 +540,7 @@ sets selection from mono files (from external program)")
         set_cursor(mix_position(mx.first), snd, chn)
         mx.first
       else
-        sorted_mx = mx.sort do |a, b|
-          if mix_position(a) < mix_position(b)
-            1
-          elsif mix_position(a) > mix_position(b)
-            -1
-          else
-            0
-          end
-        end
+        sorted_mx = mx.sort do |a, b| mix_position(a) <=> mix_position(b) end
         pos = cursor(snd, chn)
         curpos = count > 0 ? -1 : 0
         if pos >= mix_position(sorted_mx.first)
@@ -560,9 +552,9 @@ sets selection from mono files (from external program)")
             end
           end
         end
-        curpos = (curpos + count) % mx.length
-        set_cursor(mix_position(sorted_mx[curpos]), snd, chn)
-        sorted_mx[curpos]
+        curmx = sorted_mx[(curpos + count) % mx.length]
+        set_cursor(mix_position(curmx), snd, chn)
+        curmx
       end
     else
       false
@@ -583,15 +575,7 @@ sets selection from mono files (from external program)")
         set_cursor(mark_sample(mk.first), snd, chn)
         mk.first
       else
-        sorted_mk = mk.sort do |a, b|
-          if mark_sample(a) < mark_sample(b)
-            1
-          elsif mark_sample(a) > mark_sample(b)
-            -1
-          else
-            0
-          end
-        end
+        sorted_mk = mk.sort do |a, b| mark_sample(a) <=> mark_sample(b) end
         pos = cursor(snd, chn)
         curpos = count > 0 ? -1 : 0
         if pos >= mark_sample(sorted_mk.first)
@@ -603,9 +587,9 @@ sets selection from mono files (from external program)")
             end
           end
         end
-        curpos = (curpos + count) % mk.length
-        set_cursor(mark_sample(sorted_mk[curpos]), snd, chn)
-        sorted_mk[curpos]
+        curmk = sorted_mk[(curpos + count) % mk.length]
+        set_cursor(mark_sample(curmk), snd, chn)
+        curmk
       end
     else
       false
@@ -1353,7 +1337,7 @@ snd defaults to the currently selected sound.")
   # current selection sample the value returned by the function becomes
   # the new selection value.
 
-  bind_key(?x, 0, lambda do
+  bind_key(?x, 0, lambda do | |
              if selection?
                prompt_in_minibuffer("selection eval:", &method(:eval_over_selection).to_proc)
              else
