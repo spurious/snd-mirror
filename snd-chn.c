@@ -2,9 +2,6 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* TODO: if chans combined, change zy/sy, uncombine, secondary chan sliders not set right (at least zy isn't)
- */
-
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
  *   but there's no way to trap the outer resizing event and
  *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)

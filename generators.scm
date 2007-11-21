@@ -2000,8 +2000,7 @@
 ;;; from Askey "Ramanujan and Hypergeometric Series" in Berndt and Rankin "Ramanujan: Essays and Surveys" p283
 ;;;
 ;;; this gives a sum of cosines of decreasing amp where the "k" parameter determines
-;;;   the "index" (in FM nomenclature) -- higher k = more cosines; the actual amount
-;;;   of the nth cos involves hypergeometric series (looks like r^n/n! (~=e^n?) with a million other terms).
+;;;   the "index" (in FM nomenclature) -- higher k = more cosines
 
 (def-clm-struct (r2k!cos
 		 :make-wrapper (lambda (g)
@@ -2031,6 +2030,16 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
+	 (outa i (r2k!cos gen 0.0) *output*))))))
+
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+  (let ((gen (make-r2k!cos 440.0 :r 0.5 :k 3.0)) 
+	(indf (make-env '(0 1 1 0 10 0) :dur 80000 :scaler 10.0 :offset 1)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 80000)) 
+	 (set! (r2k!cos-k gen) (env indf))
 	 (outa i (r2k!cos gen 0.0) *output*))))))
 |#
 
