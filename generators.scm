@@ -314,12 +314,14 @@
 |#
 
 #|
+;;; clarinety
 (with-sound (:clipped #f :statistics #t :play #t)
-  (let ((gen (make-noddsin 300 :n 3))) ; clarinety
+  (let ((gen (make-noddsin 300 :n 3))
+	(ampf (make-env '(0 0 1 1 2 1 3 0) :dur 40000 :scaler .5)))
     (run (lambda ()
       (do ((i 0 (1+ i)))
-	  ((= i 10000))
-	(outa i (noddsin gen 0.0) *output*))))))
+	  ((= i 40000))
+	(outa i (* (env ampf) (noddsin gen 0.0)) *output*))))))
 |#
 
 
@@ -499,7 +501,7 @@
   (let ((gen (make-npcos 100.0 :n 10)))
     (run (lambda () (do ((i 0 (1+ i)))
 	((= i 20000))
-      (outa i (npcos gen) *output*))))))
+      (outa i (npcos gen 0.0) *output*))))))
 |#
 
 
@@ -862,6 +864,33 @@
 	   ((= i 30000))
 	 (outa i (nkssb gen (* vibamp (oscil vib))) *output*))))))
 
+|#
+(definstrument (nkssber beg dur freq mfreq n vibfreq amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (gen (make-nkssb freq mfreq n))
+	 (move (make-env '(0 1 1 -1) :duration dur))
+	 (vib (make-oscil vibfreq))
+	 (vibamp (hz->radians 5.0))
+	 (ampf (make-env '(0 0 1 1 5 1 6 0) :scaler amp :duration dur)))
+    (run 
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (nkssb-interp gen 
+				  (* vibamp (oscil vib))
+				  (env move))) ; interp env
+	       *output*))))))
+#|
+(with-sound (:play #t)
+  (nkssber 0 1 1000 100 5 5 0.5)
+  (nkssber 1 2 600 100 4 1 0.5)
+  (nkssber 3 2 1000 540 3 3 0.5)
+  (nkssber 5 4 300 120 2 0.25 0.5)
+  (nkssber 9 1 30 4 40 0.5 0.5)
+  (nkssber 10 1 20 6 80 0.5 0.5))
+
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nkssb 1000.0 100.0 5))
 	(move (make-env '(0 1 1 -1) :end 30000))
@@ -976,6 +1005,7 @@
     (/ (* num num)
        (* (nsincos-norm gen)
 	  (- (cos x) cosn)))))
+
 
 #|
 (with-sound (:clipped #f :statistics #t :play #f)
@@ -1176,7 +1206,44 @@
     (set! (rssb-angle2 gen) (+ fm angle2 (rssb-incr2 gen)))
     result))
 
+
+(definstrument (bump beg dur freq amp f0 f1 f2)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (res0 (inexact->exact (round (/ f0 freq))))
+	 (res1 (inexact->exact (round (/ f1 freq))))
+	 (res2 (inexact->exact (round (/ f2 freq))))
+	 (gen1 (make-rssb (* res0 freq) freq .4))
+	 (gen2 (make-rssb (* res1 freq) freq .5))
+	 (gen3 (make-rssb (* res2 freq) freq .6))
+	 (ampf (make-env '(0 0 .1 1 2 .5 3 .1 4 1 5 .4 6 .1 80 0) :scaler amp :base 32 :duration dur)) ; or 50 at end
+	 ;;           or '(0 0 .1 1 2 .5 3 .1 4 .3 5 .1 40 0)
+	 (pervib (make-triangle-wave 5.0 (hz->radians 3.0)))
+	 (ranvib (make-rand-interp 12.0 (hz->radians 2.0))))
+    (run 
+     (lambda ()
+       (do ((i start (1+ i)))
+	     ((= i stop))
+	   (let ((vib (+ (rand-interp ranvib)
+			 (triangle-wave pervib))))
+	     (outa i (* (env ampf)
+			(+ (* .85 (rssb-interp gen1 vib -1))
+			   (* .1 (rssb-interp gen2 vib 0))
+			   (* .05 (rssb-interp gen3 vib 1))))
+		   *output*)))))))
+
 #|
+(with-sound (:play #t)
+  (do ((k 0 (1+ k))) 
+      ((= k 10))
+    (bump (* 0.4 k) 1 (* 16.3 (expt 2.0 (+ 3 (/ k 12)))) .5 520 1190 2390))
+  (do ((k 0 (1+ k))) 
+      ((= k 10))
+    (let* ((freq (* 16.3 (expt 2.0 (+ 3 (/ k 12)))))
+	   (scl (sqrt (/ freq 120))))
+      (bump (+ 4 (* 0.4 k)) 1 freq  .5 (* scl 520) (* scl 1190) (* scl 2390)))))
+
+
 (with-sound (:clipped #f :statistics #t :play #t) 
   (do ((k 0 (1+ k))) 
       ((= k 10))
@@ -1449,20 +1516,28 @@
       (do ((i 0 (1+ i)))
 	  ((= i 10000))
 	(outa i (ercos gen 0.0) *output*))))))
+|#
 
+(definstrument (ercoser beg dur freq amp r)
+   (let* ((start (seconds->samples beg))
+	  (stop (+ start (seconds->samples dur)))
+	  (gen (make-ercos freq :r r))
+	  (t-env (make-env '(0 .1 1 2) :duration dur)))
+     (run 
+      (lambda ()
+	(do ((i start (1+ i)))
+	    ((= i stop))
+	  (set! (ercos-r gen) (env t-env))
+	  (set! (ercos-cosh-t gen) (cosh (ercos-r gen)))
+	  (let ((exp-t (exp (- (ercos-r gen)))))
+	    (set! (ercos-offset gen) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
+	    (set! (ercos-scaler gen) (* (sinh (ercos-r gen)) (ercos-offset gen))))
+	  (outa i (* amp (ercos gen 0.0)) *output*))))))
+
+#|
 ;; change "t" during note -- smoothly changing sum-of-cosines spectra (damped "lute-stop" effect)
-(with-sound (:clipped #f :statistics #t :play #t)  
-  (let ((gen (make-ercos 100 :r 0.1))
-	(t-env (make-env '(0 .1 1 2) :end 20000)))
-    (run (lambda ()
-      (do ((i 0 (1+ i)))
-	  ((= i 20000))
-	(set! (ercos-r gen) (env t-env))
-	(set! (ercos-cosh-t gen) (cosh (ercos-r gen)))
-	(let ((exp-t (exp (- (ercos-r gen)))))
-	  (set! (ercos-offset gen) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
-	  (set! (ercos-scaler gen) (* (sinh (ercos-r gen)) (ercos-offset gen))))
-	(outa i (ercos gen 0.0) *output*))))))
+(with-sound (:play #t)
+  (ercoser 0 1 100 .5 0.1))
 |#
 
 
@@ -1667,7 +1742,7 @@
 	   (do ((i 0 (1+ i)))
 	       ((= i 10000))
 	     (set! (eoddcos-r gen1) (env a-env))
-	     (outa i (eoddcos gen1 (* .1 (oscil gen2))) *output*))))))
+	     (outa i (* .5 (eoddcos gen1 (* .1 (oscil gen2)))) *output*))))))
 |#
 
 
@@ -1890,7 +1965,7 @@
 	   ((= i 10000)) 
 	 (outa i (* (env ampf) (rk!cos gen (env frqf))) *output*))))))
 
-(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+(with-sound (:play #t :scaled-to .5)
   (do ((k 0 (1+ k)))
       ((= k 6))
     (let ((gen (make-rk!cos 3000.0 :r 0.6)) (ampf (make-env '(0 0 1 1 2 1 3 0) :end 3000))
@@ -1899,7 +1974,10 @@
        (lambda ()
 	 (do ((i 0 (1+ i)))
 	     ((= i 3000)) 
-	   (outa (+ i (* k 4000)) (* (env ampf) (rk!cos gen (env frqf))) *output*)))))))
+	   (outa (+ i (* k 4000)) 
+		 (* (env ampf) 
+		    (rk!cos gen (env frqf))) 
+		 *output*)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (do ((k 0 (1+ k)))
@@ -3891,4 +3969,3 @@ index 10 (so 10/2 is the bes-jn arg):
 (define pulsed-env? plsenv?)
 
 
-;;; Spec 91, WW 383 385

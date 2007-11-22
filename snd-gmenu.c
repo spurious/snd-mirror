@@ -595,6 +595,17 @@ GtkWidget *add_menu(void)
   SG_SIGNAL_CONNECT(view_listener_menu, "activate", view_listener_callback, NULL);
 #endif
 
+  view_files_menu = gtk_image_menu_item_new_with_label(_("Files"));
+  ml[v_files_menu] = _("Files");
+  gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_files_menu);
+#ifdef GTK_STOCK_FILE
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(view_files_menu), gtk_image_new_from_stock(GTK_STOCK_FILE, GTK_ICON_SIZE_MENU));
+#else
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(view_files_menu), gtk_image_new_from_stock(GTK_STOCK_HOME, GTK_ICON_SIZE_MENU));
+#endif
+  gtk_widget_show(view_files_menu);
+  SG_SIGNAL_CONNECT(view_files_menu, "activate", view_files_callback, NULL);
+
   view_mix_dialog_menu = gtk_image_menu_item_new_with_label(_("Mixes"));
   ml[v_mix_dialog_menu] = _("Mixes");
   gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_mix_dialog_menu);
@@ -609,17 +620,6 @@ GtkWidget *add_menu(void)
   gtk_widget_show(view_region_menu);
   SG_SIGNAL_CONNECT(view_region_menu, "activate", view_region_callback_1, NULL);
   set_sensitive(view_region_menu, false);
-
-  view_files_menu = gtk_image_menu_item_new_with_label(_("Files"));
-  ml[v_files_menu] = _("Files");
-  gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_files_menu);
-#ifdef GTK_STOCK_FILE
-  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(view_files_menu), gtk_image_new_from_stock(GTK_STOCK_FILE, GTK_ICON_SIZE_MENU));
-#else
-  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(view_files_menu), gtk_image_new_from_stock(GTK_STOCK_HOME, GTK_ICON_SIZE_MENU));
-#endif
-  gtk_widget_show(view_files_menu);
-  SG_SIGNAL_CONNECT(view_files_menu, "activate", view_files_callback, NULL);
 
   view_color_menu = gtk_image_menu_item_new_with_label(_("Color"));
   ml[v_color_menu] = _("Color");

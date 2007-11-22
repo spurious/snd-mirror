@@ -520,16 +520,16 @@ Widget add_menu(void)
   XtVaSetValues(view_listener_menu, XmNmnemonic, 'L', NULL);
 #endif
 
+  view_files_menu = XtCreateManagedWidget(_("Files"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
+  XtAddCallback(view_files_menu, XmNactivateCallback, view_files_callback, NULL);
+  XtVaSetValues(view_files_menu, XmNmnemonic, 'F', NULL);
+
   view_mix_dialog_menu = XtCreateManagedWidget(_("Mixes"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
   XtAddCallback(view_mix_dialog_menu, XmNactivateCallback, view_mix_dialog_callback, NULL);
 
   view_region_menu = XtCreateManagedWidget(_("Regions"), xmPushButtonWidgetClass, view_menu, in_args, in_n);
   XtAddCallback(view_region_menu, XmNactivateCallback, view_region_callback_1, NULL);
   XtVaSetValues(view_region_menu, XmNmnemonic, 'R', NULL);
-
-  view_files_menu = XtCreateManagedWidget(_("Files"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
-  XtAddCallback(view_files_menu, XmNactivateCallback, view_files_callback, NULL);
-  XtVaSetValues(view_files_menu, XmNmnemonic, 'F', NULL);
 
   view_color_menu = XtCreateManagedWidget(_("Color"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
   XtAddCallback(view_color_menu, XmNactivateCallback, view_color_callback_1, NULL);

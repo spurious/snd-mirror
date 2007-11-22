@@ -2029,8 +2029,10 @@ original: & \frac{8}{\pi} \sum_{k=1}^{\infty} \frac{\sin^{2}kx}{4k^{2}-1} = |\si
 sceq31:
 J_{0}(ka)J_{0}(kr) + 2 \sum_{m=1}^{\infty} J_{m}(kr)J_{m}(ka) \cos m\theta = J_{0}\Big(k \sqrt{r^{2}+a^{2}-2ar\cos \theta}\Big)
 
-sceq32:
+sceq32 old form (redundant):
 1 + 2 \sum_{n=1}^{\infty} J_{n}(nz)\cos n(x-z\sin x) = \frac{1}{1-z\cos x}
+sceq32 new form:
+&2^{n} \Gamma(n) \sum_{m=0}^{\infty} (n+m)\frac{J_{n+m}(r)}{r^{n}} \frac{J_{n+m}(a)}{a^{n}} C_{m}^{n}(\cos \theta) = \frac{J_{n}\big(\sqrt{r^{2}+a^{2}-2ar\cos \theta}\big)}{\big(\sqrt{r^{2}+a^{2}-2ar\cos \theta}\big)^{n}} \\
 
 sceq33:
 \sum_{m=0}^{\infty}(m+\frac{1}{2})\frac{J_{m+\frac{1}{2}}(ka)}{\sqrt{a}} \frac{J_{m+\frac{1}{2}}(kr)}{\sqrt{r}} P_{m}(\cos \theta) = \frac{\sin\Big(k \sqrt{r^{2}+a^{2}-2ar\cos \theta}\Big)}{\pi \sqrt{r^{2}+a^{2}-2ar\cos \theta}}
@@ -2164,14 +2166,6 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 <tr><td colspan=3 height=25></td></tr>
 
 
-<tr><td><img src="sceq32.png" alt="more sums"></td><td></td>
-<td><a class=invisible href="#jjcos"><img src="sceq31.png" alt="more sums"></a></td></tr>
-<tr><td><a class=invisible href="#j2cos"><img src="sceq34.png" alt="more sums"></a></td><td></td>
-<td><a class=invisible href="#jpcos"><img src="sceq33.png" alt="more sums"></a></td></tr>
-<tr><td colspan=3 bgcolor="#eefdee"><center>Watson, "A Treatise on the Theory of Bessel Functions": 4.82, 11.41, 17.31</center></td></tr>
-<tr><td colspan=3 height=25></td></tr>
-
-
 <tr><td><img src="sceq36.png" alt="more sums" usemap="#GM1" border=0>
 <map name="GM1">
     <area shape=rect coords="0,0,300,50" href="sndclm.html#j0j1cos" alt="j0j1cos">
@@ -2185,6 +2179,14 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 </map>
 </td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>Gray and Mathews, "A Treatise on Bessel Functions and Their Applications to Physics" p 28, 29, 92, 240</center></td></tr>
+<tr><td colspan=3 height=25></td></tr>
+
+
+<tr><td><img src="sceq32.png" alt="more sums"></td><td></td>
+<td><a class=invisible href="#jjcos"><img src="sceq31.png" alt="more sums"></a></td></tr>
+<tr><td><a class=invisible href="#j2cos"><img src="sceq34.png" alt="more sums"></a></td><td></td>
+<td><a class=invisible href="#jpcos"><img src="sceq33.png" alt="more sums"></a></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>Watson, "A Treatise on the Theory of Bessel Functions": 4.82, 11.41, 17.31</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
@@ -4812,6 +4814,7 @@ asyfm-I is the modified Bessel function version (the second formula in the <a hr
 <p>
 This produces a repeating envelope.  <a href="#env">env</a> sticks at its last value, but pulsed-env repeats it over and over.
 "duration" is the envelope duration, and "frequency" is the repeitition rate, changeable via the "fm" argument to the pulsed-env generator.
+Many of the instruments in animals.scm use this generator.
 </p>
 <br>
 
@@ -4857,6 +4860,19 @@ sceq35:
 
 <p>j0evencos produces the J0(sin) case mentioned above (with the DC component subtracted out).
 </p>
+
+<pre>
+(with-sound (:play #t)
+  (let ((gen (make-j0evencos 100.0 0.0))
+	(indf (make-env '(0 10 1 0) :end 30000))
+	(carrier (make-oscil 2000.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000)) 
+	 (set! (j0evencos-index gen) (env indf))
+	 (outa i (* 0.5 (j0evencos gen (* .1 (oscil carrier)))) *output*))))))
+</pre>
 
 <br>
 
@@ -5039,8 +5055,18 @@ component is multiplied by -1, and "n" produces 2n-1 components.
 
 <img src="sceq28.png" alt="sum of sines" hspace=40><br>
 
-<p>The corresponding "even" case is the same as ncos with twice the frequency.
+<p>The corresponding "even" case is the same as ncos with twice the frequency.  noddsin produces a somewhat clarinet-like tone:
 </p>
+
+<pre>
+(with-sound (:play #t)
+  (let ((gen (make-noddsin 300 :n 3))
+	(ampf (make-env '(0 0 1 1 2 1 3 0) :dur 40000 :scaler .5)))
+    (run (lambda ()
+      (do ((i 0 (1+ i)))
+	  ((= i 40000))
+	(outa i (* (env ampf) (noddsin gen 0.0)) *output*))))))
+</pre>
 <br>
 
 
@@ -5063,6 +5089,37 @@ component is multiplied by -1, and "n" produces 2n-1 components.
 nrsin is the same as <a href="#sine-summation">sine-summation</a>.
 In the nrssb-interp generator, the "interp" argument interpolates between the upper (interp=1.0) and lower (interp=-1.0) side bands.
 </p>
+
+<p>The instrument lutish uses nrcos: <code>lutish beg dur freq amp</code>:
+</p>
+
+<pre>
+(with-sound (:play #t)
+  (do ((i 0 (1+ i)))
+      ((= i 10))
+    (lutish (* i .1) 2 (* 100 (1+ i)) .05)))
+</pre>
+
+<p>The instrument oboish uses nrssb: <code>oboish beg dur freq amp amp-env</code>:
+</p>
+
+<pre>
+(with-sound (:play #t)
+  (do ((i 0 (1+ i)))
+      ((= i 10))
+    (oboish (* i .3) .4 (+ 100 (* 50 i)) .05 '(0 0 1 1 2 1 3 0))))
+</pre>
+
+<p>organish also uses nrssb: <code>organish beg dur freq amp fm-index amp-env</code>:
+</p>
+
+<pre>
+(with-sound (:play #t)
+  (do ((i 0 (1+ i)))
+      ((= i 10))
+    (organish (* i .3) .4 (+ 100 (* 50 i)) .5 1.0 #f)))
+</pre>
+
 <br>
 
 
@@ -5075,7 +5132,18 @@ In the nrssb-interp generator, the "interp" argument interpolates between the up
 
 <p>This generator produces the single side-band version of the sum of "n" sinusoids, where the nth component has amplitude n.
 In the nkssb-interp generator, the "interp" argument interpolates between the upper and lower side bands.
+The instrument nkssber uses nkssb-interp:
 </p>
+
+<pre>
+(with-sound (:play #t)
+  (nkssber 0 1 1000 100 5 5 0.5)
+  (nkssber 1 2 600 100 4 1 0.5)
+  (nkssber 3 2 1000 540 3 3 0.5)
+  (nkssber 5 4 300 120 2 0.25 0.5)
+  (nkssber 9 1 30 4 40 0.5 0.5)
+  (nkssber 10 1 20 6 80 0.5 0.5))
+</pre>
 <br>
 
 
@@ -5127,7 +5195,20 @@ under the name "discrete summation formula".
 </pre>
 
 <p>These generators produce an infinite sum of sinusoids, each successive component scaled by "r" (so the nth component has amplitude r^n).
+The bump instrument uses rssb-interp: <code>bump beg dur freq amp f0 f1 f2</code>:
 </p>
+
+<pre>
+(with-sound (:play #t)
+  (do ((k 0 (1+ k))) 
+      ((= k 10))
+    (bump (* 0.4 k) 1 (* 16.3 (expt 2.0 (+ 3 (/ k 12)))) .5 520 1190 2390))
+  (do ((k 0 (1+ k))) 
+      ((= k 10))
+    (let* ((freq (* 16.3 (expt 2.0 (+ 3 (/ k 12)))))
+	   (scl (sqrt (/ freq 120))))
+      (bump (+ 4 (* 0.4 k)) 1 freq  .5 (* scl 520) (* scl 1190) (* scl 2390)))))
+</pre>
 <br>
 
 
@@ -5141,8 +5222,14 @@ under the name "discrete summation formula".
   <A class=def NAME="erssb?">erssb?</A> gen
 </pre>
 
-<p>These produce a sum of sinusoids, each scaled by e^(-kr), a special case of rcos.
+<p>These produce a sum of sinusoids, each scaled by e^(-kr), a special case of rcos.  The ercoser instrument uses ercos:
+<code>ercoser beg dur freq amp r</code>:
 </p>
+
+<pre>
+(with-sound (:play #t)
+  (ercoser 0 1 100 .5 0.1))
+</pre>
 <br>
 
 
@@ -5154,6 +5241,18 @@ under the name "discrete summation formula".
 
 <p>This produces a sum of odd harmonics, each scaled by e^(2k-1)/(2k-1).  As "r" approches 0.0, this approaches a square wave.
 </p>
+
+<pre>
+(with-sound (:play #t)
+  (let ((gen1 (make-eoddcos 400.0 :r 0.0))
+	(gen2 (make-oscil 400.0))
+	(a-env (make-env '(0 0 1 1) :end 10000)))
+    (run (lambda () 
+      (do ((i 0 (1+ i)))
+	  ((= i 10000))
+	(set! (eoddcos-r gen1) (env a-env))
+	(outa i (* .5 (eoddcos gen1 (* .1 (oscil gen2)))) *output*))))))
+</pre>
 <br>
 
 
@@ -5212,8 +5311,33 @@ This generator's output is not normalized, and looks incorrect...
 &\sum_{k=0}^{\infty}\frac{p^{k}\cos kx}{k!} = e^{p\cos x}\cos(p\sin x) \\
 -->
 
-<p>These produce a sum of sinusoids scaled by (r^k)/k!.  (rk!cos is a special case of rxyk!cos).
+<p>These produce a sum of sinusoids scaled by (r^k)/k!.  (rk!cos is a special case of rxyk!cos).  Here is rk!cos make a bird twitter:
 </p>
+
+<pre>
+(with-sound (:play #t :scaled-to .5)
+  (do ((k 0 (1+ k)))
+      ((= k 6))
+    (let ((gen (make-rk!cos 3000.0 :r 0.6)) 
+          (ampf (make-env '(0 0 1 1 2 1 3 0) :end 3000))
+	  (frqf (make-env '(0 0 1 1) :base .1 :scaler (hz-&gt;radians 2000) :end 3000)))
+      (run 
+       (lambda ()
+	 (do ((i 0 (1+ i)))
+	     ((= i 3000)) 
+	   (outa (+ i (* k 4000)) 
+		 (* (env ampf) 
+		    (rk!cos gen (env frqf))) 
+		 *output*)))))))
+</pre>
+
+<p>The instrument bouncy uses rk!ssb: <code>bouncy beg dur freq amp :optional (bounce-freq 5) (bounce-amp 20)</code>
+</p>
+
+<pre>
+(with-sound (:play #t)
+  (bouncy 0 2 200 .5 3 2))
+</pre>
 <br>
 
 
@@ -5232,6 +5356,26 @@ This generator's output is not normalized, and looks incorrect...
 
 <img src="sceq30.png" alt="sum of sines" hspace=40>
 <br>
+
+<p>The instruments pianoy and pianoy1 use r2k!cos: <code>pianoy beg dur freq amp</code>, and 
+<code>pianoy1 beg dur freq amp :optional (bounce-freq 5) (bounce-amp 20)</code>:
+</p>
+
+<pre>
+(with-sound (:play #t)
+  (pianoy 0 3 100 .5))
+
+(with-sound (:play #t)
+  (pianoy1 0 4 200 .5 1 .1))
+</pre>
+
+<p>pianoy2 combines r2k!cos with fmssb to try to get closer to the hammer sound:
+</p>
+
+<pre>
+(with-sound (:play #t) 
+  (pianoy2 0 1 100 .5))
+</pre>
 <br>
 
 
@@ -5262,6 +5406,26 @@ This generator's output is not normalized, and looks incorrect...
 
 <p>This produces a sum of odd-numbered harmonics scaled by (r^(2k-1))/(2k-1).
 </p>
+
+<p>The instrument stringy uses rkoddssb and rcos: <code>stringy beg dur freq amp</code>:
+</p>
+
+<pre>
+(with-sound (:play #t)
+  (do ((i 0 (1+ i)))
+      ((= i 10))
+    (stringy (* i .3) .3 (+ 200 (* 100 i)) .5)))
+</pre>
+
+<p>glassy also uses rkoddssb: <code>glassy beg dur freq amp</code>:
+</p>
+
+<pre>
+(with-sound (:play #t)
+  (do ((i 0 (1+ i)))
+      ((= i 10))
+    (glassy (* i .3) .1 (+ 400 (* 100 i)) .5)))
+</pre>
 <br>
 
 
@@ -5351,6 +5515,8 @@ with each component scaled by (r^(2k))/(2k)!.  r2sin output is not normalized.
 <p>This produces a sum of cosines, each scaled by 1/(r^2+k^2).
 </p>
 <br>
+
+<!-- TODO: doc fmssb and machines -->
 
 
 

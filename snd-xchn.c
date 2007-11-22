@@ -549,13 +549,6 @@ static void graph_button_press(Widget w, XtPointer context, XEvent *event, Boole
 static void graph_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) /* cont = "continue to dispatch" */
 {
   XButtonEvent *ev = (XButtonEvent *)event;
-#if MUS_DEBUGGING
-  if (((int)context) <= 0) /* this is negative -2 sometimes?? */
-    {
-      fprintf(stderr, "graph_button_release, snd-xchn.c line 544 context: %p %d\n", context, (int)context);
-      abort();
-    }
-#endif
   graph_button_release_callback((chan_info *)context, ev->x, ev->y, ev->state, ev->button);
 }
 

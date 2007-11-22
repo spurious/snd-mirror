@@ -2,6 +2,8 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
+/* TODO: sometimes when fft y axis dragged, data is not redrawn? */
+
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
  *   but there's no way to trap the outer resizing event and
  *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
@@ -4524,13 +4526,22 @@ chan_info *which_channel(snd_info *sp, int y)
 {
   int i;
   chan_info *ncp = NULL;
+
+  if (y <= 0) /* this can happen if we drag the mouse over the top of the Snd window, then release it */
+    return(sp->chans[0]);
+
   for (i = 0; i < sp->nchans; i++)
     {
       axis_info *ap;
       chan_info *cp;
       cp = sp->chans[i];
       ap = cp->axis;
-      if (y < ap->y_offset) return(ncp);
+      if (y < ap->y_offset) 
+	{
+	  if (ncp)
+	    return(ncp);
+	  else return(cp);
+	}
       ncp = cp;
     }
   return(ncp);
@@ -4640,14 +4651,17 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, int button)
 {
   snd_info *sp;
+
   sp = cp->sound;
   if ((!(cp->active)) || (sp == NULL)) return; /* autotest silliness */
+
   if (sp->channel_style == CHANNELS_COMBINED)
     {
       if ((dragged) && (dragged_cp))
 	cp = dragged_cp;
       else cp = which_channel(sp, y);
     }
+
   dragged_cp = NULL;
   if (!dragged)
     {
