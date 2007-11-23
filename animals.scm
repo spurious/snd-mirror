@@ -12,6 +12,7 @@
 ;;; Spring peeper
 ;;; Crawfish frog
 ;;; River frog
+;;; Indri
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -32,7 +33,7 @@
 	 (modulator2 (make-oscil (* freq 8))) ; or 9
 	 (ampf (make-env '(0 0 .2 .5 1 .5 2 .5 3 1 4 .5 5 .5) :scaler amp :duration dur :base 32))
 	 (frqf (make-env '(0 0  1 0  1.01 0.1  1.03 -0.1  1.05 0.0  3 0 3.02 .05 3.03 -0.1 3.1 0 5 0.0) :duration dur :scaler (hz->radians freq)))
-	 ;; TODO: make freq env flicks at call time (is there a comb-filter effect as it gets near?)
+	 ;; SOMEDAY: make freq env flicks at call time (is there a comb-filter effect as it gets near?)
 	 (vib (make-rand-interp 10.0 (hz->radians 10)))
 	 (indf (make-rand-interp 1 .5))
 	 (index2 (hz->radians (* freq 1.0)))
@@ -217,27 +218,34 @@
 	 (base3 (make-oscil (* 4 freq)))
 	 (base4 (make-oscil (* 5 freq)))
 	 (ampmod (make-triangle-wave 155))
-	 (pulse (make-pulsed-env '(0 0 1 .1 6 .2 7 0 8 .3 10 1 18 .9 21 .1 23 .3 28 .1 30 0) .06 (/ 1.0 .06))) ; base of about .1 would be better here
 	 (ampf (make-env '(0 0 8 1 20 1 21 0) :duration dur :scaler amp))
-	 (frqf (make-pulsed-env '(0 1 1 -1 2 -1) .06 (/ 1.0 .06))) ; base of about 10 here -- TODO: need base arg to pulsed-env (or pass env itself)
-	 (indf (make-pulsed-env '(0 0 10 0 18 1 23 1 26 0 30 0) .06 (/ 1.0 .06))) ; TODO: all of these pulses need to march together
+	 (frqf (make-env '(0 1  1 -1  2 -1) :duration .06 :base 10.0))
+	 (pulsef (make-env '(0 0 1 .1 6 .2 7 0 8 .3 10 1 18 .9 21 .1 23 .3 28 .1 30 0) :duration .06 :base .1))
+	 (pulser (make-pulse-train (/ 1.0 .06)))
+	 (indf (make-env '(0 0 10 0 18 1 23 1 26 0 30 0) :duration .06))
 	 (noise (make-rand-interp 1000)))
     (run
      (lambda ()
        (do ((i start (1+ i)))
 	   ((= i stop))
-	 (let ((buzz (+ (* (hz->radians 40) (pulsed-env frqf 0.0))
-			(* .005 (rand-interp noise)))))
-	   (outa i (* (env ampf)
-		      (pulsed-env pulse 0.0)
-		      (+ .93 (* .07 (triangle-wave ampmod)))
-		      (+ (* .7 (oscil base buzz))
-			 (* .05 (oscil base1 (* 2 buzz)))
-			 (* .04 (oscil base2 (* 3 buzz)))
-			 (* (pulsed-env indf 0.0)
-			    (+ 	(* .02 (oscil base3 (* 4 buzz)))
-				(* .02 (oscil base4 (* 5 buzz)))))))
-	       *output*)))))))
+	 (let* ((pulse (pulse-train pulser)))
+	   (if (> pulse .1)
+	       (begin
+		 (mus-reset pulsef)
+		 (mus-reset frqf)
+		 (mus-reset indf)))
+	   (let* ((buzz (+ (* (hz->radians 40) (env frqf))
+			   (* .005 (rand-interp noise)))))
+	     (outa i (* (env ampf)
+			(env pulsef)
+			(+ .93 (* .07 (triangle-wave ampmod)))
+			(+ (* .7 (oscil base buzz))
+			   (* .05 (oscil base1 (* 2 buzz)))
+			   (* .04 (oscil base2 (* 3 buzz)))
+			   (* (env indf)
+			      (+ (* .02 (oscil base3 (* 4 buzz)))
+				 (* .02 (oscil base4 (* 5 buzz)))))))
+		   *output*))))))))
 #|
 ;(with-sound (:play #t) (broad-winged-tree-cricket 0 1.0 0.3))
 
@@ -572,4 +580,6 @@
 		 *output*)))))))
 |#
 
+
+;;; bat recording has a steady sine wave at 18755 Hz -- very loud if I could hear that high
 

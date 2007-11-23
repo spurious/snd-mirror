@@ -2,7 +2,6 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* TODO: sometimes when fft y axis dragged, data is not redrawn? */
 
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
  *   but there's no way to trap the outer resizing event and
@@ -4976,6 +4975,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 		  }
 		else
 		  {
+		    /* fprintf(stderr,"cp: %d %f\n", cp->chan, new_cutoff); */
 		    cp->spectro_cutoff = new_cutoff;
 		    if (cp->transform_graph_type != GRAPH_ONCE)
 		      sono_update(cp);

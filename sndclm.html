@@ -4806,6 +4806,20 @@ asyfm-I is the modified Bessel function version (the second formula in the <a hr
 
 
 <pre>
+  <A class=def NAME="make-fmssb">make-fmssb</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 1.0) (index 1.0)
+  <A class=def NAME="fmssb">fmssb</A> gen fm
+  <A class=def NAME="fmssb?">fmssb?</A> gen
+</pre>
+
+<p>This generator produces the "gapped" spectra mentioned in fm.html. It is used extensively in the
+various "imaginary machines".  Also included in this section of generators.scm is fpmc, an instrument
+that performs FM with a complex index (complex in the sense of complex numbers).  It can be used
+in with-sound, but not within run (the run macro does not currently handle complex numbers).
+</p>
+<br>
+
+
+<pre>
   <A class=def NAME="make-pulsed-env">make-pulsed-env</A> <a class=quiet href="#optional-key">:optional-key</a> envelope duration frequency
   <A class=def NAME="pulsedenv">pulsed-env</A> gen fm
   <A class=def NAME="pulsedenv?">pulsed-env?</A> gen
@@ -5516,7 +5530,6 @@ with each component scaled by (r^(2k))/(2k)!.  r2sin output is not normalized.
 </p>
 <br>
 
-<!-- TODO: doc fmssb and machines -->
 
 
 
