@@ -308,29 +308,33 @@ For help with Forth and Snd/CLM, see the Forth documentation section "Snd, CLM, 
 <A NAME="animalsdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>animals</h2></td></tr></table>
 
 <p>
-Several synthesized animal sounds and songs.  Will clean up eventually...
-</p>
-
-<p>Current animals include:
+animals.scm contains several synthesized animal sounds and songs:
 </p>
 
 <pre>
-mosquito
-Knudsen's frog
-Oak toad
-Broad-winged tree-cricket
-Southern cricket frog
-Long-spurred meadow katydid
-Northern leopard frog
-Southern mole cricket
-Green tree-frog
-Spring peeper
-Crawfish frog
-River frog
-Indri
+(with-sound (:play #t :scaled-to .5)
+  (mosquito 0 5 560 .2)
+  (mosquito 1 3 880 .05)
+  (knudsens-frog 2 .5)
+  (a-cricket 3 .12 4500 5400 .5 '(0 0 1 1 3 1 4 0) (/ .11 3) '(0 0 1 .8 5 1 6 0 15 0))
+  (let ((last-beg 3.0))
+    (do ((k 0 (1+ k)))
+	((= k 12))
+      (let ((beg (+ last-beg .37 (random .08))))
+	(oak-toad beg (+ .25 (random .3)))
+	(set! last-beg beg))))
+  (broad-winged-tree-cricket 5 4.0 0.2)
+  (southern-cricket-frog 6 0.5)
+  (long-spurred-meadow-katydid 7 .5)
+  (northern-leopard-frog 8 .5)
+  (southern-mole-cricket 9 6 .15)
+  (green-tree-frog 10 .5)
+  (spring-peeper 11 .5)
+  (crawfish-frog 12 .5)
+  (river-frog 13 .5)
+  (indri 14 .25)
+  (handsome-trig 15 2 .5))
 </pre>
-
-<!-- TODO: animals doc and clean up -->
 
 <br>
 

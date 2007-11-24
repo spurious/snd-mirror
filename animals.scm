@@ -13,6 +13,7 @@
 ;;; Crawfish frog
 ;;; River frog
 ;;; Indri
+;;; Handsome trig
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -20,6 +21,13 @@
 
 (if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+
+
+;;; bat recording has a steady sine wave at 18755 Hz -- very loud if I could hear that high
+;;; TODO: delay + sqr as handler for coupled rand-interp envs
+;;; TODO: 8bat, insect trill in rail is at 8.5KHz? rail, midship (start), capuchin, allig
+;;; TODO: frogs/crickets if ins dur>base song, repeat at correct interval
+
 
 
 ;;; this mosquito taken from Richard Mankin, Reference Library of Digitized Insect Sounds, http://www.ars.usda.gov/sp2UserFiles/person/3559/soundlibrary.html
@@ -157,57 +165,46 @@
                         (/ .11 3) '(0 0 1 .8 5 1 6 0 15 0)))
 |#
 
-;;; TODO: delay + sqr as handler for coupled rand-interp envs
-;;; TODO: 8bat, insect trill in rail is at 8.5KHz? rail, midship (start), capuchin, allig
 
-
-
-#|
-;;; Oak Toad (L Elliott "The Calls of Frogs and Toads" #38)
-;;;   might be slightly too much noise (the peep I worked on turned out to be a raspy one)
-;;;
+;;; L Elliott "The Calls of Frogs and Toads"
 ;;; L Elliott and W Herschberger "The Songs of the Insects"
 ;;; L Elliott "Music of the Birds"
 
-(with-sound (:play #t :clipped #f :statistics #t)
+
+;;; --------------------------------------------------------------------------------
+;;; Oak Toad
+;;;   might be slightly too much noise (the peep I worked on turned out to be a raspy one)
+
+(definstrument (oak-toad beg amp)
   (let* ((dur .43)
-	 (stop (seconds->samples dur))
-	 (ampf (make-env '(0 0 10 1 15 0 43 0) :base .3 :duration dur :scaler .25))
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 10 1 15 0 43 0) :base .3 :duration dur :scaler amp))
 	 (gen1 (make-polyshape 2150 :partials (list 1 .01  2 1.0  3 .001 4 .005  6 .02)))
-	 (frqf (make-env '(0 -.5 1 1 5 -1) :duration .15 :scaler (hz->radians 70)))
-	 (noise (make-rand-interp 1000)))
+	 (frqf (make-env '(0 -.5 1 1 5 -1) :duration .15 :scaler (hz->radians (+ 50 (random 40)))))
+	 (noise (make-rand-interp 1000 (+ .01 (random .005)))))
     (run
      (lambda ()
-       (do ((i 0 (1+ i)))
+       (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polyshape gen1 1.0 (+ (env frqf)
-					   (* .014 (rand-interp noise)))))
+					   (rand-interp noise))))
 	       *output*))))))
-
-(with-sound (:play #t :clipped #f :statistics #t)
+#|
+(with-sound (:play #t)
   (let ((last-beg 0.0))
     (do ((k 0 (1+ k)))
 	((= k 12))
-      (let* ((beg (+ last-beg .37 (random .08)))
-	     (start (seconds->samples beg))
-	     (dur .43)
-	     (stop (+ start (seconds->samples dur)))
-	     (ampf (make-env '(0 0 10 1 15 0 43 0) :base .3 :duration dur :scaler .25))
-	     (gen1 (make-polyshape 2150 :partials (list 1 .01  2 1.0  3 .001 4 .005  6 .02))) ; this is at or past the limit of my hearing, sad to say
-	     (frqf (make-env '(0 -.5 1 1 5 -1) :duration .15 :scaler (hz->radians (+ 50 (random 40)))))
-	     (noise (make-rand-interp 1000))
-	     (noise-amount (+ .01 (random .005))))
-	(set! last-beg beg)
-	(run
-	 (lambda ()
-	   (do ((i start (1+ i)))
-	       ((= i stop))
-	     (outa i (* (env ampf)
-			(polyshape gen1 1.0 (+ (env frqf)
-					       (* noise-amount (rand-interp noise)))))
-		   *output*))))))))
+      (let ((beg (+ last-beg .37 (random .08))))
+	(oak-toad beg (+ .25 (random .3)))
+	(set! last-beg beg)))))
 |#
+
+
+;;; --------------------------------------------------------------------------------
+;;; Broad-winged Tree-cricket
+
 (definstrument (broad-winged-tree-cricket beg dur amp)
   (let* ((start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur)))
@@ -246,19 +243,19 @@
 			      (+ (* .02 (oscil base3 (* 4 buzz)))
 				 (* .02 (oscil base4 (* 5 buzz)))))))
 		   *output*))))))))
-#|
+
 ;(with-sound (:play #t) (broad-winged-tree-cricket 0 1.0 0.3))
 
 
-;;; TODO: frogs/crickets if ins dur>base song, repeat at correct interval
 
-
+;;; --------------------------------------------------------------------------------
 ;;; southern cricket frog
 
-(with-sound (:play #t :clipped #f :statistics #t)
+(definstrument (southern-cricket-frog beg amp)
   (let* ((dur1 .03)
-	 (stop (seconds->samples dur1))
-	 (ampf (make-env '(0 0 .75 1 5 1 10 0) :scaler .5 :duration dur1))
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur1)))
+	 (ampf (make-env '(0 0 .75 1 5 1 10 0) :scaler amp :duration dur1))
 	 (gen1 (make-oscil 3500))
 	 (gen2 (make-oscil 6400))
 	 (pulse (make-pulsed-env '(0 .1 1 .6 2 .8 3 1 6 .1 8 .1) (/ dur1 8) (/ 8 dur1)))
@@ -268,7 +265,7 @@
 	 (fm (make-oscil 150)))
     (run
      (lambda ()
-       (do ((i 0 (1+ i)))
+       (do ((i start (1+ i)))
 	   ((= i stop))
 	 (let ((fm (* index (oscil fm))))
 	   (outa i (* (env ampf)
@@ -277,17 +274,20 @@
 			 (* (env f2) (oscil gen2 (* 2 fm)))))
 	       *output*)))))))
 
+;(with-sound () (southern-cricket-frog 0 0.5))
 
-;;; long-spurred meadow katydid -- I can barely hear this at its true pitch, so the match was
+
+;;; --------------------------------------------------------------------------------
+;;; long-spurred meadow katydid
+;;;    I can barely hear this at its true pitch, so the match was
 ;;;    done down one or two octaves -- I think the recording has cut off high info (above 20Khz) --
 ;;;    need much higher srate to see what this guy is really doing.  This is not very good...
 
-(with-sound (:clipped #f :statistics #t)
-  (let* ((beg 0.0)
+(definstrument (long-spurred-meadow-katydid beg amp)
+  (let* ((start (seconds->samples beg))
 	 (dur 10.1) ; overall duration
 	 (slow-start 2.2) ; buzz at start
 	 (soft-end (+ slow-start 4.0)) ; softer section, rest is full vol
-	 (start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur)))
 	 ;; looks like the same basic pulse throughout, almost same speed at start but every other one is squelched
 	 ;; slow startup pulse starts much faster (.06 mid-pulse duration, .0013 base pulse)
@@ -295,17 +295,15 @@
 	 (modulator (make-oscil 1500 (* 0.5 pi)))
 	 (noise (make-rand-interp 5000))
 	 (peep (make-pulsed-env '(0 0 1 0 2 .2 3 0 5 .75 8 1 10 0 11 0) .06 (/ 1.0 .06)))
-	 (amp .4)
 	 (ampf (make-env (list 0 0 .5 .5 slow-start .4 soft-end .4 (+ soft-end .5) 1 (- dur 1) 1 dur 0.0) :duration dur :scaler amp))
-	 (pulsef (make-env (list 0 -1 slow-start -1 (+ slow-start .03) 0 dur 0) :duration dur :scaler (hz->radians 8)))
-	 )
+	 (pulsef (make-env (list 0 -1 slow-start -1 (+ slow-start .03) 0 dur 0) :duration dur :scaler (hz->radians 8))))
     (run
      (lambda ()
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (let* ((frq (env pulsef))
 		(md (oscil modulator)))
-	   (outa i (* .2 (env ampf)
+	   (outa i (* (env ampf)
 		      (pulsed-env peep frq)
 		      md md
 		      (sine-summation carrier (+ (* frq (/ 13200 16))
@@ -313,15 +311,16 @@
 					       (* .1 md))))
 		 *output*)))))))
 
+;(with-sound () (long-spurred-meadow-katydid 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
 ;;; northern leopard frog (1)
 
 ;;; TODO: this is slightly low-passed, and I don't quite have the vowel right at the end
 
-(with-sound (:statistics #t :clipped #f :play #t :scaled-to .5)
-  (let* ((beg 0.0)
-	 (dur 4.2)
+(definstrument (northern-leopard-frog beg amp)
+  (let* ((dur 4.2)
 	 (start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur)))
 	 (gen1 (make-oscil 440))
@@ -331,7 +330,6 @@
 	 (pulsef1 (make-env '(0 0 .1 1 10 0) :duration .013 :base 32.0))
 	 (pulsef2 (make-env '(0 0 4 1 10 0) :duration .013 :base 3.0))
 	 (interpf (make-env '(0 0 6 1 8 1 10 .5) :duration dur))
-	 (amp .5)
 	 (ampf (make-env '(0 0 3 1 9.5 1 10 0) :base .2 :duration dur :scaler amp))
 	 (gen1f (make-env '(0 1 8 1 10 0) :duration dur :scaler .65 :base 3))
 	 (gen2f (make-env '(0 0 8 0 10 1) :duration dur :scaler (hz->radians 90)))
@@ -362,14 +360,16 @@
 									     (* .075 (oscil gen6)))))))))))
 	   (outa i result *output*)))))))
 
+;(with-sound (:statistics #t :play #t) (northern-leopard-frog 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
 ;;; southern mole cricket
 
-(with-sound (:play #t :clipped #f :statistics #t)
-  (let* ((dur 3.0) ; goes on indefinitely
-	 (stop (seconds->samples dur))
-	 (ampf (make-env '(0 0 1 1 20 1 21 0) :scaler .25 :duration dur))
+(definstrument (southern-mole-cricket beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 1 1 20 1 21 0) :scaler amp :duration dur))
 	 (gen1 (make-oscil 2700))
 	 (gen2 (make-oscil (* 2700 2.4)))
 	 (gen3 (make-oscil 60))
@@ -378,12 +378,11 @@
 	 (gargle (make-rand-interp 360 (hz->radians (* .25 360)))))
     (run
      (lambda ()
-       (do ((i 0 (1+ i)))
+       (do ((i start (1+ i)))
 	   ((= i stop))
 	 (let* ((pval (oscil gen3))
 		(noise (rand-interp gargle))
-		(aval (+ .7 (* .3 (oscil gen5))))
-		)
+		(aval (+ .7 (* .3 (oscil gen5)))))
 	   (outa i (* (env ampf)
 		      (+ (* (max pval 0.0)
 			    (+ (* .95 (oscil gen1 noise))
@@ -392,13 +391,17 @@
 			    (* .05 aval (oscil gen2 (* 2.4 noise))))))
 		 *output*)))))))
 
+;(with-sound () (southern-mole-cricket 0 3 .5))
 
+
+;;; --------------------------------------------------------------------------------
 ;;; green tree-frog
 
-(with-sound (:play #t :clipped #f :statistics #t)
+(definstrument (green-tree-frog beg amp)
   (let* ((dur 0.2)
-	 (stop (seconds->samples dur))
-	 (ampf (make-env '(0 0 1 1 8 1 12 0) :scaler .25 :duration dur))
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 1 1 8 1 12 0) :scaler amp :duration dur))
 	 (pitch 277)
 	 (gen2770 (make-oscil (* 10 pitch) (* 0.5 pi)))
 	 (mod277 (make-oscil pitch (* 0.5 pi)))
@@ -407,31 +410,33 @@
 	 (poly2 (make-polyshape 860 :coeffs (partials->polynomial (list  1 .4  2 .1  3 .03  4 .3  5 .03))))
 	 (index (hz->radians 277))
 	 (frqf (make-env '(0 -.3  1 .3  2 0  5 0  6 -1) :duration dur :scaler (hz->radians 70)))
-	 (pulsef (make-pulsed-env '(0 .2 1 1 3 .7 5 .2) (/ 1.0 pitch) pitch))
-	 )
+	 (pulsef (make-pulsed-env '(0 .2 1 1 3 .7 5 .2) (/ 1.0 pitch) pitch)))
     (run
      (lambda ()
-       (do ((i 0 (1+ i)))
+       (do ((i start (1+ i)))
 	   ((= i stop))
 	 (let* ((md (* index (oscil mod277)))
 		(frq (env frqf)))
 	   (outa i (* (env ampf)
-		      (pulsed-env pulsef frq)
+		      (* .333 (pulsed-env pulsef frq))
 		      (+ (* .78 (polyshape poly 1.0 frq))
 			 (* .2 (oscil gen2770 (* 10 (+ frq md))))
 			 (* .02 (oscil gen7479 (* 27 (+ frq md))))
-			 (* .25 (polyshape poly2 1.0 (* 3 frq)))
-			 ))
+			 (* .25 (polyshape poly2 1.0 (* 3 frq)))))
 		 *output*)))))))
 
+;(with-sound () (green-tree-frog 0 .5))
 
+
+;;; --------------------------------------------------------------------------------
 ;;; spring peeper
 
-(with-sound (:play #t :clipped #f :statistics #t)
+(definstrument (spring-peeper beg amp)
   (let* (;; first note
 	 (dur 0.17)
-	 (stop (seconds->samples dur))
-	 (ampf (make-env '(0 0 .25 .6 8 1 10 .8 10.5 0) :scaler .25 :duration dur :base .03))
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 .25 .6 8 1 10 .8 10.5 0) :scaler amp :duration dur :base .03))
 	 (gen1 (make-oscil 2400))
 	 (gen2 (make-oscil (/ 2400 2)))
 	 (gen2a (make-oscil 2400))
@@ -442,15 +447,14 @@
 	 (start2 (+ stop (seconds->samples pause)))
 	 (dur2 .13)
 	 (stop2 (+ start2 (seconds->samples dur2)))
-	 (ampf2 (make-env '(0 0 .125 .8 1 .9 2 .7 4 1 10 0) :base .1 :duration dur2 :scaler .1))
+	 (ampf2 (make-env '(0 0 .125 .8 1 .9 2 .7 4 1 10 0) :base .1 :duration dur2 :scaler (* .4 amp)))
 	 (frqf2 (make-env '(0 0 2 1 3 .75) :duration dur2 :base .03 :scaler (hz->radians 300)))
 	 (gen3 (make-oscil 2900))
 	 (gen4 (make-oscil (/ 2900 2)))
-	 (index (hz->radians (* 0.1 2900)))
-	 )
+	 (index (hz->radians (* 0.1 2900))))
     (run
      (lambda ()
-       (do ((i 0 (1+ i)))
+       (do ((i start (1+ i)))
 	   ((= i stop))
 	 (let* ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -466,14 +470,18 @@
 		      (oscil gen3 (+ frq (* index (oscil gen4 (* 0.5 frq))))))
 		 *output*)))))))
 
+;(with-sound () (spring-peeper 0 .5))
 
 
+;;;--------------------------------------------------------------------------------
 ;;; crawfish frog
-(with-sound (:play #t :clipped #f :statistics #t)
+
+(definstrument (crawfish-frog beg amp)
   (let* ((dur 0.6)
 	 (pitch 58)
-	 (stop (seconds->samples dur))
-	 (ampf (make-env '(0 0 4 1 8 1 9 .7 10 0) :scaler .5 :duration dur))
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 4 1 8 1 9 .7 10 0) :scaler amp :duration dur))
 	 (pulser (make-pulse-train pitch))
 	 (pulsef (make-env '(0 0 1 1 10 0) :base 32.0 :duration (/ 1.0 pitch)))
 	 (fmd (make-oscil pitch))
@@ -482,11 +490,10 @@
 	 (index (hz->radians pitch))
 	 (poly1 (make-polyshape (* pitch 6) :coeffs (partials->polynomial '(1 .5  2 1  5 .5))))
 	 (poly2 (make-polyshape (* pitch 6) :coeffs (partials->polynomial '(2 .5  3 1  7 .25))))
-	 (intrp (make-env '(0 1 1 0) :duration dur :scaler .2 :base 4))
-	 )
+	 (intrp (make-env '(0 1 1 0) :duration dur :scaler .2 :base 4)))
     (run
      (lambda ()
-       (do ((i 0 (1+ i)))
+       (do ((i start (1+ i)))
 	   ((= i stop))
 	 (let* ((frq (env frqf))
 		(wha (env intrp)))
@@ -503,35 +510,34 @@
 			 (* (- 0.2 wha) (polyshape poly2 1.0 frq))))
 		 *output*)))))))
 
+;(with-sound () (crawfish-frog 0 .5))
 
+
+;;; --------------------------------------------------------------------------------
 ;;; river frog
 ;;;
 ;;; original formants were much sharper, but using rxyk!cos to sharpen ours didn't seem to help
 ;;; animal seems to group these in 3's
 
-(with-sound (:play #t :clipped #f :statistics #t)
+(definstrument (river-frog beg amp)
   (let* ((dur 1.85)
-	 (stop (seconds->samples dur))
-	 (ampf (make-env '(0 0 2 1  7 .9  10 0) :scaler .5 :duration dur :base .1))
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 2 1  7 .9  10 0) :scaler amp :duration dur :base .1))
 	 (pulse-pitch 42)
 	 (pulsef (make-pulsed-env '(0 .1 3 .1 3.1 1 4 1 6 .1 9 .1) (/ 1.0 pulse-pitch) pulse-pitch))
 	 (mid-pitch 185)
 	 (mid-pitch-change 10)
 	 (frqf (make-env '(0 .1 .2 -.02 .5 0 .65 0 1 1) :scaler (hz->radians mid-pitch-change) :duration dur))
-
 	 (vib (make-rand-interp 100 (hz->radians 10.0)))
-	 
 	 (fm (make-oscil pulse-pitch))
 	 (index (hz->radians (* 1.0 pulse-pitch)))
-
 	 (poly1 (make-polyshape mid-pitch :coeffs (partials->polynomial (normalize-partials (list 2 1.2  4 .1  7 0.75  8 .1       10 .5)))))
 	 (poly2 (make-polyshape mid-pitch :coeffs (partials->polynomial (normalize-partials (list 2 1.0        7 .5         9 .7        12 .01)))))
-
-	 (interpf (make-env '(0 0 2 0 5 1 7 1) :duration dur))
-	 )
+	 (interpf (make-env '(0 0 2 0 5 1 7 1) :duration dur)))
     (run
      (lambda ()
-       (do ((i 0 (1+ i)))
+       (do ((i start (1+ i)))
 	   ((= i stop))
 	 (let* ((frq (+ (env frqf)
 			(rand-interp vib)
@@ -542,32 +548,34 @@
 		      (+ (* (- 1.0 intrp)
 			    (polyshape poly1 1.0 frq))
 			 (* intrp 
-			    (polyshape poly2 1.0 frq)))
-		      
-		      )
+			    (polyshape poly2 1.0 frq))))
 		 *output*)))))))
 
+;(with-sound () (river-frog 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
 ;;; indri
 ;;; close in spectrum, amp, freq, but the original has what sounds like a ton of reverb
 ;;;   if I add the reverb, it's close -- a "field recording" at the local zoo?
 
-(with-sound (:clipped #f :statistics #t :play #t)
+(definstrument (indri beg amp)
   (let* ((pitch 900)
 	 (dur 1.5)
-	 (stop (seconds->samples dur))
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
 	 (gen1 (make-oscil (* 2 pitch))) 
 	 (gen4 (make-oscil pitch))
 	 (gen2 (make-oscil (* 8 pitch))) 
 	 (gen3 (make-oscil pitch))
 	 (ampf (make-env '(0.0 0.0  0.05 0.4  0.1 0.65  0.2 0.5  0.27 1.0  0.4 0.43  0.43 0.53 
 			   0.5 0.5  0.53 0.36  0.6 1.0  0.64 0.99  0.69 0.6  0.7 0.3  0.77 0.15 
-			   0.8 0.04  1.0 0.0) :duration dur :scaler .125))
+			   0.8 0.04  1.0 0.0) :duration dur :scaler amp))
 	 (frqf (make-env '(0 1  2 0  6 0 7 3 9 3) :scaler (hz->radians 60) :duration dur))
-	 (vib (make-oscil 2))
-	 )
+	 (vib (make-oscil 2)))
     (run 
      (lambda ()
-       (do ((i 0 (1+ i)))
+       (do ((i start (1+ i)))
 	   ((= i stop))
 	 (let* ((frq (+ (env frqf)
 			(* (hz->radians 10) (oscil vib))))
@@ -578,8 +586,96 @@
 			 (* .1 (oscil gen2 (+ (* 8 frq) 
 					      (* .2 (oscil gen3 frq)))))))
 		 *output*)))))))
+
+;(with-sound () (indri 0 .5))
+
+
+
+;;; --------------------------------------------------------------------------------
+;;; Handsome trig
+
+(definstrument (handsome-trig beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (freqs (list 6439 6585 6860 6940 7090 7266 7362))
+	 (num (length freqs))
+	 (amps (let* ((v (make-vct num))
+		      (lst (list 1.0  1.0  .25  .17  .2   .1   .1))
+		      (scl (apply + lst)))
+		 (do ((i 0 (1+ i)))
+		     ((= i num))
+		   (vct-set! v i (/ (list-ref lst i) scl)))
+		 v))
+	 (gens (let ((v (make-vector num #f)))
+		 (do ((i 0 (1+ i)))
+		     ((= i num))
+		   (vector-set! v i (make-oscil (list-ref freqs i))))
+		 v))
+	 (pulse-dur .02)
+	 (pulse-count 0)
+	 (pulse-length (seconds->samples pulse-dur))
+	 (ampf (make-env '(0 0 1 1 20 1 21 0) :duration dur :scaler amp)) ; continuous call
+	 (pulsef (make-env '(0.0 0.0  0.05 1.0  0.13 1.0  0.4 0.1  1.0 0.0) :duration pulse-dur))
+	 (pulses 0))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (set! pulse-count (1+ pulse-count))
+	 (if (>= pulse-count pulse-length)
+	     (let ((dont-click
+		    ;; count pulses in current group -- at least 2, at most 4, if 2 or 3, possibly and if 4 definitely insert a space
+		    (or (= pulses 4)
+			(and (or (and (= pulses 2)
+				      (> (random 1.0) 0.6))
+				 (and (= pulses 3)
+				      (> (random 1.0) 0.3)))))))
+	       (set! pulse-count 0)
+	       (if dont-click
+		   (begin
+		     (set! pulses 0)
+		     (set! pulse-length (seconds->samples (+ .015 (random .005)))))
+		   (begin
+		     (set! pulses (1+ pulses))
+		     (set! pulse-length (seconds->samples pulse-dur))
+		     (mus-reset pulsef)
+		     (do ((k 0 (1+ k)))
+			 ((= k num))
+		       (mus-reset (vector-ref gens k)))))))
+	 (let ((sum 0.0))
+	   (do ((k 0 (1+ k)))
+	       ((= k num))
+	     (set! sum (+ sum (* (vct-ref amps k) (oscil (vector-ref gens k))))))
+	   (outa i (* (env ampf) 
+		      (env pulsef)
+		      sum) 
+		 *output*)))))))
+
+;(with-sound () (handsome-trig 0 2 .5))
+
+
+#|
+(with-sound (:play #t :scaled-to .5)
+  (mosquito 0 5 560 .2)
+  (mosquito 1 3 880 .05)
+  (knudsens-frog 2 .5)
+  (a-cricket 3 .12 4500 5400 .5 '(0 0 1 1 3 1 4 0)
+	     (/ .11 3) '(0 0 1 .8 5 1 6 0 15 0))
+  (let ((last-beg 3.0))
+    (do ((k 0 (1+ k)))
+	((= k 12))
+      (let ((beg (+ last-beg .37 (random .08))))
+	(oak-toad beg (+ .25 (random .3)))
+	(set! last-beg beg))))
+  (broad-winged-tree-cricket 5 4.0 0.2)
+  (southern-cricket-frog 6 0.5)
+  (long-spurred-meadow-katydid 7 .5)
+  (northern-leopard-frog 8 .5)
+  (southern-mole-cricket 9 6 .15)
+  (green-tree-frog 10 .5)
+  (spring-peeper 11 .5)
+  (crawfish-frog 12 .5)
+  (river-frog 13 .5)
+  (indri 14 .25)
+  (handsome-trig 15 2 .5))
 |#
-
-
-;;; bat recording has a steady sine wave at 18755 Hz -- very loud if I could hear that high
-

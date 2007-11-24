@@ -3,6 +3,9 @@
 #include "clm-strings.h"
 
 
+/* SOMEDAY: fft side needs a zoom capability, not just the drag now */
+
+
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
  *   but there's no way to trap the outer resizing event and
  *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
@@ -4779,7 +4782,8 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		    }
 		}
 	      break;
-
+	      
+	    case CLICK_FFT_AXIS: /* not dragged, so must have clicked close to axis */
 	    case CLICK_FFT_MAIN:
 	      {
 		char *str;

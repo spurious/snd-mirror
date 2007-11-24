@@ -3969,3 +3969,4 @@ index 10 (so 10/2 is the bes-jn arg):
 (define pulsed-env? plsenv?)
 
 
+;;; TODO: include the instruments in snd-test
