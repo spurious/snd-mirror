@@ -3198,6 +3198,41 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; --------------------------------------------------------------------------------
 
+(def-clm-struct (jncos :make-wrapper (lambda (g)
+					(set! (jncos-incr g) (hz->radians (jncos-frequency g)))
+					g))
+  (frequency 0.0) (r 0.0) (a 1.0) (n 0 :type int)
+  (angle 0.0) (incr 0.0))
+
+(define (jncos gen fm)
+  (declare (gen jncos) (fm float))
+  (let* ((x (jncos-angle gen))
+	 (a (jncos-a gen))
+	 (r (jncos-r gen))
+	 (n (jncos-n gen))
+	 (arg (sqrt (+ (* r r) 
+		       (* a a)
+		       (* a r -2.0 (cos x))))))
+
+    (set! (jncos-angle gen) (+ x fm (jncos-incr gen)))
+
+    (/ (bes-jn n arg)
+       (expt arg n))))
+
+#|
+(with-sound (:clipped #f :statistics #t :play #t)
+  (let ((gen (make-jncos 100.0 :a 0.5 :r 1.0 :n 0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 41000))
+	 (outa i (jncos gen 0.0) *output*))))))
+|#
+
+
+
+;;; --------------------------------------------------------------------------------
+
 ;;; use J0(cos)+J1(cos) to get full spectrum
 
 (def-clm-struct (j0j1cos

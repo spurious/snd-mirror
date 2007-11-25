@@ -14,6 +14,8 @@
 ;;; River frog
 ;;; Indri
 ;;; Handsome trig
+;;; Fast-calling tree cricket
+;;; Dog-day cicada
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -654,28 +656,98 @@
 ;(with-sound () (handsome-trig 0 2 .5))
 
 
-#|
-(with-sound (:play #t :scaled-to .5)
-  (mosquito 0 5 560 .2)
-  (mosquito 1 3 880 .05)
-  (knudsens-frog 2 .5)
-  (a-cricket 3 .12 4500 5400 .5 '(0 0 1 1 3 1 4 0)
-	     (/ .11 3) '(0 0 1 .8 5 1 6 0 15 0))
-  (let ((last-beg 3.0))
-    (do ((k 0 (1+ k)))
-	((= k 12))
-      (let ((beg (+ last-beg .37 (random .08))))
-	(oak-toad beg (+ .25 (random .3)))
-	(set! last-beg beg))))
-  (broad-winged-tree-cricket 5 4.0 0.2)
-  (southern-cricket-frog 6 0.5)
-  (long-spurred-meadow-katydid 7 .5)
-  (northern-leopard-frog 8 .5)
-  (southern-mole-cricket 9 6 .15)
-  (green-tree-frog 10 .5)
-  (spring-peeper 11 .5)
-  (crawfish-frog 12 .5)
-  (river-frog 13 .5)
-  (indri 14 .25)
-  (handsome-trig 15 2 .5))
-|#
+;;; --------------------------------------------------------------------------------
+;;; Fast calling tree cricket
+;;;
+;;; (use fm for noise to get the burble right, and pm for spectrum)
+
+(definstrument (fast-calling-tree-cricket beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (pulse-dur .0167)
+	 (pulsef (make-env '(0.0 0.0  0.05 0.07  0.08 0.4  0.2 0.7  0.37 0.93   0.52 1.0   0.6 0.4  0.67 0.2  0.84 0.16  0.88 0.06  0.96 0.03  1.0 0.0)
+			   :duration pulse-dur))
+	 (gen1 (make-oscil 4100))
+	 (md (make-oscil 4100))
+	 (md1 (make-oscil 205))
+	 (rnd (make-rand-interp 180 .01))
+	 ;; 1.0 .04 .007
+	 (pulser (make-pulse-train 55.0))
+	 (ampf (make-env '(0 0 1 1 20 1 21 0) :duration dur :scaler amp)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((pulse (pulse-train pulser)))
+	   (if (> pulse .1)
+	       (mus-reset pulsef))
+	   (outa i (* (env ampf)
+		      (env pulsef)
+		      (oscil gen1 
+			     (rand-interp rnd)
+			     (+ (* .1 (oscil md))
+				(* .2 (oscil md1)))))
+
+		 *output*)))))))
+
+;(with-sound () (fast-calling-tree-cricket 0 2 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;; Dog-day cicada
+
+(definstrument (dog-day-cicada beg dur amp) ; dur ca 10 ..15 secs
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.0 0.0    0.1 0.03   0.2 0.2   0.3 0.6   0.34 0.8  0.44 1.0 
+			   0.5 0.83   0.55 0.92  0.6 0.86  0.66 1.0  0.7 0.7   0.88 0.25  
+			   0.91 0.24  0.93 0.02  1.0 0.0)
+			 :duration dur :scaler amp))
+	 (gen1 (make-oscil 7500))
+	 (gen2 (make-oscil 200))
+	 (rnd (make-rand-interp 200))
+	 (rndf (make-env '(0 .3  .7 .3  .8 1  1 0) :scaler (hz->radians 120)))
+	 (frqf (make-env '(0 -.5  .2 0  .85 0  1 -1) :scaler (hz->radians 400) :duration dur))
+	 (rx (make-rxyk!cos 4000 600 8.0)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (env frqf)))
+	   (outa i (* (env ampf)
+		      (* .5 (+ (oscil gen1 (+ frq
+					      (* (env rndf) (rand-interp rnd))
+					      (* .15 (oscil gen2))))
+			       (rxyk!cos rx 0.0))))
+	       *output*)))))))
+		     
+
+;;; --------------------------------------------------------------------------------
+
+(define (calling-all-animals)
+  (with-sound (:play #t :scaled-to .5)
+    (mosquito 0 5 560 .2)
+    (mosquito 1 3 880 .05)
+    (knudsens-frog 2 .5)
+    (a-cricket 3 .12 4500 5400 .5 '(0 0 1 1 3 1 4 0)
+	       (/ .11 3) '(0 0 1 .8 5 1 6 0 15 0))
+    (let ((last-beg 3.0))
+      (do ((k 0 (1+ k)))
+	  ((= k 12))
+	(let ((beg (+ last-beg .37 (random .08))))
+	  (oak-toad beg (+ .25 (random .3)))
+	  (set! last-beg beg))))
+    (broad-winged-tree-cricket 5 4.0 0.1)
+    (southern-cricket-frog 6 0.5)
+    (long-spurred-meadow-katydid 7 .5)
+    (northern-leopard-frog 8 .5)
+    (southern-mole-cricket 9 6 .1)
+    (green-tree-frog 10 .5)
+    (spring-peeper 11 .5)
+    (crawfish-frog 12 .5)
+    (river-frog 13 .5)
+    (indri 14 .25)
+    (handsome-trig 15 2 .5)
+    (fast-calling-tree-cricket 16 2 .25)
+    (dog-day-cicada 17 2 .125)))
+

@@ -667,6 +667,7 @@ create the individual spectral components:
 </td></tr></table>
 
 
+
 <table border=2 bgcolor="#fafafa" cellpadding=6 hspace=20 vspace=20>
 <tr><td>
 <p>To compare the Scheme, Ruby, Forth, and C versions of a CLM instrument (not to mention the Common Lisp
@@ -2182,11 +2183,14 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 <tr><td colspan=3 height=25></td></tr>
 
 
-<tr><td><img src="sceq32.png" alt="more sums"></td><td></td>
-<td><a class=invisible href="#jjcos"><img src="sceq31.png" alt="more sums"></a></td></tr>
-<tr><td><a class=invisible href="#j2cos"><img src="sceq34.png" alt="more sums"></a></td><td></td>
-<td><a class=invisible href="#jpcos"><img src="sceq33.png" alt="more sums"></a></td></tr>
-<tr><td colspan=3 bgcolor="#eefdee"><center>Watson, "A Treatise on the Theory of Bessel Functions": 4.82, 11.41, 17.31</center></td></tr>
+<tr>
+<td><a class=invisible href="#jncos"><img src="sceq32.png" alt="more sums"></a></td><td></td>
+<td><a class=invisible href="#jjcos"><img src="sceq31.png" alt="more sums"></a></td>
+</tr><tr>
+<td><a class=invisible href="#j2cos"><img src="sceq34.png" alt="more sums"></a></td><td></td>
+<td><a class=invisible href="#jpcos"><img src="sceq33.png" alt="more sums"></a></td>
+</tr><tr>
+<td colspan=3 bgcolor="#eefdee"><center>Watson, "A Treatise on the Theory of Bessel Functions": 4.82, 11.41, 17.31</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
@@ -4894,13 +4898,31 @@ sceq35:
   <A class=def NAME="make-jjcos">make-jjcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0) (a 1.0) (k 1)
   <A class=def NAME="jjcos">jjcos</A> gen fm
   <A class=def NAME="jjcos?">jjcos?</A> gen
+
+  <A class=def NAME="make-j2cos">make-j2cos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0) (n 1)
+  <A class=def NAME="j2cos">j2cos</A> gen fm
+  <A class=def NAME="j2cos?">j2cos?</A> gen
+
+  <A class=def NAME="make-jpcos">make-jpcos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0) (a 0.0) (k 1)
+  <A class=def NAME="jpcos">jpcos</A> gen fm
+  <A class=def NAME="jpcos?">jpcos?</A> gen
+
+  <A class=def NAME="make-jncos">make-jncos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (r 0.0) (a 1.0) (n 0)
+  <A class=def NAME="jncos">jncos</A> gen fm
+  <A class=def NAME="jncos?">jncos?</A> gen
 </pre>
 
-<p>This produces a sum of cosines scaled by a product of Bessel functions; in a sense, there are two, or maybe three "indices".
+<p>These produce a sum of cosines scaled by a product of Bessel functions; in a sense, there are two, or maybe three "indices".
 Normalization is not handled correctly in all cases.
 </p>
 
-<img src="sceq31.png" alt="jjcos" hspace=40>
+<table border=0 hspace=40 cellspacing=10>
+<tr><td>jjcos:</td><td width=10></td><td><img src="sceq31.png" alt="more sums"></td></tr>
+<tr><td>j2cos:</td><td width=10></td><td><img src="sceq34.png" alt="more sums"></td></tr>
+<tr><td>jpcos:</td><td width=10></td><td><img src="sceq33.png" alt="more sums"></td></tr>
+<tr><td>jncos:</td><td width=10></td><td><img src="sceq32.png" alt="more sums"></td></tr>
+</table>
+
 <br>
 <br>
 
