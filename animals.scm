@@ -16,6 +16,8 @@
 ;;; Handsome trig
 ;;; Fast-calling tree cricket
 ;;; Dog-day cicada
+;;; Linnaeus' cicada
+;;; Lyric cicada
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -722,6 +724,82 @@
 	       *output*)))))))
 		     
 
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Linnaeus' Cicada
+
+(definstrument (linnaeus-cicada beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 1 .8 10 1 11 0) :duration dur :scaler amp))
+	 (frqf (make-env '(0 0  3 .02 6 0 8 .03 9.8 0  10.6 -1 11 -1) :scaler (hz->radians 450) :duration dur :base 32))
+	 (gen1 (make-oscil 1280))
+	 (gen2 (make-oscil 1100))
+	 (gen3 (make-oscil 1460))
+	 (gen4 (make-oscil (* 2 1280)))
+	 (gen5 (make-oscil (* 3 1280)))
+	 (rnd (make-rand-interp 1280))
+	 (saw (make-sawtooth-wave 180)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let* ((frq (env frqf))
+		(md (+ frq
+		       (* .014 (rand-interp rnd))))
+		(sw (sawtooth-wave saw)))
+	   (outa i (* (env ampf)
+		      (+ .75 (* .25 sw sw))
+		      (+ (* .8 (oscil gen1 md))
+			 (* .15 (oscil gen2 (* md (/ 1100 1280))))
+			 (* .07 (oscil gen3 (* md (/ 1460 1280))))
+			 (* .02 (oscil gen4 (* 2 md)))
+			 (* .02 (oscil gen5 (* 3 md)))
+			 ))
+		 *output*)))))))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Lyric cicada
+
+(definstrument (lyric-cicada beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (p0 400)
+	 (pulsef (make-env '(0.0 0.0  0.038 0.16  0.044 0.6  0.07 0.6   0.08 0.26  
+			   0.1 0.09 0.12  0.43  0.14  0.19   0.18 0.07  0.22 0.048 
+			   0.23 0.65 0.25 0.65  0.26  0.23 0.28 0.044 
+			   0.3  0.55 0.31 0.31  0.35  0.05 0.38 0.01 0.39 1.0
+			   0.41 0.36 0.42 0.16  0.44  0.02 0.46 0.7  0.48 0.23
+			   0.5  0.1  0.55 0.01   0.56  0.97  
+			   0.6  0.12 0.612 0.02 0.63  0.61 0.65 0.18 0.69 0.07 
+			   0.7  0.61 0.72 0.16  0.76  0.05 0.78 0.37 0.790 0.13
+			   0.82 0.02 0.83 0.4   0.85  0.12 
+			   0.9  0.01 0.92 0.29  0.95  0.2 0.96 0.08
+			   1.0 0)
+			 :duration .02
+			 :scaler 1.0))
+	 (pulser (make-pulse-train 50))
+	 (gen1 (make-oscil (* p0 16)))
+	 (gen2 (make-oscil p0))
+	 (rnd (make-rand-interp p0 (hz->radians 800)))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :duration dur :scaler amp)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let* ((pulse (pulse-train pulser)))
+	   (if (> pulse .1)
+	       (mus-reset pulsef))
+	 (outa i (* (env ampf)
+		    (env pulsef)
+		    (oscil gen1 (+ (* .15 (oscil gen2))
+				   (rand-interp rnd))))
+	       *output*)))))))
+
+
 ;;; --------------------------------------------------------------------------------
 
 (define (calling-all-animals)
@@ -749,5 +827,9 @@
     (indri 14 .25)
     (handsome-trig 15 2 .5)
     (fast-calling-tree-cricket 16 2 .25)
-    (dog-day-cicada 17 2 .125)))
+    (dog-day-cicada 17 2 .125)
+    (linnaeus-cicada 18 2 .125)
+    (lyric-cicada 19 2 .125)
+    ))
+
 

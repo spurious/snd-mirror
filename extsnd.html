@@ -5558,6 +5558,22 @@ See also <a href="sndscm.html#makeselection">make-selection</a>.
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="selectionmaxamp">selection-maxamp</a> (:optional snd chn)</code>
 </td></tr><tr><td></td><td>
 selection-maxamp returns the peak amplitude of the selection in the given channel.
+I use this to provide a view of the selection amplitude envelope in the envelope editor.  If you select
+'selection' and 'wave' in that dialog, it displays a copy of whatever is in the main channel graph,
+so to get a display that makes it easy to "connect the dots", I use C-x m:
+<pre>
+    (<a class=quiet href="#bindkey">bind-key</a> #\m 0
+      (lambda ()
+        (set! (<a class=quiet href="#ybounds">y-bounds</a> (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>)) (list 0 (<em class=red>selection-maxamp</em>))))
+        #t)
+
+    (<a class=quiet href="#bindkey">bind-key</a> #\m 4
+      (lambda ()
+        (set! (<a class=quiet href="#ybounds">y-bounds</a> (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>)) (list -1.0 1.0)))
+        #t)
+</pre>
+The second key binding (C-x C-m), undoes the previous C-x m.  Another useful key binding in this regard is C-x v, the
+built-in command to fill the current window with the selection.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
