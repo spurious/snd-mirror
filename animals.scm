@@ -18,6 +18,9 @@
 ;;; Dog-day cicada
 ;;; Linnaeus' cicada
 ;;; Lyric cicada
+;;; Confused ground-cricket
+;;; Tinkling ground-cricket
+;;; Marsh meadow grasshopper
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -832,7 +835,7 @@
 	 (outa i (* (env ampf)
 		    (env songf)
 		    (env pulsef)
-		    (oscil gen1 (+ (* .1 (oscil gen2))
+		    (oscil gen1 (+ (* .01 (oscil gen2))
 				   (rand-interp rnd))))
 	       *output*)
 	 (set! song-ctr (1- song-ctr))
@@ -841,6 +844,67 @@
 ;(with-sound (:play #t) (confused-ground-cricket 0 3 .3))
 
 
+;;; ------------------------------------------------------------------------------------------
+;;;
+;;; Tinkling ground-cricket
+;;;
+;;;  There's a secondary (slower) peep -- is this part of our cricket's song, or another cricket in the background?
+
+(definstrument (tinkling-ground-cricket beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :duration dur :scaler amp))
+	 (gen1 (make-oscil 7200))
+	 (gen2 (make-oscil 80))
+	 (pulser (make-pulse-train (/ 1.0 .15)))
+	 (pulsef (make-env '(0.0 0.0  0.07 0.5  0.28 0.86  0.42 0.97  0.55 1.0  0.63 0.88  0.71 0.6  0.85 0.14  0.9 0.1 0.94 0.02 1.0 0.0) :duration .03)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((pulse (pulse-train pulser)))
+	   (if (> pulse .1)
+	       (mus-reset pulsef))
+	   (outa i (* (env ampf)
+		      (env pulsef)
+		      (oscil gen1 (* .01 (oscil gen2))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (tinkling-ground-cricket 0 3 .3))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Marsh meadow grasshopper
+
+(definstrument (marsh-meadow-grasshopper beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 4.8)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0  .2 .6  .65 1.0  .87 .87 1.0 0) :duration dur :scaler amp))
+	 (pulsef (make-env '(0.000  0.000   0.070  0.086   0.176  0.083   0.311  0.170   0.432  0.173  
+			     0.470  0.321   0.487  0.021   0.503  0.021   0.504  0.304   0.540  0.298  
+			     0.553  0.435   0.600  0.193   0.614  0.458   0.652  0.315   0.665  0.024  
+			     0.689  0.018   0.699  0.638   0.725  0.582   0.727  0.027   0.790  0.009 
+			     0.799  0.819   0.824  0.635   0.833  0.036   0.926  0.015   0.941  0.866
+			     0.949  0.053   0.968  0.570   1.000  0.000)
+			   :duration .19))
+	 (pulser (make-pulse-train (/ 1.0 (+ .19 .02))))
+	 (last-val 0.0))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((pulse (pulse-train pulser)))
+	   (if (> pulse .1)
+	       (mus-reset pulsef))
+	   (let ((this-val (* (env ampf)
+			      (env pulsef)
+			      (- 1.0 (random 2.0)))))
+	     (outa i (- last-val this-val) *output*)
+	     (set! last-val this-val))))))))
+
+;(with-sound (:play #t) (marsh-meadow-grasshopper 0 .3))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -874,6 +938,8 @@
     (linnaeus-cicada 18 2 .125)
     (lyric-cicada 19 2 .125)
     (confused-ground-cricket 20 3 .3)
+    (tinkling-ground-cricket 21 3 .3)
+    (marsh-meadow-grasshopper 0 .3)
     ))
 
 
