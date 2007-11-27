@@ -800,10 +800,53 @@
 	       *output*)))))))
 
 
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Confused ground-cricket
+
+(definstrument (confused-ground-cricket beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (gen1 (make-oscil 5700))
+	 (gen2 (make-oscil 5700))
+	 (rnd (make-rand-interp 600 (hz->radians 166)))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :duration dur :scaler amp))
+	 (songf (make-env '(0.0 0.0  0.02 0.5  0.18 0.5  0.24 0.28  0.28 0.27  0.45 0.8  0.65 1.0 0.93 0.94  1.0 0.0) :duration .4))
+	 (pulsef (make-env '(0.0 0.0  0.16 0.0  0.23 0.57  0.36  0.57  0.42 0.83  0.56 1.0  0.64 0.81  0.75 0.2  0.86 0.02 1.0 0.0) :duration .01))
+	 (pulse-ctr (seconds->samples (+ .01 (random .006))))
+	 (song-ctr (seconds->samples (+ .5 (random .2)))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (if (<= song-ctr 0)
+	     (begin
+	       (set! song-ctr (seconds->samples (+ .5 (random .2))))
+	       (mus-reset songf)
+	       (set! pulse-ctr 0)))
+	 (if (<= pulse-ctr 0)
+	     (begin
+	       (set! pulse-ctr (seconds->samples (+ .01 (random .006))))
+	       (mus-reset pulsef)))
+	 (outa i (* (env ampf)
+		    (env songf)
+		    (env pulsef)
+		    (oscil gen1 (+ (* .1 (oscil gen2))
+				   (rand-interp rnd))))
+	       *output*)
+	 (set! song-ctr (1- song-ctr))
+	 (set! pulse-ctr (1- pulse-ctr)))))))
+
+;(with-sound (:play #t) (confused-ground-cricket 0 3 .3))
+
+
+
+
 ;;; --------------------------------------------------------------------------------
 
 (define (calling-all-animals)
-  (with-sound (:play #t :scaled-to .5)
+  (with-sound (:play #t :scaled-to .5 :srate 44100) ;(srate needed by snd-test)
     (mosquito 0 5 560 .2)
     (mosquito 1 3 880 .05)
     (knudsens-frog 2 .5)
@@ -830,6 +873,7 @@
     (dog-day-cicada 17 2 .125)
     (linnaeus-cicada 18 2 .125)
     (lyric-cicada 19 2 .125)
+    (confused-ground-cricket 20 3 .3)
     ))
 
 

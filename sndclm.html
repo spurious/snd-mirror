@@ -1367,9 +1367,10 @@ we can only push the order up to around 46.
 The "fm" argument to these two generators is intended mainly for vibrato and frequency envelopes. 
 If you use it for frequency modulation, you'll notice that the result is not the necessarily same as applying that
 modulation to the equivalent bank of oscillators, but it is the same as (for example) applying it to a sum-of-cosines
-generator, or most of the other generators (table-lookup, sum-of-sines, etc).  The effective index at
-each component is lacking the "mc-ratio" fixup you'd normally apply in a multi-carrier FM instrument,
-so each partial's actual index is multiplied by the partial number (the harmonic).  This is what you want
+generator, or most of the other generators (table-lookup, sum-of-sines, etc).  The polynomial in cos(x) produces
+a sum of cos(nx) for various "n", but if "x" is itself a sinusoid, its
+effective index includes the factor of "n" (the partial number). 
+This is what you want
 if all the components should move together (as in vibrato).  If you need better control of the FM spectrum,
 use a bank of oscils where you can set each index independently.  Here we used '(1 1 2 1 3 1) and polyshape
 with sinusoidal FM with an index of 1.

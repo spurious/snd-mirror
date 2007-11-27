@@ -10,7 +10,7 @@ static GtkWidget *completion_pane = NULL;
 static slist *completion_list = NULL;
 static bool completion_list_active = false;
 
-static int printout_end;
+static int printout_end = 0;
 
 #define LISTENER_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))
 

@@ -1000,7 +1000,29 @@ static off_t zoom_focus_location(chan_info *cp)
     return(CURSOR(cp));
 
   if (selection_is_visible_in_channel(cp)) 
-    return(selection_beg(cp));
+    /* this is complicated!  We want the relative position of the focussed-upon thing
+     *   to stay the same, so that the zoom is smooth, but if we focus on just (for example)
+     *   the selection start, we end up jumping unexpectedly if C-x v centered the selection.
+     * So, return something in the current window related to the current selection.
+     */
+    {
+      off_t beg, end, mid, left, right;
+      beg = selection_beg(cp);
+      end = beg + selection_len();
+      mid = (off_t)(0.5 * (beg + end));
+      left = cp->axis->losamp;
+      right = cp->axis->hisamp;
+      if ((mid > left) &&
+	  (mid < right))
+	return(mid);
+      if ((beg > left) &&
+	  (beg < right))
+	return(beg);
+      if ((end > left) &&
+	  (end < right))
+	return(end);
+      return((off_t)(0.5 * (left + right)));
+    }
 
   {
     off_t pos;
