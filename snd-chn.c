@@ -1021,7 +1021,7 @@ static off_t zoom_focus_location(chan_info *cp)
       if ((end > left) &&
 	  (end < right))
 	return(end);
-      return((off_t)(0.5 * (left + right)));
+      /* return((off_t)(0.5 * (left + right))); */
     }
 
   {

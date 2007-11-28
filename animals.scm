@@ -21,6 +21,10 @@
 ;;; Confused ground-cricket
 ;;; Tinkling ground-cricket
 ;;; Marsh meadow grasshopper
+;;; Striped ground-cricket
+;;; Sphagnum ground cricket
+;;; Fox sparrow
+;;; Southeastern field cricket
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -28,12 +32,6 @@
 
 (if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
-
-
-;;; bat recording has a steady sine wave at 18755 Hz -- very loud if I could hear that high
-;;; TODO: delay + sqr as handler for coupled rand-interp envs
-;;; TODO: 8bat, insect trill in rail is at 8.5KHz? rail, midship (start), capuchin, allig
-;;; TODO: frogs/crickets if ins dur>base song, repeat at correct interval
 
 
 
@@ -96,10 +94,8 @@
 		    (oscil base (+ (env frqf) (* .01 (oscil modm))))
 		    (env ampm))
 	       *output*))))))
-#|
-(with-sound (:play #t :statistics #t) 
-  (knudsens-frog 0 .5))
-|#
+
+;(with-sound (:play #t :statistics #t) (knudsens-frog 0 .5))
 
 
 (definstrument (a-frog beg dur freq amp amp-env gliss gliss-env pulse-dur pulse-env fm-index fm-freq)
@@ -166,11 +162,8 @@
 		       (* .2 (oscil base1 0.0))))
 	       *output*))))))
 
-#|
-(with-sound (:play #t) 
-    (a-cricket 0 .12 4500 5400 .5 '(0 0 1 1 3 1 4 0)
-                        (/ .11 3) '(0 0 1 .8 5 1 6 0 15 0)))
-|#
+;(with-sound (:play #t) (a-cricket 0 .12 4500 5400 .5 '(0 0 1 1 3 1 4 0) (/ .11 3) '(0 0 1 .8 5 1 6 0 15 0)))
+
 
 
 ;;; L Elliott "The Calls of Frogs and Toads"
@@ -564,7 +557,7 @@
 ;;; --------------------------------------------------------------------------------
 ;;; indri
 ;;; close in spectrum, amp, freq, but the original has what sounds like a ton of reverb
-;;;   if I add the reverb, it's close -- a "field recording" at the local zoo?
+;;;   if I add the reverb, it's close -- is this really what this animal sounds like?
 
 (definstrument (indri beg amp)
   (let* ((pitch 900)
@@ -876,6 +869,8 @@
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; Marsh meadow grasshopper
+;;;
+;;; this is just a random number generator with an elaborate amplitude envelope
 
 (definstrument (marsh-meadow-grasshopper beg amp)
   (let* ((start (seconds->samples beg))
@@ -905,6 +900,221 @@
 	     (set! last-val this-val))))))))
 
 ;(with-sound (:play #t) (marsh-meadow-grasshopper 0 .3))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Striped ground cricket
+
+(definstrument (striped-ground-cricket beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :duration dur :scaler amp))
+	 (gen1 (make-oscil (* 2 6600)))
+	 (gen2 (make-oscil (* 2 66) (* 0.5 (+ pi (hz->radians (* 2 66))))))
+	 (gen3 (make-oscil 6600))
+	 (gen4 (make-oscil 66 (* 0.5 (+ pi (hz->radians 66)))))
+	 (pulser (make-pulse-train (/ 1.0 .015)))
+	 (pulsef (make-env '(0.000 0.000  0.041 0.466  0.144 0.775  0.359 1.0  0.484 0.858  1.000 0.000) :duration .012))
+	 (pulses 10)
+	 (pulse-ctr 0)
+	 (pulse-amp 0.5)
+	 (long-pulser (make-pulse-train (/ 1.0 .54)))
+	 (rnd (make-rand-interp (* 3 66) .04)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((pulse (pulse-train pulser))
+	       (long-pulse (pulse-train long-pulser)))
+	   (if (> long-pulse .1)
+	       (begin
+		 (set! pulse-amp 0.5)
+		 (set! pulse-ctr 0)
+		 (set! pulses (+ 8 (random 3)))))
+	   (if (and (> pulse .1)
+		    (< pulse-ctr pulses))
+	       (begin
+		 (mus-reset pulsef)
+		 (if (> pulse-ctr 0)
+		     (set! pulse-amp 1.0))
+		 (set! pulse-ctr (1+ pulse-ctr))))
+	   (outa i (* (env ampf)
+		      pulse-amp
+		      (env pulsef)
+		      (+ (* .2 (oscil gen1 (* .075 (oscil gen2))))
+			 (* .8 (oscil gen3 (+ (* .0125 (oscil gen4))
+					      (rand-interp rnd))))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (striped-ground-cricket 0 3 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Sphagnum ground cricket
+
+(definstrument (sphagnum-ground-cricket beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (gen1 (make-oscil 8850))
+	 (gen2 (make-oscil (* 8850 2)))
+	 (rnd1 (make-rand-interp 885 .03))
+	 (rnd2 (make-rand-interp 885 .1))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :duration dur :scaler amp))
+	 (pulsef (make-env '(0.000 0.000  0.041  0.5  0.250 0.7  0.4 1.0  0.5  0.9  0.8  0.3  1.000 0.000) :duration .013))
+	 (pulser (make-pulse-train (/ 1.0 .019))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (if (> (pulse-train pulser) .1)
+	     (mus-reset pulsef))
+	 (outa i (* (env ampf)
+		    (env pulsef)
+		    (+ (* .9 (oscil gen1 (rand-interp rnd1)))
+		       (* .1 (oscil gen2 (rand-interp rnd2))))) ; I can't hear this unless transposed down 
+	       *output*))))))
+
+;(with-sound (:play #t) (sphagnum-ground-cricket 0 2 .3))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Fox sparrow
+
+(definstrument (fox-sparrow beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (amp-envs (make-vector 10 #f))
+	 (frq-envs (make-vector 10 #f))
+	 (gen1 (make-oscil 0.0))
+	 (gen2 (make-oscil 0.0))
+	 (peep 0)
+	 (begs (vector 0.0   0.3  0.6   0.93  1.23  1.49 1.74  1.98  2.12  2.29))  
+	 (ends (vector 0.12  0.46 0.85  1.17  1.44  1.7  1.95  2.08  2.26  2.45))
+	 (durs (let ((v (make-vector 10 0.0)))
+		 (do ((i 0 (1+ i)))
+		     ((= i 10))
+		   (vector-set! v i (- (vector-ref ends i) (vector-ref begs i))))
+		 v))
+	 (scls (vector .09 .19 .22 .19 .27 .23 .21 .04 .17 .17))
+	 (amps (vector (list 0.000 0.000  0.17 0.13  0.38 0.67  0.64 1.0   0.78 0.79  0.9  0.04  1.0 0.0)
+		       (list 0.000 0.000  0.15 0.15  0.27 0.67  0.37 0.89  0.69 1.0   0.79 0.6   0.8  0.05  1.0 0.0)
+		       (list 0.000 0.000  0.11 0.28  0.18 0.66  0.35 0.98  0.90 0.92  1.0 0.0)
+		       (list 0.000 0.000  0.11 0.28  0.14 0.70  0.32 0.98  0.85 0.84  1.0 0.0)
+		       (list 0.000 0.000  0.11 0.28  0.14 0.70  0.32 0.98  0.85 0.84  1.0 0.0)
+		       (list 0.000 0.000  0.15 0.86  0.24 1.00  0.63 0.64  0.89 0.61  1.0 0.0)
+		       (list 0.000 0.000  0.27 0.80  0.37 1.00  0.63 0.64  0.88 0.51  1.0 0.0)
+		       (list 0.000 0.000  0.08 0.48  0.37 1.00  0.88 0.76  1.00 0.0)
+		       (list 0.000 0.000  0.12 0.43  0.24 1.00  0.59 0.72  0.88 0.35  1.0 0.0)
+		       (list 0.000 0.000  0.12 0.43  0.24 1.00  0.59 0.72  0.88 0.35  1.0 0.0)))
+	 (low-frqs (vector  4260 4010 3910 4970 3360 3160 2810 2310 2700 2700))
+	 (high-frqs (vector 5120 4170 5420 5520 4220 3410 5470 2460 3710 3710))
+	 (frqs (vector (list 0 1 1 0)
+		       (list 0 0 1 .5 8 .6 9 1.0)
+		       (list 0 1 1 .5 2 .2 3 0)
+		       (list 0 1 1 0 5 0)
+		       (list 0 1 1 .3 2 0)
+		       (list 0 1 1 1)
+		       (list 0 1 2 .2 3 0)
+		       (list 0 0 1 .9 2 1)
+		       (list 0 1 1 .4 2 0)
+		       (list 0 1 1 .3 2 0)))
+	 (song-start start)
+	 (next-song-start (+ start (seconds->samples (+ 8.75 (random .1)))))
+	 (next-peep (+ start (seconds->samples (vector-ref begs 1))))
+	 (rnd (make-rand-interp 100 .01)))
+    (do ((i 0 (1+ i)))
+	((= i 10))
+      (vector-set! amp-envs i (make-env (vector-ref amps i) 
+					:scaler (/ (* amp (vector-ref scls i)) .27) 
+					:duration (vector-ref durs i)))
+      (vector-set! frq-envs i (make-env (vector-ref frqs i) 
+					:scaler (hz->radians (- (vector-ref high-frqs i) (vector-ref low-frqs i))) 
+					:offset (hz->radians (vector-ref low-frqs i))
+					:duration (vector-ref durs i))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (if (= i next-song-start)
+	     (begin
+	       (set! peep -1)
+	       (set! song-start next-song-start)
+	       (set! next-song-start (+ next-song-start (seconds->samples (+ 8.75 (random .1)))))))
+	 (if (= i next-peep)
+	     (begin
+	       (set! peep (1+ peep))
+	       (mus-reset (vector-ref amp-envs peep))
+	       (mus-reset (vector-ref frq-envs peep))
+	       (if (< peep 9)
+		   (set! next-peep (+ song-start (seconds->samples (vector-ref begs (1+ peep)))))
+		   (set! next-peep next-song-start))))
+	 (let ((frq (+ (env (vector-ref frq-envs peep))
+		       (rand-interp rnd))))
+	   (outa i (* (env (vector-ref amp-envs peep))
+		      (oscil gen1 frq 
+			     (* .03 (oscil gen2 (* 2 frq)))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (fox-sparrow 0 3 .25))
+
+
+	 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Southeastern field cricket
+
+(definstrument (southeastern-field-cricket beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (gen1 (make-oscil 4730))
+	 (gen2 (make-oscil (* 2 4730)))
+	 (gen3 (make-oscil (* 3 4730)))
+	 (rnd (make-rand-interp (* 2 473) 1))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :duration dur :scaler amp))
+	 (pulsef (make-env '(0.0 0.0  0.05  0.38  0.14 0.77  0.26  0.95  0.47  1.0  0.57  0.9  0.81 0.5  0.85  0.3  1.0 0.0) :duration .014))
+	 (pulse-dur 0.027) ; occasionally a hicccup = .039, 30..100 pulses per song
+	 (pulses (+ 30 (random 70)))
+	 (pulse-amp 1.0)
+	 (pulse-ctr (seconds->samples pulse-dur))
+	 (song-ctr 0))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (if (= i song-ctr)
+	     (begin
+	       (set! pulses (+ 30 (random 70)))
+	       (set! pulse-amp 1.0)
+	       (set! pulse-ctr (seconds->samples pulse-dur))))
+	 (if (and (<= pulse-ctr 0)
+		  (> pulse-amp 0.0))
+	     (begin
+	       (if (> (random 1.0) .95)
+		   (set! pulse-ctr (seconds->samples (+ pulse-dur .005 (random .01))))
+		   (set! pulse-ctr (seconds->samples pulse-dur)))
+	       (mus-reset pulsef)
+	       (set! pulses (1- pulses))
+	       (if (<= pulses 0)
+		   (begin
+		     (set! pulse-amp 0.0)
+		     (set! song-ctr (+ i (seconds->samples (+ .2 (random .1))))))
+		   (set! pulse-amp 1.0))))
+	 (let ((rn (rand-interp rnd)))
+	   (outa i (* (env ampf)
+		      (env pulsef)
+		      pulse-amp
+		      (+ (* .8 (oscil gen1 0.0 rn))
+			 (* .1 (oscil gen2 0.0 (* 2 rn)))
+			 (* .1 (oscil gen3 0.0 (* 3 rn)))))
+		 *output*))
+	 (set! pulse-ctr (1- pulse-ctr)))))))
+
+
+;(with-sound (:play #t) (southeastern-field-cricket 0 5 .3))
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -939,7 +1149,11 @@
     (lyric-cicada 19 2 .125)
     (confused-ground-cricket 20 3 .3)
     (tinkling-ground-cricket 21 3 .3)
-    (marsh-meadow-grasshopper 0 .3)
+    (marsh-meadow-grasshopper 22 .3)
+    (striped-ground-cricket 23 3 .5)
+    (sphagnum-ground-cricket 24 2 .3)
+    (fox-sparrow 25 3 .25)
+    (southeastern-field-cricket 26 5 .3)
     ))
 
 
