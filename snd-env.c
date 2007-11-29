@@ -1,5 +1,6 @@
 #include "snd.h"
 
+/* TODO: if user types a name in the env name widget, and it is a known name, save the current! */
 
 #define ENVED_DOT_SIZE 10
 

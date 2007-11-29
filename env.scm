@@ -15,6 +15,9 @@
 ;;; repeat-envelope env repeats :optional (reflected #f) (normalized #f) repeats an envelope
 ;;; power-env: generator for extended envelopes (each segment has its own base)
 ;;; envelope-exp: interpolate segments into envelope to give exponential curves
+;;; rms-envelope
+;;; normalize-envelope
+;;; simplify-envelope
 
 (use-modules (ice-9 format) (ice-9 optargs))
 
@@ -509,3 +512,82 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 	(abs-max-envelope-1 (cddr e) (max mx (abs (cadr e))))))
   (let ((peak (abs-max-envelope-1 (cddr env) (abs (cadr env)))))
     (scale-envelope env (/ new-max peak))))
+
+
+;;; simplify-envelope
+
+(define* (simplify-envelope env :optional (ygrid 10) (xgrid 100))
+
+  ;; grid = how fine a fluctuation we will allow.
+  ;; the smaller the grid, the less likely a given bump will get through
+  ;; original x and y values are not changed, just sometimes omitted.
+
+  (define (point-on-line? px py qx qy tx ty)
+
+    ;; is point tx ty on line defined by px py and qx qy --
+    ;; #f if no, :before if on ray from p, :after if on ray from q, :within if between p and q
+    ;; (these are looking at the "line" as a fat vector drawn on a grid)
+    ;; taken from "Graphics Gems" by Glassner, code by A Paeth
+
+    (if (or (= py qy ty) 
+	    (= px qx tx))
+	:within
+	(if (< (abs (- (* (- qy py) (- tx px))
+		       (* (- ty py) (- qx px))))
+	       (max (abs (- qx px))
+		    (abs (- qy py))))
+	    (if (or (and (< qx px) (< px tx))
+		    (and (< qy py) (< py ty)))
+		:before
+		(if (or (and (< tx px) (< px qx))
+			(and (< ty py) (< py qy)))
+		    :before
+		    (if (or (and (< px qx) (< qx tx))
+			    (and (< py qy) (< qy ty)))
+			:after
+			(if (or (and (< tx qx) (< qx px))
+				(and (< ty qy) (< qy py)))
+			    :after
+			    :within))))
+	    #f)))
+
+  (if (and env
+	   (> (length env) 4))
+      (let* ((new-env (list (cadr env) (car env)))
+	     (ymax (max-envelope env))
+	     (ymin (min-envelope env))
+	     (xmax (list-ref env (- (length env) 2)))
+	     (xmin (car env)))
+	(if (= ymin ymax)
+	    (list xmin ymin xmax ymax)
+	  (let* ((y-scl (/ ygrid (- ymax ymin)))
+		 (x-scl (/ (or xgrid ygrid) (- xmax xmin)))
+		 (px #f) (py #f)
+		 (qx #f) (qy #f) 
+		 (tx #f) (ty #f) 
+		 (qtx #f) (qty #f))
+	    (do ((i 0 (+ i 2)))
+		((>= i (length env)))
+	      (let ((ttx (list-ref env i))
+		    (tty (list-ref env (+ i 1))))
+		(set! tx (inexact->exact (round (* ttx x-scl))))
+		(set! ty (inexact->exact (round (* tty y-scl))))
+		(if px
+		    (if (not (point-on-line? px py qx qy tx ty))
+			(begin
+			  (set! new-env (cons qtx new-env))
+			  (set! new-env (cons qty new-env))
+			  (set! px qx)
+			  (set! py qy)))
+		    (begin
+		      (set! px qx)
+		      (set! py qy)))
+		(set! qx tx)
+		(set! qy ty)
+		(set! qtx ttx)
+		(set! qty tty)))
+	    (set! new-env (cons qtx new-env))
+	    (set! new-env (cons qty new-env))
+	    (reverse new-env))))
+      env))
+;;; TODO: doc/test simplify-envelope

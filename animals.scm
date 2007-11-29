@@ -1,18 +1,11 @@
 ;;; animals.scm
 ;;;
+
+;;; -------- insects --------
 ;;; mosquito
-;;; Knudsen's frog
-;;; Oak toad
 ;;; Broad-winged tree-cricket
-;;; Southern cricket frog
 ;;; Long-spurred meadow katydid
-;;; Northern leopard frog
 ;;; Southern mole cricket
-;;; Green tree-frog
-;;; Spring peeper
-;;; Crawfish frog
-;;; River frog
-;;; Indri
 ;;; Handsome trig
 ;;; Fast-calling tree cricket
 ;;; Dog-day cicada
@@ -23,8 +16,28 @@
 ;;; Marsh meadow grasshopper
 ;;; Striped ground-cricket
 ;;; Sphagnum ground cricket
-;;; Fox sparrow
 ;;; Southeastern field cricket
+;;; Snowy tree cricket
+;;; Slightly musical conehead
+
+;;; -------- frogs and toads
+;;; Knudsen's frog
+;;; Oak toad
+;;; Southern cricket frog
+;;; Northern leopard frog
+;;; Green tree-frog
+;;; Spring peeper
+;;; Crawfish frog
+;;; River frog
+
+;;; -------- mammals --------
+;;; Indri
+
+;;; -------- birds --------
+;;; Fox sparrow
+;;; White-throated sparrow
+;;; Henslow's sparrow
+;;; Eastern wood-pewee (2)
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -1116,44 +1129,293 @@
 ;(with-sound (:play #t) (southeastern-field-cricket 0 5 .3))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Snowy tree cricket
+
+(definstrument (snowy-tree-cricket beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (pitch 1690)
+	 (gen1 (make-oscil pitch))
+	 (gen2 (make-oscil (* pitch 2)))
+	 (gen3 (make-oscil (* pitch 3)))
+	 (rnd (make-rand-interp 1000 .014))
+	 (ampf (make-env '(0 0 1 1 20 1 21 0) :duration dur :scaler amp))
+	 (pulsef (make-env '(0.0 0.0    0.04 0.79  0.08 0.09  0.11 0.02  0.14 0.83  0.15 0.95  
+			     0.21 0.05  0.26 0.02  0.29 0.79  0.31 0.89  0.35 0.07  0.38 0.04  
+			     0.39 0.79  0.42 0.94  0.45 0.08  0.48 0.05  0.50 0.80  0.52 0.96  
+			     0.59 0.02  0.64 0.01  0.66 0.78  0.68 0.95  0.72 0.06  0.75 0.04  
+			     0.76 0.70  0.79 0.96  0.83 0.07  0.85 0.02  0.88 0.80  0.90 1.0
+			     0.95 0.12  0.97 0.04  1.00 0.00)
+			   :duration .352 :base .1))
+	 (frqf (make-env '(0.0 0.0    0.04 1.0  0.08 0.0  0.11 0.0  0.14 1.0  0.15 0.0
+			     0.21 0.0  0.26 0.0  0.29 1.0  0.31 0.0  0.35 0.0  0.38 0.0  
+			     0.39 1.0  0.42 0.0  0.45 0.0  0.48 0.0  0.50 1.0  0.52 0.0
+			     0.59 0.0  0.64 0.0  0.66 1.0  0.68 0.0  0.72 0.0  0.75 0.0  
+			     0.76 1.0  0.79 0.0  0.83 0.0  0.85 0.0  0.88 1.0  0.90 0.0
+			     0.95 0.0  0.97 0.0  1.00 0.0)
+			   :duration .352 :scaler (hz->radians 60)))
+	 (pulser (make-pulse-train (/ 1.0 .85))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((rn (+ (rand-interp rnd)
+		      (env frqf))))
+	   (if (> (pulse-train pulser) .1)
+	       (begin
+		 (mus-reset pulsef)
+		 (mus-reset frqf)))
+	   (outa i (* (env ampf)
+		      (env pulsef)
+		      (+ (* .9 (oscil gen1 rn))
+			 (* .05 (oscil gen2 (* 2 rn)))
+			 (* .05 (oscil gen3 (* 3 rn)))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (snowy-tree-cricket 0 2 .3))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Slightly musical conehead
+;;;
+;;; this could use some work
+
+(definstrument (slightly-musical-conehead beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (gen1 (make-oscil 11000))
+	 (gen2 (make-oscil 5500))
+	 (gen3 (make-oscil 1100))
+	 (rnd1 (make-rand-interp 1100 .05))
+	 (rnd2 (make-rand-interp 1100 .4))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :duration dur :scaler amp))
+	 (pulsef (make-env '(0.00 0.00  0.02 0.29  0.04 0.55  0.07 0.37  0.08 0.06  0.11 0.48  0.14 0.13  
+			     0.15 0.69  0.18 0.31  0.20 0.07  0.22 0.77  0.23 0.52  0.25 0.77  0.26 0.21  
+			     0.28 0.70  0.30 0.12  0.34 0.80  0.38 0.17  0.39 0.79  0.42 0.08  0.44 0.54 
+			     0.48 0.53  0.50 0.85  0.53 0.11  0.55 0.51  0.58 0.79  0.60 0.22  0.62 0.84
+			     0.65 0.09  0.67 0.56  0.70 0.91  0.74 0.81  0.77 0.10  0.79 0.70  0.83 0.51
+			     0.85 0.90  0.88 0.03  0.90 0.55  0.93 0.60  0.95 0.11  0.97 0.97  1.0  0.00)
+			   :duration .146))
+	 (pulser (make-pulse-train (/ 1.0 .36))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (if (> (pulse-train pulser) .1)
+	     (mus-reset pulsef))
+	 (let ((rn (rand-interp rnd1)))
+	   (outa i (* (env ampf)
+		      (env pulsef)
+		      (+ .6 (rand-interp rnd2))
+		      (oscil gen1 
+			     (+ (* .05 (oscil gen2 (* 5 rn)))
+				(* .1 (oscil gen3 rn)))))
+	       *output*)))))))
+
+;(with-sound (:play #t) (slightly-musical-conehead 0 2 .4))
+
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; White-throated sparrow
+
+(definstrument (white-throated-sparrow beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur (+ 3.25 (random .2)))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.00 0.00  0.04 0.44  0.09 0.59  0.12 0.59  0.16 0.75  0.17 0.00  
+			   0.22 0.00
+			   0.25 0.76  0.28 0.89  0.29 0.14  0.31 0.93  0.34 0.87  0.35 0.14  0.36 0.85  
+			   0.37 0.84  0.38 0.00  
+			   0.42 0.00  0.44 0.86  0.46 0.83  0.47 0.91  0.51 0.92  
+			   0.52 0.87  0.53 0.00  
+			   0.57 0.00  0.58 0.65  0.60 0.88  0.61 0.14  0.62 0.95  
+			   0.63 0.94  0.64 0.20  0.66 0.99  0.67 0.88  0.68 0.00  
+			   0.72 0.00  0.73 0.65  
+			   0.75 0.82  0.76 0.13  0.77 0.78  0.78 0.88  0.79 0.83  0.797 0.12 0.803 0.12 0.81 0.79  
+			   0.82 0.87  0.83 0.00  
+			   0.87 0.00  0.89 0.58  0.91 0.75  0.917 0.13 0.923 0.13  0.93 0.73  
+			   0.94 0.84  0.95 0.77  0.957 0.12 0.963 0.12  0.97 0.81  0.98 0.79  1.00 0.00)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0 0 .17 0.0 .21 1 
+			   0.22 1.5 0.23 1 0.41 1
+			   0.42 1.25 0.43 1 0.56 1
+			   0.57 1.25 0.58 1 0.71 1
+			   0.72 1.25 0.73 1 0.86 1
+			   0.87 1.25 0.88 1 
+			   1 1) 
+			 :scaler (hz->radians 720) :duration dur))
+	 (pitch 3800)
+	 (gen1 (make-oscil pitch))
+	 (gen2 (make-oscil (* 2 pitch)))
+	 (gen3 (make-oscil (* 3 pitch)))
+	 (rnd (make-rand-interp 30 .005)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (+ (env frqf)
+		       (mus-random 0.01)
+		       (rand-interp rnd))))
+	   (outa i (* (env ampf)
+		      (+ (* .9 (oscil gen1 frq))
+			 (* .025 (oscil gen2 (* 2 frq)))
+			 (* .075 (oscil gen3 (* 3 frq)))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (white-throated-sparrow 0 .25))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Henslow's sparrow
+
+(definstrument (henslows-sparrow beg amp)
+  ;; "the poorest vocal effort of any bird" -- R T Peterson
+  (let* ((start (seconds->samples beg))
+	 (dur 0.24)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.00 0.00  0.05 0.42  0.08 0.03  0.10 0.30  0.12 0.02  
+			   0.21 0.00  0.22 0.69  0.23 0.34  0.24 0.84  0.26 0.64  
+			   0.28 0.04  0.29 0.11  0.30 0.47  0.32 0.00  0.46 0.00  
+			   0.48 0.04  0.52 1.00  0.53 0.97  0.54 0.44  0.55 0.80  
+			   0.57 0.02  0.58 0.07  0.59 0.72  0.60 0.45  0.61 0.79  
+			   0.62 0.66  0.63 0.81  0.66 0.05  0.67 0.16  0.73 0.50  
+			   0.75 0.52  0.78 0.04  0.81 0.03  0.82 0.08  0.85 0.47  
+			   0.87 0.22  0.88 0.39  0.90 0.09  0.91 0.36  0.96 0.39
+			   0.98 0.07  1.00 0.00)
+			 :duration dur :scaler amp))
+	 (gen1 (make-oscil 0.0))
+	 (frqf (make-env '(0.00 9310 0.05 9560 0.08 9480 0.10 9900 0.11 8140 0.12 9900
+			   0.21 9980 0.22 8630 0.23 8800 0.24 8400 0.26 8800  
+			   0.28 8600 0.29 8800 0.30 8300 0.32 8100 0.46 8100  
+			   0.48 5600 0.49 5200 0.52 6200 0.54 4800 0.55 6600  
+			   0.57 5800 0.58 5800 0.59 6200 0.60 6200
+			   0.62 5800 0.66 3600 0.67 4400 0.73 3900 0.78 3100 0.85 4900  
+			   0.88 3600 0.90 3900 0.91 4400 1.00 3900)
+			 :duration dur :scaler (hz->radians 1.0)))
+	 (rnd (make-rand-interp 10 1)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (oscil gen1 (+ (env frqf)
+				   (rand-interp rnd))))
+	       *output*))))))
+
+;(with-sound (:play #t) (henslows-sparrow 0 .25))
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Eastern wood-pewee
+
+	       
+(definstrument (eastern-wood-pewee-1 beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 1.07)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000  0.037 0.894  0.045 0.711  0.061 0.845  0.072 0.760  0.076 0.912 
+			   0.084 0.838  0.099 0.982  0.111 0.729  0.124 0.879  0.142 0.011 0.15 0.01  0.165 0.778 
+			   0.172 0.601  0.180 0.706  0.212 0.441  0.258 0.227  0.298 0.325  0.312 0.564 
+			   0.334 0.312  0.365 0.399  0.416 0.260  0.475 0.196  0.555 0.356  0.631 0.363 
+			   0.712 0.294  0.746 0.464  0.753 0.369  0.776 0.508  0.799 0.425  0.825 0.479 
+			   0.869 0.485  0.877 0.567  0.907 0.541  0.918 0.459  0.942 0.513  0.977 0.366 
+			   1.000 0.000)
+			 :duration dur :scaler amp))
+	 (gen1 (make-oscil 0.0))
+	 (gen2 (make-oscil 0.0))
+	 (gen3 (make-oscil 0.0))
+	 (frqf (make-env '(0 3370 .03 4300 .1 4600  .14 3400 0.15 4400 .16 3700 .18 4400 .24 4700 .3 4600 .34 3600 .4 3700 .6 3800 .8 4000 1.0 3900)
+			 :duration dur :base .1 :scaler (hz->radians 1.0)))
+	 )
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (env frqf)))
+	   (outa i (* (env ampf)
+		      (+ (* .905 (oscil gen1 frq))
+			 (* .025 (oscil gen2 (* 2 frq)))
+			 (* .025 (oscil gen3 (* 3 frq)))))
+	       *output*)))))))
+
+;(with-sound (:play #t) (eastern-wood-pewee-1 0 .25))
+
+(definstrument (eastern-wood-pewee-2 beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 1.07)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000  0.055 0.665  0.081 0.657  0.101 0.456  0.140 0.572
+			   0.165 0.477  0.219 0.564  0.288 0.526  0.306 0.668  0.328 0.613 
+			   0.387 0.830  0.402 1.000  0.434 0.768  0.455 0.214  0.470 0.173 
+			   0.484 0.387  0.499 0.631  0.512 0.229  0.559 0.142  0.582 0.165 
+			   0.698 0.085  1.000 0.000)
+			 :duration dur :scaler amp))
+	 (gen1 (make-oscil 0.0))
+	 (gen2 (make-oscil 0.0))
+	 (gen3 (make-oscil 0.0))
+	 (frqf (make-env '(0 3250 .1 4400 .2 4800 .3 4800 .47 4000 .49 6300 .51 3600 1.0 2800)
+			 :duration dur :base .03 :scaler (hz->radians 1.0)))
+	 (indf (make-env '(0 0 .35 0 .55 1 1 1) :duration dur)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (env frqf))
+	       (ind (env indf)))
+	   (outa i (* (env ampf)
+		      (+ (* .9 (oscil gen1 frq))
+			 (* ind .1 (oscil gen2 (* 2 frq)))
+			 (* (- 1.0 ind) .075 (oscil gen3 (* 3 frq)))))
+	       *output*)))))))
+
+;(with-sound (:play #t) (eastern-wood-pewee-2 0 .25))
+
+
 
 ;;; --------------------------------------------------------------------------------
 
 (define (calling-all-animals)
   (with-sound (:play #t :scaled-to .5 :srate 44100) ;(srate needed by snd-test)
+
     (mosquito 0 5 560 .2)
     (mosquito 1 3 880 .05)
     (knudsens-frog 2 .5)
-    (a-cricket 3 .12 4500 5400 .5 '(0 0 1 1 3 1 4 0)
-	       (/ .11 3) '(0 0 1 .8 5 1 6 0 15 0))
-    (let ((last-beg 3.0))
-      (do ((k 0 (1+ k)))
-	  ((= k 12))
-	(let ((beg (+ last-beg .37 (random .08))))
-	  (oak-toad beg (+ .25 (random .3)))
-	  (set! last-beg beg))))
-    (broad-winged-tree-cricket 5 4.0 0.1)
-    (southern-cricket-frog 6 0.5)
-    (long-spurred-meadow-katydid 7 .5)
-    (northern-leopard-frog 8 .5)
-    (southern-mole-cricket 9 6 .1)
-    (green-tree-frog 10 .5)
-    (spring-peeper 11 .5)
-    (crawfish-frog 12 .5)
-    (river-frog 13 .5)
-    (indri 14 .25)
-    (handsome-trig 15 2 .5)
-    (fast-calling-tree-cricket 16 2 .25)
-    (dog-day-cicada 17 2 .125)
-    (linnaeus-cicada 18 2 .125)
-    (lyric-cicada 19 2 .125)
-    (confused-ground-cricket 20 3 .3)
-    (tinkling-ground-cricket 21 3 .3)
-    (marsh-meadow-grasshopper 22 .3)
-    (striped-ground-cricket 23 3 .5)
-    (sphagnum-ground-cricket 24 2 .3)
-    (fox-sparrow 25 3 .25)
-    (southeastern-field-cricket 26 5 .3)
+    (a-cricket 3 .12 4500 5400 .5 '(0 0 1 1 3 1 4 0) (/ .11 3) '(0 0 1 .8 5 1 6 0 15 0))
+    (oak-toad 4 .3)
+    (broad-winged-tree-cricket 6 4.0 0.2)
+    (southern-cricket-frog 8 0.5)
+    (long-spurred-meadow-katydid 9 .5)
+    (northern-leopard-frog 10 .5)
+    (southern-mole-cricket 11 6 .15)
+    (green-tree-frog 13 .5)
+    (spring-peeper 14 .5)
+    (crawfish-frog 15 .5)
+    (river-frog 16 .5)
+    (indri 17 .25)
+    (handsome-trig 20 2 .5)
+    (fast-calling-tree-cricket 21 2 .25)
+    (dog-day-cicada 22 2 .1)
+    (linnaeus-cicada 23 2 .125)
+    (lyric-cicada 24 2 .125)
+    (confused-ground-cricket 25 3 .3)
+    (tinkling-ground-cricket 26.5 3 .3)
+    (marsh-meadow-grasshopper 28 .3)
+    (striped-ground-cricket 29 3 .5)
+    (sphagnum-ground-cricket 30 2 .3)
+    (fox-sparrow 31 3 .25)
+    (southeastern-field-cricket 33 5 .3)
+    (snowy-tree-cricket 34 2.1 .3)
+    (slightly-musical-conehead 35 2 .4)
+    (white-throated-sparrow 36 .25)
+    (henslows-sparrow 37 .25)
+    (eastern-wood-pewee-1 38 .25)
+    (eastern-wood-pewee-2 39 .25)
     ))
 
 
