@@ -590,4 +590,4 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 	    (set! new-env (cons qty new-env))
 	    (reverse new-env))))
       env))
-;;; TODO: doc/test simplify-envelope
+;;; TODO: doc/test simplify-envelope, or make it work better

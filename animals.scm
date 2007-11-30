@@ -1,5 +1,5 @@
 ;;; animals.scm
-;;;
+
 
 ;;; -------- insects --------
 ;;; mosquito
@@ -38,6 +38,9 @@
 ;;; White-throated sparrow
 ;;; Henslow's sparrow
 ;;; Eastern wood-pewee (2)
+;;; Field sparrow
+;;; Tufted titmouse
+;;; Savannah sparrow
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -46,6 +49,9 @@
 (if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
+
+;;; many of these need srate=44100 since various frequencies are (well) over 10KHz
+;;;   also, I have bare indices scattered around -- ideally these would be wrapped in hz->radians
 
 
 ;;; this mosquito taken from Richard Mankin, Reference Library of Digitized Insect Sounds, http://www.ars.usda.gov/sp2UserFiles/person/3559/soundlibrary.html
@@ -87,29 +93,6 @@
 
 
 ;;; "The Diversity of Animal Sounds", Cornell Lab of Ornithology
-
-(definstrument (knudsens-frog beg amp)
-  (let* ((start (seconds->samples beg))
-	 (stop (+ start (seconds->samples .25)))
-	 (base (make-oscil 480))
-	 (modm (make-oscil 40))
-	 (frqf (make-env '(0 0 .5 .2 .8 1 1 1) :duration .25 :base 32 :scaler (hz->radians 50)))
-	 (ampm (make-env '(0 .1  .5 .4  .6 .75  1 .9  1.5 1  2 .9 2.3 .1) :duration (/ .25 7)))
-	 (ampp (make-pulse-train (/ 7 .25)))
-	 (ampf (make-env '(0 0 1 1 3 1 4 0) :duration .25 :scaler amp)))
-    (run
-     (lambda ()
-       (do ((i start (1+ i)))
-	   ((= i stop))
-	 (if (> (pulse-train ampp) 0.1)
-	     (mus-reset ampm))
-	 (outa i (* (env ampf)
-		    (oscil base (+ (env frqf) (* .01 (oscil modm))))
-		    (env ampm))
-	       *output*))))))
-
-;(with-sound (:play #t :statistics #t) (knudsens-frog 0 .5))
-
 
 (definstrument (a-frog beg dur freq amp amp-env gliss gliss-env pulse-dur pulse-env fm-index fm-freq)
   (let* ((start (seconds->samples beg))
@@ -994,89 +977,6 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;; Fox sparrow
-
-(definstrument (fox-sparrow beg dur amp)
-  (let* ((start (seconds->samples beg))
-	 (stop (+ start (seconds->samples dur)))
-	 (amp-envs (make-vector 10 #f))
-	 (frq-envs (make-vector 10 #f))
-	 (gen1 (make-oscil 0.0))
-	 (gen2 (make-oscil 0.0))
-	 (peep 0)
-	 (begs (vector 0.0   0.3  0.6   0.93  1.23  1.49 1.74  1.98  2.12  2.29))  
-	 (ends (vector 0.12  0.46 0.85  1.17  1.44  1.7  1.95  2.08  2.26  2.45))
-	 (durs (let ((v (make-vector 10 0.0)))
-		 (do ((i 0 (1+ i)))
-		     ((= i 10))
-		   (vector-set! v i (- (vector-ref ends i) (vector-ref begs i))))
-		 v))
-	 (scls (vector .09 .19 .22 .19 .27 .23 .21 .04 .17 .17))
-	 (amps (vector (list 0.000 0.000  0.17 0.13  0.38 0.67  0.64 1.0   0.78 0.79  0.9  0.04  1.0 0.0)
-		       (list 0.000 0.000  0.15 0.15  0.27 0.67  0.37 0.89  0.69 1.0   0.79 0.6   0.8  0.05  1.0 0.0)
-		       (list 0.000 0.000  0.11 0.28  0.18 0.66  0.35 0.98  0.90 0.92  1.0 0.0)
-		       (list 0.000 0.000  0.11 0.28  0.14 0.70  0.32 0.98  0.85 0.84  1.0 0.0)
-		       (list 0.000 0.000  0.11 0.28  0.14 0.70  0.32 0.98  0.85 0.84  1.0 0.0)
-		       (list 0.000 0.000  0.15 0.86  0.24 1.00  0.63 0.64  0.89 0.61  1.0 0.0)
-		       (list 0.000 0.000  0.27 0.80  0.37 1.00  0.63 0.64  0.88 0.51  1.0 0.0)
-		       (list 0.000 0.000  0.08 0.48  0.37 1.00  0.88 0.76  1.00 0.0)
-		       (list 0.000 0.000  0.12 0.43  0.24 1.00  0.59 0.72  0.88 0.35  1.0 0.0)
-		       (list 0.000 0.000  0.12 0.43  0.24 1.00  0.59 0.72  0.88 0.35  1.0 0.0)))
-	 (low-frqs (vector  4260 4010 3910 4970 3360 3160 2810 2310 2700 2700))
-	 (high-frqs (vector 5120 4170 5420 5520 4220 3410 5470 2460 3710 3710))
-	 (frqs (vector (list 0 1 1 0)
-		       (list 0 0 1 .5 8 .6 9 1.0)
-		       (list 0 1 1 .5 2 .2 3 0)
-		       (list 0 1 1 0 5 0)
-		       (list 0 1 1 .3 2 0)
-		       (list 0 1 1 1)
-		       (list 0 1 2 .2 3 0)
-		       (list 0 0 1 .9 2 1)
-		       (list 0 1 1 .4 2 0)
-		       (list 0 1 1 .3 2 0)))
-	 (song-start start)
-	 (next-song-start (+ start (seconds->samples (+ 8.75 (random .1)))))
-	 (next-peep (+ start (seconds->samples (vector-ref begs 1))))
-	 (rnd (make-rand-interp 100 .01)))
-    (do ((i 0 (1+ i)))
-	((= i 10))
-      (vector-set! amp-envs i (make-env (vector-ref amps i) 
-					:scaler (/ (* amp (vector-ref scls i)) .27) 
-					:duration (vector-ref durs i)))
-      (vector-set! frq-envs i (make-env (vector-ref frqs i) 
-					:scaler (hz->radians (- (vector-ref high-frqs i) (vector-ref low-frqs i))) 
-					:offset (hz->radians (vector-ref low-frqs i))
-					:duration (vector-ref durs i))))
-   (run
-     (lambda ()
-       (do ((i start (1+ i)))
-	   ((= i stop))
-	 (if (= i next-song-start)
-	     (begin
-	       (set! peep -1)
-	       (set! song-start next-song-start)
-	       (set! next-song-start (+ next-song-start (seconds->samples (+ 8.75 (random .1)))))))
-	 (if (= i next-peep)
-	     (begin
-	       (set! peep (1+ peep))
-	       (mus-reset (vector-ref amp-envs peep))
-	       (mus-reset (vector-ref frq-envs peep))
-	       (if (< peep 9)
-		   (set! next-peep (+ song-start (seconds->samples (vector-ref begs (1+ peep)))))
-		   (set! next-peep next-song-start))))
-	 (let ((frq (+ (env (vector-ref frq-envs peep))
-		       (rand-interp rnd))))
-	   (outa i (* (env (vector-ref amp-envs peep))
-		      (oscil gen1 frq 
-			     (* .03 (oscil gen2 (* 2 frq)))))
-		 *output*)))))))
-
-;(with-sound (:play #t) (fox-sparrow 0 3 .25))
-
-
-	 
-;;; --------------------------------------------------------------------------------
-;;;
 ;;; Southeastern field cricket
 
 (definstrument (southeastern-field-cricket beg dur amp)
@@ -1221,6 +1121,89 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;;
+;;; Fox sparrow
+
+(definstrument (fox-sparrow beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (amp-envs (make-vector 10 #f))
+	 (frq-envs (make-vector 10 #f))
+	 (gen1 (make-oscil 0.0))
+	 (gen2 (make-oscil 0.0))
+	 (peep 0)
+	 (begs (vector 0.0   0.3  0.6   0.93  1.23  1.49 1.74  1.98  2.12  2.29))  
+	 (ends (vector 0.12  0.46 0.85  1.17  1.44  1.7  1.95  2.08  2.26  2.45))
+	 (durs (let ((v (make-vector 10 0.0)))
+		 (do ((i 0 (1+ i)))
+		     ((= i 10))
+		   (vector-set! v i (- (vector-ref ends i) (vector-ref begs i))))
+		 v))
+	 (scls (vector .09 .19 .22 .19 .27 .23 .21 .04 .17 .17))
+	 (amps (vector (list 0.000 0.000  0.17 0.13  0.38 0.67  0.64 1.0   0.78 0.79  0.9  0.04  1.0 0.0)
+		       (list 0.000 0.000  0.15 0.15  0.27 0.67  0.37 0.89  0.69 1.0   0.79 0.6   0.8  0.05  1.0 0.0)
+		       (list 0.000 0.000  0.11 0.28  0.18 0.66  0.35 0.98  0.90 0.92  1.0 0.0)
+		       (list 0.000 0.000  0.11 0.28  0.14 0.70  0.32 0.98  0.85 0.84  1.0 0.0)
+		       (list 0.000 0.000  0.11 0.28  0.14 0.70  0.32 0.98  0.85 0.84  1.0 0.0)
+		       (list 0.000 0.000  0.15 0.86  0.24 1.00  0.63 0.64  0.89 0.61  1.0 0.0)
+		       (list 0.000 0.000  0.27 0.80  0.37 1.00  0.63 0.64  0.88 0.51  1.0 0.0)
+		       (list 0.000 0.000  0.08 0.48  0.37 1.00  0.88 0.76  1.00 0.0)
+		       (list 0.000 0.000  0.12 0.43  0.24 1.00  0.59 0.72  0.88 0.35  1.0 0.0)
+		       (list 0.000 0.000  0.12 0.43  0.24 1.00  0.59 0.72  0.88 0.35  1.0 0.0)))
+	 (low-frqs (vector  4260 4010 3910 4970 3360 3160 2810 2310 2700 2700))
+	 (high-frqs (vector 5120 4170 5420 5520 4220 3410 5470 2460 3710 3710))
+	 (frqs (vector (list 0 1 1 0)
+		       (list 0 0 1 .5 8 .6 9 1.0)
+		       (list 0 1 1 .5 2 .2 3 0)
+		       (list 0 1 1 0 5 0)
+		       (list 0 1 1 .3 2 0)
+		       (list 0 1 1 1)
+		       (list 0 1 2 .2 3 0)
+		       (list 0 0 1 .9 2 1)
+		       (list 0 1 1 .4 2 0)
+		       (list 0 1 1 .3 2 0)))
+	 (song-start start)
+	 (next-song-start (+ start (seconds->samples (+ 8.75 (random .1)))))
+	 (next-peep (+ start (seconds->samples (vector-ref begs 1))))
+	 (rnd (make-rand-interp 100 .01)))
+    (do ((i 0 (1+ i)))
+	((= i 10))
+      (vector-set! amp-envs i (make-env (vector-ref amps i) 
+					:scaler (/ (* amp (vector-ref scls i)) .27) 
+					:duration (vector-ref durs i)))
+      (vector-set! frq-envs i (make-env (vector-ref frqs i) 
+					:scaler (hz->radians (- (vector-ref high-frqs i) (vector-ref low-frqs i))) 
+					:offset (hz->radians (vector-ref low-frqs i))
+					:duration (vector-ref durs i))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (if (= i next-song-start)
+	     (begin
+	       (set! peep -1)
+	       (set! song-start next-song-start)
+	       (set! next-song-start (+ next-song-start (seconds->samples (+ 8.75 (random .1)))))))
+	 (if (= i next-peep)
+	     (begin
+	       (set! peep (1+ peep))
+	       (mus-reset (vector-ref amp-envs peep))
+	       (mus-reset (vector-ref frq-envs peep))
+	       (if (< peep 9)
+		   (set! next-peep (+ song-start (seconds->samples (vector-ref begs (1+ peep)))))
+		   (set! next-peep next-song-start))))
+	 (let ((frq (+ (env (vector-ref frq-envs peep))
+		       (rand-interp rnd))))
+	   (outa i (* (env (vector-ref amp-envs peep))
+		      (oscil gen1 frq 
+			     (* .03 (oscil gen2 (* 2 frq)))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (fox-sparrow 0 3 .25))
+
+
+	 
+;;; --------------------------------------------------------------------------------
+;;;
 ;;; White-throated sparrow
 
 (definstrument (white-throated-sparrow beg amp)
@@ -1314,7 +1297,6 @@
 ;;;
 ;;; Eastern wood-pewee
 
-	       
 (definstrument (eastern-wood-pewee-1 beg amp)
   (let* ((start (seconds->samples beg))
 	 (dur 1.07)
@@ -1377,6 +1359,313 @@
 ;(with-sound (:play #t) (eastern-wood-pewee-2 0 .25))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Field sparrow
+
+(definstrument (field-sparrow beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 2.92)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000  0.025 0.201  0.095 0.307  0.113 0.235  0.122 0.005  0.146 0.000 
+			   0.167 0.696  0.201 0.430  0.241 0.325  0.243 0.000  0.265 0.000 
+			   0.287 0.840  0.300 0.791  0.312 0.567  0.354 0.369  0.365 0.000  0.388 0.000 
+			   0.405 0.853  0.430 0.621  0.449 0.387  0.470 0.314  0.477 0.000  0.493 0.000 
+			   0.511 0.887  0.529 0.796  0.552 0.402  0.566 0.327  0.578 0.000  0.594 0.000 
+			   0.614 0.966  0.629 0.446  0.645 0.273  0.649 0.000  0.65 0.0 0.664 0.026 
+			   0.673 1.0    0.690 0.459  0.706 0.000  0.714 0.031 
+			   0.719 0.892  0.74 0.0 0.747 0.000 
+			   0.755 0.851  0.773 0.0 0.781 0.000 
+			   0.790 0.869  0.81 0.0 0.814 0.000 
+			   0.827 0.827  0.845 0.0 0.849 0.000 
+			   0.861 0.786  0.878 0.0 0.882 0.000 
+			   0.894 0.716  0.912 0.0 0.918 0.000 
+			   0.925 0.711  0.943 0.0 0.949 0.000 
+			   0.959 0.657  0.97 0.0 0.975 0.000 
+			   0.984 0.536  0.993 0.149 
+			   1.000 0.000)
+			 :duration dur :scaler amp))
+	 (gen1 (make-oscil 0.0))
+	 (gen2 (make-oscil 0.0))
+	 (frqf (make-env '(0.000 4300  0.025 4300  0.1 3300 0.122 3300
+			   0.146 4300  0.18 4300  0.23 3300 0.243 3300 
+			   0.265 4300  0.3 4300  0.35 3300 0.365 3300
+			   0.388 4300  0.42 4300  0.46 3300 0.477 3300
+			   0.493 4300  0.52 4300  0.56 3300 0.578 3300
+			   0.594 4300  0.61 4300  0.63 3300 0.649 3300 0.65 4300
+			   0.664 4300  0.68 4300  0.714 3300
+			   0.716 4300  0.74 3200 0.747 4300 
+			   0.75 4300  0.773 3200 0.781 4300 
+			   0.785 4300  0.81 3200 0.814 4300 
+			   0.82 4300  0.845 3200 0.849 4300 
+			   0.85 4300  0.878 3200 0.882 4300 
+			   0.89 4300  0.912 3200 0.918 4300 
+			   0.92 4300  0.943 3200 0.949 4300 
+			   0.95 4300  0.97 3200 0.975 4300 
+			   0.98 4300  0.993 3200
+			   1.000 3300)
+			 :duration dur :scaler (hz->radians 1.0))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (env frqf)))
+	   (outa i (* (env ampf)
+		      (+ (* .99 (oscil gen1 frq))
+			 (* .01 (oscil gen2 (* 2 frq)))))
+	       *output*)))))))
+
+;(with-sound (:play #t) (field-sparrow 0 .25))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Tufted titmouse
+
+(definstrument (tufted-titmouse beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 1.0)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.00  0.034 0.637  0.060 0.591  0.074 0.458  0.095 0.872  0.119 0.473  0.185 0.033  0.211 0.102 
+			   0.233 0.00  0.384 0.00   0.425 0.926  0.447 0.898  0.461 0.665  0.471 1.0    0.497 0.578  0.529 0.422  0.565 0.054  0.594 0.107 
+			   0.616 0.00  0.755 0.00   0.807 0.905  0.829 0.870  0.837 0.675  0.847 0.992  0.867 0.739  0.891 0.486  0.942 0.056  0.970 0.130 
+			   1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.0 3730 .04 3900 .07 3770  .09 2800    .17 2470  .19 2050  .21 2320  .23 2100
+			   .38 3730  .42 3900  .45 3770  .46 2760 .53 2470  .55 2050  .58 2320 .6 2100
+			   .75 3730  .79  3900  .83 3770  .84 2720 .91 2470  .94 2050  .96 2320 1.0 2100)
+			 :duration dur :base .1 :scaler (hz->radians 1.0)))
+	 (gen1 (make-oscil 0.0))
+	 (gen2 (make-oscil 0.0)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (env frqf)))
+	   (outa i (* (env ampf)
+		      (+ (* .99 (oscil gen1 frq))
+			 (* .01 (oscil gen2 (* frq 2)))))
+	       *output*)))))))
+
+;(with-sound (:play #t) (tufted-titmouse 0 .3))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Savannah sparrow
+
+(definstrument (savannah-sparrow beg amp)
+
+  (define (savannah-1 beg amp)
+    ;; peeps
+    (let* ((start (seconds->samples beg))
+	   (dur .05)
+	   (stop (+ start (seconds->samples dur)))
+	   (hi-pitch 9000)
+	   (lo-pitch 7460)
+	   (ampf (make-env '(0 0 1 1 2 0) :duration dur :scaler amp))
+	   (frqf (make-env '(0 1 1 0) :duration dur :scaler (hz->radians (- hi-pitch lo-pitch)) :offset (hz->radians lo-pitch)))
+	   (gen1 (make-oscil 0.0))
+	   (gen2 (make-oscil 0.0))
+	   (gen3 (make-oscil 80)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (let ((frq (env frqf)))
+	     (outa i (* (env ampf)
+			(+ .8 (* .2 (abs (oscil gen3))))
+			(+ (* .98 (oscil gen1 frq))
+			   (* .02 (oscil gen2 (* 2 frq)))))
+	       *output*)))))))
+
+  (define (savannah-2 beg amp pitch)
+    ;; buzz
+    (let* ((start (seconds->samples beg))
+	   (dur .008)
+	   (stop (+ start (seconds->samples dur)))
+	   (hi-pitch (+ pitch 400))
+	   (lo-pitch pitch)
+	   (ampf (make-env '(0.000 0.000 0.094 0.228 0.148 0.832 0.248 1.000 0.364 0.695 0.522 0.586 0.634 0.284 0.801 0.558 0.891 0.102 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0 1 1 0) :duration dur :scaler (hz->radians (- hi-pitch lo-pitch)) :offset (hz->radians lo-pitch)))
+	   (gen1 (make-oscil 0.0))
+	   (rnd (make-rand-interp 300 .03)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf) 
+		      (oscil gen1 (+ (env frqf)
+				     (rand-interp rnd))))
+		 *output*))))))
+
+  (define (savannah-3 beg amp)
+    ;; ticks
+    (let* ((start (seconds->samples beg))
+	   (dur .004)
+	   (stop (+ start (seconds->samples dur)))
+	   (rnd (make-rand 4000 .4))
+	   (gen1 (make-oscil 8000))
+	   (ampf (make-env '(0 0 1 1 2 .3 10 0) :duration dur :base 32 :scaler amp)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf) 
+		      (oscil gen1 (rand rnd)))
+		 *output*))))))
+      
+    
+  (define (savannah-4 beg amp)
+    ;; ticks
+    (let* ((start (seconds->samples beg))
+	   (dur .034)
+	   (stop (+ start (seconds->samples dur)))
+	   (rnd (make-rand 12000 .1))
+	   (gen1 (make-oscil 6400))
+	   (frqf (make-env '(0 .5 1 0 2 1 4 1) :scaler (hz->radians 400) :duration dur))
+	   (ampf (make-env '(0.000 0.000 0.045 0.018 0.067 0.196 0.096 0.004 0.166 0.032 0.196 0.207 0.209 0.116 
+			     0.239 0.575 0.249 0.639 0.280 0.063 0.297 0.032 0.312 0.070 0.339 0.021 0.372 0.049 
+			     0.378 0.544 0.391 0.088 0.437 0.211 0.441 0.611 0.455 0.218 0.480 0.140 0.498 0.253 
+			     0.506 0.593 0.516 0.228 0.532 0.098 0.551 0.200 0.569 0.544 0.593 0.253 0.630 0.540 
+			     0.660 0.133 0.684 0.540 0.722 0.158 0.748 0.604 0.760 0.779 0.787 0.260 0.824 1.000 
+			     0.847 0.249 0.878 0.874 0.917 0.204 0.976 0.056 1.000 0.000)
+			   :duration dur :scaler amp)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf) 
+		      (oscil gen1 (+ (env frqf) (rand rnd))))
+		 *output*))))))
+      
+  (define (savannah-5 beg amp)
+    ;; ticks
+    (let* ((start (seconds->samples beg))
+	   (dur .071)
+	   (stop (+ start (seconds->samples dur)))
+	   (rnd (make-rand 12000 .1))
+	   (gen1 (make-oscil 8500))
+	   (ampf (make-env '(0.000 0.000 0.067 0.060 0.084 0.432 0.098 0.414 0.111 1.000 0.123 0.267 0.148 0.028 
+			     0.160 0.877 0.181 0.151 0.189 0.007 0.305 0.007 0.316 0.347 0.331 0.225 0.341 1.000 
+			     0.353 0.382 0.360 0.137 0.374 0.039 0.388 0.053 0.398 0.919 0.404 0.688 0.415 0.196 
+			     0.438 0.000 0.530 0.000 0.542 0.502 0.561 0.151 0.573 0.958 0.586 0.218 0.599 0.035 
+			     0.616 0.067 0.623 0.811 0.642 0.144 0.661 0.000 0.767 0.000 0.785 0.225 0.799 0.923 
+			     0.822 0.000 0.853 0.000 0.861 0.674 0.880 0.053 0.906 0.000 1.000 0.000)
+			   :duration dur :scaler amp)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf) 
+		      (oscil gen1 (rand rnd)))
+		 *output*))))))
+      
+  (define (savannah-6 beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur .023)
+	   (stop (+ start (seconds->samples dur)))
+	   (rnd (make-rand 3500 .15))
+	   (gen1 (make-oscil 3600))
+	   (ampf (make-env '(0.000 0.000 0.297 0.323 0.339 0.547 0.388 0.891 0.439 1.000 0.553 0.975 0.591 0.295 
+			     0.615 0.168 0.678 0.011 0.731 0.105 0.758 0.709 0.800 0.312 0.884 0.077 1.000 0.000)
+			   :duration dur :scaler amp)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf) 
+		      (oscil gen1 (rand rnd)))
+		 *output*))))))
+    
+  (define (savannah-7 beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur .053)
+	   (stop (+ start (seconds->samples dur)))
+	   (hi-pitch 8250)
+	   (lo-pitch 6900)
+	   (ampf (make-env '(0 0 2 1 3 0) :duration dur :scaler amp))
+	   (frqf (make-env '(0 0 1 1) :duration dur :scaler (hz->radians (- hi-pitch lo-pitch)) :offset (hz->radians lo-pitch)))
+	   (gen1 (make-oscil 0.0))
+	   (gen2 (make-oscil 220)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (let ((frq (env frqf)))
+	     (outa i (* (env ampf)
+			(+ .25 (* .75 (abs (oscil gen2))))
+			(oscil gen1 frq))
+	       *output*)))))))
+
+  (define (savannah-8 beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur .023)
+	   (stop (+ start (seconds->samples dur)))
+	   (gen1 (make-oscil 3800))
+	   (gen2 (make-oscil 150))
+	   (ampf (make-env '(0.000 0.000 0.138 0.098 0.199 0.218 0.258 0.018 0.367 0.404 0.422 0.361 0.462 0.011 
+			     0.549 0.782 0.639 0.519 0.665 0.000 0.678 0.379 0.707 1.000 0.801 0.551 0.835 0.165 
+			     0.850 0.337 1.000 0.000)
+			   :duration dur :scaler amp)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf) 
+		      (oscil gen1 0.0 (* 2.0 (oscil gen2))))
+		 *output*))))))
+    
+  ;; -------- 
+  (savannah-1 beg (* amp .21))
+  (savannah-1 (+ beg .35) (* amp .45))
+  (savannah-1 (+ beg .35 .28) (* amp .51))
+  (savannah-1 (+ beg .35 .28 .24) (* amp .64))
+  (savannah-1 (+ beg .35 .28 .24 .26) amp)
+  (savannah-1 (+ beg .35 .28 .24 .26 .17) amp)
+
+  (savannah-4 (+ .97 beg) (* amp .21))
+
+  (do ((i 0 (1+ i)))
+      ((= i 6))
+    (savannah-3 (+ beg 1.02 (* i .014)) (* amp .12)))
+
+  (savannah-5 (+ beg 1.19) (* amp .2))
+  (savannah-5 (+ beg 1.36) (* amp .2))
+
+  (savannah-6 (+ beg 1.46) (* amp .15))
+  (savannah-6 (+ beg 1.5) (* amp .15))
+
+  (let* ((beg2 0.0)
+	 (repeats 20)
+	 (af-incr (/ .6 repeats)))
+    (do ((i 0 (1+ i))
+	 (beg2 0.0 (+ beg2 .004))
+	 (af af-incr (+ af af-incr)))
+	((= i repeats))
+      (savannah-2 (+ beg 1.58 beg2) (* amp af) 5250)))
+  
+  (let ((af .24))
+    (do ((i 0 (1+ i)))
+	((= i 40))
+      (savannah-2 (+ beg 1.29 .36 (* i .0145)) (* amp af) 5600)
+      (if (< i 20)
+	  (set! af (+ af .004))
+	  (set! af (- af .004)))))
+
+  (savannah-7 (+ beg 2.27) (* .4 amp))
+
+  (let ((dist 0.01))
+    (do ((i 0 (1+ i))
+	 (beg2 (+ beg 2.36) (+ beg2 dist))
+	 (af .1 (* af .85)))
+	((= i 20))
+      (savannah-8 beg2 (* amp af))
+      (set! dist (+ dist .001)))))
+
+;(with-sound (:play #t) (savannah-sparrow 0 .5))
+
 
 ;;; --------------------------------------------------------------------------------
 
@@ -1388,6 +1677,8 @@
     (knudsens-frog 2 .5)
     (a-cricket 3 .12 4500 5400 .5 '(0 0 1 1 3 1 4 0) (/ .11 3) '(0 0 1 .8 5 1 6 0 15 0))
     (oak-toad 4 .3)
+    (eastern-wood-pewee-1 5 .25)
+    (eastern-wood-pewee-2 6 .25)
     (broad-winged-tree-cricket 6 4.0 0.2)
     (southern-cricket-frog 8 0.5)
     (long-spurred-meadow-katydid 9 .5)
@@ -1398,6 +1689,7 @@
     (crawfish-frog 15 .5)
     (river-frog 16 .5)
     (indri 17 .25)
+    (field-sparrow 19 .25)
     (handsome-trig 20 2 .5)
     (fast-calling-tree-cricket 21 2 .25)
     (dog-day-cicada 22 2 .1)
@@ -1414,8 +1706,8 @@
     (slightly-musical-conehead 35 2 .4)
     (white-throated-sparrow 36 .25)
     (henslows-sparrow 37 .25)
-    (eastern-wood-pewee-1 38 .25)
-    (eastern-wood-pewee-2 39 .25)
+    (tufted-titmouse 37.5 .3)
+    (savannah-sparrow 38 .5)
     ))
 
 
