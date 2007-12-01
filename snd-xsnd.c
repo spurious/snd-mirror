@@ -1240,6 +1240,34 @@ static void minibuffer_click_callback(Widget w, XtPointer context, XtPointer inf
  */
 #include <Xm/SashP.h>
 
+
+static void sash_lock_control_panel(snd_info *sp)
+{
+  if (showing_controls(sp))
+    {
+      /* lock to its current size */
+      int hgt;
+      hgt = control_panel_height(sp);
+      XtVaSetValues(CONTROLS(sp),
+		    XmNpaneMinimum, hgt,
+		    XmNpaneMaximum, hgt,
+		    NULL);
+    }
+}
+
+
+static void sash_unlock_control_panel(snd_info *sp)
+{
+  if (showing_controls(sp))
+    {
+      XtVaSetValues(CONTROLS(sp),
+		    XmNpaneMinimum, 1,
+		    XmNpaneMaximum, LOTSA_PIXELS, 
+		    NULL);
+    }
+}
+
+
 static int outer_panes = 0;
 static int *inner_panes = NULL;
 static Dimension *outer_sizes = NULL;
@@ -1249,6 +1277,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 {
   SashCallData call_data = (SashCallData)info;
   /* call_data->params[0]: Commit, Move, Key, Start (as strings) */
+
   if ((call_data->params) && 
       (call_data->params[0]) && 
       (with_relative_panes(ss)) &&
@@ -1268,12 +1297,16 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 		  (sp->channel_style == CHANNELS_SEPARATE))
 		outer_panes++;
 	    }
+
+	  for_each_sound(sash_lock_control_panel);
+
 	  if (outer_panes > 0)
 	    {
 	      inner_panes = (int *)CALLOC(outer_panes, sizeof(int));
 	      outer_sizes = (Dimension *)CALLOC(outer_panes, sizeof(Dimension));
 	      inner_sizes = (Dimension **)CALLOC(outer_panes, sizeof(Dimension *));
 	      outer_ctr = 0;
+
 	      for (i = 0; i < ss->max_sounds; i++)
 		{
 		  sp = ss->sounds[i];
@@ -1287,8 +1320,10 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 		      inner_panes[outer_ctr] = sp->nchans;
 		      inner_sizes[outer_ctr] = (Dimension *)CALLOC(sp->nchans, sizeof(Dimension));
 		      XtVaGetValues(child, XmNheight, &(outer_sizes[outer_ctr]), NULL);
+
 		      for (k = 0; k < sp->nchans; k++)
 			XtVaGetValues(channel_main_pane(sp->chans[k]), XmNheight, &(inner_sizes[outer_ctr][k]), NULL);
+
 		      outer_ctr++;
 		      if (outer_ctr >= outer_panes) break;
 		    }
@@ -1297,62 +1332,72 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 	}
       else
 	{
-	  if ((outer_panes > 0) && 
-	      (snd_strcmp(call_data->params[0], "Commit")))
+	  if (snd_strcmp(call_data->params[0], "Commit")) /* release sash */
 	    {
-	      int outer_ctr = 0;
-	      Dimension cur_outer_size = 0;
-	      for (i = 0; i < ss->max_sounds; i++)
+	      if (outer_panes > 0)
 		{
-		  sp = ss->sounds[i];
-		  if ((sp) &&
-		      (sp->inuse == SOUND_NORMAL) &&
-		      (sp->nchans > 1) &&
-		      (sp->channel_style == CHANNELS_SEPARATE))
+		  int outer_ctr = 0;
+		  Dimension cur_outer_size = 0;
+		  
+		  for (i = 0; i < ss->max_sounds; i++)
 		    {
-		      XtVaGetValues(SND_PANE(sp), XmNheight, &cur_outer_size, NULL);
-		      if ((cur_outer_size > 40) && 
-			  (abs(cur_outer_size - outer_sizes[outer_ctr]) > (sp->nchans * 2)))
+		      sp = ss->sounds[i];
+		      if ((sp) &&
+			  (sp->inuse == SOUND_NORMAL) &&
+			  (sp->nchans > 1) &&
+			  (sp->channel_style == CHANNELS_SEPARATE))
 			{
-			  /* this pane has multiple chans and its size has changed enough to matter */
-			  Dimension total_inner = 0, diff;
-			  int size;
-			  float ratio;
-			  for (k = 0; k < sp->nchans; k++)
-			    total_inner += inner_sizes[outer_ctr][k];
-			  diff = outer_sizes[outer_ctr] - total_inner; /* this is non-channel stuff */
-			  for (k = 0; k < sp->nchans; k++)
-			    XtUnmanageChild(channel_main_pane(sp->chans[k]));
-			  ratio = (float)(cur_outer_size - diff) / (float)(outer_sizes[outer_ctr] - diff);
-			  if (ratio > 0.0)
+			  XtVaGetValues(SND_PANE(sp), XmNheight, &cur_outer_size, NULL);
+			  
+			  if ((cur_outer_size > 40) && 
+			      (abs(cur_outer_size - outer_sizes[outer_ctr]) > (sp->nchans * 2)))
 			    {
+			      /* this pane has multiple chans and its size has changed enough to matter */
+			      Dimension total_inner = 0, diff;
+			      int size;
+			      float ratio;
+			      
 			      for (k = 0; k < sp->nchans; k++)
+				total_inner += inner_sizes[outer_ctr][k];
+			      diff = outer_sizes[outer_ctr] - total_inner; /* this is non-channel stuff */
+			      
+			      for (k = 0; k < sp->nchans; k++)
+				XtUnmanageChild(channel_main_pane(sp->chans[k]));
+			      
+			      ratio = (float)(cur_outer_size - diff) / (float)(outer_sizes[outer_ctr] - diff);
+			      if (ratio > 0.0)
 				{
-				  size = (int)(ratio * inner_sizes[outer_ctr][k]);
-				  XtVaSetValues(channel_main_pane(sp->chans[k]), 
-						XmNpaneMinimum, size - 1,
-						XmNpaneMaximum, size + 1, 
-						NULL);
+				  for (k = 0; k < sp->nchans; k++)
+				    {
+				      size = (int)(ratio * inner_sizes[outer_ctr][k]);
+				      XtVaSetValues(channel_main_pane(sp->chans[k]), 
+						    XmNpaneMinimum, size - 1,
+						    XmNpaneMaximum, size + 1, 
+						    NULL);
+				    }
+				  for (k = 0; k < sp->nchans; k++)
+				    XtManageChild(channel_main_pane(sp->chans[k]));
+				  for (k = 0; k < sp->nchans; k++)
+				    XtVaSetValues(channel_main_pane(sp->chans[k]), 
+						  XmNpaneMinimum, 1,
+						  XmNpaneMaximum, LOTSA_PIXELS, 
+						  NULL);
 				}
-			      for (k = 0; k < sp->nchans; k++)
-				XtManageChild(channel_main_pane(sp->chans[k]));
-			      for (k = 0; k < sp->nchans; k++)
-				XtVaSetValues(channel_main_pane(sp->chans[k]), 
-					      XmNpaneMinimum, 1,
-					      XmNpaneMaximum, LOTSA_PIXELS, 
-					      NULL);
 			    }
+			  outer_ctr++;
 			}
-		      outer_ctr++;
 		    }
+
+		  for (i = 0; i < outer_panes; i++)
+		    if (inner_sizes[i])
+		      FREE(inner_sizes[i]);
+		  FREE(inner_panes);
+		  FREE(inner_sizes);
+		  FREE(outer_sizes);
+		  outer_panes = 0;
 		}
-	      for (i = 0; i < outer_panes; i++)
-		if (inner_sizes[i])
-		  FREE(inner_sizes[i]);
-	      FREE(inner_panes);
-	      FREE(inner_sizes);
-	      FREE(outer_sizes);
-	      outer_panes = 0;
+
+	      for_each_sound(sash_unlock_control_panel);
 	    }
 	}
     }

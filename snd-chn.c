@@ -4,7 +4,6 @@
 
 
 /* SOMEDAY: fft side needs a zoom capability, not just the drag now */
-/* SOMEDAY: if pane dragged down, increase graph size by default, not controls size */
 /* TODO: set y-bounds doesn't always fixup the y zoom slider? */
 
 

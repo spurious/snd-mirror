@@ -19,6 +19,8 @@
 ;;; Southeastern field cricket
 ;;; Snowy tree cricket
 ;;; Slightly musical conehead
+;;; Pine tree cricket
+;;; Davis's tree cricket
 
 ;;; -------- frogs and toads
 ;;; Knudsen's frog
@@ -41,6 +43,7 @@
 ;;; Field sparrow
 ;;; Tufted titmouse
 ;;; Savannah sparrow
+;;; Chipping sparrow
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -54,6 +57,8 @@
 ;;;   also, I have bare indices scattered around -- ideally these would be wrapped in hz->radians
 
 
+;;; --------------------------------------------------------------------------------
+;;;
 ;;; this mosquito taken from Richard Mankin, Reference Library of Digitized Insect Sounds, http://www.ars.usda.gov/sp2UserFiles/person/3559/soundlibrary.html
 
 (definstrument (mosquito beg dur freq amp)
@@ -84,15 +89,15 @@
 			 (* 0.1 (oscil modulator2 (+ (* 8 frq) (* index2 pitch))))))
 		 *output*)))))))
 
-#|
-(with-sound (:play #t)
-  (mosquito 0 5 560 .2)
-  (mosquito 1 3 880 .05))
-|#
+
+;(with-sound (:play #t) (mosquito 0 5 560 .2) (mosquito 1 3 880 .05))
 
 
-
-;;; "The Diversity of Animal Sounds", Cornell Lab of Ornithology
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Knudsen's frog
+;;;
+;;; from "The Diversity of Animal Sounds", Cornell Lab of Ornithology
 
 (definstrument (a-frog beg dur freq amp amp-env gliss gliss-env pulse-dur pulse-env fm-index fm-freq)
   (let* ((start (seconds->samples beg))
@@ -168,6 +173,7 @@
 
 
 ;;; --------------------------------------------------------------------------------
+;;;
 ;;; Oak Toad
 ;;;   might be slightly too much noise (the peep I worked on turned out to be a raspy one)
 
@@ -199,6 +205,7 @@
 
 
 ;;; --------------------------------------------------------------------------------
+;;;
 ;;; Broad-winged Tree-cricket
 
 (definstrument (broad-winged-tree-cricket beg dur amp)
@@ -245,7 +252,8 @@
 
 
 ;;; --------------------------------------------------------------------------------
-;;; southern cricket frog
+;;;
+;;; Southern cricket frog
 
 (definstrument (southern-cricket-frog beg amp)
   (let* ((dur1 .03)
@@ -274,7 +282,9 @@
 
 
 ;;; --------------------------------------------------------------------------------
-;;; long-spurred meadow katydid
+;;;
+;;; Long-spurred meadow katydid
+;;;
 ;;;    I can barely hear this at its true pitch, so the match was
 ;;;    done down one or two octaves -- I think the recording has cut off high info (above 20Khz) --
 ;;;    need much higher srate to see what this guy is really doing.  This is not very good...
@@ -311,8 +321,9 @@
 
 
 ;;; --------------------------------------------------------------------------------
-;;; northern leopard frog (1)
-
+;;;
+;;; Northern leopard frog (1)
+;;;
 ;;; TODO: this is slightly low-passed, and I don't quite have the vowel right at the end
 
 (definstrument (northern-leopard-frog beg amp)
@@ -360,7 +371,8 @@
 
 
 ;;; --------------------------------------------------------------------------------
-;;; southern mole cricket
+;;;
+;;; Southern mole cricket
 
 (definstrument (southern-mole-cricket beg dur amp)
   (let* ((start (seconds->samples beg))
@@ -391,7 +403,8 @@
 
 
 ;;; --------------------------------------------------------------------------------
-;;; green tree-frog
+;;;
+;;; Green tree-frog
 
 (definstrument (green-tree-frog beg amp)
   (let* ((dur 0.2)
@@ -425,7 +438,8 @@
 
 
 ;;; --------------------------------------------------------------------------------
-;;; spring peeper
+;;;
+;;; Spring peeper
 
 (definstrument (spring-peeper beg amp)
   (let* (;; first note
@@ -470,7 +484,8 @@
 
 
 ;;;--------------------------------------------------------------------------------
-;;; crawfish frog
+;;;
+;;; Crawfish frog
 
 (definstrument (crawfish-frog beg amp)
   (let* ((dur 0.6)
@@ -510,7 +525,8 @@
 
 
 ;;; --------------------------------------------------------------------------------
-;;; river frog
+;;;
+;;; River frog
 ;;;
 ;;; original formants were much sharper, but using rxyk!cos to sharpen ours didn't seem to help
 ;;; animal seems to group these in 3's
@@ -551,7 +567,9 @@
 
 
 ;;; --------------------------------------------------------------------------------
-;;; indri
+;;;
+;;; Indri
+;;;
 ;;; close in spectrum, amp, freq, but the original has what sounds like a ton of reverb
 ;;;   if I add the reverb, it's close -- is this really what this animal sounds like?
 
@@ -588,6 +606,7 @@
 
 
 ;;; --------------------------------------------------------------------------------
+;;;
 ;;; Handsome trig
 
 (definstrument (handsome-trig beg dur amp)
@@ -651,6 +670,7 @@
 
 
 ;;; --------------------------------------------------------------------------------
+;;;
 ;;; Fast calling tree cricket
 ;;;
 ;;; (use fm for noise to get the burble right, and pm for spectrum)
@@ -688,6 +708,7 @@
 
 
 ;;; --------------------------------------------------------------------------------
+;;;
 ;;; Dog-day cicada
 
 (definstrument (dog-day-cicada beg dur amp) ; dur ca 10 ..15 secs
@@ -1118,6 +1139,77 @@
 ;(with-sound (:play #t) (slightly-musical-conehead 0 2 .4))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Pine tree cricket
+
+
+(definstrument (pine-tree-cricket beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (pulse-dur .014)
+	 (pulsef (make-env '(0.000 0.000 0.027 0.196 0.104 0.448 0.236 0.773 0.341 0.910 0.416 0.975 0.532 1.0
+			     0.671 0.868 0.751 0.711 0.833 0.504 0.926 0.160 1.000 0.000)
+			   :duration pulse-dur))
+	 (gen1 (make-oscil 3580))
+	 (gen2 (make-oscil (* 3 3580)))
+	 (frqf (make-env '(0 1 1 0) :scaler (hz->radians 100) :duration pulse-dur))
+	 (pulser (make-pulse-train (/ 1.0 .022)))
+	 (rnd (make-rand-interp 100 .004))
+	 (ampf (make-env '(0 0 1 1 20 1 21 0) :duration dur :scaler amp)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((pulse (pulse-train pulser))
+	       (noise (+ (env frqf)
+			 (rand-interp rnd))))
+	   (if (> pulse .1)
+	       (begin
+		 (mus-reset frqf)
+		 (mus-reset pulsef)))
+	   (outa i (* (env ampf)
+		      (env pulsef)
+		      (+ (* .97 (oscil gen1 noise))
+			 (* .03 (oscil gen2 (* 3 noise)))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (pine-tree-cricket 0 2 .25))
+
+
+;;;--------------------------------------------------------------------------------
+;;;
+;;; Davis's tree cricket
+
+(definstrument (davis-tree-cricket beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (pulse-dur .013)
+	 (pulsef (make-env '(0.000 0.000 0.079 0.395 0.245 0.925 0.410 1.000 0.470 0.874 
+			     0.554 0.549 0.614 0.312 0.728 0.170 1.000 0.000)
+			   :duration pulse-dur))
+	 (pitch 2420)
+	 (gen1 (make-oscil pitch))
+	 (gen2 (make-oscil (* 2 pitch)))
+	 (pulser (make-pulse-train (/ 1.0 .014)))
+	 (rnd (make-rand-interp 150 .004))
+	 (ampf (make-env '(0 0 1 1 20 1 21 0) :duration dur :scaler amp)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((pulse (pulse-train pulser))
+	       (noise (rand-interp rnd)))
+	   (if (> pulse .1)
+	       (mus-reset pulsef))
+	   (outa i (* (env ampf)
+		      (env pulsef)
+		      (+ (* .93 (oscil gen1 noise))
+			 (* .07 (oscil gen2 (* 2 noise)))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (davis-tree-cricket 0 2 .25))
+
 
 ;;; --------------------------------------------------------------------------------
 ;;;
@@ -1453,6 +1545,8 @@
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; Savannah sparrow
+;;;
+;;; 8 separate calls make up a song
 
 (definstrument (savannah-sparrow beg amp)
 
@@ -1518,7 +1612,6 @@
       
     
   (define (savannah-4 beg amp)
-    ;; ticks
     (let* ((start (seconds->samples beg))
 	   (dur .034)
 	   (stop (+ start (seconds->samples dur)))
@@ -1541,7 +1634,6 @@
 		 *output*))))))
       
   (define (savannah-5 beg amp)
-    ;; ticks
     (let* ((start (seconds->samples beg))
 	   (dur .071)
 	   (stop (+ start (seconds->samples dur)))
@@ -1668,6 +1760,48 @@
 
 
 ;;; --------------------------------------------------------------------------------
+;;;
+;;; Chipping sparrow
+
+(definstrument (chipping-sparrow beg amp)
+  (let* ((start (seconds->samples beg))
+	 (repeats (+ 20 (random 25)))
+	 (total-dur (* repeats .068))
+	 (stop (+ start (seconds->samples total-dur)))
+	 (ampf (make-env '(0 0 1 .7 2 1 10 1 11 0) :duration total-dur :scaler amp))
+	 (dur .055)
+	 (pulsef (make-env '(0.000 0.000 0.049 0.091 0.179 0.636   0.253 0.186 0.293 0.518 0.361 0.170 0.413 0.079 
+			   0.503 0.253 0.609 0.976 0.660 0.937 0.742 0.688 0.783 0.292 0.853 0.043 0.913 0.119 1.000 0.000)
+			 :duration dur))
+	 (frqf (make-env '(0 7600 .1 7900
+			   .18 8700 .2 9000 .23 8300
+			   .32 5300 .4 4300  .5 4800
+			   .6 5600 0.8 6400 1.0 5400)
+			 :duration dur :base 32 :scaler (hz->radians 1.0)))
+	 (gen1 (make-oscil 0.0))
+	 (pulser (make-pulse-train (/ 1.0 .068)))
+	 (rnd (make-rand-interp 100 .02)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let* ((pulse (pulse-train pulser))
+		(frq (+ (env frqf)
+			(rand-interp rnd))))
+	   (if (> pulse .1)
+	       (begin
+		 (mus-reset pulsef)
+		 (mus-reset frqf)))
+	   (outa i (* (env ampf)
+		      (env pulsef)
+		      (oscil gen1 frq))
+	       *output*)))))))
+
+;(with-sound (:play #t) (chipping-sparrow 0 .3))
+
+
+
+;;; --------------------------------------------------------------------------------
 
 (define (calling-all-animals)
   (with-sound (:play #t :scaled-to .5 :srate 44100) ;(srate needed by snd-test)
@@ -1693,21 +1827,24 @@
     (handsome-trig 20 2 .5)
     (fast-calling-tree-cricket 21 2 .25)
     (dog-day-cicada 22 2 .1)
-    (linnaeus-cicada 23 2 .125)
-    (lyric-cicada 24 2 .125)
-    (confused-ground-cricket 25 3 .3)
-    (tinkling-ground-cricket 26.5 3 .3)
-    (marsh-meadow-grasshopper 28 .3)
-    (striped-ground-cricket 29 3 .5)
-    (sphagnum-ground-cricket 30 2 .3)
-    (fox-sparrow 31 3 .25)
-    (southeastern-field-cricket 33 5 .3)
-    (snowy-tree-cricket 34 2.1 .3)
-    (slightly-musical-conehead 35 2 .4)
-    (white-throated-sparrow 36 .25)
-    (henslows-sparrow 37 .25)
-    (tufted-titmouse 37.5 .3)
-    (savannah-sparrow 38 .5)
+    (linnaeus-cicada 24 2 .125)
+    (lyric-cicada 25 2 .125)
+    (confused-ground-cricket 26 3 .3)
+    (tinkling-ground-cricket 28.5 3 .3)
+    (marsh-meadow-grasshopper 30 .3)
+    (striped-ground-cricket 31 3 .25)
+    (sphagnum-ground-cricket 33 2 .3)
+    (fox-sparrow 34 3 .25)
+    (southeastern-field-cricket 36 2 .13)
+    (snowy-tree-cricket 37 2.1 .3)
+    (slightly-musical-conehead 38 2 .4)
+    (white-throated-sparrow 39 .25)
+    (henslows-sparrow 41 .25)
+    (tufted-titmouse 42 .3)
+    (savannah-sparrow 43 .5)
+    (chipping-sparrow 45 .3)
+    (pine-tree-cricket 46 2 .125)
+    (davis-tree-cricket 48 2 .125)
     ))
 
 
