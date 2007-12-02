@@ -3,34 +3,36 @@
 
 ;;; -------- insects --------
 ;;; mosquito
-;;; Broad-winged tree-cricket
 ;;; Long-spurred meadow katydid
-;;; Southern mole cricket
 ;;; Handsome trig
-;;; Fast-calling tree cricket
 ;;; Dog-day cicada
 ;;; Linnaeus' cicada
 ;;; Lyric cicada
+;;; Southern mole cricket
 ;;; Confused ground-cricket
 ;;; Tinkling ground-cricket
-;;; Marsh meadow grasshopper
 ;;; Striped ground-cricket
 ;;; Sphagnum ground cricket
 ;;; Southeastern field cricket
 ;;; Snowy tree cricket
-;;; Slightly musical conehead
 ;;; Pine tree cricket
 ;;; Davis's tree cricket
+;;; Broad-winged tree-cricket
+;;; Fast-calling tree cricket
+;;; Marsh meadow grasshopper
+;;; Carolina grasshopper
+;;; Slightly musical conehead
 
 ;;; -------- frogs and toads
-;;; Knudsen's frog
 ;;; Oak toad
+;;; Knudsen's frog
 ;;; Southern cricket frog
 ;;; Northern leopard frog
-;;; Green tree-frog
 ;;; Spring peeper
 ;;; Crawfish frog
 ;;; River frog
+;;; Green tree-frog
+;;; Pinewoods tree frog
 
 ;;; -------- mammals --------
 ;;; Indri
@@ -39,11 +41,11 @@
 ;;; Fox sparrow
 ;;; White-throated sparrow
 ;;; Henslow's sparrow
-;;; Eastern wood-pewee (2)
 ;;; Field sparrow
-;;; Tufted titmouse
 ;;; Savannah sparrow
 ;;; Chipping sparrow
+;;; Eastern wood-pewee (2)
+;;; Tufted titmouse
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -59,7 +61,10 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;; this mosquito taken from Richard Mankin, Reference Library of Digitized Insect Sounds, http://www.ars.usda.gov/sp2UserFiles/person/3559/soundlibrary.html
+;;; mosquito 
+;;;
+;;; from Richard Mankin, Reference Library of Digitized Insect Sounds, http://www.ars.usda.gov/sp2UserFiles/person/3559/soundlibrary.html
+;;; need to make freq env flicks at call time (is there a comb-filter effect as it gets near?)
 
 (definstrument (mosquito beg dur freq amp)
   (let* ((start (seconds->samples beg))
@@ -70,7 +75,6 @@
 	 (modulator2 (make-oscil (* freq 8))) ; or 9
 	 (ampf (make-env '(0 0 .2 .5 1 .5 2 .5 3 1 4 .5 5 .5) :scaler amp :duration dur :base 32))
 	 (frqf (make-env '(0 0  1 0  1.01 0.1  1.03 -0.1  1.05 0.0  3 0 3.02 .05 3.03 -0.1 3.1 0 5 0.0) :duration dur :scaler (hz->radians freq)))
-	 ;; SOMEDAY: make freq env flicks at call time (is there a comb-filter effect as it gets near?)
 	 (vib (make-rand-interp 10.0 (hz->radians 10)))
 	 (indf (make-rand-interp 1 .5))
 	 (index2 (hz->radians (* freq 1.0)))
@@ -324,7 +328,7 @@
 ;;;
 ;;; Northern leopard frog (1)
 ;;;
-;;; TODO: this is slightly low-passed, and I don't quite have the vowel right at the end
+;;; this is slightly low-passed, and I don't quite have the vowel right at the end
 
 (definstrument (northern-leopard-frog beg amp)
   (let* ((dur 4.2)
@@ -435,6 +439,74 @@
 		 *output*)))))))
 
 ;(with-sound () (green-tree-frog 0 .5))
+
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Pinewoods tree-frog
+
+(definstrument (pinewoods-tree-frog beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 1 1 20 1 21 0) :scaler amp :duration dur))
+
+	 (pulse-dur .009)
+	 (pulsef (make-env '(0.000 0.000 0.065 0.5 0.117 0.85 0.179 1.0 0.236 0.9 0.503 0.4 0.606 0.2 1.000 0.000) :duration pulse-dur))
+	 (pulses (if (> (random 1.0) .6) 5 4))
+	 (pulse-amps (vct .7 .9 1.0 .9 .6))
+
+	 (pitch 205.0)
+	 (gen1 (make-oscil (* 10 pitch) (* 0.5 pi)))
+	 (gen3 (make-oscil (* pitch 18) (* 0.5 pi)))
+	 (gen4 (make-oscil (* pitch 28) (* 0.5 pi)))
+
+	 (pulse-ctr 0)
+	 (next-pulse (seconds->samples pulse-dur))
+	 (pulse-beg start)
+
+	 (rnd (make-rand-interp (* 10 pitch) (hz->radians (* 3 pitch))))) ; not sure this actually helps
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+
+	 (if (<= next-pulse 0)
+	     (begin
+
+	       (if (< pulse-ctr 3)
+		   (set! (mus-frequency gen1) (* pitch 10))
+		   (set! (mus-frequency gen1) (* pitch 11)))
+
+	       (set! pulse-ctr (1+ pulse-ctr))
+	       (if (>= pulse-ctr pulses)
+		   (begin
+		     (set! pulse-ctr 0)
+		     (if (> (random 1.0) .6) 
+			 (set! pulses 5)
+			 (set! pulses 4))
+		     (set! pulse-beg (+ pulse-beg (seconds->samples .078)))
+		     (set! next-pulse (- pulse-beg i)))
+		   (set! next-pulse (seconds->samples pulse-dur)))
+
+	       (mus-reset pulsef)
+	       (set! (mus-phase gen1) (* 0.5 pi))
+	       (set! (mus-phase gen3) (* 0.5 pi))
+	       (set! (mus-phase gen4) (* 0.5 pi))))
+
+	 (let* ((noise (rand-interp rnd))
+		(pulse-amp (vct-ref pulse-amps pulse-ctr)))
+	   (outa i (* (env ampf)
+		      (env pulsef)
+		      pulse-amp
+		      (+ (* .9 (oscil gen1 (* .1 noise)))
+			 (* .08 (oscil gen3 (* .18 noise)))
+			 (* .02 (oscil gen4 (* .28 noise)))))
+		 *output*))
+	 (set! next-pulse (1- next-pulse)))))))
+
+;(with-sound (:play #t) (pinewoods-tree-frog 0 1 .5))
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -917,6 +989,44 @@
 	     (set! last-val this-val))))))))
 
 ;(with-sound (:play #t) (marsh-meadow-grasshopper 0 .3))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Carolina grasshopper
+;;;
+;;; tricky!  spikes are at 48 Hz, but the sound they make requires 24 Hz pulse -- I presume
+;;;   I'm seeing the 2 or 4 wings alternating?
+
+(definstrument (carolina-grasshopper beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env ;'(0.000 0.000 0.032 0.115 0.151 0.044 0.181 0.485 0.254 0.841 0.620 0.431 0.731 0.051 0.757 0.292 0.898 0.620 0.984 0.380 1.000 0.000)
+		          '(0.000 0.000 0.031 0.122 0.076 0.054 0.148 0.010 0.177 0.512 0.199 0.366 0.246 0.868 0.291 0.336 0.320 0.644 0.386 0.244 0.450 0.553 
+			    0.535 0.142 0.583 0.424 0.611 0.427 0.727 0.081 0.778 0.315 0.835 0.319 0.899 0.600 0.972 0.356 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (spikes1 (make-sum-of-sines 250 24))
+	 (spikes1a (make-sum-of-sines 250 24 pi))
+	 (spikes2 (make-sum-of-sines 140 48 .7))
+	 (spikes3 (make-sum-of-sines 120 48 1.4))
+	 (rnd (make-rand-interp 300 .0005))
+	 (frqf (make-env '(0 0 1 -.4 2 0 3 -.2 4 .3 6 -1.0 ) :scaler (hz->radians .4) :duration dur))
+	 (last-val 0.0))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let* ((noi (rand-interp rnd))
+		(frq (+ noi (env frqf)))
+		(this-val (* (env ampf)
+			     (+ (* .6 (sum-of-sines spikes1 noi))
+				(* .6 (sum-of-sines spikes1a noi))
+				(* .4 (sum-of-sines spikes2 frq))
+				(* .3 (sum-of-sines spikes3 frq))))))
+	   (outa i (- this-val last-val) *output*)
+	   (set! last-val this-val)))))))
+
+;(with-sound (:play #t) (carolina-grasshopper 0 1.5 1.0))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -1845,6 +1955,9 @@
     (chipping-sparrow 45 .3)
     (pine-tree-cricket 46 2 .125)
     (davis-tree-cricket 48 2 .125)
+    (carolina-grasshopper 49 1.5 1.0) ; TODO: amp needs fixup here -- actual output max is about .3
+    (pinewoods-tree-frog 50 1 .15)
+
     ))
 
 
