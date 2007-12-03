@@ -2538,7 +2538,10 @@ static void make_sonogram(chan_info *cp)
 	}
 
       /* if size was wrong, we've already released pix above */
-      if (bins >= SAVE_FFT_SIZE) /* transform size of twice that (8192) */
+      if ((bins >= SAVE_FFT_SIZE) ||      /* transform size of twice that (8192) */
+	  ((enved_dialog_is_active()) &&  /*   or we want to see the sonogram as the enved background */
+	   (enved_target(ss) == ENVED_SPECTRUM) &&
+	   (enved_wave_p(ss))))
 	save_fft_pix(cp, ax, fwidth, fheight, fap->x_axis_x0, fap->y_axis_y1);
 
       if (cp->printing) ps_reset_color();

@@ -267,14 +267,16 @@ static void env_redisplay_1(printing_t printing)
 	  name = XmTextGetString(textL);
 	  if (!name) name = copy_string(_("noname"));
 	  /* active_env can be null here if just showing axes (empty initial graph) */
-	  display_env(active_env, name, gc, 0, 0, env_window_width, env_window_height, true, printing);
-	  if (name) XtFree(name);
+
 	  if (enved_wave_p(ss))
 	    {
 	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env) && (FIR_p) && (printing == NOT_PRINTING))
 		display_frequency_response(active_env, axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
 	      enved_show_background_waveform(axis, gray_ap, apply_to_selection, (enved_target(ss) == ENVED_SPECTRUM), printing);
 	    }
+
+	  display_env(active_env, name, gc, 0, 0, env_window_width, env_window_height, true, printing);
+	  if (name) XtFree(name);
 	}
     }
 }

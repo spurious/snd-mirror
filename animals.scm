@@ -46,6 +46,10 @@
 ;;; Chipping sparrow
 ;;; Eastern wood-pewee (2)
 ;;; Tufted titmouse
+;;; Least flycatcher
+;;; Acadian flycatcher
+;;; Swainson's thrush
+;;; Carolina wren
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -1004,12 +1008,12 @@
 	 (ampf (make-env ;'(0.000 0.000 0.032 0.115 0.151 0.044 0.181 0.485 0.254 0.841 0.620 0.431 0.731 0.051 0.757 0.292 0.898 0.620 0.984 0.380 1.000 0.000)
 		          '(0.000 0.000 0.031 0.122 0.076 0.054 0.148 0.010 0.177 0.512 0.199 0.366 0.246 0.868 0.291 0.336 0.320 0.644 0.386 0.244 0.450 0.553 
 			    0.535 0.142 0.583 0.424 0.611 0.427 0.727 0.081 0.778 0.315 0.835 0.319 0.899 0.600 0.972 0.356 1.000 0.000)
-			 :duration dur :scaler amp))
+			 :duration dur :scaler (* 3 amp)))
 	 (spikes1 (make-sum-of-sines 250 24))
 	 (spikes1a (make-sum-of-sines 250 24 pi))
 	 (spikes2 (make-sum-of-sines 140 48 .7))
 	 (spikes3 (make-sum-of-sines 120 48 1.4))
-	 (rnd (make-rand-interp 300 .0005))
+	 (rnd (make-rand-interp 100 .0001)) ; perhaps this is too much -- it clobbers the comb filter 
 	 (frqf (make-env '(0 0 1 -.4 2 0 3 -.2 4 .3 6 -1.0 ) :scaler (hz->radians .4) :duration dur))
 	 (last-val 0.0))
    (run
@@ -1482,18 +1486,17 @@
 			   0.57 5800 0.58 5800 0.59 6200 0.60 6200
 			   0.62 5800 0.66 3600 0.67 4400 0.73 3900 0.78 3100 0.85 4900  
 			   0.88 3600 0.90 3900 0.91 4400 1.00 3900)
-			 :duration dur :scaler (hz->radians 1.0)))
-	 (rnd (make-rand-interp 10 1)))
+			 :duration dur :scaler (hz->radians 1.0))))
    (run
      (lambda ()
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (oscil gen1 (+ (env frqf)
-				   (rand-interp rnd))))
+		    (oscil gen1 (env frqf)))
 	       *output*))))))
 
 ;(with-sound (:play #t) (henslows-sparrow 0 .25))
+
 
 ;;; --------------------------------------------------------------------------------
 ;;;
@@ -1910,12 +1913,182 @@
 ;(with-sound (:play #t) (chipping-sparrow 0 .3))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Least flycatcher
+
+(definstrument (least-flycatcher beg amp)
+  (let* ((start (seconds->samples beg))
+	 (call1-dur .032)
+	 (stop1 (+ start (seconds->samples call1-dur)))
+
+	 (ampf1 (make-env '(0.000 0.000 0.223 0.158 0.386 0.379 0.617 1.0 0.679 0.929 0.810 0.458 1.000 0.000) :duration call1-dur :scaler amp))
+	 (gen1 (make-oscil 0.0))
+	 (gen11 (make-oscil 0.0))
+	 (frqf1 (make-env '(0 3000 .4 6250 .5 6400 1.0 6000) :duration call1-dur :scaler (hz->radians 1.0)))
+	 
+	 (pause .065)
+	 (start2 (+ start (seconds->samples pause)))
+	 (call2-dur .04)
+	 (stop2 (+ start2 (seconds->samples call2-dur)))
+
+	 (ampf2 (make-env '(0.000 0.000 0.088 0.124 0.157 0.258 0.198 0.202 0.237 0.264 0.273 0.823 0.286 0.419 
+			    0.328 0.814 0.343 1.000 0.360 0.329 0.409 0.413 0.435 0.935 0.448 0.295 0.481 0.183 
+			    0.539 0.901 0.563 0.444 0.619 0.373 0.644 0.944 0.662 0.311 0.724 0.053 0.756 0.186 
+			    0.782 0.432 0.823 0.512 0.865 0.174 0.886 0.230 1.000 0.000)
+			  :duration call2-dur :scaler (* .5 amp)))
+	 (gen2 (make-oscil 4600))
+	 (gen21 (make-oscil 5600))
+	 (gen22 (make-rand-interp 2000 (hz->radians 1000))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop1))
+	 (let ((frq (env frqf1)))
+	   (outa i (* (env ampf1)
+		      (+ (* .9 (oscil gen1 frq))
+			 (* .1 (oscil gen11 (* 2 frq)))))
+	       *output*)))
+       (do ((i start2 (+ i 1)))
+	   ((= i stop2))
+	 (let ((noise (rand-interp gen22)))
+	 (outa i (* (env ampf2)
+		    (+ (* .7 (oscil gen2 noise))
+		       (* .3 (oscil gen21 noise))))
+	       *output*)))))))
+
+;(with-sound (:play #t) (least-flycatcher 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Acadian flycatcher
+
+(definstrument (acadian-flycatcher beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.3)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.102 0.301 0.221 0.705 0.287 0.332 0.357 0.801 0.406 0.385 0.45 0 0.55 0
+			   0.567 0.298 0.623 1.0 0.706 0.727 0.729 0.292 0.860 0.239 0.885 0.484 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (gen1 (make-oscil 0.0))
+	 (gen2 (make-oscil 0.0))
+	 (frqf (make-env '(0 2800 .075 3600 .11 4200 .22 4900 .28 3200 .35 5400 .45 4200 .47 4000
+			   .55 4900 .62 5000 .7 5500 .75 5200 .8 5500 .87 5400 1.0 2800)
+			 :duration dur :scaler (hz->radians 1.0) :base 32)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (env frqf)))
+	   (outa i (* (env ampf)
+		      (+ (* .95 (oscil gen1 frq))
+			 (* .05 (oscil gen2 (* 2 frq)))))
+	       *output*)))))))
+
+;(with-sound (:play #t) (acadian-flycatcher 0 .25))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Swainson's thrush
+;;;
+;;;   are there really multiphonics in this birdsong?  I'm calling it aliasing for now.
+;;;   also, is this a song that uses both parts of the syrinx? -- I'm calling the doubled stuff reverb
+
+(definstrument (swainsons-thrush beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 2.0)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.058 0.146 0.075 0.127 
+			   0.085 0.000 0.113 0.000 0.143 0.481 0.150 0.516 0.227 0.735 
+			   0.238 0.000 0.260 0.000 0.289 0.474 0.311 0.423 
+			   0.316 0.000 0.337 0.000 0.350 0.559 0.355 0.805 0.367 0.895 0.413 0.990 0.427 0.598 0.446 0.373 
+			   0.452 0.066 0.460 0.103 0.470 0.651 0.492 0.828 0.510 0.502 0.531 0.457 
+			   0.541 0.000 0.568 0.000 0.569 0.424 0.587 0.548 0.603 0.553 0.613 0.061 0.645 0.633 0.686 0.760 
+			   0.703 0.000 0.726 0.000 0.727 0.236 0.735 0.037 0.793 0.301 0.815 0.125 0.835 0.130 
+			   0.847 0.000 0.868 0.000 0.931 0.180 
+			   1.000 0.000)
+			 :duration dur :scaler amp))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 0.96  2 0.01  3 0.02 4 0.001 5 .005)))
+	 (frqf (make-env '(0.000 0.000 
+				 0.01 0.175 0.015 0.264 
+				 0.02 0.172 0.025 0.263 
+				 0.03 0.171 0.035 0.260 
+				 0.04 0.172 0.045 0.263 
+				 0.05 0.172 0.055 0.265 
+				 0.06 0.171 0.065 0.263 
+				 0.07 0.170 0.077 0.267 
+				 0.08 0.174 0.085 0.266 
+				 0.09 0.170 0.095 0.265 
+				 0.1 0.171 0.105 0.266 
+				 0.107 0.186 0.128 0.172 0.141 0.240 0.155 0.238 0.164 0.280 0.170 0.180 
+				 0.178 0.330 0.181 0.177 0.190 0.322 0.196 0.185 0.201 0.326 0.207 0.288 0.242 0.283 0.272 0.238 0.276 0.238 
+				 0.288 0.238 0.318 0.238 0.342 0.240 0.344 0.270 0.355 0.325 0.365 0.376 0.370 0.325 0.378 0.376 0.383 0.325 
+				 0.390 0.376 0.395 0.309 0.401 0.426 0.410 0.502 0.424 0.305 0.433 0.280 0.436 0.238 0.447 0.241 0.453 0.199 
+				 0.466 0.378 0.471 0.431 0.482 0.391 0.494 0.384 0.504 0.350 0.516 0.334 0.532 0.334 0.558 0.330 0.564 0.412 
+				 0.569 0.477 0.578 0.511 0.582 0.568 0.590 0.429 0.596 0.553 0.604 0.416 0.620 0.735 0.629 0.653 0.641 0.617 
+				 0.647 0.572 0.656 0.542 0.662 0.510 0.681 0.436 0.689 0.379 0.694 0.293 0.719 0.395 0.723 0.510 0.734 0.555 
+				 0.743 0.807 0.765 0.786 0.783 0.637 0.797 0.875 0.806 0.902 0.812 0.957 0.832 0.981 
+				 0.85 .9 0.868 0.416 0.895 0.814 0.900 0.788 0.903 0.735 0.917 0.635 0.922 0.686 0.931 0.855 0.949 0.952 0.965 0.939 1.000 .9)
+			 :duration dur 
+			 :scaler (hz->radians 8200))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (env frqf)))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 frq))
+	       *output*)))))))
+
+;(with-sound (:play #t) (swainsons-thrush 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Carolina wren
+
+(definstrument (carolina-wren beg amp)
+  (let* ((start (seconds->samples beg))
+	 (pulse-dur 0.25)
+	 (pulses 7)
+	 (dur 1.84)
+	 (stop (+ start (seconds->samples dur)))
+	 (pulsef (make-env '(0.000 0.000 0.027 0.031 0.049 0.185 0.065 0.749 0.121 0.508 0.137 0.339 0.146 0.270 
+			     0.195 0.571 0.247 0.806 0.270 0.994 0.311 0.837 0.325 0.129 0.335 0.373 0.354 0.000 
+			     0.512 0.000 0.525 0.677 0.548 0.831 0.560 0.737 0.594 0.082 0.602 0.000 0.618 0.223 
+			     0.635 0.313 0.657 0.712 0.698 0.649 0.716 0.517 0.741 0.006 0.775 0.094 0.791 0.467 
+			     0.808 0.373 0.838 0.480 0.885 0.414 0.917 0.160 0.930 0.031 1.000 0.000)
+			   :duration pulse-dur))
+	 (frqf (make-env '(0.000 0.3  0.06 0.209 0.079 0.204 0.084 0.158 0.171 0.160 0.260 0.175 0.310 0.185 
+			   0.495 0.153 0.582 0.155 0.621 0.145 0.653 0.125 0.738 0.121 0.794 0.125 0.805 0.109 
+			   0.835 0.104 1.000 0.102)
+			 :duration pulse-dur :scaler (hz->radians 22050)))
+	 (ampf (make-env '(0 0 1 .5 16 1 18 .8 20 0) :duration dur :scaler amp))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .95  2 .015  3 .025 3 .01)))
+	 (pulser (make-pulse-train (/ 6 1.6))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((pulse (pulse-train pulser)))
+	   (if (> pulse .1)
+	       (begin
+		 (mus-reset pulsef)
+		 (mus-reset frqf)))
+	   (outa i (* (env ampf)
+		      (env pulsef)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*)))))))
+
+;(with-sound (:play #t) (carolina-wren 0 .25))
+
 
 ;;; --------------------------------------------------------------------------------
 
 (define (calling-all-animals)
   (with-sound (:play #t :scaled-to .5 :srate 44100) ;(srate needed by snd-test)
-
     (mosquito 0 5 560 .2)
     (mosquito 1 3 880 .05)
     (knudsens-frog 2 .5)
@@ -1949,15 +2122,18 @@
     (snowy-tree-cricket 37 2.1 .3)
     (slightly-musical-conehead 38 2 .4)
     (white-throated-sparrow 39 .25)
-    (henslows-sparrow 41 .25)
     (tufted-titmouse 42 .3)
     (savannah-sparrow 43 .5)
     (chipping-sparrow 45 .3)
     (pine-tree-cricket 46 2 .125)
     (davis-tree-cricket 48 2 .125)
-    (carolina-grasshopper 49 1.5 1.0) ; TODO: amp needs fixup here -- actual output max is about .3
+    (carolina-grasshopper 49 1.5 1.0)
     (pinewoods-tree-frog 50 1 .15)
-
+    (henslows-sparrow 51 .5)
+    (least-flycatcher 51.5 .5)
+    (acadian-flycatcher 52 .25)
+    (swainsons-thrush 52.5 .25)
+    (carolina-wren 55 .25)
     ))
 
 

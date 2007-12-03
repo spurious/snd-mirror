@@ -906,24 +906,30 @@ static off_t enved_max_fft_size = DEFAULT_ENVED_MAX_FFT_SIZE;
 static enved_fft *make_enved_spectrum(chan_info *cp)
 {
   enved_fft *ef;
+
   if (cp->edits[cp->edit_ctr]->fft == NULL)
     cp->edits[cp->edit_ctr]->fft = (enved_fft *)CALLOC(1, sizeof(enved_fft));
   ef = cp->edits[cp->edit_ctr]->fft;
-  if ((ef) && (ef->size == 0)) /* otherwise it is presumably already available */
+
+  if ((ef) && 
+      (ef->size == 0)) /* otherwise it is presumably already available */
     {
-      off_t i, fsize, data_len;
+      off_t i, data_len;
       Float data_max = 0.0;
       snd_fd *sf;
-      data_len = CURRENT_SAMPLES(cp);
+
+      data_len = cp->axis->hisamp - cp->axis->losamp;
+      if (data_len > enved_max_fft_size)
+	data_len = enved_max_fft_size;
       if (data_len == 0) return(NULL);
-      sf = init_sample_read(0, cp, READ_FORWARD);
+
+      sf = init_sample_read(cp->axis->losamp, cp, READ_FORWARD);
       if (sf == NULL) return(NULL);
-      fsize = snd_to_int_pow2(data_len);
-      if (fsize <= enved_max_fft_size)
-	{
-	  ef->size = fsize;
-	  ef->data = (Float *)MALLOC(fsize * sizeof(Float));
-	}
+
+      ef->size = snd_to_int_pow2(data_len);
+      ef->data = (Float *)MALLOC(ef->size * sizeof(Float));
+      if (ef->data == NULL) return(NULL);
+
       fourier_spectrum(sf, ef->data, ef->size, data_len, NULL, NULL);
       free_snd_fd(sf);
       for (i = 0; i < ef->size; i++) 
@@ -1004,9 +1010,25 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
     {
       if (enved_max_fft_size < transform_size(ss)) enved_max_fft_size = transform_size(ss);
       if (enved_max_fft_size < active_channel->transform_size) enved_max_fft_size = active_channel->transform_size;
-      if ((!apply_to_selection) &&
-	  (CURRENT_SAMPLES(active_channel) <= enved_max_fft_size))
-	display_enved_spectrum(active_channel, make_enved_spectrum(active_channel), gray_ap);
+      
+      if ((active_channel->cgx) && 
+	  (active_channel->cgx->fft_pix) &&
+	  (active_channel->transform_graph_type == GRAPH_AS_SONOGRAM) &&
+	  (active_channel->graph_transform_p))
+	{
+	  int old_x0, old_y0;
+
+	  old_x0 = active_channel->cgx->fft_pix_x0;
+	  old_y0 = active_channel->cgx->fft_pix_y0; /* this actually aligns with the top of the enved window */
+	  active_channel->cgx->fft_pix_x0 = ap->x_axis_x0;
+	  active_channel->cgx->fft_pix_y0 = ap->y_axis_y1;
+
+	  restore_fft_pix(active_channel, gray_ap->ax);
+
+	  active_channel->cgx->fft_pix_x0 = old_x0;
+	  active_channel->cgx->fft_pix_y0 = old_y0;
+	}
+      else display_enved_spectrum(active_channel, make_enved_spectrum(active_channel), gray_ap);
     }
   else
     {

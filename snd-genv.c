@@ -270,8 +270,6 @@ static void env_redisplay_1(printing_t printing)
 	  char *name = NULL;
 	  name = (char *)gtk_entry_get_text(GTK_ENTRY(textL));
 	  if (!name) name = _("noname");
-	  display_env(active_env, name, gc, 0, 0, env_window_width, env_window_height, true, printing);
-	  name = NULL;
 	  if (enved_wave_p(ss))
 	    {
 #if USE_CAIRO
@@ -284,6 +282,8 @@ static void env_redisplay_1(printing_t printing)
 	      cairo_destroy(gray_ap->ax->cr);
 #endif
 	    }
+	  display_env(active_env, name, gc, 0, 0, env_window_width, env_window_height, true, printing);
+	  name = NULL;
 	}
     }
 }
