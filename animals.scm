@@ -33,6 +33,7 @@
 ;;; River frog
 ;;; Green tree-frog
 ;;; Pinewoods tree frog
+;;; Squirrel tree frog
 
 ;;; -------- mammals --------
 ;;; Indri
@@ -513,6 +514,54 @@
 
 ;(with-sound (:play #t) (pinewoods-tree-frog 0 1 .5))
 
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Squirrel tree frog
+
+(definstrument (squirrel-tree-frog-1 beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 1 1 30 1 31 0) :scaler amp :duration dur))
+	 (pitch 120)
+	 (gen1 (make-blackman pitch 4))
+	 (gen2 (make-oscil (* 10 pitch)))
+	 (gen3 (make-oscil (* 24 pitch)))
+	 (gen4 (make-oscil pitch))
+	 (index (hz->radians .1))
+	 (gen5 (make-oscil (* 14 pitch)))
+	 (gen6 (make-oscil (* 6 pitch)))
+	 (pulse-dur 0.24)
+	 (rnd (make-rand-interp 100 (hz->radians 5)))
+	 (frqf (make-env '(0 0  .2 0 .4 .75  .8 1  1.0 .5) :duration pulse-dur :scaler (hz->radians 15)))
+	 (pulsef (make-env '(0 0 .5 .7 2 1 3.5 .7 4 0) :duration pulse-dur))
+	 (pulser (make-pulse-train (/ 1.0 0.52)))
+	 (indf (make-env '(0 .3 1 .5 2 .5 3 0) :duration pulse-dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (if (> (pulse-train pulser) .1)
+	     (begin
+	       (mus-reset frqf)
+	       (mus-reset pulsef)
+	       (mus-reset indf)))
+	 (let* ((frq (env frqf))
+		(ind (+ frq
+			(* index (oscil gen4))
+			(rand-interp rnd)))
+		(intrp (env indf)))
+	   (outa i (* (env ampf)
+		      (env pulsef)
+		      (blackman gen1 0.0)
+		      (+ (* intrp (oscil gen2 (* 10 ind)))
+			 (* (- 1.0 intrp) (oscil gen3 (* 24 ind)))
+			 (* .1 (oscil gen5 (* 14 ind)))
+			 (* .1 (oscil gen6 (* 6 ind)))
+			 ))
+		 *output*)))))))
+
+;(with-sound (:play #t) (squirrel-tree-frog-1 0 1.0 .5))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -2250,6 +2299,7 @@
     (least-flycatcher 51.5 .5)
     (acadian-flycatcher 52 .25)
     (swainsons-thrush 52.5 .25)
+    (squirrel-tree-frog 54 1 .1)
     (carolina-wren 55 .25)
     (bachmans-sparrow 57 .25)
     (grasshopper-sparrow 58 .25)
