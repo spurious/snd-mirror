@@ -1,6 +1,5 @@
 #include "snd.h"
 
-/* TODO: if user types a name in the env name widget, and it is a known name, save the current! */
 
 #define ENVED_DOT_SIZE 10
 
@@ -1013,6 +1012,7 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
       
       if ((active_channel->cgx) && 
 	  (active_channel->cgx->fft_pix) &&
+	  (active_channel->cgx->fft_pix_ready) &&
 	  (active_channel->transform_graph_type == GRAPH_AS_SONOGRAM) &&
 	  (active_channel->graph_transform_p))
 	{

@@ -44,6 +44,8 @@
 ;;; Field sparrow
 ;;; Savannah sparrow
 ;;; Chipping sparrow
+;;; Bachman's sparrow
+;;; Grasshopper sparrow
 ;;; Eastern wood-pewee (2)
 ;;; Tufted titmouse
 ;;; Least flycatcher
@@ -1993,8 +1995,8 @@
 ;;;
 ;;; Swainson's thrush
 ;;;
-;;;   are there really multiphonics in this birdsong?  I'm calling it aliasing for now.
-;;;   also, is this a song that uses both parts of the syrinx? -- I'm calling the doubled stuff reverb
+;;;   are there really multiphonics in this birdsong? 
+;;;   also, is this a song that uses both parts of the syrinx? -- I think the doubled stuff is reverb
 
 (definstrument (swainsons-thrush beg amp)
   (let* ((start (seconds->samples beg))
@@ -2011,6 +2013,8 @@
 			   1.000 0.000)
 			 :duration dur :scaler amp))
 	 (gen1 (make-polyshape 0.0 :partials (list 1 0.96  2 0.01  3 0.02 4 0.001 5 .005)))
+	 (gen2 (make-oscil 0.0)) ; eschew aliasing
+	 (intrpf (make-env '(0 1 .7 1 .75 0 1 0) :duration dur))
 	 (frqf (make-env '(0.000 0.000 
 				 0.01 0.175 0.015 0.264 
 				 0.02 0.172 0.025 0.263 
@@ -2037,9 +2041,11 @@
      (lambda ()
        (do ((i start (1+ i)))
 	   ((= i stop))
-	 (let ((frq (env frqf)))
+	 (let ((frq (env frqf))
+	       (intrp (env intrpf)))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 frq))
+		      (+ (* intrp (polyshape gen1 1.0 frq))
+			 (* (- 1.0 intrp) (oscil gen2 frq))))
 	       *output*)))))))
 
 ;(with-sound (:play #t) (swainsons-thrush 0 .5))
@@ -2083,6 +2089,117 @@
 		 *output*)))))))
 
 ;(with-sound (:play #t) (carolina-wren 0 .25))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Bachman's sparrow
+
+(definstrument (bachmans-sparrow beg amp)
+  ;; two pieces -- initial steady tone, then 10 repetitions of 2nd call
+  (let* ((start (seconds->samples beg))
+	 (call1-dur .576)
+	 (stop1 (+ start (seconds->samples call1-dur)))
+	 (ampf1 (make-env '(0.000 0.000 0.684 0.978 0.863 1.0 0.962 0.773 1.000 0.000) :duration call1-dur :scaler (* .5 amp)))
+	 (gen1 (make-polyshape 0 :partials (list 1 .98 3 .02)))
+	 (frqf1 (make-env '(0 4970 1 4850) :duration call1-dur :scaler (hz->radians 1.0)))
+	 (pulser (make-pulse-train (/ 1.0 .184)))
+	 (pulses 10)
+	 (call2-dur .172)
+	 (stop2 (+ start (seconds->samples 2.4)))
+	 (ampf2 (make-env '(0.000 0.000 0.070 0.025 0.239 0.430 0.331 0.404 0.381 0.000 0.422 0.007 
+			    0.495 0.560 0.541 0.596 0.552 0.466 0.578 0.469 0.592 1.000 0.616 0.798 
+			    0.642 0.751 
+			    0.75 0 0.786 0.000 0.834 0.267 0.859 0.227 0.902 0.043 1.000 0.000)
+			  :duration call2-dur :scaler amp))
+	 ;; these two envs may not be aligned correctly -- maybe backup the frq slightly?
+	 (frqf2 (make-env '(0.000 0.252 0.129 0.266 0.210 0.291 0.282 0.293 0.336 0.293 0.442 0.404 
+			    0.473 0.416 0.515 0.416 0.556 0.447  
+			    0.576 0.6
+			    0.598 0.443 0.607 0.386 
+			    0.638 0.342 0.688 0.332 0.784 0.338 0.796 0.340 0.886 0.57 
+			    0.948 0.697 1 .7) 
+			  :duration call2-dur :scaler (hz->radians 10000)))
+	 (ampf (make-env '(0 1 1.78 1 1.79 0 1.82 0) :duration 1.82)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop1))
+	 (outa i (* (env ampf1)
+		    (polyshape gen1 1.0 (env frqf1)))
+	       *output*))
+       (do ((i stop1 (1+ i)))
+	   ((= i stop2))
+	 (let ((pulse (pulse-train pulser)))
+	   (if (> pulse .1)
+	       (begin
+		 (mus-reset ampf2)
+		 (mus-reset frqf2)))
+	   (outa i (* (env ampf2)
+		      (env ampf)
+		      (polyshape gen1 1.0 (env frqf2)))
+		 *output*)))))))
+	 
+;(with-sound (:play #t) (bachmans-sparrow 0 .25))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Grasshopper sparrow
+
+(definstrument (grasshopper-sparrow beg amp)
+  ;; 2 portions -- simple tones, then a buzz
+  (let* ((start (seconds->samples beg))
+
+	 (begs (vct 0.0 .24 .36 .44 .55))
+	 (durs (vct 0.019 0.020 0.011 0.021 1.09))
+	 (amps (vct .48 .54 .07 .22 1.0))
+	 (frqs (vct 8500 7240 9730 4920 8000))
+	 (starts (make-vector 4 0))
+	 (stops (make-vector 4 0))
+	 (ampfs (make-vector 4 #f))
+	 (gen1 (make-oscil 0.0))
+
+	 (buzz-start (+ start (seconds->samples (vct-ref begs 4))))
+	 (buzz-end (+ buzz-start (seconds->samples (vct-ref durs 4))))
+	 (buzz-ampf (make-env '(0.000 0.000  0.095 0.953  0.114 0.182  0.158 0.822 0.236 0.996 0.332 1.000 0.848 0.589 0.957 0.372 1.000 0.000)
+			      :duration (vct-ref durs 4) :scaler amp))
+	 (buzzer (make-sine-summation 40 :n 5 :a .5)) ; sawtooth not great here due to broad spectrum
+	 (buzzer-index (hz->radians 2000))
+	 (buzzer-amp (make-triangle-wave 40 0.8)))
+
+    (do ((i 0 (1+ i)))
+	((= i 4))
+      (vector-set! ampfs i (make-env '(0 0 1 .8 1.5 1 2 .8 3 0) :duration (vct-ref durs i) :scaler (* amp (vct-ref amps i))))
+      (vector-set! starts i (+ start (seconds->samples (vct-ref begs i))))
+      (vector-set! stops i (+ (vector-ref starts i) (seconds->samples (vct-ref durs i)))))
+
+   (run
+     (lambda ()
+
+       ;; first the 4 tones
+       (do ((tone 0 (1+ tone)))
+	   ((= tone 4))
+	 (set! (mus-frequency gen1) (vct-ref frqs tone))
+	 (let ((ampf (vector-ref ampfs tone))
+	       (end (vector-ref stops tone)))
+	   (do ((i (vector-ref starts tone) (1+ i)))
+	       ((= i end))
+	     (outa i (* (env ampf)
+			(oscil gen1))
+	       *output*))))
+
+       ;; then the buzz
+       (set! (mus-frequency gen1) 8000.0)
+       (do ((i buzz-start (1+ i)))
+	   ((= i buzz-end))
+	 (outa i (* (env buzz-ampf)
+		    (+ 0.2 (abs (triangle-wave buzzer-amp)))
+		    (oscil gen1 (* buzzer-index
+				   (sine-summation buzzer))))
+	       *output*))))))
+
+;(with-sound (:play #t) (grasshopper-sparrow 0 .25))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -2134,6 +2251,8 @@
     (acadian-flycatcher 52 .25)
     (swainsons-thrush 52.5 .25)
     (carolina-wren 55 .25)
+    (bachmans-sparrow 57 .25)
+    (grasshopper-sparrow 58 .25)
     ))
 
 

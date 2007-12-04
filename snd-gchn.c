@@ -1023,6 +1023,7 @@ void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int 
   cp->cgx->fft_pix_height = fheight;
   cp->cgx->fft_pix_x0 = x0;
   cp->cgx->fft_pix_y0 = y0;
+  cp->cgx->fft_pix_cutoff = cp->spectro_cutoff;
   cp->cgx->fft_pix = gdk_pixbuf_get_from_drawable(cp->cgx->fft_pix, ax->wn, gtk_widget_get_colormap(ax->w),
 						  cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0, 0, 0,
 						  cp->cgx->fft_pix_width, cp->cgx->fft_pix_height);

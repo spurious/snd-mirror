@@ -53186,11 +53186,11 @@ EDITS: 1
 			   (outa i (nxy1sin gen 0.0) *output*))))))
 
 	(with-sound (:clipped #f)
-		    (let ((black4 (make-blackman4 440.0)))
+		    (let ((black4 (make-blackman 440.0)))
 		      (run (lambda ()
 			     (do ((i 0 (1+ i)))
 				 ((= i 10000))
-			       (outa i (blackman4 black4 0.0) *output*))))))
+			       (outa i (blackman black4 0.0) *output*))))))
 
 	(with-sound (:clipped #f)
 		    (let ((gen (make-k3sin 100.0)))

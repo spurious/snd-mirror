@@ -133,6 +133,7 @@ typedef struct {
   unsigned int fft_pix_width, fft_pix_height;
   int fft_pix_x0, fft_pix_y0;
   bool fft_pix_ready;
+  Float fft_pix_cutoff;
 #if USE_CAIRO
   GdkPixbuf *cursor_pix;
   unsigned int cursor_pix_width, cursor_pix_height;

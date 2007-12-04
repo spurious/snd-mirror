@@ -3552,30 +3552,52 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; --------------------------------------------------------------------------------
 
-;;; blackman4 as a waveform -- all the other fft windows could be implemented, but I doubt
-;;;   they are all that different, or useful as audio sources.
+;;; blackman as a waveform -- all the other fft windows could be implemented
+;;;   perhaps most useful as an amplitude envelope
 
-(def-clm-struct (blackman4 
+
+;;; TODO: check for left-over make-blackman4 calls (html)
+
+
+(def-clm-struct (blackman
 		 :make-wrapper (lambda (g)
-				 (set! (blackman4-incr g) (hz->radians (blackman4-frequency g)))
-				 (set! (blackman4-coeffs g) (vct .084037 -.29145 .375696 -.20762 .041194))
+				 (let ((n (blackman-n g)))
+				   (set! n (min (max n 1) 10))
+				   (set! (blackman-incr g) (hz->radians (blackman-frequency g)))
+				   (case n
+				     ((1) (set! (blackman-coeffs g) (vct 0.54 -0.46)))
+				     ((2) (set! (blackman-coeffs g) (vct 0.34401 -0.49755 0.15844)))
+				     ((3) (set! (blackman-coeffs g) (vct 0.21747 -0.45325 0.28256 -0.04672)))
+				     ((4) (set! (blackman-coeffs g) (vct 0.084037 -0.29145 0.375696 -0.20762 0.041194)))
+				     ((5) (set! (blackman-coeffs g) (vct 0.097167 -0.3088448 0.3626224 -0.1889530 0.04020952 -0.0022008)))
+				     ((6) (set! (blackman-coeffs g) (vct 0.063964353 -0.239938736 0.3501594961 -0.247740954 0.0854382589
+									 -0.012320203 0.0004377882)))
+				     ((7) (set! (blackman-coeffs g) (vct 0.04210723 -0.18207621 0.3177137375 -0.284437984 0.1367622316
+									 -0.033403806 0.0034167722 -0.000081965)))
+				     ((8) (set! (blackman-coeffs g) (vct 0.027614462 -0.135382235 0.2752871215 -0.298843294 0.1853193194
+									 -0.064888448 0.0117641902 -0.000885987 0.0000148711)))
+				     ((9) (set! (blackman-coeffs g) (vct 0.01799071953 -0.098795950 0.2298837751 -0.294112951 0.2243389785
+									 -0.103248745 0.0275674108 -0.003839580	0.0002189716 -0.000002630)))
+				     ((10) (set! (blackman-coeffs g) (vct 0.0118717384 -0.071953468 0.1878870875 -0.275808066 0.2489042133 
+									  -0.141729787 0.0502002984 -0.010458985 0.0011361511 -0.000049617
+									  0.0000004343))))
 				 g))
-    (frequency 0.0) (coeffs #f :type vct)  ; angle = initial-phase
+    (frequency 0.0) (n 4 :type int) (coeffs #f :type vct)  ; angle = initial-phase
     (angle 0.0) (incr 0.0))
 
-(define (blackman4 gen fm)
-  (declare (gen blackman4) (fm float))
-  (let ((x (blackman4-angle gen)))
-    (set! (blackman4-angle gen) (+ x fm (blackman4-incr gen)))
-    (polynomial (blackman4-coeffs gen) (cos x))))
+(define (blackman gen fm)
+  (declare (gen blackman) (fm float))
+  (let ((x (blackman-angle gen)))
+    (set! (blackman-angle gen) (+ x fm (blackman-incr gen)))
+    (polynomial (blackman-coeffs gen) (cos x))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
-  (let ((black4 (make-blackman4 440.0)))
+  (let ((black4 (make-blackman 440.0)))
     (run (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
-	 (outa i (blackman4 black4 0.0) *output*))))))
+	 (outa i (blackman black4 0.0) *output*))))))
 |#
 
 

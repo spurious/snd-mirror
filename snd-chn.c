@@ -2426,6 +2426,7 @@ static void make_sonogram(chan_info *cp)
 	{
 	  if ((cp->fft_changed == FFT_UNCHANGED) &&
 	      (cp->cgx->fft_pix_ready) &&
+	      (cp->cgx->fft_pix_cutoff == cp->spectro_cutoff) &&
 	      ((int)(cp->cgx->fft_pix_width) == fwidth) &&
 	      ((int)(cp->cgx->fft_pix_height) == fheight) &&
 	      (cp->cgx->fft_pix_x0 == fap->x_axis_x0) &&

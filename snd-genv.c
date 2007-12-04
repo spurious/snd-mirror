@@ -362,7 +362,14 @@ static void text_field_activated(GtkWidget *w, gpointer context)
 	}
       if (e) 
 	{
-	  if (active_env) active_env = free_env(active_env);
+	  if (active_env)
+	    {
+	      #define ENVED_TEMP_NAME "enved-backup"
+	      /* save current under a temp name!  -- user might have mistakenly reused a name */
+	      alert_envelope_editor(ENVED_TEMP_NAME, copy_env(active_env));
+	      add_or_edit_symbol(ENVED_TEMP_NAME, active_env);
+	      active_env = free_env(active_env);
+	    }
 	  active_env = copy_env(e);
 	  set_enved_env_list_top(0);
 	  prepare_env_edit(active_env);

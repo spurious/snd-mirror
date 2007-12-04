@@ -1380,6 +1380,7 @@ void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int 
       cp->cgx->fft_pix_height = fheight;
       cp->cgx->fft_pix_x0 = x0;
       cp->cgx->fft_pix_y0 = y1;
+      cp->cgx->fft_pix_cutoff = cp->spectro_cutoff;
       cp->cgx->fft_pix = XCreatePixmap(ax->dp,
 				       RootWindowOfScreen(XtScreen(channel_graph(cp))),
 				       fwidth, fheight,
