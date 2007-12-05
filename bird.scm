@@ -3,6 +3,10 @@
 ;;;
 ;;; some of the bird names date this work to 1980 using a bird guide published in 1966
 
+
+;;; see animals.scm for later versions of some of these songs
+
+
 (use-modules (ice-9 optargs) (ice-9 format))
 (provide 'snd-bird.scm)
 
@@ -240,7 +244,7 @@
     (bigbird (+ beg 1.50) .12 2500 4000 .15 downcurve main-amp '(1 1 2 .1))))
 
 
-(define (grasshopper-sparrow beg) ; see also animals.scm
+(define (grasshopper-sparrow beg)
   "(grasshopper-sparrow beg) produces a grasshopper sparrow call at time 'beg'"
   (let ((grassone '(.00 .50 .02 .80 .04 .30 .06 .80 .07 .10 .08 .90 .10 .00 .11 .90 .12 .00 .13 .90 .14 .10 .15 1.00 .16 .10 .17 1.00 .18 .10 .19 1.00 .20 .10 .21 1.00 .22 .10 .23 1.00 .24 .10 .25 1.00 .26 .10 .27 1.00 .28 .10 .29 1.00 .30 .10 .31 1.00 .32 .10 .33 1.00 .34 .10 .35 1.00 .36 .10 .37 1.00 .38 .10 .39 1.00 .40 .10 .41 1.00 .42 .10 .43 1.00 .44 .10 .45 1.00 .46 .10 .47 1.00 .48 .10 .49 1.00 .50 .10 .51 1.00 .52 .10 .53 1.00 .54 .10 .55 1.00 .56 .10 .57 1.00 .58 .10 .59 1.00 .60 .10 .61 1.00 .62 .10 .63 1.00 .64 .10 .65 1.00 .66 .10 .67 1.00 .68 .10 .69 1.00 .70 .10 .71 1.00 .72 .10 .73 1.00 .74 .10 .75 1.00 .76 .10 .77 1.00 .78 .10 .79 1.00 .80 .10 .81 1.00 .82 .10 .83 1.00 .84 .10 .85 1.00 .86 .10 .87 1.00 .88 .10 .89 1.00 .90 .10 .91 1.00 .92 .10 .93 1.00 .94 .10 .95 1.00 .96 .10 .97 1.00 .98 .10 1.00 1.0))
 	(grasstwo '(.00 .00 .10 1.00 .20 .00 .30 1.00 .40 .00 .50 1.00 .60 .00 .70 1.00 .80 .00 .90 1.00 1.00 .0)))
@@ -587,7 +591,7 @@
     (bigbird (+ beg .3) .2 2000 1100 .2 f-two a-two '(1 1 2 .02 3 .1 4 .01))))
 
 
-(define (bachmans-sparrow beg) ; see also animals.scm
+(define (bachmans-sparrow beg)
   "(bachmans-sparrow beg) produces a bachmans sparrow call at time 'beg'"
   (let ((sopening '(.00 1.00 .10 .50 .90 .50 1.00 .0))
 	(sup '(.00 .10 .35 .00 1.00 1.0))
