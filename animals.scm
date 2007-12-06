@@ -48,6 +48,7 @@
 ;;; Chipping sparrow
 ;;; Bachman's sparrow
 ;;; Grasshopper sparrow
+;;; Black-chinned sparrow
 ;;; Eastern wood-pewee (2)
 ;;; Tufted titmouse
 ;;; Least flycatcher
@@ -55,7 +56,10 @@
 ;;; Swainson's thrush
 ;;; Carolina wren
 ;;; American robin
-;;; Common loon
+;;; Common loon (2)
+;;; Hermit thrush
+;;; Chuck-will's-widow
+;;; California towhee
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -691,6 +695,20 @@
 ;;;
 ;;; original formants were much sharper, but using rxyk!cos to sharpen ours didn't seem to help
 ;;; animal seems to group these in 3's
+
+(define (normalize-partials lst)
+  (define (sum-partials lst sum)
+    (if (null? lst)
+	sum
+	(sum-partials (cddr lst) (+ sum (cadr lst)))))
+    
+  (define (scale-partials lst scl newlst)
+    (if (null? lst)
+	newlst
+	(scale-partials (cddr lst) scl (append newlst (list (car lst) (* scl (cadr lst)))))))
+    
+  (scale-partials lst (/ 1.0 (sum-partials lst 0.0)) '()))
+
 
 (definstrument (river-frog beg amp)
   (let* ((dur 1.85)
@@ -2534,6 +2552,159 @@
 
 
 ;;; --------------------------------------------------------------------------------
+;;;
+;;; Chuck-will's-widow
+
+(definstrument (chuck-wills-widow beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 1.05)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.017 0.656 0.026 0.136 0.048 0.000 
+			   0.289 0.000 0.328 0.154 0.353 0.405 0.361 0.961 0.369 0.667 0.381 0.918 0.394 0.269 
+			   0.402 0.204 0.425 0.333 0.440 0.570 0.466 0.444 0.515 0.470 0.592 0.294 
+			   0.65 0.000 .68 0.0 .7 .1 .74 0  0.762 0.000 0.791 0.305 0.818 0.337 
+			   0.832 1.000 0.844 0.699 0.857 0.903 0.867 0.405 0.883 0.398 0.895 0.853 0.907 0.853 
+			   0.921 0.297 0.953 0.294 0.981 0.140 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .97  3 .02  4 .01)))
+	 (rnd (make-rand-interp 100 .25))
+	 (frqf (make-env '(0.000 0.702 0.014 0.637 0.023 0.478 0.048 0.343 0.298 0.385 0.335 0.389 0.353 0.459 
+			   0.362 0.546 0.371 0.687 0.376 0.715 0.383 0.687 0.388 0.635 0.391 0.565 0.398 0.474 
+			   0.417 0.370 0.455 0.561 0.490 0.389 0.504 0.465 0.523 0.483 0.541 0.461 0.552 0.413 
+			   0.605 0.409 0.610 0.370 0.781 0.380 0.804 0.417 0.823 0.457 0.837 0.517 0.851 0.693 
+			   0.858 0.737 0.867 0.702 0.871 0.572 0.878 0.496 0.889 0.430 0.904 0.535 0.914 0.630 
+			   0.924 0.554 0.933 0.457 0.951 0.380 1.000 0.354)
+			 :duration dur :scaler (hz->radians 3000.0))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (+ .75 (abs (rand-interp rnd)))
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (chuck-wills-widow 0 .25))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; California towhee
+
+(definstrument (california-towhee beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 1.17)
+	 (stop (+ start (seconds->samples dur)))
+	 ;; peep pitch changes
+	 (amps (vct .5 .8 .85 .9 .95 1.0))
+	 (begs (vct 0.0 0.39 0.67 0.86 0.96 1.09))
+	 (frqs (vct 4750 4950 4880 4920 5210 5140))
+	 (starts (make-vector 7 0))
+	 (peep-dur 0.055)
+	 (ampf (make-env '(0.000 0.000 0.141 0.119 0.220 0.652 0.329 0.968 0.495 0.830 0.603 0.399 0.715 0.178 1.000 0.000)
+			 :duration peep-dur :scaler amp))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .97  2 .02  3 .01)))
+	 (frqf (make-env '(0 .5 .1 3  .2 1  .4 0  1 .2) :duration peep-dur :scaler (hz->radians 800)))
+	 (next-start start)
+	 (peep-amp 1.0)
+	 (peep-ctr 0))
+
+    (do ((i 0 (1+ i)))
+	((= i 6))
+      (vector-set! starts i (+ start (seconds->samples (vct-ref begs i)))))
+    (vector-set! starts 6 (1+ stop))
+
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (if (>= i next-start)
+	     (begin
+	       (set! peep-amp (vct-ref amps peep-ctr))
+	       (set! (mus-frequency gen1) (vct-ref frqs peep-ctr))
+	       (set! peep-ctr (1+ peep-ctr))
+	       (set! next-start (vector-ref starts peep-ctr))
+	       (mus-reset ampf)
+	       (mus-reset frqf)))
+	 (outa i (* (env ampf)
+		    peep-amp
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (california-towhee 0 .25))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Black-chinned sparrow
+
+(definstrument (black-chinned-sparrow beg amp gliss-up)
+  (let* ((start (seconds->samples beg))
+	 ;; initial stable pitch, then the gliss->buzz with frq going either up or down
+
+	 (initial-dur .36)
+	 (initial-pitch 6800)
+	 (initial-amp .05)
+	 (initial-stop (+ start (seconds->samples initial-dur)))
+	 (initial-ampf (make-env '(0 0 1 1 10 1 11 0) :duration initial-dur :scaler (* amp initial-amp)))
+	 (initial-gen (make-oscil initial-pitch))
+
+	 (buzz-dur 2.62)
+	 (buzz-stop (+ initial-stop (seconds->samples buzz-dur)))
+	 (buzz-amp (make-env '(0.000 0.000 0.035 0.190 0.082 0.336 0.168 0.625 0.348 0.743 0.467 0.763 
+			       0.530 0.723 0.628 0.818 0.668 1.000 0.728 0.913 0.777 0.506 0.818 0.174 1.000 0.000)
+			     :duration buzz-dur :scaler amp))
+	 (buzz-frq0 (/ 1.0 (* 2 .34)))
+	 (buzz-frq1 (/ 1.0 .02))
+	 (buzz-frqmid (/ 1.0 .15))
+	 (buzz-frq (make-env (list 0 buzz-frq0 .5 buzz-frqmid 1 buzz-frq1) :duration buzz-dur :scaler (hz->radians 1.0)))
+	 (buzz-size 128)
+	 (buzz-low 3000)
+	 (buzz-high 8500)
+	 (buzz-mid 4000)
+	 (buzz-frq-table (let ((v (make-vct buzz-size 0.0))
+			       (bfrqf (make-env (if gliss-up 
+						    (list 0 buzz-low .5 buzz-mid 1 buzz-high)
+						    (list 0 buzz-high .5 buzz-mid 1 buzz-low))
+						:end buzz-size 
+						:scaler (hz->radians 1.0))))
+			   (do ((i 0 (1+ i)))
+			       ((= i buzz-size))
+			     (vct-set! v i (env bfrqf)))
+			   v))
+	 (buzz-amp-table (let ((v (make-vct buzz-size 0.0))
+			       (bampf (make-env (if gliss-up
+						    '(0 0 1 1 2.5 .7 3 0 3.5 0)
+						    '(0 0 .5 1 2 1 3 0 3.5 0))
+						:end buzz-size)))
+			   (do ((i 0 (1+ i)))
+			       ((= i buzz-size))
+			     (vct-set! v i (env bampf)))
+			   v))
+	 (buzz-frqf (make-table-lookup buzz-frq0 :wave buzz-frq-table))
+	 (buzz-ampf (make-table-lookup buzz-frq0 :wave buzz-amp-table))
+	 (buzz-gen (make-polyshape 0.0 :partials (list 1 .98 2 .005 3 .01)))
+	 )
+
+    (run
+     (lambda ()
+
+       (do ((i start (1+ i)))
+	   ((= i initial-stop))
+	 (outa i (* (env initial-ampf) (oscil initial-gen)) *output*))
+
+       (do ((i initial-stop (1+ i)))
+	   ((= i buzz-stop))
+	 (let* ((frq (env buzz-frq)))
+	   (outa i (* (env buzz-amp)
+		      (table-lookup buzz-ampf frq)
+		      (polyshape buzz-gen 1.0 (table-lookup buzz-frqf frq)))
+		 *output*)))))))
+
+;(with-sound (:play #t) (black-chinned-sparrow 0 .25 #t))
+
+
+;;; --------------------------------------------------------------------------------
 
 (define (calling-all-animals)
   (with-sound (:play #t :scaled-to .5 :srate 44100) ;(srate needed by snd-test)
@@ -2590,6 +2761,9 @@
     (common-loon-1 61 .125)
     (common-loon-2 63 .125)
     (hermit-thrush 64 .25)
+    (chuck-wills-widow 66 .25)
+    (california-towhee 67 .25)
+    (black-chinned-sparrow 68 .25 #t)
     ))
 
 

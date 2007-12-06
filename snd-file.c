@@ -1784,9 +1784,11 @@ void restore_axes_data(snd_info *sp, void *usa, Float new_duration, bool need_ed
       chan_info *cp;
       axis_info *ap;
       int loc;
+
       cp = sp->chans[i];
       loc = j * sa->fields;
       old_duration = sa->axis_data[loc + SA_X1] - sa->axis_data[loc + SA_X0];  /* old duration is x1 - x0 */
+
       if (new_duration < sa->axis_data[loc + SA_X0])                           /* new duration < old x0 */
 	sa->axis_data[loc + SA_X0] = new_duration - old_duration;              /* try to maintain old window size */
       if (sa->axis_data[loc + SA_X0] < 0.0) 
@@ -1794,11 +1796,14 @@ void restore_axes_data(snd_info *sp, void *usa, Float new_duration, bool need_ed
       if (new_duration < sa->axis_data[loc + SA_X1]) 
 	sa->axis_data[loc + SA_X1] = new_duration;                             /* new x1 */
       sa->axis_data[loc + SA_XMAX] = new_duration;                             /* new xmax */
+
       ap = cp->axis;
       ap->xmin = sa->axis_data[loc + SA_XMIN];
       ap->xmax = sa->axis_data[loc + SA_XMAX];
       ap->ymin = sa->axis_data[loc + SA_YMIN];
       ap->ymax = sa->axis_data[loc + SA_YMAX];
+
+      /* zx and sx are reset by set_axes below? */
       ap->zx = sa->axis_data[loc + SA_ZX];
       ap->sx = sa->axis_data[loc + SA_SX];
       ap->zy = sa->axis_data[loc + SA_ZY];

@@ -1049,12 +1049,15 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
    *    focus_active - find the currently active entity, if none use focus_middle 
    *    focus_proc -- call proc
    */
+
   if (ap->xmax == 0.0) return;
+
   if (ap->xmax <= ap->xmin) 
     {
       ap->xmax = ap->xmin + .001;
       ap->x_ambit = .001;
     }
+
   if (focus_style != ZOOM_FOCUS_LEFT)
     {
       chan_info *ncp;
@@ -1084,6 +1087,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
 	  ncp = virtual_selected_channel(cp);
 	  /* axes should be the same, since all move together in this mode */
 	  newf = zoom_focus_location(ncp);
+
 	  if (newf == NO_ZOOM_FOCUS_LOCATION)
 	    {
 	      snd_info *sp;
@@ -1113,6 +1117,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
 				if (newf != NO_ZOOM_FOCUS_LOCATION)
 				  break;
 			      }}}}}
+
 	  if (newf != NO_ZOOM_FOCUS_LOCATION)
 	    {
 	      double loc, pos;
@@ -1130,6 +1135,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
 	  else ap->x0 = 0.5 * ((ap->x1 + ap->x0) - ap->zx * ap->x_ambit); 
 	  break;
 	}
+
 #if HAVE_DECL_ISNAN
       if (isnan(ap->x0)) ap->x0 = 0.0;
 #endif
