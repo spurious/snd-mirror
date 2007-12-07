@@ -4276,10 +4276,12 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 {
   int x0, x1, y0, y1;
   axis_info *ap;
+
   x0 = x - SLOPPY_MOUSE;
   x1 = x + SLOPPY_MOUSE;
   y0 = y - SLOPPY_MOUSE;
   y1 = y + SLOPPY_MOUSE;
+
   if (cp->graph_time_p)
     {
       ap = cp->axis;
@@ -4288,9 +4290,21 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
 	return(CLICK_WAVE);
     }
+
+  if (((cp->graph_lisp_p) || 
+       (XEN_HOOKED(lisp_graph_hook))) && 
+      (cp->lisp_info))
+    {
+      ap = cp->lisp_info->axis;
+      if (((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0)) && 
+	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
+	return(CLICK_LISP);
+    }
+
   if (cp->graph_transform_p)
     {
       ap = cp->fft->axis;
+      if (!ap) return(CLICK_NOGRAPH); /* apparently can happen if fft is being redrawn when we click */
       /* look first for on-axis (axis drag) mouse */
 #if HAVE_GL
       if ((cp->transform_graph_type == GRAPH_AS_SPECTROGRAM) && 
@@ -4319,13 +4333,7 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
 	return(CLICK_FFT_MAIN);
     }
-  if (((cp->graph_lisp_p) || (XEN_HOOKED(lisp_graph_hook))) && (cp->lisp_info))
-    {
-      ap = cp->lisp_info->axis;
-      if (((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0)) && 
-	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
-	return(CLICK_LISP);
-    }
+
   return(CLICK_NOGRAPH);
 }
 

@@ -60,6 +60,10 @@
 ;;; Hermit thrush
 ;;; Chuck-will's-widow
 ;;; California towhee
+;;; Mourning dove
+;;; Bobwhite
+;;; Warbling vireo
+;;; Great-horned owl
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -2390,6 +2394,8 @@
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; Common loon
+;;;
+;;; Geoffrey Keller, "Bird Songs of California" (Cornell)
 
 (definstrument (common-loon-1 beg amp)
   (let* ((start (seconds->samples beg))
@@ -2705,6 +2711,188 @@
 
 
 ;;; --------------------------------------------------------------------------------
+;;;
+;;; Mourning dove
+
+(definstrument (mourning-dove beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 4.1)
+	 (stop (+ start (seconds->samples dur)))
+	 (rnd (make-rand-interp 2000 (hz->radians 200.0)))
+	 (rndf (make-env '(0 1 2 .3 5 .3) :duration dur :scaler .1))
+	 (gen2 (make-oscil 620))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .95 2 .05 3 .005)))
+	 (ampf (make-env '(0.000 0.000 0.012 0.256 0.032 0.247 0.048 0.188 0.197 0.156 0.224 0.988 0.238 0.844 
+			   0.256 0.881 0.309 0.000 0.390 0.000 0.414 0.881 0.441 0.819 0.494 0.394 0.564 0.175 
+			   0.579 0.000 0.647 0.000 0.678 0.725 0.703 0.659 0.786 0.000 0.856 0.000 0.879 0.631 
+			   0.892 0.675 0.920 0.494 0.986 0.162 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.395 0.019 0.449 0.065 0.439 0.159 0.439 0.198 0.427 0.217 0.493 0.229 0.621 
+			   0.236 0.658 0.270 0.642 0.298 0.555 0.309 0.495 0.414 0.487 0.432 0.499 0.477 0.497 
+			   0.537 0.484 0.577 0.468 0.588 0.427 0.674 0.480 0.698 0.493 0.729 0.487 0.771 0.472 
+			   0.877 0.468 0.903 0.493 0.960 0.478 1.000 0.462)
+			 :duration dur :scaler (hz->radians 1000.0))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (+ (* .95 (polyshape gen1 1.0 (env frqf)))
+		       (* (env rndf)
+			  (oscil gen2 (rand-interp rnd)))))
+	       *output*))))))
+
+;(with-sound (:play #t) (mourning-dove 0 .25))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Bobwhite
+;;;
+;;; Lang Elliott, Donald and Lillian Stokes, "Stokes Field Guide to Bird Songs, Eastern Region"
+
+(definstrument (bobwhite beg amp)
+  (let* ((call1-dur .32)
+	 (call1-amp .07)
+	 (call1-pitch 1500) ; 1530 down to 1450? 1 is pure, 2 and 3 have 1 2, no 3, 4
+	 (call1-gen (make-oscil 1450))
+	 (call1-ampf (make-env '(0 0 1 1 8 1 9 0) :duration call1-dur :scaler (* amp call1-amp)))
+	 (call1-frqf (make-env '(0 1 1 0) :duration call1-dur :scaler (hz->radians 80)))
+	 (call1-start (seconds->samples beg))
+	 (call1-stop (+ call1-start (seconds->samples call1-dur)))
+
+	 (call2-beg .80)
+	 (call2-dur .20)
+	 (call2-amp .35)
+	 (call2-gen (make-polyshape 1320 :partials (list 1 .95 2 .04 3 .01 4 .02 5 .01)))
+	 (call2-ampf (make-env '(0 0 1 1 4 1 5 0) :duration call2-dur :scaler (* amp call2-amp)))
+	 (call2-frqf (make-env '(0 0 1 1 4 1 5 .5) :duration call2-dur :scaler (hz->radians 430)))
+	 (call2-start (+ call1-start (seconds->samples call2-beg)))
+	 (call2-stop (+ call2-start (seconds->samples call2-dur)))
+
+	 (call3-beg 1.43)
+	 (call3-dur .22)
+	 (call3-amp 1.0)
+	 (call3-gen (make-polyshape 0.0 :partials (list 1 .95 2 .04 4 .01)))
+	 (call4-gen (make-polyshape 0.0 :partials (list 1 .05   2 .6  3 .2  4 .1  5 .01  6 .005)))
+	 (call3-ampf (make-env '(0 0 .5 1  .75 .2  1 0) :duration call3-dur :scaler (* amp call3-amp)))
+	 (call3-frqf (make-env '(0.000 0.245 0.135 0.304 0.399 0.335 0.439 0.345 0.491 0.384 0.551 0.434 0.591 0.485
+				       0.65 0.65  .67 .5  1 .3)
+			       :duration call3-dur :scaler (hz->radians 6000.0)))
+	 (call3-f1 (make-env '(0 1 .6 1 .75 0 1 0) :duration call3-dur))
+	 (call3-f2 (make-env '(0 0 .6 0 .64 1 1 1) :duration call3-dur))
+	 (call3-start (+ call1-start (seconds->samples call3-beg)))
+	 (call3-stop (+ call3-start (seconds->samples call3-dur))))
+   (run
+     (lambda ()
+
+       (do ((i call1-start (1+ i)))
+	   ((= i call1-stop))
+	 (outa i (* (env call1-ampf)
+		    (oscil call1-gen (env call1-frqf)))
+	       *output*))
+
+       (do ((i call2-start (1+ i)))
+	   ((= i call2-stop))
+	 (outa i (* (env call2-ampf)
+		    (polyshape call2-gen 1.0 (env call2-frqf)))
+	       *output*))
+
+       (do ((i call3-start (1+ i)))
+	   ((= i call3-stop))
+	 (let ((f1 (env call3-f1))
+	       (f2 (env call3-f2))
+	       (frq (env call3-frqf)))
+	   (outa i (* (env call3-ampf)
+		      (+ (* f1 (polyshape call3-gen 1.0 frq))
+			 (* f2 (polyshape call4-gen 1.0 (* 0.5 frq)))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (bobwhite 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Warbling vireo
+
+(definstrument (warbling-vireo beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 2.25)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.018 0.042 0.046 0.000 0.074 0.113 0.091 0.111 0.096 0.000 
+			   0.113 0.000 0.129 0.124 0.144 0.089 0.148 0.026 0.164 0.000 0.187 0.108 
+			   0.209 0.000 0.220 0.000 0.222 0.103 0.235 0.218 0.245 0.205 0.258 0.000 
+			   0.268 0.000 0.279 0.087 0.305 0.089 0.316 0.000 0.338 0.000 0.345 0.216 
+			   0.379 0.726 0.402 0.000 0.411 0.000 0.414 0.324 0.437 0.155 0.455 0.139 
+			   0.461 0.000 0.473 0.000 0.482 0.126 0.492 0.126 0.497 0.321 0.509 0.139
+			   0.520 0.003 0.536 0.308 0.552 0.187 0.565 0.250 0.572 0.000 0.587 0.000 
+			   0.596 0.737 0.619 0.966 0.646 0.501 0.661 0.000 0.670 0.000 0.679 0.266 
+			   0.697 0.097 0.703 0.711 0.719 0.000 0.736 0.000 0.746 0.997 0.756 0.282 
+			   0.775 0.392 0.787 0.000 0.804 0.000 0.813 0.811 0.826 0.463 0.836 0.411 
+			   0.847 0.000 0.862 0.000 0.873 0.284 0.893 0.192 0.899 0.066 0.912 0.329 
+			   0.921 0.000 0.931 0.000 0.934 0.303 0.947 0.466 0.960 0.418 0.980 0.258 1.000 0.000 )
+			 :duration dur :scaler amp))
+	 (gen1 (make-oscil 0.0))
+	 (frqf (make-env '(0.000 0.184 0.010 0.214 0.026 0.214 0.036 0.197 0.057 0.197 0.066 0.233 
+			   0.085 0.266 0.099 0.260 0.113 0.255 0.124 0.274 0.125 0.222 0.134 0.249 
+			   0.146 0.227 0.165 0.227 0.169 0.178 0.179 0.184 0.191 0.192 0.209 0.175 
+			   0.221 0.186 0.226 0.312 0.227 0.258 0.233 0.285 0.234 0.236 0.242 0.274 
+			   0.245 0.241 0.252 0.230 0.268 0.227 0.272 0.203 0.284 0.225 0.295 0.216 
+			   0.306 0.208 0.316 0.219 0.346 0.233 0.357 0.282 0.359 0.252 0.366 0.296 
+			   0.369 0.252 0.373 0.304 0.376 0.255 0.382 0.301 0.385 0.263 0.390 0.301 
+			   0.412 0.279 0.418 0.321 0.421 0.247 0.424 0.279 0.427 0.233 0.441 0.211 
+			   0.450 0.208 0.457 0.178 0.480 0.197 0.484 0.238 0.488 0.205 0.492 0.241 
+			   0.495 0.200 0.499 0.247 0.506 0.241 0.512 0.186 0.529 0.192 0.530 0.255 
+			   0.548 0.238 0.557 0.214 0.568 0.241 0.582 0.230 0.591 0.299 0.599 0.307 
+			   0.609 0.301 0.615 0.274 0.627 0.342 0.645 0.359 0.648 0.329 0.670 0.332 
+			   0.672 0.247 0.700 0.227 0.705 0.304 0.715 0.249 0.722 0.244 0.738 0.247 
+			   0.749 0.307 0.753 0.425 0.762 0.422 0.770 0.468 0.774 0.392 0.786 0.342 
+			   0.808 0.326 0.821 0.255 0.832 0.285 0.843 0.266 0.866 0.263 0.891 0.197 
+			   0.915 0.247 0.935 0.285 0.942 0.345 0.945 0.290 0.947 0.441 0.950 0.353 
+			   0.953 0.411 0.957 0.367 0.960 0.405 0.964 0.370 0.967 0.405 0.973 0.373 
+			   0.979 0.373 0.990 0.296 1.000 0.255 )
+			 :duration dur :scaler (hz->radians 11900))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (oscil gen1 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (warbling-vireo 0 .25))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Great-horned owl
+
+(definstrument (great-horned-owl beg amp)
+  (let* ((begs (vct 0.0  0.26 1.42 2.16))
+	 (durs (vct 0.14 0.40 0.43 0.37))
+	 (amps (vct .75 .9 .95 1.0)))
+
+    (do ((call 0 (1+ call)))
+	((= call 4))
+      (let* ((start (seconds->samples (+ beg (vct-ref begs call))))
+	     (stop (+ start (seconds->samples (vct-ref durs call))))
+	     (gen (make-polyshape 0.0 :partials (list 1 .9  2 .12  3 .007  5 .003)))
+	     (rnd (make-rand-interp 30 (hz->radians 5)))
+	     (ampf (make-env '(0 0 1 1 4 .9 5 0) :duration (vct-ref durs call) :scaler (* amp (vct-ref amps call))))
+	     (frqf (make-env '(0 1.25  .5 2  4.4 1.95  5 1) :base .1 :duration (vct-ref durs call) :scaler (hz->radians (* 0.5 328)))))
+	(run
+	 (lambda ()
+	   (do ((i start (1+ i)))
+	       ((= i stop))
+	     (outa i (* (env ampf)
+			(polyshape gen 1.0 (+ (env frqf)
+					      (rand-interp rnd))))
+		   *output*))))))))
+
+;(with-sound (:play #t) (great-horned-owl 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
 
 (define (calling-all-animals)
   (with-sound (:play #t :scaled-to .5 :srate 44100) ;(srate needed by snd-test)
@@ -2726,44 +2914,48 @@
     (river-frog 16 .5)
     (indri 17 .25)
     (field-sparrow 18.5 .25)
-    (handsome-trig 20 2 .5)
-    (fast-calling-tree-cricket 21 2 .25)
-    (dog-day-cicada 22 2 .1)
-    (linnaeus-cicada 24 2 .125)
-    (lyric-cicada 25 2 .125)
-    (confused-ground-cricket 26 3 .3)
-    (tinkling-ground-cricket 28.5 3 .3)
-    (marsh-meadow-grasshopper 30 .3)
-    (striped-ground-cricket 31 3 .25)
-    (sphagnum-ground-cricket 33 2 .3)
-    (fox-sparrow 34 3 .25)
-    (southeastern-field-cricket 36 2 .13)
-    (snowy-tree-cricket 37 2.1 .3)
-    (slightly-musical-conehead 38 2 .4)
-    (white-throated-sparrow 39 .25)
-    (tufted-titmouse 42 .3)
-    (savannah-sparrow 43 .5)
-    (chipping-sparrow 45 .3)
-    (pine-tree-cricket 46 2 .125)
-    (davis-tree-cricket 48 2 .125)
-    (carolina-grasshopper 49 1.5 1.0)
-    (pinewoods-tree-frog 50 1 .15)
-    (henslows-sparrow 51 .5)
-    (least-flycatcher 51.5 .5)
-    (acadian-flycatcher 52 .25)
-    (swainsons-thrush 52.5 .25)
-    (squirrel-tree-frog-1 54 1 .1)
-    (carolina-wren 55 .25)
-    (ornate-chorus-frog 56 2 .1)
-    (bachmans-sparrow 57 .25)
-    (grasshopper-sparrow 58 .25)
-    (american-robin 59 .25)
-    (common-loon-1 61 .125)
-    (common-loon-2 63 .125)
-    (hermit-thrush 64 .25)
-    (chuck-wills-widow 66 .25)
-    (california-towhee 67 .25)
-    (black-chinned-sparrow 68 .25 #t)
+    (handsome-trig 20.5 2 .5)
+    (fast-calling-tree-cricket 22 2 .25)
+    (dog-day-cicada 23 2 .1)
+    (linnaeus-cicada 25 2 .125)
+    (lyric-cicada 26 2 .125)
+    (confused-ground-cricket 27 3 .3)
+    (tinkling-ground-cricket 29.5 3 .3)
+    (marsh-meadow-grasshopper 31.5 .3)
+    (striped-ground-cricket 32.5 3 .25)
+    (sphagnum-ground-cricket 34.5 2 .3)
+    (fox-sparrow 35.5 3 .25)
+    (southeastern-field-cricket 37.5 2 .13)
+    (snowy-tree-cricket 39 2.1 .3)
+    (slightly-musical-conehead 40 2 .4)
+    (white-throated-sparrow 41 .25)
+    (tufted-titmouse 44 .3)
+    (savannah-sparrow 45 .5)
+    (chipping-sparrow 47 .3)
+    (pine-tree-cricket 48 2 .125)
+    (davis-tree-cricket 50 2 .125)
+    (carolina-grasshopper 51.5 1.5 1.0)
+    (pinewoods-tree-frog 53 1 .15)
+    (henslows-sparrow 54 .5)
+    (least-flycatcher 54.5 .5)
+    (acadian-flycatcher 55 .25)
+    (swainsons-thrush 55.5 .25)
+    (squirrel-tree-frog-1 57 1 .1)
+    (carolina-wren 58 .25)
+    (ornate-chorus-frog 59 2 .1)
+    (bachmans-sparrow 60 .25)
+    (grasshopper-sparrow 61 .25)
+    (american-robin 62.5 .25)
+    (common-loon-1 65 .125)
+    (common-loon-2 68 .125)
+    (hermit-thrush 69.5 .25)
+    (chuck-wills-widow 72 .25)
+    (california-towhee 73 .25)
+    (black-chinned-sparrow 74 .25 #t)
+    (mourning-dove 76 .125)
+    (bobwhite 78 .25) 
+    (warbling-vireo 80 .25)
+    (great-horned-owl 82 .25)
     ))
 
 
