@@ -64,6 +64,8 @@
 ;;; Bobwhite
 ;;; Warbling vireo
 ;;; Great-horned owl
+;;; Western tanager
+;;; Pileated woodpecker
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -2876,7 +2878,7 @@
 	((= call 4))
       (let* ((start (seconds->samples (+ beg (vct-ref begs call))))
 	     (stop (+ start (seconds->samples (vct-ref durs call))))
-	     (gen (make-polyshape 0.0 :partials (list 1 .9  2 .12  3 .007  5 .003)))
+	     (gen (make-polyshape 0.0 :partials (list 1 .9  2 .12  3 .007  7 .003)))
 	     (rnd (make-rand-interp 30 (hz->radians 5)))
 	     (ampf (make-env '(0 0 1 1 4 .9 5 0) :duration (vct-ref durs call) :scaler (* amp (vct-ref amps call))))
 	     (frqf (make-env '(0 1.25  .5 2  4.4 1.95  5 1) :base .1 :duration (vct-ref durs call) :scaler (hz->radians (* 0.5 328)))))
@@ -2890,6 +2892,109 @@
 		   *output*))))))))
 
 ;(with-sound (:play #t) (great-horned-owl 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Western tanager
+
+(definstrument (western-tanager beg amp)
+  (let* ((gen (make-polyshape 0.0 :partials '(1 .98 2 .02)))
+	 (begs (vct 0.0  0.7  1.4  2.0))
+	 (durs (vct 0.27 0.32 0.25 0.24))
+	 (amps (vct 0.32 0.85 1.0  0.65))
+
+	 (ampfs (vector 
+		 (make-env '(0.000 0.000 0.086 0.398 0.247 0.610 0.363 0.000 0.416 0.000 0.513 0.603 0.610 0.603 
+			     0.708 0.507 0.733 0.232 0.798 0.895 0.848 1.000 0.898 0.927 1.000 0.000)
+			   :duration (vct-ref durs 0) :scaler (* amp (vct-ref amps 0)))
+		 (make-env '(0.000 0.000 0.060 0.735 0.303 1.000 0.394 0.408 0.503 0.318 0.617 0.879 0.912 0.258 
+			     0.939 0.055 1.000 0.000)
+			   :duration (vct-ref durs 1) :scaler (* amp (vct-ref amps 1)))
+		 (make-env '(0.000 0.000 0.098 0.837 0.183 0.704 0.395 1.000 0.469 0.185 0.553 0.086 0.731 0.841 
+			     0.785 0.834 1.000 0.000)
+			   :duration (vct-ref durs 2) :scaler (* amp (vct-ref amps 2)))
+		 (make-env '(0.000 0.000 0.047 0.837 0.117 0.172 0.167 0.157 0.234 0.993 0.296 0.826 0.319 0.609 
+			     0.431 0.781 0.567 0.506 0.642 0.166 0.673 0.757 0.769 0.874 0.873 0.766 0.919 0.605 
+			     0.956 0.230 1.000 0.000)
+			   :duration (vct-ref durs 3) :scaler (* amp (vct-ref amps 3)))))
+
+	 (frqfs (vector 
+		 (make-env '(0.000 0.437 0.056 0.561 0.075 0.558 0.094 0.459 0.109 0.536 0.128 0.411 0.142 0.521 
+			     0.156 0.435 0.172 0.532 0.190 0.450 0.214 0.556 0.226 0.459 0.239 0.556 0.350 0.318 
+			     0.409 0.313 0.491 0.461 0.614 0.461 0.665 0.428 0.702 0.340 0.718 0.406 0.739 0.331 
+			     0.756 0.470 0.772 0.336 0.803 0.510 0.818 0.353 0.845 0.536 0.862 0.415 0.886 0.545 
+			     0.903 0.470 0.924 0.534 0.945 0.442 1.000 0.395)
+			   :duration (vct-ref durs 0) :scaler (hz->radians 6000))
+		 (make-env '(0.000 0.587 0.045 0.543 0.064 0.459 0.088 0.563 0.105 0.481 0.127 0.600 0.141 0.514 
+			     0.172 0.620 0.185 0.532 0.212 0.640 0.233 0.567 0.251 0.629 0.266 0.589 0.374 0.448 
+			     0.440 0.404 0.528 0.406 0.557 0.450 0.583 0.466 0.604 0.517 0.618 0.481 0.648 0.552 
+			     0.667 0.499 0.691 0.556 0.710 0.517 0.739 0.561 0.758 0.519 0.791 0.561 0.814 0.510 
+			     0.833 0.534 0.975 0.483 1.000 0.488)
+			   :duration (vct-ref durs 1) :scaler (hz->radians 6000))
+		 (make-env '(0.000 0.247 0.059 0.539 0.073 0.556 0.131 0.490 0.150 0.444 0.172 0.501 0.199 0.402 
+			     0.222 0.512 0.249 0.430 0.279 0.552 0.304 0.464 0.340 0.600 0.360 0.479 0.383 0.567 
+			     0.496 0.311 0.611 0.320 0.635 0.470 0.655 0.331 0.680 0.492 0.703 0.349 0.742 0.534 
+			     0.770 0.373 0.797 0.536 0.823 0.419 0.856 0.536 0.881 0.433 0.910 0.506 0.950 0.397 
+			     0.978 0.508 1.000 0.514)
+			   :duration (vct-ref durs 2) :scaler (hz->radians 6000))
+		 (make-env '(0.000 0.614 0.031 0.607 0.046 0.514 0.072 0.430 0.145 0.307 0.168 0.380 0.191 0.536 
+			     0.205 0.453 0.223 0.570 0.239 0.457 0.261 0.547 0.282 0.426 0.297 0.503 0.318 0.426 
+			     0.341 0.453 0.449 0.468 0.580 0.435 0.635 0.419 0.652 0.353 0.674 0.494 0.687 0.545 
+			     0.706 0.455 0.732 0.556 0.754 0.457 0.783 0.547 0.807 0.455 0.840 0.558 0.858 0.453 
+			     0.885 0.539 0.914 0.439 0.938 0.541 0.965 0.433 1.000 0.472)
+			   :duration (vct-ref durs 3) :scaler (hz->radians 6000)))))
+
+    (do ((call 0 (1+ call)))
+	((= call 4))
+      (let* ((ampf (vector-ref ampfs call))
+	     (frqf (vector-ref frqfs call))
+	     (start (seconds->samples (+ beg (vct-ref begs call))))
+	     (stop (+ start (seconds->samples (vct-ref durs call)))))
+	(run
+	 (lambda ()
+	   (do ((i start (1+ i)))
+	       ((= i stop))
+	     (outa i (* (env ampf)
+			(polyshape gen 1.0 (env frqf)))
+		   *output*))))))))
+
+;(with-sound (:play #t) (western-tanager 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Pileated woodpecker
+
+(definstrument (pileated-woodpecker beg amp)
+  (let* ((gen (make-polyshape 0.0 :partials (normalize-partials (list 1 .06  2 1.0  3 .1  4 .13  5 .07  6 .01  7 .015  8 .01  9 .017  10 .006))))
+	 (start (seconds->samples beg))
+	 (dur 2.28)
+	 (stop (+ start (seconds->samples 2.28)))
+	 (ampf (make-env '(0 .5 4 1 15 1) :duration dur :scaler amp))
+	 (pulse-space .137)
+	 (pulse-dur .06)
+	 (pulse-ampf (make-env '(0.000 0.000  0.20 0.625  0.511 0.985  0.663 1.000  0.802 0.940  0.906 0.731  0.961 0.157  1.000 0.000 )
+			       :duration pulse-dur))
+	 (pulse-frqf (make-env '(0 0  .3 .9  .6 1  .8 1  1 .75) :duration pulse-dur :scaler (hz->radians 300)))
+	 (pulse-off (make-env '(0 1120 .25 1140 .4 1190 .9 1150) :end 17))
+	 (pulser (make-pulse-train (/ 1.0 pulse-space)))
+	 )
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (if (> (pulse-train pulser) .1)
+	     (begin
+	       (mus-reset pulse-ampf)
+	       (mus-reset pulse-frqf)
+	       (set! (mus-frequency gen) (- (env pulse-off) 300.0))))
+	 (outa i (* (env ampf)
+		    (env pulse-ampf)
+		    (polyshape gen 1.0 (env pulse-frqf)))
+		   *output*))))))
+
+;(with-sound (:play #t) (pileated-woodpecker 0 .5))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -2956,6 +3061,8 @@
     (bobwhite 78 .25) 
     (warbling-vireo 80 .25)
     (great-horned-owl 82 .25)
+    (western-tanager 84 .2)
+    (pileated-woodpecker 86 .125)
     ))
 
 

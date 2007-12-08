@@ -8647,6 +8647,23 @@ static xen_value *vct_to_sound_data_1(ptree *prog, xen_value **args, int num_arg
     return(package(prog, R_FLOAT, Name ## _2f, #Name "_2f", args, 3)); \
   }
 
+#define GEN_WAVER(Name) \
+  static void Name ## _0f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name ## _no_input(CLM_ARG_1);} \
+  static void Name ## _1f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name ## _unmodulated(CLM_ARG_1, FLOAT_ARG_2);} \
+  static void Name ## _1fn(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name ## _fm(CLM_ARG_1, FLOAT_ARG_3);} \
+  static void Name ## _2f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);} \
+  GEN_P(Name) \
+  static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
+  { \
+    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, num_args); \
+    if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
+    if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3); \
+    if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, #Name "_0f", args, 1)); \
+    if (num_args == 2) return(package(prog, R_FLOAT, Name ## _1f, #Name "_1f", args, 2)); \
+    if ((args[2]->constant == R_CONSTANT) && (prog->dbls[args[2]->addr] == 1.0)) return(package(prog, R_FLOAT, Name ## _1fn, #Name "_1fn", args, 3)); \
+    return(package(prog, R_FLOAT, Name ## _2f, #Name "_2f", args, 3)); \
+  }
+
 
 static void oscil_0f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_unmodulated(CLM_ARG_1);}
 
@@ -8717,9 +8734,8 @@ GEN3(all_pass)
 
 GEN3(ssb_am)
 GEN3(asymmetric_fm)
-GEN3(waveshape)
-  /* this is ok, but looks wrong -- the index arg precedes the fm arg, so the 2 arg case is index here */
-GEN3(polyshape)
+GEN_WAVER(waveshape)
+GEN_WAVER(polyshape)
 
 GEN2(moving_average)
 GEN2(rand)

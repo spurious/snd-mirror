@@ -2564,7 +2564,21 @@ found (this code has to be in the ~/.snd init file):
 </td></tr><tr><td></td><td colspan=2>
 This hook is called when a sound is about to be played.
 If its function returns #t, Snd does not play.
-See <a href="sndscm.html#reportmarknames">report-mark-names</a> in marks.scm.
+We can use this hook to replace "play" with "play-selection" if the
+selection is active:
+
+<table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
+(add-hook! <em class=red>start-playing-hook</em>
+  (lambda (snd)
+    (if (and (<a class=quiet href="#selectionok">selection?</a>)
+	     (<a class=quiet href="#selectionmember">selection-member?</a> snd))
+	(begin
+	  (<a class=quiet href="#playselection">play-selection</a>)
+	  #t) ; there's a selection so don't play the entire sound
+	#f))) ; no selection, so go ahead and play it all
+</pre></td></tr></table>
+
+See also <a href="sndscm.html#reportmarknames">report-mark-names</a> in marks.scm.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 

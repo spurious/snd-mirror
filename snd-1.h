@@ -431,7 +431,7 @@ typedef struct snd_info {
   snd_context *sgx;
   file_info *hdr;             /* header of file that would be affected if we were to save current edits */
   int bomb_ctr;
-  time_t write_date;          /* check for change behind back while editing */
+  time_t write_date, update_warning_write_date;   /* check for change behind back while editing */
   bool need_update, file_unreadable; /* current in-core data does not match actual file (someone wrote it behind our back) */
   channel_style_t channel_style;
   int allocated_chans, selectpos; 

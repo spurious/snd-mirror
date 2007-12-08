@@ -6120,7 +6120,17 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
 	  snd_warning(_("%s no longer exists!"), sp->short_filename);
 	  return(NULL);
 	}
-      else snd_warning(_("%s has changed since we last read it!"), sp->short_filename);
+      else
+	{
+	  time_t write_date;
+	  write_date = file_write_date(sp->filename);
+	  if (sp->update_warning_write_date != write_date)
+	    {
+	      snd_warning(_("%s has changed since we last read it!"), sp->short_filename);
+	      sp->update_warning_write_date = write_date;
+	      /* without this write-date check, there are cases where this can get into a loop sending warnings */
+	    }
+	}
     }
 
   curlen = cp->edits[edit_position]->samples;
