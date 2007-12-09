@@ -66,6 +66,9 @@
 ;;; Great-horned owl
 ;;; Western tanager
 ;;; Pileated woodpecker
+;;; Whip-poor-will
+;;; Varied thrush
+;;; Nashville warbler
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -2978,8 +2981,7 @@
 			       :duration pulse-dur))
 	 (pulse-frqf (make-env '(0 0  .3 .9  .6 1  .8 1  1 .75) :duration pulse-dur :scaler (hz->radians 300)))
 	 (pulse-off (make-env '(0 1120 .25 1140 .4 1190 .9 1150) :end 17))
-	 (pulser (make-pulse-train (/ 1.0 pulse-space)))
-	 )
+	 (pulser (make-pulse-train (/ 1.0 pulse-space))))
     (run
      (lambda ()
        (do ((i start (1+ i)))
@@ -2995,6 +2997,170 @@
 		   *output*))))))
 
 ;(with-sound (:play #t) (pileated-woodpecker 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Whip-poor-will
+
+(definstrument (whip-poor-will beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.75)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000  0.043 0.172  0.063 0.341 0.093 0.256 0.188 0.159 0.209 0.000 
+			   0.466 0.000 0.527 0.097 0.558 0.081   0.626 0.309 0.650 0.288 
+			   0.657 0.140 0.674 0.142 0.708 0.322 0.750 0.343 0.765 0.121 
+			   0.787 0.201 0.805 0.381 0.826 0.470 
+			   0.861 0.144 0.867 0.451 0.877 0.106 
+			   0.890 0.964 
+			   0.914 0.117 0.919 0.377 0.926 0.233 0.931 0.324 0.949 0.244 0.977 0.377 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (gen1 (make-polyshape 0.0 :partials '(1 .98  2 .01  3 .01)))
+	 (frqf (make-env '(0 1170  .093 1680  .2 1640
+			   .46 1170  .558 1170  .626 1450  .650 1530
+			   .66 1290  .707 1480  .750 1480  .765 1290
+			   .78 1320  .8   1600  
+			   .81 1300 .82 1900  .83 1500 .84 2100 .85 1700 .86 2150 .87 1900 
+			   .89 2460 .914 2160  .93 1680 1.0 1600)
+			 :duration dur :scaler (hz->radians 1.0))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (whip-poor-will 0 .25))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Varied thrush
+
+(definstrument (varied-thrush beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 1.02)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.052 0.100 0.130 0.538 0.261 0.845 0.438 0.983 0.580 0.917 0.738 0.720 0.860 0.475 0.941 0.172 1.000 0.000)
+			 :duration dur :scaler (/ amp 2.25)))
+	 (gen1 (make-rxyk!cos 3360 -200 0.7)) 
+	 (gen2 (make-rxyk!cos 3760 200 0.3))
+	 (gen3 (make-polyshape 3660 :partials '(1 .98 2 .02)))
+	 (frqf (make-env '(0 1 .1 0 .95 0 1.0 -.1) :duration dur :scaler (hz->radians 10.0)))
+	 (rnd (make-rand-interp 100 (hz->radians 3))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((fm (+ (env frqf)
+		      (rand-interp rnd))))
+	   (outa i (* (env ampf)
+		      (+ (rxyk!cos gen1 (- fm) )
+			 (rxyk!cos gen2 fm)
+			 (* .25 (polyshape gen3 1.0 fm))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (varied-thrush 0 .25))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Nashville warbler
+
+(definstrument (nashville-warbler beg amp)
+  
+  (define (nashville-warbler-1 beg dur amp)
+    (let* ((start (seconds->samples beg))
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.111 0.837 0.169 0.995 0.328 1.000 0.430 0.905 0.561 0.333 
+			     0.595 0.000 0.61 0.0 0.62 0.154 0.715 0.675 0.806 0.959 0.969 0.908 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0 7200  .1 5500  .3 4800  .56 4400
+			     .59 4500 .62 7200 .72 7200
+			     .8 6800 .83 6700
+			     .85 6700 .87 6600
+			     .9 6600  .92 6500
+			     .96 6500  1 6520)
+			   :duration dur :scaler (hz->radians 1.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .95  2 .005  3 .03))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+
+  (define (nashville-warbler-2 beg dur amp)
+    (let* ((start (seconds->samples beg))
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.049 0.165 0.082 0.591  0.123 0.561 0.139 0.434 0.219 0.981 0.325 0.984 
+			     0.374 0.100 0.438 0.100 0.484 0.415 0.552 0.818 0.618 0.995 0.753 0.748 0.888 0.439 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0 3450 .1 5000
+			     .14 4800  .37 5600
+			     .44 8600  .55 6600 .61 5300  1 3200)
+			   :duration dur :scaler (hz->radians 1.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .95  2 .005  3 .03))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+
+  (define (nashville-warbler-3 beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur .1)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0 0 1 1 3 1 4 0) :duration dur :scaler amp))
+	   (frqf (make-env '(0 7580 .6 5100  1 5000) :duration dur :scaler (hz->radians 1.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .95  2 .005  3 .03))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+
+  (define (nashville-warbler-4 beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.07)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.129 0.201 0.182 0.382 0.197 1.000 
+			     0.243 0.350 0.342 0.520 0.393 0.759 0.485 0.878 0.647 0.694 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0 3300 .195 4800  
+			     .24 5500 .26 5500 .4 4500 .7 3460 1 3000)
+			   :duration dur :scaler (hz->radians 1.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .96  2 .03  3 .005  4 .004))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+
+  (let* ((amps1 (vct .2 .5 .7 .9 1.0 1.0)))
+
+    (do ((call 0 (1+ call)))
+	((= call 6))
+      (nashville-warbler-1 (+ beg (* .21 call)) (+ .15 (random .02)) (* amp (vct-ref amps1 call))))
+
+    (do ((call 0 (1+ call)))
+	((= call 3))
+      (nashville-warbler-2 (+ beg 1.26 (* .17 call)) (+ .13 (random .02)) amp))
+
+    (nashville-warbler-3 (+ beg 1.8) amp)
+
+    (nashville-warbler-4 (+ beg 1.94) (* 0.4 amp))))
+
+;(with-sound (:play #t) (nashville-warbler 0 .25))
+      
 
 
 ;;; --------------------------------------------------------------------------------
@@ -3037,32 +3203,35 @@
     (tufted-titmouse 44 .3)
     (savannah-sparrow 45 .5)
     (chipping-sparrow 47 .3)
-    (pine-tree-cricket 48 2 .125)
-    (davis-tree-cricket 50 2 .125)
-    (carolina-grasshopper 51.5 1.5 1.0)
-    (pinewoods-tree-frog 53 1 .15)
-    (henslows-sparrow 54 .5)
-    (least-flycatcher 54.5 .5)
-    (acadian-flycatcher 55 .25)
-    (swainsons-thrush 55.5 .25)
-    (squirrel-tree-frog-1 57 1 .1)
-    (carolina-wren 58 .25)
-    (ornate-chorus-frog 59 2 .1)
-    (bachmans-sparrow 60 .25)
-    (grasshopper-sparrow 61 .25)
-    (american-robin 62.5 .25)
-    (common-loon-1 65 .125)
-    (common-loon-2 68 .125)
-    (hermit-thrush 69.5 .25)
-    (chuck-wills-widow 72 .25)
-    (california-towhee 73 .25)
-    (black-chinned-sparrow 74 .25 #t)
-    (mourning-dove 76 .125)
-    (bobwhite 78 .25) 
-    (warbling-vireo 80 .25)
-    (great-horned-owl 82 .25)
-    (western-tanager 84 .2)
-    (pileated-woodpecker 86 .125)
+    (pine-tree-cricket 49 2 .125)
+    (davis-tree-cricket 51 2 .125)
+    (carolina-grasshopper 52.5 1.5 1.0)
+    (pinewoods-tree-frog 54 1 .15)
+    (henslows-sparrow 55.5 .5)
+    (least-flycatcher 56 .5)
+    (acadian-flycatcher 57 .25)
+    (swainsons-thrush 57.5 .25)
+    (squirrel-tree-frog-1 59 1 .1)
+    (carolina-wren 60 .25)
+    (ornate-chorus-frog 61 2 .1)
+    (bachmans-sparrow 62 .25)
+    (grasshopper-sparrow 63 .25)
+    (american-robin 64.5 .25)
+    (common-loon-1 67 .125)
+    (common-loon-2 70 .125)
+    (hermit-thrush 71.5 .25)
+    (chuck-wills-widow 73.5 .25)
+    (california-towhee 74.5 .25)
+    (black-chinned-sparrow 75.5 .25 #t)
+    (mourning-dove 77 .125)
+    (bobwhite 79.5 .25) 
+    (warbling-vireo 82 .25)
+    (great-horned-owl 83.5 .25)
+    (western-tanager 86 .2) 
+    (pileated-woodpecker 89 .125)
+    (whip-poor-will 91.5 .25)
+    (varied-thrush 93 .125)
+    (nashville-warbler 94.5 .25)
     ))
 
 
