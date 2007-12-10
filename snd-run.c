@@ -84,6 +84,8 @@
  */
 
 
+/* TODO: there should be a type check for (rand-interp rnd) or whatever */
+
 
 /* complex number support for run -- can't see any good reason for this but...
  *            3+4i real-part imag-part make-rectangular make-polar angle magnitude complex? real? declare case

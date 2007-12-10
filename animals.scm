@@ -51,24 +51,27 @@
 ;;; Black-chinned sparrow
 ;;; Eastern wood-pewee (2)
 ;;; Tufted titmouse
+;;; California towhee
+;;; Carolina wren
+;;; Warbling vireo
+;;; Plumbeous vireo
+;;; Nashville warbler
 ;;; Least flycatcher
 ;;; Acadian flycatcher
 ;;; Swainson's thrush
-;;; Carolina wren
 ;;; American robin
-;;; Common loon (2)
+;;; Varied thrush
 ;;; Hermit thrush
+;;; Western tanager
 ;;; Chuck-will's-widow
-;;; California towhee
+;;; Whip-poor-will
 ;;; Mourning dove
 ;;; Bobwhite
-;;; Warbling vireo
+;;; Ruffed grouse
 ;;; Great-horned owl
-;;; Western tanager
 ;;; Pileated woodpecker
-;;; Whip-poor-will
-;;; Varied thrush
-;;; Nashville warbler
+;;; Common loon (2)
+;;; Least bittern
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -3162,6 +3165,140 @@
 ;(with-sound (:play #t) (nashville-warbler 0 .25))
       
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Ruffed grouse
+
+(definstrument (ruffed-grouse beg amp)
+  (let* ((dur 10.33)
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.006 0.097 0.045 0.135 0.091 0.244 0.141 0.223 
+			   0.219 0.552 0.301 0.682 0.360 0.689 0.503 0.766 0.696 0.619 0.751 0.622 0.806 0.705 0.820 0.552 0.829 0.787 0.849  0.687 0.867  
+			   1.000 0.910 0.494 0.929 0.559 0.944 0.527 0.969 0.339 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env (list 0 (/ 1.0 .45) .18 (/ 1.0 .45)
+			       .19 (/ 1.0 .8)
+			       .22  (/ 1.0 .8)
+			       .25 (/ 1.0 .6)
+			       .5 (/ 1.0 .4)
+			       .74 (/ 1.0 .15)
+			       .9 (/ 1.0 .08)
+			       1   (/ 1.0 .4))
+			 :duration dur :scaler (hz->radians 1.0)))
+	 (pulser (make-pulse-train 0.0))
+
+	 (bump-dur 0.27)
+	 (bump-samps (seconds->samples bump-dur))
+	 (bump (make-env '(0.000 0.499 0.040 0.499 0.063 0.506 0.089 0.492 0.108 0.499 0.122 0.523 
+			   0.134 0.506 0.143 0.462 0.153 0.425 0.164 0.457 0.171 0.508 0.173 0.580 
+			   0.176 0.647 0.181 0.691 0.186 0.650 0.195 0.404 0.197 0.355 0.202 0.311 
+			   0.208 0.362 0.222 0.657 0.229 0.696 0.235 0.661 0.258 0.350 0.263 0.311 
+			   0.271 0.297 0.283 0.343 0.311 0.661 0.316 0.703 0.322 0.733 0.333 0.698 
+			   0.340 0.643 0.375 0.343 0.379 0.304 0.389 0.278 0.404 0.353 0.443 0.624 
+			   0.458 0.661 0.473 0.631 0.494 0.508 0.517 0.434 0.537 0.394 0.557 0.436 
+			   0.589 0.520 0.618 0.564 0.644 0.538 0.679 0.490 0.703 0.473 0.736 0.483 
+			   0.794 0.510 0.831 0.510 0.909 0.494 1.000 0.499)
+			 :duration bump-dur :offset -0.5)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((>= i stop))
+	 (let ((vol (env ampf)))
+	   (if (> (pulse-train pulser (env frqf)) .1)
+	       (let ((bump-amp (/ (* amp vol) .15))
+		     (bump-stop (+ i bump-samps)))
+		 (mus-reset bump)
+		 (do ((k i (1+ k)))
+		     ((= k bump-stop))
+		   (outa k (* bump-amp (env bump)) *output*))))))))))
+	      
+;(with-sound (:play #t :statistics #t) (ruffed-grouse 0 0.5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Plumbeous vireo
+
+(definstrument (plumbeous-vireo beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.34)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 .02 .1  0.124 0.146 0.142 0.370 0.251 1.000 0.277 0.373  .29 .1  0.393 0.326 0.419 0.731 
+			   0.568 0.407 0.713 0.286 0.885 0.351 0.947 0.311 0.967 0.123 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .98 3 .01  5 .004)))
+	 (ampf1a (make-env '(0 .2  .15 .25 .2 .01 .24 .02 .25 .1 .32 .1 .34 .005 .37 .001 .4 .05 .6 .03  1 0) :duration dur))
+	 (gen1a (make-oscil 0.0))
+	 (frqf (make-env '(0.000 0.181 0.054 0.175 0.072 0.187 0.087 0.156 0.097 0.177 0.118 0.154 0.151 0.259 0.201 
+			   0.320 0.243 0.293 0.256 0.261 0.275 0.202 0.295 0.162 0.316 0.204 0.328 0.314 0.339 0.446 
+			   0.359 0.489 0.382 0.454 0.394 0.352 0.425 0.286 0.449 0.277 0.467 0.246 0.494 0.238 0.507 
+			   0.211 0.525 0.234 0.551 0.166 0.570 0.215 0.586 0.207 0.595 0.161 0.617 0.211 0.633 0.203 
+			   0.642 0.159 0.657 0.207 0.692 0.168 0.711 0.231 0.728 0.227 0.742 0.188 0.750 0.257 0.795 
+			   0.218 0.802 0.283 0.845 0.234 0.856 0.296 0.897 0.229 0.909 0.292 0.958 0.227 0.969 0.261 1.000 0.252)
+			 :duration dur :scaler (hz->radians 10000.0)))
+	 (gen2 (make-polyshape 0.0 :partials (list 1 .05 2 .1  3 .2  4 .3  5 .2  6 .1  7 .05)))
+	 (ampf2 (make-env '(0 1  .15 0  1 0) :duration dur :scaler (* .5 amp)))
+	 (frqf2 (make-env '(0 850 1 700) :duration dur :scaler (hz->radians 1.0)))
+	 (rnd (make-rand-interp 1000 (hz->radians 50)))
+	 (buzz (make-rand-interp 1000 (hz->radians 40))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (+ (env frqf)
+		       (rand-interp rnd))))
+	   (outa i (* (env ampf)
+		      (+ (polyshape gen1 1.0 frq)
+			 (* (env ampf1a)
+			    (oscil gen1a (* 2 frq)))
+			 (* (env ampf2) 
+			    (polyshape gen2 1.0 (+ (env frqf2)
+						   (rand-interp buzz))))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (plumbeous-vireo 0 .25))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Least bittern
+
+(definstrument (least-bittern beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 1.25)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.100 0.123 0.388 0.454 0.884 0.649 0.995 0.754 0.776 1.000 0.100) :duration dur :scaler amp))
+	 (frqf (make-env '(0 .6  1 .75  2 1  3 .40) :duration dur :scaler (hz->radians 90)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .25  2 .6  3 .2  4 .01 5 .01)))
+	 (rnd (make-rand-interp 200 (hz->radians 40)))
+
+	 (pulser (make-pulse-train (/ 1.0 .13)))
+	 (pulse-dur .09)
+	 (pulse-samps (seconds->samples pulse-dur))
+	 (pulse-ampf (make-env '(0.000 0.000 0.119 0.698 0.258 1.000 0.355 0.310 0.564 0.1  0.7 0.070  1.3 0) :duration pulse-dur))
+	 (pulse-frqf (make-env '(0 150 .3 300 1 250 2 200 3 200 3.5 150 4 230) :duration pulse-dur :scaler (hz->radians 1.0)))
+	 (pulse-rnd (make-rand-interp 4000 .2)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((vol (env ampf))
+	       (pit (env frqf)))
+	   (if (> (pulse-train pulser) .1)
+	       (begin
+		 (mus-reset pulse-ampf)
+		 (mus-reset pulse-frqf)))
+	   (outa i (* (env pulse-ampf)
+		      vol
+		      (+ (polyshape gen1 1.0 (+ pit
+						(env pulse-frqf)
+						(rand-interp rnd)))
+			 (rand-interp pulse-rnd)))
+		 *output*)))))))
+
+;(with-sound (:play #t) (least-bittern 0 .5))
+
 
 ;;; --------------------------------------------------------------------------------
 
@@ -3174,11 +3311,11 @@
     (oak-toad 4 .3)
     (eastern-wood-pewee-1 5 .25)
     (eastern-wood-pewee-2 6 .25)
-    (broad-winged-tree-cricket 6 4.0 0.2)
+    (broad-winged-tree-cricket 6 3.0 0.2)
     (southern-cricket-frog 8 0.5)
     (long-spurred-meadow-katydid 9 .5)
     (northern-leopard-frog 10 .5)
-    (southern-mole-cricket 11 6 .15)
+    (southern-mole-cricket 11 4 .15)
     (green-tree-frog 13 .5)
     (spring-peeper 14 .5)
     (crawfish-frog 15 .5)
@@ -3190,10 +3327,10 @@
     (dog-day-cicada 23 2 .1)
     (linnaeus-cicada 25 2 .125)
     (lyric-cicada 26 2 .125)
-    (confused-ground-cricket 27 3 .3)
-    (tinkling-ground-cricket 29.5 3 .3)
+    (confused-ground-cricket 27 2 .3)
+    (tinkling-ground-cricket 29.5 2 .3)
     (marsh-meadow-grasshopper 31.5 .3)
-    (striped-ground-cricket 32.5 3 .25)
+    (striped-ground-cricket 32.5 2 .25)
     (sphagnum-ground-cricket 34.5 2 .3)
     (fox-sparrow 35.5 3 .25)
     (southeastern-field-cricket 37.5 2 .13)
@@ -3224,7 +3361,7 @@
     (california-towhee 74.5 .25)
     (black-chinned-sparrow 75.5 .25 #t)
     (mourning-dove 77 .125)
-    (bobwhite 79.5 .25) 
+    (bobwhite 79.75 .25) 
     (warbling-vireo 82 .25)
     (great-horned-owl 83.5 .25)
     (western-tanager 86 .2) 
@@ -3232,6 +3369,9 @@
     (whip-poor-will 91.5 .25)
     (varied-thrush 93 .125)
     (nashville-warbler 94.5 .25)
+    (ruffed-grouse 96 0.5)
+    (plumbeous-vireo 97 .25)
+    (least-bittern 100 .5)
     ))
 
 

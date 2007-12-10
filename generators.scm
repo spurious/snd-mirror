@@ -3555,10 +3555,6 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; blackman as a waveform -- all the other fft windows could be implemented
 ;;;   perhaps most useful as an amplitude envelope
 
-
-;;; TODO: check for left-over make-blackman4 calls (html)
-
-
 (def-clm-struct (blackman
 		 :make-wrapper (lambda (g)
 				 (let ((n (blackman-n g)))
