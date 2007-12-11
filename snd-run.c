@@ -83,7 +83,6 @@
  * (add-hook! optimization-hook (lambda (n) (snd-display "opt: ~A~%" n)))
  */
 
-
 /* TODO: vector of def-clm-structs? -- list-vector?
 
 (with-sound ()
@@ -97,12 +96,19 @@
 
 */
 
-/* complex number support for run -- can't see any good reason for this but...
- *    3+4i real-part imag-part make-rectangular make-polar angle magnitude complex? real? declare case
- *    complex.h: ccos csin ctan cacos casin catan ccosh csinh ctanh cacosh casinh catanh cexp clog cabs cpow csqrt
- *        carg[angle] creal cimag, complex double _Complex_I
- *    all arithmetic needs extra complex checks etc
- *    also each function needs a check in configure (see fth)
+
+/* it would be nice to have a compile time check for generator mismatches, but
+ *    there are instruments that choose the type at run-time, passing the same
+ *    pointer to the various choices (fm-violin).  Perhaps the *_check functions could use
+ *    the __builtin_expect stuff?  Currently run-safety=1 adds about 25% to the
+ *    compute time -- (calling-all-animals): 4.1 to 5.2.
+ *
+ * complex number support for run -- can't see any good reason for this but...
+ *            3+4i real-part imag-part make-rectangular make-polar angle magnitude complex? real? declare case
+ *            complex.h: ccos csin ctan cacos casin catan ccosh csinh ctanh cacosh casinh catanh cexp clog cabs cpow csqrt
+ *                       carg[angle] creal cimag, complex double _Complex_I
+ *            all arithmetic needs extra complex checks etc
+ *            also each function needs a check in configure (see fth)
  *
  * would it simplify variable handling to store everything as xen_value?
  */
@@ -127,6 +133,7 @@
 #define MUS_LIKELY(_expr)  MUS_EXPECT((_expr), 1)
 #define MUS_UNLIKELY(_expr) MUS_EXPECT((_expr), 0)
 #endif
+
 
 static XEN optimization_hook;
 
@@ -8664,9 +8671,6 @@ static xen_value *vct_to_sound_data_1(ptree *prog, xen_value **args, int num_arg
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if ((prog->clms) && (prog->clms[args[1]->addr]) &&	  \
-        (!mus_ ## Name ## _p(prog->clms[args[1]->addr]))) \
-      snd_warning(#Name " arg is a %s\n", mus_name(prog->clms[args[1]->addr])); \
     if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, num_args); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
     if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3); \
@@ -8683,9 +8687,6 @@ static xen_value *vct_to_sound_data_1(ptree *prog, xen_value **args, int num_arg
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if ((prog->clms) && (prog->clms[args[1]->addr]) &&	  \
-        (!mus_ ## Name ## _p(prog->clms[args[1]->addr]))) \
-      snd_warning(#Name " arg is a %s\n", mus_name(prog->clms[args[1]->addr])); \
     if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, num_args); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
     if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3); \
@@ -8708,11 +8709,7 @@ GEN_P(oscil)
 
 static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
 {
-  if ((prog->clms) && (prog->clms[args[1]->addr]) && 
-      (!mus_oscil_p(prog->clms[args[1]->addr])))
-    snd_warning("oscil arg is a %s\n", mus_name(prog->clms[args[1]->addr]));
   if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, oscil_check, "oscil_check", args, num_args);
-
   if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2);
   if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3);
   if ((num_args == 1) || ((num_args == 2) && (args[2]->constant == R_CONSTANT) && (prog->dbls[args[2]->addr] == 0.0)))
@@ -8730,9 +8727,6 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if ((prog->clms) && (prog->clms[args[1]->addr]) &&	  \
-        (!mus_ ## Name ## _p(prog->clms[args[1]->addr]))) \
-      snd_warning(#Name " arg is a %s\n", mus_name(prog->clms[args[1]->addr])); \
     if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, 1); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
     if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, #Name "_0f", args, 1)); \
@@ -8745,9 +8739,6 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if ((prog->clms) && (prog->clms[args[1]->addr]) &&	  \
-        (!mus_ ## Name ## _p(prog->clms[args[1]->addr]))) \
-      snd_warning(#Name " arg is a %s\n", mus_name(prog->clms[args[1]->addr])); \
     if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, 1); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
     if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, #Name "_0f", args, 1)); \
@@ -8759,9 +8750,6 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if ((prog->clms) && (prog->clms[args[1]->addr]) &&	  \
-        (!mus_ ## Name ## _p(prog->clms[args[1]->addr]))) \
-      snd_warning(#Name " arg is a %s\n", mus_name(prog->clms[args[1]->addr])); \
     if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, 1); \
     return(package(prog, R_FLOAT, Name ## _0f, #Name "_0f", args, 1)); \
   }
