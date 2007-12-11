@@ -84,6 +84,19 @@
  */
 
 
+/* TODO: vector of def-clm-structs? -- list-vector?
+
+(with-sound ()
+  (let ((v (make-vector 2 #f)))
+    (vector-set! v 0 (make-nrcos 440 10 .5))    
+    (vector-set! v 1 (make-nrcos 440 10 .5))    
+    (run
+     (lambda ()
+       (let ((gen (vector-ref v 1)))
+       (outa 0 (nrcos gen 0.0) *output*)))))) ;either segfault or complains about null list
+
+*/
+
 /* complex number support for run -- can't see any good reason for this but...
  *    3+4i real-part imag-part make-rectangular make-polar angle magnitude complex? real? declare case
  *    complex.h: ccos csin ctan cacos casin catan ccosh csinh ctanh cacosh casinh catanh cexp clog cabs cpow csqrt
@@ -8651,7 +8664,7 @@ static xen_value *vct_to_sound_data_1(ptree *prog, xen_value **args, int num_arg
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if ((prog->clms[args[1]->addr]) && \
+    if ((prog->clms) && (prog->clms[args[1]->addr]) &&	  \
         (!mus_ ## Name ## _p(prog->clms[args[1]->addr]))) \
       snd_warning(#Name " arg is a %s\n", mus_name(prog->clms[args[1]->addr])); \
     if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, num_args); \
@@ -8670,7 +8683,7 @@ static xen_value *vct_to_sound_data_1(ptree *prog, xen_value **args, int num_arg
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if ((prog->clms[args[1]->addr]) && \
+    if ((prog->clms) && (prog->clms[args[1]->addr]) &&	  \
         (!mus_ ## Name ## _p(prog->clms[args[1]->addr]))) \
       snd_warning(#Name " arg is a %s\n", mus_name(prog->clms[args[1]->addr])); \
     if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, num_args); \
@@ -8695,7 +8708,7 @@ GEN_P(oscil)
 
 static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
 {
-  if ((prog->clms[args[1]->addr]) && 
+  if ((prog->clms) && (prog->clms[args[1]->addr]) && 
       (!mus_oscil_p(prog->clms[args[1]->addr])))
     snd_warning("oscil arg is a %s\n", mus_name(prog->clms[args[1]->addr]));
   if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, oscil_check, "oscil_check", args, num_args);
@@ -8717,7 +8730,7 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if ((prog->clms[args[1]->addr]) && \
+    if ((prog->clms) && (prog->clms[args[1]->addr]) &&	  \
         (!mus_ ## Name ## _p(prog->clms[args[1]->addr]))) \
       snd_warning(#Name " arg is a %s\n", mus_name(prog->clms[args[1]->addr])); \
     if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, 1); \
@@ -8732,7 +8745,7 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if ((prog->clms[args[1]->addr]) && \
+    if ((prog->clms) && (prog->clms[args[1]->addr]) &&	  \
         (!mus_ ## Name ## _p(prog->clms[args[1]->addr]))) \
       snd_warning(#Name " arg is a %s\n", mus_name(prog->clms[args[1]->addr])); \
     if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, 1); \
@@ -8746,7 +8759,7 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if ((prog->clms[args[1]->addr]) && \
+    if ((prog->clms) && (prog->clms[args[1]->addr]) &&	  \
         (!mus_ ## Name ## _p(prog->clms[args[1]->addr]))) \
       snd_warning(#Name " arg is a %s\n", mus_name(prog->clms[args[1]->addr])); \
     if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, 1); \

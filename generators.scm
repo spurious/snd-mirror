@@ -2,6 +2,8 @@
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
 
+;;; TODO: make and runtime function help strings
+
 ;;; these try to mimic existing gens (mainly oscil), so "frequency" is placed first.
 ;;;   Where a factor is involved, I'll try to use "r".
 ;;;   Where the limit of the sum is settable, I'll use "n".

@@ -74,6 +74,7 @@
 ;;; Common loon (2)
 ;;; Least bittern
 ;;; American crow
+;;; Loggerhead shrike (2)
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -3394,6 +3395,118 @@
 
 
 ;;; --------------------------------------------------------------------------------
+;;;
+;;; Loggerhead shrike
+
+(definstrument (loggerhead-shrike-1 beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.65)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 .01 1 .99 1 1 0) :duration dur :scaler amp))
+	 (gen1 (make-oscil 0.0))
+	 (frqf (make-env '(0 0 1 1) :duration dur :scaler (hz->radians 100.0)))
+
+	 (open-dur .036)
+	 (open-samps (seconds->samples open-dur))
+	 (open-stop (+ start open-samps))
+	 (open-ampf (make-env '(0.000 0.000 0.158 0.063 0.280 0.162 0.386 0.775 0.418 0.644 
+				0.465 0.000 0.573 0.000 0.592 0.921 .62 .1 0.633 0.866 
+				0.726 0.000 0.788 0.000 0.829 0.399 0.889 0.154 1.000 0.000)
+			      :duration open-dur :scaler .75))
+	 (open-frqf (make-env '(0 4200 .35 3900 .46 3800
+				.57 3600 .6 3900 .61 5100 .72 5100
+				.8 3400 .83 4200 1 4200)
+			      :duration open-dur :scaler (hz->radians 1.0)))
+
+	 (pulse-dur .008)
+	 (pulser (make-pulse-train (/ 1.0 pulse-dur)))
+	 (pulse-ampf (make-env '(0 0 .05 1  .3 1  .8 .1  1 0) :duration pulse-dur))
+	 (pulse-frqf (make-env '(0 3600 .2 4800 .5 5000 .85 4000 1 3700) :duration pulse-dur :scaler (hz->radians 1.0)))
+	 (trem (make-oscil 160))
+	 (rnd (make-rand-interp 500 .04))
+	 (rnd1 (make-rand-interp 100 .01)))
+   (run
+     (lambda ()
+       ;; special starting call, then the buzz
+       (do ((i start (1+ i)))
+	   ((= i open-stop))
+	 (outa i (* (env open-ampf)
+		    (env ampf)
+		    (oscil gen1 (+ (env frqf) 
+				   (env open-frqf))))
+	       *output*))
+
+       (do ((i open-stop (1+ i)))
+	   ((= i stop))
+	 (if (> (pulse-train pulser) .1)
+	     (begin
+	       (mus-reset pulse-ampf)
+	       (mus-reset pulse-frqf)))
+	 (outa i (* (env ampf)
+		    (env pulse-ampf)
+		    (+ .5 (* .5 (abs (oscil trem (rand-interp rnd1)))))
+		    (oscil gen1 (+ (env frqf)
+				   (env pulse-frqf)
+				   (rand-interp rnd))))
+	       *output*))))))
+
+;(with-sound (:play #t) (loggerhead-shrike-1 0 .5))
+
+
+(definstrument (loggerhead-shrike-2 beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.4)
+	 (stop (+ start (seconds->samples dur)))
+	 (frqs (vct .9 .95 .95 1.0 1.0 1.0))
+
+	 (pulse-dur .08)
+	 (pulse-samps (seconds->samples pulse-dur))
+	 (pulse-ampf (make-env '(0.000 0.000 0.114 0.077 0.153 0.943 0.191 0.960 0.291 0.510 0.320 0.114 
+				 0.342 0.647 0.373 0.191 0.400 0.490 0.419 0.066 0.456 0.291 0.728 0.288 
+				 0.769 0.479 0.792 0.407 0.812 0.003 1.000 0.000)
+			       :duration pulse-dur :scaler amp))
+	 (frqf1 (make-env '(0.000 0.229  0.310 0.231  0.325 0.271  0.345 0.273  0.377 0.237  0.397 0.240  
+			    0.615 0.235  0.7 0.235 1.000 0.235)
+			  :duration pulse-dur :scaler (hz->radians 10500.0)))
+	 (frqf2 (make-env '(0.000 0.13 .6 .13   0.7 0.15 .9 .15 1.000 0.1)
+			  :duration pulse-dur :scaler (hz->radians 10500.0)))
+	 (next-pulse (+ start pulse-samps))
+
+	 (ampf1 (make-env '(0 1 .8 1 1 0) :duration pulse-dur))
+	 (ampf2 (make-env '(0 0 .6 0 .7 1 1 1) :duration pulse-dur))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .95 2 .04 3 .005)))
+	 (gen2 (make-polyshape 0.0 :partials (list 1 .5 2 .5 4 .01)))
+	 (pulse-frq (vct-ref frqs 0))
+	 (pulse-ctr 1)
+	 (rnd (make-rand-interp 500 .02)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (if (>= i next-pulse)
+	     (begin
+	       (set! next-pulse (+ next-pulse pulse-samps))
+	       (set! pulse-frq (vct-ref frqs pulse-ctr))
+	       (set! pulse-ctr (+ pulse-ctr 1))
+	       (mus-reset pulse-ampf)
+	       (mus-reset ampf1)
+	       (mus-reset ampf2)
+	       (mus-reset frqf1)
+	       (mus-reset frqf2)))
+
+	 (let ((noise (rand-interp rnd)))
+	   (outa i (* (env pulse-ampf)
+		      (+ (* (env ampf1)
+			    (polyshape gen1 1.0 (* pulse-frq (+ noise (env frqf1)))))
+			 (* (env ampf2)
+			    (polyshape gen2 1.0 (* pulse-frq (+ noise (env frqf2)))))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (loggerhead-shrike-2 0 .5))
+
+
+
+;;; --------------------------------------------------------------------------------
 
 (define (calling-all-animals)
   (with-sound (:play #t :scaled-to .5 :srate 44100) ;(srate needed by snd-test)
@@ -3467,6 +3580,8 @@
     (american-crow 99 .5)
     (least-bittern 100 .5)
     (orange-crowned-warbler 102 .25)
+    (loggerhead-shrike-1 103.5 .1)
+    (loggerhead-shrike-2 105 .1)
     ))
 
 
