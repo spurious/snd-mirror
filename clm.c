@@ -2,7 +2,7 @@
 
 
 /* should I add pm args alongside the fm args, as in oscil?
- * perhaps use __builtin_expect 
+ * perhaps use __builtin_expect -- in DIVISOR_NEAR_ZERO for example
  */
 
 #include <mus-config.h>

@@ -56,6 +56,7 @@
 ;;; Warbling vireo
 ;;; Plumbeous vireo
 ;;; Nashville warbler
+;;; Orange-crowned warbler
 ;;; Least flycatcher
 ;;; Acadian flycatcher
 ;;; Swainson's thrush
@@ -72,6 +73,7 @@
 ;;; Pileated woodpecker
 ;;; Common loon (2)
 ;;; Least bittern
+;;; American crow
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -3301,6 +3303,97 @@
 
 
 ;;; --------------------------------------------------------------------------------
+;;;
+;;; American crow
+
+(definstrument (american-crow beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.27)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 .02 .1  .04 .01 .06 0.056 0.110 0.700 0.258 1.000  0.344 0.970  0.369 0.677 .7 .3  1.000 0.000)
+			 :duration dur :scaler (* 2 amp)))
+	 (frqf (make-env '(0.000 0.360 0.038 0.362 0.052 0.396 0.076 0.403 0.095 0.445 0.129 0.445 0.153 0.493 
+			   0.201 0.495 0.231 0.501 0.260 0.490 0.297 0.503 0.317 0.499 0.346 0.473 0.407 0.473 
+			   0.435 0.424 0.495 0.439 0.528 0.392 0.589 0.405 0.621 0.362 0.677 0.373 0.704 0.332 
+			   0.767 0.325 0.791 0.281 0.832 0.278 0.859 0.251 0.890 0.225 0.912 0.255 0.950 0.263 1.000 0.26)
+			 :duration dur :scaler (hz->radians 1250.0)))
+	 (frm1 (make-formant .995 1400 20))
+	 (frm2 (make-formant .98 5500 1))
+	 (frm3 (make-formant .98 3800 2))
+	 (gen (make-nrcos 0.0 15 .75))
+	 (rnd (make-rand-interp 5000 .007)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((inp (* (env ampf)
+		       (nrcos gen (+ (env frqf)
+				     (rand-interp rnd))))))
+	   (outa i (+ (formant frm1 inp)
+		      (formant frm2 inp)
+		      (formant frm3 inp))
+		 *output*)))))))
+
+;(with-sound (:play #t) (american-crow 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Orange-crowned warbler
+
+(definstrument (orange-crowned-warbler beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 1.5)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.05  0.347 1.000 0.838 0.831 1.000 0.000) :duration dur :scaler amp))
+	 (gen1 (make-oscil 0.0))
+	 (frqf (make-env '(0 0 7 1 10 0) :duration dur :scaler (hz->radians 600.0)))
+
+	 (pulse-dur 0.045)
+	 (pulse-samps (seconds->samples pulse-dur))
+	 (pulse-ampf1 (make-env '(0.000 0.000 0.038 0.152 0.062 0.115 0.148 0.468 0.211 0.530 0.228 0.290 
+				 0.266 0.642 0.313 0.873 0.362 0.623 0.401 0.918 0.443 0.054 0.475 0.983 
+				 0.490 0.901 0.501 0.290 0.525 0.668 0.576 0.189 0.605 0.155 0.621 0.313 
+				 0.656 0.082 0.679 0.259 0.703 0.118 0.730 0.177 0.752 0.062 0.775 0.155 
+				 0.798 0.048 0.812 0.099 0.831 0.059 0.885 0.096 0.922 0.048 0.947 0.087 1.000 0.000)
+			       :duration pulse-dur))
+	 (pulse-frqf1 (make-env '(0 3700 .2 4500  .3 4500 .45  4000 .8 4000 1 4300) :duration pulse-dur :scaler (hz->radians 1.0)))
+	 (pulser (make-pulse-train (/ 1.0 pulse-dur)))
+
+	 (call1-stop (+ start (seconds->samples 1.35)))
+	 (call2-start (+ start (seconds->samples 1.36)))
+	 (call2-dur 0.13)
+	 (pulse-ampf2 (make-env '(0.000 0.000 0.074 0.994 0.135 0.375 0.184 0.637 0.238 0.721 0.290 0.411 0.381 0.003 
+				  0.537 0.000 0.591 0.186 0.704 0.121 0.737 0.437 0.843 0.358 0.880 0.045 0.908 0.225 1.000 0.000)
+				:duration call2-dur :scaler (* 0.5 amp)))
+	 (pulse-frqf2 (make-env '(0 4800 .1 3950  .15 3820  .22 3950 .4 4800 .6 4600 .7 3480 .75 3940 .86 5200 1 5150)
+				:duration call2-dur :scaler (hz->radians 1.0))))
+   (run
+     (lambda ()
+       ;; 30 repetitions, then 2 special end tones
+       (do ((i start (1+ i)))
+	   ((= i call1-stop))
+	 (let ((vol (env ampf))
+	       (frq (env frqf)))
+	   (if (> (pulse-train pulser) .1)
+	       (begin
+		 (mus-reset pulse-ampf1)
+		 (mus-reset pulse-frqf1)))
+	   (outa i (* vol
+		      (env pulse-ampf1)
+		      (oscil gen1 (+ frq (env pulse-frqf1))))
+		 *output*)))
+
+       (do ((i call2-start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env pulse-ampf2)
+		    (oscil gen1 (env pulse-frqf2)))
+	       *output*))))))
+
+;(with-sound (:play #t) (orange-crowned-warbler 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
 
 (define (calling-all-animals)
   (with-sound (:play #t :scaled-to .5 :srate 44100) ;(srate needed by snd-test)
@@ -3371,7 +3464,9 @@
     (nashville-warbler 94.5 .25)
     (ruffed-grouse 96 0.5)
     (plumbeous-vireo 97 .25)
+    (american-crow 99 .5)
     (least-bittern 100 .5)
+    (orange-crowned-warbler 102 .25)
     ))
 
 
