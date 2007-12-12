@@ -59,6 +59,7 @@
 ;;; Orange-crowned warbler
 ;;; Least flycatcher
 ;;; Acadian flycatcher
+;;; Vermillion flycatcher
 ;;; Swainson's thrush
 ;;; American robin
 ;;; Varied thrush
@@ -68,6 +69,7 @@
 ;;; Whip-poor-will
 ;;; Mourning dove
 ;;; Bobwhite
+;;; California Quail
 ;;; Ruffed grouse
 ;;; Great-horned owl
 ;;; Pileated woodpecker
@@ -2700,8 +2702,7 @@
 			   v))
 	 (buzz-frqf (make-table-lookup buzz-frq0 :wave buzz-frq-table))
 	 (buzz-ampf (make-table-lookup buzz-frq0 :wave buzz-amp-table))
-	 (buzz-gen (make-polyshape 0.0 :partials (list 1 .98 2 .005 3 .01)))
-	 )
+	 (buzz-gen (make-polyshape 0.0 :partials (list 1 .98 2 .005 3 .01))))
 
     (run
      (lambda ()
@@ -3505,11 +3506,99 @@
 ;(with-sound (:play #t) (loggerhead-shrike-2 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; California Quail
+
+(definstrument (california-quail beg amp)
+  (let* ((durs (vct .075 .23 .16))
+	 (begs (vct 0.0 .21 .58))
+	 (ampfs (make-vector 3 #f))
+	 (frqfs (make-vector 3 #f))
+	 (gens (make-vector 3 #f))
+	 (starts (make-vector 3 0))
+	 (stops (make-vector 3 0))
+	 (frm1 (make-formant .995 1000 5))
+	 (frm2 (make-formant .99 1700 15))
+	 (frm3 (make-formant .98 5600 5)))
+
+    (do ((i 0 (1+ i)))
+	((= i 3))
+      (vector-set! starts i (seconds->samples (+ beg (vct-ref begs i))))
+      (vector-set! stops i (+ (vector-ref starts i) (seconds->samples (vct-ref durs i)))))
+    
+    (vector-set! gens 0 (make-sine-summation 530 0.0 8 .5))
+    (vector-set! gens 1 (make-sine-summation 450 0.0 15 .6))
+    (vector-set! gens 2 (make-sine-summation 400 0.0 8 .5))
+
+    (vector-set! ampfs 0 (make-env '(0 0 1.25 1 1.75 1 3 0) :base 10 :duration (vct-ref durs 0) :scaler (* amp 0.25)))
+    (vector-set! ampfs 1 (make-env '(0.000 0.000 0.208 0.719 0.292 0.965 0.809 0.869 0.928 0.682 1.000 0.000) :base 10 :duration (vct-ref durs 1) :scaler (* 0.5 amp)))
+    (vector-set! ampfs 2 (make-env '(0 0 1 1 3 1 6 0) :base 10 :duration (vct-ref durs 2) :scaler (* amp .375)))
+
+    (vector-set! frqfs 0 (make-env '(0 0 1.3 1 2 0) :duration (vct-ref durs 0) :scaler (hz->radians 300)))
+    (vector-set! frqfs 1 (make-env '(0 0  1.5 .8 2.5 1 4 .95 5 .25) :base .03 :duration (vct-ref durs 1) :scaler (hz->radians 520)))
+    (vector-set! frqfs 2 (make-env '(0 0 .2 .7  .3 1  1 .5) :duration (vct-ref durs 2) :scaler (hz->radians 450.0)))
+
+   (run
+     (lambda ()
+       (do ((k 0 (1+ k)))
+	   ((= k 3))
+	 (let ((start (vector-ref starts k))
+	       (stop (vector-ref stops k))
+	       (ampf (vector-ref ampfs k))
+	       (frqf (vector-ref frqfs k))
+	       (gen (vector-ref gens k)))
+	   (do ((i start (1+ i)))
+	       ((= i stop))
+	     (let ((val (* (env ampf)
+			   (sine-summation gen (env frqf)))))
+	       (outa i (+ (formant frm1 val)
+			  (formant frm2 val)
+			  (formant frm3 val))
+		     *output*)))))))))
+
+;(with-sound (:play #t) (california-quail 0 .25))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Vermillion flycatcher
+
+(definstrument (vermillion-flycatcher beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.72)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.023 0.527 
+			   0.045 0.000 0.264 0.000 0.282 0.868 0.295 0.231 
+			   0.312 0.000 0.462 0.000 0.481 0.918 0.503 0.206 
+			   0.520 0.000 0.598 0.000 0.614 0.848 0.633 0.729 0.648 0.164 
+			   0.660 0.000 0.685 0.000 0.696 0.654 0.709 0.746 0.719 0.532 
+			   0.738 0.000 0.747 0.100 0.750 0.570 0.770 0.435 
+			   0.779 0.000 0.814 0.000 0.823 0.923 0.836 0.525 0.840 0.998 0.855 0.968 0.866 0.321 
+			   0.883 0.095 0.909 0.517 0.924 0.600 0.961 0.440 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .98  2 .015  3 .006)))
+	 (frqf (make-env '(0.000 0.378 0.022 0.474 0.032 0.400 
+			   0.266 0.378 0.278 0.496 0.297 0.402 0.462 0.351 0.469 0.466 0.482 
+			   0.526 0.504 0.398 0.602 0.378 0.607 0.486 0.617 0.546 0.637 0.490 0.643 0.398 
+			   0.686 0.402 0.689 0.510 0.709 0.582 0.721 0.560 0.736 0.558 0.744 0.406 0.752 0.562 0.767 0.679 
+			   0.793 0.394 0.810 0.394 0.827 0.851 0.836 0.633 0.849 0.564 0.856 0.478 0.871 0.448 
+			   0.887 0.480 0.902 0.506 0.924 0.510 0.950 0.500 0.973 0.466 1.000 0.470)
+			 :duration dur :scaler (hz->radians 8000.0))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (vermillion-flycatcher 0 .5))
 
 ;;; --------------------------------------------------------------------------------
 
 (define (calling-all-animals)
-  (with-sound (:play #t :scaled-to .5 :srate 44100) ;(srate needed by snd-test)
+  (with-sound (:scaled-to .5 :srate 44100) ;(srate needed by snd-test)
     (mosquito 0 5 560 .2)
     (mosquito 1 3 880 .05)
     (knudsens-frog 2 .5)
@@ -3582,6 +3671,8 @@
     (orange-crowned-warbler 102 .25)
     (loggerhead-shrike-1 103.5 .1)
     (loggerhead-shrike-2 105 .1)
+    (california-quail 106 .25)
+    (vermillion-flycatcher 107 .25)
     ))
 
 

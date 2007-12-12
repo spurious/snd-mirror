@@ -5473,27 +5473,10 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
 
     case CP_CURSOR:
 #if USE_CAIRO
-      if (cp->cgx == NULL)
-	{
-	  fprintf(stderr, "set cursor cgx null");
-	  abort();
-	}
-      if (cp->sound == NULL)
-	{
-	  fprintf(stderr, "set cursor sound null");
-	  abort();
-	}
-      if (cp->cgx->ax == NULL)
-	{
-	  fprintf(stderr, "set cursor cgx->ax null");
-	  abort();
-	}
       if (cp->cgx->ax->cr == NULL)
 	{
-	  fprintf(stderr, "set cursor cgx->ax->cr null");
 	  if (cp->cgx->ax->wn)
 	    cp->cgx->ax->cr = gdk_cairo_create(cp->cgx->ax->wn);
-	  else abort();
 	}
 #endif
       cp->cursor_on = true; 

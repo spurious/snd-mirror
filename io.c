@@ -1648,15 +1648,6 @@ int mus_snprintf(char *buffer, int buffer_len, const char *format, ...)
   bytes_needed = vsprintf(buffer, format, ap);
 #endif
   va_end(ap);
-
-#if MUS_DEBUGGING
-  if (bytes_needed > buffer_len)
-    {
-      fprintf(stderr, "mus_snprintf: %s %d %d\n", buffer, buffer_len, bytes_needed);
-      abort();
-    }
-#endif
-
   return(bytes_needed);
 }
 

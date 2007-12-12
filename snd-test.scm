@@ -51024,7 +51024,7 @@ EDITS: 1
 		      (vox 4 2 170 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) 
 			   '(.8 .15 .05) '(.005 .0125 .025) .05 .1)
 		      (p 5.0 :duration .5 :keyNum 36 :strike-velocity .5 :amp .4 :DryPedalResonanceFactor .25)
-		      (bobwhite 5.5)
+		      ;(bobwhite 5.5)
 		      (scissor 2.0) 
 		      (plucky 3.25 .3 440 .2 1.0)
 		      (bowstr 3.75 .3 220 .2 1.0)
@@ -51489,7 +51489,7 @@ EDITS: 1
 	  (clm-reverb-sound .1 jc-reverb)
 	  (close-sound ind))
 	
-	(make-birds)
+;	(make-birds)
 	(for-each close-sound (sounds))
 	
 	(set! (run-safety) 1)

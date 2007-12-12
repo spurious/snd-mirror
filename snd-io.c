@@ -508,7 +508,6 @@ io_error_t sndlib_error_to_snd(int sndlib_err)
       }
 #if MUS_DEBUGGING
   fprintf(stderr, "sndlib_error_to_snd: %d (%s)\n", sndlib_err, mus_error_type_to_string(sndlib_err));
-  abort();
 #endif
   return(IO_UNKNOWN_SNDLIB_ERROR);
 }
