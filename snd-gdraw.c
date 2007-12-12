@@ -660,7 +660,7 @@ void phases_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b);
 void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
 {
   int i, x0, y0, x1, y1, cur, prev;
-  color_t old_color, cur_color;
+  color_t old_color;
   rgb_t r, g, b;
 
   old_color = get_foreground_color(ax);

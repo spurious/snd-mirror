@@ -166,7 +166,7 @@ Float gsy_size(chan_info *cp)
 }
 
 
-static set_zx(chan_info *cp, axis_info *ap)
+static void set_zx(chan_info *cp, axis_info *ap)
 {
   if (ap->x_ambit < X_RANGE_CHANGEOVER)
     set_scrollbar(zx_adj(cp), sqrt(ap->zx), .1);  /* assume size is 10% of scrollbar length */

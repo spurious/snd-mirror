@@ -77,6 +77,7 @@
 ;;; Least bittern
 ;;; American crow
 ;;; Loggerhead shrike (2)
+;;; Cardinal
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -3178,8 +3179,9 @@
 	 (start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur)))
 	 (ampf (make-env '(0.000 0.000 0.006 0.097 0.045 0.135 0.091 0.244 0.141 0.223 
-			   0.219 0.552 0.301 0.682 0.360 0.689 0.503 0.766 0.696 0.619 0.751 0.622 0.806 0.705 0.820 0.552 0.829 0.787 0.849  0.687 0.867  
-			   1.000 0.910 0.494 0.929 0.559 0.944 0.527 0.969 0.339 1.000 0.000)
+			   0.219 0.552 0.301 0.682 0.360 0.689 0.503 0.766 0.696 0.619 
+			   0.751 0.622 0.806 0.705 0.820 0.552 0.829 0.787 0.849  0.687 
+			   0.867 1.000 0.910 0.494 0.929 0.559 0.944 0.527 0.969 0.339 1.000 0.000)
 			 :duration dur :scaler amp))
 	 (frqf (make-env (list 0 (/ 1.0 .45) .18 (/ 1.0 .45)
 			       .19 (/ 1.0 .8)
@@ -3595,6 +3597,63 @@
 
 ;(with-sound (:play #t) (vermillion-flycatcher 0 .5))
 
+
+;;;--------------------------------------------------------------------------------
+;;;
+;;; Cardinal
+
+(definstrument (cardinal beg amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples 3.26)))
+	 (call 0)
+	 (next-call (+ start (seconds->samples 0.35)))
+	 (gen1 (make-polyshape 0.0 :partials (normalize-partials (list 1 1  2 .08  3 .01  4 .05  5 .005  6 .01))))
+
+	 (call1-dur 0.185)
+	 (call1-ampf (make-env '(0.000 0.000 0.174 0.333 0.243 0.273 0.332 0.446 0.391 0.373 0.446 0.488 
+				 0.496 0.363 0.545 0.064 0.606 0.048 0.632 0.614 0.676 0.783 0.732 0.655 
+				 0.764 0.667 0.802 0.992 0.841 0.659 0.888 0.633 0.951 0.347 0.974 0.122 1.000 0.000)
+			       :duration call1-dur :scaler (* 0.5 amp)))
+	 (call1-frqf (make-env '(0.000 0.299 0.230 0.320 0.387 0.339 0.513 0.349 0.586 0.349 0.610 0.534 
+				 0.622 0.570 0.654 0.585 0.703 0.594 0.753 0.584 0.778 0.566 0.803 0.560 
+				 0.911 0.434 1.000 0.435)
+			       :duration call1-dur :scaler (hz->radians 6000.0)))
+
+	 (call2-dur 0.19)
+	 (call2-ampf (make-env '(0.000 0.000 0.041 0.159 0.101 0.263 0.167 0.247 0.246 0.126 0.266 0.150 
+				 0.443 0.000 0.573 0.000 0.599 0.202 0.635 0.299 0.667 0.273 0.683 0.371 0.724 0.411 
+				 0.796 0.000 0.83 0.0 0.848 0.155 0.870 1.000 0.925 0.639 0.951 0.126 1.000 0.000)
+			       :duration call2-dur :scaler amp))
+	 (call2-frqf (make-env '(0.000 0.138 0.032 0.173 0.063 0.187 0.215 0.176 0.403 0.140 0.542 0.117 0.590 0.214 
+				 0.659 0.218 0.750 0.250 0.794 0.244 0.832 0.618  0.843 0.518   
+				 0.876 0.352 0.909 0.335 0.954 0.323 1.000 0.311)
+			       :duration call2-dur :scaler (hz->radians 10000.0))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (if (>= i next-call)
+	     (begin
+	       (set! call (1+ call))
+	       (if (= call 1)
+		   (begin
+		     (set! next-call (+ start (seconds->samples 0.63)))
+		     (mus-reset call1-ampf)
+		     (mus-reset call1-frqf))
+		   (begin
+		     (set! next-call (+ next-call (seconds->samples 0.24)))
+		     (mus-reset call2-ampf)
+		     (mus-reset call2-frqf)))))
+	 (outa i (if (< call 2)
+		     (* (env call1-ampf)
+			(polyshape gen1 1.0 (env call1-frqf)))
+		     (* (env call2-ampf)
+			(polyshape gen1 1.0 (env call2-frqf))))
+	       *output*))))))
+
+;(with-sound (:play #t) (cardinal 0 .5))
+
+
 ;;; --------------------------------------------------------------------------------
 
 (define (calling-all-animals)
@@ -3610,7 +3669,7 @@
     (southern-cricket-frog 8 0.5)
     (long-spurred-meadow-katydid 9 .5)
     (northern-leopard-frog 10 .5)
-    (southern-mole-cricket 11 4 .15)
+    (southern-mole-cricket 11 3 .15)
     (green-tree-frog 13 .5)
     (spring-peeper 14 .5)
     (crawfish-frog 15 .5)
@@ -3673,6 +3732,7 @@
     (loggerhead-shrike-2 105 .1)
     (california-quail 106 .25)
     (vermillion-flycatcher 107 .25)
+    (cardinal 108 .2))
     ))
 
 

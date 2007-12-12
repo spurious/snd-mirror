@@ -14,7 +14,7 @@ static int printout_end = 0;
 
 #define LISTENER_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))
 
-
+#if 0
 static void list_completions_callback(const char *name, int row, void *data)
 {
   int beg, end, i, j, old_len, new_len;
@@ -38,6 +38,7 @@ static void list_completions_callback(const char *name, int row, void *data)
   if (old_text) g_free(old_text);
   gtk_widget_hide(completion_pane);
 }
+#endif
 
 #if 0
 static void start_completion_dialog(int num_items, char **items)
