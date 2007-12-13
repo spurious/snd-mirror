@@ -227,6 +227,20 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
     sndlist))
 
 
+;;; -------- clear-selection
+
+(define (clear-selection)
+  (if (selection?)
+      (for-each
+       (lambda (s)
+	 (do ((i 0 (1+ i)))
+	     ((= i (chans s)))
+	   (let ((need-update (selection-member? s i)))
+	     (set! (selection-member? s i) #f)
+	     (if need-update (update-time-graph s i)))))
+       (sounds))))
+
+
 ;;; -------- make-selection
 
 ;;; the regularized form of this would use dur not end
@@ -235,23 +249,19 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
   "(make-selection :optional beg end snd chn) makes a selection like make-region but without creating a region.
 make-selection follows snd's sync field, and applies to all snd's channels if chn is not specified. end defaults
 to end of channel, beg defaults to 0, snd defaults to the currently selected sound."
+
   (let ((current-sound (or snd (selected-sound) (car (sounds)))))
+
     (define (add-chan-to-selection s0 s1 s c)
       (set! (selection-member? s c) #t)
       (set! (selection-position s c) (or s0 0))
       (set! (selection-frames s c) (- (or (and (number? s1) (1+ s1)) (frames s c)) (or s0 0))))
+
     (if (not (sound? current-sound))
 	(throw 'no-such-sound (list "make-selection" beg end snd chn)))
+
     (let ((current-sync (sync current-sound)))
-      (if (selection?) ; clear selection
-	  (for-each
-	   (lambda (s)
-	     (do ((i 0 (1+ i)))
-		 ((= i (chans s)))
-	       (let ((need-update (selection-member? s i)))
-		 (set! (selection-member? s i) #f)
-		 (if need-update (update-time-graph s i)))))
-	   (sounds)))
+      (clear-selection)
       (if (number? chn)
 	  (add-chan-to-selection beg end snd chn)
 	  (for-each
@@ -264,6 +274,27 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 		     ((= i (chans s)))
 		   (add-chan-to-selection beg end s i))))
 	   (sounds))))))
+
+
+
+;;; -------- with-temporary-selection
+
+(define (with-temporary-selection thunk beg dur snd chn)
+  (let ((seldata (and (selection?) 
+		      (car (selection-members)))))
+    (if (selection?)
+	(set! seldata (append seldata (list (selection-position) (selection-frames)))))
+    (make-selection beg (+ beg dur) snd chn)
+    (let ((result (thunk)))
+      (if seldata
+	  (make-selection (caddr seldata) 
+			  (+ (caddr seldata) (cadddr seldata))
+			  (car seldata)
+			  (cadr seldata))
+	  (clear-selection))
+      result)))
+
+
 
 
 ;;; -------- delete selected portion and smooth the splice

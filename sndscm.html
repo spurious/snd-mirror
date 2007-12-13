@@ -4382,6 +4382,14 @@ those hooks.  Normally Snd just closes such a sound, or exits silently, flushing
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- clear-selection -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="clearselection">clear-selection</a>
+</td></tr><tr><td></td><td>
+If there is currently a selection, clear-selection unselects it.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- contrast-channel -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="contrastchannel">contrast-channel</a> <code>index :optional beg dur snd chn edpos</code>
@@ -4774,6 +4782,18 @@ It presents a list of previously
 closed (and not subsequently re-opened) files in the reverse order of closing.
 If you choose one, it is opened.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- with-temporary-selection -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="withtemporaryselection">with-temporary-selection</a> <code>thunk beg dur snd chn</code>
+</td></tr><tr><td></td><td>
+with-temporary selection saves the current selection placement, makes a new selection
+of the data from sample 'beg' to beg + dur in the given channel, calls 'thunk', then
+restores the previous selection (if any).  It returns whatever 'thunk' returned.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 
 </table>
 

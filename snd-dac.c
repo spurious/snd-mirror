@@ -1175,7 +1175,7 @@ static bool call_start_playing_hook(snd_info *sp)
 {
   if ((XEN_HOOKED(start_playing_hook)) &&
       (XEN_TRUE_P(run_or_hook(start_playing_hook,
-			      XEN_LIST_1(C_TO_XEN_INT(sp->index)),
+			      XEN_LIST_1(C_TO_XEN_INT(sp->index)), /* this can be 123456 (TEMP_SOUND_INDEX in snd-file.c) -- View:Files dialog play button */
 			      S_start_playing_hook))))
     {
       reflect_play_stop(sp);           /* turns off buttons */

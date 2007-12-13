@@ -57,9 +57,12 @@
 ;;; Plumbeous vireo
 ;;; Nashville warbler
 ;;; Orange-crowned warbler
+;;; Yellow warbler
 ;;; Least flycatcher
 ;;; Acadian flycatcher
 ;;; Vermillion flycatcher
+;;; Black phoebe
+;;; Say's phoebe
 ;;; Swainson's thrush
 ;;; American robin
 ;;; Varied thrush
@@ -72,6 +75,7 @@
 ;;; California Quail
 ;;; Ruffed grouse
 ;;; Great-horned owl
+;;; Barred owl
 ;;; Pileated woodpecker
 ;;; Common loon (2)
 ;;; Least bittern
@@ -3655,6 +3659,154 @@
 
 
 ;;; --------------------------------------------------------------------------------
+;;;
+;;; Black phoebe
+
+(definstrument (black-phoebe beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.36)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.082 0.899 0.098 0.957 0.118 0.892 0.142 0.396 
+			   0.181 0.000 0.287 0.000 0.367 0.661 0.396 0.000 0.440 0.778 
+			   0.458 0.739 0.479 0.300 0.507 0.636 0.532 0.558 0.555 0.380 
+			   0.588 0.535 0.807 0.325 0.926 0.181 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .9  2 .1  3 .006)))
+	 (frqf (make-env '(0.000 0.167 0.066 0.212 0.077 0.234 0.104 0.231 0.132 0.187 
+			   0.148 0.181 0.166 0.153 0.231 0.146 0.289 0.101 0.298 0.196 
+			   0.319 0.229 0.339 0.222 0.349 0.240 0.357 0.219 0.377 0.159 
+			   0.388 0.146 0.401 0.167 0.417 0.199 0.438 0.209 0.456 0.202 
+			   0.467 0.177 0.479 0.174 0.485 0.196 0.503 0.206 0.531 0.201 
+			   0.550 0.176 0.563 0.194 0.602 0.196 0.622 0.186 0.658 0.192 
+			   0.931 0.163 1.000 0.141)
+			 :duration dur :scaler (hz->radians 22050.0))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (black-phoebe 0 .25))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Yellow warbler
+
+(definstrument (yellow-warbler beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 1.38)
+	 (stop (+ start (seconds->samples dur)))
+	 (gen1 (make-oscil 0.0))
+
+	 (ampf (make-env '(0.000 0.000 0.028 0.077 0.056 0.000 0.135 0.000 0.156 0.125 0.182 0.112 0.197 0.000 
+			   0.268 0.000 0.287 0.235 0.314 0.243 0.326 0.000 0.406 0.000 0.415 0.339 0.440 0.301 0.463 0.000 
+			   0.486 0.000 0.499 0.403 0.513 0.611 0.531 0.592 0.553 0.000 
+			   0.582 0.000 0.596 0.517 0.606 0.648 0.627 0.621 0.640 0.000 0.667 0.000 0.673 0.533 0.696 0.896 0.720 0.000 
+			   0.750 0.000 0.774 1.000 0.800 0.000 0.831 0.000 0.858 0.971 0.884 0.000 
+			   0.905 0.000 0.926 0.349 0.942 0.424 0.978 0.421 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.827 0.026 0.661 0.042 0.706 0.104 0.695 0.134 0.909 0.167 0.672 0.184 0.708 
+			   0.229 0.677 0.271 0.909 0.292 0.715 0.303 0.670 0.310 0.713 0.342 0.674 0.396 0.911 
+			   0.418 0.715 0.425 0.672 0.441 0.727 0.480 0.720 0.487 0.476 0.491 0.533 0.510 0.558 
+			   0.526 0.704 0.539 0.765 0.563 0.754 0.578 0.472 0.582 0.526 0.594 0.540 0.618 0.720 
+			   0.630 0.781 0.656 0.765 0.674 0.683 0.693 0.567 0.713 0.408 0.735 0.410 0.751 0.711 
+			   0.765 0.654 0.795 0.358 0.817 0.355 0.826 0.708 0.839 0.681 0.854 0.565 0.881 0.330 
+			   0.904 0.308 0.924 0.351 0.957 0.460 0.967 0.408 0.976 0.362 1.000 0.314)
+			 :duration dur :scaler (hz->radians 10000.0))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (oscil gen1 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (yellow-warbler 0 .25))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Barred owl
+
+(definstrument (barred-owl-1 beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 1.27)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.030 0.308 0.052 0.345 0.057 0.932 0.104 0.567 0.161 0.605 0.259 0.510 
+			   0.299 0.399 0.371 0.535 0.396 0.463 0.472 0.678 0.495 1.000 0.517 0.995 
+			   0.534 0.000 0.538 0.365 0.560 0.435 0.630 0.254 0.828 0.338 0.850 0.190 
+			   0.897 0.154 0.929 0.079 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.09 0.025 0.09  0.092 0.156  0.435 0.149 0.491 0.132 0.517 0.124 
+			   0.53 .124 0.536 0.088 0.830 0.061 1.000 0.013)
+			 :base .03 :duration dur :scaler (hz->radians 4060.0)))
+
+	 (gen1 (make-nrcos 0.0 9 .5))
+	 (vib (make-oscil 12))
+	 (rnd (make-rand-interp 300 (hz->radians 5)))
+	 (intrpf (make-env '(0 0 .53 0 .54 1 1 1) :duration dur))
+	 (rnd1 (make-rand-interp 1000 .1))
+
+	 (frm1 (make-formant .995 730 15))
+	 (frm2 (make-formant .999 1090 1))
+	 (frm3 (make-formant .993 2240 1)))
+
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let* ((intrp (env intrpf))
+		(frq (+ (env frqf)
+			(* intrp (+ (* (hz->radians 7) (oscil vib))
+				    (rand-interp rnd)))))
+		(inp (* (env ampf) 
+			(+ .9 (rand-interp rnd1))
+			(nrcos gen1 frq))))
+	   (set! (mus-frequency frm1) (+ 550 (* intrp 80)))
+	   (set! (mus-frequency frm2) (- 1500 (* intrp 400)))
+	   (set! (mus-frequency frm3) (+ 2300 (* intrp 150)))
+	   (outa i (+ (formant frm1 inp)
+		      (formant frm2 inp)
+		      (formant frm3 inp))
+		 *output*)))))))
+
+;(with-sound (:play #t) (barred-owl-1 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Say's phoebe
+
+(definstrument (says-phoebe beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.64)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.017 0.223 0.039 0.372 0.056 0.000 0.101 0.000 0.122 0.132 
+			   0.145 0.000 0.192 0.000 0.214 0.639 0.232 0.507 0.324 0.981 0.415 0.402 
+			   0.496 0.413 0.610 0.317 0.771 0.287 0.970 0.179 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .98  2 .07  3 .08  4 .01 5 .003)))
+	 (frqf (make-env '(0.000 0.221 0.022 0.305 0.032 0.318 0.040 0.297 0.054 0.225 0.106 0.229 
+			   0.111 0.250 0.130 0.240 0.139 0.215 0.196 0.238 0.205 0.274 0.223 0.322 
+			   0.249 0.337 0.295 0.333 0.324 0.310 0.356 0.293 0.584 0.265 0.781 0.261 
+			   0.958 0.250 1.000 0.204)
+			 :duration dur :scaler (hz->radians 10040.0))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (says-phoebe 0 .25))
+
+
+
+;;; --------------------------------------------------------------------------------
 
 (define (calling-all-animals)
   (with-sound (:scaled-to .5 :srate 44100) ;(srate needed by snd-test)
@@ -3665,7 +3817,7 @@
     (oak-toad 4 .3)
     (eastern-wood-pewee-1 5 .25)
     (eastern-wood-pewee-2 6 .25)
-    (broad-winged-tree-cricket 6 3.0 0.2)
+    (broad-winged-tree-cricket 6 2.0 0.2)
     (southern-cricket-frog 8 0.5)
     (long-spurred-meadow-katydid 9 .5)
     (northern-leopard-frog 10 .5)
@@ -3732,7 +3884,11 @@
     (loggerhead-shrike-2 105 .1)
     (california-quail 106 .25)
     (vermillion-flycatcher 107 .25)
-    (cardinal 108 .2))
+    (cardinal 108 .2)
+    (black-phoebe 109 .25)
+    (yellow-warbler 110 .25)
+    (barred-owl-1 111 .25)
+    (says-phoebe 113 .25)
     ))
 
 

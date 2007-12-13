@@ -1642,7 +1642,8 @@ void snd_close_file(snd_info *sp)
 
 
 #define TEMP_SOUND_INDEX 123456
-/* just a marker for debugging */
+/* just a marker for debugging -- but it actually appears in things like start-playing-hook!
+ */
 
 
 snd_info *make_sound_readable(const char *filename, bool post_close)

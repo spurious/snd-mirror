@@ -1156,7 +1156,7 @@ void snd_rationalize(Float a, int *num, int *den)
 {
   XEN ratio;
   int gloc;
-  ratio = XEN_RATIONALIZE(C_TO_XEN_DOUBLE(a), C_TO_XEN_DOUBLE(a * .02));
+  ratio = XEN_RATIONALIZE(C_TO_XEN_DOUBLE(a), C_TO_XEN_DOUBLE(a * .04)); /* was .02 until 13-Dec-07 but that gives too many useless choices */
   gloc = snd_protect(ratio);
   (*num) = XEN_TO_C_INT(XEN_NUMERATOR(ratio));
   (*den) = XEN_TO_C_INT(XEN_DENOMINATOR(ratio));
