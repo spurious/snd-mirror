@@ -35,6 +35,7 @@
 ;;; Pinewoods tree frog
 ;;; Squirrel tree frog
 ;;; Ornate chorus frog
+;;; Bullfrog
 
 ;;; -------- mammals --------
 ;;; Indri
@@ -85,6 +86,7 @@
 ;;; American crow
 ;;; Loggerhead shrike (2)
 ;;; Cardinal
+;;; Common Gull
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -768,6 +770,54 @@
 		 *output*)))))))
 
 ;(with-sound () (river-frog 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Bullfrog
+
+(definstrument (bullfrog beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.81)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 1 1 2 1 3 0) :duration dur :scaler amp :base 10))
+	 (frqf (make-env '(0 0  1 6  2 0) :duration dur :scaler (hz->radians 1.0)))
+
+	 (f1 (make-rxyk!cos 200 100 0.6))
+	 (f2 (make-rxyk!cos 230 100 1.2))
+
+	 (f3 (make-rxyk!cos 600 100 8.0))
+	 (f4 (make-rxyk!cos 630 100 8.0))
+
+	 (rnd (make-rand-interp 4000 .2))
+	 (rnd1 (make-rand-interp 200 (hz->radians 2)))
+
+	 (frm1 (make-formant .99 400 7))
+	 (frm2 (make-formant .98 1200 14))
+	 (frm3 (make-formant .97 5000 4))
+
+	 (intrpf (make-env '(0 1 .6 0 1 1) :duration dur))
+	 )
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let* ((frq (+ (env frqf)
+			(rand-interp rnd1)))
+		(intrp (env intrpf))
+		(val (* (env ampf)
+			(+ .8 (rand-interp rnd))
+			(+ (rxyk!cos f1 frq)
+			   (* .5 (rxyk!cos f2 frq))
+			   (* .1 (rxyk!cos f3 frq))
+			   (* .1 (rxyk!cos f4 frq))))))
+	   (set! (mus-frequency frm2) (+ 1000 (* intrp 200)))
+	   (outa i (+ (formant frm1 val)
+		      (formant frm2 val)
+		      (formant frm3 val))
+		 *output*)))))))
+
+;(with-sound (:play #t) (bullfrog 0 .5))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -3866,7 +3916,7 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;; Purple finch (could use some work)
+;;; Purple finch
 
 (definstrument (purple-finch beg amp)
   (let* ((start (seconds->samples beg))
@@ -3970,6 +4020,54 @@
 ;(with-sound (:play #t) (northern-goshawk 0 .25))
 
 
+;;;--------------------------------------------------------------------------------
+;;;
+;;; Common Gull
+;;;
+;;; Roche and Chevereau, "Guide to the Sounds of the Birds of Europe"
+
+(definstrument (common-gull beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.42)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 1 1 1.4 1 1.7 .8  1.8 .2 2 0) :duration dur :scaler amp))
+	 (gen1 (make-rcos 1200 0.5))
+	 (gen2 (make-rxycos 1800 1200 0.75))
+	 (frqf (make-env '(0.000 0.326 0.057 0.599 0.075 0.602 0.102 0.637 0.140 0.618 0.255 0.626 0.378 0.607 
+			   0.401 0.589 0.441 0.584 0.491 0.562 0.591 0.544 0.628 0.557 0.675 0.541 0.733 0.538 
+			   0.756 0.523 0.809 0.501 0.853 0.469 0.887 0.390 1.000 0.325 )
+			 :duration dur :offset (hz->radians -1200) :scaler (hz->radians 2000.0)))
+	 (intrpf (make-env '(0 1 .2 1 .5 0 1 0) :duration dur :scaler .3 :base 10))
+	 (rnd (make-rand-interp 800 .2))
+	 (attf (make-env '(0 1 .15 0 1 0) :duration dur :base 10))
+
+	 (frm1 (make-formant .99 2300 5))
+	 (frm2 (make-formant .98 6100 3))
+	 (frm3 (make-formant .98 3800 5))
+	 (frm4 (make-formant .99 1800 7))
+
+	 (rnd2 (make-rand-interp 300 (hz->radians 15))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let* ((frq (+ (env frqf)
+			(rand-interp rnd2)
+			(* (env attf)
+			   (rand-interp rnd))))
+		(val (* (env ampf)
+		      (+ (rcos gen1 frq)
+			 (* (env intrpf)
+			    (rxycos gen2 frq))))))
+	   (outa i (+ (formant frm1 val)
+		      (formant frm2 val)
+		      (formant frm3 val)
+		      (formant frm4 val))
+		 *output*)))))))
+
+;(with-sound (:play #t :scaled-to .5) (common-gull 0 .5))
+
+
 ;;; --------------------------------------------------------------------------------
 
 (define (calling-all-animals)
@@ -4055,7 +4153,9 @@
     (says-phoebe 112 .25)
     (yellow-rumped-warbler 113.5 .25)
     (purple-finch 115 .25)
+    (bullfrog 117 .125)
     (northern-goshawk 118 .125)
+    (common-gull 120 .25)
     ))
 
 
