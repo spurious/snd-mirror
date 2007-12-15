@@ -500,6 +500,38 @@ returning you to the true top-level."
   (apply with-sound-helper (lambda () (load file)) args))
 
 
+#|
+;;; a bit clumsy, but here's one way to mix each note in a notelist ("calls" below),
+;;;   then rewrite a new notelist after changing begin times in Snd:
+
+(define (mix-calls)
+  (let ((s (new-sound)))
+    (for-each
+     (lambda (call)
+       (with-sound (:output "temp.snd")
+         (eval (append (list (car call) 0.0) (cddr call)) (current-module)))
+       (let ((temp (find-sound "temp.snd")))
+	 (mix-channel temp (seconds->samples (cadr call)) (frames temp) s 0 -1 #t)))
+     calls)
+    (close-sound (find-sound "temp.snd"))))
+
+(define (rewrite-calls)
+  (let ((ctr 0))
+    (for-each
+     (lambda (call)
+       (let ((beg (exact->inexact (/ (mix-position ctr) (srate)))))
+	 (if (<= (abs (- beg (cadr call))) .001)
+	     (display (format #f "  ~A~%" call))
+	     (display (format #f "  (~A ~,3F~{ ~A~})~%"
+			      (car call) 
+			      beg
+			      (cddr call)))))
+       (set! ctr (1+ ctr)))
+     calls)))
+|#
+
+
+
 ;;; -------- sound-let --------
 ;;;
 ;;; (with-sound () (sound-let ((a () (fm-violin 0 .1 440 .1))) (mus-mix "test.snd" a)))

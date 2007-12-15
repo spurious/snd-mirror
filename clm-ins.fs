@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Sat Oct 06 21:19:17 CEST 2007
+\ Changed: Thu Nov 22 22:19:58 CET 2007
 
 \ Commentary:
 \
@@ -1445,11 +1445,11 @@ instrument: cellon <{ start dur pitch0 amp ampfun
      pvibfreq pvibpc pvibfun pvibat pvibdc
      rvibfreq rvibpc rvibfun -- }>
   pitch1 f0= if pitch0 else pitch1 then { pit1 }
-  :frequency pitch0                               make-oscil         { carr }
-  0.5 -0.5                                        make-one-zero      { low }
-  :frequency pitch0                               make-oscil         { fmosc }
-  :frequency pvibfreq                             make-triangle-wave { pvib }
-  :frequency rvibfreq                             make-rand-interp   { rvib }
+  :frequency pitch0                   make-oscil         { carr }
+  0.5 -0.5                            make-one-zero      { low }
+  :frequency pitch0                   make-oscil         { fmosc }
+  :frequency pvibfreq :amplitude 1.0  make-triangle-wave { pvib }
+  :frequency rvibfreq :amplitude 1.0  make-rand-interp   { rvib }
   ampat f0> if 100 ampat dur f/ f* else 25 then          { ampap }
   ampdc f0> if 100 1 ampdc dur f/ f- f* else 75 then     { ampdp }
   glissat f0> if 100 glissat dur f/ f* else 25 then      { glsap }
@@ -1461,11 +1461,11 @@ instrument: cellon <{ start dur pitch0 amp ampfun
   :envelope pvibfun 25 pvbap 75 pvbdp stretch-envelope
   :scaler pvibpc pitch0 f* hz->radians
   :duration dur                                   make-env { pvibenv }
-  :envelope rvibfun 0.0 0.0 0.0 0.0 stretch-envelope
+  :envelope rvibfun
   :scaler rvibpc pitch0 f* hz->radians
   :duration dur                                   make-env { rvibenv }
   :envelope glissfun 25 glsap 75 glsdp stretch-envelope
-  :scaler pit1 pitch0 f-
+  :scaler pit1 pitch0 f- hz->radians
   :duration dur                                   make-env { glisenv }
   :envelope ampfun 25 ampap 75 ampdp stretch-envelope
   :scaler amp
@@ -3183,43 +3183,52 @@ end-struct fm2%
 \ ;;; rms gain balance
 \ ;;; This is a translation of the rmsgain code provided by Fabio Furlanete.
 
-: make-rmsgain ( :optional hp -- gen )
-  '( 10.0 ) 0 get-optargs { hp }
-  2.0 two-pi mus-srate f/ hp f* fcos  f- { b }
+: make-rmsgain <{ :optional hp 10.0 -- gen }>
+  doc" makes an RMS gain generator."
+  2.0  two-pi mus-srate f/ hp f* fcos  f- { b }
   b  b b f* 1.0 f- fsqrt  f- { c2 }
   1.0 c2 f- { c1 }
   make-hash { rmsg }
-  rmsg :rmsg-c1    c1  hash-set!
-  rmsg :rmsg-c2    c2  hash-set!
-  rmsg :rmsg-q     0.0 hash-set!
-  rmsg :rmsg-r     0.0 hash-set!
-  rmsg :rmsg-avg   0.0 hash-set!
-  rmsg :rmsg-avgc  0   hash-set!
+  rmsg :rmsg-c1   c1  hash-set!
+  rmsg :rmsg-c2   c2  hash-set!
+  rmsg :rmsg-q    0.0 hash-set!
+  rmsg :rmsg-r    0.0 hash-set!
+  rmsg :rmsg-avg  0.0 hash-set!
+  rmsg :rmsg-avgc 0   hash-set!
   rmsg
 ;
 : rmsgain-rms ( gen sig -- val )
+  doc" runs an RMS gain generator."
   { gen sig }
-  gen :rmsg-c1 hash-ref    sig f*  sig f*
-  gen :rmsg-c2 hash-ref  gen :rmsg-q hash-ref  f* f+ dup gen :rmsg-q rot hash-set! ( rmsg-q ) fsqrt
+  gen :rmsg-c1 hash-ref  sig f*  sig f*
+  gen :rmsg-c2 hash-ref  gen :rmsg-q hash-ref  f*  f+
+  dup gen :rmsg-q rot hash-set! ( val ) fsqrt
 ;
 : rmsgain-gain ( gen sig rmsval -- val )
+  doc" returns the current RMS gain."
   { gen sig rmsval }
-  gen :rmsg-c1 hash-ref    sig f*  sig f*
-  gen :rmsg-c2 hash-ref  gen :rmsg-r hash-ref  f*  f+  gen :rmsg-r rot hash-set!
-  gen :rmsg-r  hash-ref f0= if rmsval else rmsval  gen :rmsg-r hash-ref fsqrt  f/ then { this-gain }
-  this-gain gen :rmsg-avg hash-ref f+ gen :rmsg-avg  rot hash-set!
+  gen :rmsg-c1 hash-ref  sig f*  sig f*
+  gen :rmsg-c2 hash-ref  gen :rmsg-r hash-ref  f*  f+
+  dup ( val val ) gen :rmsg-r rot hash-set!
+  ( val ) f0= if rmsval else rmsval  gen :rmsg-r hash-ref fsqrt  f/ then { this-gain }
+  gen :rmsg-avg hash-ref this-gain f+ gen :rmsg-avg  rot hash-set!
   gen :rmsg-avgc hash-ref 1+          gen :rmsg-avgc rot hash-set!
   sig this-gain f*
 ;
 : rmsgain-balance ( gen sig comp -- val )
+  doc" scales a signal based on a RMS gain."
   { gen sig comp }
   gen sig  gen comp rmsgain-rms  rmsgain-gain
 ;
 : rmsgain-gain-avg ( gen -- val )
+  doc" is part of the RMS gain stuff."
   { gen }
   gen :rmsg-avg hash-ref  gen :rmsg-avgc hash-ref f/
 ;
-: rmsgain-balance-avg ( gen -- val ) :rmsg-avg hash-ref ;
+: rmsgain-balance-avg ( gen -- val )
+  doc" is part of the RM gain stuff."
+  :rmsg-avg hash-ref
+;
 
 : clm-ins-test <{ :optional start 0.0 dur 1.0 }>
   start now!

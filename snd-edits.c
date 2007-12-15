@@ -7255,10 +7255,9 @@ static void ripple_mixes_1(chan_info *cp, off_t beg, off_t len, off_t change, Fl
 	      (FRAGMENT_MIX_LIST(ed, i)) &&
 	      (FRAGMENT_MIX_LIST_SIZE(ed, i) > 0))
 	    {
-	      int j;
+	      int j, size = 0;
 	      if (current_states == NULL)
 		{
-		  int size;
 		  low_id = lowest_mix_id();
 		  high_id = highest_mix_id();
 		  size = high_id - low_id + 1;
@@ -7287,7 +7286,11 @@ static void ripple_mixes_1(chan_info *cp, off_t beg, off_t len, off_t change, Fl
 			    }
 			}
 		      FRAGMENT_MIX_STATE(ed, i, j) = new_ms;
-		      current_states[new_ms->mix_id - low_id] = new_ms;
+		      if ((new_ms->mix_id - low_id) < size)
+			current_states[new_ms->mix_id - low_id] = new_ms;
+#if MUS_DEBUGGING
+		      else fprintf(stderr, "current starts size (snd-edits 7293): %d <= %d\n", size, new_ms->mix_id - low_id);
+#endif
 		    }
 		}
 	    }

@@ -1033,6 +1033,13 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, off_t sta
       else 
 	{
 	  direction = READ_BACKWARD;
+	  if (start < end)
+	    {
+	      off_t tmp;
+	      tmp = start;
+	      start = end;
+	      end = tmp;
+	    }
 	  if ((start == 0) || (start >= cp->edits[pos]->samples)) /* don't be pedantic about the start point */
 	    beg = cp->edits[pos]->samples - 1;
 	  else beg = start;

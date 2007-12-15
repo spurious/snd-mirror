@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Thu Jun 07 14:45:39 CEST 2007
+\ Changed: Thu Nov 22 00:26:48 CET 2007
 
 \ src-duration             ( en -- dur )
 \ dolph                    ( n gamma -- im )
@@ -200,13 +200,15 @@ for time-varying sampling-rate conversion."
     phase ccos alpha c* cacos n c* ccos den c* mult c* ( val )
     mult fnegate to mult
     phase freq f+ to phase
+    ( val )
   end-map { vals }
   \ now take the DFT
   0.0 { pk }
   n make-array map!
     0.0 ( sum )
-    vals each ( val ) 2.0 0+1.0i c*  pi j i * f*  c*  n c/ cexp c* c+ end-each
-    ( sum ) cabs dup pk fmax to pk ( sum )
+    vals each ( val ) 0+1.0i two-pi c* j c* i c*  n c/ cexp c* c+ ( sum++ ) end-each cabs { sum }
+    sum pk f> if sum to pk then
+    sum
   end-map ( w ) map! *key* pk f/ end-map ( w )
 ;
 

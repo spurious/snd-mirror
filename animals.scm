@@ -64,6 +64,7 @@
 ;;; Least flycatcher
 ;;; Acadian flycatcher
 ;;; Vermillion flycatcher
+;;; Ash-throated flycatcher
 ;;; Black phoebe
 ;;; Say's phoebe
 ;;; Swainson's thrush
@@ -81,6 +82,7 @@
 ;;; Barred owl
 ;;; Northern goshawk
 ;;; Pileated woodpecker
+;;; White-headed woodpecker
 ;;; Common loon (2)
 ;;; Least bittern
 ;;; American crow
@@ -590,8 +592,7 @@
 		      (+ (* intrp (oscil gen2 (* 10 ind)))
 			 (* (- 1.0 intrp) (oscil gen3 (* 24 ind)))
 			 (* .1 (oscil gen5 (* 14 ind)))
-			 (* .1 (oscil gen6 (* 6 ind)))
-			 ))
+			 (* .1 (oscil gen6 (* 6 ind)))))
 		 *output*)))))))
 
 ;(with-sound (:play #t) (squirrel-tree-frog-1 0 1.0 .5))
@@ -796,8 +797,7 @@
 	 (frm2 (make-formant .98 1200 14))
 	 (frm3 (make-formant .97 5000 4))
 
-	 (intrpf (make-env '(0 1 .6 0 1 1) :duration dur))
-	 )
+	 (intrpf (make-env '(0 1 .6 0 1 1) :duration dur)))
    (run
      (lambda ()
        (do ((i start (1+ i)))
@@ -1022,8 +1022,7 @@
 			 (* .15 (oscil gen2 (* md (/ 1100 1280))))
 			 (* .07 (oscil gen3 (* md (/ 1460 1280))))
 			 (* .02 (oscil gen4 (* 2 md)))
-			 (* .02 (oscil gen5 (* 3 md)))
-			 ))
+			 (* .02 (oscil gen5 (* 3 md)))))
 		 *output*)))))))
 
 
@@ -1192,7 +1191,7 @@
 	 (spikes2 (make-sum-of-sines 140 48 .7))
 	 (spikes3 (make-sum-of-sines 120 48 1.4))
 	 (rnd (make-rand-interp 100 .0001)) ; perhaps this is too much -- it clobbers the comb filter 
-	 (frqf (make-env '(0 0 1 -.4 2 0 3 -.2 4 .3 6 -1.0 ) :scaler (hz->radians .4) :duration dur))
+	 (frqf (make-env '(0 0 1 -.4 2 0 3 -.2 4 .3 6 -1.0) :scaler (hz->radians .4) :duration dur))
 	 (last-val 0.0))
    (run
      (lambda ()
@@ -1696,8 +1695,7 @@
 	 (gen2 (make-oscil 0.0))
 	 (gen3 (make-oscil 0.0))
 	 (frqf (make-env '(0 3370 .03 4300 .1 4600  .14 3400 0.15 4400 .16 3700 .18 4400 .24 4700 .3 4600 .34 3600 .4 3700 .6 3800 .8 4000 1.0 3900)
-			 :duration dur :base .1 :scaler (hz->radians 1.0)))
-	 )
+			 :duration dur :base .1 :scaler (hz->radians 1.0))))
    (run
      (lambda ()
        (do ((i start (1+ i)))
@@ -2900,7 +2898,7 @@
 			   0.697 0.097 0.703 0.711 0.719 0.000 0.736 0.000 0.746 0.997 0.756 0.282 
 			   0.775 0.392 0.787 0.000 0.804 0.000 0.813 0.811 0.826 0.463 0.836 0.411 
 			   0.847 0.000 0.862 0.000 0.873 0.284 0.893 0.192 0.899 0.066 0.912 0.329 
-			   0.921 0.000 0.931 0.000 0.934 0.303 0.947 0.466 0.960 0.418 0.980 0.258 1.000 0.000 )
+			   0.921 0.000 0.931 0.000 0.934 0.303 0.947 0.466 0.960 0.418 0.980 0.258 1.000 0.000)
 			 :duration dur :scaler amp))
 	 (gen1 (make-oscil 0.0))
 	 (frqf (make-env '(0.000 0.184 0.010 0.214 0.026 0.214 0.036 0.197 0.057 0.197 0.066 0.233 
@@ -2920,7 +2918,7 @@
 			   0.808 0.326 0.821 0.255 0.832 0.285 0.843 0.266 0.866 0.263 0.891 0.197 
 			   0.915 0.247 0.935 0.285 0.942 0.345 0.945 0.290 0.947 0.441 0.950 0.353 
 			   0.953 0.411 0.957 0.367 0.960 0.405 0.964 0.370 0.967 0.405 0.973 0.373 
-			   0.979 0.373 0.990 0.296 1.000 0.255 )
+			   0.979 0.373 0.990 0.296 1.000 0.255)
 			 :duration dur :scaler (hz->radians 11900))))
    (run
      (lambda ()
@@ -3042,7 +3040,7 @@
 	 (ampf (make-env '(0 .5 4 1 15 1) :duration dur :scaler amp))
 	 (pulse-space .137)
 	 (pulse-dur .06)
-	 (pulse-ampf (make-env '(0.000 0.000  0.20 0.625  0.511 0.985  0.663 1.000  0.802 0.940  0.906 0.731  0.961 0.157  1.000 0.000 )
+	 (pulse-ampf (make-env '(0.000 0.000  0.20 0.625  0.511 0.985  0.663 1.000  0.802 0.940  0.906 0.731  0.961 0.157  1.000 0.000)
 			       :duration pulse-dur))
 	 (pulse-frqf (make-env '(0 0  .3 .9  .6 1  .8 1  1 .75) :duration pulse-dur :scaler (hz->radians 300)))
 	 (pulse-off (make-env '(0 1120 .25 1140 .4 1190 .9 1150) :end 17))
@@ -3121,7 +3119,7 @@
 	 (let ((fm (+ (env frqf)
 		      (rand-interp rnd))))
 	   (outa i (* (env ampf)
-		      (+ (rxyk!cos gen1 (- fm) )
+		      (+ (rxyk!cos gen1 (- fm))
 			 (rxyk!cos gen2 fm)
 			 (* .25 (polyshape gen3 1.0 fm))))
 		 *output*)))))))
@@ -3953,7 +3951,7 @@
 			   0.8506 0.4826 0.8600 0.0000 0.8754 0.0000 0.8767 0.1207 0.8796 0.0000 0.8818 0.2377 
 			   0.8844 0.0000 0.8951 0.3528 0.9114 0.0000 0.9255 0.0000 0.9285 0.1024 0.9322 0.0000 
 			   0.9336 0.1737 0.9388 0.0000 0.9439 0.0859 0.9482 0.2431 0.9521 0.1024 0.9546 0.2761 
-			   0.9636 0.0000 0.9850 0.0000 0.9927 0.0402 1.0000 0.0000 )
+			   0.9636 0.0000 0.9850 0.0000 0.9927 0.0402 1.0000 0.0000)
 			 :duration dur :scaler amp))
 	 (gen1 (make-polyshape 0.0 :partials (list 1 .98  2 .01  3 .005  4 .003)))
 	 (rnd (make-rand-interp 800 (hz->radians 200)))
@@ -3982,7 +3980,7 @@
 			   0.8377 0.2155 0.8444 0.2121 0.8471 0.2929 0.8533 0.2963 0.8613 0.2037 0.8823 0.2391 
 			   0.8850 0.4478 0.8903 0.1886 0.8939 0.2256 0.8979 0.2946 0.9015 0.3131 0.9104 0.2088 
 			   0.9309 0.2172 0.9358 0.5556 0.9403 0.2172 0.9456 0.2290 0.9563 0.3215 0.9666 0.2104 
-			   0.9924 0.1785 1.0000 0.1801 )
+			   0.9924 0.1785 1.0000 0.1801)
 			 :duration dur :scaler (hz->radians 10035.0))))
    (run
      (lambda ()
@@ -4004,10 +4002,10 @@
   (let* ((start (seconds->samples beg))
 	 (dur 0.31)
 	 (stop (+ start (seconds->samples dur)))
-	 (ampf (make-env '(0.000 0.000 0.124 0.399 0.174 0.520 0.223 0.881 0.355 0.998 0.499 0.644 1.000 0.000 )
+	 (ampf (make-env '(0.000 0.000 0.124 0.399 0.174 0.520 0.223 0.881 0.355 0.998 0.499 0.644 1.000 0.000)
 			 :duration dur :scaler amp))
 	 (gen1 (make-polyshape 0.0 :partials (list 1 .1  2 .8  3 .3  4 .05 5 .01 6 .005 7 .003)))
-	 (frqf (make-env '(0.000 0.137  0.126 0.138  0.237 0.144  0.314 0.142  0.400 0.140  1.000 0.130 )
+	 (frqf (make-env '(0.000 0.137  0.126 0.138  0.237 0.144  0.314 0.142  0.400 0.140  1.000 0.130)
 			 :duration dur :scaler (hz->radians 9040.0))))
    (run
      (lambda ()
@@ -4035,7 +4033,7 @@
 	 (gen2 (make-rxycos 1800 1200 0.75))
 	 (frqf (make-env '(0.000 0.326 0.057 0.599 0.075 0.602 0.102 0.637 0.140 0.618 0.255 0.626 0.378 0.607 
 			   0.401 0.589 0.441 0.584 0.491 0.562 0.591 0.544 0.628 0.557 0.675 0.541 0.733 0.538 
-			   0.756 0.523 0.809 0.501 0.853 0.469 0.887 0.390 1.000 0.325 )
+			   0.756 0.523 0.809 0.501 0.853 0.469 0.887 0.390 1.000 0.325)
 			 :duration dur :offset (hz->radians -1200) :scaler (hz->radians 2000.0)))
 	 (intrpf (make-env '(0 1 .2 1 .5 0 1 0) :duration dur :scaler .3 :base 10))
 	 (rnd (make-rand-interp 800 .2))
@@ -4069,93 +4067,217 @@
 
 
 ;;; --------------------------------------------------------------------------------
+;;;
+;;; Ash-throated flycatcher
+
+(definstrument (ash-throated-flycatcher beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.47)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.018 0.176 0.030 0.756 0.041 1.000 0.052 0.916 0.066 0.198 0.097 0.046 
+			   0.128 0.000 0.165 0.000 0.211 0.141 0.224 0.108 0.244 0.149 0.261 0.105 0.267 0.031 
+			   0.272 0.218 0.278 0.125 0.302 0.237 0.315 0.510 0.336 0.255 0.346 0.000 0.369 0.000 
+			   0.386 0.345 0.403 0.246 0.412 0.000 0.481 0.000 0.490 0.084 0.504 0.330 0.514 0.174 
+			   0.527 0.070 0.531 0.000 0.546 0.000 0.550 0.055 0.556 0.000 0.560 0.000 0.565 0.053 
+			   0.571 0.000 0.575 0.000 0.580 0.048 0.587 0.000 0.592 0.000 0.597 0.064 0.601 0.000 
+			   0.605 0.000 0.609 0.084 0.616 0.000 0.620 0.000 0.623 0.086 0.631 0.000 0.636 0.000 
+			   0.638 0.103 0.644 0.000 0.650 0.000 0.653 0.095 0.657 0.000 0.663 0.000 0.669 0.105 
+			   0.675 0.000 0.679 0.000 0.683 0.046 0.689 0.000 0.722 0.000 0.727 0.084 0.736 0.312 
+			   0.741 0.365 0.747 0.314 0.756 0.000 0.819 0.000 0.830 0.086 0.838 0.369 0.845 0.411 
+			   0.854 0.365 0.861 0.000 0.864 0.092 0.869 0.081 0.873 0.200 0.881 0.336 0.889 0.374 
+			   0.901 0.033 0.908 0.000 0.913 0.066 0.929 0.310 0.936 0.266 0.940 0.079 0.948 0.000 
+			   0.967 0.044 0.973 0.101 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .98  2 .02  4 .01)))
+	 (frqf (make-env '(0.000 0.317 0.013 0.368 0.029 0.464 0.048 0.485 0.062 0.469 0.100 0.310 0.176 0.320 
+			   0.224 0.389 0.242 0.395 0.270 0.370 0.280 0.492 0.284 0.304 0.292 0.363 0.305 0.411 
+			   0.322 0.464 0.347 0.306 0.376 0.269 0.386 0.368 0.396 0.398 0.407 0.366 0.415 0.290 
+			   0.485 0.288 0.520 0.405 0.536 0.315 0.690 0.313 0.728 0.267 0.733 0.350 0.743 0.375 
+			   0.756 0.345 0.759 0.281 0.827 0.285 0.834 0.349 0.850 0.375 0.868 0.312 0.878 0.358 
+			   0.886 0.375 0.897 0.352 0.910 0.297 0.923 0.342 0.932 0.361 0.942 0.342 0.960 0.283 
+			   0.968 0.327 0.978 0.350 0.989 0.335 1.000 0.290)
+			 :duration dur :scaler (hz->radians 6070.0))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (ash-throated-flycatcher 0 .25))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; White-header woodpecker
+
+(definstrument (white-headed-woodpecker beg amp)
+  ;; spectrum travels right off the top -- I wonder how high it actually goes
+  (let* ((start (seconds->samples beg))
+	 (dur 0.16)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.053 0.952 0.066 0.865 0.079 0.386 0.091 0.937 0.145 0.963 0.182 0.923 
+			   0.197 0.384 0.221 0.892 0.256 0.751 0.298 0.000 0.410 0.000 0.430 0.915 0.450 0.836 
+			   0.464 0.307 0.479 0.873 0.496 0.952 0.531 0.886 0.554 0.291 0.575 0.892 0.606 0.717 
+			   0.654 0.000 0.775 0.000 0.801 0.712 0.814 0.233 0.822 0.712 0.893 0.712 0.923 0.225 
+			   0.938 0.758 0.959 0.640 1.000 0.000 )
+			 :duration dur :scaler amp))
+	 (frqf1 (make-env '(0.000 0.106 0.051 0.119 0.063 0.177 0.087 0.230 0.198 0.228 0.211 0.175 0.236 0.153 
+			    0.282 0.122 0.427 0.103 0.465 0.156 0.483 0.214 0.542 0.220 0.563 0.159 0.588 0.146 
+			    0.615 0.095 0.767 0.122  0.8 0.2 0.851 0.2 0.871 0.16 0.903 0.148 
+			    0.939 0.143  .95 .14)
+			 :duration dur :scaler (hz->radians (/ 22050.0 3.0))))
+	 (frqf2 (make-env '(0.000 0.230 0.061 0.262 0.088 0.341 0.152 0.323 0.206 0.341 0.219 0.265 0.237 0.235 
+			    0.450 0.220 0.459 0.317 0.514 0.302 0.558 0.354 0.605 0.246 0.772 0.246 0.838 0.323 
+			    0.857 0.278 0.864 0.325 0.914 0.222 .95 .22)
+			 :duration dur :scaler (hz->radians (/ 22050.0 5.0))))
+
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .01 2 .1 3 .6  4 .02  6 .4 7 .05 9 .1 10 .1 12 .01)))
+	 (gen2 (make-polyshape 0.0 :partials (list 5 .9   8 .3   11 .1)))
+
+	 (rnd (make-sawtooth-wave 700 .01))
+	 (rndf (make-env '(0 0  .01 1 .08 .02 .25 .02 .3 1   .45 1 .47 .03 .64 .01 .65 1  .75 1 .77 .05 .92 .01 1 1)
+			 :duration dur)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((noise (* (env rndf) 
+			 (sawtooth-wave rnd))))
+	 (outa i (* (env ampf)
+		    (+ (* .8 (polyshape gen1 1.0 (+ (env frqf1)
+						    noise)))
+		       (* .2 (polyshape gen2 1.0 (+ (env frqf2)
+						    (* 10 noise))))))
+	       *output*)))))))
+
+;(with-sound (:play #t) (white-headed-woodpecker 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Phainopepla
+
+(definstrument (phainopepla beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.26)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.063 0.073 0.119 0.181 0.142 0.290 0.178 0.617 0.192 0.525 0.236 0.288 
+			   0.255 0.000 0.272 0.557 0.285 0.178 0.296 0.095 0.393 0.088 0.501 0.000 0.522 0.108
+			   0.538 0.634 0.647 0.000 0.663 0.000 0.681 0.484 0.704 0.211 0.777 0.643 0.850 0.961 
+			   0.880 0.998 0.899 0.974 0.958 0.277 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .9 2 .1 3 .01)))
+	 (frqf (make-env '(0.000 0.203 0.061 0.309 0.259 0.317 0.276 0.533 0.300 0.720 0.329 0.739 0.373 0.697 
+			   0.450 0.792 0.496 0.836 0.516 0.794 0.525 0.689 0.532 0.417 0.550 0.351 0.573 0.314 
+			   0.607 0.296 0.624 0.351 0.629 0.435 0.652 0.425 0.660 0.219 0.698 0.398 0.726 0.441 
+			   0.839 0.433 1.000 0.427)
+			 :duration dur :scaler (hz->radians 8040.0))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (phainopepla 0 .5))
+
+
+
+;;; --------------------------------------------------------------------------------
+
 
 (define (calling-all-animals)
   (with-sound (:scaled-to .5 :srate 44100) ;(srate needed by snd-test)
-    (mosquito 0 5 560 .2)
-    (mosquito 1 3 880 .05)
-    (knudsens-frog 2 .5)
-    (a-cricket 3 .12 4500 5400 .5 '(0 0 1 1 3 1 4 0) (/ .11 3) '(0 0 1 .8 5 1 6 0 15 0))
-    (oak-toad 4 .3)
-    (eastern-wood-pewee-1 5 .25)
-    (eastern-wood-pewee-2 6 .25)
+    (mosquito 0 5 560 0.2)
+    (mosquito 1 3 880 0.05)
+    (knudsens-frog 2 0.5)
+    (a-cricket 3 0.12 4500 5400 0.5 '(0 0 1 1 3 1 4 0) (/ 0.11 3) '(0 0 1 0.8 5 1 6 0 15 0))
+    (oak-toad 4 0.3)
+    (eastern-wood-pewee-1 5 0.25)
+    (eastern-wood-pewee-2 6 0.25)
     (broad-winged-tree-cricket 6.5 2.0 0.2)
-    (southern-cricket-frog 8 0.5)
-    (long-spurred-meadow-katydid 9 .5)
-    (northern-leopard-frog 10 .5)
-    (southern-mole-cricket 11 3 .15)
-    (green-tree-frog 13 .5)
-    (spring-peeper 14 .5)
-    (crawfish-frog 15 .5)
-    (river-frog 16 .5)
-    (indri 17 .25)
-    (field-sparrow 18.5 .25)
-    (handsome-trig 21 2 .5)
-    (fast-calling-tree-cricket 22 2 .25)
-    (dog-day-cicada 23 2 .1)
-    (linnaeus-cicada 25 2 .125)
-    (lyric-cicada 26 2 .125)
-    (confused-ground-cricket 27 2 .3)
-    (tinkling-ground-cricket 29.5 2 .3)
-    (marsh-meadow-grasshopper 31.5 .3)
-    (striped-ground-cricket 33 2 .25)
-    (sphagnum-ground-cricket 34.5 2 .3)
-    (fox-sparrow 35.5 3 .25)
-    (southeastern-field-cricket 37.5 2 .13)
-    (snowy-tree-cricket 39 2.1 .3)
-    (slightly-musical-conehead 40 2 .4)
-    (white-throated-sparrow 41 .25)
-    (tufted-titmouse 44 .3)
-    (savannah-sparrow 45.5 .5)
-    (chipping-sparrow 48 .3)
-    (pine-tree-cricket 49 2 .125)
-    (davis-tree-cricket 51 2 .125)
+    (southern-cricket-frog 8.785 0.5)
+    (long-spurred-meadow-katydid 9 0.5)
+    (northern-leopard-frog 10 0.5)
+    (southern-mole-cricket 11 3 0.15)
+    (green-tree-frog 13 0.5)
+    (spring-peeper 14 0.5)
+    (crawfish-frog 15 0.5)
+    (river-frog 16 0.5)
+    (indri 17 0.25)
+    (field-sparrow 18.5 0.25)
+    (handsome-trig 21 2 0.5)
+    (fast-calling-tree-cricket 22 2 0.25)
+    (dog-day-cicada 23 2 0.1)
+    (linnaeus-cicada 24.702 2 0.125)
+    (lyric-cicada 26 2 0.125)
+    (confused-ground-cricket 27.733 2 0.3)
+    (tinkling-ground-cricket 29.5 2 0.3)
+    (marsh-meadow-grasshopper 31.5 0.3)
+    (striped-ground-cricket 33 2 0.25)
+    (sphagnum-ground-cricket 34.5 2 0.3)
+    (fox-sparrow 35.5 3 0.25)
+    (southeastern-field-cricket 37.5 2 0.13)
+    (snowy-tree-cricket 37.984 2.1 0.3)
+    (slightly-musical-conehead 40.210 2 0.4)
+    (white-throated-sparrow 41 0.25)
+    (tufted-titmouse 44.353 0.3)
+    (savannah-sparrow 45.5 0.5)
+    (chipping-sparrow 48 0.3)
+    (pine-tree-cricket 49 2 0.125)
+    (davis-tree-cricket 51 2 0.125)
     (carolina-grasshopper 52.5 1.5 1.0)
-    (pinewoods-tree-frog 54 1.5 .15)
-    (henslows-sparrow 55.5 .5)
-    (least-flycatcher 56 .5)
-    (acadian-flycatcher 57 .25)
-    (swainsons-thrush 57.5 .25)
-    (squirrel-tree-frog-1 59 1 .1)
-    (carolina-wren 60 .25)
-    (ornate-chorus-frog 61 2 .1)
-    (bachmans-sparrow 62 .25)
-    (grasshopper-sparrow 63 .25)
-    (american-robin 64.75 .25)
-    (common-loon-1 67 .125)
-    (common-loon-2 70 .125)
-    (hermit-thrush 71.5 .25)
-    (chuck-wills-widow 73.5 .25)
-    (california-towhee 74.5 .25)
-    (black-chinned-sparrow 76 .25 #t)
-    (mourning-dove 78 .125)
-    (bobwhite 79.75 .25) 
-    (warbling-vireo 82 .25)
-    (great-horned-owl 83.5 .25)
-    (western-tanager 86 .2) 
-    (pileated-woodpecker 89 .125)
-    (whip-poor-will 91.5 .25)
-    (varied-thrush 93 .125)
-    (nashville-warbler 94.5 .25)
-    (ruffed-grouse 96 0.5)
-    (plumbeous-vireo 97 .25)
-    (american-crow 98 .5)
-    (least-bittern 100 .5)
-    (orange-crowned-warbler 101 .25)
-    (loggerhead-shrike-1 103.5 .1)
-    (loggerhead-shrike-2 105 .1)
-    (california-quail 106 .25)
-    (vermillion-flycatcher 107 .25)
-    (cardinal 108 .2)
-    (black-phoebe 109 .25)
-    (yellow-warbler 110 .25)
-    (barred-owl-1 111 .25)
-    (says-phoebe 112 .25)
-    (yellow-rumped-warbler 113.5 .25)
-    (purple-finch 115 .25)
-    (bullfrog 117 .125)
-    (northern-goshawk 118 .125)
-    (common-gull 120 .25)
+    (pinewoods-tree-frog 54.321 1.5 0.15)
+    (henslows-sparrow 55.951 0.5)
+    (least-flycatcher 56.623 0.5)
+    (acadian-flycatcher 57 0.25)
+    (swainsons-thrush 57.5 0.25)
+    (squirrel-tree-frog-1 59 1 0.1)
+    (carolina-wren 60 0.25)
+    (ornate-chorus-frog 61 2 0.1)
+    (bachmans-sparrow 62 0.25)
+    (grasshopper-sparrow 63 0.25)
+    (american-robin 65.012 0.25)
+    (common-loon-1 67.679 0.125)
+    (common-loon-2 70.556 0.125)
+    (hermit-thrush 71.5 0.25)
+    (chuck-wills-widow 73.262 0.25)
+    (california-towhee 74.663 0.25)
+    (black-chinned-sparrow 76 0.25 #t)
+    (mourning-dove 78 0.125)
+    (bobwhite 79.75 0.25)
+    (warbling-vireo 82 0.25)
+    (great-horned-owl 83.864 0.25)
+    (western-tanager 86.530 0.2)
+    (pileated-woodpecker 89 0.125)
+    (whip-poor-will 91.5 0.25)
+    (varied-thrush 92.561 0.125)
+    (nashville-warbler 93.731 0.25)
+    (ruffed-grouse 95.081 0.5)
+    (plumbeous-vireo 97 0.25)
+    (american-crow 98 0.5)
+    (least-bittern 100 0.5)
+    (orange-crowned-warbler 101 0.25)
+    (loggerhead-shrike-1 103.5 0.1)
+    (loggerhead-shrike-2 105.647 0.1)
+    (california-quail 106.126 0.25)
+    (vermillion-flycatcher 107 0.25)
+    (cardinal 107.872 0.2)
+    (black-phoebe 109 0.25)
+    (yellow-warbler 110 0.25)
+    (barred-owl-1 110.979 0.25)
+    (says-phoebe 112.552 0.25)
+    (yellow-rumped-warbler 113.511 0.25)
+    (purple-finch 115.545 0.25)
+    (bullfrog 118.269 0.125)
+    (northern-goshawk 119.381 0.125)
+    (common-gull 120 0.25)
+    (ash-throated-flycatcher 120.820 0.25)
+    (white-headed-woodpecker 121.702 0.2)
+    (phainopepla 121.5 .5)
     ))
 
 
