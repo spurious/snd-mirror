@@ -1,7 +1,14 @@
 #include "snd.h"
 
 
-#define ENVED_DOT_SIZE 10
+#define BIG_DOT_SIZE 10
+#define MEDIUM_DOT_SIZE 7
+#define LITTLE_DOT_SIZE 4
+
+static int current_dot_size = BIG_DOT_SIZE;
+
+#define MAX_PIXEL 10000
+
 
 env *free_env(env *e)
 {
@@ -192,13 +199,13 @@ static int hit_point(int *cxs, int *cys, int points, int x, int y)
   /* enved dot size (10) is big enough that we need to search for the closest dot
    *   but I think we can assume that the x's are in order
    */
-  int i, cur_i = -1, cur_min_x = 1000, cur_min_y = 1000, lim_x;
-  lim_x = x + ENVED_DOT_SIZE;
+  int i, cur_i = -1, cur_min_x = MAX_PIXEL, cur_min_y = MAX_PIXEL, lim_x;
+  lim_x = x + current_dot_size;
   for (i = 0; (i < points) && (cxs[i] <= lim_x); i++)
-    if (((x > (cxs[i] - ENVED_DOT_SIZE)) && 
-	 (x < (cxs[i] + ENVED_DOT_SIZE))) &&
-	((y > (cys[i] - ENVED_DOT_SIZE)) && 
-	 (y < (cys[i] + ENVED_DOT_SIZE))))
+    if (((x > (cxs[i] - current_dot_size)) && 
+	 (x < (cxs[i] + current_dot_size))) &&
+	((y > (cys[i] - current_dot_size)) && 
+	 (y < (cys[i] + current_dot_size))))
       {
 	if (abs(x - cxs[i]) <= cur_min_x)
 	  {
@@ -295,7 +302,7 @@ double env_editor_ungrf_y_dB(env_editor *edp, int y)
 
 
 #define EXP_SEGLEN 4
-typedef enum {ENVED_ADD_POINT,ENVED_DELETE_POINT,ENVED_MOVE_POINT} enved_point_t;
+typedef enum {ENVED_ADD_POINT, ENVED_DELETE_POINT, ENVED_MOVE_POINT} enved_point_t;
 
 static bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t reason);
 
@@ -313,7 +320,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 {
   int i, j, k;
   Float ex0, ey0, ex1, ey1, val;
-  int ix0, ix1, iy0, iy1, size = 0, lx0, lx1, ly0, ly1, index = 0;
+  int ix0, ix1, iy0, iy1, lx0, lx1, ly0, ly1, index = 0;
   Float env_val, curx, xincr;
   int dur;
   axis_info *ap;
@@ -367,11 +374,16 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
       iy1 = env_editor_grf_y_dB(edp, e->data[1]);
       if (edp->with_dots)
 	{
-	  if (e->pts < 100)
-	    size = ENVED_DOT_SIZE;
-	  else size = (int)(ENVED_DOT_SIZE * 0.4);
+	  if (e->pts < 50)
+	    current_dot_size = BIG_DOT_SIZE;
+	  else
+	    {
+	      if (e->pts < 100)
+		current_dot_size = MEDIUM_DOT_SIZE;
+	      else current_dot_size = LITTLE_DOT_SIZE;
+	    }
 	  env_editor_set_current_point(edp, 0, ix1, iy1);
-	  draw_dot(ax, ix1, iy1, size);
+	  draw_dot(ax, ix1, iy1, current_dot_size);
 	}
       if (e->base == 1.0)
 	{
@@ -386,7 +398,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 		  if (edp->with_dots)
 		    {
 		      env_editor_set_current_point(edp, j, ix1, iy1);
-		      draw_dot(ax, ix1, iy1, size);
+		      draw_dot(ax, ix1, iy1, current_dot_size);
 		    }
 		  /* now try to fill in from the last point to this one */
 		  if ((ix1 - ix0) < (2 * EXP_SEGLEN))
@@ -429,7 +441,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 		  if (edp->with_dots)
 		    {
 		      env_editor_set_current_point(edp, j, ix1, iy1);
-		      draw_dot(ax, ix1, iy1, size);
+		      draw_dot(ax, ix1, iy1, current_dot_size);
 		    }
 		  draw_line(ax, ix0, iy0, ix1, iy1);
 		  if (printing) ps_draw_line(ap, ix0, iy0, ix1, iy1);
@@ -449,7 +461,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 		  if (edp->with_dots)
 		    {
 		      env_editor_set_current_point(edp, j, ix1, iy1);
-		      draw_dot(ax, ix1, iy1, size);
+		      draw_dot(ax, ix1, iy1, current_dot_size);
 		    }
 		  draw_line(ax, ix0, iy0, ix1, iy0);
 		  draw_line(ax, ix1, iy0, ix1, iy1);
@@ -492,7 +504,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 		    {
 		      index = mus_position(ce);
 		      if (index < (e->pts - 1))
-			draw_dot(ax, ix1, iy1, size);
+			draw_dot(ax, ix1, iy1, current_dot_size);
 		    }
 		}
 	      if (curx < ex1)
@@ -505,7 +517,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 		  if (printing) ps_draw_line(ap, ix0, iy0, ix1, iy1);
 		}
 	      if (edp->with_dots)
-		draw_dot(ax, ix1, iy1, size);
+		draw_dot(ax, ix1, iy1, current_dot_size);
 	      mus_free(ce);
 	    }
 	}
@@ -513,7 +525,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 }
 
 
-void env_editor_button_motion(env_editor *edp, int evx, int evy, oclock_t motion_time, env *e)
+void env_editor_button_motion_with_xy(env_editor *edp, int evx, int evy, oclock_t motion_time, env *e, Float *new_x, Float *new_y)
 {
   axis_info *ap;
   Float x0, x1, x, y;
@@ -529,8 +541,13 @@ void env_editor_button_motion(env_editor *edp, int evx, int evy, oclock_t motion
   if (edp->env_pos < (e->pts - 1))
     x1 = e->data[edp->env_pos * 2 + 2]; /* looking for next point on right to avoid crossing it */
   else x1 = e->data[e->pts * 2 - 2];
-  if (x <= x0) x = x0 + .0001;
-  if (x >= x1) x = x1 - .0001;
+  {
+    Float dist = 0.0001;
+    if ((x1 - x0) <= dist)
+      dist = (x1 - x0) / 2.0;
+    if (x <= x0) x = x0 + dist;
+    if (x >= x1) x = x1 - dist;
+  }
   if (edp->env_pos == 0) x = e->data[0];
   if (edp->env_pos == (e->pts - 1)) x = e->data[(e->pts - 1) * 2];
   y = ungrf_y(ap, evy);
@@ -540,9 +557,18 @@ void env_editor_button_motion(env_editor *edp, int evx, int evy, oclock_t motion
       if (y > ap->y1) y = ap->y1;
     }
   if (edp->in_dB) y = un_dB(y);
-  if ((edp != ss->enved) || (check_enved_hook(e, edp->env_pos, x, y, ENVED_MOVE_POINT) == 0))
+  if ((edp != ss->enved) || 
+      (check_enved_hook(e, edp->env_pos, x, y, ENVED_MOVE_POINT) == 0))
     move_point(e, edp->env_pos, x, y);
   edp->edited = true;
+  if (new_x) (*new_x) = x;
+  if (new_y) (*new_y) = y;
+}
+
+
+void env_editor_button_motion(env_editor *edp, int evx, int evy, oclock_t motion_time, env *e)
+{
+  env_editor_button_motion_with_xy(edp, evx, evy, motion_time, e, NULL, NULL);
 }
 
 

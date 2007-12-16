@@ -2744,8 +2744,10 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 	  FREE(name);
 	}
     }
+
+  map_over_children(SOUND_PANE(ss), color_sashes);
   if (!(in_show_controls(ss)))
-    XtUnmanageChild(CONTROLS(sp));
+    hide_controls(sp);
   else show_controls(sp);
 
   if (sp->nchans == 1) 
@@ -2759,7 +2761,6 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
   if (sp->file_read_only || sp->user_read_only) show_lock(sp); else hide_lock(sp);
   if (old_name)
     report_in_minibuffer(sp, _("(translated %s)"), old_name);
-  map_over_children(SOUND_PANE(ss), color_sashes);
 
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
     {

@@ -1153,6 +1153,7 @@ env *default_env(Float x1, Float y);
 bool default_env_p(env *e);
 bool envs_equal(env *e1, env *e2);
 env_editor *new_env_editor(void);
+void env_editor_button_motion_with_xy(env_editor *edp, int evx, int evy, oclock_t motion_time, env *e, Float *new_x, Float *new_y);
 void env_editor_button_motion(env_editor *edp, int evx, int evy, oclock_t motion_time, env *e);
 bool env_editor_button_press(env_editor *edp, int evx, int evy, oclock_t time, env *e);
 void env_editor_button_release(env_editor *edp, env *e);

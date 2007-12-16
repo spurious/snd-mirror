@@ -423,6 +423,17 @@ static void text_field_activated(void)
   if (name) XtFree(name);
 }
 
+static void text_activate_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  text_field_activated();
+}
+
+
+static void order_activate_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  order_field_activated();
+}
+
 
 static void save_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
@@ -458,12 +469,6 @@ static void apply_enved_callback(Widget w, XtPointer context, XtPointer info)
     {
       apply_enved();
       last_active_channel = active_channel;
-    }
-  else 
-    {
-      if (active_widget == textL)
-	text_field_activated();
-      else order_field_activated();
     }
 }
 
@@ -543,11 +548,12 @@ static void drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boo
   ignore_button_release = false;
   if (!showing_all_envs)
     {
+      Float x, y;
 #ifdef MUS_MAC_OSX
       if ((ev->x == press_x) && (ev->y == press_y)) return;
 #endif
-      env_editor_button_motion(ss->enved, ev->x, ev->y, ev->time, active_env);
-      enved_display_point_label(ungrf_x(ss->enved->axis, ev->x), env_editor_ungrf_y_dB(ss->enved, ev->y));
+      env_editor_button_motion_with_xy(ss->enved, ev->x, ev->y, ev->time, active_env, &x, &y);
+      enved_display_point_label(x, y);
       env_redisplay();
     }
 }
@@ -583,7 +589,7 @@ static void drawer_button_press(Widget w, XtPointer context, XEvent *event, Bool
 	}
       if (env_editor_button_press(ss->enved, ev->x, ev->y, ev->time, active_env))
 	env_redisplay();
-      enved_display_point_label(ev->x, ev->y);
+      enved_display_point_label(ungrf_x(ss->enved->axis, ev->x), env_editor_ungrf_y_dB(ss->enved, ev->y));
       set_sensitive(saveB, true);
       set_sensitive(undoB, true);
       set_sensitive(revertB, true);
@@ -1066,6 +1072,7 @@ Widget create_envelope_editor(void)
       mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", enved_filter_order(ss));
       XtSetArg(args[n], XmNvalue, str); n++;
       orderL = make_textfield_widget("orderL", mainform, args, n, ACTIVATABLE, NO_COMPLETER);
+      XtAddCallback(orderL, XmNactivateCallback, order_activate_callback, NULL);
 
       /* -------- fft/fir choice -------- */
       n = 0;      
@@ -1140,6 +1147,8 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNleftWidget, nameL); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       textL = make_textfield_widget("textL", mainform, args, n, ACTIVATABLE, add_completer_func(env_name_completer, NULL));
+      XtAddCallback(textL, XmNactivateCallback, text_activate_callback, NULL);
+
 
       /* -------- dB, GRAPH ('wave') AND CLIP BUTTONS -------- */
       n = 0;

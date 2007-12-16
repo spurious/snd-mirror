@@ -517,8 +517,9 @@ static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer 
   else return(false);
   if (!showing_all_envs)
     {
-      env_editor_button_motion(ss->enved, evx, evy, motion_time, active_env);
-      enved_display_point_label(ungrf_x(ss->enved->axis, evx), env_editor_ungrf_y_dB(ss->enved, evy));
+      Float x, y;
+      env_editor_button_motion_with_xy(ss->enved, evx, evy, motion_time, active_env, &x, &y);
+      enved_display_point_label(x, y);
       env_redisplay();
     }
   return(false);
