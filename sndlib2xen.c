@@ -863,7 +863,8 @@ static int audio_io_size = 0;
 static int *audio_io_lines = NULL;
 static int *audio_io_formats = NULL;
 
-static int audio_io_format(int line)
+int mus_audio_io_format(int line);
+int mus_audio_io_format(int line)
 {
   int i;
   for (i = 0; i < audio_io_size; i++)
@@ -873,8 +874,8 @@ static int audio_io_format(int line)
 }
 
 
-#define audio_io_read_format(Line) (audio_io_format(Line) & 0xffff)
-#define audio_io_write_format(Line) (audio_io_format(Line) >> 16)
+#define audio_io_read_format(Line) (mus_audio_io_format(Line) & 0xffff)
+#define audio_io_write_format(Line) (mus_audio_io_format(Line) >> 16)
 
 static void audio_io_set_format(int line, int format)
 {
@@ -908,8 +909,8 @@ static void audio_io_set_format(int line, int format)
 }
 
 
-#define audio_io_set_read_format(Line, Format) audio_io_set_format(Line, ((audio_io_format(Line) & 0xffff0000) | Format))
-#define audio_io_set_write_format(Line, Format) audio_io_set_format(Line, ((audio_io_format(Line) & 0xffff) | (Format << 16)))
+#define audio_io_set_read_format(Line, Format) audio_io_set_format(Line, ((mus_audio_io_format(Line) & 0xffff0000) | Format))
+#define audio_io_set_write_format(Line, Format) audio_io_set_format(Line, ((mus_audio_io_format(Line) & 0xffff) | (Format << 16)))
 
 
 static XEN g_mus_audio_open_output(XEN dev, XEN srate, XEN chans, XEN format, XEN size)

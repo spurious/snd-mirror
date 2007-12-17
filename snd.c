@@ -369,6 +369,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
   ss = (snd_state *)CALLOC(1, sizeof(snd_state));
   ss->fam_ok = false;
+  ss->cg_seen = false;
   ss->startup_errors = NULL;
   mus_sound_initialize(); /* has to precede version check (mus_audio_moniker needs to be setup in Alsa/Oss) */
 

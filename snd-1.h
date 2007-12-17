@@ -556,7 +556,7 @@ typedef struct snd_state {
   bool jump_ok, exiting;
   env_editor *enved;
   oclock_t click_time;
-  bool fam_ok;
+  bool fam_ok, cg_seen;
   FAMConnection *fam_connection;
   void (*snd_error_handler)(const char *error_msg, void *data);
   void *snd_error_data;

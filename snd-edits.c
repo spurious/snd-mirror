@@ -7244,7 +7244,7 @@ static void ripple_mixes_1(chan_info *cp, off_t beg, off_t len, off_t change, Fl
       (cp->edit_ctr > 0))
     {
       ed_list *ed;
-      int i, low_id = 0, high_id; /* low_id confuses the compiler, but it will always get set below (current_states starts NULL etc) */
+      int i, low_id = 0, high_id = 0, size = 0; /* low_id confuses the compiler, but it will always get set below (current_states starts NULL etc) */
       mix_state **current_states = NULL;
 
       ed = cp->edits[cp->edit_ctr];
@@ -7255,7 +7255,7 @@ static void ripple_mixes_1(chan_info *cp, off_t beg, off_t len, off_t change, Fl
 	      (FRAGMENT_MIX_LIST(ed, i)) &&
 	      (FRAGMENT_MIX_LIST_SIZE(ed, i) > 0))
 	    {
-	      int j, size = 0;
+	      int j;
 	      if (current_states == NULL)
 		{
 		  low_id = lowest_mix_id();
@@ -7275,6 +7275,16 @@ static void ripple_mixes_1(chan_info *cp, off_t beg, off_t len, off_t change, Fl
 		      if (!new_ms)
 			{
 			  new_ms = copy_mix_state(old_ms);
+#if MUS_DEBUGGING
+			  if (!new_ms)
+			    fprintf(stderr, "copy_mix_state returned null mix?");
+			  else
+			    {
+			      if (new_ms->mix_id > high_id)
+				fprintf(stderr, "copy_mix_state new mix id: %d, high: %d, old: %d\n",
+					new_ms->mix_id, high_id, old_ms->mix_id);
+			    }
+#endif
 			  add_ed_mix(ed, new_ms);
 			  if (new_ms->beg >= beg)
 			    {

@@ -846,12 +846,12 @@ static void deferred_region_to_temp_file(region *r)
 		      /* read and write return 0 to indicate end of file, apparently */
 		      n = read(fdi, buffer, bytes);
 		      if (n < 0)
-			fprintf(stderr, "IO error while reading region temp file: %d %s\n", n, strerror(errno));
+			fprintf(stderr, "IO error while reading region temp file: %d %s\n", (int)n, strerror(errno));
 		      if (n > 0)
 			{
 			  n = write(fdo, buffer, bytes);
 			  if (n < 0)
-			    fprintf(stderr, "IO error while writing region temp file: %d %s\n", n, strerror(errno));
+			    fprintf(stderr, "IO error while writing region temp file: %d %s\n", (int)n, strerror(errno));
 			}
 		    }
 		}

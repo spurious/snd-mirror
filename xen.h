@@ -225,6 +225,7 @@
 
 #if HAVE_COMPLEX_TRIG
   #if HAVE_SCM_C_MAKE_RECTANGULAR
+    #define XEN_HAVE_COMPLEX_NUMBERS 1
     #define XEN_COMPLEX_P(Arg)       scm_is_complex(Arg)
     #if defined(__GNUC__) && (!(defined(__cplusplus)))
       #define XEN_TO_C_COMPLEX(a)    ({ XEN _xen_h_23_ = a; (scm_c_real_part(_xen_h_23_) + scm_c_imag_part(_xen_h_23_) * _Complex_I); })    
@@ -234,11 +235,13 @@
       #define C_TO_XEN_COMPLEX(a)    scm_c_make_rectangular(creal(a), cimag(a))
     #endif
   #else
-    #define XEN_COMPLEX_P(Arg)       (XEN_NOT_FALSE_P(scm_number_p(Arg)))
-    #define XEN_TO_C_COMPLEX(a)      XEN_TO_C_DOUBLE(scm_real_part(a)) + (XEN_TO_C_DOUBLE(scm_imag_part(a)) * _Complex_I)
-    #define C_TO_XEN_COMPLEX(a)      scm_make_complex(creal(a), cimag(a))
+    #if HAVE_SCM_MAKE_COMPLEX
+      #define XEN_HAVE_COMPLEX_NUMBERS 1
+      #define XEN_COMPLEX_P(Arg)       (XEN_NOT_FALSE_P(scm_number_p(Arg)))
+      #define XEN_TO_C_COMPLEX(a)      XEN_TO_C_DOUBLE(scm_real_part(a)) + (XEN_TO_C_DOUBLE(scm_imag_part(a)) * _Complex_I)
+      #define C_TO_XEN_COMPLEX(a)      scm_make_complex(creal(a), cimag(a))
+    #endif
   #endif
-  #define XEN_HAVE_COMPLEX_NUMBERS 1
 #endif
 
 #if HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR

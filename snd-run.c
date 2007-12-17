@@ -7222,27 +7222,14 @@ static xen_value *channels_1(ptree *pt, xen_value **args, int num_args)
 
 static void c_g_p(int *args, ptree *pt) 
 {
-  /* explicit check here speeds this up by about a factor of 3! but it's still slow */
-  /*   does this have to be in a graph? C-g in the listener seems to have no effect */
-#if USE_GTK
-  if (gtk_events_pending())
-#else
-  #if USE_MOTIF
-  if ((XtPending()) & (XtIMXEvent | XtIMAlternateInput))
-  #endif
-#endif
+  check_for_event();
+  if ((ss->cg_seen) || (ss->stopped_explicitly))
     {
-      check_for_event();
-      if (ss->stopped_explicitly)
-	{
-	  ss->stopped_explicitly = false;
-	  BOOL_RESULT = (Int)true;
-	}
-      else BOOL_RESULT = (Int)false;
+      ss->stopped_explicitly = false;
+      ss->cg_seen = false;
+      BOOL_RESULT = (Int)true;
     }
-#if USE_GTK || USE_MOTIF
   else BOOL_RESULT = (Int)false;
-#endif
 }
 
 
@@ -7358,6 +7345,66 @@ static xen_value *report_in_minibuffer_1(ptree *pt, xen_value **args, int num_ar
   for (k = num_args + 1; k <= 2; k++) FREE(true_args[k]);
   return(rtn);
 }
+
+
+/* ---------------- mus-audio stuff ---------------- */
+
+INT_INT_OP(mus_audio_close)
+
+
+static char *audio_write_obuf = NULL;
+static int audio_write_obuf_size = 0;
+int mus_audio_io_format(int line);
+
+static void mus_audio_write_0(int *args, ptree *pt) 
+{
+  #define audio_io_write_format(Line) (mus_audio_io_format(Line) >> 16)
+
+  sound_data *sd;
+  int outbytes, frms, fmt, fd;
+
+  sd = SOUND_DATA_ARG_2;
+  frms = INT_ARG_3;
+  fd = INT_ARG_1;
+
+  fmt = audio_io_write_format(fd);
+  outbytes = frms * sd->chans * mus_bytes_per_sample(fmt);
+
+  if (outbytes > audio_write_obuf_size)
+    {
+      if (audio_write_obuf) FREE(audio_write_obuf);
+      audio_write_obuf_size = outbytes;
+      audio_write_obuf = (char *)CALLOC(outbytes, sizeof(char));
+    }
+
+#if SNDLIB_USE_FLOATS
+  mus_file_write_buffer(fmt, 0, frms - 1, sd->chans, sd->data, audio_write_obuf, true); /* true -> clipped */
+#else
+  {
+    mus_sample_t **sdata;
+    int i, j;
+    sdata = (mus_sample_t **)CALLOC(sd->chans, sizeof(mus_sample_t *));
+    for (i = 0; i < sd->chans; i++) sdata[i] = (mus_sample_t *)CALLOC(sd->length, sizeof(mus_sample_t));
+    for (i = 0; i < sd->chans; i++)
+      for (j = 0; j < sd->length; j++)
+	sdata[i][j] = MUS_DOUBLE_TO_SAMPLE(sd->data[i][j]);
+    mus_file_write_buffer(fmt, 0, frms - 1, sd->chans, sdata, audio_write_obuf, true);
+    for (i = 0; i < sd->chans; i++)
+      FREE(sdata[i]);
+    FREE(sdata);
+  }
+#endif
+  INT_RESULT = mus_audio_write(fd, audio_write_obuf, outbytes);
+
+}
+
+
+static xen_value *mus_audio_write_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(package(prog, R_INT, mus_audio_write_0, "mus_audio_write_0", args, 3));
+}
+
+
 
 
 /* ---------------- sample-reader stuff ---------------- */
@@ -12102,7 +12149,9 @@ static XEN eval_ptree_to_xen(ptree *pt)
   last_error_ptree = NULL;
   saw_mus_error = 1;
 
+  ss->cg_seen = false;
   eval_ptree(pt);
+  ss->cg_seen = false;
   result = xen_value_to_xen(pt, pt->result);
   free_ptree(pt);
 
@@ -12545,6 +12594,9 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_header_type_to_string, make_walker(mus_header_type_to_string_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
   INIT_WALKER(S_mus_data_format_to_string, make_walker(mus_data_format_to_string_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
   INIT_WALKER(S_mus_bytes_per_sample, make_walker(mus_bytes_per_sample_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+
+  INIT_WALKER(S_mus_audio_close, make_walker(mus_audio_close_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_mus_audio_write, make_walker(mus_audio_write_1, NULL, NULL, 3, 3, R_INT, false, 3, R_INT, R_SOUND_DATA, R_INT));
 
   INIT_WALKER(S_vct_ref, make_walker(vct_ref_1, NULL, vct_set_1, 2, 2, R_FLOAT, false, 2, R_VCT, R_INT));
   INIT_WALKER(S_vct_length, make_walker(vct_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_VCT));

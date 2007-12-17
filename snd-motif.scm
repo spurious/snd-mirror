@@ -751,7 +751,7 @@ Reverb-feedback sets the scaler on the feedback.
 			     (lambda (w context info)
 			       (if running
 				   (set! running #f)
-				   (let* ((audio-info (open-play-output 1 22050 #f 128))
+				   (let* ((audio-info (open-play-output 1 44100 #f 128))
 					  (audio-fd (car audio-info))
 					  (outchans (cadr audio-info))
 					  (frames (caddr audio-info))
@@ -3025,7 +3025,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 		       (lambda (w context info)
 			 (if running
 			     (set! running #f)
-			     (let* ((audio-info (open-play-output 1 22050 #f 128))
+			     (let* ((audio-info (open-play-output 1 44100 #f 128))
 				    (audio-fd (car audio-info))
 				    (outchans (cadr audio-info))
 				    (frames (caddr audio-info))
