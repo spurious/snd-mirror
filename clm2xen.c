@@ -3807,15 +3807,45 @@ static XEN g_wave_train_p(XEN obj)
 
 /* ---------------- waveshape ---------------- */
 
-static Float *list_to_partials(XEN harms, int *npartials)
+enum {NO_PROBLEM_IN_LIST, NULL_LIST, ODD_LENGTH_LIST, NON_NUMBER_IN_LIST};
+
+static char* list_to_partials_error_to_string(int code)
+{
+  switch (code)
+    {
+    case NO_PROBLEM_IN_LIST: return("nothing wrong with partials list??");          break;
+    case NULL_LIST:          return("partials list is null");                       break;
+    case ODD_LENGTH_LIST:    return("partials list has an odd number of elements"); break;
+    case NON_NUMBER_IN_LIST: return("partials list starts with a non-number");      break;
+    }
+  return("unknown error");
+}
+
+
+static Float *list_to_partials(XEN harms, int *npartials, int *error_code)
 {
   int listlen, i, maxpartial, curpartial;
   Float *partials = NULL;
   XEN lst;
   listlen = XEN_LIST_LENGTH(harms);
-  if ((listlen == 0) || (listlen & 1)) return(NULL);
-  if (!(XEN_NUMBER_P(XEN_CAR(harms)))) return(NULL);
+  if (listlen == 0)
+    {
+      (*error_code) = NULL_LIST;
+      return(NULL);
+    }
+  if (listlen & 1)
+    {
+      (*error_code) = ODD_LENGTH_LIST;
+      return(NULL);
+    }
+  if (!(XEN_NUMBER_P(XEN_CAR(harms)))) 
+    {
+      (*error_code) = NON_NUMBER_IN_LIST;
+      return(NULL);
+    }
   /* the list is '(partial-number partial-amp ... ) */
+  (*error_code) = NO_PROBLEM_IN_LIST;
+
   maxpartial = XEN_TO_C_INT_OR_ELSE(XEN_CAR(harms), 0);
   for (i = 2, lst = XEN_CDDR(XEN_COPY_ARG(harms)); i < listlen; i += 2, lst = XEN_CDDR(lst))
     {
@@ -3895,12 +3925,13 @@ is the same in effect as " S_make_oscil
 
       if (!(XEN_KEYWORD_P(keys[1])))
         {
+	  int error = NO_PROBLEM_IN_LIST;
 	  XEN_ASSERT_TYPE(XEN_LIST_P(keys[1]), keys[1], orig_arg[1], S_make_waveshape, "a list");
-	  partials = list_to_partials(keys[1], &npartials);
+	  partials = list_to_partials(keys[1], &npartials, &error);
 	  if (partials == NULL)
 	    XEN_ERROR(NO_DATA, 
 		      XEN_LIST_3(C_TO_XEN_STRING(S_make_waveshape), 
-				 C_TO_XEN_STRING("partials list empty?"), 
+				 C_TO_XEN_STRING(list_to_partials_error_to_string(error)), 
 				 keys[1]));
 	  partials_allocated = true;
         }
@@ -3964,6 +3995,8 @@ partial 2 twice as loud as 3."
   int npartials, size, len = 0;
   Float *partials, *wave;
   XEN gwave;
+  int error = NO_PROBLEM_IN_LIST;
+
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(amps, len), amps, XEN_ARG_1, S_partials_to_waveshape, "a list");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(s_size), s_size, XEN_ARG_2, S_partials_to_waveshape, "an integer");
   if (XEN_INTEGER_P(s_size))
@@ -3971,19 +4004,14 @@ partial 2 twice as loud as 3."
   else size = clm_table_size;
   if ((size <= 0) || (size > MAX_TABLE_SIZE))
     XEN_OUT_OF_RANGE_ERROR(S_partials_to_waveshape, 2, s_size, "~A: bad size?");
-  if (len == 0)
-    XEN_ERROR(NO_DATA,
+
+  partials = list_to_partials(amps, &npartials, &error);
+  if (partials == NULL)
+    XEN_ERROR(NO_DATA, 
 	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_waveshape), 
-			 C_TO_XEN_STRING("partials list empty?"), 
+			 C_TO_XEN_STRING(list_to_partials_error_to_string(error)), 
 			 amps));
-  if (len & 1)
-    XEN_ERROR(BAD_TYPE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_waveshape), 
-			 C_TO_XEN_STRING("odd length partials list?"), 
-			 amps));
-  if (!(XEN_NUMBER_P(XEN_CAR(amps))))
-    XEN_ASSERT_TYPE(false, amps, XEN_ARG_1, S_partials_to_waveshape, "a list of numbers (partial numbers with amplitudes)");
-  partials = list_to_partials(amps, &npartials);
+
   wave = mus_partials_to_waveshape(npartials, partials, size, (Float *)CALLOC(size, sizeof(Float)));
   gwave = xen_make_vct(size, wave);
   FREE(partials);
@@ -4010,6 +4038,8 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
   int npartials, len = 0;
   mus_polynomial_t kind = MUS_CHEBYSHEV_FIRST_KIND;
   Float *partials, *wave;
+  int error = NO_PROBLEM_IN_LIST;
+
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(amps, len), amps, XEN_ARG_1, S_partials_to_polynomial, "a list");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ukind), ukind, XEN_ARG_2, S_partials_to_polynomial, "either " S_mus_chebyshev_first_kind " or " S_mus_chebyshev_second_kind);
   if (XEN_INTEGER_P(ukind))
@@ -4020,19 +4050,14 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
 	kind = (mus_polynomial_t)ck;
       else XEN_OUT_OF_RANGE_ERROR(S_partials_to_polynomial, 2, ukind, "~A: unknown Chebyshev polynomial kind");
     }
-  if (len == 0)
+
+  partials = list_to_partials(amps, &npartials, &error);
+  if (partials == NULL)
     XEN_ERROR(NO_DATA, 
 	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_polynomial), 
-			 C_TO_XEN_STRING("partials list empty?"), 
+			 C_TO_XEN_STRING(list_to_partials_error_to_string(error)), 
 			 amps));
-  if (len & 1)
-    XEN_ERROR(BAD_TYPE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_polynomial), 
-			 C_TO_XEN_STRING("odd length partials list?"), 
-			 amps));
-  if (!(XEN_NUMBER_P(XEN_CAR(amps))))
-    XEN_ASSERT_TYPE(false, amps, XEN_ARG_1, S_partials_to_polynomial, "a list of numbers (partial numbers with amplitudes)");
-  partials = list_to_partials(amps, &npartials);
+
   wave = mus_partials_to_polynomial(npartials, partials, kind);
   return(xen_return_first(xen_make_vct(npartials, wave), amps));
 }
@@ -4118,12 +4143,13 @@ is the same in effect as " S_make_oscil
 	{
 	  if (!(XEN_KEYWORD_P(keys[3])))
 	    {
+	      int error = NO_PROBLEM_IN_LIST;
 	      XEN_ASSERT_TYPE(XEN_LIST_P(keys[3]), keys[3], orig_arg[3], S_make_polyshape, "a list");
-	      partials = list_to_partials(keys[3], &npartials);
+	      partials = list_to_partials(keys[3], &npartials, &error);
 	      if (partials == NULL)
 		XEN_ERROR(NO_DATA, 
 			  XEN_LIST_3(C_TO_XEN_STRING(S_make_polyshape), 
-				     C_TO_XEN_STRING("coeffs and partials list empty?"), 
+				     C_TO_XEN_STRING(list_to_partials_error_to_string(error)), 
 				     keys[3]));
 	      coeffs = mus_partials_to_polynomial(npartials, partials, kind);
 	      csize = npartials;

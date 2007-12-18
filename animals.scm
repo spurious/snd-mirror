@@ -1,6 +1,40 @@
 ;;; animals.scm
 
 
+;;; sources:
+;;; "The Diversity of Animal Sounds", Cornell Lab of Ornithology
+;;; Geoffrey Keller, "Bird Songs of California" (Cornell)
+;;; Bret Whitney et al, "Voices of New World Parrots" (Cornell)
+;;; Carlos Davidson, "Frog and Toad Calls of the Rocky Mountains" (Cornell)
+;;; Geoffrey Keller, "Bird Songs of the Lower Rio Grande Valley" (Cornell)
+;;; "Voices of North American Owls" (Cornell)
+;;; Roche and Chevereau, "Guide to the Sounds of the Birds of Europe"
+;;; from Richard Mankin, Reference Library of Digitized Insect Sounds, http://www.ars.usda.gov/sp2UserFiles/person/3559/soundlibrary.html
+;;; Lang Elliott, Donald and Lillian Stokes, "Stokes Field Guide to Bird Songs, Eastern Region"
+;;; Lang Elliott "The Calls of Frogs and Toads"
+;;; Lang Elliott and W Herschberger "The Songs of the Insects"
+;;; Lang Elliott "Music of the Birds"
+
+
+
+;;; -------- frogs and toads
+;;; Oak toad
+;;; Knudsen's frog
+;;; Southern cricket frog
+;;; Northern leopard frog
+;;; Spring peeper
+;;; Crawfish frog
+;;; River frog
+;;; Green tree-frog
+;;; Pinewoods tree frog
+;;; Squirrel tree frog
+;;; Ornate chorus frog
+;;; Bullfrog
+;;; Texas toad
+
+;;; -------- mammals --------
+;;; Indri
+
 ;;; -------- insects --------
 ;;; mosquito
 ;;; Long-spurred meadow katydid
@@ -23,23 +57,6 @@
 ;;; Carolina grasshopper
 ;;; Slightly musical conehead
 
-;;; -------- frogs and toads
-;;; Oak toad
-;;; Knudsen's frog
-;;; Southern cricket frog
-;;; Northern leopard frog
-;;; Spring peeper
-;;; Crawfish frog
-;;; River frog
-;;; Green tree-frog
-;;; Pinewoods tree frog
-;;; Squirrel tree frog
-;;; Ornate chorus frog
-;;; Bullfrog
-
-;;; -------- mammals --------
-;;; Indri
-
 ;;; -------- birds --------
 ;;; Fox sparrow
 ;;; White-throated sparrow
@@ -60,6 +77,7 @@
 ;;; Carolina wren
 ;;; Warbling vireo
 ;;; Plumbeous vireo
+;;; Cassin's vireo
 ;;; Nashville warbler
 ;;; Orange-crowned warbler
 ;;; Yellow warbler
@@ -110,47 +128,7 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;; mosquito 
-;;;
-;;; from Richard Mankin, Reference Library of Digitized Insect Sounds, http://www.ars.usda.gov/sp2UserFiles/person/3559/soundlibrary.html
-;;; need to make freq env flicks at call time (is there a comb-filter effect as it gets near?)
-
-(definstrument (mosquito beg dur freq amp)
-  (let* ((start (seconds->samples beg))
-	 (stop (+ start (seconds->samples dur)))
-	 (carrier (make-oscil freq))
-	 (modulator1 (make-oscil (* freq 2))) ; or 1 (but leave lower mult at 2??)
-	 (modulator3 (make-oscil (* freq 3)))
-	 (modulator2 (make-oscil (* freq 8))) ; or 9
-	 (ampf (make-env '(0 0 .2 .5 1 .5 2 .5 3 1 4 .5 5 .5) :scaler amp :duration dur :base 32))
-	 (frqf (make-env '(0 0  1 0  1.01 0.1  1.03 -0.1  1.05 0.0  3 0 3.02 .05 3.03 -0.1 3.1 0 5 0.0) :duration dur :scaler (hz->radians freq)))
-	 (vib (make-rand-interp 10.0 (hz->radians 10)))
-	 (indf (make-rand-interp 1 .5))
-	 (index2 (hz->radians (* freq 1.0)))
-	 (index3 (hz->radians (* freq 0.5))))
-    (run
-     (lambda ()
-       (do ((i start (1+ i)))
-	   ((= i stop))
-	 (let* ((amp (env ampf))
-		(frq (+ (env frqf) (rand-interp vib)))
-		(pitch (oscil carrier frq))
-		(index1 (hz->radians (* freq (+ 1.0 (rand-interp indf))))))
-	   (outa i (* amp
-		      (+ (* 0.6 (oscil modulator1 (+ (* 2 frq) (* index1 pitch))))
-			 (* 0.3 (oscil modulator3 (+ (* 3 frq) (* index3 pitch))))
-			 (* 0.1 (oscil modulator2 (+ (* 8 frq) (* index2 pitch))))))
-		 *output*)))))))
-
-
-;(with-sound (:play #t) (mosquito 0 5 560 .2) (mosquito 1 3 880 .05))
-
-
-;;; --------------------------------------------------------------------------------
-;;;
 ;;; Knudsen's frog
-;;;
-;;; from "The Diversity of Animal Sounds", Cornell Lab of Ornithology
 
 (definstrument (a-frog beg dur freq amp amp-env gliss gliss-env pulse-dur pulse-env fm-index fm-freq)
   (let* ((start (seconds->samples beg))
@@ -220,11 +198,6 @@
 
 
 
-;;; L Elliott "The Calls of Frogs and Toads"
-;;; L Elliott and W Herschberger "The Songs of the Insects"
-;;; L Elliott "Music of the Birds"
-
-
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; Oak Toad
@@ -259,53 +232,6 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;; Broad-winged Tree-cricket
-
-(definstrument (broad-winged-tree-cricket beg dur amp)
-  (let* ((start (seconds->samples beg))
-	 (stop (+ start (seconds->samples dur)))
-	 (freq 1700)
-	 (base (make-oscil freq))
-	 (base1 (make-oscil (* 2 freq)))
-	 (base2 (make-oscil (* 3 freq)))
-	 (base3 (make-oscil (* 4 freq)))
-	 (base4 (make-oscil (* 5 freq)))
-	 (ampmod (make-triangle-wave 155))
-	 (ampf (make-env '(0 0 8 1 20 1 21 0) :duration dur :scaler amp))
-	 (frqf (make-env '(0 1  1 -1  2 -1) :duration .06 :base 10.0))
-	 (pulsef (make-env '(0 0 1 .1 6 .2 7 0 8 .3 10 1 18 .9 21 .1 23 .3 28 .1 30 0) :duration .06 :base .1))
-	 (pulser (make-pulse-train (/ 1.0 .06)))
-	 (indf (make-env '(0 0 10 0 18 1 23 1 26 0 30 0) :duration .06))
-	 (noise (make-rand-interp 1000)))
-    (run
-     (lambda ()
-       (do ((i start (1+ i)))
-	   ((= i stop))
-	 (let* ((pulse (pulse-train pulser)))
-	   (if (> pulse .1)
-	       (begin
-		 (mus-reset pulsef)
-		 (mus-reset frqf)
-		 (mus-reset indf)))
-	   (let* ((buzz (+ (* (hz->radians 40) (env frqf))
-			   (* .005 (rand-interp noise)))))
-	     (outa i (* (env ampf)
-			(env pulsef)
-			(+ .93 (* .07 (triangle-wave ampmod)))
-			(+ (* .7 (oscil base buzz))
-			   (* .05 (oscil base1 (* 2 buzz)))
-			   (* .04 (oscil base2 (* 3 buzz)))
-			   (* (env indf)
-			      (+ (* .02 (oscil base3 (* 4 buzz)))
-				 (* .02 (oscil base4 (* 5 buzz)))))))
-		   *output*))))))))
-
-;(with-sound (:play #t) (broad-winged-tree-cricket 0 1.0 0.3))
-
-
-
-;;; --------------------------------------------------------------------------------
-;;;
 ;;; Southern cricket frog
 
 (definstrument (southern-cricket-frog beg amp)
@@ -332,45 +258,6 @@
 	       *output*)))))))
 
 ;(with-sound () (southern-cricket-frog 0 0.5))
-
-
-;;; --------------------------------------------------------------------------------
-;;;
-;;; Long-spurred meadow katydid
-;;;
-;;;    I can barely hear this at its true pitch, so the match was
-;;;    done down one or two octaves -- I think the recording has cut off high info (above 20Khz) --
-;;;    need much higher srate to see what this guy is really doing.  This is not very good...
-
-(definstrument (long-spurred-meadow-katydid beg amp)
-  (let* ((start (seconds->samples beg))
-	 (dur 10.1) ; overall duration
-	 (slow-start 2.2) ; buzz at start
-	 (soft-end (+ slow-start 4.0)) ; softer section, rest is full vol
-	 (stop (+ start (seconds->samples dur)))
-	 ;; looks like the same basic pulse throughout, almost same speed at start but every other one is squelched
-	 ;; slow startup pulse starts much faster (.06 mid-pulse duration, .0013 base pulse)
-	 (carrier (make-sine-summation 13200 0 4 .7 (/ 800 13200))) 
-	 (modulator (make-oscil 1500 (* 0.5 pi)))
-	 (noise (make-rand-interp 5000))
-	 (peep (make-pulsed-env '(0 0 1 0 2 .2 3 0 5 .75 8 1 10 0 11 0) .06 (/ 1.0 .06)))
-	 (ampf (make-env (list 0 0 .5 .5 slow-start .4 soft-end .4 (+ soft-end .5) 1 (- dur 1) 1 dur 0.0) :duration dur :scaler amp))
-	 (pulsef (make-env (list 0 -1 slow-start -1 (+ slow-start .03) 0 dur 0) :duration dur :scaler (hz->radians 8))))
-    (run
-     (lambda ()
-       (do ((i start (1+ i)))
-	   ((= i stop))
-	 (let* ((frq (env pulsef))
-		(md (oscil modulator)))
-	   (outa i (* (env ampf)
-		      (pulsed-env peep frq)
-		      md md
-		      (sine-summation carrier (+ (* frq (/ 13200 16))
-					       (* .1 (rand-interp noise))
-					       (* .1 md))))
-		 *output*)))))))
-
-;(with-sound () (long-spurred-meadow-katydid 0 .5))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -421,38 +308,6 @@
 	   (outa i result *output*)))))))
 
 ;(with-sound (:statistics #t :play #t) (northern-leopard-frog 0 .5))
-
-
-;;; --------------------------------------------------------------------------------
-;;;
-;;; Southern mole cricket
-
-(definstrument (southern-mole-cricket beg dur amp)
-  (let* ((start (seconds->samples beg))
-	 (stop (+ start (seconds->samples dur)))
-	 (ampf (make-env '(0 0 1 1 20 1 21 0) :scaler amp :duration dur))
-	 (gen1 (make-oscil 2700))
-	 (gen2 (make-oscil (* 2700 2.4)))
-	 (gen3 (make-oscil 60))
-	 (gen5 (make-oscil 360))
-	 (gen4 (make-oscil (* 2700 3.2)))
-	 (gargle (make-rand-interp 360 (hz->radians (* .25 360)))))
-    (run
-     (lambda ()
-       (do ((i start (1+ i)))
-	   ((= i stop))
-	 (let* ((pval (oscil gen3))
-		(noise (rand-interp gargle))
-		(aval (+ .7 (* .3 (oscil gen5)))))
-	   (outa i (* (env ampf)
-		      (+ (* (max pval 0.0)
-			    (+ (* .95 (oscil gen1 noise))
-			       (* .05 (oscil gen4 noise))))
-			 (* (max (- 1.0 pval) 0.0)
-			    (* .05 aval (oscil gen2 (* 2.4 noise))))))
-		 *output*)))))))
-
-;(with-sound () (southern-mole-cricket 0 3 .5))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -828,6 +683,47 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;;
+;;; Texas toad
+
+(define (texas-toad beg1 dur1 amp1)
+
+  (definstrument (texas-toad-1 beg dur amp)
+    (let* ((start (seconds->samples beg))
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0 0 .1 1 25 1 26 0) :duration dur :scaler amp))
+	   (pulse-dur .0173)
+	   (gen (make-polyshape 2460 :partials (list 1 .9  2 .01  3 .05  4 .005  5 .01)))
+	   (pulsef (make-env '(0 0 1 1 3 1 4 0) :duration pulse-dur))
+	   (pulse2 (make-blackman (/ 4.0 pulse-dur) 2))
+	   (pulser (make-pulse-train (/ 1.0 .02666)))
+	   (rnd (make-rand-interp 4000 (hz->radians 200))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (if (> (pulse-train pulser) .1)
+	       (begin
+		 (mus-reset pulsef)
+		 (mus-reset pulse2)))
+	   (outa i (* (env ampf)
+		      (env pulsef)
+		      (blackman pulse2 0.0)
+		      (polyshape gen 1.0 (rand-interp rnd)))
+		 *output*))))))
+
+  (let ((last-dur 0.0)
+	(last-call (+ beg1 dur1 (- 0.4))))
+    (do ((call-beg beg1 (+ call-beg last-dur 0.3 (random 0.2))))
+	((>= call-beg last-call))
+      (set! last-dur (+ .6 (random .25)))
+      (display (format #f "beg: ~A, dur: ~A~%" call-beg last-dur))
+      (texas-toad-1 call-beg last-dur amp1))))
+
+;(with-sound (:play #t) (texas-toad 0 2.0 0.5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
 ;;; Indri
 ;;;
 ;;; close in spectrum, amp, freq, but the original has what sounds like a ton of reverb
@@ -863,6 +759,161 @@
 
 ;(with-sound () (indri 0 .5))
 
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; mosquito 
+;;;
+;;; need to make freq env flicks at call time (is there a comb-filter effect as it gets near?)
+
+(definstrument (mosquito beg dur freq amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (carrier (make-oscil freq))
+	 (modulator1 (make-oscil (* freq 2))) ; or 1 (but leave lower mult at 2??)
+	 (modulator3 (make-oscil (* freq 3)))
+	 (modulator2 (make-oscil (* freq 8))) ; or 9
+	 (ampf (make-env '(0 0 .2 .5 1 .5 2 .5 3 1 4 .5 5 .5) :scaler amp :duration dur :base 32))
+	 (frqf (make-env '(0 0  1 0  1.01 0.1  1.03 -0.1  1.05 0.0  3 0 3.02 .05 3.03 -0.1 3.1 0 5 0.0) :duration dur :scaler (hz->radians freq)))
+	 (vib (make-rand-interp 10.0 (hz->radians 10)))
+	 (indf (make-rand-interp 1 .5))
+	 (index2 (hz->radians (* freq 1.0)))
+	 (index3 (hz->radians (* freq 0.5))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let* ((amp (env ampf))
+		(frq (+ (env frqf) (rand-interp vib)))
+		(pitch (oscil carrier frq))
+		(index1 (hz->radians (* freq (+ 1.0 (rand-interp indf))))))
+	   (outa i (* amp
+		      (+ (* 0.6 (oscil modulator1 (+ (* 2 frq) (* index1 pitch))))
+			 (* 0.3 (oscil modulator3 (+ (* 3 frq) (* index3 pitch))))
+			 (* 0.1 (oscil modulator2 (+ (* 8 frq) (* index2 pitch))))))
+		 *output*)))))))
+
+
+;(with-sound (:play #t) (mosquito 0 5 560 .2) (mosquito 1 3 880 .05))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Southern mole cricket
+
+(definstrument (southern-mole-cricket beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 1 1 20 1 21 0) :scaler amp :duration dur))
+	 (gen1 (make-oscil 2700))
+	 (gen2 (make-oscil (* 2700 2.4)))
+	 (gen3 (make-oscil 60))
+	 (gen5 (make-oscil 360))
+	 (gen4 (make-oscil (* 2700 3.2)))
+	 (gargle (make-rand-interp 360 (hz->radians (* .25 360)))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let* ((pval (oscil gen3))
+		(noise (rand-interp gargle))
+		(aval (+ .7 (* .3 (oscil gen5)))))
+	   (outa i (* (env ampf)
+		      (+ (* (max pval 0.0)
+			    (+ (* .95 (oscil gen1 noise))
+			       (* .05 (oscil gen4 noise))))
+			 (* (max (- 1.0 pval) 0.0)
+			    (* .05 aval (oscil gen2 (* 2.4 noise))))))
+		 *output*)))))))
+
+;(with-sound () (southern-mole-cricket 0 3 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Broad-winged Tree-cricket
+
+(definstrument (broad-winged-tree-cricket beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (freq 1700)
+	 (base (make-oscil freq))
+	 (base1 (make-oscil (* 2 freq)))
+	 (base2 (make-oscil (* 3 freq)))
+	 (base3 (make-oscil (* 4 freq)))
+	 (base4 (make-oscil (* 5 freq)))
+	 (ampmod (make-triangle-wave 155))
+	 (ampf (make-env '(0 0 8 1 20 1 21 0) :duration dur :scaler amp))
+	 (frqf (make-env '(0 1  1 -1  2 -1) :duration .06 :base 10.0))
+	 (pulsef (make-env '(0 0 1 .1 6 .2 7 0 8 .3 10 1 18 .9 21 .1 23 .3 28 .1 30 0) :duration .06 :base .1))
+	 (pulser (make-pulse-train (/ 1.0 .06)))
+	 (indf (make-env '(0 0 10 0 18 1 23 1 26 0 30 0) :duration .06))
+	 (noise (make-rand-interp 1000)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let* ((pulse (pulse-train pulser)))
+	   (if (> pulse .1)
+	       (begin
+		 (mus-reset pulsef)
+		 (mus-reset frqf)
+		 (mus-reset indf)))
+	   (let* ((buzz (+ (* (hz->radians 40) (env frqf))
+			   (* .005 (rand-interp noise)))))
+	     (outa i (* (env ampf)
+			(env pulsef)
+			(+ .93 (* .07 (triangle-wave ampmod)))
+			(+ (* .7 (oscil base buzz))
+			   (* .05 (oscil base1 (* 2 buzz)))
+			   (* .04 (oscil base2 (* 3 buzz)))
+			   (* (env indf)
+			      (+ (* .02 (oscil base3 (* 4 buzz)))
+				 (* .02 (oscil base4 (* 5 buzz)))))))
+		   *output*))))))))
+
+;(with-sound (:play #t) (broad-winged-tree-cricket 0 1.0 0.3))
+
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Long-spurred meadow katydid
+;;;
+;;;    I can barely hear this at its true pitch, so the match was
+;;;    done down one or two octaves -- I think the recording has cut off high info (above 20Khz) --
+;;;    need much higher srate to see what this guy is really doing.  This is not very good...
+
+(definstrument (long-spurred-meadow-katydid beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 10.1) ; overall duration
+	 (slow-start 2.2) ; buzz at start
+	 (soft-end (+ slow-start 4.0)) ; softer section, rest is full vol
+	 (stop (+ start (seconds->samples dur)))
+	 ;; looks like the same basic pulse throughout, almost same speed at start but every other one is squelched
+	 ;; slow startup pulse starts much faster (.06 mid-pulse duration, .0013 base pulse)
+	 (carrier (make-sine-summation 13200 0 4 .7 (/ 800 13200))) 
+	 (modulator (make-oscil 1500 (* 0.5 pi)))
+	 (noise (make-rand-interp 5000))
+	 (peep (make-pulsed-env '(0 0 1 0 2 .2 3 0 5 .75 8 1 10 0 11 0) .06 (/ 1.0 .06)))
+	 (ampf (make-env (list 0 0 .5 .5 slow-start .4 soft-end .4 (+ soft-end .5) 1 (- dur 1) 1 dur 0.0) :duration dur :scaler amp))
+	 (pulsef (make-env (list 0 -1 slow-start -1 (+ slow-start .03) 0 dur 0) :duration dur :scaler (hz->radians 8))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let* ((frq (env pulsef))
+		(md (oscil modulator)))
+	   (outa i (* (env ampf)
+		      (pulsed-env peep frq)
+		      md md
+		      (sine-summation carrier (+ (* frq (/ 13200 16))
+					       (* .1 (rand-interp noise))
+					       (* .1 md))))
+		 *output*)))))))
+
+;(with-sound () (long-spurred-meadow-katydid 0 .5))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -2469,8 +2520,6 @@
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; Common loon
-;;;
-;;; Geoffrey Keller, "Bird Songs of California" (Cornell)
 
 (definstrument (common-loon-1 beg amp)
   (let* ((start (seconds->samples beg))
@@ -2822,8 +2871,6 @@
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; Bobwhite
-;;;
-;;; Lang Elliott, Donald and Lillian Stokes, "Stokes Field Guide to Bird Songs, Eastern Region"
 
 (definstrument (bobwhite beg amp)
   (let* ((call1-dur .32)
@@ -4027,8 +4074,6 @@
 ;;;--------------------------------------------------------------------------------
 ;;;
 ;;; Common Gull
-;;;
-;;; Roche and Chevereau, "Guide to the Sounds of the Birds of Europe"
 
 (definstrument (common-gull beg amp)
   (let* ((start (seconds->samples beg))
@@ -4465,7 +4510,7 @@
 			   0.704 0.000 0.720 0.000 0.727 0.761 0.731 0.440 0.733 0.875 0.743 0.461 0.750 0.000 
 			   0.768 0.000 0.773 0.993 0.781 0.601 0.785 0.918 0.798 0.000 0.816 0.000 0.823 0.877 
 			   0.827 0.535 0.830 0.877 0.855 0.000 0.879 0.000 0.885 0.638 0.889 0.741 0.919 0.000 
-			   0.945 0.000 0.950 0.556 0.955 0.379 0.959 0.563 0.986 0.037 1.000 0.000 )
+			   0.945 0.000 0.950 0.556 0.955 0.379 0.959 0.563 0.986 0.037 1.000 0.000)
 			 :duration dur :scaler amp))
 	 (gen1 (make-polyshape 0.0 :partials (list 1 .98  2 .015  3 .005)))
 	 (frqf (make-env '(0.000 0.651 0.018 0.637 0.040 0.401 0.049 0.361 0.055 0.658 0.072 0.644 0.087 0.526 
@@ -4482,7 +4527,7 @@
 			   0.746 0.432 0.748 0.373 0.759 0.325 0.760 0.813 0.770 0.780 0.785 0.623 0.789 0.507 
 			   0.793 0.405 0.802 0.342 0.803 0.837 0.818 0.795 0.829 0.630 0.836 0.535 0.854 0.372 
 			   0.864 0.309 0.868 0.826 0.878 0.802 0.884 0.727 0.888 0.618 0.915 0.373 0.930 0.314 
-			   0.931 0.819 0.944 0.792 0.951 0.670 0.963 0.563 0.977 0.448 0.981 0.387 1.000 0.318 )
+			   0.931 0.819 0.944 0.792 0.951 0.670 0.963 0.563 0.977 0.448 0.981 0.387 1.000 0.318)
 			 :duration dur :scaler (hz->radians 8070.0))))
    (run
      (lambda ()
@@ -4496,19 +4541,75 @@
 
 
 ;;; --------------------------------------------------------------------------------
+;;;
+;;; Cassin's vireo
+
+(definstrument (cassins-vireo beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.5)
+	 (stop (+ start (seconds->samples dur)))
+
+	 (ampf (make-env '(0.000 0.000 0.028 0.110 0.037 0.062 0.050 0.098 0.060 0.075 0.078 0.179 0.085 0.065 
+			   0.093 0.116 0.100 0.379 0.119 0.163 0.136 0.457 0.147 0.473 0.159 0.180 0.173 0.608 
+			   0.182 0.655 0.193 0.001 0.200 0.292 0.210 0.180 0.219 0.262 0.224 0.103 0.241 0.204 
+			   0.253 0.055 0.268 0.225 0.285 0.061 0.299 0.251 0.312 0.171 0.330 0.298 0.366 0.182 
+			   0.375 0.138 0.384 0.159 0.391 0.000 0.512 0.000 0.527 0.085 0.539 0.267 0.553 0.111 
+			   0.565 0.200 0.574 0.150 0.583 0.360 0.587 0.117 0.595 0.257 0.602 0.096 0.610 0.297 
+			   0.623 0.072 0.635 0.241 0.640 0.201 0.653 0.336 0.669 0.996 0.679 0.730 0.689 0.235 
+			   0.702 0.336 0.714 0.688 0.725 0.752 0.733 0.466 0.744 0.680 0.752 0.070 0.763 0.628 
+			   0.766 0.567 0.774 0.671 0.786 0.094 0.792 0.514 0.797 0.099 0.800 0.187 0.807 0.224 
+			   0.810 0.523 0.820 0.444 0.824 0.155 0.829 0.481 0.832 0.598 0.838 0.521 0.843 0.070 
+			   0.847 0.209 0.857 0.476 0.862 0.294 0.873 0.775 0.880 0.175 0.884 0.495 0.888 0.083 
+			   0.896 0.644 0.916 0.074 0.919 0.379 0.926 0.072 0.940 0.657 0.944 0.613 0.955 0.070 
+			   0.960 0.181 0.966 0.087 0.970 0.111 0.975 0.069 0.981 0.173 0.989 0.021 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.069 0.028 0.063 0.060 0.075 0.078 0.110 0.100 0.144 0.121 0.159 0.141 0.162 
+			   0.160 0.154 0.188 0.130 0.206 0.119 0.216 0.120 0.225 0.100 0.239 0.119 0.254 0.093 
+			   0.265 0.117 0.281 0.094 0.298 0.120 0.325 0.129 0.356 0.133 0.382 0.128 0.395 0.100 
+			   0.516 0.090 0.568 0.108 0.600 0.075 0.621 0.150 0.639 0.183 0.662 0.178 0.682 0.159 
+			   0.703 0.155 0.721 0.139 0.735 0.157 0.753 0.123 0.769 0.148 0.784 0.124 0.795 0.159 
+			   0.816 0.139 0.831 0.172 0.845 0.148 0.857 0.180 0.872 0.178 0.881 0.159 0.892 0.198 
+			   0.908 0.178 0.922 0.206 0.942 0.194 0.957 0.212 0.982 0.199 1.000 0.179)
+			 :duration dur :scaler (hz->radians 22050.0)))
+	 (gen1 (make-oscil 0.0))
+	 (gen2 (make-oscil 0.0))
+	 (gen3 (make-oscil 0.0))
+	 (gen4 (make-oscil 0.0))
+	 (gen5 (make-oscil 0.0))
+	 (f1 (make-env '(0 .01  .06 .01 .1 1  .3 1  .5 .01 .65 .05 .67 1  1 1) :duration dur))
+	 (f2 (make-env '(0 .25  .06 .5 .1 .01  .3 .01  .5 .75  .6 .5 .64 .01  1 .01) :duration dur))
+	 (f3 (make-env '(0 1  .06 .5 .1 .01  .3 .01  .5 .01 .6 .3 .65 .01 .67 .01  1 .01) :duration dur)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (env frqf)))
+	   (outa i (* (env ampf)
+		      (+ (* (env f1) (oscil gen1 frq))
+			 (* (env f2) (oscil gen2 (* 2 frq)))
+			 (* (env f3) (oscil gen3 (* 3 frq)))
+			 (* .005 (oscil gen4 (* 4 frq)))
+			 (* .005 (oscil gen5 (* 5 frq)))))
+		 *output*)))))))
+
+;;; formants sounded bad here, polyshape worse
+
+;(with-sound (:play #t) (cassins-vireo 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
 
 
 (define (calling-all-animals)
   (with-sound (:scaled-to .5 :srate 44100) ;(srate needed by snd-test)
-    (mosquito 0 5 560 0.2)
+    (mosquito 86.818 5 560 0.2)
     (mosquito 1 3 880 0.05)
     (knudsens-frog 2 0.5)
-    (a-cricket 3 0.12 4500 5400 0.5 '(0 0 1 1 3 1 4 0) (/ 0.11 3) '(0 0 1 0.8 5 1 6 0 15 0))
     (oak-toad 4 0.3)
     (eastern-wood-pewee-1 5 0.25)
-    (eastern-wood-pewee-2 6 0.25)
-    (broad-winged-tree-cricket 6.5 2.0 0.2)
-    (southern-cricket-frog 8.785 0.5)
+    (eastern-wood-pewee-2 6.107 0.25)
+    (broad-winged-tree-cricket 7.247 2.0 0.2)
+    (southern-cricket-frog 8.119 0.5)
     (long-spurred-meadow-katydid 9 0.5)
     (northern-leopard-frog 10 0.5)
     (southern-mole-cricket 11 3 0.15)
@@ -4524,14 +4625,14 @@
     (linnaeus-cicada 24.702 2 0.125)
     (lyric-cicada 26 2 0.125)
     (confused-ground-cricket 27.733 2 0.3)
-    (tinkling-ground-cricket 29.5 2 0.3)
+    (tinkling-ground-cricket 29.842 2 0.3)
     (marsh-meadow-grasshopper 31.5 0.3)
     (striped-ground-cricket 33 2 0.25)
     (sphagnum-ground-cricket 34.5 2 0.3)
     (fox-sparrow 35.5 3 0.25)
     (southeastern-field-cricket 37.5 2 0.13)
-    (snowy-tree-cricket 37.984 2.1 0.3)
-    (slightly-musical-conehead 40.210 2 0.4)
+    (snowy-tree-cricket 38.156 2.1 0.3)
+    (slightly-musical-conehead 40.242 2 0.4)
     (white-throated-sparrow 41 0.25)
     (tufted-titmouse 44.353 0.3)
     (savannah-sparrow 45.5 0.5)
@@ -4560,39 +4661,42 @@
     (bobwhite 79.75 0.25)
     (warbling-vireo 82 0.25)
     (great-horned-owl 83.864 0.25)
-    (western-tanager 86.530 0.2)
-    (pileated-woodpecker 89 0.125)
-    (whip-poor-will 91.5 0.25)
-    (varied-thrush 92.561 0.125)
-    (nashville-warbler 93.731 0.25)
-    (ruffed-grouse 95.081 0.5)
-    (plumbeous-vireo 97 0.25)
-    (american-crow 98 0.5)
-    (least-bittern 100 0.5)
-    (orange-crowned-warbler 101 0.25)
-    (loggerhead-shrike-1 103.5 0.1)
-    (loggerhead-shrike-2 105.647 0.1)
-    (california-quail 106.126 0.25)
-    (vermillion-flycatcher 107 0.25)
-    (cardinal 107.872 0.2)
-    (black-phoebe 109 0.25)
-    (yellow-warbler 110 0.25)
-    (barred-owl-1 110.979 0.25)
-    (says-phoebe 112.552 0.25)
-    (yellow-rumped-warbler 113.511 0.25)
-    (purple-finch 115.545 0.25)
-    (bullfrog 118.269 0.125)
-    (northern-goshawk 119.381 0.125)
-    (common-gull 120 0.25)
-    (ash-throated-flycatcher 120.820 0.25)
-    (white-headed-woodpecker 121.702 0.2)
-    (phainopepla 122 .5)
-    (golden-crowned-sparrow 123 .25)
-    (house-finch 125 .25)
-    (ruby-crowned-kinglet 127 .25)
-    (green-tailed-towhee 129 .25)
-    (white-faced-ibis 131 .25)
-    (lucys-warbler 132 .25)
+    (western-tanager 86.53 0.2)
+    (pileated-woodpecker 90.222 0.125)
+    (whip-poor-will 92.796 0.25)
+    (varied-thrush 93.782 0.125)
+    (nashville-warbler 95.084 0.25)
+    (ruffed-grouse 95.765 0.5)
+    (plumbeous-vireo 97.833 0.25)
+    (american-crow 100.008 0.5)
+    (least-bittern 101.814 0.5)
+    (orange-crowned-warbler 106.292 0.25)
+    (loggerhead-shrike-1 108.319 0.1)
+    (loggerhead-shrike-2 109.621 0.1)
+    (california-quail 110.361 0.25)
+    (vermillion-flycatcher 111.456 0.25)
+    (cardinal 112.566 0.2)
+    (black-phoebe 116.389 0.25)
+    (yellow-warbler 117.218 0.25)
+    (barred-owl-1 118.846 0.25)
+    (says-phoebe 120.399 0.25)
+    (yellow-rumped-warbler 121.450 0.25)
+    (purple-finch 123.536 0.25)
+    (bullfrog 126.288 0.125)
+    (northern-goshawk 127.428 0.125)
+    (common-gull 128.005 0.25)
+    (ash-throated-flycatcher 128.760 0.25)
+    (white-headed-woodpecker 129.559 0.2)
+    (phainopepla 130.032 0.5)
+    (golden-crowned-sparrow 130.683 0.25)
+    (house-finch 133.092 0.25)
+    (ruby-crowned-kinglet 136.457 0.25)
+    (green-tailed-towhee 138.915 0.25)
+    (white-faced-ibis 140.993 0.25)
+    (lucys-warbler 141.440 0.25)
+    (cassins-vireo 143 .25)
+    (texas-toad 145 2.0 0.125)
     ))
+
 
 

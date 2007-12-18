@@ -1,8 +1,17 @@
 /* CLM (Music V) implementation */
 
 
-/* should I add pm args alongside the fm args, as in oscil?
- * perhaps use __builtin_expect -- in DIVISOR_NEAR_ZERO for example
+/* perhaps use __builtin_expect -- in DIVISOR_NEAR_ZERO for example
+ *
+ * clm4:
+ *   perhaps add pm args alongside the fm args, as in oscil?
+ *   all the make-* funcs that have a frequency arg should put that first (make-formant in particular)
+ *   also polyshape/waveshape should put the "index" arg last, or just forget it (use mus-scaler or something)
+ *   sum-of-cosines -> ncos
+ *   sum-of-sines -> nsin
+ *   sine-summation -> nrxysin
+ *   env scaler\offset set and some way to set duration
+ *   asymmetric-fm -> generators.scm (not built-in)
  */
 
 #include <mus-config.h>

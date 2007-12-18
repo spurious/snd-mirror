@@ -3566,7 +3566,11 @@ index 10 (so 10/2 is the bes-jn arg):
 				     ((10) (set! (blackman-coeffs g) (vct 0.0118717384 -0.071953468 0.1878870875 -0.275808066 0.2489042133 
 									  -0.141729787 0.0502002984 -0.010458985 0.0011361511 -0.000049617
 									  0.0000004343))))
-				 g)))
+				 g))
+		 :methods (list
+			   (list 'mus-reset
+				 (lambda (g)
+				   (set! (blackman-angle g) 0.0)))))
     (frequency 0.0) (n 4 :type int) (coeffs #f :type vct)  ; angle = initial-phase
     (angle 0.0) (incr 0.0))
 

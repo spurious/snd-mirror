@@ -504,6 +504,8 @@ returning you to the true top-level."
 ;;; a bit clumsy, but here's one way to mix each note in a notelist ("calls" below),
 ;;;   then rewrite a new notelist after changing begin times in Snd:
 
+;;; TODO: make a with-sound replacement for mix-calls
+
 (define (mix-calls)
   (let ((s (new-sound)))
     (for-each
@@ -516,18 +518,22 @@ returning you to the true top-level."
     (close-sound (find-sound "temp.snd"))))
 
 (define (rewrite-calls)
-  (let ((ctr 0))
-    (for-each
-     (lambda (call)
-       (let ((beg (exact->inexact (/ (mix-position ctr) (srate)))))
-	 (if (<= (abs (- beg (cadr call))) .001)
-	     (display (format #f "  ~A~%" call))
-	     (display (format #f "  (~A ~,3F~{ ~A~})~%"
-			      (car call) 
-			      beg
-			      (cddr call)))))
-       (set! ctr (1+ ctr)))
-     calls)))
+  (let ((oput (open-output-file "temp")))
+    (display (format #f "(with-sound ()~%") oput)
+    (let ((ctr 0))
+      (for-each
+       (lambda (call)
+	 (let ((beg (exact->inexact (/ (mix-position ctr) (srate)))))
+	   (if (<= (abs (- beg (cadr call))) .001)
+	       (display (format #f "  ~A~%" call) oput)
+	       (display (format #f "  (~A ~,3F~{ ~A~})~%"
+				(car call) 
+				beg
+				(cddr call)) oput)))
+	 (set! ctr (1+ ctr)))
+       calls))
+    (display (format #f ")~%") oput)
+    (close-output-port oput)))
 |#
 
 

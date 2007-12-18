@@ -7,6 +7,9 @@
 #endif
 
 
+/* TODO: the file viewer should say what directories it is showing */
+
+
 /* -------------------------------- basic file attributes -------------------------------- */
 
 #if USE_STATVFS
