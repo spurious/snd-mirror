@@ -7,9 +7,6 @@
 #endif
 
 
-/* TODO: the file viewer should say what directories it is showing */
-
-
 /* -------------------------------- basic file attributes -------------------------------- */
 
 #if USE_STATVFS
@@ -3703,6 +3700,7 @@ void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname
 {
   /* I think all directory additions come through here */
   dir_info *sound_files = NULL;
+
   if ((dirname) && (dirname[strlen(dirname) - 1] != '/'))
     {
       char *add_slash;
@@ -3714,12 +3712,51 @@ void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname
     {
       view_files_monitor_directory(vdat, dirname);
       sound_files = find_sound_files_in_dir(dirname);
-      if ((sound_files) && (sound_files->len > 0))
+      if ((sound_files) && 
+	  (sound_files->len > 0))
 	{
-	  int i;
+	  int i, dirs = 0, len = 6;
 	  for (i = 0; i < sound_files->len; i++) 
 	    add_file_to_view_files_list(vdat, sound_files->files[i]->filename, sound_files->files[i]->full_filename);
 	  sound_files = free_dir_info(sound_files);
+
+	  /* fixup title */
+	  for (i = 0; i < vdat->dirs_size; i++)
+	    if (vdat->dir_names[i])
+	      {
+		dirs++;
+		len += snd_strlen(just_filename(vdat->dir_names[i]));
+	      }
+	  if ((dirs < 4) &&
+	      (len < 512))
+	    {
+	      int cur_dir = 0;
+	      char *titlestr = NULL, *dirstr;
+	      titlestr = (char *)CALLOC(len + dirs * 8, sizeof(char));
+	      strcat(titlestr, "Files: ");
+	      for (i = 0; i < vdat->dirs_size; i++)
+		if (vdat->dir_names[i])
+		  {
+		    dirstr = just_filename(vdat->dir_names[i]);
+		    strcat(titlestr, dirstr);
+		    FREE(dirstr);
+		    cur_dir++;
+		    if (cur_dir < dirs)
+		      strcat(titlestr, ", ");
+		  }
+#if USE_MOTIF
+	      {
+		XmString title;
+		title = XmStringCreateLocalized(titlestr);
+		XtVaSetValues(vdat->dialog, XmNdialogTitle, title, NULL);
+		XmStringFree(title);
+	      }
+#endif
+#if USE_GTK
+	      gtk_window_set_title(GTK_WINDOW(vdat->dialog), titlestr);
+#endif
+	      FREE(titlestr);
+	    }
 	}
     }
 }

@@ -16468,7 +16468,7 @@ EDITS: 2
 	      (snd-display ";~A ~A, ~A ~A" upper upper2 lower lower2)))))
     
     (let ((tag (catch #t (lambda () (harmonicizer 550.0 (list .5 .3 .2) 10)) (lambda args (car args)))))
-      (if (not (eq? tag 'bad-type)) (snd-display ";odd length arg to partials->polynomial: ~A" tag)))
+      (if (not (eq? tag 'no-data)) (snd-display ";odd length arg to partials->polynomial: ~A" tag)))
     
     (let* ((amps (list->vct '(1.0)))
 	   (phases (list->vct '(0.0)))
@@ -20931,7 +20931,7 @@ EDITS: 2
 		    (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1)))
 		    (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 .5))))
     (let ((tag (catch #t (lambda () (partials->wave (list .5 .3 .2))) (lambda args (car args)))))
-      (if (not (eq? tag 'bad-type)) (snd-display ";odd length arg to partials->wave: ~A" tag)))
+      (if (not (eq? tag 'no-data)) (snd-display ";odd length arg to partials->wave: ~A" tag)))
     
     (let ((hi (make-table-lookup :size 256)))
       (if (not (= (mus-length hi) 256)) (snd-display ";table-lookup set length: ~A?" (mus-length hi))))

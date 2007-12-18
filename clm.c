@@ -1,9 +1,7 @@
 /* CLM (Music V) implementation */
 
 
-/* perhaps use __builtin_expect -- in DIVISOR_NEAR_ZERO for example
- *
- * clm4:
+/* clm4:
  *   perhaps add pm args alongside the fm args, as in oscil?
  *   all the make-* funcs that have a frequency arg should put that first (make-formant in particular)
  *   also polyshape/waveshape should put the "index" arg last, or just forget it (use mus-scaler or something)
@@ -60,6 +58,15 @@
 #ifndef TWO_PI
   #define TWO_PI (2.0 * M_PI)
 #endif
+
+#if defined(__GNUC__) && (__GNUC__ >= 3)
+  #define MUS_EXPECT __builtin_expect
+#else
+  #define MUS_EXPECT(_expr, _value) (_expr)
+#endif
+
+#define MUS_LIKELY(_expr)  MUS_EXPECT((_expr), 1)
+#define MUS_UNLIKELY(_expr) MUS_EXPECT((_expr), 0)
 
 
 #if (!HAVE_MEMMOVE)
@@ -1257,7 +1264,7 @@ typedef struct {
   double phase, freq;
 } cosp;
 
-#define DIVISOR_NEAR_ZERO(Den) (fabs(Den) < 1.0e-14)
+#define DIVISOR_NEAR_ZERO(Den) MUS_UNLIKELY(fabs(Den) < 1.0e-14)
 
 Float mus_sum_of_cosines(mus_any *ptr, Float fm)
 {

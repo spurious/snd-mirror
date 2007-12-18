@@ -113,6 +113,8 @@
 ;;; Cardinal
 ;;; Common Gull
 ;;; White-faced ibis
+;;; Plain chacalaca
+;;; Black-billed cuckoo
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -716,7 +718,6 @@
     (do ((call-beg beg1 (+ call-beg last-dur 0.3 (random 0.2))))
 	((>= call-beg last-call))
       (set! last-dur (+ .6 (random .25)))
-      (display (format #f "beg: ~A, dur: ~A~%" call-beg last-dur))
       (texas-toad-1 call-beg last-dur amp1))))
 
 ;(with-sound (:play #t) (texas-toad 0 2.0 0.5))
@@ -4598,6 +4599,83 @@
 
 
 ;;; --------------------------------------------------------------------------------
+;;;
+;;; Plain chacalaca
+;;;
+;;;  the recording doesn't do this bird justice -- it actually does say "chacalaca"
+;;;    (and the mosquitos darken the skies)
+
+(define (plain-chacalaca beg1 amp)
+
+  (definstrument (plain-chacalaca-1 beg dur amp frmfrq frqlst)
+    (let* ((start (seconds->samples beg))
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 2 1 4 1 6 0) :duration dur :scaler (* 0.5 amp)))
+	   (frqf (make-env frqlst :duration dur :scaler (hz->radians 1.0)))
+	   (frm1 (make-formant .99 frmfrq 20))
+	   (frm2 (make-formant .98 4200 1))
+	   (frm3 (make-formant .98 2800 8))
+	   (gen (make-nrcos 0.0 15 .75))
+	   (rnd (make-rand-interp 5000 .03))
+	   (rnd1 (make-rand-interp 1000 .15))
+	   (vib (make-blackman 50 4))
+	   (vib-index (hz->radians -100)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (let ((inp (* (env ampf)
+			 (+ .85 (abs (rand-interp rnd1)))
+			 (nrcos gen (+ (env frqf)
+				       (rand-interp rnd)
+				       (* vib-index (blackman vib 0.0)))))))
+	     (outa i (+ (formant frm1 inp)
+			(formant frm2 inp)
+			(formant frm3 inp))
+		   *output*)))))))
+
+  (plain-chacalaca-1 beg1 0.17    (* .7 amp) 1700 (list 0 450  1 680))
+  (plain-chacalaca-1 (+ beg1 0.20) 0.12 amp  1400 (list 0 500  1 680  2 660))
+  (plain-chacalaca-1 (+ beg1 0.35) 0.20 amp  1400 (list 0 500  1 680  4 660)))
+
+;(with-sound (:play #t) (plain-chacalaca 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Black-billed cuckoo
+
+(definstrument (black-billed-cuckoo beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.68)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.013 0.388 0.023 0.303 0.026 0.419 0.042 0.530 0.066 0.104 0.128 0.000 
+			   0.215 0.000 0.243 0.642 0.257 0.536 0.266 0.725 0.296 0.737 0.311 0.044 0.357 0.070 
+			   0.367 0.000 0.421 0.000 0.448 0.856 0.460 0.807 0.468 0.913 0.483 0.960 0.515 0.928 
+			   0.535 0.048 0.575 0.085 0.584 0.000 0.638 0.000 0.658 0.903 0.674 0.989 0.708 0.822 
+			   0.732 0.079 0.781 0.038 0.798 0.070 0.806 0.028 0.823 0.059 0.845 0.000 0.883 0.000 
+			   0.892 0.593 0.913 0.739 0.940 0.031 0.976 0.066 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .97  2 .005 3 .008  5 .005)))
+	 (rnd (make-rand-interp 400 (hz->radians 25)))
+	 (frqf (make-env '(0.000 0.568 0.057 0.568 0.078 0.399 0.203 0.315 0.218 0.632 0.252 0.557 0.314 0.553 
+			   0.340 0.350 0.410 0.337 0.426 0.667 0.469 0.557 0.528 0.559 0.548 0.381 0.616 0.352 
+			   0.624 0.617 0.659 0.544 0.721 0.544 0.748 0.350 0.840 0.297 0.851 0.615 0.889 0.540 
+			   0.926 0.542 0.948 0.416 1.000 0.419)
+			 :duration dur :scaler (hz->radians 1190.0))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (+ (env frqf)
+					   (rand-interp rnd))))
+	       *output*))))))
+
+;(with-sound (:play #t) (black-billed-cuckoo 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
 
 
 (define (calling-all-animals)
@@ -4696,6 +4774,8 @@
     (lucys-warbler 141.440 0.25)
     (cassins-vireo 143 .25)
     (texas-toad 145 2.0 0.125)
+    (plain-chacalaca 147 .5)
+    (black-billed-cuckoo 149 .25)
     ))
 
 

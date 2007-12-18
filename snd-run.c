@@ -120,20 +120,6 @@
 #include "clm-strings.h"
 #include "sndlib-strings.h"
 
-#if 0
-/* an experiment -- adding this just to the gen_check func did not speed up calling-all-animals,
- *    but perhaps it needs to be used for the other arg checks as well?
- */
-#if defined(__GNUC__) && (__GNUC__ >= 3)
-  #define MUS_EXPECT __builtin_expect
-#else
-  #define MUS_EXPECT(_expr, _value) (_expr)
-#endif
-
-#define MUS_LIKELY(_expr)  MUS_EXPECT((_expr), 1)
-#define MUS_UNLIKELY(_expr) MUS_EXPECT((_expr), 0)
-#endif
-
 
 static XEN optimization_hook;
 
