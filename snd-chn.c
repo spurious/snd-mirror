@@ -5,6 +5,7 @@
 
 /* SOMEDAY: fft side needs a zoom capability, not just the drag now */
 /* TODO: set y-bounds doesn't always fixup the y zoom slider? */
+/* TODO: something is wrong with the zoom (set x-zoom-slider CP_AP_ZX) stuff -- it seems quantized? */
 
 
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size

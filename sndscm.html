@@ -6571,6 +6571,8 @@ scale-mixes scales the amplitude of each mix in 'mix-list' by 'scl'.
 <a class=def name="scaletempo">scale-tempo</a> <code>mix-list scl</code>
 </td></tr><tr><td></td><td>
 scale-tempo changes the positions of the mixes in 'mix-list' to reflect a tempo change of 'scl'.
+<code>(scale-tempo (mixes 0 0) 2.0)</code> makes the mixes in snd 0, chan 0 happen twice as slowly.
+To reverse the order of the mixes: <code>(scale-tempo (mixes 0 0) -1)</code>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

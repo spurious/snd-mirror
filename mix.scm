@@ -342,7 +342,7 @@ example, if you know the frequency of the mix sound, you can reflect that in the
 (define (scale-tempo mix-list tempo-scl)
   "(scale-tempo mix-list scl) changes the rate at which the mixes in 'mix-list' occur to reflect \
 the tempo scaler 'scl'.  If 'scl' is 2.0, for example, the mixes are re-positioned so that they \
-happen twice as fast (the data is not resampled -- each mix is untouched except that its begin time \
+happen twice as slowly (the data is not resampled -- each mix is untouched except that its begin time \
 may change)"
 
   (let* ((first-beg (mix-position (car mix-list)))

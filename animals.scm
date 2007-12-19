@@ -115,6 +115,7 @@
 ;;; White-faced ibis
 ;;; Plain chacalaca
 ;;; Black-billed cuckoo
+;;; Eared grebe
 
 
 (use-modules (ice-9 optargs) (ice-9 format))
@@ -128,7 +129,9 @@
 ;;;   also, I have bare indices scattered around -- ideally these would be wrapped in hz->radians
 
 
-;;; --------------------------------------------------------------------------------
+
+;;; ================ Frogs and Toads ================
+;;;
 ;;;
 ;;; Knudsen's frog
 
@@ -723,7 +726,8 @@
 ;(with-sound (:play #t) (texas-toad 0 2.0 0.5))
 
 
-;;; --------------------------------------------------------------------------------
+;;; ================ Mammals? ================
+;;;
 ;;;
 ;;; Indri
 ;;;
@@ -762,7 +766,8 @@
 
 
 
-;;; --------------------------------------------------------------------------------
+;;; ================ Insects ================
+;;;
 ;;;
 ;;; mosquito 
 ;;;
@@ -1560,7 +1565,8 @@
 ;(with-sound (:play #t) (davis-tree-cricket 0 2 .25))
 
 
-;;; --------------------------------------------------------------------------------
+;;; ================ Birds ================
+;;;
 ;;;
 ;;; Fox sparrow
 
@@ -4676,107 +4682,192 @@
 
 
 ;;; --------------------------------------------------------------------------------
+;;;
+;;; Eared grebe
+
+(definstrument (eared-grebe beg amp)
+  ;; note #1
+  (let* ((start (seconds->samples beg))
+	 (dur 0.3)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 9 1 10 0) :duration dur :scaler amp))
+	 (frqf (make-env '(0 1050 1 1400) :duration dur :scaler (hz->radians 1.0)))
+	 (gen1 (make-oscil 0.0))
+	 (gen2 (make-oscil 0.0))
+	 (gen3 (make-oscil 0.0))
+	 (gen4 (make-oscil 0.0))
+	 (gen5 (make-oscil 0.0))
+	 (f1 (make-env '(0 .03 9 .144 10 .1) :duration dur))
+	 (f2 (make-env '(0 .5 9 .844 10 .2) :duration dur))
+	 (f3 (make-env '(0 .01 9 .03 10 .02) :duration dur))
+	 (f4 (make-env '(0 0 1 .002 7 .003 10 0) :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (env frqf)))
+	   (outa i (* (env ampf)
+		      (+ (* (env f1) (oscil gen1 frq))
+			 (* (env f2) (oscil gen2 (* 2 frq)))
+			 (* (env f3) (oscil gen3 (* 3 frq)))
+			 (* (env f4) (oscil gen4 (* 4 frq)))
+			 (* .005 (oscil gen5 (* 5 frq)))))
+		 *output*))))))
+
+  ;; note #2
+  (let* ((start (seconds->samples (+ beg 0.29)))
+	 (dur 0.085)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0  1 1  2 .5  2.9 1  3 0) :duration dur :scaler amp))
+	 (frqf (make-env '(0 2280  .25 2320  .6 2440 .65 3240  .8 3470  1 3260) :duration dur :scaler (hz->radians 1.0)))
+	 (gen1 (make-oscil 0.0))
+	 (gen2 (make-oscil 0.0))
+	 (f1 (make-env '(0 .5  .6 1  .62 .05  .65 .5  1 .5) :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (env frqf)))
+	   (outa i (* (env ampf)
+		      (+ (* (env f1) (oscil gen1 frq))
+			 (* .01 (oscil gen2 (* 2 frq)))))
+		 *output*))))))
+
+  ;; note #3
+  (let* ((start (seconds->samples (+ beg 0.446)))
+	 (dur 0.02)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0  1 1  2.5 0) :duration dur :scaler (* .5 amp)))
+	 (frqf1 (make-env '(0 1120  .5 1540  1 1100) :duration dur :scaler (hz->radians 1.0)))
+	 (frqf2 (make-env '(0 2400  .5 2520  1 2300) :duration dur :scaler (hz->radians 1.0)))
+	 (gen1 (make-oscil 0.0))
+	 (gen2 (make-oscil 0.0))
+	 (gen3 (make-oscil 0.0))
+	 (gen4 (make-oscil 0.0))
+	 (f1 (make-env '(0 .9  .2 1   .6 1  .8 0  1 0) :duration dur))
+	 (f2 (make-env '(0 .5  .2 1   .6 .01  1 0) :duration dur))
+	 (f3 (make-env '(0 .1  .2 0  1 0) :duration dur))
+	 (f4 (make-env '(0 0  .2 0   .7 .25  1 .1) :duration dur))
+	 (rnd (make-rand-interp 3000 (hz->radians 100))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq1 (+ (env frqf1)
+			(rand-interp rnd))))
+	   (outa i (* (env ampf)
+		      (+ (* (env f1) (oscil gen1 (* 2 frq1)))
+			 (* (env f2) (oscil gen2 frq1))
+			 (* (env f3) (oscil gen3 (* 3 frq1)))
+			 (* (env f4) (oscil gen4 (env frqf2)))))
+		 *output*)))))))
+
+
+;(with-sound (:play #t :statistics #t) (eared-grebe 0 .5))
+
+
+
+;;; ================ calling-all-animals ================
 
 
 (define (calling-all-animals)
   (with-sound (:scaled-to .5 :srate 44100) ;(srate needed by snd-test)
-    (mosquito 86.818 5 560 0.2)
-    (mosquito 1 3 880 0.05)
-    (knudsens-frog 2 0.5)
-    (oak-toad 4 0.3)
-    (eastern-wood-pewee-1 5 0.25)
-    (eastern-wood-pewee-2 6.107 0.25)
-    (broad-winged-tree-cricket 7.247 2.0 0.2)
-    (southern-cricket-frog 8.119 0.5)
-    (long-spurred-meadow-katydid 9 0.5)
-    (northern-leopard-frog 10 0.5)
-    (southern-mole-cricket 11 3 0.15)
-    (green-tree-frog 13 0.5)
-    (spring-peeper 14 0.5)
-    (crawfish-frog 15 0.5)
-    (river-frog 16 0.5)
-    (indri 17 0.25)
-    (field-sparrow 18.5 0.25)
-    (handsome-trig 21 2 0.5)
-    (fast-calling-tree-cricket 22 2 0.25)
-    (dog-day-cicada 23 2 0.1)
-    (linnaeus-cicada 24.702 2 0.125)
-    (lyric-cicada 26 2 0.125)
-    (confused-ground-cricket 27.733 2 0.3)
-    (tinkling-ground-cricket 29.842 2 0.3)
-    (marsh-meadow-grasshopper 31.5 0.3)
-    (striped-ground-cricket 33 2 0.25)
-    (sphagnum-ground-cricket 34.5 2 0.3)
-    (fox-sparrow 35.5 3 0.25)
-    (southeastern-field-cricket 37.5 2 0.13)
-    (snowy-tree-cricket 38.156 2.1 0.3)
-    (slightly-musical-conehead 40.242 2 0.4)
-    (white-throated-sparrow 41 0.25)
-    (tufted-titmouse 44.353 0.3)
-    (savannah-sparrow 45.5 0.5)
-    (chipping-sparrow 48 0.3)
-    (pine-tree-cricket 49 2 0.125)
-    (davis-tree-cricket 51 2 0.125)
-    (carolina-grasshopper 52.5 1.5 1.0)
-    (pinewoods-tree-frog 54.321 1.5 0.15)
-    (henslows-sparrow 55.951 0.5)
-    (least-flycatcher 56.623 0.5)
-    (acadian-flycatcher 57 0.25)
-    (swainsons-thrush 57.5 0.25)
-    (squirrel-tree-frog-1 59 1 0.1)
-    (carolina-wren 60 0.25)
-    (ornate-chorus-frog 61 2 0.1)
-    (bachmans-sparrow 62 0.25)
-    (grasshopper-sparrow 63 0.25)
-    (american-robin 65.012 0.25)
-    (common-loon-1 67.679 0.125)
-    (common-loon-2 70.556 0.125)
-    (hermit-thrush 71.5 0.25)
-    (chuck-wills-widow 73.262 0.25)
-    (california-towhee 74.663 0.25)
-    (black-chinned-sparrow 76 0.25 #t)
-    (mourning-dove 78 0.125)
-    (bobwhite 79.75 0.25)
-    (warbling-vireo 82 0.25)
-    (great-horned-owl 83.864 0.25)
-    (western-tanager 86.53 0.2)
-    (pileated-woodpecker 90.222 0.125)
-    (whip-poor-will 92.796 0.25)
-    (varied-thrush 93.782 0.125)
-    (nashville-warbler 95.084 0.25)
-    (ruffed-grouse 95.765 0.5)
-    (plumbeous-vireo 97.833 0.25)
-    (american-crow 100.008 0.5)
-    (least-bittern 101.814 0.5)
-    (orange-crowned-warbler 106.292 0.25)
-    (loggerhead-shrike-1 108.319 0.1)
-    (loggerhead-shrike-2 109.621 0.1)
-    (california-quail 110.361 0.25)
-    (vermillion-flycatcher 111.456 0.25)
-    (cardinal 112.566 0.2)
-    (black-phoebe 116.389 0.25)
-    (yellow-warbler 117.218 0.25)
-    (barred-owl-1 118.846 0.25)
-    (says-phoebe 120.399 0.25)
-    (yellow-rumped-warbler 121.450 0.25)
-    (purple-finch 123.536 0.25)
-    (bullfrog 126.288 0.125)
-    (northern-goshawk 127.428 0.125)
-    (common-gull 128.005 0.25)
-    (ash-throated-flycatcher 128.760 0.25)
-    (white-headed-woodpecker 129.559 0.2)
-    (phainopepla 130.032 0.5)
-    (golden-crowned-sparrow 130.683 0.25)
-    (house-finch 133.092 0.25)
-    (ruby-crowned-kinglet 136.457 0.25)
-    (green-tailed-towhee 138.915 0.25)
-    (white-faced-ibis 140.993 0.25)
-    (lucys-warbler 141.440 0.25)
-    (cassins-vireo 143 .25)
-    (texas-toad 145 2.0 0.125)
-    (plain-chacalaca 147 .5)
-    (black-billed-cuckoo 149 .25)
+    (mosquito 0 5 560 0.2)
+    (mosquito 1.500 3 880 0.05)
+    (knudsens-frog 5.506 0.5)
+    (oak-toad 6.535 0.3)
+    (eastern-wood-pewee-1 7.500 0.25)
+    (eastern-wood-pewee-2 9.500 0.25)
+    (broad-winged-tree-cricket 10.870 2.0 0.2)
+    (southern-cricket-frog 12.178 0.5)
+    (long-spurred-meadow-katydid 13.500 0.5)
+    (northern-leopard-frog 15.000 0.5)
+    (southern-mole-cricket 16.500 3 0.15)
+    (green-tree-frog 19.500 0.5)
+    (spring-peeper 21.000 0.5)
+    (crawfish-frog 22.500 0.5)
+    (river-frog 24.000 0.5)
+    (indri 25.500 0.25)
+    (field-sparrow 27.750 0.25)
+    (handsome-trig 31.500 2 0.5)
+    (fast-calling-tree-cricket 33.000 2 0.25)
+    (dog-day-cicada 34.500 2 0.1)
+    (linnaeus-cicada 37.053 2 0.125)
+    (lyric-cicada 39.000 2 0.125)
+    (confused-ground-cricket 41.600 2 0.3)
+    (tinkling-ground-cricket 44.763 2 0.3)
+    (marsh-meadow-grasshopper 47.250 0.3)
+    (striped-ground-cricket 49.500 2 0.25)
+    (sphagnum-ground-cricket 51.750 2 0.3)
+    (fox-sparrow 53.250 3 0.25)
+    (southeastern-field-cricket 56.250 2 0.13)
+    (snowy-tree-cricket 57.234 2.1 0.3)
+    (slightly-musical-conehead 60.363 2 0.4)
+    (white-throated-sparrow 62.809 0.25)
+    (tufted-titmouse 66.983 0.3)
+    (savannah-sparrow 68.496 0.5)
+    (chipping-sparrow 72.000 0.3)
+    (pine-tree-cricket 73.821 2 0.125)
+    (davis-tree-cricket 76.500 2 0.125)
+    (carolina-grasshopper 79.085 1.5 1.0)
+    (pinewoods-tree-frog 81.481 1.5 0.15)
+    (henslows-sparrow 83.926 0.5)
+    (least-flycatcher 84.934 0.5)
+    (acadian-flycatcher 85.500 0.25)
+    (swainsons-thrush 86.250 0.25)
+    (squirrel-tree-frog-1 88.500 1 0.1)
+    (carolina-wren 90.000 0.25)
+    (ornate-chorus-frog 91.500 2 0.1)
+    (bachmans-sparrow 93.000 0.25)
+    (grasshopper-sparrow 94.500 0.25)
+    (american-robin 97.518 0.25)
+    (common-loon-1 100.969 0.125)
+    (common-loon-2 104.842 0.125)
+    (hermit-thrush 106.596 0.25)
+    (chuck-wills-widow 109.198 0.25)
+    (california-towhee 111.376 0.25)
+    (black-chinned-sparrow 113.615 0.25 #t)
+    (mourning-dove 117.000 0.125)
+    (bobwhite 121.360 0.25)
+    (warbling-vireo 123.478 0.25)
+    (great-horned-owl 126.745 0.25)
+    (western-tanager 129.795 0.2)
+    (pileated-woodpecker 133.450 0.125)
+    (whip-poor-will 137.141 0.25)
+    (varied-thrush 139.198 0.125)
+    (nashville-warbler 141.256 0.25)
+    (ruffed-grouse 144.024 0.5)
+    (plumbeous-vireo 161.332 0.25)
+    (american-crow 155.342 0.5)
+    (least-bittern 156.791 0.5)
+    (orange-crowned-warbler 159.090 0.25)
+    (loggerhead-shrike-1 162.478 0.1)
+    (loggerhead-shrike-2 164.431 0.1)
+    (california-quail 165.541 0.25)
+    (vermillion-flycatcher 167.184 0.25)
+    (cardinal 169.377 0.2)
+    (black-phoebe 173.672 0.25)
+    (yellow-warbler 175.299 0.25)
+    (barred-owl-1 177.840 0.25)
+    (says-phoebe 180.018 0.25)
+    (yellow-rumped-warbler 181.531 0.25)
+    (purple-finch 184.193 0.25)
+    (bullfrog 187.521 0.125)
+    (northern-goshawk 189.760 0.125)
+    (common-gull 191.333 0.25)
+    (ash-throated-flycatcher 193.140 0.25)
+    (white-headed-woodpecker 195.089 0.2)
+    (phainopepla 196.662 0.5)
+    (golden-crowned-sparrow 198.054 0.25)
+    (house-finch 201.503 0.25)
+    (ruby-crowned-kinglet 205.496 0.25)
+    (green-tailed-towhee 208.372 0.25)
+    (white-faced-ibis 211.489 0.25)
+    (lucys-warbler 213.241 0.25)
+    (cassins-vireo 216.085 0.25)
+    (texas-toad 217.500 2.0 0.125)
+    (plain-chacalaca 220.500 0.5)
+    (black-billed-cuckoo 222.000 0.25)
+    (eared-grebe 223 .25)
     ))
-
-
 

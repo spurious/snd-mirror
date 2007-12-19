@@ -3883,10 +3883,10 @@ envelope so that the result has a given duration, use <a href="sndscm.html#srcfi
 
 <pre>
   <a class=def name="make-convolve">make-convolve</a> <a class=quiet href="#optional-key">:optional-key</a> input filter fft-size filter-size
-   <a class=def name="convolve">convolve</a> ff :optional input-function
-   <a class=def name="convolve?">convolve?</a> ff
+  <a class=def name="convolve">convolve</a> ff :optional input-function
+  <a class=def name="convolve?">convolve?</a> ff
 
-   <a class=def name="convolvefiles">convolve-files</a> file1 file2 :optional (maxamp 1.0) (output-file "tmp.snd")
+  <a class=def name="convolvefiles">convolve-files</a> file1 file2 :optional (maxamp 1.0) (output-file "tmp.snd")
 </pre>
 
 <table border=1 cellpadding=4 hspace=40>
@@ -4834,6 +4834,18 @@ in with-sound, but not within run (the run macro does not currently handle compl
 This produces a repeating envelope.  <a href="#env">env</a> sticks at its last value, but pulsed-env repeats it over and over.
 "duration" is the envelope duration, and "frequency" is the repeitition rate, changeable via the "fm" argument to the pulsed-env generator.
 Many of the instruments in animals.scm use this generator.
+</p>
+<br>
+
+
+<pre>
+  <A class=def NAME="make-blackman">make-blackman</A> <a class=quiet href="#optional-key">:optional-key</a> frequency n
+  <A class=def NAME="blackman">blackman</A> gen fm
+  <A class=def NAME="blackman?">blackman?</A> gen
+</pre>
+
+<p>
+This produces a Blackman-Harris sum of cosines of order 'n'.
 </p>
 <br>
 

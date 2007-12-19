@@ -143,7 +143,20 @@ the usual Xt/X-related flags like -xrm).</p>
 <tr><td bgcolor="#f6f8ff"><code>-nogtkrc</code></td>                 <td bgcolor="#f6f8ff">don't read ~/Snd.gtkrc or any of its friends (Gtk only)</td></tr>
 </table>
 
-<img src="note.png" alt="notebook" hspace=20 vspace=10>
+<table border=0 hspace=20 vspace=10>
+<tr>
+<td><img src="note.png" alt="notebook"></td>
+<td width=40></td>
+<td>
+<pre>
+./snd -notebook oboe.snd pistol.snd
+(set! (<a class=quiet href="extsnd.html#graphstyle">graph-style</a>) graph-lollipops)
+(set! (<a class=quiet href="extsnd.html#dotsize">dot-size</a>) 8)
+</pre>
+</td>
+</tr>
+</table>
+
 
 <p>
 The -e switch evaluates its argument.  The
@@ -164,7 +177,25 @@ View:Files dialog's list:
     snd -e '(<a class=quiet href="extsnd.html#addsoundfileextension">add-sound-file-extension</a> "WAV")' -p /home/bil/sounds
 </pre>
 
-<img src="bgd.png" alt="black background" hspace=20>
+
+<table border=0 hspace=20 vspace=10>
+<tr>
+<td><img src="bgd.png" alt="black background"></td>
+<td width=20></td>
+<td>
+<pre>
+./snd oboe.snd
+(set! (<a class=quiet href="extsnd.html#selecteddatacolor">selected-data-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 1 1 1))
+(set! (<a class=quiet href="extsnd.html#selectedgraphcolor">selected-graph-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 0 0 0))
+(set! (<a class=quiet href="extsnd.html#graphshorizontal">graphs-horizontal</a>) #f)
+(set! (<a class=quiet href="extsnd.html#transformgraphp">transform-graph?</a>) #t)
+(set! (<a class=quiet href="extsnd.html#showtransformpeaks">show-transform-peaks</a>) #t)
+</pre>
+</td>
+</tr>
+</table>
+
+
 <br>
 <br>
 

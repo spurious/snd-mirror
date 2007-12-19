@@ -3,13 +3,24 @@
 
 /* clm4:
  *   perhaps add pm args alongside the fm args, as in oscil?
- *   all the make-* funcs that have a frequency arg should put that first (make-formant in particular)
- *   also polyshape/waveshape should put the "index" arg last, or just forget it (use mus-scaler or something)
+ *   all the make-* funcs that have a frequency arg should put that first (make-formant in particular), use "n" not cosines, "r" not "a"
+ *      make-sum-of-cosines freq n [no init-phase]
+ *      make-sine-summation freq n r ratio [no init-phase]
+ *      make-sum-of-sines freq n [no init-phase]
+ *      make-ssb-am freq n
+ *      make-formant freq r gain
+ *   polyshape/waveshape should put the "index" arg last, or just forget it (use mus-scaler or something)
  *   sum-of-cosines -> ncos
  *   sum-of-sines -> nsin
  *   sine-summation -> nrxysin
- *   env scaler\offset set and some way to set duration
+ *     what about oscil? [1sin?]
+ *   env scaler\offset set and some way to set duration [mus-length?]
  *   asymmetric-fm -> generators.scm (not built-in)
+ *   can the def-clm-struct method/make lists be used with built-in gens?
+ *   "fm" arg to formant -> set frequency so it's easier to have moving formants
+ *      but it's a direct freq, not an increment -- see mus_formant_with_frequency below
+ *   it would be cleaner to have a pulser+func rather than checking pulse-train>.1
+ *   high-pass et al with order and type
  */
 
 #include <mus-config.h>
@@ -4583,6 +4594,15 @@ static Float set_formant_frequency(mus_any *ptr, Float val)
   mus_set_formant_radius_and_frequency(ptr, gen->radius, val);
   return(val);
 }
+
+
+#if 0
+Float mus_formant_with_frequency(mus_any *ptr, Float input, Float freq)
+{
+  set_formant_frequency(ptr, freq);
+  return(mus_formant(ptr, input));
+}
+#endif
 
 
 static Float f_radius(mus_any *ptr) {return(((smpflt *)ptr)->radius);}

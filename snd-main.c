@@ -1427,10 +1427,14 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
     { /* wanted to use "-d" and "-i" but they're in use */
       if ((strcmp("-h", argname) == 0) || 
 	  (strcmp("-horizontal", argname) == 0) ||
+	  (strcmp("--horizontal", argname) == 0) ||
 	  (strcmp("-v", argname) == 0) || 
 	  (strcmp("-vertical", argname) == 0) ||
+	  (strcmp("--vertical", argname) == 0) ||
 	  (strcmp("-notebook", argname) == 0) ||
+	  (strcmp("--notebook", argname) == 0) ||
 	  (strcmp("-separate", argname) == 0) ||
+	  (strcmp("--separate", argname) == 0) ||
 	  (strcmp("-nostdin", argname) == 0) ||
 	  (strcmp("-noglob", argname) == 0) ||
 	  (strcmp("-noinit", argname) == 0) ||
@@ -1443,7 +1447,8 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 	  else
 	    {
 	      if ((strcmp("-p", argname) == 0) ||
-		  (strcmp("-preload", argname) == 0))
+		  (strcmp("-preload", argname) == 0) ||
+		  (strcmp("--preload", argname) == 0))
 		{
 		  /* preload sound files in dir (can be ., should be unquoted) */
 		  auto_open_ctr++;
@@ -1456,14 +1461,18 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 		{
 		  if ((strcmp("-l", argname) == 0) ||
 		      (strcmp("-load", argname) == 0) ||
+		      (strcmp("--load", argname) == 0) ||
 		      (strcmp("-b", argname) == 0) ||
 		      (strcmp("-batch", argname) == 0) ||
+		      (strcmp("--batch", argname) == 0) ||
 		      (source_file_p(argname)))
 		    {
 		      if ((strcmp("-l", argname) == 0) || 
 			  (strcmp("-load", argname) == 0) ||
+			  (strcmp("--load", argname) == 0) ||
 			  (strcmp("-b", argname) == 0) || 
-			  (strcmp("-batch", argname) == 0))
+			  (strcmp("-batch", argname) == 0) ||
+			  (strcmp("--batch", argname) == 0))
 			auto_open_ctr++;
 		      if ((auto_open_ctr >= args) ||
 			  (auto_open_file_names[auto_open_ctr] == NULL))
@@ -1483,7 +1492,8 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 		  else
 		    {
 		      if ((strcmp("-e", argname) == 0) ||
-			  (strcmp("-eval", argname) == 0))
+			  (strcmp("-eval", argname) == 0) ||
+			  (strcmp("--eval", argname) == 0))
 			{
 			  /* evaluate expression */
 			  auto_open_ctr++;

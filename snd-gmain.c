@@ -641,17 +641,21 @@ void snd_doit(int argc, char **argv)
   set_sound_style(SOUNDS_VERTICAL);
   for (i = 1; i < argc; i++)
     if ((strcmp(argv[i], "-h") == 0) || 
-	(strcmp(argv[i], "-horizontal") == 0))
+	(strcmp(argv[i], "-horizontal") == 0) ||
+	(strcmp(argv[i], "--horizontal") == 0))
       set_sound_style(SOUNDS_HORIZONTAL);
     else
       if ((strcmp(argv[i], "-v") == 0) || 
-	  (strcmp(argv[i], "-vertical") == 0))
+	  (strcmp(argv[i], "-vertical") == 0) ||
+	  (strcmp(argv[i], "--vertical") == 0))
 	set_sound_style(SOUNDS_VERTICAL);
       else
-	if (strcmp(argv[i], "-notebook") == 0)
+	if ((strcmp(argv[i], "-notebook") == 0) ||
+	    (strcmp(argv[i], "--notebook") == 0))
 	  set_sound_style(SOUNDS_IN_NOTEBOOK);
 	else
-	  if (strcmp(argv[i], "-separate") == 0)
+	  if ((strcmp(argv[i], "-separate") == 0) ||
+	      (strcmp(argv[i], "--separate") == 0))
 	    set_sound_style(SOUNDS_IN_SEPARATE_WINDOWS);
 	  else
 	    if (strcmp(argv[i], "-noglob") == 0)
@@ -667,7 +671,8 @@ void snd_doit(int argc, char **argv)
 		    nogtkrc = true;
 		  else
 		    if ((strcmp(argv[i], "-b") == 0) || 
-			(strcmp(argv[i], "-batch") == 0))
+			(strcmp(argv[i], "-batch") == 0) ||
+			(strcmp(argv[i], "--batch") == 0))
 		      batch = true;
 		    else
 		      if (strcmp(argv[i], "--features") == 0) /* testing (compsnd) */
