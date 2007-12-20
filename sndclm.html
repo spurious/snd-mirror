@@ -1449,6 +1449,47 @@ is scaled to be -1..1, so that adds another layer of confusion).
 	      *output*)))))
 -->
 
+<p>The index argument can be used to vary the spectrum, much as in FM, but there's an annoying "gotcha".
+You'll notice in the Chebyshev polynomials above that even numbered terms have a constant term (since,
+for example, cos^2 goes between 0 and 1, we mutiply it by 2 and subtract 1 to get cos 2x; that
+is (cos x)^2 = 1/2 (cos 2x + 1)).  But if the "x" is not a full amplitude sinusoid (if our index is
+less than 1.0), our x^2 term no longer balances the constant 1, so we get a DC component.  Each
+even numbered partial contributes to this component, and the result can be surprisingly large.
+If you don't counteract it in some way, you get a big click when the generator stops.
+Perhaps simplest is to add a "dc-block" filter onto the output:
+</p>
+
+<pre>
+  (with-sound ()
+    (let ((gen (<em class=red>make-polyshape</em> 100.0 :partials (list 1 .5 2 .25 3 .125 4 .125)))
+	  (flt (<a class=quiet href="#make-filter">make-filter</a> 2 (<a class=quiet href="extsnd.html#vct">vct</a> 1 -1) (<a class=quiet href="extsnd.html#vct">vct</a> 0 -0.999))) ; dc blocker
+	  (indf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) :end 88200)))
+      (do ((i 0 (1+ i)))
+	  ((= i 88200))
+        (<a class=quiet href="#outa">outa</a> i (* .5 (<a class=quiet href="#filter">filter</a> flt (<em class=red>polyshape</em> gen (<a class=quiet href="#env">env</a> indf)))) *output*))))
+</pre>
+
+<p>
+Check out what the 2nd partial does as the index moves toward 1.  This
+example also makes obvious yet another problem: changing the index changes
+the output peak amplitude.  
+</p>
+
+<p>
+On a related topic, if we drive the sum of Chebyshev polynomials with a complex signal
+(hoping to brighten a sound, for example), 
+we get sum and difference tones, much as in complex FM.
+</p>
+
+<pre>
+  (define (brighten-slightly coeffs)
+    (let ((pcoeffs (partials-&gt;polynomial coeffs))
+	  (mx (<a class=quiet href="extsnd.html#maxamp">maxamp</a>)))
+      (<a class=quiet href="extsnd.html#mapchannel">map-channel</a>
+       (lambda (y)
+         (* mx (<a class=quiet href="#polynomial">polynomial</a> pcoeffs (/ y mx)))))))
+</pre>
+
 <br><br>
 
 

@@ -1,25 +1,36 @@
 /* CLM (Music V) implementation */
 
 
+/* TODO: test/doc env scaler/offset/dur set 
+ */
+
 /* clm4:
  *   perhaps add pm args alongside the fm args, as in oscil?
+ *   perhaps remove all the initial-phase args (oscil->1sin and 1cos or something)
+ *
  *   all the make-* funcs that have a frequency arg should put that first (make-formant in particular), use "n" not cosines, "r" not "a"
+ *         the "n" and "r" renaming could be parallel to for now -- backwards compatible for a while
  *      make-sum-of-cosines freq n [no init-phase]
  *      make-sine-summation freq n r ratio [no init-phase]
  *      make-sum-of-sines freq n [no init-phase]
  *      make-ssb-am freq n
  *      make-formant freq r gain
+ *
  *   polyshape/waveshape should put the "index" arg last, or just forget it (use mus-scaler or something)
+ *
  *   sum-of-cosines -> ncos
  *   sum-of-sines -> nsin
  *   sine-summation -> nrxysin
  *     what about oscil? [1sin?]
- *   env scaler\offset set and some way to set duration [mus-length?]
  *   asymmetric-fm -> generators.scm (not built-in)
+ *
  *   can the def-clm-struct method/make lists be used with built-in gens?
+ *
  *   "fm" arg to formant -> set frequency so it's easier to have moving formants
  *      but it's a direct freq, not an increment -- see mus_formant_with_frequency below
+ *
  *   it would be cleaner to have a pulser+func rather than checking pulse-train>.1
+ *
  *   high-pass et al with order and type
  */
 
@@ -5415,11 +5426,9 @@ static Float env_scaler(mus_any *ptr) {return(((seg *)ptr)->original_scaler);} /
 
 static Float env_offset(mus_any *ptr) {return(((seg *)ptr)->original_offset);}
 
-static Float set_env_offset(mus_any *ptr, Float val) {((seg *)ptr)->original_offset = val; return(val);}
-
 int mus_env_breakpoints(mus_any *ptr) {return(((seg *)ptr)->size);}
 
-static off_t env_length(mus_any *ptr) {return((((seg *)ptr)->end));}
+static off_t env_length(mus_any *ptr) {return((((seg *)ptr)->end));} /* end + 1? */
 
 static Float env_current_value(mus_any *ptr) {return(((seg *)ptr)->current_value);}
 
@@ -5461,6 +5470,58 @@ static void env_reset(mus_any *ptr)
 }
 
 
+static void rebuild_env(seg *e, Float scl, Float off, off_t dur)
+{
+  seg *new_e;
+
+  new_e = (seg *)mus_make_env(e->original_data, e->size, scl, off, e->base, 0.0, dur, e->original_data);
+  if (e->locs) FREE(e->locs);
+  if (e->rates) FREE(e->rates);
+  e->locs = new_e->locs;
+  e->rates = new_e->rates;
+
+  e->init_y = new_e->init_y;
+  e->init_power = new_e->init_power;
+  env_reset((mus_any *)e);
+
+  FREE(new_e);
+}
+
+
+static Float env_set_scaler(mus_any *ptr, Float val)
+{
+  /* exp env handling makes this messy
+   *   if this works, it can be used to set the length (end + 1) via the set_length method, and offset via set_offset
+   *   the current set_env_offset merely sets original_offset -- where is it used (besides snd-test.scm)?
+   */
+  seg *e;
+  e = (seg *)ptr;
+  rebuild_env(e, val, e->original_offset, e->end);
+  e->original_scaler = val;
+  return(val);
+}
+
+
+static Float env_set_offset(mus_any *ptr, Float val)
+{
+  seg *e;
+  e = (seg *)ptr;
+  rebuild_env(e, e->original_scaler, val, e->end);
+  e->original_offset = val;
+  return(val);
+}
+
+
+static off_t env_set_length(mus_any *ptr, off_t val)
+{
+  seg *e;
+  e = (seg *)ptr;
+  rebuild_env(e, e->original_scaler, e->original_offset, val);
+  return(val);
+}
+
+
+
 static mus_any_class ENV_CLASS = {
   MUS_ENV,
   S_env,
@@ -5469,19 +5530,17 @@ static mus_any_class ENV_CLASS = {
   &env_equalp,
   &env_data, /* mus-data -> original breakpoints */
   0,
-  &env_length,
-  0,
+  &env_length, &env_set_length,
   0, 0, 
   &env_current_value, 0,
-  &env_scaler,
-  0,
+  &env_scaler, &env_set_scaler,
   &env_increment,
   0,
   &run_env,
   MUS_NOT_SPECIAL, 
   NULL,
   &env_position,
-  &env_offset, &set_env_offset, 
+  &env_offset, &env_set_offset,
   0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 
   &seg_pass, &seg_set_pass,
@@ -5539,7 +5598,7 @@ mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, dou
       e->data_allocated = true;
     }
   if (e->original_data != brkpts)
-    memcpy((void *)(e->original_data), (void *)brkpts, npts * 2 *sizeof(Float));
+    memcpy((void *)(e->original_data), (void *)brkpts, npts * 2 * sizeof(Float));
 
   if (base == 0.0)
     {

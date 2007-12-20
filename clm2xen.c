@@ -4476,6 +4476,8 @@ static XEN g_make_iir_filter(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 /* ---------------- env ---------------- */
 
+/* TODO: vct as env brkpt data */
+
 static XEN g_env_p(XEN obj) 
 {
   #define H_env_p "(" S_env_p " gen): " PROC_TRUE " if gen is a " S_env

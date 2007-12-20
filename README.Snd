@@ -890,7 +890,7 @@ So, here's the detailed step-by-step method, thanks to Cris Ewing:
     in /usr/local/bin)
 
 
-In OSX 10.5, I had to add Xtf Xmu and fontconfig to the MOTIF_LIBS line in makefile:
+In OSX 10.5, I had to add Xtf, Xmu, and fontconfig to the MOTIF_LIBS line in makefile:
 
 MOTIF_LIBS =  -L/usr/X11/lib -R/usr/X11/lib  -lSM -lICE -lXft -lXmu -lfontconfig /usr/X11R6-old/lib/libXm.a -L/usr/X11R6-old/lib -lXt -lXp -lX11  -lSM -lICE -lXext -lXpm
 
