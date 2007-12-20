@@ -4476,8 +4476,6 @@ static XEN g_make_iir_filter(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 /* ---------------- env ---------------- */
 
-/* TODO: vct as env brkpt data */
-
 static XEN g_env_p(XEN obj) 
 {
   #define H_env_p "(" S_env_p " gen): " PROC_TRUE " if gen is a " S_env
@@ -4555,14 +4553,24 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
       /* env data is a list, checked last to let the preceding throw wrong-type error before calloc  */
       if (!(XEN_KEYWORD_P(keys[0])))
         {
-	  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(keys[0], len), keys[0], orig_arg[0], S_make_env, "a list");
-	  if (len == 0)
-	    XEN_ERROR(NO_DATA,
-		      XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
-				 C_TO_XEN_STRING("null env?"), 
-				 keys[0]));
-	  if (!(XEN_NUMBER_P(XEN_CAR(keys[0]))))
-	    XEN_ASSERT_TYPE(false, keys[0], orig_arg[0], S_make_env, "a list of numbers (breakpoints)");
+	  vct *v = NULL;
+	  if (MUS_VCT_P(keys[0]))
+	    {
+	      v = XEN_TO_VCT(keys[0]);
+	      len = v->length;
+	    }
+	  else
+	    {
+	      XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(keys[0], len), keys[0], orig_arg[0], S_make_env, "a list");
+	      if (len == 0)
+		XEN_ERROR(NO_DATA,
+			  XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
+				     C_TO_XEN_STRING("null env?"), 
+				     keys[0]));
+	      if (!(XEN_NUMBER_P(XEN_CAR(keys[0]))))
+		XEN_ASSERT_TYPE(false, keys[0], orig_arg[0], S_make_env, "a list of numbers (breakpoints)");
+	    }
+
 	  npts = len / 2;
 	  brkpts = (Float *)CALLOC(len, sizeof(Float));
 	  if (brkpts == NULL)
@@ -4570,11 +4578,15 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	  odata = (Float *)CALLOC(len, sizeof(Float));
 	  if (odata == NULL)
 	    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env copy"));
-	  for (i = 0, lst = XEN_COPY_ARG(keys[0]); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
+
+	  if (v)
+	    memcpy((void *)brkpts, (void *)(v->data), len * sizeof(Float));
+	  else
 	    {
-	      brkpts[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
-	      odata[i] = brkpts[i];
+	      for (i = 0, lst = XEN_COPY_ARG(keys[0]); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
+		brkpts[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
 	    }
+	  memcpy((void *)odata, (void *)brkpts, len * sizeof(Float));
         }
     }
   if (brkpts == NULL) 

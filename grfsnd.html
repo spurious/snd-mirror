@@ -149,7 +149,7 @@ the usual Xt/X-related flags like -xrm).</p>
 <td width=40></td>
 <td>
 <pre>
-./snd -notebook oboe.snd pistol.snd
+snd -notebook oboe.snd pistol.snd
 (set! (<a class=quiet href="extsnd.html#graphstyle">graph-style</a>) graph-lollipops)
 (set! (<a class=quiet href="extsnd.html#dotsize">dot-size</a>) 8)
 </pre>
@@ -167,7 +167,7 @@ in order:</p>
 </pre>
 <p>reads ~/.snd, if any, then sets the (unselected) data color to red, then opens oboe.snd.</p>
 <pre>
-    ./snd -eval '(begin (display (+ 1 2)) (<a class=quiet href="extsnd.html#exit">exit</a>))'
+    snd -eval '(begin (display (+ 1 2)) (<a class=quiet href="extsnd.html#exit">exit</a>))'
 </pre>
 <p>prints "3" and exits.  The "-title" argument works in both versions of Snd.
 The following adds "WAV" to the sound file extension table before adding all the sound files in the directory to the
@@ -184,7 +184,7 @@ View:Files dialog's list:
 <td width=20></td>
 <td>
 <pre>
-./snd oboe.snd
+snd oboe.snd
 (set! (<a class=quiet href="extsnd.html#selecteddatacolor">selected-data-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 1 1 1))
 (set! (<a class=quiet href="extsnd.html#selectedgraphcolor">selected-graph-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 0 0 0))
 (set! (<a class=quiet href="extsnd.html#graphshorizontal">graphs-horizontal</a>) #f)
@@ -674,7 +674,7 @@ since Snd defaults to an off-white background, this makes everything unreadable.
 the black text back with:
 </p>
 <pre>
-    ./snd -xrm '*foreground: Black'
+    snd -xrm '*foreground: Black'
 </pre>
 <p>or put the equivalent line in your .Xdefaults file.  The listener text color can be set
 via <code>(set! (<a class=quiet href="extsnd.html#listenertextcolor">listener-text-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 0 0 0))</code> in ~/.snd.

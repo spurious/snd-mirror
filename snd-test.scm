@@ -20931,7 +20931,7 @@ EDITS: 2
 		    (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1)))
 		    (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 .5))))
     (let ((tag (catch #t (lambda () (partials->wave (list .5 .3 .2))) (lambda args (car args)))))
-      (if (not (eq? tag 'no-data)) (snd-display ";odd length arg to partials->wave: ~A" tag)))
+      (if (not (eq? tag 'bad-type)) (snd-display ";odd length arg to partials->wave: ~A" tag)))
     
     (let ((hi (make-table-lookup :size 256)))
       (if (not (= (mus-length hi) 256)) (snd-display ";table-lookup set length: ~A?" (mus-length hi))))
@@ -21074,7 +21074,7 @@ EDITS: 2
     (test-gen-equal (make-waveshape 440.0 :partials '(1 1)) (make-waveshape 440.0 :partials '(1 1)) (make-waveshape 100.0 :partials '(1 1)))
     (test-gen-equal (make-waveshape 440.0 :partials '(1 1)) (make-waveshape 440.0 :partials '(1 1)) (make-waveshape 4400.0 :partials '(1 1 2 .5)))
     (let ((tag (catch #t (lambda () (partials->waveshape (list .5 .3 .2))) (lambda args (car args)))))
-      (if (not (eq? tag 'bad-type)) (snd-display ";odd length arg to partials->waveshape: ~A" tag)))
+      (if (not (eq? tag 'no-data)) (snd-display ";odd length arg to partials->waveshape: ~A" tag)))
     (let ((tag (catch #t (lambda () (phase-partials->wave (list 1 .3 2 .2))) (lambda args (car args)))))
       (if (not (eq? tag 'wrong-type-arg)) (snd-display ";bad length arg to phase-partials->wave: ~A" tag)))
     

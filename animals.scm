@@ -31,6 +31,7 @@
 ;;; Ornate chorus frog
 ;;; Bullfrog
 ;;; Texas toad
+;;; American toad
 
 ;;; -------- mammals --------
 ;;; Indri
@@ -727,6 +728,41 @@
       (texas-toad-1 call-beg last-dur amp1))))
 
 ;(with-sound (:play #t) (texas-toad 0 2.0 0.5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; American toad
+
+(definstrument (american-toad beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 4 1 20 1 21 0) :duration dur :scaler amp))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .94  2 .03  3 .01  4 .003 5 .005  7 .002)))
+	 (pulse-dur .024)
+	 (frqf (make-env '(0 150 .1 250 .5 300 .9 200 1 0) :duration pulse-dur :offset (hz->radians 1000) :scaler (hz->radians 1.0)))
+	 (pulsef (make-env '(0.000 0.000 0.147 0.700 0.261 0.968 0.405 0.996 0.601 0.830 0.878 0.198 1.000 0.000) :duration pulse-dur))
+	 (pulse-sep .045)
+	 (pulse-samps (seconds->samples pulse-sep))
+	 (next-pulse (+ start pulse-samps))
+	 (pulse-frqf (make-env (list 0 1100 .4 1300 dur (- 1300 (* dur 8))) :duration dur :scaler (hz->radians 1.0))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((pfreq (env pulse-frqf)))
+	   (if (>= i next-pulse)
+	       (begin
+		 (set! next-pulse (+ i pulse-samps))
+		 (mus-reset pulsef)
+		 (set! (mus-offset frqf) pfreq))) ; also resets
+	   (outa i (* (env ampf)
+		      (env pulsef)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*)))))))
+
+;(with-sound (:play #t) (american-toad 0 2 .25))
+
 
 
 ;;; ================ Mammals? ================
@@ -5037,5 +5073,6 @@
     (brown-jay 225 .5)
     (blue-grosbeak 224 .25)
     (acorn-woodpecker 225 .5)
+    (american-toad 226 3 .25)
     ))
 

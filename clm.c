@@ -1,7 +1,7 @@
 /* CLM (Music V) implementation */
 
 
-/* TODO: test/doc env scaler/offset/dur set 
+/* TODO: test/doc env scaler/offset/dur set, also vct as envelope arg in make-env
  */
 
 /* clm4:
@@ -23,6 +23,7 @@
  *   sine-summation -> nrxysin
  *     what about oscil? [1sin?]
  *   asymmetric-fm -> generators.scm (not built-in)
+ *   do something debonair about move-sound -- another mistake
  *
  *   can the def-clm-struct method/make lists be used with built-in gens?
  *
@@ -5637,6 +5638,7 @@ mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, dou
 
   return((mus_any *)e);
 }
+
 
 static void set_env_location(mus_any *ptr, off_t val)
 {
