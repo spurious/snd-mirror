@@ -1271,7 +1271,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
     }
 
   fs->done = reuse_old;
-  fs->beg = 0;
+  fs->beg = 0; /* offset from losamp */
   fs->databeg = dbeg;
   fs->datalen = dlen;
   return(fs);
@@ -1426,7 +1426,7 @@ typedef struct sonogram_state {
   sono_info *scp;
   off_t beg, losamp, hisamp;
   bool done;
-  int hop;
+  double acc_hop, hop;
   mus_fft_window_t window;
   int msg_ctr;
   int edit_ctr;
@@ -1522,10 +1522,12 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
   chan_info *cp;
   sonogram_state *lsg = NULL;
   int i, dpys = 1;
+
   cp = sg->cp;
   if (cp->fft_changed != FFT_CHANGE_LOCKED)
     cp->fft_changed = FFT_UNCHANGED;
   else cp->fft_changed = FFT_CHANGED;
+
   if ((!(cp->graph_transform_p)) || (cp->transform_size <= 2)) return(SONO_QUIT);
   ap = cp->axis;
   sg->slice = SONO_INIT;
@@ -1534,19 +1536,27 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
   sg->losamp = ap->losamp;
   sg->hisamp = ap->hisamp;
   sg->window = cp->fft_window;
+
   if (cp->graph_time_p) dpys++; 
   if (cp->graph_lisp_p) dpys++; 
+
   if (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)
     sg->outlim = ap->height / cp->spectro_hop;
   else sg->outlim = ap->window_width / dpys;
   if (sg->outlim <= 1) return(SONO_QUIT);
-  sg->hop = (int)(ceil((double)(ap->hisamp - ap->losamp + 1) / (double)(sg->outlim)));
+
+  /* sg->hop = (int)(ceil((double)(ap->hisamp - ap->losamp + 1) / (double)(sg->outlim))); */
+  /*   this ^ old form causes a noticeable step in the zoom sequence when the hop value changes */
+  sg->hop = (double)(ap->hisamp - ap->losamp + 1) / (double)(sg->outlim);
+  sg->acc_hop = 0.0;
+
   /* if fewer samps than pixels, draw rectangles */
   if ((cp->transform_type == FOURIER) || 
       (cp->transform_type == AUTOCORRELATION))
     sg->spectrum_size = (cp->transform_size) / 2;
   else sg->spectrum_size = cp->transform_size;
   if (sg->spectrum_size <= 0) return(SONO_QUIT);
+
   sg->edit_ctr = cp->edit_ctr;
   si = cp->sonogram_data;
   if (!si)
@@ -1671,7 +1681,8 @@ static sono_slice_t run_all_ffts(sonogram_state *sg)
     }
   sg->outer++;
   if ((sg->outer == sg->outlim) || (!(cp->graph_transform_p)) || (cp->transform_graph_type == GRAPH_ONCE)) return(SONO_QUIT);
-  fs->beg += sg->hop;
+  sg->acc_hop += sg->hop;
+  fs->beg = (off_t)(sg->acc_hop);
   ap = cp->axis;
   if ((sg->losamp != ap->losamp) || (sg->hisamp != ap->hisamp)) 
     {

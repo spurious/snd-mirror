@@ -73,15 +73,13 @@ static void sy_changed(int value, chan_info *cp)
 }
 
 
-#define SCROLLBAR_SX_MAX 2000
-
 static void sx_changed(int value, chan_info *cp)
 {
   /* treat as centered with non-slider trough as defining current bounds */
   axis_info *ap;
   double low;
   ap = cp->axis;
-  low = get_scrollbar(channel_sx(cp), value, SCROLLBAR_SX_MAX);
+  low = get_scrollbar(channel_sx(cp), value, SCROLLBAR_MAX);
   ap->sx = low * (1.0 - ap->zx);
   apply_x_axis_change(ap, cp);
 }
@@ -229,7 +227,7 @@ void initialize_scrollbars(chan_info *cp)
   ap = cp->axis;
   sp = cp->sound;
 
-  set_scrollbar(channel_sx(cp), ap->sx, ap->zx, SCROLLBAR_SX_MAX);
+  set_scrollbar(channel_sx(cp), ap->sx, ap->zx, SCROLLBAR_MAX);
   set_scrollbar(channel_sy(cp), ap->sy, ap->zy, SCROLLBAR_MAX);
   set_z_scrollbars(cp, ap);
 
@@ -271,7 +269,7 @@ void resize_sx(chan_info *cp)
     set_scrollbar(channel_sx(cp),
 		  (ap->x0 - ap->xmin) / ap->x_ambit,
 		  (ap->x1 - ap->x0) / ap->x_ambit,
-		  SCROLLBAR_SX_MAX);
+		  SCROLLBAR_MAX);
 }
 
 
@@ -1103,7 +1101,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNmaximum, SCROLLBAR_SX_MAX); n++;
+      XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
       XtSetArg(args[n], XmNincrement, 1); n++;
       XtSetArg(args[n], XmNdragCallback, n5 = make_callback_list(sx_drag_callback, (XtPointer)cp)); n++;
       XtSetArg(args[n], XmNincrementCallback, n6 = make_callback_list(sx_increment_callback, (XtPointer)cp)); n++;

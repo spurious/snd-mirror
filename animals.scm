@@ -89,6 +89,7 @@
 ;;; Acadian flycatcher
 ;;; Vermillion flycatcher
 ;;; Ash-throated flycatcher
+;;; Olive-sided flycatcher
 ;;; Black phoebe
 ;;; Say's phoebe
 ;;; Blue grosbeak
@@ -99,6 +100,7 @@
 ;;; Western tanager
 ;;; Chuck-will's-widow
 ;;; Whip-poor-will
+;;; Lesser nighthawk
 ;;; Mourning dove
 ;;; Bobwhite
 ;;; California Quail
@@ -740,7 +742,7 @@
 	 (ampf (make-env '(0 0 4 1 20 1 21 0) :duration dur :scaler amp))
 	 (gen1 (make-polyshape 0.0 :partials (list 1 .94  2 .03  3 .01  4 .003 5 .005  7 .002)))
 	 (pulse-dur .024)
-	 (frqf (make-env '(0 150 .1 250 .5 300 .9 200 1 0) :duration pulse-dur :offset (hz->radians 1000) :scaler (hz->radians 1.0)))
+	 (frqf (make-env '(0 150 .1 250 .5 300 .9 200 1 0) :duration pulse-dur :scaler (hz->radians 1.0)))
 	 (pulsef (make-env '(0.000 0.000 0.147 0.700 0.261 0.968 0.405 0.996 0.601 0.830 0.878 0.198 1.000 0.000) :duration pulse-dur))
 	 (pulse-sep .045)
 	 (pulse-samps (seconds->samples pulse-sep))
@@ -750,16 +752,16 @@
      (lambda ()
        (do ((i start (1+ i)))
 	   ((= i stop))
-	 (let ((pfreq (env pulse-frqf)))
-	   (if (>= i next-pulse)
-	       (begin
-		 (set! next-pulse (+ i pulse-samps))
-		 (mus-reset pulsef)
-		 (set! (mus-offset frqf) pfreq))) ; also resets
-	   (outa i (* (env ampf)
-		      (env pulsef)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*)))))))
+	 (if (>= i next-pulse)
+	     (begin
+	       (set! next-pulse (+ i pulse-samps))
+	       (mus-reset pulsef)
+	       (mus-reset frqf)))
+	 (outa i (* (env ampf)
+		    (env pulsef)
+		    (polyshape gen1 1.0 (+ (env frqf)
+					   (env pulse-frqf))))
+	       *output*))))))
 
 ;(with-sound (:play #t) (american-toad 0 2 .25))
 
@@ -4966,6 +4968,67 @@
 ;(with-sound (:play #t) (acorn-woodpecker 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Lesser nighhawk
+
+(definstrument (lesser-nighthawk beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 2 1 10 1 11 0) :duration dur :scaler amp :base 10))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .94  3 .04  4 .01)))
+	 (pulse-dur .021)
+	 (pulsef (make-env '(0.000 0.000 .6 1 1 0) :base .1  :duration pulse-dur))
+	 (pulse-sep .047)
+	 (pulse-samps (seconds->samples pulse-sep))
+	 (next-pulse (+ start pulse-samps))
+	 (frqf (make-env (list 0 600  .5 620 (max .55 (- dur .5)) 620  (max .6 dur) 570) :duration dur :scaler (hz->radians 1.0))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (if (>= i next-pulse)
+	     (begin
+	       (set! next-pulse (+ i pulse-samps))
+	       (mus-reset pulsef)))
+	 (outa i (* (env ampf)
+		    (env pulsef)
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (lesser-nighthawk 0 1 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Olive-sided flycatcher
+
+(definstrument (olive-sided-flycatcher beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 1.08)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.021 0.129 0.035 0.369 0.053 0.250 0.064 0.000 0.352 0.000 0.381 0.674 
+			   0.394 0.483 0.407 0.834 0.418 0.852 0.425 0.795 0.440 0.898 0.457 0.931 0.489 0.922 
+			   0.506 0.878 0.534 0.991 0.548 0.988 0.577 0.717 0.593 0.834 0.615 0.000 0.690 0.000 
+			   0.704 0.698 0.710 0.436 0.712 0.610 0.726 0.395 0.736 0.483 0.756 0.545 0.773 0.795 
+			   0.786 0.583 0.808 0.919 0.816 0.843 0.826 0.898 0.837 0.797 0.844 0.659 0.860 0.640 
+			   0.879 0.334 0.975 0.176 0.989 0.034 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.175 0.020 0.235 0.035 0.269 0.041 0.311 0.070 0.224 0.356 0.209 0.377 0.309 
+			   0.402 0.352 0.449 0.360 0.549 0.348 0.574 0.339 0.588 0.354 0.596 0.330 0.603 0.354 
+			   0.612 0.235 0.691 0.213 0.702 0.313 0.725 0.380 0.743 0.397 0.765 0.354 0.794 0.328 
+			   0.844 0.299 0.876 0.277 0.975 0.254 1.000 0.198)
+			 :duration dur :scaler (hz->radians 10100.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .95  2 .03  3 .01  4 .005))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (olive-sided-flycatcher 0 .5))
 
 
 ;;; ================ calling-all-animals ================
@@ -5074,5 +5137,7 @@
     (blue-grosbeak 224 .25)
     (acorn-woodpecker 225 .5)
     (american-toad 226 3 .25)
+    (lesser-nighthawk 229 2 .25)
+    (olive-sided-flycatcher 230 .125)
     ))
 
