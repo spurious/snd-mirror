@@ -69,6 +69,7 @@
 ;;; Grasshopper sparrow
 ;;; Black-chinned sparrow
 ;;; Golden-crowned sparrow
+;;; Cassin's sparrow
 ;;; Purple finch
 ;;; House finch
 ;;; Eastern wood-pewee (2)
@@ -92,6 +93,7 @@
 ;;; Olive-sided flycatcher
 ;;; Black phoebe
 ;;; Say's phoebe
+;;; Common yellowthroat
 ;;; Blue grosbeak
 ;;; Swainson's thrush
 ;;; American robin
@@ -108,6 +110,7 @@
 ;;; Great-horned owl
 ;;; Barred owl
 ;;; Northern goshawk
+;;; Red-shouldered hawk
 ;;; Pileated woodpecker
 ;;; White-headed woodpecker
 ;;; Acorn woodpecker
@@ -5031,6 +5034,227 @@
 ;(with-sound (:play #t) (olive-sided-flycatcher 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Red-shouldered hawk
+;;;
+;;;   ending is not right
+
+(definstrument (red-shouldered-hawk beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.475)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.071 0.704 0.128 0.964 0.168 0.593 0.383 0.356 0.399 0.798 0.446 0.901 
+			   0.492 0.628 0.595 0.771 0.677 0.700 0.693 0.439 0.715 0.593 0.750 0.715 0.872 0.648 
+			   0.894 0.360 0.938 0.360 0.984 0.213 1.000 0.000)
+			 :duration dur :scaler (* 0.2 amp)))
+	 (frqf (make-env '(0.000 0.083 0.027 0.094 0.035 0.129 0.103 0.143 0.116 0.180  0.370 0.167  0.381 0.13 
+                           0.66 .114 .72 .116 .8 .112
+			   0.871 0.105 0.888 0.080 0.976 0.078 1.000 0.08)
+			 :base .1 :duration dur :scaler (hz->radians (* 0.5 9130.0))))
+	 (histuff (make-polyshape 0.0 :partials (list 1 .1  2 .75   3 .1  4 .1  5 .01  6 .01  7 .01  8 .02 9 .01 11 .005 )))
+	 (lostuff (make-polyshape 0.0 :partials (list 2 .1 3 .3  5 .03  7 .1   9 .01   13 .1  15 .1  17 .05  19 .03)))
+	 (midstuff (make-polyshape 0.0 :partials (list 1 .3 3 .7)))
+	 (midf (make-env '(0 1 .3 1 .4 .1 1 0) :duration dur :scaler 1.0))
+	 (oddf (make-env '(0 1  .1 1  .12 .01 .45 .01 .55 .75 1 0) :duration dur :scaler 0.7 :base 10))
+	 (frm1 (make-formant .98 2300 10))
+	 (frm2 (make-formant .99 3200 3))
+	 (frm3 (make-formant .97 5300 5))
+	 (frm4 (make-formant .99 1600 5))
+	 (rnd (make-rand-interp 400 (hz->radians 10))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let* ((frq (+ (env frqf)
+			(rand-interp rnd)))
+		(val (* (env ampf)
+			(+ (* (polyshape histuff 1.0 (* 2 frq)))
+			   (* (env oddf) 
+			      (polyshape lostuff 1.0 frq))
+			   (* (env midf)
+			      (polyshape midstuff 1.0 (* 2 frq)))))))
+	   (outa i (+ val
+		      (formant frm1 val) 
+		      (formant frm2 val) 
+		      (formant frm3 val)
+		      (formant frm4 val))
+	       *output*)))))))
+
+;(with-sound (:play #t) (red-shouldered-hawk 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Common yellowthroat
+
+(define (common-yellowthroat beg1 amp1)
+
+  (definstrument (common-yellowthroat-1 beg amp) 
+    (let* ((start (seconds->samples beg))
+	   (dur .42)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.067 0.312 0.105 0.773 0.132 0.685 0.160 0.168 0.178 0.075 0.192 0.178 
+			     0.211 0.636 0.227 0.782 0.236 0.623 0.258 0.807 0.283 0.639 0.299 0.000 0.434 0.000 
+			     0.482 0.751 0.503 0.804 0.518 0.651 0.540 0.000 0.638 -0.000 0.661 0.576 0.715 0.664
+			     0.736 0.984 0.763 0.685 0.784 0.620 0.817 0.894 0.830 0.745 0.912 0.134 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.296 0.029 0.290 0.052 0.305 0.072 0.334 0.088 0.367 0.108 0.381 0.132 0.348 
+			     0.159 0.305 0.183 0.352 0.210 0.410 0.241 0.436 0.267 0.441 0.292 0.434 0.398 0.417 
+			     0.410 0.682 0.428 0.686 0.457 0.581 0.475 0.534 0.491 0.503 0.521 0.485 0.531 0.468 
+			     0.645 0.488 0.672 0.506 0.690 0.530 0.704 0.543 0.718 0.521 0.733 0.486 0.763 0.457 
+			     0.791 0.423 0.838 0.356 0.918 0.261 0.951 0.252 1.000 0.194)
+			   :duration dur :scaler (hz->radians 10150.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .99  2 .01))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+
+  (common-yellowthroat-1 beg1 (* 0.4 amp1))
+  (common-yellowthroat-1 (+ beg1 0.44) amp1)
+  (common-yellowthroat-1 (+ beg1 0.90) amp1)
+  (common-yellowthroat-1 (+ beg1 1.36) (* 0.8 amp1)))
+  
+
+;(with-sound (:play #t) (common-yellowthroat 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Cassin's sparrow
+
+(define (cassins-sparrow beg amp)
+
+  ;; buzz1
+  (let* ((start (seconds->samples beg))
+	 (dur 0.2)
+	 (stop (+ start (seconds->samples dur)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .95 2 .05)))
+	 (ampf (make-env '(0.000 0.000 0.139 0.174 0.302 0.577 0.492 0.601 0.720 0.415 0.853 0.628 0.962 0.945 1.000 0.000) 
+			 :duration dur :scaler (* .3 amp)))
+	 (pulse-dur .0064)
+	 (pulse-samps (seconds->samples pulse-dur))
+	 (next-pulse (+ start pulse-samps))
+	 (pulse-frqf (make-env '(0 0 1 200 3 0) :duration pulse-dur :scaler (hz->radians 1.0)))
+	 (frqf (make-env '(0 5850  .2 6200 .3 6000 1 6100) :duration dur :scaler (hz->radians 1.0)))
+	 (pulse-ampf (make-env '(0.000 0.2 0.435 0.356 0.701 0.925 0.785 0.984 0.880 0.779 0.973 0.395 1.000 0.2) :duration pulse-dur)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (if (>= i next-pulse)
+	       (begin
+		 (set! next-pulse (+ next-pulse pulse-samps))
+		 (mus-reset pulse-ampf)
+		 (mus-reset pulse-frqf)))
+	   (outa i (* (env ampf)
+		      (env pulse-ampf)
+		      (polyshape gen1 1.0 (+ (env pulse-frqf)
+					     (env frqf))))
+		 *output*)))))
+
+  ;; buzz2
+  (let* ((start (seconds->samples (+ beg .2)))
+	 (dur 0.22)
+	 (stop (+ start (seconds->samples dur)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .95 2 .05)))
+	 (pulse-dur .022)
+	 (pulse-samps (seconds->samples pulse-dur))
+	 (next-pulse (+ start pulse-samps))
+	 (pulse-frqf (make-env '(0 5400 1 6700) :duration pulse-dur :scaler (hz->radians 1.0)))
+	 (pulse-ampf (make-env '(0 0 .1 0 .7 1 1 0) :duration pulse-dur :base .1 :scaler (* .6 amp)))
+	 (rnd (make-rand-interp 600 (hz->radians 100))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (if (>= i next-pulse)
+	       (begin
+		 (set! next-pulse (+ next-pulse pulse-samps))
+		 (mus-reset pulse-ampf)
+		 (mus-reset pulse-frqf)))
+	   (outa i (* (env pulse-ampf)
+		      (polyshape gen1 1.0 (+ (env pulse-frqf)
+					     (rand-interp rnd))))
+		 *output*)))))
+
+  ;; buzz3
+  (let* ((start (seconds->samples (+ beg .425)))
+	 (dur 0.51)
+	 (stop (+ start (seconds->samples dur)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .98 2 .01  3 .005)))
+	 (pulse-dur .051)
+	 (pulse-samps (seconds->samples 0.064))
+	 (next-pulse (+ start pulse-samps))
+	 (pulse-frqf (make-env '(0 5300 .1 5200 .2 5300 .3 6000 1 6000) :duration pulse-dur :scaler (hz->radians 1.0)))
+	 (pulse-ampf (make-env '(0 0 .1 .5 .2 0 .3 1 .4 .9 .8 1 1 0) :duration pulse-dur :scaler amp))
+	 (frqf (make-env '(0 100 .6 0 1 50) :duration dur :scaler (hz->radians 1.0)))
+	 (ampf (make-env '(0 .6 1 1) :duration dur))
+	 (rnd (make-rand-interp 600 (hz->radians 10))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (if (>= i next-pulse)
+	       (begin
+		 (set! next-pulse (+ next-pulse pulse-samps))
+		 (mus-reset pulse-ampf)
+		 (mus-reset pulse-frqf)))
+	   (outa i (* (env ampf)
+		      (env pulse-ampf)
+		      (polyshape gen1 1.0 (+ (env pulse-frqf)
+					     (env frqf)
+					     (rand-interp rnd))))
+		 *output*)))))
+
+  ;; 4 long pitches
+  (let* ((start (seconds->samples (+ beg .95)))
+	 (dur 0.74)
+	 (stop (+ start (seconds->samples dur)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .99 2 .01)))
+	 (frqf (make-env '(0.000 0.446 0.014 0.403 0.054 0.385 0.121 0.376 0.248 0.374 0.274 0.367 0.290 0.198 
+			   0.308 0.166 0.339 0.159 0.418 0.162 0.545 0.162 0.674 0.162 0.714 0.164 0.718 0.458 
+			   0.735 0.451 0.743 0.415 0.761 0.403 0.847 0.387 1.000 0.387)
+		:duration dur :scaler (hz->radians 22050.0)))
+	 (ampf (make-env '(0.000 0.000 0.025 0.833 0.062 0.951 0.087 0.882 0.120 1.000 0.172 0.961 0.226 0.849 
+			   0.238 0.666 0.253 0.000 0.299 0.000 0.319 0.689 0.329 0.679 0.346 0.000 0.409 0.000 
+			   0.450 0.593 0.478 0.689 0.537 0.767 0.649 0.626 0.666 0.469 0.679 0.000 0.737 0.000 
+			   0.771 0.816 0.784 0.698 0.795 0.911 0.828 0.895 0.853 0.774 0.882 0.734 0.942 0.603 
+			   0.979 0.475 0.992 0.325 1.000 0.000)
+		:duration dur :scaler (* .9 amp))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*)))))
+
+  ;; last buzz
+  (let* ((start (seconds->samples (+ beg 1.73)))
+	 (dur 0.32)
+	 (stop (+ start (seconds->samples dur)))
+	 (gen1 (make-oscil 3100.0))
+	 (ampf (make-env '(0 0 1 1 2 1 3 0) :base .3 :duration dur :scaler (* .4 amp)))
+	 (buzz (make-oscil 120))
+	 (rnd (make-rand-interp 400 (hz->radians 100))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (+ .25 (* .75 (abs (oscil buzz))))
+		      (oscil gen1 (rand-interp rnd)))
+		 *output*))))))
+
+;(with-sound (:play #t) (cassins-sparrow 0 .5))
+
+
+
 ;;; ================ calling-all-animals ================
 
 
@@ -5137,7 +5361,10 @@
     (blue-grosbeak 224 .25)
     (acorn-woodpecker 225 .5)
     (american-toad 226 3 .25)
+    (red-shouldered-hawk 228 .5)
     (lesser-nighthawk 229 2 .25)
     (olive-sided-flycatcher 230 .125)
+    (common-yellowthroat 232 .25)
+    (cassins-sparrow 233 .25)
     ))
 

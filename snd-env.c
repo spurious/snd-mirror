@@ -1,6 +1,5 @@
 #include "snd.h"
 
-/* SOMEDAY: it would be nice to display current mouse coords, or dot if linger, but I can't see how to do that in Motif */
 
 #define BIG_DOT_SIZE 10
 #define MEDIUM_DOT_SIZE 7
