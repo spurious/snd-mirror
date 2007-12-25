@@ -32391,6 +32391,7 @@ EDITS: 2
 	      (close-sound id))
 	    (let ((id (open-sound (car (match-sound-files (lambda (file) 
 							    (and (>= (mus-sound-chans file) 2)
+								 (not (= (mus-sound-header-type file) mus-raw))
 								 (> (mus-sound-frames file) 1000))))))))
 	      (set! (sync id) 1)
 	      (select-sound id)

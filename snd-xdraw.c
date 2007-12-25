@@ -1115,16 +1115,16 @@ void reflect_spectro(void)
 }
 
 
-void set_with_gl(bool val)
+void set_with_gl(bool val, bool with_dialogs)
 {
 #if HAVE_GL
   sgl_save_currents();
 #endif
   in_set_with_gl(val);
 #if HAVE_GL
-  sgl_set_currents();
-  if (oid) XmToggleButtonSetState(oid->glbutton, val, false);
-  /* for_each_chan(update_graph); */
+  sgl_set_currents(with_dialogs);
+  if ((oid) && (with_dialogs))
+    XmToggleButtonSetState(oid->glbutton, val, false);
 #endif
 } 
 
@@ -1136,7 +1136,7 @@ static void with_gl_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   sgl_save_currents();
   in_set_with_gl(cb->set);
-  sgl_set_currents();
+  sgl_set_currents(true);
   for_each_chan(update_graph);
 }
 #endif

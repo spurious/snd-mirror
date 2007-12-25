@@ -13,7 +13,7 @@
 (provide 'snd-analog-filter.scm)
 
 (if (not (defined? 'cascade->canonical)) ; dsp.scm normally
-    (define (cascade->canonical A)
+    (define+ (cascade->canonical A)
       "(cascade->canonical A) converts cascade filter coeffs to canonical form"
       ;; from Orfanidis "Introduction to Signal Processing"
 

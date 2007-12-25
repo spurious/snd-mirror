@@ -7,7 +7,6 @@
 static GtkWidget *listener_text = NULL;
 
 static GtkWidget *completion_pane = NULL;
-static slist *completion_list = NULL;
 static bool completion_list_active = false;
 
 static int printout_end = 0;
@@ -15,6 +14,8 @@ static int printout_end = 0;
 #define LISTENER_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))
 
 #if 0
+static slist *completion_list = NULL;
+
 static void list_completions_callback(const char *name, int row, void *data)
 {
   int beg, end, i, j, old_len, new_len;

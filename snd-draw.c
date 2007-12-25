@@ -1268,7 +1268,7 @@ void sgl_save_currents(void)
 }
 
 
-void sgl_set_currents(void)
+void sgl_set_currents(bool with_dialogs)
 {
   Float *vals;
   if (with_gl(ss)) vals = gl_currents; else vals = x_currents;
@@ -1278,7 +1278,7 @@ void sgl_set_currents(void)
   in_set_spectro_x_scale(vals[3]);
   in_set_spectro_y_scale(vals[4]);
   in_set_spectro_z_scale(vals[5]);
-  reflect_spectro();
+  if (with_dialogs) reflect_spectro();
   chans_field(FCP_X_ANGLE, vals[0]);
   chans_field(FCP_Y_ANGLE, vals[1]);
   chans_field(FCP_Z_ANGLE, vals[2]);

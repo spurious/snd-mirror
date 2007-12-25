@@ -56,7 +56,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info);
 bool color_dialog_is_active(void);
 bool orientation_dialog_is_active(void);
 void reflect_spectro(void);
-void set_with_gl(bool val);
+void set_with_gl(bool val, bool with_dialogs);
 void g_init_gxdraw(void);
 
 

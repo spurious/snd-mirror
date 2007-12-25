@@ -35,7 +35,7 @@ void setup_axis_context(chan_info *cp, axis_context *ax) {}
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1) {}
 void allocate_color_map(int colormap) {}
 void allocate_sono_rects(int size) {}
-void set_with_gl(bool val) {}
+void set_with_gl(bool val, bool dpys) {}
 void set_sono_rectangle(int j, int color, int x, int y, int width, int height) {}
 void draw_sono_rectangles(axis_context *ax, int color, int jmax) {}
 void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color) {}

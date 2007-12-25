@@ -2974,7 +2974,7 @@ static bool make_spectrogram(chan_info *cp)
 #endif
   
   old_with_gl = with_gl(ss);
-  if (old_with_gl) set_with_gl(false); /* needed to fixup spectro angles/scales etc */
+  if (old_with_gl) set_with_gl(false, false); /* needed to fixup spectro angles/scales etc */
   if (cp->printing) ps_allocate_grf_points();
 
   scl = si->scale;                     /* unnormalized fft doesn't make much sense here (just washes out the graph) */
@@ -3092,7 +3092,7 @@ static bool make_spectrogram(chan_info *cp)
     }
   if ((cp->printing) && (color_map(ss) != BLACK_AND_WHITE_COLORMAP)) ps_reset_color();
   if (cp->hookable == WITH_HOOK) after_transform(cp, 1.0 / scl);
-  if (old_with_gl) set_with_gl(true);
+  if (old_with_gl) set_with_gl(true, false);
   return(false);
 }
 
@@ -8243,7 +8243,7 @@ static XEN g_set_with_gl(XEN val)
   #define H_with_gl "(" S_with_gl "): " PROC_TRUE " if Snd should use GL graphics"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_with_gl, "a boolean");
 #if HAVE_GL
-  set_with_gl(XEN_TO_C_BOOLEAN(val));
+  set_with_gl(XEN_TO_C_BOOLEAN(val), true);
   for_each_chan(update_graph);
 #endif
   return(C_TO_XEN_BOOLEAN(with_gl(ss)));

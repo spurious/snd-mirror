@@ -1283,7 +1283,7 @@ static void glbutton_callback(GtkWidget *w, gpointer context)
 {
   sgl_save_currents();
   in_set_with_gl(GTK_TOGGLE_BUTTON(w)->active);
-  sgl_set_currents();
+  sgl_set_currents(true);
   /* for_each_chan(update_graph); */
 }
 #endif
@@ -1576,17 +1576,16 @@ GtkWidget *start_orientation_dialog(bool managed)
 }
 
 
-void set_with_gl(bool val)
+void set_with_gl(bool val, bool with_dialogs)
 {
 #if HAVE_GL
   sgl_save_currents();
 #endif
   in_set_with_gl(val);
 #if HAVE_GL
-  sgl_set_currents();
-  if (oid)
+  sgl_set_currents(with_dialogs);
+  if ((oid) && (with_dialogs))
     set_toggle_button(oid->glbutton, val, false, NULL);
-  /* for_each_chan(update_graph); */
 #endif
 }
 

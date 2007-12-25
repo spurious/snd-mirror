@@ -58,7 +58,7 @@ void allocate_color_map(int colormap);
 void check_colormap_sizes(int size);
 void initialize_colormap(void);
 void reflect_color_list(bool setup_time);
-void set_with_gl(bool val);
+void set_with_gl(bool val, bool with_dialogs);
 void g_init_gxdraw(void);
 
 

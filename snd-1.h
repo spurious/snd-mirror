@@ -1733,7 +1733,7 @@ void run_new_widget_hook(widget_t w);
 
 #if HAVE_GL
   void sgl_save_currents(void);
-  void sgl_set_currents(void);
+  void sgl_set_currents(bool with_dialogs);
 #endif
 
 

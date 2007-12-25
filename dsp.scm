@@ -362,7 +362,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
   "(chordalize) uses harmonically-related comb-filters to bring out a chord in a sound"
   ;; chord is a list of members of chord such as '(1 5/4 3/2)
   (let ((combs (map (lambda (interval)
-		      (make-comb chordalize-amount (* chordalize-base interval)))
+		      (make-comb chordalize-amount (inexact->exact (floor (* chordalize-base interval)))))
 		    chordalize-chord))
 	(scaler (/ 0.5 (length chordalize-chord)))) ; just a guess -- maybe this should rescale to old maxamp
     (lambda (x)

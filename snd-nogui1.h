@@ -44,7 +44,7 @@ void set_spectro_cutoff(Float val);
 bool color_dialog_is_active(void);
 bool orientation_dialog_is_active(void);
 void reflect_spectro(void);
-void set_with_gl(bool val);
+void set_with_gl(bool val, bool dpys);
 
 
 /* -------- snd-xfind.c -------- */
