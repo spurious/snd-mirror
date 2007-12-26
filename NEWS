@@ -1,25 +1,27 @@
-Snd 9.5
+Snd 9.6:
 
-port to mingw thanks to Kjetil.
+Many more Ruby improvements thanks to Mike.
 
-changed slightly the way local methods are declared in def-clm-struct
+Fernando fixed a help-system bug.
 
-14 more generators in generators.scm, and a couple dozen instruments in various states of disrepair
-  (including some imaginary machines)
+5 more generators in generators.scm.
 
-animals.scm
+102 more calls in animals.scm -- (calling-all-animals) plays them all.
 
-more changes to fm.html, and fm-parallel|cascade|complex-component in dsp.scm
+"Open recent" item in File menu.
 
-src-fit-envelope in dsp.scm
+completions dialog changed to be a drop-down list in the listener
+  (in Motif -- I haven't decided how to display it in Gtk).
 
-changed clm default srate to 44100
+make-env can take a vct rather than a list for the breakpoint data
+  (to make it easier to use at run time).  Also, there are set!
+  methods for envelope scaler, offset, and duration.
 
-moved mus-phase-vocoder-outctr to mus-location (old form is in snd9.scm)
+clear-selection and with-temporary-selection in extensions.scm.
 
-Mike Scholz and Juan Pampin found and fixed bugs in sndlib/clm
+added fft-with-phases -- a normal FFT display but with colors to
+  try to show phase info (actually less useful than I hoped).
 
-checked: pango 1.18.3, guile 1.8.3, gtk 2.12.1, clisp 2.42, OSX 10.5, Gauche 0.8.12
+checked: Fedora 8, sbcl 1.0.11|2, clisp 2.43, gtk 2.12.2|3
 
-Thanks!: Mike Scholz, Juan Pampin, Bill Sack, Kjetil Matheussen
-
+Thanks!: Fernando Lopez-Lezcano, Mike Scholz
