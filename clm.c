@@ -9,7 +9,7 @@
  *   perhaps remove all the initial-phase args (oscil->1sin and 1cos or something)
  *
  *   all the make-* funcs that have a frequency arg should put that first (make-formant in particular), use "n" not cosines, "r" not "a"
- *         the "n" and "r" renaming could be parallel to for now -- backwards compatible for a while
+ *         the "n" and "r" renaming could be parallel for now -- backwards compatible for a while
  *      make-sum-of-cosines freq n [no init-phase]
  *      make-sine-summation freq n r ratio [no init-phase]
  *      make-sum-of-sines freq n [no init-phase]
@@ -276,7 +276,13 @@ static char *float_array_to_string(Float *arr, int len, int loc)
   lim = (array_print_length + 4) * MAX_NUM_SIZE; /* 4 for possible bounds below */
   if (lim > size) size = lim;
   base = (char *)CALLOC(size, sizeof(char));
+#if MUS_DEBUGGING
+  set_printable(PRINT_CHAR);
+#endif
   str = (char *)CALLOC(STR_SIZE, sizeof(char));
+#if MUS_DEBUGGING
+  set_printable(PRINT_CHAR);
+#endif
   sprintf(base, "[");
   lim = len;
   if (lim > array_print_length) lim = array_print_length;
@@ -288,6 +294,9 @@ static char *float_array_to_string(Float *arr, int len, int loc)
       if ((int)(strlen(base) + MAX_NUM_SIZE) > size)
 	{
 	  base = (char *)REALLOC(base, size * 2 * sizeof(char));
+#if MUS_DEBUGGING
+	  set_printable(PRINT_CHAR);
+#endif
 	  base[size] = 0;
 	  size *= 2;
 	}

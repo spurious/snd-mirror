@@ -546,6 +546,7 @@ static void drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boo
 {
   XMotionEvent *ev = (XMotionEvent *)event;
   ignore_button_release = false;
+
   if (!showing_all_envs)
     {
       Float x, y;

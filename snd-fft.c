@@ -1430,7 +1430,7 @@ typedef struct sonogram_state {
   mus_fft_window_t window;
   int msg_ctr;
   int edit_ctr;
-  Float old_scale;
+  Float old_scale, alpha, beta;
   graph_type_t graph_type;
   int transform_type, w_choice;
   bool old_logxing;
@@ -1536,6 +1536,8 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
   sg->losamp = ap->losamp;
   sg->hisamp = ap->hisamp;
   sg->window = cp->fft_window;
+  sg->alpha = cp->fft_window_alpha;
+  sg->beta = cp->fft_window_beta;
 
   if (cp->graph_time_p) dpys++; 
   if (cp->graph_lisp_p) dpys++; 
@@ -1601,13 +1603,15 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
       lsg = (sonogram_state *)(cp->last_sonogram);
       if ((lsg->done) &&                                 /* it completed all ffts */
 	  (lsg->outlim == sg->outlim) &&                 /* the number of ffts is the same */
-	  (lsg->spectrum_size == sg->spectrum_size) &&   /* ditto fft sizes */
+	  (lsg->spectrum_size == sg->spectrum_size) &&   /* ditto fft sizes [cp->transform_size] */
 	  (lsg->losamp == sg->losamp) &&                 /* begins are same */
 	  (lsg->hisamp == sg->hisamp) &&                 /* ends are same */
-	  (lsg->window == sg->window) &&                 /* data windows are same */
+	  (lsg->window == sg->window) &&                 /* data windows are same [fs->wintype, cp->fft_window] */
 	  (lsg->transform_type == sg->transform_type) && /* transform types are the same */
-	  (lsg->w_choice == sg->w_choice) &&             /* wavelets are the same */
-	  (lsg->edit_ctr == sg->edit_ctr))               /* underlying data is the same */
+	  (lsg->w_choice == sg->w_choice) &&             /* wavelets are the same [cp->wavelet_type] */
+	  (lsg->edit_ctr == sg->edit_ctr) &&             /* underlying data is the same */
+	  ((!(fft_window_alpha_in_use(sg->window))) || (lsg->alpha == sg->alpha)) &&
+	  ((!(fft_window_beta_in_use(sg->window))) || (lsg->beta == sg->beta)))
 	{
 	  sg->outer = sg->outlim;                        /* fake up the run */
 	  si->active_slices = si->target_slices;

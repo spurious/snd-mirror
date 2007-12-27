@@ -2012,6 +2012,7 @@ static XEN g_gsl_eigenvectors(XEN matrix)
     gsl_matrix_complex_free(evec);
   }
 
+  FREE(data);
   return(XEN_LIST_2(values, vectors));
 }
 #endif

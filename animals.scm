@@ -32,6 +32,7 @@
 ;;; Bullfrog
 ;;; Texas toad
 ;;; American toad
+;;; Plain spadefoot
 
 ;;; -------- mammals --------
 ;;; Indri
@@ -776,6 +777,43 @@
 
 ;(with-sound (:play #t) (american-toad 0 2 .25))
 
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Plain spadefoot
+
+(definstrument (plain-spadefoot beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.73)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.098 0.423 0.310 0.747 0.630 0.929 0.785 0.830 0.902 0.553 1.000 0.000) :scaler amp :duration dur))
+	 (gen1 (make-oscil 0.0))
+	 (gen2 (make-polyshape 0.0 :partials (list 1 .01 2 .01  6 .01  8 .1 10 .01)))
+	 (ampf2 (make-env '(0 0 .3 0 .8 1 1 1) :duration dur :scaler 0.4))
+	 (pulse-dur .019)
+	 (frqf (make-env '(0 1520  .4 1650 1 1630) :duration dur :scaler (hz->radians 1.0)))
+	 (pulsef (make-env '(0.000 0.000  0.03 1.000 0.08 1.0  0.160 0.486 0.304 0.202 0.508 0.087 1.000 0.000) :duration pulse-dur))
+	 (pulse-samps (seconds->samples pulse-dur))
+	 (next-pulse (+ start pulse-samps))
+	 (rnd (make-rand-interp 100 (hz->radians 100))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (if (>= i next-pulse)
+	     (begin
+	       (set! next-pulse (+ i pulse-samps))
+	       (mus-reset pulsef)))
+	 (let* ((frq (+ (env frqf)
+			(rand-interp rnd))))
+	   (outa i (* (env ampf)
+		      (env pulsef)
+		      (+ (oscil gen1 frq)
+			 (* (env ampf2)
+			    (polyshape gen2 1.0 (* 0.25 frq)))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (plain-spadefoot 0 .5))
 
 
 ;;; ================ Mammals? ================
@@ -5825,5 +5863,6 @@
     (oak-titmouse 220 .25)
     (macgillivrays-warbler 221 .25)
     (huttons-vireo 222 .25)
+    (plain-spadefoot 224 .25)
     ))
 
