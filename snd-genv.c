@@ -15,7 +15,7 @@ static slist *env_list = NULL;
 static char *env_names[3] = {N_("amp env:"), N_("flt env:"), N_("src env:")};
 
 static bool showing_all_envs = false; /* edit one env (0), or view all currently defined envs (1) */
-static bool apply_to_selection = false;
+static bool apply_to_selection = false, we_turned_selection_off = false;
 
 static int env_window_width = 0;
 static int env_window_height = 0;
@@ -1299,8 +1299,13 @@ static void enved_reflect_selection(bool on)
       if ((apply_to_selection) && (!on))
 	{
 	  apply_to_selection = false;
-	  widget_modify_bg(selectionB, GTK_STATE_NORMAL, ss->sgx->basic_color);
+	  we_turned_selection_off = true;
 	}
+      if ((on) && (we_turned_selection_off))
+	{
+	  apply_to_selection = true;
+	}
+      widget_modify_bg(selectionB, GTK_STATE_NORMAL, (apply_to_selection) ? ss->sgx->yellow : ss->sgx->basic_color);
       if ((enved_target(ss) != ENVED_SPECTRUM) && 
 	  (enved_wave_p(ss)) && 
 	  (!showing_all_envs)) 

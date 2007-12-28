@@ -2,7 +2,7 @@
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
 
-;;; TODO: make and runtime function help strings
+;;; TODO: make and runtime function help strings -- could this use mus-documentation or some such method?
 
 ;;; these try to mimic existing gens (mainly oscil), so "frequency" is placed first.
 ;;;   Where a factor is involved, I'll try to use "r".

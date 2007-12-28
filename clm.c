@@ -1,9 +1,6 @@
 /* CLM (Music V) implementation */
 
 
-/* TODO: test/doc env scaler/offset/dur set, also vct as envelope arg in make-env
- */
-
 /* clm4:
  *   perhaps add pm args alongside the fm args, as in oscil?
  *   perhaps remove all the initial-phase args (oscil->1sin and 1cos or something)
@@ -33,6 +30,7 @@
  *   it would be cleaner to have a pulser+func rather than checking pulse-train>.1
  *
  *   high-pass et al with order and type
+ *   ideally we'd use dur, not end in make-env, or perhaps length=duration in samples
  */
 
 #include <mus-config.h>
@@ -5500,10 +5498,6 @@ static void rebuild_env(seg *e, Float scl, Float off, off_t dur)
 
 static Float env_set_scaler(mus_any *ptr, Float val)
 {
-  /* exp env handling makes this messy
-   *   if this works, it can be used to set the length (end + 1) via the set_length method, and offset via set_offset
-   *   the current set_env_offset merely sets original_offset -- where is it used (besides snd-test.scm)?
-   */
   seg *e;
   e = (seg *)ptr;
   rebuild_env(e, val, e->original_offset, e->end);
@@ -5527,6 +5521,7 @@ static off_t env_set_length(mus_any *ptr, off_t val)
   seg *e;
   e = (seg *)ptr;
   rebuild_env(e, e->original_scaler, e->original_offset, val);
+  e->end = val;
   return(val);
 }
 

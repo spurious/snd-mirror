@@ -13,7 +13,7 @@ static GC gc, rgc, ggc;
 static char *env_names[3] = {N_("amp env:"), N_("flt env:"), N_("src env:")};
 
 static bool showing_all_envs = false; /* edit one env (0), or view all currently defined envs (1) */
-static bool apply_to_selection = false;
+static bool apply_to_selection = false, we_turned_selection_off = false;
 
 static int env_window_width = 0;
 static int env_window_height = 0;
@@ -634,6 +634,7 @@ static void show_button_pressed(Widget w, XtPointer context, XtPointer info)
 
 static void selection_button_pressed(Widget s, XtPointer context, XtPointer info) 
 {
+  we_turned_selection_off = false;
   apply_to_selection = (!apply_to_selection);
   XmChangeColor(selectionB, (apply_to_selection) ? ((Pixel)ss->sgx->yellow) : ((Pixel)ss->sgx->highlight_color));
   set_sensitive(apply2B, true);
@@ -1625,8 +1626,13 @@ static void enved_reflect_selection(bool on)
       if ((apply_to_selection) && (!on))
 	{
 	  apply_to_selection = false;
-	  XmChangeColor(selectionB, (Pixel)ss->sgx->highlight_color);
+	  we_turned_selection_off = true;
 	}
+      if ((on) && (we_turned_selection_off))
+	{
+	  apply_to_selection = true;
+	}
+      XmChangeColor(selectionB, (apply_to_selection) ? ((Pixel)ss->sgx->yellow) : ((Pixel)ss->sgx->highlight_color));
       if ((enved_target(ss) != ENVED_SPECTRUM) && 
 	  (enved_wave_p(ss)) && 
 	  (!showing_all_envs)) 

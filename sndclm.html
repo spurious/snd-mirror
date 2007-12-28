@@ -786,7 +786,7 @@ To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
 
 <pre>
   <a class=def name="make-env">make-env</a> <a class=quiet href="#optional-key">:optional-key</a> 
-      envelope      ; list of x,y break-point pairs
+      envelope      ; list or vct of x,y break-point pairs
       (scaler 1.0)  ; scaler on every y value (before offset is added)
       duration      ; seconds
       (offset 0.0)  ; value added to every y value
@@ -814,8 +814,8 @@ To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
 <img src="pyr.png" alt="an envelope">
 </td></tr></table>
 
-<p>An envelope is a list of break point pairs:  '(0 0  100 1)  is
-a ramp from 0 to 1 over an x-axis excursion from 0 to 100.  This list is passed
+<p>An envelope is a list or vct of break point pairs:  '(0 0  100 1)  is
+a ramp from 0 to 1 over an x-axis excursion from 0 to 100, as is (vct 0 0 100 1).  This data is passed
 to make-env along with the scaler
 applied to the y axis, the offset added to every y value,
 and the time in samples or seconds that the x axis represents.  make-env
@@ -900,6 +900,7 @@ for examples and pictures.
 <p>
 <a href="#mus-reset">mus-reset</a> of an env causes it
 to start all over again from the beginning. 
+mus-reset is called internally if you use mus-scaler to set an env's scaler (and similarly for offset and length).
 To jump to any position in
 an env, use <a href="#mus-location">mus-location</a>.
 Here's a function that uses these methods to apply an envelope over and over:

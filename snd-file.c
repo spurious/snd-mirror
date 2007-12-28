@@ -3715,7 +3715,7 @@ void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname
       if ((sound_files) && 
 	  (sound_files->len > 0))
 	{
-	  int i, dirs = 0, len = 6;
+	  int i, dirs = 0, len = 16;
 	  for (i = 0; i < sound_files->len; i++) 
 	    add_file_to_view_files_list(vdat, sound_files->files[i]->filename, sound_files->files[i]->full_filename);
 	  sound_files = free_dir_info(sound_files);
