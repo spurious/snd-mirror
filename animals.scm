@@ -89,6 +89,7 @@
 ;;; Yellow-rumped warbler
 ;;; Lucy's warbler
 ;;; Macgillivray's warbler
+;;; Wilson's warbler
 ;;; Western meadowlark
 ;;; Ruby-crowned kinglet
 ;;; Least flycatcher
@@ -104,6 +105,7 @@
 ;;; Cardinal
 ;;; Swainson's thrush
 ;;; American robin
+;;; Scott's oriole
 ;;; Varied thrush
 ;;; Hermit thrush
 ;;; Western tanager
@@ -5823,6 +5825,8 @@
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; Northern beardless tyrannulet
+;;;
+;;; this should have used 4 calls on one note
 
 (definstrument (northern-beardless-tyrannulet beg amp)
   (let* ((start (seconds->samples beg))
@@ -5867,6 +5871,161 @@
 	       *output*)))))))
 
 ;(with-sound (:play #t) (northern-beardless-tyrannulet 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Scott's oriole
+
+(definstrument (scotts-oriole beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 1.83)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.020 0.103 0.030 0.113 0.038 0.099 0.062 0.000 0.142 0.000 0.150 0.050 
+			   0.160 0.326 0.170 0.333 0.178 0.309 0.200 0.050 0.207 0.076 0.218 0.282 0.238 0.018 
+			   0.255 0.353 0.265 0.415 0.276 0.392 0.292 0.000 0.318 0.000 0.328 0.442 0.331 0.090 
+			   0.335 0.408 0.339 0.279 0.342 0.545 0.357 0.000 0.405 0.000 0.413 0.250 0.419 0.281 
+			   0.424 0.250 0.436 0.058 0.442 0.072 0.462 0.511 0.471 0.500 0.477 0.000 0.484 0.000 
+			   0.487 0.980 0.505 0.514 0.521 0.304 0.530 0.000 0.601 0.000 0.616 0.559 0.622 0.599 
+			   0.637 0.581 0.646 0.507 0.661 0.000 0.676 0.000 0.678 0.239 0.680 0.094 0.682 0.424 
+			   0.687 0.096 0.689 0.374 0.693 0.000 0.702 0.000 0.716 0.698 0.725 0.763 0.735 0.000 
+			   0.746 0.000 0.753 0.396 0.758 0.423 0.760 0.399 0.771 0.054 0.777 0.095 0.783 0.207 
+			   0.786 0.227 0.800 0.142 0.823 0.072 0.828 0.000 0.851 0.000 0.853 0.243 0.856 0.087 
+			   0.857 0.351 0.862 0.147 0.863 0.300 0.870 0.000 0.877 0.000 0.892 0.888 0.911 0.000 
+			   0.920 0.000 0.926 0.353 0.933 0.406 0.943 0.059 0.948 0.025 0.962 0.167 0.970 0.174 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.560 0.023 0.489 0.052 0.487 0.079 0.487 0.138 0.556 0.150 0.556 0.162 0.487 
+			   0.181 0.473 0.202 0.473 0.212 0.415 0.234 0.415 0.241 0.491 0.252 0.442 0.267 0.431 
+			   0.285 0.438 0.319 0.455 0.322 0.533 0.328 0.634 0.332 0.467 0.338 0.775 0.348 0.839 
+			   0.354 0.810 0.366 0.737 0.392 0.415 0.409 0.411 0.421 0.386 0.440 0.397 0.472 0.438 
+			   0.477 0.531 0.485 0.607 0.495 0.507 0.508 0.408 0.527 0.406 0.587 0.406 0.607 0.491 
+			   0.624 0.462 0.637 0.458 0.654 0.467 0.658 0.422 0.679 0.393 0.682 0.585 0.684 0.482 
+			   0.686 0.643 0.690 0.420 0.700 0.576 0.706 0.621 0.710 0.583 0.730 0.612 0.751 0.413 
+			   0.766 0.406 0.789 0.362 0.819 0.359 0.852 0.388 0.856 0.645 0.858 0.491 0.861 0.621 
+			   0.864 0.435 0.867 0.576 0.873 0.565 0.879 0.600 0.887 0.576 0.896 0.596 0.903 0.654 
+			   0.924 0.420 0.940 0.395 0.973 0.359 1.000 0.353)
+			 :duration dur :scaler (hz->radians 5080.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .98  2 .01  3 .003  4 .007))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (scotts-oriole 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Wilson's warbler
+
+(define (wilsons-warbler beg1 amp1)
+  ;; 3 different calls, 2(?) with 2 different tones
+
+  (definstrument (wilsons-warbler-1 beg dur amp)
+    (let* ((start (seconds->samples beg))
+	   (stop (+ start (seconds->samples dur)))
+
+	   (ampf (make-env '(0.000 0.000 0.101 0.169 0.138 0.169 0.179 0.297 0.226 0.377 0.269 0.092 0.318 0.513 
+			     0.340 0.651 0.359 0.156 0.372 0.654 0.387 0.156 0.428 0.700 0.491 0.808 0.607 0.721 
+			     0.659 0.923 0.747 0.995 0.909 0.813 0.965 0.528 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf1 (make-env '(0.000 0.692 0.038 0.698 0.077 0.647 0.136 0.614 0.258 0.606 0.275 0.575 0.314 0.571 
+			      0.365 0.550 0.381 0.500 0.681 0.502 0.844 0.496 0.873 0.401 1.000 0.390)
+			    :duration dur :scaler (hz->radians 10210.0)))
+	   (gen1 (make-oscil 0.0))
+	   (frqf2 (make-env '(0.000 0.692 0.038 0.698 0.077 0.647 0.136 0.614 0.258 0.606 0.275 0.575 0.314 0.571 
+			      0.365 0.550 0.376 0.394 0.490 0.353 0.594 0.347 0.681 0.392 0.740 0.418 0.818 0.416 
+			      0.886 0.399 1.000 0.390)
+			    :duration dur :scaler (hz->radians 10210.0)))
+	   (ampf1 (make-env '(0 1 .6 1 .8 0 1 0) :duration dur))
+	   (gen2 (make-oscil 0.0))
+	   (ampf2 (make-env '(0 .25 .35 .25 .36 0 .6 0 .7 1 1 1) :duration dur))
+
+	   (rnd (make-rand-interp 4000 (hz->radians 300))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (let ((noise (rand-interp rnd)))
+	     (outa i (* (env ampf)
+			(+ (* (env ampf1)
+			      (oscil gen1 (+ (env frqf1)
+					     noise)))
+			   (* (env ampf2)
+			      (oscil gen2 (env frqf2)))))
+		   *output*)))))))
+
+  (definstrument (wilsons-warbler-2 beg dur frq amp)
+    (let* ((start (seconds->samples beg))
+	   (stop (+ start (seconds->samples dur)))
+
+	   (ampf (make-env '(0.000 0.000 0.049 0.091 0.109 0.276 0.129 0.280 0.149 0.164 0.157 0.388 0.179 0.677 
+			     0.221 0.642 0.241 0.448 0.319 1.000 0.360 0.953 0.489 0.765 0.513 0.539 0.591 0.282 
+			     0.619 0.345 0.727 0.244 0.762 0.446 0.828 0.442 0.925 0.313 0.982 0.136 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.909 0.050 0.838 0.080 0.799 0.119 0.786 0.162 0.752 0.225 0.692 0.262 0.634 
+			     0.317 0.538 0.366 0.478 0.482 0.376 0.554 0.342 0.628 0.366 0.701 0.392 0.762 0.394 
+			     0.832 0.373 1.000 0.3)
+			   :duration dur :scaler (hz->radians (* frq 9780.0))))
+	   (gen1 (make-oscil 0.0))
+
+	   (rnd (make-rand-interp 4000 (hz->radians 200))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (oscil gen1 (+ (env frqf)
+				     (rand-interp rnd))))
+		 *output*))))))
+
+
+  (definstrument (wilsons-warbler-3 beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.07)
+	   (stop (+ start (seconds->samples dur)))
+
+	   (ampf (make-env '(0.000 0.000 0.087 0.099 0.126 0.201 0.148 0.086 0.201 0.483 0.223 0.337 0.243 0.561 
+			     0.257 0.384 0.269 0.658 0.282 0.332 0.292 0.428 0.311 0.211 0.357 0.290 0.390 0.601 
+			     0.407 0.674 0.433 0.658 0.437 0.222 0.456 0.572 0.485 0.629 0.498 0.885 0.529 0.627 
+			     0.552 0.807 0.642 0.689 0.658 0.836 0.683 0.877 0.704 0.543 0.733 0.634 0.837 0.428 
+			     0.873 0.634 0.924 0.185 0.974 0.238 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.770 0.120 0.768 0.190 0.752 0.227 0.715 0.261 0.692 0.292 0.695 0.310 0.648 
+			     0.334 0.629 0.423 0.616 0.477 0.561 0.510 0.554 0.534 0.501 0.645 0.413 0.690 0.402 
+			     0.737 0.371 0.893 0.347 1.000 0.295)
+			   :duration dur :scaler (hz->radians 9780.0)))
+	   (gen1 (make-oscil 0.0))
+
+	   (rnd (make-rand-interp 4000 (hz->radians 200))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (oscil gen1 (+ (env frqf)
+				     (rand-interp rnd))))
+		 *output*))))))
+
+  (wilsons-warbler-1 beg1 .046 (* .05 amp1))
+  (wilsons-warbler-1 (+ beg1 .147) .05 (* .1 amp1))
+
+  (let ((durs2 (vct 0.067 0.07 0.075 0.08 0.086 0.084 0.08 0.08 0.078))
+	(frqs2 (vct 1.0   1.0  0.95  0.93 1.0   1.0   1.0  1.0  0.95))
+	(amps2 (vct .2    .4    .7   1    1      .8   1    1    1)))
+    (do ((i 0 (1+ i)))
+	((= i 9))
+      (wilsons-warbler-2 (+ beg1 0.285 (* i .13)) (vct-ref durs2 i) (vct-ref frqs2 i) (* amp1 (vct-ref amps2 i)))))
+
+  (do ((i 0 (1+ i)))
+      ((= i 3))
+    (wilsons-warbler-3 (+ beg1 1.45 (* i 0.12)) (* amp1 .9))))
+
+;(with-sound (:play #t) (wilsons-warbler 0 .5))
+
 
 
 
@@ -5992,5 +6151,7 @@
     (plain-spadefoot 224 .25)
     (western-meadowlark 225 .25)
     (northern-beardless-tyrannulet 227 .25)
+    (scotts-oriole 229 .25)
+    (wilsons-warbler 231 .25)
     ))
 

@@ -53438,6 +53438,7 @@ EDITS: 1
 	));end snd-guile block
 
 	(calling-all-animals)
+	(calling-all-generators)
 
 	(if (not (null? (sounds))) (for-each close-sound (sounds)))
 	(set! (optimization) old-opt-23)
@@ -66084,6 +66085,7 @@ EDITS: 1
 						    (n arg))
 						  (lambda args (car args)))))
 				      (if (and (not (eq? tag 'wrong-type-arg))
+					       (not (eq? tag 'no-data))
 					       (not (eq? tag 'arg-error)))
 					  (snd-display ";clm ~A: tag: ~A arg: ~A [~A]" n tag arg ctr))
 				      (set! ctr (1+ ctr))))

@@ -4015,6 +4015,20 @@ index 10 (so 10/2 is the bes-jn arg):
 (define pulsed-env? plsenv?)
 
 
-;;; TODO: include the instruments in snd-test
 
+(define (calling-all-generators)
+  ;; for snd-test
+  (with-sound (:play #f)
+    (lutish 0 1 440 .1)
+    (oboish 1 1 300 .1 '(0 0 1 1 2 0))
+    (nkssber 2 1 1000 100 5 5 0.5)
+    (stringy 3 1 1000 .5)
+    (ercoser 4 1 100 .5 0.1)
+    (bouncy 5 2 300 .5 5 10)
+    (pianoy 6 3 100 .5)
+    (pianoy1 7 4 200 .5 1 .1)
+    (pianoy2 8 1 100 .5)
+    (glassy 9 .1 1000 .5)
+    (machine1 10 .3 100 540 0.5 3.0 0.0)
+    (organish 11 .4 100 .5 1.0 #f)))
 
