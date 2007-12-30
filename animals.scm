@@ -33,6 +33,9 @@
 ;;; Texas toad
 ;;; American toad
 ;;; Plain spadefoot
+;;; Barking tree-frog
+;;; Western toad
+;;; Southwestern toad
 
 ;;; -------- mammals --------
 ;;; Indri
@@ -818,6 +821,132 @@
 		 *output*)))))))
 
 ;(with-sound (:play #t) (plain-spadefoot 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Barking tree-frog
+
+(definstrument (barking-tree-frog beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.165)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.015 0.131 0.038 0.110 0.066 0.621 0.078 0.488 0.090 0.977 0.104 0.423 
+			   0.108 0.013 0.113 0.504 0.122 0.005 0.129 0.979 0.138 0.337 0.142 0.470 0.152 0.008 
+			   0.156 0.561 0.160 0.008 0.165 1.000 0.177 0.535 0.183 0.744 0.189 0.290 0.193 0.731 
+			   0.200 0.381 0.209 0.977 0.217 0.499 0.237 0.846 0.247 0.896 0.260 0.898 0.464 0.846 
+			   0.623 0.689 0.801 0.305 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0 480  .3 430 1 425) :duration dur :scaler (hz->radians 1.0)))
+	 (gen1 (make-polyshape 0.0 :partials (normalize-partials (list 1 .9  2 .06  3 .25  4 .79  5 .18  6 .03  7 .02  8 .03  9 .01  10 .02  11 .005 12 .005))))
+	 (rnd (make-rand-interp 1000 (hz->radians 10)))
+
+	 (gen2 (make-oscil 0.0))
+	 (frqf2 (make-env '(0 4750 .2 4790  .5 4710  1 4300) :duration dur :scaler (hz->radians 1.0)))
+	 (attack (make-rand-interp 4000 (hz->radians 400)))
+	 (gen3 (make-oscil 1720))
+	 (attackf (make-env '(0.000 0.000 0.068 0.000 0.093 0.614 0.098 0.000 0.114 0.000 0.120 0.969 0.131 0.000 
+			      0.155 0.000 0.159 0.997 0.175 0.000 0.198 0.000 0.2 1.000 0.224 0.000 0.241 0.000 
+			      0.243 0.984 0.260 0.000 1.000 0.000)
+			    :duration dur :scaler amp)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (+ (* (env ampf)
+		       (+ (polyshape gen1 1.0 (+ (env frqf)
+						 (rand-interp rnd)))
+			  (* .02 (oscil gen2 (env frqf2)))))
+		    (* (env attackf)
+		       (oscil gen3 (rand-interp attack))))
+	       *output*))))))
+
+;(with-sound (:play #t) (barking-tree-frog 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Western toad
+
+(definstrument (western-toad beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (gen (make-polyshape 0 :partials (list 1 .95  2 .02  3 .03  4 .005)))
+	 (ampf (make-env '(0 0 1 1 8 1 9 0) :duration dur :scaler amp))
+	 (cur-start start)
+	 (cur-is-long #t))
+    (do ()
+	((>= cur-start stop))
+      (let* ((pulse-samps (seconds->samples (if cur-is-long 
+						(+ 0.04 (random .04)) 
+						(+ .01 (random .02)))))
+	     (pulse-ampf (make-env (if cur-is-long 
+				       (vct 0 0 .1 .5 2 1 3 0) 
+				       (vct 0 0 1 1 1.5 .3 2 0)) 
+				   :scaler (if cur-is-long (+ .6 (random .4)) (+ .1 (random .7)))
+				   :dur pulse-samps
+				   :base (if cur-is-long 6.0 3.0)))
+	     (pulse-frqf (make-env (if cur-is-long
+				       '(0 -.5 .5 0 1 -.3)
+				       '(0 -1 .1 0 1 0))
+				   :dur pulse-samps
+				   :base .1
+				   :offset (hz->radians (if cur-is-long (if (> (random 1.0) .6) 1340 1260) 1200))
+				   :scaler (hz->radians (random 500.0)))))
+	(run
+	 (lambda ()
+	   (do ((i 0 (1+ i)))
+	       ((= i pulse-samps))
+	     (outa (+ cur-start i)
+		   (* (env ampf)
+		      (env pulse-ampf)
+		      (polyshape gen 1.0 (env pulse-frqf)))
+		   *output*))))
+
+	(if cur-is-long
+	    (set! cur-start (+ cur-start pulse-samps (seconds->samples (+ .015 (if (> (random 1.0) .8) 
+										   (random .15) 
+										   (random .04))))))
+	    (set! cur-start (+ cur-start pulse-samps (seconds->samples (+ .01 (random .01))))))
+	(set! cur-is-long (or (not cur-is-long) (> (random 1.0) .3)))))))
+
+;(with-sound (:play #t) (western-toad  0 2 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Southwestern toad
+
+(definstrument (southwestern-toad beg dur amp)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env (list 0 0    1.3 1   dur 1   (* 1.01 dur) 0) :duration dur :scaler amp :base .3))
+	 (frqf (make-env (list 0 940  1 1230  dur 1230) :base 3.0 :duration dur :scaler (hz->radians 1.0) :offset (hz->radians -300)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .95  2 .02  3 .03)))
+	 (rnd (make-rand-interp 4000 (hz->radians 80)))
+	 (pulse-dur 0.0135)
+	 (pulse-space 0.0236)
+	 (pulse-samps (seconds->samples pulse-space))
+	 (pulse-ampf (make-env '(0 0 1 1 1.5 1 2 .5 3 0) :base .3 :duration pulse-dur))
+	 (pulse-frqf (make-env '(0 0  .3 .8  1.5 1  2.7 .8  3 .3) :duration pulse-dur :scaler (hz->radians 300)))
+	 (next-pulse (+ start pulse-samps)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (if (>= i next-pulse)
+	     (begin
+	       (mus-reset pulse-ampf)
+	       (mus-reset pulse-frqf)
+	       (set! next-pulse (+ next-pulse pulse-samps))))
+	 (outa i (* (env ampf)
+		    (env pulse-ampf)
+		    (polyshape gen1 1.0 (+ (env frqf)
+					   (env pulse-frqf)
+					   (rand-interp rnd))))
+	       *output*))))))
+
+;(with-sound (:play #t) (southwestern-toad 0 2 .5))
 
 
 ;;; ================ Mammals? ================
@@ -5487,7 +5616,7 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;; Kildeer
+;;; Killdeer
 
 (definstrument (killdeer beg amp)
   (let* ((start (seconds->samples beg))
@@ -6029,6 +6158,7 @@
 
 
 
+
 ;;; ================ calling-all-animals ================
 
 
@@ -6153,5 +6283,8 @@
     (northern-beardless-tyrannulet 227 .25)
     (scotts-oriole 229 .25)
     (wilsons-warbler 231 .25)
+    (barking-tree-frog 232 .25)
+    (western-toad  233 2 .25)
+    (southwestern-toad 235 2 .25)
     ))
 

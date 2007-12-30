@@ -1,5 +1,9 @@
 #include "snd.h"
 
+/* PERHAPS: gtk's paned window is so buggy that perhaps I should simply replace all of them
+ *            with boxes.  Especially the control panel.
+ */
+
 enum {W_pane, W_pane_box, W_control_panel,
       W_name_form, W_name, W_name_event, W_name_pix, W_stop_pix, W_info_label, W_info,
       W_play, W_sync, W_unite,

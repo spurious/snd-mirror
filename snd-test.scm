@@ -46440,6 +46440,10 @@ EDITS: 1
 	(btst '(let ((v0 (make-vct 4)) (v1 (make-vct 4))) (vct? (fft v0 v1))) #t)
 	(btst '(let ((v0 (make-vct 4)) (v1 (make-vct 4))) (vct? (fft v0 v1 1))) #t)
 	(btst '(let ((v0 (make-vct 4))) (vct? (clear-array v0))) #t)
+
+	(let ((x 0.0))
+	  (run (lambda () (set! x (vct-ref (vct 0 1 2 3) 2))))
+	  (if (fneq x 2.0) (snd-display ";vct with ints in run: ~A" x)))
 	
 	(let ((v1 (make-vct 32 1.0)))
 	  (run

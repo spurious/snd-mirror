@@ -8110,6 +8110,7 @@ static void vct_v(int *args, ptree *pt)
 static xen_value *vct_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_value *rtn;
+  float_all_args(prog, num_args, args, true);
   rtn = package_n(prog, R_VCT, vct_v, "vct_v", args, num_args);
   /* rtn is args[0] */
   add_obj_to_gcs(prog, R_VCT, rtn->addr);
@@ -12597,7 +12598,7 @@ static void init_walkers(void)
   INIT_WALKER(S_vct_peak, make_walker(vct_peak_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_VCT));
   INIT_WALKER(S_vct_setB, make_walker(vct_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_VCT, R_INT, R_NUMBER));
   INIT_WALKER(S_make_vct, make_walker(make_vct_1, NULL, NULL, 1, 2, R_VCT, false, 2, R_INT, R_FLOAT));
-  INIT_WALKER(S_vct, make_walker(vct_1, NULL, NULL, 1, UNLIMITED_ARGS, R_VCT, false, 1, -R_FLOAT));
+  INIT_WALKER(S_vct, make_walker(vct_1, NULL, NULL, 1, UNLIMITED_ARGS, R_VCT, false, 1, -R_NUMBER));
   INIT_WALKER(S_vct_p, make_walker(vct_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
   INIT_WALKER(S_vct_reverse, make_walker(vct_reverse_2, NULL, NULL, 1, 2, R_VCT, false, 2, R_VCT, R_INT));
   INIT_WALKER(S_vct_moveB, make_walker(vct_move_3, NULL, NULL, 3, 3, R_VCT, false, 3, R_VCT, R_INT, R_INT));
