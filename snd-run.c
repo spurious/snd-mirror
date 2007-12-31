@@ -93,9 +93,11 @@
      (lambda ()
        (let ((gen (vector-ref v 1)))
        (outa 0 (nrcos gen 0.0) *output*)))))) ;either segfault or complains about null list
-
 */
 
+/* make-env needs vct args because '(...) and (list...) return #f (') or a parser complaint (list), so...
+ *   SOMEDAY: add support for ' and list
+ */
 
 /* it would be nice to have a compile time check for generator mismatches, but
  *    there are instruments that choose the type at run-time, passing the same

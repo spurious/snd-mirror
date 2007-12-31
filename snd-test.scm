@@ -46614,6 +46614,57 @@ EDITS: 1
 	(let ((val (run-eval '(lambda (y) (let ((ge (make-env l0111 :end 10))) (env ge))) 0.0)))
 	  (if (fneq val 1.0) (snd-display ";make-env in run with var list: ~A" val)))
 	
+	(let ((x 0.0))
+	  (run
+	   (lambda ()
+	     (let ((e (make-env '(0 0 1 1) :dur 11)))
+	       (env e)
+	       (set! x (env e))
+	       x)))
+	  (if (fneq x .1) (snd-display ";make-env in run 0: ~A" x)))
+	
+	(let ((x 0.0)
+	      (samps 11)
+	      (data (vct 0 0 1 1)))
+	  (run
+	   (lambda ()
+	     (let ((e (make-env data :dur samps)))
+	       (env e)
+	       (set! x (env e))
+	       x)))
+	  (if (fneq x .1) (snd-display ";make-env in run 1: ~A" x)))
+	
+	(let ((x 0.0))
+	  (run
+	   (lambda ()
+	     (let* ((samps 11)
+		    (data (vct 0 0 1 1))
+		    (e (make-env data :dur samps)))
+	       (env e)
+	       (set! x (env e))
+	       x)))
+	  (if (fneq x .1) (snd-display ";make-env in run 2: ~A" x)))
+	
+	(let ((x 0.0))
+	  (run
+	   (lambda ()
+	     (let* ((samps 1)
+		    (data (vct 0 0 1 1))
+		    (e (make-env data :dur (+ 10 samps))))
+	       (env e)
+	       (set! x (env e))
+	       x)))
+	  (if (fneq x .1) (snd-display ";make-env in run 3: ~A" x)))
+	
+	(let ((x 0.0))
+	  (run
+	   (lambda ()
+	     (let* ((samps 1)
+		    (e (make-env (vct 0 0 1 1) :dur (+ 10 samps) :scaler (hz->radians (/ 22050 pi)))))
+	       (env e)
+	       (set! x (env e))
+	       x)))
+	  (if (fneq x .1) (snd-display ";make-env in run 4: ~A" x)))
 	
 	(btst '(let ((gen (make-all-pass))) (all-pass? gen)) #t)
 	(btst '(let ((gen (make-all-pass))) (if gen #t #f)) #t)
