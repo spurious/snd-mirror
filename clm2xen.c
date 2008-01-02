@@ -3807,16 +3807,17 @@ static XEN g_wave_train_p(XEN obj)
 
 /* ---------------- waveshape ---------------- */
 
-enum {NO_PROBLEM_IN_LIST, NULL_LIST, ODD_LENGTH_LIST, NON_NUMBER_IN_LIST};
+enum {NO_PROBLEM_IN_LIST, NULL_LIST, ODD_LENGTH_LIST, NON_NUMBER_IN_LIST, NON_POSITIVE_NUMBER_IN_LIST};
 
 static char* list_to_partials_error_to_string(int code)
 {
   switch (code)
     {
-    case NO_PROBLEM_IN_LIST: return("nothing wrong with partials list??");          break;
-    case NULL_LIST:          return("partials list is null");                       break;
-    case ODD_LENGTH_LIST:    return("partials list has an odd number of elements"); break;
-    case NON_NUMBER_IN_LIST: return("partials list starts with a non-number");      break;
+    case NO_PROBLEM_IN_LIST:          return("nothing wrong with partials list??");                     break;
+    case NULL_LIST:                   return("partials list is null");                                  break;
+    case ODD_LENGTH_LIST:             return("partials list has an odd number of elements");            break;
+    case NON_NUMBER_IN_LIST:          return("partials list has a non-numerical element");              break;
+    case NON_POSITIVE_NUMBER_IN_LIST: return("partials list has a partial number that is less than 1"); break;
     }
   return("unknown error");
 }
@@ -3827,17 +3828,20 @@ static Float *list_to_partials(XEN harms, int *npartials, int *error_code)
   int listlen, i, maxpartial, curpartial;
   Float *partials = NULL;
   XEN lst;
+
   listlen = XEN_LIST_LENGTH(harms);
   if (listlen == 0)
     {
       (*error_code) = NULL_LIST;
       return(NULL);
     }
+
   if (listlen & 1)
     {
       (*error_code) = ODD_LENGTH_LIST;
       return(NULL);
     }
+
   if (!(XEN_NUMBER_P(XEN_CAR(harms)))) 
     {
       (*error_code) = NON_NUMBER_IN_LIST;
@@ -3847,12 +3851,27 @@ static Float *list_to_partials(XEN harms, int *npartials, int *error_code)
   (*error_code) = NO_PROBLEM_IN_LIST;
 
   maxpartial = XEN_TO_C_INT_OR_ELSE(XEN_CAR(harms), 0);
-  for (i = 2, lst = XEN_CDDR(XEN_COPY_ARG(harms)); i < listlen; i += 2, lst = XEN_CDDR(lst))
+  if (maxpartial <= 0)
+    (*error_code) = NON_POSITIVE_NUMBER_IN_LIST;
+  else
     {
-      curpartial = XEN_TO_C_INT_OR_ELSE(XEN_CAR(lst), 0);
-      if (curpartial > maxpartial) maxpartial = curpartial;
+      for (i = 2, lst = XEN_CDDR(XEN_COPY_ARG(harms)); i < listlen; i += 2, lst = XEN_CDDR(lst))
+	{
+	  curpartial = XEN_TO_C_INT_OR_ELSE(XEN_CAR(lst), 0);
+	  if (curpartial > maxpartial) 
+	    maxpartial = curpartial;
+	  if (curpartial <= 0)
+	    {
+	      if (!(XEN_NUMBER_P(XEN_CAR(lst))))
+		(*error_code) = NON_NUMBER_IN_LIST;
+	      else (*error_code) = NON_POSITIVE_NUMBER_IN_LIST;
+	    }
+	}
     }
-  if (maxpartial < 0) return(NULL);
+
+  if ((*error_code) != NO_PROBLEM_IN_LIST)
+    return(NULL);
+
   partials = (Float *)CALLOC(maxpartial + 1, sizeof(Float));
   if (partials == NULL)
     mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate waveshape partials list");
@@ -3861,6 +3880,49 @@ static Float *list_to_partials(XEN harms, int *npartials, int *error_code)
     {
       curpartial = XEN_TO_C_INT(XEN_CAR(lst));
       partials[curpartial] = XEN_TO_C_DOUBLE(XEN_CADR(lst));
+    }
+  return(partials);
+}
+
+
+static Float *vct_to_partials(vct *v, int *npartials, int *error_code)
+{
+  int len, i, maxpartial, curpartial;
+  Float *partials = NULL;
+  len = v->length;
+  if (len & 1)
+    {
+      (*error_code) = ODD_LENGTH_LIST;
+      return(NULL);
+    }
+  (*error_code) = NO_PROBLEM_IN_LIST;
+
+  maxpartial = (int)(v->data[0]);
+  if (maxpartial <= 0)
+    (*error_code) = NON_POSITIVE_NUMBER_IN_LIST;
+  else
+    {
+      for (i = 2; i < len; i += 2)
+	{
+	  curpartial = (int)(v->data[i]);
+	  if (curpartial > maxpartial) 
+	    maxpartial = curpartial;
+	  if (curpartial <= 0)
+	    (*error_code) = NON_POSITIVE_NUMBER_IN_LIST;
+	}
+    }
+  if ((*error_code) != NO_PROBLEM_IN_LIST)
+    return(NULL);
+
+  partials = (Float *)CALLOC(maxpartial + 1, sizeof(Float));
+  if (partials == NULL)
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate waveshape partials list");
+  (*npartials) = maxpartial + 1;
+
+  for (i = 0; i < len; i += 2)
+    {
+      curpartial = (int)(v->data[i]);
+      partials[curpartial] = v->data[i + 1];
     }
   return(partials);
 }
@@ -3926,14 +3988,22 @@ is the same in effect as " S_make_oscil
       if (!(XEN_KEYWORD_P(keys[1])))
         {
 	  int error = NO_PROBLEM_IN_LIST;
-	  XEN_ASSERT_TYPE(XEN_LIST_P(keys[1]), keys[1], orig_arg[1], S_make_waveshape, "a list");
-	  partials = list_to_partials(keys[1], &npartials, &error);
+	  if (MUS_VCT_P(keys[1]))
+	    {
+	      partials = vct_to_partials(XEN_TO_VCT(keys[1]), &npartials, &error);
+	      partials_allocated = false;
+	    }
+	  else
+	    {
+	      XEN_ASSERT_TYPE(XEN_LIST_P(keys[1]), keys[1], orig_arg[1], S_make_waveshape, "a list");
+	      partials = list_to_partials(keys[1], &npartials, &error);
+	      partials_allocated = true;
+	    }
 	  if (partials == NULL)
 	    XEN_ERROR(NO_DATA, 
 		      XEN_LIST_3(C_TO_XEN_STRING(S_make_waveshape), 
 				 C_TO_XEN_STRING(list_to_partials_error_to_string(error)), 
 				 keys[1]));
-	  partials_allocated = true;
         }
     }
 
@@ -4144,8 +4214,15 @@ is the same in effect as " S_make_oscil
 	  if (!(XEN_KEYWORD_P(keys[3])))
 	    {
 	      int error = NO_PROBLEM_IN_LIST;
-	      XEN_ASSERT_TYPE(XEN_LIST_P(keys[3]), keys[3], orig_arg[3], S_make_polyshape, "a list");
-	      partials = list_to_partials(keys[3], &npartials, &error);
+	      /* TODO: test make-waveshape/polyshape with vct partials list */
+	      /* TODO: also test exprs as vct/list args here in run */
+	      if (MUS_VCT_P(keys[3]))
+		partials = vct_to_partials(XEN_TO_VCT(keys[3]), &npartials, &error);
+	      else
+		{
+		  XEN_ASSERT_TYPE(XEN_LIST_P(keys[3]), keys[3], orig_arg[3], S_make_polyshape, "a list");
+		  partials = list_to_partials(keys[3], &npartials, &error);
+		}
 	      if (partials == NULL)
 		XEN_ERROR(NO_DATA, 
 			  XEN_LIST_3(C_TO_XEN_STRING(S_make_polyshape), 

@@ -97,6 +97,10 @@
 
 /* make-env needs vct args because '(...) and (list...) return #f (') or a parser complaint (list), so...
  *   SOMEDAY: add support for ' and list
+ *   the other such cases are make-waveshape and make-polyshape
+ *   currently make-rand|-interp distribution arg (an env) can't be a vct
+ *   only other clm lists are in the partials->* functions
+ *   PERHAPS: add partials->* in run
  */
 
 /* it would be nice to have a compile time check for generator mismatches, but

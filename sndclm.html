@@ -1162,7 +1162,9 @@ cos x to get effects similar to those of FM.
 
 <p>
 waveshape uses an internal <a href="#table-lookup">table-lookup</a> generator, whereas polyshape uses
-the <a href="#polynomial">polynomial</a> function.  The "kind" argument determines which kind of Chebyshev polynomial
+the <a href="#polynomial">polynomial</a> function.  The "partials" argument to either make function can
+be either a list or a vct.
+The "kind" argument determines which kind of Chebyshev polynomial
 is used internally:  mus-chebyshev-first-kind or mus-chebyshev-second-kind. (The <a href="#sum-of-cosines">sum-of-cosines</a> generator produces
 Chebyshev polynomials of the fourth kind).
 </p>

@@ -79,6 +79,7 @@
 ;;; Eastern wood-pewee (2)
 ;;; Tufted titmouse
 ;;; Oak titmouse
+;;; Bushtit
 ;;; California towhee
 ;;; Green-tailed towhee
 ;;; Carolina wren
@@ -6251,6 +6252,54 @@
 ;(with-sound (:play #t) (black-necked-stilt 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Bushtit
+
+(definstrument (bushtit beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.368)
+	 (stop (+ start (seconds->samples dur)))
+	 (frqf (make-env '(0 0 1 -1) :duration dur :scaler (hz->radians 500)))
+	 (pulse-dur .044)
+	 (pulse-spacing (seconds->samples .064))
+	 (next-pulse (+ start pulse-spacing))
+	 (pulse-ampf (make-env '(0.000 0.000 0.114 0.486 0.182 0.988 0.394 0.763 0.620 1.000 0.769 0.937 0.889 1.000 1.000 0.000)
+			       :duration pulse-dur :scaler amp))
+	 (pulse-frqf (make-env '(0.000 0.230 0.109 0.291 0.212 0.322 0.298 0.343 0.410 0.348 0.654 0.357 0.821 0.354 0.889 0.337 0.952 0.304 1.000 0.231)
+			       :duration pulse-dur :scaler (hz->radians 22050.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .99  2 .01)))
+	 (gen2 (make-polyshape 0.0 :partials (list 5 .9  7 .07  8 .02  9 .01  11 .02)))
+	 (pulse-ampf2 (make-env '(0 0 .65 0 .8 1 .9 1 1 0) 
+				:duration pulse-dur :scaler .4))
+	 (pulse-frqf2 (make-env '(0 5400  .6 5400  .75 6300  1 5400) 
+				:duration pulse-dur :scaler (hz->radians 0.2) :base .1))
+	 (pulse2 #f))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (if (>= i next-pulse)
+	     (begin
+	       (mus-reset pulse-ampf)
+	       (mus-reset pulse-frqf)
+	       (if pulse2
+		   (begin
+		     (mus-reset pulse-ampf2)
+		     (mus-reset pulse-frqf2))
+		   (set! pulse2 #t))
+	       (set! next-pulse (+ next-pulse pulse-spacing))))
+	 (outa i (+ (* (env pulse-ampf)
+		       (polyshape gen1 1.0 (+ (env pulse-frqf)
+					      (env frqf))))
+		    (if pulse2
+			(* (env pulse-ampf2)
+			   (polyshape gen2 1.0 (env pulse-frqf2)))
+			0.0))
+	       *output*))))))
+
+;(with-sound (:play #t) (bushtit 0 .5))
+
 
 ;;; ================ calling-all-animals ================
 
@@ -6381,5 +6430,6 @@
     (southwestern-toad 235 2 .25)
     (willow-flycatcher 237 .25)
     (black-necked-stilt 238 .25)
+    (bushtit 239 .25)
     ))
 

@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: if 'flt' clicked and sono bg, make sure we get the current graph (via force redisplay if necessary)
+ */
 
 #define BIG_DOT_SIZE 10
 #define MEDIUM_DOT_SIZE 7
