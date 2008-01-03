@@ -4214,8 +4214,6 @@ is the same in effect as " S_make_oscil
 	  if (!(XEN_KEYWORD_P(keys[3])))
 	    {
 	      int error = NO_PROBLEM_IN_LIST;
-	      /* TODO: test make-waveshape/polyshape with vct partials list */
-	      /* TODO: also test exprs as vct/list args here in run */
 	      if (MUS_VCT_P(keys[3]))
 		partials = vct_to_partials(XEN_TO_VCT(keys[3]), &npartials, &error);
 	      else

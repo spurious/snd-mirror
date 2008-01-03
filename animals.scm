@@ -128,6 +128,9 @@
 ;;; Pileated woodpecker
 ;;; White-headed woodpecker
 ;;; Acorn woodpecker
+;;; Red-breasted nuthatch
+;;; white-breasted nuthatch
+;;; Pygmy nuthatch
 ;;; Common loon (2)
 ;;; American crow
 ;;; Brown jay
@@ -6301,6 +6304,106 @@
 ;(with-sound (:play #t) (bushtit 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Red-breasted nuthatch
+
+(definstrument (red-breasted-nuthatch beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.287)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.084 0.402 0.289 0.914 0.400 0.957 0.501 0.957 0.530 0.895 0.600 0.988 
+			   0.680 1.000 0.786 0.926 0.860 0.984 0.912 0.969 0.962 0.855 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.257 0.029 0.306 0.061 0.322 0.101 0.318 0.965 0.361 1.000 0.316)
+			 :duration dur :scaler (hz->radians (* 0.2 7510.0))))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .95  2 .03  3 .03)))
+	 (mod1 (make-oscil 0.0))
+	 (index (hz->radians (* 510 1.25)))
+	 (rnd (make-rand-interp 100 (hz->radians 6))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (+ (env frqf)
+		       (rand-interp rnd))))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (+ (* 5 frq)
+					     (* index (oscil mod1 frq)))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (red-breasted-nuthatch 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; White-breasted nuthatch
+
+(definstrument (white-breasted-nuthatch beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.31)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.157 0.871 0.386 1.000 0.728 0.759 0.951 0.306 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.318 0.045 0.392 0.160 0.418 0.254 0.418 0.517 0.404 0.816 0.367 1.000 0.310)
+			 :duration dur :scaler (hz->radians (* 0.25 8900))))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .96  2 .02 3 .03)))
+	 (gen2 (make-polyshape 0.0 :partials (list 4 .005 5 .01)))
+	 (ampf2 (make-env '(0 1 .65 1 .75 0 1 0) :duration dur))
+	 (mod1 (make-oscil 0.0))
+	 (index (hz->radians (* 800 0.4)))
+	 (rnd (make-rand-interp 100 (hz->radians 16)))
+	 (vib (make-oscil 40.0))
+	 (vib-index (hz->radians 50)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let* ((vb (oscil vib))
+		(frq (+ (env frqf)
+			(rand-interp rnd)
+			(* vib-index vb)))
+		(mfrq (+ (* 3 frq)
+			 (* index (oscil mod1 frq)))))
+	   (outa i (* (env ampf)
+		      (+ .7 (* .3 (abs vb)))
+		      (+ (polyshape gen1 1.0 mfrq)
+			 (* (env ampf2)
+			    (polyshape gen2 1.0 mfrq))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (white-breasted-nuthatch 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Pygmy nuthatch
+
+(definstrument (pygmy-nuthatch beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.12)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.096 0.247 0.148 0.591 0.206 0.767 0.244 0.995 0.260 0.470 0.385 0.406 
+			   0.406 0.240 0.425 0.370 0.475 0.244 0.488 0.324 0.511 0.326 0.528 0.258 0.544 0.336 
+			   0.594 0.331 0.638 0.256 0.689 0.288 0.720 0.279 0.769 0.299 0.795 0.249 0.818 0.272 
+			   0.841 0.242 0.856 0.292 0.865 0.205 0.876 0.304 0.897 0.304 0.932 0.126 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.096 0.063 0.174 0.090 0.199 0.127 0.205 0.25 0.210 0.26 0.237 0.733 0.222 
+			   0.865 0.210 0.890 0.195 0.912 0.159 0.930 0.145 1.000 0.138)
+			 :duration dur :scaler (hz->radians 21500.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .98  2 .005  3 .01))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (pygmy-nuthatch 0 .5))
+
+
+
 ;;; ================ calling-all-animals ================
 
 
@@ -6431,5 +6534,8 @@
     (willow-flycatcher 237 .25)
     (black-necked-stilt 238 .25)
     (bushtit 239 .25)
+    (red-breasted-nuthatch 240 .25)
+    (white-breasted-nuthatch 240.5 .25)
+    (pygmy-nuthatch 241 .25)
     ))
 
