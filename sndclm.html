@@ -1166,7 +1166,7 @@ the <a href="#polynomial">polynomial</a> function.  The "partials" argument to e
 be either a list or a vct.
 The "kind" argument determines which kind of Chebyshev polynomial
 is used internally:  mus-chebyshev-first-kind or mus-chebyshev-second-kind. (The <a href="#sum-of-cosines">sum-of-cosines</a> generator produces
-Chebyshev polynomials of the fourth kind).
+Chebyshev polynomials of the fourth kind).  
 </p>
 
 <table border=1 align=left hspace=40 cellpadding=4>
@@ -1242,7 +1242,7 @@ bigbird is an example:
 </pre>
 </td></tr></table>
 
-<p>
+<p>See animals.scm for many more examples along these lines.
 partials-&gt;waveshape with waveshape produces the same output as partials-&gt;polynomial with polyshape.
 The <a href="sndscm.html#fmviolin">fm-violin</a> uses polyshape for the multiple FM section in some cases.
 We can get single side-band spectra by using Chebyshev polynomials of the second kind.  
@@ -1492,6 +1492,50 @@ we get sum and difference tones, much as in complex FM.
        (lambda (y)
          (* mx (<a class=quiet href="#polynomial">polynomial</a> pcoeffs (/ y mx)))))))
 </pre>
+
+
+<p>We might ask why we'd want polyshape at all.  Leaving aside
+speed and memory (waveshape and table-lookup use a table that has to be loaded), the main reason to use polyshape is accuracy.  polyshape
+produces output that is almost as clean as the equivalent sum of oscils, whereas table-lookup 
+and waveshape, both of which interpolate into a sampled version of the desired function, are noisy.
+To make the difference almost appalling, here are spectra comparing a sum of oscils, polyshape,
+waveshape, and table-lookup.  The table size is 512, but that almost doesn't matter; you'd see the
+similar result with a huge table.  The FFT size is 262144, dolph-chebyshev window, and the y-axis
+is in dB, going down to -200 dB(!):
+</p>
+
+<img src="4grfs.png" alt="compare ffts" hspace=40>
+
+<!--
+(with-sound (:channels 4)
+  (let ((poly (make-polyshape 100.0 :partials '(1 1 8 1 16 1)))
+	(wave (make-waveshape 100.0 :partials '(1 1 8 1 16 1))) ; this is normalized
+	(gen1 (make-oscil 100))
+	(gen2 (make-oscil 800))
+	(gen3 (make-oscil 1600))
+	(table (make-table-lookup 100.0 :wave (partials->wave '(1 1 8 1 16 1))))
+	)
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 500000))
+	 (out-any i (* .3 (+ (oscil gen1) (oscil gen2) (oscil gen3))) 0 *output*)
+	 (out-any i (* .3 (polyshape poly)) 1 *output*)
+	 (out-any i (* .9 (waveshape wave)) 2 *output*)
+	 (out-any i (* .3 (table-lookup table)) 3 *output*))))))
+	 
+(set! (x-axis-label 0 0 1) "sum of oscils: frequency")
+(set! (x-axis-label 0 1 1) "polyshape: frequency")
+(set! (x-axis-label 0 2 1) "waveshape: frequency")
+(set! (x-axis-label 0 3 1) "table-lookup: frequency")
+-->
+
+<p>Perhaps a better question is, why waveshape?  Here history intrudes.  We couldn't handle the
+polynomial on the Samson box, so we used the table-lookup version.  I've tried to maintain
+reasonable backwards compatibility with old instruments, but someday I think I'll 
+remove the waveshape generator.
+</p>
+
 
 <br><br>
 

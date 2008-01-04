@@ -74,6 +74,7 @@
 ;;; Black-chinned sparrow
 ;;; Golden-crowned sparrow
 ;;; Cassin's sparrow
+;;; Song sparrow
 ;;; Purple finch
 ;;; House finch
 ;;; Eastern wood-pewee (2)
@@ -123,6 +124,7 @@
 ;;; Ruffed grouse
 ;;; Great-horned owl
 ;;; Barred owl
+;;; Flammulated owl
 ;;; Northern goshawk
 ;;; Red-shouldered hawk
 ;;; Pileated woodpecker
@@ -6403,6 +6405,262 @@
 ;(with-sound (:play #t) (pygmy-nuthatch 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Flammulated owl
+
+(definstrument (flammulated-owl beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.25)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.146 0.603 0.286 0.858 0.455 0.992 0.629 0.983 0.789 0.819 0.907 0.473 0.946 0.445 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0 340  .1 400  .15 410  .9 420  1 380) :duration dur :scaler (hz->radians 1.0)))
+	 (gen1 (make-polyshape 0 :partials (list 1 .98  2 .01  3 .005))))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (flammulated-owl 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Song sparrow
+
+(define (song-sparrow beg1 amp1)
+
+  (definstrument (song-sparrow-big-buzz beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.25)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.106 0.826 0.190 0.996 0.418 0.818 0.688 0.458 0.897 0.447 0.962 0.348 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0 4400 .4 4200 1 4300) :duration dur :scaler (hz->radians 1.0)))
+	   (gen-up (make-polyshape 0.0 :partials (vct 1 .95  2 .03  3 .02)))
+	   (gen-down (make-polyshape 0.0 :partials (vct 1 .95  2 .03  3 .02)))
+	   (mod-up (make-oscil 142.0))
+	   (mod-down (make-oscil 142.0))
+	   (pulser (make-pulse-train 142.0))
+	   (ampf-up (make-env '(0 .1  .23 .01  .27 .01  .6 .5  .75 1  .8 .4  1 .1) :duration (/ 1.0 142.0)))
+	   (ampf-down (make-env '(0 .1  .2 .6  .25 1  .6 .1  .75 .001 1 .1) :duration (/ 1.0 142.0)))
+	   (ampf2 (make-env '(0 1 1 0) :duration dur :scaler 0.7))
+	   (rnd (make-rand-interp 6000 (hz->radians 300))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (let ((modup (oscil mod-up))
+		 (moddown (oscil mod-down))
+		 (frq (+ (env frqf)
+			 (rand-interp rnd))))
+	     (if (> (pulse-train pulser) .1)
+		 (begin
+		   (mus-reset ampf-up)
+		   (mus-reset ampf-down)))
+	     (outa i (* (env ampf)
+			(+ (* (env ampf-up)
+			      (polyshape gen-up 1.0 (+ frq (hz->radians 700)
+						       (* (hz->radians 800) 
+							  modup))))
+			   (* (env ampf-down)
+			      (env ampf2)
+			      (polyshape gen-down 1.0 (+ frq (hz->radians -600)
+							 (* (hz->radians 800)
+							    moddown))))))
+		   *output*)))))))
+
+  (definstrument (song-sparrow-clear-tone beg frq amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.062)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.054 0.208 0.138 0.327 0.162 0.292 0.306 0.659 0.352 0.698 0.400 0.835 
+			     0.468 0.894 0.507 0.808 0.548 0.906 0.593 0.833 0.623 0.939 0.668 0.902 0.710 0.971 
+			     0.735 0.678 0.759 0.937 0.777 1.000 0.792 0.820 0.800 0.922 0.847 0.806 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.203 0.043 0.253 0.118 0.276 0.446 0.263 0.575 0.251 0.707 0.226 0.883 0.187 1.000 0.153)
+			   :duration dur :scaler (hz->radians (* frq 22050.0))))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .98  2 .005  3 .01))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+
+  (definstrument (song-sparrow-sweep-tone beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.036)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.048 0.158 0.098 0.474 0.201 0.574 0.235 0.206 0.357 0.206 0.419 0.366 
+			     0.468 0.331 0.489 0.173 0.519 0.579 0.567 0.639 0.604 0.972 0.647 0.556 0.697 0.391 0.75 0.0)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.358 0.033 0.355 0.060 0.321 0.078 0.240 0.098 0.214 0.120 0.257 0.153 0.364 
+			     0.187 0.420 0.242 0.428 0.289 0.418 0.348 0.390 0.465 0.381 0.531 0.360 0.571 0.338 
+			     0.609 0.306 0.668 0.246 0.75 0.223)
+			   :duration dur :scaler (hz->radians 22050.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .95  2 .05))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+
+  (definstrument (song-sparrow-sweep-caw beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.025)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.155 0.364 0.185 0.154 0.242 0.542 0.283 0.526 0.321 0.660 0.386 0.846 
+			     0.451 0.292 0.481 1.000 0.546 0.881 0.584 0.676 0.636 0.798 0.685 0.269 0.755 0.640 
+			     0.791 0.316 0.957 0.115 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.210 0.170 0.232 0.187 0.164 0.453 0.212 0.462 0.159 0.668 0.201 0.699 0.147
+			     0.905 0.181 1.000 0.164)
+			   :duration dur :scaler (hz->radians 22050.0)))
+	   (gen (make-polyshape 0.0 :partials (list 2 .92 3 .02 4 .01 5 .005)))
+	   (rnd (make-rand-interp 4000 (hz->radians 500))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen 1.0 (+ (* .5 (env frqf))
+					    (rand-interp rnd))))
+		 *output*))))))
+
+  (definstrument (song-sparrow-little-buzz beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.17)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0 0 1 1 2 1 4 0) :duration dur :scaler amp))
+	   (frqf (make-env '(0 0 1 1) :duration dur :scaler (hz->radians 20)))
+	   (gen (make-polyshape 610.0 :partials (normalize-partials (list 3 .4 4 1 5 .01 6 .2 7 .03 8 .02 9 .01 10 .01 11 .01 12 .005))))
+	   (rnd (make-rand-interp 4000 (hz->radians 50)))
+	   (tri (make-triangle-wave 60 0.6)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (+ .4 (abs (triangle-wave tri)))
+		      (polyshape gen 1.0 (+ (env frqf)
+					    (rand-interp rnd))))
+		 *output*))))))
+
+  (definstrument (song-sparrow-sweep-down beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.186)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.125 0.212 0.164 1.000 0.206 0.218 0.231 0.278 0.243 0.470 0.273 0.136 
+			     0.301 0.419 0.311 0.691 0.329 0.530 0.341 0.501 0.354 0.295 0.373 0.382 0.383 0.193 
+			     0.397 0.232 0.403 0.127 0.415 0.238 0.426 0.173 0.433 0.238 0.452 0.088 0.528 0.286 
+			     0.552 0.150 0.564 0.309 0.590 0.133 0.608 0.303 0.635 0.204 0.659 0.215 0.673 0.275 
+			     0.709 0.380 0.718 0.292 0.727 0.354 0.749 0.235 0.800 0.139 0.831 0.153 0.853 0.232 
+			     0.886 0.130 0.911 0.337 0.932 0.147 0.949 0.224 0.965 0.082 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0 9000 .08 7900  .164 7385 .2 7000 1 6960) :duration dur :scaler (hz->radians 1.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .95  2 .05))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+
+  (definstrument (song-sparrow-sweep-up beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.076)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0 0 1 1 2 1 3 0) :base .1
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0 2260 .3 3000 .9 3100 1 3300)
+			   :duration dur :scaler (hz->radians 1.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .98  2 .005  3 .01 4 .005))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+
+  (definstrument (song-sparrow-2nd-buzz beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.053)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.101 0.110 0.174 0.229 0.206 0.229 0.220 0.153 0.231 0.285 0.263 0.449 
+			     0.293 0.424 0.315 0.698 0.374 0.661 0.416 0.884 0.554 0.785 0.587 0.661 0.600 0.037 
+			     0.608 0.859 0.685 0.554 0.692 0.034 0.705 0.734 0.729 0.602 0.741 0.079 0.753 0.695 
+			     0.787 0.737 0.803 0.110 0.813 0.520 0.841 0.757 0.868 0.085 0.882 0.398 0.899 0.514 
+			     0.922 0.172 0.952 0.280 0.962 0.150 0.993 0.198 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0 3100  .4 3430  1 3140)
+			   :duration dur :offset (hz->radians 40) :scaler (hz->radians 0.5)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .1 2 .5  3 .2  4 .1  6 .05  8 .03)))
+	   (vib (make-blackman 320 4)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (let ((vb (blackman vib 0.0)))
+	     (outa i (* (env ampf)
+			(+ .4 (* .6 vb))
+			(polyshape gen1 1.0 (+ (env frqf)
+					       (* (hz->radians 200) vb))))
+		   *output*)))))))
+
+
+  (definstrument (song-sparrow-chiff beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.019)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0 0 1 1 2 0) :duration dur :scaler amp))
+	   (frqf (make-env '(0 4800  .4 5500  .6 6060  .9 4200 1 4100)
+			   :duration dur :scaler (hz->radians 0.32)))
+	   (gen1 (make-polyshape 0.0 :partials (list 3 .7 4 .3  7 .01)))
+	   )
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+
+
+
+  (song-sparrow-little-buzz beg1 (* .25 amp1))
+  (song-sparrow-clear-tone (+ beg1 0.2) 1.0 (* 0.9 amp1))
+
+  (song-sparrow-little-buzz (+ beg1 .37) (* .4 amp1))
+  (song-sparrow-clear-tone (+ beg1 0.57) 1.0 amp1)
+
+  (let ((amps (vct .14 .33 .37 .37 .30 .30 .30)))
+    (do ((i 0 (1+ i))
+	 (x 0.68 (+ x .1)))
+	((= i 7)) 
+      (song-sparrow-sweep-tone (+ beg1 x) (* (vct-ref amps i) amp1))
+      (song-sparrow-sweep-caw (+ beg1 x .05) (* 0.5 amp1))))
+
+  (song-sparrow-sweep-tone (+ beg1 1.37) (* .27 amp1))
+  (song-sparrow-big-buzz (+ beg1 1.44) (* 0.75 amp1))
+
+  (song-sparrow-2nd-buzz (+ 1.73 beg1) (* .25 amp1))
+  (song-sparrow-sweep-up (+ 1.8 beg1) (* .5 amp1))
+  (song-sparrow-chiff (+ 1.92 beg1) (* .3 amp1))
+  (song-sparrow-sweep-down (+ beg1 1.96) (* .3 amp1))
+  (song-sparrow-clear-tone (+ beg1 2.22) 0.86 (* .8 amp1)))
+  
+;(with-sound (:play #t) (song-sparrow 0 .5))
+
 
 ;;; ================ calling-all-animals ================
 
@@ -6475,14 +6733,15 @@
     (varied-thrush 138.198 0.125)
     (nashville-warbler 140.256 0.25)
     (plumbeous-vireo 141.332 0.25)
-    (american-crow 135.342 0.5)
-    (least-bittern 136.791 0.5)
-    (orange-crowned-warbler 139.090 0.25)
-    (loggerhead-shrike-1 142.478 0.1)
-    (loggerhead-shrike-2 144.431 0.1)
-    (california-quail 145.541 0.25)
-    (vermillion-flycatcher 147.184 0.25)
-    (cardinal 149.377 0.2)
+
+    (american-crow 142.342 0.5)
+    (least-bittern 143.791 0.5)
+    (orange-crowned-warbler 145.090 0.25)
+    (loggerhead-shrike-1 146.478 0.1)
+    (loggerhead-shrike-2 147.431 0.1)
+    (california-quail 148.541 0.25)
+    (vermillion-flycatcher 149.184 0.25)
+    (cardinal 151.377 0.2)
     (black-phoebe 153.672 0.25)
     (yellow-warbler 155.299 0.25)
     (barred-owl-1 157.840 0.25)
@@ -6508,6 +6767,7 @@
     (eared-grebe 203 .25)
     (brown-jay 204 .5)
     (blue-grosbeak 205 .25)
+
     (acorn-woodpecker 206 .5)
     (american-toad 207 3 .25)
     (red-shouldered-hawk 208 .5)
@@ -6537,5 +6797,7 @@
     (red-breasted-nuthatch 240 .25)
     (white-breasted-nuthatch 240.5 .25)
     (pygmy-nuthatch 241 .25)
+    (flammulated-owl 242 .25)
+    (song-sparrow 243 .25)
     ))
 

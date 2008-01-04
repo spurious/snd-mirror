@@ -2606,7 +2606,7 @@ static XEN g_make_table_lookup(XEN arglist)
 return a new " S_table_lookup " generator.  This is known as an oscillator in other synthesis systems. \
 The default table size is 512; use :size to set some other size, or pass your own vct as the 'wave'.\n\
    (set! gen (" S_make_table_lookup " 440.0 :wave (" S_partials_to_wave " '(1 1.0)))\n\
-is the same in effect as " S_make_oscil "."
+is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice which defaults to " S_mus_interp_linear "."
 
   mus_any *ge;
   int vals, i, arglist_len, table_size = clm_table_size;

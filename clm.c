@@ -14,6 +14,7 @@
  *      make-formant freq r gain
  *
  *   polyshape/waveshape should put the "index" arg last, or just forget it (use mus-scaler or something)
+ *    remove waveshape
  *
  *   sum-of-cosines -> ncos
  *   sum-of-sines -> nsin
