@@ -292,7 +292,7 @@ static XEN kw_frequency, kw_initial_phase, kw_wave, kw_cosines, kw_amplitude,
   kw_direction, kw_degree, kw_distance, kw_reverb, kw_output, kw_fft_size,
   kw_expansion, kw_length, kw_hop, kw_ramp, kw_jitter,
   kw_type, kw_channels, kw_filter, kw_revout, kw_width,
-  kw_edit, kw_synthesize, kw_analyze, kw_interp, kw_overlap, kw_pitch, kw_dur, kw_sines,
+  kw_edit, kw_synthesize, kw_analyze, kw_interp, kw_overlap, kw_pitch, kw_sines,
   kw_distribution, kw_coeffs, kw_kind;
 
 
@@ -358,7 +358,6 @@ static void init_keywords(void)
   kw_interp =           XEN_MAKE_KEYWORD("interp");
   kw_overlap =          XEN_MAKE_KEYWORD("overlap");
   kw_pitch =            XEN_MAKE_KEYWORD("pitch");
-  kw_dur =              XEN_MAKE_KEYWORD("dur");
   kw_sines =            XEN_MAKE_KEYWORD("sines");
   kw_distribution =     XEN_MAKE_KEYWORD("distribution");
   kw_coeffs =           XEN_MAKE_KEYWORD("coeffs");
@@ -2473,7 +2472,9 @@ static XEN g_mus_set_rand_seed(XEN a)
 static int clm_table_size = MUS_DEFAULT_CLM_TABLE_SIZE;
 
 int clm_table_size_c(void) {return(clm_table_size);}
+
 static XEN g_clm_table_size(void) {return(C_TO_XEN_INT((int)clm_table_size));}
+
 static XEN g_set_clm_table_size(XEN val) 
 {
   int size;
@@ -2497,7 +2498,7 @@ static XEN g_table_lookup_p(XEN obj)
 static XEN g_partials_to_wave(XEN partials, XEN utable, XEN normalize)
 {
   #define H_partials_to_wave "(" S_partials_to_wave " partials :optional wave (normalize " PROC_FALSE ")): \
-take a list of partials (harmonic number and associated amplitude) and produce \
+take a list or vct of partials (harmonic number and associated amplitude) and produce \
 a waveform for use in " S_table_lookup ".  If wave (a vct) is not given, \
 a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goes between -1.0 and 1.0.\n\
   (set! gen (" S_make_table_lookup " 440.0 :wave (" S_partials_to_wave " '(1 1.0 2 .5))))"
@@ -2505,23 +2506,39 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   vct *f;
   XEN table; 
   XEN lst;
-  Float *partial_data;
+  Float *partial_data = NULL;
   int len = 0, i;
-  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(partials, len), partials, XEN_ARG_1, S_partials_to_wave, "a list");
+  bool partials_allocated = true;
+
+  XEN_ASSERT_TYPE(MUS_VCT_P(partials) || XEN_LIST_P(partials), partials, XEN_ARG_1, S_partials_to_wave, "a list or a vct");
   XEN_ASSERT_TYPE(MUS_VCT_P(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, XEN_ARG_2, S_partials_to_wave, "a vct or " PROC_FALSE);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalize), normalize, XEN_ARG_3, S_partials_to_wave, "a boolean");
-  if (len == 0)
-    XEN_ERROR(NO_DATA, 
-	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_wave), 
-			 C_TO_XEN_STRING("partials list empty?"), 
-			 partials));
+
+  if (MUS_VCT_P(partials))
+    {
+      vct *v;
+      v = XEN_TO_VCT(partials);
+      partial_data = v->data;
+      len = v->length;
+      partials_allocated = false;
+    }
+  else
+    {
+      len = XEN_LIST_LENGTH(partials);
+      if (len == 0)
+	XEN_ERROR(NO_DATA, 
+		  XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_wave), 
+			     C_TO_XEN_STRING("partials list empty?"), 
+			     partials));
+      if (!(XEN_NUMBER_P(XEN_CAR(partials))))
+	XEN_ASSERT_TYPE(false, partials, XEN_ARG_1, S_partials_to_wave, "a list of numbers (partial numbers with amplitudes)");
+    }
   if (len & 1)
     XEN_ERROR(BAD_TYPE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_wave), 
 			 C_TO_XEN_STRING("odd length partials list?"), 
 			 partials));
-  if (!(XEN_NUMBER_P(XEN_CAR(partials))))
-    XEN_ASSERT_TYPE(false, partials, XEN_ARG_1, S_partials_to_wave, "a list of numbers (partial numbers with amplitudes)");
+
   if ((XEN_NOT_BOUND_P(utable)) || (!(MUS_VCT_P(utable))))
     {
       Float *wave;
@@ -2531,14 +2548,22 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
       table = xen_make_vct(clm_table_size, wave);
     }
   else table = utable;
+
   f = XEN_TO_VCT(table);
-  partial_data = (Float *)CALLOC(len, sizeof(Float));
-  if (partial_data == NULL)
-    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table"));
-  for (i = 0, lst = XEN_COPY_ARG(partials); i < len; i++, lst = XEN_CDR(lst)) 
-    partial_data[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
+
+  if (!partial_data)
+    {
+      partial_data = (Float *)CALLOC(len, sizeof(Float));
+      if (partial_data == NULL)
+	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table"));
+      for (i = 0, lst = XEN_COPY_ARG(partials); i < len; i++, lst = XEN_CDR(lst)) 
+	partial_data[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
+    }
+
   mus_partials_to_wave(partial_data, len / 2, f->data, f->length, (XEN_TRUE_P(normalize)));
-  FREE(partial_data);
+
+  if (partials_allocated)
+    FREE(partial_data);
   return(xen_return_first(table, partials, utable));
 }
 
@@ -2547,8 +2572,9 @@ static XEN g_phase_partials_to_wave(XEN partials, XEN utable, XEN normalize)
 {
   vct *f;
   XEN table, lst;
-  Float *partial_data, *wave;
+  Float *partial_data = NULL, *wave;
   int len = 0, i;
+  bool partials_allocated = true;
 
   #if HAVE_SCHEME
     #define pp2w_example "(" S_make_table_lookup " 440.0 :wave (" S_phase_partials_to_wave " (list  1 .75 0.0  2 .25 (* 3.14159 .5))))"
@@ -2561,25 +2587,39 @@ static XEN g_phase_partials_to_wave(XEN partials, XEN utable, XEN normalize)
   #endif
 
   #define H_phase_partials_to_wave "(" S_phase_partials_to_wave " partials :optional wave (normalize " PROC_FALSE ")): \
-take a list of partials (harmonic number, amplitude, initial phase) and produce \
+take a list or vct of partials (harmonic number, amplitude, initial phase) and produce \
 a waveform for use in " S_table_lookup ".  If wave (a vct) is not given, \
 a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goes between -1.0 and 1.0.\n  " pp2w_example
 
-  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(partials, len), partials, XEN_ARG_1, S_phase_partials_to_wave, "a list");
+  XEN_ASSERT_TYPE(MUS_VCT_P(partials) || XEN_LIST_P(partials), partials, XEN_ARG_1, S_phase_partials_to_wave, "a list or a vct");
   XEN_ASSERT_TYPE(MUS_VCT_P(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, XEN_ARG_2, S_phase_partials_to_wave, "a vct or " PROC_FALSE);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalize), normalize, XEN_ARG_3, S_phase_partials_to_wave, "a boolean");
-  if (len == 0)
-    XEN_ERROR(NO_DATA,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_phase_partials_to_wave), 
-			 C_TO_XEN_STRING("partials list empty?"),
-			 partials));
+
+  if (MUS_VCT_P(partials))
+    {
+      vct *v;
+      v = XEN_TO_VCT(partials);
+      partial_data = v->data;
+      len = v->length;
+      partials_allocated = false;
+    }
+  else
+    {
+      len = XEN_LIST_LENGTH(partials);
+      if (len == 0)
+	XEN_ERROR(NO_DATA,
+		  XEN_LIST_3(C_TO_XEN_STRING(S_phase_partials_to_wave), 
+			     C_TO_XEN_STRING("partials list empty?"),
+			     partials));
+      if (!(XEN_NUMBER_P(XEN_CAR(partials))))
+	XEN_ASSERT_TYPE(false, partials, XEN_ARG_1, S_phase_partials_to_wave, "a list of numbers (partial numbers with amplitudes and phases)");
+    }
   if ((len % 3) != 0)
     XEN_ERROR(XEN_ERROR_TYPE("wrong-type-arg"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_phase_partials_to_wave), 
 			 C_TO_XEN_STRING("partials list should have 3 entries for each harmonic (number amp phase)"),
 			 partials));
-  if (!(XEN_NUMBER_P(XEN_CAR(partials))))
-    XEN_ASSERT_TYPE(false, partials, XEN_ARG_1, S_phase_partials_to_wave, "a list of numbers (partial numbers with amplitudes and phases)");
+
   if ((XEN_NOT_BOUND_P(utable)) || (!(MUS_VCT_P(utable))))
     {
       wave = (Float *)CALLOC(clm_table_size, sizeof(Float));
@@ -2588,14 +2628,22 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
       table = xen_make_vct(clm_table_size, wave);
     }
   else table = utable;
+
   f = XEN_TO_VCT(table);
-  partial_data = (Float *)CALLOC(len, sizeof(Float));
-  if (partial_data == NULL)
-    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table"));
-  for (i = 0, lst = XEN_COPY_ARG(partials); i < len; i++, lst = XEN_CDR(lst)) 
-    partial_data[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
+
+  if (!partial_data)
+    {
+      partial_data = (Float *)CALLOC(len, sizeof(Float));
+      if (partial_data == NULL)
+	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table"));
+      for (i = 0, lst = XEN_COPY_ARG(partials); i < len; i++, lst = XEN_CDR(lst)) 
+	partial_data[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
+    }
+
   mus_phase_partials_to_wave(partial_data, len / 3, f->data, f->length, (XEN_TRUE_P(normalize)));
-  FREE(partial_data);
+
+  if (partials_allocated)
+    FREE(partial_data);
   return(xen_return_first(table, partials, utable));
 }
 
@@ -3989,16 +4037,13 @@ is the same in effect as " S_make_oscil
         {
 	  int error = NO_PROBLEM_IN_LIST;
 	  if (MUS_VCT_P(keys[1]))
-	    {
-	      partials = vct_to_partials(XEN_TO_VCT(keys[1]), &npartials, &error);
-	      partials_allocated = false;
-	    }
+	    partials = vct_to_partials(XEN_TO_VCT(keys[1]), &npartials, &error);
 	  else
 	    {
 	      XEN_ASSERT_TYPE(XEN_LIST_P(keys[1]), keys[1], orig_arg[1], S_make_waveshape, "a list");
 	      partials = list_to_partials(keys[1], &npartials, &error);
-	      partials_allocated = true;
 	    }
+	  partials_allocated = true;
 	  if (partials == NULL)
 	    XEN_ERROR(NO_DATA, 
 		      XEN_LIST_3(C_TO_XEN_STRING(S_make_waveshape), 
@@ -4062,12 +4107,12 @@ produce a waveshaping lookup table (suitable for the " S_waveshape " generator) 
 that will produce the harmonic spectrum given by the partials argument. " p2w_example " returns \
 partial 2 twice as loud as 3."
 
-  int npartials, size, len = 0;
+  int npartials = 0, size;
   Float *partials, *wave;
   XEN gwave;
   int error = NO_PROBLEM_IN_LIST;
 
-  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(amps, len), amps, XEN_ARG_1, S_partials_to_waveshape, "a list");
+  XEN_ASSERT_TYPE(MUS_VCT_P(amps) || XEN_LIST_P(amps), amps, XEN_ARG_1, S_partials_to_waveshape, "a list or a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(s_size), s_size, XEN_ARG_2, S_partials_to_waveshape, "an integer");
   if (XEN_INTEGER_P(s_size))
     size = XEN_TO_C_INT(s_size);
@@ -4075,7 +4120,10 @@ partial 2 twice as loud as 3."
   if ((size <= 0) || (size > MAX_TABLE_SIZE))
     XEN_OUT_OF_RANGE_ERROR(S_partials_to_waveshape, 2, s_size, "~A: bad size?");
 
-  partials = list_to_partials(amps, &npartials, &error);
+  if (MUS_VCT_P(amps))
+    partials = vct_to_partials(XEN_TO_VCT(amps), &npartials, &error);
+  else partials = list_to_partials(amps, &npartials, &error);
+
   if (partials == NULL)
     XEN_ERROR(NO_DATA, 
 	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_waveshape), 
@@ -4105,12 +4153,12 @@ static XEN g_partials_to_polynomial(XEN amps, XEN ukind)
 produce a Chebyshev polynomial suitable for use with the " S_polynomial " generator \
 to create (via waveshaping) the harmonic spectrum described by the partials argument:\n  " p2p_example
 
-  int npartials, len = 0;
+  int npartials = 0;
   mus_polynomial_t kind = MUS_CHEBYSHEV_FIRST_KIND;
-  Float *partials, *wave;
+  Float *partials = NULL, *wave;
   int error = NO_PROBLEM_IN_LIST;
 
-  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(amps, len), amps, XEN_ARG_1, S_partials_to_polynomial, "a list");
+  XEN_ASSERT_TYPE(MUS_VCT_P(amps) || XEN_LIST_P(amps), amps, XEN_ARG_1, S_partials_to_polynomial, "a list or a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ukind), ukind, XEN_ARG_2, S_partials_to_polynomial, "either " S_mus_chebyshev_first_kind " or " S_mus_chebyshev_second_kind);
   if (XEN_INTEGER_P(ukind))
     {
@@ -4120,17 +4168,21 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
 	kind = (mus_polynomial_t)ck;
       else XEN_OUT_OF_RANGE_ERROR(S_partials_to_polynomial, 2, ukind, "~A: unknown Chebyshev polynomial kind");
     }
+  
+  if (MUS_VCT_P(amps))
+    partials = vct_to_partials(XEN_TO_VCT(amps), &npartials, &error);
+  else partials = list_to_partials(amps, &npartials, &error);
 
-  partials = list_to_partials(amps, &npartials, &error);
   if (partials == NULL)
     XEN_ERROR(NO_DATA, 
 	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_polynomial), 
 			 C_TO_XEN_STRING(list_to_partials_error_to_string(error)), 
 			 amps));
 
-  wave = mus_partials_to_polynomial(npartials, partials, kind);
+  wave = mus_partials_to_polynomial(npartials, partials, kind); /* wave == partials */
   return(xen_return_first(xen_make_vct(npartials, wave), amps));
 }
+
 
 
 
@@ -4218,7 +4270,7 @@ is the same in effect as " S_make_oscil
 		partials = vct_to_partials(XEN_TO_VCT(keys[3]), &npartials, &error);
 	      else
 		{
-		  XEN_ASSERT_TYPE(XEN_LIST_P(keys[3]), keys[3], orig_arg[3], S_make_polyshape, "a list");
+		  XEN_ASSERT_TYPE(XEN_LIST_P(keys[3]), keys[3], orig_arg[3], S_make_polyshape, "a list or a vct");
 		  partials = list_to_partials(keys[3], &npartials, &error);
 		}
 	      if (partials == NULL)
@@ -4591,7 +4643,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   keys[3] = kw_offset;
   keys[4] = kw_base;
   keys[5] = kw_end;
-  keys[6] = kw_dur;
+  keys[6] = kw_length;
 
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)

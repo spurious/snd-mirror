@@ -319,7 +319,7 @@
 ;;; clarinety
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-noddsin 300 :n 3))
-	(ampf (make-env '(0 0 1 1 2 1 3 0) :dur 40000 :scaler .5)))
+	(ampf (make-env '(0 0 1 1 2 1 3 0) :length 40000 :scaler .5)))
     (run (lambda ()
       (do ((i 0 (1+ i)))
 	  ((= i 40000))
@@ -2114,7 +2114,7 @@
 
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-r2k!cos 440.0 :r 0.5 :k 3.0)) 
-	(indf (make-env '(0 1 1 0 10 0) :dur 80000 :scaler 10.0 :offset 1)))
+	(indf (make-env '(0 1 1 0 10 0) :length 80000 :scaler 10.0 :offset 1)))
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))

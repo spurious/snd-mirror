@@ -2263,7 +2263,7 @@
 
 (define (sndclmdoc-simp-5 start end freq amp frq-env)
   (let ((os (make-oscil freq)) 
-        (frqe (make-env frq-env :dur (- end start) :scaler (hz->radians freq))))
+        (frqe (make-env frq-env :length (- end start) :scaler (hz->radians freq))))
     (do ((i start (1+ i))) 
         ((= i end))
       (outa i (* amp (oscil os (env frqe))) *output*))))

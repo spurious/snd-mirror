@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 46
-#define MUS_DATE "19-Oct-07"
+#define MUS_REVISION 47
+#define MUS_DATE "7-Jan-08"
 
 /*
+ * 7-Jan:      :dur replaced by :length in make-env.
  * 19-Oct:     all *_0 *_1 *_2 names now use _fm|_pm|_unmodulated|_no_input.
  * 17-Oct:     replace some method macros with functions (def-clm-struct local methods need true names).
  * 15-Oct:     mus_oscil_1 -> _fm, _2->_pm.

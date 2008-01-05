@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: if 'flt' clicked and sono bg, make sure we get the current graph (via force redisplay if necessary)
- */
-
 #define BIG_DOT_SIZE 10
 #define MEDIUM_DOT_SIZE 7
 #define LITTLE_DOT_SIZE 4
@@ -1038,6 +1035,16 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
       if (enved_max_fft_size < transform_size(ss)) enved_max_fft_size = transform_size(ss);
       if (enved_max_fft_size < active_channel->transform_size) enved_max_fft_size = active_channel->transform_size;
       
+      if ((active_channel->cgx) && 
+	  (active_channel->transform_graph_type == GRAPH_AS_SONOGRAM) &&
+	  (active_channel->graph_transform_p))
+	{
+	  /* if the sonogram isn't ready, try to get it */
+	  if ((!(active_channel->cgx->fft_pix)) ||
+	      (!(active_channel->cgx->fft_pix_ready)))
+	    display_channel_fft_data(active_channel);
+	}
+
       if ((active_channel->cgx) && 
 	  (active_channel->cgx->fft_pix) &&
 	  (active_channel->cgx->fft_pix_ready) &&

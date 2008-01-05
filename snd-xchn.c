@@ -106,9 +106,12 @@ static void zx_changed(int value, chan_info *cp)
 { /* scrollbar change */
   axis_info *ap;
   static int old_zx_value = -1;
+  #define ZX_MIN 20
 
-  if (value < 1) value = 1;
-  if (old_zx_value == value) return; /* try to keep click on slider from moving the window! */
+  if (value < ZX_MIN) value = ZX_MIN; /* less than this causes underflow in snd-axis describe_ticks */
+                                      /* snd-gchn uses .01 -- its equivalent here would be 100 */
+                                      /* perhaps the definition should be ((int)(0.002 * MAX_SCROLLBAR)) */
+  if (old_zx_value == value) return;  /* try to keep click on slider from moving the window! */
   old_zx_value = value;
 
   ap = cp->axis;

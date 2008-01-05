@@ -16080,7 +16080,7 @@ def test088
       snd_display("exp env direct (32.0) offset: %s %s", res, val)
     end
   end
-  e1 = make_env([0, 1, 1, 2], :base, 32.0, :dur, 11)
+  e1 = make_env([0, 1, 1, 2], :base, 32.0, :length, 11)
   vct(1, 1.013, 1.032, 1.059, 1.097, 1.15, 1.226, 1.333, 1.484, 1.698, 2).each do |val|
     if fneq(res = env(e1), val)
       snd_display("exp env direct (32.0) offset (and dur): %s %s", res, val)
@@ -16137,7 +16137,7 @@ def test088
   if fneq(res = env(gen), 0.817)
     snd_display("set env location with base: %s %s?", res, gen)
   end
-  gen = make_env([0, 0, 1, 1], :base, 0.032, :dur, 12)
+  gen = make_env([0, 0, 1, 1], :base, 0.032, :length, 12)
   gen.location = 5
   if fneq(res = env(gen), 0.817)
     snd_display("set env location with base and dur: %s %s?", res, gen)
@@ -16162,7 +16162,7 @@ def test088
   if (res = Snd.catch do make_env(:envelope, [0, 0], :end, -1) end).first != :out_of_range
     snd_display("make_env bad end: %s", res.inspect)
   end
-  if (res = Snd.catch do make_env(:envelope, [0, 0], :dur, -1) end).first != :out_of_range
+  if (res = Snd.catch do make_env(:envelope, [0, 0], :length, -1) end).first != :out_of_range
     snd_display("make_env bad dur: %s", res.inspect)
   end
   if (res = Snd.catch do make_env(:envelope, [0, 0], :duration, -1.0) end).first != :out_of_range
@@ -16177,7 +16177,7 @@ def test088
   if (res = Snd.catch do make_env(:envelope, [0, 1, -1, 0], :end, 10) end).first != :mus_error
     snd_display("make_env bad env 0 1 -1 0: %s", res.inspect)
   end
-  if (res = Snd.catch do make_env(:envelope, [0, 1, 1, 0], :end, 10, :dur, 10) end).first != :mus_error
+  if (res = Snd.catch do make_env(:envelope, [0, 1, 1, 0], :end, 10, :length, 10) end).first != :mus_error
     snd_display("make_env bad end/dur: %s", res.inspect)
   end
 end

@@ -2,6 +2,7 @@
 
 
 /* clm4:
+ *
  *   perhaps add pm args alongside the fm args, as in oscil?
  *   perhaps remove all the initial-phase args (oscil->1sin and 1cos or something)
  *
@@ -13,15 +14,15 @@
  *      make-ssb-am freq n
  *      make-formant freq r gain
  *
- *   polyshape/waveshape should put the "index" arg last, or just forget it (use mus-scaler or something)
- *    remove waveshape
+ *   polyshape/waveshape should put the "index" arg last, or just forget it (use mus-scaler)
+ *     mus-scaler is free in wave|polyshape, but needs field in struct, decision on how to use it in the mus_wave|polyshape* funcs
+ *     remove waveshape, partials->waveshape
  *
  *   sum-of-cosines -> ncos
  *   sum-of-sines -> nsin
  *   sine-summation -> nrxysin
  *     what about oscil? [1sin?]
  *   asymmetric-fm -> generators.scm (not built-in)
- *   do something debonair about move-sound -- another mistake
  *
  *   can the def-clm-struct method/make lists be used with built-in gens?
  *
@@ -31,7 +32,17 @@
  *   it would be cleaner to have a pulser+func rather than checking pulse-train>.1
  *
  *   high-pass et al with order and type
- *   ideally we'd use dur, not end in make-env, or perhaps length=duration in samples
+ *
+ *   ideally we'd use length=duration in samples, not end in make-env (and remove end as a keyword)
+ *     this requires a huge find/replace with checks for where :end actually meant :length all along (445 occurrences in *.scm)
+ *
+ *   do something debonair about move-sound -- another mistake -- elastic-delay + vector arithmetic = dlocsig?
+ *   elastic-delay (and inelastic) -> delay with run-time length, if len expands so quickly as to drop
+ *      a sample, interpolate, if compresses too quickly, create shock -- a slight extension of the current delay pm arg
+ *      it should be possible to collapse nearly all of dlocsig into these lines -- no envelopes need to be precalulated etc
+ *
+ * done:
+ *   :dur -> :length in make-env
  */
 
 #include <mus-config.h>
