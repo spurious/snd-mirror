@@ -3933,7 +3933,7 @@ static Float *list_to_partials(XEN harms, int *npartials, int *error_code)
 }
 
 
-static Float *vct_to_partials(vct *v, int *npartials, int *error_code)
+Float *mus_vct_to_partials(vct *v, int *npartials, int *error_code)
 {
   int len, i, maxpartial, curpartial;
   Float *partials = NULL;
@@ -4037,7 +4037,7 @@ is the same in effect as " S_make_oscil
         {
 	  int error = NO_PROBLEM_IN_LIST;
 	  if (MUS_VCT_P(keys[1]))
-	    partials = vct_to_partials(XEN_TO_VCT(keys[1]), &npartials, &error);
+	    partials = mus_vct_to_partials(XEN_TO_VCT(keys[1]), &npartials, &error);
 	  else
 	    {
 	      XEN_ASSERT_TYPE(XEN_LIST_P(keys[1]), keys[1], orig_arg[1], S_make_waveshape, "a list");
@@ -4121,7 +4121,7 @@ partial 2 twice as loud as 3."
     XEN_OUT_OF_RANGE_ERROR(S_partials_to_waveshape, 2, s_size, "~A: bad size?");
 
   if (MUS_VCT_P(amps))
-    partials = vct_to_partials(XEN_TO_VCT(amps), &npartials, &error);
+    partials = mus_vct_to_partials(XEN_TO_VCT(amps), &npartials, &error);
   else partials = list_to_partials(amps, &npartials, &error);
 
   if (partials == NULL)
@@ -4170,7 +4170,7 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
     }
   
   if (MUS_VCT_P(amps))
-    partials = vct_to_partials(XEN_TO_VCT(amps), &npartials, &error);
+    partials = mus_vct_to_partials(XEN_TO_VCT(amps), &npartials, &error);
   else partials = list_to_partials(amps, &npartials, &error);
 
   if (partials == NULL)
@@ -4179,7 +4179,7 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
 			 C_TO_XEN_STRING(list_to_partials_error_to_string(error)), 
 			 amps));
 
-  wave = mus_partials_to_polynomial(npartials, partials, kind); /* wave == partials */
+  wave = mus_partials_to_polynomial(npartials, partials, kind); /* wave == partials; in both vct and list cases, partials is newly allocated */
   return(xen_return_first(xen_make_vct(npartials, wave), amps));
 }
 
@@ -4267,7 +4267,7 @@ is the same in effect as " S_make_oscil
 	    {
 	      int error = NO_PROBLEM_IN_LIST;
 	      if (MUS_VCT_P(keys[3]))
-		partials = vct_to_partials(XEN_TO_VCT(keys[3]), &npartials, &error);
+		partials = mus_vct_to_partials(XEN_TO_VCT(keys[3]), &npartials, &error);
 	      else
 		{
 		  XEN_ASSERT_TYPE(XEN_LIST_P(keys[3]), keys[3], orig_arg[3], S_make_polyshape, "a list or a vct");

@@ -99,7 +99,6 @@
  *   SOMEDAY: add support for ' and list
  *   the other such cases are make-waveshape, make-polyshape, partials->*
  *   currently make-rand|-interp distribution arg (an env) can't be a vct
- *   PERHAPS: add partials->* in run [assume vct arg][snd-test too]
  */
 
 /* it would be nice to have a compile time check for generator mismatches, but
@@ -10001,6 +10000,49 @@ static xen_value *mus_spectrum_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
+/* ---------------- partials->polynomial ---------------- */
+
+/* (partials->polynomial amps kind) which doesn't match the C level mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial_t kind)
+ */
+
+static void partials_to_polynomial_n(int *args, ptree *pt, mus_polynomial_t kind) 
+{
+  int npartials = 0, error = 0;
+  Float *partials = NULL;
+  vct *v;
+  if (VCT_RESULT) mus_vct_free(VCT_RESULT);
+  partials = mus_vct_to_partials(VCT_ARG_1, &npartials, &error);
+  mus_partials_to_polynomial(npartials, partials, kind);
+  v = (vct *)MALLOC(sizeof(vct));
+  v->length = npartials;
+  v->data = partials;
+  v->dont_free = false;
+  VCT_RESULT = v;
+}
+
+static void partials_to_polynomial_no_kind(int *args, ptree *pt)
+{
+  partials_to_polynomial_n(args, pt, MUS_CHEBYSHEV_FIRST_KIND);
+}
+
+static void partials_to_polynomial_with_kind(int *args, ptree *pt)
+{
+  partials_to_polynomial_n(args, pt, (mus_polynomial_t)INT_ARG_2);
+}
+
+
+static xen_value *partials_to_polynomial_1(ptree *prog, xen_value **args, int num_args) 
+{
+  args[0] = make_xen_value(R_VCT, add_vct_to_ptree(prog, NULL), R_VARIABLE);
+  add_obj_to_gcs(prog, R_VCT, args[0]->addr);
+  if (num_args == 1)
+    add_triple_to_ptree(prog, va_make_triple(partials_to_polynomial_no_kind, "partials_to_polynomial_0", 2, args[0], args[1]));
+  else add_triple_to_ptree(prog, va_make_triple(partials_to_polynomial_with_kind, "partials_to_polynomial_1", 3, args[0], args[1], args[2]));
+  return(args[0]);
+}
+
+
+
 /* ---------------- src ---------------- */
 
 GEN_P(src)
@@ -12565,6 +12607,8 @@ static void init_walkers(void)
   INIT_WALKER(S_make_wave_train, make_walker(make_wave_train_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_waveshape, make_walker(make_waveshape_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_polyshape, make_walker(make_polyshape_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
+
+  INIT_WALKER(S_partials_to_polynomial, make_walker(partials_to_polynomial_1, NULL, NULL, 1, 2, R_VCT, false, 2, R_VCT, R_INT));
 
 
   /* -------- sndlib funcs */

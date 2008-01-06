@@ -48743,6 +48743,16 @@ EDITS: 1
 		  (if (not (vct? lrla)) (snd-display ";run lambda vct return: ~A?" lrla))
 		  (if (fneq (vct-ref val 0) 2.0) (snd-display ";run autocorrelate 0: ~A" (vct-ref lrla 0)))
 		  (if (fneq (vct-ref val 4) 1.0) (snd-display ";run autocorrelate 4: ~A" (vct-ref lrla 4)))))
+
+	      (if (not (vequal (vct -0.5 1 1)
+			       (run (lambda () (partials->polynomial (vct 1 1 2 .5))))))
+		  (snd-display ";run partials->polynomial no kind: ~A" (run (lambda () (partials->polynomial (vct 1 1 2 .5))))))
+	      (if (not (vequal (vct -0.5 1 1)
+			       (run (lambda () (partials->polynomial (vct 1 1 2 .5) mus-chebyshev-first-kind)))))
+		  (snd-display ";run partials->polynomial 1st kind: ~A" (run (lambda () (partials->polynomial (vct 1 1 2 .5) mus-chebyshev-first-kind)))))
+	      (if (not (vequal (vct 1 1 0)
+			       (run (lambda () (partials->polynomial (vct 1 1 2 .5) mus-chebyshev-second-kind)))))
+		  (snd-display ";run partials->polynomial 2nd kind: ~A" (run (lambda () (partials->polynomial (vct 1 1 2 .5) mus-chebyshev-second-kind)))))
 	      
 	      (let ((ho 123))
 		(let ((val (run-eval '(lambda () (lfunc)))))
