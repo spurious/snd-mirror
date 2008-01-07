@@ -129,6 +129,7 @@
 ;;; Burrowing owl
 ;;; Northern goshawk
 ;;; Red-shouldered hawk
+;;; Bald eagle
 ;;; Pileated woodpecker
 ;;; White-headed woodpecker
 ;;; Acorn woodpecker
@@ -6782,6 +6783,135 @@
 ;(with-sound (:play #t) (gray-vireo-2 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Bald eagle
+
+
+(define (bald-eagle beg amp)
+
+  (definstrument (bald-eagle-1 beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.153)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.016 0.145 0.042 0.773 0.084 0.471 0.097 0.265 0.112 0.124 0.123 0.297 
+			     0.134 0.937 0.151 0.665 0.166 0.810 0.194 0.733 0.228 0.218 0.244 0.059 0.269 0.373 
+			     0.280 0.621 0.292 0.597 0.314 0.681 0.368 0.241 0.389 0.332 0.411 0.688 0.431 0.674 
+			     0.447 0.539 0.477 0.452 0.517 0.572 0.534 0.550 0.555 0.455 0.576 0.457 0.597 0.494 
+			     0.613 0.391 0.630 0.073 0.648 0.164 0.671 0.119 0.680 0.014 0.700 0.077 0.737 0.045 
+			     0.757 0.075 0.803 0.024 0.817 0.065 0.855 0.028 0.866 0.063 0.906 0.033 0.973 0.042 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf1 (make-env '(0.000 0.268 0.042 0.273 0.132 0.280 0.281 0.280 0.409 0.273 0.609 0.282 0.686 0.289 1.000 0.273)
+			    :duration dur :scaler (hz->radians 10000.0)))
+	   (frqf2 (make-env '(0.000 0.541 0.050 0.543 0.130 0.555 0.202 0.559 0.271 0.568 0.413 0.534 0.522 0.543 
+			      0.586 0.559 0.638 0.582 0.706 0.566 0.791 0.539 0.852 0.516 0.922 0.466 0.962 0.400 1.000 0.309)
+			    :duration dur :scaler (hz->radians 10000.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .98  3 .02)))
+	   (gen2 (make-polyshape 0.0 :partials (list 1 .95  2 .05)))
+	   (intrpf (make-env '(0 .9 .6 .9 .7 .5 1 .5) :duration dur))
+	   (rnd (make-rand-interp 2000 ))
+	   (rndf (make-env '(0 0 .02 0 .04 1 .06 0 .13 0 .135 1 .14 0 .27 0 .276 1 .28 0 .4 0 .405 1 .41 0 .678 0 .682 1 1 1) 
+			   :duration dur :offset (hz->radians 40) :scaler (hz->radians 100))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (let ((intrp (env intrpf))
+		 (noise (* (env rndf)
+			   (rand-interp rnd))))
+	     (outa i (* (env ampf)
+			(+ (* intrp (polyshape gen1 1.0 (+ (env frqf1)
+							   noise)))
+			   (* (- 1.0 intrp) (polyshape gen2 1.0 (+ (env frqf2)
+								   (* 2 noise))))))
+		   *output*)))))))
+  
+  (definstrument (bald-eagle-2 beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.074)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.045 0.084 0.073 0.223 0.176 0.395 0.207 1.000 0.245 0.616 0.276 0.093 
+			     0.301 0.325 0.349 0.316 0.396 0.211 0.445 0.075 0.643 0.145 0.777 0.170 0.804 0.291 
+			     0.848 0.164 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.752 0.065 0.617 0.116 0.597 0.140 0.513 0.158 0.420 0.177 0.273 0.255 0.285 
+			     0.351 0.285 0.393 0.285 0.467 0.287 0.518 0.293 0.582 0.301 0.638 0.163 0.690 0.225 
+			     0.752 0.282 0.800 0.262 0.875 0.268 1.000 0.290)
+			   :duration dur :scaler (hz->radians 10100.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .99  2 .01)))
+	   (rnd (make-rand-interp 2000))
+	   (rndf (make-env '(0 0 .16 0 .25 1 1 .5) :duration dur :offset (hz->radians 100) :scaler (hz->radians 500))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (+ (env frqf)
+					     (* (env rndf)
+						(rand-interp rnd)))))
+		 *output*))))))
+  
+  (definstrument (bald-eagle-3 beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.074)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.048 0.225 0.130 0.273 0.170 0.507 0.190 1.000 0.204 0.775 0.259 0.761 
+			     0.318 0.349 0.361 0.501 0.447 0.045 0.476 0.375 0.539 0.476 0.560 0.679 0.593 0.670 
+			     0.613 0.583 0.668 0.028 0.684 0.177 0.727 0.068 0.741 0.400 0.766 0.504 0.784 0.372 
+			     0.826 0.400 0.857 0.318 0.879 0.085 0.937 0.045 0.979 0.073 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.449 0.076 0.410 0.122 0.325 0.150 0.195 0.190 0.195 0.255 0.198 0.371 0.198 
+			     0.436 0.198 0.465 0.215 0.521 0.203 0.745 0.198 1.000 0.195)
+			   :duration dur :scaler (hz->radians 14000.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .99   3 .01)))
+	   (gen2 (make-polyshape 0.0 :partials (list 1 .9   2 .1)))
+	   (ampf2 (make-env '(0 0 .2 0 .25 1 .3 1 .35 0 .5 0 .55 1 .6 1 .65 0 .75 0 .8 .5 .9 0 1 0) :scaler .1 :duration dur))
+	   (rnd (make-rand-interp 2000 (hz->radians 200))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (let ((frq (+ (env frqf)
+			 (rand-interp rnd))))
+	     (outa i (* (env ampf)
+			(+ (polyshape gen1 1.0 frq)
+			   (* (env ampf2)
+			      (polyshape gen2 1.0 (* 2 frq)))))
+		   *output*)))))))
+  
+  (definstrument (bald-eagle-4 beg frqscl amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.056)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.079 0.116 0.125 0.198 0.154 0.867 0.190 0.994 0.214 0.743 0.260 0.867 
+			     0.282 0.802 0.315 0.825 0.330 0.636 0.371 0.678 0.423 0.825 0.468 0.734 0.504 0.542 
+			     0.549 0.619 0.595 0.960 0.637 0.686 0.669 0.130 0.772 0.418 0.823 0.147 0.890 0.056 
+			     0.929 0.090 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.215 0.035 0.243 0.060 0.285 0.086 0.268 0.121 0.198 0.135 0.137 0.154 0.167 
+			     0.218 0.186 0.880 0.181 1.000 0.192)
+			   :duration dur :scaler (hz->radians (* frqscl 13920))))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .96  2 .04   3 .007  4 .002)))
+	   (rnd (make-rand-interp 4000 (hz->radians 100))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (let ((frq (+ (env frqf)
+			 (rand-interp rnd))))
+	     (outa i (* (env ampf)
+			(polyshape gen1 1.0 frq))
+		   *output*)))))))
+  
+  
+  (bald-eagle-1 beg (* amp .8))
+  (bald-eagle-2 (+ beg .195) (* amp .7))
+  (bald-eagle-3 (+ beg .32) (* amp .7))
+  (bald-eagle-4 (+ beg .47) 1.1 amp)  
+  (bald-eagle-4 (+ beg .63) 1.05 amp)  
+  (bald-eagle-4 (+ beg .806) 1.0 amp))
+
+;(with-sound (:play #t) (bald-eagle 0 .5))
 
 
 ;;; ================ calling-all-animals ================
@@ -6922,5 +7052,6 @@
     (burrowing-owl 244 .25)
     (gray-vireo-1 245 .25)
     (gray-vireo-2 245.5 .25)
+    (bald-eagle 246 .25)
     ))
 

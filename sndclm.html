@@ -1495,7 +1495,9 @@ we get sum and difference tones, much as in complex FM.
 
 
 <p>We might ask why we'd want polyshape at all.  Leaving aside
-speed and memory (waveshape and table-lookup use a table that has to be loaded), the main reason to use polyshape is accuracy.  polyshape
+speed (the polynomial computation is much faster than the equivalent sum of oscils)
+and memory (waveshape and table-lookup use a table that has to be loaded),
+the main reason to use polyshape is accuracy.  polyshape
 produces output that is almost as clean as the equivalent sum of oscils, whereas table-lookup 
 and waveshape, both of which interpolate into a sampled version of the desired function, are noisy.
 To make the difference almost appalling, here are spectra comparing a sum of oscils, polyshape,
@@ -1696,6 +1698,10 @@ Even more amusing is this algorithm:
 (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:srate 44100) (tritri 0 1 4000.0 0.7 0.1 0.01)) ; a sparrow?
 </pre>
 </td></tr></table>
+
+<p>On the other hand, animals.scm uses pulse-train's fm argument to track a frequency envelope,
+triggering a new peep each time the pulse goes by.
+</p>
 
 <p>I think just about every combination of oscil/triangle-wave/sawtooth-wave/square-wave has been
 used.  Even triangle-wave(square-wave) can make funny noises. Along these lines, there's
@@ -3314,6 +3320,7 @@ If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more
 </td></tr></table>
 
 <p>The Mathews/Smith <a href="sndscm.html#mfilter">filter</a> in dsp.scm is very similar to the formant generator.
+There are many more examples of formant in animals.scm.
 </p>
 
 <br><br>
@@ -4981,16 +4988,16 @@ sceq35:
 </p>
 
 <pre>
-(with-sound (:play #t)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:play #t)
   (let ((gen (make-j0evencos 100.0 0.0))
-	(indf (make-env '(0 10 1 0) :end 30000))
-	(carrier (make-oscil 2000.0)))
+	(indf (<a class=quiet href="#make-env">make-env</a> '(0 10 1 0) :end 30000))
+	(carrier (<a class=quiet href="#make-oscil">make-oscil</a> 2000.0)))
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 30000)) 
-	 (set! (j0evencos-index gen) (env indf))
-	 (outa i (* 0.5 (j0evencos gen (* .1 (oscil carrier)))) *output*))))))
+	 (set! (j0evencos-index gen) (<a class=quiet href="#env">env</a> indf))
+	 (<a class=quiet href="#outa">outa</a> i (* 0.5 (j0evencos gen (* .1 (<a class=quiet href="#oscil">oscil</a> carrier)))) *output*))))))
 </pre>
 
 <br>
@@ -5196,13 +5203,13 @@ component is multiplied by -1, and "n" produces 2n-1 components.
 </p>
 
 <pre>
-(with-sound (:play #t)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:play #t)
   (let ((gen (make-noddsin 300 :n 3))
-	(ampf (make-env '(0 0 1 1 2 1 3 0) :length 40000 :scaler .5)))
+	(ampf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 2 1 3 0) :length 40000 :scaler .5)))
     (run (lambda ()
       (do ((i 0 (1+ i)))
 	  ((= i 40000))
-	(outa i (* (env ampf) (noddsin gen 0.0)) *output*))))))
+	(<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#env">env</a> ampf) (noddsin gen 0.0)) *output*))))))
 </pre>
 <br>
 
@@ -5231,7 +5238,7 @@ In the nrssb-interp generator, the "interp" argument interpolates between the up
 </p>
 
 <pre>
-(with-sound (:play #t)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:play #t)
   (do ((i 0 (1+ i)))
       ((= i 10))
     (lutish (* i .1) 2 (* 100 (1+ i)) .05)))
@@ -5241,7 +5248,7 @@ In the nrssb-interp generator, the "interp" argument interpolates between the up
 </p>
 
 <pre>
-(with-sound (:play #t)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:play #t)
   (do ((i 0 (1+ i)))
       ((= i 10))
     (oboish (* i .3) .4 (+ 100 (* 50 i)) .05 '(0 0 1 1 2 1 3 0))))
@@ -5251,7 +5258,7 @@ In the nrssb-interp generator, the "interp" argument interpolates between the up
 </p>
 
 <pre>
-(with-sound (:play #t)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:play #t)
   (do ((i 0 (1+ i)))
       ((= i 10))
     (organish (* i .3) .4 (+ 100 (* 50 i)) .5 1.0 #f)))
@@ -5273,7 +5280,7 @@ The instrument nkssber uses nkssb-interp:
 </p>
 
 <pre>
-(with-sound (:play #t)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:play #t)
   (nkssber 0 1 1000 100 5 5 0.5)
   (nkssber 1 2 600 100 4 1 0.5)
   (nkssber 3 2 1000 540 3 3 0.5)
@@ -5336,7 +5343,7 @@ The bump instrument uses rssb-interp: <code>bump beg dur freq amp f0 f1 f2</code
 </p>
 
 <pre>
-(with-sound (:play #t)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:play #t)
   (do ((k 0 (1+ k))) 
       ((= k 10))
     (bump (* 0.4 k) 1 (* 16.3 (expt 2.0 (+ 3 (/ k 12)))) .5 520 1190 2390))
@@ -5364,7 +5371,7 @@ The bump instrument uses rssb-interp: <code>bump beg dur freq amp f0 f1 f2</code
 </p>
 
 <pre>
-(with-sound (:play #t)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:play #t)
   (ercoser 0 1 100 .5 0.1))
 </pre>
 <br>
@@ -5380,15 +5387,15 @@ The bump instrument uses rssb-interp: <code>bump beg dur freq amp f0 f1 f2</code
 </p>
 
 <pre>
-(with-sound (:play #t)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:play #t)
   (let ((gen1 (make-eoddcos 400.0 :r 0.0))
-	(gen2 (make-oscil 400.0))
-	(a-env (make-env '(0 0 1 1) :end 10000)))
+	(gen2 (<a class=quiet href="#make-oscil">make-oscil</a> 400.0))
+	(a-env (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) :end 10000)))
     (run (lambda () 
       (do ((i 0 (1+ i)))
 	  ((= i 10000))
-	(set! (eoddcos-r gen1) (env a-env))
-	(outa i (* .5 (eoddcos gen1 (* .1 (oscil gen2)))) *output*))))))
+	(set! (eoddcos-r gen1) (<a class=quiet href="#env">env</a> a-env))
+	(<a class=quiet href="#outa">outa</a> i (* .5 (eoddcos gen1 (* .1 (<a class=quiet href="#oscil">oscil</a> gen2)))) *output*))))))
 </pre>
 <br>
 
@@ -5452,19 +5459,19 @@ This generator's output is not normalized, and looks incorrect...
 </p>
 
 <pre>
-(with-sound (:play #t :scaled-to .5)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:play #t :scaled-to .5)
   (do ((k 0 (1+ k)))
       ((= k 6))
     (let ((gen (make-rk!cos 3000.0 :r 0.6)) 
-          (ampf (make-env '(0 0 1 1 2 1 3 0) :end 3000))
-	  (frqf (make-env '(0 0 1 1) :base .1 :scaler (hz-&gt;radians 2000) :end 3000)))
+          (ampf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 2 1 3 0) :end 3000))
+	  (frqf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) :base .1 :scaler <a class=quiet href="#hztoradians">(hz-&gt;radians</a> 2000) :end 3000)))
       (run 
        (lambda ()
 	 (do ((i 0 (1+ i)))
 	     ((= i 3000)) 
-	   (outa (+ i (* k 4000)) 
-		 (* (env ampf) 
-		    (rk!cos gen (env frqf))) 
+	   (<a class=quiet href="#outa">outa</a> (+ i (* k 4000)) 
+		 (* (<a class=quiet href="#env">env</a> ampf) 
+		    (rk!cos gen (<a class=quiet href="#env">env</a> frqf))) 
 		 *output*)))))))
 </pre>
 
@@ -5472,7 +5479,7 @@ This generator's output is not normalized, and looks incorrect...
 </p>
 
 <pre>
-(with-sound (:play #t)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:play #t)
   (bouncy 0 2 200 .5 3 2))
 </pre>
 <br>
@@ -5499,10 +5506,10 @@ This generator's output is not normalized, and looks incorrect...
 </p>
 
 <pre>
-(with-sound (:play #t)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:play #t)
   (pianoy 0 3 100 .5))
 
-(with-sound (:play #t)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:play #t)
   (pianoy1 0 4 200 .5 1 .1))
 </pre>
 
@@ -5510,7 +5517,7 @@ This generator's output is not normalized, and looks incorrect...
 </p>
 
 <pre>
-(with-sound (:play #t) 
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:play #t) 
   (pianoy2 0 1 100 .5))
 </pre>
 <br>
@@ -5548,7 +5555,7 @@ This generator's output is not normalized, and looks incorrect...
 </p>
 
 <pre>
-(with-sound (:play #t)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:play #t)
   (do ((i 0 (1+ i)))
       ((= i 10))
     (stringy (* i .3) .3 (+ 200 (* 100 i)) .5)))
@@ -5558,7 +5565,7 @@ This generator's output is not normalized, and looks incorrect...
 </p>
 
 <pre>
-(with-sound (:play #t)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:play #t)
   (do ((i 0 (1+ i)))
       ((= i 10))
     (glassy (* i .3) .1 (+ 400 (* 100 i)) .5)))
@@ -5705,6 +5712,22 @@ The generic functions are:
 <p>Many of these are settable:
 <code>(set! (mus-frequency osc1) 440.0)</code>
 sets osc1's phase increment to (<a class=quiet href="#hztoradians">hz-&gt;radians</a> 440.0). 
+When I have a cold, I sometimes use the following function to see how high I can hear; count
+the audible tones and multiply by 1000:
+</p>
+<pre>
+(define (quick-check)
+  (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () 
+    (let ((gen (<a class=quiet href="#make-oscil">make-oscil</a> 1000))) 
+      (run (lambda ()
+        (do ((i 0 (1+ i))) 
+	    ((= i 400000))
+	  (if (= (modulo i 20000) 0) 
+              (set! (<em class=red>mus-frequency</em> gen) (+ 1000 (/ i 20))))
+	  (<a class=quiet href="#outa">outa</a> i (* .5 (<a class=quiet href="#oscil">oscil</a> gen)) *output*)))))))
+</pre>
+
+<p>
 <a class=def name="musgeneratorp">mus-generator?</a> returns #t if its argument is
 a generator.
 <a href="sndscm.html#clminsdoc">clm-ins.scm</a> has many examples of these functions.
