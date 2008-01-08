@@ -161,7 +161,83 @@ static void edit_find_callback_1(GtkWidget *w, gpointer info)
 
 /* -------------------------------- VIEW MENU -------------------------------- */
 
-static void view_menu_update_1(GtkWidget *w, gpointer info) {view_menu_update();}
+static GtkWidget **view_files_items = NULL, *view_files_cascade_menu = NULL;
+static int view_files_items_size = 0;
+
+static void view_files_item_callback(GtkWidget *w, gpointer info)
+{
+  char *dirname;
+  dirname = get_item_label(w);
+  if (snd_strcmp(dirname, _("new viewer")))
+    start_view_files_dialog(true, true); /* managed and empty (brand-new) */
+  else view_files_start_dialog_with_title(dirname);
+}
+
+
+static void view_files_callback(GtkWidget *w, gpointer info)
+{
+  int size;
+
+  size = view_files_dialog_list_length();
+  if (size == 0)
+    {
+      start_view_files_dialog(true, true); /* managed and empty (brand-new) */
+    }
+  else
+    {
+      int i;
+      char **view_files_names;
+
+      view_files_names = view_files_dialog_titles();
+      view_files_names[size++] = copy_string(_("new viewer"));
+
+      if (size > view_files_items_size)
+	{
+	  if (view_files_items_size == 0)
+	    view_files_items = (GtkWidget **)CALLOC(size, sizeof(GtkWidget *));
+	  else
+	    {
+	      view_files_items = (GtkWidget **)REALLOC(view_files_items, size * sizeof(GtkWidget *));
+	      for (i = view_files_items_size; i < size; i++)
+		view_files_items[i] = NULL;
+	    }
+	  view_files_items_size = size;
+	}
+
+      for (i = 0; i < size; i++)
+	{
+	  if (view_files_items[i] == NULL)
+	    {
+	      view_files_items[i] = gtk_menu_item_new_with_label(view_files_names[i]);
+	      gtk_menu_shell_append(GTK_MENU_SHELL(view_files_cascade_menu), view_files_items[i]);
+	      gtk_widget_show(view_files_items[i]);
+	      SG_SIGNAL_CONNECT(view_files_items[i], "activate", view_files_item_callback, NULL);
+	    }
+	  else
+	    {
+	      set_item_label(view_files_items[i], view_files_names[i]);
+	      gtk_widget_show(view_files_items[i]);
+	    }
+	  FREE(view_files_names[i]);
+	}
+      FREE(view_files_names);
+    }
+}
+
+
+static void view_menu_update_1(GtkWidget *w, gpointer info)
+{
+  if ((view_files_dialog_list_length() > 0) &&
+      (!view_files_cascade_menu))
+    {
+      view_files_cascade_menu = gtk_menu_new();
+      gtk_menu_item_set_submenu(GTK_MENU_ITEM(view_files_menu), view_files_cascade_menu);
+    }
+    
+  view_menu_update();
+}
+
+
 static void view_separate_callback(GtkWidget *w, gpointer info) {set_channel_style(CHANNELS_SEPARATE);}
 static void view_combined_callback(GtkWidget *w, gpointer info) {set_channel_style(CHANNELS_COMBINED);}
 static void view_superimposed_callback(GtkWidget *w, gpointer info) {set_channel_style(CHANNELS_SUPERIMPOSED);}
@@ -190,7 +266,6 @@ static void view_mix_dialog_callback(GtkWidget *w, gpointer info) {make_mix_dial
 static void view_region_callback_1(GtkWidget *w, gpointer info) {view_region_callback(w, info);}
 static void view_orientation_callback_1(GtkWidget *w, gpointer info) {view_orientation_callback(w, info);}
 static void view_color_callback_1(GtkWidget *w, gpointer info) {view_color_callback(w, info);}
-static void view_files_callback(GtkWidget *w, gpointer info) {start_view_files_dialog(true, false);}
 
 static void view_x_axis_seconds_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_SECONDS);}
 static void view_x_axis_clock_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_AS_CLOCK);}

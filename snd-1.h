@@ -1447,6 +1447,9 @@ widget_t start_view_files_dialog(bool managed, bool make_new);
 void view_files_unplay(void);
 void view_files_add_directory(widget_t dialog, const char *dirname);
 char *view_files_find_any_directory(void);
+int view_files_dialog_list_length(void);
+char **view_files_dialog_titles(void);
+void view_files_start_dialog_with_title(const char *title);
 
 void g_init_file(void);
 void initialize_format_lists(void);

@@ -4238,9 +4238,9 @@ void save_post_it_dialog_state(FILE *fd)
 {
   if ((post_it_dialog) && (GTK_WIDGET_VISIBLE(post_it_dialog)))
     {
-      const gchar *subject;
+      char *subject;
       gchar *text;
-      subject = gtk_window_get_title(GTK_WINDOW(post_it_dialog)); /* don't free subject! */
+      subject = dialog_get_title(post_it_dialog);
       text = sg_get_text(post_it_text, 0, -1);
 #if HAVE_SCHEME
       fprintf(fd, "(%s \"%s\" \"%s\")\n", S_info_dialog, subject, text);
@@ -4252,6 +4252,7 @@ void save_post_it_dialog_state(FILE *fd)
       fprintf(fd, "\"%s\" \"%s\" %s drop\n", subject, text, S_info_dialog);
 #endif
       if (text) g_free(text);
+      if (subject) FREE(subject);
     }
 }
 
@@ -5192,7 +5193,14 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       GtkWidget *mainform, *leftform, *fileform, *helpB, *dismissB, *resetB;
 
       vdat->dialog = snd_gtk_dialog_new();
-      gtk_window_set_title(GTK_WINDOW(vdat->dialog), _("Files"));
+
+      {
+	char *filestr = NULL;
+	filestr = mus_format("%s %d", _("Files"), vdat->index + 1);
+	gtk_window_set_title(GTK_WINDOW(vdat->dialog), filestr);
+	FREE(filestr);
+      }
+
       sg_make_resizable(vdat->dialog);
       gtk_container_set_border_width (GTK_CONTAINER(vdat->dialog), 10);
       gtk_widget_realize(vdat->dialog);

@@ -177,9 +177,109 @@ static void edit_find_callback_1(Widget w, XtPointer info, XtPointer context)
 #endif
 
 
+
 /* -------------------------------- VIEW MENU -------------------------------- */
 
-static void view_menu_update_1(Widget w, XtPointer info, XtPointer context) {view_menu_update();}
+static Widget *view_files_items = NULL;
+static Widget view_files_cascade_menu = NULL;
+static int view_files_items_size = 0;
+
+
+static void view_files_item_callback(Widget w, XtPointer context, XtPointer info)
+{
+  char *dirname;
+  dirname = get_label(w);
+  if (snd_strcmp(dirname, _("new viewer")))
+    start_view_files_dialog(true, true); /* managed and empty (brand-new) */
+  else view_files_start_dialog_with_title(dirname);
+}
+
+
+static void view_files_callback(Widget w, XtPointer info, XtPointer context) 
+{
+  int size;
+  size = view_files_dialog_list_length();
+  if (size == 0)
+    {
+      start_view_files_dialog(true, true); /* managed and empty (brand-new) */
+    }
+  else
+    {
+      int i;
+      char **view_files_names;
+
+      view_files_names = view_files_dialog_titles();
+      view_files_names[size++] = copy_string(_("new viewer"));
+
+      if (size > view_files_items_size)
+	{
+	  if (view_files_items_size == 0)
+	    view_files_items = (Widget *)CALLOC(size, sizeof(Widget));
+	  else
+	    {
+	      view_files_items = (Widget *)REALLOC(view_files_items, size * sizeof(Widget));
+	      for (i = view_files_items_size; i < size; i++)
+		view_files_items[i] = NULL;
+	    }
+	  view_files_items_size = size;
+	}
+
+      for (i = 0; i < size; i++)
+	{
+	  if (view_files_items[i] == NULL)
+	    {
+	      int n = 0;
+	      Arg args[6];
+	      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+
+	      view_files_items[i] = XtCreateManagedWidget(view_files_names[i], xmPushButtonWidgetClass, view_files_menu, args, n);
+	      XtAddCallback(view_files_items[i], XmNactivateCallback, view_files_item_callback, NULL); 
+	    }
+	  else
+	    {
+	      set_label(view_files_items[i], view_files_names[i]);
+	      XtManageChild(view_files_items[i]);
+	    }
+	  FREE(view_files_names[i]);
+	}
+      FREE(view_files_names);
+    }
+}
+
+
+static void make_view_files_list_menu(void)
+{
+  int n = 0, pos = 2;
+  Arg args[6];
+
+  if ((view_files_menu) &&
+      (XmIsPushButton(view_files_menu)))
+    {
+      XtVaGetValues(view_files_menu, XmNpositionIndex, &pos, NULL);
+      XtUnmanageChild(view_files_menu);
+    }
+  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNpositionIndex, pos); n++;
+  
+  view_files_menu = XmCreatePulldownMenu(view_menu, "view-files", args, n);
+  XtSetArg(args[n], XmNsubMenuId, view_files_menu); n++;
+
+  view_files_cascade_menu = XtCreateManagedWidget(_("Files"), xmCascadeButtonWidgetClass, view_menu, args, n);
+  XtAddCallback(view_files_cascade_menu, XmNcascadingCallback, view_files_callback, NULL);
+}
+
+
+static void view_menu_update_1(Widget w, XtPointer info, XtPointer context) 
+{
+  if ((view_files_dialog_list_length() > 0) &&
+      (!view_files_cascade_menu))
+    make_view_files_list_menu();
+    
+  view_menu_update();
+}
+
+
+
 static void view_separate_callback(Widget w, XtPointer info, XtPointer context) {set_channel_style(CHANNELS_SEPARATE);}
 static void view_combined_callback(Widget w, XtPointer info, XtPointer context) {set_channel_style(CHANNELS_COMBINED);}
 static void view_superimposed_callback(Widget w, XtPointer info, XtPointer context) {set_channel_style(CHANNELS_SUPERIMPOSED);}
@@ -207,7 +307,6 @@ static void view_controls_callback(Widget w, XtPointer info, XtPointer context)
 static void view_region_callback_1(Widget w, XtPointer info, XtPointer context) {view_region_callback(w, info, context);}
 static void view_orientation_callback_1(Widget w, XtPointer info, XtPointer context) {view_orientation_callback(w, info, context);}
 static void view_color_callback_1(Widget w, XtPointer info, XtPointer context) {view_color_callback(w, info, context);}
-static void view_files_callback(Widget w, XtPointer info, XtPointer context) {start_view_files_dialog(true, false);}
 
 static void view_x_axis_seconds_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_SECONDS);}
 static void view_x_axis_clock_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_AS_CLOCK);}

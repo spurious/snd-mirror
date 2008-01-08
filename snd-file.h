@@ -13,7 +13,7 @@ typedef struct {
 
 typedef struct {
   vf_row **file_list_entries;
-  int size;
+  int index, size;
   char **names;
   char **full_names;
   int end;
@@ -134,6 +134,8 @@ void view_files_reflect_sort_items(void);
 int vf_mix(view_files_info *vdat);
 bool vf_insert(view_files_info *vdat);
 
+void dialog_set_title(widget_t dialog, const char *titlestr);
+char *dialog_get_title(widget_t dialog);
 
 char **type_and_format_to_position(file_data *fdat, int type, int format);
 void position_to_type_and_format(file_data *fdat, int pos);

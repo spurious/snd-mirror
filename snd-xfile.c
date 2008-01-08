@@ -4772,11 +4772,9 @@ void save_post_it_dialog_state(FILE *fd)
 {
   if ((post_it_dialog) && (XtIsManaged(post_it_dialog)))
     {
-      char *subject, *text;
-      XmString title;
+      char *subject = NULL, *text = NULL;
+      subject = dialog_get_title(post_it_dialog);
       text = XmTextGetString(post_it_text);
-      XtVaGetValues(post_it_dialog, XmNdialogTitle, &title, NULL);
-      subject = (char *)XmStringUnparse(title, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
 #if HAVE_SCHEME
       fprintf(fd, "(%s \"%s\" \"%s\")\n", S_info_dialog, subject, text);
 #endif
@@ -4786,7 +4784,7 @@ void save_post_it_dialog_state(FILE *fd)
 #if HAVE_FORTH
       fprintf(fd, "\"%s\" \"%s\" %s drop\n", subject, text, S_info_dialog);
 #endif
-      if (subject) XtFree(subject);
+      if (subject) FREE(subject);
       if (text) XtFree(text);
     }
 }
@@ -5828,8 +5826,14 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       xdismiss = XmStringCreateLocalized(_("Go Away"));
       xhelp = XmStringCreateLocalized(_("Help"));
-      titlestr = XmStringCreateLocalized(_("Files"));
       new_viewer_str = XmStringCreateLocalized(_("New Viewer"));
+
+      {
+	char *filestr = NULL;
+	filestr = mus_format("%s %d", _("Files"), vdat->index + 1);
+	titlestr = XmStringCreateLocalized(filestr);
+	FREE(filestr);
+      }
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;

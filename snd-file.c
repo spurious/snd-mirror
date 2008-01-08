@@ -2938,9 +2938,63 @@ static void vf_open_file_watcher(ss_watcher_reason_t reason, void *context)
 static int view_files_info_size = 0;
 static view_files_info **view_files_infos = NULL;
 
+
+int view_files_dialog_list_length(void)
+{
+  int i, n = 0;
+  for (i = 0; i < view_files_info_size; i++)
+    if ((view_files_infos[i]) &&
+	(view_files_infos[i]->dialog))
+      n++;
+  return(n);
+}
+
+
+char **view_files_dialog_titles(void)
+{
+  int n;
+  n = view_files_dialog_list_length();
+  if (n > 0)
+    {
+      char **titles;
+      int i, j = 0;
+      titles = (char **)CALLOC(n + 1, sizeof(char *));
+      for (i = 0; i < view_files_info_size; i++)
+	if ((view_files_infos[i]) &&
+	    (view_files_infos[i]->dialog))
+	  titles[j++] = dialog_get_title(view_files_infos[i]->dialog);
+      return(titles);
+    }
+  return(NULL);
+}
+
+
+void view_files_start_dialog_with_title(const char *title)
+{
+  int i;
+  for (i = 0; i < view_files_info_size; i++)
+    if ((view_files_infos[i]) &&
+	(view_files_infos[i]->dialog))
+      {
+	char *dialog_title = NULL;
+	dialog_title = dialog_get_title(view_files_infos[i]->dialog);
+	if (snd_strcmp(title, dialog_title)) /* this includes NULL == NULL */
+	  {
+	    if (dialog_title) FREE(dialog_title);
+	    start_view_files_dialog_1(view_files_infos[i], true);
+	    return;
+	  }
+	if (dialog_title) FREE(dialog_title);
+      }
+}
+
+
 view_files_info *new_view_files_dialog(void)
 {
+  /* always returns a new (empty) file viewer -- changed 8-Jan-08 */
   int loc = -1;
+  view_files_info *vdat;
+
   if (view_files_info_size == 0)
     {
       loc = 0;
@@ -2951,9 +3005,7 @@ view_files_info *new_view_files_dialog(void)
     {
       int i;
       for (i = 0; i < view_files_info_size; i++)
-	if ((!view_files_infos[i]) ||
-	    (!(view_files_infos[i]->dialog)) ||
-	    (!(widget_is_active(view_files_infos[i]->dialog))))
+	if (!view_files_infos[i])
 	  {
 	    loc = i;
 	    break;
@@ -2966,42 +3018,42 @@ view_files_info *new_view_files_dialog(void)
 	  for (i = loc; i < view_files_info_size; i++) view_files_infos[i] = NULL;
 	}
     }
-  if (!view_files_infos[loc])
-    {
-      view_files_info *vdat;
-      view_files_infos[loc] = (view_files_info *)CALLOC(1, sizeof(view_files_info));
-      vdat = view_files_infos[loc];
-      vdat->dialog = NULL_WIDGET;
-      vdat->file_list = NULL_WIDGET;
-      vdat->file_list_holder = NULL_WIDGET;
-      vdat->file_list_entries = NULL;
-      vdat->size = 0;
-      vdat->end = -1;
-      vdat->names = NULL;
-      vdat->full_names = NULL;
-      vdat->selected_files = NULL;
-      vdat->selected_files_size = 0;
-      vdat->location_choice = VF_AT_CURSOR;
-      vdat->error_p = false;
-      vdat->need_update = false;
-      vdat->dirs_size = 0;
-      vdat->dirs = NULL;
-      vdat->dir_names = NULL;
-      vdat->amp = 1.0;
-      vdat->speed = 1.0;
-      vdat->amp_env = default_env(1.0, 1.0);
-      vdat->open_file_watcher_loc = add_ss_watcher(SS_FILE_OPEN_WATCHER, vf_open_file_watcher, (void *)vdat);
-      vdat->sort_items_size = 0;
-      vdat->sort_items = NULL;
-      vdat->speed_style = speed_control_style(ss);
+
+  view_files_infos[loc] = (view_files_info *)CALLOC(1, sizeof(view_files_info));
+  vdat = view_files_infos[loc];
+  vdat->index = loc;
+  vdat->dialog = NULL_WIDGET;
+  vdat->file_list = NULL_WIDGET;
+  vdat->file_list_holder = NULL_WIDGET;
+  vdat->file_list_entries = NULL;
+  vdat->size = 0;
+  vdat->end = -1;
+  vdat->names = NULL;
+  vdat->full_names = NULL;
+  vdat->selected_files = NULL;
+  vdat->selected_files_size = 0;
+  vdat->location_choice = VF_AT_CURSOR;
+  vdat->error_p = false;
+  vdat->need_update = false;
+  vdat->dirs_size = 0;
+  vdat->dirs = NULL;
+  vdat->dir_names = NULL;
+  vdat->amp = 1.0;
+  vdat->speed = 1.0;
+  vdat->amp_env = default_env(1.0, 1.0);
+  vdat->open_file_watcher_loc = add_ss_watcher(SS_FILE_OPEN_WATCHER, vf_open_file_watcher, (void *)vdat);
+  vdat->sort_items_size = 0;
+  vdat->sort_items = NULL;
+  vdat->speed_style = speed_control_style(ss);
+
 #if USE_GTK
-      vdat->at_sample_text_handler_id = 0;
-      vdat->at_mark_text_handler_id = 0;
-      vdat->at_sample_button_handler_id = 0; 
-      vdat->at_mark_button_handler_id = 0;
-      vdat->add_text_handler_id = 0;
+  vdat->at_sample_text_handler_id = 0;
+  vdat->at_mark_text_handler_id = 0;
+  vdat->at_sample_button_handler_id = 0; 
+  vdat->at_mark_button_handler_id = 0;
+  vdat->add_text_handler_id = 0;
 #endif
-    }
+
   /* don't clear at this point! */
   view_files_infos[loc]->currently_selected_files = 0;
   view_files_infos[loc]->sorter = view_files_sort(ss);
@@ -3692,6 +3744,40 @@ static void view_files_monitor_directory(view_files_info *vdat, const char *dirn
 }
 
 
+void dialog_set_title(widget_t dialog, const char *titlestr)
+{
+#if USE_MOTIF
+  XmString title;
+  title = XmStringCreateLocalized((char *)titlestr);
+  XtVaSetValues(dialog, XmNdialogTitle, title, NULL);
+  XmStringFree(title);
+#endif
+#if USE_GTK
+  gtk_window_set_title(GTK_WINDOW(dialog), titlestr);
+#endif
+}
+
+
+char *dialog_get_title(widget_t dialog)
+{
+#if USE_MOTIF
+  char *temp, *titlestr = NULL;
+  XmString title;
+  XtVaGetValues(dialog, XmNdialogTitle, &title, NULL);
+  temp = (char *)XmStringUnparse(title, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+  if (temp)
+    {
+      titlestr = copy_string(temp);
+      XtFree(temp);
+    }
+  return(titlestr);
+#endif
+#if USE_GTK
+  return(copy_string(gtk_window_get_title(GTK_WINDOW(dialog))));
+#endif
+}
+
+
 /* what about temps coming and going -- should we just add a need-update switch for later remanage? */
 /*   remanagement only through start_view_files_dialog -- this file */
 /*   perhaps ss->making|deleting_temp_file -> ignore this fam event? */
@@ -3744,17 +3830,7 @@ void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname
 		    if (cur_dir < dirs)
 		      strcat(titlestr, ", ");
 		  }
-#if USE_MOTIF
-	      {
-		XmString title;
-		title = XmStringCreateLocalized(titlestr);
-		XtVaSetValues(vdat->dialog, XmNdialogTitle, title, NULL);
-		XmStringFree(title);
-	      }
-#endif
-#if USE_GTK
-	      gtk_window_set_title(GTK_WINDOW(vdat->dialog), titlestr);
-#endif
+	      dialog_set_title(vdat->dialog, titlestr);
 	      FREE(titlestr);
 	    }
 	}
@@ -4206,8 +4282,10 @@ widget_t start_view_files_dialog(bool managed, bool make_new)
 {
   int i;
   view_files_info *vdat = NULL;
+
   if (make_new)
     return(start_view_files_dialog_1(new_view_files_dialog(), managed));
+
   for (i = 0; i < view_files_info_size; i++)
     if ((view_files_infos[i]) &&
 	(view_files_infos[i]->dialog))
@@ -4216,6 +4294,7 @@ widget_t start_view_files_dialog(bool managed, bool make_new)
 	if (widget_is_active(vdat->dialog))
 	  break;
       }
+
   if (vdat)
     return(start_view_files_dialog_1(vdat, managed));
   return(start_view_files_dialog_1(new_view_files_dialog(), managed));
