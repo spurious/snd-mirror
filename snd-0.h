@@ -873,7 +873,7 @@ enum {PRINT_NOT, PRINT_CHAR, PRINT_CLM, PRINT_REGION, PRINT_SYNC, PRINT_SND_FD, 
 
 #define enved_clip_p(ss) ss->enved->clip_p
 #define in_set_enved_clip_p(a) ss->enved->clip_p = a
-#define DEFAULT_ENVED_CLIP_P false
+#define DEFAULT_ENVED_CLIP_P true
 
 #define enved_wave_p(ss) ss->Enved_Wave_p
 #define in_set_enved_wave_p(a) ss->Enved_Wave_p = a
