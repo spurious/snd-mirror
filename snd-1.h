@@ -1147,7 +1147,6 @@ char *region_description(int rg);
 env *copy_env(env *e);
 env *free_env(env *e);
 char *env_to_string(env *e);
-env *make_envelope(Float *env_buffer, int len);
 env *make_envelope_with_offset_and_scaler(Float *env_buffer, int len, Float offset, Float scaler);
 env *default_env(Float x1, Float y);
 bool default_env_p(env *e);
@@ -1516,7 +1515,6 @@ fam_info *fam_monitor_directory(const char *dir_name,
 				void (*action)(struct fam_info *fp, FAMEvent *fe));
 fam_info *fam_unmonitor_file(const char *filename, fam_info *fp);
 fam_info *fam_unmonitor_directory(const char *filename, fam_info *fp);
-char *fam_event_name(int code);
 
 #if MUS_DEBUGGING
 void set_printable(int val);
@@ -1607,7 +1605,6 @@ void finish_moving_mix_tag(int mix_tag, int x);
 int hit_mix(chan_info *cp, int x, int y);
 int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided);
 void display_channel_mixes(chan_info *cp);
-void display_channel_mixes_with_bounds(chan_info *cp, off_t beg, off_t end);
 
 bool play_mix_from_id(int mix_id);
 void drag_and_drop_mix_at_x_y(int data, const char *filename, int x, int y);
@@ -1636,7 +1633,6 @@ int snd_translate(const char *oldname, const char *newname, int type);
 
 /* -------- snd.c -------- */
 
-void mus_error_to_snd(int type, char *msg);
 void snd_set_global_defaults(bool need_cleanup);
 #if SND_AS_WIDGET
   snd_state *snd_main(int argc, char **argv);

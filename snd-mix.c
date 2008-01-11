@@ -1979,7 +1979,7 @@ static void display_one_mix(mix_state *ms, chan_info *cp)
 }
 
 
-void display_channel_mixes_with_bounds(chan_info *cp, off_t beg, off_t end)
+static void display_channel_mixes_with_bounds(chan_info *cp, off_t beg, off_t end)
 {
   /* called in display_channel_data if cp has active mixes
    *   it used to draw the tag and waveform if show_mix_waveforms(ss), but I think the tag should be drawn in any case

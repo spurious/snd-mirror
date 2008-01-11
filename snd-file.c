@@ -1589,7 +1589,7 @@ void snd_close_file(snd_info *sp)
 	sequester_deferred_regions(sp->chans[i], -1);
   sp->inuse = SOUND_IDLE;
   for (i = 0; i < sp->nchans; i++) sp->chans[i]->squelch_update = true;
-  view_files_add_file(NULL_WIDGET, sp->filename);
+  /* view_files_add_file(NULL_WIDGET, sp->filename); */  /* removed 11-Jan-08 -- the open recent files menu item replaces this */
   if (sp->playing) stop_playing_sound(sp, PLAY_CLOSE);
   if (sp->sgx) 
     {
@@ -3572,6 +3572,7 @@ static void vf_add_file(view_files_info *vdat, const char *filename, const char 
 void add_file_to_view_files_list(view_files_info *vdat, const char *filename, const char *fullname)
 {
   int row;
+
   row = view_files_find_row(vdat, filename);
   if (row != -1)
     {
@@ -3584,6 +3585,7 @@ void add_file_to_view_files_list(view_files_info *vdat, const char *filename, co
 	}
       return;
     }
+
   errno = 0;
   if (!(mus_file_probe(fullname)))
     {
@@ -3599,6 +3601,7 @@ void add_file_to_view_files_list(view_files_info *vdat, const char *filename, co
 	}
       return;
     }
+
   vf_add_file(vdat, filename, fullname);
 #if (!HAVE_FAM)
   if ((vdat->dialog) && 
@@ -4508,6 +4511,7 @@ void view_files_remove_selected_files(view_files_info *vdat)
 	}
     }
   vdat->currently_selected_files = 0;
+  vf_unpost_info(vdat);
   view_files_update_list(vdat);
   view_files_display_list(vdat);
 }

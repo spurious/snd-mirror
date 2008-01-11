@@ -436,7 +436,7 @@ void snd_exit(int val)
 
 static bool fam_already_warned = false;
 
-char *fam_event_name(int code)
+static char *fam_event_name(int code)
 {
   switch (code)
     {

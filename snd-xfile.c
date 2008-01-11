@@ -5260,6 +5260,7 @@ static void view_files_open_selected_callback(Widget w, XtPointer context, XtPoi
 
 static void view_files_remove_selected_callback(Widget w, XtPointer context, XtPointer info) 
 {
+  /* the "unlist" button's callback */
   view_files_remove_selected_files((view_files_info *)context);
 }
 

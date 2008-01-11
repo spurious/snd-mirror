@@ -472,15 +472,15 @@ typedef struct {
 #define FRAGMENTS(Ed)                         (ed_fragment **)((Ed)->fragments)
 #define FRAGMENT(Ed, Pos)                    ((ed_fragment **)((Ed)->fragments))[Pos]
 
-#define FRAGMENT_RAMPS(Ed, Pos)              ((ed_fragment **)((Ed)->fragments))[Pos]->ramps
-#define FRAGMENT_RAMP_LIST(Ed, Pos)          ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->ramp_list
+/* #define FRAGMENT_RAMPS(Ed, Pos)              ((ed_fragment **)((Ed)->fragments))[Pos]->ramps */
+/* #define FRAGMENT_RAMP_LIST(Ed, Pos)          ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->ramp_list */
 #define FRAGMENT_RAMP_LIST_SIZE(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->ramps
-#define FRAGMENT_XRAMP_LIST(Ed, Pos)         ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->xramp_list
+/* #define FRAGMENT_XRAMP_LIST(Ed, Pos)         ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->xramp_list */
 #define FRAGMENT_XRAMP_LIST_SIZE(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->xramps
 
 #define FRAGMENT_PTREES(Ed, Pos)             ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees
 #define FRAGMENT_PTREE_LIST_SIZE(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->size
-#define FRAGMENT_PTREE_LIST(Ed, Pos)         ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_list
+/* #define FRAGMENT_PTREE_LIST(Ed, Pos)         ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_list */
 
 #define FRAGMENT_MIXES(Ed, Pos)              ((ed_fragment **)((Ed)->fragments))[Pos]->mixes
 #define FRAGMENT_MIX_LIST_SIZE(Ed, Pos)      ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->size
@@ -503,14 +503,14 @@ typedef struct {
 
 #define FRAGMENT_PTREE_SCALER(Ed, Pos, Pt)   ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_list[Pt].scl
 #define FRAGMENT_PTREE_INDEX(Ed, Pos, Pt)    ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_list[Pt].loc
-#define FRAGMENT_PTREE_DUR(Ed, Pos, Pt)      ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_list[Pt].dur
+/* #define FRAGMENT_PTREE_DUR(Ed, Pos, Pt)      ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_list[Pt].dur */
 #define FRAGMENT_PTREE_POSITION(Ed, Pos, Pt) ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_list[Pt].pos
 
 #define FRAGMENT_MIX_STATE(Ed, Pos, Mix)     ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->mix_list[Mix]
-#define FRAGMENT_MIX_INDEX(Ed, Pos, Mix)     ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->mix_list[Mix]->index
-#define FRAGMENT_MIX_LENGTH(Ed, Pos, Mix)    ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->mix_list[Mix]->len
-#define FRAGMENT_MIX_SCALER(Ed, Pos, Mix)    ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->mix_list[Mix]->scaler
-#define FRAGMENT_MIX_BEG(Ed, Pos, Mix)       ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->mix_list[Mix]->beg
+/* #define FRAGMENT_MIX_INDEX(Ed, Pos, Mix)     ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->mix_list[Mix]->index */
+/* #define FRAGMENT_MIX_LENGTH(Ed, Pos, Mix)    ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->mix_list[Mix]->len */
+/* #define FRAGMENT_MIX_SCALER(Ed, Pos, Mix)    ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->mix_list[Mix]->scaler */
+/* #define FRAGMENT_MIX_BEG(Ed, Pos, Mix)       ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->mix_list[Mix]->beg */
 
 
 #define ED_GLOBAL_POSITION(Ed)               (Ed)->out
@@ -547,16 +547,16 @@ typedef struct {
 #define ED_MIXES(Ed)                         (Ed)->mixes
 #define ED_MIX_LIST_SIZE(Ed)                 (Ed)->mixes->size
 #define ED_MIX_LIST(Ed)                      (Ed)->mixes->mix_list
-#define ED_MIX_STATE(Ed, Mix)                (Ed)->mixes->mix_list[Mix]
-#define ED_MIX_INDEX(Ed, Mix)                (Ed)->mixes->mix_list[Mix]->index
-#define ED_MIX_LENGTH(Ed, Mix)               (Ed)->mixes->mix_list[Mix]->len
-#define ED_MIX_SCALER(Ed, Mix)               (Ed)->mixes->mix_list[Mix]->scaler
-#define ED_MIX_BEG(Ed, Mix)                  (Ed)->mixes->mix_list[Mix]->beg
+/* #define ED_MIX_STATE(Ed, Mix)                (Ed)->mixes->mix_list[Mix] */
+/* #define ED_MIX_INDEX(Ed, Mix)                (Ed)->mixes->mix_list[Mix]->index */
+/* #define ED_MIX_LENGTH(Ed, Mix)               (Ed)->mixes->mix_list[Mix]->len */
+/* #define ED_MIX_SCALER(Ed, Mix)               (Ed)->mixes->mix_list[Mix]->scaler */
+/* #define ED_MIX_BEG(Ed, Mix)                  (Ed)->mixes->mix_list[Mix]->beg */
 
 #define MIX_LIST_SCALER(Ed, Mix)             (Ed)->mix_list[Mix]->scaler
 #define MIX_LIST_STATE(Ed, Mix)              (Ed)->mix_list[Mix]
 #define MIX_LIST_INDEX(Ed, Mix)              (Ed)->mix_list[Mix]->index
-#define MIX_LIST_LENGTH(Ed, Mix)             (Ed)->mix_list[Mix]->len
+/* #define MIX_LIST_LENGTH(Ed, Mix)             (Ed)->mix_list[Mix]->len */
 #define MIX_LIST_BEG(Ed, Mix)                (Ed)->mix_list[Mix]->beg
 
 
@@ -606,9 +606,9 @@ typedef struct {
 #define READER_PTREE_CLOSURE(Sf, Pt)         ((reader_ptrees *)((Sf)->ptrees))->ptree_list[Pt].closure
 #define READER_PTREE_GC_LOC(Sf, Pt)          ((reader_ptrees *)((Sf)->ptrees))->ptree_list[Pt].gc_loc
 
-#define READER_MIXES(Sf)                     ((ed_fragment *)((Sf)->cb))->mixes
+/* #define READER_MIXES(Sf)                     ((ed_fragment *)((Sf)->cb))->mixes */
 #define READER_MIX_LIST_SIZE(Sf)             ((ed_fragment *)((Sf)->cb))->mixes->size
-#define READER_MIX_LIST(Sf)                  ((ed_fragment *)((Sf)->cb))->mixes->mix_list
+/* #define READER_MIX_LIST(Sf)                  ((ed_fragment *)((Sf)->cb))->mixes->mix_list */
 #define READER_MIX_STATE(Sf, Mix)            ((ed_fragment *)((Sf)->cb))->mixes->mix_list[Mix]
 #define READER_MIX_INDEX(Sf, Mix)            ((ed_fragment *)((Sf)->cb))->mixes->mix_list[Mix]->index
 #define READER_MIX_LENGTH(Sf, Mix)           ((ed_fragment *)((Sf)->cb))->mixes->mix_list[Mix]->len

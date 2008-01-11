@@ -127,7 +127,7 @@ env *make_envelope_with_offset_and_scaler(Float *env_buffer, int len, Float offs
 }
 
 
-env *make_envelope(Float *env_buffer, int len)
+static env *make_envelope(Float *env_buffer, int len)
 {
   return(make_envelope_with_offset_and_scaler(env_buffer, len, 0.0, 1.0));
 }

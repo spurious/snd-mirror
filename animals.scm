@@ -14,6 +14,9 @@
 ;;; Lang Elliott "The Calls of Frogs and Toads"
 ;;; Lang Elliott and W Herschberger "The Songs of the Insects"
 ;;; Lang Elliott "Music of the Birds"
+;;; Cocroft, Morales, McDiarmid "Frogs of Tambopata, Peru" (Cornell)
+;;; Ross, Whitney, "Voices of Costa Rican Birds" (Cornell)
+;;; Rebolledo, Ramirez, Cuervo, "A Guide to the Bird Sounds of the Colombian Andes" (Humboldt and Cornell
 
 
 
@@ -7246,6 +7249,7 @@
 ;;; Evening grosbeak
 
 (definstrument (evening-grosbeak beg amp)
+  ;; east 98 7.5
   (let* ((start (seconds->samples beg))
 	 (dur 0.17)
 	 (stop (+ start (seconds->samples dur)))
@@ -7417,16 +7421,16 @@
     (pygmy-nuthatch 241 0.25)
     (flammulated-owl 241.600 0.25)
     (song-sparrow 242.301 0.25)
-    (burrowing-owl 244 .25)
-    (gray-vireo-1 245 .25)
-    (gray-vireo-2 245.5 .25)
-    (bald-eagle 246 .25)
-    (eastern-meadowlark 247 .25)
-    (plumbeous-vireo-2 249 .25)
-    (yellow-green-vireo 250 .25)
-    (great-plains-narrow-mouthed-toad 251 2 .25)
-    (magnolia-warbler 253 .25)
-    (eastern-bluebird 254 .25)
-    (evening-grosbeak 255 .25)
+    (burrowing-owl 245 .25)
+    (gray-vireo-1 246 .25)
+    (gray-vireo-2 246.5 .25)
+    (bald-eagle 247 .25)
+    (eastern-meadowlark 248 .25)
+    (plumbeous-vireo-2 250 .25)
+    (yellow-green-vireo 251 .25)
+    (great-plains-narrow-mouthed-toad 252 2 .25)
+    (magnolia-warbler 254.5 .25)
+    (eastern-bluebird 256 .25)
+    (evening-grosbeak 257 .25)
     ))
 

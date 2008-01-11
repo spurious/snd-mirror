@@ -16,6 +16,7 @@ char **hnames;
 char **nnames;
 char **files;
 char **headers;
+char **defs;
 int **counts;
 char ***lines;
 #define MAX_LINES 16
@@ -108,6 +109,18 @@ static int add_count(char *name, int curfile)
   return(-1);
 }
 
+static void add_def(char *name, int curfile)
+{
+  int i;
+  for (i = 0; i < names_ctr; i++)
+    if (strcmp(names[i], name) == 0)
+      {
+	if (!(defs[i]))
+	  defs[i] = strdup(files[curfile]);
+	return;
+      }
+}
+
 #define MAX_CHARS 1048576
 /* xg.c is 2.7 Mb */
 
@@ -171,7 +184,7 @@ static int get_result(char *input, int input_loc, int curname_len)
 }
 
 typedef struct {
-  char *name, *hname;
+  char *name, *hname, *def;
   int i, calls, v, results, proc;
 } qdata;
 
@@ -205,6 +218,7 @@ int main(int argc, char **argv)
   names = (char **)calloc(names_size, sizeof(char *));
   hnames = (char **)calloc(names_size, sizeof(char *));
   nnames = (char **)calloc(names_size, sizeof(char *));
+  defs = (char **)calloc(names_size, sizeof(char *));
   voids = (int *)calloc(names_size, sizeof(int));
   files_size = 256;
   files = (char **)calloc(files_size, sizeof(char *));
@@ -258,9 +272,9 @@ int main(int argc, char **argv)
   add_file("snd-error.c");
   add_file("snd-completion.c");
   add_file("snd-menu.c");
+  add_file("snd-draw.c");
   add_file("snd-axis.c");
   add_file("snd-data.c");
-  add_file("snd-draw.c");
   add_file("snd-fft.c");
   add_file("snd-marks.c");
   add_file("snd-file.c");
@@ -270,7 +284,6 @@ int main(int argc, char **argv)
   add_file("snd-kbd.c");
   add_file("snd-dac.c");
   add_file("snd-region.c");
-  add_file("snd-run.c");
   add_file("snd-select.c");
   add_file("snd-find.c");
   add_file("snd-snd.c");
@@ -283,6 +296,7 @@ int main(int argc, char **argv)
   add_file("snd-env.c");
   add_file("snd-xen.c");
   add_file("snd-ladspa.c");
+  add_file("snd-run.c");
   add_file("snd-xutils.c");
   add_file("snd-xhelp.c");
   add_file("snd-xfind.c");
@@ -569,6 +583,11 @@ int main(int argc, char **argv)
 					    }
 					}
 				    }
+
+				  if ((k < ID_SIZE) && (curly_ctr == 0) && (paren_ctr <= 0))
+				    {
+				      add_def(curname, i);
+				    }
 				  
 				  if ((k < ID_SIZE) && 
 				      ((curly_ctr > 0) || (in_define == 1) || (paren_ctr > 0)))
@@ -673,6 +692,7 @@ int main(int argc, char **argv)
 	  q->i = i;
 	  q->v = voids[i];
 	  q->name = names[i];
+	  q->def = defs[i];
 	  q->hname = hnames[i];
 	  q->calls = mcalls[i];
 	  q->results = results[i];
@@ -681,21 +701,21 @@ int main(int argc, char **argv)
       qsort((void *)qs, names_ctr, sizeof(qdata *), greater_compare);
       for (i = 0; i < names_ctr; i++)
 	{
-	  bool menu_case = false, file_case = false, nonogui_case = false;
+	  bool menu_case = false, file_case = false, nonogui_case = false, static_case = false;
 	  int menu_count = 0, file_count = 0, rec_count = 0;
 	  int nfiles;
 	  nfiles = 0;
 	  /* try to get rid of a bunch of annoying false positives */
-	  if ((qs[i]->calls == 0) &&
-	      ((strcmp(qs[i]->hname, "xen.h") == 0) || 
-	       (strcmp(qs[i]->hname, "mus-config.h.in") == 0) ||
-	       (qs[i]->name[strlen(qs[i]->name) - 2] == '_') &&
-	       ((qs[i]->name[strlen(qs[i]->name) - 1] == 't') || (qs[i]->name[strlen(qs[i]->name) - 1] == 'H'))))
+	  if ((strcmp(qs[i]->hname, "xen.h") == 0) || 
+	      (strcmp(qs[i]->hname, "mus-config.h.in") == 0) ||
+	      ((qs[i]->name[strlen(qs[i]->name) - 2] == '_') &&
+	       ((qs[i]->name[strlen(qs[i]->name) - 1] == 't') || 
+		(qs[i]->name[strlen(qs[i]->name) - 1] == 'H'))))
 	    {
 	    }
 	  else
 	    {
-	      fprintf(FD, "\n\n%s: %d [%s]", qs[i]->name, qs[i]->calls, qs[i]->hname);
+	      fprintf(FD, "\n\n%s: %d [%s, %s]", qs[i]->name, qs[i]->calls, qs[i]->hname, qs[i]->def);
 	      if (qs[i]->v) 
 		{
 		  fprintf(FD, " (void)");
@@ -707,8 +727,11 @@ int main(int argc, char **argv)
 		      (strncmp(qs[i]->name, "in_set_", 7) != 0))
 		    fprintf(FD, " (not void but result not used?)");
 		}
+		  
 	      menu_case = (strcmp(qs[i]->hname, "snd-menu.h") != 0);
 	      file_case = (strcmp(qs[i]->hname, "snd-file.h") != 0);
+	      static_case = ((qs[i]->def != NULL) && (qs[i]->calls > 0));
+
 	      menu_count  = 0;
 	      file_count = 0;
 	      rec_count = 0;
@@ -757,14 +780,36 @@ int main(int argc, char **argv)
 			    }
 			  else file_count++;
 			}
+
+		      if ((static_case) &&
+			  (strcmp(files[j], qs[i]->def) != 0))
+			static_case = false;
 		      
 		      fprintf(FD,"\n    %s: %d", files[j], counts[qs[i]->i][j]);
 		      nfiles++;
 		    }
 		}
-	      if ((menu_case) && (menu_count > 0)) fprintf(FD, "\n->SND-MENU.H\n");
-	      if ((file_case) && (file_count > 0)) fprintf(FD, "\n->SND-FILE.H\n");
+
+	      if ((menu_case) && 
+		  (menu_count > 0) &&
+		  ((!(qs[i]->def)) ||
+		   (strcmp(qs[i]->def, "snd-menu.c") == 0) ||
+		   (strcmp(qs[i]->def, "snd-xmenu.c") == 0) ||
+		   (strcmp(qs[i]->def, "snd-gmenu.c") == 0)))
+		fprintf(FD, "\n->SND-MENU.H\n");
+
+	      if ((file_case) && 
+		  (file_count > 0) &&
+		  ((!(qs[i]->def)) ||
+		   (strcmp(qs[i]->def, "snd-file.c") == 0) ||
+		   (strcmp(qs[i]->def, "snd-xfile.c") == 0) ||
+		   (strcmp(qs[i]->def, "snd-gfile.c") == 0)))
+		fprintf(FD, "\n->SND-FILE.H\n");
+
 	      if (nonogui_case) fprintf(FD, "\nnot needed in snd-nogui?\n");
+
+	      if (static_case) fprintf(FD, "\ncould be static?\n");
+
 	      {
 		int m;
 		if ((nfiles > 0) && (lines[qs[i]->i]))

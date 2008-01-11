@@ -478,7 +478,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
     {
       GtkWidget *buttons;
       GtkWidget *display_frame, *help_button, *dismiss_button;
-      GtkWidget *window_box, *orient_button, *color_button;
+      GtkWidget *wavelet_box, *orient_button, *color_button;
 
       transform_dialog = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(transform_dialog, "delete_event", delete_transform_dialog, NULL);
@@ -663,15 +663,17 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_widget_show(buttons);
       gtk_widget_show(display_frame);
 
-      /* WAVELET */
-      wavelet_list = slist_new_with_title_and_table_data(_("wavelet"), outer_table, wavelet_names(), NUM_WAVELETS, TABLE_ATTACH, 0, 1, 1, 2);
-      wavelet_list->select_callback = wavelet_browse_callback;
 
-      /* WINDOW */
-      window_box = gtk_table_new(2, 3, false);
-      gtk_table_attach_defaults(GTK_TABLE(outer_table), window_box, 1, 2, 1, 2);
-      window_list = slist_new_with_title_and_table_data(_("window"), window_box, (char **)mus_fft_window_names(), MUS_NUM_FFT_WINDOWS, TABLE_ATTACH, 0, 1, 0, 1);
+      /* WINDOWS */
+      window_list = slist_new_with_title_and_table_data(_("window"), outer_table, (char **)mus_fft_window_names(), MUS_NUM_FFT_WINDOWS, TABLE_ATTACH, 0, 1, 1, 2);
       window_list->select_callback = window_browse_callback;
+
+      
+      /* WAVELETS */
+      wavelet_box = gtk_table_new(2, 3, false);
+      gtk_table_attach_defaults(GTK_TABLE(outer_table), wavelet_box, 1, 2, 1, 2);
+      wavelet_list = slist_new_with_title_and_table_data(_("wavelet"), wavelet_box, wavelet_names(), NUM_WAVELETS, TABLE_ATTACH, 0, 1, 0, 1);
+      wavelet_list->select_callback = wavelet_browse_callback;
 
       beta_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
       window_beta_scale = gtk_hscale_new(GTK_ADJUSTMENT(beta_adj));
@@ -681,7 +683,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_scale_set_value_pos(GTK_SCALE(window_beta_scale), GTK_POS_TOP);
       gtk_scale_set_draw_value(GTK_SCALE(window_beta_scale), true);
       SG_SIGNAL_CONNECT(beta_adj, "value_changed", beta_callback, NULL);
-      gtk_table_attach(GTK_TABLE(window_box), window_beta_scale, 0, 1, 1, 2,
+      gtk_table_attach(GTK_TABLE(wavelet_box), window_beta_scale, 0, 1, 1, 2,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
 		       (GtkAttachOptions)(GTK_FILL), 
 		       0, 0);
@@ -694,14 +696,14 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_scale_set_value_pos(GTK_SCALE(window_alpha_scale), GTK_POS_TOP);
       gtk_scale_set_draw_value(GTK_SCALE(window_alpha_scale), true);
       SG_SIGNAL_CONNECT(alpha_adj, "value_changed", alpha_callback, NULL);
-      gtk_table_attach(GTK_TABLE(window_box), window_alpha_scale, 0, 1, 2, 3,
+      gtk_table_attach(GTK_TABLE(wavelet_box), window_alpha_scale, 0, 1, 2, 3,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
 		       (GtkAttachOptions)(GTK_FILL), 
 		       0, 0);
 
       gtk_widget_show(window_alpha_scale);
       gtk_widget_show(window_beta_scale);
-      gtk_widget_show(window_box);
+      gtk_widget_show(wavelet_box);
 
 
       /* GRAPH */
