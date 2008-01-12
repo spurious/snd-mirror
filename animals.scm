@@ -40,6 +40,7 @@
 ;;; Western toad
 ;;; Southwestern toad
 ;;; Great Plains Narrow-mouthed toad
+;;; Pacific chorus frog
 
 ;;; -------- mammals --------
 ;;; Indri
@@ -79,6 +80,7 @@
 ;;; Golden-crowned sparrow
 ;;; Cassin's sparrow
 ;;; Song sparrow
+;;; Dark-eyed junco
 ;;; Purple finch
 ;;; House finch
 ;;; Eastern wood-pewee (2)
@@ -150,7 +152,9 @@
 ;;; Brown jay
 ;;; Steller's jay
 ;;; Pinyon jay
+;;; Groove-billed ani
 ;;; Loggerhead shrike (2)
+;;; Greater roadrunner
 ;;; Common Gull
 ;;; Black-necked stilt
 ;;; White-faced ibis
@@ -1014,17 +1018,18 @@
 
     ;; main portion
     (let* ((dur (- dur1 attack-dur))
-	 (ampf (make-env '(0 1 1 1 10 1 11 0) :duration dur :scaler amp))
-	 (frqf (make-env (list 0 2000  .9 2000 1 1700) :duration dur :scaler (hz->radians 1.0)))
-	 (gen1 (make-polyshape 0.0 :partials (list 1 .92 2 .05  3 .02  4 .01)))
-	 (frqf2 (make-env '(0 0  .1 25  4 20) :duration dur :scaler (hz->radians 1.0)))
-	 (gen2 (make-ncos2 100 17))
-	 (gen3 (make-oscil 900))
-	 (gen4 (make-oscil 400))
-	 (low-ampf (make-env (list 0 0 .2 1 dur 1) :duration dur :scaler .15))
-	 (pulser (make-pulse-train 100))
-	 (pulse-ampf (make-env '(0.000 0.000 0.227 0.057 0.319 0.164 0.407 0.946 0.554 0.706 0.707 0.036 0.839 0.031 0.930 0.097 1.000 0.000) :duration .008))
-	 (rnd (make-rand-interp 20 (hz->radians 3))))
+	   (ampf (make-env '(0 1 1 1 10 1 11 0) :duration dur :scaler amp))
+	   (frqf (make-env (list 0 2000  .9 2000 1 1700) :duration dur :scaler (hz->radians 1.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .92 2 .05  3 .02  4 .01)))
+	   (frqf2 (make-env '(0 0  .1 25  4 20) :duration dur :scaler (hz->radians 1.0)))
+	   (gen2 (make-ncos2 100 17))
+	   (gen3 (make-oscil 900))
+	   (gen4 (make-oscil 400))
+	   (low-ampf (make-env (list 0 0 .2 1 dur 1) :duration dur :scaler .15))
+	   (pulser (make-pulse-train 100))
+	   (pulse-ampf (make-env '(0.000 0.000 0.227 0.057 0.319 0.164 0.407 0.946 0.554 0.706 0.707 0.036 0.839 0.031 
+				   0.930 0.097 1.000 0.000) :duration .008))
+	   (rnd (make-rand-interp 20 (hz->radians 3))))
       (run
        (lambda ()
 	 (do ((i attack-stop (1+ i)))
@@ -1046,6 +1051,42 @@
 
 ;(with-sound (:play #t) (great-plains-narrow-mouthed-toad 0 2 .25))
 
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Pacific chorus frog
+
+(definstrument (pacific-chorus-frog beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.25)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.011 0.147 0.023 0.131 0.028 0.034 0.059 0.000 0.063 0.153 0.067 0.113 
+			   0.072 0.391 0.081 0.095 0.088 0.052 0.102 0.025 0.124 0.000 0.131 0.452 0.139 0.327 
+			   0.144 0.099 0.156 0.097 0.160 0.048 0.186 0.000 0.194 0.438 0.200 0.366 0.201 0.156 
+			   0.211 0.063 0.247 0.000 0.256 0.628 0.268 0.154 0.274 0.190 0.285 0.027 0.296 0.059 
+			   0.309 0.031 0.312 0.481 0.322 0.939 0.331 0.314 0.351 0.061 0.363 0.099 0.374 0.056 
+			   0.377 0.438 0.389 0.858 0.394 0.467 0.403 0.241 0.414 0.197 0.415 0.127 0.425 0.075 
+			   0.436 0.090 0.441 0.526 0.454 0.869 0.471 0.239 0.490 0.029 0.503 0.117 0.505 0.485
+			   0.514 0.811 0.528 0.415 0.538 0.088 0.552 0.056 0.561 0.106 0.580 0.075 0.597 0.000 
+			   0.776 0.000 0.777 0.573 0.786 0.145 0.801 0.054 0.826 0.000 0.827 0.632 0.844 1.000 
+			   0.856 0.524 0.866 0.031 0.883 0.074 0.891 0.136 0.896 0.745 0.907 0.424 0.915 0.765 
+			   0.934 0.059 0.951 0.048 0.962 0.079 0.970 0.436 0.986 0.266 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.220 0.074 0.249 0.133 0.249 0.194 0.240 0.258 0.252 0.324 0.264 0.389 0.267 
+			   0.456 0.270 0.520 0.264 0.847 0.270 0.920 0.273 1.000 0.279)
+			 :duration dur :scaler (hz->radians (* 0.5 0.205 22050.0))))
+	 (gen1 (make-polyshape 0.0 :partials (list 2 .35  3 .1 4 .8  5 .01 6 .03  8 .005)))
+	 (rnd (make-rand-interp 600 (hz->radians 50))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (+ (env frqf)
+					   (rand-interp rnd))))
+	       *output*))))))
+
+;(with-sound (:play #t) (pacific-chorus-frog 0 .5))
 
 
 
@@ -7246,6 +7287,41 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;;
+;;; Greater roadrunner
+
+(definstrument (greater-roadrunner beg amp)
+  ;; south 13 3
+  (let* ((start (seconds->samples beg))
+	 (dur 4.36)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.043 0.623 0.069 0.901 0.079 0.000 0.155 0.000 0.168 0.292 0.193 0.771 
+			   0.231 0.947 0.240 0.000 0.310 0.000 0.317 0.327 0.369 0.947 0.385 0.894 0.401 0.000 
+			   0.458 0.000 0.491 0.620 0.510 0.810 0.538 0.757 0.563 0.000 0.627 0.000 0.646 0.408 
+			   0.691 0.680 0.709 0.148 0.750 0.000 0.813 0.004 0.825 0.201 0.847 0.317 0.867 0.211 
+			   0.881 0.067 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.215 0.075 0.178 0.114 0.172 0.137 0.231 0.166 0.215 0.188 0.190 0.230 0.178 
+			   0.265 0.176 0.284 0.217 0.316 0.201 0.349 0.183 0.388 0.174 0.421 0.174 0.443 0.211 
+			   0.465 0.197 0.503 0.176 0.542 0.169 0.556 0.137 0.591 0.142 0.600 0.195 0.638 0.185 
+			   0.674 0.174 0.697 0.167 0.709 0.140 0.733 0.137 0.766 0.130 0.793 0.174 0.820 0.169 
+			   0.868 0.162 0.879 0.133 1.000 0.089)
+			 :duration dur :scaler (hz->radians 3000.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .95  2 .03  3 .01  4 .005  5 .005  7 .005)))
+	 (rnd (make-rand-interp 200 .3)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (+ .7 (abs (rand-interp rnd)))
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (greater-roadrunner 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
 ;;; Evening grosbeak
 
 (definstrument (evening-grosbeak beg amp)
@@ -7284,6 +7360,112 @@
 
 ;(with-sound (:play #t) (evening-grosbeak 0 .5))
 
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Dark-eyed junco
+
+(define (dark-eyed-junco beg1 amp1)
+  ;; calif 49 3
+  (definstrument (dark-eyed-junco-1 beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.11)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.042 0.085 0.115 0.572 0.161 0.288 0.192 0.604 0.214 0.661 0.241 1.000 
+			     0.289 0.085 0.316 0.748 0.345 0.950 0.387 0.307 0.413 0.082 0.431 0.497 0.459 0.481 
+			     0.486 0.133 0.552 0.078 0.710 0.382 0.777 0.236 0.795 0.291 0.872 0.156 0.899 0.169 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.578 0.069 0.569 0.119 0.535 0.173 0.427 0.175 0.575 0.204 0.566 0.235 0.536 
+			     0.273 0.473 0.299 0.401 0.304 0.535 0.327 0.547 0.358 0.513 0.404 0.416 0.415 0.555 
+			     0.445 0.549 0.482 0.493 0.520 0.396 0.549 0.367 0.695 0.369 0.846 0.330 0.934 0.297 1.000 0.243)
+			   :duration dur :scaler (hz->radians 10050.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .99 2 .01))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+
+  (let ((amps (vct .3 .5 .8 .8 .8 .8 .8 1.0 .8 .8 .4)))
+    (do ((call 0 (1+ call)))
+	((= call 11))
+      (dark-eyed-junco-1 (+ beg1 (* call .122)) (* amp1 (vct-ref amps call))))))
+
+;(with-sound (:play #t) (dark-eyed-junco 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Groove-billed ani
+
+(definstrument (groove-billed-ani beg amp)
+  ;; south 14 17
+
+  ;; first note
+  (let* ((start (seconds->samples beg))
+	 (dur 0.067)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.110 0.124 0.121 0.469 0.137 0.323 0.149 0.524 0.195 0.654 0.212 0.906 
+			   0.226 0.204 0.245 0.744 0.317 0.991 0.481 0.824 0.517 0.558 0.556 0.746 0.573 0.446 
+			   0.581 0.590 0.597 0.668 0.606 0.231 0.622 0.698 0.653 0.686 0.718 0.185 0.884 0.046 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.112   0.058 0.098  0.114 0.098  0.18 0.143  0.208 0.309 0.339 0.325 0.445 0.327 
+			   0.597 0.318 0.636 0.297 0.673 0.240 0.744 0.229 0.775 0.160 0.801 0.117 0.838 0.082 0.884 0.082 .95 0.059 )
+			 :duration dur :scaler (hz->radians 17100.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .96  2 .04  3 .005)))
+	 (gen2 (make-polyshape 0.0 :partials (list 1 .1  2 .7  3 .1  4 .005  5 .005  6 .002)))
+	 (ampf2 (make-env '(0 0 .025 1 .2 0 .7 0 .9 1 1 0) :duration dur))
+	 (rnd (make-rand-interp 400 (hz->radians 100))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (+ (env frqf)
+		       (rand-interp rnd))))
+	 (outa i (* (env ampf)
+		    (+ (polyshape gen1 1.0 frq)
+		       (* (env ampf2)
+			  (polyshape gen2 1.0 frq))))
+	       *output*))))))
+
+  ;; second note
+  (let* ((start (seconds->samples (+ beg 0.27)))
+	 (dur 0.265)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.020 0.160 0.091 0.182 0.138 0.132 0.174 0.162 0.239 0.120 0.390 0.297 
+			   0.427 0.216 0.474 0.530 0.521 1.000 0.565 0.893 0.590 0.498 0.605 0.656 0.634 0.171 
+			   0.676 0.209 0.696 0.130 0.754 0.222 0.786 0.173 0.818 0.214 0.835 0.177 0.884 0.199 
+			   0.911 0.107 0.922 0.158 0.961 0.071 0.978 0.378 1.000 0.000)
+			 :duration dur :scaler (* .4 amp)))
+	 (frqf (make-env '(0.000 0.125 0.048 0.142 0.139 0.133 0.303 0.131 0.443 0.150 0.495 0.156 0.508 0.206 
+			   0.568 0.200 0.612 0.219 0.621 0.289 0.627 0.439 0.690 0.458 0.752 0.464 0.823 0.464 
+			   0.900 0.450 0.947 0.425 0.975 0.194 1.000 0.2 )
+			 :duration dur :scaler (hz->radians 10300.0)))
+	 (gen1 (make-oscil 0.0))
+	 (gen2 (make-oscil 0.0))
+	 (gen3 (make-oscil 0.0))
+	 (ampf1 (make-env '(0 1  .63 1  .65 .1 .94 .1 1 1) :scaler .95 :duration dur))
+	 (ampf2 (make-env '(0 .5  .6 1  .9 1  1 .5) :scaler .1 :duration dur))
+	 (ampf3 (make-env '(0 1 .59 1 .6 0 .65 0 .66 1 .8 1 .9 0 1 0) :scaler .05 :duration dur))
+	 (rnd (make-rand-interp 400 (hz->radians 30))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (+ (env frqf)
+		       (rand-interp rnd))))
+	 (outa i (* (env ampf)
+		    (+ (* (env ampf1) 
+			  (oscil gen1 frq))
+		       (* (env ampf2) 
+			  (oscil gen2 (* 2 frq)))
+		       (* (env ampf3) 
+			  (oscil gen3 (* 3 frq)))))
+	       *output*)))))))
+
+;(with-sound (:play #t) (groove-billed-ani 0 .5))
 
 
 ;;; ================ calling-all-animals ================
@@ -7432,5 +7614,9 @@
     (magnolia-warbler 254.5 .25)
     (eastern-bluebird 256 .25)
     (evening-grosbeak 257 .25)
+    (greater-roadrunner 258 .5)
+    (dark-eyed-junco 263 .25)
+    (groove-billed-ani 264 .25)
+    (pacific-chorus-frog 265 .5)
     ))
 
