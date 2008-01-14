@@ -24,7 +24,7 @@
 ;;; Oak toad
 ;;; Knudsen's frog
 ;;; Southern cricket frog
-;;; Northern leopard frog
+;;; Northern leopard frog (2)
 ;;; Spring peeper
 ;;; Crawfish frog
 ;;; River frog
@@ -113,6 +113,7 @@
 ;;; Ash-throated flycatcher
 ;;; Olive-sided flycatcher
 ;;; Willow flycatcher
+;;; Hammond's flycatcher
 ;;; Black phoebe
 ;;; Say's phoebe
 ;;; Northern beardless tyrannulet
@@ -130,6 +131,7 @@
 ;;; Chuck-will's-widow
 ;;; Whip-poor-will
 ;;; Lesser nighthawk
+;;; Common pauraque
 ;;; Mourning dove
 ;;; Bobwhite
 ;;; California Quail
@@ -316,11 +318,10 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;; Northern leopard frog (1)
-;;;
-;;; this is slightly low-passed, and I don't quite have the vowel right at the end
+;;; Northern leopard frog (2)
 
-(definstrument (northern-leopard-frog beg amp)
+(definstrument (northern-leopard-frog-1 beg amp)
+  ;; this is slightly low-passed, and I don't quite have the vowel right at the end
   (let* ((dur 4.2)
 	 (start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur)))
@@ -361,7 +362,78 @@
 									     (* .075 (oscil gen6)))))))))))
 	   (outa i result *output*)))))))
 
-;(with-sound (:statistics #t :play #t) (northern-leopard-frog 0 .5))
+;(with-sound (:statistics #t :play #t) (northern-leopard-frog-1 0 .5))
+
+
+(definstrument (northern-leopard-frog-2 beg amp)
+  ;; rocky 57 2
+  (let* ((start (seconds->samples beg))
+	 (dur 1.53)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.108 0.118 0.596 0.167 0.719 0.357 0.827 0.604 0.838 0.745 0.912 0.860 1.000 0.929 0.962 0.984 0.831 1.000 0.000)
+			 :duration dur :scaler amp))
+
+	 (frqf2 (make-env '(0.000 0.198 0.021 0.209 0.110 0.239 0.178 0.239 0.294 0.247 0.343 0.260 0.463 0.255 
+			    0.593 0.265 0.704 0.252 0.788 0.244 0.881 0.228 0.941 0.204 1.000 0.18)
+			 :duration dur :scaler 6100.0))
+	 (frqf1 (make-env '(0.000 0.086 0.462 0.110 1.000 0.118)
+			  :duration dur :scaler 6100.0))
+	 (frqf3 (make-env '(0.000 0.721 0.508 0.786 0.698 0.761 0.876 0.689 0.935 0.563 1.000 0.509)
+			  :duration dur :scaler 6100.0))
+	 (frqf4 (make-env '(0 7200 .5 7600 .9 7000 1 5400) :duration dur))
+
+	 (frm1 (make-formant .995 900 5))
+	 (frm2 (make-formant .99 1260 5))
+	 (frm3 (make-formant .99 4500 5))
+	 (frm4 (make-formant .9 7200 5))
+
+	 (ampfr1 (make-env '(0 .5 1 3) :duration dur :base 3))
+	 (ampfr2 (make-env '(0 .25 .5 .4 1 1) :duration dur))
+	 (ampfr4 (make-env '(0 0 .3 1 1 1) :duration dur))
+
+	 (gen1 (make-rk!cos 100 13.0))
+	 (ampf1 (make-env '(0 1 1 0) :base 3 :duration dur))
+
+	 (pulse-dur .03)
+	 (pulse-samps (seconds->samples .045))
+	 (pulsef (make-env '(0.000 0.000 0.01 1  0.15 0.936  0.2 0.100  0.792 0.000 0.906 0.107 1.000 0.000)
+			   :duration pulse-dur))
+	 (pulse-frqf (make-env '(0 0 1 .9 2 1 ) :base .1 :duration pulse-dur :scaler (hz->radians 100)))
+	 (pulse-stop (+ start pulse-samps)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+
+	 (if (>= i pulse-stop)
+	     (begin
+	       (set! (rk!cos-angle gen1) (* -0.1 pi))
+	       (set! pulse-stop (+ pulse-stop pulse-samps))
+	       (mus-reset pulse-frqf)
+	       (mus-reset pulsef)))
+
+	 (set! (mus-frequency frm1) (env frqf1))
+	 (set! (mus-frequency frm2) (env frqf2))
+	 (set! (mus-frequency frm3) (env frqf3))
+	 (set! (mus-frequency frm4) (env frqf4))
+
+	 (let ((val (* (env ampf)
+		       (env pulsef)
+		       (rk!cos gen1 (env pulse-frqf)))))
+
+	   (outa i (+ (* (env ampf1) 
+			 val)
+		      (* (env ampfr1)
+			 (formant frm1 val))
+		      (* (env ampfr2)
+			 (formant frm2 val))
+		      (formant frm3 val)
+		      (* (env ampfr4)
+			 (formant frm4 val)))
+		 *output*)))))))
+
+;(with-sound (:play #t :statistics #t :clipped #f) (northern-leopard-frog-2 0 .5))
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -7468,6 +7540,75 @@
 ;(with-sound (:play #t) (groove-billed-ani 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Common pauraque
+
+(definstrument (common-pauraque beg amp)
+  ;; south 20 1.7
+  (let* ((start (seconds->samples beg))
+	 (dur 0.65)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.134 0.124 0.181 0.079 0.203 0.169 0.275 0.160 0.341 0.494 0.390 0.850 
+			   0.443 0.561 0.462 0.783 0.502 0.768 0.535 1.000 0.587 0.795 0.742 0.802 0.821 0.702 
+			   0.856 0.458 0.884 0.263 0.926 0.241 1.000 0.000 )
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.168 0.175 0.190 0.328 0.225 0.399 0.237 0.472 0.310 0.504 0.342 0.539 0.345 
+			   0.572 0.326 0.594 0.294 0.644 0.275 0.731 0.259 0.797 0.244 0.832 0.231 0.868 0.212 1.000 0.155 )
+			 :duration dur :scaler (hz->radians 7700.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .98  2 .005  3 .015)))
+	 (vib (make-oscil 120))
+	 (vibf (make-env '(0 0  .25 0  .4 .3  .5 .1  .6 1 1 0) :duration dur :scaler (hz->radians 100))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (+ (env frqf)
+					   (* (env vibf)
+					      (oscil vib)))))
+	       *output*))))))
+
+;(with-sound (:play #t) (common-pauraque 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Hammond's flycatcher
+
+(definstrument (hammonds-flycatcher beg amp)
+  ;; calif2 5 8.2
+  (let* ((start (seconds->samples beg))
+	 (dur 0.23)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.090 0.518 0.153 0.872 0.167 0.795 0.190 0.952 0.251 0.000 0.453 0.000 
+			   0.502 0.434 0.521 0.295 0.542 0.053 0.580 0.051 0.606 0.000 0.691 0.000 0.701 0.062 
+			   0.731 0.089 0.735 0.000 0.746 0.000 0.754 0.212 0.764 0.119 0.784 0.110 0.794 0.148 
+			   0.800 0.007 0.815 0.080 0.823 0.301 0.834 0.126 0.854 0.151 0.862 0.062 0.873 0.009
+			   0.880 0.075 0.890 0.297 0.910 0.205 0.921 0.078 0.934 0.032 0.948 0.208 0.959 0.285 
+			   0.971 0.260 0.984 0.091 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.401 0.037 0.480 0.073 0.538 0.109 0.596 0.142 0.628 0.175 0.697 0.206 0.794 
+			   0.218 0.812 0.233 0.800 0.240 0.773 0.260 0.693 0.404 0.381 0.416 0.356 0.437 0.347 
+			   0.460 0.359 0.482 0.439 0.497 0.532 0.529 0.659 0.546 0.836 0.587 0.614 0.690 0.460 
+			   0.700 0.282 0.713 0.247 0.725 0.285 0.727 0.525 0.739 0.594 0.756 0.314 0.769 0.276 
+			   0.784 0.280 0.788 0.329 0.796 0.736 0.811 0.543 0.828 0.301 0.843 0.282 0.851 0.325 
+			   0.861 0.780 0.887 0.377 0.899 0.321 0.909 0.370 0.926 0.681 0.944 0.449 0.959 0.421 
+			   0.977 0.433 1.000 0.471)
+			 :duration dur :scaler (hz->radians 9000.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .99  2 .01  3 .005))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (hammonds-flycatcher 0 .5))
+
+
+
 ;;; ================ calling-all-animals ================
 
 
@@ -7483,7 +7624,7 @@
     (broad-winged-tree-cricket 10.87 2.0 0.2)
     (southern-cricket-frog 13.225 0.5)
     (long-spurred-meadow-katydid 13.5 0.5)
-    (northern-leopard-frog 15.0 0.5)
+    (northern-leopard-frog-1 15.0 0.5)
     (southern-mole-cricket 16.5 3 0.15)
     (green-tree-frog 19.5 0.5)
     (spring-peeper 21.0 0.5)
@@ -7618,5 +7759,8 @@
     (dark-eyed-junco 263 .25)
     (groove-billed-ani 264 .25)
     (pacific-chorus-frog 265 .5)
+    (common-pauraque 266 .25)
+    (hammonds-flycatcher 267 .25)
+    (northern-leopard-frog-2 268.0 0.5)
     ))
 
