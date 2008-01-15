@@ -3395,6 +3395,9 @@ bool view_files_play(view_files_info *vdat, int pos, bool play)
 	{
 	  play_sp->short_filename = vdat->names[pos];
 	  play_sp->filename = NULL;
+	  /* pass view files dialog settings to play */
+	  play_sp->speed_control = vdat->speed;
+	  play_sp->amp_control = vdat->amp;
 	  play_sound(play_sp, 0, NO_END_SPECIFIED);
 	}
       else return(true); /* can't find or setup file */
