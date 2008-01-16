@@ -2,9 +2,10 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Thu Nov 22 00:26:48 CET 2007
+\ Changed: Sat Jan 12 01:09:50 CET 2008
 
 \ src-duration             ( en -- dur )
+\ src-fit-envelope         ( e1 target-dur -- e2 )
 \ dolph                    ( n gamma -- im )
 \ dolph-1                  ( n gamma -- im )
 \ down-oct                 ( n :optional snd chn -- vct )
@@ -120,6 +121,11 @@
 \ moving-rms               ( gen y -- val )
 \ make-moving-length       ( :optional size -- gen )
 \ moving-length            ( gen y -- val )
+\ make-smoothing-filter    ( size -- gen )
+\ smoothing-filter         ( gen sig -- r )
+\ make-exponentially-weighted-moving-average   ( order -- r )
+\ make-weighted-moving-average                 ( order -- r )
+\ weighted-moving-average  ( gen sig -- r )
 \ harmonicizer             ( freq coeffs pairs :optional ... )
 \ linear-src-channel       ( sr :optional snd chn -- file )
 \ make-mfilter             ( :key decay frequency -- gen )
@@ -160,6 +166,7 @@ for time-varying sampling-rate conversion."
   2 +loop
   ( dur )
 ;
+: src-fit-envelope { e1 target-dur -- e2 } e1 e1 src-duration target-dur f/ scale-envelope ;
 
 \ ;;; -------- Dolph-Chebyshev window
 \ ;;; 
@@ -2049,6 +2056,53 @@ returning the euclidean length of the vector in that window."
 : moving-length ( gen y -- val )
   doc" Returns the length of the values in a window over the last few inputs."
   ( gen y ) dup f* moving-average fsqrt
+;
+
+\ ;;; ----------------
+\ ;;;
+\ ;;; more moving-average cases
+\ 
+\ ;;; a simple modification is to round-off the edges:
+
+<'> make-moving-average alias make-smoothing-filter
+
+: smoothing-filter ( gen sig -- r )
+  { gen sig }
+  gen sig moving-average { val }
+  gen tap { old-sig }
+  gen mus-order { n }
+  n n 1- f/
+  val  gen mus-increment 0.5 f* sig old-sig f+ f*   f-  f* 
+;
+
+\ ;;; exponential weights
+: make-exponentially-weighted-moving-average ( order -- r )
+  { order }
+  order 1/f
+  order fnegate 1.0 order f+ f/  make-one-pole
+;
+<'> one-pole alias exponentially-weighted-moving-average
+
+\ ;;; arithmetic (1/n) weights
+: make-weighted-moving-average ( order -- r )
+  { order }
+  order make-moving-average { gen }
+  gen 1.0 set-mus-increment drop
+  #( gen 0.0 0.0 )
+;
+
+: weighted-moving-average ( gen sig -- r )
+  { gen-ary sig }
+  gen-ary 0 array-ref { gen }
+  gen-ary 1 array-ref { num }
+  gen-ary 2 array-ref { sum }
+  gen mus-order { n }
+  n 1+ n * 2/ { den }
+  n sig f* num f+ sum f- to num
+  gen sig moving-average to sum
+  gen-ary num 1 array-set!
+  gen-ary sum 2 array-set!
+  num den f/
 ;
 
 \ ;;; ----------------

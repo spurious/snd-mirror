@@ -20846,6 +20846,12 @@ EDITS: 2
     (let ((var (catch #t (lambda () (make-env :envelope '(0 1 1 0) :end 10 :length 10)) (lambda args args))))
       (if (not (eq? (car var) 'mus-error))
 	  (snd-display ";make-env bad end/dur: ~A" var)))
+    (let ((var (catch #t (lambda () (make-env :envelope '(0 0 1 1 2 0 1) :duration 1.0)) (lambda args args))))
+      (if (not (eq? (car var) 'bad-type))
+	  (snd-display ";make-env odd length env: ~A" var)))
+    (let ((var (catch #t (lambda () (make-env :envelope (list "hi" 0 1 1 2 0) :duration 1.0)) (lambda args args))))
+      (if (not (eq? (car var) 'wrong-type-arg))
+	  (snd-display ";make-env env of non-number: ~A" var)))
     
     (let ((ind (new-sound :size 20)))
       (select-sound ind)

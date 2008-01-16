@@ -4694,6 +4694,13 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 			  XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
 				     C_TO_XEN_STRING("null env?"), 
 				     keys[0]));
+
+	      if (len & 1)
+		XEN_ERROR(BAD_TYPE,
+			  XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
+				     C_TO_XEN_STRING("odd length breakpoints list?"), 
+				     keys[0]));
+
 	      if (!(XEN_NUMBER_P(XEN_CAR(keys[0]))))
 		XEN_ASSERT_TYPE(false, keys[0], orig_arg[0], S_make_env, "a list of numbers (breakpoints)");
 	    }
@@ -4716,6 +4723,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	  memcpy((void *)odata, (void *)brkpts, len * sizeof(Float));
         }
     }
+
   if (brkpts == NULL) 
     XEN_ERROR(NO_DATA,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_make_env), 
@@ -4733,9 +4741,11 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	}
       end = dur - 1;
     }
+
   old_error_handler = mus_error_set_handler(local_mus_error);
   ge = mus_make_env(brkpts, npts, scaler, offset, base, duration, end, odata);
   mus_error_set_handler(old_error_handler);
+
   FREE(brkpts);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct(mus_env_breakpoints(ge) * 2, odata))));
   FREE(odata);
