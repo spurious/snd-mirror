@@ -2284,6 +2284,24 @@ Most of this section has been moved to generators.scm.
 <tr><td colspan=2 height=32></td></tr>
 
 
+<!-- cheby-hka -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="chebyhka">cheby-hka</A> <code>k a coeffs</code>
+</td></tr><tr><td></td><td>
+This returns the amplitude of the kth harmonic (0=DC) in the waveshaping output
+given the index 'a', and harmonic coefficients 'coeffs' (the 0th element is DC amplitude).
+<pre>
+    (<a class=quiet href="#wsdoc">with-sound</a> ()
+      (let ((gen (<a class=quiet href="sndclm.html#make-polyshape">make-polyshape</a> 1000.0 :partials (list 1 .5  2 .25  3 .125  4 .125))))
+        (do ((i 0 (1+ i)))
+	    ((= i 88200))
+          (<a class=quiet href="sndclm.html#outa">outa</a> i (* .5 (<a class=quiet href="sndclm.html#polyshape">polyshape</a> gen 0.25)) *output*))))
+
+    (<em class=red>cheby-hka</em> 1 0.25 (vct 0 .5 .25 .125 .125)) ; returns 1st partial (fundamental) amplitude
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- fm-parallel-component -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>fm-parallel-component</em> <code>freq-we-want wc wms inds ns bs using-sine</code>

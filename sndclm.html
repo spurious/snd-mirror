@@ -548,6 +548,8 @@ you can use <a href="sndscm.html#def-clm-struct">def-clm-struct</a>.
 <br><br>
 
 
+<!-- TODO: give simple examples based on direct-in-with-sound calls of the generators -->
+
 
 <!-- INDEX generators:Generators -->
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2><A class=def NAME="generators">Generators</a></h2></td></tr></table>
@@ -1155,7 +1157,7 @@ The basic idea is:
 </p>
 <img src="sceq16.png" alt="Cheby eqs" hspace=40>
 <p>
-So, we can add scaled polynomials to get the spectrum we want;
+We can add scaled polynomials to get the spectrum we want;
 in the simplest use, an inexpensive additive synthesis.  We can vary the peak amplitude of the
 cos x to get effects similar to those of FM.  
 </p>
@@ -1324,47 +1326,6 @@ we absolutely insist on using waveshaping, we could do it this way:
                  *output*)))))))
 </pre></td></tr></table>
 
-<p>Why does the high order give numerical problems?  The polynomials are related to each other
-via the recursion: <img src="sceq17.png" alt="Cheby recurse" align=absmiddle>, so the first
-few polynomials are:
-</p>
-
-<!-- LATEX:
-\begin{align*}
-&T_{0}(x)=1 \\
-&T_{1}(x)=x \\
-&T_{2}(x)=2x^{2}-1\\
-&T_{3}(x)=4x^{3}-3x \\
-&T_{4}(x)=8x^{4}-8x^{2}+1
-\end{align*}
-
-\begin{align*}
-&U_{0}(x)=1 \\
-&U_{1}(x)=2x \\
-&U_{2}(x)=4x^{2}-1 \\
-&U_{3}(x)=8x^{3}-4x \\
-&U_{4}(x)=16x^{4}-12x^{2}+1
-\end{align*}
-
--->
-
-<table border=0 hspace=40><tr>
-<td><img src="sceq18.png" alt="some Chebys"></td>
-<td width=20></td>
-<td><img src="sceq19.png" alt="more Chebys"></td>
-</tr></table>
-
-<p>The first coefficient is 2^n or 2^(n-1).  This is bad news if "n" is large because
-we are expecting a bunch of huge numbers 
-to add up to something in the vicinity of 0.0 or 1.0.  
-If we're using 32-bit floats, the first sign of trouble comes when the order is around 26.
-If you look at some of the coefficients, you'll see numbers like -129026688.000 (in the 32 bit case), which
-should be -129026680.721 &mdash;  we have run out of bits in the mantissa!
-Even if we build Snd --with-doubles, 
-we can only push the order up to around 46. 
-</p>
-
-
 <table border=0>
 <tr><td>
 The "fm" argument to these two generators is intended mainly for vibrato and frequency envelopes. 
@@ -1452,31 +1413,85 @@ is scaled to be -1..1, so that adds another layer of confusion).
 	      *output*)))))
 -->
 
-<p>The index argument can be used to vary the spectrum, much as in FM, but there's an annoying "gotcha".
-You'll notice in the Chebyshev polynomials above that even numbered terms have a constant term (since,
-for example, cos^2 goes between 0 and 1, we mutiply it by 2 and subtract 1 to get cos 2x; that
-is (cos x)^2 = 1/2 (cos 2x + 1)).  But if the "x" is not a full amplitude sinusoid (if our index is
-less than 1.0), our x^2 term no longer balances the constant 1, so we get a DC component.  Each
-even numbered partial contributes to this component, and the result can be surprisingly large.
-If you don't counteract it in some way, you get a big click when the generator stops.
-Perhaps simplest is to add a "dc-block" filter onto the output:
+<p>The index argument can be used to vary the spectrum, much as in FM.
+The kth partial's amplitude
+at a given index, given a set h[k] of coefficients, is:
+</p>
+
+<img src="sceq43.png" alt="cheby hka calc" hspace=40>
+
+<!-- LATEX:
+    &h_{k}(a) = \sum_{j=0}^{\infty} \binom{p}{j} a^{p} \sum_{i=0}^{\infty} (-1)^{i}\Big(\tbinom{p+i}{i} + \tbinom{p+i-1}{i-1}\Big) h_{p+2i}(1) & p=k+2j \\
+-->
+
+<p>(This formula is implemented by <a href="sndscm.html#chebyhka">cheby-hka</a> in dsp.scm).
+The function traced out by the harmonic (analogous to the role the Bessel function Jn plays in FM)
+is a polynomial in the index whose order depends on the number of coefficients.  When the index is less than 1.0,
+energy appears in lower harmonics even if they are not included in the index=1.0 list:
 </p>
 
 <pre>
-  (with-sound ()
-    (let ((gen (<em class=red>make-polyshape</em> 100.0 :partials (list 1 .5 2 .25 3 .125 4 .125)))
-	  (flt (<a class=quiet href="#make-filter">make-filter</a> 2 (<a class=quiet href="extsnd.html#vct">vct</a> 1 -1) (<a class=quiet href="extsnd.html#vct">vct</a> 0 -0.999))) ; dc blocker
-	  (indf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) :end 88200)))
-      (do ((i 0 (1+ i)))
-	  ((= i 88200))
-        (<a class=quiet href="#outa">outa</a> i (* .5 (<a class=quiet href="#filter">filter</a> flt (<em class=red>polyshape</em> gen (<a class=quiet href="#env">env</a> indf)))) *output*))))
+    &gt; (cheby-hka 3 0.25 (vct 0 0 0 0 1.0 1.0))
+    -0.0732421875
+    &gt; (cheby-hka 2 0.25 (vct 0 0 0 0 1.0 1.0))
+    -0.234375
+    &gt; (cheby-hka 1 0.25 (vct 0 0 0 0 1.0 1.0))
+    1.025390625
+    &gt; (cheby-hka 0 0.25 (vct 0 0 0 0 1.0 1.0))
+    1.5234375
 </pre>
 
 <p>
-Check out what the 2nd partial does as the index moves toward 1.  This
-example also makes obvious yet another problem: changing the index changes
-the output peak amplitude.  
+Below we sweep the index from 0.0
+to 1.0 (sticking at 1.0 for a moment at the end), with a partials list of '(11 1.0 20 1.0).  These numbers were chosen to show that the even and
+odd harmonics are independent:
 </p>
+
+<table border=0 hspace=20>
+<tr><td colspan=2>
+<pre>
+  (with-sound ()
+    (let ((gen (<em class=red>make-polyshape</em> 100.0 :partials (list 11 1 20 1)))
+	  (ampf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 20 1 21 0) :scaler .4 :end 88200)))
+	  (indf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 1.1 1) :end 88200)))
+      (do ((i 0 (1+ i)))
+	  ((= i 88200))
+        (<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#env">env</a> ampf) (<em class=red>polyshape</em> gen (<a class=quiet href="#env">env</a> indf))) *output*))))
+</pre>
+</td></tr>
+
+<tr><td>
+<img src="waver.png" alt="picture of waveshaping sweep">
+</td><td>
+<img src="waver2.png" alt="time domain" hspace=20>
+</td></tr>
+</table>
+
+<!--
+;;; data cutoff .015 light 56 jet
+;;; xangle 292 scale 1.45 yangle 0 scale .68 zangle 0 scale 1.39, % 43
+-->
+
+<p>You can see there's another
+another annoying "gotcha":  the DC component can be arbitrarily large.
+If you don't counteract it in some way, you lose dynamic range, and you get a big click when the generator stops.
+In addition (as the right graph shows, although in this case the effect is minor), the peak amplitude is dependent on the index.  We can reduce this
+problem somewhat by changing the signs of the harmonics to follow the
+pattern + + - -: 
+</p>
+
+<pre>
+    (list 1 .5  2 .25  3 -.125  4 -.125) ; squeeze the amplitude change toward index=0
+</pre>
+
+<p>The harmonic amplitude formula for the Chebyshev polynomials of the second kind is:
+</p>
+
+<img src="sceq44.png" alt="more cheby hka calcs" hspace=40>
+
+<!-- LATEX:
+    &h_{k}(a) = \sum_{j=0}^{\infty} \Big(\tbinom{p-1}{j} - \tbinom{p-1}{j-1}\Big) a^p \sum_{i=0}^{\infty} (-1)^{i} \tbinom{p+i-1}{i} h_{p+2i}(1) & p=k+2j \\
+-->
 
 <p>
 On a related topic, if we drive the sum of Chebyshev polynomials with a complex signal
@@ -1494,7 +1509,48 @@ we get sum and difference tones, much as in complex FM.
 </pre>
 
 
-<p>We might ask why we'd want polyshape at all.  Leaving aside
+<p>Looking back at the bl-saw instrument, why does the high order give numerical problems?  The polynomials are related to each other
+via the recursion: <img src="sceq17.png" alt="Cheby recurse" align=absmiddle>, so the first
+few polynomials are:
+</p>
+
+<!-- LATEX:
+\begin{align*}
+&T_{0}(x)=1 \\
+&T_{1}(x)=x \\
+&T_{2}(x)=2x^{2}-1\\
+&T_{3}(x)=4x^{3}-3x \\
+&T_{4}(x)=8x^{4}-8x^{2}+1
+\end{align*}
+
+\begin{align*}
+&U_{0}(x)=1 \\
+&U_{1}(x)=2x \\
+&U_{2}(x)=4x^{2}-1 \\
+&U_{3}(x)=8x^{3}-4x \\
+&U_{4}(x)=16x^{4}-12x^{2}+1
+\end{align*}
+
+-->
+
+<table border=0 hspace=40><tr>
+<td><img src="sceq18.png" alt="some Chebys"></td>
+<td width=20></td>
+<td><img src="sceq19.png" alt="more Chebys"></td>
+</tr></table>
+
+<p>The first coefficient is 2^n or 2^(n-1).  This is bad news if "n" is large because
+we are expecting a bunch of huge numbers 
+to add up to something in the vicinity of 0.0 or 1.0.  
+If we're using 32-bit floats, the first sign of trouble comes when the order is around 26.
+If you look at some of the coefficients, you'll see numbers like -129026688.000 (in the 32 bit case), which
+should be -129026680.721 &mdash;  we have run out of bits in the mantissa!
+Even if we build Snd --with-doubles, 
+we can only push the order up to around 46. 
+</p>
+
+
+<p>With all these problems, we might ask why we'd want polyshape at all.  Leaving aside
 speed (the polynomial computation is much faster than the equivalent sum of oscils)
 and memory (waveshape and table-lookup use a table that has to be loaded),
 the main reason to use polyshape is accuracy.  polyshape
@@ -1537,7 +1593,6 @@ polynomial on the Samson box, so we used the table-lookup version.  I've tried t
 reasonable backwards compatibility with old instruments, but someday I think I'll 
 remove the waveshape generator.
 </p>
-
 
 <br><br>
 

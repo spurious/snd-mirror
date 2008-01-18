@@ -40,6 +40,10 @@
  *   elastic-delay (and inelastic) -> delay with run-time length, if len expands so quickly as to drop
  *      a sample, interpolate, if compresses too quickly, create shock -- a slight extension of the current delay pm arg
  *      it should be possible to collapse nearly all of dlocsig into these lines -- no envelopes need to be precalulated etc
+ *      if the vector from the object to the speaker projected onto the vector from the speaker to the user is positive
+ *        then the object is in front of the speaker(?)
+ *
+ *   perhaps built-in: blackman rk!cos rxyk!cos nrcos rcos rxycos nxycos nrssb rk!ssb
  *
  * done:
  *   :dur -> :length in make-env

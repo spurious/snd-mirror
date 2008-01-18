@@ -2679,3 +2679,37 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 
 ;(fm-cascade-component 2000 2000 500 1.5 50 1.0)
 
+
+
+;;; waveshaping harmonic amplitude at a given index
+
+(define (cheby-hka k a coeffs) ; (coeff 0 = DC)
+  (let* ((sum 0.0)
+	 (n (vct-length coeffs)))
+    (do ((j 0 (1+ j)))
+	((= j n))
+      (let* ((dsum 0.0)
+	     (p (+ k (* 2 j))))
+	(do ((i 0 (1+ i)))
+	    ((>= (+ p (* 2 i)) n))
+	  (set! dsum (+ dsum (* (expt -1 i)
+				(* (vct-ref coeffs (+ p (* 2 i)))
+				   (+ (binomial (+ p i) i)
+				      (binomial (+ p i -1) (- i 1))))))))
+	(set! sum (+ sum (* dsum 
+			    (expt a p)
+			    (binomial p j))))))
+    sum))
+
+#|
+(with-sound ()
+  (let ((gen (make-polyshape 1000.0 :partials (list 1 .5  2 .25  3 .125  4 .125))))
+    (do ((i 0 (1+ i)))
+	((= i 88200))
+      (outa i (* .5 (polyshape gen 0.25)) *output*))))
+
+(cheby-hka 1 0.25 (vct 0 .5 .25 .125 .125))
+|#
+
+
+;;; TODO: add snd-test for cheby-hka

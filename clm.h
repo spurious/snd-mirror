@@ -6,7 +6,8 @@
 #define MUS_DATE "7-Jan-08"
 
 /*
- * 7-Jan:      :dur replaced by :length in make-env.
+ * 7-Jan-08:   :dur replaced by :length in make-env.
+ * --------
  * 19-Oct:     all *_0 *_1 *_2 names now use _fm|_pm|_unmodulated|_no_input.
  * 17-Oct:     replace some method macros with functions (def-clm-struct local methods need true names).
  * 15-Oct:     mus_oscil_1 -> _fm, _2->_pm.
@@ -23,7 +24,7 @@
  *               to make room for this, asymmetric-fm ratio and sine-summation b moved to mus-offset.
  * 22-Feb:     mus_big_fft and mus_spectrum_t.
  * 21-Feb:     mus_fft_window_name.
- * 14-Feb:     three more fft window choices.
+ * 14-Feb-07:  three more fft window choices.
  * --------
  * 27-Nov:     move-sound array access parallel to locsig.
  * 22-Nov:     had to add non-backwards-compatible reverb chans arg to mus_make_locsig.
