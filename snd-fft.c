@@ -829,6 +829,16 @@ void fourier_spectrum(snd_fd *sf, Float *fft_data, off_t fft_size_1, off_t data_
     mus_fftw(fft_data, fft_size, 1);
     fft_data[0] = fabs(fft_data[0]);
     fft_data[fft_size / 2] = fabs(fft_data[fft_size / 2]);
+
+    /* here and in the case below, the DC term is assuming that you're thinking a0/2 + sum an*sin...
+     *   that is, a0 is twice what you'd add as a constant if you were making it by hand.
+     *   When displayed, this doubles the DC term, in a sense -- is this what people expect?
+     *  
+     *    (with-sound () (do ((i 0 (1+ i)) (angle 0.0 (+ angle .1))) ((= i 44100)) (outa i (+ .25 (* .5 (sin angle))) *output*)))
+     *
+     * displays equal amplitude DC and 702Hz components
+     */
+
     if ((cp) && (cp->fft_with_phases))
       {
 	cp->fft->phases[0] = 0.0;

@@ -927,9 +927,9 @@ Float mus_polynomial(Float *coeffs, Float x, int ncoeffs)
 {
   double sum;
   int i;
-  if (ncoeffs <= 0) return(x);
+  if (ncoeffs <= 0) return(0.0);
+  if (ncoeffs == 1) return(coeffs[0]); /* just a constant term */
   sum = coeffs[ncoeffs - 1];
-  if (ncoeffs == 1) return(sum * x);
   for (i = ncoeffs - 2; i >= 0; i--) 
     sum = (sum * x) + coeffs[i];
   return((Float)sum);
@@ -2363,15 +2363,17 @@ Float mus_waveshape_no_input(mus_any *ptr) /* default index is 1.0 */
 Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float *table)
 {
   /* partials incoming is a list of partials amps indexed by partial number */
-  /* #<0.0, 1.0, 0.0> = 2nd partial 1.0, rest 0. */
+  /* #<0.0, 0.0, 1.0> = 2nd partial 1.0, rest 0. from (partials->waveshape (vct 2 1)) */
   int i;
   Float maxI2, x;
   Float *data;
+
   if (partials == NULL) return(NULL);
   if (table == NULL)
     data = (Float *)clm_calloc(size, sizeof(Float), "waveshape table");
   else data = table;
   if (data == NULL) return(NULL);
+
   maxI2 = 2.0 / (Float)(size - 1); /* was size, but mus.lisp was correct?!? */
   for (i = 0, x = -1.0; i < size; i++, x += maxI2)
     {
@@ -2400,14 +2402,18 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial
   int i;
   off_t *T0, *T1, *Tn;
   double *Cc1;
+
   T0 = (off_t *)clm_calloc(npartials + 1, sizeof(off_t), "partials_to_polynomial t0");
   T1 = (off_t *)clm_calloc(npartials + 1, sizeof(off_t), "partials_to_polynomial t1");
   Tn = (off_t *)clm_calloc(npartials + 1, sizeof(off_t), "partials_to_polynomial tn");
   Cc1 = (double *)clm_calloc(npartials + 1, sizeof(double), "partials_to_polynomial cc1");
+
   if (kind == MUS_CHEBYSHEV_FIRST_KIND)
     T0[0] = 1;
   else T0[0] = 0;
   T1[1] = 1;
+
+  Cc1[0] = partials[0]; /* DC requested? */
 
   for (i = 1; i < npartials; i++)
     {
@@ -2435,6 +2441,7 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial
 
   for (i = 0; i < npartials; i++) 
     partials[i] = Cc1[i];
+
   FREE(T0);
   FREE(T1);
   FREE(Tn);

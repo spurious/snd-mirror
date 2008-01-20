@@ -3855,17 +3855,17 @@ static XEN g_wave_train_p(XEN obj)
 
 /* ---------------- waveshape ---------------- */
 
-enum {NO_PROBLEM_IN_LIST, NULL_LIST, ODD_LENGTH_LIST, NON_NUMBER_IN_LIST, NON_POSITIVE_NUMBER_IN_LIST};
+enum {NO_PROBLEM_IN_LIST, NULL_LIST, ODD_LENGTH_LIST, NON_NUMBER_IN_LIST, NEGATIVE_NUMBER_IN_LIST};
 
 static char* list_to_partials_error_to_string(int code)
 {
   switch (code)
     {
-    case NO_PROBLEM_IN_LIST:          return("nothing wrong with partials list??");                     break;
-    case NULL_LIST:                   return("partials list is null");                                  break;
-    case ODD_LENGTH_LIST:             return("partials list has an odd number of elements");            break;
-    case NON_NUMBER_IN_LIST:          return("partials list has a non-numerical element");              break;
-    case NON_POSITIVE_NUMBER_IN_LIST: return("partials list has a partial number that is less than 1"); break;
+    case NO_PROBLEM_IN_LIST:          return("nothing wrong with partials list??");                  break;
+    case NULL_LIST:                   return("partials list is null");                               break;
+    case ODD_LENGTH_LIST:             return("partials list has an odd number of elements");         break;
+    case NON_NUMBER_IN_LIST:          return("partials list has a non-numerical element");           break;
+    case NEGATIVE_NUMBER_IN_LIST:     return("partials list has a partial number that is negative"); break;
     }
   return("unknown error");
 }
@@ -3899,8 +3899,8 @@ static Float *list_to_partials(XEN harms, int *npartials, int *error_code)
   (*error_code) = NO_PROBLEM_IN_LIST;
 
   maxpartial = XEN_TO_C_INT_OR_ELSE(XEN_CAR(harms), 0);
-  if (maxpartial <= 0)
-    (*error_code) = NON_POSITIVE_NUMBER_IN_LIST;
+  if (maxpartial < 0)
+    (*error_code) = NEGATIVE_NUMBER_IN_LIST;
   else
     {
       for (i = 2, lst = XEN_CDDR(XEN_COPY_ARG(harms)); i < listlen; i += 2, lst = XEN_CDDR(lst))
@@ -3908,11 +3908,11 @@ static Float *list_to_partials(XEN harms, int *npartials, int *error_code)
 	  curpartial = XEN_TO_C_INT_OR_ELSE(XEN_CAR(lst), 0);
 	  if (curpartial > maxpartial) 
 	    maxpartial = curpartial;
-	  if (curpartial <= 0)
+	  if (curpartial < 0)
 	    {
 	      if (!(XEN_NUMBER_P(XEN_CAR(lst))))
 		(*error_code) = NON_NUMBER_IN_LIST;
-	      else (*error_code) = NON_POSITIVE_NUMBER_IN_LIST;
+	      else (*error_code) = NEGATIVE_NUMBER_IN_LIST;
 	    }
 	}
     }
@@ -3946,8 +3946,8 @@ Float *mus_vct_to_partials(vct *v, int *npartials, int *error_code)
   (*error_code) = NO_PROBLEM_IN_LIST;
 
   maxpartial = (int)(v->data[0]);
-  if (maxpartial <= 0)
-    (*error_code) = NON_POSITIVE_NUMBER_IN_LIST;
+  if (maxpartial < 0)
+    (*error_code) = NEGATIVE_NUMBER_IN_LIST;
   else
     {
       for (i = 2; i < len; i += 2)
@@ -3955,8 +3955,8 @@ Float *mus_vct_to_partials(vct *v, int *npartials, int *error_code)
 	  curpartial = (int)(v->data[i]);
 	  if (curpartial > maxpartial) 
 	    maxpartial = curpartial;
-	  if (curpartial <= 0)
-	    (*error_code) = NON_POSITIVE_NUMBER_IN_LIST;
+	  if (curpartial < 0)
+	    (*error_code) = NEGATIVE_NUMBER_IN_LIST;
 	}
     }
   if ((*error_code) != NO_PROBLEM_IN_LIST)
@@ -4066,7 +4066,7 @@ is the same in effect as " S_make_oscil
       orig_v = xen_make_vct(wsize, wave);
     }
   if (partials_allocated) {FREE(partials); partials = NULL;}
-  ge = mus_make_waveshape(freq, 0.0, wave, wsize);
+  ge = mus_make_waveshape(freq, 0.0, wave, wsize);  /* or initial-phase = M_PI_2 -- see note under make_polyshape */
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
   return(XEN_FALSE);
 }
@@ -4221,7 +4221,15 @@ is the same in effect as " S_make_oscil
   int i, ck, vals, csize = 0, npartials = 0;
   vct *v = NULL;
   XEN orig_v = XEN_FALSE;
-  Float freq = 440.0, phase = 0.0;
+  Float freq = 440.0, phase = 0.0; 
+  /* 
+   * if we followed the definition directly, the initial phase default would be M_PI_2 (pi/2) so that
+   *   we drive the Tn's with a cosine.  But I've always used sine instead, so I think I'll leave
+   *   it that way.  There is no difference in the output waveform except an overall phase
+   *   offset.  So, with sine, the phases rotate through cos sin -cos -sin... rather than being all cos,
+   *   but these add to exactly the same actual wave -- what you'd expect since Tn doesn't know
+   *   where we started.  This also does not affect "signification".
+   */
   Float *coeffs = NULL, *partials = NULL;
   mus_polynomial_t kind = MUS_CHEBYSHEV_FIRST_KIND;
 

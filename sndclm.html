@@ -1474,7 +1474,7 @@ odd harmonics are independent:
 
 <p>You can see there's another
 another annoying "gotcha":  the DC component can be arbitrarily large.
-If you don't counteract it in some way, you lose dynamic range, and you get a big click when the generator stops.
+If we don't counteract it in some way, we lose dynamic range, and we get a big click when the generator stops.
 In addition (as the right graph shows, although in this case the effect is minor), the peak amplitude is dependent on the index.  We can reduce this
 problem somewhat by changing the signs of the harmonics to follow the
 pattern + + - -: 
@@ -1508,8 +1508,21 @@ we get sum and difference tones, much as in complex FM.
          (* mx (<a class=quiet href="#polynomial">polynomial</a> pcoeffs (/ y mx)))))))
 </pre>
 
+<!-- TODO: find formulas for cheby with cos+cos and so on (polyshape(polyshape)) -->
+<!-- PERHAPS: red-dot pix as in fm.html, show as sound effect? -->
 
-<p>Looking back at the bl-saw instrument, why does the high order give numerical problems?  The polynomials are related to each other
+<!--
+;;; is this worth a graph?
+(with-sound ()
+  (let ((pcoeffs (partials->polynomial (vct 1 .5 2 .5)))
+	(gen1 (make-oscil 400.0))
+	(gen2 (make-oscil 600.0)))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i (* .5 (polynomial pcoeffs (* 0.5 (+ (oscil gen1) (oscil gen2))))) *output*))))
+-->
+
+<p>Looking back at the bl-saw instrument, why does a high harmonic number give numerical problems?  The polynomials are related to each other
 via the recursion: <img src="sceq17.png" alt="Cheby recurse" align=absmiddle>, so the first
 few polynomials are:
 </p>
@@ -1557,7 +1570,7 @@ the main reason to use polyshape is accuracy.  polyshape
 produces output that is almost as clean as the equivalent sum of oscils, whereas table-lookup 
 and waveshape, both of which interpolate into a sampled version of the desired function, are noisy.
 To make the difference almost appalling, here are spectra comparing a sum of oscils, polyshape,
-waveshape, and table-lookup.  The table size is 512, but that almost doesn't matter; you'd see the
+waveshape, and table-lookup.  The table size is 512, but that almost doesn't matter; you'd see a
 similar result with a huge table.  The FFT size is 262144, dolph-chebyshev window, and the y-axis
 is in dB, going down to -200 dB(!):
 </p>
@@ -1723,11 +1736,12 @@ Even more amusing is this algorithm:
 (define (sinsq c theta) (cossq c (- theta (* 0.5 pi))))
 (define (sqsq c theta) (sinsq c (- (sinsq c theta)))) ; a sharper square wave
 
-(let ((angle 0.0))
-  (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y)
-                 (let ((val (* 0.5 (+ 1.0 (sqsq 1.001 angle))))) 
-                   (set! angle (+ angle .02)) 
-                   val))))
+(with-sound ()
+  (let ((angle 0.0))
+    (do ((i 0 (1+ i))
+	 (angle 0.0 (+ angle 0.02)))
+	((= i 44100))
+      (outa i (* 0.5 (+ 1.0 (sqsq 1.001 angle))) *output*))))
 </pre>
 </td></tr></table>
 
@@ -1915,6 +1929,9 @@ kosine95
       (outa i (kosine-summation gen 0.95 1.0) *output*))))
 -->
 
+<!-- PERHAPS: table of ways to get 3 equal-amp cosines
+-->
+
 
 <br><br>
 
@@ -2021,6 +2038,10 @@ as "ncos" for "sum-of-cosines", and "nsin" for "sum-of-sines".
 It also provides <a href="#nrssb">nrssb</a>, the single side-band version of sine-summation.
 There are some surprising sounds lurking in sine-summation; a sonata for moped, anyone?
 </p>
+
+
+<!-- TODO: check out MLB's notion of an index here and in sum-of-sines cases
+-->
 
 <br><br>
 
@@ -2401,6 +2422,19 @@ Don't shy away from the sums to infinity just because you've heard shouting abou
 overwhelm r^k, so you can get away with very large "r"s in those cases; the center
 of the resultant spectrum is around r * freq.
 </p>
+
+<!-- TODO: 3D graphs of how these change with index (if possible), perhaps also accuracy comparisons? [at least sweep "k" in last]
+     TODO: also how they act with noise as input, or in feedback situations?
+     TODO: also 3D of moving formants in each of those cases?
+     TODO: also expl of polyshape stand-in
+     TODO: also can wave-train be used as frog/insect?  perhaps too clunky -- gives a way to do sqwv et al with "bias"
+     TODO: more intro to polyshape (show addition of scaled Tn)
+     TODO: show (if possible) how the Tn hka's -> Bessel in the sin(sin) case
+     TODO: grf showing ssb case in Tn Un
+     TODO: surely we can use hka summed to predict amp? and invert?
+     TODO: express the index Tn low harm order better
+     TODO: carrier in Tn? Tn(Tn as fm arg)? Tn(Tm) = Tnm
+-->
 
 <p>
 <a class=quiet href="sndscm.html#def-clm-struct">def-clm-struct</a> makes it easy to try out 

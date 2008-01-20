@@ -16699,7 +16699,7 @@ EDITS: 2
 		       (polynomial v0 0.0)
 		       (polynomial v0 1.0)
 		       (polynomial v0 2.0))))
-    (if (fneq (polynomial (vct 2.0) 0.5) 1.0) 
+    (if (fneq (polynomial (vct 0.0 2.0) 0.5) 1.0) 
 	(snd-display ";polynomial 2.0 * 0.5: ~A" (polynomial (vct 2.0) 0.5)))
     (let ((var (catch #t (lambda () (polynomial #f 1.0)) (lambda args args))))
       (if (not (eq? (car var) 'wrong-type-arg))
@@ -67033,9 +67033,7 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (make-polyshape 440.0 :partials '(1 1) :kind -1)))
 		(check-error-tag 'out-of-range (lambda () (make-polyshape 440.0 :partials '(1 1) :kind 3)))
 
-		(check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials (vct 0 0 1 1))))
 		(check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials (vct 1 1 -2 1))))
-		(check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials (list 0 0 1 1))))
 		(check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials (list 1 1 -2 1))))
 		(check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials (list 1 1 "hi" 1))))
 		(check-error-tag 'wrong-type-arg (lambda () (make-polyshape 440.0 :partials (list 1 1 2 "hi"))))

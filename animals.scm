@@ -108,6 +108,7 @@
 ;;; Macgillivray's warbler
 ;;; Wilson's warbler
 ;;; Magnolia warbler
+;;; Chestnut-sided warbler
 ;;; Western meadowlark
 ;;; Eastern meadowlark
 ;;; Ruby-crowned kinglet
@@ -123,6 +124,7 @@
 ;;; Black phoebe
 ;;; Say's phoebe
 ;;; Northern beardless tyrannulet
+;;; Great kiskadee
 ;;; Eastern bluebird
 ;;; Common yellowthroat
 ;;; Blue grosbeak
@@ -140,6 +142,7 @@
 ;;; Lesser nighthawk
 ;;; Common pauraque
 ;;; Mourning dove
+;;; Inca dove (2)
 ;;; Bobwhite
 ;;; California Quail
 ;;; Ruffed grouse
@@ -8131,6 +8134,8 @@
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; Sage Sparrow
+;;;
+;;; this is one of the best so far
 
 (definstrument (sage-sparrow beg amp)
   ;; calif 39 4
@@ -8426,6 +8431,269 @@
 ;(with-sound (:play #t) (dusky-flycatcher 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Inca dove
+
+(definstrument (inca-dove-1 beg amp)
+  ;; south 11 9.6
+  (let* ((start (seconds->samples beg))
+	 (dur 0.76)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.022 0.506 0.046 0.664 0.079 0.889 0.109 0.684 0.136 0.980 0.166 0.806 
+			   0.264 0.779 0.427 0.000 0.674 0.000 0.707 0.751 0.750 0.609 0.777 0.747 0.791 0.403 
+			   0.815 0.680 0.842 0.368 0.875 0.285 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.268 0.048 0.323 0.106 0.338 0.184 0.331 0.247 0.321 0.284 0.294 0.314 0.296 
+			   0.419 0.287 0.435 0.254 0.683 0.237 0.696 0.285 0.715 0.323 0.748 0.321 0.781 0.306 
+			   0.830 0.300 0.875 0.277 0.922 0.264 1.000 0.208)
+			 :duration dur :scaler (hz->radians 2850.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .99  3 .01)))
+	 (rndf (make-env '(0 0 .3 0 .4 1 .5 0 .65 0 .7 .1 .85 .1 1 1) :duration dur))
+	 (rnd (make-rand-interp 400 (hz->radians 100))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (+ (env frqf)
+					   (* (env rndf)
+					      (rand-interp rnd)))))
+	       *output*))))))
+
+;(with-sound (:play #t) (inca-dove-1 0 .5))
+
+
+(definstrument (inca-dove-2 beg amp)
+  ;; south 11 11.3 ("what the hell")
+  (let* ((start1 (seconds->samples beg))
+	 (pitch 5150)
+
+	 (dur1 .1)
+	 (stop1 (+ start1 (seconds->samples dur1)))
+	 (ampf1 (make-env '(0.000 0.000 0.354 0.256 0.417 0.212 0.543 0.031 0.579 0.101 0.608 0.606 0.635 0.822 
+			    0.666 0.744 0.724 0.046 0.749 0.637 0.783 0.981 0.821 0.966 0.869 0.660 0.905 0.746 
+			    0.930 0.702 0.972 0.197 1.000 0.000)
+			 :duration dur1 :scaler amp))
+	 (frqf1 (make-env '(0.000 0.092 0.082 0.115 0.201 0.137 0.351 0.143 0.477 0.140 0.553 0.162 0.624 0.166 
+			    0.675 0.159 0.770 0.166 0.838 0.162 0.933 0.156 1.000 0.156)
+			 :duration dur1 :scaler (hz->radians pitch)))
+
+	 (dur2 .07)
+	 (start2 (seconds->samples (+ beg .2)))
+	 (stop2 (+ start2 (seconds->samples dur2)))
+	 (ampf2 (make-env '(0.000 0.000 0.254 0.252 0.513 0.997 0.612 0.943 0.675 0.990 0.851 0.809 0.906 0.608 1.000 0.000)
+			 :duration dur2 :scaler amp))
+	 (frqf2 (make-env '(0.000 0.129 0.158 0.154 0.369 0.173 0.450 0.173 0.867 0.164 1.000 0.138)
+			 :duration dur2 :scaler (hz->radians pitch)))
+
+	 (dur3 .29)
+	 (start3 (seconds->samples (+ beg .3)))
+	 (stop3 (+ start3 (seconds->samples dur3)))
+	 (ampf3 (make-env '(0.000 0.000 0.017 0.084 0.043 1.000 0.049 0.964 0.065 0.202 0.071 0.311 0.084 1.000 
+			    0.096 0.851 0.109 0.363 0.123 0.920 0.140 0.790 0.150 0.308 0.162 0.931 0.166 0.896 
+			    0.177 0.414 0.186 0.859 0.190 0.794 0.197 0.264 0.204 0.890 0.209 0.858 0.216 0.218 
+			    0.228 0.934 0.233 0.885 0.243 0.331 0.248 0.776 0.253 0.877 0.264 0.372 0.274 0.881 
+			    0.277 0.869 0.287 0.128 0.290 0.481 0.292 0.789 0.296 0.848 0.302 0.660 0.307 0.182 
+			    0.311 0.478 0.313 0.831 0.318 0.950 0.322 0.881 0.330 0.175 0.334 0.559 0.338 0.896 
+			    0.341 0.953 0.350 0.438 0.356 0.829 0.362 0.952 0.364 0.887 0.374 0.309 0.387 0.942 
+			    0.391 0.930 0.396 0.796 0.407 0.912 0.421 0.272 0.428 0.633 0.431 0.847 0.436 0.878 
+			    0.446 0.222 0.452 0.811 0.459 0.967 0.468 0.825 0.475 0.942 0.480 0.896 0.491 0.153 
+			    0.506 0.919 0.512 0.867 0.523 0.482 0.532 0.581 0.544 0.402 0.551 0.633 0.559 0.767 
+			    0.563 0.740 0.575 0.485 0.587 0.638 0.597 0.656 0.606 0.590 0.616 0.477 0.627 0.025 
+			    0.634 0.213 0.642 0.301 0.665 0.251 0.673 0.156 0.687 0.276 0.717 0.159 0.725 0.207 
+			    0.735 0.094 0.749 0.157 0.769 0.108 0.799 0.155 0.827 0.115 0.858 0.142 0.876 0.070 1.000 0.000)
+			  :duration dur3 :scaler amp))
+	 (frqf3 (make-env '(0.000 0.172 0.135 0.191 0.199 0.192 0.266 0.176 0.325 0.173 0.384 0.182 0.423 0.186 
+			    0.614 0.173 0.896 0.145 1.000 0.138)
+			 :duration dur3 :scaler (hz->radians pitch)))
+
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .99  3 .01)))
+	 (rnd (make-rand-interp 300 (hz->radians 50))))
+    (run
+     (lambda ()
+       (do ((i start1 (1+ i)))
+	   ((= i stop1))
+	 (outa i (* (env ampf1) (polyshape gen1 1.0 (env frqf1))) *output*))
+
+       (do ((i start2 (1+ i)))
+	   ((= i stop2))
+	 (outa i (* (env ampf2) (polyshape gen1 1.0 (env frqf2))) *output*))
+
+       (do ((i start3 (1+ i)))
+	   ((= i stop3))
+	 (outa i (* (env ampf3) (polyshape gen1 1.0 (+ (env frqf3) (rand-interp rnd)))) *output*))))))
+
+;(with-sound (:play #t) (inca-dove-2 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Great kiskadee
+
+(definstrument (great-kiskadee beg amp)
+  ;; south 37 16.5
+  ;; note #1
+  (let* ((start (seconds->samples beg))
+	 (dur 0.123)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.013 0.068 0.026 0.000 0.048 0.030 0.053 0.211 0.068 0.000 0.083 0.000 
+			   0.093 0.184 0.098 0.479 0.114 0.000 0.125 0.000 0.135 0.216 0.140 0.526 0.159 0.000 
+			   0.172 0.000 0.174 0.159 0.179 0.252 0.185 0.625 0.190 0.578 0.205 0.000 0.218 0.066 
+			   0.225 0.301 0.230 0.715 0.240 0.592 0.250 0.000 0.260 0.077 0.280 0.800 0.295 0.000 
+			   0.305 0.099 0.324 0.822 0.341 0.000 0.351 0.137 0.370 0.855 0.377 0.660 0.389 0.000 
+			   0.396 0.110 0.405 0.397 0.414 0.868 0.422 0.751 0.442 0.071 0.457 0.562 0.461 0.827 
+			   0.470 0.759 0.488 0.438 0.496 0.863 0.506 0.822 0.519 0.666 0.538 0.737 0.553 0.737 
+			   0.567 0.871 0.619 0.973 0.650 0.847 0.694 0.375 0.766 0.238 0.789 0.353 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.357 0.048 0.353 0.056 0.407 0.098 0.353 0.105 0.395 0.142 0.347 0.145 0.390 
+			   0.183 0.353 0.194 0.403 0.231 0.374 0.240 0.420 0.273 0.372 0.285 0.434 0.317 0.388 
+			   0.332 0.438 0.364 0.376 0.382 0.438 0.406 0.384 0.427 0.447 0.454 0.370 0.472 0.432 
+			   0.489 0.436 0.500 0.399 0.527 0.418 0.561 0.420 0.647 0.359 0.711 0.317 0.736 0.313 
+			   .9 .2 .95 .15)
+			 :duration dur :scaler (hz->radians (* 0.5 8280.0))))
+	 (gen1 (make-polyshape 0.0 :partials (normalize-partials (list 1 .17  3 .1  4 .1  5 .14 6 .01))))
+	 (ampf1 (make-env '(0 .1 .3 1 .5 1 .8 0 1 0) :duration dur))
+	 (gen2 (make-polyshape 0.0 :partials (normalize-partials (list 2 .95  3 .04  4 .03)))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (env frqf)))
+	   (outa i (* (env ampf)
+		      (+ (* (env ampf1)
+			    (polyshape gen1 1.0 frq))
+			 (polyshape gen2 1.0 frq)))
+	       *output*))))))
+
+
+  ;; note #2
+  (let* ((start (seconds->samples (+ beg .2)))
+	 (dur 0.38)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.024 0.225 0.147 0.534 0.263 0.731 0.406 0.881 0.597 0.873 0.772 0.754 
+			   0.897 0.503 0.926 0.582 1.000 0.000)
+			 :duration dur :scaler (* 0.8 amp)))
+	 (frqf (make-env '(0.000 0.195 0.066 0.286 0.086 0.305 0.120 0.365 0.187 0.417 0.345 0.461 0.525 0.483 
+			   0.748 0.450 0.853 0.429 0.919 0.392 0.957 0.328 0.971 0.253 1.000 0.214)
+			 :duration dur :scaler (hz->radians (* 0.5 5500.0))))
+	 (gen1 (make-polyshape 0.0 :partials (normalize-partials (list 3 .01  4 .01  5 .01  6 .01))))
+	 (gen2 (make-polyshape 0.0 :partials (normalize-partials (list 1 .08  2 1.0  3 .06  5 .02  7 .007  8 .003  10 .001))))
+	 (ampf1 (make-env '(0 1 .07 1  .15 .1 .85 .1 .9 1 1 1) :duration dur))
+	 (ampf2 (make-env '(0 0 .3 1 .8 1 1 0) :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (env frqf)))
+	   (outa i (* (env ampf)
+		      (+ (* (env ampf1)
+			    (polyshape gen1 1.0 frq))
+			 (* (env ampf2)
+			    (polyshape gen2 1.0 frq))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (great-kiskadee 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Chestnut-sided warbler
+
+(define (chestnut-sided-warbler beg1 amp1)
+  ;; east 12 3.5
+
+  (definstrument (chestnut-sided-warbler-1 beg amp)
+    ;; 1st 6 notes
+    (let* ((start (seconds->samples beg))
+	   (dur 0.11)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.188 0.446 0.230 0.412 0.276 0.190 0.298 0.330 0.302 0.158 0.309 0.278 
+			     0.312 0.037 0.324 0.126 0.367 0.077 0.400 0.261 0.459 0.880 0.482 0.710 0.493 0.798 
+			     0.503 0.628 0.519 0.998 0.534 0.591 0.559 0.843 0.565 0.769 0.579 0.835 0.601 0.562 
+			     0.622 0.663 0.641 0.581 0.642 0.689 0.660 0.465 0.682 0.601 0.707 0.678 0.724 0.603 
+			     0.746 0.668 0.758 0.589 0.768 0.682 0.814 0.549 0.833 0.638 0.865 0.582 0.881 0.618 
+			     0.915 0.527 0.965 0.143 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.262 0.127 0.273 0.263 0.273 0.294 0.320 0.318 0.383 0.346 0.410 0.373 0.386 
+			     0.396 0.353 0.421 0.339 0.458 0.336 0.490 0.306 0.516 0.303 0.534 0.287 0.598 0.267 
+			     0.689 0.245 0.806 0.223 1.000 0.212)
+			   :duration dur :scaler (hz->radians 22000.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .99  2 .01))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+
+  (definstrument (chestnut-sided-warbler-2 beg amp)
+    ;; notes 7 and 8
+    (let* ((start (seconds->samples beg))
+	   (dur 0.17)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.213 0.394 0.239 0.394 0.319 0.669 0.337 0.584 0.354 0.683 0.369 0.620 
+			     0.381 0.705 0.387 0.556 0.398 0.642 0.419 0.683 0.468 0.576 0.490 0.424 0.513 0.576 
+			     0.589 0.212 0.644 0.380 0.693 0.609 0.708 0.537 0.721 0.402 0.729 0.515 0.754 0.620 
+			     0.767 0.526 0.785 0.749 0.812 0.942 0.827 0.675 0.835 0.733 0.853 0.573 0.863 0.369 
+			     0.876 1.000 0.881 0.565 0.887 0.893 0.910 0.857 0.919 0.672 0.939 0.774 0.950 0.551 
+			     0.968 0.477 0.982 0.050 0.989 0.102 1.000 0.000)
+			   :duration dur :scaler (* .9 amp)))
+	   (frqf (make-env '(0.000 0.129 0.067 0.160 0.129 0.174 0.184 0.176 0.273 0.196 0.351 0.212 0.390 0.229 
+			     0.426 0.251 0.470 0.270 0.503 0.253 0.538 0.204 0.563 0.182 0.594 0.168 0.633 0.176 
+			     0.688 0.218 0.715 0.223 0.733 0.240 0.750 0.281 0.794 0.303 0.844 0.314 0.894 0.320 
+			     0.945 0.336 1.000 0.325)
+			   :duration dur :scaler (hz->radians 22000.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .98  2 .01 3 .005  4 .003))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+
+  (definstrument (chestnut-sided-warbler-3 beg amp)
+    ;; last note
+    (let* ((start (seconds->samples beg))
+	   (dur 0.19)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.015 0.036 0.074 0.344 0.105 0.331 0.111 0.427 0.137 0.455 0.152 0.567 
+			     0.166 0.466 0.178 0.840 0.194 0.749 0.207 0.884 0.232 0.992 0.239 0.953 0.245 0.763 
+			     0.255 0.895 0.260 0.749 0.272 0.862 0.286 0.650 0.295 0.744 0.302 0.636 0.334 0.501 
+			     0.352 0.711 0.375 0.730 0.384 0.559 0.395 0.620 0.404 0.576 0.419 0.656 0.443 0.540 
+			     0.462 0.559 0.473 0.490 0.487 0.534 0.566 0.267 0.582 0.320 0.645 0.154 0.714 0.113 
+			     1.000 0.000)
+			   :duration dur :scaler (* .7 amp)))
+	   (frqf (make-env '(0.000 0.416 0.039 0.419 0.063 0.410 0.092 0.386 0.127 0.342 0.167 0.314 0.229 0.278 
+			     0.334 0.245 0.497 0.198 0.579 0.179 0.628 0.176 0.675 0.171 0.731 0.160 0.841 0.152 
+			     1.000 0.118)
+			   :duration dur :scaler (hz->radians 22000.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .98  2 .01)))) ; there are 3 to 5, but they alias at 44KHz
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+
+  (let ((amps (vct .1 .3 .6  .8 .9 1.0))
+	(begs (vct 0.0 0.156 .311 .454  .594 .731)))
+    (do ((call 0 (1+ call)))
+	((= call 6))
+      (chestnut-sided-warbler-1 (+ beg1 (vct-ref begs call))
+				(* amp1 (vct-ref amps call)))))
+
+
+  (chestnut-sided-warbler-2 (+ beg1 .88) amp1)
+  (chestnut-sided-warbler-2 (+ beg1 1.09) amp1)
+
+  (chestnut-sided-warbler-3 (+ beg1 1.3) amp1))
+
+;(with-sound (:play #t) (chestnut-sided-warbler 0 .5))
+
 
 
 ;;; ================ calling-all-animals ================
@@ -8604,7 +8872,11 @@
   (hairy-woodpecker              (+ beg 208.0) .25)
   (pacific-slope-flycatcher      (+ beg 208.5) .25)
   (dusky-flycatcher              (+ beg 209.0) .25)
-  (+ beg 209.5))
+  (inca-dove-1                   (+ beg 209.5) .25)
+  (inca-dove-2                   (+ beg 210.5) .25)
+  (great-kiskadee                (+ beg 211.0) .25)
+  (chestnut-sided-warbler        (+ beg 212.0) .25)
+  (+ beg 213.5))
 
 
 (define (calling-all-animals)
