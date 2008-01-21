@@ -1157,9 +1157,9 @@ The basic idea is:
 </p>
 <img src="sceq16.png" alt="Cheby eqs" hspace=40>
 <p>
-We can add scaled polynomials to get the spectrum we want;
-in the simplest use, an inexpensive additive synthesis.  We can vary the peak amplitude of the
-cos x to get effects similar to those of FM.  
+We can add scaled Tns (polynomials) to get the spectrum we want, producing
+in the simplest case an inexpensive additive synthesis.  We can vary the peak amplitude of the
+cos x to get effects similar to those of FM. 
 </p>
 
 <p>
@@ -1450,7 +1450,7 @@ odd harmonics are independent:
 <table border=0 hspace=20>
 <tr><td colspan=2>
 <pre>
-  (with-sound ()
+  (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
     (let ((gen (<em class=red>make-polyshape</em> 100.0 :partials (list 11 1 20 1)))
 	  (ampf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 20 1 21 0) :scaler .4 :end 88200)))
 	  (indf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 1.1 1) :end 88200)))
@@ -1494,9 +1494,34 @@ pattern + + - -:
 -->
 
 <p>
-On a related topic, if we drive the sum of Chebyshev polynomials with a complex signal
-(hoping to brighten a sound, for example), 
-we get sum and difference tones, much as in complex FM.
+On a related topic, if we drive the sum of Chebyshev polynomials with more than one sinusoid,
+we get sum and difference tones, much as in complex FM:
+</p>
+
+<table border=1 cellpadding=10 hspace=20>
+<tr><td>
+<center>T5 driven with sinusoids at 100Hz and 2000Hz</center>
+<hr>
+<pre>
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
+  (let ((pcoeffs (<em class=red>partials-&gt;polynomial</em> (vct 5 1)))
+	(gen1 (<a class=quiet href="#make-oscil">make-oscil</a> 100.0))
+	(gen2 (<a class=quiet href="#make-oscil">make-oscil</a> 2000.0)))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (<a class=quiet href="#outa">outa</a> i (<em class=red>polynomial</em> pcoeffs 
+                (+ (* 0.5 (<a class=quiet href="#oscil">oscil</a> gen1))
+		   (* 0.5 (<a class=quiet href="#oscil">oscil</a> gen2))))
+	    *output*))))
+</pre>
+</td>
+<td>
+<img src="crosswave.png">
+</td></tr></table>
+
+<p>This kind of output is typical; I get the impression that the cross products are
+much more noticeable here than in FM.  It's possible to use this as a way to
+"brighten" a sound file:
 </p>
 
 <pre>
@@ -1508,19 +1533,15 @@ we get sum and difference tones, much as in complex FM.
          (* mx (<a class=quiet href="#polynomial">polynomial</a> pcoeffs (/ y mx)))))))
 </pre>
 
-<!-- TODO: find formulas for cheby with cos+cos and so on (polyshape(polyshape)) -->
-<!-- PERHAPS: red-dot pix as in fm.html, show as sound effect? -->
+<p>but watch out for clicks from the DC component if any of the "n" in the Tn are even.
+When I use this idea, I either use only odd numbered partials in the partials-&gt;polynomial list,
+or add an amplitude envelope to make sure the result ends at 0.  "distort" might be a better
+description than "brighten".
+</p>
 
-<!--
-;;; is this worth a graph?
-(with-sound ()
-  (let ((pcoeffs (partials->polynomial (vct 1 .5 2 .5)))
-	(gen1 (make-oscil 400.0))
-	(gen2 (make-oscil 600.0)))
-    (do ((i 0 (1+ i)))
-	((= i 44100))
-      (outa i (* .5 (polynomial pcoeffs (* 0.5 (+ (oscil gen1) (oscil gen2))))) *output*))))
--->
+<!-- SOMEDAY: find formulas for cheby with cos+cos and so on (polyshape(polyshape)) -- this is really complicated! -->
+<!-- PERHAPS: show t5 and sin5 and their expansions for comparison of cross products -->
+
 
 <p>Looking back at the bl-saw instrument, why does a high harmonic number give numerical problems?  The polynomials are related to each other
 via the recursion: <img src="sceq17.png" alt="Cheby recurse" align=absmiddle>, so the first
@@ -2034,9 +2055,11 @@ goes up, "a" goes down (to avoid foldover, or whatever).
 
 <p>
 "sine-summation" is a borderline vacuous name; generators.scm defines the alternate name "nrsin", as well
-as "ncos" for "sum-of-cosines", and "nsin" for "sum-of-sines".
+as "ncos" for "sum-of-cosines" (which ought to be "sum-of-equal-cosines"), and "nsin" for "sum-of-sines"
+("sum-of-equal-sines").  
 It also provides <a href="#nrssb">nrssb</a>, the single side-band version of sine-summation.
-There are some surprising sounds lurking in sine-summation; a sonata for moped, anyone?
+Similary, "oscil" is a contentious name, since some people think it means "table-lookup",
+but I can't think of a good replacement.
 </p>
 
 
@@ -2427,7 +2450,7 @@ of the resultant spectrum is around r * freq.
      TODO: also how they act with noise as input, or in feedback situations?
      TODO: also 3D of moving formants in each of those cases?
      TODO: also expl of polyshape stand-in
-     TODO: also can wave-train be used as frog/insect?  perhaps too clunky -- gives a way to do sqwv et al with "bias"
+     TODO: also can wave-train be used as frog/insect?  perhaps too clunky and noisy -- gives a way to do sqwv et al with "bias"
      TODO: more intro to polyshape (show addition of scaled Tn)
      TODO: show (if possible) how the Tn hka's -> Bessel in the sin(sin) case
      TODO: grf showing ssb case in Tn Un
