@@ -71,8 +71,8 @@
 	 (cr (make-oscil freq))                     ; our carrier
          (md (make-oscil (* freq mc-ratio)))        ; our modulator
          (fm-index (hz->radians (* index mc-ratio freq)))
-         (ampf (make-env (or amp-env '(0 0 .5 1 1 0)) :scaler amp :end end))
-         (indf (make-env (or index-env '(0 0 .5 1 1 0)) :scaler fm-index :end end)))
+         (ampf (make-env (or amp-env '(0 0 .5 1 1 0)) :scaler amp :duration dur))
+         (indf (make-env (or index-env '(0 0 .5 1 1 0)) :scaler fm-index :duration dur)))
     (run
       (lambda ()
         (do ((i start (1+ i)))
@@ -122,7 +122,7 @@
 	 (end (+ start len))
 	 (arr (make-vector 3)))
     (vector-set! arr 0 (make-oscil freq))
-    (vector-set! arr 1 (make-env '(0 0 1 1) :scaler amp :end len))
+    (vector-set! arr 1 (make-env '(0 0 1 1) :scaler amp :duration dur))
     (vector-set! arr 2 (make-oscil (* freq 2)))
     (run
      (lambda ()
@@ -780,8 +780,8 @@
 	 (start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur)))
 	 (loc (make-move-sound (list start end 1 0
-				     (make-delay 32) (make-env '(0 0 1 1) :end 1000) (make-env '(0 0 1 1) :end 1000)
-				     (vector (make-delay 32)) (vector (make-env '(0 0 1 1) :end 1000)) 
+				     (make-delay 32) (make-env '(0 0 1 1) :length 1000) (make-env '(0 0 1 1) :length 1000)
+				     (vector (make-delay 32)) (vector (make-env '(0 0 1 1) :length 1000)) 
 				     (vector (make-delay 32)) (vector 0 1))
 			       *output*)))
     (run
@@ -1816,8 +1816,8 @@
 
 (define (or1)
   "(or1) test function for or"
-  (let ((e1 (make-env '(0 0 1 1) :end 10))
-	(e2 (make-env '(0 1 1 0) :end 10))
+  (let ((e1 (make-env '(0 0 1 1) :length 10))
+	(e2 (make-env '(0 1 1 0) :length 10))
 	(e3 #f)
 	(ok1 0.0))
     (run
@@ -1847,8 +1847,8 @@
 
 (define (or2)
   "(or2) test function for or"
-  (let ((e1 (make-env '(0 0 1 1) :end 10))
-	(e2 (make-env '(0 1 1 0) :end 10))
+  (let ((e1 (make-env '(0 0 1 1) :length 10))
+	(e2 (make-env '(0 1 1 0) :length 10))
 	(e3 #f)
 	(ok1 0.0)
 	(oki 0)
@@ -1886,7 +1886,7 @@
 
 (define (or3)
   "(or3) test function for or"
-  (let ((e1 (make-env '(0 0 1 1) :end 10))
+  (let ((e1 (make-env '(0 0 1 1) :length 10))
 	(i1 (make-vector 3 32))
 	(f1 (make-vct 3 3.14))
 	(i2 (make-vector 3 3))
@@ -1918,8 +1918,8 @@
 
 (define (or4)
   "(or4) test function for or"
-  (let ((e1 (make-env '(0 0 1 1) :end 10))
-	(e2 (make-env '(0 1 1 0) :end 10))
+  (let ((e1 (make-env '(0 0 1 1) :length 10))
+	(e2 (make-env '(0 1 1 0) :length 10))
   	(i1 (make-vector 3 32))
 	(f1 (make-vct 3 3.14))
 	(i2 (make-vector 3 3))
@@ -2770,7 +2770,7 @@
 	 (end (+ start (seconds->samples dur)))
 	 (loc (make-move-sound (list start end 4 0
 	      	   		     (make-delay 12) 
-				     (make-env '(0 0 10 1) :end dur)
+				     (make-env '(0 0 10 1) :duration dur)
 				     #f
 				     (make-vector 4 #f)
 				     (vector (make-env '(0 0 1 1 2 0 3 0 4 0) :duration dur)
@@ -2823,7 +2823,7 @@
 	 (dur (mus-sound-frames file))
 	 (end (+ beg dur))
 	 (rd (make-readin file))
-	 (menv (make-env move-env :end dur)))
+	 (menv (make-env move-env :length dur)))
     (let ((start-frq (env menv)))
       (do ((i 0 (1+ i)))
 	  ((= i num-formants))
@@ -2846,7 +2846,7 @@
 (define (test-filter flt)
   (let* ((osc (make-oscil 0.0))
 	 (samps (seconds->samples 0.5))
-	 (ramp (make-env '(0 0 1 1) :scaler (hz->radians samps) :end samps)))
+	 (ramp (make-env '(0 0 1 1) :scaler (hz->radians samps) :length samps)))
     (with-sound ()
       (do ((i 0 (1+ i)))
 	  ((= i samps))
@@ -3204,7 +3204,7 @@
 
   (with-sound ()
 	      (let ((gen (make-sndclm-expcs :frequency 100 :et 0.1))
-		    (t-env (make-env '(0 .1 1 2) :end 10000)))
+		    (t-env (make-env '(0 .1 1 2) :length 10000)))
 		(run (lambda ()
 		(do ((i 0 (1+ i)))
 		    ((= i 10000))

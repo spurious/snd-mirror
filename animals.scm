@@ -3325,7 +3325,7 @@
 			       (bfrqf (make-env (if gliss-up 
 						    (list 0 buzz-low .5 buzz-mid 1 buzz-high)
 						    (list 0 buzz-high .5 buzz-mid 1 buzz-low))
-						:end buzz-size 
+						:length buzz-size 
 						:scaler (hz->radians 1.0))))
 			   (do ((i 0 (1+ i)))
 			       ((= i buzz-size))
@@ -3335,7 +3335,7 @@
 			       (bampf (make-env (if gliss-up
 						    '(0 0 1 1 2.5 .7 3 0 3.5 0)
 						    '(0 0 .5 1 2 1 3 0 3.5 0))
-						:end buzz-size)))
+						:length buzz-size)))
 			   (do ((i 0 (1+ i)))
 			       ((= i buzz-size))
 			     (vct-set! v i (env bampf)))
@@ -3625,7 +3625,7 @@
 	 (pulse-ampf (make-env '(0.000 0.000  0.20 0.625  0.511 0.985  0.663 1.000  0.802 0.940  0.906 0.731  0.961 0.157  1.000 0.000)
 			       :duration pulse-dur))
 	 (pulse-frqf (make-env '(0 0  .3 .9  .6 1  .8 1  1 .75) :duration pulse-dur :scaler (hz->radians 300)))
-	 (pulse-off (make-env '(0 1120 .25 1140 .4 1190 .9 1150) :end 17))
+	 (pulse-off (make-env '(0 1120 .25 1140 .4 1190 .9 1150) :length 18))
 	 (pulser (make-pulse-train (/ 1.0 pulse-space))))
     (run
      (lambda ()

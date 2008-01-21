@@ -4628,10 +4628,10 @@ static XEN g_env(XEN obj)
 
 static XEN g_make_env(XEN arglist)
 {
-  #define H_make_env "(" S_make_env " :envelope (:scaler 1.0) :duration (:offset 0.0) (:base 1.0) :end :dur): \
+  #define H_make_env "(" S_make_env " :envelope (:scaler 1.0) :duration (:offset 0.0) (:base 1.0) :length :dur): \
 return a new envelope generator.  'envelope' is a list or vct of break-point pairs. To create the envelope, \
 these points are offset by 'offset', scaled by 'scaler', and mapped over the time interval defined by \
-either 'duration' (seconds) or 'end' (samples).  If 'base' is 1.0, the connecting segments \
+either 'duration' (seconds) or 'length' (samples).  If 'base' is 1.0, the connecting segments \
 are linear, if 0.0 you get a step function, and anything else produces an exponential connecting segment."
 
   mus_any *ge;

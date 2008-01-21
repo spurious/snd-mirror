@@ -1294,9 +1294,9 @@ tracks the RMS signal.  An example is worth a zillion words:
         (let ((rg (make-rmsgain))
 	      (rg1 (make-rmsgain 40))
 	      (rg2 (make-rmsgain 2))
-	      (e (<a class=quiet href="sndclm.html#make-env">make-env</a> '(0 0 1 1 2 0) :end 10000))
-	      (e1 (<a class=quiet href="sndclm.html#make-env">make-env</a> '(0 0 1 1) :end 10000))
-	      (e2 (<a class=quiet href="sndclm.html#make-env">make-env</a> '(0 0 1 1 2 0 10 0) :end 10000))
+	      (e (<a class=quiet href="sndclm.html#make-env">make-env</a> '(0 0 1 1 2 0) :length 10000))
+	      (e1 (<a class=quiet href="sndclm.html#make-env">make-env</a> '(0 0 1 1) :length 10000))
+	      (e2 (<a class=quiet href="sndclm.html#make-env">make-env</a> '(0 0 1 1 2 0 10 0) :length 10000))
 	      (o (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a> 440.0)))
 	  (do ((i 0 (1+ i)))
 	      ((= i 10000))
@@ -2265,7 +2265,7 @@ by <a href="#maxfdoc">maxf</a>.
 (<a class=quiet href="#wsdoc">with-sound</a> ()    ; sweep center freq from 100Hz to 2000Hz
   (let ((rd (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 "oboe.snd")) 
         (m (<em class=red>make-mfilter</em> :decay .99 :frequency 1000)) 
-        (e (<a class=quiet href="sndclm.html#make-env">make-env</a> '(0 100 1 2000) :end 10000))) 
+        (e (<a class=quiet href="sndclm.html#make-env">make-env</a> '(0 100 1 2000) :length 10000))) 
     (run (lambda () 
 	   (do ((i 0 (1+ i))) 
 	       ((= i 10000))
@@ -8776,7 +8776,7 @@ in fmv.scm, the simpler one being:
 	      freq amp 
 	      :amp-env (let ((e (<a class=quiet href="sndclm.html#make-env">make-env</a> (or amp-env '(0 0 1 1 2 0)) 
 					  :scaler amp 
-					  :end dur)))
+					  :length dur)))
 			 (lambda () (<a class=quiet href="sndclm.html#env">env</a> e)))))
 	  (data (<a class=quiet href="extsnd.html#channeltovct">channel-&gt;vct</a> beg dur)))
       (do ((i 0 (1+ i)))
@@ -10219,9 +10219,9 @@ an upward ramp and a downward ramp, then zips them together:
       (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (- 1.0 (* i .0001))))
     (<a class=quiet href="extsnd.html#vcttochannel">vct-&gt;channel</a> data 0 10000 1)
     (let* ((dur (<a class=quiet href="extsnd.html#frames">frames</a>))
-	   (zp (<em class=red>make-zipper</em> (<a class=quiet href="sndclm.html#make-env">make-env</a> '(0 0 1 1) :end dur)
+	   (zp (<em class=red>make-zipper</em> (<a class=quiet href="sndclm.html#make-env">make-env</a> '(0 0 1 1) :length dur)
 			    0.05
-			    (<a class=quiet href="sndclm.html#make-env">make-env</a> (list 0 (* (<a class=quiet href="extsnd.html#srate">srate</a>) 0.05)) :end dur)))
+			    (<a class=quiet href="sndclm.html#make-env">make-env</a> (list 0 (* (<a class=quiet href="extsnd.html#srate">srate</a>) 0.05)) :length dur)))
 	  (reader0 (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 0 0))
 	  (reader1 (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 1 0)))
       (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (val) (<em class=red>zipper</em> zp reader0 reader1))))))

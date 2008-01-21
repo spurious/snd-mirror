@@ -1150,7 +1150,7 @@ an oscil or a sawtooth-wave:
 (define zcomb
   (lambda (scaler size pm)
     (let ((cmb (<a class=quiet href="sndclm.html#make-comb">make-comb</a> scaler size :max-size (+ size 1 (<a class=quiet href="sndscm.html#maxenvelope">max-envelope</a> pm 0))))
-	  (penv (<a class=quiet href="sndclm.html#make-env">make-env</a> pm :end (<a class=quiet href="extsnd.html#frames">frames</a>))))
+	  (penv (<a class=quiet href="sndclm.html#make-env">make-env</a> pm :length (<a class=quiet href="extsnd.html#frames">frames</a>))))
       (lambda (x) (<a class=quiet href="sndclm.html#comb">comb</a> cmb x (env penv))))))
 
 ; (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (zcomb .8 32 '(0 0 1 10)))
@@ -1174,7 +1174,7 @@ an oscil or a sawtooth-wave:
 (define moving-formant
   (lambda (radius move)
     (let ((frm (<a class=quiet href="sndclm.html#make-formant">make-formant</a> radius (cadr move)))
-	  (menv (<a class=quiet href="sndclm.html#make-env">make-env</a> move :end (<a class=quiet href="extsnd.html#frames">frames</a>))))
+	  (menv (<a class=quiet href="sndclm.html#make-env">make-env</a> move :length (<a class=quiet href="extsnd.html#frames">frames</a>))))
       (lambda (x)
         (let ((val (<a class=quiet href="sndclm.html#formant">formant</a> frm x)))
 	  (set! (<a class=quiet href="sndclm.html#mus-frequency">mus-frequency</a> frm) (env menv))

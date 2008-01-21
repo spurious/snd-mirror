@@ -129,7 +129,7 @@
 		      (error 0.01))
   (make-env :envelope (db-envelope envelope cutoff error)
 	    :scaler scaler :offset offset
-	    :base base :duration duration :end end))
+	    :base base :duration duration :length (1+ end)))
 
 ;;; Pitch envelopes (y units are semitone and octave intervals)
 
@@ -152,7 +152,7 @@
 			     (error 0.01))
   (make-env :envelope (semitones-envelope envelope around error)
 	    :scaler scaler :offset offset
-	    :base base :duration duration :end end))
+	    :base base :duration duration :length (1+ end)))
 
 (define* (octaves-envelope envelope :optional (around 1.0) (error 0.01))
   (exp-envelope envelope
@@ -173,7 +173,7 @@
 			   (error 0.01))
   (make-env :envelope (octaves-envelope envelope around error)
 	    :scaler scaler :offset offset
-	    :base base :duration duration :end end))
+	    :base base :duration duration :length (1+ end)))
 
 
 ;;; *************************

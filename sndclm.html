@@ -608,7 +608,7 @@ This means that the frequency envelope y values should be passed through <a href
 <pre>
 (define (simp start end freq amp frq-env)
   (let ((os (make-oscil freq)) 
-        (frqe (<a class=quiet href="#make-env">make-env</a> frq-env :end (- end start) :scaler (<em class=red>hz->radians</em> freq))))
+        (frqe (<a class=quiet href="#make-env">make-env</a> frq-env :length (1+ (- end start)) :scaler (<em class=red>hz->radians</em> freq))))
     (do ((i start (1+ i))) 
         ((= i end))
       (<a class=quiet href="#outa">outa</a> i (* amp (oscil os (env <em class=red>frqe</em>))) *output*))))
@@ -916,7 +916,7 @@ Here's a function that uses these methods to apply an envelope over and over:
 		     (<em class=red>mus-reset</em> e))     ; start env again (default is to stick at the last value)
 		 (* y (env e)))))
 
-;;; (strum (make-env (list 0 0 1 1 10 .6 25 .3 100 0) :end 2000))
+;;; (strum (make-env (list 0 0 1 1 10 .6 25 .3 100 0) :length 2000))
 </pre>
 </td></tr></table>
 
@@ -1452,8 +1452,8 @@ odd harmonics are independent:
 <pre>
   (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
     (let ((gen (<em class=red>make-polyshape</em> 100.0 :partials (list 11 1 20 1)))
-	  (ampf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 20 1 21 0) :scaler .4 :end 88200)))
-	  (indf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 1.1 1) :end 88200)))
+	  (ampf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 20 1 21 0) :scaler .4 :length 88200)))
+	  (indf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 1.1 1) :length 88200)))
       (do ((i 0 (1+ i)))
 	  ((= i 88200))
         (<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#env">env</a> ampf) (<em class=red>polyshape</em> gen (<a class=quiet href="#env">env</a> indf))) *output*))))
@@ -1900,7 +1900,7 @@ matter what.  It is possible to vary the spectrum smoothly:
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td><pre>
 (let ((os (<em class=red>make-sum-of-cosines</em> 4 100.0))
-      (pow (make-env '(0 1.0 1 30.0) :end 10000))) ; our "index" envelope in FM jargon
+      (pow (make-env '(0 1.0 1 30.0) :length 10000))) ; our "index" envelope in FM jargon
    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) 
 		  (let ((val (<em class=red>sum-of-cosines</em> os 0.0))) 
 		    (* (signum val) 
@@ -3304,7 +3304,7 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
 (define (test-filter flt)
   (let* ((osc (<a class=quiet href="#make-oscil">make-oscil</a> 0.0))
 	 (samps (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> 0.5))
-	 (ramp (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) :scaler (<a class=quiet href="#hztoradians">hz-&gt;radians</a> samps) :end samps)))
+	 (ramp (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) :scaler (<a class=quiet href="#hztoradians">hz-&gt;radians</a> samps) :length samps)))
     (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
       (do ((i 0 (1+ i)))
 	  ((= i samps))
@@ -3406,7 +3406,7 @@ If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more
 	 (dur (<a class=quiet href="extsnd.html#mussoundframes">mus-sound-frames</a> file))
 	 (end (+ beg dur))
 	 (rd (<a class=quiet href="#make-readin">make-readin</a> file))
-	 (menv (<a class=quiet href="#make-env">make-env</a> move-env :end dur)))
+	 (menv (<a class=quiet href="#make-env">make-env</a> move-env :length dur)))
     (let ((start-frq (<a class=quiet href="#env">env</a> menv)))
       (do ((i 0 (1+ i)))
 	  ((= i num-formants))
@@ -4909,7 +4909,7 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
 	 (loc (<em class=red>make-move-sound</em> (list start end 4 0
 	      	   		     (<a class=quiet href="#make-delay">make-delay</a> 12) 
-				     (<a class=quiet href="#make-env">make-env</a> '(0 0 10 1) :end dur)
+				     (<a class=quiet href="#make-env">make-env</a> '(0 0 10 1) :length dur)
 				     #f
 				     (make-vector 4 #f)
 				     (vector (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 2 0 3 0 4 0) :duration dur)
@@ -5102,7 +5102,7 @@ sceq35:
 <pre>
 (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:play #t)
   (let ((gen (make-j0evencos 100.0 0.0))
-	(indf (<a class=quiet href="#make-env">make-env</a> '(0 10 1 0) :end 30000))
+	(indf (<a class=quiet href="#make-env">make-env</a> '(0 10 1 0) :length 30000))
 	(carrier (<a class=quiet href="#make-oscil">make-oscil</a> 2000.0)))
     (run 
      (lambda ()
@@ -5502,7 +5502,7 @@ The bump instrument uses rssb-interp: <code>bump beg dur freq amp f0 f1 f2</code
 (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:play #t)
   (let ((gen1 (make-eoddcos 400.0 :r 0.0))
 	(gen2 (<a class=quiet href="#make-oscil">make-oscil</a> 400.0))
-	(a-env (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) :end 10000)))
+	(a-env (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) :length 10000)))
     (run (lambda () 
       (do ((i 0 (1+ i)))
 	  ((= i 10000))
@@ -5575,8 +5575,8 @@ This generator's output is not normalized, and looks incorrect...
   (do ((k 0 (1+ k)))
       ((= k 6))
     (let ((gen (make-rk!cos 3000.0 :r 0.6)) 
-          (ampf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 2 1 3 0) :end 3000))
-	  (frqf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) :base .1 :scaler <a class=quiet href="#hztoradians">(hz-&gt;radians</a> 2000) :end 3000)))
+          (ampf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 2 1 3 0) :length 3000))
+	  (frqf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) :base .1 :scaler <a class=quiet href="#hztoradians">(hz-&gt;radians</a> 2000) :length 3000)))
       (run 
        (lambda ()
 	 (do ((i 0 (1+ i)))

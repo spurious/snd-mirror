@@ -1000,7 +1000,7 @@ CLM instrument that shows this (subtle) effect:
 (definstrument fm (beg end freq amp mc-ratio index car-phase mod-phase skew-func skew)
   (let ((cr (make-oscil freq car-phase))
         (md (make-oscil (* freq mc-ratio) mod-phase))
-        (skewf (make-env skew-func :scaler (hz-&gt;radians (* skew mc-ratio freq)) :end end))
+        (skewf (make-env skew-func :scaler (hz-&gt;radians (* skew mc-ratio freq)) :length (1+ (- end beg))))
         (fm-index (hz-&gt;radians (* index mc-ratio freq))))
     (run
       (loop for i from beg to end do

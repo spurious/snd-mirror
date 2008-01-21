@@ -1446,7 +1446,7 @@ shift the given channel in pitch without changing its length.  The higher 'order
 						 order))
 	(vector-set! frenvs (1- i) (make-env freq-env 
 					     :scaler (hz->radians (exact->inexact i)) 
-					     :end (1- (frames))))))
+					     :length (frames)))))
     (as-one-edit
      (lambda ()
        (let ((nmx 0.0))
@@ -1996,7 +1996,7 @@ and replaces it with the spectrum given in coeffs"
 (with-sound () 
   (let ((rd (make-sample-reader 0 "oboe.snd")) 
         (m (make-mfilter :decay .99 :frequency 1000)) 
-        (e (make-env '(0 100 1 2000) :end 10000))) 
+        (e (make-env '(0 100 1 2000) :length 10000))) 
     (run (lambda () 
 	   (do ((i 0 (1+ i))) 
 	       ((= i 10000))

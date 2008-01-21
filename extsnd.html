@@ -5421,7 +5421,7 @@ env-selection applies 'envelope' to the selection. (as an amplitude envelope).
 These are equivalent:
 <pre>
   (env-selection '(0 0 1 1 2 0))
-  (env-selection (<a class=quiet href="sndclm.html#make-env">make-env</a> '(0 0 1 1 2 0) :end (<a class=quiet href="#selectionframes">selection-frames</a>)))
+  (env-selection (<a class=quiet href="sndclm.html#make-env">make-env</a> '(0 0 1 1 2 0) :length (<a class=quiet href="#selectionframes">selection-frames</a>)))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -6501,7 +6501,7 @@ curve's exponent and 'env-base'.  Here's a brief restatement:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define (compare-exp k)
-   (let ((e (<a class=quiet href="sndclm.html#make-env">make-env</a> (list 0 1 1 (exp (- k))) :base (exp k) :end 10)))
+   (let ((e (<a class=quiet href="sndclm.html#make-env">make-env</a> (list 0 1 1 (exp (- k))) :base (exp k) :length 11)))
       (do ((i 0 (1+ i )))
          ((= i 10))
          (<a class=quiet href="#sndprint">snd-print</a> (format #f "~A ~A~%" (<a class=quiet href="sndclm.html#env">env</a> e) (exp (* (- k) (/ i 10.0))))))))
@@ -8448,7 +8448,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 (<a class=quiet href="#mapchannel">map-channel</a> (lambda (val) (* val 2.0)))
 (set! (<a class=quiet href="#maxamp">maxamp</a>) (* 2 (<a class=quiet href="#maxamp">maxamp</a>)))
 (<a class=quiet href="#envsound">env-sound</a> '(0 2 1 2))
-(<a class=quiet href="#envchannel">env-channel</a> (<a class=quiet href="sndclm.html#make-env">make-env</a> '(0 1 1 1) :scaler 2.0 :end (1- (<a class=quiet href="#frames">frames</a>))))
+(<a class=quiet href="#envchannel">env-channel</a> (<a class=quiet href="sndclm.html#make-env">make-env</a> '(0 1 1 1) :scaler 2.0 :length (<a class=quiet href="#frames">frames</a>)))
 (<a class=quiet href="#clmchannel">clm-channel</a> (<a class=quiet href="sndclm.html#make-one-zero">make-one-zero</a> :a0 2.0 :a1 0.0))
 (<a class=quiet href="#filterchannel">filter-channel</a> (vct 2.0) 1)
 (<a class=quiet href="#vcttochannel">vct-&gt;channel</a> (<a class=quiet href="#vctscale">vct-scale!</a> (<a class=quiet href="#channeltovct">channel-&gt;vct</a>) 2.0) 0)

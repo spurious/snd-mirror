@@ -35,7 +35,7 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 		:frame0 (make-vct max-size)
 		:frame1 (make-vct max-size)
 		:frame2 (make-vct max-size)
-		:fe (or frame-env (make-env (list 0 (* (safe-srate) 0.05)) :end (mus-length ramp-env))) ; a bit of a kludge...
+		:fe (or frame-env (make-env (list 0 (* (safe-srate) 0.05)) :length (mus-length ramp-env))) ; a bit of a kludge...
 		:rampe ramp-env)))
 
 
@@ -99,9 +99,9 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
   "(zip-sound beg dur file1 file2 :optional ramp-env size) zips the two files and mixes the result into the current sound"
   (let* ((beg (inexact->exact (round (* (srate) beg-in-seconds))))
 	 (dur (inexact->exact (round (* (srate) dur-in-seconds))))
-	 (zip (make-zipper (make-env (or ramp (list 0 0 1 1)) :end dur)
+	 (zip (make-zipper (make-env (or ramp (list 0 0 1 1)) :length dur)
 			   (or size 0.05)
-			   (make-env (list 0 (* (srate) (or size 0.05))) :end dur)))
+			   (make-env (list 0 (* (srate) (or size 0.05))) :length dur)))
 	(read0 (make-sample-reader 0 file1))
 	(read1 (make-sample-reader 0 file2)))
     (map-channel (lambda (y)
@@ -118,9 +118,9 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
     (do ((i 0 (1+ i))) ((= i 10000)) (vct-set! data i (- 1.0 (* i .0001))))
     (vct->channel data 0 10000 1)
     (let* ((dur (frames))
-	   (zp (make-zipper (make-env '(0 0 1 1) :end dur)
+	   (zp (make-zipper (make-env '(0 0 1 1) :length dur)
 			    0.05
-			    (make-env (list 0 (* (safe-srate) 0.05)) :end dur)))
+			    (make-env (list 0 (* (safe-srate) 0.05)) :length dur)))
 	  (reader0 (make-sample-reader 0 0 0))
 	  (reader1 (make-sample-reader 0 1 0)))
       (map-channel (lambda (val)

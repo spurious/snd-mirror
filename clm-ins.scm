@@ -475,7 +475,7 @@ is a physical model of a flute:
 	 (chns (mus-channels *output*))
 	 (flowf (make-env :envelope flow-envelope 
 			  :scaler flow 
-			  :end (+ beg (seconds->samples (- dur decay)))))
+			  :duration (- dur decay)))
 	 (periodic-vibrato (make-oscil :frequency vib-rate))
 	 (random-vibrato (make-rand-interp :frequency ran-rate))
 	 (breath (make-rand :frequency (/ (mus-srate) 2) :amplitude 1))

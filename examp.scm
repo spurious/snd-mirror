@@ -741,8 +741,8 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 	  (map-channel (lambda (y)
 			 (+ y (* (- 1.0 pos) (read-sample reader0))))
 		       0 len stereo-snd 0))
-	(let ((e0 (make-env pan-env :end (1- len)))
-	      (e1 (make-env pan-env :end (1- len)))
+	(let ((e0 (make-env pan-env :length len))
+	      (e1 (make-env pan-env :length len))
 	      (reader0 (make-sample-reader 0 mono-snd))
 	      (reader1 (make-sample-reader 0 mono-snd)))
 	  (map-channel (lambda (y)
@@ -915,7 +915,7 @@ then inverse ffts."
 	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
 	 (fsize2 (/ fsize 2))
-	 (e (make-env fft-env :end (1- fsize2))))
+	 (e (make-env fft-env :length fsize2)))
     (fft rdata idata 1)
     (let ((val (env e)))
       (vct-set! rdata 0 (* val (vct-ref rdata 0)))
@@ -944,7 +944,7 @@ spectral envelopes) following interp (an env between 0 and 1)"
 	 (data2 (fft-env-data env2 snd chn))
 	 (len (frames snd chn))
 	 (new-data (make-vct len))
-	 (e (make-env interp :end (1- len))))
+	 (e (make-env interp :length len)))
     (do ((i 0 (1+ i)))
 	((= i len))
       (let ((pan (env e)))
@@ -1095,7 +1095,7 @@ envelope: (map-channel (zcomb .8 32 '(0 0 1 10)))"
 	(max-envelope-1 (cddr e) (max mx (abs (cadr e))))))
 
   (let ((cmb (make-comb scaler size :max-size (inexact->exact (+ size 1 (max-envelope-1 pm 0.0)))))
-	(penv (make-env :envelope pm :end (frames))))
+	(penv (make-env :envelope pm :length (frames))))
     (lambda (x)
       (comb cmb x (env penv)))))
 
@@ -1131,7 +1131,7 @@ is: (filter-sound (make-formant .99 2400))"
 (define (moving-formant radius move)
   "(moving-formant radius move) returns a time-varying (in frequency) formant filter: (map-channel (moving-formant .99 '(0 1200 1 2400)))"
   (let ((frm (make-formant radius (cadr move)))
-	(menv (make-env :envelope move :end (frames))))
+	(menv (make-env :envelope move :length (frames))))
     (lambda (x)
       (let ((val (formant frm x)))
 	(set! (mus-frequency frm) (env menv))
@@ -1202,7 +1202,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
   "(ring-mod freq gliss-env) returns a time-varying ring-modulation filter: (map-channel (ring-mod 10 (list 0 0 1 (hz->radians 100))))"
   (let* ((os (make-oscil :frequency freq))
 	 (len (frames))
-	 (genv (make-env :envelope gliss-env :end len)))
+	 (genv (make-env :envelope gliss-env :length len)))
     (lambda (inval)
       (* (oscil os (env genv)) inval))))
 
@@ -1526,7 +1526,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 	 (es (make-vector 8)))
     (do ((i 0 (1+ i)))
 	((= i 8))
-      (vector-set! es i (make-env (list 0 (list-ref coeffs i) 1 0) :end 100)))
+      (vector-set! es i (make-env (list 0 (list-ref coeffs i) 1 0) :length 100)))
     (vector-set! es 5 (make-env '(0 .4 1 1) :duration 1.0))
     (lambda (x)
       (let ((val (fir-filter flt x))
@@ -1650,7 +1650,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
   (let* ((len (frames snd chn))
 	 (newlen (inexact->exact (floor (* time-scale len))))
 	 (reader (make-sound-interp 0 snd chn))
-	 (read-env (make-env envelope :end newlen :scaler len))
+	 (read-env (make-env envelope :length newlen :scaler len))
 	 (tempfilename (snd-tempnam))
 	 (fil (mus-sound-open-output tempfilename (srate snd) 1 #f mus-next "env-sound-interp temp file"))
 	 ;; #f as data-format -> format compatible with sndlib (so no data translation is needed)
@@ -1681,7 +1681,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 the given channel following 'envelope' (as in env-sound-interp), using grains to create the re-tempo'd read"
   (let* ((len (frames snd chn))
 	 (newlen (inexact->exact (floor (* time-scale len))))
-	 (read-env (make-env envelope :end newlen :scaler len))
+	 (read-env (make-env envelope :length newlen :scaler len))
 	 (tempfilename (snd-tempnam))
 	 (fil (mus-sound-open-output tempfilename (srate snd) 1 #f mus-next "env-sound-interp temp file"))
 	 ;; #f as data-format -> format compatible with sndlib (so no data translation is needed)
@@ -1699,7 +1699,7 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 
     (do ((i 0 (1+ i)))
 	((= i num-readers))
-      (vector-set! grain-envs i (make-env grain-envelope :end grain-frames)))
+      (vector-set! grain-envs i (make-env grain-envelope :length grain-frames)))
 
     (do ((i 0 (1+ i)))
 	((= i newlen))
@@ -1797,7 +1797,7 @@ this clock, set retitle-time to 0"
 as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount move together"
   (let* ((samps (frames))
 	 (flt (make-one-pole 1.0 0.0))
-	 (amp-env (make-env e :end (1- samps))))
+	 (amp-env (make-env e :length samps)))
     (map-channel
      (lambda (val)
        (let ((env-val (env amp-env)))

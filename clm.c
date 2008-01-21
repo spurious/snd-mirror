@@ -33,9 +33,6 @@
  *
  *   high-pass et al with order and type
  *
- *   ideally we'd use length=duration in samples, not end in make-env (and remove end as a keyword)
- *     this requires a huge find/replace with checks for where :end actually meant :length all along (445 occurrences in *.scm)
- *
  *   do something debonair about move-sound -- another mistake -- elastic-delay + vector arithmetic = dlocsig?
  *   elastic-delay (and inelastic) -> delay with run-time length, if len expands so quickly as to drop
  *      a sample, interpolate, if compresses too quickly, create shock -- a slight extension of the current delay pm arg
@@ -46,7 +43,7 @@
  *   perhaps built-in: blackman rk!cos rxyk!cos nrcos rcos rxycos nxycos nrssb rk!ssb
  *
  * done:
- *   :dur -> :length in make-env
+ *   :dur and :end -> :length in make-env [TODO: same changes in *.rb, possibly *.fs]
  */
 
 #include <mus-config.h>

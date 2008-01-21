@@ -164,7 +164,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	 (envs (make-vector 1))
 	 (inenvs (make-vector 1)))
     (mus-sound-close-output tmpfil 0)
-    (vector-set! inenvs 0 (make-env env :end len))
+    (vector-set! inenvs 0 (make-env env :length len))
     (vector-set! envs 0 inenvs)
     (mus-mix tmp-name filename 0 len 0 mx envs)
     (mix tmp-name beg)
