@@ -1307,6 +1307,8 @@ static void describe_audio_state_1(void)
 
 /* ------------------------------- OSS ----------------------------------------- */
 
+/* Thanks to Yair K. for OSS v4 changes.  22-Jan-08 */
+
 #if (HAVE_OSS || HAVE_ALSA || HAVE_JACK_IN_LINUX)
 /* actually it's not impossible that someday we'll have ALSA but not OSS... */
 #define AUDIO_OK
@@ -1345,6 +1347,21 @@ static void describe_audio_state_1(void)
 #if ((SOUND_VERSION > 360) && (defined(OSS_SYSINFO)))
   #define NEW_OSS 1
 #endif
+
+/* OSS version 4 */
+#ifndef SOUND_PCM_GETFMTS
+  #define SOUND_PCM_GETFMTS		SNDCTL_DSP_GETFMTS
+#endif
+#ifndef SOUND_PCM_SETFMT
+  #define SOUND_PCM_SETFMT		SNDCTL_DSP_SETFMT
+#endif
+#ifndef SOUND_PCM_WRITE_CHANNELS
+  #define SOUND_PCM_WRITE_CHANNELS	SNDCTL_DSP_CHANNELS
+#endif
+#ifndef SOUND_PCM_WRITE_RATE
+  #define SOUND_PCM_WRITE_RATE		SNDCTL_DSP_SPEED
+#endif
+
 
 #define DAC_NAME "/dev/dsp"
 #define MIXER_NAME "/dev/mixer"
@@ -2894,13 +2911,18 @@ static void yes_no(int condition)
 
 static int set_dsp(int fd, int channels, int bits, int *rate)
 {
-  int val;
+  int val, fmt;
   val = channels;
   ioctl(fd, SOUND_PCM_WRITE_CHANNELS, &val);
   if (val != channels) return(MUS_ERROR);
-  val = bits;
-  ioctl(fd, SOUND_PCM_WRITE_BITS, &val);
-  if (val != bits) return(MUS_ERROR);
+
+  if (bits == 8)
+    val = AFMT_U8;
+  else val = AFMT_S16_LE;
+  fmt = val;
+  ioctl(fd, SNDCTL_DSP_SETFMT, &val);
+  if (fmt != val) return(MUS_ERROR);
+
   ioctl(fd, SOUND_PCM_WRITE_RATE, rate);
   return(MUS_NO_ERROR);
 }
@@ -2911,7 +2933,7 @@ static void oss_describe_audio_state_1(void)
   /* it is explicitly released under the GPL, so I think I can use it here without elaborate disguises */
   int fd;
   int status = 0, level, i, recsrc, devmask, recmask, stereodevs, caps;
-  int numdevs = 0, rate = 0, channels = 0, bits = 0, blocksize = 0, formats = 0, deffmt = 0, min_rate = 0, max_rate = 0;
+  int numdevs = 0, rate = 0, channels = 0, blocksize = 0, formats = 0, deffmt = 0, min_rate = 0, max_rate = 0;
   struct synth_info sinfo;
   struct midi_info minfo;
   const char *sound_device_names[] = SOUND_DEVICE_LABELS;
@@ -3159,15 +3181,26 @@ AUDIO_INFO:
   fd = linux_audio_open(dsp_name, O_RDWR, 0, 0);
   if ((fd == -1) && (dsp_num == 0)) fd = linux_audio_open(DAC_NAME, O_WRONLY, 0, 0);
   if (fd == -1) return;
+
+#if defined(SOUND_PCM_READ_RATE) && defined(SOUND_PCM_READ_CHANNELS)
+  /* these are not defined in OSS v4 */
+
+  /* Here's Yair K's explanation:
+
+     In OSSv4 we can use the same ioctls as the equivalents of the 
+       respective SOUND_PCM_WRITE_* with arg == 0 to read the current value.
+     But in ALSA's OSS emulation this would set everything to mono/slowest 
+       rate. So there we have to keep using SOUND_PCM_READ_*. 
+  */
+
   mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "%s:\n\n", dsp_name); pprint(audio_strbuf);
   if ((ioctl(fd, SOUND_PCM_READ_RATE, &rate) != -1) &&
       (ioctl(fd, SOUND_PCM_READ_CHANNELS, &channels) != -1) &&
-      (ioctl(fd, SOUND_PCM_READ_BITS, &bits) != -1) &&
       (ioctl(fd, SNDCTL_DSP_GETBLKSIZE, &blocksize) != -1))
     {
       mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, 
-		   "  defaults:\n    sampling rate: %d, chans: %d, sample size: %d bits, block size: %d bytes", 
-		   rate, channels, bits, blocksize); 
+		   "  defaults:\n    sampling rate: %d, chans: %d, block size: %d bytes", 
+		   rate, channels, blocksize); 
       pprint(audio_strbuf);
 
 #ifdef SNDCTL_DSP_GETOSPACE
@@ -3207,6 +3240,7 @@ AUDIO_INFO:
 	      pprint("            sample        srate\n  channels   size      min      max\n");
 	      for (channels = 1; channels <= 2; channels++)
 		{
+		  int bits;
 		  for (bits = 8; bits <= 16; bits += 8)
 		    {
 		      min_rate = 1;
@@ -3221,6 +3255,7 @@ AUDIO_INFO:
 	}
     }
   pprint("--------------------------------\n");
+#endif
   linux_audio_close(fd); 
   fd = -1;
   dsp_num++; 

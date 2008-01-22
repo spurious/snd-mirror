@@ -1520,9 +1520,16 @@ we get sum and difference tones, much as in complex FM:
 </td></tr></table>
 
 <p>This kind of output is typical; I get the impression that the cross products are
-much more noticeable here than in FM.  It's possible to use this as a way to
-"brighten" a sound file:
+much more noticeable here than in FM. 
+If we use a recorded sound as the argument
+to the polynomial, the output is a brightened or distorted version of the
+original:
 </p>
+
+<!-- 
+(The comparison in the T5 case above is between
+T5(a+b) = 16(a+b)^5 - 20(a+b)^3 + 5(a+b) and the complex FM equation cos(5*(a+b))).
+-->
 
 <pre>
   (define (brighten-slightly coeffs)
@@ -1535,12 +1542,10 @@ much more noticeable here than in FM.  It's possible to use this as a way to
 
 <p>but watch out for clicks from the DC component if any of the "n" in the Tn are even.
 When I use this idea, I either use only odd numbered partials in the partials-&gt;polynomial list,
-or add an amplitude envelope to make sure the result ends at 0.  "distort" might be a better
-description than "brighten".
+or add an amplitude envelope to make sure the result ends at 0. 
 </p>
 
 <!-- SOMEDAY: find formulas for cheby with cos+cos and so on (polyshape(polyshape)) -- this is really complicated! -->
-<!-- PERHAPS: show t5 and sin5 and their expansions for comparison of cross products -->
 
 
 <p>Looking back at the bl-saw instrument, why does a high harmonic number give numerical problems?  The polynomials are related to each other

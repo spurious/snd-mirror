@@ -2710,6 +2710,3 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 
 (cheby-hka 1 0.25 (vct 0 .5 .25 .125 .125))
 |#
-
-
-;;; TODO: add snd-test for cheby-hka

@@ -29,10 +29,6 @@
  *   "fm" arg to formant -> set frequency so it's easier to have moving formants
  *      but it's a direct freq, not an increment -- see mus_formant_with_frequency below
  *
- *   it would be cleaner to have a pulser+func rather than checking pulse-train>.1
- *
- *   high-pass et al with order and type
- *
  *   do something debonair about move-sound -- another mistake -- elastic-delay + vector arithmetic = dlocsig?
  *   elastic-delay (and inelastic) -> delay with run-time length, if len expands so quickly as to drop
  *      a sample, interpolate, if compresses too quickly, create shock -- a slight extension of the current delay pm arg

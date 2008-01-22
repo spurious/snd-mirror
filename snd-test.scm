@@ -32692,6 +32692,15 @@ EDITS: 2
 	      (if (fneq (fm-parallel-component 500 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) '() '() #t) 0.17047)
 		  (snd-display ";fm-parallel-component 500: ~A" (fm-parallel-component 500 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) '() '() #t)))
 
+	      (if (fneq (cheby-hka 3 0.25 (vct 0 0 0 0 1.0 1.0)) -0.0732421875)
+		  (snd-display ";cheby-hka 0: ~A" (cheby-hka 3 0.25 (vct 0 0 0 0 1.0 1.0))))
+	      (if (fneq (cheby-hka 2 0.25 (vct 0 0 0 0 1.0 1.0)) -0.234375)
+		  (snd-display ";cheby-hka 1: ~A" (cheby-hka 2 0.25 (vct 0 0 0 0 1.0 1.0))))
+	      (if (fneq (cheby-hka 1 0.25 (vct 0 0 0 0 1.0 1.0)) 1.025390625)
+		  (snd-display ";cheby-hka 2: ~A" (cheby-hka 1 0.25 (vct 0 0 0 0 1.0 1.0))))
+	      (if (fneq (cheby-hka 0 0.25 (vct 0 0 0 0 1.0 1.0)) 1.5234375)
+		  (snd-display ";cheby-hka 3: ~A" (cheby-hka 0 0.25 (vct 0 0 0 0 1.0 1.0)) 1.5234375))
+
 
 	      (map-channel (lambda (y) (* .5 (oscil osc))))
 	      (let ((vals (freq-peak 0 ind 8192)))

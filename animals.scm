@@ -98,7 +98,7 @@
 ;;; Plumbeous vireo (2)
 ;;; Cassin's vireo
 ;;; Hutton's vireo
-;;; Gray vireo (2)
+;;; Gray vireo (5)
 ;;; Yellow-green vireo
 ;;; Nashville warbler
 ;;; Orange-crowned warbler
@@ -123,6 +123,7 @@
 ;;; Pacific-slope flycatcher
 ;;; Dusky flycatcher
 ;;; Yellow-bellied flycatcher
+;;; Great crested flycatcher
 ;;; Black phoebe
 ;;; Say's phoebe
 ;;; Northern beardless tyrannulet
@@ -7039,7 +7040,9 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;; Gray vireo
+;;; Gray vireo 
+;;;
+;;; (I didn't really intend to do 5 of these calls)
 
 (definstrument (gray-vireo-1 beg amp)
   (let* ((start (seconds->samples beg))
@@ -7076,8 +7079,8 @@
 
 ;(with-sound (:play #t) (gray-vireo-1 0 .5))
 
-
 (definstrument (gray-vireo-2 beg amp)
+  ;; probably calif2 18 4
   (let* ((start (seconds->samples beg))
 	 (dur 0.23)
 	 (stop (+ start (seconds->samples dur)))
@@ -7120,6 +7123,152 @@
 		 *output*)))))))
 
 ;(with-sound (:play #t) (gray-vireo-2 0 .5))
+
+
+(definstrument (gray-vireo-3 beg amp)
+  ;; south 44 4
+
+  ;; part 1 -- I could not find a way to get this right short of brute force additive synthesis
+  (let* ((start (seconds->samples beg))
+	 (dur 0.1)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.167 0.561 0.210 0.243 0.245 0.298 0.272 0.793 0.437 0.171 0.572 0.296 
+			   0.604 0.202 0.734 0.599 0.759 0.597 0.829 0.425 0.881 0.843 1.000 0.000)
+			 :duration dur :scaler (* 0.2 amp)))
+	 (frqf (make-env '(0.000 0.260 0.060 0.301 0.100 0.371 0.151 0.442 0.191 0.465 0.251 0.447 0.313 0.365 
+			   0.381 0.266 0.458 0.228 0.546 0.231 0.632 0.243 0.708 0.275 0.792 0.310 0.855 0.339 
+			   0.899 0.389 0.934 0.404 0.964 0.398 1.000 0.363)
+			 :duration dur :scaler (hz->radians (* 1/3 11500.0))))
+	 (oscs (make-vector 5))
+	 (ampfs (make-vector 5)))
+    (do ((i 0 (1+ i)))
+	((= i 5))
+      (vector-set! oscs i (make-oscil 0.0)))
+
+    (vector-set! ampfs 0 (make-env '(0.000 0.000 0.061 0.000 0.201 0.997 0.278 0.997 0.441 0.000 0.662 0.000 
+				     0.783 0.456 0.864 0.459 0.970 0.000 1.000 0.000)
+				   :duration dur :scaler .1))
+    (vector-set! ampfs 1 (make-env '(0.000 0.000 0.153 0.639 0.307 0.639 0.457 0.109 0.617 0.107 0.739 1.000 
+				     0.913 1.000 1.000 0.298)
+				   :duration dur :scaler .4))
+    (vector-set! ampfs 2 (make-env '(0.000 0.000 0.190 0.842 0.266 0.514 0.297 1.000 0.456 0.257 0.599 0.260 
+				     0.670 0.702 0.707 0.579 0.739 0.710 0.808 0.325 0.865 0.519 1.000 0.402)
+				   :duration dur :scaler .2))
+    (vector-set! ampfs 3 (make-env '(0.000 0.000 0.064 0.077 0.157 0.653 0.255 0.699 0.311 0.995 0.352 0.615 
+				     0.389 0.986 0.458 0.178 0.667 0.363 0.750 0.000 1.000 0.000)
+				   :duration dur :scaler .07))
+    (vector-set! ampfs 4 (make-env '(0.000 0.000 0.159 0.995 0.314 0.997 0.598 0.000 1.000 0.000)
+				   :duration dur :scaler .01))
+
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (env frqf))
+	       (sum 0.0))
+	   (do ((k 0 (1+ k)))
+	       ((= k 5))
+	     (set! sum (+ sum (* (env (vector-ref ampfs k)) (oscil (vector-ref oscs k) (* (1+ k) frq))))))
+	   (outa i (* (env ampf) sum) *output*))))))
+
+  ;; part 2
+  (let* ((start (seconds->samples (+ beg 0.1)))
+	 (dur 0.137)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.042 0.123 0.086 0.399 0.155 0.626 0.176 0.169 0.190 0.691 0.205 0.877 
+			   0.224 0.552 0.246 0.828 0.274 0.978 0.319 0.937 0.356 0.893 0.410 0.866 0.461 0.956 
+			   0.565 0.784 0.622 0.311 0.648 0.423 0.671 0.279 0.688 0.096 0.705 0.328 0.713 0.284 
+			   0.725 0.096 0.807 0.254 0.844 0.134 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.493 0.034 0.542 0.048 0.550 0.066 0.515 0.102 0.485 0.151 0.463 0.168 0.431 
+			   0.181 0.455 0.198 0.450 0.216 0.436 0.232 0.439 0.444 0.439 0.572 0.444 0.703 0.463 
+			   0.800 0.472 1.000 0.458)
+			 :duration dur :scaler (hz->radians 7300.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .95  2 .01  3 .02 4 .005))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (gray-vireo-3 0 .5))
+
+
+(definstrument (gray-vireo-4 beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.23)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.081 0.163 0.123 0.184 0.185 0.447 0.204 0.081 0.230 0.626 0.245 0.607 
+			   0.271 0.398 0.293 0.130 0.305 0.347 0.326 0.444 0.339 0.279 0.349 0.382 0.366 0.751 
+			   0.388 0.347 0.405 0.965 0.417 0.783 0.435 0.992 0.452 0.737 0.471 0.916 0.523 0.702 
+			   0.534 0.526 0.543 0.770 0.563 0.496 0.581 0.558 0.625 0.393 0.646 0.439 0.712 0.388
+			   0.761 0.455 0.832 0.141 0.845 0.081 0.875 0.106 0.911 0.068 0.959 0.154 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.534 0.054 0.509 0.089 0.480 0.128 0.447 0.168 0.477 0.195 0.531 0.224 0.661 
+			   0.240 0.507 0.278 0.350 0.304 0.295 0.319 0.333 0.334 0.409 0.352 0.369 0.370 0.442 
+			   0.398 0.431 0.414 0.504 0.485 0.493 0.563 0.458 0.621 0.431 0.697 0.423 0.814 0.409 
+			   1.000 0.420)
+			 :duration dur :scaler (hz->radians 6230.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .98  2 .003  3 .007)))
+	 (ampf1 (make-env '(0 0 .22 0 .23 1 1 1) :duration dur))
+	 (gen2 (make-polyshape 0.0 :partials (list 1 .05  2 .9  3 .1  4 .07)))
+	 (ampf2 (make-env '(0 1 .2 1 .22 0 1 0) :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (env frqf)))
+	   (outa i (* (env ampf)
+		      (+ (* (env ampf1)
+			    (polyshape gen1 1.0 frq))
+			 (* (env ampf2)
+			    (polyshape gen2 1.0 (* 0.5 frq)))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (gray-vireo-4 0 .5))
+
+(definstrument (gray-vireo-5 beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.256)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.010 0.160 0.025 0.133 0.044 0.301 0.060 0.314 0.072 0.724 0.085 0.678 
+			   0.088 0.374 0.106 0.634 0.114 0.930 0.127 0.718 0.141 1.000 0.175 0.233 0.220 0.528 
+			   0.244 0.496 0.270 0.648 0.320 0.564 0.353 0.393 0.376 0.667 0.443 0.623 0.493 0.447 
+			   0.524 0.474 0.570 0.287 0.583 0.320 0.682 0.117 0.856 0.079 0.933 0.057 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.371 0.029 0.393 0.047 0.428 0.074 0.425 0.097 0.333 0.116 0.206 0.149 0.168 
+			   0.192 0.190 0.242 0.214 0.314 0.217 0.437 0.198 0.876 0.165 1.000 0.146)
+			 :duration dur :scaler (hz->radians 11150.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .98 2 .01  4 .005)))
+	 (ampf1 (make-env '(0 1 .09 1 .14 .1 .2 1 .6 .8 .9 .8 1 1) :duration dur))
+	 (gen2 (make-oscil 0.0))
+	 (ampf2 (make-env '(0 0 .09 0 .14 1 .18 1 .23 0 .6 0 .7 .4 1 0) :duration dur :scaler .5))
+	 (gen3 (make-oscil 0.0))
+	 (ampf3 (make-env '(0 0 .2 0 .25 1 .5 1 .6 0 1 0) :duration dur :scaler .01)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (env frqf)))
+	   (outa i (* (env ampf)
+		      (+ (* (env ampf1)
+			    (polyshape gen1 1.0 frq))
+			 (* (env ampf2)
+			    (oscil gen2 (* frq 2)))
+			 (* (env ampf3)
+			    (oscil gen3 (* frq 3)))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (gray-vireo-5 0 .5))
+
+(define (gray-vireo beg amp)
+  (gray-vireo-3 beg amp)
+  (gray-vireo-4 (+ beg 1.1) amp)
+  (gray-vireo-5 (+ beg 2.1) amp))
+
+;(with-sound (:play #t) (gray-vireo 0 .5))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -8809,6 +8958,54 @@
 ;(with-sound (:play #t) (black-throated-blue-warbler 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Great crested flycatcher
+
+(definstrument (great-crested-flycatcher beg amp)
+  ;; east 46 6
+  (let* ((start (seconds->samples beg))
+	 (dur 0.318)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.122 0.198 0.136 0.168 0.165 0.235 0.184 0.411 0.191 0.373 0.212 0.542 
+			   0.224 0.499 0.242 0.715 0.288 0.617 0.294 0.559 0.307 0.644 0.338 0.491 0.348 0.586 
+			   0.357 0.576 0.368 0.491 0.373 0.539 0.392 0.536 0.427 0.656 0.446 0.642 0.528 0.795 
+			   0.556 0.636 0.566 0.997 0.582 0.100 0.590 0.384 0.597 0.097 0.601 0.213 0.607 0.120 
+			   0.614 0.586 0.653 0.334 0.658 0.225 0.676 0.639 0.703 0.195 0.711 0.363 0.733 0.358 
+			   0.746 0.280 0.771 0.551 0.793 0.226 0.840 0.258 0.922 0.183 0.973 0.150 1.000 0.000)
+			 :duration dur :scaler amp))
+
+	 (frqf1 (make-env '(0.000 0.226 0.033 0.284 0.076 0.324 0.128 0.376 0.200 0.423 0.254 0.439 0.314 0.441 
+			    0.391 0.438 0.488 0.432 0.533 0.436 0.559 0.445 0.566 0.486 0.586 0.660 0.606 0.656 
+			    0.612 0.544 0.627 0.535 0.643 0.546 0.689 0.535 0.708 0.523 0.718 0.546 0.735 0.528 
+			    0.740 0.501 1.000 0.416)
+			 :duration dur :scaler (hz->radians 7090.0)))
+	 (ampf1 (make-env '(0 1  .6 1  .65 .1 .7 .5  .75 0  1 0) :duration dur))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .92  2 .05  3 .01  4 .005  6 .005)))
+
+	 (frqf2 (make-env '(0.000 0.407 0.256 0.439 0.492 0.434 0.566 0.447 0.595 0.430 0.609 0.309 0.626 0.266 
+			    0.646 0.297 0.661 0.396 0.673 0.430 0.681 0.474 0.695 0.412 0.702 0.325 0.719 0.320
+			    0.736 0.335 0.762 0.409 0.774 0.445 0.786 0.414 0.791 0.335 0.806 0.311 0.824 0.329
+			    0.839 0.376 0.856 0.349 0.876 0.324 0.916 0.324 0.951 0.293 1.000 0.25)
+			 :duration dur :scaler (hz->radians 7090.0)))
+	 (ampf2 (make-env '(0 0 .5 0 .55 .2 .7 1  1 .5) :duration dur))
+	 (gen2 (make-polyshape 0.0 :partials (list 1 .95  2 .01  3 .01  4 .01 5 .005  6 .01)))
+	 (rnd (make-rand-interp 100 .7)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (+ (* (env ampf1)
+			  (polyshape gen1 1.0 (env frqf1)))
+		       (* (env ampf2)
+			  (+ .3 (abs (rand-interp rnd)))
+			  (polyshape gen2 1.0 (env frqf2)))))
+	       *output*))))))
+
+;(with-sound (:play #t) (great-crested-flycatcher 0 .5))
+
+
 
 
 ;;; ================ calling-all-animals ================
@@ -8993,7 +9190,9 @@
   (chestnut-sided-warbler        (+ beg 212.0) .25)
   (yellow-bellied-flycatcher     (+ beg 213.5) .25)
   (black-throated-blue-warbler   (+ beg 214.0) .25)
-  (+ beg 215.5))
+  (great-crested-flycatcher      (+ beg 215.5) .25)
+  (gray-vireo                    (+ beg 216.0) .25)
+  (+ beg 218))
 
 
 (define (calling-all-animals)
