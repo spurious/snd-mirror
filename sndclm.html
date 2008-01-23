@@ -1213,8 +1213,7 @@ Chebyshev polynomials of the fourth kind).
 </tr></table>
 
 <p>we can also use
-partials-&gt;polynomial with polyshape;
-bigbird is an example:
+partials-&gt;polynomial with polyshape:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -1456,7 +1455,7 @@ odd harmonics are independent:
 	  (indf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 1.1 1) :length 88200)))
       (do ((i 0 (1+ i)))
 	  ((= i 88200))
-        (<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#env">env</a> ampf) (<em class=red>polyshape</em> gen (<a class=quiet href="#env">env</a> indf))) *output*))))
+        (<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#env">env</a> ampf) (<em class=red>polyshape</em> gen (<a class=quiet href="#env">env</a> indf))) *output*)))
 </pre>
 </td></tr>
 
@@ -1585,7 +1584,7 @@ If we're using 32-bit floats, the first sign of trouble comes when the order is 
 If you look at some of the coefficients, you'll see numbers like -129026688.000 (in the 32 bit case), which
 should be -129026680.721 &mdash;  we have run out of bits in the mantissa!
 Even if we build Snd --with-doubles, 
-we can only push the order up to around 46. 
+we can only push the order up to around 46.
 </p>
 
 

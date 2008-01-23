@@ -1348,20 +1348,18 @@ static void describe_audio_state_1(void)
   #define NEW_OSS 1
 #endif
 
-/* OSS version 4 */
-#ifndef SOUND_PCM_GETFMTS
-  #define SOUND_PCM_GETFMTS		SNDCTL_DSP_GETFMTS
-#endif
-#ifndef SOUND_PCM_SETFMT
-  #define SOUND_PCM_SETFMT		SNDCTL_DSP_SETFMT
-#endif
-#ifndef SOUND_PCM_WRITE_CHANNELS
-  #define SOUND_PCM_WRITE_CHANNELS	SNDCTL_DSP_CHANNELS
-#endif
-#ifndef SOUND_PCM_WRITE_RATE
-  #define SOUND_PCM_WRITE_RATE		SNDCTL_DSP_SPEED
-#endif
+#define MUS_OSS_WRITE_RATE     SNDCTL_DSP_SPEED
+#define MUS_OSS_WRITE_CHANNELS SNDCTL_DSP_CHANNELS
+#define MUS_OSS_SET_FORMAT     SNDCTL_DSP_SETFMT
+#define MUS_OSS_GET_FORMATS    SNDCTL_DSP_GETFMTS
 
+#if SOUND_VERSION < 0x040000
+  /* did they change the way SOUND_VERSION encodes the version? */
+  /* MUS_OSS_READ_* deliberately undefined in OSS v4 (see below) */
+  #define MUS_OSS_READ_RATE      SOUND_PCM_READ_RATE
+  #define MUS_OSS_READ_CHANNELS  SOUND_PCM_READ_CHANNELS
+  /* these can't be defined (easily anyway) in oss v4 */
+#endif
 
 #define DAC_NAME "/dev/dsp"
 #define MIXER_NAME "/dev/mixer"
@@ -1974,7 +1972,7 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
 				     dev, 
 				     mus_audio_device_name(dev), strerror(errno)));
 #ifdef NEW_OSS
-      if (ioctl(audio_out, SNDCTL_DSP_CHANNELS, &chans) == -1) 
+      if (ioctl(audio_out, MUS_OSS_WRITE_CHANNELS, &chans) == -1) 
 	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_out,
 			  mus_format("can't get %d channels for Sonorus device %d (%s)",
 				     chans, dev, 
@@ -1994,17 +1992,17 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
 			  mus_format("can't open %s: %s",
 				     dname, 
 				     strerror(errno)));
-      if ((ioctl(audio_out, SNDCTL_DSP_SETFMT, &oss_format) == -1) || 
+      if ((ioctl(audio_out, MUS_OSS_SET_FORMAT, &oss_format) == -1) || 
 	  (oss_format != to_oss_format(format))) 
 	RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_out,
 			  mus_format("can't set %s format to %d (%s)",
 				     dname, format, 
 				     mus_data_format_name(format)));
-      if (ioctl(audio_out, SNDCTL_DSP_CHANNELS, &chans) == -1)
+      if (ioctl(audio_out, MUS_OSS_WRITE_CHANNELS, &chans) == -1)
 	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_out,
 			  mus_format("can't get %d channels on %s",
 				     chans, dname));
-      if (ioctl(audio_out, SNDCTL_DSP_SPEED, &srate) == -1)
+      if (ioctl(audio_out, MUS_OSS_WRITE_RATE, &srate) == -1)
 	RETURN_ERROR_EXIT(MUS_AUDIO_SRATE_NOT_AVAILABLE, audio_out,
 			  mus_format("can't set srate to %d on %s",
 				     srate, dname));
@@ -2051,7 +2049,7 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
 	    }
         }
     }
-  if ((ioctl(audio_out, SNDCTL_DSP_SETFMT, &oss_format) == -1) || 
+  if ((ioctl(audio_out, MUS_OSS_SET_FORMAT, &oss_format) == -1) || 
       (oss_format != to_oss_format(format)))
     RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_out,
 		      mus_format("data format %d (%s) not available on %s",
@@ -2059,7 +2057,7 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
 				 mus_data_format_name(format), 
 				 dev_name));
 #ifdef NEW_OSS
-  if (ioctl(audio_out, SNDCTL_DSP_CHANNELS, &chans) == -1) 
+  if (ioctl(audio_out, MUS_OSS_WRITE_CHANNELS, &chans) == -1) 
     RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_out,
 		      mus_format("can't get %d channels on %s",
 				 chans, dev_name));
@@ -2071,7 +2069,7 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
 		      mus_format("can't get %d channels on %s",
 				 chans, dev_name));
 #endif
-  if (ioctl(audio_out, SNDCTL_DSP_SPEED, &srate) == -1) 
+  if (ioctl(audio_out, MUS_OSS_WRITE_RATE, &srate) == -1) 
     RETURN_ERROR_EXIT(MUS_AUDIO_SRATE_NOT_AVAILABLE, audio_out,
 		      mus_format("can't set srate of %s to %d",
 				 dev_name, srate));
@@ -2186,7 +2184,7 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
 				     mus_audio_device_name(dev), 
 				     strerror(errno)));
 #ifdef NEW_OSS
-      if (ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &chans) == -1) 
+      if (ioctl(audio_fd, MUS_OSS_WRITE_CHANNELS, &chans) == -1) 
 	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
 			  mus_format("can't get %d channels on %s (Sonorus device %s)",
 				     chans, dev_name, 
@@ -2206,17 +2204,17 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
 			  mus_format("can't open input %s: %s",
 				     dname, 
 				     strerror(errno)));
-      if ((ioctl(audio_fd, SNDCTL_DSP_SETFMT, &oss_format) == -1) || 
+      if ((ioctl(audio_fd, MUS_OSS_SET_FORMAT, &oss_format) == -1) || 
 	  (oss_format != to_oss_format(format)))
 	RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
 			  mus_format("can't set %s format to %d (%s)",
 				     dname, format, 
 				     mus_data_format_name(format)));
-      if (ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &chans) == -1)
+      if (ioctl(audio_fd, MUS_OSS_WRITE_CHANNELS, &chans) == -1)
 	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
 			  mus_format("can't get %d channels on %s",
 				     chans, dname));
-      if (ioctl(audio_fd, SNDCTL_DSP_SPEED, &srate) == -1)
+      if (ioctl(audio_fd, MUS_OSS_WRITE_RATE, &srate) == -1)
 	RETURN_ERROR_EXIT(MUS_AUDIO_SRATE_NOT_AVAILABLE, audio_fd,
 			  mus_format("can't set srate to %d on %s",
 				     srate, dname));
@@ -2292,14 +2290,14 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
       buffer_info = (FRAGMENTS << 16) | (FRAGMENT_SIZE);
       ioctl(audio_fd, SNDCTL_DSP_SETFRAGMENT, &buffer_info);
     }
-  if ((ioctl(audio_fd, SNDCTL_DSP_SETFMT, &oss_format) == -1) ||
+  if ((ioctl(audio_fd, MUS_OSS_SET_FORMAT, &oss_format) == -1) ||
       (oss_format != to_oss_format(format)))
     RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
 		      mus_format("can't set %s format to %d (%s)",
 				 dev_name, format, 
 				 mus_data_format_name(format)));
 #ifdef NEW_OSS
-  if (ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &chans) == -1) 
+  if (ioctl(audio_fd, MUS_OSS_WRITE_CHANNELS, &chans) == -1) 
     RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
 		      mus_format("can't get %d channels on %s",
 				 chans, dev_name));
@@ -2312,7 +2310,7 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
 				 chans, dev_name, 
 				 mus_audio_device_name(dev)));
 #endif
-  if (ioctl(audio_fd, SNDCTL_DSP_SPEED, &srate) == -1) 
+  if (ioctl(audio_fd, MUS_OSS_WRITE_RATE, &srate) == -1) 
     RETURN_ERROR_EXIT(MUS_AUDIO_SRATE_NOT_AVAILABLE, audio_fd,
 		      mus_format("can't set srate to %d on %s (%s)",
 				 srate, dev_name, 
@@ -2633,14 +2631,14 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 					   DAC_NAME, strerror(errno)));
 	      return(MUS_ERROR);
 	    }
-           ioctl(fd, SOUND_PCM_GETFMTS, &formats);
+           ioctl(fd, MUS_OSS_GET_FORMATS, &formats);
 #else
         case MUS_AUDIO_FORMAT:
-          ioctl(fd, SOUND_PCM_GETFMTS, &formats);
+          ioctl(fd, MUS_OSS_GET_FORMATS, &formats);
 	  /* this returns -1 and garbage?? */
 
 	  /* from Steven Schultz:
-	I did discover why, in audio.c the SOUND_PCM_GETFMTS ioctl was failing.
+	I did discover why, in audio.c the MUS_OSS_GET_FORMATS ioctl was failing.
 	That ioctl call can only be made against the /dev/dsp device and _not_
 	the /dev/mixer device.  With that change things starting working real
 	nice.
@@ -2714,13 +2712,13 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
           break;
 	case MUS_AUDIO_SRATE:
 	  srate = (int)(val[0]);
-	  if (ioctl(fd, SNDCTL_DSP_SPEED, &srate) == -1) 
+	  if (ioctl(fd, MUS_OSS_WRITE_RATE, &srate) == -1) 
 	    {
 	      linux_audio_close(fd);
 	      /* see comment from Steven Schultz above */
 	      fd = open(dac_name(sys, 0), O_WRONLY, 0);
 	      if (fd == -1) fd = open(DAC_NAME, O_WRONLY, 0);
-	      if (ioctl(fd, SNDCTL_DSP_SPEED, &srate) == -1) 
+	      if (ioctl(fd, MUS_OSS_WRITE_RATE, &srate) == -1) 
 		RETURN_ERROR_EXIT(MUS_AUDIO_SRATE_NOT_AVAILABLE, fd,
 				  mus_format("can't get %s's (%s) srate",
 					     mus_audio_device_name(dev), dev_name));
@@ -2853,7 +2851,7 @@ static int oss_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val
 	      fd = open(DAC_NAME, O_WRONLY | O_NONBLOCK, 0);
 	      if (fd == -1) return(-1);
 	    }
-          err = ioctl(fd, SNDCTL_DSP_SPEED, &vol);
+          err = ioctl(fd, MUS_OSS_WRITE_RATE, &vol);
           break;
         default: 
 	  RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE, fd,
@@ -2913,17 +2911,17 @@ static int set_dsp(int fd, int channels, int bits, int *rate)
 {
   int val, fmt;
   val = channels;
-  ioctl(fd, SOUND_PCM_WRITE_CHANNELS, &val);
+  ioctl(fd, MUS_OSS_WRITE_CHANNELS, &val);
   if (val != channels) return(MUS_ERROR);
 
   if (bits == 8)
     val = AFMT_U8;
   else val = AFMT_S16_LE;
   fmt = val;
-  ioctl(fd, SNDCTL_DSP_SETFMT, &val);
+  ioctl(fd, MUS_OSS_SET_FORMAT, &val);
   if (fmt != val) return(MUS_ERROR);
 
-  ioctl(fd, SOUND_PCM_WRITE_RATE, rate);
+  ioctl(fd, MUS_OSS_WRITE_RATE, rate);
   return(MUS_NO_ERROR);
 }
 
@@ -3182,8 +3180,7 @@ AUDIO_INFO:
   if ((fd == -1) && (dsp_num == 0)) fd = linux_audio_open(DAC_NAME, O_WRONLY, 0, 0);
   if (fd == -1) return;
 
-#if defined(SOUND_PCM_READ_RATE) && defined(SOUND_PCM_READ_CHANNELS)
-  /* these are not defined in OSS v4 */
+#if SOUND_VERSION < 0x040000
 
   /* Here's Yair K's explanation:
 
@@ -3193,9 +3190,14 @@ AUDIO_INFO:
        rate. So there we have to keep using SOUND_PCM_READ_*. 
   */
 
+  /* since this is just a descriptive function, and not really vital anymore (in the bad old
+   *   days, getting a sound card to work was a major undertaking), I think I'll just comment
+   *   out the portions that require rewriting.
+   */
+
   mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "%s:\n\n", dsp_name); pprint(audio_strbuf);
-  if ((ioctl(fd, SOUND_PCM_READ_RATE, &rate) != -1) &&
-      (ioctl(fd, SOUND_PCM_READ_CHANNELS, &channels) != -1) &&
+  if ((ioctl(fd, MUS_OSS_READ_RATE, &rate) != -1) &&
+      (ioctl(fd, MUS_OSS_READ_CHANNELS, &channels) != -1) &&
       (ioctl(fd, SNDCTL_DSP_GETBLKSIZE, &blocksize) != -1))
     {
       mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, 
@@ -3215,8 +3217,8 @@ AUDIO_INFO:
 #endif
  
       deffmt = AFMT_QUERY;
-      if ((ioctl(fd, SOUND_PCM_SETFMT, &deffmt) != -1) &&
-	  (ioctl(fd, SOUND_PCM_GETFMTS, &formats) != -1))
+      if ((ioctl(fd, MUS_OSS_SET_FORMAT, &deffmt) != -1) &&
+	  (ioctl(fd, MUS_OSS_GET_FORMATS, &formats) != -1))
 	{
 	  pprint("  supported formats:\n"); 
 	  if (formats & AFMT_MU_LAW)    {pprint("    mulaw");                        if (deffmt == AFMT_MU_LAW)    pprint(" (default)"); pprint("\n");}
@@ -3244,9 +3246,9 @@ AUDIO_INFO:
 		  for (bits = 8; bits <= 16; bits += 8)
 		    {
 		      min_rate = 1;
-		      if (set_dsp(fd, channels, bits, &min_rate) == -1) continue;
+		      if (set_dsp(fd, channels, bits, &min_rate) == MUS_ERROR) continue;
 		      max_rate = 100000;
-		      if (set_dsp(fd, channels, bits, &max_rate) == -1) continue;
+		      if (set_dsp(fd, channels, bits, &max_rate) == MUS_ERROR) continue;
 		      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  %4d  %8d  %8d  %8d\n", channels, bits, min_rate, max_rate); 
 		      pprint(audio_strbuf);
 		    }
@@ -8051,8 +8053,6 @@ void describe_audio_state_1(void)
 /* Jack Part */
 /*************/
 
-#define SNDJACK_NUMINCHANNELS 4
-
 #define SNDJACK_MAXSNDS 20
 
 #define SNDJACK_BUFFERSIZE 32768
@@ -8294,30 +8294,48 @@ static int sndjack_buffersizecallback(jack_nframes_t nframes, void *arg){
 }
 
 static int sndjack_getnumoutchannels(void){
-  int lokke=0;
-  const char **ports=jack_get_ports(sndjack_client,NULL,NULL,JackPortIsPhysical|JackPortIsInput);
-  while(ports!=NULL && ports[lokke]!=NULL){
-    lokke++;
+  char *a=getenv("SNDLIB_NUM_JACK_CHANNELS");
+  if(a!=NULL){
+    int num_ch=atoi(a);
+    return
+      (num_ch<=0 || num_ch > 100000)
+      ? 2
+      : num_ch;
+  }else{
+    int lokke=0;
+    const char **ports=jack_get_ports(sndjack_client,NULL,NULL,JackPortIsPhysical|JackPortIsInput);
+    while(ports!=NULL && ports[lokke]!=NULL){
+      lokke++;
+    }
+    
+    if(lokke<2) return 2;
+    return lokke;
   }
-  if(lokke<2) return 2;
-  return lokke;
 }
 
 static int sndjack_getnuminchannels(void){
-  int lokke=0;
-  const char **ports=jack_get_ports(sndjack_client,NULL,NULL,JackPortIsPhysical|JackPortIsOutput);
-  while(ports!=NULL && ports[lokke]!=NULL){
-    lokke++;
+  char *a=getenv("SNDLIB_NUM_JACK_CHANNELS");
+  if(a!=NULL){
+    int num_ch=atoi(a);
+    return
+      (num_ch<=0 || num_ch > 100000)
+      ? 2
+      : num_ch;
+  }else{
+    int lokke=0;
+    const char **ports=jack_get_ports(sndjack_client,NULL,NULL,JackPortIsPhysical|JackPortIsOutput);
+    while(ports!=NULL && ports[lokke]!=NULL){
+      lokke++;
+    }
+    if(lokke<2) return 2;
+    return lokke;
   }
-  if(lokke<2) return 2;
-  return lokke;
 }
 
 
 static int sndjack_init(void){
   int ch;
   int numch;
-  int numch_read;
   int num=0;
 
   while(num<SNDJACK_MAXSNDS){
@@ -8342,9 +8360,8 @@ static int sndjack_init(void){
   jack_set_process_callback(sndjack_client,sndjack_process,NULL);
 
   sndjack_num_channels_allocated = numch = sndjack_getnumoutchannels();
-  numch_read=sndjack_getnuminchannels();
-  sndjack_num_read_channels_allocated=SJ_MAX(SNDJACK_NUMINCHANNELS,numch_read);
-
+  sndjack_num_read_channels_allocated    = sndjack_getnuminchannels();
+     
   sndjack_channels=calloc(sizeof(struct SndjackChannel),numch);
   sndjack_read_channels=calloc(sizeof(struct SndjackChannel),sndjack_num_read_channels_allocated);
 
@@ -8399,7 +8416,8 @@ static int sndjack_init(void){
     goto failed_activate;
   }
 
-  {
+  if(getenv("SNDLIB_JACK_DONT_AUTOCONNECT")==NULL){
+
     const char **outportnames=jack_get_ports(sndjack_client,NULL,NULL,JackPortIsPhysical|JackPortIsInput);
     for(ch=0;outportnames && outportnames[ch]!=NULL && ch<numch;ch++){
       if (
@@ -8413,9 +8431,7 @@ static int sndjack_init(void){
 	  printf ("Warning. Cannot connect jack output port %d: \"%s\".\n",ch,outportnames[ch]);
 	}
     }
-  }
 
-  {    
     const char **inportnames=jack_get_ports(sndjack_client,NULL,NULL,JackPortIsPhysical|JackPortIsOutput);
     for(ch=0;inportnames && inportnames[ch]!=NULL && ch<numch;ch++){
     if (
@@ -8430,6 +8446,7 @@ static int sndjack_init(void){
       }
     }
   }
+
   return 0;
   
   // failed_connect:
@@ -8451,7 +8468,6 @@ static void sndjack_cleanup(void){
   jack_client_close(sndjack_client);
 
 }
-
 
 
 /***************/
