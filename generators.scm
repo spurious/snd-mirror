@@ -4001,6 +4001,9 @@ index 10 (so 10/2 is the bes-jn arg):
 |#
 
 
+
+;;; --------------------------------------------------------------------------------
+
 (def-clm-struct plsenv (pulse #f :type clm) (ampf #f :type clm))
 
 (def-optkey-fun (make-pulsed-env envelope duration frequency)
@@ -4015,6 +4018,41 @@ index 10 (so 10/2 is the bes-jn arg):
 (define pulsed-env? plsenv?)
 
 
+;;; --------------------------------------------------------------------------------
+
+(def-clm-struct (pulse-wave 
+		 :make-wrapper 
+		 (lambda (g)
+		   (set! (pulse-wave-p1 g) (make-pulse-train 
+					    (pulse-wave-frequency g) 
+					    (pulse-wave-amplitude g)))
+		   (set! (pulse-wave-p2 g) (make-pulse-train 
+					    (pulse-wave-frequency g) 
+					    (- (pulse-wave-amplitude g))
+					    (* 2.0 pi (- 1.0 (pulse-wave-duty-factor g)))))
+		   g))
+  (frequency 0.0) (duty-factor 0.5) (amplitude 1.0)
+  (sum 0.0) (p1 #f :type clm) (p2 #f :type clm))
+
+(define (pulse-wave gen fm)
+  (declare (gen pulse-wave) (fm float))
+  (set! (pulse-wave-sum gen) (+ (pulse-wave-sum gen)
+				(pulse-train (pulse-wave-p1 gen) fm)
+				(pulse-train (pulse-wave-p2 gen) fm)))
+  (pulse-wave-sum gen))
+
+#|
+(with-sound ()
+  (let ((gen (make-pulse-wave 100 .2 .5)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 22050))
+	 (outa i (pulse-wave gen 0.0) *output*))))))
+|#
+
+
+;;; --------------------------------------------------------------------------------
 
 (define (calling-all-generators)
   ;; for snd-test

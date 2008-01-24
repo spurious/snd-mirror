@@ -53408,6 +53408,14 @@ EDITS: 1
 				 ((= i 20000))
 			       (outa i (nsincos gen 0.0) *output*))))))
 
+	(with-sound ()
+		    (let ((gen (make-pulse-wave 100 .2 .5)))
+		      (run
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 200))
+			   (outa i (pulse-wave gen 0.0) *output*))))))
+
 	
 	(if (provided? 'snd-guile) (begin
 	(let ((g (make-osc329 440.0)) (f 10.0)) 

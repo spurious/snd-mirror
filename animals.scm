@@ -42,6 +42,7 @@
 ;;; Great Plains Narrow-mouthed toad
 ;;; Pacific chorus frog
 ;;; Red-spotted toad
+;;; Green toad
 
 ;;; -------- mammals --------
 ;;; Indri
@@ -83,6 +84,7 @@
 ;;; Cassin's sparrow
 ;;; Song sparrow
 ;;; Sage sparrow
+;;; House sparrow
 ;;; Dark-eyed junco
 ;;; Purple finch
 ;;; House finch
@@ -1213,6 +1215,48 @@
 	       *output*))))))
 
 ;(with-sound (:play #t) (red-spotted-toad 0 4 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Green toad
+
+(definstrument (green-toad beg dur amp)
+  ;; rocky 31 1
+  ;;  (an experiment with wave-train in place of pulsed env)
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env (list 0 0  .2 .9  .3 .7  .4 1  (max .5 (- dur .01)) 1  (max .51 dur) 0) :duration dur :scaler amp))
+	 (frqf (make-env (list 0 2540  .2 3250  (max .5 dur) 3200) :base 10 :duration dur :scaler (hz->radians 1.0)))
+	 (wave-len 256)
+	 (pulse (let ((v (make-vct wave-len))
+		      (pulse-ampf (make-env '(0.000 0.000 0.063 0.312 0.277 0.937 0.405 1.000 0.617 0.696 0.929 0.146 2.000 0.000) :length wave-len)))
+		  (do ((i 0 (1+ i)))
+		      ((= i wave-len))
+		    (vct-set! v i (env pulse-ampf)))
+		  v))
+	 (pulse1 (make-wave-train 56.0 :wave pulse))
+	 (pulse2 (make-wave-train 56.0 :wave pulse))
+	 (offset (seconds->samples .0078))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .95  2 .04  3 .01)))
+	 (rnd (make-rand-interp 100 (hz->radians 2.0)))
+	 (rnd1 (make-rand-interp 1000 (hz->radians 80))))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))  ; offset 2nd by .0078 (the pulses come in pairs)
+	   ((= i offset))
+	 (wave-train pulse2))
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((fluct (rand-interp rnd)))
+	   (outa i (* (env ampf)
+		      (+ (wave-train pulse1 fluct)
+			 (wave-train pulse2 fluct))
+		      (polyshape gen1 1.0 (+ (env frqf)
+					     (rand-interp rnd1))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (green-toad 0 1 .5))
 
 
 
@@ -9006,6 +9050,60 @@
 ;(with-sound (:play #t) (great-crested-flycatcher 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; House sparrow
+
+(definstrument (house-sparrow-1 beg amp)
+  ;; east 99 2.9
+  (let* ((start (seconds->samples beg))
+	 (dur 0.144)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.073 0.108 0.086 0.220 0.182 0.225 0.190 0.281 0.200 0.151 0.240 0.529 
+			   0.254 0.436 0.259 0.558 0.266 0.536 0.284 0.856 0.299 0.461 0.311 0.888 0.330 0.281 
+			   0.339 0.612 0.344 0.559 0.355 0.178 0.376 0.575 0.380 0.407 0.389 0.919 0.394 0.686 
+			   0.399 0.836 0.407 0.547 0.412 0.976 0.422 0.176 0.426 0.476 0.442 0.942 0.461 0.347 
+			   0.475 0.281 0.485 0.069 0.488 0.222 0.499 0.200 0.505 0.259 0.527 0.422 0.559 0.583 
+			   0.576 0.324 0.599 0.578 0.611 0.556 0.626 0.268 0.640 0.525 0.652 0.471 0.657 0.237 
+			   0.685 0.556 0.703 0.449 0.714 0.175 0.756 0.308 0.803 0.229 0.926 0.112 0.963 0.056 
+			   0.972 0.093 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.217 0.130 0.236 0.169 0.261 0.196 0.321 0.238 0.414 0.260 0.445 0.286 0.462 
+			   0.302 0.451 0.316 0.472 0.329 0.458 0.346 0.507 0.361 0.530 0.383 0.501 0.408 0.400 
+			   0.427 0.420 0.451 0.395 0.465 0.333 0.485 0.275 0.503 0.290 0.518 0.321 0.563 0.373 
+			   0.622 0.441 0.643 0.387 0.664 0.325 0.684 0.360 0.700 0.358 0.713 0.282 0.734 0.267 
+			   0.746 0.288 0.769 0.325 0.799 0.290 0.833 0.321 0.859 0.292 0.888 0.304 0.913 0.265 
+			   0.944 0.265 0.964 0.226 0.984 0.209 1.000 0.224)
+			 :duration dur :scaler (hz->radians 10550.0)))
+	 (rnd (make-rand-interp 4000 (hz->radians 300)))
+	 (rnd1 (make-rand-interp 4000))
+	 (rndf1 (make-env '(0 1 .15 1 .2 0 .75 0 .8 1 1 1) :duration dur :scaler .75))
+	 (gen1 (make-oscil 0.0))
+	 (ampf1 (make-env '(0 0 .15 0 .2 1 .9 1 1 .2) :duration dur))
+	 (gen2 (make-oscil 0.0))
+	 (ampf2 (make-env '(0 .5 .15 .5 .2 .05 1 .01) :duration dur))
+	 (gen3 (make-oscil 0.0))
+	 (ampf3 (make-env '(0 .5 .15 .5 .2 .005 1 .005) :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((rf (env rndf1))
+	       (frq (+ (env frqf)
+		       (rand-interp rnd))))
+	   (outa i (* (env ampf)
+		      (+ (- 1.0 rf) 
+			 (* rf (abs (rand-interp rnd1))))
+		      (+ (* (env ampf1) (oscil gen1 frq))
+			 (* (env ampf2) (oscil gen2 (* 2 frq)))
+			 (* (env ampf3) (oscil gen3 (* 3 frq)))
+			 ))
+	       *output*)))))))
+
+;(with-sound (:play #t) (house-sparrow-1 0 .5))
+
+
+
 
 
 ;;; ================ calling-all-animals ================
@@ -9033,7 +9131,8 @@
   (crawfish-frog           (+ beg 32) 0.5)
   (river-frog              (+ beg 33) 0.5)
   (red-spotted-toad        (+ beg 35) 4 .25)
-  (+ beg 40))
+  (green-toad              (+ beg 39.5) 2 .25)
+  (+ beg 42))
 
 
 (define* (calling-all-mammals :optional (beg 0.0))
@@ -9192,7 +9291,8 @@
   (black-throated-blue-warbler   (+ beg 214.0) .25)
   (great-crested-flycatcher      (+ beg 215.5) .25)
   (gray-vireo                    (+ beg 216.0) .25)
-  (+ beg 218))
+  (house-sparrow-1               (+ beg 218.0) .25)
+  (+ beg 218.5))
 
 
 (define (calling-all-animals)

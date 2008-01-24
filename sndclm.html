@@ -1684,7 +1684,27 @@ pulse-train produces a single sample of 1.0, then zeros.
 square-wave produces 1 for half a period, then 0.  All have a period
 of two pi, so the "fm" argument should have an effect comparable to the
 same FM applied to the same waveform in <a href="#table-lookup">table-lookup</a>.
-These do not produce band-limited output; if the frequency is too high, you can get foldover.
+To get a square-wave with control over the "duty-factor":
+</p>
+
+<table border=0 hspace=40>
+<tr><td>
+<pre>
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()             ; see also pulse-wave in generators.scm
+  (let* ((duty-factor .25) ; ratio of pulse duration to pulse period
+	 (p-on (<em class=red>make-pulse-train</em> 100 0.5))
+	 (p-off (<em class=red>make-pulse-train</em> 100 -0.5 (* 2 pi (- 1.0 duty-factor))))
+	 (sum 0.0))
+    (do ((i 0 (1+ i)))
+	((= i 22050))
+      (set! sum (+ sum (<em class=red>pulse-train</em> p-on) (<em class=red>pulse-train</em> p-off)))
+      (<a class=quiet href="#outa">outa</a> i sum *output*))))
+</pre>
+</td></tr>
+</table>
+
+<p>
+These generators do not produce band-limited output; if the frequency is too high, you can get foldover.
 A more reasonable square-wave can be generated via
 <code>(tanh (* n (sin theta)))</code>, where "n" (a float) sets how squared-off it is:
 </p>
@@ -2454,7 +2474,6 @@ of the resultant spectrum is around r * freq.
      TODO: also how they act with noise as input, or in feedback situations?
      TODO: also 3D of moving formants in each of those cases?
      TODO: also expl of polyshape stand-in
-     TODO: also can wave-train be used as frog/insect?  perhaps too clunky and noisy -- gives a way to do sqwv et al with "bias"
      TODO: more intro to polyshape (show addition of scaled Tn)
      TODO: show (if possible) how the Tn hka's -> Bessel in the sin(sin) case
      TODO: grf showing ssb case in Tn Un
