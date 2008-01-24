@@ -1690,7 +1690,7 @@ To get a square-wave with control over the "duty-factor":
 <table border=0 hspace=40>
 <tr><td>
 <pre>
-(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()             ; see also pulse-wave in generators.scm
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()             ; see also <a href="#pulse-wave">pulse-wave</a> in generators.scm
   (let* ((duty-factor .25) ; ratio of pulse duration to pulse period
 	 (p-on (<em class=red>make-pulse-train</em> 100 0.5))
 	 (p-off (<em class=red>make-pulse-train</em> 100 -0.5 (* 2 pi (- 1.0 duty-factor))))
@@ -5076,6 +5076,18 @@ Many of the instruments in animals.scm use this generator.
 
 <p>
 This produces a Blackman-Harris sum of cosines of order 'n'.
+</p>
+<br>
+
+
+<pre>
+  <A class=def NAME="make-pulse-wave">make-pulse-wave</A> <a class=quiet href="#optional-key">:optional-key</a> frequency (duty-factor 0.5) (amplitude 1.0)
+  <A class=def NAME="pulse-wave">pulse-wave</A> gen fm
+  <A class=def NAME="pulse-wave?">pulse-wave?</A> gen
+</pre>
+
+<p>
+This produces a square-wave with optional "duty-factor" (ratio of pulse duration to pulse period).
 </p>
 <br>
 

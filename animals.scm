@@ -149,7 +149,8 @@
 ;;; Mourning dove
 ;;; Inca dove (2)
 ;;; Bobwhite
-;;; California Quail
+;;; California quail
+;;; Gambel's quail
 ;;; Ruffed grouse
 ;;; Great-horned owl
 ;;; Barred owl
@@ -9103,6 +9104,38 @@
 ;(with-sound (:play #t) (house-sparrow-1 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Gambel's quail
+
+(definstrument (gambels-quail beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.56)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.105 0.364 0.146 0.379 0.231 0.694 0.471 0.838 0.567 0.785 0.637 0.649 
+			   0.681 0.626 0.750 0.513 0.771 0.417 0.828 0.351 0.864 0.212 0.952 0.048 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.080 0.029 0.091 0.079 0.131 0.103 0.136 0.165 0.148 0.219 0.164 0.341 0.176 
+			   0.469 0.173 0.714 0.162 0.819 0.157 0.902 0.150 0.949 0.138 1.000 0.141)
+			 :duration dur :scaler (hz->radians (* 0.5 10950))))
+	 (gen1 (make-polyshape 0.0 :partials (normalize-partials (list 1 .21  2 .83  3 .05))))
+	 (gen2 (make-polyshape 0.0 :partials (normalize-partials (list 4 .03  5 .02  6 .12))))
+	 (gen3 (make-polyshape 0.0 :partials (normalize-partials (list 7 .01  8 .02  9 .007  10 .003))))
+	 (ampf2 (make-env '(0 0  .05 0  .1 .2  .15 0  .275 1 .6 1 .9 0 1 0) :duration dur :scaler .15))
+	 (ampf3 (make-env '(0 0  .18 0  .5 1  .7 1 .85 0 1 0) :duration dur :scaler .08)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (env frqf)))
+	   (outa i (* (env ampf)
+		      (+ (polyshape gen1 1.0 frq)
+			 (* (env ampf2) (polyshape gen2 1.0 frq))
+			 (* (env ampf3) (polyshape gen3 1.0 frq))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (gambels-quail 0 .5))
+
 
 
 
@@ -9292,7 +9325,8 @@
   (great-crested-flycatcher      (+ beg 215.5) .25)
   (gray-vireo                    (+ beg 216.0) .25)
   (house-sparrow-1               (+ beg 218.0) .25)
-  (+ beg 218.5))
+  (gambels-quail                 (+ beg 218.5) .25)
+  (+ beg 219.5))
 
 
 (define (calling-all-animals)
