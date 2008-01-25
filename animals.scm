@@ -151,6 +151,7 @@
 ;;; Bobwhite
 ;;; California quail
 ;;; Gambel's quail
+;;; Scaled quail
 ;;; Ruffed grouse
 ;;; Great-horned owl
 ;;; Barred owl
@@ -9109,6 +9110,7 @@
 ;;; Gambel's quail
 
 (definstrument (gambels-quail beg amp)
+  ;; south 8 3
   (let* ((start (seconds->samples beg))
 	 (dur 0.56)
 	 (stop (+ start (seconds->samples dur)))
@@ -9136,6 +9138,78 @@
 
 ;(with-sound (:play #t) (gambels-quail 0 .5))
 
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Scaled quail
+
+(define (scaled-quail beg1 amp1)
+  ;; south 7 7
+
+  (definstrument (scaled-quail-1 beg dur amp frqscl frm1frq frm2frq frmamp vibamp vibf amp4 amp5)
+    (let* ((start (seconds->samples beg))
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.026 0.166 0.052 0.609 0.058 0.250 0.066 0.892 0.070 0.465 0.073 0.909 
+			     0.079 0.255 0.088 0.766 0.091 0.350 0.096 0.607 0.105 0.504 0.106 0.932 0.119 0.296 
+			     0.126 0.978 0.129 0.540 0.134 0.609 0.136 0.347 0.140 0.425 0.142 0.274 0.148 0.998 
+			     0.154 0.393 0.156 0.816 0.161 0.266 0.166 0.614 0.170 0.810 0.174 0.482 0.177 0.773 
+			     0.184 0.305 0.192 0.937 0.198 0.296 0.199 0.596 0.203 0.350 0.207 0.738 0.212 0.399 
+			     0.213 0.602 0.222 0.650 0.228 0.464 0.238 0.526 0.246 0.266 0.259 0.403 0.283 0.320 
+			     0.323 0.365 0.388 0.249 0.405 0.196 0.432 0.191 0.496 0.135 0.582 0.120 0.621 0.071 1.000 0.000)
+			 :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.157 0.051 0.204 0.075 0.267 0.142 0.281 0.196 0.267 0.268 0.191 0.353 0.171 1.000 0.175)
+			   :duration dur :scaler (hz->radians frqscl)))
+	   (gen1 (make-oscil 0.0))
+	   (gen2 (make-polyshape 0.0 :partials (normalize-partials (list 2 .3  3 .7))))
+	   (gen6 (make-polyshape 0.0 :partials (normalize-partials (list 4 .1  5 .05  6 .02))))
+	   (gen3 (make-polyshape 0.0 :partials (normalize-partials (list 9 .12  10 .02  11  .003  12 .006 15 .005 16 .004))))
+	   (gen4 (make-oscil 0.0))
+	   (gen5 (make-oscil 0.0))
+	   (ampf1 (make-env '(0 1 .6 1 .9 0 1 0) :duration dur :scaler .1))
+	   (ampf3 (make-env '(0 0 .1 .2 .4 1 .5 1 .8 0 1 0) :duration dur :scaler .3))
+	   (ampf4 (make-env amp4 :duration dur :scaler .25))
+	   (ampf5 (make-env amp5 :duration dur :scaler .125))
+	   (ampf6 (make-env '(0 0 .3 0 .4 1  1 0) :duration dur :scaler .5))
+	   (vib (make-oscil 1000))
+	   (vibf (make-env vibf :duration dur :scaler (hz->radians 200)))
+	   (rnd (make-rand-interp 10000 vibamp))
+	   (frm1 (make-formant .97 frm1frq 5))
+	   (frm2 (make-formant .95 frm2frq 4))
+	   (frmf (make-env frmamp :duration dur)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (let ((frq (+ (env frqf)
+			 (* (env vibf) 
+			    (+ (oscil vib)
+			       (rand-interp rnd)))))
+		 (frm (env frmf)))
+	     (let ((val (* 0.3 (env ampf)
+			   (+ (* 2 (env ampf1) (oscil gen1 frq))
+			      (* (env ampf4) (oscil gen4 (* frq 5)))
+			      (* (env ampf5) (oscil gen5 (* frq 6)))
+			      (* 2 (polyshape gen2 1.0 frq))
+			      (* (env ampf3) (polyshape gen3 1.0 frq))
+			      (* (env ampf6) (polyshape gen6 1.0 frq))))))
+	       (outa i (+ (* frm (+ (formant frm1 val)
+				    (formant frm2 val)))
+			  (* (- 1.0 frm) val))
+		     *output*))))))))
+
+  (scaled-quail-1 beg1 .18 amp1 4200 
+		  2300 6400 '(0 0 .1 1 .45 1 .5 0 .7 0 .8 1 1 1)
+		  1.5 '(0 1 .1 1 .45 1 .5 0 .6 0 .65 1 1 1)
+		  '(0 0 .1 1 .4 1 .5 0 1 0)
+		  '(0 0 .1 0 .4 1 .5 0 1 0))
+  
+  (scaled-quail-1 (+ beg1 .35) .27 amp1 4000
+		  2700 6000 '(0 0 .1 1 .25 1 .3 0 1 0)
+		  2.0 '(0 1 .1 1 .25 1 .3 0 .9 0 1 .5)
+		  '(0 0 .1 1 .2 1 .3 0 1 0)
+		  '(0 0 .1 0 .2 1 .3 0 1 0)))
+
+;(with-sound (:play #t) (scaled-quail 0 .5))
 
 
 
@@ -9326,7 +9400,8 @@
   (gray-vireo                    (+ beg 216.0) .25)
   (house-sparrow-1               (+ beg 218.0) .25)
   (gambels-quail                 (+ beg 218.5) .25)
-  (+ beg 219.5))
+  (scaled-quail                  (+ beg 219.25) .25)
+  (+ beg 221))
 
 
 (define (calling-all-animals)
