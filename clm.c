@@ -39,7 +39,7 @@
  *   perhaps built-in: blackman rk!cos rxyk!cos nrcos rcos rxycos nxycos nrssb rk!ssb
  *
  * done:
- *   :dur and :end -> :length in make-env [TODO: same changes in *.rb, possibly *.fs, *.ins?]
+ *   :dur and :end -> :length in make-env [TODO: same changes in *.rb, possibly *.fs]
  */
 
 #include <mus-config.h>

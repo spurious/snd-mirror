@@ -43,6 +43,7 @@
 ;;; Pacific chorus frog
 ;;; Red-spotted toad
 ;;; Green toad
+;;; Little grass frog
 
 ;;; -------- mammals --------
 ;;; Indri
@@ -112,6 +113,7 @@
 ;;; Magnolia warbler
 ;;; Chestnut-sided warbler
 ;;; Black-throated blue warbler
+;;; Verdin
 ;;; Western meadowlark
 ;;; Eastern meadowlark
 ;;; Ruby-crowned kinglet
@@ -152,6 +154,8 @@
 ;;; California quail
 ;;; Gambel's quail
 ;;; Scaled quail
+;;; Montezuma quail
+;;; Mountain quail
 ;;; Ruffed grouse
 ;;; Great-horned owl
 ;;; Barred owl
@@ -1259,6 +1263,57 @@
 		 *output*)))))))
 
 ;(with-sound (:play #t) (green-toad 0 1 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Little grass frog
+
+(definstrument (little-grass-frog beg amp)
+  ;; frogs 26 8.5
+
+  ;; initial note
+  (let* ((start (seconds->samples beg))
+	 (dur .032)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.061 0.739 0.124 0.998 0.358 0.902 0.630 0.419 0.727 
+			   0.469 0.813 0.391 0.857 0.046 0.884 0.256 0.918 0.121 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.289 0.534 0.302 0.793 0.299 1.000 0.307)
+			 :duration dur :scaler (hz->radians (* 0.5 21900.0))))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .005  2 .97  3 .02  4 .01))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*)))))
+
+  ;; 4 tinks
+  (let ((begs (vct 0.085 0.118 0.141 0.162))
+	(amps (vct 1.0 1.0 .8 .6))
+	(frqs (vct 6840 6940 6890 6940)))
+    (do ((call 0 (1+ call)))
+	((= call 4))
+
+      (let* ((start (seconds->samples (+ beg (vct-ref begs call))))
+	     (dur .01)
+	     (stop (+ start (seconds->samples dur)))
+	     (ampf (make-env '(0.000 0.000 0.082 0.967 0.149 1.000 0.183 0.977 0.299 0.529 
+			       0.334 0.595 0.451 0.312 0.520 0.176 0.639 0.155 0.753 0.077 1.000 0.000)
+			     :duration dur :scaler (* amp (vct-ref amps call))))
+	     (frq (hz->radians (* 0.5 (vct-ref frqs call))))
+	     (gen1 (make-polyshape 0.0 :partials (list 1 .005  2 .97  3 .02  4 .01))))
+	(run
+	 (lambda ()
+	   (do ((i start (1+ i)))
+	       ((= i stop))
+	     (outa i (* (env ampf)
+			(polyshape gen1 1.0 frq))
+		   *output*))))))))
+
+;(with-sound (:play #t) (little-grass-frog 0 .5))
 
 
 
@@ -9212,6 +9267,113 @@
 ;(with-sound (:play #t) (scaled-quail 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Montezuma quail
+
+(definstrument (montezuma-quail beg amp)
+  ;; south 9 15
+  (let* ((start (seconds->samples beg))
+	 (dur 1.3)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.022 0.069 0.036 0.196 0.088 0.615 0.138 0.837 0.168 0.873 0.202 0.837 
+			   0.217 0.743 0.225 0.850 0.242 0.962 0.255 0.839 0.270 0.914 0.309 0.916 0.322 0.796 
+			   0.365 0.831 0.407 0.941 0.432 0.975 0.442 0.885 0.461 0.919 0.480 0.850 0.494 0.651 
+			   0.504 0.903 0.527 0.773 0.546 0.870 0.585 0.813 0.604 0.880 0.630 0.836 0.642 0.789 
+			   0.662 0.898 0.689 0.817 0.779 0.656 0.834 0.668 0.895 0.449 0.927 0.372 0.950 0.350 
+			   0.965 0.229 0.981 0.253 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.284 0.052 0.254 0.128 0.239 0.256 0.229 0.404 0.219 0.580 0.211 0.707 0.206 1.000 0.216)
+			 :duration dur :scaler (hz->radians 8700.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .91  2 .008  3 .07  4 .003)))
+	 (vib (make-oscil 50))
+	 (vibf (make-env '(0 .1 .4 .6 .9 1 1 .4) :duration dur :scaler (hz->radians 100)))
+	 (vibr (make-rand-interp 200 .5))
+	 (rnd (make-rand-interp 240 .5)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (+ .5 (abs (rand-interp rnd)))
+		    (polyshape gen1 1.0 (+ (env frqf)
+					   (* (env vibf) (+ (oscil vib)
+							    (rand-interp vibr))))))
+	       *output*))))))
+
+;(with-sound (:play #t) (montezuma-quail 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Mountain quail
+
+(definstrument (mountain-quail beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur .2)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.152 0.128 0.179 0.040 0.219 0.173 0.271 0.864 0.289 0.754 0.300 0.666 
+			   0.316 0.804 0.339 0.666 0.362 0.628 0.402 0.477 0.493 0.653 0.513 0.721 0.573 0.736 
+			   0.599 0.626 0.666 0.804 0.741 0.887 0.786 0.977 0.818 0.814 0.837 0.807 0.872 0.889 
+			   0.899 0.761 0.920 0.588 0.932 0.656 0.956 0.427 0.970 0.176 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.103 0.036 0.108 0.151 0.103 0.175 0.156 0.219 0.160 0.261 0.162 0.322 0.144 
+			   0.397 0.149 0.894 0.146 0.945 0.130 1.000 0.121)
+			 :duration dur :scaler (hz->radians 10000.0)))
+	 (gen1 (make-oscil 0.0))
+	 (ampf2 (make-env '(0 0 .1 0 .2 1 1 1) :duration dur))
+	 (gen2 (make-polyshape 0.0 :partials (list 2 .01  3 .005 4 .04  5 .003)))
+	 (rnd (make-rand-interp 4000 (hz->radians 500)))
+	 (rndf (make-env '(0 1 .2 .1 .9 .1 1 1) :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (+ (env frqf)
+		       (* (env rndf) (rand-interp rnd)))))
+	   (outa i (* (env ampf)
+		      (+ (oscil gen1 frq)
+			 (* (env ampf2) (polyshape gen2 1.0 frq))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (mountain-quail 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Verdin
+
+(definstrument (verdin beg amp)
+  ;; south 57 18
+  (let* ((begs (vct 0.0 0.28 0.57))
+	 (durs (vct 0.12 0.15 0.15))
+	 (amps (vct 0.25 0.75 1.0))
+	 (frqs (vector (list 0.000 0.162 0.246 0.168 0.505 0.168 0.867 0.183 0.956 0.198 1.000 0.192)
+		       (list 0.000 0.162 0.246 0.168 0.867 0.183 0.897 0.186 0.926 0.204 1.000 0.192)
+		       (list 0.000 0.189 0.039 0.168 0.246 0.168 1.000 0.192)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .98  2 .015  3 .005))))
+    (do ((call 0 (1+ call)))
+	((= call 3))
+      (let* ((start (seconds->samples (+ beg (vct-ref begs call))))
+	     (dur (vct-ref durs call))
+	     (stop (+ start (seconds->samples dur)))
+	     (ampf (make-env '(0.000 0.000 0.016 0.207 0.079 0.402 0.131 0.348 0.224 0.562 0.255 0.592 0.316 0.757 
+			       0.367 0.637 0.407 0.664 0.428 0.613 0.474 0.751 0.495 0.757 0.522 0.898 0.609 1.000 
+			       0.701 0.778 0.738 0.967 0.770 0.892 0.797 0.898 0.819 0.790 0.835 0.931 0.852 0.892 
+			       0.874 0.997 0.903 0.775 0.928 0.718 0.957 0.736 1.000 0.000)
+			     :duration dur :scaler (* amp (vct-ref amps call))))
+	     (frqf (make-env (vector-ref frqs call) :duration dur :scaler (hz->radians 22000.0))))
+	(run
+	 (lambda ()
+	   (do ((i start (1+ i)))
+	       ((= i stop))
+	     (outa i (* (env ampf)
+			(polyshape gen1 1.0 (env frqf)))
+		   *output*))))))))
+
+;(with-sound (:play #t) (verdin 0 .5))
+
+
 
 ;;; ================ calling-all-animals ================
 
@@ -9239,7 +9401,8 @@
   (river-frog              (+ beg 33) 0.5)
   (red-spotted-toad        (+ beg 35) 4 .25)
   (green-toad              (+ beg 39.5) 2 .25)
-  (+ beg 42))
+  (little-grass-frog       (+ beg 42.0) .25)
+  (+ beg 42.5))
 
 
 (define* (calling-all-mammals :optional (beg 0.0))
@@ -9400,8 +9563,11 @@
   (gray-vireo                    (+ beg 216.0) .25)
   (house-sparrow-1               (+ beg 218.0) .25)
   (gambels-quail                 (+ beg 218.5) .25)
-  (scaled-quail                  (+ beg 219.25) .25)
-  (+ beg 221))
+  (scaled-quail                  (+ beg 219.5) .25)
+  (montezuma-quail               (+ beg 221.0) .25)
+  (mountain-quail                (+ beg 222.5) .25)
+  (verdin                        (+ beg 223.0) .25)
+  (+ beg 224.0))
 
 
 (define (calling-all-animals)
