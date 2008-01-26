@@ -6741,3 +6741,8 @@
 (CLNG-211 "GTK_TYPE_TOOLTIP")
 (CCAST-211 "GTK_TOOLTIP(obj)" "GtkTooltip*")
 (CCHK-211 "GTK_IS_TOOLTIP(obj)" "GtkTooltip*")
+
+
+;;; pango 19.3:
+;(CFNC-2xx "void pango_layout_set_height PangoLayout* layout int height")
+;(CFNC-2xx "int pango_layout_get_height PangoLayout* layout")

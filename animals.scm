@@ -137,9 +137,9 @@
 ;;; Blue grosbeak
 ;;; Evening grosbeak
 ;;; Cardinal
-;;; Swainson's thrush
 ;;; American robin
 ;;; Scott's oriole
+;;; Swainson's thrush
 ;;; Varied thrush
 ;;; Hermit thrush
 ;;; Western tanager
@@ -150,6 +150,7 @@
 ;;; Common pauraque
 ;;; Mourning dove
 ;;; Inca dove (2)
+;;; White-tipped dove
 ;;; Bobwhite
 ;;; California quail
 ;;; Gambel's quail
@@ -165,6 +166,7 @@
 ;;; Long-eared owl
 ;;; Northern goshawk
 ;;; Red-shouldered hawk
+;;; Zone-tailed hawk
 ;;; Bald eagle
 ;;; Pileated woodpecker
 ;;; White-headed woodpecker
@@ -3010,7 +3012,7 @@
 ;;; Grasshopper sparrow
 
 (definstrument (grasshopper-sparrow beg amp)
-  ;; 2 portions -- simple tones, then a buzz
+  ;; 2 portions -- simple tones, then a buzz (calif case has much tighter (faster) buzz)
   (let* ((start (seconds->samples beg))
 
 	 (begs (vct 0.0 .24 .36 .44 .55))
@@ -9374,6 +9376,85 @@
 ;(with-sound (:play #t) (verdin 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; White-tipped dove
+
+(definstrument (white-tipped-dove beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 1.7)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.097 0.071 0.140 0.147 0.190 0.000 0.328 0.000 0.405 0.652 0.426 0.596 
+			   0.447 0.136 0.465 0.109 0.473 0.000 0.511 0.000 0.555 0.354 0.625 0.578 0.672 0.820 
+			   0.745 1.000 0.782 0.897 0.874 0.755 0.930 0.614 0.975 0.139 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.172 0.137 0.170 0.175 0.165 0.340 0.172 0.451 0.160 0.544 0.165 .6 .160 1.000 0.170)
+			 :duration dur :scaler (hz->radians 2550.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .94  2 .02  3 .05  4 .005))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (white-tipped-dove 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Zone-tailed hawk
+
+(definstrument (zone-tailed-hawk beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 1.82)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.014 0.170 0.019 0.000 0.046 0.074 0.054 0.327 0.090 0.448 0.106 0.781 
+			   0.130 0.852 0.139 1.000 0.174 1.000 0.359 0.691 0.383 0.435 0.427 0.494 0.545 0.448 
+			   0.654 0.463 0.704 0.485 0.741 0.330 0.752 0.407 0.785 0.435 0.792 0.238 0.793 0.528 
+			   0.825 0.528 0.838 0.475 0.846 0.225 0.850 0.509 0.872 0.485 0.892 0.367 0.913 0.497 
+			   0.949 0.500 0.978 0.537 0.988 0.099 1.000 0.000)
+			 :duration dur :scaler (* 0.8 amp)))
+	 (frqf (make-env '(0.000 0.283 0.026 0.321 0.048 0.368 0.051 0.404 0.055 0.330 0.064 0.357 0.076 0.357 
+			   0.097 0.387 0.108 0.427 0.184 0.438 0.356 0.452 0.371 0.431 0.380 0.408 0.460 0.401 
+			   0.510 0.390 0.555 0.397 0.589 0.386 0.615 0.388 0.667 0.376 0.718 0.382 0.783 0.365 
+			   0.807 0.348 0.841 0.333 0.875 0.314 0.905 0.314 0.925 0.340 0.957 0.344 0.972 0.325 
+			   0.983 0.302 1.000 0.237)
+			 :duration dur :scaler (hz->radians (* 0.5 8150.0))))
+	 (gen1 (make-polyshape 0.0 :partials (normalize-partials (list 1 .25  2 .25  3 .05  4 .2  5 .01  7 .003))))
+	 (gen2 (make-oscil 0.0))
+	 (gen3 (make-polyshape 0.0 :partials (normalize-partials (list 3 .2  5 .1  7 .1  9 .05  11 .05  13 .01))))
+
+	 (ampf2 (make-env '(0 0 .05 0 .12 1 .18 1 .2 .6  .5 .8 .75 0 .8 .7 1 .7) :duration dur :scaler .5))
+	 (ampf3 (make-env '(0 0 .05 0 .12 1 .6 1 .75 0 1 0) :duration dur :scaler .3 :base 10))
+
+	 (rnd (make-rand-interp 3000))
+	 (rndf (make-env '(0 0 .12 .2  .25 1 .35 1 .4 .2 .75 .3 .9 .1 .93 .4 1 0) :duration dur :scaler (hz->radians 100)))
+
+	 (vib (make-triangle-wave 40 (hz->radians 20)))
+	 (vibf (make-env '(0 0 .15 0 .2 1 .4 0 1 0) :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let* ((noise (* (env rndf)
+			  (rand-interp rnd)))
+		(frq (+ (env frqf)
+			(* (env vibf)
+			   (triangle-wave vib))))
+		(frq1 (+ frq (* 1.5 noise)))
+		(frq2 (+ (* 2 frq) (* 0.5 noise)))
+		(frq3 (+ (* 0.5 frq) (* 2 noise))))
+	   (outa i (* (env ampf)
+		      (+ (* .5 (polyshape gen1 1.0 frq1))
+			 (* (env ampf2) (oscil gen2 frq2))
+			 (* (env ampf3) (polyshape gen3 1.0 frq3))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (zone-tailed-hawk 0 .5))
+
+
 
 ;;; ================ calling-all-animals ================
 
@@ -9567,7 +9648,9 @@
   (montezuma-quail               (+ beg 221.0) .25)
   (mountain-quail                (+ beg 222.5) .25)
   (verdin                        (+ beg 223.0) .25)
-  (+ beg 224.0))
+  (white-tipped-dove             (+ beg 224.0) .25)
+  (zone-tailed-hawk              (+ beg 226.0) .25)
+  (+ beg 228.0))
 
 
 (define (calling-all-animals)
