@@ -1150,7 +1150,7 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 A&S 22.3.15
 -->
 
-<p>waveshape and polyshape perform waveshaping; waveshaping drives a sum of Chebyshev polynomials with
+<p>waveshape and polyshape perform waveshaping; waveshaping drives a sum of scaled Chebyshev polynomials with
 a sinusoid, creating a sort of cross between additive synthesis and FM; see
 "Digital Waveshaping Synthesis" by Marc Le Brun in JAES 1979 April, vol 27, no 4, p250.
 The basic idea is:
@@ -1159,7 +1159,7 @@ The basic idea is:
 <p>
 We can add scaled Tns (polynomials) to get the spectrum we want, producing
 in the simplest case an inexpensive additive synthesis.  We can vary the peak amplitude of the
-cos x to get effects similar to those of FM. 
+input (cos theta) to get effects similar to those of FM. 
 </p>
 
 <p>
@@ -1411,6 +1411,21 @@ is scaled to be -1..1, so that adds another layer of confusion).
 							   0.0)))))))))))
 	      *output*)))))
 -->
+
+<p>To get the FM effect of a spectrum centered around a carrier, multiply the waveshape output by the carrier:
+</p>
+
+<table border=0 hspace=20>
+<tr><td>
+<pre>
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
+  (let ((modulator (<em class=red>make-polyshape</em> 100.0 :partials (list 1 .5  2 .25  3 .125  4 .125)))
+	(carrier (<a class=quiet href="#make-oscil">make-oscil</a> 1000.0)))
+    (do ((i 0 (1+ i))) ((= i 20000))
+      (<a class=quiet href="#outa">outa</a> i (* .5 (<a class=quiet href="#oscil">oscil</a> carrier) (<em class=red>polyshape</em> modulator)) *output*))))
+</pre>
+</td></tr></table>
+
 
 <p>The index argument can be used to vary the spectrum, much as in FM.
 The kth partial's amplitude
@@ -1995,10 +2010,6 @@ kosine95
       (outa i (kosine-summation gen 0.95 1.0) *output*))))
 -->
 
-<!-- PERHAPS: table of ways to get 3 equal-amp cosines
--->
-
-
 <br><br>
 
 
@@ -2491,13 +2502,9 @@ overwhelm r^k, so you can get away with very large "r"s in those cases; the cent
 of the resultant spectrum is around r * freq.
 </p>
 
-<!-- TODO: 3D graphs of how these change with index (if possible), perhaps also accuracy comparisons? [at least sweep "k" in last]
+<!-- TODO: 3D graphs of how these change with index (if possible), perhaps also accuracy comparisons?
      TODO: also how they act with noise as input, or in feedback situations?
      TODO: also 3D of moving formants in each of those cases?
-     TODO: more intro to polyshape (show addition of scaled Tn)
-     TODO: show (if possible) how the Tn hka's -> Bessel in the sin(sin) case
-     TODO: express the index Tn low harm order better
-     TODO: carrier in Tn? Tn(Tn as fm arg)? Tn(Tm) = Tnm
 -->
 
 <p>

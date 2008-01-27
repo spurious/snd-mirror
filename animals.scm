@@ -103,6 +103,7 @@
 ;;; Hutton's vireo
 ;;; Gray vireo (5)
 ;;; Yellow-green vireo
+;;; Red-eyed vireo
 ;;; Nashville warbler
 ;;; Orange-crowned warbler
 ;;; Yellow warbler
@@ -168,6 +169,7 @@
 ;;; Red-shouldered hawk
 ;;; Zone-tailed hawk
 ;;; Bald eagle
+;;; Crested caracara
 ;;; Pileated woodpecker
 ;;; White-headed woodpecker
 ;;; Acorn woodpecker
@@ -7549,6 +7551,7 @@
 ;;; Yellow-green vireo
 
 (definstrument (yellow-green-vireo beg amp)
+  ;; south 48 3.5
   (let* ((start (seconds->samples beg))
 	 (dur 0.22)
 	 (stop (+ start (seconds->samples dur)))
@@ -7577,6 +7580,7 @@
 	       *output*))))))
 
 ;(with-sound (:play #t) (yellow-green-vireo 0 .5))
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -8591,7 +8595,7 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;;
+;;; Hairy woodpecker
 
 (definstrument (hairy-woodpecker beg amp)
   ;; calif 81 10
@@ -9455,6 +9459,78 @@
 ;(with-sound (:play #t) (zone-tailed-hawk 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Red-eyed vireo
+
+(definstrument (red-eyed-vireo beg amp)
+  ;; south 47 46
+  (let* ((start (seconds->samples beg))
+	 (dur 0.29)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.033 0.082 0.069 0.415 0.081 0.426 0.102 0.204 0.119 0.156 0.137 0.307 
+			   0.146 0.159 0.156 0.378 0.182 0.685 0.188 0.556 0.205 0.735 0.212 0.479 0.223 0.484 
+			   0.236 0.939 0.243 0.344 0.246 0.825 0.254 0.415 0.258 0.611 0.273 0.587 0.279 0.251 
+			   0.290 0.992 0.297 0.865 0.304 0.937 0.314 0.735 0.324 0.770 0.340 0.365 0.352 0.590 
+			   0.367 0.230 0.387 0.000 0.495 0.000 0.510 0.331 0.535 0.339 0.560 0.249 0.572 0.116 
+			   0.592 0.146 0.604 0.275 0.628 0.410 0.634 0.339 0.668 0.619 0.684 0.220 0.709 0.656 
+			   0.731 0.593 0.761 0.598 0.770 0.534 0.783 0.720 0.797 0.632 0.809 0.479 0.819 0.288 
+			   0.833 0.444 0.849 0.423 0.857 0.325 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.375 0.022 0.420 0.044 0.492 0.067 0.531 0.079 0.506 0.095 0.352 0.105 0.336 
+			   0.121 0.359 0.147 0.417 0.163 0.462 0.178 0.520 0.188 0.590 0.197 0.662 0.209 0.685 
+			   0.225 0.669 0.245 0.625 0.266 0.606 0.283 0.576 0.329 0.406 0.342 0.387 0.371 0.338 
+			   0.484 0.289 0.505 0.340 0.529 0.347 0.541 0.368 0.558 0.268 0.572 0.245 0.589 0.259 
+			   0.607 0.305 0.642 0.368 0.672 0.396 0.704 0.420 0.752 0.431 0.775 0.452 0.795 0.527 
+			   0.815 0.534 0.824 0.492 0.835 0.387 0.861 0.336 0.891 0.305 0.946 0.298 1.000 0.240)
+			 :duration dur :scaler (hz->radians 8100.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .985  2 .005  3 .01))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (red-eyed-vireo 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Crested caracara
+;;;
+;;; not perfect... original seems to have a harder attack, slightly different timbre, etc
+
+(definstrument (crested-caracara beg amp)
+  ;; south 5 6.5
+
+  (do ((i 0 (1+ i)))
+      ((= i 17))
+    (let* ((start (seconds->samples (+ beg (* i .04) (random .005))))
+	   (dur (+ 0.04 (random .005)))
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.003 0.273 0.032 0.068 0.055 0.147 0.073 0.033 0.116 0.958 0.143 0.641 
+			     0.180 0.869 0.193 0.340 0.207 0.618 0.235 0.881 0.258 0.587 0.293 0.387 0.320 0.676 
+			     0.334 0.263 0.352 0.338 0.369 0.000 0.396 0.573 0.407 0.333 0.417 0.660 0.431 0.779 
+			     0.445 0.268 0.498 0.1 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (gen1 (make-polyshape 1600 :partials (normalize-partials (list 1 .4  2 .7  3 .01  4 .01  5 .01))))
+	   (gen2 (make-polyshape 1200 :partials (list 1 .4 2 1)))
+	   (index (hz->radians 800))
+	   (rnd (make-rand-interp 4000 .425)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (* index (+ (polyshape gen2)
+						      (rand-interp rnd)))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (crested-caracara 0 .5))
+
+
 
 ;;; ================ calling-all-animals ================
 
@@ -9650,7 +9726,9 @@
   (verdin                        (+ beg 223.0) .25)
   (white-tipped-dove             (+ beg 224.0) .25)
   (zone-tailed-hawk              (+ beg 226.0) .25)
-  (+ beg 228.0))
+  (red-eyed-vireo                (+ beg 228.0) .25)
+  (crested-caracara              (+ beg 228.5) .25)
+  (+ beg 229.5))
 
 
 (define (calling-all-animals)
