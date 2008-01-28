@@ -366,7 +366,7 @@ If KEY exists, VAL overwrites the old value."
   filename mus-sound-frames { len }
   temp-dir empty? if "" else temp-dir then "tmp.snd" $+ { tmp-name }
   tmp-name 22050 1 mus-bshort mus-next "" mus-sound-open-output 0 mus-sound-close-output drop
-  #( #( :envelope env :end len make-env ) ) { envs }
+  #( #( :envelope env :length len make-env ) ) { envs }
   1 1.0 make-mixer { mx }
   tmp-name filename 0 len 0 mx envs mus-mix drop
   tmp-name beg undef undef undef undef undef undef mix drop

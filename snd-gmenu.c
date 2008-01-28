@@ -126,7 +126,10 @@ static bool selection_play_stop = false;
 static void edit_play_callback(GtkWidget *w, gpointer info) 
 {
   if (selection_play_stop)
-    stop_playing_all_sounds(PLAY_BUTTON_UNSET);
+    {
+      stop_playing_all_sounds(PLAY_BUTTON_UNSET);
+      reflect_play_selection_stop();
+    }
   else
     {
       set_menu_label(edit_play_menu, _("Stop"));

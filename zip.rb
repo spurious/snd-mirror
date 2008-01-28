@@ -36,7 +36,7 @@ class Zipper
     @frame0 = Vct.new(max_size)
     @frame1 = Vct.new(max_size)
     @frame2 = Vct.new(max_size)
-    @fe = (frame_env or make_env([0, safe_srate * 0.05], :end, ramp_env.length))
+    @fe = (frame_env or make_env([0, safe_srate * 0.05], :length, ramp_env.length))
     @rampe = ramp_env
   end
 
@@ -108,9 +108,9 @@ zips the two files and mixes the result into the current sound")
 def zip_sound(start, dur, file1, file2, ramp = [0, 0, 1, 1], size = 0.05)
   beg = seconds2samples(start)
   len = seconds2samples(dur)
-  zip = make_zipper(make_env(:envelope, ramp, :end, len),
+  zip = make_zipper(make_env(:envelope, ramp, :length, len),
                     size,
-                    make_env(:envelope, [0, safe_srate * size], :end, len))
+                    make_env(:envelope, [0, safe_srate * size], :length, len))
   read0 = make_sample_reader(0, file1)
   read1 = make_sample_reader(0, file2)
   map_channel(lambda do |y| y + zipper(zip, read0, read1) end, beg, len)

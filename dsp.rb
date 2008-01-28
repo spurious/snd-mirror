@@ -1725,7 +1725,7 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
       aff = (i + 1.0) * old_freq
       bwf = bw * (1.0 + (i + 1.0) / (2.0 * pairs))
       ssbs[i] = make_ssb_am((i + 1.0) * factor * old_freq)
-      frenvs[i] = make_env(:envelope, freq_env, :scaler, hz2radians(i.to_f), :end, frames() - 1)
+      frenvs[i] = make_env(:envelope, freq_env, :scaler, hz2radians(i.to_f), :length, frames())
       make_bandpass(hz_to_2pi(aff - bwf), hz_to_2pi(aff + bwf), order)
     end
     as_one_edit_rb("%s(%s, %s, %s, %s, %s, %s, %s, %s",
@@ -2192,7 +2192,7 @@ performs sampling rate conversion using linear interpolation.")
   with_sound(:clm, true) do
     rd = make_sample_reader(0, "oboe.snd")
     m = make_mfilter(:decay, 0.99, :frequency, 1000)
-    e = make_env([0, 100, 1, 2000], :end, 10000)
+    e = make_env([0, 100, 1, 2000], :length, 10001)
     10000.times do |i|
       outa(i, mfilter(m, 0.1 * rd.call), $output)
       m.eps = 2.0 * sind((PI * env(e)) / mus_srate())

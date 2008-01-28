@@ -1726,7 +1726,7 @@ set-current
     idx pairs f2* f/ 1.0 f+ bw f* { bwf }
     ssbs  i  :frequency idx factor f* old-freq f* :order 40 make-ssb-am   array-set!
     bands i  aff bwf f- hz->2pi  aff bwf f+ hz->2pi  order make-bandpass  array-set!
-    :envelope freq-env :scaler idx hz->radians :end len make-env
+    :envelope freq-env :scaler idx hz->radians :length len make-env
     frenvs i  rot array-set!
   loop
   $" %s %s %s %s %s %s %s %s %s"

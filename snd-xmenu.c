@@ -144,6 +144,7 @@ static void edit_play_callback(Widget w, XtPointer info, XtPointer context)
   if (selection_play_stop)
     {
       stop_playing_all_sounds(PLAY_BUTTON_UNSET);
+      reflect_play_selection_stop(); /* if there was an error, stop_playing might not remember to clear this */
     }
   else
     {

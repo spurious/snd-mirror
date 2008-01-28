@@ -747,8 +747,8 @@ and 90 is all in channel 1."
     reader1 pos places1-cb 0 len stereo 1 #f #f map-channel drop
     reader0 pos places0-cb 0 len stereo 0 #f #f map-channel drop
   else
-    :envelope pan :end len 1- make-env { e0 }
-    :envelope pan :end len 1- make-env { e1 }
+    :envelope pan :length len make-env { e0 }
+    :envelope pan :length len make-env { e1 }
     0 mono #f 1 #f make-sample-reader { reader0 }
     0 mono #f 1 #f make-sample-reader { reader1 }
     reader1 e1 places3-cb 0 len stereo 1 #f #f map-channel drop
@@ -911,7 +911,7 @@ previous
   0 fsize snd chn #f channel->vct { rdata }
   fsize 0.0 make-vct { idata }
   fsize 2/ { fsize2 }
-  :envelope fft-env :end fsize2 1- make-env { e }
+  :envelope fft-env :length fsize2 make-env { e }
   rdata idata 1 fft drop
   e env { val }
   rdata 0 val object-set*!
@@ -941,7 +941,7 @@ following interp (an env between 0 and 1)."
   env1 snd chn fft-env-data { data1 }
   env2 snd chn fft-env-data { data2 }
   snd chn #f frames { len }
-  :envelope interp :end len 1- make-env { e }
+  :envelope interp :length len make-env { e }
   $" %s %s %s %s" '( env1 env2 interp get-func-name ) string-format { origin }
   len 0.0 make-vct map!
     e env { pan }
@@ -1074,7 +1074,7 @@ If you're in a hurry use: 0.8 32 make-comb clm-channel instead."
 0.8 32 '( 0 0 1 10 ) zcomb map-channel "
   { scaler size pm }
   :size size :max-size pm 0.0 max-envelope 1.0 f+ size f+ fround->s make-comb { cmb }
-  :envelope pm :end #f #f #f frames make-env { penv }
+  :envelope pm :length #f #f #f frames make-env { penv }
   1 proc-create cmb , penv ,
  does> { x self -- val }
   self @ ( cmb ) x self cell+ @ ( penv ) env comb
@@ -1115,7 +1115,7 @@ Faster is:  0.99 2400 make-formant filter-sound"
 0.99 '( 0 1200 1 2400 ) moving-formant map-channel"
   { radius move }
   radius move cadr make-formant { frm }
-  :envelope move :end #f #f #f frames make-env { menv }
+  :envelope move :length #f #f #f frames make-env { menv }
   1 proc-create frm , menv ,
  does> { x self -- val }
   self @ ( frm ) x formant ( ret )
@@ -1196,7 +1196,7 @@ Faster is:  0.99 2400 make-formant filter-sound"
 10 '( 0 0 1 100 hz->radians ) ring-mod map-channel"
   { freq gliss-env }
   :frequency freq make-oscil { os }
-  :envelope gliss-env :end #f #f #f frames make-env { genv }
+  :envelope gliss-env :length #f #f #f frames make-env { genv }
   1 proc-create os , genv , ( prc )
  does> { y self -- val }
   self @ { os }
@@ -1605,7 +1605,7 @@ previous
   snd chn #f frames { len }
   time-scale len f* fround->s { newlen }
   0 snd chn make-sound-interp { reader }
-  :envelope envelope :end newlen :scaler len make-env { read-env }
+  :envelope envelope :length newlen :scaler len make-env { read-env }
   snd-tempnam { tempfilename }
   tempfilename snd srate 1 #f mus-next get-func-name mus-sound-open-output { fil }
   8192 { bufsize }
@@ -1626,7 +1626,7 @@ previous
      snd #f chn #f -- file-name }>
   snd chn #f frames { len }
   time-scale len f* fround->s { newlen }
-  :envelope envelope :end newlen :scaler len make-env { read-env }
+  :envelope envelope :length newlen :scaler len make-env { read-env }
   snd-tempnam { tempfilename }
   \ ;; #f as data-format -> format compatible with sndlib (so no data translation is needed)
   tempfilename snd srate 1 #f mus-next get-func-name mus-sound-open-output { fil }
@@ -1635,7 +1635,7 @@ previous
   grain-length output-hop f/ fround->s 1+ { num-reader }
   num-reader make-array { readers }
   num-reader make-array map!
-    :envelope grain-envelope :end grain-frames make-env
+    :envelope grain-envelope :length grain-frames make-env
   end-map { grain-envs }
   0 { next-reader-start-at }
   8192 { bufsize }
@@ -1713,7 +1713,7 @@ set-current
 when env is at 1.0, no filtering, as env moves to 0.0, low-pass gets more intense; \
 amplitude and low-pass amount move together."
   1.0 0.0 make-one-pole { flt }
-  :envelope e :end snd chn #f frames 1- make-env { amp-env }
+  :envelope e :length snd chn #f frames make-env { amp-env }
   flt amp-env fe-cb  0 #f snd chn #f $" %s %s" '( e get-func-name ) string-format  map-channel
 ;
 previous

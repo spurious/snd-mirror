@@ -629,7 +629,7 @@ REFLECTED causes every other repetition to be in reverse.")
            [:cutoff, -70],
            [:error, 0.01])
     make_env(:envelope, db_envelope(env, cutoff, error), :scaler, scaler, :offset, offset,
-             :base, base, :duration, dur, :end, len)
+             :base, base, :duration, dur, :length, len)
   end
 
   # ;;; Pitch envelopes (y units are semitone and octave intervals)
@@ -648,7 +648,7 @@ REFLECTED causes every other repetition to be in reverse.")
            [:len, 0],
            [:error, 0.01])
     make_env(:envelope, semitones_envelope(env, around, error), :scaler, scaler, :offset, offset,
-             :base, base, :duration, dur, :end, len)
+             :base, base, :duration, dur, :length, len)
   end
 
   def octaves_envelope(env, around = 1.0, error = 0.01)
@@ -666,7 +666,7 @@ REFLECTED causes every other repetition to be in reverse.")
            [:len, 0],
            [:error, 0.01])
     make_env(:envelope, octaves_envelope(env, around, error), :scaler, scaler, :offset, offset,
-             :base, base, :duration, dur, :end, len)
+             :base, base, :duration, dur, :length, len)
   end
 end
 

@@ -1203,7 +1203,7 @@ enveloped_mix(\"pistol.snd\", 0, [0, 0, 1, 1, 2, 0])")
     tmpfil = mus_sound_open_output(tmp_name, 22050, 1, Mus_lshort, Mus_next, "")
     mx = make_mixer(1, 1.0)
     mus_sound_close_output(tmpfil, 0)
-    mus_mix(tmp_name, fname, 0, len, 0, mx, [[make_env(:envelope, env, :end, len)]])
+    mus_mix(tmp_name, fname, 0, len, 0, mx, [[make_env(:envelope, env, :length, len)]])
     mix(tmp_name, beg)
     File.unlink(tmp_name) if del_tmp
   end

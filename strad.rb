@@ -53,7 +53,7 @@ def bow(start = 0, dur = 1, freq = 440, amp = 0.5, *args)
          [:dist, 0.0025],
          [:reverb, 0.005])
   beg, len = times2samples(start, dur)
-  ampf     = make_env(:envelope, ampenv, :scaler, amp, :end, len)
+  ampf     = make_env(:envelope, ampenv, :scaler, amp, :length, len)
   dcblocker  = DCBlock.new
   vinut      = make_vct(bufsize)
   vinbridge  = make_vct(bufsize)

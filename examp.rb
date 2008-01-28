@@ -3648,8 +3648,8 @@ and 90 is all in channel 1.")
       map_channel(lambda do |y| y + pos * read_sample(rd1) end, 0, len, stereo_snd, 1)
       map_channel(lambda do |y| y + (1.0 - pos) * read_sample(rd0) end, 0, len, stereo_snd, 0)
     else
-      e0 = make_env(:envelope, pan_env, :end, len - 1)
-      e1 = make_env(:envelope, pan_env, :end, len - 1)
+      e0 = make_env(:envelope, pan_env, :length, len)
+      e1 = make_env(:envelope, pan_env, :length, len)
       rd0 = make_sample_reader(0, mono_snd, false)
       rd1 = make_sample_reader(0, mono_snd, false)
       map_channel(lambda do |y| y + env(e1) * read_sample(rd1) end, 0, len, stereo_snd, 1)
@@ -3804,7 +3804,7 @@ applies fft_env as spectral env to current sound, returning vct of new data")
     rdata = channel2vct(0, fsize, snd, chn)
     idata = make_vct(fsize)
     fsize2 = fsize / 2
-    en = make_env(:envelope, fft_env, :end, fsize2 - 1)
+    en = make_env(:envelope, fft_env, :length, fsize2)
     fft(rdata, idata, 1)
     j = fsize - 1
     fsize2.times do |i|
@@ -3835,7 +3835,7 @@ following interp (an env between 0 and 1)")
     data1 = fft_env_data(env1, snd, chn)
     data2 = fft_env_data(env2, snd, chn)
     len = frames(snd, chn)
-    en = make_env(:envelope, interp, :end, len - 1)
+    en = make_env(:envelope, interp, :length, len)
     new_data = make_vct!(len) do |i|
       pan = env(en)
       (1.0 - pan) * data1[i] + pan * data2[i]
@@ -3915,7 +3915,7 @@ map_channel(zcomb(0.8, 32, [0, 0, 1, 10]))")
       mx
     end
     cmb = make_comb(scaler, size, :max_size, (max_envelope_1.call(pm, 0.0) + size + 1).to_i)
-    penv = make_env(:envelope, pm, :end, frames)
+    penv = make_env(:envelope, pm, :length, frames)
     lambda do |inval| comb(cmb, inval, env(penv)) end
   end
 
@@ -3953,7 +3953,7 @@ returns a time-varying (in frequency) formant filter: \
 map_channel(moving_formant(0.99, [0, 1200, 1, 2400]))")
   def moving_formant(radius, move)
     frm = make_formant(radius, move[1])
-    menv = make_env(:envelope, move, :end, frames)
+    menv = make_env(:envelope, move, :length, frames)
     lambda do |inval|
       val = formant(frm, inval)
       frm.frequency = env(menv)
@@ -4025,7 +4025,7 @@ map_channel(ring_mod(10, [0, 0, 1, hz2radians(100)]))")
     len = frames()
     sr = srate()
     dur = (len / sr).round
-    genv = make_env(:envelope, gliss_env, :end, len)
+    genv = make_env(:envelope, gliss_env, :length, len)
     lambda do |inval| oscil(os, env(genv)) * inval end
   end
 
@@ -4419,7 +4419,7 @@ reads snd's channel chn according to env and time-scale")
     len = frames(snd, chn)
     newlen = (time_scale.to_f * len).floor
     rd = make_sound_interp(0, snd, chn)
-    read_env = make_env(:envelope, envelope, :end, newlen, :scaler, len)
+    read_env = make_env(:envelope, envelope, :length, newlen, :scaler, len)
     tempfilename = snd_tempnam
     fil = mus_sound_open_output(tempfilename, srate(snd), 1, false, Mus_next,
                                 format("%s temp file", get_func_name))
@@ -4452,7 +4452,7 @@ reads snd's channel chn according to env and time-scale")
                               chn = false)
     len = frames(snd, chn)
     newlen = (time_scale * len).floor
-    read_env = make_env(envelope, :end, newlen, :scaler, len)
+    read_env = make_env(envelope, :length, newlen, :scaler, len)
     tempfilename = snd_tempnam
     fil = mus_sound_open_output(tempfilename, srate(snd), 1, false, Mus_next,
                                 "granulated_sound_interp temp file")
@@ -4460,7 +4460,7 @@ reads snd's channel chn according to env and time-scale")
     hop_frames = (output_hop * srate).round
     num_readers = (grain_length / output_hop).round + 1
     readers = make_array(num_readers, false)
-    grain_envs = make_array(num_readers) do |i| make_env(grain_envelope, :end, grain_frames) end
+    grain_envs = make_array(num_readers) do |i| make_env(grain_envelope, :length, grain_frames) end
     next_reader_starts_at = 0
     next_reader = 0
     bufsize = 8192
@@ -4539,7 +4539,7 @@ is a time-varying one-pole filter: when env is at 1.0, no filtering, \
 as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount move together")
   def filtered_env(en, snd = false, chn = false)
     flt = make_one_pole(1.0, 0.0)
-    amp_env = make_env(:envelope, en, :end, frames - 1)
+    amp_env = make_env(:envelope, en, :length, frames)
     map_channel(lambda do |val|
                   env_val = env(amp_env)
                   set_mus_xcoeff(flt, 0, env_val)

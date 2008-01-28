@@ -286,7 +286,7 @@ module Effects
 
   def effects_am(freq, en, beg = 0, dur = false, snd = false, chn = false)
     os = make_oscil(:frequency, freq)
-    e = (en and make_env(:envelope, en, :end, (dur or frames(snd, chn)) - 1))
+    e = (en and make_env(:envelope, en, :length, (dur or frames(snd, chn))))
     func = if e
              lambda do |inval| amplitude_modulate(1.0, inval, env(e) * oscil(os)) end
            else
@@ -299,7 +299,7 @@ module Effects
   
   def effects_rm(freq, gliss_env, beg = 0, dur = false, snd = false, chn = false)
     os = make_oscil(:frequency, freq)
-    e = (gliss_env and make_env(:envelope, gliss_env, :end, (dur or frames(snd, chn)) - 1))
+    e = (gliss_env and make_env(:envelope, gliss_env, :length, (dur or frames(snd, chn))))
     func = if e
              lambda do |inval| inval * env(e) * oscil(os) end
            else
@@ -415,7 +415,7 @@ module Effects
       end
     else
       if array?(pos)
-        e1 = make_env(:envelope, pos, :end, len - 1)
+        e1 = make_env(:envelope, pos, :length, len)
         if number?(chn) and chn == 1
           map_channel(0, len, snd, chn, false,
                       format("%s(%s, %s", get_func_name, mono_snd, pos.inspect)) do |inval|
@@ -1436,7 +1436,7 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
             if pts = plausible_mark_samples
               beg = pts[0]
               len = pts[1] - beg
-              src_channel(make_env(env, :end, len), beg, len, selected_sound)
+              src_channel(make_env(env, :length, len), beg, len, selected_sound)
             end
           end
         end
@@ -1499,7 +1499,7 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
                                                    @envelope.envelope.inspect : "false"))
                                          }) do |ignored|
             os = make_oscil(@amount)
-            e = (need_env and make_env(@envelope.envelope, :end, effect_frames(@target) - 1))
+            e = (need_env and make_env(@envelope.envelope, :length, effect_frames(@target)))
             if need_env
               lambda do |inval|
                 amplitude_modulate(1.0, inval, env(e) * oscil(os))
@@ -1569,9 +1569,9 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
                                                    @envelope.envelope.inspect : "false"))
                                          }) do |ignored|
             os = make_oscil(@frequency)
-            e = (need_env and make_env(@envelope.envelope, :end, effect_frames(@target) - 1))
+            e = (need_env and make_env(@envelope.envelope, :length, effect_frames(@target)))
             len = frames()
-            genv = make_env([0, 0, 1, hz2radians(@radians)], :end, len)
+            genv = make_env([0, 0, 1, hz2radians(@radians)], :length, len)
             if need_env
               lambda do |inval| inval * (env(e) * oscil(os)) end
             else

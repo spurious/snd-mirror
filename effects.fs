@@ -2322,7 +2322,7 @@ hide
 	pts car   { beg }
 	pts cadr  { end }
 	end beg - { len }
-	:envelope en :end len make-env beg len selected-sound #f #f src-channel drop
+	:envelope en :length len make-env beg len selected-sound #f #f src-channel drop
       else
 	$" no marks" _ snd-warning drop
       then
@@ -2431,14 +2431,14 @@ hide
 set-current
 : effects-am <{ freq en :optional beg 0 dur #f snd #f chn #f -- res }>
   freq make-oscil { os }
-  en list? if :envelope en :end dur 1- make-env else #f then { e }
+  en list? if :envelope en :length dur make-env else #f then { e }
   $" %s %s %s %s %s" '( freq en beg dur get-func-name ) string-format { origin }
   e if os e effects-am-env-cb else os effects-am-cb then beg dur snd chn #f origin map-channel
 ;
 
 : effects-rm <{ freq en :optional beg 0 dur #f snd #f chn #f -- res }>
   freq make-oscil { os }
-  en list? if :envelope en :end dur 1- make-env else #f then { e }
+  en list? if :envelope en :length dur make-env else #f then { e }
   $" %s %s %s %s %s" '( freq en beg dur get-func-name ) string-format { origin }
   e if os e effects-rm-env-cb else os effects-rm-cb then beg dur snd chn #f origin map-channel
 ;
@@ -2456,7 +2456,7 @@ hide
   gen envel@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if
     #f
   else
-    :envelope gen envel@ xe-envelope :end gen target@ effect-frames 1- make-env
+    :envelope gen envel@ xe-envelope :length gen target@ effect-frames make-env
   then { e }
   e if os e effects-am-env-cb else os effects-am-cb then
 ;
@@ -2559,7 +2559,7 @@ hide
   gen envel@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if
     #f
   else
-    :envelope gen envel@ xe-envelope :end gen target@ effect-frames 1- make-env
+    :envelope gen envel@ xe-envelope :length gen target@ effect-frames make-env
   then { e }
   e if os e effects-rm-env-cb else os effects-rm-cb then
 ;
@@ -3102,7 +3102,7 @@ set-current
   pos number? if
     rd pos numb-cb 0 len snd chn #f origin map-channel
   else
-    :envelope pos :end len 1- make-env { e }
+    :envelope pos :length len make-env { e }
     chn number? chn 1 = && if
       rd e env-numb-cb 0 len snd chn #f origin map-channel
     else

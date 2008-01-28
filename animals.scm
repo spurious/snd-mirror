@@ -190,6 +190,7 @@
 ;;; White-faced ibis
 ;;; Whooping crane
 ;;; Sandhill crane
+;;; Trumpeter swan
 ;;; Least bittern
 ;;; Black rail
 ;;; Virginia rail
@@ -5162,7 +5163,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (let ((inp (* (env ampf)
-		       (nxycos gen (+ (* 1 (env frqf))
+		       (nxycos gen (+ (env frqf)
 				      (rand-interp rnd))))))
 	   (set! (mus-frequency frm1) (env frm1f))
 	   (set! (mus-frequency frm2) (env frm2f))
@@ -9531,6 +9532,43 @@
 ;(with-sound (:play #t) (crested-caracara 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Trumpeter swan
+
+(definstrument (trumpeter-swan-3 beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.11)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.029 0.244 0.084 0.525 0.111 0.515 0.124 0.376 0.153 0.334 0.183 0.166 
+			   0.205 0.000 0.240 0.769 0.261 0.775 0.280 0.271 0.297 0.000 0.338 0.773 0.423 1.000 
+			   0.529 0.758 0.621 0.845 0.783 0.630 0.849 0.676 0.896 0.538 0.930 0.252 0.957 0.118 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.085 0.189 0.079 0.222 0.113 0.251 0.123 0.278 0.105 0.312 0.121 0.349 0.125 
+			   0.377 0.133 0.412 0.127 0.510 0.123 0.691 0.129 0.778 0.125 0.830 0.127 1.000 0.129)
+			 :duration dur :scaler (hz->radians (* 0.5 8650.0))))
+	 (gen1 (make-polyshape 0.0 :partials (normalize-partials (list 1 .01 2 .98 3 .05 4 .02 5 .005 6 .005))))
+	 (gen2 (make-polyshape 0.0 (* 0.5 pi) :partials (normalize-partials (list 1 .44  2 1.0  3 .34  4 .31  5 .19  6 .075  7 .04  8 .03))))
+	 (gen3 (make-sine-summation 0.0 0.0 12 .85 1/9))  ; frq phase n "a" ratio -> nrssb in new nomenclature
+	 (intrpf (make-env '(0 1 .19 1 .2 0 1 0) :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (env frqf))
+	       (intrp (env intrpf))) ; runtime if instead here caused a click at the juncture
+	   (outa i (* (env ampf)
+		      (+ (* intrp 
+			    (polyshape gen1 1.0 frq))
+			  (* (- 1.0 intrp)
+			     (+ (polyshape gen2 1.0 frq)
+				(* .03 (sine-summation gen3 (* frq 9)))))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (trumpeter-swan-3 0 .5))
+
+
+
 
 ;;; ================ calling-all-animals ================
 
@@ -9728,7 +9766,8 @@
   (zone-tailed-hawk              (+ beg 226.0) .25)
   (red-eyed-vireo                (+ beg 228.0) .25)
   (crested-caracara              (+ beg 228.5) .25)
-  (+ beg 229.5))
+  (trumpeter-swan-3              (+ beg 229.5) .25)
+  (+ beg 230.0))
 
 
 (define (calling-all-animals)

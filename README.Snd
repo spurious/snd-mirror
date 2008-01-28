@@ -472,6 +472,23 @@ amixer sset Mic,0 80%
 If you use 100% (meaning, give me full amplitude output), it's the same
 as 0!!  
 
+On a different machine, I use:
+
+setenv MUS_ALSA_DEVICE "plughw:0"
+
+
+
+If you get some complaint like
+
+  ;Invalid argument: cannot set hardware parameters for default
+
+try setting:
+
+    (set! mus-alsa-device "plughw:0")
+
+then try playing again.  The "default" device is always completely
+broken.  
+
 
 
 ---- colors: ----

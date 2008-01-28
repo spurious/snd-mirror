@@ -6430,7 +6430,7 @@ def test085
   rto1_data = make_vct(101)
   xto1_data = make_vct(101)
   cos_data = make_vct(101)
-  xe = make_env(:envelope, [0, 0, 1, 1], :end, 100, :base, 32.0)
+  xe = make_env(:envelope, [0, 0, 1, 1], :length, 101, :base, 32.0)
   incr = PI / 101.0
   ang = -0.5 * PI
   101.times do |i|
@@ -8266,17 +8266,17 @@ def test165
   test_orig(lambda { |snd| env_sound([0, 1.0, 1, 2.0, 2, 1.0], ind1) },
             lambda { |snd| env_sound([0, 1.0, 1, 0.5, 2, 1.0], ind1) },
             :env_sound, ind1)
-  test_orig(lambda { |snd| env_channel(make_env(:envelope, [0, 1.0, 1, 2.0], :end, frames)) },
-            lambda { |snd| env_channel(make_env(:envelope, [0, 1.0, 1, 2.0], :end, frames)) },
+  test_orig(lambda { |snd| env_channel(make_env(:envelope, [0, 1.0, 1, 2.0], :length, frames)) },
+            lambda { |snd| env_channel(make_env(:envelope, [0, 1.0, 1, 2.0], :length, frames)) },
             :env_channel, ind1)
   test_orig(lambda { |snd| env_channel([0, 1.0, 1, 2.0]) },
             lambda { |snd| env_channel([0, 1.0, 1, 0.5]) },
             :env_channel, ind1)
   test_orig(lambda { |snd|
-              env_channel(make_env(:envelope, [0, 2, 1, 2, 2, 0.5, 3, 0.5], :base, 0, :end, frames))
+              env_channel(make_env(:envelope, [0, 2, 1, 2, 2, 0.5, 3, 0.5], :base, 0, :length, frames))
             },
             lambda { |snd|
-              env_channel(make_env(:envelope, [0, 0.5, 1, 0.5, 2, 2, 3, 2], :base, 0, :end, frames))
+              env_channel(make_env(:envelope, [0, 0.5, 1, 0.5, 2, 2, 3, 2], :base, 0, :length, frames))
             },
             :env_channel, ind1)
   test_orig(lambda { |snd| map_channel(lambda { |y| y * 2.0 }) },
@@ -9011,16 +9011,16 @@ def test225
   env_channel([0, 0, 1, 1, 2, 0])
   peak_env_equal?("env_channel peak", ind, channel_amp_envs(ind, 0, 1), 0.002)
   undo_edit
-  env_channel(make_env([0, 0, 1, 1, 2, 0], :scaler, 0.5, :end, frames - 1))
+  env_channel(make_env([0, 0, 1, 1, 2, 0], :scaler, 0.5, :length, frames))
   peak_env_equal?("scaled env_channel peak", ind, channel_amp_envs(ind, 0, 1), 0.002)
   undo_edit
-  env_channel(make_env([0, 0, 1, 1, 2, 0], 0.5, :end, frames - 1))
+  env_channel(make_env([0, 0, 1, 1, 2, 0], 0.5, :length, frames))
   peak_env_equal?("scaled nokey env_channel peak", ind, channel_amp_envs(ind, 0, 1), 0.001)
   undo_edit
-  env_channel(make_env([0, 0, 1, 1, 2, 0], :scaler, 0.5, :offset, 0.5, :end, frames - 1))
+  env_channel(make_env([0, 0, 1, 1, 2, 0], :scaler, 0.5, :offset, 0.5, :length, frames))
   peak_env_equal?("scaled and offset env_channel peak", ind, channel_amp_envs(ind, 0, 1), 0.001)
   undo_edit
-  env_channel(make_env([0, 0, 1, 1, 2, 0.5, 3, 0], :base, 0.0, :end, frames - 1))
+  env_channel(make_env([0, 0, 1, 1, 2, 0.5, 3, 0], :base, 0.0, :length, frames))
   peak_env_equal?("env_channel base 0.0 peak", ind, channel_amp_envs(ind, 0, 1), 0.001)
   undo_edit
   xramp_channel(0.0, 1.0, 32.0)
@@ -9029,10 +9029,10 @@ def test225
   xramp_channel(0.0, 1.0, 0.032)
   peak_env_equal?("xramp_channel 0.032 peak", ind, channel_amp_envs(ind, 0, 1), 0.004)
   undo_edit
-  env_channel(make_env([0, 0, 1, 1, 2, 0.5, 3, 0], :base, 10.0, :end, frames - 1))
+  env_channel(make_env([0, 0, 1, 1, 2, 0.5, 3, 0], :base, 10.0, :length, frames))
   peak_env_equal?("env_channel base 10.0 peak", ind, channel_amp_envs(ind, 0, 1), 0.01)
   undo_edit
-  env_channel(make_env([0, 0, 1, 1, 2, 0], :base, 0.1, :end, frames - 1))
+  env_channel(make_env([0, 0, 1, 1, 2, 0], :base, 0.1, :length, frames))
   peak_env_equal?("env_channel base 0.1 peak", ind, channel_amp_envs(ind, 0, 1), 0.003)
   undo_edit
   insert_samples(1000, 5000, make_vct(5000, 0.5))
@@ -9058,13 +9058,13 @@ def test225
   env_channel([0, 0, 1, 1, 2, 0], 12000, 5000)
   peak_env_equal?("env_channel peak", ind, channel_amp_envs(ind, 0, 1), 0.003)
   undo_edit
-  env_channel(make_env([0, 0, 1, 1, 2, 0], :scaler, 0.5, :end, 4999), 12000, 5000)
+  env_channel(make_env([0, 0, 1, 1, 2, 0], :scaler, 0.5, :length, 5000), 12000, 5000)
   peak_env_equal?("scaled env_channel peak", ind, channel_amp_envs(ind, 0, 1), 0.004)
   undo_edit
-  env_channel(make_env([0, 0, 1, 1, 2, 0], 0.5, :end, 4999), 12000, 5000)
+  env_channel(make_env([0, 0, 1, 1, 2, 0], 0.5, :length, 5000), 12000, 5000)
   peak_env_equal?("scaled nokey env_channel peak", ind, channel_amp_envs(ind, 0, 1), 0.004)
   undo_edit
-  env_channel(make_env([0, 0, 1, 1, 2, 0], :scaler, 0.5, :offset, 0.5, :end, 4999), 12000, 5000)
+  env_channel(make_env([0, 0, 1, 1, 2, 0], :scaler, 0.5, :offset, 0.5, :length, 5000), 12000, 5000)
   peak_env_equal?("scaled and offset env_channel peak", ind, channel_amp_envs(ind, 0, 1), 0.002)
   undo_edit
   xramp_channel(0.0, 1.0, 32.0, 2000, 1000)
@@ -9073,7 +9073,7 @@ def test225
   xramp_channel(0.0, 1.0, 0.032, 2000, 1000)
   peak_env_equal?("xramp_channel 0.032 peak (1)", ind, channel_amp_envs(ind, 0, 1), 0.01)
   undo_edit
-  env_channel(make_env([0, 0, 1, 1, 2, 0.5, 3, 0], :base, 10.0, :end, 4999), 12000, 5000)
+  env_channel(make_env([0, 0, 1, 1, 2, 0.5, 3, 0], :base, 10.0, :length, 5000), 12000, 5000)
   peak_env_equal?("env_channel base 10.0 peak", ind, channel_amp_envs(ind, 0, 1), 0.1)
   undo_edit
   #
@@ -9210,10 +9210,10 @@ def test235
   insert_silence(0, 10, index, 1)
   test_channel_func(:env, index, 0.0,
                     lambda do |beg, dur, index, chan, edpos|
-                      clm_channel(make_env(:envelope, [0, 0, 1, 1], :end, dur - 1),
+                      clm_channel(make_env(:envelope, [0, 0, 1, 1], :length, dur),
                                   beg, dur, index, chan, edpos)
                     end) do |dur|
-    e = make_env(:envelope, [0, 0, 1, 1], :end, dur - 1)
+    e = make_env(:envelope, [0, 0, 1, 1], :length, dur)
     make_vct!(dur) do env(e) end
   end
   test_channel_func(:oscil, index, 0.0,
@@ -9227,17 +9227,17 @@ def test235
                     end) do |dur| make_vct!(dur) do 0.5 end end
   test_channel_func(:env_channel, index, 1.0,
                     lambda do |beg, dur, index, chan, edpos|
-                      env_channel(make_env(:envelope, [0, 0, 1, 1], :end, dur - 1),
+                      env_channel(make_env(:envelope, [0, 0, 1, 1], :length, dur),
                                   beg, dur, index, chan, edpos)
                     end) do |dur|
-    e = make_env(:envelope, [0, 0, 1, 1], :end, dur - 1)
+    e = make_env(:envelope, [0, 0, 1, 1], :length, dur)
     make_vct!(dur) do env(e) end
   end
   test_channel_func(:env_channel, index, 1.0,
                     lambda do |beg, dur, index, chan, edpos|
                       env_channel([0, 0, 1, 1], beg, dur, index, chan, edpos)
                     end) do |dur|
-    e = make_env(:envelope, [0, 0, 1, 1], :end, dur - 1)
+    e = make_env(:envelope, [0, 0, 1, 1], :length, dur)
     make_vct!(dur) do env(e) end
   end
   test_channel_func(:vct2channel, index, 1.0,
@@ -9261,16 +9261,16 @@ def test235
                     end) do |dur| make_vct!(dur) do -1.0 end end
   test_channel_func(:reverse_channel, index, 1.0,
                     lambda do |beg, dur, index, chan, edpos|
-                      env_channel(make_env(:envelope, [0, 0, 1, 1], :end, dur - 1),
+                      env_channel(make_env(:envelope, [0, 0, 1, 1], :length, dur),
                                   beg, dur, index, chan, edpos)
                       reverse_channel(beg, dur, index, chan)
                     end) do |dur|
-    e = make_env(:envelope, [0, 1, 1, 0], :end, dur - 1)
+    e = make_env(:envelope, [0, 1, 1, 0], :length, dur)
     make_vct!(dur) do env(e) end
   end
   test_channel_func(:smooth_channel, index, 1.0,
                     lambda do |beg, dur, index, chan, edpos|
-                      env_channel(make_env(:envelope, [0, 0, 1, 1], :end, dur - 1),
+                      env_channel(make_env(:envelope, [0, 0, 1, 1], :length, dur),
                                   beg, dur, index, chan, edpos)
                       set_sample(beg + dur, 1.0, index, chan)
                       smooth_channel(beg, dur, index, chan)
@@ -9353,7 +9353,7 @@ def test245
   revert_sound(index)
   vct2channel(v0, 0, 10, index, 1)
   vct2channel(v0, 10, 10, index, 1)
-  src_channel(make_env(:envelope, [1, 1, 2, 2], :end, 20), 0, 20, index, 1)
+  src_channel(make_env(:envelope, [1, 1, 2, 2], :length, 21), 0, 20, index, 1)
   unless vequal(res = channel2vct(0, 10, index, 1),
                 vct(1.000, 0.000, -0.048, 0.068, -0.059, 0.022, 0.030, -0.100, 0.273, 0.606))
     snd_display("src_channel env: %s?", res)
@@ -9365,7 +9365,7 @@ def test245
   revert_sound(index)
   vct2channel(v0, 0, 10, index, 1)
   vct2channel(v0, 10, 10, index, 1)
-  src_channel(make_env(:envelope, [1, 1, 2, 2], :end, 20), 0, 20, index, 1)
+  src_channel(make_env(:envelope, [1, 1, 2, 2], :length, 21), 0, 20, index, 1)
   unless vequal(res = channel2vct(0, 10, index, 1),
                 vct(1.000, 0.000, -0.048, 0.068, -0.059, 0.022, 0.030, -0.100, 0.273, 0.606))
     snd_display("src_channel env: %s?", res)
@@ -9561,7 +9561,7 @@ def test255
     end
     map_channel(lambda do |y| rd.call end)
     pos = 0
-    e = make_env([0, 0, 1, 1, 2, 0], :end, dur)
+    e = make_env([0, 0, 1, 1, 2, 0], :length, dur)
     scan_channel(lambda do |y|
                    if fneq(val = env(e), y)
                      snd_display("trouble in reverse read at %d %s %s", pos, val, y)
@@ -9583,7 +9583,7 @@ def test255
   rd = make_sample_reader(frames - 1, ind, 0, -1)
   map_channel(lambda do |y| rd.call end)
   pos = 0
-  e = make_env([0, 0, 1, 1, 2, 0], :end, 1000)
+  e = make_env([0, 0, 1, 1, 2, 0], :length, 1001)
   scan_channel(lambda do |y|
                  val = env(e)
                  if ((pos > 900 or pos <= 700) and fneq(val, y)) or
@@ -9681,27 +9681,27 @@ end
 def test265
   ind = new_sound("test.snd")
   map_chan(lambda do |y| 1.0 end, 0, 1000)
-  env_channel(make_env([0, 1, 1, 1], :scaler, 0.5, :end, 1000))
+  env_channel(make_env([0, 1, 1, 1], :scaler, 0.5, :length, 1001))
   check_maxamp(ind, 0.5, "simple scaler")
-  check_env_vals("simple scaler", make_env([0, 1, 1, 1], :scaler, 0.5, :end, 1000))
+  check_env_vals("simple scaler", make_env([0, 1, 1, 1], :scaler, 0.5, :length, 1001))
   if edit_position == 2
     undo_edit
   else
     snd_display("env+scl was no-op")
   end
-  env_channel(make_env([0, 1, 1, 1], :offset, 0.5, :end, 1000))
+  env_channel(make_env([0, 1, 1, 1], :offset, 0.5, :length, 1001))
   check_maxamp(ind, 1.5, "simple scaler")
-  check_env_vals("simple scaler", make_env([0, 1, 1, 1], :offset, 0.5, :end, 1000))
+  check_env_vals("simple scaler", make_env([0, 1, 1, 1], :offset, 0.5, :length, 1001))
   if edit_position == 2
     undo_edit
   else
     snd_display("env+offset was no-op")
   end
-  env_channel(make_env([0, 0, 1, 1, 2, 0], :offset, 0.5, :scaler, 2.0, :end, 1000))
+  env_channel(make_env([0, 0, 1, 1, 2, 0], :offset, 0.5, :scaler, 2.0, :length, 1001))
   check_maxamp(ind, 2.5, "off+scl")
-  check_env_vals("off+scl", make_env([0, 0, 1, 1, 2, 0], :offset, 0.5, :scaler, 2.0, :end, 1000))
+  check_env_vals("off+scl", make_env([0, 0, 1, 1, 2, 0], :offset, 0.5, :scaler, 2.0, :length, 1001))
   undo_edit
-  env_channel(make_env([0, -0.5, 1, 0, 2, -1], :offset, 0.5, :scaler, 2.0, :end, 1000))
+  env_channel(make_env([0, -0.5, 1, 0, 2, -1], :offset, 0.5, :scaler, 2.0, :length, 1001))
   check_maxamp(ind, 1.5, "off+scl #2")
   mx = -12.0
   scan_chan(lambda do |y|
@@ -9712,15 +9712,15 @@ def test265
             end)
   snd_display("non abs max: %s (correct: 0.5)", mx) if fneq(mx, 0.5)
   check_env_vals("off+scl #2",
-                 make_env([0, -0.5, 1, 0, 2, -1], :offset, 0.5, :scaler, 2.0, :end, 1000))
+                 make_env([0, -0.5, 1, 0, 2, -1], :offset, 0.5, :scaler, 2.0, :length, 1001))
   undo_edit
   env_sound([0, 0.5, 1, 0.75, 2, 0.25], 0, frames, 32.0)
   check_maxamp(ind, 0.75, "xramp")
-  check_env_vals("xramp", make_env([0, 0.5, 1, 0.75, 2, 0.25], :base, 32.0, :end, 1000))
+  check_env_vals("xramp", make_env([0, 0.5, 1, 0.75, 2, 0.25], :base, 32.0, :length, 1001))
   undo_edit
   env_channel_with_base([0, 0.5, 1, 0.75, 2, 0.25], 32.0)
   check_maxamp(ind, 0.75, "xramp1")
-  check_env_vals("xramp1", make_env([0, 0.5, 1, 0.75, 2, 0.25], :base, 32.0, :end, 1000))
+  check_env_vals("xramp1", make_env([0, 0.5, 1, 0.75, 2, 0.25], :base, 32.0, :length, 1001))
   close_sound(ind)
   #
   hlb = make_hilbert_transform(8)
@@ -12167,7 +12167,7 @@ def fltit
     if i == 5
       make_env(:envelope, [0, 0.4, 1, 1], :duration, 1.0)
     else
-      make_env(:envelope, [0, coeffs[i], 1, 0], :end, 100)
+      make_env(:envelope, [0, coeffs[i], 1, 0], :length, 101)
     end
   end
   lambda do |x|
@@ -14395,8 +14395,8 @@ def test058
   test_gen_equal(f1, f2, f3)
   coeffs = vct(0.1, 0.2, 0.3, 0.4, 0.4, 0.3, 0.2, 0.1)
   flt = make_fir_filter(8, coeffs)
-  es = make_array(8) do |i| make_env([0, coeffs[i], 1, 0], :end, 101) end
-  es[5] = make_env([0, 0.4, 1, 1], :end, 101)
+  es = make_array(8) do |i| make_env([0, coeffs[i], 1, 0], :length, 102) end
+  es[5] = make_env([0, 0.4, 1, 1], :length, 102)
   data = make_vct!(100) do |i|
     val = fir_filter(flt, (i % 12).zero? ? 1.0 : 0.0)
     xcof = flt.xcoeffs
@@ -15221,8 +15221,8 @@ def test068
   poltergeist = lambda do |frek, amp, r, gain, frek_env, r_env|
     # test courtesy of Anders Vinjar
     filt = make_formant(r, frek, gain)
-    fe = make_env(:envelope, frek_env, :end, frames, :offset, frek)
-    re = make_env(:envelope, r_env, :end, frames, :offset, r)
+    fe = make_env(:envelope, frek_env, :length, frames, :offset, frek)
+    re = make_env(:envelope, r_env, :length, frames, :offset, r)
     lambda do |y|
       outval = formant(filt, amp * y)
       mus_set_formant_radius_and_frequency(filt, env(re), env(fe))
@@ -15909,8 +15909,8 @@ def test088
   val2 = make_fft_window(Dolph_chebyshev_window, 16, 1.0)
   unless vequal(val1, val2) then snd_display("dolph_1/dolph 1: %s %s?", val1, val2) end
   #
-  gen = make_env(:envelope, [0, 0, 1, 1, 2, 0], :scaler, 0.5, :end, 10)
-  gen1 = make_env(:envelope, [0, 0, 1, 1, 2, 0], :scaler, 0.5, :end, 10)
+  gen = make_env(:envelope, [0, 0, 1, 1, 2, 0], :scaler, 0.5, :length, 11)
+  gen1 = make_env(:envelope, [0, 0, 1, 1, 2, 0], :scaler, 0.5, :length, 11)
   print_and_check(gen,
                   "env",
                   "env: linear, pass: 0 (dur: 11), index: 0, scaler: 0.5000, offset: 0.0000, data: [0.000 0.000 1.000 1.000 2.000 0.000]")
@@ -15933,19 +15933,19 @@ def test088
   if fneq(res = env_interp(1.6, gen), 0.2)
     snd_display("env_interp %s at 1.6: %s?", gen, res)
   end
-  gen = make_env(:envelope, [0, 1, 1, 0], :base, 32.0, :end, 10)
+  gen = make_env(:envelope, [0, 1, 1, 0], :base, 32.0, :length, 11)
   snd_display("env base (32.0): %s?", gen.increment) if fneq(gen.increment, 32.0)
   v0.map! do |val| env(gen) end
   if fneq(v0[0], 1.0) or fneq(v0[1], 0.698) or fneq(v0[8], 0.032)
     snd_display("%s output: %s?", gen, v0)
   end
-  gen = make_env(:envelope, [0, 1, 1, 0], :base, 0.0325, :end, 10)
+  gen = make_env(:envelope, [0, 1, 1, 0], :base, 0.0325, :length, 11)
   snd_display("env base (0.0325): %s?", gen.increment) if fneq(gen.increment, 0.0325)
   v0.map! do |val| env(gen) end
   if fneq(v0[0], 1.0) or fneq(v0[1], 0.986) or fneq(v0[8], 0.513)
     snd_display("%s output: %s?", gen, v0)
   end
-  gen = make_env(:envelope, [0, 1, 1, 0.5, 2, 0], :base, 0.0, :end, 10, :offset, 1.0)
+  gen = make_env(:envelope, [0, 1, 1, 0.5, 2, 0], :base, 0.0, :length, 11, :offset, 1.0)
   snd_display("mus_offset: %s?", gen.offset) if fneq(gen.offset, 1.0)
   snd_display("env base (0.0): %s?", gen.increment) if fneq(gen.increment, 0.0)
   v0.map_with_index! do |val, i|
@@ -15971,7 +15971,7 @@ def test088
   if fneq(val = env(gen), 2.0)
     snd_display("set_mus_location 0 -> %s (2.0)?", val)
   end
-  gen = make_env([0, 0, 1, -1, 2, 0], :end, 10)
+  gen = make_env([0, 0, 1, -1, 2, 0], :length, 11)
   5.times do |i|
     if fneq(val = env(gen), i / -5.0)
       snd_display("neg env: %d %s?", i, val)
@@ -15982,7 +15982,7 @@ def test088
       snd_display("neg env: %d %s?", i, val)
     end
   end
-  gen = make_env([0, 0, 1, -1, 2, 0], :end, 10, :base, 0.5)
+  gen = make_env([0, 0, 1, -1, 2, 0], :length, 11, :base, 0.5)
   vct(0.0, -0.14869, -0.31950, -0.51571, -0.74110,
       -1.0, -0.74110, -0.51571, -0.31950, -0.14869).each_with_index do |val, i|
     if fneq(res = env(gen), val)
@@ -15990,7 +15990,7 @@ def test088
     end
   end
   mus_apply(gen)
-  e = make_env([0, 0, 1, 1], :end, 9)
+  e = make_env([0, 0, 1, 1], :length, 10)
   if fneq(res = env_interp(1.0, e), 1.0)
     snd_display("env_interp 0011 at 1: %s?", res)
   end
@@ -16009,7 +16009,7 @@ def test088
       snd_display("ramp env over 10: %s at %d?", val, i)
     end
   end
-  e = make_env([0, 0, 0.5, 0.5, 1, 1], :base, 32, :end, 9)
+  e = make_env([0, 0, 0.5, 0.5, 1, 1], :base, 32, :length, 10)
   x = 0.0
   vct(0, 0.0243, 0.0667, 0.1412, 0.2716, 0.5, 0.5958, 0.709, 0.8425, 1).each_with_index do |val, i|
     if fneq(res = env_interp(x, e), val)
@@ -16017,7 +16017,7 @@ def test088
     end
     x += 0.111111
   end
-  e = make_env([0, -1.0, 1, 1], :base, 32, :end, 9)
+  e = make_env([0, -1.0, 1, 1], :base, 32, :length, 10)
   x = 0.0
   vct(-1.0, -0.9697, -0.9252, -0.8597, -0.7635,
       -0.6221, -0.4142, -0.1088, 0.34017, 1.0).each_with_index do |val, i|
@@ -16026,7 +16026,7 @@ def test088
     end
     x += 0.111111
   end
-  e = make_env([0, -1.0, 0.5, 0.5, 1, 0], :base, 32, :end, 9)
+  e = make_env([0, -1.0, 0.5, 0.5, 1, 0], :base, 32, :length, 10)
   x = 0.0
   vct(-1.0, -0.952, -0.855, -0.661, -0.274,
       0.5, 0.356, 0.226, 0.107, 0.0).each_with_index do |val, i|
@@ -16035,7 +16035,7 @@ def test088
     end
     x += 0.111111
   end
-  e = make_env([0, 0.0, 0.5, 0.5, 1, -1.0], :base, 32, :end, 9)
+  e = make_env([0, 0.0, 0.5, 0.5, 1, -1.0], :base, 32, :length, 10)
   x = 0.0
   vct(0, 0.085, 0.177, 0.276, 0.384, 0.5, -0.397, -0.775, -0.933, -1).each_with_index do |val, i|
     if fneq(res = env_interp(x, e), val)
@@ -16044,7 +16044,7 @@ def test088
     x += 0.111111
   end
   #
-  e = make_env([0, 0, 1, 1], :end, 9, :base, 4)
+  e = make_env([0, 0, 1, 1], :length, 10, :base, 4)
   if fneq(res = env_interp(1.0, e), 1.0)
     snd_display("env_interp 0011 4 at 1: %s?", res)
   end
@@ -16054,7 +16054,7 @@ def test088
   if fneq(res = env_interp(0.45, e), 0.2839)
     snd_display("env_interp 0011 4 at 0.45: %s?", res)
   end
-  e = make_env([0, 0, 1, 1], :end, 9, :base, 0.2)
+  e = make_env([0, 0, 1, 1], :length, 10, :base, 0.2)
   if fneq(res = env_interp(1.0, e), 1.0)
     snd_display("env_interp 0011 2 at 1: %s?", res)
   end
@@ -16068,13 +16068,13 @@ def test088
   e.offset = 3.0
   snd_display("set_mus_offset env: %s?", e.offset) if fneq(e.offset, 3.0)
   #
-  e1 = make_env([0, 0, 1, 1], :base, 32.0, :end, 10)
+  e1 = make_env([0, 0, 1, 1], :base, 32.0, :length, 11)
   vct(0, 0.013, 0.032, 0.059, 0.097, 0.150, 0.226, 0.333, 0.484, 0.698, 1).each do |val|
     if fneq(res = env(e1), val)
       snd_display("exp env direct (32.0): %s %s", res, val)
     end
   end
-  e1 = make_env([0, 1, 1, 2], :base, 32.0, :end, 10)
+  e1 = make_env([0, 1, 1, 2], :base, 32.0, :length, 11)
   vct(1, 1.013, 1.032, 1.059, 1.097, 1.15, 1.226, 1.333, 1.484, 1.698, 2).each do |val|
     if fneq(res = env(e1), val)
       snd_display("exp env direct (32.0) offset: %s %s", res, val)
@@ -16086,16 +16086,16 @@ def test088
       snd_display("exp env direct (32.0) offset (and dur): %s %s", res, val)
     end
   end
-  e1 = make_env([0, 0, 1, 1], :base, 0.032, :end, 10)
+  e1 = make_env([0, 0, 1, 1], :base, 0.032, :length, 11)
   vct(0.000, 0.301, 0.514, 0.665, 0.772, 0.848, 0.902, 0.940, 0.967, 0.986, 1.0).each do |val|
     if fneq(res = env(e1), val)
       snd_display("exp env direct (0.032): %s %s", res, val)
     end
   end
   #
-  e1 = make_env([0, 0, 1, 1], :base, 0.03125, :end, 10)
-  e2 = make_env([0, 0, 1, 1, 2, 0], :base, 32.0, :end, 10)
-  e3 = make_env([0, 0, 0.1, 1, 2, 0], :base, 1.1, :end, 100)
+  e1 = make_env([0, 0, 1, 1], :base, 0.03125, :length, 11)
+  e2 = make_env([0, 0, 1, 1, 2, 0], :base, 32.0, :length, 11)
+  e3 = make_env([0, 0, 0.1, 1, 2, 0], :base, 1.1, :length, 101)
   10.times do |i|
     lv1 = env_interp(i * 0.1, e1)
     lv2 = env(e1)
@@ -16110,7 +16110,7 @@ def test088
     snd_display("env_interp[tri %s]: %s (%s)?", i * 0.02, lv5, lv6) if fneq(lv5, lv6)
   end
   #
-  e1 = make_env([0, 0, 1, 1, 2, 0], :end, 9)
+  e1 = make_env([0, 0, 1, 1, 2, 0], :length, 10)
   lv1 = make_vct!(11) do env(e1) end
   lv2 = make_vct!(11) do env(e1) end
   e1.reset
@@ -16118,7 +16118,7 @@ def test088
   snd_display("mus_reset: %s %s?", lv1, lv3) unless vequal(lv1, lv3)
   snd_display("mus_reset 1: %s?", lv2) unless vequal(lv2, make_vct(11))
   #
-  gen = make_env([0, 0, 1, 1, 2, 0], :end, 10)
+  gen = make_env([0, 0, 1, 1, 2, 0], :length, 11)
   4.times do env(gen) end
   if fneq(res = env(gen), 0.8)
     snd_display("env(5): %s?", res)
@@ -16132,7 +16132,7 @@ def test088
   if fneq(res = env(gen), 0.8)
     snd_display("set_mus_location 6 -> %s (0.8)?", res)
   end
-  gen = make_env([0, 0, 1, 1], :base, 0.032, :end, 11)
+  gen = make_env([0, 0, 1, 1], :base, 0.032, :length, 12)
   gen.location = 5
   if fneq(res = env(gen), 0.817)
     snd_display("set env location with base: %s %s?", res, gen)
@@ -16143,23 +16143,23 @@ def test088
     snd_display("set env location with base and dur: %s %s?", res, gen)
   end
   #
-  test_gen_equal(make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :end,  9),
-                 make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :end,  9),
-                 make_env([0, 0, 1, 1, 2, 0], :scaler, 0.25, :end,  9))
-  test_gen_equal(make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :end,  9),
-                 make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :end,  9),
-                 make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :end, 10))
-  test_gen_equal(make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :end,  9),
-                 make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :end,  9),
-                 make_env([0, 0, 1, 1, 3, 0], :scaler, 0.50, :end,  9))
+  test_gen_equal(make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :length,  10),
+                 make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :length,  10),
+                 make_env([0, 0, 1, 1, 2, 0], :scaler, 0.25, :length,  10))
+  test_gen_equal(make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :length,  10),
+                 make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :length,  10),
+                 make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :length,  11))
+  test_gen_equal(make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :length,  10),
+                 make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :length,  10),
+                 make_env([0, 0, 1, 1, 3, 0], :scaler, 0.50, :length,  10))
   #
   if (res = Snd.catch do make_env(:envelope, []) end).first != :no_data
     snd_display("make_env null env: %s", res.inspect)
   end
-  if (res = Snd.catch do make_env(:end, 0) end).first != :no_data
+  if (res = Snd.catch do make_env(:length, 0) end).first != :no_data
     snd_display("make_env no env: %s", res.inspect)
   end
-  if (res = Snd.catch do make_env(:envelope, [0, 0], :end, -1) end).first != :out_of_range
+  if (res = Snd.catch do make_env(:envelope, [0, 0], :length, -1) end).first != :out_of_range
     snd_display("make_env bad end: %s", res.inspect)
   end
   if (res = Snd.catch do make_env(:envelope, [0, 0], :length, -1) end).first != :out_of_range
@@ -16171,13 +16171,13 @@ def test088
   if (res = Snd.catch do make_env(:envelope, [0, 0], :base, -1.0) end).first != :out_of_range
     snd_display("make_env bad base: %s", res.inspect)
   end
-  if (res = Snd.catch do make_env(:envelope, [1, 1, 0, 0], :end, 10) end).first != :mus_error
+  if (res = Snd.catch do make_env(:envelope, [1, 1, 0, 0], :length, 11) end).first != :mus_error
     snd_display("make_env bad env 1 1 0 0: %s", res.inspect)
   end
-  if (res = Snd.catch do make_env(:envelope, [0, 1, -1, 0], :end, 10) end).first != :mus_error
+  if (res = Snd.catch do make_env(:envelope, [0, 1, -1, 0], :length, 11) end).first != :mus_error
     snd_display("make_env bad env 0 1 -1 0: %s", res.inspect)
   end
-  if (res = Snd.catch do make_env(:envelope, [0, 1, 1, 0], :end, 10, :length, 10) end).first != :mus_error
+  if (res = Snd.catch do make_env(:envelope, [0, 1, 1, 0], :length, 11, :length, 10) end).first != :mus_error
     snd_display("make_env bad end/dur: %s", res.inspect)
   end
 end
@@ -16775,7 +16775,7 @@ def test108
   # 
   table = make_vct(10, 0.1)
   gen = make_wave_train(1000.0, :wave, table)
-  e = make_env([0, 1, 1, 2], :end, 1000)
+  e = make_env([0, 1, 1, 2], :length, 1001)
   base_freq = mus_frequency(gen)
   map_channel(lambda do |y|
                 res = wave_train(gen)
@@ -18138,10 +18138,10 @@ def test148
   dur = 1.0
   gen1 = make_move_sound([start, len, 1, 0,
                           make_delay(32),
-                          make_env([0, 0, 1, 1], :end, 1000),
-                          make_env([0, 0, 1, 1], :end, 1000),
+                          make_env([0, 0, 1, 1], :length, 1001),
+                          make_env([0, 0, 1, 1], :length, 1001),
                           [make_delay(32)],
-                          [make_env([0, 0, 1, 1], :end, 1000)],
+                          [make_env([0, 0, 1, 1], :length, 1001)],
                           false,
                           [0, 1]],
                          outf1)
@@ -18159,11 +18159,11 @@ def test148
                          outf4)
   gen3 = make_move_sound([start, len, 1, 1,
                           make_delay(32),
-                          make_env([0, 0, 1, 1], :end, 1000),
-                          make_env([0, 0, 1, 1], :end, 1000),
+                          make_env([0, 0, 1, 1], :length, 1001),
+                          make_env([0, 0, 1, 1], :length, 1001),
                           [make_delay(32)],
-                          [make_env([0, 0, 1, 1], :end, 1000)],
-                          [make_env([0, 1, 1, 1], :end, 1000)],
+                          [make_env([0, 0, 1, 1], :length, 1001)],
+                          [make_env([0, 1, 1, 1], :length, 1001)],
                           [0, 1]],
                          outf1, revf)
   print_and_check(gen1,
@@ -18227,24 +18227,24 @@ def test148
   end
   unless vequal(v, Vct.new(10, 0.875)) then snd_display("move_sound output: %s?", v) end
   if (res = Snd.catch do
-        make_move_sound([0, 1000, 1, 0, make_oscil(32), make_env([0, 0, 1, 1], :end, 1000),
-                         make_env([0, 0, 1, 1], :end, 1000), [make_delay(32)],
-                         [make_env([0, 0, 1, 1], :end, 1000)], false, [0, 1]],
+        make_move_sound([0, 1000, 1, 0, make_oscil(32), make_env([0, 0, 1, 1], :length, 1001),
+                         make_env([0, 0, 1, 1], :length, 1001), [make_delay(32)],
+                         [make_env([0, 0, 1, 1], :length, 1001)], false, [0, 1]],
                         outf1)
       end).first != :wrong_type_arg
     snd_display("make_move_sound bad doppler delay: %s", res.inspect)
   end
   if (res = Snd.catch do
-        make_move_sound([0, 1000, 1, 0, make_oscil(32), make_env([0, 0, 1, 1], :end, 1000),
-                         make_env([0, 0, 1, 1], :end, 1000), [make_delay(32)]],
+        make_move_sound([0, 1000, 1, 0, make_oscil(32), make_env([0, 0, 1, 1], :length, 1001),
+                         make_env([0, 0, 1, 1], :length, 1001), [make_delay(32)]],
                         outf1)
       end).first != :wrong_type_arg
     snd_display("make_move_sound truncated list: %s", res.inspect)
   end
   if (res = Snd.catch do
-        make_move_sound([0, 1000, 1, 0, make_delay(32), make_env([0, 0, 1, 1], :end, 1000),
+        make_move_sound([0, 1000, 1, 0, make_delay(32), make_env([0, 0, 1, 1], :length, 1001),
                          false, [false],
-                         [make_env([0, 0, 1, 1], :end, 1000)], false, false],
+                         [make_env([0, 0, 1, 1], :length, 1001)], false, false],
                         outf1)
       end).first != :wrong_type_arg
     snd_display("make_move_sound no out map: %s", res.inspect)
@@ -18830,7 +18830,7 @@ def test168
   undo_edit
   #
   gen = make_granulate(:jitter, 0.0, :hop, 0.004, :length, 0.001, :ramp, 0.0)
-  e = make_env(:envelope, [0, 0, 1, 0.5], :end, 1000)
+  e = make_env(:envelope, [0, 0, 1, 0.5], :length, 1001)
   base_ramp_len = mus_length(gen)
   map_channel(lambda do |y|
                 result = granulate(gen, lambda do |dir| 0.1 end)
@@ -18866,7 +18866,7 @@ def test168
   end
   undo_edit
   gen = make_granulate(:jitter, 0.0, :hop, 0.004, :length, 0.001, :ramp, 0.0)
-  e = make_env(:envelope, [0, 1, 1, 0.25], :end, 1000)
+  e = make_env(:envelope, [0, 1, 1, 0.25], :length, 1001)
   base_hop_len = mus_hop(gen)
   map_channel(lambda do |y|
                 result = granulate(gen, lambda do |dir| 0.1 end)
@@ -18895,7 +18895,7 @@ def test168
   end
   undo_edit
   gen = make_granulate(:jitter, 0.0, :hop, 0.004, :length, 0.001, :ramp, 0.0)
-  e = make_env(:envelope, [0, 1, 1, 0.25], :end, 1000)
+  e = make_env(:envelope, [0, 1, 1, 0.25], :length, 1001)
   base_freq = mus_frequency(gen)
   map_channel(lambda do |y|
                 result = granulate(gen, lambda do |dir| 0.1 end)
@@ -18938,7 +18938,7 @@ def test168
   end
   undo_edit
   gen = make_granulate(:jitter, 0.0, :hop, 0.004, :length, 0.001, :ramp, 0.0, :scaler, 1.0)
-  e = make_env(:envelope, [0, 1, 1, 0], :end, 1000)
+  e = make_env(:envelope, [0, 1, 1, 0], :length, 1001)
   base_freq = mus_frequency(gen)
   map_channel(lambda do |y|
                 result = granulate(gen, lambda do |dir| 0.1 end)
@@ -18971,7 +18971,7 @@ def test168
   end
   undo_edit
   gen = make_granulate(:jitter, 0.0, :hop, 0.006, :length, 0.001, :ramp, 0.0, :max_size, 2200)
-  e = make_env(:envelope, [0, 1, 1, 5], :end, 1000)
+  e = make_env(:envelope, [0, 1, 1, 5], :length, 1001)
   base_len = mus_length(gen)
   map_channel(lambda do |y|
                 result = granulate(gen, lambda do |dir| 0.1 end)
@@ -19007,7 +19007,7 @@ def test168
   end
   undo_edit
   gen = make_granulate(:jitter, 0.0, :hop, 0.006, :length, 0.005, :ramp, 0.0, :max_size, 2200)
-  e = make_env(:envelope, [0, 1, 1, 0.2], :end, 1000)
+  e = make_env(:envelope, [0, 1, 1, 0.2], :length, 1001)
   base_len = mus_length(gen)
   map_channel(lambda do |y|
                 result = granulate(gen, lambda do |dir| 0.1 end)
@@ -19631,7 +19631,7 @@ def test208
     end
     vf = make_array(1) do
       make_array(1) do
-        make_env(:envelope, [0, 0, 1, 1], :end, 10)
+        make_env(:envelope, [0, 0, 1, 1], :length, 11)
       end
     end
     mus_mix_1(make_mix_output.call("fmv.snd", k),
@@ -19649,8 +19649,8 @@ def test208
     vf2 = make_array(2)
     vf[0] = vf1
     vf[1] = vf2
-    vf1[0] = make_env(:envelope, [0, 0, 1, 1], :end, 9)
-    vf2[1] = make_env(:envelope, [0, 0, 1, 1], :end, 9)
+    vf1[0] = make_env(:envelope, [0, 0, 1, 1], :length, 10)
+    vf2[1] = make_env(:envelope, [0, 0, 1, 1], :length, 10)
     mus_mix_1(make_mix_output.call("fmv.snd", k),
               make_mix_input.call("fmv2.snd", k),
               0, 12, 0, make_mixer(2, 1.0, 1.0, 1.0, 1.0), vf)
@@ -19662,8 +19662,8 @@ def test208
         end).first != :bad_type
       snd_display("%d mix w oscil-array: %s", k, res.inspect)
     end
-    vf1[0] = make_env(:envelope, [0, 0, 1, 1], :end, 9)
-    vf2[1] = make_env(:envelope, [0, 0, 1, 1], :end, 9)
+    vf1[0] = make_env(:envelope, [0, 0, 1, 1], :length, 10)
+    vf2[1] = make_env(:envelope, [0, 0, 1, 1], :length, 10)
     if (res = Snd.catch do
           vf1[0] = make_oscil
           vf2[1] = sqrt(-1.0)
@@ -19704,10 +19704,10 @@ def test208
     egen = make_array(1)
     outv = make_array(1)
     outv[0] = egen
-    egen[0] = make_env(:envelope, [0, 0, 1, 1], :end, len)
+    egen[0] = make_env(:envelope, [0, 0, 1, 1], :length, len)
     mus_mix_1(make_mix_output.call("fmv.snd", k), make_mix_input.call("oboe.snd", k),
               0, len, 0, false, outv)
-    egen[0] = make_env(:envelope, [0, 1, 1, 0], :end, len)
+    egen[0] = make_env(:envelope, [0, 1, 1, 0], :length, len)
     mus_mix_1(make_mix_output.call("fmv.snd", k), make_mix_input.call("oboe.snd", k),
               0, len, 0, make_mixer(1, 1.0), outv)
     ind_oboe = open_sound("oboe.snd")
@@ -19734,8 +19734,8 @@ def test208
     outv = make_array(2)
     outv[0] = egen0
     outv[1] = egen1
-    egen0[0] = make_env(:envelope, [0, 0, 1, 1], :end, len)
-    egen1[1] = make_env(:envelope, [0, 0, 1, 1], :end, len)
+    egen0[0] = make_env(:envelope, [0, 0, 1, 1], :length, len)
+    egen1[1] = make_env(:envelope, [0, 0, 1, 1], :length, len)
     mus_mix_1(make_mix_output.call("fmv.snd", k), make_mix_input.call("2.snd", k),
               0, len, 0, false, outv)
     ind_mix = open_sound("fmv.snd")
@@ -20306,7 +20306,7 @@ def test238
                [:filtered_comb,  [:filter, make_one_zero(0.5, 0.5)], false],
                [:convolve,       [:filter, vct(0, 1, 2), :input, lambda { |dir| 1.0 }], false],
                [:delay,          false, false],
-               [:env, [:envelope, [0, 1, 1, 0], :end, 10], lambda { |gen, ignored| env(gen) }],
+               [:env, [:envelope, [0, 1, 1, 0], :length, 11], lambda { |gen, ignored| env(gen) }],
                [:filter,         [:xcoeffs, vct(0, 1, 2)], false],
                [:filter,         [:ycoeffs, vct(0, 1, 2)], false],
                [:filter,         [:xcoeffs, vct(1, 2, 3), :ycoeffs, vct(0, 1, 2)], false],
@@ -21297,7 +21297,7 @@ def test0010
     end
   end
   undo_edit
-  env_sound(make_env(:envelope, [0, 0, 1, 1], :end, 9), 0, 10, 1.0, ind0)
+  env_sound(make_env(:envelope, [0, 0, 1, 1], :length, 10), 0, 10, 1.0, ind0)
   10.times do |i|
     if fneq(res = sample(i, ind0, 0), i * 0.1111)
       snd_display("ind0:0 2 env_sound[%d]: %s?", i, res)
@@ -21651,15 +21651,15 @@ def test0210
   snd_display("src -env m2: %s?", mark_sample(m2)) if mark_sample(m2) != 61160
   revert_sound(ind)
   # 
-  src_channel(make_env(:envelope, [0, 0.5, 1, 1], :end, 8000), 2000, 10000)
+  src_channel(make_env(:envelope, [0, 0.5, 1, 1], :length, 8001), 2000, 10000)
   snd_display("src_channel (1) m1: %s?", mark_sample(m1)) if mark_sample(m1) != samp1
   snd_display("src_channel (1) m2: %s?", mark_sample(m2)) if mark_sample(m2) != 11345
   undo_edit
-  src_channel(make_env(:envelope, [0, 0.5, 1, 1], :end, 8000), 0, 8000)
+  src_channel(make_env(:envelope, [0, 0.5, 1, 1], :length, 8001), 0, 8000)
   snd_display("src_channel (2) m1: %s?", mark_sample(m1)) if mark_sample(m1) != 3303
   snd_display("src_channel (2) m2: %s?", mark_sample(m2)) if mark_sample(m2) != samp2
   undo_edit
-  src_channel(make_env(:envelope, [0, 0.5, 1, 1], :end, 8000), 10000, 8000)
+  src_channel(make_env(:envelope, [0, 0.5, 1, 1], :length, 8001), 10000, 8000)
   snd_display("src_channel (3) m1: %s?", mark_sample(m1)) if mark_sample(m1) != samp1
   snd_display("src_channel (3) m2: %s?", mark_sample(m2)) if mark_sample(m2) != samp2
   close_sound(ind)
@@ -24604,7 +24604,7 @@ def test14
     if rs(0.5) then src_sound([0, 0.5, 1, 1.5], 1.0, cfd) end
     if rs(0.5)
       if frames(cfd) > 0
-        src_sound(make_env(:envelope, [0, 0.5, 1, 1.5], :end, frames(cfd) - 1), 1.0, cfd)
+        src_sound(make_env(:envelope, [0, 0.5, 1, 1.5], :length, frames(cfd)), 1.0, cfd)
       end
     end
     if rs(0.5) then revert_sound(cfd) end
@@ -25840,7 +25840,7 @@ def test0215
   player = make_player(ind, 0)
   len = frames(ind, 0)
   incr = dac_size
-  e = make_env(:envelope, [0, 0, 1, 1], :end, (len.to_f / incr).floor)
+  e = make_env(:envelope, [0, 0, 1, 1], :length, (len.to_f / incr).floor)
   samp = 0
   add_player(player, 0, -1, -1, lambda do |reason|
                $play_hook.reset_hook!
@@ -25964,7 +25964,7 @@ def test0215
     undo_edit
   end
   src_lists2.each do |e, f0, f1|
-    src_sound(make_env(:envelope, e, :end, frames), 1.0, ind, 0)
+    src_sound(make_env(:envelope, e, :length, frames), 1.0, ind, 0)
     if fneq(res1 = frames(ind, 0) / 10000.0, res2 = src_duration(e))
       snd_display("src_sound (make_env) %s: %s (%s)?", e, res1, res2)
     end
@@ -26017,7 +26017,7 @@ def test0215
     undo_edit
   end
   src_lists3.each do |e|
-    src_channel(make_env(:envelope, e, :end, 2500), 1000, 2500)
+    src_channel(make_env(:envelope, e, :length, 2501), 1000, 2500)
     if f3neq(res1 = frames(ind, 0), (res2 = 7500 + src_duration(e) * 2500))
       snd_display("src_channel section (make_env duration) %s: %s (%s %s)?",
                   e, src_duration(e), res1, res2)
@@ -26050,7 +26050,7 @@ def test0215
     undo_edit
   end
   src_lists3.each do |e|
-    src_selection(make_env(:envelope, e, :end, 2500))
+    src_selection(make_env(:envelope, e, :length, 2501))
     if f3neq(res1 = frames(ind, 0), (res2 = 7500 + src_duration(e) * 2500))
       snd_display("src_selection section (make_env duration) %s: %s (%s %s)?",
                   e, src_duration(e), res1, res2)
@@ -26879,7 +26879,7 @@ def opt_test(choice)
     reader0 = make_sample_reader(beg, cursnd, curchn)
     env_channel(e, beg, dur, cursnd, curchn)
     reader1 = make_sample_reader(beg, cursnd, curchn)
-    en = make_env(:envelope, e, :end, dur - 1)
+    en = make_env(:envelope, e, :length, dur)
     dur.times do |i|
       e0 = env(en)
       val00 = reader0.call
@@ -27040,7 +27040,7 @@ end
 def test0016
   oboe = open_sound("oboe.snd")
   [[lambda { scale_channel(2.0, 0, 0, oboe) }, :scale_channel],
-   [lambda { env_channel(make_env([0, 0, 1, 1], :end, 123), 0, 0, oboe) }, :env_channel],
+   [lambda { env_channel(make_env([0, 0, 1, 1], :length, 123), 0, 0, oboe) }, :env_channel],
    [lambda { clm_channel(make_oscil, 0, 0, oboe) }, :clm_channel],
    [lambda { vct2channel(make_vct(3), 0, 0, oboe) }, :vct2channel],
    [lambda { smooth_channel(0, 0, oboe) }, :smooth_channel],
@@ -27061,7 +27061,7 @@ def test0016
     end
   end
   [[lambda { scale_channel(2.0, -1, 123, oboe) }, :scale_channel],
-   [lambda { env_channel(make_env([0, 0, 1, 1], :end, 123), -1, 123, oboe) }, :env_channel],
+   [lambda { env_channel(make_env([0, 0, 1, 1], :length, 123), -1, 123, oboe) }, :env_channel],
    [lambda { clm_channel(make_oscil, -1, 123, oboe) }, :clm_channel],
    [lambda { vct2channel(make_vct(3), -1, 123, oboe) }, :vct2channel],
    [lambda { smooth_channel(-1, 123, oboe) }, :smooth_channel],
@@ -27084,7 +27084,7 @@ def test0016
     end
   end
   [[lambda { scale_channel(2.0, 12345678, 123, oboe) }, :scale_channel],
-   [lambda { env_channel(make_env([0, 0, 1, 1], :end, 123), 12345678, 123, oboe) }, :env_channel],
+   [lambda { env_channel(make_env([0, 0, 1, 1], :length, 123), 12345678, 123, oboe) }, :env_channel],
    [lambda { smooth_channel(12345678, 123, oboe) }, :smooth_channel],
    [lambda { src_channel(2.0, 12345678, 123, oboe) }, :src_channel],
    [lambda { reverse_channel(12345678, 123, oboe) }, :reverse_channel],
@@ -27096,7 +27096,7 @@ def test0016
   end
   pos = 0
   [[lambda { scale_channel(2.0, 0, 123, oboe, 0) }, :scale_channel],
-   [lambda { env_channel(make_env([0, 0, 1, 1], :end, 123), 0, 123, oboe, 0) }, :env_channel],
+   [lambda { env_channel(make_env([0, 0, 1, 1], :length, 123), 0, 123, oboe, 0) }, :env_channel],
    [lambda { clm_channel(make_oscil, 0, 123, oboe, 0) }, :clm_channel],
    [lambda { vct2channel(make_vct(3), 0, 123, oboe, 0) }, :vct2channel],
    [lambda { smooth_channel(0, 123, oboe, 0) }, :smooth_channel],
@@ -27134,7 +27134,7 @@ def test0016
   # args instead of one
   edpos_fnc = lambda do |hi, ho, hu| false end
   [[lambda { scale_channel(2.0, 0, 123, oboe, 0, edpos_fnc) }, :scale_channel],
-   [lambda { env_channel(make_env([0, 0, 1, 1], :end, 123), 0, 123, oboe, 0, edpos_fnc)}, :env_channel],
+   [lambda { env_channel(make_env([0, 0, 1, 1], :length, 123), 0, 123, oboe, 0, edpos_fnc)}, :env_channel],
    [lambda { clm_channel(make_oscil, 0, 123, oboe, 0, edpos_fnc) }, :clm_channel],
    [lambda { vct2channel(make_vct(3), 0, 123, oboe, 0, edpos_fnc) }, :vct2channel],
    [lambda { smooth_channel(0, 123, oboe, 0, edpos_fnc) }, :smooth_channel],
@@ -27151,7 +27151,7 @@ def test0016
     end
   end
   [[lambda { scale_channel(2.0, 0, 123, oboe, 0, 123) }, :scale_channel],
-   [lambda { env_channel(make_env([0, 0, 1, 1], :end, 123), 0, 123, oboe, 0, 123)}, :env_channel],
+   [lambda { env_channel(make_env([0, 0, 1, 1], :length, 123), 0, 123, oboe, 0, 123)}, :env_channel],
    [lambda { clm_channel(make_oscil, 0, 123, oboe, 0, 123) }, :clm_channel],
    [lambda { vct2channel(make_vct(3), 0, 123, oboe, 0, 123) }, :vct2channel],
    [lambda { smooth_channel(0, 123, oboe, 0, 123) }, :smooth_channel],
@@ -27221,42 +27221,42 @@ def test0116
   vct2channel(v0)
   if frames != 20 then snd_display("vct2channel new 20: %s?", frames) end
   if fneq(maxamp, 1.0) then snd_display("vct 1->new: %s?", maxamp) end
-  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 1], :base, 0, :end, 19))
+  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 1], :base, 0, :length, 20))
   if (res = channel2vct) != vct(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
     snd_display("env_channel step 1: %s?", res)
   end
   undo_edit
-  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 1], :base, 0, :end, 19), 8)
+  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 1], :base, 0, :length, 20), 8)
   if (res = channel2vct) != vct(1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1)
     snd_display("env_channel step 1 at 8: %s?", res)
   end
   undo_edit
-  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 1], :base, 0, :end, 11))
+  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 1], :base, 0, :length, 12))
   if (res = channel2vct) != vct(0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
     snd_display("env_channel step 1 at 0: %s?", res)
   end
   undo_edit
-  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 1], :base, 0, :end, 11), 4)
+  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 1], :base, 0, :length, 12), 4)
   if (res = channel2vct) != vct(1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
     snd_display("env_channel step 1 at 4: %s?", res)
   end
   undo_edit
-  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 1], :base, 0, :end, 11), 4, 3)
+  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 1], :base, 0, :length, 12), 4, 3)
   if (res = channel2vct) != vct(1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
     snd_display("env_channel step 1 at 4 by 3: %s?", res)
   end
   undo_edit
-  env_channel(make_env(:envelope, [0, 1, 1, 0, 2, 0], :base, 0, :end, 7), 0, 12)
+  env_channel(make_env(:envelope, [0, 1, 1, 0, 2, 0], :base, 0, :length, 8), 0, 12)
   if (res = channel2vct) != vct(1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1)
     snd_display("env_channel step 1 at 0 for 7: %s?", res)
   end
   undo_edit
-  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 1, 3, 0, 4, 0], :base, 0, :end, 19))
+  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 1, 3, 0, 4, 0], :base, 0, :length, 20))
   if (res = channel2vct) != vct(0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0)
     snd_display("env_channel step 1: %s?", res)
   end
   undo_edit
-  env_channel(make_env(:envelope, [0, 0, 1, 0.5, 2, 0.25, 3, 0, 4, 0], :base, 0, :end, 20))
+  env_channel(make_env(:envelope, [0, 0, 1, 0.5, 2, 0.25, 3, 0, 4, 0], :base, 0, :length, 21))
   if (res = channel2vct) != vct(0, 0, 0, 0, 0, 0, 0.5, 0.5, 0.5, 0.5,
                                 0.5, 0.25, 0.25, 0.25, 0.25, 0.25, 0, 0, 0, 0)
     snd_display("env_channel step 1 (0.5): %s?", res)
@@ -27321,7 +27321,7 @@ def test0116
                lambda { |*args|
                  snd = (args[2] or selected_sound)
                  len = (args[1] and number?(args[1])) ? args[1] : (frames(snd) - 1)
-                 env_channel(make_env(:envelope, [0, 0, 1, 1], :end, len), *args)
+                 env_channel(make_env(:envelope, [0, 0, 1, 1], :length, len), *args)
                },
                oboe0, oboe1)
   funcs_equal?(:map_chan,
@@ -27632,8 +27632,8 @@ def test0216
                    [30, 1, 30, 99, 1.0, 0.0, 0.0, 0],
                    [100, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
                   vals, "scale_channel(0.5, 10, 20)")
-  env_channel(make_env(:envelope, [0, 0, 1, 1], :end, 10), 15, 10)
-  e = make_env(:envelope, [0, 0, 1, 1], :end, 10)
+  env_channel(make_env(:envelope, [0, 0, 1, 1], :length, 11), 15, 10)
+  e = make_env(:envelope, [0, 0, 1, 1], :length, 11)
   15.upto(24) do |i| vals[i] *= env(e) end
   check_edit_tree([[0, 1, 0, 9, 1.0, 0.0, 0.0, 0],
                    [10, 1, 10, 14, 0.5, 0.0, 0.0, 0],
@@ -27754,8 +27754,8 @@ def test0216
                    [60, 1, 60, 99, 1.0, 0.0, 0.0, 0],
                    [100, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
                   vals, "scale_selection_by(0.1)")
-  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 0, 3, 0], :end, 30, :base, 0), 50, 30)
-  e = make_env(:envelope, [0, 0, 1, 1, 2, 0, 3, 0], :end, 30, :base, 0)
+  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 0, 3, 0], :length, 31, :base, 0), 50, 30)
+  e = make_env(:envelope, [0, 0, 1, 1, 2, 0, 3, 0], :length, 31, :base, 0)
   50.upto(79) do |i| vals[i] *= env(e) end
   check_edit_tree([[0, 1, 0, 3, 1.0, 0.0, 0.0, 0],
                    [4, 1, 4, 4, 1.0, 0.0, 0.0, 1],
@@ -27941,8 +27941,8 @@ def test0216
   check_edit_tree([[0, 0, 0, 99, 0.0, 0.0, 0.0, 1],
                    [100, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
                   vals, "scale_channel(0.0, 0, 100)")
-  e = make_env(:envelope, [0, 0, 1, 1], :end, 100)
-  e1 = make_env(:envelope, [0, 0, 1, 1], :end, 100)
+  e = make_env(:envelope, [0, 0, 1, 1], :length, 101)
+  e1 = make_env(:envelope, [0, 0, 1, 1], :length, 101)
   map_channel(lambda do |y| env(e) end)
   vals.map! do |val| env(e1) end
   check_edit_tree([[0, 13, 0, 99, 1.0, 0.0, 0.0, 0],
@@ -27972,8 +27972,8 @@ def test0216
                    [75, 16, 0, 24, 1.0, 0.0, 0.0, 0],
                    [100, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
                   vals, "clobber env end")
-  env_channel(make_env(:envelope, [0, 1, 1, 0, 2, 1], :end, 19), 50, 20)
-  e = make_env(:envelope, [0, 1, 1, 0, 2, 1], :end, 19)
+  env_channel(make_env(:envelope, [0, 1, 1, 0, 2, 1], :length, 20), 50, 20)
+  e = make_env(:envelope, [0, 1, 1, 0, 2, 1], :length, 20)
   50.upto(69) do |i| vals[i] *= env(e) end
   check_edit_tree([[0, 15, 0, 24, 1.0, 0.0, 0.0, 0],
                    [25, 13, 25, 49, 1.0, 0.0, 0.0, 0],
@@ -27984,8 +27984,8 @@ def test0216
                    [75, 16, 0, 24, 1.0, 0.0, 0.0, 0],
                    [100, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
                   vals, "env on env")
-  env_channel(make_env(:envelope, [0, 1, 1, 0, 2, 1], :end, 79), 10, 80)
-  e = make_env(:envelope, [0, 1, 1, 0, 2, 1], :end, 79)
+  env_channel(make_env(:envelope, [0, 1, 1, 0, 2, 1], :length, 80), 10, 80)
+  e = make_env(:envelope, [0, 1, 1, 0, 2, 1], :length, 80)
   10.upto(89) do |i| vals[i] *= env(e) end
   check_edit_tree([[0, 15, 0, 9, 1.0, 0.0, 0.0, 0],
                    [10, 15, 10, 24, 1.0, 1.0, -0.025, 4],
@@ -27998,8 +27998,8 @@ def test0216
                    [90, 16, 15, 24, 1.0, 0.0, 0.0, 0],
                    [100, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
                   vals, "env on env 2")
-  env_channel(make_env(:envelope, [0, 1, 1, 0, 2, 1], :end, 19), 50, 20)
-  e = make_env(:envelope, [0, 1, 1, 0, 2, 1], :end, 19)
+  env_channel(make_env(:envelope, [0, 1, 1, 0, 2, 1], :length, 20), 50, 20)
+  e = make_env(:envelope, [0, 1, 1, 0, 2, 1], :length, 20)
   50.upto(69) do |i| vals[i] *= env(e) end
   check_edit_tree([[0, 15, 0, 9, 1.0, 0.0, 0.0, 0],
                    [10, 15, 10, 24, 1.0, 1.0, -0.025, 4],
@@ -28032,40 +28032,40 @@ def test0216
     i1 = new_sound
     vct2channel(Vct.new(dur, 1.0))
     env_sound([0, 0, 1, 1])
-    check_env(:ramp, make_sample_reader(0), make_env([0, 0, 1, 1], :end, dur - 1), dur)
+    check_env(:ramp, make_sample_reader(0), make_env([0, 0, 1, 1], :length, dur), dur)
     reverse_channel
-    check_env(:rev_ramp, make_sample_reader(0), make_env([0, 1, 1, 0], :end, dur - 1), dur)
+    check_env(:rev_ramp, make_sample_reader(0), make_env([0, 1, 1, 0], :length, dur), dur)
     undo_edit(2)
     env_sound([0, 0, 1, 1, 2, 0])
-    check_env(:ramp, make_sample_reader(0), make_env([0, 0, 1, 1, 2, 0], :end, dur - 1), dur)
+    check_env(:ramp, make_sample_reader(0), make_env([0, 0, 1, 1, 2, 0], :length, dur), dur)
     cur_read = make_sample_reader(0)
     reverse_channel
     check_env(:rev_pyr_1, cur_read, make_sample_reader(dur - 1, i1, 0, -1), dur)
     undo_edit(2)
     env_sound([0, 0, 1, 1, 2, 0, 3, 1])
-    check_env(:ramp_3, make_sample_reader(0), make_env([0, 0, 1, 1, 2, 0, 3, 1],:end, dur - 1), dur)
+    check_env(:ramp_3, make_sample_reader(0), make_env([0, 0, 1, 1, 2, 0, 3, 1],:length, dur), dur)
     cur_read = make_sample_reader(0)
     reverse_channel
     check_env(:rev_pyr_2, cur_read, make_sample_reader(dur - 1, i1, 0, -1), dur)
     undo_edit(2)
     env_sound([0, 0, 1, 1, 2, 1, 3, 0])
-    check_env(:sqoff, make_sample_reader(0), make_env([0, 0, 1, 1, 2, 1, 3, 0], :end, dur - 1), dur)
+    check_env(:sqoff, make_sample_reader(0), make_env([0, 0, 1, 1, 2, 1, 3, 0], :length, dur), dur)
     undo_edit(1)
     env_sound([0, 0, 1, 0.5, 2, 0.5, 3, 0])
     check_env(:sqoff_5, make_sample_reader(0),
-              make_env([0, 0, 1, 0.5, 2, 0.5, 3, 0], :end, dur - 1), dur)
+              make_env([0, 0, 1, 0.5, 2, 0.5, 3, 0], :length, dur), dur)
     undo_edit(1)
     scale_channel(0.5)
     env_sound([0, 0, 1, 1])
     check_env(:scl_ramp, make_sample_reader(0),
-              make_env([0, 0, 1, 1], :end, dur - 1, :scaler, 0.5), dur)
+              make_env([0, 0, 1, 1], :length, dur, :scaler, 0.5), dur)
     reverse_channel
     check_env(:scl_rev_ramp, make_sample_reader(0),
-              make_env([0, 1, 1, 0], :end, dur - 1, :scaler, 0.5), dur)
+              make_env([0, 1, 1, 0], :length, dur, :scaler, 0.5), dur)
     undo_edit(2)
     env_sound([0, 0, 1, 1, 2, 0])
     check_env(:scl_ramp_3, make_sample_reader(0),
-              make_env([0, 0, 1, 1, 2, 0], :end, dur - 1, :scaler, 0.5), dur)
+              make_env([0, 0, 1, 1, 2, 0], :length, dur, :scaler, 0.5), dur)
     cur_read = make_sample_reader(0)
     reverse_channel
     check_env(:scl_rev_pyr, cur_read, make_sample_reader(dur - 1, i1, 0, -1), dur)
@@ -28082,7 +28082,7 @@ def test0216
        [5000, 5000]].each do |beg, local_dur|
         env_sound([0, 0, 1, 1, 2, 0])
         scale_channel(0.5, beg, local_dur)
-        e = make_env([0, 0, 1, 1, 2, 0], :end, dur - 1)
+        e = make_env([0, 0, 1, 1, 2, 0], :length, dur)
         ctr = 0
         check_env(:env_and_scl, make_sample_reader(0),
                   lambda {
@@ -28106,7 +28106,7 @@ def test0216
        [5000, 5000, 8000,  2000]].each do |env_beg, env_dur, scl_beg, scl_dur|
         env_channel([0, 0, 1, 1, 2, 1, 3, 0], env_beg, env_dur)
         scale_channel(0.5, scl_beg, scl_dur)
-        e = make_env([0, 0, 1, 1, 2, 1, 3, 0], :end, env_dur - 1)
+        e = make_env([0, 0, 1, 1, 2, 1, 3, 0], :length, env_dur)
         ctr = 0
         check_env(:env_scl_partial, make_sample_reader(0),
                   lambda {
@@ -28125,7 +28125,7 @@ def test0216
     end
     env_sound([0, 0, 1, 1])
     env_sound([0, 0, 1, 1])
-    e = make_env([0, 0, 1, 1], :end, dur - 1)
+    e = make_env([0, 0, 1, 1], :length, dur)
     check_env(:unenv_ramp, make_sample_reader(0),
               lambda {
                 val = env(e)
@@ -28152,7 +28152,7 @@ def test0216
     env_sound([0, 0, 1, 1])
     insert_samples(3, 3, Vct.new(3, 1.0))
     delete_samples(3, 3)
-    check_env(:ramp_5, make_sample_reader(0), make_env([0, 0, 1, 1], :end, dur - 1), dur)
+    check_env(:ramp_5, make_sample_reader(0), make_env([0, 0, 1, 1], :length, dur), dur)
     undo_edit(3)
     env_sound([0, 0, 1, 1, 2, 0])
     if dur == 10
@@ -28214,7 +28214,7 @@ def test0316
                    [10000, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
                   vals, "envd set first samps to one")
   env_sound([0, 0, 1, 1])
-  e = make_env(:envelope, [0, 0, 1, 1], :end, 9999)
+  e = make_env(:envelope, [0, 0, 1, 1], :length, 10000)
   vals.map! do |val| e.run end
   check_edit_tree([[0, 1, 0, 9999, 1.0, 0.0, 1.0e-4, 4],
                    [10000, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
@@ -28266,8 +28266,8 @@ def test0316
   revert_sound(ind)
   vals = Vct.new(100000, 1.0)
   vct2channel(vals, 0, 100000)
-  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 0], :end, 9999), 30000, 10000)
-  e = make_env(:envelope, [0, 0, 1, 1, 2, 0], :end, 9999)
+  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 0], :length, 10000), 30000, 10000)
+  e = make_env(:envelope, [0, 0, 1, 1, 2, 0], :length, 10000)
   30000.upto(39999) do |i| vals[i] = e.run end
   check_edit_tree([[0, 1, 0, 29999, 1.0, 0.0, 0.0, 0],
                    [30000, 1, 30000, 34999, 1.0, 0.0, 1.9e-4, 4],
@@ -28276,8 +28276,8 @@ def test0316
                    [100000, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
                   vals, "partial env")
   scale_channel(0.5, 10000, 10000)
-  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 0], :end, 9999), 30000, 10000)
-  e = make_env(:envelope, [0, 0, 1, 1, 2, 0], :end, 9999)
+  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 0], :length, 10000), 30000, 10000)
+  e = make_env(:envelope, [0, 0, 1, 1, 2, 0], :length, 10000)
   30000.upto(39999) do |i| vals[i] *= e.run end
   10000.upto(19999) do |i| vals[i] *= 0.5 end
   check_edit_tree([[0, 1, 0, 9999, 1.0, 0.0, 0.0, 0],
@@ -28288,8 +28288,8 @@ def test0316
                    [40000, 1, 40000, 99999, 1.0, 0.0, 0.0, 0],
                    [100000, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
                   vals, "env over env")
-  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 0], :end, 9999), 5000, 10000)
-  e = make_env(:envelope, [0, 0, 1, 1, 2, 0], :end, 9999)
+  env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 0], :length, 10000), 5000, 10000)
+  e = make_env(:envelope, [0, 0, 1, 1, 2, 0], :length, 10000)
   5000.upto(14999) do |i| vals[i] *= e.run end
   check_edit_tree([[0, 1, 0, 4999, 1.0, 0.0, 0.0, 0],
                    [5000, 1, 5000, 9999, 1.0, 0.0, 1.9e-4, 4],
@@ -28302,7 +28302,7 @@ def test0316
                    [100000, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
                   vals, "env over scl")
   ramp_channel(0.5, -0.5, 25000, 1000)
-  e = make_env(:envelope, [0, 0.5, 1, -0.5], :end, 999)
+  e = make_env(:envelope, [0, 0.5, 1, -0.5], :length, 1000)
   25000.upto(25999) do |i| vals[i] *= e.run end
   check_edit_tree([[0, 1, 0, 4999, 1.0, 0.0, 0.0, 0],
                    [5000, 1, 5000, 9999, 1.0, 0.0, 1.9e-4, 4],
@@ -28338,7 +28338,7 @@ def test0316
   if fneq(maxamp, 0.0) then snd_display("invert-and-add maxamp: %s?", maxamp) end
   undo_edit
   ramp_channel(-1.0, 1.0, 50000, 30000)
-  e = make_env(:envelope, [0, -1, 1, 1], :end, 29999)
+  e = make_env(:envelope, [0, -1, 1, 1], :length, 30000)
   50000.upto(79999) do |i| vals[i] *= e.run end
   check_edit_tree([[0, 1, 0, 4999, -1.0, 0.0, 0.0, 0],
                    [5000, 1, 5000, 9999, -1.0, 0.0, 1.9e-4, 4],
@@ -28494,30 +28494,30 @@ def test0416
     env_sound([0, 0, 1, 1])
     check_envs(:ramps,
                lambda { |s, c| make_sample_reader(0, s, c) },
-               lambda { |s, c| make_env(:envelope, [0, 0, 1, 1], :end, dur - 1) },
+               lambda { |s, c| make_env(:envelope, [0, 0, 1, 1], :length, dur) },
                dur, i1, i2)
     reverse_sound
     check_envs(:rev_ramps,
                lambda { |s, c| make_sample_reader(0, s, c) },
-               lambda { |s, c| make_env(:envelope, [0, 1, 1, 0], :end, dur - 1) },
+               lambda { |s, c| make_env(:envelope, [0, 1, 1, 0], :length, dur) },
                dur, i1, i2)
     undo_edit(2)
     env_sound([0, 0, 1, 1, 2, 0])
     check_envs(:ramps_2,
                lambda { |s, c| make_sample_reader(0, s, c) },
-               lambda { |s, c| make_env(:envelope, [0, 0, 1, 1, 2, 0], :end, dur - 1) },
+               lambda { |s, c| make_env(:envelope, [0, 0, 1, 1, 2, 0], :length, dur) },
                dur, i1, i2)
     undo_edit(1)
     scale_by(0.5)
     env_sound([0, 0, 1, 1])
     check_envs(:scl_ramps,
                lambda { |s, c| make_sample_reader(0, s, c) },
-               lambda { |s, c| make_env(:envelope, [0, 0, 1, 1], :end, dur - 1, :scaler, 0.5) },
+               lambda { |s, c| make_env(:envelope, [0, 0, 1, 1], :length, dur, :scaler, 0.5) },
                dur, i1, i2)
     reverse_sound
     check_envs(:scl_rev_ramps,
                lambda { |s, c| make_sample_reader(0, s, c) },
-               lambda { |s, c| make_env(:envelope, [0, 1, 1, 0], :end, dur - 1, :scaler, 0.5) },
+               lambda { |s, c| make_env(:envelope, [0, 1, 1, 0], :length, dur, :scaler, 0.5) },
                dur, i1, i2)
     undo_edit(3)
     env_sound([0, 0, 1, 1])
@@ -28525,7 +28525,7 @@ def test0416
     check_envs(:unenv_ramps,
                lambda { |s, c| make_sample_reader(0, s, c) },
                lambda { |s, c|
-                 e = make_env(:envelope, [0, 0, 1, 1], :end, dur - 1)
+                 e = make_env(:envelope, [0, 0, 1, 1], :length, dur)
                  lambda {
                    val = env(e)
                    val * val
@@ -30037,29 +30037,29 @@ def test0219
   unless proc?(func = edit_list2function)
     snd_display("edit_list2function 7b: %s", func)
   end
-  if (res = func.source) != "Proc.new {|snd, chn|  env_channel(make_env([0.000, 0.000, 1.000, 0.300, 2.000, 0.800, 3.000, 0.000], :base, 1.0000, :end, 1999), 1000, 2000, snd, chn) }"
+  if (res = func.source) != "Proc.new {|snd, chn|  env_channel(make_env([0.000, 0.000, 1.000, 0.300, 2.000, 0.800, 3.000, 0.000], :base, 1.0000, :length, 2000), 1000, 2000, snd, chn) }"
     snd_display("edit_list2function 7b: %s", res)
   end
   revert_sound(ind)
-  env_sound(make_env(:envelope, [0, 0, 1, 0.3, 2, 0.8, 3, 0], :base, 32.0, :end, 1999), 1000, 2000)
+  env_sound(make_env(:envelope, [0, 0, 1, 0.3, 2, 0.8, 3, 0], :base, 32.0, :length, 2000), 1000, 2000)
   mxenv0 = maxamp
   unless proc?(func = edit_list2function)
     snd_display("edit_list2function 7c: %s", func)
   end
-  if (res = func.source) != "Proc.new {|snd, chn|  env_channel(make_env([0.000, 0.000, 1.000, 0.300, 2.000, 0.800, 3.000, 0.000], :base, 32.0000, :end, 1999), 1000, 2000, snd, chn) }"
+  if (res = func.source) != "Proc.new {|snd, chn|  env_channel(make_env([0.000, 0.000, 1.000, 0.300, 2.000, 0.800, 3.000, 0.000], :base, 32.0000, :length, 2000), 1000, 2000, snd, chn) }"
     snd_display("edit_list2function 7c: %s", res)
   end
   revert_sound(ind)
   env_sound(make_env(:envelope, [0, 0, 1, 0.3, 2, 0.8, 3, 0],
                      :offset, 2.0,
                      :scaler, 3.0,
-                     :end, 1999),
+                     :length, 2000),
             1000, 2000)
   mxenv1 = maxamp
   unless proc?(func = edit_list2function)
     snd_display("edit_list2function 7d: %s", func)
   end
-  if (res = func.source) != "Proc.new {|snd, chn|  env_channel(make_env([0.000, 2.000, 1.000, 2.900, 2.000, 4.400, 3.000, 2.000], :base, 1.0000, :end, 1999), 1000, 2000, snd, chn) }"
+  if (res = func.source) != "Proc.new {|snd, chn|  env_channel(make_env([0.000, 2.000, 1.000, 2.900, 2.000, 4.400, 3.000, 2.000], :base, 1.0000, :length, 2000), 1000, 2000, snd, chn) }"
     snd_display("edit_list2function 7d: %s", res)
   end
   revert_sound(ind)
@@ -30281,7 +30281,7 @@ def test0219
   unless proc?(func = edit_list2function)
     snd_display("edit_list2function 14: %s", func)
   end
-  if (res = func.source) != "Proc.new {|snd, chn|  env_channel(make_env([0.000, 0.000, 1.000, 1.000, 2.000, 0.000], :base, 1.0000, :end, 10000), 1000, 10001, snd, chn) }"
+  if (res = func.source) != "Proc.new {|snd, chn|  env_channel(make_env([0.000, 0.000, 1.000, 1.000, 2.000, 0.000], :base, 1.0000, :length, 10001), 1000, 10001, snd, chn) }"
     snd_display("edit_list2function 14: %s", res)
   end
   revert_sound(ind)
@@ -30326,14 +30326,14 @@ def test0219
   func.call(ind, 0)
   revert_sound(ind)
   # sticky env end
-  # env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 0], :end, 500), 1000, 1000)
+  # env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 0], :length, 501), 1000, 1000)
   # if fneq(res = sample(1750), 0.0)
   #   snd_display("edit_list2function 15 samp: %s?", res)
   # end
   # unless proc?(func = edit_list2function)
   #   snd_display("edit_list2function 15: %s", func)
   # end
-  # if (res = func.source) != "Proc.new {|snd, chn|  env_channel(make_env([0.000, 0.000, 1.000, 1.000, 2.000, 0.000], :base, 1.0000, :end, 500), 1000, 1000, snd, chn) }"
+  # if (res = func.source) != "Proc.new {|snd, chn|  env_channel(make_env([0.000, 0.000, 1.000, 1.000, 2.000, 0.000], :base, 1.0000, :length, 501), 1000, 1000, snd, chn) }"
   #   snd_display("edit_list2function 15: %s", res)
   # end
   # revert_sound(ind)
@@ -33610,7 +33610,7 @@ def test0221
    [:map_channel, lambda { map_channel(lambda { |y| y * 2.0 }) }],
    [:set_maxamp, lambda { set_maxamp(2 * maxamp) }],
    [:env_sound, lambda { env_sound([0, 2, 1, 2]) }],
-   [:env_channel, lambda { env_channel(make_env([0, 1, 1, 1], :scaler, 2.0, :end, frames - 1)) }],
+   [:env_channel, lambda { env_channel(make_env([0, 1, 1, 1], :scaler, 2.0, :length, frames)) }],
    [:clm_channel, lambda { clm_channel(make_one_zero(:a0, 2.0, :a1, 0.0)) }],
    [:filter_channel, lambda { filter_channel(vct(2.0), 1) }],
    [:vct2channel, lambda { vct2channel(channel2vct.scale(2.0), 0) }],
@@ -34767,9 +34767,9 @@ def test0223
     anoi("oboe.snd", 1, 1)
     ind = open_sound("oboe.snd")
     ind1 = open_sound("now.snd")
-    zp = make_zipper(make_env(:envelope, [0, 0, 1, 1], :end, 22050),
+    zp = make_zipper(make_env(:envelope, [0, 0, 1, 1], :length, 22050),
                      0.05,
-                     make_env(:envelope, [0, mus_srate() * 0.05], :end, 22050))
+                     make_env(:envelope, [0, mus_srate() * 0.05], :length, 22050))
     reader0 = make_sample_reader(0, ind, 0)
     reader1 = make_sample_reader(0, ind1, 0)
     22050.times do |i| outa(i, zipper(zp, reader0, reader1), $output) end
@@ -39458,14 +39458,14 @@ def test0228
   check_error_tag(:wrong_type_arg) do play_selection(0, lambda do |a, b| false end) end
   check_error_tag(:no_data) do draw_lines([]) end
   check_error_tag(:bad_length) do draw_lines([1, 2, 3]) end
-  check_error_tag(:out_of_range) do src_channel(make_env([0, 0, 1, 1], :end, 10)) end
-  check_error_tag(:out_of_range) do src_channel(make_env([0, 1, 1, 0], :end, 10)) end
-  check_error_tag(:out_of_range) do src_channel(make_env([0, 1, 1, -1], :end, 10)) end
-  check_error_tag(:out_of_range) do src_channel(make_env([0, -1, 1, 1], :end, 10)) end
-  check_error_tag(:out_of_range) do src_sound(make_env([0, 0, 1, 1], :end, 10)) end
-  check_error_tag(:out_of_range) do src_sound(make_env([0, 1, 1, 0], :end, 10)) end
-  check_error_tag(:out_of_range) do src_sound(make_env([0, 1, 1, -1], :end, 10)) end
-  check_error_tag(:out_of_range) do src_sound(make_env([0, -1, 1, 1], :end, 10)) end
+  check_error_tag(:out_of_range) do src_channel(make_env([0, 0, 1, 1], :length, 11)) end
+  check_error_tag(:out_of_range) do src_channel(make_env([0, 1, 1, 0], :length, 11)) end
+  check_error_tag(:out_of_range) do src_channel(make_env([0, 1, 1, -1], :length, 11)) end
+  check_error_tag(:out_of_range) do src_channel(make_env([0, -1, 1, 1], :length, 11)) end
+  check_error_tag(:out_of_range) do src_sound(make_env([0, 0, 1, 1], :length, 11)) end
+  check_error_tag(:out_of_range) do src_sound(make_env([0, 1, 1, 0], :length, 11)) end
+  check_error_tag(:out_of_range) do src_sound(make_env([0, 1, 1, -1], :length, 11)) end
+  check_error_tag(:out_of_range) do src_sound(make_env([0, -1, 1, 1], :length, 11)) end
   check_error_tag(:mus_error) do make_readin(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) end
   check_error_tag(:out_of_range) do filter_sound($vct_3, 32) end
   check_error_tag(:out_of_range) do filter_sound([0, 0, 1, 1], 0) end

@@ -1555,9 +1555,9 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
   make-rmsgain { rg }
   40 make-rmsgain { rg1 }
   2  make-rmsgain { rg2 }
-  '( 0 0 1 1 2 0 )      :end 10000 make-env { e }
-  '( 0 0 1 1 )          :end 10000 make-env { e1 }
-  '( 0 0 1 1 2 0 10 0 ) :end 10000 make-env { e2 }
+  '( 0 0 1 1 2 0 )      :length 10001 make-env { e }
+  '( 0 0 1 1 )          :length 10001 make-env { e1 }
+  '( 0 0 1 1 2 0 10 0 ) :length 10001 make-env { e2 }
   440.0 make-oscil { o }
   10000 0 do
     e env { sig }
@@ -2802,14 +2802,14 @@ include bird.fsm
     0 <'> noop 2 make-proc     <'> play-selection         'wrong-type-arg   check-error-tag
     #()                        <'> draw-lines             'no-data          check-error-tag
     #( 1 2 3 )                 <'> draw-lines             'bad-length       check-error-tag
-    '( 0 0 1 1 )  :end 10 make-env <'> src-channel        'out-of-range     check-error-tag
-    '( 0 1 1 0 )  :end 10 make-env <'> src-channel        'out-of-range     check-error-tag
-    '( 0 1 1 -1 ) :end 10 make-env <'> src-channel        'out-of-range     check-error-tag
-    '( 0 -1 1 1 ) :end 10 make-env <'> src-channel        'out-of-range     check-error-tag
-    '( 0 0 1 1 )  :end 10 make-env <'> src-sound          'out-of-range     check-error-tag
-    '( 0 1 1 0 )  :end 10 make-env <'> src-sound          'out-of-range     check-error-tag
-    '( 0 1 1 -1 ) :end 10 make-env <'> src-sound          'out-of-range     check-error-tag
-    '( 0 -1 1 1 ) :end 10 make-env <'> src-sound          'out-of-range     check-error-tag
+    '( 0 0 1 1 )  :length 11 make-env <'> src-channel        'out-of-range     check-error-tag
+    '( 0 1 1 0 )  :length 11 make-env <'> src-channel        'out-of-range     check-error-tag
+    '( 0 1 1 -1 ) :length 11 make-env <'> src-channel        'out-of-range     check-error-tag
+    '( 0 -1 1 1 ) :length 11 make-env <'> src-channel        'out-of-range     check-error-tag
+    '( 0 0 1 1 )  :length 11 make-env <'> src-sound          'out-of-range     check-error-tag
+    '( 0 1 1 0 )  :length 11 make-env <'> src-sound          'out-of-range     check-error-tag
+    '( 0 1 1 -1 ) :length 11 make-env <'> src-sound          'out-of-range     check-error-tag
+    '( 0 -1 1 1 ) :length 11 make-env <'> src-sound          'out-of-range     check-error-tag
     0.0 0.0 0.0 0.0 0.0 0.0 0.0 <'> make-readin           'mus-error        check-error-tag
     vct-3 32                   <'> filter-sound           'out-of-range     check-error-tag
     '( 0 0 1 1 ) 0             <'> filter-sound           'out-of-range     check-error-tag
