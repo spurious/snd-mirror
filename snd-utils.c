@@ -436,6 +436,7 @@ void snd_exit(int val)
 
 static bool fam_already_warned = false;
 
+#if MUS_DEBUGGING_FAM
 static char *fam_event_name(int code)
 {
   switch (code)
@@ -452,6 +453,7 @@ static char *fam_event_name(int code)
     }
   return("unknown");
 }
+#endif
 
 
 static const char *fam_error_to_string(int err)
@@ -700,11 +702,12 @@ fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
   return(NULL);
 }
 
-
-char *fam_event_name(int code)
+#if MUS_DEBUGGING_FAM
+static char *fam_event_name(int code)
 {
   return("no fam!");
 }
+#endif
 #endif
 
 

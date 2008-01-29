@@ -3781,6 +3781,9 @@ char *dialog_get_title(widget_t dialog)
 #if USE_GTK
   return(copy_string(gtk_window_get_title(GTK_WINDOW(dialog))));
 #endif
+#if USE_NO_GUI
+  return(NULL); /* make the compiler happy */
+#endif
 }
 
 
