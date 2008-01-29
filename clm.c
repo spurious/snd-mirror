@@ -20,8 +20,8 @@
  *
  *   sum-of-cosines -> ncos
  *   sum-of-sines -> nsin
- *   sine-summation -> nrxysin
- *     what about oscil? [1sin?]
+ *   sine-summation -> nrssb?  is nrssb really different from sine-summation?
+ *     what about oscil? [sine?]
  *   asymmetric-fm -> generators.scm (not built-in)
  *
  *   can the def-clm-struct method/make lists be used with built-in gens?
@@ -37,6 +37,9 @@
  *        then the object is in front of the speaker(?)
  *
  *   perhaps built-in: blackman rk!cos rxyk!cos nrcos rcos rxycos nxycos nrssb rk!ssb
+ *   perhaps phaser = the phase+incr+fm+pm portion of nearly every generator
+ *
+ *   wave-train needs a way to set the initial counter (current notion of initial-phase seems useless)
  *
  * done:
  *   :dur and :end -> :length in make-env

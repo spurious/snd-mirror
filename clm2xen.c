@@ -317,7 +317,7 @@ static void init_keywords(void)
   kw_srate =            XEN_MAKE_KEYWORD("srate");
   kw_file =             XEN_MAKE_KEYWORD("file");
   kw_channel =          XEN_MAKE_KEYWORD("channel");
-  kw_start =            XEN_MAKE_KEYWORD("start");
+  kw_start =            XEN_MAKE_KEYWORD("start");  /* make-readin */
   kw_initial_contents = XEN_MAKE_KEYWORD("initial-contents");
   kw_initial_element =  XEN_MAKE_KEYWORD("initial-element");
   kw_scaler =           XEN_MAKE_KEYWORD("scaler");

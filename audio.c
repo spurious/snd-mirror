@@ -2321,7 +2321,7 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
 
 static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 {
-  int fd, amp, channels, err = MUS_NO_ERROR, devmask, stereodevs, ind, formats, sys, dev, srate;
+  int fd, amp, channels, err = MUS_NO_ERROR, devmask = 0, stereodevs = 0, ind = 0, formats = 0, sys, dev, srate = 0;
   char *dev_name = NULL;
   sys = MUS_AUDIO_SYSTEM(ur_dev);
   dev = MUS_AUDIO_DEVICE(ur_dev);
@@ -2656,8 +2656,16 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 	  val[0] = ind;
           break;
         case MUS_AUDIO_CHANNEL:
+
 	  channels = 0;
           ioctl(fd, SOUND_MIXER_READ_STEREODEVS, &stereodevs);
+
+	  /* TODO: ALSA 1.0.15 no longer handles this ioctl, so I need some replacement */
+	  /*    for the time being... */
+	  if ((stereodevs == 0) && ((devmask & SOUND_MASK_VOLUME) == 0))
+	    channels = 2;
+	  else
+
 	  switch (dev)
 	    {
 	    case MUS_AUDIO_MICROPHONE: if (SOUND_MASK_MIC & devmask)     {if (SOUND_MASK_MIC & stereodevs) channels = 2; else channels = 1;}     break;

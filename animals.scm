@@ -97,6 +97,7 @@
 ;;; California towhee
 ;;; Green-tailed towhee
 ;;; Carolina wren
+;;; Wrentit
 ;;; Warbling vireo
 ;;; Plumbeous vireo (2)
 ;;; Cassin's vireo
@@ -9535,38 +9536,246 @@
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; Trumpeter swan
+;;;
+;;; this is a good one
 
-(definstrument (trumpeter-swan-3 beg amp)
-  (let* ((start (seconds->samples beg))
-	 (dur 0.11)
-	 (stop (+ start (seconds->samples dur)))
-	 (ampf (make-env '(0.000 0.000 0.029 0.244 0.084 0.525 0.111 0.515 0.124 0.376 0.153 0.334 0.183 0.166 
-			   0.205 0.000 0.240 0.769 0.261 0.775 0.280 0.271 0.297 0.000 0.338 0.773 0.423 1.000 
-			   0.529 0.758 0.621 0.845 0.783 0.630 0.849 0.676 0.896 0.538 0.930 0.252 0.957 0.118 1.000 0.000)
-			 :duration dur :scaler amp))
-	 (frqf (make-env '(0.000 0.085 0.189 0.079 0.222 0.113 0.251 0.123 0.278 0.105 0.312 0.121 0.349 0.125 
-			   0.377 0.133 0.412 0.127 0.510 0.123 0.691 0.129 0.778 0.125 0.830 0.127 1.000 0.129)
-			 :duration dur :scaler (hz->radians (* 0.5 8650.0))))
-	 (gen1 (make-polyshape 0.0 :partials (normalize-partials (list 1 .01 2 .98 3 .05 4 .02 5 .005 6 .005))))
-	 (gen2 (make-polyshape 0.0 (* 0.5 pi) :partials (normalize-partials (list 1 .44  2 1.0  3 .34  4 .31  5 .19  6 .075  7 .04  8 .03))))
-	 (gen3 (make-sine-summation 0.0 0.0 12 .85 1/9))  ; frq phase n "a" ratio -> nrssb in new nomenclature
-	 (intrpf (make-env '(0 1 .19 1 .2 0 1 0) :duration dur)))
-    (run
-     (lambda ()
-       (do ((i start (1+ i)))
-	   ((= i stop))
-	 (let ((frq (env frqf))
-	       (intrp (env intrpf))) ; runtime if instead here caused a click at the juncture
+;;;
+;;; (TODO: also 55)
+
+(define (trumpeter-swan-1 beg amp)
+  ;; east 19 44
+
+  (definstrument (trumpeter-swan-a beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.053)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.086 0.411 0.253 0.887 0.466 0.989 0.627 0.992 0.782 0.842 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (gen1 (make-polyshape 356.0 :partials (normalize-partials (list 1 .1  2 1.0  3 .08  4 .2  5 .1  6 .03  7 .03  8 .03))))
+	   (vib (make-oscil 130.0))
+	   (index (hz->radians 30)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (+ (* intrp 
-			    (polyshape gen1 1.0 frq))
-			  (* (- 1.0 intrp)
-			     (+ (polyshape gen2 1.0 frq)
-				(* .03 (sine-summation gen3 (* frq 9)))))))
-		 *output*)))))))
+		      (polyshape gen1 1.0 (* index (oscil vib))))
+		 *output*))))))
 
-;(with-sound (:play #t) (trumpeter-swan-3 0 .5))
+  (definstrument (trumpeter-swan-b beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.12)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.038 0.460 0.106 0.554 0.152 1.000 0.187 0.569 0.225 0.694 0.316 0.000 
+			     0.381 0.000 0.462 0.827 0.512 0.000 0.539 0.613 0.571 0.859 0.609 0.528 0.632 0.815 
+			     0.715 0.661 0.764 0.782 0.837 0.800 0.884 0.724 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.251 0.088 0.259 0.144 0.290 0.173 0.228 0.276 0.228 0.387 0.245 0.429 0.296 
+			     0.457 0.310 0.484 0.296 0.514 0.265 0.548 0.307 0.599 0.377 0.641 0.352 0.706 0.346 
+			     0.741 0.338 0.773 0.346 1.000 0.346)
+			   :duration dur :scaler (hz->radians (* 0.5 3140))))
+	   (gen2 (make-polyshape 0.0 (* 0.5 pi) :partials (normalize-partials (list  2 1.0  3 .25))))
+	   (gen2a (make-polyshape 0.0 (* 0.5 pi) :partials (normalize-partials (list  4 .35  5 .19  6 .12  7 .03  8 .02))))
+	   (ampf2a (make-env '(0 1 .6 1 1 0) :duration dur :scaler .4 :base 10))
+	   (gen3 (make-sine-summation 0.0 0.0 12 .85 1/9))
+	   (ampf3 (make-env '(0 0 .1 0  .15 .5 .2 0 .4 0 .45 .7 .5 0 .55 1 .7 1 .8 0 .9 .1 1 0) :duration dur :scaler .02))
+	   (gen1 (make-oscil 0.0))
+	   (ampf1 (make-env '(0 0 .5 0 .6 1 .9 1 1 0) :duration dur :scaler .2)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (let ((frq (env frqf)))
+	     (outa i (* (env ampf)
+			(+ (* .6 (polyshape gen2 1.0 frq))
+			   (* (env ampf2a)
+			      (polyshape gen2a 1.0 frq))
+			   (* (env ampf1)
+			      (oscil gen1 frq))
+			   (* (env ampf3)
+			      (sine-summation gen3 (* frq 9)))))
+		   *output*)))))))
+  
+  (definstrument (trumpeter-swan-c beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.11)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.029 0.244 0.084 0.525 0.111 0.515 0.124 0.376 0.153 0.334 0.183 0.166 
+			     0.205 0.000 0.240 0.769 0.261 0.775 0.280 0.271 0.297 0.000 0.338 0.773 0.423 1.000 
+			     0.529 0.758 0.621 0.845 0.783 0.630 0.849 0.676 0.896 0.538 0.930 0.252 0.957 0.118 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.085 0.189 0.079 0.222 0.113 0.251 0.123 0.278 0.105 0.312 0.121 0.349 0.125 
+				   0.377 0.133 0.412 0.127 0.510 0.123 0.691 0.129 0.778 0.125 0.830 0.127 1.000 0.129)
+			   :duration dur :scaler (hz->radians (* 0.5 8650.0))))
+	   (gen1 (make-polyshape 0.0 :partials (normalize-partials (list 1 .01 2 .98 3 .05 4 .02 5 .005 6 .005))))
+	   (gen2 (make-polyshape 0.0 (* 0.5 pi) :partials (normalize-partials (list 1 .44  2 1.0  3 .34  4 .31  5 .19  6 .075  7 .04  8 .03))))
+	   (gen3 (make-sine-summation 0.0 0.0 12 .85 1/9))  ; frq phase n "a" ratio -> nrssb in new nomenclature
+	   (intrpf (make-env '(0 1 .19 1 .2 0 1 0) :duration dur)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (let ((frq (env frqf))
+		 (intrp (env intrpf))) ; runtime if instead here caused a click at the juncture
+	     (outa i (* (env ampf)
+			(+ (* intrp 
+			      (polyshape gen1 1.0 frq))
+			   (* (- 1.0 intrp)
+			      (+ (polyshape gen2 1.0 frq)
+				 (* .03 (sine-summation gen3 (* frq 9)))))))
+		   *output*)))))))
 
+  (definstrument (trumpeter-swan-d beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.082)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.068 0.279 0.121 0.989 0.178 0.755 0.208 0.451 0.234 0.834 0.291 0.921 
+			     0.355 0.459 0.371 0.158 0.401 0.876 0.494 1.000 0.614 0.851 0.797 0.510 0.862 0.166 
+			     0.928 0.146 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.328 0.092 0.328 0.147 0.370 0.212 0.314 0.256 0.356 0.345 0.359 0.389 0.373 
+			     0.438 0.370 0.489 0.420 0.532 0.398 0.601 0.398 0.641 0.375 0.685 0.364 0.739 0.401 
+			     0.799 0.417 0.856 0.398 1.000 0.401)
+			   :duration dur :scaler (hz->radians 1350)))
+	   (gen1 (make-oscil 0.0))
+	   (ampf1 (make-env '(0 0 .4 .1 .5 1 .9 .5 1 0) :duration dur :scaler .3))
+
+	   (gen2 (make-oscil 0.0))
+	   (ampf2 (make-env '(0 1 .45 1 .5 .5 .6 .8 .7 .8 .75 .1 .8 .5 1 0) :duration dur :scaler .5))
+
+	   (gen3 (make-sine-summation 0.0 0.0 12 .8 1/8))
+	   (ampf3 (make-env '(0 0 .1 1 .6 1 .8 0 1 0) :duration dur :scaler .15))
+
+	   (gen4 (make-polyshape 0.0 :partials (normalize-partials (list 3 .4  4 .4  5 .2  6 .1  7 .05))))
+	   (ampf4 (make-env '(0 1 .8 1 1 0) :duration dur :scaler .5)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (let ((frq (env frqf)))
+	     (outa i (* (env ampf)
+			(+ (* (env ampf1)
+			      (oscil gen1 frq))
+			   (* (env ampf2)
+			      (oscil gen2 (* 2 frq)))
+			   (* (env ampf3)
+			      (sine-summation gen3 (* 8 frq)))
+			   (* (env ampf4)
+			      (polyshape gen4 1.0 frq))))
+		   *output*)))))))
+  
+  (definstrument (trumpeter-swan-e beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.04)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.087 0.300 0.206 0.927 0.265 1.000 0.324 0.894 0.382 0.482 0.445 0.515 
+			     0.692 0.364 0.752 0.218 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frq 434)
+	   (gen1 (make-polyshape frq :partials (list 1 .05  2 .85  3 .1  5 .01)))
+	   (gen2 (make-sine-summation (* frq 7) 0.0 10 .8 1/7))
+	   (ampf2 (make-env '(0 0 .1 1 .4 0 1 0) :duration dur :scaler .2))
+	   (vib (make-rand-interp 200))
+	   (index (hz->radians 40)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (let ((vb (* index (rand-interp vib))))
+	     (outa i (* (env ampf)
+			(+ (polyshape gen1 1.0 vb)
+			   (* (env ampf2)
+			      (sine-summation gen2 vb))))
+		   *output*)))))))
+
+  (trumpeter-swan-a beg (* amp .6))
+  (trumpeter-swan-b (+ beg .126) (* amp .9))
+  (trumpeter-swan-c (+ beg .259) amp)
+  (trumpeter-swan-d (+ beg .408) (* amp .6))
+  (trumpeter-swan-e (+ beg .54) (* amp .3)))
+
+
+;(with-sound (:play #t) (trumpeter-swan-1 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Wrentit
+
+(define (wrentit beg1 amp1)
+  ;; calif 1 3
+
+  (definstrument (wrentit-1 beg dur amp frqscl)
+    (let* ((start (seconds->samples beg))
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.095 0.221 0.193 0.692 0.293 0.814 0.380 0.727 0.486 1.000 0.543 0.972 
+			     0.611 0.664 0.720 0.435 0.788 0.115 0.853 0.138 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.262 0.112 0.288 0.197 0.304 0.275 0.319 0.508 0.313 0.634 0.281 0.743 0.281 
+			     0.811 0.249 0.869 0.256 1.000 0.240)
+			   :duration dur :scaler (hz->radians (* frqscl 5000.0))))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .005 2 .9 3 .005 4 .01 6 .03  7 .005 8 .005))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+
+  (definstrument (wrentit-2 beg dur amp frqscl)
+    (let* ((start (seconds->samples beg))
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.091 0.616 0.150 0.724 0.195 0.667 0.259 0.686 0.387 1.000 0.447 0.770 
+			     0.482 0.740 0.507 0.623 0.552 0.693 0.629 0.557 0.684 0.288 0.713 0.321 0.738 0.232 
+			     0.754 0.162 0.771 0.225 0.786 0.150 0.792 0.197 0.801 0.126 0.808 0.225 0.816 0.122 
+			     0.829 0.178 0.832 0.105 0.840 0.211 0.849 0.094 0.856 0.173 0.880 0.089 0.898 0.220 
+			     0.914 0.124 .925 .01 1 0)  
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.269 0.105 0.297 0.182 0.319 0.311 0.319 0.428 0.304 0.534 0.281 0.688 0.269 
+			     0.789 0.244 0.825 0.215 1 .21)
+			   :duration dur :scaler (hz->radians (* frqscl 5040.0))))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .005 3 .005 4 .01 6 .03  7 .005 8 .005)))
+	   (ampf1 (make-env '(0 1 .6 1 .7 0 1 0) :duration dur))
+	   (gen2 (make-oscil 0.0))
+	   (gen3 (make-oscil 0.0))
+	   (ampf3 (make-env '(0 0 .7 0 1 1) :duration dur :scaler .5)))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (let ((frq (env frqf)))
+	     (outa i (* (env ampf)
+			(+ (* (env ampf1)
+			      (polyshape gen1 1.0 frq))
+			   (* .9 (oscil gen2 (* 2 frq)))
+			   (* (env ampf3)
+			      (oscil gen3 (* 3 frq)))))
+		   *output*)))))))
+
+  (wrentit-1 beg1 .041 (* amp1 0.6) 1.0)
+
+  (wrentit-1 (+ beg1 .35) .05 amp1 1.0)
+  (wrentit-2 (+ beg1 .45) .062 amp1 1.02)
+
+  (wrentit-1 (+ beg1 .8) .048 amp1 1.03)
+  (wrentit-2 (+ beg1 .87) .064 amp1 1.03)
+
+  (let ((ampf (make-env '(0 1 1 .8) :length 10))
+	(frqf (make-env (list 0 1 1 (/ 3050.0 3200.0)) :length 10))
+	(call-init 1.0))
+
+    (do ((call 0 (1+ call)))
+	((= call 10))
+      (let ((call-amp (env ampf))
+	    (call-frq (env frqf)))
+	(let ((call-beg (+ beg1 call-init (* call .15) (random .01))))
+	  (wrentit-1 call-beg (+ .03 (random .005)) (* amp1 call-amp) call-frq)
+	  (wrentit-2 (+ call-beg .048) (+ .06 (random .005)) (* amp1 call-amp) call-frq))))
+
+    (wrentit-1 (+ beg1 2.6) .041 (* amp1 0.5) 1.0)))
+
+;(with-sound (:play #t) (wrentit 0 .5))
 
 
 
@@ -9766,8 +9975,9 @@
   (zone-tailed-hawk              (+ beg 226.0) .25)
   (red-eyed-vireo                (+ beg 228.0) .25)
   (crested-caracara              (+ beg 228.5) .25)
-  (trumpeter-swan-3              (+ beg 229.5) .25)
-  (+ beg 230.0))
+  (trumpeter-swan-1              (+ beg 229.5) .25)
+  (wrentit                       (+ beg 230.5) .25)
+  (+ beg 233))
 
 
 (define (calling-all-animals)

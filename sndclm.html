@@ -548,9 +548,6 @@ you can use <a href="sndscm.html#def-clm-struct">def-clm-struct</a>.
 <br><br>
 
 
-<!-- TODO: give simple examples based on direct-in-with-sound calls of the generators -->
-
-
 <!-- INDEX generators:Generators -->
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2><A class=def NAME="generators">Generators</a></h2></td></tr></table>
 <br><br>
@@ -799,7 +796,7 @@ To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
   <a class=def name="env">env</a> e
   <a class=def name="env?">env?</a> e
 
-  <a class=def name="env-interp">env-interp</a> x env :optional (base 1.0)
+  <a class=def name="env-interp">env-interp</a> x env :optional (base 1.0) ;value of env at x
 </pre>
 
 <table border=0 hspace=40><tr><td>
@@ -926,16 +923,13 @@ duration), it's simplest to use make-env:
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(defun change-env-dur (e dur)
+(define (change-env-dur e dur)
   (<a class=quiet href="#make-env">make-env</a> (<a class=quiet href="#mus-data">mus-data</a> e) :scaler (<a class=quiet href="#mus-scaler">mus-scaler</a> e) :offset (<a class=quiet href="#mus-offset">mus-offset</a> e) :base (<a class=quiet href="#mus-increment">mus-increment</a> e)
 	    :duration dur))
 </pre>
 </td></tr></table>
 
-
-
-<p>env-interp returns the value of the envelope at some point
-on the x axis.
+<p>or use table-lookup. 
 </p>
 
 <table border=3 bordercolor="tan" hspace=40><th bgcolor="beige">Envelopes</th><tr><td>
@@ -2119,7 +2113,33 @@ but I can't think of a good replacement.
 </p>
 
 
-<!-- TODO: check out MLB's notion of an index here and in sum-of-sines cases
+<!-- MLB's index idea is not so great:
+(with-sound (:clipped #f :statistics #t)
+  (let* ((dur 2.0)
+	 (ampf (make-env '(0 1 10 1 11 0) :duration dur :scaler .5))
+	 (indf (make-env '(0 0 1 .999) :duration dur))
+	 (samps (seconds->samples dur))
+	 (N 60))
+
+    (do ((i 0 (1+ i))
+	 (th 0.0 (+ th (hz->radians 1000.0))))
+	((= i samps))
+  
+      (let* ((a .999)
+	     (index (env indf))
+	     (a2 (+ 1.0 (* a a)))
+	     (an (expt a (+ N 1)))
+	     (b 1/10)
+	     (B (* b th))
+	     (thB (- th B))
+	     (divisor (* (- a2 (* 2 a index (cos B)))
+			 (/ (- (expt a N) 1.0)
+			    (- a 1.0))))
+	     (val (/ (- (sin th) (* a (sin thB))
+			(* an (- (sin (+ th (* (+ N 1) B))) 
+				 (* a (sin (+ th (* N B)))))))
+		     divisor)))
+	(outa i (* (env ampf) val) *output*)))))
 -->
 
 <br><br>
