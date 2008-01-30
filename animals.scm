@@ -91,7 +91,7 @@
 ;;; House finch
 ;;; Gray-crowned rosy-finch
 ;;; Eastern wood-pewee (2)
-;;; Western wood-pewee
+;;; Western wood-pewee (2)
 ;;; Tufted titmouse
 ;;; Oak titmouse
 ;;; Bushtit
@@ -117,6 +117,7 @@
 ;;; Chestnut-sided warbler
 ;;; Black-throated blue warbler
 ;;; Verdin
+;;; Cedar waxwing
 ;;; Western meadowlark
 ;;; Eastern meadowlark
 ;;; Ruby-crowned kinglet
@@ -9823,8 +9824,63 @@
 
 ;(with-sound (:play #t) (western-wood-pewee-1 0 .5))
 
+(definstrument (western-wood-pewee-2 beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.69)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.016 0.098 0.038 0.208 0.060 0.000 0.254 0.000 0.293 0.846 0.306 0.975 
+			   0.345 1.000 0.391 0.833 0.457 0.809 0.545 0.843 0.596 0.836 0.713 0.669 0.724 0.583 
+			   0.729 0.326 0.740 0.324 0.751 0.240 0.774 0.179 0.794 0.600 0.812 0.632 0.878 0.539 
+			   0.912 0.392 0.971 0.316 0.984 0.091 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.409 0.030 0.400 0.039 0.436 0.067 0.444 0.279 0.434 0.291 0.505 0.327 0.561 
+			   0.420 0.578 0.482 0.569 0.648 0.532 0.728 0.527 0.753 0.593 0.779 0.650 0.802 0.605 
+			   0.827 0.532 0.854 0.507 0.977 0.485 1.000 0.43)
+			 :duration dur :scaler (hz->radians 7300.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .99  2 .005  3 .005)))
+	 (vib (make-oscil 152))
+	 (index (hz->radians 500))
+	 (vibf (make-env '(0 0 .29 0 .38 1 .7 .5 .75 0 1 0) :duration dur))
+	 (trem (make-triangle-wave 76 .8)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((vbf (env vibf)))
+	   (outa i (* (env ampf)
+		      (- 1.0 (* vbf (abs (triangle-wave trem))))
+		      (polyshape gen1 1.0 (+ (env frqf)
+					     (* vbf index (oscil vib)))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (western-wood-pewee-2 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Cedar waxwing
+
+(definstrument (cedar-waxwing beg amp)
+  ;; probably the simplest bird call
+  ;; calif 10 10 (hard to find one call by itself)
+  ;;   a cleaner original is east 3 3 with a slightly sharper frq env
+  (let* ((start (seconds->samples beg))
+	 (dur 0.5)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.133 0.217 0.337 0.854 0.470 0.826 0.533 0.751 0.617 0.980 
+			   0.704 1.000 0.883 0.881 0.943 0.747 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.267 0.097 0.287 0.242 0.301 0.472 0.304 0.684 0.301 0.788 0.301 
+			   0.973 0.293 1.000 0.264)
+			 :duration dur :scaler (hz->radians 22000.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .99 2 .006  3 .004))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf) (polyshape gen1 1.0 (env frqf))) *output*))))))
+
+;(with-sound (:play #t) (cedar-waxwing 0 .5))
 
 
 ;;; ================ calling-all-animals ================
@@ -10026,7 +10082,9 @@
   (trumpeter-swan-1              (+ beg 229.5) .25)
   (wrentit                       (+ beg 230.5) .25)
   (western-wood-pewee-1          (+ beg 233.5) .25)
-  (+ beg 234.5))
+  (western-wood-pewee-2          (+ beg 234.5) .25)
+  (cedar-waxwing                 (+ beg 235.5) .25)
+  (+ beg 236))
 
 
 (define (calling-all-animals)

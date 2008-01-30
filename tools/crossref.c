@@ -715,7 +715,9 @@ int main(int argc, char **argv)
 	    }
 	  else
 	    {
-	      fprintf(FD, "\n\n%s: %d [%s, %s]", qs[i]->name, qs[i]->calls, qs[i]->hname, qs[i]->def);
+	      if (qs[i]->def)
+		fprintf(FD, "\n\n%s: %d [%s, %s]", qs[i]->name, qs[i]->calls, qs[i]->hname, qs[i]->def);
+	      else fprintf(FD, "\n\n%s: %d [%s, <no function definition found>]", qs[i]->name, qs[i]->calls, qs[i]->hname);
 	      if (qs[i]->v) 
 		{
 		  fprintf(FD, " (void)");

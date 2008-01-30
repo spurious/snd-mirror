@@ -1480,9 +1480,6 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 		      (CLM_STRUCT_P(var->v->type)))
 		    {
 		      val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
-		      
-		      /* fprintf(stderr,"%s set %s\n", var->name, XEN_AS_STRING(val));  */
-		      
 		      if (XEN_LIST_P(val))
 			list_into_list(prog, prog->lists[var->v->addr], val);
 		    }
@@ -8077,6 +8074,22 @@ static void make_vct_v2(int *args, ptree *pt)
 }
 
 
+static void make_int_vector(int *args, ptree *pt) 
+{
+  vect *v = NULL;
+  if (VECT_RESULT) free_vect(VECT_RESULT, R_INT_VECTOR);
+  if (INT_ARG_1 > 0)
+    {
+      int i;
+      v = (vect *)CALLOC(1, sizeof(vect));
+      v->length = INT_ARG_1;
+      v->data.ints = (Int *)CALLOC(v->length, sizeof(Int));
+      for (i = 0; i < v->length; i++) v->data.ints[i] = INT_ARG_2;
+    }
+  VECT_RESULT = v;
+}
+
+
 static xen_value *make_vct_1(ptree *prog, xen_value **args, int num_args)
 {
   args[0] = make_xen_value(R_VCT, add_vct_to_ptree(prog, NULL), R_VARIABLE);
@@ -8090,11 +8103,20 @@ static xen_value *make_vct_1(ptree *prog, xen_value **args, int num_args)
 
 static xen_value *make_vector_1(ptree *prog, xen_value **args, int num_args)
 {
-  args[0] = make_xen_value(R_FLOAT_VECTOR, add_vct_to_ptree(prog, NULL), R_VARIABLE);
-  add_obj_to_gcs(prog, R_FLOAT_VECTOR, args[0]->addr);
-  if (num_args == 1)
-    add_triple_to_ptree(prog, va_make_triple(make_vct_v, "make_vct_v", 2, args[0], args[1]));
-  else add_triple_to_ptree(prog, va_make_triple(make_vct_v2, "make_vct_v2", 3, args[0], args[1], args[2]));
+  if ((num_args == 2) && (args[2]->type == R_INT))
+    {
+      args[0] = make_xen_value(R_INT_VECTOR, add_vect_to_ptree(prog, NULL), R_VARIABLE);
+      add_obj_to_gcs(prog, R_INT_VECTOR, args[0]->addr);
+      add_triple_to_ptree(prog, va_make_triple(make_int_vector, "make_int_vector", 3, args[0], args[1], args[2]));
+    }
+  else
+    {
+      args[0] = make_xen_value(R_FLOAT_VECTOR, add_vct_to_ptree(prog, NULL), R_VARIABLE);
+      add_obj_to_gcs(prog, R_FLOAT_VECTOR, args[0]->addr);
+      if (num_args == 1)
+	add_triple_to_ptree(prog, va_make_triple(make_vct_v, "make_vct_v", 2, args[0], args[1]));
+      else add_triple_to_ptree(prog, va_make_triple(make_vct_v2, "make_vct_v2", 3, args[0], args[1], args[2]));
+    }
   return(args[0]);
 }
 
@@ -10847,7 +10869,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
 	  /* it is necessary to copy the data here to protect it from free_ptree:
 	   *
 	   * (def-clm-struct hiho2 (v #f :type vct))
-	   * (define val (make-hiho2))
+	   * (define val (make-hiho2))
 	   * (run (lambda () (set! (hiho2-v val) (make-vct 32 .1))))
 	   */
 	  vtemp = mus_vct_copy(pt->vcts[v->addr]);
@@ -10856,7 +10878,18 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
 	}
       break;
 
-      /* PERHAPS: xen_value_to_xen for R_INT|CLM|VCT|LIST_VECTOR READER MIX_READER */
+    case R_INT_VECTOR:
+      if (pt->vects[v->addr])
+	{
+	  /* (let ((hi (vector 1 2 3))) (run (lambda () (vector-set! hi 2 4) hi))) */
+	  /* (run (lambda () (let ((v (make-vector 3 0))) (vector-set! v 1 2) v))) */
+	  val = XEN_MAKE_VECTOR(pt->vects[v->addr]->length, XEN_FALSE);
+	  int_vect_into_vector(pt->vects[v->addr], val);
+	}
+      break;
+
+      /* PERHAPS: xen_value_to_xen for R_CLM|VCT|LIST_VECTOR READER MIX_READER also in free_xen_var? */
+      /*  clm_vector data.gens=mus_any direct from scheme obj: is it safe to simply repackage? */
 
     case R_SOUND_DATA:
       if ((pt->sds) && (pt->sds[v->addr]))
@@ -12367,7 +12400,7 @@ static void init_walkers(void)
   INIT_WALKER("vector-length", make_walker(vector_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_VECTOR));
   INIT_WALKER("vector-fill!", make_walker(vector_fill_1, NULL, NULL, 2, 2, R_INT, false, 1, R_VECTOR));
   INIT_WALKER("vector-set!", make_walker(vector_set_1, NULL, NULL, 3, 3, R_ANY, false, 2, R_VECTOR, R_INT));
-  INIT_WALKER("make-vector", make_walker(make_vector_1, NULL, NULL, 1, 2, R_FLOAT_VECTOR, false, 2, R_INT, R_FLOAT));
+  INIT_WALKER("make-vector", make_walker(make_vector_1, NULL, NULL, 1, 2, R_ANY, false, 2, R_INT, R_NUMBER));
 
   /* -------- list funcs */
   INIT_WALKER("list-ref", make_walker(list_ref_1, NULL, NULL, 2, 2, R_ANY, false, 2, R_LIST, R_INT));

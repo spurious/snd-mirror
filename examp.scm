@@ -1650,7 +1650,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
   (let* ((len (frames snd chn))
 	 (newlen (inexact->exact (floor (* time-scale len))))
 	 (reader (make-sound-interp 0 snd chn))
-	 (read-env (make-env envelope :length newlen :scaler len))
+	 (read-env (make-env envelope :length (1+ newlen) :scaler len))
 	 (tempfilename (snd-tempnam))
 	 (fil (mus-sound-open-output tempfilename (srate snd) 1 #f mus-next "env-sound-interp temp file"))
 	 ;; #f as data-format -> format compatible with sndlib (so no data translation is needed)
