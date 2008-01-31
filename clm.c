@@ -7008,13 +7008,11 @@ static void flush_buffers(rdout *gen)
   else
     {
       mus_sample_t **addbufs;
-      int i, j, hdrfrm, hdrtyp;
-      off_t size, hdrend, num, last;
+      int i, j, data_format;
+      off_t current_file_frames, frames_to_add;
 
-      hdrend = mus_sound_data_location(gen->file_name);
-      hdrfrm = mus_sound_data_format(gen->file_name);
-      hdrtyp = mus_sound_header_type(gen->file_name);
-      size = mus_sound_frames(gen->file_name);
+      data_format = mus_sound_data_format(gen->file_name);
+      current_file_frames = mus_sound_frames(gen->file_name);
 
       addbufs = (mus_sample_t **)clm_calloc(gen->chans, sizeof(mus_sample_t *), "output buffers");
 
@@ -7022,16 +7020,31 @@ static void flush_buffers(rdout *gen)
 	addbufs[i] = (mus_sample_t *)clm_calloc(clm_file_buffer_size, sizeof(mus_sample_t), "output buffer");
 
       mus_file_seek_frame(fd, gen->data_start);
-      num = gen->out_end - gen->data_start;
-      if (num >= clm_file_buffer_size) 
-	num = clm_file_buffer_size - 1;
+      frames_to_add = gen->out_end - gen->data_start;
 
-      mus_file_read(fd, 0, num, gen->chans, addbufs);
+      /* if the caller reset clm_file_buffer_size during a run, frames_to_add might be greater than the assumed buffer size,
+       *   so we need to complain and fix up the limits.  In CLM, the size is set in sound.lisp, begin-with-sound.
+       *   In Snd via mus_set_file_buffer_size in clm2xen.c.  The initial default is set in init_mus_module
+       *   called in CLM by clm-initialize-links via in cmus.c, and in Snd in clm2xen.c when the module is setup.
+       */
+      if (frames_to_add >= clm_file_buffer_size) 
+	{
+	  mus_print("clm-file-buffer-size changed? %d <= " OFF_TD, clm_file_buffer_size, frames_to_add);
+	  frames_to_add = clm_file_buffer_size - 1;
+	  /* this means we drop samples -- the other choice (short of throwing an error) would
+	   *   be to read/allocate the bigger size.
+	   */
+	}
+
+      mus_file_read(fd, 0, frames_to_add, gen->chans, addbufs);
       mus_sound_close_input(fd);
-      fd = mus_sound_reopen_output(gen->file_name, gen->chans, hdrfrm, hdrtyp, hdrend);
 
-      if ((size < gen->data_start) &&
-	  (data_format_zero[hdrfrm] != 0))
+      fd = mus_sound_reopen_output(gen->file_name, gen->chans, data_format,
+				   mus_sound_header_type(gen->file_name),
+				   mus_sound_data_location(gen->file_name));
+
+      if ((current_file_frames < gen->data_start) &&
+	  (data_format_zero[data_format] != 0))
 	{
 	  /* we're about to create a gap in the output file.  mus_file_seek_frame calls lseek which (man lseek):
 	   *
@@ -7055,8 +7068,8 @@ static void flush_buffers(rdout *gen)
 	   */
 
 	  off_t filler, current_samps;
-	  filler = gen->data_start - size; /* this is in terms of frames */
-	  mus_file_seek_frame(fd, size);
+	  filler = gen->data_start - current_file_frames; 
+	  mus_file_seek_frame(fd, current_file_frames);
 	  while (filler > 0)
 	    {
 	      if (filler > clm_file_buffer_size)
@@ -7067,32 +7080,28 @@ static void flush_buffers(rdout *gen)
 	    }
 	}
 
+#if MUS_DEBUGGING
+      {
+	off_t last;
+	last = gen->out_end - gen->data_start;
+	if (last != frames_to_add)
+	  {
+	    fprintf(stderr,"last != frames_to_add: " OFF_TD " " OFF_TD "\n", last, frames_to_add);
+	    abort();
+	  }
+      }
+#endif
+
       /* fill/write output buffers with current data added to saved data (if any) */
-      last = gen->out_end - gen->data_start;
-
-      /* if the caller reset clm_file_buffer_size during a run, last might be greater than the addbufs size,
-       *   so we need to complain and fix up the limits.  In CLM, the size is set in sound.lisp, begin-with-sound.
-       *   In Snd via mus_set_file_buffer_size in clm2xen.c.  The initial default is set in init_mus_module
-       *   called in CLM by clm-initialize-links via in cmus.c, and in Snd in clm2xen.c when the module is setup.
-       */
-      if (clm_file_buffer_size < last)
-	{
-	  mus_print("clm-file-buffer-size changed? %d < " OFF_TD, clm_file_buffer_size, last);
-	  last = clm_file_buffer_size;
-	  /* this means we drop samples -- the other choice (short of throwing an error) would
-	   *   be to read/allocate the bigger size above (see "num" etc).
-	   */
-	}
-
       for (j = 0; j < gen->chans; j++)
-	for (i = 0; i <= last; i++)
+	for (i = 0; i <= frames_to_add; i++)
 	  addbufs[j][i] += gen->obufs[j][i];
 
       mus_file_seek_frame(fd, gen->data_start);
-      mus_file_write(fd, 0, last, gen->chans, addbufs);
-      if (size <= gen->out_end) size = gen->out_end + 1;
+      mus_file_write(fd, 0, frames_to_add, gen->chans, addbufs);
+      if (current_file_frames <= gen->out_end) current_file_frames = gen->out_end + 1;
 
-      mus_sound_close_output(fd, size * gen->chans * mus_bytes_per_sample(hdrfrm));
+      mus_sound_close_output(fd, current_file_frames * gen->chans * mus_bytes_per_sample(data_format));
       for (i = 0; i < gen->chans; i++) 
 	FREE(addbufs[i]);
       FREE(addbufs);
@@ -7222,7 +7231,7 @@ mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chan
 
 Float mus_sample_to_file(mus_any *ptr, off_t samp, int chan, Float val)
 {
-  return(mus_write_sample(ptr, samp, chan, val));
+  return(mus_write_sample(ptr, samp, chan, val)); /* write_sample -> write_sample in class struct -> file_sample for example */
 }
 
 

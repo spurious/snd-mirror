@@ -9310,8 +9310,6 @@ MUS_VCT_1(data, 0)
 MUS_VCT_1(xcoeffs, 1)
 MUS_VCT_1(ycoeffs, 2)
 
-/* TODO: local case for data x|ycoeffs, set x|ycoeff */
-
 
 
 /* ---------------- polynomial ---------------- */

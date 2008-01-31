@@ -195,6 +195,7 @@
 ;;; Whooping crane
 ;;; Sandhill crane
 ;;; Trumpeter swan
+;;; Canada goose
 ;;; Least bittern
 ;;; Black rail
 ;;; Virginia rail
@@ -10017,6 +10018,61 @@
 ;(with-sound (:play #t) (townsends-solitaire 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Canada goose
+
+(definstrument (canada-goose-1 beg amp)
+  (let* ((start (seconds->samples beg))
+	 (dur 0.375)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.446 0.182 0.489 0.778 0.521 0.465 0.610 0.356 0.682 0.553 0.741 1.000 
+			   0.785 0.513 0.811 0.350 0.878 0.270 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.362 0.321 0.378 0.422 0.398 0.445 0.418 0.461 0.388 0.485 0.428 0.606 0.434 
+			   0.624 0.421 0.643 0.444 0.662 0.405 0.670 0.451 0.685 0.378 0.691 0.428 0.700 0.378 
+			   0.708 0.434 0.748 0.457 0.819 0.467 0.870 0.464 0.910 0.414 1.000 0.382)
+			 :duration dur :scaler (hz->radians (* 0.5 3500))))
+	 (gen1 (make-oscil 0.0))
+	 (ampf1 (make-env '(0 1 .44 1 .455 .5 .46 1 .465 .5 .5 1 .67 1 .68 .1 .69 1 .71 1 .72 .1 .73 1 1 1) :duration dur :scaler .4))
+	 (gen2 (make-oscil 0.0))
+	 (gen3 (make-oscil 0.0))
+	 (ampf3 (make-env '(0 .2 .4 .2 .5 1 .68 1 .7 .5 .9 .5 1 0) :duration dur :scaler .3))
+	 (gen4 (make-polyshape 0.0 :partials (list 4 .8 5 .2)))
+	 (ampf4 (make-env '(0 0 .4 .1 .5 1 .75 1 .9 0 1 0) :duration dur :scaler .05))
+	 (gen5 (make-sine-summation 0.0 0.0 12 .8 1/6))
+	 (ampf5 (make-env '(0 0 .4 0 .5 1 .65 .1 .7 1  .9 0 1 0) :duration dur :scaler .2))
+	 (trem (make-triangle-wave (* 0.5 170)))
+	 (tremf (make-env '(0 1 .45 1 .5 .3 .65 .2 .7 1 .75 .2 1 .2) :duration dur))
+	 (hum (make-oscil 0.0))
+	 (humf (make-env '(0 .1 .1 1 .2 .1 .3 1 .4 1 .45 .1 .8 0 1 0) :duration dur :scaler .4))
+	 (rnd (make-rand-interp 2000))
+	 (rndf (make-env '(0 .1 .3 .2 .4 1 .45 1 .5 .1 .6 .01 .65 1  .7 .1 1 .25) :duration dur :scaler (hz->radians 200)))
+	 (gen6 (make-sine-summation 0.0 0.0 12 .8 1/6))
+	 (ampf6 (make-env '(0 0 .4 0 .45 1 .5 0 .65 0 .7 1 .75 0 1 0) :duration dur :scaler .2)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((trmf (env tremf))
+	       (frq (+ (env frqf)
+		       (* (env rndf) (rand-interp rnd)))))
+	   (outa i (* (env ampf)
+		      (+ (- 1.0 trmf) (* trmf (abs (triangle-wave trem))))
+		      (+ (* (env ampf1) (oscil gen1 frq))
+			 (* .5 (oscil gen2 (* 2 frq)))
+			 (* (env ampf3) (oscil gen3 (* 3 frq)))
+			 (* (env ampf4) (polyshape gen4 1.0 frq))
+			 (* (env ampf5) (sine-summation gen5 (* 6 frq)))
+			 (* (env ampf6) (sine-summation gen6 (* 3 frq)))
+			 (* (env humf) (oscil hum (* .25 frq)))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (canada-goose-1 0 .5))
+
+
+
+
 ;;; ================ calling-all-animals ================
 
 (define* (calling-all-frogs :optional (beg 0.0))
@@ -10219,7 +10275,8 @@
   (western-wood-pewee-2          (+ beg 234.5) .25)
   (cedar-waxwing                 (+ beg 235.5) .25)
   (townsends-solitaire           (+ beg 236.0) .25)
-  (+ beg 237.5))
+  (canada-goose-1                (+ beg 237.5) .25)
+  (+ beg 238))
 
 
 (define (calling-all-animals)
