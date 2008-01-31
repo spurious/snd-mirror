@@ -7015,6 +7015,7 @@ static void flush_buffers(rdout *gen)
       hdrfrm = mus_sound_data_format(gen->file_name);
       hdrtyp = mus_sound_header_type(gen->file_name);
       size = mus_sound_frames(gen->file_name);
+
       addbufs = (mus_sample_t **)clm_calloc(gen->chans, sizeof(mus_sample_t *), "output buffers");
 
       for (i = 0; i < gen->chans; i++) 
@@ -7068,6 +7069,20 @@ static void flush_buffers(rdout *gen)
 
       /* fill/write output buffers with current data added to saved data (if any) */
       last = gen->out_end - gen->data_start;
+
+      /* if the caller reset clm_file_buffer_size during a run, last might be greater than the addbufs size,
+       *   so we need to complain and fix up the limits.  In CLM, the size is set in sound.lisp, begin-with-sound.
+       *   In Snd via mus_set_file_buffer_size in clm2xen.c.  The initial default is set in init_mus_module
+       *   called in CLM by clm-initialize-links via in cmus.c, and in Snd in clm2xen.c when the module is setup.
+       */
+      if (clm_file_buffer_size < last)
+	{
+	  mus_print("clm-file-buffer-size changed? %d < " OFF_TD, clm_file_buffer_size, last);
+	  last = clm_file_buffer_size;
+	  /* this means we drop samples -- the other choice (short of throwing an error) would
+	   *   be to read/allocate the bigger size above (see "num" etc).
+	   */
+	}
 
       for (j = 0; j < gen->chans; j++)
 	for (i = 0; i <= last; i++)

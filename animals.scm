@@ -117,6 +117,7 @@
 ;;; Chestnut-sided warbler
 ;;; Black-throated blue warbler
 ;;; Verdin
+;;; Townsend's solitaire
 ;;; Cedar waxwing
 ;;; Western meadowlark
 ;;; Eastern meadowlark
@@ -9883,6 +9884,139 @@
 ;(with-sound (:play #t) (cedar-waxwing 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Townsend's solitaire
+
+(define (townsends-solitaire beg1 amp1)
+  ;; calif 67 33
+
+  (definstrument (townsends-solitaire-1 beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.15)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.056 0.074 0.084 0.182 0.122 0.118 0.163 0.168 0.224 0.104 0.257 0.343 
+			     0.289 0.337 0.299 0.155 0.308 0.242 0.320 0.185 0.329 0.125 0.389 0.145 0.436 0.242 
+			     0.466 0.195 0.484 0.313 0.495 0.455 0.571 0.535 0.634 0.566 0.684 0.727 0.717 0.926 
+			     0.751 0.983 0.786 0.960 0.891 0.717 0.957 0.242 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.321 0.055 0.337 0.081 0.365 0.103 0.370 0.113 0.303 0.153 0.308 0.192 0.329 
+			     0.233 0.342 0.261 0.376 0.282 0.358 0.306 0.285 0.358 0.272 0.427 0.308 0.490 0.360 
+			     0.584 0.376 0.813 0.360 1.000 0.342)
+			   :duration dur :scaler (hz->radians 8100.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .995  2 .005))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+    
+  (definstrument (townsends-solitaire-2 beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.037)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.077 0.215 0.112 0.907 0.198 0.189 0.212 0.096 0.235 0.0 0.333 0.085 
+			     0.433 0.515 0.471 0.481 0.517 0.622 0.571 0.526 0.671 1.000 0.699 0.752 0.718 0.904 
+			     0.781 0.915 0.862 0.374 0.968 0.289 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.395 0.077 0.351 0.121 0.293 0.169 0.225 0.218 0.196 0.286 0.163 0.345 0.185 
+			     0.407 0.221 1.000 0.36)
+			   :duration dur :scaler (hz->radians 13800.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .98  2 .01  3 .005 4 .005))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+  
+  (definstrument (townsends-solitaire-3 beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.323)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.106 0.301 0.117 0.254 0.156 0.475 0.198 0.359 0.221 0.043 0.228 0.214 
+			     0.307 0.848 0.337 0.391 0.355 0.355 0.366 0.467 0.381 0.409 0.397 0.649 0.407 0.576 
+			     0.424 0.105 0.453 0.449 0.474 0.627 0.485 0.558 0.488 0.703 0.506 0.482 0.514 0.261 
+			     0.523 0.203 0.572 0.529 0.581 0.449 0.586 0.641 0.606 0.000 0.634 0.359 0.661 0.598 
+			     0.675 0.522 0.684 0.750 0.701 0.616 0.709 0.380 0.718 0.250 0.733 0.188 0.768 0.478 
+			     0.778 0.362 0.796 0.000 0.822 0.373 0.849 0.587 0.861 0.478 0.881 0.891 0.888 0.804 
+			     0.904 0.996 0.935 0.703 0.946 0.768 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.549 0.083 0.595 0.114 0.606 0.144 0.641 0.179 0.656 0.213 0.643 0.229 0.590 
+			     0.247 0.573 0.283 0.564 0.313 0.538 0.344 0.484 0.347 0.641 0.361 0.610 0.387 0.586 
+			     0.404 0.547 0.419 0.486 0.435 0.477 0.440 0.645 0.450 0.667 0.456 0.634 0.472 0.610 
+			     0.507 0.529 0.527 0.492 0.535 0.688 0.559 0.625 0.605 0.519 0.618 0.505 0.629 0.678 
+			     0.654 0.619 0.672 0.590 0.711 0.519 0.732 0.510 0.734 0.702 0.758 0.632 0.797 0.508 
+			     0.813 0.671 0.828 0.662 0.840 0.608 0.882 0.560 0.922 0.525 1.000 0.475)
+			   :duration dur :scaler (hz->radians 6000.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .99  2 .004  3 .006))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+  
+  (definstrument (townsends-solitaire-4 beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.217)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.065 0.296 0.096 0.261 0.145 0.368 0.179 0.580 0.196 0.375 0.227 0.560 
+			     0.272 0.000 0.314 0.000 0.380 0.451 0.416 0.325 0.433 0.183 0.456 0.351 0.483 0.303 
+			     0.509 0.410 0.528 0.255 0.627 0.089 0.640 0.000 0.660 0.196 0.699 0.307 0.711 0.706 
+			     0.722 0.719 0.740 0.481 0.755 0.455 0.763 0.362 0.775 0.453 0.793 0.059 0.796 0.214 
+			     0.807 0.000 0.810 0.124 0.828 0.187 0.856 0.240 0.867 0.205 0.883 0.253 0.902 0.882 
+			     0.909 1.000 0.955 0.438 0.963 0.603 0.969 0.497 0.982 0.153 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.486 0.036 0.486 0.128 0.538 0.134 0.473 0.166 0.481 0.183 0.512 0.200 0.534 
+			     0.219 0.484 0.227 0.425 0.244 0.386 0.287 0.366 0.307 0.499 0.328 0.527 0.341 0.508 
+			     0.424 0.429 0.507 0.410 0.599 0.364 0.617 0.381 0.628 0.414 0.659 0.427 0.685 0.460 
+			     0.707 0.475 0.729 0.514 0.759 0.551 0.774 0.521 0.779 0.449 0.797 0.386 0.833 0.414 
+			     0.873 0.451 0.905 0.492 0.941 0.547 0.959 0.545 0.970 0.423 1.000 0.322)
+			   :duration dur :scaler (hz->radians 6050.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .99  2 .006  3 .004))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+  
+  (definstrument (townsends-solitaire-5 beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.007)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0 0 1 1 3 0) :duration dur :scaler amp))
+	   (frqf (make-env '(0 4600 1 3000) :duration dur :scaler (hz->radians 1.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .99  2 .01))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+  
+  
+  (townsends-solitaire-3 beg1 (* amp1 .7))
+  (townsends-solitaire-1 (+ beg1 .37) amp1)
+  (townsends-solitaire-1 (+ beg1 .59) amp1)
+  
+  (do ((call 0 (1+ call)))
+      ((= call 5))
+    (townsends-solitaire-2 (+ beg1 .85 (* call .059)) (* .3 amp1)))
+  
+  (townsends-solitaire-5 (+ beg1 1.139) (* amp1 .2))
+  (townsends-solitaire-4 (+ beg1 1.178) (* amp1 .6)))
+
+;(with-sound (:play #t) (townsends-solitaire 0 .5))
+
+
 ;;; ================ calling-all-animals ================
 
 (define* (calling-all-frogs :optional (beg 0.0))
@@ -10084,7 +10218,8 @@
   (western-wood-pewee-1          (+ beg 233.5) .25)
   (western-wood-pewee-2          (+ beg 234.5) .25)
   (cedar-waxwing                 (+ beg 235.5) .25)
-  (+ beg 236))
+  (townsends-solitaire           (+ beg 236.0) .25)
+  (+ beg 237.5))
 
 
 (define (calling-all-animals)
